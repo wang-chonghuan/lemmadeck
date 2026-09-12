@@ -108,6 +108,7 @@ function Exercises({
                   <figure
                     key={f.id}
                     className="sr-ex-fig"
+                    data-figure-id={f.id}
                     aria-label={f.label ?? undefined}
                     {...(!f.image
                       ? { dangerouslySetInnerHTML: { __html: f.svg ?? '' } }
