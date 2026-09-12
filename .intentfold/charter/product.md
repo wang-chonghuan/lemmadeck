@@ -1,7 +1,7 @@
 # Product
 
 Human-authored. The machine reads this as binding intent and never edits it.
-Section shape is fixed — see `format.md`.
+Section shape is fixed by `.intentfold/readme.md`.
 
 > Migrated 2026-08-05 from `.prodfarm/charter/goal.md`. The source carried a
 > `DRAFT — AWAITING HUMAN CONFIRMATION` banner while its body marked two pillars as human-confirmed
@@ -42,7 +42,7 @@ TODO(human) — 源文件写的是 `达成度判定标准: (awaiting human)`,并
 
 **What this product is not**
 
-TODO(human) — 源文件没有非目标一节。`format.md` 认为这是最有用的一节:它是阻止范围一个
+TODO(human) — 源文件没有非目标一节。`.intentfold/readme.md` 认为这是最有用的一节:它是阻止范围一个
 "听起来合理的工单"接一个地向外漂的东西。至少值得写清楚:是否做多用户/班级、是否做家长端、
 是否做游戏化激励、是否做初中以外的学段。
 
@@ -51,13 +51,5 @@ TODO(human) — 源文件没有非目标一节。`format.md` 认为这是最有�
 ## Guidance
 
 ## Redlines
-
-**A closed list, looked up — never judged.** Do not ask "is this a big deal?"; check whether the
-action is on the list. If it is: **route around it, or stop and hand it to the human.** Never
-proceed, never approximate, never decide on the human's behalf.
-
-Every entry says which of the two it is — **forbidden outright**, or **not without the human's
-explicit approval**. An entry that needs a read-through to apply is not a redline; write it as
-Guidance instead (`format.md`, test 2).
 
 1. **Editing this file** — forbidden outright. Product intent is the human's exclusively.

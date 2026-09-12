@@ -1,59 +1,97 @@
 # .intentfold
 
-Read this at the start of every session in this repo, and revisit it whenever you have been away from
-it for a while.
+Read this first in every session. It is the single entry to project intent and ticket workflow.
 
-*Machine-owned: `intentfold` cap1 rewrites this file from its template. It says where things live, not
-what this project wants — that is `charter/`, which is yours and which cap1 only creates when absent and never reopens once it exists. Do not
-hand-edit here; edits belong in the charter or in the skill.*
+*Machine-owned: IntentFold cap1 refreshes this file. The four files in `charter/` are human-owned;
+do not edit them unless the human explicitly asks for a Charter change.*
 
-## Read in this order
+## Start here
 
-1. `.intentfold/project.json` — project name, main branch, deploy target, ticket backend (`plane` or
-   `linear`) with its project URL, and each service's fixed main port plus ticket prefix.
-2. `.intentfold/charter/` — **every dimension file in it**. This is binding intent, not background
-   reading:
-   - `product.md` — what this product is and who it is for
-   - `dev.md` — development rules a coding agent must obey
-   - `ui.md` — UI requirements, tokens, patterns
-   - `arch.md` — architecture decisions and constraints
-   - `runbook.md` — how to run, build and debug locally
-   - `qa.md` — how this project is tested
-   - `devops.md` — how it is deployed and operated
+1. Read `.intentfold/project.json` for the project, main branch, ticket backend, deploy target, and
+   service ports.
+2. Read `charter/product.md` to understand what the product is, who it serves, and what it must not
+   become.
+3. Read `charter/engineering.md` before changing code or structure.
+4. Read `charter/ui.md` when the work touches a user interface.
+5. Read `charter/operations.md` when running, testing, querying, migrating, deploying, or operating
+   the product.
+6. Read the live ticket from the backend named by `project.json`, then its local artifacts under
+   `tickets/<ticket-id>/`.
 
-   Each of them is written in the same four sections, and **each section is used differently** —
-   `charter/format.md` states the shape and the tests, and is worth reading once:
+The Charter has exactly four files:
 
-   | Section | Use it by |
-   |---|---|
-   | `## Contract` | referencing it while you author — it is what the thing *is* |
-   | `## Tools` | looking it up **at the moment you act** and running it as written; never from memory |
-   | `## Guidance` | following it while you write; nobody reviews a diff against it |
-   | `## Redlines` | looking the action up **before** doing it. Never judged. Forbidden outright, or not without the human |
+| File | Owns |
+|---|---|
+| `product.md` | product purpose, users, value, and non-goals |
+| `engineering.md` | architecture, development rules, checks, dependencies, and landing |
+| `ui.md` | design system and interface constraints |
+| `operations.md` | local runtime, acceptance evidence, deployment, and operations |
 
-   Hard prohibitions live at the end of the file they belong to. There is no separate redline file.
-3. The ticket you are working on, live from the ticket backend — never from a local copy.
-4. `.intentfold/tickets/<ticket-id>/` — the artifacts of the ticket in hand.
+Requirements live in the ticket backend, not in a local `req.md`. Use the **n-plane** or
+**n-linear** skill selected by `project.json`. Linear ticket text is English; Plane ticket text is
+Chinese unless the human asks otherwise.
 
-## What lives where
+## Charter format
 
-- Requirements live in the **ticket backend** named by `project.json` `tickets.system` — plane or
-  linear, read and written only through the **n-plane** / **n-linear** skill. There is no local copy.
-  Ticket text follows the backend's language: linear is English, plane is Chinese unless the human
-  asks otherwise.
-- Intent lives in `charter/`. It is **human-owned**: read it, never edit it. Report drift instead.
-- Per-ticket contracts live in `tickets/<ticket-id>/`: `ticket.json` (branch, base, ports, and
-  `status: open | closed`), `plan.md`, `ac.md`, `grill.md`, `handoff.md`, and `rework.md` when there
-  was any. **`ticket.json` `status` is how you tell live work from finished work** without asking the
-  backend. **Read them in that order and read both of the
-  last two** — `handoff.md` is frozen at first delivery, so `rework.md` is what says what is actually
-  true now.
-- Scratch lives in `tmp/` (project) and `tickets/<id>/tmp/` (ticket). Neither is committed.
+Every Charter file has these four headings, in this order, even when a section is empty:
 
-## How work happens
+```markdown
+## Contract
+## Tools
+## Guidance
+## Redlines
+```
 
-Through the **intentfold** skill, which owns the workflow — this file does not repeat it. One ticket
-at a time: worktree → plan/ac → grill → code → verify the acceptance criteria with playwright →
-handoff → merge.
+They are different kinds of information:
 
-No change without a ticket.
+| Section | States | How it is used |
+|---|---|---|
+| `Contract` | what the artifact is | referenced while authoring |
+| `Tools` | commands, paths, ports, URLs, viewports | looked up at the moment of acting and run as written |
+| `Guidance` | how to approach the work | followed while writing |
+| `Redlines` | forbidden or approval-required actions | looked up before acting; never judged away |
+
+Use these tests when writing:
+
+1. **Contract or Guidance:** does the line describe the artifact, or the act of changing it?
+2. **Guidance or Redline:** can compliance be decided from a path, token, command, or structural
+   fact without reading and interpreting the implementation? If not, it is Guidance.
+3. **Tools:** could the concrete value go stale? Commands, paths, ports, URLs, and viewports belong
+   here once; other files point here rather than copy them.
+4. **Derive, do not enumerate:** a check derives targets from the product, manifest, sitemap, schema,
+   or registry and fails when derivation returns nothing. It does not preserve a second hand-written
+   list of routes, fields, or fixtures.
+
+Redlines live in the file whose subject they govern. There is no separate redline file. Each entry
+says either **forbidden outright** or **not without the human's explicit approval**.
+
+Write only what the code, configuration, schema, design system, or a command cannot answer more
+reliably. Prefer making a rule mechanical in `Tools` over emphasizing it in prose.
+
+## Ticket artifacts
+
+`tickets/<ticket-id>/` may contain:
+
+- `ticket.json` — mode, stage, finish, checkout, branch, base, and ports;
+- optional `draft.md`, `plan.md`, `ac.md`, and `grill.md`;
+- `handoff.md`, plus `intentfold-usage.json` when configured;
+- `rework.md` when the delivered branch changed after the first handoff;
+- `tmp/` for uncommitted evidence.
+
+The ticket backend decides whether work is live or Done. `handoff.md` freezes at first delivery;
+read it together with `rework.md`.
+
+Project scratch lives in `.intentfold/tmp/`. Scratch and environment files are not committed.
+
+## Workflow
+
+Use the **intentfold** skill:
+
+- cap1 initializes this harness;
+- cap2 files one ticket;
+- cap3 develops one ticket autonomously;
+- cap3setup prepares an open development phase;
+- cap3handoff verifies and records completed development;
+- cap4 merges and closes a verified ticket.
+
+No product change without a ticket.

@@ -9,7 +9,7 @@
 插画生成，所有产物都要经过确定性校验。第二支柱是短文学英语（VOA1500 核心词，
 读懂 → 提示递减 → 全文默写）。
 
-产品目标与红线是人拥有的，见 `.prodfarm/charter/`（batch 内冻结，不要中途改）。
+产品目标与红线是人拥有的，见 `.intentfold/charter/`。
 
 ---
 
@@ -23,7 +23,7 @@
 | `ssot-schemas/` | 数据库 schema 真源 |
 | `.claude/skills/` | 本仓库自己的教材技能（`ld-s10y-lesson`、`ld-s10y-answer`） |
 | `.agents/skills/` | 项目技能（`ld-s10y-image` 现代插图、`sr-story` 传记、`sr-voa1500` 英语、`ld-galaxy` 首页星图） |
-| `.prodfarm/charter/` | 产品目标、红线、工程规约、架构、运维手册（人拥有） |
+| `.intentfold/charter/` | 产品目标、工程规约、UI 约束、运行验证与运维（人拥有） |
 | `.tmp/` | 已 gitignore 的暂存区：原书 PDF、数据库备份 |
 
 `AGENTS.md` 是给 agent 的路由表，知识分别住在哪里由它说了算。
@@ -47,10 +47,10 @@
 
 **原书 PDF 不入 git。** 放 `.tmp/ori-books/{书系列名}/{书名}.pdf`（约 215MB）。
 
-**动生产数据要人批准。** 见 `.prodfarm/charter/redlines.md` 第 2 条。删库前先备份到
+**动生产数据要人批准。** 见 `.intentfold/charter/operations.md` 的 Redlines。删库前先备份到
 `.tmp/backup/`。
 
-**常用命令**（更全的见 `.prodfarm/charter/runbook.md`）：
+**常用命令**（更全的见 `.intentfold/charter/operations.md`）：
 
 ```bash
 cd app && npm run dev     # 开发服务器，固定 3200 端口

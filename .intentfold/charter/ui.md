@@ -1,14 +1,15 @@
 # UI Requirements
 
 Binding on every UI change. **UI work follows this file strictly** — the agent does not invent
-alternatives to what is written here. Section shape is fixed — see `format.md`.
+alternatives to what is written here. Section shape is fixed by `.intentfold/readme.md`.
 
 Anything this file does not cover is still a design decision: it is settled at the **grill**, by the
 human, before implementation. Never invented while coding.
 
 > `.prodfarm/charter/` had no UI file — the design system lives in `resources/reference/DESIGN.md`
 > and has since before this harness. This file **points at it** rather than restating it, per
-> `format.md` ("a restated value is a stale value waiting to happen"). Filled in 2026-08-05; the
+> `.intentfold/readme.md` ("a restated value is a stale value waiting to happen"). Filled in
+> 2026-08-05; the
 > parts marked *observed* describe how the repo is today, not a decision the human has recorded.
 
 ## Contract
@@ -46,7 +47,7 @@ default `Button` components match.
 **Layout and responsive**
 
 App-shell layout, fixed 236px catalog, 860px mobile breakpoint, 100dvh shell, compact spacing scale —
-all specified in `DESIGN.md`. Every UI change is checked at both viewports named in `qa.md`.
+all specified in `DESIGN.md`. Every UI change is checked at both viewports named in `operations.md`.
 
 **Component structure** — *observed*: components are flat under `app/src/components/` (e.g.
 `catalog.tsx`, `card-reader.tsx`, `quiz-drawer.tsx`), with shadcn primitives alongside. The
@@ -58,11 +59,7 @@ restructure.
 ## Tools
 
 There is no UI-specific static check today. The mechanical defence is the project-wide one in
-`dev.md`:
-
-```bash
-cd app && npm run test && npm run build
-```
+`engineering.md`.
 
 TODO(human) — a check that fails on a raw hex colour or an off-palette hue in `app/src/` would be
 worth more than any of the prose above. Until it exists, the palette rule is Guidance enforced by the
@@ -96,14 +93,6 @@ sentence).
 lesson-section labels are fixed per subject in `DESIGN.md` and are not reworded.
 
 ## Redlines
-
-**A closed list, looked up — never judged.** Do not ask "is this a big deal?"; check whether the
-action is on the list. If it is: **route around it, or stop and hand it to the human.** Never
-proceed, never approximate, never decide on the human's behalf.
-
-Every entry says which of the two it is — **forbidden outright**, or **not without the human's
-explicit approval**. An entry that needs a read-through to apply is not a redline; write it as
-Guidance instead (`format.md`, test 2).
 
 1. **Changing a governed token registry** — adding, renaming, removing or retuning a value — not
    without the human's explicit approval. The registries, by path, so this can be matched against a
