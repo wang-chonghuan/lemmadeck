@@ -8,7 +8,9 @@ A chapter exists to make a **12–16-year-old** reader *want to keep reading* ab
 
 ## Output format — Markdown (not HTML)
 
-The authored, gated, and stored artifact is **Markdown**. Unlike `sr-lesson` (which authors self-contained HTML), a biography chapter is prose, so HTML is only produced at render time (the app converts the stored md → html). Author a `.md` file; never author the chapter as HTML.
+The authored, gated, and stored artifact is **Markdown**. A biography chapter is prose, so HTML is
+only produced at render time (the app converts the stored md → html). Author a `.md` file; never
+author the chapter as HTML.
 
 The markdown of one chapter:
 - **One `#` H1**: the chapter title (evocative but honest, Chinese).

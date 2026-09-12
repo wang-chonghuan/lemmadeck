@@ -19,8 +19,9 @@ functions; there is no separate API process. "Start the product" means the Vite 
 fixed main port recorded in `.intentfold/project.json`.
 
 The database is remote: the shared Supabase project, schema `lemmadeck-schema`, reached through
-`LEMMADECK_DATABASE_URL`. There is no local database. Content generation (`sr-math-lesson`,
-`sr-story`, `sr-lesson`) runs as one-off node scripts, not as a service.
+`LEMMADECK_DATABASE_URL`. There is no local database. Content generation (`ld-s10y-lesson`,
+`ld-s10y-image`, `ld-s10y-answer`, `sr-story`, `sr-voa1500`, `ld-galaxy`) runs as one-off scripts,
+not as a service.
 
 **Environments**
 
@@ -73,8 +74,12 @@ cd app && npm install
 The content skills install separately:
 
 ```bash
-cd .agents/skills && npm install
+npm --prefix .agents/skills install
+npm --prefix .claude/skills/ld-s10y-lesson install
 ```
+
+`ld-s10y-lesson` also owns a Python virtual environment; its `SKILL.md` contains the exact `uv`
+bootstrap command and required packages.
 
 **Run locally**
 
@@ -156,8 +161,9 @@ psql "$LEMMADECK_DATABASE_URL" -c 'select * from "lemmadeck-schema".sr_answer_ev
 ln -sf ../.env app/.env
 ```
 
-- Content skill scripts run directly with node, read the repo-root `.env`, and resolve `postgres`
-  from `.agents/skills/node_modules`.
+- Content scripts read the repo-root `.env`. Skills under `.agents/skills/` resolve shared Node
+  dependencies there; `ld-s10y-lesson` uses its own Node package and Python virtual environment;
+  `ld-s10y-answer` publishers resolve `postgres` from `app/`.
 - The deployed container receives environment values from Azure, not from the repo `.env`.
   Change runtime values through n-easyapp or `az containerapp`, never by baking them into the image.
 

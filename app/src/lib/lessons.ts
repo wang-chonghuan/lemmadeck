@@ -1,8 +1,8 @@
 import { createServerFn } from '@tanstack/react-start'
 import { sql } from '~/lib/db'
 
-// Lesson metadata + content delivery. The 課文 and PDF live in the Azure easy-app
-// Postgres (`sr_lessons`); the app serves them through these server functions —
+// Lesson metadata + content delivery. The 課文 and PDF live in the shared
+// Supabase content database (`sr_lessons`); the app serves them through these server functions —
 // there is no static public/lessons/* path. The DB connection stays server-side.
 // One card's readable content: the 課文 blocks and its exercises. Both are stored
 // as HTML fragments (KaTeX pre-rendered, figures inline) so the page lays them
