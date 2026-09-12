@@ -12,16 +12,26 @@ const katex = require("katex")
 
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
 const escText = (s) => esc(s).replace(/\r?\n/g, "<br>")
+const PROSE_MATH = /[A-Za-z0-9]+(?:\.[0-9]+)*/g
+const escProseText = (text) => {
+  let out = "", last = 0
+  for (const match of text.matchAll(PROSE_MATH)) {
+    out += esc(text.slice(last, match.index))
+    out += `<span class="sr-prose-math">${esc(match[0])}</span>`
+    last = match.index + match[0].length
+  }
+  return (out + esc(text.slice(last))).replace(/\r?\n/g, "<br>")
+}
 // 原书用黑体排定义句，转写时记成 **…**
 const strong = (h) => h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
 const MATH = /\$\$(.+?)\$\$|\$([^$]+?)\$/gs
 // 公式后面紧跟的标点要与公式绑在一起，否则 `$…$;` 的分号会被甩到下一行
 const TRAIL = /^[;,.、，。：:！!？?)）\]]+/
 
-function inline(text) {
+function renderInline(text, renderText) {
   let out = "", last = 0
   for (const m of text.matchAll(MATH)) {
-    out += escText(text.slice(last, m.index))
+    out += renderText(text.slice(last, m.index))
     const tex = m[1] ?? m[2]
     let html
     try {
@@ -34,7 +44,34 @@ function inline(text) {
     last += t.length
     out += `<span class="sr-nb">${html}${esc(t)}</span>`
   }
-  return strong(out + escText(text.slice(last)))
+  return strong(out + renderText(text.slice(last)))
+}
+
+const inline = (text) => renderInline(text, escText)
+const proseInline = (text) => renderInline(text, escProseText)
+
+function proseParagraphs(text) {
+  return String(text ?? "")
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+}
+
+function proseFlow(blocks, sectionBreaks = []) {
+  const breaks = new Set(sectionBreaks)
+  let paragraphIndex = 0
+  return blocks.flatMap((block) => {
+    if (block.kind !== "p") return [block]
+    return proseParagraphs(block.text).map((text) => {
+      const item = {
+        ...block,
+        text,
+        ...(breaks.has(paragraphIndex) ? { sectionBreak: true } : {}),
+      }
+      paragraphIndex += 1
+      return item
+    })
+  })
 }
 
 /** 插图取矢量优先；SVG 直接内联，宿主可用 CSS 换色（fill 是 currentColor）。 */
@@ -50,4 +87,4 @@ function figureSvg(bookDir, id) {
   return null
 }
 
-module.exports = { esc, inline, figureSvg }
+module.exports = { esc, inline, proseInline, proseParagraphs, proseFlow, figureSvg }

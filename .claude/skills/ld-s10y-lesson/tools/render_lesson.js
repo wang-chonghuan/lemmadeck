@@ -14,6 +14,7 @@
 const fs = require("fs");
 const path = require("path");
 const katex = require("katex");
+const { proseFlow } = require("./htmlfrag.js");
 
 const SKILL = path.resolve(__dirname, "..");
 const KATEX_DIST = path.join(SKILL, "node_modules", "katex", "dist");
@@ -43,16 +44,26 @@ function katexCss() {
 
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const escText = (s) => esc(s).replace(/\r?\n/g, "<br>");
+const PROSE_MATH = /[A-Za-z0-9]+(?:\.[0-9]+)*/g;
+const escProseText = (text) => {
+  let out = "", last = 0;
+  for (const match of text.matchAll(PROSE_MATH)) {
+    out += esc(text.slice(last, match.index));
+    out += `<span class="prose-math">${esc(match[0])}</span>`;
+    last = match.index + match[0].length;
+  }
+  return (out + esc(text.slice(last))).replace(/\r?\n/g, "<br>");
+};
 // 原书用黑体排定义句，转写时记成 **…**，这里还原成 <strong>
 const strong = (h) => h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
 const MATH = /\$\$(.+?)\$\$|\$([^$]+?)\$/gs;
 // 公式后面紧跟的标点必须与公式绑在一起，否则 `$…$;` 的分号会被甩到下一行
 const TRAIL = /^[;,.、，。：:！!？?)）\]]+/;
 
-function inline(text) {
+function renderInline(text, renderText) {
   let out = "", last = 0;
   for (const m of text.matchAll(MATH)) {
-    out += escText(text.slice(last, m.index));
+    out += renderText(text.slice(last, m.index));
     const tex = m[1] ?? m[2];
     let html;
     try {
@@ -63,8 +74,11 @@ function inline(text) {
     last += t.length;
     out += `<span class="nb">${html}${esc(t)}</span>`;
   }
-  return strong(out + escText(text.slice(last)));
+  return strong(out + renderText(text.slice(last)));
 }
+
+const inline = (text) => renderInline(text, escText);
+const proseInline = (text) => renderInline(text, escProseText);
 
 function figure(contentRoot, id, label, strictEdition) {
   const svg = path.join(contentRoot, "figures", `${id}.svg`);
@@ -97,7 +111,10 @@ body{margin:0;background:#fff;color:var(--ink);
 h1{font-size:1.6em;margin:0 0 .2em;letter-spacing:.02em}
 .crumb{color:var(--sub);font-size:.82em;margin:0 0 2em;
   font-family:ui-monospace,Menlo,monospace}
-p.para{margin:0 0 .2em;text-indent:2em;line-height:1.95;font-size:1.06em;text-align:justify}
+p.para{margin:0 0 1em;text-indent:0;line-height:1.95;font-size:1.06em}
+p.para .katex,.prose-math{font-size:1.1em}
+.prose-math{font-family:KaTeX_Main,serif}
+p.para.section{border-top:1px solid var(--rule);margin-top:1.5em;padding-top:1.35em}
 .figcap{text-align:center;color:var(--sub);font-size:.85em;margin:.2em 0 1.2em}
 .fig{margin:1.3em 0 .2em;text-align:center}
 .fig svg{max-width:min(100%,26em);height:auto;color:var(--ink)}
@@ -142,10 +159,13 @@ for (const lid of lessonDirs) {
 
   // ---- 课文页
   let body = "";
-  for (const b of L.prose) {
+  const prose = proseFlow(L.prose, L.section_breaks);
+  for (const b of prose) {
     if (b.kind === "fig") body += figure(contentRoot, b.id, b.label, !!editionName);
-    else if (b.kind === "cap") body += `<div class="figcap">${inline(b.text)}</div>`;
-    else body += `<p class="para">${inline(b.text)}</p>`;
+    else if (b.kind === "cap") body += `<div class="figcap">${proseInline(b.text)}</div>`;
+    else {
+      body += `<p class="para${b.sectionBreak ? " section" : ""}">${proseInline(b.text)}</p>`;
+    }
   }
   body += `<a class="jump" href="exercises.html">去做题 · ${X.count} 道 →</a>`;
   fs.writeFileSync(path.join(dir, "text.html"),
@@ -168,7 +188,7 @@ for (const lid of lessonDirs) {
   out += `<a class="jump" href="text.html">← 回课文</a>`;
   fs.writeFileSync(path.join(dir, "exercises.html"),
     page(`${L.printed_title || L.title} · 习题`, crumb, out));
-  done.push({ lesson: lid, exercises: X.count, prose: L.prose.length });
+  done.push({ lesson: lid, exercises: X.count, prose: prose.length });
 }
 
 console.log(JSON.stringify({ ok: true, lessons: done }, null, 2));

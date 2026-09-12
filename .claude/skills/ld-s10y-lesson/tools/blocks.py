@@ -73,7 +73,9 @@ def parse(md: str) -> tuple[dict, list[dict]]:
         elif cur is not None and raw.strip():
             if raw.strip().startswith("!["):      # 图片引用由 fig 块的 box 决定，忽略
                 continue
-            cur["lines"].append(raw.rstrip())
+            # A trailing space is an explicit join separator in the page format:
+            # adjacent printed lines are otherwise concatenated verbatim in cap2.
+            cur["lines"].append(raw)
     return meta, blocks
 
 
@@ -120,7 +122,21 @@ def printed_lines(blocks: list[dict]) -> int:
 
 def text_of(block: dict, join: str = "") -> str:
     """把块体接成一段文字。印刷换行在中文教材里一律是软换行，直接接上。"""
-    return join.join(ln.replace(WRAP, "") for ln in block["lines"]).strip()
+    lines = [ln.replace(WRAP, "") for ln in block["lines"]]
+    if join:
+        return join.join(lines).strip()
+
+    text = ""
+    for line in lines:
+        adjacent_math = text.endswith("$") and line.startswith("$")
+        adjacent_enumerators = (
+            text.endswith(")")
+            and re.match(r"^[A-Za-z\u0400-\u04ff]\)", line) is not None
+        )
+        if adjacent_math or adjacent_enumerators:
+            text += " "
+        text += line
+    return text.strip()
 
 
 def load(path: Path):

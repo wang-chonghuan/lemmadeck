@@ -70,6 +70,12 @@ A lesson is four sections plus a typed exercise set (see `app/src/lib/lessons.ts
 
 Exercise types map to quiet category tags, not colorful badges: 辨认 / 表示 / 操作 / 反推 / 解释 / 辨错. Mastery checks and the closing "最容易错在哪里" question are rendered as a compact list, not a celebratory callout.
 
+Within textbook prose, short paragraphs are flush-left with no first-line indent and use whitespace
+only. Arabic numerals and Latin mathematical glyphs use KaTeX Main at `1.10em` so their visual height
+balances the surrounding Chinese text; this applies equally to plain values and inline formulas. A real
+concept transition may add one full-width `line` rule before the next paragraph; do not draw a rule
+between every paragraph.
+
 ## Icons
 
 - Use the LemmaDeck mark in every brand surface: browser/app icon, landing and login brand areas, catalog header, and app title bars.

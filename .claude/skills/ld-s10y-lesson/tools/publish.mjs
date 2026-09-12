@@ -25,7 +25,8 @@ import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
 const postgres = require('postgres')
-const { inline } = require('./htmlfrag.js')
+const { inline, proseInline, proseFlow } = require('./htmlfrag.js')
+const { preserveExerciseMetadata } = require('./publish_merge.js')
 
 const args = process.argv.slice(2)
 const bookDir = args.find((a) => !a.startsWith('--'))
@@ -93,10 +94,16 @@ for (const lid of fs.readdirSync(lessonsDir).sort()) {
     console.error(`  ✗ ${lid}: 没有卡片 id（assemble 时没给 --toc，或 TOC 里对不上），跳过`)
     continue
   }
-  const prose = L.prose.map((b) =>
+  const prose = proseFlow(L.prose, L.section_breaks).map((b) =>
     b.kind === 'fig'
       ? { kind: 'fig', id: b.id, label: b.label, ...figureAssetStrict(b.id) }
-      : { kind: b.kind, html: inline(b.text) })
+      : b.kind === 'p'
+        ? {
+            kind: 'p',
+            html: proseInline(b.text),
+            ...(b.sectionBreak ? { sectionBreak: true } : {}),
+          }
+        : { kind: b.kind, html: proseInline(b.text) })
   const exercises = X.exercises.map((e) => ({
     number: e.number,
     group: e.group,
@@ -168,17 +175,11 @@ try {
       select exercises from sr_lessons where id = ${r.id}
     `
     const existingDeck = existingRows[0]?.exercises
-    if (existingDeck?.edition === editionName && Array.isArray(existingDeck.exercises)) {
-      const keys = new Map(
-        existingDeck.exercises
-          .filter((exercise) => exercise?.answerKey)
-          .map((exercise) => [String(exercise.number), exercise.answerKey]),
-      )
-      r.exercises.exercises = r.exercises.exercises.map((exercise) => {
-        const answerKey = keys.get(String(exercise.number))
-        return answerKey ? { ...exercise, answerKey } : exercise
-      })
-    }
+    r.exercises.exercises = preserveExerciseMetadata(
+      r.exercises.exercises,
+      existingDeck,
+      editionName,
+    )
     await sql`
       insert into sr_lessons
         (id, subject, stage, lesson_order, title, concept, content, exercises, status)
