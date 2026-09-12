@@ -212,13 +212,21 @@ class EditionTest(unittest.TestCase):
             "下面是数式的例：\n"
             "$a+1,\\ b+2.$\n"
             "其中第一个式子含有 $a$。\n"
+            "\n"
             "当 $a=1$ 时，式的值为 2；\n"
             "当 $a=2$ 时，式的值为 3。\n"
             "定义域记作：\n"
             "$\\{x\\mid x\\ne1\\}$，\n"
+            "\n"
             "读作变量 $x$ 的取值集合。\n"
             "在式中有的运算不能进行（零不能作除数！），所以它没有意义。",
         )
+
+    def test_prose_layout_creates_real_paragraph_groups(self) -> None:
+        source = "甲。乙。丙。丁。戊。"
+        modern = edition.normalize_prose_layout(source)
+        self.assertEqual(modern, "甲。\n乙。\n丙。\n\n丁。\n戊。")
+        self.assertEqual(len(modern.split("\n\n")), 2)
 
     def test_layout_normalization_preserves_prose_signatures(self) -> None:
         source = "例如：$x+1.$式的值是 2。"

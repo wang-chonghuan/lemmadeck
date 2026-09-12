@@ -25,7 +25,7 @@ import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
 const postgres = require('postgres')
-const { inline } = require('./htmlfrag.js')
+const { inline, proseParagraphs } = require('./htmlfrag.js')
 
 const args = process.argv.slice(2)
 const bookDir = args.find((a) => !a.startsWith('--'))
@@ -93,10 +93,15 @@ for (const lid of fs.readdirSync(lessonsDir).sort()) {
     console.error(`  ✗ ${lid}: 没有卡片 id（assemble 时没给 --toc，或 TOC 里对不上），跳过`)
     continue
   }
-  const prose = L.prose.map((b) =>
+  const prose = L.prose.flatMap((b) =>
     b.kind === 'fig'
-      ? { kind: 'fig', id: b.id, label: b.label, ...figureAssetStrict(b.id) }
-      : { kind: b.kind, html: inline(b.text) })
+      ? [{ kind: 'fig', id: b.id, label: b.label, ...figureAssetStrict(b.id) }]
+      : b.kind === 'p'
+        ? proseParagraphs(b.text).map((paragraph) => ({
+            kind: 'p',
+            html: inline(paragraph),
+          }))
+        : [{ kind: b.kind, html: inline(b.text) }])
   const exercises = X.exercises.map((e) => ({
     number: e.number,
     group: e.group,

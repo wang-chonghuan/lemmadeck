@@ -52,6 +52,15 @@ export type CardExercise = {
 }
 export type CardContent = { prose: ProseBlock[]; exercises: CardExercise[] }
 
+export function partInputKind(
+  widget: string | undefined,
+  judge: 'exact' | 'numeric' | 'expression' | undefined,
+): PartInputKind {
+  if (widget === 'number') return 'number'
+  if (widget === 'math' || widget === 'free') return 'math'
+  return judge === 'numeric' ? 'number' : 'math'
+}
+
 export const getCardContent = createServerFn({ method: 'GET' })
   .validator((id: string) => id)
   .handler(async ({ data: id }): Promise<CardContent | null> => {
@@ -86,6 +95,7 @@ export const getCardContent = createServerFn({ method: 'GET' })
       (rows[0].exercises as { exercises?: StoredExercise[] } | null)?.exercises ?? []
     const exercises = stored.map((exercise): CardExercise => {
       const answerKey = exercise.answerKey
+      const interaction = exercise.interaction
       const answerSpec =
         answerKey?.grading === 'auto' || answerKey?.grading === 'ungraded'
           ? {
@@ -101,16 +111,15 @@ export const getCardContent = createServerFn({ method: 'GET' })
                     return {
                       ...(label ? { label } : {}),
                       ...(typeof part.unit === 'string' ? { unit: part.unit } : {}),
-                      // A blank whose answer is a plain number needs a number
-                      // pad, not a formula editor. Everything else keeps the
-                      // math field, which is the only thing that can express it.
-                      input: (part.judge === 'numeric' ? 'number' : 'math') as PartInputKind,
+                      // The interaction spec owns how the learner answers.
+                      // Fall back to the answer judge only for older rows that
+                      // predate interaction generation.
+                      input: partInputKind(interaction?.widget, part.judge),
                     }
                   })
                 : [],
             }
           : undefined
-      const interaction = exercise.interaction
       const domain = interaction?.frame?.domain
       const gridParts = interaction?.parts
       const grid: ExerciseGridSpec | undefined =

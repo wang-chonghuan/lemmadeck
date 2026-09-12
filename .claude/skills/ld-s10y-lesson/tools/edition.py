@@ -248,7 +248,7 @@ def nesting_depths(text: str) -> list[int]:
 
 
 def normalize_prose_layout(text: str) -> str:
-    """Put complete prose sentences and introduced formulas on separate lines."""
+    """Create short paragraphs while keeping complete sentences and formulas legible."""
     if not isinstance(text, str):
         return text
     text = re.sub(r"[\t \u3000]+", " ", text.replace("\r\n", "\n")).strip()
@@ -302,7 +302,31 @@ def normalize_prose_layout(text: str) -> str:
     tail = re.sub(r"\s*\n\s*", " ", text[start:]).strip()
     if tail:
         lines.append(tail)
-    return "\n".join(lines)
+
+    paragraphs = []
+    current = []
+    current_chars = 0
+    for line in lines:
+        bare = line.rstrip("，,；;。.!！?？")
+        standalone_formula = bool(MATH.fullmatch(bare))
+        attaches_to_previous = bool(
+            current
+            and (
+                current[-1].endswith(("：", ":"))
+                or standalone_formula
+            )
+        )
+        if current and not attaches_to_previous and (
+            len(current) >= 3 or current_chars + len(line) > 180
+        ):
+            paragraphs.append(current)
+            current = []
+            current_chars = 0
+        current.append(line)
+        current_chars += len(line)
+    if current:
+        paragraphs.append(current)
+    return "\n\n".join("\n".join(paragraph) for paragraph in paragraphs)
 
 
 def marker_order(markers: list[re.Match[str]]) -> dict[str, int] | None:
