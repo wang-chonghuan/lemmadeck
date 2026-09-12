@@ -7,7 +7,8 @@ The dependency inventory belongs to the lockfile; generated structure belongs to
 Record here only decisions, boundaries, and commands that the repository cannot explain by itself.
 
 > Consolidated on 2026-09-12 from the former architecture and development dimensions. Existing
-> project decisions and boundaries were preserved; no new CI or pull-request policy was introduced.
+> project decisions and boundaries were preserved. Pull-request landing commands were added later
+> that day with explicit human authorization.
 
 ## Contract
 
@@ -80,6 +81,44 @@ Record here only decisions, boundaries, and commands that the repository cannot 
   independent of the app's install, so a content run does not depend on the app being installed.
 
 ## Tools
+
+**Pull-request landing**
+
+Worktree tickets land through GitHub pull requests in `wang-chonghuan/lemmadeck`. Substitute the
+ticket's recorded values for `<ticket-id>`, `<branch>`, and `<pr>`.
+
+Find an existing PR:
+
+```bash
+gh pr list --repo wang-chonghuan/lemmadeck --head <branch> --state all \
+  --json number,title,url,state,headRefOid,baseRefName,mergeStateStatus,statusCheckRollup
+```
+
+Create one when absent:
+
+```bash
+gh pr create --repo wang-chonghuan/lemmadeck --base main --head <branch> \
+  --title "<ticket-id>" --body-file ".intentfold/tickets/<ticket-id>/handoff.md"
+```
+
+Read its current head, state, and checks:
+
+```bash
+gh pr view <pr> --repo wang-chonghuan/lemmadeck \
+  --json number,url,state,headRefOid,mergeStateStatus,statusCheckRollup
+```
+
+This repository currently configures no required GitHub checks, branch protection, rulesets,
+overlap detector, or cap4 takeover gate. If that changes, update these Tools before landing the
+next ticket. Merge with a merge commit, then confirm GitHub reports the merge commit:
+
+```bash
+gh pr merge <pr> --repo wang-chonghuan/lemmadeck --merge
+gh pr view <pr> --repo wang-chonghuan/lemmadeck --json state,mergedAt,mergeCommit
+```
+
+Do not pass `--delete-branch`; IntentFold cap4 deletes the local and remote ticket branches only
+after the ticket backend reaches Done.
 
 **Mechanical defence**
 
