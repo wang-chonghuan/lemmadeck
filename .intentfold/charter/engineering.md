@@ -39,19 +39,22 @@ Record here only decisions, boundaries, and commands that the repository cannot 
   commands run from `app/` or via `npm --prefix app`. `ssot-schemas/db-schemas/` = DB SSOT;
   `resources/` = committed human/curated material and generated content
   (`resources/s10y-lessons/` = Soviet 10 Years extraction + modern editions;
-  `resources/content/` = English and physics authoring sources; `resources/reference/` = human docs
+  `resources/content/` = physics authoring sources plus retained historical English sources;
+  `resources/reference/` = human docs
   incl. `DESIGN.md`); `.claude/skills/` = repository-local S10Y lesson and answer pipelines;
-  `.agents/skills/` = project skills for modern figures, stories, English, and the knowledge galaxy;
+  `.agents/skills/` = project skills for modern figures, stories, the knowledge galaxy, and retained
+  English generation tooling;
   `infra/` = deploy/substrate notes. No top-level `jobs/` — this project has no independently-packaged
   jobs. Root holds only cross-cutting files: the deploy `Dockerfile`, `.intentfold/`, `AGENTS.md`, and
   tooling config.
 - **Routes**: public learner routes are `index.tsx` and `_app/card.$id.tsx` for the textbook
-  catalog and cards, plus `_app/english.$id.tsx` and its recitation child for short-literature
-  English. `login.tsx` remains the account entry.
+  catalog and cards. The legacy English lesson and recitation paths redirect to the public landing
+  page and render no English-learning UI. `login.tsx` remains the account entry.
 - **Domain libs** in `app/src/lib/`: `curriculum.ts` (course structure + lesson ordering/nav),
   `lessons.ts`, `stories.ts`, `quiz.ts` + `answer-normalize.ts` (practice, incl. `input`-mode
   server-side judging), `session*.ts` (auth), `db.ts` (postgres access, `search_path` = the project
-  schema).
+  schema). `english.ts` remains only as preserved server/data capability and is not a learner-facing
+  product module.
 - **DB access is server-only**: every read and write goes through `app/src/lib/db.ts`'s `sql()`. The
   browser never holds the connection string.
 - `app/vite.config.ts` sets `envDir: '..'` so build-time env resolves from the root `.env`.
@@ -64,8 +67,9 @@ Record here only decisions, boundaries, and commands that the repository cannot 
   Modern figures are delegated to `ld-s10y-image`; answers and interaction specifications are added
   by `ld-s10y-answer`; their publishers upsert `sr_lessons`. The app reads the stored prose and
   exercise fragments at `/card/:id`. New math work does not use a concept ledger, neutral card tree,
-  locale overlay, or retired concept-led lesson savers. Biographies use `sr-story`;
-  short-literature English uses `sr-voa1500`.
+  locale overlay, or retired concept-led lesson savers. Biographies use `sr-story`. Historical
+  short-literature English rows and the `sr-voa1500` generator are retained but are not exposed by
+  the application.
 - **The content DB lives on the shared Supabase project, not on the Azure easy-app instance**
   (schema `lemmadeck-schema`), because the Azure instance was intermittently refusing connections.
   This is the decision that matters most to anyone writing content — and since the 2026-08-14 rename
@@ -144,7 +148,8 @@ There is no separate lint or typecheck script today; `vite build` is the type-er
 - Content generation: never hand-write `sr_*` rows. Math starts at
   `.claude/skills/ld-s10y-lesson/SKILL.md`, delegates modern figures to `ld-s10y-image`, delegates
   answers and interaction specifications to `ld-s10y-answer`, and persists only through those
-  skills' publishers. Biographies use `sr-story`; short-literature English uses `sr-voa1500`.
+  skills' publishers. Biographies use `sr-story`; retained short-literature English generation uses
+  `sr-voa1500` but does not publish a learner-facing application surface.
   Each skill's `SKILL.md` owns its exact generation and persistence commands.
 - DB schema: `ssot-schemas/db-schemas/lemmadeck.sql` describes the live schema. It is generated from
   the database, never hand-edited and never applied to it. The inspection command lives in

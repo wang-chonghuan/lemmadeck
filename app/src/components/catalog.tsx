@@ -3,7 +3,6 @@ import { BookOpenCheck, ChevronUp, Eye, EyeOff, LogIn, LogOut } from 'lucide-rea
 import { useEffect, useRef, useState } from 'react'
 
 import { BrandMark } from '~/components/brand-mark'
-import type { EnglishLessonRef } from '~/lib/english'
 import {
   bookLessons,
   getTextbookOutline,
@@ -18,14 +17,12 @@ import { logout, type CurrentUser } from '~/lib/session'
 // navigation — which is what lets an open chapter survive opening a card.
 export function CatalogSidebar({
   lessonIds,
-  englishLessons,
   locale,
   user,
   drawerOpen,
   onNavigate,
 }: {
   lessonIds: string[]
-  englishLessons: EnglishLessonRef[]
   locale: Locale
   user: CurrentUser | null
   drawerOpen: boolean
@@ -90,7 +87,6 @@ export function CatalogSidebar({
             showAll={showAll}
           />
         ))}
-        <EnglishOutline lessons={englishLessons} locale={locale} onNavigate={onNavigate} />
       </div>
 
       <UserMenu user={user} locale={locale} />
@@ -234,54 +230,6 @@ function UserMenu({ user, locale }: { user: CurrentUser | null; locale: Locale }
     </div>
   )
 }
-
-// 短文学英语 (STEMROBIN-82). Its catalog is DB-driven rather than a static outline:
-// the 84 A1A2 passages are generated, so their titles only exist once saved.
-// Nothing is rendered until at least one lesson is in the DB — there is no static
-// list to show placeholders against, unlike math/physics. Lessons are a flat,
-// sequentially-numbered list (1, 2, 3 …), not grouped into units.
-function EnglishOutline({
-  lessons,
-  locale,
-  onNavigate,
-}: {
-  lessons: EnglishLessonRef[]
-  locale: Locale
-  onNavigate: () => void
-}) {
-  if (!lessons.length) return null
-  return (
-    <details className="sr-out-subject" open>
-      <summary>
-        <span className="sr-out-caret" aria-hidden />
-        <span className="sr-out-subject-name">{t(locale, 'cat.english')}</span>
-        <span className="sr-count">{lessons.length}</span>
-      </summary>
-      <details className="sr-out-stage" open>
-        <summary>
-          <span className="sr-out-caret" aria-hidden />
-          <span className="sr-out-stage-name">A1A2</span>
-        </summary>
-        <ul className="sr-out-lessons">
-          {lessons.map((l) => (
-            <li key={l.id}>
-              <Link
-                to="/english/$id"
-                params={{ id: l.id }}
-                className="sr-out-lesson ready"
-                activeProps={{ className: 'sr-out-lesson ready active' }}
-                onClick={onNavigate}
-              >
-                {l.seq}. {l.title}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </details>
-    </details>
-  )
-}
-
 
 // One outline row. The rail follows a single rule: a row with children folds,
 // The destination is always the lesson — one section, one 課文 document.

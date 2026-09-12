@@ -4,7 +4,6 @@ import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { CatalogSidebar } from '~/components/catalog'
 import { LocaleMenu } from '~/components/locale-menu'
 import { listAvailableLessonIds } from '~/lib/lessons'
-import { listEnglishLessons } from '~/lib/english'
 import { getLocale } from '~/lib/locale'
 import { useLayoutStore } from '~/lib/layout-store'
 import { getCurrentUser } from '~/lib/session'
@@ -21,7 +20,6 @@ export const Route = createFileRoute('/_app')({
   component: AppShell,
   loader: async () => ({
     lessonIds: await listAvailableLessonIds(),
-    englishLessons: await listEnglishLessons(),
     locale: await getLocale(),
     user: await getCurrentUser(),
   }),
@@ -32,7 +30,7 @@ export const Route = createFileRoute('/_app')({
 // scrim below 1200px. The catalog is persistent — the detail pane swaps via
 // <Outlet /> for the overview and lesson routes, so the sidebar is always shown.
 function AppShell() {
-  const { lessonIds, englishLessons, locale, user } = Route.useLoaderData()
+  const { lessonIds, locale, user } = Route.useLoaderData()
   const drawerOpen = useLayoutStore((s) => s.drawerOpen)
   const setDrawer = useLayoutStore((s) => s.setDrawer)
   const [isMobile, setIsMobile] = useState(false)
@@ -95,7 +93,6 @@ function AppShell() {
       />
       <CatalogSidebar
         lessonIds={lessonIds}
-        englishLessons={englishLessons}
         locale={locale}
         user={user}
         drawerOpen={drawerOpen}
