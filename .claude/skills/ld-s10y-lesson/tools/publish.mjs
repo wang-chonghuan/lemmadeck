@@ -25,7 +25,7 @@ import { createRequire } from 'node:module'
 
 const require = createRequire(import.meta.url)
 const postgres = require('postgres')
-const { inline, proseFlow } = require('./htmlfrag.js')
+const { inline, proseInline, proseFlow } = require('./htmlfrag.js')
 
 const args = process.argv.slice(2)
 const bookDir = args.find((a) => !a.startsWith('--'))
@@ -99,10 +99,10 @@ for (const lid of fs.readdirSync(lessonsDir).sort()) {
       : b.kind === 'p'
         ? {
             kind: 'p',
-            html: inline(b.text),
+            html: proseInline(b.text),
             ...(b.sectionBreak ? { sectionBreak: true } : {}),
           }
-        : { kind: b.kind, html: inline(b.text) })
+        : { kind: b.kind, html: proseInline(b.text) })
   const exercises = X.exercises.map((e) => ({
     number: e.number,
     group: e.group,

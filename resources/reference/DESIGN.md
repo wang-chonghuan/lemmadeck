@@ -71,10 +71,10 @@ A lesson is four sections plus a typed exercise set (see `app/src/lib/lessons.ts
 Exercise types map to quiet category tags, not colorful badges: 辨认 / 表示 / 操作 / 反推 / 解释 / 辨错. Mastery checks and the closing "最容易错在哪里" question are rendered as a compact list, not a celebratory callout.
 
 Within textbook prose, short paragraphs are flush-left with no first-line indent and use whitespace
-only. Arabic numerals and Latin mathematical glyphs use KaTeX Main at the same size as the surrounding
-body text, so plain values and inline formulas do not visibly switch typeface or scale. A real concept
-transition may add one full-width `line` rule before the next paragraph; do not draw a rule between
-every paragraph.
+only. Arabic numerals and Latin mathematical glyphs use KaTeX Main at `1.10em` so their visual height
+balances the surrounding Chinese text; this applies equally to plain values and inline formulas. A real
+concept transition may add one full-width `line` rule before the next paragraph; do not draw a rule
+between every paragraph.
 
 ## Icons
 
