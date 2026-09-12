@@ -8,7 +8,8 @@ import { sql } from '~/lib/db'
 // as HTML fragments (KaTeX pre-rendered, figures inline) so the page lays them
 // out with the app's own typography instead of hosting a whole document.
 export type ProseBlock =
-  | { kind: 'p' | 'cap'; html: string }
+  | { kind: 'p'; html: string; sectionBreak?: boolean }
+  | { kind: 'cap'; html: string }
   | {
       kind: 'fig'
       id: string

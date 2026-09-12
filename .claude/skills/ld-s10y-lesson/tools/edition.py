@@ -185,6 +185,7 @@ def cmd_prepare(args: argparse.Namespace) -> int:
             "status": "draft",
             "source": lesson_source,
             "prose": modern_prose(raw_lesson),
+            "section_breaks": [],
         }
         exercises_template = {
             **copy.deepcopy(raw_exercises),
@@ -401,6 +402,36 @@ def normalize_lesson_layout(lesson: dict) -> None:
         changes = block.get("changes")
         if isinstance(changes, list) and "layout" not in changes:
             changes.append("layout")
+
+
+def prose_paragraph_count(prose: object) -> int:
+    if not isinstance(prose, list):
+        return 0
+    return sum(
+        len(re.split(r"\n{2,}", block.get("text", "").strip()))
+        for block in prose
+        if isinstance(block, dict)
+        and block.get("kind") == "p"
+        and isinstance(block.get("text"), str)
+        and block["text"].strip()
+    )
+
+
+def validate_section_breaks(section_breaks: object, paragraph_count: int) -> list[str]:
+    if section_breaks is None:
+        return []
+    if (
+        not isinstance(section_breaks, list)
+        or any(isinstance(item, bool) or not isinstance(item, int) for item in section_breaks)
+    ):
+        return ["lesson.section_breaks 必须是整数数组"]
+    if section_breaks != sorted(set(section_breaks)):
+        return ["lesson.section_breaks 必须严格递增且不得重复"]
+    if any(item <= 0 or item >= paragraph_count for item in section_breaks):
+        return [
+            "lesson.section_breaks 只能指向正文段落之间的 0 起始位置"
+        ]
+    return []
 
 
 def normalize_exercise_layout(exercises: dict) -> None:
@@ -810,6 +841,10 @@ def validate_lesson(
     if not isinstance(modern_prose_items, list) or len(modern_prose_items) != len(raw_prose):
         errors.append("lesson.prose 数量与原书不一致")
         modern_prose_items = []
+    errors += validate_section_breaks(
+        lesson.get("section_breaks"),
+        prose_paragraph_count(modern_prose_items),
+    )
     for index, (source_block, modern_block) in enumerate(zip(raw_prose, modern_prose_items)):
         label = f"lesson.prose[{index}]"
         if modern_block.get("source_text") != source_block.get("text", ""):
@@ -967,6 +1002,7 @@ def cmd_finalize(args: argparse.Namespace) -> int:
             "sourceExercisesSha256": exercises["source"]["sha256"],
             "proseBlocks": len(lesson["prose"]),
             "changedProseBlocks": changed_prose,
+            "sectionBreaks": len(lesson.get("section_breaks") or []),
             "exercises": len(exercises["exercises"]),
             "changedExercises": changed_exercises,
             "figures": len(figures["figures"]),

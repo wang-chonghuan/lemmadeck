@@ -65,7 +65,11 @@ function Prose({ blocks }: { blocks: ProseBlock[] }) {
         ) : b.kind === 'cap' ? (
           <p key={i} className="sr-read-cap" dangerouslySetInnerHTML={{ __html: b.html }} />
         ) : (
-          <p key={i} className="sr-read-p" dangerouslySetInnerHTML={{ __html: b.html }} />
+          <p
+            key={i}
+            className={`sr-read-p${b.sectionBreak ? ' sr-read-section' : ''}`}
+            dangerouslySetInnerHTML={{ __html: b.html }}
+          />
         ),
       )}
     </div>

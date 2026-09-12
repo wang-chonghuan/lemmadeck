@@ -228,6 +228,14 @@ class EditionTest(unittest.TestCase):
         self.assertEqual(modern, "甲。\n乙。\n丙。\n\n丁。\n戊。")
         self.assertEqual(len(modern.split("\n\n")), 2)
 
+    def test_section_breaks_only_point_between_paragraphs(self) -> None:
+        self.assertEqual(edition.validate_section_breaks([2, 4], 5), [])
+        self.assertTrue(edition.validate_section_breaks([0], 5))
+        self.assertTrue(edition.validate_section_breaks([5], 5))
+        self.assertTrue(edition.validate_section_breaks([3, 2], 5))
+        self.assertTrue(edition.validate_section_breaks([2, 2], 5))
+        self.assertTrue(edition.validate_section_breaks(["2"], 5))
+
     def test_layout_normalization_preserves_prose_signatures(self) -> None:
         source = "例如：$x+1.$式的值是 2。"
         modern = edition.normalize_prose_layout(source)

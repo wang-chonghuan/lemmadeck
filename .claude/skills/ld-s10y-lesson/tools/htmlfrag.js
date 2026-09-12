@@ -44,6 +44,23 @@ function proseParagraphs(text) {
     .filter(Boolean)
 }
 
+function proseFlow(blocks, sectionBreaks = []) {
+  const breaks = new Set(sectionBreaks)
+  let paragraphIndex = 0
+  return blocks.flatMap((block) => {
+    if (block.kind !== "p") return [block]
+    return proseParagraphs(block.text).map((text) => {
+      const item = {
+        ...block,
+        text,
+        ...(breaks.has(paragraphIndex) ? { sectionBreak: true } : {}),
+      }
+      paragraphIndex += 1
+      return item
+    })
+  })
+}
+
 /** 插图取矢量优先；SVG 直接内联，宿主可用 CSS 换色（fill 是 currentColor）。 */
 function figureSvg(bookDir, id) {
   const svg = path.join(bookDir, "figures", `${id}.svg`)
@@ -57,4 +74,4 @@ function figureSvg(bookDir, id) {
   return null
 }
 
-module.exports = { esc, inline, proseParagraphs, figureSvg }
+module.exports = { esc, inline, proseParagraphs, proseFlow, figureSvg }

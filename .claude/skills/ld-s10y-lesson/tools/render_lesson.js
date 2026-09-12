@@ -14,6 +14,7 @@
 const fs = require("fs");
 const path = require("path");
 const katex = require("katex");
+const { proseFlow } = require("./htmlfrag.js");
 
 const SKILL = path.resolve(__dirname, "..");
 const KATEX_DIST = path.join(SKILL, "node_modules", "katex", "dist");
@@ -66,13 +67,6 @@ function inline(text) {
   return strong(out + escText(text.slice(last)));
 }
 
-function proseParagraphs(text) {
-  return String(text ?? "")
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean);
-}
-
 function figure(contentRoot, id, label, strictEdition) {
   const svg = path.join(contentRoot, "figures", `${id}.svg`);
   const png = path.join(contentRoot, "figures", `${id}.png`);
@@ -105,6 +99,7 @@ h1{font-size:1.6em;margin:0 0 .2em;letter-spacing:.02em}
 .crumb{color:var(--sub);font-size:.82em;margin:0 0 2em;
   font-family:ui-monospace,Menlo,monospace}
 p.para{margin:0 0 1em;text-indent:2em;line-height:1.95;font-size:1.06em}
+p.para.section{border-top:1px solid var(--rule);margin-top:1.5em;padding-top:1.35em}
 .figcap{text-align:center;color:var(--sub);font-size:.85em;margin:.2em 0 1.2em}
 .fig{margin:1.3em 0 .2em;text-align:center}
 .fig svg{max-width:min(100%,26em);height:auto;color:var(--ink)}
@@ -149,13 +144,12 @@ for (const lid of lessonDirs) {
 
   // ---- 课文页
   let body = "";
-  for (const b of L.prose) {
+  const prose = proseFlow(L.prose, L.section_breaks);
+  for (const b of prose) {
     if (b.kind === "fig") body += figure(contentRoot, b.id, b.label, !!editionName);
     else if (b.kind === "cap") body += `<div class="figcap">${inline(b.text)}</div>`;
     else {
-      for (const paragraph of proseParagraphs(b.text)) {
-        body += `<p class="para">${inline(paragraph)}</p>`;
-      }
+      body += `<p class="para${b.sectionBreak ? " section" : ""}">${inline(b.text)}</p>`;
     }
   }
   body += `<a class="jump" href="exercises.html">去做题 · ${X.count} 道 →</a>`;
@@ -179,12 +173,7 @@ for (const lid of lessonDirs) {
   out += `<a class="jump" href="text.html">← 回课文</a>`;
   fs.writeFileSync(path.join(dir, "exercises.html"),
     page(`${L.printed_title || L.title} · 习题`, crumb, out));
-  const proseCount = L.prose.reduce(
-    (count, block) =>
-      count + (block.kind === "p" ? proseParagraphs(block.text).length : 1),
-    0,
-  );
-  done.push({ lesson: lid, exercises: X.count, prose: proseCount });
+  done.push({ lesson: lid, exercises: X.count, prose: prose.length });
 }
 
 console.log(JSON.stringify({ ok: true, lessons: done }, null, 2));

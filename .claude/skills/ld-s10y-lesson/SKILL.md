@@ -63,6 +63,9 @@ cd app && npm run dev
   组成可独立显示的短段落；完整的数字、拉丁字母或西里尔字母分题序列必须统一成自然顺序，
   且题干前缀和每个分题各自独占一行。`adapt-finalize` 会重写已有 edition，不允许连续
   大段正文、错序或横向分题通过
+- edition lesson 可用 `section_breaks` 标记真正的概念切换：值是扁平正文段落中“下一段”
+  的 0 起始位置，例如 `[2, 6]`。它只用于定义、例题类型或变量范围等明显换挡处，普通短段落
+  只留段间距，禁止每段都画横线；`adapt-finalize` 会拒绝首尾、重复、乱序或越界位置
 - `render` 不是发布门禁，但必须用于离线视觉检查；它读取指定 edition，不得回退原书
 - 边界页常会带出下一节开头；它必须完整转写以通过页级对账，但**不得发布未完成的下一节**。
   用可重复的 `--lesson <cardId>` 只发布本次已完成的单元
@@ -275,6 +278,8 @@ p2c.py adapt-finalize --book 5m --edition modern-us-neutral \
    **题干前缀和每个小问各自独占一行**，并移除原书多栏对齐所用的全角空格。
    `adapt-finalize` 会确定性执行这些排版规范并重写已有 edition，禁止手改原始
    `pages/` 或原始 lesson JSON。
+   需要横线表达概念切换时，在 edition `lesson.json` 的 `section_breaks` 中记录下一段的
+   扁平段落索引；这属于现代版排版事实，不得写回原始抽取层。
 5. 每张产品图委托项目技能 `ld-s10y-image`，并配
    `ld-s10y-image/figure-spec@1`：
    - 数轴、几何、网格、刻度、坐标、变换、图表和数学标签用 JSXGraph 确定性生成
