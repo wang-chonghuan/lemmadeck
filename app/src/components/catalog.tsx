@@ -1,5 +1,5 @@
 import { Link, useParams, useRouter } from '@tanstack/react-router'
-import { BookOpenCheck, ChevronUp, Eye, EyeOff, LogIn, LogOut } from 'lucide-react'
+import { BookOpenCheck, ChevronUp, LogIn, LogOut } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import { BrandMark } from '~/components/brand-mark'
@@ -12,7 +12,7 @@ import {
 import { t, type Locale } from '~/lib/i18n'
 import { logout, type CurrentUser } from '~/lib/session'
 
-// The persistent left catalog: the curriculum outline (maths, physics, English),
+// The persistent left catalog: the complete mathematics and physics curriculum,
 // collapsible at every level. Lives in the _app layout so it stays mounted across
 // navigation — which is what lets an open chapter survive opening a card.
 export function CatalogSidebar({
@@ -33,7 +33,6 @@ export function CatalogSidebar({
   // params: this component is mounted for every route under _app, not just /card.
   const openCard = useParams({ strict: false }).id
   const { railRef, gripProps } = useRailWidth()
-  const [showAll, setShowAll] = useState(false)
   return (
     <aside className={`sr-catalog${drawerOpen ? ' open' : ''}`} ref={railRef}>
       <div {...gripProps} />
@@ -63,19 +62,7 @@ export function CatalogSidebar({
       </div>
 
       <div className="sr-cat-scroll">
-        <div className="sr-cat-group-row">
-          <div className="sr-cat-group">{t(locale, 'cat.group.curriculum')}</div>
-          <button
-            type="button"
-            className="sr-cat-visibility"
-            aria-pressed={showAll}
-            title={t(locale, showAll ? 'cat.hideUnavailable' : 'cat.showAll')}
-            onClick={() => setShowAll((visible) => !visible)}
-          >
-            {showAll ? <EyeOff size={14} aria-hidden /> : <Eye size={14} aria-hidden />}
-            <span>{t(locale, showAll ? 'cat.hideUnavailable' : 'cat.showAll')}</span>
-          </button>
-        </div>
+        <div className="sr-cat-group">{t(locale, 'cat.group.curriculum')}</div>
         {outline.map((d) => (
           <DisciplineOutline
             key={d.discipline}
@@ -84,7 +71,6 @@ export function CatalogSidebar({
             defaultOpen={d.discipline === 'math'}
             openCard={openCard}
             onNavigate={onNavigate}
-            showAll={showAll}
           />
         ))}
       </div>
@@ -243,23 +229,19 @@ function UserMenu({ user, locale }: { user: CurrentUser | null; locale: Locale }
 //
 // Rows stay expandable-but-inert until the section has content: an unread row
 // that navigates to an empty page is worse than one that plainly cannot be
-// clicked. In the default filtered view, these unavailable rows are omitted.
+// clicked. It remains visible so the catalog always represents the full course.
 function LessonRow({
   lesson,
   title,
   openCard,
   onNavigate,
-  showAll,
 }: {
   lesson: OutlineLesson
   title: string
   /** The lesson being read, so its section is unfolded on arrival. */
   openCard: string | undefined
   onNavigate: () => void
-  showAll: boolean
 }) {
-  if (!showAll && !lesson.ready) return null
-
   if (lesson.topics.length === 0) {
     if (!lesson.ready) {
       return (
@@ -312,7 +294,7 @@ function LessonRow({
           )}
         </summary>
         <ol className="sr-out-topics">
-          {lesson.topics.filter((tp) => showAll || tp.ready).map((tp) => (
+          {lesson.topics.map((tp) => (
             <li key={tp.id}>
               {tp.ready ? (
                 <Link
@@ -352,14 +334,12 @@ function DisciplineOutline({
   defaultOpen,
   openCard,
   onNavigate,
-  showAll,
 }: {
   discipline: OutlineDiscipline
   locale: Locale
   defaultOpen: boolean
   openCard: string | undefined
   onNavigate: () => void
-  showAll: boolean
 }) {
   // Counted in CARDS, not sections — a card is what carries a page, and the
   // overview's stats use the same unit. Counting sections made "1/372" mean four
@@ -369,10 +349,6 @@ function DisciplineOutline({
     l.topics.length ? l.topics : [{ ready: l.ready }],
   )
   const ready = cards.filter((c) => c.ready).length
-  const visibleBooks = discipline.books.filter(
-    (book) => showAll || bookLessons(book).some((lesson) => lesson.ready),
-  )
-  if (!visibleBooks.length) return null
 
   return (
     <details className="sr-out-subject" open={defaultOpen}>
@@ -380,26 +356,24 @@ function DisciplineOutline({
         <span className="sr-out-caret" aria-hidden />
         <span className="sr-out-subject-name">{discipline.label}</span>
         <span className="sr-count">
-          {showAll && ready > 0 ? `${ready}/${cards.length}` : showAll ? cards.length : ready}
+          {ready > 0 ? `${ready}/${cards.length}` : cards.length}
         </span>
       </summary>
-      {visibleBooks.map((book) => (
-        <details key={book.book} className="sr-out-book" open={visibleBooks.length === 1}>
+      {discipline.books.map((book) => (
+        <details key={book.book} className="sr-out-book" open={discipline.books.length === 1}>
           <summary>
             <span className="sr-out-caret" aria-hidden />
             <span className="sr-out-stage-name">{book.title}</span>
           </summary>
           {book.contents.map((node) => {
             if (node.kind === 'chapter') {
-              const lessons = showAll ? node.lessons : node.lessons.filter((lesson) => lesson.ready)
-              if (!lessons.length) return null
               return (
                 <details
                   key={node.id}
                   className="sr-out-stage"
                   // Open when it holds what is being read, so arriving by link or
                   // reload does not leave the rail folded shut around you.
-                  open={lessons.some(
+                  open={node.lessons.some(
                     (l) =>
                       l.ready ||
                       l.id === openCard ||
@@ -411,21 +385,19 @@ function DisciplineOutline({
                     <span className="sr-out-stage-name">{node.label}</span>
                   </summary>
                   <ul className="sr-out-lessons">
-                    {lessons.map((l) => (
+                    {node.lessons.map((l) => (
                       <LessonRow
                         key={l.id}
                         lesson={l}
                         title={rowTitle(l)}
                         openCard={openCard}
                         onNavigate={onNavigate}
-                        showAll={showAll}
                       />
                     ))}
                   </ul>
                 </details>
               )
             }
-            if (!showAll && !node.lesson.ready) return null
             return (
               <ul key={node.lesson.id} className="sr-out-lessons sr-out-toplevel">
                 <LessonRow
@@ -433,7 +405,6 @@ function DisciplineOutline({
                   title={rowTitle(node.lesson)}
                   openCard={openCard}
                   onNavigate={onNavigate}
-                  showAll={showAll}
                 />
               </ul>
             )
