@@ -2,6 +2,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   ChevronLeft,
   ChevronRight,
+  Download,
   Menu,
   MessageCircleQuestion,
   Star,
@@ -83,11 +84,13 @@ function Exercises({
   locale,
   cardId,
   targetExercise,
+  interactive = true,
 }: {
   items: CardExercise[]
   locale: Locale
   cardId: string
   targetExercise?: number
+  interactive?: boolean
 }) {
   let group: string | null | undefined
   return (
@@ -98,8 +101,10 @@ function Exercises({
           <section key={e.number} className="sr-ex-wrap">
             {head !== null && <h2 className="sr-ex-group">{head || t(locale, 'card.practice')}</h2>}
             <article
-              className={`sr-ex${Number(e.number) === targetExercise ? ' sr-ex-target' : ''}`}
-              id={`ex-${e.number}`}
+              className={`sr-ex${
+                interactive && Number(e.number) === targetExercise ? ' sr-ex-target' : ''
+              }`}
+              id={interactive ? `ex-${e.number}` : undefined}
             >
               <div className="sr-ex-n sr-num">{e.number}</div>
               <div className="sr-ex-body">
@@ -117,14 +122,16 @@ function Exercises({
                     {f.image ? <img src={f.image} alt={f.label ?? ''} /> : null}
                   </figure>
                 ))}
-                <MathAnswerField
-                  lessonId={cardId}
-                  exercise={e.number}
-                  storageKey={`sr_math_answer:${cardId}:${e.number}`}
-                  locale={locale}
-                  answerSpec={e.answerSpec}
-                  grid={e.grid}
-                />
+                {interactive && (
+                  <MathAnswerField
+                    lessonId={cardId}
+                    exercise={e.number}
+                    storageKey={`sr_math_answer:${cardId}:${e.number}`}
+                    locale={locale}
+                    answerSpec={e.answerSpec}
+                    grid={e.grid}
+                  />
+                )}
               </div>
             </article>
           </section>
@@ -177,7 +184,7 @@ function CardPage() {
     return () => timers.forEach((timer) => window.clearTimeout(timer))
   }, [cardId, search.exercise, tab])
 
-  const top = (title: string) => (
+  const top = (title: string, printable = false) => (
     <div className="sr-d-top">
       <button
         className="sr-navtoggle"
@@ -189,6 +196,17 @@ function CardPage() {
       </button>
       <BrandMark className="sr-title-logo" size={22} decorative />
       <span className="sr-d-title">{title}</span>
+      {printable && (
+        <button
+          type="button"
+          className="sr-icontool sr-d-download"
+          onClick={() => window.print()}
+          aria-label={t(locale, 'lesson.pdf')}
+          title={t(locale, 'lesson.pdf')}
+        >
+          <Download size={17} aria-hidden />
+        </button>
+      )}
     </div>
   )
 
@@ -208,7 +226,7 @@ function CardPage() {
 
   return (
     <main className="sr-detail">
-      {top(card.trail[card.trail.length - 1])}
+      {top(card.trail[card.trail.length - 1], prose.length > 0 || exercises.length > 0)}
       <div className="sr-d-scroll" data-scroll-restoration-id="app-detail">
         <article className="sr-deck">
           <nav
@@ -309,6 +327,34 @@ function CardPage() {
           </footer>
         </article>
       </div>
+      <article
+        className="sr-print-lesson"
+        aria-hidden="true"
+        data-testid="lesson-print"
+      >
+        <p className="sr-print-trail">{card.trail.join(' / ')}</p>
+        <h1 className="sr-print-title">
+          {card.number !== null && <span className="sr-num">{card.number} </span>}
+          {card.title}
+        </h1>
+        {prose.length > 0 && (
+          <section className="sr-print-section" data-print-section="read">
+            <h2 className="sr-print-section-title">{t(locale, 'card.read')}</h2>
+            <Prose blocks={prose} />
+          </section>
+        )}
+        {exercises.length > 0 && (
+          <section className="sr-print-section" data-print-section="exercises">
+            <h2 className="sr-print-section-title">{t(locale, 'card.exercises')}</h2>
+            <Exercises
+              items={exercises}
+              locale={locale}
+              cardId={card.id}
+              interactive={false}
+            />
+          </section>
+        )}
+      </article>
     </main>
   )
 }

@@ -60,6 +60,7 @@ Tokens are implemented as `--sr-*` CSS variables in `app/src/styles/app.css` —
 - **Buttons**: primary is solid `blue`, hover `blue_deep`; ghost is transparent with a `line` border and `panel` hover. Compact height (~9px vertical padding).
 - **Eyebrow**: uppercase, letter-spaced, `ink_dim` label above titles; `.accent` variant in `blue_deep`.
 - **Empty state**: centered icon tile (`blue_tint`), short display heading, one dim sentence. Used when a subject has no lessons yet.
+- **Lesson PDF**: use the compact download icon in the lesson header to open the browser print/save flow. The print document contains the current lesson title, full prose, then all exercises; it omits the app shell, tabs, navigation, answer controls, and learner state. Fit figures and tables to an A4 page without replacing the on-screen lesson renderer.
 
 ## Lesson Rendering
 
