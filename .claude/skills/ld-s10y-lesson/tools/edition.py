@@ -932,7 +932,25 @@ def validate_lesson(
     return lesson, exercises, figures, errors
 
 
-def update_book_index(edition: Path, profile_path: Path, lesson_rows: list[dict]) -> None:
+def source_lesson_order(book: Path) -> dict[str, int]:
+    source_index = load(book / "book.json")
+    order = {}
+    for position, item in enumerate(source_index.get("lessons", [])):
+        lesson_id = item.get("card_id") or item.get("id")
+        if not lesson_id:
+            raise SystemExit("ERROR: 原始 book.json 含无 id 的课程条目")
+        if lesson_id in order:
+            raise SystemExit(f"ERROR: 原始 book.json 含重复课程 id: {lesson_id}")
+        order[lesson_id] = position
+    return order
+
+
+def update_book_index(
+    book: Path,
+    edition: Path,
+    profile_path: Path,
+    lesson_rows: list[dict],
+) -> None:
     path = edition / "book.json"
     existing = load(path) if path.exists() else {
         "schema": BOOK_SCHEMA,
@@ -953,8 +971,21 @@ def update_book_index(edition: Path, profile_path: Path, lesson_rows: list[dict]
     by_id = {item["id"]: item for item in existing.get("lessons", [])}
     for row in lesson_rows:
         by_id[row["id"]] = row
+    source_order = source_lesson_order(book)
+
+    def sort_key(item: dict) -> tuple[int, int, str]:
+        lesson_id = item.get("id", "")
+        if lesson_id in source_order:
+            return (0, source_order[lesson_id], lesson_id)
+        number = item.get("number")
+        return (
+            1,
+            int(number) if str(number).isdigit() else sys.maxsize,
+            lesson_id,
+        )
+
     existing["status"] = "ready"
-    existing["lessons"] = sorted(by_id.values(), key=lambda item: int(item["number"]))
+    existing["lessons"] = sorted(by_id.values(), key=sort_key)
     dump(path, existing)
 
 
@@ -1026,7 +1057,7 @@ def cmd_finalize(args: argparse.Namespace) -> int:
             f"新图 {len(figures['figures'])}"
         )
     if not failed:
-        update_book_index(edition, profile_path, index_rows)
+        update_book_index(book, edition, profile_path, index_rows)
     return 2 if failed else 0
 
 

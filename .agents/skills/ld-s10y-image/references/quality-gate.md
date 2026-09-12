@@ -10,6 +10,9 @@ still be misled about the mathematical relationship?
 - every required mathematical relationship has an assertion
 - every centrally symmetric object has complete opposite-point pairs whose
   midpoint is the declared center
+- preserve shared frames: source elements that use one axis, grid, number line,
+  or coordinate system remain in one deterministic frame even when they are
+  labelled as separate subparts
 - assertions pass within declared tolerance
 - visible labels use English
 - output hash matches render metadata

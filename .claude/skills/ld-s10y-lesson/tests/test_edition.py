@@ -400,6 +400,13 @@ class EditionTest(unittest.TestCase):
             }
             dump(raw_dir / "lesson.json", raw_lesson)
             dump(raw_dir / "exercises.json", raw_exercises)
+            dump(book / "book.json", {
+                "lessons": [{
+                    "id": lesson_id,
+                    "card_id": lesson_id,
+                    "number": "1",
+                }],
+            })
             (book / "figures").mkdir(parents=True)
             Image.new("RGB", (120, 80), "white").save(
                 book / "figures" / "fig-01.png"
@@ -458,6 +465,43 @@ class EditionTest(unittest.TestCase):
             self.assertEqual(
                 edition.load(target / "adaptation.audit.json")["status"],
                 "pass",
+            )
+
+    def test_book_index_uses_source_order_for_unnumbered_exercises(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            book = root / "6a"
+            edition_dir = book / "editions" / "modern-us-neutral"
+            profile = root / "profile.json"
+            dump(profile, {"id": "modern-us-neutral"})
+            dump(book / "book.json", {
+                "lessons": [
+                    {"id": "alg6-c1-s1-n1", "card_id": "alg6-c1-s1-n1", "number": "1"},
+                    {"id": "alg6-c1-ex", "card_id": "alg6-c1-ex", "number": None},
+                    {"id": "alg6-c2-s1-n2", "card_id": "alg6-c2-s1-n2", "number": "2"},
+                ],
+            })
+            dump(edition_dir / "book.json", {
+                "schema": edition.BOOK_SCHEMA,
+                "edition": "modern-us-neutral",
+                "status": "draft",
+                "profile": {},
+                "lessons": [
+                    {"id": "alg6-c2-s1-n2", "number": "2"},
+                    {"id": "alg6-c1-s1-n1", "number": "1"},
+                ],
+            })
+
+            edition.update_book_index(
+                book,
+                edition_dir,
+                profile,
+                [{"id": "alg6-c1-ex", "number": None}],
+            )
+
+            self.assertEqual(
+                [item["id"] for item in edition.load(edition_dir / "book.json")["lessons"]],
+                ["alg6-c1-s1-n1", "alg6-c1-ex", "alg6-c2-s1-n2"],
             )
 
 

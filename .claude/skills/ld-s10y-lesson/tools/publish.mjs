@@ -1,19 +1,18 @@
 #!/usr/bin/env node
 /**
- * cap5：把装订好的小节写进内容库，让它在产品里变成可点的一课。
+ * cap6：把装订好的卡片写进内容库，让它在产品里变成可点的一课。
  *
  * app 的设计已经替我们决定了落点（见 app/src/lib/deck-stats.ts）：
- * **一张卡片的内容写入时，它在 sr_lessons 的行就用卡片自己的 id**，所以这里不建新表，
- * 一个小节 = 一行，id 就是 cap2 从 TOC 认领来的卡片 id（math5-c1-s1-n1）。
+ * **一张卡片的内容写入时，它在 sr_lessons 的行就用卡片自己的 id**，所以这里不建新表。
+ * 编号单元和无编号补充习题都是一张卡片 = 一行，id 来自 cap2 的 TOC 认领。
  *
  *   content   ← 课文块，每块一段**可直接嵌入的 HTML 片段**（KaTeX 已渲染，插图内联）
  *   exercises ← 每道题一条：题号、所属栏目、题干片段、自己的图
  *   html      ← 留空。整份自包含文档只适合单独打开；塞进产品会变成"文档中的文档"，
  *               字体版式与宿主两套，高度还得靠 JS 猜。产品侧用上面两列原生渲染。
  *
- * 连接串取自仓库根的 .env，`LEMMADECK_DATABASE_URL` 优先——内容库已从 Azure 迁到
- * Supabase，schema 是 lemmadeck-schema。**不要用 psql**：这个串的密码里带 `@`，
- * psql 会把它当主机名分隔符，解析失败；node 的 postgres 客户端能正确处理。
+ * 连接串只取仓库根 .env 的 `LEMMADECK_DATABASE_URL`。内容库在 Supabase，
+ * schema 是 lemmadeck-schema；旧 Azure 连接串不得作为写入回退。
  *
  * 生产只接受通过 cap4 审计的 edition，不允许回退到原书 JSON。
  *
@@ -26,6 +25,7 @@ import { createRequire } from 'node:module'
 const require = createRequire(import.meta.url)
 const postgres = require('postgres')
 const { inline, proseInline, proseFlow } = require('./htmlfrag.js')
+const { lessonOrderMap } = require('./lesson_order.js')
 const { preserveExerciseMetadata } = require('./publish_merge.js')
 
 const args = process.argv.slice(2)
@@ -44,11 +44,10 @@ if (!bookDir || !editionName || !requestedLessons.size) {
 
 function dbUrl() {
   const env = fs.readFileSync(envPath, 'utf8')
-  for (const key of ['LEMMADECK_DATABASE_URL', 'EASYAPP_DATABASE_URL', 'DATABASE_URL']) {
-    const m = env.match(new RegExp(`^${key}=(.*)$`, 'm'))
-    if (m?.[1]?.trim()) return { key, url: m[1].trim() }
-  }
-  throw new Error(`${envPath} 里没有任何数据库连接串`)
+  const key = 'LEMMADECK_DATABASE_URL'
+  const match = env.match(new RegExp(`^${key}=(.*)$`, 'm'))
+  if (match?.[1]?.trim()) return { key, url: match[1].trim() }
+  throw new Error(`${envPath} 里没有 ${key}`)
 }
 
 const book = path.resolve(bookDir)
@@ -57,6 +56,13 @@ const lessonsDir = path.join(edition, 'lessons')
 if (!fs.existsSync(lessonsDir)) {
   throw new Error(`edition 不存在或没有 lessons: ${lessonsDir}`)
 }
+const sourceBookIndexPath = path.join(book, 'book.json')
+if (!fs.existsSync(sourceBookIndexPath)) {
+  throw new Error(`缺少原始课程索引: ${sourceBookIndexPath}`)
+}
+const lessonOrders = lessonOrderMap(
+  JSON.parse(fs.readFileSync(sourceBookIndexPath, 'utf8')),
+)
 
 function figureAssetStrict(id) {
   const pngPath = path.join(edition, 'figures', `${id}.png`)
@@ -115,15 +121,18 @@ for (const lid of fs.readdirSync(lessonsDir).sort()) {
       ...figureAssetStrict(f.id),
     })),
   }))
-  // stage/lesson_order 是 (subject, stage, lesson_order) 唯一约束的一半：年级 +
-  // 本册内连续的印刷小节号。同年级同学科的两册（代数六年级 / 几何六-八年级）会撞，
-  // 撞到时这里会报出来，不静默覆盖。
+  // lesson_order 使用原始 book.json 的卡片阅读顺序。无编号补充习题的 number 为 null，
+  // 不能转成 0；否则同册第二个补充习题会撞唯一约束。
   const grade = Number(/^[a-z]*(\d+)/.exec(L.card_id.replace(/^math|^physics/, ''))?.[1] ?? 0)
+  const lessonOrder = lessonOrders.get(L.card_id)
+  if (!lessonOrder) {
+    throw new Error(`${lid}: 原始 book.json 没有该卡片，不能确定 lesson_order`)
+  }
   rows.push({
     id: L.card_id,
     subject: 'math',
     stage: grade || 0,
-    lesson_order: Number(L.number),
+    lesson_order: lessonOrder,
     title: L.printed_title || L.title,
     concept: [L.chapter, L.section].filter(Boolean).join(' · '),
     content: {
@@ -148,7 +157,7 @@ for (const lid of fs.readdirSync(lessonsDir).sort()) {
 if (requestedLessons.size) {
   const found = new Set(rows.map((r) => r.id))
   const missing = [...requestedLessons].filter((id) => !found.has(id))
-  if (missing.length) throw new Error(`指定的小节没有可发布产物: ${missing.join(', ')}`)
+  if (missing.length) throw new Error(`指定的卡片没有可发布产物: ${missing.join(', ')}`)
 }
 
 console.log(`[publish] ${book} edition=${editionName} → ${rows.length} 行`)
