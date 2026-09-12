@@ -98,7 +98,9 @@ body{margin:0;background:#fff;color:var(--ink);
 h1{font-size:1.6em;margin:0 0 .2em;letter-spacing:.02em}
 .crumb{color:var(--sub);font-size:.82em;margin:0 0 2em;
   font-family:ui-monospace,Menlo,monospace}
-p.para{margin:0 0 1em;text-indent:0;line-height:1.95;font-size:1.06em}
+p.para{margin:0 0 1em;text-indent:0;line-height:1.95;font-size:1.06em;
+  font-family:KaTeX_Main,"Songti SC","Source Han Serif SC","Noto Serif CJK SC",SimSun,serif}
+p.para .katex{font-size:1em}
 p.para.section{border-top:1px solid var(--rule);margin-top:1.5em;padding-top:1.35em}
 .figcap{text-align:center;color:var(--sub);font-size:.85em;margin:.2em 0 1.2em}
 .fig{margin:1.3em 0 .2em;text-align:center}
