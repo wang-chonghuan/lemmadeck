@@ -7,27 +7,26 @@ Section shape is fixed by `.intentfold/readme.md`.
 > `DRAFT — AWAITING HUMAN CONFIRMATION` banner while its body marked two pillars as human-confirmed
 > (2026-07-14, 2026-07-20). The confirmed parts are stated below as fact; the parts the source left
 > open are marked `TODO(human)` rather than invented.
+>
+> Revised 2026-09-12 by explicit human direction: English learning is no longer part of this
+> application.
 
 ## Contract
 
 **What this product is**
 
-一个面向**一名 8 岁、理解力强的孩子**的自学课程产品(web 应用),现有两条支柱。
+一个面向**一名 8 岁、理解力强的孩子**的初中数学/物理自学课程产品(web 应用)。
 
-第一支柱是**初中数学/物理**:内容按初中标准(2022 版义务教育课标),解释按儿童认知,训练按严肃教材
+内容按初中标准(2022 版义务教育课标),解释按儿童认知,训练按严肃教材
 ——不阉割概念,只重排入口与坡度。三层材料:教师版知识骨架、学生版讲义(课文页)、练习题系统
 (识别/表示/基础操作/反向推理/易错辨析五类题)。
 
 课文页采用**卡片式精读**:课文不变、按语义打散成带编号的卡片,一次读一张,读完当场以轻量"读没读"题
 (read-check)卡关,防止跳读/假读;走完全部卡片才算读完课文,之后进入练习题系统。
 
-第二支柱是**短文学英语**(人确认 2026-07-20):以约 60 篇适合 8–12 岁的短文/对话,通过
-"读懂 → 提示递减 → 全文默写 → 周期复习"让孩子有机记住 VOA1500 核心词。遵循同一原则
-(内容按严肃教材、解释按儿童认知)。
-
 **多语言**(人确认 2026-07-14):产品面向多语言学习者,目标 7–8 种语言,首个为英文。数学内容以中文为
-源语言,学习者可切换语言学习;数学公式统一用标准数学记法、跨语言共享。短文学英语当前中英双语,
-后续多语言。
+源语言,学习者可切换界面与数学内容语言;数学公式统一用标准数学记法、跨语言共享。多语言是数学/
+物理课程的呈现能力,不是英语学习课程。
 
 **Who it is for**
 
@@ -42,9 +41,9 @@ TODO(human) — 源文件写的是 `达成度判定标准: (awaiting human)`,并
 
 **What this product is not**
 
-TODO(human) — 源文件没有非目标一节。`.intentfold/readme.md` 认为这是最有用的一节:它是阻止范围一个
-"听起来合理的工单"接一个地向外漂的东西。至少值得写清楚:是否做多用户/班级、是否做家长端、
-是否做游戏化激励、是否做初中以外的学段。
+- 不提供英语学习课程、英语课文、英语背诵或英语词汇训练。历史英语数据与生成工具可以保留,
+  但不是产品界面或学习路径的一部分。
+- TODO(human) — 是否做多用户/班级、是否做家长端、是否做游戏化激励、是否做初中以外的学段。
 
 ## Tools
 
