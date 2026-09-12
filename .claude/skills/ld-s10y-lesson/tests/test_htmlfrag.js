@@ -2,6 +2,7 @@ const assert = require("node:assert/strict")
 const fs = require("node:fs")
 const path = require("node:path")
 const { inline, proseInline, proseParagraphs, proseFlow } = require("../tools/htmlfrag.js")
+const { lessonOrderMap } = require("../tools/lesson_order.js")
 const { preserveExerciseMetadata } = require("../tools/publish_merge.js")
 
 const repo = path.resolve(__dirname, "../../../..")
@@ -54,6 +55,14 @@ const offlineRenderer = fs.readFileSync(
   path.join(repo, ".claude/skills/ld-s10y-lesson/tools/render_lesson.js"),
   "utf8",
 )
+const publisher = fs.readFileSync(
+  path.join(repo, ".claude/skills/ld-s10y-lesson/tools/publish.mjs"),
+  "utf8",
+)
+assert.doesNotMatch(
+  publisher,
+  /["'](?:EASYAPP_DATABASE_URL|DATABASE_URL)["']/,
+)
 assert.match(
   offlineRenderer,
   /p\.para \.katex,\.prose-math\{font-size:1\.1em\}/,
@@ -100,4 +109,19 @@ assert.deepEqual(
     "modern-us-neutral",
   ),
   [{ number: "1", html: "new" }],
+)
+
+assert.deepEqual(
+  [...lessonOrderMap({
+    lessons: [
+      { id: "alg6-c1-s1-n1", number: "1" },
+      { id: "alg6-c1-ex", number: null },
+      { id: "alg6-c2-s1-n2", number: "2" },
+    ],
+  }).entries()],
+  [
+    ["alg6-c1-s1-n1", 1],
+    ["alg6-c1-ex", 2],
+    ["alg6-c2-s1-n2", 3],
+  ],
 )
