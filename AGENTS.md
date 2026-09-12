@@ -6,9 +6,10 @@ Read the routed file directly; don't duplicate its content here.
 
 ## Behavioral baseline
 
-- Follow the development rules in `.intentfold/charter/dev.md` (they are binding, not advisory).
+- Follow `.intentfold/charter/engineering.md` (binding architecture and development rules).
 - This repo runs the **intentfold** one-ticket-at-a-time loop: no product change without a ticket in the backend `.intentfold/project.json` names. `.intentfold/charter/` is human-owned — an agent reports drift, never edits it.
-- Verify by actually running the product (browser / runbook commands), never by imagining from code.
+- Verify through the authoritative browser or command evidence in `operations.md`, never by
+  imagining from code.
 
 ## Where knowledge lives
 
@@ -17,11 +18,8 @@ Read the routed file directly; don't duplicate its content here.
 | Session entry — read this first | `.intentfold/readme.md` |
 | Product intent / what good looks like | `.intentfold/charter/product.md` (human-only) |
 | Hard boundaries needing human approval | the `## Redlines` section of each `.intentfold/charter/` file |
-| Engineering norms a coder must obey | `.intentfold/charter/dev.md` |
-| Architecture decisions + stack & constraints | `.intentfold/charter/arch.md` |
-| Dev / build / test commands | `.intentfold/charter/runbook.md` |
-| Deploy / ops commands | `.intentfold/charter/devops.md` |
-| How the product is tested, test account | `.intentfold/charter/qa.md` |
+| Engineering norms, architecture, stack, checks, landing | `.intentfold/charter/engineering.md` |
+| Run / test / acceptance / deploy / operations | `.intentfold/charter/operations.md` |
 | UI stack, tokens, design rules | `.intentfold/charter/ui.md` → `resources/reference/DESIGN.md` |
 | Machine-current module facts (reverse-engineered) | `.evodocs/modules/` |
 | Ticket spec / acceptance criteria | the ticket in plane, live — never a local copy |

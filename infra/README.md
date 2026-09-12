@@ -10,8 +10,8 @@ owned and provisioned by **n-easyapp** (project `lemmadeck`), not by hand-writte
   project, schema `lemmadeck-schema`, injected as `LEMMADECK_DATABASE_URL`; locally it lives in the
   root `.env` (never committed). n-easyapp still creates a `lemmadeck-schema` on the shared Azure
   Postgres and wires it as `DATABASE_URL` — same name, different server, empty, and nothing may be
-  written through it. See `.intentfold/charter/arch.md`.
+  written through it. See `.intentfold/charter/engineering.md`.
 
-Deploy / rollback / logs commands live in `.prodfarm/charter/runbook.md`. This directory is the
+Deploy / rollback / logs commands live in `.intentfold/charter/operations.md`. This directory is the
 home for any future deploy config that is *not* owned by n-easyapp (e.g. a custom Bicep overlay);
 it is intentionally empty of such config today.
