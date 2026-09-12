@@ -1,81 +1,57 @@
 # purpose
 
-The database-schema module is StemRobin's durable contract for learner identity, math curriculum content, localization, reading and practice events, attempt state, progress summaries, and retained biography data. It creates and evolves tables inside the quoted `stemrobin-schema` namespace of the shared PostgreSQL database. The browser never receives database credentials; application server functions and content saver scripts are the only normal readers and writers.
+The database schema is the durable persistence contract for LemmaDeck's lesson content, learner activity, audio, identity, and retained story data. Its SQL file describes the live PostgreSQL schema named `lemmadeck-schema` in the shared Supabase database. It is a snapshot of the deployed shape, not a migration or bootstrap script, so changing the file alone does not change production.
 
-The schema reflects an active migration rather than one uniform storage model. Math courseware is JSONB-first: stage ledgers, neutral card trees, neutral exercise decks, and prose overlays are authoritative, while HTML and PDF are derived caches. Practice still has relational question rows and answer events because those ids drive the attempt-aware quiz. Content-node events and compact practice score rows support reading and overview progress. Story tables remain available even though the deployed application no longer exposes biography routes.
-
-Several product guarantees depend on understanding these relationships. Answer keys may be stored but must not enter overlays or initial browser payloads. Deterministic lesson ids connect curriculum order to content and progress. Locale overlays must cover every referenced node before a lesson appears. Cascades define which learner history disappears when content or attempts are replaced.
+For current Soviet mathematics courseware, `sr_lessons` is the central storage boundary. A TOC card id is also the lesson primary key, and one row carries the rendered prose blocks, exercise deck, answer keys, and interaction specifications consumed by `/card/:id`. Older ledger, overlay, card-tree, and relational quiz structures remain for compatibility; they are not the authoring entry point for the current `ld-s10y-lesson` workflow.
 
 # structure
 
-`sr_users` is the identity root. It stores a numeric id, unique email, scrypt hash, and creation timestamp. The application signs the numeric id into an HTTP-only cookie; there is no database session table. All answer, attempt, and progress rows reference this user and cascade on deletion.
+`sr_lessons` has thirteen declared columns. `id` is the text primary key. `subject`, `stage`, `lesson_order`, `title`, and `concept` provide catalog metadata. `html` and `pdf` are nullable derived artifacts. `status` is required and defaults to `draft`; `created_at` and `updated_at` default to the current time. `content` and `exercises` are nullable JSONB documents. A unique index on `(subject, stage, lesson_order)` prevents two rows from occupying the same ordering coordinate within a subject and stage.
 
-`sr_lessons` is the math lesson identity and artifact row. It stores deterministic id, subject, stage/order coordinates, title, concept, status, derived HTML, optional derived PDF, and timestamps. Additive alterations introduce `content` and `exercises` JSONB. Those JSONB columns are neutral authorities: prose is represented by node ids, formulas and SVG may remain inline, and hidden keys stay in the neutral base.
+The current math `content` document stores source hashes, edition metadata, and an ordered `prose` array. Prose entries are ready-to-embed HTML fragments or inline figures. The `exercises` document stores its edition, count, and ordered exercise objects containing printed number, group, rendered prompt, figure references, and inline figures. Each exercise may also contain an `answerKey` and an `interaction`.
 
-`sr_content_ledger` stores one ledger JSON document per subject and stage plus source revision and update time. It owns the machine-readable curriculum plan used by the math saver: lesson ids, genres, concepts, vocabulary dependencies, and boundary cases. `sr_lesson_i18n` stores one prose-only overlay per lesson and locale, mapping stable node ids to text and source revision. It cascades with the lesson.
+An `answerKey` contains grading mode, a display answer revealed after submission, provenance, and auto-graded parts when applicable. Each part names an exact, numeric, or expression judge, accepted expected values, and optional label, unit, or tolerance. An `interaction` describes the input widget and its derivation. Grid interactions may additionally store a frame, target point coordinates, and the ordered mapping from input parts to point axes.
 
-`sr_questions` remains the relational practice deck. Each row has lesson, order, cognitive type, prompt, answer mode, visible options, hidden correct index or accepted forms, composition layer, review target, and hidden explanation. The unique lesson/order pair establishes deck order. `sr_answer_events` records relational question responses and can link each event to a quiz attempt.
-
-`sr_quiz_attempts` groups one pass through a lesson deck. It stores learner, lesson, start time, and nullable end time. Open attempts support resume; ended attempts support scorecards. The later `attempt_id` alteration on answer events cascades so deleting an open attempt during restart removes its events.
-
-`sr_content_answer_events` stores answers against JSONB node identities rather than relational question ids. It records learner, lesson, kind, node id, correctness, selected index or typed text, locale, and timestamp. Current application reading uses `kind='read_check'`. These rows are deliberately disposable and cannot use a foreign key to a JSONB item.
-
-`sr_practice_attempts` stores a scored percentage for a learner and lesson. It is separate from `sr_quiz_attempts`: the quiz attempt reconstructs item-level state, while the practice row is the compact progress signal. SQL constrains scores to zero through one hundred. Application code retains only the newest two rows per learner/lesson.
-
-The retained biography family consists of `sr_stories`, `sr_story_chapters`, `sr_story_questions`, and `sr_story_answer_events`. Stories store public-domain provenance; chapters store Markdown, stage grouping, global section ranges, PDF, and status; questions and events use a separate id space. These tables remain writable by the biography skill but have no current application consumer.
+Supporting lesson tables include `sr_lesson_audio`, `sr_word_audio`, `sr_lesson_i18n`, and `sr_content_ledger`. Learner activity is split across current card events and mistake rows, recitation events, older relational questions and quiz attempts, and compact practice attempts. Identity lives in `sr_users` and `ld_user_emails`. The `sr_stories`, `sr_story_chapters`, `sr_story_questions`, and `sr_story_answer_events` family preserves biography content.
 
 # flows
 
-Schema application uses the server-only easy-app connection string and sets the project search path. The file combines `CREATE TABLE IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, and additive `ALTER TABLE ... ADD COLUMN IF NOT EXISTS`. It can create a fresh schema and add the documented JSONB or attempt-link columns to an existing deployment. More complex future transformations still require deliberate migration SQL.
+The current math publication flow starts with `ld-s10y-lesson`. Its publisher validates an audited modern edition, then upserts one `sr_lessons` row per TOC card. It writes `content.prose` and `exercises.exercises`, sets `html` to null on update, and inserts new rows with draft status. When republishing the same edition, it carries existing answer keys forward by exercise number.
 
-Math curriculum production first upserts a stage ledger. Lesson persistence reads that ledger, validates neutral content, exercises, and the source overlay, renders HTML/PDF, then upserts the lesson row and Chinese overlay. Translation tooling adds another overlay only after exact coverage and fidelity checks. Rerendering updates only derived HTML/PDF from the current ledger, JSONB, and source overlay.
+`ld-s10y-answer` then augments the stored exercise deck without adding columns. The answer publisher requires an exact exercise-number match and merges `answerKey` into every exercise in one transaction. The interaction publisher separately requires one interaction per exercise and merges `interaction` beside the answer key. Edition equality is checked before either enrichment is accepted.
 
-At runtime, locale availability enumerates all prose, caption, read-check, and exercise node ids referenced by a lesson and requires the selected overlay to contain them. Card reading joins the lesson JSONB to the active overlay and projects key-free cards. Correct read-check submissions write content answer events for authenticated learners. The hidden key stays in lesson JSONB.
+At runtime, `getCardContent` reads only the two JSONB columns. It projects prose and exercises into a browser payload while removing grading secrets. The browser receives grading mode and input labels, units, and kinds, but not expected values or the display answer. For grid interactions it receives the grid domain, point names, and part mapping, but not the stored target coordinates. `checkTextbookAnswer` rereads the full answer key server-side, judges the submission, then returns the verdict and display answer. Authenticated submissions append `sr_content_answer_events`; incorrect answers also append `sr_textbook_mistakes`.
 
-Practice question delivery reads visible relational question columns. For non-source locales, exercise JSONB and overlay text are aligned to relational questions by order. Answer recording reads hidden relational columns after authentication and writes an answer event, optionally linked to a quiz attempt. Restarting deletes an open quiz attempt and cascades its events. Ending stamps the attempt and computes a score against the current relational deck.
-
-The score percentage is then written to `sr_practice_attempts`. The writer inserts a new row and prunes all but the latest two for the learner and lesson. Progress reads every lesson's current read-check ids, the learner's distinct correct content events, and the latest practice score. Reading contributes one point only when every current check is correct; practice contributes one point when the latest score is at least eighty.
-
-Biography saver flows can still upsert stories, chapters, questions, and PDFs. Question replacement and parent deletion cascade their dependent events. Because no current route reads this family, database validity does not imply current product visibility.
+Lesson availability is based on the presence of prose blocks or a positive exercise count, not on `status`. The textbook TOC remains the source of navigation order and supplies the ids that connect catalog cards, `sr_lessons`, answer events, and mistake history.
 
 # module-relationships
 
-The math-courseware generator is the main upstream writer. It owns ledger validation, JSONB shape validation, overlay key secrecy, relational deck synchronization, rendering, translation, and cache rebuilding. The schema provides storage and broad relational constraints but does not validate JSONB internals or educational meaning.
+The math-courseware skills are the main upstream writers. `ld-s10y-lesson` owns transcription, modern-edition validation, rendered fragments, and the initial lesson upsert. `ld-s10y-answer` owns answer-key and interaction production. The schema supplies JSONB storage, but the skills enforce edition consistency, exercise coverage, and document shape.
 
-The application domain-services module is the runtime consumer and learner-state writer. It authenticates against users, selects locale-complete lesson content, judges hidden keys, manages quiz attempts, writes content and relational events, stores compact practice scores, and aggregates progress. The learner-experience module sees only its server projections.
+The application domain services are the downstream readers and learner-state writers. The lesson service exposes a key-free projection, the textbook answer service owns server-side judgment, and the current card route renders the result. The static textbook TOC and database rows meet at the shared card id; the database does not derive curriculum order from the TOC.
 
-The curriculum outline in application code is a companion contract. Deterministic lesson ids turn persisted rows into catalog links and navigation. The human course guide and database ledger are upstream intent and machine-plan sources; the schema does not derive titles or order from them automatically.
-
-The runbook owns operational application of this file through `psql`. There is no separate migration framework or version table. Changes therefore need explicit coordination among DDL, deployed database shape, content savers, application services, and existing data.
+Legacy relationships remain deliberately visible. `sr_content_ledger` has no active producer or consumer in the current code. `sr_lesson_i18n` is bypassed by current math publication but is still used by English lessons and older math reading and quiz services. There is no separate card-tree table: the old card-tree contract is a `content.cards` shape inside `sr_lessons`, alongside the new `content.prose` shape. Old `sr_questions`, quiz attempts, and answer events support the retained relational quiz path rather than the current S10Y exercise renderer.
 
 # constraints
 
-The schema file is the source of truth for durable shape. New columns, tables, indexes, cascades, and checks belong here and must be applied server-side. Do not create shadow table definitions in application or content artifacts. Preserve the quoted project schema and keep credentials out of the browser.
+The SQL snapshot declares table columns, primary keys, and indexes, but it does not validate JSONB structure. Exercise numbering, one-to-one answer and interaction coverage, supported judge modes, edition equality, and public-key removal are application and publisher invariants. Direct JSONB writes can therefore create rows that satisfy PostgreSQL while breaking rendering or leaking answers.
 
-Answer-key secrecy spans storage and services. Neutral JSONB and question rows may contain keys, but overlay rows must be prose-only, rendered HTML must be key-free, and initial fetches must omit hidden columns. Correctness remains a server decision.
+Answer secrecy spans both nested objects. Expected values and display answers in `answerKey`, and target coordinates in grid `interaction.points`, must remain server-side. Public projection may expose only the information needed to render an input.
 
-Foreign-key cascades define data lifetime. Deleting a lesson removes overlays, questions, content events, quiz attempts, practice scores, and question-linked events. Deleting an open quiz attempt removes its linked events. Replacing relational questions can destroy answer history. These consequences must be intentional.
-
-Important invariants remain code-enforced: JSONB shape, stable node ids, complete overlay coverage, companion fields for each answer mode, exact choice policy, ledger closure, latest-two practice retention, story section continuity, and deterministic lesson-id consistency. A constraint-valid direct insert can still be invalid product content.
+The unique `(subject, stage, lesson_order)` index is stricter than the text primary key and can collide when different books reuse a grade and printed order. The current publisher intentionally surfaces that conflict. The SQL snapshot contains no declared foreign keys, check constraints, or cascades, so relationships and deletion behavior must not be assumed.
 
 # known-limits
 
-The persistence model is hybrid. Neutral exercises and overlays coexist with relational questions, and order is their alignment key for localized practice. There is no database constraint proving they represent the same deck. A partial writer can create a mismatch that only appears in the learner UI.
+This file is descriptive rather than executable migration history. It does not encode deployment order, data transformations, or a schema version. It also shows bigint identifiers without identity or sequence defaults, although current writers insert rows without supplying those ids. Live identity-generation behavior therefore exists outside the documented SQL surface.
 
-The DDL is additive but not a general migration system. `ADD COLUMN IF NOT EXISTS` handles selected evolution, but it cannot transform old data, tighten existing constraints safely, rename columns, or version multi-step migrations. There is no schema-version ledger.
+The old and new lesson representations share the same JSONB columns. Consumers must distinguish `content.cards` from `content.prose`, and PostgreSQL cannot guarantee that an exercise deck matches either shape. Compatibility code can drift even while the current card route continues to work.
 
-Draft status is stored but current lesson reads do not use it as a publication gate. Persisted rows may become visible when ids and locale coverage qualify. Publication remains an operational convention rather than enforced access control.
-
-Progress and answer data are intentionally lossy. Content events have no foreign key to JSONB nodes, only the latest two practice scores are retained, and relational question replacement can cascade old events. The model supports current feedback, not immutable longitudinal analytics.
-
-Biography tables are orphaned from the current app. They remain valid storage for the biography saver but can drift from runtime expectations without an active consumer.
+Lesson republishing preserves existing `answerKey` objects but does not preserve existing `interaction` objects. Running the base lesson publisher after interaction publication can remove those specifications unless the interaction publication step is repeated. Status is also not a runtime publication gate: a draft row with usable content can become available.
 
 # notes-for-ai
 
-Before changing a table, map every writer and reader. For math content, trace ledger save, lesson save, translation, rerender, locale availability, card projection, practice localization, answer judgment, attempts, and progress. For identity, trace password verification, signed cookies, and every user cascade. For story tables, account for the absence of a current route.
+When changing current math persistence, trace the complete chain from the S10Y lesson publisher through answer and interaction publication to `getCardContent`, `checkTextbookAnswer`, and `/card/:id`. Preserve the card id, edition checks, exercise-number alignment, and server-only grading material.
 
-Use explicit migration SQL for existing deployments and test against a realistic pre-change schema. Reapplying create statements is not enough for transformations. Preserve data lifetimes unless the product requirement deliberately changes history retention.
+Do not revive `sr_content_ledger`, math overlays, or the old card-tree shape as inputs to new S10Y generation. Do not remove them solely because the current card route bypasses them: English still depends on `sr_lesson_i18n`, and old math services remain compatibility readers.
 
-Never bypass content savers with direct SQL. They enforce prerequisite closure, JSONB shape, overlay coverage, rendering, and key separation that PostgreSQL does not. If a new writer is necessary, give it equivalent validation before production use.
-
-Verify both storage and behavior after changes. Exercise locale availability, card reading, key-free payloads, one read-check event, a resumed and ended quiz attempt, score recording, progress aggregation, PDF retrieval, and relevant cascades in a disposable database. Confirm that schema changes do not expose keys or split the deterministic lesson identity across tables.
+Treat live schema changes as an explicit database operation and then synchronize this descriptive snapshot. Before changing deletion behavior or identifiers, inspect all application joins because the SQL file declares no foreign keys or cascades. Verify both the stored JSONB and the browser projection after any lesson-schema change, especially that expected answers, display answers, and target coordinates do not appear before submission.

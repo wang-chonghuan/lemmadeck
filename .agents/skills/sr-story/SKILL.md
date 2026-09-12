@@ -1,11 +1,11 @@
 ---
 name: sr-story
-description: Load when the user asks to build a LemmaDeck 名人传记 (biography reading, a narrative story stored as Markdown) — convert a public-domain book to markdown, outline it, author a chapter as a story, generate its questions, or persist a chapter+questions to the DB — or says "用 sr-story 生成传记", "sr-story cap1/2/3/4/5", "把福特自传做成章节". Sibling of sr-lesson, for biography/reading content (not math/physics lessons). Public-domain sources only.
+description: Load when the user asks to build a LemmaDeck 名人传记 (biography reading, a narrative story stored as Markdown) — convert a public-domain book to markdown, outline it, author a chapter as a story, generate its questions, or persist a chapter+questions to the DB — or says "用 sr-story 生成传记", "sr-story cap1/2/3/4/5", "把福特自传做成章节". For biography/reading content, not textbook lesson generation. Public-domain sources only.
 ---
 
 # sr-story
 
-Build LemmaDeck 名人传记 — biography reading modules from **public-domain** books (Gutenberg / Internet Archive, works out of US copyright). Unlike `sr-lesson` (self-contained HTML), a biography chapter is **prose stored as Markdown**: a linear, factual, absorbing **story** for a 12–16-year-old (the app renders md → html). Told like a story, not a lesson — hook first, minimal 说教, no bullet lists; the moral/思辨 material lives in the questions. 正文 ≥ 2000 汉字 per chapter.
+Build LemmaDeck 名人传记 — biography reading modules from **public-domain** books (Gutenberg / Internet Archive, works out of US copyright). A biography chapter is **prose stored as Markdown**: a linear, factual, absorbing **story** for a 12–16-year-old (the app renders md → html). Told like a story, not a textbook lesson — hook first, minimal 说教, no bullet lists; the moral/思辨 material lives in the questions. 正文 ≥ 2000 汉字 per chapter.
 
 A **story** = one creator's 传记 (a person/book, e.g. 福特). It has an **outline** (chapters) and, per chapter, a **narrative Markdown body** + **questions**. Subject scope: American inventor-entrepreneurs / industrialists whose story shows 科学/发明 → 事业, treating the ethical complexity (monopoly, humbug, labor, prejudice) honestly but through the questions rather than sermons — critical thinking, not hagiography.
 
