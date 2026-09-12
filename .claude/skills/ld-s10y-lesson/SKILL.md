@@ -50,6 +50,7 @@ $P $S render --book 5m --edition modern-us-neutral \
 node .claude/skills/ld-s10y-lesson/tools/publish.mjs resources/s10y-lessons/5m \
   --edition modern-us-neutral \
   --lesson math5-c1-s1-n5 --lesson math5-c1-s1-n6 --lesson math5-c1-s1-n7
+# ⑤ 按 ld-s10y-answer 的 cap2、cap3 为同一批 lesson 依次发布答案键和交互规格
 cd app && npm run dev
 ```
 
@@ -66,6 +67,9 @@ cd app && npm run dev
 - edition lesson 可用 `section_breaks` 标记真正的概念切换：值是扁平正文段落中“下一段”
   的 0 起始位置，例如 `[2, 6]`。它只用于定义、例题类型或变量范围等明显换挡处，普通短段落
   只留段间距，禁止每段都画横线；`adapt-finalize` 会拒绝首尾、重复、乱序或越界位置
+- 现代正文中的公式外 ASCII 数字和拉丁字母由发布器、离线渲染器自动标记；作者只写正文和
+  `$...$` 公式，禁止手工包 `<span>`。产品与离线 HTML 都必须让这些字符和行内 KaTeX 使用
+  KaTeX Main，并以中文正文的 `1.10em` 显示，避免同一句中的数学字符换字体或显得偏小
 - `render` 不是发布门禁，但必须用于离线视觉检查；它读取指定 edition，不得回退原书
 - 边界页常会带出下一节开头；它必须完整转写以通过页级对账，但**不得发布未完成的下一节**。
   用可重复的 `--lesson <cardId>` 只发布本次已完成的单元
@@ -338,7 +342,12 @@ node .claude/skills/ld-s10y-lesson/tools/publish.mjs resources/s10y-lessons/5m \
 
 发布器只读取 `editions/<edition>/lessons/`，要求 adaptation audit 为 `pass`，并验证
 现代图、FigureSpec 与生成/渲染元数据。写入 DB 时只保留现代正文、现代题目、现代图片、edition 名和原始
-SHA；完整原始快照不入库。重发课文或图片时必须保留同题号已有的 `answerKey`。
+SHA；完整原始快照不入库。重发同一 edition 的课文或图片时，必须按题号保留已有的
+`answerKey` 和 `interaction`，不得让重发导致答案或数学键盘消失。
+
+一批可作答课程的发布顺序固定为：`ld-s10y-lesson` 基础课程 → `ld-s10y-answer` 答案键 →
+`ld-s10y-answer` 交互规格。基础发布器的保留逻辑用于保障后续重发，不替代首次生成答案和
+交互规格。
 
 连接串取仓库根 `.env` 的 `LEMMADECK_DATABASE_URL`（Supabase，schema `lemmadeck-schema`）。
 **不要用 psql**：这个串的密码含 `@`，psql 会当成主机名分隔符而解析失败。
@@ -352,9 +361,10 @@ SHA；完整原始快照不入库。重发课文或图片时必须保留同题�
    edition 必须等于本次发布值，只有练习的单元允许 `content.prose=[]`
 2. `cd app && npm run dev`，固定端口 3200
 3. 浏览器打开每个目标 `/card/<cardId>`，确认正文没有混入练习专用图、插图清晰、
-   习题入口与题数
+   习题入口与题数；逐段检查无首行缩进、概念切换横线正确，正文外数字/拉丁字母和行内公式
+   字体一致且不小于中文正文
 4. 打开每节的习题视图，确认所有题都能渲染，并按 `figure id` 检查同一张共享图
-   在该练习区只出现一次
+   在该练习区只出现一次；需要数学输入的题必须显示数学键盘
 5. 检查桌面与 390px 移动宽度无整页横向溢出，控制台无报错
 
 任一项失败都要修到通过。只生成文件、只 dry-run、只写库但没在产品验证，都不算完成。

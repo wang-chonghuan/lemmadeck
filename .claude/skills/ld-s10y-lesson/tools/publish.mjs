@@ -26,6 +26,7 @@ import { createRequire } from 'node:module'
 const require = createRequire(import.meta.url)
 const postgres = require('postgres')
 const { inline, proseInline, proseFlow } = require('./htmlfrag.js')
+const { preserveExerciseMetadata } = require('./publish_merge.js')
 
 const args = process.argv.slice(2)
 const bookDir = args.find((a) => !a.startsWith('--'))
@@ -174,17 +175,11 @@ try {
       select exercises from sr_lessons where id = ${r.id}
     `
     const existingDeck = existingRows[0]?.exercises
-    if (existingDeck?.edition === editionName && Array.isArray(existingDeck.exercises)) {
-      const keys = new Map(
-        existingDeck.exercises
-          .filter((exercise) => exercise?.answerKey)
-          .map((exercise) => [String(exercise.number), exercise.answerKey]),
-      )
-      r.exercises.exercises = r.exercises.exercises.map((exercise) => {
-        const answerKey = keys.get(String(exercise.number))
-        return answerKey ? { ...exercise, answerKey } : exercise
-      })
-    }
+    r.exercises.exercises = preserveExerciseMetadata(
+      r.exercises.exercises,
+      existingDeck,
+      editionName,
+    )
     await sql`
       insert into sr_lessons
         (id, subject, stage, lesson_order, title, concept, content, exercises, status)
