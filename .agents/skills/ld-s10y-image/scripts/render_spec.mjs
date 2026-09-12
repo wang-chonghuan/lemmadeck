@@ -111,6 +111,10 @@ function portablePath(filePath) {
   return relative.startsWith('..') ? absolute : relative || '.'
 }
 
+function rendererBoardId(figureId) {
+  return `ld-${String(figureId).replace(/[^A-Za-z0-9_-]/g, '-')}`
+}
+
 function chromeExecutable() {
   const candidates = [
     process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
@@ -131,6 +135,7 @@ function chromeExecutable() {
 }
 
 async function render(spec, output) {
+  const boardId = rendererBoardId(spec.id)
   const browser = await chromium.launch({
     executablePath: chromeExecutable(),
     headless: true,
@@ -150,7 +155,7 @@ async function render(spec, output) {
           <meta charset="utf-8">
           <style>
             html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
-            #board {
+            #${boardId} {
               width: ${spec.canvas.width}px;
               height: ${spec.canvas.height}px;
               background: ${spec.canvas.background || '#ffffff'};
@@ -158,13 +163,13 @@ async function render(spec, output) {
             }
           </style>
         </head>
-        <body><div id="board" class="jxgbox"></div></body>
+        <body><div id="${boardId}" class="jxgbox"></div></body>
       </html>
     `)
     await page.addStyleTag({ path: jsxgraphCssPath })
     await page.addScriptTag({ path: jsxgraphPath })
 
-    const result = await page.evaluate((figureSpec) => {
+    const result = await page.evaluate(({ figureSpec, boardId }) => {
       const SVG_NS = 'http://www.w3.org/2000/svg'
       const palette = {
         primary: '#0f8b8d',
@@ -175,7 +180,7 @@ async function render(spec, output) {
         ...figureSpec.palette,
       }
       const box = figureSpec.canvas.boundingBox
-      const board = JXG.JSXGraph.initBoard('board', {
+      const board = JXG.JSXGraph.initBoard(boardId, {
         boundingbox: box,
         axis: false,
         grid: false,
@@ -472,7 +477,7 @@ async function render(spec, output) {
       board.unsuspendUpdate()
       board.fullUpdate()
 
-      const svg = document.querySelector('#board svg')
+      const svg = document.getElementById(boardId)?.querySelector('svg')
       if (!svg) throw new Error('JSXGraph did not create an SVG renderer')
       svg.setAttribute('xmlns', SVG_NS)
       svg.setAttribute('width', String(figureSpec.canvas.width))
@@ -486,7 +491,7 @@ async function render(spec, output) {
       const imageFits = figureSpec.objects
         .filter((object) => object.type === 'image')
         .map((object) => {
-          const node = document.getElementById(`board_ld-${object.id}`)
+          const node = document.getElementById(`${boardId}_ld-${object.id}`)
           if (!node) {
             return {
               id: object.id,
@@ -508,7 +513,7 @@ async function render(spec, output) {
 
       if (rawPaths.length) {
         const rawLayer = document.createElementNS(SVG_NS, 'g')
-        rawLayer.setAttribute('id', 'ld-raw-path-layer')
+        rawLayer.setAttribute('id', `${boardId}-raw-path-layer`)
         const scaleX = figureSpec.canvas.width / (
           figureSpec.canvas.boundingBox[2] - figureSpec.canvas.boundingBox[0]
         )
@@ -551,7 +556,7 @@ async function render(spec, output) {
         }
       }
       const labelLayer = document.createElementNS(SVG_NS, 'g')
-      labelLayer.setAttribute('id', 'ld-label-layer')
+      labelLayer.setAttribute('id', `${boardId}-label-layer`)
       svg.appendChild(labelLayer)
       const geometryNodes = [...svg.querySelectorAll(
         'line, path, polygon, polyline, circle, ellipse, rect',
@@ -737,7 +742,7 @@ async function render(spec, output) {
         objects: figureSpec.objects.length,
         imageFits,
       }
-    }, spec)
+    }, { figureSpec: spec, boardId })
 
     if (output.svg) {
       ensureParent(output.svg)
@@ -745,7 +750,7 @@ async function render(spec, output) {
     }
     if (output.png) {
       ensureParent(output.png)
-      await page.locator('#board').screenshot({
+      await page.locator(`#${boardId}`).screenshot({
         path: output.png,
         type: 'png',
         animations: 'disabled',
