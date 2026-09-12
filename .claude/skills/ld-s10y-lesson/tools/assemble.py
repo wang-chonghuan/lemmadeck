@@ -316,6 +316,19 @@ def audit(lessons: list[dict], stream: list[dict], profile_path: Path) -> dict:
             "figure_numbers": fignums, "katex_warnings": m_warn}
 
 
+def _toc_cards(toc: dict) -> list[dict]:
+    """展开目录中所有可发布卡片，包括无印刷编号的练习卡。"""
+    cards = []
+    for content in toc.get("contents", []):
+        if content.get("kind") == "exercises":
+            cards.append(content)
+        for section in content.get("lessons", []):
+            if section.get("kind") == "exercises":
+                cards.append(section)
+            cards.extend(section.get("topics") or [])
+    return cards
+
+
 def check_toc(lessons: list[dict], toc_path: Path, book_id: str) -> list[str]:
     """TOC 是外部真源，做两件事：核对覆盖，并把小节钉到目录的**卡片 id** 上。
 
@@ -324,31 +337,45 @@ def check_toc(lessons: list[dict], toc_path: Path, book_id: str) -> list[str]:
     印刷号和起始印刷页两个都对得上才算认领，只对上一个就报告，不猜。
     """
     toc = json.loads(toc_path.read_text(encoding="utf-8"))
-    topics = [t for c in toc.get("contents", []) for l in c.get("lessons", [])
-              for t in l.get("topics", [])]
+    cards = _toc_cards(toc)
+    topics = [card for card in cards if card.get("printedNumber") is not None]
+    exercise_cards = [card for card in cards if card.get("kind") == "exercises"]
     warn = []
     for l in lessons:
-        if not l["number"]:
-            continue
-        by_num = [t for t in topics if str(t["printedNumber"]) == l["number"]]
-        hit = [t for t in by_num if t["page"] == l["start_printed"]]
+        if l["number"]:
+            by_num = [t for t in topics if str(t["printedNumber"]) == l["number"]]
+            hit = [t for t in by_num if t["page"] == l["start_printed"]]
+        else:
+            by_num = []
+            hit = [card for card in exercise_cards
+                   if card["page"] == l["start_printed"]]
         if len(hit) == 1:
             l["card_id"] = hit[0]["id"]
             l["toc_title"] = hit[0]["title"]
+        elif len(hit) > 1:
+            warn.append(
+                f"无编号小节「{l['title']}」的印刷页 {l['start_printed']} "
+                f"对应多个目录卡片 {[card['id'] for card in hit]}，未认领卡片 id")
         elif by_num:
             warn.append(f"小节「{l['number']}. {l['title']}」在 TOC 里印刷页是 "
                         f"{[t['page'] for t in by_num]}，抽出来的是 {l['start_printed']}，"
                         "对不上，未认领卡片 id")
-        else:
+        elif l["number"]:
             warn.append(f"小节「{l['number']}. {l['title']}」在 TOC 里找不到对应条目")
 
-    covered = {l["number"] for l in lessons if l["number"]}
+    covered = {l.get("card_id") for l in lessons if l.get("card_id")}
     pages = [l["start_printed"] for l in lessons if l["start_printed"]]
     if pages:
         lo, hi = min(pages), max(pages)
-        missing = [f"{t['printedNumber']}. {t['title']}（印刷页 {t['page']}）"
-                   for t in topics if lo <= t["page"] <= hi
-                   and str(t["printedNumber"]) not in covered]
+        missing = [
+            (
+                f"{card['printedNumber']}. {card['title']}（印刷页 {card['page']}）"
+                if card.get("printedNumber") is not None
+                else f"{card['title']}（印刷页 {card['page']}）"
+            )
+            for card in cards
+            if lo <= card["page"] <= hi and card["id"] not in covered
+        ]
         if missing:
             warn.append(f"TOC 里这些小节落在已抽范围内却没装订出来: {'; '.join(missing)}")
     return warn

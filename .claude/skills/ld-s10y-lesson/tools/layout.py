@@ -19,11 +19,11 @@ from scipy import ndimage
 
 INK_THRESHOLD = 128          # 灰度低于此值视为墨迹
 ROW_INK_MIN_RATIO = 0.008    # 行墨迹占版心宽比例低于此值视为空白（抑制扫描噪点）
-MIN_BAND_HEIGHT = 4          # 低于此高度的行带视为噪声
+MIN_BAND_HEIGHT = 3          # 保留拆成上下笔画的短标号（如表格前单独一行的 а)）
 MIN_BAND_WIDTH = 24          # 孤立扫描墨点不能算作一行文字
 # 只用来把同一行里断开的笔画（分式、上下标、页码的点）接回去。不能取大：取 0.6
 # 会把行距紧的相邻几行并成一行，数出来的行数就少了。
-GLYPH_GAP_FACTOR = 0.25      # 见上
+GLYPH_GAP_FACTOR = 0.4       # 6a 的高分式与「于」字上下部需要约 0.35 行高
 SNAP_OVERLAP = 0.45          # 连通域与粗框的重叠比例超过此值才吸附进来
 GRID = 100                   # 坐标网格间距（px），画在 page.grid.png 上供读图取坐标
 
@@ -109,7 +109,25 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     if not raw:
         return []
     line_h = int(np.median([b - a + 1 for a, b in raw]))
-    return _merge_close(raw, max(2.0, GLYPH_GAP_FACTOR * line_h))
+    merged = _merge_close(raw, max(2.0, GLYPH_GAP_FACTOR * line_h))
+
+    # 扫描页常有页顶黑边、章标题横线和孤立墨点。它们能通过最小宽高阈值，却不是
+    # 印刷文字行；只过滤明显偏薄且过宽/过窄的孤立带，页底的页码装饰则保留。
+    out = []
+    page_h = ink.shape[0]
+    for a, b in merged:
+        xs = np.flatnonzero(ink[a:b + 1].any(axis=0))
+        band_h = b - a + 1
+        band_w = int(xs[-1] - xs[0] + 1)
+        thin = band_h < 0.4 * line_h
+        edge_border = a < 0.02 * page_h and band_w > 0.7 * content_w
+        decoration = edge_border or (
+            thin and b < 0.85 * page_h
+            and (band_w > 0.7 * content_w or band_w < 0.05 * content_w)
+        )
+        if not decoration:
+            out.append((a, b))
+    return out
 
 
 def snap(ink: np.ndarray, box: list[int]) -> tuple[list[int], dict]:

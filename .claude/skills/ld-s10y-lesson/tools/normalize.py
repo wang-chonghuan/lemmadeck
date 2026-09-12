@@ -186,7 +186,7 @@ def check_charset(text: str, profile: dict) -> list[dict]:
 
 # ---------- 一致性信号（cap3 用） ----------
 
-_CYRILLIC_ENUM = set("абвгдежзик")
+_CYRILLIC_ENUM = set("абвгдежзиклм")
 _LATIN_LOOKALIKE = set("abcdexpo")
 
 
