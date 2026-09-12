@@ -135,6 +135,36 @@ class EditionTest(unittest.TestCase):
             "2) 被 5 整除？",
         )
 
+    def test_parenthesized_numbered_subparts_are_line_broken(self) -> None:
+        source = "计算：(1) $a+1$；　　　(2) $b+2$."
+        self.assertEqual(
+            edition.normalize_numbered_subparts(source),
+            "计算：\n(1) $a+1$；\n(2) $b+2$.",
+        )
+
+    def test_latin_lettered_subparts_are_line_broken(self) -> None:
+        source = (
+            "求值：a) $a+1$； b) $b+2$； c) $c+3$，\n"
+            "其中 $c=4$."
+        )
+        self.assertEqual(
+            edition.normalize_numbered_subparts(source),
+            "求值：\n"
+            "a) $a+1$；\n"
+            "b) $b+2$；\n"
+            "c) $c+3$， 其中 $c=4$.",
+        )
+
+    def test_cyrillic_lettered_subparts_are_line_broken(self) -> None:
+        source = "求值：а) $a+1$；　в) $c+3$； б) $b+2$."
+        self.assertEqual(
+            edition.normalize_numbered_subparts(source),
+            "求值：\n"
+            "а) $a+1$；\n"
+            "б) $b+2$.\n"
+            "в) $c+3$；",
+        )
+
     def test_figure_number_is_not_treated_as_a_subpart(self) -> None:
         source = "观察图 72），回答：\n1) 第一问；\n2) 第二问."
         self.assertEqual(edition.normalize_numbered_subparts(source), source)
@@ -169,6 +199,41 @@ class EditionTest(unittest.TestCase):
             "再求交点坐标."
         )
         self.assertEqual(edition.normalize_numbered_subparts(source), source)
+
+    def test_prose_is_line_broken_at_sentences_and_introduced_formulas(self) -> None:
+        source = (
+            "下面是数式的例：$a+1,\\ b+2.$其中第一个式子含有 $a$。"
+            "当 $a=1$ 时，式的值为 2；当 $a=2$ 时，式的值为 3。"
+            "定义域记作：$\\{x\\mid x\\ne1\\}$，读作变量 $x$ 的取值集合。"
+            "在式中有的运算不能进行（零不能作除数！），所以它没有意义。"
+        )
+        self.assertEqual(
+            edition.normalize_prose_layout(source),
+            "下面是数式的例：\n"
+            "$a+1,\\ b+2.$\n"
+            "其中第一个式子含有 $a$。\n"
+            "当 $a=1$ 时，式的值为 2；\n"
+            "当 $a=2$ 时，式的值为 3。\n"
+            "定义域记作：\n"
+            "$\\{x\\mid x\\ne1\\}$，\n"
+            "读作变量 $x$ 的取值集合。\n"
+            "在式中有的运算不能进行（零不能作除数！），所以它没有意义。",
+        )
+
+    def test_layout_normalization_preserves_prose_signatures(self) -> None:
+        source = "例如：$x+1.$式的值是 2。"
+        modern = edition.normalize_prose_layout(source)
+        self.assertEqual(
+            edition.validate_text(
+                source,
+                modern,
+                ["layout"],
+                [],
+                "prose",
+                [],
+            ),
+            [],
+        )
 
     def test_text_validation_preserves_math_and_rejects_old_culture(self) -> None:
         errors = edition.validate_text(

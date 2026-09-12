@@ -25,7 +25,12 @@ AUDIT_SCHEMA = "ld-s10y-lesson/edition-audit@1"
 BOOK_SCHEMA = "ld-s10y-lesson/edition-book@1"
 MATH = re.compile(r"\$\$(.+?)\$\$|\$([^$]+?)\$", re.S)
 NUMBER = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])")
-NUMBERED_PART = re.compile(r"(?<![A-Za-z0-9_.])(\d{1,2})[)）]")
+PART_MARKER = re.compile(
+    r"(?<![A-Za-z0-9_.\u0400-\u04ff])"
+    r"(?P<open>[(（]?)(?P<label>\d{1,2}|[a-z]|[\u0430-\u044f\u0451])(?P<close>[)）])"
+)
+LATIN_PARTS = tuple("abcdefghijklmnopqrstuvwxyz")
+CYRILLIC_PARTS = tuple("абвгдежзиклмнопрстуфхцчшщэюя")
 CYRILLIC = re.compile(r"[\u0400-\u04ff]")
 NON_ENGLISH_FIGURE_SCRIPT = re.compile(
     r"[\u0400-\u04ff\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]"
@@ -89,15 +94,22 @@ def source_dir(args: argparse.Namespace) -> Path:
 
 
 def modern_prose(source: dict) -> list[dict]:
-    return [
-        {
+    result = []
+    for block in source.get("prose", []):
+        source_text = block.get("text", "")
+        modern_text = (
+            normalize_prose_layout(source_text)
+            if block.get("kind") == "p"
+            else source_text
+        )
+        result.append({
             **copy.deepcopy(block),
-            "source_text": block.get("text", ""),
-            "changes": [],
+            "text": modern_text,
+            "source_text": source_text,
+            "changes": ["layout"] if modern_text != source_text else [],
             "numeric_changes": [],
-        }
-        for block in source.get("prose", [])
-    ]
+        })
+    return result
 
 
 def modern_exercises(source: dict) -> list[dict]:
@@ -216,32 +228,122 @@ def number_signature(text: str) -> list[str]:
     return NUMBER.findall(without_math)
 
 
-def normalize_numbered_subparts(text: str) -> str:
-    """Sort a complete 1)..N) sequence and put every subpart on its own line."""
-    if not isinstance(text, str):
-        return text
+def masked_math(text: str) -> str:
     masked = list(text)
     for match in MATH.finditer(text):
         masked[match.start():match.end()] = " " * (match.end() - match.start())
-    masked_text = "".join(masked)
+    return "".join(masked)
+
+
+def nesting_depths(text: str) -> list[int]:
     depths = []
     depth = 0
-    for char in masked_text:
+    for char in text:
         depths.append(depth)
         if char in "(（":
             depth += 1
         elif char in ")）":
             depth = max(0, depth - 1)
+    return depths
+
+
+def normalize_prose_layout(text: str) -> str:
+    """Put complete prose sentences and introduced formulas on separate lines."""
+    if not isinstance(text, str):
+        return text
+    text = re.sub(r"[\t \u3000]+", " ", text.replace("\r\n", "\n")).strip()
+    if not text:
+        return text
+
+    masked = masked_math(text)
+    depths = nesting_depths(masked)
+    boundaries = set()
+    for index, char in enumerate(masked):
+        if char == "\n":
+            boundaries.add(index + 1)
+            continue
+        if depths[index] != 0:
+            continue
+        if char in "。！？；;":
+            boundaries.add(index + 1)
+        elif char in "：:":
+            rest = text[index + 1:].lstrip()
+            if rest.startswith("$"):
+                boundaries.add(index + 1)
+
+    for match in MATH.finditer(text):
+        tex = (match.group(1) or match.group(2)).rstrip()
+        if (
+            depths[match.start()] == 0
+            and tex.endswith((".", "。", "!", "！", "?", "？"))
+            and text[match.end():].strip()
+        ):
+            boundaries.add(match.end())
+
+    initial_boundaries = sorted(boundaries)
+    for match in MATH.finditer(text):
+        previous = max(
+            (boundary for boundary in initial_boundaries if boundary <= match.start()),
+            default=0,
+        )
+        if text[previous:match.start()].strip():
+            continue
+        trailing = re.match(r"[，,；;]", text[match.end():])
+        if trailing and text[match.end() + trailing.end():].strip():
+            boundaries.add(match.end() + trailing.end())
+
+    lines = []
+    start = 0
+    for end in sorted(boundaries):
+        line = re.sub(r"\s*\n\s*", " ", text[start:end]).strip()
+        if line:
+            lines.append(line)
+        start = end
+    tail = re.sub(r"\s*\n\s*", " ", text[start:]).strip()
+    if tail:
+        lines.append(tail)
+    return "\n".join(lines)
+
+
+def marker_order(markers: list[re.Match[str]]) -> dict[str, int] | None:
+    labels = [marker.group("label") for marker in markers]
+    if all(label.isdigit() for label in labels):
+        expected = [str(number) for number in range(1, len(labels) + 1)]
+    elif all(label in LATIN_PARTS for label in labels):
+        expected = list(LATIN_PARTS[:len(labels)])
+    elif all(label in CYRILLIC_PARTS for label in labels):
+        expected = list(CYRILLIC_PARTS[:len(labels)])
+    else:
+        return None
+    if (
+        len(labels) != len(set(labels))
+        or set(labels) != set(expected)
+        or sorted(labels, key=expected.index) != expected
+    ):
+        return None
+    return {label: index for index, label in enumerate(expected)}
+
+
+def normalize_numbered_subparts(text: str) -> str:
+    """Sort a complete numeric or lettered sequence and line-break its parts."""
+    if not isinstance(text, str):
+        return text
+    masked_text = masked_math(text)
+    depths = nesting_depths(masked_text)
     markers = [
         marker
-        for marker in NUMBERED_PART.finditer(masked_text)
+        for marker in PART_MARKER.finditer(masked_text)
         if depths[marker.start()] == 0
+        and (
+            not marker.group("open")
+            or (marker.group("open"), marker.group("close")) in {("(", ")"), ("（", "）")}
+        )
         and not re.search(r"图\s*$", masked_text[max(0, marker.start() - 3):marker.start()])
     ]
     if len(markers) < 2:
         return text
-    numbers = [int(marker.group(1)) for marker in markers]
-    if len(numbers) != len(set(numbers)) or sorted(numbers) != list(range(1, len(numbers) + 1)):
+    order = marker_order(markers)
+    if order is None:
         return text
 
     prefix = text[:markers[0].start()].rstrip()
@@ -249,8 +351,8 @@ def normalize_numbered_subparts(text: str) -> str:
     for index, marker in enumerate(markers):
         end = markers[index + 1].start() if index + 1 < len(markers) else len(text)
         part = text[marker.start():end]
-        part = re.sub(r"[\t \u3000]+", " ", part).strip()
-        parts.append((int(marker.group(1)), part))
+        part = re.sub(r"[\t \u3000\r\n]+", " ", part).strip()
+        parts.append((order[marker.group("label")], part))
     ordered = [part for _, part in sorted(parts)]
     return "\n".join(([prefix] if prefix else []) + ordered)
 
@@ -259,8 +361,22 @@ def validate_numbered_subpart_layout(text: object) -> list[str]:
     if not isinstance(text, str):
         return []
     if normalize_numbered_subparts(text) != text:
-        return ["完整数字分题必须按 1 到 N 排序，并且每个分题独占一行"]
+        return ["完整数字或字母分题必须按自然顺序排列，并且每个分题独占一行"]
     return []
+
+
+def normalize_lesson_layout(lesson: dict) -> None:
+    for block in lesson.get("prose", []):
+        if block.get("kind") != "p":
+            continue
+        text = block.get("text")
+        normalized = normalize_prose_layout(text)
+        if normalized == text:
+            continue
+        block["text"] = normalized
+        changes = block.get("changes")
+        if isinstance(changes, list) and "layout" not in changes:
+            changes.append("layout")
 
 
 def normalize_exercise_layout(exercises: dict) -> None:
@@ -636,6 +752,7 @@ def validate_lesson(
     exercises_path = target / "exercises.json"
     figures_path = target / "figures.json"
     lesson = load(lesson_path)
+    normalize_lesson_layout(lesson)
     exercises = load(exercises_path)
     normalize_exercise_layout(exercises)
     figures = load(figures_path)
