@@ -60,6 +60,8 @@ cd app && npm run dev
 
 - `assemble` 的 `--toc` **不能省**：课的 id 是从教材目录认领的，没有它产品里就没有地址
 - ③ 和 `assemble` 的对账**不通过就是没做完**，回到 ② 修，不允许放行
+- `finalize` 必须可重复执行：同一 `page.png` 和同一已收口图框要复用上次审计中的精确
+  几何信息，禁止再次把精确框当粗框吸附，造成裁图像素和下游 FigureSpec 哈希漂移
 - `vectorize` 后必须再跑一次 `assemble`，把页目录中新生成的 SVG 同步到全书图库
 - 原始 `pages/`、`figures/`、`lessons/` 和 `book.json` 是忠实抽取层，生成现代版时不得修改
 - `adapt-prepare` 后只编辑 `editions/<edition>/`；改写后的 JSON 和新图必须通过
