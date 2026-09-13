@@ -131,6 +131,27 @@ def _block_position(ref: str) -> int | None:
     return int(match.group(1)) * 10_000 + int(match.group(2))
 
 
+def _page_segments(pages: list[int] | set[int]) -> list[tuple[int, int]]:
+    """Collapse extracted pages into contiguous ranges.
+
+    A book may be produced chapter by chapter, so a gap between extracted page
+    ranges is not evidence of missing exercises or figures.
+    """
+    ordered = sorted(set(pages))
+    if not ordered:
+        return []
+    segments = []
+    start = end = ordered[0]
+    for page in ordered[1:]:
+        if page == end + 1:
+            end = page
+            continue
+        segments.append((start, end))
+        start = end = page
+    segments.append((start, end))
+    return segments
+
+
 def _figure_owner(figure: dict, exercises: list[dict]) -> dict:
     """把共享练习图交给离原书图块最近的一题，只展示一次。"""
     figure_position = _block_position(figure["ref"])
@@ -250,16 +271,42 @@ def audit(lessons: list[dict], stream: list[dict], profile_path: Path) -> dict:
     if len(seq) != len(set(seq)):
         dup = sorted({n for n in seq if seq.count(n) > 1})
         errors.append(f"题号重复: {dup}")
-    gaps = [n for n in range(seq[0], seq[-1]) if n not in set(seq)] if seq else []
-    if gaps:
-        errors.append(f"题号缺号: {gaps}（可能漏页或漏题）")
+    for first_page, last_page in _page_segments({b["page"] for b in stream}):
+        segment_nums = sorted(
+            int(e["number"])
+            for lesson in lessons
+            for e in lesson["exercises"]
+            if (e["number"] or "").isdigit()
+            and any(
+                (position := _block_position(ref)) is not None
+                and first_page <= position // 10_000 <= last_page
+                for ref in e.get("pages", [])
+            )
+        )
+        gaps = [
+            n for n in range(segment_nums[0], segment_nums[-1])
+            if n not in set(segment_nums)
+        ] if segment_nums else []
+        if gaps:
+            errors.append(
+                f"题号缺号（页段 {first_page}-{last_page}）: {gaps}（可能漏页或漏题）")
 
     fignums = sorted({int(n) for b in stream if b["kind"] == "fig"
                       for n in FIGREF.findall(b.get("label") or "")})
-    fgaps = [n for n in range(fignums[0], fignums[-1]) if n not in set(fignums)] \
-        if fignums else []
-    if fgaps:
-        errors.append(f"图号缺号: {fgaps}（可能漏裁）")
+    for first_page, last_page in _page_segments({b["page"] for b in stream}):
+        segment_fignums = sorted({
+            int(n)
+            for b in stream
+            if b["kind"] == "fig" and first_page <= b["page"] <= last_page
+            for n in FIGREF.findall(b.get("label") or "")
+        })
+        fgaps = [
+            n for n in range(segment_fignums[0], segment_fignums[-1])
+            if n not in set(segment_fignums)
+        ] if segment_fignums else []
+        if fgaps:
+            errors.append(
+                f"图号缺号（页段 {first_page}-{last_page}）: {fgaps}（可能漏裁）")
 
     for lesson in lessons:
         exercise_figure_ids = [
@@ -329,7 +376,8 @@ def _toc_cards(toc: dict) -> list[dict]:
     return cards
 
 
-def check_toc(lessons: list[dict], toc_path: Path, book_id: str) -> list[str]:
+def check_toc(lessons: list[dict], toc_path: Path, book_id: str,
+              extracted_printed_pages: set[int] | None = None) -> list[str]:
     """TOC 是外部真源，做两件事：核对覆盖，并把小节钉到目录的**卡片 id** 上。
 
     app 的目录就是这份 TOC，一张「卡片」正是书里的一个小节（`math5-c1-s1-n1` = 子集），
@@ -364,9 +412,11 @@ def check_toc(lessons: list[dict], toc_path: Path, book_id: str) -> list[str]:
             warn.append(f"小节「{l['number']}. {l['title']}」在 TOC 里找不到对应条目")
 
     covered = {l.get("card_id") for l in lessons if l.get("card_id")}
-    pages = [l["start_printed"] for l in lessons if l["start_printed"]]
-    if pages:
-        lo, hi = min(pages), max(pages)
+    pages = extracted_printed_pages or {
+        l["start_printed"] for l in lessons if l["start_printed"]
+    }
+    segments = _page_segments(pages)
+    if segments:
         missing = [
             (
                 f"{card['printedNumber']}. {card['title']}（印刷页 {card['page']}）"
@@ -374,7 +424,8 @@ def check_toc(lessons: list[dict], toc_path: Path, book_id: str) -> list[str]:
                 else f"{card['title']}（印刷页 {card['page']}）"
             )
             for card in cards
-            if lo <= card["page"] <= hi and card["id"] not in covered
+            if any(lo <= card["page"] <= hi for lo, hi in segments)
+            and card["id"] not in covered
         ]
         if missing:
             warn.append(f"TOC 里这些小节落在已抽范围内却没装订出来: {'; '.join(missing)}")
@@ -395,7 +446,12 @@ def run(book: Path, toc: Path | None, profile: Path, strict: bool = True) -> int
     report = audit(lessons, merged, profile)
     report["warnings"] = warn_merge + warn_fig + report["warnings"]
     if toc:
-        report["warnings"] += check_toc(lessons, toc, book.name)
+        report["warnings"] += check_toc(
+            lessons,
+            toc,
+            book.name,
+            {b["printed_page"] for b in stream if b.get("printed_page") is not None},
+        )
 
     # 全书图库：页目录里的裁图按原书图号汇总，重号即报
     lib = book / "figures"

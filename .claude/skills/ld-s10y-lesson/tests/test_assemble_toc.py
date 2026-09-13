@@ -65,6 +65,26 @@ class TocBindingTest(unittest.TestCase):
             ["alg6-c1-s1-n1", "alg6-c1-s1-n2"],
         )
 
+    def test_toc_coverage_ignores_unextracted_page_ranges(self) -> None:
+        toc = REPO / "ssot-resources/soviet10year-textbooks/toc/6a/zh.json"
+        lessons = [
+            {"number": "1", "title": "数式", "start_printed": 1},
+            {"number": "30", "title": "自然数指数幂", "start_printed": 152},
+        ]
+
+        warnings = assemble.check_toc(
+            lessons,
+            toc,
+            "6a",
+            extracted_printed_pages={1, 152},
+        )
+
+        self.assertEqual(warnings, [])
+        self.assertEqual(
+            [lesson["card_id"] for lesson in lessons],
+            ["alg6-c1-s1-n1", "alg6-c4-s1-n30"],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,60 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "6a",
+  "page": 195,
+  "printed_page": 189,
+  "source": {
+    "pdf": "6a 苏联十年制学校数学教材 代数 六年级.pdf",
+    "pdf_sha256": "5bf4fa02c7478d22e88fb1029557fd986e7f1e862d53d449ba96bfc8cf5a3548",
+    "pdf_page": 195
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1473,
+    "h": 2239,
+    "sha256": "fd4e06c9d30bc9681cadaea691e6f090d290ed0566e2cb2493e249a26a41d16b"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [],
+  "printed_lines": 14,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 691 -->
+691．用适当的数代替指数中的 $n$ 和 $m$，使所得的等式对于变量取任何值时都是真等式：　а）$\frac{a^{n+2}}{b^{m+12}}=\frac{a^5}{b^{20}}\cdot\frac{a^{13}}{b^{14}}$；　б）$\frac{x^{100-n}}{y^{m-20}}=\frac{x^n}{y^8}\cdot\frac{y^2}{x^2}$．
+
+<!-- ex 692 -->
+692*．求下列各式的值：　а）$\frac{25^{25}}{6^{60}}\cdot\frac{3^{31}}{5^{40}}\cdot\frac{2^{29}}{5^{10}}$；　б）$\frac{135^{36}}{12^{12}}\cdot\frac{8^8}{9^{50}}\cdot\frac{3^3}{25^{18}}$．
+
+<!-- exhead -->
+第37小节
+
+<!-- ex 693 -->
+693．把下列除式写成分式：
+а）$\frac{56a^{10}}{15b^{12}}:\frac{70a^5}{9b^{18}}$；　　б）$\frac{98x^3y^4}{135z^{16}}:\frac{147x^4y^3}{100z^{20}}$；
+в）* $\frac{x^{n+2}}{y^{n-2}}:\frac{x^n}{y^{n+1}}$；　　г）* $\frac{a^{k-2}}{b^{k-3}}:\frac{a^{k+2}}{b^{k+3}}$；
+д）* $12a^p:\frac{6a^{p-2}}{q^4}$；　　е）* $\frac{30b^n}{c^{10}}:\left(1\frac15b^{n-3}\right)$．
+
+<!-- exhead -->
+第38小节
+
+<!-- ex 694 -->
+694．把下列各式写成分式：
+а）$\left(\frac{b^3}{c^4}\right)^3$；　б）$\left(-\frac{x^5}{y^6}\right)^4$；　в）$\left(-\frac{a^n}{b^{n+1}}\right)^2$；　г）$\left(\frac{x^3y^5}{z^{n+1}}\right)^3$；　д）* $\left(-\frac{b^9}{c^{10}}\right)^{2m}\ (m\in N)$；　е）* $\left(-\frac{y^4}{x^2}\right)^{2n+1}\ (n\in N)$．
+
+<!-- ex 695 open -->
+695．化简：
+а）$\left(-\frac{5k^5}{3c^4}\right)^5:\left(-\frac{10k^8}{9c^7}\right)^3$；　　б）$\left(-\frac{6a^4}{5b^3}\right)^4\cdot\left(-\frac{25b^4}{9a^5}\right)^3$；
+в）$\left(-\frac{15p^7}{8q^4}\right)^3\cdot\left(\frac{4q^3}{5p^5}\right)^4$；　　г）$\left(-\frac{10a^4}{9y^6}\right)^4:\left(-\frac{5a^5}{27y^8}\right)^3$；
+
+<!-- foot -->
+· 189 ·
