@@ -282,6 +282,27 @@ class EditionTest(unittest.TestCase):
         )
         self.assertTrue(any("俄文人名" in error for error in errors))
 
+    def test_text_validation_allows_cultural_copy_inside_latex_text(self) -> None:
+        errors = edition.validate_text(
+            "集合 $\\{\\text{КОТ，СОН，ТОК}\\}$ 中哪些单词由相同字母组成？",
+            "集合 $\\{\\text{ACT，CAT，TAC}\\}$ 中哪些单词由相同字母组成？",
+            ["context"],
+            [],
+            "exercise",
+            [],
+        )
+        self.assertEqual(errors, [])
+
+        errors = edition.validate_text(
+            "计算 $x+\\text{10 apples}$。",
+            "计算 $x-\\text{10 oranges}$。",
+            ["context"],
+            [],
+            "exercise",
+            [],
+        )
+        self.assertTrue(any("数学公式发生变化" in error for error in errors))
+
     def test_context_numbers_must_be_declared_exactly(self) -> None:
         errors = edition.validate_text(
             "数据来自 1970—1974 年.",

@@ -9,7 +9,7 @@
  * 按 ; 匹配会一个字体都替换不到，页面看着能用（系统字体兜底）但并不自包含。
  * 所以内联数为 0 直接抛错，不允许静默降级。
  *
- * 用法: render_lesson.js <bookDir> [--edition <name>] [--lesson <lessonId>]
+ * 用法: render_lesson.js <bookDir> [--edition <name>] [--lesson <lessonId>]...
  */
 const fs = require("fs");
 const path = require("path");
@@ -21,9 +21,10 @@ const KATEX_DIST = path.join(SKILL, "node_modules", "katex", "dist");
 const args = process.argv.slice(2);
 const bookDir = args.find((arg) => !arg.startsWith("--"));
 const editionName = args.includes("--edition") ? args[args.indexOf("--edition") + 1] : null;
-const onlyLesson = args.includes("--lesson") ? args[args.indexOf("--lesson") + 1] : null;
+const onlyLessons = new Set(args.flatMap((arg, index) =>
+  arg === "--lesson" && args[index + 1] ? [args[index + 1]] : []));
 if (!bookDir) {
-  console.error("用法: render_lesson.js <bookDir> [--edition <name>] [--lesson <lessonId>]");
+  console.error("用法: render_lesson.js <bookDir> [--edition <name>] [--lesson <lessonId>]...");
   process.exit(2);
 }
 
@@ -147,7 +148,7 @@ function page(title, crumb, bodyHtml) {
 const book = path.resolve(bookDir);
 const contentRoot = editionName ? path.join(book, "editions", editionName) : book;
 const lessonDirs = fs.readdirSync(path.join(contentRoot, "lessons"))
-  .filter((d) => !onlyLesson || d === onlyLesson).sort();
+  .filter((d) => onlyLessons.size === 0 || onlyLessons.has(d)).sort();
 const done = [];
 
 for (const lid of lessonDirs) {

@@ -68,6 +68,30 @@ def _find_pdf(a) -> Path:
     return hits[0]
 
 
+def _reusable_figure_geometry(
+    meta: dict,
+    prior_audit: dict,
+    figure_id: str,
+    requested_box: list[int],
+    render_sha256: str,
+) -> tuple[list[int], dict] | None:
+    if not meta.get("provenance", {}).get("normalized"):
+        return None
+    if meta.get("render", {}).get("sha256") != render_sha256:
+        return None
+
+    for figure in prior_audit.get("figures", []):
+        if figure.get("id") != figure_id or figure.get("box") != requested_box:
+            continue
+        info = {
+            key: value
+            for key, value in figure.items()
+            if key not in {"id", "label", "box"}
+        }
+        return list(requested_box), info
+    return None
+
+
 TEMPLATE = """---
 {meta}
 ---
@@ -137,6 +161,14 @@ def cmd_finalize(a) -> int:
     profile = nz.load_profile(DEFAULT_PROFILE)
     img = Image.open(pdir / "page.png")
     ink = layout.ink_mask(img)
+    render_sha256 = layout.sha256_file(pdir / "page.png")
+    audit_path = pdir / "audit.json"
+    prior_audit = {}
+    if audit_path.exists():
+        try:
+            prior_audit = json.loads(audit_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            prior_audit = {}
     errors: list[str] = []
 
     # 1) 插图：粗框吸附到真实墨迹再裁；文件名用原书图号，跨页唯一
@@ -149,7 +181,10 @@ def cmd_finalize(a) -> int:
             errors.append(f"fig {b.get('label')}: 缺 box")
             continue
         b["id"] = B.fig_id(b.get("label"), a.page, seq)
-        box, info = layout.snap(ink, b["box"])
+        reused = _reusable_figure_geometry(
+            meta, prior_audit, b["id"], b["box"], render_sha256
+        )
+        box, info = reused if reused is not None else layout.snap(ink, b["box"])
         b["box"] = box
         layout.crop(pdir / "page.png", box, pdir / "figures" / f"{b['id']}.png")
         figs.append({"id": b["id"], "label": b.get("label"), "box": box, **info})
@@ -225,7 +260,7 @@ def cmd_finalize(a) -> int:
                    "pdf_page": a.page},
         "render": {"dpi": meta.get("render", {}).get("dpi", 300),
                    "w": img.width, "h": img.height,
-                   "sha256": layout.sha256_file(pdir / "page.png")},
+                   "sha256": render_sha256},
         "profile": {"id": profile["id"], "sha256": layout.sha256_file(DEFAULT_PROFILE)},
         "printed_lines": got, "figures": [{"id": f["id"], "label": f["label"],
                                            "box": f["box"]} for f in figs],
@@ -306,8 +341,8 @@ def cmd_render(a) -> int:
     args = ["node", str(TOOLS / "render_lesson.js"), str(book)]
     if a.edition:
         args += ["--edition", a.edition]
-    if a.lesson:
-        args += ["--lesson", a.lesson]
+    for lesson in a.lesson or []:
+        args += ["--lesson", lesson]
     return subprocess.run(args).returncode
 
 
@@ -370,7 +405,7 @@ def main() -> int:
     p = sub.add_parser("render", help="自包含 HTML：课文页 + 习题页")
     common(p, page=False)
     p.add_argument("--edition", default=None)
-    p.add_argument("--lesson", default=None)
+    p.add_argument("--lesson", action="append")
     p.set_defaults(fn=cmd_render)
 
     p = sub.add_parser("publish", help="把已通过审计的 edition 写进内容库")

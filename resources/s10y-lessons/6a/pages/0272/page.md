@@ -1,0 +1,46 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "6a",
+  "page": 272,
+  "printed_page": 266,
+  "source": {
+    "pdf": "6a 苏联十年制学校数学教材 代数 六年级.pdf",
+    "pdf_sha256": "5bf4fa02c7478d22e88fb1029557fd986e7f1e862d53d449ba96bfc8cf5a3548",
+    "pdf_page": 272
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1473,
+    "h": 2239,
+    "sha256": "37a09878678906a3be32af0dda61a6352fe7a4b2fb84c473cb78526f749cea5e"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [],
+  "printed_lines": 10,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 1023 cont -->
+а) $x^2+y^2+2xy+4$；　　　　　　б) $4x^2+z^2-4xz+1$；
+в) $a^2+2a+b^2+1$；　　　　　　 г) $9b^2-6b+4c^2+1$；
+д) $a^2+2ab+2b^2+2b+1$；　　　　е) $x^2-4xy+y^2+x^2y^2+1$；
+ж) $x^2+10x+26+y^2+2y$；　　　　з) $p^2-6p+13+q^2+4q$．
+
+<!-- ex 1024 -->
+1024*．把多项式写成两个式子的平方差，并且分解因式：
+а) $x^2+y^2+2xy-1$；　　　　　　б) $a^2+b^2-2ab-25$；
+в) $36-b^2-c^2+2bc$；　　　　　 г) $49-2ax-a^2-x^2$；
+д) $1-25x^2+10xy-y^2$；　　　　 е) $b^2-a^2-12a-36$；
+ж) $81a^2+6bc-9b^2-c^2$；　　　 з) $b^2c^2-4bc-b^2-c^2+1$．
+
+<!-- foot -->
+· 266 ·
