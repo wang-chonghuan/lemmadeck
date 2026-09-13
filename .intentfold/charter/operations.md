@@ -21,7 +21,8 @@ fixed main port recorded in `.intentfold/project.json`.
 The database is remote: the shared Supabase project, schema `lemmadeck-schema`, reached through
 `LEMMADECK_DATABASE_URL`. There is no local database. Content generation (`ld-s10y-lesson`,
 `ld-s10y-image`, `ld-s10y-answer`, `sr-story`, `sr-voa1500`, `ld-galaxy`) runs as one-off scripts,
-not as a service.
+not as a service. Their committed resource inputs and outputs live under `ssot-resources/`;
+rebuildable working files live under `.tmp/` and may be removed after the run.
 
 **Environments**
 

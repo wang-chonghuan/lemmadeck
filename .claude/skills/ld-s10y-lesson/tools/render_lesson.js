@@ -9,7 +9,7 @@
  * 按 ; 匹配会一个字体都替换不到，页面看着能用（系统字体兜底）但并不自包含。
  * 所以内联数为 0 直接抛错，不允许静默降级。
  *
- * 用法: render_lesson.js <bookDir> [--edition <name>] [--lesson <lessonId>]...
+ * 用法: render_lesson.js <bookDir> --out <dir> [--edition <name>] [--lesson <lessonId>]...
  */
 const fs = require("fs");
 const path = require("path");
@@ -21,10 +21,11 @@ const KATEX_DIST = path.join(SKILL, "node_modules", "katex", "dist");
 const args = process.argv.slice(2);
 const bookDir = args.find((arg) => !arg.startsWith("--"));
 const editionName = args.includes("--edition") ? args[args.indexOf("--edition") + 1] : null;
+const outRoot = args.includes("--out") ? args[args.indexOf("--out") + 1] : null;
 const onlyLessons = new Set(args.flatMap((arg, index) =>
   arg === "--lesson" && args[index + 1] ? [args[index + 1]] : []));
-if (!bookDir) {
-  console.error("用法: render_lesson.js <bookDir> [--edition <name>] [--lesson <lessonId>]...");
+if (!bookDir || !outRoot) {
+  console.error("用法: render_lesson.js <bookDir> --out <dir> [--edition <name>] [--lesson <lessonId>]...");
   process.exit(2);
 }
 
@@ -153,6 +154,8 @@ const done = [];
 
 for (const lid of lessonDirs) {
   const dir = path.join(contentRoot, "lessons", lid);
+  const outDir = path.resolve(outRoot, lid);
+  fs.mkdirSync(outDir, { recursive: true });
   const L = JSON.parse(fs.readFileSync(path.join(dir, "lesson.json"), "utf8"));
   const X = JSON.parse(fs.readFileSync(path.join(dir, "exercises.json"), "utf8"));
   const crumb = [L.chapter, L.section, `印刷页 ${L.start_printed ?? "?"}`]
@@ -169,7 +172,7 @@ for (const lid of lessonDirs) {
     }
   }
   body += `<a class="jump" href="exercises.html">去做题 · ${X.count} 道 →</a>`;
-  fs.writeFileSync(path.join(dir, "text.html"),
+  fs.writeFileSync(path.join(outDir, "text.html"),
     page(L.printed_title || L.title, crumb, body));
 
   // ---- 习题页：每题独立编号，带自己的图
@@ -187,9 +190,9 @@ for (const lid of lessonDirs) {
   }
   if (out) out += "</ol>";
   out += `<a class="jump" href="text.html">← 回课文</a>`;
-  fs.writeFileSync(path.join(dir, "exercises.html"),
+  fs.writeFileSync(path.join(outDir, "exercises.html"),
     page(`${L.printed_title || L.title} · 习题`, crumb, out));
-  done.push({ lesson: lid, exercises: X.count, prose: prose.length });
+  done.push({ lesson: lid, exercises: X.count, prose: prose.length, output: outDir });
 }
 
 console.log(JSON.stringify({ ok: true, lessons: done }, null, 2));

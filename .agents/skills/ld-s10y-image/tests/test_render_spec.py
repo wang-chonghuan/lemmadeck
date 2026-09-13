@@ -54,6 +54,39 @@ class RendererNamespaceTests(unittest.TestCase):
             self.assertIn("ld-fig-test-number-line_ClipFull", first_ids)
             self.assertIn("ld-fig-test-second_ClipFull", second_ids)
 
+    def test_deterministic_report_omits_preview_png(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            spec = json.loads(FIXTURE.read_text(encoding="utf-8"))
+            spec_path = directory / "figure.spec.json"
+            svg_path = directory / "figure.svg"
+            png_path = directory / "preview.png"
+            report_path = directory / "figure.svg.json"
+            spec_path.write_text(json.dumps(spec), encoding="utf-8")
+
+            result = subprocess.run(
+                [
+                    "node",
+                    str(RENDERER),
+                    "--spec",
+                    str(spec_path),
+                    "--svg",
+                    str(svg_path),
+                    "--png",
+                    str(png_path),
+                    "--report",
+                    str(report_path),
+                ],
+                cwd=REPO,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            self.assertEqual(set(report["output"]), {"svg"})
+            self.assertTrue(png_path.is_file())
+
 
 if __name__ == "__main__":
     unittest.main()

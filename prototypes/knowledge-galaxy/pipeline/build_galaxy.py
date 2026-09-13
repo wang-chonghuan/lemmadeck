@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Merge layout.json + hub names into web/galaxy.json for the prototype."""
+"""Merge layout.json + hub names into the canonical runtime galaxy.json."""
 
 import json
 import os
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "out")
-WEB = os.path.join(HERE, "..", "web")
+APP_PUBLIC = os.path.join(HERE, "..", "..", "..", "ssot-resources", "public")
 
 # Hub names, reviewed against each cluster's nearest-to-centroid samples.
 # NOTE: keyed by KMeans cluster index — any change to the embedding texts
@@ -96,14 +96,13 @@ for n in layout["nodes"]:
     stars.append({**n, "bookTitle": r["bookTitle"], "bookTitleEn": r.get("bookTitleEn", r["bookTitle"])})
 
 galaxy = {"hubs": hubs, "edges": edges, "stars": stars}
-APP_PUBLIC = os.path.join(HERE, "..", "..", "..", "app", "public")
-for dest in (f"{WEB}/galaxy.json", os.path.join(APP_PUBLIC, "galaxy.json")):
-    with open(dest, "w") as f:
-        json.dump(galaxy, f, ensure_ascii=False)
+dest = os.path.join(APP_PUBLIC, "galaxy.json")
+with open(dest, "w") as f:
+    json.dump(galaxy, f, ensure_ascii=False)
 
 cross_named = [(NAMES[e['a']], NAMES[e['b']], e['w']) for e in edges if disc[e['a']] != disc[e['b']]]
 from collections import Counter
 by_disc = Counter(s["discipline"] for s in stars)
 print(f"hubs={len(hubs)} edges={len(edges)} stars={len(stars)} dropped={dropped} {dict(by_disc)}")
 print("cross-discipline edges:", cross_named)
-print("size:", os.path.getsize(f'{WEB}/galaxy.json') // 1024, "KB")
+print("size:", os.path.getsize(dest) // 1024, "KB")

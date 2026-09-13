@@ -100,7 +100,10 @@ def main() -> int:
     parser.add_argument("--book", required=True)
     parser.add_argument("--edition", required=True)
     parser.add_argument("--figure", required=True)
-    parser.add_argument("--root", default="resources/s10y-lessons")
+    parser.add_argument(
+        "--root",
+        default="ssot-resources/soviet10year-textbooks/artifacts",
+    )
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
 

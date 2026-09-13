@@ -6,11 +6,13 @@ import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 
 const SSOT = fileURLToPath(new URL('../ssot-resources', import.meta.url))
+const PUBLIC = fileURLToPath(new URL('../ssot-resources/public', import.meta.url))
 
 export default defineConfig({
   // app/ lives under an npm workspace; the shared .env stays at the repo root
   // (the content skills + n-easyapp read it there), so load env from the parent.
   envDir: '..',
+  publicDir: PUBLIC,
   // This project's fixed dev port (STEMROBIN-111) — the single source of truth;
   // .claude/launch.json attaches here instead of passing --port.
   server: {
@@ -33,6 +35,14 @@ export default defineConfig({
     tailwindcss(),
     tanstackStart(),
     viteReact(),
-    nitro(),
+    nitro({
+      publicAssets: [
+        {
+          baseURL: '/',
+          dir: PUBLIC,
+          maxAge: 0,
+        },
+      ],
+    }),
   ],
 })

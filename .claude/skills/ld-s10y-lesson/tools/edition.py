@@ -90,6 +90,10 @@ def edition_dir(args: argparse.Namespace) -> Path:
     return Path(args.root) / args.book / "editions" / args.edition
 
 
+def work_edition_dir(args: argparse.Namespace) -> Path:
+    return Path(args.work) / "adapt" / args.book / args.edition
+
+
 def source_dir(args: argparse.Namespace) -> Path:
     return Path(args.root) / args.book
 
@@ -153,11 +157,12 @@ def figure_sources(book: Path, figures: list[dict]) -> list[dict]:
 def cmd_prepare(args: argparse.Namespace) -> int:
     book = source_dir(args)
     edition = edition_dir(args)
+    work_edition = work_edition_dir(args)
     profile_path = Path(args.profile)
     profile = load(profile_path)
     book_index = edition / "book.json"
     existing_lessons = load(book_index).get("lessons", []) if book_index.exists() else []
-    dump(book_index, {
+    dump(work_edition / "book.template.json", {
         "schema": BOOK_SCHEMA,
         "edition": args.edition,
         "status": "draft",
@@ -177,7 +182,7 @@ def cmd_prepare(args: argparse.Namespace) -> int:
         exercises_source = source_ref(book, exercises_path)
         raw_lesson = lesson_source["data"]
         raw_exercises = exercises_source["data"]
-        target = edition / "lessons" / lesson_id
+        target = work_edition / "lessons" / lesson_id
 
         lesson_template = {
             **copy.deepcopy(raw_lesson),
@@ -216,8 +221,9 @@ def cmd_prepare(args: argparse.Namespace) -> int:
             f"[adapt-prepare] {lesson_id}: "
             f"正文 {len(raw_lesson.get('prose', []))} 块, "
             f"题 {len(raw_exercises.get('exercises', []))} 道, "
-            f"图 {len(raw_lesson.get('figures', []))} 张"
+            f"图 {len(raw_lesson.get('figures', []))} 张 -> {target}"
         )
+        print(f"  完成后写入 {edition / 'lessons' / lesson_id}")
     return 0
 
 
@@ -1077,7 +1083,11 @@ def common(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--book", required=True)
     parser.add_argument("--edition", required=True)
     parser.add_argument("--lesson", action="append")
-    parser.add_argument("--root", default="resources/s10y-lessons")
+    parser.add_argument(
+        "--root",
+        default="ssot-resources/soviet10year-textbooks/artifacts",
+    )
+    parser.add_argument("--work", default=".tmp/ld-s10y-lesson")
     parser.add_argument(
         "--profile",
         default=str(Path(__file__).resolve().parent.parent / "profiles" / "modern-us-neutral.json"),

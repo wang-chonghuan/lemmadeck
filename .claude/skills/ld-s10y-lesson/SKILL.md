@@ -36,8 +36,8 @@ description: 按书名、章、节、连续编号单元、无编号补充习题�
 P=.claude/skills/ld-s10y-lesson/.venv/bin/python
 S=.claude/skills/ld-s10y-lesson/tools/p2c.py
 
-for n in $(seq 21 31); do $P $S prepare --book 5m --page $n; done   # ① 备料
-#   ② 逐页读 page.grid.png，把 page.template.md 填成 page.md
+for n in $(seq 21 31); do $P $S prepare --book 5m --page $n; done   # ① 在 .tmp 备料
+#   ② 逐页读 .tmp 中的 page.grid.png/template，把 page.md 写入持久 pages/<page>/
 for n in $(seq 21 31); do $P $S finalize --book 5m --page $n; done  # ③ 收口，必须全绿
 
 $P $S assemble  --book 5m --toc ssot-resources/soviet10year-textbooks/toc/5m/zh.json
@@ -51,7 +51,8 @@ $P $S adapt-finalize --book 5m --edition modern-us-neutral \
   --lesson math5-c1-s1-n5 --lesson math5-c1-s1-n6 --lesson math5-c1-s1-n7
 $P $S render --book 5m --edition modern-us-neutral \
   --lesson math5-c1-s1-n5 --lesson math5-c1-s1-n6 --lesson math5-c1-s1-n7
-node .claude/skills/ld-s10y-lesson/tools/publish.mjs resources/s10y-lessons/5m \
+node .claude/skills/ld-s10y-lesson/tools/publish.mjs \
+  ssot-resources/soviet10year-textbooks/artifacts/5m \
   --edition modern-us-neutral \
   --lesson math5-c1-s1-n5 --lesson math5-c1-s1-n6 --lesson math5-c1-s1-n7
 # ⑤ 按 ld-s10y-answer 的 cap2、cap3 为同一批 lesson 依次发布答案键和交互规格
@@ -125,29 +126,34 @@ cd app && npm run dev
 ## 目录布局
 
 ```
-.tmp/ori-books/soviet10years/5m ….pdf   ← 原书：{书系列名}/{书名}.pdf
-resources/s10y-lessons/5m/
-├── pages/0015/              ← cap1 页级产物
+ssot-resources/soviet10year-textbooks/sources/soviet10years/5m ….pdf
+ssot-resources/soviet10year-textbooks/artifacts/5m/
+├── pages/0015/              ← cap1 持久页级事实
 │   ├── page.md              ★ 带类型的块
 │   ├── page.json            结构化视图（cap2 的输入）
-│   ├── page.png / page.grid.png / layout.json / audit.json
-│   └── figures/fig-07.png|svg
+│   └── audit.json           行数、框和规范化审计
 ├── figures/fig-07.png|svg   ← 全书图库，按**原书图号**命名，跨页唯一
 ├── lessons/2-交集/          ← ★ 课程单元
 │   ├── lesson.json          课文块 + 元数据
 │   ├── lesson.md            完整课文（跨页、跨图都接好）
 │   ├── exercises.json       ★ 每题独立：题号、栏目、题干、图号引用；共享图只挂到一题展示
-│   ├── text.html            自包含课文页（白底）
-│   └── exercises.html       自包含习题页
 ├── editions/modern-us-neutral/
 │   ├── figures/             ★ ld-s10y-image 产物 + 每图一份 FigureSpec
 │   ├── lessons/<card-id>/   ★ 可发布的现代 lesson/exercises/figures JSON + 审计
 │   └── book.json            edition 索引
 └── book.json                全书索引 + 审计报告
+
+.tmp/ld-s10y-lesson/5m/
+├── pages/0015/
+│   ├── page.png / page.grid.png / layout.json / page.template.md
+│   └── figures/fig-07.png|svg
+└── render/<edition>/<card-id>/{text,exercises}.html
 ```
 
-**book id = 书名首段**（`5m`、`8a`、`9-10g`）。默认跨 `.tmp/ori-books/` 所有书系列
-查找，撞名用 `--series`。
+**book id = 书名首段**（`5m`、`8a`、`9-10g`）。默认跨
+`ssot-resources/soviet10year-textbooks/sources/` 下的书系列查找，撞名用 `--series`。
+`.tmp/` 中的页面渲染、模板、页级裁图和离线 HTML 可随时删除；重新 `prepare`、`finalize`、
+`vectorize`、`assemble` 即可恢复。持久 JSON 不得引用 `.tmp/`。
 
 工具入口：`.claude/skills/ld-s10y-lesson/.venv/bin/python .claude/skills/ld-s10y-lesson/tools/p2c.py`
 
@@ -165,8 +171,8 @@ cd <skill> && npm install katex @resvg/resvg-js
 ## cap1 — 单页识别
 
 ```bash
-p2c.py prepare  --book 5m --page 15     # 渲染整页 + 100px 坐标网格图
-#  ↓ 读 page.grid.png，把 page.template.md 填成 page.md
+p2c.py prepare  --book 5m --page 15     # 在 .tmp 渲染整页 + 100px 坐标网格图
+#  ↓ 读 .tmp 中的 page.grid.png/template，写 artifacts/5m/pages/0015/page.md
 p2c.py finalize --book 5m --page 15     # 吸附裁图 + 规范化 + 页级体检
 ```
 
@@ -251,7 +257,8 @@ p2c.py assemble --book 5m [--toc <toc.json>]
 p2c.py vectorize --book 5m [--page N] [--turdsize 2]
 ```
 
-**位图描摹**（potrace），不是让模型看图重画。描摹是确定性的、逐像素还原轮廓；
+**位图描摹**（potrace），不是让模型看图重画。页级 PNG/SVG 只存在于 `.tmp/`，`assemble`
+把最终版本提升到持久全书图库。描摹是确定性的、逐像素还原轮廓；
 模型重画看着漂亮，但那是再创作——会把椭圆画成圆、把格子数画错、把标注挪位，
 与"不增删改"直接冲突。图形和文字适用同一条原则。
 
@@ -270,7 +277,8 @@ SVG 用 `fill="currentColor"`，HTML 里可直接用 CSS 换色。
 ```bash
 p2c.py adapt-prepare --book 5m --edition modern-us-neutral \
   --lesson math5-c1-s2-n12 --lesson math5-c1-s2-n13
-# 编辑 editions/modern-us-neutral/lessons/<id>/*.json，
+# 编辑 .tmp/ld-s10y-lesson/adapt/5m/modern-us-neutral/lessons/<id>/*.template.json，
+# 验收后分别提升为持久目录中的 lesson.json、exercises.json、figures.json，
 # 并用 ld-s10y-image 生成图像产物和 *.spec.json
 p2c.py adapt-finalize --book 5m --edition modern-us-neutral \
   --lesson math5-c1-s2-n12 --lesson math5-c1-s2-n13
@@ -278,7 +286,10 @@ p2c.py adapt-finalize --book 5m --edition modern-us-neutral \
 
 这一层是忠实抽取与产品内容之间的唯一转换层：
 
-1. `adapt-prepare` 把原始 lesson/exercises 完整快照和 SHA 写入新 JSON，原始文件不动。
+1. `adapt-prepare` 把原始 lesson/exercises 完整快照和 SHA 写入 `.tmp/` 模板，原始文件
+   不动。编辑模板后，只有通过内容验收的结果才分别以 `lesson.json`、`exercises.json`
+   和 `figures.json` 写入 `artifacts/<book>/editions/<edition>/lessons/<id>/`；模板本身
+   不得进入持久目录。
 2. 只改文化语境，不改知识点、题号、分组、公式、图引用和题量；非公式数字确需更新时，
    必须逐项写入 `numeric_changes`，并在 `changes` 中包含 `context-number`。
 3. 发布文本不得含 profile 禁词或西里尔字母；小问标号改用拉丁字母。
@@ -322,8 +333,9 @@ context package、渲染路由、FigureSpec、`n-azure` 和视觉门禁见
 p2c.py render --book 5m --edition modern-us-neutral [--lesson <cardId>]...
 ```
 
-每个单元两张白底页：`text.html`（课文，原书无正文时为空）+ `exercises.html`
-（每题独立编号，共享练习图只展示一次）。
+每个单元两张白底预览：`text.html`（课文，原书无正文时为空）+ `exercises.html`
+（每题独立编号，共享练习图只展示一次），只写
+`.tmp/ld-s10y-lesson/render/<book>/<edition>/`。
 自包含指不依赖网络也不依赖同级文件：KaTeX 服务端渲染成静态 HTML（页面不要 JS）、
 CSS 与 20 个 woff2 字体内联成 data URI，插图 SVG 或 PNG 都内联。
 
@@ -336,7 +348,8 @@ CSS 与 20 个 woff2 字体内联成 data URI，插图 SVG 或 PNG 都内联。
 ## cap6 — 生产入库
 
 ```bash
-node .claude/skills/ld-s10y-lesson/tools/publish.mjs resources/s10y-lessons/5m \
+node .claude/skills/ld-s10y-lesson/tools/publish.mjs \
+  ssot-resources/soviet10year-textbooks/artifacts/5m \
   --edition modern-us-neutral [--lesson <cardId>]... [--dry]
 ```
 

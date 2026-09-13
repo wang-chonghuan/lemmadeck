@@ -434,6 +434,7 @@ class EditionTest(unittest.TestCase):
             )
             args = Namespace(
                 root=str(root),
+                work=str(root / "work"),
                 book="5m",
                 edition="modern-us-neutral",
                 lesson=[lesson_id],
@@ -442,10 +443,30 @@ class EditionTest(unittest.TestCase):
             )
             self.assertEqual(edition.cmd_prepare(args), 0)
 
+            template_target = (
+                root
+                / "work"
+                / "adapt"
+                / "5m"
+                / args.edition
+                / "lessons"
+                / lesson_id
+            )
             target = book / "editions" / args.edition / "lessons" / lesson_id
-            shutil.copy2(target / "lesson.template.json", target / "lesson.json")
-            shutil.copy2(target / "exercises.template.json", target / "exercises.json")
-            shutil.copy2(target / "figures.template.json", target / "figures.json")
+            target.mkdir(parents=True)
+            shutil.copy2(
+                template_target / "lesson.template.json",
+                target / "lesson.json",
+            )
+            shutil.copy2(
+                template_target / "exercises.template.json",
+                target / "exercises.json",
+            )
+            shutil.copy2(
+                template_target / "figures.template.json",
+                target / "figures.json",
+            )
+            self.assertFalse(any(target.glob("*.template.json")))
             figures = edition.load(target / "figures.json")
             figures["figures"][0].update({
                 "png": "figures/fig-01.png",

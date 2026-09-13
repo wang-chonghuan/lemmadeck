@@ -20,11 +20,11 @@ Read the routed file directly; don't duplicate its content here.
 | Hard boundaries needing human approval | the `## Redlines` section of each `.intentfold/charter/` file |
 | Engineering norms, architecture, stack, checks, landing | `.intentfold/charter/engineering.md` |
 | Run / test / acceptance / deploy / operations | `.intentfold/charter/operations.md` |
-| UI stack, tokens, design rules | `.intentfold/charter/ui.md` → `resources/reference/DESIGN.md` |
+| UI stack, tokens, design rules | `.intentfold/charter/ui.md` → `ssot-resources/reference/DESIGN.md` |
 | Machine-current module facts (reverse-engineered) | `.evodocs/modules/` |
 | Ticket spec / acceptance criteria | the ticket in plane, live — never a local copy |
 | Content-generation skills | `.agents/skills/` (`sr-story`, `sr-voa1500`, `ld-galaxy`, `ld-s10y-image`) |
-| Soviet 10 Years 教材 → lesson / exercise | `.claude/skills/ld-s10y-lesson/`（现代图委托 `ld-s10y-image`；产物在 `resources/s10y-lessons/`） |
+| Soviet 10 Years 教材 → lesson / exercise | `.claude/skills/ld-s10y-lesson/`（现代图委托 `ld-s10y-image`；产物在 `ssot-resources/soviet10year-textbooks/artifacts/`） |
 | Soviet 10 Years 书后答案 → answer | `.claude/skills/ld-s10y-answer/` |
 
 ## Frozen directories

@@ -170,6 +170,22 @@ def _figure_owner(figure: dict, exercises: list[dict]) -> dict:
     return min(exercises, key=distance)
 
 
+def promote_figures(book: Path, work: Path | None, warnings: list[str]) -> None:
+    """Promote rebuilt page figures without clearing the durable book library."""
+    library = book / "figures"
+    library.mkdir(parents=True, exist_ok=True)
+    page_root = work if work is not None else book
+    seen = {}
+    for png in sorted(page_root.glob("pages/*/figures/*.png")):
+        if png.stem in seen:
+            warnings.append(
+                f"图号 {png.stem} 在 {seen[png.stem]} 和 {png.parent.parent.name} 各出现一次")
+        seen[png.stem] = png.parent.parent.name
+        for source in (png, png.with_suffix(".svg")):
+            if source.exists():
+                shutil.copy2(source, library / source.name)
+
+
 def claim_figures(lessons: list[dict], stream: list[dict]) -> list[str]:
     """按语义认领图：正文图留正文，练习共享图只在练习区展示一次。"""
     warn = []
@@ -432,7 +448,13 @@ def check_toc(lessons: list[dict], toc_path: Path, book_id: str,
     return warn
 
 
-def run(book: Path, toc: Path | None, profile: Path, strict: bool = True) -> int:
+def run(
+    book: Path,
+    toc: Path | None,
+    profile: Path,
+    strict: bool = True,
+    work: Path | None = None,
+) -> int:
     stream = load_stream(book)
     if not stream:
         print(f"ERROR: {book}/pages 下没有 page.json", file=sys.stderr)
@@ -453,18 +475,9 @@ def run(book: Path, toc: Path | None, profile: Path, strict: bool = True) -> int
             {b["printed_page"] for b in stream if b.get("printed_page") is not None},
         )
 
-    # 全书图库：页目录里的裁图按原书图号汇总，重号即报
-    lib = book / "figures"
-    lib.mkdir(parents=True, exist_ok=True)
-    seen = {}
-    for png in sorted(book.glob("pages/*/figures/*.png")):
-        if png.stem in seen:
-            report["warnings"].append(
-                f"图号 {png.stem} 在 {seen[png.stem]} 和 {png.parent.parent.name} 各出现一次")
-        seen[png.stem] = png.parent.parent.name
-        for src in (png, png.with_suffix(".svg")):
-            if src.exists():
-                shutil.copy2(src, lib / src.name)
+    # 全书图库：.tmp 页目录里的裁图按原书图号提升，重号即报。
+    # 只覆盖本次重建的图，不清空已有图库；这样删掉 .tmp 后重新 assemble 也不会丢图。
+    promote_figures(book, work, report["warnings"])
 
     out = book / "lessons"
     answer_assets = {

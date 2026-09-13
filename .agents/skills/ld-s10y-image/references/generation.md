@@ -36,7 +36,7 @@ Example:
 ```bash
 python <n-azure-skill>/scripts/generate_image.py \
   --prompt-file .tmp/s10y-image/fig-29/artwork-prompt.txt \
-  --reference-image resources/s10y-lessons/5m/figures/fig-29.png \
+  --reference-image ssot-resources/soviet10year-textbooks/artifacts/5m/figures/fig-29.png \
   --output .tmp/s10y-image/fig-29/artwork.png \
   --background transparent --quality high --size 1024x1536
 ```

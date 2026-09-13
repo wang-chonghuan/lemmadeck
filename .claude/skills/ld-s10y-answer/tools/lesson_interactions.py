@@ -351,17 +351,17 @@ def try_grid_point(exercise, parts, figures, spec_dir: Path) -> dict | None:
 # --- 命令 -------------------------------------------------------------------
 
 
-def lesson_dir(book: str, edition: str, lesson: str) -> Path:
-    return Path("resources/s10y-lessons") / book / "editions" / edition / "lessons" / lesson
+def lesson_dir(root: str, book: str, edition: str, lesson: str) -> Path:
+    return Path(root) / book / "editions" / edition / "lessons" / lesson
 
 
-def build(book: str, edition: str, lesson: str) -> dict:
-    base = lesson_dir(book, edition, lesson)
+def build(root: str, book: str, edition: str, lesson: str) -> dict:
+    base = lesson_dir(root, book, edition, lesson)
     exercises = load(base / "exercises.json")["exercises"]
     answers = {str(a["exercise"]): a for a in load(base / "answer-keys.json")["answers"]}
     figures_doc = load(base / "figures.json")
     figures = {f["id"]: f for f in figures_doc.get("figures", [])}
-    spec_dir = Path("resources/s10y-lessons") / book / "editions" / edition / "figures"
+    spec_dir = Path(root) / book / "editions" / edition / "figures"
 
     interactions = []
     for exercise in exercises:
@@ -382,12 +382,12 @@ def build(book: str, edition: str, lesson: str) -> dict:
     }
 
 
-def validate(doc: dict, book: str, edition: str, lesson: str) -> list[str]:
+def validate(doc: dict, root: str, book: str, edition: str, lesson: str) -> list[str]:
     errors: list[str] = []
-    base = lesson_dir(book, edition, lesson)
+    base = lesson_dir(root, book, edition, lesson)
     exercises = load(base / "exercises.json")["exercises"]
     answers = {str(a["exercise"]): a for a in load(base / "answer-keys.json")["answers"]}
-    spec_dir = Path("resources/s10y-lessons") / book / "editions" / edition / "figures"
+    spec_dir = Path(root) / book / "editions" / edition / "figures"
     figures = {f["id"]: f for f in load(base / "figures.json").get("figures", [])}
 
     if doc.get("schema") != SCHEMA:
@@ -451,13 +451,17 @@ def main() -> None:
     parser.add_argument("--book", required=True)
     parser.add_argument("--edition", required=True)
     parser.add_argument("--lesson", action="append", required=True)
+    parser.add_argument(
+        "--root",
+        default="ssot-resources/soviet10year-textbooks/artifacts",
+    )
     args = parser.parse_args()
 
     failed = False
     for lesson in args.lesson:
-        out = lesson_dir(args.book, args.edition, lesson) / "interactions.json"
+        out = lesson_dir(args.root, args.book, args.edition, lesson) / "interactions.json"
         if args.command == "prepare":
-            doc = build(args.book, args.edition, lesson)
+            doc = build(args.root, args.book, args.edition, lesson)
             out.write_text(
                 json.dumps(doc, ensure_ascii=False, indent=1) + "\n", encoding="utf-8"
             )
@@ -468,7 +472,7 @@ def main() -> None:
             print(f"{lesson}: {doc['count']} 条 → {counts}，待补 {pending} 条 → {out}")
         else:
             doc = load(out)
-            errors = validate(doc, args.book, args.edition, lesson)
+            errors = validate(doc, args.root, args.book, args.edition, lesson)
             if errors:
                 failed = True
                 print(f"{lesson}: 校验失败", file=sys.stderr)

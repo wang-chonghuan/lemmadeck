@@ -27,11 +27,10 @@ if (!bookDirArg || !editionName || !lessons.length) {
 
 function dbUrl() {
   const env = fs.readFileSync(envPath, 'utf8')
-  for (const key of ['LEMMADECK_DATABASE_URL', 'EASYAPP_DATABASE_URL', 'DATABASE_URL']) {
-    const match = env.match(new RegExp(`^${key}=(.*)$`, 'm'))
-    if (match?.[1]?.trim()) return { key, url: match[1].trim() }
-  }
-  throw new Error(`${envPath} 里没有数据库连接串`)
+  const key = 'LEMMADECK_DATABASE_URL'
+  const match = env.match(new RegExp(`^${key}=(.*)$`, 'm'))
+  if (match?.[1]?.trim()) return { key, url: match[1].trim() }
+  throw new Error(`${envPath} 里没有 ${key}`)
 }
 
 const bookDir = path.resolve(bookDirArg)

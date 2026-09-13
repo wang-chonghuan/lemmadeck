@@ -16,6 +16,7 @@ still be misled about the mathematical relationship?
 - assertions pass within declared tolerance
 - visible labels use English
 - output hash matches render metadata
+- render metadata names only the durable final output, never a preview or ticket-temp path
 - every hybrid image reports centered contain fitting with preserved aspect ratio
 - no label collision, clipping, missing point, or missing object
 

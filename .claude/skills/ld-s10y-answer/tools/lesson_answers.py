@@ -17,6 +17,8 @@ MODERN_US_PROFILE = (
 )
 GRADING = {"auto", "ungraded"}
 SOURCES = {"book", "derived", "reviewed"}
+DEFAULT_ROOT = "ssot-resources/soviet10year-textbooks/artifacts"
+DEFAULT_WORK = ".tmp/ld-s10y-answer"
 
 
 def load(path: Path) -> dict:
@@ -112,9 +114,17 @@ def cmd_prepare(args: argparse.Namespace) -> int:
             "status": "draft",
             "answers": answers,
         }
-        target = lesson_dir / "answer-keys.template.json"
+        target = (
+            Path(args.work)
+            / args.book
+            / args.edition
+            / "lessons"
+            / lesson
+            / "answer-keys.template.json"
+        )
         dump(target, template)
         print(f"[prepare] {lesson}: {len(answers)} exercises -> {target}")
+        print(f"  完成后写入 {lesson_dir / 'answer-keys.json'}")
     return 0
 
 
@@ -257,7 +267,8 @@ def add_common(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--book", required=True)
     parser.add_argument("--lesson", action="append")
     parser.add_argument("--edition", required=True)
-    parser.add_argument("--root", default="resources/s10y-lessons")
+    parser.add_argument("--root", default=DEFAULT_ROOT)
+    parser.add_argument("--work", default=DEFAULT_WORK)
 
 
 def build_parser() -> argparse.ArgumentParser:

@@ -6,7 +6,7 @@
 // lessons it was 16 words; extrapolated over 84 lessons, ~480 words would never be taught.
 //
 // So every save reconciles the passage against the plan in
-// resources/content/course-wordlist.json (the single source of truth) and each planned
+// ssot-resources/content/course/course-wordlist.json (the single source of truth) and each planned
 // word ends in a state that is never silently "gone":
 //
 //   taught    — the passage really covers it
@@ -27,7 +27,7 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 import { repoRoot } from './vocab.mjs'
 
-const WORDLIST = 'resources/content/course-wordlist.json'
+const WORDLIST = 'ssot-resources/content/course/course-wordlist.json'
 const UNITS = 12
 const PER_UNIT = 7
 

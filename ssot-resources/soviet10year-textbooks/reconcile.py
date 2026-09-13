@@ -21,8 +21,8 @@ REPO = ROOT.parent.parent
 # ten-year set, and the Russian probability pair that fills its one real gap — and
 # each carries its own printed contents to be reconciled against.
 SRCS = [
-    REPO / "resources/soviet10years/toc/苏联十年制学校教材-书名作者目录.md",
-    REPO / "resources/tyurin-probability/toc/图林-概率论与统计-书名作者目录.md",
+    REPO / "ssot-resources/soviet10year-textbooks/sources/toc/苏联十年制学校教材-书名作者目录.md",
+    REPO / "ssot-resources/tyurin-probability/toc/图林-概率论与统计-书名作者目录.md",
 ]
 EXCLUDE = re.compile(r"答案|Ответы|От авторов")
 IGNORE_BELOW = "<!-- reconcile:ignore-below -->"
