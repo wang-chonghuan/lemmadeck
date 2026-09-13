@@ -306,8 +306,8 @@ def cmd_render(a) -> int:
     args = ["node", str(TOOLS / "render_lesson.js"), str(book)]
     if a.edition:
         args += ["--edition", a.edition]
-    if a.lesson:
-        args += ["--lesson", a.lesson]
+    for lesson in a.lesson or []:
+        args += ["--lesson", lesson]
     return subprocess.run(args).returncode
 
 
@@ -370,7 +370,7 @@ def main() -> int:
     p = sub.add_parser("render", help="自包含 HTML：课文页 + 习题页")
     common(p, page=False)
     p.add_argument("--edition", default=None)
-    p.add_argument("--lesson", default=None)
+    p.add_argument("--lesson", action="append")
     p.set_defaults(fn=cmd_render)
 
     p = sub.add_parser("publish", help="把已通过审计的 edition 写进内容库")

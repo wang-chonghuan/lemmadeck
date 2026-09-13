@@ -24,6 +24,7 @@ IMAGE_FIGURE_SPEC_SCHEMA = "ld-s10y-image/figure-spec@1"
 AUDIT_SCHEMA = "ld-s10y-lesson/edition-audit@1"
 BOOK_SCHEMA = "ld-s10y-lesson/edition-book@1"
 MATH = re.compile(r"\$\$(.+?)\$\$|\$([^$]+?)\$", re.S)
+MATH_TEXT_LITERAL = re.compile(r"\\text\{([^{}]*)\}")
 NUMBER = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])")
 PART_MARKER = re.compile(
     r"(?<![A-Za-z0-9_.\u0400-\u04ff])"
@@ -221,7 +222,18 @@ def cmd_prepare(args: argparse.Namespace) -> int:
 
 
 def math_signature(text: str) -> list[str]:
-    return [(match.group(1) or match.group(2)).strip() for match in MATH.finditer(text)]
+    def normalize_text_literals(expression: str) -> str:
+        return MATH_TEXT_LITERAL.sub(
+            lambda match: (
+                "\\text{" + "|".join(NUMBER.findall(match.group(1))) + "}"
+            ),
+            expression,
+        )
+
+    return [
+        normalize_text_literals(match.group(1) or match.group(2)).strip()
+        for match in MATH.finditer(text)
+    ]
 
 
 def number_signature(text: str) -> list[str]:
