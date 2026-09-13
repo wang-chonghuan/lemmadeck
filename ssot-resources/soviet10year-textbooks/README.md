@@ -1,91 +1,147 @@
-# Soviet ten-year school textbooks — source of truth
+# Soviet 10 Years resource map
 
-The authoritative transcription of the printed series. Everything downstream —
-the app's catalog, content generation, lesson provenance — reads from here and
-never writes back.
+This directory is the authoritative entry for the Soviet ten-year-school textbook pipeline. It
+contains every committed source and durable generated artifact needed to rebuild, validate and
+publish the lessons. Disposable work stays under the repository root `.tmp/`.
 
-## Layout
+## Persistent layout
 
+| Path | Role |
+|---|---|
+| `sources/manifest.json` | Inventory of all source PDFs, hashes, sizes, page counts, catalogs, skills and publishers |
+| `sources/soviet10years/*.pdf` | The 16 original scans, committed with normal Git |
+| `sources/toc/*.md` | Human-readable transcriptions of the printed contents pages |
+| `toc/<book>/{zh,en,ru}.json` | Application catalog, card ids, page ranges and locale structure |
+| `artifacts/<book>/pages/<page>/page.md` | Faithful typed page blocks |
+| `artifacts/<book>/pages/<page>/page.json` | Structured page blocks consumed by assembly |
+| `artifacts/<book>/pages/<page>/audit.json` | Durable page reconciliation and crop geometry |
+| `artifacts/<book>/figures/*` | Final book-level source figure library |
+| `artifacts/<book>/lessons/<card-id>/*` | Assembled faithful lesson and exercise objects |
+| `artifacts/<book>/book.json` | Book-level lesson index and extraction audit |
+| `artifacts/<book>/answers.json` | Faithful capture of printed answer pages |
+| `artifacts/<book>/answers.audit.json` | Printed-answer capture audit |
+| `artifacts/<book>/editions/<edition>/figures/*` | Final modern figures, FigureSpecs and render/generation metadata |
+| `artifacts/<book>/editions/<edition>/lessons/<card-id>/*` | Final lesson, exercises, figures, answer keys, interactions and audits |
+| `artifacts/<book>/editions/<edition>/book.json` | Edition-level lesson index |
+
+`sources/manifest.json` is the machine-readable map. Run:
+
+```bash
+python3 ssot-resources/soviet10year-textbooks/validate.py
 ```
-toc/<bookId>/zh.json     the printed table of contents, extracted from the scan
-toc/<bookId>/en.json     a translation of zh.json
+
+It verifies the PDFs and hashes, the PDF-to-catalog mapping, every catalog structure, and the
+declared skill and publisher entry points.
+
+## Disposable layout
+
+These paths are rebuildable and must never be authoritative:
+
+| Path | Contents |
+|---|---|
+| `.tmp/ld-s10y-lesson/<book>/pages/<page>/` | Rendered page, coordinate grid, layout, transcription template and page-level figure crops |
+| `.tmp/ld-s10y-lesson/adapt/<book>/<edition>/` | Draft modern-edition book and lesson templates awaiting review and promotion |
+| `.tmp/ld-s10y-lesson/render/<book>/<edition>/` | Offline lesson and exercise HTML previews |
+| `.tmp/ld-s10y-answer/<book>/` | Rendered answer pages and capture templates |
+| `.tmp/s10y-image/<figure>/` | Figure context packages, draft specs and preview renders |
+| `.tmp/backup/` | Temporary operational backups |
+
+Deleting `.tmp/` must not remove a PDF, TOC, page transcription, final figure, lesson, answer,
+interaction, or anything needed to republish the existing corpus.
+
+## Generation ownership
+
+| Stage | Owner |
+|---|---|
+| Scan page to typed page facts, assembly and edition text | `.claude/skills/ld-s10y-lesson/` |
+| Modern deterministic, generated and hybrid figures | `.agents/skills/ld-s10y-image/` |
+| Printed answers, edition answer keys and interactions | `.claude/skills/ld-s10y-answer/` |
+| Runtime catalog consumption | `app/src/lib/textbooks.ts` |
+| Lesson, answer and interaction database writes | Publishers declared in `sources/manifest.json` |
+
+The ordered path is:
+
+```text
+source PDF + catalog
+  -> .tmp page render/template
+  -> durable page.md/page.json/audit.json
+  -> durable raw lessons + book figure library
+  -> durable modern edition + final figures
+  -> durable answer keys + interactions
+  -> sr_lessons in the database
 ```
 
-`<bookId>` is the PDF's own id (`6a`, `9c`, `6-8g`, `10p`, …) — the text before
-the first space in its filename under `resources/soviet10years/pdf/`.
+## Representative rebuild
 
-## The files are not peers
+Run from the repository root:
 
-Exactly one locale per volume carries `"authority": "extracted"`. It is what the
-book prints, read off the contents pages; it is the file a dispute is settled
-against. Every other locale carries `"authority": "translated"`, and its
-structure, ids, `number`s and `source` refs must match the extracted file field
-for field — **only titles differ**. A new language is a new file beside the
-others, never a change to the structure.
+```bash
+P=.claude/skills/ld-s10y-lesson/.venv/bin/python
+S=.claude/skills/ld-s10y-lesson/tools/p2c.py
+BOOK=6a
+LESSON=alg6-c1-s1-n1
 
-Which locale that is depends on the edition transcribed, and every file in the
-volume names it in `extractedLocale`:
+# Rebuild disposable source-page images when visual work is required.
+$P $S prepare --book "$BOOK" --page 10
+# Read .tmp/ld-s10y-lesson/6a/pages/0010/page.grid.png and write the durable
+# ssot-resources/.../artifacts/6a/pages/0010/page.md before finalizing.
+$P $S finalize --book "$BOOK" --page 10
 
-- The Soviet ten-year series was read off its **printed Chinese editions**
-  (人民教育出版社), so `zh` is the authority. The field may be omitted there; it
-  defaults to `zh`.
-- The probability pair (`7-9pr`, `10-11pr`) has no Chinese edition, so `ru` is
-  the authority and both `zh.json` and `en.json` are translations. Marking `zh`
-  as extracted there would dress a translation up as the printed page.
+$P $S assemble --book "$BOOK" \
+  --toc ssot-resources/soviet10year-textbooks/toc/6a/zh.json
+$P $S vectorize --book "$BOOK"
+$P $S assemble --book "$BOOK" \
+  --toc ssot-resources/soviet10year-textbooks/toc/6a/zh.json
+# Existing modern lessons can be revalidated directly. For a new or revised lesson, first run
+# adapt-prepare, edit the templates under .tmp/ld-s10y-lesson/adapt/, and promote the accepted
+# content as lesson.json, exercises.json and figures.json under the durable edition lesson path.
+$P $S adapt-finalize --book "$BOOK" --edition modern-us-neutral --lesson "$LESSON"
 
-## Grades are the shelf's, not the edition's
+python3 .claude/skills/ld-s10y-answer/tools/lesson_answers.py finalize \
+  --book "$BOOK" --edition modern-us-neutral --lesson "$LESSON"
+python3 .claude/skills/ld-s10y-answer/tools/lesson_interactions.py finalize \
+  --book "$BOOK" --edition modern-us-neutral --lesson "$LESSON"
+```
 
-`grade` is where a volume sits in **this** ladder, and the ladder is the Soviet
-ten-year school: a 1—3 primary school, algebra starting in grade 6. Modern Russia
-runs a 1—4 primary, so its whole secondary sequence is a year later than the same
-content here — Алгебра 7—9 класс covers what 代数 6/7/8年级 covers, and Алгебра и
-начала анализа 10—11 covers 代数和分析初步 9/10年级. The correspondence is exact,
-three volumes to three grades and two to two.
+`assemble` reads durable page JSON and only promotes page-level figures found in `.tmp/`; it never
+clears the committed book-level figure library. Running it after deleting `.tmp/` therefore
+rebuilds lessons without erasing final source figures.
 
-So a book printed for the 11-year system is shelved one grade earlier, and its
-`grade` and its translated titles say the shelf's grade. The extracted file keeps
-the printed title untouched — `7-9pr/ru.json` still reads «7—9 классы» — and every
-locale carries a `gradeAlignment` note stating the printed band, the shelf band,
-and why they differ. Nothing is renamed in the transcription; only the placement
-is the shelf's to decide.
+## Database publication
 
-## More than one printed series
+The three publishers are deliberately separate and run in this order:
 
-The shelf is not only the Soviet set. Probability and statistics is the one
-branch that series never carried, and it is filled by Ю. Н. Тюрин et al.,
-*Теория вероятностей и статистика* (7—9 and 10—11), transcribed under the same
-rules. The directory keeps its name for the sake of stable paths; the volumes
-say which book they came from in `source.series`, and `reconcile.py` checks each
-series against its own printed-contents file.
+```bash
+BOOK_ROOT=ssot-resources/soviet10year-textbooks/artifacts/6a
+LESSON=alg6-c1-s1-n1
 
-## Two numbering systems, deliberately
+node .claude/skills/ld-s10y-lesson/tools/publish.mjs "$BOOK_ROOT" \
+  --edition modern-us-neutral --lesson "$LESSON"
+node .claude/skills/ld-s10y-answer/tools/publish.mjs "$BOOK_ROOT" \
+  --edition modern-us-neutral --lesson "$LESSON"
+node .claude/skills/ld-s10y-answer/tools/publish-interactions.mjs "$BOOK_ROOT" \
+  --edition modern-us-neutral --lesson "$LESSON"
+```
 
-- `number` (`2.3`) is what the interface shows: a hierarchical number fixed by
-  the position encoded in the id. The series is a set of finished editions, so a
-  position never moves.
-- `source` points back to whatever uniquely identifies the entry in the printed
-  contents — `printedSection` where the book numbers it (continuous across the
-  whole volume, so §6 is 2.3 in book `6a`), otherwise `printedName`, the printed
-  heading, kept in Chinese in both files because it is a pointer into the book.
+All writes use the repository root `.env` and `LEMMADECK_DATABASE_URL`. They upsert or merge the
+existing `sr_lessons` row; they do not change the database schema. The base publisher owns prose,
+exercise prompts and figures, the answer publisher adds `answerKey`, and the interaction publisher
+adds input-widget metadata without exposing expected answers to the browser.
 
-`page` is the printed page number, for locating the scan. Neither `source` nor
-`page` is displayed.
+## Catalog rules
 
-## What is not here
+Exactly one locale per volume carries `"authority": "extracted"`. It records what the printed
+contents page says. Other locales carry `"authority": "translated"` and must preserve structure,
+ids, numbers and source references exactly; only titles differ.
 
-Two things, for two different reasons.
+The Soviet set was transcribed from printed Chinese editions, so `zh` is authoritative. The
+probability pair (`7-9pr`, `10-11pr`) has no Chinese edition, so `ru` is authoritative and both
+`zh.json` and `en.json` are translations.
 
-**Exercise answers.** The books print them as back matter, separated from the
-exercises themselves; they enter as an input when a lesson's practice is built,
-bound to the exercise they answer — never as a browsable entry, which would hand
-over a master key to every read-check in the deck.
+`grade` is the shelf position in the Soviet ten-year sequence. Modern Russian 11-year editions are
+shelved one grade earlier here, and each affected locale records that fact in `gradeAlignment`.
 
-**The authors' foreword** (`От авторов`, and any preface a future volume prints).
-It addresses the teacher about the edition, not the learner about the subject, so
-it is the one printed heading that would become a card with nothing to learn on
-it. Excluded at the outline, not lost: it stays in the printed-contents file, and
-`reconcile.py` skips it by name the way it skips answers.
-
-Everything else the contents print is here, including the back matter that is
-neither of those: appendices, symbol lists, term indexes, formula tables,
-glossaries, assessment sets. They are part of the book.
+`number` is the stable hierarchical number shown in the interface. `source` points back to the
+printed contents through `printedSection` or `printedName`; `page` is the printed page used to find
+the scan. Answers and author forewords are not catalog cards. Appendices, symbol lists, term
+indexes, formula tables, glossaries and assessment sets remain catalog content.

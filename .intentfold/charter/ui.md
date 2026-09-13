@@ -6,7 +6,8 @@ alternatives to what is written here. Section shape is fixed by `.intentfold/rea
 Anything this file does not cover is still a design decision: it is settled at the **grill**, by the
 human, before implementation. Never invented while coding.
 
-> `.prodfarm/charter/` had no UI file — the design system lives in `resources/reference/DESIGN.md`
+> `.prodfarm/charter/` had no UI file — the design system lives in
+> `ssot-resources/reference/DESIGN.md`
 > and has since before this harness. This file **points at it** rather than restating it, per
 > `.intentfold/readme.md` ("a restated value is a stale value waiting to happen"). Filled in
 > 2026-08-05; the
@@ -22,9 +23,9 @@ chose Tailwind. Astryx and StyleX are not used at all.
 
 **Design source of truth**
 
-`resources/reference/DESIGN.md` is the design system of record — palette, radii, layout metrics,
+`ssot-resources/reference/DESIGN.md` is the design system of record — palette, radii, layout metrics,
 typography, per-component specs, and lesson-section labelling. **Read
-`resources/reference/DESIGN.guide.md` first**; `DESIGN.md` itself says so, and it explains how the
+`ssot-resources/reference/DESIGN.guide.md` first**; `DESIGN.md` itself says so, and it explains how the
 document is meant to be read and written.
 
 Where a value in `DESIGN.md` and the code disagree, **`app/src/styles/app.css` is the source of truth
@@ -35,7 +36,7 @@ for the value** — that is where the tokens actually live — and the disagreem
 Every style value is a token. The registries, by path:
 
 - `app/src/styles/app.css` — the `--sr-*` CSS variables. The implementation SSOT.
-- `resources/reference/DESIGN.md` — the documented vocabulary the variables realize.
+- `ssot-resources/reference/DESIGN.md` — the documented vocabulary the variables realize.
 
 The palette is closed: **exactly three colors carry the identity — teal-blue, green, and pure
 white — over a neutral ink scale. No additional hues.** The full list of names and values is in
@@ -65,7 +66,8 @@ TODO(human) — a check that fails on a raw hex colour or an off-palette hue in 
 worth more than any of the prose above. Until it exists, the palette rule is Guidance enforced by the
 author.
 
-Design reference: `resources/reference/DESIGN.guide.md`, then `resources/reference/DESIGN.md`.
+Design reference: `ssot-resources/reference/DESIGN.guide.md`, then
+`ssot-resources/reference/DESIGN.md`.
 shadcn/ui docs: https://ui.shadcn.com
 
 ## Guidance
@@ -96,11 +98,12 @@ lesson-section labels are fixed per subject in `DESIGN.md` and are not reworded.
 
 1. **Changing a governed token registry** — adding, renaming, removing or retuning a value — not
    without the human's explicit approval. The registries, by path, so this can be matched against a
-   diff without judgement: `app/src/styles/app.css`, `resources/reference/DESIGN.md`.
+   diff without judgement: `app/src/styles/app.css`, `ssot-resources/reference/DESIGN.md`.
 2. **Introducing a colour outside the three-colour palette plus the ink scale** — forbidden outright.
    Detectable as a raw hex or an `rgb(`/`hsl(` literal added under `app/src/` outside those two files.
-3. **Recreating the brand mark** — forbidden outright. It is `app/public/logo-mark.png` (derived from
-   `resources/lemmadeck-logo.png`); never substitute a Lucide glyph or a CSS shape, and never restretch
-   or re-crop it.
+3. **Recreating the brand mark** — forbidden outright. It is
+   `ssot-resources/public/logo-mark.png` (derived from
+   `ssot-resources/brand/lemmadeck-logo.png`); never substitute a Lucide glyph or a CSS shape, and
+   never restretch or re-crop it.
 4. **Introducing a second styling mechanism** — StyleX, Astryx, CSS-in-JS, or a new global stylesheet —
    forbidden outright. Tailwind plus `app/src/styles/app.css` is the whole of it.

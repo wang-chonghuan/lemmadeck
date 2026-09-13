@@ -1,6 +1,6 @@
 # purpose
 
-The content-generation module is LemmaDeck's repository-local authoring and publication toolchain. It converts governed curriculum sources into validated artifacts that the deployed application can consume. The tools are run manually or as one-off generation jobs; they are not part of the application's request path. Their durable effects are database content, reconciled authoring state, generated audio and PDFs, and static assets such as the homepage knowledge galaxy.
+The content-generation module is LemmaDeck's repository-local authoring and publication toolchain. It converts governed curriculum sources into validated artifacts that the deployed application can consume. The tools are run manually or as one-off generation jobs; they are not part of the application's request path. Committed product resources live under `ssot-resources/`, disposable work lives under `.tmp/`, and published lesson content lives in the database.
 
 The parent directly owns two workflows that do not have specialist child modules: short-text English lessons and the offline knowledge-galaxy rebuild. It also owns the shared dependency package and content-database adapter used by content skills. Public-domain biography reading and Soviet-textbook math courseware are declared children. The parent chooses and connects these workflows but does not own the children's internal narrative, extraction, figure, answer, or publication rules.
 
@@ -10,7 +10,7 @@ A common principle connects the workflows: generated prose or layout is not publ
 
 The shared skill runtime under `.agents/skills` is intentionally separate from the web application's package. It provides PostgreSQL, browser automation, Markdown, and figure-related dependencies for one-off tools without coupling those dependencies to the deployed bundle. A single database adapter reads the repository-root environment, selects the content database URL, requires TLS, and fixes PostgreSQL's search path to `lemmadeck-schema`. English and biography publishers use that adapter so content writers do not each invent connection behavior.
 
-The short-text English area is organized around three authorities. The human-owned 84-lesson outline defines scenes, reusable sentence patterns, dialogue or narrative form, and recycling intent. `resources/content/course-wordlist.json` is both the allowed vocabulary and the allocation plan: each canonical word carries level, provenance, intended introduction lesson, and a lifecycle state. Individual JSON lesson specs are the author-facing inputs containing English sentences, Chinese glosses, pattern instances, slot words, target words, and declared proper names.
+The retained short-text English area is organized around three authorities. The human-owned 84-lesson outline defines scenes, reusable sentence patterns, dialogue or narrative form, and recycling intent. `ssot-resources/content/course/course-wordlist.json` is both the allowed vocabulary and the allocation plan: each canonical word carries level, provenance, intended introduction lesson, and a lifecycle state. Individual JSON lesson specs are the author-facing inputs containing English sentences, Chinese glosses, pattern instances, slot words, target words, and declared proper names. This tooling and historical data are retained but are not exposed as a learner-facing product area.
 
 The English implementation separates vocabulary analysis, publication, media, and reporting. The vocabulary resolver maps ordinary surface forms, contractions, possessives, irregular forms, and productive suffixes back to canonical course entries. Its audit script generates thousands of plausible forms and protects both acceptance and rejection behavior. The publisher validates a spec, converts target and slot words to token indices, builds neutral content plus a Chinese overlay, renders a PDF, synthesizes narration, and persists the result. Reconciliation mutates the vocabulary plan after a save so omitted planned words become visible orphans rather than disappearing. Coverage remains a derived report over stored lessons.
 
@@ -30,7 +30,7 @@ The lesson, overlay, sentence/full/practice audio, PDF, and new word audio are u
 
 A galaxy rebuild starts from the authoritative Chinese textbook TOCs and English title overlays. Extraction follows the same card-addressing rule as the application: numbered topics become stars, while a section without topics becomes its own star. Chinese branch and chapter context are added to the embedding text. BGE embeddings feed a cosine UMAP layout and KMeans clustering. The layout command prints representative titles nearest every centroid; those samples are the evidence used to rewrite every Chinese and English hub label after a rerun.
 
-The build step filters reviews, exercises, summaries, introductions, and appendices from final stars. It connects each hub to its strongest semantic neighbors and adds the strongest cross-discipline links, then writes identical data to the prototype and application public directories. Verification runs against the real application, waits for lazy Three.js initialization, checks expected JSON and label counts, and captures the rendered galaxy before temporary test artifacts are removed.
+The build step filters reviews, exercises, summaries, introductions, and appendices from final stars. It connects each hub to its strongest semantic neighbors and adds the strongest cross-discipline links, then writes the sole dataset to `ssot-resources/public/galaxy.json`; the prototype and application both consume that file. Verification runs against the real application, waits for lazy Three.js initialization, checks expected JSON and label counts, and captures the rendered galaxy before temporary test artifacts are removed.
 
 # module-relationships
 
@@ -40,7 +40,7 @@ Those contracts have direct learner consequences. The reading view shows full En
 
 Azure OpenAI TTS is an external production dependency for newly published or regenerated English media. Playwright and a local browser are required for English PDF generation and galaxy acceptance. The repository-root environment is the operational bridge to both services.
 
-The galaxy consumes the textbook catalog and emits `app/public/galaxy.json` for the homepage `KnowledgeGalaxy` component. Its discipline keys, bilingual titles, coordinates, clusters, hubs, and weighted links are a static contract. The component dynamically imports Three.js and fetches the JSON only when visible, so generation cost stays offline and the main client bundle does not absorb the layout stack.
+The galaxy consumes the textbook catalog and emits `ssot-resources/public/galaxy.json` for the homepage `KnowledgeGalaxy` component. Vite serves that directory as the application's public root. Its discipline keys, bilingual titles, coordinates, clusters, hubs, and weighted links are a static contract. The component dynamically imports Three.js and fetches the JSON only when visible, so generation cost stays offline and the main client bundle does not absorb the layout stack.
 
 The biography-reading child shares the parent's database adapter but owns its own provenance, narrative, question, and story persistence behavior. The math-courseware child owns Soviet-textbook lesson extraction, modern figures, answer enrichment, and lesson publication. Changes confined to either child belong in that child's documentation; parent-level changes concern shared infrastructure, skill routing, or interactions among the content producers and application consumers.
 
@@ -52,7 +52,7 @@ Stable sentence and pattern ids, tokenization rules, target indices, slot indice
 
 The database adapter must continue to target the shared content schema with TLS and the same URL precedence as the application. Secrets remain in the ignored root environment and must not appear in generated output or logs.
 
-Galaxy extraction must remain aligned with the application's textbook card rules and subject mapping. Any embedding-corpus change requires a complete review of cluster names because KMeans ids are not stable semantic identities. Both JSON copies must be rebuilt together. Embedding, reduction, clustering, and force-like work remain offline; the browser is a renderer and interaction layer, not a fallback generator.
+Galaxy extraction must remain aligned with the application's textbook card rules and subject mapping. Any embedding-corpus change requires a complete review of cluster names because KMeans ids are not stable semantic identities. The one canonical JSON output must remain under `ssot-resources/public/`. Embedding, reduction, clustering, and force-like work remain offline; the browser is a renderer and interaction layer, not a fallback generator.
 
 # known-limits
 
@@ -62,7 +62,7 @@ Database publication and local wordlist reconciliation are sequential rather tha
 
 English publication depends on Azure TTS and a working Playwright browser. It performs PDF and audio generation before opening the persistence transaction, so a late failure avoids partial database writes but can consume significant time and external API usage. The Oxford parser is recovery code with machine-specific scratch paths and is not a portable way to rebuild the committed word list.
 
-The galaxy extractor currently contains an absolute checkout path, which can make a sibling worktree read TOCs from another checkout. Hub naming remains a manual review step after every embedding rerun. Galaxy links express centroid similarity, not prerequisite direction, and UMAP may rotate or mirror the map without changing its semantics.
+Hub naming remains a manual review step after every embedding rerun. Galaxy links express centroid similarity, not prerequisite direction, and UMAP may rotate or mirror the map without changing its semantics.
 
 # notes-for-ai
 

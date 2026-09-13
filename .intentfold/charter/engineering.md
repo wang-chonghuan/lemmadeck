@@ -8,7 +8,8 @@ Record here only decisions, boundaries, and commands that the repository cannot 
 
 > Consolidated on 2026-09-12 from the former architecture and development dimensions. Existing
 > project decisions and boundaries were preserved. Pull-request landing commands were added later
-> that day with explicit human authorization.
+> that day with explicit human authorization. The resource boundary was revised on 2026-09-13 by
+> explicit human direction.
 
 ## Contract
 
@@ -36,12 +37,13 @@ Record here only decisions, boundaries, and commands that the repository cannot 
 
 - **Repo layout**: `app/` = the web app, a **standalone project** with its
   own `package.json`/`package-lock.json`/`node_modules` — **there is no repo-root `package.json`**;
-  commands run from `app/` or via `npm --prefix app`. `ssot-schemas/db-schemas/` = DB SSOT;
-  `resources/` = committed human/curated material and generated content
-  (`resources/s10y-lessons/` = Soviet 10 Years extraction + modern editions;
-  `resources/content/` = physics authoring sources plus retained historical English sources;
-  `resources/reference/` = human docs
-  incl. `DESIGN.md`); `.claude/skills/` = repository-local S10Y lesson and answer pipelines;
+  commands run from `app/` or via `npm --prefix app`. `ssot-schemas/db-schemas/` = DB SSOT.
+  `ssot-resources/` is the only committed product-resource root: runtime public assets, design
+  references, brand material, retained course sources, original textbooks, TOCs, durable
+  transcriptions, final lessons, figures, answers and interactions all live below it. `.tmp/` is
+  disposable scratch only and may be deleted as a whole after any ticket. Code-owned schemas,
+  profiles, dependencies and test fixtures remain beside their code and are not product-resource
+  roots. `.claude/skills/` = repository-local S10Y lesson and answer pipelines;
   `.agents/skills/` = project skills for modern figures, stories, the knowledge galaxy, and retained
   English generation tooling;
   `infra/` = deploy/substrate notes. No top-level `jobs/` — this project has no independently-packaged
@@ -63,7 +65,8 @@ Record here only decisions, boundaries, and commands that the repository cannot 
 
 - **Published content lives in the DB and is produced by named skills.** The sole math lesson entry is
   `.claude/skills/ld-s10y-lesson`: scanned textbook pages become faithful page artifacts, assembled
-  lesson/exercise objects, and a `modern-us-neutral` edition under `resources/s10y-lessons/`.
+  lesson/exercise objects, and a `modern-us-neutral` edition under
+  `ssot-resources/soviet10year-textbooks/artifacts/`.
   Modern figures are delegated to `ld-s10y-image`; answers and interaction specifications are added
   by `ld-s10y-answer`; their publishers upsert `sr_lessons`. The app reads the stored prose and
   exercise fragments at `/card/:id`. New math work does not use a concept ledger, neutral card tree,
@@ -137,6 +140,8 @@ after the ticket backend reaches Done.
 Run once before handoff:
 
 ```bash
+python3 ssot-resources/audit.py
+python3 ssot-resources/soviet10year-textbooks/validate.py
 cd app && npm run test && npm run build
 ```
 
@@ -148,8 +153,10 @@ There is no separate lint or typecheck script today; `vite build` is the type-er
 - Content generation: never hand-write `sr_*` rows. Math starts at
   `.claude/skills/ld-s10y-lesson/SKILL.md`, delegates modern figures to `ld-s10y-image`, delegates
   answers and interaction specifications to `ld-s10y-answer`, and persists only through those
-  skills' publishers. Biographies use `sr-story`; retained short-literature English generation uses
-  `sr-voa1500` but does not publish a learner-facing application surface.
+  skills' publishers. Its original scans, TOCs and durable artifacts live under
+  `ssot-resources/soviet10year-textbooks/`; its renders, templates and previews live under `.tmp/`.
+  Biographies use `sr-story`; retained short-literature English generation uses `sr-voa1500` but
+  does not publish a learner-facing application surface.
   Each skill's `SKILL.md` owns its exact generation and persistence commands.
 - DB schema: `ssot-schemas/db-schemas/lemmadeck.sql` describes the live schema. It is generated from
   the database, never hand-edited and never applied to it. The inspection command lives in
@@ -189,6 +196,11 @@ browser never holds the connection string.
 **Content is DB-driven and skill-generated.** Never hand-write `sr_*` rows and never apply a schema
 change ad hoc; both have exactly one path named in `## Tools`.
 
+**Resource ownership is explicit.** Commit product resources only below `ssot-resources/`. Put
+rebuildable renders, templates, previews, batch outputs and backups below `.tmp/`, and never make a
+durable artifact depend on a `.tmp/` path. Keep schemas, profiles, dependency manifests and test
+fixtures with the code that owns them.
+
 **Secrets.** `.env` holds DB and API secrets and is git-ignored. Never stage it, commit it, or echo
 its contents; verify it is not staged before every commit.
 
@@ -227,3 +239,6 @@ the next grill sharper.
    Every content script connects through `.agents/skills/lib/content-db.mjs`.
 10. **Adding a repo-root `package.json`, or a second application** — not without the human's explicit
     approval. The standalone-`app/` layout is what the root `Dockerfile` and n-easyapp are built on.
+11. **Committing a product resource outside `ssot-resources/`, or making durable content depend on
+    `.tmp/`** — forbidden outright. Code-owned schemas, profiles, dependency files and test fixtures
+    remain beside code. `python3 ssot-resources/audit.py` is the mechanical boundary.

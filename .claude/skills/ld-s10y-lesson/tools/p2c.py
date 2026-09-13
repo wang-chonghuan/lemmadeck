@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """ld-s10y-lesson —— 扫描教材 PDF → 按小节成课、按题成件。
 
-    p2c.py prepare   --book 5m --page 15      # 渲染整页 + 坐标网格图
-    #  ↓ 视觉环节：读 page.grid.png，写 page.md（带类型的块）
+    p2c.py prepare   --book 5m --page 15      # 在 .tmp 渲染整页 + 坐标网格图
+    #  ↓ 视觉环节：读 .tmp 里的 page.grid.png，写持久 page.md（带类型的块）
     p2c.py finalize  --book 5m --page 15      # 吸附裁图 + 规范化 + 页级体检
     p2c.py assemble  --book 5m                # 跨页装订 → 小节 + 独立编号的题
     p2c.py vectorize --book 5m                # 插图 PNG → SVG（描摹 + 保真自检）
@@ -33,8 +33,9 @@ from PIL import Image
 
 SKILL = Path(__file__).resolve().parent.parent
 TOOLS = SKILL / "tools"
-DEFAULT_ROOT = Path("resources/s10y-lessons")
-DEFAULT_BOOKS = Path(".tmp/ori-books")
+DEFAULT_ROOT = Path("ssot-resources/soviet10year-textbooks/artifacts")
+DEFAULT_BOOKS = Path("ssot-resources/soviet10year-textbooks/sources")
+DEFAULT_WORK = Path(".tmp/ld-s10y-lesson")
 DEFAULT_PROFILE = SKILL / "profiles" / "soviet-cn.json"
 
 ENUM_LINE = re.compile(r"^\s*(?:\d+\.\s*)?([A-Za-z\u0400-\u04ff])\s*[)）]", re.M)
@@ -51,6 +52,10 @@ def _book_dir(a) -> Path:
 
 def _page_dir(a, page: int) -> Path:
     return _book_dir(a) / "pages" / f"{page:04d}"
+
+
+def _work_page_dir(a, page: int) -> Path:
+    return Path(a.work) / a.book / "pages" / f"{page:04d}"
 
 
 def _find_pdf(a) -> Path:
@@ -114,7 +119,7 @@ TEMPLATE = """---
 # ---------------------------------------------------------------- cap1 备料
 def cmd_prepare(a) -> int:
     pdf = _find_pdf(a)
-    pdir = _page_dir(a, a.page)
+    pdir = _work_page_dir(a, a.page)
     pdir.mkdir(parents=True, exist_ok=True)
 
     png = layout.render_page(pdf, a.page, pdir / "page.png", dpi=a.dpi)
@@ -146,12 +151,14 @@ def cmd_prepare(a) -> int:
     print(f"[prepare] {a.book} p{a.page:04d} -> {pdir}")
     print(f"  {img.width}x{img.height} @{a.dpi}dpi  印刷行 {len(bands)} 行"
           f"  读图用 page.grid.png（网格 {layout.GRID}px）")
+    print(f"  按模板写入持久文件 {_page_dir(a, a.page) / 'page.md'}")
     return 0
 
 
 # ---------------------------------------------------------------- cap1 收口
 def cmd_finalize(a) -> int:
     pdir = _page_dir(a, a.page)
+    work = _work_page_dir(a, a.page)
     md_path = pdir / "page.md"
     if not md_path.exists():
         print(f"ERROR: 缺少 {md_path}（视觉转写尚未产出）", file=sys.stderr)
@@ -159,9 +166,13 @@ def cmd_finalize(a) -> int:
 
     meta, blks = B.parse(md_path.read_text(encoding="utf-8"))
     profile = nz.load_profile(DEFAULT_PROFILE)
-    img = Image.open(pdir / "page.png")
+    render_path = work / "page.png"
+    if not render_path.exists():
+        print(f"ERROR: 缺少 {render_path}（先运行 prepare；.tmp 可随时重建）", file=sys.stderr)
+        return 2
+    img = Image.open(render_path)
     ink = layout.ink_mask(img)
-    render_sha256 = layout.sha256_file(pdir / "page.png")
+    render_sha256 = layout.sha256_file(render_path)
     audit_path = pdir / "audit.json"
     prior_audit = {}
     if audit_path.exists():
@@ -186,7 +197,7 @@ def cmd_finalize(a) -> int:
         )
         box, info = reused if reused is not None else layout.snap(ink, b["box"])
         b["box"] = box
-        layout.crop(pdir / "page.png", box, pdir / "figures" / f"{b['id']}.png")
+        layout.crop(render_path, box, work / "figures" / f"{b['id']}.png")
         figs.append({"id": b["id"], "label": b.get("label"), "box": box, **info})
         if info.get("components", 0) == 0:
             errors.append(f"{b['id']}: 粗框里没有完整连通域，框可能给错了")
@@ -197,7 +208,7 @@ def cmd_finalize(a) -> int:
                 errors.append(f"{figs[i]['id']} 与 {figs[j]['id']} 框重叠，"
                               "同一块墨迹会被裁两次")
     keep = {f"{f['id']}.png" for f in figs}
-    for stale in (pdir / "figures").glob("*.png"):
+    for stale in (work / "figures").glob("*.png"):
         if stale.name not in keep:
             stale.unlink()
 
@@ -290,14 +301,15 @@ def cmd_finalize(a) -> int:
 def cmd_assemble(a) -> int:
     import assemble
     return assemble.run(_book_dir(a), Path(a.toc) if a.toc else None,
-                        DEFAULT_PROFILE, strict=not a.lenient)
+                        DEFAULT_PROFILE, strict=not a.lenient,
+                        work=Path(a.work) / a.book)
 
 
 # ---------------------------------------------------------------- cap3 矢量化
 def cmd_vectorize(a) -> int:
     import vectorize as V
-    book = _book_dir(a)
-    pngs = sorted(book.glob("pages/*/figures/*.png"))
+    work = Path(a.work) / a.book
+    pngs = sorted(work.glob("pages/*/figures/*.png"))
     if a.page:
         pngs = [p for p in pngs if f"/{a.page:04d}/" in str(p)]
     ok = fail = 0
@@ -319,6 +331,7 @@ def cmd_adapt(a, command: str) -> int:
         "--book", a.book,
         "--edition", a.edition,
         "--root", a.root,
+        "--work", a.work,
     ]
     for lesson in a.lesson or []:
         args += ["--lesson", lesson]
@@ -338,7 +351,8 @@ def cmd_adapt_finalize(a) -> int:
 # ---------------------------------------------------------------- cap5 成品
 def cmd_render(a) -> int:
     book = _book_dir(a)
-    args = ["node", str(TOOLS / "render_lesson.js"), str(book)]
+    out = Path(a.work) / "render" / a.book / (a.edition or "source")
+    args = ["node", str(TOOLS / "render_lesson.js"), str(book), "--out", str(out)]
     if a.edition:
         args += ["--edition", a.edition]
     for lesson in a.lesson or []:
@@ -370,6 +384,7 @@ def main() -> int:
             p.add_argument("--page", type=int, required=True)
         p.add_argument("--root", default=str(DEFAULT_ROOT))
         p.add_argument("--books", default=str(DEFAULT_BOOKS))
+        p.add_argument("--work", default=str(DEFAULT_WORK))
         p.add_argument("--series", default=None)
         p.add_argument("--pdf", default=None)
 

@@ -2,7 +2,7 @@
 //
 // Enforces the charter ruling "英文词元不得超出课程词表(允许其词形变化、专有名词、数字)":
 // every word of a generated passage must resolve to a headword in
-// resources/content/course-wordlist.json, or be an allowed exception (proper name /
+// ssot-resources/content/course/course-wordlist.json, or be an allowed exception (proper name /
 // number). A word that resolves to nothing is reported, never silently accepted —
 // the author fixes the text, the gate does not widen.
 //
@@ -162,7 +162,7 @@ export function lemmaCandidates(w) {
   return out
 }
 
-// The course vocabulary is ONE list: `resources/content/course-wordlist.json` —
+// The course vocabulary is ONE list: `ssot-resources/content/course/course-wordlist.json` —
 // the Oxford 3000 A1+A2 subset (human ruling 2026-07-22). VOA1500 was abandoned because
 // it is a NEWS wordlist: it carries administration/guerrilla/asylum but not
 // breakfast/park/sorry/phone, while the blueprint selects by how often a child actually
@@ -171,7 +171,7 @@ export function lemmaCandidates(w) {
 // and its per-word生成 state (which lesson first teaches it), so no second copy exists.
 export function loadVocab() {
   const root = repoRoot()
-  const path = join(root, 'resources/content/course-wordlist.json')
+  const path = join(root, 'ssot-resources/content/course/course-wordlist.json')
   const doc = JSON.parse(readFileSync(path, 'utf8'))
   // headword -> canonical entry key. Multi-word headwords ("ice cream", "next to")
   // also register their component words so the gate accepts them in running text.

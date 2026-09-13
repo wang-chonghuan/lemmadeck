@@ -6,8 +6,7 @@
 数学知识、题号、数值和结构来自**苏联十年制学校教材**（1978–1982 中译本扫描件），
 不是让 AI 从零编教材。产品发布的是 `modern-us-neutral` edition：保留数学内容，替换过时
 文化语境，并重新制作插图。AI 只参与视觉转写、受约束的现代化改写、缺失答案推导和语义
-插画生成，所有产物都要经过确定性校验。第二支柱是短文学英语（VOA1500 核心词，
-读懂 → 提示递减 → 全文默写）。
+插画生成，所有产物都要经过确定性校验。
 
 产品目标与红线是人拥有的，见 `.intentfold/charter/`。
 
@@ -18,19 +17,19 @@
 | 目录 | 是什么 |
 |---|---|
 | `app/` | web 应用，**独立工程**（自己的 package.json / node_modules，仓库根没有） |
-| `resources/s10y-lessons/` | 教材抽取产物：按书存放页级底稿、全书图库和课程成品 |
-| `ssot-resources/` | 教材目录（TOC）等真源；app 的课程目录就是读它 |
+| `ssot-resources/` | 唯一提交到 Git 的产品资源根：原书、TOC、教材产物、静态文件、设计与品牌资料 |
 | `ssot-schemas/` | 数据库 schema 真源 |
 | `.claude/skills/` | 本仓库自己的教材技能（`ld-s10y-lesson`、`ld-s10y-answer`） |
 | `.agents/skills/` | 项目技能（`ld-s10y-image` 现代插图、`sr-story` 传记、`sr-voa1500` 英语、`ld-galaxy` 首页星图） |
 | `.intentfold/charter/` | 产品目标、工程规约、UI 约束、运行验证与运维（人拥有） |
-| `.tmp/` | 已 gitignore 的暂存区：原书 PDF、数据库备份 |
+| `.tmp/` | 可整体删除的暂存区：页面渲染、模板、预览、批处理输出和备份 |
 
 `AGENTS.md` 是给 agent 的路由表，知识分别住在哪里由它说了算。
+资源布局和 10y 全链路入口见 `ssot-resources/README.md`。
 
 当前 app 支持公开浏览教材、课文/练习切换、MathLive 数学输入、服务端判题、错题本与重做、
-登录后保存学习记录，以及短文学英语的阅读和提示递减背诵。未登录用户仍可浏览课程；登录
-页的邮箱登记只写入候选邮箱表，不等于自动创建学习账号。
+登录后保存学习记录。未登录用户仍可浏览课程；登录页的邮箱登记只写入候选邮箱表，不等于
+自动创建学习账号。
 
 ## 开发注意事项
 
@@ -45,7 +44,9 @@
 （`math5-c1-s1-n1`），不另建表。`content` 放课文块，`exercises` 放每道题，`html` 列已废弃
 不再写入。目录里某一项能不能点，取决于库里有没有它的行——`listAvailableLessonIds`。
 
-**原书 PDF 不入 git。** 放 `.tmp/ori-books/{书系列名}/{书名}.pdf`（约 215MB）。
+**原书 PDF 入普通 Git。** 16 本扫描件放在
+`ssot-resources/soviet10year-textbooks/sources/soviet10years/`，由同目录上层的
+`manifest.json` 记录文件名、大小、页数和 SHA-256；不使用 Git LFS。
 
 **动生产数据要人批准。** 见 `.intentfold/charter/operations.md` 的 Redlines。删库前先备份到
 `.tmp/backup/`。
@@ -70,8 +71,8 @@ cd app && npm run e2e     # Playwright
 P=.claude/skills/ld-s10y-lesson/.venv/bin/python
 S=.claude/skills/ld-s10y-lesson/tools/p2c.py
 
-$P $S prepare  --book 5m --page 15        # ① 渲染整页 + 坐标网格图
-#                                           ② 读 page.grid.png，把 page.template.md 填成 page.md
+$P $S prepare  --book 5m --page 15        # ① 在 .tmp 渲染整页 + 坐标网格图
+# ② 读 .tmp 中的 page.grid.png/template，把转写写入 artifacts/5m/pages/0015/page.md
 $P $S finalize --book 5m --page 15        # ③ 吸附裁图 + 规范化 + 页级体检
 #   ①②③ 对每一页重复
 
@@ -86,7 +87,7 @@ $P $S adapt-finalize --book 5m --edition modern-us-neutral \
   --lesson math5-c1-s1-n5
 $P $S render --book 5m --edition modern-us-neutral \
   --lesson math5-c1-s1-n5                 # 离线视觉检查
-node .claude/skills/ld-s10y-lesson/tools/publish.mjs resources/s10y-lessons/5m \
+node .claude/skills/ld-s10y-lesson/tools/publish.mjs ssot-resources/soviet10year-textbooks/artifacts/5m \
   --edition modern-us-neutral \
   --lesson math5-c1-s1-n5                 # 只写已完整的目标单元
 
@@ -96,7 +97,7 @@ python3 $K prepare --book 5m --edition modern-us-neutral \
 # 逐题完成 edition 下的 answer-keys.json
 python3 $K finalize --book 5m --edition modern-us-neutral \
   --lesson math5-c1-s1-n5
-node .claude/skills/ld-s10y-answer/tools/publish.mjs resources/s10y-lessons/5m \
+node .claude/skills/ld-s10y-answer/tools/publish.mjs ssot-resources/soviet10year-textbooks/artifacts/5m \
   --edition modern-us-neutral \
   --lesson math5-c1-s1-n5
 ```
@@ -132,7 +133,7 @@ node .claude/skills/ld-s10y-answer/tools/publish.mjs resources/s10y-lessons/5m \
 
 答案由独立技能 `ld-s10y-answer` 负责：
 
-- cap1 忠实抄录书后答案到 `resources/s10y-lessons/<book>/answers.json`，作为原书证据；
+- cap1 忠实抄录书后答案到 `ssot-resources/soviet10year-textbooks/artifacts/<book>/answers.json`，作为原书证据；
 - cap2 读取指定 edition 题面和现代图，为每道题生成
   `editions/<edition>/lessons/<lesson-id>/answer-keys.json`；
 - 有书后答案时保留 `bookRaw`，没有或不完整时现场求解；可可靠判定的题生成 `auto`

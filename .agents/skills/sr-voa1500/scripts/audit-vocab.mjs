@@ -347,9 +347,9 @@ function buildGapsDoc(gaps) {
     generated:
       'node .agents/skills/sr-voa1500/scripts/audit-vocab.mjs --emit-gaps (STEMROBIN-94). ' +
       'Words a children\'s-course author would plausibly write that resolve to NOTHING in ' +
-      'resources/content/course-wordlist.json and are not inflections of anything in it. ' +
+      'ssot-resources/content/course/course-wordlist.json and are not inflections of anything in it. ' +
       'The gate rejects them; avoid them while writing instead of discovering them at save time.',
-    wordlist: `resources/content/course-wordlist.json (${vocab.count} headwords)`,
+    wordlist: `ssot-resources/content/course/course-wordlist.json (${vocab.count} headwords)`,
     contractionPolicy:
       'RESOLVE — contractions are treated as inflections, so authors may write natural ' +
       'spoken English in the 〔对话〕 lessons instead of stilted expansions. vocab.mjs ' +

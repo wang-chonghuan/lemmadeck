@@ -15,7 +15,7 @@ constraints come from the batch 0012 release-gate ruling and are enforced by
 
 ## One wordlist, one gate
 
-`resources/content/course-wordlist.json` is the **single source of truth** for the course
+`ssot-resources/content/course/course-wordlist.json` is the **single source of truth** for the course
 vocabulary (human ruling 2026-07-22, STEMROBIN-100): the Oxford 3000 **A1+A2** slice, plus
 the words the blueprint names that Oxford files at B1/B2 (`oxford-promoted`) or does not
 carry at all (`added-by-machine`, each with its reason). Every entry records `level` /
@@ -25,7 +25,7 @@ VOA1500 was abandoned: it is a **news** vocabulary — administration/guerrilla/
 not breakfast/park/sorry/phone — so 36% of the words the blueprint's own lesson cards name
 were unwritable. Oxford covers those scenes 100%, and its CEFR levels give the course its
 difficulty ramp for free. The complete unfiltered Oxford table lives at
-`resources/content/oxford3000.json` (2970 entries); never parse the PDF again.
+`ssot-resources/content/course/oxford3000.json` (2970 entries); never parse the PDF again.
 
 ## Hard constraints (enforced, not advisory)
 
@@ -34,7 +34,7 @@ difficulty ramp for free. The complete unfiltered Oxford table lives at
 | Sentences per lesson | 6–9 |
 | Words per lesson | ≤ 120 |
 | New target words introduced | ~20–25 |
-| Vocabulary | every word must resolve to `resources/content/course-wordlist.json` |
+| Vocabulary | every word must resolve to `ssot-resources/content/course/course-wordlist.json` |
 | Allowed outside the list | inflections of in-list words, declared proper names, numbers |
 | Gloss | every sentence needs a 中文 gloss |
 | Audience | 8–12 year olds; concrete life/dialogue themes |
@@ -205,7 +205,7 @@ would go stale the moment a passage is edited (charter · SSOT).
 
 | File | Purpose |
 |---|---|
-| `resources/content/course-wordlist.json` | **the wordlist AND the plan** — level / pos / source / lesson / state / movedFrom per word |
+| `ssot-resources/content/course/course-wordlist.json` | **the wordlist AND the plan** — level / pos / source / lesson / state / movedFrom per word |
 | `scripts/reconcile.mjs` | 保存即对账 — planned vs actually taught, orphan disposition (`--rehome` / `--defer` / `--status`) |
 | `outline.md` | **the 84-lesson curriculum SSOT** — the human-authored blueprint (v3): 场景 / 句型 / 新词 / 复用 per lesson. Human property, never machine-edited |
 | `scripts/vocab.mjs` | the course-wordlist gate — lemma resolution + out-of-vocabulary detection |

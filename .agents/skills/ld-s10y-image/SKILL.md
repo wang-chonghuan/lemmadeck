@@ -83,7 +83,9 @@ when:
 5. The lesson edition validator and offline lesson render pass.
 
 Preview under `.tmp/`. Do not overwrite edition assets or write the database
-before approval.
+before approval. The promoted render report records only the durable final output:
+`deterministic` keeps `output.svg`, while `hybrid` keeps `output.png`; preview files
+must not remain as report dependencies.
 
 ## Non-negotiable rules
 

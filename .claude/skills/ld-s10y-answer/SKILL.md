@@ -33,16 +33,17 @@ A=.claude/skills/ld-s10y-answer/tools/answers.py
 
 python3 $A prepare --book 5m --pages 305-309
 # 逐页查看 .tmp/ld-s10y-answer/5m/pages/page-*.png，
-# 按模板生成 resources/s10y-lessons/5m/answers.json
+# 按模板生成 ssot-resources/soviet10year-textbooks/artifacts/5m/answers.json
 python3 $A finalize --book 5m
 ```
 
 `--pages` 是 PDF 物理页，支持 `305-309`、`305,307,309` 和混合写法。书默认从
-`.tmp/ori-books/*/<book> *.pdf` 唯一定位；撞名时用 `--series`，特殊情况用 `--pdf`。
+`ssot-resources/soviet10year-textbooks/sources/*/<book> *.pdf` 唯一定位；撞名时用
+`--series`，特殊情况用 `--pdf`。
 
 ### 输出
 
-稳定产物是 `resources/s10y-lessons/<book>/answers.json`：
+稳定产物是 `ssot-resources/soviet10year-textbooks/artifacts/<book>/answers.json`：
 
 ```json
 {
@@ -101,7 +102,8 @@ python3 $K finalize --book 5m \
   --edition modern-us-neutral \
   --lesson math5-c1-s1-n5 --lesson math5-c1-s1-n6 --lesson math5-c1-s1-n7
 
-node .claude/skills/ld-s10y-answer/tools/publish.mjs resources/s10y-lessons/5m \
+node .claude/skills/ld-s10y-answer/tools/publish.mjs \
+  ssot-resources/soviet10year-textbooks/artifacts/5m \
   --edition modern-us-neutral \
   --lesson math5-c1-s1-n5 --lesson math5-c1-s1-n6 --lesson math5-c1-s1-n7
 ```
@@ -109,7 +111,8 @@ node .claude/skills/ld-s10y-answer/tools/publish.mjs resources/s10y-lessons/5m \
 ### 生成规则
 
 1. 每个已抽取 exercise 必须恰有一个 answer key。
-2. 题面必须读取指定 edition；`resources/s10y-lessons/<book>/answers.json` 有书后答案时
+2. 题面必须读取指定 edition；
+   `ssot-resources/soviet10year-textbooks/artifacts/<book>/answers.json` 有书后答案时
    优先参考并保留为 `bookRaw`。
 3. `prepare` 提供 `figureEvidence` 时，必须实际查看现代图、原始 PNG 和 FigureSpec 后
    作答。现代题面是语义权威，原图用于核对数值、位置与构图；禁止写“题面未附图”或
@@ -128,7 +131,7 @@ node .claude/skills/ld-s10y-answer/tools/publish.mjs resources/s10y-lessons/5m \
 稳定产物为每个 lesson 一份：
 
 ```text
-resources/s10y-lessons/<book>/editions/<edition>/lessons/<lesson-id>/answer-keys.json
+ssot-resources/soviet10year-textbooks/artifacts/<book>/editions/<edition>/lessons/<lesson-id>/answer-keys.json
 ```
 
 ```json
@@ -180,7 +183,8 @@ I=.claude/skills/ld-s10y-answer/tools/lesson_interactions.py
 python3 $I prepare  --book 5m --edition modern-us-neutral --lesson math5-c1-s2-n16
 python3 $I finalize --book 5m --edition modern-us-neutral --lesson math5-c1-s2-n16
 
-node .claude/skills/ld-s10y-answer/tools/publish-interactions.mjs resources/s10y-lessons/5m \
+node .claude/skills/ld-s10y-answer/tools/publish-interactions.mjs \
+  ssot-resources/soviet10year-textbooks/artifacts/5m \
   --edition modern-us-neutral --lesson math5-c1-s2-n16
 ```
 
@@ -230,4 +234,3 @@ FigureSpec 是**渲染**规格不是**几何**规格：网格是一堆独立线�
 并进 `sr_lessons.exercises` 里每道题的对象，与 `answerKey` 同级，**不改表结构**。
 发布器逐题保留已有的 `answerKey`、题面与图——它只加一个 `interaction` 键。
 规格只带作答形态与参数，不带 `expected`、不带 `displayAnswer`：判分仍然只在服务端做。
-

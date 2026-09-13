@@ -80,6 +80,7 @@ class LessonAnswersTest(unittest.TestCase):
             })
             args = Namespace(
                 root=str(root),
+                work=str(root / "work"),
                 book="5m",
                 edition="modern-us-neutral",
                 lesson=[lesson_id],
@@ -87,7 +88,8 @@ class LessonAnswersTest(unittest.TestCase):
 
             self.assertEqual(lesson_answers.cmd_prepare(args), 0)
             template = lesson_answers.load(
-                lesson_dir / "answer-keys.template.json"
+                root / "work" / "5m" / "modern-us-neutral" / "lessons"
+                / lesson_id / "answer-keys.template.json"
             )
             self.assertEqual(template["edition"], "modern-us-neutral")
             self.assertEqual(template["answers"][0]["bookRaw"], "42")
@@ -96,7 +98,7 @@ class LessonAnswersTest(unittest.TestCase):
             self.assertTrue(evidence["editionAsset"].endswith("figures/fig-01.svg"))
             self.assertTrue(evidence["figureSpec"].endswith("figures/fig-01.spec.json"))
             self.assertFalse(
-                (root / "5m" / "lessons" / lesson_id / "answer-keys.template.json").exists()
+                (lesson_dir / "answer-keys.template.json").exists()
             )
 
 

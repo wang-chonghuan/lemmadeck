@@ -22,9 +22,9 @@ description: 重建或更新首页"知识星图"（knowledge galaxy）——把 
 | `ssot-resources/soviet10year-textbooks/toc/<bookId>/{zh,en}.json` | 数据源（zh 权威，en 只译标题） |
 | `prototypes/knowledge-galaxy/pipeline/extract.py` | toc → `out/nodes.json`（含 embedding 文本） |
 | `prototypes/knowledge-galaxy/pipeline/embed_layout.py` | embedding → UMAP 2D → KMeans → `out/layout.json`，并**打印每簇样本**（命名的唯一依据） |
-| `prototypes/knowledge-galaxy/pipeline/build_galaxy.py` | 簇命名（NAMES/NAMES_EN）+ 无内容节点过滤 + 枢纽边 → 同时写 `prototypes/.../web/galaxy.json` 和 `app/public/galaxy.json` |
+| `prototypes/knowledge-galaxy/pipeline/build_galaxy.py` | 簇命名（NAMES/NAMES_EN）+ 无内容节点过滤 + 枢纽边 → 写唯一成品 `ssot-resources/public/galaxy.json` |
 | `app/src/components/knowledge-galaxy.tsx` | 前端组件：颜色配置（顶部 `COLORS`）、双语 `STRINGS`、懒加载、交互 |
-| `prototypes/knowledge-galaxy/web/` | 独立原型页（three.js importmap），调视觉参数时用，`launch.json` 配置名 `galaxy-prototype`（端口 8765） |
+| `prototypes/knowledge-galaxy/web/` | 独立原型页（three.js importmap），调视觉参数时用；`galaxy-prototype` 从仓库根启动，打开 `/prototypes/knowledge-galaxy/web/` |
 
 ## 重建流程（每一步都必须做，顺序不能换）
 
@@ -79,7 +79,8 @@ $VENV/bin/python build_galaxy.py
 
 脚本自动：过滤无内容节点（标题含 练习/复习题/习题/问题解答/小结/提要/引言/附录 或
 en 对应词——这些**连星尘都不当**，是用户的明确决定）；每枢纽取质心余弦 top-3 邻边 +
-跨学科 top-6；**同时写两份** galaxy.json（原型 + app/public）。检查打印的
+跨学科 top-6；写唯一成品 `ssot-resources/public/galaxy.json`。独立原型也读取这一份，
+不保留第二份数据。检查打印的
 `stars/hubs/dropped/{math,physics}` 计数和跨学科边名字是否讲得通。
 
 ### 5. 验证 — 用仓库自己的 Playwright，别用别的
@@ -127,7 +128,7 @@ cd app && npx playwright test tests/galaxy-verify.spec.ts --reporter=list
    `textbooks.ts:193` 有一个与星图无关的既有类型错误，忽略。
 3. **HMR 对 canvas 组件不可靠**：改了组件感觉没生效时，先硬刷新再排查。
 4. 上线需要 commit + push（n-git cap11）+ 重新部署（n-easyapp cap2，项目名 `lemmadeck`）；
-   galaxy.json 走镜像里的 `app/public/`，不改数据库。
+   galaxy.json 由 Vite 从 `ssot-resources/public/` 放进镜像，不改数据库。
 
 ## 明确排除 / 未来方向
 

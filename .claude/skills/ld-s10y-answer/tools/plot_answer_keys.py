@@ -30,7 +30,7 @@ def main() -> None:
     args = parser.parse_args()
 
     base = (
-        Path("resources/s10y-lessons")
+        Path("ssot-resources/soviet10year-textbooks/artifacts")
         / args.book
         / "editions"
         / args.edition

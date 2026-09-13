@@ -771,6 +771,12 @@ async function main() {
     throw new Error('generated mode must be produced with n-azure cap4')
   }
   const spec = embedAssets(rawSpec)
+  if (spec.mode === 'deterministic' && !args.svg) {
+    throw new Error('deterministic mode requires --svg')
+  }
+  if (spec.mode === 'hybrid' && !args.png) {
+    throw new Error('hybrid mode requires --png')
+  }
   const result = await render(spec, {
     svg: args.svg && path.resolve(args.svg),
     png: args.png && path.resolve(args.png),
@@ -793,10 +799,10 @@ async function main() {
       sha256: sha256File(specPath),
     },
     output: {
-      ...(args.svg
+      ...(spec.mode === 'deterministic'
         ? { svg: { path: portablePath(args.svg), sha256: sha256File(args.svg) } }
         : {}),
-      ...(args.png
+      ...(spec.mode === 'hybrid'
         ? { png: { path: portablePath(args.png), sha256: sha256File(args.png) } }
         : {}),
     },

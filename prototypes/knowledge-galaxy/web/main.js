@@ -1,7 +1,7 @@
 import * as THREE from 'three'
 import { OrbitControls } from './node_modules/three/examples/jsm/controls/OrbitControls.js'
 
-const data = await (await fetch('./galaxy.json')).json()
+const data = await (await fetch('/ssot-resources/public/galaxy.json')).json()
 
 // ---------- adjustable config ----------
 // Discipline colors — tweak here (or call window.galaxySetColors({math, physics})
