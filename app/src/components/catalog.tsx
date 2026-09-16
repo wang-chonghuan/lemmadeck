@@ -230,7 +230,7 @@ function UserMenu({ user, locale }: { user: CurrentUser | null; locale: Locale }
 // Rows stay expandable-but-inert until the section has content: an unread row
 // that navigates to an empty page is worse than one that plainly cannot be
 // clicked. It remains visible so the catalog always represents the full course.
-function LessonRow({
+export function LessonRow({
   lesson,
   title,
   openCard,
@@ -246,7 +246,9 @@ function LessonRow({
     if (!lesson.ready) {
       return (
         <li>
-          <span className="sr-out-lesson">{title}</span>
+          <span className="sr-out-lesson sr-out-disabled" aria-disabled="true">
+            {title}
+          </span>
         </li>
       )
     }
@@ -290,7 +292,9 @@ function LessonRow({
               {title}
             </Link>
           ) : (
-            <span className="sr-out-lesson">{title}</span>
+            <span className="sr-out-lesson sr-out-disabled" aria-disabled="true">
+              {title}
+            </span>
           )}
         </summary>
         <ol className="sr-out-topics">
@@ -308,7 +312,7 @@ function LessonRow({
                   {tp.title}
                 </Link>
               ) : (
-                <span className="sr-out-topic">
+                <span className="sr-out-topic sr-out-disabled" aria-disabled="true">
                   <span className="sr-out-topic-n">{tp.number}</span>
                   {tp.title}
                 </span>
@@ -322,6 +326,7 @@ function LessonRow({
 }
 
 const rowTitle = (l: OutlineLesson) => (l.number ? `${l.number} ${l.title}` : l.title)
+const lessonsReady = (lessons: OutlineLesson[]) => lessons.some((lesson) => lesson.ready)
 
 // 学科 → 册 → 章 → 课. The book is the middle level (its title already carries
 // the branch — "Algebra, Grade 6"), so the rail nests three deep, not four.
@@ -354,7 +359,9 @@ function DisciplineOutline({
     <details className="sr-out-subject" open={defaultOpen}>
       <summary>
         <span className="sr-out-caret" aria-hidden />
-        <span className="sr-out-subject-name">{discipline.label}</span>
+        <span className={`sr-out-subject-name${ready > 0 ? '' : ' sr-out-disabled'}`}>
+          {discipline.label}
+        </span>
         <span className="sr-count">
           {ready > 0 ? `${ready}/${cards.length}` : cards.length}
         </span>
@@ -363,7 +370,13 @@ function DisciplineOutline({
         <details key={book.book} className="sr-out-book" open={discipline.books.length === 1}>
           <summary>
             <span className="sr-out-caret" aria-hidden />
-            <span className="sr-out-stage-name">{book.title}</span>
+            <span
+              className={`sr-out-stage-name${
+                lessonsReady(bookLessons(book)) ? '' : ' sr-out-disabled'
+              }`}
+            >
+              {book.title}
+            </span>
           </summary>
           {book.contents.map((node) => {
             if (node.kind === 'chapter') {
@@ -382,7 +395,13 @@ function DisciplineOutline({
                 >
                   <summary>
                     <span className="sr-out-caret" aria-hidden />
-                    <span className="sr-out-stage-name">{node.label}</span>
+                    <span
+                      className={`sr-out-stage-name${
+                        lessonsReady(node.lessons) ? '' : ' sr-out-disabled'
+                      }`}
+                    >
+                      {node.label}
+                    </span>
                   </summary>
                   <ul className="sr-out-lessons">
                     {node.lessons.map((l) => (
