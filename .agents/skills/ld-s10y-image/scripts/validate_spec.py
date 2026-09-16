@@ -12,7 +12,8 @@ from pathlib import Path
 from typing import Any
 
 
-SCHEMA = "ld-s10y-image/figure-spec@1"
+SCHEMA = "ld-s10y-image/figure-spec@2"
+LEGACY_SCHEMA = "ld-s10y-image/figure-spec@1"
 NON_ENGLISH = re.compile(
     r"[\u0400-\u04ff\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]"
 )
@@ -26,6 +27,7 @@ GEOMETRY_TYPES = {
     "grid", "axis", "measure", "svgPath",
 }
 SUPPORTED_TYPES = GEOMETRY_TYPES | {"text", "image"}
+COLOR_ROLES = {"ink", "muted", "accent", "accentSoft", "grid", "paper"}
 
 
 def load(path: Path) -> dict:
@@ -83,6 +85,22 @@ def resolve_point(
     return None
 
 
+def resolve_position(
+    value: Any,
+    objects_by_id: dict[str, dict],
+    points: dict[str, tuple[float, float]],
+    label: str,
+    errors: list[str],
+) -> tuple[float, float] | None:
+    if isinstance(value, str):
+        obj = objects_by_id.get(value)
+        if isinstance(obj, dict) and obj.get("type") in {"point", "text"}:
+            at = obj.get("at")
+            if coordinate(at):
+                return float(at[0]), float(at[1])
+    return resolve_point(value, points, label, errors)
+
+
 def distance(a: tuple[float, float], b: tuple[float, float]) -> float:
     return math.hypot(a[0] - b[0], a[1] - b[1])
 
@@ -99,27 +117,106 @@ def dot(a: tuple[float, float], b: tuple[float, float]) -> float:
     return a[0] * b[0] + a[1] * b[1]
 
 
-def completeness_errors(spec: dict, objects: list[dict], points: dict) -> list[str]:
+def point_to_segment_distance(
+    point: tuple[float, float],
+    start: tuple[float, float],
+    end: tuple[float, float],
+) -> float:
+    segment = vector(start, end)
+    length_squared = dot(segment, segment)
+    if length_squared == 0:
+        return distance(point, start)
+    offset = vector(start, point)
+    position = max(0.0, min(1.0, dot(offset, segment) / length_squared))
+    projection = (
+        start[0] + segment[0] * position,
+        start[1] + segment[1] * position,
+    )
+    return distance(point, projection)
+
+
+def point_in_polygon(
+    point: tuple[float, float],
+    polygon: list[tuple[float, float]],
+) -> bool:
+    inside = False
+    previous = polygon[-1]
+    for current in polygon:
+        crosses = (current[1] > point[1]) != (previous[1] > point[1])
+        if crosses:
+            edge_x = (
+                (previous[0] - current[0])
+                * (point[1] - current[1])
+                / (previous[1] - current[1])
+                + current[0]
+            )
+            if point[0] < edge_x:
+                inside = not inside
+        previous = current
+    return inside
+
+
+def completeness_errors(
+    spec: dict,
+    objects: list[dict],
+    points: dict[str, tuple[float, float]],
+    assertions: list[dict],
+    current: bool,
+) -> list[str]:
     errors = []
     inventory = spec.get("source", {}).get("inventory")
     by_id = {item.get("id"): item for item in objects if isinstance(item, dict)}
+    assertions_by_id = {
+        item.get("id"): item
+        for item in assertions
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
     if inventory is not None:
         if not isinstance(inventory, list) or not inventory:
             errors.append("source.inventory must be a nonempty array")
         else:
+            inventory_ids = []
             for index, group in enumerate(inventory):
                 label = f"source.inventory[{index}]"
                 if not isinstance(group, dict) or not group.get("description"):
                     errors.append(f"{label} needs a source-based description")
                     continue
-                required = group.get("objects")
-                if not isinstance(required, list) or not required:
+                if current:
+                    inventory_id = group.get("id")
+                    if not isinstance(inventory_id, str) or not inventory_id:
+                        errors.append(f"{label}.id must be nonempty")
+                    else:
+                        inventory_ids.append(inventory_id)
+                required_objects = group.get("objects")
+                required_assertions = group.get("assertions", [])
+                if not isinstance(required_objects, list):
+                    errors.append(f"{label}.objects must be an array")
+                    required_objects = []
+                if current and not isinstance(required_assertions, list):
+                    errors.append(f"{label}.assertions must be an array")
+                    required_assertions = []
+                if (
+                    current
+                    and spec.get("mode") != "generated"
+                    and not required_objects
+                    and not required_assertions
+                ):
+                    errors.append(
+                        f"{label} must map at least one object or assertion"
+                    )
+                if not current and not required_objects:
                     errors.append(f"{label}.objects must be nonempty")
-                    continue
-                for object_id in required:
+                for object_id in required_objects:
                     obj = by_id.get(object_id) if isinstance(object_id, str) else None
                     if obj is None or obj.get("visible") is False:
                         errors.append(f"{label}: missing visible object {object_id!r}")
+                for assertion_id in required_assertions:
+                    if assertion_id not in assertions_by_id:
+                        errors.append(
+                            f"{label}: missing assertion {assertion_id!r}"
+                        )
+            if current and len(inventory_ids) != len(set(inventory_ids)):
+                errors.append("source.inventory ids must be unique")
 
     box = spec.get("canvas", {}).get("boundingBox")
     if not isinstance(box, list) or len(box) != 4 or not all(map(finite_number, box)):
@@ -168,6 +265,11 @@ def assertion_errors(
     points: dict[str, tuple[float, float]],
 ) -> list[str]:
     errors = []
+    objects_by_id = {
+        item.get("id"): item
+        for item in objects
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
     for index, item in enumerate(assertions):
         label = f"assertions[{index}]"
         kind = item.get("type")
@@ -224,6 +326,79 @@ def assertion_errors(
                 if distance(midpoint, center) > tolerance:
                     errors.append(
                         f"{pair_label}: midpoint {midpoint} != center {center}"
+                    )
+            continue
+        if kind == "inside":
+            point = resolve_position(
+                item.get("point"),
+                objects_by_id,
+                points,
+                f"{label}.point",
+                errors,
+            )
+            container_id = item.get("container")
+            container = objects_by_id.get(container_id)
+            if not isinstance(container, dict) or container.get("type") != "polygon":
+                errors.append(f"{label}.container must reference a polygon")
+                continue
+            polygon = []
+            for point_index, value in enumerate(container.get("points", [])):
+                resolved = resolve_point(
+                    value,
+                    points,
+                    f"{label}.container.points[{point_index}]",
+                    errors,
+                )
+                if resolved is not None:
+                    polygon.append(resolved)
+            margin = item.get("margin", 0)
+            if not finite_number(margin) or margin < 0:
+                errors.append(f"{label}.margin must be a nonnegative number")
+                continue
+            if point is not None and len(polygon) >= 3:
+                if not point_in_polygon(point, polygon):
+                    errors.append(
+                        f"{label}: point {item.get('point')!r} is outside "
+                        f"{container_id!r}"
+                    )
+                elif margin and min(
+                    point_to_segment_distance(point, start, end)
+                    for start, end in zip(polygon, polygon[1:] + polygon[:1])
+                ) < margin:
+                    errors.append(
+                        f"{label}: point {item.get('point')!r} is inside "
+                        f"{container_id!r} but violates margin {margin}"
+                    )
+            continue
+        if kind == "connects":
+            arrow_id = item.get("arrow")
+            arrow = objects_by_id.get(arrow_id)
+            if not isinstance(arrow, dict) or arrow.get("type") != "arrow":
+                errors.append(f"{label}.arrow must reference an arrow")
+                continue
+            actual_from = resolve_point(
+                arrow.get("from"), points, f"{label}.arrow.from", errors
+            )
+            actual_to = resolve_point(
+                arrow.get("to"), points, f"{label}.arrow.to", errors
+            )
+            expected_from = resolve_point(
+                item.get("from"), points, f"{label}.from", errors
+            )
+            expected_to = resolve_point(
+                item.get("to"), points, f"{label}.to", errors
+            )
+            if all(
+                value is not None
+                for value in (actual_from, actual_to, expected_from, expected_to)
+            ):
+                if distance(actual_from, expected_from) > tolerance:
+                    errors.append(
+                        f"{label}: arrow {arrow_id!r} starts at the wrong member"
+                    )
+                if distance(actual_to, expected_to) > tolerance:
+                    errors.append(
+                        f"{label}: arrow {arrow_id!r} ends at the wrong member"
                     )
             continue
 
@@ -290,8 +465,10 @@ def assertion_errors(
 def validate(spec_path: Path, stage: str) -> list[str]:
     spec = load(spec_path)
     errors: list[str] = []
-    if spec.get("schema") != SCHEMA:
+    schema = spec.get("schema")
+    if schema not in {SCHEMA, LEGACY_SCHEMA}:
         errors.append(f"schema must be {SCHEMA}")
+    current = schema == SCHEMA
     if (
         not isinstance(spec.get("id"), str)
         or not re.fullmatch(r"(fig|tbl)-[A-Za-z0-9-]+", spec["id"])
@@ -334,6 +511,8 @@ def validate(spec_path: Path, stage: str) -> list[str]:
         for item in authoritative
     ):
         errors.append("every authoritativeText item needs nonempty text")
+    if current and not source.get("inventory"):
+        errors.append("current FigureSpec requires source.inventory")
 
     canvas = spec.get("canvas")
     if not isinstance(canvas, dict):
@@ -355,6 +534,44 @@ def validate(spec_path: Path, stage: str) -> list[str]:
         and bounding_box[3] < bounding_box[1]
     ):
         errors.append("canvas.boundingBox must be [xMin, yMax, xMax, yMin]")
+    if current and canvas.get("background", "paper") not in {
+        "paper", "transparent"
+    }:
+        errors.append("canvas.background must be paper or transparent")
+
+    display = spec.get("display")
+    if current:
+        if not isinstance(display, dict):
+            errors.append("current FigureSpec requires display")
+            display = {}
+        layout = display.get("layout")
+        if layout not in {"inline", "scroll"}:
+            errors.append("display.layout must be inline or scroll")
+        min_text = display.get("minTextPx")
+        if not finite_number(min_text) or min_text < 16:
+            errors.append("display.minTextPx must be at least 16")
+        widths = display.get("widths")
+        if (
+            not isinstance(widths, list)
+            or not widths
+            or any(
+                not isinstance(width, int) or not 240 <= width <= 1600
+                for width in widths
+            )
+        ):
+            errors.append(
+                "display.widths must be a nonempty array of widths from 240 to 1600"
+            )
+        elif layout == "inline" and min(widths) > 352:
+            errors.append("inline display must include a width of 352px or less")
+        if "palette" in spec:
+            errors.append(
+                "current FigureSpec uses semantic color roles; remove palette"
+            )
+        if "review" in spec:
+            errors.append(
+                "current FigureSpec review evidence belongs in a separate review file"
+            )
 
     objects = spec.get("objects")
     if not isinstance(objects, list):
@@ -389,6 +606,13 @@ def validate(spec_path: Path, stage: str) -> list[str]:
         if kind not in SUPPORTED_TYPES:
             errors.append(f"{label}: unsupported type {kind!r}")
             continue
+        if current:
+            for field in ("stroke", "fill", "labelColor"):
+                role = item.get(field)
+                if role is not None and role not in COLOR_ROLES:
+                    errors.append(
+                        f"{label}.{field} must use a semantic color role"
+                    )
         for field in ("label", "text"):
             text = item.get(field)
             if isinstance(text, str) and text:
@@ -484,6 +708,19 @@ def validate(spec_path: Path, stage: str) -> list[str]:
     if not isinstance(assertions, list):
         errors.append("assertions must be an array")
         assertions = []
+    if current:
+        assertion_ids = [
+            item.get("id")
+            for item in assertions
+            if isinstance(item, dict)
+        ]
+        if any(
+            not isinstance(assertion_id, str) or not assertion_id
+            for assertion_id in assertion_ids
+        ):
+            errors.append("every current assertion needs a nonempty id")
+        if len(assertion_ids) != len(set(assertion_ids)):
+            errors.append("assertion ids must be unique")
     if mode in {"deterministic", "hybrid"} and any(
         item.get("type") in GEOMETRY_TYPES
         for item in objects
@@ -491,7 +728,7 @@ def validate(spec_path: Path, stage: str) -> list[str]:
     ) and not assertions:
         errors.append("mathematical objects require assertions")
     errors += assertion_errors(assertions, objects, points)
-    errors += completeness_errors(spec, objects, points)
+    errors += completeness_errors(spec, objects, points, assertions, current)
     symmetry_text = " ".join([
         spec.get("description", ""),
         *[
@@ -512,13 +749,14 @@ def validate(spec_path: Path, stage: str) -> list[str]:
             "central-symmetry content requires a centralSymmetry assertion"
         )
 
-    review = spec.get("review")
-    if not isinstance(review, dict) or review.get("status") not in {
-        "draft", "pass", "fail"
-    }:
-        errors.append("review.status must be draft, pass, or fail")
-    elif stage == "approved" and review.get("status") != "pass":
-        errors.append("approved stage requires review.status pass")
+    if not current:
+        review = spec.get("review")
+        if not isinstance(review, dict) or review.get("status") not in {
+            "draft", "pass", "fail"
+        }:
+            errors.append("review.status must be draft, pass, or fail")
+        elif stage == "approved" and review.get("status") != "pass":
+            errors.append("approved stage requires review.status pass")
     return errors
 
 

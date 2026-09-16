@@ -304,17 +304,24 @@ p2c.py adapt-finalize --book 5m --edition modern-us-neutral \
    需要横线表达概念切换时，在 edition `lesson.json` 的 `section_breaks` 中记录下一段的
    扁平段落索引；这属于现代版排版事实，不得写回原始抽取层。
 5. 每张产品图委托项目技能 `ld-s10y-image`，并配
-   `ld-s10y-image/figure-spec@1`：
+   `ld-s10y-image/figure-spec@2`：
    - 数轴、几何、网格、刻度、坐标、变换、图表和数学标签用 JSXGraph 确定性生成
    - 动物、人物、树木和场景等语义素材用 Azure `gpt-image-2`
-   - 同时需要自然对象与精确数学关系时，用 GPT artwork + JSXGraph overlay 的 hybrid 模式
+   - 同时需要自然对象与精确数学关系时，用分层的 GPT artwork + JSXGraph overlay hybrid；
+     产品分别保存 PNG 素材层和 SVG 数学层，不生成或发布扁平合成 PNG
    - 输入必须包含完整相关 edition 题面/正文与原始抽取图 PNG；edition 文本是语义真相
+   - `source.inventory` 先按原图列全对象与关系，再绑定稳定的 object/assertion id；集合归属
+     用 `inside`，语义连线用 `connects`
+   - 声明产品实际显示宽度，所有标签在这些宽度下不得小于 16px
+   - 矢量颜色只用 `ink`、`muted`、`accent`、`accentSoft`、`grid`、`paper` 语义角色，
+     由产品主题和打印样式通过 CSS 变量决定实际颜色
    - 禁止使用答案键或添加原图没有的解答标注，不能让题图泄露答案
    - 禁止手改渲染器产物、直接发布原书截图，或让 GPT Image 猜精确刻度和标签位置
 6. **图内语言固定为英文**：数字、拉丁字母和数学符号可直接使用；禁止中文、日文、
    西里尔文字、苏联文化符号、旧书纹理和手写体。课程正文仍为中文。
 7. 先按 [现代图生成流程](references/figure-generation.md) 完成 FigureSpec、数学断言、
-   渲染碰撞检测和目视验收；任一不符时最多针对缺陷修复一次。
+   渲染碰撞与产品宽度字号检测，并写独立、哈希绑定的 `review@1` 目视验收证据；
+   任一不符时最多针对缺陷修复一次。
 8. `adapt-finalize` 校验原始快照、数学、FigureSpec、渲染或生成元数据；失败不能发布。
 
 原始层 cap3 的 potrace 只用于保存教材抽取事实；现代 edition 的图必须重新创作，两者用途不同。

@@ -15,7 +15,8 @@ For `hybrid`, request artwork only:
   answer annotations
 - clean white or transparent background
 - objects separated enough for deterministic overlay
-- natural colors with teal/green accents
+- natural colors without a fixed app-theme accent; the deterministic SVG
+  overlay owns theme-aware ink, accent, grid, and paper colors
 
 Azure `gpt-image-2` may reject `background=transparent` or paint a checkerboard
 instead of returning alpha. Generate on a light neutral background, then remove
@@ -28,8 +29,9 @@ only the background region connected to the canvas border:
 ```
 
 Keep the original `n-azure/image-generation@1` metadata beside the derived
-transparent asset. Reject the result if background removal erases any part of
-the semantic object or leaves a visible checkerboard halo.
+transparent asset and reference it from `spec.assets[].metadata`. Reject the
+result if background removal erases any part of the semantic object or leaves
+a visible checkerboard halo.
 
 Example:
 
@@ -42,4 +44,5 @@ python <n-azure-skill>/scripts/generate_image.py \
 ```
 
 Keep the `n-azure/image-generation@1` metadata beside the asset. FigureSpec
-must reference both files.
+must reference both files. Hybrid publication keeps the artwork PNG and
+independent SVG overlay; never publish a flattened composite PNG.

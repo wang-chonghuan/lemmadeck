@@ -83,21 +83,46 @@ console.log(gate.stdout.trim())
 function figureAssetStrict(id, manifest) {
   const figure = manifest.find(item => item.id === id)
   if (!figure) throw new Error(`现代版图清单缺少: ${id}`)
-  if (figure.png) {
-    const pngPath = path.join(edition, figure.png)
+  const specPath = path.join(edition, figure.spec)
+  const spec = JSON.parse(fs.readFileSync(specPath, 'utf8'))
+  if (spec.schema !== 'ld-s10y-image/figure-spec@2') {
+    throw new Error(`${id}: 历史 FigureSpec 只读，不能重新发布`)
+  }
+
+  const readImage = (relativePath) => {
+    const imagePath = path.join(edition, relativePath)
+    if (!fs.existsSync(imagePath)) throw new Error(`现代版缺少图片: ${id}`)
+    return `data:image/png;base64,${fs.readFileSync(imagePath).toString('base64')}`
+  }
+  const readSvg = (relativePath) => {
+    const svgPath = path.join(edition, relativePath)
+    if (!fs.existsSync(svgPath)) throw new Error(`现代版缺少图片: ${id}`)
+    const svg = fs.readFileSync(svgPath, 'utf8').replace(/<\?xml[^>]*\?>/, '').trim()
+    const linkScan = svg.replace(/\sxmlns(?::\w+)?="[^"]+"/g, '')
+    if (/<(?:image|foreignObject|script)\b/i.test(svg) || /(?:data:|https?:\/\/)/i.test(linkScan)) {
+      throw new Error(`${svgPath} 含位图、脚本、data URI 或外链`)
+    }
+    return svg
+  }
+
+  const common = {
+    mode: spec.mode,
+    layout: spec.display.layout,
+  }
+  if (spec.mode === 'deterministic') {
+    return { ...common, image: null, svg: readSvg(figure.svg) }
+  }
+  if (spec.mode === 'hybrid') {
     return {
-      image: `data:image/png;base64,${fs.readFileSync(pngPath).toString('base64')}`,
-      svg: null,
+      ...common,
+      image: readImage(figure.artwork),
+      svg: readSvg(figure.svg),
     }
   }
-  const svgPath = path.join(edition, figure.svg)
-  if (!fs.existsSync(svgPath)) throw new Error(`现代版缺少图片: ${id}`)
-  const svg = fs.readFileSync(svgPath, 'utf8').replace(/<\?xml[^>]*\?>/, '').trim()
-  const linkScan = svg.replace(/\sxmlns(?::\w+)?="[^"]+"/g, '')
-  if (/<(?:image|foreignObject|script)\b/i.test(svg) || /(?:data:|https?:\/\/)/i.test(linkScan)) {
-    throw new Error(`${svgPath} 含位图、脚本、data URI 或外链`)
+  if (spec.mode === 'generated') {
+    return { ...common, image: readImage(figure.png), svg: null }
   }
-  return { image: null, svg }
+  throw new Error(`${id}: 未知图片模式 ${spec.mode}`)
 }
 
 const rows = []

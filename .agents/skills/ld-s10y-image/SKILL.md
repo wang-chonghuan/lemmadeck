@@ -14,11 +14,11 @@ This skill owns the complete modern-edition figure workflow:
 
 - authoritative edition-text context
 - renderer selection
-- `ld-s10y-image/figure-spec@1`
+- `ld-s10y-image/figure-spec@2`
 - deterministic geometry and labels
 - GPT Image artwork through `n-azure`
-- hybrid composition
-- mathematical, visual, and cultural review
+- layered hybrid composition
+- hash-bound mathematical, visual, and cultural review
 
 `ld-s10y-lesson` owns extraction, lesson assembly, edition text, and publishing.
 It must delegate modern figure work here.
@@ -32,16 +32,22 @@ mode, and write a draft FigureSpec. Read
 [routing.md](references/routing.md) and
 [figure-spec.md](references/figure-spec.md).
 
-Before drawing an exercise figure, record `source.inventory`: independently
-describe every source subfigure, point, relationship, label, row/column and
-given value, then map those requirements to object IDs. Do not derive the
-inventory by merely counting the objects you happened to draw. A pass from
-`objectCount` cannot detect an object omitted from both the drawing and count.
+Before drawing, record `source.inventory`: independently describe every source
+subfigure, point, relationship, label, row/column and given value, then map
+those requirements to object and assertion IDs. Use stable IDs derived from
+the source inventory. Do not derive the inventory by merely counting what you
+happened to draw. A pass from `objectCount` cannot detect an item omitted from
+both the drawing and count.
 
 Update the lesson edition figure entry to exactly one final-output contract:
 
-- `deterministic`: `svg` + `render` + `spec`; remove `png` and `generation`
-- `hybrid` or `generated`: `png` + `generation` + `spec`; remove `svg`
+- `deterministic`: `svg` + `render` + `review` + `spec`
+- `hybrid`: `artwork` + overlay `svg` + `render` + `review` + `spec`
+- `generated`: `png` + `generation` + `review` + `spec`
+
+Remove fields from the other modes. A hybrid figure never publishes a
+flattened PNG. Its artwork-generation metadata is referenced by
+`spec.assets[].metadata`, not duplicated in the lesson manifest.
 
 ```bash
 python .agents/skills/ld-s10y-image/scripts/build_context.py \
@@ -63,14 +69,15 @@ python .agents/skills/ld-s10y-image/scripts/validate_spec.py \
 node .agents/skills/ld-s10y-image/scripts/render_spec.mjs \
   --spec .tmp/s10y-image/fig-29/spec.json \
   --svg .tmp/s10y-image/fig-29/fig-29.svg \
-  --png .tmp/s10y-image/fig-29/fig-29.png \
-  --report .tmp/s10y-image/fig-29/fig-29.svg.json
+  --report .tmp/s10y-image/fig-29/fig-29.render.json
 ```
 
 The validator also rejects finite geometry outside the canvas; label checks
 alone miss clipped table borders and blank answer cells. The renderer fails
-when labels overlap or leave the canvas. Repair the spec
-once; do not hand-edit generated SVG paths.
+when labels overlap, leave the canvas, or render below `display.minTextPx` at
+any declared product width. For hybrid mode, also pass `--artwork` for the
+transparent artwork layer; `--svg` remains the independent mathematical
+overlay. Repair the spec once; do not hand-edit generated SVG paths.
 
 ### cap3 — Generate semantic artwork
 
@@ -87,13 +94,24 @@ when:
 1. FigureSpec validation passes.
 2. Render report status is `pass` for deterministic or hybrid output.
 3. Mathematical and cultural visual review passes.
-4. `review.status` is set to `pass`.
+4. A separate `ld-s10y-image/review@1` file records `status: pass` and hashes
+   the current source, spec, evidence, and durable outputs.
 5. The lesson edition validator and offline lesson render pass.
 
-Preview under `.tmp/`. Do not overwrite edition assets or write the database
-before approval. The promoted render report records only the durable final output:
-`deterministic` keeps `output.svg`, while `hybrid` keeps `output.png`; preview files
-must not remain as report dependencies.
+Record the review after inspecting the figure:
+
+```bash
+python .agents/skills/ld-s10y-image/scripts/record_review.py \
+  --spec .tmp/s10y-image/fig-29/spec.json \
+  --render .tmp/s10y-image/fig-29/fig-29.render.json \
+  --output .tmp/s10y-image/fig-29/fig-29.review.json \
+  --status pass \
+  --notes "Compared with the source image and current edition text."
+```
+
+Use `--generation` instead of `--render` for `generated` mode. Preview under
+`.tmp/`. Do not overwrite edition assets or write the database before
+approval. Promoted metadata may depend only on durable edition files.
 
 ## Non-negotiable rules
 
@@ -101,15 +119,23 @@ must not remain as report dependencies.
 - Never use an answer key to construct a question figure.
 - Use deterministic geometry for points, lines, grids, axes, ticks, dimensions,
   coordinates, transformations, and mathematical labels.
+- Declare every intended product display width and keep all final text at least
+  16 px there. Do not judge readability from the source canvas alone.
 - Hybrid artwork must preserve its intrinsic aspect ratio. FigureSpec `size`
   is a centered contain box, never permission to stretch an image.
 - A central-symmetry or half-turn claim requires a `centralSymmetry` assertion
   covering every defining opposite point pair. Never represent the claimed
   symmetric object as an unchecked free-form `svgPath`.
+- Use `inside` assertions for items that must stay inside a set, panel, frame,
+  or region. Use `connects` assertions for every arrow or edge whose endpoints
+  carry meaning.
 - Use GPT Image only for semantic artwork. In hybrid output, artwork is below
   the deterministic overlay.
 - Visible labels are English; mathematical symbols and numbers are allowed.
-- Use teal and green app accents with natural object colors.
+- Vector colors use only semantic roles: `ink`, `muted`, `accent`,
+  `accentSoft`, `grid`, and `paper`. The SVG emits CSS variables so the app,
+  alternate themes, and print can recolor it. Do not encode a product theme
+  such as teal or green into the FigureSpec.
 - Do not copy Cyrillic, Chinese, Soviet symbols, flags, uniforms, handwriting,
   old-book texture, or cultural wording from source pixels.
 - No silent fallback. A failed assertion, collision, or visual gate blocks

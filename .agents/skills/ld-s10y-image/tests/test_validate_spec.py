@@ -81,6 +81,7 @@ class ValidateSpecTests(unittest.TestCase):
         payload = copy.deepcopy(self.payload)
         payload["description"] = "A half-turn symmetric segment."
         payload["assertions"].append({
+            "id": "half-turn",
             "type": "centralSymmetry",
             "center": [2, 0],
             "pairs": [{"a": [0, 0], "b": [4, 0]}],
@@ -91,6 +92,7 @@ class ValidateSpecTests(unittest.TestCase):
         payload = copy.deepcopy(self.payload)
         payload["description"] = "A half-turn symmetric segment."
         payload["assertions"].append({
+            "id": "half-turn",
             "type": "centralSymmetry",
             "center": [2, 0],
             "pairs": [{"a": [0, 0], "b": [3, 0]}],
@@ -123,6 +125,7 @@ class ValidateSpecTests(unittest.TestCase):
         }]
         payload["objects"].remove(required)
         payload["assertions"] = [{
+            "id": "remaining-point-count",
             "type": "objectCount", "objectType": "point",
             "count": sum(item["type"] == "point" for item in payload["objects"]),
         }]
@@ -132,6 +135,7 @@ class ValidateSpecTests(unittest.TestCase):
     def test_point_on_circle_checks_chord_endpoints(self):
         payload = copy.deepcopy(self.payload)
         payload["assertions"].append({
+            "id": "test-point-on-circle",
             "type": "pointOnCircle", "point": [0, 0],
             "center": [0, 1], "radius": 2,
         })
@@ -139,6 +143,85 @@ class ValidateSpecTests(unittest.TestCase):
         self.assertTrue(any("point is not on circle" in error for error in errors))
         payload["assertions"][-1]["radius"] = 1
         self.assertEqual(MODULE.validate(self.write(payload), "draft"), [])
+
+    def test_current_spec_rejects_raw_colors(self):
+        payload = copy.deepcopy(self.payload)
+        payload["objects"][0]["fill"] = "#00ff00"
+        errors = MODULE.validate(self.write(payload), "draft")
+        self.assertTrue(any("semantic color role" in error for error in errors))
+
+    def test_current_spec_requires_narrow_inline_display(self):
+        payload = copy.deepcopy(self.payload)
+        payload["display"]["layout"] = "inline"
+        payload["display"]["widths"] = [480]
+        errors = MODULE.validate(self.write(payload), "draft")
+        self.assertTrue(any("352px or less" in error for error in errors))
+
+    def test_inventory_catches_missing_relationship(self):
+        payload = copy.deepcopy(self.payload)
+        payload["source"]["inventory"][0]["assertions"].append(
+            "required-arrow"
+        )
+        errors = MODULE.validate(self.write(payload), "draft")
+        self.assertTrue(any("missing assertion 'required-arrow'" in error for error in errors))
+
+    def test_inside_rejects_member_outside_set(self):
+        payload = copy.deepcopy(self.payload)
+        payload["objects"].extend([
+            {
+                "id": "set-a",
+                "type": "polygon",
+                "points": [[-2, -2], [2, -2], [2, 2], [-2, 2]],
+                "stroke": "ink",
+                "fill": "paper",
+            },
+            {
+                "id": "outside-member",
+                "type": "point",
+                "at": [2.5, 0],
+                "fill": "accent",
+            },
+        ])
+        payload["assertions"].append({
+            "id": "outside-member-in-set",
+            "type": "inside",
+            "point": "outside-member",
+            "container": "set-a",
+            "margin": 0.1,
+        })
+        payload["source"]["inventory"].append({
+            "id": "set-membership",
+            "description": "The named member belongs to set A.",
+            "objects": ["set-a", "outside-member"],
+            "assertions": ["outside-member-in-set"],
+        })
+        errors = MODULE.validate(self.write(payload), "draft")
+        self.assertTrue(any("is outside 'set-a'" in error for error in errors))
+
+    def test_connects_rejects_wrong_arrow_endpoint(self):
+        payload = copy.deepcopy(self.payload)
+        payload["objects"].append({
+            "id": "relation-arrow",
+            "type": "arrow",
+            "from": "left",
+            "to": "origin",
+            "stroke": "accent",
+        })
+        payload["assertions"].append({
+            "id": "left-to-right",
+            "type": "connects",
+            "arrow": "relation-arrow",
+            "from": "left",
+            "to": "right",
+        })
+        payload["source"]["inventory"].append({
+            "id": "relation",
+            "description": "A directed arrow connects A to B.",
+            "objects": ["relation-arrow"],
+            "assertions": ["left-to-right"],
+        })
+        errors = MODULE.validate(self.write(payload), "draft")
+        self.assertTrue(any("ends at the wrong member" in error for error in errors))
 
 
 if __name__ == "__main__":

@@ -27,6 +27,8 @@ const jsxgraphCssPath = path.join(
   'distrib',
   'jsxgraph.css',
 )
+const FIGURE_SPEC_SCHEMA = 'ld-s10y-image/figure-spec@2'
+const RENDER_SCHEMA = 'ld-s10y-image/render@2'
 
 function parseArgs(argv) {
   const result = {}
@@ -42,10 +44,10 @@ function parseArgs(argv) {
     result[key.slice(2)] = value
     index += 1
   }
-  if (!result.spec || (!result.svg && !result.png)) {
+  if (!result.spec || (!result.svg && !result.png && !result.artwork)) {
     throw new Error(
       'usage: render_spec.mjs --spec spec.json [--svg out.svg] ' +
-      '[--png out.png] [--report render.json]',
+      '[--artwork artwork.png] [--png preview.png] [--report render.json]',
     )
   }
   return result
@@ -154,11 +156,23 @@ async function render(spec, output) {
         <head>
           <meta charset="utf-8">
           <style>
+            :root {
+              --ld-figure-ink: #15201f;
+              --ld-figure-muted: #4c5a58;
+              --ld-figure-accent: #15201f;
+              --ld-figure-accent-soft: #8a9795;
+              --ld-figure-grid: #e3eae9;
+              --ld-figure-paper: #ffffff;
+            }
             html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
             #${boardId} {
               width: ${spec.canvas.width}px;
               height: ${spec.canvas.height}px;
-              background: ${spec.canvas.background || '#ffffff'};
+              background: ${
+                spec.canvas.background === 'transparent'
+                  ? 'transparent'
+                  : 'var(--ld-figure-paper)'
+              };
               border: 0;
             }
           </style>
@@ -172,12 +186,12 @@ async function render(spec, output) {
     const result = await page.evaluate(({ figureSpec, boardId }) => {
       const SVG_NS = 'http://www.w3.org/2000/svg'
       const palette = {
-        primary: '#0f8b8d',
-        secondary: '#58a942',
-        ink: '#172526',
-        grid: '#9acfd0',
-        muted: '#657475',
-        ...figureSpec.palette,
+        ink: 'var(--ld-figure-ink, #15201f)',
+        muted: 'var(--ld-figure-muted, #4c5a58)',
+        accent: 'var(--ld-figure-accent, #15201f)',
+        accentSoft: 'var(--ld-figure-accent-soft, #8a9795)',
+        grid: 'var(--ld-figure-grid, #e3eae9)',
+        paper: 'var(--ld-figure-paper, #ffffff)',
       }
       const box = figureSpec.canvas.boundingBox
       const board = JXG.JSXGraph.initBoard(boardId, {
@@ -214,7 +228,7 @@ async function render(spec, output) {
         }
         return pointValue(value)
       }
-      const color = (value, fallback) => palette[value] || value || fallback
+      const color = (value, fallback) => palette[value] || fallback
       const lineStyle = (object, fallback = palette.ink) => ({
         fixed: true,
         highlight: false,
@@ -258,8 +272,8 @@ async function render(spec, output) {
             face: object.face || 'o',
             size: object.size || 4,
             strokeWidth: object.strokeWidth || 2,
-            strokeColor: color(object.stroke, palette.primary),
-            fillColor: color(object.fill, palette.primary),
+            strokeColor: color(object.stroke, palette.accent),
+            fillColor: color(object.fill, palette.accent),
           })
           elements.set(object.id, point)
           if (object.visible !== false) {
@@ -294,7 +308,7 @@ async function render(spec, output) {
             jsxPoint(object.to),
           ], {
             id: `ld-${object.id}`,
-            ...lineStyle(object, palette.primary),
+            ...lineStyle(object, palette.accent),
           })
           elements.set(object.id, arrow)
         } else if (object.type === 'circle') {
@@ -305,7 +319,7 @@ async function render(spec, output) {
             id: `ld-${object.id}`,
             fixed: true,
             highlight: false,
-            strokeColor: color(object.stroke, palette.primary),
+            strokeColor: color(object.stroke, palette.accent),
             strokeWidth: object.strokeWidth || 3,
             fillColor: color(object.fill, 'none'),
             fillOpacity: object.fillOpacity ?? 0,
@@ -319,7 +333,7 @@ async function render(spec, output) {
               id: `ld-${object.id}`,
               fixed: true,
               highlight: false,
-              fillColor: color(object.fill, palette.secondary),
+            fillColor: color(object.fill, palette.accentSoft),
               fillOpacity: object.fillOpacity ?? 0.15,
               vertices: { visible: false },
               borders: lineStyle(object),
@@ -333,7 +347,7 @@ async function render(spec, output) {
             jsxPoint(object.end),
           ], {
             id: `ld-${object.id}`,
-            ...lineStyle(object, palette.primary),
+            ...lineStyle(object, palette.accent),
           })
           elements.set(object.id, arc)
         } else if (object.type === 'grid') {
@@ -413,7 +427,7 @@ async function render(spec, output) {
             object.id,
             start,
             end,
-            lineStyle(object, palette.primary),
+            lineStyle(object, palette.accent),
           )
           const dx = end[0] - start[0]
           const dy = end[1] - start[1]
@@ -425,7 +439,7 @@ async function render(spec, output) {
               `${object.id}-cap-${index}`,
               [at[0] - normal[0] * size, at[1] - normal[1] * size],
               [at[0] + normal[0] * size, at[1] + normal[1] * size],
-              lineStyle(object, palette.primary),
+              lineStyle(object, palette.accent),
             )
           }
           addLabel(object, [
@@ -486,7 +500,9 @@ async function render(spec, output) {
         'viewBox',
         `0 0 ${figureSpec.canvas.width} ${figureSpec.canvas.height}`,
       )
-      svg.style.background = figureSpec.canvas.background || '#ffffff'
+      svg.style.background = figureSpec.canvas.background === 'transparent'
+        ? 'transparent'
+        : palette.paper
 
       const imageFits = figureSpec.objects
         .filter((object) => object.type === 'image')
@@ -502,6 +518,7 @@ async function render(spec, output) {
           // JSXGraph defaults SVG images to preserveAspectRatio="none".
           // Treat FigureSpec size as a fit box and never distort artwork.
           node.setAttribute('preserveAspectRatio', 'xMidYMid meet')
+          node.setAttribute('data-ld-layer', 'artwork')
           return {
             id: object.id,
             status: node.getAttribute('preserveAspectRatio') === 'xMidYMid meet'
@@ -735,26 +752,105 @@ async function render(spec, output) {
       }
 
       svg.querySelectorAll('foreignObject, script').forEach((node) => node.remove())
+      const displayChecks = figureSpec.display.widths.map((width) => {
+        const host = document.createElement('div')
+        host.style.cssText =
+          `position:absolute;left:-10000px;top:0;width:${width}px;overflow:visible`
+        const candidate = svg.cloneNode(true)
+        candidate.setAttribute('width', String(width))
+        candidate.removeAttribute('height')
+        candidate.style.width = `${width}px`
+        candidate.style.height = 'auto'
+        host.appendChild(candidate)
+        document.body.appendChild(host)
+        const textSizes = [...candidate.querySelectorAll('text')].map((node) => {
+          const fontSize = Number.parseFloat(node.getAttribute('font-size') || '0')
+          const matrix = node.getScreenCTM()
+          const scale = matrix ? Math.hypot(matrix.a, matrix.b) : 0
+          return {
+            id: node.getAttribute('data-label-id'),
+            text: node.textContent,
+            px: fontSize * scale,
+          }
+        })
+        const failures = textSizes.filter(
+          (item) => item.px + 0.01 < figureSpec.display.minTextPx,
+        )
+        host.remove()
+        return {
+          width,
+          minTextPx: figureSpec.display.minTextPx,
+          measuredMinPx: textSizes.length
+            ? Math.min(...textSizes.map((item) => item.px))
+            : null,
+          failures,
+          status: failures.length ? 'fail' : 'pass',
+        }
+      })
+      const cloneFor = (layer) => {
+        const clone = svg.cloneNode(true)
+        clone.style.background = layer === 'composite'
+          ? svg.style.background
+          : 'transparent'
+        if (layer === 'overlay') {
+          clone.querySelectorAll('image').forEach((node) => node.remove())
+        } else if (layer === 'artwork') {
+          clone.querySelectorAll(
+            'line, path, polygon, polyline, circle, ellipse, rect, text',
+          ).forEach((node) => {
+            if (!node.closest('defs')) node.remove()
+          })
+        }
+        clone.querySelectorAll('foreignObject, script').forEach((node) => node.remove())
+        return clone.outerHTML
+      }
       return {
-        svg: svg.outerHTML,
+        svg: cloneFor(figureSpec.mode === 'hybrid' ? 'overlay' : 'composite'),
+        compositeSvg: cloneFor('composite'),
+        artworkSvg: figureSpec.mode === 'hybrid' ? cloneFor('artwork') : null,
         labels: labels.length,
         collisions,
         objects: figureSpec.objects.length,
         imageFits,
+        displayChecks,
       }
     }, { figureSpec: spec, boardId })
 
+    const screenshotSvg = async (svg, filePath, transparent) => {
+      ensureParent(filePath)
+      await page.setContent(`
+        <!doctype html>
+        <style>
+          :root {
+            --ld-figure-ink: #15201f;
+            --ld-figure-muted: #4c5a58;
+            --ld-figure-accent: #15201f;
+            --ld-figure-accent-soft: #8a9795;
+            --ld-figure-grid: #e3eae9;
+            --ld-figure-paper: #ffffff;
+          }
+          html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+          body { background: ${transparent ? 'transparent' : '#ffffff'}; }
+          svg { display: block; }
+        </style>
+        ${svg}
+      `)
+      await page.screenshot({
+        path: filePath,
+        type: 'png',
+        omitBackground: transparent,
+        animations: 'disabled',
+      })
+    }
     if (output.svg) {
       ensureParent(output.svg)
       fs.writeFileSync(output.svg, `${result.svg}\n`, 'utf8')
     }
     if (output.png) {
-      ensureParent(output.png)
-      await page.locator(`#${boardId}`).screenshot({
-        path: output.png,
-        type: 'png',
-        animations: 'disabled',
-      })
+      await screenshotSvg(result.compositeSvg, output.png, false)
+    }
+    if (output.artwork) {
+      await screenshotSvg(result.artworkSvg, output.artwork, true)
     }
     return result
   } finally {
@@ -767,6 +863,11 @@ async function main() {
   const specPath = path.resolve(args.spec)
   validateSpec(specPath)
   const rawSpec = JSON.parse(fs.readFileSync(specPath, 'utf8'))
+  if (rawSpec.schema !== FIGURE_SPEC_SCHEMA) {
+    throw new Error(
+      `renderer accepts only ${FIGURE_SPEC_SCHEMA}; migrate the source-first spec`,
+    )
+  }
   if (rawSpec.mode === 'generated') {
     throw new Error('generated mode must be produced with n-azure cap4')
   }
@@ -774,15 +875,16 @@ async function main() {
   if (spec.mode === 'deterministic' && !args.svg) {
     throw new Error('deterministic mode requires --svg')
   }
-  if (spec.mode === 'hybrid' && !args.png) {
-    throw new Error('hybrid mode requires --png')
+  if (spec.mode === 'hybrid' && (!args.svg || !args.artwork)) {
+    throw new Error('hybrid mode requires --svg and --artwork')
   }
   const result = await render(spec, {
     svg: args.svg && path.resolve(args.svg),
     png: args.png && path.resolve(args.png),
+    artwork: args.artwork && path.resolve(args.artwork),
   })
   const report = {
-    schema: 'ld-s10y-image/render@1',
+    schema: RENDER_SCHEMA,
     figure: spec.id,
     mode: spec.mode,
     renderer: {
@@ -803,16 +905,44 @@ async function main() {
         ? { svg: { path: portablePath(args.svg), sha256: sha256File(args.svg) } }
         : {}),
       ...(spec.mode === 'hybrid'
-        ? { png: { path: portablePath(args.png), sha256: sha256File(args.png) } }
+        ? {
+            artwork: {
+              path: portablePath(args.artwork),
+              sha256: sha256File(args.artwork),
+            },
+            svg: {
+              path: portablePath(args.svg),
+              sha256: sha256File(args.svg),
+            },
+          }
         : {}),
+    },
+    assets: (spec.assets || []).map((asset) => ({
+      id: asset.id,
+      path: portablePath(asset.path),
+      sha256: sha256File(asset.path),
+      ...(asset.metadata
+        ? {
+            metadata: {
+              path: portablePath(asset.metadata),
+              sha256: sha256File(asset.metadata),
+            },
+          }
+        : {}),
+    })),
+    theme: {
+      roles: ['ink', 'muted', 'accent', 'accentSoft', 'grid', 'paper'],
+      output: 'css-variables',
     },
     objects: result.objects,
     labels: result.labels,
     collisions: result.collisions,
     imageFits: result.imageFits,
+    displayChecks: result.displayChecks,
     status: (
       result.collisions.length ||
-      result.imageFits.some((item) => item.status !== 'pass')
+      result.imageFits.some((item) => item.status !== 'pass') ||
+      result.displayChecks.some((item) => item.status !== 'pass')
     ) ? 'fail' : 'pass',
   }
   if (args.report) {

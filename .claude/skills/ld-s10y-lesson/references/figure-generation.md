@@ -17,5 +17,17 @@ python .claude/skills/ld-s10y-lesson/tools/figure_context.py \
   --output .tmp/s10y-image/fig-29/context.json
 ```
 
-Do not create new figure rules here. `ld-s10y-image/figure-spec@1` is the single
-contract for deterministic, hybrid, and GPT Image output.
+Do not create new figure rules here. `ld-s10y-image/figure-spec@2` is the
+single source-first contract for deterministic, hybrid, and GPT Image output.
+It requires a source inventory mapped to stable object/assertion IDs, declared
+product widths with at least 16 px final text, semantic color roles, and a
+separate hash-bound `ld-s10y-image/review@1` record.
+
+The edition manifest contracts are:
+
+- deterministic: `spec`, `svg`, `render`, `review`
+- hybrid: `spec`, `artwork`, overlay `svg`, `render`, `review`
+- generated: `spec`, `png`, `generation`, `review`
+
+Hybrid artwork-generation metadata is referenced by `spec.assets[].metadata`.
+Do not publish a flattened hybrid PNG or embed review state in FigureSpec.

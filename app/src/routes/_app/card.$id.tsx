@@ -15,7 +15,12 @@ import { MathAnswerField } from '~/components/math-answer-field'
 import { t, type Locale } from '~/lib/i18n'
 import { useLayoutStore } from '~/lib/layout-store'
 import { getLocale } from '~/lib/locale'
-import { getCardContent, type CardExercise, type ProseBlock } from '~/lib/lessons'
+import {
+  getCardContent,
+  type CardExercise,
+  type CardFigure,
+  type ProseBlock,
+} from '~/lib/lessons'
 import { findCard } from '~/lib/textbooks'
 
 // One card: a numbered teaching item from the printed book.
@@ -48,6 +53,33 @@ export const Route = createFileRoute('/_app/card/$id')({
   },
 })
 
+function FigureMedia({ figure }: { figure: CardFigure }) {
+  const layered = Boolean(figure.image && figure.svg)
+  return (
+    <div
+      className={`sr-figure-media${layered ? ' sr-figure-layered' : ''}`}
+      data-figure-mode={figure.mode}
+      data-figure-theme="neutral"
+    >
+      {figure.image ? (
+        <img
+          className="sr-figure-artwork"
+          src={figure.image}
+          alt=""
+          aria-hidden="true"
+        />
+      ) : null}
+      {figure.svg ? (
+        <div
+          className="sr-figure-vector"
+          aria-hidden="true"
+          dangerouslySetInnerHTML={{ __html: figure.svg }}
+        />
+      ) : null}
+    </div>
+  )
+}
+
 function Prose({ blocks }: { blocks: ProseBlock[] }) {
   return (
     <div className="sr-read">
@@ -57,11 +89,10 @@ function Prose({ blocks }: { blocks: ProseBlock[] }) {
             key={i}
             className="sr-read-fig"
             aria-label={b.label ?? undefined}
-            {...(!b.image
-              ? { dangerouslySetInnerHTML: { __html: b.svg ?? '' } }
-              : {})}
+            data-figure-id={b.id}
+            data-figure-layout={b.layout ?? 'inline'}
           >
-            {b.image ? <img src={b.image} alt={b.label ?? ''} /> : null}
+            <FigureMedia figure={b} />
           </figure>
         ) : b.kind === 'cap' ? (
           <p key={i} className="sr-read-cap" dangerouslySetInnerHTML={{ __html: b.html }} />
@@ -114,12 +145,10 @@ function Exercises({
                     key={f.id}
                     className="sr-ex-fig"
                     data-figure-id={f.id}
+                    data-figure-layout={f.layout ?? 'inline'}
                     aria-label={f.label ?? undefined}
-                    {...(!f.image
-                      ? { dangerouslySetInnerHTML: { __html: f.svg ?? '' } }
-                      : {})}
                   >
-                    {f.image ? <img src={f.image} alt={f.label ?? ''} /> : null}
+                    <FigureMedia figure={f} />
                   </figure>
                 ))}
                 {interactive && (
