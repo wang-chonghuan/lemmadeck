@@ -374,6 +374,11 @@ SHA；完整原始快照不入库。重发同一 edition 的课文或图片时�
 `ld-s10y-answer` 交互规格。基础发布器的保留逻辑用于保障后续重发，不替代首次生成答案和
 交互规格。
 
+发布器会调用 `tools/validate_publish.py` 只读重验当前产物，不能用旧 audit 的 `pass`
+替代本次检查。图片严格按 `figures.json` 的输出类型读取，不按同名 PNG/SVG 是否存在猜测。
+习题引用的图必须实际展示，并带 `source.inventory`；图改动涉及点位、标签或题中数据时，
+同步核对受影响答案，再走答案技能的 finalize/publish，不能保留基于旧错误图推导的答案。
+
 连接串取仓库根 `.env` 的 `LEMMADECK_DATABASE_URL`（Supabase，schema `lemmadeck-schema`）。
 写入只用本技能的 Node `postgres` 发布器；只读核对使用项目 `operations.md` 当前指定的命令，
 不要在技能里另造连接串解析规则。
@@ -391,8 +396,23 @@ SHA；完整原始快照不入库。重发同一 edition 的课文或图片时�
    习题入口与题数；逐段检查无首行缩进、概念切换横线正确，正文外数字/拉丁字母和行内公式
    字体一致且不小于中文正文
 4. 打开每节的习题视图，确认所有题都能渲染，并按 `figure id` 检查同一张共享图
-   在该练习区只出现一次；需要数学输入的题必须显示数学键盘
+   在该练习区只出现一次。**每个答案输入框**都必须有数学键盘，包括 `number`、`math`、
+   `free`；数字题只改变初始键盘布局，不得退回无数学键盘的普通 input。
 5. 检查桌面与 390px 移动宽度无整页横向溢出，控制台无报错
+
+对本次全部课程执行可失败的浏览器检查，不能只抽一课或只数 SVG：
+
+```bash
+node .claude/skills/ld-s10y-lesson/tools/check_product.mjs \
+  --book-dir ssot-resources/soviet10year-textbooks/artifacts/6a \
+  --edition modern-us-neutral --lesson <cardId> \
+  --base-url http://localhost:<ticket-port> \
+  --output .tmp/s10y-product-check
+```
+
+`--lesson` 可重复，`--all` 检查该 edition 全部课程。脚本使用 app 已安装的 Playwright，
+在桌面与手机逐题检查图引用、媒体非空、宽表末列可达及每个输入框的键盘实际输入归属；
+不提交答案，不写学习记录。它不证明原图语义完整，必须先完成 `ld-s10y-image` 的源图对照。
 
 自动检查 `.sr-d-scroll` 的末尾可达性时，用瞬时滚动并轮询几何条件；CSS 平滑滚动后立即
 读取位置会产生假失败。不要靠给容器留下内联样式来禁用平滑滚动，否则下一次 SPA 导航会

@@ -32,6 +32,12 @@ mode, and write a draft FigureSpec. Read
 [routing.md](references/routing.md) and
 [figure-spec.md](references/figure-spec.md).
 
+Before drawing an exercise figure, record `source.inventory`: independently
+describe every source subfigure, point, relationship, label, row/column and
+given value, then map those requirements to object IDs. Do not derive the
+inventory by merely counting the objects you happened to draw. A pass from
+`objectCount` cannot detect an object omitted from both the drawing and count.
+
 Update the lesson edition figure entry to exactly one final-output contract:
 
 - `deterministic`: `svg` + `render` + `spec`; remove `png` and `generation`
@@ -61,7 +67,9 @@ node .agents/skills/ld-s10y-image/scripts/render_spec.mjs \
   --report .tmp/s10y-image/fig-29/fig-29.svg.json
 ```
 
-The renderer fails when labels overlap or leave the canvas. Repair the spec
+The validator also rejects finite geometry outside the canvas; label checks
+alone miss clipped table borders and blank answer cells. The renderer fails
+when labels overlap or leave the canvas. Repair the spec
 once; do not hand-edit generated SVG paths.
 
 ### cap3 — Generate semantic artwork
@@ -106,3 +114,10 @@ must not remain as report dependencies.
   old-book texture, or cultural wording from source pixels.
 - No silent fallback. A failed assertion, collision, or visual gate blocks
   promotion.
+- Source coordinates and half-unit grid steps are facts, not approximate
+  decoration. Chords must include every labelled intersection, with
+  `pointOnCircle` and collinearity assertions where applicable. A directed
+  self-loop needs an arrowhead, not only a circle.
+- For read-from-graph exercises, record the source curve's queried coordinates
+  and extrema before interpolation. A similar-looking curve is not equivalent;
+  do not change its values or extend it past the source endpoints.

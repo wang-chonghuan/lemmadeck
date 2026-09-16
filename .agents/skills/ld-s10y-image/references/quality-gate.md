@@ -7,6 +7,8 @@ still be misled about the mathematical relationship?
 
 - source PNG hash is current
 - all object ids and references resolve
+- the independent source inventory resolves to visible objects; compare its
+  completeness against source pixels, not against the already-generated object list
 - every required mathematical relationship has an assertion
 - every centrally symmetric object has complete opposite-point pairs whose
   midpoint is the declared center
@@ -19,11 +21,16 @@ still be misled about the mathematical relationship?
 - render metadata names only the durable final output, never a preview or ticket-temp path
 - every hybrid image reports centered contain fitting with preserved aspect ratio
 - no label collision, clipping, missing point, or missing object
+- finite geometry fits the canvas, including empty table cells and border lines;
+  a label-only pass is insufficient
 
 ## Visual checks
 
 - compare the full edition text, original PNG, and rendered output together
 - verify counts, signs, units, relative positions, equal intervals, and labels
+- verify half-unit scales, every subfigure, every chord endpoint, every table
+  column and every directed self-loop. When repairing given data, also repair
+  dependent answer keys through `ld-s10y-answer`.
 - verify no answer is revealed
 - verify no cultural text or symbols leaked from the source
 - inspect at full resolution and at normal app width

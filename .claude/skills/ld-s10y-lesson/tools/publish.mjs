@@ -21,6 +21,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { createRequire } from 'node:module'
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 
 const require = createRequire(import.meta.url)
 const postgres = require('postgres')
@@ -64,15 +66,31 @@ const lessonOrders = lessonOrderMap(
   JSON.parse(fs.readFileSync(sourceBookIndexPath, 'utf8')),
 )
 
-function figureAssetStrict(id) {
-  const pngPath = path.join(edition, 'figures', `${id}.png`)
-  if (fs.existsSync(pngPath)) {
+const toolDir = path.dirname(fileURLToPath(import.meta.url))
+const gate = spawnSync(
+  process.env.PYTHON || path.resolve(toolDir, '../.venv/bin/python'),
+  [
+    path.join(toolDir, 'validate_publish.py'), book, '--edition', editionName,
+    ...[...requestedLessons].flatMap(id => ['--lesson', id]),
+  ],
+  { encoding: 'utf8' },
+)
+if (gate.error || gate.status !== 0) {
+  throw new Error(`当前产物未通过发布检查: ${gate.error?.message || gate.stdout || gate.stderr}`)
+}
+console.log(gate.stdout.trim())
+
+function figureAssetStrict(id, manifest) {
+  const figure = manifest.find(item => item.id === id)
+  if (!figure) throw new Error(`现代版图清单缺少: ${id}`)
+  if (figure.png) {
+    const pngPath = path.join(edition, figure.png)
     return {
       image: `data:image/png;base64,${fs.readFileSync(pngPath).toString('base64')}`,
       svg: null,
     }
   }
-  const svgPath = path.join(edition, 'figures', `${id}.svg`)
+  const svgPath = path.join(edition, figure.svg)
   if (!fs.existsSync(svgPath)) throw new Error(`现代版缺少图片: ${id}`)
   const svg = fs.readFileSync(svgPath, 'utf8').replace(/<\?xml[^>]*\?>/, '').trim()
   const linkScan = svg.replace(/\sxmlns(?::\w+)?="[^"]+"/g, '')
@@ -88,6 +106,7 @@ for (const lid of fs.readdirSync(lessonsDir).sort()) {
   const dir = path.join(lessonsDir, lid)
   const L = JSON.parse(fs.readFileSync(path.join(dir, 'lesson.json'), 'utf8'))
   const X = JSON.parse(fs.readFileSync(path.join(dir, 'exercises.json'), 'utf8'))
+  const F = JSON.parse(fs.readFileSync(path.join(dir, 'figures.json'), 'utf8')).figures
   const auditPath = path.join(dir, 'adaptation.audit.json')
   const audit = JSON.parse(fs.readFileSync(auditPath, 'utf8'))
   if (L.status !== 'ready' || X.status !== 'ready' || audit.status !== 'pass') {
@@ -102,7 +121,7 @@ for (const lid of fs.readdirSync(lessonsDir).sort()) {
   }
   const prose = proseFlow(L.prose, L.section_breaks).map((b) =>
     b.kind === 'fig'
-      ? { kind: 'fig', id: b.id, label: b.label, ...figureAssetStrict(b.id) }
+      ? { kind: 'fig', id: b.id, label: b.label, ...figureAssetStrict(b.id, F) }
       : b.kind === 'p'
         ? {
             kind: 'p',
@@ -118,7 +137,7 @@ for (const lid of fs.readdirSync(lessonsDir).sort()) {
     figures: (e.figures ?? []).map((f) => ({
       id: f.id,
       label: f.label,
-      ...figureAssetStrict(f.id),
+      ...figureAssetStrict(f.id, F),
     })),
   }))
   // lesson_order 使用原始 book.json 的卡片阅读顺序。无编号补充习题的 number 为 null，

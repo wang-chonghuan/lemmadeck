@@ -1,5 +1,5 @@
-import { Check, CheckCircle2, Eye, Info, LoaderCircle, XCircle } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Check, CheckCircle2, Eye, Info, Keyboard, LoaderCircle, XCircle } from 'lucide-react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 
 import { t, type Locale } from '~/lib/i18n'
@@ -69,73 +69,6 @@ function revealField(field: MathField | null) {
   }, 180)
 }
 
-// One blank whose answer is a plain number. A formula editor can express these
-// too, but it makes the learner assemble a digit out of a symbol palette; a
-// number pad is what the phone already has. `inputMode="decimal"` opens it, and
-// the sign toggle supplies the minus that pad does not carry.
-function NumberInput({
-  index,
-  storageKey,
-  locale,
-  locked,
-  label,
-  onValue,
-}: {
-  index: number
-  storageKey: string
-  locale: Locale
-  locked: boolean
-  label: ReactNode
-  onValue: (index: number, value: string) => void
-}) {
-  const [value, setValue] = useState('')
-
-  useEffect(() => {
-    const stored = localStorage.getItem(storageKey) ?? ''
-    setValue(stored)
-    onValue(index, stored)
-  }, [index, onValue, storageKey])
-
-  function commit(next: string) {
-    setValue(next)
-    localStorage.setItem(storageKey, next)
-    onValue(index, next)
-  }
-
-  return (
-    <div className="sr-math-part">
-      <div className="sr-math-answer-head">
-        <span className="sr-math-answer-label">{label}</span>
-        <div className="sr-math-modes" role="group">
-          <button
-            type="button"
-            disabled={locked}
-            aria-label={t(locale, 'exercise.sign')}
-            onClick={() =>
-              commit(value.startsWith('-') ? value.slice(1) : `-${value}`)
-            }
-          >
-            ±
-          </button>
-        </div>
-      </div>
-      <div className="sr-math-field-host">
-        <input
-          className="sr-num-field"
-          type="text"
-          inputMode="decimal"
-          autoComplete="off"
-          readOnly={locked}
-          value={value}
-          aria-label={t(locale, 'exercise.answer')}
-          placeholder={t(locale, 'exercise.answer.placeholder')}
-          onChange={(e) => commit(e.target.value)}
-        />
-      </div>
-    </div>
-  )
-}
-
 function MathInput({
   index,
   storageKey,
@@ -143,6 +76,7 @@ function MathInput({
   locked,
   label,
   onValue,
+  kind,
 }: {
   index: number
   storageKey: string
@@ -150,11 +84,17 @@ function MathInput({
   locked: boolean
   label: ReactNode
   onValue: (index: number, value: string) => void
+  kind: PartInputKind
 }) {
+  const fieldId = useId()
   const hostRef = useRef<HTMLDivElement>(null)
   const fieldRef = useRef<MathField | null>(null)
-  const modeRef = useRef<KeyboardMode>('more')
-  const [mode, setMode] = useState<KeyboardMode>('more')
+  const initialMode = kind === 'number' ? 'basic' : 'more'
+  const modeRef = useRef<KeyboardMode>(initialMode)
+  const [mode, setMode] = useState<KeyboardMode>(initialMode)
+  const [ready, setReady] = useState(false)
+  const lockedRef = useRef(locked)
+  lockedRef.current = locked
 
   useEffect(() => {
     const host = hostRef.current
@@ -163,6 +103,7 @@ function MathInput({
     let field: MathField | null = null
     let onInput: (() => void) | null = null
     let onFocus: (() => void) | null = null
+    setReady(false)
 
     void import('mathlive').then(({
       MathfieldElement,
@@ -177,9 +118,10 @@ function MathInput({
       MathfieldElement.plonkSound = null
 
       field = new MathfieldElement() as MathField
+      field.id = fieldId
       field.className = 'sr-math-field'
       field.smartFence = true
-      field.readOnly = locked
+      field.readOnly = lockedRef.current
       field.mathVirtualKeyboardPolicy = 'manual'
       field.placeholder = `\\text{${t(locale, 'exercise.answer.placeholder')}}`
       field.setAttribute('aria-label', t(locale, 'exercise.answer'))
@@ -192,6 +134,7 @@ function MathInput({
         onValue(index, value)
       }
       onFocus = () => {
+        if (lockedRef.current) return
         setKeyboardMode(modeRef.current)
         keyboard()?.show({ animate: true })
         revealField(field)
@@ -200,6 +143,7 @@ function MathInput({
       field.addEventListener('focusin', onFocus)
       fieldRef.current = field
       host.replaceChildren(field)
+      setReady(true)
     })
 
     return () => {
@@ -210,14 +154,14 @@ function MathInput({
       host.replaceChildren()
       keyboard()?.hide({ animate: false })
     }
-  }, [index, locale, onValue, storageKey])
+  }, [fieldId, index, locale, onValue, storageKey])
 
   useEffect(() => {
     if (fieldRef.current) fieldRef.current.readOnly = locked
   }, [locked])
 
   function activateMode(next: KeyboardMode) {
-    if (locked) return
+    if (locked || !ready) return
     modeRef.current = next
     setMode(next)
     setKeyboardMode(next)
@@ -227,7 +171,7 @@ function MathInput({
   }
 
   return (
-    <div className="sr-math-part">
+    <div className="sr-math-part" data-input-kind={kind}>
       <div className="sr-math-answer-head">
         <span className="sr-math-answer-label">{label}</span>
         <div className="sr-math-modes" role="group" aria-label={t(locale, 'exercise.keyboard')}>
@@ -235,7 +179,7 @@ function MathInput({
             type="button"
             className={mode === 'basic' ? 'on' : ''}
             aria-pressed={mode === 'basic'}
-            disabled={locked}
+            disabled={locked || !ready}
             onClick={() => activateMode('basic')}
           >
             {t(locale, 'exercise.keyboard.basic')}
@@ -244,14 +188,24 @@ function MathInput({
             type="button"
             className={mode === 'more' ? 'on' : ''}
             aria-pressed={mode === 'more'}
-            disabled={locked}
+            disabled={locked || !ready}
             onClick={() => activateMode('more')}
           >
             {t(locale, 'exercise.keyboard.more')}
           </button>
+          <button
+            type="button"
+            aria-label={t(locale, 'exercise.keyboard')}
+            title={t(locale, 'exercise.keyboard')}
+            aria-controls={fieldId}
+            disabled={locked || !ready}
+            onClick={() => activateMode(modeRef.current)}
+          >
+            <Keyboard size={16} aria-hidden />
+          </button>
         </div>
       </div>
-      <div className="sr-math-field-host" ref={hostRef} />
+      <div className="sr-math-field-host" aria-busy={!ready} ref={hostRef} />
     </div>
   )
 }
@@ -357,10 +311,10 @@ export function MathAnswerField({
         // No part spec means an ungraded exercise's single free blank — it can
         // hold anything, so it keeps the math field.
         const kind: PartInputKind = part?.input ?? 'math'
-        const Input = kind === 'number' ? NumberInput : MathInput
         return (
-          <Input
+          <MathInput
             key={index}
+            kind={kind}
             index={index}
             storageKey={`${storageKey}:${index}`}
             locale={locale}

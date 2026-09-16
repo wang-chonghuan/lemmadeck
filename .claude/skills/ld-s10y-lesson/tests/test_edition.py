@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -507,6 +508,19 @@ class EditionTest(unittest.TestCase):
             self.assertEqual(
                 edition.load(target / "adaptation.audit.json")["status"],
                 "pass",
+            )
+            gate_args = [
+                sys.executable, str(TOOLS / "validate_publish.py"), str(book),
+                "--edition", args.edition, "--lesson", lesson_id,
+            ]
+            gate = subprocess.run(gate_args, capture_output=True, text=True)
+            self.assertEqual(gate.returncode, 0, gate.stdout + gate.stderr)
+            image_path.unlink()
+            gate = subprocess.run(gate_args, capture_output=True, text=True)
+            self.assertEqual(gate.returncode, 2, gate.stdout + gate.stderr)
+            self.assertIn("缺少现代 PNG", gate.stdout)
+            self.assertEqual(
+                edition.load(target / "adaptation.audit.json")["status"], "pass",
             )
 
     def test_book_index_uses_source_order_for_unnumbered_exercises(self) -> None:

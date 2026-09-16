@@ -905,6 +905,19 @@ def validate_lesson(
         ]
 
     raw_figure_ids = [item["id"] for item in raw_lesson.get("figures", [])]
+    displayed_ids = {
+        item.get("id") for item in modern_prose_items if item.get("kind") == "fig"
+    } | {
+        figure.get("id")
+        for item in modern_items
+        for figure in item.get("figures", [])
+    }
+    exercise_figure_ids = {
+        figure_id for item in modern_items for figure_id in item.get("figure_refs", [])
+    }
+    for figure_id in exercise_figure_ids:
+        if figure_id not in displayed_ids:
+            errors.append(f"{figure_id}: referenced exercise figure is never displayed")
     figure_items = figures.get("figures")
     if not isinstance(figure_items, list):
         errors.append("figures.figures 必须是数组")
@@ -913,6 +926,10 @@ def validate_lesson(
         errors.append("现代图 id 或顺序与原书不一致")
     for figure in figure_items:
         spec_path = edition / figure.get("spec", "")
+        if figure["id"] in exercise_figure_ids and spec_path.is_file():
+            spec = load(spec_path)
+            if not spec.get("source", {}).get("inventory"):
+                errors.append(f"{figure['id']}: exercise figure requires source.inventory")
         if figure.get("png"):
             generation = figure.get("generation")
             if not isinstance(generation, str) or not generation:

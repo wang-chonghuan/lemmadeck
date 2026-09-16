@@ -99,6 +99,69 @@ def dot(a: tuple[float, float], b: tuple[float, float]) -> float:
     return a[0] * b[0] + a[1] * b[1]
 
 
+def completeness_errors(spec: dict, objects: list[dict], points: dict) -> list[str]:
+    errors = []
+    inventory = spec.get("source", {}).get("inventory")
+    by_id = {item.get("id"): item for item in objects if isinstance(item, dict)}
+    if inventory is not None:
+        if not isinstance(inventory, list) or not inventory:
+            errors.append("source.inventory must be a nonempty array")
+        else:
+            for index, group in enumerate(inventory):
+                label = f"source.inventory[{index}]"
+                if not isinstance(group, dict) or not group.get("description"):
+                    errors.append(f"{label} needs a source-based description")
+                    continue
+                required = group.get("objects")
+                if not isinstance(required, list) or not required:
+                    errors.append(f"{label}.objects must be nonempty")
+                    continue
+                for object_id in required:
+                    obj = by_id.get(object_id) if isinstance(object_id, str) else None
+                    if obj is None or obj.get("visible") is False:
+                        errors.append(f"{label}: missing visible object {object_id!r}")
+
+    box = spec.get("canvas", {}).get("boundingBox")
+    if not isinstance(box, list) or len(box) != 4 or not all(map(finite_number, box)):
+        return errors
+    xmin, ymax, xmax, ymin = box
+    for obj in objects:
+        if not isinstance(obj, dict) or obj.get("visible") is False:
+            continue
+        kind = obj.get("type")
+        # Infinite lines and grids are intentionally bounded by the viewport.
+        if kind in {"line", "grid", "svgPath", "image"}:
+            continue
+        coordinates = []
+        if kind in {"point", "text"}:
+            coordinates = [obj.get("at")]
+        elif kind in {"segment", "arrow", "measure", "axis"}:
+            coordinates = [obj.get("from"), obj.get("to")]
+        elif kind == "polygon":
+            coordinates = obj.get("points", [])
+        elif kind == "circle" and finite_number(obj.get("radius")):
+            center = obj.get("center")
+            center = points.get(center) if isinstance(center, str) else center
+            if center is not None and len(center) == 2:
+                radius = obj["radius"]
+                coordinates = [
+                    [center[0] - radius, center[1] - radius],
+                    [center[0] + radius, center[1] + radius],
+                ]
+        elif kind == "arc":
+            coordinates = [obj.get("start"), obj.get("end")]
+        for value in coordinates:
+            value = points.get(value) if isinstance(value, str) else value
+            if not isinstance(value, (list, tuple)) or len(value) != 2:
+                continue
+            if not all(map(finite_number, value)):
+                continue
+            if not (xmin <= value[0] <= xmax and ymin <= value[1] <= ymax):
+                errors.append(f"{obj.get('id')}: geometry outside canvas at {value}")
+                break
+    return errors
+
+
 def assertion_errors(
     assertions: list[dict],
     objects: list[dict],
@@ -120,6 +183,16 @@ def assertion_errors(
                 errors.append(
                     f"{label}: expected {expected} {object_type}, found {actual}"
                 )
+            continue
+        if kind == "pointOnCircle":
+            point = resolve_point(item.get("point"), points, f"{label}.point", errors)
+            center = resolve_point(item.get("center"), points, f"{label}.center", errors)
+            radius = item.get("radius")
+            if not finite_number(radius) or radius <= 0:
+                errors.append(f"{label}.radius must be positive")
+            elif point is not None and center is not None:
+                if abs(distance(point, center) - radius) > tolerance:
+                    errors.append(f"{label}: point is not on circle")
             continue
         if kind == "centralSymmetry":
             center = resolve_point(
@@ -418,6 +491,7 @@ def validate(spec_path: Path, stage: str) -> list[str]:
     ) and not assertions:
         errors.append("mathematical objects require assertions")
     errors += assertion_errors(assertions, objects, points)
+    errors += completeness_errors(spec, objects, points)
     symmetry_text = " ".join([
         spec.get("description", ""),
         *[
