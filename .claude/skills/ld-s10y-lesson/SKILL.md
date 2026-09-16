@@ -412,6 +412,7 @@ node .claude/skills/ld-s10y-lesson/tools/check_product.mjs \
 
 `--lesson` 可重复，`--all` 检查该 edition 全部课程。脚本使用 app 已安装的 Playwright，
 在桌面与手机逐题检查图引用、媒体非空、宽表末列可达及每个输入框的键盘实际输入归属；
+还检查页尾答案框不被键盘遮住、收起后滚动区留白恢复。
 不提交答案，不写学习记录。它不证明原图语义完整，必须先完成 `ld-s10y-image` 的源图对照。
 
 自动检查 `.sr-d-scroll` 的末尾可达性时，用瞬时滚动并轮询几何条件；CSS 平滑滚动后立即

@@ -9,6 +9,10 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../.
 const require = createRequire(path.join(root, 'app/package.json'))
 const { chromium, expect } = require('@playwright/test')
 
+async function hideKeyboard(page) {
+  await page.evaluate(() => window.mathVirtualKeyboard?.hide({ animate: false }))
+}
+
 export async function assertKeyboardCoverage(scope) {
   const errors = await scope.evaluate(container => {
     const fields = [...container.querySelectorAll('input:not([type=hidden]), textarea, math-field')]
@@ -68,6 +72,7 @@ export async function checkProduct({ book, edition, lessons, baseURL, output, vi
         await page.goto(`${baseURL}/card/${lesson}?tab=ex`)
         const articles = page.locator('article[id^="ex-"]')
         await expect(articles).toHaveCount(exercises.length)
+        const initialPadding = await page.locator('.sr-d-scroll').evaluate(element => element.style.paddingBottom)
         let fieldsChecked = 0, figuresChecked = 0
         const widgets = new Set()
         for (const exercise of exercises) {
@@ -89,7 +94,7 @@ export async function checkProduct({ book, edition, lessons, baseURL, output, vi
             await expect(figure).toBeAttached()
           }
           for (const figureSpec of exercise.figures) {
-            await page.keyboard.press('Escape')
+            await hideKeyboard(page)
             const figure = article.locator(`[data-figure-id="${figureSpec.id}"]`)
             await expect(figure).toHaveCount(1)
             const asset = figureManifest.find(item => item.id === figureSpec.id)
@@ -152,7 +157,7 @@ export async function checkProduct({ book, edition, lessons, baseURL, output, vi
             // Real pointer accessibility and viewport framing for each widget.
             if (!widgets.has(interaction?.widget)) {
               widgets.add(interaction?.widget)
-              await page.keyboard.press('Escape')
+              await hideKeyboard(page)
               const button = article.locator('button[aria-controls]').first()
               await button.evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }))
               await button.click()
@@ -164,7 +169,22 @@ export async function checkProduct({ book, edition, lessons, baseURL, output, vi
             }
           }
         }
-        await page.keyboard.press('Escape')
+        const lastField = articles.locator('math-field').last()
+        if (await lastField.count()) {
+          await hideKeyboard(page)
+          const lastButton = articles.locator('button[aria-controls]').last()
+          await lastButton.scrollIntoViewIfNeeded()
+          await lastButton.click()
+          await expect(lastField).toBeFocused()
+          await expect.poll(() => lastField.evaluate(element => {
+            const field = element.getBoundingClientRect()
+            const plate = document.querySelector('.ML__keyboard .MLK__plate')?.getBoundingClientRect()
+            return !!plate && plate.height > 0 && field.top >= 0 && field.bottom <= plate.top
+          })).toBe(true)
+          await lastField.locator('[part="virtual-keyboard-toggle"]').click()
+        }
+        await expect(page.locator('.ML__keyboard .MLK__plate:visible')).toHaveCount(0)
+        await expect.poll(() => page.locator('.sr-d-scroll').evaluate(element => element.style.paddingBottom)).toBe(initialPadding)
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false)
         assert.deepEqual(errors, [])
         const row = { lesson, viewport: viewport.width, exercises: exercises.length, inputs: fieldsChecked, figures: figuresChecked }

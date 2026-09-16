@@ -21,11 +21,17 @@ type MathField = HTMLElement & {
 type MathKeyboard = {
   layouts: string
   boundingRect?: { top: number; height: number }
+  addEventListener: (type: string, listener: () => void) => void
   show: (options?: { animate: boolean }) => void
   hide: (options?: { animate: boolean }) => void
 }
 
 let sharedKeyboard: MathKeyboard | undefined
+let keyboardInset: {
+  scroller: HTMLElement
+  inlinePadding: string
+  basePadding: string
+} | undefined
 
 function keyboard(): MathKeyboard | undefined {
   return (
@@ -39,10 +45,32 @@ function setKeyboardMode(mode: KeyboardMode) {
   if (mathKeyboard) mathKeyboard.layouts = mode === 'basic' ? 'compact' : 'default'
 }
 
+function syncKeyboardInset(field?: MathField | null) {
+  const scroller = field?.closest<HTMLElement>('.sr-d-scroll')
+  if (scroller && scroller !== keyboardInset?.scroller) {
+    if (keyboardInset) keyboardInset.scroller.style.paddingBottom = keyboardInset.inlinePadding
+    keyboardInset = {
+      scroller,
+      inlinePadding: scroller.style.paddingBottom,
+      basePadding: getComputedStyle(scroller).paddingBottom,
+    }
+  }
+  if (!keyboardInset) return
+  const height = keyboard()?.boundingRect?.height ?? 0
+  if (height > 0) {
+    keyboardInset.scroller.style.paddingBottom = `calc(${keyboardInset.basePadding} + ${height}px)`
+  } else {
+    keyboardInset.scroller.style.paddingBottom = keyboardInset.inlinePadding
+    keyboardInset = undefined
+  }
+}
+
 function revealField(field: MathField | null) {
   window.setTimeout(() => {
     const scroller = field?.closest<HTMLElement>('.sr-d-scroll')
     if (!field || !scroller) return
+    // MathLive pads body, but lessons scroll inside this nested container.
+    syncKeyboardInset(field)
     const fieldRect = field.getBoundingClientRect()
     const scrollerRect = scroller.getBoundingClientRect()
     const viewport = window.visualViewport
@@ -110,8 +138,11 @@ function MathInput({
       initVirtualKeyboardInCurrentBrowsingContext,
     }) => {
       if (disposed) return
-      sharedKeyboard ??=
-        initVirtualKeyboardInCurrentBrowsingContext() as unknown as MathKeyboard
+      if (!sharedKeyboard) {
+        sharedKeyboard =
+          initVirtualKeyboardInCurrentBrowsingContext() as unknown as MathKeyboard
+        sharedKeyboard.addEventListener('geometrychange', () => syncKeyboardInset())
+      }
       MathfieldElement.fontsDirectory = null
       MathfieldElement.soundsDirectory = null
       MathfieldElement.keypressSound = null
