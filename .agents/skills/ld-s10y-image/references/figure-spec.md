@@ -105,9 +105,15 @@ Use assertions for every relationship required by the exercise:
 - `pointOnCircle`: `point`, `center`, `radius`, optional tolerance
 - `centralSymmetry`: `center` plus every defining opposite point pair in
   `pairs`; each pair's midpoint must equal the declared center
-- `inside`: `object` plus the containing `region`; use for points, labels, or
-  other items that must remain inside a set, panel, or frame
-- `connects`: `object`, `from`, and `to`; use for arrows or edges whose
+- `inside`: `point` plus the containing polygon `container`; use for points,
+  labels, or other anchored items that must remain inside a set, panel, or
+  frame. In a set-relation figure, every visible member point and every
+  `*-label` requires its own `inside` assertion. The anchor and the rendered
+  footprint must both have clear boundary space. Name a set polygon
+  `<group>-set`, its points `<group>-<index>`, and labels
+  `<group>-<index>-label`; the validator derives mandatory coverage from those
+  ids instead of trusting a hand-written assertion list.
+- `connects`: `arrow`, `from`, and `to`; use for arrows or edges whose
   endpoints are part of the source meaning
 - `objectCount`
 

@@ -156,6 +156,174 @@ def point_in_polygon(
     return inside
 
 
+def relation_membership_errors(
+    spec: dict,
+    objects: list[dict],
+    points: dict[str, tuple[float, float]],
+    assertions: list[dict],
+    current: bool,
+) -> list[str]:
+    if not current:
+        return []
+
+    set_polygons = {
+        item.get("id"): item
+        for item in objects
+        if isinstance(item, dict)
+        and item.get("type") == "polygon"
+        and isinstance(item.get("id"), str)
+        and item["id"].endswith("-set")
+    }
+    connects = [
+        item
+        for item in assertions
+        if isinstance(item, dict) and item.get("type") == "connects"
+    ]
+    if len(set_polygons) < 2 or not connects:
+        return []
+
+    objects_by_id = {
+        item.get("id"): item
+        for item in objects
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    memberships: dict[str, list[dict]] = {}
+    for assertion in assertions:
+        if not isinstance(assertion, dict) or assertion.get("type") != "inside":
+            continue
+        member_id = assertion.get("point")
+        if isinstance(member_id, str):
+            memberships.setdefault(member_id, []).append(assertion)
+
+    members = {
+        item["id"]: next(
+            (
+                container_id
+                for container_id in set_polygons
+                if re.fullmatch(
+                    rf"{re.escape(container_id[:-4])}-\d+(?:-label)?",
+                    item["id"],
+                )
+            ),
+            None,
+        )
+        for item in objects
+        if isinstance(item, dict)
+        and item.get("visible") is not False
+        and isinstance(item.get("id"), str)
+        and (
+            item.get("type") == "point"
+            or (
+                item.get("type") == "text"
+                and item["id"].endswith("-label")
+            )
+        )
+    }
+    members = {
+        member_id: container_id
+        for member_id, container_id in members.items()
+        if container_id is not None
+    }
+    errors = []
+    canvas_width = spec.get("canvas", {}).get("width")
+    bounding_box = spec.get("canvas", {}).get("boundingBox")
+    widths = spec.get("display", {}).get("widths")
+    user_width = (
+        bounding_box[2] - bounding_box[0]
+        if isinstance(bounding_box, list)
+        and len(bounding_box) == 4
+        and all(finite_number(value) for value in bounding_box)
+        else None
+    )
+    user_units_per_canvas_px = (
+        user_width / canvas_width
+        if finite_number(user_width)
+        and finite_number(canvas_width)
+        and canvas_width > 0
+        else 1.0
+    )
+    user_units_per_product_px = (
+        user_width / min(widths)
+        if finite_number(user_width)
+        and isinstance(widths, list)
+        and widths
+        and all(finite_number(width) and width > 0 for width in widths)
+        else user_units_per_canvas_px
+    )
+
+    for member_id, expected_container in sorted(members.items()):
+        member_assertions = [
+            assertion
+            for assertion in memberships.get(member_id, [])
+            if assertion.get("container") == expected_container
+        ]
+        if not member_assertions:
+            errors.append(
+                "set-relation figure requires an inside assertion for "
+                f"member {member_id!r} in {expected_container!r}"
+            )
+            continue
+
+        member = objects_by_id[member_id]
+        position = resolve_position(
+            member_id,
+            objects_by_id,
+            points,
+            f"set member {member_id!r}",
+            errors,
+        )
+        if position is None:
+            continue
+
+        if member.get("type") == "text":
+            font_size = member.get("fontSize", 16)
+            text = member.get("text", "")
+            half_height = font_size * 0.5 if finite_number(font_size) else 8
+            half_width = (
+                font_size * 0.3 * max(len(text), 1)
+                if finite_number(font_size)
+                else 8
+            )
+            required_clearance = (
+                max(half_height, half_width) * user_units_per_canvas_px
+                + 4 * user_units_per_product_px
+            )
+        else:
+            size = member.get("size", 3)
+            required_clearance = (
+                size if finite_number(size) and size >= 0 else 3
+            ) * user_units_per_canvas_px + 4 * user_units_per_product_px
+
+        clearances = []
+        for assertion in member_assertions:
+            container = set_polygons.get(assertion.get("container"))
+            if container is None:
+                continue
+            polygon = []
+            for value in container.get("points", []):
+                resolved = resolve_point(
+                    value,
+                    points,
+                    f"container {container.get('id')!r}",
+                    errors,
+                )
+                if resolved is not None:
+                    polygon.append(resolved)
+            if len(polygon) >= 3 and point_in_polygon(position, polygon):
+                clearances.append(min(
+                    point_to_segment_distance(position, start, end)
+                    for start, end in zip(polygon, polygon[1:] + polygon[:1])
+                ))
+
+        if clearances and max(clearances) < required_clearance:
+            errors.append(
+                f"set member {member_id!r} has {max(clearances):.3g} units "
+                f"of boundary clearance; requires {required_clearance:.3g}"
+            )
+
+    return errors
+
+
 def completeness_errors(
     spec: dict,
     objects: list[dict],
@@ -729,6 +897,9 @@ def validate(spec_path: Path, stage: str) -> list[str]:
         errors.append("mathematical objects require assertions")
     errors += assertion_errors(assertions, objects, points)
     errors += completeness_errors(spec, objects, points, assertions, current)
+    errors += relation_membership_errors(
+        spec, objects, points, assertions, current
+    )
     symmetry_text = " ".join([
         spec.get("description", ""),
         *[

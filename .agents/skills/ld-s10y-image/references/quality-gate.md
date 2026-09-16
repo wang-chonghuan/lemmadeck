@@ -13,7 +13,9 @@ still be misled about the mathematical relationship?
 - every required mathematical relationship has an assertion
 - every centrally symmetric object has complete opposite-point pairs whose
   midpoint is the declared center
-- every point or label whose membership matters has an `inside` assertion
+- every set-relation member point and member label has an `inside` assertion;
+  omission is a validation failure, and the rendered footprint has clear
+  space from the set boundary
 - every semantic arrow or edge has a `connects` assertion
 - preserve shared frames: source elements that use one axis, grid, number line,
   or coordinate system remain in one deterministic frame even when they are

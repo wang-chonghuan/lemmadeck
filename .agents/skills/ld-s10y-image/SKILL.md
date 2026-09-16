@@ -126,9 +126,14 @@ approval. Promoted metadata may depend only on durable edition files.
 - A central-symmetry or half-turn claim requires a `centralSymmetry` assertion
   covering every defining opposite point pair. Never represent the claimed
   symmetric object as an unchecked free-form `svgPath`.
-- Use `inside` assertions for items that must stay inside a set, panel, frame,
-  or region. Use `connects` assertions for every arrow or edge whose endpoints
-  carry meaning.
+- Use `inside` assertions (`point` + `container`) for items that must stay
+  inside a set, panel, frame, or region. A set-relation figure with
+  `connects` assertions must cover every visible member point and every
+  `*-label`; the validator also requires clearance for the rendered point or
+  text footprint, not merely an anchor barely inside the border. Give set
+  polygons stable `*-set` ids and their members matching `*-<index>` plus
+  `*-<index>-label`, so completeness is derived rather than optional. Use
+  `connects` assertions for every arrow or edge whose endpoints carry meaning.
 - Use GPT Image only for semantic artwork. In hybrid output, artwork is below
   the deterministic overlay.
 - Visible labels are English; mathematical symbols and numbers are allowed.

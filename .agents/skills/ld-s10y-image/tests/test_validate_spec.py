@@ -223,6 +223,115 @@ class ValidateSpecTests(unittest.TestCase):
         errors = MODULE.validate(self.write(payload), "draft")
         self.assertTrue(any("ends at the wrong member" in error for error in errors))
 
+    def test_set_relation_requires_containment_for_every_member_and_label(self):
+        payload = copy.deepcopy(self.payload)
+        payload["objects"].extend([
+            {
+                "id": "rel-left-set",
+                "type": "polygon",
+                "points": [[-3, -2], [0, -2], [0, 2], [-3, 2]],
+                "stroke": "ink",
+                "fill": "paper",
+            },
+            {
+                "id": "rel-right-set",
+                "type": "polygon",
+                "points": [[1, -2], [4, -2], [4, 2], [1, 2]],
+                "stroke": "ink",
+                "fill": "paper",
+            },
+            {
+                "id": "rel-left-0",
+                "type": "point",
+                "at": [-1.5, 0],
+                "fill": "accent",
+            },
+            {
+                "id": "rel-left-0-label",
+                "type": "text",
+                "at": [-2.2, 0],
+                "text": "a",
+                "fontSize": 16,
+                "labelColor": "ink",
+            },
+            {
+                "id": "rel-right-0",
+                "type": "point",
+                "at": [2.5, 0],
+                "fill": "accent",
+            },
+            {
+                "id": "relation-arrow",
+                "type": "arrow",
+                "from": "rel-left-0",
+                "to": "rel-right-0",
+                "stroke": "accent",
+            },
+        ])
+        payload["assertions"].append({
+            "id": "left-to-right",
+            "type": "connects",
+            "arrow": "relation-arrow",
+            "from": "rel-left-0",
+            "to": "rel-right-0",
+        })
+        payload["source"]["inventory"].append({
+            "id": "set-relation",
+            "description": "Two sets, their members, and one mapping arrow.",
+            "objects": [
+                "rel-left-set",
+                "rel-right-set",
+                "rel-left-0",
+                "rel-left-0-label",
+                "rel-right-0",
+                "relation-arrow",
+            ],
+            "assertions": ["left-to-right"],
+        })
+        errors = MODULE.validate(self.write(payload), "draft")
+        self.assertTrue(any(
+            "inside assertion for member 'rel-left-0'" in error
+            for error in errors
+        ))
+        self.assertTrue(any(
+            "inside assertion for member 'rel-left-0-label'" in error
+            for error in errors
+        ))
+        self.assertTrue(any(
+            "inside assertion for member 'rel-right-0'" in error
+            for error in errors
+        ))
+
+        payload["assertions"][4]["count"] = 5
+        containment = [
+            {
+                "id": "rel-left-0-inside",
+                "type": "inside",
+                "point": "rel-left-0",
+                "container": "rel-left-set",
+                "margin": 0.1,
+            },
+            {
+                "id": "rel-left-0-label-inside",
+                "type": "inside",
+                "point": "rel-left-0-label",
+                "container": "rel-left-set",
+                "margin": 0.1,
+            },
+            {
+                "id": "rel-right-0-inside",
+                "type": "inside",
+                "point": "rel-right-0",
+                "container": "rel-right-set",
+                "margin": 0.1,
+            },
+        ]
+        payload["assertions"].extend(containment)
+        payload["source"]["inventory"][-1]["assertions"].extend(
+            assertion["id"] for assertion in containment
+        )
+        self.assertEqual(MODULE.validate(self.write(payload), "draft"), [])
+
 
 if __name__ == "__main__":
     unittest.main()
