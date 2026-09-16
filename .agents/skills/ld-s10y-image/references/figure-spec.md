@@ -12,6 +12,9 @@ The canonical schema is
 - `description`: instructional purpose, not merely appearance
 - `source.image`: original PNG path and SHA-256
 - `source.authoritativeText`: complete relevant edition text
+- `source.inventory`: required for exercise figures; source-based groups with
+  `description` and `objects` (the IDs that realize that group). Record source
+  requirements before building objects. Missing or invisible IDs fail validation.
 - `canvas`: pixel size and mathematical bounding box
 - `objects`: ordered render objects
 - `assertions`: machine-checkable mathematical facts
@@ -73,6 +76,7 @@ Use assertions for every relationship required by the exercise:
 - `parallel`
 - `perpendicular`
 - `pointOnLine`
+- `pointOnCircle`: `point`, `center`, `radius`, optional tolerance
 - `centralSymmetry`: `center` plus every defining opposite point pair in
   `pairs`; each pair's midpoint must equal the declared center
 - `objectCount`

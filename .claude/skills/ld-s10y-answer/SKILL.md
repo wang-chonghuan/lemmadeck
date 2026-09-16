@@ -192,7 +192,7 @@ node .claude/skills/ld-s10y-answer/tools/publish-interactions.mjs \
 
 | widget | 含义 | 能否机械推导 |
 |---|---|---|
-| `number` | 一个数，用数字键盘 | 是 |
+| `number` | 一个数，默认基础数学键盘，仍可切完整键盘 | 是 |
 | `math` | 需要公式编辑器 | 是（也是维持现状的落点） |
 | `grid-point` | 在坐标网格上点格点 | 是，且自带交叉校验 |
 | `free` | 不判分的自由作答 | 是 |
@@ -210,6 +210,12 @@ node .claude/skills/ld-s10y-answer/tools/publish-interactions.mjs \
 
 每一条规格都必须带 `derivation` 写明依据。**不允许静默兜底**：落到 `math` 只是维持现状，
 但必须让人一眼看出哪些题只是维持现状、原因是什么。
+
+widget 不决定有没有数学键盘。所有答案输入框（包括 `number`、`math`、`free`）都由共享
+数学输入控件提供键盘按钮；手机系统数字键盘和 `±` 按钮不等于数学键盘。发布后执行
+`ld-s10y-lesson` cap7 的 `check_product.mjs`，逐框验证打开与输入归属。
+修图改变了点位、标签或原图给定数据时，必须重新求解对应题并 finalize/publish 答案与交互；
+禁止让“保留已有答案”的重发机制保留旧图错误。
 
 ### grid-point 的交叉校验（这条是 cap3 的核心）
 

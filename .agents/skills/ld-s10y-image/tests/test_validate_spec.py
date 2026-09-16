@@ -104,6 +104,42 @@ class ValidateSpecTests(unittest.TestCase):
         errors = MODULE.validate(self.write(payload), "draft")
         self.assertTrue(any("requires a centralSymmetry" in error for error in errors))
 
+    def test_geometry_outside_canvas_fails_even_when_labels_fit(self):
+        payload = copy.deepcopy(self.payload)
+        xmax = payload["canvas"]["boundingBox"][2]
+        payload["objects"].append({
+            "id": "right-table-border", "type": "segment",
+            "from": [xmax + 1, 0], "to": [xmax + 1, 1],
+        })
+        errors = MODULE.validate(self.write(payload), "draft")
+        self.assertTrue(any("geometry outside canvas" in error for error in errors))
+
+    def test_inventory_catches_omission_even_if_object_count_is_changed(self):
+        payload = copy.deepcopy(self.payload)
+        required = next(item for item in payload["objects"] if item["type"] == "point")
+        payload["source"]["inventory"] = [{
+            "description": "All source points, checked before drawing",
+            "objects": [required["id"]],
+        }]
+        payload["objects"].remove(required)
+        payload["assertions"] = [{
+            "type": "objectCount", "objectType": "point",
+            "count": sum(item["type"] == "point" for item in payload["objects"]),
+        }]
+        errors = MODULE.validate(self.write(payload), "draft")
+        self.assertTrue(any("missing visible object" in error for error in errors))
+
+    def test_point_on_circle_checks_chord_endpoints(self):
+        payload = copy.deepcopy(self.payload)
+        payload["assertions"].append({
+            "type": "pointOnCircle", "point": [0, 0],
+            "center": [0, 1], "radius": 2,
+        })
+        errors = MODULE.validate(self.write(payload), "draft")
+        self.assertTrue(any("point is not on circle" in error for error in errors))
+        payload["assertions"][-1]["radius"] = 1
+        self.assertEqual(MODULE.validate(self.write(payload), "draft"), [])
+
 
 if __name__ == "__main__":
     unittest.main()
