@@ -2,7 +2,7 @@ const assert = require("node:assert/strict")
 const fs = require("node:fs")
 const path = require("node:path")
 const { inline, proseInline, proseParagraphs, proseFlow } = require("../tools/htmlfrag.js")
-const { lessonOrderMap } = require("../tools/lesson_order.js")
+const { lessonOrderMap, publicationPlan, tocCardIds } = require("../tools/lesson_order.js")
 const { preserveExerciseMetadata } = require("../tools/publish_merge.js")
 
 const repo = path.resolve(__dirname, "../../../..")
@@ -124,4 +124,56 @@ assert.deepEqual(
     ["alg6-c1-ex", 2],
     ["alg6-c2-s1-n2", 3],
   ],
+)
+
+const toc = {
+  subject: "algebra",
+  grade: 6,
+  contents: [
+    {
+      id: "alg6-c1",
+      kind: "chapter",
+      lessons: [
+        {
+          id: "alg6-c1-s1",
+          kind: "section",
+          topics: [
+            { id: "alg6-c1-s1-n1" },
+            { id: "alg6-c1-s1-n2" },
+          ],
+        },
+        { id: "alg6-c1-ex", kind: "exercises" },
+      ],
+    },
+    {
+      id: "alg6-c2",
+      kind: "chapter",
+      lessons: [
+        {
+          id: "alg6-c2-s1",
+          kind: "section",
+          topics: [{ id: "alg6-c2-s1-n3" }],
+        },
+      ],
+    },
+  ],
+}
+assert.deepEqual(tocCardIds(toc), [
+  "alg6-c1-s1-n1",
+  "alg6-c1-s1-n2",
+  "alg6-c1-ex",
+  "alg6-c2-s1-n3",
+])
+assert.deepEqual(
+  [...publicationPlan(toc).orders.entries()],
+  [
+    ["alg6-c1-s1-n1", 1001],
+    ["alg6-c1-s1-n2", 1002],
+    ["alg6-c1-ex", 1003],
+    ["alg6-c2-s1-n3", 1004],
+  ],
+)
+assert.deepEqual(
+  { subject: publicationPlan(toc).subject, stage: publicationPlan(toc).stage },
+  { subject: "math", stage: 6 },
 )

@@ -27,7 +27,7 @@ import { fileURLToPath } from 'node:url'
 const require = createRequire(import.meta.url)
 const postgres = require('postgres')
 const { inline, proseInline, proseFlow } = require('./htmlfrag.js')
-const { lessonOrderMap } = require('./lesson_order.js')
+const { publicationPlan } = require('./lesson_order.js')
 const { preserveExerciseMetadata } = require('./publish_merge.js')
 
 const args = process.argv.slice(2)
@@ -58,13 +58,13 @@ const lessonsDir = path.join(edition, 'lessons')
 if (!fs.existsSync(lessonsDir)) {
   throw new Error(`edition 不存在或没有 lessons: ${lessonsDir}`)
 }
-const sourceBookIndexPath = path.join(book, 'book.json')
-if (!fs.existsSync(sourceBookIndexPath)) {
-  throw new Error(`缺少原始课程索引: ${sourceBookIndexPath}`)
+const bookId = path.basename(book)
+const textbookRoot = path.dirname(path.dirname(book))
+const tocPath = path.join(textbookRoot, 'toc', bookId, 'zh.json')
+if (!fs.existsSync(tocPath)) {
+  throw new Error(`缺少完整课程目录: ${tocPath}`)
 }
-const lessonOrders = lessonOrderMap(
-  JSON.parse(fs.readFileSync(sourceBookIndexPath, 'utf8')),
-)
+const publication = publicationPlan(JSON.parse(fs.readFileSync(tocPath, 'utf8')))
 
 const toolDir = path.dirname(fileURLToPath(import.meta.url))
 const gate = spawnSync(
@@ -140,17 +140,16 @@ for (const lid of fs.readdirSync(lessonsDir).sort()) {
       ...figureAssetStrict(f.id, F),
     })),
   }))
-  // lesson_order 使用原始 book.json 的卡片阅读顺序。无编号补充习题的 number 为 null，
-  // 不能转成 0；否则同册第二个补充习题会撞唯一约束。
-  const grade = Number(/^[a-z]*(\d+)/.exec(L.card_id.replace(/^math|^physics/, ''))?.[1] ?? 0)
-  const lessonOrder = lessonOrders.get(L.card_id)
+  // 完整 TOC 是稳定排序源；不能使用只含已抽取课程的 book.json，否则后补前面章节
+  // 会改变已发布课程的顺序并撞数据库唯一约束。
+  const lessonOrder = publication.orders.get(L.card_id)
   if (!lessonOrder) {
-    throw new Error(`${lid}: 原始 book.json 没有该卡片，不能确定 lesson_order`)
+    throw new Error(`${lid}: 完整 TOC 没有该卡片，不能确定 lesson_order`)
   }
   rows.push({
     id: L.card_id,
-    subject: 'math',
-    stage: grade || 0,
+    subject: publication.subject,
+    stage: publication.stage,
     lesson_order: lessonOrder,
     title: L.printed_title || L.title,
     concept: [L.chapter, L.section].filter(Boolean).join(' · '),
@@ -198,30 +197,54 @@ const sql = postgres(url, {
   connect_timeout: 15,
 })
 try {
-  for (const r of rows) {
-    const existingRows = await sql`
-      select exercises from sr_lessons where id = ${r.id}
+  await sql.begin(async (tx) => {
+    const bookIds = [...publication.orders.keys()]
+    const existingBookRows = await tx`
+      select id from sr_lessons where id = any(${bookIds})
     `
-    const existingDeck = existingRows[0]?.exercises
-    r.exercises.exercises = preserveExerciseMetadata(
-      r.exercises.exercises,
-      existingDeck,
-      editionName,
-    )
-    await sql`
-      insert into sr_lessons
-        (id, subject, stage, lesson_order, title, concept, content, exercises, status)
-      values (${r.id}, ${r.subject}, ${r.stage}, ${r.lesson_order}, ${r.title},
-              ${r.concept}, ${sql.json(r.content)}, ${sql.json(r.exercises)}, 'draft')
-      on conflict (id) do update set
-        subject = excluded.subject, stage = excluded.stage,
-        lesson_order = excluded.lesson_order, title = excluded.title,
-        concept = excluded.concept, html = null,
-        content = excluded.content, exercises = excluded.exercises,
-        updated_at = now()
-    `
-    console.log(`    ✓ ${r.id}`)
-  }
+    if (existingBookRows.length) {
+      await tx`
+        update sr_lessons
+        set lesson_order = lesson_order - 1000000000
+        where id = any(${existingBookRows.map(row => row.id)})
+      `
+      for (const existing of existingBookRows) {
+        await tx`
+          update sr_lessons
+          set subject = ${publication.subject},
+              stage = ${publication.stage},
+              lesson_order = ${publication.orders.get(existing.id)}
+          where id = ${existing.id}
+        `
+      }
+      console.log(`    ↻ 同册既有课程稳定重排 ${existingBookRows.length} 行`)
+    }
+
+    for (const r of rows) {
+      const existingRows = await tx`
+        select exercises from sr_lessons where id = ${r.id}
+      `
+      const existingDeck = existingRows[0]?.exercises
+      r.exercises.exercises = preserveExerciseMetadata(
+        r.exercises.exercises,
+        existingDeck,
+        editionName,
+      )
+      await tx`
+        insert into sr_lessons
+          (id, subject, stage, lesson_order, title, concept, content, exercises, status)
+        values (${r.id}, ${r.subject}, ${r.stage}, ${r.lesson_order}, ${r.title},
+                ${r.concept}, ${tx.json(r.content)}, ${tx.json(r.exercises)}, 'draft')
+        on conflict (id) do update set
+          subject = excluded.subject, stage = excluded.stage,
+          lesson_order = excluded.lesson_order, title = excluded.title,
+          concept = excluded.concept, html = null,
+          content = excluded.content, exercises = excluded.exercises,
+          updated_at = now()
+      `
+      console.log(`    ✓ ${r.id}`)
+    }
+  })
   const all = await sql`
     select id, subject, jsonb_array_length(content->'prose') as prose,
            coalesce((exercises->>'count')::int, 0) as ex
