@@ -20,6 +20,8 @@ still be misled about the mathematical relationship?
 - preserve shared frames: source elements that use one axis, grid, number line,
   or coordinate system remain in one deterministic frame even when they are
   labelled as separate subparts
+- preserve every instructional grid row, column, offset, and road/cell gap;
+  a blank frame is not a valid substitute for a source lattice
 - assertions pass within declared tolerance
 - visible labels use English
 - output hash matches render metadata

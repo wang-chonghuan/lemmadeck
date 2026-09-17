@@ -352,9 +352,13 @@ async function render(spec, output) {
           elements.set(object.id, arc)
         } else if (object.type === 'grid') {
           const [xMin, yMax, xMax, yMin] = object.bounds || box
+          const xOffset = object.xOffset ?? 0
+          const yOffset = object.yOffset ?? 0
           let index = 0
           for (
-            let x = Math.ceil(xMin / object.xStep) * object.xStep;
+            let x = xOffset + (
+              Math.ceil((xMin - xOffset) / object.xStep - 1e-9) * object.xStep
+            );
             x <= xMax + 1e-9 && index < 500;
             x += object.xStep
           ) {
@@ -368,7 +372,9 @@ async function render(spec, output) {
           }
           index = 0
           for (
-            let y = Math.ceil(yMin / object.yStep) * object.yStep;
+            let y = yOffset + (
+              Math.ceil((yMin - yOffset) / object.yStep - 1e-9) * object.yStep
+            );
             y <= yMax + 1e-9 && index < 500;
             y += object.yStep
           ) {

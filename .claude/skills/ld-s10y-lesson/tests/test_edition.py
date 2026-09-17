@@ -24,6 +24,55 @@ def dump(path: Path, value: object) -> None:
 
 
 class EditionTest(unittest.TestCase):
+    def test_displayed_figure_must_exist_in_lesson_manifest(self) -> None:
+        errors = edition.validate_figure_references(
+            [],
+            [{
+                "number": "39",
+                "figure_refs": ["fig-05"],
+                "figures": [{"id": "fig-05", "label": "图 5"}],
+            }],
+            [],
+        )
+        self.assertIn(
+            "fig-05: displayed or referenced figure is missing from figures.json",
+            errors,
+        )
+
+    def test_shared_figure_can_be_appended_to_manifest(self) -> None:
+        prose = [{"kind": "fig", "id": "fig-09"}]
+        exercises = [{
+            "number": "39",
+            "figure_refs": ["fig-05"],
+            "figures": [{"id": "fig-05"}],
+        }]
+        figures = [{"id": "fig-09"}, {"id": "fig-05"}]
+        self.assertEqual(
+            edition.validate_figure_references(prose, exercises, figures),
+            [],
+        )
+
+    def test_exercise_display_figure_is_part_of_expected_manifest(self) -> None:
+        modern_items = [{
+            "number": "1",
+            "figure_refs": [],
+            "figures": [{"id": "fig-05"}],
+        }]
+        exercise_figure_ids = {
+            figure_id
+            for item in modern_items
+            if isinstance(item, dict)
+            for figure_id in item.get("figure_refs", [])
+            if isinstance(figure_id, str)
+        } | {
+            figure.get("id")
+            for item in modern_items
+            if isinstance(item, dict)
+            for figure in item.get("figures", [])
+            if isinstance(figure, dict) and isinstance(figure.get("id"), str)
+        }
+        self.assertEqual(exercise_figure_ids, {"fig-05"})
+
     def test_hybrid_artwork_requires_aspect_ratio_report(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
