@@ -24,15 +24,27 @@ def dump(path: Path, value: object) -> None:
 
 
 class EditionTest(unittest.TestCase):
-    def test_hybrid_png_requires_aspect_ratio_report(self) -> None:
+    def test_hybrid_artwork_requires_aspect_ratio_report(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             source_path = root / "source.png"
-            image_path = root / "figure.png"
-            metadata_path = root / "figure.png.json"
+            artwork_path = root / "figure.artwork.png"
+            generation_path = root / "artwork.generated.png.json"
+            render_path = root / "figure.render.json"
             spec_path = root / "figure.spec.json"
             Image.new("RGB", (1024, 1024), "#0f766e").save(source_path)
-            Image.new("RGB", (1024, 1024), "#0f766e").save(image_path)
+            Image.new("RGBA", (1024, 1024), "#0f766e").save(artwork_path)
+            dump(generation_path, {
+                "schema": "n-azure/image-generation@1",
+                "model": "gpt-image-2",
+                "mode": "edit",
+                "prompt": "Create artwork only.",
+                "references": [{"sha256": edition.sha256(source_path)}],
+                "output": {
+                    "path": artwork_path.as_posix(),
+                    "sha256": edition.sha256(artwork_path),
+                },
+            })
             spec = {
                 "schema": edition.IMAGE_FIGURE_SPEC_SCHEMA,
                 "id": "fig-01",
@@ -44,15 +56,29 @@ class EditionTest(unittest.TestCase):
                         "sha256": edition.sha256(source_path),
                     },
                     "authoritativeText": [{"text": "Place the figure on a grid."}],
+                    "inventory": [{
+                        "id": "artwork",
+                        "description": "One generated artwork layer.",
+                        "objects": ["artwork"],
+                        "assertions": ["image-count"],
+                    }],
                 },
                 "canvas": {
                     "width": 1024,
                     "height": 1024,
                     "boundingBox": [0, 10, 10, 0],
+                    "background": "transparent",
+                    "keepAspectRatio": True,
+                },
+                "display": {
+                    "layout": "inline",
+                    "minTextPx": 16,
+                    "widths": [352],
                 },
                 "assets": [{
                     "id": "art",
-                    "path": image_path.as_posix(),
+                    "path": artwork_path.as_posix(),
+                    "metadata": generation_path.as_posix(),
                     "role": "artwork",
                 }],
                 "objects": [{
@@ -63,32 +89,40 @@ class EditionTest(unittest.TestCase):
                     "size": [8, 8],
                 }],
                 "assertions": [{
+                    "id": "image-count",
                     "type": "objectCount",
                     "objectType": "image",
                     "count": 1,
                 }],
-                "review": {"status": "pass"},
             }
             dump(spec_path, spec)
             metadata = {
-                "schema": "ld-s10y-image/render@1",
+                "schema": edition.IMAGE_RENDER_SCHEMA,
+                "figure": "fig-01",
                 "mode": "hybrid",
                 "renderer": {"name": "JSXGraph"},
                 "status": "pass",
+                "assets": [{
+                    "id": "art",
+                    "sha256": edition.sha256(artwork_path),
+                    "metadata": {"sha256": edition.sha256(generation_path)},
+                }],
                 "imageFits": [{
                     "id": "artwork",
                     "status": "pass",
                     "preserveAspectRatio": "xMidYMid meet",
                 }],
-                "output": {"png": {"sha256": edition.sha256(image_path)}},
+                "output": {
+                    "artwork": {"sha256": edition.sha256(artwork_path)},
+                },
                 "spec": {"sha256": edition.sha256(spec_path)},
             }
-            dump(metadata_path, metadata)
+            dump(render_path, metadata)
             figure = {"id": "fig-01"}
             self.assertEqual(
-                edition.validate_png(
-                    image_path,
-                    metadata_path,
+                edition.validate_artwork(
+                    artwork_path,
+                    render_path,
                     spec_path,
                     figure,
                 ),
@@ -96,14 +130,14 @@ class EditionTest(unittest.TestCase):
             )
 
             metadata.pop("imageFits")
-            dump(metadata_path, metadata)
-            errors = edition.validate_png(
-                image_path,
-                metadata_path,
+            dump(render_path, metadata)
+            errors = edition.validate_artwork(
+                artwork_path,
+                render_path,
                 spec_path,
                 figure,
             )
-            self.assertTrue(any("比例保护报告" in error for error in errors))
+            self.assertTrue(any("imageFits" in error for error in errors))
 
     def test_numbered_subparts_are_sorted_and_line_broken(self) -> None:
         source = (
@@ -331,13 +365,50 @@ class EditionTest(unittest.TestCase):
     def test_svg_figure_text_must_be_english(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
+            source = root / "source.png"
             svg = root / "fig-01.svg"
             spec = root / "fig-01.spec.json"
+            render = root / "fig-01.render.json"
+            Image.new("RGB", (320, 320), "white").save(source)
             dump(spec, {
-                "schema": edition.FIGURE_SPEC_SCHEMA,
+                "schema": edition.IMAGE_FIGURE_SPEC_SCHEMA,
                 "id": "fig-01",
+                "mode": "deterministic",
                 "description": "A newly authored tree.",
-                "constraints": ["The tree has one trunk."],
+                "source": {
+                    "image": {
+                        "path": source.as_posix(),
+                        "sha256": edition.sha256(source),
+                    },
+                    "authoritativeText": [{"text": "One tree."}],
+                    "inventory": [{
+                        "id": "tree",
+                        "description": "The visible tree label.",
+                        "objects": ["tree-label"],
+                        "assertions": [],
+                    }],
+                },
+                "canvas": {
+                    "width": 320,
+                    "height": 320,
+                    "boundingBox": [0, 60, 100, 0],
+                    "background": "paper",
+                    "keepAspectRatio": True,
+                },
+                "display": {
+                    "layout": "inline",
+                    "minTextPx": 16,
+                    "widths": [320],
+                },
+                "objects": [{
+                    "id": "tree-label",
+                    "type": "text",
+                    "at": [10, 20],
+                    "text": "Tree",
+                    "fontSize": 20,
+                    "labelColor": "ink",
+                }],
+                "assertions": [],
             })
             svg.write_text(
                 '<svg viewBox="0 0 100 60">'
@@ -345,12 +416,24 @@ class EditionTest(unittest.TestCase):
                 '<text x="10" y="20">Tree</text>'
                 "</svg>"
             )
+            dump(render, {
+                "schema": edition.IMAGE_RENDER_SCHEMA,
+                "figure": "fig-01",
+                "mode": "deterministic",
+                "renderer": {"name": "JSXGraph"},
+                "status": "pass",
+                "spec": {"sha256": edition.sha256(spec)},
+                "output": {"svg": {"sha256": edition.sha256(svg)}},
+                "displayChecks": [{"status": "pass"}],
+                "theme": {"output": "css-variables"},
+            })
 
             errors = edition.validate_svg(
                 svg,
                 spec,
                 {"id": "fig-01"},
                 "English",
+                render,
             )
             self.assertTrue(any("必须使用英文" in error for error in errors))
 
@@ -360,12 +443,16 @@ class EditionTest(unittest.TestCase):
                 '<text x="10" y="20">Tree 1</text>'
                 "</svg>"
             )
+            metadata = edition.load(render)
+            metadata["output"]["svg"]["sha256"] = edition.sha256(svg)
+            dump(render, metadata)
             self.assertEqual(
                 edition.validate_svg(
                     svg,
                     spec,
                     {"id": "fig-01"},
                     "English",
+                    render,
                 ),
                 [],
             )
@@ -472,6 +559,7 @@ class EditionTest(unittest.TestCase):
             figures["figures"][0].update({
                 "png": "figures/fig-01.png",
                 "generation": "figures/fig-01.png.json",
+                "review": "figures/fig-01.review.json",
             })
             dump(target / "figures.json", figures)
             exercises = edition.load(target / "exercises.json")
@@ -493,14 +581,58 @@ class EditionTest(unittest.TestCase):
                 "mode": "edit",
                 "prompt": "Create a full-color horizontal line diagram.",
                 "references": [{"sha256": source_sha}],
-                "output": {"sha256": edition.sha256(image_path)},
+                "output": {
+                    "path": image_path.as_posix(),
+                    "sha256": edition.sha256(image_path),
+                },
             })
-            dump(figure_dir / "fig-01.spec.json", {
-                "schema": edition.FIGURE_SPEC_SCHEMA,
+            spec_path = figure_dir / "fig-01.spec.json"
+            dump(spec_path, {
+                "schema": edition.IMAGE_FIGURE_SPEC_SCHEMA,
                 "id": "fig-01",
+                "mode": "generated",
                 "description": "A generated full-color line diagram.",
-                "constraints": ["The line is horizontal."],
-                "visualReview": {"status": "pass"},
+                "source": {
+                    "image": {
+                        "path": (book / "figures" / "fig-01.png").as_posix(),
+                        "sha256": source_sha,
+                    },
+                    "authoritativeText": [{
+                        "lesson": lesson_id,
+                        "text": "观察图 1.",
+                    }],
+                    "inventory": [{
+                        "id": "line-diagram",
+                        "description": "One complete semantic line diagram.",
+                        "objects": [],
+                        "assertions": [],
+                    }],
+                },
+                "canvas": {
+                    "width": 1024,
+                    "height": 1024,
+                    "boundingBox": [0, 10, 10, 0],
+                    "background": "paper",
+                    "keepAspectRatio": True,
+                },
+                "display": {
+                    "layout": "inline",
+                    "minTextPx": 16,
+                    "widths": [352],
+                },
+                "objects": [],
+                "assertions": [],
+            })
+            generation_path = figure_dir / "fig-01.png.json"
+            dump(figure_dir / "fig-01.review.json", {
+                "schema": edition.IMAGE_REVIEW_SCHEMA,
+                "figure": "fig-01",
+                "status": "pass",
+                "spec": {"sha256": edition.sha256(spec_path)},
+                "generation": {"sha256": edition.sha256(generation_path)},
+                "outputs": {
+                    "png": {"sha256": edition.sha256(image_path)},
+                },
             })
 
             self.assertEqual(edition.cmd_finalize(args), 0)
@@ -515,6 +647,17 @@ class EditionTest(unittest.TestCase):
             ]
             gate = subprocess.run(gate_args, capture_output=True, text=True)
             self.assertEqual(gate.returncode, 0, gate.stdout + gate.stderr)
+
+            current_spec = edition.load(spec_path)
+            legacy_spec = dict(current_spec)
+            legacy_spec["schema"] = edition.LEGACY_IMAGE_FIGURE_SPEC_SCHEMA
+            legacy_spec["review"] = {"status": "pass"}
+            dump(spec_path, legacy_spec)
+            gate = subprocess.run(gate_args, capture_output=True, text=True)
+            self.assertEqual(gate.returncode, 2, gate.stdout + gate.stderr)
+            self.assertIn("历史 FigureSpec 只读", gate.stdout)
+            dump(spec_path, current_spec)
+
             image_path.unlink()
             gate = subprocess.run(gate_args, capture_output=True, text=True)
             self.assertEqual(gate.returncode, 2, gate.stdout + gate.stderr)

@@ -3,6 +3,7 @@ import re
 import subprocess
 import tempfile
 import unittest
+import base64
 from pathlib import Path
 from xml.etree import ElementTree
 
@@ -84,8 +85,103 @@ class RendererNamespaceTests(unittest.TestCase):
 
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             report = json.loads(report_path.read_text(encoding="utf-8"))
+            self.assertEqual(report["schema"], "ld-s10y-image/render@2")
             self.assertEqual(set(report["output"]), {"svg"})
+            self.assertTrue(all(
+                item["status"] == "pass"
+                for item in report["displayChecks"]
+            ))
             self.assertTrue(png_path.is_file())
+
+    def test_render_rejects_undersized_display_text(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            spec = json.loads(FIXTURE.read_text(encoding="utf-8"))
+            for item in spec["objects"]:
+                if item["type"] == "text":
+                    item["fontSize"] = 12
+                if item["type"] == "axis":
+                    item["fontSize"] = 12
+            spec_path = directory / "figure.spec.json"
+            svg_path = directory / "figure.svg"
+            report_path = directory / "figure.svg.json"
+            spec_path.write_text(json.dumps(spec), encoding="utf-8")
+
+            result = subprocess.run(
+                [
+                    "node",
+                    str(RENDERER),
+                    "--spec",
+                    str(spec_path),
+                    "--svg",
+                    str(svg_path),
+                    "--report",
+                    str(report_path),
+                ],
+                cwd=REPO,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            self.assertTrue(any(
+                item["status"] == "fail"
+                for item in report["displayChecks"]
+            ))
+
+    def test_hybrid_keeps_artwork_and_vector_overlay_separate(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            artwork_source = directory / "source.png"
+            artwork_source.write_bytes(base64.b64decode(
+                "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ"
+                "AAAADUlEQVR42mP8z8BQDwAFgQIAffJQ9QAAAABJRU5ErkJggg=="
+            ))
+            spec = json.loads(FIXTURE.read_text(encoding="utf-8"))
+            spec["mode"] = "hybrid"
+            spec["assets"] = [{
+                "id": "art",
+                "path": str(artwork_source),
+                "role": "artwork",
+            }]
+            spec["objects"].insert(0, {
+                "id": "artwork",
+                "type": "image",
+                "asset": "art",
+                "at": [-2, -1],
+                "size": [4, 2],
+            })
+            spec["source"]["inventory"][0]["objects"].append("artwork")
+            spec_path = directory / "figure.spec.json"
+            svg_path = directory / "figure.svg"
+            artwork_path = directory / "figure.artwork.png"
+            report_path = directory / "figure.render.json"
+            spec_path.write_text(json.dumps(spec), encoding="utf-8")
+
+            result = subprocess.run(
+                [
+                    "node",
+                    str(RENDERER),
+                    "--spec",
+                    str(spec_path),
+                    "--svg",
+                    str(svg_path),
+                    "--artwork",
+                    str(artwork_path),
+                    "--report",
+                    str(report_path),
+                ],
+                cwd=REPO,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertNotIn("<image", svg_path.read_text(encoding="utf-8"))
+            self.assertTrue(artwork_path.is_file())
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            self.assertEqual(set(report["output"]), {"artwork", "svg"})
 
 
 if __name__ == "__main__":

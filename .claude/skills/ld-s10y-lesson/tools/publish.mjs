@@ -27,7 +27,7 @@ import { fileURLToPath } from 'node:url'
 const require = createRequire(import.meta.url)
 const postgres = require('postgres')
 const { inline, proseInline, proseFlow } = require('./htmlfrag.js')
-const { lessonOrderMap } = require('./lesson_order.js')
+const { publicationPlan } = require('./lesson_order.js')
 const { preserveExerciseMetadata } = require('./publish_merge.js')
 
 const args = process.argv.slice(2)
@@ -58,13 +58,13 @@ const lessonsDir = path.join(edition, 'lessons')
 if (!fs.existsSync(lessonsDir)) {
   throw new Error(`edition 不存在或没有 lessons: ${lessonsDir}`)
 }
-const sourceBookIndexPath = path.join(book, 'book.json')
-if (!fs.existsSync(sourceBookIndexPath)) {
-  throw new Error(`缺少原始课程索引: ${sourceBookIndexPath}`)
+const bookId = path.basename(book)
+const textbookRoot = path.dirname(path.dirname(book))
+const tocPath = path.join(textbookRoot, 'toc', bookId, 'zh.json')
+if (!fs.existsSync(tocPath)) {
+  throw new Error(`缺少完整课程目录: ${tocPath}`)
 }
-const lessonOrders = lessonOrderMap(
-  JSON.parse(fs.readFileSync(sourceBookIndexPath, 'utf8')),
-)
+const publication = publicationPlan(JSON.parse(fs.readFileSync(tocPath, 'utf8')))
 
 const toolDir = path.dirname(fileURLToPath(import.meta.url))
 const gate = spawnSync(
@@ -83,21 +83,46 @@ console.log(gate.stdout.trim())
 function figureAssetStrict(id, manifest) {
   const figure = manifest.find(item => item.id === id)
   if (!figure) throw new Error(`现代版图清单缺少: ${id}`)
-  if (figure.png) {
-    const pngPath = path.join(edition, figure.png)
+  const specPath = path.join(edition, figure.spec)
+  const spec = JSON.parse(fs.readFileSync(specPath, 'utf8'))
+  if (spec.schema !== 'ld-s10y-image/figure-spec@2') {
+    throw new Error(`${id}: 历史 FigureSpec 只读，不能重新发布`)
+  }
+
+  const readImage = (relativePath) => {
+    const imagePath = path.join(edition, relativePath)
+    if (!fs.existsSync(imagePath)) throw new Error(`现代版缺少图片: ${id}`)
+    return `data:image/png;base64,${fs.readFileSync(imagePath).toString('base64')}`
+  }
+  const readSvg = (relativePath) => {
+    const svgPath = path.join(edition, relativePath)
+    if (!fs.existsSync(svgPath)) throw new Error(`现代版缺少图片: ${id}`)
+    const svg = fs.readFileSync(svgPath, 'utf8').replace(/<\?xml[^>]*\?>/, '').trim()
+    const linkScan = svg.replace(/\sxmlns(?::\w+)?="[^"]+"/g, '')
+    if (/<(?:image|foreignObject|script)\b/i.test(svg) || /(?:data:|https?:\/\/)/i.test(linkScan)) {
+      throw new Error(`${svgPath} 含位图、脚本、data URI 或外链`)
+    }
+    return svg
+  }
+
+  const common = {
+    mode: spec.mode,
+    layout: spec.display.layout,
+  }
+  if (spec.mode === 'deterministic') {
+    return { ...common, image: null, svg: readSvg(figure.svg) }
+  }
+  if (spec.mode === 'hybrid') {
     return {
-      image: `data:image/png;base64,${fs.readFileSync(pngPath).toString('base64')}`,
-      svg: null,
+      ...common,
+      image: readImage(figure.artwork),
+      svg: readSvg(figure.svg),
     }
   }
-  const svgPath = path.join(edition, figure.svg)
-  if (!fs.existsSync(svgPath)) throw new Error(`现代版缺少图片: ${id}`)
-  const svg = fs.readFileSync(svgPath, 'utf8').replace(/<\?xml[^>]*\?>/, '').trim()
-  const linkScan = svg.replace(/\sxmlns(?::\w+)?="[^"]+"/g, '')
-  if (/<(?:image|foreignObject|script)\b/i.test(svg) || /(?:data:|https?:\/\/)/i.test(linkScan)) {
-    throw new Error(`${svgPath} 含位图、脚本、data URI 或外链`)
+  if (spec.mode === 'generated') {
+    return { ...common, image: readImage(figure.png), svg: null }
   }
-  return { image: null, svg }
+  throw new Error(`${id}: 未知图片模式 ${spec.mode}`)
 }
 
 const rows = []
@@ -140,17 +165,16 @@ for (const lid of fs.readdirSync(lessonsDir).sort()) {
       ...figureAssetStrict(f.id, F),
     })),
   }))
-  // lesson_order 使用原始 book.json 的卡片阅读顺序。无编号补充习题的 number 为 null，
-  // 不能转成 0；否则同册第二个补充习题会撞唯一约束。
-  const grade = Number(/^[a-z]*(\d+)/.exec(L.card_id.replace(/^math|^physics/, ''))?.[1] ?? 0)
-  const lessonOrder = lessonOrders.get(L.card_id)
+  // 完整 TOC 是稳定排序源；不能使用只含已抽取课程的 book.json，否则后补前面章节
+  // 会改变已发布课程的顺序并撞数据库唯一约束。
+  const lessonOrder = publication.orders.get(L.card_id)
   if (!lessonOrder) {
-    throw new Error(`${lid}: 原始 book.json 没有该卡片，不能确定 lesson_order`)
+    throw new Error(`${lid}: 完整 TOC 没有该卡片，不能确定 lesson_order`)
   }
   rows.push({
     id: L.card_id,
-    subject: 'math',
-    stage: grade || 0,
+    subject: publication.subject,
+    stage: publication.stage,
     lesson_order: lessonOrder,
     title: L.printed_title || L.title,
     concept: [L.chapter, L.section].filter(Boolean).join(' · '),
@@ -198,30 +222,54 @@ const sql = postgres(url, {
   connect_timeout: 15,
 })
 try {
-  for (const r of rows) {
-    const existingRows = await sql`
-      select exercises from sr_lessons where id = ${r.id}
+  await sql.begin(async (tx) => {
+    const bookIds = [...publication.orders.keys()]
+    const existingBookRows = await tx`
+      select id from sr_lessons where id = any(${bookIds})
     `
-    const existingDeck = existingRows[0]?.exercises
-    r.exercises.exercises = preserveExerciseMetadata(
-      r.exercises.exercises,
-      existingDeck,
-      editionName,
-    )
-    await sql`
-      insert into sr_lessons
-        (id, subject, stage, lesson_order, title, concept, content, exercises, status)
-      values (${r.id}, ${r.subject}, ${r.stage}, ${r.lesson_order}, ${r.title},
-              ${r.concept}, ${sql.json(r.content)}, ${sql.json(r.exercises)}, 'draft')
-      on conflict (id) do update set
-        subject = excluded.subject, stage = excluded.stage,
-        lesson_order = excluded.lesson_order, title = excluded.title,
-        concept = excluded.concept, html = null,
-        content = excluded.content, exercises = excluded.exercises,
-        updated_at = now()
-    `
-    console.log(`    ✓ ${r.id}`)
-  }
+    if (existingBookRows.length) {
+      await tx`
+        update sr_lessons
+        set lesson_order = lesson_order - 1000000000
+        where id = any(${existingBookRows.map(row => row.id)})
+      `
+      for (const existing of existingBookRows) {
+        await tx`
+          update sr_lessons
+          set subject = ${publication.subject},
+              stage = ${publication.stage},
+              lesson_order = ${publication.orders.get(existing.id)}
+          where id = ${existing.id}
+        `
+      }
+      console.log(`    ↻ 同册既有课程稳定重排 ${existingBookRows.length} 行`)
+    }
+
+    for (const r of rows) {
+      const existingRows = await tx`
+        select exercises from sr_lessons where id = ${r.id}
+      `
+      const existingDeck = existingRows[0]?.exercises
+      r.exercises.exercises = preserveExerciseMetadata(
+        r.exercises.exercises,
+        existingDeck,
+        editionName,
+      )
+      await tx`
+        insert into sr_lessons
+          (id, subject, stage, lesson_order, title, concept, content, exercises, status)
+        values (${r.id}, ${r.subject}, ${r.stage}, ${r.lesson_order}, ${r.title},
+                ${r.concept}, ${tx.json(r.content)}, ${tx.json(r.exercises)}, 'draft')
+        on conflict (id) do update set
+          subject = excluded.subject, stage = excluded.stage,
+          lesson_order = excluded.lesson_order, title = excluded.title,
+          concept = excluded.concept, html = null,
+          content = excluded.content, exercises = excluded.exercises,
+          updated_at = now()
+      `
+      console.log(`    ✓ ${r.id}`)
+    }
+  })
   const all = await sql`
     select id, subject, jsonb_array_length(content->'prose') as prose,
            coalesce((exercises->>'count')::int, 0) as ex

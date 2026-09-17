@@ -17,7 +17,11 @@ def main():
     errors = []
     for lesson in args.lesson:
         _, _, _, failures = validate_lesson(
-            args.book, args.book / "editions" / args.edition, lesson, profile,
+            args.book,
+            args.book / "editions" / args.edition,
+            lesson,
+            profile,
+            require_current_figures=True,
         )
         errors.extend(f"{lesson}: {failure}" for failure in failures)
     for error in errors:

@@ -26,6 +26,19 @@ type MathKeyboard = {
   hide: (options?: { animate: boolean }) => void
 }
 
+function renderMath(element: HTMLElement | null) {
+  const fn = (window as unknown as { renderMathInElement?: Function }).renderMathInElement
+  if (element && typeof fn === 'function') {
+    fn(element, {
+      delimiters: [
+        { left: '$$', right: '$$', display: true },
+        { left: '$', right: '$', display: false },
+      ],
+      throwOnError: false,
+    })
+  }
+}
+
 let sharedKeyboard: MathKeyboard | undefined
 let keyboardInset: {
   scroller: HTMLElement
@@ -261,6 +274,7 @@ export function MathAnswerField({
   const [result, setResult] = useState<TextbookAnswerResult | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const resultRef = useRef<HTMLDivElement>(null)
   // How many times this learner has submitted a wrong answer to THIS exercise.
   // The first wrong one is not the end of the exercise — it is the moment the
   // learner is most able to find their own slip, so the standard answer waits.
@@ -272,6 +286,25 @@ export function MathAnswerField({
     setError('')
     setWrongTries(0)
   }, [exercise, fieldCount, lessonId])
+
+  useEffect(() => {
+    if (!result) return
+    let tries = 0
+    let timer: ReturnType<typeof setTimeout>
+    const typeset = () => {
+      const element = resultRef.current
+      const ready =
+        typeof (window as unknown as { renderMathInElement?: Function })
+          .renderMathInElement === 'function'
+      if (element && ready) {
+        renderMath(element)
+      } else if (tries++ < 100) {
+        timer = window.setTimeout(typeset, 100)
+      }
+    }
+    typeset()
+    return () => window.clearTimeout(timer)
+  }, [result])
 
   const onValue = useCallback((index: number, value: string) => {
     setValues((current) => {
@@ -393,7 +426,7 @@ export function MathAnswerField({
       {error && <p className="sr-math-error">{error}</p>}
 
       {graded && (
-        <div className={`sr-math-result ${result.verdict}`}>
+        <div ref={resultRef} className={`sr-math-result ${result.verdict}`}>
           <div className="sr-math-verdict">
             {result.verdict === 'correct' ? (
               <CheckCircle2 size={18} aria-hidden />

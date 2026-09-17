@@ -304,17 +304,24 @@ p2c.py adapt-finalize --book 5m --edition modern-us-neutral \
    需要横线表达概念切换时，在 edition `lesson.json` 的 `section_breaks` 中记录下一段的
    扁平段落索引；这属于现代版排版事实，不得写回原始抽取层。
 5. 每张产品图委托项目技能 `ld-s10y-image`，并配
-   `ld-s10y-image/figure-spec@1`：
+   `ld-s10y-image/figure-spec@2`：
    - 数轴、几何、网格、刻度、坐标、变换、图表和数学标签用 JSXGraph 确定性生成
    - 动物、人物、树木和场景等语义素材用 Azure `gpt-image-2`
-   - 同时需要自然对象与精确数学关系时，用 GPT artwork + JSXGraph overlay 的 hybrid 模式
+   - 同时需要自然对象与精确数学关系时，用分层的 GPT artwork + JSXGraph overlay hybrid；
+     产品分别保存 PNG 素材层和 SVG 数学层，不生成或发布扁平合成 PNG
    - 输入必须包含完整相关 edition 题面/正文与原始抽取图 PNG；edition 文本是语义真相
+   - `source.inventory` 先按原图列全对象与关系，再绑定稳定的 object/assertion id；集合归属
+     用 `inside`，语义连线用 `connects`
+   - 声明产品实际显示宽度，所有标签在这些宽度下不得小于 16px
+   - 矢量颜色只用 `ink`、`muted`、`accent`、`accentSoft`、`grid`、`paper` 语义角色，
+     由产品主题和打印样式通过 CSS 变量决定实际颜色
    - 禁止使用答案键或添加原图没有的解答标注，不能让题图泄露答案
    - 禁止手改渲染器产物、直接发布原书截图，或让 GPT Image 猜精确刻度和标签位置
 6. **图内语言固定为英文**：数字、拉丁字母和数学符号可直接使用；禁止中文、日文、
    西里尔文字、苏联文化符号、旧书纹理和手写体。课程正文仍为中文。
 7. 先按 [现代图生成流程](references/figure-generation.md) 完成 FigureSpec、数学断言、
-   渲染碰撞检测和目视验收；任一不符时最多针对缺陷修复一次。
+   渲染碰撞与产品宽度字号检测，并写独立、哈希绑定的 `review@1` 目视验收证据；
+   任一不符时最多针对缺陷修复一次。
 8. `adapt-finalize` 校验原始快照、数学、FigureSpec、渲染或生成元数据；失败不能发布。
 
 原始层 cap3 的 potrace 只用于保存教材抽取事实；现代 edition 的图必须重新创作，两者用途不同。
@@ -366,9 +373,11 @@ node .claude/skills/ld-s10y-lesson/tools/publish.mjs \
 SHA；完整原始快照不入库。重发同一 edition 的课文或图片时，必须按题号保留已有的
 `answerKey` 和 `interaction`，不得让重发导致答案或数学键盘消失。
 
-`lesson_order` 取原始 `book.json` 的卡片阅读顺序，不取 `Number(lesson.number)`：
-无编号补充习题的 `number` 是 `null`，必须排在所属章的编号课之后，并为后续章节保留稳定、
-唯一的顺序。edition `book.json` 同样按原始索引重建，禁止手工修排序。
+`lesson_order` 取完整 TOC 的卡片阅读顺序，不取只含当前已抽取课程的 `book.json`，也不取
+`Number(lesson.number)`：前者会在后补较早章节时移动旧序号，后者无法安置 `number=null`
+的补充习题。发布器按学科分支分配稳定编号段，并在同一事务中重排同册既有课程，因此章节可以
+按任意顺序生成而不会撞 `(subject, stage, lesson_order)` 唯一约束。edition `book.json`
+仍按原始索引重建，禁止手工修排序。
 
 一批可作答课程的发布顺序固定为：`ld-s10y-lesson` 基础课程 → `ld-s10y-answer` 答案键 →
 `ld-s10y-answer` 交互规格。基础发布器的保留逻辑用于保障后续重发，不替代首次生成答案和
@@ -397,7 +406,9 @@ SHA；完整原始快照不入库。重发同一 edition 的课文或图片时�
    字体一致且不小于中文正文
 4. 打开每节的习题视图，确认所有题都能渲染，并按 `figure id` 检查同一张共享图
    在该练习区只出现一次。**每个答案输入框**都必须有数学键盘，包括 `number`、`math`、
-   `free`；数字题只改变初始键盘布局，不得退回无数学键盘的普通 input。
+   `free`；数字题只改变初始键盘布局，不得退回无数学键盘的普通 input。每课再以匿名状态
+   提交一道纯数值样本，确认判分结果中的标准答案已渲染 KaTeX 且没有残留 `$...$`；
+   匿名提交不得写学习记录。
 5. 检查桌面与 390px 移动宽度无整页横向溢出，控制台无报错
 
 对本次全部课程执行可失败的浏览器检查，不能只抽一课或只数 SVG：
@@ -412,8 +423,8 @@ node .claude/skills/ld-s10y-lesson/tools/check_product.mjs \
 
 `--lesson` 可重复，`--all` 检查该 edition 全部课程。脚本使用 app 已安装的 Playwright，
 在桌面与手机逐题检查图引用、媒体非空、宽表末列可达及每个输入框的键盘实际输入归属；
-还检查页尾答案框不被键盘遮住、收起后滚动区留白恢复。
-不提交答案，不写学习记录。它不证明原图语义完整，必须先完成 `ld-s10y-image` 的源图对照。
+还检查页尾答案框不被键盘遮住、收起后滚动区留白恢复，以及匿名判分结果中的公式渲染。
+匿名检查不写学习记录。它不证明原图语义完整，必须先完成 `ld-s10y-image` 的源图对照。
 
 自动检查 `.sr-d-scroll` 的末尾可达性时，用瞬时滚动并轮询几何条件；CSS 平滑滚动后立即
 读取位置会产生假失败。不要靠给容器留下内联样式来禁用平滑滚动，否则下一次 SPA 导航会

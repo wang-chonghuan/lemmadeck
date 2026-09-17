@@ -1,5 +1,5 @@
 {
-  "schema": "ld-s10y-image/figure-spec@1",
+  "schema": "ld-s10y-image/figure-spec@2",
   "id": "fig-test-number-line",
   "mode": "deterministic",
   "description": "Three collinear points with equal five-unit intervals.",
@@ -13,39 +13,51 @@
         "lesson": "test",
         "text": "Show -5, 0, and 5 at equal intervals on a number line."
       }
+    ],
+    "inventory": [
+      {
+        "id": "number-line-facts",
+        "description": "The three named points and their equal spacing on one number line.",
+        "objects": ["left", "origin", "right", "number-line", "left-name", "right-name"],
+        "assertions": [
+          "left-distance",
+          "right-distance",
+          "equal-intervals",
+          "same-line"
+        ]
+      }
     ]
   },
   "canvas": {
     "width": 1200,
     "height": 600,
     "boundingBox": [-7, 3, 7, -3],
-    "background": "#ffffff",
+    "background": "paper",
     "keepAspectRatio": true
   },
-  "palette": {
-    "primary": "#0f8b8d",
-    "secondary": "#58a942",
-    "ink": "#172526",
-    "grid": "#9acfd0"
+  "display": {
+    "layout": "scroll",
+    "minTextPx": 16,
+    "widths": [600]
   },
   "objects": [
     {
       "id": "left",
       "type": "point",
       "at": [-5, 0],
-      "fill": "primary"
+      "fill": "accent"
     },
     {
       "id": "origin",
       "type": "point",
       "at": [0, 0],
-      "fill": "secondary"
+      "fill": "accentSoft"
     },
     {
       "id": "right",
       "type": "point",
       "at": [5, 0],
-      "fill": "primary"
+      "fill": "accent"
     },
     {
       "id": "number-line",
@@ -79,30 +91,35 @@
       "type": "text",
       "at": "left",
       "text": "A",
-      "labelPlacement": {"position": "N", "gap": 34}
+      "fontSize": 32,
+      "labelPlacement": {"position": "N", "gap": 64}
     },
     {
       "id": "right-name",
       "type": "text",
       "at": "right",
       "text": "B",
-      "labelPlacement": {"position": "N", "gap": 34}
+      "fontSize": 32,
+      "labelPlacement": {"position": "N", "gap": 64}
     }
   ],
   "assertions": [
     {
+      "id": "left-distance",
       "type": "distance",
       "a": "left",
       "b": "origin",
       "value": 5
     },
     {
+      "id": "right-distance",
       "type": "distance",
       "a": "origin",
       "b": "right",
       "value": 5
     },
     {
+      "id": "equal-intervals",
       "type": "equalDistance",
       "a": "left",
       "b": "origin",
@@ -110,12 +127,14 @@
       "d": "right"
     },
     {
+      "id": "same-line",
       "type": "collinear",
       "a": "left",
       "b": "origin",
       "c": "right"
     },
     {
+      "id": "point-count",
       "type": "objectCount",
       "objectType": "point",
       "count": 3
@@ -124,9 +143,5 @@
   "layout": {
     "minLabelGap": 4,
     "avoidRegions": []
-  },
-  "review": {
-    "status": "draft",
-    "notes": "Renderer fixture."
   }
 }

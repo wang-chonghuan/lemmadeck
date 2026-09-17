@@ -16,12 +16,16 @@ export type ProseBlock =
       label: string | null
       image?: string | null
       svg?: string | null
+      mode?: 'deterministic' | 'hybrid' | 'generated'
+      layout?: 'inline' | 'scroll'
     }
 export type CardFigure = {
   id: string
   label: string | null
   image?: string | null
   svg?: string | null
+  mode?: 'deterministic' | 'hybrid' | 'generated'
+  layout?: 'inline' | 'scroll'
 }
 // What the browser is allowed to know about one blank: how to label it, what
 // unit it is measured in, and which kind of input it takes. Never the expected
@@ -163,6 +167,8 @@ export const getCardContent = createServerFn({ method: 'GET' })
               label: figure.label ?? null,
               image: figure.image ?? null,
               svg: figure.svg ?? null,
+              mode: figure.mode,
+              layout: figure.layout,
             }))
           : [],
         ...(answerSpec ? { answerSpec } : {}),

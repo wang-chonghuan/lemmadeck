@@ -681,20 +681,41 @@ a.sr-out-topic:hover {
   margin: 20px auto 2px;
   text-align: center;
 }
-.sr-read-fig svg,
-.sr-ex-fig svg {
+.sr-figure-media {
+  --ld-figure-ink: var(--sr-ink);
+  --ld-figure-muted: var(--sr-ink-soft);
+  --ld-figure-accent: var(--sr-ink);
+  --ld-figure-accent-soft: var(--sr-ink-dim);
+  --ld-figure-grid: var(--sr-line);
+  --ld-figure-paper: var(--sr-white);
+  position: relative;
   display: block;
   margin: 0 auto;
+  width: fit-content;
   max-width: min(100%, 30em);
-  height: auto;
-  color: var(--sr-ink);
 }
-.sr-read-fig img,
-.sr-ex-fig img {
+.sr-figure-media[data-figure-theme="accent"] {
+  --ld-figure-accent: var(--sr-blue);
+  --ld-figure-accent-soft: var(--sr-green);
+  --ld-figure-grid: var(--sr-blue-tint);
+}
+.sr-figure-layered {
+  display: grid;
+}
+.sr-figure-layered > .sr-figure-artwork,
+.sr-figure-layered > .sr-figure-vector {
+  grid-area: 1 / 1;
+}
+.sr-figure-media svg,
+.sr-figure-media img,
+.sr-figure-vector {
   display: block;
-  margin: 0 auto;
-  max-width: min(100%, 30em);
+  width: 100%;
+  max-width: 100%;
   height: auto;
+}
+.sr-figure-vector svg {
+  margin: 0;
 }
 
 /* ---- 習題 ---- */
@@ -747,15 +768,18 @@ a.sr-out-topic:hover {
   margin: 10px 0 0;
   max-width: 100%;
 }
-.sr-ex-fig svg { margin: 0; max-width: min(100%, 22em); }
-.sr-ex-fig img { margin: 0; max-width: min(100%, 22em); }
-.sr-ex-fig[data-figure-id^="tbl-"] {
+.sr-ex-fig .sr-figure-media {
+  margin: 0;
+  max-width: min(100%, 22em);
+}
+.sr-read-fig[data-figure-layout="scroll"],
+.sr-ex-fig[data-figure-layout="scroll"] {
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: thin;
 }
-.sr-ex-fig[data-figure-id^="tbl-"] svg,
-.sr-ex-fig[data-figure-id^="tbl-"] img {
+.sr-read-fig[data-figure-layout="scroll"] .sr-figure-media,
+.sr-ex-fig[data-figure-layout="scroll"] .sr-figure-media {
   width: 40em;
   max-width: none;
 }
@@ -2967,12 +2991,20 @@ a.lw-map-sec:hover b { color: var(--sr-blue); }
   }
 
   .sr-print-lesson .sr-ex-body > div:first-child,
-  .sr-print-lesson .sr-ex-fig[data-figure-id^="tbl-"] {
+  .sr-print-lesson .sr-read-fig[data-figure-layout="scroll"],
+  .sr-print-lesson .sr-ex-fig[data-figure-layout="scroll"] {
     overflow: visible;
   }
 
-  .sr-print-lesson .sr-ex-fig[data-figure-id^="tbl-"] img,
-  .sr-print-lesson .sr-ex-fig[data-figure-id^="tbl-"] svg {
+  .sr-print-lesson .sr-figure-media {
+    --ld-figure-ink: var(--sr-ink);
+    --ld-figure-muted: var(--sr-ink-soft);
+    --ld-figure-accent: var(--sr-ink);
+    --ld-figure-accent-soft: var(--sr-ink-dim);
+    --ld-figure-grid: var(--sr-line);
+  }
+
+  .sr-print-lesson [data-figure-layout="scroll"] .sr-figure-media {
     width: 100%;
     max-width: 100%;
   }

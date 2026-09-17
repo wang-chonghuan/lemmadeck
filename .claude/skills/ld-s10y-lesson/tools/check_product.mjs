@@ -99,17 +99,26 @@ export async function checkProduct({ book, edition, lessons, baseURL, output, vi
             await expect(figure).toHaveCount(1)
             const asset = figureManifest.find(item => item.id === figureSpec.id)
             assert.ok(asset, `Missing figure manifest entry: ${figureSpec.id}`)
-            const assetPath = path.join(book, 'editions', edition, asset.png || asset.svg)
             if (asset.svg) {
+              const assetPath = path.join(book, 'editions', edition, asset.svg)
               const currentSVG = fs.readFileSync(assetPath, 'utf8')
               assert.equal(await figure.evaluate((element, expected) => {
                 const host = document.createElement('div')
                 host.innerHTML = expected
                 return element.querySelector('svg')?.outerHTML === host.querySelector('svg')?.outerHTML
               }, currentSVG), true, `${lesson}/${figureSpec.id}: published SVG is stale`)
-            } else {
-              assert.equal(await figure.locator('img').getAttribute('src'),
-                `data:image/png;base64,${fs.readFileSync(assetPath).toString('base64')}`)
+            }
+            const imageAsset = asset.artwork || asset.png
+            if (imageAsset) {
+              const assetPath = path.join(book, 'editions', edition, imageAsset)
+              assert.equal(
+                await figure.locator('img').getAttribute('src'),
+                `data:image/png;base64,${fs.readFileSync(assetPath).toString('base64')}`,
+              )
+            }
+            if (asset.artwork) {
+              await expect(figure.locator('.sr-figure-artwork')).toHaveCount(1)
+              await expect(figure.locator('.sr-figure-vector svg')).toHaveCount(1)
             }
             const state = await figure.evaluate(async element => {
               const svg = element.querySelector('svg')
@@ -185,9 +194,52 @@ export async function checkProduct({ book, edition, lessons, baseURL, output, vi
         }
         await expect(page.locator('.ML__keyboard .MLK__plate:visible')).toHaveCount(0)
         await expect.poll(() => page.locator('.sr-d-scroll').evaluate(element => element.style.paddingBottom)).toBe(initialPadding)
+        const answerRenderSample = answers.find(answer =>
+          answer.grading === 'auto' &&
+          answer.displayAnswer?.includes('$') &&
+          answer.parts?.length > 0 &&
+          answer.parts.every(part =>
+            part.judge === 'numeric' && typeof part.expected?.[0] === 'string'
+          )
+        )
+        if (answerRenderSample) {
+          const interaction = interactions.find(item =>
+            String(item.exercise) === String(answerRenderSample.exercise)
+          )
+          const grid = ['grid-point', 'grid-plot'].includes(interaction?.widget)
+          if (!grid) {
+            current = {
+              lesson,
+              exercise: answerRenderSample.exercise,
+              viewport: viewport.width,
+              check: 'rendered-answer',
+            }
+            const article = page.locator(`#ex-${answerRenderSample.exercise}`)
+            const fields = article.locator('math-field, input:not([type=hidden]), textarea')
+            await expect(fields).toHaveCount(answerRenderSample.parts.length)
+            for (const [index, part] of answerRenderSample.parts.entries()) {
+              await fields.nth(index).evaluate((element, value) => {
+                element.value = value
+                element.dispatchEvent(new Event('input', { bubbles: true }))
+              }, part.expected[0])
+            }
+            await article.locator('.sr-math-submit').click()
+            await expect(article.locator('.sr-math-result.correct')).toBeVisible()
+            const standard = article.locator('.sr-math-standard')
+            await expect(standard.locator('.katex').first()).toBeVisible()
+            assert.equal((await standard.textContent()).includes('$'), false)
+          }
+        }
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false)
         assert.deepEqual(errors, [])
-        const row = { lesson, viewport: viewport.width, exercises: exercises.length, inputs: fieldsChecked, figures: figuresChecked }
+        const row = {
+          lesson,
+          viewport: viewport.width,
+          exercises: exercises.length,
+          inputs: fieldsChecked,
+          figures: figuresChecked,
+          renderedAnswer: answerRenderSample?.exercise ?? null,
+        }
         report.push(row)
         fs.writeFileSync(path.join(output, 'product-check.json'), `${JSON.stringify(report, null, 2)}\n`)
         console.log(`PASS ${JSON.stringify(row)}`)
