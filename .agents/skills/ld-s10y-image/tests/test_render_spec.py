@@ -183,6 +183,55 @@ class RendererNamespaceTests(unittest.TestCase):
             report = json.loads(report_path.read_text(encoding="utf-8"))
             self.assertEqual(set(report["output"]), {"artwork", "svg"})
 
+    def test_grid_supports_local_bounds_and_coordinate_offsets(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            spec = json.loads(FIXTURE.read_text(encoding="utf-8"))
+            spec["objects"] = [{
+                "id": "offset-grid",
+                "type": "grid",
+                "bounds": [-1, 1, 2, -1],
+                "xStep": 1,
+                "yStep": 1,
+                "xOffset": 0.5,
+                "yOffset": 0.25,
+                "stroke": "grid",
+            }]
+            spec["assertions"] = [{
+                "id": "one-offset-grid",
+                "type": "objectCount",
+                "objectType": "grid",
+                "count": 1,
+            }]
+            spec["source"]["inventory"] = [{
+                "id": "source-offset-grid",
+                "description": "A cropped grid with a nonzero coordinate phase.",
+                "objects": ["offset-grid"],
+                "assertions": ["one-offset-grid"],
+            }]
+            spec_path = directory / "figure.spec.json"
+            svg_path = directory / "figure.svg"
+            spec_path.write_text(json.dumps(spec), encoding="utf-8")
+
+            result = subprocess.run(
+                [
+                    "node",
+                    str(RENDERER),
+                    "--spec",
+                    str(spec_path),
+                    "--svg",
+                    str(svg_path),
+                ],
+                cwd=REPO,
+                capture_output=True,
+                text=True,
+            )
+
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            svg = svg_path.read_text(encoding="utf-8")
+            self.assertEqual(len(re.findall(r"ld-offset-grid-v-\d+", svg)), 3)
+            self.assertEqual(len(re.findall(r"ld-offset-grid-h-\d+", svg)), 2)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -978,6 +978,46 @@ def validate_source(book: Path, source: object, expected_path: Path, label: str)
     return errors
 
 
+def validate_figure_references(
+    prose: list[dict],
+    exercises: list[dict],
+    figures: list[dict],
+) -> list[str]:
+    displayed_ids = {
+        item.get("id")
+        for item in prose
+        if isinstance(item, dict) and item.get("kind") == "fig"
+    } | {
+        figure.get("id")
+        for item in exercises
+        if isinstance(item, dict)
+        for figure in item.get("figures", [])
+        if isinstance(figure, dict)
+    }
+    referenced_ids = {
+        figure_id
+        for item in exercises
+        if isinstance(item, dict)
+        for figure_id in item.get("figure_refs", [])
+        if isinstance(figure_id, str)
+    }
+    manifest_ids = {
+        item.get("id")
+        for item in figures
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    errors = [
+        f"{figure_id}: referenced exercise figure is never displayed"
+        for figure_id in sorted(referenced_ids - displayed_ids)
+    ]
+    errors += [
+        f"{figure_id}: displayed or referenced figure is missing from figures.json"
+        for figure_id in sorted((displayed_ids | referenced_ids) - manifest_ids)
+        if isinstance(figure_id, str)
+    ]
+    return errors
+
+
 def validate_lesson(
     book: Path,
     edition: Path,
@@ -1070,25 +1110,44 @@ def validate_lesson(
         ]
 
     raw_figure_ids = [item["id"] for item in raw_lesson.get("figures", [])]
-    displayed_ids = {
-        item.get("id") for item in modern_prose_items if item.get("kind") == "fig"
-    } | {
-        figure.get("id")
-        for item in modern_items
-        for figure in item.get("figures", [])
-    }
-    exercise_figure_ids = {
-        figure_id for item in modern_items for figure_id in item.get("figure_refs", [])
-    }
-    for figure_id in exercise_figure_ids:
-        if figure_id not in displayed_ids:
-            errors.append(f"{figure_id}: referenced exercise figure is never displayed")
     figure_items = figures.get("figures")
     if not isinstance(figure_items, list):
         errors.append("figures.figures 必须是数组")
         figure_items = []
-    if [item.get("id") for item in figure_items] != raw_figure_ids:
-        errors.append("现代图 id 或顺序与原书不一致")
+    errors += validate_figure_references(
+        modern_prose_items,
+        modern_items,
+        figure_items,
+    )
+    exercise_figure_ids = {
+        figure_id
+        for item in modern_items
+        if isinstance(item, dict)
+        for figure_id in item.get("figure_refs", [])
+        if isinstance(figure_id, str)
+    } | {
+        figure.get("id")
+        for item in modern_items
+        if isinstance(item, dict)
+        for figure in item.get("figures", [])
+        if isinstance(figure, dict) and isinstance(figure.get("id"), str)
+    }
+    manifest_ids = [item.get("id") for item in figure_items]
+    expected_ids = set(raw_figure_ids) | {
+        figure_id
+        for item in modern_prose_items
+        if isinstance(item, dict)
+        for figure_id in (
+            [item.get("id")] if item.get("kind") == "fig" else []
+        )
+        if isinstance(figure_id, str)
+    } | exercise_figure_ids
+    if (
+        manifest_ids[:len(raw_figure_ids)] != raw_figure_ids
+        or len(manifest_ids) != len(set(manifest_ids))
+        or set(manifest_ids) != expected_ids
+    ):
+        errors.append("现代图必须保留原书图顺序，并只追加实际引用的共享图")
     for figure in figure_items:
         spec_path = edition / figure.get("spec", "")
         spec = load(spec_path) if spec_path.is_file() else {}

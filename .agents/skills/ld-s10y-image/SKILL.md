@@ -113,6 +113,19 @@ Use `--generation` instead of `--render` for `generated` mode. Preview under
 `.tmp/`. Do not overwrite edition assets or write the database before
 approval. Promoted metadata may depend only on durable edition files.
 
+For a corpus migration or audit, derive the target set from lesson prose,
+exercise display objects, and `figure_refs`:
+
+```bash
+python .agents/skills/ld-s10y-image/scripts/audit_corpus.py \
+  --edition modern-us-neutral --require-current \
+  --output .tmp/s10y-image/corpus-audit.json
+```
+
+Do not substitute a glob of FigureSpec files for this audit. A referenced
+figure can be absent from its lesson manifest, and an unreferenced file does
+not prove that the product uses it.
+
 ## Non-negotiable rules
 
 - Edition text is authoritative; the original PNG supplies visual structure.
@@ -149,6 +162,9 @@ approval. Promoted metadata may depend only on durable edition files.
   decoration. Chords must include every labelled intersection, with
   `pointOnCircle` and collinearity assertions where applicable. A directed
   self-loop needs an arrowhead, not only a circle.
+- A source grid, ruled plane, table lattice, or city-block array is
+  instructional structure, not a decorative background. Inventory its exact
+  rows, columns, offsets, and gaps; never replace it with a blank panel.
 - For read-from-graph exercises, record the source curve's queried coordinates
   and extrema before interpolation. A similar-looking curve is not equivalent;
   do not change its values or extend it past the source endpoints.

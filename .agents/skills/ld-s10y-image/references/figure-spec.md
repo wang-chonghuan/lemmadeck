@@ -36,7 +36,11 @@ change invalidates the review evidence.
 - `circle`: `center`, `radius`
 - `polygon`: `points`
 - `arc`: `center`, `start`, `end`
-- `grid`: `xStep`, `yStep`
+- `grid`: `xStep`, `yStep`; optional finite
+  `[xMin, yMax, xMax, yMin]` `bounds`; optional absolute coordinate phases
+  `xOffset` and `yOffset`. Grid lines occur at `offset + n * step`, so a
+  cropped or locally positioned source grid does not have to align with the
+  canvas origin.
 - `axis`: `from`, `to`, optional ticks
 - `measure`: `from`, `to`, `label`
 - `text`: `at`, `text`

@@ -394,11 +394,20 @@ def completeness_errors(
         if not isinstance(obj, dict) or obj.get("visible") is False:
             continue
         kind = obj.get("type")
-        # Infinite lines and grids are intentionally bounded by the viewport.
-        if kind in {"line", "grid", "svgPath", "image"}:
+        # Infinite lines and viewport grids are intentionally bounded by the viewport.
+        if kind in {"line", "svgPath", "image"}:
             continue
         coordinates = []
-        if kind in {"point", "text"}:
+        if kind == "grid":
+            bounds = obj.get("bounds")
+            if isinstance(bounds, list) and len(bounds) == 4:
+                coordinates = [
+                    [bounds[0], bounds[1]],
+                    [bounds[2], bounds[3]],
+                ]
+            else:
+                continue
+        elif kind in {"point", "text"}:
             coordinates = [obj.get("at")]
         elif kind in {"segment", "arrow", "measure", "axis"}:
             coordinates = [obj.get("from"), obj.get("to")]
@@ -810,6 +819,23 @@ def validate(spec_path: Path, stage: str) -> list[str]:
             for field in ("xStep", "yStep"):
                 if not finite_number(item.get(field)) or item[field] <= 0:
                     errors.append(f"{label}.{field} must be positive")
+            for field in ("xOffset", "yOffset"):
+                if field in item and not finite_number(item.get(field)):
+                    errors.append(f"{label}.{field} must be finite")
+            bounds = item.get("bounds")
+            if bounds is not None:
+                if (
+                    not isinstance(bounds, list)
+                    or len(bounds) != 4
+                    or not all(map(finite_number, bounds))
+                ):
+                    errors.append(
+                        f"{label}.bounds must be [xMin, yMax, xMax, yMin]"
+                    )
+                elif not (bounds[0] < bounds[2] and bounds[3] < bounds[1]):
+                    errors.append(
+                        f"{label}.bounds must be [xMin, yMax, xMax, yMin]"
+                    )
         elif kind == "text":
             resolve_point(item.get("at"), points, f"{label}.at", errors)
             if not isinstance(item.get("text"), str) or not item["text"].strip():

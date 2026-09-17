@@ -157,6 +157,69 @@ class ValidateSpecTests(unittest.TestCase):
         errors = MODULE.validate(self.write(payload), "draft")
         self.assertTrue(any("352px or less" in error for error in errors))
 
+    def test_grid_accepts_local_bounds_and_finite_offsets(self):
+        payload = copy.deepcopy(self.payload)
+        payload["objects"].append({
+            "id": "offset-grid",
+            "type": "grid",
+            "bounds": [-6, 2, 6, -2],
+            "xStep": 1,
+            "yStep": 0.5,
+            "xOffset": 0.25,
+            "yOffset": -0.25,
+            "stroke": "grid",
+        })
+        payload["source"]["inventory"].append({
+            "id": "source-offset-grid",
+            "description": "A bounded source grid with a local coordinate phase.",
+            "objects": ["offset-grid"],
+            "assertions": [],
+        })
+        self.assertEqual(MODULE.validate(self.write(payload), "draft"), [])
+
+    def test_grid_rejects_invalid_bounds_and_offsets(self):
+        payload = copy.deepcopy(self.payload)
+        payload["objects"].append({
+            "id": "invalid-grid",
+            "type": "grid",
+            "bounds": [6, -2, -6, 2],
+            "xStep": 1,
+            "yStep": 1,
+            "xOffset": "left",
+            "stroke": "grid",
+        })
+        payload["source"]["inventory"].append({
+            "id": "source-invalid-grid",
+            "description": "An invalid bounded source grid.",
+            "objects": ["invalid-grid"],
+            "assertions": [],
+        })
+        errors = MODULE.validate(self.write(payload), "draft")
+        self.assertTrue(any("bounds must be" in error for error in errors))
+        self.assertTrue(any("xOffset must be finite" in error for error in errors))
+
+    def test_grid_bounds_must_fit_canvas(self):
+        payload = copy.deepcopy(self.payload)
+        payload["objects"].append({
+            "id": "outside-grid",
+            "type": "grid",
+            "bounds": [-8, 2, 6, -2],
+            "xStep": 1,
+            "yStep": 1,
+            "stroke": "grid",
+        })
+        payload["source"]["inventory"].append({
+            "id": "source-outside-grid",
+            "description": "A source grid outside the canvas.",
+            "objects": ["outside-grid"],
+            "assertions": [],
+        })
+        errors = MODULE.validate(self.write(payload), "draft")
+        self.assertTrue(any(
+            "outside-grid: geometry outside canvas" in error
+            for error in errors
+        ))
+
     def test_inventory_catches_missing_relationship(self):
         payload = copy.deepcopy(self.payload)
         payload["source"]["inventory"][0]["assertions"].append(
