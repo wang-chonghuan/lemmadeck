@@ -28,6 +28,7 @@ AUDIT_SCHEMA = "ld-s10y-lesson/edition-audit@1"
 BOOK_SCHEMA = "ld-s10y-lesson/edition-book@1"
 MATH = re.compile(r"\$\$(.+?)\$\$|\$([^$]+?)\$", re.S)
 MATH_TEXT_LITERAL = re.compile(r"\\text\{([^{}]*)\}")
+MATH_BOUNDARY_PUNCTUATION = re.compile(r"[、，；。？！：]+")
 NUMBER = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])")
 PART_MARKER = re.compile(
     r"(?<![A-Za-z0-9_.\u0400-\u04ff])"
@@ -239,10 +240,15 @@ def math_signature(text: str) -> list[str]:
             expression,
         )
 
-    return [
-        normalize_text_literals(match.group(1) or match.group(2)).strip()
-        for match in MATH.finditer(text)
-    ]
+    signature = []
+    for match in MATH.finditer(text):
+        expression = normalize_text_literals(match.group(1) or match.group(2))
+        signature.extend(
+            part.strip()
+            for part in MATH_BOUNDARY_PUNCTUATION.split(expression)
+            if part.strip()
+        )
+    return signature
 
 
 def number_signature(text: str) -> list[str]:
@@ -1024,11 +1030,15 @@ def validate_lesson(
     lesson_id: str,
     profile: dict,
     require_current_figures: bool = False,
+    candidate_paths: tuple[Path, Path, Path] | None = None,
 ) -> tuple[dict, dict, dict, list[str]]:
     target = edition / "lessons" / lesson_id
-    lesson_path = target / "lesson.json"
-    exercises_path = target / "exercises.json"
-    figures_path = target / "figures.json"
+    if candidate_paths is None:
+        lesson_path = target / "lesson.json"
+        exercises_path = target / "exercises.json"
+        figures_path = target / "figures.json"
+    else:
+        lesson_path, exercises_path, figures_path = candidate_paths
     lesson = load(lesson_path)
     normalize_lesson_layout(lesson)
     exercises = load(exercises_path)
@@ -1357,13 +1367,20 @@ def update_book_index(
 def cmd_finalize(args: argparse.Namespace) -> int:
     book = source_dir(args)
     edition = edition_dir(args)
+    work_edition = work_edition_dir(args)
     profile_path = Path(args.profile)
     profile = load(profile_path)
     failed = False
     index_rows = []
     for lesson_id in selected_lessons(args):
+        work_target = work_edition / "lessons" / lesson_id
         lesson, exercises, figures, errors = validate_lesson(
             book, edition, lesson_id, profile,
+            candidate_paths=(
+                work_target / "lesson.template.json",
+                work_target / "exercises.template.json",
+                work_target / "figures.template.json",
+            ),
         )
         target = edition / "lessons" / lesson_id
         if errors:

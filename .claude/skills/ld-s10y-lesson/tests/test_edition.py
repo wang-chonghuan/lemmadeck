@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -387,6 +386,28 @@ class EditionTest(unittest.TestCase):
         )
         self.assertTrue(any("数学公式发生变化" in error for error in errors))
 
+    def test_text_validation_allows_cjk_punctuation_outside_math(self) -> None:
+        errors = edition.validate_text(
+            "求 $f(-100)、f(-10)、f(0)$。",
+            "求 $f(-100)$、$f(-10)$、$f(0)$。",
+            ["layout"],
+            [],
+            "exercise",
+            [],
+        )
+        self.assertEqual(errors, [])
+
+    def test_text_validation_still_rejects_formula_change_while_moving_punctuation(self) -> None:
+        errors = edition.validate_text(
+            "求 $f(-100)、f(-10)、f(0)$。",
+            "求 $f(-100)$、$f(-11)$、$f(0)$。",
+            ["layout"],
+            [],
+            "exercise",
+            [],
+        )
+        self.assertTrue(any("数学公式发生变化" in error for error in errors))
+
     def test_context_numbers_must_be_declared_exactly(self) -> None:
         errors = edition.validate_text(
             "数据来自 1970—1974 年.",
@@ -590,31 +611,20 @@ class EditionTest(unittest.TestCase):
                 / lesson_id
             )
             target = book / "editions" / args.edition / "lessons" / lesson_id
-            target.mkdir(parents=True)
-            shutil.copy2(
-                template_target / "lesson.template.json",
-                target / "lesson.json",
-            )
-            shutil.copy2(
-                template_target / "exercises.template.json",
-                target / "exercises.json",
-            )
-            shutil.copy2(
-                template_target / "figures.template.json",
-                target / "figures.json",
-            )
-            self.assertFalse(any(target.glob("*.template.json")))
-            figures = edition.load(target / "figures.json")
+            self.assertFalse((target / "lesson.json").exists())
+            self.assertFalse((target / "exercises.json").exists())
+            self.assertFalse((target / "figures.json").exists())
+            figures = edition.load(template_target / "figures.template.json")
             figures["figures"][0].update({
                 "png": "figures/fig-01.png",
                 "generation": "figures/fig-01.png.json",
                 "review": "figures/fig-01.review.json",
             })
-            dump(target / "figures.json", figures)
-            exercises = edition.load(target / "exercises.json")
+            dump(template_target / "figures.template.json", figures)
+            exercises = edition.load(template_target / "exercises.template.json")
             exercises["exercises"][0]["text"] = "一个社区农场有 10 棵树."
             exercises["exercises"][0]["changes"] = ["setting"]
-            dump(target / "exercises.json", exercises)
+            dump(template_target / "exercises.template.json", exercises)
 
             figure_dir = book / "editions" / args.edition / "figures"
             figure_dir.mkdir(parents=True)
