@@ -5,6 +5,7 @@ import path from 'node:path'
 import {
   assertKeyboardCoverage,
   expectedFigureCoverage,
+  visibleProseSelector,
 } from '../tools/check_product.mjs'
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
@@ -19,6 +20,12 @@ try {
   await assertKeyboardCoverage(page.locator('article'))
   await page.setContent('<article><input id="first"><input id="second"><button aria-controls="first" aria-label="数学键盘"></button></article>')
   await assert.rejects(() => assertKeyboardCoverage(page.locator('article')), /second/)
+  await page.setContent(`
+    <article class="sr-deck"><div class="sr-read"><div data-figure-id="fig-1">screen</div></div></article>
+    <article data-testid="lesson-print"><div class="sr-read"><div data-figure-id="fig-1">print</div></div></article>
+  `)
+  assert.equal(await page.locator(visibleProseSelector).count(), 1)
+  assert.equal(await page.locator('.sr-deck').locator('.sr-read [data-figure-id="fig-1"]').count(), 1)
   assert.deepEqual(
     expectedFigureCoverage(
       { prose: [{ kind: 'fig', id: 'prose-a' }, { kind: 'p' }, { kind: 'fig', id: 'shared' }] },

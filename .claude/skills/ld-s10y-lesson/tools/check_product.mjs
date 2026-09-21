@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url'
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
 const require = createRequire(path.join(root, 'app/package.json'))
 const { chromium, expect } = require('@playwright/test')
+export const visibleProseSelector = '.sr-deck > .sr-read'
 
 async function hideKeyboard(page) {
   await page.evaluate(() => window.mathVirtualKeyboard?.hide({ animate: false }))
@@ -143,11 +144,12 @@ export async function checkProduct({ book, edition, lessons, baseURL, output, vi
         )
 
         await page.goto(`${baseURL}/card/${lesson}`)
-        await expect(page.locator('.sr-deck-title')).toBeVisible()
-        await expect(page.locator('.sr-read')).toBeVisible()
+        const deck = page.locator('.sr-deck')
+        await expect(deck.locator('.sr-deck-title')).toBeVisible()
+        await expect(page.locator(visibleProseSelector)).toBeVisible()
         for (const figureId of coverage.prose) {
           current = { lesson, figure: figureId, viewport: viewport.width, surface: 'prose' }
-          const figure = page.locator(`.sr-read [data-figure-id="${figureId}"]`)
+          const figure = deck.locator(`.sr-read [data-figure-id="${figureId}"]`)
           await expect(figure).toHaveCount(1)
           const asset = figureManifest.find(item => item.id === figureId)
           assert.ok(asset, `Missing prose figure manifest entry: ${figureId}`)
@@ -195,11 +197,11 @@ export async function checkProduct({ book, edition, lessons, baseURL, output, vi
         if (exercises.length === 0) {
           await expect(page.locator('[role="tablist"]')).toHaveCount(0)
           await page.goto(`${baseURL}/card/${lesson}?tab=ex`)
-          await expect(page.locator('.sr-read')).toBeVisible()
+          await expect(page.locator(visibleProseSelector)).toBeVisible()
         } else {
           await page.goto(`${baseURL}/card/${lesson}?tab=ex`)
         }
-        const articles = page.locator('article[id^="ex-"]')
+        const articles = deck.locator('article[id^="ex-"]')
         await expect(articles).toHaveCount(exercises.length)
         const initialPadding = await page.locator('.sr-d-scroll').evaluate(element => element.style.paddingBottom)
         let fieldsChecked = 0, figuresChecked = 0
@@ -210,6 +212,11 @@ export async function checkProduct({ book, edition, lessons, baseURL, output, vi
           const answer = answers.find(item => String(item.exercise) === String(exercise.number))
           const interaction = interactions.find(item => String(item.exercise) === String(exercise.number))
           assert.ok(answer, `Missing answer for ${lesson}/${exercise.number}`)
+          assert.equal(
+            (await article.locator('.sr-ex-n').textContent())?.trim() ?? '',
+            exercise.source_number == null ? '' : String(exercise.source_number),
+            `${lesson}/${exercise.number}: displayed number differs from the source`,
+          )
           const grid = ['grid-point', 'grid-plot'].includes(interaction?.widget)
           const expectedFields = grid ? 0 : answer.grading === 'auto' ? answer.parts.length : 1
           const fields = article.locator('math-field, input:not([type=hidden]), textarea')
@@ -219,7 +226,7 @@ export async function checkProduct({ book, edition, lessons, baseURL, output, vi
           fieldsChecked += expectedFields
 
           for (const reference of exercise.figure_refs) {
-            const figure = page.locator(`.sr-ex-list [data-figure-id="${reference}"]`).first()
+            const figure = deck.locator(`.sr-ex-list [data-figure-id="${reference}"]`).first()
             await expect(figure).toBeAttached()
           }
           for (const figureSpec of exercise.figures) {
