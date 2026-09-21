@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import contextlib
+import io
 import json
+import shutil
 import sys
 import tempfile
 import unittest
@@ -8,9 +11,21 @@ from argparse import Namespace
 from pathlib import Path
 
 TOOLS = Path(__file__).resolve().parents[1] / "tools"
+REPO = Path(__file__).resolve().parents[4]
+TEXTBOOK_ROOT = REPO / "ssot-resources" / "soviet10year-textbooks"
+PROFILE = (
+    REPO
+    / ".claude"
+    / "skills"
+    / "ld-s10y-lesson"
+    / "profiles"
+    / "modern-us-neutral.json"
+)
 sys.path.insert(0, str(TOOLS))
 
+import answers
 import lesson_answers
+import edition
 
 
 def dump(path: Path, value: object) -> None:
@@ -19,6 +34,90 @@ def dump(path: Path, value: object) -> None:
 
 
 class LessonAnswersTest(unittest.TestCase):
+    def test_legacy_group_identity_joins_new_capture_without_rewriting_source(self) -> None:
+        lesson_id = "phy6-c1-s2"
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            book = root / "6p"
+            shutil.copytree(TEXTBOOK_ROOT / "artifacts" / "6p", book)
+            source_path = book / "lessons" / lesson_id / "exercises.json"
+            source_bytes = source_path.read_bytes()
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(
+                    lesson_answers.assemble.run(
+                        book,
+                        TEXTBOOK_ROOT / "toc" / "6p" / "zh.json",
+                        PROFILE,
+                        exercise_numbering="lesson-group",
+                    ),
+                    0,
+                )
+            self.assertEqual(source_path.read_bytes(), source_bytes)
+            _, _, _, edition_errors = edition.validate_lesson(
+                book,
+                book / "editions" / "modern-us-neutral",
+                lesson_id,
+                edition.load(PROFILE),
+                require_current_figures=True,
+            )
+            self.assertEqual(edition_errors, [])
+
+            rebuilt = lesson_answers.rebuilt_exercises(
+                book,
+                "6p",
+                {lesson_id},
+            )[lesson_id]["exercises"][0]
+            page = int(rebuilt["pages"][0].split("#")[0][1:])
+            captured = {
+                "lesson": lesson_id,
+                "exerciseId": rebuilt["number"],
+                "sourceNumber": rebuilt["source_number"],
+                "groupId": rebuilt["group_id"],
+                "group": rebuilt["group"],
+                "raw": "TEST-ONLY IDENTITY FIXTURE, NOT A TEXTBOOK ANSWER",
+                "pdfPage": page,
+            }
+            answer_path = book / "answers.json"
+            dump(answer_path, {
+                "schema": answers.SCHEMA,
+                "book": "6p",
+                "exerciseNumbering": "lesson-group",
+                "source": {"pdfPages": [page]},
+                "answers": [captured],
+            })
+            _, capture_errors = answers.validate_answer_file(
+                answer_path,
+                "6p",
+                "lesson-group",
+            )
+            self.assertEqual(capture_errors, [])
+            args = Namespace(
+                root=str(root),
+                work=str(root / "work"),
+                book="6p",
+                edition="modern-us-neutral",
+                lesson=[lesson_id],
+            )
+
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(lesson_answers.cmd_prepare(args), 0)
+            template = lesson_answers.load(
+                root / "work" / "6p" / "modern-us-neutral" / "lessons"
+                / lesson_id / "answer-keys.template.json"
+            )
+            self.assertEqual(template["answers"][0]["bookRaw"], captured["raw"])
+
+            captured["groupId"] = "g2"
+            dump(answer_path, {
+                "schema": answers.SCHEMA,
+                "book": "6p",
+                "exerciseNumbering": "lesson-group",
+                "source": {"pdfPages": [page]},
+                "answers": [captured],
+            })
+            with self.assertRaisesRegex(SystemExit, "groupId"):
+                lesson_answers.cmd_prepare(args)
+
     def test_lesson_scoped_capture_rejects_unscoped_numeric_answer(self) -> None:
         answers = [
             {"exercise": 1, "raw": "global"},

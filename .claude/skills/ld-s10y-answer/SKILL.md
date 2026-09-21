@@ -118,6 +118,9 @@ node .claude/skills/ld-s10y-answer/tools/publish.mjs \
 2. 题面必须读取指定 edition；
    `ssot-resources/soviet10year-textbooks/artifacts/<book>/answers.json` 有书后答案时
    优先参考并保留为 `bookRaw`。
+   `lesson-group` 旧课若为保持既有 source 快照而缺少 `group_id`，`prepare` 必须从持久
+   `page.json` 和 TOC 在内存中重建栏目身份，并与旧原书、edition 逐题严格对齐；不得改写
+   旧文件、猜测 `g1`/`g0`，或跳过 `groupId` 证据校验。
 3. `prepare` 提供 `figureEvidence` 时，必须实际查看现代图、原始 PNG 和 FigureSpec 后
    作答。现代题面是语义权威，原图用于核对数值、位置与构图；禁止写“题面未附图”或
    用通用判定方法代替具体标准答案。

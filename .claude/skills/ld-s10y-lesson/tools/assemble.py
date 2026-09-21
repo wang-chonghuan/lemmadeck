@@ -147,7 +147,7 @@ def split_lesson(
     return prose, exercises
 
 
-def _can_reuse_exercises(existing: dict, rebuilt: dict) -> bool:
+def can_reuse_exercises(existing: dict, rebuilt: dict) -> bool:
     """Allow an old source file to omit identity fields added by newer assemblers."""
     if not isinstance(existing, dict) or not isinstance(rebuilt, dict):
         return False
@@ -678,7 +678,7 @@ def run(
             "exercises": l["exercises"],
         }
         previous = existing_exercises.get(lid)
-        if previous and _can_reuse_exercises(previous[0], exercises_document):
+        if previous and can_reuse_exercises(previous[0], exercises_document):
             (d / "exercises.json").write_bytes(previous[1])
         else:
             (d / "exercises.json").write_text(

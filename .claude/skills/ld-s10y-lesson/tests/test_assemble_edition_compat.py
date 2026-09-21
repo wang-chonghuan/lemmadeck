@@ -38,13 +38,13 @@ class AssembleEditionCompatibilityTest(unittest.TestCase):
             }],
         }
 
-        self.assertTrue(assemble._can_reuse_exercises(existing, rebuilt))
+        self.assertTrue(assemble.can_reuse_exercises(existing, rebuilt))
         rebuilt["exercises"][0]["text"] = "changed"
-        self.assertFalse(assemble._can_reuse_exercises(existing, rebuilt))
+        self.assertFalse(assemble.can_reuse_exercises(existing, rebuilt))
         existing["exercises"][0]["source_number"] = "1"
         rebuilt["exercises"][0]["text"] = "same"
         rebuilt["exercises"][0]["source_number"] = "2"
-        self.assertFalse(assemble._can_reuse_exercises(existing, rebuilt))
+        self.assertFalse(assemble.can_reuse_exercises(existing, rebuilt))
 
     def assert_noop_reassembly_preserves_edition(
         self,
