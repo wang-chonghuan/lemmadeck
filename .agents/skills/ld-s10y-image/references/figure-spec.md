@@ -17,8 +17,9 @@ The canonical schema is
   map them to the object and assertion IDs that realize each requirement.
   Missing, invisible, or unresolved IDs fail validation.
 - `canvas`: pixel size and mathematical bounding box
-- `display`: product `layout`, minimum final text size, and every width that
-  must be checked
+- `display`: product `layout`, semantic `purpose`, minimum final text size,
+  every width that must be checked, and a compact maximum width when the
+  figure is decorative
 - `objects`: ordered render objects
 - `assertions`: ID-addressable machine-checkable mathematical facts
 
@@ -77,6 +78,24 @@ Use `labelPlacement` only when the semantic layout requires a fixed side:
 Never compensate for a wrong coordinate by moving a label.
 
 ## Display and color
+
+Classify the figure by what the learner must do with it, independently of its
+rendering mode:
+
+- `display.purpose: "instructional"` is the default for diagrams, apparatus,
+  tables, graphs, measured figures, and any image whose details the learner
+  must inspect. It keeps the product's normal figure sizing.
+- `display.purpose: "decorative"` is for portraits, avatars, and similar
+  identification or atmosphere images that carry no measured, relational, or
+  answer-bearing detail. Decorative figures must use `layout: "inline"`, set
+  `display.maxWidthPx` from 128 through 240, and declare only
+  `display.widths` at or below that maximum. Use 160 px for an ordinary
+  textbook portrait.
+
+Every newly authored or repaired FigureSpec must state `display.purpose`.
+Specs that predate this field are treated as instructional for compatibility.
+Never classify an image as decorative merely because it was generated or
+contains natural objects.
 
 `display.widths` contains the actual CSS widths at which the product may show
 the figure. The renderer measures labels at each width and rejects any text
