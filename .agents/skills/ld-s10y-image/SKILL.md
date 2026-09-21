@@ -41,11 +41,19 @@ both the drawing and count.
 
 Classify `display.purpose` independently of rendering mode. Use
 `instructional` for anything whose detail, geometry, relationship, apparatus,
-table, or data the learner must inspect. Use `decorative` only for portraits,
-avatars, and comparable non-instructional images; these must use inline layout
-and a validated `display.maxWidthPx` from 128 through 240 (normally 160 for a
-portrait). Read the full contract in
+table, or data the learner must inspect. Instructional figures normally use
+the product's standard width, but may declare an inline `display.maxWidthPx`
+from 240 through 960 when their composition is legible at a smaller natural
+size; all declared test widths must fit that maximum. Use `decorative` only
+for portraits, avatars, and comparable non-instructional images; these must
+use inline layout and a validated `display.maxWidthPx` from 128 through 240
+(normally 160 for a portrait). Read the full contract in
 [figure-spec.md](references/figure-spec.md).
+
+For figures wider than the mobile reading column, include the product's actual
+headed-browser content width in `display.widths`. In the current 390 px
+acceptance viewport that width is 331 px; do not substitute the viewport width
+or an optimistic 346/352 px estimate.
 
 Update the lesson edition figure entry to exactly one final-output contract:
 
@@ -144,8 +152,12 @@ not prove that the product uses it.
   16 px there. Do not judge readability from the source canvas alone.
 - Do not infer display size from rendering mode or filename. Every newly
   authored or repaired FigureSpec states `display.purpose`; decorative figures
-  use the compact width contract, while instructional figures retain normal
-  readable sizing.
+  use the compact width contract. Instructional figures retain normal readable
+  sizing unless their spec explicitly declares a validated inline
+  `display.maxWidthPx`.
+- Validate against the usable figure width measured in the headed product, not
+  only the nominal viewport. A 390 px viewport currently leaves 331 px for a
+  full-column figure.
 - Hybrid artwork must preserve its intrinsic aspect ratio. FigureSpec `size`
   is a centered contain box, never permission to stretch an image.
 - A central-symmetry or half-turn claim requires a `centralSymmetry` assertion

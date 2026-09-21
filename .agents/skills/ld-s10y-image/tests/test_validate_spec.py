@@ -179,12 +179,31 @@ class ValidateSpecTests(unittest.TestCase):
         self.assertTrue(any("must use inline layout" in error for error in errors))
         self.assertTrue(any("must not exceed" in error for error in errors))
 
-    def test_instructional_display_rejects_compact_width_override(self):
+    def test_instructional_display_accepts_validated_width_override(self):
         payload = copy.deepcopy(self.payload)
+        payload["display"]["layout"] = "inline"
         payload["display"]["purpose"] = "instructional"
-        payload["display"]["maxWidthPx"] = 160
+        payload["display"]["maxWidthPx"] = 480
+        payload["display"]["widths"] = [331, 480]
+        self.assertEqual(MODULE.validate(self.write(payload), "draft"), [])
+
+        payload["display"]["maxWidthPx"] = 200
         errors = MODULE.validate(self.write(payload), "draft")
-        self.assertTrue(any("only valid for decorative" in error for error in errors))
+        self.assertTrue(any("instructional display.maxWidthPx" in error for error in errors))
+
+        payload["display"]["maxWidthPx"] = 480
+        payload["display"]["layout"] = "scroll"
+        errors = MODULE.validate(self.write(payload), "draft")
+        self.assertTrue(any("with maxWidthPx must use inline" in error for error in errors))
+
+        payload["display"]["layout"] = "inline"
+        payload["display"]["widths"] = [331, 640]
+        errors = MODULE.validate(self.write(payload), "draft")
+        self.assertTrue(any("must not exceed" in error for error in errors))
+
+        payload["display"]["widths"] = [346, 480]
+        errors = MODULE.validate(self.write(payload), "draft")
+        self.assertTrue(any("331px mobile product width" in error for error in errors))
 
     def test_grid_accepts_local_bounds_and_finite_offsets(self):
         payload = copy.deepcopy(self.payload)

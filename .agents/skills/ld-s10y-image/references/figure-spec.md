@@ -18,8 +18,8 @@ The canonical schema is
   Missing, invisible, or unresolved IDs fail validation.
 - `canvas`: pixel size and mathematical bounding box
 - `display`: product `layout`, semantic `purpose`, minimum final text size,
-  every width that must be checked, and a compact maximum width when the
-  figure is decorative
+  every width that must be checked, and an optional validated product maximum
+  width
 - `objects`: ordered render objects
 - `assertions`: ID-addressable machine-checkable mathematical facts
 
@@ -84,7 +84,13 @@ rendering mode:
 
 - `display.purpose: "instructional"` is the default for diagrams, apparatus,
   tables, graphs, measured figures, and any image whose details the learner
-  must inspect. It keeps the product's normal figure sizing.
+  must inspect. It keeps the product's normal figure sizing unless the
+  composition has a smaller natural display size. In that case use inline
+  layout and set `display.maxWidthPx` from 240 through 960; include every
+  resulting desktop and mobile width in `display.widths`, with no width above
+  the maximum. Measure the usable width in the headed product rather than
+  assuming it from the viewport; the current 390 px acceptance viewport yields
+  a 331 px full-column figure.
 - `display.purpose: "decorative"` is for portraits, avatars, and similar
   identification or atmosphere images that carry no measured, relational, or
   answer-bearing detail. Decorative figures must use `layout: "inline"`, set
@@ -101,7 +107,9 @@ contains natural objects.
 the figure. The renderer measures labels at each width and rejects any text
 smaller than `display.minTextPx`, which must be at least 16. Use
 `display.layout: "scroll"` when keeping labels readable requires a figure
-wider than its viewport.
+wider than its viewport. Any figure with `display.maxWidthPx` must use inline
+layout. When that maximum exceeds 331 px, `display.widths` must include a width
+of 331 px or less so the current mobile reader is actually covered.
 
 Use semantic color roles rather than literal product-theme colors:
 

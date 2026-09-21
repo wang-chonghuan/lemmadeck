@@ -747,6 +747,37 @@ def validate(spec_path: Path, stage: str) -> list[str]:
             )
         elif layout == "inline" and min(widths) > 352:
             errors.append("inline display must include a width of 352px or less")
+        if "maxWidthPx" in display:
+            if (
+                not isinstance(max_width, int)
+                or isinstance(max_width, bool)
+                or not 128 <= max_width <= 960
+            ):
+                errors.append(
+                    "display.maxWidthPx must be an integer from 128 to 960"
+                )
+            else:
+                if layout != "inline":
+                    errors.append(
+                        "display with maxWidthPx must use inline layout"
+                    )
+                if isinstance(widths, list) and any(
+                    isinstance(width, int) and width > max_width
+                    for width in widths
+                ):
+                    errors.append(
+                        "display widths must not exceed display.maxWidthPx"
+                    )
+                if (
+                    max_width > 331
+                    and isinstance(widths, list)
+                    and widths
+                    and min(widths) > 331
+                ):
+                    errors.append(
+                        "display with maxWidthPx above 331 must include "
+                        "the 331px mobile product width"
+                    )
         if purpose == "decorative":
             if layout != "inline":
                 errors.append("decorative display must use inline layout")
@@ -758,16 +789,14 @@ def validate(spec_path: Path, stage: str) -> list[str]:
                 errors.append(
                     "decorative display.maxWidthPx must be an integer from 128 to 240"
                 )
-            elif isinstance(widths, list) and any(
-                isinstance(width, int) and width > max_width
-                for width in widths
-            ):
-                errors.append(
-                    "decorative display widths must not exceed display.maxWidthPx"
-                )
-        elif "maxWidthPx" in display:
+        elif (
+            "maxWidthPx" in display
+            and isinstance(max_width, int)
+            and not isinstance(max_width, bool)
+            and not 240 <= max_width <= 960
+        ):
             errors.append(
-                "display.maxWidthPx is only valid for decorative figures"
+                "instructional display.maxWidthPx must be an integer from 240 to 960"
             )
         if "palette" in spec:
             errors.append(
