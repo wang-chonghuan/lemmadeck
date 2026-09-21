@@ -57,13 +57,29 @@ export const Route = createFileRoute('/_app/card/$id')({
   },
 })
 
+function decorativeMaxWidth(figure: CardFigure) {
+  const { maxWidthPx } = figure
+  return (
+    figure.purpose === 'decorative' &&
+    typeof maxWidthPx === 'number' &&
+    Number.isInteger(maxWidthPx) &&
+    maxWidthPx >= 128 &&
+    maxWidthPx <= 240
+  )
+    ? maxWidthPx
+    : undefined
+}
+
 function FigureMedia({ figure }: { figure: CardFigure }) {
   const layered = Boolean(figure.image && figure.svg)
+  const maxWidthPx = decorativeMaxWidth(figure)
   return (
     <div
       className={`sr-figure-media${layered ? ' sr-figure-layered' : ''}`}
       data-figure-mode={figure.mode}
+      data-figure-purpose={figure.purpose ?? 'instructional'}
       data-figure-theme="neutral"
+      style={maxWidthPx ? { width: maxWidthPx, maxWidth: '100%' } : undefined}
     >
       {figure.image ? (
         <img
@@ -84,17 +100,100 @@ function FigureMedia({ figure }: { figure: CardFigure }) {
   )
 }
 
+type FigureBlock = Extract<ProseBlock, { kind: 'fig' }>
+type CaptionBlock = Extract<ProseBlock, { kind: 'cap' }>
+type ProseDisplayBlock =
+  | ProseBlock
+  | {
+      kind: 'decorative-group'
+      items: { figure: FigureBlock; caption: CaptionBlock }[]
+    }
+
+function groupDecorativeFigures(blocks: ProseBlock[]): ProseDisplayBlock[] {
+  const grouped: ProseDisplayBlock[] = []
+  let index = 0
+
+  while (index < blocks.length) {
+    const block = blocks[index]
+    if (block.kind !== 'fig' || block.purpose !== 'decorative') {
+      grouped.push(block)
+      index += 1
+      continue
+    }
+
+    const figures: FigureBlock[] = []
+    let cursor = index
+    while (
+      cursor < blocks.length &&
+      blocks[cursor].kind === 'fig' &&
+      blocks[cursor].purpose === 'decorative'
+    ) {
+      figures.push(blocks[cursor] as FigureBlock)
+      cursor += 1
+    }
+
+    const captions: CaptionBlock[] = []
+    const figureEnd = cursor
+    while (
+      cursor < blocks.length &&
+      captions.length < figures.length &&
+      blocks[cursor].kind === 'cap'
+    ) {
+      captions.push(blocks[cursor] as CaptionBlock)
+      cursor += 1
+    }
+
+    if (captions.length === figures.length) {
+      grouped.push({
+        kind: 'decorative-group',
+        items: figures.map((figure, itemIndex) => ({
+          figure,
+          caption: captions[itemIndex],
+        })),
+      })
+      index = cursor
+      continue
+    }
+
+    grouped.push(...figures)
+    index = figureEnd
+  }
+
+  return grouped
+}
+
 function Prose({ blocks }: { blocks: ProseBlock[] }) {
   return (
     <div className="sr-read">
-      {blocks.map((b, i) =>
-        b.kind === 'fig' ? (
+      {groupDecorativeFigures(blocks).map((b, i) =>
+        b.kind === 'decorative-group' ? (
+          <div className="sr-decorative-figures" key={`decorative-${i}`}>
+            {b.items.map(({ figure, caption }) => (
+              <figure
+                key={figure.id}
+                className="sr-decorative-figure"
+                aria-label={figure.label ?? undefined}
+                data-figure-id={figure.id}
+                data-figure-layout={figure.layout ?? 'inline'}
+                data-figure-purpose="decorative"
+                style={{ width: decorativeMaxWidth(figure) }}
+              >
+                <FigureMedia figure={figure} />
+                <figcaption
+                  className="sr-decorative-caption"
+                  dangerouslySetInnerHTML={{ __html: caption.html }}
+                />
+              </figure>
+            ))}
+          </div>
+        ) : b.kind === 'fig' ? (
           <figure
             key={i}
             className="sr-read-fig"
             aria-label={b.label ?? undefined}
             data-figure-id={b.id}
             data-figure-layout={b.layout ?? 'inline'}
+            data-figure-purpose={b.purpose ?? 'instructional'}
           >
             <FigureMedia figure={b} />
           </figure>
@@ -150,6 +249,7 @@ function Exercises({
                     className="sr-ex-fig"
                     data-figure-id={f.id}
                     data-figure-layout={f.layout ?? 'inline'}
+                    data-figure-purpose={f.purpose ?? 'instructional'}
                     aria-label={f.label ?? undefined}
                   >
                     <FigureMedia figure={f} />

@@ -18,6 +18,8 @@ export type ProseBlock =
       svg?: string | null
       mode?: 'deterministic' | 'hybrid' | 'generated'
       layout?: 'inline' | 'scroll'
+      purpose?: 'instructional' | 'decorative'
+      maxWidthPx?: number
     }
 export type CardFigure = {
   id: string
@@ -26,6 +28,8 @@ export type CardFigure = {
   svg?: string | null
   mode?: 'deterministic' | 'hybrid' | 'generated'
   layout?: 'inline' | 'scroll'
+  purpose?: 'instructional' | 'decorative'
+  maxWidthPx?: number
 }
 // What the browser is allowed to know about one blank: how to label it, what
 // unit it is measured in, and which kind of input it takes. Never the expected
@@ -172,6 +176,8 @@ export const getCardContent = createServerFn({ method: 'GET' })
               svg: figure.svg ?? null,
               mode: figure.mode,
               layout: figure.layout,
+              purpose: figure.purpose,
+              maxWidthPx: figure.maxWidthPx,
             }))
           : [],
         ...(answerSpec ? { answerSpec } : {}),

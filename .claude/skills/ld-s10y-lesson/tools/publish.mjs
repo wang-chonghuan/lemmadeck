@@ -108,6 +108,10 @@ function figureAssetStrict(id, manifest) {
   const common = {
     mode: spec.mode,
     layout: spec.display.layout,
+    purpose: spec.display.purpose ?? 'instructional',
+    ...(spec.display.purpose === 'decorative'
+      ? { maxWidthPx: spec.display.maxWidthPx }
+      : {}),
   }
   if (spec.mode === 'deterministic') {
     return { ...common, image: null, svg: readSvg(figure.svg) }

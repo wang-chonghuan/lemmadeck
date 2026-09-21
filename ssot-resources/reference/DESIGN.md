@@ -77,6 +77,11 @@ balances the surrounding Chinese text; this applies equally to plain values and 
 concept transition may add one full-width `line` rule before the next paragraph; do not draw a rule
 between every paragraph.
 
+Figures carry a semantic display purpose from their FigureSpec. Instructional diagrams, apparatus,
+tables, graphs, and detail-bearing images keep the normal readable figure width. Decorative portraits,
+avatars, and comparable non-instructional images use their validated compact width and may share a row;
+their captions stay attached to the corresponding image on screen and in print.
+
 ## Icons
 
 - Use the LemmaDeck mark in every brand surface: browser/app icon, landing and login brand areas, catalog header, and app title bars.

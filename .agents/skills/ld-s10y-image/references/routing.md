@@ -10,6 +10,9 @@ Choose the least generative mode that can express the figure.
 
 ## Hard routing rules
 
+- Rendering mode and display purpose are independent decisions. A generated
+  portrait can be decorative; a generated classification scene is
+  instructional. Record the choice in `display.purpose`.
 - Any exact point, tick, number, distance, angle, grid intersection, alignment,
   parallelism, perpendicularity, symmetry, or transformation makes the
   mathematical layer deterministic.

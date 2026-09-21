@@ -724,6 +724,12 @@ def validate(spec_path: Path, stage: str) -> list[str]:
         layout = display.get("layout")
         if layout not in {"inline", "scroll"}:
             errors.append("display.layout must be inline or scroll")
+        purpose = display.get("purpose", "instructional")
+        if purpose not in {"instructional", "decorative"}:
+            errors.append(
+                "display.purpose must be instructional or decorative"
+            )
+        max_width = display.get("maxWidthPx")
         min_text = display.get("minTextPx")
         if not finite_number(min_text) or min_text < 16:
             errors.append("display.minTextPx must be at least 16")
@@ -732,15 +738,37 @@ def validate(spec_path: Path, stage: str) -> list[str]:
             not isinstance(widths, list)
             or not widths
             or any(
-                not isinstance(width, int) or not 240 <= width <= 1600
+                not isinstance(width, int) or not 128 <= width <= 1600
                 for width in widths
             )
         ):
             errors.append(
-                "display.widths must be a nonempty array of widths from 240 to 1600"
+                "display.widths must be a nonempty array of widths from 128 to 1600"
             )
         elif layout == "inline" and min(widths) > 352:
             errors.append("inline display must include a width of 352px or less")
+        if purpose == "decorative":
+            if layout != "inline":
+                errors.append("decorative display must use inline layout")
+            if (
+                not isinstance(max_width, int)
+                or isinstance(max_width, bool)
+                or not 128 <= max_width <= 240
+            ):
+                errors.append(
+                    "decorative display.maxWidthPx must be an integer from 128 to 240"
+                )
+            elif isinstance(widths, list) and any(
+                isinstance(width, int) and width > max_width
+                for width in widths
+            ):
+                errors.append(
+                    "decorative display widths must not exceed display.maxWidthPx"
+                )
+        elif "maxWidthPx" in display:
+            errors.append(
+                "display.maxWidthPx is only valid for decorative figures"
+            )
         if "palette" in spec:
             errors.append(
                 "current FigureSpec uses semantic color roles; remove palette"
