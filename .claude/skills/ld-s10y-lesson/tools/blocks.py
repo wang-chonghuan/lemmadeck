@@ -113,10 +113,10 @@ def printed_lines(blocks: list[dict]) -> int:
         if b["kind"] not in KINDS_TEXT:
             continue
         n += len(b["lines"]) + sum(ln.count(WRAP) for ln in b["lines"])
-        # samerow：本块首行与上一块末行印在**同一行**上（正文右侧的图题、并排的图题），
-        # 各算一行就会多数一行。
+        # samerow：本块与上一块共享印刷行。多行 cap 用于并排人物图题，
+        # 每一行都与相邻图题或正文同排；其他块只声明首行同排。
         if b.get("samerow"):
-            n -= 1
+            n -= len(b["lines"]) if b["kind"] == "cap" else 1
     return n
 
 

@@ -33,6 +33,7 @@ from PIL import Image
 
 SKILL = Path(__file__).resolve().parent.parent
 TOOLS = SKILL / "tools"
+REPO = Path(__file__).resolve().parents[4]
 DEFAULT_ROOT = Path("ssot-resources/soviet10year-textbooks/artifacts")
 DEFAULT_BOOKS = Path("ssot-resources/soviet10year-textbooks/sources")
 DEFAULT_WORK = Path(".tmp/ld-s10y-lesson")
@@ -58,9 +59,74 @@ def _work_page_dir(a, page: int) -> Path:
     return Path(a.work) / a.book / "pages" / f"{page:04d}"
 
 
+def _source_manifest(a) -> tuple[Path, dict] | None:
+    path = Path(a.books) / "manifest.json"
+    if not path.is_file():
+        return None
+    try:
+        return path, json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise SystemExit(f"ERROR: source manifest 不是有效 JSON: {path}: {error}")
+
+
+def _catalog_config(a) -> dict:
+    loaded = _source_manifest(a)
+    if loaded is None:
+        return {}
+    _, manifest = loaded
+    return next(
+        (
+            catalog
+            for catalog in manifest.get("catalogs", [])
+            if catalog.get("book") == a.book
+        ),
+        {},
+    )
+
+
+def _manifest_path(manifest_path: Path, value: str) -> Path:
+    path = Path(value)
+    if path.is_absolute():
+        return path
+    candidates = (REPO / path, manifest_path.parent / path)
+    return next((candidate for candidate in candidates if candidate.exists()), candidates[-1])
+
+
 def _find_pdf(a) -> Path:
     if getattr(a, "pdf", None):
         return Path(a.pdf)
+    loaded = _source_manifest(a)
+    if loaded is not None:
+        manifest_path, manifest = loaded
+        catalog = next(
+            (
+                item
+                for item in manifest.get("catalogs", [])
+                if item.get("book") == a.book
+            ),
+            None,
+        )
+        if catalog is not None:
+            source_id = catalog.get("sourcePdf")
+            if not source_id:
+                raise SystemExit(f"ERROR: {a.book!r} 没有可用的 sourcePdf")
+            record = next(
+                (
+                    item
+                    for item in manifest.get("pdfs", [])
+                    if item.get("book") == source_id
+                ),
+                None,
+            )
+            if record is None:
+                raise SystemExit(
+                    f"ERROR: {a.book!r} 的 sourcePdf {source_id!r} 未在 manifest.pdfs 声明"
+                )
+            pdf_root = _manifest_path(manifest_path, manifest.get("pdfRoot", ""))
+            pdf = pdf_root / record.get("file", "")
+            if not pdf.is_file():
+                raise SystemExit(f"ERROR: source manifest 指向的 PDF 不存在: {pdf}")
+            return pdf
     books = Path(a.books)
     pattern = f"{a.series}/*.pdf" if getattr(a, "series", None) else "*/*.pdf"
     hits = sorted(p for p in books.glob(pattern)
@@ -300,9 +366,11 @@ def cmd_finalize(a) -> int:
 # ---------------------------------------------------------------- cap2 装订
 def cmd_assemble(a) -> int:
     import assemble
+    catalog = _catalog_config(a)
     return assemble.run(_book_dir(a), Path(a.toc) if a.toc else None,
                         DEFAULT_PROFILE, strict=not a.lenient,
-                        work=Path(a.work) / a.book)
+                        work=Path(a.work) / a.book,
+                        exercise_numbering=catalog.get("exerciseNumbering", "book"))
 
 
 # ---------------------------------------------------------------- cap3 矢量化
@@ -317,8 +385,14 @@ def cmd_vectorize(a) -> int:
         svg = png.with_suffix(".svg")
         r = V.vectorize(png, svg, turdsize=a.turdsize)
         mark = "✓" if r["ok"] else "✗"
-        print(f"  {mark} {png.parent.parent.name}/{png.stem}  "
-              f"不匹配 {r['mismatch_ratio'] * 100:.3f}%  {svg.stat().st_size // 1024}KB")
+        if "mismatch_ratio" in r:
+            detail = (
+                f"不匹配 {r['mismatch_ratio'] * 100:.3f}%  "
+                f"{svg.stat().st_size // 1024}KB"
+            )
+        else:
+            detail = r.get("error", "矢量化失败")
+        print(f"  {mark} {png.parent.parent.name}/{png.stem}  {detail}")
         ok, fail = (ok + 1, fail) if r["ok"] else (ok, fail + 1)
     print(f"[vectorize] {ok} 张通过, {fail} 张不匹配超限")
     return 1 if fail else 0

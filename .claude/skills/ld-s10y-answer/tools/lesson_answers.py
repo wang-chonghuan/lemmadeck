@@ -55,17 +55,53 @@ def lessons_dir(args: argparse.Namespace) -> Path:
     return root / "editions" / args.edition / "lessons"
 
 
-def captured_answers(root: Path) -> dict[int, dict]:
+def captured_answers(root: Path) -> list[dict]:
     path = root / "answers.json"
     if not path.exists():
-        return {}
+        return []
     document = load(path)
-    return {int(answer["exercise"]): answer for answer in document.get("answers", [])}
+    return [
+        answer
+        for answer in document.get("answers", [])
+        if isinstance(answer, dict)
+    ]
+
+
+def exercise_numbering(root: Path) -> str:
+    path = root / "book.json"
+    if not path.exists():
+        return "book"
+    value = load(path).get("exercise_numbering", "book")
+    if value not in {"book", "lesson"}:
+        raise SystemExit(f"ERROR: {path} exercise_numbering 非法: {value!r}")
+    return value
+
+
+def captured_answer(
+    answers: list[dict],
+    lesson: str,
+    source_number: object,
+    numbering: str,
+) -> dict | None:
+    if source_number is None:
+        return None
+    matches = [
+        answer
+        for answer in answers
+        if str(answer.get("exercise")) == str(source_number)
+        and (numbering == "book" or answer.get("lesson") == lesson)
+    ]
+    if len(matches) > 1:
+        raise SystemExit(
+            f"ERROR: {lesson} 第 {source_number} 题匹配到多条书后答案"
+        )
+    return matches[0] if matches else None
 
 
 def cmd_prepare(args: argparse.Namespace) -> int:
     root = book_dir(args)
     captured = captured_answers(root)
+    numbering = exercise_numbering(root)
     for lesson in selected_lessons(args):
         lesson_dir = lessons_dir(args) / lesson
         exercise_doc = load(lesson_dir / "exercises.json")
@@ -76,8 +112,13 @@ def cmd_prepare(args: argparse.Namespace) -> int:
         }
         answers = []
         for exercise in exercise_doc.get("exercises", []):
-            number = int(exercise["number"])
-            book_answer = captured.get(number)
+            number = str(exercise["number"])
+            book_answer = captured_answer(
+                captured,
+                lesson,
+                exercise.get("source_number", exercise.get("number")),
+                numbering,
+            )
             evidence = []
             for figure_id in exercise.get("figure_refs", []):
                 figure = figures.get(figure_id, {})
@@ -95,13 +136,14 @@ def cmd_prepare(args: argparse.Namespace) -> int:
                     ).as_posix() if figure.get("spec") else None,
                 })
             item = {
-                "exercise": str(exercise["number"]),
+                "exercise": number,
                 "prompt": exercise["text"],
                 "figureEvidence": evidence,
                 "grading": None,
                 "source": "book" if book_answer else "derived",
                 "displayAnswer": "",
                 "parts": [],
+                "historical_entities": [],
             }
             if book_answer:
                 item["bookRaw"] = book_answer["raw"]
@@ -161,6 +203,11 @@ def validate_lesson(
             f"want={expected_numbers}, got={numbers}"
         )
 
+    exercise_by_number = {
+        str(item.get("number")): item
+        for item in exercise_doc.get("exercises", [])
+        if isinstance(item, dict)
+    }
     for index, answer in enumerate(answers):
         label = f"answers[{index}]"
         if not isinstance(answer, dict):
@@ -181,7 +228,38 @@ def validate_lesson(
             for phrase in ("题面未附图", "题面未提供图", "无法可靠确定")
         ):
             errors.append(f"{label}.displayAnswer 不得声称题图缺失")
-        elif hits := [term for term in forbidden_terms if term in display]:
+        historical_entities = answer.get("historical_entities")
+        allowed_historical = set()
+        if historical_entities is not None:
+            if not isinstance(historical_entities, list):
+                errors.append(f"{label}.historical_entities 必须是数组")
+            else:
+                prompt = exercise_by_number.get(str(answer.get("exercise")), {}).get("text", "")
+                for entity_index, declaration in enumerate(historical_entities):
+                    entity_label = f"{label}.historical_entities[{entity_index}]"
+                    if not isinstance(declaration, dict):
+                        errors.append(f"{entity_label} 必须是对象")
+                        continue
+                    term = declaration.get("term")
+                    reason = declaration.get("reason")
+                    if not isinstance(term, str) or not term.strip():
+                        errors.append(f"{entity_label}.term 不能为空")
+                        continue
+                    if not isinstance(reason, str) or not reason.strip():
+                        errors.append(f"{entity_label}.reason 不能为空")
+                    if term not in prompt:
+                        errors.append(f"{entity_label}.term={term!r} 不在对应题面中")
+                    if isinstance(display, str) and term not in display:
+                        errors.append(f"{entity_label}.term={term!r} 不在标准答案中")
+                    allowed_historical.add(term)
+        if (
+            isinstance(display, str)
+            and (hits := [
+                term
+                for term in forbidden_terms
+                if term in display and term not in allowed_historical
+            ])
+        ):
             errors.append(
                 f"{label}.displayAnswer 仍含旧文化词或俄文人名: {', '.join(hits)}"
             )

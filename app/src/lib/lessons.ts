@@ -48,6 +48,7 @@ export type ExerciseGridSpec = {
 }
 export type CardExercise = {
   number: string
+  sourceNumber: string | null
   group: string | null
   html: string
   figureRefs: string[]
@@ -156,6 +157,8 @@ export const getCardContent = createServerFn({ method: 'GET' })
 
       return {
         number: String(exercise.number),
+        sourceNumber:
+          exercise.sourceNumber == null ? null : String(exercise.sourceNumber),
         group: exercise.group ?? null,
         html: exercise.html,
         figureRefs: Array.isArray(exercise.figureRefs)

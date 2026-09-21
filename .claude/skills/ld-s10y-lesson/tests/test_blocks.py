@@ -45,6 +45,19 @@ class BlockTextTest(unittest.TestCase):
             "填表：а) б)",
         )
 
+    def test_multiline_side_by_side_caption_reuses_each_printed_row(self) -> None:
+        _, parsed = blocks.parse(
+            '---\n{"printed_page": 1}\n---\n\n'
+            '<!-- cap -->\n'
+            '左一\n'
+            '左二\n\n'
+            '<!-- cap samerow -->\n'
+            '右一\n'
+            '右二\n'
+        )
+
+        self.assertEqual(blocks.printed_lines(parsed), 2)
+
 
 if __name__ == "__main__":
     unittest.main()

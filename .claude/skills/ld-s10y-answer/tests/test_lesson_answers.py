@@ -19,6 +19,74 @@ def dump(path: Path, value: object) -> None:
 
 
 class LessonAnswersTest(unittest.TestCase):
+    def test_lesson_scoped_capture_rejects_unscoped_numeric_answer(self) -> None:
+        answers = [
+            {"exercise": 1, "raw": "global"},
+            {"lesson": "phy6-c1-s2", "exercise": 1, "raw": "scoped"},
+        ]
+
+        self.assertIsNone(
+            lesson_answers.captured_answer(
+                answers,
+                "phy6-c1-s1",
+                "1",
+                "lesson",
+            )
+        )
+        self.assertEqual(
+            lesson_answers.captured_answer(
+                answers,
+                "phy6-c1-s2",
+                "1",
+                "lesson",
+            )["raw"],
+            "scoped",
+        )
+
+    def test_finalize_allows_source_bound_historical_entity(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            lesson_id = "phy6-c1-s6"
+            lesson_dir = (
+                root / "6p" / "editions" / "modern-us-neutral"
+                / "lessons" / lesson_id
+            )
+            dump(lesson_dir / "exercises.json", {
+                "exercises": [{
+                    "number": "q1",
+                    "source_number": None,
+                    "text": "苏联航天事业为什么发展迅速？",
+                }],
+            })
+            dump(lesson_dir / "answer-keys.json", {
+                "schema": lesson_answers.SCHEMA,
+                "book": "6p",
+                "lesson": lesson_id,
+                "edition": "modern-us-neutral",
+                "answers": [{
+                    "exercise": "q1",
+                    "grading": "ungraded",
+                    "source": "derived",
+                    "displayAnswer": "苏联航天事业依靠科学研究与工程协作。",
+                    "parts": [],
+                    "historical_entities": [{
+                        "term": "苏联",
+                        "reason": "题面讨论真实航天史。",
+                    }],
+                }],
+            })
+
+            _, errors = lesson_answers.validate_lesson(
+                lesson_dir / "answer-keys.json",
+                lesson_dir / "exercises.json",
+                "6p",
+                lesson_id,
+                "modern-us-neutral",
+                ["苏联"],
+            )
+
+            self.assertEqual(errors, [])
+
     def test_finalize_rejects_russian_names_in_modern_answer(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

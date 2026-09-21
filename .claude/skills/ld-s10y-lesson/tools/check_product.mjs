@@ -26,6 +26,22 @@ export async function assertKeyboardCoverage(scope) {
   assert.deepEqual(errors, [])
 }
 
+export function expectedFigureCoverage(lesson, exercises) {
+  const prose = (lesson.prose ?? [])
+    .filter(block => block?.kind === 'fig' && typeof block.id === 'string')
+    .map(block => block.id)
+  const exercise = exercises.flatMap(item =>
+    (item.figures ?? [])
+      .filter(figure => typeof figure?.id === 'string')
+      .map(figure => figure.id)
+  )
+  return {
+    prose: [...new Set(prose)],
+    exercise: [...new Set(exercise)],
+    print: [...new Set([...prose, ...exercise])],
+  }
+}
+
 async function assertFigurePixels(figure, page) {
   const png = await figure.screenshot()
   const marks = await page.evaluate(async base64 => {
@@ -47,6 +63,55 @@ async function assertFigurePixels(figure, page) {
   assert.ok(marks > 100, 'Figure screenshot has no visible drawing')
 }
 
+async function assertPublishedFigure({ figure, asset, book, edition, lesson, page }) {
+  await expect(figure).toBeAttached()
+  if (asset.svg) {
+    const assetPath = path.join(book, 'editions', edition, asset.svg)
+    const currentSVG = fs.readFileSync(assetPath, 'utf8')
+    assert.equal(await figure.evaluate((element, expected) => {
+      const host = document.createElement('div')
+      host.innerHTML = expected
+      return element.querySelector('svg')?.outerHTML === host.querySelector('svg')?.outerHTML
+    }, currentSVG), true, `${lesson}/${asset.id}: published SVG is stale`)
+  }
+  const imageAsset = asset.artwork || asset.png
+  if (imageAsset) {
+    const assetPath = path.join(book, 'editions', edition, imageAsset)
+    assert.equal(
+      await figure.locator('img').getAttribute('src'),
+      `data:image/png;base64,${fs.readFileSync(assetPath).toString('base64')}`,
+    )
+  }
+  if (asset.artwork) {
+    await expect(figure.locator('.sr-figure-artwork')).toHaveCount(1)
+    await expect(figure.locator('.sr-figure-vector svg')).toHaveCount(1)
+  }
+  const state = await figure.evaluate(async element => {
+    const svg = element.querySelector('svg')
+    const image = element.querySelector('img')
+    if (image) await image.decode()
+    const media = svg || image
+    if (!media) return null
+    const rect = media.getBoundingClientRect()
+    element.scrollLeft = element.scrollWidth
+    const atEnd = element.scrollLeft + element.clientWidth >= element.scrollWidth - 1
+    element.scrollLeft = 0
+    return {
+      width: rect.width,
+      height: rect.height,
+      atEnd,
+      marks: svg
+        ? svg.querySelectorAll('path,line,polygon,circle,text,rect').length
+        : image.naturalWidth,
+    }
+  })
+  assert.ok(
+    state?.width > 0 && state.height > 0 && state.marks > 0 && state.atEnd,
+    `${lesson}/${asset.id}: missing, blank or unreachable figure`,
+  )
+  await assertFigurePixels(figure, page)
+}
+
 export async function checkProduct({ book, edition, lessons, baseURL, output, viewports }) {
   assert.match(baseURL, /^http:\/\/(?:localhost|127\.0\.0\.1):\d+$/, 'Acceptance must use localhost')
   assert.ok(lessons.length, 'No lessons selected')
@@ -65,11 +130,75 @@ export async function checkProduct({ book, edition, lessons, baseURL, output, vi
       page.on('pageerror', error => errors.push(error.message))
       for (const lesson of lessons) {
         const dir = path.join(book, 'editions', edition, 'lessons', lesson)
+        const lessonDocument = JSON.parse(fs.readFileSync(path.join(dir, 'lesson.json')))
         const exercises = JSON.parse(fs.readFileSync(path.join(dir, 'exercises.json'))).exercises
         const answers = JSON.parse(fs.readFileSync(path.join(dir, 'answer-keys.json'))).answers
         const interactions = JSON.parse(fs.readFileSync(path.join(dir, 'interactions.json'))).interactions
         const figureManifest = JSON.parse(fs.readFileSync(path.join(dir, 'figures.json'))).figures
-        await page.goto(`${baseURL}/card/${lesson}?tab=ex`)
+        const coverage = expectedFigureCoverage(lessonDocument, exercises)
+        assert.deepEqual(
+          new Set(figureManifest.map(figure => figure.id)),
+          new Set(coverage.print),
+          `${lesson}: figure manifest differs from prose/exercise coverage`,
+        )
+
+        await page.goto(`${baseURL}/card/${lesson}`)
+        await expect(page.locator('.sr-deck-title')).toBeVisible()
+        await expect(page.locator('.sr-read')).toBeVisible()
+        for (const figureId of coverage.prose) {
+          current = { lesson, figure: figureId, viewport: viewport.width, surface: 'prose' }
+          const figure = page.locator(`.sr-read [data-figure-id="${figureId}"]`)
+          await expect(figure).toHaveCount(1)
+          const asset = figureManifest.find(item => item.id === figureId)
+          assert.ok(asset, `Missing prose figure manifest entry: ${figureId}`)
+          await assertPublishedFigure({ figure, asset, book, edition, lesson, page })
+        }
+
+        if (viewport.width === 1440) {
+          await page.emulateMedia({ media: 'print' })
+          const print = page.getByTestId('lesson-print')
+          await expect(print).toBeVisible()
+          for (const figureId of coverage.print) {
+            current = { lesson, figure: figureId, viewport: 'print', surface: 'print' }
+            const figures = print.locator(`[data-figure-id="${figureId}"]`)
+            assert.ok(await figures.count(), `${lesson}/${figureId}: missing from print`)
+            const asset = figureManifest.find(item => item.id === figureId)
+            assert.ok(asset, `Missing print figure manifest entry: ${figureId}`)
+            await assertPublishedFigure({
+              figure: figures.first(), asset, book, edition, lesson, page,
+            })
+          }
+          const printGeometry = await print.evaluate(element => {
+            const figures = [...element.querySelectorAll('[data-figure-id]')]
+            return {
+              width: element.scrollWidth,
+              clientWidth: element.clientWidth,
+              clipped: figures.some(figure => {
+                const media = figure.querySelector('svg, img')
+                if (!media) return true
+                const outer = figure.getBoundingClientRect()
+                const inner = media.getBoundingClientRect()
+                return inner.width <= 0 || inner.height <= 0 || inner.right > outer.right + 1
+              }),
+            }
+          })
+          assert.ok(printGeometry.clientWidth > 0)
+          assert.equal(printGeometry.width > printGeometry.clientWidth + 1, false)
+          assert.equal(printGeometry.clipped, false)
+          await page.screenshot({
+            path: path.join(output, `${lesson}-print.png`),
+            fullPage: true,
+          })
+          await page.emulateMedia({ media: 'screen' })
+        }
+
+        if (exercises.length === 0) {
+          await expect(page.locator('[role="tablist"]')).toHaveCount(0)
+          await page.goto(`${baseURL}/card/${lesson}?tab=ex`)
+          await expect(page.locator('.sr-read')).toBeVisible()
+        } else {
+          await page.goto(`${baseURL}/card/${lesson}?tab=ex`)
+        }
         const articles = page.locator('article[id^="ex-"]')
         await expect(articles).toHaveCount(exercises.length)
         const initialPadding = await page.locator('.sr-d-scroll').evaluate(element => element.style.paddingBottom)
@@ -99,45 +228,7 @@ export async function checkProduct({ book, edition, lessons, baseURL, output, vi
             await expect(figure).toHaveCount(1)
             const asset = figureManifest.find(item => item.id === figureSpec.id)
             assert.ok(asset, `Missing figure manifest entry: ${figureSpec.id}`)
-            if (asset.svg) {
-              const assetPath = path.join(book, 'editions', edition, asset.svg)
-              const currentSVG = fs.readFileSync(assetPath, 'utf8')
-              assert.equal(await figure.evaluate((element, expected) => {
-                const host = document.createElement('div')
-                host.innerHTML = expected
-                return element.querySelector('svg')?.outerHTML === host.querySelector('svg')?.outerHTML
-              }, currentSVG), true, `${lesson}/${figureSpec.id}: published SVG is stale`)
-            }
-            const imageAsset = asset.artwork || asset.png
-            if (imageAsset) {
-              const assetPath = path.join(book, 'editions', edition, imageAsset)
-              assert.equal(
-                await figure.locator('img').getAttribute('src'),
-                `data:image/png;base64,${fs.readFileSync(assetPath).toString('base64')}`,
-              )
-            }
-            if (asset.artwork) {
-              await expect(figure.locator('.sr-figure-artwork')).toHaveCount(1)
-              await expect(figure.locator('.sr-figure-vector svg')).toHaveCount(1)
-            }
-            const state = await figure.evaluate(async element => {
-              const svg = element.querySelector('svg')
-              const image = element.querySelector('img')
-              if (image) await image.decode()
-              const media = svg || image
-              if (!media) return null
-              const rect = media.getBoundingClientRect()
-              element.scrollLeft = element.scrollWidth
-              const atEnd = element.scrollLeft + element.clientWidth >= element.scrollWidth - 1
-              element.scrollLeft = 0
-              return {
-                width: rect.width, height: rect.height, atEnd,
-                marks: svg ? svg.querySelectorAll('path,line,polygon,circle,text,rect').length : image.naturalWidth,
-              }
-            })
-            assert.ok(state?.width > 0 && state.height > 0 && state.marks > 0 && state.atEnd,
-              `${lesson}/${exercise.number}/${figureSpec.id}: missing, blank or unreachable figure`)
-            await assertFigurePixels(figure, page)
+            await assertPublishedFigure({ figure, asset, book, edition, lesson, page })
             figuresChecked += 1
           }
 
@@ -194,6 +285,34 @@ export async function checkProduct({ book, edition, lessons, baseURL, output, vi
         }
         await expect(page.locator('.ML__keyboard .MLK__plate:visible')).toHaveCount(0)
         await expect.poll(() => page.locator('.sr-d-scroll').evaluate(element => element.style.paddingBottom)).toBe(initialPadding)
+        const freeSample = answers.find(answer =>
+          answer.grading === 'ungraded' &&
+          interactions.some(item =>
+            String(item.exercise) === String(answer.exercise) && item.widget === 'free'
+          )
+        )
+        if (freeSample) {
+          current = {
+            lesson,
+            exercise: freeSample.exercise,
+            viewport: viewport.width,
+            check: 'ungraded-chinese',
+          }
+          const article = page.locator(`#ex-${freeSample.exercise}`)
+          const field = article.locator('math-field, input:not([type=hidden]), textarea').first()
+          await field.evaluate(element => {
+            element.value = ''
+            element.dispatchEvent(new Event('input', { bubbles: true }))
+          })
+          await field.focus()
+          await page.keyboard.insertText('观察和实验')
+          await expect.poll(() => field.evaluate(element => element.value)).toContain('观察')
+          await article.locator('.sr-math-submit').click()
+          const result = article.locator('.sr-math-result.ungraded')
+          await expect(result).toBeVisible()
+          await expect(result.locator('.sr-math-standard p')).not.toHaveText('')
+          assert.equal((await context.cookies()).some(cookie => cookie.name === 'sr_session'), false)
+        }
         const answerRenderSample = answers.find(answer =>
           answer.grading === 'auto' &&
           answer.displayAnswer?.includes('$') &&
@@ -237,7 +356,10 @@ export async function checkProduct({ book, edition, lessons, baseURL, output, vi
           viewport: viewport.width,
           exercises: exercises.length,
           inputs: fieldsChecked,
-          figures: figuresChecked,
+          proseFigures: coverage.prose.length,
+          exerciseFigures: figuresChecked,
+          printFigures: viewport.width === 1440 ? coverage.print.length : null,
+          ungradedSubmission: freeSample?.exercise ?? null,
           renderedAnswer: answerRenderSample?.exercise ?? null,
         }
         report.push(row)

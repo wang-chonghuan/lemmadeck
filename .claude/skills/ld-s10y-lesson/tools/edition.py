@@ -117,6 +117,7 @@ def modern_prose(source: dict) -> list[dict]:
             "source_text": source_text,
             "changes": ["layout"] if modern_text != source_text else [],
             "numeric_changes": [],
+            "historical_entities": [],
         })
     return result
 
@@ -133,6 +134,7 @@ def modern_exercises(source: dict) -> list[dict]:
             "source_text": source_text,
             "changes": ["layout"] if modern_text != source_text else [],
             "numeric_changes": [],
+            "historical_entities": [],
         })
     return result
 
@@ -481,6 +483,7 @@ def validate_text(
     numeric_changes: object,
     label: str,
     forbidden_terms: list[str],
+    historical_entities: object = None,
 ) -> list[str]:
     errors = []
     if not isinstance(modern, str):
@@ -528,7 +531,33 @@ def validate_text(
         errors.append(f"{label} 有 numeric_changes，但 changes 缺 context-number")
     if CYRILLIC.search(modern):
         errors.append(f"{label} 仍含西里尔字母")
-    hits = [term for term in forbidden_terms if term in modern]
+    allowed_historical = set()
+    if historical_entities is not None:
+        if not isinstance(historical_entities, list):
+            errors.append(f"{label}.historical_entities 必须是数组")
+        else:
+            for index, declaration in enumerate(historical_entities):
+                declaration_label = f"{label}.historical_entities[{index}]"
+                if not isinstance(declaration, dict):
+                    errors.append(f"{declaration_label} 必须是对象")
+                    continue
+                term = declaration.get("term")
+                reason = declaration.get("reason")
+                if not isinstance(term, str) or not term.strip():
+                    errors.append(f"{declaration_label}.term 不能为空")
+                    continue
+                if not isinstance(reason, str) or not reason.strip():
+                    errors.append(f"{declaration_label}.reason 不能为空")
+                if term not in source:
+                    errors.append(f"{declaration_label}.term={term!r} 不在原文中")
+                if term not in modern:
+                    errors.append(f"{declaration_label}.term={term!r} 不在现代版文本中")
+                allowed_historical.add(term)
+    hits = [
+        term
+        for term in forbidden_terms
+        if term in modern and term not in allowed_historical
+    ]
     if hits:
         errors.append(f"{label} 仍含旧文化词或俄文人名: {', '.join(hits)}")
     return errors
@@ -1092,6 +1121,7 @@ def validate_lesson(
             modern_block.get("numeric_changes"),
             label,
             forbidden,
+            modern_block.get("historical_entities"),
         )
 
     raw_items = raw_exercises.get("exercises", [])
@@ -1113,6 +1143,7 @@ def validate_lesson(
             modern_item.get("numeric_changes"),
             label,
             forbidden,
+            modern_item.get("historical_entities"),
         )
         errors += [
             f"{label}: {error}"
