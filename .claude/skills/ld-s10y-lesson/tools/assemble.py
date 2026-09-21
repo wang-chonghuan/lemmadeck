@@ -8,8 +8,8 @@
   3. 分流   —— ex/exhead 进习题，其余先进入课文候选
   4. 认领图 —— 正文图留在课文；练习图从课文移出，并按原书位置只展示一次
 
-对账全部是**对象级**的，比页级像素对账便宜也强得多：题号连续、图号连续、
-图与引用双向齐全、TOC 小节覆盖、拼完整之后的公式再过一遍 KaTeX。
+对账全部是**对象级**的，比页级像素对账便宜也强得多：题号按书目声明的范围连续、
+图号连续、图与引用双向齐全、TOC 小节覆盖、拼完整之后的公式再过一遍 KaTeX。
 一页漏抽、一题读错号、一张图没裁，都会在这里露出来。
 """
 from __future__ import annotations
@@ -29,6 +29,7 @@ import normalize as nz
 FIGREF = re.compile(r"图\s*(\d+)")
 SEC_NUM = re.compile(r"^\s*(\d+)\s*[.．、]\s*(.+)$")
 BLOCKREF = re.compile(r"^p(\d+)#(\d+)$")
+OPTIONAL_EXERCISE_IDENTITY_FIELDS = ("source_number", "group_id")
 
 
 def _slug(text: str) -> str:
@@ -144,6 +145,39 @@ def split_lesson(
         else:
             prose.append(b)
     return prose, exercises
+
+
+def _can_reuse_exercises(existing: dict, rebuilt: dict) -> bool:
+    """Allow an old source file to omit identity fields added by newer assemblers."""
+    if not isinstance(existing, dict) or not isinstance(rebuilt, dict):
+        return False
+    old_items = existing.get("exercises")
+    new_items = rebuilt.get("exercises")
+    if not isinstance(old_items, list) or not isinstance(new_items, list):
+        return False
+    old_document = {key: value for key, value in existing.items() if key != "exercises"}
+    new_document = {key: value for key, value in rebuilt.items() if key != "exercises"}
+    if old_document != new_document or len(old_items) != len(new_items):
+        return False
+    for old_item, new_item in zip(old_items, new_items):
+        if not isinstance(old_item, dict) or not isinstance(new_item, dict):
+            return False
+        for field in OPTIONAL_EXERCISE_IDENTITY_FIELDS:
+            if field in old_item and old_item[field] != new_item.get(field):
+                return False
+        old_core = {
+            key: value
+            for key, value in old_item.items()
+            if key not in OPTIONAL_EXERCISE_IDENTITY_FIELDS
+        }
+        new_core = {
+            key: value
+            for key, value in new_item.items()
+            if key not in OPTIONAL_EXERCISE_IDENTITY_FIELDS
+        }
+        if old_core != new_core:
+            return False
+    return True
 
 
 def _block_position(ref: str) -> int | None:
@@ -611,6 +645,11 @@ def run(
     promote_figures(book, work, report["warnings"])
 
     out = book / "lessons"
+    existing_exercises = {}
+    if out.exists():
+        for path in out.glob("*/exercises.json"):
+            data = path.read_bytes()
+            existing_exercises[path.parent.name] = (json.loads(data), data)
     answer_assets = {
         path.relative_to(out): path.read_bytes()
         for path in out.glob("*/answer-keys*.json")
@@ -633,9 +672,19 @@ def run(
             else:
                 md += [B.text_of(b), ""]
         (d / "lesson.md").write_text("\n".join(md).rstrip() + "\n", encoding="utf-8")
-        (d / "exercises.json").write_text(json.dumps(
-            {"lesson": lid, "count": len(l["exercises"]), "exercises": l["exercises"]},
-            ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        exercises_document = {
+            "lesson": lid,
+            "count": len(l["exercises"]),
+            "exercises": l["exercises"],
+        }
+        previous = existing_exercises.get(lid)
+        if previous and _can_reuse_exercises(previous[0], exercises_document):
+            (d / "exercises.json").write_bytes(previous[1])
+        else:
+            (d / "exercises.json").write_text(
+                json.dumps(exercises_document, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
         (d / "lesson.json").write_text(json.dumps(
             {"id": lid, "card_id": l.get("card_id"),
              "chapter": l["chapter"], "section": l["section"],
@@ -679,5 +728,10 @@ def run(
         for e in report["errors"]:
             print(f"    - {e}")
         return 1 if strict else 0
-    print("  ✓ 通过 题号连续 + 图号连续 + 引用齐全 + 公式")
+    numbering_label = {
+        "book": "全书题号",
+        "lesson": "课内题号",
+        "lesson-group": "课内分栏目题号",
+    }.get(exercise_numbering, "题号")
+    print(f"  ✓ 通过 {numbering_label}连续 + 图号连续 + 引用齐全 + 公式")
     return 0
