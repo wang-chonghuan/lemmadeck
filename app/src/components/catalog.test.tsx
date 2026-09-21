@@ -11,6 +11,7 @@ describe('Catalog lesson availability', () => {
           id: 'alg6-c2-s1',
           number: '2.1',
           title: '示例',
+          hasOwnCard: false,
           ready: false,
           cardId: 'alg6-c2-s1-n8',
           topics: [
@@ -38,6 +39,7 @@ describe('Catalog lesson availability', () => {
           id: 'alg6-c2-ex',
           number: '',
           title: '练习',
+          hasOwnCard: true,
           ready: false,
           cardId: 'alg6-c2-ex',
           topics: [],
@@ -51,5 +53,34 @@ describe('Catalog lesson availability', () => {
     expect(html).toContain('class="sr-out-lesson sr-out-disabled"')
     expect(html).toContain('aria-disabled="true"')
     expect(html).not.toContain('<a')
+  })
+
+  it('renders an unnumbered supplemental card separately from its parent lesson', () => {
+    const html = renderToStaticMarkup(
+      <LessonRow
+        lesson={{
+          id: 'phy6-c2-s4',
+          number: '2.4',
+          title: '气体、液体及固体中的扩散现象',
+          hasOwnCard: true,
+          ready: false,
+          cardId: 'phy6-c2-s4',
+          topics: [{
+            id: 'phy6-c2-s4-t1',
+            number: null,
+            title: '布朗运动',
+            ready: false,
+          }],
+        }}
+        title="2.4 气体、液体及固体中的扩散现象"
+        openCard="phy6-c2-s4"
+        onNavigate={vi.fn()}
+      />,
+    )
+
+    expect(html.match(/aria-disabled="true"/g)).toHaveLength(2)
+    expect(html).toContain('气体、液体及固体中的扩散现象')
+    expect(html).toContain('布朗运动')
+    expect(html).not.toContain('sr-out-topic-n')
   })
 })

@@ -108,19 +108,36 @@ def cut_lessons(stream: list[dict]) -> list[dict]:
     return lessons
 
 
-def split_lesson(lesson: dict) -> tuple[list[dict], list[dict]]:
+def split_lesson(
+    lesson: dict,
+    exercise_numbering: str = "book",
+) -> tuple[list[dict], list[dict]]:
     """先分题和课文候选；图的最终归属要等所有引用都看见后再决定。"""
     prose, exercises, group = [], [], None
+    group_index = 0
     unnumbered = 0
+    first_group_by_source: dict[str, str] = {}
     for b in lesson["blocks"]:
         if b["kind"] == "exhead":
             group = B.text_of(b)
+            group_index += 1
         elif b["kind"] == "ex":
             source_number = b.get("label")
             if source_number is None:
                 unnumbered += 1
-            exercises.append({"number": source_number or f"q{unnumbered}",
+                number = f"q{unnumbered}"
+            else:
+                source_key = str(source_number)
+                group_id = f"g{group_index}"
+                first_group = first_group_by_source.setdefault(source_key, group_id)
+                number = (
+                    f"{group_id}-{_slug(source_key)}"
+                    if exercise_numbering == "lesson-group" and first_group != group_id
+                    else source_key
+                )
+            exercises.append({"number": number,
                               "source_number": source_number, "group": group,
+                              "group_id": f"g{group_index}",
                               "text": B.text_of(b, join=""),
                               "lines": b["lines"], "pages": b.get("spans") or [b["ref"]],
                               "figure_refs": [], "figures": []})
@@ -191,9 +208,9 @@ def promote_figures(book: Path, work: Path | None, warnings: list[str]) -> None:
                 shutil.copy2(source, library / source.name)
 
 
-def claim_figures(lessons: list[dict], stream: list[dict]) -> list[str]:
+def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], list[str]]:
     """按语义认领图：正文图留正文，练习共享图只在练习区展示一次。"""
-    warn = []
+    errors, warn = [], []
     fig_by_num, all_figs = {}, []
     for b in stream:
         if b["kind"] != "fig":
@@ -204,20 +221,39 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> list[str]:
 
     referenced = set()
     for lesson in lessons:
-        exercises_by_number = {
-            str(exercise["number"]): exercise
-            for exercise in lesson["exercises"]
-        }
+        exercises_by_number: dict[str, list[dict]] = {}
+        exercises_by_source: dict[str, list[dict]] = {}
+        exercises_by_group_source: dict[str, list[dict]] = {}
+        for exercise in lesson["exercises"]:
+            exercises_by_number.setdefault(str(exercise["number"]), []).append(exercise)
+            source_number = _source_number(exercise)
+            if source_number is not None:
+                exercises_by_source.setdefault(source_number, []).append(exercise)
+                scoped_key = f"{exercise.get('group_id', 'g0')}-{_slug(source_number)}"
+                exercises_by_group_source.setdefault(scoped_key, []).append(exercise)
         explicitly_owned = set()
         for figure in (block for block in lesson["blocks"] if block["kind"] == "fig"):
             owner_number = figure.get("owner_exercise")
             if not owner_number:
                 continue
-            owner = exercises_by_number.get(str(owner_number))
-            if owner is None:
-                warn.append(
+            owner_key = str(owner_number)
+            source_matches = exercises_by_source.get(owner_key, [])
+            identity_matches = exercises_by_number.get(owner_key, [])
+            scoped_matches = exercises_by_group_source.get(owner_key, [])
+            if len(scoped_matches) == 1:
+                matches = scoped_matches
+            elif len(source_matches) > 1:
+                errors.append(
+                    f"{figure['id']} 的 owner-ex {owner_number} 在本小节跨栏目重复，"
+                    "必须写栏目限定标识（例如 g2-1）")
+                continue
+            else:
+                matches = identity_matches or source_matches
+            if len(matches) != 1:
+                errors.append(
                     f"{figure['id']} 指定给第 {owner_number} 题，但本小节没有这道题")
                 continue
+            owner = matches[0]
             explicitly_owned.add(figure["id"])
             if figure["id"] not in owner["figure_refs"]:
                 owner["figure_refs"].append(figure["id"])
@@ -279,7 +315,7 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> list[str]:
         nums = FIGREF.findall(f.get("label") or "")
         if nums and not (set(nums) & referenced):
             warn.append(f"{f['id']}（{f.get('label')}）全书没有任何正文引用它")
-    return warn
+    return errors, warn
 
 
 def _source_number(exercise: dict) -> str | None:
@@ -320,14 +356,34 @@ def audit(
     """对象级对账。页级像素对账管不到的东西，这里全能看见。"""
     errors, warns = [], []
 
-    if exercise_numbering not in {"book", "lesson"}:
+    if exercise_numbering not in {"book", "lesson", "lesson-group"}:
         errors.append(f"未知 exercise numbering scope: {exercise_numbering!r}")
+    for lesson in lessons:
+        identifiers = [str(exercise["number"]) for exercise in lesson["exercises"]]
+        duplicated = sorted({
+            identifier
+            for identifier in identifiers
+            if identifiers.count(identifier) > 1
+        })
+        if duplicated:
+            errors.append(f"{lesson['title']}: 内部题目标识重复: {duplicated}")
     if exercise_numbering == "lesson":
         for lesson in lessons:
             errors += _audit_number_sequence(
                 _numeric_source_numbers(lesson["exercises"]),
                 f"{lesson['title']}: ",
             )
+    if exercise_numbering == "lesson-group":
+        for lesson in lessons:
+            groups: dict[str, list[dict]] = {}
+            for exercise in lesson["exercises"]:
+                groups.setdefault(exercise.get("group_id", "g0"), []).append(exercise)
+            for group_id, exercises in groups.items():
+                group = exercises[0].get("group") or "未命名栏目"
+                errors += _audit_number_sequence(
+                    _numeric_source_numbers(exercises),
+                    f"{lesson['title']}/{group}({group_id}): ",
+                )
     nums = [
         number
         for lesson in lessons
@@ -441,10 +497,13 @@ def _toc_cards(toc: dict) -> list[dict]:
             cards.append(content)
         for section in content.get("lessons", []):
             topics = section.get("topics") or []
-            if topics:
-                cards.extend(topics)
-            else:
+            has_numbered_topics = any(
+                topic.get("printedNumber") is not None
+                for topic in topics
+            )
+            if not topics or not has_numbered_topics:
                 cards.append(section)
+            cards.extend(topics)
     return cards
 
 
@@ -534,9 +593,10 @@ def run(
     merged, warn_merge = merge_across_pages(stream)
     lessons = cut_lessons(merged)
     for l in lessons:
-        l["prose"], l["exercises"] = split_lesson(l)
-    warn_fig = claim_figures(lessons, merged)
+        l["prose"], l["exercises"] = split_lesson(l, exercise_numbering)
+    figure_errors, warn_fig = claim_figures(lessons, merged)
     report = audit(lessons, merged, profile, exercise_numbering)
+    report["errors"] = figure_errors + report["errors"]
     report["warnings"] = warn_merge + warn_fig + report["warnings"]
     if toc:
         report["warnings"] += check_toc(

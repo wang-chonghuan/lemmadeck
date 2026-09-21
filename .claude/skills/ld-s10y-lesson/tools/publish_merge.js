@@ -19,4 +19,10 @@ function preserveExerciseMetadata(exercises, existingDeck, editionName) {
   })
 }
 
-module.exports = { preserveExerciseMetadata }
+function sourceNumberForArtifact(exercise) {
+  return Object.prototype.hasOwnProperty.call(exercise, 'source_number')
+    ? exercise.source_number
+    : exercise.number
+}
+
+module.exports = { preserveExerciseMetadata, sourceNumberForArtifact }

@@ -4,12 +4,14 @@
 
 逐个 PDF 页检查：
 
-1. 页面上每个明确印出的 exercise 号在 JSON 中恰有一条。
+1. 页面上每个明确印出的 exercise 在 JSON 中恰有一条；`lesson-group` 教材按
+   `exerciseId` 唯一，并核对 `lesson`、`groupId`、`group`、`sourceNumber`。
 2. JSON 中没有页面上不存在的 exercise。
 3. 数字、小数点、负号、分数、百分号、单位和近似号与原书一致。
 4. 多小问的顺序和分隔保持原样，没有把一个 exercise 拆成多个 answer。
-5. 跨印刷行的答案已经接回同一个 `raw`。
-6. 无法可靠辨认的字形已标记 `needsReview`，没有自行猜测后当作确定事实。
-7. 没有因为答案看起来错误而改写原书。
+5. 无编号题的 `sourceNumber` 显式为 `null`，没有拿内部 `qN` 冒充印刷题号。
+6. 跨印刷行的答案已经接回同一个 `raw`。
+7. 无法可靠辨认的字形已标记 `needsReview`，没有自行猜测后当作确定事实。
+8. 没有因为答案看起来错误而改写原书。
 
 Gate 失败时修正抄录后重新检查；Gate 通过后运行 `answers.py finalize`。

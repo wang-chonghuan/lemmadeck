@@ -10,6 +10,12 @@ const require = createRequire(path.join(root, 'app/package.json'))
 const { chromium, expect } = require('@playwright/test')
 export const visibleProseSelector = '.sr-deck > .sr-read'
 
+export function sourceNumberForArtifact(exercise) {
+  return Object.prototype.hasOwnProperty.call(exercise, 'source_number')
+    ? exercise.source_number
+    : exercise.number
+}
+
 async function hideKeyboard(page) {
   await page.evaluate(() => window.mathVirtualKeyboard?.hide({ animate: false }))
 }
@@ -214,7 +220,9 @@ export async function checkProduct({ book, edition, lessons, baseURL, output, vi
           assert.ok(answer, `Missing answer for ${lesson}/${exercise.number}`)
           assert.equal(
             (await article.locator('.sr-ex-n').textContent())?.trim() ?? '',
-            exercise.source_number == null ? '' : String(exercise.source_number),
+            sourceNumberForArtifact(exercise) == null
+              ? ''
+              : String(sourceNumberForArtifact(exercise)),
             `${lesson}/${exercise.number}: displayed number differs from the source`,
           )
           const grid = ['grid-point', 'grid-plot'].includes(interaction?.widget)

@@ -50,8 +50,9 @@ class ClaimFiguresTest(unittest.TestCase):
             "exercises": [ex105, ex106],
         }
 
-        warnings = assemble.claim_figures([lesson], [figure, caption])
+        errors, warnings = assemble.claim_figures([lesson], [figure, caption])
 
+        self.assertEqual(errors, [])
         self.assertEqual(warnings, [])
         self.assertEqual(lesson["prose"], [])
         self.assertEqual(ex105["figure_refs"], ["fig-29"])
@@ -71,8 +72,10 @@ class ClaimFiguresTest(unittest.TestCase):
             "exercises": [ex107, ex108],
         }
 
-        assemble.claim_figures([lesson], [figure, caption])
+        errors, warnings = assemble.claim_figures([lesson], [figure, caption])
 
+        self.assertEqual(errors, [])
+        self.assertEqual(warnings, [])
         self.assertEqual(ex107["figures"], [{"id": "fig-30", "label": "图 30"}])
         self.assertEqual(ex108["figures"], [])
 
@@ -88,8 +91,10 @@ class ClaimFiguresTest(unittest.TestCase):
             "exercises": [ex20],
         }
 
-        assemble.claim_figures([lesson], [paragraph, figure, caption])
+        errors, warnings = assemble.claim_figures([lesson], [paragraph, figure, caption])
 
+        self.assertEqual(errors, [])
+        self.assertEqual(warnings, [])
         self.assertEqual(lesson["prose"], [paragraph, figure, caption])
         self.assertEqual(ex20["figures"], [{"id": "fig-06", "label": "图 6"}])
 
@@ -109,8 +114,9 @@ class ClaimFiguresTest(unittest.TestCase):
             "exercises": [ex183],
         }
 
-        warnings = assemble.claim_figures([lesson], [table])
+        errors, warnings = assemble.claim_figures([lesson], [table])
 
+        self.assertEqual(errors, [])
         self.assertEqual(warnings, [])
         self.assertEqual(lesson["prose"], [])
         self.assertEqual(ex183["figure_refs"], ["tbl-p0049-01"])
@@ -118,6 +124,46 @@ class ClaimFiguresTest(unittest.TestCase):
             ex183["figures"],
             [{"id": "tbl-p0049-01", "label": "表"}],
         )
+
+    def test_repeated_source_number_requires_group_scoped_owner(self) -> None:
+        table = block(
+            "fig",
+            "p0031#4",
+            label="表",
+            figure_id="tbl-p0031-01",
+            owner_exercise="1",
+        )
+        first = {
+            **exercise("1", "p0029#1", "问题一"),
+            "source_number": "1",
+            "group": "问题",
+            "group_id": "g1",
+        }
+        second = {
+            **exercise("g2-1", "p0031#1", "练习一"),
+            "source_number": "1",
+            "group": "练习",
+            "group_id": "g2",
+        }
+        lesson = {
+            "title": "扩散现象",
+            "blocks": [table],
+            "prose": [table],
+            "exercises": [first, second],
+        }
+
+        errors, _ = assemble.claim_figures([lesson], [table])
+        self.assertTrue(any("跨栏目重复" in error for error in errors))
+
+        table["owner_exercise"] = "g2-1"
+        first["figure_refs"] = []
+        first["figures"] = []
+        second["figure_refs"] = []
+        second["figures"] = []
+        lesson["prose"] = [table]
+        errors, _ = assemble.claim_figures([lesson], [table])
+        self.assertEqual(errors, [])
+        self.assertEqual(second["figure_refs"], ["tbl-p0031-01"])
 
 
 if __name__ == "__main__":

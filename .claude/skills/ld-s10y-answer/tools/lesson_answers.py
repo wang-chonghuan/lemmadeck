@@ -72,28 +72,74 @@ def exercise_numbering(root: Path) -> str:
     if not path.exists():
         return "book"
     value = load(path).get("exercise_numbering", "book")
-    if value not in {"book", "lesson"}:
+    if value not in {"book", "lesson", "lesson-group"}:
         raise SystemExit(f"ERROR: {path} exercise_numbering 非法: {value!r}")
     return value
+
+
+def source_number(exercise: dict) -> object:
+    return (
+        exercise["source_number"]
+        if "source_number" in exercise
+        else exercise.get("number")
+    )
+
+
+def same_source_number(left: object, right: object) -> bool:
+    if left is None or right is None:
+        return left is right
+    return str(left) == str(right)
 
 
 def captured_answer(
     answers: list[dict],
     lesson: str,
-    source_number: object,
+    exercise: dict,
     numbering: str,
 ) -> dict | None:
-    if source_number is None:
-        return None
-    matches = [
-        answer
-        for answer in answers
-        if str(answer.get("exercise")) == str(source_number)
-        and (numbering == "book" or answer.get("lesson") == lesson)
-    ]
+    printed_number = source_number(exercise)
+    if numbering == "lesson-group":
+        exercise_id = str(exercise.get("number"))
+        matches = [
+            answer
+            for answer in answers
+            if answer.get("lesson") == lesson
+            and str(answer.get("exerciseId")) == exercise_id
+        ]
+        if len(matches) == 1:
+            answer = matches[0]
+            evidence = (
+                ("groupId", exercise.get("group_id")),
+                ("group", exercise.get("group")),
+                ("sourceNumber", printed_number),
+            )
+            mismatches = [
+                field
+                for field, expected in evidence
+                if field not in answer
+                or (
+                    not same_source_number(answer.get(field), expected)
+                    if field == "sourceNumber"
+                    else answer.get(field) != expected
+                )
+            ]
+            if mismatches:
+                raise SystemExit(
+                    f"ERROR: {lesson}/{exercise_id} 的书后答案证据不一致: "
+                    + ", ".join(mismatches)
+                )
+    elif printed_number is None:
+        matches = []
+    else:
+        matches = [
+            answer
+            for answer in answers
+            if str(answer.get("exercise")) == str(printed_number)
+            and (numbering == "book" or answer.get("lesson") == lesson)
+        ]
     if len(matches) > 1:
         raise SystemExit(
-            f"ERROR: {lesson} 第 {source_number} 题匹配到多条书后答案"
+            f"ERROR: {lesson}/{exercise.get('number')} 匹配到多条书后答案"
         )
     return matches[0] if matches else None
 
@@ -116,7 +162,7 @@ def cmd_prepare(args: argparse.Namespace) -> int:
             book_answer = captured_answer(
                 captured,
                 lesson,
-                exercise.get("source_number", exercise.get("number")),
+                exercise,
                 numbering,
             )
             evidence = []

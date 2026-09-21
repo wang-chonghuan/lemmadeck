@@ -29,7 +29,7 @@ class LessonAnswersTest(unittest.TestCase):
             lesson_answers.captured_answer(
                 answers,
                 "phy6-c1-s1",
-                "1",
+                {"number": "1", "source_number": "1"},
                 "lesson",
             )
         )
@@ -37,11 +37,93 @@ class LessonAnswersTest(unittest.TestCase):
             lesson_answers.captured_answer(
                 answers,
                 "phy6-c1-s2",
-                "1",
+                {"number": "1", "source_number": "1"},
                 "lesson",
             )["raw"],
             "scoped",
         )
+
+    def test_group_scoped_capture_matches_stable_identity_and_evidence(self) -> None:
+        answers = [
+            {
+                "exerciseId": "1",
+                "lesson": "phy6-c2-s4",
+                "groupId": "g1",
+                "group": "问题",
+                "sourceNumber": 1,
+                "raw": "问题答案",
+            },
+            {
+                "exerciseId": "g2-1",
+                "lesson": "phy6-c2-s4",
+                "groupId": "g2",
+                "group": "练习",
+                "sourceNumber": 1,
+                "raw": "练习答案",
+            },
+            {
+                "exerciseId": "q1",
+                "lesson": "phy6-c2-s4",
+                "groupId": "g3",
+                "group": "作业",
+                "sourceNumber": None,
+                "raw": "作业答案",
+            },
+        ]
+        exercises = [
+            {
+                "number": "1",
+                "source_number": "1",
+                "group": "问题",
+                "group_id": "g1",
+            },
+            {
+                "number": "g2-1",
+                "source_number": "1",
+                "group": "练习",
+                "group_id": "g2",
+            },
+            {
+                "number": "q1",
+                "source_number": None,
+                "group": "作业",
+                "group_id": "g3",
+            },
+        ]
+
+        self.assertEqual(
+            [
+                lesson_answers.captured_answer(
+                    answers,
+                    "phy6-c2-s4",
+                    exercise,
+                    "lesson-group",
+                )["raw"]
+                for exercise in exercises
+            ],
+            ["问题答案", "练习答案", "作业答案"],
+        )
+
+    def test_group_scoped_capture_rejects_mismatched_group_evidence(self) -> None:
+        with self.assertRaisesRegex(SystemExit, "groupId"):
+            lesson_answers.captured_answer(
+                [{
+                    "exerciseId": "g2-1",
+                    "lesson": "phy6-c2-s4",
+                    "groupId": "g1",
+                    "group": "问题",
+                    "sourceNumber": 1,
+                    "raw": "错误归组",
+                }],
+                "phy6-c2-s4",
+                {
+                    "number": "g2-1",
+                    "source_number": "1",
+                    "group": "练习",
+                    "group_id": "g2",
+                },
+                "lesson-group",
+            )
 
     def test_finalize_allows_source_bound_historical_entity(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
@@ -167,6 +249,89 @@ class LessonAnswersTest(unittest.TestCase):
             self.assertTrue(evidence["figureSpec"].endswith("figures/fig-01.spec.json"))
             self.assertFalse(
                 (lesson_dir / "answer-keys.template.json").exists()
+            )
+
+    def test_prepare_joins_repeated_numbers_by_stable_exercise_id(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            lesson_id = "phy6-c2-s4"
+            dump(root / "6p" / "book.json", {
+                "exercise_numbering": "lesson-group",
+            })
+            dump(root / "6p" / "answers.json", {
+                "answers": [
+                    {
+                        "exerciseId": "1",
+                        "lesson": lesson_id,
+                        "groupId": "g1",
+                        "group": "问题",
+                        "sourceNumber": 1,
+                        "raw": "问题答案",
+                    },
+                    {
+                        "exerciseId": "g2-1",
+                        "lesson": lesson_id,
+                        "groupId": "g2",
+                        "group": "练习",
+                        "sourceNumber": 1,
+                        "raw": "练习答案",
+                    },
+                    {
+                        "exerciseId": "q1",
+                        "lesson": lesson_id,
+                        "groupId": "g3",
+                        "group": "作业",
+                        "sourceNumber": None,
+                        "raw": "作业答案",
+                    },
+                ],
+            })
+            lesson_dir = (
+                root / "6p" / "editions" / "modern-us-neutral"
+                / "lessons" / lesson_id
+            )
+            dump(lesson_dir / "exercises.json", {
+                "exercises": [
+                    {
+                        "number": "1",
+                        "source_number": "1",
+                        "group": "问题",
+                        "group_id": "g1",
+                        "text": "问题",
+                    },
+                    {
+                        "number": "g2-1",
+                        "source_number": "1",
+                        "group": "练习",
+                        "group_id": "g2",
+                        "text": "练习",
+                    },
+                    {
+                        "number": "q1",
+                        "source_number": None,
+                        "group": "作业",
+                        "group_id": "g3",
+                        "text": "作业",
+                    },
+                ],
+            })
+            dump(lesson_dir / "figures.json", {"figures": []})
+            args = Namespace(
+                root=str(root),
+                work=str(root / "work"),
+                book="6p",
+                edition="modern-us-neutral",
+                lesson=[lesson_id],
+            )
+
+            self.assertEqual(lesson_answers.cmd_prepare(args), 0)
+            template = lesson_answers.load(
+                root / "work" / "6p" / "modern-us-neutral" / "lessons"
+                / lesson_id / "answer-keys.template.json"
+            )
+            self.assertEqual(
+                [answer["bookRaw"] for answer in template["answers"]],
+                ["问题答案", "练习答案", "作业答案"],
             )
 
 

@@ -5,13 +5,13 @@ description: Load when the user asks to extract Soviet ten-year-school textbook 
 
 # ld-s10y-answer
 
-从 Soviet 10 Years 教材扫描件中忠实抄录书后答案，并按 exercise 编号生成一本书一份的
-结构化答案文件。
+从 Soviet 10 Years 教材扫描件中忠实抄录书后答案，并按教材声明的 exercise 编号作用域
+生成一本书一份的结构化答案文件。
 
 ## 术语
 
-- **lesson**：一本书中全局连续编号的课程单元。
-- **exercise**：一本书中全局连续编号的练习。
+- **lesson**：目录中的可发布课程卡片。
+- **exercise**：题目的内部稳定标识；数学书可全书连续，物理书可在每课每栏目重新编号。
 - **answer**：一个 exercise 对应的答案。
 
 本技能有两个能力：
@@ -37,9 +37,10 @@ python3 $A prepare --book 5m --pages 305-309
 python3 $A finalize --book 5m
 ```
 
-`--pages` 是 PDF 物理页，支持 `305-309`、`305,307,309` 和混合写法。书默认从
-`ssot-resources/soviet10year-textbooks/sources/*/<book> *.pdf` 唯一定位；撞名时用
-`--series`，特殊情况用 `--pdf`。
+`--pages` 是 PDF 物理页，支持 `305-309`、`305,307,309` 和混合写法。书默认通过
+`ssot-resources/soviet10year-textbooks/sources/manifest.json` 的
+`catalogs[].sourcePdf` 定位，因此 `6p` 与 `7p` 都会解析到共享的 `6-7p` 扫描件；
+manifest 不存在时才按文件名前缀查找。特殊情况可用 `--pdf`。
 
 ### 输出
 
@@ -68,6 +69,9 @@ python3 $A finalize --book 5m
 ```
 
 - 一条印刷答案对应一个对象；多小问仍放在同一个 `raw` 中，保持原顺序。
+- `exerciseNumbering: "book"` 沿用正整数 `exercise`。`"lesson"` 另带 `lesson`。
+  `"lesson-group"` 必须写稳定 `exerciseId`，并同时记录 `lesson`、`groupId`、`group` 和
+  `sourceNumber`；无印刷题号时 `sourceNumber` 必须显式为 `null`。
 - `raw` 忠实记录原书，不改正、不推导、不拆成判题结构。
 - 看不清的字符照最可能字形抄录，并加 `needsReview: true` 和 `reviewNote`。
 - 答案页没有出现的 exercise 不写入；“原书略答”只有以后与完整 exercise 清单对齐后才能判定。

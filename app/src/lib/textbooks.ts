@@ -26,7 +26,7 @@
 import { t, type Locale } from '~/lib/i18n'
 
 type SourceRef = { printedSection: number } | { printedName: string }
-type RawTopic = { id: string; printedNumber: number; title: string; page: number }
+type RawTopic = { id: string; printedNumber?: number | null; title: string; page: number }
 type RawLesson = {
   id: string
   kind: 'section' | 'exercises'
@@ -105,19 +105,20 @@ const SHELF: Partial<Record<Locale, RawBook>>[] = (() => {
   })
 })()
 
-/** `topics` are the book's own numbered teaching items inside a section — the
- *  card boundaries the lesson will be built from. They are shown under the
- *  lesson with the printed numbering, which runs continuously across the whole
- *  volume (1–55 in Algebra 6), so a topic is addressed by its lesson's id plus
- *  that number. They are not pages of their own. */
-export type OutlineTopic = { id: string; number: number; title: string; ready: boolean }
+/** `topics` are the book's own teaching items inside a section. Numbered topics
+ *  are the section's card boundaries; all-unnumbered topics are supplemental
+ *  cards following a main section card. */
+export type OutlineTopic = { id: string; number: number | null; title: string; ready: boolean }
 export type OutlineLesson = {
   id: string
   number: string
   title: string
+  /** Whether the section itself is a card. Sections with numbered topics are
+   * structural; sections with only unnumbered topics keep their main lesson. */
+  hasOwnCard: boolean
   ready: boolean
-  /** Where the section title goes: its first card that has content, else its
-   *  first card, else itself when the book gave it no numbered items. */
+  /** Destination for the section title. Structural sections use their first
+   * available topic; publishable parent sections use their own id. */
   cardId: string
   topics: OutlineTopic[]
 }
@@ -135,6 +136,11 @@ function chapterLabel(locale: Locale, n: number | null, title: string): string {
   return n === null ? title : t(locale, 'cat.chapter', { n, title })
 }
 
+function rawLessonHasOwnCard(lesson: RawLesson): boolean {
+  const topics = lesson.topics ?? []
+  return topics.length === 0 || !topics.some((topic) => topic.printedNumber != null)
+}
+
 /** The catalog tree, localized, with availability resolved against the DB ids. */
 export function getTextbookOutline(
   lessonIds: readonly string[],
@@ -146,24 +152,25 @@ export function getTextbookOutline(
   for (const localized of SHELF) {
     const book = localized[locale] ?? localized.zh ?? localized.en
     if (!book) continue
-    // Content is stored per CARD, so readiness is decided per card: a numbered
-    // item is ready when its own id is in the DB, and a section is ready when any
-    // of its items is. Deciding it on the section id would leave every card
-    // unreachable — the section id is a container, nothing is ever stored under it.
+    // Content is stored per card. A structural section is ready when one of its
+    // numbered topic cards is available; a publishable parent is ready only when
+    // its own id exists, independently of its supplemental topic cards.
     const lesson = (l: RawLesson): OutlineLesson => {
       const topics = (l.topics ?? []).map((tp) => ({
         id: tp.id,
-        number: tp.printedNumber,
+        number: tp.printedNumber ?? null,
         title: tp.title,
         ready: available.has(tp.id),
       }))
+      const hasOwnCard = rawLessonHasOwnCard(l)
       const firstReady = topics.find((tp) => tp.ready)
       return {
         id: l.id,
         number: l.number ?? '',
         title: l.title,
-        ready: topics.length ? Boolean(firstReady) : available.has(l.id),
-        cardId: firstReady?.id ?? topics[0]?.id ?? l.id,
+        hasOwnCard,
+        ready: hasOwnCard ? available.has(l.id) : Boolean(firstReady),
+        cardId: hasOwnCard ? l.id : firstReady?.id ?? topics[0]?.id ?? l.id,
         topics,
       }
     }
@@ -216,21 +223,26 @@ type FlatCard = { id: string; number: number | null; title: string; trail: strin
  *  of the outline reachable. */
 function cardsOf(book: RawBook, locale: Locale): FlatCard[] {
   const sectionLabel = (l: RawLesson) => (l.number ? `${l.number} ${l.title}` : l.title)
+  const lessonCards = (lesson: RawLesson, trail: string[]): FlatCard[] => {
+    const topics = lesson.topics ?? []
+    return [
+      ...(rawLessonHasOwnCard(lesson)
+        ? [{ id: lesson.id, number: null, title: lesson.title, trail }]
+        : []),
+      ...topics.map((topic) => ({
+        id: topic.id,
+        number: topic.printedNumber ?? null,
+        title: topic.title,
+        trail: [...trail, sectionLabel(lesson)],
+      })),
+    ]
+  }
   return book.contents.flatMap((e) => {
     if (e.kind !== 'chapter') {
-      return [{ id: e.id, number: null, title: e.title, trail: [book.title] }]
+      return lessonCards(e, [book.title])
     }
     const ch = chapterLabel(locale, e.number, e.title)
-    return e.lessons.flatMap((l): FlatCard[] =>
-      l.topics?.length
-        ? l.topics.map((tp) => ({
-            id: tp.id,
-            number: tp.printedNumber,
-            title: tp.title,
-            trail: [book.title, ch, sectionLabel(l)],
-          }))
-        : [{ id: l.id, number: null, title: l.title, trail: [book.title, ch] }],
-    )
+    return e.lessons.flatMap((lesson) => lessonCards(lesson, [book.title, ch]))
   })
 }
 
@@ -278,6 +290,21 @@ export function bookLessons(book: OutlineBook): OutlineLesson[] {
   return book.contents.flatMap((n) => (n.kind === 'chapter' ? n.lessons : [n.lesson]))
 }
 
+export function outlineLessonCards(
+  lesson: OutlineLesson,
+): { id: string; title: string; ready: boolean }[] {
+  return [
+    ...(lesson.hasOwnCard
+      ? [{ id: lesson.id, title: lesson.title, ready: lesson.ready }]
+      : []),
+    ...lesson.topics,
+  ]
+}
+
+export function lessonHasReadyCard(lesson: OutlineLesson): boolean {
+  return outlineLessonCards(lesson).some((card) => card.ready)
+}
+
 /** Cards that have content, in book order — the overview's grid and the
  *  prev/next chain. Cards, not sections: a section is a container, and it is the
  *  card that carries a page. */
@@ -287,20 +314,22 @@ export function getAvailableTextbookLessons(
 ): { id: string; title: string; subject: string }[] {
   return getTextbookOutline(lessonIds, locale).flatMap((d) =>
     d.books.flatMap((b) =>
-      bookLessons(b).flatMap((l) =>
-        l.topics.length
-          ? l.topics
-              .filter((tp) => tp.ready)
-              .map((tp) => ({
-                id: tp.id,
-                title: `${tp.number}. ${tp.title}`,
-                subject: b.title,
-              }))
-          : l.ready
-            ? [{ id: l.id, title: l.number ? `${l.number} ${l.title}` : l.title,
-                 subject: b.title }]
-            : [],
-      ),
+      bookLessons(b).flatMap((l) => [
+        ...(l.hasOwnCard && l.ready
+          ? [{
+              id: l.id,
+              title: l.number ? `${l.number} ${l.title}` : l.title,
+              subject: b.title,
+            }]
+          : []),
+        ...l.topics
+          .filter((topic) => topic.ready)
+          .map((topic) => ({
+            id: topic.id,
+            title: topic.number === null ? topic.title : `${topic.number}. ${topic.title}`,
+            subject: b.title,
+          })),
+      ]),
     ),
   )
 }
@@ -313,7 +342,7 @@ export function getTextbookLessonLabel(id: string, locale: Locale): string {
       for (const l of bookLessons(b)) {
         if (l.id === id) return l.number ? `${l.number} ${l.title}` : l.title
         const tp = l.topics.find((x) => x.id === id)
-        if (tp) return `${tp.number}. ${tp.title}`
+        if (tp) return tp.number === null ? tp.title : `${tp.number}. ${tp.title}`
       }
   return id
 }

@@ -476,6 +476,19 @@ def normalize_exercise_layout(exercises: dict) -> None:
             changes.append("layout")
 
 
+def validate_identity_fields(
+    source: dict,
+    modern: dict,
+    fields: tuple[str, ...],
+    label: str,
+) -> list[str]:
+    errors = []
+    for field in fields:
+        if (field in modern) != (field in source) or modern.get(field) != source.get(field):
+            errors.append(f"{label}.{field} 不得改变")
+    return errors
+
+
 def validate_text(
     source: str,
     modern: object,
@@ -1133,9 +1146,12 @@ def validate_lesson(
         label = f"exercises[{index}]"
         if modern_item.get("source_text") != source_item.get("text", ""):
             errors.append(f"{label}.source_text 与原书不一致")
-        for field in ("number", "group", "figure_refs", "figures"):
-            if modern_item.get(field) != source_item.get(field):
-                errors.append(f"{label}.{field} 不得改变")
+        errors += validate_identity_fields(
+            source_item,
+            modern_item,
+            ("number", "source_number", "group", "group_id", "figure_refs", "figures"),
+            label,
+        )
         errors += validate_text(
             source_item.get("text", ""),
             modern_item.get("text"),

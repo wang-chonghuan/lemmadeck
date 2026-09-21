@@ -23,6 +23,45 @@ def dump(path: Path, value: object) -> None:
 
 
 class EditionTest(unittest.TestCase):
+    def test_modern_exercises_preserve_source_and_group_identity(self) -> None:
+        source = {
+            "exercises": [{
+                "number": "g2-1",
+                "source_number": "1",
+                "group": "练习",
+                "group_id": "g2",
+                "text": "求解。",
+            }]
+        }
+
+        modern = edition.modern_exercises(source)[0]
+
+        self.assertEqual(modern["number"], "g2-1")
+        self.assertEqual(modern["source_number"], "1")
+        self.assertEqual(modern["group"], "练习")
+        self.assertEqual(modern["group_id"], "g2")
+        self.assertEqual(
+            edition.validate_identity_fields(
+                source["exercises"][0],
+                modern,
+                ("number", "source_number", "group", "group_id"),
+                "exercise",
+            ),
+            [],
+        )
+        modern.pop("group_id")
+        self.assertTrue(
+            any(
+                "group_id 不得改变" in error
+                for error in edition.validate_identity_fields(
+                    source["exercises"][0],
+                    modern,
+                    ("number", "source_number", "group", "group_id"),
+                    "exercise",
+                )
+            )
+        )
+
     def test_displayed_figure_must_exist_in_lesson_manifest(self) -> None:
         errors = edition.validate_figure_references(
             [],

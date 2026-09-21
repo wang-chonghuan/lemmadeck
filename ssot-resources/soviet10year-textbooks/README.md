@@ -145,3 +145,9 @@ shelved one grade earlier here, and each affected locale records that fact in `g
 printed contents through `printedSection` or `printedName`; `page` is the printed page used to find
 the scan. Answers and author forewords are not catalog cards. Appendices, symbol lists, term
 indexes, formula tables, glossaries and assessment sets remain catalog content.
+
+A section with numbered `topics[]` is structural and publishes only those topic cards. A section
+whose `topics[]` are all unnumbered publishes the section itself first as the main lesson, followed
+by the unnumbered supplemental cards. Exercise identity follows each catalog's
+`exerciseNumbering`: `number` is stable internal identity, `source_number` is the printed label,
+`group` is display text, and `group_id` is the stable lesson-local group identity.

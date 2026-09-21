@@ -14,6 +14,42 @@ import assemble
 
 
 class TocBindingTest(unittest.TestCase):
+    def test_unnumbered_topics_follow_their_publishable_parent(self) -> None:
+        toc = json.loads(
+            (
+                REPO
+                / "ssot-resources/soviet10year-textbooks/toc/6p/zh.json"
+            ).read_text(encoding="utf-8")
+        )
+        cards = assemble._toc_cards(toc)
+        ids = [card["id"] for card in cards]
+
+        parents = [
+            "phy6-c2-s4",
+            "phy6-c3-s18",
+            "phy6-c3-s19",
+            "phy6-c4-s3",
+            "phy6-c4-s7",
+            "phy6-c4-s15",
+            "phy6-c4-s17",
+            "phy6-c5-s13",
+        ]
+        for parent in parents:
+            index = ids.index(parent)
+            self.assertEqual(ids[index + 1], f"{parent}-t1")
+
+    def test_numbered_topics_keep_their_parent_structural(self) -> None:
+        toc = json.loads(
+            (
+                REPO
+                / "ssot-resources/soviet10year-textbooks/toc/6a/zh.json"
+            ).read_text(encoding="utf-8")
+        )
+        ids = [card["id"] for card in assemble._toc_cards(toc)]
+
+        self.assertNotIn("alg6-c1-s1", ids)
+        self.assertIn("alg6-c1-s1-n1", ids)
+
     def test_leaf_physics_sections_receive_formal_ids(self) -> None:
         toc = REPO / "ssot-resources/soviet10year-textbooks/toc/6p/zh.json"
         lessons = [
