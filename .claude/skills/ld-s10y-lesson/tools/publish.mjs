@@ -156,6 +156,7 @@ for (const lid of fs.readdirSync(lessonsDir).sort()) {
         : { kind: b.kind, html: proseInline(b.text) })
   const exercises = X.exercises.map((e) => ({
     number: e.number,
+    sourceNumber: e.source_number ?? null,
     group: e.group,
     html: inline(e.text),
     figureRefs: e.figure_refs ?? [],

@@ -154,8 +154,11 @@ not prove that the product uses it.
   `accentSoft`, `grid`, and `paper`. The SVG emits CSS variables so the app,
   alternate themes, and print can recolor it. Do not encode a product theme
   such as teal or green into the FigureSpec.
-- Do not copy Cyrillic, Chinese, Soviet symbols, flags, uniforms, handwriting,
-  old-book texture, or cultural wording from source pixels.
+- Do not copy Cyrillic, Chinese, decorative Soviet symbols, flags, uniforms,
+  handwriting, old-book texture, or fictional cultural wording from source
+  pixels. Preserve source-bound historical identities declared by the edition;
+  generated portraits must read as contemporary textbook illustrations, never
+  as archival photographs.
 - No silent fallback. A failed assertion, collision, or visual gate blocks
   promotion.
 - Source coordinates and half-unit grid steps are facts, not approximate

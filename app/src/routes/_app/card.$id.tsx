@@ -35,12 +35,16 @@ import { findCard } from '~/lib/textbooks'
 export const Route = createFileRoute('/_app/card/$id')({
   validateSearch: (
     search: Record<string, unknown>,
-  ): { tab?: 'ex'; exercise?: number } => {
-    const exercise = Number(search.exercise)
+  ): { tab?: 'ex'; exercise?: string } => {
+    const exercise =
+      typeof search.exercise === 'string'
+        ? search.exercise.trim()
+        : typeof search.exercise === 'number'
+          ? String(search.exercise)
+          : ''
     return {
       tab: search.tab === 'ex' ? 'ex' : undefined,
-      exercise:
-        Number.isSafeInteger(exercise) && exercise > 0 ? exercise : undefined,
+      exercise: exercise || undefined,
     }
   },
   component: CardPage,
@@ -108,8 +112,8 @@ function Prose({ blocks }: { blocks: ProseBlock[] }) {
   )
 }
 
-// The book numbers its exercises continuously across a whole volume, so the
-// number is the exercise's name — it is shown as given, never re-counted here.
+// `number` is a stable lesson-local identity. `sourceNumber` is what the book
+// actually printed and may be null for an unnumbered question.
 function Exercises({
   items,
   locale,
@@ -120,7 +124,7 @@ function Exercises({
   items: CardExercise[]
   locale: Locale
   cardId: string
-  targetExercise?: number
+  targetExercise?: string
   interactive?: boolean
 }) {
   let group: string | null | undefined
@@ -133,11 +137,11 @@ function Exercises({
             {head !== null && <h2 className="sr-ex-group">{head || t(locale, 'card.practice')}</h2>}
             <article
               className={`sr-ex${
-                interactive && Number(e.number) === targetExercise ? ' sr-ex-target' : ''
+                interactive && e.number === targetExercise ? ' sr-ex-target' : ''
               }`}
               id={interactive ? `ex-${e.number}` : undefined}
             >
-              <div className="sr-ex-n sr-num">{e.number}</div>
+              <div className="sr-ex-n sr-num">{e.sourceNumber ?? ''}</div>
               <div className="sr-ex-body">
                 <div dangerouslySetInnerHTML={{ __html: e.html }} />
                 {e.figures.map((f) => (
@@ -193,8 +197,12 @@ function CardPage() {
   // Ordinary navigation starts at the text. A mistake-book redo explicitly opens
   // the exercise tab and identifies the book-numbered exercise to locate.
   useEffect(() => {
-    setTab(search.tab === 'ex' ? 'ex' : 'read')
-  }, [cardId, search.tab])
+    setTab(
+      search.tab === 'ex' && (content?.exercises.length ?? 0) > 0
+        ? 'ex'
+        : 'read',
+    )
+  }, [cardId, content?.exercises.length, search.tab])
 
   useEffect(() => {
     if (tab !== 'ex' || !search.exercise) return

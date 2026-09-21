@@ -111,6 +111,38 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     line_h = int(np.median([b - a + 1 for a, b in raw]))
     merged = _merge_close(raw, max(2.0, GLYPH_GAP_FACTOR * line_h))
 
+    # Dense glyphs or staggered side-by-side text can keep the row projection
+    # continuously live across two or more printed rows. Recover the row count
+    # from the page's normal band height and inter-line gap instead of treating
+    # one unusually tall projection band as one line.
+    merged_heights = [b - a + 1 for a, b in merged]
+    typical_h = float(np.median(merged_heights))
+    nearby_gaps = [
+        next_a - prev_b - 1
+        for (_, prev_b), (next_a, _) in zip(merged, merged[1:])
+        if 0 < next_a - prev_b - 1 <= 1.5 * typical_h
+    ]
+    typical_gap = float(np.median(nearby_gaps)) if nearby_gaps else typical_h * 0.75
+    pitch = typical_h + typical_gap
+    expanded = []
+    for a, b in merged:
+        band_h = b - a + 1
+        count = 1
+        if band_h > 2.2 * typical_h and pitch > 0:
+            count = max(2, int(round((band_h + typical_gap) / pitch)))
+        if count == 1:
+            expanded.append((a, b))
+            continue
+        step = band_h / count
+        expanded.extend(
+            (
+                int(round(a + index * step)),
+                int(round(a + (index + 1) * step)) - 1,
+            )
+            for index in range(count)
+        )
+    merged = expanded
+
     # 扫描页常有页顶黑边、章标题横线和孤立墨点。它们能通过最小宽高阈值，却不是
     # 印刷文字行；只过滤明显偏薄且过宽/过窄的孤立带，页底的页码装饰则保留。
     out = []

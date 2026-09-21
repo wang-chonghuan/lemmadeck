@@ -111,11 +111,16 @@ def cut_lessons(stream: list[dict]) -> list[dict]:
 def split_lesson(lesson: dict) -> tuple[list[dict], list[dict]]:
     """先分题和课文候选；图的最终归属要等所有引用都看见后再决定。"""
     prose, exercises, group = [], [], None
+    unnumbered = 0
     for b in lesson["blocks"]:
         if b["kind"] == "exhead":
             group = B.text_of(b)
         elif b["kind"] == "ex":
-            exercises.append({"number": b.get("label"), "group": group,
+            source_number = b.get("label")
+            if source_number is None:
+                unnumbered += 1
+            exercises.append({"number": source_number or f"q{unnumbered}",
+                              "source_number": source_number, "group": group,
                               "text": B.text_of(b, join=""),
                               "lines": b["lines"], "pages": b.get("spans") or [b["ref"]],
                               "figure_refs": [], "figures": []})
@@ -277,35 +282,82 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> list[str]:
     return warn
 
 
-def audit(lessons: list[dict], stream: list[dict], profile_path: Path) -> dict:
+def _source_number(exercise: dict) -> str | None:
+    value = exercise.get("source_number", exercise.get("number"))
+    return str(value) if value is not None else None
+
+
+def _numeric_source_numbers(exercises: list[dict]) -> list[int]:
+    return [
+        int(number)
+        for exercise in exercises
+        if (number := _source_number(exercise)) is not None and number.isdigit()
+    ]
+
+
+def _audit_number_sequence(numbers: list[int], label: str) -> list[str]:
+    errors = []
+    ordered = sorted(numbers)
+    if len(ordered) != len(set(ordered)):
+        duplicates = sorted({number for number in ordered if ordered.count(number) > 1})
+        errors.append(f"{label}题号重复: {duplicates}")
+    gaps = [
+        number
+        for number in range(ordered[0], ordered[-1])
+        if number not in set(ordered)
+    ] if ordered else []
+    if gaps:
+        errors.append(f"{label}题号缺号: {gaps}（可能漏页或漏题）")
+    return errors
+
+
+def audit(
+    lessons: list[dict],
+    stream: list[dict],
+    profile_path: Path,
+    exercise_numbering: str = "book",
+) -> dict:
     """对象级对账。页级像素对账管不到的东西，这里全能看见。"""
     errors, warns = [], []
 
-    nums = [int(e["number"]) for l in lessons for e in l["exercises"]
-            if (e["number"] or "").isdigit()]
-    seq = sorted(nums)
-    if len(seq) != len(set(seq)):
-        dup = sorted({n for n in seq if seq.count(n) > 1})
-        errors.append(f"题号重复: {dup}")
-    for first_page, last_page in _page_segments({b["page"] for b in stream}):
-        segment_nums = sorted(
-            int(e["number"])
-            for lesson in lessons
-            for e in lesson["exercises"]
-            if (e["number"] or "").isdigit()
-            and any(
-                (position := _block_position(ref)) is not None
-                and first_page <= position // 10_000 <= last_page
-                for ref in e.get("pages", [])
+    if exercise_numbering not in {"book", "lesson"}:
+        errors.append(f"未知 exercise numbering scope: {exercise_numbering!r}")
+    if exercise_numbering == "lesson":
+        for lesson in lessons:
+            errors += _audit_number_sequence(
+                _numeric_source_numbers(lesson["exercises"]),
+                f"{lesson['title']}: ",
             )
-        )
-        gaps = [
-            n for n in range(segment_nums[0], segment_nums[-1])
-            if n not in set(segment_nums)
-        ] if segment_nums else []
-        if gaps:
-            errors.append(
-                f"题号缺号（页段 {first_page}-{last_page}）: {gaps}（可能漏页或漏题）")
+    nums = [
+        number
+        for lesson in lessons
+        for number in _numeric_source_numbers(lesson["exercises"])
+    ]
+    seq = sorted(nums)
+    if exercise_numbering == "book":
+        if len(seq) != len(set(seq)):
+            dup = sorted({n for n in seq if seq.count(n) > 1})
+            errors.append(f"题号重复: {dup}")
+        for first_page, last_page in _page_segments({b["page"] for b in stream}):
+            segment_nums = sorted(
+                int(number)
+                for lesson in lessons
+                for exercise in lesson["exercises"]
+                if (number := _source_number(exercise)) is not None
+                and number.isdigit()
+                and any(
+                    (position := _block_position(ref)) is not None
+                    and first_page <= position // 10_000 <= last_page
+                    for ref in exercise.get("pages", [])
+                )
+            )
+            gaps = [
+                n for n in range(segment_nums[0], segment_nums[-1])
+                if n not in set(segment_nums)
+            ] if segment_nums else []
+            if gaps:
+                errors.append(
+                    f"题号缺号（页段 {first_page}-{last_page}）: {gaps}（可能漏页或漏题）")
 
     fignums = sorted({int(n) for b in stream if b["kind"] == "fig"
                       for n in FIGREF.findall(b.get("label") or "")})
@@ -374,8 +426,10 @@ def audit(lessons: list[dict], stream: list[dict], profile_path: Path) -> dict:
     if open_tail:
         warns.append(f"仍有 {len(open_tail)} 个块标着 open 没接上（书还没抽完是正常的）: "
                      + ", ".join(open_tail[:5]))
-    return {"errors": errors, "warnings": warns, "exercise_range":
-            [seq[0], seq[-1]] if seq else None, "exercise_count": len(seq),
+    exercise_count = sum(len(lesson["exercises"]) for lesson in lessons)
+    return {"errors": errors, "warnings": warns,
+            "exercise_numbering": exercise_numbering, "exercise_range":
+            [seq[0], seq[-1]] if seq else None, "exercise_count": exercise_count,
             "figure_numbers": fignums, "katex_warnings": m_warn}
 
 
@@ -383,13 +437,21 @@ def _toc_cards(toc: dict) -> list[dict]:
     """展开目录中所有可发布卡片，包括无印刷编号的练习卡。"""
     cards = []
     for content in toc.get("contents", []):
-        if content.get("kind") == "exercises":
+        if content.get("kind") != "chapter":
             cards.append(content)
         for section in content.get("lessons", []):
-            if section.get("kind") == "exercises":
+            topics = section.get("topics") or []
+            if topics:
+                cards.extend(topics)
+            else:
                 cards.append(section)
-            cards.extend(section.get("topics") or [])
     return cards
+
+
+def _card_printed_number(card: dict) -> object:
+    if card.get("printedNumber") is not None:
+        return card["printedNumber"]
+    return card.get("source", {}).get("printedSection")
 
 
 def check_toc(lessons: list[dict], toc_path: Path, book_id: str,
@@ -402,17 +464,25 @@ def check_toc(lessons: list[dict], toc_path: Path, book_id: str,
     """
     toc = json.loads(toc_path.read_text(encoding="utf-8"))
     cards = _toc_cards(toc)
-    topics = [card for card in cards if card.get("printedNumber") is not None]
-    exercise_cards = [card for card in cards if card.get("kind") == "exercises"]
+    numbered_cards = [card for card in cards if _card_printed_number(card) is not None]
+    unnumbered_cards = [card for card in cards if _card_printed_number(card) is None]
     warn = []
     for l in lessons:
         if l["number"]:
-            by_num = [t for t in topics if str(t["printedNumber"]) == l["number"]]
+            by_num = [
+                card
+                for card in numbered_cards
+                if str(_card_printed_number(card)) == l["number"]
+            ]
             hit = [t for t in by_num if t["page"] == l["start_printed"]]
         else:
             by_num = []
-            hit = [card for card in exercise_cards
-                   if card["page"] == l["start_printed"]]
+            by_page = [
+                card for card in unnumbered_cards
+                if card["page"] == l["start_printed"]
+            ]
+            by_title = [card for card in by_page if card.get("title") == l["title"]]
+            hit = by_title or by_page
         if len(hit) == 1:
             l["card_id"] = hit[0]["id"]
             l["toc_title"] = hit[0]["title"]
@@ -454,6 +524,7 @@ def run(
     profile: Path,
     strict: bool = True,
     work: Path | None = None,
+    exercise_numbering: str = "book",
 ) -> int:
     stream = load_stream(book)
     if not stream:
@@ -465,7 +536,7 @@ def run(
     for l in lessons:
         l["prose"], l["exercises"] = split_lesson(l)
     warn_fig = claim_figures(lessons, merged)
-    report = audit(lessons, merged, profile)
+    report = audit(lessons, merged, profile, exercise_numbering)
     report["warnings"] = warn_merge + warn_fig + report["warnings"]
     if toc:
         report["warnings"] += check_toc(
@@ -530,6 +601,7 @@ def run(
 
     (book / "book.json").write_text(json.dumps(
         {"book": book.name, "pages": len({b["page"] for b in stream}),
+         "exercise_numbering": exercise_numbering,
          "lessons": index, "audit": report}, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8")
 

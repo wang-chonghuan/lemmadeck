@@ -14,6 +14,33 @@ import assemble
 
 
 class TocBindingTest(unittest.TestCase):
+    def test_leaf_physics_sections_receive_formal_ids(self) -> None:
+        toc = REPO / "ssot-resources/soviet10year-textbooks/toc/6p/zh.json"
+        lessons = [
+            {"number": str(number), "title": title, "start_printed": page}
+            for number, title, page in (
+                (1, "自然界和人", 1),
+                (2, "物理学是研究什么的", 2),
+                (3, "物体、物质和实物", 4),
+                (4, "观察和实验", 5),
+                (5, "物理量　物理量的测量", 7),
+                (6, "物理学与技术", 8),
+            )
+        ]
+
+        warnings = assemble.check_toc(
+            lessons,
+            toc,
+            "6p",
+            extracted_printed_pages=set(range(1, 12)),
+        )
+
+        self.assertEqual(warnings, [])
+        self.assertEqual(
+            [lesson["card_id"] for lesson in lessons],
+            [f"phy6-c1-s{index}" for index in range(1, 7)],
+        )
+
     def test_six_algebra_exercise_cards_receive_formal_ids(self) -> None:
         toc = REPO / "ssot-resources/soviet10year-textbooks/toc/6a/zh.json"
         expected = {

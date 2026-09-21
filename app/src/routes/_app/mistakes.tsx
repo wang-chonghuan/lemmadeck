@@ -53,7 +53,7 @@ function MistakeRow({ mistake, locale }: { mistake: TextbookMistake; locale: Loc
       <Link
         to="/card/$id"
         params={{ id: mistake.lessonId }}
-        search={{ tab: 'ex', exercise: Number(mistake.exercise) }}
+        search={{ tab: 'ex', exercise: mistake.exercise }}
         className="sr-mistake-redo"
       >
         {t(locale, 'mistakes.redo')}

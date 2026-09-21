@@ -46,6 +46,21 @@ class LineBandsTest(unittest.TestCase):
         self.assertEqual(len(bands), 6)
         self.assertIn((400, 416), bands)
 
+    def test_recovers_rows_from_an_unusually_tall_merged_band(self) -> None:
+        ink = np.zeros((600, 400), dtype=bool)
+        for top in (40, 110, 180, 500, 570):
+            ink[top:top + 40, 40:360] = True
+
+        # Three staggered rows leave no empty horizontal projection between
+        # them, as happens beside a portrait caption.
+        ink[250:310, 40:190] = True
+        ink[300:370, 210:360] = True
+        ink[360:430, 40:190] = True
+
+        bands = layout.line_bands(ink, content_w=400)
+
+        self.assertEqual(len(bands), 8)
+
 
 if __name__ == "__main__":
     unittest.main()

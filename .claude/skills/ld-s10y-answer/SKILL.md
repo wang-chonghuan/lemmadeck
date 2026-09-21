@@ -125,8 +125,10 @@ node .claude/skills/ld-s10y-answer/tools/publish.mjs \
 9. 当前运行时不调用 LLM 判题；LLM 只在 cap2 的离线生产阶段生成缺失标准答案。
 10. 现代版改了人物、地点、单位或年份时，`displayAnswer` 和单位必须跟随现代题面；
    `bookRaw` 仍原样保留，不能反向污染原始答案。
-11. `modern-us-neutral` 不得在 `displayAnswer` 中重新引入俄文或苏联人物姓名；必须使用
-    edition 题面中的英文姓名，并与题面保持逐人一致。
+11. `modern-us-neutral` 不得在 `displayAnswer` 中重新引入已被 edition 替换的虚构俄文或
+    苏联人物姓名；必须使用题面中的英文姓名，并与题面保持逐人一致。科学史题保留真实
+    历史实体时，在答案项的 `historical_entities` 中逐项声明 `term` 和 `reason`；该词
+    必须同时出现在对应 edition 题面和标准答案中，不能用声明绕过无来源的文化词检查。
 
 稳定产物为每个 lesson 一份：
 

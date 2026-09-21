@@ -365,6 +365,29 @@ class EditionTest(unittest.TestCase):
         )
         self.assertTrue(any("俄文人名" in error for error in errors))
 
+    def test_text_validation_allows_source_bound_historical_entity(self) -> None:
+        errors = edition.validate_text(
+            "苏联科学家推动了物理学的发展。",
+            "苏联科学家推动了物理学的发展。",
+            [],
+            [],
+            "prose",
+            ["苏联"],
+            [{"term": "苏联", "reason": "原文在科学史语境中陈述该历史国家。"}],
+        )
+        self.assertEqual(errors, [])
+
+        errors = edition.validate_text(
+            "科学家推动了物理学的发展。",
+            "苏联科学家推动了物理学的发展。",
+            ["history"],
+            [],
+            "prose",
+            ["苏联"],
+            [{"term": "苏联", "reason": "历史背景。"}],
+        )
+        self.assertTrue(any("不在原文中" in error for error in errors))
+
     def test_text_validation_allows_cultural_copy_inside_latex_text(self) -> None:
         errors = edition.validate_text(
             "集合 $\\{\\text{КОТ，СОН，ТОК}\\}$ 中哪些单词由相同字母组成？",

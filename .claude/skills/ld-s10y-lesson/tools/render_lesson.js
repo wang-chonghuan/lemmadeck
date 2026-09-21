@@ -185,7 +185,8 @@ for (const lid of lessonDirs) {
     }
     const figs = (e.figures || [])
       .map((f) => figure(contentRoot, f.id, f.label, !!editionName)).join("");
-    out += `<li class="ex" id="ex-${esc(e.number)}"><div class="no">${esc(e.number)}.</div>`
+    const sourceNumber = e.source_number == null ? "" : `${esc(e.source_number)}.`;
+    out += `<li class="ex" id="ex-${esc(e.number)}"><div class="no">${sourceNumber}</div>`
       + `<div class="body">${inline(e.text)}${figs}</div></li>`;
   }
   if (out) out += "</ol>";
