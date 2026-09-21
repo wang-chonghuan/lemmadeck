@@ -109,7 +109,7 @@ function figureAssetStrict(id, manifest) {
     mode: spec.mode,
     layout: spec.display.layout,
     purpose: spec.display.purpose ?? 'instructional',
-    ...(spec.display.purpose === 'decorative'
+    ...(Number.isInteger(spec.display.maxWidthPx)
       ? { maxWidthPx: spec.display.maxWidthPx }
       : {}),
   }

@@ -78,9 +78,11 @@ concept transition may add one full-width `line` rule before the next paragraph;
 between every paragraph.
 
 Figures carry a semantic display purpose from their FigureSpec. Instructional diagrams, apparatus,
-tables, graphs, and detail-bearing images keep the normal readable figure width. Decorative portraits,
-avatars, and comparable non-instructional images use their validated compact width and may share a row;
-their captions stay attached to the corresponding image on screen and in print.
+tables, graphs, and detail-bearing images keep the normal readable figure width unless their figure
+spec declares a smaller validated natural width. Any figure with an explicit maximum width may share
+a row with adjacent compact figures, and its caption stays attached on screen and in print.
+Decorative portraits, avatars, and comparable non-instructional images always use their validated
+compact width.
 
 ## Icons
 

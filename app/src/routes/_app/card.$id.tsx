@@ -57,14 +57,13 @@ export const Route = createFileRoute('/_app/card/$id')({
   },
 })
 
-function decorativeMaxWidth(figure: CardFigure) {
+function figureMaxWidth(figure: CardFigure) {
   const { maxWidthPx } = figure
   return (
-    figure.purpose === 'decorative' &&
     typeof maxWidthPx === 'number' &&
     Number.isInteger(maxWidthPx) &&
     maxWidthPx >= 128 &&
-    maxWidthPx <= 240
+    maxWidthPx <= 960
   )
     ? maxWidthPx
     : undefined
@@ -72,7 +71,7 @@ function decorativeMaxWidth(figure: CardFigure) {
 
 function FigureMedia({ figure }: { figure: CardFigure }) {
   const layered = Boolean(figure.image && figure.svg)
-  const maxWidthPx = decorativeMaxWidth(figure)
+  const maxWidthPx = figureMaxWidth(figure)
   return (
     <div
       className={`sr-figure-media${layered ? ' sr-figure-layered' : ''}`}
@@ -105,17 +104,17 @@ type CaptionBlock = Extract<ProseBlock, { kind: 'cap' }>
 type ProseDisplayBlock =
   | ProseBlock
   | {
-      kind: 'decorative-group'
+      kind: 'compact-group'
       items: { figure: FigureBlock; caption: CaptionBlock }[]
     }
 
-function groupDecorativeFigures(blocks: ProseBlock[]): ProseDisplayBlock[] {
+function groupCompactFigures(blocks: ProseBlock[]): ProseDisplayBlock[] {
   const grouped: ProseDisplayBlock[] = []
   let index = 0
 
   while (index < blocks.length) {
     const block = blocks[index]
-    if (block.kind !== 'fig' || block.purpose !== 'decorative') {
+    if (block.kind !== 'fig' || figureMaxWidth(block) === undefined) {
       grouped.push(block)
       index += 1
       continue
@@ -126,7 +125,7 @@ function groupDecorativeFigures(blocks: ProseBlock[]): ProseDisplayBlock[] {
     while (
       cursor < blocks.length &&
       blocks[cursor].kind === 'fig' &&
-      blocks[cursor].purpose === 'decorative'
+      figureMaxWidth(blocks[cursor] as FigureBlock) !== undefined
     ) {
       figures.push(blocks[cursor] as FigureBlock)
       cursor += 1
@@ -145,7 +144,7 @@ function groupDecorativeFigures(blocks: ProseBlock[]): ProseDisplayBlock[] {
 
     if (captions.length === figures.length) {
       grouped.push({
-        kind: 'decorative-group',
+        kind: 'compact-group',
         items: figures.map((figure, itemIndex) => ({
           figure,
           caption: captions[itemIndex],
@@ -165,22 +164,22 @@ function groupDecorativeFigures(blocks: ProseBlock[]): ProseDisplayBlock[] {
 function Prose({ blocks }: { blocks: ProseBlock[] }) {
   return (
     <div className="sr-read">
-      {groupDecorativeFigures(blocks).map((b, i) =>
-        b.kind === 'decorative-group' ? (
-          <div className="sr-decorative-figures" key={`decorative-${i}`}>
+      {groupCompactFigures(blocks).map((b, i) =>
+        b.kind === 'compact-group' ? (
+          <div className="sr-compact-figures" key={`compact-${i}`}>
             {b.items.map(({ figure, caption }) => (
               <figure
                 key={figure.id}
-                className="sr-decorative-figure"
+                className="sr-compact-figure"
                 aria-label={figure.label ?? undefined}
                 data-figure-id={figure.id}
                 data-figure-layout={figure.layout ?? 'inline'}
-                data-figure-purpose="decorative"
-                style={{ width: decorativeMaxWidth(figure) }}
+                data-figure-purpose={figure.purpose ?? 'instructional'}
+                style={{ width: figureMaxWidth(figure), maxWidth: '100%' }}
               >
                 <FigureMedia figure={figure} />
                 <figcaption
-                  className="sr-decorative-caption"
+                  className="sr-compact-caption"
                   dangerouslySetInnerHTML={{ __html: caption.html }}
                 />
               </figure>
