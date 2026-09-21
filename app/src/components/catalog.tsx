@@ -6,6 +6,8 @@ import { BrandMark } from '~/components/brand-mark'
 import {
   bookLessons,
   getTextbookOutline,
+  lessonHasReadyCard,
+  outlineLessonCards,
   type OutlineDiscipline,
   type OutlineLesson,
 } from '~/lib/textbooks'
@@ -217,19 +219,9 @@ function UserMenu({ user, locale }: { user: CurrentUser | null; locale: Locale }
   )
 }
 
-// One outline row. The rail follows a single rule: a row with children folds,
-// The destination is always the lesson — one section, one 課文 document.
-//
-// This used to route into /card/$id, where a numbered section was a collapsible
-// group that was "never a destination" and only its individual 小节 were
-// reachable. That followed the old card tree; content is now one document per
-// section, so the section itself is what you open, and its 小节 are places
-// inside that document rather than separate destinations. The 小节 still list
-// under the section for orientation, and each opens the same 課文.
-//
-// Rows stay expandable-but-inert until the section has content: an unread row
-// that navigates to an empty page is worse than one that plainly cannot be
-// clicked. It remains visible so the catalog always represents the full course.
+// One outline row. Numbered topics make the parent structural; all-unnumbered
+// topics are supplemental cards beneath a separately publishable main lesson.
+// Every unavailable card remains visible but inert.
 export function LessonRow({
   lesson,
   title,
@@ -308,12 +300,12 @@ export function LessonRow({
                   activeProps={{ className: 'sr-out-topic ready active' }}
                   onClick={onNavigate}
                 >
-                  <span className="sr-out-topic-n">{tp.number}</span>
+                  {tp.number !== null && <span className="sr-out-topic-n">{tp.number}</span>}
                   {tp.title}
                 </Link>
               ) : (
                 <span className="sr-out-topic sr-out-disabled" aria-disabled="true">
-                  <span className="sr-out-topic-n">{tp.number}</span>
+                  {tp.number !== null && <span className="sr-out-topic-n">{tp.number}</span>}
                   {tp.title}
                 </span>
               )}
@@ -326,7 +318,7 @@ export function LessonRow({
 }
 
 const rowTitle = (l: OutlineLesson) => (l.number ? `${l.number} ${l.title}` : l.title)
-const lessonsReady = (lessons: OutlineLesson[]) => lessons.some((lesson) => lesson.ready)
+const lessonsReady = (lessons: OutlineLesson[]) => lessons.some(lessonHasReadyCard)
 
 // 学科 → 册 → 章 → 课. The book is the middle level (its title already carries
 // the branch — "Algebra, Grade 6"), so the rail nests three deep, not four.
@@ -350,9 +342,7 @@ function DisciplineOutline({
   // overview's stats use the same unit. Counting sections made "1/372" mean four
   // readable cards, which reads as one.
   const lessons = discipline.books.flatMap(bookLessons)
-  const cards: { ready: boolean }[] = lessons.flatMap((l) =>
-    l.topics.length ? l.topics : [{ ready: l.ready }],
-  )
+  const cards = lessons.flatMap(outlineLessonCards)
   const ready = cards.filter((c) => c.ready).length
 
   return (

@@ -32,9 +32,12 @@ function tocCardIds(toc) {
     const lessons = entry?.kind === 'chapter' ? entry.lessons : [entry]
     if (!Array.isArray(lessons)) throw new Error(`TOC 条目缺少 lessons: ${entry?.id ?? '?'}`)
     for (const lesson of lessons) {
-      const cards = Array.isArray(lesson?.topics) && lesson.topics.length
-        ? lesson.topics
-        : [lesson]
+      const topics = Array.isArray(lesson?.topics) ? lesson.topics : []
+      const hasNumberedTopics = topics.some(topic => topic?.printedNumber != null)
+      const cards = [
+        ...(!topics.length || !hasNumberedTopics ? [lesson] : []),
+        ...topics,
+      ]
       for (const card of cards) {
         if (!card?.id) throw new Error('TOC 含无 id 的卡片')
         ids.push(card.id)

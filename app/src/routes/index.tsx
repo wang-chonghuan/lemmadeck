@@ -14,6 +14,7 @@ import { KnowledgeGalaxy, type GalaxyApi } from '~/components/knowledge-galaxy'
 import {
   bookLessons,
   getTextbookOutline,
+  outlineLessonCards,
   type OutlineLesson,
   type OutlineNode,
 } from '~/lib/textbooks'
@@ -195,7 +196,9 @@ function LandingLight() {
           <div key={d.discipline}>
             <div className={'lw-map-disc ' + d.discipline}>{d.label}</div>
             {d.books.map((b) => {
-              const ready = bookLessons(b).filter((l) => l.ready).length
+              const ready = bookLessons(b)
+                .flatMap(outlineLessonCards)
+                .filter((card) => card.ready).length
               return (
                 <button
                   key={b.book}

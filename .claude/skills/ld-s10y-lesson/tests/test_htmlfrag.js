@@ -3,7 +3,10 @@ const fs = require("node:fs")
 const path = require("node:path")
 const { inline, proseInline, proseParagraphs, proseFlow } = require("../tools/htmlfrag.js")
 const { lessonOrderMap, publicationPlan, tocCardIds } = require("../tools/lesson_order.js")
-const { preserveExerciseMetadata } = require("../tools/publish_merge.js")
+const {
+  preserveExerciseMetadata,
+  sourceNumberForArtifact,
+} = require("../tools/publish_merge.js")
 
 const repo = path.resolve(__dirname, "../../../..")
 
@@ -110,6 +113,9 @@ assert.deepEqual(
   ),
   [{ number: "1", html: "new" }],
 )
+assert.equal(sourceNumberForArtifact({ number: "14" }), "14")
+assert.equal(sourceNumberForArtifact({ number: "q1", source_number: null }), null)
+assert.equal(sourceNumberForArtifact({ number: "g2-1", source_number: "1" }), "1")
 
 assert.deepEqual(
   [...lessonOrderMap({
@@ -138,8 +144,8 @@ const toc = {
           id: "alg6-c1-s1",
           kind: "section",
           topics: [
-            { id: "alg6-c1-s1-n1" },
-            { id: "alg6-c1-s1-n2" },
+            { id: "alg6-c1-s1-n1", printedNumber: 1 },
+            { id: "alg6-c1-s1-n2", printedNumber: 2 },
           ],
         },
         { id: "alg6-c1-ex", kind: "exercises" },
@@ -152,7 +158,7 @@ const toc = {
         {
           id: "alg6-c2-s1",
           kind: "section",
-          topics: [{ id: "alg6-c2-s1-n3" }],
+          topics: [{ id: "alg6-c2-s1-n3", printedNumber: 3 }],
         },
       ],
     },
@@ -163,6 +169,19 @@ assert.deepEqual(tocCardIds(toc), [
   "alg6-c1-s1-n2",
   "alg6-c1-ex",
   "alg6-c2-s1-n3",
+])
+assert.deepEqual(tocCardIds({
+  contents: [{
+    id: "phy6-c2",
+    kind: "chapter",
+    lessons: [{
+      id: "phy6-c2-s4",
+      topics: [{ id: "phy6-c2-s4-t1", printedNumber: null }],
+    }],
+  }],
+}), [
+  "phy6-c2-s4",
+  "phy6-c2-s4-t1",
 ])
 assert.deepEqual(
   [...publicationPlan(toc).orders.entries()],

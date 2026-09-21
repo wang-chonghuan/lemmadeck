@@ -17,6 +17,7 @@ TOC = ROOT / "toc"
 MANIFEST = ROOT / "sources" / "manifest.json"
 SUBJECTS = {"early", "algebra", "analysis", "geometry", "physics", "probability"}
 KINDS = {"chapter", "exercises", "section"}
+EXERCISE_NUMBERING = {"book", "lesson", "lesson-group"}
 
 errors: list[str] = []
 
@@ -132,6 +133,9 @@ def check_manifest() -> dict:
         source_pdf = record.get("sourcePdf")
         if source_pdf is not None and source_pdf not in pdf_ids:
             fail(book, f"sourcePdf {source_pdf!r} is not declared")
+        numbering = record.get("exerciseNumbering", "book")
+        if numbering not in EXERCISE_NUMBERING:
+            fail(book, f"unknown exerciseNumbering {numbering!r}")
         toc_source = resolve_path(record.get("tocSource", ""))
         if not toc_source.is_file():
             fail(book, f"missing TOC source: {toc_source.relative_to(REPO)}")

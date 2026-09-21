@@ -28,7 +28,7 @@ const require = createRequire(import.meta.url)
 const postgres = require('postgres')
 const { inline, proseInline, proseFlow } = require('./htmlfrag.js')
 const { publicationPlan } = require('./lesson_order.js')
-const { preserveExerciseMetadata } = require('./publish_merge.js')
+const { preserveExerciseMetadata, sourceNumberForArtifact } = require('./publish_merge.js')
 
 const args = process.argv.slice(2)
 const bookDir = args.find((a) => !a.startsWith('--'))
@@ -160,8 +160,9 @@ for (const lid of fs.readdirSync(lessonsDir).sort()) {
         : { kind: b.kind, html: proseInline(b.text) })
   const exercises = X.exercises.map((e) => ({
     number: e.number,
-    sourceNumber: e.source_number ?? null,
+    sourceNumber: sourceNumberForArtifact(e),
     group: e.group,
+    groupId: e.group_id ?? null,
     html: inline(e.text),
     figureRefs: e.figure_refs ?? [],
     figures: (e.figures ?? []).map((f) => ({

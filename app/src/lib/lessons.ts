@@ -54,6 +54,7 @@ export type CardExercise = {
   number: string
   sourceNumber: string | null
   group: string | null
+  groupId: string | null
   html: string
   figureRefs: string[]
   figures: CardFigure[]
@@ -69,6 +70,16 @@ export function partInputKind(
   if (widget === 'number') return 'number'
   if (widget === 'math' || widget === 'free') return 'math'
   return judge === 'numeric' ? 'number' : 'math'
+}
+
+export function projectedSourceNumber(exercise: {
+  number: unknown
+  sourceNumber?: unknown
+}): string | null {
+  const value = Object.prototype.hasOwnProperty.call(exercise, 'sourceNumber')
+    ? exercise.sourceNumber
+    : exercise.number
+  return value == null ? null : String(value)
 }
 
 export const getCardContent = createServerFn({ method: 'GET' })
@@ -161,9 +172,9 @@ export const getCardContent = createServerFn({ method: 'GET' })
 
       return {
         number: String(exercise.number),
-        sourceNumber:
-          exercise.sourceNumber == null ? null : String(exercise.sourceNumber),
+        sourceNumber: projectedSourceNumber(exercise),
         group: exercise.group ?? null,
+        groupId: exercise.groupId ?? null,
         html: exercise.html,
         figureRefs: Array.isArray(exercise.figureRefs)
           ? exercise.figureRefs.filter((id): id is string => typeof id === 'string')

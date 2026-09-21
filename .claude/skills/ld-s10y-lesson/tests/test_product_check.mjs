@@ -5,6 +5,7 @@ import path from 'node:path'
 import {
   assertKeyboardCoverage,
   expectedFigureCoverage,
+  sourceNumberForArtifact,
   visibleProseSelector,
 } from '../tools/check_product.mjs'
 
@@ -13,6 +14,8 @@ const require = createRequire(path.join(root, 'app/package.json'))
 const { chromium } = require('playwright-core')
 const browser = await chromium.launch({ headless: false })
 try {
+  assert.equal(sourceNumberForArtifact({ number: '14' }), '14')
+  assert.equal(sourceNumberForArtifact({ number: 'q1', source_number: null }), null)
   const page = await browser.newPage()
   await page.setContent('<article><input id="numeric-answer"><button>±</button></article>')
   await assert.rejects(() => assertKeyboardCoverage(page.locator('article')), /missing an enabled keyboard/)

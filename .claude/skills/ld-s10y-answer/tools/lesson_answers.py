@@ -5,7 +5,17 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
+
+LESSON_TOOLS = (
+    Path(__file__).resolve().parents[2]
+    / "ld-s10y-lesson"
+    / "tools"
+)
+sys.path.insert(0, str(LESSON_TOOLS))
+
+import assemble
 
 SCHEMA = "ld-s10y-answer/lesson-answers@1"
 JUDGES = {"exact", "numeric", "expression"}
@@ -19,6 +29,13 @@ GRADING = {"auto", "ungraded"}
 SOURCES = {"book", "derived", "reviewed"}
 DEFAULT_ROOT = "ssot-resources/soviet10year-textbooks/artifacts"
 DEFAULT_WORK = ".tmp/ld-s10y-answer"
+TEXTBOOK_ROOT = (
+    Path(__file__).resolve().parents[4]
+    / "ssot-resources"
+    / "soviet10year-textbooks"
+)
+OPTIONAL_IDENTITY_FIELDS = ("source_number", "group_id")
+PRESERVED_IDENTITY_FIELDS = ("number", "group", "figure_refs", "figures")
 
 
 def load(path: Path) -> dict:
@@ -72,28 +89,167 @@ def exercise_numbering(root: Path) -> str:
     if not path.exists():
         return "book"
     value = load(path).get("exercise_numbering", "book")
-    if value not in {"book", "lesson"}:
+    if value not in {"book", "lesson", "lesson-group"}:
         raise SystemExit(f"ERROR: {path} exercise_numbering 非法: {value!r}")
     return value
+
+
+def source_number(exercise: dict) -> object:
+    return (
+        exercise["source_number"]
+        if "source_number" in exercise
+        else exercise.get("number")
+    )
+
+
+def same_source_number(left: object, right: object) -> bool:
+    if left is None or right is None:
+        return left is right
+    return str(left) == str(right)
+
+
+def rebuilt_exercises(
+    root: Path,
+    book: str,
+    lesson_ids: set[str],
+) -> dict[str, dict]:
+    stream = assemble.load_stream(root)
+    if not stream:
+        raise SystemExit(f"ERROR: {root}/pages 下没有 page.json，无法解析旧题栏目身份")
+    merged, _ = assemble.merge_across_pages(stream)
+    lessons = assemble.cut_lessons(merged)
+    for lesson in lessons:
+        lesson["prose"], lesson["exercises"] = assemble.split_lesson(
+            lesson,
+            "lesson-group",
+        )
+    figure_errors, _ = assemble.claim_figures(lessons, merged)
+    if figure_errors:
+        raise SystemExit(
+            "ERROR: 无法从页级事实解析旧题栏目身份: " + "; ".join(figure_errors)
+        )
+    toc = TEXTBOOK_ROOT / "toc" / book / "zh.json"
+    if not toc.is_file():
+        raise SystemExit(f"ERROR: 缺少 {toc}，无法确定旧 lesson 身份")
+    assemble.check_toc(
+        lessons,
+        toc,
+        book,
+        {block["printed_page"] for block in stream if block.get("printed_page") is not None},
+    )
+    by_id = {
+        lesson["card_id"]: {
+            "lesson": lesson["card_id"],
+            "count": len(lesson["exercises"]),
+            "exercises": lesson["exercises"],
+        }
+        for lesson in lessons
+        if lesson.get("card_id") in lesson_ids
+    }
+    missing = sorted(lesson_ids - set(by_id))
+    if missing:
+        raise SystemExit(
+            f"ERROR: 无法从页级事实和 TOC 确定旧 lesson: {', '.join(missing)}"
+        )
+    return by_id
+
+
+def resolve_legacy_identities(
+    lesson: str,
+    source_doc: dict,
+    exercise_doc: dict,
+    rebuilt_doc: dict,
+) -> list[dict]:
+    if not assemble.can_reuse_exercises(source_doc, rebuilt_doc):
+        raise SystemExit(
+            f"ERROR: {lesson} 的旧 exercises.json 与页级事实不一致，"
+            "无法确定 groupId"
+        )
+    source_items = source_doc.get("exercises", [])
+    edition_items = exercise_doc.get("exercises", [])
+    rebuilt_items = rebuilt_doc.get("exercises", [])
+    if len(source_items) != len(edition_items):
+        raise SystemExit(f"ERROR: {lesson} 的 edition 题目数量与原书不一致")
+
+    resolved = []
+    for index, (source, edition_item, rebuilt) in enumerate(
+        zip(source_items, edition_items, rebuilt_items)
+    ):
+        label = f"{lesson}/exercises[{index}]"
+        mismatches = [
+            field
+            for field in PRESERVED_IDENTITY_FIELDS
+            if edition_item.get(field) != source.get(field)
+        ]
+        for field in OPTIONAL_IDENTITY_FIELDS:
+            if field in source and edition_item.get(field) != source[field]:
+                mismatches.append(field)
+            elif field in edition_item and edition_item[field] != rebuilt.get(field):
+                mismatches.append(field)
+        if mismatches:
+            raise SystemExit(
+                f"ERROR: {label} 的 edition 身份与原书或页级事实不一致: "
+                + ", ".join(dict.fromkeys(mismatches))
+            )
+        group_id = rebuilt.get("group_id")
+        if not isinstance(group_id, str) or not group_id:
+            raise SystemExit(f"ERROR: {label} 无法从页级事实确定 groupId")
+        item = dict(edition_item)
+        for field in OPTIONAL_IDENTITY_FIELDS:
+            item[field] = rebuilt.get(field)
+        resolved.append(item)
+    return resolved
 
 
 def captured_answer(
     answers: list[dict],
     lesson: str,
-    source_number: object,
+    exercise: dict,
     numbering: str,
 ) -> dict | None:
-    if source_number is None:
-        return None
-    matches = [
-        answer
-        for answer in answers
-        if str(answer.get("exercise")) == str(source_number)
-        and (numbering == "book" or answer.get("lesson") == lesson)
-    ]
+    printed_number = source_number(exercise)
+    if numbering == "lesson-group":
+        exercise_id = str(exercise.get("number"))
+        matches = [
+            answer
+            for answer in answers
+            if answer.get("lesson") == lesson
+            and str(answer.get("exerciseId")) == exercise_id
+        ]
+        if len(matches) == 1:
+            answer = matches[0]
+            evidence = (
+                ("groupId", exercise.get("group_id")),
+                ("group", exercise.get("group")),
+                ("sourceNumber", printed_number),
+            )
+            mismatches = [
+                field
+                for field, expected in evidence
+                if field not in answer
+                or (
+                    not same_source_number(answer.get(field), expected)
+                    if field == "sourceNumber"
+                    else answer.get(field) != expected
+                )
+            ]
+            if mismatches:
+                raise SystemExit(
+                    f"ERROR: {lesson}/{exercise_id} 的书后答案证据不一致: "
+                    + ", ".join(mismatches)
+                )
+    elif printed_number is None:
+        matches = []
+    else:
+        matches = [
+            answer
+            for answer in answers
+            if str(answer.get("exercise")) == str(printed_number)
+            and (numbering == "book" or answer.get("lesson") == lesson)
+        ]
     if len(matches) > 1:
         raise SystemExit(
-            f"ERROR: {lesson} 第 {source_number} 题匹配到多条书后答案"
+            f"ERROR: {lesson}/{exercise.get('number')} 匹配到多条书后答案"
         )
     return matches[0] if matches else None
 
@@ -102,21 +258,66 @@ def cmd_prepare(args: argparse.Namespace) -> int:
     root = book_dir(args)
     captured = captured_answers(root)
     numbering = exercise_numbering(root)
-    for lesson in selected_lessons(args):
+    lesson_ids = selected_lessons(args)
+    exercise_docs = {
+        lesson: load(lessons_dir(args) / lesson / "exercises.json")
+        for lesson in lesson_ids
+    }
+    source_docs = {}
+    if numbering == "lesson-group":
+        for lesson in lesson_ids:
+            path = root / "lessons" / lesson / "exercises.json"
+            if path.is_file():
+                source_docs[lesson] = load(path)
+    legacy_lessons = {
+        lesson
+        for lesson, document in exercise_docs.items()
+        if numbering == "lesson-group"
+        and any(
+            field not in exercise
+            for exercise in (
+                source_docs.get(lesson, {}).get("exercises", [])
+                + document.get("exercises", [])
+            )
+            for field in OPTIONAL_IDENTITY_FIELDS
+        )
+    }
+    missing_sources = sorted(legacy_lessons - set(source_docs))
+    if missing_sources:
+        raise SystemExit(
+            "ERROR: 缺少旧原书 exercises.json，无法解析栏目身份: "
+            + ", ".join(missing_sources)
+        )
+    rebuilt_by_lesson = (
+        rebuilt_exercises(root, args.book, legacy_lessons)
+        if legacy_lessons
+        else {}
+    )
+    for lesson in lesson_ids:
         lesson_dir = lessons_dir(args) / lesson
-        exercise_doc = load(lesson_dir / "exercises.json")
+        exercise_doc = exercise_docs[lesson]
+        exercises = (
+            resolve_legacy_identities(
+                lesson,
+                source_docs[lesson],
+                exercise_doc,
+                rebuilt_by_lesson[lesson],
+            )
+            if lesson in legacy_lessons
+            else exercise_doc.get("exercises", [])
+        )
         figure_doc = load(lesson_dir / "figures.json")
         figures = {
             figure["id"]: figure
             for figure in figure_doc.get("figures", [])
         }
         answers = []
-        for exercise in exercise_doc.get("exercises", []):
+        for exercise in exercises:
             number = str(exercise["number"])
             book_answer = captured_answer(
                 captured,
                 lesson,
-                exercise.get("source_number", exercise.get("number")),
+                exercise,
                 numbering,
             )
             evidence = []

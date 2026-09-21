@@ -15,6 +15,7 @@ const fs = require("fs");
 const path = require("path");
 const katex = require("katex");
 const { proseFlow } = require("./htmlfrag.js");
+const { sourceNumberForArtifact } = require("./publish_merge.js");
 
 const SKILL = path.resolve(__dirname, "..");
 const KATEX_DIST = path.join(SKILL, "node_modules", "katex", "dist");
@@ -185,7 +186,8 @@ for (const lid of lessonDirs) {
     }
     const figs = (e.figures || [])
       .map((f) => figure(contentRoot, f.id, f.label, !!editionName)).join("");
-    const sourceNumber = e.source_number == null ? "" : `${esc(e.source_number)}.`;
+    const printedNumber = sourceNumberForArtifact(e);
+    const sourceNumber = printedNumber == null ? "" : `${esc(String(printedNumber))}.`;
     out += `<li class="ex" id="ex-${esc(e.number)}"><div class="no">${sourceNumber}</div>`
       + `<div class="body">${inline(e.text)}${figs}</div></li>`;
   }

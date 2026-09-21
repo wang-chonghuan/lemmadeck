@@ -76,6 +76,71 @@ class IncrementalAuditTest(unittest.TestCase):
             report["errors"],
         )
 
+    def test_lesson_group_numbering_preserves_first_ids_and_qualifies_collisions(self) -> None:
+        prose, exercises = assemble.split_lesson(
+            {
+                "blocks": [
+                    {"kind": "exhead", "lines": ["问题"]},
+                    {"kind": "ex", "label": "1", "lines": ["问题一"], "ref": "p0029#1"},
+                    {"kind": "ex", "label": "2", "lines": ["问题二"], "ref": "p0029#2"},
+                    {"kind": "ex", "label": "3", "lines": ["问题三"], "ref": "p0029#3"},
+                    {"kind": "exhead", "lines": ["练习"]},
+                    {"kind": "ex", "label": "1", "lines": ["练习一"], "ref": "p0031#1"},
+                    {"kind": "ex", "label": "2", "lines": ["练习二"], "ref": "p0031#2"},
+                    {"kind": "exhead", "lines": ["作业"]},
+                    {"kind": "ex", "label": None, "lines": ["作业题"], "ref": "p0031#3"},
+                ],
+            },
+            "lesson-group",
+        )
+
+        self.assertEqual(prose, [])
+        self.assertEqual(
+            [
+                (item["number"], item["source_number"], item["group"], item["group_id"])
+                for item in exercises
+            ],
+            [
+                ("1", "1", "问题", "g1"),
+                ("2", "2", "问题", "g1"),
+                ("3", "3", "问题", "g1"),
+                ("g2-1", "1", "练习", "g2"),
+                ("g2-2", "2", "练习", "g2"),
+                ("q1", None, "作业", "g3"),
+            ],
+        )
+
+    @patch.object(assemble.mathcheck, "collect_and_check", return_value=([], []))
+    def test_lesson_group_numbering_rejects_duplicates_and_gaps_inside_a_group(self, _) -> None:
+        first = {
+            **exercise(1, 1),
+            "source_number": "1",
+            "group": "问题",
+            "group_id": "g1",
+        }
+        duplicate = {
+            **exercise(1, 1),
+            "source_number": "1",
+            "group": "问题",
+            "group_id": "g1",
+        }
+        gap = {
+            **exercise(3, 1),
+            "source_number": "3",
+            "group": "问题",
+            "group_id": "g1",
+        }
+        report = assemble.audit(
+            [lesson(first, duplicate, gap)],
+            [page_block(1)],
+            Path("unused.json"),
+            exercise_numbering="lesson-group",
+        )
+
+        self.assertTrue(any("内部题目标识重复" in error for error in report["errors"]))
+        self.assertTrue(any("题号重复: [1]" in error for error in report["errors"]))
+        self.assertTrue(any("题号缺号: [2]" in error for error in report["errors"]))
+
     def test_unnumbered_exercise_gets_stable_identity_without_source_number(self) -> None:
         prose, exercises = assemble.split_lesson({
             "blocks": [
@@ -91,6 +156,7 @@ class IncrementalAuditTest(unittest.TestCase):
         self.assertEqual(prose, [])
         self.assertEqual(exercises[0]["number"], "q1")
         self.assertIsNone(exercises[0]["source_number"])
+        self.assertEqual(exercises[0]["group_id"], "g0")
 
     @patch.object(assemble.mathcheck, "collect_and_check", return_value=([], []))
     def test_gaps_between_extracted_page_ranges_are_allowed(self, _) -> None:
