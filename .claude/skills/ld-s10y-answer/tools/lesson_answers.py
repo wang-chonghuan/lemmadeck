@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 from pathlib import Path
 
@@ -34,6 +35,8 @@ TEXTBOOK_ROOT = (
     / "ssot-resources"
     / "soviet10year-textbooks"
 )
+REPO = Path(__file__).resolve().parents[4]
+MATHLIVE_CHECK = Path(__file__).resolve().parent / "check_mathlive_exact.mjs"
 OPTIONAL_IDENTITY_FIELDS = ("source_number", "group_id")
 PRESERVED_IDENTITY_FIELDS = ("number", "group", "figure_refs", "figures")
 
@@ -499,6 +502,7 @@ def validate_lesson(
 def cmd_finalize(args: argparse.Namespace) -> int:
     root = book_dir(args)
     failed = False
+    ready: list[tuple[str, Path, dict]] = []
     forbidden_terms: list[str] = []
     if args.edition == "modern-us-neutral":
         profile = load(MODERN_US_PROFILE)
@@ -522,6 +526,26 @@ def cmd_finalize(args: argparse.Namespace) -> int:
             for error in errors:
                 print(f"ERROR {lesson}: {error}")
             continue
+        ready.append((lesson, path, document))
+
+    if ready:
+        command = ["node", str(MATHLIVE_CHECK)]
+        for _, path, _ in ready:
+            command.extend(["--answer-key", str(path)])
+        result = subprocess.run(command, cwd=REPO, text=True, capture_output=True)
+        if result.returncode:
+            failed = True
+            print("ERROR: MathLive exact 输入合同校验失败", file=sys.stderr)
+            if result.stdout.strip():
+                print(result.stdout.strip(), file=sys.stderr)
+            if result.stderr.strip():
+                print(result.stderr.strip(), file=sys.stderr)
+
+    if failed:
+        return 2
+
+    for lesson, path, document in ready:
+        lesson_dir = lessons_dir(args) / lesson
         document["status"] = "ready"
         document["count"] = len(document["answers"])
         dump(path, document)
@@ -539,7 +563,7 @@ def cmd_finalize(args: argparse.Namespace) -> int:
         }
         dump(lesson_dir / "answer-keys.audit.json", audit)
         print(f"[finalize] {lesson}: PASS auto={auto} ungraded={ungraded}")
-    return 2 if failed else 0
+    return 0
 
 
 def add_common(parser: argparse.ArgumentParser) -> None:

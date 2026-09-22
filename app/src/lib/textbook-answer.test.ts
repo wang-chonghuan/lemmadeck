@@ -45,13 +45,46 @@ describe('judgeTextbookPart', () => {
     ).resolves.toBe(true)
   })
 
-  it('normalizes exact-answer typography', async () => {
+  it.each([
+    ['Chinese text', '\\text{是}', ['是', '整式', '是整式'], '\\text{否}'],
+    [
+      'plus-minus fraction',
+      '\\pm\\frac{2}{5}',
+      ['{-2/5,2/5}', '-2/5,2/5', '2/5,-2/5', '±2/5'],
+      '\\pm\\frac{3}{5}',
+    ],
+    [
+      'not-equal fraction',
+      'x\\ne\\frac12',
+      ['x≠1/2', 'x!=1/2', 'ℝ∖{1/2}', 'R\\{1/2}'],
+      'x=\\frac12',
+    ],
+    ['real numbers', '\\mathbb{R}', ['R', 'ℝ', '全体实数'], '\\mathbb{Z}'],
+    [
+      'finite set',
+      '\\left\\{1,2,3,6\\right\\}',
+      ['{1,2,3,6}', '1,2,3,6'],
+      '\\left\\{1,2,3,5\\right\\}',
+    ],
+    ['plus-minus integer', '\\pm6', ['{-6,6}', '-6,6', '6,-6', '±6'], '\\pm5'],
+  ])('normalizes exact MathLive answers for %s', async (
+    _name,
+    submitted,
+    expected,
+    wrong,
+  ) => {
     await expect(
       judgeTextbookPart(
-        { judge: 'exact', expected: ['3*x'] },
-        '３ × x',
+        { judge: 'exact', expected },
+        submitted,
       ),
     ).resolves.toBe(true)
+    await expect(
+      judgeTextbookPart(
+        { judge: 'exact', expected },
+        wrong,
+      ),
+    ).resolves.toBe(false)
   })
 
   it('rejects a different value', async () => {

@@ -178,8 +178,47 @@ TEMPLATE = """---
 
 块头可加 cont（承接上页同一对象）/ open（延续到下页），跨页装订全靠这两个标记。
 一条公式被印刷从中间切开时：公式写完整，断点处写 ↵。
+确认的数学印刷错误仍照抄，并在 frontmatter 的 errata 中登记
+{{"id":"pNNNN-math-1","block":"pNNNN#K","original":"$原式$","reason":"核验说明"}}。
 删掉本条注释。 -->
 """
+
+
+def _validate_page_errata(meta: dict, blocks: list[dict], page: int) -> list[str]:
+    records = meta.get("errata", [])
+    if not isinstance(records, list):
+        return ["errata 必须是数组"]
+    errors = []
+    seen = set()
+    by_ref = {
+        f"p{page:04d}#{index + 1}": block
+        for index, block in enumerate(blocks)
+    }
+    for index, record in enumerate(records):
+        label = f"errata[{index}]"
+        if not isinstance(record, dict):
+            errors.append(f"{label} 必须是对象")
+            continue
+        erratum_id = record.get("id")
+        block_ref = record.get("block")
+        original = record.get("original")
+        reason = record.get("reason")
+        if not isinstance(erratum_id, str) or not erratum_id.strip():
+            errors.append(f"{label}.id 不能为空")
+        elif erratum_id in seen:
+            errors.append(f"{label}.id={erratum_id!r} 重复")
+        else:
+            seen.add(erratum_id)
+        if block_ref not in by_ref:
+            errors.append(f"{label}.block 必须指向本页现有块")
+            continue
+        if not isinstance(original, str) or not original.strip():
+            errors.append(f"{label}.original 不能为空")
+        elif original not in B.text_of(by_ref[block_ref]):
+            errors.append(f"{label}.original 不在 {block_ref} 的忠实转写中")
+        if not isinstance(reason, str) or not reason.strip():
+            errors.append(f"{label}.reason 不能为空")
+    return errors
 
 
 # ---------------------------------------------------------------- cap1 备料
@@ -206,6 +245,7 @@ def cmd_prepare(a) -> int:
                    "sha256": layout.sha256_file(png)},
         "profile": {"id": profile["id"], "sha256": layout.sha256_file(DEFAULT_PROFILE)},
         "notes": [],
+        "errata": [],
     }
     _dump(pdir / "layout.json", {"w": img.width, "h": img.height,
                                  "content_width": content_w,
@@ -327,6 +367,8 @@ def cmd_finalize(a) -> int:
             if nz.enum_key_script(key) not in ("cyrillic", "numeric"):
                 errors.append(f"{b['kind']}#{i+1}: 小问标号 {key!r} 不是西里尔")
 
+    errors += _validate_page_errata(meta, blks, a.page)
+
     if meta.get("printed_page") is None:
         errors.append("printed_page 未填（页码承载溯源，不能空）")
 
@@ -348,6 +390,7 @@ def cmd_finalize(a) -> int:
     _dump(pdir / "audit.json", {"page": a.page, "lines_printed": want, "lines_md": got,
                                 "figures": figs, "normalizations": applied,
                                 "unknown_chars": unknown, "katex_warnings": m_warn,
+                                "errata": len(meta.get("errata", [])),
                                 "errors": errors})
 
     print(f"[finalize] {a.book} p{a.page:04d}: {len(blks)} 块 / {got} 行"

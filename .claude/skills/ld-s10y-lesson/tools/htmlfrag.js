@@ -57,8 +57,63 @@ function proseParagraphs(text) {
     .filter(Boolean)
 }
 
+function proseOutline(blocks) {
+  let index = 0
+  return blocks.flatMap((block, blockIndex) => {
+    if (block.kind !== "p") return []
+    return proseParagraphs(block.text).map((text, paragraphInBlock) => ({
+      index: index++,
+      blockIndex,
+      paragraphInBlock,
+      text,
+    }))
+  })
+}
+
+function sectionBreakIndices(blocks, sectionBreaks = []) {
+  if (!Array.isArray(sectionBreaks)) {
+    throw new Error("section_breaks must be an array")
+  }
+  const outline = proseOutline(blocks)
+  const indices = sectionBreaks.map((boundary, boundaryIndex) => {
+    if (Number.isInteger(boundary)) return boundary
+    if (
+      !boundary
+      || typeof boundary !== "object"
+      || typeof boundary.before !== "string"
+      || !boundary.before.trim()
+      || typeof boundary.after !== "string"
+      || !boundary.after.trim()
+    ) {
+      throw new Error(
+        `section_breaks[${boundaryIndex}] must contain non-empty before/after paragraph text`,
+      )
+    }
+    const matches = outline
+      .slice(1)
+      .filter((item) =>
+        outline[item.index - 1].text === boundary.before.trim()
+        && item.text === boundary.after.trim())
+      .map((item) => item.index)
+    if (matches.length !== 1) {
+      throw new Error(
+        `section_breaks[${boundaryIndex}] must identify exactly one adjacent paragraph pair; `
+        + `matched ${matches.length}`,
+      )
+    }
+    return matches[0]
+  })
+  if (indices.some((index) => index <= 0 || index >= outline.length)) {
+    throw new Error("section_breaks must point between prose paragraphs")
+  }
+  if (indices.some((index, position) => position > 0 && index <= indices[position - 1])) {
+    throw new Error("section_breaks must be strictly increasing and unique")
+  }
+  return indices
+}
+
 function proseFlow(blocks, sectionBreaks = []) {
-  const breaks = new Set(sectionBreaks)
+  const breaks = new Set(sectionBreakIndices(blocks, sectionBreaks))
   let paragraphIndex = 0
   return blocks.flatMap((block) => {
     if (block.kind !== "p") return [block]
@@ -87,4 +142,13 @@ function figureSvg(bookDir, id) {
   return null
 }
 
-module.exports = { esc, inline, proseInline, proseParagraphs, proseFlow, figureSvg }
+module.exports = {
+  esc,
+  inline,
+  proseInline,
+  proseParagraphs,
+  proseOutline,
+  sectionBreakIndices,
+  proseFlow,
+  figureSvg,
+}

@@ -73,11 +73,12 @@ cd app && npm run dev
   且题干前缀和每个分题各自独占一行。`adapt-finalize` 会重写已有 edition，不允许连续
   大段正文、错序或横向分题通过
 - 现代 edition 中的中文顿号、逗号、分号、句号、问号、叹号和冒号必须放在 `$...$`
-  数学区外；拆开相邻公式只属于 `layout` 变更。`adapt-finalize` 允许移动这些边界标点，
-  但仍按顺序核对每段公式，任何数字、变量、运算符或公式结构变化都会拒绝
-- edition lesson 可用 `section_breaks` 标记真正的概念切换：值是扁平正文段落中“下一段”
-  的 0 起始位置，例如 `[2, 6]`。它只用于定义、例题类型或变量范围等明显换挡处，普通短段落
-  只留段间距，禁止每段都画横线；`adapt-finalize` 会拒绝首尾、重复、乱序或越界位置
+  数学区外；拆开相邻公式只属于 `layout` 变更。数学内容默认保持原式；只有忠实页已登记、
+  且页哈希、块引用和原式全部匹配的 `errata` 才能在现代层改为修正式
+- edition lesson 用 `section_breaks` 的 `{before, after}` 相邻段落文本标记真正的概念切换。
+  先运行 `node .claude/skills/ld-s10y-lesson/tools/prose_flow.mjs <lesson.template.json>` 查看
+  `proseFlow` 的最终段落，再复制工具输出的 boundary 对象；禁止按 prose 块或换行手算整数。
+  `adapt-finalize`、离线渲染和发布均调用同一 `htmlfrag.js` 解析
 - 现代正文中的公式外 ASCII 数字和拉丁字母由发布器、离线渲染器自动标记；作者只写正文和
   `$...$` 公式，禁止手工包 `<span>`。产品与离线 HTML 都必须让这些字符和行内 KaTeX 使用
   KaTeX Main，并以中文正文的 `1.10em` 显示，避免同一句中的数学字符换字体或显得偏小
@@ -222,7 +223,8 @@ md 里每块前面一行块头声明它是什么；块体里**一行 = 印刷一
 - 页边缘、书脊或相邻页透出的重复字迹属于扫描串页，不是本页内容；对照相邻页确认后不写入
   块。无法确认时记入 `notes`，不得把可疑残片并进题干
 - 一条公式被印刷从中间切开：公式写完整，断点处写 `↵`（行数照样对得上，公式也配得平）
-- frontmatter 只填 `printed_page` 和 `notes`，哈希一类字段收口时用事实覆盖，不要手抄
+- frontmatter 填 `printed_page`、`notes`；确认的数学印刷错误另填 `errata`，包含稳定 `id`、
+  本页块引用、忠实 `original` 和核验 `reason`。哈希一类字段收口时用事实覆盖，不要手抄
 - 印刷行末若本该有一个空格（半角句点后、中英之间），**把空格写在行尾**——
   拼接是直接首尾相接的，行尾不留空格，句子接起来就粘住了
 
@@ -235,7 +237,10 @@ md 里每块前面一行块头声明它是什么；块体里**一行 = 印刷一
 - 苏联教材用法式区间记号 `]a, b[`，**照抄，禁止改成 `(a, b)`**
 - 含中文的集合 `{俄语、数学}`、含全角标点的数组 `{52 164，32 415}` 写成普通文本，
   不要塞进 `$...$`——CJK 混进数学区是"公式看着对、渲染歪"的主要来源
-- 原书印错、破损、污点：**照抄原样**，记进 `notes`，不订正
+- 原书印错、破损、污点：**照抄原样**。不确定的识别问题记进 `notes`；确认的数学印刷错误
+  还要登记 `errata`，例如
+  `{"id":"p0013-math-1","block":"p0013#7","original":"$原式$","reason":"代入值核验不成立"}`。
+  `finalize` 会拒绝不存在的块、找不到的原式和重复 id
 
 ---
 
@@ -303,8 +308,12 @@ p2c.py adapt-finalize --book 5m --edition modern-us-neutral \
    不动。编辑模板后，只有通过内容验收的结果才分别以 `lesson.json`、`exercises.json`
    和 `figures.json` 写入 `artifacts/<book>/editions/<edition>/lessons/<id>/`；模板本身
    不得进入持久目录。
-2. 只改文化语境，不改知识点、题号、分组、公式、图引用和题量；非公式数字确需更新时，
-   必须逐项写入 `numeric_changes`，并在 `changes` 中包含 `context-number`。
+2. 只改文化语境，不改知识点、题号、分组、未登记公式、图引用和题量；非公式数字确需更新时，
+   必须逐项写入 `numeric_changes`，并在 `changes` 中包含 `context-number`。`adapt-prepare`
+   会把来源页 `errata` 自动带进 lesson 模板；作者只填写 `corrected` 并把目标块的 `changes`
+   标为 `math-correction`。`adapt-finalize` 会核对来源页、页 JSON 哈希、块引用、原式和修正式，
+   未登记改写、错误绑定或把已知错误原样带入现代版都会失败。完整字段见
+   [edition text contract](references/edition-text-contract.md)
 3. 发布文本不得含未声明的 profile 禁词或西里尔字母；小问标号改用拉丁字母。
    虚构场景中的俄文或苏联人物姓名必须替换为常见的现代英文姓名，并在题面、图像上下文
    和答案中保持同一映射；不得只替换文化场景却保留阿廖沙、别佳、谢尔盖、瓦西亚等姓名。
@@ -317,8 +326,8 @@ p2c.py adapt-finalize --book 5m --edition modern-us-neutral \
    **题干前缀和每个小问各自独占一行**，并移除原书多栏对齐所用的全角空格。
    `adapt-finalize` 会确定性执行这些排版规范并重写已有 edition，禁止手改原始
    `pages/` 或原始 lesson JSON。
-   需要横线表达概念切换时，在 edition `lesson.json` 的 `section_breaks` 中记录下一段的
-   扁平段落索引；这属于现代版排版事实，不得写回原始抽取层。
+   需要横线表达概念切换时，用 `prose_flow.mjs` 输出的相邻段落 `{before, after}` 对象填写
+   `section_breaks`；工具会按实际发布流解析并验证两侧内容，不得手算或只数横线。
 5. 每张产品图委托项目技能 `ld-s10y-image`，并配
    `ld-s10y-image/figure-spec@2`：
    - 数轴、几何、网格、刻度、坐标、变换、图表和数学标签用 JSXGraph 确定性生成
@@ -419,8 +428,8 @@ SHA；完整原始快照不入库。重发同一 edition 的课文或图片时�
 2. 按项目 `operations.md` 启动服务：主 checkout 使用主端口，IntentFold 工单 worktree
    使用 `ticket.json` 记录的工单端口，禁止把 3200 写死到工单验收
 3. 浏览器打开每个目标 `/card/<cardId>`，确认正文没有混入练习专用图、插图清晰、
-   习题入口与题数；逐段检查无首行缩进、概念切换横线正确，正文外数字/拉丁字母和行内公式
-   字体一致且不小于中文正文
+   习题入口与题数；逐段检查无首行缩进，并按 `section_breaks` 的 `before`/`after` 断言横线
+   两侧实际内容，正文外数字/拉丁字母和行内公式字体一致且不小于中文正文
 4. 打开每节的习题视图，确认所有题都能渲染，并按 `figure id` 检查同一张共享图
    在该练习区只出现一次。**每个答案输入框**都必须有数学键盘，包括 `number`、`math`、
    `free`；数字题只改变初始键盘布局，不得退回无数学键盘的普通 input。每课再以匿名状态

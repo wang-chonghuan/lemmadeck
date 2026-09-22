@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import json
 import subprocess
 import sys
@@ -350,13 +351,43 @@ class EditionTest(unittest.TestCase):
         self.assertEqual(modern, "甲。\n乙。\n丙。\n\n丁。\n戊。")
         self.assertEqual(len(modern.split("\n\n")), 2)
 
-    def test_section_breaks_only_point_between_paragraphs(self) -> None:
-        self.assertEqual(edition.validate_section_breaks([2, 4], 5), [])
-        self.assertTrue(edition.validate_section_breaks([0], 5))
-        self.assertTrue(edition.validate_section_breaks([5], 5))
-        self.assertTrue(edition.validate_section_breaks([3, 2], 5))
-        self.assertTrue(edition.validate_section_breaks([2, 2], 5))
-        self.assertTrue(edition.validate_section_breaks(["2"], 5))
+    def test_semantic_section_breaks_follow_rendered_paragraph_adjacency(self) -> None:
+        prose = [
+            {
+                "kind": "p",
+                "text": "定义说明。\n\n例：\n1) 第一项；\n2) 第二项。",
+            },
+            {
+                "kind": "p",
+                "text": "由 $a=b$，\n所以 $a+c=b+c$。",
+            },
+        ]
+        report, errors = edition.prose_flow_contract(
+            prose,
+            [{
+                "before": "定义说明。",
+                "after": "例：\n1) 第一项；\n2) 第二项。",
+            }],
+        )
+        self.assertEqual(errors, [])
+        self.assertEqual(
+            [item["text"] for item in report["paragraphs"]],
+            [
+                "定义说明。",
+                "例：\n1) 第一项；\n2) 第二项。",
+                "由 $a=b$，\n所以 $a+c=b+c$。",
+            ],
+        )
+        self.assertEqual(report["resolvedBreaks"], [1])
+
+        _, errors = edition.prose_flow_contract(
+            prose,
+            [{
+                "before": "定义说明。",
+                "after": "由 $a=b$，\n所以 $a+c=b+c$。",
+            }],
+        )
+        self.assertTrue(any("matched 0" in error for error in errors))
 
     def test_layout_normalization_preserves_prose_signatures(self) -> None:
         source = "例如：$x+1.$式的值是 2。"
@@ -446,7 +477,7 @@ class EditionTest(unittest.TestCase):
             "exercise",
             [],
         )
-        self.assertTrue(any("数学公式发生变化" in error for error in errors))
+        self.assertTrue(any("数学公式变化没有匹配已绑定勘误" in error for error in errors))
 
     def test_text_validation_allows_cjk_punctuation_outside_math(self) -> None:
         errors = edition.validate_text(
@@ -468,7 +499,183 @@ class EditionTest(unittest.TestCase):
             "exercise",
             [],
         )
-        self.assertTrue(any("数学公式发生变化" in error for error in errors))
+        self.assertTrue(any("数学公式变化没有匹配已绑定勘误" in error for error in errors))
+
+    def test_source_bound_erratum_allows_only_the_registered_correction(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            book = Path(temp) / "5m"
+            page_path = book / "pages" / "0001" / "page.json"
+            original = "$1+1=3$"
+            corrected = "$1+1=2$"
+            dump(page_path, {
+                "meta": {
+                    "page": 1,
+                    "printed_page": 1,
+                    "source": {"pdf_sha256": "pdf-sha"},
+                    "errata": [{
+                        "id": "p0001-math-1",
+                        "block": "p0001#1",
+                        "original": original,
+                        "reason": "The printed equality is false.",
+                    }],
+                },
+                "blocks": [{"kind": "p", "lines": [f"原书印作 {original}。"]}],
+            })
+            raw_lesson = {
+                "prose": [{
+                    "kind": "p",
+                    "text": f"原书印作 {original}。",
+                    "source_refs": ["p0001#1"],
+                }],
+            }
+            raw_exercises = {"exercises": []}
+            lesson = {
+                "prose": edition.modern_prose(raw_lesson),
+                "errata": edition.source_errata(book, raw_lesson, raw_exercises),
+            }
+            exercises = {"exercises": []}
+            lesson["errata"][0]["corrected"] = corrected
+            lesson["prose"][0]["text"] = f"原书应为 {corrected}。"
+            lesson["prose"][0]["changes"] = ["math-correction"]
+
+            corrections, errors = edition.validate_errata(
+                book,
+                raw_lesson,
+                raw_exercises,
+                lesson,
+                exercises,
+            )
+
+            self.assertEqual(errors, [])
+            self.assertEqual(
+                corrections,
+                {"lesson.prose[0]": [{"original": original, "corrected": corrected}]},
+            )
+            self.assertEqual(lesson["errata"][0]["source"], {
+                "page": 1,
+                "printed_page": 1,
+                "block": "p0001#1",
+                "sha256": edition.sha256(page_path),
+                "pdf_sha256": "pdf-sha",
+            })
+            self.assertEqual(
+                edition.validate_text(
+                    raw_lesson["prose"][0]["text"],
+                    lesson["prose"][0]["text"],
+                    lesson["prose"][0]["changes"],
+                    [],
+                    "lesson.prose[0]",
+                    [],
+                    math_corrections=corrections["lesson.prose[0]"],
+                ),
+                [],
+            )
+
+    def test_legacy_source_snapshot_allows_only_added_source_references(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            book = Path(temp) / "5m"
+            lesson_path = book / "lessons" / "lesson-1" / "lesson.json"
+            current = {
+                "id": "lesson-1",
+                "prose": [{
+                    "kind": "p",
+                    "text": "正文。",
+                    "source_refs": ["p0001#2"],
+                }],
+            }
+            snapshot = copy.deepcopy(current)
+            snapshot["prose"][0].pop("source_refs")
+            dump(lesson_path, current)
+            source = {
+                "path": "lessons/lesson-1/lesson.json",
+                "sha256": "legacy-hash",
+                "data": snapshot,
+            }
+
+            self.assertEqual(
+                edition.validate_source(book, source, lesson_path, "lesson"),
+                [],
+            )
+
+            current["prose"][0]["text"] = "被改动的正文。"
+            dump(lesson_path, current)
+            errors = edition.validate_source(book, source, lesson_path, "lesson")
+            self.assertTrue(any("source 已过期" in error for error in errors))
+            self.assertTrue(any("完整快照" in error for error in errors))
+
+    def test_erratum_binding_rejects_missing_wrong_stale_and_unchanged_records(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            book = Path(temp) / "5m"
+            original = "$1+1=3$"
+            corrected = "$1+1=2$"
+            dump(book / "pages" / "0001" / "page.json", {
+                "meta": {
+                    "page": 1,
+                    "printed_page": 1,
+                    "source": {"pdf_sha256": "pdf-sha"},
+                    "errata": [{
+                        "id": "p0001-math-1",
+                        "block": "p0001#1",
+                        "original": original,
+                        "reason": "The printed equality is false.",
+                    }],
+                },
+                "blocks": [{"kind": "p", "lines": [f"原书印作 {original}。"]}],
+            })
+            raw_lesson = {
+                "prose": [{
+                    "kind": "p",
+                    "text": f"原书印作 {original}。",
+                    "source_refs": ["p0001#1"],
+                }],
+            }
+            raw_exercises = {"exercises": []}
+            base_lesson = {
+                "prose": edition.modern_prose(raw_lesson),
+                "errata": edition.source_errata(book, raw_lesson, raw_exercises),
+            }
+            base_lesson["errata"][0]["corrected"] = corrected
+            base_lesson["prose"][0]["text"] = f"原书应为 {corrected}。"
+            exercises = {"exercises": []}
+
+            cases = {}
+            missing = copy.deepcopy(base_lesson)
+            missing["errata"] = []
+            cases["missing"] = (missing, "缺少来源页已登记勘误")
+
+            wrong_page = copy.deepcopy(base_lesson)
+            wrong_page["errata"][0]["source"]["page"] = 2
+            cases["wrong page"] = (wrong_page, ".source 与来源页绑定不一致")
+
+            stale_hash = copy.deepcopy(base_lesson)
+            stale_hash["errata"][0]["source"]["sha256"] = "0" * 64
+            cases["stale hash"] = (stale_hash, ".source 与来源页绑定不一致")
+
+            original_mismatch = copy.deepcopy(base_lesson)
+            original_mismatch["errata"][0]["original"] = "$1+1=4$"
+            cases["original mismatch"] = (
+                original_mismatch,
+                ".original 与来源页绑定不一致",
+            )
+
+            unchanged = copy.deepcopy(base_lesson)
+            unchanged["errata"][0]["corrected"] = original
+            unchanged["prose"][0]["text"] = raw_lesson["prose"][0]["text"]
+            cases["unchanged"] = (unchanged, "corrected 不得照抄错误原式")
+
+            for name, (lesson, expected) in cases.items():
+                with self.subTest(name=name):
+                    _, errors = edition.validate_errata(
+                        book,
+                        raw_lesson,
+                        raw_exercises,
+                        lesson,
+                        exercises,
+                    )
+                    self.assertTrue(
+                        any(expected in error for error in errors),
+                        errors,
+                    )
 
     def test_context_numbers_must_be_declared_exactly(self) -> None:
         errors = edition.validate_text(

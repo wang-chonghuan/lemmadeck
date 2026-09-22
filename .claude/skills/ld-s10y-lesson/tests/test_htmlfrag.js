@@ -1,7 +1,14 @@
 const assert = require("node:assert/strict")
 const fs = require("node:fs")
 const path = require("node:path")
-const { inline, proseInline, proseParagraphs, proseFlow } = require("../tools/htmlfrag.js")
+const {
+  inline,
+  proseInline,
+  proseParagraphs,
+  proseOutline,
+  sectionBreakIndices,
+  proseFlow,
+} = require("../tools/htmlfrag.js")
 const { lessonOrderMap, publicationPlan, tocCardIds } = require("../tools/lesson_order.js")
 const {
   preserveExerciseMetadata,
@@ -34,6 +41,32 @@ assert.deepEqual(
     { kind: "p", text: "第二段。", sectionBreak: true },
     { kind: "p", text: "第三段。", sectionBreak: true },
   ],
+)
+
+const semanticProse = [
+  { kind: "p", text: "定义说明。\n\n例：\n1) 第一项；\n2) 第二项。" },
+  { kind: "p", text: "由 $a=b$，\n所以 $a+c=b+c$。" },
+]
+assert.deepEqual(
+  proseOutline(semanticProse).map(({ index, text }) => ({ index, text })),
+  [
+    { index: 0, text: "定义说明。" },
+    { index: 1, text: "例：\n1) 第一项；\n2) 第二项。" },
+    { index: 2, text: "由 $a=b$，\n所以 $a+c=b+c$。" },
+  ],
+)
+const semanticBreak = [{
+  before: "定义说明。",
+  after: "例：\n1) 第一项；\n2) 第二项。",
+}]
+assert.deepEqual(sectionBreakIndices(semanticProse, semanticBreak), [1])
+assert.equal(proseFlow(semanticProse, semanticBreak)[1].sectionBreak, true)
+assert.throws(
+  () => sectionBreakIndices(semanticProse, [{
+    before: "定义说明。",
+    after: "由 $a=b$，\n所以 $a+c=b+c$。",
+  }]),
+  /exactly one adjacent paragraph pair/,
 )
 
 const appCss = fs.readFileSync(path.join(repo, "app/src/styles/app.css"), "utf8")

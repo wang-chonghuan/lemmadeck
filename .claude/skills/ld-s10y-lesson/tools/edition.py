@@ -90,6 +90,60 @@ def source_ref(book: Path, path: Path) -> dict:
     }
 
 
+def source_errata(book: Path, lesson: dict, exercises: dict) -> list[dict]:
+    targets: dict[str, list[tuple[str, str]]] = {}
+    for index, block in enumerate(lesson.get("prose", [])):
+        for ref in block.get("source_refs", []):
+            targets.setdefault(ref, []).append(
+                (f"lesson.prose[{index}]", block.get("text", ""))
+            )
+    for index, exercise in enumerate(exercises.get("exercises", [])):
+        for ref in exercise.get("pages", []):
+            targets.setdefault(ref, []).append(
+                (f"exercises[{index}]", exercise.get("text", ""))
+            )
+
+    records = []
+    seen = set()
+    for page_path in sorted(book.glob("pages/*/page.json")):
+        page = load(page_path)
+        meta = page.get("meta", {})
+        for erratum in meta.get("errata", []):
+            if not isinstance(erratum, dict):
+                continue
+            block_ref = erratum.get("block")
+            matches = [
+                target
+                for target in targets.get(block_ref, [])
+                if erratum.get("original") in target[1]
+            ]
+            if not matches:
+                continue
+            if len(matches) != 1:
+                raise SystemExit(
+                    f"ERROR: {page_path} 的勘误 {erratum.get('id')!r} "
+                    "不能唯一绑定到 lesson/exercise"
+                )
+            if erratum["id"] in seen:
+                raise SystemExit(f"ERROR: 来源页勘误 id 重复: {erratum['id']}")
+            seen.add(erratum["id"])
+            records.append({
+                "id": erratum["id"],
+                "target": matches[0][0],
+                "source": {
+                    "page": meta.get("page"),
+                    "printed_page": meta.get("printed_page"),
+                    "block": block_ref,
+                    "sha256": sha256(page_path),
+                    "pdf_sha256": meta.get("source", {}).get("pdf_sha256"),
+                },
+                "original": erratum["original"],
+                "corrected": "",
+                "reason": erratum["reason"],
+            })
+    return records
+
+
 def edition_dir(args: argparse.Namespace) -> Path:
     return Path(args.root) / args.book / "editions" / args.edition
 
@@ -198,6 +252,7 @@ def cmd_prepare(args: argparse.Namespace) -> int:
             "source": lesson_source,
             "prose": modern_prose(raw_lesson),
             "section_breaks": [],
+            "errata": source_errata(book, raw_lesson, raw_exercises),
         }
         exercises_template = {
             **copy.deepcopy(raw_exercises),
@@ -433,34 +488,24 @@ def normalize_lesson_layout(lesson: dict) -> None:
             changes.append("layout")
 
 
-def prose_paragraph_count(prose: object) -> int:
-    if not isinstance(prose, list):
-        return 0
-    return sum(
-        len(re.split(r"\n{2,}", block.get("text", "").strip()))
-        for block in prose
-        if isinstance(block, dict)
-        and block.get("kind") == "p"
-        and isinstance(block.get("text"), str)
-        and block["text"].strip()
+def prose_flow_contract(prose: object, section_breaks: object) -> tuple[dict, list[str]]:
+    payload = json.dumps({
+        "prose": prose,
+        "section_breaks": section_breaks,
+    }, ensure_ascii=False)
+    result = subprocess.run(
+        ["node", str(Path(__file__).resolve().parent / "prose_flow.mjs"), "--stdin"],
+        input=payload,
+        text=True,
+        capture_output=True,
     )
-
-
-def validate_section_breaks(section_breaks: object, paragraph_count: int) -> list[str]:
-    if section_breaks is None:
-        return []
-    if (
-        not isinstance(section_breaks, list)
-        or any(isinstance(item, bool) or not isinstance(item, int) for item in section_breaks)
-    ):
-        return ["lesson.section_breaks 必须是整数数组"]
-    if section_breaks != sorted(set(section_breaks)):
-        return ["lesson.section_breaks 必须严格递增且不得重复"]
-    if any(item <= 0 or item >= paragraph_count for item in section_breaks):
-        return [
-            "lesson.section_breaks 只能指向正文段落之间的 0 起始位置"
-        ]
-    return []
+    if result.returncode:
+        detail = result.stderr.strip() or result.stdout.strip() or "unknown error"
+        return {}, [f"lesson.section_breaks 无法由 proseFlow 解析: {detail}"]
+    try:
+        return json.loads(result.stdout), []
+    except json.JSONDecodeError as error:
+        return {}, [f"lesson.section_breaks proseFlow 输出无效: {error}"]
 
 
 def normalize_exercise_layout(exercises: dict) -> None:
@@ -497,6 +542,7 @@ def validate_text(
     label: str,
     forbidden_terms: list[str],
     historical_entities: object = None,
+    math_corrections: list[dict] | None = None,
 ) -> list[str]:
     errors = []
     if not isinstance(modern, str):
@@ -510,8 +556,19 @@ def validate_text(
         errors.append(f"{label} 未改写但 changes 非空")
     canonical_source = normalize_numbered_subparts(source)
     canonical_modern = normalize_numbered_subparts(modern)
-    if math_signature(canonical_modern) != math_signature(canonical_source):
-        errors.append(f"{label} 的数学公式发生变化")
+    expected_math_source = canonical_source
+    for correction in math_corrections or []:
+        expected_math_source = expected_math_source.replace(
+            correction["original"],
+            correction["corrected"],
+            1,
+        )
+    if math_signature(canonical_modern) != math_signature(expected_math_source):
+        errors.append(f"{label} 的数学公式变化没有匹配已绑定勘误")
+    if math_corrections and "math-correction" not in changes:
+        errors.append(f"{label} 应在 changes 中包含 math-correction")
+    if not math_corrections and "math-correction" in changes:
+        errors.append(f"{label} 声明 math-correction 但没有已绑定勘误")
     source_numbers = number_signature(canonical_source)
     modern_numbers = number_signature(canonical_modern)
     if not isinstance(numeric_changes, list):
@@ -1017,13 +1074,121 @@ def validate_source(book: Path, source: object, expected_path: Path, label: str)
         return [f"{label}.source 必须是对象"]
     errors = []
     current = load(expected_path)
+    snapshot = source.get("data")
+    additive_source_refs = False
+    if label == "lesson" and isinstance(snapshot, dict):
+        current_without_new_refs = copy.deepcopy(current)
+        snapshot_prose = snapshot.get("prose")
+        current_prose = current_without_new_refs.get("prose")
+        if (
+            isinstance(snapshot_prose, list)
+            and isinstance(current_prose, list)
+            and len(snapshot_prose) == len(current_prose)
+        ):
+            for old_block, current_block in zip(snapshot_prose, current_prose):
+                if (
+                    isinstance(old_block, dict)
+                    and isinstance(current_block, dict)
+                    and "source_refs" not in old_block
+                ):
+                    current_block.pop("source_refs", None)
+            additive_source_refs = snapshot == current_without_new_refs
     if source.get("path") != expected_path.relative_to(book).as_posix():
         errors.append(f"{label}.source.path 不匹配")
-    if source.get("sha256") != sha256(expected_path):
+    if source.get("sha256") != sha256(expected_path) and not additive_source_refs:
         errors.append(f"{label}.source 已过期")
-    if source.get("data") != current:
+    if snapshot != current and not additive_source_refs:
         errors.append(f"{label}.source.data 不是当前原书 JSON 的完整快照")
     return errors
+
+
+def validate_errata(
+    book: Path,
+    raw_lesson: dict,
+    raw_exercises: dict,
+    lesson: dict,
+    exercises: dict,
+) -> tuple[dict[str, list[dict]], list[str]]:
+    try:
+        expected = source_errata(book, raw_lesson, raw_exercises)
+    except SystemExit as error:
+        return {}, [str(error)]
+    actual = lesson.get("errata", [])
+    if not isinstance(actual, list):
+        return {}, ["lesson.errata 必须是数组"]
+
+    errors = []
+    expected_by_id = {item["id"]: item for item in expected}
+    actual_by_id = {
+        item.get("id"): item
+        for item in actual
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    if len(actual_by_id) != len(actual):
+        errors.append("lesson.errata 必须是 id 唯一的对象数组")
+    for erratum_id in sorted(expected_by_id.keys() - actual_by_id.keys()):
+        errors.append(f"lesson.errata 缺少来源页已登记勘误 {erratum_id}")
+    for erratum_id in sorted(actual_by_id.keys() - expected_by_id.keys()):
+        errors.append(f"lesson.errata 含未由来源页登记的勘误 {erratum_id}")
+
+    source_targets = {
+        **{
+            f"lesson.prose[{index}]": item.get("text", "")
+            for index, item in enumerate(raw_lesson.get("prose", []))
+        },
+        **{
+            f"exercises[{index}]": item.get("text", "")
+            for index, item in enumerate(raw_exercises.get("exercises", []))
+        },
+    }
+    modern_targets = {
+        **{
+            f"lesson.prose[{index}]": item.get("text", "")
+            for index, item in enumerate(lesson.get("prose", []))
+        },
+        **{
+            f"exercises[{index}]": item.get("text", "")
+            for index, item in enumerate(exercises.get("exercises", []))
+        },
+    }
+    corrections: dict[str, list[dict]] = {}
+    for erratum_id, source_record in expected_by_id.items():
+        record = actual_by_id.get(erratum_id)
+        if not record:
+            continue
+        for field in ("target", "source", "original", "reason"):
+            if record.get(field) != source_record.get(field):
+                errors.append(f"lesson.errata[{erratum_id}].{field} 与来源页绑定不一致")
+        corrected = record.get("corrected")
+        if not isinstance(corrected, str) or not corrected.strip():
+            errors.append(f"lesson.errata[{erratum_id}].corrected 不能为空")
+            continue
+        if corrected == source_record["original"]:
+            errors.append(f"lesson.errata[{erratum_id}].corrected 不得照抄错误原式")
+            continue
+        if (
+            not math_signature(source_record["original"])
+            or not math_signature(corrected)
+        ):
+            errors.append(f"lesson.errata[{erratum_id}] 必须绑定数学原式与修正式")
+            continue
+        target = source_record["target"]
+        source_text = source_targets.get(target)
+        modern_text = modern_targets.get(target)
+        if not isinstance(source_text, str) or source_text.count(source_record["original"]) != 1:
+            errors.append(f"lesson.errata[{erratum_id}].original 未唯一出现在来源目标中")
+            continue
+        if not isinstance(modern_text, str) or corrected not in modern_text:
+            errors.append(f"lesson.errata[{erratum_id}].corrected 未出现在现代目标中")
+            continue
+        if source_record["original"] in modern_text:
+            errors.append(f"lesson.errata[{erratum_id}] 已知错误仍在现代目标中")
+            continue
+        corrections.setdefault(target, []).append({
+            "original": source_record["original"],
+            "corrected": corrected,
+        })
+    return corrections, errors
 
 
 def validate_figure_references(
@@ -1107,24 +1272,48 @@ def validate_lesson(
             errors.append(f"{name}.edition 必须是 {edition.name}")
     errors += validate_source(book, lesson.get("source"), raw_lesson_path, "lesson")
     errors += validate_source(book, exercises.get("source"), raw_exercises_path, "exercises")
+    corrections, errata_errors = validate_errata(
+        book,
+        raw_lesson,
+        raw_exercises,
+        lesson,
+        exercises,
+    )
+    errors += errata_errors
 
     for field in IDENTITY_FIELDS:
         if lesson.get(field) != raw_lesson.get(field):
             errors.append(f"lesson.{field} 不得改变")
     raw_prose = raw_lesson.get("prose", [])
+    lesson_source = lesson.get("source")
+    lesson_source_data = lesson_source.get("data") if isinstance(lesson_source, dict) else {}
+    snapshot_prose = (
+        lesson_source_data.get("prose", [])
+        if isinstance(lesson_source_data, dict)
+        else []
+    )
     modern_prose_items = lesson.get("prose")
     if not isinstance(modern_prose_items, list) or len(modern_prose_items) != len(raw_prose):
         errors.append("lesson.prose 数量与原书不一致")
         modern_prose_items = []
-    errors += validate_section_breaks(
+    prose_flow, prose_flow_errors = prose_flow_contract(
+        modern_prose_items,
         lesson.get("section_breaks"),
-        prose_paragraph_count(modern_prose_items),
     )
+    errors += prose_flow_errors
     for index, (source_block, modern_block) in enumerate(zip(raw_prose, modern_prose_items)):
         label = f"lesson.prose[{index}]"
         if modern_block.get("source_text") != source_block.get("text", ""):
             errors.append(f"{label}.source_text 与原书不一致")
-        for field in ("kind", "id", "label", "printed_page"):
+        for field in ("kind", "id", "label", "printed_page", "source_refs"):
+            if (
+                field == "source_refs"
+                and field not in modern_block
+                and index < len(snapshot_prose)
+                and isinstance(snapshot_prose[index], dict)
+                and field not in snapshot_prose[index]
+            ):
+                continue
             if modern_block.get(field) != source_block.get(field):
                 errors.append(f"{label}.{field} 不得改变")
         errors += validate_text(
@@ -1135,6 +1324,7 @@ def validate_lesson(
             label,
             forbidden,
             modern_block.get("historical_entities"),
+            corrections.get(label),
         )
 
     raw_items = raw_exercises.get("exercises", [])
@@ -1160,6 +1350,7 @@ def validate_lesson(
             label,
             forbidden,
             modern_item.get("historical_entities"),
+            corrections.get(label),
         )
         errors += [
             f"{label}: {error}"
@@ -1453,6 +1644,10 @@ def cmd_finalize(args: argparse.Namespace) -> int:
         changed_exercises = sum(
             item["text"] != item["source_text"] for item in exercises["exercises"]
         )
+        prose_flow, _ = prose_flow_contract(
+            lesson["prose"],
+            lesson.get("section_breaks"),
+        )
         audit = {
             "schema": AUDIT_SCHEMA,
             "edition": args.edition,
@@ -1463,6 +1658,8 @@ def cmd_finalize(args: argparse.Namespace) -> int:
             "proseBlocks": len(lesson["prose"]),
             "changedProseBlocks": changed_prose,
             "sectionBreaks": len(lesson.get("section_breaks") or []),
+            "resolvedSectionBreaks": prose_flow.get("boundaries", []),
+            "errata": len(lesson.get("errata") or []),
             "exercises": len(exercises["exercises"]),
             "changedExercises": changed_exercises,
             "figures": len(figures["figures"]),

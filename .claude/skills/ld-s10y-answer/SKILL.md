@@ -170,13 +170,18 @@ ssot-resources/soviet10year-textbooks/artifacts/<book>/editions/<edition>/lesson
 
 `judge` 当前只允许：
 
-- `exact`：规范化后的文本必须匹配 `expected` 中任一项。
+- `exact`：MathLive `.value` 的 LaTeX 与 `expected` 中任一项经过共享
+  `app/src/lib/answer-normalize.ts` 规范化后必须匹配；不要求作者枚举 `\text{}`、`\frac`、
+  `\pm`、`\ne`、`\mathbb`、`\left`/`\right` 等纯输入序列化差异。
 - `numeric`：数值等价。
 - `expression`：数学表达式等价。
 
 cap2 产物必须通过 [gate-2-lesson-answers](references/gate-2-lesson-answers/gate.md)，再
 `finalize` 和真实 `publish`。发布器会验证答案审计和数据库课程的 edition 完全一致；
-原始 lesson 或不同 edition 均拒绝写入。`--dry` 只能检查，不能作为交付终点。
+原始 lesson 或不同 edition 均拒绝写入。`finalize` 会用真实 MathLive 元素逐项往返所有
+`exact` expected，再调用产品共享规范化器；任一不能由实际输入链判对即失败。公共回归样例在
+`examples/mathlive-exact-contract.json`，可用 `tools/check_mathlive_exact.mjs` 单独运行。
+`--dry` 只能检查，不能作为交付终点。
 
 ## cap3 — 交互规格生产
 
@@ -214,7 +219,8 @@ node .claude/skills/ld-s10y-answer/tools/publish-interactions.mjs \
 1. `grading=ungraded` → `free`
 2. 任一小问 `judge=expression` → `math`
 3. 全部小问 `judge=numeric` 且 expected 均为普通数字 → 先试 `grid-point`，不成则 `number`
-4. 全部小问 `judge=exact` → `math` + `needsAuthoring`（正确形态多半是点选）
+4. 全部小问 `judge=exact` → `math`；其输入能力已由 cap2 的真实 MathLive gate 验证，
+   不得再用 `needsAuthoring` 代替判分可靠性
 5. 其余 → `math` + `needsAuthoring`
 
 每一条规格都必须带 `derivation` 写明依据。**不允许静默兜底**：落到 `math` 只是维持现状，

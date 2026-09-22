@@ -21,6 +21,37 @@ import edition
 
 
 class AssembleEditionCompatibilityTest(unittest.TestCase):
+    def test_assembly_preserves_page_block_source_references(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            book = Path(temp) / "sample"
+            page = book / "pages" / "0001" / "page.json"
+            page.parent.mkdir(parents=True)
+            page.write_text(json.dumps({
+                "meta": {"page": 1, "printed_page": 1},
+                "blocks": [
+                    {"kind": "h3", "lines": ["1. 测试"], "open": False},
+                    {"kind": "p", "lines": ["正文。"], "open": False},
+                    {
+                        "kind": "ex",
+                        "label": "1",
+                        "lines": ["计算 $1+1$。"],
+                        "open": False,
+                    },
+                ],
+            }, ensure_ascii=False))
+
+            with patch.object(assemble.mathcheck, "collect_and_check", return_value=([], [])):
+                self.assertEqual(
+                    assemble.run(book, None, PROFILE, strict=False),
+                    0,
+                )
+
+            lesson_dir = next((book / "lessons").iterdir())
+            lesson = json.loads((lesson_dir / "lesson.json").read_text())
+            exercises = json.loads((lesson_dir / "exercises.json").read_text())
+            self.assertEqual(lesson["prose"][0]["source_refs"], ["p0001#2"])
+            self.assertEqual(exercises["exercises"][0]["pages"], ["p0001#3"])
+
     def test_reuse_only_allows_new_optional_identity_fields(self) -> None:
         existing = {
             "lesson": "lesson-1",
