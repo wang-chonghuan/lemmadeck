@@ -55,6 +55,90 @@ async function loadCases(options) {
   return cases
 }
 
+async function editMathLiveValue(page, url, input, targetedKeyboard) {
+  await page.goto(url)
+  const initialized = await page.evaluate(async (value) => {
+    const { MathfieldElement } = await import('/mathlive.min.mjs')
+    MathfieldElement.fontsDirectory = null
+    MathfieldElement.soundsDirectory = null
+    const element = new MathfieldElement()
+    element.addEventListener('input', () => {
+      element.dataset.inputEvents = String(Number(element.dataset.inputEvents ?? '0') + 1)
+    })
+    document.body.append(element)
+    element.value = value
+    element.dataset.inputEvents = '0'
+    return {
+      value: element.value,
+      expanded: element.getValue('latex-expanded'),
+    }
+  }, input)
+  const field = page.locator('math-field')
+  await field.click()
+  await field.evaluate((element) => {
+    element.focus()
+    element.executeCommand('moveToMathfieldEnd')
+  })
+  if (targetedKeyboard) await field.pressSequentially('+1')
+  else await page.keyboard.type('+1')
+  let insertionObserved = true
+  let insertedExpanded = null
+  try {
+    const changed = await page.waitForFunction(
+      (expanded) => {
+        const current = document
+          .querySelector('math-field')
+          ?.getValue('latex-expanded')
+        return current !== expanded ? current : false
+      },
+      initialized.expanded,
+      { timeout: 1000 },
+    )
+    insertedExpanded = await changed.jsonValue()
+  } catch {
+    insertionObserved = false
+  }
+  let restorationObserved = false
+  if (insertionObserved) {
+    await field.click()
+    await field.evaluate((element) => {
+      element.focus()
+      element.executeCommand('moveToMathfieldEnd')
+    })
+    await page.keyboard.press('Backspace')
+    await page.keyboard.press('Backspace')
+    try {
+      await page.waitForFunction(
+        (expanded) => (
+          document.querySelector('math-field')?.getValue('latex-expanded') === expanded
+        ),
+        initialized.expanded,
+        { timeout: 1000 },
+      )
+      restorationObserved = true
+    } catch {
+      restorationObserved = false
+    }
+  }
+  const edited = await field.evaluate((element) => ({
+    value: element.value,
+    expanded: element.getValue('latex-expanded'),
+    inputEvents: Number(element.dataset.inputEvents ?? '0'),
+  }))
+  return {
+    initialized: initialized.value,
+    expanded: edited.expanded,
+    emitted: edited.value,
+    inputEvents: edited.inputEvents,
+    insertedExpanded,
+    inserted: insertionObserved,
+    preserved: (
+      restorationObserved
+      && initialized.expanded === edited.expanded
+    ),
+  }
+}
+
 async function mathLiveValues(browser, inputs) {
   const server = createServer(async (request, response) => {
     if (request.url === '/mathlive.min.mjs') {
@@ -69,20 +153,21 @@ async function mathLiveValues(browser, inputs) {
   const address = server.address()
   const page = await browser.newPage()
   try {
-    await page.goto(`http://127.0.0.1:${address.port}/`)
-    return await page.evaluate(async (values) => {
-      const { MathfieldElement } = await import('/mathlive.min.mjs')
-      MathfieldElement.fontsDirectory = null
-      MathfieldElement.soundsDirectory = null
-      return values.map((value) => {
-        const field = new MathfieldElement()
-        document.body.append(field)
-        field.value = value
-        const emitted = field.value
-        field.remove()
-        return emitted
+    const url = `http://127.0.0.1:${address.port}/`
+    const results = []
+    for (const input of inputs) {
+      let result
+      let attempts = 0
+      for (; attempts < 3; attempts += 1) {
+        result = await editMathLiveValue(page, url, input, attempts > 0)
+        if (result.inserted && result.inputEvents > 0 && result.preserved) break
+      }
+      results.push({
+        ...result,
+        attempts: Math.min(attempts + 1, 3),
       })
-    }, inputs)
+    }
+    return results
   } finally {
     await page.close()
     await new Promise((resolve) => server.close(resolve))
@@ -108,17 +193,28 @@ async function main() {
     const positive = emitted[cursor++]
     const negatives = (item.reject ?? []).map((input) => ({
       input,
-      emitted: emitted[cursor++],
+      ...emitted[cursor++],
     }))
     return {
       name: item.name,
       source: item.source,
       input: item.input,
-      emitted: positive,
-      accepted: Boolean(positive?.trim()) && exactMathAnswersMatch(item.expected, positive),
+      ...positive,
+      accepted: (
+        positive.inserted
+        && positive.inputEvents > 0
+        && positive.preserved
+        && Boolean(positive.emitted?.trim())
+        && exactMathAnswersMatch(item.expected, positive.emitted)
+      ),
       rejected: negatives.map((negative) => ({
         ...negative,
-        rejected: !exactMathAnswersMatch(item.expected, negative.emitted),
+        rejected: (
+          negative.inserted
+          && negative.inputEvents > 0
+          && negative.preserved
+          && !exactMathAnswersMatch(item.expected, negative.emitted)
+        ),
       })),
     }
   })

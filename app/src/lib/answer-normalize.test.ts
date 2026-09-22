@@ -31,6 +31,18 @@ describe('normalizeMathAnswer', () => {
     expect(n('2\\div3')).toBe('2/3')
     expect(n('2÷3')).toBe('2/3')
   })
+  it('preserves grouped fraction scope', () => {
+    expect(n('\\frac{1}{ab}')).toBe('1/(ab)')
+    expect(n('\\frac{1}{a}b')).toBe('1/ab')
+    expect(n('\\frac{a+b}{c}')).toBe('(a+b)/c')
+    expect(n('a+\\frac{b}{c}')).toBe('a+b/c')
+  })
+  it('normalizes Greek Unicode and LaTeX commands consistently', () => {
+    expect(n('α≠0')).toBe(n('\\alpha\\ne0'))
+    expect(n('β≤γ')).toBe(n('\\beta\\le\\gamma'))
+    expect(n('Ω')).toBe(n('\\Omega'))
+    expect(n('φ')).toBe(n('\\varphi'))
+  })
   it('turns superscripts into ^n', () => {
     expect(n('x²y')).toBe('x^2y')
     expect(n('x³')).toBe('x^3')
@@ -67,6 +79,20 @@ describe('normalizeMathAnswer', () => {
     ],
     ['plus-minus integer', '\\pm6', ['{-6,6}', '-6,6', '6,-6', '±6'], '\\pm5'],
   ])('matches MathLive LaTeX for %s', (_name, submitted, expected, wrong) => {
+    expect(exactMathAnswersMatch(expected, submitted)).toBe(true)
+    expect(exactMathAnswersMatch(expected, wrong)).toBe(false)
+  })
+
+  it.each([
+    ['denominator product', '\\frac{1}{ab}', ['\\frac{1}{ab}'], '\\frac{1}{a}b'],
+    [
+      'condition denominator product',
+      'x\\ne\\frac{1}{ab}',
+      ['x\\ne\\frac{1}{ab}'],
+      'x\\ne\\frac{1}{a}b',
+    ],
+    ['numerator group', '\\frac{a+b}{c}', ['\\frac{a+b}{c}'], 'a+\\frac{b}{c}'],
+  ])('keeps operator scope for %s', (_name, submitted, expected, wrong) => {
     expect(exactMathAnswersMatch(expected, submitted)).toBe(true)
     expect(exactMathAnswersMatch(expected, wrong)).toBe(false)
   })

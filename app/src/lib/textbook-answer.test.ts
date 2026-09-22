@@ -87,6 +87,30 @@ describe('judgeTextbookPart', () => {
     ).resolves.toBe(false)
   })
 
+  it('keeps multiplication outside a fraction denominator distinct', async () => {
+    await expect(
+      judgeTextbookPart(
+        { judge: 'exact', expected: ['x\\ne\\frac{1}{ab}'] },
+        'x\\ne\\frac{1}{ab}',
+      ),
+    ).resolves.toBe(true)
+    await expect(
+      judgeTextbookPart(
+        { judge: 'exact', expected: ['x\\ne\\frac{1}{ab}'] },
+        'x\\ne\\frac{1}{a}b',
+      ),
+    ).resolves.toBe(false)
+  })
+
+  it('accepts equivalent Unicode and LaTeX Greek symbols', async () => {
+    await expect(
+      judgeTextbookPart(
+        { judge: 'exact', expected: ['α≠0'] },
+        '\\alpha\\ne0',
+      ),
+    ).resolves.toBe(true)
+  })
+
   it('rejects a different value', async () => {
     await expect(
       judgeTextbookPart({ judge: 'numeric', expected: ['18'] }, '17'),

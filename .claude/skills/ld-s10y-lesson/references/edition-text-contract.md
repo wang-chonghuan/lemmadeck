@@ -40,6 +40,11 @@ in that page's frontmatter:
 `finalize` verifies that the block exists and contains `original`. `assemble` preserves the source
 block reference. `adapt-prepare` then creates the lesson-level record with the physical/printed page,
 page JSON SHA-256, PDF SHA-256, target, original expression, and an empty `corrected` field.
+For a legacy raw lesson that predates `source_refs`, `adapt-prepare` reconstructs those references
+from the authoritative page stream using the lesson identity and assembly rules. If that
+reconstruction is ambiguous, or if a page erratum's `original` no longer appears exactly once in
+its bound raw lesson/exercise target, preparation fails and instructs the author to rerun
+`assemble`; it never treats the registered erratum as unrelated and silently drops it.
 
 The edition author fills only `corrected`, updates the target text, and adds `math-correction` to that
 target's `changes`. `adapt-finalize` rejects a missing record, wrong page or block, stale page hash,

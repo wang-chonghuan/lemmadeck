@@ -571,6 +571,133 @@ class EditionTest(unittest.TestCase):
                 [],
             )
 
+    def test_bound_erratum_rejects_raw_original_drift(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            book = Path(temp) / "5m"
+            dump(book / "pages" / "0001" / "page.json", {
+                "meta": {
+                    "page": 1,
+                    "printed_page": 1,
+                    "source": {"pdf_sha256": "pdf-sha"},
+                    "errata": [{
+                        "id": "p0001-math-1",
+                        "block": "p0001#1",
+                        "original": "$1+1=3$",
+                        "reason": "The printed equality is false.",
+                    }],
+                },
+                "blocks": [{"kind": "p", "lines": ["原书印作 $1+1=3$。"]}],
+            })
+            raw_lesson = {
+                "prose": [{
+                    "kind": "p",
+                    "text": "原始 lesson 被改成 $1+1=4$。",
+                    "source_refs": ["p0001#1"],
+                }],
+            }
+
+            with self.assertRaisesRegex(SystemExit, "original 未唯一出现"):
+                edition.source_errata(book, raw_lesson, {"exercises": []})
+
+    def test_legacy_lesson_reconstructs_erratum_source_refs(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            book = Path(temp) / "5m"
+            dump(book / "pages" / "0001" / "page.json", {
+                "meta": {
+                    "page": 1,
+                    "printed_page": 1,
+                    "source": {"pdf_sha256": "pdf-sha"},
+                    "errata": [{
+                        "id": "p0001-math-1",
+                        "block": "p0001#2",
+                        "original": "$1+1=3$",
+                        "reason": "The printed equality is false.",
+                    }],
+                },
+                "blocks": [
+                    {"kind": "h3", "label": None, "lines": ["1. 测试"]},
+                    {"kind": "p", "label": None, "lines": ["原书印作 $1+1=3$。"]},
+                ],
+            })
+            raw_lesson = {
+                "id": "lesson-1",
+                "number": "1",
+                "title": "测试",
+                "printed_title": "1. 测试",
+                "start_page": 1,
+                "start_printed": 1,
+                "prose": [{
+                    "kind": "p",
+                    "text": "原书印作 $1+1=3$。",
+                    "id": None,
+                    "label": None,
+                    "printed_page": 1,
+                }],
+            }
+
+            records = edition.source_errata(book, raw_lesson, {"exercises": []})
+
+            self.assertEqual(len(records), 1)
+            self.assertEqual(records[0]["target"], "lesson.prose[0]")
+            self.assertEqual(records[0]["source"]["block"], "p0001#2")
+
+            raw_lesson["prose"][0]["text"] = "原始 lesson 被改成 $1+1=4$。"
+            with self.assertRaisesRegex(SystemExit, "original 未唯一出现"):
+                edition.source_errata(book, raw_lesson, {"exercises": []})
+
+    def test_legacy_reconstruction_ignores_other_lessons_errata(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            book = Path(temp) / "5m"
+            dump(book / "pages" / "0001" / "page.json", {
+                "meta": {
+                    "page": 1,
+                    "printed_page": 1,
+                    "source": {"pdf_sha256": "pdf-sha"},
+                    "errata": [],
+                },
+                "blocks": [
+                    {"kind": "h3", "label": None, "lines": ["1. 第一课"]},
+                    {"kind": "p", "label": None, "lines": ["第一课正文。"]},
+                ],
+            })
+            dump(book / "pages" / "0002" / "page.json", {
+                "meta": {
+                    "page": 2,
+                    "printed_page": 2,
+                    "source": {"pdf_sha256": "pdf-sha"},
+                    "errata": [{
+                        "id": "p0002-math-1",
+                        "block": "p0002#2",
+                        "original": "$1+1=3$",
+                        "reason": "The printed equality is false.",
+                    }],
+                },
+                "blocks": [
+                    {"kind": "h3", "label": None, "lines": ["2. 第二课"]},
+                    {"kind": "p", "label": None, "lines": ["原书印作 $1+1=3$。"]},
+                ],
+            })
+            raw_lesson = {
+                "id": "lesson-1",
+                "number": "1",
+                "title": "第一课",
+                "printed_title": "1. 第一课",
+                "start_page": 1,
+                "start_printed": 1,
+                "prose": [{
+                    "kind": "p",
+                    "text": "第一课正文。",
+                    "id": None,
+                    "label": None,
+                    "printed_page": 1,
+                }],
+            }
+
+            self.assertEqual(
+                edition.source_errata(book, raw_lesson, {"exercises": []}),
+                [],
+            )
+
     def test_legacy_source_snapshot_allows_only_added_source_references(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             book = Path(temp) / "5m"

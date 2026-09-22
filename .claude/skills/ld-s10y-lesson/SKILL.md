@@ -74,7 +74,9 @@ cd app && npm run dev
   大段正文、错序或横向分题通过
 - 现代 edition 中的中文顿号、逗号、分号、句号、问号、叹号和冒号必须放在 `$...$`
   数学区外；拆开相邻公式只属于 `layout` 变更。数学内容默认保持原式；只有忠实页已登记、
-  且页哈希、块引用和原式全部匹配的 `errata` 才能在现代层改为修正式
+  且页哈希、块引用和原式全部匹配的 `errata` 才能在现代层改为修正式。旧 lesson 缺
+  `source_refs` 时，工具必须从权威页流和装订身份重建；无法唯一重建或绑定原式漂移即失败，
+  不得把本课已登记勘误静默当作无关记录丢弃
 - edition lesson 用 `section_breaks` 的 `{before, after}` 相邻段落文本标记真正的概念切换。
   先运行 `node .claude/skills/ld-s10y-lesson/tools/prose_flow.mjs <lesson.template.json>` 查看
   `proseFlow` 的最终段落，再复制工具输出的 boundary 对象；禁止按 prose 块或换行手算整数。
@@ -312,7 +314,8 @@ p2c.py adapt-finalize --book 5m --edition modern-us-neutral \
    必须逐项写入 `numeric_changes`，并在 `changes` 中包含 `context-number`。`adapt-prepare`
    会把来源页 `errata` 自动带进 lesson 模板；作者只填写 `corrected` 并把目标块的 `changes`
    标为 `math-correction`。`adapt-finalize` 会核对来源页、页 JSON 哈希、块引用、原式和修正式，
-   未登记改写、错误绑定或把已知错误原样带入现代版都会失败。完整字段见
+   旧 lesson 缺 `source_refs` 时先从权威页流重建；未登记改写、绑定断裂、原式漂移或把已知
+   错误原样带入现代版都会失败。完整字段见
    [edition text contract](references/edition-text-contract.md)
 3. 发布文本不得含未声明的 profile 禁词或西里尔字母；小问标号改用拉丁字母。
    虚构场景中的俄文或苏联人物姓名必须替换为常见的现代英文姓名，并在题面、图像上下文

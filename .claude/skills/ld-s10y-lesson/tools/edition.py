@@ -15,6 +15,8 @@ from pathlib import Path
 
 from PIL import Image
 
+import assemble
+
 
 LESSON_SCHEMA = "ld-s10y-lesson/edition-lesson@1"
 EXERCISES_SCHEMA = "ld-s10y-lesson/edition-exercises@1"
@@ -90,35 +92,155 @@ def source_ref(book: Path, path: Path) -> dict:
     }
 
 
-def source_errata(book: Path, lesson: dict, exercises: dict) -> list[dict]:
-    targets: dict[str, list[tuple[str, str]]] = {}
+def _source_target_map(lesson: dict, exercises: dict) -> dict[str, dict[str, str]]:
+    targets: dict[str, dict[str, str]] = {}
     for index, block in enumerate(lesson.get("prose", [])):
         for ref in block.get("source_refs", []):
-            targets.setdefault(ref, []).append(
-                (f"lesson.prose[{index}]", block.get("text", ""))
-            )
+            targets.setdefault(ref, {})[f"lesson.prose[{index}]"] = block.get("text", "")
     for index, exercise in enumerate(exercises.get("exercises", [])):
         for ref in exercise.get("pages", []):
-            targets.setdefault(ref, []).append(
-                (f"exercises[{index}]", exercise.get("text", ""))
+            targets.setdefault(ref, {})[f"exercises[{index}]"] = exercise.get("text", "")
+    return targets
+
+
+def _reconstructed_source_targets(
+    book: Path,
+    lesson: dict,
+    exercises: dict,
+) -> dict[str, dict[str, str]]:
+    stream = assemble.load_stream(book)
+    merged, _ = assemble.merge_across_pages(stream)
+    candidates = assemble.cut_lessons(merged)
+    numbering = "book"
+    book_path = book / "book.json"
+    if book_path.exists():
+        numbering = load(book_path).get("exercise_numbering", "book")
+    for candidate in candidates:
+        candidate["prose"], candidate["exercises"] = assemble.split_lesson(
+            candidate,
+            numbering,
+        )
+    figure_errors, _ = assemble.claim_figures(candidates, merged)
+    if figure_errors:
+        raise SystemExit(
+            "ERROR: 无法从权威页重建来源引用: " + "; ".join(figure_errors)
+        )
+
+    identity_fields = (
+        "number",
+        "title",
+        "printed_title",
+        "start_page",
+        "start_printed",
+    )
+    available = [
+        field
+        for field in identity_fields
+        if lesson.get(field) is not None
+    ]
+    matches = [
+        candidate
+        for candidate in candidates
+        if all(candidate.get(field) == lesson.get(field) for field in available)
+    ]
+    if not available and len(candidates) == 1:
+        matches = candidates
+    if len(matches) != 1:
+        raise SystemExit(
+            "ERROR: 旧 lesson 缺少 source_refs，且无法从权威页唯一重建；"
+            "请重新运行 assemble"
+        )
+
+    candidate = matches[0]
+    raw_prose = lesson.get("prose", [])
+    source_prose = candidate.get("prose", [])
+    if len(raw_prose) != len(source_prose):
+        raise SystemExit(
+            "ERROR: 旧 lesson 缺少 source_refs，且正文块数量与权威页装订结果不一致；"
+            "请重新运行 assemble"
+        )
+
+    targets: dict[str, dict[str, str]] = {}
+    for index, (raw_block, source_block) in enumerate(zip(raw_prose, source_prose)):
+        for field in ("kind", "id", "label", "printed_page"):
+            if raw_block.get(field) != source_block.get(field):
+                raise SystemExit(
+                    "ERROR: 旧 lesson 缺少 source_refs，且正文身份与权威页装订结果不一致；"
+                    "请重新运行 assemble"
+                )
+        for ref in source_block.get("spans") or [source_block["ref"]]:
+            targets.setdefault(ref, {})[f"lesson.prose[{index}]"] = raw_block.get("text", "")
+
+    raw_items = exercises.get("exercises", [])
+    source_items = candidate.get("exercises", [])
+    if any(not item.get("pages") for item in raw_items):
+        if len(raw_items) != len(source_items):
+            raise SystemExit(
+                "ERROR: 旧 exercises 缺少 pages，且题目数量与权威页装订结果不一致；"
+                "请重新运行 assemble"
             )
+        for index, (raw_item, source_item) in enumerate(zip(raw_items, source_items)):
+            for field in ("number", "source_number", "group", "group_id"):
+                if raw_item.get(field) != source_item.get(field):
+                    raise SystemExit(
+                        "ERROR: 旧 exercises 缺少 pages，且题目身份与权威页装订结果不一致；"
+                        "请重新运行 assemble"
+                    )
+            for ref in source_item.get("pages", []):
+                targets.setdefault(ref, {})[f"exercises[{index}]"] = raw_item.get("text", "")
+    return targets
+
+
+def source_errata(book: Path, lesson: dict, exercises: dict) -> list[dict]:
+    pages = [
+        (page_path, load(page_path))
+        for page_path in sorted(book.glob("pages/*/page.json"))
+    ]
+    if not any(
+        isinstance(erratum, dict)
+        for _, page in pages
+        for erratum in page.get("meta", {}).get("errata", [])
+    ):
+        return []
+
+    targets = _source_target_map(lesson, exercises)
+    missing_refs = any(
+        not block.get("source_refs")
+        for block in lesson.get("prose", [])
+    ) or any(
+        not exercise.get("pages")
+        for exercise in exercises.get("exercises", [])
+    )
+    if missing_refs:
+        for ref, recovered in _reconstructed_source_targets(
+            book,
+            lesson,
+            exercises,
+        ).items():
+            targets.setdefault(ref, {}).update(recovered)
 
     records = []
     seen = set()
-    for page_path in sorted(book.glob("pages/*/page.json")):
-        page = load(page_path)
+    for page_path, page in pages:
         meta = page.get("meta", {})
         for erratum in meta.get("errata", []):
             if not isinstance(erratum, dict):
                 continue
             block_ref = erratum.get("block")
+            bound = targets.get(block_ref, {})
             matches = [
-                target
-                for target in targets.get(block_ref, [])
-                if erratum.get("original") in target[1]
+                (target, text)
+                for target, text in bound.items()
+                if isinstance(erratum.get("original"), str)
+                and text.count(erratum["original"]) == 1
             ]
-            if not matches:
+            if not bound:
                 continue
+            if not matches:
+                raise SystemExit(
+                    f"ERROR: {page_path} 的勘误 {erratum.get('id')!r} "
+                    "已绑定本课来源块，但 original 未唯一出现在忠实 lesson/exercise"
+                )
             if len(matches) != 1:
                 raise SystemExit(
                     f"ERROR: {page_path} 的勘误 {erratum.get('id')!r} "
