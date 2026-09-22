@@ -190,7 +190,7 @@ class RendererNamespaceTests(unittest.TestCase):
             spec["objects"] = [{
                 "id": "offset-grid",
                 "type": "grid",
-                "bounds": [-1, 1, 2, -1],
+                "bounds": [-0.5, 0.25, 1.5, -0.75],
                 "xStep": 1,
                 "yStep": 1,
                 "xOffset": 0.5,
@@ -202,12 +202,18 @@ class RendererNamespaceTests(unittest.TestCase):
                 "type": "objectCount",
                 "objectType": "grid",
                 "count": 1,
+            }, {
+                "id": "offset-grid-dimensions",
+                "type": "gridDimensions",
+                "grid": "offset-grid",
+                "columns": 2,
+                "rows": 1,
             }]
             spec["source"]["inventory"] = [{
                 "id": "source-offset-grid",
                 "description": "A cropped grid with a nonzero coordinate phase.",
                 "objects": ["offset-grid"],
-                "assertions": ["one-offset-grid"],
+                "assertions": ["offset-grid-dimensions"],
             }]
             spec_path = directory / "figure.spec.json"
             svg_path = directory / "figure.svg"
