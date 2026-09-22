@@ -23,6 +23,12 @@ It requires a source inventory mapped to stable object/assertion IDs, declared
 product widths with at least 16 px final text, semantic color roles, and a
 separate hash-bound `ld-s10y-image/review@1` record.
 
+Reusing an existing FigureSpec or SVG does not reuse its source-fidelity
+judgment. Reopen the original PNG, rebuild or recheck `source.inventory`, and
+separate source facts from justified modern additions. Byte-identical
+regeneration proves determinism only. Grid dimensions and point relationships
+must use executable assertions rather than `objectCount`.
+
 The edition manifest contracts are:
 
 - deterministic: `spec`, `svg`, `render`, `review`

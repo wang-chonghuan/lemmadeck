@@ -13,9 +13,14 @@ The canonical schema is
 - `source.image`: original PNG path and SHA-256
 - `source.authoritativeText`: complete relevant edition text
 - `source.inventory`: source-based groups with `description`, `objects`, and
-  `assertions`. Record source requirements first, give them stable IDs, then
-  map them to the object and assertion IDs that realize each requirement.
-  Missing, invisible, or unresolved IDs fail validation.
+  `assertions`. Use `requires: ["gridDimensions"]` for source grid counts and
+  `requires: ["pointRelationships"]` for source-bound relations among multiple
+  points. Record source requirements first, give them stable IDs, then map
+  them to the object and assertion IDs that realize each requirement.
+  Missing, invisible, or unresolved IDs fail validation. Reused specs are not
+  evidence: rebuild or recheck this inventory against the original PNG, not
+  the prior SVG or object list. State modern regularization or additions as
+  additions rather than source-image facts.
 - `canvas`: pixel size and mathematical bounding box
 - `display`: product `layout`, semantic `purpose`, minimum final text size,
   every width that must be checked, and an optional validated product maximum
@@ -146,10 +151,17 @@ Use assertions for every relationship required by the exercise:
   ids instead of trusting a hand-written assertion list.
 - `connects`: `arrow`, `from`, and `to`; use for arrows or edges whose
   endpoints are part of the source meaning
+- `gridDimensions`: `grid`, `columns`, and `rows`; the finite grid bounds must
+  align with its offsets and steps, and the asserted cell count must match
+- `displacement`: `from`, `to`, `dx`, and `dy`; use for source-bound horizontal
+  and vertical point relationships on a grid
 - `objectCount`
 
 Assertions validate source-space mathematics before rendering. The render
-report separately validates label overlap and clipping.
+report separately validates label overlap and clipping. When a source-inventory
+group declares `gridDimensions`, every mapped grid must have that assertion;
+when it declares `pointRelationships`, the mapped points must have a
+relationship assertion. `objectCount` is never a substitute for either check.
 
 When the description or authoritative text says a figure is centrally
 symmetric or invariant under a half-turn, `centralSymmetry` is mandatory.

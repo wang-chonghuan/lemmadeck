@@ -210,18 +210,25 @@ class ValidateSpecTests(unittest.TestCase):
         payload["objects"].append({
             "id": "offset-grid",
             "type": "grid",
-            "bounds": [-6, 2, 6, -2],
+            "bounds": [-5.75, 1.75, 6.25, -2.25],
             "xStep": 1,
             "yStep": 0.5,
             "xOffset": 0.25,
             "yOffset": -0.25,
             "stroke": "grid",
         })
+        payload["assertions"].append({
+            "id": "offset-grid-dimensions",
+            "type": "gridDimensions",
+            "grid": "offset-grid",
+            "columns": 12,
+            "rows": 8,
+        })
         payload["source"]["inventory"].append({
             "id": "source-offset-grid",
             "description": "A bounded source grid with a local coordinate phase.",
             "objects": ["offset-grid"],
-            "assertions": [],
+            "assertions": ["offset-grid-dimensions"],
         })
         self.assertEqual(MODULE.validate(self.write(payload), "draft"), [])
 
@@ -236,11 +243,18 @@ class ValidateSpecTests(unittest.TestCase):
             "xOffset": "left",
             "stroke": "grid",
         })
+        payload["assertions"].append({
+            "id": "invalid-grid-dimensions",
+            "type": "gridDimensions",
+            "grid": "invalid-grid",
+            "columns": 12,
+            "rows": 4,
+        })
         payload["source"]["inventory"].append({
             "id": "source-invalid-grid",
             "description": "An invalid bounded source grid.",
             "objects": ["invalid-grid"],
-            "assertions": [],
+            "assertions": ["invalid-grid-dimensions"],
         })
         errors = MODULE.validate(self.write(payload), "draft")
         self.assertTrue(any("bounds must be" in error for error in errors))
@@ -256,15 +270,107 @@ class ValidateSpecTests(unittest.TestCase):
             "yStep": 1,
             "stroke": "grid",
         })
+        payload["assertions"].append({
+            "id": "outside-grid-dimensions",
+            "type": "gridDimensions",
+            "grid": "outside-grid",
+            "columns": 14,
+            "rows": 4,
+        })
         payload["source"]["inventory"].append({
             "id": "source-outside-grid",
             "description": "A source grid outside the canvas.",
             "objects": ["outside-grid"],
-            "assertions": [],
+            "assertions": ["outside-grid-dimensions"],
         })
         errors = MODULE.validate(self.write(payload), "draft")
         self.assertTrue(any(
             "outside-grid: geometry outside canvas" in error
+            for error in errors
+        ))
+
+    def grid_displacement_payload(self):
+        payload = copy.deepcopy(self.payload)
+        payload["canvas"]["boundingBox"] = [-1, 8, 10, -1]
+        payload["objects"] = [
+            {
+                "id": "source-grid",
+                "type": "grid",
+                "bounds": [0, 7, 9, 0],
+                "xStep": 1,
+                "yStep": 1,
+                "stroke": "grid",
+            },
+            {"id": "origin", "type": "point", "at": [2, 1], "label": "O"},
+            {"id": "target", "type": "point", "at": [5, 6], "label": "M"},
+        ]
+        payload["assertions"] = [
+            {
+                "id": "source-grid-9x7",
+                "type": "gridDimensions",
+                "grid": "source-grid",
+                "columns": 9,
+                "rows": 7,
+            },
+            {
+                "id": "origin-to-target",
+                "type": "displacement",
+                "from": "origin",
+                "to": "target",
+                "dx": 3,
+                "dy": 5,
+            },
+        ]
+        payload["source"]["inventory"] = [
+            {
+                "id": "source-grid-facts",
+                "description": "The source has a 9-column by 7-row grid.",
+                "objects": ["source-grid"],
+                "assertions": ["source-grid-9x7"],
+                "requires": ["gridDimensions"],
+            },
+            {
+                "id": "source-point-facts",
+                "description": "Point M is three cells right and five cells above O.",
+                "objects": ["origin", "target"],
+                "assertions": ["origin-to-target"],
+                "requires": ["pointRelationships"],
+            },
+        ]
+        return payload
+
+    def test_grid_dimensions_and_displacement_pass(self):
+        payload = self.grid_displacement_payload()
+        self.assertEqual(MODULE.validate(self.write(payload), "draft"), [])
+
+    def test_wrong_grid_row_count_fails(self):
+        payload = self.grid_displacement_payload()
+        payload["assertions"][0]["rows"] = 8
+        errors = MODULE.validate(self.write(payload), "draft")
+        self.assertTrue(any("grid has 7 rows, expected 8" in error for error in errors))
+
+    def test_wrong_displacement_fails(self):
+        payload = self.grid_displacement_payload()
+        payload["assertions"][1]["dy"] = 4
+        errors = MODULE.validate(self.write(payload), "draft")
+        self.assertTrue(any("displacement (3, 5)" in error for error in errors))
+
+    def test_object_count_cannot_replace_source_relationship_assertions(self):
+        payload = self.grid_displacement_payload()
+        payload["assertions"] = [
+            {
+                "id": "object-count",
+                "type": "objectCount",
+                "objectType": "point",
+                "count": 2,
+            }
+        ]
+        for group in payload["source"]["inventory"]:
+            group["assertions"] = ["object-count"]
+        errors = MODULE.validate(self.write(payload), "draft")
+        self.assertTrue(any("gridDimensions" in error for error in errors))
+        self.assertTrue(any(
+            "multiple source points require a mapped relationship assertion" in error
             for error in errors
         ))
 
