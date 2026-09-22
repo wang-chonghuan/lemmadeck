@@ -694,7 +694,8 @@ def run(
              "figures": l["figures"], "exercise_count": len(l["exercises"]),
              "prose": [{"kind": b["kind"], "text": B.text_of(b),
                         "id": b.get("id"), "label": b.get("label"),
-                        "printed_page": b.get("printed_page")}
+                        "printed_page": b.get("printed_page"),
+                        "source_refs": b.get("spans") or [b["ref"]]}
                        for b in l["prose"]]},
             ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         index.append({"id": lid, "card_id": l.get("card_id"),

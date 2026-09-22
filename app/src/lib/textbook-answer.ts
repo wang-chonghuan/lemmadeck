@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import type { ComputeEngine } from '@cortex-js/compute-engine'
 
-import { normalizeMathAnswer } from '~/lib/answer-normalize'
+import { exactMathAnswersMatch } from '~/lib/answer-normalize'
 import { sql } from '~/lib/db'
 import { currentLocale } from '~/lib/locale.server'
 import { currentUserId } from '~/lib/session.server'
@@ -73,8 +73,7 @@ function cleanNumericLatex(value: string, unit?: string): string {
 
 export async function judgeTextbookPart(part: AnswerPart, submitted: string): Promise<boolean> {
   if (part.judge === 'exact') {
-    const normalized = normalizeMathAnswer(submitted)
-    return part.expected.some((expected) => normalizeMathAnswer(expected) === normalized)
+    return exactMathAnswersMatch(part.expected, submitted)
   }
 
   const engine = await mathEngine()

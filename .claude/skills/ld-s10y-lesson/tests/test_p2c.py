@@ -110,6 +110,38 @@ class PdfResolutionTest(unittest.TestCase):
             self.assertEqual(p2c._find_pdf(args), expected)
 
 
+class PageErrataTest(unittest.TestCase):
+    def test_erratum_must_bind_to_one_faithful_block_on_the_same_page(self) -> None:
+        blocks = [{"kind": "p", "lines": ["原书印作 $1+1=3$。"]}]
+        meta = {
+            "errata": [{
+                "id": "p0012-math-1",
+                "block": "p0012#1",
+                "original": "$1+1=3$",
+                "reason": "The printed equality is false.",
+            }],
+        }
+        self.assertEqual(p2c._validate_page_errata(meta, blocks, 12), [])
+
+        wrong_page = json.loads(json.dumps(meta))
+        wrong_page["errata"][0]["block"] = "p0013#1"
+        self.assertTrue(
+            any(
+                "本页现有块" in error
+                for error in p2c._validate_page_errata(wrong_page, blocks, 12)
+            )
+        )
+
+        wrong_original = json.loads(json.dumps(meta))
+        wrong_original["errata"][0]["original"] = "$1+1=4$"
+        self.assertTrue(
+            any(
+                "忠实转写" in error
+                for error in p2c._validate_page_errata(wrong_original, blocks, 12)
+            )
+        )
+
+
 class VectorizeCommandTest(unittest.TestCase):
     def test_reports_renderer_failure_without_masking_it(self) -> None:
         with tempfile.TemporaryDirectory() as temp:

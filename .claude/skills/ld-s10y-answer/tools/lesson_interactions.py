@@ -26,8 +26,8 @@ from pathlib import Path
 
 SCHEMA = "ld-s10y-answer/lesson-interactions@1"
 
-# v1 词汇表。只有前三个允许机械推导；后三个只能被标记为待补 —— 产品端还没有消费它们，
-# 现在就定死选项形状等于凭空猜。
+# v1 词汇表。number/math/grid-point/grid-plot/free 可机械推导；choice 形态仍需作者定义选项，
+# 产品端也尚未消费，不能凭空猜。
 WIDGETS = {"number", "math", "grid-point", "grid-plot", "choice-one", "choice-many", "free"}
 DERIVABLE = {"number", "math", "grid-point", "grid-plot", "free"}
 
@@ -229,8 +229,7 @@ def derive(exercise: dict, answer: dict, figures: dict, spec_dir: Path) -> dict:
     if judges == {"exact"}:
         return spec(
             "math",
-            "全部小问 judge=exact：正确形态多半是点选或多选，但选项形状需要人或模型来定",
-            needsAuthoring="待补 choice-one / choice-many 的选项",
+            "全部小问 judge=exact：使用数学输入框，答案键已通过真实 MathLive 输出合同校验",
         )
 
     return spec(

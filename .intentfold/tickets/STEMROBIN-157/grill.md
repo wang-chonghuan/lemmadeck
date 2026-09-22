@@ -1,0 +1,7 @@
+# Self Grill
+
+1. **Should authors keep entering numeric paragraph indexes?** No. The observed renderer already defines the final paragraph stream. New templates will accept adjacent `before`/`after` paragraph text, resolved by that same JS implementation. Existing numeric artifacts remain readable only as compatibility data.
+2. **Should exact answers be delegated to symbolic equivalence?** No. `exact` is intentionally lexical. The runtime will canonicalize general MathLive LaTeX syntax before lexical comparison; `numeric` and `expression` keep their existing Compute Engine semantics.
+3. **How is a correction authorized without weakening the formula gate?** A faithful page records the printed mathematical concern without changing its block text. Assembly preserves the page/block reference. Edition preparation generates a correction record bound to the page JSON hash, block, original expression, and target; validation compares the modern text to the source text after applying only those registered replacements.
+4. **What happens to a registered source error copied unchanged into the modern edition?** Finalization fails because every generated correction record requires a non-empty replacement and requires the modern target to contain it instead of the original.
+5. **Does this cross a Charter redline?** No. The route changes no dependencies, schema, Charter, deployment configuration, or production content; it does not expose answer keys or write production data. Temporary source samples and browser evidence stay under the ticket's ignored `tmp/`.

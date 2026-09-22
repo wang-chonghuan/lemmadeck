@@ -95,14 +95,14 @@ def test_derive_routes_by_the_answer_key_alone():
     )
     assert expression["widget"] == "math" and "needsAuthoring" not in expression
 
-    # exact 的正确形态多半是点选，但选项形状还没人定 —— 维持现状且必须标记待补。
+    # exact 已由真实 MathLive 输出合同覆盖，可以直接沿用数学输入框。
     exact = li.derive(
         exercise,
         {"grading": "auto", "parts": [{"judge": "exact", "expected": ["是"]}]},
         {},
         Path("."),
     )
-    assert exact["widget"] == "math" and exact["needsAuthoring"]
+    assert exact["widget"] == "math" and "needsAuthoring" not in exact
 
 
 def test_number_needs_every_expected_to_be_a_bare_number():
