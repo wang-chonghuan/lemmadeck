@@ -13,7 +13,9 @@ still be misled about the mathematical relationship?
 - every source inventory assertion ID resolves
 - every finite source grid has a `gridDimensions` assertion, and every
   source-bound point relation has an executable relationship assertion such as
-  `displacement`; `objectCount` cannot satisfy either requirement
+  `displacement`; every mapped point is covered by a mapped relation wholly
+  inside its source-inventory group, so another point's or an outside point's
+  relation cannot substitute; `objectCount` cannot satisfy either requirement
 - every required mathematical relationship has an assertion
 - every centrally symmetric object has complete opposite-point pairs whose
   midpoint is the declared center

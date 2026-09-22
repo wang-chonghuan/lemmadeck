@@ -70,8 +70,9 @@ async function assertFigurePixels(figure, page) {
   assert.ok(marks > 100, 'Figure screenshot has no visible drawing')
 }
 
-async function assertPublishedFigure({ figure, asset, book, edition, lesson, page }) {
+export async function assertPublishedFigure({ figure, asset, book, edition, lesson, page }) {
   await expect(figure).toBeAttached()
+  let requiredMinTextPx = null
   if (asset.svg) {
     const assetPath = path.join(book, 'editions', edition, asset.svg)
     const currentSVG = fs.readFileSync(assetPath, 'utf8')
@@ -80,6 +81,14 @@ async function assertPublishedFigure({ figure, asset, book, edition, lesson, pag
       host.innerHTML = expected
       return element.querySelector('svg')?.outerHTML === host.querySelector('svg')?.outerHTML
     }, currentSVG), true, `${lesson}/${asset.id}: published SVG is stale`)
+    assert.ok(asset.spec, `${lesson}/${asset.id}: SVG is missing its FigureSpec`)
+    const specPath = path.join(book, 'editions', edition, asset.spec)
+    const spec = JSON.parse(fs.readFileSync(specPath, 'utf8'))
+    requiredMinTextPx = spec?.display?.minTextPx
+    assert.ok(
+      Number.isFinite(requiredMinTextPx) && requiredMinTextPx >= 16,
+      `${lesson}/${asset.id}: FigureSpec display.minTextPx is invalid`,
+    )
   }
   const imageAsset = asset.artwork || asset.png
   if (imageAsset) {
@@ -99,7 +108,20 @@ async function assertPublishedFigure({ figure, asset, book, edition, lesson, pag
     if (image) await image.decode()
     const media = svg || image
     if (!media) return null
+    await document.fonts.ready
     const rect = media.getBoundingClientRect()
+    const renderedTextSizes = svg
+      ? [...svg.querySelectorAll('text')].map(node => {
+          const matrix = node.getScreenCTM()
+          if (!matrix) throw new Error('Missing SVG screen transform')
+          const fontSize = Number.parseFloat(getComputedStyle(node).fontSize)
+          if (!Number.isFinite(fontSize)) throw new Error('Invalid SVG font size')
+          return fontSize * Math.min(
+            Math.hypot(matrix.a, matrix.b),
+            Math.hypot(matrix.c, matrix.d),
+          )
+        })
+      : []
     element.scrollLeft = element.scrollWidth
     const atEnd = element.scrollLeft + element.clientWidth >= element.scrollWidth - 1
     element.scrollLeft = 0
@@ -107,6 +129,10 @@ async function assertPublishedFigure({ figure, asset, book, edition, lesson, pag
       width: rect.width,
       height: rect.height,
       atEnd,
+      textCount: renderedTextSizes.length,
+      minRenderedTextPx: renderedTextSizes.length
+        ? Math.min(...renderedTextSizes)
+        : null,
       marks: svg
         ? svg.querySelectorAll('path,line,polygon,circle,text,rect').length
         : image.naturalWidth,
@@ -116,6 +142,14 @@ async function assertPublishedFigure({ figure, asset, book, edition, lesson, pag
     state?.width > 0 && state.height > 0 && state.marks > 0 && state.atEnd,
     `${lesson}/${asset.id}: missing, blank or unreachable figure`,
   )
+  if (state.textCount > 0) {
+    assert.ok(
+      state.minRenderedTextPx >= requiredMinTextPx,
+      `${lesson}/${asset.id}: rendered SVG text `
+        + `${state.minRenderedTextPx.toFixed(2)}px is below `
+        + `${requiredMinTextPx}px`,
+    )
+  }
   await assertFigurePixels(figure, page)
 }
 

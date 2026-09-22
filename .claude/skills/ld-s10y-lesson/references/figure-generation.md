@@ -27,7 +27,10 @@ Reusing an existing FigureSpec or SVG does not reuse its source-fidelity
 judgment. Reopen the original PNG, rebuild or recheck `source.inventory`, and
 separate source facts from justified modern additions. Byte-identical
 regeneration proves determinism only. Grid dimensions and point relationships
-must use executable assertions rather than `objectCount`.
+must use executable assertions rather than `objectCount`. A source-inventory
+group that requires point relationships must cover every mapped source point
+with a mapped multi-point assertion wholly inside that group; relationships
+among other points or to an unmapped point do not count.
 
 The edition manifest contracts are:
 

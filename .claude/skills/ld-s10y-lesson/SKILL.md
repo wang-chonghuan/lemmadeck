@@ -343,7 +343,8 @@ p2c.py adapt-finalize --book 5m --edition modern-us-neutral \
      对象、标签、行列与关系，再绑定稳定的 object/assertion id。已有 FigureSpec、SVG 或
      字节一致重建只能证明实现可复现，不能替代原图保真核对；现代规整或增补必须与原图事实
      分开说明。网格行列用 `gridDimensions`，点位移用 `displacement`，集合归属用 `inside`，
-     语义连线用 `connects`，不能用 `objectCount` 代替关系断言
+     语义连线用 `connects`，不能用 `objectCount` 代替关系断言；要求点关系的来源组中，
+     每个来源点都必须被组内映射的多点断言覆盖，组外或只覆盖其他点的关系不能替代
    - 声明产品实际显示宽度，所有标签在这些宽度下不得小于 16px
    - 矢量颜色只用 `ink`、`muted`、`accent`、`accentSoft`、`grid`、`paper` 语义角色，
      由产品主题和打印样式通过 CSS 变量决定实际颜色
@@ -457,8 +458,9 @@ node .claude/skills/ld-s10y-lesson/tools/check_product.mjs \
 ```
 
 `--lesson` 可重复，`--all` 检查该 edition 全部课程。脚本使用 app 已安装的 Playwright，
-在桌面与手机逐题检查图引用、媒体非空、SVG 屏幕变换后的实际字号、横向滚动末端可达及
-每个输入框的键盘实际输入归属；
+在桌面与手机逐题检查图引用、媒体非空，并从图片清单指向的 FigureSpec 读取
+`display.minTextPx`，通过 `getScreenCTM()` 检查 SVG 屏幕变换后的实际字号；还检查
+横向滚动末端可达及每个输入框的键盘实际输入归属；
 还检查页尾答案框不被键盘遮住、收起后滚动区留白恢复，以及匿名判分结果中的公式渲染。
 匿名检查不写学习记录。它不证明原图语义完整，必须先完成 `ld-s10y-image` 的源图对照。
 

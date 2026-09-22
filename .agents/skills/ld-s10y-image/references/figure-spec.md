@@ -160,8 +160,11 @@ Use assertions for every relationship required by the exercise:
 Assertions validate source-space mathematics before rendering. The render
 report separately validates label overlap and clipping. When a source-inventory
 group declares `gridDimensions`, every mapped grid must have that assertion;
-when it declares `pointRelationships`, the mapped points must have a
-relationship assertion. `objectCount` is never a substitute for either check.
+when it declares `pointRelationships`, every mapped point must appear in at
+least one mapped multi-point assertion whose point references are wholly
+inside that inventory group. A relationship among other points or to an
+unmapped point does not cover the missing source point. `objectCount` is never
+a substitute for either check.
 
 When the description or authoritative text says a figure is centrally
 symmetric or invariant under a half-turn, `centralSymmetry` is mandatory.

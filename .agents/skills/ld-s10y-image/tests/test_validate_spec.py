@@ -374,6 +374,99 @@ class ValidateSpecTests(unittest.TestCase):
             for error in errors
         ))
 
+    def multi_point_displacement_payload(self):
+        payload = self.grid_displacement_payload()
+        payload["objects"].extend([
+            {"id": "point-k", "type": "point", "at": [6, 2], "label": "K"},
+            {"id": "point-p", "type": "point", "at": [3, 4], "label": "P"},
+            {"id": "point-n", "type": "point", "at": [7, 5], "label": "N"},
+        ])
+        payload["assertions"].extend([
+            {
+                "id": "origin-to-k",
+                "type": "displacement",
+                "from": "origin",
+                "to": "point-k",
+                "dx": 4,
+                "dy": 1,
+            },
+            {
+                "id": "origin-to-p",
+                "type": "displacement",
+                "from": "origin",
+                "to": "point-p",
+                "dx": 1,
+                "dy": 3,
+            },
+            {
+                "id": "origin-to-n",
+                "type": "displacement",
+                "from": "origin",
+                "to": "point-n",
+                "dx": 5,
+                "dy": 4,
+            },
+        ])
+        group = payload["source"]["inventory"][1]
+        group["objects"].extend(["point-k", "point-p", "point-n"])
+        group["assertions"].extend([
+            "origin-to-k",
+            "origin-to-p",
+            "origin-to-n",
+        ])
+        return payload
+
+    def test_multi_point_relationship_coverage_passes(self):
+        payload = self.multi_point_displacement_payload()
+        self.assertEqual(MODULE.validate(self.write(payload), "draft"), [])
+
+    def test_missing_one_multi_point_relationship_fails(self):
+        payload = self.multi_point_displacement_payload()
+        payload["assertions"] = [
+            item
+            for item in payload["assertions"]
+            if item["id"] != "origin-to-target"
+        ]
+        group = payload["source"]["inventory"][1]
+        group["assertions"].remove("origin-to-target")
+        errors = MODULE.validate(self.write(payload), "draft")
+        self.assertTrue(any(
+            "pointRelationships missing mapped relation coverage for 'target'"
+            in error
+            for error in errors
+        ))
+
+    def test_relationship_outside_inventory_group_cannot_cover_point(self):
+        payload = self.multi_point_displacement_payload()
+        payload["objects"].append({
+            "id": "external",
+            "type": "point",
+            "at": [8, 6],
+            "label": "E",
+        })
+        payload["assertions"] = [
+            item
+            for item in payload["assertions"]
+            if item["id"] != "origin-to-target"
+        ]
+        payload["assertions"].append({
+            "id": "target-to-external",
+            "type": "displacement",
+            "from": "target",
+            "to": "external",
+            "dx": 3,
+            "dy": 0,
+        })
+        group = payload["source"]["inventory"][1]
+        group["assertions"].remove("origin-to-target")
+        group["assertions"].append("target-to-external")
+        errors = MODULE.validate(self.write(payload), "draft")
+        self.assertTrue(any(
+            "pointRelationships missing mapped relation coverage for 'target'"
+            in error
+            for error in errors
+        ))
+
     def test_inventory_catches_missing_relationship(self):
         payload = copy.deepcopy(self.payload)
         payload["source"]["inventory"][0]["assertions"].append(
