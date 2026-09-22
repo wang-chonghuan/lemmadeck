@@ -103,7 +103,17 @@ def _source_target_map(lesson: dict, exercises: dict) -> dict[str, dict[str, str
     return targets
 
 
-def _reconstructed_source_targets(
+def _refs_by_target(
+    targets: dict[str, dict[str, str]],
+) -> dict[str, set[str]]:
+    result: dict[str, set[str]] = {}
+    for ref, bound in targets.items():
+        for target in bound:
+            result.setdefault(target, set()).add(ref)
+    return result
+
+
+def _authoritative_source_targets(
     book: Path,
     lesson: dict,
     exercises: dict,
@@ -147,7 +157,7 @@ def _reconstructed_source_targets(
         matches = candidates
     if len(matches) != 1:
         raise SystemExit(
-            "ERROR: 旧 lesson 缺少 source_refs，且无法从权威页唯一重建；"
+            "ERROR: 无法从权威页唯一确认 lesson 来源身份；"
             "请重新运行 assemble"
         )
 
@@ -156,16 +166,16 @@ def _reconstructed_source_targets(
     source_prose = candidate.get("prose", [])
     if len(raw_prose) != len(source_prose):
         raise SystemExit(
-            "ERROR: 旧 lesson 缺少 source_refs，且正文块数量与权威页装订结果不一致；"
+            "ERROR: lesson 正文块数量与权威页装订结果不一致；"
             "请重新运行 assemble"
         )
 
     targets: dict[str, dict[str, str]] = {}
     for index, (raw_block, source_block) in enumerate(zip(raw_prose, source_prose)):
         for field in ("kind", "id", "label", "printed_page"):
-            if raw_block.get(field) != source_block.get(field):
+            if field in raw_block and raw_block.get(field) != source_block.get(field):
                 raise SystemExit(
-                    "ERROR: 旧 lesson 缺少 source_refs，且正文身份与权威页装订结果不一致；"
+                    "ERROR: lesson 正文身份与权威页装订结果不一致；"
                     "请重新运行 assemble"
                 )
         for ref in source_block.get("spans") or [source_block["ref"]]:
@@ -173,21 +183,20 @@ def _reconstructed_source_targets(
 
     raw_items = exercises.get("exercises", [])
     source_items = candidate.get("exercises", [])
-    if any(not item.get("pages") for item in raw_items):
-        if len(raw_items) != len(source_items):
-            raise SystemExit(
-                "ERROR: 旧 exercises 缺少 pages，且题目数量与权威页装订结果不一致；"
-                "请重新运行 assemble"
-            )
-        for index, (raw_item, source_item) in enumerate(zip(raw_items, source_items)):
-            for field in ("number", "source_number", "group", "group_id"):
-                if raw_item.get(field) != source_item.get(field):
-                    raise SystemExit(
-                        "ERROR: 旧 exercises 缺少 pages，且题目身份与权威页装订结果不一致；"
-                        "请重新运行 assemble"
-                    )
-            for ref in source_item.get("pages", []):
-                targets.setdefault(ref, {})[f"exercises[{index}]"] = raw_item.get("text", "")
+    if len(raw_items) != len(source_items):
+        raise SystemExit(
+            "ERROR: exercises 题目数量与权威页装订结果不一致；"
+            "请重新运行 assemble"
+        )
+    for index, (raw_item, source_item) in enumerate(zip(raw_items, source_items)):
+        for field in ("number", "source_number", "group", "group_id"):
+            if field in raw_item and raw_item.get(field) != source_item.get(field):
+                raise SystemExit(
+                    "ERROR: exercises 题目身份与权威页装订结果不一致；"
+                    "请重新运行 assemble"
+                )
+        for ref in source_item.get("pages", []):
+            targets.setdefault(ref, {})[f"exercises[{index}]"] = raw_item.get("text", "")
     return targets
 
 
@@ -203,21 +212,18 @@ def source_errata(book: Path, lesson: dict, exercises: dict) -> list[dict]:
     ):
         return []
 
-    targets = _source_target_map(lesson, exercises)
-    missing_refs = any(
-        not block.get("source_refs")
-        for block in lesson.get("prose", [])
-    ) or any(
-        not exercise.get("pages")
-        for exercise in exercises.get("exercises", [])
-    )
-    if missing_refs:
-        for ref, recovered in _reconstructed_source_targets(
-            book,
-            lesson,
-            exercises,
-        ).items():
-            targets.setdefault(ref, {}).update(recovered)
+    declared_targets = _source_target_map(lesson, exercises)
+    targets = _authoritative_source_targets(book, lesson, exercises)
+    declared_refs = _refs_by_target(declared_targets)
+    authoritative_refs = _refs_by_target(targets)
+    for target, expected in authoritative_refs.items():
+        actual = declared_refs.get(target, set())
+        if actual and actual != expected:
+            raise SystemExit(
+                f"ERROR: {target} 的来源引用与权威页装订身份不一致 "
+                f"(当前 {sorted(actual)}，权威 {sorted(expected)})；"
+                "请重新运行 assemble"
+            )
 
     records = []
     seen = set()
@@ -227,14 +233,14 @@ def source_errata(book: Path, lesson: dict, exercises: dict) -> list[dict]:
             if not isinstance(erratum, dict):
                 continue
             block_ref = erratum.get("block")
-            bound = targets.get(block_ref, {})
+            authoritative_bound = targets.get(block_ref, {})
             matches = [
                 (target, text)
-                for target, text in bound.items()
+                for target, text in authoritative_bound.items()
                 if isinstance(erratum.get("original"), str)
                 and text.count(erratum["original"]) == 1
             ]
-            if not bound:
+            if not authoritative_bound:
                 continue
             if not matches:
                 raise SystemExit(

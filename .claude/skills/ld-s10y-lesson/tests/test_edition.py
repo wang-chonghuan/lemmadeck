@@ -645,7 +645,65 @@ class EditionTest(unittest.TestCase):
             with self.assertRaisesRegex(SystemExit, "original 未唯一出现"):
                 edition.source_errata(book, raw_lesson, {"exercises": []})
 
-    def test_legacy_reconstruction_ignores_other_lessons_errata(self) -> None:
+    def test_nonempty_wrong_source_ref_is_rejected_against_authoritative_assembly(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            book = Path(temp) / "5m"
+            dump(book / "pages" / "0001" / "page.json", {
+                "meta": {
+                    "page": 1,
+                    "printed_page": 1,
+                    "source": {"pdf_sha256": "pdf-sha"},
+                    "errata": [{
+                        "id": "p0001-math-1",
+                        "block": "p0001#2",
+                        "original": "$1+1=3$",
+                        "reason": "The printed equality is false.",
+                    }],
+                },
+                "blocks": [
+                    {"kind": "h3", "label": None, "lines": ["1. 测试"]},
+                    {"kind": "p", "label": None, "lines": ["原书印作 $1+1=3$。"]},
+                    {
+                        "kind": "ex",
+                        "label": "1",
+                        "lines": ["判断 $1+1=2$ 是否成立。"],
+                    },
+                ],
+            })
+            raw_lesson = {
+                "id": "lesson-1",
+                "number": "1",
+                "title": "测试",
+                "printed_title": "1. 测试",
+                "start_page": 1,
+                "start_printed": 1,
+                "prose": [{
+                    "kind": "p",
+                    "text": "原书印作 $1+1=3$。",
+                    "id": None,
+                    "label": None,
+                    "printed_page": 1,
+                    "source_refs": ["p0001#3"],
+                }],
+            }
+            raw_exercises = {
+                "exercises": [{
+                    "number": "1",
+                    "source_number": "1",
+                    "group": None,
+                    "group_id": "g0",
+                    "text": "判断 $1+1=2$ 是否成立。",
+                    "pages": ["p0001#3"],
+                }],
+            }
+
+            with self.assertRaisesRegex(
+                SystemExit,
+                "来源引用与权威页装订身份不一致",
+            ):
+                edition.source_errata(book, raw_lesson, raw_exercises)
+
+    def test_authoritative_binding_ignores_other_lessons_errata(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             book = Path(temp) / "5m"
             dump(book / "pages" / "0001" / "page.json", {
@@ -690,6 +748,7 @@ class EditionTest(unittest.TestCase):
                     "id": None,
                     "label": None,
                     "printed_page": 1,
+                    "source_refs": ["p0001#2"],
                 }],
             }
 
