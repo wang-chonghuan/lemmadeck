@@ -1,0 +1,65 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 10,
+  "printed_page": 4,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 10
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "aa33f27460c7ed68007199854dbe6f8ec9c97c815fc5bb8f423ed9ea2e658b40"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "页底横线与扫描边缘各形成一个额外行带；脚注分隔以换行标记保留，页码作为 foot 块保存。"
+  ],
+  "printed_lines": 18,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 9 -->
+9．约分：
+а）$\frac{45a^3b^4}{54a^4b^3}$；　б）$\frac{26a^2b^6}{65a^6b^2}$；　в）$\frac{3x+9y}{x^2-9y^2}$；
+г）$\frac{2x-4y}{x^2-4y^2}$；　д）$\frac{7a(a-b)}{14a^2(b-a)}$；　е）$\frac{6x^3-3xy}{6y^2-12xy}$；
+ж）$\frac{p^2-q(2p-q)}{pq-q(2p-q)}$；　з）$\frac{a(a+b)-b(a-b)}{b(a+b)+a(a-b)}$．
+
+<!-- ex 10 -->
+10．化简：
+а）$\frac{5x^2-x}{a^2}\cdot\frac{a}{x^2}$；　б）$\frac{a^2b^2}{a^2-9b^2}\cdot\frac{a+3b}{2ab}$；
+в）$\frac{a-3}{4b^2}:\frac{4a-12}{b^3}$；　г）$\frac{7x^2y}{x^2-3xy}:\frac{21x}{x-3y}$．
+
+<!-- ex 11 -->
+11．求下列各式的值：
+а）$\frac{(a-2)^2}{a^2-5a}\cdot\frac{2a-10}{4-a^2}$，当 $a=-\frac13$ 时；
+б）$\frac{1-4x^2}{x^2-4x}:\frac{(2x-1)^2}{x^2-16}$，当 $x=-0.25$ 时．
+
+<!-- h3 -->
+2．同分母的分式的和
+
+<!-- p -->
+式 $\frac ac+\frac bc$ 是含有同分母的两个分式的和．我们来说明，
+可以把这个和化成分式 $\frac{a+b}{c}$．
+
+<!-- p open -->
+如果变量 $a$、$b$ 和 $c$ 取自然数值，那么根据同分母的普通
+
+<!-- p -->
+* 这里和以后在有理式的变形中，如果没有特别说明，那么就不再指出使原式↵
+和所得的式恒等的集合．
+
+<!-- foot -->
+4
