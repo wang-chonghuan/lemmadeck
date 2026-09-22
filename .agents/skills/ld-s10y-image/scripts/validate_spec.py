@@ -71,6 +71,35 @@ def point_map(objects: list[dict]) -> dict[str, tuple[float, float]]:
     return points
 
 
+def assertion_point_ids(
+    assertion: dict,
+    point_ids: set[str],
+) -> set[str]:
+    kind = assertion.get("type")
+    fields = {
+        "distance": ("a", "b"),
+        "equalDistance": ("a", "b", "c", "d"),
+        "collinear": ("a", "b", "c"),
+        "parallel": ("a", "b", "c", "d"),
+        "perpendicular": ("a", "b", "c", "d"),
+        "pointOnLine": ("point", "a", "b"),
+        "pointOnCircle": ("point", "center"),
+        "connects": ("from", "to"),
+        "displacement": ("from", "to"),
+    }.get(kind, ())
+    values = [assertion.get(field) for field in fields]
+    if kind == "centralSymmetry":
+        values.append(assertion.get("center"))
+        for pair in assertion.get("pairs", []):
+            if isinstance(pair, dict):
+                values.extend((pair.get("a"), pair.get("b")))
+    return {
+        value
+        for value in values
+        if isinstance(value, str) and value in point_ids
+    }
+
+
 def resolve_point(
     value: Any,
     points: dict[str, tuple[float, float]],
@@ -439,16 +468,38 @@ def completeness_errors(
                             f"{label}: pointRelationships requirement needs "
                             "at least two mapped points"
                         )
-                    elif not any(
-                        item.get("type") not in {
-                            "objectCount", "gridDimensions"
-                        }
-                        for item in mapped_assertions
-                    ):
-                        errors.append(
-                            f"{label}: multiple source points require a mapped "
-                            "relationship assertion; objectCount is insufficient"
-                        )
+                    else:
+                        mapped_point_ids = set(mapped_points)
+                        relationship_coverages = []
+                        for item in mapped_assertions:
+                            references = assertion_point_ids(
+                                item, set(points)
+                            )
+                            if (
+                                len(references) >= 2
+                                and references <= mapped_point_ids
+                            ):
+                                relationship_coverages.append(references)
+                        if not relationship_coverages:
+                            errors.append(
+                                f"{label}: multiple source points require a "
+                                "mapped relationship assertion wholly within "
+                                "the inventory group; objectCount or unrelated "
+                                "relationships are insufficient"
+                            )
+                        else:
+                            covered_points = set().union(
+                                *relationship_coverages
+                            )
+                            missing_points = sorted(
+                                mapped_point_ids - covered_points
+                            )
+                            if missing_points:
+                                errors.append(
+                                    f"{label}: pointRelationships missing "
+                                    "mapped relation coverage for "
+                                    + ", ".join(repr(item) for item in missing_points)
+                                )
             if current and len(inventory_ids) != len(set(inventory_ids)):
                 errors.append("source.inventory ids must be unique")
 

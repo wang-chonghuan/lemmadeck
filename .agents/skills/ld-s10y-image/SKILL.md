@@ -44,7 +44,10 @@ byte-identical regenerated output proves renderer determinism only. It does
 not prove source fidelity, and `objectCount` cannot replace grid-dimension or
 point-relationship assertions. Mark applicable inventory groups with
 `requires: ["gridDimensions"]` or `requires: ["pointRelationships"]` so the
-validator enforces that distinction.
+validator enforces that distinction. A point-relationship group must map every
+source point to at least one mapped relationship assertion wholly inside that
+group; a relation among other points, or one that escapes to an unmapped point,
+does not cover the missing source point.
 
 Classify `display.purpose` independently of rendering mode. Use
 `instructional` for anything whose detail, geometry, relationship, apparatus,
