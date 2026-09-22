@@ -1,0 +1,62 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 14,
+  "printed_page": 8,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 14
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "09e0bbc90b6063eb4b1b4c94c20872657863570124ecd3cd38c32f4f0b87327b"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "相邻习题的高分式在行投影中重叠，按实际投影使用 samerow；第 18 题续至下一页。"
+  ],
+  "printed_lines": 13,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 13 cont -->
+д）$\frac{a-2}{8a}+\frac{2a+5}{8a}-\frac{3-a}{8a}$；
+е）$\frac{7y-5}{12y}-\frac{10y-19}{12y}+\frac{10+15y}{12y}$．
+
+<!-- ex 14 samerow -->
+14．对于不使分母为零的任何 $a$ 和 $b$，证明：
+а）$\frac{(a+b)^2}{ab}-\frac{(a-b)^2}{ab}$ 的值等于 $4$；
+б）$\frac{(a+b)^2}{a^2+b^2}+\frac{(a-b)^2}{a^2+b^2}$ 的值等于 $2$．
+
+<!-- ex 15 -->
+15．求值：
+а）$\frac{x^2+1}{x-3}-\frac{10}{x-3}$，当 $x=97$ 时；
+б）$\frac{y+7}{y^2-25}-\frac{2y+2}{y^2-25}$，当 $y=-5.1$ 时．
+
+<!-- ex 16 -->
+16．化简：　а）$\frac{x}{y-1}+\frac5{1-y}$；　б）$\frac{a}{c-3}-\frac6{3-c}$；
+в）$\frac{2m}{m-n}+\frac{2n}{n-m}$；　г）$\frac{5p}{2q-p}+\frac{10q}{p-2q}$；
+д）$\frac{a^2+16}{a-4}+\frac{8a}{4-a}$；　е）$\frac{x^2+9y^2}{2x-6y}+\frac{6xy}{6y-2x}$．
+
+<!-- ex 17 samerow -->
+17．找出下列各式的定义域，并证明，在整个定义域上，式的值不依赖于变量值：
+а）$\frac{3x+5}{2x-1}+\frac{7x+3}{1-2x}$；　б）$\frac{5x+1}{5x-20}+\frac{x+17}{20-5x}$．
+
+<!-- ex 18 samerow -->
+18．化简：
+а）$\frac{x^2}{(x-5)^2}-\frac{25}{(5-x)^2}$；　б）$\frac{x^2+25}{(x-5)^3}+\frac{10x}{(5-x)^3}$．
+
+<!-- foot -->
+8
