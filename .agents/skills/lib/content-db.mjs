@@ -8,15 +8,14 @@
 // writes, so seven finished lessons were saved, reported success, and were invisible in the
 // product. One definition, imported everywhere, is the fix — not six corrected copies.
 //
-// Keep the resolution order identical to `app/src/lib/db.ts`.
+// Keep the single-variable contract identical to `app/src/lib/db.ts`.
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import postgres from 'postgres'
 import { repoRoot } from '../sr-voa1500/scripts/vocab.mjs'
 
-// The live content schema — on Supabase, via LEMMADECK_DATABASE_URL. The Azure easy-app
-// Postgres has a schema of the same name; it is empty and is never written to. Tell them
-// apart by server, not by name — see .intentfold/charter/engineering.md.
+// A schema name alone does not identify the server. Only LEMMADECK_DATABASE_URL
+// selects the authoritative Supabase database.
 export const CONTENT_SCHEMA = 'lemmadeck-schema'
 
 // The repo-root .env, parsed the way every one of these scripts parsed it.
@@ -33,14 +32,12 @@ export function readRepoEnv(root = repoRoot()) {
   return env
 }
 
-// Same order as app/src/lib/db.ts. The fallbacks exist so an unmigrated environment keeps
-// reading; nothing new should ever be written through them.
+// Fail closed just like app/src/lib/db.ts; legacy deployment variables are not aliases.
 export function contentUrl(env = readRepoEnv()) {
-  const url =
-    env.LEMMADECK_DATABASE_URL || env.EASYAPP_DATABASE_URL || env.DATABASE_URL
+  const url = env.LEMMADECK_DATABASE_URL
   if (!url)
     throw new Error(
-      'no LEMMADECK_DATABASE_URL / EASYAPP_DATABASE_URL / DATABASE_URL in the repo-root .env',
+      'no LEMMADECK_DATABASE_URL in the repo-root .env',
     )
   return url
 }

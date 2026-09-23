@@ -1,6 +1,5 @@
-# Root Dockerfile — build context is the repo root (n-easyapp hard-codes a root
-# Dockerfile + root build context). The web app is a standalone project in app/;
-# this builds it. No repo-root package.json exists — the app owns its own manifest.
+# Root Dockerfile and build context are the Render deployment contract.
+# The web app is a standalone project in app/; no repo-root package.json exists.
 FROM node:24-alpine AS build
 WORKDIR /app
 # install from the app's own manifest + lockfile (context paths are repo-root relative)
