@@ -127,8 +127,8 @@ cd app && npx playwright test tests/galaxy-verify.spec.ts --reporter=list
 2. **`npx tsc` 偶尔解析到假 tsc 包**，用 `./node_modules/.bin/tsc --noEmit`。
    `textbooks.ts:193` 有一个与星图无关的既有类型错误，忽略。
 3. **HMR 对 canvas 组件不可靠**：改了组件感觉没生效时，先硬刷新再排查。
-4. 上线需要 commit + push（n-git cap11）+ 重新部署（n-easyapp cap2，项目名 `lemmadeck`）；
-   galaxy.json 由 Vite 从 `ssot-resources/public/` 放进镜像，不改数据库。
+4. 上线先按 IntentFold 合并，再按 `.intentfold/charter/operations.md` 显式发布到 Render；
+   合并不会自动部署。galaxy.json 由 Vite 从 `ssot-resources/public/` 放进镜像，不改数据库。
 
 ## 明确排除 / 未来方向
 

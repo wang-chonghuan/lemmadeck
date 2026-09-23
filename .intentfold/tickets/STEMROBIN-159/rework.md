@@ -19,7 +19,7 @@ The original `handoff.md` remains unchanged.
   at `lemmadeck.onrender.com`. Azure remained available throughout.
 - Updated the machine-owned deploy routing and infrastructure record to actual Render state.
   Added an explicit comment to `render.yaml`: it is a reference, not an active Blueprint.
-  No application source changed after the original handoff.
+  No application source changed during this initial cutover.
 
 ## Rechecked Evidence
 
@@ -47,10 +47,52 @@ The original `handoff.md` remains unchanged.
 - Screenshots and raw observations are disposable ticket evidence under `tmp/`; live service,
   DNS, and rollback identifiers are retained in `infra/README.md` and the Plane ticket.
 
+## Authorized Hosting Cleanup
+
+The human subsequently approved finishing the proposed cleanup, explicitly preserving Supabase
+and focusing on separation from Azure hosting. The live ticket now records this approval in place
+of the former pending-Charter constraints.
+
+- Replaced the Engineering and Operations Charter's Azure hosting/deploy instructions with the
+  actual Render configuration and the sole manual release, observation, and rollback path.
+  Approval boundaries remain explicit; Product and UI Charter files are unchanged.
+- Routed `project.json`, `infra/README.md`, the root README, and the galaxy skill's publishing
+  instruction to those operations. Removed obsolete Azure build comments. Kept retirement-only
+  Azure identifiers and the rollback baseline separate from routine deployment instructions.
+- Removed `EASYAPP_DATABASE_URL` and `DATABASE_URL` fallbacks from the application DB client and
+  shared content helper. Both now fail closed without `LEMMADECK_DATABASE_URL`; the client,
+  Supabase connection value, schema, and pool configuration are unchanged.
+- Added four application tests and four shared-helper tests covering canonical-only selection,
+  missing/empty configuration, rejected legacy variables, and existing client/pool behavior.
+  The helper tests are included in the mechanical-defence commands.
+- No dependency manifests, lockfiles, database schemas, course artifacts, environment files,
+  secrets, or Azure model/image/TTS resources changed.
+
+Cleanup verification passed:
+
+- Resource audit and textbook validator.
+- 113 application tests and four content-helper tests, without database writes.
+- Production build and `git diff --check`.
+- Galaxy skill validation. The validation interpreter initially lacked PyYAML; an isolated `uv`
+  tool environment resolved it without changing project dependencies.
+- Fresh built application, temporarily on port 52160 because 52159 was already held by an SSH
+  listener: `/healthz` returned 200 with database `reachable`; `/` returned 200 with 13,335 bytes;
+  `/card/alg6-c1-s1-n2` returned 200 with 1,522,456 bytes and the lesson title markup.
+  Only GETs were issued. No Supabase configuration, schema, or data was changed.
+- Active-code/instruction search leaves Azure hosting references only in the explicit retirement
+  record, rejection tests, and the rule forbidding legacy database aliases. Frozen history is
+  intentionally preserved.
+
+The cleanup release and its exact merged/deployed revision are recorded in the live ticket after
+publication, rather than claiming a deployment before it occurs.
+
 ## Remaining Boundaries
 
-The Azure application, its empty Azure schema/role, dedicated certificate/image repository, and
-old verification record are not deleted. n-easyapp requires the human's exact confirmation after
-its current deletion plan. The human-owned Charter is also unchanged, pending explicit permission
-for the minimal hosting/deploy replacements. Those unfinished items keep the ticket open.
-No actual production rollback was induced merely to test it.
+The Azure application, its empty Azure schema/role, dedicated certificate/image repository,
+old verification TXT, and old Cloudflare redirect ruleset are not deleted. The human approved
+their scoped cleanup but has not supplied n-easyapp's exact `delete easyapp lemmadeck` confirmation
+after the current plan. Do not substitute broad approval for that tool gate or delete the app's
+dependent resources first. These unfinished items keep the ticket open.
+
+Supabase and shared infrastructure are preserved. No actual production rollback was induced
+merely to test it.

@@ -8,7 +8,8 @@ Most tickets end at merge. `Finish: auto-deploy` runs this file's deploy and pos
 merge. Acceptance verification also uses this file, so stale commands block delivery.
 
 > Consolidated on 2026-09-12 from the former local runbook, QA, and deployment dimensions. Existing
-> commands, evidence rules, and operational boundaries were preserved.
+> commands, evidence rules, and operational boundaries were preserved. Hosting instructions were
+> replaced on 2026-09-23 with explicit human approval for the Render migration and Azure cleanup.
 
 ## Contract
 
@@ -26,22 +27,16 @@ rebuildable working files live under `.tmp/` and may be removed after the run.
 
 **Environments**
 
-One environment: **production**. There is no staging or preview environment.
+One environment: **production**, hosted on Render. There is no staging or preview environment.
+Render builds the root `Dockerfile` with the repo root as context, installing the standalone
+project in `app/` and shipping only `app/.output`. Production remains a single always-on instance.
 
-- Live URL: `https://lemmadeck.com` (`www` redirects to the apex).
-- Origin:
-  `https://ca-lemmadeck.kindsmoke-4d84c417.northeurope.azurecontainerapps.io`.
-- Azure Container Apps app `ca-lemmadeck`, resource group `rg-easyapp-shared`, shared environment
-  `cae-easyapp-shared`, managed through n-easyapp project `lemmadeck`.
-- Image `acreasyapp.azurecr.io/lemmadeck:latest`, built by `az acr build`.
-- The app runs with minimum replicas set to 1.
-- n-easyapp builds from the repo-root `Dockerfile` with the repo root as build context. The image
-  installs and builds the standalone project in `app/`, then ships only `app/.output`.
-- Cloudflare zone `lemmadeck.com`: apex A record to `20.54.18.105` is DNS-only; `www` is a proxied
-  CNAME to the apex with a redirect rule. The Azure managed certificate is
-  `mc-cae-easyapp-sh-lemmadeck-com-3571`, DigiCert auto-renewing and bound `SniEnabled`.
-- Retired domains `mynatree.com` and `stemrobin.com` serve nothing; their Cloudflare zones remain
-  in the account and may be repointed later.
+The service is API-managed, not Blueprint-managed. `render.yaml` records intended configuration;
+editing it does not apply infrastructure changes. Automatic deployment and preview creation are
+disabled. A merge is not a release; publication is a separate explicit operation.
+
+Azure hosting is retired from the normal deployment path. Remaining guarded retirement targets
+are recorded in `infra/README.md`; Azure model/image/TTS generation services are unaffected.
 
 **Evidence**
 
@@ -65,6 +60,20 @@ A chore's proof is whatever settles its criterion. When the criterion is visible
 product, verify it there even when a query proves the underlying row exists.
 
 ## Tools
+
+**Production**
+
+- Live URL: `https://lemmadeck.com`; `www` redirects to the apex.
+- Render origin: `https://lemmadeck.onrender.com`.
+- Workspace: `intentplex` (`tea-d229rofdiees73d7h4gg`).
+- Web service: `lemmadeck` (`srv-dapsio9srm7s73an5p60`), Frankfurt, one `0.5c-512mb` instance.
+- GitHub repository: `wang-chonghuan/lemmadeck`, branch `main`, `autoDeploy=no`.
+- Health endpoint: `/healthz`, requiring session configuration and the existing Supabase connection;
+  its response reports the deployed `RENDER_GIT_COMMIT`.
+- Cloudflare apex and `www`: DNS-only CNAMEs to `lemmadeck.onrender.com`, TTL 300.
+  Both custom domains are verified by Render, which provides TLS and the `www` redirect.
+- No Render database, disk, worker, cron, autoscaling, or preview service.
+- Retired domains `mynatree.com` and `stemrobin.com` serve nothing; their Cloudflare zones remain.
 
 **Install**
 
@@ -153,9 +162,9 @@ psql "$LEMMADECK_DATABASE_URL" -c 'select * from "lemmadeck-schema".sr_answer_ev
 
 **Environment**
 
-- The single source file is repo-root `.env`, git-ignored. Required keys include
-  `LEMMADECK_DATABASE_URL` for the live content DB and `AZURE_TTS_*` for short-literature English
-  narration. `EASYAPP_DATABASE_URL` is dead since 2026-08-14 and must not be used for writes.
+- The single local source file is repo-root `.env`, git-ignored. `LEMMADECK_DATABASE_URL` is the
+  only supported DB variable. Generation credentials, including Azure models/images and
+  `AZURE_TTS_*`, remain available to their one-off skills; they are not website runtime keys.
 - The app reads the same values through a git-ignored symlink:
 
 ```bash
@@ -165,8 +174,11 @@ ln -sf ../.env app/.env
 - Content scripts read the repo-root `.env`. Skills under `.agents/skills/` resolve shared Node
   dependencies there; `ld-s10y-lesson` uses its own Node package and Python virtual environment;
   `ld-s10y-answer` publishers resolve `postgres` from `app/`.
-- The deployed container receives environment values from Azure, not from the repo `.env`.
-  Change runtime values through n-easyapp or `az containerapp`, never by baking them into the image.
+- Render securely stores the existing `LEMMADECK_DATABASE_URL` and a random production
+  `SESSION_SECRET`. The container does not load the repo `.env`. Use `ips-render-ops` capability 6
+  for approved runtime changes, never bake secrets into the image. Do not copy generation
+  credentials to the website. Session-secret rotation invalidates existing login cookies and
+  requires explicit approval.
 
 Read the live content schema:
 
@@ -175,27 +187,48 @@ psql "$LEMMADECK_DATABASE_URL" -c 'set search_path to "lemmadeck-schema"; \dt'
 ```
 
 There is no local database: this command reaches the same shared Supabase project used by production.
-`DATABASE_URL` reaches the empty Azure easy-app database whose schema has the same name, and
-`EASYAPP_DATABASE_URL` is dead; neither is acceptance evidence for data the product reads.
+Legacy database variables are not supported; no alternate database is acceptance evidence for
+data the product reads.
 
 **Deploy**
 
-The routine and only path is the n-easyapp redeploy capability for project `lemmadeck`. It builds
-`acreasyapp.azurecr.io/lemmadeck:latest` via `az acr build` and updates the container app. Do not
-hand-assemble the Azure commands.
+The only routine release path is `ips-render-ops` capability 3, targeting an approved merged
+revision. Load the current skill and use its secret-safe authentication setup. Replace the skill
+path and commit placeholders below with the loaded skill directory and approved main commit:
+
+```bash
+python3 <ips-render-ops>/scripts/release.py --dry-run --only lemmadeck --commit <merged-sha>
+python3 <ips-render-ops>/scripts/release.py --only lemmadeck --commit <merged-sha>
+```
+
+The dry run must select exactly the web service above. Reconcile approved infrastructure changes
+explicitly with the Render API; a change to `render.yaml` alone is not a deployment.
 
 **Post-deploy check**
 
 ```bash
-curl -sS -o /dev/null -w '%{http_code}\n' https://lemmadeck.com/
+render deploys list srv-dapsio9srm7s73an5p60 --output json --confirm
+curl -fsS -D - https://lemmadeck.com/healthz
+curl -fsS -o /dev/null -w '%{http_code} %{size_download}\n' https://lemmadeck.com/
+curl -sSI 'https://www.lemmadeck.com/healthz?check=render'
 ```
 
-Healthy is `200`. Then open the page and confirm the deployed change is visible.
+Require a `live` deploy on the intended commit, `/healthz` status `ok` with the same commit and
+database `reachable`, and `x-render-origin-server: Render`. The root must return 200 with actual
+SSR content, not an empty shell. `www` must redirect once to the apex with path/query intact.
+Observe the changed page read-only; write-capable acceptance remains local.
+
+**Rollback**
+
+Use `ips-render-ops` capability 7 to identify and roll back to a retained successful Render deploy.
+Do not confuse a preceding `deactivated` successful deploy with a failed build. Recheck the actual
+commit and post-deploy observations above. Application rollback does not undo database changes,
+environment variables, DNS, or TLS configuration.
 
 **Operations**
 
 ```bash
-az containerapp logs show -n ca-lemmadeck -g rg-easyapp-shared --tail 50
+render logs -r srv-dapsio9srm7s73an5p60 --limit 50 --output text --confirm
 ```
 
 ## Guidance
@@ -235,8 +268,8 @@ check targeted the wrong surface, then rerun the same command.
 schema operation, Dockerfile or infrastructure change, new runtime environment key, ingress change,
 or scaling change, it is not a routine redeploy.
 
-**Authentication failures stop operations.** An Azure command failing authentication is a stop for
-human re-authentication, not a reason to retry with a different subscription or account.
+**Authentication failures stop operations.** A cloud command failing authentication is a stop for
+human re-authentication, not a reason to retry with a different account, workspace, or subscription.
 
 ## Redlines
 
@@ -251,8 +284,8 @@ human re-authentication, not a reason to retry with a different subscription or 
    artifact, or Charter file** — forbidden outright.
 5. **Running a destructive statement against `$LEMMADECK_DATABASE_URL`** — `DROP`, `TRUNCATE`, or an
    unfiltered `DELETE`/`UPDATE` on any `sr_*` table — not without the human's explicit approval.
-6. **Creating or deleting cloud resources beyond the established n-easyapp redeploy path** — not
-   without the human's explicit approval.
+6. **Creating or deleting cloud resources** — not without the human's explicit approval. Routine
+   Render releases update only the existing approved service.
 7. **Deploying for the first time** — not without the human's explicit approval.
 8. **A deploy that changes more than the image's application code** — not without the human's
    explicit approval. This includes a schema statement run against the live database; a root
@@ -261,7 +294,8 @@ human re-authentication, not a reason to retry with a different subscription or 
    a schema statement is not itself a runtime change.
 9. **Moving the root `Dockerfile`, or changing its build context away from the repo root** —
    forbidden outright.
-10. **Setting the container app to scale to zero** (`--min-replicas 0`) — forbidden outright.
+10. **Allowing the production web service to scale to zero or sleep when idle** — forbidden
+    outright; retain the always-on single-instance baseline.
 11. **Pointing a production domain at anything new, or changing the `lemmadeck.com` Cloudflare
     records or proxy state** — not without the human's explicit approval.
 12. **Reporting a deploy as done without running the post-deploy check** — forbidden outright.

@@ -33,9 +33,12 @@
 
 ## 开发注意事项
 
-**活动数据库是 Supabase。** `LEMMADECK_DATABASE_URL` 优先，schema 是
-`lemmadeck-schema`。`EASYAPP_DATABASE_URL` / `DATABASE_URL` 只保留为旧部署兼容回退；
-新内容和 schema 变更都应面向 LemmaDeck 库。运行时判据在 `app/src/lib/db.ts`。
+**网站托管在 Render。** 合并不会自动上线，发布与回滚统一按
+`.intentfold/charter/operations.md` 执行；不再使用 Azure 应用托管或 ACR 构建。
+
+**活动数据库是 Supabase。** 唯一连接变量是 `LEMMADECK_DATABASE_URL`，schema 是
+`lemmadeck-schema`。缺少此变量即报错，不回退到其他数据库。网站与内容工具遵循相同规则，
+运行时判据在 `app/src/lib/db.ts`，内容工具入口在 `.agents/skills/lib/content-db.mjs`。
 
 **连接串不能喂给 psql。** Supabase 那个串的密码里含 `@`，psql 会当成主机名分隔符而解析
 失败。用 node + 仓库自带的 `postgres` 客户端连（`app/node_modules/postgres`）。

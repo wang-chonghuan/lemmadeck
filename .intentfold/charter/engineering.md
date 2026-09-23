@@ -9,7 +9,8 @@ Record here only decisions, boundaries, and commands that the repository cannot 
 > Consolidated on 2026-09-12 from the former architecture and development dimensions. Existing
 > project decisions and boundaries were preserved. Pull-request landing commands were added later
 > that day with explicit human authorization. The resource boundary was revised on 2026-09-13 by
-> explicit human direction.
+> explicit human direction. Hosting and database-variable rules were revised on 2026-09-23
+> with explicit human approval for the Render migration and Azure hosting cleanup.
 
 ## Contract
 
@@ -17,17 +18,16 @@ Record here only decisions, boundaries, and commands that the repository cannot 
 
 - **tanstack-start** is the application framework — SSR full-stack, a single app in `app/`, React 19,
   TypeScript, Node 24. Vite builds it through the TanStack Start and Nitro plugins. This is the one
-  supported n-easyapp base for this repo; a second app or a framework change is out of scope without
+  supported application structure for this repo; a second app or a framework change is out of scope without
   a charter decision.
 - **`@tanstack/react-router`** is the router — file-based, under `app/src/routes/`.
 - **Tailwind CSS 4** (+ tw-animate-css) is the styling authority; see `ui.md`.
 - **zustand** is the client state library (`app/src/lib/layout-store.ts`).
 - **PostgreSQL** via the `postgres` client is the datastore — the **shared Supabase project**, schema
   **`lemmadeck-schema`**, reached through `LEMMADECK_DATABASE_URL`. Never a second client.
-  `app/src/lib/db.ts` resolves the URL as `LEMMADECK_DATABASE_URL || EASYAPP_DATABASE_URL ||
-  DATABASE_URL`; the fallbacks exist only so an unmigrated deploy keeps working and **nothing new may
-  be written through them**. The container app has `LEMMADECK_DATABASE_URL` set, so production and
-  local read the same schema.
+  `app/src/lib/db.ts` and the shared content helper require `LEMMADECK_DATABASE_URL`; missing
+  configuration fails instead of falling back to another database. Render and local development
+  use the same existing Supabase schema.
 - **Authentication is in-repo, no external provider**: scrypt password hashing (Node `crypto`) and an
   HMAC-signed httpOnly session cookie, both in `app/src/lib/session.server.ts`.
 - **Content rendering**: markdown via `marked`; KaTeX is loaded from a CDN by the root document
@@ -73,16 +73,10 @@ Record here only decisions, boundaries, and commands that the repository cannot 
   locale overlay, or retired concept-led lesson savers. Biographies use `sr-story`. Historical
   short-literature English rows and the `sr-voa1500` generator are retained but are not exposed by
   the application.
-- **The content DB lives on the shared Supabase project, not on the Azure easy-app instance**
-  (schema `lemmadeck-schema`), because the Azure instance was intermittently refusing connections.
-  This is the decision that matters most to anyone writing content — and since the 2026-08-14 rename
-  it needs saying carefully: **tell the two apart by server, never by schema name.** The Azure
-  easy-app Postgres now *also* has a schema called `lemmadeck-schema` (created by n-easyapp cap1 for
-  project `lemmadeck`, empty, wired into the container as `DATABASE_URL`). The live one is the
-  Supabase project reached through `LEMMADECK_DATABASE_URL`; a write that lands in the Azure one
-  still succeeds and never reaches the product. `EASYAPP_DATABASE_URL` still sits in `.env` but is
-  now inert: it names `stemrobin-schema` / `stemrobin-user`, both deleted with `ca-stemrobin` on
-  2026-08-14, so it fails to connect rather than writing somewhere invisible.
+- **Website hosting and content storage are independent.** Render runs the web application;
+  the original shared Supabase project remains the content database. Hosting migration does not
+  migrate the database. Identify the database by its authoritative connection, never by schema
+  name alone. Azure model/image/TTS services remain generation dependencies, not website hosting.
 - **`ssot-schemas/db-schemas/lemmadeck.sql` is the single source of truth for the DB tables** — 18
   of them, generated from the live schema by STEMROBIN-124 and regenerated the same way whenever the
   schema changes deliberately. Reason: schema changes applied ad hoc drift away from anything
@@ -142,6 +136,7 @@ Run once before handoff:
 ```bash
 python3 ssot-resources/audit.py
 python3 ssot-resources/soviet10year-textbooks/validate.py
+node --test .agents/skills/lib/content-db.test.mjs
 cd app && npm run test && npm run build
 ```
 
@@ -231,14 +226,13 @@ the next grill sharper.
    `app/.output/`.
 7. **Changing the DB schema anywhere other than `ssot-schemas/db-schemas/lemmadeck.sql`** —
    forbidden outright. Ad hoc `ALTER`/`CREATE` against the shared server is drift.
-8. **Writing content through any connection other than `LEMMADECK_DATABASE_URL`** — forbidden
-   outright. `DATABASE_URL` points at the Azure easy-app Postgres, whose schema is also named
-   `lemmadeck-schema` and is empty; a write that lands there still succeeds and never reaches the
-   product. `EASYAPP_DATABASE_URL` is dead since 2026-08-14 and only fails.
+8. **Using a database connection other than `LEMMADECK_DATABASE_URL` for application or content
+   access** — forbidden outright. `DATABASE_URL` and `EASYAPP_DATABASE_URL` are not aliases;
+   same-named schemas on other servers are not the product database.
 9. **A content script under `.agents/skills/` calling `postgres(` directly** — forbidden outright.
    Every content script connects through `.agents/skills/lib/content-db.mjs`.
 10. **Adding a repo-root `package.json`, or a second application** — not without the human's explicit
-    approval. The standalone-`app/` layout is what the root `Dockerfile` and n-easyapp are built on.
+    approval. The standalone-`app/` layout is what the root `Dockerfile` builds.
 11. **Committing a product resource outside `ssot-resources/`, or making durable content depend on
     `.tmp/`** — forbidden outright. Code-owned schemas, profiles, dependency files and test fixtures
     remain beside code. `python3 ssot-resources/audit.py` is the mechanical boundary.
