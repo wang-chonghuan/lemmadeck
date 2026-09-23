@@ -1,76 +1,94 @@
-# infra/
+# LemmaDeck Hosting
 
-Deployment transition record for LemmaDeck. The current production origin remains **Azure
-Container Apps** until the Render service, domains, and TLS have been explicitly approved and
-verified. The proposed Render service is declared in the root `render.yaml`; that file does not
-become authoritative until a human creates its Blueprint instance.
+Production moved from Azure Container Apps to **Render** on September 23, 2026 under
+STEMROBIN-159. DNS, TLS, the deployed commit, database readiness, and read-only desktop/mobile
+course rendering were verified before accepting the cutover.
 
-## Current production
+## Current Production
 
-- Origin: Azure Container App `ca-lemmadeck` in `rg-easyapp-shared` /
-  `cae-easyapp-shared`.
-- Image: `acreasyapp.azurecr.io/lemmadeck:latest`.
-- Public URL: `https://lemmadeck.com`; `www` redirects to the apex.
-- The live content database is the shared **Supabase** project, schema `lemmadeck-schema`, through
-  `LEMMADECK_DATABASE_URL`. The same-named Azure schema is empty and is not production data.
+- Public URL: `https://lemmadeck.com`; `www` redirects once to the apex, preserving path and query.
+- Render origin: `https://lemmadeck.onrender.com`.
+- Workspace: `intentplex` (`tea-d229rofdiees73d7h4gg`).
+- Web service: `lemmadeck` (`srv-dapsio9srm7s73an5p60`).
+- Frankfurt, one `0.5c-512mb` instance, root `Dockerfile` and root build context.
+- No Render database, disk, worker, cron, autoscaling, or preview service.
+- GitHub repository: `wang-chonghuan/lemmadeck`, branch `main`, automatic deployments disabled.
+- Health endpoint: `/healthz`; success requires production session configuration and a reachable
+  existing Supabase database, and reports `RENDER_GIT_COMMIT`.
+- Cloudflare apex and `www`: DNS-only CNAMEs to `lemmadeck.onrender.com`, TTL 300.
+- Both custom domains are verified by Render and have valid HTTPS. Render handles the `www`
+  redirect; the former Cloudflare redirect rule is retained only with the rollback baseline and
+  is inactive while `www` is DNS-only.
 
-The active deploy, rollback, and log commands remain in
-`.intentfold/charter/operations.md`. That Charter is human-owned and still names Azure until the
-cutover is approved.
+The service was created through the official Render API. There is **no Blueprint instance or
+Blueprint automatic sync**. Root `render.yaml` is a version-controlled configuration reference;
+editing it alone does not update the service. Reconcile deliberate configuration changes with
+the actual Render API state.
 
-## Proposed Render target
+## Database And Secrets
 
-`render.yaml` declares one Docker web service:
+The database remains the original shared **Supabase** project, schema `lemmadeck-schema`.
+The production `LEMMADECK_DATABASE_URL` was compared with the existing Azure runtime connection
+before copying it. No courses, users, learning records, or database schemas were migrated.
 
-- repository-root `Dockerfile` and build context;
-- Frankfurt, one `0.5c-512mb` instance;
-- no disk, database, worker, cron, autoscaling, or preview service;
-- manual code deploys (`autoDeployTrigger: off`);
-- readiness at `/healthz`;
-- `lemmadeck.com` and `www.lemmadeck.com`;
-- runtime-only `LEMMADECK_DATABASE_URL` and `SESSION_SECRET` values entered outside Git.
+Render stores only the website's required runtime secrets:
 
-Render injects `PORT`; the image already binds `0.0.0.0:$PORT`. `/healthz` verifies that the
-production session secret is configured and that the existing Supabase database is reachable. Its
-response includes `RENDER_GIT_COMMIT` so a release can be matched to Git without exposing secrets.
+- `LEMMADECK_DATABASE_URL`: the existing authoritative Supabase connection.
+- `SESSION_SECRET`: a newly generated random production signing key.
 
-Creating the Blueprint instance starts a paid service and requires explicit approval. Until that
-happens, `render.yaml` is a reviewed proposal, not a description of live infrastructure.
+Neither value belongs in Git, logs, or tickets. The new signing key invalidated old login cookies;
+users sign in again. Later rotations require explicit approval. Content-generation/model/TTS
+credentials remain outside the web service.
 
-## Approved migration sequence
+## Release And Observation
 
-1. Validate `render.yaml`, create its Blueprint instance, enter the two runtime secrets, and verify
-   the first deploy at the Render hostname.
-2. Use `ips-render-ops` capability 3 with a dry run before each manual release. Verify every target
-   is live on the intended commit, then check `/healthz` and real learner pages.
-3. Add the custom domains to Render before changing DNS. Point the Cloudflare apex and `www` records
-   to the assigned Render hostname with proxying disabled until Render reports both domains verified
-   and HTTPS succeeds.
-4. Verify apex and `www`, path and query preservation, the intended single redirect, certificate
-   dates, Render response-origin headers, and the health commit.
-5. Keep the Azure origin intact until those checks pass. On failure, restore the recorded Azure DNS
-   target; Render rollback changes application deploys but does not restore environment variables,
-   DNS, database state, or external configuration.
-6. Only after stable cutover, run the n-easyapp read-only deletion plan again. The human must supply
-   the exact confirmation phrase printed by that tool before it may delete the application, empty
-   project schema, and role. Separately verify and remove only approved LemmaDeck-specific
-   certificate, image repository, and Azure validation records.
+Production release is deliberate; a push or merge does not publish automatically. Use the current
+`ips-render-ops` skill, scope it to this service, and specify the approved merged revision:
 
-The shared Azure resource group, Container Apps Environment, ACR registry, PostgreSQL server and
-database, other projects, Supabase data, and Azure model/image/TTS services are not migration
-targets.
+```bash
+python3 <ips-render-ops>/scripts/release.py --dry-run --only lemmadeck --commit <merged-sha>
+python3 <ips-render-ops>/scripts/release.py --only lemmadeck --commit <merged-sha>
+```
 
-## Post-cutover operations
+The dry run must match exactly one service. After release, verify the API deploy is `live` on the
+same revision and check the actual website, not only the deploy command:
 
-- Release: `ips-render-ops` capability 3, starting with `release.py --dry-run --only lemmadeck`,
-  then deploying an explicit Git commit and verifying the live commit plus response bytes.
-- Logs and status: `ips-render-ops` capabilities 1 and 2.
-- Rollback: `ips-render-ops` capability 7, selecting the newest successful deploy before the bad
-  one, followed by the same health and learner-flow checks.
-- Environment changes: `ips-render-ops` capability 6. Changing `SESSION_SECRET` invalidates existing
-  login cookies and requires the user's explicit production-rotation approval.
+```bash
+render deploys list srv-dapsio9srm7s73an5p60 --output json --confirm
+render logs -r srv-dapsio9srm7s73an5p60 --limit 50 --output text --confirm
+curl -fsS https://lemmadeck.com/healthz
+curl -sS -o /dev/null -w '%{http_code}\n' https://lemmadeck.com/
+curl -sSI 'https://www.lemmadeck.com/card/alg6-c1-s1-n2?tab=ex&exercise=14'
+```
 
-After cutover approval, the Charter needs one minimal replacement: change `.intentfold/project.json`
-and the Engineering/Operations deployment facts and commands from Azure/n-easyapp to the actual
-Render project, service, release, log, rollback, domain, and post-deploy checks. Do not retain Azure
-as a second normal deployment path once its application has been retired.
+Use the skill's secret-safe authentication setup. `/healthz` must name the intended commit,
+the response must identify Render, and the `www` redirect must preserve the requested path/query.
+Learner interaction acceptance remains local; production checks are read-only.
+
+For application rollback, use `ips-render-ops` capability 7 and select the preceding successful
+Render deploy, then recheck the actual commit and health. Rollback does not restore environment
+variables, DNS, or database state. Do not create a second normal Azure deployment path.
+
+## Pending Retirement And Charter Approval
+
+The old Azure application `ca-lemmadeck` remains in `rg-easyapp-shared` /
+`cae-easyapp-shared` until the guarded deletion is explicitly confirmed. Its retained origin is
+`https://ca-lemmadeck.kindsmoke-4d84c417.northeurope.azurecontainerapps.io`.
+The rollback DNS baseline is apex A `20.54.18.105` (DNS-only, automatic TTL) and `www` CNAME to
+the apex (proxied, automatic TTL), with the original Cloudflare redirect rule. Reverting DNS is a
+deliberate production operation, not a routine release.
+
+Run the n-easyapp read-only deletion plan again before removal. It targets only `ca-lemmadeck`,
+the empty **Azure** `easyapp` database's `lemmadeck-schema`, and `lemmadeck-user`; it must not target
+the same-named Supabase schema. The human must reply with the tool's exact confirmation phrase
+before the destructive command runs. The dedicated Azure certificate, ACR `lemmadeck` repository,
+and `asuid.lemmadeck.com` verification record remain until ownership and cleanup are approved.
+
+Keep the shared Azure resource group, environment, registry, PostgreSQL server/database, other
+projects, Supabase, and Azure model/image/TTS services.
+
+The human-owned Engineering and Operations Charter still describes the previous Azure runtime.
+It was **not edited** by the migration agent. Its Azure hosting/deploy facts and commands need the
+human's explicit approval for minimal in-place replacement; other product/UI boundaries remain
+unchanged. This verified transition record and `.intentfold/project.json` identify the actual
+runtime so the old Charter does not cause an accidental Azure redeploy.
