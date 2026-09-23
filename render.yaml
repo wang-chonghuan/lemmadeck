@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: lemmadeck
+    runtime: docker
+    repo: https://github.com/wang-chonghuan/lemmadeck
+    branch: main
+    region: frankfurt
+    plan: 0.5c-512mb
+    numInstances: 1
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    autoDeployTrigger: off
+    maxShutdownDelaySeconds: 30
+    previews:
+      generation: off
+    renderSubdomainPolicy: enabled
+    domains:
+      - lemmadeck.com
+      - www.lemmadeck.com
+    envVars:
+      - key: LEMMADECK_DATABASE_URL
+        sync: false
+      - key: SESSION_SECRET
+        sync: false

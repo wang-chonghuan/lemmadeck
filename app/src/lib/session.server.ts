@@ -4,9 +4,19 @@ import { getCookie, setCookie } from '@tanstack/react-start/server'
 // Server-only session + password primitives. Isolated in a `.server.ts` module so
 // the cookie/crypto imports never reach the client bundle. Minimal by design: a
 // scrypt password hash and an HMAC-signed cookie holding only the user id. No JWT.
-const SESSION_SECRET =
-  process.env.SESSION_SECRET || 'stemrobin-dev-session-secret'
+const DEVELOPMENT_SESSION_SECRET = 'stemrobin-dev-session-secret'
 export const SESSION_COOKIE = 'sr_session'
+
+export function requireSessionSecret(
+  env: NodeJS.ProcessEnv = process.env,
+): string {
+  const configured = env.SESSION_SECRET?.trim()
+  if (configured) return configured
+  if (env.NODE_ENV === 'production') {
+    throw new Error('SESSION_SECRET is required in production')
+  }
+  return DEVELOPMENT_SESSION_SECRET
+}
 
 // --- password: scrypt$saltHex$hashHex ---
 export function verifyPassword(password: string, stored: string): boolean {
@@ -24,7 +34,7 @@ export function verifyPassword(password: string, stored: string): boolean {
 // --- session value: `${userId}.${hmac(userId)}` ---
 export function signSession(userId: number): string {
   const mac = crypto
-    .createHmac('sha256', SESSION_SECRET)
+    .createHmac('sha256', requireSessionSecret())
     .update(String(userId))
     .digest('hex')
   return `${userId}.${mac}`
@@ -37,7 +47,7 @@ export function verifySession(token: string | undefined | null): number | null {
   const id = token.slice(0, dot)
   const mac = token.slice(dot + 1)
   const expected = crypto
-    .createHmac('sha256', SESSION_SECRET)
+    .createHmac('sha256', requireSessionSecret())
     .update(id)
     .digest('hex')
   const macBuf = Buffer.from(mac)
@@ -56,6 +66,7 @@ export function setSessionCookie(userId: number): void {
   setCookie(SESSION_COOKIE, signSession(userId), {
     httpOnly: true,
     sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
     path: '/',
     maxAge: 60 * 60 * 24 * 30,
   })
