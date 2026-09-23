@@ -71,6 +71,35 @@ def point_map(objects: list[dict]) -> dict[str, tuple[float, float]]:
     return points
 
 
+def assertion_point_ids(
+    assertion: dict,
+    point_ids: set[str],
+) -> set[str]:
+    kind = assertion.get("type")
+    fields = {
+        "distance": ("a", "b"),
+        "equalDistance": ("a", "b", "c", "d"),
+        "collinear": ("a", "b", "c"),
+        "parallel": ("a", "b", "c", "d"),
+        "perpendicular": ("a", "b", "c", "d"),
+        "pointOnLine": ("point", "a", "b"),
+        "pointOnCircle": ("point", "center"),
+        "connects": ("from", "to"),
+        "displacement": ("from", "to"),
+    }.get(kind, ())
+    values = [assertion.get(field) for field in fields]
+    if kind == "centralSymmetry":
+        values.append(assertion.get("center"))
+        for pair in assertion.get("pairs", []):
+            if isinstance(pair, dict):
+                values.extend((pair.get("a"), pair.get("b")))
+    return {
+        value
+        for value in values
+        if isinstance(value, str) and value in point_ids
+    }
+
+
 def resolve_point(
     value: Any,
     points: dict[str, tuple[float, float]],
@@ -383,6 +412,94 @@ def completeness_errors(
                         errors.append(
                             f"{label}: missing assertion {assertion_id!r}"
                         )
+                mapped_assertions = [
+                    assertions_by_id[assertion_id]
+                    for assertion_id in required_assertions
+                    if assertion_id in assertions_by_id
+                ]
+                mapped_objects = [
+                    by_id[object_id]
+                    for object_id in required_objects
+                    if object_id in by_id
+                ]
+                requirements = group.get("requires", [])
+                if (
+                    not isinstance(requirements, list)
+                    or any(
+                        requirement not in {
+                            "gridDimensions", "pointRelationships"
+                        }
+                        for requirement in requirements
+                    )
+                    or len(requirements) != len(set(requirements))
+                ):
+                    errors.append(
+                        f"{label}.requires must contain unique supported requirements"
+                    )
+                    requirements = []
+                mapped_grids = [
+                    item["id"]
+                    for item in mapped_objects
+                    if item.get("type") == "grid"
+                ]
+                if "gridDimensions" in requirements:
+                    if not mapped_grids:
+                        errors.append(
+                            f"{label}: gridDimensions requirement needs a mapped grid"
+                        )
+                    for grid_id in mapped_grids:
+                        if not any(
+                            item.get("type") == "gridDimensions"
+                            and item.get("grid") == grid_id
+                            for item in mapped_assertions
+                        ):
+                            errors.append(
+                                f"{label}: grid {grid_id!r} requires a mapped "
+                                "gridDimensions assertion; objectCount is insufficient"
+                            )
+                mapped_points = [
+                    item["id"]
+                    for item in mapped_objects
+                    if item.get("type") == "point"
+                ]
+                if "pointRelationships" in requirements:
+                    if len(mapped_points) < 2:
+                        errors.append(
+                            f"{label}: pointRelationships requirement needs "
+                            "at least two mapped points"
+                        )
+                    else:
+                        mapped_point_ids = set(mapped_points)
+                        relationship_coverages = []
+                        for item in mapped_assertions:
+                            references = assertion_point_ids(
+                                item, set(points)
+                            )
+                            if (
+                                len(references) >= 2
+                                and references <= mapped_point_ids
+                            ):
+                                relationship_coverages.append(references)
+                        if not relationship_coverages:
+                            errors.append(
+                                f"{label}: multiple source points require a "
+                                "mapped relationship assertion wholly within "
+                                "the inventory group; objectCount or unrelated "
+                                "relationships are insufficient"
+                            )
+                        else:
+                            covered_points = set().union(
+                                *relationship_coverages
+                            )
+                            missing_points = sorted(
+                                mapped_point_ids - covered_points
+                            )
+                            if missing_points:
+                                errors.append(
+                                    f"{label}: pointRelationships missing "
+                                    "mapped relation coverage for "
+                                    + ", ".join(repr(item) for item in missing_points)
+                                )
             if current and len(inventory_ids) != len(set(inventory_ids)):
                 errors.append("source.inventory ids must be unique")
 
@@ -462,6 +579,106 @@ def assertion_errors(
                 errors.append(
                     f"{label}: expected {expected} {object_type}, found {actual}"
                 )
+            continue
+        if kind == "gridDimensions":
+            grid_id = item.get("grid")
+            grid = objects_by_id.get(grid_id)
+            if not isinstance(grid, dict) or grid.get("type") != "grid":
+                errors.append(f"{label}.grid must reference a grid")
+                continue
+            columns = item.get("columns")
+            rows = item.get("rows")
+            if (
+                not isinstance(columns, int)
+                or isinstance(columns, bool)
+                or columns <= 0
+            ):
+                errors.append(f"{label}.columns must be a positive integer")
+            if (
+                not isinstance(rows, int)
+                or isinstance(rows, bool)
+                or rows <= 0
+            ):
+                errors.append(f"{label}.rows must be a positive integer")
+            bounds = grid.get("bounds")
+            x_step = grid.get("xStep")
+            y_step = grid.get("yStep")
+            if (
+                not isinstance(bounds, list)
+                or len(bounds) != 4
+                or not all(finite_number(value) for value in bounds)
+            ):
+                errors.append(
+                    f"{label}: gridDimensions requires finite grid bounds"
+                )
+                continue
+            if (
+                not finite_number(x_step)
+                or x_step <= 0
+                or not finite_number(y_step)
+                or y_step <= 0
+            ):
+                continue
+            x_offset = grid.get("xOffset", 0)
+            y_offset = grid.get("yOffset", 0)
+            if not finite_number(x_offset) or not finite_number(y_offset):
+                continue
+            x_min, y_max, x_max, y_min = bounds
+            aligned = all(
+                abs(value - round(value)) <= tolerance
+                for value in (
+                    (x_min - x_offset) / x_step,
+                    (x_max - x_offset) / x_step,
+                    (y_min - y_offset) / y_step,
+                    (y_max - y_offset) / y_step,
+                )
+            )
+            if not aligned:
+                errors.append(
+                    f"{label}: grid bounds must align with its offsets and steps"
+                )
+                continue
+            actual_columns = round((x_max - x_min) / x_step)
+            actual_rows = round((y_max - y_min) / y_step)
+            if isinstance(columns, int) and actual_columns != columns:
+                errors.append(
+                    f"{label}: grid has {actual_columns} columns, expected {columns}"
+                )
+            if isinstance(rows, int) and actual_rows != rows:
+                errors.append(
+                    f"{label}: grid has {actual_rows} rows, expected {rows}"
+                )
+            continue
+        if kind == "displacement":
+            start = resolve_point(
+                item.get("from"), points, f"{label}.from", errors
+            )
+            end = resolve_point(
+                item.get("to"), points, f"{label}.to", errors
+            )
+            expected_dx = item.get("dx")
+            expected_dy = item.get("dy")
+            if not finite_number(expected_dx):
+                errors.append(f"{label}.dx must be finite")
+            if not finite_number(expected_dy):
+                errors.append(f"{label}.dy must be finite")
+            if (
+                start is not None
+                and end is not None
+                and finite_number(expected_dx)
+                and finite_number(expected_dy)
+            ):
+                actual_dx = end[0] - start[0]
+                actual_dy = end[1] - start[1]
+                if (
+                    abs(actual_dx - expected_dx) > tolerance
+                    or abs(actual_dy - expected_dy) > tolerance
+                ):
+                    errors.append(
+                        f"{label}: displacement ({actual_dx:.8g}, "
+                        f"{actual_dy:.8g}) != ({expected_dx!r}, "
+                        f"{expected_dy!r})"
+                    )
             continue
         if kind == "pointOnCircle":
             point = resolve_point(item.get("point"), points, f"{label}.point", errors)

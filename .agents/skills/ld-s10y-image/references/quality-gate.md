@@ -7,9 +7,15 @@ still be misled about the mathematical relationship?
 
 - source PNG hash is current
 - all object ids and references resolve
-- the independent source inventory resolves to visible objects; compare its
-  completeness against source pixels, not against the already-generated object list
+- the independent source inventory resolves to visible objects; for new and
+  reused figures alike, compare its completeness against the original source
+  pixels, never against the already-generated object list or SVG
 - every source inventory assertion ID resolves
+- every finite source grid has a `gridDimensions` assertion, and every
+  source-bound point relation has an executable relationship assertion such as
+  `displacement`; every mapped point is covered by a mapped relation wholly
+  inside its source-inventory group, so another point's or an outside point's
+  relation cannot substitute; `objectCount` cannot satisfy either requirement
 - every required mathematical relationship has an assertion
 - every centrally symmetric object has complete opposite-point pairs whose
   midpoint is the declared center
@@ -25,10 +31,13 @@ still be misled about the mathematical relationship?
 - assertions pass within declared tolerance
 - visible labels use English
 - output hash matches render metadata
+- byte-identical regeneration is determinism evidence only, never source-fidelity evidence
 - render metadata names only the durable final output, never a preview or ticket-temp path
 - every hybrid image reports centered contain fitting with preserved aspect ratio
 - no label collision, clipping, missing point, or missing object
-- text is at least 16 px at every declared product width
+- text is at least 16 px at every declared product width and on the final
+  offline/product surface after applying the SVG screen transform
+- every scroll-layout figure can reach its horizontal scroll end
 - SVG colors are semantic CSS variables and remain legible in neutral, accent,
   and print themes
 - finite geometry fits the canvas, including empty table cells and border lines;

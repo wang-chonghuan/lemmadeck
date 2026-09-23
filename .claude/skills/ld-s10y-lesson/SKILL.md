@@ -339,8 +339,12 @@ p2c.py adapt-finalize --book 5m --edition modern-us-neutral \
    - 同时需要自然对象与精确数学关系时，用分层的 GPT artwork + JSXGraph overlay hybrid；
      产品分别保存 PNG 素材层和 SVG 数学层，不生成或发布扁平合成 PNG
    - 输入必须包含完整相关 edition 题面/正文与原始抽取图 PNG；edition 文本是语义真相
-   - `source.inventory` 先按原图列全对象与关系，再绑定稳定的 object/assertion id；集合归属
-     用 `inside`，语义连线用 `connects`
+   - 新建或复用已有现代图时，都必须重新打开 `source.image` 指向的原 PNG；先按原图列全
+     对象、标签、行列与关系，再绑定稳定的 object/assertion id。已有 FigureSpec、SVG 或
+     字节一致重建只能证明实现可复现，不能替代原图保真核对；现代规整或增补必须与原图事实
+     分开说明。网格行列用 `gridDimensions`，点位移用 `displacement`，集合归属用 `inside`，
+     语义连线用 `connects`，不能用 `objectCount` 代替关系断言；要求点关系的来源组中，
+     每个来源点都必须被组内映射的多点断言覆盖，组外或只覆盖其他点的关系不能替代
    - 声明产品实际显示宽度，所有标签在这些宽度下不得小于 16px
    - 矢量颜色只用 `ink`、`muted`、`accent`、`accentSoft`、`grid`、`paper` 语义角色，
      由产品主题和打印样式通过 CSS 变量决定实际颜色
@@ -415,8 +419,10 @@ SHA；完整原始快照不入库。重发同一 edition 的课文或图片时�
 
 发布器会调用 `tools/validate_publish.py` 只读重验当前产物，不能用旧 audit 的 `pass`
 替代本次检查。图片严格按 `figures.json` 的输出类型读取，不按同名 PNG/SVG 是否存在猜测。
-习题引用的图必须实际展示，并带 `source.inventory`；图改动涉及点位、标签或题中数据时，
-同步核对受影响答案，再走答案技能的 finalize/publish，不能保留基于旧错误图推导的答案。
+习题引用的图必须实际展示，并带经原 PNG 复核的 `source.inventory`；复用样本也不能沿用
+未经复核的旧清单。字节一致只证明确定性，不证明与来源一致。图改动涉及点位、标签或题中
+数据时，同步核对受影响答案，再走答案技能的 finalize/publish，不能保留基于旧错误图
+推导的答案。
 
 连接串取仓库根 `.env` 的 `LEMMADECK_DATABASE_URL`（Supabase，schema `lemmadeck-schema`）。
 写入只用本技能的 Node `postgres` 发布器；只读核对使用项目 `operations.md` 当前指定的命令，
@@ -452,7 +458,9 @@ node .claude/skills/ld-s10y-lesson/tools/check_product.mjs \
 ```
 
 `--lesson` 可重复，`--all` 检查该 edition 全部课程。脚本使用 app 已安装的 Playwright，
-在桌面与手机逐题检查图引用、媒体非空、宽表末列可达及每个输入框的键盘实际输入归属；
+在桌面与手机逐题检查图引用、媒体非空，并从图片清单指向的 FigureSpec 读取
+`display.minTextPx`，通过 `getScreenCTM()` 检查 SVG 屏幕变换后的实际字号；还检查
+横向滚动末端可达及每个输入框的键盘实际输入归属；
 还检查页尾答案框不被键盘遮住、收起后滚动区留白恢复，以及匿名判分结果中的公式渲染。
 匿名检查不写学习记录。它不证明原图语义完整，必须先完成 `ld-s10y-image` 的源图对照。
 
