@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as HealthzRouteImport } from './routes/healthz'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as EnglishAudioIdRouteImport } from './routes/english-audio.$id'
@@ -22,6 +23,11 @@ import { Route as AppEnglishIdReciteRouteImport } from './routes/_app/english.$i
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HealthzRoute = HealthzRouteImport.update({
+  id: '/healthz',
+  path: '/healthz',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -66,6 +72,7 @@ const AppEnglishIdReciteRoute = AppEnglishIdReciteRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/healthz': typeof HealthzRoute
   '/login': typeof LoginRoute
   '/learn': typeof AppLearnRoute
   '/mistakes': typeof AppMistakesRoute
@@ -76,6 +83,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/healthz': typeof HealthzRoute
   '/login': typeof LoginRoute
   '/learn': typeof AppLearnRoute
   '/mistakes': typeof AppMistakesRoute
@@ -88,6 +96,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_app': typeof AppRouteWithChildren
+  '/healthz': typeof HealthzRoute
   '/login': typeof LoginRoute
   '/_app/learn': typeof AppLearnRoute
   '/_app/mistakes': typeof AppMistakesRoute
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/healthz'
     | '/login'
     | '/learn'
     | '/mistakes'
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/healthz'
     | '/login'
     | '/learn'
     | '/mistakes'
@@ -121,6 +132,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_app'
+    | '/healthz'
     | '/login'
     | '/_app/learn'
     | '/_app/mistakes'
@@ -133,6 +145,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  HealthzRoute: typeof HealthzRoute
   LoginRoute: typeof LoginRoute
   EnglishAudioIdRoute: typeof EnglishAudioIdRoute
 }
@@ -144,6 +157,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/healthz': {
+      id: '/healthz'
+      path: '/healthz'
+      fullPath: '/healthz'
+      preLoaderRoute: typeof HealthzRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app': {
@@ -226,6 +246,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  HealthzRoute: HealthzRoute,
   LoginRoute: LoginRoute,
   EnglishAudioIdRoute: EnglishAudioIdRoute,
 }
