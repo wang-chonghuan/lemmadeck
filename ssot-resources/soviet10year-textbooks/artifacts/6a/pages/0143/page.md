@@ -1,0 +1,58 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "6a",
+  "page": 143,
+  "printed_page": 137,
+  "notes": [],
+  "errata": [],
+  "source": {
+    "pdf": "6a 苏联十年制学校数学教材 代数 六年级.pdf",
+    "pdf_sha256": "5bf4fa02c7478d22e88fb1029557fd986e7f1e862d53d449ba96bfc8cf5a3548",
+    "pdf_page": 143
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1473,
+    "h": 2239,
+    "sha256": "a05246a558998519e080d030c7639c7f7145be80e4918c7e032e783d5478c16d"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 25,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 466 cont -->
+б) $\begin{cases}5(x-3y)-6=2x+1,\\↵3(x+6y)+4=9y+19.\end{cases}$
+
+<!-- ex 467 -->
+解方程组：
+а) $\begin{cases}\frac{1}{3}x+\frac{1}{4}y-2=0,\\↵5x-y=56;\end{cases}$
+б) $\begin{cases}\frac{1}{5}x-\frac{1}{6}y=0,\\↵5x-4y=2;\end{cases}$
+в) $\begin{cases}\frac{1}{2}(x+11)=\frac{1}{3}(y+13)+2,\\↵5x=3y+8;\end{cases}$
+г) $\begin{cases}\frac{1}{4}(x-3y)=\frac{1}{3}(x+2y),\\↵x+5y=12.\end{cases}$
+
+<!-- ex 468 -->
+验证：
+а) 方程组 $\begin{cases}7x-3y=0,\\↵2x-y=-1\end{cases}$ 的解是不是方程 $3x+5y=44$
+的解；
+б) 方程组 $\begin{cases}4x+5y=18,\\↵-5x+4y=80\end{cases}$ 的解是不是方程 $7x-2y=↵-96$ 的解。
+
+<!-- ex 469 -->
+下列方程组有没有解？
+а) $\begin{cases}3x+5y=34,\\↵4x-5y=-13,\\↵2x-y=1;\end{cases}$　　б) $\begin{cases}6x-5y=-15,\\13x+3y=-86,\\3x+y=-18.\end{cases}$
+
+<!-- ex 470 open -->
+当 $k$ 和 $l$ 取什么值时，表示方程 $y=kx+l$ 的直线经过
+下列两点：
+
+<!-- foot -->
+· 137 ·

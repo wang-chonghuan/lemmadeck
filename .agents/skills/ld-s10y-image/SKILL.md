@@ -196,3 +196,7 @@ not prove that the product uses it.
 - For read-from-graph exercises, record the source curve's queried coordinates
   and extrema before interpolation. A similar-looking curve is not equivalent;
   do not change its values or extend it past the source endpoints.
+- Preserve source solid/dashed curve distinctions. `svgPath.dash` uses the same
+  dash styles as JSXGraph lines; review the rendered SVG, not only the spec.
+  Position axis values explicitly when automatic label placement would shift
+  them away from their ticks.

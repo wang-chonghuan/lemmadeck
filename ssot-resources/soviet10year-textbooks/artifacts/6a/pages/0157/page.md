@@ -1,0 +1,40 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "6a",
+  "page": 157,
+  "printed_page": 151,
+  "notes": [],
+  "errata": [],
+  "source": {
+    "pdf": "6a 苏联十年制学校数学教材 代数 六年级.pdf",
+    "pdf_sha256": "5bf4fa02c7478d22e88fb1029557fd986e7f1e862d53d449ba96bfc8cf5a3548",
+    "pdf_page": 157
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1473,
+    "h": 2239,
+    "sha256": "5281d8bd6c34a8c098233ca1ab0944ca3dc82f0ce86b8034fa2ea98b84663049"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 5,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 549 cont -->
+他每小时比预定的速度每小时少走了 $0.5$ 公里，结果到
+达 $B$ 地晚了 $40$ 分钟。由 $B$ 地返回时，他每小时走的路程
+比从 $A$ 到 $B$ 时要多 $1$ 公里，结果比从 $A$ 到 $B$ 少用了 $1$ 小
+时。$A$ 和 $B$ 之间的距离是多少公里？
+
+<!-- foot -->
+· 151 ·
