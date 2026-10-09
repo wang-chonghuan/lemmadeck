@@ -83,22 +83,54 @@ function renderInline(text, renderText) {
 const inline = (text) => renderInline(text, escText);
 const proseInline = (text) => renderInline(text, escProseText);
 
+function figureContract(contentRoot, id, strictEdition) {
+  const fallback = {
+    mode: strictEdition ? "deterministic" : "source",
+    layout: "inline",
+    purpose: "instructional",
+    maxWidthPx: null,
+  };
+  if (!strictEdition) return fallback;
+  const specPath = path.join(contentRoot, "figures", `${id}.spec.json`);
+  if (!fs.existsSync(specPath)) return fallback;
+  const spec = JSON.parse(fs.readFileSync(specPath, "utf8"));
+  const display = spec.display || {};
+  return {
+    mode: spec.mode || fallback.mode,
+    layout: display.layout === "scroll" ? "scroll" : "inline",
+    purpose: display.purpose === "decorative" ? "decorative" : "instructional",
+    maxWidthPx: Number.isInteger(display.maxWidthPx)
+      && display.maxWidthPx >= 128
+      && display.maxWidthPx <= 960
+      ? display.maxWidthPx
+      : null,
+  };
+}
+
 function figure(contentRoot, id, label, strictEdition) {
   const svg = path.join(contentRoot, "figures", `${id}.svg`);
   const png = path.join(contentRoot, "figures", `${id}.png`);
+  const contract = figureContract(contentRoot, id, strictEdition);
+  const mediaStyle = contract.maxWidthPx
+    ? ` style="width:${contract.maxWidthPx}px;max-width:100%"`
+    : "";
+  const open = `<figure class="fig" id="${id}" aria-label="${esc(label || id)}"`
+    + ` data-figure-layout="${contract.layout}"`
+    + ` data-figure-purpose="${contract.purpose}"><div class="figure-media"`
+    + ` data-figure-mode="${contract.mode}" data-figure-theme="neutral"${mediaStyle}>`;
+  const close = "</div></figure>";
   if (strictEdition && fs.existsSync(png)) {
     const b64 = fs.readFileSync(png).toString("base64");
-    return `<figure class="fig" id="${id}"><img alt="${esc(label || id)}" `
-      + `src="data:image/png;base64,${b64}"></figure>`;
+    return open + `<img alt="${esc(label || id)}" `
+      + `src="data:image/png;base64,${b64}">` + close;
   }
   if (fs.existsSync(svg)) {
-    return `<figure class="fig" id="${id}" aria-label="${esc(label || id)}">`
-      + fs.readFileSync(svg, "utf8").replace(/<\?xml[^>]*\?>/, "") + `</figure>`;
+    return open + fs.readFileSync(svg, "utf8").replace(/<\?xml[^>]*\?>/, "") + close;
   }
   if (fs.existsSync(png)) {
     const b64 = fs.readFileSync(png).toString("base64");
-    return `<figure class="fig" id="${id}"><img alt="${esc(label || id)}" `
-      + `src="data:image/png;base64,${b64}"></figure>`;
+    return open + `<img alt="${esc(label || id)}" `
+      + `src="data:image/png;base64,${b64}">` + close;
   }
   if (strictEdition) return `<p class="err">缺少现代图片 ${esc(id)}</p>`;
   return `<p class="err">缺图 ${esc(id)}</p>`;
@@ -119,9 +151,12 @@ p.para .katex,.prose-math{font-size:1.1em}
 .prose-math{font-family:KaTeX_Main,serif}
 p.para.section{border-top:1px solid var(--rule);margin-top:1.5em;padding-top:1.35em}
 .figcap{text-align:center;color:var(--sub);font-size:.85em;margin:.2em 0 1.2em}
-.fig{margin:1.3em 0 .2em;text-align:center}
-.fig svg{max-width:min(100%,26em);height:auto;color:var(--ink)}
-.fig img{max-width:min(100%,26em);height:auto}
+.fig{margin:1.3em 0 .2em;text-align:center;max-width:100%}
+.figure-media{--ld-figure-ink:var(--ink);--ld-figure-muted:var(--sub);
+  --ld-figure-accent:var(--ink);--ld-figure-accent-soft:var(--sub);
+  --ld-figure-grid:var(--rule);--ld-figure-paper:#fff;display:block;
+  margin:0 auto;width:fit-content;max-width:min(100%,30em);font-size:16px}
+.figure-media svg,.figure-media img{display:block;width:100%;max-width:100%;height:auto}
 .nb{display:inline-block;max-width:100%;overflow-x:auto;vertical-align:middle;white-space:nowrap}
 .err{color:#a3341f;background:#fdeeea;padding:1px 5px;border-radius:3px}
 .exgroup{margin:2.2em 0 .8em;font-weight:700;font-size:1.05em;
@@ -133,7 +168,11 @@ li.ex .no{font-family:ui-monospace,Menlo,monospace;color:var(--accent);
   font-weight:700;padding-top:.15em}
 li.ex .body{min-width:0;overflow-x:auto;line-height:1.9;font-size:1.04em}
 li.ex .body .fig{margin:.7em 0 0;text-align:left}
-li.ex .body .fig svg,li.ex .body img{max-width:min(100%,18em)}
+li.ex .body .figure-media{margin:0;max-width:min(100%,22em)}
+.fig[data-figure-layout="scroll"]{overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
+.fig[data-figure-layout="scroll"] .figure-media,
+li.ex .body .fig[data-figure-layout="scroll"] .figure-media{
+  width:40em;max-width:none}
 .jump{display:inline-block;margin:2.5em 0 0;padding:.55em 1.1em;border-radius:6px;
   background:var(--accent);color:#fff;text-decoration:none;font-size:.95em}
 .src{color:var(--sub);font-size:.78em;font-family:ui-monospace,Menlo,monospace}

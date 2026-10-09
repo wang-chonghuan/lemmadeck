@@ -32,12 +32,22 @@ mode, and write a draft FigureSpec. Read
 [routing.md](references/routing.md) and
 [figure-spec.md](references/figure-spec.md).
 
-Before drawing, record `source.inventory`: independently describe every source
-subfigure, point, relationship, label, row/column and given value, then map
-those requirements to object and assertion IDs. Use stable IDs derived from
-the source inventory. Do not derive the inventory by merely counting what you
-happened to draw. A pass from `objectCount` cannot detect an item omitted from
-both the drawing and count.
+Before drawing or reusing any existing modern figure, reopen the original PNG
+named by `source.image` and record `source.inventory` from those pixels:
+independently describe every source subfigure, point, relationship, label,
+row/column and given value, then map those requirements to object and
+assertion IDs. Treat a reused FigureSpec as an unverified draft until this
+comparison is complete. Use stable IDs derived from the source inventory.
+Record justified modern additions separately from source facts; do not relabel
+axes, ticks, regularization, or other additions as source content. A
+byte-identical regenerated output proves renderer determinism only. It does
+not prove source fidelity, and `objectCount` cannot replace grid-dimension or
+point-relationship assertions. Mark applicable inventory groups with
+`requires: ["gridDimensions"]` or `requires: ["pointRelationships"]` so the
+validator enforces that distinction. A point-relationship group must map every
+source point to at least one mapped relationship assertion wholly inside that
+group; a relation among other points, or one that escapes to an unmapped point,
+does not cover the missing source point.
 
 Classify `display.purpose` independently of rendering mode. Use
 `instructional` for anything whose detail, geometry, relationship, apparatus,

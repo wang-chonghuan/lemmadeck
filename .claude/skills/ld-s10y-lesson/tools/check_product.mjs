@@ -85,18 +85,28 @@ async function assertFigurePixels(figure, page) {
 }
 
 export async function assertActualFigureText(figure, minTextPx = 16) {
-  const small = await figure.evaluate((element, minimum) =>
-    [...element.querySelectorAll('svg text')].flatMap(node => {
+  assert.ok(Number.isFinite(minTextPx) && minTextPx >= 16, 'Invalid FigureSpec minimum text size')
+  const small = await figure.evaluate(async (element, minimum) => {
+    await document.fonts.ready
+    return [...element.querySelectorAll('svg text')].flatMap(node => {
       const matrix = node.getScreenCTM()
+      if (!matrix) throw new Error('Missing SVG screen transform')
       const font = Number.parseFloat(getComputedStyle(node).fontSize)
-      const px = matrix ? font * Math.hypot(matrix.a, matrix.b) : 0
+      if (!Number.isFinite(font)) throw new Error('Invalid SVG font size')
+      const px = font * Math.min(
+        Math.hypot(matrix.a, matrix.b),
+        Math.hypot(matrix.c, matrix.d),
+      )
       return px + 0.01 < minimum ? [{ text: node.textContent, px }] : []
-    }), minTextPx)
-  assert.deepEqual(small, [], 'Figure text is below minimum at the actual product width')
+    })
+  }, minTextPx)
+  assert.deepEqual(small, [], 'Figure text is below minimum at the actual product width'
+    + small.map(item => `: rendered SVG text ${item.px.toFixed(2)}px is below ${minTextPx}px`).join(''))
 }
 
-async function assertPublishedFigure({ figure, asset, book, edition, lesson, page }) {
+export async function assertPublishedFigure({ figure, asset, book, edition, lesson, page }) {
   await expect(figure).toBeAttached()
+  let requiredMinTextPx = null
   if (asset.svg) {
     const assetPath = path.join(book, 'editions', edition, asset.svg)
     const currentSVG = fs.readFileSync(assetPath, 'utf8')
@@ -105,6 +115,14 @@ async function assertPublishedFigure({ figure, asset, book, edition, lesson, pag
       host.innerHTML = expected
       return element.querySelector('svg')?.outerHTML === host.querySelector('svg')?.outerHTML
     }, currentSVG), true, `${lesson}/${asset.id}: published SVG is stale`)
+    assert.ok(asset.spec, `${lesson}/${asset.id}: SVG is missing its FigureSpec`)
+    const specPath = path.join(book, 'editions', edition, asset.spec)
+    const spec = JSON.parse(fs.readFileSync(specPath, 'utf8'))
+    requiredMinTextPx = spec?.display?.minTextPx
+    assert.ok(
+      Number.isFinite(requiredMinTextPx) && requiredMinTextPx >= 16,
+      `${lesson}/${asset.id}: FigureSpec display.minTextPx is invalid`,
+    )
   }
   const imageAsset = asset.artwork || asset.png
   if (imageAsset) {
@@ -142,8 +160,7 @@ async function assertPublishedFigure({ figure, asset, book, edition, lesson, pag
     `${lesson}/${asset.id}: missing, blank or unreachable figure`,
   )
   if (asset.svg) {
-    const spec = JSON.parse(fs.readFileSync(path.join(book, 'editions', edition, asset.spec)))
-    await assertActualFigureText(figure, spec.display.minTextPx)
+    await assertActualFigureText(figure, requiredMinTextPx)
   }
   await assertFigurePixels(figure, page)
 }
