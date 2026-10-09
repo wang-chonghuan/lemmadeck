@@ -49,7 +49,10 @@ def main() -> int:
             raise SystemExit(f"ERROR: render evidence must use {RENDER_SCHEMA}")
         if producer.get("figure") != spec.get("id"):
             raise SystemExit("ERROR: render figure does not match spec")
-        if producer.get("status") != "pass":
+        render_status = producer.get("status")
+        if render_status not in ("pass", "fail"):
+            raise SystemExit("ERROR: render status must be pass or fail")
+        if render_status == "fail" and args.status == "pass":
             raise SystemExit("ERROR: a failing render cannot receive visual approval")
         if producer.get("spec", {}).get("sha256") != sha256(args.spec):
             raise SystemExit("ERROR: render evidence uses a stale FigureSpec")
