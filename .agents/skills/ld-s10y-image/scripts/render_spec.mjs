@@ -341,10 +341,21 @@ async function render(spec, output) {
           )
           elements.set(object.id, polygon)
         } else if (object.type === 'arc') {
+          const arcPoint = (value, role) => {
+            if (typeof value === 'string') return jsxPoint(value)
+            return board.create('point', pointValue(value), {
+              id: `ld-${object.id}-${role}`,
+              name: '',
+              withLabel: false,
+              visible: false,
+              fixed: true,
+              highlight: false,
+            })
+          }
           const arc = board.create('arc', [
-            jsxPoint(object.center),
-            jsxPoint(object.start),
-            jsxPoint(object.end),
+            arcPoint(object.center, 'center'),
+            arcPoint(object.start, 'start'),
+            arcPoint(object.end, 'end'),
           ], {
             id: `ld-${object.id}`,
             ...lineStyle(object, palette.accent),
@@ -551,8 +562,9 @@ async function render(spec, output) {
           node.setAttribute('stroke', color(object.stroke, 'none'))
           node.setAttribute(
             'stroke-width',
-            String((object.strokeWidth || 1) / Math.max(scaleX, scaleY)),
+            String(object.strokeWidth || 1),
           )
+          node.setAttribute('vector-effect', 'non-scaling-stroke')
           if (object.fillOpacity !== undefined) {
             node.setAttribute('fill-opacity', String(object.fillOpacity))
           }
@@ -702,8 +714,10 @@ async function render(spec, output) {
         let best = null
 
         for (const position of candidates) {
-          const [xDirection, yDirection, anchor] =
-            placements[position] || placements.NE
+          if (!placements[position]) {
+            throw new Error(`Unsupported label placement: ${position}`)
+          }
+          const [xDirection, yDirection, anchor] = placements[position]
           node.setAttribute(
             'x',
             String(anchorX + xDirection * gap + offset[0]),

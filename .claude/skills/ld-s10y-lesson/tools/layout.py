@@ -23,7 +23,7 @@ MIN_BAND_HEIGHT = 3          # 保留拆成上下笔画的短标号（如表格�
 MIN_BAND_WIDTH = 24          # 孤立扫描墨点不能算作一行文字
 # 只用来把同一行里断开的笔画（分式、上下标、页码的点）接回去。不能取大：取 0.6
 # 会把行距紧的相邻几行并成一行，数出来的行数就少了。
-GLYPH_GAP_FACTOR = 0.4       # 6a 的高分式与「于」字上下部需要约 0.35 行高
+GLYPH_GAP_FACTOR = 0.4       # Keep captions separate from the following printed row.
 SNAP_OVERLAP = 0.45          # 连通域与粗框的重叠比例超过此值才吸附进来
 GRID = 100                   # 坐标网格间距（px），画在 page.grid.png 上供读图取坐标
 
@@ -97,7 +97,7 @@ def grid_overlay(png: Path, out: Path, step: int = GRID) -> Path:
 
 
 def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
-    """行投影切出的印刷行。只用来数行，不用来判图/文——这部分从没出过错。"""
+    """Count printed rows after masking model-identified figures."""
     counts = ink.sum(axis=1)
     raw = []
     for a, b in _runs(counts > max(8, ROW_INK_MIN_RATIO * content_w)):
@@ -110,6 +110,24 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         return []
     line_h = int(np.median([b - a + 1 for a, b in raw]))
     merged = _merge_close(raw, max(2.0, GLYPH_GAP_FACTOR * line_h))
+    joined = []
+    for a, b in merged:
+        if joined:
+            prev_a, prev_b = joined[-1]
+            prev_x = np.flatnonzero(ink[prev_a:prev_b + 1].any(axis=0))
+            next_x = np.flatnonzero(ink[a:b + 1].any(axis=0))
+            widths = (prev_x[-1] - prev_x[0] + 1, next_x[-1] - next_x[0] + 1)
+            compact_fragment = min(prev_b - prev_a + 1, b - a + 1) < 0.75 * line_h
+            aligned = abs((prev_x[0] + prev_x[-1]) - (next_x[0] + next_x[-1])) < line_h
+            if (
+                a - prev_b <= 0.5 * line_h
+                and compact_fragment and aligned
+                and min(widths) / max(widths) >= 0.65
+            ):
+                joined[-1] = (prev_a, b)
+                continue
+        joined.append((a, b))
+    merged = joined
 
     # Dense glyphs or staggered side-by-side text can keep the row projection
     # continuously live across two or more printed rows. Recover the row count
@@ -129,7 +147,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         band_h = b - a + 1
         count = 1
         if band_h > 2.2 * typical_h and pitch > 0:
-            count = max(2, int(round((band_h + typical_gap) / pitch)))
+            count = max(2, int((band_h + typical_gap) / pitch))
         if count == 1:
             expanded.append((a, b))
             continue
@@ -151,11 +169,13 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         xs = np.flatnonzero(ink[a:b + 1].any(axis=0))
         band_h = b - a + 1
         band_w = int(xs[-1] - xs[0] + 1)
-        thin = band_h < 0.4 * line_h
-        edge_border = a < 0.02 * page_h and band_w > 0.7 * content_w
+        thin = band_h < 0.4 * typical_h
+        edge_border = a < 0.02 * page_h and (
+            thin or band_w > 0.7 * content_w
+        )
         decoration = edge_border or (
-            thin and b < 0.85 * page_h
-            and (band_w > 0.7 * content_w or band_w < 0.05 * content_w)
+            thin
+            and (band_w > 0.3 * content_w or band_w < 0.05 * content_w)
         )
         if not decoration:
             out.append((a, b))

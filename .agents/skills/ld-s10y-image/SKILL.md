@@ -50,10 +50,11 @@ use inline layout and a validated `display.maxWidthPx` from 128 through 240
 (normally 160 for a portrait). Read the full contract in
 [figure-spec.md](references/figure-spec.md).
 
-For figures wider than the mobile reading column, include the product's actual
-headed-browser content width in `display.widths`. In the current 390 px
-acceptance viewport that width is 331 px; do not substitute the viewport width
-or an optimistic 346/352 px estimate.
+Measure the media width in the headed product, not only the containing column.
+For inline figures include the actual mobile media width in `display.widths`.
+For scroll figures include the fixed media width: the current product renders
+scroll media at 640 px even when the source canvas is wider. A canvas-width-only
+check can incorrectly pass text that the product shrinks below 16 px.
 
 Update the lesson edition figure entry to exactly one final-output contract:
 
@@ -156,8 +157,8 @@ not prove that the product uses it.
   sizing unless their spec explicitly declares a validated inline
   `display.maxWidthPx`.
 - Validate against the usable figure width measured in the headed product, not
-  only the nominal viewport. A 390 px viewport currently leaves 331 px for a
-  full-column figure.
+  only the nominal viewport or column. Prose and exercise containers can have
+  different widths, and scroll media keeps its own fixed width.
 - Hybrid artwork must preserve its intrinsic aspect ratio. FigureSpec `size`
   is a centered contain box, never permission to stretch an image.
 - A central-symmetry or half-turn claim requires a `centralSymmetry` assertion

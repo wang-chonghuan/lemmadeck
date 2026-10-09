@@ -70,6 +70,17 @@ async function assertFigurePixels(figure, page) {
   assert.ok(marks > 100, 'Figure screenshot has no visible drawing')
 }
 
+export async function assertActualFigureText(figure, minTextPx = 16) {
+  const small = await figure.evaluate((element, minimum) =>
+    [...element.querySelectorAll('svg text')].flatMap(node => {
+      const matrix = node.getScreenCTM()
+      const font = Number.parseFloat(getComputedStyle(node).fontSize)
+      const px = matrix ? font * Math.hypot(matrix.a, matrix.b) : 0
+      return px + 0.01 < minimum ? [{ text: node.textContent, px }] : []
+    }), minTextPx)
+  assert.deepEqual(small, [], 'Figure text is below minimum at the actual product width')
+}
+
 async function assertPublishedFigure({ figure, asset, book, edition, lesson, page }) {
   await expect(figure).toBeAttached()
   if (asset.svg) {
@@ -116,6 +127,10 @@ async function assertPublishedFigure({ figure, asset, book, edition, lesson, pag
     state?.width > 0 && state.height > 0 && state.marks > 0 && state.atEnd,
     `${lesson}/${asset.id}: missing, blank or unreachable figure`,
   )
+  if (asset.svg) {
+    const spec = JSON.parse(fs.readFileSync(path.join(book, 'editions', edition, asset.spec)))
+    await assertActualFigureText(figure, spec.display.minTextPx)
+  }
   await assertFigurePixels(figure, page)
 }
 

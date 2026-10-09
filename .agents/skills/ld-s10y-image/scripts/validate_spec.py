@@ -840,6 +840,24 @@ def validate(spec_path: Path, stage: str) -> list[str]:
         if kind not in SUPPORTED_TYPES:
             errors.append(f"{label}: unsupported type {kind!r}")
             continue
+        placements = [(label, item.get("labelPlacement"))]
+        if kind == "axis":
+            placements.extend(
+                (f"{label}.ticks[{tick_index}]", tick.get("labelPlacement"))
+                for tick_index, tick in enumerate(item.get("ticks", []))
+                if isinstance(tick, dict)
+            )
+        for owner, placement in placements:
+            if placement is None:
+                continue
+            if not isinstance(placement, dict):
+                errors.append(f"{owner}.labelPlacement must be an object")
+                continue
+            position = placement.get("position")
+            if position is not None and position not in {
+                "CENTER", "NE", "NW", "SE", "SW", "E", "W", "N", "S"
+            }:
+                errors.append(f"{owner}.labelPlacement.position is unsupported: {position!r}")
         if current:
             for field in ("stroke", "fill", "labelColor"):
                 role = item.get(field)
