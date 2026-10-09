@@ -2,13 +2,29 @@
   "schema": "ld-s10y-image/figure-spec@2",
   "id": "fig-64",
   "mode": "deterministic",
-  "description": "A 16-by-9 square grid carrying triangle ABC for a seven-cell downward translation followed by four cells right.",
+  "description": "Triangle ABC on the original 16 by 9 square lattice.",
   "source": {
     "image": {
       "path": "ssot-resources/soviet10year-textbooks/artifacts/5m/figures/fig-64.png",
       "sha256": "e18a096e3c8db9e95aaf4061b5a849961f9649dd4b9477b9a863ee73823eccff"
     },
     "authoritativeText": [
+      {
+        "lesson": "math5-c1-s2-n15",
+        "text": "过去我们作平行线是沿直尺移动三角板（图 12）. 这时三角板的所有点都向同一个方向移动相同的距离. 图形的这种位移就叫做平移."
+      },
+      {
+        "lesson": "math5-c1-s2-n15",
+        "text": "为了给定图形的平移，只要知道这个图形的一个点移动到哪里就足够了. 假如在平移时，点 $A$ 移到点 $A_1$（图 58）. 要想知道这个图形的 $B$ 点移到哪里，作法如下：联结点 $A$ 和点 $A_1$，并且从 $B$ 点作和 $AA_1$ 线段平行的线段 $BB_1$，使它与 $AA_1$ 长度相等、方向相同，于是点 $B$ 移到点 $B_1$."
+      },
+      {
+        "lesson": "math5-c1-s2-n15",
+        "text": "当三角板沿直尺移动时，三角板的尺寸不变. 一般说来，在平移时，如果图形 $M$ 移到图形 $P$，那么图形 $M$ 和 $P$ 合同."
+      },
+      {
+        "lesson": "math5-c1-s2-n15",
+        "text": "例 1. 让我们来完成 $AB$ 线段的平移，使点 $A$ 移到点 $A_1$.联结点 $A$ 和点 $A_1$（图 59）. 从点 $B$ 引和 $AA_1$ 平行并且长度相等、方向相同的线段 $BB_1$. 联结$A_1$ 和 $B_1$ 二点. 线段 $A_1B_1$ 就是线段 $AB$ 在平移时移到的线段.例 2. 我们来完成圆心为点$A$、半径为 1 厘米的圆周的平移，使点 $A$ 移到点 $A_1$.因为平移时，圆周的大小不变，所以只要作以点 $A_1$ 为圆心、半径为 1 厘米的圆周即可（图 60）.用花样模板作花纹时应用了平移原理（图 61）."
+      },
       {
         "lesson": "math5-c1-s2-n15",
         "exercise": "248",
@@ -18,180 +34,156 @@
     "inventory": [
       {
         "id": "source-grid",
-        "description": "The source contains one complete 16-column by 9-row square grid inside a dark rectangular frame.",
+        "description": "Original lattice: 16 columns and 9 rows; equal spacing preserved.",
         "objects": [
-          "square-grid",
-          "grid-frame"
+          "source-grid"
         ],
         "assertions": [
-          "one-source-grid"
+          "source-grid-dimensions"
+        ],
+        "requires": [
+          "gridDimensions"
         ]
       },
       {
-        "id": "source-triangle",
-        "description": "Triangle ABC uses source grid intersections B(3,8), A(7,3), and C(13,4).",
+        "id": "source-vertices",
+        "description": "Original A(7,3),B(3,8),C(13,4), counted from lower-left corner.",
         "objects": [
-          "triangle-abc",
-          "point-a",
-          "point-b",
-          "point-c"
+          "A",
+          "B",
+          "C",
+          "source-shape"
         ],
         "assertions": [
-          "three-source-points",
-          "two-source-polygons"
+          "A-to-B",
+          "A-to-C"
+        ],
+        "requires": [
+          "pointRelationships"
         ]
       }
     ]
   },
   "canvas": {
-    "width": 1024,
-    "height": 620,
+    "width": 640,
+    "height": 391,
     "boundingBox": [
-      -0.6,
-      10.1,
-      17.1,
-      -0.6
+      -1,
+      10,
+      17,
+      -1
     ],
     "background": "paper",
     "keepAspectRatio": true
   },
+  "display": {
+    "layout": "scroll",
+    "purpose": "instructional",
+    "minTextPx": 16,
+    "widths": [
+      640
+    ]
+  },
   "objects": [
     {
-      "id": "square-grid",
+      "id": "source-grid",
       "type": "grid",
+      "stroke": "grid",
+      "strokeWidth": 1,
       "bounds": [
-        0.25,
-        9.25,
-        16.25,
-        0.25
+        0,
+        9,
+        16,
+        0
       ],
       "xStep": 1,
       "yStep": 1,
-      "xOffset": 0.25,
-      "yOffset": 0.25,
-      "stroke": "grid",
-      "strokeWidth": 2
+      "xOffset": 0,
+      "yOffset": 0
     },
     {
-      "id": "grid-frame",
-      "type": "polygon",
-      "points": [
-        [
-          0.25,
-          0.25
-        ],
-        [
-          16.25,
-          0.25
-        ],
-        [
-          16.25,
-          9.25
-        ],
-        [
-          0.25,
-          9.25
-        ]
-      ],
-      "stroke": "ink",
-      "strokeWidth": 4,
-      "fill": "paper",
-      "fillOpacity": 0
-    },
-    {
-      "id": "triangle-abc",
-      "type": "polygon",
-      "points": [
-        "point-a",
-        "point-b",
-        "point-c"
-      ],
-      "stroke": "ink",
-      "strokeWidth": 6,
-      "fill": "accentSoft",
-      "fillOpacity": 0.32
-    },
-    {
-      "id": "point-a",
+      "id": "A",
       "type": "point",
+      "stroke": "ink",
+      "strokeWidth": 2,
       "at": [
-        7.25,
-        3.25
+        7,
+        3
       ],
+      "size": 2.5,
       "label": "A",
-      "fontSize": 32,
-      "labelPlacement": {
-        "position": "S",
-        "gap": 40
-      },
-      "size": 5,
-      "fill": "ink",
-      "stroke": "ink"
+      "fontSize": 18,
+      "labelColor": "ink"
     },
     {
-      "id": "point-b",
+      "id": "B",
       "type": "point",
+      "stroke": "ink",
+      "strokeWidth": 2,
       "at": [
-        3.25,
-        8.25
+        3,
+        8
       ],
+      "size": 2.5,
       "label": "B",
-      "fontSize": 32,
-      "labelPlacement": {
-        "position": "NW",
-        "gap": 28
-      },
-      "size": 5,
-      "fill": "ink",
-      "stroke": "ink"
+      "fontSize": 18,
+      "labelColor": "ink"
     },
     {
-      "id": "point-c",
+      "id": "C",
       "type": "point",
+      "stroke": "ink",
+      "strokeWidth": 2,
       "at": [
-        13.25,
-        4.25
+        13,
+        4
       ],
+      "size": 2.5,
       "label": "C",
-      "fontSize": 32,
-      "labelPlacement": {
-        "position": "E",
-        "gap": 28
-      },
-      "size": 5,
-      "fill": "ink",
-      "stroke": "ink"
+      "fontSize": 18,
+      "labelColor": "ink"
+    },
+    {
+      "id": "source-shape",
+      "type": "polygon",
+      "stroke": "ink",
+      "strokeWidth": 2,
+      "points": [
+        "A",
+        "B",
+        "C"
+      ],
+      "fill": "accentSoft",
+      "fillOpacity": 0.3
     }
   ],
   "assertions": [
     {
-      "id": "three-source-points",
-      "type": "objectCount",
-      "objectType": "point",
-      "count": 3
+      "type": "gridDimensions",
+      "id": "source-grid-dimensions",
+      "grid": "source-grid",
+      "columns": 16,
+      "rows": 9
     },
     {
-      "id": "two-source-polygons",
-      "type": "objectCount",
-      "objectType": "polygon",
-      "count": 2
+      "type": "displacement",
+      "id": "A-to-B",
+      "from": "A",
+      "to": "B",
+      "dx": -4,
+      "dy": 5
     },
     {
-      "id": "one-source-grid",
-      "type": "objectCount",
-      "objectType": "grid",
-      "count": 1
+      "type": "displacement",
+      "id": "A-to-C",
+      "from": "A",
+      "to": "C",
+      "dx": 6,
+      "dy": 1
     }
   ],
   "layout": {
     "minLabelGap": 2,
     "avoidRegions": []
-  },
-  "display": {
-    "layout": "scroll",
-    "minTextPx": 16,
-    "widths": [
-      640
-    ]
   }
 }
