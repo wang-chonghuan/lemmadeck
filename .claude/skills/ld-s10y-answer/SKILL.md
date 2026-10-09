@@ -177,6 +177,11 @@ ssot-resources/soviet10year-textbooks/artifacts/<book>/editions/<edition>/lesson
 - `numeric`：数值等价。
 - `expression`：数学表达式等价。
 
+所有 `expected` 使用产品数学编辑器的 LaTeX，不使用代码式 `abs(x)`、`sqrt(x)` 等写法；
+绝对值写 `\left|x\right|`。普通解析器可能把代码式函数名当作字母乘积且不报错。
+`finalize` 用当前产品的 ComputeEngine 拦截这类写法、解析错误和非有限实数的 numeric 键；
+此机械检查不代替逐题数学验算。
+
 cap2 产物必须通过 [gate-2-lesson-answers](references/gate-2-lesson-answers/gate.md)，再
 `finalize` 和真实 `publish`。发布器会验证答案审计和数据库课程的 edition 完全一致；
 原始 lesson 或不同 edition 均拒绝写入。`finalize` 会把所有 `exact` expected 放入真实

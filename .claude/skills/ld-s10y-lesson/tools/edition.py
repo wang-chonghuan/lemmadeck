@@ -582,6 +582,42 @@ def normalize_numbered_subparts(text: str) -> str:
     order = marker_order(markers)
     if order is None:
         return text
+    if len(markers) == 2:
+        formulas = list(MATH.finditer(text, markers[0].end()))
+        run = []
+        for formula in formulas:
+            previous = run[-1].end() if run else markers[0].end()
+            gap = text[previous:formula.start()]
+            if run and len(run) == 1:
+                gap = gap.replace(text[markers[1].start():markers[1].end()], "", 1)
+            if re.fullmatch(r"[\s,，;；。]*", gap) is None:
+                break
+            run.append(formula)
+        if len(run) >= 4 and len(run) % 2 == 0:
+            row_gaps = [
+                text[run[index].end():run[index + 1].start()]
+                for index in range(0, len(run), 2)
+            ]
+            if (
+                run[0].end() <= markers[1].start() < run[1].start()
+                and all("\u3000\u3000" in gap for gap in row_gaps)
+                and all(
+                    "\u3000\u3000" not in text[run[index].end():run[index + 1].start()]
+                    for index in range(1, len(run) - 1, 2)
+                )
+            ):
+                columns = [
+                    text[markers[column].start():markers[column].end()] + " " +
+                    " ".join(match.group() for match in run[column::2])
+                    for column in range(2)
+                ]
+                suffix = text[run[-1].end():].strip()
+                if suffix:
+                    columns[-1] += suffix
+                prefix = text[:markers[0].start()].rstrip()
+                return "\n".join(
+                    ([prefix] if prefix else []) + columns
+                )
 
     prefix = text[:markers[0].start()].rstrip()
     parts = []
