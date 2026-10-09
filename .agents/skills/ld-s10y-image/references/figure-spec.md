@@ -36,7 +36,8 @@ change invalidates the review evidence.
 - `segment`, `line`, `arrow`: `from`, `to`
 - `circle`: `center`, `radius`
 - `polygon`: `points`
-- `arc`: `center`, `start`, `end`
+- `arc`: `center`, `start`, `end`. Coordinate literals create hidden construction
+  points; only explicitly declared point objects may display endpoint markers.
 - `grid`: `xStep`, `yStep`; optional finite
   `[xMin, yMax, xMax, yMin]` `bounds`; optional absolute coordinate phases
   `xOffset` and `yOffset`. Grid lines occur at `offset + n * step`, so a
@@ -55,7 +56,8 @@ change invalidates the review evidence.
   applies an exact JSXGraph rotation around that user-coordinate center.
 - `svgPath`: deterministic fallback for a curve or filled region JSXGraph
   cannot express directly. It uses source-screen path coordinates and must not
-  contain labels, ticks, points, or measurements.
+  contain labels, ticks, points, or measurements. Like other objects,
+  `strokeWidth` is in output pixels, independent of unequal axis scales.
 
 Point references may be object ids. Coordinate literals are `[x, y]`.
 
@@ -76,6 +78,9 @@ Use `labelPlacement` only when the semantic layout requires a fixed side:
 ```
 
 Never compensate for a wrong coordinate by moving a label.
+Supported positions are `CENTER`, `NE`, `NW`, `SE`, `SW`, `E`, `W`, `N`, and `S`.
+`C` is not an alias. Unknown positions must fail validation rather than silently
+falling back to a different side. Axis tick labels follow the same contract.
 
 ## Display and color
 
@@ -88,9 +93,8 @@ rendering mode:
   composition has a smaller natural display size. In that case use inline
   layout and set `display.maxWidthPx` from 240 through 960; include every
   resulting desktop and mobile width in `display.widths`, with no width above
-  the maximum. Measure the usable width in the headed product rather than
-  assuming it from the viewport; the current 390 px acceptance viewport yields
-  a 331 px full-column figure.
+  the maximum. Measure the media width in each headed product surface rather
+  than assuming it from the viewport or the prose column.
 - `display.purpose: "decorative"` is for portraits, avatars, and similar
   identification or atmosphere images that carry no measured, relational, or
   answer-bearing detail. Decorative figures must use `layout: "inline"`, set
@@ -107,9 +111,11 @@ contains natural objects.
 the figure. The renderer measures labels at each width and rejects any text
 smaller than `display.minTextPx`, which must be at least 16. Use
 `display.layout: "scroll"` when keeping labels readable requires a figure
-wider than its viewport. Any figure with `display.maxWidthPx` must use inline
-layout. When that maximum exceeds 331 px, `display.widths` must include a width
-of 331 px or less so the current mobile reader is actually covered.
+wider than its viewport. Scroll media currently renders at 640 px regardless
+of a wider source canvas, so include that actual width rather than only the
+canvas width. Any figure with `display.maxWidthPx` must use inline layout and
+include its actual mobile media width. A prose-column measurement does not
+cover a narrower exercise container.
 
 Use semantic color roles rather than literal product-theme colors:
 
