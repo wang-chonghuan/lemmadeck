@@ -10,6 +10,20 @@ const require = createRequire(path.join(root, 'app/package.json'))
 const { chromium, expect } = require('@playwright/test')
 export const visibleProseSelector = '.sr-deck > .sr-read'
 
+export async function assertProseSurface(page, lesson) {
+  const prose = page.locator(visibleProseSelector)
+  const hasContent = (lesson.prose ?? []).some(block =>
+    block.kind === 'fig' || (typeof block.text === 'string' && block.text.trim())
+  )
+  if (hasContent) {
+    await expect(prose).toBeVisible()
+  } else {
+    await expect(prose).toBeAttached()
+    await expect(prose).toHaveText('')
+    await expect(prose.locator('[data-figure-id]')).toHaveCount(0)
+  }
+}
+
 export function sourceNumberForArtifact(exercise) {
   return Object.prototype.hasOwnProperty.call(exercise, 'source_number')
     ? exercise.source_number
@@ -167,7 +181,7 @@ export async function checkProduct({ book, edition, lessons, baseURL, output, vi
         await page.goto(`${baseURL}/card/${lesson}`)
         const deck = page.locator('.sr-deck')
         await expect(deck.locator('.sr-deck-title')).toBeVisible()
-        await expect(page.locator(visibleProseSelector)).toBeVisible()
+        await assertProseSurface(page, lessonDocument)
         for (const figureId of coverage.prose) {
           current = { lesson, figure: figureId, viewport: viewport.width, surface: 'prose' }
           const figure = deck.locator(`.sr-read [data-figure-id="${figureId}"]`)

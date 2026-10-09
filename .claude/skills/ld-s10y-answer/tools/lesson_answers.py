@@ -529,6 +529,15 @@ def cmd_finalize(args: argparse.Namespace) -> int:
         ready.append((lesson, path, document))
 
     if ready:
+        expression_check = Path(__file__).with_name("check_math_expressions.mjs")
+        result = subprocess.run(
+            ["node", str(expression_check), *(str(path) for _, path, _ in ready)],
+            cwd=REPO, text=True, capture_output=True,
+        )
+        if result.returncode:
+            failed = True
+            print("ERROR: numeric/expression LaTeX 合同校验失败", file=sys.stderr)
+            print(result.stdout.strip() or result.stderr.strip(), file=sys.stderr)
         command = ["node", str(MATHLIVE_CHECK)]
         for _, path, _ in ready:
             command.extend(["--answer-key", str(path)])

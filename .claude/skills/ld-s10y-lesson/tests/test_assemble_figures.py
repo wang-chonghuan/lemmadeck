@@ -38,6 +38,22 @@ def exercise(number: str, ref: str, text: str) -> dict:
 
 
 class ClaimFiguresTest(unittest.TestCase):
+    def test_math_wrapped_figure_number_is_claimed_by_exercise(self) -> None:
+        fig = block("fig", "p0090#1", label="图 72", figure_id="fig-72")
+        cap = block("cap", "p0090#2", label="图 72", text="图 72")
+        ex = exercise("290", "p0089#9", "从图 $72$ 求函数值")
+        lesson = {"title": "图象", "blocks": [fig, cap],
+                  "prose": [fig, cap], "exercises": [ex]}
+        errors, warnings = assemble.claim_figures([lesson], [fig, cap])
+        self.assertEqual(errors, [])
+        self.assertEqual(warnings, [])
+        self.assertEqual(ex["figure_refs"], ["fig-72"])
+        self.assertEqual(lesson["prose"], [])
+
+    def test_nonfigure_formula_numbers_are_not_references(self) -> None:
+        self.assertEqual(assemble.FIGREF.findall("图象 $72$ 个点，式 $y=72/x$"), [])
+        self.assertEqual(assemble.FIGREF.findall("图 72，图 $73$"), ["72", "73"])
+
     def test_exercise_only_shared_figure_leaves_prose_and_renders_once(self) -> None:
         ex105 = exercise("105", "p0032#9", "见图 29")
         ex106 = exercise("106", "p0033#1", "仍见图 29")

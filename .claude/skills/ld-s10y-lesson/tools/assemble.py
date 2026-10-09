@@ -26,7 +26,7 @@ import blocks as B
 import mathcheck
 import normalize as nz
 
-FIGREF = re.compile(r"图\s*(\d+)")
+FIGREF = re.compile(r"图\s*\$?\s*(\d+)(?!\d)")
 SEC_NUM = re.compile(r"^\s*(\d+)\s*[.．、]\s*(.+)$")
 BLOCKREF = re.compile(r"^p(\d+)#(\d+)$")
 OPTIONAL_EXERCISE_IDENTITY_FIELDS = ("source_number", "group_id")

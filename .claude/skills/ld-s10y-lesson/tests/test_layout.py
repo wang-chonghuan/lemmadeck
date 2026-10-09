@@ -13,6 +13,46 @@ import layout
 
 
 class LineBandsTest(unittest.TestCase):
+    def test_sparse_enumerator_on_a_wide_page(self) -> None:
+        ink = np.zeros((500, 1473), dtype=bool)
+        for top in (40, 110, 180, 250):
+            ink[top:top + 40, 100:1300] = True
+        ink[350:355, 210:220] = True
+        ink[350:355, 239:241] = True
+        ink[360:369, 231:241] = True
+        ink[360:369, 210:212] = True
+        self.assertEqual(len(layout.line_bands(ink, content_w=1473)), 5)
+
+    def test_sparse_wide_scan_noise_is_not_a_text_row(self) -> None:
+        ink = np.zeros((500, 1473), dtype=bool)
+        for top in (40, 110, 180, 250):
+            ink[top:top + 40, 100:1300] = True
+        ink[350:360, 100:1000:90] = True
+        self.assertEqual(len(layout.line_bands(ink, content_w=1473)), 4)
+
+    def test_nested_fraction_fragments_ignore_scan_edge_streak(self) -> None:
+        ink = np.zeros((800, 1000), dtype=bool)
+        for top in (60, 130, 200, 270, 340):
+            ink[top:top + 40, 100:900] = True
+        ink[420:451, 490:530] = True
+        ink[468:548, 200:800] = True
+        ink[565:583, 490:530] = True
+        ink[400:700, 3:5] = True
+        bands = layout.line_bands(ink, content_w=1000)
+        self.assertEqual(len(bands), 6)
+        self.assertIn((420, 582), bands)
+
+    def test_keeps_separate_narrow_row_outside_fraction_span(self) -> None:
+        ink = np.zeros((800, 1000), dtype=bool)
+        for top in (60, 130, 200, 270, 340):
+            ink[top:top + 40, 100:900] = True
+        ink[420:451, 850:890] = True
+        ink[468:548, 200:800] = True
+        bands = layout.line_bands(ink, content_w=1000)
+        self.assertEqual(len(bands), 7)
+        self.assertIn((420, 450), bands)
+        self.assertIn((468, 547), bands)
+
     def test_merges_split_glyphs_and_ignores_scan_decorations(self) -> None:
         ink = np.zeros((700, 400), dtype=bool)
         ink[0:16, 0:390] = True

@@ -98,12 +98,21 @@ def grid_overlay(png: Path, out: Path, step: int = GRID) -> Path:
 
 def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     """Count printed rows after masking model-identified figures."""
+    # Narrow scan-edge streaks distort fragment alignment without being text.
+    ink = ink.copy()
+    edge = max(1, int(ink.shape[1] * 0.01))
+    ink[:, :edge] = False
+    ink[:, -edge:] = False
     counts = ink.sum(axis=1)
     raw = []
-    for a, b in _runs(counts > max(8, ROW_INK_MIN_RATIO * content_w)):
+    for a, b in _runs(counts > 8):
         if b - a + 1 < MIN_BAND_HEIGHT:
             continue
         xs = np.flatnonzero(ink[a:b + 1].any(axis=0))
+        if counts[a:b + 1].max() <= ROW_INK_MIN_RATIO * content_w and (
+            not xs.size or xs[-1] - xs[0] + 1 > 0.08 * content_w
+        ):
+            continue
         if xs.size and xs[-1] - xs[0] + 1 >= MIN_BAND_WIDTH:
             raw.append((a, b))
     if not raw:
@@ -111,6 +120,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     line_h = int(np.median([b - a + 1 for a, b in raw]))
     merged = _merge_close(raw, max(2.0, GLYPH_GAP_FACTOR * line_h))
     joined = []
+    fraction_starts = set()
     for a, b in merged:
         if joined:
             prev_a, prev_b = joined[-1]
@@ -119,12 +129,25 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             widths = (prev_x[-1] - prev_x[0] + 1, next_x[-1] - next_x[0] + 1)
             compact_fragment = min(prev_b - prev_a + 1, b - a + 1) < 0.75 * line_h
             aligned = abs((prev_x[0] + prev_x[-1]) - (next_x[0] + next_x[-1])) < line_h
+            heights = (prev_b - prev_a + 1, b - a + 1)
+            small, large = (prev_x, next_x) if widths[0] < widths[1] else (next_x, prev_x)
+            fraction_spill = (
+                min(heights) <= 1.2 * line_h
+                and max(heights) >= 1.8 * line_h
+                and min(widths) <= 0.3 * max(widths)
+                and large[0] <= small[0] <= small[-1] <= large[-1]
+            )
             if (
                 a - prev_b <= 0.5 * line_h
-                and compact_fragment and aligned
-                and min(widths) / max(widths) >= 0.65
+                and (
+                    compact_fragment and aligned
+                    and min(widths) / max(widths) >= 0.65
+                    or fraction_spill
+                )
             ):
                 joined[-1] = (prev_a, b)
+                if fraction_spill:
+                    fraction_starts.add(prev_a)
                 continue
         joined.append((a, b))
     merged = joined
@@ -146,7 +169,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     for a, b in merged:
         band_h = b - a + 1
         count = 1
-        if band_h > 2.2 * typical_h and pitch > 0:
+        if a not in fraction_starts and band_h > 2.2 * typical_h and pitch > 0:
             count = max(2, int((band_h + typical_gap) / pitch))
         if count == 1:
             expanded.append((a, b))
