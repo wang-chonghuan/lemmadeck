@@ -1,0 +1,59 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "6a",
+  "page": 142,
+  "printed_page": 136,
+  "notes": [],
+  "errata": [],
+  "source": {
+    "pdf": "6a 苏联十年制学校数学教材 代数 六年级.pdf",
+    "pdf_sha256": "5bf4fa02c7478d22e88fb1029557fd986e7f1e862d53d449ba96bfc8cf5a3548",
+    "pdf_page": 142
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1473,
+    "h": 2239,
+    "sha256": "08e5b3cafa05ec1d5a7974dbd08144d70d3b8215e1a742e3a12c5328a105a3dc"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 27,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 463 -->
+作图证明：方程组
+$\begin{cases}2x-y=5,\\↵x+y=16\end{cases}$
+和下列方程组有相同的解：
+а) $\begin{cases}2x-y=5,\\↵3x=21;\end{cases}$　　б) $\begin{cases}3x=21,\\x+y=16.\end{cases}$
+（方程组（1）和（2）是原方程组经过更换一个方程而得到
+的，新方程的左边是原方程组两个方程左边的和，新方程
+的右边是两个方程右边的和。）
+
+<!-- ex 464 -->
+解方程组：
+а) $\begin{cases}2x+11y=15,\\↵10x-11y=9;\end{cases}$　　б) $\begin{cases}9x-17y=-14,\\-9x+15y=12;\end{cases}$
+в) $\begin{cases}4x-7y=30,\\↵4x-5y=90;\end{cases}$　　г) $\begin{cases}13x-8y=28,\\11x-8y=24.\end{cases}$
+
+<!-- ex 465 -->
+解方程组：
+а) $\begin{cases}40x+3y=10,\\↵20x-7y=5;\end{cases}$　　б) $\begin{cases}5x-2y=1,\\15x-3y=-3;\end{cases}$
+в) $\begin{cases}33x+42y=10,\\↵9x+14y=4;\end{cases}$　　г) $\begin{cases}13x-12y=14,\\11x+18y=40;\end{cases}$
+д) $\begin{cases}10x-9y=8,\\↵15x+21y=0.5;\end{cases}$　　е) $\begin{cases}9y+8z=-2,\\4y+5z=-11;\end{cases}$
+ж) $\begin{cases}0.75x+20y=95,\\↵0.32x-25y=7;\end{cases}$　　з) $\begin{cases}5u-6v=0,\\4u+17v=109.\end{cases}$
+
+<!-- ex 466 open -->
+把方程化为 $ax+by=c$ 形式，并解方程组：
+а) $\begin{cases}5(x+2y)-3=x+5,\\↵4(x-3y)-50=-y;\end{cases}$
+
+<!-- foot -->
+· 136 ·

@@ -1,0 +1,75 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "6a",
+  "page": 141,
+  "printed_page": 135,
+  "notes": [],
+  "errata": [],
+  "source": {
+    "pdf": "6a 苏联十年制学校数学教材 代数 六年级.pdf",
+    "pdf_sha256": "5bf4fa02c7478d22e88fb1029557fd986e7f1e862d53d449ba96bfc8cf5a3548",
+    "pdf_page": 141
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1473,
+    "h": 2239,
+    "sha256": "a1a3d9695d4f94b5b2f5b062dab65fa8c0c006405e1213dacf16d5abca405d1b"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 26,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+$\begin{cases}-10x-22y=-16,\\↵10x-7y=74.\end{cases}$
+
+<!-- p -->
+现在将两个方程相加，得到方程 $-29y=58$，其中 $x$ 的系
+数等于零。
+
+<!-- p -->
+用方程 $-29y=58$ 代替原方程组的第一个方程，得到新
+方程组：
+$\begin{cases}-29y=58,\\↵10x-7y=74.\end{cases}$
+
+<!-- p -->
+从方程 $-29y=58$ 得到：$y=-2$。将 $y=-2$ 代入第二
+个方程，解得 $x=6$。
+
+<!-- p -->
+答：$\{(6,-2)\}$。
+
+<!-- p -->
+例 3. 解方程组：
+$\begin{cases}9x+7y=7,\\↵2x-3y=-85.\end{cases}$
+
+<!-- p -->
+将第一个方程各项乘以 $3$，第二个方程各项乘以 $7$：
+$\begin{cases}27x+21y=21,\\↵14x-21y=-595.\end{cases}$
+
+<!-- p -->
+将两个方程相加，得
+$\begin{cases}41x=-574,\\↵2x-3y=-85.\end{cases}$
+
+<!-- p -->
+由此得：
+$\begin{cases}x=-14,\\↵2x-3y=-85.\end{cases}$
+
+<!-- p -->
+从后一个方程组求得：$y=19$。
+
+<!-- p -->
+答：$\{(-14,19)\}$。
+
+<!-- foot -->
+· 135 ·

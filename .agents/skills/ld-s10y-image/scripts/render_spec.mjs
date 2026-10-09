@@ -565,6 +565,17 @@ async function render(spec, output) {
             String(object.strokeWidth || 1),
           )
           node.setAttribute('vector-effect', 'non-scaling-stroke')
+          const dashPatterns = [
+            [2, 2], [5, 5], [10, 10], [20, 20],
+            [20, 10, 10, 10], [20, 5, 10, 5], [0, 5],
+          ]
+          const dashPattern = dashPatterns[(object.dash || 0) - 1]
+          if (dashPattern) {
+            node.setAttribute(
+              'stroke-dasharray',
+              dashPattern.map(value => value * (object.strokeWidth || 1)).join(','),
+            )
+          }
           if (object.fillOpacity !== undefined) {
             node.setAttribute('fill-opacity', String(object.fillOpacity))
           }

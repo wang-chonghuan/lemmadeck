@@ -1,0 +1,62 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "6a",
+  "page": 154,
+  "printed_page": 148,
+  "notes": [],
+  "errata": [],
+  "source": {
+    "pdf": "6a 苏联十年制学校数学教材 代数 六年级.pdf",
+    "pdf_sha256": "5bf4fa02c7478d22e88fb1029557fd986e7f1e862d53d449ba96bfc8cf5a3548",
+    "pdf_page": 154
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1473,
+    "h": 2239,
+    "sha256": "6931b33736ba1d8a4f4d8ef1c8f78fa94d28f08088fdec8f07288c3a85d3c46c"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 21,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 530 cont -->
+в) $\begin{cases}\frac{x}{3}+\frac{y}{2}=6,\\↵0x+0.02y=0.6;\end{cases}$　　г) $\begin{cases}\frac{2}{3}y=1,\\0.1x-4y=0.\end{cases}$
+
+<!-- ex 531 -->
+当 $p$ 和 $q$ 取什么值时，方程组
+а) $\begin{cases}0.2x=p,\\↵x+py=q\end{cases}$ 的解是 $x=30$，$y=-7$？
+б) $\begin{cases}\frac{2}{7}y=q,\\↵px-qy=1\end{cases}$ 有解 $x=19$，$y=14$？
+
+<!-- exhead -->
+第 28 小节
+
+<!-- ex 532 -->
+解方程组：
+а) $\begin{cases}25x-18y=75,\\↵35x-28y=35;\end{cases}$　　б) $\begin{cases}35x=3y+5,\\49x=4y+9;\end{cases}$
+в) $\begin{cases}2(2x+y-1)=3,\\↵2(2y-x+1)=3;\end{cases}$　　г) $\begin{cases}6(x+y)=8+2x-3y,\\5(y-x)=5+3x+2y;\end{cases}$
+д) $\begin{cases}\frac{x}{2}=\frac{y+1}{3},\\↵\frac{y}{7}=\frac{x+2}{6};\end{cases}$　　е) $\begin{cases}\frac{y}{2}-\frac{x+y}{5}=0.1,\\\frac{y}{5}-\frac{x-y}{2}=0.1.\end{cases}$
+
+<!-- ex 533 -->
+直线 $ax-8y=c$ 经过点 $A(1,-1)$ 和 $B(9,-6)$。求系数
+$a$ 和 $c$。
+
+<!-- ex 534 -->
+直线 $ax+by=1$ 经过点 $K(8,-3)$ 和 $M(-12,5)$。求系
+数 $a$ 和 $b$。
+
+<!-- ex 535 open -->
+下列方程组有没有解？
+
+<!-- foot -->
+· 148 ·
