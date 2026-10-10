@@ -767,8 +767,8 @@ def assertion_errors(
         if kind == "connects":
             arrow_id = item.get("arrow")
             arrow = objects_by_id.get(arrow_id)
-            if not isinstance(arrow, dict) or arrow.get("type") != "arrow":
-                errors.append(f"{label}.arrow must reference an arrow")
+            if not isinstance(arrow, dict) or arrow.get("type") not in {"arrow", "segment"}:
+                errors.append(f"{label}.arrow must reference an arrow or segment")
                 continue
             actual_from = resolve_point(
                 arrow.get("from"), points, f"{label}.arrow.from", errors

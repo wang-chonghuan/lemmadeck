@@ -1,0 +1,61 @@
+---
+{
+  "printed_page": 232,
+  "notes": [],
+  "errata": [],
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "5m",
+  "page": 241,
+  "source": {
+    "pdf": "5m 苏联十年制学校教材 数学 五年级.pdf",
+    "pdf_sha256": "63de04ad3638091845160482903031cef4728857ad41aac477ffb473222cbe84",
+    "pdf_page": 241
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2172,
+    "sha256": "7ba315a1438a395f3a8debf5d54303f0a104fcfeff597b46dc7802dbf3330743"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 17,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+求式子的值时应用这个定律.
+
+<!-- p -->
+例1. 求$\left(\frac{1}{2}+\frac{3}{5}\right)\cdot10$的值：
+$\left(\frac{1}{2}+\frac{3}{5}\right)\cdot10=\frac{1}{2}\cdot10+\frac{3}{5}\cdot10=5+6=11$.
+
+<!-- p -->
+例2. 如果$x=3\frac{1}{3}$，求$-\frac{3}{5}x+\frac{1}{2}+\frac{7}{10}x+\frac{3}{4}$的值.
+
+<!-- p -->
+应用分配律可以合并同类项：
+$-\frac{3}{5}x+\frac{1}{2}+\frac{7}{10}x+\frac{3}{4}=\left(-\frac{3}{5}+\frac{7}{10}\right)x+\left(\frac{1}{2}+\frac{3}{4}\right)=↵\frac{1}{10}x+1\frac{1}{4}$.
+
+<!-- p -->
+现在我们求上式在$x=3\frac{1}{3}$时的值：
+$\frac{1}{10}x+1\frac{1}{4}=\frac{1}{10}\cdot3\frac{1}{3}+1\frac{1}{4}=\frac{1}{10}\cdot\frac{10}{3}+1\frac{1}{4}=\frac{1}{3}+1\frac{1}{4}↵=1+\frac{1}{3}+\frac{1}{4}=1+\frac{4}{12}+\frac{3}{12}=1\frac{7}{12}$.
+
+<!-- ex 1033 -->
+1033. 叙述乘法分配律，用变量$a$、$b$、$c$把它写出来并用$a=↵\frac{2}{3}$，$b=\frac{1}{6}$，$c=\frac{6}{7}$. 加以验证.
+
+<!-- ex 1034 -->
+1034. 作乘法：
+1) $6\frac{1}{5}\cdot4$；　　2) $9\frac{2}{7}\cdot2$；　　3) $3\cdot7\frac{1}{4}$；
+4) $6\cdot1\frac{1}{7}$；　　5) $4\frac{1}{4}\cdot4$；　　6) $2\frac{1}{8}\cdot8$；
+7) $10\cdot5\frac{2}{5}$；　　8) $11\frac{1}{3}\cdot3$；　　9) $27\frac{4}{9}\cdot9$.
+
+<!-- foot -->
+232

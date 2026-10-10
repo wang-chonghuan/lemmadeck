@@ -544,7 +544,11 @@ def _toc_cards(toc: dict) -> list[dict]:
 def _card_printed_number(card: dict) -> object:
     if card.get("printedNumber") is not None:
         return card["printedNumber"]
-    return card.get("source", {}).get("printedSection")
+    source = card.get("source", {})
+    if source.get("printedSection") is not None:
+        return source["printedSection"]
+    named = SEC_NUM.fullmatch(source.get("printedName", "").strip())
+    return named.group(1) if named else None
 
 
 def check_toc(lessons: list[dict], toc_path: Path, book_id: str,
@@ -553,13 +557,31 @@ def check_toc(lessons: list[dict], toc_path: Path, book_id: str,
 
     app 的目录就是这份 TOC，一张「卡片」正是书里的一个小节（`math5-c1-s1-n1` = 子集），
     可用性按 id 查库。所以这里认领 id 不是锦上添花——不认领，抽出来的课就没有地址。
-    印刷号和起始印刷页两个都对得上才算认领，只对上一个就报告，不猜。
+    印刷号和起始印刷页都对得上才算认领；printedName 还须标题严格一致，不猜。
     """
     toc = json.loads(toc_path.read_text(encoding="utf-8"))
     cards = _toc_cards(toc)
-    numbered_cards = [card for card in cards if _card_printed_number(card) is not None]
-    unnumbered_cards = [card for card in cards if _card_printed_number(card) is None]
     warn = []
+    valid_cards = []
+    for card in cards:
+        source = card.get("source", {})
+        named = SEC_NUM.fullmatch(source.get("printedName", "").strip())
+        if named and (
+            named.group(2).strip() != card.get("title")
+            or any(
+                number is not None and str(number) != named.group(1)
+                for number in (card.get("printedNumber"), source.get("printedSection"))
+            )
+        ):
+            warn.append(f"TOC 卡片 {card['id']} 的 printedName 与编号或标题不一致，未认领")
+            continue
+        valid_cards.append(card)
+    numbered_cards = [
+        card for card in valid_cards if _card_printed_number(card) is not None
+    ]
+    unnumbered_cards = [
+        card for card in valid_cards if _card_printed_number(card) is None
+    ]
     for l in lessons:
         if l["number"]:
             by_num = [
@@ -567,7 +589,14 @@ def check_toc(lessons: list[dict], toc_path: Path, book_id: str,
                 for card in numbered_cards
                 if str(_card_printed_number(card)) == l["number"]
             ]
-            hit = [t for t in by_num if t["page"] == l["start_printed"]]
+            hit = [
+                t for t in by_num
+                if t["page"] == l["start_printed"]
+                and (
+                    not SEC_NUM.fullmatch(t.get("source", {}).get("printedName", "").strip())
+                    or t["title"] == l["title"]
+                )
+            ]
         else:
             by_num = []
             by_page = [
@@ -581,12 +610,13 @@ def check_toc(lessons: list[dict], toc_path: Path, book_id: str,
             l["toc_title"] = hit[0]["title"]
         elif len(hit) > 1:
             warn.append(
-                f"无编号小节「{l['title']}」的印刷页 {l['start_printed']} "
+                f"小节「{l['number'] or ''} {l['title']}」的印刷页 {l['start_printed']} "
                 f"对应多个目录卡片 {[card['id'] for card in hit]}，未认领卡片 id")
         elif by_num:
-            warn.append(f"小节「{l['number']}. {l['title']}」在 TOC 里印刷页是 "
-                        f"{[t['page'] for t in by_num]}，抽出来的是 {l['start_printed']}，"
-                        "对不上，未认领卡片 id")
+            warn.append(
+                f"小节「{l['number']}. {l['title']}」与 TOC 页码/印刷名称不一致，"
+                f"目录是 {[(t['page'], t['title']) for t in by_num]}，"
+                f"抽出来的是 {l['start_printed']}，未认领卡片 id")
         elif l["number"]:
             warn.append(f"小节「{l['number']}. {l['title']}」在 TOC 里找不到对应条目")
 

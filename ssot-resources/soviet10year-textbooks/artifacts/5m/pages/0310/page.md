@@ -1,0 +1,53 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "5m",
+  "page": 310,
+  "printed_page": 301,
+  "source": {
+    "pdf": "5m 苏联十年制学校教材 数学 五年级.pdf",
+    "pdf_sha256": "63de04ad3638091845160482903031cef4728857ad41aac477ffb473222cbe84",
+    "pdf_page": 310
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2172,
+    "sha256": "9db4dbf7c1453c5ab649facb00c225c5851e4dd6ebae5a26cb289cdaa2696d90"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "全页质数表由七列、二十四行构成，按列从上到下排列2至997共168个质数；源表粗细字样忠实保存在原图中。"
+  ],
+  "errata": [],
+  "printed_lines": 2,
+  "figures": [
+    {
+      "id": "tbl-p0310-01",
+      "label": "表",
+      "box": [
+        381,
+        426,
+        851,
+        1407
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- h3 -->
+质数表（到997）
+
+<!-- fig 表 box 381,426,851,1407 -->
+![表](figures/tbl-p0310-01.png)
+
+<!-- foot -->
+· 301 ·

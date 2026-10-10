@@ -33,7 +33,7 @@ MATH_TEXT_LITERAL = re.compile(r"\\text\{([^{}]*)\}")
 MATH_BOUNDARY_PUNCTUATION = re.compile(r"[、，；。？！：]+")
 NUMBER = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])")
 PART_MARKER = re.compile(
-    r"(?<![A-Za-z0-9_.\u0400-\u04ff])"
+    r"(?<![A-Za-z0-9_\u0400-\u04ff])(?<!\d\.)"
     r"(?P<open>[(（]?)(?P<label>\d{1,2}|[a-z]|[\u0430-\u044f\u0451])(?P<close>[)）])"
 )
 LATIN_PARTS = tuple("abcdefghijklmnopqrstuvwxyz")
@@ -565,6 +565,7 @@ def normalize_numbered_subparts(text: str) -> str:
     """Sort a complete numeric or lettered sequence and line-break its parts."""
     if not isinstance(text, str):
         return text
+    text = re.sub(r"^(\s*\d+\.)\s*(?=1[)）])", r"\1\n", text)
     masked_text = masked_math(text)
     depths = nesting_depths(masked_text)
     markers = [
@@ -997,6 +998,9 @@ def validate_generation_metadata(
     spec: dict,
     figure: dict,
     output_path: Path | None = None,
+    *,
+    reuse: dict | None = None,
+    asset_path: Path | None = None,
 ) -> list[str]:
     if not metadata_path.exists():
         return [f"缺少图片生成元数据: {metadata_path}"]
@@ -1018,7 +1022,49 @@ def validate_generation_metadata(
         for item in references
         if isinstance(item, dict)
     } if isinstance(references, list) else set()
-    if not expected_source or expected_source not in reference_shas:
+    if reuse is not None:
+        if not isinstance(reuse, dict):
+            errors.append(f"{metadata_path}: reuse 必须是对象")
+            reuse = {}
+        source = reuse.get("source", {})
+        if not isinstance(source, dict):
+            source = {}
+        source_path = Path(source.get("path", ""))
+        if (
+            not expected_source
+            or source.get("sha256") != expected_source
+            or not source_path.is_file()
+            or sha256(source_path) != expected_source
+        ):
+            errors.append(f"{metadata_path}: reuse 当前原图绑定无效")
+        if not isinstance(reuse.get("reason"), str) or not reuse["reason"].strip():
+            errors.append(f"{metadata_path}: reuse 缺少源图复核理由")
+        if reuse.get("generationSha256") != sha256(metadata_path):
+            errors.append(f"{metadata_path}: reuse 生成记录已过期")
+        if (
+            asset_path is None
+            or not asset_path.is_file()
+            or reuse.get("assetSha256") != sha256(asset_path)
+        ):
+            errors.append(f"{metadata_path}: reuse 素材绑定无效")
+        if not isinstance(references, list) or not references:
+            errors.append(f"{metadata_path}: reuse 缺少原生成来源")
+        else:
+            for reference in references:
+                original = Path(reference.get("path", "")) if isinstance(reference, dict) else Path("")
+                if (
+                    not original.is_file()
+                    or reference.get("sha256") != sha256(original)
+                ):
+                    errors.append(f"{metadata_path}: reuse 原生成来源已过期")
+        original_output = metadata.get("output", {})
+        generated_path = Path(original_output.get("path", ""))
+        if (
+            not generated_path.is_file()
+            or original_output.get("sha256") != sha256(generated_path)
+        ):
+            errors.append(f"{metadata_path}: reuse 原生成输出已过期")
+    elif not expected_source or expected_source not in reference_shas:
         errors.append(f"{metadata_path}: 未记录当前原图 PNG SHA")
     if (
         output_path is not None
@@ -1204,6 +1250,8 @@ def validate_artwork(
             generation_path,
             spec,
             figure,
+            reuse=asset.get("reuse"),
+            asset_path=asset_path,
         )
         if (
             not generation_path.is_file()

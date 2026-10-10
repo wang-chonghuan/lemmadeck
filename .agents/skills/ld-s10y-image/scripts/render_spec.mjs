@@ -8,6 +8,7 @@ import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 
 import { chromium } from 'playwright-core'
+import { materializeArrowheads } from './materialize_arrowheads.mjs'
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url))
 const skillDir = path.dirname(scriptDir)
@@ -182,6 +183,9 @@ async function render(spec, output) {
     `)
     await page.addStyleTag({ path: jsxgraphCssPath })
     await page.addScriptTag({ path: jsxgraphPath })
+    await page.addScriptTag({
+      content: `window.materializeArrowheads = ${materializeArrowheads.toString()}`,
+    })
 
     const result = await page.evaluate(({ figureSpec, boardId }) => {
       const SVG_NS = 'http://www.w3.org/2000/svg'
@@ -783,6 +787,7 @@ async function render(spec, output) {
       }
 
       svg.querySelectorAll('foreignObject, script').forEach((node) => node.remove())
+      window.materializeArrowheads(svg)
       const displayChecks = figureSpec.display.widths.map((width) => {
         const host = document.createElement('div')
         host.style.cssText =

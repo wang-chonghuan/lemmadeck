@@ -20,7 +20,7 @@ from scipy import ndimage
 INK_THRESHOLD = 128          # 灰度低于此值视为墨迹
 ROW_INK_MIN_RATIO = 0.008    # 行墨迹占版心宽比例低于此值视为空白（抑制扫描噪点）
 MIN_BAND_HEIGHT = 3          # 保留拆成上下笔画的短标号（如表格前单独一行的 а)）
-MIN_BAND_WIDTH = 24          # 孤立扫描墨点不能算作一行文字
+MIN_BAND_WIDTH = 14          # Retain a single printed quotient digit.
 # 只用来把同一行里断开的笔画（分式、上下标、页码的点）接回去。不能取大：取 0.6
 # 会把行距紧的相邻几行并成一行，数出来的行数就少了。
 GLYPH_GAP_FACTOR = 0.4       # Keep captions separate from the following printed row.
@@ -112,6 +112,62 @@ def _row_fragments(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     return raw
 
 
+def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool:
+    """Distinguish tall inline fractions from two full text rows."""
+    band = ink[a:b + 1].copy()
+    height = band.shape[0]
+    rules = []
+    components, _ = ndimage.label(band)
+    for bounds in ndimage.find_objects(components):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        if (
+            columns.stop - columns.start >= 0.7 * line_h
+            and rows.stop - rows.start <= 0.2 * line_h
+            and 0.3 * height <= (rows.start + rows.stop) / 2 <= 0.7 * height
+        ):
+            rules.append((columns.start, columns.stop - 1))
+    horizontal = ndimage.binary_opening(
+        band, structure=np.ones((1, max(2, int(0.7 * line_h))), dtype=bool)
+    )
+    rule_components, _ = ndimage.label(horizontal)
+    for bounds in ndimage.find_objects(rule_components):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        if (
+            rows.stop - rows.start <= 0.25 * line_h
+            and (
+                0.3 * height <= (rows.start + rows.stop) / 2 <= 0.7 * height
+                # A nested denominator moves its long outer rule above centre.
+                or height > 3 * line_h
+                and columns.stop - columns.start >= 2 * line_h
+                and 0.2 * height <= (rows.start + rows.stop) / 2 <= 0.8 * height
+            )
+        ):
+            rules.append((columns.start, columns.stop - 1))
+    if not rules:
+        return False
+    for left, right in rules:
+        margin = int(0.5 * line_h)
+        band[:, max(0, left - margin):min(band.shape[1], right + margin + 1)] = False
+    components, _ = ndimage.label(band)
+    for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        if (
+            rows.stop - rows.start > 1.8 * line_h
+            and columns.stop - columns.start < 0.6 * line_h
+        ):
+            region = band[bounds]
+            region[components[bounds] == component_id] = False
+    counts = band.sum(axis=1)
+    remaining = np.flatnonzero(counts > max(8, 0.25 * counts.max()))
+    return not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h
+
+
 def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     """Count printed rows after masking model-identified figures."""
     # Work on a counting-only copy; extraction pixels are never changed.
@@ -124,6 +180,39 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         return []
     line_h = int(np.median([b - a + 1 for a, b in raw]))
     components, _ = ndimage.label(ink)
+    bounds_list = ndimage.find_objects(components)
+    glyph_heights = [
+        rows.stop - rows.start
+        for bounds in bounds_list if bounds is not None
+        for rows, columns in [bounds]
+        if 0.25 * line_h <= rows.stop - rows.start <= 1.3 * line_h
+        and 0.2 * line_h <= columns.stop - columns.start <= 1.3 * line_h
+    ]
+    glyph_h = (
+        float(np.percentile(glyph_heights, 75)) if len(glyph_heights) >= 3 else line_h
+    )
+    # Dense, joined shallow blemishes are not glyphs or thin fraction rules.
+    # Remove them only when they occupy an otherwise isolated projection row.
+    for component_id, bounds in enumerate(bounds_list, 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        height, width = rows.stop - rows.start, columns.stop - columns.start
+        area = np.count_nonzero(components[bounds] == component_id)
+        if (
+            0.35 * glyph_h <= height <= 0.65 * glyph_h
+            and width >= 1.5 * glyph_h
+            and area >= 0.35 * width * height
+            and any(
+                a - 0.15 * glyph_h <= rows.start
+                and rows.stop - 1 <= b + 0.15 * glyph_h
+                and b - a + 1 <= 0.65 * glyph_h
+                and np.count_nonzero(ink[a:b + 1]) <= area * 1.1
+                for a, b in raw
+            )
+        ):
+            region = ink[bounds]
+            region[components[bounds] == component_id] = False
     for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
         if bounds is None:
             continue
@@ -136,7 +225,33 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     if not raw:
         return []
     line_h = int(np.median([b - a + 1 for a, b in raw]))
-    merged = _merge_close(raw, max(2.0, GLYPH_GAP_FACTOR * line_h))
+    # Projection thresholds can miss a narrow standalone quotient such as 1 or 7.
+    for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        height, width = rows.stop - rows.start, columns.stop - columns.start
+        if (
+            0.6 * line_h <= height <= 1.3 * line_h
+            and 0.3 * line_h <= width <= line_h
+            and np.count_nonzero(components[bounds] == component_id) >= 0.12 * line_h ** 2
+            and not any(a <= rows.start and rows.stop - 1 <= b for a, b in raw)
+        ):
+            raw.append((rows.start, rows.stop - 1))
+    raw.sort()
+    merged = []
+    merge_gap = max(2.0, GLYPH_GAP_FACTOR * min(line_h, glyph_h))
+    for a, b in _merge_close(raw, 0):
+        if merged:
+            prev_a, prev_b = merged[-1]
+            separate_tall_rows = (
+                min(prev_b - prev_a + 1, b - a + 1) >= 1.8 * glyph_h
+                and not _single_fraction_row(ink, prev_a, b, glyph_h)
+            )
+            if a - prev_b <= merge_gap and not separate_tall_rows:
+                merged[-1] = (prev_a, b)
+                continue
+        merged.append((a, b))
     joined = []
     fraction_starts = set()
     for a, b in merged:
@@ -150,7 +265,10 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             heights = (prev_b - prev_a + 1, b - a + 1)
             small, large = (prev_x, next_x) if widths[0] < widths[1] else (next_x, prev_x)
             fraction_spill = (
-                min(heights) <= 1.2 * line_h
+                b - prev_a + 1 <= (
+                    4.8 if prev_a in fraction_starts else 3.2
+                ) * max(line_h, glyph_h)
+                and min(heights) <= 1.2 * line_h
                 and (
                     max(heights) >= 1.8 * line_h
                     or min(heights) < 0.4 * line_h
@@ -164,7 +282,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             if (
                 a - prev_b <= (
                     0.6 if min(heights) < 0.4 * line_h else 0.5
-                ) * line_h
+                ) * min(line_h, 1.5 * glyph_h)
                 and (
                     compact_fragment and aligned
                     and min(widths) / max(widths) >= 0.65
@@ -209,6 +327,11 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             ]
             if count == 3 and len(strong_rows) == 2:
                 count = 2
+            if (
+                count == 2 and _single_fraction_row(ink, a, b, typical_h)
+                or _single_fraction_row(ink, a, b, min(typical_h, glyph_h))
+            ):
+                count = 1
         if count == 1:
             expanded.append((a, b))
             continue
@@ -234,9 +357,24 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         edge_border = a < 0.02 * page_h and (
             thin or band_w > 0.7 * content_w
         )
+        short_text = False
+        if thin and not edge_border and band_w < 0.05 * content_w:
+            labels, _ = ndimage.label(ink[a:b + 1])
+            glyphs = [
+                bounds for bounds in ndimage.find_objects(labels)
+                if bounds is not None
+                and bounds[0].stop - bounds[0].start >= 0.25 * typical_h
+                and bounds[1].stop - bounds[1].start >= 0.2 * typical_h
+                and bounds[0].stop - bounds[0].start >= (
+                    0.35 * (bounds[1].stop - bounds[1].start)
+                )
+            ]
+            # A short final number can be lower than the Chinese body glyphs.
+            short_text = bool(glyphs) and band_w >= 0.8 * typical_h
         decoration = edge_border or (
             thin
             and (band_w > 0.3 * content_w or band_w < 0.05 * content_w)
+            and not short_text
         )
         if not decoration:
             out.append((a, b))
