@@ -23,7 +23,7 @@ function inspect(document) {
   }
 }
 
-function main() {
+async function main() {
   const args = process.argv.slice(2)
   const stdin = args.includes('--stdin')
   const json = args.includes('--json') || stdin
@@ -31,7 +31,15 @@ function main() {
   if (!stdin && !filename) {
     throw new Error('usage: prose_flow.mjs [--json] <lesson.json> | --stdin')
   }
-  const raw = stdin ? fs.readFileSync(0, 'utf8') : fs.readFileSync(filename, 'utf8')
+  let raw
+  if (stdin) {
+    process.stdin.setEncoding('utf8')
+    const chunks = []
+    for await (const chunk of process.stdin) chunks.push(chunk)
+    raw = chunks.join('')
+  } else {
+    raw = fs.readFileSync(filename, 'utf8')
+  }
   const report = inspect(JSON.parse(raw))
   if (json) {
     process.stdout.write(`${JSON.stringify(report, null, 2)}\n`)
@@ -49,7 +57,7 @@ function main() {
 }
 
 try {
-  main()
+  await main()
 } catch (error) {
   console.error(error instanceof Error ? error.message : String(error))
   process.exitCode = 2

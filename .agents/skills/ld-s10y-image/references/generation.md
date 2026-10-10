@@ -46,3 +46,20 @@ python <n-azure-skill>/scripts/generate_image.py \
 Keep the `n-azure/image-generation@1` metadata beside the asset. FigureSpec
 must reference both files. Hybrid publication keeps the artwork PNG and
 independent SVG overlay; never publish a flattened composite PNG.
+
+When reusing an existing hybrid artwork asset, keep its original generation
+metadata unchanged. Reopen the current source PNG and the artwork, record the
+semantic fit in the source inventory and review, and add `assets[].reuse`:
+
+```json
+{
+  "reason": "Describe the inspected semantic fit and any modern adaptation.",
+  "source": {"path": "durable/current-source.png", "sha256": "..."},
+  "assetSha256": "...",
+  "generationSha256": "..."
+}
+```
+
+The publisher verifies the current source, reused asset and generation hashes,
+plus the original generation's reference images and output. Reuse does not
+claim a new generation call or insert the current image into old references.

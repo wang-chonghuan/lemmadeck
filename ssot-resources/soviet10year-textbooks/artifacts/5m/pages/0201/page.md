@@ -1,0 +1,62 @@
+---
+{
+  "printed_page": 192,
+  "notes": [],
+  "errata": [],
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "5m",
+  "page": 201,
+  "source": {
+    "pdf": "5m 苏联十年制学校教材 数学 五年级.pdf",
+    "pdf_sha256": "63de04ad3638091845160482903031cef4728857ad41aac477ffb473222cbe84",
+    "pdf_page": 201
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2172,
+    "sha256": "51ce733ed1d3f7940c5b56942e882d12a455bf68d35796570ec9b9d0129fac1f"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 17,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+实际是：$\frac{8}{15}\cdot\frac{15}{8}=1$. 这时，$\frac{15}{8}$叫做$\frac{8}{15}$的倒数. $\frac{8}{15}$也是$\frac{15}{8}$
+的倒数，因为$\frac{8}{15}$和$\frac{15}{8}$的乘积等于1. 可以说，分数$\frac{8}{15}$和$\frac{15}{8}$互为
+倒数.
+
+<!-- p -->
+一般地说，乘积等于1的两个数叫做互为倒数. 例如，7
+和$\frac{1}{7}$互为倒数，因为$7\times\frac{1}{7}=1$.
+
+<!-- p -->
+形如$\frac{a}{b}$和$\frac{b}{a}$的任何两个分数都互为倒数，因为对于$a$和
+$b$的任何自然数的值，它们的乘积都等于1：
+$\frac{a}{b}\cdot\frac{b}{a}=1$.
+
+<!-- p -->
+因此，如果任何一个数$x$先乘以分数$\frac{a}{b}$，然后再乘以它
+的倒数$\frac{b}{a}$，结果还是得$x$：
+$\left(x\cdot\frac{a}{b}\right)\cdot\frac{b}{a}=x\cdot\left(\frac{a}{b}\cdot\frac{b}{a}\right)=x\cdot1=x$.
+
+<!-- ex 852 -->
+852. 说出下列各数的倒数：
+1) $\frac{7}{10}$；　3) $\frac{5}{1}$；　5) $\frac{1}{5}$；　7) $-\frac{2}{3}$；
+2) $\frac{11}{4}$；　4) $\frac{8}{9}$；　6) $\frac{5}{5}$；　8) $-\frac{5}{4}$.
+
+<!-- ex 853 open -->
+853. 下列每对数是互为倒数吗？
+1) $7\frac{2}{5}$和$\frac{5}{37}$；　2) 48和$\frac{1}{48}$；　3) 0.2和5；
+
+<!-- foot -->
+192

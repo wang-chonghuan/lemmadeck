@@ -119,6 +119,17 @@ function figure(contentRoot, id, label, strictEdition) {
     + ` data-figure-purpose="${contract.purpose}"><div class="figure-media"`
     + ` data-figure-mode="${contract.mode}" data-figure-theme="neutral"${mediaStyle}>`;
   const close = "</div></figure>";
+  if (strictEdition && contract.mode === "hybrid") {
+    const artwork = path.join(contentRoot, "figures", `${id}.artwork.png`);
+    if (!fs.existsSync(artwork) || !fs.existsSync(svg)) {
+      return `<p class="err">缺少现代分层图片 ${esc(id)}</p>`;
+    }
+    const b64 = fs.readFileSync(artwork).toString("base64");
+    const vector = fs.readFileSync(svg, "utf8").replace(/<\?xml[^>]*\?>/, "");
+    return open + `<div class="figure-layered"><img class="figure-artwork" `
+      + `alt="${esc(label || id)}" src="data:image/png;base64,${b64}">`
+      + `<div class="figure-vector">${vector}</div></div>` + close;
+  }
   if (strictEdition && fs.existsSync(png)) {
     const b64 = fs.readFileSync(png).toString("base64");
     return open + `<img alt="${esc(label || id)}" `
@@ -157,6 +168,9 @@ p.para.section{border-top:1px solid var(--rule);margin-top:1.5em;padding-top:1.3
   --ld-figure-grid:var(--rule);--ld-figure-paper:#fff;display:block;
   margin:0 auto;width:fit-content;max-width:min(100%,30em);font-size:16px}
 .figure-media svg,.figure-media img{display:block;width:100%;max-width:100%;height:auto}
+.figure-layered{display:grid}
+.figure-layered>.figure-artwork,.figure-layered>.figure-vector{grid-area:1/1}
+.figure-vector{display:block;width:100%;max-width:100%;height:auto}
 .nb{display:inline-block;max-width:100%;overflow-x:auto;vertical-align:middle;white-space:nowrap}
 .err{color:#a3341f;background:#fdeeea;padding:1px 5px;border-radius:3px}
 .exgroup{margin:2.2em 0 .8em;font-weight:700;font-size:1.05em;

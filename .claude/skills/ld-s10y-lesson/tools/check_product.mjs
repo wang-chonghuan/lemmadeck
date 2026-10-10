@@ -63,25 +63,62 @@ export function expectedFigureCoverage(lesson, exercises) {
   }
 }
 
-async function assertFigurePixels(figure, page) {
-  const png = await figure.screenshot()
-  const marks = await page.evaluate(async base64 => {
-    const image = new Image()
-    image.src = `data:image/png;base64,${base64}`
-    await image.decode()
-    const canvas = document.createElement('canvas')
-    canvas.width = image.width
-    canvas.height = image.height
-    const context = canvas.getContext('2d')
-    context.drawImage(image, 0, 0)
-    const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data
-    let marks = 0
-    for (let index = 0; index < pixels.length; index += 4) {
-      if (pixels[index + 3] > 0 && Math.min(...pixels.slice(index, index + 3)) < 180) marks += 1
+export async function assertFigurePixels(figure, page) {
+  const frame = await figure.evaluate(element => ({
+    start: element.scrollLeft,
+    end: Math.max(0, element.scrollWidth - element.clientWidth),
+    step: Math.max(1, element.clientWidth),
+  }))
+  let visibleMarks = 0
+  try {
+    // A source-faithful scroll figure may leave its first visible strip empty.
+    for (let position = 0; ; position = Math.min(position + frame.step, frame.end)) {
+      await figure.evaluate(async (element, left) => {
+        element.scrollLeft = left
+        await new Promise(resolve => requestAnimationFrame(resolve))
+      }, position)
+      const png = await figure.screenshot()
+      const mediaBounds = await figure.evaluate(element => {
+        const outer = element.getBoundingClientRect()
+        const media = [...element.querySelectorAll('svg, img')].map(node => node.getBoundingClientRect())
+          .filter(rect => rect.width > 0 && rect.height > 0)
+        if (!media.length) return null
+        const left = Math.max(outer.left + element.clientLeft, Math.min(...media.map(rect => rect.left)))
+        const top = Math.max(outer.top + element.clientTop, Math.min(...media.map(rect => rect.top)))
+        const right = Math.min(outer.left + element.clientLeft + element.clientWidth,
+          Math.max(...media.map(rect => rect.right)))
+        const bottom = Math.min(outer.top + element.clientTop + element.clientHeight,
+          Math.max(...media.map(rect => rect.bottom)))
+        return { x: left - outer.left, y: top - outer.top, width: right - left, height: bottom - top,
+          outerWidth: outer.width, outerHeight: outer.height }
+      })
+      const marks = await page.evaluate(async ({ base64, bounds }) => {
+        if (!bounds || bounds.width <= 0 || bounds.height <= 0) return 0
+        const image = new Image()
+        image.src = `data:image/png;base64,${base64}`
+        await image.decode()
+        const scaleX = image.width / bounds.outerWidth, scaleY = image.height / bounds.outerHeight
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.max(1, Math.floor(bounds.width * scaleX))
+        canvas.height = Math.max(1, Math.floor(bounds.height * scaleY))
+        const context = canvas.getContext('2d')
+        // Count drawing pixels, never a caption, border or native scrollbar.
+        context.drawImage(image, bounds.x * scaleX, bounds.y * scaleY,
+          bounds.width * scaleX, bounds.height * scaleY, 0, 0, canvas.width, canvas.height)
+        const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data
+        let marks = 0
+        for (let index = 0; index < pixels.length; index += 4) {
+          if (pixels[index + 3] > 0 && Math.min(...pixels.slice(index, index + 3)) < 180) marks += 1
+        }
+        return marks
+      }, { base64: png.toString('base64'), bounds: mediaBounds })
+      visibleMarks = Math.max(visibleMarks, marks)
+      if (position === frame.end) break
     }
-    return marks
-  }, png.toString('base64'))
-  assert.ok(marks > 100, 'Figure screenshot has no visible drawing')
+  } finally {
+    await figure.evaluate((element, left) => { element.scrollLeft = left }, frame.start)
+  }
+  assert.ok(visibleMarks > 100, 'Figure screenshot has no visible drawing')
 }
 
 export async function assertActualFigureText(figure, minTextPx = 16) {

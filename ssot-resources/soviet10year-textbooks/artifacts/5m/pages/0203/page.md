@@ -1,0 +1,67 @@
+---
+{
+  "printed_page": 194,
+  "notes": [],
+  "errata": [],
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "5m",
+  "page": 203,
+  "source": {
+    "pdf": "5m 苏联十年制学校教材 数学 五年级.pdf",
+    "pdf_sha256": "63de04ad3638091845160482903031cef4728857ad41aac477ffb473222cbe84",
+    "pdf_page": 203
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2172,
+    "sha256": "a64e113b7ec63bdddd4a6661aeba08dba726eeeb23f97c503f499da2af678a2c"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 19,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 858 cont -->
+倍，每叠中原来各有多少本笔记本？
+
+<!-- exhead -->
+家庭作业题
+
+<!-- ex 859 -->
+859. 求下列各数的倒数：
+1) $\frac{10}{27},\ \frac{12}{59},\ \frac{23}{98},\ \frac{11}{122},\ \frac{42}{315},\ \frac{10}{3},\ \frac{41}{8}$；
+2) $11\frac{11}{12},\ \frac{1}{20}$，80，100，1，0.5，1.2.
+
+<!-- ex 860 -->
+860. 计算：
+1) $\frac{8}{11}\cdot\frac{33}{4}$；　3) $\frac{14}{3}\cdot\frac{3}{7}$；　5) $\frac{31}{23}\cdot\left(-\frac{69}{31}\right)$；
+2) $\frac{21}{13}\cdot\frac{26}{7}$；　4) $-\frac{5}{9}\cdot\frac{108}{5}$；　6) $-\frac{41}{42}\cdot\left(-\frac{21}{41}\right)$.
+
+<!-- ex 861 -->
+861. 给学生的任务是收集2.5吨废铁. 他们收集了3.2吨.
+求学生完成任务的百分率和他们超额完成任务的百
+分数.
+
+<!-- h3 -->
+47. 分数除法
+
+<!-- p -->
+问题1. 一个长方形面积为$\frac{5}{7}$平方米，它的一边长$\frac{3}{4}$米，
+求另一边的长.
+
+<!-- p open -->
+因为长方形面积等于它的长和宽的乘积，所以解题时要
+求出这样一个数$x$，使$x\cdot\frac{3}{4}=\frac{5}{7}$. 我们知道，如果把$x\cdot\frac{3}{4}$的乘
+积再乘以分数$\frac{3}{4}$的倒数$\frac{4}{3}$，就可以求出$x$，也就是$x=\left(x\cdot\frac{3}{4}\right)\cdot↵\frac{4}{3}$. 因为$x\cdot\frac{3}{4}=\frac{5}{7}$，所以$x=\frac{5}{7}\cdot\frac{4}{3}$. 这样，长方形的另一边长
+
+<!-- foot -->
+194
