@@ -219,9 +219,7 @@ function UserMenu({ user, locale }: { user: CurrentUser | null; locale: Locale }
   )
 }
 
-// One outline row. Numbered topics make the parent structural; all-unnumbered
-// topics are supplemental cards beneath a separately publishable main lesson.
-// Every unavailable card remains visible but inert.
+// Branch rows only disclose their topics; only available leaves navigate.
 export function LessonRow({
   lesson,
   title,
@@ -268,26 +266,9 @@ export function LessonRow({
       >
         <summary>
           <span className="sr-out-caret" aria-hidden />
-          {lesson.ready ? (
-            // Inside <summary>, so stop the click from toggling the disclosure —
-            // the caret is the toggle, the title is the destination.
-            <Link
-              to="/card/$id"
-              params={{ id: lesson.cardId }}
-              className="sr-out-lesson ready"
-              activeProps={{ className: 'sr-out-lesson ready active' }}
-              onClick={(e) => {
-                e.stopPropagation()
-                onNavigate()
-              }}
-            >
-              {title}
-            </Link>
-          ) : (
-            <span className="sr-out-lesson sr-out-disabled" aria-disabled="true">
-              {title}
-            </span>
-          )}
+          <span className={`sr-out-lesson${lesson.ready ? ' ready' : ' sr-out-disabled'}`}>
+            {title}
+          </span>
         </summary>
         <ol className="sr-out-topics">
           {lesson.topics.map((tp) => (
