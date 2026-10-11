@@ -28,7 +28,7 @@ const require = createRequire(import.meta.url)
 const postgres = require('postgres')
 const { inline, proseInline, proseFlow } = require('./htmlfrag.js')
 const { publicationPlan } = require('./lesson_order.js')
-const { preserveExerciseMetadata, sourceNumberForArtifact } = require('./publish_merge.js')
+const { preserveExerciseMetadata, preserveChoiceMetadata, sourceNumberForArtifact } = require('./publish_merge.js')
 
 const args = process.argv.slice(2)
 const bookDir = args.find((a) => !a.startsWith('--'))
@@ -261,6 +261,7 @@ try {
         existingDeck,
         editionName,
       )
+      r.exercises = preserveChoiceMetadata(r.exercises, existingDeck)
       await tx`
         insert into sr_lessons
           (id, subject, stage, lesson_order, title, concept, content, exercises, status)

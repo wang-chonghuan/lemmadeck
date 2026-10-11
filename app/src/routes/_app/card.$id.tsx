@@ -11,7 +11,8 @@ import {
 import { useEffect, useRef, useState } from 'react'
 
 import { BrandMark } from '~/components/brand-mark'
-import { MathAnswerField } from '~/components/math-answer-field'
+import { TextbookChoices } from '~/components/textbook-choices'
+import { getTextbookChoices } from '~/lib/textbook-choice'
 import { t, type Locale } from '~/lib/i18n'
 import { useLayoutStore } from '~/lib/layout-store'
 import { getLocale } from '~/lib/locale'
@@ -35,7 +36,7 @@ import { findCard } from '~/lib/textbooks'
 export const Route = createFileRoute('/_app/card/$id')({
   validateSearch: (
     search: Record<string, unknown>,
-  ): { tab?: 'ex'; exercise?: string } => {
+  ): { tab?: 'ex' | 'choices'; exercise?: string } => {
     const exercise =
       typeof search.exercise === 'string'
         ? search.exercise.trim()
@@ -43,17 +44,18 @@ export const Route = createFileRoute('/_app/card/$id')({
           ? String(search.exercise)
           : ''
     return {
-      tab: search.tab === 'ex' ? 'ex' : undefined,
+      tab: search.tab === 'ex' || search.tab === 'choices' ? search.tab : undefined,
       exercise: exercise || undefined,
     }
   },
   component: CardPage,
   loader: async ({ params }) => {
-    const [locale, content] = await Promise.all([
+    const [locale, content, choices] = await Promise.all([
       getLocale(),
       getCardContent({ data: params.id }),
+      getTextbookChoices({ data: params.id }),
     ])
-    return { locale, content, card: findCard(params.id, locale) }
+    return { locale, content, choices, card: findCard(params.id, locale) }
   },
 })
 
@@ -215,15 +217,13 @@ function Prose({ blocks }: { blocks: ProseBlock[] }) {
 function Exercises({
   items,
   locale,
-  cardId,
   targetExercise,
-  interactive = true,
+  anchors = true,
 }: {
   items: CardExercise[]
   locale: Locale
-  cardId: string
   targetExercise?: string
-  interactive?: boolean
+  anchors?: boolean
 }) {
   let group: string | null | undefined
   return (
@@ -235,9 +235,9 @@ function Exercises({
             {head !== null && <h2 className="sr-ex-group">{head || t(locale, 'card.practice')}</h2>}
             <article
               className={`sr-ex${
-                interactive && e.number === targetExercise ? ' sr-ex-target' : ''
+                anchors && e.number === targetExercise ? ' sr-ex-target' : ''
               }`}
-              id={interactive ? `ex-${e.number}` : undefined}
+              id={anchors ? `ex-${e.number}` : undefined}
             >
               <div className="sr-ex-n sr-num">{e.sourceNumber ?? ''}</div>
               <div className="sr-ex-body">
@@ -254,16 +254,6 @@ function Exercises({
                     <FigureMedia figure={f} />
                   </figure>
                 ))}
-                {interactive && (
-                  <MathAnswerField
-                    lessonId={cardId}
-                    exercise={e.number}
-                    storageKey={`sr_math_answer:${cardId}:${e.number}`}
-                    locale={locale}
-                    answerSpec={e.answerSpec}
-                    grid={e.grid}
-                  />
-                )}
               </div>
             </article>
           </section>
@@ -274,11 +264,11 @@ function Exercises({
 }
 
 function CardPage() {
-  const { locale, content, card } = Route.useLoaderData()
+  const { locale, content, choices, card } = Route.useLoaderData()
   const search = Route.useSearch()
   const setDrawer = useLayoutStore((s) => s.setDrawer)
   const where = useRef<HTMLElement>(null)
-  const [tab, setTab] = useState<'read' | 'ex'>('read')
+  const [tab, setTab] = useState<'read' | 'ex' | 'choices'>('read')
 
   // Park the trail at its own end, so a trail too long for the pane shows the
   // section rather than the volume. Re-run once the display font lands.
@@ -293,15 +283,16 @@ function CardPage() {
     document.fonts?.ready.then(park).catch(() => {})
   }, [cardId])
 
-  // Ordinary navigation starts at the text. A mistake-book redo explicitly opens
-  // the exercise tab and identifies the book-numbered exercise to locate.
+  // Existing exercise links open the writing tab at the book-numbered problem.
   useEffect(() => {
     setTab(
-      search.tab === 'ex' && (content?.exercises.length ?? 0) > 0
+      search.tab === 'choices' && choices
+        ? 'choices'
+        : search.tab === 'ex' && (content?.exercises.length ?? 0) > 0
         ? 'ex'
         : 'read',
     )
-  }, [cardId, content?.exercises.length, search.tab])
+  }, [cardId, content?.exercises.length, choices, search.tab])
 
   useEffect(() => {
     if (tab !== 'ex' || !search.exercise) return
@@ -311,8 +302,7 @@ function CardPage() {
       })
     }
     // TanStack's page-navigation restoration resets the detail pane after the
-    // first paint. MathLive then replaces its input hosts asynchronously. Scroll
-    // after both phases so a redo remains parked on the requested exercise.
+    // first paint. Scroll after restoration so the requested problem stays in view.
     const timers = [
       window.setTimeout(scrollToExercise, 80),
       window.setTimeout(scrollToExercise, 500),
@@ -383,7 +373,7 @@ function CardPage() {
             {card.title}
           </h1>
 
-          {exercises.length > 0 && (
+          {(exercises.length > 0 || choices) && (
             <div className="sr-tabs" role="tablist">
               <button
                 type="button"
@@ -394,16 +384,26 @@ function CardPage() {
               >
                 {t(locale, 'card.read')}
               </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={tab === 'ex'}
-                className={`sr-tab${tab === 'ex' ? ' on' : ''}`}
-                onClick={() => setTab('ex')}
-              >
-                {t(locale, 'card.exercises')}
-                <span className="sr-tab-n">{exercises.length}</span>
-              </button>
+              {choices && (
+                <button type="button" role="tab" aria-selected={tab === 'choices'}
+                  className={`sr-tab${tab === 'choices' ? ' on' : ''}`}
+                  onClick={() => setTab('choices')}>
+                  {t(locale, 'card.exercises')}
+                  <span className="sr-tab-n">{choices.questions.length}</span>
+                </button>
+              )}
+              {exercises.length > 0 && (
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === 'ex'}
+                  className={`sr-tab${tab === 'ex' ? ' on' : ''}`}
+                  onClick={() => setTab('ex')}
+                >
+                  {t(locale, 'card.writing')}
+                  <span className="sr-tab-n">{exercises.length}</span>
+                </button>
+              )}
             </div>
           )}
 
@@ -413,13 +413,16 @@ function CardPage() {
             </div>
           ) : tab === 'read' ? (
             <Prose blocks={prose} />
+          ) : tab === 'choices' && choices ? (
+            <TextbookChoices key={`${card.id}:${choices.revision}`} deck={choices} lessonId={card.id} locale={locale} />
           ) : (
-            <Exercises
-              items={exercises}
-              locale={locale}
-              cardId={card.id}
-              targetExercise={search.exercise}
-            />
+            <section aria-label={t(locale, 'card.writing')} data-testid="textbook-writing">
+              <Exercises
+                items={exercises}
+                locale={locale}
+                targetExercise={search.exercise}
+              />
+            </section>
           )}
 
           <footer className="sr-deck-actions">
@@ -481,12 +484,11 @@ function CardPage() {
         )}
         {exercises.length > 0 && (
           <section className="sr-print-section" data-print-section="exercises">
-            <h2 className="sr-print-section-title">{t(locale, 'card.exercises')}</h2>
+            <h2 className="sr-print-section-title">{t(locale, 'card.writing')}</h2>
             <Exercises
               items={exercises}
               locale={locale}
-              cardId={card.id}
-              interactive={false}
+              anchors={false}
             />
           </section>
         )}
