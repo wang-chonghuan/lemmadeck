@@ -48,7 +48,7 @@ async function currentRound(database: TransactionSql | ReturnType<typeof sql>, u
   const [row] = await database`
     select id::text as id from sr_content_answer_events
     where user_id = ${userId} and lesson_id = ${lessonId}
-      and kind = 'choice_round' and node_id = ${roundNode(revision)}
+      and kind = 'exercise' and node_id = ${roundNode(revision)}
     order by id desc limit 1
   `
   return (row?.id as string | undefined) ?? '0'
@@ -177,7 +177,7 @@ export const restartTextbookChoices = createServerFn({ method: 'POST' })
       if (roundId !== data.roundId) return
       await transaction`
         insert into sr_content_answer_events (user_id, lesson_id, kind, node_id, locale)
-        values (${userId}, ${data.lessonId}, 'choice_round', ${roundNode(deck.revision)}, ${currentLocale()})
+        values (${userId}, ${data.lessonId}, 'exercise', ${roundNode(deck.revision)}, ${currentLocale()})
       `
     })
     return loadChoiceProgress(sql(), userId, data.lessonId, deck)
