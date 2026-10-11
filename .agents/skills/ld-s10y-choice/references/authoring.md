@@ -26,6 +26,8 @@ verification:
   人工独立代入定义域每个元素，核对整个值域；不能只查元素个数。
 - literal：每项理由和结论逐项审核；不以唯一 correctOptionId 冒充数学正确。
 - graph：图由 ld-s10y-image 的确定性 FigureSpec 渲染，选项同坐标范围、刻度、尺寸。
+  图 A/B/C 按 options 当前显示顺序命名，不从稳定 option.id 推断；调整顺序时同步图名，
+  不为改显示名称而改 id 或 correctOptionId。
   数值反比例/正比例选项可用
   `scripts/graph-options.mjs <choices.json> <reference-source.png> <inspected-inventory.json>`。
   先看实际源PNG，inventory JSON 中的 description 记录源图内容和现代新增框架的区别，
@@ -36,10 +38,14 @@ verification:
   坐标识别可写 `{type:"points",points:[["A",x,y],...]}`，从原题给定值定义点及错误变换。
   线性函数可写 `{type:"affine",k,l,domain:[a,b],closed:[true,true],integers:false}`；
   不写 domain 表示全部实数，integers 表示只描定义域内的整数点、绝不连线。
+  domain 的有限端点是实际定义域边界，不是绘图窗口；不能把无穷射线写成窗口上的闭区间。
+  半无限定义域、数轴射线或组合图交给 ld-s10y-image，不把临时模型当作本工具支持的类型。
+  数轴射线以箭头表示延伸；实线/虚线只区分曲线，不改变端点的实心/空心含义。
   question.graphFrame 指定 bounds、xStep/yStep、xTicks/yTicks 和可选 xLabel/yLabel，
   同题选项共用框架。读图材料可在 generatedGraphs 中写 id、graph、frame、text，
   text 为完整相关题面；工具产生 generatedFigures 引用，同 id 可供多题复用。
-  图框必须包含所查询的坐标；非整数精确读数可明确允许按给定公式验算。
+  图框必须包含所查询的坐标和需判断的有限端点；组合图各子图使用同一足够大的框架，
+  不丢弃子图要求后套默认窗口。非整数精确读数可明确允许按给定公式验算。
   工具在网格外缘标刻度值，与网格线对齐，避免曲线遮字或自动避让将数字移离刻度。
   两轴单位不同时使用独立缩放；判断斜率依赖刻度，不依赖屏幕上的倾斜角。
   其他图形直接委托 ld-s10y-image。图保存在当前课的 choice-figures；
