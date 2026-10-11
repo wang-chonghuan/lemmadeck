@@ -1,102 +1,171 @@
 import { useEffect, useRef, useState } from 'react'
-import { Check, Circle, CircleDot, LoaderCircle, RotateCcw, X } from 'lucide-react'
-import { submitTextbookChoice, type ChoiceDeck, type ChoiceQuestion, type ChoiceResult } from '~/lib/textbook-choice'
+import { Check, ChevronLeft, ChevronRight, Circle, CircleDot, LoaderCircle, RotateCcw, X } from 'lucide-react'
+import {
+  getTextbookChoiceProgress, restartTextbookChoices, submitTextbookChoice,
+  type ChoiceAttempt, type ChoiceDeck, type ChoiceProgress, type ChoiceQuestion,
+} from '~/lib/textbook-choice'
 import { t, type Locale } from '~/lib/i18n'
 
-type Attempt = { optionId: string; result: ChoiceResult }
-type Progress = { attempts: Record<string, Attempt> }
+const PAGE_SIZE = 50
+type Submission = { optionId: string; pending: boolean; error: string }
 
 export function TextbookChoices({ deck, lessonId, locale }: {
   deck: ChoiceDeck
   lessonId: string
   locale: Locale
 }) {
-  const [attempts, setAttempts] = useState<Record<string, Attempt>>({})
-  const [loaded, setLoaded] = useState(false)
-  const [pass, setPass] = useState(0)
+  const [progress, setProgress] = useState<ChoiceProgress | null>(null)
+  const [submissions, setSubmissions] = useState<Record<string, Submission>>({})
+  const [page, setPage] = useState(0)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
   const listRef = useRef<HTMLDivElement>(null)
-  const storage = `sr_choices:${lessonId}:${deck.revision}`
+  const alive = useRef(true)
+  const inFlight = useRef(new Set<string>())
 
-  useEffect(() => {
+  async function restore() {
+    setError('')
     try {
-      const saved = JSON.parse(localStorage.getItem(storage) ?? 'null') as Progress | null
-      if (saved?.attempts) {
-        const restored: Record<string, Attempt> = {}
-        for (const [id, value] of Object.entries(saved.attempts ?? {})) {
-          const item = deck.questions.find((candidate) => candidate.id === id)
-          if (item?.options.some((option) => option.id === value?.optionId) &&
-            item.options.some((option) => option.id === value.result?.correctOptionId) &&
-            typeof value.result?.isCorrect === 'boolean' &&
-            typeof value.result.explanationHtml === 'string') restored[id] = value
-        }
-        setAttempts(restored)
+      const restored = await getTextbookChoiceProgress({ data: { lessonId, revision: deck.revision } })
+      if (!alive.current) return
+      if ('error' in restored) setError(restored.error)
+      else {
+        setProgress(restored)
+        const firstUnanswered = deck.questions.findIndex((question) => !restored.attempts[question.id])
+        setPage(firstUnanswered < 0 ? 0 : Math.floor(firstUnanswered / PAGE_SIZE))
       }
-    } catch { /* Storage is optional; an unreadable record starts a new pass. */ }
-    setLoaded(true)
-  }, [storage, deck.questions])
+    } catch {
+      if (alive.current) setError(t(locale, 'choice.failed'))
+    }
+  }
 
   useEffect(() => {
-    if (!loaded) return
-    try { localStorage.setItem(storage, JSON.stringify({ attempts })) } catch { /* Private storage may be disabled. */ }
-  }, [storage, attempts, loaded])
+    alive.current = true
+    void restore()
+    return () => { alive.current = false }
+  }, [lessonId, deck.revision])
 
+  const attempts = progress?.attempts ?? {}
   const answered = Object.keys(attempts).length
   const correct = Object.values(attempts).filter((item) => item.result.isCorrect).length
+  const pageCount = Math.ceil(deck.questions.length / PAGE_SIZE)
+
+  function changePage(next: number) {
+    setPage(next)
+    listRef.current?.scrollIntoView({ block: 'start' })
+  }
+
+  async function submit(questionId: string, optionId: string) {
+    if (!progress || busy || inFlight.current.has(questionId) || attempts[questionId]) return
+    inFlight.current.add(questionId)
+    setSubmissions((previous) => ({ ...previous, [questionId]: { optionId, pending: true, error: '' } }))
+    try {
+      const result = await submitTextbookChoice({ data: {
+        lessonId, revision: deck.revision, questionId, optionId,
+        roundId: progress.roundId, userId: progress.userId,
+      } })
+      if (!alive.current) return
+      if ('error' in result) {
+        setSubmissions((previous) => ({ ...previous, [questionId]: { optionId, pending: false, error: result.error } }))
+      } else {
+        setProgress((previous) => previous ? {
+          ...previous, attempts: { ...previous.attempts, [questionId]: result },
+        } : previous)
+        setSubmissions((previous) => ({ ...previous, [questionId]: { optionId: result.optionId, pending: false, error: '' } }))
+      }
+    } catch {
+      if (alive.current) setSubmissions((previous) => ({
+        ...previous, [questionId]: { optionId, pending: false, error: t(locale, 'choice.failed') },
+      }))
+    } finally {
+      inFlight.current.delete(questionId)
+    }
+  }
+
+  async function restart() {
+    if (!progress || busy || inFlight.current.size) return
+    setBusy(true)
+    setError('')
+    try {
+      const result = await restartTextbookChoices({ data: {
+        lessonId, revision: deck.revision, roundId: progress.roundId, userId: progress.userId,
+      } })
+      if (!alive.current) return
+      if ('error' in result) setError(result.error)
+      else {
+        setProgress(result)
+        setSubmissions({})
+        setPage(0)
+        listRef.current?.scrollIntoView({ block: 'start' })
+      }
+    } catch {
+      if (alive.current) setError(t(locale, 'choice.failed'))
+    } finally {
+      if (alive.current) setBusy(false)
+    }
+  }
+
+  const pagination = pageCount > 1 && (
+    <nav aria-label={t(locale, 'choice.pagination')} className="my-3 flex items-center justify-center gap-3">
+      <button className="sr-icontool" type="button" disabled={page === 0}
+        title={t(locale, 'choice.previousPage')} aria-label={t(locale, 'choice.previousPage')}
+        onClick={() => changePage(page - 1)}><ChevronLeft size={18} /></button>
+      <span className="text-sm" aria-live="polite">{t(locale, 'choice.page', { page: page + 1, total: pageCount })}</span>
+      <button className="sr-icontool" type="button" disabled={page === pageCount - 1}
+        title={t(locale, 'choice.nextPage')} aria-label={t(locale, 'choice.nextPage')}
+        onClick={() => changePage(page + 1)}><ChevronRight size={18} /></button>
+    </nav>
+  )
+
   return (
     <section className="mt-5 min-w-0" aria-label={t(locale, 'card.exercises')} data-testid="textbook-choices">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 text-sm">
         <span>{t(locale, 'choice.score', { answered, correct })}</span>
         {answered === deck.questions.length && (
           <button className="sr-icontool" type="button" title={t(locale, 'choice.restart')}
-            aria-label={t(locale, 'choice.restart')} onClick={() => {
-              setAttempts({})
-              setPass((previous) => previous + 1)
-              window.requestAnimationFrame(() => {
-                const first = listRef.current?.querySelector<HTMLElement>('[role="radio"]')
-                first?.scrollIntoView({ block: 'center' })
-                first?.focus({ preventScroll: true })
-              })
-            }}>
-            <RotateCcw size={18} />
+            disabled={busy} aria-label={t(locale, 'choice.restart')} onClick={() => void restart()}>
+            {busy ? <LoaderCircle size={18} className="animate-spin" /> : <RotateCcw size={18} />}
           </button>
         )}
       </div>
+      {!progress && !error && <p role="status">{t(locale, 'quiz.loading')}</p>}
+      {error && <div className="mb-3 flex items-center gap-2">
+        <p role="alert" className="sr-quiz-err">{error}</p>
+        <button className="sr-icontool" type="button" title={t(locale, 'choice.retry')}
+          aria-label={t(locale, 'choice.retry')} onClick={() => void (progress ? restart() : restore())}>
+          <RotateCcw size={18} />
+        </button>
+      </div>}
+      {pagination}
       <div ref={listRef}>
-        {deck.questions.map((question, index) => (
-          <ChoiceItem key={`${question.id}:${pass}`} question={question} number={index + 1}
-            lessonId={lessonId} revision={deck.revision} locale={locale} loaded={loaded}
+        {deck.questions.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE).map((question, index) => (
+          <ChoiceItem key={`${question.id}:${progress?.roundId}`} question={question} number={page * PAGE_SIZE + index + 1}
+            locale={locale} loaded={Boolean(progress) && !busy}
             attempt={attempts[question.id]}
-            onAnswered={(attempt) => setAttempts((previous) => ({ ...previous, [question.id]: attempt }))} />
+            submission={submissions[question.id]}
+            onSubmit={(optionId) => void submit(question.id, optionId)} />
         ))}
       </div>
+      {pagination}
     </section>
   )
 }
 
-function ChoiceItem({ question, number, lessonId, revision, locale, loaded, attempt, onAnswered }: {
+function ChoiceItem({ question, number, locale, loaded, attempt, submission, onSubmit }: {
   question: ChoiceQuestion
   number: number
-  lessonId: string
-  revision: string
   locale: Locale
   loaded: boolean
-  attempt?: Attempt
-  onAnswered: (attempt: Attempt) => void
+  attempt?: ChoiceAttempt
+  submission?: Submission
+  onSubmit: (optionId: string) => void
 }) {
-  const [chosen, setChosen] = useState<string | null>(null)
   const [focused, setFocused] = useState(question.options[0].id)
-  const [pending, setPending] = useState(false)
-  const [error, setError] = useState('')
-  const alive = useRef(true)
-  const inFlight = useRef(false)
   const misconceptionRef = useRef<HTMLParagraphElement>(null)
-  const picked = attempt?.optionId ?? chosen
+  const pending = submission?.pending ?? false
+  const error = submission?.error
+  const picked = attempt?.optionId ?? submission?.optionId
   const locked = !loaded || pending || Boolean(attempt)
-
-  useEffect(() => {
-    alive.current = true
-    return () => { alive.current = false }
-  }, [])
 
   useEffect(() => {
     const element = misconceptionRef.current
@@ -115,27 +184,6 @@ function ChoiceItem({ question, number, lessonId, revision, locale, loaded, atte
     typeset()
     return () => clearTimeout(timer)
   }, [attempt?.result.misconception])
-
-  async function submit(optionId: string) {
-    if (!loaded || inFlight.current || attempt) return
-    inFlight.current = true
-    setChosen(optionId)
-    setPending(true)
-    setError('')
-    try {
-      const result = await submitTextbookChoice({ data: {
-        lessonId, revision, questionId: question.id, optionId,
-      } })
-      if (!alive.current) return
-      if ('error' in result) setError(result.error)
-      else onAnswered({ optionId, result })
-    } catch {
-      if (alive.current) setError(t(locale, 'choice.failed'))
-    } finally {
-      inFlight.current = false
-      if (alive.current) setPending(false)
-    }
-  }
 
   return (
     <section className="min-w-0 border-t border-[var(--sr-line-soft)] py-4"
@@ -172,7 +220,7 @@ function ChoiceItem({ question, number, lessonId, revision, locale, loaded, atte
                 buttons?.[next]?.focus()
               }}
               className={`sr-quiz-opt${right ? ' correct' : wrong ? ' wrong' : picked === option.id ? ' picking' : ''}`}
-              onClick={() => void submit(option.id)}>
+              onClick={() => onSubmit(option.id)}>
               <span className="shrink-0">{String.fromCharCode(65 + optionIndex)}</span>
               <span className="sr-quiz-opt-text min-w-0">
                 <span dangerouslySetInnerHTML={{ __html: option.html }} />
