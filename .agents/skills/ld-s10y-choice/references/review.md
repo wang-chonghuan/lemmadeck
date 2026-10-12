@@ -1,27 +1,77 @@
-# 发布前语义审核
+# Semantic Gate
 
-给独立审核者本技能、指定现代原题/课文/图、生成产物与覆盖表，不提供预期结论。
-只读审核，不写库。审核结果绑定被审核的产物哈希；修题后重审受影响的部分。
+First ask: **Does this artifact make the learner think through the written
+mathematical task, or could it be followed correctly while missing that task?**
+Formatting or a correct numeric answer cannot rescue a failed purpose.
+Judge fidelity by mathematical distinctions, key relationships and coverage,
+not by whether a choice response proves independent writing or construction.
+Complete-table recognition and reasonable elimination do not automatically fail.
+Require recorded production losses; block if they destroy the learning task.
+Fail genuine data-copying, absent mathematical judgment, leakage or removal of
+a key task. Keep source, correct-set and distractor standards unchanged.
 
-先问：学生沿着这套选择题做完，是否确实回答了原题中可选择化的数学任务？
-逐原题对照：
+## Review Order
 
-1. 全部语义小问、空格和复习题有覆盖，选图能力限制标明。
-2. 条件、数字、单位、公式、图表来自指定 edition，原题求解正确。
-3. 只有一个成立的选项，干扰项有具体错误依据，不存在等价答案或理由歧义。
-   集合题对定义域逐元素求值、按集合等价核对所有选项；分类＋系数的成组选项
-   要同时检查判断与每个系数，不因其中一部分正确就算正确。
-4. 当前题不泄露答案，反馈解释当前小问，文字适合独立阅读。
-   原题关系和能力限制只留内部；题面与反馈没有来源题号、小问标签或生成说明。
-5. 图的轴、刻度、范围和曲线一致可读，图像误差不成为选错的原因。
-   对照实际渲染图与选项显示顺序核对图名；按题意核对有限端点、射线延伸及数轴箭头，
-   不把窗口边缘当定义域边界，不因虚线误画空心端点；组合图的共同框架未裁掉所需端点。
+1. Read the seed prose, selected definitions and actual images. Solve the source
+   independently. Record `source_reviews.independent_solution`. Do this without
+   the author's internal solution or correct set. A separate agent receives the
+   seed and images first, and the draft's `view` sections next; internal author
+   reasoning is disclosed only for the later comparison.
+2. Compare the visible questions against the source task. Judge `task_fidelity`,
+   `redundancy` and `answer_leakage` before seeing the author's key. Can the task
+   be answered by isolated cell clicks, wording clues or another question's
+   answer? Have direction, quantifiers, interval endpoints, units or data changed?
+   Does a drawing-to-recognition limitation honestly account for lost ability?
+3. Solve each visible question afresh, determine the complete true set, and
+   check **every** option. Only now compare the author's solution, derivations,
+   misconceptions and key. A plausible distractor must actually result from the
+   stated wrong procedure and must actually be false here.
+4. Check whole-package source coverage and cross-question dependence. Make sure
+   both merged seeds and split tasks have mathematical justification. Inspect any
+   omitted task; a silent omission or essential capacity loss blocks approval.
 
-列出具体题ID、缺陷和修正依据。无发现也记录检查范围。
-工具的 finalize 只负责机械合同，不可以代替这次审核。
+Use separate records for fidelity and mathematics. Neither implies the other.
+A concise but concrete evidence statement names the task or option and gives
+the observed relationship, counterexample, calculation or leaked cue. "Pass",
+"correct", "no issue" and rubric restatements are not evidence.
 
-审核通过后在课程目录写 choices.review.json：
-schema 为 ld-s10y-choice/review@1，status 为 pass，hash 使用
-scripts/choice.mjs 导出的 documentHash(document)，questions 列出全部审核题ID，
-notes 记录原题覆盖、正确性和图片的实际审核结果及作图识别限制。
-finalize/publish 要求这份记录仍绑定当前内容；改题后更新受影响的审核证据。
+For every used figure, record the asset opened, its hash and the relevant visual
+observation. A stored hash proves which asset was referenced, not that anyone
+understood it. Confirm the rendered view contains every relevant object, including
+the rightmost and bottommost ones; cropped previews do not establish a full check.
+Unreadable diagrams, ambiguous labels, unresolved definitions or
+insufficient conditions receive `blocked`, not a guessed answer.
+
+For every draft `new_figures` entry, obtain the separate hash-bound
+`new_figure_reviews` record from an independent reviewer who actually opens it.
+Check the rendered image against its mathematical `basis`, including deliberate
+wrong-option geometry and legible labels; do not reject an intentionally false
+alternative merely for being false. Source figure observations and authored-figure
+approval remain distinct from checking the option's mathematical truth.
+
+## Verdicts
+
+- `pass`: the specific check is supported by substantive evidence.
+- `revise`: a definite authoring/math defect can be corrected from available input.
+- `blocked`: missing evidence or an unresolved decision prevents a justified check.
+
+`outcome` is `blocked` if any check is blocked, otherwise `revise` if any check
+needs revision, otherwise `pass`. Do not weaken a failure just to match the key.
+Keep rejected reviews. On repair, replace only the affected draft units and
+review the new snapshot, including any affected package relationships.
+
+Use `reviewer.kind = independent_agent` only for a genuinely separate reviewer.
+With no available authorized delegation, an inline independent-stance pass is
+allowed but must say `self_review`; do not claim agent independence.
+
+## What the Tool Settles
+
+`validate.py` checks field structure, exact identifiers/sets, seed freshness,
+asset references, coverage relationships, snapshot binding and the declared
+review's agreement with the draft when a mathematics check says `pass`. It
+returns a nonzero exit for a non-passing review.
+
+It does not read minds, execute mathematical proofs, detect equivalent options,
+prove a misconception plausible, establish that a diagram was viewed, or decide
+fidelity/leakage from text. A mechanically consistent wrong draft can pass this
+tool. Human/agent semantic evidence is mandatory and remains separately labeled.
