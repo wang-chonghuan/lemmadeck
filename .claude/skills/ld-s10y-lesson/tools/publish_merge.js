@@ -26,11 +26,11 @@ function sourceNumberForArtifact(exercise) {
 }
 
 function preserveChoiceMetadata(deck, existingDeck) {
-  if (!existingDeck?.choices || deck.edition !== existingDeck.edition) return deck
+  if (!existingDeck?.choiceSet || deck.edition !== existingDeck.edition) return deck
   const sourceProjection = (items) => items.map(({ answerKey, interaction, ...exercise }) => exercise)
   if (JSON.stringify(sourceProjection(deck.exercises)) !==
     JSON.stringify(sourceProjection(existingDeck.exercises))) return deck
-  return { ...deck, choices: existingDeck.choices }
+  return { ...deck, choiceSet: existingDeck.choiceSet }
 }
 
 module.exports = { preserveExerciseMetadata, preserveChoiceMetadata, sourceNumberForArtifact }

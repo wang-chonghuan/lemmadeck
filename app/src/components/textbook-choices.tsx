@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Check, ChevronLeft, ChevronRight, Circle, CircleDot, LoaderCircle, RotateCcw, X } from 'lucide-react'
+import { Check, ChevronLeft, ChevronRight, Circle, CircleDot, LoaderCircle, RotateCcw, Square, SquareCheck, X } from 'lucide-react'
 import {
   getTextbookChoiceProgress, restartTextbookChoices, submitTextbookChoice,
   type ChoiceAttempt, type ChoiceDeck, type ChoiceProgress, type ChoiceQuestion,
@@ -7,7 +7,7 @@ import {
 import { t, type Locale } from '~/lib/i18n'
 
 const PAGE_SIZE = 50
-type Submission = { optionId: string; pending: boolean; error: string }
+type Submission = { optionIds: string[]; pending: boolean; error: string }
 
 export function TextbookChoices({ deck, lessonId, locale }: {
   deck: ChoiceDeck
@@ -55,27 +55,27 @@ export function TextbookChoices({ deck, lessonId, locale }: {
     listRef.current?.scrollIntoView({ block: 'start' })
   }
 
-  async function submit(questionId: string, optionId: string) {
+  async function submit(questionId: string, optionIds: string[]) {
     if (!progress || busy || inFlight.current.has(questionId) || attempts[questionId]) return
     inFlight.current.add(questionId)
-    setSubmissions((previous) => ({ ...previous, [questionId]: { optionId, pending: true, error: '' } }))
+    setSubmissions((previous) => ({ ...previous, [questionId]: { optionIds, pending: true, error: '' } }))
     try {
       const result = await submitTextbookChoice({ data: {
-        lessonId, revision: deck.revision, questionId, optionId,
+        lessonId, revision: deck.revision, questionId, optionIds,
         roundId: progress.roundId, userId: progress.userId,
       } })
       if (!alive.current) return
       if ('error' in result) {
-        setSubmissions((previous) => ({ ...previous, [questionId]: { optionId, pending: false, error: result.error } }))
+        setSubmissions((previous) => ({ ...previous, [questionId]: { optionIds, pending: false, error: result.error } }))
       } else {
         setProgress((previous) => previous ? {
           ...previous, attempts: { ...previous.attempts, [questionId]: result },
         } : previous)
-        setSubmissions((previous) => ({ ...previous, [questionId]: { optionId: result.optionId, pending: false, error: '' } }))
+        setSubmissions((previous) => ({ ...previous, [questionId]: { optionIds: result.optionIds, pending: false, error: '' } }))
       }
     } catch {
       if (alive.current) setSubmissions((previous) => ({
-        ...previous, [questionId]: { optionId, pending: false, error: t(locale, 'choice.failed') },
+        ...previous, [questionId]: { optionIds, pending: false, error: t(locale, 'choice.failed') },
       }))
     } finally {
       inFlight.current.delete(questionId)
@@ -143,7 +143,7 @@ export function TextbookChoices({ deck, lessonId, locale }: {
             locale={locale} loaded={Boolean(progress) && !busy}
             attempt={attempts[question.id]}
             submission={submissions[question.id]}
-            onSubmit={(optionId) => void submit(question.id, optionId)} />
+            onSubmit={(optionIds) => void submit(question.id, optionIds)} />
         ))}
       </div>
       {pagination}
@@ -158,13 +158,15 @@ function ChoiceItem({ question, number, locale, loaded, attempt, submission, onS
   loaded: boolean
   attempt?: ChoiceAttempt
   submission?: Submission
-  onSubmit: (optionId: string) => void
+  onSubmit: (optionIds: string[]) => void
 }) {
   const [focused, setFocused] = useState(question.options[0].id)
+  const [selected, setSelected] = useState<string[]>([])
+  const multiple = question.mode === 'multiple'
   const misconceptionRef = useRef<HTMLParagraphElement>(null)
   const pending = submission?.pending ?? false
   const error = submission?.error
-  const picked = attempt?.optionId ?? submission?.optionId
+  const picked = attempt?.optionIds ?? (multiple ? selected : submission?.optionIds ?? [])
   const locked = !loaded || pending || Boolean(attempt)
 
   useEffect(() => {
@@ -188,7 +190,7 @@ function ChoiceItem({ question, number, locale, loaded, attempt, submission, onS
   return (
     <section className="min-w-0 border-t border-[var(--sr-line-soft)] py-4"
       aria-label={t(locale, 'choice.question', { number })} data-testid="choice-question">
-      <p className="sr-ex-n mb-2">{number}.</p>
+      <p className="sr-ex-n mb-2">{number}. {t(locale, multiple ? 'choice.multiple' : 'choice.single')}</p>
       <h2 className="sr-quiz-prompt"
         dangerouslySetInnerHTML={{ __html: question.html }} />
       {question.figures.map((figure) => (
@@ -199,17 +201,19 @@ function ChoiceItem({ question, number, locale, loaded, attempt, submission, onS
           </div>
         </figure>
       ))}
-      <div role="radiogroup" aria-label={t(locale, 'choice.options')} aria-busy={pending} className="sr-quiz-options">
+      <div role={multiple ? 'group' : 'radiogroup'} aria-label={t(locale, 'choice.options')} aria-busy={pending} className="sr-quiz-options">
         {question.options.map((option, optionIndex) => {
-          const right = attempt?.result.correctOptionId === option.id
-          const wrong = Boolean(attempt && picked === option.id && !right)
+          const right = attempt?.result.correctOptionIds.includes(option.id)
+          const chosen = picked.includes(option.id)
+          const wrong = Boolean(attempt && chosen && !right)
           return (
-            <button type="button" role="radio" aria-checked={picked === option.id}
+            <button type="button" role={multiple ? 'checkbox' : 'radio'} aria-checked={chosen}
               key={option.id} data-option-id={option.id}
               disabled={locked}
-              tabIndex={focused === option.id ? 0 : -1}
+              tabIndex={multiple || focused === option.id ? 0 : -1}
               onFocus={() => setFocused(option.id)}
               onKeyDown={(event) => {
+                if (multiple) return
                 if (!['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return
                 event.preventDefault()
                 if (locked) return
@@ -219,21 +223,31 @@ function ChoiceItem({ question, number, locale, loaded, attempt, submission, onS
                 const buttons = event.currentTarget.parentElement?.querySelectorAll<HTMLButtonElement>('[role="radio"]')
                 buttons?.[next]?.focus()
               }}
-              className={`sr-quiz-opt${right ? ' correct' : wrong ? ' wrong' : picked === option.id ? ' picking' : ''}`}
-              onClick={() => onSubmit(option.id)}>
+              className={`sr-quiz-opt${right ? ' correct' : wrong ? ' wrong' : chosen ? ' picking' : ''}`}
+              onClick={() => multiple
+                ? setSelected((previous) => previous.includes(option.id)
+                  ? previous.filter((id) => id !== option.id) : [...previous, option.id])
+                : onSubmit([option.id])}>
               <span className="shrink-0">{String.fromCharCode(65 + optionIndex)}</span>
               <span className="sr-quiz-opt-text min-w-0">
                 <span dangerouslySetInnerHTML={{ __html: option.html }} />
                 {option.svg && <span className="sr-figure-media pointer-events-none [&_*]:pointer-events-none mt-2 block w-full max-w-[400px]"
                   data-testid="choice-graph" dangerouslySetInnerHTML={{ __html: option.svg }} />}
               </span>
-              {pending && picked === option.id ? <LoaderCircle size={18} className="shrink-0 animate-spin motion-reduce:animate-none" /> :
+              {pending && chosen ? <LoaderCircle size={18} className="shrink-0 animate-spin motion-reduce:animate-none" /> :
                 right ? <Check size={18} className="shrink-0" /> : wrong ? <X size={18} className="shrink-0" /> :
-                picked === option.id ? <CircleDot size={18} className="shrink-0" /> : <Circle size={18} className="shrink-0" />}
+                multiple ? (chosen ? <SquareCheck size={18} className="shrink-0" /> : <Square size={18} className="shrink-0" />) :
+                chosen ? <CircleDot size={18} className="shrink-0" /> : <Circle size={18} className="shrink-0" />}
             </button>
           )
         })}
       </div>
+      {multiple && !attempt && (
+        <button type="button" className="sr-btn primary mt-3 inline-flex items-center gap-2 disabled:opacity-50" disabled={locked || !selected.length}
+          onClick={() => onSubmit(selected)}>
+          <Check size={16} />{t(locale, 'choice.submit')}
+        </button>
+      )}
       {error && <p role="alert" className="sr-quiz-err">{error}</p>}
       {pending && <p role="status" className="mt-3 text-sm">{t(locale, 'choice.submitting')}</p>}
       {attempt && (

@@ -55,6 +55,23 @@ function dbUrl() {
 const book = path.resolve(bookDir)
 const edition = path.join(book, 'editions', editionName)
 const lessonsDir = path.join(edition, 'lessons')
+if (args.includes('--choices-only')) {
+  const { publishChoices } = await import('./publish_choices.mjs')
+  if (dry) {
+    await publishChoices({ book, editionName, requestedLessons, dry })
+  } else {
+    const { url } = dbUrl()
+    const database = postgres(url, {
+      ssl: 'require', connection: { search_path: '"lemmadeck-schema"' }, connect_timeout: 15,
+    })
+    try {
+      await publishChoices({ book, editionName, requestedLessons, dry, database })
+    } finally {
+      await database.end()
+    }
+  }
+  process.exit(0)
+}
 if (!fs.existsSync(lessonsDir)) {
   throw new Error(`edition 不存在或没有 lessons: ${lessonsDir}`)
 }
