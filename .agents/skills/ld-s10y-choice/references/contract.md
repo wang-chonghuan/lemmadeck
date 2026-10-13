@@ -44,12 +44,18 @@ changes do not invalidate a review; any content change does.
 | `questions` | Nonempty list of question objects below |
 | `coverage` | One `{source_number, question_ids, omitted_tasks, reason}` per selected seed |
 
-New figure IDs must not collide with seed figure IDs. `path` is repo-relative,
-resolves only inside ticket `tmp/` or `.tmp/`, and identifies an existing
+New figure IDs must not collide with seed figure IDs. While authoring, `path` is
+repo-relative, resolves only inside ticket `tmp/` or `.tmp/`, and identifies an existing
 PNG/SVG/JPG/JPEG/WebP image; `sha256` hashes its current bytes. `basis` states the
 derived mathematical relationships and any intentional distractor differences.
 Never mutate the seed to register an authored image. Use `ld-s10y-image` for
 creation and an independent reviewer for the actual image; no new drawing engine.
+
+The checker also accepts retained handoff images inside the selected lesson's
+`choice-set/figures/` directory. A separately authorized integration may relocate
+approved assets there without changing their bytes or mathematical basis, rebind
+paths and obtain a review for that retained snapshot. This does not authorize
+this offline skill to promote assets, publish, or write outside scratch.
 
 Each question:
 

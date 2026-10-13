@@ -441,6 +441,23 @@ SHA；完整原始快照不入库。重发同一 edition 的课文或图片时�
 
 ## cap7 — 产品验收
 
+### 已审查选择题接入
+
+`ld-s10y-choice` 保持离线。将其已通过结构与语义审查的种子、题稿、审查报告分别保存为
+目标现代课程 `choice-set/{seed,draft,review}.json` 后，使用本发布入口：
+
+```bash
+node .claude/skills/ld-s10y-lesson/tools/publish.mjs \
+  ssot-resources/soviet10year-textbooks/artifacts/6a --edition modern-us-neutral \
+  --lesson <cardId> --choices-only
+```
+
+该模式重新核验三份快照和所有引用图，只更新已有课程的 `exercises.choiceSet`，
+不重发课文、书写题、答案或课程排序。当前接入支持种子中的已发布实图；
+新候选图必须先按图技能完成持久提升及独立图审查，不得发布 scratch 路径。
+离线 `intent`、完整题源、作者键及审查文件不作为客户端载荷；应用只投影题面，
+单选点击提交，多选明确提交且由服务端按完整集合判分。
+
 生产写入不是完成；孩子在产品里能读到才是完成。
 
 1. 用 node + `app/node_modules/postgres` 查询目标 `sr_lessons` 行，核对

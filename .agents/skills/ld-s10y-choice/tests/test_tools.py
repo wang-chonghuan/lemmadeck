@@ -337,6 +337,27 @@ class ToolTests(unittest.TestCase):
         self.assertEqual(self.check(review=True), "pass")
         self.assertEqual(self.seed, before)
 
+    def test_retained_handoff_figures_are_lesson_scoped_and_hash_bound(self):
+        output = self.add_new_figure()
+        retained = self.lesson / "choice-set/figures/candidate.svg"
+        retained.parent.mkdir(parents=True)
+        retained.write_bytes(output.read_bytes())
+        figure = self.draft["new_figures"][0]
+        figure["path"] = retained.relative_to(self.repo).as_posix()
+        self.review["draft_sha256"] = digest(self.draft)
+        self.review["figure_checks"][-1]["asset_path"] = figure["path"]
+        self.assertEqual(self.check(review=True), "pass")
+        retained.write_text("changed", encoding="utf-8")
+        with self.assertRaises(ContractError):
+            self.check()
+        for target in (self.lesson / "choice-set/other.svg",
+                       self.lesson.parent / "unit-b/choice-set/figures/candidate.svg"):
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(output.read_bytes())
+            figure["path"] = target.relative_to(self.repo).as_posix()
+            with self.assertRaises(ContractError):
+                self.check()
+
     def test_new_figure_path_hash_collision_and_basis_rejected(self):
         self.add_new_figure()
         for change in (

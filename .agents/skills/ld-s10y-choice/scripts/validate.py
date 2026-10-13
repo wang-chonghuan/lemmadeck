@@ -7,8 +7,8 @@ from pathlib import Path
 import re
 import sys
 
-from prepare import (ContractError, digest, file_hash, load_json, prepare_seed,
-                     require, scratch_path, text, unique)
+from prepare import (ARTIFACTS, ContractError, digest, file_hash, inside, load_json,
+                     prepare_seed, require, scratch_path, text, unique)
 
 DRAFT_SCHEMA = "s10y-choice-draft-v1"
 REVIEW_SCHEMA = "s10y-choice-review-v1"
@@ -84,7 +84,7 @@ def question_figures(question, exercises):
         {ref for number in question["source_numbers"] for ref in exercises[number]["figure_ids"]}
 
 
-def draft_figures(draft, repo, source_figures):
+def draft_figures(seed, draft, repo, source_figures):
     registered = keyed(draft["new_figures"], "id", "id path sha256 basis", "new_figures")
     require(not (set(registered) & set(source_figures)), "new figure ID collides with seed figure")
     figures = dict(source_figures)
@@ -92,7 +92,12 @@ def draft_figures(draft, repo, source_figures):
         path_text = text(figure["path"], "new figure path")
         path = Path(path_text)
         require(not path.is_absolute() and ".." not in path.parts, "new figure needs repo-relative path")
-        resolved = scratch_path(path, repo)
+        retained_root = Path(repo) / ARTIFACTS / seed["source"]["book"] / \
+            "editions/modern-us-neutral/lessons" / seed["source"]["lesson"] / \
+            "choice-set/figures"
+        resolved = inside(Path(repo) / path, Path(repo))
+        if not resolved.is_relative_to(retained_root.resolve()):
+            resolved = scratch_path(path, repo)
         require(resolved.suffix.lower() in {".png", ".svg", ".jpg", ".jpeg", ".webp"},
                 "new figure must be an image file")
         require(figure["sha256"] == file_hash(resolved), "new figure file/hash mismatch")
@@ -105,7 +110,7 @@ def check_draft(seed, draft, repo, exercises, source_figures, blocks):
     fields(draft, "schema seed_sha256 new_figures questions coverage", "draft")
     require(draft["schema"] == DRAFT_SCHEMA, "draft schema mismatch")
     require(draft["seed_sha256"] == digest(seed), "draft seed snapshot mismatch")
-    figures = draft_figures(draft, repo, source_figures)
+    figures = draft_figures(seed, draft, repo, source_figures)
     questions = keyed(draft["questions"], "id", "id source_numbers view intent key", "questions")
     require(bool(questions), "empty question draft; report a blocker instead")
     for question_id, question in questions.items():
