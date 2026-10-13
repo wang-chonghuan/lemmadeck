@@ -70,12 +70,15 @@ export async function publishChoices({ book, editionName, requestedLessons, dry,
       const render = JSON.parse(fs.readFileSync(renderPath, 'utf8'))
       const imageReview = JSON.parse(fs.readFileSync(imageReviewPath, 'utf8'))
       const imageHash = (filename) => createHash('sha256').update(fs.readFileSync(filename)).digest('hex')
+      const sourceMatches = 'authoredBasis' in spec.source
+        ? imageReview.source.authoredBasis === spec.source.authoredBasis
+        : imageReview.source.sha256 === imageHash(path.resolve(repo, spec.source.image.path))
       if (render.status !== 'pass' || imageReview.status !== 'pass'
         || render.figure !== figure.id || imageReview.figure !== figure.id
         || render.spec.sha256 !== imageHash(specPath)
         || imageReview.spec.sha256 !== imageHash(specPath)
         || imageReview.render.sha256 !== imageHash(renderPath)
-        || imageReview.source.sha256 !== imageHash(path.resolve(repo, spec.source.image.path))
+        || !sourceMatches
         || render.output.svg.sha256 !== figure.sha256
         || imageReview.outputs.svg.sha256 !== figure.sha256) {
         throw new Error(`${lessonId}: stale or failing authored figure evidence`)

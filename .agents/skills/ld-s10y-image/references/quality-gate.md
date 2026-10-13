@@ -6,6 +6,10 @@ still be misled about the mathematical relationship?
 ## Deterministic checks
 
 - source PNG hash is current
+- For deterministic `source.authoredBasis` diagrams, compare the actual image
+  with the written task and declared derived geometry instead of a source PNG.
+  The spec hash binds this provenance; intentional alternative geometry is not
+  a claim of original-source fidelity. All other applicable checks still run.
 - all object ids and references resolve
 - the independent source inventory resolves to visible objects; for new and
   reused figures alike, compare its completeness against the original source

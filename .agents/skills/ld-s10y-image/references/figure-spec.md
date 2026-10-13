@@ -21,6 +21,14 @@ The canonical schema is
   evidence: rebuild or recheck this inventory against the original PNG, not
   the prior SVG or object list. State modern regularization or additions as
   additions rather than source-image facts.
+- For a **new deterministic choice diagram**, use `source.authoredBasis`
+  instead of `source.image`. State the independently derived geometry and any
+  deliberate false alternatives. `authoritativeText` still holds the written
+  task; `inventory` maps these authored requirements to objects and assertions,
+  not invented source pixels. This path cannot recover or replace a missing
+  original, requires a new `fig-choice-` identifier, and cannot use
+  hybrid/generated mode. Reference-only images do not
+  become `source.image`. All geometry, label and independent-review checks remain.
 - `canvas`: pixel size and mathematical bounding box
 - `display`: product `layout`, semantic `purpose`, minimum final text size,
   every width that must be checked, and an optional validated product maximum
