@@ -62,7 +62,7 @@ def main() -> int:
         if producer.get("schema") != "n-azure/image-generation@1":
             raise SystemExit("ERROR: invalid generation evidence")
 
-    source = spec["source"]["image"]
+    source = spec["source"].get("image")
     if evidence_name == "render":
         outputs = producer.get("output")
         if not isinstance(outputs, dict) or not outputs:
@@ -91,7 +91,7 @@ def main() -> int:
         "source": {
             "path": source["path"],
             "sha256": source["sha256"],
-        },
+        } if source else {"authoredBasis": spec["source"]["authoredBasis"]},
         "spec": {
             "path": portable(args.spec),
             "sha256": sha256(args.spec),

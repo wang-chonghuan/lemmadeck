@@ -66,6 +66,12 @@ For scroll figures include the fixed media width: the current product renders
 scroll media at 640 px even when the source canvas is wider. A canvas-width-only
 check can incorrectly pass text that the product shrinks below 16 px.
 
+For new choice diagrams derived from written mathematics rather than an
+original image, use the deterministic `source.authoredBasis` path in the
+FigureSpec contract. Do not fabricate an original; the pixel-inventory rule
+above applies to source-image figures, while authored diagrams map their stated
+geometry and deliberate alternatives to the same executable assertions.
+
 Update the lesson edition figure entry to exactly one final-output contract:
 
 - `deterministic`: `svg` + `render` + `review` + `spec`

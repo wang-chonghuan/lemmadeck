@@ -878,22 +878,32 @@ def validate(spec_path: Path, stage: str) -> list[str]:
     if not isinstance(source, dict):
         errors.append("source must be an object")
         source = {}
-    source_image = source.get("image")
-    if not isinstance(source_image, dict):
-        errors.append("source.image must be an object")
-        source_image = {}
-    image_path = source_image.get("path")
-    image_sha = source_image.get("sha256")
-    if not isinstance(image_path, str) or not image_path:
-        errors.append("source.image.path must be nonempty")
-    elif stage in {"rendered", "approved"}:
-        path = Path(image_path)
-        if not path.is_file():
-            errors.append(f"missing source image: {path}")
-        elif image_sha != sha256(path):
-            errors.append("source.image.sha256 is stale")
-    if not isinstance(image_sha, str) or not re.fullmatch(r"[a-f0-9]{64}", image_sha):
-        errors.append("source.image.sha256 must be lowercase SHA-256")
+    if "authoredBasis" in source:
+        if not current or mode != "deterministic":
+            errors.append("source.authoredBasis requires current deterministic FigureSpec")
+        if not str(spec.get("id", "")).startswith("fig-choice-"):
+            errors.append("source.authoredBasis requires a new fig-choice- identifier")
+        if not isinstance(source["authoredBasis"], str) or not source["authoredBasis"].strip():
+            errors.append("source.authoredBasis must be nonempty")
+        if "image" in source:
+            errors.append("authored diagrams cannot claim source.image")
+    else:
+        source_image = source.get("image")
+        if not isinstance(source_image, dict):
+            errors.append("source.image must be an object")
+            source_image = {}
+        image_path = source_image.get("path")
+        image_sha = source_image.get("sha256")
+        if not isinstance(image_path, str) or not image_path:
+            errors.append("source.image.path must be nonempty")
+        elif stage in {"rendered", "approved"}:
+            path = Path(image_path)
+            if not path.is_file():
+                errors.append(f"missing source image: {path}")
+            elif image_sha != sha256(path):
+                errors.append("source.image.sha256 is stale")
+        if not isinstance(image_sha, str) or not re.fullmatch(r"[a-f0-9]{64}", image_sha):
+            errors.append("source.image.sha256 must be lowercase SHA-256")
     authoritative = source.get("authoritativeText")
     if not isinstance(authoritative, list) or not authoritative:
         errors.append("source.authoritativeText must be nonempty")

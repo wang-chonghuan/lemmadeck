@@ -33,6 +33,13 @@ Before considering any alternatives, record:
   any ambiguity. Use exact arithmetic where appropriate.
 - The conceptual distinction the response should reveal.
 
+Measured tables need not be exactly linear. An approximate-model question may
+state an explicit error criterion as a new visible condition, retain every
+measurement, and record the change from exact proof to model judgment in
+coverage. Do not silently round the seed or claim unique exact parameters.
+In numerical sets, equal fraction spellings denote the same element; use
+unambiguous equivalent forms rather than counting representation duplicates.
+
 ## Choose the Response Unit
 
 The number of blanks, list entries, printed letters or requested values does not
@@ -67,6 +74,8 @@ independently derived geometry, intended alternative meanings, and the current
 source image where one exists. Keep new facts separate from the source inventory.
 Do not synthesize a missing original scan or pretend a new choice candidate is
 the original diagram.
+When the written task has no original diagram, request the image skill's
+deterministic `source.authoredBasis` path; do not fabricate a source image.
 
 Supply a figure request with the intended question/option IDs, mathematical
 relationships and permitted differences. Use the resulting FigureSpec, rendered
