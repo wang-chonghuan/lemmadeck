@@ -23,8 +23,12 @@ uses a different convention from a familiar modern definition, use the supplied
 definition consistently. Ask when it is missing or contradictory.
 For example, if a source uses `N` and the available lesson definitions do not say
 whether it contains zero, do not introduce a convention to make a table unique.
-Record the missing convention as blocked. If authoring cannot start, retain the
-seed and a concrete blocker report; do not fabricate a keyed draft for validation.
+Record the convention-dependent task as blocked. An invariant conclusion may
+still support a question when it is true under every unresolved convention:
+keep the original conditions visible, explain that independence in the solution,
+and record the unavailable full-table task in coverage. Do not present partial
+coverage as resolving the missing convention. If no meaningful task remains,
+retain the seed and a concrete blocker report; do not fabricate a keyed draft.
 
 Before considering any alternatives, record:
 
