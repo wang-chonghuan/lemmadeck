@@ -9,7 +9,7 @@ export type ChoiceQuestion = {
   id: string
   mode: 'single' | 'multiple'
   html: string
-  figures: CardFigure[]
+  figures: (CardFigure & { displayWidthPx?: number })[]
   options: { id: string; html: string; svg?: string }[]
 }
 export type ChoiceDeck = { revision: string; questions: ChoiceQuestion[] }
@@ -152,6 +152,7 @@ export function projectChoiceDeck(deck: StoredDeck | undefined): ChoiceDeck | nu
         svg: figure.svg ?? null, image: figure.image ?? null,
         mode: figure.mode, layout: figure.layout,
         purpose: figure.purpose, maxWidthPx: figure.maxWidthPx,
+        ...(figure.displayWidthPx ? { displayWidthPx: figure.displayWidthPx } : {}),
       })),
       options: question.options.map((option) => ({
         id: option.id, html: option.html, ...(option.svg ? { svg: option.svg } : {}),

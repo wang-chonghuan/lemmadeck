@@ -40,6 +40,19 @@ describe('choice client projection', () => {
     expect(projectChoiceDeck(undefined)).toBeNull()
   })
 
+  it('preserves the validated scroll display width without exposing the answer', () => {
+    const source = {
+      ...deck,
+      questions: [{ ...deck.questions[0], figures: [{
+        id: 'graph', label: null, svg: '<svg></svg>',
+        layout: 'scroll' as const, displayWidthPx: 920,
+      }] }],
+    }
+    const client = projectChoiceDeck(source)!
+    expect(client.questions[0].figures[0]).toMatchObject({ layout: 'scroll', displayWidthPx: 920 })
+    expect(JSON.stringify(client)).not.toMatch(/correctOptionId|explanationHtml|misconception|sourceNumbers/)
+  })
+
   it('keeps anonymous progress empty and refuses a changed account without writing', async () => {
     const database = vi.fn() as unknown as Parameters<typeof saveChoiceAnswer>[0]
     expect(await loadChoiceProgress(database, null, 'lesson', deck)).toEqual({

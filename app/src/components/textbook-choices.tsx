@@ -195,7 +195,8 @@ function ChoiceItem({ question, number, locale, loaded, attempt, submission, onS
         dangerouslySetInnerHTML={{ __html: question.html }} />
       {question.figures.map((figure) => (
         <figure key={figure.id} className="sr-ex-fig" data-figure-layout={figure.layout ?? 'inline'}>
-          <div className="sr-figure-media">
+          <div className="sr-figure-media"
+            style={figure.layout === 'scroll' && figure.displayWidthPx ? { width: figure.displayWidthPx } : undefined}>
             {figure.svg && <div className="sr-figure-vector" dangerouslySetInnerHTML={{ __html: figure.svg }} />}
             {figure.image && <img src={figure.image} alt={figure.label ?? ''} />}
           </div>
@@ -229,8 +230,9 @@ function ChoiceItem({ question, number, locale, loaded, attempt, submission, onS
                   ? previous.filter((id) => id !== option.id) : [...previous, option.id])
                 : onSubmit([option.id])}>
               <span className="shrink-0">{String.fromCharCode(65 + optionIndex)}</span>
-              <span className="sr-quiz-opt-text min-w-0 pointer-events-none [&_*]:pointer-events-none">
-                <span dangerouslySetInnerHTML={{ __html: option.html }} />
+              <span className={`sr-quiz-opt-text min-w-0${option.html.includes('<table>') ? '' : ' pointer-events-none [&_*]:pointer-events-none'}`}>
+                <span className="block max-w-full overflow-x-auto [&_*]:pointer-events-none [&_table]:w-max [&_th]:border [&_td]:border [&_th]:border-[var(--sr-line)] [&_td]:border-[var(--sr-line)] [&_th]:px-2 [&_td]:px-2 [&_th]:py-1 [&_td]:py-1"
+                  dangerouslySetInnerHTML={{ __html: option.html }} />
                 {option.svg && <span className="sr-figure-media pointer-events-none [&_*]:pointer-events-none mt-2 block w-full max-w-[400px]"
                   data-testid="choice-graph" dangerouslySetInnerHTML={{ __html: option.svg }} />}
               </span>

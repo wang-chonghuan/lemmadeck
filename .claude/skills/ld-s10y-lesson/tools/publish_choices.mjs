@@ -3,6 +3,7 @@ import path from 'node:path'
 import { createRequire } from 'node:module'
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
+import { choiceHtml } from './choice_html.mjs'
 
 const require = createRequire(import.meta.url)
 const { inline } = require('./htmlfrag.js')
@@ -48,6 +49,7 @@ export async function publishChoices({ book, editionName, requestedLessons, dry,
         layout: spec.display.layout,
         purpose: spec.display.purpose ?? 'instructional',
         ...(spec.display.maxWidthPx ? { maxWidthPx: spec.display.maxWidthPx } : {}),
+        ...(spec.display.layout === 'scroll' ? { displayWidthPx: Math.min(...spec.display.widths) } : {}),
       }]
     }))
     for (const figure of draft.new_figures) {
@@ -88,16 +90,17 @@ export async function publishChoices({ book, editionName, requestedLessons, dry,
         mode: spec.mode, layout: spec.display.layout,
         purpose: spec.display.purpose,
         ...(spec.display.maxWidthPx ? { maxWidthPx: spec.display.maxWidthPx } : {}),
+        ...(spec.display.layout === 'scroll' ? { displayWidthPx: Math.min(...spec.display.widths) } : {}),
       })
     }
     const questions = draft.questions.map((question) => ({
       id: question.id,
       mode: question.view.mode,
       sourceNumbers: question.source_numbers,
-      html: inline(question.view.stem),
+      html: choiceHtml(question.view.stem),
       figures: question.view.figure_ids.map((id) => figures.get(id)),
       options: question.view.options.map((option) => ({
-        id: option.id, html: inline(option.text),
+        id: option.id, html: choiceHtml(option.text),
         ...(option.figure_ids.length
           ? { svg: option.figure_ids.map((id) => {
             const figure = figures.get(id)
