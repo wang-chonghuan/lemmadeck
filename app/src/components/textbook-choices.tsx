@@ -195,7 +195,8 @@ function ChoiceItem({ question, number, locale, loaded, attempt, submission, onS
         dangerouslySetInnerHTML={{ __html: question.html }} />
       {question.figures.map((figure) => (
         <figure key={figure.id} className="sr-ex-fig" data-figure-layout={figure.layout ?? 'inline'}>
-          <div className="sr-figure-media">
+          <div className="sr-figure-media"
+            style={figure.layout === 'scroll' && figure.displayWidthPx ? { width: figure.displayWidthPx } : undefined}>
             {figure.svg && <div className="sr-figure-vector" dangerouslySetInnerHTML={{ __html: figure.svg }} />}
             {figure.image && <img src={figure.image} alt={figure.label ?? ''} />}
           </div>

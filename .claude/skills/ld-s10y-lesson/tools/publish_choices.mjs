@@ -49,6 +49,7 @@ export async function publishChoices({ book, editionName, requestedLessons, dry,
         layout: spec.display.layout,
         purpose: spec.display.purpose ?? 'instructional',
         ...(spec.display.maxWidthPx ? { maxWidthPx: spec.display.maxWidthPx } : {}),
+        ...(spec.display.layout === 'scroll' ? { displayWidthPx: Math.min(...spec.display.widths) } : {}),
       }]
     }))
     for (const figure of draft.new_figures) {
@@ -89,6 +90,7 @@ export async function publishChoices({ book, editionName, requestedLessons, dry,
         mode: spec.mode, layout: spec.display.layout,
         purpose: spec.display.purpose,
         ...(spec.display.maxWidthPx ? { maxWidthPx: spec.display.maxWidthPx } : {}),
+        ...(spec.display.layout === 'scroll' ? { displayWidthPx: Math.min(...spec.display.widths) } : {}),
       })
     }
     const questions = draft.questions.map((question) => ({
