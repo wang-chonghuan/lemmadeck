@@ -61,7 +61,7 @@ Tokens are implemented as `--sr-*` CSS variables in `app/src/styles/app.css` —
 - **Eyebrow**: uppercase, letter-spaced, `ink_dim` label above titles; `.accent` variant in `blue_deep`.
 - **Empty state**: centered icon tile (`blue_tint`), short display heading, one dim sentence. Used when a subject has no lessons yet.
 - **Lesson PDF**: use the compact download icon in the lesson header to open the browser print/save flow. The print document contains the current lesson title, full prose, then all exercises; it omits the app shell, tabs, navigation, answer controls, and learner state. Fit figures and tables to an A4 page without replacing the on-screen lesson renderer.
-- **Textbook tabs**: order is 课文, 习题, 书写题. 习题 contains the parallel single-choice set, all on one page with click-to-submit feedback. 书写题 contains full textbook problems and figures for paper work, without input, plotting or submission controls. Omit 习题 when no parallel set exists.
+- **Textbook tabs**: order is 课文, 选择题, 书写题. 选择题 contains the parallel single-choice set, all on one page with click-to-submit feedback. 书写题 contains full textbook problems and figures for paper work, without input, plotting or submission controls. Omit 选择题 when no parallel set exists.
 
 ## Lesson Rendering
 

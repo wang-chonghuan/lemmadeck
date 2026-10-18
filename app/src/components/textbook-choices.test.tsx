@@ -16,7 +16,8 @@ describe('Textbook choice pagination', () => {
     })) }
     const html = renderToStaticMarkup(<TextbookChoices deck={deck} lessonId="lesson" locale="zh" />)
     expect(html.match(/data-testid="choice-question"/g)).toHaveLength(Math.min(count, 50))
-    expect(html.includes('aria-label="习题分页"')).toBe(count > 50)
+    expect(html).toContain('aria-label="选择题"')
+    expect(html.includes('aria-label="选择题分页"')).toBe(count > 50)
     if (count > 50) {
       expect(html).toContain(`第 1 / ${Math.ceil(count / 50)} 页`)
       expect(html).not.toContain('Question 51')
