@@ -32,6 +32,7 @@ MATH = re.compile(r"\$\$(.+?)\$\$|\$([^$]+?)\$", re.S)
 MATH_TEXT_LITERAL = re.compile(r"\\text\{([^{}]*)\}")
 MATH_BOUNDARY_PUNCTUATION = re.compile(r"[、，；。？！：]+")
 NUMBER = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])")
+ERRATA_NUMBER = re.compile(NUMBER.pattern, re.ASCII)
 PART_MARKER = re.compile(
     r"(?<![A-Za-z0-9_\u0400-\u04ff])(?<!\d\.)"
     r"(?P<open>[(（]?)(?P<label>\d{1,2}|[a-z]|[\u0430-\u044f\u0451])(?P<close>[)）])"
@@ -1379,10 +1380,13 @@ def validate_errata(
             errors.append(f"lesson.errata[{erratum_id}].corrected 不得照抄错误原式")
             continue
         if (
-            not math_signature(source_record["original"])
-            or not math_signature(corrected)
+            not (
+                math_signature(source_record["original"])
+                or ERRATA_NUMBER.search(source_record["original"])
+            )
+            or not (math_signature(corrected) or ERRATA_NUMBER.search(corrected))
         ):
-            errors.append(f"lesson.errata[{erratum_id}] 必须绑定数学原式与修正式")
+            errors.append(f"lesson.errata[{erratum_id}] 必须绑定数学原式与修正式（公式或数字）")
             continue
         target = source_record["target"]
         source_text = source_targets.get(target)
