@@ -128,7 +128,8 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
             return False
     rules = []
     components, _ = ndimage.label(band)
-    for bounds in ndimage.find_objects(components):
+    glyph_bounds = ndimage.find_objects(components)
+    for bounds in glyph_bounds:
         if bounds is None:
             continue
         rows, columns = bounds
@@ -156,6 +157,17 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
                 and 0.2 * height <= (rows.start + rows.stop) / 2 <= 0.8 * height
             )
         ):
+            source_ids = np.unique(components[rows, columns][horizontal[rows, columns]])
+            # A complete glyph's horizontal stroke is not a fraction rule.
+            if any(
+                source_id > 0
+                and 0.6 * line_h <= glyph_bounds[source_id - 1][0].stop
+                - glyph_bounds[source_id - 1][0].start <= 1.3 * line_h
+                and 0.4 * line_h <= glyph_bounds[source_id - 1][1].stop
+                - glyph_bounds[source_id - 1][1].start <= 1.5 * line_h
+                for source_id in source_ids
+            ):
+                continue
             rules.append((columns.start, columns.stop - 1))
     if not rules:
         return False
@@ -483,7 +495,17 @@ def line_bands(
                 and strong_rows[0][0] - a < 1.2 * typical_h
                 and b - strong_rows[-1][1] < 1.2 * typical_h
             ):
-                count = 2
+                # A short middle sentence can fall below the long rows' ink threshold.
+                middle_text = any(
+                    strong_rows[0][1] < rows.start
+                    and rows.stop - 1 < strong_rows[1][0]
+                    and 0.6 * glyph_h <= rows.stop - rows.start <= 1.3 * glyph_h
+                    and 0.4 * glyph_h <= columns.stop - columns.start <= 1.5 * glyph_h
+                    for bounds in bounds_list if bounds is not None
+                    for rows, columns in [bounds]
+                )
+                if not middle_text:
+                    count = 2
             if (
                 count == 2 and _single_fraction_row(ink, a, b, typical_h)
                 or _single_fraction_row(ink, a, b, min(typical_h, glyph_h))
