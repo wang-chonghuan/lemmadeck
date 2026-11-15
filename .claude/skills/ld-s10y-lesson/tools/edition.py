@@ -721,6 +721,7 @@ def validate_text(
     forbidden_terms: list[str],
     historical_entities: object = None,
     math_corrections: list[dict] | None = None,
+    notation_changes: object = None,
 ) -> list[str]:
     errors = []
     if not isinstance(modern, str):
@@ -735,6 +736,32 @@ def validate_text(
     canonical_source = normalize_numbered_subparts(source)
     canonical_modern = normalize_numbered_subparts(modern)
     expected_math_source = canonical_source
+    if notation_changes is None:
+        notation_changes = []
+    if not isinstance(notation_changes, list):
+        errors.append(f"{label}.notation_changes 必须是数组")
+        notation_changes = []
+    for index, change in enumerate(notation_changes):
+        change_label = f"{label}.notation_changes[{index}]"
+        if (
+            not isinstance(change, dict)
+            or change.get("kind") != "apparatus-label"
+            or (change.get("from"), change.get("to")) != ("$Г$", "$G$")
+            or not isinstance(change.get("reason"), str)
+            or not change["reason"].strip()
+        ):
+            errors.append(f"{change_label} 必须是已支持的仪器标签别名并说明原因")
+            continue
+        before, after = change["from"], change["to"]
+        # Only whole, uniquely source-bound apparatus labels may be localized.
+        source_tokens = [match.group(0) for match in MATH.finditer(expected_math_source)]
+        modern_tokens = [match.group(0) for match in MATH.finditer(canonical_modern)]
+        if source_tokens.count(before) != 1 or modern_tokens.count(after) != 1:
+            errors.append(f"{change_label} 必须唯一匹配原文和现代版的完整标签")
+            continue
+        expected_math_source = expected_math_source.replace(before, after, 1)
+    if notation_changes and "notation" not in changes:
+        errors.append(f"{label} 有 notation_changes，但 changes 缺 notation")
     for correction in math_corrections or []:
         expected_math_source = expected_math_source.replace(
             correction["original"],
@@ -1586,6 +1613,7 @@ def validate_lesson(
             forbidden,
             modern_block.get("historical_entities"),
             corrections.get(label),
+            modern_block.get("notation_changes"),
         )
 
     raw_items = raw_exercises.get("exercises", [])
@@ -1612,6 +1640,7 @@ def validate_lesson(
             forbidden,
             modern_item.get("historical_entities"),
             corrections.get(label),
+            modern_item.get("notation_changes"),
         )
         errors += [
             f"{label}: {error}"

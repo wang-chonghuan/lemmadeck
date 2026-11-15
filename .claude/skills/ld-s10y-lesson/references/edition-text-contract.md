@@ -18,6 +18,29 @@ and `\mathrm{н}` (normal) may be localized to upright Latin `\mathrm{m}` and
 snapshot remains untouched. These two label aliases do not permit changing
 variables, numerical values, signs, equations or physical meanings.
 
+## Apparatus Labels
+
+The standalone air-bulb label `$Г$` may be localized to `$G$` with `notation`
+in `changes` and an explicit block-level declaration:
+
+```json
+{
+  "notation_changes": [
+    {
+      "kind": "apparatus-label",
+      "from": "$Г$",
+      "to": "$G$",
+      "reason": "The source identifies this as the air-bulb label; the modern figure uses G."
+    }
+  ]
+}
+```
+
+The label must occur exactly once as a complete math token in the source block
+and the replacement exactly once in the modern block. The source snapshot
+remains untouched. This is not a scientific erratum and does not authorize
+substitutions inside equations or any other Cyrillic variable.
+
 ## Section Boundaries
 
 `section_breaks` is authored as adjacent final-paragraph anchors:
