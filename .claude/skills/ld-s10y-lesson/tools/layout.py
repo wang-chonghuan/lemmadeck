@@ -178,6 +178,59 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
     return not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h
 
 
+def _small_prose_continuation(
+    ink: np.ndarray, top: int, top_bottom: int, bottom_top: int, bottom: int,
+    glyph_h: float,
+) -> bool:
+    """Keep a short, left-aligned small-font continuation out of glyph merging."""
+    if (
+        bottom_top - top_bottom <= 0.15 * glyph_h
+        or not all(
+            0.5 * glyph_h <= b - a + 1 <= 1.2 * glyph_h
+            for a, b in ((top, top_bottom), (bottom_top, bottom))
+        )
+    ):
+        return False
+    rows = []
+    thin_rules = []
+    for a, b in ((top, top_bottom), (bottom_top, bottom)):
+        labels, _ = ndimage.label(ink[a:b + 1])
+        bounds_list = [
+            bounds for bounds in ndimage.find_objects(labels) if bounds is not None
+        ]
+        thin_rules.extend(
+            c.stop - c.start for r, c in bounds_list
+            if r.stop - r.start <= 0.2 * glyph_h
+        )
+        glyphs = [
+            (r.stop - r.start, c.start, c.stop)
+            for r, c in bounds_list
+            if 0.6 * glyph_h <= r.stop - r.start <= 1.1 * glyph_h
+            and 0.5 * (r.stop - r.start) <= c.stop - c.start
+            <= 1.4 * (r.stop - r.start)
+        ]
+        if len(glyphs) < 3:
+            return False
+        rows.append((
+            float(np.median([h for h, _, _ in glyphs])),
+            min(left for _, left, _ in glyphs),
+            max(right for _, _, right in glyphs),
+        ))
+    (top_h, top_left, top_right), (bottom_h, bottom_left, bottom_right) = rows
+    local_h = min(top_h, bottom_h)
+    if (
+        max(top_h, bottom_h) > 0.9 * glyph_h
+        or abs(top_h - bottom_h) > 0.25 * local_h
+        or abs(top_left - bottom_left) > 2.5 * local_h
+        or bottom_right - bottom_left > 0.35 * (top_right - top_left)
+    ):
+        return False
+    return not any(
+        width >= max(0.7 * local_h, 0.8 * (bottom_right - bottom_left))
+        for width in thin_rules
+    )
+
+
 def _connected_radical_row(
     ink: np.ndarray, top: int, cap_bottom: int, row_top: int, bottom: int,
     glyph_h: float,
@@ -330,7 +383,12 @@ def line_bands(
                 min(prev_b - prev_a + 1, b - a + 1) >= 1.8 * glyph_h
                 and not _single_fraction_row(ink, prev_a, b, glyph_h)
             )
-            if a - prev_b <= merge_gap and not separate_tall_rows:
+            if (
+                a - prev_b <= merge_gap and not separate_tall_rows
+                and not _small_prose_continuation(
+                    ink, prev_a, prev_b, a, b, glyph_h
+                )
+            ):
                 merged[-1] = (prev_a, b)
                 continue
         merged.append((a, b))

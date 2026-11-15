@@ -1,0 +1,161 @@
+{
+  "ticket": "STEMROBIN-181",
+  "book": "10p",
+  "pdf_page": 41,
+  "recorded_date": "2026-11-15",
+  "status": "focused-verification-pass",
+  "purpose": "Record the narrow small-footnote row-count repair and affected-only author verification. This is not independent code approval, a new science review, or a finalize execution.",
+  "current_files": {
+    "layout": {
+      "path": ".claude/skills/ld-s10y-lesson/tools/layout.py",
+      "sha256": "1bf8f492be3897ff51726ee32540346d0a24638f8e251f6684926ebcf0177463"
+    },
+    "focused_test": {
+      "path": ".claude/skills/ld-s10y-lesson/tests/test_layout_small_footnotes.py",
+      "sha256": "0c6c89a3ae567b811be0d48c6bbb1d5ecb7ae53282391306a243d29dc80451eb"
+    },
+    "pdf41_png": {
+      "path": ".tmp/ld-s10y-lesson/10p/pages/0041/page.png",
+      "sha256": "73afd09e7ca49426e5192247bd50bfd19edcc54a5fc9267802b671fc27da5895"
+    },
+    "pdf41_prepare_layout": {
+      "path": ".tmp/ld-s10y-lesson/10p/pages/0041/layout.json",
+      "sha256": "5de73291f25b99dc0c4b0c4df798f55d80f0f0e84cf636e1bf1fbd444517a19a"
+    },
+    "pdf41_page_md": {
+      "path": "ssot-resources/soviet10year-textbooks/artifacts/10p/pages/0041/page.md",
+      "sha256": "f2f3fa6986b97ed06fe751f4f77a2cf623212a2d61391b1c980c8f1cb31c2a6e"
+    },
+    "pdf41_author_draft": {
+      "path": ".intentfold/tickets/STEMROBIN-181/tmp/10p-next-source/0041.page.md",
+      "sha256": "3e5451db4bb455ad8e2ac86a44c51496024dc9bb4498c390cb1226ff509e2b68"
+    },
+    "pdf35_png": {
+      "path": ".tmp/ld-s10y-lesson/10p/pages/0035/page.png",
+      "sha256": "3bb19c8a240dab54890789f83adcd9ad9569458971feb47a363674f9cacb573a"
+    },
+    "pdf35_prepare_layout": {
+      "path": ".tmp/ld-s10y-lesson/10p/pages/0035/layout.json",
+      "sha256": "4ce5eca8460b4b08cb1122caf2fb2753068f7e41cd10593307891691f6b294d1"
+    },
+    "pdf35_retained_evidence": {
+      "path": ".intentfold/tickets/STEMROBIN-181/tmp/source-review-10p-0035-layout-fix.json",
+      "sha256": "40c1e76c6d88498dc235c527e44478658322757eedece9b86da309b5e85caa77"
+    },
+    "pdf41_independent_source_review": {
+      "path": ".intentfold/tickets/STEMROBIN-181/tmp/source-review-10p-0040-0043.json",
+      "sha256": "4bd85e450406660083ed5813d2d3910257dfe319c67e742d3eb11f1de76cd996"
+    }
+  },
+  "before_layout_sha256": "4478d485a38301fe9448890d682cf035ba4a9e45d999b1450033d0f1f45c0753",
+  "source_observation": {
+    "actual_original_page_png_opened": true,
+    "independent_expected_printed_rows": 25,
+    "body_rows": 22,
+    "explanatory_footnote_rows": 2,
+    "page_footer_rows": 1,
+    "footnote_separator_is_not_a_text_row": true,
+    "footnote_second_row": "Short left-aligned prose continuation, not a fraction denominator.",
+    "source_review": "Existing independent source review and the author's original-page inventory both require 25 rows; this fix does not alter those source facts."
+  },
+  "diagnosis": {
+    "line_height_px": 42,
+    "glyph_height_px": 40,
+    "unchanged_merge_gap_px": 16,
+    "footnote_raw_row_bounds": [
+      [1764, 1803],
+      [1815, 1845]
+    ],
+    "first_row_typical_glyph_height_px": 30,
+    "second_row_typical_glyph_height_px": 30,
+    "raw_row_boundary_difference_px": 12,
+    "old_merged_band": [1764, 1845],
+    "cause": "The close-gap pass merged the smaller-font prose rows. The later expansion used a density threshold relative to the long first row, which missed the short second row and reset the merged band to one row.",
+    "old_single_fraction_row_check_for_footnote_band": false
+  },
+  "fix_scope": {
+    "changed_code": "Add _small_prose_continuation and consult it only before an otherwise eligible close-gap merge.",
+    "recognition": "Both candidate rows must contain at least three similarly sized glyph components smaller than the surrounding body glyphs; the lower row must be short and share the upper row's left margin within a small-font indentation allowance.",
+    "fraction_exclusion": "A thin independent horizontal rule extending across the lower glyph group rejects the prose-continuation interpretation. Glyph-internal strokes are not treated as a fraction rule.",
+    "global_merge_gap_changed": false,
+    "existing_fraction_and_radical_helpers_changed": false,
+    "row_counts_or_markdown_hardcoded_in_production_logic": false,
+    "source_pixels_md_and_author_draft_changed": false,
+    "prepare_layout_json_rewritten": false,
+    "app_dependencies_or_other_products_changed": false
+  },
+  "focused_tests": {
+    "command": ".claude/skills/ld-s10y-lesson/.venv/bin/python -m unittest discover -s .claude/skills/ld-s10y-lesson/tests -p test_layout_small_footnotes.py -v",
+    "exit_code": 0,
+    "status": "pass",
+    "case_count": 3,
+    "cases": [
+      {
+        "name": "test_two_small_footnote_rows_with_short_continuation",
+        "independent_expectation": "Three body rows plus two small-font prose rows; the input ink mask is unchanged.",
+        "status": "pass"
+      },
+      {
+        "name": "test_small_fraction_is_one_printed_row",
+        "independent_expectation": "Three body rows plus one fraction, including a short left-aligned denominator and an independent fraction rule.",
+        "status": "pass"
+      },
+      {
+        "name": "test_centered_small_fraction_is_not_a_prose_continuation",
+        "independent_expectation": "Three body rows plus one fraction with a centered denominator, not two prose rows.",
+        "status": "pass"
+      }
+    ],
+    "output": "test_centered_small_fraction_is_not_a_prose_continuation (test_layout_small_footnotes.SmallFootnoteRowsTest.test_centered_small_fraction_is_not_a_prose_continuation) ... ok\ntest_small_fraction_is_one_printed_row (test_layout_small_footnotes.SmallFootnoteRowsTest.test_small_fraction_is_one_printed_row) ... ok\ntest_two_small_footnote_rows_with_short_continuation (test_layout_small_footnotes.SmallFootnoteRowsTest.test_two_small_footnote_rows_with_short_continuation) ... ok\n\n----------------------------------------------------------------------\nRan 3 tests in 0.019s\n\nOK"
+  },
+  "actual_count": {
+    "entry_point": "layout.line_bands(ink, content_w), the same counting API used by p2c finalize; invoked read-only without finalize's source writes.",
+    "input": "ink = layout.ink_mask(Image.open(page / 'page.png')); content_w is derived from the first and last ink-bearing columns. PDF41 has no figure masks or counting override.",
+    "reproduction_command": ".claude/skills/ld-s10y-lesson/.venv/bin/python <<'PY'\nimport json\nimport sys\nfrom pathlib import Path\nsys.path.insert(0, str(Path('.claude/skills/ld-s10y-lesson/tools').resolve()))\nimport layout\nimport numpy as np\nfrom PIL import Image\nfor number in (41, 35):\n    page = Path(f'.tmp/ld-s10y-lesson/10p/pages/{number:04d}')\n    ink = layout.ink_mask(Image.open(page / 'page.png'))\n    before = ink.copy()\n    columns = np.flatnonzero(ink.any(axis=0))\n    width = int(columns[-1] - columns[0] + 1)\n    old = [tuple(band) for band in json.loads((page / 'layout.json').read_text())['line_bands']]\n    bands = layout.line_bands(ink, width)\n    expected = old[:22] + [(1764, 1803), (1815, 1845)] + old[23:] if number == 41 else [(149, 234)] + old[2:]\n    assert len(bands) == 25\n    assert bands == expected\n    assert np.array_equal(ink, before)\n    print(json.dumps({'pdf_page': number, 'content_width': width, 'count': len(bands), 'bands_match_independent_expectation': True, 'input_ink_unchanged': True}))\nPY",
+    "exit_code": 0,
+    "status": "pass",
+    "pdf41_output": {
+      "content_width": 1224,
+      "before": 24,
+      "after": 25,
+      "expected": 25,
+      "md_printed_lines": 25,
+      "md_printed_lines_verified_with": "blocks.load and blocks.printed_lines, without writing the page.",
+      "changed_bands": {
+        "before": [
+          [1764, 1845]
+        ],
+        "after": [
+          [1764, 1803],
+          [1815, 1845]
+        ]
+      },
+      "all_22_body_bands_unchanged": true,
+      "footer_band_unchanged": [1892, 1917],
+      "divider_still_excluded": true,
+      "input_ink_unchanged": true
+    }
+  },
+  "targeted_pdf35_regression": {
+    "reason": "The fix touches the shared close-gap pass, so the previously repaired actual PDF35 count was checked once.",
+    "status": "pass",
+    "exit_code": 0,
+    "content_width": 1481,
+    "current_count": 25,
+    "expected": 25,
+    "retained_radical_first_band": [149, 234],
+    "every_later_band_matches_retained_evidence": true,
+    "input_ink_unchanged": true,
+    "prior_evidence_file_preserved": true,
+    "note": "The prior PDF35 report retains its historical implementation hash; this report records the actual count under the new layout.py hash rather than overwriting that evidence."
+  },
+  "not_performed": [
+    "No prepare or finalize execution.",
+    "No source, MD, author draft, figure, or modern lesson edits.",
+    "No repeated independent source or science approval.",
+    "No whole-project tests or application checks.",
+    "No dependency, environment, network, model, API, or database action.",
+    "No figure15 authoring, promotion, commit, or push."
+  ],
+  "validity": "Focused author verification is bound to the current_files hashes above. Other concurrent edits are preserved; independent review and main-session finalize remain separate."
+}
