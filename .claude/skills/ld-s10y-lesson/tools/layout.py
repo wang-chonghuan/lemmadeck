@@ -243,6 +243,41 @@ def _small_prose_continuation(
     )
 
 
+def _fraction_denominator(ink, rows, columns, bounds_list, glyph_h: float) -> bool:
+    """Require a covering fraction rule and its numerator before hiding a glyph."""
+    margin = 0.15 * glyph_h
+    top = max(0, rows.start - int(glyph_h))
+    horizontal = ndimage.binary_opening(
+        ink[top:rows.start],
+        structure=np.ones((1, max(2, int(0.7 * glyph_h))), dtype=bool),
+    )
+    rules, _ = ndimage.label(horizontal)
+    for bounds in ndimage.find_objects(rules):
+        if bounds is None:
+            continue
+        rule_rows, rule_columns = bounds
+        rule_rows = slice(top + rule_rows.start, top + rule_rows.stop)
+        if not (
+            rule_rows.stop - rule_rows.start <= 0.25 * glyph_h
+            and rule_columns.stop - rule_columns.start >= 0.7 * glyph_h
+            and 0 <= rows.start - rule_rows.stop <= 0.6 * glyph_h
+            and rule_columns.start - margin <= columns.start
+            and columns.stop <= rule_columns.stop + margin
+        ):
+            continue
+        if any(
+            0.5 * glyph_h <= numerator_rows.stop - numerator_rows.start <= 1.3 * glyph_h
+            and 0.3 * glyph_h <= numerator_columns.stop - numerator_columns.start
+            and 0 <= rule_rows.start - numerator_rows.stop <= 0.6 * glyph_h
+            and rule_columns.start - margin <= numerator_columns.start
+            and numerator_columns.stop <= rule_columns.stop + margin
+            for numerator in bounds_list if numerator is not None
+            for numerator_rows, numerator_columns in [numerator]
+        ):
+            return True
+    return False
+
+
 def _connected_radical_row(
     ink: np.ndarray, top: int, cap_bottom: int, row_top: int, bottom: int,
     glyph_h: float,
@@ -501,6 +536,9 @@ def line_bands(
                     and rows.stop - 1 < strong_rows[1][0]
                     and 0.6 * glyph_h <= rows.stop - rows.start <= 1.3 * glyph_h
                     and 0.4 * glyph_h <= columns.stop - columns.start <= 1.5 * glyph_h
+                    and not _fraction_denominator(
+                        ink, rows, columns, bounds_list, glyph_h
+                    )
                     for bounds in bounds_list if bounds is not None
                     for rows, columns in [bounds]
                 )
