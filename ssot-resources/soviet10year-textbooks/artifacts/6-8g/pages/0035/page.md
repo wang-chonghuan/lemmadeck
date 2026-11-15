@@ -1,0 +1,95 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "6-8g",
+  "page": 35,
+  "printed_page": 25,
+  "source": {
+    "pdf": "6-8g 苏联十年制学校数学教材 几何 六-八年级.pdf",
+    "pdf_sha256": "d06ea093886065380febda597331bb5d48c81303d955161f2f84a7f11c116e5c",
+    "pdf_page": 35
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1441,
+    "h": 2079,
+    "sha256": "890ffc45993fde2a4e345f13f7ba3dd5e2be3486be80c0112c488a4933b2d1f6"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "Independent ticket-local draft; page.grid.png viewed individually at original resolution. Grid SHA-256: 79114d1cd0d2581e5c3cf395e523ab1fecb0f3f4038cb355e6dfa96961fb032d. No finalize, snapping, assembly or promotion performed.",
+    "Manual pixel reading: 19 printed text rows = 14 prose/formula rows + 1 caption + 1 exercise heading + 2 exercise rows + 1 folio. Figure-internal labels and the thin rule near y=1695 are not text rows. This is an observed count, not a pipeline counter result.",
+    "The proof continues from physical p0034, but the first line is a newly indented paragraph after formula (1), not a continuation of that formula block. A 3x clean-source detail [285,265,730,55], saved as source-glyph-detail.png, shows a slanted lower stroke in the greater-than-or-equal glyph in formula (2), transcribed as \\geqslant; the final sum uses strict greater-than.",
+    "Figure 28 coarse source box [200,890,1125,265] includes all five subfigures and their Cyrillic labels, but not its caption. Caption source box [680,1225,130,45]. Boxes have not been snapped.",
+    "The first prose reference to subfigure в is a worn small glyph; the five printed labels and the corresponding simple closed polyline support reading it as Cyrillic в.",
+    "Independent source review and parent clean-page inspection confirm a raised solid circular mark after exercise70, distinct from its lower sentence dot. Superscript bullet preserves the observed shape; the original typographic identity (filled circle versus damaged type) remains uncertain and is not used to infer task meaning."
+  ],
+  "errata": [],
+  "printed_lines": 19,
+  "figures": [
+    {
+      "id": "fig-28",
+      "label": "图 28",
+      "box": [
+        203,
+        895,
+        1118,
+        250
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+根据距离的第三条性质（第4小节），有
+
+<!-- p -->
+$|A_1A_3|+|A_3A_4|\geqslant|A_1A_4|$. (2)
+
+<!-- p -->
+由不等式(1)，和$|A_1A_2|+|A_2A_3|$大于$|A_1A_3|$，所以可以
+用$|A_1A_2|+|A_2A_3|$代换不等式(2)中的被加项$|A_1A_3|$.代换
+以后，不等式(2)的左边变大，因此有
+
+<!-- p -->
+$|A_1A_2|+|A_2A_3|+|A_3A_4|>|A_1A_4|$.
+
+<!-- p -->
+对于由任意段组成的折线，可以类似地证明这条定理.
+
+<!-- p -->
+3. 图28上画出了几条闭折线，其中а、в、г是简单闭折
+线.б和д不是简单闭折线.
+
+<!-- fig 图 28 box 203,895,1118,250 -->
+![图 28](figures/fig-28.png)
+
+<!-- cap 图 28 -->
+图 28
+
+<!-- p -->
+**简单折线**$A_1A_2\cdots A_n(n>2)$和线段$A_nA_1$当中，如果相邻
+两段（按圆周排列顺序）不在一条直线上，而不相邻的两段没
+有公共点，那么$A_1A_2\cdots A_n$和$A_nA_1$的并集叫做简单闭折线.
+
+<!-- p -->
+**注** 以后我们提到折线时均指简单折线（闭折线或不闭
+折线）.
+
+<!-- exhead -->
+问题和习题
+
+<!-- ex 70 -->
+70.$^{\bullet}$ 图29上画出的许多图形是一些线段的并集.其中哪些
+是简单折线？
+
+<!-- foot -->
+· 25 ·

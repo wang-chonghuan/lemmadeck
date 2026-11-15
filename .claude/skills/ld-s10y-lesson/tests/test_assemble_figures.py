@@ -95,6 +95,25 @@ class ClaimFiguresTest(unittest.TestCase):
         self.assertEqual(ex107["figures"], [{"id": "fig-30", "label": "图 30"}])
         self.assertEqual(ex108["figures"], [])
 
+    def test_explicit_owner_wins_when_next_question_shares_numbered_figure(self) -> None:
+        figure = block("fig", "p0037#1", label="图 31", figure_id="fig-31",
+                       owner_exercise="78")
+        caption = block("cap", "p0037#2", label="图 31", text="图 31")
+        ex78 = exercise("78", "p0036#9", "观察图 31，а")
+        ex79 = exercise("79", "p0037#3", "观察图 31，б")
+        lesson = {"title": "折线", "blocks": [figure, caption],
+                  "prose": [figure, caption], "exercises": [ex78, ex79]}
+
+        errors, warnings = assemble.claim_figures([lesson], [figure, caption])
+
+        self.assertEqual(errors, [])
+        self.assertEqual(warnings, [])
+        self.assertEqual(ex78["figure_refs"], ["fig-31"])
+        self.assertEqual(ex79["figure_refs"], ["fig-31"])
+        self.assertEqual(ex78["figures"], [{"id": "fig-31", "label": "图 31"}])
+        self.assertEqual(ex79["figures"], [])
+        self.assertEqual(lesson["prose"], [])
+
     def test_real_prose_reference_keeps_figure_in_text_and_exercises(self) -> None:
         paragraph = block("p", "p0010#1", text="观察图 6")
         figure = block("fig", "p0010#2", label="图 6", figure_id="fig-06")

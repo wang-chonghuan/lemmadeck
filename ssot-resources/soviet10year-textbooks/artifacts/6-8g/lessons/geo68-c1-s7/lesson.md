@@ -28,6 +28,20 @@
 
 $|AB|=|x_B-x_A|$．
 
-$\blacktriangledown$* 证明．分三种情况讨论：1) 坐标原点$O$在点$A$和$B$之
+$\blacktriangledown$* 证明．分三种情况讨论：1) 坐标原点$O$在点$A$和$B$之间；2) 点$A$在点$O$和$B$之间；3) 点$B$在点$O$和$A$之间.
 
 * 符号$\blacktriangledown$表示供选学的内容．
+
+设点$O$在点$A$和$B$之间，$x_A<0$（图23，а）.于是，$x_B>0$.在这种情况下，
+
+$|AB|=|AO|+|OB|=-x_A+x_B=x_B-x_A=|x_B-x_A|$.
+
+如果$x_A>0$，那么$x_B<0$（图23，б），而且
+
+$|AB|=|AO|+|OB|=x_A-x_B=|x_B-x_A|$.
+
+![图 23](../../figures/fig-23.svg)
+
+*图 23*
+
+对于第二和第三种情况，定理的证明类似（参看图23，в和г）.$\blacktriangledown$

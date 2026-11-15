@@ -438,7 +438,8 @@ def math_signature(text: str) -> list[str]:
 
 def number_signature(text: str) -> list[str]:
     without_math = MATH.sub("", text)
-    return NUMBER.findall(without_math)
+    # Printed punctuation and adjacent units/CJK must not hide a numeric token.
+    return re.findall(r"-?\d+(?:\.\d+)?", without_math)
 
 
 def masked_math(text: str) -> str:

@@ -481,47 +481,70 @@ def counting_ink(ink: np.ndarray, exclusions: list[dict]) -> np.ndarray:
     return masked
 
 
-def snap(ink: np.ndarray, box: list[int]) -> tuple[list[int], dict]:
-    """把粗框吸附到它覆盖的连通域上：框歪一点、小一点都能救回来。
-
-    判据是「连通域有多大比例落在框内」——整体在框内的（图形本身、被框住的标注）
-    并进来，只被蹭到边的（相邻正文行）排除在外。
-    """
+def _figure_components(ink: np.ndarray, box: list[int]):
     x, y, w, h = box
     H, W = ink.shape
     x0, y0 = max(0, x), max(0, y)
     x1, y1 = min(W - 1, x + w - 1), min(H - 1, y + h - 1)
     labels, n = ndimage.label(ink)
     if n == 0:
-        return [x0, y0, x1 - x0 + 1, y1 - y0 + 1], {"components": 0}
-
+        return labels, [], []
     sizes = np.bincount(labels.ravel())
     inside = np.bincount(labels[y0:y1 + 1, x0:x1 + 1].ravel(), minlength=len(sizes))
     boxes = ndimage.find_objects(labels)
-
-    took, nx0, ny0, nx1, ny1 = 0, x1, y1, x0, y0
+    selected = []
     for lab in np.flatnonzero(inside[1:]) + 1:
         if inside[lab] < SNAP_OVERLAP * sizes[lab]:
             continue
         sy, sx = boxes[lab - 1]
-        # 贯通整页的连通域是扫描件页边黑线，吞进来会把整页当成插图
         if (sy.stop - sy.start) > 0.9 * H or (sx.stop - sx.start) > 0.9 * W:
             continue
-        took += 1
+        selected.append(int(lab))
+    return labels, selected, boxes
+
+
+def figure_ink(ink: np.ndarray, box: list[int]) -> np.ndarray:
+    """Use the same component ownership as snapping, not the rectangular envelope."""
+    labels, selected, _ = _figure_components(ink, box)
+    return np.isin(labels, selected)
+
+
+def snap(ink: np.ndarray, box: list[int]) -> tuple[list[int], dict]:
+    """把粗框吸附到它覆盖的连通域上，按落在框内的比例认领墨迹。"""
+    x, y, w, h = box
+    H, W = ink.shape
+    x0, y0 = max(0, x), max(0, y)
+    x1, y1 = min(W - 1, x + w - 1), min(H - 1, y + h - 1)
+    _, selected, boxes = _figure_components(ink, box)
+    nx0, ny0, nx1, ny1 = x1, y1, x0, y0
+    for lab in selected:
+        sy, sx = boxes[lab - 1]
         nx0, ny0 = min(nx0, sx.start), min(ny0, sy.start)
         nx1, ny1 = max(nx1, sx.stop - 1), max(ny1, sy.stop - 1)
-    if took == 0:
+    if not selected:
         return [x0, y0, x1 - x0 + 1, y1 - y0 + 1], {"components": 0}
     return [int(nx0), int(ny0), int(nx1 - nx0 + 1), int(ny1 - ny0 + 1)],  {
-        "components": int(took), "from": box}
+        "components": len(selected), "from": box}
 
 
-def crop(png: Path, box: list[int], out: Path, pad: int = 12) -> None:
-    img = Image.open(png)
+def crop(png: Path, box: list[int], out: Path, pad: int = 12,
+         exclude: np.ndarray | None = None) -> None:
+    with Image.open(png) as source:
+        img = source.copy()
+    if exclude is not None:
+        if exclude.shape != (img.height, img.width) or exclude.dtype != bool:
+            raise ValueError("crop exclusion must be a page-sized boolean mask")
+        img = img.copy()
+        white = 255 if img.mode == "L" else tuple(255 for _ in img.getbands())
+        img.paste(white, mask=Image.fromarray(exclude.astype(np.uint8) * 255))
     x, y, w, h = box
     out.parent.mkdir(parents=True, exist_ok=True)
-    img.crop((max(0, x - pad), max(0, y - pad),
-              min(img.width, x + w + pad), min(img.height, y + h + pad))).save(out)
+    left, top = max(0, x - pad), max(0, y - pad)
+    right, bottom = min(img.width, x + w + pad), min(img.height, y + h + pad)
+    white = 255 if img.mode == "L" else tuple(255 for _ in img.getbands())
+    padded = Image.new(img.mode, (right - left, bottom - top), white)
+    padded.paste(img.crop((x, y, x + w, y + h)), (x - left, y - top))
+    padded.save(out)
 
 
 def ink_coverage(ink: np.ndarray, boxes: list[list[int]]) -> dict:

@@ -339,6 +339,8 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
 
         for n, users in exercise_users.items():
             for figure in fig_by_num.get(n, []):
+                if figure["id"] in explicitly_owned:
+                    continue
                 owner = _figure_owner(figure, users)
                 if figure["id"] not in {item["id"] for item in owner["figures"]}:
                     owner["figures"].append({"id": figure["id"], "label": figure.get("label")})

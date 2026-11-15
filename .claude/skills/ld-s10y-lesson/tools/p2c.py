@@ -17,6 +17,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import subprocess
@@ -30,6 +31,7 @@ import layout
 import mathcheck
 import normalize as nz
 from PIL import Image
+from scipy import ndimage
 
 SKILL = Path(__file__).resolve().parent.parent
 TOOLS = SKILL / "tools"
@@ -303,16 +305,40 @@ def cmd_finalize(a) -> int:
         )
         box, info = reused if reused is not None else layout.snap(ink, b["box"])
         b["box"] = box
-        layout.crop(render_path, box, work / "figures" / f"{b['id']}.png")
         figs.append({"id": b["id"], "label": b.get("label"), "box": box, **info})
         if info.get("components", 0) == 0:
             errors.append(f"{b['id']}: 粗框里没有完整连通域，框可能给错了")
+    neighbours = {f["id"]: [] for f in figs}
+    owned_ink = {}
     for i in range(len(figs)):
         for j in range(i + 1, len(figs)):
             (x1, y1, w1, h1), (x2, y2, w2, h2) = figs[i]["box"], figs[j]["box"]
             if x1 < x2 + w2 and x2 < x1 + w1 and y1 < y2 + h2 and y2 < y1 + h1:
-                errors.append(f"{figs[i]['id']} 与 {figs[j]['id']} 框重叠，"
-                              "同一块墨迹会被裁两次")
+                for f in (figs[i], figs[j]):
+                    if f["id"] not in owned_ink:
+                        owned_ink[f["id"]] = layout.figure_ink(ink, f.get("from", f["box"]))
+                if (owned_ink[figs[i]["id"]] & owned_ink[figs[j]["id"]]).any():
+                    errors.append(f"{figs[i]['id']} 与 {figs[j]['id']} 认领同一连通域，"
+                                  "同一块墨迹会被裁两次")
+                else:
+                    neighbours[figs[i]["id"]].append(figs[j]["id"])
+                    neighbours[figs[j]["id"]].append(figs[i]["id"])
+    for f in figs:
+        exclude = None
+        if neighbours[f["id"]]:
+            exclude = owned_ink[neighbours[f["id"]][0]].copy()
+            for neighbour in neighbours[f["id"]][1:]:
+                exclude |= owned_ink[neighbour]
+            # Remove neighbour antialiasing without changing any owned ink pixel.
+            exclude = ndimage.binary_dilation(exclude, iterations=2) & ~owned_ink[f["id"]]
+            f["ownership"] = {
+                "method": "snapped-components",
+                "neighbours": neighbours[f["id"]],
+                "ink_pixels": int(owned_ink[f["id"]].sum()),
+                "ink_sha256": hashlib.sha256(owned_ink[f["id"]].tobytes()).hexdigest(),
+            }
+        layout.crop(render_path, f["box"], work / "figures" / f"{f['id']}.png",
+                    exclude=exclude)
     keep = {f"{f['id']}.png" for f in figs}
     for stale in (work / "figures").glob("*.png"):
         if stale.name not in keep:

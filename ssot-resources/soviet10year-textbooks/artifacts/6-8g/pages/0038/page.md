@@ -1,0 +1,117 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "6-8g",
+  "page": 38,
+  "printed_page": 28,
+  "source": {
+    "pdf": "6-8g 苏联十年制学校数学教材 几何 六-八年级.pdf",
+    "pdf_sha256": "d06ea093886065380febda597331bb5d48c81303d955161f2f84a7f11c116e5c",
+    "pdf_page": 38
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1441,
+    "h": 2079,
+    "sha256": "4ed288ebc5278ffa1d27b28729dcdd979afb5b5cf02b12445a5283a207d79e2b"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "Independent ticket-local draft; page.grid.png and clean page.png viewed individually at original resolution. Grid SHA-256: 1a74d9c79d52013f098cac1f871eba6e5aa1ff64a0808ebb7f0f04c931e3cd46. No finalize, snapping, assembly or promotion performed.",
+    "Manual pixel reading: 16 distinct printed text rows = 3 exercise rows + 1 section heading + 10 prose/statement rows + 1 independent caption row + 1 folio. Captions 34 and 35 share one row. Caption 36 shares the prose row ending 但是，. Raw nonfigure body lines total 18 before the two samerow adjustments. The thin rule near y=430 and the edge scan bands are not body text.",
+    "Exercise 85 visibly prints two raised asterisks. Part 1 says 简单闭折线共有五条; part 2 says 简单非闭曲线共有20条. The printed 曲 is retained, not silently changed to 折. This is a source-wording observation, not an answer derivation.",
+    "Figure 34 coarse box [85,825,530,495]; caption [310,1360,125,40]. Figure 35 coarse box [615,755,600,575]; caption [865,1365,125,40]. Figure 35 comprises five panels, including the lower-left sphere. The coarse boxes do not overlap, but exact envelopes interleave: figure 34's rightmost hatch tips reach about x=628 near y=1100, while figure 35's sphere/line reaches about x=616 near y=1170. Parent snapping/final cropping must retain those tips without assigning neighbouring figure pixels; these are not finalized crop bounds.",
+    "Figure 36 box [650,1475,565,235] includes the full plane outline, line and both point labels; caption [870,1735,125,45]. All boxes are coarse and unsnapped. The surrounding paragraph is p open / p cont across this figure, and cap 36 is samerow with the last line of the preceding paragraph fragment.",
+    "Statement 13 has a solid upright rectangular marker near [175,1860,25,45]. It is encoded as a LaTeX rule with the same upright rectangular shape, rather than a whitelist-external U+25AE character. No missing word such as 定理 or 公理 has been inferred. The statement ends with a full stop on this page; it is not marked open.",
+    "Parent re-opened the clean original page. Figures34/35 have disjoint component ownership despite interleaved rectangular envelopes. Final crops remove only the neighbour figure component mask and its 2px fringe; own source ink pixels are retained. The finalize audit records ownership hashes."
+  ],
+  "errata": [],
+  "printed_lines": 16,
+  "figures": [
+    {
+      "id": "fig-34",
+      "label": "图 34",
+      "box": [
+        93,
+        832,
+        536,
+        479
+      ]
+    },
+    {
+      "id": "fig-35",
+      "label": "图 35",
+      "box": [
+        616,
+        762,
+        601,
+        561
+      ]
+    },
+    {
+      "id": "fig-36",
+      "label": "图 36",
+      "box": [
+        659,
+        1487,
+        552,
+        217
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 85 -->
+85.** 已知一正方形$ABCD$.1) 证明：以这个正方形的所有
+顶点为顶点的简单闭折线共有五条.2) 证明：以这个
+正方形的所有顶点为顶点的简单非闭曲线共有20条.
+
+<!-- h3 -->
+9. 平面.平面几何
+
+<!-- p -->
+你们已经知道了关于平面的概念.在空间中有许多不同
+的平面.例如，正方体（图34）的六个面在六个不同的平面
+上.
+
+<!-- fig 图 34 box 93,832,536,479 -->
+![图 34](figures/fig-34.png)
+
+<!-- fig 图 35 box 616,762,601,561 -->
+![图 35](figures/fig-35.png)
+
+<!-- cap 图 34 -->
+图 34
+
+<!-- cap 图 35 samerow -->
+图 35
+
+<!-- p open -->
+在图35上画出了一些“曲
+面”，包括球面，圆柱面，等等.
+在其中任一曲面上总可以找到
+这样的两个点，使得直线$AB$
+不完全在已知曲面内.但是，
+
+<!-- fig 图 36 box 659,1487,552,217 -->
+![图 36](figures/fig-36.png)
+
+<!-- cap 图 36 samerow -->
+图 36
+
+<!-- p cont -->
+对于平面就不这样了（图36）.平面具有下述性质：
+
+<!-- p -->
+**13 $\rule{0.5em}{0.9em}$ 过平面内任意两点的直线，一定在平面内.**
+
+<!-- foot -->
+· 28 ·
