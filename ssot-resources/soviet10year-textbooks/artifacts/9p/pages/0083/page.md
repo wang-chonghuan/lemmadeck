@@ -24,7 +24,14 @@
     "32单元在33标题前完整闭合。33仅标题和第一段，尾段有句号但课程下界待84确认；不标正文open、不作完成声明。",
     "图外22行与prepare相同，无图、任务、覆盖、finalize或装订。"
   ],
-  "errata": [],
+  "errata": [
+    {
+      "id": "p0083-mean-square-speed-bar",
+      "block": "p0083#2",
+      "original": "$\\overline F\\Delta t=\\frac{1}{3}mnSv^2\\Delta t.$",
+      "reason": "上一块由平均力和速度分量平方的平均值建立等式，再用各向同性关系替换为速率平方的平均值；本式v平方漏印平均横线，且下一式(3-10)保留该横线。忠实块仍照录原印，现代式应使用overline{v^2}。"
+    }
+  ],
   "printed_lines": 22,
   "figures": [],
   "provenance": {
