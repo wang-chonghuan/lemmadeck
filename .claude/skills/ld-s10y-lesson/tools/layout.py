@@ -191,6 +191,19 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     glyph_h = (
         float(np.percentile(glyph_heights, 75)) if len(glyph_heights) >= 3 else line_h
     )
+    # Isolated thin scan streaks have no neighboring numerator or glyph row.
+    for a, b in raw:
+        xs = np.flatnonzero(ink[a:b + 1].any(axis=0))
+        if (
+            b - a + 1 < 0.2 * glyph_h
+            and xs.size and xs[-1] - xs[0] + 1 > 2 * glyph_h
+            and not any(
+                (c, d) != (a, b)
+                and max(c - b, a - d) <= 1.5 * glyph_h
+                for c, d in raw
+            )
+        ):
+            ink[a:b + 1] = False
     # Dense, joined shallow blemishes are not glyphs or thin fraction rules.
     # Remove them only when they occupy an otherwise isolated projection row.
     for component_id, bounds in enumerate(bounds_list, 1):

@@ -429,7 +429,7 @@ def math_signature(text: str) -> list[str]:
     for match in MATH.finditer(text):
         expression = normalize_text_literals(match.group(1) or match.group(2))
         signature.extend(
-            part.strip()
+            re.sub(r"[\t \u3000\r\n]+", " ", part).strip()
             for part in MATH_BOUNDARY_PUNCTUATION.split(expression)
             if part.strip()
         )

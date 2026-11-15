@@ -7,6 +7,7 @@ import path from 'node:path'
 import {
   assertPublishedFigure,
   assertKeyboardCoverage,
+  assertWrittenExerciseSurface,
   expectedFigureCoverage,
   sourceNumberForArtifact,
   visibleProseSelector,
@@ -27,6 +28,16 @@ try {
   await assertKeyboardCoverage(page.locator('article'))
   await page.setContent('<article><input id="first"><input id="second"><button aria-controls="first" aria-label="数学键盘"></button></article>')
   await assert.rejects(() => assertKeyboardCoverage(page.locator('article')), /second/)
+  await page.setContent('<article><div class="sr-ex-body"><div>计算。</div></div></article>')
+  await assertWrittenExerciseSurface(page.locator('article'), { number: '1', text: '计算。' })
+  await assert.rejects(
+    () => assertWrittenExerciseSurface(page.locator('article'), { number: '1', text: '证明。' }),
+    /written prose differs/,
+  )
+  await page.setContent('<article><div class="sr-ex-body"><div>计算。</div><input></div></article>')
+  await assert.rejects(() => assertWrittenExerciseSurface(page.locator('article')), /toHaveCount/)
+  await page.setContent('<article><div class="sr-ex-body"><div>计算。</div><div class="sr-math-standard">答案</div></div></article>')
+  await assert.rejects(() => assertWrittenExerciseSurface(page.locator('article')), /toHaveCount/)
   await page.setContent(`
     <article class="sr-deck"><div class="sr-read"><div data-figure-id="fig-1">screen</div></div></article>
     <article data-testid="lesson-print"><div class="sr-read"><div data-figure-id="fig-1">print</div></div></article>
@@ -98,7 +109,7 @@ try {
     /rendered SVG text 8\.00px is below 16px/,
   )
   console.log(
-    'PASS: keyboard coverage and screen-scaled SVG text size are enforced',
+    'PASS: read-only written prose, keyboard utility and screen-scaled SVG text size are enforced',
   )
 } finally {
   await browser.close()

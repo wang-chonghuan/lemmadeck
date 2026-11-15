@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url'
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
 const require = createRequire(path.join(root, 'app/package.json'))
 const { chromium, expect } = require('@playwright/test')
+const { inline } = createRequire(import.meta.url)('./htmlfrag.js')
 export const visibleProseSelector = '.sr-deck > .sr-read'
 
 export async function assertProseSurface(page, lesson) {
@@ -30,10 +31,6 @@ export function sourceNumberForArtifact(exercise) {
     : exercise.number
 }
 
-async function hideKeyboard(page) {
-  await page.evaluate(() => window.mathVirtualKeyboard?.hide({ animate: false }))
-}
-
 export async function assertKeyboardCoverage(scope) {
   const errors = await scope.evaluate(container => {
     const fields = [...container.querySelectorAll('input:not([type=hidden]), textarea, math-field')]
@@ -45,6 +42,24 @@ export async function assertKeyboardCoverage(scope) {
     })
   })
   assert.deepEqual(errors, [])
+}
+
+export async function assertWrittenExerciseSurface(article, exercise) {
+  const body = article.locator('.sr-ex-body')
+  await expect(body).toBeVisible()
+  await expect(body).not.toHaveText('')
+  await expect(article.locator(
+    'math-field, input:not([type=hidden]), textarea, button, .sr-math-result, .sr-math-standard',
+  )).toHaveCount(0)
+  await expect(body.locator('.katex-error')).toHaveCount(0)
+  if (exercise) {
+    const sameText = await body.locator(':scope > div').first().evaluate((element, html) => {
+      const expected = document.createElement('div')
+      expected.innerHTML = html
+      return element.innerHTML === expected.innerHTML
+    }, inline(exercise.text))
+    assert.equal(sameText, true, `${exercise.number}: written prose differs from the edition`)
+  }
 }
 
 export function expectedFigureCoverage(lesson, exercises) {
@@ -222,8 +237,6 @@ export async function checkProduct({ book, edition, lessons, baseURL, output, vi
         const dir = path.join(book, 'editions', edition, 'lessons', lesson)
         const lessonDocument = JSON.parse(fs.readFileSync(path.join(dir, 'lesson.json')))
         const exercises = JSON.parse(fs.readFileSync(path.join(dir, 'exercises.json'))).exercises
-        const answers = JSON.parse(fs.readFileSync(path.join(dir, 'answer-keys.json'))).answers
-        const interactions = JSON.parse(fs.readFileSync(path.join(dir, 'interactions.json'))).interactions
         const figureManifest = JSON.parse(fs.readFileSync(path.join(dir, 'figures.json'))).figures
         const coverage = expectedFigureCoverage(lessonDocument, exercises)
         assert.deepEqual(
@@ -292,15 +305,10 @@ export async function checkProduct({ book, edition, lessons, baseURL, output, vi
         }
         const articles = deck.locator('article[id^="ex-"]')
         await expect(articles).toHaveCount(exercises.length)
-        const initialPadding = await page.locator('.sr-d-scroll').evaluate(element => element.style.paddingBottom)
-        let fieldsChecked = 0, figuresChecked = 0
-        const widgets = new Set()
+        let writtenChecked = 0, figuresChecked = 0
         for (const exercise of exercises) {
           current = { lesson, exercise: exercise.number, viewport: viewport.width }
           const article = page.locator(`#ex-${exercise.number}`)
-          const answer = answers.find(item => String(item.exercise) === String(exercise.number))
-          const interaction = interactions.find(item => String(item.exercise) === String(exercise.number))
-          assert.ok(answer, `Missing answer for ${lesson}/${exercise.number}`)
           assert.equal(
             (await article.locator('.sr-ex-n').textContent())?.trim() ?? '',
             sourceNumberForArtifact(exercise) == null
@@ -308,20 +316,15 @@ export async function checkProduct({ book, edition, lessons, baseURL, output, vi
               : String(sourceNumberForArtifact(exercise)),
             `${lesson}/${exercise.number}: displayed number differs from the source`,
           )
-          const grid = ['grid-point', 'grid-plot'].includes(interaction?.widget)
-          const expectedFields = grid ? 0 : answer.grading === 'auto' ? answer.parts.length : 1
-          const fields = article.locator('math-field, input:not([type=hidden]), textarea')
-          await expect(fields).toHaveCount(expectedFields)
           await expect(article.locator('[aria-busy="true"]')).toHaveCount(0)
-          await assertKeyboardCoverage(article)
-          fieldsChecked += expectedFields
+          await assertWrittenExerciseSurface(article, exercise)
+          writtenChecked += 1
 
           for (const reference of exercise.figure_refs) {
             const figure = deck.locator(`.sr-ex-list [data-figure-id="${reference}"]`).first()
             await expect(figure).toBeAttached()
           }
           for (const figureSpec of exercise.figures) {
-            await hideKeyboard(page)
             const figure = article.locator(`[data-figure-id="${figureSpec.id}"]`)
             await expect(figure).toHaveCount(1)
             const asset = figureManifest.find(item => item.id === figureSpec.id)
@@ -330,122 +333,6 @@ export async function checkProduct({ book, edition, lessons, baseURL, output, vi
             figuresChecked += 1
           }
 
-          if (expectedFields) {
-            // Every blank must target its own math field. The actual virtual
-            // key is clicked; no grading or learner database writes are made.
-            for (let index = 0; index < expectedFields; index += 1) {
-              const field = fields.nth(index)
-              current.input = index
-              const id = await field.getAttribute('id')
-              const button = article.locator('button[aria-controls]').nth(index)
-              assert.equal(await button.getAttribute('aria-controls'), id)
-              const before = await fields.evaluateAll(items => items.map(item => item.value))
-              await button.evaluate(element => element.click())
-              await expect(field).toBeFocused()
-              const key = page.locator('.ML__keyboard [data-keycap-value="7"]:visible').first()
-              await expect(key).toBeVisible()
-              await key.click()
-              await expect.poll(() => field.evaluate(element => element.value),
-                { message: JSON.stringify(current) }).not.toBe(before[index])
-              const after = await fields.evaluateAll(items => items.map(item => item.value))
-              after.forEach((value, other) => {
-                if (other !== index) assert.equal(value, before[other], 'Keyboard changed another blank')
-              })
-            }
-            // Real pointer accessibility and viewport framing for each widget.
-            if (!widgets.has(interaction?.widget)) {
-              widgets.add(interaction?.widget)
-              await hideKeyboard(page)
-              const button = article.locator('button[aria-controls]').first()
-              await button.evaluate(element => element.scrollIntoView({ block: 'center', behavior: 'instant' }))
-              await button.click()
-              await expect(fields.first()).toBeFocused()
-              await expect(page.locator('.ML__keyboard [data-keycap-value="7"]:visible').first()).toBeVisible()
-              await page.screenshot({
-                path: path.join(output, `${lesson}-${interaction?.widget}-${viewport.width}.png`),
-              })
-            }
-          }
-        }
-        const lastField = articles.locator('math-field').last()
-        if (await lastField.count()) {
-          await hideKeyboard(page)
-          const lastButton = articles.locator('button[aria-controls]').last()
-          await lastButton.scrollIntoViewIfNeeded()
-          await lastButton.click()
-          await expect(lastField).toBeFocused()
-          await expect.poll(() => lastField.evaluate(element => {
-            const field = element.getBoundingClientRect()
-            const plate = document.querySelector('.ML__keyboard .MLK__plate')?.getBoundingClientRect()
-            return !!plate && plate.height > 0 && field.top >= 0 && field.bottom <= plate.top
-          })).toBe(true)
-          await lastField.locator('[part="virtual-keyboard-toggle"]').click()
-        }
-        await expect(page.locator('.ML__keyboard .MLK__plate:visible')).toHaveCount(0)
-        await expect.poll(() => page.locator('.sr-d-scroll').evaluate(element => element.style.paddingBottom)).toBe(initialPadding)
-        const freeSample = answers.find(answer =>
-          answer.grading === 'ungraded' &&
-          interactions.some(item =>
-            String(item.exercise) === String(answer.exercise) && item.widget === 'free'
-          )
-        )
-        if (freeSample) {
-          current = {
-            lesson,
-            exercise: freeSample.exercise,
-            viewport: viewport.width,
-            check: 'ungraded-chinese',
-          }
-          const article = page.locator(`#ex-${freeSample.exercise}`)
-          const field = article.locator('math-field, input:not([type=hidden]), textarea').first()
-          await field.evaluate(element => {
-            element.value = ''
-            element.dispatchEvent(new Event('input', { bubbles: true }))
-          })
-          await field.focus()
-          await page.keyboard.insertText('观察和实验')
-          await expect.poll(() => field.evaluate(element => element.value)).toContain('观察')
-          await article.locator('.sr-math-submit').click()
-          const result = article.locator('.sr-math-result.ungraded')
-          await expect(result).toBeVisible()
-          await expect(result.locator('.sr-math-standard p')).not.toHaveText('')
-          assert.equal((await context.cookies()).some(cookie => cookie.name === 'sr_session'), false)
-        }
-        const answerRenderSample = answers.find(answer =>
-          answer.grading === 'auto' &&
-          answer.displayAnswer?.includes('$') &&
-          answer.parts?.length > 0 &&
-          answer.parts.every(part =>
-            part.judge === 'numeric' && typeof part.expected?.[0] === 'string'
-          )
-        )
-        if (answerRenderSample) {
-          const interaction = interactions.find(item =>
-            String(item.exercise) === String(answerRenderSample.exercise)
-          )
-          const grid = ['grid-point', 'grid-plot'].includes(interaction?.widget)
-          if (!grid) {
-            current = {
-              lesson,
-              exercise: answerRenderSample.exercise,
-              viewport: viewport.width,
-              check: 'rendered-answer',
-            }
-            const article = page.locator(`#ex-${answerRenderSample.exercise}`)
-            const fields = article.locator('math-field, input:not([type=hidden]), textarea')
-            await expect(fields).toHaveCount(answerRenderSample.parts.length)
-            for (const [index, part] of answerRenderSample.parts.entries()) {
-              await fields.nth(index).evaluate((element, value) => {
-                element.value = value
-                element.dispatchEvent(new Event('input', { bubbles: true }))
-              }, part.expected[0])
-            }
-            await article.locator('.sr-math-submit').click()
-            await expect(article.locator('.sr-math-result.correct')).toBeVisible()
-            const standard = article.locator('.sr-math-standard')
-            await expect(standard.locator('.katex').first()).toBeVisible()
-            assert.equal((await standard.textContent()).includes('$'), false)
-          }
         }
         assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false)
         assert.deepEqual(errors, [])
@@ -453,12 +340,11 @@ export async function checkProduct({ book, edition, lessons, baseURL, output, vi
           lesson,
           viewport: viewport.width,
           exercises: exercises.length,
-          inputs: fieldsChecked,
+          writtenExercises: writtenChecked,
+          readOnly: true,
           proseFigures: coverage.prose.length,
           exerciseFigures: figuresChecked,
           printFigures: viewport.width === 1440 ? coverage.print.length : null,
-          ungradedSubmission: freeSample?.exercise ?? null,
-          renderedAnswer: answerRenderSample?.exercise ?? null,
         }
         report.push(row)
         fs.writeFileSync(path.join(output, 'product-check.json'), `${JSON.stringify(report, null, 2)}\n`)

@@ -171,7 +171,9 @@ p.para.section{border-top:1px solid var(--rule);margin-top:1.5em;padding-top:1.3
 .figure-layered{display:grid}
 .figure-layered>.figure-artwork,.figure-layered>.figure-vector{grid-area:1/1}
 .figure-vector{display:block;width:100%;max-width:100%;height:auto}
-.nb{display:inline-block;max-width:100%;overflow-x:auto;vertical-align:middle;white-space:nowrap}
+.nb{display:inline-block;max-width:100%;overflow-x:auto;overflow-y:hidden;
+  scrollbar-width:none;padding-block:.2em;margin-block:-.2em;
+  vertical-align:middle;white-space:nowrap}
 .err{color:#a3341f;background:#fdeeea;padding:1px 5px;border-radius:3px}
 .exgroup{margin:2.2em 0 .8em;font-weight:700;font-size:1.05em;
   border-left:3px solid var(--accent);padding-left:.6em}
@@ -183,6 +185,15 @@ li.ex .no{font-family:ui-monospace,Menlo,monospace;color:var(--accent);
 li.ex .body{min-width:0;overflow-x:auto;line-height:1.9;font-size:1.04em}
 li.ex .body .fig{margin:.7em 0 0;text-align:left}
 li.ex .body .figure-media{margin:0;max-width:min(100%,22em)}
+.choice{padding:1em 0;border-top:1px solid var(--rule);line-height:1.9}
+.choice-heading{color:var(--accent);font-size:.85em;margin:0 0 .4em}
+.choice-stem,.choice-option-body{min-width:0;overflow-x:auto}
+.choice-options{list-style:none;margin:.7em 0 0;padding:0}
+.choice-options>li{display:grid;grid-template-columns:1.8em minmax(0,1fr);
+  gap:.5em;padding:.4em 0}
+.choice-options .option-id{font-family:ui-monospace,Menlo,monospace;color:var(--sub)}
+.choice table{border-collapse:collapse;min-width:100%;white-space:nowrap}
+.choice th,.choice td{border:1px solid var(--rule);padding:.35em .6em;text-align:left}
 .fig[data-figure-layout="scroll"]{overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
 .fig[data-figure-layout="scroll"] .figure-media,
 li.ex .body .fig[data-figure-layout="scroll"] .figure-media{
@@ -251,4 +262,67 @@ for (const lid of lessonDirs) {
   done.push({ lesson: lid, exercises: X.count, prose: prose.length, output: outDir });
 }
 
-console.log(JSON.stringify({ ok: true, lessons: done }, null, 2));
+async function renderChoicePages() {
+  const { choiceHtml } = await import("./choice_html.mjs");
+  const repo = path.resolve(SKILL, "../../..");
+  for (const record of done) {
+    const choiceDir = path.join(contentRoot, "lessons", record.lesson, "choice-set");
+    const draftPath = path.join(choiceDir, "draft.json");
+    if (!fs.existsSync(draftPath)) continue;
+    const draft = JSON.parse(fs.readFileSync(draftPath, "utf8"));
+    const seed = JSON.parse(fs.readFileSync(path.join(choiceDir, "seed.json"), "utf8"));
+    if (draft.schema !== "s10y-choice-draft-v1"
+      || seed.schema !== "s10y-choice-seed-v1"
+      || seed.source.lesson !== record.lesson
+      || seed.source.book !== path.basename(book)) {
+      throw new Error(`${record.lesson}: 选择题快照或课程身份不匹配`);
+    }
+    const sourceFigures = new Set(seed.figures.map((item) => item.id));
+    const assets = new Map(draft.new_figures.map((item) => [item.id, [{ path: item.path }]]));
+    const renderFigures = (ids) => ids.map((id) => {
+      if (sourceFigures.has(id)) return figure(contentRoot, id, null, !!editionName);
+      const entries = assets.get(id);
+      if (!entries?.length) throw new Error(`${record.lesson}: 缺少选择题图片 ${id}`);
+      const media = entries.map((entry) => {
+        const assetPath = path.resolve(repo, entry.path);
+        const retainedRoot = fs.realpathSync(book);
+        if (!fs.realpathSync(assetPath).startsWith(`${retainedRoot}${path.sep}`)) {
+          throw new Error(`${record.lesson}: 选择题图片不在本书持久目录内`);
+        }
+        const bytes = fs.readFileSync(assetPath);
+        if (path.extname(assetPath) === ".svg") {
+          return bytes.toString("utf8").replace(/<\?xml[^>]*\?>/, "");
+        }
+        const ext = path.extname(assetPath).slice(1);
+        const type = ext === "jpg" ? "jpeg" : ext;
+        return `<img alt="${esc(id)}" src="data:image/${type};base64,${bytes.toString("base64")}">`;
+      }).join("");
+      return `<figure class="fig"><div class="figure-media">${media}</div></figure>`;
+    }).join("");
+    let body = "";
+    for (const [index, question] of draft.questions.entries()) {
+      const view = question.view;
+      body += `<section class="choice"><p class="choice-heading">${index + 1}. `
+        + `${view.mode === "multiple" ? "多选" : "单选"}</p>`
+        + `<div class="choice-stem">${choiceHtml(view.stem)}${renderFigures(view.figure_ids)}</div>`
+        + `<ol class="choice-options">`
+        + view.options.map((option) => `<li><span class="option-id">${esc(option.id)}</span>`
+          + `<div class="choice-option-body">${choiceHtml(option.text)}`
+          + `${renderFigures(option.figure_ids)}</div></li>`).join("")
+        + `</ol></section>`;
+    }
+    const L = JSON.parse(fs.readFileSync(
+      path.join(contentRoot, "lessons", record.lesson, "lesson.json"), "utf8",
+    ));
+    fs.writeFileSync(path.join(record.output, "choices.html"),
+      page(`${L.printed_title || L.title} · 选择题`, "", body));
+    record.choices = draft.questions.length;
+  }
+}
+
+renderChoicePages().then(() => {
+  console.log(JSON.stringify({ ok: true, lessons: done }, null, 2));
+}).catch((error) => {
+  console.error(error.message);
+  process.exitCode = 1;
+});

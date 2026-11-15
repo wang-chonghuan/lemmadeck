@@ -99,6 +99,58 @@ class RenderLessonFigureDisplayTests(unittest.TestCase):
                 exercises_html,
             )
 
+    def test_choice_render_projects_only_visible_fields(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            book = root / "book"
+            lesson = book / "editions" / "modern-us-neutral" / "lessons" / "lesson-test"
+            output = root / "render"
+            self.write_json(lesson / "lesson.json", {
+                "title": "Choice preview", "prose": [], "section_breaks": [],
+            })
+            self.write_json(lesson / "exercises.json", {"count": 0, "exercises": []})
+            self.write_json(lesson / "choice-set" / "seed.json", {
+                "schema": "s10y-choice-seed-v1",
+                "source": {"book": "book", "lesson": "lesson-test"},
+                "exercises": [{"number": "PRIVATE_SOURCE_NUMBER"}],
+                "figures": [],
+            })
+            self.write_json(lesson / "choice-set" / "draft.json", {
+                "schema": "s10y-choice-draft-v1",
+                "new_figures": [],
+                "questions": [{
+                    "source_numbers": ["PRIVATE_SOURCE_NUMBER"],
+                    "intent": {"source_solution": "PRIVATE_SOLUTION"},
+                    "key": {"correct": ["PRIVATE_KEY"]},
+                    "view": {
+                        "mode": "multiple", "stem": "Select the valid identities.",
+                        "figure_ids": [],
+                        "options": [
+                            {"id": "A", "text": "$x+x=2x$", "figure_ids": []},
+                            {
+                                "id": "B",
+                                "text": "| $x$ | $y$ |\n| --- | --- |\n| 1 | 2 |",
+                                "figure_ids": [],
+                            },
+                        ],
+                    },
+                }],
+            })
+            result = subprocess.run([
+                "node", str(RENDERER), str(book), "--out", str(output),
+                "--edition", "modern-us-neutral", "--lesson", "lesson-test",
+            ], cwd=SKILL.parents[2], capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            html = (output / "lesson-test" / "choices.html").read_text()
+            self.assertIn("Select the valid identities.", html)
+            self.assertIn('class="choice-options"', html)
+            self.assertIn("<table>", html)
+            self.assertIn('class="katex"', html)
+            self.assertNotIn("PRIVATE_", html)
+            self.assertNotIn("source_numbers", html)
+            self.assertNotIn("correct", html)
+            self.assertEqual(json.loads(result.stdout)["lessons"][0]["choices"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()
