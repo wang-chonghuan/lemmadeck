@@ -15,7 +15,15 @@ Prepared by the tool, not manually assembled.
 | `exercises` | `[{number, text, figure_ids}]`; full written prose, no answer configuration |
 | `concepts` | `[{block, text}]`; selected zero-based paragraph indices and definition prose |
 | `figures` | `[{id, label, assets: [{path, sha256}]}]`; actual local images, repo-relative paths |
-| `trace` | `[{path, sha256}]`; tool-computed hashes of the four allowed source JSON files |
+| `trace` | `[{path, sha256}]`; tool-computed source hashes as defined below |
+
+For `book.json`, hash canonical JSON containing `{book, exercise_numbering,
+lesson}`, where `lesson` is the single complete index entry with the selected
+lesson ID. Missing or duplicate membership fails. Total page counts, global
+figure inventories and other lessons are not this lesson's input, so unrelated
+assembly must not invalidate its review. For `lesson.json`, `exercises.json`
+and `figures.json`, hash the entire file bytes. The checker reconstructs all
+four hashes and the full selected seed projection from current files.
 
 `label` may be `null`. An asset path must resolve inside the selected textbook's
 artifact directory, including symlink resolution. No external or auxiliary files.

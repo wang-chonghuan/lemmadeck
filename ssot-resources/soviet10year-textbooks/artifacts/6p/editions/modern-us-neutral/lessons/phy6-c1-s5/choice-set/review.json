@@ -1,0 +1,85 @@
+{
+  "schema": "s10y-choice-review-v1",
+  "seed_sha256": "2c644e80aa5caaa5d2473e381b6ccb8b7334a214fa06235a5b321891cc8c83d0",
+  "draft_sha256": "513163f1c92a4a4087b306103e666c0b3579577510d555ca2291b87133641ef8",
+  "reviewer": {
+    "kind": "independent_agent",
+    "identity": "STEMROBIN-180 获授权的短时独立审查代理，非生产作者。原源解、view 独立求解、内部键比较顺序不变，旧拒绝报告仍为 review-rejected-1.json，上一轮 pass 报告逐字节归档为 review-file-trace.json。本次核对 seed-scoped 与 seed-current 仅 book 投影 trace 不同，另三源完整字节哈希及 seed 实质字段不变；draft 与保留的 draft-file-trace.json 仅 seed_sha256 不同，后者与上一轮 pass 摘要一致。原全部有效实质结论不变，仅绑定 prepare.py digest 实算的当前摘要。Codex；确切模型 ID、推理设置和模型 token 用量未知。"
+  },
+  "source_reviews": [
+    {
+      "source_number": "1",
+      "independent_solution": "测量就是把待测量与选作其单位的同类量比较，确定其倍数；用所选单位说明数值的含义，不能跨量种或将任意长度单位默认为米。",
+      "coverage": {
+        "verdict": "pass",
+        "evidence": "measure 保留同类单位比较、数值含义及五倍方向，排除体积和任意默认米，自由定义损失已声明。本次只把 book trace 改为 canonical {book,exercise_numbering,lesson=完整当前选中索引项} 摘要 82ed2cd31bfd61b5d1775c6ce48babf1e9a5f4ac007b6651b34ede64a7eb09b2，已与实际投影核对；另三源完整字节哈希及全部实质内容不变，覆盖和逐题结论复用。"
+      }
+    },
+    {
+      "source_number": "2",
+      "independent_solution": "长度可用毫米、厘米、米、千米；面积可用平方厘米、平方米、平方千米；体积可用立方厘米、立方米、升。分别是长度、面积、体积单位，不可跨维数互代；seed 直接给米、平方米、立方米，其他是基础单位知识举例。",
+      "coverage": {
+        "verdict": "pass",
+        "evidence": "unit-types 覆盖长度、面积、体积及升，检验维数，声明自主列举损失，不冒称已检验换算。题面、内部依据与映射未变，复用有效实质审查；当前源 trace 核对见 source 1。"
+      }
+    }
+  ],
+  "figure_checks": [],
+  "new_figure_reviews": [],
+  "question_reviews": [
+    {
+      "question_id": "measure",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "用具体单位比较情境理解测量含义，整项结论要求量种、单位和倍数方向同时成立；不是把数字与单位拆槽。不能证明自由表述及摆放操作的损失已明确记录。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "本题处理待测长度与单位的数量关系，unit-types 则处理不同量的单位类别；后题不提供短棒的实际长度，也不能直接解答倍数方向。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "题干给五根短棒这一测量事实，但没有给米制长度；需把事实解释为 L=5u，并拒绝体积或倒置等结论。识别测量意义是原题核心，合法倍数数据不是与任务无关的答案提示。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "设短棒长 u>0，桌边长 L=5u，因此 u=L/5；未给 u=1米，不能推出 L=5米，也没有体积信息。仅 A 正确，与作者键一致。B 忽略量种，C 默认单位为米，D 交换比较方向，均能产生所给错误结论。",
+        "correct": ["A"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "五根所选单位短棒沿桌边首尾相接，直接给 L/u=5，且比较的都是长度。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "短棒给的是长度单位，不能据此得到桌子体积的五倍结论，量种与单位维数不相同。"},
+          {"option_id": "C", "truth": "incorrect", "evidence": "短棒未被规定为一米；例如取 u=10厘米，同样得到五根却只有 L=50厘米，反驳一定五米。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "u=L/5 而不是 u=5L，正长度条件下倒置五倍关系不成立。"}
+        ]
+      }
+    },
+    {
+      "question_id": "unit-types",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "三类单位都要整组分类，保留原题长度、面积、体积的区分，不只匹配单个字词；自由列举的损失由 limitations 和 coverage 记录，没有新增必须换算的要求。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "A、B、C 给三种量的正例，D、E 给遗漏维数的反例；多选覆盖不同分类而非把同一单位逐个拆问，measure 的五倍关系也未重复。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "平方、立方这些文字本身就是被测的单位维数，不能因可据此分类就判为泄漏；升还要求认识不以立方字面命名的体积单位。题干未给正确组数，前题也没有列这三组单位。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "长度单位为一维，平方长度单位为面积，立方长度单位及升为体积。A、B、C 每项都匹配；D 将一维标为面积，E 将二维标为体积。真集 ABC 与作者一致，错误项分别确由少写一次平方或少一维的误用产生。",
+        "correct": ["A", "B", "C"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "毫米、厘米、米、千米都表示长度，区别仅在单位大小。"},
+          {"option_id": "B", "truth": "correct", "evidence": "平方厘米、平方米、平方千米均为面积单位。"},
+          {"option_id": "C", "truth": "correct", "evidence": "立方厘米、立方米及升均为体积单位；升不是长度或面积单位。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "厘米、米、千米是长度单位，不能作为该组标注的面积单位。"},
+          {"option_id": "E", "truth": "incorrect", "evidence": "平方单位表示面积，而体积需要三维单位，整组量种标注错误。"}
+        ]
+      }
+    }
+  ],
+  "outcome": "pass"
+}

@@ -221,6 +221,23 @@ def _validate_page_errata(meta: dict, blocks: list[dict], page: int) -> list[str
     return errors
 
 
+def _page_number_errors(meta: dict, blocks: list[dict]) -> list[str]:
+    if meta.get("unpaginated") is True:
+        if meta.get("printed_page") is not None:
+            return ["unpaginated 页不能同时声明 printed_page"]
+        if not blocks or any(
+            block["kind"] not in ("fig", "cap")
+            or not block.get("owner_lesson")
+            or block.get("owner_exercise")
+            for block in blocks
+        ):
+            return ["unpaginated 只允许有 owner-lesson 的独立 fig/cap 页"]
+        return []
+    if meta.get("printed_page") is None:
+        return ["printed_page 未填（页码承载溯源，不能空）"]
+    return []
+
+
 # ---------------------------------------------------------------- cap1 备料
 def cmd_prepare(a) -> int:
     pdf = _find_pdf(a)
@@ -286,7 +303,8 @@ def cmd_finalize(a) -> int:
             prior_audit = json.loads(audit_path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
             prior_audit = {}
-    errors: list[str] = []
+    errors: list[str] = _page_number_errors(meta, blks)
+    unpaginated = meta.get("unpaginated") is True and not errors
 
     # 1) 插图：粗框吸附到真实墨迹再裁；文件名用原书图号，跨页唯一
     figs, seq = [], 0
@@ -301,7 +319,9 @@ def cmd_finalize(a) -> int:
         reused = _reusable_figure_geometry(
             meta, prior_audit, b["id"], b["box"], render_sha256
         )
-        box, info = reused if reused is not None else layout.snap(ink, b["box"])
+        box, info = reused if reused is not None else layout.snap(
+            ink, b["box"], allow_page_spanning=unpaginated
+        )
         b["box"] = box
         layout.crop(render_path, box, work / "figures" / f"{b['id']}.png")
         figs.append({"id": b["id"], "label": b.get("label"), "box": box, **info})
@@ -368,9 +388,6 @@ def cmd_finalize(a) -> int:
                 errors.append(f"{b['kind']}#{i+1}: 小问标号 {key!r} 不是西里尔")
 
     errors += _validate_page_errata(meta, blks, a.page)
-
-    if meta.get("printed_page") is None:
-        errors.append("printed_page 未填（页码承载溯源，不能空）")
 
     pdf = _find_pdf(a)
     meta |= {

@@ -30,6 +30,12 @@ class RenderLessonFigureDisplayTests(unittest.TestCase):
             )
             for figure_id in ("fig-inline", "fig-scroll"):
                 (figures / f"{figure_id}.svg").write_text(svg, encoding="utf-8")
+            (figures / "fig-inline.png").write_bytes(b"obsolete, undeclared rendition")
+            self.write_json(lesson / "figures.json", {"figures": [
+                {"id": figure_id, "svg": f"figures/{figure_id}.svg",
+                 "spec": f"figures/{figure_id}.spec.json"}
+                for figure_id in ("fig-inline", "fig-scroll")
+            ]})
 
             self.write_json(figures / "fig-inline.spec.json", {
                 "mode": "deterministic",
@@ -89,6 +95,8 @@ class RenderLessonFigureDisplayTests(unittest.TestCase):
             self.assertIn('style="width:360px;max-width:100%"', text_html)
             self.assertIn('data-figure-layout="scroll"', exercises_html)
             self.assertIn('data-figure-mode="deterministic"', exercises_html)
+            self.assertIn(svg, text_html)
+            self.assertNotIn("data:image/png", text_html)
             self.assertIn('width:40em;max-width:none', exercises_html)
             self.assertNotIn(
                 ".fig svg{max-width:min(100%,26em)",
@@ -98,6 +106,11 @@ class RenderLessonFigureDisplayTests(unittest.TestCase):
                 "li.ex .body .fig svg,li.ex .body img{max-width:min(100%,18em)",
                 exercises_html,
             )
+            (figures / "fig-inline.svg").unlink()
+            missing = subprocess.run(result.args, cwd=SKILL.parents[2],
+                                     capture_output=True, text=True)
+            self.assertNotEqual(missing.returncode, 0)
+            self.assertIn("missing declared svg", missing.stderr)
 
 
 if __name__ == "__main__":

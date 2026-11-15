@@ -14,8 +14,10 @@
 const fs = require("fs");
 const path = require("path");
 const katex = require("katex");
+const { spawnSync } = require("node:child_process");
 const { proseFlow } = require("./htmlfrag.js");
 const { sourceNumberForArtifact } = require("./publish_merge.js");
+const { choiceHtml } = require("./choice_html.mjs");
 
 const SKILL = path.resolve(__dirname, "..");
 const KATEX_DIST = path.join(SKILL, "node_modules", "katex", "dist");
@@ -83,7 +85,7 @@ function renderInline(text, renderText) {
 const inline = (text) => renderInline(text, escText);
 const proseInline = (text) => renderInline(text, escProseText);
 
-function figureContract(contentRoot, id, strictEdition) {
+function figureContract(contentRoot, id, strictEdition, manifest) {
   const fallback = {
     mode: strictEdition ? "deterministic" : "source",
     layout: "inline",
@@ -91,12 +93,24 @@ function figureContract(contentRoot, id, strictEdition) {
     maxWidthPx: null,
   };
   if (!strictEdition) return fallback;
-  const specPath = path.join(contentRoot, "figures", `${id}.spec.json`);
-  if (!fs.existsSync(specPath)) return fallback;
+  const entry = manifest.find((item) => item.id === id);
+  if (!entry?.spec) throw new Error(`${id}: missing edition figure contract`);
+  const specPath = path.join(contentRoot, entry.spec);
   const spec = JSON.parse(fs.readFileSync(specPath, "utf8"));
+  const outputs = spec.mode === "generated" ? ["png"]
+    : spec.mode === "hybrid" ? ["svg", "artwork"]
+    : spec.mode === "deterministic" ? ["svg"] : [];
+  if (!outputs.length) throw new Error(`${id}: unsupported figure mode ${spec.mode}`);
+  for (const output of outputs) {
+    if (!entry[output] || !fs.existsSync(path.join(contentRoot, entry[output]))) {
+      throw new Error(`${id}: missing declared ${output}`);
+    }
+  }
   const display = spec.display || {};
   return {
     mode: spec.mode || fallback.mode,
+    assets: Object.fromEntries(outputs.map((output) =>
+      [output, path.join(contentRoot, entry[output])])),
     layout: display.layout === "scroll" ? "scroll" : "inline",
     purpose: display.purpose === "decorative" ? "decorative" : "instructional",
     maxWidthPx: Number.isInteger(display.maxWidthPx)
@@ -107,10 +121,10 @@ function figureContract(contentRoot, id, strictEdition) {
   };
 }
 
-function figure(contentRoot, id, label, strictEdition) {
-  const svg = path.join(contentRoot, "figures", `${id}.svg`);
-  const png = path.join(contentRoot, "figures", `${id}.png`);
-  const contract = figureContract(contentRoot, id, strictEdition);
+function figure(contentRoot, id, label, strictEdition, manifest = []) {
+  const contract = figureContract(contentRoot, id, strictEdition, manifest);
+  const svg = strictEdition ? contract.assets.svg : path.join(contentRoot, "figures", `${id}.svg`);
+  const png = strictEdition ? contract.assets.png : path.join(contentRoot, "figures", `${id}.png`);
   const mediaStyle = contract.maxWidthPx
     ? ` style="width:${contract.maxWidthPx}px;max-width:100%"`
     : "";
@@ -120,25 +134,22 @@ function figure(contentRoot, id, label, strictEdition) {
     + ` data-figure-mode="${contract.mode}" data-figure-theme="neutral"${mediaStyle}>`;
   const close = "</div></figure>";
   if (strictEdition && contract.mode === "hybrid") {
-    const artwork = path.join(contentRoot, "figures", `${id}.artwork.png`);
-    if (!fs.existsSync(artwork) || !fs.existsSync(svg)) {
-      return `<p class="err">缺少现代分层图片 ${esc(id)}</p>`;
-    }
+    const artwork = contract.assets.artwork;
     const b64 = fs.readFileSync(artwork).toString("base64");
     const vector = fs.readFileSync(svg, "utf8").replace(/<\?xml[^>]*\?>/, "");
     return open + `<div class="figure-layered"><img class="figure-artwork" `
       + `alt="${esc(label || id)}" src="data:image/png;base64,${b64}">`
       + `<div class="figure-vector">${vector}</div></div>` + close;
   }
-  if (strictEdition && fs.existsSync(png)) {
+  if (strictEdition && contract.mode === "generated") {
     const b64 = fs.readFileSync(png).toString("base64");
     return open + `<img alt="${esc(label || id)}" `
       + `src="data:image/png;base64,${b64}">` + close;
   }
-  if (fs.existsSync(svg)) {
+  if (svg && fs.existsSync(svg)) {
     return open + fs.readFileSync(svg, "utf8").replace(/<\?xml[^>]*\?>/, "") + close;
   }
-  if (fs.existsSync(png)) {
+  if (png && fs.existsSync(png)) {
     const b64 = fs.readFileSync(png).toString("base64");
     return open + `<img alt="${esc(label || id)}" `
       + `src="data:image/png;base64,${b64}">` + close;
@@ -183,6 +194,15 @@ li.ex .no{font-family:ui-monospace,Menlo,monospace;color:var(--accent);
 li.ex .body{min-width:0;overflow-x:auto;line-height:1.9;font-size:1.04em}
 li.ex .body .fig{margin:.7em 0 0;text-align:left}
 li.ex .body .figure-media{margin:0;max-width:min(100%,22em)}
+.choice{border-top:1px solid var(--rule);padding:1.2em 0;line-height:1.9}
+.choice-stem{margin:0 0 .8em;font-size:1.04em}
+.choice-options{list-style:none;margin:0;padding:0}
+.choice-options li{display:grid;grid-template-columns:1.6em minmax(0,1fr);gap:.5em;
+  padding:.45em 0}
+.choice-options input{margin:.45em 0 0;width:16px;height:16px}
+.choice-options table{border-collapse:collapse;max-width:100%}
+.choice-options th,.choice-options td{border:1px solid var(--rule);padding:.35em .6em}
+.choice-options .option-body{min-width:0;overflow-x:auto}
 .fig[data-figure-layout="scroll"]{overflow-x:auto;overflow-y:hidden;scrollbar-width:thin}
 .fig[data-figure-layout="scroll"] .figure-media,
 li.ex .body .fig[data-figure-layout="scroll"] .figure-media{
@@ -212,6 +232,10 @@ for (const lid of lessonDirs) {
   fs.mkdirSync(outDir, { recursive: true });
   const L = JSON.parse(fs.readFileSync(path.join(dir, "lesson.json"), "utf8"));
   const X = JSON.parse(fs.readFileSync(path.join(dir, "exercises.json"), "utf8"));
+  const manifest = editionName
+    ? JSON.parse(fs.readFileSync(path.join(dir, "figures.json"), "utf8")).figures : [];
+  const renderFigure = (id, label) => figure(contentRoot, id, label, !!editionName, manifest);
+  const choiceDir = path.join(dir, "choice-set");
   const crumb = [L.chapter, L.section, `印刷页 ${L.start_printed ?? "?"}`]
     .filter(Boolean).join(" · ");
 
@@ -219,13 +243,14 @@ for (const lid of lessonDirs) {
   let body = "";
   const prose = proseFlow(L.prose, L.section_breaks);
   for (const b of prose) {
-    if (b.kind === "fig") body += figure(contentRoot, b.id, b.label, !!editionName);
+    if (b.kind === "fig") body += renderFigure(b.id, b.label);
     else if (b.kind === "cap") body += `<div class="figcap">${proseInline(b.text)}</div>`;
     else {
       body += `<p class="para${b.sectionBreak ? " section" : ""}">${proseInline(b.text)}</p>`;
     }
   }
   body += `<a class="jump" href="exercises.html">去做题 · ${X.count} 道 →</a>`;
+  if (fs.existsSync(choiceDir)) body += `<a class="jump" href="choices.html">选择题 →</a>`;
   fs.writeFileSync(path.join(outDir, "text.html"),
     page(L.printed_title || L.title, crumb, body));
 
@@ -238,7 +263,7 @@ for (const lid of lessonDirs) {
       out += `<div class="exgroup">${esc(group || "练习")}</div><ol class="ex">`;
     }
     const figs = (e.figures || [])
-      .map((f) => figure(contentRoot, f.id, f.label, !!editionName)).join("");
+      .map((f) => renderFigure(f.id, f.label)).join("");
     const printedNumber = sourceNumberForArtifact(e);
     const sourceNumber = printedNumber == null ? "" : `${esc(String(printedNumber))}.`;
     out += `<li class="ex" id="ex-${esc(e.number)}"><div class="no">${sourceNumber}</div>`
@@ -248,7 +273,46 @@ for (const lid of lessonDirs) {
   out += `<a class="jump" href="text.html">← 回课文</a>`;
   fs.writeFileSync(path.join(outDir, "exercises.html"),
     page(`${L.printed_title || L.title} · 习题`, crumb, out));
-  done.push({ lesson: lid, exercises: X.count, prose: prose.length, output: outDir });
+  let choiceCount = 0;
+  if (fs.existsSync(choiceDir)) {
+    const repo = path.resolve(SKILL, "../../..");
+    const gate = spawnSync(process.env.PYTHON || "python3", [
+      path.join(repo, ".agents/skills/ld-s10y-choice/scripts/validate.py"), "--repo", repo,
+      "--seed", path.join(choiceDir, "seed.json"),
+      "--draft", path.join(choiceDir, "draft.json"),
+      "--review", path.join(choiceDir, "review.json"),
+    ], { encoding: "utf8" });
+    if (gate.error || gate.status !== 0) {
+      throw new Error(`${lid}: ${gate.error?.message || gate.stderr || gate.stdout}`);
+    }
+    const seed = JSON.parse(fs.readFileSync(path.join(choiceDir, "seed.json"), "utf8"));
+    if (seed.source.book !== path.basename(book) || seed.source.lesson !== lid) {
+      throw new Error(`${lid}: choice seed belongs to another lesson`);
+    }
+    const draft = JSON.parse(fs.readFileSync(path.join(choiceDir, "draft.json"), "utf8"));
+    const choiceManifest = [...manifest, ...draft.new_figures.map((item) => ({
+      id: item.id,
+      spec: path.relative(contentRoot, path.resolve(repo, item.path.replace(/\.[^.]+$/, ".spec.json"))),
+      [item.path.endsWith(".svg") ? "svg" : "png"]:
+        path.relative(contentRoot, path.resolve(repo, item.path)),
+    }))];
+    const choiceFigures = (ids) => ids.map((id) =>
+      figure(contentRoot, id, null, true, choiceManifest)).join("");
+    const html = draft.questions.map(({ id, view }, index) =>
+      `<section class="choice" id="choice-${esc(id)}" data-choice-mode="${view.mode}">`
+      + `<div class="choice-stem">${index + 1}. ${choiceHtml(view.stem)}</div>`
+      + choiceFigures(view.figure_ids)
+      + `<ul class="choice-options">${view.options.map((option) =>
+        `<li><input type="${view.mode === "single" ? "radio" : "checkbox"}" disabled`
+        + ` aria-label="${esc(option.id)}"><div class="option-body">`
+        + `${esc(option.id)}. ${choiceHtml(option.text)}${choiceFigures(option.figure_ids)}</div></li>`
+      ).join("")}</ul></section>`
+    ).join("");
+    fs.writeFileSync(path.join(outDir, "choices.html"),
+      page(`${L.printed_title || L.title} · 选择题`, crumb, html));
+    choiceCount = draft.questions.length;
+  }
+  done.push({ lesson: lid, exercises: X.count, choices: choiceCount, prose: prose.length, output: outDir });
 }
 
 console.log(JSON.stringify({ ok: true, lessons: done }, null, 2));

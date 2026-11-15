@@ -57,6 +57,14 @@ def file_hash(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def book_lesson_hash(book, lesson):
+    entries = [item for item in book["lessons"] if item.get("id") == lesson]
+    require(len(entries) == 1, "lesson must occur exactly once in original book.json")
+    return digest({"book": book["book"],
+                   "exercise_numbering": book.get("exercise_numbering"),
+                   "lesson": entries[0]})
+
+
 def inside(path, root):
     resolved = path.resolve()
     require(resolved.is_relative_to(root.resolve()), f"path escapes allowed root: {path}")
@@ -77,8 +85,7 @@ def source_files(repo, book, lesson):
     paths = [base / "book.json"] + [directory / name for name in
                                    ("lesson.json", "exercises.json", "figures.json")]
     data = [load_json(inside(path, base)) for path in paths]
-    require(any(item.get("id") == lesson for item in data[0]["lessons"]),
-            "lesson absent from original book.json")
+    book_lesson_hash(data[0], lesson)
     require(data[1].get("id") == lesson, "lesson.json identity mismatch")
     return repo, base, directory, paths, data
 
@@ -167,8 +174,10 @@ def prepare_seed(repo, book, lesson, numbers, blocks, concept_figures):
             "source": {"book": book, "lesson": lesson, "concept_figure_ids": concept_figures},
             "exercises": exercises, "concepts": concepts,
             "figures": [project_figure(figures_by_id[ref], repo, base, directory) for ref in needed],
-            "trace": [{"path": path.relative_to(repo).as_posix(), "sha256": file_hash(path)}
-                      for path in paths]}
+            "trace": [{"path": path.relative_to(repo).as_posix(),
+                       "sha256": book_lesson_hash(data[0], lesson) if index == 0
+                       else file_hash(path)}
+                      for index, path in enumerate(paths)]}
 
 
 def scratch_path(path, repo):

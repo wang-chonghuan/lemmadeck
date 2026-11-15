@@ -39,7 +39,8 @@ class ToolTests(unittest.TestCase):
                               '<text x="5" y="25">A: 1 to 2</text></svg>', encoding="utf-8")
         poison = {"part": [{"expected": "DO-NOT-PROJECT"}],
                   "answer": "DO-NOT-PROJECT", "metadata": {"secret": "DO-NOT-PROJECT"}}
-        store(self.book / "book.json", {"lessons": [{"id": "unit-a", **poison}], **poison})
+        store(self.book / "book.json", {"book": "sample", "exercise_numbering": "lesson",
+                                      "lessons": [{"id": "unit-a", **poison}], **poison})
         store(self.lesson / "lesson.json", {"id": "unit-a", "prose": [
             {"kind": "p", "text": "A function gives each input a unique output.", **poison},
             {"kind": "fig", "id": "diagram", "text": ""},
@@ -146,7 +147,7 @@ class ToolTests(unittest.TestCase):
             prepare_seed(self.repo, "sample", "unit-a", ["1"], [0], [])
         allowed = {self.book / "book.json", self.lesson / "lesson.json",
                    self.lesson / "exercises.json", self.lesson / "figures.json", self.image}
-        self.assertEqual(set(opened), allowed)
+        self.assertEqual(set(opened), {path.resolve() for path in allowed})
 
     def test_inspect_is_also_projected(self):
         projected = inventory(self.repo, "sample", "unit-a")

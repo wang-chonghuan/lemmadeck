@@ -1,0 +1,85 @@
+{
+  "schema": "s10y-choice-review-v1",
+  "seed_sha256": "e312d3db152ec934ac898247ee1373944e775213d2d03ef020265c2ccfefa345",
+  "draft_sha256": "26f253ba80e6dc6348ab0b6c61c36f87c68e3007ebb30c8c1c31c94071cb2c16",
+  "reviewer": {
+    "kind": "independent_agent",
+    "identity": "STEMROBIN-180 获授权的短时独立审查代理，非生产作者；先独立源解，再审 view，最后比较完整 draft。Codex；确切模型 ID、推理设置和模型 token 用量未知。"
+  },
+  "source_reviews": [
+    {
+      "source_number": "1",
+      "independent_solution": "本课物体指具体的物理研究对象，不限于人体、固体或人造用品；水滴、月亮、沙粒都有形状和体积。速度是对象的运动属性，不是另一个具体物体。",
+      "coverage": {
+        "verdict": "blocked",
+        "evidence": "就提供的 seed 快照而言，bodies 跨水滴、月亮、沙粒、铝箔辨认物体，排除速度，独立写定义的损失已记录；定义提到图但本题不实际引用图。但 validate.py 返回 exit 2：seed projection/source/asset changed; prepare again。共享 6p/book.json 当前 SHA-256 为 f4e709e1181a239bf86ba1296acbe37a26698e2fcc93fbfabb4e189eef1fd053，seed.trace 记为 73968f2ad84b697043d193068aa580b13b4ebd3ffdec3006fc5c812a04bef93d，本课其他三份源文件哈希仍匹配。不能通过当前源快照的覆盖门禁，未修改 seed 或源文件。"
+      }
+    },
+    {
+      "source_number": "2",
+      "independent_solution": "本课实物是物质的一种形式，指构成物体的东西；铝、水、铁是材料，一把铝匙、一滴水、一枚铁钉是具体物体。物体到构成材料的方向不能颠倒，形状或体积不是材料。",
+      "coverage": {
+        "verdict": "blocked",
+        "evidence": "提供的快照中，material-pair 保留给定实物定义的应用与三组对象到材料关系，独立定义和生成例子的损失已承认；但所有任务共享同一失配的 book.json trace，详情见 source 1。验证 exit 2，当前源快照门禁不能通过。"
+      }
+    }
+  ],
+  "figure_checks": [],
+  "new_figure_reviews": [],
+  "question_reviews": [
+    {
+      "question_id": "bodies",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "具体物体的范围不受大小、是否液体或是否天体限制；对比速度要求理解具体对象与研究它时使用的量，保留原题术语理解核心，书写损失有明确记录。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "一组多选覆盖尺度和对象类型，material-pair 则判断对象由什么构成；后题还有材料、属性和关系方向，不能用本题真集直接代替其解答。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "题干未列出哪几个对象为物体或正确项数；必须理解速度不同于水滴本身，且水滴、月亮和沙粒不能因日常体的狭义解释被排除。其他题没有给本题完整选择集合。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "A、B、C、E 是具体对象；D 是运动的量。真集 ABCE 与作者一致，D 的误解确是把对象的一项属性当成对象本身。",
+        "correct": ["A", "B", "C", "E"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "一滴水是具体对象，seed block 7 直接将它与材料水区分。"},
+          {"option_id": "B", "truth": "correct", "evidence": "月亮在 block 0 中明确作为物体举例，天体尺度不排除物体身份。"},
+          {"option_id": "C", "truth": "correct", "evidence": "一粒沙是有形状体积的具体对象，block 0 的沙粒例子直接支持。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "水滴下落的速度描述水滴怎样运动，不是另一个有形状和体积的具体对象。"},
+          {"option_id": "E", "truth": "correct", "evidence": "一张铝箔是由铝构成的具体对象；薄不等于体积为零，也不能与材料名铝混同。"}
+        ]
+      }
+    },
+    {
+      "question_id": "material-pair",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "按本课专门定义判断具体物体到构成材料的完整对应，未用日常真实物件代替实物。题干给定义作为应用条件，仍需完成类型、方向和具体材料判断；不能独立写定义及举例的损失在 coverage 中声明。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "三对构成一份完整关系组；B 反向、C 把属性当材料、D 错配材料分别检验不同错误。前题虽含水滴，但不回答这三对的材料和方向，没有拆成逐名词填槽。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "给定构成物体的东西这一定义没有给出三对的答案表；需要用物体与材料的区别及对象名称判断。铝勺等名称中的材料信息是判断组成关系所需的合法数据，而不是无关身份提示。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "按左边具体对象、右边构成材料的方向，只有 A 三对同时正确。B 反向，C 将材料换成属性，D 循环错配，均确由作者所述错误操作形成，真集 A 与作者键一致。",
+        "correct": ["A"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "铝勺对应铝，一滴水对应水，铁钉对应铁；三对都是具体物体到其材料。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "左侧为材料、右侧为对象，与题干要求的对象到材料方向完全相反。"},
+          {"option_id": "C", "truth": "incorrect", "evidence": "形状、体积和长度是物体特征或量，不是构成铝勺、水滴、铁钉的东西。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "铝勺不由水构成，水滴不由铁构成，铁钉不由铝构成；按名称所指定对象三对都错配。"}
+        ]
+      }
+    }
+  ],
+  "outcome": "blocked"
+}

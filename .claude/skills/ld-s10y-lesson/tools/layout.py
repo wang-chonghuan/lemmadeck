@@ -381,7 +381,9 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     return out
 
 
-def snap(ink: np.ndarray, box: list[int]) -> tuple[list[int], dict]:
+def snap(
+    ink: np.ndarray, box: list[int], *, allow_page_spanning: bool = False
+) -> tuple[list[int], dict]:
     """把粗框吸附到它覆盖的连通域上：框歪一点、小一点都能救回来。
 
     判据是「连通域有多大比例落在框内」——整体在框内的（图形本身、被框住的标注）
@@ -405,7 +407,9 @@ def snap(ink: np.ndarray, box: list[int]) -> tuple[list[int], dict]:
             continue
         sy, sx = boxes[lab - 1]
         # 贯通整页的连通域是扫描件页边黑线，吞进来会把整页当成插图
-        if (sy.stop - sy.start) > 0.9 * H or (sx.stop - sx.start) > 0.9 * W:
+        if not allow_page_spanning and (
+            (sy.stop - sy.start) > 0.9 * H or (sx.stop - sx.start) > 0.9 * W
+        ):
             continue
         took += 1
         nx0, ny0 = min(nx0, sx.start), min(ny0, sy.start)

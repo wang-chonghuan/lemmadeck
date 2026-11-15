@@ -1,0 +1,44 @@
+---
+{
+  "printed_page": 31,
+  "notes": [],
+  "errata": [],
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "6p",
+  "page": 42,
+  "source": {
+    "pdf": "6-7p 苏联中学课本 物理 六-七年级.pdf",
+    "pdf_sha256": "46e2b2e4a92b7c00fab9adfc6a8a9b5340a9519fa90f1b82e79bc1e1432fcbb0",
+    "pdf_page": 42
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1472,
+    "h": 2161,
+    "sha256": "4f9c18d056a5b4a655756bf79433a3d387e669d7bb623dd8090b2268124453f0"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 5,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 4 cont -->
+持一定的形状？
+
+<!-- ex 5 -->
+为什么结晶固体能够保持固有的形状和体积？
+
+<!-- ex 6 -->
+哪一位俄罗斯学者被认为是物质结构学说的奠基
+人？
+
+<!-- foot -->
+31

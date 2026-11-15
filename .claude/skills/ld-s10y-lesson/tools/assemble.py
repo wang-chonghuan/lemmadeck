@@ -83,6 +83,8 @@ def cut_lessons(stream: list[dict]) -> list[dict]:
     lessons, pending = [], {"h1": None, "h2": None}
     cur = None
     for b in stream:
+        if b.get("owner_lesson") and b["kind"] in ("fig", "cap"):
+            continue
         if b["kind"] in ("h1", "h2"):
             pending[b["kind"]] = B.text_of(b)
             if b["kind"] == "h1":
@@ -180,6 +182,30 @@ def can_reuse_exercises(existing: dict, rebuilt: dict) -> bool:
     return True
 
 
+def can_reuse_lesson(existing: dict, rebuilt: dict) -> bool:
+    """Keep a completed source snapshot when only optional provenance was added."""
+    if not isinstance(existing, dict) or not isinstance(rebuilt, dict):
+        return False
+    old_prose = existing.get("prose")
+    new_prose = rebuilt.get("prose")
+    if not isinstance(old_prose, list) or not isinstance(new_prose, list):
+        return False
+    if len(old_prose) != len(new_prose):
+        return False
+    if ({key: value for key, value in existing.items() if key != "prose"}
+            != {key: value for key, value in rebuilt.items() if key != "prose"}):
+        return False
+    for old_block, new_block in zip(old_prose, new_prose):
+        if not isinstance(old_block, dict) or not isinstance(new_block, dict):
+            return False
+        if "source_refs" in old_block and old_block["source_refs"] != new_block.get("source_refs"):
+            return False
+        if ({key: value for key, value in old_block.items() if key != "source_refs"}
+                != {key: value for key, value in new_block.items() if key != "source_refs"}):
+            return False
+    return True
+
+
 def _block_position(ref: str) -> int | None:
     match = BLOCKREF.match(ref)
     if not match:
@@ -245,6 +271,26 @@ def promote_figures(book: Path, work: Path | None, warnings: list[str]) -> None:
 def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], list[str]]:
     """按语义认领图：正文图留正文，练习共享图只在练习区展示一次。"""
     errors, warn = [], []
+    for block in stream:
+        owner_id = block.get("owner_lesson")
+        if not owner_id:
+            continue
+        if block["kind"] not in ("fig", "cap") or block.get("owner_exercise"):
+            errors.append(f"{block['ref']}: owner-lesson 只允许独立的 fig/cap 块")
+            continue
+        matches = [lesson for lesson in lessons if lesson.get("card_id") == owner_id]
+        if len(matches) != 1:
+            errors.append(f"{block['ref']}: owner-lesson {owner_id} 必须对应唯一已装订课程")
+            continue
+        owner = matches[0]
+        if block["kind"] == "fig" and any(
+            existing.get("id") == block.get("id")
+            for existing in owner["blocks"] if existing["kind"] == "fig"
+        ):
+            errors.append(f"{block['ref']}: owner-lesson {owner_id} 的图 {block.get('id')} 重复")
+            continue
+        owner["blocks"].append(block)
+        owner["prose"].append(block)
     fig_by_num, all_figs = {}, []
     for b in stream:
         if b["kind"] != "fig":
@@ -658,17 +704,17 @@ def run(
     lessons = cut_lessons(merged)
     for l in lessons:
         l["prose"], l["exercises"] = split_lesson(l, exercise_numbering)
+    toc_warnings = check_toc(
+        lessons,
+        toc,
+        book.name,
+        {b["printed_page"] for b in stream if b.get("printed_page") is not None},
+    ) if toc else []
     figure_errors, warn_fig = claim_figures(lessons, merged)
     report = audit(lessons, merged, profile, exercise_numbering)
     report["errors"] = figure_errors + report["errors"]
     report["warnings"] = warn_merge + warn_fig + report["warnings"]
-    if toc:
-        report["warnings"] += check_toc(
-            lessons,
-            toc,
-            book.name,
-            {b["printed_page"] for b in stream if b.get("printed_page") is not None},
-        )
+    report["warnings"] += toc_warnings
 
     # 全书图库：.tmp 页目录里的裁图按原书图号提升，重号即报。
     # 只覆盖本次重建的图，不清空已有图库；这样删掉 .tmp 后重新 assemble 也不会丢图。
@@ -676,10 +722,14 @@ def run(
 
     out = book / "lessons"
     existing_exercises = {}
+    existing_lessons = {}
     if out.exists():
         for path in out.glob("*/exercises.json"):
             data = path.read_bytes()
             existing_exercises[path.parent.name] = (json.loads(data), data)
+        for path in out.glob("*/lesson.json"):
+            data = path.read_bytes()
+            existing_lessons[path.parent.name] = (json.loads(data), data)
     answer_assets = {
         path.relative_to(out): path.read_bytes()
         for path in out.glob("*/answer-keys*.json")
@@ -715,8 +765,7 @@ def run(
                 json.dumps(exercises_document, ensure_ascii=False, indent=2) + "\n",
                 encoding="utf-8",
             )
-        (d / "lesson.json").write_text(json.dumps(
-            {"id": lid, "card_id": l.get("card_id"),
+        lesson_document = {"id": lid, "card_id": l.get("card_id"),
              "chapter": l["chapter"], "section": l["section"],
              "number": l["number"], "title": l["title"],
              "printed_title": l["printed_title"], "start_page": l["start_page"],
@@ -726,8 +775,15 @@ def run(
                         "id": b.get("id"), "label": b.get("label"),
                         "printed_page": b.get("printed_page"),
                         "source_refs": b.get("spans") or [b["ref"]]}
-                       for b in l["prose"]]},
-            ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+                       for b in l["prose"]]}
+        previous_lesson = existing_lessons.get(lid)
+        if previous_lesson and can_reuse_lesson(previous_lesson[0], lesson_document):
+            (d / "lesson.json").write_bytes(previous_lesson[1])
+        else:
+            (d / "lesson.json").write_text(
+                json.dumps(lesson_document, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
         index.append({"id": lid, "card_id": l.get("card_id"),
                       "title": l["title"], "number": l["number"],
                       "start_printed": l["start_printed"],
