@@ -238,6 +238,8 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     if not raw:
         return []
     line_h = int(np.median([b - a + 1 for a, b in raw]))
+    # Fraction-heavy pages inflate row heights without enlarging printed digits.
+    number_glyph_h = min(line_h, glyph_h)
     # Projection thresholds can miss a narrow standalone quotient such as 1 or 7.
     for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
         if bounds is None:
@@ -245,9 +247,9 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         rows, columns = bounds
         height, width = rows.stop - rows.start, columns.stop - columns.start
         if (
-            0.6 * line_h <= height <= 1.3 * line_h
-            and 0.3 * line_h <= width <= line_h
-            and np.count_nonzero(components[bounds] == component_id) >= 0.12 * line_h ** 2
+            0.6 * number_glyph_h <= height <= 1.3 * number_glyph_h
+            and 0.3 * number_glyph_h <= width <= number_glyph_h
+            and np.count_nonzero(components[bounds] == component_id) >= 0.12 * number_glyph_h ** 2
             and not any(a <= rows.start and rows.stop - 1 <= b for a, b in raw)
         ):
             raw.append((rows.start, rows.stop - 1))
@@ -292,7 +294,15 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
                 ) * max(widths)
                 and large[0] <= small[0] <= small[-1] <= large[-1]
             )
+            separate_full_row = (
+                max(heights) >= 1.8 * glyph_h
+                and min(heights) >= 0.6 * glyph_h
+                and min(widths) / max(widths) >= 0.65
+                and not _single_fraction_row(ink, prev_a, b, glyph_h)
+            )
             if (
+                not separate_full_row
+                and
                 a - prev_b <= (
                     0.6 if min(heights) < 0.4 * line_h else 0.5
                 ) * min(line_h, 1.5 * glyph_h)
@@ -371,19 +381,24 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             thin or band_w > 0.7 * content_w
         )
         short_text = False
-        if thin and not edge_border and band_w < 0.05 * content_w:
+        if thin and not edge_border:
             labels, _ = ndimage.label(ink[a:b + 1])
+            short_glyph_h = min(typical_h, glyph_h)
             glyphs = [
                 bounds for bounds in ndimage.find_objects(labels)
                 if bounds is not None
-                and bounds[0].stop - bounds[0].start >= 0.25 * typical_h
-                and bounds[1].stop - bounds[1].start >= 0.2 * typical_h
+                and bounds[0].stop - bounds[0].start >= 0.6 * short_glyph_h
+                and bounds[1].stop - bounds[1].start >= 0.2 * short_glyph_h
                 and bounds[0].stop - bounds[0].start >= (
                     0.35 * (bounds[1].stop - bounds[1].start)
                 )
             ]
             # A short final number can be lower than the Chinese body glyphs.
-            short_text = bool(glyphs) and band_w >= 0.8 * typical_h
+            if glyphs:
+                glyph_w = max(bounds[1].stop for bounds in glyphs) - min(
+                    bounds[1].start for bounds in glyphs
+                )
+                short_text = 0.3 * short_glyph_h <= glyph_w < 0.05 * content_w
         decoration = edge_border or (
             thin
             and (band_w > 0.3 * content_w or band_w < 0.05 * content_w)

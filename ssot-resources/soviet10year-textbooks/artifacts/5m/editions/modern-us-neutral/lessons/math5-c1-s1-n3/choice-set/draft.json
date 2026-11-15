@@ -1,0 +1,385 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "d06892adccc17ee1f90fec45e591678590912eb317db48f198a0c2007fe1dae7",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "union-of-overlapping-figure-sets",
+      "source_numbers": ["39"],
+      "view": {
+        "mode": "single",
+        "stem": "图中各字母命名一个元素。$X\\cup Y$ 是哪个集合？",
+        "figure_ids": ["fig-05"],
+        "options": [
+          {"id": "A", "text": "$\\{A,B\\}$。", "figure_ids": []},
+          {"id": "B", "text": "$\\{C,K,D,P,M\\}$。", "figure_ids": []},
+          {"id": "C", "text": "$\\{A,B,C,D,K,M,P\\}$。", "figure_ids": []},
+          {"id": "D", "text": "$\\{A,B,C,K\\}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "从实际集合图找至少属于一集的全部元素并去重。",
+        "source_solution": "X的命名元素为A/B/C/K，Y为A/B/D/P/M，并集为全部七个不同命名元素。",
+        "unit_reason": "一个完整并集承接全图，不逐个图形拆成是否入选。",
+        "concept_blocks": [4],
+        "limitations": ["识别完整并集不证明能独立写出集合。"],
+        "figure_observations": [{"figure_id": "fig-05", "observation": "完整SVG渲染显示左部C/K，共同部A/B，右部D/P/M；最右P和最下M/K及两集边界均完整。"}]
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "A/B仅为共同元素，遗漏C/K/D/P/M。", "misconception": "把至少在一个集合改为必须同时在两个集合，只取交叠部。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "只在一集的C/K/D/P/M不含共同的A/B。", "misconception": "把至少一个误解为恰好一个，把共同元素全部删除。"},
+          {"option_id": "C", "truth": "correct", "derivation": "合并两集四个和五个成员，对重复A/B去重得七个元素。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "这是X，缺少只在Y中的D/P/M。", "misconception": "只读取左集，把并集误作第一个集合而省去右集独有元素。"}
+        ]
+      }
+    },
+    {
+      "id": "three-set-unions-and-intersections",
+      "source_numbers": ["40"],
+      "view": {
+        "mode": "multiple",
+        "stem": "$A=\\{b,c,d,e,f\\}$，$B=\\{b,d,f,i,l\\}$，$C=\\{c,e,g\\}$。选出所有正确的集合等式。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$A\\cap B=B\\cap A=\\{b,d,f\\}$。", "figure_ids": []},
+          {"id": "B", "text": "$A\\cup B=B\\cup A=\\{b,c,d,e,f,i,l\\}$。", "figure_ids": []},
+          {"id": "C", "text": "$A\\cap C=\\{c,e,g\\}$。", "figure_ids": []},
+          {"id": "D", "text": "$A\\cup C=\\{b,c,d,e,f,g\\}$。", "figure_ids": []},
+          {"id": "E", "text": "$B\\cap C=\\varnothing$。", "figure_ids": []},
+          {"id": "F", "text": "$B\\cup C=\\{b,c,d,e,f,g,i,l\\}$。", "figure_ids": []},
+          {"id": "G", "text": "$A\\cap C=\\{c,e\\}$。", "figure_ids": []},
+          {"id": "H", "text": "$B\\cup C=\\{b,d,f,i,l\\}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "计算三对集合的并集和交集，并辨别交换集合次序的影响。",
+        "source_solution": "AB交集b/d/f，并集b/c/d/e/f/i/l，交换次序不变；AC交集c/e，并集b/c/d/e/f/g；BC交集空、并集b/c/d/e/f/g/i/l。",
+        "unit_reason": "原八项中AB的两种次序分别用链式等式合并；六个不同结果仍都有完整候选，未将同义答案重复设为选项。",
+        "concept_blocks": [4],
+        "limitations": ["不能验证独立生成八个集合；可局部反例排除错误候选。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "B", "D", "E", "F", "G"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "b/d/f同时在A和B；c/e仅在A，i/l仅在B，交集与次序无关。", "misconception": null},
+          {"option_id": "B", "truth": "correct", "derivation": "A五元素加B独有i/l，去重得七元素，交换次序不变。", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "g在C但不在A，不能成为共同元素。", "misconception": "看到C的c/e在A，便误把C整个认作A子集，从而复制C当交集。"},
+          {"option_id": "D", "truth": "correct", "derivation": "在A五元素上加入C独有g，c/e不重复，得六元素。", "misconception": null},
+          {"option_id": "E", "truth": "correct", "derivation": "逐看C的c/e/g，没有一个在B中，共同元素为空。", "misconception": null},
+          {"option_id": "F", "truth": "correct", "derivation": "B五元素与C三元素互不重复，合并为八元素。", "misconception": null},
+          {"option_id": "G", "truth": "correct", "derivation": "c/e分别属于A和C；g不在A，交集准确为c/e。", "misconception": null},
+          {"option_id": "H", "truth": "incorrect", "derivation": "只复制B，漏C独有c/e/g。", "misconception": "把B作为并集第一项就停止，不再加入第二集合的独有元素。"}
+        ]
+      }
+    },
+    {
+      "id": "unions-of-touching-and-contained-segments",
+      "source_numbers": ["41"],
+      "view": {
+        "mode": "single",
+        "stem": "在从原点向右的射线上，$A,B,C$ 坐标依次为3、6、10。线段包含端点与中间点。$AB\\cup BC$ 和 $AC\\cup BC$ 分别是什么？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "都为线段 $AC$，即 $[3,10]$。", "figure_ids": []},
+          {"id": "B", "text": "依次为单点 $B$ 与线段 $BC$。", "figure_ids": []},
+          {"id": "C", "text": "依次为线段 $AB$ 与线段 $AC$。", "figure_ids": []},
+          {"id": "D", "text": "都为三个点组成的集合 $\\{A,B,C\\}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "合并首尾相接的线段及已有包含关系的线段。",
+        "source_solution": "AB=[3,6]、BC=[6,10]，并成AC=[3,10]；BC已在AC内，因此AC∪BC仍AC。",
+        "unit_reason": "两个情形不同但完整结果相同，用一个有序双结果判断保留接合与包含两种关系。",
+        "concept_blocks": [4],
+        "limitations": ["不验证独立画射线标出三点；算出第一并集即可排除全部错误选项，不证明独立核过第二情形。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "所有3至10之间的点至少在AB或BC中；AC已有BC所有点，加BC不改变。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "所列分别为AB∩BC及AC∩BC，不是并集。", "misconception": "将并集两次误算成交集，仅保留共同点。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "第一只保留AB而漏去坐标大于6的BC部分。", "misconception": "两次都直接返回第一个集合，忽略第二集合新增点。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "如坐标4的点在AB并集内，却不是A/B/C三点。", "misconception": "把线段当作只有命名端点，合并端点标签便得到三个离散点。"}
+        ]
+      }
+    },
+    {
+      "id": "age-predicate-union-covers-class",
+      "source_numbers": ["42"],
+      "view": {
+        "mode": "single",
+        "stem": "$A$ 是本班11岁以上学生的集合，$B$ 是本班12岁以下学生的集合。不论班内学生有哪些年龄，哪种描述总能表示 $A\\cup B$？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "本班所有11岁以上的学生。", "figure_ids": []},
+          {"id": "B", "text": "本班全体学生。", "figure_ids": []},
+          {"id": "C", "text": "本班同时符合两项年龄条件的学生。", "figure_ids": []},
+          {"id": "D", "text": "本班所有12岁以下的学生。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "证明两项年龄谓词至少有一个对每名学生成立。",
+        "source_solution": "年龄大于11的属A，其余年龄≤11<12的属B；含边界的以上/以下解释也不会破坏全覆盖。",
+        "unit_reason": "完整年龄集合逻辑，不根据臆造的班级人数或年龄名单逐人点击。",
+        "concept_blocks": [4],
+        "limitations": ["不验证独立撰写全称证明；以上/以下是否含端点未由种子决定，但并集结论对此不敏感。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "10岁学生属B而不属A，因此仅A不能保证列全并集。", "misconception": "只读并集首项，漏掉第二项里小于11岁的成员。"},
+          {"option_id": "B", "truth": "correct", "derivation": "任意年龄t若>11属A，否则≤11<12属B；两集本来均在本班内，故并集恰为本班。", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "同时满足是交集；10岁和13岁分别只满足一项却都在并集。", "misconception": "把至少一项年龄条件替换为必须同时满足两项。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "13岁学生属A而不属B，因此仅B不保证完整并集。", "misconception": "只保留年龄上限条件，将A独有的较年长学生排除。"}
+        ]
+      }
+    },
+    {
+      "id": "divisibility-subsets-common-members",
+      "source_numbers": ["43"],
+      "view": {
+        "mode": "single",
+        "stem": "$X=\\{67,48,90,45,76,25\\}$。$A$ 为其中5的倍数，$B$ 为其中3的倍数。哪项完整列出 $A,B,A\\cap B$？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$A=\\{90,45,25\\}$，$B=\\{48,90,45\\}$，$A\\cap B=\\{48,90,45,25\\}$。", "figure_ids": []},
+          {"id": "B", "text": "$A=\\{90,45\\}$，$B=\\{48,90,45\\}$，$A\\cap B=\\{90,45\\}$。", "figure_ids": []},
+          {"id": "C", "text": "$A=\\{90,45,25\\}$，$B=\\{48,90,45\\}$，$A\\cap B=\\{90,45\\}$。", "figure_ids": []},
+          {"id": "D", "text": "$A=\\{90,45,25\\}$，$B=\\{90,76\\}$，$A\\cap B=\\{90\\}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "按两个整除规则提取子集，再取共同成员。",
+        "source_solution": "末位0/5给A90/45/25；各位和能被3整除给B48/90/45；共同为90/45。",
+        "unit_reason": "完整三集合保留两个属性提取及共同元素运算，不能仅换成一个公倍数答案。",
+        "concept_blocks": [4],
+        "limitations": ["不验证独立写出三个集合；允许用某个错误成员作为局部排除依据。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "交集错列成并集，48不在A、25不在B。", "misconception": "正确提取两集后，把共同元素误作合并全部不同元素。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "25=5×5是A元素，却被漏掉。", "misconception": "误以为只有15的倍数才是5的倍数，A额外要求也被3整除；B仍按正常规则提取。"},
+          {"option_id": "C", "truth": "correct", "derivation": "90/45/25末位0或5；48/90/45各位和12/9/9，两个规则共同选90/45。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "76各位和13，不是3的倍数；48、45各位和12、9，不能从B删去。", "misconception": "判断3的倍数只看末位，在末位7/8/0/5/6/5中选0和6，生成B={90,76}；与正确A取交得{90}。"}
+        ]
+      }
+    },
+    {
+      "id": "intersection-of-two-activity-memberships",
+      "source_numbers": ["44"],
+      "view": {
+        "mode": "single",
+        "stem": "$M$ 为本班科学社团成员的集合，$N$ 为夏令营徒步参加者的集合。哪项准确表达 $M\\cap N$ 的成员条件？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "是本班科学社团成员，或参加夏令营徒步，至少满足一项。", "figure_ids": []},
+          {"id": "B", "text": "是本班科学社团成员，但没有参加夏令营徒步。", "figure_ids": []},
+          {"id": "C", "text": "参加夏令营徒步，但不是本班科学社团成员。", "figure_ids": []},
+          {"id": "D", "text": "既是本班科学社团成员，又参加夏令营徒步。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "把交集符号解释为同时成立的两个成员条件。",
+        "source_solution": "M∩N的学生同时属于本班科学社团与夏令营徒步者；N不是自动局限在本班。",
+        "unit_reason": "完整成员谓词辨析，不按两活动分别拆是非题，不猜实际参加人数。",
+        "concept_blocks": [],
+        "limitations": ["选择成员条件不证明能独立写出交集的语言解释。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "至少一项对应M∪N，允许仅在一个集合的成员。", "misconception": "把交集的同时条件误写成并集的至少一个条件。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "这是M中不在N的成员，恰好排除交集。", "misconception": "将第二成员条件改成否定，选M独有部分而非公共部分。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "这是N中不在M的成员，与交集所需在M相反。", "misconception": "以N为基准删除M成员，把N独有部分当公共部分。"},
+          {"option_id": "D", "truth": "correct", "derivation": "x属于M∩N当且仅当x属于M且x属于N，正是两个活动条件同时成立。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "scholarship-increase-relative-to-original",
+      "source_numbers": ["45"],
+      "view": {
+        "mode": "single",
+        "stem": "某基金1965年发放奖学金9亿美元，1972年发放15亿美元。相对1965年，增加了百分之几？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$66\\frac23\\%$。", "figure_ids": []},
+          {"id": "B", "text": "$166\\frac23\\%$。", "figure_ids": []},
+          {"id": "C", "text": "$40\\%$。", "figure_ids": []},
+          {"id": "D", "text": "$6\\%$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "从两个时期总额求以旧额为基数的增长率。",
+        "source_solution": "增加额6亿美元，6/9=2/3，百分比为66又2/3%，不是新额占旧额166又2/3%。",
+        "unit_reason": "奖学金增长与医生数量比较具有不同基数和方向，分为两个完整应用题，非按数值输入槽拆分。",
+        "concept_blocks": [],
+        "limitations": ["不验证独立列增长率公式；所列年份是题设，不声称真实统计。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "(15-9)/9×100%=200/3%=66又2/3%。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "15/9×100%=166又2/3%是新总额占旧总额的比例，不是增加部分。", "misconception": "省去先减旧额，直接把新额除以旧额当增长率。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "(15-9)/15×100%=40%使用新额作基数。", "misconception": "求出增加额6后误除以1972年的15，而非1965年的9。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "15-9=6的单位是亿美元，未得到无量纲比例。", "misconception": "只相减得到6，不除以旧额，直接在金额差后加百分号。"}
+        ]
+      }
+    },
+    {
+      "id": "doctor-density-decrease-relative-to-comparator",
+      "source_numbers": ["45"],
+      "view": {
+        "mode": "single",
+        "stem": "1972年，甲地区每万人有30名医生，乙地区每万人有20名医生。以甲地区为比较基数，乙地区的医生数少百分之几？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$50\\%$。", "figure_ids": []},
+          {"id": "B", "text": "$33\\frac13\\%$。", "figure_ids": []},
+          {"id": "C", "text": "$66\\frac23\\%$。", "figure_ids": []},
+          {"id": "D", "text": "$10\\%$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "以被比较的甲为基数求乙少的百分比。",
+        "source_solution": "共同每万人单位下差10名，10/30=1/3，因此乙少33又1/3%。",
+        "unit_reason": "一个完整相对减少问题；不把人数差和基数分别拆题，也不与基金增长混成组合码。",
+        "concept_blocks": [],
+        "limitations": ["不验证独立写出人数差及基数比；原年份为题设而非现实医疗统计。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "(30-20)/20×100%=50%错用乙作基数。", "misconception": "将以甲为基数误作以乙为基数，求甲比乙多而非乙比甲少。"},
+          {"option_id": "B", "truth": "correct", "derivation": "(30-20)/30×100%=100/3%=33又1/3%。", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "20/30×100%=66又2/3%是乙达到甲的比例，不是少的比例。", "misconception": "直接把乙数除以甲数，省掉从甲中减去乙的差额。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "30-20=10名/万人是密度差，不是10%。", "misconception": "相减后不除以甲的30，直接把差10标成百分比。"}
+        ]
+      }
+    },
+    {
+      "id": "union-intersection-of-positive-divisor-sets",
+      "source_numbers": ["46"],
+      "view": {
+        "mode": "multiple",
+        "stem": "$K,M,P$ 分别是15、18、9的正整数约数集合。选出所有正确的并集、交集等式。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$K\\cup M=\\{1,2,3,5,6,9,15,18\\}$。", "figure_ids": []},
+          {"id": "B", "text": "$K\\cap M=\\{1,3,5,15\\}$。", "figure_ids": []},
+          {"id": "C", "text": "$M\\cup P=\\{1,2,3,6,9,18\\}$。", "figure_ids": []},
+          {"id": "D", "text": "$M\\cap P=\\{1,3\\}$。", "figure_ids": []},
+          {"id": "E", "text": "$K\\cap M=\\{1,3\\}$。", "figure_ids": []},
+          {"id": "F", "text": "$M\\cap P=\\{1,3,9\\}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "先确定三个约数集合，再保留共同元素或合并不同元素。",
+        "source_solution": "在明示正约数约定下K={1,3,5,15}，M={1,2,3,6,9,18}，P={1,3,9}；K∪M八元素，K∩M={1,3}，P⊂M使M∪P=M、M∩P=P。",
+        "unit_reason": "四个不同运算结果各有完整正确候选，用自然多选承接，不把约数逐个拆为是否按钮。",
+        "concept_blocks": [4],
+        "limitations": ["原文只说约数，本view明确限定正整数；若原任务允许负约数，带负数的完整集合未覆盖。", "识别结果不能证明独立枚举三个约数集合及四个运算；可检查错误项5或缺项9来排除候选。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "C", "E", "F"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "将1/3/5/15与1/2/3/6/9/18合并去重，恰为八元素。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "5和15均不整除18，不能将整个K当作K∩M。", "misconception": "因为15<18便错误推出15的约数集合是18的约数集合的子集，直接复制K={1,3,5,15}作交集。"},
+          {"option_id": "C", "truth": "correct", "derivation": "P的1/3/9全部已在M，取并集没有新增元素，仍M。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "9同时整除18和9，被此候选漏掉。", "misconception": "把约数误当严格小于该数，删除P中的自身9；与M求交就只剩1/3。"},
+          {"option_id": "E", "truth": "correct", "derivation": "K成员1/3整除18，5/15不整除18，交集仅1/3。", "misconception": null},
+          {"option_id": "F", "truth": "correct", "derivation": "P是M子集，共同元素恰为P的1/3/9。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "intersection-and-union-of-finite-integer-sets",
+      "source_numbers": ["47"],
+      "view": {
+        "mode": "single",
+        "stem": "$A=\\{7,8,9,10\\}$，$C=\\{9,10,11,12,13\\}$。哪项完整列出 $A\\cap C$ 和 $A\\cup C$？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "交集 $\\{7,8,9,10,11,12,13\\}$；并集 $\\{9,10\\}$。", "figure_ids": []},
+          {"id": "B", "text": "交集 $\\{9,10\\}$；并集 $\\{7,8,11,12,13\\}$。", "figure_ids": []},
+          {"id": "C", "text": "交集 $\\{9,10\\}$；并集 $\\{7,8,9,10,11,12,13\\}$。", "figure_ids": []},
+          {"id": "D", "text": "交集 $\\{9\\}$；并集 $\\{7,8,9,10,11,12,13\\}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "区别同一对集合的公共元素与至少属于一集的元素。",
+        "source_solution": "共同元素9/10，所有不同元素7至13；各元素只记一次。",
+        "unit_reason": "两种运算的完整有序结果对，不逐个数字或成员槽拆分。",
+        "concept_blocks": [4],
+        "limitations": ["不验证独立写出两个集合；排除错误并集或遗漏10允许局部判断。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "两项分别是实际并集、交集，符号次序反转。", "misconception": "把∩理解为所有元素，把∪理解为共同元素，将两个运算颠倒。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "并集错误删除共同的9/10，实际至少一集包括它们。", "misconception": "正确求交后，把并集误解为只能出现在一个集合，删去公共部分。"},
+          {"option_id": "C", "truth": "correct", "derivation": "A的9/10也在C；7/8仅在A，11/12/13仅在C，合并得七元素。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "10在A和C，交集不能只有9。", "misconception": "逐个寻找公共元素时找到第一个9就停止，未继续检查下一个10；并集另完整合并。"}
+        ]
+      }
+    },
+    {
+      "id": "parallel-and-intersecting-line-classification",
+      "source_numbers": ["48"],
+      "view": {
+        "mode": "multiple",
+        "stem": "图中各线表示直线。选出所有正确描述直线 $m$ 与其他线关系的判断。",
+        "figure_ids": ["fig-10"],
+        "options": [
+          {"id": "A", "text": "$p$ 与 $m$ 相交。", "figure_ids": []},
+          {"id": "B", "text": "$a$ 与 $m$ 相交。", "figure_ids": []},
+          {"id": "C", "text": "$k$ 与 $m$ 相交。", "figure_ids": []},
+          {"id": "D", "text": "$a$ 与 $m$ 平行。", "figure_ids": []},
+          {"id": "E", "text": "$p$ 与 $m$ 平行。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "从实图辨别与m平行及相交的全部其他直线。",
+        "source_solution": "m/a有同方向且不相交；两条竖线p/k分别穿过m，均相交。",
+        "unit_reason": "同一图同一关系分类做自然多选；p与k都相交，不能把原文哪条强行只键一条。",
+        "concept_blocks": [],
+        "limitations": ["不验证独立用文字列出全部关系或构造平行线。"],
+        "figure_observations": [{"figure_id": "fig-10", "observation": "完整SVG渲染显示两斜线m/a同向，竖线p/k均穿m和a；右端m/a标签、底端p/k及所有交点完整。"}]
+      },
+      "key": {
+        "correct": ["A", "C", "D"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "p的竖线与m的斜线在图内有公共点，方向不同。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "a/m具有相同方向且间距保持，不相交。", "misconception": "误以为两条非水平、非竖直的斜线都会继续相交，忽略方向相同。"},
+          {"option_id": "C", "truth": "correct", "derivation": "k在图内穿过m，显然存在公共点。", "misconception": null},
+          {"option_id": "D", "truth": "correct", "derivation": "两斜线斜率相同但位置不同，在整个平面内没有交点。", "misconception": null},
+          {"option_id": "E", "truth": "incorrect", "derivation": "p/m实际有交点；p与k平行不代表p与m平行。", "misconception": "看出p与k平行后把这个关系错误转移到题干指定的m，混淆比较对象。"}
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {"source_number": "39", "question_ids": ["union-of-overlapping-figure-sets"], "omitted_tasks": ["独立写出完整并集。"], "reason": "全部七元素及交叠去重由完整集合辨析承接。"},
+    {"source_number": "40", "question_ids": ["three-set-unions-and-intersections"], "omitted_tasks": ["独立生成八个集合。"], "reason": "AB交换次序的重复项用链式等式合并，六个不同结果全部可识别。"},
+    {"source_number": "41", "question_ids": ["unions-of-touching-and-contained-segments"], "omitted_tasks": ["独立画射线和标点。"], "reason": "接合与包含两情形均保留，未把线段当端点集。"},
+    {"source_number": "42", "question_ids": ["age-predicate-union-covers-class"], "omitted_tasks": ["独立书写全覆盖证明。"], "reason": "以上/以下边界缺口未伪造，但并集全班结论在各解释下不变。"},
+    {"source_number": "43", "question_ids": ["divisibility-subsets-common-members"], "omitted_tasks": ["独立写出两属性子集及交集。"], "reason": "三集合完整保留，局部排除不证明逐个运算。"},
+    {"source_number": "44", "question_ids": ["intersection-of-two-activity-memberships"], "omitted_tasks": ["独立书写交集的成员条件说明。"], "reason": "两项同时成立的定义性任务完整保留，不臆造参与人数。"},
+    {"source_number": "45", "question_ids": ["scholarship-increase-relative-to-original", "doctor-density-decrease-relative-to-comparator"], "omitted_tasks": ["独立列式、计算并书写两个百分比。"], "reason": "两个背景、比较基数及增减方向数学上独立，分别承接完整问题。"},
+    {"source_number": "46", "question_ids": ["union-intersection-of-positive-divisor-sets"], "omitted_tasks": ["若原约数范围包括负整数，带负约数的完整集合未覆盖。", "独立枚举三个约数集合及四个运算结果。"], "reason": "明示正整数限定，不冒充原文已经说明；四个原运算都有完整正确候选。"},
+    {"source_number": "47", "question_ids": ["intersection-and-union-of-finite-integer-sets"], "omitted_tasks": ["独立书写两个集合。"], "reason": "公共元素、所有不同元素及去重承接为完整结果对。"},
+    {"source_number": "48", "question_ids": ["parallel-and-intersecting-line-classification"], "omitted_tasks": ["独立书写全部直线关系。"], "reason": "同图自然多选保留两条相交线与一条平行线，不按直线拆是非题。"}
+  ]
+}

@@ -237,7 +237,7 @@ async function render(spec, output) {
         fixed: true,
         highlight: false,
         strokeColor: color(object.stroke, fallback),
-        strokeWidth: object.strokeWidth || 3,
+        strokeWidth: object.strokeWidth ?? 3,
         dash: object.dash || 0,
         opacity: object.opacity ?? 1,
       })
