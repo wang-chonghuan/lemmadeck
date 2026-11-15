@@ -74,7 +74,18 @@ def check_seed(seed, repo):
     source = seed["source"]
     refreshed = prepare_seed(repo, source["book"], source["lesson"], list(exercises),
                              blocks, source["concept_figure_ids"])
-    require(seed == refreshed, "seed projection/source/asset changed; prepare again")
+    trace = keyed(seed["trace"], "path", "path sha256", "seed.trace",
+                  {entry["path"] for entry in refreshed["trace"]})
+    for entry in trace.values():
+        require(isinstance(entry["sha256"], str) and
+                re.fullmatch(r"[0-9a-f]{64}", entry["sha256"]), "seed.trace: invalid SHA-256")
+    book_path = (ARTIFACTS / source["book"] / "book.json").as_posix()
+    # Appending other lessons must not invalidate an unchanged lesson snapshot.
+    comparison = {**seed, "trace": [
+        {**entry, "sha256": refreshed["trace"][0]["sha256"]}
+        if entry["path"] == book_path else entry for entry in seed["trace"]
+    ]}
+    require(comparison == refreshed, "seed projection/source/asset changed; prepare again")
     return exercises, {figure["id"]: figure for figure in seed["figures"]}, set(blocks)
 
 

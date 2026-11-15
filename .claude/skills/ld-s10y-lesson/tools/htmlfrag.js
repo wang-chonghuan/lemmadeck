@@ -117,7 +117,7 @@ function proseFlow(blocks, sectionBreaks = []) {
   let paragraphIndex = 0
   return blocks.flatMap((block) => {
     if (block.kind !== "p") return [block]
-    return proseParagraphs(block.text).map((text) => {
+    const paragraphs = proseParagraphs(block.text).map((text) => {
       const item = {
         ...block,
         text,
@@ -126,6 +126,10 @@ function proseFlow(blocks, sectionBreaks = []) {
       paragraphIndex += 1
       return item
     })
+    return [
+      ...paragraphs,
+      ...(block.figures ?? []).map((figure) => ({ ...figure, kind: "fig" })),
+    ]
   })
 }
 

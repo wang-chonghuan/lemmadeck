@@ -1,5 +1,23 @@
 # Edition Text Contract
 
+## Shared Prose Figures
+
+A modern prose block may add `figures: [{"id": "fig-03", "label": "图 3"}]`
+to display a numbered figure that its faithful `source_text` explicitly references.
+The original prose count, order, identity and source snapshot stay unchanged.
+The figure must exist in the source book and the modern `figures.json`, with the
+same current source, spec, render and review checks as locally owned figures.
+The shared prose renderer inserts it after that block's final paragraph.
+Display each shared figure only once per lesson.
+
+## Descriptive Subscripts
+
+The source's upright Cyrillic descriptive subscripts `\mathrm{м}` (maximum)
+and `\mathrm{н}` (normal) may be localized to upright Latin `\mathrm{m}` and
+`\mathrm{n}` in the modern edition with `notation` in `changes`. The source
+snapshot remains untouched. These two label aliases do not permit changing
+variables, numerical values, signs, equations or physical meanings.
+
 ## Section Boundaries
 
 `section_breaks` is authored as adjacent final-paragraph anchors:

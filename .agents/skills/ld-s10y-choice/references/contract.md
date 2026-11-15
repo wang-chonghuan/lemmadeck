@@ -17,6 +17,12 @@ Prepared by the tool, not manually assembled.
 | `figures` | `[{id, label, assets: [{path, sha256}]}]`; actual local images, repo-relative paths |
 | `trace` | `[{path, sha256}]`; tool-computed hashes of the four allowed source JSON files |
 
+The original `book.json` hash is retained as preparation provenance. Validation
+still requires the selected lesson to exist in the current book index, and
+strictly refreshes its three lesson-file hashes, full selected prose and actual
+assets. An index-only change does not invalidate an otherwise unchanged seed or
+its review; a changed lesson file, projection or asset does.
+
 `label` may be `null`. An asset path must resolve inside the selected textbook's
 artifact directory, including symlink resolution. No external or auxiliary files.
 Manifest asset paths are edition-root-relative (or explicitly repo-relative).

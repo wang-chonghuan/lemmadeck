@@ -239,6 +239,27 @@ class ToolTests(unittest.TestCase):
         with self.assertRaises(ContractError):
             self.check()
 
+    def test_book_index_append_preserves_unchanged_review(self):
+        index = load_json(self.book / "book.json")
+        index["lessons"].append({"id": "unit-b"})
+        store(self.book / "book.json", index)
+        self.assertEqual(self.check(review=True), "pass")
+
+    def test_selected_lesson_must_still_exist_in_book_index(self):
+        store(self.book / "book.json", {"lessons": [{"id": "unit-b"}]})
+        with self.assertRaises(ContractError):
+            self.check(review=True)
+
+    def test_index_append_does_not_mask_changed_lesson_files(self):
+        for name in ("lesson.json", "exercises.json", "figures.json"):
+            with self.subTest(name=name):
+                source = self.lesson / name
+                original = load_json(source)
+                store(source, {**original, "revision": "changed"})
+                with self.assertRaises(ContractError):
+                    self.check(review=True)
+                store(source, original)
+
     def test_duplicate_json_keys_and_nonfinite_numbers_rejected(self):
         path = self.repo / "bad.json"
         for value in ('{"x":1,"x":2}', '{"x":NaN}', '{"x":Infinity}'):

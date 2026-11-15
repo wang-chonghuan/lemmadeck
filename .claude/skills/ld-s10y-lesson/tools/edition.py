@@ -428,6 +428,9 @@ def math_signature(text: str) -> list[str]:
     signature = []
     for match in MATH.finditer(text):
         expression = normalize_text_literals(match.group(1) or match.group(2))
+        # Upright descriptive subscripts are localized labels, not new variables.
+        expression = expression.replace(r"\mathrm{м}", r"\mathrm{m}")
+        expression = expression.replace(r"\mathrm{н}", r"\mathrm{n}")
         signature.extend(
             part.strip()
             for part in MATH_BOUNDARY_PUNCTUATION.split(expression)
@@ -1424,6 +1427,14 @@ def validate_figure_references(
         if isinstance(item, dict) and item.get("kind") == "fig"
     } | {
         figure.get("id")
+        for item in prose
+        if isinstance(item, dict)
+        for figure in (
+            item.get("figures", []) if isinstance(item.get("figures", []), list) else []
+        )
+        if isinstance(figure, dict)
+    } | {
+        figure.get("id")
         for item in exercises
         if isinstance(item, dict)
         for figure in item.get("figures", [])
@@ -1451,6 +1462,34 @@ def validate_figure_references(
         if isinstance(figure_id, str)
     ]
     return errors
+
+
+def validate_shared_prose_figures(book: Path, prose: list[dict]) -> tuple[set[str], list[str]]:
+    shared_ids: set[str] = set()
+    errors = []
+    for index, block in enumerate(prose):
+        shared = block.get("figures", [])
+        label = f"lesson.prose[{index}].figures"
+        if not isinstance(shared, list):
+            errors.append(f"{label} 必须是数组")
+            continue
+        if shared and block.get("kind") != "p":
+            errors.append(f"{label} 只允许正文段落引用共享图")
+        for figure in shared:
+            figure_id = figure.get("id") if isinstance(figure, dict) else None
+            if not isinstance(figure_id, str) or not re.fullmatch(r"fig-\d+", figure_id):
+                errors.append(f"{label}: 共享图必须有原书编号 id")
+                continue
+            if figure_id in shared_ids:
+                errors.append(f"{figure_id}: 共享正文图不得重复展示")
+            shared_ids.add(figure_id)
+            number = str(int(figure_id.removeprefix("fig-")))
+            reference = re.compile(rf"图\s*(?:\$\s*)?{number}(?!\d)")
+            if not reference.search(block.get("source_text", "")):
+                errors.append(f"{figure_id}: 共享图必须由本段原文明确引用")
+            if not (book / "figures" / f"{figure_id}.png").is_file():
+                errors.append(f"{figure_id}: 缺少原书共享图 PNG")
+    return shared_ids, errors
 
 
 def validate_lesson(
@@ -1589,6 +1628,8 @@ def validate_lesson(
         modern_items,
         figure_items,
     )
+    shared_prose_ids, shared_errors = validate_shared_prose_figures(book, modern_prose_items)
+    errors += shared_errors
     exercise_figure_ids = {
         figure_id
         for item in modern_items
@@ -1611,7 +1652,7 @@ def validate_lesson(
             [item.get("id")] if item.get("kind") == "fig" else []
         )
         if isinstance(figure_id, str)
-    } | exercise_figure_ids
+    } | shared_prose_ids | exercise_figure_ids
     if (
         manifest_ids[:len(raw_figure_ids)] != raw_figure_ids
         or len(manifest_ids) != len(set(manifest_ids))
