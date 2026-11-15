@@ -61,6 +61,18 @@ def merge_across_pages(stream: list[dict]) -> tuple[list[dict], list[str]]:
             out.append(dict(b))
             continue
         if b.get("cont"):
+            # A printed footnote may be retained as prose between a numbered
+            # exercise and its continuation. Explicit identity can cross that
+            # prose, but never another exercise or a section boundary.
+            if b["kind"] == "ex" and b.get("label") is not None:
+                for candidate in reversed(out):
+                    if candidate["kind"] in (*TRANSPARENT, "p"):
+                        continue
+                    if (candidate["kind"] == "ex"
+                            and candidate.get("label") == b["label"]
+                            and candidate.get("open")):
+                        prev = candidate
+                    break
             if prev is None or not prev.get("open"):
                 warn.append(f"{b['ref']}: 标了 cont，但上一块没标 open")
             elif prev["kind"] != b["kind"] or (

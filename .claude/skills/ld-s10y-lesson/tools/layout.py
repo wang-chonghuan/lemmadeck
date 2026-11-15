@@ -254,6 +254,42 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         ):
             raw.append((rows.start, rows.stop - 1))
     raw.sort()
+    stacked_centres = []
+    stacked_rules = []
+    spans = _merge_close(raw, 0)
+    for first, second, rule, result in zip(spans, spans[1:], spans[2:], spans[3:]):
+        glyph_rows = (first, second, result)
+        heights = [b - a + 1 for a, b in glyph_rows]
+        widths = [
+            np.flatnonzero(ink[a:b + 1].any(axis=0))
+            for a, b in glyph_rows
+        ]
+        widths = [xs[-1] - xs[0] + 1 for xs in widths]
+        rule_x = np.flatnonzero(ink[rule[0]:rule[1] + 1].any(axis=0))
+        pitches = (second[0] - first[0], result[0] - second[0])
+        if (
+            all(0.6 * glyph_h <= height <= 1.5 * glyph_h for height in heights)
+            and min(widths) >= 2 * glyph_h
+            and min(widths) >= 0.65 * max(widths)
+            and rule[1] - rule[0] + 1 <= 0.25 * glyph_h
+            and rule_x.size and rule_x[-1] - rule_x[0] + 1 >= min(widths)
+            and min(pitches) > 0
+            and max(pitches) <= 1.35 * min(pitches)
+        ):
+            # A rule below two aligned operand rows is not a fraction bar.
+            stacked_centres.extend((a + b) / 2 for a, b in glyph_rows)
+            stacked_rules.append(rule)
+    if stacked_centres:
+        for a, b in stacked_rules:
+            ink[a:b + 1] = False
+        raw = [(a, b) for a, b in raw if ink[a:b + 1].any()]
+
+    def different_stacked_rows(first, second):
+        return (
+            any(first[0] <= centre <= first[1] for centre in stacked_centres)
+            and any(second[0] <= centre <= second[1] for centre in stacked_centres)
+        )
+
     merged = []
     merge_gap = max(2.0, GLYPH_GAP_FACTOR * min(line_h, glyph_h))
     for a, b in _merge_close(raw, 0):
@@ -263,7 +299,28 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
                 min(prev_b - prev_a + 1, b - a + 1) >= 1.8 * glyph_h
                 and not _single_fraction_row(ink, prev_a, b, glyph_h)
             )
-            if a - prev_b <= merge_gap and not separate_tall_rows:
+            row_widths = [
+                np.flatnonzero(ink[top:bottom + 1].any(axis=0))
+                for top, bottom in ((prev_a, prev_b), (a, b))
+            ]
+            row_widths = [xs[-1] - xs[0] + 1 for xs in row_widths]
+            # Complete smaller or short wrapped rows can have a tight gap.
+            separate_full_text = (
+                min(prev_b - prev_a + 1, b - a + 1) >= 0.6 * glyph_h
+                and min(row_widths) >= 2 * glyph_h
+                and not any(
+                    prev_a <= c <= d <= b
+                    and d - c + 1 <= 0.25 * glyph_h
+                    and np.ptp(np.flatnonzero(ink[c:d + 1].any(axis=0))) >= 0.7 * glyph_h
+                    for c, d in raw
+                )
+            )
+            if (
+                a - prev_b <= merge_gap
+                and not separate_tall_rows
+                and not separate_full_text
+                and not different_stacked_rows((prev_a, prev_b), (a, b))
+            ):
                 merged[-1] = (prev_a, b)
                 continue
         merged.append((a, b))
@@ -302,6 +359,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             )
             if (
                 not separate_full_row
+                and not different_stacked_rows((prev_a, prev_b), (a, b))
                 and
                 a - prev_b <= (
                     0.6 if min(heights) < 0.4 * line_h else 0.5

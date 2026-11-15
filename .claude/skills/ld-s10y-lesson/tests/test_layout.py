@@ -13,6 +13,86 @@ import layout
 
 
 class LineBandsTest(unittest.TestCase):
+    def test_smaller_complete_footnote_rows_keep_their_tight_spacing(self) -> None:
+        ink = np.zeros((1000, 1000), dtype=bool)
+        for top in (40, 130, 220, 310, 400, 490, 580):
+            for left in range(100, 900, 40):
+                ink[top:top + 40, left:left + 25] = True
+        for top in (700, 739, 778):
+            for left in range(100, 900, 30):
+                ink[top:top + 30, left:left + 20] = True
+        original = ink.copy()
+        bands = layout.line_bands(ink, content_w=1000)
+        self.assertEqual(len(bands), 10)
+        self.assertEqual(len([(a, b) for a, b in bands if 700 <= a < 820]), 3)
+        np.testing.assert_array_equal(ink, original)
+
+    def test_wide_fraction_rows_still_merge_across_their_rule(self) -> None:
+        ink = np.zeros((1000, 1000), dtype=bool)
+        for top in (40, 130, 220, 310, 400, 490, 580):
+            for left in range(100, 900, 40):
+                ink[top:top + 40, left:left + 25] = True
+        for top in (700, 745):
+            for left in range(150, 850, 30):
+                ink[top:top + 30, left:left + 20] = True
+        ink[735:739, 140:870] = True
+        self.assertEqual(len(layout.line_bands(ink, content_w=1000)), 8)
+
+    def test_short_complete_wrap_remains_a_separate_printed_row(self) -> None:
+        ink = np.zeros((1000, 1000), dtype=bool)
+        for top in (40, 130, 220, 310, 400, 490, 580):
+            for left in range(100, 900, 40):
+                ink[top:top + 40, left:left + 25] = True
+        for left in range(100, 900, 40):
+            ink[700:740, left:left + 25] = True
+        for left in (100, 140, 180, 220):
+            ink[752:787, left:left + 25] = True
+        bands = layout.line_bands(ink, content_w=1000)
+        self.assertEqual(len(bands), 9)
+        self.assertIn((752, 786), bands)
+
+    def test_short_wrap_glyph_strokes_are_not_fraction_rules(self) -> None:
+        ink = np.zeros((1000, 1000), dtype=bool)
+        for top in (40, 130, 220, 310, 400, 490, 580):
+            for left in range(100, 900, 40):
+                ink[top:top + 40, left:left + 25] = True
+        for left in range(100, 900, 40):
+            ink[700:740, left:left + 25] = True
+        for left in (100, 140, 180, 220):
+            ink[752:756, left:left + 35] = True
+            ink[756:787, left + 12:left + 22] = True
+        self.assertEqual(len(layout.line_bands(ink, content_w=1000)), 9)
+
+    def test_parallel_stacked_arithmetic_keeps_three_operand_rows(self) -> None:
+        ink = np.zeros((1150, 1000), dtype=bool)
+        for top in (40, 130, 220, 680, 770, 860, 950, 1040):
+            for left in range(100, 900, 40):
+                ink[top:top + 50, left:left + 25] = True
+        for left in (220, 620):
+            for top in (350, 400, 450):
+                for offset in (0, 40, 80):
+                    ink[top:top + 35, left + offset:left + offset + 25] = True
+            ink[441:446, left - 20:left + 120] = True
+        original = ink.copy()
+        bands = layout.line_bands(ink, content_w=1000)
+        self.assertEqual(len(bands), 11)
+        self.assertEqual(
+            len([(a, b) for a, b in bands if 350 <= (a + b) / 2 <= 484]), 3
+        )
+        np.testing.assert_array_equal(ink, original)
+
+    def test_arithmetic_rule_does_not_remove_a_short_following_number(self) -> None:
+        ink = np.zeros((1150, 1000), dtype=bool)
+        for top in (40, 130, 220, 680, 770, 860, 950, 1040):
+            for left in range(100, 900, 40):
+                ink[top:top + 50, left:left + 25] = True
+        for top in (350, 400, 450):
+            for left in (400, 440, 480):
+                ink[top:top + 35, left:left + 25] = True
+        ink[441:446, 380:520] = True
+        ink[550:585, 480:500] = True
+        self.assertEqual(len(layout.line_bands(ink, content_w=1000)), 12)
+
     def test_sparse_enumerator_on_a_wide_page(self) -> None:
         ink = np.zeros((500, 1473), dtype=bool)
         for top in (40, 110, 180, 250):
