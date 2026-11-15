@@ -16,6 +16,7 @@ from pathlib import Path
 from PIL import Image
 
 import assemble
+import blocks
 
 
 LESSON_SCHEMA = "ld-s10y-lesson/edition-lesson@1"
@@ -709,6 +710,7 @@ def validate_text(
     forbidden_terms: list[str],
     historical_entities: object = None,
     math_corrections: list[dict] | None = None,
+    source_lines: list[str] | None = None,
 ) -> list[str]:
     errors = []
     if not isinstance(modern, str):
@@ -720,7 +722,28 @@ def validate_text(
         errors.append(f"{label} 已改写但 changes 为空")
     if modern == source and changes:
         errors.append(f"{label} 未改写但 changes 非空")
-    canonical_source = normalize_numbered_subparts(source)
+    comparison_source = source
+    if source_lines is not None:
+        if (
+            not isinstance(source_lines, list)
+            or not source_lines
+            or any(not isinstance(line, str) for line in source_lines)
+        ):
+            return errors + [f"{label}.source_lines 必须是非空字符串数组"]
+        if blocks.text_of({"lines": source_lines}) != source:
+            return errors + [f"{label}.source_lines 与原书 source 文本不一致"]
+        # Keep authoritative row boundaries without altering wrapped formulas.
+        boundaries = {
+            len(blocks.text_of({"lines": source_lines[:index]}))
+            for index in range(1, len(source_lines))
+        }
+        formulas = list(MATH.finditer(source))
+        for boundary in sorted(boundaries, reverse=True):
+            if not any(match.start() < boundary < match.end() for match in formulas):
+                comparison_source = (
+                    comparison_source[:boundary] + "\n" + comparison_source[boundary:]
+                )
+    canonical_source = normalize_numbered_subparts(comparison_source)
     canonical_modern = normalize_numbered_subparts(modern)
     expected_math_source = canonical_source
     for correction in math_corrections or []:
@@ -1567,6 +1590,7 @@ def validate_lesson(
             forbidden,
             modern_item.get("historical_entities"),
             corrections.get(label),
+            source_lines=source_item.get("lines"),
         )
         errors += [
             f"{label}: {error}"
