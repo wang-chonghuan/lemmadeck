@@ -171,7 +171,7 @@ p.para.section{border-top:1px solid var(--rule);margin-top:1.5em;padding-top:1.3
 .figure-layered{display:grid}
 .figure-layered>.figure-artwork,.figure-layered>.figure-vector{grid-area:1/1}
 .figure-vector{display:block;width:100%;max-width:100%;height:auto}
-.nb{display:inline-block;max-width:100%;overflow-x:auto;overflow-y:hidden;
+.nb,.sr-nb{display:inline-block;max-width:100%;overflow-x:auto;overflow-y:hidden;
   scrollbar-width:none;padding-block:.2em;margin-block:-.2em;
   vertical-align:middle;white-space:nowrap}
 .err{color:#a3341f;background:#fdeeea;padding:1px 5px;border-radius:3px}
@@ -187,7 +187,8 @@ li.ex .body .fig{margin:.7em 0 0;text-align:left}
 li.ex .body .figure-media{margin:0;max-width:min(100%,22em)}
 .choice{padding:1em 0;border-top:1px solid var(--rule);line-height:1.9}
 .choice-heading{color:var(--accent);font-size:.85em;margin:0 0 .4em}
-.choice-stem,.choice-option-body{min-width:0;overflow-x:auto}
+.choice-stem,.choice-option-body{min-width:0;overflow-x:auto;overflow-y:hidden;
+  padding-block:.25em;margin-block:-.25em}
 .choice-options{list-style:none;margin:.7em 0 0;padding:0}
 .choice-options>li{display:grid;grid-template-columns:1.8em minmax(0,1fr);
   gap:.5em;padding:.4em 0}

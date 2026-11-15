@@ -1,0 +1,802 @@
+{
+  "stage": "views_only",
+  "reviewer": {
+    "kind": "independent_agent",
+    "identity": "STEMROBIN-182 / 会话A / reviewer-n3"
+  },
+  "input": {
+    "path": ".intentfold/tickets/STEMROBIN-182/tmp/7a-n3/views.json",
+    "canonical_sha256": "dd31c859fa39f3328cf7f0f8909e328f808b18f9be3589cc3e571ff6861f21aa",
+    "question_count": 26,
+    "option_count": 129
+  },
+  "review_order": "先依据第一阶段原题独立解答与当前view判断任务保真、冗余、可见提示，再逐选项独立求解；数学核查完成后复查全包关系，将独立发现的单选位置规律补入answer_leakage。没有读取作者draft、source-math、key或coverage。",
+  "author_material_read": false,
+  "scope_note": "这是只含view的分阶段审查，不是已与作者答案比对的最终review。各mathematics.correct均为本审查者独立计算。覆盖按已知seed原任务和view重建，不是作者coverage。没有图像资产或新图，也未声称检查了客户端排版、实际绘图或实际图上读数能力。",
+  "question_reviews": [
+    {
+      "question_id": "common-denominator-identities",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "A-I依次承接27(a-i)，均需要区分原分母并判断通分后的分子、分母；C检验pq而非p+q，D检验b^3而非b^2，G检验分母不能直接相加。改为恒等式识别，未保留学生自主写出分式的生产能力，但未删除这些数学区别。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "九项对应九个不同原式；E-I的数值系数与公分母分别不同，不能以某一项的结论代替其余项。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "stem只规定原定义域上的全称判断，没有给出答案。C不仅数值不恒等，还在某些左式有意义点使右式无意义，须作数学判断；未发现其他view直接提供本题原式的键。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "各项都在左式原域判断：A任意实数x,y；B b!=0；C p,q!=0；D a,b!=0；E x!=0；F c!=0；G y!=0；H b!=0；I c!=0。正确通分结果依次为(3x+2y)/6、(bc-4a)/(4b)、(p^2+q^2)/(pq)、(a^2-b^3)/(ab)、5/(6x)、19a/(20c)、7x/(8y)、a/(6b)、y/(72c)。",
+        "correct": ["A", "B", "E", "F", "H", "I"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "公分母6，附加因式分别3、2，分子3x+2y；无变量禁值。"},
+          {"option_id": "B", "truth": "correct", "evidence": "b!=0时公分母4b，分子bc-4a。"},
+          {"option_id": "C", "truth": "incorrect", "evidence": "正确分母为pq。p=q=1时左值2、候选右值1；且p=1,q=-1时左式有意义而p+q=0，候选右式无意义。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "通分应得(a^2-b^3)/(ab)。a=2,b=1时左值3/2，候选为1/2。"},
+          {"option_id": "E", "truth": "correct", "evidence": "x!=0时公分母6x，分子9-4=5。"},
+          {"option_id": "F", "truth": "correct", "evidence": "c!=0时公分母20c，分子4a+15a=19a。"},
+          {"option_id": "G", "truth": "incorrect", "evidence": "真实结果为7x/(8y)。x=y=1时左值7/8，候选6/12=1/2。"},
+          {"option_id": "H", "truth": "correct", "evidence": "b!=0时公分母30b，(14a-9a)/(30b)=a/(6b)。"},
+          {"option_id": "I", "truth": "correct", "evidence": "c!=0时公分母72c，(51y-50y)/(72c)=y/(72c)。"}
+        ]
+      }
+    },
+    {
+      "question_id": "coefficient-cancellations",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "A-D依次覆盖28(a-d)；C仍保留15b与45c，D仍保留40b与30y，未把不同字母的分母同化。A检验化成常数但仍限y!=0的恒等关系。损失为自主完成书面通分，不是删除通分数学。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "前两项是系数抵消成常数，后两项是不同变量分母；四个原式都出现，不是重复同一结论。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "没有把13/12或2/15在stem中宣布为答案，也没有其他view展示这四个原式的解。C与D需要独立通分判断符号。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "A的域y!=0，分子2(5y-3)+3(y+2)=13y，结果13/12。B的域x!=0，分子3(3x+5)+5(x-3)=14x，分母105x，结果2/15。C的域b,c!=0，分子3c(b+2)-b(3c-5)=6c+5b。D的域b,y!=0，分子3y(8b+y)-4b(6y+b)=3y^2-4b^2。常数化后不恢复原禁值。",
+        "correct": ["A", "C"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "13y/(12y)=13/12只对y!=0成立，与stem一致。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "正确值2/15。x=1时候选(4+2)/56=3/28，与2/15不同。"},
+          {"option_id": "C", "truth": "correct", "evidence": "公分母45bc，3bc+6c-3bc+5b=6c+5b，域为b,c!=0。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "第二项须整体相减，分子为3y^2-4b^2。b=y=1时左值-1/120，候选7/120。"}
+        ]
+      }
+    },
+    {
+      "question_id": "power-denominator-reductions",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "A-H依次覆盖29(a-h)，保留幂次公分母、交叉乘法、合并交叉项及约分后原禁值。D虽约掉x，stem仍明确判断范围是左式原域。识别代替自行写出结果的能力损失存在。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "B/G/H的抵消涉及不同幂次，C/E/F分别检验a^2b、a^2b^2、x^2y^2，D额外检验消去x但不扩域，不是同一题的反复复制。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "通分答案均仅作为待判候选，没有另一道题直接给出这些原式的结论。重复的抵消结构是数学类比，不是已知键。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "A a!=0，结果(b-a)/a^2；B x!=0，结果1/x^3；C a,b!=0，分子b(a+b)+a(a-b)=a^2+b^2，分母a^2b；D x,y,z!=0，分子z(x-y)-y(x-z)=x(z-y)，结果(z-y)/(yz)仍禁x=0；E a,b!=0，分子4a^2-3ab-3b^2；F x,y!=0，分子x(x-2y)-y(2x-y)=x^2-4xy+y^2；G a!=0，结果2/a^10；H x!=0，结果1/x^12。",
+        "correct": ["A", "B", "D", "E", "G", "H"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "1/a=a/a^2，合并为(b-a)/a^2，a!=0。"},
+          {"option_id": "B", "truth": "correct", "evidence": "分子1-x+x=1，公分母x^3，x!=0。"},
+          {"option_id": "C", "truth": "incorrect", "evidence": "分母缺一个a。a=2,b=1时原式5/4，候选5/2。"},
+          {"option_id": "D", "truth": "correct", "evidence": "x(z-y)/(xyz)=(z-y)/(yz)在x,y,z均非零的原域成立；未由stem恢复x=0。"},
+          {"option_id": "E", "truth": "correct", "evidence": "b(2a-3b)+a(4a-5b)=4a^2-3ab-3b^2，分母a^2b^2。"},
+          {"option_id": "F", "truth": "incorrect", "evidence": "漏掉-4xy。x=y=1时原值-2，候选2。"},
+          {"option_id": "G", "truth": "correct", "evidence": "1/a^7=a^3/a^10，分子2-a^3+a^3=2，a!=0。"},
+          {"option_id": "H", "truth": "correct", "evidence": "1/x^8=x^4/x^12，分子1+x^4-x^4=1，x!=0。"}
+        ]
+      }
+    },
+    {
+      "question_id": "three-term-fraction-sums",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "A-D对应30(a-d)，保留三个分式合并、立方分子、零恒等式与混合项约分。C等于0但判断仍限定a,b,c非零。只损失学生自己组织书面推导的生产能力。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "A的对称分母abc、B的a^2b^2、C的循环抵消与D的符号处理各有独立区别。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "没有在stem宣布C恒零或展示B/D的正确结果。A不能直接推出C，因为C分子另含三个不同项。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "A与C要求a,b,c!=0；B与D要求a,b!=0。A=(a+b+c)/(abc)。B通分分子b^2(b-a)+a^2(a-b)+ab(a+b)=a^3+b^3。C通分分子c(bc-a^2)+a(ac-b^2)+b(ab-c^2)=0。D通分分子2a^2-11ab+2b(a+2b)-2a(a-5b)=ab+4b^2，结果(a+4b)/(2a)，仍禁b=0。",
+        "correct": ["A", "C"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "分别补c、b、a得到公分母abc与分子a+b+c。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "分子为a^3+b^3而非差。a=b=1时原值2，候选0。"},
+          {"option_id": "C", "truth": "correct", "evidence": "bc^2-a^2c+a^2c-ab^2+ab^2-bc^2=0；原非零分母限制保留。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "结果(a+4b)/(2a)。a=b=1时原值5/2，候选-3/2。"}
+        ]
+      }
+    },
+    {
+      "question_id": "polynomial-and-fraction",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "A-D对应31(a-d)，保留把整式项扩成分式与平方展开时的加减号区别；stem明确不改变禁值。损失自行写分式的生产能力。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "A/B是整式项合并，C/D有平方与交叉项抵消，四项分别承接原分题。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "候选中的正负号须展开判断；C的正平方和并没有在stem被用来宣布D也为正。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "A域y!=0，结果(xy+1)/y；B域a!=0，结果(1-a^2)/a；C域a!=0，[(a-b)^2+2ab]/(2a)=(a^2+b^2)/(2a)；D域b!=0，[2bc-(b+c)^2]/(2b)=-(b^2+c^2)/(2b)。其余字母可为0。",
+        "correct": ["A", "C"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "x=xy/y在y!=0成立，分子xy+1。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "整式项是-a，分子应1-a^2。a=1时原值0，候选2。"},
+          {"option_id": "C", "truth": "correct", "evidence": "a^2-2ab+b^2+2ab=a^2+b^2，分母2a，a!=0。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "真实结果为负平方和。b=1,c=0时原值-1/2，候选1/2。"}
+        ]
+      }
+    },
+    {
+      "question_id": "linear-factor-denominators",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "A-F对应32(a-f)，保留a与b+c、x-2与y、m-n与m+n、2a-1与2a+1这些不能混淆的分母。E/F保留系数公分母。识别代替自主通分的损失明确存在。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "六项的因式和附加因式不同，即使C/D都使用平方差，分子交叉项并不相同。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "没有可直接抄用的另一道同原式答案，B/D的符号或线性项错误需展开或反例判断。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "A域a!=0,b+c!=0，分子(c-a)(b+c)+ab=c(b+c-a)。B域x!=2,y!=0，分子y(x+1)-(x+y)(x-2)=-x^2+2x+3y。C域m!=n,m!=-n，分子m(m+n)+n(m-n)=m^2+2mn-n^2。D域a!=+/-1/2，分子2a(2a+1)-(2a-1)=4a^2+1。E域x+y!=0，结果(9x-10y)/[15(x+y)]。F域a!=b，结果(4a^2-5b^2)/[20(a-b)]。",
+        "correct": ["A", "C", "E", "F"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "展开后bc+c^2-ac=c(b+c-a)，分母a(b+c)。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "候选分子是正确分子的相反数。x=0,y=1时原值-3/2，候选3/2。"},
+          {"option_id": "C", "truth": "correct", "evidence": "公分母m^2-n^2，分子m^2+mn+mn-n^2。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "正确分子4a^2+1。a=0在原域，原值-1，候选(-1)/(-1)=1。"},
+          {"option_id": "E", "truth": "correct", "evidence": "公分母15(x+y)，分子9x-10y。"},
+          {"option_id": "F", "truth": "correct", "evidence": "公分母20(a-b)，分子4a^2-5b^2。"}
+        ]
+      }
+    },
+    {
+      "question_id": "integer-parts-and-squares",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "A-F完整对应33(a-f)，包括1与分式相减、整式乘分母、平方展开及x-3、a^2-1的原禁值。书写过程生产能力不由选择结果保证。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "六个分子结构不同，C的平方差抵消与F的四次项抵消并非同一计算。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "B/D的错误分别在因式符号与系数2，不能由选项格式或其他题的已给键直接判断。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "A/B域a!=b；C域m+n!=0；D域a+b!=0；E域x!=3；F域a!=+/-1。正确分子依次为-2b、b(a+b)、m^2、2ab、x(x-6)、-2，各自分母依次为a-b、a-b、m+n、a+b、x-3、a^2-1。",
+        "correct": ["A", "C", "E", "F"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "(a-b)-(a+b)=-2b。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "a^2+b^2-a(a-b)=b(a+b)。a=2,b=1时原值3，候选-1。"},
+          {"option_id": "C", "truth": "correct", "evidence": "(m-n)(m+n)+n^2=m^2，域m+n!=0。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "(a+b)^2-a^2-b^2=2ab。a=b=1时原值1，候选1/2。"},
+          {"option_id": "E", "truth": "correct", "evidence": "(x-3)^2-9=x^2-6x，分母x-3，禁x=3。"},
+          {"option_id": "F", "truth": "correct", "evidence": "(a^2+1)(a^2-1)-(a^4+1)=-2，禁a=+/-1。"}
+        ]
+      }
+    },
+    {
+      "question_id": "domain-bound-constant-proofs",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "A/B针对34(a)，C/D针对34(b)。要求每一步正确并保留原域，保留证明恒定值的关键等价链，而非只选最终常数；自主写证明的生产能力转为证明链识别。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "同一原式的候选链在中间分子相差符号，正用于判断推导是否合法。P与Q的域和常数不同。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "A/B虽然都印出最终1/6，B的中间链仍错误；不能靠末值相同同时选择。C/D的最后符号不同，stem没有宣布Q的值。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "P域x!=-1，公分母6(x+1)，3(5x+3)-2(7x+4)=x+1，故P=1/6。Q域y!=1，因为4-4y=-4(y-1)，公分母12(y-1)，4(11y+13)-3(15y+17)=1-y，故Q=-1/12。禁值不能因常数化恢复。",
+        "correct": ["A", "C"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "15x+9-14x-8=x+1；x!=-1时除以6(x+1)等于1/6，链和域均正确。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "第一处展开应x+1而非x-1。x=0时P=1/6，但链中的(x-1)/[6(x+1)]=-1/6；即使末值写对，链仍不成立。"},
+          {"option_id": "C", "truth": "correct", "evidence": "44y+52-45y-51=1-y，除以12(y-1)得到-1/12，域y!=1保留。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "展开分子为1-y。y=0时原值-1/12，候选链末值1/12。"}
+        ]
+      }
+    },
+    {
+      "question_id": "opposite-factor-cancellations",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "A-D对应35(a-d)，保留相反因式的负号、平方差及约去公因式。stem明确使用原域，没有把简式的更大定义域当作原域。识别代替独立书写的损失存在。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "A/B分别检验a-x与x-a、2y-b与b-2y；C/D还需要拆出不同变量因式，不能互相直接替代。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "B/D的符号错误是待判数学关系，stem未标示相反因式答案；没有其他view直接解同一原式。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "A域x!=0,a!=x，(a^2-x^2)/[x(a-x)]=(a+x)/x。B域y!=0,b!=2y，(b-2y)^2/[y(2y-b)]=(2y-b)/y。C域a,b!=0,b!=2a，(b^2-4a^2)/[ab(2a-b)]=-(2a+b)/(ab)。D域x,y!=0,3x+2y!=0，(4y^2-9x^2)/[xy(3x+2y)]=(2y-3x)/(xy)。",
+        "correct": ["A", "C"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "第二项为-x/[a-x]，通分分子a^2-x^2；约分仍禁a=x。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "结果应(2y-b)/y。b=y=1时原值1，候选-1。"},
+          {"option_id": "C", "truth": "correct", "evidence": "b^2-4a^2=-(2a-b)(2a+b)，在原非零因式域得到负号结果。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "结果应(2y-3x)/(xy)。x=y=1时原值-1，候选1。"}
+        ]
+      }
+    },
+    {
+      "question_id": "removable-holes-pair",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "每个候选同时含36(a,b)的化简与完整原域，B专门检验不能恢复x=5、y=6，C/D分别检验两个简式。数学任务保留，独立写出步骤的生产能力未验证。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "B错在原域，C错P，D错Q，是三个不同区别；配对不把两个原题结果拆成互相提示的独立题。"
+      },
+      "answer_leakage": {
+        "verdict": "revise",
+        "evidence": "本题单独的文字未直接给键，但独立核算后它的唯一真项为A，与全包其余8道单选相同。9/9单选都在A，形成可绕过后续数学的固定位置规律；详见package_checks.answer_leakage。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "P原域x!=0,5；分子x(x-25)+5(3x+5)=(x-5)^2，故P=(x-5)/(5x)。Q原域y!=0,6；分子y(12-y)-36=-(y-6)^2，故Q=(6-y)/(6y)。约去的x-5、y-6不能扩域。",
+        "correct": ["A"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "两个简式与原域都正确：P禁0,5；Q禁0,6。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "简式正确但原域不完整。x=5或y=6时对应原式分母为0；不能因简式值0而允许这些点。"},
+          {"option_id": "C", "truth": "incorrect", "evidence": "域和Q正确，P分子符号错误。x=1时实际P=-4/5，候选6/5。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "P和两个域正确，Q为相反数。y=1时实际Q=5/6，候选-5/6。"}
+        ]
+      }
+    },
+    {
+      "question_id": "unit-fraction-proofs-and-examples",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "A/B检验37(a,b)的通分证明，C/D分别给多个具体例子，E/F检验原式有意义条件，D包含b<a的例子。这里单位分数按原任务分子1、分母正整数理解，包括1/1。保留数学关系，但不验证学生自主撰写证明或自主选择例子的生产能力。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "一般证明和具体例子是原题明确要求的两个层次；C检验a=b可用于P，D检验b<a可用于Q，E/F另检验禁值。用已核实的一般公式算例子是合法推理依赖，不是重复同一任务。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "A/B中的1/(ab)仍是待验证证明，不是在stem宣布的答案；可在验证公式后据此算C/D，属于原题证明后举例的数学联系。E/F即使可凭域条件排除，也未在文字中宣布其余选项为真。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "无论自然数是否含0，由原分母非零可得a,b为正整数。P域允许a=b，P=(a+b)/[ab(a+b)]=1/(ab)。Q域另须a!=b，Q=(b-a)/[ab(b-a)]=1/(ab)，不须b>a。ab为正整数。P给定三例为1,1/4,1/6；Q给定三例为1/2,1/6,1/3。",
+        "correct": ["A", "B", "C", "D"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "分母a(a+b)、b(a+b)，通分分子a+b；有效自然数域a,b>0，所以ab为正整数。"},
+          {"option_id": "B", "truth": "correct", "evidence": "分母a(b-a)、b(b-a)，相减分子b-a；a,b>0且a!=b，约分合法且结果为正。"},
+          {"option_id": "C", "truth": "correct", "evidence": "(1,1):1/2+1/2=1；(2,2):1/8+1/8=1/4；(2,3):1/10+1/15=1/6，三例均在P原域。"},
+          {"option_id": "D", "truth": "correct", "evidence": "(1,2):1-1/2=1/2；(2,3):1/2-1/3=1/6；(3,1):-1/6-(-1/2)=1/3，三例均在Q原域。"},
+          {"option_id": "E", "truth": "incorrect", "evidence": "a=0,b=1时第一分母a^2+ab=0，P无意义而不是0；即使把0列入自然数也不能取该例。"},
+          {"option_id": "F", "truth": "incorrect", "evidence": "a=b=1时ab-a^2=b^2-ab=0，Q无意义，且违背显式a!=b。"}
+        ]
+      }
+    },
+    {
+      "question_id": "factored-denominator-identities",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "A-H完整覆盖38(a-h)，包括平方差分母、相反因式及约去后仍不得恢复禁值。G保留x与a，H保留a与y，没有混淆它们。自主构造通分过程未由选择验证。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "B/C、F/G/H虽共享平方因式约分结构，却有不同原域与负号位置；A无可同样约去因式，D/E有额外a或b因式，覆盖不同计算。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "A/E是不同的分子或符号错误，其余候选仍须核实各自分母；没有在别的view展示相同原式的答案。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "A域x!=+/-y，结果(x^2-2xy-y^2)/(x^2-y^2)。B域b!=+/-c，结果(b-c)/(b+c)。C域a!=+/-y，结果(a+y)/(a-y)。D域a!=0,+/-1，结果(a+1)/[a(a-1)]。E域b!=0,+/-2，结果(2-b)/[b(b+2)]。F域a!=0,b!=+/-5a，结果(b-5a)/[a(b+5a)]。G域x!=0,x!=+/-4a，结果(x-4a)/[x(x+4a)]，a可为0。H域a!=0,a!=+/-10y，结果(a-10y)/[a(a+10y)]，y可为0。所有约掉因式的禁值都保留。",
+        "correct": ["B", "C", "D", "F", "G", "H"],
+        "option_checks": [
+          {"option_id": "A", "truth": "incorrect", "evidence": "分子应x^2-3xy+y(x-y)=x^2-2xy-y^2。x=2,y=1时原值-1/3，候选-1。"},
+          {"option_id": "B", "truth": "correct", "evidence": "分子c(b+c)+b^2-3bc=(b-c)^2，除以(b-c)(b+c)得候选；b=c仍禁。"},
+          {"option_id": "C", "truth": "correct", "evidence": "分子(a-2y)(a-y)-(y^2-5ay)=(a+y)^2，约分得候选；a=-y仍禁。"},
+          {"option_id": "D", "truth": "correct", "evidence": "公分母a(a-1)(a+1)，分子a(a+3)-(a-1)=(a+1)^2；a=-1仍禁。"},
+          {"option_id": "E", "truth": "incorrect", "evidence": "分母2-b与b-2相反，正确结果为(2-b)/[b(b+2)]。b=1时原值1/3，候选-1/3。"},
+          {"option_id": "F", "truth": "correct", "evidence": "公分母a(b-5a)(b+5a)，分子b(b+5a)-a(15b-25a)=(b-5a)^2；原域禁止a=0和b=+/-5a。"},
+          {"option_id": "G", "truth": "correct", "evidence": "4ax-x^2=-x(x-4a)，分子x(x-12a)+4a(x+4a)=(x-4a)^2；约分后仍禁x=0,+/-4a。"},
+          {"option_id": "H", "truth": "correct", "evidence": "10ay-a^2=-a(a-10y)，分子a(a-30y)+10y(a+10y)=(a-10y)^2；约分后仍禁a=0,+/-10y。"}
+        ]
+      }
+    },
+    {
+      "question_id": "strict-sign-proofs",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "A/B对应39(a)，C/D对应39(b)；选项含原定义域、变形及严格不等式理由，保留证明严格负值和严格大于1的核心，不只是最终数值。自主写证明生产能力不由识别保证。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "P检验恒负及x=+/-1禁值，Q额外检验x=0禁值和1/x^2严格正，两个判断不可互换。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "stem没有给出恒负或大于1的结论，A/B和C/D分别保留相反或错误推导，必须判断平方因式与符号。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "P域x!=+/-1，在此域(2-(x^2+1))/[(x^2-1)(x^2+1)]=-1/(x^2+1)<0，因为分母x^2+1始终正。Q域x!=0,+/-1，(x^4-1)/[x^2(x^2-1)]=(x^2+1)/x^2=1+1/x^2>1；x!=0保证严格正。约分不恢复+/-1。",
+        "correct": ["A", "C"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "2-(x^2+1)=-(x^2-1)，域内约分得-1/(x^2+1)，原域与严格负理由均完整。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "约分负号丢失。x=0允许用于P，原值-1，候选为1。"},
+          {"option_id": "C", "truth": "correct", "evidence": "x^4-1=(x^2-1)(x^2+1)，在x!=0,+/-1的原域得到1+1/x^2>1。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "x^4-1不等于(x^2-1)^2。x=2时原Q=5/4，候选链末值3/4；分子15也不等于9。"}
+        ]
+      }
+    },
+    {
+      "question_id": "simplify-then-evaluate",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "每组含40(a,b)的简式及x=-1.5的两个值，B检验代入P符号，C检验P简式，D检验Q简式和数值。原域判断仍保留。整组识别不证明学生自主写完每一步，但没有移除两式的数学内容。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "P约分后分子为1，Q分子为-2(x+3)，检验不同因式；候选共同正确部分允许合理排除，不能以此认定学生逐步计算能力已完成。"
+      },
+      "answer_leakage": {
+        "verdict": "revise",
+        "evidence": "独立唯一真项A，是全包9道单选均为A的位置规律之一。局部重复正确Q并非直接宣布键，但全包位置规律需要作者修订后新快照复审。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "P域x!=0,+/-1，分子(x+1)^2-x(x+2)=1，结果1/[x(x^2-1)]；x=-3/2时值-8/15。Q域x!=0,+/-3，分子(x+2)(x-3)-x(1+x)=-2(x+3)，结果-2/[x(x-3)]仍禁x=-3；在x=-3/2得-8/27。",
+        "correct": ["A"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "x=-3/2时P分母=-15/8，Q简式分母27/4，所以P=-8/15,Q=-8/27；两简式也在原域成立。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "P简式正确却把-8/15写成正8/15；Q两部分正确仍不能使整组为真。"},
+          {"option_id": "C", "truth": "incorrect", "evidence": "P整体取了相反数，原式通分分子是正1不是-1，代入原P也应-8/15；Q正确。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "P正确，Q简式及数值同时取相反数；原Q在该点为-8/27而非8/27。"}
+        ]
+      }
+    },
+    {
+      "question_id": "three-term-factor-results",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "A、B、C、D、E分别承接41(a,c,d,e,f)，每个原式完整出现，保留共有因式、重复因式及平方差。41(b)由下一题单独承接，不在本题被遗漏。自主通分书写转为等式判断。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "与mixed-independent-denominator没有重复原分题：这里五项含可共用或重复的因式，另一题是41(b)的独立分母，拆分有代数依据。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "本题既不展示也不引用41(b)的通分结果；各候选的分子或符号需要本项计算，不是下一题的提示。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "A域y!=+/-2，分子4(y-2)-3(y+2)+12=y-2，结果1/(y+2)仍禁y=2。B域a!=0,b!=+/-2a，分子(2a+b)^2-16a^2+(2a-b)^2=-2(4a^2-b^2)，结果-2/a。C域x!=y，结果(x^2+y^2)/[2(x-y)^2]。D域b!=0,a!=b，结果a^2/[b(a-b)^2]。E域a!=+/-3，通分分子36，结果36/(a^2-9)^2。",
+        "correct": ["A", "C", "D"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "公分母(y-2)(y+2)分子y-2，在原域约分得到候选，仍禁y=2。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "正确结果-2/a。a=b=1在域，原值-2，候选2。"},
+          {"option_id": "C", "truth": "correct", "evidence": "分子2x^2-(x+y)(x-y)=x^2+y^2，分母2(x-y)^2。"},
+          {"option_id": "D", "truth": "correct", "evidence": "第二分母-b(a-b)，相减转相加，分子b^2+(a+b)(a-b)=a^2。"},
+          {"option_id": "E", "truth": "incorrect", "evidence": "分子(a+3)^2-2(a^2-9)+(a-3)^2=36而非18。a=0时原值4/9，候选2/9。"}
+        ]
+      }
+    },
+    {
+      "question_id": "mixed-independent-denominator",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "完整保留41(b)的a-b、a+b、36-a^2，要求一个完整分式，候选分别检验减号、附加因式36-a^2及分母整体符号。该原式不能一般约分，故完整通分结果即可承接原题任务。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "只有本题承接41(b)；其他41 view承接a,c,d,e,f，没有重复或交叉显示本题答案。"
+      },
+      "answer_leakage": {
+        "verdict": "revise",
+        "evidence": "唯一真项独立算得A，纳入9/9单选正确位置全为A的全包规律。局部四个式子的差异均是数学差异，但包级位置线索仍需revise。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "原域a!=b,a!=-b,a!=+/-6，不额外要求a或b单独非零。公分母(a^2-b^2)(36-a^2)，分子N=[a(a+b)-3(a-b)](36-a^2)+a^2(a^2-b^2)。N不含可一般约去的分母因式：a=b时N=2a^2(36-a^2)，a=-b时N=-6a(36-a^2)，a=+/-6时N=36(36-b^2)，均非恒零。取合法a=0,b=1时原R=-3，可同时区分全部候选。",
+        "correct": ["A"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "第一、二项先得[a(a+b)-3(a-b)]/(a^2-b^2)，再补36-a^2；第三项补a^2-b^2，恰得N与所列公分母。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "把第二项的-3变成+3。a=0,b=1时候选为3，而原R=-3。"},
+          {"option_id": "C", "truth": "incorrect", "evidence": "前两项分子遗漏附加因式36-a^2。a=0,b=1时候选3/(-36)=-1/12，原值-3。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "分母a^2-36是36-a^2的相反数而分子未变。a=0,b=1时候选3，原值-3。"}
+        ]
+      }
+    },
+    {
+      "question_id": "identity-domain-reconstructions",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "A/B覆盖42(a)两边通分到同一分式的证明，C/D覆盖42(b)因式约分证明；D检验恒等范围不能扩为任意实数。保留恒等式全称范围，自主组织证明的生产能力转为识别。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "42(a)需比较两式，42(b)需约去a^2-4；两种证明结构不同。与前面的常数证明没有同一原式。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "两种证明都是待判选项，B的a^2/a^3错误和D的范围错误并非stem已给的答案提示。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "42(a)共同域a!=0,3，左边=(a^3+3)/[a(a-3)]；右边分子(a+3)a(a-3)+9a+3=a^3+3，故恒等。42(b)左式域a!=+/-2，分子a^3-a(a+2)-2(a-2)=a^3-a^2-4a+4=(a-1)(a^2-4)，故仅在原域等于a-1。",
+        "correct": ["A", "C"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "a^2/(a-3)通分到a(a-3)须乘a，得a^3；右边展开a^3-9a+9a+3=a^3+3，域a!=0,3正确。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "左边分子应a^3+3。a=2时左值-11/2，候选-7/2，且其右边同样不能变为候选分式。"},
+          {"option_id": "C", "truth": "correct", "evidence": "分子确为(a-1)(a^2-4)，a!=+/-2使约分合法，链与域完整。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "宣称任意实数，包含a=2、a=-2；这两点原分母为0。不能由末式a-1恢复原式意义。"}
+        ]
+      }
+    },
+    {
+      "question_id": "isolate-variable-results",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "A-F依次承接43(a-f)，保持参数仅在原方程有意义时取值，并检验移项、解线性方程与含参数系数。作为参数公式作全域判断，不误解成某一次偶合的解。自主写移项步骤的生产能力未验证。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "前四项x系数与参数分式不同，E/F还需要合并x的系数，六个原方程都保留。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "候选B/E是不同错误，stem没有提供各解；x=36a不能用来直接判x=15a是否成立，因为两式系数不同。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "A域b!=0，x=(b-a)/b。B域p!=q，x=p/(p-q)-2=(2q-p)/(p-q)。C域n!=0，x=(m-n)/(2n)。D域n!=-1/2，x=(n+1)/(2n+1)。E/F域a!=0，E为8x/(15a)=8故x=15a，F为7x/(12a)=21故x=36a。参数允许负值，没有额外正数限制。",
+        "correct": ["A", "C", "D", "F"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "代入得(b-a)/b+a/b=1，b!=0时恒成立。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "正确解分子2q-p。p=3,q=1时候选x=1/2，原方程左值3/2-1/2=1而非2。"},
+          {"option_id": "C", "truth": "correct", "evidence": "2(m-n)/(2n)-m/n=-1，n!=0。"},
+          {"option_id": "D", "truth": "correct", "evidence": "[(n-1)+3(n+1)]/(2n+1)=(4n+2)/(2n+1)=2，n!=-1/2。"},
+          {"option_id": "E", "truth": "incorrect", "evidence": "应x=15a。a=1时候选x=1只给1/3+1/5=8/15，不等于8。"},
+          {"option_id": "F", "truth": "correct", "evidence": "x=36a时3x/(4a)-x/(6a)=27-6=21，a!=0。"}
+        ]
+      }
+    },
+    {
+      "question_id": "boat-round-trip",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "保留44的往返公式和两组原始数值及小时单位，显式s>0,v>5使顺、逆流航程可完成。整组识别保留计算模型，但不能单凭选择证明学生分别算完两个数值或自主建模。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "与45不同，本题给静水速度v且固定水速5；45给顺流时间反推静水速度，变量含义和模型推导不同。"
+      },
+      "answer_leakage": {
+        "verdict": "revise",
+        "evidence": "独立唯一真项A，全包另外8道单选也全为A，产生固定位置规律。stem没有直接给时间，但该包级规律允许无需本题计算就命中。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "顺流速度v+5、逆流速度v-5千米/小时，均为正；总时间t=s/(v+5)+s/(v-5)=2sv/(v^2-25)小时。(50,25):5/3+5/2=25/6小时=4小时10分钟。(105,40):7/3+3=16/3小时=5小时20分钟。各候选所写单位均为小时，错误在航行关系不是单位换算。",
+        "correct": ["A"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "分别累加一程顺流与一程逆流；分子s(v-5)+s(v+5)=2sv；两次数值25/6、16/3均正确。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "把往返两程都按顺流速度。候选本身确算为10/3、14/3小时，但实际分别25/6、16/3小时；逆流程遗漏。"},
+          {"option_id": "C", "truth": "incorrect", "evidence": "忽略水流，以静水速度行两程。4、21/4是该错误式的值，不是实际25/6、16/3。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "将两程时间相减，5/6、2/3是逆流与顺流时间之差，不是往返总时间；总时间须相加。"}
+        ]
+      }
+    },
+    {
+      "question_id": "infer-return-speed",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "45的公式、原数值与单位全部保留；view明确恒水速、去返静水速度相同和s>2vt，消除了第一阶段模型假设未明示的限制。仍需要由顺流速度推回逆流速度，识别不保证自主建立公式的生产能力。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "44给定静水速度，45只给s/t，必须扣水速两次；不能复制44中的v变量含义来直接作答。"
+      },
+      "answer_leakage": {
+        "verdict": "revise",
+        "evidence": "本题唯一真项A，与所有9道单选一致。完整模型条件不构成泄露，但正确位置全包不变构成需要修订的位置线索。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "顺流速度s/t，静水速度u=s/t-v，逆流速度u-v=s/t-2v>0，T=s/(s/t-2v)=st/(s-2vt)小时。域s>0,t>0,v>=0,s>2vt由view明确，不能因最后分式而允许t=0。原数值s=18,t=12/5,v=3/2：顺流15/2，静水6，逆流9/2千米/小时，T=4小时。",
+        "correct": ["A"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "s-2vt=54/5千米，st=216/5千米乘小时，商4小时；一般推导也正确。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "只减一次水速得到静水速度而非逆流速度。st/(s-vt)确为3小时，但应为4小时。"},
+          {"option_id": "C", "truth": "incorrect", "evidence": "有正水速时逆流不能与顺流同时间。给定v=3/2>0时t=12/5小时，而实际T=4小时；v=0时偶合不构成通用公式。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "分母误加2vt。候选值(216/5)/(126/5)=12/7小时，实际逆流时间4小时。"}
+        ]
+      }
+    },
+    {
+      "question_id": "intervals-and-number-line",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "A承接46(a)，B/D承接46(b)，C/E承接46(c)。保留绝对值内外区间、射线方向、开闭端点这三种关键数学区别。用解析数轴描述代替绘制，未验证自主画空心/实心点和线段的生产能力。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "D检验内部与外部混淆，E检验<=与开端点混淆；不同于仅重复B/C的正确描述。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "stem没有直接给端点或方向，各选项同时提供待判断的区间与描述，没有实际图像可从标签抄键。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "自变量域R。x<3的解集(-infinity,3)，在3空心并向左。|x|<3等价-3<x<3，解集(-3,3)，两端空心。|x|<=4等价-4<=x<=4，解集[-4,4]，两端实心。view的欧洲式开区间]a,b[与(a,b)等价；无穷不为实数端点。",
+        "correct": ["A", "B", "C"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "]-infinity,3[是(-infinity,3)，3不含，射线向左，两个表述一致。"},
+          {"option_id": "B", "truth": "correct", "evidence": "|x|<3包含0且排除+/-3，正是开区间(-3,3)与中间线段。"},
+          {"option_id": "C", "truth": "correct", "evidence": "|x|<=4包含+/-4，正是闭区间[-4,4]与实心两端。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "描述的是|x|>3。x=0满足原不等式却不在候选集合；x=4不满足原式却在候选集合。"},
+          {"option_id": "E", "truth": "incorrect", "evidence": "开区间漏掉端点。x=4与x=-4都满足|x|<=4，却被候选的空心端点排除。"}
+        ]
+      }
+    },
+    {
+      "question_id": "horizontal-vertical-loci",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "原47仅问图像是什么，并未要求学生实际画出；view保持全部解点的含义，区别完整直线、单点、坐标互换和过原点斜线。没有删除原题的独立作图任务，因为原文并无该生产要求。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "两方程对应固定不同坐标；B/C/D分别测试坐标交换、丢失自由坐标、把常数当斜率，不是同一种错误重复。"
+      },
+      "answer_leakage": {
+        "verdict": "revise",
+        "evidence": "唯一真项A，属于全包9/9单选都为A的规律；本题局部表述没有宣布答案，但包级正确位置固定需revise。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "x=2的全部解为{(2,y):y属于R}，过(2,0)竖直无限直线；y=-3的全部解为{(x,-3):x属于R}，过(0,-3)水平无限直线。前者不是y=f(x)的单值函数，后者是定义域R、值域{-3}的常函数。",
+        "correct": ["A"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "固定x而y自由得竖直线，固定y而x自由得水平线；两截点均正确。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "把坐标和方向互换。原解点(2,1)不在候选y=2线上，原解点(1,-3)不在候选x=-3线上。"},
+          {"option_id": "C", "truth": "incorrect", "evidence": "截点只是解的一部分。还分别有(2,1)和(1,-3)，不能只包含两个截点。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "常坐标关系不是斜率关系。(2,0)满足x=2但不满足y=2x；(0,-3)满足y=-3但不满足y=-3x。"}
+        ]
+      }
+    },
+    {
+      "question_id": "absolute-value-quotient-graph",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "保留48的六个原输入和值，完整分段图像、开端点与x=0原禁值；C使有正确数值但补错点的候选必须被拒绝。解析图像描述保留数学点集，不等于学生自行作出实际图像，后者生产能力损失明确存在。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "B错负输入绝对值除法，C错定义域，D错分段符号；六值与连续半直线描述对应原题两个任务层次。"
+      },
+      "answer_leakage": {
+        "verdict": "revise",
+        "evidence": "本题唯一真项A，与全包其他8道单选相同，固定位置规律可使未判断半直线和禁值的学生仍命中。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "域R\\{0}；x<0时|x|=-x故f=-1，x>0时f=1。六值按原序为-1,-1,-1,1,1,1，-2.4=-12/5，2又1/3=7/3。图像为y=-1的x<0半直线与y=1的x>0半直线，(0,-1)、(0,1)为空心，x=0无点、不连竖线，值域{-1,1}。",
+        "correct": ["A"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "六值、两分段方向及两个空心端点均与原域和分段式一致。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "x=-8时8/(-8)=-1，不是1；整条y=1遗漏负半轴的y=-1分支。"},
+          {"option_id": "C", "truth": "incorrect", "evidence": "六值正确，但x=0使原分母0，不能补入(0,0)；完整图像因此错误。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "符号两边颠倒；x=-8应-1，x=1应1，候选分别为1和-1，图像两分支也颠倒。"}
+        ]
+      }
+    },
+    {
+      "question_id": "function-values-and-preimages",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "保留49全部三个函数值和三个目标函数值的原像，顺序未变。整组识别不保证学生独立逐格计算六个槽位，但属于完整值/原像关系识别，不能仅因允许合理排除就判任务失败。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "正向求值与逆向求原像是两个不同关系；C保留正向值但改变两个原像，D检验漏除3，B检验常数号。"
+      },
+      "answer_leakage": {
+        "verdict": "revise",
+        "evidence": "唯一真项A，全包9道单选的位置全一致。局部C与A共有前三值不是键声明，但包级固定位置仍需修订。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "定义域和值域R。f(-2)=(-4-5)/3=-3，f(10)=(20-5)/3=5，f(16)=(32-5)/3=9。f(x)=c给x=(3c+5)/2，c=3,0,-9分别得到7,5/2,-11，原像唯一。",
+        "correct": ["A"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "前三值-3,5,9及后三个原像7,5/2,-11均逐项核算正确。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "前三值1/3,25/3,37/3对应误用(2x+5)/3；原题实际-3,5,9。候选原像2,-5/2,-16也不是原函数的3,0,-9原像。"},
+          {"option_id": "C", "truth": "incorrect", "evidence": "前三值正确，第二原像5/2正确，但f(4)=1而非3，f(-2)=-3而非-9；正确第一、第三原像为7、-11。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "前三值-9,15,27只是2x-5，漏除3；原像4与-2也只解了2x-5=3,-9，实际函数值1,-3，只有零值原像5/2偶合。"}
+        ]
+      }
+    },
+    {
+      "question_id": "line-graph-and-readings",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "保留50的直线关系、截点、三个值及两个原像，四组各自是不同直线的完整解析关系。只就数学内容的识别式覆盖通过：没有实际绘制图像，不能验证学生自主作图，也不能验证原题要求的根据已画图像读出纵坐标/横坐标；后两种生产与读图能力必须单列为未评估，不能称完全保留原操作流程。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "B/C/D分别对应斜率改为2、截距改为4、斜率改为-1/2，不是同一结果换文字。图像与表值/原像属于一个一致关系组，合理排除允许但不证明学生逐项读图。"
+      },
+      "answer_leakage": {
+        "verdict": "revise",
+        "evidence": "唯一真项A，全包所有9道单选均A，固定位置可绕过本题斜率、截距和值/原像判断；与缺少实际图上读数证据应分别记录。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "域和值域R，直线y=x/2-4过(0,-4)、(8,0)，斜率1/2，完整延伸无端点。x=6,4,-6分别得-1,-2,-7；令y=-2,0分别解得x=4,8。没有实际图像时这些为解析核算的精确读数关系，不声称进行了看图测读。",
+        "correct": ["A"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "两截点、三个正向值及两个原像均对应x/2-4，逐项正确。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "两点决定y=2x-4，其余数值确属该错误函数。原函数在x=2时y=-3，不经过(2,0)，且原三值为-1,-2,-7、原像4,8。"},
+          {"option_id": "C", "truth": "incorrect", "evidence": "整组对应y=x/2+4而非原式；原函数在x=0为-4不是4，其余三值与原像也分别错误。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "整组对应y=-x/2-4。原函数在x=-8时y=-8不是0，斜率为正而非负；给定三值与两个原像均不同。"}
+        ]
+      }
+    },
+    {
+      "question_id": "line-inclination-properties",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "A/B以两点和方向描述51两条直线，C/D/E保留一般kx+b的锐/钝/水平条件，F检验不能改用最小无向夹角。view显式等轴比例、标准逆时针[0,180)约定，消除了第一阶段约定证据限制。数学关系识别保留；自主绘制两直线和在图上画角弧/选边标角的生产能力未验证。原题不要求具体角度数值，因此未显示arctan数值不是原任务遗漏。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "具体两直线与一般k条件是原题从实例到规律的两个层次；E是k=0的边界，F区别有向倾斜角与无向最小夹角，不是C的无意义重复。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "stem给角度约定是必要定义，不是给斜率正负的答案。C是待验证规则，可在验证后用于A/B，属于同一道原题的实例/推广联系，不是另一道题的键。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "在view明确的等轴比例及标准倾斜角范围中tan(alpha)=k。L1斜率-2，过(0,1),(1,-1)，横轴截点(1/2,0)，角为180度-arctan(2)，约116.565051177078度，钝角。L2斜率2，过(0,-3),(1,-1)，横轴截点(3/2,0)，角arctan(2)，约63.434948822922度，锐角。一般k>0当且仅当锐角，k<0当且仅当钝角；b仅平移。k=0角0，有限k不能产生竖直90度。k,b任意实常数，不另加b!=0或b>0。",
+        "correct": ["A", "B", "C", "E"],
+        "option_checks": [
+          {"option_id": "A", "truth": "correct", "evidence": "代入x=0,1给y=1,-1；斜率-2从左上向右下，标准角180度-arctan(2)在(90,180)度。"},
+          {"option_id": "B", "truth": "correct", "evidence": "代入x=0,1给y=-3,-1；斜率2从左下向右上，标准角arctan(2)在(0,90)度。"},
+          {"option_id": "C", "truth": "correct", "evidence": "0<alpha<90度时tan正，90<alpha<180度时tan负；tan(alpha)=k且b不改方向，给两个充要条件。"},
+          {"option_id": "D", "truth": "incorrect", "evidence": "反例k=1,b=-1时标准角45度为锐角，却按候选b<0应为钝角；k=-1,b=1时实际135度钝角也与候选相反。"},
+          {"option_id": "E", "truth": "correct", "evidence": "k=0得到水平线y=b，按显式约定角0度，不属锐角或钝角，无论b取何实值。"},
+          {"option_id": "F", "truth": "incorrect", "evidence": "违背stem的标准倾斜角约定；L1必须取180度-arctan(2)的钝角，不能改用两直线最小夹角arctan(2)。"}
+        ]
+      }
+    }
+  ],
+  "source_coverage": [
+    {"source_number": "27", "question_ids": ["common-denominator-identities"], "coverage": {"verdict": "pass", "evidence": "27(a-i)逐项对应A-I，九个原式全部出现；通分数学覆盖完整。"}, "production_losses": ["不验证学生自主写出九个正确分式或全部中间步骤。"]},
+    {"source_number": "28", "question_ids": ["coefficient-cancellations"], "coverage": {"verdict": "pass", "evidence": "28(a-d)逐项对应A-D，特别保留c项15b/45c与d项40b/30y。"}, "production_losses": ["自主通分、合并与书写结果转为等式识别。"]},
+    {"source_number": "29", "question_ids": ["power-denominator-reductions"], "coverage": {"verdict": "pass", "evidence": "29(a-h)逐项对应A-H；d约去x但原域仍禁x=0，e/f交叉项与g/h幂次均保留。"}, "production_losses": ["自主构造一个分式与组织幂次通分步骤未评估。"]},
+    {"source_number": "30", "question_ids": ["three-term-fraction-sums"], "coverage": {"verdict": "pass", "evidence": "30(a-d)逐项对应A-D；三项合并、循环零恒等式与d约去b均出现。"}, "production_losses": ["自主完成三项通分与证明恒零的书面推导未评估。"]},
+    {"source_number": "31", "question_ids": ["polynomial-and-fraction"], "coverage": {"verdict": "pass", "evidence": "31(a-d)逐项对应A-D，整式项、平方与负平方和均出现。"}, "production_losses": ["自主把整式项乘分母并写分式未评估。"]},
+    {"source_number": "32", "question_ids": ["linear-factor-denominators"], "coverage": {"verdict": "pass", "evidence": "32(a-f)逐项对应A-F，六种原分母未更换。"}, "production_losses": ["自主选择公分母和写完整通分过程未评估。"]},
+    {"source_number": "33", "question_ids": ["integer-parts-and-squares"], "coverage": {"verdict": "pass", "evidence": "33(a-f)逐项对应A-F，包括e的x-3与f的a^2-1原域。"}, "production_losses": ["独立生产完整简式及中间展开步骤未评估。"]},
+    {"source_number": "34", "question_ids": ["domain-bound-constant-proofs"], "coverage": {"verdict": "pass", "evidence": "a由A/B检查P链，b由C/D检查Q链；原域及恒定值证明链都保留。"}, "production_losses": ["自主撰写域内恒等证明转为识别已给链。"]},
+    {"source_number": "35", "question_ids": ["opposite-factor-cancellations"], "coverage": {"verdict": "pass", "evidence": "35(a-d)逐项对应A-D，反号因式与原域条件都在判断范围内。"}, "production_losses": ["自主因式分解、约分书写未评估。"]},
+    {"source_number": "36", "question_ids": ["removable-holes-pair"], "coverage": {"verdict": "pass", "evidence": "每个候选的P、Q两段分别承接36(a,b)，完整域和简式同时作为判据。"}, "production_losses": ["配对识别不验证自主求出两个域和简式。"]},
+    {"source_number": "37", "question_ids": ["unit-fraction-proofs-and-examples"], "coverage": {"verdict": "pass", "evidence": "a由A的证明和C的多例承接，b由B的证明和D的多例承接，E/F额外检验0和a=b禁值；没有略掉举几个例子的数学层次。"}, "production_losses": ["不能证明学生能自主写证明或自主选择新的例子；已给例子识别不等于例子生成。"]},
+    {"source_number": "38", "question_ids": ["factored-denominator-identities"], "coverage": {"verdict": "pass", "evidence": "38(a-h)逐项对应A-H；全部原分母、参数关系与化简任务保留。"}, "production_losses": ["自主选择公分母、因式分解和产出简式未评估。"]},
+    {"source_number": "39", "question_ids": ["strict-sign-proofs"], "coverage": {"verdict": "pass", "evidence": "a由A/B，b由C/D覆盖；原域、严格负值和严格大于1的完整证明均出现。"}, "production_losses": ["自主组织严格不等式证明转为已给链识别。"]},
+    {"source_number": "40", "question_ids": ["simplify-then-evaluate"], "coverage": {"verdict": "pass", "evidence": "每组P/Q分别覆盖40(a,b)，两个简式和x=-1.5的两个精确值都出现。"}, "production_losses": ["整组选择不单独证明学生能生产两段通分与代入过程。"]},
+    {"source_number": "41", "question_ids": ["three-term-factor-results", "mixed-independent-denominator"], "coverage": {"verdict": "pass", "evidence": "第一view的A,B,C,D,E依次覆盖41(a,c,d,e,f)，第二view独立覆盖41(b)。并集恰为a-f且无重复分题；b保留三个独立分母并有完整公分母，不能一般约分。"}, "production_losses": ["两个view均验证结果识别而非学生自行写完整分式；拆题本身未新增数学损失。"]},
+    {"source_number": "42", "question_ids": ["identity-domain-reconstructions"], "coverage": {"verdict": "pass", "evidence": "a由A/B两式共同通分，b由C/D因式约分及原域范围覆盖，两个全称恒等式均保留。"}, "production_losses": ["自主证明写作转为证明链识别。"]},
+    {"source_number": "43", "question_ids": ["isolate-variable-results"], "coverage": {"verdict": "pass", "evidence": "43(a-f)逐项对应A-F，各参数域与唯一解公式均可判定。"}, "production_losses": ["不单独评估学生自主移项与生产参数解。"]},
+    {"source_number": "44", "question_ids": ["boat-round-trip"], "coverage": {"verdict": "pass", "evidence": "公式和两个原数值案例(50,25)、(105,40)均在每组中，小时单位与可返航域明示。"}, "production_losses": ["公式/两次数值整组识别，不证明学生能自主建模或分别计算全部案例。"]},
+    {"source_number": "45", "question_ids": ["infer-return-speed"], "coverage": {"verdict": "pass", "evidence": "返程时间公式和s=18,t=12/5,v=3/2的值同时出现；恒水速、同静水速度、逆流速度正由view显式给定。"}, "production_losses": ["自主反推静水/逆流速度及写公式的生产能力未评估；模型假设不再不明确。"]},
+    {"source_number": "46", "question_ids": ["intervals-and-number-line"], "coverage": {"verdict": "pass", "evidence": "a由A，b由B/D，c由C/E覆盖；区间和完整解析数轴描述均检查，方向和所有开闭端点保留。"}, "production_losses": ["没有学生实际绘制数轴、空心/实心点和射线/线段的证据。"]},
+    {"source_number": "47", "question_ids": ["horizontal-vertical-loci"], "coverage": {"verdict": "pass", "evidence": "两个方程的全部解点图像同时判断，维数、自由坐标和直线方向保留。原题仅问图像是什么，不要求实际作图。"}, "production_losses": []},
+    {"source_number": "48", "question_ids": ["absolute-value-quotient-graph"], "coverage": {"verdict": "pass", "evidence": "六个原输入全保留，完整分段点集与0处开端点/禁值均在整组描述里。数学识别覆盖完整。"}, "production_losses": ["未验证自主作出两条半直线或正确绘制开端点；识别文字图像不等于实际图像生产。"]},
+    {"source_number": "49", "question_ids": ["function-values-and-preimages"], "coverage": {"verdict": "pass", "evidence": "全部三个函数值和三个目标值的原像按原顺序同时出现，没有少一个数值任务。"}, "production_losses": ["整组识别不保证学生自主逐项计算六个值或写逆向解法。"]},
+    {"source_number": "50", "question_ids": ["line-graph-and-readings"], "coverage": {"verdict": "pass", "evidence": "数学内容的识别式覆盖：图像由完整直线及两截点描述，x=6,4,-6三个值及y=-2,0两个原像全出现。但实际作图与根据已画图像读数的原操作流程没有被保留为可观察任务。"}, "production_losses": ["没有学生自主绘图的证据。", "没有可实际读取的已绘图像，原题的图上读纵坐标/横坐标能力未评估，只保留了解析值/原像关系识别。"]},
+    {"source_number": "51", "question_ids": ["line-inclination-properties"], "coverage": {"verdict": "pass", "evidence": "A/B覆盖两具体直线的点、方向与角类型，C/D覆盖一般k条件，E覆盖水平边界，F检验约定；等轴比例与标准角定义已明确。原题不要求具体角度数值。"}, "production_losses": ["没有学生自主绘制两条直线的证据。", "没有学生在实际图上选取标准倾斜角的两射线、画角弧并标注的证据；类型识别不等于标角生产。"]}
+  ],
+  "package_checks": {
+    "source_coverage": {
+      "verdict": "pass",
+      "evidence": "26个view覆盖原27-51共25个exercise。24个exercise各由一个view承接，41由两个view承接；84个字母分题及44-50的未按字母编号的公式、数值与图像关系任务逐项列入source_coverage。这里的通过仅指明示能力损失后的数学内容覆盖，不是全部书写/绘图/实际读图能力都被保存。"
+    },
+    "split_41": {
+      "verdict": "pass",
+      "evidence": "three-term-factor-results承接a,c,d,e,f，mixed-independent-denominator仅承接b。前组具有共有或重复因式，b的a-b、a+b、36-a^2须独立补因式且无一般约分，拆分数学上合理、无重复、无漏分题、无跨题答案引用。"
+    },
+    "redundancy": {
+      "verdict": "pass",
+      "evidence": "没有相同原分题在两个view重复考查。27-43虽复用等式或证明链形式，但各原式、参数域、系数与抵消区别不同。37的证明/例子和51的实例/一般规则是原题本来要求的合法数学联系，不是独立题之间互给键。"
+    },
+    "answer_leakage": {
+      "verdict": "revise",
+      "finding_id": "N3-SINGLE-POSITION-PATTERN",
+      "evidence": "独立穷尽129个选项后发现，9道single的完整真集无一例外都是[A]。在当前静态view快照中，无需阅读这些题的数学，给所有single统一选A就能9/9全对；在解过前几道或获得常规反馈后也会形成强位置捷径。这是包级位置规律，不是作者键比对结果；单题公式/数值本身未出现不确定性。不能凭数学正确把该门禁降为pass。",
+      "affected_question_ids": [
+        "removable-holes-pair",
+        "simplify-then-evaluate",
+        "mixed-independent-denominator",
+        "boat-round-trip",
+        "infer-return-speed",
+        "horizontal-vertical-loci",
+        "absolute-value-quotient-graph",
+        "function-values-and-preimages",
+        "line-graph-and-readings"
+      ],
+      "recommended_revision": "由作者改变单选正确项位置分布，保持每项数学内容及真集对应关系，并对改变后的快照重新审查。仅在有可验证的运行时打乱机制时才可另评其实际风险；本轮只获静态views，没有这种证据，不假设运行时会自动修复。不由审查者改写作者文件。"
+    },
+    "graph_representation": {
+      "verdict": "pass",
+      "evidence": "全部view及option的figure_ids均为空，没有新图可审或图像哈希需核。46、48、50、51以解析点集/坐标/方向/端点描述替代图形生产，保留了本轮列明的数学识别关系；47原题问图像是什么，文字识别本来符合其任务。50特别不具实际图上读数证据；51不具在图上标角证据。通过仅限数学识别，不批准把这些损失描述为完整绘图能力保留。",
+      "not_verified_capacities": [
+        "46：独立画数轴、开闭端点及正确方向的线段/射线。",
+        "48：独立画两条水平半直线并处理x=0的两个空心端点。",
+        "50：独立画直线，以及实际从已画图像读取横/纵坐标而不是直接代数计算。",
+        "51：独立画两直线，在图上选边、画角弧和标出标准倾斜角。",
+        "全部view：客户端数学文字实际渲染、截断与排版未在本轮检查。"
+      ]
+    },
+    "explicit_assumptions": {
+      "verdict": "pass",
+      "evidence": "45明示水速恒定、去返静水速度相同以及s>2vt，模型唯一且返程可完成。51明示等坐标比例及从横轴正向逆时针、范围[0,180)的标准角，并明确水平角0。第一阶段这两项条件性证据限制在本view快照中已经解决，无需猜测。"
+    },
+    "mathematics": {
+      "verdict": "pass",
+      "evidence": "26题的129个选项逐项独立判真，完整true集合合计67个选项、false合计62个。每题single恰一个真项，每题multiple完整枚举所有真项；错误选项均给出定义域违例、具体反例或精确错误计算。这个pass只表示本审查的数学结论完整，不表示已验证作者key或已通过其他门禁。"
+    }
+  },
+  "outcome": "revise",
+  "next_stage": "已报告view-only结果并停止；等待人类最后授权读取作者key及coverage后再比较，不自行读取。",
+  "observable": {
+    "model": null,
+    "usage": null
+  }
+}
