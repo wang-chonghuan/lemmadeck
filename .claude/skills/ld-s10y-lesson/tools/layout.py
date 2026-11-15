@@ -118,16 +118,34 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
     height = band.shape[0]
     rules = []
     components, _ = ndimage.label(band)
+    text_centers = []
     for bounds in ndimage.find_objects(components):
         if bounds is None:
             continue
         rows, columns = bounds
+        if (
+            0.75 * line_h <= rows.stop - rows.start <= 1.35 * line_h
+            and 0.65 * line_h <= columns.stop - columns.start <= 1.3 * line_h
+            and columns.stop - columns.start >= 0.85 * (rows.stop - rows.start)
+        ):
+            text_centers.append((rows.start + rows.stop) / 2)
         if (
             columns.stop - columns.start >= 0.7 * line_h
             and rows.stop - rows.start <= 0.2 * line_h
             and 0.3 * height <= (rows.start + rows.stop) / 2 <= 0.7 * height
         ):
             rules.append((columns.start, columns.stop - 1))
+    # A short second CJK line can vanish under a long first line's ink threshold.
+    # Preserve independently visible body-glyph rows before masking rule columns.
+    text_rows = [
+        (start, end)
+        for start, end in _merge_close(
+            [(center, center) for center in sorted(text_centers)], 0.4 * line_h
+        )
+        if sum(start <= center <= end for center in text_centers) >= 3
+    ]
+    if len(text_rows) >= 2 and text_rows[-1][0] - text_rows[0][1] >= 1.5 * line_h:
+        return False
     horizontal = ndimage.binary_opening(
         band, structure=np.ones((1, max(2, int(0.7 * line_h))), dtype=bool)
     )
@@ -424,8 +442,12 @@ def crop(png: Path, box: list[int], out: Path, pad: int = 12) -> None:
     img = Image.open(png)
     x, y, w, h = box
     out.parent.mkdir(parents=True, exist_ok=True)
-    img.crop((max(0, x - pad), max(0, y - pad),
-              min(img.width, x + w + pad), min(img.height, y + h + pad))).save(out)
+    left, top = max(0, x - pad), max(0, y - pad)
+    right, bottom = min(img.width, x + w + pad), min(img.height, y + h + pad)
+    # Padding is blank space, not permission to copy a neighboring caption.
+    padded = Image.new(img.mode, (right - left, bottom - top), "white")
+    padded.paste(img.crop((x, y, x + w, y + h)), (x - left, y - top))
+    padded.save(out)
 
 
 def ink_coverage(ink: np.ndarray, boxes: list[list[int]]) -> dict:

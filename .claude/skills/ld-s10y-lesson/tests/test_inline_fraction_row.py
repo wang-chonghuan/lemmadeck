@@ -35,6 +35,17 @@ class InlineFractionRowTests(unittest.TestCase):
         ink[53:90, 60:580] = True
         self.assertFalse(layout._single_fraction_row(ink, 0, 89, 37))
 
+    def test_short_second_body_row_is_not_erased_as_fraction_strokes(self):
+        ink = np.zeros((130, 1200), dtype=bool)
+        for y, count in [(0, 20), (74, 4)]:
+            for index in range(count):
+                x = 80 + index * 45
+                ink[y:y + 4, x:x + 35] = True
+                ink[y + 36:y + 40, x:x + 35] = True
+                ink[y:y + 40, x:x + 4] = True
+                ink[y:y + 40, x + 31:x + 35] = True
+        self.assertFalse(layout._single_fraction_row(ink, 0, 129, 40))
+
 
 if __name__ == "__main__":
     unittest.main()
