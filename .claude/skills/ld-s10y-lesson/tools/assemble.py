@@ -82,11 +82,15 @@ def cut_lessons(stream: list[dict]) -> list[dict]:
     """h3 开一节。h1/h2 记作祖先标题，跟着下一节走。"""
     lessons, pending = [], {"h1": None, "h2": None}
     cur = None
+    preface = []
     for b in stream:
         if b["kind"] in ("h1", "h2"):
             pending[b["kind"]] = B.text_of(b)
             if b["kind"] == "h1":
                 pending["h2"] = None
+            continue
+        if b["kind"] == "p" and b.get("label") == "preface":
+            preface.append(b)
             continue
         if b["kind"] == "h3":
             title = B.text_of(b)
@@ -94,18 +98,37 @@ def cut_lessons(stream: list[dict]) -> list[dict]:
             cur = {"chapter": pending["h1"], "section": pending["h2"],
                    "number": m.group(1) if m else None,
                    "title": m.group(2).strip() if m else title,
-                   "printed_title": title, "blocks": [],
+                   "printed_title": title, "blocks": preface,
                    "start_page": b["page"], "start_printed": b.get("printed_page")}
+            preface = []
             lessons.append(cur)
             continue
         if b["kind"] == "foot":
-            continue
+            if b.get("label") != "note":
+                continue
+            if b.get("owner_exercise"):
+                matches = [
+                    candidate
+                    for lesson in lessons
+                    for candidate in lesson["blocks"]
+                    if candidate["kind"] == "ex"
+                    and str(candidate.get("label")) == str(b["owner_exercise"])
+                ]
+                if len(matches) != 1:
+                    raise ValueError("教学脚注 owner-ex 无法唯一绑定已出现的原题")
+                target = matches[0]
+                target["lines"] = target["lines"] + ["\n".join(b["lines"])]
+                target.setdefault("spans", [target["ref"]]).append(b["ref"])
+                continue
+            b = {**b, "kind": "p"}
         if cur is None:                     # 小节标题之前的内容（承前页的残段）
             cur = {"chapter": pending["h1"], "section": pending["h2"], "number": None,
                    "title": "（承上页）", "printed_title": None, "blocks": [],
                    "start_page": b["page"], "start_printed": b.get("printed_page")}
             lessons.append(cur)
         cur["blocks"].append(b)
+    if preface:
+        raise ValueError("preface 没有后续 h3，不能静默丢弃章节导语")
     return lessons
 
 

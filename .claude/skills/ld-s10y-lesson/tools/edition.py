@@ -477,7 +477,7 @@ def normalize_prose_layout(text: str) -> str:
             continue
         if depths[index] != 0:
             continue
-        if char in "。！？；;":
+        if char in "。．！？；;":
             boundaries.add(index + 1)
         elif char in "：:":
             rest = text[index + 1:].lstrip()
@@ -488,7 +488,7 @@ def normalize_prose_layout(text: str) -> str:
         tex = (match.group(1) or match.group(2)).rstrip()
         if (
             depths[match.start()] == 0
-            and tex.endswith((".", "。", "!", "！", "?", "？"))
+            and tex.endswith((".", "。", "．", "!", "！", "?", "？"))
             and text[match.end():].strip()
         ):
             boundaries.add(match.end())
@@ -520,7 +520,7 @@ def normalize_prose_layout(text: str) -> str:
     current = []
     current_chars = 0
     for line in lines:
-        bare = line.rstrip("，,；;。.!！?？")
+        bare = line.rstrip("，,；;。．.!！?？")
         standalone_formula = bool(MATH.fullmatch(bare))
         attaches_to_previous = bool(
             current

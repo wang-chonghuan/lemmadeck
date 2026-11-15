@@ -241,8 +241,12 @@ for (const lid of lessonDirs) {
       .map((f) => figure(contentRoot, f.id, f.label, !!editionName)).join("");
     const printedNumber = sourceNumberForArtifact(e);
     const sourceNumber = printedNumber == null ? "" : `${esc(String(printedNumber))}.`;
-    out += `<li class="ex" id="ex-${esc(e.number)}"><div class="no">${sourceNumber}</div>`
-      + `<div class="body">${inline(e.text)}${figs}</div></li>`;
+    const prefix = printedNumber == null ? null : e.text.match(/^\s*(\d+)([.°*])\s*/);
+    const hasPrintedPrefix = prefix && prefix[1] === String(printedNumber);
+    const marker = hasPrintedPrefix && prefix[2] !== "." ? esc(prefix[2]) : "";
+    const text = hasPrintedPrefix ? e.text.slice(prefix[0].length) : e.text;
+    out += `<li class="ex" id="ex-${esc(e.number)}"><div class="no">${sourceNumber}${marker}</div>`
+      + `<div class="body">${inline(text)}${figs}</div></li>`;
   }
   if (out) out += "</ol>";
   out += `<a class="jump" href="text.html">← 回课文</a>`;

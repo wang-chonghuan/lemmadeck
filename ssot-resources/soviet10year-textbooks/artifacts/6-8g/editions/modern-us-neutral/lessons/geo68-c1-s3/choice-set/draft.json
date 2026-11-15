@@ -1,0 +1,289 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "b1d1c025407d32f1d7e9efc00938ca48680260db9401bfda7a06f2b9a5abb736",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "unit-families",
+      "source_numbers": ["18"],
+      "view": {
+        "mode": "multiple",
+        "stem": "哪些单位与所列的量的类别相符？选出所有符合的项。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "长度：毫米、厘米、米、公里。", "figure_ids": []},
+          {"id": "B", "text": "面积：平方厘米、平方米、公顷。", "figure_ids": []},
+          {"id": "C", "text": "时间：秒、分钟、小时。", "figure_ids": []},
+          {"id": "D", "text": "质量：克、千克、吨。", "figure_ids": []},
+          {"id": "E", "text": "面积：厘米、米、公里。", "figure_ids": []},
+          {"id": "F", "text": "质量：秒、分钟、小时。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "区分长度、面积、时间和质量的度量单位，覆盖源任务的四类量。",
+        "source_solution": "长度可用毫米、厘米、分米、米、公里；面积可用平方毫米、平方厘米、平方米、公顷、平方公里；时间可用秒、分钟、小时、天；质量可用毫克、克、千克、吨。列举没有唯一清单，但单位必须属于指定类别。",
+        "unit_reason": "同一个量纲分类任务合成自然多选，选项给出整组单位，不把每个单位拆成独立点击。",
+        "concept_blocks": [4, 6],
+        "limitations": ["识别给定单位不能证明能脱离选项自行回忆、列举其他单位。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "B", "C", "D"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "四种单位都度量长度，只是单位大小不同。", "misconception": null},
+          {"option_id": "B", "truth": "correct", "derivation": "平方厘米、平方米和公顷均为面积单位。", "misconception": null},
+          {"option_id": "C", "truth": "correct", "derivation": "秒、分钟和小时均为时间间隔的单位。", "misconception": null},
+          {"option_id": "D", "truth": "correct", "derivation": "克、千克和吨均度量质量。", "misconception": null},
+          {"option_id": "E", "truth": "incorrect", "derivation": "厘米、米、公里度量长度；面积应使用它们的平方单位。", "misconception": "把面积所依赖的边长单位直接当成面积单位，漏掉平方。"},
+          {"option_id": "F", "truth": "incorrect", "derivation": "秒、分钟、小时度量时间而非质量。", "misconception": "认为可按不同大小排列的单位都能互换类别，将时间的单位族挪到质量。"}
+        ]
+      }
+    },
+    {
+      "id": "quantity-order",
+      "source_numbers": ["19"],
+      "view": {
+        "mode": "multiple",
+        "stem": "比较下面三组量。\n长度：$2\\mathrm{m}$、$305\\mathrm{cm}$、$24.2\\mathrm{dm}$、$2416\\mathrm{cm}$。\n质量：$1050\\mathrm{kg}$、$1.5\\mathrm{t}$、$1052\\mathrm{q}$，这里采用公担单位，$1\\mathrm{q}=100\\mathrm{kg}$。\n时间：$90$分钟、$3000$秒、$2$小时。\n哪些排列是从小到大？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$2\\mathrm{m}<24.2\\mathrm{dm}<305\\mathrm{cm}<2416\\mathrm{cm}$。", "figure_ids": []},
+          {"id": "B", "text": "$2\\mathrm{m}<305\\mathrm{cm}<2416\\mathrm{cm}<24.2\\mathrm{dm}$。", "figure_ids": []},
+          {"id": "C", "text": "$1050\\mathrm{kg}<1.5\\mathrm{t}<1052\\mathrm{q}$。", "figure_ids": []},
+          {"id": "D", "text": "$1050\\mathrm{kg}<1052\\mathrm{q}<1.5\\mathrm{t}$。", "figure_ids": []},
+          {"id": "E", "text": "$3000$秒$<90$分钟$<2$小时。", "figure_ids": []},
+          {"id": "F", "text": "$2$小时$<90$分钟$<3000$秒。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "先统一单位，再判断长度、质量、时间三组完整量序列的递增关系。",
+        "source_solution": "长度换成米为2、3.05、2.42、24.16，故2m<24.2dm<305cm<2416cm。质量中1.5t=1500kg；若q采用公担约定，1052q=105200kg，故1050kg<1.5t<1052q。时间统一为秒为5400、3000、7200，故3000秒<90分钟<2小时。源课本未在本课解释q，质量部分的结果依赖公担约定，不把这个条件冒充原书明示事实。",
+        "unit_reason": "三组排序共享统一单位后比较的规则，合成多选，每个候选是完整序列而非单个换算值。",
+        "concept_blocks": [4],
+        "limitations": ["识别已排列序列不能证明独立写出完整排序过程。", "质量题在新题面明示公担约定；不能据本题审查声称原书未解释的q已得到原书内部定义确认。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "C", "E"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "换成米后2<2.42<3.05<24.16。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "实际24.2dm=2.42m，应在305cm=3.05m之前，不能排在24.16m之后。", "misconception": "把分米换成米时忘记除以10，以24.2m参加比较，得到2<3.05<24.16<24.2。"},
+          {"option_id": "C", "truth": "correct", "derivation": "统一为千克，1050<1500<105200。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "1052q=105200kg，大于1.5t=1500kg。", "misconception": "将q直接当成kg，按1050<1052<1500排序，漏乘公担换算因子100。"},
+          {"option_id": "E", "truth": "correct", "derivation": "统一为秒，3000<5400<7200。", "misconception": null},
+          {"option_id": "F", "truth": "incorrect", "derivation": "2小时=7200秒，是三个量中最大的，不是最小的。", "misconception": "完全不换单位，直接按裸数2<90<3000排序。"}
+        ]
+      }
+    },
+    {
+      "id": "applications",
+      "source_numbers": ["20"],
+      "view": {
+        "mode": "multiple",
+        "stem": "下面哪些应用题能够用所列运算来解决？选出所有符合的项。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "比较量的大小：两根绳分别长$150\\mathrm{cm}$和$1.4\\mathrm{m}$，哪根更长？", "figure_ids": []},
+          {"id": "B", "text": "把量相加：把一根$2\\mathrm{m}$长的绳和一根$40\\mathrm{cm}$长的绳接起来，总长多少？", "figure_ids": []},
+          {"id": "C", "text": "把量乘以数：每份材料需$0.8\\mathrm{m}$的彩带、$60\\mathrm{cm}^2$的纸和$125\\mathrm{g}$的黏土，制作$5$份各需多少？", "figure_ids": []},
+          {"id": "D", "text": "比较量的大小：跳绳长$2\\mathrm{m}$，音乐长$3$分钟，哪个量更大？", "figure_ids": []},
+          {"id": "E", "text": "把量相加：书包质量是$2\\mathrm{kg}$，步行时间是$3$分钟，两者相加是多少？", "figure_ids": []},
+          {"id": "F", "text": "把量乘以数：电影长$20$分钟，把这个时间乘以$3\\mathrm{km}$，得到多长时间？", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "识别能由比较、同类量相加、量乘非负数解决的应用情境，并排除异类量混算。",
+        "source_solution": "可分别编成：150cm和1.4m两根绳比较长短，统一单位后150cm>140cm；2m与40cm绳接起来长2.4m；每份需0.8m彩带、60平方厘米纸、125g黏土，共5份，各量分别乘5，得到4m、300平方厘米、625g。原题要求自己构造三种应用题，解答不唯一，但各运算必须有合法的量类别与乘数。",
+        "unit_reason": "三个运算情境用一题自然多选检验匹配关系，保留数学意义，不把三种编题任务假装成已经独立完成。",
+        "concept_blocks": [4, 6, 7],
+        "limitations": ["不能证明能独立编写应用题或表达情境；原书写题保留此生产性任务。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "B", "C"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "比较同类长度，1.4m=140cm，150cm>140cm。", "misconception": null},
+          {"option_id": "B", "truth": "correct", "derivation": "两长度相加，2m+0.4m=2.4m。", "misconception": null},
+          {"option_id": "C", "truth": "correct", "derivation": "各量分别乘无量纲份数5，0.8m乘5=4m，60平方厘米乘5=300平方厘米，125g乘5=625g；不把异类量互相加起来。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "长度与时间不是同类量，不能比较大小。", "misconception": "忽略类别，直接用裸数2和3的大小当成两个量的大小。"},
+          {"option_id": "E", "truth": "incorrect", "derivation": "质量和时间不能作为同类量相加。", "misconception": "去掉kg和分钟，只按2+3=5计算后把结果当作一个合法量。"},
+          {"option_id": "F", "truth": "incorrect", "derivation": "3km是长度，不是本课量乘法中的数；时间乘长度不产生同类时间。", "misconception": "把带单位的3km误当无量纲数3，算20乘3并继续沿用分钟单位。"}
+        ]
+      }
+    },
+    {
+      "id": "measure-values",
+      "source_numbers": ["21"],
+      "view": {
+        "mode": "single",
+        "stem": "同一长度$a=3\\mathrm{cm}$，分别用毫米、米、公里作单位，得到的数值按这个顺序组成一组。哪一组正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$(30,\\ 0.03,\\ 0.00003)$。", "figure_ids": []},
+          {"id": "B", "text": "$(0.3,\\ 300,\\ 300000)$。", "figure_ids": []},
+          {"id": "C", "text": "$(30,\\ 0.03,\\ 0.03)$。", "figure_ids": []},
+          {"id": "D", "text": "$(30,\\ 0.03,\\ 0.0003)$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "为同一个长度切换三个度量单位，保持量不变，按指定顺序给出数值。",
+        "source_solution": "1cm=10mm，3cm=30mm；1m=100cm，3cm=0.03m；1km=100000cm，3cm=0.00003km。数值按毫米、米、公里的次序是30、0.03、0.00003。",
+        "unit_reason": "三个数值共同描述同一量，是一个有序的换算结果，使用完整数组单选而非三道孤立数字题。",
+        "concept_blocks": [],
+        "limitations": ["识别有序结果不能证明独立写出三步换算。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "3乘10、除100、除100000，得到30、0.03、0.00003。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "所有换算方向都与实际单位大小相反。", "misconception": "把厘米到毫米误作除10，到米误作乘100，到公里误作乘100000。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "0.03是用米作单位的数值，用公里作单位还应除1000。", "misconception": "算得0.03m后直接把单位名字换成km，不再改变数值。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "3cm=0.00003km，不是0.0003km。", "misconception": "把1km对应的厘米数少写一个零，误用10000代替100000，得到3除10000。"}
+        ]
+      }
+    },
+    {
+      "id": "unit-scale",
+      "source_numbers": ["22"],
+      "view": {
+        "mode": "single",
+        "stem": "一个量用单位$e$度量时数值是$x$。保持量不变，先把单位换成$e$的十分之一，再另取$e$的$100$倍作单位。哪组数值变化规律对所有这样的量都成立？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "两次数值分别是$10x$和$\\frac{x}{100}$。", "figure_ids": []},
+          {"id": "B", "text": "两次数值分别是$\\frac{x}{10}$和$100x$。", "figure_ids": []},
+          {"id": "C", "text": "两次数值分别是$10x$和$100x$。", "figure_ids": []},
+          {"id": "D", "text": "两次数值分别是$\\frac{x}{10}$和$\\frac{x}{100}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "推导同一量的数值与单位大小的反向关系，两个单位均相对于原单位e。",
+        "source_solution": "a=xe。e'=e/10时a=10x e'，所以数值10x。e''=100e时a=(x/100)e''，所以数值x/100。若x=0，两次数值仍为0；规律对零量也成立。",
+        "unit_reason": "两个变化是一条反向比例规律的两个方向，整体单选能检验一致性，不拆成零散倍率点击。",
+        "concept_blocks": [7],
+        "limitations": ["选择变化规律不能证明独立推导a=xe中的新系数。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "新数值是a除新单位，xe除(e/10)=10x，xe除(100e)=x/100。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "以非零量为例，两次均反向；如x=1应为10和0.01，而不是0.1和100。", "misconception": "让数值跟着单位同向缩放，分别乘1/10和100。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "单位扩大100倍时数值应除100，不能乘100。", "misconception": "第一方向用细单位增加份数，第二方向却改成单位扩大数值也扩大，混用逆向与同向规则。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "单位缩小十分之一时非零数值应扩大10倍。", "misconception": "把两次换单位都按除所给倍数处理，第一处把十分之一误读为除以10。"}
+        ]
+      }
+    },
+    {
+      "id": "quantity-ratios",
+      "source_numbers": ["23"],
+      "view": {
+        "mode": "single",
+        "stem": "依次求前一个量与后一个量的比：$2$公里与$40$米；$3$吨与$50$千克；$100$平方米与$4$公顷；$3$小时与$15$分钟。哪组结果正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$(50,\\ 60,\\ \\frac{1}{400},\\ 12)$。", "figure_ids": []},
+          {"id": "B", "text": "$(\\frac{1}{50},\\ \\frac{1}{60},\\ 400,\\ \\frac{1}{12})$。", "figure_ids": []},
+          {"id": "C", "text": "$(\\frac{1}{20},\\ \\frac{3}{50},\\ 25,\\ \\frac{1}{5})$。", "figure_ids": []},
+          {"id": "D", "text": "$(50,\\ 60,\\ \\frac{1}{4},\\ 12)$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "统一四组同类量的单位，保持前比后方向，得到没有单位的完整比值数组。",
+        "source_solution": "2km/40m=2000/40=50；3t/50kg=3000/50=60；100m²/4ha=100/40000=1/400；3h/15min=180/15=12。每组均以前量除后量，不能直接除未统一单位的数值。",
+        "unit_reason": "四组共同检验带单位的比的定义，以完整有序数组为响应，不按每个源分题造孤立填空。",
+        "concept_blocks": [10],
+        "limitations": ["识别数组不能证明独立写出所有统一单位的计算。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "2000/40=50，3000/50=60，100/40000=1/400，180/15=12。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "这四个值都是所求前比后的倒数。", "misconception": "统一单位后将后一个量除以前一个量，分别算40/2000、50/3000、40000/100、15/180。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "这些值来自不顾单位直接相除，不能作为量的比。", "misconception": "直接算2/40、3/50、100/4、3/15，漏掉长度、质量、面积、时间的各个换算因子。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "4公顷=40000平方米，所以第三个值应为1/400。", "misconception": "错将1公顷当100平方米，使用100/(4乘100)=1/4，其余换算正确。"}
+        ]
+      }
+    },
+    {
+      "id": "nautical-conversions",
+      "source_numbers": ["24"],
+      "view": {
+        "mode": "multiple",
+        "stem": "已知$1$海里$=1.852$公里。哪些换算正确？选出所有符合的项。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$3$海里$=5.556$公里。", "figure_ids": []},
+          {"id": "B", "text": "$12$海里$=22.224$公里。", "figure_ids": []},
+          {"id": "C", "text": "$200$海里$=370.4$公里。", "figure_ids": []},
+          {"id": "D", "text": "$1$公里$=\\frac{250}{463}$海里。", "figure_ids": []},
+          {"id": "E", "text": "$1$公里$=1.852$海里。", "figure_ids": []},
+          {"id": "F", "text": "$200$海里$=37.04$公里。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "应用同一海里到公里的比例作三次正向换算和一次逆向换算。",
+        "source_solution": "1.852=463/250。3海里=3乘1.852=5.556公里；12海里=22.224公里；200海里=370.4公里；1公里=1/1.852=250/463海里，约0.5399568海里。",
+        "unit_reason": "四个源请求共用同一比例及其倒数，用一题多选覆盖正向和逆向，不造四个独立算术点击。",
+        "concept_blocks": [7, 10],
+        "limitations": ["从候选等式识别换算不能证明独立写出正向、逆向的计算过程。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "B", "C", "D"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "3乘1.852=5.556。", "misconception": null},
+          {"option_id": "B", "truth": "correct", "derivation": "12乘1.852=22.224。", "misconception": null},
+          {"option_id": "C", "truth": "correct", "derivation": "200乘1.852=370.4。", "misconception": null},
+          {"option_id": "D", "truth": "correct", "derivation": "1除1.852=1除(463/250)=250/463。", "misconception": null},
+          {"option_id": "E", "truth": "incorrect", "derivation": "逆向换算系数是1/1.852，不是1.852。", "misconception": "调换等式两边的单位名称却原样保留数值，用正向因子乘1。"},
+          {"option_id": "F", "truth": "incorrect", "derivation": "37.04对应20海里而不是200海里。", "misconception": "先算2乘1.852=3.704，再只补一个零当成200，实际只完成20乘1.852。"}
+        ]
+      }
+    },
+    {
+      "id": "historical-length",
+      "source_numbers": ["25"],
+      "view": {
+        "mode": "single",
+        "stem": "已知$1$俄里$=1066.8$米。对任意非负数$a$，将$a$俄里换成公里，再将$1$公里换成俄里。哪一组结果正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$1.0668a$公里；$\\frac{2500}{2667}$俄里。", "figure_ids": []},
+          {"id": "B", "text": "$\\frac{a}{1.0668}$公里；$1.0668$俄里。", "figure_ids": []},
+          {"id": "C", "text": "$1066.8a$公里；$\\frac{1}{1066.8}$俄里。", "figure_ids": []},
+          {"id": "D", "text": "$1.0668a$公里；$1.0668$俄里。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "先把给出的历史长度单位转换到公里，得到带参数的正向式及逆向单位值。",
+        "source_solution": "1俄里=1066.8m=1.0668km=(2667/2500)km。因此a俄里=1.0668a公里；1公里=(2500/2667)俄里，约0.9373828271俄里。a=0仍给出0公里。只使用题面给定的历史换算值，不替换数据。",
+        "unit_reason": "参数正向式与单位逆向式是一组互逆关系，用完整配对单选保留双向转换。",
+        "concept_blocks": [7, 10],
+        "limitations": ["识别参数式不能证明独立列出带单位的代数推导。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "1066.8除1000=1.0668=2667/2500，正向乘a，逆向取倒数2500/2667。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "把两个换算方向倒置，非零a时正向式也一般不等于1.0668a。", "misconception": "把正向比例1.0668误用为除数，把逆向比例误用原乘数。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "1066.8是米数不是公里数，逆式也应以公里系数1.0668作除数。", "misconception": "完全漏掉米到公里的除1000，直接把1066.8m的数值当km并倒置这个错误系数。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "正向式正确，但1公里是2500/2667俄里，不能保留1.0668。", "misconception": "完成米到公里后，反向仅换单位名、不取正向系数的倒数。"}
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {"source_number": "18", "question_ids": ["unit-families"], "omitted_tasks": ["自行回忆并列举未提供的单位。"], "reason": "四类单位均被识别题覆盖；无提示列举仍保留在书写题。"},
+    {"source_number": "19", "question_ids": ["quantity-order"], "omitted_tasks": ["独立写出三组统一单位、排序的过程。", "从原书内部确认未定义符号q的含义。"], "reason": "三组排序均在新题面明确条件下覆盖；q采用公担约定并明示，原书中未定义符号的来源调查不被本题冒充解决。"},
+    {"source_number": "20", "question_ids": ["applications"], "omitted_tasks": ["独立构造并写出三种应用题。"], "reason": "识别三种合法运算情境只覆盖数学匹配，不等于完成原书的编题能力；书写题仍要求自行编题。"},
+    {"source_number": "21", "question_ids": ["measure-values"], "omitted_tasks": ["独立呈现毫米、米、公里的三次换算步骤。"], "reason": "三个结果作为同一量的完整有序表示被覆盖。"},
+    {"source_number": "22", "question_ids": ["unit-scale"], "omitted_tasks": ["独立推导数值与度量单位的反向关系。"], "reason": "两种相对于原单位的变化规律及零量情况均覆盖，推导留在书写题。"},
+    {"source_number": "23", "question_ids": ["quantity-ratios"], "omitted_tasks": ["独立写出四组统一单位的比值计算。"], "reason": "四个前比后的结果均覆盖，保留比值方向和面积单位差异。"},
+    {"source_number": "24", "question_ids": ["nautical-conversions"], "omitted_tasks": ["独立书写正向、逆向换算计算。"], "reason": "三次正向和一次逆向请求在同一多选中完整覆盖。"},
+    {"source_number": "25", "question_ids": ["historical-length"], "omitted_tasks": ["独立列出带参数和带单位的转换推导。"], "reason": "题面的原历史换算值、参数正向式和逆向系数均覆盖。"}
+  ]
+}

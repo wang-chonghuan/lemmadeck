@@ -132,11 +132,23 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
         band, structure=np.ones((1, max(2, int(0.7 * line_h))), dtype=bool)
     )
     rule_components, _ = ndimage.label(horizontal)
+    original_bounds = ndimage.find_objects(components)
     for bounds in ndimage.find_objects(rule_components):
         if bounds is None:
             continue
         rows, columns = bounds
+        original_ids = np.unique(components[bounds][horizontal[bounds]])
+        glyph_stroke = any(
+            original_bounds[component_id - 1] is not None
+            and 0.6 * line_h <= (
+                original_bounds[component_id - 1][0].stop
+                - original_bounds[component_id - 1][0].start
+            ) <= 1.8 * line_h
+            for component_id in original_ids if component_id
+        )
         if (
+            not glyph_stroke
+            and
             rows.stop - rows.start <= 0.25 * line_h
             and (
                 0.3 * height <= (rows.start + rows.stop) / 2 <= 0.7 * height
@@ -165,7 +177,43 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
             region[components[bounds] == component_id] = False
     counts = band.sum(axis=1)
     remaining = np.flatnonzero(counts > max(8, 0.25 * counts.max()))
+    glyph_rows = [
+        row
+        for bounds in ndimage.find_objects(ndimage.label(band)[0])
+        if bounds is not None
+        for rows, columns in [bounds]
+        if 0.6 * line_h <= rows.stop - rows.start <= 1.8 * line_h
+        and columns.stop - columns.start >= 0.2 * line_h
+        for row in (rows.start, rows.stop - 1)
+    ]
+    if glyph_rows:
+        remaining = np.union1d(remaining, glyph_rows)
     return not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h
+
+
+def _decorated_folio(ink: np.ndarray, a: int, b: int, glyph_h: float) -> bool:
+    if a < 0.9 * ink.shape[0] or b - a + 1 > glyph_h:
+        return False
+    band = ink[a:b + 1]
+    groups = _merge_close(
+        [
+            (x, y) for x, y in _runs(band.any(axis=0))
+            if y - x + 1 >= max(2, 0.1 * glyph_h)
+        ],
+        max(2, 0.45 * glyph_h),
+    )
+    if len(groups) != 3:
+        return False
+    heights = []
+    for x, y in groups:
+        rows = np.flatnonzero(band[:, x:y + 1].any(axis=1))
+        heights.append(int(rows[-1] - rows[0] + 1))
+    return (
+        max(heights[0], heights[2]) < 0.5 * glyph_h
+        and heights[1] >= 0.4 * glyph_h
+        and max(groups[0][1] - groups[0][0], groups[2][1] - groups[2][0])
+        < 0.5 * glyph_h
+    )
 
 
 def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
@@ -244,6 +292,9 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     for a, b in _merge_close(raw, 0):
         if merged:
             prev_a, prev_b = merged[-1]
+            if _decorated_folio(ink, a, b, glyph_h):
+                merged.append((a, b))
+                continue
             separate_tall_rows = (
                 min(prev_b - prev_a + 1, b - a + 1) >= 1.8 * glyph_h
                 and not _single_fraction_row(ink, prev_a, b, glyph_h)
@@ -257,6 +308,9 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     for a, b in merged:
         if joined:
             prev_a, prev_b = joined[-1]
+            if _decorated_folio(ink, a, b, glyph_h):
+                joined.append((a, b))
+                continue
             prev_x = np.flatnonzero(ink[prev_a:prev_b + 1].any(axis=0))
             next_x = np.flatnonzero(ink[a:b + 1].any(axis=0))
             widths = (prev_x[-1] - prev_x[0] + 1, next_x[-1] - next_x[0] + 1)
@@ -286,6 +340,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
                 and (
                     compact_fragment and aligned
                     and min(widths) / max(widths) >= 0.65
+                    and _single_fraction_row(ink, prev_a, b, min(line_h, glyph_h))
                     or fraction_spill
                 )
             ):
@@ -313,19 +368,29 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     for a, b in merged:
         band_h = b - a + 1
         count = 1
-        if a not in fraction_starts and band_h > 2.2 * typical_h and pitch > 0:
+        if (
+            a not in fraction_starts
+            and band_h > 2.0 * min(typical_h, glyph_h)
+            and pitch > 0
+        ):
             # Brace-connected rows are often shorter than an integral pitch
             # multiple. Count the nearest number of row centres, not a floor.
             count = max(2, int(round((band_h + typical_gap) / pitch)))
             core = counts[a:b + 1]
             strong_rows = _merge_close(
-                [(a + x, a + y) for x, y in _runs(core > 0.4 * core.max())],
+                [(a + x, a + y) for x, y in _runs(core > 0.12 * core.max())],
                 max(2, 0.25 * typical_h),
             )
             strong_rows = [
                 (x, y) for x, y in strong_rows if y - x + 1 >= 0.3 * typical_h
             ]
-            if count == 3 and len(strong_rows) == 2:
+            glyph_rows = [
+                (x, y)
+                for x, y in _row_fragments(ink[a:b + 1], content_w)
+                if y - x + 1 >= 0.6 * glyph_h
+            ]
+            count = max(count, min(len(strong_rows), len(glyph_rows)))
+            if count == 3 and len(strong_rows) == 2 and len(glyph_rows) < 3:
                 count = 2
             if (
                 count == 2 and _single_fraction_row(ink, a, b, typical_h)
@@ -379,6 +444,41 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         if not decoration:
             out.append((a, b))
     return out
+
+
+def counting_ink(ink: np.ndarray, exclusions: list[dict]) -> np.ndarray:
+    """Exclude explicitly inspected non-text objects from counting, not extraction."""
+    if not isinstance(exclusions, list):
+        raise ValueError("count_exclusions 必须是数组")
+    masked = ink.copy()
+    height, width = ink.shape
+    for entry in exclusions:
+        if not isinstance(entry, dict) or set(entry) != {"kind", "box", "reason"}:
+            raise ValueError("count_exclusions 每项必须有 kind、box、reason")
+        box = entry["box"]
+        if (
+            not isinstance(box, list) or len(box) != 4
+            or any(type(value) is not int for value in box)
+        ):
+            raise ValueError("count_exclusions.box 必须是四个整数")
+        x, y, w, h = box
+        if x < 0 or y < 0 or w <= 0 or h <= 0 or x + w > width or y + h > height:
+            raise ValueError("count_exclusions.box 超出原图")
+        if not isinstance(entry["reason"], str) or not entry["reason"].strip():
+            raise ValueError("count_exclusions.reason 不能为空")
+        if entry["kind"] == "scan-artifact":
+            if not (
+                x + w <= 0.05 * width or x >= 0.90 * width
+                or y + h <= 0.05 * height or y >= 0.95 * height
+            ):
+                raise ValueError("scan-artifact 必须位于页边无正文区域")
+        elif entry["kind"] == "separator-rule":
+            if h > 0.015 * height or w < 0.20 * width:
+                raise ValueError("separator-rule 必须是薄分隔横线")
+        else:
+            raise ValueError("count_exclusions.kind 只允许 scan-artifact / separator-rule")
+        masked[y:y + h, x:x + w] = False
+    return masked
 
 
 def snap(ink: np.ndarray, box: list[int]) -> tuple[list[int], dict]:

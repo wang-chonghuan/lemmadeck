@@ -1,0 +1,86 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "6-8g",
+  "page": 28,
+  "printed_page": 18,
+  "source": {
+    "pdf": "6-8g 苏联十年制学校数学教材 几何 六-八年级.pdf",
+    "pdf_sha256": "d06ea093886065380febda597331bb5d48c81303d955161f2f84a7f11c116e5c",
+    "pdf_page": 28
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1441,
+    "h": 2079,
+    "sha256": "a41b74af9011e8a93ba4d3fecae5e1e5ab9fbc5b3f5f70908a867ae46e3d551e"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "第49、51题题号后的升高圆标在扫描中呈实心，无法仅据此确定是印刷实点或墨填圆环；沿用度号转写，字形待核，已保留升高标存在这一事实。"
+  ],
+  "errata": [],
+  "printed_lines": 22,
+  "figures": [
+    {
+      "id": "fig-19",
+      "label": "图 19",
+      "box": [
+        474,
+        750,
+        531,
+        150
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+$AC$，或者$AD$，等等．因此，在射线$AB$的图上一般不特别标
+出点$B$（图18）．
+
+<!-- p -->
+以$A$为始点且包含点$B$的射线，记作$[AB)$．射线$AB$是
+直线$AB$的子集，即$[AB)\subset(AB)$．
+
+<!-- exhead -->
+问题和习题
+
+<!-- ex 48 -->
+48. 用符号$\in$和$\notin$写出图19上标出的点中哪些属于线段
+$AB$，哪些不属于线段$AB$．
+
+<!-- fig 图 19 box 474,750,531,150 -->
+![图 19](figures/fig-19.png)
+
+<!-- cap 图 19 -->
+图 19
+
+<!-- ex 49 -->
+49.° 点$A$和$C$的距离等于$10\mathrm{cm}$．如果1) $|AB|=7\mathrm{cm}$，$|BC|↵=3\mathrm{cm}$；2) $|AB|=2\mathrm{cm}$，$|BC|=9\mathrm{cm}$；3) $|AB|=↵6.5\mathrm{cm}$，$|BC|=3.5\mathrm{cm}$；4) $|AB|=|BC|$，点$B$属于线段↵$AC$吗？
+
+<!-- ex 50 -->
+50. 在下列条件下$A$、$B$和$C$三点属于同一线段吗？
+1) $|AB|=5\mathrm{cm}$，$|AC|=4\mathrm{cm}$，$|BC|=6\mathrm{cm}$；
+2) $|AB|=5\mathrm{cm}$，$|AC|=3\mathrm{cm}$，$|BC|=2\mathrm{cm}$；
+3) $|AB|=5\mathrm{cm}$，$|AC|=7\mathrm{cm}$，$|BC|=2\mathrm{cm}$．
+
+<!-- ex 51 -->
+51.° 1) 两条线段可以只有一个公共点吗？
+2) 两条线段可以只有两个公共点吗？
+
+<!-- ex 52 -->
+52. 已知$A$、$B$、$C$和$D$是四个不同的点．两个端点属于下列
+图形的不同线段有多少条？
+1) $\{A,B,C\}$；2) $\{A,B,C,D\}$．
+
+<!-- foot -->
+· 18 ·

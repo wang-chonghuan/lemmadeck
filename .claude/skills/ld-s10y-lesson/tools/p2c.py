@@ -323,6 +323,11 @@ def cmd_finalize(a) -> int:
     for f in figs:
         x, y, w, h = f["box"]
         masked[max(0, y):y + h, max(0, x):x + w] = False
+    exclusions = meta.get("count_exclusions", [])
+    try:
+        masked = layout.counting_ink(masked, exclusions)
+    except ValueError as error:
+        errors.append(str(error))
     cols = ink.any(axis=0).nonzero()[0]
     content_w = int(cols[-1] - cols[0] + 1) if cols.size else img.width
     want = len(layout.line_bands(masked, content_w))
@@ -391,6 +396,7 @@ def cmd_finalize(a) -> int:
                                 "figures": figs, "normalizations": applied,
                                 "unknown_chars": unknown, "katex_warnings": m_warn,
                                 "errata": len(meta.get("errata", [])),
+                                "count_exclusions": exclusions,
                                 "errors": errors})
 
     print(f"[finalize] {a.book} p{a.page:04d}: {len(blks)} 块 / {got} 行"
