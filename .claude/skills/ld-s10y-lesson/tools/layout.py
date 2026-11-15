@@ -209,6 +209,39 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     glyph_h = (
         float(np.percentile(glyph_heights, 75)) if len(glyph_heights) >= 3 else line_h
     )
+    # Emphasis dots below consecutive body glyphs can bridge printed rows.
+    # Remove only the isolated dot sequence from this counting-only mask.
+    for index, (a, b) in enumerate(raw):
+        if index == 0 or b - a + 1 > 0.3 * glyph_h:
+            continue
+        prev_a, prev_b = raw[index - 1]
+        if not (
+            0.75 * glyph_h <= prev_b - prev_a + 1 <= 1.35 * glyph_h
+            and 0 < a - prev_b <= 0.5 * glyph_h
+        ):
+            continue
+        dots = []
+        for component_id, bounds in enumerate(bounds_list, 1):
+            if bounds is None:
+                continue
+            rows, columns = bounds
+            if (
+                a - 1 <= rows.start and rows.stop - 1 <= b + 1
+                and 0.1 * glyph_h <= rows.stop - rows.start <= 0.3 * glyph_h
+                and 0.1 * glyph_h <= columns.stop - columns.start <= 0.3 * glyph_h
+            ):
+                dots.append((component_id, bounds))
+        centers = sorted((columns.start + columns.stop) / 2 for _, (_, columns) in dots)
+        if len(centers) < 3 or not all(
+            0.6 * glyph_h <= gap <= 1.5 * glyph_h for gap in np.diff(centers)
+        ):
+            continue
+        area = sum(np.count_nonzero(components[bounds] == cid) for cid, bounds in dots)
+        if area < 0.8 * np.count_nonzero(ink[max(0, a - 1):b + 2]):
+            continue
+        for component_id, bounds in dots:
+            region = ink[bounds]
+            region[components[bounds] == component_id] = False
     # Dense, joined shallow blemishes are not glyphs or thin fraction rules.
     # Remove them only when they occupy an otherwise isolated projection row.
     for component_id, bounds in enumerate(bounds_list, 1):

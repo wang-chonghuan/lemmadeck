@@ -13,6 +13,22 @@ import layout
 
 
 class LineBandsTest(unittest.TestCase):
+    def test_emphasis_dots_do_not_bridge_a_short_middle_body_row(self) -> None:
+        ink = np.zeros((800, 1400), dtype=bool)
+        for top, count in ((40, 24), (112, 24), (184, 3), (256, 24), (400, 24)):
+            for index in range(count):
+                left = 100 + index * 45
+                ink[top:top + 40, left:left + 36] = True
+                if top in (112, 184):
+                    ink[top + 49:top + 58, left + 14:left + 23] = True
+        original = ink.copy()
+
+        bands = layout.line_bands(ink, content_w=1400)
+
+        self.assertEqual(len(bands), 5)
+        self.assertIn((184, 223), bands)
+        self.assertTrue(np.array_equal(ink, original))
+
     def test_sparse_enumerator_on_a_wide_page(self) -> None:
         ink = np.zeros((500, 1473), dtype=bool)
         for top in (40, 110, 180, 250):
