@@ -334,6 +334,37 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
                 )
                 target[collection][insertion:insertion] = moving
 
+    # Wrapped captions can fall beyond a heading even when their figure does not.
+    for source_index, lesson in enumerate(lessons):
+        for caption in list(lesson["blocks"]):
+            if caption["kind"] != "cap":
+                continue
+            numbers = set(FIGREF.findall(
+                " ".join(filter(None, (caption.get("label"), B.text_of(caption))))
+            ))
+            users = set().union(*(prose_users.get(number, set()) for number in numbers))
+            if len(users) != 1 or source_index in users:
+                continue
+            target = lessons[next(iter(users))]
+            figures = [
+                block for block in target["blocks"]
+                if block["kind"] == "fig"
+                and not block.get("owner_exercise")
+                and numbers <= set(FIGREF.findall(block.get("label") or ""))
+                and block.get("page") == caption.get("page")
+            ]
+            if len(figures) != 1:
+                continue
+            for collection in ("blocks", "prose"):
+                lesson[collection] = [
+                    block for block in lesson[collection] if block is not caption
+                ]
+                insertion = next(
+                    index for index, block in enumerate(target[collection])
+                    if block is figures[0]
+                ) + 1
+                target[collection].insert(insertion, caption)
+
     referenced = set()
     for lesson in lessons:
         exercises_by_number: dict[str, list[dict]] = {}
