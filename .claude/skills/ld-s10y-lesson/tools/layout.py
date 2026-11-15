@@ -134,7 +134,7 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
             and rows.stop - rows.start <= 0.2 * line_h
             and 0.3 * height <= (rows.start + rows.stop) / 2 <= 0.7 * height
         ):
-            rules.append((columns.start, columns.stop - 1))
+            rules.append((columns.start, columns.stop - 1, (rows.start + rows.stop) / 2))
     # A short second CJK line can vanish under a long first line's ink threshold.
     # Preserve independently visible body-glyph rows before masking rule columns.
     text_rows = [
@@ -164,10 +164,10 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
                 and 0.2 * height <= (rows.start + rows.stop) / 2 <= 0.8 * height
             )
         ):
-            rules.append((columns.start, columns.stop - 1))
+            rules.append((columns.start, columns.stop - 1, (rows.start + rows.stop) / 2))
     if not rules:
         return False
-    for left, right in rules:
+    for left, right, _ in rules:
         margin = int(0.5 * line_h)
         band[:, max(0, left - margin):min(band.shape[1], right + margin + 1)] = False
     components, _ = ndimage.label(band)
@@ -183,7 +183,14 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
             region[components[bounds] == component_id] = False
     counts = band.sum(axis=1)
     remaining = np.flatnonzero(counts > max(8, 0.25 * counts.max()))
-    return not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h
+    # Remaining prose must belong beside the fraction, not solely below it.
+    return not remaining.size or (
+        remaining[-1] - remaining[0] + 1 <= 2.0 * line_h
+        and any(
+            remaining[0] - line_h <= center <= remaining[-1] + line_h
+            for _, _, center in rules
+        )
+    )
 
 
 def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
@@ -232,9 +239,23 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             ):
                 dots.append((component_id, bounds))
         centers = sorted((columns.start + columns.stop) / 2 for _, (_, columns) in dots)
-        if len(centers) < 3 or not all(
+        regular_sequence = len(centers) >= 3 and all(
             0.6 * glyph_h <= gap <= 1.5 * glyph_h for gap in np.diff(centers)
-        ):
+        )
+        # A two-glyph row, or a missing dot in a longer sequence, still has
+        # independently visible body glyphs directly above its emphasis dots.
+        body_columns = [
+            columns for bounds in bounds_list if bounds is not None
+            for rows, columns in [bounds]
+            if prev_a - 1 <= rows.start and rows.stop - 1 <= prev_b + 1
+            and 0.1 * glyph_h <= rows.stop - rows.start <= 1.35 * glyph_h
+            and 0.1 * glyph_h <= columns.stop - columns.start <= 1.3 * glyph_h
+        ]
+        aligned_sequence = len(centers) >= 2 and all(
+            any(columns.start <= center <= columns.stop for columns in body_columns)
+            for center in centers
+        )
+        if not (regular_sequence or aligned_sequence):
             continue
         area = sum(np.count_nonzero(components[bounds] == cid) for cid, bounds in dots)
         if area < 0.8 * np.count_nonzero(ink[max(0, a - 1):b + 2]):
@@ -296,10 +317,30 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         if merged:
             prev_a, prev_b = merged[-1]
             separate_tall_rows = (
-                min(prev_b - prev_a + 1, b - a + 1) >= 1.8 * glyph_h
+                (
+                    min(prev_b - prev_a + 1, b - a + 1) >= 1.8 * glyph_h
+                    or prev_b - prev_a + 1 >= 1.8 * glyph_h
+                    and 0.6 * glyph_h <= b - a + 1 <= 1.35 * glyph_h
+                    and _single_fraction_row(ink, prev_a, prev_b, glyph_h)
+                )
                 and not _single_fraction_row(ink, prev_a, b, glyph_h)
             )
-            if a - prev_b <= merge_gap and not separate_tall_rows:
+            separate_offset_rows = False
+            if (
+                a - prev_b <= merge_gap
+                and 0.6 * glyph_h <= min(prev_b - prev_a + 1, b - a + 1)
+                and max(prev_b - prev_a + 1, b - a + 1) <= 1.35 * glyph_h
+            ):
+                prev_x = np.flatnonzero(ink[prev_a:prev_b + 1].any(axis=0))
+                next_x = np.flatnonzero(ink[a:b + 1].any(axis=0))
+                # Complete, horizontally disjoint rows are not split glyph
+                # strokes, even when a smaller page number has a close gap.
+                separate_offset_rows = prev_x[-1] < next_x[0] or next_x[-1] < prev_x[0]
+            if (
+                a - prev_b <= merge_gap
+                and not separate_tall_rows
+                and not separate_offset_rows
+            ):
                 merged[-1] = (prev_a, b)
                 continue
         merged.append((a, b))
