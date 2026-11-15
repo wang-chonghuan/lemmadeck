@@ -244,8 +244,15 @@ for (const lid of lessonDirs) {
     const prefix = printedNumber == null ? null : e.text.match(/^\s*(\d+)([.°*])\s*/);
     const hasPrintedPrefix = prefix && prefix[1] === String(printedNumber);
     const marker = hasPrintedPrefix && prefix[2] !== "." ? esc(prefix[2]) : "";
-    const text = hasPrintedPrefix ? e.text.slice(prefix[0].length) : e.text;
-    out += `<li class="ex" id="ex-${esc(e.number)}"><div class="no">${sourceNumber}${marker}</div>`
+    const annotatedPrefix = printedNumber == null ? null
+      : e.text.match(/^\s*\$(\d+)\^\{(\\circ|\*)\}\$(\*)?[.．]\s*/);
+    const hasAnnotatedPrefix = annotatedPrefix && annotatedPrefix[1] === String(printedNumber);
+    const numberLabel = hasAnnotatedPrefix
+      ? inline(`$${annotatedPrefix[1]}^{${annotatedPrefix[2]}}$${annotatedPrefix[3] || ""}.`)
+      : `${sourceNumber}${marker}`;
+    const text = hasAnnotatedPrefix ? e.text.slice(annotatedPrefix[0].length)
+      : hasPrintedPrefix ? e.text.slice(prefix[0].length) : e.text;
+    out += `<li class="ex" id="ex-${esc(e.number)}"><div class="no">${numberLabel}</div>`
       + `<div class="body">${inline(text)}${figs}</div></li>`;
   }
   if (out) out += "</ol>";

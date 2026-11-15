@@ -325,12 +325,23 @@ def cmd_finalize(a) -> int:
                     neighbours[figs[j]["id"]].append(figs[i]["id"])
     for f in figs:
         exclude = None
+        if f["id"] not in owned_ink:
+            owned_ink[f["id"]] = layout.figure_ink(ink, f.get("from", f["box"]))
         if neighbours[f["id"]]:
             exclude = owned_ink[neighbours[f["id"]][0]].copy()
             for neighbour in neighbours[f["id"]][1:]:
                 exclude |= owned_ink[neighbour]
             # Remove neighbour antialiasing without changing any owned ink pixel.
             exclude = ndimage.binary_dilation(exclude, iterations=2) & ~owned_ink[f["id"]]
+            f["ownership"] = {
+                "method": "snapped-components",
+                "neighbours": neighbours[f["id"]],
+                "ink_pixels": int(owned_ink[f["id"]].sum()),
+                "ink_sha256": hashlib.sha256(owned_ink[f["id"]].tobytes()).hexdigest(),
+            }
+        foreign = layout.figure_crop_exclusion(ink, owned_ink[f["id"]], f["box"])
+        if foreign is not None:
+            exclude = foreign if exclude is None else exclude | foreign
             f["ownership"] = {
                 "method": "snapped-components",
                 "neighbours": neighbours[f["id"]],

@@ -129,7 +129,10 @@ class InterleavedFigureCropsTests(unittest.TestCase):
                         slice(y - 12, y + height + 12),
                         slice(x - 12, x + width + 12),
                     )
-                    expected_page = values.copy()
+                    expected_page = np.full_like(values, 255)
+                    expected_page[y:y + height, x:x + width] = values[
+                        y:y + height, x:x + width
+                    ]
                     expected_page[expected_exclusion] = 255
                     with Image.open(target) as image:
                         self.assertEqual(image.mode, mode)
@@ -185,7 +188,7 @@ class InterleavedFigureCropsTests(unittest.TestCase):
         )
         self.assertEqual(layout.snap(ink, [0, 0, 60, 100])[0], [30, 30, 10, 10])
 
-    def test_normal_rectangle_crop_has_unchanged_pixels_and_png_bytes(self):
+    def test_normal_rectangle_crop_preserves_core_with_white_padding(self):
         yy, xx = np.indices((120, 140))
         gray = ((3 * yy + 5 * xx) % 256).astype(np.uint8)
         for mode in ("L", "RGB", "RGBA"):
@@ -197,14 +200,18 @@ class InterleavedFigureCropsTests(unittest.TestCase):
             source = self.root / f"normal-{mode}.png"
             Image.fromarray(values).save(source)
             source_bytes = source.read_bytes()
-            # Explicit old rectangular bounds, including clipped padding.
+            # The original core is unchanged; clipped padding is white.
             for name, box, bounds in (
                 ("inner", [18, 20, 61, 71], (6, 8, 91, 103)),
                 ("edge", [2, 3, 40, 30], (0, 0, 54, 45)),
             ):
                 with self.subTest(mode=mode, crop=name):
                     left, top, right, bottom = bounds
-                    expected = values[top:bottom, left:right]
+                    x, y, width, height = box
+                    expected = np.full_like(values[top:bottom, left:right], 255)
+                    expected[y - top:y - top + height, x - left:x - left + width] = (
+                        values[y:y + height, x:x + width]
+                    )
                     baseline = self.root / f"baseline-{mode}-{name}.png"
                     Image.fromarray(expected).save(baseline)
                     target = self.root / f"normal-{mode}-{name}.png"

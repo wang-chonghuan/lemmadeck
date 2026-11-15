@@ -393,9 +393,20 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     for a, b in merged:
         band_h = b - a + 1
         count = 1
+        glyph_rows = [
+            (x, y)
+            for x, y in _row_fragments(ink[a:b + 1], content_w)
+            if y - x + 1 >= 0.6 * glyph_h
+        ]
+        compact_text_rows = len(glyph_rows) >= 2 and all(
+            y - x + 1 <= 1.5 * glyph_h for x, y in glyph_rows
+        )
         if (
             a not in fraction_starts
-            and band_h > 2.0 * min(typical_h, glyph_h)
+            and (
+                band_h > 2.0 * min(typical_h, glyph_h)
+                or compact_text_rows
+            )
             and pitch > 0
         ):
             # Brace-connected rows are often shorter than an integral pitch
@@ -409,12 +420,10 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             strong_rows = [
                 (x, y) for x, y in strong_rows if y - x + 1 >= 0.3 * typical_h
             ]
-            glyph_rows = [
-                (x, y)
-                for x, y in _row_fragments(ink[a:b + 1], content_w)
-                if y - x + 1 >= 0.6 * glyph_h
-            ]
             count = max(count, min(len(strong_rows), len(glyph_rows)))
+            if compact_text_rows:
+                # Compact text rows need not share the body's line pitch.
+                count = max(count, len(glyph_rows))
             if count == 3 and len(strong_rows) == 2 and len(glyph_rows) < 3:
                 count = 2
             if (
@@ -461,10 +470,27 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             ]
             # A short final number can be lower than the Chinese body glyphs.
             short_text = bool(glyphs) and band_w >= 0.8 * typical_h
+        folio = False
+        if thin and a >= 0.9 * page_h:
+            # A narrow folio digit can extend beyond its projected dot row.
+            folio_rows = [
+                rows for bounds in bounds_list if bounds is not None
+                for rows, columns in [bounds]
+                if rows.start <= b and a < rows.stop
+                and columns.stop - columns.start >= max(2, 0.1 * glyph_h)
+            ]
+            if folio_rows:
+                folio = _decorated_folio(
+                    ink,
+                    min(rows.start for rows in folio_rows),
+                    max(rows.stop - 1 for rows in folio_rows),
+                    glyph_h,
+                )
         decoration = edge_border or (
             thin
             and (band_w > 0.3 * content_w or band_w < 0.05 * content_w)
             and not short_text
+            and not folio
         )
         if not decoration:
             out.append((a, b))
@@ -532,6 +558,17 @@ def figure_ink(ink: np.ndarray, box: list[int]) -> np.ndarray:
     """Use the same component ownership as snapping, not the rectangular envelope."""
     labels, selected, _ = _figure_components(ink, box)
     return np.isin(labels, selected)
+
+
+def figure_crop_exclusion(
+    ink: np.ndarray, owned: np.ndarray, box: list[int]
+) -> np.ndarray | None:
+    """Remove foreign component edges captured by a snapped figure envelope."""
+    x, y, w, h = box
+    foreign = ink & ~owned
+    if not foreign[max(0, y):y + h, max(0, x):x + w].any():
+        return None
+    return ndimage.binary_dilation(foreign, iterations=2) & ~owned
 
 
 def snap(ink: np.ndarray, box: list[int]) -> tuple[list[int], dict]:
