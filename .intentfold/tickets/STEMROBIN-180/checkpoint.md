@@ -1,6 +1,114 @@
 # 生产检查点
 
-## 第七批待提交
+## 第八批在途
+
+暂存范围检查首次发现s4结构执行日志的seed.path仍指向scratch，
+未改日志，原字节移回tmp/choices/phy6-c4-s4/retained-structural-check-1.json；
+与作者原日志同SHA c01d006d98b9a3cb728b687025d34283c69593f2e086e174f2c06a1ad5028dfc。
+正式seed/draft/review及文字审查未改，无题目/显示重查。
+修正范围后检查PASS：160文件，无env/app/依赖/108/结构资源scratch依赖，
+三份ready答案和两个PASS choice-set；source141+及后续现代稿排除。
+
+2026-11-15 22:08:28 UTC：s2三选择题12项（single1/multiple2）完整
+先行源解→纯view盲判冻结→作者推导/干扰项/覆盖独审PASS；
+带review validate恰一次退出0并持久保留。新增圆活塞直径比2是明确
+测试条件，不冒充原图测量。含s4五题20项，本批共8选择题32项。
+官方render三课退出0；首次用本checkout不存在的venv路径退出127，
+未运行渲染器，改用已存在的共享解释器后一次实际render成功。
+现有隔离headless检查恰一次16页面PASS，无重跑已有批次/图审批。
+实际查看两课全部手机选项、s4书写末端108/109及完整手机106装置；
+长截图按现有像素分三段查看，没有新浏览器检查。
+全部选项/公式/图/末端可达，无横向整页溢出或内部键泄漏。
+手机100宽358/字23.49375px，105字21.25625px，
+106最小字19.01875px；109书写宽310.015625/字17.4380984px，
+choice宽358/字20.1375px。无文字104/108不伪造minText值。
+本批墙钟2304秒含并行后续任务；新增图片调用0、token/费用未知。
+显示证据tmp/offline-evidence-phy6-c4-s2-phy6-c4-s3-t1-phy6-c4-s4/report.json。
+commit/push待执行，不算正式handoff。下一批继续，7p/8p未开始。
+
+2026-11-15接续：s2四份完整答案与先行源解/最终题面独立比较PASS。
+作者另给hash-bound amendment只撤q1多余historical_entities声明；
+帕斯卡不在profile旧文化禁词或虚构人名中，本题不是科学史例外。
+冻结原稿及字面不匹配证据完整保留，所有解答/notes/parts值未改；
+现有scratch搬运helper接单课shape并在内存应用唯一声明撤除，
+官方prepare/retain/finalize退出0，auto0/ungraded4。本批11答案全ready。
+s4五选择题20项（multiple3/single2）main先源解→纯view→作者内部
+逐项独审PASS，带review validate恰一次退出0并持久保留；
+s2选择题仍作者在途。本批显示检查/commit/push未执行。
+s5/s6文字作者冻结，Wegener完整独审在途；110/111/112另交Bacon
+figure作者，s7文字作者继续。141–145独审及146–150源作者继续，
+未批准源不装订、下一批不计为本批完成。
+
+2026-11-15接续：109 main完整原图/c4-s4全文七题/全部spec关系及306/640
+三主题六样本独审PASS，record_review与批准字节晋升退出0。107/108原审批
+复用。通过单独binding副本保留作者冻结，s4正式adapt-finalizePASS；
+第一次遗漏自定义`--work`退出1，尚未读模板，修正参数后退出0，如实留记。
+s4全部七答案与先行源解、最终文字及实图独立比较PASS，官方prepare→
+保留作者键→finalize退出0，auto0/ungraded7，报告answer-key-review-c4-s4.md。
+
+c4-s2十四块/四题文字独审PASS，首轮遗漏重复F1/S1的唯一修复及拒绝证据
+保留；文字冻结未经main改写。100 main完整原图/全文四题/全部spec及306/
+640三主题六样本独审PASS，六标签手机20.08125px；sole scratch marker
+assertion修复消耗1/1，spec/SVG未变。100晋升和binding副本adapt-finalize
+均退出0，四题答案作者在途，main先行源解未披露。
+
+104/105同一次跨压缩main独审已完成，剩余accent/print样本实际打开，全文/
+原图/全部映射及可见引线、弯气路、五气流两运动箭头PASS。105四标签手机
+18.16875px；104无文字minText不适用。两图sole主题binding helper修复均
+1/1用尽，图稿/输出未改，record与晋升退出0。106完整原图/全文零题/
+98对象92断言/气路开口与连杆/制动块间隙/六实际样本独审PASS，手机最小
+文字16.25625px，sole文字锚点修复保留。record/晋升退出0，无重渲染。
+只读jq错误shape退出5后正确读取现有measurements，不算新检查或修图。
+补充阅读c4-s3-t1用binding副本正式adapt-finalizePASS，零答案finalize
+auto0/ungraded0，原书零题不强编选择题。本批三课正文/七图已定稿，
+11答案中7ready；s2/s4选择题各作者在途，显示检查/commit/push尚未执行。
+
+main先行全文21原题/原图110–122及密度表求解冻结于answer-source-c4-s5-s7.md，
+不披露给作者；s5/s6新独立scratch文字作者在途。源141–145作者/独审继续，
+未审源不装订，不改caption定义传播app/schema/display，不计为本批完成。
+费用/token仍未知，无新增图服务调用、生产写库、全项目test/build或handoff。
+
+2026-11-15接续：131/133/135受影响独审PASS，132/134有效审批复用，
+正确filtered through135官方assemble→116现有SVG同步→必需再assemble
+均退出0，晋升退出0，源124有效页/58源对象/252原题/118编号图。
+首次误把artifact root传给`--books`而非`--root`，实际退出1并产生24编号
+错误，错误执行读入108和136–140，不能算批准。assembler失败前已写结果；
+main将自己错误执行产生的book/lessons/figures整个按原字节保留到
+`.tmp/ld-s10y-lesson/approved-through-135/failure-01-wrong-books-flag/`，
+再从执行前cohort快照恢复这三处自身输出，未改页/edition/他人内容。
+失败说明和恢复哈希保留，随后正确命令保留`--books`的源manifest默认值。
+
+136唯一公式断行修复已官方finalize一次，Sagan受影响独审PASS：
+只将`$P=`后的物理换行变为显式`↵`，8块19印刷行、audit/图字节不变。
+137–140和7裁图有效完整审批复用；filtered through140官方assemble、
+123现有SVG同步后必需再assemble均退出0，晋升退出0。权威源现129
+有效页/59源对象/261原题/125编号图；只余p0107#7，108仍硬排除。
+131+/140源对象数不是现代完整课数。141–145已另派draft-only作者及独审。
+
+107/108 main完整原图、c4-s4全文七题、全部spec映射及306/640三主题实际
+样本独审PASS，record_review退出0并按批准字节晋升。跨压缩接续同一次
+实质审查，没有重渲染。108重物悬于折面前方、尖端离开前底边，后边交叠
+为透视遮挡，不声称与底座接触；无文字minText不适用。两图首合同FAIL
+及唯一编码修复保留，1/1用尽。109/104/105/106仍作者在途，无整课晋升。
+c4-s2文字冻结已交Wegener独审，100另交Volta作图；main先行源解不披露。
+caption拼接补丁已用于批准源assembly，8项focused PASS不重跑；fig99/102
+两完整题注/四片段/六印刷行/八定义的下游丢失仍未解决，c4-s1/c4-s3不
+计完整，不暗改app/schema/display。无生产写库、全项目test/build或handoff。
+
+2026-11-15 21:30:04 UTC，继续c4-s2/c4-s4及气动机械补充阅读；
+c4-s2文字作者在途，c4-s4图107/108作者在途，109另行委托。
+c4-s3-t1/c4-s4已冻结文字独审复用，未finalize或计为完整课。
+131–135批准页准备隔离装订；136–140独审尚在途，141+保持未派。
+图99/102题注定义的传播问题继续隔离，不改app/schema/display。
+
+## 第七批已提交推送
+
+2026-11-15，第七批283文件提交
+`94dd5ddb67bfb5fb282e4e95ab4267fb64b0b867`，
+push实际退出0，已推送同一origin/codex/STEMROBIN-180-textbooks。
+三课、14答案、11选择题46项及18唯一离线显示单位已完成。
+提交排除108、131+未装订页、未完成caption工具和后续现代草稿。
+不是正式handoff，继续第八批。以下保留提交前检查记录。
 
 2026-11-15 21:24:37 UTC，s28/s31/s32全部14份答案ready（auto0/ungraded14），
 s31六选择题25项完整独立源解→纯view→作者键PASS，带review validate恰一次

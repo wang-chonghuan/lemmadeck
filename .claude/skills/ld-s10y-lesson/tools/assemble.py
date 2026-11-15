@@ -50,16 +50,45 @@ def load_stream(book: Path) -> list[dict]:
 
 
 def merge_across_pages(stream: list[dict]) -> tuple[list[dict], list[str]]:
-    """open 的块与下一页 cont 的块接成一个对象。文本一个字不改，只是接上。"""
+    """open 的块与后续 cont 接成一个对象，跨页或同页均可。文本一个字不改。"""
     # 页码、插图、图题都可能夹在一个对象的两半之间（文字环绕的插图、页脚），
     # 配对时要当它们不存在——否则一段被插图打断的正文就永远接不上。
     TRANSPARENT = ("foot", "fig", "cap")
     out, warn = [], []
-    for b in stream:
-        prev = next((x for x in reversed(out) if x["kind"] not in TRANSPARENT), None)
-        if b["kind"] in TRANSPARENT:
-            out.append(dict(b))
+    caption = None
+
+    def merge_continuation(prev: dict, b: dict) -> None:
+        prev["lines"].extend(b["lines"])
+        prev["open"] = b.get("open", False)
+        prev["spans"] = (prev.get("spans") or [prev["ref"]]) + (
+            b.get("spans") or [b["ref"]])
+
+    for source in stream:
+        b = dict(source)
+        b["lines"] = list(source["lines"])
+        if source.get("spans") is not None:
+            b["spans"] = list(source["spans"])
+        # 图题自身可续接，但对正文/习题的配对仍保持透明。
+        if b["kind"] == "cap":
+            if b.get("cont"):
+                if caption is None or not caption.get("open"):
+                    warn.append(f"{b['ref']}: 图题标了 cont，但上一图题没标 open")
+                elif any(caption.get(field) != b.get(field)
+                         for field in ("label", "owner_lesson", "owner_exercise")):
+                    warn.append(f"{b['ref']}: 图题 cont 接不上——"
+                                f"标签或归属与 {caption['ref']} 不一致")
+                else:
+                    merge_continuation(caption, b)
+                    continue
+            out.append(b)
+            caption = b
             continue
+        if b["kind"] in TRANSPARENT:
+            out.append(b)
+            continue
+        # 源文本块是图题边界，即使本块随后被正文/习题续接吞并。
+        caption = None
+        prev = next((x for x in reversed(out) if x["kind"] not in TRANSPARENT), None)
         if b.get("cont"):
             if prev is None or not prev.get("open"):
                 warn.append(f"{b['ref']}: 标了 cont，但上一块没标 open")
@@ -68,13 +97,11 @@ def merge_across_pages(stream: list[dict]) -> tuple[list[dict], list[str]]:
                 warn.append(f"{b['ref']}: cont 接不上——上块是 {prev['kind']}"
                             f"{prev.get('label') or ''}，本块是 {b['kind']}{b.get('label') or ''}")
             else:
-                prev["lines"] += b["lines"]
-                prev["open"] = b.get("open", False)
-                prev.setdefault("spans", [prev["ref"]]).append(b["ref"])
+                merge_continuation(prev, b)
                 continue
         elif prev is not None and prev.get("open") and prev["page"] != b["page"]:
             warn.append(f"{prev['ref']}: 标了 open，但下一页首块没标 cont")
-        out.append(dict(b))
+        out.append(b)
     return out, warn
 
 
