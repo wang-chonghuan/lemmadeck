@@ -178,6 +178,60 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
     return not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h
 
 
+def _connected_radical_row(
+    ink: np.ndarray, top: int, cap_bottom: int, row_top: int, bottom: int,
+    glyph_h: float,
+) -> bool:
+    """Join a thin radical cap only through its inclined, connected stem."""
+    if (
+        cap_bottom - top + 1 > 0.35 * glyph_h
+        or bottom - row_top + 1 < 0.6 * glyph_h
+        or bottom - top + 1 > 2.2 * glyph_h
+        or row_top - cap_bottom < 3
+    ):
+        return False
+    band = ink[top:bottom + 1]
+    labels, _ = ndimage.label(band)
+    cap_height = cap_bottom - top + 1
+    main_start = row_top - top
+    for component_id, bounds in enumerate(ndimage.find_objects(labels), 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        if rows.start >= cap_height or rows.stop <= main_start:
+            continue
+        component = labels[:, columns] == component_id
+        bridge = component[cap_height:main_start]
+        widths = bridge.sum(axis=1)
+        if not widths.size or widths.min() == 0 or widths.max() > max(3, 0.2 * glyph_h):
+            continue
+        # A radical descends leftward; a vertical rule linking rows does not.
+        first_x = np.flatnonzero(bridge[0]).mean()
+        last_x = np.flatnonzero(bridge[-1]).mean()
+        if first_x - last_x < 0.1 * glyph_h:
+            continue
+        cap = ndimage.binary_opening(
+            component[:cap_height],
+            structure=np.ones((1, max(2, int(0.7 * glyph_h))), dtype=bool),
+        )
+        cap_labels, _ = ndimage.label(cap)
+        lower_x = np.flatnonzero(component[main_start:].any(axis=0))
+        for cap_bounds in ndimage.find_objects(cap_labels):
+            if cap_bounds is None:
+                continue
+            cap_rows, cap_columns = cap_bounds
+            if (
+                cap_rows.start <= 0.15 * glyph_h
+                and cap_rows.stop - cap_rows.start <= 0.2 * glyph_h
+                and cap_columns.stop - cap_columns.start >= 0.7 * glyph_h
+                and first_x <= cap_columns.start + 0.15 * glyph_h
+                and lower_x.size
+                and lower_x[0] <= cap_columns.start - 0.4 * glyph_h
+            ):
+                return True
+    return False
+
+
 def line_bands(
     ink: np.ndarray, content_w: int, *, edge_margin_px: int | None = None
 ) -> list[tuple[int, int]]:
@@ -282,9 +336,14 @@ def line_bands(
         merged.append((a, b))
     joined = []
     fraction_starts = set()
+    radical_starts = set()
     for a, b in merged:
         if joined:
             prev_a, prev_b = joined[-1]
+            if _connected_radical_row(ink, prev_a, prev_b, a, b, glyph_h):
+                joined[-1] = (prev_a, b)
+                radical_starts.add(prev_a)
+                continue
             prev_x = np.flatnonzero(ink[prev_a:prev_b + 1].any(axis=0))
             next_x = np.flatnonzero(ink[a:b + 1].any(axis=0))
             widths = (prev_x[-1] - prev_x[0] + 1, next_x[-1] - next_x[0] + 1)
@@ -341,7 +400,10 @@ def line_bands(
     for a, b in merged:
         band_h = b - a + 1
         count = 1
-        if a not in fraction_starts and band_h > 1.8 * typical_h and pitch > 0:
+        if (
+            a not in fraction_starts and a not in radical_starts
+            and band_h > 1.8 * typical_h and pitch > 0
+        ):
             # Brace-connected rows are often shorter than an integral pitch
             # multiple. Count the nearest number of row centres, not a floor.
             count = max(2, int(round((band_h + typical_gap) / pitch)))

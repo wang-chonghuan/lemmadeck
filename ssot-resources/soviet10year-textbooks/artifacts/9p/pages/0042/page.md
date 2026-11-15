@@ -29,7 +29,14 @@
     "摩尔体积下标依放大原印暂转写为0与м；后一个字形的西里尔/拉丁身份不能仅凭字形确定，保持识别未决，不用物理常识替代像素。",
     "首块接第41页“所以，”；末段在参量括号内止于p、V，需要第43页接续。"
   ],
-  "errata": [],
+  "errata": [
+    {
+      "id": "p0042-avogadro-year",
+      "block": "p0042#4",
+      "original": "$1881$",
+      "reason": "源审已确认原印数字1881，忠实正文不改。Avogadro原论文重印本列为Journal de Physique 73, 58-76 (1811)，第一节提出等体积气体含相同分子数的假说；现代层更正年代为1811。2026-11-15通过cloak-fetch实际读取https://web.lemoyne.edu/giunta/avogadro.html，HTTP 200；该段是原论文的重印译文而非根据预期猜改。"
+    }
+  ],
   "printed_lines": 23,
   "figures": [],
   "provenance": {
