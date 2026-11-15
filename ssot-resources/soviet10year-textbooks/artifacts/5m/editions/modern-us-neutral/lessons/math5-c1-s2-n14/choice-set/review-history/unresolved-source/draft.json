@@ -1,0 +1,909 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "3de56d80b98058895009645f32d7215572bbf6027dbc5d0a49f7225f0befda9e",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "nine-point-placement",
+      "source_numbers": ["220"],
+      "view": {
+        "mode": "single",
+        "stem": "在以0为原点、向右为正方向的数轴上，标出$0,1,3,-5,8,-7,-2,-10,-3$这九个数。每个选项给出从左到右的点标签，以及这个次序下八段相邻距离（单位长度）。将标签0的点固定在原点，哪一套位置规格全部正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "左至右：$-2,-3,-5,-7,-10,0,1,3,8$；相邻距离：$1,2,2,3,10,1,2,5$。", "figure_ids": []},
+          {"id": "B", "text": "左至右：$8,3,1,0,-2,-3,-5,-7,-10$；相邻距离：$5,2,1,2,1,2,2,3$。", "figure_ids": []},
+          {"id": "C", "text": "左至右：$-10,-7,-5,-3,-2,0,1,3,8$；相邻距离：$3,2,2,1,2,1,2,5$。", "figure_ids": []},
+          {"id": "D", "text": "左至右：$-10,-7,-5,-3,-2,0,1,3,8$；相邻距离：$1,1,1,1,1,1,1,1$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "判断九个点的完整左右位置次序和全部相邻区间长度，使用固定原点检验尺度而非照抄输入标签。",
+        "source_solution": "从左到右为-10,-7,-5,-3,-2,0,1,3,8；相邻右坐标减左坐标得3,2,2,1,2,1,2,5。固定0点后这些次序与长度唯一确定九点位置。",
+        "unit_reason": "一项完整位置规格要求排序并计算八个距离；同源十二对比较另检验原比较任务，不给出本题的完整位置与间隔规格。",
+        "concept_blocks": [4],
+        "limitations": ["完整位置与相邻距离的文字规格识别仍未检验实际绘制统一尺度的数轴和标注九点的生产技能。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "负数组按绝对值递增误排为-2,-3,-5,-7,-10，随后接0及升序正数；对这个错误名单逐对计算绝对差，得到1,2,2,3,10,1,2,5。负数的位置次序违反向右递增。", "misconception": "把负数内部的绝对值递增次序当作从左到右次序，再用绝对差设置间距。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "把九标签按数值降序从左至右排列，再取相邻绝对差，得到8,3,1,0,-2,-3,-5,-7,-10及5,2,1,2,1,2,2,3；方向与明确的正方向相反。", "misconception": "误把数轴设为从左到右递减。"},
+          {"option_id": "C", "truth": "correct", "derivation": "负数按-10<-7<-5<-3<-2排在0左方，正数1<3<8在右；各右坐标减左坐标依次3,2,2,1,2,1,2,5，固定0后完整确定各点。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "九标签排序正确，但按名单序号而非数值每相邻点画一个单位，生成八个1；例如3和8间的距离被缩成1而非5。", "misconception": "将相邻标签一律等距，忽略原数值差的尺度。"}
+        ]
+      }
+    },
+    {
+      "id": "twelve-integer-comparisons",
+      "source_numbers": ["220"],
+      "view": {
+        "mode": "single",
+        "stem": "依次比较以下数对的左数与右数：$(0,3),(0,-5),(8,0),(-7,0),(-2,3),(-7,1),(1,-10),(3,-3),(1,8),(-5,-3),(-5,-10),(-2,-5)$。哪一列关系符号全部正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$<,>,>,<,<,<,>,>,<,<,>,>$", "figure_ids": []},
+          {"id": "B", "text": "$<,<,>,>,<,>,<,=,<,>,<,<$", "figure_ids": []},
+          {"id": "C", "text": "$>,<,<,>,>,>,<,<,>,>,<,<$", "figure_ids": []},
+          {"id": "D", "text": "$<,>,>,<,<,<,>,>,<,>,<,<$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "完整判断十二组整数大小，涵盖零、异号、同号负数。",
+        "source_solution": "依次为<,>,>,<,<,<,>,>,<,<,>,>；负数绝对值越大越小。",
+        "unit_reason": "十二组共享数轴顺序规则，完整符号列保留每组而不拆成十二次点击；与坐标识别分别检验比较和位置。",
+        "concept_blocks": [4],
+        "limitations": ["识别完整比较列，不证明能独立写出十二个不等式。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "零大于负数、小于正数；正数大于负数；-5<-3，-5>-10，-2>-5，逐组得此列。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "把每组两数都先取绝对值再比较，得到0<3,0<5,8>0,7>0,2<3,7>1,1<10,3=3,1<8,5>3,5<10,2<5，即此列。", "misconception": "把数的大小比较替换为绝对值大小比较。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "先得到正确列，然后每一组把右数对左数的关系填入左数对右数的位置，所有<和>互换。", "misconception": "倒置每对数的比较方向。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "前九组按数值比较，最后三组为两负数时直接比较5与3、5与10、2与5，得到>,<,<。", "misconception": "仅在两个负数的比较中忘记绝对值顺序要反转。"}
+        ]
+      }
+    },
+    {
+      "id": "six-noon-temperatures",
+      "source_numbers": ["221"],
+      "view": {
+        "mode": "single",
+        "stem": "表中为12月1、6、11、16、21、26日中午12时两地的气温（摄氏度）。哪一项按这些日期的顺序，完整列出了当天气温较高的地点？",
+        "figure_ids": ["tbl-p0056-02"],
+        "options": [
+          {"id": "A", "text": "Harbor、Harbor、Harbor、Harbor、Harbor、MountainView", "figure_ids": []},
+          {"id": "B", "text": "MountainView、MountainView、Harbor、Harbor、Harbor、MountainView", "figure_ids": []},
+          {"id": "C", "text": "Harbor、Harbor、MountainView、MountainView、MountainView、MountainView", "figure_ids": []},
+          {"id": "D", "text": "Harbor、Harbor、MountainView、MountainView、MountainView、Harbor", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "从完整温度表比较六个同日气温，特别保留两个显式0及末列两个负温度。",
+        "source_solution": "Harbor减MountainView依次为2.8,3.5,-2.6,-1.6,-4.2,2，因此较高地点依次H,H,M,M,M,H。",
+        "unit_reason": "一次判定全六日的比较对应，不把日期拆成机械逐格答题。",
+        "concept_blocks": [4],
+        "limitations": ["选择比较结果列，未独立写出每个同日不等式。"],
+        "figure_observations": [{"figure_id": "tbl-p0056-02", "observation": "已打开绑定原SVG的完整白底渲染：3行7列，Date为1,6,11,16,21,26；Harbor为9.2,3.5,-2.6,-3.1,-7.8,-19；MountainView为6.4,0,0,-1.5,-3.6,-21。右most26日与bottom MountainView完整可见，两个0均明确。"}]
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "逐列比较温度绝对值：9.2>6.4,3.5>0,2.6>0,3.1>1.5,7.8>3.6,19<21，得到H,H,H,H,H,M。", "misconception": "把绝对值较大的温度当作气温较高。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "逐日先找较低温度：M,M,H,H,H,M，再把这些地点写入较高温度名单。", "misconception": "颠倒较高与较低的比较目标。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "读取MountainView行时把各日数据错移一列，使用6.4,6.4,0,0,-1.5,-3.6与Harbor比较，得到H,H,M,M,M,M。", "misconception": "首日保留、其余日期误用MountainView前一个测量日的数据。"},
+          {"option_id": "D", "truth": "correct", "derivation": "前三列分别9.2>6.4,3.5>0,-2.6<0；后三列-3.1<-1.5,-7.8<-3.6,-19>-21，完整得到所列地点。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "decimal-and-large-integer-order",
+      "source_numbers": ["222", "236"],
+      "view": {
+        "mode": "single",
+        "stem": "比较每对数的左数和右数，依次填入关系符号：$(8.9,9.2),(-240,3.2),(4.5,-800),(-5.5,-7.2),(-96.9,-90.3),(-1000,0),(-999,-1000),(-3542,-2763),(-6543,-7831),(-836,-834),(-9999,-9998),(100,-100)$。哪一列全部正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$<,>,<,<,>,>,<,>,<,>,>,=$", "figure_ids": []},
+          {"id": "B", "text": "$<,<,>,>,<,<,>,<,>,<,<,>$", "figure_ids": []},
+          {"id": "C", "text": "$>,>,<,<,>,>,<,>,<,>,>,<$", "figure_ids": []},
+          {"id": "D", "text": "$<,<,>,<,>,<,<,>,<,>,>,>$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "完整比较两组六组数，统一检验小数及大整数的零、异号和负数顺序。",
+        "source_solution": "222依次<,<,>,>,<,<；236依次>,<,>,<,<,>。",
+        "unit_reason": "两源均为同一大小比较规则，无独立建模条件，合并成完整十二对响应并保留所有数对。",
+        "concept_blocks": [4],
+        "limitations": ["选择整列符号代替自行书写两组十二个不等式。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "逐对改为比较绝对值，顺序得<,>,<,<,>,>,<,>,<,>,>,=；最后100与100相等。", "misconception": "删掉所有负号再比较。"},
+          {"option_id": "B", "truth": "correct", "derivation": "正数大于负数；-5.5>-7.2，-96.9<-90.3；后六组比较负数绝对值并反转，最后100>-100，得完整列。", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "把每对右数对左数的比较写到左数对右数的位置，将正确列所有方向反转。", "misconception": "统一颠倒比较对象顺序。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "异号、零和两个正数照常比较；所有两个负数的数对按绝对值直接比较而不反转，分别改为<,>,<,>,<,>,>，生成此列。", "misconception": "只在同为负数时错用绝对值顺序。"}
+        ]
+      }
+    },
+    {
+      "id": "eight-closed-segment-specifications",
+      "source_numbers": ["223", "243"],
+      "view": {
+        "mode": "single",
+        "stem": "在向右递增的数轴上表示以下八个实数不等式的完整解集：$-3\\le x\\le2$，$-4\\le x\\le6$，$-3.5\\le x\\le4$，$-0.5\\le x\\le7.5$，$-2\\le x\\le5$，$0\\le x\\le7$，$-6\\le x\\le-1$，$-1\\le x\\le6$。哪一套标注规格正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "依次标注端点对$(-3,2),(-4,6),(-3.5,4),(-0.5,7.5),(-2,5),(0,7),(-6,-1),(-1,6)$；各对之间涂连续线段，所有端点用空心点。", "figure_ids": []},
+          {"id": "B", "text": "依次标注端点对$(-3,2),(-4,6),(-3.5,4),(-0.5,7.5),(-2,5),(0,7),(-6,-1),(-1,6)$；各对端点用实心点，涂左端点以左及右端点以右的两条射线。", "figure_ids": []},
+          {"id": "C", "text": "依次使用端点对$(-3,2),(-4,6),(-3.5,4),(-0.5,7.5),(-2,5),(0,7),(-6,-1),(-1,6)$；每组只将两端点之间（含端点范围内）的整数位置标为实心点，不连接线段。", "figure_ids": []},
+          {"id": "D", "text": "依次标注端点对$(-3,2),(-4,6),(-3.5,4),(-0.5,7.5),(-2,5),(0,7),(-6,-1),(-1,6)$；各对之间涂连续线段，所有端点用实心点。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "保留八个实数解集的端点、连续性及闭端点，把两源的数轴标注归为统一任务。",
+        "source_solution": "八个解集依次[-3,2],[-4,6],[-3.5,4],[-0.5,7.5],[-2,5],[0,7],[-6,-1],[-1,6]，均包含所有中间实数与两端点。",
+        "unit_reason": "两源只有区间端点不同，合为八行完整标注规格；候选改变关键集合规则而非逐区间点击。",
+        "concept_blocks": [4],
+        "limitations": ["文字规格识别不能证明实际绘制八条数轴、正确设置尺度或涂画线段。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "把每个<=读成<，形成八个开区间，画空心端点，恰好得到A。", "misconception": "丢掉全部端点的等号条件。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "把a<=x<=b误写为x<=a或x>=b，生成每组两个向外闭射线。", "misconception": "把两条件的交集误改为反向条件的并集。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "擅自把x限制为整数，在每个给定闭区间内仅点出整数，排除所有非整数解及两个半整数端点。", "misconception": "把实数区间解集当成整数解集。"},
+          {"option_id": "D", "truth": "correct", "derivation": "每个双不等式同时要求x不小于左端、不大于右端，故完整解集为两实心端点间的连续闭线段。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "six-city-altitude-orders",
+      "source_numbers": ["224"],
+      "view": {
+        "mode": "single",
+        "stem": "按表中海拔高度分别排列全部六个城市。哪一项同时给出了正确的递增顺序和递减顺序？",
+        "figure_ids": ["tbl-p0057-01"],
+        "options": [
+          {"id": "A", "text": "递增：Summit、Mesa、Harbor、River、Lake、Valley；递减：Valley、Lake、River、Harbor、Mesa、Summit。", "figure_ids": []},
+          {"id": "B", "text": "递增：Valley、Lake、River、Harbor、Mesa、Summit；递减：Summit、Mesa、Harbor、River、Lake、Valley。", "figure_ids": []},
+          {"id": "C", "text": "递增：Lake、Valley、River、Harbor、Mesa、Summit；递减：Summit、Mesa、Harbor、River、Valley、Lake。", "figure_ids": []},
+          {"id": "D", "text": "递增：Harbor、Lake、Valley、Mesa、Summit、River；递减：River、Summit、Mesa、Valley、Lake、Harbor。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "依据六个完整海拔数据作升序及降序排列。",
+        "source_solution": "-25<5<130<150<1100<2280，对应V,L,R,H,M,S；降序反转。",
+        "unit_reason": "升降顺序互为逆序，作为同一完整排序成果选择，所有六城市都保留。",
+        "concept_blocks": [4],
+        "limitations": ["选择成套排序不检验原题要求口头说出两个顺序的能力。"],
+        "figure_observations": [{"figure_id": "tbl-p0057-01", "observation": "完整渲染为4行4列，表头City,m,City,m；Harbor150/Mesa1100，Lake5/Summit2280，Valley-25/River130。已核右列与底行完整，Valley负号可见。"}]
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "把正确降序写在递增处、正确升序写在递减处，形成A。", "misconception": "互换递增与递减的方向。"},
+          {"option_id": "B", "truth": "correct", "derivation": "将海拔-25,5,130,150,1100,2280升序对应到城市，再严格反转得到降序。", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "把Valley的-25读作25，按5<25<130<150<1100<2280排序并反转，得到C。", "misconception": "漏读唯一负海拔的负号。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "先按左半表由上到下、再右半表由上到下抄为H,L,V,M,S,R，并把此名单当升序，反转作降序。", "misconception": "把表格读取次序当作数值排序。"}
+        ]
+      }
+    },
+    {
+      "id": "four-adjacent-integer-bounds",
+      "source_numbers": ["225"],
+      "view": {
+        "mode": "single",
+        "stem": "将$-2.73,-9.5,-0.63,0.87$依次夹在两个相邻整数之间。哪一组双不等式全部正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$-2<-2.73<-1$；$-9<-9.5<-8$；$0<-0.63<1$；$0<0.87<1$。", "figure_ids": []},
+          {"id": "B", "text": "$-3<-2.73<-2$；$-10<-9.5<-9$；$-1<-0.63<0$；$1<0.87<2$。", "figure_ids": []},
+          {"id": "C", "text": "$-3<-2.73<-2$；$-10<-9.5<-9$；$-1<-0.63<0$；$0<0.87<1$。", "figure_ids": []},
+          {"id": "D", "text": "$-2<-2.73<-3$；$-9<-9.5<-10$；$0<-0.63<-1$；$0<0.87<1$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "完整给出四个非整数的相邻整数界，保留负小数跨零区间。",
+        "source_solution": "下界为-3,-10,-1,0，上界各加1；均为严格不等式。",
+        "unit_reason": "共同的取整与负数定位规则作为一组完整双不等式成果。",
+        "concept_blocks": [4],
+        "limitations": ["识别成套双不等式而非独立写出四式。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "对每数向零截断后把截断整数当下界、加1作上界，得到-2,-9,0,0为下界，产生A。", "misconception": "负小数截断向零被误当作向下取整。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "负数三式按floor正确完成，但把0.87四舍五入为1再以1和2作界，生成B。", "misconception": "对正小数用最近整数而非下方相邻整数作下界。"},
+          {"option_id": "C", "truth": "correct", "derivation": "-3<-2.73<-2，-10<-9.5<-9，-1<-0.63<0，0<0.87<1，四组界均相差1。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "先正确写出2<2.73<3，9<9.5<10，0<0.63<1；前三式取相反数却保留<方向，正数末式不变，得到D。", "misconception": "将正数界整体取负时没有反转不等号。"}
+        ]
+      }
+    },
+    {
+      "id": "eight-symbolic-comparisons",
+      "source_numbers": ["226"],
+      "view": {
+        "mode": "single",
+        "stem": "已知$x,y>0$，$n,m<0$。按$(0,x),(y,0),(m,0),(0,n),(x,m),(n,x),(-m,n),(-x,y)$的顺序，比较每对左式与右式。哪一列关系符号在所有这些条件下均成立？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$<,>,<,>,>,<,>,<$", "figure_ids": []},
+          {"id": "B", "text": "$>,<,>,<,<,>,<,>$", "figure_ids": []},
+          {"id": "C", "text": "前六对依次为$<,>,<,>,>,<$；第七、第八对均不能确定大小。", "figure_ids": []},
+          {"id": "D", "text": "前七对依次为$<,>,<,>,>,<,>$；第八对不能确定大小。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "使用给定变量符号完整比较八对，包括对负数及正数取相反数。",
+        "source_solution": "依次<,>,<,>,>,<,>,<；-m>0>n，-x<0<y。",
+        "unit_reason": "各比较均由符号而非未知量大小决定，保留完整八项规则应用。",
+        "concept_blocks": [4],
+        "limitations": ["选择全列关系替代自行推导并书写八式。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "正数在零右、负数在零左；-m为正，-x为负，故八项均为所列方向。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "把每一对右式对左式的方向填写到左式对右式的位置，八项全面反转得B。", "misconception": "把比较方向统一颠倒。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "忽略第七、第八项的前置负号，把两对当作(m,n)和(x,y)。同为负或同为正的大小确实不能由条件确定，于是产生前六项正确、后两项不能确定的候选；原表达式的符号实际相反。", "misconception": "比较前先删掉变量表达式的前置负号。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "把带前置负号的表达式都换成绝对值：-m换为|m|仍大于n，-x换为|x|=x后与y同正而无法确定，生成D。", "misconception": "把取相反数误解释为取绝对值。"}
+        ]
+      }
+    },
+    {
+      "id": "opposite-sign-two-cases",
+      "source_numbers": ["227"],
+      "view": {
+        "mode": "single",
+        "stem": "分别在$x<0$和$x>0$两种情形下，$-x$是什么符号的数？选项按这两种情形的顺序作答。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "负数；正数。", "figure_ids": []},
+          {"id": "B", "text": "负数；负数。", "figure_ids": []},
+          {"id": "C", "text": "正数；正数。", "figure_ids": []},
+          {"id": "D", "text": "正数；负数。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "判断相反数在x两个严格符号分支下的符号。",
+        "source_solution": "x<0时-x>0；x>0时-x<0。两分支都排除零。",
+        "unit_reason": "两条件共享相反数规则，一次给出完整双分支结果。",
+        "concept_blocks": [4],
+        "limitations": ["识别两个符号结果，不直接检验独立写解释。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "完全忽略-x的前置负号，直接把x的两分支符号负、正照抄。", "misconception": "相反数与原数符号不变。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "把-x替换为-|x|，两分支x非零时均负，得负、负。", "misconception": "把代数相反数理解为绝对值之前固定加负号。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "把-x替换为|x|，两分支均非零，绝对值均正。", "misconception": "把取相反数误作取绝对值。"},
+          {"option_id": "D", "truth": "correct", "derivation": "两分支乘以-1均反转与零的比较方向，依次正、负。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "sign-statements-as-inequalities",
+      "source_numbers": ["228"],
+      "view": {
+        "mode": "single",
+        "stem": "依次把“-4.3是负数”“27.1是正数”“a是负数”“b是正数”写成与零比较的不等式。哪一组与这四句话逐一等价？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$-4.3>0$；$27.1<0$；$a>0$；$b<0$。", "figure_ids": []},
+          {"id": "B", "text": "$-4.3<0$；$27.1>0$；$a<0$；$b>0$。", "figure_ids": []},
+          {"id": "C", "text": "$-4.3\\le0$；$27.1\\ge0$；$a\\le0$；$b\\ge0$。", "figure_ids": []},
+          {"id": "D", "text": "$4.3<0$；$27.1>0$；$-a<0$；$b>0$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "将四个数值或变量的正负陈述转成严格不等式并检验等价性。",
+        "source_solution": "-4.3<0，27.1>0，a<0，b>0；正或负均不含零。",
+        "unit_reason": "整套符号语言转换保留数值、变量及严格性。",
+        "concept_blocks": [4],
+        "limitations": ["选择等价表达而非独立产出四个不等式。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "把“负数”统一写为>0，“正数”统一写为<0，得到A。", "misconception": "颠倒正负数与零的顺序定义。"},
+          {"option_id": "B", "truth": "correct", "derivation": "严格负数小于零，严格正数大于零，逐句转换为所列四式。", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "把负数写为非正、正数写为非负，形成<=和>=；a=0或b=0满足候选却不满足原句，所以不等价。", "misconception": "用含零的非严格符号替换严格正负定义。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "把每个负数陈述中的对象先取相反数再照写<0：-4.3变4.3，a变-a；正数陈述保留，生成D。", "misconception": "在转换负数陈述时额外更换了所谈论的数。"}
+        ]
+      }
+    },
+    {
+      "id": "two-tree-positions",
+      "source_numbers": ["229"],
+      "view": {
+        "mode": "single",
+        "stem": "树洞作为原点0，松鼠在数轴上的$M(4)$，啄木鸟在$N(-3)$。两者相距多少个单位长度？哪一个离树洞更远？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "相距1个单位长度；松鼠更远。", "figure_ids": []},
+          {"id": "B", "text": "相距7个单位长度；啄木鸟更远。", "figure_ids": []},
+          {"id": "C", "text": "相距7个单位长度；松鼠更远。", "figure_ids": []},
+          {"id": "D", "text": "相距-7个单位长度；啄木鸟更远。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "同时计算两点距离并比较两点到原点的距离。",
+        "source_solution": "|4-(-3)|=7；|4|=4>|-3|=3，所以松鼠更远。",
+        "unit_reason": "一套回答保留相互距离与距原点距离这两个不同但关联的判断。",
+        "concept_blocks": [4],
+        "limitations": ["选择距离与对象组合，未独立写出绝对值计算式；不擅加物理单位。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "将两点相互距离误算为||4|-|-3||=1，比较距零的4与3仍正确，得到A。", "misconception": "忽略两点在原点两侧，只减去两者距原点的距离。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "相互距离正确算7；把较小数轴坐标-3对应地点判作更远，得到啄木鸟。", "misconception": "把数值更小的坐标误当作到原点距离更大。"},
+          {"option_id": "C", "truth": "correct", "derivation": "两点分居原点两边，距离4+3=7；距原点4>3，松鼠更远。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "把N-M=-3-4=-7直接当距离，并以更靠负方向的N为更远，产生D。", "misconception": "将有向坐标差当非负距离，并用坐标负向次序替代距原点比较。"}
+        ]
+      }
+    },
+    {
+      "id": "two-absolute-value-expressions",
+      "source_numbers": ["230"],
+      "view": {
+        "mode": "single",
+        "stem": "依次求两式的值：当$x=-64.1,y=52.8$时的$|x|-|y|$；当$x=-54.5,y=-7.6$时的$|x|+|y|$。哪一组结果正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$11.3$；$62.1$。", "figure_ids": []},
+          {"id": "B", "text": "$-116.9$；$-62.1$。", "figure_ids": []},
+          {"id": "C", "text": "$-11.3$；$-62.1$。", "figure_ids": []},
+          {"id": "D", "text": "$116.9$；$46.9$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "在两套独立代入数据下处理绝对值，保留外部减法和加法的区别。",
+        "source_solution": "64.1-52.8=11.3；54.5+7.6=62.1。",
+        "unit_reason": "共同检验绝对值内部符号与外部运算，两式成套保留而不拆绝对值的各个数。",
+        "concept_blocks": [4],
+        "limitations": ["选择两项完整结果，不直接观察独立计算步骤。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "分别把负输入取正，再保留外部原运算，得11.3及62.1。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "删除绝对值符号直接代入，第一式-64.1-52.8=-116.9，第二式-54.5+(-7.6)=-62.1。", "misconception": "绝对值被当作可直接删去的括号。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "把|a|误替换为-|a|，得-64.1-(-52.8)=-11.3及-54.5+(-7.6)=-62.1。", "misconception": "把绝对值统一定义成负的大小。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "输入先取绝对值正确，却互换两式外部运算：64.1+52.8=116.9，54.5-7.6=46.9。", "misconception": "误将第一式减号、第二式加号彼此互换。"}
+        ]
+      }
+    },
+    {
+      "id": "triangle-set-meaning-branches",
+      "source_numbers": ["231"],
+      "view": {
+        "mode": "multiple",
+        "stem": "要作边长3.8厘米的正三角形ABM，取AB的中点K，再作关于K的中心对称三角形，将M的对应顶点记为M'。对于这两个三角形，分别考虑三种明确含义：“闭区域”包含内部及三边；“边界”仅含三条闭线段；“开内部”不含三边。选出所有正确的集合陈述和满足原构作要求的完整作法。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "若两者都取闭区域，它们的交集是完整闭线段AB。", "figure_ids": []},
+          {"id": "B", "text": "若两者都取边界，它们的并集只含四边形AMBM'的外周四条边。", "figure_ids": []},
+          {"id": "C", "text": "若两者都取开内部，它们的交集是完整闭线段AB。", "figure_ids": []},
+          {"id": "D", "text": "若两者都取闭区域，它们的并集是包含边界的菱形AMBM'区域。", "figure_ids": []},
+          {"id": "E", "text": "若两者都取边界，它们的交集只有AB的中点K。", "figure_ids": []},
+          {"id": "F", "text": "若两者都取开内部，它们的并集是两个不相交的开三角形区域，不包含AB。", "figure_ids": []},
+          {"id": "G", "text": "作AB长3.8厘米；以A、B为圆心、3.8厘米为半径作圆，取两圆任一交点为M，连接AM、BM；取AB中点K，在直线MK上取与M分居K两侧且KM'=KM的点M'，连接AM'、BM'。", "figure_ids": []},
+          {"id": "H", "text": "作AB长3.8厘米；以A、B为圆心、3.8厘米为半径作圆，取两圆任一交点为M，连接AM、BM；取AB中点K，在射线KM上取KM'=KM的点M'，连接AM'、BM'。", "figure_ids": []},
+          {"id": "I", "text": "作AB长3.8厘米；以A、B为圆心、1.9厘米为半径作圆，取两圆任一交点为M，连接AM、BM；取AB中点K，在直线MK上取与M分居K两侧且KM'=KM的点M'，连接AM'、BM'。", "figure_ids": []},
+          {"id": "J", "text": "作AB长3.8厘米；以A、B为圆心、3.8厘米为半径作圆，取两圆任一交点为M，连接AM、BM；取AB中点K，在直线MK上取与M分居K两侧且KM'=2KM的点M'，连接AM'、BM'。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "在同一中心对称三角形任务中，判断完整尺规构作规格及三种显式点集含义下的交并，保留原集合约定歧义。",
+        "source_solution": "AB=3.8，以A、B为圆心及3.8为半径的两圆交点给AM=BM=AB；K平分AB，A与B互为像，沿MK在K另一侧取KM'=KM给M的中心对称像，故像三角形为ABM'。两三角形在AB相反侧：闭区域交AB、并闭菱形；边界交AB、并外周加内部AB；开内部交空、并两开区域。此论证不需平方根或坐标；源纯数序定义不能选择原集合约定。",
+        "unit_reason": "合并原构作坐标题与集合题，在一个自然多选中逐项识别完整作法和条件性集合陈述，移除前题答案被后题题干直接披露的包关系；不新增高度或根式计算任务。",
+        "concept_blocks": [],
+        "limitations": ["原题没有三角形区域/边界约定，原无条件唯一交并答案仍blocked；新增的三分支只给条件性结果。", "完整文字作法及集合描述识别仍未检验实际尺规作等边三角形、AB中点、中心对称像或交并图的生产技能；没有新造源图。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "D", "F", "G"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "K在AB上且平分AB，中心对称将M移到AB另一侧、将A与B互换。两闭区域各在AB的相反闭半平面，共同点恰为都包含的完整AB。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "把两个三角形六条边取并时误将重复出现的AB抵消，剩四条外边；集合并集重复元素只能去重，不能删除AB。", "misconception": "把并集做成对称差，消去共有边。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "沿用闭区域交AB的结论却没有移除边界；两开内部在AB的相反严格半平面，实际交空。", "misconception": "在取开内部后仍把共同边作为成员保留。"},
+          {"option_id": "D", "truth": "correct", "derivation": "闭上、下三角形沿AB拼合，外周A-M-B-M'-A四边等长3.8，内部和边界完整填满菱形。", "misconception": null},
+          {"option_id": "E", "truth": "incorrect", "derivation": "把中心对称唯一不动点K当成两点集唯一公共点，忽略A、B互换但AB整体为两边界共同成员。", "misconception": "混淆对称的不动点集合与两个图形的交集。"},
+          {"option_id": "F", "truth": "correct", "derivation": "两开内部位于相反严格半平面，AB及外边均排除，故并集为两不相交开三角形区域。", "misconception": null},
+          {"option_id": "G", "truth": "correct", "derivation": "两圆半径均等于AB，使AM=BM=AB=3.8且M不在AB上。K为AB及MM'的共同中点，故A'=B、B'=A、M的像为M'，所得ABM'是要求的中心对称三角形，两种圆交点均有效。", "misconception": null},
+          {"option_id": "H", "truth": "incorrect", "derivation": "原等边三角形正确，但在射线KM上要求KM'=KM只得到M'=M，不能使K成为MM'的中点，图形没有移到AB另一侧。", "misconception": "构作像点时保留从中心出发的原方向，只复制距离。"},
+          {"option_id": "I", "truth": "incorrect", "derivation": "把两圆半径改为AB的一半1.9，圆心距3.8等于半径和，交点唯一为K，于是M=K，A、M、B共线；也没有确定直线MK及分居K两侧的非退化M'。", "misconception": "把构作等边三角形的圆半径误取为半边长，产生退化共线配置后照搬对称步骤。"},
+          {"option_id": "J", "truth": "incorrect", "derivation": "原三角形正确、像点方向反转，但把KM'设为2KM，K不再是MM'中点，所得像并非关于K的中心对称。", "misconception": "把中心对称的等距离要求错改为像点到中心距离加倍。"}
+        ]
+      }
+    },
+    {
+      "id": "morning-train-uniform-model",
+      "source_numbers": ["232"],
+      "view": {
+        "mode": "single",
+        "stem": "晨光号列车全程650公里，用时5小时。明确假设它在整个行程中匀速行驶，以出发为$t=0$。$s(t)$表示$t$小时内的路程（公里），$0\\le t\\le5$。哪一项同时给出正确的公式和2小时45分钟的路程？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$s(t)=650t$；2小时45分钟走1787.5公里。", "figure_ids": []},
+          {"id": "B", "text": "$s(t)=130t$；2小时45分钟走357.5公里。", "figure_ids": []},
+          {"id": "C", "text": "$s(t)=130t$；2小时45分钟走318.5公里。", "figure_ids": []},
+          {"id": "D", "text": "$s(t)=5t$；2小时45分钟走13.75公里。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "在可见新增匀速条件下，由全程比求速度并建路程函数，正确换算小时分钟。",
+        "source_solution": "匀速条件给v=650/5=130，s(t)=130t；2h45min=2.75h，路程357.5。源原文未给匀速，只能无条件求平均速度130，不能唯一推出中途路程。",
+        "unit_reason": "第一列车的公式与代入同一模型成一响应；第二列车独立条件和时段另题。",
+        "concept_blocks": [],
+        "limitations": ["原232(1)缺匀速或明确平均速度模型条件，其无条件中途公式和路程仍blocked；本题新增可见匀速条件并不解决源缺口。", "选择公式及结果不能展示独立建模推导。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "把总路程650直接当小时速度，s=650t，代入2.75得到1787.5。", "misconception": "忘记总路程必须除以总时间才能得到匀速速度。"},
+          {"option_id": "B", "truth": "correct", "derivation": "650/5=130，45/60=0.75；130(2+0.75)=357.5。", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "速度及公式正确，却把2小时45分钟当2.45小时，130*2.45=318.5。", "misconception": "将分钟按百进制并入小时小数。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "把总时间5这个数直接当每小时公里数，s=5t；5*2.75=13.75。", "misconception": "把总时间的数值错作速度系数。"}
+        ]
+      }
+    },
+    {
+      "id": "vista-train-uniform-model",
+      "source_numbers": ["232"],
+      "view": {
+        "mode": "single",
+        "stem": "远景号列车全程9300公里，用时155小时。明确假设它在整个行程中匀速行驶，以出发为$t=0$。$s(t)$表示$t$小时内的路程（公里），$0\\le t\\le155$。哪一项同时给出正确的公式和60小时的路程？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$s(t)=9300t$；60小时走558000公里。", "figure_ids": []},
+          {"id": "B", "text": "$s(t)=155t$；60小时走9300公里。", "figure_ids": []},
+          {"id": "C", "text": "$s(t)=t/60$；60小时走1公里。", "figure_ids": []},
+          {"id": "D", "text": "$s(t)=60t$；60小时走3600公里。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "在可见匀速条件下建第二列车的完整行程模型及60小时路程。",
+        "source_solution": "9300/155=60km/h；匀速时s=60t，s(60)=3600。未加条件的原总程资料只能确定平均速度。",
+        "unit_reason": "独立的第二旅程成一个公式及求值单元，不与第一列车混成分量繁多的答案包。",
+        "concept_blocks": [],
+        "limitations": ["原232(2)缺匀速或明确平均速度模型条件，其无条件中途公式和路程仍blocked；新增条件不解决原约定。", "选择模型不等于独立写出建模过程。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "把总路程9300当速度，s=9300t，60小时得558000。", "misconception": "漏除总时间155。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "把总时间155的数值当速度，s=155t，代入60得9300。", "misconception": "把时间数据误放进速度系数的位置。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "正确求60后把路程规则乘速度改成除速度，s=t/60，60/60=1。", "misconception": "交换速度与时间关系中的乘除运算。"},
+          {"option_id": "D", "truth": "correct", "derivation": "9300/155=60，匀速路程60t；60*60=3600。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "five-years-average-increase",
+      "source_numbers": ["233"],
+      "view": {
+        "mode": "single",
+        "stem": "表中是一位员工连续五年的太阳能组件年产量（件）。这四次相邻年度产量增加量的算术平均值是多少？",
+        "figure_ids": ["tbl-p0058-01"],
+        "options": [
+          {"id": "A", "text": "2823件/年。", "figure_ids": []},
+          {"id": "B", "text": "2258.4件/年。", "figure_ids": []},
+          {"id": "C", "text": "14734.4件/年。", "figure_ids": []},
+          {"id": "D", "text": "3511件/年。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "从五个年度观测求四个年度差的算术平均，区分平均增加和平均产量。",
+        "source_solution": "增加2332,2275,3174,3511，总11292，四段平均2823；不是恒定年增。",
+        "unit_reason": "一次完整平均增长结果，由所有年度数据共同决定，不逐年点选增加值。",
+        "concept_blocks": [],
+        "limitations": ["选择平均增加值，不检验独立列出四个差并说明平均分母的书写能力。"],
+        "figure_observations": [{"figure_id": "tbl-p0058-01", "observation": "完整渲染2行5列，Year1至Year5对应9532,11864,14139,17313,20824；已核bottom全数及rightmost20824。年度差不恒定。"}]
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "(2332+2275+3174+3511)/4=(20824-9532)/4=2823。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "总增加11292除以五个观测年数，11292/5=2258.4。", "misconception": "把五个年度观测误当成五个年度间隔。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "把年产量本身求平均：(9532+11864+14139+17313+20824)/5=73672/5=14734.4。", "misconception": "把平均增加量换成平均产量。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "只取末年与前一年差20824-17313=3511作为整个期间的平均。", "misconception": "把最后一个年度增加量当作四段的平均增加量。"}
+        ]
+      }
+    },
+    {
+      "id": "unknown-subtracted-dividend",
+      "source_numbers": ["234"],
+      "view": {
+        "mode": "single",
+        "stem": "求方程$\\dfrac{387.5-x}{2.5}=168.75-41.25$的解。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$x=706.25$。", "figure_ids": []},
+          {"id": "B", "text": "$x=-68.75$。", "figure_ids": []},
+          {"id": "C", "text": "$x=336.5$。", "figure_ids": []},
+          {"id": "D", "text": "$x=68.75$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "解含未知减数的商方程，保留右侧小数差及乘除逆运算。",
+        "source_solution": "右侧127.5；387.5-x=318.75；x=68.75。",
+        "unit_reason": "此方程与同源未知分母方程的逆运算和域不同，独立成题。",
+        "concept_blocks": [],
+        "limitations": ["选择解不能展示独立方程变形与验算。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "求318.75后把387.5-x=318.75错误移项成x=387.5+318.75=706.25。", "misconception": "求未知减数时改用被减数与差相加。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "正确得到387.5-x=318.75，却把-x=318.75-387.5=-68.75的值直接当x。", "misconception": "移项后漏把-x变为x时的符号反转。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "右侧127.5正确，但把清除分母误作再除2.5，387.5-x=51，x=336.5。", "misconception": "清除除法时再次除同一常数。"},
+          {"option_id": "D", "truth": "correct", "derivation": "168.75-41.25=127.5；乘2.5得318.75，x=387.5-318.75=68.75。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "unknown-denominator-offset",
+      "source_numbers": ["234"],
+      "view": {
+        "mode": "single",
+        "stem": "在原式有定义的范围内，求方程$\\dfrac{280.44}{y-42.6}=121.62-51.51$的解。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$y=4$。", "figure_ids": []},
+          {"id": "B", "text": "$y=46.6$。", "figure_ids": []},
+          {"id": "C", "text": "$y=38.6$。", "figure_ids": []},
+          {"id": "D", "text": "$y=112.71$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "解未知分母方程并保留原式分母非零域。",
+        "source_solution": "y!=42.6；右侧70.11，y-42.6=280.44/70.11=4，所以y=46.6并在原域。",
+        "unit_reason": "未知数位于分母且带位移，数学结构不同于上一方程，完整独立处理。",
+        "concept_blocks": [],
+        "limitations": ["选择解不检验独立提出分母条件、变形及代回验算。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "正确算出分母y-42.6=4，却把分母的值直接记作y。", "misconception": "解出复合分母后漏加位移42.6。"},
+          {"option_id": "B", "truth": "correct", "derivation": "右侧70.11；分母4，y=4+42.6=46.6；原式280.44/4=70.11。", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "分母值4正确，却解y-42.6=4为y=42.6-4=38.6。", "misconception": "将偏移量与分母值的逆运算顺序颠倒。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "算出右侧70.11后，直接令分母y-42.6等于商70.11，得到y=112.71。", "misconception": "把除法的商误当成分母，跳过280.44除以商。"}
+        ]
+      }
+    },
+    {
+      "id": "nested-decimal-subtraction",
+      "source_numbers": ["235"],
+      "view": {
+        "mode": "single",
+        "stem": "计算$111-[(0.9744\\div0.24+1.02)\\cdot2.5-2.75]$。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$95.55$。", "figure_ids": []},
+          {"id": "B", "text": "$107.14$。", "figure_ids": []},
+          {"id": "C", "text": "$101.05$。", "figure_ids": []},
+          {"id": "D", "text": "$120.95$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "完整计算第一复合小数式，处理括号内除加乘减及外部减法。",
+        "source_solution": "4.06+1.02=5.08；乘2.5得12.7；减2.75得9.95；111-9.95=101.05。",
+        "unit_reason": "保留整式运算次序，不拆成孤立中间小数计算；同源第二式独立符号结构另题。",
+        "concept_blocks": [],
+        "limitations": ["选择最终值不证明自主组织多层运算步骤。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "括号乘积12.7正确，但展开外部减号时把-2.75仍写成减：111-12.7-2.75=95.55。", "misconception": "减去括号时不反转括号内的减项。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "把乘2.5只作用于1.02，括号变4.06+1.02*2.5-2.75=3.86；111-3.86=107.14。", "misconception": "乘法未作用于圆括号的整个和。"},
+          {"option_id": "C", "truth": "correct", "derivation": "0.9744/0.24=4.06；(4.06+1.02)*2.5-2.75=9.95；111-9.95=101.05。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "正确计算方括号为9.95，却把外部减法改为加法，111+9.95=120.95。", "misconception": "计算整体时把外部减号误写成加号。"}
+        ]
+      }
+    },
+    {
+      "id": "nested-decimal-addition",
+      "source_numbers": ["235"],
+      "view": {
+        "mode": "single",
+        "stem": "计算$200-[(9.08-2.6828\\div0.38)\\cdot8.5+0.84]$。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$181.99$。", "figure_ids": []},
+          {"id": "B", "text": "$183.67$。", "figure_ids": []},
+          {"id": "C", "text": "$216.33$。", "figure_ids": []},
+          {"id": "D", "text": "$250.09$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "完整计算第二复合式，保留内减法、整体乘法与被减方括号的加项。",
+        "source_solution": "2.6828/.38=7.06，9.08-7.06=2.02，乘8.5=17.17，加.84=18.01，200-18.01=181.99。",
+        "unit_reason": "原独立整式成完整响应，避免用与第一式组合的大数值包掩盖相反的括号符号结构。",
+        "concept_blocks": [],
+        "limitations": ["最终值选择不能检验独立计算次序和书写步骤。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "7.06商后内差2.02，乘积17.17，方括号18.01，最终181.99。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "正确乘积17.17后展开外减号却保留+.84，算200-17.17+.84=183.67。", "misconception": "减去方括号时其加项没有改成减项。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "把内差颠倒为7.06-9.08=-2.02，乘8.5为-17.17，加.84得-16.33，200-(-16.33)=216.33。", "misconception": "颠倒圆括号内被减数与减数。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "把8.5只乘内商7.06，方括号9.08-7.06*8.5+.84=9.08-60.01+.84=-50.09，200-(-50.09)=250.09。", "misconception": "乘8.5没有作用于整个圆括号的差。"}
+        ]
+      }
+    },
+    {
+      "id": "four-digit-solution-sets",
+      "source_numbers": ["237"],
+      "view": {
+        "mode": "single",
+        "stem": "每个星号分别替换为一个数字$d\\in\\{0,1,\\ldots,9\\}$，不同星号可选不同数字。这里明确允许整数部分的前导0，例如05.44表示5.44。依次求$-3841<-384*$，$-5*83>-5183$，$-*5.44>-25.44$，$-999.*>-999.1$中所有可用数字的集合。哪一项正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$\\{0,1\\}$；$\\{0,1\\}$；$\\{0,1,2\\}$；$\\{0,1\\}$。", "figure_ids": []},
+          {"id": "B", "text": "$\\varnothing$；$\\varnothing$；$\\{1\\}$；$\\varnothing$。", "figure_ids": []},
+          {"id": "C", "text": "$\\{0\\}$；$\\{0\\}$；$\\{0,1\\}$；$\\{0\\}$。", "figure_ids": []},
+          {"id": "D", "text": "$\\{2,3,4,5,6,7,8,9\\}$；$\\{2,3,4,5,6,7,8,9\\}$；$\\{3,4,5,6,7,8,9\\}$；$\\{2,3,4,5,6,7,8,9\\}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "按位值和严格负数比较完整求四个数字可选集合，显式处理前导零。",
+        "source_solution": "转换为3841>3840+d、5083+100d<5183、10d+5.44<25.44、d/10<.1，依次d<1,d<1,d<2,d<1。可见允许前导零时为{0},{0},{0,1},{0}。",
+        "unit_reason": "由同一严格比较与十进位值规则给出四套完整可用数字，避免只用一组随意数字掩盖不等式的解范围。",
+        "concept_blocks": [4],
+        "limitations": ["原文仅要求适当数字，完整真集是增强任务；原题可不选前导零而答(0,0,1,0)。", "第三位置原文未定义前导零合法性，本题显式允许只决定条件分支，不决定原约定；若不允许，则第三集合为{1}。", "选择集合不检验自主填位及逐一论证排除其余数字。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "将四个严格不等式均放宽为非严格后得到d<=1,d<=1,d<=2,d<=1，从0至9取数得A。", "misconception": "把原严格比较中恰好相等的边界数字也纳入。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "四式比较计算正确但把数字域改为{1,...,9}，对{0},{0},{0,1},{0}删掉0，得到空,空,{1},空。", "misconception": "将零从所有可用数字中排除，违反明确的数字域及前导零条件。"},
+          {"option_id": "C", "truth": "correct", "derivation": "按位值写3840+d、5083+100d、10d+5.44、999+d/10，并反转负数顺序；四式范围分别d<1,d<1,d<2,d<1，得C。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "删除两边共同负号却保留原比较方向，得d>1,d>1,d>2,d>1，在0至9内选数恰得D。", "misconception": "比较两负数时去负号不反转方向。"}
+        ]
+      }
+    },
+    {
+      "id": "seven-decimal-orders",
+      "source_numbers": ["238"],
+      "view": {
+        "mode": "single",
+        "stem": "将$2.8,-3.7,0.5,0,-1.6,-1.1,0.1$分别按递增、递减顺序排列。哪一项的两个完整序列都正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "递增：$2.8,0.5,0.1,0,-1.1,-1.6,-3.7$；递减：$-3.7,-1.6,-1.1,0,0.1,0.5,2.8$。", "figure_ids": []},
+          {"id": "B", "text": "递增：$0,0.1,0.5,-1.1,-1.6,2.8,-3.7$；递减：$-3.7,2.8,-1.6,-1.1,0.5,0.1,0$。", "figure_ids": []},
+          {"id": "C", "text": "递增：$-1.1,-1.6,-3.7,0,0.1,0.5,2.8$；递减：$2.8,0.5,0.1,0,-3.7,-1.6,-1.1$。", "figure_ids": []},
+          {"id": "D", "text": "递增：$-3.7,-1.6,-1.1,0,0.1,0.5,2.8$；递减：$2.8,0.5,0.1,0,-1.1,-1.6,-3.7$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "完整排列七个正、负、零小数的升降序。",
+        "source_solution": "升序-3.7,-1.6,-1.1,0,.1,.5,2.8；降序反转，每个数恰出现一次。",
+        "unit_reason": "升降为同一全排序的相反遍历，合为一项成果，所有原数不漏。",
+        "concept_blocks": [4],
+        "limitations": ["选择两个排列替代独立产出两个完整序列。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "把正确升降名单的标题互换，直接生成A。", "misconception": "互换递增和递减方向。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "按绝对值0,.1,.5,1.1,1.6,2.8,3.7升序排列原标签，再反转；对应得到B两序列。", "misconception": "按距原点远近而非数值大小排序。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "先将负数放在零前、正数放在零后，但负数内部按绝对值由小到大排列-1.1,-1.6,-3.7，再将全名单反转为降序。", "misconception": "仅在负数组内没有反转绝对值次序。"},
+          {"option_id": "D", "truth": "correct", "derivation": "负数按绝对值大者较小排为-3.7,-1.6,-1.1，接零，再正数.1,.5,2.8；反转得降序。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "salary-shirt-remainder",
+      "source_numbers": ["239"],
+      "view": {
+        "mode": "single",
+        "stem": "一名员工月薪150美元，用月薪的15%购买鞋和衬衫。鞋价17美元，衬衫多少钱？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "22.50美元。", "figure_ids": []},
+          {"id": "B", "text": "5.50美元。", "figure_ids": []},
+          {"id": "C", "text": "19.95美元。", "figure_ids": []},
+          {"id": "D", "text": "110.50美元。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "按完整薪资确定百分比支出并扣去已知鞋价。",
+        "source_solution": "150*.15=22.5，衬衫22.5-17=5.5美元。",
+        "unit_reason": "整段两步应用题保留百分比基数与支出分配，不拆成两个计算小题。",
+        "concept_blocks": [],
+        "limitations": ["选择价格而非独立建立并书写费用关系。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "计算150*.15=22.5后直接当作衬衫价，未减鞋价17。", "misconception": "把两件总支出当作一件价格。"},
+          {"option_id": "B", "truth": "correct", "derivation": "鞋和衬衫总价22.5美元，扣17美元得到5.5。", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "先从工资扣鞋价再取15%，(150-17)*.15=133*.15=19.95，并直接当衬衫价。", "misconception": "把百分比基数改为扣鞋后的工资余额。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "把15%支出误为85%余额作两件总价，150*.85-17=127.5-17=110.5。", "misconception": "将百分比支出与未支出的补百分比混淆。"}
+        ]
+      }
+    },
+    {
+      "id": "three-wagon-count-model",
+      "source_numbers": ["240"],
+      "view": {
+        "mode": "single",
+        "stem": "一列货车共有60节蓬车、油槽车和敞车。油槽车比敞车少4节，敞车比蓬车少22节。油槽车有多少节？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "10节。", "figure_ids": []},
+          {"id": "B", "text": "14节。", "figure_ids": []},
+          {"id": "C", "text": "36节。", "figure_ids": []},
+          {"id": "D", "text": "20节。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "用三种车厢差量关系建立总数方程，求指定油槽车数量。",
+        "source_solution": "油槽x，敞x+4，蓬x+26；3x+30=60，x=10，敞14、蓬36验证关系。",
+        "unit_reason": "同一个三类数量模型给一个指定目标，不为中间数量加冗余题。",
+        "concept_blocks": [],
+        "limitations": ["数量选择不证明自主设未知数并把两段差量合成26的建模能力。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "x+(x+4)+(x+26)=60，x=10；14-10=4，36-14=22，合计60。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "正确解油槽10、敞14、蓬36后，把敞车14填入油槽车目标。", "misconception": "求三类数量后错选敞车作为回答对象。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "正确解三类数量后把蓬车36当作要求的油槽车数量。", "misconception": "求三类数量后错选蓬车作为回答对象。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "忽略两个差量关系，把三类都设相等，60/3=20。", "misconception": "把总数按三种名称平均分配而不使用数量差。"}
+        ]
+      }
+    },
+    {
+      "id": "three-meat-sales-total",
+      "source_numbers": ["241"],
+      "view": {
+        "mode": "single",
+        "stem": "表中列出商店一个营业日各类肉的售出质量及每千克售价。这个营业日售肉总金额是多少美元？",
+        "figure_ids": ["tbl-p0060-01"],
+        "options": [
+          {"id": "A", "text": "2223美元。", "figure_ids": []},
+          {"id": "B", "text": "8680美元。", "figure_ids": []},
+          {"id": "C", "text": "2936美元。", "figure_ids": []},
+          {"id": "D", "text": "2831美元。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "依据完整质量/单价表求三行金额再累加。",
+        "source_solution": "牛肉720*1.6=1152，猪肉510*2.1=1071，羊肉320*1.9=608，合计2831美元。",
+        "unit_reason": "全表金额为一个加权总量任务，不拆为每类肉的算术小点击。",
+        "concept_blocks": [],
+        "limitations": ["选择总额不能检验独立列出三行乘法并求和。"],
+        "figure_observations": [{"figure_id": "tbl-p0060-01", "observation": "完整渲染4行3列，Meat,Mass(kg),Price($/kg)；Beef720/1.6，Pork510/2.1，Lamb320/1.9。实际核rightmost三个单位价格与bottom Lamb整行，未遗漏羊肉。"}]
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "仅计前两行720*1.6+510*2.1=1152+1071=2223，漏掉羊肉608。", "misconception": "全表总额漏算最后一行。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "先相加质量1550，再相加单价5.6，乘1550*5.6=8680，加入了各类质量与别类单价的交叉项。", "misconception": "把各行乘积之和换成两列总和的乘积。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "互换牛、猪单价：720*2.1+510*1.6+320*1.9=1512+816+608=2936。", "misconception": "表格对应错行，把前两类质量匹配到对方单价。"},
+          {"option_id": "D", "truth": "correct", "derivation": "各行同类质量乘单位价格再加：1152+1071+608=2831美元。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "linear-equation-subtracted-sum",
+      "source_numbers": ["242"],
+      "view": {
+        "mode": "single",
+        "stem": "求方程$9.5x-(3.2x+1.8x)+3.75=6.9$的解。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$x=\\dfrac7{18}$。", "figure_ids": []},
+          {"id": "B", "text": "$x=0.7$。", "figure_ids": []},
+          {"id": "C", "text": "$x=\\dfrac{71}{30}$。", "figure_ids": []},
+          {"id": "D", "text": "$x=14.175$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "减去含两个加项的括号并解小数一次方程。",
+        "source_solution": "(9.5-3.2-1.8)x=6.9-3.75，4.5x=3.15，x=.7。",
+        "unit_reason": "独立方程的整体变形为一响应，同源第二式内减号产生不同负号结构另题。",
+        "concept_blocks": [],
+        "limitations": ["选择根，不检验自主展开括号、合并系数及验算。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "错误展开为(9.5-3.2+1.8)x=3.15，8.1x=3.15，x=3.15/8.1=7/18。", "misconception": "外部减号只作用于括号第一项。"},
+          {"option_id": "B", "truth": "correct", "derivation": "系数9.5-5=4.5，右侧3.15，除得.7。", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "系数正确4.5，却将+3.75移到右边仍加：x=(6.9+3.75)/4.5=10.65/4.5=71/30。", "misconception": "常数移项时没有改变符号。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "正确得到4.5x=3.15，却以乘法消系数：x=3.15*4.5=14.175。", "misconception": "从系数乘未知数求未知数时再乘系数。"}
+        ]
+      }
+    },
+    {
+      "id": "linear-equation-subtracted-difference",
+      "source_numbers": ["242"],
+      "view": {
+        "mode": "single",
+        "stem": "求方程$11.3y-(9.7y-0.8y)+7.4=1.7$的解。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$y=-7.125$。", "figure_ids": []},
+          {"id": "B", "text": "$y=2.375$。", "figure_ids": []},
+          {"id": "C", "text": "$y=-2.375$。", "figure_ids": []},
+          {"id": "D", "text": "$y=\\dfrac{91}{24}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "减去含减法的括号，保留双负号及负数方程根。",
+        "source_solution": "(11.3-9.7+.8)y=1.7-7.4；2.4y=-5.7，y=-2.375。",
+        "unit_reason": "内减号与外减号相遇是独立的关键区别，整式单独作题，不只问一个符号。",
+        "concept_blocks": [4],
+        "limitations": ["选择解代替独立展开、合并及代回检查。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "展开时-.8y仍负，系数11.3-9.7-.8=.8，y=-5.7/.8=-7.125。", "misconception": "外减号作用于内减项时没有变为加。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "系数2.4正确，但移项取7.4-1.7=5.7而非1.7-7.4，y=2.375。", "misconception": "为避免负差而颠倒常数的相减顺序。"},
+          {"option_id": "C", "truth": "correct", "derivation": "-(9.7y-.8y)=-9.7y+.8y，系数2.4，常数差-5.7，除得-2.375。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "系数2.4正确，却将7.4移到右边仍相加，y=(1.7+7.4)/2.4=9.1/2.4=91/24。", "misconception": "常数移项保留原加号。"}
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {"source_number": "220", "question_ids": ["nine-point-placement", "twelve-integer-comparisons"], "omitted_tasks": ["未实际绘制统一尺度的数轴并标九点；完整左右次序与八段相邻距离规格仅检验位置和尺度识别。", "未独立书写十二个比较式。"], "reason": "九点的完整左右次序、八段相邻距离和十二组原比较全部保留，分成位置规格与比较两种响应；不再将题干数字向量照抄成位置答案，作图和书写生产损失仍保留。"},
+    {"source_number": "221", "question_ids": ["six-noon-temperatures"], "omitted_tasks": ["未独立书写六日的比较不等式。"], "reason": "实际完整表六列、两个0、末日负数均纳入完整同日较高地点名单。"},
+    {"source_number": "222", "question_ids": ["decimal-and-large-integer-order"], "omitted_tasks": ["未自行逐式写出六个不等号。"], "reason": "六对小数与异号比较同236的六对合并，全部数字和判断保留。"},
+    {"source_number": "223", "question_ids": ["eight-closed-segment-specifications"], "omitted_tasks": ["四组数轴线段的实际绘制、尺度及端点标注生产未检验。"], "reason": "与243组成完整八组连续闭线段规格识别，本源四个实数区间和全部小数端点完整。"},
+    {"source_number": "224", "question_ids": ["six-city-altitude-orders"], "omitted_tasks": ["原题口头说出城市升降序的产出能力未检验。"], "reason": "六城市及两方向全保留，实际负海拔及底行均核过。"},
+    {"source_number": "225", "question_ids": ["four-adjacent-integer-bounds"], "omitted_tasks": ["未自行写出四个双不等式。"], "reason": "四个数及相邻整数严格夹界全保留，含负小数跨零情形。"},
+    {"source_number": "226", "question_ids": ["eight-symbolic-comparisons"], "omitted_tasks": ["未独立书写八组比较推导。"], "reason": "x,y正及n,m负条件、全部八组比较和两个相反数全保留；候选判断是全条件而非选定数值样本。"},
+    {"source_number": "227", "question_ids": ["opposite-sign-two-cases"], "omitted_tasks": ["未自主写出相反数符号的说明。"], "reason": "x<0、x>0两个原分支均可见且排除零。"},
+    {"source_number": "228", "question_ids": ["sign-statements-as-inequalities"], "omitted_tasks": ["未独立产出四个符号陈述的不等式形式。"], "reason": "四句数值/变量正负陈述全保留，并检验严格与含零的不等价。"},
+    {"source_number": "229", "question_ids": ["two-tree-positions"], "omitted_tasks": ["未独立列出两点相互距离和各自距零的计算式。"], "reason": "两个原问题全部保留，以单位长度不擅加实际物理单位。"},
+    {"source_number": "230", "question_ids": ["two-absolute-value-expressions"], "omitted_tasks": ["未独立书写两组代入及绝对值运算过程。"], "reason": "两套输入和外部加减的区别全部保留。"},
+    {"source_number": "231", "question_ids": ["triangle-set-meaning-branches"], "omitted_tasks": ["blocked：原题未规定“三角形”是闭区域、仅三边边界还是开内部；原无条件唯一交集和并集不能确定。新增三分支不能解决原约定。", "实际尺规构作边长3.8厘米正三角形、AB中点、中心对称像以及交并图的绘制未检验。"], "reason": "合并构作与集合识别为一个多选任务，用完整尺规规格保留原三角形、中点及中心对称关系，允许原两种顶点方向；移除不必要的根式坐标任务及跨题直接披露。三种点集含义仅给条件性结论，源约定gap仍blocked。"},
+    {"source_number": "232", "question_ids": ["morning-train-uniform-model", "vista-train-uniform-model"], "omitted_tasks": ["blocked：232(1)仅给650公里/5小时，没有匀速或平均模型条件，不能无条件确定任意t公式及2小时45分钟路程。", "blocked：232(2)仅给9300公里/155小时，没有匀速或平均模型条件，不能无条件确定任意t公式及60小时路程。", "新增可见匀速条件下选择公式与求值不检验原本的独立建模书写。"], "reason": "保留两完整旅程及所有目标时段，明确新增匀速条件，源解另有同总程不同中途路程反例；条件性答案不冒称解决原缺口。"},
+    {"source_number": "233", "question_ids": ["five-years-average-increase"], "omitted_tasks": ["未独立产出四个差量与平均的说明。"], "reason": "完整五年数据对应四次年增，题面把原“平均一年增加”明确为四次差量的算术平均，不假定产量匀增。"},
+    {"source_number": "234", "question_ids": ["unknown-subtracted-dividend", "unknown-denominator-offset"], "omitted_tasks": ["两个方程的自主变形、书写、验算及第二式自主提出分母条件未检验。"], "reason": "原两个完整方程均保留；分母非零域可见于题干并在内部解中明确。"},
+    {"source_number": "235", "question_ids": ["nested-decimal-subtraction", "nested-decimal-addition"], "omitted_tasks": ["两完整式的自主运算顺序安排及逐步书写未检验。"], "reason": "保留两原式、全部小数、括号层级及符号，以两完整结果响应区分内加减和外减号。"},
+    {"source_number": "236", "question_ids": ["decimal-and-large-integer-order"], "omitted_tasks": ["未自行逐式写出六个不等号。"], "reason": "与222合并的完整十二对中，本源六对大整数及最后异号100/-100全部保留。"},
+    {"source_number": "237", "question_ids": ["four-digit-solution-sets"], "omitted_tasks": ["未自主填四个适当数字；本题增强为求所有可用数字的集合。", "原第三式前导零未定义，未解决原完整真集约定；允许前导零时{0,1}，不允许时{1}。原仅要求适当数字可由1不依赖该约定完成。"], "reason": "四原式全保留，数字位值和严格界全部处理；可见明确允许前导零只给条件性完整集合，不强加于原文。源解保留不依赖约定的原题适当数字(0,0,1,0)。"},
+    {"source_number": "238", "question_ids": ["seven-decimal-orders"], "omitted_tasks": ["未自主写出两组完整排序。"], "reason": "七数与两方向全保留，零、负数内部和正小数序都被检验。"},
+    {"source_number": "239", "question_ids": ["salary-shirt-remainder"], "omitted_tasks": ["未自主建立并书写两步费用关系。"], "reason": "150美元、15%、17美元全部保留，完整求衬衫价。"},
+    {"source_number": "240", "question_ids": ["three-wagon-count-model"], "omitted_tasks": ["未自主设未知数并列三类总数方程。"], "reason": "60总数、两差量4和22及指定油槽车目标完整；源解记录三类数量验算。"},
+    {"source_number": "241", "question_ids": ["three-meat-sales-total"], "omitted_tasks": ["未自主列三行乘法及总额求和。"], "reason": "完整实际质量与单价表三行都参与总额，末行羊肉明确保留。"},
+    {"source_number": "242", "question_ids": ["linear-equation-subtracted-sum", "linear-equation-subtracted-difference"], "omitted_tasks": ["两方程的独立去括号、合并、解和验算生产未检验。"], "reason": "两完整原式保留，各自成题严肃区分减和与减差的括号负号。"},
+    {"source_number": "243", "question_ids": ["eight-closed-segment-specifications"], "omitted_tasks": ["四组实数区间的实际数轴绘制、端点涂画生产未检验。"], "reason": "与223同规则去重合并；本源四组全保留，含零端点及完全负的闭区间。"}
+  ]
+}
