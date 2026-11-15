@@ -116,6 +116,16 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
     """Distinguish tall inline fractions from two full text rows."""
     band = ink[a:b + 1].copy()
     height = band.shape[0]
+    counts = band.sum(axis=1)
+    for top, bottom in _runs(counts > 0.4 * counts.max()):
+        xs = np.flatnonzero(band[top:bottom + 1].any(axis=0))
+        if (
+            bottom - top + 1 >= 0.5 * line_h
+            and xs.size and xs[-1] - xs[0] + 1 >= 0.6 * ink.shape[1]
+            and not 0.3 * height <= (top + bottom) / 2 <= 0.7 * height
+        ):
+            # Full text at an outer edge is another row, not a numerator.
+            return False
     rules = []
     components, _ = ndimage.label(band)
     for bounds in ndimage.find_objects(components):
@@ -168,11 +178,19 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
     return not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h
 
 
-def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+def line_bands(
+    ink: np.ndarray, content_w: int, *, edge_margin_px: int | None = None
+) -> list[tuple[int, int]]:
     """Count printed rows after masking model-identified figures."""
     # Work on a counting-only copy; extraction pixels are never changed.
     ink = ink.copy()
-    edge = max(1, int(ink.shape[1] * 0.01))
+    edge = (
+        max(1, int(ink.shape[1] * 0.01))
+        if edge_margin_px is None
+        else edge_margin_px
+    )
+    if not isinstance(edge, int) or not 1 <= edge <= ink.shape[1] * 0.1:
+        raise ValueError("counting edge margin must be 1..10% of page width")
     ink[:, :edge] = False
     ink[:, -edge:] = False
     raw = _row_fragments(ink, content_w)
@@ -191,6 +209,16 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     glyph_h = (
         float(np.percentile(glyph_heights, 75)) if len(glyph_heights) >= 3 else line_h
     )
+    # Shallow specks cannot protect each other as neighboring text rows.
+    # Keep nearby fraction rules when a full-height row anchors them.
+    for a, b in raw:
+        if edge_margin_px is not None and b - a + 1 <= 0.35 * glyph_h and not any(
+            (other_a, other_b) != (a, b)
+            and other_b - other_a + 1 > 0.35 * glyph_h
+            and min(abs(a - other_b), abs(other_a - b)) <= 1.5 * glyph_h
+            for other_a, other_b in raw
+        ):
+            ink[a:b + 1] = False
     # Dense, joined shallow blemishes are not glyphs or thin fraction rules.
     # Remove them only when they occupy an otherwise isolated projection row.
     for component_id, bounds in enumerate(bounds_list, 1):
@@ -313,19 +341,28 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     for a, b in merged:
         band_h = b - a + 1
         count = 1
-        if a not in fraction_starts and band_h > 2.2 * typical_h and pitch > 0:
+        if a not in fraction_starts and band_h > 1.8 * typical_h and pitch > 0:
             # Brace-connected rows are often shorter than an integral pitch
             # multiple. Count the nearest number of row centres, not a floor.
             count = max(2, int(round((band_h + typical_gap) / pitch)))
             core = counts[a:b + 1]
             strong_rows = _merge_close(
-                [(a + x, a + y) for x, y in _runs(core > 0.4 * core.max())],
+                [(a + x, a + y) for x, y in _runs(core > 0.2 * core.max())],
                 max(2, 0.25 * typical_h),
             )
             strong_rows = [
                 (x, y) for x, y in strong_rows if y - x + 1 >= 0.3 * typical_h
             ]
-            if count == 3 and len(strong_rows) == 2:
+            # Smaller footnotes have their own pitch; their distinct cores
+            # can outnumber the estimate from the surrounding body font.
+            count = max(count, len(strong_rows))
+            if band_h <= 2.2 * typical_h and len(strong_rows) < 2:
+                count = 1
+            if (
+                count == 3 and len(strong_rows) == 2
+                and strong_rows[0][0] - a < 1.2 * typical_h
+                and b - strong_rows[-1][1] < 1.2 * typical_h
+            ):
                 count = 2
             if (
                 count == 2 and _single_fraction_row(ink, a, b, typical_h)
@@ -376,6 +413,14 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             and (band_w > 0.3 * content_w or band_w < 0.05 * content_w)
             and not short_text
         )
+        if thin and band_w > 0.15 * content_w:
+            components, _ = ndimage.label(ink[a:b + 1])
+            decoration = decoration or any(
+                bounds is not None
+                and bounds[1].stop - bounds[1].start >= 0.9 * band_w
+                and bounds[0].stop - bounds[0].start < 0.35 * typical_h
+                for bounds in ndimage.find_objects(components)
+            )
         if not decoration:
             out.append((a, b))
     return out

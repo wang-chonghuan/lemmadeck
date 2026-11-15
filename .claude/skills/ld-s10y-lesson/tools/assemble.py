@@ -29,6 +29,7 @@ import normalize as nz
 FIGREF = re.compile(r"图\s*\$?\s*(\d+)(?!\d)")
 SEC_NUM = re.compile(r"^\s*(\d+)\s*[.．、]\s*(.+)$")
 BLOCKREF = re.compile(r"^p(\d+)#(\d+)$")
+FOOTNOTE_MARKERS = "①②"
 OPTIONAL_EXERCISE_IDENTITY_FIELDS = ("source_number", "group_id")
 
 
@@ -54,10 +55,20 @@ def merge_across_pages(stream: list[dict]) -> tuple[list[dict], list[str]]:
     # 页码、插图、图题都可能夹在一个对象的两半之间（文字环绕的插图、页脚），
     # 配对时要当它们不存在——否则一段被插图打断的正文就永远接不上。
     TRANSPARENT = ("foot", "fig", "cap")
+    def transparent(block):
+        return block["kind"] in TRANSPARENT or (
+            block["kind"] == "p" and block.get("label") == "footnote"
+        )
     out, warn = [], []
     for b in stream:
-        prev = next((x for x in reversed(out) if x["kind"] not in TRANSPARENT), None)
-        if b["kind"] in TRANSPARENT:
+        b = dict(b)
+        if b["kind"] == "p" and b.get("label") != "footnote":
+            b["footnote_callouts"] = [
+                {"marker": marker, "ref": b["ref"]}
+                for marker in sorted(set(re.findall(f"[{FOOTNOTE_MARKERS}]", B.text_of(b))))
+            ]
+        prev = next((x for x in reversed(out) if not transparent(x)), None)
+        if transparent(b):
             out.append(dict(b))
             continue
         if b.get("cont"):
@@ -71,6 +82,9 @@ def merge_across_pages(stream: list[dict]) -> tuple[list[dict], list[str]]:
                 prev["lines"] += b["lines"]
                 prev["open"] = b.get("open", False)
                 prev.setdefault("spans", [prev["ref"]]).append(b["ref"])
+                prev.setdefault("footnote_callouts", []).extend(
+                    b.get("footnote_callouts", [])
+                )
                 continue
         elif prev is not None and prev.get("open") and prev["page"] != b["page"]:
             warn.append(f"{prev['ref']}: 标了 open，但下一页首块没标 cont")
@@ -99,6 +113,30 @@ def cut_lessons(stream: list[dict]) -> list[dict]:
             lessons.append(cur)
             continue
         if b["kind"] == "foot":
+            continue
+        if b["kind"] == "p" and b.get("label") == "footnote":
+            marker = re.match(rf"^\s*([{FOOTNOTE_MARKERS}])", B.text_of(b))
+            if not marker:
+                raise ValueError(f"{b['ref']}: footnote 缺少可核对的印刷标记")
+            page_prefix = f"p{b['page']:04d}#"
+            owners = [
+                (lesson, index)
+                for lesson in lessons
+                for index, block in enumerate(lesson["blocks"])
+                if block["kind"] == "p"
+                and block.get("label") != "footnote"
+                and any(
+                    callout["marker"] == marker.group(1)
+                    and callout["ref"].startswith(page_prefix)
+                    for callout in block.get("footnote_callouts", [])
+                )
+            ]
+            if len(owners) != 1:
+                raise ValueError(
+                    f"{b['ref']}: footnote 标记需唯一对应本页正文，找到 {len(owners)} 个"
+                )
+            owner, index = owners[0]
+            owner["blocks"].insert(index + 1, b)
             continue
         if cur is None:                     # 小节标题之前的内容（承前页的残段）
             cur = {"chapter": pending["h1"], "section": pending["h2"], "number": None,
@@ -252,6 +290,49 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
         all_figs.append(b)
         for n in FIGREF.findall(b.get("label") or ""):
             fig_by_num.setdefault(n, []).append(b)
+
+    prose_users: dict[str, set[int]] = {}
+    for index, lesson in enumerate(lessons):
+        for block in lesson["prose"]:
+            if block["kind"] not in ("fig", "cap"):
+                for number in FIGREF.findall(B.text_of(block)):
+                    prose_users.setdefault(number, set()).add(index)
+
+    # A figure printed before a new heading can belong to that next unit's prose.
+    for source_index, lesson in enumerate(lessons):
+        for figure in list(lesson["blocks"]):
+            if figure["kind"] != "fig" or figure.get("owner_exercise"):
+                continue
+            numbers = set(FIGREF.findall(figure.get("label") or ""))
+            users = set().union(*(prose_users.get(number, set()) for number in numbers))
+            if not users or source_index in users:
+                continue
+            if len(users) != 1:
+                errors.append(f"{figure['id']}: 跨小节正文归属不唯一，不能按位置猜测")
+                continue
+            target = lessons[next(iter(users))]
+            moving = [
+                block for block in lesson["blocks"]
+                if block is figure or (
+                    block["kind"] == "cap"
+                    and (caption_numbers := set(FIGREF.findall(
+                        " ".join(filter(None, (block.get("label"), B.text_of(block))))
+                    )))
+                    and caption_numbers <= numbers
+                )
+            ]
+            for collection in ("blocks", "prose"):
+                lesson[collection] = [
+                    block for block in lesson[collection]
+                    if not any(block is item for item in moving)
+                ]
+                insertion = next(
+                    (index for index, block in enumerate(target[collection])
+                     if block["kind"] not in ("fig", "cap")
+                     and numbers & set(FIGREF.findall(B.text_of(block)))),
+                    0,
+                )
+                target[collection][insertion:insertion] = moving
 
     referenced = set()
     for lesson in lessons:

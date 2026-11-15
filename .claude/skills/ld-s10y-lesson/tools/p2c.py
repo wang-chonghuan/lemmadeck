@@ -163,6 +163,23 @@ def _reusable_figure_geometry(
     return None
 
 
+def _figure_crop_padding(meta: dict, figure_id: str) -> int:
+    overrides = meta.get("figure_crops", {})
+    if not isinstance(overrides, dict):
+        raise ValueError("figure_crops must be an object")
+    override = overrides.get(figure_id)
+    if override is None:
+        return 12
+    if not isinstance(override, dict):
+        raise ValueError(f"figure_crops.{figure_id} must be an object")
+    padding = override.get("padding_px")
+    if type(padding) is not int or not 0 <= padding <= 12:
+        raise ValueError(f"figure_crops.{figure_id}.padding_px must be an integer from 0 to 12")
+    if not isinstance(override.get("reason"), str) or not override["reason"].strip():
+        raise ValueError(f"figure_crops.{figure_id} requires a source inspection reason")
+    return padding
+
+
 TEMPLATE = """---
 {meta}
 ---
@@ -303,7 +320,16 @@ def cmd_finalize(a) -> int:
         )
         box, info = reused if reused is not None else layout.snap(ink, b["box"])
         b["box"] = box
-        layout.crop(render_path, box, work / "figures" / f"{b['id']}.png")
+        try:
+            padding = _figure_crop_padding(meta, b["id"])
+        except ValueError as error:
+            errors.append(str(error))
+            continue
+        layout.crop(render_path, box, work / "figures" / f"{b['id']}.png", pad=padding)
+        if b["id"] in meta.get("figure_crops", {}):
+            info["crop_padding_px"] = padding
+        else:
+            info.pop("crop_padding_px", None)
         figs.append({"id": b["id"], "label": b.get("label"), "box": box, **info})
         if info.get("components", 0) == 0:
             errors.append(f"{b['id']}: 粗框里没有完整连通域，框可能给错了")
@@ -313,6 +339,13 @@ def cmd_finalize(a) -> int:
             if x1 < x2 + w2 and x2 < x1 + w1 and y1 < y2 + h2 and y2 < y1 + h1:
                 errors.append(f"{figs[i]['id']} 与 {figs[j]['id']} 框重叠，"
                               "同一块墨迹会被裁两次")
+    crop_overrides = meta.get("figure_crops", {})
+    if not isinstance(crop_overrides, dict):
+        errors.append("figure_crops must be an object")
+        crop_overrides = {}
+    unknown_crops = set(crop_overrides) - {f["id"] for f in figs}
+    if unknown_crops:
+        errors.append(f"figure_crops contains unknown or invalid figures: {sorted(unknown_crops)}")
     keep = {f"{f['id']}.png" for f in figs}
     for stale in (work / "figures").glob("*.png"):
         if stale.name not in keep:
@@ -325,7 +358,17 @@ def cmd_finalize(a) -> int:
         masked[max(0, y):y + h, max(0, x):x + w] = False
     cols = ink.any(axis=0).nonzero()[0]
     content_w = int(cols[-1] - cols[0] + 1) if cols.size else img.width
-    want = len(layout.line_bands(masked, content_w))
+    counting = meta.get("counting", {})
+    edge_margin_px = counting.get("edge_margin_px")
+    if edge_margin_px is not None and not counting.get("reason", "").strip():
+        errors.append("counting.edge_margin_px requires a source inspection reason")
+    try:
+        want = len(layout.line_bands(
+            masked, content_w, edge_margin_px=edge_margin_px
+        ))
+    except (ValueError, TypeError) as error:
+        errors.append(f"invalid counting boundary: {error}")
+        want = len(layout.line_bands(masked, content_w))
     got = B.printed_lines(blks)
     if want != got:
         errors.append(f"行数对不上：印刷 {want} 行，块体 {got} 行"

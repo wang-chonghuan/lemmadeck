@@ -516,6 +516,16 @@ def normalize_prose_layout(text: str) -> str:
     if tail:
         lines.append(tail)
 
+    joined_lines = []
+    for line in lines:
+        closing = re.match(r"^([”’」』]+)\s*(.*)$", line)
+        if closing and joined_lines:
+            joined_lines[-1] += closing.group(1)
+            line = closing.group(2)
+        if line:
+            joined_lines.append(line)
+    lines = joined_lines
+
     paragraphs = []
     current = []
     current_chars = 0
