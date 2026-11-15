@@ -1,0 +1,97 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "6-8g",
+  "page": 43,
+  "printed_page": 33,
+  "source": {
+    "pdf": "6-8g 苏联十年制学校数学教材 几何 六-八年级.pdf",
+    "pdf_sha256": "d06ea093886065380febda597331bb5d48c81303d955161f2f84a7f11c116e5c",
+    "pdf_page": 43
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1441,
+    "h": 2079,
+    "sha256": "605bbcf8921a66dc3189c618e637aad8449aa477f22fa60e08b0dc312917f3fb"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "Parent viewed actual clean page.png and page.grid.png individually. Source exercise99 deliberately mixes membership and subset notation: (AB) subset [CD), [AB] notsubset (AB), [MN) in (MN), A subset (MA), [PQ] notsubset [QP], [AB] notin (CD). Independent p43 review corrected only the first expression's final parenthesis and the second expression's crossed subset glyph. The printed mathematical mistakes remain faithful problem data, not mathematical corrections.",
+    "Source exercise95 has two printed rows;97/98 each have two;99 has a heading and three paired-expression rows;100 has two two-row parts. Section10 begins on this page. Figure46 caption shares the last row of the six-row first paragraph; final two-row introductory paragraph continues to the next page's properties.",
+    "Figure46 coarse box includes the complete hatched circular interior, stippled surrounding region, O/M/N labels and dots. The caption is separate text; no inferred numeric radius or boundary point is added."
+  ],
+  "errata": [],
+  "printed_lines": 25,
+  "figures": [
+    {
+      "id": "fig-46",
+      "label": "图 46",
+      "box": [
+        784,
+        1323,
+        416,
+        374
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 95 -->
+95. 作图分别表示两条线段的交集：1) 是空集；2) 点；
+3) 两线段之一；4) 不同于两线段的线段.
+
+<!-- ex 96 -->
+96. 作图表示同一直线上两条线段的并集可以是什么图形.
+
+<!-- ex 97 -->
+97. 1) 两个不同的圆的并集可能是圆吗？
+2) 两个不同的圆的交集可能是圆吗？
+
+<!-- ex 98 -->
+98.* 作图表示：1) 两个不同的圆周的交集可能是什么图形.
+2) 圆和圆周的交集可能是什么图形.
+
+<!-- ex 99 -->
+99. 指出下列各式中的错误：
+1) $(AB)\subset[CD)$；2) $[AB]\not\subset(AB)$；
+3) $[MN)\in(MN)$；4) $A\subset(MA)$；
+5) $[PQ]\not\subset[QP]$；6) $[AB]\notin(CD)$.
+
+<!-- ex 100 -->
+100. 1) 两个图形的并集是圆，而交集是三角形.画出这两
+个图形.
+2) 两个图形的并集是三角形，而交集是圆.画出这两
+个图形.
+
+<!-- h3 -->
+10. 区域
+
+<!-- p -->
+圆周将平面上不属于它的
+点的集合分成两个集合（图
+46）.其中一个集合的点离圆周
+中心的距离小于圆周半径，而
+另一集合的点离圆周中心的距
+离大于圆周半径.
+
+<!-- fig 图 46 box 784,1323,416,374 -->
+![图 46](figures/fig-46.png)
+
+<!-- cap 图 46 samerow -->
+图 46
+
+<!-- p open -->
+从图47可以看出，其中每一个集合都具有下述两条
+性质：
+
+<!-- foot -->
+· 33 ·

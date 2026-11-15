@@ -196,7 +196,7 @@ li.ex .body .fig[data-figure-layout="scroll"] .figure-media{
 function page(title, crumb, bodyHtml) {
   return `<!DOCTYPE html><meta charset="utf-8"><title>${esc(title)}</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<style>${CSS}</style><div class="sheet"><h1>${esc(title)}</h1>
+<style>${CSS}</style><div class="sheet"><h1>${inline(title)}</h1>
 <div class="crumb">${esc(crumb)}</div>${bodyHtml}</div>`;
 }
 

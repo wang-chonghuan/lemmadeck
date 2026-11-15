@@ -112,13 +112,25 @@ def _row_fragments(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     return raw
 
 
+def _straight_fraction_rule(mask: np.ndarray, line_h: float) -> bool:
+    counts = mask.sum(axis=0)
+    x = np.flatnonzero(counts)
+    if len(x) < 2:
+        return False
+    centers = (
+        (mask * np.arange(mask.shape[0])[:, None]).sum(axis=0)[x] / counts[x]
+    )
+    residual = centers - np.polyval(np.polyfit(x, centers, 1), x)
+    return np.percentile(np.abs(residual), 90) <= max(1.0, 0.03 * line_h)
+
+
 def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool:
     """Distinguish tall inline fractions from two full text rows."""
     band = ink[a:b + 1].copy()
     height = band.shape[0]
     rules = []
     components, _ = ndimage.label(band)
-    for bounds in ndimage.find_objects(components):
+    for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
         if bounds is None:
             continue
         rows, columns = bounds
@@ -126,6 +138,7 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
             columns.stop - columns.start >= 0.7 * line_h
             and rows.stop - rows.start <= 0.2 * line_h
             and 0.3 * height <= (rows.start + rows.stop) / 2 <= 0.7 * height
+            and _straight_fraction_rule(components[bounds] == component_id, line_h)
         ):
             rules.append((columns.start, columns.stop - 1))
     horizontal = ndimage.binary_opening(
@@ -140,6 +153,7 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
         original_ids = np.unique(components[bounds][horizontal[bounds]])
         glyph_stroke = any(
             original_bounds[component_id - 1] is not None
+            and columns.stop - columns.start < 2 * line_h
             and 0.6 * line_h <= (
                 original_bounds[component_id - 1][0].stop
                 - original_bounds[component_id - 1][0].start
@@ -148,6 +162,17 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
         )
         if (
             not glyph_stroke
+            and all(
+                _straight_fraction_rule(
+                    # Connected numerators need only their horizontal bar checked.
+                    horizontal[bounds]
+                    if original_bounds[component_id - 1][0].stop
+                    - original_bounds[component_id - 1][0].start > 0.5 * line_h
+                    else components[original_bounds[component_id - 1]] == component_id,
+                    line_h,
+                )
+                for component_id in original_ids if component_id
+            )
             and
             rows.stop - rows.start <= 0.25 * line_h
             and (
