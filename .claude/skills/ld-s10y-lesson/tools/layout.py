@@ -193,6 +193,34 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
     )
 
 
+def _has_column_body_rows(
+    ink: np.ndarray, a: int, b: int, line_h: float, count: int
+) -> bool:
+    """Check independent body-glyph rows without pooling staggered columns."""
+    band = ink[a:b + 1]
+    components, _ = ndimage.label(band)
+    bounds_list = [bounds for bounds in ndimage.find_objects(components) if bounds is not None]
+    columns = _merge_close(_runs(band.any(axis=0)), line_h)
+    for left, right in columns:
+        centers = [
+            (rows.start + rows.stop) / 2
+            for rows, cols in bounds_list
+            if left <= cols.start and cols.stop - 1 <= right
+            and 0.25 * line_h <= rows.stop - rows.start <= 1.3 * line_h
+            and 0.2 * line_h <= cols.stop - cols.start <= 1.3 * line_h
+        ]
+        rows = [
+            (start, end)
+            for start, end in _merge_close(
+                [(center, center) for center in sorted(centers)], 0.4 * line_h
+            )
+            if sum(start <= center <= end for center in centers) >= 3
+        ]
+        if len(rows) >= count:
+            return True
+    return False
+
+
 def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     """Count printed rows after masking model-identified figures."""
     # Work on a counting-only copy; extraction pixels are never changed.
@@ -417,7 +445,12 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             strong_rows = [
                 (x, y) for x, y in strong_rows if y - x + 1 >= 0.3 * typical_h
             ]
-            if count == 3 and len(strong_rows) == 2:
+            # A wide separator or caption can hide a narrow variable row in
+            # the full-width peaks; independent column glyphs veto that loss.
+            if (
+                count == 3 and len(strong_rows) == 2
+                and not _has_column_body_rows(ink, a, b, typical_h, count)
+            ):
                 count = 2
             if (
                 count == 2 and _single_fraction_row(ink, a, b, typical_h)
