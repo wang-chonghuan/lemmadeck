@@ -1,0 +1,216 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "efcb38d601a830629d70ab9b2cc6a938745e943ea024bf69d24faa20f1c5af6a",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "remainder-three-class-partition",
+      "source_numbers": ["67"],
+      "view": {
+        "mode": "single",
+        "stem": "把 $1$ 到 $20$ 的整数分成三类：第一类是 $3$ 的倍数，第二类是除以 $3$ 余 $1$ 的数，第三类是除以 $3$ 余 $2$ 的数。哪一组分类完整且正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "第一类：$\\{3,6,9,12,15,18\\}$；第二类：$\\{2,5,8,11,14,17,20\\}$；第三类：$\\{1,4,7,10,13,16,19\\}$。", "figure_ids": []},
+          {"id": "B", "text": "第一类：$\\{0,3,6,9,12,15,18\\}$；第二类：$\\{1,4,7,10,13,16,19\\}$；第三类：$\\{2,5,8,11,14,17,20\\}$。", "figure_ids": []},
+          {"id": "C", "text": "第一类：$\\{3,6,9,12,15,18\\}$；第二类：$\\{1,4,7,10,13,16,19\\}$；第三类：$\\{2,5,8,11,14,17,20\\}$。", "figure_ids": []},
+          {"id": "D", "text": "第一类：$\\{1,4,7,10,13,16,19\\}$；第二类：$\\{2,5,8,11,14,17,20\\}$；第三类：$\\{3,6,9,12,15,18\\}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {"task": "Partition all twenty specified integers by their remainder modulo three.", "source_solution": "The remainder-zero, remainder-one and remainder-two sets are respectively {3,6,9,12,15,18}, {1,4,7,10,13,16,19}, {2,5,8,11,14,17,20}. Their disjoint union is exactly 1..20.", "unit_reason": "One complete three-class result retains the rule and exhaustive partition rather than twenty cell clicks.", "concept_blocks": [4], "limitations": ["Recognizing supplied complete lists does not test independently generating every list."], "figure_observations": []},
+      "key": {"correct": ["C"], "rationales": [
+        {"option_id": "A", "truth": "incorrect", "derivation": "The correct remainder-zero list is kept, but the remainder-one and remainder-two lists are exchanged, so 1 is assigned to the third class instead of the second.", "misconception": "Reverse the two nonzero remainder labels after computing their lists."},
+        {"option_id": "B", "truth": "incorrect", "derivation": "Generating multiples as 3k from k=0 yields 0,3,6,9,12,15,18; the other two lists remain correct. Zero is not a member of the given set.", "misconception": "Generate multiples from zero without intersecting with the specified 1..20 domain."},
+        {"option_id": "C", "truth": "correct", "derivation": "Each integer is 3q+r with unique r in {0,1,2}; these lists contain all twenty values once with the prescribed class labels.", "misconception": null},
+        {"option_id": "D", "truth": "incorrect", "derivation": "Writing periodic groups starting at 1,2,3 and naming them classes one,two,three produces the displayed cyclic assignment. Its first class contains 1, which is not a multiple of 3.", "misconception": "Number the periodic starting residues 1,2,3 instead of matching the stated residue order 0,1,2."}
+      ]}
+    },
+    {
+      "id": "all-valid-figure-partitions",
+      "source_numbers": ["68"],
+      "view": {
+        "mode": "multiple",
+        "stem": "下面哪些分类能把图中的全部图形分组，使每个图形恰好属于一类？",
+        "figure_ids": ["fig-17"],
+        "options": [
+          {"id": "A", "text": "三角形、四边形两类。", "figure_ids": []},
+          {"id": "B", "text": "三角形、四边形、带阴影图形三类。", "figure_ids": []},
+          {"id": "C", "text": "三角形、四边形、圆三类。", "figure_ids": []},
+          {"id": "D", "text": "带阴影图形、白色图形两类。", "figure_ids": []}
+        ]
+      },
+      "intent": {"task": "Judge all four proposed classifications by both exhaustiveness and nonoverlap.", "source_solution": "Two triangles, two quadrilaterals and two circles are visible. A omits both circles. B puts the shaded triangle and quadrilateral in two classes each. C covers all six by shape once; D covers four shaded and two unshaded figures once.", "unit_reason": "Native multiple selection preserves the four competing classifications without combination codes or yes/no splitting.", "concept_blocks": [4], "limitations": ["Does not require writing a separate justification for each failed classification."], "figure_observations": [{"figure_id": "fig-17", "observation": "Full image has six separated objects: unshaded quadrilateral and triangle above, a shaded upper-right circle, a shaded middle triangle, a shaded right quadrilateral and a shaded lower-left circle. Rightmost and bottommost boundaries are visible."}]},
+      "key": {"correct": ["C", "D"], "rationales": [
+        {"option_id": "A", "truth": "incorrect", "derivation": "Assign both triangles to triangle and both quadrilaterals to quadrilateral; neither of the two circles belongs to either class.", "misconception": "Check only that the proposed classes do not overlap, ignoring uncovered objects."},
+        {"option_id": "B", "truth": "incorrect", "derivation": "The shaded triangle belongs to both triangle and shaded, and the shaded quadrilateral belongs to both quadrilateral and shaded; coverage alone is insufficient.", "misconception": "Add a covering shaded class without checking overlap with existing shape classes."},
+        {"option_id": "C", "truth": "correct", "derivation": "The three shape classes contain two objects each, have no shared object and cover all six.", "misconception": null},
+        {"option_id": "D", "truth": "correct", "derivation": "Every visible figure is either shaded or unshaded and none is both; group sizes are four and two.", "misconception": null}
+      ]}
+    },
+    {
+      "id": "complete-shape-table-and-bars",
+      "source_numbers": ["69"],
+      "view": {
+        "mode": "single",
+        "stem": "按图填写表格，再用一个单位高度表示一个图形，画三角形、四边形、圆的数量条形图。哪份完整结果正确？候选表的列依次为三角形、四边形、圆、共计。",
+        "figure_ids": ["fig-17", "tbl-p0024-02"],
+        "options": [
+          {"id": "A", "text": "| 类别 | 三角形 | 四边形 | 圆 | 共计 |\n|---|---:|---:|---:|---:|\n| 带阴影 | 1 | 1 | 1 | 3 |\n| 白色 | 1 | 1 | 1 | 3 |\n| 共计 | 2 | 2 | 2 | 6 |\n三根柱高依次为 $2,2,2$。", "figure_ids": []},
+          {"id": "B", "text": "| 类别 | 三角形 | 四边形 | 圆 | 共计 |\n|---|---:|---:|---:|---:|\n| 带阴影 | 1 | 1 | 1 | 3 |\n| 白色 | 1 | 1 | 0 | 2 |\n| 共计 | 2 | 2 | 1 | 5 |\n三根柱高依次为 $2,2,1$。", "figure_ids": []},
+          {"id": "C", "text": "| 类别 | 三角形 | 四边形 | 圆 | 共计 |\n|---|---:|---:|---:|---:|\n| 带阴影 | 0 | 2 | 2 | 4 |\n| 白色 | 1 | 1 | 0 | 2 |\n| 共计 | 1 | 3 | 2 | 6 |\n三根柱高依次为 $1,3,2$。", "figure_ids": []},
+          {"id": "D", "text": "| 类别 | 三角形 | 四边形 | 圆 | 共计 |\n|---|---:|---:|---:|---:|\n| 带阴影 | 1 | 1 | 2 | 4 |\n| 白色 | 1 | 1 | 0 | 2 |\n| 共计 | 2 | 2 | 2 | 6 |\n三根柱高依次为 $2,2,2$。", "figure_ids": []}
+        ]
+      },
+      "intent": {"task": "Fill every shading-by-shape table cell and determine all three shape-count bar heights.", "source_solution": "Rows shaded,unshaded,total are (1,1,2,4),(1,1,0,2),(2,2,2,6); bars are (2,2,2) at the explicitly stated unit scale.", "unit_reason": "One coherent whole table plus ordered bar-height tuple keeps both classifications and row/column totals.", "concept_blocks": [4], "limitations": ["Choosing a complete filled table does not demonstrate independently filling its cells.", "A bar-height specification does not demonstrate drawing axes, labels and bars."], "figure_observations": [{"figure_id": "fig-17", "observation": "Two shaded circles differ in size and position and both must be counted; the long shaded middle polygon has three vertices. All six objects and outer boundaries are visible."}, {"figure_id": "tbl-p0024-02", "observation": "Full blank table has four rows and five columns: Class,Triangle,Quad.,Circle,Total across; Shaded,Unshaded,Total down. Last Total column and bottom row are visible."}]},
+      "key": {"correct": ["D"], "rationales": [
+        {"option_id": "A", "truth": "incorrect", "derivation": "Misread the lower-left shaded circle as white, transferring one circle from shaded to unshaded. Rows become (1,1,1,3),(1,1,1,3); shape totals remain (2,2,2,6).", "misconception": "Classify a shaded circle by an imagined white interior while preserving the shape count."},
+        {"option_id": "B", "truth": "incorrect", "derivation": "Treat the two circles as one repeated shape, count one shaded circle, then sum rows and columns to obtain total five and bars (2,2,1).", "misconception": "Deduplicate two separate drawn objects just because both are circles."},
+        {"option_id": "C", "truth": "incorrect", "derivation": "Assign the long shaded triangle to quadrilaterals, moving its one count from shaded triangle to shaded quadrilateral. The resulting shape totals are 1,3,2.", "misconception": "Judge an elongated three-vertex polygon by its silhouette instead of counting sides."},
+        {"option_id": "D", "truth": "correct", "derivation": "Count shaded triangle 1,quadrilateral 1,circle 2; unshaded triangle 1,quadrilateral 1,circle 0. Sum each row and column; each shape total is 2.", "misconception": null}
+      ]}
+    },
+    {
+      "id": "triangle-and-through-vertex-parallel",
+      "source_numbers": ["70"],
+      "view": {
+        "mode": "single",
+        "stem": "要作 $|AB|=5.6$ 厘米、$\\angle A=40^\\circ$、$\\angle B=65^\\circ$ 的三角形 $ABC$，再过 $C$ 作 $AB$ 的平行线。下列步骤中的两条角射线都取在 $AB$ 同一侧并朝三角形内部。哪套步骤满足全部要求？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "作 $AB=5.6$ 厘米；在 $A$ 作与 $AB$ 成 $40^\\circ$ 的射线，在 $B$ 作与 $BA$ 成 $65^\\circ$ 的射线，交于 $C$；过 $C$ 作与 $AB$ 垂直的直线。", "figure_ids": []},
+          {"id": "B", "text": "作 $AB=5.6$ 厘米；在 $A$ 作与 $AB$ 成 $40^\\circ$ 的射线，在 $B$ 作与 $BA$ 成 $65^\\circ$ 的射线，交于 $C$；过 $C$ 作与 $AB$ 平行的直线。", "figure_ids": []},
+          {"id": "C", "text": "作 $AB=5.6$ 厘米；在 $A$ 作与 $AB$ 成 $65^\\circ$ 的射线，在 $B$ 作与 $BA$ 成 $40^\\circ$ 的射线，交于 $C$；过 $C$ 作与 $AB$ 平行的直线。", "figure_ids": []},
+          {"id": "D", "text": "作 $AB=5.6$ 厘米；在 $A$ 作与 $AB$ 成 $40^\\circ$ 的射线，在 $B$ 作与 $BA$ 成 $65^\\circ$ 的射线，交于 $C$；过 $C$ 作与 $AC$ 重合的直线。", "figure_ids": []}
+        ]
+      },
+      "intent": {"task": "Specify the complete two-angle/base triangle construction and the parallel through its third vertex.", "source_solution": "The inward 40-degree ray at A and 65-degree ray at B meet at C with C=75 degrees. Through C, slide a set square aligned to AB along a fixed ruler and draw the parallel. AC meets AB at angle40, so it cannot be that parallel.", "unit_reason": "A complete construction programme retains both endpoint-angle assignments and the additional through-C parallel rather than asking only the triangle angle sum.", "concept_blocks": [], "limitations": ["Recognition of a construction programme does not demonstrate compass/protractor/set-square handling or actual drawing accuracy."], "figure_observations": []},
+      "key": {"correct": ["B"], "rationales": [
+        {"option_id": "A", "truth": "incorrect", "derivation": "Keep the base and angles but turn the set square through a right angle before drawing the final line. It meets AB at90 degrees, not a parallel direction.", "misconception": "Use the perpendicular drawing edge instead of the edge parallel to the base."},
+        {"option_id": "B", "truth": "correct", "derivation": "The rays enforce both given angles and form a nondegenerate triangle; the final through-C line has the direction of AB.", "misconception": null},
+        {"option_id": "C", "truth": "incorrect", "derivation": "Attach65 to A and40 to B instead of the given assignments. Their sum is unchanged but the labelled endpoint conditions are both false.", "misconception": "Treat two specified endpoint angles as an unordered pair."},
+        {"option_id": "D", "truth": "incorrect", "derivation": "Use side AC as the required through-C line. AC intersects AB at A with angle40, so it is not parallel to AB.", "misconception": "Satisfy only through-C incidence and ignore the required direction."}
+      ]}
+    },
+    {
+      "id": "decimal-addition-complete-pairs",
+      "source_numbers": ["71"],
+      "view": {
+        "mode": "single",
+        "stem": "把每个加数化成小数再相加：① $\\frac{1}{2}+\\frac{1}{4}$；② $\\frac{1}{5}+\\frac{1}{10}$。哪份两行计算完整且正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "① $0.5+0.25=0.75$；② $0.2+0.1=0.3$。", "figure_ids": []},
+          {"id": "B", "text": "① $0.2+0.4=0.6$；② $0.5+0.10=0.6$。", "figure_ids": []},
+          {"id": "C", "text": "① $0.5+0.25=0.333\\ldots$；② $0.2+0.1=0.1333\\ldots$。", "figure_ids": []},
+          {"id": "D", "text": "① $0.5+0.25=0.30$；② $0.2+0.1=0.3$。", "figure_ids": []}
+        ]
+      },
+      "intent": {"task": "Convert all four fractions and carry out the two requested decimal additions.", "source_solution": "1/2=.5,1/4=.25 and sum=.75;1/5=.2,1/10=.1 and sum=.3.", "unit_reason": "One ordered pair of complete computations checks the shared fraction-to-decimal/addition procedure and both different denominator cases.", "concept_blocks": [], "limitations": ["Does not elicit independently written long division or decimal-column work."], "figure_observations": []},
+      "key": {"correct": ["A"], "rationales": [
+        {"option_id": "A", "truth": "correct", "derivation": "Use denominators10,100: 1/2=5/10,1/4=25/100;1/5=2/10,1/10=1/10. Add to .75 and .3.", "misconception": null},
+        {"option_id": "B", "truth": "incorrect", "derivation": "Encode 1/n as decimal .n: 1/2→.2,1/4→.4,1/5→.5,1/10→.10. Adding the mistaken decimals gives .6 in each row.", "misconception": "Write the denominator after a decimal point instead of dividing the numerator by it."},
+        {"option_id": "C", "truth": "incorrect", "derivation": "Convert the addends correctly but add original fraction numerators and denominators: (1+1)/(2+4)=1/3 and (1+1)/(5+10)=2/15, whose decimals are .333... and .1333....", "misconception": "Use componentwise fraction addition to obtain the sum despite correctly converted addends."},
+        {"option_id": "D", "truth": "incorrect", "derivation": "For different decimal lengths, add unscaled digits5+25=30 and retain two decimal places, giving .30. The equal-length second addition gives .3.", "misconception": "Right-align decimal digits rather than align the decimal points."}
+      ]}
+    },
+    {
+      "id": "five-year-mean-and-annual-increase",
+      "source_numbers": ["72"],
+      "view": {
+        "mode": "single",
+        "stem": "表中列出五年的发电量，单位为 $10$ 亿千瓦时。五年年平均发电量和每年的平均增长量依次是多少？",
+        "figure_ids": ["tbl-p0025-01"],
+        "options": [
+          {"id": "A", "text": "年平均发电量 $1072$；平均每年增长 $58.5$。", "figure_ids": []},
+          {"id": "B", "text": "年平均发电量 $857.6$；平均每年增长 $46.8$。", "figure_ids": []},
+          {"id": "C", "text": "年平均发电量 $857.6$；平均每年增长 $58.5$。", "figure_ids": []},
+          {"id": "D", "text": "年平均发电量 $828.25$；平均每年增长 $58.5$。", "figure_ids": []}
+        ]
+      },
+      "intent": {"task": "Distinguish averaging five yearly levels from averaging four consecutive annual changes.", "source_solution": "741+800+857+915+975=4288;4288/5=857.6. Increases59,57,58,60 sum234;234/4=58.5. Both quantities use billion kWh, with growth per annual interval.", "unit_reason": "A paired result keeps the different denominators and the relation between totals and changes; separate level-only and growth-only clicks would hide that comparison.", "concept_blocks": [], "limitations": ["Does not require producing the sum, difference list or unit explanation independently."], "figure_observations": [{"figure_id": "tbl-p0025-01", "observation": "Full two-row, five-column table contains1970–1974 above741,800,857,915,975, in order. Last975 and all bottom border are visible and match the original scan."}]},
+      "key": {"correct": ["C"], "rationales": [
+        {"option_id": "A", "truth": "incorrect", "derivation": "Divide the five-level sum4288 by the number of changes4:4288/4=1072. Growth still uses234/4=58.5.", "misconception": "Use the four annual intervals as the divisor for the five annual observations."},
+        {"option_id": "B", "truth": "incorrect", "derivation": "The level mean4288/5=857.6 is correct; divide total change975-741=234 by the five labelled years to get46.8.", "misconception": "Count five year labels as five consecutive growth intervals."},
+        {"option_id": "C", "truth": "correct", "derivation": "Average five levels with divisor5 and four increments with divisor4; values are857.6 and58.5.", "misconception": null},
+        {"option_id": "D", "truth": "incorrect", "derivation": "Omit the final level975 when averaging, obtaining(741+800+857+915)/4=3313/4=828.25. Keep the correct endpoint-change calculation234/4.", "misconception": "Confuse the last level with an endpoint used only for growth and exclude it from the level mean."}
+      ]}
+    },
+    {
+      "id": "english-letter-two-class-partition",
+      "source_numbers": ["73"],
+      "view": {
+        "mode": "single",
+        "stem": "把英语字母集合 $\\{a,b,c,d,e,f,g,h,i,j\\}$ 分成元音字母和辅音字母两类。哪一组分类完整且正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "元音：$\\{a,e,i\\}$；辅音：$\\{b,c,d,f,g,h,i,j\\}$。", "figure_ids": []},
+          {"id": "B", "text": "元音：$\\{a,e\\}$；辅音：$\\{b,c,d,f,g,h,j\\}$。", "figure_ids": []},
+          {"id": "C", "text": "元音：$\\{a,e,i,o,u\\}$；辅音：$\\{b,c,d,f,g,h,j\\}$。", "figure_ids": []},
+          {"id": "D", "text": "元音：$\\{a,e,i\\}$；辅音：$\\{b,c,d,f,g,h,j\\}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {"task": "Classify exactly the supplied English letters, without overlapping classes, omissions or outside members.", "source_solution": "The selected English set intersects vowel letters{a,e,i,o,u} in{a,e,i}; its complement within the supplied set is{b,c,d,f,g,h,j}.", "unit_reason": "One complete partition makes coverage and disjointness substantive alongside membership; per-letter yes/no answers would not test that structure.", "concept_blocks": [4], "limitations": ["Does not demonstrate independently generating the two lists.", "Uses the modern edition's explicitly English alphabet, not knowledge of the original Russian-letter list."], "figure_observations": []},
+      "key": {"correct": ["D"], "rationales": [
+        {"option_id": "A", "truth": "incorrect", "derivation": "Put i in the vowel set correctly, then mistakenly leave it in the consonant list as well. The two classes intersect at i.", "misconception": "Build a second class without removing every already classified vowel."},
+        {"option_id": "B", "truth": "incorrect", "derivation": "List a,e as vowels and remove all a,e,i from the consonants; i consequently appears in neither class.", "misconception": "Recognize i as not consonant but omit it from the vowel list."},
+        {"option_id": "C", "truth": "incorrect", "derivation": "Copy all five English vowel letters{a,e,i,o,u} without restricting to the supplied a..j set. Outside members o,u enter the classification.", "misconception": "Classify the entire alphabet's vowel inventory instead of intersecting it with the given set."},
+        {"option_id": "D", "truth": "correct", "derivation": "Use{a,e,i} and all remaining seven supplied letters; their disjoint union is the original ten-letter set.", "misconception": null}
+      ]}
+    },
+    {
+      "id": "plant-animal-complete-groups-and-bars",
+      "source_numbers": ["74"],
+      "view": {
+        "mode": "single",
+        "stem": "把图中对象分成植物和动物两类，再画数量条形图，每个对象对应一个单位高度。哪份分类和两根柱高同时正确？",
+        "figure_ids": ["fig-18"],
+        "options": [
+          {"id": "A", "text": "植物：针叶树、阔叶树；动物：向日葵、狼、兔、熊、山羊、象。植物柱高 $2$，动物柱高 $6$。", "figure_ids": []},
+          {"id": "B", "text": "植物：针叶树、阔叶树、向日葵；动物：狼、兔、熊、山羊、象。植物柱高 $3$，动物柱高 $5$。", "figure_ids": []},
+          {"id": "C", "text": "植物：针叶树、阔叶树、向日葵；动物：狼、兔、熊、山羊、象。植物柱高 $5$，动物柱高 $3$。", "figure_ids": []},
+          {"id": "D", "text": "植物：针叶树、阔叶树、向日葵；动物：狼、熊、山羊、象。植物柱高 $3$，动物柱高 $4$。", "figure_ids": []}
+        ]
+      },
+      "intent": {"task": "Classify all eight actual pictured objects and determine the two population-count bar heights.", "source_solution": "Conifer,broadleaf tree,sunflower are the three plants. Wolf,rabbit,bear,goat,elephant are the five animals. At the stated unit scale the bar heights are3 and5.", "unit_reason": "One complete membership-and-count result preserves classification, coverage and the graph quantities instead of a counts-only shortcut.", "concept_blocks": [4], "limitations": ["Does not demonstrate independently drawing axes, category labels or bars.", "Recognizes supplied member lists rather than generating them."], "figure_observations": [{"figure_id": "fig-18", "observation": "Full image shows three separate plants across the top and five animals below: wolf,rabbit,bear,goat,elephant. The complete far-right elephant and all feet/plant bases are visible."}]},
+      "key": {"correct": ["B"], "rationales": [
+        {"option_id": "A", "truth": "incorrect", "derivation": "Classify only trees as plants, moving sunflower to animals. The resulting lists contain two plants and six animals.", "misconception": "Restrict plants to trees and classify the remaining non-tree flower as animal."},
+        {"option_id": "B", "truth": "correct", "derivation": "All three plants and all five animals are separated exactly once; counts match the complete lists and the unit-scale heights.", "misconception": null},
+        {"option_id": "C", "truth": "incorrect", "derivation": "Classify and count the three plants and five animals correctly, but reverse the category order when placing the counts on the bars. Plant height becomes5 and animal height3.", "misconception": "Swap the correspondence between the two category labels and their numerical bar heights."},
+        {"option_id": "D", "truth": "incorrect", "derivation": "Skip the small rabbit while scanning the bottom row. Four named animals remain and the rabbit belongs to neither class.", "misconception": "Count only large pictured animals and omit the smaller rabbit."}
+      ]}
+    },
+    {
+      "id": "decimal-subtraction-complete-pairs",
+      "source_numbers": ["75"],
+      "view": {
+        "mode": "single",
+        "stem": "把被减数和减数都化成小数再相减：① $\\frac{3}{4}-\\frac{1}{8}$；② $\\frac{13}{25}-\\frac{2}{5}$。哪份两行计算完整且正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "① $0.75-0.125=0.625$；② $0.52-0.4=0.12$。", "figure_ids": []},
+          {"id": "B", "text": "① $0.34-0.18=0.16$；② $0.1325-0.25=-0.1175$。", "figure_ids": []},
+          {"id": "C", "text": "① $0.75-0.125=-0.5$；② $0.52-0.4=0.55$。", "figure_ids": []},
+          {"id": "D", "text": "① $0.75-0.125=-0.05$；② $0.52-0.4=0.48$。", "figure_ids": []}
+        ]
+      },
+      "intent": {"task": "Convert all four fractions and perform both decimal differences with correct place values.", "source_solution": "3/4=.75,1/8=.125, difference=.625.13/25=.52,2/5=.4, difference=.12.", "unit_reason": "The full ordered pair of computations tests the common conversion/subtraction rule across two denominator patterns rather than isolated digit clicks.", "concept_blocks": [], "limitations": ["Does not demonstrate independently written conversion, borrowing or column alignment."], "figure_observations": []},
+      "key": {"correct": ["A"], "rationales": [
+        {"option_id": "A", "truth": "correct", "derivation": "Use .750-.125=.625 and .52-.40=.12 after equivalent denominator conversions.", "misconception": null},
+        {"option_id": "B", "truth": "incorrect", "derivation": "Concatenate numerator and denominator after a decimal point:3/4→.34,1/8→.18,13/25→.1325,2/5→.25. Subtracting gives.16 and-.1175.", "misconception": "Read the two fraction components as decimal digits instead of a quotient."},
+        {"option_id": "C", "truth": "incorrect", "derivation": "Convert operands correctly but compute(3-1)/(4-8)=2/(-4)=-.5 and(13-2)/(25-5)=11/20=.55 for the results.", "misconception": "Subtract numerators and denominators componentwise despite correct decimal operand conversion."},
+        {"option_id": "D", "truth": "incorrect", "derivation": "Right-align digits75 and125, divide their difference-50 by1000 to get-.05; right-align52 and4, divide48 by100 to get.48.", "misconception": "Align the last digits rather than decimal points, assigning both operands the longer precision."}
+      ]}
+    }
+  ],
+  "coverage": [
+    {"source_number": "67", "question_ids": ["remainder-three-class-partition"], "omitted_tasks": ["Independent exhaustive list generation."], "reason": "Complete prescribed residue classes retain all twenty members and the partition conditions."},
+    {"source_number": "68", "question_ids": ["all-valid-figure-partitions"], "omitted_tasks": ["Independently writing reasons for each yes/no classification."], "reason": "All four original proposals are native multiple alternatives and require both disjointness and coverage."},
+    {"source_number": "69", "question_ids": ["complete-shape-table-and-bars"], "omitted_tasks": ["Independent cell filling and drawing the labelled bar chart."], "reason": "Every table count, row/column total and three ordered bar heights survive in one full result."},
+    {"source_number": "70", "question_ids": ["triangle-and-through-vertex-parallel"], "omitted_tasks": ["Performing actual instrument construction and measuring the completed figure."], "reason": "The complete construction programme retains base length, both labelled angle constraints and the through-C parallel."},
+    {"source_number": "71", "question_ids": ["decimal-addition-complete-pairs"], "omitted_tasks": ["Independent written fraction conversion and decimal addition."], "reason": "Both complete ordered computations include every original operand and sum."},
+    {"source_number": "72", "question_ids": ["five-year-mean-and-annual-increase"], "omitted_tasks": ["Independent summation, increment calculation and written unit explanation."], "reason": "All five measurements, their ordered years, both requested averages and different divisors are retained."},
+    {"source_number": "73", "question_ids": ["english-letter-two-class-partition"], "omitted_tasks": ["Independent member-list generation and Russian-alphabet classification."], "reason": "Modernized English alphabet is explicitly declared in the source; classification exhausts only the actual ten-letter set."},
+    {"source_number": "74", "question_ids": ["plant-animal-complete-groups-and-bars"], "omitted_tasks": ["Independent listing and production of the two labelled bars."], "reason": "All eight real pictured objects occur in the complete candidate classification; both counts and bar heights remain."},
+    {"source_number": "75", "question_ids": ["decimal-subtraction-complete-pairs"], "omitted_tasks": ["Independent written conversion and decimal subtraction."], "reason": "Both complete ordered computations retain all operands and differences."}
+  ]
+}
