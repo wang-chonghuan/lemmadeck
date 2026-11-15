@@ -1,0 +1,71 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 20,
+  "printed_page": 14,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 20
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "4899ac6e8fd8392b1e5826d53765dc1e086963047eedbcb36f4862ef3d92cc3d"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "第41题б小问经原图局部放大复核：前两分母是a-b、a+b，第三分母是36-a^2，不擅自替换变量或常数。"
+  ],
+  "errata": [
+    {
+      "id": "p0020-ex37-quantifier",
+      "block": "p0020#1",
+      "original": "如果 $a$ 和 $b$ 是自然数，那么分子为 $1$ 的分数都是下式的值：",
+      "reason": "原书把单位分数与式值的包含方向写反。两式在原定义域内均化简为1/(ab)，所以其值都是单位分数；但б要求a≠b，正整数ab不可能为1，因而单位分数1不能是б式的值。若自然数约定含0，原分母仍排除a=0或b=0。"
+    }
+  ],
+  "printed_lines": 19,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 37 -->
+37．证明，如果 $a$ 和 $b$ 是自然数，那么分子为 $1$ 的分数都是
+下式的值：
+а）$\frac1{a^2+ab}+\frac1{ab+b^2}$；　　б）$\frac1{ab-a^2}-\frac1{b^2-ab}$（$a\ne b$）．
+举出几个具体数字的例子．
+
+<!-- ex 38 -->
+38．把下列各式写成分式：
+а）$\frac{x^2-3xy}{(x+y)(x-y)}+\frac y{x+y}$；　　б）$\frac c{b-c}+\frac{b^2-3bc}{b^2-c^2}$；
+в）$\frac{a-2y}{a+y}-\frac{y^2-5ay}{a^2-y^2}$；　　г）$\frac{a+3}{a^2-1}-\frac1{a^2+a}$；
+д）$\frac{b-6}{4-b^2}+\frac2{2b-b^2}$；　　е）$\frac b{ab-5a^2}-\frac{15b-25a}{b^2-25a^2}$；
+ж）$\frac{x-12a}{x^2-16a^2}-\frac{4a}{4ax-x^2}$；　　з）$\frac{a-30y}{a^2-100y^2}-\frac{10y}{10ay-a^2}$．
+
+<!-- ex 39 -->
+39．找出下列各式的定义域并证明，对于定义域里的任
+何 $x$：
+а）式 $\frac2{x^4-1}-\frac1{x^2-1}$ 的值为负；
+б）式 $\frac{x^2}{x^2-1}-\frac1{x^4-x^2}$ 的值大于 $1$．
+
+<!-- ex 40 -->
+40．化简并求出当 $x=-1.5$ 时的值：
+а）$\frac{x+1}{x^2-x}-\frac{x+2}{x^2-1}$；　　б）$\frac{x+2}{x^2+3x}-\frac{1+x}{x^2-9}$．
+
+<!-- ex 41 open -->
+41．先写成一个分式，如果可能的话，再化简：
+а）$\frac4{y+2}-\frac3{y-2}+\frac{12}{y^2-4}$；　　б）$\frac a{a-b}-\frac3{a+b}+\frac{a^2}{36-a^2}$；
+в）$\frac{2a+b}{2a^2-ab}-\frac{16a}{4a^2-b^2}+\frac{2a-b}{2a^2+ab}$；
+
+<!-- foot -->
+14

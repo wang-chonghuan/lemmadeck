@@ -56,11 +56,11 @@
 <!-- p -->
 $\frac ab+\frac cd=\frac{ad}{bd}+\frac{bc}{bd}$．
 
-<!-- p -->
+<!-- p open -->
 式 $d$ 叫做分式 $\frac ab$ 的分子与分母的附加因式，式 $b$ 是分式
 $\frac cd$ 的分子与分母的附加因式．我们已经把分式 $\frac ab$ 与 $\frac cd$ 变形成
 
-<!-- p -->
+<!-- p cont -->
 同分母的分式 $\frac{ad}{bd}$ 与 $\frac{bc}{bd}$．这时就说，分式 $\frac ab$ 与 $\frac cd$ 已经通分．
 
 <!-- p -->
