@@ -1,0 +1,31 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const work = path.dirname(new URL(import.meta.url).pathname);
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const request = read(path.join(work, 'figure-02.parent-approval.request.json'));
+const approvalFile = path.join(work, 'figure-02.parent-approval.json');
+if (!fs.existsSync(approvalFile)) throw Error('STOP: parent independent actual figure approval still absent');
+const approval = read(approvalFile);
+if (approval.status !== 'pass' || approval.independent_actual_source_and_output_comparison !== true) {
+  throw Error('STOP: explicit parent actual comparison pass required');
+}
+for (const input of request.inputs) {
+  const approved = approval.inputs.find(item => item.path === input.path);
+  if (!approved || approved.sha256 !== input.sha256 || sha(input.path) !== input.sha256) {
+    throw Error('STOP: every original/spec/SVG/render/preview/template hash must match parent approval');
+  }
+}
+const reviewFile = path.join(work, '../root/7a/editions/modern-us-neutral/figures/fig-02.review.json');
+if (!fs.existsSync(reviewFile) || read(reviewFile).status !== 'pass') {
+  throw Error('STOP: separately recorded hash-bound independent figure review@1 required');
+}
+const result = spawnSync('node', [path.join(work, 'modern-once.mjs'), 'finalize', 'alg7-c1-s2-n6'], {
+  cwd: work, encoding: 'utf8',
+});
+process.stdout.write(result.stdout ?? '');
+process.stderr.write(result.stderr ?? '');
+process.exitCode = result.status ?? 1;

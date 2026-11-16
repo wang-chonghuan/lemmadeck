@@ -1,0 +1,37 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const work = path.dirname(new URL(import.meta.url).pathname);
+const digest = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const dump = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+// Identify concept transitions by source object, then take the adjacent
+// paragraph anchors from the shared proseFlow output, never a guessed index.
+const transitions = new Map([
+  [5, [13]], [6, [7, 14]], [7, [10, 14]], [8, [4, 9]],
+]);
+for (const [number, starts] of transitions) {
+  const id = `alg7-c1-s${number === 8 ? 3 : 2}-n${number}`;
+  const file = path.join(work, 'adapt/7a/modern-us-neutral/lessons', id, 'lesson.template.json');
+  const recordFile = path.join(work, `prose-flow-${id}.json`);
+  dump(`${recordFile}.started.json`, { file, sha256: digest(file) });
+  const args = [path.join(repo, '.claude/skills/ld-s10y-lesson/tools/prose_flow.mjs'), '--json', file];
+  const result = spawnSync('node', args, { cwd: repo, encoding: 'utf8' });
+  if (result.status !== 0) {
+    dump(recordFile, { argv: ['node', ...args], status: result.status, stdout: result.stdout, stderr: result.stderr });
+    throw Error('STOP: proseFlow failed');
+  }
+  const outline = JSON.parse(result.stdout);
+  const boundaries = starts.map(blockIndex => {
+    const position = outline.paragraphs.findIndex(paragraph => paragraph.blockIndex === blockIndex);
+    if (position <= 0) throw Error('Concept transition is not a valid adjacent pair');
+    return { before: outline.paragraphs[position - 1].text, after: outline.paragraphs[position].text };
+  });
+  const document = JSON.parse(fs.readFileSync(file, 'utf8'));
+  document.section_breaks = boundaries;
+  fs.writeFileSync(file, JSON.stringify(document, null, 2) + '\n');
+  dump(recordFile, { argv: ['node', ...args], status: result.status, stdout: result.stdout, stderr: result.stderr,
+    actual_prose_flow: outline, selected_concept_boundaries: boundaries, template_sha256_after: digest(file) });
+}

@@ -1,0 +1,164 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const base = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp/batch22-modern-7a');
+const root = path.join(base, 'root');
+const work = path.join(base, 'work');
+const raw = path.join(repo, 'ssot-resources/soviet10year-textbooks/artifacts/7a');
+const editionName = 'modern-us-neutral';
+const skill = path.join(repo, '.claude/skills/ld-s10y-lesson');
+const imageSkill = path.join(repo, '.agents/skills/ld-s10y-image');
+const toc = path.join(repo, 'ssot-resources/soviet10year-textbooks/toc/7a/zh.json');
+const ids = [5, 6, 7, 8].map(number => `alg7-c1-s${number === 8 ? 3 : 2}-n${number}`);
+const freezeFile = path.join(work, 'inputs-before.json');
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const record = file => ({ path: file, sha256: sha(file), bytes: fs.statSync(file).size });
+const write = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+const assert = (ok, message) => { if (!ok) throw Error(message); };
+const templates = id => path.join(work, 'adapt/7a', editionName, 'lessons', id);
+const destinationEdition = path.join(root, '7a/editions', editionName);
+const priorIds = [1, 2, 3, 4].map(number => `alg7-c1-s1-n${number}`);
+
+function copiedPaths() {
+  const files = [
+    path.join(raw, 'book.json'),
+    ...fs.readdirSync(path.join(raw, 'pages')).flatMap(page =>
+      ['page.md', 'page.json', 'audit.json'].map(name => path.join(raw, 'pages', page, name))),
+    ...fs.readdirSync(path.join(raw, 'lessons')).flatMap(id =>
+      ['lesson.md', 'lesson.json', 'exercises.json'].map(name => path.join(raw, 'lessons', id, name))),
+    ...[1, 2].flatMap(number => ['png', 'svg'].map(extension => path.join(raw, `figures/fig-0${number}.${extension}`))),
+    path.join(raw, 'editions', editionName, 'book.json'),
+    ...priorIds.flatMap(id => ['lesson.json', 'exercises.json', 'figures.json', 'adaptation.audit.json']
+      .map(name => path.join(raw, 'editions', editionName, 'lessons', id, name))),
+    ...['svg', 'spec.json', 'render.json', 'review.json'].map(extension =>
+      path.join(raw, 'editions', editionName, `figures/fig-01.${extension}`)),
+  ];
+  assert(files.every(file => !/(?:choice|answer|interaction|history)/i.test(path.relative(raw, file))), 'Non-authoring input entered whitelist');
+  return files.map(source => ({ source, destination: path.join(root, '7a', path.relative(raw, source)) }));
+}
+
+function checkFrozen(frozen) {
+  for (const input of frozen.inputs) assert(sha(input.path) === input.sha256, `Frozen input changed: ${input.path}`);
+  for (const copy of frozen.copies) {
+    if (copy.destination === path.join(destinationEdition, 'book.json')) continue;
+    assert(sha(copy.destination) === copy.sha256, `Immutable copied source/prior file changed: ${copy.destination}`);
+  }
+}
+
+function runOnce(name, executable, args, outputFiles = []) {
+  const frozen = read(freezeFile);
+  checkFrozen(frozen);
+  const started = path.join(work, `${name}.started.json`);
+  const resultFile = path.join(work, `${name}.json`);
+  assert(!fs.existsSync(started) && !fs.existsSync(resultFile), `Already attempted: ${name}`);
+  assert(fs.readdirSync(work).filter(file => /^command-.*\.json$/.test(file) && !file.endsWith('.started.json'))
+    .every(file => read(path.join(work, file)).pass), 'Previous recorded command failed; stop');
+  write(started, { at: new Date().toISOString(), argv: [executable, ...args], inputs: outputFiles.filter(fs.existsSync).map(record) });
+  const temporary = path.join(work, 'runtime-temp');
+  fs.mkdirSync(temporary, { recursive: true });
+  const result = spawnSync(executable, args, {
+    cwd: repo, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024,
+    env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', PYTHON: path.join(skill, '.venv/bin/python'), TMPDIR: temporary },
+  });
+  let failure = result.error?.message ?? (result.status === 0 ? null : `Exit ${result.status}`);
+  try { checkFrozen(frozen); } catch (error) { failure = error.message; }
+  write(resultFile, {
+    at: new Date().toISOString(), argv: [executable, ...args], status: result.status,
+    stdout: result.stdout, stderr: result.stderr, pass: !failure, failure,
+    outputs: outputFiles.filter(fs.existsSync).map(record),
+  });
+  process.stdout.write(result.stdout ?? '');
+  process.stderr.write(result.stderr ?? '');
+  if (failure) throw Error(`STOP ${name}: ${failure}`);
+}
+
+const action = process.argv[2];
+if (action === 'freeze') {
+  assert(!fs.existsSync(root) && !fs.existsSync(freezeFile), 'Unique batch22 root already exists');
+  const copies = copiedPaths();
+  const tools = [
+    'p2c.py', 'edition.py', 'assemble.py', 'blocks.py', 'normalize.py', 'mathcheck.py',
+    'prose_flow.mjs', 'htmlfrag.js', 'katex_check.js', 'render_lesson.js', 'svg_raster.js',
+  ].map(name => path.join(skill, 'tools', name));
+  const extra = [
+    toc, path.join(skill, 'SKILL.md'), path.join(skill, 'profiles/modern-us-neutral.json'),
+    path.join(skill, 'profiles/soviet-cn.json'), path.join(skill, 'references/edition-text-contract.md'),
+    path.join(imageSkill, 'SKILL.md'), path.join(imageSkill, 'assets/figure-spec.schema.json'),
+    ...['render_spec.mjs', 'validate_spec.py', 'materialize_arrowheads.mjs'].map(name => path.join(imageSkill, 'scripts', name)),
+    ...['routing.md', 'figure-spec.md', 'quality-gate.md'].map(name => path.join(imageSkill, 'references', name)),
+    path.join(work, 'modern-once.mjs'),
+  ];
+  const topics = read(toc).contents.flatMap(chapter => chapter.lessons ?? []).flatMap(section => section.topics ?? []);
+  const targets = ids.map(id => {
+    const card = topics.find(topic => topic.id === id);
+    const lesson = read(path.join(raw, 'lessons', id, 'lesson.json'));
+    const exercises = read(path.join(raw, 'lessons', id, 'exercises.json'));
+    assert(card && card.page === lesson.start_printed && String(card.printedNumber) === lesson.number, 'Actual TOC target mismatch');
+    assert(exercises.count === exercises.exercises.length, 'RAW exercise count mismatch');
+    return { id, actual_toc: card, raw_lesson: record(path.join(raw, 'lessons', id, 'lesson.json')),
+      raw_exercises: record(path.join(raw, 'lessons', id, 'exercises.json')), originals: exercises.exercises.map(item => item.number),
+      counts: { prose: lesson.prose.length, exercises: exercises.count, figures: lesson.figures.length } };
+  });
+  const frozen = {
+    at: new Date().toISOString(), scope: 'Offline modern adaptation n5-n8 only; current RAW source and explicitly whitelisted prior modern files. No choices, answers, interaction files, history, DB, env or service input.',
+    roots: { root, work }, targets,
+    inputs: [...new Set([...copies.map(item => item.source), ...tools, ...extra])].map(record),
+    copies: copies.map(item => ({ ...item, sha256: sha(item.source) })),
+    prior_modern_copy_purpose: 'Preserve old lesson files and modern book index only; never consulted to author new task text or figure.',
+    raw_n9_purpose: 'Retained only as immutable RAW stream/index context; never adapted or included in modern target/index additions.',
+  };
+  write(freezeFile, frozen);
+  for (const item of frozen.copies) {
+    fs.mkdirSync(path.dirname(item.destination), { recursive: true });
+    fs.copyFileSync(item.source, item.destination, fs.constants.COPYFILE_EXCL);
+    assert(sha(item.destination) === item.sha256, 'Exact copy failed');
+  }
+  checkFrozen(frozen);
+  console.log(JSON.stringify({ frozen: true, inputs: frozen.inputs.length, copies: frozen.copies.length, root, work, targets }));
+} else if (action === 'prepare') {
+  const args = [path.join(skill, 'tools/p2c.py'), 'adapt-prepare', '--book', '7a', '--edition', editionName, '--root', root, '--work', work];
+  for (const id of ids) args.push('--lesson', id);
+  runOnce('command-prepare', path.join(skill, '.venv/bin/python'), args);
+  write(path.join(work, 'templates-before-editing.json'), {
+    at: new Date().toISOString(),
+    templates: ids.flatMap(id => ['lesson.template.json', 'exercises.template.json', 'figures.template.json'].map(name => record(path.join(templates(id), name)))),
+  });
+} else if (action === 'finalize') {
+  const id = process.argv[3];
+  assert(ids.includes(id), 'Only explicit n5-n8 targets allowed');
+  assert(read(path.join(work, 'command-prepare.json')).pass, 'Prepare must pass');
+  if (id === 'alg7-c1-s2-n6') {
+    const approvalFile = path.join(work, 'figure-02.parent-approval.json');
+    assert(fs.existsSync(approvalFile), 'N6 blocked: independent actual figure approval not yet supplied');
+    const approval = read(approvalFile);
+    assert(approval.status === 'pass' && approval.independent_actual_source_and_output_comparison === true, 'N6 requires parent actual comparison pass');
+    for (const input of approval.inputs) assert(sha(input.path) === input.sha256, 'Parent-approved figure/template changed');
+    assert(fs.existsSync(path.join(destinationEdition, 'figures/fig-02.review.json')), 'N6 requires separate approved figure review evidence');
+  }
+  const args = [path.join(skill, 'tools/p2c.py'), 'adapt-finalize', '--book', '7a', '--edition', editionName,
+    '--root', root, '--work', work, '--lesson', id];
+  const outputs = ['lesson.json', 'exercises.json', 'figures.json', 'adaptation.audit.json']
+    .map(name => path.join(destinationEdition, 'lessons', id, name));
+  runOnce(`command-finalize-${id}`, path.join(skill, '.venv/bin/python'), args, outputs);
+} else if (action === 'figure-validate') {
+  const spec = path.join(destinationEdition, 'figures/fig-02.spec.json');
+  runOnce('command-figure-validate', path.join(skill, '.venv/bin/python'),
+    [path.join(imageSkill, 'scripts/validate_spec.py'), spec, '--stage', 'draft', '--json']);
+} else if (action === 'figure-render') {
+  const directory = path.join(destinationEdition, 'figures');
+  runOnce('command-figure-render', 'node', [
+    path.join(imageSkill, 'scripts/render_spec.mjs'),
+    '--spec', path.join(directory, 'fig-02.spec.json'), '--svg', path.join(directory, 'fig-02.svg'),
+    '--report', path.join(directory, 'fig-02.render.json'), '--png', path.join(work, 'fig-02.preview.png'),
+  ], [path.join(directory, 'fig-02.svg'), path.join(directory, 'fig-02.render.json'), path.join(work, 'fig-02.preview.png')]);
+} else if (action === 'check') {
+  const frozen = read(freezeFile);
+  checkFrozen(frozen);
+  console.log(JSON.stringify({ immutable_whitelist_unchanged: true, original_inputs: frozen.inputs.length, copied_files: frozen.copies.length }));
+} else {
+  throw Error('Expected freeze, prepare, finalize <id>, figure-validate, figure-render, or check');
+}

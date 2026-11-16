@@ -1,0 +1,57 @@
+"""Confirm that the promoted edition index is outside existing choice seed traces."""
+import importlib.util
+import json
+from pathlib import Path
+import sys
+
+sys.dont_write_bytecode = True
+repo = Path.cwd()
+spec = importlib.util.spec_from_file_location(
+    "choice_prepare", repo / ".agents/skills/ld-s10y-choice/scripts/prepare.py")
+prepare = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(prepare)
+root = repo / "ssot-resources/soviet10year-textbooks/artifacts/7a"
+evidence = root / "review-history/batch22-modern-evidence"
+output = evidence / "choice-trace-rebinding.json"
+assert not output.exists()
+changed_index = (root / "editions/modern-us-neutral/book.json").relative_to(repo).as_posix()
+records = []
+for choice in sorted((root / "editions/modern-us-neutral/lessons").glob("*/choice-set")):
+    approved = choice / "seed.json"
+    blocked = choice / "review-history/unresolved-source/seed.json"
+    assert not (approved.exists() and blocked.exists())
+    seed_path = approved if approved.exists() else blocked
+    if not seed_path.exists():
+        continue
+    paths = {name: seed_path.parent / f"{name}.json" for name in ("seed", "draft", "review")}
+    original = {name: file.read_bytes() for name, file in paths.items()}
+    values = {name: json.loads(data) for name, data in original.items()}
+    seed = values["seed"]
+    assert changed_index not in [row["path"] for row in seed["trace"]]
+    fresh = prepare.prepare_seed(
+        repo, "7a", seed["source"]["lesson"],
+        [row["number"] for row in seed["exercises"]],
+        [row["block"] for row in seed["concepts"]],
+        seed["source"]["concept_figure_ids"])
+    assert fresh == seed
+    assert values["draft"]["seed_sha256"] == prepare.digest(seed)
+    assert values["review"]["seed_sha256"] == prepare.digest(seed)
+    assert values["review"]["draft_sha256"] == prepare.digest(values["draft"])
+    assert all(paths[name].read_bytes() == data for name, data in original.items())
+    digests = {name: prepare.digest(value) for name, value in values.items()}
+    records.append({
+        "lesson": seed["source"]["lesson"],
+        "snapshot_root": seed_path.parent.relative_to(repo).as_posix(),
+        "trace_changes": [], "before": digests, "after": digests,
+        "fresh_seed_exactly_current": True, "all_snapshot_bytes_unchanged": True,
+        "edition_index_not_in_seed_authority": True,
+        "semantic_canonical_or_display_reruns": 0})
+assert len(records) == 4
+output.write_text(json.dumps({
+    "status": "pass", "scope": "Four existing7a choice snapshots unchanged; promoted edition index is not seed authority.",
+    "rebinding_required": False, "snapshot_files_written": 0,
+    "new_semantic_approval": False,
+    "initial_rebinding_precheck_failure": "Expected one changed trace, but the actual trace does not contain the edition index; failed command wrote no snapshots.",
+    "records": records}, indent=2) + "\n")
+print(json.dumps({"status": "pass", "groups": 4, "rebinding_required": False,
+                  "snapshot_files_written": 0}))

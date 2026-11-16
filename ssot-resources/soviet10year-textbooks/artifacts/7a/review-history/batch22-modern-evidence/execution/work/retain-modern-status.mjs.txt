@@ -1,0 +1,194 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const base = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp/batch22-modern-7a');
+const root = path.join(base, 'root');
+const work = path.join(base, 'work');
+const edition = 'modern-us-neutral';
+const modern = path.join(root, '7a/editions', edition);
+const durable = path.join(repo, 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions', edition);
+const digest = value => crypto.createHash('sha256').update(value).digest('hex');
+const sha = file => digest(fs.readFileSync(file));
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const record = file => ({ path: file, sha256: sha(file), bytes: fs.statSync(file).size });
+const write = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+const assert = (ok, message) => { if (!ok) throw Error(message); };
+const frozen = read(path.join(work, 'inputs-before.json'));
+const ids = frozen.targets.map(target => target.id);
+const readyIds = ids.filter(id => id !== 'alg7-c1-s2-n6');
+const templateDir = id => path.join(work, 'adapt/7a', edition, 'lessons', id);
+const flatten = value => value.replace(/\s/gu, '');
+const mechanical = read(path.join(work, 'mechanical-template-formatting.json'));
+const inputsAfter = frozen.inputs.map(item => ({ ...item, current_sha256: sha(item.path) }));
+assert(inputsAfter.every(item => item.current_sha256 === item.sha256), 'Frozen original source/tool changed');
+const copiesAfter = frozen.copies.map(item => ({ ...item, current_sha256: sha(item.destination) }));
+const changed = copiesAfter.filter(item => item.sha256 !== item.current_sha256);
+assert(changed.length === 1 && changed[0].destination === path.join(modern, 'book.json'), 'Unapproved copied RAW/prior resource change');
+const rawBook = read(path.join(root, '7a/book.json'));
+const modernBook = read(path.join(modern, 'book.json'));
+assert(rawBook.lessons.length === 9 && !modernBook.lessons.some(item => item.id === 'alg7-c1-s3-n9'), 'N9 modern exclusion violated');
+assert(!modernBook.lessons.some(item => item.id === 'alg7-c1-s2-n6'), 'Pending n6 must not be indexed ready');
+assert(readyIds.every(id => modernBook.lessons.some(item => item.id === id)), 'Ready target missing from private index');
+const commands = fs.readdirSync(work).filter(name => /^command-.*\.json$/.test(name) && !name.endsWith('.started.json'))
+  .map(name => ({ file: record(path.join(work, name)), ...read(path.join(work, name)) }));
+assert(commands.length === 6 && commands.every(command => command.pass && command.status === 0), 'Expected prepare, three once-finalizes, figure validation/render');
+assert(!fs.existsSync(path.join(work, 'command-finalize-alg7-c1-s2-n6.started.json'))
+  && !fs.existsSync(path.join(modern, 'lessons/alg7-c1-s2-n6')), 'N6 must not have been finalized');
+assert(!fs.existsSync(path.join(modern, 'figures/fig-02.review.json')), 'Independent pass review cannot be fabricated');
+
+const text = ids.map(id => {
+  const rawDirectory = path.join(root, '7a/lessons', id);
+  const rawLesson = read(path.join(rawDirectory, 'lesson.json'));
+  const rawExercises = read(path.join(rawDirectory, 'exercises.json'));
+  const ready = readyIds.includes(id);
+  const directory = ready ? path.join(modern, 'lessons', id) : templateDir(id);
+  const lesson = read(path.join(directory, ready ? 'lesson.json' : 'lesson.template.json'));
+  const exercises = read(path.join(directory, ready ? 'exercises.json' : 'exercises.template.json'));
+  assert(JSON.stringify(lesson.source.data) === JSON.stringify(rawLesson)
+    && JSON.stringify(exercises.source.data) === JSON.stringify(rawExercises), 'RAW snapshot/data mismatch');
+  assert(lesson.source.sha256 === sha(path.join(rawDirectory, 'lesson.json'))
+    && exercises.source.sha256 === sha(path.join(rawDirectory, 'exercises.json')), 'Source hash mismatch');
+  assert(lesson.prose.length === rawLesson.prose.length && exercises.exercises.length === rawExercises.exercises.length, 'Object count changed');
+  const preparedLesson = read(path.join(work, 'prepared-template-snapshots', id, 'lesson.template.json'));
+  for (const [index, block] of lesson.prose.entries()) {
+    const raw = rawLesson.prose[index];
+    assert(block.source_text === raw.text && JSON.stringify(block.source_refs) === JSON.stringify(raw.source_refs), 'Prose provenance changed');
+    let expected = preparedLesson.prose[index].text;
+    if (id === 'alg7-c1-s2-n7' && index === 20) expected = expected.replace('$x+3=0$', '$x+2=0$');
+    assert(flatten(block.text) === flatten(expected), 'Unexpected prose content rewrite');
+  }
+  for (const [index, exercise] of exercises.exercises.entries()) {
+    const raw = rawExercises.exercises[index];
+    assert(exercise.source_text === raw.text, 'Original task text snapshot changed');
+    for (const field of ['number', 'source_number', 'group', 'group_id', 'pages', 'figure_refs', 'figures']) {
+      assert(JSON.stringify(exercise[field]) === JSON.stringify(raw[field]), `Original exercise identity/order changed: ${field}`);
+    }
+    const formatted = mechanical.exercises.find(item => item.lesson === id && item.original === exercise.number);
+    assert(formatted, 'Missing mechanical source expectation');
+    if (exercise.number !== '67') assert(flatten(exercise.text) === flatten(formatted.modern), 'Unexpected task/domain/data rewrite');
+    else {
+      assert(exercise.changes.includes('culture')
+        && exercise.text.includes('在一幅假想地图中，一条河流及其沿岸都位于同一个地区。')
+        && exercise.text.includes('a) “$x$ 城位于这条河流沿岸”，“$x$ 城在这个地区”；')
+        && flatten(exercise.text.slice(exercise.text.indexOf('b)'))) === flatten(formatted.modern.slice(formatted.modern.indexOf('b)'))),
+      'Culture-only geography adaptation drifted other subparts');
+    }
+    assert(!/[\u0400-\u04ff]/u.test(exercise.text), 'Cyrillic marker in modern text');
+  }
+  const audit = ready ? read(path.join(directory, 'adaptation.audit.json')) : null;
+  assert(!audit || (audit.status === 'pass' && audit.errors.length === 0), 'Modern audit not pass');
+  return {
+    id, actual_toc: frozen.targets.find(target => target.id === id).actual_toc,
+    status: ready ? 'once_finalized_pass_pending_parent_review' : 'templates_ready_waiting_independent_actual_figure_approval',
+    count: { prose: lesson.prose.length, exercises: exercises.count, figures: rawLesson.figures.length },
+    originals: exercises.exercises.map(exercise => exercise.number),
+    raw_lesson: record(path.join(rawDirectory, 'lesson.json')),
+    raw_exercises: record(path.join(rawDirectory, 'exercises.json')),
+    templates: ['lesson.template.json', 'exercises.template.json', 'figures.template.json'].map(name => record(path.join(templateDir(id), name))),
+    audit, section_breaks: lesson.section_breaks,
+    errata: lesson.errata,
+    prose: lesson.prose, exercises: exercises.exercises,
+    claims: { raw_snapshots_and_source_text_exact: true, source_object_identity_order_and_task_data_preserved: true,
+      unregistered_math_changes: 0, new_solutions_or_answer_keys_authored: 0 },
+  };
+});
+assert(text.reduce((sum, target) => sum + target.count.exercises, 0) === 42, 'Target total not42');
+const n7 = text.find(target => target.id === 'alg7-c1-s2-n7');
+assert(n7.errata.length === 1 && n7.errata[0].id === 'p0038-math-1'
+  && n7.errata[0].source.block === 'p0038#3' && n7.errata[0].corrected === '$x+2=0$', 'Required bound erratum not retained');
+const specFile = path.join(modern, 'figures/fig-02.spec.json');
+const spec = read(specFile);
+const renderFile = path.join(modern, 'figures/fig-02.render.json');
+const render = read(renderFile);
+const svgFile = path.join(modern, 'figures/fig-02.svg');
+assert(render.status === 'pass' && render.collisions.length === 0
+  && render.spec.sha256 === sha(specFile) && render.output.svg.sha256 === sha(svgFile), 'Figure render/hash mismatch');
+assert(render.displayChecks.every(check => check.status === 'pass' && check.measuredMinPx >= 16), 'Figure label width check failed');
+assert(spec.source.image.sha256 === sha(spec.source.image.path), 'Source PNG changed');
+const approvalInputs = [
+  spec.source.image.path, specFile, svgFile, renderFile, path.join(work, 'fig-02.preview.png'),
+  ...['lesson.template.json', 'exercises.template.json', 'figures.template.json'].map(name => path.join(templateDir('alg7-c1-s2-n6'), name)),
+].map(record);
+write(path.join(work, 'figure-02.parent-approval.request.json'), {
+  status: 'pending', independent_actual_source_and_output_comparison: false,
+  figure: 'fig-02', lesson: 'alg7-c1-s2-n6', inputs: approvalInputs,
+  requires_parent_actual_review: [
+    'Open original RAW PNG and rendered SVG/preview individually; compare A inner, B outer, B label outside upper right, subset notation below.',
+    'Compare complete n6 modern prose and all seven original tasks with the FigureSpec authoritative text; no extra members, arrows or solutions.',
+    'Approve current spec, output, render and template hashes. Record independent pass review@1 separately and explicit figure-02.parent-approval.json before n6 finalize.',
+  ],
+  n6_finalized: false, independent_pass_review_authored_by_agent: false,
+});
+write(path.join(work, 'figure-02-author-output-observations.json'), {
+  status: 'author_visual_check_only_pending_independent_approval',
+  actual_source_png_opened: true, actual_output_preview_opened: true,
+  observation: 'The actual source and modern preview both show A inside an offset-left smaller closed outline, B as the larger closed outline with its label outside upper right, and A subset B below. No extra point, arrow, scale, or solution annotation.',
+  inputs: approvalInputs, render_display_checks: render.displayChecks,
+  scope: 'Author observation is not independent parent review and does not authorize n6 finalize.',
+});
+const candidate = (relative, status) => {
+  const file = path.join(modern, relative);
+  return {
+    proposed_private_path: file, proposed_durable_path: path.join(durable, relative),
+    status, exists: fs.existsSync(file), artifact: fs.existsSync(file) ? record(file) : null,
+    promoted: false, parent_review_and_rebinding_required: true,
+  };
+};
+const candidates = [
+  ...ids.flatMap(id => ['lesson.json', 'exercises.json', 'figures.json', 'adaptation.audit.json']
+    .map(name => candidate(path.join('lessons', id, name), readyIds.includes(id) ? 'candidate_once_pass_not_parent_approved' : 'future_only_blocked_by_n6_figure_approval'))),
+  ...['spec.json', 'svg', 'render.json', 'review.json'].map(extension => candidate(`figures/fig-02.${extension}`,
+    extension === 'review.json' ? 'future_only_requires_independent_parent_pass' : 'figure_candidate_pending_independent_parent_approval')),
+  candidate('book.json', 'private_partial_target_index_n6_not_finalized'),
+];
+assert(candidates.length === 21 && candidates.filter(item => item.exists).length === 16, 'Candidate path count mismatch');
+const preservation = {
+  frozen_inputs: inputsAfter.length, original_source_and_tool_files_unchanged: inputsAfter.length,
+  copies: copiesAfter.length, unchanged_copied_destinations: copiesAfter.length - changed.length,
+  permitted_changed_copies: changed,
+  raw_copies_immutable: copiesAfter.filter(item => !item.destination.includes('/editions/')).length,
+  prior_modern_copies: copiesAfter.filter(item => item.destination.includes('/editions/')).length,
+  inputs: inputsAfter, copied_destinations: copiesAfter,
+  durable_resource_writes: 0, choices_answers_interactions_or_history_used_for_authoring: false,
+};
+write(path.join(work, 'preservation-after.json'), preservation);
+write(path.join(work, 'proposed-modern-candidates.json'), {
+  status: 'private_candidates_only_pending_parent_review_and_figure_approval',
+  edition, targets: ids, finalized_once: readyIds, n6_pending: true, n9_excluded: true,
+  total_proposed_paths: 21, existing_candidates: 16, future_paths: 5, candidates,
+  source_binding_note: 'RAW snapshots and erratum page hashes remain exact. Figure spec/render paths currently bind private scratch assets; parent owns scoped promotion and durable path rebinding plus fresh evidence, without re-authoring RAW.',
+  book_index_note: 'Private modern book preserves copied prior n1-n4 and adds only once-finalized n5,n7,n8. N6 row awaits approved finalization; n9 never enters modern scope.',
+});
+write(path.join(work, 'modern-adaptation-status.json'), {
+  ticket: 'STEMROBIN-182', status: 'n5_n7_n8_once_pass_n6_templates_and_figure_pending_independent_approval',
+  roots: { root, work }, edition,
+  target_objects: text, total_original_exercises: 42, finalized_original_exercises: 35, pending_n6_originals: 7,
+  actual_source_figure: read(path.join(work, 'figure-02-actual-source-observations.json')),
+  figure: { spec: record(specFile), svg: record(svgFile), render: record(renderFile),
+    source: record(spec.source.image.path), preview: record(path.join(work, 'fig-02.preview.png')),
+    spec_assertions: spec.assertions.length, render_status: render.status, independent_approval: 'pending', review_file_created: false },
+  commands, preservation_summary: { inputs189_exact: true, copies164_sources_exact: true, copied_raw143_exact: true,
+    copied_prior_modern20_exact_plus_private_book_changed: true, durable_writes: 0 },
+  authoring_changes: [
+    'Culture-neutral mathematical prose retained, with repository deterministic paragraph layout.',
+    'All printed original exercise identity/group/domain/formula/task data retained; complete subpart sequences displayed in natural Latin order.',
+    'Original85 preserves its incomplete printed a,b,d label set; no synthetic c subpart.',
+    'Original99 keeps each six fraction/label pair while converting printed column order to canonical a-f reading order.',
+    'Only original67a geography context changes to an explicitly fictional river/region with the same containment premise; no new quantities.',
+    'Only p0038-math-1 applies the registered x+3 to x+2 correction at lesson.prose[20]; RAW remains unchanged.',
+    'Figure2 deterministically redraws the reopened source only. No exercise graph or answer-bearing figure is invented.',
+  ],
+  operations: { adapt_prepare: 1, adapt_finalize_n5: 1, adapt_finalize_n6: 0, adapt_finalize_n7: 1, adapt_finalize_n8: 1,
+    figure_spec_validate: 1, figure_render: 1, independent_pass_review: 0,
+    raw_prepare_finalize_assemble_vectorize: 0, old_pipeline_reruns: 0, model_or_image_service: 0,
+    choice_or_answer_authorship: 0, publishing_db_env_service_dependency_config_commit: 0 },
+  evidence: [
+    'inputs-before.json', 'templates-before-editing.json', 'mechanical-template-formatting.json',
+    'preservation-after.json', 'proposed-modern-candidates.json',
+    'figure-02.parent-approval.request.json', 'figure-02-author-output-observations.json',
+  ].map(name => record(path.join(work, name))),
+});
+console.log(JSON.stringify({ status: 'awaiting_independent_figure_approval', finalized: readyIds, n6_finalized: false,
+  original_count: 42, candidates_present: 16, candidates_future: 5, raw_immutable: true, durable_writes: 0 }));

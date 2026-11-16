@@ -1,0 +1,95 @@
+---
+{
+  "printed_page": 14,
+  "notes": [
+    "完整实际页逐页打开；图3、图4分别作为完整原图保存，均为课文图，不归习题。两个图题在同一横排。",
+    "坐标和向量公式保留原样；M'坐标及向量恒等式的实际跨行用↵表示。末段等式续至物理22页。"
+  ],
+  "errata": [],
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "8a",
+  "page": 21,
+  "source": {
+    "pdf": "8a 苏联十年制学校数学教材 代数 八年级.pdf",
+    "pdf_sha256": "5978388efc80df4085400f80d5912f710efb052a806222633b172b0a9479b071",
+    "pdf_page": 21
+  },
+  "render": {
+    "dpi": 300,
+    "w": 2480,
+    "h": 3509,
+    "sha256": "15f53ece3ab3dacc805cfa51d047e865c7f22507c5b13f2eb619a2209f18b2aa"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 17,
+  "figures": [
+    {
+      "id": "fig-03",
+      "label": "图 3",
+      "box": [
+        372,
+        900,
+        839,
+        875
+      ]
+    },
+    {
+      "id": "fig-04",
+      "label": "图 4",
+      "box": [
+        1261,
+        900,
+        847,
+        878
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+图象（曲线$\Phi'$）. 比较这两个图象，可以推测曲线$\Phi'$是抛物线
+$\Phi$在平移（坐标原点$O(0,0)$被映射到点$O'(8,3)$）下的象.
+
+<!-- p -->
+现在我们证明实际上就是这样.
+
+<!-- p -->
+平移$\overrightarrow{OO'}$把任意一点$M(x_0,y_0)$映射到点$M'(x_0+8,↵y_0+3)$.
+
+<!-- fig 图 3 box 372,900,839,875 -->
+![图 3](figures/fig-03.png)
+
+<!-- fig 图 4 box 1261,900,847,878 -->
+![图 4](figures/fig-04.png)
+
+<!-- cap 图 3 -->
+图3
+
+<!-- cap 图 4 samerow -->
+图4
+
+<!-- p -->
+事实上，由图4可以看出：
+$\overrightarrow{OM}=x_0\vec{e}_1+y_0\vec{e}_2$，
+$\overrightarrow{OO'}=8\vec{e}_1+3\vec{e}_2$，
+$\overrightarrow{OM'}=\overrightarrow{OM}+\overrightarrow{OO'}↵=(x_0+8)\vec{e}_1+(y_0+3)\vec{e}_2$，
+也就是点$M'$的坐标等于$x_0+8$，$y_0+3$.
+
+<!-- p -->
+容易理解，如果点$M(x_0,y_0)$属于抛物线$\Phi$，那么点$M'$
+$(x_0+8,y_0+3)$就属于曲线$\Phi'$.
+
+<!-- p open -->
+实际上，如果等式
+$y_0=\frac{1}{2}x_0^2$
+
+<!-- foot -->
+14

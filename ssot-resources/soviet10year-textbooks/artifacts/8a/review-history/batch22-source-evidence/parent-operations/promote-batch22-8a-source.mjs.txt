@@ -1,0 +1,118 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const source = `${scratch}/batch22-source-8a/8a`
+const work = `${scratch}/batch22-work-8a`
+const durable = 'ssot-resources/soviet10year-textbooks/artifacts/8a'
+const evidence = `${durable}/review-history/batch22-source-evidence`
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const walk = dir => fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+  const file = path.join(dir, entry.name)
+  return entry.isDirectory() ? walk(file) : [file]
+})
+assert(!fs.existsSync(evidence), 'Once-only scoped promotion')
+for (const name of ['assemble-continuations', 'vectorize', 'assemble-vectorized']) {
+  assert.equal(read(`${work}/parent-${name}-command.json`).exit_code, 0)
+}
+const book = read(`${source}/book.json`)
+assert.deepEqual(book.audit.errors, [])
+assert.equal(book.audit.exercise_count, 33)
+assert.equal(book.audit.warnings.length, 1)
+assert(book.audit.warnings[0].includes('p0025#7'))
+const targetIds = ['alg8-c1-s1-n3', 'alg8-c1-s2-n4']
+for (const [i, id] of targetIds.entries()) {
+  const exercises = read(`${source}/lessons/${id}/exercises.json`)
+  assert.equal(exercises.count, 11)
+  assert.deepEqual(exercises.exercises.map(e => e.source_number),
+    Array.from({ length: 11 }, (_, j) => String(12 + i * 11 + j)))
+}
+for (const id of ['alg8-c1-s1-n1', 'alg8-c1-s1-n2']) {
+  for (const name of ['lesson.json', 'lesson.md', 'exercises.json']) {
+    assert.equal(hash(`${source}/lessons/${id}/${name}`), hash(`${durable}/lessons/${id}/${name}`))
+  }
+}
+const names = ['book.json']
+for (let page = 15; page <= 25; page++) {
+  for (const name of ['page.md', 'page.json', 'audit.json']) {
+    names.push(`pages/${String(page).padStart(4, '0')}/${name}`)
+  }
+}
+for (const id of ['fig-01', 'fig-02', 'fig-03', 'fig-04', 'fig-05', 'tbl-p0020-01']) {
+  for (const ext of ['png', 'svg']) names.push(`figures/${id}.${ext}`)
+}
+for (const id of [...targetIds, 'alg8-c1-s2-n5']) {
+  for (const name of ['lesson.json', 'lesson.md', 'exercises.json']) names.push(`lessons/${id}/${name}`)
+}
+assert.equal(names.length, 55)
+const pending = []
+const retained = {}
+const retain = (file, target) => {
+  assert(!fs.existsSync(target))
+  pending.push({ file: target, bytes: fs.readFileSync(file) })
+  retained[path.relative(evidence, target)] = {
+    original_bytes_sha256: hash(file), retained_bytes_sha256: hash(file),
+    inactive_history: target.endsWith('.txt')
+  }
+}
+const promoted = names.map(name => {
+  const from = `${source}/${name}`
+  const to = `${durable}/${name}`
+  const bytes = fs.readFileSync(from)
+  if (name.endsWith('.json')) {
+    JSON.parse(bytes.toString('utf8'))
+    assert.doesNotMatch(bytes.toString('utf8'), /\.intentfold\/|\.tmp\/|\/Users\//)
+  }
+  const previous = fs.existsSync(to) ? hash(to) : null
+  if (previous) retain(to, `${evidence}/before/${name}.txt`)
+  pending.push({ file: to, bytes })
+  return { destination: to, sha256: hash(from), previous_sha256: previous,
+    partial_only: name.includes('alg8-c1-s2-n5') }
+})
+for (const file of walk(work)) {
+  if (file.includes('/__pycache__/')) continue
+  retain(file, `${evidence}/execution/${path.relative(work, file)}${/\.(json|md|mjs|cjs|py|log)$/.test(file) ? '.txt' : ''}`)
+}
+for (const entry of fs.readdirSync(path.dirname(source), { withFileTypes: true })) {
+  if (entry.isFile()) retain(`${path.dirname(source)}/${entry.name}`, `${evidence}/author/${entry.name}.txt`)
+}
+const parent = {
+  status: 'pass', reviewer_kind: 'self_review',
+  scope: 'RAW only, no modern figure or choice mathematical approval.',
+  parent_source_review: `${evidence}/execution/parent-raw-review.json.txt`,
+  closed_targets: targetIds, original_exercises: 22, raw_prose_objects: 42,
+  new_pages: 11, printed_rows: 242,
+  explicit_continuation_repair: {
+    rejected_assembly_exit_code: 0,
+    rejected_extra_unbound_objects: 2,
+    changed: ['p0019 first block ex-cont to ex18-cont', 'p0024 first block ex-cont to ex27-cont'],
+    original_text_math_figures_and_geometry_unchanged: true,
+    changed_finalizes_once_each: true,
+    final_assembly_has_only_partial_n5_open: true
+  },
+  vectorize: { execution_count: 1, six_assets_pass: true,
+    new_vector_pixels_reopened: false,
+    proof_scope: 'Pixel fidelity command plus parent full original-image observations, not modern diagram approval.' },
+  n5_partial_only: true,
+  previous_n1_n2_raw_and_all_modern_core_unchanged: true,
+  source_choice_book_trace_rebinding_required_next: true,
+  promoted,
+  usage: null
+}
+pending.push({ file: `${evidence}/parent-source-review.json`,
+  bytes: Buffer.from(JSON.stringify(parent, null, 2) + '\n') })
+pending.push({ file: `${evidence}/retention.json`,
+  bytes: Buffer.from(JSON.stringify({ status: 'pass', core_files_promoted: 55,
+    closed_target_lessons: 2, partial_context_lessons_not_complete: ['alg8-c1-s2-n5'],
+    parent_observations: `${evidence}/parent-source-review.json`, retained,
+    original_textual_execution_files_are_inactive_history: true }, null, 2) + '\n') })
+for (const { file, bytes } of pending) {
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  fs.writeFileSync(file, bytes)
+}
+assert(promoted.every(row => hash(row.destination) === row.sha256))
+console.log(JSON.stringify({ status: 'pass', core_files_promoted: promoted.length,
+  evidence_files: Object.keys(retained).length + 2, existing_choice_trace_rebinding_pending: true }))

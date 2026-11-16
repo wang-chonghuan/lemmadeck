@@ -1,0 +1,120 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const base = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp/batch22-modern-7a');
+const work = path.join(base, 'work');
+const root = path.join(base, 'root');
+const id = 'alg7-c1-s2-n6';
+const edition = 'modern-us-neutral';
+const directory = path.join(root, '7a/editions', edition, 'figures');
+const lessonDirectory = path.join(work, 'adapt/7a', edition, 'lessons', id);
+const source = path.join(root, '7a/figures/fig-02.png');
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const record = file => ({ path: file, sha256: sha(file), bytes: fs.statSync(file).size });
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const dump = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+const lesson = read(path.join(lessonDirectory, 'lesson.template.json'));
+const exercises = read(path.join(lessonDirectory, 'exercises.template.json'));
+const fullText = [
+  ...lesson.prose.filter(block => block.text).map(block => ({
+    lesson: id, kind: block.kind, source_refs: block.source_refs, text: block.text,
+  })),
+  ...exercises.exercises.map(exercise => ({
+    lesson: id, exercise: exercise.number, pages: exercise.pages, text: exercise.text,
+  })),
+];
+fs.mkdirSync(directory, { recursive: true });
+dump(path.join(work, 'figure-02-authoring.started.json'), {
+  source: record(source), templates: ['lesson.template.json', 'exercises.template.json'].map(name => record(path.join(lessonDirectory, name))),
+  script: record(new URL(import.meta.url).pathname),
+});
+const count = 64;
+const circleVertices = (cx, cy, radius) => Array.from({ length: count }, (_, index) => {
+  const angle = index * Math.PI * 2 / count;
+  return [cx + radius * Math.cos(angle), cy + radius * Math.sin(angle)].map(value => Number(value.toFixed(8)));
+});
+const outer = circleVertices(4.9, 5.5, 3.6);
+const inner = circleVertices(3.8, 5.5, 1.65);
+const containment = inner.map((point, index) => ({
+  id: `a-boundary-${String(index + 1).padStart(2, '0')}-inside-b`,
+  type: 'inside', point, container: 'b-set', margin: 0.5,
+}));
+const inventory = [
+  {
+    id: 'source-nested-sets',
+    description: 'Actual PNG has exactly two closed rounded outlines. The smaller A outline is left of the larger B center and strictly contained in B with no contact/intersection. There are no member points, arrows, axes, grids, or additional regions.',
+    objects: ['b-set', 'a-set'],
+    assertions: ['two-set-outlines', ...containment.map(assertion => assertion.id)],
+  },
+  {
+    id: 'source-set-labels',
+    description: 'Actual A text is inside the smaller outline. Actual B text is outside the larger outline at its upper-right edge. Preserve these identities and relative placements.',
+    objects: ['a-label', 'b-label'], assertions: ['a-label-inside-a', 'a-label-inside-b', 'three-visible-labels'],
+  },
+  {
+    id: 'source-subset-text',
+    description: 'Actual source prints A subset B below both outlines; this is source explanatory notation, not an added exercise answer.',
+    objects: ['subset-label'], assertions: ['three-visible-labels'],
+  },
+];
+const spec = {
+  schema: 'ld-s10y-image/figure-spec@2', id: 'fig-02', mode: 'deterministic',
+  description: 'Show the source truth-set implication as A contained strictly in B, with the printed A subset B relation below.',
+  source: {
+    image: { path: source, sha256: sha(source) }, authoritativeText: fullText, inventory,
+    modernAdditions: [
+      'Regularize the two scanned rounded outlines to 64-vertex deterministic circular boundaries; retain the smaller region offset left, without new member points or numerical dimensions.',
+      'Use clean renderer-owned A/B labels and subset glyph with semantic ink colors; remove scan texture only.',
+      'Declared inline preview media widths 240/280/320px are conservative authoring checks, not a claim of measured headed-product width. Parent owns actual display approval.',
+    ],
+  },
+  canvas: { width: 480, height: 480, boundingBox: [0, 10, 10, 0], background: 'paper' },
+  display: { purpose: 'instructional', layout: 'inline', maxWidthPx: 320, widths: [240, 280, 320], minTextPx: 16 },
+  objects: [
+    { id: 'b-set', type: 'polygon', points: outer, stroke: 'ink', strokeWidth: 3, fillOpacity: 0 },
+    { id: 'a-set', type: 'polygon', points: inner, stroke: 'ink', strokeWidth: 3, fillOpacity: 0 },
+    { id: 'a-label', type: 'text', at: [3.8, 5.5], text: 'A', fontSize: 36, color: 'ink', labelPlacement: { position: 'CENTER' } },
+    { id: 'b-label', type: 'text', at: [8.9, 8.7], text: 'B', fontSize: 36, color: 'ink', labelPlacement: { position: 'CENTER' } },
+    { id: 'subset-label', type: 'text', at: [4.9, 0.8], text: 'A \u2282 B', fontSize: 36, color: 'ink', labelPlacement: { position: 'CENTER' } },
+  ],
+  assertions: [
+    { id: 'two-set-outlines', type: 'objectCount', objectType: 'polygon', count: 2 },
+    { id: 'three-visible-labels', type: 'objectCount', objectType: 'text', count: 3 },
+    ...containment,
+    { id: 'a-label-inside-a', type: 'inside', point: 'a-label', container: 'a-set', margin: 0.8 },
+    { id: 'a-label-inside-b', type: 'inside', point: 'a-label', container: 'b-set', margin: 0.8 },
+  ],
+};
+dump(path.join(directory, 'fig-02.spec.json'), spec);
+dump(path.join(work, 'figure-02-context.json'), {
+  schema: 'ld-s10y-image/context@1', book: '7a', edition, figure: 'fig-02',
+  sourceImage: record(source), authoritativeText: fullText,
+  modern_templates: ['lesson.template.json', 'exercises.template.json'].map(name => record(path.join(lessonDirectory, name))),
+  rule: 'Current modern template text and reopened original RAW PNG only; no choices, answers, history, model or image service.',
+});
+dump(path.join(work, 'figure-02-actual-source-observations.json'), {
+  status: 'author_actual_source_observed_pending_independent_output_approval',
+  source: record(source), actual_png_opened_individually: true, source_size: [341, 385],
+  threshold: 128, total_ink_pixels: 15961, bounds_convention: '[x0,y0,x1,y1], exclusive high bounds; connected components with area>20',
+  observed_components: [
+    { role: 'outer B outline', bounds: [17, 12, 329, 327], ink_pixels: 10194 },
+    { role: 'B upper-right label', bounds: [291, 35, 314, 66], ink_pixels: 361 },
+    { role: 'inner A outline', bounds: [52, 101, 203, 253], ink_pixels: 4440 },
+    { role: 'A inner label', bounds: [105, 165, 126, 194], ink_pixels: 263 },
+    { role: 'subset notation B', bounds: [184, 342, 207, 373], ink_pixels: 341 },
+    { role: 'subset notation A', bounds: [131, 343, 153, 371], ink_pixels: 216 },
+    { role: 'subset glyph', bounds: [159, 349, 180, 367], ink_pixels: 143 },
+  ],
+  inventory, exact_source_content: 'Two nested outlines; A inner and offset left, B outer with its label outside upper right; A subset B below.',
+  independent_review: 'pending; no pass review authored', modern_spec: record(path.join(directory, 'fig-02.spec.json')),
+});
+const manifestFile = path.join(lessonDirectory, 'figures.template.json');
+const manifest = read(manifestFile);
+manifest.figures[0] = {
+  ...manifest.figures[0], spec: 'figures/fig-02.spec.json', svg: 'figures/fig-02.svg',
+  render: 'figures/fig-02.render.json', review: 'figures/fig-02.review.json',
+};
+fs.writeFileSync(manifestFile, JSON.stringify(manifest, null, 2) + '\n');
+console.log(JSON.stringify({ figure: 'fig-02', mode: 'deterministic', spec_authored: true, independent_review: 'pending', n6_finalize_authorized: false }));

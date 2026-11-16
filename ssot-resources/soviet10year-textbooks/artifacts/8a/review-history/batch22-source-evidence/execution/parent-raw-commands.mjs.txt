@@ -1,0 +1,79 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { spawnSync } from 'node:child_process'
+
+const source = '.intentfold/tickets/STEMROBIN-182/tmp/batch22-source-8a'
+const work = '.intentfold/tickets/STEMROBIN-182/tmp/batch22-work-8a'
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const save = (name, value) => fs.writeFileSync(path.join(work, name),
+  JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+const [phase] = process.argv.slice(2)
+assert(['record-review', 'assemble', 'finalize19-continuation', 'finalize24-continuation',
+  'assemble-continuations', 'vectorize', 'assemble-vectorized'].includes(phase))
+
+if (phase === 'record-review') {
+  const progress = JSON.parse(fs.readFileSync(`${work}/raw-progress-after-caption-repair.json`, 'utf8'))
+  const rows = progress.page_results
+  assert.equal(rows.length, 11)
+  for (const row of rows) {
+    assert.equal(row.exit_code, 0)
+    assert.equal(row.lines_printed, row.lines_md)
+    for (const file of row.files) assert.equal(sha(file.path), file.sha256)
+    assert.equal(sha(row.command_record), row.command_sha256)
+  }
+  save('parent-raw-review.json', {
+    status: 'pass', reviewer_kind: 'self_review',
+    scope: 'Parent actual source-pixel to RAW text comparison, not choice mathematics or final product acceptance.',
+    pdf_pages: rows.map(row => row.pdf_page),
+    printed_rows: rows.reduce((n, row) => n + row.lines_printed, 0),
+    all_full_pages_previously_or_currently_opened_individually: true,
+    prior_observed_pages: [15, 16, 17, 18, 19, 20, 25],
+    current_observed_pages: [21, 22, 23, 24],
+    full_page_pixel_bindings: rows.map(row => {
+      const file = `${work}/8a/pages/${String(row.pdf_page).padStart(4, '0')}/page.png`
+      return { path: file, sha256: sha(file) }
+    }),
+    all_eleven_raw_manuscripts_read: true,
+    current_whole_native_figure_observations: [
+      ['0019', 'fig-01', 'Four complete upward/downward branches I/II/III/IV, common origin, x/y ticks and outer frame.'],
+      ['0021', 'fig-03', 'Complete parabola Phi at O and translated Phi-prime at O-prime(8,3), translation arrow, axes and both dashed coordinates.'],
+      ['0021', 'fig-04', 'O,M,O-prime,M-prime, base vectors e1/e2, x0,y0 and shifted coordinates, complete translation-vector parallelogram and axes.'],
+      ['0023', 'fig-05', 'Both full schematic parabolas Phi/Phi-prime, O/O-prime(2,5), x/y axes and dashed2/5. Original23 owns this figure.']
+    ].map(([page, id, observation]) => {
+      const file = `${work}/8a/pages/${page}/${id}-whole-read.png`
+      return { path: file, sha256: sha(file), observation }
+    }),
+    prior_page20_actual_observation: 'Eight table columns including x/y label column; x5..11 with y7.5,5,3.5,3,3.5,5,7.5. Full graph2 vertex(8,3), both branches/axes and last prose share caption row.',
+    checked_boundaries: ['14/15 factorization proof', '15/16 worked factorization', '18/19 original18 inequality systems', '19/20/21/22 complete forward and reverse translation proof', '23/24 original27 six parts plus coefficient and point-coordinate request', '25 original33b p^4-16', 'n5 partial open excluded'],
+    preserved_original_tasks: ['12-22 factorization, rational original domains, graph drawing, four inequality systems, actual figure1 coefficient reading', '23-33 translation, template fabrication/use, sketches, vertex/axis construction, original two-root/no-root distinction and p^4-16'],
+    p20_repair: 'Only unchanged caption moved after final prose block and samerow added; failed audit and old bytes preserved, boxes/text/math unchanged.',
+    closed_targets: ['alg8-c1-s1-n3', 'alg8-c1-s2-n4'],
+    original_exercises: 22,
+    partial_excluded: 'alg8-c1-s2-n5',
+    assembly_vectorize_modern_durable_runs_at_review: 0,
+    usage: null
+  })
+  console.log(JSON.stringify({ status: 'pass', pages: rows.length,
+    printed_rows: rows.reduce((n, row) => n + row.lines_printed, 0) }))
+} else {
+  const resultName = `parent-${phase}-command.json`
+  assert(!fs.existsSync(path.join(work, resultName)), 'Command evidence is once-only')
+  assert(fs.existsSync(path.join(work, 'parent-raw-review.json')))
+  const command = phase.startsWith('assemble') ? 'assemble'
+    : phase.startsWith('finalize') ? 'finalize' : 'vectorize'
+  const args = ['.claude/skills/ld-s10y-lesson/tools/p2c.py', command,
+    '--book', '8a', '--root', source, '--work', work]
+  if (command === 'assemble') args.push('--toc', 'ssot-resources/soviet10year-textbooks/toc/8a/zh.json')
+  if (command === 'finalize') args.push('--page', phase.startsWith('finalize19') ? '19' : '24')
+  const started = new Date().toISOString()
+  const result = spawnSync('.claude/skills/ld-s10y-lesson/.venv/bin/python', args, { encoding: 'utf8' })
+  const record = { command: ['.claude/skills/ld-s10y-lesson/.venv/bin/python', ...args],
+    started_at: started, finished_at: new Date().toISOString(), exit_code: result.status,
+    stdout: result.stdout, stderr: result.stderr, signal: result.signal,
+    error: result.error?.message ?? null, durable_writes: false }
+  save(resultName, record)
+  console.log(JSON.stringify(record, null, 2))
+  process.exitCode = result.status ?? 2
+}

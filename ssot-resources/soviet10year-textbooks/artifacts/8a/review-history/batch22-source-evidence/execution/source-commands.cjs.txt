@@ -1,0 +1,108 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
+const { spawnSync } = require('node:child_process');
+
+const base = '.intentfold/tickets/STEMROBIN-182/tmp';
+const root = `${base}/batch22-source-8a`;
+const work = `${base}/batch22-work-8a`;
+const original = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const python = '.claude/skills/ld-s10y-lesson/.venv/bin/python';
+const tool = '.claude/skills/ld-s10y-lesson/tools/p2c.py';
+const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const json = (file, value) => {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+};
+const files = (directory) => fs.readdirSync(directory, { withFileTypes: true })
+  .sort((a, b) => a.name.localeCompare(b.name))
+  .flatMap((entry) => entry.isDirectory()
+    ? files(path.join(directory, entry.name))
+    : [path.join(directory, entry.name)]);
+const runOnce = (command, page) => {
+  const record = `${work}/evidence/${command}-p${String(page).padStart(4, '0')}.json`;
+  if (fs.existsSync(record)) throw new Error(`Refusing to repeat ${command} page ${page}`);
+  const args = [tool, command, '--book', '8a', '--page', String(page),
+    '--root', root, '--work', work];
+  const started = new Date().toISOString();
+  const result = spawnSync(python, args, { encoding: 'utf8' });
+  json(record, {
+    argv: [python, ...args], cwd: process.cwd(), started_at: started,
+    completed_at: new Date().toISOString(), exit_code: result.status,
+    signal: result.signal, execution_error: result.error ? String(result.error) : null,
+    stdout: result.stdout || '', stderr: result.stderr || '', execution_count: 1,
+  });
+  console.log(result.stdout || '');
+  if (result.stderr) console.error(result.stderr);
+  if (result.error || result.status !== 0) {
+    throw new Error(`${command} page ${page} failed; preserve evidence and stop`);
+  }
+};
+
+if (process.argv[2] === 'init') {
+  if (fs.existsSync(`${root}/input-freeze.json`)) throw new Error('Input already frozen');
+  const inventory = [];
+  for (const name of ['pages', 'figures', 'lessons', 'book.json']) {
+    const source = `${original}/${name}`;
+    const destination = `${root}/8a/${name}`;
+    if (fs.existsSync(destination)) throw new Error(`Destination exists: ${destination}`);
+    fs.cpSync(source, destination, { recursive: true, errorOnExist: true, force: false });
+    for (const file of fs.statSync(source).isDirectory() ? files(source) : [source]) {
+      const copied = `${root}/8a/${path.relative(original, file)}`;
+      const digest = sha(file);
+      if (digest !== sha(copied)) throw new Error(`Copy changed bytes: ${file}`);
+      inventory.push({ source: file, copy: copied, sha256: digest });
+    }
+  }
+  const reused = [];
+  for (const page of [14, 15, 19, 25]) {
+    const number = String(page).padStart(4, '0');
+    const source = page === 14
+      ? `${base}/batch16-work/8a/pages/${number}`
+      : `${base}/next-source-8a-boundaries/8a/pages/${number}`;
+    const destination = `${work}/8a/pages/${number}`;
+    if (fs.existsSync(destination)) throw new Error(`Work page exists: ${destination}`);
+    fs.cpSync(source, destination, { recursive: true, errorOnExist: true, force: false });
+    for (const file of files(source)) {
+      const copied = `${destination}/${path.relative(source, file)}`;
+      const digest = sha(file);
+      if (digest !== sha(copied)) throw new Error(`Reused page bytes changed: ${file}`);
+      reused.push({ pdf_page: page, source: file, copy: copied, sha256: digest });
+    }
+  }
+  const authority = [
+    'ssot-resources/soviet10year-textbooks/toc/8a/zh.json',
+    'ssot-resources/soviet10year-textbooks/sources/soviet10years/8a 苏联十年制学校数学教材 代数 八年级.pdf',
+    `${base}/next-source-8a-boundaries/parent-actual-boundary-observations.json`,
+    `${base}/next-source-8a-boundaries/boundary-prepare-record.json`,
+  ].map((file) => ({ path: file, sha256: sha(file) }));
+  json(`${root}/input-freeze.json`, {
+    schema: 'raw-source-scratch-input-freeze-v1',
+    created_at: new Date().toISOString(), copied_raw_inventory: inventory,
+    reused_prepared_inventory: reused, authoritative_inputs: authority,
+    scope: { book: '8a', lessons: ['alg8-c1-s1-n3', 'alg8-c1-s2-n4'],
+      new_pdf_pages: [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
+      previous_continuation_page: 14, printed_page_offset: 7,
+      next_partial_excluded: 'alg8-c1-s2-n5' },
+    copied_modern_choices_answers_or_history: false,
+    assembly_vectorization_or_promotion_authorized: false,
+  });
+  for (const page of [16, 17, 18, 20, 21, 22, 23, 24]) {
+    if (fs.existsSync(`${work}/8a/pages/${String(page).padStart(4, '0')}/page.png`)) {
+      throw new Error(`Do not prepare an existing page ${page}`);
+    }
+    runOnce('prepare', page);
+  }
+  console.log('Raw inputs frozen; eight missing pages prepared once.');
+} else if (process.argv[2] === 'finalize') {
+  const page = Number(process.argv[3]);
+  if (!Number.isInteger(page) || page < 15 || page > 25) throw new Error('Page outside scope');
+  const pageDirectory = `${root}/8a/pages/${String(page).padStart(4, '0')}`;
+  const before = `${work}/before-finalize/${String(page).padStart(4, '0')}/page.md`;
+  if (fs.existsSync(before)) throw new Error('Before-finalize snapshot exists; no repeat');
+  fs.mkdirSync(path.dirname(before), { recursive: true });
+  fs.copyFileSync(`${pageDirectory}/page.md`, before, fs.constants.COPYFILE_EXCL);
+  runOnce('finalize', page);
+} else {
+  throw new Error('Use init or finalize <page>; no other pipeline stages authorized');
+}

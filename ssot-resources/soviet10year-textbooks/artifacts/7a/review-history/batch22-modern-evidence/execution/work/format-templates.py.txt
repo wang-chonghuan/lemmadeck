@@ -1,0 +1,62 @@
+"""Mechanical Latin-label and printed-layout normalization only."""
+import hashlib
+import json
+import re
+import shutil
+import sys
+from pathlib import Path
+
+WORK = Path(__file__).resolve().parent
+REPO = WORK.parents[5]
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+import edition
+
+before = json.loads((WORK / "templates-before-editing.json").read_text())
+guard = WORK / "format-templates.started.json"
+with guard.open("x") as output:
+    json.dump({"script": str(Path(__file__)), "before": before}, output, indent=2)
+backup = WORK / "prepared-template-snapshots"
+backup.mkdir()
+labels = dict(zip(edition.CYRILLIC_PARTS, edition.LATIN_PARTS))
+results = []
+for number in (5, 6, 7, 8):
+    lesson_id = f"alg7-c1-s{3 if number == 8 else 2}-n{number}"
+    directory = WORK / "adapt/7a/modern-us-neutral/lessons" / lesson_id
+    for name in ("lesson.template.json", "exercises.template.json", "figures.template.json"):
+        file = directory / name
+        expected = next(item for item in before["templates"] if item["path"] == str(file))
+        if hashlib.sha256(file.read_bytes()).hexdigest() != expected["sha256"]:
+            raise RuntimeError("Prepared template changed before mechanical formatting")
+        destination = backup / lesson_id / name
+        destination.parent.mkdir(exist_ok=True)
+        shutil.copyfile(file, destination)
+    file = directory / "exercises.template.json"
+    document = json.loads(file.read_text())
+    for exercise in document["exercises"]:
+        text = exercise["text"]
+        masked = edition.masked_math(text)
+        markers = [
+            marker for marker in edition.PART_MARKER.finditer(masked)
+            if marker.group("label") in labels
+            and edition.nesting_depths(masked)[marker.start()] == 0
+        ]
+        for marker in reversed(markers):
+            start = marker.start("label")
+            end = marker.end("label")
+            text = text[:start] + labels[marker.group("label")] + text[end:]
+        text = edition.normalize_numbered_subparts(text)
+        # A deliberately incomplete printed label set (85: a,b,d) must not
+        # be renumbered. It still needs one source subpart per line.
+        if exercise["number"] == "85":
+            text = re.sub(r"(?<!\n)(?=[abd]\)\s)", "\n", text)
+        if re.search(r"[\u0400-\u04ff]", text):
+            raise RuntimeError("Unconverted Cyrillic in modern task")
+        if text != exercise["source_text"]:
+            exercise["changes"] = list(dict.fromkeys(exercise["changes"] + ["layout"]))
+        exercise["text"] = text
+        exercise["lines"] = text.splitlines()
+        results.append({"lesson": lesson_id, "original": exercise["number"], "modern": text})
+    file.write_text(json.dumps(document, ensure_ascii=False, indent=2) + "\n")
+with (WORK / "mechanical-template-formatting.json").open("x", encoding="utf-8") as output:
+    json.dump({"scope": "Latin labels and layout only; source_text/data unchanged", "exercises": results}, output, ensure_ascii=False, indent=2)
+    output.write("\n")

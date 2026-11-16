@@ -1,0 +1,219 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+import { spawnSync } from 'node:child_process';
+
+const work = path.dirname(fileURLToPath(import.meta.url));
+const base = path.dirname(work);
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const root = path.join(base, 'root');
+const modern = path.join(root, '7a/editions/modern-us-neutral');
+const id = 'alg7-c1-s2-n6';
+const reviewer = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp/reviewer-7a-n6-figure');
+const sourceReview = path.join(reviewer, 'fig-02.review.json');
+const observationsFile = path.join(reviewer, 'observations.json');
+const reviewFile = path.join(modern, 'figures/fig-02.review.json');
+const beforeFile = path.join(work, 'n6-authorized-continuation.before.json');
+const receiptFile = path.join(work, 'n6-authorized-continuation.command.json');
+const afterFile = path.join(work, 'n6-authorized-continuation.after.json');
+const reports = [
+  path.join(work, 'proposed-modern-candidates.json'),
+  path.join(work, 'modern-adaptation-status.json'),
+  path.join(work, 'preservation-after.json'),
+  path.join(base, 'BATCH22-MODERN-STATUS.md'),
+];
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const record = file => ({ path: file, sha256: sha(file), bytes: fs.statSync(file).size });
+const assert = (ok, message) => { if (!ok) throw Error(`STOP: ${message}`); };
+const write = (file, value, flag = 'wx') =>
+  fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag });
+const inventory = directory => fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+  const file = path.join(directory, entry.name);
+  if (entry.name === 'runtime-temp') return [];
+  assert(!entry.isSymbolicLink(), `Unexpected symlink: ${file}`);
+  return entry.isDirectory() ? inventory(file) : [record(file)];
+});
+const frozen = read(path.join(work, 'inputs-before.json'));
+const bookFile = path.join(modern, 'book.json');
+function checkFrozen() {
+  for (const item of frozen.inputs) assert(sha(item.path) === item.sha256, `Frozen input changed: ${item.path}`);
+  for (const item of frozen.copies) {
+    assert(sha(item.source) === item.sha256, `Original copy source changed: ${item.source}`);
+    if (item.destination !== bookFile) assert(sha(item.destination) === item.sha256, `Copied RAW/prior file changed: ${item.destination}`);
+  }
+}
+function checkBefore(before, updatingReports = false) {
+  checkFrozen();
+  for (const item of before.preserved) {
+    if (item.path === bookFile || (updatingReports && reports.includes(item.path))) continue;
+    assert(sha(item.path) === item.sha256, `Pre-continuation file changed: ${item.path}`);
+  }
+  for (const item of before.independent_evidence) assert(sha(item.path) === item.sha256, `Independent evidence changed: ${item.path}`);
+}
+
+if (process.argv[2] === 'finalize') {
+  checkFrozen();
+  for (const file of [reviewFile, beforeFile, receiptFile, afterFile, path.join(work, 'figure-02.parent-approval.json'),
+    path.join(work, `command-finalize-${id}.started.json`), path.join(work, `command-finalize-${id}.json`),
+    path.join(modern, 'lessons', id)]) assert(!fs.existsSync(file), `Already exists/attempted: ${file}`);
+  const requestFile = path.join(work, 'figure-02.parent-approval.request.json');
+  const request = read(requestFile);
+  const review = read(sourceReview);
+  const observations = read(observationsFile);
+  assert(review.schema === 'ld-s10y-image/review@1' && review.figure === 'fig-02' && review.status === 'pass', 'Independent review not pass');
+  assert(observations.status === 'pass' && observations.reviewer.kind === 'independent_agent', 'Independent observations not pass');
+  assert(sha(observationsFile) === 'cabf70d2efff582ef9324545dede7ecffb4be4d9d1086766d979b8a6e2d16da1'
+    && review.notes.includes(sha(observationsFile)), 'Review/observations binding changed');
+  for (const item of [...observations.bindings, ...observations.actual_image_observations]) {
+    assert(sha(item.path) === item.sha256, `Reviewer binding changed: ${item.path}`);
+  }
+  for (const item of [review.source, review.spec, review.render, review.outputs.svg]) {
+    assert(sha(path.resolve(repo, item.path)) === item.sha256, `Review binding changed: ${item.path}`);
+  }
+  assert(request.inputs.length === 8, 'Expected eight unchanged requested inputs');
+  for (const item of request.inputs) {
+    assert(sha(item.path) === item.sha256, `Requested input changed: ${item.path}`);
+    const binding = observations.bindings.find(binding => binding.path === item.path);
+    assert(binding?.sha256 === item.sha256 || item.path.endsWith('/figures.template.json'), 'Requested input lacks independent binding');
+  }
+  for (const item of read(path.join(work, 'proposed-modern-candidates.json')).candidates) {
+    assert(fs.existsSync(item.proposed_private_path) === item.exists, 'Candidate existence changed');
+    if (item.exists) assert(sha(item.proposed_private_path) === item.artifact.sha256, 'Existing candidate changed');
+  }
+  const before = {
+    at: new Date().toISOString(), scope: 'Explicit human authorization: copy independent review exact bytes and finalize n6 once only.',
+    inputs: frozen.inputs, copies: frozen.copies, requested_inputs: request.inputs,
+    independent_evidence: [sourceReview, observationsFile, ...observations.actual_image_observations.map(item => item.path)].map(record),
+    preserved: [...inventory(root), ...inventory(work), record(reports[3])],
+    old_book: read(bookFile),
+    allowed_resource_changes: [reviewFile, bookFile, ...['lesson.json', 'exercises.json', 'figures.json', 'adaptation.audit.json']
+      .map(name => path.join(modern, 'lessons', id, name))],
+    pending_parent_scope: ['n6 full text review', 'durable promotion/rebinding', 'sole offline product display'],
+  };
+  write(beforeFile, before);
+  for (const file of reports) fs.copyFileSync(file, `${file}.before-n6`, fs.constants.COPYFILE_EXCL);
+  fs.copyFileSync(sourceReview, reviewFile, fs.constants.COPYFILE_EXCL);
+  assert(fs.readFileSync(sourceReview).equals(fs.readFileSync(reviewFile)), 'Independent review copy not exact bytes');
+  write(path.join(work, 'figure-02.parent-approval.json'), {
+    status: 'pass', independent_actual_source_and_output_comparison: true, figure: 'fig-02', lesson: id,
+    inputs: request.inputs, review: record(reviewFile), original_review: record(sourceReview), observations: record(observationsFile),
+    authorization: 'Human explicitly confirms independent figure pass/current hashes and authorizes exact review copy plus one n6 adapt-finalize.',
+    evidence_origin: 'Independent reviewer observations, not a new author/parent visual inspection.',
+    scope: observations.scope, n6_full_text_review: 'pending parent',
+    figures_template_authorization: 'Eighth requested hash verified unchanged under explicit human authorization; not an independent full text pass.',
+    headed_product_display_approved: false, durable_promotion_approved: false,
+  });
+  checkBefore(before);
+  const argv = ['node', path.join(work, 'resume-n6-after-parent.mjs')];
+  const inputFiles = [beforeFile, requestFile, path.join(work, 'figure-02.parent-approval.json'), reviewFile,
+    path.join(work, 'modern-once.mjs'), argv[1], ...request.inputs.map(item => item.path)];
+  write(path.join(work, 'n6-authorized-continuation.started.json'), { at: new Date().toISOString(), argv, inputs: inputFiles.map(record) });
+  const result = spawnSync(argv[0], argv.slice(1), { cwd: repo, maxBuffer: 8 * 1024 * 1024 });
+  const stdoutFile = path.join(work, 'n6-authorized-continuation.stdout.txt');
+  const stderrFile = path.join(work, 'n6-authorized-continuation.stderr.txt');
+  fs.writeFileSync(stdoutFile, result.stdout ?? Buffer.alloc(0), { flag: 'wx' });
+  fs.writeFileSync(stderrFile, result.stderr ?? Buffer.alloc(0), { flag: 'wx' });
+  let failure = result.error?.message ?? (result.status === 0 ? null : `Exit ${result.status}`);
+  try { checkBefore(before); } catch (error) { failure = error.message; }
+  write(receiptFile, {
+    at: new Date().toISOString(), argv, cwd: repo, status: result.status, signal: result.signal,
+    pass: !failure, failure, inputs: inputFiles.map(record), stdout: record(stdoutFile), stderr: record(stderrFile),
+    review_copy: { source: record(sourceReview), destination: record(reviewFile), byte_identity: true, exclusive_copy: true },
+    outputs: before.allowed_resource_changes.filter(fs.existsSync).map(record),
+    underlying_receipt: fs.existsSync(path.join(work, `command-finalize-${id}.json`)) ? record(path.join(work, `command-finalize-${id}.json`)) : null,
+  });
+  process.stdout.write(result.stdout ?? '');
+  process.stderr.write(result.stderr ?? '');
+  assert(!failure, `Authorized n6 command failed; no retry: ${failure}`);
+} else if (process.argv[2] === 'status') {
+  assert(!fs.existsSync(afterFile), 'Status update already attempted');
+  const before = read(beforeFile);
+  checkBefore(before);
+  assert(read(receiptFile).pass, 'Authorized finalize receipt failed');
+  const command = read(path.join(work, `command-finalize-${id}.json`));
+  assert(command.pass && command.status === 0, 'N6 once-finalize failed');
+  const directory = path.join(modern, 'lessons', id);
+  const lesson = read(path.join(directory, 'lesson.json'));
+  const exercises = read(path.join(directory, 'exercises.json'));
+  const figures = read(path.join(directory, 'figures.json'));
+  const audit = read(path.join(directory, 'adaptation.audit.json'));
+  assert(audit.status === 'pass' && audit.errors.length === 0 && audit.proseBlocks === 16
+    && audit.exercises === 7 && audit.figures === 1, 'Unexpected n6 audit/counts');
+  const target = read(path.join(work, 'modern-adaptation-status.json')).target_objects.find(item => item.id === id);
+  assert(JSON.stringify(exercises.exercises.map(item => item.number)) === JSON.stringify(target.originals), 'N6 originals/order changed');
+  for (const [document, source] of [[lesson, target.raw_lesson], [exercises, target.raw_exercises]]) {
+    assert(document.source.sha256 === source.sha256 && JSON.stringify(document.source.data) === JSON.stringify(read(source.path)), 'RAW snapshot/binding changed');
+  }
+  assert(lesson.prose.length === 16 && exercises.count === 7 && figures.figures.length === 1, 'N6 actual output counts changed');
+  const book = read(bookFile);
+  const expectedIds = frozen.targets.map(item => item.id);
+  assert(book.lessons.length === 8 && expectedIds.every(id => book.lessons.some(item => item.id === id))
+    && !book.lessons.some(item => item.id === 'alg7-c1-s3-n9'), 'Modern index scope incorrect');
+  for (const row of before.old_book.lessons) assert(JSON.stringify(book.lessons.find(item => item.id === row.id)) === JSON.stringify(row), 'Previous index row changed');
+  const oldRoot = before.preserved.filter(item => item.path.startsWith(`${root}/`));
+  const newRoot = inventory(root);
+  const changedPaths = newRoot.filter(item => oldRoot.find(old => old.path === item.path)?.sha256 !== item.sha256).map(item => item.path);
+  assert(changedPaths.length === 6 && changedPaths.every(file => before.allowed_resource_changes.includes(file)), 'Unexpected private resource changes');
+  const candidates = read(reports[0]);
+  candidates.status = 'all_four_once_pass_private_candidates_pending_n6_text_and_parent_promotion_display';
+  candidates.finalized_once = expectedIds;
+  candidates.n6_pending = false;
+  candidates.existing_candidates = 21;
+  candidates.future_paths = 0;
+  for (const item of candidates.candidates) {
+    assert(fs.existsSync(item.proposed_private_path), 'Candidate missing');
+    item.exists = true;
+    item.artifact = record(item.proposed_private_path);
+    item.status = item.proposed_private_path.includes(`/${id}/`) ? 'once_pass_pending_parent_n6_text_review'
+      : item.proposed_private_path.includes('/figures/fig-02.') ? 'independent_figure_pass_pending_parent_rebinding_display'
+      : item.proposed_private_path === bookFile ? 'private_index_n1_n8_only_pending_parent_promotion'
+      : 'once_pass_parent_text_review_pass_pending_promotion';
+  }
+  candidates.book_index_note = 'Private index preserves exact prior n1-n4 rows and adds once-finalized n5-n8 only; n9 excluded.';
+  candidates.independent_figure_review = { review: record(reviewFile), observations: record(observationsFile), scope: read(observationsFile).scope };
+  const status = read(reports[1]);
+  const n6 = status.target_objects.find(item => item.id === id);
+  Object.assign(n6, { status: 'once_finalized_pass_pending_parent_n6_text_review', audit,
+    prose: lesson.prose, exercises: exercises.exercises, section_breaks: lesson.section_breaks, errata: lesson.errata });
+  for (const item of status.target_objects.filter(item => item.id !== id)) item.status = 'once_finalized_pass_parent_text_review_pass_pending_promotion';
+  status.status = candidates.status;
+  status.finalized_original_exercises = 42;
+  status.pending_n6_originals = 0;
+  status.actual_source_figure.independent_review = 'pass; external independent review copied exact bytes; no new author review';
+  Object.assign(status.figure, { independent_approval: 'pass_scoped_asset_declared_widths_only', review_file_created: true,
+    review: record(reviewFile), observations: record(observationsFile), headed_product_display_approved: false });
+  status.commands.push({ file: record(path.join(work, `command-finalize-${id}.json`)), ...command });
+  status.operations.adapt_finalize_n6 = 1;
+  status.operations.independent_pass_review = 1;
+  status.operations.independent_review_authoring_or_recording_reruns = 0;
+  status.operations.offline_display_renders = 0;
+  status.parent_review_scope = { n5_n7_n8_text: 'pass explicitly reported by human', n6_text: 'pending',
+    figure_asset: 'independent pass', durable_promotion_rebinding: 'parent owned pending', sole_offline_display: 'parent owned pending' };
+  const preservation = read(reports[2]);
+  preservation.permitted_changed_copies = frozen.copies.filter(item => item.destination === bookFile)
+    .map(item => ({ ...item, current_sha256: sha(item.destination) }));
+  preservation.copied_destinations = frozen.copies.map(item => ({ ...item, current_sha256: sha(item.destination) }));
+  preservation.continuation = { inputs189_exact: true, copied_raw143_exact: true, prior_modern20_exact: true,
+    previous_commands_templates_and_n5_n7_n8_outputs_exact: true, previous_book_rows_exact: true,
+    changed_private_resource_paths: changedPaths, independent_review_byte_identity: true,
+    sole_new_pipeline_invocation: 'adapt-finalize alg7-c1-s2-n6 once', durable_writes: 0 };
+  write(reports[0], candidates, 'w');
+  write(reports[2], preservation, 'w');
+  status.evidence = status.evidence.map(item => record(item.path));
+  status.evidence.push(...[beforeFile, receiptFile, path.join(work, 'figure-02.parent-approval.json'),
+    reviewFile, observationsFile].map(record));
+  write(reports[1], status, 'w');
+  checkBefore(before, true);
+  write(afterFile, { at: new Date().toISOString(), status: status.status, n6_audit: audit,
+    target_counts: status.target_objects.map(item => ({ id: item.id, count: item.count, originals: item.originals })),
+    total_exercises: 42, total_prose: 76, candidates: 21, n9_excluded: true,
+    outputs: before.allowed_resource_changes.map(record), updated_reports: reports.slice(0, 3).map(record),
+    preserved_before: record(beforeFile), command: record(receiptFile), immutable_old_files_verified: true,
+    pending: status.parent_review_scope });
+  console.log(JSON.stringify({ n6_finalize: 'once_pass', exercises: 7, prose: 16, figures: 1,
+    total_exercises: 42, candidates_present: 21, raw_and_prior_outputs_unchanged: true, n9_excluded: true }));
+} else {
+  throw Error('Expected finalize or status; both are exclusive once-guarded operations.');
+}

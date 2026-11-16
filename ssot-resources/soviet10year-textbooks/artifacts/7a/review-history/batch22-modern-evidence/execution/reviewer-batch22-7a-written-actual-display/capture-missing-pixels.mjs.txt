@@ -1,0 +1,130 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
+
+delete process.env.PWDEBUG;
+process.env.PLAYWRIGHT_HTML_OPEN = 'never';
+const repo = process.cwd();
+const require = createRequire(path.join(repo, 'app/package.json'));
+const { chromium } = require('@playwright/test');
+const base = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp');
+const output = path.join(base, 'reviewer-batch22-7a-written-actual-display');
+const render = path.join(base, 'batch22-modern-7a/work/render/7a/modern-us-neutral');
+const original = path.join(base, 'batch22-modern-7a/display');
+const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const save = (file, value) => fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+fs.mkdirSync(path.join(output, 'supplements'), { recursive: true });
+if (fs.existsSync(path.join(output, 'supplement-manifest.json'))) throw new Error('Capture already saved');
+const originalManifest = JSON.parse(fs.readFileSync(path.join(original, 'capture-manifest.json')));
+const existing = originalManifest.primary_PNGs.map((item) => {
+  if (sha(path.join(repo, item.path)) !== item.sha256) throw new Error(`Original pixels changed: ${item.path}`);
+  return item;
+});
+const viewports = [{ width: 1440, height: 960 }, { width: 390, height: 844 }];
+const lessons = ['alg7-c1-s2-n5', 'alg7-c1-s2-n6', 'alg7-c1-s2-n7', 'alg7-c1-s3-n8'];
+const surfaces = [];
+const themes = [];
+const started = new Date().toISOString();
+const browser = await chromium.launch({ headless: true });
+let browserClosed = false;
+try {
+  for (const viewport of viewports) {
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1 });
+    await context.route('**/*', (route) => {
+      const url = route.request().url();
+      return /^(file:|data:|about:)/.test(url) ? route.continue() : route.abort();
+    });
+    try {
+      const page = await context.newPage();
+      for (const lesson of lessons) {
+        for (const surface of ['text', 'exercises']) {
+          const file = path.join(render, lesson, `${surface}.html`);
+          await page.goto(pathToFileURL(file).href);
+          await page.evaluate(() => document.fonts.ready);
+          const selector = surface === 'text' ? '.para' : 'li.ex';
+          const items = page.locator(selector);
+          const itemGeometry = await items.evaluateAll((nodes) => nodes.map((node, index) => {
+            const box = node.getBoundingClientRect();
+            return { index, label: node.querySelector('.no')?.textContent || `para-${index + 1}`,
+              top: box.top + scrollY, bottom: box.bottom + scrollY,
+              visible_text: node.innerText };
+          }));
+          await items.first().scrollIntoViewIfNeeded();
+          const firstY = await page.evaluate(() => scrollY);
+          await items.last().scrollIntoViewIfNeeded();
+          const lastY = await page.evaluate(() => scrollY);
+          const sheet = await page.locator('.sheet').boundingBox();
+          const missing = [];
+          const endFirst = firstY + viewport.height;
+          for (let y = Math.max(firstY, endFirst - 64); y < lastY; y += viewport.height - 64) {
+            await page.evaluate((value) => scrollTo(0, value), y);
+            const actualY = await page.evaluate(() => scrollY);
+            const screenshot = path.join(output, 'supplements',
+              `${lesson}-${surface}-${viewport.width}-gap-${missing.length + 1}.png`);
+            await page.screenshot({ path: screenshot, clip: {
+              x: Math.max(0, sheet.x), y: 0, width: Math.min(viewport.width, sheet.width), height: viewport.height,
+            } });
+            missing.push({ path: screenshot, sha256: sha(screenshot), scale: 'native-1:1',
+              document_y_start: actualY, document_y_end: actualY + viewport.height });
+            if (actualY + viewport.height >= lastY + viewport.height) break;
+          }
+          surfaces.push({ lesson, surface, viewport, html_path: file, html_sha256: sha(file),
+            first_existing_path: path.join(original, 'captures', `${lesson}-${surface}-${viewport.width}-first.png`),
+            last_existing_path: path.join(original, 'captures', `${lesson}-${surface}-${viewport.width}-last.png`),
+            first_document_y: firstY, last_document_y: lastY,
+            objects: itemGeometry, supplements: missing,
+            actual_observation_status: 'pending-human-model-pixel-inspection-not-DOM-approval' });
+        }
+      }
+      const figureHtml = path.join(render, 'alg7-c1-s2-n6/text.html');
+      await page.goto(pathToFileURL(figureHtml).href);
+      await page.evaluate(() => document.fonts.ready);
+      for (const [name, palette] of Object.entries({
+        neutral: { ink: '#1b1b1b', muted: '#6b6b6b', accent: '#1b1b1b', grid: '#e3e3e3', paper: '#ffffff' },
+        accent: { ink: '#1b1b1b', muted: '#6b6b6b', accent: '#2b5f8e', grid: '#e3e3e3', paper: '#ffffff' },
+        print: { ink: '#000000', muted: '#444444', accent: '#000000', grid: '#bbbbbb', paper: '#ffffff' },
+      })) {
+        await page.locator('.figure-media').evaluate((node, colors) => {
+          for (const [key, value] of Object.entries(colors)) node.style.setProperty(`--ld-figure-${key}`, value);
+        }, palette);
+        const media = page.locator('.figure-media');
+        await media.scrollIntoViewIfNeeded();
+        const labels = await media.locator('text[data-label-id]').evaluateAll((nodes) =>
+          nodes.map((node) => {
+            const matrix = node.getScreenCTM();
+            const scale = Math.hypot(matrix.a, matrix.b);
+            return { text: node.textContent, svg_font_px: parseFloat(getComputedStyle(node).fontSize),
+              actual_surface_font_px: parseFloat(getComputedStyle(node).fontSize) * scale,
+              fill: getComputedStyle(node).fill, bounding_box: node.getBoundingClientRect().toJSON() };
+          }));
+        const screenshot = path.join(output, 'supplements', `fig-02-${viewport.width}-${name}.png`);
+        await media.screenshot({ path: screenshot });
+        themes.push({ figure_id: 'fig-02', viewport, theme: name, theme_variable_overrides_only: palette,
+          path: screenshot, sha256: sha(screenshot), labels,
+          actual_observation_status: 'pending-pixel-inspection' });
+      }
+    } finally {
+      await context.close();
+    }
+  }
+} finally {
+  await browser.close();
+  browserClosed = true;
+}
+save(path.join(output, 'supplement-manifest.json'), {
+  started_at: started, completed_at: new Date().toISOString(),
+  scope: 'Missing original written-surface pixels and same-HTML figure themes only; no gates or semantic check',
+  launch: { headless: true, persistent_profile: false, device_scale_factor: 1,
+    PWDEBUG_absent: !('PWDEBUG' in process.env), PLAYWRIGHT_HTML_OPEN: process.env.PLAYWRIGHT_HTML_OPEN,
+    browser_executable: chromium.executablePath(), browser_closed: browserClosed, network_blocked: true },
+  existing_original_PNGs: existing, original_PNG_count: existing.length,
+  surface_combinations: 16, surfaces, figure_theme_supplements: themes,
+  supplemental_PNG_count: surfaces.reduce((total, surface) => total + surface.supplements.length, 0) + themes.length,
+  montage_PNG_count: 0, choice_combinations: 0,
+});
+console.log(JSON.stringify({ original_pngs: existing.length, surfaces: surfaces.length,
+  gap_pngs: surfaces.reduce((total, surface) => total + surface.supplements.length, 0),
+  theme_pngs: themes.length, browser_closed: browserClosed,
+  manifest: path.join(output, 'supplement-manifest.json') }, null, 2));

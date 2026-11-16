@@ -1,0 +1,87 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
+const base = '.intentfold/tickets/STEMROBIN-182/tmp';
+const root = `${base}/batch22-source-8a`;
+const work = `${base}/batch22-work-8a`;
+const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const write = (file, value) => fs.writeFileSync(
+  file, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' },
+);
+const source = JSON.parse(fs.readFileSync(`${work}/source-observations.draft.json`, 'utf8'));
+for (const observation of source.page_observations) {
+  const number = String(observation.pdf_page).padStart(4, '0');
+  observation.actual_full_page_opened_individually = true;
+  observation.image_path = `${work}/8a/pages/${number}/page.png`;
+  observation.image_sha256 = sha(observation.image_path);
+  observation.raw_manuscript_path = `${root}/8a/pages/${number}/page.md`;
+  observation.raw_manuscript_sha256 = sha(observation.raw_manuscript_path);
+}
+for (const observation of source.figure_observations) {
+  const number = String(observation.pdf_page).padStart(4, '0');
+  observation.dedicated_read_path = `${work}/8a/pages/${number}/${observation.dedicated_read_filename}`;
+  observation.dedicated_read_sha256 = sha(observation.dedicated_read_path);
+  observation.dedicated_native_whole_figure_opened = true;
+  observation.parent_full_page_sha256 = source.page_observations
+    .find((item) => item.pdf_page === observation.pdf_page).image_sha256;
+  if (observation.finalized_crop_path) {
+    observation.finalized_crop_sha256 = sha(observation.finalized_crop_path);
+  }
+}
+source.frozen_at = new Date().toISOString();
+write(`${work}/source-observations.json`, source);
+const commands = fs.readdirSync(`${work}/evidence`).sort()
+  .filter((name) => name.endsWith('.json'))
+  .map((name) => ({
+    record: `${work}/evidence/${name}`,
+    ...JSON.parse(fs.readFileSync(`${work}/evidence/${name}`, 'utf8')),
+  }));
+const finalizes = commands.filter((item) => item.argv[2] === 'finalize');
+const prepares = commands.filter((item) => item.argv[2] === 'prepare');
+const freeze = JSON.parse(fs.readFileSync(`${root}/input-freeze.json`, 'utf8'));
+const changedCopiedFiles = freeze.copied_raw_inventory.filter((item) => sha(item.copy) !== item.sha256);
+const changedDurableInputs = freeze.copied_raw_inventory.filter((item) => sha(item.source) !== item.sha256);
+write(`${work}/raw-progress.json`, {
+  schema: 'raw-source-author-progress-v1',
+  state: 'stopped-on-first-finalize-failure-awaiting-diagnosis-authorization',
+  source_root: root, work_root: work,
+  input_freeze: `${root}/input-freeze.json`,
+  source_observations: `${work}/source-observations.json`,
+  copied_raw_book_sha256: sha(`${root}/8a/book.json`),
+  all_new_manuscripts_saved: true,
+  new_manuscript_pages: [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25],
+  full_original_page_images_opened_individually: source.page_observations.length,
+  new_full_page_images_opened: source.page_observations.length - 1,
+  original_figure_whole_native_reads: source.figure_observations.length,
+  new_prepares_count: prepares.length,
+  prepare_commands: prepares,
+  reused_prepared_new_pages: [15, 19, 25],
+  reused_prior_boundary_page: 14,
+  finalize_attempt_count: finalizes.length,
+  finalized_pass_pages: finalizes.filter((item) => item.exit_code === 0)
+    .map((item) => Number(item.argv[item.argv.indexOf('--page') + 1])),
+  finalized_failure_pages: finalizes.filter((item) => item.exit_code !== 0)
+    .map((item) => Number(item.argv[item.argv.indexOf('--page') + 1])),
+  unattempted_finalize_pages: [21, 22, 23, 24, 25],
+  finalize_commands: finalizes,
+  failure_diagnosis: source.failure_diagnosis,
+  previous_raw_files_changed_in_copy: changedCopiedFiles.map((item) => item.copy),
+  previous_durable_inputs_changed: changedDurableInputs.map((item) => item.source),
+  n3_n4_raw_assembled_or_approved: false,
+  original_scope: source.confirmed_scope,
+  assemble_runs: 0, vectorize_runs: 0, modern_runs: 0,
+  durable_writes: false, browser_or_service_used: false, model_usage: null,
+  sessions_running: false,
+});
+console.log(JSON.stringify({
+  observations: `${work}/source-observations.json`,
+  progress: `${work}/raw-progress.json`,
+  full_pages_opened: source.page_observations.length,
+  new_prepares: prepares.length,
+  finalize_attempts: finalizes.length,
+  pass_pages: finalizes.filter((item) => item.exit_code === 0)
+    .map((item) => Number(item.argv[item.argv.indexOf('--page') + 1])),
+  failed_pages: finalizes.filter((item) => item.exit_code !== 0)
+    .map((item) => Number(item.argv[item.argv.indexOf('--page') + 1])),
+  stopped: true,
+}, null, 2));

@@ -1,0 +1,190 @@
+"""Inspect existing artifacts and scale their existing PNG; never render an SVG."""
+
+import hashlib
+import json
+import math
+import sys
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+from PIL import Image, ImageDraw
+
+
+OWN = Path(__file__).resolve().parent
+BASE = OWN.parent / "batch22-modern-7a"
+FIGURES = BASE / "root/7a/editions/modern-us-neutral/figures"
+SOURCE = BASE / "root/7a/figures/fig-02.png"
+PREVIEW = BASE / "work/fig-02.preview.png"
+SPEC = FIGURES / "fig-02.spec.json"
+RENDER = FIGURES / "fig-02.render.json"
+SVG = FIGURES / "fig-02.svg"
+CONTEXT = BASE / "work/figure-02-context.json"
+LESSON = BASE / "work/adapt/7a/modern-us-neutral/lessons/alg7-c1-s2-n6/lesson.template.json"
+EXERCISES = LESSON.with_name("exercises.template.json")
+MONTAGE = OWN / "declared-widths-existing-preview.png"
+
+
+def bound(path):
+    return {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+
+
+def inspect():
+    spec = json.loads(SPEC.read_text())
+    render = json.loads(RENDER.read_text())
+    context = json.loads(CONTEXT.read_text())
+    lesson = json.loads(LESSON.read_text())
+    exercises = json.loads(EXERCISES.read_text())
+    svg = ET.parse(SVG).getroot()
+    texts = [{
+        "text": "".join(t.itertext()),
+        "label_id": t.get("data-label-id"),
+        "font_size_at_canvas_px": float(t.get("font-size")),
+        "x": float(t.get("x")), "y": float(t.get("y")),
+        "fill": t.get("fill"),
+    } for t in svg.iter("{http://www.w3.org/2000/svg}text")]
+    assert [t["text"] for t in texts] == ["A", "B", "A \u2282 B"]
+    assert spec["source"]["image"]["sha256"] == bound(SOURCE)["sha256"]
+    assert render["spec"]["sha256"] == bound(SPEC)["sha256"]
+    assert render["output"]["svg"]["sha256"] == bound(SVG)["sha256"]
+    assert spec["source"]["authoritativeText"] == context["authoritativeText"]
+    assert [p["text"] for p in lesson["prose"] if p["text"]] == [
+        item["text"] for item in context["authoritativeText"] if "exercise" not in item
+    ]
+    assert [e["text"] for e in exercises["exercises"]] == [
+        item["text"] for item in context["authoritativeText"] if "exercise" in item
+    ]
+    objects = {o["id"]: o for o in spec["objects"]}
+    boundary_assertions = [
+        a for a in spec["assertions"] if a["id"].startswith("a-boundary-")
+    ]
+    assert len(boundary_assertions) == len(objects["a-set"]["points"]) == 64
+    assert [a["point"] for a in boundary_assertions] == objects["a-set"]["points"]
+    assert all(a["container"] == "b-set" and a["margin"] == 0.5 for a in boundary_assertions)
+    assert len(objects["b-set"]["points"]) == 64
+    with Image.open(SOURCE) as source_image, Image.open(PREVIEW) as preview:
+        sizes = {"source": list(source_image.size), "preview": list(preview.size)}
+        assert preview.size == (480, 480)
+    checks = [{
+        "declared_width_px": width,
+        "svg_font_size_after_width_transform_px": [
+            t["font_size_at_canvas_px"] * width / float(svg.get("width")) for t in texts
+        ],
+        "existing_render_report_check": next(c for c in render["displayChecks"] if c["width"] == width),
+        "width_origin": "Declared authoring width, not measured headed-product media.",
+    } for width in spec["display"]["widths"]]
+    return {
+        "bindings": [bound(p) for p in (SOURCE, PREVIEW, SPEC, RENDER, SVG, CONTEXT, LESSON, EXERCISES)],
+        "image_dimensions_px": sizes,
+        "svg_texts": texts,
+        "declared_display": spec["display"],
+        "declared_width_font_checks": checks,
+        "full_boundary_coverage": {
+            "a_vertices": 64, "b_vertices": 64,
+            "a_vertex_inside_b_assertions": len(boundary_assertions),
+            "minimum_clearance_lower_bound_user_units": 3.6 * math.cos(math.pi / 64) - 1.1 - 1.65,
+            "proof": "The convex 64-vertex B regularization contains the disk centered (4.9,5.5) with radius 3.6*cos(pi/64). All of A lies within radius 1.1+1.65=2.75 of that center, strictly smaller than B's inradius. Hence all segments, not merely sampled anchors, lie strictly inside.",
+        },
+        "current_render_status": render["status"],
+        "new_renderer_or_standalone_validator_invocations": 0,
+    }
+
+
+def main():
+    data = inspect()
+    if sys.argv[1] == "prepare":
+        assert not MONTAGE.exists()
+        canvas = Image.new("RGB", (888, 360), "white")
+        draw = ImageDraw.Draw(canvas)
+        x = 12
+        with Image.open(PREVIEW) as image:
+            image = image.convert("RGB")
+            for width in (240, 280, 320):
+                draw.text((x, 8), f"Existing PNG scaled to {width}px; font {36*width/480:g}px", fill="black")
+                tile = image.resize((width, width), Image.Resampling.LANCZOS)
+                canvas.paste(tile, (x, 32))
+                assert canvas.crop((x, 32, x + width, 32 + width)).tobytes() == tile.tobytes()
+                x += width + 12
+        canvas.save(MONTAGE)
+        print(json.dumps({**data, "derived_existing_png_montage": bound(MONTAGE)}))
+        return
+    assert sys.argv[1] == "freeze"
+    data.update({
+        "schema": "independent-figure-observations-v1",
+        "lesson": "alg7-c1-s2-n6", "figure": "fig-02",
+        "reviewer": {"kind": "independent_agent", "identity": "independent source-first figure reviewer, not the author"},
+        "status": "pass",
+        "scope": "Current source/spec/SVG and actually opened existing preview at full resolution and declared authoring widths. Not headed-product actual-display, three-theme screenshot or durable promotion approval.",
+        "source_first_inventory": [
+            {
+                "id": "independent-two-outlines",
+                "observation": "Original PNG has two complete closed black rounded boundaries. The smaller A region is left of the outer B center, wholly within B with a visible gap everywhere; neither outline contacts or intersects the other. No dots, member numerals, arrows, grid, axes or other subfigure is present.",
+                "mapped_objects": ["a-set", "b-set"],
+                "mapped_assertions": ["two-set-outlines", "a-boundary-01-inside-b through a-boundary-64-inside-b"],
+            },
+            {
+                "id": "independent-three-labels",
+                "observation": "Original A is within the inner boundary; B is outside the outer boundary at upper right; A subset B is below the outlines. These are three label items, not a list of members or exercise answers.",
+                "mapped_objects": ["a-label", "b-label", "subset-label"],
+                "mapped_assertions": ["three-visible-labels", "a-label-inside-a", "a-label-inside-b"],
+            },
+        ],
+        "actual_image_observations": [
+            {
+                **bound(SOURCE), "actually_opened": True,
+                "opening": "view_image detail original; complete original PNG opened before current spec/preview.",
+                "evidence": "Both full black contours and all three source labels are visible, including the outer rightmost/lower boundary and the bottom subset relation. The smaller region is offset left. No mathematical element is cropped.",
+            },
+            {
+                **bound(PREVIEW), "actually_opened": True,
+                "opening": "view_image detail original; complete existing 480x480 PNG.",
+                "evidence": "Full outer contour spans approximately x62-409,y42-390; smaller contour approximately x102-264,y135-297. A is centered within the inner region, B remains outside at upper right, and the complete A subset B relation is below. White gaps separate contours, labels and image edges; no occlusion, missing arc, false overlap or blank paint is visible.",
+            },
+            {
+                **bound(MONTAGE), "actually_opened": True,
+                "opening": "view_image detail original; labeled existing-PNG width checks at 240/280/320 px, copied without further scaling in the montage.",
+                "evidence": "At each of the three declared widths both complete contours and A,B,A subset B remain legible and separated. Smallest-width inner/outer gaps remain visible, the upper-right B and bottom relation have margins, and no label truncation or contact appears.",
+                "derived_not_fresh_svg_render": True,
+                "montage_member_pixel_copy_equality_asserted": True,
+            },
+        ],
+        "mathematical_review": {
+            "status": "pass",
+            "evidence": "Current n6 prose assigns A={10,20,30,...} and B={5,10,15,20,...}. Every A member is a B member and 5 belongs to B but not A, so A is strictly contained in B. The diagram matches that specific example; it does not assert that every implication forces proper rather than possibly equal truth sets.",
+            "complete_contour_check": "Both full boundaries were opened, including right/bottom extents; convex-polygon clearance proof independently covers all boundary segments.",
+            "answer_leakage_check": "The subset notation is present in the original explanatory figure and matches surrounding teaching prose. No numerical exercise solution or choice answer is added.",
+        },
+        "modern_additions_review": {
+            "status": "pass",
+            "independent_additions": [
+                "Two irregular scanned rounded outlines are regularized to deterministic 64-vertex round boundaries.",
+                "Clean renderer-owned Latin labels and subset glyph replace handwriting; scan specks/texture are removed.",
+                "Canvas square layout and declared preview widths are modern presentation decisions, not numerical facts in the original source.",
+            ],
+            "source_additions_separated": True,
+            "no_new_members_coordinates_axes_or_measures": True,
+        },
+        "cultural_visual_review": {
+            "status": "pass",
+            "evidence": "Visible modern content contains only A,B and mathematical subset notation on white. No Chinese/Cyrillic glyph, Soviet decoration, flag, uniform, handwriting or archival texture remains. Semantic ink/paper roles support recoloring; hidden JSXGraph construction colors are not visible source content.",
+        },
+        "font_measurement_scope": "Parsed current SVG text font-size is 36px for all three labels at the 480px canvas. Its exact width transforms give 18/21/24px at 240/280/320, agreeing with existing report minima. These widths are declared authoring checks, not newly measured product CSS widths.",
+        "limitations": [
+            "No new renderer, browser or standalone validator was run.",
+            "Only supplied neutral preview pixels and its derived declared-width views were opened; no unobserved theme or headed-product display is passed.",
+            "Current render metadata still references scratch files. Parent must rebind/review durable paths and perform required actual-display/promotion checks separately.",
+            "Existing preview has been compared visually and geometrically to current SVG; no unprovided preview-generation provenance is fabricated.",
+        ],
+        "n46_n47_author_internals_opened_in_this_figure_task": False,
+        "author_source_spec_svg_render_templates_modified": False,
+        "new_figure_authoring_repairs": 0,
+        "record_review_authorization": "One subsequent record_review.py invocation only after this independent pass; its built-in preflight is the explicitly authorized recording operation, not a standalone validator rerun.",
+    })
+    out = OWN / "observations.json"
+    with out.open("x", encoding="utf-8") as handle:
+        json.dump(data, handle, ensure_ascii=True, indent=2)
+        handle.write("\n")
+    print(json.dumps({"saved": str(out), "status": "pass", "sha256": bound(out)["sha256"]}))
+
+
+if __name__ == "__main__":
+    main()

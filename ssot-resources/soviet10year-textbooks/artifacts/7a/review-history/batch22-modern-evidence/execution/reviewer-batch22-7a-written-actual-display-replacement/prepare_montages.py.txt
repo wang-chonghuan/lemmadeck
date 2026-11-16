@@ -1,0 +1,144 @@
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image, ImageDraw
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+T = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp"
+OUT = T / "reviewer-batch22-7a-written-actual-display-replacement"
+ORIGINAL = T / "batch22-modern-7a/display/capture-manifest.json"
+SUPPLEMENT = T / "reviewer-batch22-7a-written-actual-display/supplement-manifest.json"
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+original = json.loads(ORIGINAL.read_text())
+supplement = json.loads(SUPPLEMENT.read_text())
+entries = {}
+for item in original["primary_PNGs"]:
+    path = ROOT / item["path"]
+    entries[str(path)] = dict(item, path=str(path), kind="original")
+for surface in supplement["surfaces"]:
+    for item in surface["supplements"]:
+        entries[item["path"]] = dict(item, kind="gap_supplement")
+for item in supplement["figure_theme_supplements"]:
+    entries[item["path"]] = dict(item, kind="figure_theme_supplement")
+
+groups = {1440: [], 390: []}
+for surface in supplement["surfaces"]:
+    width = surface["viewport"]["width"]
+    sequence = [surface["first_existing_path"]]
+    sequence += [item["path"] for item in surface["supplements"]]
+    sequence += [surface["last_existing_path"]]
+    groups[width].extend(sequence)
+OUT.mkdir(parents=True, exist_ok=True)
+(OUT / "montages").mkdir(exist_ok=True)
+sheets = []
+for width, paths in groups.items():
+    batch_size = 2 if width == 1440 else 3
+    batches = [paths[i:i + batch_size] for i in range(0, len(paths), batch_size)]
+    if len(batches[-1]) == 1:
+        batches[-2].extend(batches.pop())
+    for batch in batches:
+        images = [Image.open(path).convert("RGB") for path in batch]
+        if width == 1440:
+            size = (width, sum(image.height + 28 for image in images))
+        else:
+            size = (width * len(images), max(image.height for image in images) + 28)
+        canvas = Image.new("RGB", size, "#d0d0d0")
+        draw = ImageDraw.Draw(canvas)
+        placements = []
+        y = 0
+        for index, (path, image) in enumerate(zip(batch, images)):
+            x = 0 if width == 1440 else index * width
+            header_y = y if width == 1440 else 0
+            pixel_y = header_y + 28
+            draw.text((x + 8, header_y + 8), Path(path).name, fill="black")
+            canvas.paste(image, (x, pixel_y))
+            assert canvas.crop((x, pixel_y, x + image.width, pixel_y + image.height)).tobytes() == image.tobytes()
+            entry = entries[path]
+            assert digest(Path(path)) == entry["sha256"], path
+            entry.update(width=image.width, height=image.height, hash_verified=True)
+            placements.append({
+                "path": path,
+                "sha256": entry["sha256"],
+                "x": x,
+                "y": pixel_y,
+                "width": image.width,
+                "height": image.height,
+                "scale": 1,
+                "pixel_copy_verified": True,
+            })
+            y += image.height + 28
+        number = len(sheets) + 1
+        path = OUT / "montages" / f"sheet-{number:02d}.png"
+        canvas.save(path)
+        sheets.append({
+            "number": number,
+            "path": str(path),
+            "sha256": digest(path),
+            "width": canvas.width,
+            "height": canvas.height,
+            "sources": placements,
+        })
+
+assigned = {source["path"] for sheet in sheets for source in sheet["sources"]}
+remaining = sorted(set(entries) - assigned)
+small = [path for path in remaining if Image.open(path).height < 10]
+figures = [path for path in remaining if path not in small]
+for batch in [figures[:4], figures[4:], small]:
+    columns = 4 if batch != small else 2
+    cell_width = 320 if batch != small else 480
+    cell_height = 349 if batch != small else 42
+    rows = (len(batch) + columns - 1) // columns
+    canvas = Image.new("RGB", (cell_width * columns, cell_height * rows), "#d0d0d0")
+    draw = ImageDraw.Draw(canvas)
+    placements = []
+    for index, path in enumerate(batch):
+        image = Image.open(path).convert("RGB")
+        x, header_y = (index % columns) * cell_width, (index // columns) * cell_height
+        y = header_y + 28
+        draw.text((x + 2, header_y + 8), Path(path).name, fill="black")
+        canvas.paste(image, (x, y))
+        assert canvas.crop((x, y, x + image.width, y + image.height)).tobytes() == image.tobytes()
+        entry = entries[path]
+        assert digest(Path(path)) == entry["sha256"], path
+        entry.update(width=image.width, height=image.height, hash_verified=True)
+        placements.append({
+            "path": path, "sha256": entry["sha256"], "x": x, "y": y,
+            "width": image.width, "height": image.height,
+            "scale": 1, "pixel_copy_verified": True,
+        })
+    number = len(sheets) + 1
+    path = OUT / "montages" / f"sheet-{number:02d}.png"
+    canvas.save(path)
+    sheets.append({
+        "number": number, "path": str(path), "sha256": digest(path),
+        "width": canvas.width, "height": canvas.height, "sources": placements,
+    })
+
+assert len(entries) == 76
+assert len({source["path"] for sheet in sheets for source in sheet["sources"]}) == 76
+inventory = {
+    "schema": "independent-native-pixel-inventory@1",
+    "input_manifests": [
+        {"path": str(path), "sha256": digest(path)}
+        for path in [ORIGINAL, SUPPLEMENT]
+    ],
+    "source_png_count": len(entries),
+    "unique_source_paths": len(entries),
+    "unique_source_sha256": len({item["sha256"] for item in entries.values()}),
+    "montage_count": len(sheets),
+    "resampling": False,
+    "all_source_pixels_copied_once": True,
+    "source_files": list(entries.values()),
+    "sheets": sheets,
+}
+(OUT / "pixel-inventory.json").write_text(json.dumps(inventory, indent=2) + "\n")
+for sheet in sheets:
+    print(f'{sheet["number"]:02d} {sheet["width"]}x{sheet["height"]}: ' +
+          " | ".join(Path(source["path"]).name for source in sheet["sources"]))

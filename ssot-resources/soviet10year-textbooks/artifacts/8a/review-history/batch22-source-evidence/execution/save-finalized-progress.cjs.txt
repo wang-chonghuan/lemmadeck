@@ -1,0 +1,66 @@
+const fs = require('node:fs');
+const crypto = require('node:crypto');
+const assert = require('node:assert/strict');
+const base = '.intentfold/tickets/STEMROBIN-182/tmp';
+const root = `${base}/batch22-source-8a`;
+const work = `${base}/batch22-work-8a`;
+const read = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
+const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const write = (file, data) => fs.writeFileSync(file, `${JSON.stringify(data, null, 2)}\n`, { flag: 'wx' });
+const pages = Array.from({ length: 11 }, (_, index) => index + 15);
+const results = pages.map((page) => {
+  const number = String(page).padStart(4, '0');
+  const record = `${work}/evidence/finalize-p${number}${page === 20 ? '-caption-row-repair' : ''}.json`;
+  const command = read(record);
+  const audit = read(`${root}/8a/pages/${number}/audit.json`);
+  assert.equal(command.exit_code, 0);
+  assert.deepEqual(audit.errors, []);
+  assert.equal(audit.lines_printed, audit.lines_md);
+  return { pdf_page: page, command_record: record, command_sha256: sha(record),
+    exit_code: command.exit_code, lines_printed: audit.lines_printed, lines_md: audit.lines_md,
+    files: ['page.md', 'page.json', 'audit.json'].map((name) => ({
+      path: `${root}/8a/pages/${number}/${name}`, sha256: sha(`${root}/8a/pages/${number}/${name}`),
+    })),
+    finalized_crops: audit.figures.map((figure) => {
+      const file = `${work}/8a/pages/${number}/figures/${figure.id}.png`;
+      return { id: figure.id, box: figure.box, path: file, sha256: sha(file) };
+    }) };
+});
+const freeze = read(`${root}/input-freeze.json`);
+const previous = freeze.copied_raw_inventory.map((item) => ({
+  ...item, current_copy_sha256: sha(item.copy), current_source_sha256: sha(item.source),
+}));
+assert(previous.every((item) => item.sha256 === item.current_copy_sha256 && item.sha256 === item.current_source_sha256));
+const source = read(`${work}/source-observations.json`);
+source.finalize_completion = {
+  results,
+  original_failure_retained: `${work}/history/p0020-before-caption-row-repair`,
+  authorized_p20_layout_delta: `${work}/p0020-caption-row-repair-delta.json`,
+};
+source.current_status = 'all-new-pages-finalized-awaiting-parent-raw-comparison-before-assembly';
+source.figure_observations.forEach((figure) => {
+  const crop = results.find((item) => item.pdf_page === figure.pdf_page)?.finalized_crops
+    .find((item) => item.id === figure.id);
+  if (crop) figure.current_finalized_crop = { ...crop, newly_opened_after_finalize: false };
+});
+write(`${work}/source-observations-finalized.json`, source);
+write(`${work}/raw-progress-after-caption-repair.json`, {
+  schema: 'raw-source-author-progress-v1',
+  state: source.current_status,
+  source_root: root, work_root: work, input_freeze: `${root}/input-freeze.json`,
+  previous_progress_preserved: `${work}/raw-progress.json`,
+  observations: `${work}/source-observations-finalized.json`,
+  page_results: results, passed_pages: pages,
+  original_failed_attempt_retained: `${work}/evidence/finalize-p0020.json`,
+  finalize_attempts_total: 12, successful_attempts: 11, new_prepare_count: 8,
+  full_original_pages_previously_opened: 12, native_whole_figure_table_reads_previously_opened: 6,
+  original_scope: source.confirmed_scope, previous_raw_files_hashes: previous,
+  p20_only_manual_change: 'Move unchanged cap after final p open and add samerow',
+  markdown_and_json_delta: `${work}/p0020-caption-row-repair-delta.json`,
+  original_33b_p_fourth_minus_16_preserved: read(`${root}/8a/pages/0025/page.json`).blocks
+    .some((block) => block.kind === 'ex' && block.label === '33' && block.lines.some((line) => line.includes('p^4-16'))),
+  assemble_runs: 0, vectorize_runs: 0, modern_runs: 0,
+  durable_writes: false, browser_or_services_used_for_raw: false, model_usage: null,
+});
+console.log(JSON.stringify({ passed_pages: pages, observations: `${work}/source-observations-finalized.json`,
+  progress: `${work}/raw-progress-after-caption-repair.json`, stopped_before_assembly: true }, null, 2));

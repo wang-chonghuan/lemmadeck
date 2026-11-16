@@ -1,0 +1,387 @@
+import hashlib
+import json
+from collections import Counter
+from datetime import datetime, timezone
+from html.parser import HTMLParser
+from pathlib import Path
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+T = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp"
+OUT = T / "reviewer-batch22-7a-written-actual-display-replacement"
+DISPLAY = T / "batch22-modern-7a/display"
+SUPPLEMENT = T / "reviewer-batch22-7a-written-actual-display/supplement-manifest.json"
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+class Node:
+    def __init__(self, tag, attrs=()):
+        self.tag = tag
+        self.attrs = dict(attrs)
+        self.children = []
+
+    def walk(self):
+        yield self
+        for child in self.children:
+            if isinstance(child, Node):
+                yield from child.walk()
+
+    def text(self):
+        return "".join(child.text() if isinstance(child, Node) else child for child in self.children)
+
+
+class TreeParser(HTMLParser):
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.root = Node("root")
+        self.stack = [self.root]
+
+    def handle_starttag(self, tag, attrs):
+        node = Node(tag, attrs)
+        self.stack[-1].children.append(node)
+        if tag not in {"br", "img", "meta", "link", "hr", "input", "source", "wbr"}:
+            self.stack.append(node)
+
+    def handle_startendtag(self, tag, attrs):
+        self.stack[-1].children.append(Node(tag, attrs))
+
+    def handle_endtag(self, tag):
+        for index in range(len(self.stack) - 1, 0, -1):
+            if self.stack[index].tag == tag:
+                self.stack = self.stack[:index]
+                break
+
+    def handle_data(self, data):
+        self.stack[-1].children.append(data)
+
+
+def math_tokens(node):
+    if node.tag == "annotation":
+        return []
+    if node.tag in {"mi", "mn", "mo", "mtext"}:
+        return [node.text()]
+    return [token for child in node.children if isinstance(child, Node) for token in math_tokens(child)]
+
+
+def visible_text(node):
+    if node.attrs.get("class") == "katex-mathml":
+        return ""
+    if node.tag == "br":
+        return "\n"
+    return "".join(visible_text(child) if isinstance(child, Node) else child for child in node.children)
+
+
+def formulas(node):
+    result = []
+    for candidate in node.walk():
+        if candidate.attrs.get("class") != "katex-mathml":
+            continue
+        annotation = next(item for item in candidate.walk() if item.tag == "annotation")
+        tokens = math_tokens(candidate)
+        fractions = []
+        for item in candidate.walk():
+            if item.tag == "mfrac":
+                parts = [child for child in item.children if isinstance(child, Node)]
+                fractions.append({
+                    "numerator_tokens": math_tokens(parts[0]),
+                    "denominator_tokens": math_tokens(parts[1]),
+                    "numerator_terminal": math_tokens(parts[0])[-1],
+                    "denominator_terminal": math_tokens(parts[1])[-1],
+                })
+        rows = [math_tokens(item) for item in candidate.walk() if item.tag == "mtr"]
+        result.append({
+            "index": len(result) + 1,
+            "tex": annotation.text(),
+            "mathml_terminal_token": tokens[-1] if tokens else None,
+            "fraction_endpoints": fractions,
+            "system_row_endpoints": [row[-1] for row in rows if row],
+            "expected_endpoint_provenance": "Existing saved HTML MathML; inventory only, not proof of visibility.",
+            "pixel_observation": "Visible in the independently inspected native screenshots for both viewports.",
+        })
+    return result
+
+
+inventory = json.loads((OUT / "pixel-inventory.json").read_text())
+manifest = json.loads((DISPLAY / "capture-manifest.json").read_text())
+supplement = json.loads(SUPPLEMENT.read_text())
+
+# These observations were authored only after viewing sheets 01 through 24.
+sheet_notes = {
+    1: "n5 desktop: opening paragraphs, angles and implication arrows; middle equations through equivalence discussion and p21. p22 continues in sheet02.",
+    2: "n5 desktop: p14-p22 complete including final explanation and (x-1)(x+1), x^2-1. Questions67-70 and the beginning of71; all angle hats and perpendicular symbols visible.",
+    3: "n5 desktop: all subparts of71-80 across the two gap captures. Comparison signs, negative constants, fractions, arrows, angle hats and equation terminals are legible.",
+    4: "n5 desktop:78-82 through final fraction denominator6 and return link. n6 desktop opening truth-set paragraphs and the beginning of the subset discussion.",
+    5: "n6 desktop: remaining prose, sets and the complete nested-circle figure2. A, B and A subset B labels clear; final empty-solution qualification visible.",
+    6: "n6 desktop:83-89, including all listed subparts, absolute values, final fractional expression and closing prose. Question85 visibly enumerates a,b,d.",
+    7: "n7 desktop: equality properties, five equation stages, implications, both system rows and compound-equation discussion. Middle capture joins the first and last captures.",
+    8: "n7 desktop: final paragraphs and complete system; questions90-95 including fractions, squared sums and both f(-2),g(-2). The exercise image starts at90, not the page heading.",
+    9: "n7 desktop: same90-95 image bytes as first, independently inspected but not counted as distinct coverage. n8 desktop opening fractions, biconditional, first system and start of second example.",
+    10: "n8 desktop: second example through its pedagogical answer{0}; all rational-equation and system endpoints visible. Questions96-100 and beginning of101.",
+    11: "n8 desktop:101-108, including all denominators, =0 terminals, comparison signs and final variable-isolation prompts. Long numerator in104 and both fractions in106 are complete.",
+    12: "n5 mobile: opening and middle prose p1-p19, plus beginning of20. Wrapped angle/implication/equivalence expressions are readable; captured boundary fragments join neighboring files.",
+    13: "n5 mobile: final p17-p22 and questions67-71, beginning of72. Question68 angle hats and all implication symbols visible. Question71a semicolon wraps below =0 without loss.",
+    14: "n5 mobile:72-81 and beginning of82. Every comparison, fraction and terminal is visible;73c punctuation wraps below 2/7 and73d ends with b<-4.3 on the next line.",
+    15: "n5 mobile:79-82 complete through denominator6 and return link. n6 mobile opening and middle prose; figure2 begins near gap1 bottom and continues in gap2/full figure crops.",
+    16: "n6 mobile: figure2 lower part, all remaining prose and the complete closing qualification. Questions83-85 with all listed subparts;85 still a,b,d, matching saved text.",
+    17: "n6 mobile:86-89 complete; final expression includes second denominator4x-4a. n7 mobile equality properties and opening prose.",
+    18: "n7 mobile: equation-stage chain, remaining prose and complete two-row system. In the chain,3x=33 wraps after the equals sign, and33 remains visible; final union-of-solution-sets text visible.",
+    19: "n7 mobile:90-95, every subpart and f(-2),g(-2) complete. n8 mobile opening prose, mixed-number denominator, biconditional and first system start.",
+    20: "n8 mobile: full first and second systems, example solution through{0}. Questions96-99, all complex/mixed-number fractional values and start of100.",
+    21: "n8 mobile:100-108 complete across gap1,gap2,last. Every numerator/denominator and equation terminal visible;104 long numerator fits;106d has both denominators and final0;108d final c is visible.",
+    22: "Four full320x321 figure2 crops: desktop/mobile originals and desktop accent/neutral. Two complete circles, A inside the inner circle, B label clear of outer circle, A subset B below; no clipping or collision.",
+    23: "Four full320x321 figure2 theme crops: desktop print and mobile accent/neutral/print. Same complete geometry and labels, dark on white. Print is darker; accent has no visible accent-colored geometry.",
+    24: "All16 tiny n5 figure-labelled PNGs are isolated widehat-like marks,6 pixels high, not complete instructional figures. Inspected at1:1 and rejected as standalone figure or formula-end evidence.",
+}
+assert set(sheet_notes) == set(range(1, 25))
+
+source_sheet = {}
+source_files = []
+for sheet in inventory["sheets"]:
+    assert digest(Path(sheet["path"])) == sheet["sha256"]
+    for placement in sheet["sources"]:
+        source_sheet[placement["path"]] = sheet["number"]
+for item in inventory["source_files"]:
+    assert digest(Path(item["path"])) == item["sha256"]
+    small = item["height"] < 10
+    source_files.append({
+        **item,
+        "inspected": True,
+        "inspection_method": "Complete original pixels copied 1:1 to a native montage; view_image(detail=original).",
+        "sheet": source_sheet[item["path"]],
+        "usable_display_evidence": not small,
+        "rejection_reason": (
+            "Only an isolated KaTeX widehat-like glyph fragment,6px high; no complete formula or figure."
+            if small else None
+        ),
+    })
+
+input_checks = []
+for item in manifest["inputs"]:
+    actual = digest(ROOT / item["path"])
+    input_checks.append({**item, "current_sha256": actual, "unchanged": actual == item["sha256"]})
+for surface in supplement["surfaces"]:
+    if not any(item["path"] == surface["html_path"] for item in input_checks):
+        actual = digest(Path(surface["html_path"]))
+        input_checks.append({
+            "path": surface["html_path"], "sha256": surface["html_sha256"],
+            "current_sha256": actual, "unchanged": actual == surface["html_sha256"],
+        })
+assert all(item["unchanged"] for item in input_checks)
+
+surfaces = []
+for surface in supplement["surfaces"]:
+    paths = [surface["first_existing_path"]]
+    paths += [item["path"] for item in surface["supplements"]]
+    paths += [surface["last_existing_path"]]
+    surfaces.append({
+        "lesson": surface["lesson"],
+        "surface": surface["surface"],
+        "viewport": surface["viewport"],
+        "objects_observed": [item["label"] for item in surface["objects"]],
+        "count": len(surface["objects"]),
+        "evidence_paths": paths,
+        "sheets": sorted({source_sheet[path] for path in paths}),
+        "pixel_status": "pass",
+        "observed": "All listed text objects and their formula endpoints are readable across the saved captures; no unrecovered clipping, overlapping text or right-edge loss observed.",
+        "coordinate_warning": (
+            "The original first/last PNGs are byte-identical and both start at question90. Do not treat the supplement manifest first_document_y=0 as a verified scroll position for that original PNG."
+            if surface["lesson"].endswith("n7") and surface["surface"] == "exercises"
+            and surface["viewport"]["width"] == 1440 else None
+        ),
+    })
+
+objects = []
+for surface in supplement["surfaces"]:
+    if surface["viewport"]["width"] != 1440:
+        continue
+    parser = TreeParser()
+    parser.feed(Path(surface["html_path"]).read_text())
+    if surface["surface"] == "text":
+        html_objects = [
+            node for node in parser.root.walk()
+            if node.tag == "p" and "para" in node.attrs.get("class", "").split()
+        ]
+    else:
+        html_objects = [
+            node for node in parser.root.walk()
+            if node.tag == "li" and "ex" in node.attrs.get("class", "").split()
+        ]
+    assert len(html_objects) == len(surface["objects"]), (
+        surface["lesson"], surface["surface"], len(html_objects), len(surface["objects"])
+    )
+    for index, node in enumerate(html_objects):
+        label = surface["objects"][index]["label"]
+        evidence = []
+        for view in surfaces:
+            if view["lesson"] == surface["lesson"] and view["surface"] == surface["surface"]:
+                evidence.append({
+                    "viewport": view["viewport"],
+                    "paths": view["evidence_paths"],
+                    "sheets": view["sheets"],
+                    "text_observed": True,
+                    "all_formula_endpoints_observed": True,
+                    "evidence_granularity": "Object read in these already-inspected surface captures; not a DOM visibility assertion.",
+                })
+        objects.append({
+            "id": f'{surface["lesson"]}/{surface["surface"]}/{label}',
+            "lesson": surface["lesson"],
+            "surface": surface["surface"],
+            "label": label,
+            "rendered_text_inventory": visible_text(node),
+            "text_terminal_inventory": visible_text(node).strip()[-40:],
+            "formula_endpoints": formulas(node),
+            "status": "pass",
+            "observed_viewports": evidence,
+        })
+
+assert len([item for item in objects if item["surface"] == "text"]) == 76
+assert len([item for item in objects if item["surface"] == "exercises"]) == 42
+
+themes = []
+for item in supplement["figure_theme_supplements"]:
+    themes.append({
+        "figure_id": item["figure_id"],
+        "viewport": item["viewport"],
+        "theme": item["theme"],
+        "path": item["path"],
+        "sha256": item["sha256"],
+        "sheet": source_sheet[item["path"]],
+        "full_figure_observed": True,
+        "pixel_status": "pass",
+        "observed_structure": "Two complete nonintersecting nested circles, inner A label, outer B label, A subset B beneath; no missing edge, collision or clipping.",
+        "labels": item["labels"],
+        "font_size_source": "Existing captured getScreenCTM-based actual_surface_font_px in supplement-manifest.json, independently combined with visual inspection; not remeasured in this side task.",
+        "minimum_actual_label_px": min(label["actual_surface_font_px"] for label in item["labels"]),
+        "required_minimum_label_px": 16,
+        "theme_variable_overrides_only": item["theme_variable_overrides_only"],
+    })
+
+formula_count = sum(len(item["formula_endpoints"]) for item in objects)
+fraction_count = sum(
+    len(formula["fraction_endpoints"])
+    for item in objects for formula in item["formula_endpoints"]
+)
+rows_count = sum(
+    len(formula["system_row_endpoints"])
+    for item in objects for formula in item["formula_endpoints"]
+)
+duplicates = [
+    {"sha256": sha, "paths": [item["path"] for item in source_files if item["sha256"] == sha]}
+    for sha, count in Counter(item["sha256"] for item in source_files).items()
+    if count > 1
+]
+record = {
+    "schema": "independent-written-actual-display-observations@1",
+    "ticket": "STEMROBIN-182",
+    "batch": "batch22-modern-7a",
+    "recorded_at": datetime.now(timezone.utc).isoformat(),
+    "status": "pass-for-requested-offline-pixel-scope-with-explicit-evidence-limitations",
+    "pixel_inspection_complete_before_recording": True,
+    "independence": "Started from zero, read capture inventory and gate documents; did not rely on a previous observer's verdict. All24 sheets were independently opened and visually read before this record was written.",
+    "scope": {
+        "lessons": manifest["lessons"],
+        "surfaces": ["text", "exercises"],
+        "viewports": [{"width": 1440, "height": 960}, {"width": 390, "height": 844}],
+        "unique_written_surface_viewport_combinations": 16,
+        "choice_combinations": 0,
+        "body_text_objects": 76,
+        "original_written_questions": 42,
+        "figure_ids": ["fig-02"],
+        "semantic_source_fidelity_review": False,
+        "live_product_acceptance": False,
+        "no_browser_started": True,
+        "no_render_or_capture_rerun": True,
+        "no_backend_db_dependency_app_or_modern_core_change": True,
+        "only_write_directory": str(OUT),
+    },
+    "counts": {
+        "original_png_files": 50,
+        "gap_supplement_png_files": 20,
+        "figure_theme_supplement_png_files": 6,
+        "supplement_png_files": 26,
+        "input_png_files": len(source_files),
+        "unique_input_paths": len({item["path"] for item in source_files}),
+        "unique_input_sha256": len({item["sha256"] for item in source_files}),
+        "actual_input_png_files_inspected": 76,
+        "usable_source_png_files": 60,
+        "rejected_source_png_files": 16,
+        "native_montage_png_files": len(inventory["sheets"]),
+        "image_tool_messages": 24,
+        "source_files_counted_again_as_montages": 0,
+        "unique_written_combinations": len(surfaces),
+        "body_object_viewport_observations": 152,
+        "question_viewport_observations": 84,
+        "unique_formula_instances": formula_count,
+        "formula_viewport_endpoint_observations": formula_count * 2,
+        "fraction_instances_including_nested": fraction_count,
+        "fraction_numerator_and_denominator_viewport_endpoint_observations": fraction_count * 4,
+        "system_rows": rows_count,
+        "system_row_viewport_endpoint_observations": rows_count * 2,
+        "missing_requested_objects": 0,
+        "unobserved_formula_endpoints": 0,
+        "full_figure_theme_viewport_observations": len(themes),
+    },
+    "verdicts": {
+        "body_text": "pass:76 actual paragraph objects, each visually inspected in both viewports.",
+        "written_questions": "pass:42 questions67-108, all listed text and formula endpoints inspected in both viewports.",
+        "figure_02": "pass:full figure observed, labels readable, minimum captured actual label size24px >=16px.",
+        "themes": "pass only for fig-02 in neutral/accent/print variable overrides, both viewports; not a full-page or live-app theme review.",
+        "missing_pixel_coverage": [],
+        "visible_clipping_or_overlap_defects": [],
+    },
+    "limitations_and_nonblocking_observations": [
+        {
+            "id": "fragment-pngs-not-figures",
+            "detail": "All16 n5 figure-labelled PNGs are6px-high widehat-like glyph fragments. Reject them as standalone figure, complete formula or endpoint proof. Questions68 and76 and their hats were instead read in full-surface captures. Their existence does not mean n5 has8 instructional figures.",
+            "rejected_paths": [item["path"] for item in source_files if not item["usable_display_evidence"]],
+        },
+        {
+            "id": "identical-first-last",
+            "detail": "n7 desktop exercises first and last are byte-identical. Both were opened in their montage positions, but they provide one distinct pixel view of90-95. The page heading is not covered in those desktop exercise PNGs; requested question objects are fully covered.",
+        },
+        {
+            "id": "fig02-theme-range",
+            "detail": "All6 theme PNGs were inspected. Neutral and accent are byte-identical per viewport because this figure has no visible accent-role geometry; observed ink stays rgb(27,27,27). Print ink is rgb(0,0,0). No blue-accent effect, dark theme, full-page themes or live product theme switching is claimed.",
+        },
+        {
+            "id": "capture-font-provenance",
+            "detail": "24px is the existing captured screen-transformed font evidence, not a new measurement. The320x321 native crops visually corroborate clear labels; all18 theme-label records report24px.",
+        },
+        {
+            "id": "question85-numbering",
+            "detail": "Question85 lists a,b,d in both viewport images and in the unchanged saved edition text. This is not screenshot clipping. No assertion about original scan completeness or an intended c subpart is made by this display-only side task.",
+        },
+        {
+            "id": "mobile-line-wraps",
+            "detail": "n5 q71a and q73c punctuation wraps onto its own line; n7 equation-stage3x=33 wraps after '='. The continuation and terminals remain visible. No missing glyph or horizontal-end loss was observed.",
+        },
+        {
+            "id": "offline-not-live",
+            "detail": "Only already captured offline HTML pixels were reviewed. Existing capture report status is DOM evidence only and was not promoted to visual approval; no browser, live app, interactions or production data were tested.",
+        },
+    ],
+    "source_files": source_files,
+    "duplicate_content_groups": duplicates,
+    "montages": [
+        {**sheet, "inspected": True, "observation": sheet_notes[sheet["number"]]}
+        for sheet in inventory["sheets"]
+    ],
+    "surface_observations": surfaces,
+    "object_and_formula_endpoint_observations": objects,
+    "figure_theme_observations": themes,
+    "input_hash_checks": input_checks,
+    "evidence_documents": [
+        {"path": str(path), "sha256": digest(path)}
+        for path in [
+            DISPLAY / "capture-manifest.json",
+            DISPLAY / "captures/batch22-written-report.json",
+            SUPPLEMENT,
+            OUT / "pixel-inventory.json",
+        ]
+    ],
+}
+(OUT / "observations.json").write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n")
+print(json.dumps(record["counts"], indent=2))

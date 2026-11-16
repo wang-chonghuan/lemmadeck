@@ -1,0 +1,182 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const work = `${scratch}/batch22-modern-7a`
+const source = `${work}/root/7a`
+const durable = 'ssot-resources/soviet10year-textbooks/artifacts/7a'
+const evidence = `${durable}/review-history/batch22-modern-evidence`
+const edition = 'editions/modern-us-neutral'
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
+const bytes = file => fs.readFileSync(file)
+const jsonBytes = value => Buffer.from(JSON.stringify(value, null, 2) + '\n')
+const relative = file => path.isAbsolute(file) ? path.relative(process.cwd(), file) : file
+const walk = dir => fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+  const file = path.join(dir, entry.name)
+  return entry.isDirectory() ? walk(file) : [file]
+})
+assert(!fs.existsSync(evidence))
+assert.equal(read(`${work}/parent-three-text-reviews.json`).status, 'pass')
+assert.equal(read(`${work}/parent-n6-text-review.json`).status, 'pass')
+const observer = `${scratch}/reviewer-batch22-7a-written-actual-display-replacement`
+const observed = read(`${observer}/observations.json`)
+assert.equal(observed.status, 'pass-for-requested-offline-pixel-scope-with-explicit-evidence-limitations')
+assert.equal(observed.counts.missing_requested_objects, 0)
+assert.equal(observed.counts.unobserved_formula_endpoints, 0)
+assert.equal(observed.counts.actual_input_png_files_inspected, 76)
+const proposal = read(`${work}/work/proposed-modern-candidates.json`)
+assert.equal(proposal.candidates.length, 21)
+const targets = proposal.targets
+assert.equal(targets.length, 4)
+for (const id of targets) {
+  const finalize = read(`${work}/work/command-finalize-${id}.json`)
+  assert.equal(finalize.status, 0)
+  assert.equal(finalize.pass, true)
+  for (const name of ['lesson.json', 'exercises.json']) {
+    assert(bytes(`${source}/lessons/${id}/${name}`).equals(bytes(`${durable}/lessons/${id}/${name}`)))
+  }
+}
+for (const id of ['alg7-c1-s1-n1', 'alg7-c1-s1-n2', 'alg7-c1-s1-n3', 'alg7-c1-s1-n4']) {
+  for (const name of ['lesson.json', 'exercises.json', 'figures.json', 'adaptation.audit.json']) {
+    assert(bytes(`${source}/${edition}/lessons/${id}/${name}`)
+      .equals(bytes(`${durable}/${edition}/lessons/${id}/${name}`)))
+  }
+}
+const pending = new Map()
+const retained = {}
+const mappings = new Map()
+const remember = (file, destination) => {
+  file = relative(file)
+  if (mappings.has(file)) return
+  assert(!fs.existsSync(destination))
+  const data = bytes(file)
+  pending.set(destination, data)
+  mappings.set(file, destination)
+  retained[path.relative(evidence, destination)] = {
+    original_bytes_sha256: hash(data), retained_bytes_sha256: hash(data),
+    inactive_history: destination.endsWith('.txt')
+  }
+}
+remember(`${durable}/${edition}/book.json`, `${evidence}/before/edition-book.json.txt`)
+for (const directory of [`${work}/work`, `${work}/display`, observer,
+  `${scratch}/reviewer-batch22-7a-written-actual-display`, `${scratch}/reviewer-7a-n6-figure`]) {
+  for (const file of walk(directory)) {
+    if (file.includes('/__pycache__/')) continue
+    const category = path.basename(directory)
+    remember(file, `${evidence}/execution/${category}/${path.relative(directory, file)}${
+      /\.(json|md|mjs|cjs|py|log|html)$/.test(file) ? '.txt' : ''}`)
+  }
+}
+for (const name of ['parent-three-text-reviews.json', 'parent-n6-text-review.json']) {
+  remember(`${work}/${name}`, `${evidence}/execution/${name}.txt`)
+}
+const promoted = proposal.candidates.map(row => {
+  const from = relative(row.proposed_private_path)
+  const to = relative(row.proposed_durable_path)
+  assert(from.startsWith(`${source}/${edition}/`))
+  assert.equal(to, from.replace(source, durable))
+  assert.equal(hash(bytes(from)), row.artifact.sha256)
+  const name = path.relative(`${source}/${edition}`, from)
+  if (fs.existsSync(to)) assert.equal(name, 'book.json')
+  remember(from, `${evidence}/original-core/${name}.txt`)
+  mappings.set(from, to)
+  return { source: from, destination: to, original_sha256: hash(bytes(from)),
+    sha256: hash(bytes(from)), metadata_rebinding_only: false }
+})
+const sourcePNG = `${durable}/figures/fig-02.png`
+const figureRoot = `${durable}/${edition}/figures`
+const figureNames = ['spec', 'render', 'review']
+const originals = Object.fromEntries(figureNames.map(name =>
+  [name, read(`${source}/${edition}/figures/fig-02.${name}.json`)]))
+assert.equal(hash(bytes(sourcePNG)), originals.spec.source.image.sha256)
+assert.equal(originals.render.status, 'pass')
+assert.equal(originals.review.status, 'pass')
+assert.equal(hash(bytes(`${source}/${edition}/figures/fig-02.svg`)), originals.render.output.svg.sha256)
+assert.equal(hash(bytes(`${source}/${edition}/figures/fig-02.spec.json`)), originals.render.spec.sha256)
+assert.equal(hash(bytes(`${source}/${edition}/figures/fig-02.render.json`)), originals.review.render.sha256)
+const changed = structuredClone(originals)
+changed.spec.source.image.path = sourcePNG
+changed.render.spec.path = `${figureRoot}/fig-02.spec.json`
+changed.render.spec.sha256 = hash(jsonBytes(changed.spec))
+changed.render.output.svg.path = `${figureRoot}/fig-02.svg`
+changed.review.source.path = sourcePNG
+changed.review.spec = structuredClone(changed.render.spec)
+changed.review.render.path = `${figureRoot}/fig-02.render.json`
+changed.review.render.sha256 = hash(jsonBytes(changed.render))
+changed.review.outputs.svg = structuredClone(changed.render.output.svg)
+changed.review.notes = changed.review.notes
+  .replace(`${scratch}/reviewer-7a-n6-figure/observations.json`,
+    mappings.get(`${scratch}/reviewer-7a-n6-figure/observations.json`))
+  + ` Parent path-only promotion retained all original metadata and observed SVG bytes. `
+  + `Offline display scope and limitations are retained at ${evidence}/actual-observations.json; `
+  + `no figure, semantic, validator or render rerun was performed.`
+const index = read(`${source}/${edition}/book.json`)
+index.profile.path = relative(index.profile.path)
+assert.equal(hash(bytes(index.profile.path)), index.profile.sha256)
+for (const row of promoted) {
+  let data = bytes(row.source)
+  if (row.destination === `${durable}/${edition}/book.json`) {
+    data = jsonBytes(index)
+    row.metadata_rebinding_only = true
+  }
+  for (const name of figureNames) {
+    if (row.destination === `${figureRoot}/fig-02.${name}.json`) {
+      data = jsonBytes(changed[name])
+      row.metadata_rebinding_only = true
+    }
+  }
+  if (row.destination.endsWith('.json')) {
+    assert.doesNotMatch(data.toString('utf8'), /\.intentfold\/|\.tmp\/|\/Users\//)
+  }
+  row.sha256 = hash(data)
+  pending.set(row.destination, data)
+}
+const rebind = value => {
+  if (Array.isArray(value)) return value.map(rebind)
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value)
+    .map(([key, child]) => [key, rebind(child)]))
+  if (typeof value !== 'string') return value
+  const normalized = relative(value)
+  if (mappings.has(normalized)) return mappings.get(normalized)
+  if (normalized.startsWith(`${source}/`) && fs.existsSync(normalized.replace(source, durable))) {
+    const destination = normalized.replace(source, durable)
+    assert(bytes(normalized).equals(bytes(destination)))
+    return destination
+  }
+  if (normalized.startsWith(`${scratch}/`) || normalized.startsWith('.tmp/')) {
+    return `Historical execution location, not retained dependency: ${normalized.slice(normalized.indexOf('/') + 1)}`
+  }
+  return value
+}
+pending.set(`${evidence}/actual-observations.json`, jsonBytes(rebind(observed)))
+pending.set(`${evidence}/parent-source-review.json`, jsonBytes({
+  status: 'pass', reviewer_kind: 'self_review', scope: 'Path-only modern promotion using completed source, figure and offline pixel reviews.',
+  closed_targets: targets, original_exercises: 42, modern_prose_objects: 76,
+  written_only_combinations: 16, choice_questions_completed: 0,
+  actual_observations: `${evidence}/actual-observations.json`,
+  text_reviews: ['parent-three-text-reviews.json', 'parent-n6-text-review.json']
+    .map(name => mappings.get(`${work}/${name}`)),
+  original_figure_review: `${evidence}/original-core/figures/fig-02.review.json.txt`,
+  figure_metadata_rebound_only: true, observed_svg_bytes_unchanged: true,
+  previous_four_modern_lesson_core_unchanged: true, partial_n9_excluded: true,
+  semantic_canonical_display_or_pipeline_reruns: 0,
+  existing_choice_edition_book_trace_rebinding_required_next: true,
+  promoted: promoted.map(({ source: ignored, ...row }) => row), usage: null
+}))
+pending.set(`${evidence}/retention.json`, jsonBytes({
+  status: 'pass', core_files_promoted: promoted.length, retained,
+  original_textual_execution_files_are_inactive_history: true,
+  parent_observations: `${evidence}/parent-source-review.json`,
+  actual_observations: `${evidence}/actual-observations.json`
+}))
+for (const [file, data] of pending) {
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  fs.writeFileSync(file, data)
+}
+assert(promoted.every(row => hash(bytes(row.destination)) === row.sha256))
+console.log(JSON.stringify({ status: 'pass', core_files_promoted: promoted.length,
+  retained_files: Object.keys(retained).length + 3, observed_svg_bytes_unchanged: true,
+  choice_edition_book_trace_rebinding_pending: true }))
