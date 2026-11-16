@@ -8,6 +8,10 @@ description: Load when asked to create or review single-choice or multiple-choic
 Create new questions that still require the mathematical thinking of the written
 task. The seed is a problem to understand, not a collection of answer slots.
 
+Before opening seed images, candidate figures or review screenshots, follow the
+shared [image batch rules](../ld-s10y-image/SKILL.md#image-batches).
+They also apply to delegated authors and reviewers.
+
 ## Boundary
 
 - Work offline. Do not read `.env`, connect to a database, install dependencies,
