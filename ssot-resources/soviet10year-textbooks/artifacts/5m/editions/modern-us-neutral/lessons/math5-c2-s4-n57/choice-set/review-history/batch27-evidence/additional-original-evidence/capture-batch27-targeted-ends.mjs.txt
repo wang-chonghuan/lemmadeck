@@ -1,0 +1,95 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { createRequire } from 'node:module'
+import { pathToFileURL } from 'node:url'
+
+assert.equal(process.cwd(), '/Users/yong/.codex/worktrees/d9b1/lemmadeck')
+delete process.env.PWDEBUG
+process.env.PLAYWRIGHT_HTML_OPEN = 'never'
+const { chromium } = createRequire(path.resolve('app/package.json'))('@playwright/test')
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const targets = [
+  { n: 56, surface: 'text', selector: 'a.jump', name: 'targeted-mobile-jump-r2',
+    expectedText: '去做题 · 12 道 →', padding: 0,
+    gap: 'The actual mobile first/last text captures are aliases; the jump below the first viewport was not actually observed.' },
+  { n: 57, surface: 'exercises', selector: '#ex-1101 .nb', first: true,
+    name: 'targeted-equation-r2', padding: 3,
+    gap: 'Capture25 observer could not see the first equation closing parenthesis. Actual DOM bounds show its right edge at373.609375 inside the374px column edge, with no horizontal overflow. This focused capture includes surrounding paper, not a changed formula or style.' },
+]
+const browser = await chromium.launch({ headless: true })
+try {
+  for (const target of targets) {
+    const root = `${scratch}/reviewer-5m-n${target.n}-display`
+    const command = JSON.parse(fs.readFileSync(`${root}/supplement-command.json`))
+    const html = command.protectedFiles.find(row => row.path.endsWith(`/${target.surface}.html`))
+    assert(html)
+    const output = `${root}/${target.name}.png`
+    const receipt = `${root}/${target.name}-command.json`
+    assert(!fs.existsSync(output) && !fs.existsSync(receipt))
+    command.protectedFiles.forEach(row => assert.equal(hash(row.path), row.sha256))
+    const started = new Date().toISOString()
+    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 })
+    let failure = null
+    let geometry = null
+    try {
+      await context.route(/^https?:/, route => route.abort())
+      const page = await context.newPage()
+      await page.goto(pathToFileURL(path.resolve(html.path)).href)
+      await page.evaluate(() => document.fonts.ready)
+      let item = page.locator(target.selector)
+      if (target.first) item = item.first()
+      assert.equal(await item.count(), 1)
+      await item.scrollIntoViewIfNeeded()
+      await page.evaluate(() => new Promise(resolve =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve))))
+      geometry = await item.evaluate(node => {
+        const box = node.getBoundingClientRect()
+        const end = node.querySelector('.katex-html .mclose:last-child')
+        return { x: box.x, y: box.y, width: box.width, height: box.height,
+          text: node.innerText, formula: node.querySelector('annotation')?.textContent ?? null,
+          scrollY, scrollWidth: node.scrollWidth, clientWidth: node.clientWidth,
+          right: box.right, terminal: end?.innerText ?? null }
+      })
+      if (target.expectedText) assert.equal(geometry.text, target.expectedText)
+      if (target.n === 57) {
+        assert(geometry.formula.endsWith('\\left(\\frac{4}{5}z-1\\right)'))
+        assert(geometry.right <= 374)
+        assert(geometry.scrollWidth <= geometry.clientWidth)
+      }
+      const clip = {
+        x: Math.max(0, geometry.x - target.padding),
+        y: Math.max(0, geometry.y - target.padding),
+        width: geometry.width + 2 * target.padding,
+        height: geometry.height + 2 * target.padding,
+      }
+      await page.screenshot({ path: output, clip, animations: 'disabled' })
+      geometry.clip = clip
+    } catch (error) {
+      failure = error.stack || String(error)
+    } finally {
+      await context.close()
+    }
+    command.protectedFiles.forEach(row => assert.equal(hash(row.path), row.sha256))
+    fs.writeFileSync(receipt, JSON.stringify({
+      status: failure ? 'failed' : 'captured-awaiting-actual-observation',
+      executable: process.execPath,
+      args: ['.intentfold/tickets/STEMROBIN-182/tmp/capture-batch27-targeted-ends.mjs'],
+      cwd: process.cwd(), started, finished: new Date().toISOString(),
+      exit_code: failure ? 1 : 0, failure, geometry,
+      image: failure ? null : { path: path.resolve(output), sha256: hash(output) },
+      protectedFiles: command.protectedFiles, all_protected_hashes_unchanged: true,
+      coverage_gap: target.gap, original_partial_observations_preserved: true,
+      targeted_crop_retry: 'Original script used document y for a viewport clip. The first mobile-jump crop and failed equation receipt are retained; only these two targeted clips are retried using viewport coordinates.',
+      changes_to_HTML_style_or_formula: 0, primary_capture_render_semantic_canonical_reruns: 0,
+      browser: { headless: true, isolated: true, user_profile: false, context_closed: true },
+      parent_image_opens: 0,
+    }, null, 2) + '\n', { flag: 'wx' })
+    if (failure) throw new Error(failure)
+    console.log(JSON.stringify({ n: target.n, image: output, status: 'captured-awaiting-actual-observation' }))
+  }
+} finally {
+  await browser.close()
+}

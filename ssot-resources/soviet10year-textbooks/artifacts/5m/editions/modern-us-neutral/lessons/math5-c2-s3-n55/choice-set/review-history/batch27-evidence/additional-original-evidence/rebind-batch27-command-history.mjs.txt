@@ -1,0 +1,60 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const initialFile = `${scratch}/batch27-retained-reference-check.json`
+const initial = JSON.parse(fs.readFileSync(initialFile))
+assert.equal(initial.status, 'fail')
+assert.equal(initial.failures.length, 12)
+assert(initial.failures.every(row => row.filename.endsWith('/validation-command.json') &&
+  /^\/args\/[468]$/.test(row.pointer) && row.scratch_dependency.startsWith(scratch + '/')))
+const files = [...new Set(initial.failures.map(row => row.filename))]
+assert.equal(files.length, 4)
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const changes = []
+for (const file of files) {
+  const root = initial.roots.find(candidate => file.startsWith(candidate + '/'))
+  assert(root)
+  const archive = `${root}/review-history/batch27-evidence/author/canonical-validation.json.txt`
+  const before = fs.readFileSync(file)
+  assert(before.equals(fs.readFileSync(archive)))
+  const original = JSON.parse(before)
+  const snapshot = file.slice(0, file.lastIndexOf('/'))
+  const repaired = {
+    ...original,
+    args: original.args.map(arg => arg.startsWith(scratch + '/')
+      ? `Historical execution location, not retained dependency: ${arg.slice(scratch.length + 1)}` : arg),
+    executed_command: `Executed command: ${original.executable} ${original.args.join(' ')}`,
+    original_execution_receipt: archive,
+    retained_snapshot_inputs: ['seed.json', 'draft.json', 'review.json'].map(name => `${snapshot}/${name}`),
+    historical_command_location_rebinding_only: true,
+    canonical_semantic_or_display_reruns: 0,
+  }
+  fs.writeFileSync(file, JSON.stringify(repaired, null, 2) + '\n')
+  const current = JSON.parse(fs.readFileSync(file))
+  assert(current.args.filter(arg => arg.startsWith('Historical execution location')).length === 3)
+  assert(current.retained_snapshot_inputs.every(input => fs.existsSync(input)))
+  assert.equal(hash(archive), crypto.createHash('sha256').update(before).digest('hex'))
+  assert.deepEqual(Object.fromEntries(Object.entries(current).filter(([key]) =>
+    !['args', 'executed_command', 'original_execution_receipt', 'retained_snapshot_inputs',
+      'historical_command_location_rebinding_only', 'canonical_semantic_or_display_reruns'].includes(key))),
+  Object.fromEntries(Object.entries(original).filter(([key]) => key !== 'args')))
+  changes.push({ path: file, original_bytes_sha256: hash(archive), current_bytes_sha256: hash(file),
+    byte_identical_original_receipt: archive, changed_historical_arguments: 3 })
+}
+const result = {
+  status: 'pass', scope: 'Only four changed validation-command summaries; all unchanged reference and retained-hash checks reused.',
+  prior_scoped_check: { path: initialFile, sha256: hash(initialFile), status: initial.status,
+    original_failure_preserved: true },
+  changes, repaired_argument_fields: 12,
+  unchanged_active_JSON_checks_reused: initial.checked_json_files - files.length,
+  unchanged_retained_hash_checks_reused: initial.retained_hash_checks,
+  changed_active_JSON_checks: files.length,
+  exact_original_command_receipts_preserved: true,
+  seed_draft_review_content_changes: 0,
+  full_scoped_or_pipeline_or_semantic_or_canonical_or_display_reruns: 0,
+}
+fs.writeFileSync(`${scratch}/batch27-reference-repair-check.json`, JSON.stringify(result, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ status: 'pass', changed_JSON: files.length,
+  repaired_historical_arguments: 12, reused_retained_hash_checks: initial.retained_hash_checks }))

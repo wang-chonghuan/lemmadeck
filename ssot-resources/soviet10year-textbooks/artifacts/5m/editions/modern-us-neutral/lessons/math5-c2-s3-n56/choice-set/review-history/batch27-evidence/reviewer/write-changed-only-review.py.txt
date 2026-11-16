@@ -1,0 +1,182 @@
+import copy
+import hashlib
+import json
+import pathlib
+
+
+ROOT = pathlib.Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+TMP = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp"
+OWNED = TMP / "reviewer-5m-n56"
+REPAIR = TMP / "5m-n56-repair"
+
+
+def hashes(raw):
+    canonical = json.dumps(
+        json.loads(raw), sort_keys=True, ensure_ascii=True, separators=(",", ":")
+    ).encode("utf-8")
+    return {
+        "canonical_sha256": hashlib.sha256(canonical).hexdigest(),
+        "bytes_sha256": hashlib.sha256(raw).hexdigest(),
+        "byte_count": len(raw),
+    }
+
+
+delta_path = REPAIR / "delta-invariance.json"
+delta_raw = delta_path.read_bytes()
+delta = json.loads(delta_raw)
+draft_path = REPAIR / "draft.json"
+draft_raw = draft_path.read_bytes()
+draft = json.loads(draft_raw)
+question = next(
+    item for item in draft["questions"]
+    if item["id"] == "n56-1092-constructions"
+)
+coverage = next(
+    item for item in draft["coverage"] if item["source_number"] == "1092"
+)
+declarations = {
+    "intent.limitations": question["intent"]["limitations"],
+    "coverage.omitted_tasks": coverage["omitted_tasks"],
+    "coverage.reason": coverage["reason"],
+}
+original_review_path = OWNED / "review.json"
+original_review_raw = original_review_path.read_bytes()
+original_review = json.loads(original_review_raw)
+repaired_review = copy.deepcopy(original_review)
+repaired_review["draft_sha256"] = hashes(draft_raw)["canonical_sha256"]
+source_review = next(
+    item for item in repaired_review["source_reviews"]
+    if item["source_number"] == "1092"
+)
+source_review["coverage"] = {
+    "verdict": "pass",
+    "evidence": (
+        "Changed-only comparison resolves the original 1092 disclosure defect. "
+        "The repaired intent.limitations explicitly says the initial SSS plan is "
+        "identical in every option and selecting it is not independently assessed. "
+        "The repaired coverage.omitted_tasks records independent initial-plan "
+        "selection as lost; coverage.reason now limits the independently "
+        "discriminated procedure judgment to the reflection axes, fixed vertices "
+        "and circle distances, without claiming initial-plan selection or drawing "
+        "production. All prior SOURCE, VIEW, key, correct-proof and wrong-program "
+        "judgments are reused unchanged under the supplied digest-bound "
+        "delta-invariance receipt; they were not rerun."
+    ),
+}
+repaired_review["outcome"] = "pass"
+review_path = OWNED / "review-repaired.json"
+with review_path.open("x", encoding="utf-8") as stream:
+    json.dump(repaired_review, stream, ensure_ascii=True, indent=2)
+    stream.write("\n")
+
+receipt = {
+    "schema": "s10y-choice-changed-only-comparison-receipt-v1",
+    "batch": "5m-n56",
+    "phase": "CHANGED_DECLARATIONS_ONLY",
+    "ready": True,
+    "outcome": "pass",
+    "resolved_finding": "n56-1092-unrecorded-shared-sss-loss",
+    "question_id": "n56-1092-constructions",
+    "source_number": "1092",
+    "bindings": {
+        "parent_delta_invariance": {
+            "path": str(delta_path.relative_to(ROOT)), **hashes(delta_raw),
+        },
+        "original_review_preserved": {
+            "path": str(original_review_path.relative_to(ROOT)),
+            **hashes(original_review_raw),
+            "outcome": original_review["outcome"],
+            "draft_sha256": original_review["draft_sha256"],
+        },
+        "repaired_draft": {
+            "path": str(draft_path.relative_to(ROOT)), **hashes(draft_raw),
+        },
+        "repaired_review": {
+            "path": str(review_path.relative_to(ROOT)),
+            **hashes(review_path.read_bytes()),
+        },
+    },
+    "invariance_basis": {
+        "authority": "Supplied parent delta-invariance receipt; inverse delta was not rerun.",
+        "receipt_status": delta["status"],
+        "original_draft_bytes_sha256": delta["original_draft_bytes_sha256"],
+        "repaired_draft_bytes_sha256": delta["repaired_draft_bytes_sha256"],
+        "observed_repaired_bytes_sha256": hashes(draft_raw)["bytes_sha256"],
+        "byte_binding_matches_parent_receipt": (
+            hashes(draft_raw)["bytes_sha256"]
+            == delta["repaired_draft_bytes_sha256"]
+        ),
+        "all_learner_views_and_keys_unchanged": (
+            delta["all_learner_views_and_keys_unchanged"]
+        ),
+        "inverse_delta_restores_original_structured_draft": (
+            delta["inverse_delta_restores_original_structured_draft"]
+        ),
+        "seed_and_views_byte_identical": delta["seed_and_views_byte_identical"],
+        "all_wrong_procedures_unchanged_inside_key_rationales": (
+            delta["all_wrong_procedures_unchanged_inside_key_rationales"]
+        ),
+        "original_author_and_review_history_preserved": (
+            delta["original_author_and_review_history_preserved"]
+        ),
+    },
+    "changed_declarations": declarations,
+    "changed_only_judgments": [
+        {
+            "field": "questions[27].intent.limitations",
+            "verdict": "pass",
+            "evidence": "The added limitation states the initial SSS plan is supplied identically and choosing an option does not independently assess selecting it; both existing drawing losses remain acknowledged.",
+        },
+        {
+            "field": "coverage[11].omitted_tasks",
+            "verdict": "pass",
+            "evidence": "Independent selection of the initial SSS construction is explicitly listed as lost because it is supplied identically, alongside the initial and two reflected drawing-production losses.",
+        },
+        {
+            "field": "coverage[11].reason",
+            "verdict": "pass",
+            "evidence": "The revised reason says the initial plan is not independently discriminated and confines the procedure-assessment claim to both reflection axes, fixed vertices and circle distances. It no longer overclaims selecting the initial SSS plan.",
+        },
+    ],
+    "review_delta": {
+        "draft_sha256": repaired_review["draft_sha256"],
+        "source_reviews[1092].coverage": source_review["coverage"],
+        "outcome": "pass",
+        "all_other_review_fields": "Copied unchanged from preserved original review.",
+    },
+    "reuse": {
+        "source_reviews_reused": 12,
+        "source_independent_solutions_changed": 0,
+        "source_coverage_judgments_changed": 1,
+        "question_reviews_reused": 28,
+        "prior_correct_option_proofs_reused": 28,
+        "prior_false_wrong_program_checks_reused": 56,
+        "new_source_view_math_or_key_checks": 0,
+    },
+    "scope": {
+        "explicit_shell_workdir": str(ROOT),
+        "author_declarations_edited": False,
+        "original_review_edited": False,
+        "source_view_math_or_key_rerun": False,
+        "checker_or_canonical_command_run": False,
+        "images_or_browser_opened": False,
+        "git_db_env_dependencies_app_used": False,
+        "n57_read_or_written": False,
+    },
+    "stopped": True,
+}
+receipt_path = OWNED / "comparison-repaired-changed-only.json"
+with receipt_path.open("x", encoding="utf-8") as stream:
+    json.dump(receipt, stream, ensure_ascii=True, indent=2)
+    stream.write("\n")
+print(json.dumps({
+    "outcome": repaired_review["outcome"],
+    "review_path": str(review_path),
+    "comparison_receipt_path": str(receipt_path),
+    "repair_draft_sha256": repaired_review["draft_sha256"],
+    "review_hashes": hashes(review_path.read_bytes()),
+    "comparison_receipt_hashes": hashes(receipt_path.read_bytes()),
+    "original_review_outcome_preserved": original_review["outcome"],
+    "new_source_view_math_or_key_checks": 0,
+    "n57_touched": False,
+}, ensure_ascii=True, indent=2))

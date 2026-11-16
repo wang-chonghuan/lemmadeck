@@ -1,0 +1,371 @@
+import { createHash } from 'node:crypto';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
+
+const root = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const ticketTmp = join(root, '.intentfold/tickets/STEMROBIN-182/tmp');
+const originalDir = join(ticketTmp, '5m-n54');
+const repairedDir = join(ticketTmp, '5m-n54-repair');
+const reviewerDir = join(ticketTmp, 'reviewer-5m-n54');
+const read = (path) => JSON.parse(readFileSync(path, 'utf8'));
+const hashBytes = (path) => createHash('sha256').update(readFileSync(path)).digest('hex');
+const hashCompact = (value) => createHash('sha256').update(JSON.stringify(value)).digest('hex');
+const requireFact = (condition, message) => {
+  if (!condition) throw new Error(message);
+};
+const saveNew = (name, value) => writeFileSync(
+  join(reviewerDir, name), `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' },
+);
+const pointerPart = (key) => String(key).replace(/~/g, '~0').replace(/\//g, '~1');
+
+// Only an exact structured repair delta; this does not interpret unchanged mathematics.
+const changes = (before, after, pointer = '') => {
+  if (isDeepStrictEqual(before, after)) return [];
+  if (Array.isArray(before) && Array.isArray(after)) {
+    requireFact(before.length === after.length, `Out-of-scope array-length change: ${pointer}`);
+    return before.flatMap((value, index) => changes(value, after[index], `${pointer}/${index}`));
+  }
+  if (before !== null && after !== null
+      && typeof before === 'object' && typeof after === 'object'
+      && !Array.isArray(before) && !Array.isArray(after)) {
+    const keys = Object.keys(before).sort();
+    requireFact(isDeepStrictEqual(keys, Object.keys(after).sort()),
+      `Out-of-scope object-field change: ${pointer}`);
+    return keys.flatMap((key) => changes(before[key], after[key], `${pointer}/${pointerPart(key)}`));
+  }
+  return [{ pointer, before, after }];
+};
+const orderedChanges = (items) => [...items].sort((a, b) => a.pointer.localeCompare(b.pointer));
+
+const oldReviewPath = join(reviewerDir, 'review.json');
+const oldCompletion = read(join(reviewerDir, 'continuation-complete.json'));
+const oldReview = read(oldReviewPath);
+const authorDelta = read(join(repairedDir, 'delta-invariance.json'));
+const originalDigests = read(join(repairedDir, 'original-digests.json'));
+const authorArithmetic = read(join(repairedDir, 'arithmetic-execution.json'));
+const authorStructure = read(join(repairedDir, 'structural-command.json'));
+const freezePath = join(reviewerDir, 'repair-1043-view-truths-frozen.json');
+const freeze = read(freezePath);
+const factsPath = join(reviewerDir, 'repair-changed-internal-facts.json');
+const facts = read(factsPath);
+const oldDraft = read(join(originalDir, 'draft.json'));
+const newDraft = read(join(repairedDir, 'draft.json'));
+const oldView = read(join(originalDir, 'view.json'));
+const newView = read(join(repairedDir, 'view.json'));
+const oldWrong = read(join(originalDir, 'wrong-programs.json'));
+const newWrong = read(join(repairedDir, 'wrong-programs.json'));
+const oldReviewHash = hashBytes(oldReviewPath);
+requireFact(oldReviewHash === oldCompletion.review_byte_sha256,
+  'Original full review differs from its frozen completion receipt.');
+const originalReviewDigestRow = originalDigests.byte_hashes
+  .find((row) => row.path.endsWith('/reviewer-5m-n54/review.json'));
+requireFact(originalReviewDigestRow?.sha256 === oldReviewHash,
+  'Repair author original-review binding differs from the frozen reviewer original.');
+requireFact(oldReview.draft_sha256 === authorDelta.draft_snapshot.before,
+  'Repair delta does not start from the independently frozen original draft.');
+
+const originalFilesBound = ['seed.json', 'source-solutions.json', 'draft.json', 'view.json', 'wrong-programs.json']
+  .map((name) => {
+    const path = join(originalDir, name);
+    const row = originalDigests.byte_hashes.find((item) => item.path.endsWith(`/5m-n54/${name}`));
+    const actual = hashBytes(path);
+    requireFact(row?.sha256 === actual, `Original input bytes changed: ${name}`);
+    return { path, byte_sha256: actual, preserved: true };
+  });
+const independentSourcesPreserved = oldCompletion.preserved_existing_source_records.map((record) => {
+  requireFact(hashBytes(record.path) === record.byte_sha256,
+    `Independent frozen source record changed: ${record.path}`);
+  return { ...record, preserved: true };
+});
+const repairedInputBindings = ['draft.json', 'view.json', 'wrong-programs.json'].map((name) => {
+  const path = join(repairedDir, name);
+  const row = authorDelta.output_digests_except_this_receipt
+    .find((item) => item.path.endsWith(`/5m-n54-repair/${name}`));
+  const actual = hashBytes(path);
+  requireFact(row?.sha256 === actual, `Repaired bytes drifted from supplied delta receipt: ${name}`);
+  return {
+    path,
+    byte_sha256: actual,
+    contract_snapshot_sha256_reused_from_receipt: row.canonical_sha256,
+  };
+});
+requireFact(newDraft.seed_sha256 === oldReview.seed_sha256
+  && oldDraft.seed_sha256 === newDraft.seed_sha256,
+  'Seed snapshot selector changed.');
+requireFact(authorDelta.draft_snapshot.after === repairedInputBindings[0]
+  .contract_snapshot_sha256_reused_from_receipt,
+  'Repaired draft snapshot bindings disagree within author receipts.');
+requireFact(hashBytes(join(repairedDir, 'view.json')) === freeze.bindings.repaired_view_byte_sha256,
+  'Revised pure view drifted after the independent changed-view freeze.');
+const changedId = 'n54-1043-four-full-expressions';
+const wordingId = 'n54-1046-full-circle-construction-plan';
+const question1043 = newDraft.questions.find((question) => question.id === changedId);
+const question1046 = newDraft.questions.find((question) => question.id === wordingId);
+const pure1043 = newView.questions.find((question) => question.id === changedId);
+requireFact(hashCompact(pure1043) === freeze.bindings.repaired_question_compact_utf8_sha256,
+  '1043 pure-view projection drifted after freeze.');
+requireFact(isDeepStrictEqual(pure1043, { id: question1043.id, view: question1043.view }),
+  '1043 repaired draft does not contain the independently frozen pure view.');
+requireFact(isDeepStrictEqual(newView, {
+  questions: newDraft.questions.map((question) => ({ id: question.id, view: question.view })),
+}), 'Repaired pure-view/draft snapshot mismatch.');
+
+const draftAllowed = [
+  '/questions/10/view/options/0/text',
+  '/questions/10/view/options/1/text',
+  '/questions/10/intent/source_solution',
+  '/questions/10/key/rationales/0/derivation',
+  '/questions/10/key/rationales/0/misconception',
+  '/questions/10/key/rationales/1/derivation',
+  '/questions/13/key/rationales/0/derivation',
+  '/questions/13/key/rationales/0/misconception',
+];
+const viewAllowed = [
+  '/questions/10/view/options/0/text',
+  '/questions/10/view/options/1/text',
+];
+const wrongAllowed = [
+  '/programs/10/false_programs/0/executed_output',
+  '/programs/10/false_programs/0/operations',
+  '/programs/13/false_programs/0/operations',
+];
+requireFact(newDraft.questions[10].id === changedId && newDraft.questions[13].id === wordingId,
+  'Changed question indices/identities moved.');
+const actualDeltas = [
+  { name: 'draft.json', actual: changes(oldDraft, newDraft), allowed: draftAllowed },
+  { name: 'view.json', actual: changes(oldView, newView), allowed: viewAllowed },
+  { name: 'wrong-programs.json', actual: changes(oldWrong, newWrong), allowed: wrongAllowed },
+].map(({ name, actual, allowed }) => {
+  requireFact(isDeepStrictEqual(actual.map((item) => item.pointer).sort(), [...allowed].sort()),
+    `Unexpected structured repair delta in ${name}`);
+  const receipt = authorDelta.deltas.find((item) => item.path.endsWith(`/5m-n54-repair/${name}`));
+  requireFact(receipt && isDeepStrictEqual(orderedChanges(actual), orderedChanges(receipt.fields)),
+    `Actual structured before/after fields differ from author receipt in ${name}`);
+  return { file: name, exact_expected_fields_only: true, changes: actual };
+});
+const untouchedQuestions = newDraft.questions
+  .filter((question) => ![changedId, wordingId].includes(question.id))
+  .map((question) => {
+    const original = oldDraft.questions.find((item) => item.id === question.id);
+    requireFact(isDeepStrictEqual(original, question), `Untouched question changed: ${question.id}`);
+    return { question_id: question.id, exact_structured_equal: true };
+  });
+requireFact(untouchedQuestions.length === 38, 'Expected exactly38 untouched complete draft questions.');
+const keyProjection = (draft) => draft.questions.map((question) => ({
+  id: question.id,
+  correct: question.key.correct,
+  truths: question.key.rationales.map(({ option_id, truth }) => ({ option_id, truth })),
+}));
+const selectorProjection = (draft) => draft.questions.map((question) => ({
+  id: question.id,
+  source_numbers: question.source_numbers,
+  concept_blocks: question.intent.concept_blocks,
+  figure_observations: question.intent.figure_observations,
+}));
+requireFact(isDeepStrictEqual(keyProjection(oldDraft), keyProjection(newDraft)),
+  'An authored key or option truth label changed outside the allowed repair.');
+requireFact(isDeepStrictEqual(oldDraft.coverage, newDraft.coverage),
+  'An author coverage row changed.');
+requireFact(isDeepStrictEqual(selectorProjection(oldDraft), selectorProjection(newDraft)),
+  'A source/concept/figure selector changed.');
+requireFact(isDeepStrictEqual(question1046.view,
+  oldDraft.questions.find((question) => question.id === wordingId).view),
+  '1046 view changed; wording-only continuation cannot cover it.');
+
+const new1043A = question1043.key.rationales.find((item) => item.option_id === 'A');
+const new1043B = question1043.key.rationales.find((item) => item.option_id === 'B');
+const new1046A = question1046.key.rationales.find((item) => item.option_id === 'A');
+const wrong1043A = newWrong.programs.find((item) => item.question_id === changedId)
+  .false_programs.find((item) => item.option_id === 'A');
+const wrong1046A = newWrong.programs.find((item) => item.question_id === wordingId)
+  .false_programs.find((item) => item.option_id === 'A');
+const expected1043Solution = '1:1 25/42=67/42; 2-67/42=17/42, product=(7/6)(17/42)=17/36, add11/9=44/36 to obtain61/36. 2:(23/15)(30/23)=2. 3:(55/6)/(11/36)=30. 4:7/3-5/4=13/12. Both division denominators are nonzero.';
+const expected1043A = '1 wrongly add11/9+7/6 before multiplying by bracket: (11/9+7/6)(2-67/42)=(43/18)(17/42)=731/756; 2 ignore fractional parts in both mixed subtrahends: (4-2)(10-8)=4; 3 add denominator fractions instead of subtracting: (55/6)/(1/3+1/36)=(55/6)/(13/36)=330/13; 4 add final product instead of subtracting: (77/12)/(11/4)+(45/4)(1/9)=7/3+5/4=43/12.';
+const expected1046A = 'Use the chord itself instead of its perpendicular bisector. Reflection in AB fixes A and B separately rather than swapping them. For AB<diameter its midpoint lies on chord AB, not at centre.';
+requireFact(question1043.intent.source_solution === expected1043Solution
+  && new1043B.derivation === expected1043Solution && new1043B.misconception === null,
+  '1043 changed source/B derivation differs from the reviewed repaired text.');
+requireFact(new1043A.derivation === expected1043A
+  && new1043A.misconception === expected1043A && wrong1043A.operations === expected1043A,
+  '1043-A changed derivation/misconception/program differ from the reviewed text.');
+requireFact(wrong1043A.executed_output === question1043.view.options
+  .find((option) => option.id === 'A').text, '1043-A program output does not match the repaired view.');
+requireFact(new1046A.derivation === expected1046A
+  && new1046A.misconception === expected1046A && wrong1046A.operations === expected1046A,
+  '1046-A wording differs from the reviewed midpoint-only replacement.');
+requireFact(isDeepStrictEqual(question1043.key.correct, freeze.correct),
+  '1043 repaired authored key disagrees with independent pre-internals freeze.');
+for (const option of freeze.option_checks) {
+  requireFact(question1043.key.rationales.find((item) => item.option_id === option.option_id)
+    .truth === option.truth, `1043 authored truth differs from pre-internals freeze:${option.option_id}`);
+}
+
+const repairedReview = structuredClone(oldReview);
+repairedReview.draft_sha256 = authorDelta.draft_snapshot.after;
+repairedReview.reviewer.identity += '; repair-only continuation in the same independent reviewer chat: revised1043 view frozen before repaired internals, then only1043-A/B and1046-A wording compared;38 untouched questions inherited by exact delta; distinct repair author, no original gate repeated';
+const changedReview = repairedReview.question_reviews.find((item) => item.question_id === changedId);
+changedReview.task_fidelity.evidence = facts.review_evidence_updates['1043_task_fidelity'];
+changedReview.redundancy.evidence = facts.review_evidence_updates['1043_redundancy'];
+changedReview.answer_leakage.evidence = facts.review_evidence_updates['1043_answer_leakage'];
+const old1043C = oldReview.question_reviews.find((item) => item.question_id === changedId)
+  .mathematics.option_checks.find((item) => item.option_id === 'C');
+changedReview.mathematics = {
+  verdict: 'pass',
+  independent_solution: `${freeze.independent_solution} Changed author source/B comparison: ${facts.comparisons[0].evidence}`,
+  correct: freeze.correct,
+  option_checks: freeze.option_checks.map((option) => {
+    if (option.option_id === 'C') return structuredClone(old1043C);
+    const internalEvidence = option.option_id === 'A' ? facts.comparisons[1].evidence
+      : facts.comparisons[0].evidence;
+    return {
+      option_id: option.option_id,
+      truth: option.truth,
+      evidence: `${option.evidence} Repaired internal comparison after independent view freeze: ${internalEvidence}`,
+    };
+  }),
+};
+const wordingReview = repairedReview.question_reviews.find((item) => item.question_id === wordingId);
+wordingReview.mathematics.verdict = 'pass';
+const original1046Evidence = oldReview.question_reviews.find((item) => item.question_id === wordingId)
+  .mathematics.option_checks.find((item) => item.option_id === 'A').evidence;
+const unchanged1046TruthEvidence = original1046Evidence.split(' Internal misconception comparison:')[0];
+wordingReview.mathematics.option_checks.find((item) => item.option_id === 'A').evidence =
+  `${unchanged1046TruthEvidence} Changed midpoint wording only: ${facts.comparisons[2].evidence}`;
+const source1043Review = repairedReview.source_reviews.find((item) => item.source_number === '1043');
+source1043Review.coverage = {
+  verdict: 'pass',
+  evidence: facts.review_evidence_updates['1043_source_coverage'],
+};
+repairedReview.outcome = 'blocked';
+
+const copiedQuestionChecks = untouchedQuestions.map(({ question_id }) => {
+  requireFact(isDeepStrictEqual(
+    oldReview.question_reviews.find((item) => item.question_id === question_id),
+    repairedReview.question_reviews.find((item) => item.question_id === question_id),
+  ), `Inherited question review changed: ${question_id}`);
+  return { question_id, original_review_copied_verbatim: true };
+});
+const copiedSources = oldReview.source_reviews.filter((item) => item.source_number !== '1043')
+  .map((item) => {
+    requireFact(isDeepStrictEqual(item, repairedReview.source_reviews
+      .find((source) => source.source_number === item.source_number)),
+    `Inherited source review changed: ${item.source_number}`);
+    return { source_number: item.source_number, original_review_copied_verbatim: true };
+  });
+requireFact(oldReview.source_reviews.every((item) =>
+  item.independent_solution === repairedReview.source_reviews
+    .find((source) => source.source_number === item.source_number).independent_solution),
+  'An independent original source solution was rewritten.');
+const original1054 = oldReview.source_reviews.find((item) => item.source_number === '1054');
+const repaired1054 = repairedReview.source_reviews.find((item) => item.source_number === '1054');
+requireFact(isDeepStrictEqual(original1054, repaired1054)
+  && repaired1054.coverage.verdict === 'blocked',
+  '1054 frozen blocker was changed.');
+requireFact(repairedReview.question_reviews.every((item) => item.mathematics.verdict === 'pass'),
+  'Unexpected residual math revision; repair scope cannot remove another defect.');
+requireFact(hashBytes(oldReviewPath) === oldReviewHash, 'Original review changed during continuation.');
+const countVerdicts = (items) => Object.fromEntries(['pass', 'revise', 'blocked']
+  .map((verdict) => [verdict, items.filter((item) => item === verdict).length]));
+const summary = {
+  outcome: repairedReview.outcome,
+  source_count: repairedReview.source_reviews.length,
+  question_count: repairedReview.question_reviews.length,
+  option_count: repairedReview.question_reviews
+    .reduce((count, item) => count + item.mathematics.option_checks.length, 0),
+  changed_view_questions_reviewed: 1,
+  changed_internal_question_scope: 2,
+  unchanged_complete_questions_reused: copiedQuestionChecks.length,
+  all_authored_correct_sets_structurally_unchanged: 40,
+  all_authored_truth_labels_structurally_unchanged: 120,
+  all_author_coverage_rows_structurally_unchanged: 40,
+  all_source_selector_rows_structurally_unchanged: 40,
+  unchanged_source_reviews_copied_verbatim: copiedSources.length,
+  all_independent_source_solutions_copied_verbatim: 40,
+  mathematics: countVerdicts(repairedReview.question_reviews.map((item) => item.mathematics.verdict)),
+  source_coverage: countVerdicts(repairedReview.source_reviews.map((item) => item.coverage.verdict)),
+  removed_original_defect_ids: facts.removed_original_defect_ids,
+  remaining_blocked_source: '1054',
+  whole_group_approved: false,
+};
+saveNew('review-repaired.json', repairedReview);
+saveNew('repair-changed-comparison-receipt.json', {
+  schema: 'independent-digest-bound-changed-snapshot-continuation/v1',
+  completed_at: new Date().toISOString(),
+  status: 'changed_snapshot_continuation_complete_original_gate_not_repeated',
+  reviewer: repairedReview.reviewer,
+  original_source_review_identity: oldCompletion.original_source_review_identity,
+  seed_sha256: repairedReview.seed_sha256,
+  original_draft_sha256: oldReview.draft_sha256,
+  repaired_draft_sha256: repairedReview.draft_sha256,
+  original_review: {
+    path: oldReviewPath, byte_sha256: oldReviewHash, preserved_unchanged: true,
+  },
+  repaired_review: {
+    path: join(reviewerDir, 'review-repaired.json'),
+    byte_sha256: hashBytes(join(reviewerDir, 'review-repaired.json')),
+  },
+  digest_binding_method: 'Reuse supplied contract snapshot digests only after actual byte hashes match the supplied author delta receipt, whose before digest also matches the frozen independent review. No canonical command/digest regeneration or checker rerun.',
+  revised_1043_view_freeze_before_repaired_internals: {
+    path: freezePath, byte_sha256: hashBytes(freezePath), correct: freeze.correct,
+    original_author_internals_known_from_prior_gate: true,
+    repaired_internals_read_before_freeze: false,
+  },
+  changed_internal_facts: { path: factsPath, byte_sha256: hashBytes(factsPath) },
+  actual_structured_deltas: actualDeltas,
+  original_input_bytes_preserved: originalFilesBound,
+  independent_source_records_preserved: independentSourcesPreserved,
+  repaired_input_bindings: repairedInputBindings,
+  untouched_complete_draft_questions: untouchedQuestions,
+  inherited_question_reviews: copiedQuestionChecks,
+  inherited_source_reviews: copiedSources,
+  authored_key_truth_source_coverage_invariance: {
+    all_40_authored_correct_sets_equal: true,
+    all_120_authored_truth_labels_equal: true,
+    all_40_author_coverage_rows_equal: true,
+    all_40_source_concept_figure_selectors_equal: true,
+    source_seed_digest_unchanged: true,
+    source_1043_independent_solution_unchanged: true,
+    source_1054_review_copied_verbatim: true,
+    question_1046_view_unchanged: true,
+    question_1043_C_option_and_rationale_unchanged: true,
+    other_wrong_program_entries_unchanged: 77,
+  },
+  changed_comparisons: facts.comparisons,
+  supplied_author_receipts_reused_not_executed: [
+    {
+      path: join(repairedDir, 'arithmetic-execution.json'),
+      byte_sha256: hashBytes(join(repairedDir, 'arithmetic-execution.json')),
+      declared_execution_count: authorArithmetic.execution_count,
+      declared_exit_code: authorArithmetic.exit_code,
+      unchanged_C_execution_not_new_independent_check: true,
+    },
+    {
+      path: join(repairedDir, 'structural-command.json'),
+      byte_sha256: hashBytes(join(repairedDir, 'structural-command.json')),
+      declared_execution_count: authorStructure.execution_count,
+      declared_exit_code: authorStructure.exit_code,
+      reviewer_checker_execution_count: 0,
+    },
+    {
+      path: join(repairedDir, 'delta-invariance.json'),
+      byte_sha256: hashBytes(join(repairedDir, 'delta-invariance.json')),
+      independently_verified_by_structured_delta: true,
+    },
+    {
+      path: join(repairedDir, 'original-digests.json'),
+      byte_sha256: hashBytes(join(repairedDir, 'original-digests.json')),
+    },
+  ],
+  review_record_delta: changes(oldReview, repairedReview),
+  original_gate_repeated: false,
+  browser_or_images_used: false,
+  author_or_existing_frozen_files_modified: false,
+  summary,
+});
+console.log(JSON.stringify({
+  review_path: join(reviewerDir, 'review-repaired.json'),
+  receipt_path: join(reviewerDir, 'repair-changed-comparison-receipt.json'),
+  repaired_draft_sha256: repairedReview.draft_sha256,
+  ...summary,
+}, null, 2));

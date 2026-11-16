@@ -1,0 +1,67 @@
+import hashlib
+import json
+import pathlib
+import shutil
+
+
+ROOT = pathlib.Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+TICKET_TMP = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp"
+
+
+def digest(raw):
+    canonical = json.dumps(
+        json.loads(raw), sort_keys=True, ensure_ascii=True, separators=(",", ":")
+    ).encode("utf-8")
+    return {
+        "canonical_sha256": hashlib.sha256(canonical).hexdigest(),
+        "bytes_sha256": hashlib.sha256(raw).hexdigest(),
+        "byte_count": len(raw),
+    }
+
+
+for batch in ("5m-n56", "5m-n57"):
+    authority = TICKET_TMP / batch / "draft.json"
+    owned = TICKET_TMP / ("reviewer-" + batch)
+    raw = authority.read_bytes()
+    draft = json.loads(raw)
+    snapshot = owned / "internal-input-snapshot"
+    snapshot.mkdir()
+    frozen_path = snapshot / "draft.json"
+    shutil.copyfile(authority, frozen_path)
+    if frozen_path.read_bytes() != raw:
+        raise RuntimeError("Internal input changed while copying.")
+    frozen_view_raw = (owned / "view-input-snapshot/pure-view.json").read_bytes()
+    prior_view = json.loads(frozen_view_raw)
+    projected_view = {
+        "questions": [
+            {"id": question["id"], "view": question["view"]}
+            for question in draft["questions"]
+        ]
+    }
+    math_raw = (owned / "view-math-frozen.json").read_bytes()
+    source_raw = (owned / "source-solutions.json").read_bytes()
+    checks_raw = (owned / "view-checks.json").read_bytes()
+    manifest = {
+        "schema": "s10y-choice-internal-input-freeze-v1",
+        "batch": batch,
+        "authority_path": str(authority.relative_to(ROOT)),
+        "snapshot_path": str(frozen_path.relative_to(ROOT)),
+        "draft_hashes": digest(raw),
+        "draft_seed_sha256": draft["seed_sha256"],
+        "frozen_pure_view_hashes": digest(frozen_view_raw),
+        "draft_view_hashes": digest(json.dumps(projected_view).encode("utf-8")),
+        "draft_view_matches_frozen_pure_view": projected_view == prior_view,
+        "unchanged_source_solutions_hashes": digest(source_raw),
+        "unchanged_view_checks_hashes": digest(checks_raw),
+        "unchanged_view_math_hashes": digest(math_raw),
+        "question_count": len(draft["questions"]),
+        "coverage_source_count": len(draft["coverage"]),
+        "rationale_count": sum(
+            len(question["key"]["rationales"]) for question in draft["questions"]
+        ),
+        "new_figure_count": len(draft["new_figures"]),
+    }
+    with (snapshot / "freeze.json").open("x", encoding="utf-8") as stream:
+        json.dump(manifest, stream, ensure_ascii=True, indent=2)
+        stream.write("\n")
+    print(json.dumps(manifest, ensure_ascii=True, indent=2))

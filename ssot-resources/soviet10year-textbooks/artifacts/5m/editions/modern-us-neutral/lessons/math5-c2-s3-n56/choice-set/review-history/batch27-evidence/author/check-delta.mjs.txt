@@ -1,0 +1,46 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+
+const root = '.intentfold/tickets/STEMROBIN-182/tmp'
+const oldDir = `${root}/5m-n56`
+const newDir = `${root}/5m-n56-repair`
+const read = file => JSON.parse(fs.readFileSync(file))
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const oldDraft = read(`${oldDir}/draft.json`)
+const newDraft = read(`${newDir}/draft.json`)
+const oldQuestion = oldDraft.questions.find(row => row.id === 'n56-1092-constructions')
+const newQuestion = newDraft.questions.find(row => row.id === oldQuestion.id)
+const oldCoverage = oldDraft.coverage.find(row => row.source_number === '1092')
+const newCoverage = newDraft.coverage.find(row => row.source_number === '1092')
+assert.deepEqual(newQuestion.intent.limitations.slice(0, -1), oldQuestion.intent.limitations)
+assert(newQuestion.intent.limitations.at(-1).includes('supplied identically in every option'))
+assert.deepEqual(newCoverage.omitted_tasks.slice(0, -1), oldCoverage.omitted_tasks)
+assert(newCoverage.omitted_tasks.at(-1).includes('supplied identically in every option'))
+assert(newCoverage.reason.includes('not independently discriminated'))
+assert.deepEqual(newDraft.questions.map(row => row.view), oldDraft.questions.map(row => row.view))
+assert.deepEqual(newDraft.questions.map(row => row.key), oldDraft.questions.map(row => row.key))
+const restored = structuredClone(newDraft)
+restored.questions.find(row => row.id === oldQuestion.id).intent.limitations = oldQuestion.intent.limitations
+const coverage = restored.coverage.find(row => row.source_number === '1092')
+coverage.omitted_tasks = oldCoverage.omitted_tasks
+coverage.reason = oldCoverage.reason
+assert.deepEqual(restored, oldDraft)
+for (const name of ['seed.json', 'views.json']) {
+  assert(fs.readFileSync(`${oldDir}/${name}`).equals(fs.readFileSync(`${newDir}/${name}`)), name)
+}
+const result = {
+  status: 'pass', source: oldDir, repaired: newDir,
+  original_draft_bytes_sha256: hash(`${oldDir}/draft.json`),
+  repaired_draft_bytes_sha256: hash(`${newDir}/draft.json`),
+  scope: 'Only n56-1092 intent.limitations and coverage.omitted_tasks/reason changed.',
+  all_learner_views_and_keys_unchanged: true,
+  inverse_delta_restores_original_structured_draft: true,
+  seed_and_views_byte_identical: true,
+  all_wrong_procedures_unchanged_inside_key_rationales: true,
+  original_author_and_review_history_preserved: true,
+  semantic_or_source_or_view_reruns: 0,
+  editing_history: 'First apply_patch expected multiline formatting and failed before writes. Second patch matched original compact lines and changed only the three declared internal fields. First delta runner used nonexistent view.json and wrong-programs.json names and stopped before receipt writes; its original script is retained. The corrected runner compares the existing seed.json/views.json and all key rationales structurally.',
+}
+fs.writeFileSync(`${newDir}/delta-invariance.json`, JSON.stringify(result, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify(result))

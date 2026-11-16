@@ -1,0 +1,153 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { createRequire } from 'node:module'
+import { pathToFileURL } from 'node:url'
+
+delete process.env.PWDEBUG
+process.env.PLAYWRIGHT_HTML_OPEN = 'never'
+const [book, lesson, observer] = process.argv.slice(2)
+assert(book && lesson && observer)
+const { chromium } = createRequire(path.join(process.cwd(), 'package.json'))('@playwright/test')
+const repo = path.resolve(process.cwd(), '..')
+const scratch = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp')
+const out = path.join(scratch, observer)
+const recordFile = path.join(out, 'supplement-command.json')
+assert(!fs.existsSync(recordFile))
+const primary = JSON.parse(fs.readFileSync(path.join(scratch,
+  `${process.env.S10Y_DISPLAY_BATCH || 'batch26'}-render/${book}-${lesson}-capture-manifest.json`)))
+const absolute = file => path.isAbsolute(file) ? file : path.join(repo, file)
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const originalManifestHasRenderedBindings = Array.isArray(primary.rendered)
+const rendered = primary.rendered ?? ['text', 'exercises', 'choices'].map(surface => {
+  const file = path.join(repo, `.tmp/ld-s10y-lesson/render/${book}/modern-us-neutral/${lesson}/${surface}.html`)
+  return { path: file, sha256: sha(file) }
+})
+const protectedFiles = [...primary.screenshots, ...primary.inputs, ...rendered]
+for (const row of protectedFiles) assert.equal(sha(absolute(row.path)), row.sha256)
+fs.mkdirSync(path.join(out, 'supplements'), { recursive: true })
+const started = new Date().toISOString()
+const captures = []
+const objects = []
+const errors = []
+let browser
+let closedContexts = 0
+let browserClosed = false
+let failure = null
+try {
+  browser = await chromium.launch({ headless: true })
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1 })
+    try {
+      await context.route(/^https?:/, route => route.abort())
+      const page = await context.newPage()
+      page.on('pageerror', error => errors.push(error.message))
+      for (const surface of ['text', 'exercises', 'choices']) {
+        const html = rendered.find(row => row.path.endsWith(`/${surface}.html`))
+        await page.goto(pathToFileURL(absolute(html.path)).href)
+        await page.evaluate(() => document.fonts.ready)
+        const documentHeight = await page.evaluate(() => document.documentElement.scrollHeight)
+        const primaryLastTop = Math.max(0, documentHeight - viewport.height)
+        const selector = surface === 'text' ? '.para,.fig,.jump'
+          : surface === 'exercises' ? 'li.ex,.jump' : '.choice'
+        const items = page.locator(selector)
+        for (let index = 0; index < await items.count(); index++) {
+          const item = items.nth(index)
+          const geometry = await item.evaluate(node => {
+            const box = node.getBoundingClientRect()
+            return { top: box.top + scrollY, bottom: box.bottom + scrollY,
+              width: box.width, height: box.height, id: node.id, tag: node.tagName,
+              class: node.className, text: node.innerText,
+              options: node.querySelectorAll('.choice-options>li').length }
+          })
+          const coveredBy = []
+          if (geometry.top >= 0 && geometry.bottom <= viewport.height) coveredBy.push('first')
+          if (geometry.top >= primaryLastTop &&
+              geometry.bottom <= documentHeight) coveredBy.push('last')
+          const identity = { surface, viewport, index: index + 1, selector, geometry,
+            primary_windows: [[0, viewport.height], [primaryLastTop, documentHeight]],
+            whole_object_covered_by_primary: coveredBy }
+          const regions = await item.evaluate(node => [...node.querySelectorAll('*')]
+            .flatMap((part, descendantIndex) => {
+              const style = getComputedStyle(part)
+              if (!['auto', 'scroll'].includes(style.overflowX) ||
+                  part.scrollWidth <= part.clientWidth + 1) return []
+              part.scrollLeft = 0
+              return [{ descendant_index: descendantIndex, class: part.className,
+                width: part.clientWidth, maximum: part.scrollWidth - part.clientWidth,
+                formula: part.querySelector('annotation')?.textContent ?? part.innerText }]
+            }))
+          const capture = async (kind, suffix, region = null, left = null) => {
+            await item.scrollIntoViewIfNeeded()
+            await page.evaluate(() => new Promise(resolve =>
+              requestAnimationFrame(() => requestAnimationFrame(resolve))))
+            const file = path.join(out, 'supplements',
+              `${surface}-${viewport.width}-${index + 1}-${suffix}.png`)
+            assert(!fs.existsSync(file))
+            await item.screenshot({ path: file, animations: 'disabled' })
+            const id = captures.length + 1
+            captures.push({ id, ...identity, kind, region, actual_left: left,
+              path: file, sha256: sha(file), horizontal_regions: regions })
+            return id
+          }
+          const coverage = []
+          if (coveredBy.length === 0) coverage.push(await capture('uncovered-whole-object', 'left'))
+          for (let regionIndex = 0; regionIndex < regions.length; regionIndex++) {
+            const region = regions[regionIndex]
+            assert(region.width > 0)
+            const positions = []
+            for (let left = Math.max(1, region.width - 16); left < region.maximum;
+              left += Math.max(1, region.width - 16)) positions.push(left)
+            positions.push(region.maximum)
+            for (let positionIndex = 0; positionIndex < positions.length; positionIndex++) {
+              const left = positions[positionIndex]
+              const actual = await item.evaluate((node, data) => {
+                const part = node.querySelectorAll('*')[data.index]
+                part.scrollLeft = data.left
+                return part.scrollLeft
+              }, { index: region.descendant_index, left })
+              assert(Math.abs(actual - left) <= 1)
+              coverage.push(await capture('whole-object-horizontal-window',
+                `region-${regionIndex + 1}-window-${positionIndex + 1}`, region, actual))
+            }
+            await item.evaluate((node, index) => {
+              node.querySelectorAll('*')[index].scrollLeft = 0
+            }, region.descendant_index)
+          }
+          objects.push({ ...identity, regions, supplement_ids: coverage })
+        }
+        assert.equal(sha(absolute(html.path)), html.sha256)
+      }
+      await page.close()
+    } finally {
+      await context.close()
+      closedContexts++
+    }
+  }
+  assert.deepEqual(errors, [])
+} catch (error) {
+  failure = { message: error.message, stack: error.stack }
+} finally {
+  if (browser) { await browser.close(); browserClosed = true }
+  const unchanged = protectedFiles.every(row => sha(absolute(row.path)) === row.sha256)
+  fs.writeFileSync(recordFile, JSON.stringify({
+    status: failure ? 'capture-failed' : 'captured-awaiting-actual-pixels',
+    started, finished: new Date().toISOString(), exit_code: failure ? 1 : 0,
+    failure, errors, captures, objects, protectedFiles,
+    all_protected_hashes_unchanged: unchanged,
+    original_manifest_has_rendered_bindings: originalManifestHasRenderedBindings,
+    rendered_binding_scope: originalManifestHasRenderedBindings
+      ? 'Original capture manifest bindings reused unchanged.'
+      : 'HTML bytes first bound at this supplement start; no claim these hashes were recorded by the original capture.',
+    primary_windows_assumption: 'Existing first/last screenshots are at document top and maximum vertical scroll. Bounded observers identified actual complete and partial windows before this supplement; parent received text only.',
+    primary_render_or_capture_repeated: false, additional_unique_combinations: 0,
+    headless: true, isolated_contexts: true, user_profile: false,
+    PWDEBUG_cleared: true, PLAYWRIGHT_HTML_OPEN: 'never',
+    closed_contexts: closedContexts, browser_closed: browserClosed,
+    semantic_or_canonical_reruns: 0, durable_or_HTML_writes: false,
+  }, null, 2) + '\n', { flag: 'wx' })
+}
+if (failure) throw new Error(failure.message)
+console.log(JSON.stringify({ captures: captures.length, objects: objects.length,
+  record: recordFile, browser_closed: browserClosed }))

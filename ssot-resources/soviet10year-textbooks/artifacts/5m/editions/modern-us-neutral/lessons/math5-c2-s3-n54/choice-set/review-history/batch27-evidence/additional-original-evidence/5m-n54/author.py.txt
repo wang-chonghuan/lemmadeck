@@ -1,0 +1,328 @@
+from datetime import datetime, timezone
+from fractions import Fraction as F
+import hashlib
+import json
+from pathlib import Path
+
+
+OUT = Path(__file__).resolve().parent
+seed = json.loads((OUT / "seed.json").read_text())
+source = json.loads((OUT / "source-solutions.json").read_text())
+freeze = json.loads((OUT / "source-freeze.json").read_text())
+assert freeze["before_alternatives"] and not freeze["author_draft_exists_at_freeze"]
+assert hashlib.sha256((OUT / "source-solutions.json").read_bytes()).hexdigest() == freeze["source_solutions_sha256"]
+assert not (OUT / "draft.json").exists()
+by_number = {item["source_number"]: item for item in source["solutions"]}
+canonical = lambda value: hashlib.sha256(json.dumps(
+    value, sort_keys=True, ensure_ascii=True, separators=(",", ":")
+).encode()).hexdigest()
+
+
+def token(value):
+    if isinstance(value, str):
+        return value
+    value = F(value)
+    if value.denominator == 1:
+        return str(value.numerator)
+    sign = "-" if value < 0 else ""
+    return sign + r"\frac{" + str(abs(value.numerator)) + "}{" + str(value.denominator) + "}"
+
+
+def render(values, unit=""):
+    if isinstance(values, str):
+        return values
+    if len(values) == 1:
+        return f"${token(values[0])}$" + (f" {unit}" if unit else "")
+    return "; ".join(f"{index}) ${token(value)}$" + (f" {unit}" if unit else "")
+                     for index, value in enumerate(values, 1))
+
+
+def roots(number):
+    return [F(value) for value in by_number[str(number)]["ordered_results"]]
+
+
+def prompt(number, ending="选择按原顺序排列的完整结果记录。"):
+    return by_number[str(number)]["original_text"].removeprefix(f"{number}. ") + "\n\n" + ending
+
+
+questions = []
+programs = []
+positions = list("BCACBABACCBABCCABACBCABBCACABBACBCACBABC")
+assert len(positions) == 40
+
+
+def add(number, title, correct, wrong1, wrong2, program1, program2, stem=None,
+        unit="", losses=None, task=None):
+    number = str(number)
+    original = by_number[number]
+    correct_id = positions[len(questions)]
+    wrong_ids = [label for label in "ABC" if label != correct_id]
+    candidates = {
+        correct_id: (render(correct, unit), "correct", original["independent_derivation"], None),
+        wrong_ids[0]: (render(wrong1, unit), "incorrect", program1, program1),
+        wrong_ids[1]: (render(wrong2, unit), "incorrect", program2, program2),
+    }
+    qid = f"n54-{number}-{title}"
+    questions.append({
+        "id": qid,
+        "source_numbers": [number],
+        "view": {
+            "mode": "single", "stem": stem or prompt(number),
+            "figure_ids": [],
+            "options": [{"id": label, "text": candidates[label][0], "figure_ids": []} for label in "ABC"],
+        },
+        "intent": {
+            "task": task or original["whole_original_task"],
+            "source_solution": original["independent_derivation"],
+            "unit_reason": "One complete response preserves all ordered subcases and the common mathematical task; no separate answer-blank clicks.",
+            "concept_blocks": [0],
+            "limitations": losses if losses is not None else original["production_losses_for_later_choice"] + original["notices"],
+            "figure_observations": [],
+        },
+        "key": {
+            "correct": [correct_id],
+            "rationales": [{
+                "option_id": label, "truth": candidates[label][1],
+                "derivation": candidates[label][2], "misconception": candidates[label][3],
+            } for label in "ABC"],
+        },
+    })
+    programs.append({
+        "question_id": qid,
+        "execution_only_not_semantic_approval": True,
+        "false_programs": [{
+            "option_id": label, "executed_output": candidates[label][0],
+            "operations": candidates[label][2],
+        } for label in wrong_ids],
+    })
+
+
+def multiplication_errors(pairs):
+    wrong1, wrong2 = [], []
+    descriptions1, descriptions2 = [], []
+    for index, (whole, numerator, denominator, multiplier) in enumerate(pairs):
+        frac = F(numerator, denominator)
+        value = whole + frac
+        if index % 2 == 0:
+            wrong1.append(whole + frac * multiplier)
+            wrong2.append((whole + numerator) * multiplier)
+            descriptions1.append(f"{index+1}: {whole}+({numerator}/{denominator})*{multiplier}")
+            descriptions2.append(f"{index+1}: ({whole}+{numerator})*{multiplier}, dropping fractional denominator")
+        else:
+            wrong1.append(whole * multiplier + frac)
+            wrong2.append(value / multiplier)
+            descriptions1.append(f"{index+1}: {whole}*{multiplier}+{numerator}/{denominator}")
+            descriptions2.append(f"{index+1}: ({whole}+{numerator}/{denominator})/{multiplier}, division instead of multiplication")
+    return wrong1, wrong2, "Only one mixed-number part multiplied: " + "; ".join(descriptions1), "; ".join(descriptions2)
+
+
+add(1033, "law-and-verification",
+    r"$a(b+c)=ab+ac$，$(a+b)c=ac+bc$；代入后两组等式两边的值分别为 $\frac{43}{63}$ 和 $\frac57$。",
+    rf"$a(b+c)=ab+c$，$(a+b)c=a+bc$；代入后两组等式两边的值分别为 ${token(F(1,9)+F(6,7))}$ 和 ${token(F(2,3)+F(1,7))}$。",
+    rf"$a(b+c)=a+b+c$，$(a+b)c=a+b+c$；代入后两组等式两边的值都为 ${token(F(2,3)+F(1,6)+F(6,7))}$。",
+    "Distribute the outer factor to only one summand: ab+c=1/9+6/7=61/63 and a+bc=2/3+1/7=17/21; falsely equate the original left sides to these outputs.",
+    "Replace either multiplication by summation: a+b+c=2/3+1/6+6/7=71/42; assert this is both products.",
+    stem=prompt(1033, "选择同时给出正确分配律和完整数值验证的记录。"))
+mixed1 = [(6,1,5,4),(9,2,7,2),(7,1,4,3),(1,1,7,6),(4,1,4,4),(2,1,8,8),(5,2,5,10),(11,1,3,3),(27,4,9,9)]
+w1,w2,p1,p2 = multiplication_errors(mixed1)
+add(1034,"nine-products",roots(1034),w1,w2,p1,p2)
+add(1035,"ten-distributive-values",roots(1035),
+    [F(14,3)+F(11,2)*6,F(23,7)+F(5,7)*7,8-F(10,9)*9,F(109,8)-F(101,8)*208,
+     1-F(7,5)*35,(4-F(4,3))*2*F(1,2),F(93,11)*F(38,9)+F(61,9),
+     F(33,5)*F(43,6)-F(13,6),(F(75,8)+F(59,8))*F(19,7),F(15,4)*F(15,4)+F(1,4)],
+    [(4+5)*6,(3+5)*7,(8-1)*9,(13-12)*208,(1-1)*35,(4-F(4,3)*2)*2,
+     F(93,11)*(F(38,9)-F(61,9)),F(33,5)*(F(43,6)+F(13,6)),
+     (F(75,8)-F(59,8))/F(19,7),F(15,4)*(F(15,4)-F(1,4))],
+    "1-5 multiply only the last summand:14/3+(11/2)6;23/7+(5/7)7;8-(10/9)9;109/8-(101/8)208;1-(7/5)35. 6 misgroup as(4-4/3)*2*(1/2). 7 omit93/11 on last61/9. 8 omit33/5 on subtracted13/6. 9 replace coefficient difference by sum134/8. 10 omit15/4 on last1/4.",
+    "1 use only whole parts4 and5;2 read3 2/7 as3 and5/7 as5;3 use only whole part1;4 only whole parts13,12;5 only whole part1, yielding0. 6 divide by1/2 instead of multiply. 7 factor but subtract coefficients;8 add coefficients;9 divide the difference2 by19/7;10 subtract1/4 within common factor.")
+add(1036,"two-equation-roots",roots(1036),[F(9,10),F(1,2)],[-F(27,35),7],
+    "After moving constants obtain(7/6)x=9/10 and(-1/14)y=1/2; drop variable coefficients and report9/10,1/2.",
+    "Move both net constants with reversed sign: x=(-9/10)/(7/6)=-27/35; y=(-1/2)/(-1/14)=7.")
+add(1037,"four-identical-simplifications",
+    [r"-9x-6",r"\frac23x+\frac45",r"-\frac74y-\frac{81}{100}",r"-\frac32"],
+    [r"-9x-\frac{11}{4}",r"\frac23x+\frac{11}{10}",r"-\frac74y-\frac{12}{5}",r"-\frac{21}{2}"],
+    [r"-\frac32x-\frac{15}{4}",r"\frac7{12}x+\frac9{10}",r"-\frac{227}{20}y-\frac{37}{20}",r"-\frac49k-\frac72"],
+    "Multiply variable terms but not bracket constants:1:x-2-10x-3/4;2:x+3/5-x/3+1/2;3:13y/20-11/10-12y/5-13/10;4:k/9-8-k/9-5/2.",
+    "Apply the first bracket factor but drop the entire second bracket factor:1:x-3-(5x/2+3/4);2:x+2/5-(5x/12-1/2);3:13y/20-11/20-(12y+13/10);4:k/9-1-(5k/9+5/2).",
+    stem=prompt(1037, "选择对原变量所有实数取值都成立的四个化简式。"))
+add(1038,"four-step-distances",roots(1038),[5,12,20,24],[F(n)+F(6,5) for n in [5,12,20,24]],
+    "Ignore1/5 metre in each step, giving distance=n metres.",
+    "Add step length to step count rather than multiplying:5+6/5=31/5;12+6/5=66/5;20+6/5=106/5;24+6/5=126/5.",unit="米")
+add(1039,"lifetime-chain",[F(6270)],[150*(F(19,5)+11)],[150*(3+4)*11],
+    "Add the two growth factors before applying150:150*(19/5+11)=2220.",
+    "Read3 4/5 as3+4=7, then150*7*11=11550.",unit="年")
+add(1040,"room-area-difference",[8],[F(53,10)*4+4*F(33,10)],[F(53,10)-F(33,10)],
+    "Add room areas instead of subtracting:106/5+66/5=172/5.",
+    "Subtract lengths5.3-3.3=2 and incorrectly label the linear difference as square metres.",unit="平方米")
+pairs = [(F(22,3),F(28,5),1),(F(20,3),F(7,5),-1),(F(15,4),F(43,9),1),(F(125,6),F(11,4),-1),
+         (F(93,8),F(53,6),1),(F(356,9),F(25,6),-1),(-F(87,10),F(14,15),-1),(-F(59,10),F(3,4),1),(-F(17,5),F(9,4),-1)]
+add(1041,"nine-signed-sums",roots(1041),
+    [F(a.numerator+sign*b.numerator,a.denominator+b.denominator) for a,b,sign in pairs],
+    [a-sign*b for a,b,sign in pairs],
+    "Convert signed mixed numbers correctly, but combine numerators directly over sum of denominators. Apply(a.num +/- b.num)/(a.den+b.den) for every listed operation; the executed tuple records each output.",
+    "Reverse each binary addition/subtraction while retaining the leading sign of the first operand: use a-b for an original plus and a+b for an original minus.")
+add(1042,"four-variable-roots",roots(1042),
+    [F(7,6)-F(62,9),F(119,8)+F(65,6),F(71,8)+F(49,6),F(1261,18)-F(77,12)],
+    [F(62,9)-F(7,6),F(65,6)-F(119,8),F(49,6)-F(71,8),F(77,12)-F(1261,18)],
+    "1 subtract62/9 instead of adding;2 add119/8 and65/6;3 add71/8 and49/6;4 subtract77/12 instead of adding.",
+    "1 reverse subtraction to62/9-7/6;2 report65/6-119/8;3 reverse to49/6-71/8;4 reverse to77/12-1261/18.")
+add(1043,"four-full-expressions",roots(1043),
+    [(F(11,9)+F(7,6))*(2-F(109,42)),(4-2)*(10-8),(4+F(31,6))/(F(1,3)+F(1,36)),F(77,12)/F(11,4)+F(45,4)*F(1,9)],
+    [F(11,9)+F(7,6)*(2-F(25,42)),(4-F(7,15))*(10-F(16,23)),
+     (4+F(31,6))*(F(1,3)-F(1,36)),F(77,12)*F(11,4)-F(45,4)*F(1,9)],
+    "1 wrongly add11/9+7/6 before multiplying by bracket;2 ignore fractional parts in both mixed subtrahends;3 add denominator fractions instead of subtracting;4 add final product instead of subtracting.",
+    "1 drop whole1 from1 25/42;2 drop whole2 and8 from mixed subtrahends;3 multiply by11/36 instead of dividing;4 multiply77/12 by11/4 instead of dividing.")
+add(1044,"compare-two-quotients",
+    r"第一式为 $\frac43$，第二式为 $0$；第一式 $>$ 第二式。",
+    "两式都为 $0$；第一式 $=$ 第二式。",
+    rf"第一式为 $-\frac43$，第二式为 ${token(F(10,3))}$；第一式 $<$ 第二式。",
+    "Illegally distribute division of differences as4/(12/5)-3/(9/5)=0 for the first expression, so incorrectly claim equality.",
+    "Reverse first denominator difference to9/5-3, obtaining-4/3; replace second subtraction by addition5/3+5/3=10/3; then compare -4/3<10/3.",
+    stem=prompt(1044, "选择包含两个确切值和大小关系的完整判断。"))
+add(1045,"two-substitution-values",roots(1045),
+    [F(12,5)*(F(25,12)+F(147,40)),F(35,4)*F(5,2)+F(8,7)],
+    [F(2,5)*F(25,12)+F(147,40),F(35,4)*(F(5,2)-F(8,7))],
+    "1 incorrectly group coefficient with(a+b);2 multiply only a by35/4 and leave b=8/7 unmultiplied.",
+    "1 drop whole2 from2 2/5;2 subtract b instead of adding inside brackets.")
+add(1046,"full-circle-construction-plan",
+    "先用圆规作半径3.5厘米的圆周，取两个不同的圆周点 $A,B$ 且 $AB<7$ 厘米；作弦 $AB$ 的垂直平分线。圆心在这条线上，因为到 $A,B$ 距离相等。在未标圆心的圆周上再取与两点不同的 $C$，作 $AC$ 的垂直平分线；两线交点就是圆心。",
+    "先用圆规作半径3.5厘米的圆周，取两个不同的圆周点 $A,B$ 且 $AB<7$ 厘米；以直线 $AB$ 为两点的对称轴，认为圆心在直线 $AB$ 上；圆心未标时直接取 $AB$ 的中点。",
+    "先用圆规作半径3.5厘米的圆周，取两个不同的圆周点 $A,B$ 且 $AB<7$ 厘米；过 $A$ 作 $AB$ 的垂线为对称轴，认为圆心在此线上；圆心未标时取这条垂线与圆周的另一交点。",
+    "Use the chord itself instead of its perpendicular bisector. Reflection in AB fixes A and B separately rather than swapping them. For AB<diameter its midpoint lies between centre and chord, not at centre.",
+    "Place the perpendicular at endpoint A rather than midpoint; reflection cannot swap A,B. A circle point obtained by intersecting this line is on the circumference, not its centre.",
+    stem=prompt(1046, "选择完整作图、圆心判断和寻找未标圆心方法的方案。"))
+add(1047,"weighted-eight-year-mean",roots(1047),[(135000+149000)/F(2)],[(4*135000+2*149000)/F(6)],
+    "Give the two yearly-rate groups equal weight:(135000+149000)/2=142000.",
+    "Use endpoint differences4 and2 instead of inclusive year counts5 and3; weighted mean(4*135000+2*149000)/6=419000/3.",unit="台/年")
+add(1048,"manuscript-total",roots(1048),[70],[686],
+    "Round the fractional difference1/14 to one decimal place0.1 before solving:7/0.1=70 pages.",
+    "Use common denominator98:42/98-35/98=7/98. Invert by using98 instead of98/7, then7*98=686 pages.",unit="页")
+add(1049,"transport-volume-difference",[6400],[12800],[20],
+    "Compute rail volume32000*40%=12800 but report it instead of river-minus-rail difference.",
+    "Compute60-40=20 percentage points and incorrectly report20 cubic metres without multiplying by32000.",unit="立方米")
+add(1050,"nested-paint-total",[1760],[44/(F(1,5)+F(1,8))],[44/F(1,5)/F(1,800)],
+    "Add nested percentage fractions instead of multiplying:44/(1/5+1/8)=1760/13kg.",
+    "After allocation220kg, convert12.5% to1/800 rather than1/8, yielding176000kg.",unit="公斤")
+add(1051,"full-road-length",roots(1051),[F(21,4)/(1-F(8,27)-F(4,27))],[F(5,4)/F(7,27)],
+    "Change second fraction4/9 to4/27 without scaling its numerator; remainder15/27; total(21/4)/(15/27)=189/20km.",
+    "Read5 1/4km as5/4 rather than21/4; divide by correct7/27 to obtain135/28km.",unit="公里")
+add(1052,"sequential-spending-total",roots(1052),[100],[350],
+    "Apply second3/5 to the original money rather than its5/7 remainder:60/(3/5)=100.",
+    "Use first spent2/7 as the remaining fraction:60/((3/5)(2/7))=350.",unit="美元")
+add(1053,"three-bags-and-flour",roots(1053),[90,F(819,10)],[360,F(162,5)],
+    "Use third-minus-first instead of third-minus-second:7/18-5/18=1/9; total90kg and91% flour819/10kg.",
+    "Double given10kg to20kg in the bag difference, obtaining360kg; then report9% bran as flour360*9%=162/5kg.",
+    stem=prompt(1053, "按只计已给9%麦麸、其余为面粉的模型，选择依次为小麦总量、面粉量的记录。"),unit="公斤")
+number="1054"
+qid="n54-1054-complete-legal-oil-allocations"
+questions.append({
+    "id":qid,"source_numbers":[number],
+    "view":{"mode":"multiple","stem":prompt(1054,"不额外假设油箱已灌空。只要求三桶灌入量和油箱余额非负；选择所有满足给定比例及6升差值的完整记录。记录依次为原有油量、第一桶、第二桶、第三桶、油箱余额，单位均为升。"),
+            "figure_ids":[],"options":[
+                {"id":"A","text":render([40,12,20,6,2]),"figure_ids":[]},
+                {"id":"B","text":render([50,15,25,6,4]),"figure_ids":[]},
+                {"id":"C","text":render([60,18,30,12,0]),"figure_ids":[]}]},
+    "intent":{"task":by_number[number]["whole_original_task"],"source_solution":by_number[number]["independent_derivation"],
+              "unit_reason":"Complete legal allocations retain every ratio, difference and physical balance without guessing a unique initial volume.",
+              "concept_blocks":[0],"limitations":by_number[number]["notices"]+by_number[number]["production_losses_for_later_choice"],"figure_observations":[]},
+    "key":{"correct":["A","C"],"rationales":[
+        {"option_id":"A","truth":"correct","derivation":"40*3/10=12,40/2=20,12-6=6;40-(12+20+6)=2>=0.","misconception":None},
+        {"option_id":"B","truth":"incorrect","derivation":"Treat the stated6-litre difference as the third barrel amount6. With T=50, first15,second25, balance4; but15-6=9, not the required6 difference.","misconception":"Use the difference as an absolute third-barrel volume, then assign the residual balance."},
+        {"option_id":"C","truth":"correct","derivation":"60*3/10=18,60/2=30,18-6=12;60-(18+30+12)=0.","misconception":None}]}})
+programs.append({"question_id":qid,"execution_only_not_semantic_approval":True,"false_programs":[{"option_id":"B","executed_output":render([50,50*F(3,10),50/F(2),6,50-50*F(3,10)-50/F(2)-6]),"operations":"Set third=6 instead of first-minus6; compute first,second and residual from T=50."}]})
+add(1055,"first-day-paper",roots(1055),[F(99,25)/F(6,5)],[F(99,25)*(F(6,5)-1)],
+    "Divide two-day3.96 tons by day2/day1 ratio1.2 alone, instead of1+1.2, giving33/10.",
+    "Treat ratio excess1.2-1=.2 as day1 fraction of3.96 tons, giving99/125.",unit="吨")
+add(1056,"morning-afternoon-sales",roots(1056),[F(12,5)*F(5,7),F(12,5)*F(2,7)],[F(16,5)*F(5,12),F(16,5)*F(7,12)],
+    "Treat morning/afternoon5/7 as morning fraction of the sold total12/5; morning12/7, remaining24/35.",
+    "Ignore75% sold and split the full16/5 tons in ratio5:7, giving4/3 and28/15.",unit="吨")
+add(1057,"count-scoring-two",roots(1057),[4],[3],
+    "Round known mean148/38 to4 first; solve38*(4-3.8)/(3.8-2)=38/9 and round to4 students.",
+    "Calculate known score excess148-3.8*38=3.6, truncate to3 students, omitting division by the1.8-point deficit per2-point student.",unit="名")
+add(1058,"two-both-sides-equation-roots",roots(1058),[F(33,14),F(15,19)],[F(11,3),-F(45,91)],
+    "Ignore variable terms on each right side: x=(11/4)/(7/6)=33/14; a=(3/2)/(19/10)=15/19.",
+    "Combine coefficients correctly but reverse signs of the net right constants: x=(-11/4)/(-3/4)=11/3; a=(-3/2)/(91/30)=-45/91.")
+add(1059,"two-complete-precedence-values",roots(1059),
+    [F(4,3)*(F(26,3)*F(13,9)-F(27,8)+F(13,8))-F(11,6),
+     (F(46,15)-F(16,15)*F(8,5)+F(2,5))*F(15,7)-F(8,7)],
+    [F(17,3),6],
+    "Replace each inner division by multiplication: (26/3)*(13/9) in1 and(16/15)*(8/5) in2; retain all other operations and execute the displayed tuples.",
+    "Evaluate each bracket/product correctly, but omit final subtractions11/6 and8/7, giving17/3 and6.")
+w1,w2,p1,p2=multiplication_errors([(7,2,13,2),(8,3,28,5),(6,3,8,2),(5,7,16,8),(3,1,5,5),(9,2,9,9)])
+add(1060,"six-products",roots(1060),w1,w2,p1,p2)
+add(1061,"four-factored-values",roots(1061),
+    [F(18,5)-F(31,15)*5,F(31,17)-F(35,34)*34,F(139,17)*F(21,4)+F(65,17),F(43,13)*F(618,41)-F(85,41)],
+    [(F(18,5)+F(31,15))*5,(F(31,17)+F(35,34))*34,(F(139,17)-F(65,17))*F(21,4),F(43,13)*(F(618,41)+F(85,41))],
+    "1,2 apply multiplier to only subtracted term;3 omit21/4 factor on65/17;4 omit43/13 factor on subtracted85/41.",
+    "1,2,4 replace subtraction by addition;3 replace addition by subtraction between common-factor coefficients.")
+add(1062,"two-full-substitutions",roots(1062),[F(37,15)+F(76,25),17],
+    [9*F(37,15)+25*F(76,25),F(7,4)*8+F(3,9)*9],
+    "Drop3 and5 coefficients in first expression, giving a+b=413/75; drop mixed coefficients in second, giving x+y=17.",
+    "First apply coefficients twice:9a+25b=491/5. Second read7 1/4 as7/4 and3 2/9 as3/9, yielding14+3=17.")
+add(1063,"two-leg-total-distance",roots(1063),[9],[54],
+    "Add speeds19/4+17/4=9 and label their sum as distance, omitting both3-hour factors.",
+    "Apply whole6-hour journey time to each leg speed:6*(19/4+17/4)=54km.",unit="公里")
+add(1064,"second-box-after-addition",roots(1064),[F(127,10)+F(12,5)],[2*(F(127,10)+F(12,5))],
+    "Ignore second box doubling:127/10+12/5=151/10.",
+    "Double added sugar as well as original box:2*(127/10+12/5)=151/5.",unit="公斤")
+add(1065,"combined-problem-time",roots(1065),[F(5,12)],[F(1,12)+F(1,12)*F(1,3)],
+    "Report only word-problem time1/12+1/3=5/12 and omit equation time.",
+    "Read '1/3 hour more' as '1/3 times as long'; total1/12+1/36=1/9h.",unit="小时")
+add(1066,"thirty-covered-notebooks",roots(1066),[30*F(7,50)],[30*F(7+3,50-20)],
+    "Price only notebook cores, omitting every cover:30*(7/50)=21/5.",
+    "Add numerators but subtract denominators in unit price:(7+3)/(50-20)=1/3; times30 gives10.",unit="美元")
+add(1067,"all-delivered-bricks",roots(1067),[840/(F(2,5)+F(3,8))],[840/F(2-3,5-8)],
+    "Use sum2/5+3/8=31/40 instead of difference1/40; total33600/31.",
+    "Subtract fraction numerators and denominators separately:(2-3)/(5-8)=1/3; total840*3=2520.",unit="块")
+add(1068,"two-room-areas",roots(1068),[20*F(5,12),20*F(1,4)],[20,F(100,3)],
+    "Use given remaining20 as whole apartment area; large25/3 and small5.",
+    "Treat20 as small-room area1/4 of total, so total80 and large100/3; then reverse large/small output labels to(20,100/3).",unit="平方米")
+add(1069,"three-complete-quotient-values",roots(1069),
+    [F(3)/(F(4)/F(5,6))+1-F(9,10),F(11,4)/F(3,2)-F(11,4)/F(2,5)+F(1,2),
+     (F(2,15)+F(19,12))*F(103,30)-(F(2)*F(9,4))*F(9,32)],
+    [F(9,10),F(11,4)/F(3,2)-F(2,5)+F(1,2),F(2,15)+F(19,12)*F(30,103)-F(1,4)],
+    "1 group3:4:5/6 as3/(4/(5/6)) instead of left-associative division. 2 distribute division over denominator difference, giving(11/4)/(3/2)-(11/4)/(2/5)+1/2. 3 invert intended multiplier30/103 and replace2/(9/4) by2*(9/4).",
+    "1 replace final1/(10/9)=9/10 by1. 2 drop denominator parentheses: (11/4)/(3/2)-2/5+1/2. 3 apply30/103 only to19/12, leaving2/15 unmultiplied.")
+add(1070,"two-simplify-then-substitute-values",roots(1070),[F(29,4),F(44,5)*F(47,13)],[F(171,4),0],
+    "Do not negate final term within either subtracted bracket:1:2a+(4/5)b=29/4;2:(43/5-21/5+22/5)m=(44/5)(47/13)=2068/65.",
+    "First combine17/7-3/7 as14, losing denominator7:14*(25/8)-(4/5)(5/4)=171/4. Second happens to keep exact cancellation0.")
+add(1071,"two-roots-and-denominator-domain",
+    rf"第一式：$x={token(F(1,5))}$，定义域 $x\ne\frac{{11}}{{15}}$；第二式：$x={token(F(8,9))}$。",
+    rf"第一式：$x={token(F(19,15))}$，定义域 $x\ne\frac{{11}}{{15}}$；第二式：$x=-2$。",
+    rf"第一式：$x={token(F(97,135))}$，定义域 $x\ne\frac{{11}}{{15}}$；第二式：$x={token(F(931,48))}$。",
+    "First obtain denominator8/3 but move it with wrong sign:5x=11/3+8/3 =>19/15. Second use7-13/4=15/4 instead of7+13/4, then x=(15/4)/(9/4)-11/3=-2.",
+    "First multiply4/9 by1/6 to get denominator2/27 instead of dividing by1/6; x=(11/3-2/27)/5=97/135. Second multiply41/4 by9/4 instead of dividing, then369/16-11/3=931/48.",
+    stem=prompt(1071, "选择包含第一式原分母定义域及两式全部根的记录。"))
+add(1072,"entire-five-value-program",roots(1072),[-20,F(18,5),44,-103,-4532],
+    [20,F(111,20),-F(169,8),F(275,8),-F(46475,64)],
+    "Treat two negatives in a's quotient as negative, a=-20; b=18/5. Execute x=35+9=44,y=-76-27=-103,z=44*(-103)=-4532.",
+    "Replace b=.75*4.8 by .75+4.8=111/20, with a20. Execute x=-35+111/8=-169/8,y=76-333/8=275/8,z=-46475/64.",
+    stem=prompt(1072, "选择依次为 $a,b,x,y,z$ 的完整程序输出。"))
+
+assert len(questions)==40
+coverage=[]
+for item in seed["exercises"]:
+    number=item["number"]
+    omitted=by_number[number]["production_losses_for_later_choice"]
+    reason="All original ordered targets represented by one complete response. Production of original calculations is not established by selecting a record."
+    if number=="1054":
+        omitted=["BLOCKED: original uniquely requested oilbox total needs an unstated final-balance condition; legal full allocations do not resolve this."]
+        reason="The complete source-derived family is preserved. The source does not say the tank is emptied; T40 andT60 are both legal. No single convention or missing datum is silently chosen."
+    if number=="1046":
+        reason="Complete circle/chord/perpendicular-bisector/centre-finding plan recognition covers every judgment and method; physical construction remains omitted."
+    coverage.append({"source_number":number,"question_ids":[q["id"] for q in questions if number in q["source_numbers"]],
+                     "omitted_tasks":omitted,"reason":reason})
+draft={"schema":"s10y-choice-draft-v1","seed_sha256":canonical(seed),"new_figures":[],"questions":questions,"coverage":coverage}
+view={"questions":[{"id":q["id"],"view":q["view"]} for q in questions]}
+for name,value in [("draft.json",draft),("view.json",view),("wrong-programs.json",{"execution_stage":"author arithmetic only; no semantic self-approval","programs":programs})]:
+    target=OUT/name
+    assert not target.exists()
+    target.write_text(json.dumps(value,ensure_ascii=True,indent=2)+"\n")
+(OUT/"draft-freeze.json").write_text(json.dumps({
+    "frozen_at":datetime.now(timezone.utc).isoformat(),"seed_sha256":canonical(seed),"draft_sha256":canonical(draft),
+    "view_sha256":hashlib.sha256((OUT/"view.json").read_bytes()).hexdigest(),"source_freeze_unchanged":True,
+    "questions":40,"options":120,"source_blockers":["1054 final tank balance not supplied"],
+    "independent_review_pending":True,"semantic_approval":False,"model":None,"usage":None,
+},indent=2)+"\n")
+print(json.dumps({"questions":40,"options":120,"seed_sha256":canonical(seed),"draft_sha256":canonical(draft),
+                  "view_sha256":hashlib.sha256((OUT/"view.json").read_bytes()).hexdigest(),"independent_review_pending":True}))

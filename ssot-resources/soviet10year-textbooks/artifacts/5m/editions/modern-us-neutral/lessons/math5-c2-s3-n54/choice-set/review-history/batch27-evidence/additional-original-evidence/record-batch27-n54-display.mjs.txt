@@ -1,0 +1,101 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+assert.equal(process.cwd(), '/Users/yong/.codex/worktrees/d9b1/lemmadeck')
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const root = `${scratch}/reviewer-5m-n54-display`
+const read = file => JSON.parse(fs.readFileSync(file))
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const bind = file => ({ path: path.resolve(file), sha256: hash(file) })
+const commandFile = `${root}/supplement-command.json`
+const inventoryFile = `${root}/native-inventory.json`
+const manifestFile = `${scratch}/batch27-render/5m-math5-c2-s3-n54-capture-manifest.json`
+const command = read(commandFile)
+const inventory = read(inventoryFile)
+const manifest = read(manifestFile)
+assert.equal(command.exit_code, 0)
+assert.equal(command.captures.length, 142)
+assert.equal(command.objects.length, 174)
+assert.equal(command.all_protected_hashes_unchanged, true)
+assert.equal(command.primary_render_or_capture_repeated, false)
+assert.equal(inventory.montages.length, 55)
+assert.equal(manifest.screenshots.length, 12)
+assert(command.objects.every(row =>
+  row.whole_object_covered_by_primary.length || row.supplement_ids.length))
+for (const row of [...manifest.screenshots, ...command.protectedFiles,
+  ...command.captures, ...inventory.montages]) {
+  assert.equal(hash(row.path), row.sha256, row.path)
+}
+const primaryFiles = ['desktop-primary.json', 'mobile-primary.json'].map(name => `${root}/${name}`)
+const [desktop, mobile] = primaryFiles.map(read)
+assert.equal(desktop.status, 'pass-with-gaps')
+assert.equal(mobile.status, 'defects-with-gaps')
+const reviewFiles = Array.from({ length: 7 }, (_, i) =>
+  `${root}/bounded-${String(i + 1).padStart(2, '0')}.json`)
+const seenMontages = new Set()
+const seenCaptures = new Set()
+const contextCounts = [5, 5]
+for (const file of reviewFiles) {
+  const review = read(file)
+  assert.equal(review.status, 'pass', file)
+  assert(Number.isInteger(review.image_opens) && review.image_opens > 0 &&
+    review.image_opens <= 8, file)
+  assert.equal(review.montages.length, review.image_opens, file)
+  contextCounts.push(review.image_opens)
+  for (const row of review.montages) {
+    const expected = inventory.montages[row.index]
+    assert(expected && !seenMontages.has(row.index), file)
+    assert.equal(row.path, expected.path, file)
+    assert.equal(row.sha256, expected.sha256, file)
+    assert.equal(row.status, 'pass', row.path)
+    assert.equal(row.members.length, expected.members.length, row.path)
+    seenMontages.add(row.index)
+    for (const member of row.members) {
+      const original = expected.members.find(item => item.capture_id === member.capture_id)
+      assert(original && !seenCaptures.has(member.capture_id), row.path)
+      assert.equal(member.path, original.path, row.path)
+      assert.equal(member.sha256, original.sha256, row.path)
+      assert.equal(member.status, 'pass', member.path)
+      assert.equal(typeof member.observation, 'string', member.path)
+      assert(member.observation.trim(), member.path)
+      seenCaptures.add(member.capture_id)
+    }
+  }
+}
+assert.equal(seenMontages.size, 55)
+assert.equal(seenCaptures.size, 142)
+assert(command.captures.every(row => seenCaptures.has(row.id)))
+const output = `${root}/actual-observations.json`
+assert(!fs.existsSync(output))
+fs.writeFileSync(output, JSON.stringify({
+  schema: 's10y-actual-display-observations@1', ticket: 'STEMROBIN-182',
+  book: '5m', lesson: 'math5-c2-s3-n54', status: 'pass', outcome: 'pass',
+  recorded_at: new Date().toISOString(),
+  reviewer: { kind: 'independent_agent',
+    identity: 'Fresh bounded primary and seven supplement observers; parent aggregates text only.' },
+  manifest: bind(manifestFile), bounded_reviews: [...primaryFiles, ...reviewFiles].map(bind),
+  supplement_command: bind(commandFile), native_inventory: bind(inventoryFile),
+  protected_render_and_core_bindings: command.protectedFiles,
+  primary_images: manifest.screenshots, supplemental_images: command.captures,
+  native_montages: inventory.montages, full_object_coverage_ledger: command.objects,
+  counts: { primary_PNGs: 12, primary_actual_opened: 10,
+    unopened_identical_aliases: 2, supplementary_PNGs: 142,
+    native_montages: 55, fresh_context_image_counts: contextCounts,
+    original_and_supplement_PNGs: 154, actual_distinct_PNG_inputs: 152,
+    unique_questions: 40, unique_options: 120, original_written_sources: 40,
+    unique_surface_viewport_combinations: 6, additional_unique_combinations: 0 },
+  complete_prose_written_questions_options_and_terminal_coverage: true,
+  original_partials_and_mobile_formula_defect_retained_as_partial: true,
+  mobile_formula_continuations_require_observed_scroll_windows: true,
+  parent_image_opens: 0, image_payloads_returned_to_parent: false,
+  unchanged_semantic_or_canonical_reruns: 0,
+  browser_boundary: { headless: true, isolated_contexts: true, user_profile: false,
+    PWDEBUG_cleared: true, PLAYWRIGHT_HTML_OPEN: 'never', browser_closed: true },
+  semantic_source_1054_remains_blocked: true,
+  formal_application_acceptance_or_new_semantic_approval_claimed: false,
+  model: null, usage: null,
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ status: 'pass', screenshots: 154, distinct_actual_inputs: 152,
+  primary_opens: 10, montage_opens: 55, parent_image_opens: 0 }))

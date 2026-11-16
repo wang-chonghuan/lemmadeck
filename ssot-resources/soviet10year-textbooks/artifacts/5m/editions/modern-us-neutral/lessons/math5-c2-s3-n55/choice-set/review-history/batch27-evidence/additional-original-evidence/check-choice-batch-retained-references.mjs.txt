@@ -1,0 +1,64 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+const [batch, resultName = `${batch}-retained-reference-check.json`, ...authors] = process.argv.slice(2)
+assert(/^batch[0-9]+$/.test(batch) && authors.length)
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const roots = authors.map(author => {
+  const directory = `${scratch}/${author}`
+  const seed = read(`${directory}/${fs.existsSync(`${directory}/seed.json`) ? 'seed.json' : 'source.json'}`)
+  const { book, lesson } = seed.source
+  const root = `ssot-resources/soviet10year-textbooks/artifacts/${book}/editions/modern-us-neutral/lessons/${lesson}/choice-set`
+  assert(fs.existsSync(`${root}/review-history/${batch}-evidence/retention.json`))
+  return root
+})
+const walk = directory => fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+  const file = path.join(directory, entry.name)
+  return entry.isDirectory() ? walk(file) : [file]
+})
+const failures = []
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+let checked = 0
+let retainedHashChecks = 0
+function inspect(value, filename, pointer = '') {
+  if (Array.isArray(value)) return value.forEach((child, i) => inspect(child, filename, `${pointer}/${i}`))
+  if (value && typeof value === 'object') {
+    return Object.entries(value).forEach(([key, child]) => inspect(child, filename, `${pointer}/${key}`))
+  }
+  if (typeof value !== 'string' || value.startsWith('Historical ') ||
+      value.startsWith('Executed command:') || pointer.endsWith('/executed_command')) return
+  const normalized = value.startsWith(process.cwd() + '/')
+    ? value.slice(process.cwd().length + 1) : value
+  if (normalized.startsWith('.tmp/') || normalized.includes('/.tmp/') ||
+      normalized.startsWith(scratch + '/')) {
+    failures.push({ filename, pointer, scratch_dependency: value })
+  }
+  if (normalized.startsWith('ssot-resources/') && !fs.existsSync(normalized)) {
+    failures.push({ filename, pointer, missing_retained_path: value })
+  }
+}
+for (const filename of roots.flatMap(walk).filter(file => file.endsWith('.json'))) {
+  const value = read(filename)
+  inspect(value, filename)
+  checked++
+  if (path.basename(filename) !== 'retention.json' || !value.retained) continue
+  for (const [relative, record] of Object.entries(value.retained)) {
+    const file = relative.startsWith('ssot-resources/')
+      ? relative : path.join(path.dirname(filename), relative)
+    const actual = fs.existsSync(file) ? hash(file) : null
+    const expected = record.retained_bytes_sha256 ?? record.sha256
+    if (actual !== expected) failures.push({ filename, retained_file: file, actual, expected })
+    retainedHashChecks++
+  }
+}
+const result = {
+  status: failures.length ? 'fail' : 'pass',
+  scope: `${batch} newly retained choice roots only; no whole-project defence or semantic revalidation.`,
+  roots, checked_json_files: checked, retained_hash_checks: retainedHashChecks, failures,
+}
+fs.writeFileSync(`${scratch}/${resultName}`, JSON.stringify(result, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify(result, null, 2))
+assert.equal(failures.length, 0)

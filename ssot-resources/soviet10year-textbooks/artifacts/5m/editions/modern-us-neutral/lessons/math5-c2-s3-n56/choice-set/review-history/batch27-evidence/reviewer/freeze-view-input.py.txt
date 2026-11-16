@@ -1,0 +1,91 @@
+import hashlib
+import json
+import pathlib
+import shutil
+
+
+ROOT = pathlib.Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+TICKET_TMP = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp"
+
+
+def canonical_bytes(value):
+    return json.dumps(
+        value, sort_keys=True, ensure_ascii=True, separators=(",", ":")
+    ).encode("utf-8")
+
+
+for batch in ("5m-n56", "5m-n57"):
+    authority = TICKET_TMP / batch / "views.json"
+    owned = TICKET_TMP / ("reviewer-" + batch)
+    raw = authority.read_bytes()
+    payload = json.loads(raw)
+    snapshot = owned / "view-input-snapshot"
+    snapshot.mkdir()
+    raw_path = snapshot / "views.json"
+    shutil.copyfile(authority, raw_path)
+    if raw_path.read_bytes() != raw:
+        raise RuntimeError("Visible input changed during copying.")
+    if isinstance(payload, list):
+        entries = payload
+        wrapper_keys = []
+    elif isinstance(payload, dict):
+        wrapper_keys = list(payload)
+        entries = payload.get("questions", payload.get("views"))
+        if not isinstance(entries, list):
+            raise RuntimeError("No recognizable visible-question list.")
+    else:
+        raise RuntimeError("Unsupported visible-input wrapper.")
+    pure_questions = []
+    for entry in entries:
+        question_id = entry.get("id", entry.get("question_id"))
+        view = entry.get("view", entry)
+        if not question_id or not all(
+            field in view for field in ("mode", "stem", "options")
+        ):
+            raise RuntimeError("No recognizable ID/visible subtree.")
+        pure_view = {
+            "mode": view["mode"],
+            "stem": view["stem"],
+            "figure_ids": view.get("figure_ids", []),
+            "options": [
+                {"id": option["id"], "text": option["text"],
+                 "figure_ids": option.get("figure_ids", [])}
+                for option in view["options"]
+            ],
+        }
+        pure_questions.append({"id": question_id, "view": pure_view})
+    pure = {"questions": pure_questions}
+    pure_path = snapshot / "pure-view.json"
+    with pure_path.open("x", encoding="utf-8") as stream:
+        json.dump(pure, stream, ensure_ascii=True, indent=2)
+        stream.write("\n")
+    pure_raw = pure_path.read_bytes()
+    manifest = {
+        "schema": "s10y-choice-keyfree-view-input-freeze-v1",
+        "batch": batch,
+        "authority_path": str(authority.relative_to(ROOT)),
+        "raw_snapshot_path": str(raw_path.relative_to(ROOT)),
+        "raw_canonical_sha256": hashlib.sha256(canonical_bytes(payload)).hexdigest(),
+        "raw_bytes_sha256": hashlib.sha256(raw).hexdigest(),
+        "raw_byte_count": len(raw),
+        "pure_view_snapshot_path": str(pure_path.relative_to(ROOT)),
+        "pure_view_sha256": hashlib.sha256(canonical_bytes(pure)).hexdigest(),
+        "pure_view_bytes_sha256": hashlib.sha256(pure_raw).hexdigest(),
+        "pure_view_byte_count": len(pure_raw),
+        "wrapper_keys": wrapper_keys,
+        "question_count": len(pure_questions),
+        "single_count": sum(q["view"]["mode"] == "single" for q in pure_questions),
+        "multiple_count": sum(q["view"]["mode"] == "multiple" for q in pure_questions),
+        "option_count": sum(len(q["view"]["options"]) for q in pure_questions),
+        "figure_reference_count": sum(
+            len(q["view"]["figure_ids"]) + sum(
+                len(o["figure_ids"]) for o in q["view"]["options"]
+            ) for q in pure_questions
+        ),
+        "only_visible_fields_projected": True,
+        "author_internals_disclosed": False,
+    }
+    with (snapshot / "freeze.json").open("x", encoding="utf-8") as stream:
+        json.dump(manifest, stream, ensure_ascii=True, indent=2)
+        stream.write("\n")
+    print(json.dumps(manifest, ensure_ascii=True, indent=2))

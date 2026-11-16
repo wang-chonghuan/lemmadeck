@@ -1,0 +1,311 @@
+import hashlib
+import json
+import math
+from fractions import Fraction as F
+from pathlib import Path
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+TMP = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp"
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def canonical_digest(value):
+    return sha(json.dumps(value, ensure_ascii=True, sort_keys=True, separators=(",", ":")).encode())
+
+
+def encode(value):
+    if isinstance(value, F):
+        return str(value)
+    if isinstance(value, dict):
+        return {key: encode(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [encode(item) for item in value]
+    return value
+
+
+def save(path, value):
+    path.write_text(json.dumps(encode(value), ensure_ascii=True, indent=2) + "\n")
+
+
+# Every expression below is independently transcribed from the allowed prose.
+calc54 = {
+    "1033": {
+        "a(b+c)_left": F(2, 3) * (F(1, 6) + F(6, 7)),
+        "a(b+c)_right": F(2, 3) * F(1, 6) + F(2, 3) * F(6, 7),
+        "(a+b)c_left": (F(2, 3) + F(1, 6)) * F(6, 7),
+        "(a+b)c_right": F(2, 3) * F(6, 7) + F(1, 6) * F(6, 7),
+    },
+    "1034": [F(31, 5) * 4, F(65, 7) * 2, 3 * F(29, 4), 6 * F(8, 7),
+             F(17, 4) * 4, F(17, 8) * 8, 10 * F(27, 5), F(34, 3) * 3, F(247, 9) * 9],
+    "1035": [(F(14, 3) + F(11, 2)) * 6, (F(23, 7) + F(5, 7)) * 7,
+             (8 - F(10, 9)) * 9, (F(109, 8) - F(101, 8)) * 208,
+             (1 - F(7, 5)) * 35, (4 - F(4, 3) * 2) * F(1, 2),
+             F(93, 11) * F(38, 9) + F(93, 11) * F(61, 9),
+             F(33, 5) * F(43, 6) - F(13, 6) * F(33, 5),
+             F(75, 8) * F(19, 7) - F(19, 7) * F(59, 8),
+             F(15, 4) * F(15, 4) + F(15, 4) * F(1, 4)],
+    "1036": {
+        "x": (F(13, 5) - F(17, 10)) / (F(1, 2) + F(2, 3)),
+        "y": (-F(1, 8) + F(5, 8)) / (-F(2, 7) + F(3, 14)),
+    },
+    "1037": [
+        {"coefficient": F(3, 2) * F(2, 3) - 4 * F(5, 2),
+         "constant": F(3, 2) * -2 - 4 * F(3, 4)},
+        {"coefficient": F(2, 3) * F(3, 2) - F(4, 5) * F(5, 12),
+         "constant": F(2, 3) * F(3, 5) - F(4, 5) * -F(1, 2)},
+        {"coefficient": F(1, 2) * F(13, 10) - F(1, 5) * 12,
+         "constant": F(1, 2) * -F(11, 10) - F(1, 5) * F(13, 10)},
+        {"coefficient": F(1, 8) * F(8, 9) - F(1, 5) * F(5, 9),
+         "constant": F(1, 8) * -8 - F(1, 5) * F(5, 2)},
+    ],
+    "1038": [F(6, 5) * steps for steps in (5, 12, 20, 24)],
+    "1039": {"pine_years": 150 * F(19, 5), "world_tree_years": 150 * F(19, 5) * 11},
+    "1040": {"large_m2": F(53, 10) * 4, "small_m2": 4 * F(33, 10),
+             "difference_m2": F(53, 10) * 4 - 4 * F(33, 10)},
+    "1041": [F(22, 3) + F(28, 5), F(20, 3) - F(7, 5), F(15, 4) + F(43, 9),
+             F(125, 6) - F(11, 4), F(93, 8) + F(53, 6), F(356, 9) - F(25, 6),
+             -F(87, 10) - F(14, 15), -F(59, 10) + F(3, 4), -F(17, 5) - F(9, 4)],
+    "1042": [F(62, 9) + F(7, 6), F(119, 8) - F(65, 6),
+             F(71, 8) - F(49, 6), F(77, 12) + F(1261, 18)],
+    "1043": [F(11, 9) + F(7, 6) * (2 - F(67, 42)),
+             (4 - F(37, 15)) * (10 - F(200, 23)),
+             (4 + F(31, 6)) / (F(1, 3) - F(1, 36)),
+             F(77, 12) / F(11, 4) - F(45, 4) * F(1, 9)],
+    "1044": {"first": (4 - F(12, 5)) / (3 - F(9, 5)),
+             "second": 4 / F(12, 5) - 3 / F(9, 5)},
+    "1045": [F(12, 5) * F(25, 12) + F(147, 40), F(35, 4) * (F(5, 2) + F(8, 7))],
+    "1046": {"radius_cm": F(7, 2), "diameter_cm": 7,
+             "no_existing_figure": True,
+             "construction": "See handwritten equal-arc and two-nonparallel-chord proof; no drawing generated."},
+    "1047": {"years": [5, 3], "total": 5 * 135000 + 3 * 149000,
+             "mean": F(5 * 135000 + 3 * 149000, 8)},
+    "1048": {"total": 7 / (F(3, 7) - F(5, 14)), "first": 42, "second": 35},
+    "1049": {"river": F(3, 5) * 32000, "rail": F(2, 5) * 32000,
+             "difference": (F(3, 5) - F(2, 5)) * 32000},
+    "1050": {"school_allocation": F(44) / F(1, 5), "farm_purchase": F(44) / (F(1, 5) * F(1, 8))},
+    "1051": {"remaining_fraction": 1 - F(8, 27) - F(4, 9),
+             "total_km": F(21, 4) / (1 - F(8, 27) - F(4, 9))},
+    "1052": {"second_spending_initial_fraction": F(3, 5) * (1 - F(2, 7)),
+             "initial_dollars": 60 / (F(3, 5) * (1 - F(2, 7)))},
+    "1053": {"third_fraction": 1 - F(5, 18) - F(1, 3),
+             "wheat_kg": 10 / (1 - F(5, 18) - 2 * F(1, 3)),
+             "bran_kg": F(9, 100) * 180, "flour_kg": F(91, 100) * 180},
+    "1054": {"conditional_empty_tank_total": 6 / (F(3, 10) + F(1, 2) + F(3, 10) - 1),
+             "residual_model": [
+                 {"initial": total, "bucket1": F(3, 10) * total, "bucket2": F(1, 2) * total,
+                  "bucket3": F(3, 10) * total - 6,
+                  "tank_residual": total - F(3, 10) * total - F(1, 2) * total - (F(3, 10) * total - 6)}
+                 for total in (40, 60)
+             ]},
+    "1055": {"used_total": F(3, 5) * F(33, 5),
+             "day1": (F(3, 5) * F(33, 5)) / (1 + F(6, 5)),
+             "day2": ((F(3, 5) * F(33, 5)) / (1 + F(6, 5))) * F(6, 5)},
+    "1056": {"sold_total": F(3, 4) * F(16, 5),
+             "morning": F(5, 12) * F(3, 4) * F(16, 5),
+             "afternoon": F(7, 12) * F(3, 4) * F(16, 5)},
+    "1057": {"known_count": 8 + 18 + 12, "known_points": 8 * 5 + 18 * 4 + 12 * 3,
+             "grade2_count": F(148 - F(19, 5) * 38) / (F(19, 5) - 2),
+             "mean_check": F(148 + 2 * 2, 38 + 2)},
+    "1058": {
+        "x": (2 + F(3, 4)) / (F(2, 3) + F(1, 2) - (-F(1, 3) + F(9, 4))),
+        "a": (F(5, 2) - 1) / (-F(3, 2) + F(17, 5) - (F(4, 3) - F(37, 15))),
+    },
+    "1059": [F(4, 3) * (F(26, 3) / F(13, 9) - F(27, 8) + F(13, 8)) - F(11, 6),
+             (F(46, 15) - F(16, 15) / F(8, 5) + F(2, 5)) * F(15, 7) - F(8, 7)],
+    "1060": [F(93, 13) * 2, F(227, 28) * 5, F(51, 8) * 2,
+             F(87, 16) * 8, 5 * F(16, 5), F(83, 9) * 9],
+    "1061": [(F(18, 5) - F(31, 15)) * 5, (F(31, 17) - F(35, 34)) * 34,
+             F(139, 17) * F(21, 4) + F(65, 17) * F(21, 4),
+             F(43, 13) * F(618, 41) - F(43, 13) * F(85, 41)],
+    "1062": [3 * F(37, 15) + 5 * F(76, 25), F(29, 4) * 8 + F(29, 9) * 9],
+    "1063": F(19, 4) * 3 + F(17, 4) * 3,
+    "1064": 2 * F(127, 10) + F(12, 5),
+    "1065": {"equation_hours": F(1, 12), "word_hours": F(1, 12) + F(1, 3),
+             "total_hours": 2 * F(1, 12) + F(1, 3)},
+    "1066": 30 * (F(7, 50) + F(3, 20)),
+    "1067": 840 / (F(2, 5) - F(3, 8)),
+    "1068": {"total_m2": 20 / (1 - F(5, 12) - F(1, 4)),
+             "large_m2": F(5, 12) * 60, "small_m2": F(1, 4) * 60},
+    "1069": [(F(3) / 4) / F(5, 6) + F(5, 2) * F(2, 5) - F(1) / F(10, 9),
+             F(11, 4) / (F(3, 2) - F(2, 5)) + (F(3, 4) + F(5, 6)) / F(19, 6),
+             (F(2, 15) + F(19, 12)) * F(30, 103) - (F(2) / F(9, 4)) * F(9, 32)],
+    "1070": [F(17, 7) * F(25, 8) - (F(3, 7) * F(25, 8) + F(4, 5) * F(5, 4)),
+             F(43, 5) * F(47, 13) - (F(21, 5) * F(47, 13) + F(22, 5) * F(47, 13))],
+    "1071": {"x1": (F(11, 3) - F(4, 9) / F(1, 6)) / 5,
+             "x2": (7 + F(13, 4)) / F(9, 4) - F(11, 3),
+             "x1_forbidden": F(11, 15)},
+}
+a = -F(5, 2) / -F(1, 8)
+b = F(3, 4) * F(24, 5)
+x = -F(7, 4) * a + F(5, 2) * b
+y = F(19, 5) * a - F(15, 2) * b
+calc54["1072"] = {"a": a, "b": b, "x": x, "y": y, "z": x * y}
+
+calc55 = {
+    "1073": [{"inputs": pair, "lcm": math.lcm(*pair),
+              "example_triple": [k * math.lcm(*pair) for k in (1, 2, 3)]}
+             for pair in ((2, 3), (10, 5), (5, 6), (12, 18))],
+    "1074": {"lcm": math.lcm(22, 4), "positive_common_multiples_below50": [44]},
+    "1075": {"trip_days": [15, 20, 24], "departure_periods": [16, 21, 25],
+             "elapsed_day_lcm": math.lcm(16, 21, 25), "cycle_counts": [525, 400, 336]},
+    "1076": [{"inputs": values, "lcm": math.lcm(*values),
+              "divisibility_check": [math.lcm(*values) % n == 0 for n in values]}
+             for values in ((60, 72), (396, 180), (12, 18, 50), (168, 231, 60))],
+    "1077": [{"coefficient": F(2, 5) - F(3, 5), "constant": F(5, 2)},
+             {"coefficient": F(1, 3) + F(1, 5) + F(7, 15), "constant": F(22, 3)}],
+    "1078": [F(3, 7) * F(7, 11) + F(5, 14) * F(7, 11) + F(3, 14),
+             F(1, 9) * F(3, 7) + F(4, 5) * F(2, 3) + F(2, 3) * F(3, 7) - F(3, 10) * F(2, 3)],
+    "1079": [{"inputs": values, "lcm": math.lcm(*values),
+              "divisibility_check": [math.lcm(*values) % n == 0 for n in values]}
+             for values in ((18, 45), (30, 40), (210, 350), (20, 70, 15))],
+    "1080": {"distance1_km": F(323, 4) * 4, "distance2_km": F(361, 5) * 5,
+             "elapsed_hours": 9, "mean_kmh": (F(323, 4) * 4 + F(361, 5) * 5) / 9,
+             "incorrect_unweighted_mean": (F(323, 4) + F(361, 5)) / 2},
+}
+
+for lesson_number, calculations in ((54, calc54), (55, calc55)):
+    own = TMP / f"reviewer-5m-n{lesson_number}"
+    reasoning_path = own / "source-reasoning.json"
+    reasoning = json.loads(reasoning_path.read_bytes())
+    seed_path = TMP / f"5m-n{lesson_number}/seed.json"
+    seed_bytes = seed_path.read_bytes()
+    seed = json.loads(seed_bytes)
+    lesson_id = seed["source"]["lesson"]
+    durable_dir = ROOT / "ssot-resources/soviet10year-textbooks/artifacts/5m/editions/modern-us-neutral/lessons" / lesson_id
+    lesson_path = durable_dir / "lesson.json"
+    exercises_path = durable_dir / "exercises.json"
+    lesson_bytes = lesson_path.read_bytes()
+    exercises_bytes = exercises_path.read_bytes()
+    lesson = json.loads(lesson_bytes)
+    exercises = json.loads(exercises_bytes)
+    exercise_by_number = {exercise["number"]: exercise for exercise in exercises["exercises"]}
+    definition_blocks = [0] if lesson_number == 54 else [0, 2, 3, 7]
+    definitions = [{"block": block, "text": lesson["prose"][block]["text"]}
+                   for block in definition_blocks]
+    projection = {
+        "source": seed["source"],
+        "definitions": definitions,
+        "exercises": [{"number": exercise["number"], "text": exercise["text"],
+                       "figure_ids": exercise.get("figure_ids") or []}
+                      for exercise in exercises["exercises"]],
+    }
+    snapshot = own / "input-snapshot"
+    snapshot.mkdir(exist_ok=True)
+    seed_snapshot = snapshot / "seed.json"
+    if seed_snapshot.exists():
+        raise RuntimeError(f"Existing source snapshot for{lesson_number}; preserve it.")
+    seed_snapshot.write_bytes(seed_bytes)
+    save(snapshot / "durable-source-projection.json", projection)
+    calc_path = own / "source-exact-arithmetic.json"
+    save(calc_path, {
+        "schema": "independent-source-exact-arithmetic/v1",
+        "method": "Independently transcribed Fraction arithmetic and standard integer LCM; no author calculation inputs.",
+        "source_lesson": lesson_id,
+        "calculations": calculations,
+        "handwritten_reasoning_path": str(reasoning_path),
+    })
+    solutions = []
+    for frozen in reasoning["sources"]:
+        number = frozen["number"]
+        exercise = next(ex for ex in seed["exercises"] if ex["number"] == number)
+        entry = dict(frozen)
+        entry["original_written_text"] = exercise["text"]
+        entry["original_text_utf8_sha256"] = sha(exercise["text"].encode())
+        entry["original_figure_ids"] = exercise["figure_ids"]
+        entry["durable_prose_equal"] = exercise["text"] == exercise_by_number[number]["text"]
+        entry["exact_arithmetic_evidence"] = encode(calculations[number])
+        solutions.append(entry)
+    source_result = {
+        "schema": "independent-source-solutions/v1",
+        "stage": "Original source frozen before any view/options/draft/author solutions",
+        "reviewer": reasoning["reviewer"],
+        "source": seed["source"],
+        "seed_binding": {"path": str(seed_path), "byte_sha256": sha(seed_bytes),
+                         "canonical_sha256": canonical_digest(seed),
+                         "snapshot_path": str(seed_snapshot), "snapshot_sha256": sha(seed_snapshot.read_bytes())},
+        "durable_source_bindings": [
+            {"path": str(lesson_path), "byte_sha256": sha(lesson_bytes),
+             "opened_projection": "Only named original definition blocks; no choice/internal or answer material"},
+            {"path": str(exercises_path), "byte_sha256": sha(exercises_bytes),
+             "opened_projection": "Original written exercise prose; no answer/choice fields"},
+        ],
+        "definition_bindings": [
+            {**definition, "text_utf8_sha256": sha(definition["text"].encode())}
+            for definition in definitions
+        ],
+        "definitions_and_domains": reasoning["definitions_and_domains"],
+        "original_source_count": len(seed["exercises"]),
+        "original_source_numbers": [ex["number"] for ex in seed["exercises"]],
+        "grouped_task_count": sum(len(entry["units"]) for entry in solutions),
+        "source_assets": [],
+        "actual_image_observations": [],
+        "prose_defined_constructions": ["1046"] if lesson_number == 54 else [],
+        "source_trace_metadata_from_seed_only": seed["trace"],
+        "all_seed_durable_exercise_prose_equal": all(entry["durable_prose_equal"] for entry in solutions),
+        "sources": solutions,
+        "task_ledger": [{
+            "source_number": entry["number"], "status": entry["status"],
+            "original_text_utf8_sha256": entry["original_text_utf8_sha256"],
+            "task_units": [{
+                "id": unit["id"],
+                "task": unit.get("task", f"Full original mathematical unit{unit['id']} in the bound prose"),
+                "solution": unit["solution"], "derivation": unit["derivation"],
+                "domain": unit.get("domain", entry.get("domain", "Stated numerical or physical domain in source/model ledger")),
+            } for unit in entry["units"]],
+            "production_losses": entry.get("production_losses", []),
+        } for entry in solutions],
+        "source_blockers": reasoning["source_blockers"],
+        "future_view_constraints": reasoning["future_view_constraints"],
+        "handwritten_reasoning_binding": {"path": str(reasoning_path), "sha256": sha(reasoning_path.read_bytes())},
+        "exact_arithmetic_binding": {"path": str(calc_path), "sha256": sha(calc_path.read_bytes())},
+        "author_solutions_views_or_internals_read": False,
+        "browser_or_image_operations": 0,
+        "no_option_truths_or_author_key_claimed": True,
+    }
+    result_path = own / "source-solutions.json"
+    save(result_path, source_result)
+    image_path = own / "image-observations.json"
+    save(image_path, {
+        "schema": "independent-source-image-observations/v1",
+        "source_lesson": lesson_id, "seed_byte_sha256": sha(seed_bytes),
+        "declared_seed_figures": [], "actual_opened_source_images": [],
+        "image_open_count": 0, "browser_runs": 0,
+        "prose_defined_construction": "1046 requires a new construction, not an existing source figure."
+        if lesson_number == 54 else "No original source figures or graph construction tasks.",
+        "no_missing_declared_asset": True,
+        "status": "not_applicable_no_declared_figures",
+    })
+    ready = {
+        "schema": "independent-source-phase-ready/v1",
+        "reviewer": reasoning["reviewer"],
+        "status": "source_frozen_awaiting_keyfree_view_authorization",
+        "source": seed["source"],
+        "seed_byte_sha256": sha(seed_bytes),
+        "seed_canonical_sha256": canonical_digest(seed),
+        "original_source_count": len(seed["exercises"]),
+        "grouped_task_count": source_result["grouped_task_count"],
+        "all_seed_durable_exercise_prose_equal": source_result["all_seed_durable_exercise_prose_equal"],
+        "source_blockers": reasoning["source_blockers"],
+        "outcome": "blocked" if reasoning["source_blockers"] else "pass",
+        "records": [
+            {"path": str(result_path), "sha256": sha(result_path.read_bytes())},
+            {"path": str(image_path), "sha256": sha(image_path.read_bytes())},
+            {"path": str(reasoning_path), "sha256": sha(reasoning_path.read_bytes())},
+            {"path": str(calc_path), "sha256": sha(calc_path.read_bytes())},
+        ],
+        "author_solutions_views_or_internals_read": False,
+        "next_gate": "Stop. Parent must separately authorize a key-free view. No author choices, draft, ready or answer inputs have been opened.",
+    }
+    save(own / "source-phase-ready.json", ready)
+    print(json.dumps({
+        "lesson": lesson_id, "source_count": len(seed["exercises"]),
+        "task_count": source_result["grouped_task_count"],
+        "source_solution_sha256": sha(result_path.read_bytes()),
+        "source_ready_sha256": sha((own / "source-phase-ready.json").read_bytes()),
+        "outcome": ready["outcome"],
+        "source_blockers": reasoning["source_blockers"],
+    }, indent=2))

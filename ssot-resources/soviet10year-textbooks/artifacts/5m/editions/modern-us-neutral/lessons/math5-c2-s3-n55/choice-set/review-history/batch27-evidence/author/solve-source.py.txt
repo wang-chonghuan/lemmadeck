@@ -1,0 +1,104 @@
+from datetime import datetime, timezone
+from fractions import Fraction as F
+import hashlib
+import json
+from math import lcm
+from pathlib import Path
+
+
+OUT=Path(__file__).resolve().parent
+seed=json.loads((OUT/"seed.json").read_text())
+digest=lambda value:hashlib.sha256(json.dumps(value,sort_keys=True,ensure_ascii=True,separators=(",",":")).encode()).hexdigest()
+solutions=[
+    {
+        "source_number":"1073",
+        "whole_original_task":"Construct three common multiples for each of four pairs; not necessarily the first three.",
+        "ordered_results":[[6,12,18],[10,20,30],[30,60,90],[36,72,108]],
+        "independent_derivation":"The positive common multiples are6k,10k,30k,36k respectively for positive integer k. Choosing k1,2,3 yields three distinct witnesses in each row; each is divisible by both original numbers. Later choices k2,3,4 are equally valid.",
+        "notices":["The source asks for witnesses, not all common multiples. Positive witnesses solve the full free task regardless of any unknown N-zero convention. No zero convention is imposed."],
+        "production_losses_for_later_choice":["Recognition of valid complete witnesses does not demonstrate freely producing one's own three common multiples for every pair."],
+    },
+    {
+        "source_number":"1074",
+        "whole_original_task":"Decide existence of a common multiple of22,4 smaller than50.",
+        "ordered_results":["Yes:44=2*22=11*4<50."],
+        "independent_derivation":"22=2*11 and4=2^2; least positive common multiple44 supplies a complete existential witness. The task does not require enumerating every value or settling whether0 is a natural number.",
+        "notices":["Do not claim '44 is the only natural common multiple below50' without a zero convention; existence is fully resolved by44."],
+        "production_losses_for_later_choice":["Certificate recognition does not demonstrate independently finding and writing the witness."],
+    },
+    {
+        "source_number":"1075",
+        "whole_original_task":"Next simultaneous departure with all three voyage durations and next-day return rule.",
+        "ordered_results":[16,21,25,lcm(16,21,25)],
+        "independent_derivation":"Use elapsed day0 for current departure. Voyages last15,20,24 days, and departures occur the next day after return, so repeat periods16,21,25. Factors2^4,3*7,5^2 are disjoint; next common positive multiple=2^4*3*7*5^2=8400 days.",
+        "notices":["Voyage duration is elapsed time; stated next-day turnaround adds1 to each period. Ignoring that rule gives120 but does not answer the given problem. Standard repeated-route model is visible in the authored stem."],
+        "production_losses_for_later_choice":["Complete-period recognition does not demonstrate writing the schedule or originating the common-period calculation."],
+    },
+    {
+        "source_number":"1076",
+        "whole_original_task":"All four least-positive-common-multiple calculations, including both triples.",
+        "ordered_results":[lcm(60,72),lcm(396,180),lcm(12,18,50),lcm(168,231,60)],
+        "independent_derivation":"1:60=2^2*3*5,72=2^3*3^2 ->2^3*3^2*5=360. 2:396=2^2*3^2*11,180=2^2*3^2*5 ->1980. 3:12=2^2*3,18=2*3^2,50=2*5^2 ->2^2*3^2*5^2=900. 4:168=2^3*3*7,231=3*7*11,60=2^2*3*5 ->2^3*3*5*7*11=9240.",
+        "notices":["For these positive integers 'least common multiple' is the least positive common multiple; do not replace it by0 through an unrelated N convention."],
+        "production_losses_for_later_choice":["Choosing complete values cannot demonstrate producing all prime factorizations and maximum-exponent selections."],
+    },
+    {
+        "source_number":"1077",
+        "whole_original_task":"Simplify both variable expressions identically.",
+        "ordered_results":["-x/5+5/2","y+22/3"],
+        "independent_derivation":"First combine2/5-3/5=-1/5, keep constant5/2. Second1/3+1/5+7/15=(5+3+7)/15=1, keep constant22/3. Identities hold for all real x,y.",
+        "notices":[],
+        "production_losses_for_later_choice":["Recognition of the pair of simplified identities does not demonstrate writing the distributive collection of coefficients."],
+    },
+    {
+        "source_number":"1078",
+        "whole_original_task":"Both exact evaluations with each variable assignment preserved.",
+        "ordered_results":[str((F(3,7)+F(5,14))*F(7,11)+F(3,14)),
+                           str((F(1,9)+F(2,3))*F(3,7)+(F(4,5)-F(3,10))*F(2,3))],
+        "independent_derivation":"1:combine coefficient11/14, multiply7/11 to obtain1/2; add3/14 gives5/7. 2:collecta coefficient7/9 andb coefficient1/2; at3/7,2/3 each contributes1/3, total2/3.",
+        "notices":[],
+        "production_losses_for_later_choice":["Value recognition does not demonstrate originating the simplification and substitution order."],
+    },
+    {
+        "source_number":"1079",
+        "whole_original_task":"All four LCM groups, including the three-number final group.",
+        "ordered_results":[lcm(18,45),lcm(30,40),lcm(210,350),lcm(20,70,15)],
+        "independent_derivation":"1:18=2*3^2,45=3^2*5 ->90. 2:30=2*3*5,40=2^3*5 ->120. 3:210=2*3*5*7,350=2*5^2*7 ->1050. 4:20=2^2*5,70=2*5*7,15=3*5 ->420.",
+        "notices":["Positive LCM convention is inherent in these nonzero positive inputs, not a choice about whether N includes0."],
+        "production_losses_for_later_choice":["Complete-record recognition does not produce the factorization method independently."],
+    },
+    {
+        "source_number":"1080",
+        "whole_original_task":"Time-weighted average speed over both full legs, not arithmetic mean of speeds.",
+        "ordered_results":[str(F(323,4)*4),str(F(361,5)*5),str((F(323,4)*4+F(361,5)*5)/9)],
+        "independent_derivation":"First80 3/4km/h times4h=323km; second72 1/5 times5h=361km. Total684km in9h, average76km/h.",
+        "notices":["Only the stated9 hours of running are used; no unmentioned stop duration is invented."],
+        "production_losses_for_later_choice":["Answer recognition does not demonstrate independently building total-distance/total-time model."],
+    },
+]
+texts={item["number"]:item["text"] for item in seed["exercises"]}
+assert set(texts)=={item["source_number"] for item in solutions}
+assert not seed["figures"]
+for item in solutions:
+    item["original_text"]=texts[item["source_number"]]
+source={
+    "stage":"independent-author-source-only","lesson":seed["source"]["lesson"],
+    "seed_sha256":digest(seed),"stage_complete":True,"created_before_any_alternatives":True,
+    "source_count":8,"solutions":solutions,"source_blockers":[],
+    "selected_definition_blocks":[3,7],
+    "excluded_concept_candidates":[{"blocks":[0,1,2],"reason":"Numerical multiple/example sets, intersection result and12 witness are not clean pure definition-only paragraphs."},
+                                   {"blocks":[4,5,6,8],"reason":"Worked examples and numerical worked factorization/results."}],
+    "actual_source_assets":[],"source_image_count":0,
+    "previous_answers_choices_or_other_agent_solutions_read":False,"model":None,"usage":None,
+}
+target=OUT/"source-solutions.json"
+assert not target.exists()
+target.write_text(json.dumps(source,ensure_ascii=True,indent=2)+"\n")
+(OUT/"source-freeze.json").write_text(json.dumps({
+    "stage_complete":True,"before_alternatives":True,"frozen_at":datetime.now(timezone.utc).isoformat(),
+    "seed_sha256":digest(seed),"source_solutions_sha256":hashlib.sha256(target.read_bytes()).hexdigest(),
+    "source_solutions_canonical_sha256":digest(source),"source_count":8,
+    "all_original_numbers":list(texts),"actual_source_asset_count":0,"definitions":[3,7],
+    "semantic_approval":False,"author_draft_exists_at_freeze":(OUT/"draft.json").exists(),
+},indent=2)+"\n")
+print(json.dumps({"source_count":8,"source_solutions":str(target),"seed_sha256":digest(seed),"before_alternatives":True}))

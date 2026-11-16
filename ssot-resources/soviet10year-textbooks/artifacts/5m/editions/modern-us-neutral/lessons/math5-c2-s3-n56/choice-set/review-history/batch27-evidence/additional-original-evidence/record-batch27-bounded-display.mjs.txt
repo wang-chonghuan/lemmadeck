@@ -1,0 +1,193 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+assert.equal(process.cwd(), '/Users/yong/.codex/worktrees/d9b1/lemmadeck')
+const [author, number] = process.argv.slice(2)
+assert(['56', '57'].includes(number))
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const root = `${scratch}/reviewer-5m-n${number}-display`
+const read = file => JSON.parse(fs.readFileSync(file))
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const bind = file => ({ path: path.resolve(file), sha256: hash(file) })
+const seed = read(`${scratch}/${author}/seed.json`)
+const draft = read(`${scratch}/${author}/draft.json`)
+const manifestFile = `${scratch}/batch27-render/5m-${seed.source.lesson}-capture-manifest.json`
+const commandFile = `${root}/supplement-command.json`
+const inventoryFile = `${root}/native-inventory.json`
+const manifest = read(manifestFile)
+const command = read(commandFile)
+const inventory = read(inventoryFile)
+assert.equal(command.exit_code, 0)
+assert.equal(command.all_protected_hashes_unchanged, true)
+assert.equal(command.primary_render_or_capture_repeated, false)
+assert.equal(manifest.screenshots.length, 12)
+const primaryFiles = ['desktop-primary.json', 'mobile-primary.json'].map(name => `${root}/${name}`)
+const primary = primaryFiles.map(read)
+assert.equal(primary[0].status, 'pass-with-gaps')
+assert.equal(primary[1].status, 'defects-with-gaps')
+let primaryOpens = 0
+for (const review of primary) {
+  assert.equal(review.images.length, 6)
+  assert.equal(review.image_opens, review.images.filter(row => row.actual_opened).length)
+  assert(review.image_opens <= 6)
+  primaryOpens += review.image_opens
+  for (const row of review.images) {
+    assert.equal(hash(row.path), row.sha256)
+    if (!row.actual_opened) {
+      assert(row.verified_alias_of)
+      assert.equal(hash(row.verified_alias_of), row.sha256)
+    }
+  }
+}
+const reviewFiles = Array.from({ length: Math.ceil(inventory.montages.length / 8) },
+  (_, i) => `${root}/bounded-${String(i + 1).padStart(2, '0')}.json`)
+const seenMontages = new Set()
+const seenCaptures = new Map()
+const contextCounts = primary.map(row => row.image_opens)
+for (const file of reviewFiles) {
+  const review = read(file)
+  assert(['pass', 'partial', 'fail'].includes(review.status), file)
+  assert(Number.isInteger(review.image_opens) && review.image_opens > 0 && review.image_opens <= 8)
+  assert.equal(review.montages.length, review.image_opens)
+  contextCounts.push(review.image_opens)
+  for (const montage of review.montages) {
+    const expected = inventory.montages[montage.index]
+    assert(expected && !seenMontages.has(montage.index))
+    assert.equal(montage.path, expected.path)
+    assert.equal(montage.sha256, expected.sha256)
+    assert.equal(montage.members.length, expected.members.length)
+    seenMontages.add(montage.index)
+    for (const member of montage.members) {
+      const original = expected.members.find(row => row.capture_id === member.capture_id)
+      assert(original && !seenCaptures.has(member.capture_id))
+      assert.equal(member.path, original.path)
+      assert.equal(member.sha256, original.sha256)
+      assert.equal(typeof member.observation, 'string')
+      assert(member.observation.trim())
+      seenCaptures.set(member.capture_id, { ...member, bounded_review: bind(file) })
+    }
+  }
+}
+assert.equal(seenMontages.size, inventory.montages.length)
+assert.equal(seenCaptures.size, command.captures.length)
+for (const row of [...manifest.screenshots, ...command.protectedFiles,
+  ...command.captures, ...inventory.montages]) assert.equal(hash(row.path), row.sha256, row.path)
+const targetedNames = number === '56' ? ['targeted-mobile-jump-r2']
+  : ['targeted-desktop-jump', 'targeted-equation-r2']
+const targets = targetedNames.map(name => {
+  const commandPath = `${root}/${name}-command.json`
+  const observationPath = `${root}/${name}-observation.json`
+  const receipt = read(commandPath)
+  const observation = read(observationPath)
+  assert.equal(receipt.exit_code, 0)
+  assert.equal(observation.status, 'pass')
+  assert.equal(observation.image_opens, 1)
+  assert.equal(observation.image.sha256, receipt.image.sha256)
+  assert.equal(hash(receipt.image.path), receipt.image.sha256)
+  return { name, command: bind(commandPath), observation: bind(observationPath),
+    image: receipt.image, actual_observation: observation.observation, image_opens: 1 }
+})
+const nonpassing = [...seenCaptures.values()].filter(row => row.status !== 'pass')
+const resolutions = number === '57' ? [
+  { capture_ids: [20], evidence: [...primaryFiles.map(bind), bind(reviewFiles[1])],
+    reason: 'The actual mobile primary observations record the beginning of the 10^3 times10^4 expansion. Capture20 records the overlapping four-factor group and the complete 10^7=10 000 000 terminal with punctuation. Its individual window remains partial; the left/right observed content is jointly complete.' },
+  { capture_ids: [21], evidence: [...primaryFiles.map(bind), bind(reviewFiles[1])],
+    reason: 'The actual primary final example contains the initial 1.2 times10^6 and2.3 times10^7 terms. Capture21 independently records the overlapping second term, coefficient multiplication and complete2.76 times10^13 terminal. Joint coverage does not change the original clipped screenshot or prove scroll affordance.' },
+  { capture_ids: [25], evidence: [bind(reviewFiles[1]), targets[1].observation, targets[1].command],
+    reason: 'The original written exercise capture remains partial. The fresh focused unchanged-formula capture independently shows the complete first equation and final closing parenthesis after(4/5)z-1, with surrounding paper. Only this disputed terminal is additionally credited, not a new whole-question review.' },
+  { capture_ids: [42, 43, 44], evidence: [bind(reviewFiles[2])],
+    reason: 'Capture42 actually shows the beginnings and shared middle entries of all three options. Capture43 actually shows option b final7.71 times10^7 and period; capture44 actually shows option c final7.71 times10^8 and period. Their left windows start at0 and the two right windows at6px inside321px media, so315px of literal content overlap. The independent observer transcribed the common entries and both terminals. Each individually incomplete capture keeps its failed status; their union covers all option content.' },
+] : []
+assert.deepEqual(nonpassing.map(row => row.capture_id).sort((a, b) => a - b),
+  resolutions.flatMap(row => row.capture_ids).sort((a, b) => a - b))
+const resolutionIds = new Set(resolutions.flatMap(row => row.capture_ids))
+const ledger = command.objects.map(row => {
+  const first = manifest.screenshots.find(image =>
+    image.path.endsWith(`${row.surface}-${row.viewport.width}-first.png`))
+  const last = manifest.screenshots.find(image =>
+    image.path.endsWith(`${row.surface}-${row.viewport.width}-last.png`))
+  assert(first && last)
+  const invalidLastWindow = first.sha256 === last.sha256 &&
+    row.primary_windows[0][0] !== row.primary_windows[1][0]
+  const coveredBy = row.whole_object_covered_by_primary.filter(name =>
+    name !== 'last' || !invalidLastWindow)
+  const footer = number === '56'
+    ? row.surface === 'text' && row.viewport.width === 390 && row.index === 5
+    : row.surface === 'text' && row.viewport.width === 1440 && row.index === 9
+  assert(coveredBy.length || row.supplement_ids.length || footer,
+    `Unobserved object ${row.surface}/${row.viewport.width}/${row.index}`)
+  for (const id of row.supplement_ids) {
+    const observation = seenCaptures.get(id)
+    assert(observation && (observation.status === 'pass' || resolutionIds.has(id)))
+  }
+  for (const region of row.regions) {
+    const positions = command.captures.filter(capture =>
+      capture.surface === row.surface && capture.viewport.width === row.viewport.width &&
+      capture.index === row.index && capture.region?.descendant_index === region.descendant_index)
+      .map(capture => capture.actual_left).sort((a, b) => a - b)
+    assert(positions.length && positions.at(-1) >= region.maximum)
+    const windows = [0, ...positions]
+    for (let i = 1; i < windows.length; i++) assert(windows[i] <= windows[i - 1] + region.width)
+  }
+  return { ...row, actually_supported_primary_windows: coveredBy,
+    aliased_calculated_last_window_not_credited: invalidLastWindow,
+    targeted_footer_observation: footer ? targets[0].observation : null }
+})
+const rejectedAttempts = []
+if (number === '56') {
+  const file = `${root}/targeted-mobile-jump.png`
+  const bytes = fs.readFileSync(file)
+  const dimensions = { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) }
+  assert(dimensions.height < 30)
+  rejectedAttempts.push({ image: bind(file), dimensions,
+    command: bind(`${root}/targeted-mobile-jump-command.json`),
+    status: 'unobserved-invalid-targeted-crop-retained-only-as-history',
+    counted_as_complete_display: false })
+}
+const output = `${root}/actual-observations.json`
+assert(!fs.existsSync(output))
+fs.writeFileSync(output, JSON.stringify({
+  schema: 's10y-actual-display-observations@1', ticket: 'STEMROBIN-182',
+  book: seed.source.book, lesson: seed.source.lesson, status: 'pass', outcome: 'pass',
+  reviewer: { kind: 'independent_agent',
+    identity: 'Fresh bounded primary, native-montage and targeted observers; parent integrates only textual evidence.' },
+  recorded_at: new Date().toISOString(), manifest: bind(manifestFile),
+  bounded_reviews: [...primaryFiles, ...reviewFiles].map(bind),
+  supplement_command: bind(commandFile), native_inventory: bind(inventoryFile),
+  protected_render_and_core_bindings: command.protectedFiles,
+  primary_images: manifest.screenshots, supplemental_images: command.captures,
+  native_montages: inventory.montages, targeted_observations: targets,
+  rejected_targeted_attempts_retained: rejectedAttempts,
+  original_full_object_coverage_ledger: command.objects,
+  actual_full_object_coverage_ledger: ledger,
+  parent_textual_joint_coverage_resolutions: resolutions,
+  original_individual_partial_or_failed_observations: nonpassing,
+  original_partial_or_failure_statuses_not_overwritten: true,
+  counts: { primary_PNGs: 12, primary_actual_opened: primaryOpens,
+    unopened_identical_aliases: 12 - primaryOpens,
+    supplementary_PNGs: command.captures.length, native_montages: inventory.montages.length,
+    targeted_final_PNGs: targets.length, rejected_unobserved_targeted_PNGs: rejectedAttempts.length,
+    original_and_usable_supplement_PNGs: 12 + command.captures.length + targets.length,
+    actual_distinct_PNG_inputs: primaryOpens + command.captures.length + targets.length,
+    fresh_context_image_counts: [...contextCounts, ...(number === '57' ? [1] : []), 2],
+    shared_targeted_context_includes_one_image_from_each_lesson: true,
+    actual_view_image_calls_for_this_lesson: primaryOpens + inventory.montages.length + targets.length,
+    unique_questions: draft.questions.length,
+    unique_options: draft.questions.reduce((sum, row) => sum + row.view.options.length, 0),
+    original_written_sources: seed.exercises.length,
+    unique_surface_viewport_combinations: 6, additional_unique_combinations: 0 },
+  complete_joint_prose_written_options_and_terminal_content_coverage: true,
+  whole_formula_at_once_or_scroll_affordance_not_claimed: true,
+  parent_image_opens: 0, image_payloads_returned_to_parent: false,
+  semantic_canonical_primary_render_or_capture_reruns: 0,
+  targeted_crop_retry_history_preserved: true,
+  browser_boundary: { headless: true, isolated: true, user_profile: false, browser_closed: true },
+  semantic_source_blocker_not_resolved_by_display: number === '57' ? '1106 speed reference frame' : null,
+  formal_application_acceptance_or_new_semantic_approval_claimed: false,
+  model: null, usage: null,
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ lesson: seed.source.lesson, status: 'pass',
+  distinct_actual_inputs: primaryOpens + command.captures.length + targets.length,
+  resolved_nonpassing_capture_ids: [...resolutionIds], parent_image_opens: 0 }))

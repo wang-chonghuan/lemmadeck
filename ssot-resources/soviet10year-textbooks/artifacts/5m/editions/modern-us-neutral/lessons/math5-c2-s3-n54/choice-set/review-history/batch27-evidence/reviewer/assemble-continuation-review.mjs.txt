@@ -1,0 +1,302 @@
+import { createHash } from 'node:crypto';
+import { readFileSync, statSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const reviewerDir = join(root, '.intentfold/tickets/STEMROBIN-182/tmp/reviewer-5m-n54');
+const authorDir = join(root, '.intentfold/tickets/STEMROBIN-182/tmp/5m-n54');
+const read = (path) => JSON.parse(readFileSync(path, 'utf8'));
+const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const byteHash = (path) => sha(readFileSync(path));
+const sorted = (value) => {
+  if (Array.isArray(value)) return value.map(sorted);
+  if (value !== null && typeof value === 'object') {
+    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, sorted(value[key])]));
+  }
+  return value;
+};
+// Contract snapshot serialization, not a canonical/structural gate invocation.
+const canonical = (value) => JSON.stringify(sorted(value))
+  .replace(/[\u0080-\uffff]/g, (character) =>
+    `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`);
+const same = (left, right) => canonical(left) === canonical(right);
+const digest = (value) => sha(Buffer.from(canonical(value), 'utf8'));
+const saveNew = (name, value) => writeFileSync(
+  join(reviewerDir, name), `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' },
+);
+
+const seedPath = join(authorDir, 'seed.json');
+const draftPath = join(authorDir, 'draft.json');
+const viewPath = join(authorDir, 'view.json');
+const wrongPath = join(authorDir, 'wrong-programs.json');
+const fidelityPath = join(reviewerDir, 'view-fidelity-frozen.json');
+const mathPath = join(reviewerDir, 'view-math-frozen.json');
+const sourcePath = join(reviewerDir, 'source-solutions.json');
+const preAddendumPath = join(reviewerDir, 'view-math-pre-disclosure-corrections.json');
+const postAddendumPath = join(reviewerDir, 'post-disclosure-review-addendum.json');
+const comparisonPath = join(reviewerDir, 'internal-comparison-facts.json');
+const seed = read(seedPath);
+const draft = read(draftPath);
+const view = read(viewPath);
+const wrong = read(wrongPath);
+const fidelity = read(fidelityPath);
+const math = read(mathPath);
+const sources = read(sourcePath);
+const preAddendum = read(preAddendumPath);
+const postAddendum = read(postAddendumPath);
+const comparison = read(comparisonPath);
+const seedDigest = digest(seed);
+const draftDigest = digest(draft);
+if (seedDigest !== fidelity.bindings.seed_canonical_sha256_reused) {
+  throw new Error('Current seed changed after inherited independent source phase; refusing stale review.');
+}
+if (byteHash(viewPath) !== math.view_byte_sha256) {
+  throw new Error('Current key-free view changed after freeze; refusing stale review.');
+}
+const draftView = { questions: draft.questions.map(({ id, view: questionView }) => ({
+  id, view: questionView,
+})) };
+if (!same(view, draftView)) {
+  throw new Error('Current draft view differs from independently frozen view; refusing unreviewed snapshot.');
+}
+
+const byNumber = (records) => new Map(records.map((record) => [record.number, record]));
+const fidelityByNumber = byNumber(fidelity.questions);
+const mathByNumber = byNumber(math.questions);
+const sourceByNumber = byNumber(sources.sources);
+const internalByNumber = byNumber(comparison.questions);
+const coverageDecisions = byNumber(comparison.coverage_decisions);
+const wrongById = new Map(wrong.programs.map((program) => [program.question_id, program]));
+for (const correction of [...preAddendum.corrections, ...postAddendum.corrections]) {
+  const option = mathByNumber.get(correction.number).options
+    .find((item) => item.option_id === correction.option_id);
+  option.evidence = correction.evidence;
+}
+
+const keyComparisons = [];
+const optionComparisons = [];
+const programComparisons = [];
+const questionReviews = draft.questions.map((question) => {
+  const number = question.source_numbers[0];
+  const visibleFacts = fidelityByNumber.get(number);
+  const mathematics = mathByNumber.get(number);
+  const internal = internalByNumber.get(number);
+  if (!visibleFacts || !mathematics || !internal || question.source_numbers.length !== 1) {
+    throw new Error(`Missing independent continuation facts for ${question.id}`);
+  }
+  const keyAgreement = same([...question.key.correct].sort(), [...mathematics.correct].sort());
+  keyComparisons.push({
+    question_id: question.id,
+    author_correct: question.key.correct,
+    frozen_correct: mathematics.correct,
+    exact_set_agreement: keyAgreement,
+  });
+  let mathVerdict = mathematics.verdict ?? 'pass';
+  if (!keyAgreement || internal.intent_verdict === 'revise') mathVerdict = 'revise';
+  const authorPrograms = wrongById.get(question.id)?.false_programs ?? [];
+  if (authorPrograms.length !== internal.programs.length) {
+    throw new Error(`Not every author misconception program has evidence for ${question.id}`);
+  }
+  const optionChecks = mathematics.options.map((option) => {
+    const rationale = question.key.rationales.find((item) => item.option_id === option.option_id);
+    const visibleOption = question.view.options.find((item) => item.id === option.option_id);
+    if (!rationale || !visibleOption) throw new Error(`Option drift for ${question.id}/${option.option_id}`);
+    const truthAgreement = rationale.truth === option.truth;
+    if (!truthAgreement) mathVerdict = 'revise';
+    let evidence = option.evidence;
+    evidence += ` Author truth=${rationale.truth}; frozen truth=${option.truth}.`;
+    const programFacts = internal.programs.find((item) => item.option_id === option.option_id);
+    if (programFacts) {
+      const program = authorPrograms.find((item) => item.option_id === option.option_id);
+      if (!program || program.executed_output !== visibleOption.text) {
+        throw new Error(`Author program output snapshot drift for ${question.id}/${option.option_id}`);
+      }
+      if (programFacts.verdict !== 'pass') mathVerdict = 'revise';
+      evidence += ` Internal misconception comparison: ${programFacts.evidence}`;
+      programComparisons.push({
+        question_id: question.id,
+        option_id: option.option_id,
+        author_operations: program.operations,
+        author_executed_output: program.executed_output,
+        author_derivation: rationale.derivation,
+        author_misconception: rationale.misconception,
+        verdict: programFacts.verdict,
+        output_reproduction_verdict: programFacts.output_reproduction_verdict
+          ?? programFacts.verdict,
+        evidence: programFacts.evidence,
+      });
+    } else {
+      evidence += ` Author correct-rationale comparison: ${internal.intent_evidence}`;
+    }
+    optionComparisons.push({
+      question_id: question.id,
+      option_id: option.option_id,
+      author_truth: rationale.truth,
+      frozen_truth: option.truth,
+      truth_agreement: truthAgreement,
+      author_derivation: rationale.derivation,
+      author_misconception: rationale.misconception,
+      evidence,
+    });
+    return { option_id: option.option_id, truth: option.truth, evidence };
+  });
+  return {
+    question_id: question.id,
+    task_fidelity: {
+      verdict: 'pass',
+      evidence: `${visibleFacts.fidelity} Author intent/limitations comparison: ${internal.intent_evidence}`,
+    },
+    redundancy: { verdict: 'pass', evidence: visibleFacts.redundancy },
+    answer_leakage: { verdict: 'pass', evidence: visibleFacts.leakage },
+    mathematics: {
+      verdict: mathVerdict,
+      independent_solution: `${mathematics.independent_solution} Internal solution comparison after freezing: ${internal.intent_evidence}`,
+      correct: mathematics.correct,
+      option_checks: optionChecks,
+    },
+  };
+});
+
+const sourceReviews = seed.exercises.map((exercise) => {
+  const number = exercise.number;
+  const original = sourceByNumber.get(number);
+  const visibleFacts = fidelityByNumber.get(number);
+  const coverage = draft.coverage.find((item) => item.source_number === number);
+  const internal = internalByNumber.get(number);
+  if (!original || !visibleFacts || !coverage || !internal) {
+    throw new Error(`Missing original source or coverage comparison for ${number}`);
+  }
+  const decision = coverageDecisions.get(number);
+  const originalSolution = original.units.map((unit) =>
+    `${unit.id}: ${unit.solution} ${unit.derivation ?? ''}${unit.domain ? ` Domain: ${unit.domain}.` : ''}`,
+  ).join(' ');
+  const explanation = decision?.evidence ?? visibleFacts.coverage;
+  return {
+    source_number: number,
+    independent_solution: `Reused without re-solving from ${sources.reviewer.identity}, frozen source-solutions.json. ${originalSolution}${original.ambiguity ? ` Source ambiguity retained: ${original.ambiguity}` : ''}`,
+    coverage: {
+      verdict: decision?.verdict ?? visibleFacts.coverage_verdict ?? 'pass',
+      evidence: `${explanation} Current author coverage cites[${coverage.question_ids.join(',')}]. Author omissions: ${coverage.omitted_tasks.join(' ')} Author reason: ${coverage.reason} Package comparison: ${visibleFacts.coverage}`,
+    },
+  };
+});
+const verdicts = [
+  ...sourceReviews.map((item) => item.coverage.verdict),
+  ...questionReviews.flatMap((item) => [
+    item.task_fidelity.verdict, item.redundancy.verdict, item.answer_leakage.verdict,
+    item.mathematics.verdict,
+  ]),
+];
+const outcome = verdicts.includes('blocked') ? 'blocked' : verdicts.includes('revise') ? 'revise' : 'pass';
+const review = {
+  schema: 's10y-choice-review-v1',
+  seed_sha256: seedDigest,
+  draft_sha256: draftDigest,
+  reviewer: {
+    kind: 'independent_agent',
+    identity: `${sources.reviewer.identity} [original-source review reused, unchanged]; continuation: Codex in the human-authorized independent reviewer chat on2026-11-16, separate from original author, not Tesla; no agents awakened or dispatched`,
+  },
+  source_reviews: sourceReviews,
+  figure_checks: [],
+  new_figure_reviews: [],
+  question_reviews: questionReviews,
+  outcome,
+};
+
+const countVerdicts = (items) => Object.fromEntries(['pass', 'revise', 'blocked']
+  .map((verdict) => [verdict, items.filter((item) => item === verdict).length]));
+const summary = {
+  outcome,
+  original_sources: seed.exercises.length,
+  inherited_grouped_source_tasks: sources.grouped_task_count,
+  questions: questionReviews.length,
+  options_checked: optionComparisons.length,
+  source_images: seed.figures.length,
+  authored_images: draft.new_figures.length,
+  modes: {
+    single: draft.questions.filter((question) => question.view.mode === 'single').length,
+    multiple: draft.questions.filter((question) => question.view.mode === 'multiple').length,
+  },
+  source_coverage: countVerdicts(sourceReviews.map((item) => item.coverage.verdict)),
+  mathematics: countVerdicts(questionReviews.map((item) => item.mathematics.verdict)),
+  task_fidelity: countVerdicts(questionReviews.map((item) => item.task_fidelity.verdict)),
+  redundancy: countVerdicts(questionReviews.map((item) => item.redundancy.verdict)),
+  answer_leakage: countVerdicts(questionReviews.map((item) => item.answer_leakage.verdict)),
+  complete_key_sets_matching: keyComparisons.filter((item) => item.exact_set_agreement).length,
+  complete_key_sets_mismatching: keyComparisons.filter((item) => !item.exact_set_agreement).length,
+  option_truths_matching_author: optionComparisons.filter((item) => item.truth_agreement).length,
+  option_truths_mismatching_author: optionComparisons.filter((item) => !item.truth_agreement).length,
+  independently_true_options: optionComparisons.filter((item) => item.frozen_truth === 'correct').length,
+  independently_false_options: optionComparisons.filter((item) => item.frozen_truth === 'incorrect').length,
+  author_wrong_programs_checked: programComparisons.length,
+  wrong_program_comparisons: countVerdicts(programComparisons.map((item) => item.verdict)),
+  wrong_program_output_reproduction: countVerdicts(
+    programComparisons.map((item) => item.output_reproduction_verdict),
+  ),
+  original_source_solution_comparisons: {
+    pass: comparison.questions.filter((item) => (item.intent_verdict ?? 'pass') === 'pass').length,
+    revise: comparison.questions.filter((item) => item.intent_verdict === 'revise').length,
+  },
+  author_defects: comparison.defects,
+  remaining_original_source_blocker: comparison.coverage_decisions.find((item) => item.verdict === 'blocked'),
+};
+if (summary.original_sources !== 40 || summary.questions !== 40
+    || summary.options_checked !== 120 || summary.author_wrong_programs_checked !== 79) {
+  throw new Error('Unexpected review scope; not every requested original/question/option/program was accounted for.');
+}
+const preserved = [
+  'source-solutions.json', 'source-phase-ready.json', 'source-reasoning.json',
+  'source-exact-arithmetic.json', 'image-observations.json',
+];
+const evidenceFiles = [
+  'view-fidelity-frozen.json', 'view-math-frozen.json',
+  'view-math-pre-disclosure-corrections.json', 'internal-comparison-facts.json',
+  'post-disclosure-review-addendum.json', 'assemble-continuation-review.mjs',
+];
+saveNew('internal-comparison.json', {
+  schema: 'independent-digest-bound-internal-comparison/v1',
+  seed_sha256: seedDigest,
+  draft_sha256: draftDigest,
+  wrong_programs_byte_sha256: byteHash(wrongPath),
+  key_comparisons: keyComparisons,
+  option_comparisons: optionComparisons,
+  program_comparisons: programComparisons,
+  summary,
+});
+saveNew('review.json', review);
+saveNew('continuation-complete.json', {
+  schema: 'independent-semantic-review-continuation-complete/v1',
+  completed_at: new Date().toISOString(),
+  status: 'full_semantic_gate_complete',
+  reviewer: review.reviewer,
+  original_source_review_identity: sources.reviewer,
+  seed_sha256: seedDigest,
+  draft_sha256: draftDigest,
+  current_seed_byte_sha256: byteHash(seedPath),
+  current_draft_byte_sha256: byteHash(draftPath),
+  current_view_byte_sha256: byteHash(viewPath),
+  current_wrong_programs_byte_sha256: byteHash(wrongPath),
+  review_path: join(reviewerDir, 'review.json'),
+  review_byte_sha256: byteHash(join(reviewerDir, 'review.json')),
+  preserved_existing_source_records: preserved.map((name) => ({
+    path: join(reviewerDir, name), byte_sha256: byteHash(join(reviewerDir, name)),
+  })),
+  new_evidence: evidenceFiles.map((name) => ({
+    path: join(reviewerDir, name),
+    byte_sha256: byteHash(join(reviewerDir, name)),
+    file_mtime: statSync(join(reviewerDir, name)).mtime.toISOString(),
+  })),
+  checks_not_rerun: [
+    'original source phase', 'canonical authoring gate', 'structural checker',
+    'browser', 'environment', 'database', 'setup', 'commit', 'agents',
+  ],
+  snapshot_binding: 'Current seed/draft contract digests computed only to bind this review; current draft view compared against the pre-key freeze. No canonical or structural validator was invoked.',
+  author_or_durable_files_modified: false,
+  summary,
+});
+console.log(JSON.stringify({
+  review_path: join(reviewerDir, 'review.json'),
+  seed_sha256: seedDigest,
+  draft_sha256: draftDigest,
+  ...summary,
+}, null, 2));

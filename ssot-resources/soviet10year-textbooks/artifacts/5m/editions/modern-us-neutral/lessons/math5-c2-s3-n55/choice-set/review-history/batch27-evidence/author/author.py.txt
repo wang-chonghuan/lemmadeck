@@ -1,0 +1,191 @@
+from datetime import datetime, timezone
+from fractions import Fraction as F
+import hashlib
+import json
+from math import gcd, lcm, prod
+from pathlib import Path
+
+
+OUT=Path(__file__).resolve().parent
+seed=json.loads((OUT/"seed.json").read_text())
+source=json.loads((OUT/"source-solutions.json").read_text())
+freeze=json.loads((OUT/"source-freeze.json").read_text())
+assert freeze["before_alternatives"] and not freeze["author_draft_exists_at_freeze"]
+assert hashlib.sha256((OUT/"source-solutions.json").read_bytes()).hexdigest()==freeze["source_solutions_sha256"]
+assert not (OUT/"draft.json").exists()
+by_number={item["source_number"]:item for item in source["solutions"]}
+digest=lambda value:hashlib.sha256(json.dumps(value,sort_keys=True,ensure_ascii=True,separators=(",",":")).encode()).hexdigest()
+
+
+def token(value):
+    if isinstance(value,str):
+        return value
+    value=F(value)
+    if value.denominator==1:
+        return str(value.numerator)
+    return ("-" if value<0 else "")+r"\frac{"+str(abs(value.numerator))+"}{"+str(value.denominator)+"}"
+
+
+def record_text(values,unit=""):
+    if isinstance(values,str):
+        return values
+    if len(values)==1:
+        return "$"+token(values[0])+"$"+(" "+unit if unit else "")
+    return "; ".join(f"{index}) ${token(value)}$"+(" "+unit if unit else "")
+                     for index,value in enumerate(values,1))
+
+
+def linear(coefficient,constant,variable):
+    coeff="" if coefficient==1 else "-" if coefficient==-1 else token(coefficient)
+    return coeff+variable+("+" if constant>=0 else "-")+token(abs(constant))
+
+
+def prompt(number,ending="选择按原顺序排列的完整结果记录。"):
+    return by_number[str(number)]["original_text"].removeprefix(f"{number}. ")+"\n\n"+ending
+
+
+questions=[]
+programs=[]
+
+
+def add(number,title,stem,correct,wrong1,wrong2,p1,p2,position,unit=""):
+    original=by_number[str(number)]
+    wrong_ids=[label for label in "ABC" if label!=position]
+    options={
+        position:(record_text(correct,unit),"correct",original["independent_derivation"],None),
+        wrong_ids[0]:(record_text(wrong1,unit),"incorrect",p1,p1),
+        wrong_ids[1]:(record_text(wrong2,unit),"incorrect",p2,p2),
+    }
+    qid=f"n55-{number}-{title}"
+    questions.append({
+        "id":qid,"source_numbers":[str(number)],
+        "view":{"mode":"single","stem":stem,"figure_ids":[],
+                "options":[{"id":label,"text":options[label][0],"figure_ids":[]} for label in "ABC"]},
+        "intent":{"task":original["whole_original_task"],
+                  "source_solution":original["independent_derivation"],
+                  "unit_reason":"One complete response retains every source subcase or every decisive modeling stage; no per-blank arithmetic clicks.",
+                  "concept_blocks":[3,7],"limitations":original["production_losses_for_later_choice"]+original["notices"],"figure_observations":[]},
+        "key":{"correct":[position],"rationales":[{"option_id":label,"truth":options[label][1],
+              "derivation":options[label][2],"misconception":options[label][3]} for label in "ABC"]},
+    })
+    programs.append({"question_id":qid,"execution_only_not_semantic_approval":True,
+                     "false_programs":[{"option_id":label,"executed_output":options[label][0],"operations":options[label][2]} for label in wrong_ids]})
+
+
+groups=[(2,3),(10,5),(5,6),(12,18)]
+
+
+def witnesses(bases,multipliers):
+    return "; ".join(f"{index}) $("+",".join(str(base*k) for k in multipliers)+")$"
+                    for index,base in enumerate(bases,1))
+
+
+correct_bases=[lcm(*group) for group in groups]
+wrong_gcd=[gcd(*group) for group in groups]
+wrong_max=[max(group) for group in groups]
+qid="n55-1073-four-complete-common-multiple-witnesses"
+candidate_texts={
+    "A":witnesses(correct_bases,[1,2,3]),
+    "B":witnesses(wrong_gcd,[1,2,3]),
+    "C":witnesses(wrong_max,[1,2,3]),
+    "D":witnesses(correct_bases,[3,4,5]),
+}
+questions.append({
+    "id":qid,"source_numbers":["1073"],
+    "view":{"mode":"multiple",
+            "stem":prompt(1073,"选择所有合法的完整记录。每行须给对应数对的三个互不相同的正公倍数，不要求它们是最小的三个。"),
+            "figure_ids":[],"options":[{"id":label,"text":candidate_texts[label],"figure_ids":[]} for label in "ABCD"]},
+    "intent":{"task":by_number["1073"]["whole_original_task"],
+              "source_solution":by_number["1073"]["independent_derivation"],
+              "unit_reason":"Whole four-row witness records preserve the free existence/construction task; different legal triples are allowed rather than a combination-code answer.",
+              "concept_blocks":[3,7],"limitations":by_number["1073"]["production_losses_for_later_choice"]+by_number["1073"]["notices"],"figure_observations":[]},
+    "key":{"correct":["A","D"],"rationales":[
+        {"option_id":"A","truth":"correct","derivation":"Each row is1,2,3 times LCM6,10,30,36; every value is divisible by both listed numbers and each triple is positive/distinct.","misconception":None},
+        {"option_id":"B","truth":"incorrect","derivation":"Use GCD1,5,1,6 instead of LCM6,10,30,36, then multiply by1,2,3. The resulting triples include1 for2/3,5 for10/5,1 for5/6,6 for12/18, none common to the relevant pair.","misconception":"Generate multiples of the common divisor instead of common multiples of the two original numbers."},
+        {"option_id":"C","truth":"incorrect","derivation":"Use maximum inputs3,10,6,18 as bases then multiply by1,2,3. Row2 is incidentally valid, but3 is not divisible by2,6 not by5 and18 not by12.","misconception":"Assume the larger number in each pair is itself a common multiple, without divisibility by the smaller."},
+        {"option_id":"D","truth":"correct","derivation":"Each row is3,4,5 times the LCM6,10,30,36, giving later but fully valid distinct positive common multiples. The source does not require the first three.","misconception":None},
+    ]},
+})
+programs.append({"question_id":qid,"execution_only_not_semantic_approval":True,"false_programs":[
+    {"option_id":"B","executed_output":candidate_texts["B"],"operations":f"Compute gcd bases {wrong_gcd} and multiply each by1,2,3."},
+    {"option_id":"C","executed_output":candidate_texts["C"],"operations":f"Compute maximum bases {wrong_max} and multiply each by1,2,3."}]})
+
+add(1074,"existential-common-multiple-certificate",
+    prompt(1074,"选择同时给出正确结论及有效计算依据的记录。"),
+    "有；$44=2\\cdot22=11\\cdot4$，且 $44<50$。",
+    f"没有；最小公倍数为 ${22*4}$，它不小于50。",
+    "有；$22$ 就是这样的公倍数。",
+    "Multiply22*4=88 without removing the shared factor2, claim it is least, and conclude no value below50.",
+    "Take the larger input22 as a common multiple without testing22/4; it is not divisible by4, so the alleged certificate is invalid.",
+    "B")
+add(1075,"complete-turnaround-periods",
+    prompt(1075,"以今天出航为经过0天的时刻；航程按经过的天数计算，每次返回后的第二天重新出航。选择依次为三船重复出航间隔、下次共同出航等待天数的记录。"),
+    [16,21,25,lcm(16,21,25)],
+    [15,20,24,lcm(15,20,24)],
+    [17,22,26,lcm(17,22,26)],
+    "Ignore stated next-day turnaround: periods15,20,24; LCM=2^3*3*5=120.",
+    "Add two days instead of one to each voyage:17,22,26; LCM=17*2*11*13=4862.",
+    "C",unit="天")
+groups1076=[(60,72),(396,180),(12,18,50),(168,231,60)]
+add(1076,"four-prime-exponent-lcms",
+    prompt(1076,"选择各组数最小正公倍数的完整记录。"),
+    [lcm(*group) for group in groups1076],
+    [gcd(*group) for group in groups1076],
+    [max(groups1076[0]),prod(groups1076[1]),prod(groups1076[2]),lcm(*groups1076[3])//11],
+    "Select minimum shared prime powers, computing GCDs12,36,2,3 instead of LCMs.",
+    "1 use largest input72. 2 multiply396*180=71280 without reducing repeated factors. 3 multiply12*18*50=10800. 4 omit unique prime11 from9240, giving840.",
+    "A")
+add(1077,"two-identical-linear-simplifications",
+    prompt(1077,"选择对原变量所有实数取值都成立的两个化简式。"),
+    [linear(F(2,5)-F(3,5),F(5,2),"x"),linear(F(1,3)+F(1,5)+F(7,15),F(22,3),"y")],
+    [linear(F(2,5)+F(3,5),F(5,2),"x"),linear(F(1+1+7,3+5+15),F(22,3),"y")],
+    [linear(F(2-3),F(1,2),"x"),linear(F(1),F(7,3),"y")],
+    "1 add2/5 and3/5 rather than subtract, obtaining x+5/2. 2 add coefficient numerators and denominators separately to9/23, leaving22/3 unchanged.",
+    "1 subtract coefficient numerators but drop denominator5, and read2 1/2 as1/2, yielding-x+1/2. 2 correctly collect coefficient1 but read7 1/3 as7/3, yieldingy+7/3.",
+    "C")
+add(1078,"two-collect-and-substitute-values",
+    prompt(1078),
+    [(F(3,7)+F(5,14))*F(7,11)+F(3,14),(F(1,9)+F(2,3))*F(3,7)+(F(4,5)-F(3,10))*F(2,3)],
+    [F(3,7)+F(5,14)+F(3,14),F(1,9)+F(4,5)+F(2,3)-F(3,10)],
+    [(F(3,7)+F(5,14))*F(7,11),(F(1,9)+F(2,3))*F(3,7)+(F(4,5)+F(3,10))*F(2,3)],
+    "Ignore all variable assignments by setting variables to1: first coefficient/constant sum1; second signed coefficient sum23/18.",
+    "1 omit final constant3/14 after coefficient substitution, giving1/2. 2 add instead of subtract3b/10, giving1/3+(11/10)(2/3)=16/15.",
+    "B")
+groups1079=[(18,45),(30,40),(210,350),(20,70,15)]
+add(1079,"four-additional-lcms",
+    prompt(1079,"选择各组数最小正公倍数的完整记录。"),
+    [lcm(*group) for group in groups1079],
+    [gcd(*group) for group in groups1079],
+    [45,prod(groups1079[1]),350,prod(groups1079[3])],
+    "Compute GCDs9,10,70,5 by shared minimum prime powers instead of LCM.",
+    "1 use largest input45;2 multiply30*40=1200;3 use largest input350;4 multiply20*70*15=21000, failing to retain each unique prime only to its maximum exponent.",
+    "A")
+add(1080,"two-leg-weighted-average-speed",
+    prompt(1080,"按所给两段运行时间计算整个行程的平均速度。"),
+    [(F(323,4)*4+F(361,5)*5)/(4+5)],
+    [(F(323,4)+F(361,5))/2],
+    [(F(323,4)*4+F(361,5)*5)/(4*5)],
+    "Average speeds directly without weighting unequal durations:(323/4+361/5)/2=3059/40km/h.",
+    "Compute correct total distance684km, but use product4*5=20 as total time instead of4+5=9; average171/5km/h.",
+    "B",unit="公里/小时")
+
+coverage=[{
+    "source_number":item["number"],
+    "question_ids":[q["id"] for q in questions if item["number"] in q["source_numbers"]],
+    "omitted_tasks":by_number[item["number"]]["production_losses_for_later_choice"],
+    "reason":"All original subcases and mathematical conclusions are represented. Free witness construction and independent written calculations remain production losses, not missing-input blockers.",
+} for item in seed["exercises"]]
+draft={"schema":"s10y-choice-draft-v1","seed_sha256":digest(seed),"new_figures":[],"questions":questions,"coverage":coverage}
+view={"questions":[{"id":q["id"],"view":q["view"]} for q in questions]}
+for name,value in [("draft.json",draft),("view.json",view),("wrong-programs.json",{
+        "execution_stage":"author arithmetic only; no semantic self-approval","programs":programs})]:
+    assert not (OUT/name).exists()
+    (OUT/name).write_text(json.dumps(value,ensure_ascii=True,indent=2)+"\n")
+(OUT/"draft-freeze.json").write_text(json.dumps({
+    "frozen_at":datetime.now(timezone.utc).isoformat(),"seed_sha256":digest(seed),"draft_sha256":digest(draft),
+    "view_sha256":hashlib.sha256((OUT/"view.json").read_bytes()).hexdigest(),
+    "questions":8,"options":25,"source_freeze_unchanged":True,"source_blockers":[],
+    "independent_review_pending":True,"semantic_approval":False,"model":None,"usage":None,
+},indent=2)+"\n")
+print(json.dumps({"questions":8,"options":25,"seed_sha256":digest(seed),"draft_sha256":digest(draft),
+                  "view_sha256":hashlib.sha256((OUT/"view.json").read_bytes()).hexdigest(),"independent_review_pending":True}))

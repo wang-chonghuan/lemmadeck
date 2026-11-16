@@ -1,0 +1,80 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { createRequire } from 'node:module'
+import { pathToFileURL } from 'node:url'
+
+assert.equal(process.cwd(), '/Users/yong/.codex/worktrees/d9b1/lemmadeck')
+delete process.env.PWDEBUG
+process.env.PLAYWRIGHT_HTML_OPEN = 'never'
+const { chromium } = createRequire(path.resolve('app/package.json'))('@playwright/test')
+const root = '.intentfold/tickets/STEMROBIN-182/tmp/reviewer-5m-n57-display'
+const commandFile = `${root}/supplement-command.json`
+const command = JSON.parse(fs.readFileSync(commandFile))
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const protectedFiles = command.protectedFiles
+for (const row of protectedFiles) assert.equal(hash(row.path), row.sha256)
+const html = protectedFiles.find(row => row.path.endsWith('/text.html'))
+assert(html)
+const output = `${root}/targeted-desktop-jump.png`
+const receipt = `${root}/targeted-desktop-jump-command.json`
+assert(!fs.existsSync(output) && !fs.existsSync(receipt))
+const started = new Date().toISOString()
+let browser
+let browserClosed = false
+let failure = null
+let geometry = null
+try {
+  browser = await chromium.launch({ headless: true })
+  const context = await browser.newContext({ viewport: { width: 1440, height: 960 }, deviceScaleFactor: 1 })
+  try {
+    await context.route(/^https?:/, route => route.abort())
+    const page = await context.newPage()
+    await page.goto(pathToFileURL(path.resolve(html.path)).href)
+    await page.evaluate(() => document.fonts.ready)
+    const jump = page.locator('a.jump')
+    assert.equal(await jump.count(), 1)
+    await jump.scrollIntoViewIfNeeded()
+    await page.evaluate(() => new Promise(resolve =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve))))
+    geometry = await jump.evaluate(node => {
+      const box = node.getBoundingClientRect()
+      return { x: box.x, y: box.y, width: box.width, height: box.height,
+        text: node.innerText, href: node.getAttribute('href'),
+        documentScrollY: scrollY, documentHeight: document.documentElement.scrollHeight }
+    })
+    assert.equal(geometry.text, '去做题 · 15 道 →')
+    assert(geometry.width > 100 && geometry.height > 30)
+    assert(geometry.x >= 0 && geometry.y >= 0 &&
+      geometry.x + geometry.width <= 1440 && geometry.y + geometry.height <= 960)
+    await jump.screenshot({ path: output, animations: 'disabled' })
+  } finally {
+    await context.close()
+  }
+} catch (error) {
+  failure = error.stack || String(error)
+} finally {
+  if (browser) {
+    await browser.close()
+    browserClosed = true
+  }
+}
+for (const row of protectedFiles) assert.equal(hash(row.path), row.sha256)
+fs.writeFileSync(receipt, JSON.stringify({
+  status: failure ? 'failed' : 'captured-awaiting-actual-observation',
+  executable: process.execPath,
+  args: ['.intentfold/tickets/STEMROBIN-182/tmp/capture-n57-desktop-jump.mjs'],
+  cwd: process.cwd(), started, finished: new Date().toISOString(),
+  exit_code: failure ? 1 : 0, failure, geometry,
+  image: failure ? null : { path: path.resolve(output), sha256: hash(output) },
+  protectedFiles, all_protected_hashes_unchanged: true,
+  coverage_gap: 'Actual desktop text first/last PNGs are byte-identical; their unscrolled pixels do not establish the calculated last window. The jump extends beyond the first screenshot.',
+  original_coverage_ledger_retained_without_overwrite: true,
+  primary_capture_or_render_or_semantic_or_canonical_reruns: 0,
+  browser: { headless: true, isolated: true, user_profile: false, browser_closed: browserClosed },
+  parent_image_opens: 0,
+}, null, 2) + '\n', { flag: 'wx' })
+if (failure) throw new Error(failure)
+console.log(JSON.stringify({ status: 'captured-awaiting-actual-observation',
+  image: output, browser_closed: browserClosed, parent_image_opens: 0 }))

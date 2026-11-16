@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+const [root, ...sources] = process.argv.slice(2)
+assert(root?.startsWith('ssot-resources/') && sources.length)
+const registry = `${root}/retention.json`
+const value = JSON.parse(fs.readFileSync(registry))
+assert(value.retained && !value.extra_author_and_parent_history_retained)
+const directory = `${root}/additional-original-evidence`
+assert(!fs.existsSync(directory))
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
+const walk = file => fs.statSync(file).isDirectory()
+  ? fs.readdirSync(file).flatMap(name => walk(path.join(file, name))) : [file]
+const pending = [[`${directory}/retention-before-additional-evidence.json.txt`, fs.readFileSync(registry)]]
+for (const source of sources) {
+  for (const file of walk(source)) {
+    if (file.includes('/__pycache__/')) continue
+    const relative = fs.statSync(source).isDirectory()
+      ? `${path.basename(source)}/${path.relative(source, file)}` : path.basename(file)
+    const target = `${directory}/${relative}${/\.(json|md|mjs|js|py|log|html)$/.test(file) ? '.txt' : ''}`
+    pending.push([target, fs.readFileSync(file)])
+  }
+}
+assert.equal(new Set(pending.map(([file]) => file)).size, pending.length)
+for (const [file, bytes] of pending) {
+  assert(!fs.existsSync(file))
+  value.retained[path.relative(root, file)] = {
+    original_bytes_sha256: hash(bytes), retained_bytes_sha256: hash(bytes),
+    inactive_history: file.endsWith('.txt'),
+  }
+}
+for (const [file, bytes] of pending) {
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  fs.writeFileSync(file, bytes, { flag: 'wx' })
+}
+value.extra_author_and_parent_history_retained = true
+value.extra_evidence_preserves_original_bytes_not_new_review = true
+fs.writeFileSync(registry, JSON.stringify(value, null, 2) + '\n')
+console.log(JSON.stringify({ status: 'pass', additional_files: pending.length,
+  root, canonical_semantic_display_reruns: 0 }))

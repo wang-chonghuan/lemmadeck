@@ -1,0 +1,322 @@
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
+
+const root = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const source = ".intentfold/tickets/STEMROBIN-182/tmp/5m-n54";
+const output = ".intentfold/tickets/STEMROBIN-182/tmp/5m-n54-repair";
+const reviewPath = ".intentfold/tickets/STEMROBIN-182/tmp/reviewer-5m-n54/review.json";
+assert.equal(process.cwd(), root);
+assert.equal(fs.realpathSync(path.join(root, output)), path.join(root, output));
+const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
+const read = (name) => fs.readFileSync(path.join(root, name));
+const parse = (name) => JSON.parse(read(name));
+const escapeAscii = (text) => text.replace(/[\u007f-\uffff]/g,
+  (char) => `\\u${char.charCodeAt(0).toString(16).padStart(4, "0")}`);
+function canonical(value) {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+  if (value && typeof value === "object") {
+    return `{${Object.keys(value).sort().map((key) =>
+      `${escapeAscii(JSON.stringify(key))}:${canonical(value[key])}`).join(",")}}`;
+  }
+  return escapeAscii(JSON.stringify(value));
+}
+const digest = (value) => sha(canonical(value));
+const clone = (value) => structuredClone(value);
+function writeNew(name, value) {
+  assert.equal(path.basename(name), name);
+  fs.writeFileSync(path.join(root, output, name),
+    `${escapeAscii(JSON.stringify(value, null, 2))}\n`, { flag: "wx" });
+}
+function command(argv) {
+  const started = new Date().toISOString();
+  const result = spawnSync(argv[0], argv.slice(1), {
+    cwd: root, encoding: "utf8", maxBuffer: 16 * 1024 * 1024,
+  });
+  return {
+    command: argv, cwd: root, execution_count: 1,
+    started, finished: new Date().toISOString(),
+    exit_code: result.status, stdout: result.stdout ?? "", stderr: result.stderr ?? "",
+    signal: result.signal, spawn_error: result.error?.message ?? null,
+    semantic_approval: false,
+  };
+}
+function changes(before, after, pointer = "") {
+  if (Object.is(before, after)) return [];
+  if (Array.isArray(before) && Array.isArray(after)) {
+    assert.equal(before.length, after.length, `array length changed at ${pointer}`);
+    return before.flatMap((value, index) => changes(value, after[index], `${pointer}/${index}`));
+  }
+  if (before && after && typeof before === "object" && typeof after === "object") {
+    assert.deepEqual(Object.keys(before), Object.keys(after), `fields changed at ${pointer}`);
+    return Object.keys(before).flatMap((key) => changes(before[key], after[key],
+      `${pointer}/${key.replace(/~/g, "~0").replace(/\//g, "~1")}`));
+  }
+  return [{ pointer, before, after }];
+}
+function exactChanges(before, after, allowed) {
+  const result = changes(before, after);
+  assert.deepEqual(result.map((row) => row.pointer).sort(), [...allowed].sort());
+  return result;
+}
+
+const outputs = [
+  "original-digests.json", "arithmetic-execution.json", "draft.json", "view.json",
+  "wrong-programs.json", "structural-command.json", "delta-invariance.json",
+];
+for (const name of outputs) assert.equal(fs.existsSync(path.join(root, output, name)), false);
+const originalBytes = new Map();
+for (const name of fs.readdirSync(path.join(root, source)).sort()) {
+  const relative = `${source}/${name}`;
+  assert.equal(fs.statSync(path.join(root, relative)).isFile(), true);
+  originalBytes.set(relative, read(relative));
+}
+originalBytes.set(reviewPath, read(reviewPath));
+const seed = parse(`${source}/seed.json`);
+const sourceSolutions = parse(`${source}/source-solutions.json`);
+const originalDraft = parse(`${source}/draft.json`);
+const originalView = parse(`${source}/view.json`);
+const originalWrong = parse(`${source}/wrong-programs.json`);
+const originalReview = parse(reviewPath);
+assert.equal(digest(seed), originalDraft.seed_sha256);
+assert.equal(digest(seed), sourceSolutions.seed_sha256);
+assert.equal(digest(seed), originalReview.seed_sha256);
+assert.equal(digest(originalDraft), originalReview.draft_sha256);
+assert.deepEqual(originalView, {
+  questions: originalDraft.questions.map(({ id, view }) => ({ id, view })),
+});
+assert.equal(originalDraft.questions.length, 40);
+assert.equal(originalDraft.coverage.length, 40);
+assert.deepEqual(seed.figures, []);
+assert.deepEqual(originalDraft.new_figures, []);
+
+const originalDigests = {
+  algorithm: "SHA-256",
+  byte_hashes: [...originalBytes].map(([name, bytes]) => ({
+    path: name, bytes: bytes.length, sha256: sha(bytes),
+  })),
+  canonical_rule: 'json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":"))',
+  canonical_hashes: [
+    ["seed.json", seed], ["source-solutions.json", sourceSolutions],
+    ["draft.json", originalDraft], ["view.json", originalView],
+    ["wrong-programs.json", originalWrong],
+  ].map(([name, value]) => ({ path: `${source}/${name}`, sha256: digest(value) }))
+    .concat([{ path: reviewPath, sha256: digest(originalReview) }]),
+};
+writeNew("original-digests.json", originalDigests);
+
+const arithmeticCommand = command(["python3", "-B", `${output}/arithmetic.py`]);
+writeNew("arithmetic-execution.json", arithmeticCommand);
+assert.equal(arithmeticCommand.exit_code, 0);
+assert.equal(arithmeticCommand.spawn_error, null);
+const arithmetic = JSON.parse(arithmeticCommand.stdout);
+const q43id = "n54-1043-four-full-expressions";
+const q46id = "n54-1046-full-circle-construction-plan";
+const q43index = originalDraft.questions.findIndex((row) => row.id === q43id);
+const q46index = originalDraft.questions.findIndex((row) => row.id === q46id);
+assert.ok(q43index >= 0 && q46index >= 0);
+const original43 = originalDraft.questions[q43index];
+const source43 = sourceSolutions.solutions.find((row) => row.source_number === "1043");
+assert.deepEqual(source43.ordered_results, ["19/36", "2", "30", "13/12"]);
+assert.deepEqual(source43.ordered_results.slice(1),
+  arithmetic["1043_ordered_source_results"].slice(1));
+assert.equal(source43.original_text, seed.exercises.find((row) => row.number === "1043").text);
+assert.equal(original43.intent.source_solution, source43.independent_derivation);
+assert.equal(original43.key.rationales[1].derivation, source43.independent_derivation);
+const correct43 = source43.independent_derivation.replace(
+  "1:2-109/42=-25/42, product=-25/36, add44/36.",
+  "1:1 25/42=67/42; 2-67/42=17/42, product=(7/6)(17/42)=17/36, "
+    + "add11/9=44/36 to obtain61/36.");
+assert.notEqual(correct43, source43.independent_derivation);
+const wrongA43 = "1 wrongly add11/9+7/6 before multiplying by bracket: "
+  + "(11/9+7/6)(2-67/42)=(43/18)(17/42)=731/756; "
+  + "2 ignore fractional parts in both mixed subtrahends: (4-2)(10-8)=4; "
+  + "3 add denominator fractions instead of subtracting: "
+  + "(55/6)/(1/3+1/36)=(55/6)/(13/36)=330/13; "
+  + "4 add final product instead of subtracting: "
+  + "(77/12)/(11/4)+(45/4)(1/9)=7/3+5/4=43/12.";
+const original46 = originalDraft.questions[q46index];
+const oldMidpoint = "For AB<diameter its midpoint lies between centre and chord, not at centre.";
+const newMidpoint = "For AB<diameter its midpoint lies on chord AB, not at centre.";
+assert.ok(original46.key.rationales[0].derivation.endsWith(oldMidpoint));
+assert.equal(original46.key.rationales[0].derivation,
+  original46.key.rationales[0].misconception);
+const wrongA46 = original46.key.rationales[0].derivation.replace(oldMidpoint, newMidpoint);
+
+const draft = clone(originalDraft);
+const repaired43 = draft.questions[q43index];
+repaired43.view.options[0].text = original43.view.options[0].text.replace(
+  "$-\\frac{1075}{756}$", "$\\frac{731}{756}$");
+repaired43.view.options[1].text = original43.view.options[1].text.replace(
+  "$\\frac{19}{36}$", "$\\frac{61}{36}$");
+repaired43.intent.source_solution = correct43;
+repaired43.key.rationales[0].derivation = wrongA43;
+repaired43.key.rationales[0].misconception = wrongA43;
+repaired43.key.rationales[1].derivation = correct43;
+draft.questions[q46index].key.rationales[0].derivation = wrongA46;
+draft.questions[q46index].key.rationales[0].misconception = wrongA46;
+const view = { questions: draft.questions.map(({ id, view: questionView }) =>
+  ({ id, view: questionView })) };
+const wrong = clone(originalWrong);
+const w43index = wrong.programs.findIndex((row) => row.question_id === q43id);
+const w46index = wrong.programs.findIndex((row) => row.question_id === q46id);
+assert.ok(w43index >= 0 && w46index >= 0);
+assert.equal(wrong.programs[w43index].false_programs[0].option_id, "A");
+assert.equal(wrong.programs[w46index].false_programs[0].option_id, "A");
+assert.equal(wrong.programs[w46index].false_programs[0].operations,
+  original46.key.rationales[0].derivation);
+wrong.programs[w43index].false_programs[0].executed_output = repaired43.view.options[0].text;
+wrong.programs[w43index].false_programs[0].operations = wrongA43;
+wrong.programs[w46index].false_programs[0].operations = wrongA46;
+
+// Bind computed outputs to the actual offered alternatives, not copied claims.
+function visibleResults(text) {
+  return [...text.matchAll(/\$([^$]+)\$/g)].map((match) => {
+    const fraction = match[1].match(/^(-?)\\frac\{(\d+)\}\{(\d+)\}$/);
+    return fraction ? `${fraction[1]}${fraction[2]}/${fraction[3]}` : match[1];
+  });
+}
+for (const optionId of ["A", "C"]) {
+  const option = repaired43.view.options.find((row) => row.id === optionId);
+  const actual = arithmetic["1043_wrong_procedures"][optionId];
+  assert.deepEqual(visibleResults(option.text), actual.map((row) => row.executed_result));
+  assert.ok(actual.every((row) => row.equals_offered && row.false_under_source));
+}
+assert.deepEqual(visibleResults(repaired43.view.options[1].text),
+  arithmetic["1043_ordered_source_results"]);
+const draftDelta = exactChanges(originalDraft, draft, [
+  `/questions/${q43index}/view/options/0/text`,
+  `/questions/${q43index}/view/options/1/text`,
+  `/questions/${q43index}/intent/source_solution`,
+  `/questions/${q43index}/key/rationales/0/derivation`,
+  `/questions/${q43index}/key/rationales/0/misconception`,
+  `/questions/${q43index}/key/rationales/1/derivation`,
+  `/questions/${q46index}/key/rationales/0/derivation`,
+  `/questions/${q46index}/key/rationales/0/misconception`,
+]);
+const viewDelta = exactChanges(originalView, view, [
+  `/questions/${q43index}/view/options/0/text`,
+  `/questions/${q43index}/view/options/1/text`,
+]);
+const wrongDelta = exactChanges(originalWrong, wrong, [
+  `/programs/${w43index}/false_programs/0/executed_output`,
+  `/programs/${w43index}/false_programs/0/operations`,
+  `/programs/${w46index}/false_programs/0/operations`,
+]);
+assert.deepEqual(draft.coverage, originalDraft.coverage);
+assert.deepEqual(draft.questions.map((row) => row.key.correct),
+  originalDraft.questions.map((row) => row.key.correct));
+assert.deepEqual(draft.questions[q46index].view, original46.view);
+const unrelated = originalDraft.questions.filter((row) => ![q43id, q46id].includes(row.id));
+assert.equal(unrelated.length, 38);
+const untouched = unrelated.map((row) => {
+  const after = draft.questions.find((question) => question.id === row.id);
+  assert.deepEqual(after, row);
+  return { question_id: row.id, before_sha256: digest(row), after_sha256: digest(after) };
+});
+const source1054 = sourceSolutions.solutions.find((row) => row.source_number === "1054");
+const coverage1054 = draft.coverage.find((row) => row.source_number === "1054");
+assert.ok(coverage1054.omitted_tasks.some((text) => text.startsWith("BLOCKED:")));
+const blocker = sourceSolutions.source_blockers.find((row) => row.source_number === "1054");
+assert.ok(blocker);
+writeNew("draft.json", draft);
+writeNew("view.json", view);
+writeNew("wrong-programs.json", wrong);
+
+function frozenInputs() {
+  return [...originalBytes].map(([name, bytes]) => {
+    const now = read(name);
+    assert.deepEqual(now, bytes, `original bytes changed: ${name}`);
+    return { path: name, before_sha256: sha(bytes), after_sha256: sha(now),
+      unchanged_bytes: true };
+  });
+}
+frozenInputs();
+const structural = command([
+  "python3", "-B", ".agents/skills/ld-s10y-choice/scripts/validate.py",
+  "--repo", ".", "--seed", `${source}/seed.json`, "--draft", `${output}/draft.json`,
+]);
+writeNew("structural-command.json", structural);
+const invariance = frozenInputs();
+const outputDigests = [
+  "repair.mjs", "arithmetic.py", ...outputs.filter((name) => name !== "delta-invariance.json"),
+].map((name) => {
+  const bytes = read(`${output}/${name}`);
+  return { path: `${output}/${name}`, bytes: bytes.length, sha256: sha(bytes),
+    canonical_sha256: name.endsWith(".json") ? digest(JSON.parse(bytes)) : null };
+});
+writeNew("delta-invariance.json", {
+  kind: "n54-narrow-author-repair-receipt-not-review",
+  ticket: "STEMROBIN-182", cwd: root,
+  authority: [`${source}/seed.json`, `${source}/source-solutions.json`],
+  reported_defects: reviewPath,
+  owned_write_root: output,
+  semantic_approval: false, review_written: false, independent_review_required: true,
+  draft_snapshot: { before: digest(originalDraft), after: digest(draft) },
+  deltas: [
+    { path: `${output}/draft.json`, compared_with: `${source}/draft.json`, fields: draftDelta },
+    { path: `${output}/view.json`, compared_with: `${source}/view.json`, fields: viewDelta },
+    { path: `${output}/wrong-programs.json`, compared_with: `${source}/wrong-programs.json`,
+      fields: wrongDelta },
+  ],
+  original_source_solution_note: {
+    path: `${source}/source-solutions.json`,
+    immutable: true, source_number: "1043",
+    preserved_erroneous_first_result: source43.ordered_results[0],
+    corrected_first_result_in_repaired_draft: "61/36",
+    corrected_source_solution_pointer: `/questions/${q43index}/intent/source_solution`,
+    no_rewritten_source_solution_file: true,
+    later_three_ordered_results_unchanged: source43.ordered_results.slice(1),
+  },
+  unchanged: {
+    original_files: invariance,
+    unrelated_question_count: untouched.length, unrelated_questions: untouched,
+    all_40_correct_sets: { unchanged: true,
+      before_sha256: digest(originalDraft.questions.map(({ id, key }) => ({ id, correct: key.correct }))),
+      after_sha256: digest(draft.questions.map(({ id, key }) => ({ id, correct: key.correct }))) },
+    all_40_coverage_rows: { unchanged: true,
+      before_sha256: digest(originalDraft.coverage), after_sha256: digest(draft.coverage),
+      reason: "1043's full result record is now answerable; the original task, mapping, "
+        + "unit and production loss remain true and require no coverage rewrite." },
+    question_1043_task_and_stem: true, question_1043_option_C_and_rationale: true,
+    question_1043_option_A_and_B_results_2_to_4: true,
+    question_1046_view_and_correct_set_C: true,
+    new_figures: [], source_figure_count: 0,
+    source_seed_sha256: digest(seed), source_solutions_sha256: digest(sourceSolutions),
+  },
+  unresolved_source_blocker: {
+    source_number: "1054", status: "blocked", source_amended: false,
+    issue: blocker.issue, source_solution_sha256: digest(source1054),
+    unchanged_coverage: coverage1054,
+    conditional_emptied_tank_result_is_not_unconditional_answer: true,
+  },
+  computation: {
+    artifact: `${output}/arithmetic-execution.json`,
+    wrong_procedures_executed: ["1043-A positions 1-4", "1043-C positions 1-4"],
+    no_other_source_resolving: true,
+    previous_wrong_projection_rows_not_reexecuted: 38,
+    previous_execution_metadata_preserved_not_newly_endorsed: true,
+  },
+  structural_check: {
+    artifact: `${output}/structural-command.json`, execution_count: 1,
+    exit_code: structural.exit_code, stdout: structural.stdout, stderr: structural.stderr,
+    review_argument_supplied: false,
+  },
+  output_digests_except_this_receipt: outputDigests,
+  forbidden_side_effects_performed: [],
+  handoff_status: "Await independent comparison of changed fields; "
+    + "1054 keeps whole-package source coverage blocked. No approval claimed.",
+});
+console.log(JSON.stringify({
+  output_root: output, draft_sha256: digest(draft),
+  changed_field_counts: { draft: draftDelta.length, view: viewDelta.length,
+    wrong_programs: wrongDelta.length },
+  unchanged_questions: untouched.length, all_keys_unchanged: true, all_coverage_unchanged: true,
+  original_files_byte_unchanged: invariance.length,
+  structural_exit_code: structural.exit_code,
+  structural_stdout: structural.stdout, structural_stderr: structural.stderr,
+  source_1054: "blocked", semantic_approval: false,
+}, null, 2));
+if (structural.exit_code !== 0 || structural.spawn_error) process.exitCode = 1;

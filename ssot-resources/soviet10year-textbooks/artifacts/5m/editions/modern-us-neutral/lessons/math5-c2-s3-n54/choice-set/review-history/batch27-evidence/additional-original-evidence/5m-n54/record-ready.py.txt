@@ -1,0 +1,63 @@
+from collections import Counter
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+
+out = Path(sys.argv[1]).resolve()
+read = lambda name: json.loads((out / name).read_text())
+digest = lambda value: hashlib.sha256(json.dumps(
+    value, sort_keys=True, ensure_ascii=True, separators=(",", ":")
+).encode()).hexdigest()
+sha = lambda name: hashlib.sha256((out / name).read_bytes()).hexdigest()
+seed, draft, view = read("seed.json"), read("draft.json"), read("view.json")
+structural, freeze = read("structural-command.json"), read("source-freeze.json")
+assert structural["execution_count"] == 1 and structural["exit_code"] == 0
+assert sha("source-solutions.json") == freeze["source_solutions_sha256"]
+assert view == {"questions": [{"id": q["id"], "view": q["view"]} for q in draft["questions"]]}
+assert draft["seed_sha256"] == digest(seed)
+record = {
+    "status": "ready_for_independent_source_first_then_pure_view_review",
+    "lesson": seed["source"]["lesson"],
+    "author_identity": "Sartre; disjoint author scope, not independent review of this draft",
+    "frozen_at": datetime.now(timezone.utc).isoformat(),
+    "source_count": len(seed["exercises"]),
+    "source_numbers": [item["number"] for item in seed["exercises"]],
+    "selected_definition_blocks": [item["block"] for item in seed["concepts"]],
+    "actual_source_asset_count": sum(len(item["assets"]) for item in seed["figures"]),
+    "actual_source_assets": seed["figures"],
+    "new_figure_count": len(draft["new_figures"]),
+    "question_count": len(draft["questions"]),
+    "option_count": sum(len(q["view"]["options"]) for q in draft["questions"]),
+    "mode_counts": dict(Counter(q["view"]["mode"] for q in draft["questions"])),
+    "seed_sha256": digest(seed),
+    "seed_byte_sha256": sha("seed.json"),
+    "draft_sha256": digest(draft),
+    "draft_byte_sha256": sha("draft.json"),
+    "view_byte_sha256": sha("view.json"),
+    "paths": {name.removesuffix(".json"): str(out/name) for name in [
+        "seed.json","source-solutions.json","source-freeze.json","draft.json",
+        "view.json","wrong-programs.json","structural-command.json"]},
+    "source_solutions_frozen_before_alternatives": True,
+    "source_freeze_preserved": True,
+    "source_blockers": read("source-solutions.json")["source_blockers"],
+    "pure_view_fields": ["questions", "id", "view"],
+    "structural_execution_count": 1,
+    "structural_exit_code": 0,
+    "structural_stdout": structural["stdout"],
+    "semantic_self_approval": False,
+    "canonical_executions": 0,
+    "browser_executions": 0,
+    "in_flight_operations": 0,
+    "durable_or_application_DB_writes": False,
+    "previous_answers_choices_or_review_records_as_design_authority": False,
+    "independent_review_pending": True,
+    "model": None, "usage": None,
+}
+assert not (out/"ready.json").exists()
+(out/"ready.json").write_text(json.dumps(record,ensure_ascii=True,indent=2)+"\n")
+print(json.dumps({key:record[key] for key in [
+    "status","lesson","source_count","question_count","option_count","seed_sha256",
+    "draft_sha256","view_byte_sha256","structural_execution_count","structural_exit_code"]}))

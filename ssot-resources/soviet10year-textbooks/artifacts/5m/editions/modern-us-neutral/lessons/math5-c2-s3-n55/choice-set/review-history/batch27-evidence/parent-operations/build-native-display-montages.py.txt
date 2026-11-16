@@ -1,0 +1,77 @@
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+from PIL import Image, ImageChops, ImageDraw
+
+root = Path.cwd()
+directory = root / ".intentfold/tickets/STEMROBIN-182/tmp" / sys.argv[1]
+command = json.loads((directory / "supplement-command.json").read_text())
+assert command["exit_code"] == 0
+target = directory / "montages"
+assert not target.exists()
+target.mkdir()
+groups = {}
+for entry in command["captures"]:
+    file = Path(entry["path"])
+    assert hashlib.sha256(file.read_bytes()).hexdigest() == entry["sha256"]
+    with Image.open(file) as image:
+        entry = {**entry, "width": image.width, "height": image.height}
+    groups.setdefault((entry["surface"], entry["viewport"]["width"]), []).append(entry)
+
+montages = []
+for (surface, viewport), entries in groups.items():
+    batches = []
+    batch = []
+    for entry in entries:
+        trial = batch + [entry]
+        width = sum(row["width"] for row in trial) + 16 * (len(trial) - 1)
+        height = max(row["height"] for row in trial) + 24
+        if batch and (width > 1500 or width * height > 2100000):
+            batches.append(batch)
+            batch = []
+        batch.append(entry)
+    if batch:
+        batches.append(batch)
+    for index, batch in enumerate(batches, 1):
+        width = sum(row["width"] for row in batch) + 16 * (len(batch) - 1)
+        height = max(row["height"] for row in batch) + 24
+        canvas = Image.new("RGB", (width, height), "#dddddd")
+        draw = ImageDraw.Draw(canvas)
+        members = []
+        left = 0
+        for entry in batch:
+            with Image.open(entry["path"]) as image:
+                image = image.convert("RGB")
+                canvas.paste(image, (left, 24))
+                assert ImageChops.difference(
+                    canvas.crop((left, 24, left + image.width, 24 + image.height)),
+                    image,
+                ).getbbox() is None
+            draw.text((left, 4), f"Capture {entry['id']}: {surface} {entry['index']}", fill="black")
+            members.append({
+                "capture_id": entry["id"], "path": entry["path"],
+                "sha256": entry["sha256"],
+                "rect": [left, 24, entry["width"], entry["height"]],
+                "pixels_byte_identical": True,
+            })
+            left += entry["width"] + 16
+        file = target / f"{surface}-{viewport}-{index:02d}.png"
+        canvas.save(file)
+        montages.append({
+            "path": str(file), "sha256": hashlib.sha256(file.read_bytes()).hexdigest(),
+            "width": width, "height": height, "scale": 1, "cropped": False,
+            "members": members,
+        })
+output = {
+    "status": "native-montages-awaiting-actual-observation",
+    "supplement_inputs": len(command["captures"]),
+    "montages": montages, "montage_count": len(montages),
+    "extra_surface_viewport_combinations": 0,
+    "no_resize_or_content_changes": True,
+}
+file = directory / "native-inventory.json"
+assert not file.exists()
+file.write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n")
+print(json.dumps({"inputs": len(command["captures"]), "montages": len(montages)}))

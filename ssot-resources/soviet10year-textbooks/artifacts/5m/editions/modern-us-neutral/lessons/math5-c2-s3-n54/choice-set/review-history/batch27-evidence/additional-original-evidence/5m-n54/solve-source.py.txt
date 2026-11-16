@@ -1,0 +1,208 @@
+from datetime import datetime, timezone
+from fractions import Fraction as F
+import hashlib
+import json
+from pathlib import Path
+
+
+OUT = Path(__file__).resolve().parent
+seed = json.loads((OUT / "seed.json").read_text())
+canonical = lambda value: hashlib.sha256(json.dumps(
+    value, sort_keys=True, ensure_ascii=True, separators=(",", ":")
+).encode()).hexdigest()
+show = lambda value: str(F(value))
+solutions = {}
+
+
+def record(number, task, values, working, notices=None, losses=None):
+    solutions[str(number)] = {
+        "source_number": str(number),
+        "whole_original_task": task,
+        "ordered_results": [show(value) if isinstance(value, (int, F)) else value for value in values],
+        "independent_derivation": working,
+        "notices": notices or [],
+        "production_losses_for_later_choice": losses or ["Choosing a result does not demonstrate independently writing the calculation."],
+    }
+
+
+record(1033, "State the distributive law, write it in a,b,c, and verify at all three supplied values.",
+       ["a(b+c)=ab+ac; (a+b)c=ac+bc", F(43,63), F(5,7)],
+       "Multiplication distributes over addition. With a=2/3,b=1/6,c=6/7: b+c=43/42, a(b+c)=43/63; ab+ac=1/9+4/7=43/63. Also (a+b)c=(5/6)(6/7)=5/7=4/7+1/7=ac+bc.",
+       losses=["Law/proof recognition cannot demonstrate originating the verbal statement, formula and numerical verification."])
+record(1034, "All nine mixed-number multiplications in printed order.",
+       [F(31,5)*4,F(65,7)*2,3*F(29,4),6*F(8,7),F(17,4)*4,F(17,8)*8,10*F(27,5),F(34,3)*3,F(247,9)*9],
+       "Convert mixed numbers to (31/5,65/7,29/4,8/7,17/4,17/8,27/5,34/3,247/9). Multiply the entire number by its displayed integer, not just the fractional part.")
+record(1035, "All ten expressions, preserving nested product order and common factors.",
+       [(F(14,3)+F(11,2))*6,(F(23,7)+F(5,7))*7,(8-F(10,9))*9,(F(109,8)-F(101,8))*208,(1-F(7,5))*35,
+        (4-F(4,3)*2)*F(1,2),F(93,11)*(F(38,9)+F(61,9)),F(33,5)*(F(43,6)-F(13,6)),
+        (F(75,8)-F(59,8))*F(19,7),F(15,4)*(F(15,4)+F(1,4))],
+       "1:6(14/3+11/2)=28+33. 2:7(23/7+5/7)=28. 3:72-10. 4:(109/8-101/8)208=208. 5:(1-7/5)35=-14. 6:inner product 8/3, then (4-8/3)/2. 7:factor93/11, sum11. 8:factor33/5, difference5. 9:factor19/7, difference2. 10:factor15/4, sum4.")
+record(1036, "Solve both original equations over real numbers.",
+       [F(27,35),-7],
+       "1:(1/2+2/3)x=13/5-17/10=9/10, hence (7/6)x=9/10 and x=27/35. 2:(-2/7+3/14)y=-1/8+5/8=1/2, hence -y/14=1/2 and y=-7.")
+record(1037, "Simplify all four expressions identically, not only at an assigned variable.",
+       ["-9x-6","(2/3)x+4/5","-(7/4)y-81/100","-3/2"],
+       "1:x-3-(10x+3)=-9x-6. 2:x+2/5-(x/3-2/5)=2x/3+4/5. 3:(13/20)y-11/20-(12/5)y-13/50=-7y/4-81/100. 4:k/9-1-k/9-1/2=-3/2 for every k.")
+record(1038, "Distances for 5,12,20,24 equal steps of 1 1/5 metres.",
+       [F(6,5)*n for n in [5,12,20,24]], "Distance=(6/5)n metres for each of the four specified step counts.")
+record(1039, "Compute the stated tree-lifetime chain, without supplying botanical facts.",
+       [150*F(19,5),150*F(19,5)*11],
+       "Pine=150*(19/5)=570 years; the last named tree is 11*570=6270 years.",
+       notices=["The unusual literal tree name is retained as a label only; no outside taxonomy or empirical lifespan claim is used."])
+record(1040, "Area difference between the two rectangular rooms.",
+       [F(53,10)*4,4*F(33,10),F(53,10)*4-4*F(33,10)],
+       "Large area=21.2 square metres, small=13.2 square metres; difference=4(5.3-3.3)=8 square metres.")
+record(1041, "All nine signed mixed-number sums and differences.",
+       [F(22,3)+F(28,5),F(20,3)-F(7,5),F(15,4)+F(43,9),F(125,6)-F(11,4),
+        F(93,8)+F(53,6),F(356,9)-F(25,6),-F(87,10)-F(14,15),-F(59,10)+F(3,4),-F(17,5)-F(9,4)],
+       "Common denominators in order:15,15,36,12,24,18,30,20,20. Numerator results:194,79,307,217,491,637,-289,-103,-113. A leading minus on a mixed number negates its entire magnitude.")
+record(1042, "Solve all four equations in original variable order x,y,a,b.",
+       [F(62,9)+F(7,6),F(119,8)-F(65,6),F(71,8)-F(49,6),F(77,12)+F(1261,18)],
+       "Isolate x by adding62/9; y=119/8-65/6; a=71/8-49/6; b=77/12+1261/18. These are reversible translations of each equality.")
+record(1043, "All four precedence-sensitive expressions.",
+       [F(11,9)+F(7,6)*(2-F(109,42)),(4-F(37,15))*(10-F(200,23)),
+        (4+F(31,6))/(F(1,3)-F(1,36)),F(77,12)/F(11,4)-F(45,4)*F(1,9)],
+       "1:2-109/42=-25/42, product=-25/36, add44/36. 2:(23/15)(30/23)=2. 3:(55/6)/(11/36)=30. 4:7/3-5/4=13/12. Both division denominators are nonzero.")
+record(1044, "Compare the quotient of differences with the difference of quotients.",
+       [F(4,3),0,">"],
+       "(4-12/5)/(3-9/5)=(8/5)/(6/5)=4/3. 4/(12/5)-3/(9/5)=5/3-5/3=0. First > second; division does not distribute this way. All original denominators are nonzero.")
+record(1045, "Evaluate both original variable expressions at their respective given pairs.",
+       [F(12,5)*F(25,12)+F(147,40),F(35,4)*(F(5,2)+F(8,7))],
+       "1:(12/5)(25/12)+147/40=5+147/40=347/40. 2:(35/4)(5/2+8/7)=(35/4)(51/14)=255/8.")
+record(1046, "Draw radius3.5 circle, choose a chord AB<7, construct its symmetry axis, decide centre membership and find unmarked centre.",
+       ["Take two distinct non-antipodal points A,B on the circle, so 0<AB<7.",
+        "The axis is the perpendicular bisector of AB; O lies on it because OA=OB=3.5.",
+        "Choose a third circle point C distinct from A,B; intersect the perpendicular bisectors of AB and AC to find O."],
+       "Two circle points means distinct geometric points. Equal-radius distances give centre membership on the perpendicular bisector. AB<diameter excludes a diameter, but a second nonparallel chord is still needed to locate the centre uniquely. Three distinct circle points are noncollinear; their two chord bisectors meet at the circle centre.",
+       notices=["Coincident labels would not define a chord axis. The visible construction plan will explicitly use distinct A,B,C rather than hide that requirement."],
+       losses=["Choice recognition does not produce the radius3.5 circle, select points, construct perpendicular bisectors or physically mark their intersection."])
+record(1047, "Eight-year annual mean with inclusive five-year and three-year groups.",
+       [(5*135000+3*149000)/F(8)],
+       "1966-1970 inclusive gives5 years; 1971-1973 gives3. Total=675000+447000=1122000 devices; weighted annual mean=140250.")
+record(1048, "Recover manuscript total from two fractions and seven-page difference.",
+       [7/(F(3,7)-F(5,14))],
+       "(3/7-5/14)T=7; coefficient1/14, so T=98 pages.")
+record(1049, "Compare river and rail volumes.",
+       [32000*F(3,5),32000*F(2,5),32000*F(1,5)],
+       "River=.60*32000=19200; rail=.40*32000=12800; difference6400 cubic metres.")
+record(1050, "Recover nested school allocation and whole purchase.",
+       [44/F(1,5),(44/F(1,5))/F(1,8)],
+       "44 kg is20% of school allocation, so allocation220kg. This is12.5%=1/8 of purchase; total1760kg.")
+record(1051, "Recover full road length from remaining third-year5 1/4 km.",
+       [F(21,4)/(1-F(8,27)-F(4,9))],
+       "Remainder=1-8/27-12/27=7/27; (7/27)L=21/4, so L=81/4 km.")
+record(1052, "Recover original money with second spending based on the remainder.",
+       [60/(F(3,5)*(1-F(2,7)))],
+       "First remainder5/7 of original; second spending(3/5)(5/7)=3/7. Thus (3/7)M=60 and M=140 dollars.")
+record(1053, "Total three bags and resulting flour, keeping both targets.",
+       [10/(1-F(5,18)-2*F(1,3)),180*F(91,100)],
+       "Third fraction=1-5/18-1/3=7/18; second=6/18. Difference1/18 of total is10kg, so total180kg. Bran9% gives remaining91%, 163.8kg flour.",
+       notices=["Flour calculation uses the source's elementary complement model: the only stated non-flour output is9% bran; other milling losses are not supplied. State this model visibly if used."])
+record(1054, "Find oilbox total from three barrel statements without silently assuming the tank was emptied.",
+       ["Let T be initial litres. Barrels:3T/10, T/2, 3T/10-6; balance R=6-T/10.",
+        "Nonnegative barrel/balance constraints give20<=T<=60; strictly positive third-barrel contents give20<T<=60.",
+        "If and only if the extra emptied-tank condition R=0 is supplied, T=60 litres."],
+       "The original never states the oilbox is emptied. Summing the three stated amounts gives11T/10-6, which need not equal T. T=40 produces(12,20,6) and balance2; T=60 produces(18,30,12) and balance0. Both satisfy the actual statements, so no unique initial volume follows.",
+       notices=["ESSENTIAL SOURCE GAP for a unique numeric total: final tank balance is unstated. A complete parameterized answer or possible-allocation judgment must retain this, not present60 as unconditionally determined."],
+       losses=["Choice can judge complete legal allocations but cannot recover the original missing final-balance condition."])
+record(1055, "First-day paper use from total percentage and day2/day1 ratio.",
+       [F(33,5)*F(3,5)/(1+F(6,5))],
+       "Two-day use=(33/5)(3/5)=99/25 tons; day2=6/5 day1, total11/5 day1; day1=9/5 tons.")
+record(1056, "Both morning and afternoon potato sales.",
+       [F(1),F(7,5)],
+       "Sold total=(16/5)(3/4)=12/5 tons. Morning=5/7 afternoon; total12/7 afternoon, afternoon7/5, morning1 ton.")
+record(1057, "Integer number of students scoring2 with given exact mean3.8.",
+       [2],
+       "Known weighted score148 and count38. (148+2n)/(38+n)=19/5 =>740+10n=722+19n =>n=2. Total40 and score152 verify3.8.",
+       notices=["3.8 is used as the stated exact average, not silently as a rounded interval."])
+record(1058, "Both equations with like terms on both sides.",
+       [-F(11,3),F(45,91)],
+       "1:(7/6-23/12)x=2+3/4, so(-3/4)x=11/4 and x=-11/3. 2:(19/10+17/15)a=5/2-1, so(91/30)a=3/2 and a=45/91.")
+record(1059, "Both complete multi-operation expressions.",
+       [F(4,3)*(F(26,3)/F(13,9)-F(27,8)+F(13,8))-F(11,6),
+        (F(46,15)-F(16,15)/F(8,5)+F(2,5))*F(15,7)-F(8,7)],
+       "1:inner26/3 divided13/9=6, -27/8+13/8=-7/4, bracket17/4; result17/3-11/6=23/6. 2:16/15 divided8/5=2/3; bracket14/5; product6; subtract8/7 gives34/7.")
+record(1060, "All six mixed-number multiplications.",
+       [F(93,13)*2,F(227,28)*5,F(51,8)*2,F(87,16)*8,5*F(16,5),F(83,9)*9],
+       "Improper mixed numerators93,227,51,87,16,83 over denominators13,28,8,16,5,9. Multiply the whole mixed number.")
+record(1061, "All four distributive expressions.",
+       [(F(18,5)-F(31,15))*5,(F(31,17)-F(35,34))*34,
+        (F(139,17)+F(65,17))*F(21,4),F(43,13)*(F(618,41)-F(85,41))],
+       "1:(54/15-31/15)5=23/3. 2:(62/34-35/34)34=27. 3:factor21/4, coefficient204/17=12, result63. 4:factor43/13, difference533/41=13, result43.")
+record(1062, "Both substitutions with full supplied variable values.",
+       [3*F(37,15)+5*F(76,25),F(29,4)*8+F(29,9)*9],
+       "1:37/5+76/5=113/5. 2:58+29=87.")
+record(1063, "Total distance across both three-hour legs.",
+       [3*(F(19,4)+F(17,4))],
+       "Add distances3*(19/4)+3*(17/4)=27km, not the speeds alone.")
+record(1064, "Second box after doubling first amount and adding2 2/5kg.",
+       [2*F(127,10)+F(12,5)],
+       "2*(127/10)+12/5=139/5kg.")
+record(1065, "Combined equation and word-problem time.",
+       [F(1,12)+(F(1,12)+F(1,3))],
+       "Equation1/12h; word problem1/12+1/3=5/12h; both total1/2h.")
+record(1066, "Thirty complete covered notebooks.",
+       [30*(F(7,50)+F(3,20))],
+       "One complete notebook7/50+3/20=29/100 dollars; thirty=87/10 dollars.")
+record(1067, "Recover all delivered bricks from fractional difference840.",
+       [840/(F(2,5)-F(3,8))],
+       "Second-minus-first=2/5-3/8=1/40 of delivery; total840*40=33600 bricks.")
+record(1068, "Both room areas from remaining20 square metres.",
+       [25,15],
+       "Remaining fraction1-5/12-1/4=1/3, total60; large25 and small15 square metres.")
+record(1069, "All three complete expressions with left-associative successive division.",
+       [F(3)/4/F(5,6)+F(5,2)*F(2,5)-F(1)/F(10,9),
+        F(11,4)/(F(3,2)-F(2,5))+(F(3,4)+F(5,6))/F(19,6),
+        (F(2,15)+F(19,12))*F(30,103)-(F(2)/F(9,4))*F(9,32)],
+       "1:(3/4)/(5/6)=9/10, product1, final quotient9/10 =>1. 2:11/4 divided11/10=5/2, 19/12 divided19/6=1/2 =>3. 3:103/60 times30/103=1/2, 8/9 times9/32=1/4 =>1/4. All divisors nonzero.")
+record(1070, "Both expressions, with second identically zero for every m.",
+       [F(17,7)*F(25,8)-(F(3,7)*F(25,8)+F(4,5)*F(5,4)),0],
+       "1:combine17/7-3/7=2, then2*(25/8)-(4/5)(5/4)=21/4. 2:43/5-21/5-22/5=0, so expression0 for every m including47/13.")
+record(1071, "Both equations, preserving rational-equation excluded denominator.",
+       [F(1,5),F(8,9)],
+       "1:domain11/3-5x!=0, so x!=11/15. Dividing4/9 by it equals1/6 iff denominator8/3; x=1/5 is allowed. 2:(x+11/3)(9/4)=41/4 =>x+11/3=41/9 =>x=8/9.",
+       notices=["Do not lose x!=11/15 in a complete rational-equation solution."])
+record(1072, "Run the entire dependency program a,b then x,y then z.",
+       [20,F(18,5),-26,49,-1274],
+       "a=(-5/2)/(-1/8)=20; b=(3/4)(24/5)=18/5. x=(-7/4)20+(5/2)(18/5)=-26; y=(19/5)20-(15/2)(18/5)=49; z=(-26)49=-1274.",
+       losses=["Complete-program recognition does not demonstrate independently executing and recording every intermediate operation."])
+
+assert set(solutions) == {item["number"] for item in seed["exercises"]}
+assert seed["figures"] == []
+source = {
+    "stage": "independent-author-source-only",
+    "lesson": seed["source"]["lesson"],
+    "seed_sha256": canonical(seed),
+    "stage_complete": True,
+    "created_before_any_alternatives": True,
+    "selected_definition_blocks": [0],
+    "excluded_worked_example_blocks": [1,2,3,4],
+    "source_count": 40,
+    "actual_source_assets": [],
+    "source_image_count": 0,
+    "solutions": [
+        {**solutions[item["number"]], "original_text": item["text"]}
+        for item in seed["exercises"]
+    ],
+    "source_blockers": [
+        {"source_number":"1054","issue":"Unique total requires an unstated final tank balance; complete parameter family is available.","conditional_if_emptied":"60 litres"}
+    ],
+    "previous_answers_choices_or_other_agent_solutions_read": False,
+    "model": None,
+    "usage": None,
+}
+target = OUT / "source-solutions.json"
+assert not target.exists()
+target.write_text(json.dumps(source, ensure_ascii=True, indent=2) + "\n")
+freeze = {
+    "stage_complete": True, "before_alternatives": True,
+    "frozen_at": datetime.now(timezone.utc).isoformat(),
+    "seed_sha256": canonical(seed),
+    "source_solutions_sha256": hashlib.sha256(target.read_bytes()).hexdigest(),
+    "source_solutions_canonical_sha256": canonical(source),
+    "source_count":40, "all_original_numbers":[item["number"] for item in seed["exercises"]],
+    "actual_source_asset_count":0, "definitions":[0],
+    "semantic_approval":False, "author_draft_exists_at_freeze":(OUT/"draft.json").exists(),
+}
+(OUT / "source-freeze.json").write_text(json.dumps(freeze, indent=2) + "\n")
+print(json.dumps({"source_count":40,"seed_sha256":canonical(seed),"source_solutions":str(target),"before_alternatives":True}))

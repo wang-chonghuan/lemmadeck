@@ -1,0 +1,147 @@
+import hashlib
+import json
+import pathlib
+
+
+ROOT = pathlib.Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+TICKET_TMP = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp"
+
+
+def digest(raw):
+    canonical = json.dumps(
+        json.loads(raw), sort_keys=True, ensure_ascii=True, separators=(",", ":")
+    ).encode("utf-8")
+    return {
+        "canonical_sha256": hashlib.sha256(canonical).hexdigest(),
+        "bytes_sha256": hashlib.sha256(raw).hexdigest(),
+        "byte_count": len(raw),
+    }
+
+
+for batch in ("5m-n56", "5m-n57"):
+    owned = TICKET_TMP / ("reviewer-" + batch)
+    checks_path = owned / "view-checks.json"
+    checks_raw = checks_path.read_bytes()
+    checks = json.loads(checks_raw)
+    pure_path = owned / "view-input-snapshot/pure-view.json"
+    pure_raw = pure_path.read_bytes()
+    pure = json.loads(pure_raw)
+    source_ready = json.loads((owned / "source-phase-ready.json").read_bytes())
+    view_freeze = json.loads((owned / "view-input-snapshot/freeze.json").read_bytes())
+    mode_by_id = {q["id"]: q["view"]["mode"] for q in pure["questions"]}
+    truths = [
+        {
+            "question_id": review["question_id"],
+            "mode": mode_by_id[review["question_id"]],
+            "source_task_ids": review["source_task_ids"],
+            "verdict": review["mathematics"]["verdict"],
+            "independent_solution_from_frozen_source": (
+                review["mathematics"]["independent_solution"]
+            ),
+            "correct": review["mathematics"]["correct"],
+            "option_checks": review["mathematics"]["option_checks"],
+        }
+        for review in checks["question_reviews"]
+    ]
+    options = [o for q in truths for o in q["option_checks"]]
+    frozen = {
+        "schema": "s10y-choice-view-math-frozen-v1",
+        "phase": "VIEW_MATH_FROZEN",
+        "batch": batch,
+        "reviewer": checks["reviewer"],
+        "pure_view_phase_complete": True,
+        "source_phase_repeated": False,
+        "bindings": {
+            "source_seed": source_ready["input_snapshot"],
+            "source_solutions": source_ready["source_solutions_snapshot"],
+            "author_visible_input": {
+                "authority_path": view_freeze["authority_path"],
+                "canonical_sha256": view_freeze["raw_canonical_sha256"],
+                "bytes_sha256": view_freeze["raw_bytes_sha256"],
+                "byte_count": view_freeze["raw_byte_count"],
+            },
+            "keyfree_pure_view": {
+                "path": str(pure_path.relative_to(ROOT)),
+                **digest(pure_raw),
+            },
+            "view_checks": {
+                "path": str(checks_path.relative_to(ROOT)),
+                **digest(checks_raw),
+            },
+        },
+        "counts": {
+            "source_count": checks["counts"]["source_count"],
+            "source_task_count": checks["counts"]["source_task_count"],
+            "represented_source_count": checks["counts"]["represented_source_count"],
+            "represented_source_task_count": (
+                checks["counts"]["represented_source_task_count"]
+            ),
+            "omitted_source_task_count": checks["counts"]["omitted_source_task_count"],
+            "question_count": len(pure["questions"]),
+            "question_math_records": len(truths),
+            "single_count": sum(q["mode"] == "single" for q in truths),
+            "multiple_count": sum(q["mode"] == "multiple" for q in truths),
+            "visible_option_count": sum(
+                len(q["view"]["options"]) for q in pure["questions"]
+            ),
+            "option_truth_records": len(options),
+            "true_option_count": sum(o["truth"] == "correct" for o in options),
+            "false_option_count": sum(o["truth"] == "incorrect" for o in options),
+            "unresolved_visible_option_count": sum(
+                o["truth"] not in ("correct", "incorrect") for o in options
+            ),
+            "source_blocker_count": len(source_ready["source_blockers"]),
+            "visible_targeted_finding_count": len(checks["targeted_findings"]),
+            "figure_reference_count": view_freeze["figure_reference_count"],
+        },
+        "all_visible_truths": truths,
+        "package_checks": checks["package_checks"],
+        "source_ambiguities_retained": source_ready["source_ambiguities"],
+        "source_blockers_retained": source_ready["source_blockers"],
+        "source_omissions_observed": checks.get("source_omissions_observed", []),
+        "targeted_findings": checks["targeted_findings"],
+        "all_visible_question_math_outcome": "pass",
+        "visible_gate_outcome": checks["visible_gate_outcome"],
+        "phase_status": checks["phase_status"],
+        "staged_disclosure": {
+            "source_frozen_before_view": True,
+            "pure_view_and_truths_frozen": True,
+            "author_internal_solutions_seen": False,
+            "author_keys_seen": False,
+            "author_draft_seen": False,
+            "author_wrong_programs_seen": False,
+            "author_coverage_or_limitations_seen": False,
+            "author_comparison_complete": False,
+            "next_phase": "INTERNALS only after separate authorization",
+            "stopped_before_internals": True,
+        },
+        "operations": {
+            "explicit_shell_workdir": str(ROOT),
+            "only_owned_reviewer_directories_written": True,
+            "source_files_unchanged": True,
+            "images_opened": False,
+            "validators_or_canonical_commands_run": False,
+            "git_db_env_dependencies_app_schema_global_checks_used": False,
+            "other_chats_or_subdelegation_used": False,
+            "paused_agents_touched": False,
+        },
+    }
+    out = owned / "view-math-frozen.json"
+    with out.open("x", encoding="utf-8") as stream:
+        json.dump(frozen, stream, ensure_ascii=True, indent=2)
+        stream.write("\n")
+    summary = {
+        "batch": batch,
+        "phase_status": frozen["phase_status"],
+        "view_gate": frozen["visible_gate_outcome"],
+        "counts": frozen["counts"],
+        "pure_view_hashes": digest(pure_raw),
+        "view_checks_hashes": digest(checks_raw),
+        "view_math_frozen_hashes": digest(out.read_bytes()),
+        "correct_sets": [
+            {"question_id": q["question_id"], "correct": q["correct"]}
+            for q in truths
+        ],
+        "stopped_before_internals": True,
+    }
+    print(json.dumps(summary, ensure_ascii=True, indent=2))

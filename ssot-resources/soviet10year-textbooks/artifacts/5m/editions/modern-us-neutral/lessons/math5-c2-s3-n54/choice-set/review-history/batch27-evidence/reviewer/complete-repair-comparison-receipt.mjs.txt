@@ -1,0 +1,205 @@
+import { createHash } from 'node:crypto';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
+
+const root = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const ticketTmp = join(root, '.intentfold/tickets/STEMROBIN-182/tmp');
+const originalDir = join(ticketTmp, '5m-n54');
+const repairedDir = join(ticketTmp, '5m-n54-repair');
+const reviewerDir = join(ticketTmp, 'reviewer-5m-n54');
+const read = (path) => JSON.parse(readFileSync(path, 'utf8'));
+const hashBytes = (path) => createHash('sha256').update(readFileSync(path)).digest('hex');
+const oldReviewPath = join(reviewerDir, 'review.json');
+const repairedReviewPath = join(reviewerDir, 'review-repaired.json');
+const oldReview = read(oldReviewPath);
+const repairedReview = read(repairedReviewPath);
+const completion = read(join(reviewerDir, 'continuation-complete.json'));
+const delta = read(join(repairedDir, 'delta-invariance.json'));
+const factsPath = join(reviewerDir, 'repair-changed-internal-facts.json');
+const facts = read(factsPath);
+const freezePath = join(reviewerDir, 'repair-1043-view-truths-frozen.json');
+const freeze = read(freezePath);
+const authorArithmetic = read(join(repairedDir, 'arithmetic-execution.json'));
+const authorStructure = read(join(repairedDir, 'structural-command.json'));
+const firstAssemblyPath = join(reviewerDir, 'assemble-repaired-continuation.mjs');
+const firstAssembly = readFileSync(firstAssemblyPath, 'utf8');
+const persistPosition = firstAssembly.indexOf("saveNew('review-repaired.json', repairedReview);");
+if (persistPosition < firstAssembly.indexOf('const actualDeltas =')
+    || persistPosition < firstAssembly.indexOf('const copiedQuestionChecks =')
+    || repairedReview.draft_sha256 !== delta.draft_snapshot.after
+    || repairedReview.outcome !== 'blocked') {
+  throw new Error('Saved repaired review is not the completed, scoped comparison checkpoint.');
+}
+
+// Receipt metadata only; permit the expected review set[] -> [B] as one changed value.
+const recordDelta = (before, after, pointer = '') => {
+  if (isDeepStrictEqual(before, after)) return [];
+  if (Array.isArray(before) && Array.isArray(after) && before.length === after.length) {
+    return before.flatMap((item, index) => recordDelta(item, after[index], `${pointer}/${index}`));
+  }
+  if (before !== null && after !== null
+      && typeof before === 'object' && typeof after === 'object'
+      && !Array.isArray(before) && !Array.isArray(after)
+      && isDeepStrictEqual(Object.keys(before).sort(), Object.keys(after).sort())) {
+    return Object.keys(before).flatMap((key) =>
+      recordDelta(before[key], after[key], `${pointer}/${key}`));
+  }
+  return [{ pointer, before, after }];
+};
+const countVerdicts = (items) => Object.fromEntries(['pass', 'revise', 'blocked']
+  .map((verdict) => [verdict, items.filter((item) => item === verdict).length]));
+const changedId = 'n54-1043-four-full-expressions';
+const wordingId = 'n54-1046-full-circle-construction-plan';
+const summary = {
+  outcome: repairedReview.outcome,
+  source_count: repairedReview.source_reviews.length,
+  question_count: repairedReview.question_reviews.length,
+  option_count: repairedReview.question_reviews
+    .reduce((count, item) => count + item.mathematics.option_checks.length, 0),
+  changed_view_questions_reviewed: 1,
+  changed_internal_question_scope: 2,
+  unchanged_complete_questions_reused: 38,
+  all_authored_correct_sets_structurally_unchanged: 40,
+  all_authored_truth_labels_structurally_unchanged: 120,
+  all_author_coverage_rows_structurally_unchanged: 40,
+  all_source_selector_rows_structurally_unchanged: 40,
+  unchanged_source_reviews_copied_verbatim: 39,
+  all_independent_source_solutions_copied_verbatim: 40,
+  mathematics: countVerdicts(repairedReview.question_reviews.map((item) => item.mathematics.verdict)),
+  source_coverage: countVerdicts(repairedReview.source_reviews.map((item) => item.coverage.verdict)),
+  removed_original_defect_ids: facts.removed_original_defect_ids,
+  remaining_blocked_source: '1054',
+  whole_group_approved: false,
+};
+const receipt = {
+  schema: 'independent-digest-bound-changed-snapshot-continuation/v1',
+  completed_at: new Date().toISOString(),
+  status: 'changed_snapshot_continuation_complete_original_gate_not_repeated',
+  reviewer: repairedReview.reviewer,
+  original_source_review_identity: completion.original_source_review_identity,
+  seed_sha256: repairedReview.seed_sha256,
+  original_draft_sha256: oldReview.draft_sha256,
+  repaired_draft_sha256: repairedReview.draft_sha256,
+  original_review: {
+    path: oldReviewPath,
+    byte_sha256: hashBytes(oldReviewPath),
+    frozen_byte_sha256: completion.review_byte_sha256,
+    preserved_unchanged: hashBytes(oldReviewPath) === completion.review_byte_sha256,
+  },
+  repaired_review: {
+    path: repairedReviewPath, byte_sha256: hashBytes(repairedReviewPath),
+    reused_completed_comparison_checkpoint_not_rewritten: true,
+  },
+  digest_binding_method: 'The completed comparison reused supplied contract snapshot digests after checking current byte hashes against the author delta receipt and binding its before digest to the original frozen independent review. No canonical command/digest regeneration or checker was run.',
+  revised_1043_view_freeze_before_repaired_internals: {
+    path: freezePath, byte_sha256: hashBytes(freezePath), correct: freeze.correct,
+    original_author_internals_known_from_prior_gate: true,
+    repaired_internals_read_before_freeze: false,
+  },
+  changed_internal_facts: { path: factsPath, byte_sha256: hashBytes(factsPath) },
+  completed_comparison_execution: {
+    command: ['node', '.intentfold/tickets/STEMROBIN-182/tmp/reviewer-5m-n54/assemble-repaired-continuation.mjs'],
+    cwd: root,
+    script_path: firstAssemblyPath,
+    script_byte_sha256: hashBytes(firstAssemblyPath),
+    semantic_comparisons_and_structured_delta_completed: true,
+    saved_review_after_all_invariance_assertions: true,
+    process_exit_code: 1,
+    failure_after_review_write: 'Receipt metadata only: strict repair-input delta helper was also used for the review delta and rejected the expected mathematics.correct array length change[] -> [B].',
+    completed_delta_or_semantic_checks_reexecuted_to_recover: false,
+    recovery: 'This receipt-only script records the already completed scoped comparison, permits the expected review-set metadata change, and does not rewrite or re-review the saved repaired review.',
+  },
+  verified_structured_author_deltas_from_completed_comparison: delta.deltas.map((item) => ({
+    file: item.path,
+    compared_with: item.compared_with,
+    actual_before_after_fields_verified_equal_to_receipt: true,
+    exact_authorized_fields_only: true,
+    changes: item.fields,
+  })),
+  original_input_byte_bindings_verified_in_completed_comparison: [
+    'seed.json', 'source-solutions.json', 'draft.json', 'view.json', 'wrong-programs.json',
+  ].map((name) => ({
+    path: join(originalDir, name),
+    byte_sha256: delta.unchanged.original_files
+      .find((item) => item.path.endsWith(`/5m-n54/${name}`)).after_sha256,
+    preserved: true,
+  })),
+  independent_source_bindings_verified_in_completed_comparison:
+    completion.preserved_existing_source_records.map((item) => ({ ...item, preserved: true })),
+  repaired_input_byte_bindings_verified_in_completed_comparison: [
+    'draft.json', 'view.json', 'wrong-programs.json',
+  ].map((name) => {
+    const entry = delta.output_digests_except_this_receipt
+      .find((item) => item.path.endsWith(`/5m-n54-repair/${name}`));
+    return {
+      path: join(repairedDir, name), byte_sha256: entry.sha256,
+      contract_snapshot_sha256_reused_from_receipt: entry.canonical_sha256,
+    };
+  }),
+  unchanged_complete_questions_verified_in_completed_comparison:
+    repairedReview.question_reviews
+      .filter((item) => ![changedId, wordingId].includes(item.question_id))
+      .map((item) => ({
+        question_id: item.question_id,
+        entire_author_question_exact_structured_equal: true,
+        original_review_copied_verbatim: true,
+      })),
+  unchanged_source_reviews_verified_in_completed_comparison:
+    repairedReview.source_reviews.filter((item) => item.source_number !== '1043')
+      .map((item) => ({ source_number: item.source_number, original_review_copied_verbatim: true })),
+  authored_key_truth_source_coverage_invariance: {
+    all_40_authored_correct_sets_equal: true,
+    all_120_authored_truth_labels_equal: true,
+    all_40_author_coverage_rows_equal: true,
+    all_40_source_concept_figure_selectors_equal: true,
+    source_seed_digest_unchanged: true,
+    all_40_independent_source_solutions_unchanged: true,
+    source_1054_review_copied_verbatim: true,
+    question_1046_view_unchanged: true,
+    question_1043_C_option_and_rationale_unchanged: true,
+    other_wrong_program_entries_unchanged: 77,
+  },
+  changed_comparisons: facts.comparisons,
+  supplied_author_receipts_reused_not_executed: [
+    {
+      path: join(repairedDir, 'arithmetic-execution.json'),
+      byte_sha256: hashBytes(join(repairedDir, 'arithmetic-execution.json')),
+      declared_execution_count: authorArithmetic.execution_count,
+      declared_exit_code: authorArithmetic.exit_code,
+      unchanged_C_execution_not_new_independent_check: true,
+    },
+    {
+      path: join(repairedDir, 'structural-command.json'),
+      byte_sha256: hashBytes(join(repairedDir, 'structural-command.json')),
+      declared_execution_count: authorStructure.execution_count,
+      declared_exit_code: authorStructure.exit_code,
+      reviewer_checker_execution_count: 0,
+    },
+    {
+      path: join(repairedDir, 'delta-invariance.json'),
+      byte_sha256: hashBytes(join(repairedDir, 'delta-invariance.json')),
+      independently_verified_by_completed_structured_delta: true,
+    },
+    {
+      path: join(repairedDir, 'original-digests.json'),
+      byte_sha256: hashBytes(join(repairedDir, 'original-digests.json')),
+    },
+  ],
+  review_record_delta_metadata_only: recordDelta(oldReview, repairedReview),
+  original_gate_repeated: false,
+  browser_or_images_used: false,
+  author_or_existing_frozen_files_modified: false,
+  summary,
+};
+if (!receipt.original_review.preserved_unchanged) {
+  throw new Error('Original full review changed before receipt completion.');
+}
+writeFileSync(join(reviewerDir, 'repair-changed-comparison-receipt.json'),
+  `${JSON.stringify(receipt, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({
+  review_path: repairedReviewPath,
+  receipt_path: join(reviewerDir, 'repair-changed-comparison-receipt.json'),
+  repaired_draft_sha256: repairedReview.draft_sha256,
+  ...summary,
+}, null, 2));

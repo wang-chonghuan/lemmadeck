@@ -1,0 +1,386 @@
+import copy
+import hashlib
+import json
+import pathlib
+
+
+ROOT = pathlib.Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+TICKET_TMP = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp"
+
+
+COVERAGE_EVIDENCE = {
+    "5m-n56": {
+        "1081": "All four complete conversion groups and written-denominator LCM requirements are retained. The author declares loss of independently written conversions/minimality proof; this matches the frozen recognition limitation and the 77/70 convention.",
+        "1082": "All four frozen signed-expression tasks are cited, including both negative results. Written conversion/calculation production loss is explicitly declared; no source expression or sign is omitted.",
+        "1083": "All four three-term source tasks retain their complete signs and values. The declared independent working loss matches choice recognition; no arithmetic task is dropped.",
+        "1084": "Both mixed-number tasks are present as complete expressions. Author limitations explicitly distinguish choosing a value from independently writing mixed-number conversions and operations.",
+        "1085": "The one chained word-problem task retains all comparison dependencies and the remaining length. Author declares independent equation/model production loss; the combined first-two reference is not dropped.",
+        "1086": "The grain inventory task retains initial stock, receipt, dispatch, result and tonnes. Author declares inventory-equation production loss without claiming independent modeling.",
+        "1087": "Both applications are present, with all three requested quantities in each labeled tuple. The author declares independent proportional-model production loss. Whole tuples preserve total and both directional ratios.",
+        "1088": "Both full compound expressions and their division/grouping domains are represented. Independent derivation/reciprocal-working losses are declared; no source term or final subtraction is omitted.",
+        "1089": "All four frozen signed arithmetic tasks are represented. The author declares independent fraction-calculation working loss; negative results and final signs remain unchanged.",
+        "1090": "Both source tasks retain complete mixed-number expressions, including both terms of the subtracted parenthesis. Independent parenthesis/mixed-number working is declared as unobserved.",
+        "1091": "The complete coal stock-flow task retains the outgoing/incoming directions and tonnes. Author explicitly declares independent stock-model production loss.",
+        "1092": "All three frozen tasks are represented in the composite plan, and the author declares physical initial-triangle and reflection-drawing losses. However, the initial SSS plan is identical in every option, so no independent initial-SSS decision is discriminated. This additional frozen-view loss is absent from intent.limitations and coverage.omitted_tasks, while coverage.reason claims SSS is covered without qualification. Revise those internal declarations only; reflection mathematics and the frozen view remain passing.",
+    },
+    "5m-n57": {
+        "1093": "All four frozen product/quotient tasks are represented by one complete ordered row. Author declares independent factor-counting derivation loss, not omission of any expression.",
+        "1094": "All four normalization tasks preserve their numbers and order, checking value and coefficient range together. Independent written conversion loss is explicitly declared.",
+        "1095": "Both frozen full products retain coefficients and exponents together. Author declares independent multiplication working loss; neither source product is omitted.",
+        "1096": "The supplied-data light-distance task preserves speed, seconds per year, kilometre result and unit cancellation. Author declares independent physical model/unit-working production loss.",
+        "1097": "The full rectangle-area task retains both side lengths and squared units. Independent area-model production loss is declared; no unseen figure or drawing claim is introduced.",
+        "1098": "Both frozen algebra/value tasks retain all terms and assigned values, especially the constant final 7/16 in subpart 2. The declared symbolic/substitution production loss matches recognition.",
+        "1099": "Both source tasks include both required deliverables: simplified identity and specified evaluation. Negative distribution remains represented; independent writing of that work is declared as lost.",
+        "1100": "Both source tasks retain two distinct complete valid methods and final units. The author explicitly declares the loss of independently inventing/writing two solutions, matching both frozen multiple-question limitations.",
+        "1101": "Both full equations retain their complete real solution sets and no extra domain restriction. Author declares independent equivalent-equation-transformation production loss.",
+        "1102": "All four frozen normalization tasks are represented by a complete row distinguishing equality from normalization. Independent written conversion is declared as unobserved.",
+        "1103": "Both exact product tasks are retained without unauthorized rounding. Author declares independent exact multiplication/representation production loss.",
+        "1104": "All three inverse-conversion tasks retain the place-value relationships and internal zero in 1.05. Independent decimal-expansion writing loss is explicitly declared.",
+        "1105": "Both frozen requested outputs, meeting time and second speed, are included in one full response pair using the source ratio direction. Independent meeting-model production loss is declared.",
+        "1106": "The author now explicitly declares no question IDs and omits current-speed determination because 70 km/h has an unspecified reference frame. The reason retains the frozen conditional values 5,70/13,14/3 and refuses a fabricated still-water premise. This resolves the prior missing omission-declaration evidence, but not the SOURCE ambiguity: the one original source task remains blocked/omitted and the whole package cannot be approved. The referenced author source-solutions.md was not opened.",
+        "1107": "Both complete frozen compound-expression tasks are present, retaining decimals, mixed numbers, grouping and final operations. Independent written calculation production loss is declared.",
+    },
+}
+
+
+def hashes(raw):
+    canonical = json.dumps(
+        json.loads(raw), sort_keys=True, ensure_ascii=True, separators=(",", ":")
+    ).encode("utf-8")
+    return {
+        "canonical_sha256": hashlib.sha256(canonical).hexdigest(),
+        "bytes_sha256": hashlib.sha256(raw).hexdigest(),
+        "byte_count": len(raw),
+    }
+
+
+def read_json(path):
+    raw = path.read_bytes()
+    return json.loads(raw), raw
+
+
+for batch in ("5m-n56", "5m-n57"):
+    owned = TICKET_TMP / ("reviewer-" + batch)
+    draft_path = owned / "internal-input-snapshot/draft.json"
+    draft, draft_raw = read_json(draft_path)
+    sources_path = owned / "source-solutions.json"
+    sources, sources_raw = read_json(sources_path)
+    checks_path = owned / "view-checks.json"
+    view_checks, checks_raw = read_json(checks_path)
+    math_path = owned / "view-math-frozen.json"
+    frozen_math, math_raw = read_json(math_path)
+    evidence_path = owned / "internal-comparison-evidence.json"
+    evidence, evidence_raw = read_json(evidence_path)
+    input_freeze, _ = read_json(owned / "internal-input-snapshot/freeze.json")
+    pure, pure_raw = read_json(owned / "view-input-snapshot/pure-view.json")
+    seed_path = owned / "input-snapshot/seed.json"
+    seed, seed_raw = read_json(seed_path)
+
+    author_by_id = {q["id"]: q for q in draft["questions"]}
+    visible_by_id = {q["id"]: q["view"] for q in pure["questions"]}
+    math_by_id = {q["question_id"]: q for q in frozen_math["all_visible_truths"]}
+    evidence_by_id = {q["question_id"]: q for q in evidence["question_evidence"]}
+    coverage_by_source = {c["source_number"]: c for c in draft["coverage"]}
+
+    question_reviews = []
+    question_comparisons = []
+    for prior in view_checks["question_reviews"]:
+        question_id = prior["question_id"]
+        author = author_by_id[question_id]
+        frozen = math_by_id[question_id]
+        manual = evidence_by_id[question_id]
+        rationales = {r["option_id"]: r for r in author["key"]["rationales"]}
+        replays = {
+            r["option_id"]: r for r in manual["wrong_program_replays"]
+        }
+        visible_options = {
+            o["id"]: o for o in visible_by_id[question_id]["options"]
+        }
+        key_agrees = set(author["key"]["correct"]) == set(frozen["correct"])
+        all_labels_agree = all(
+            rationales[option["option_id"]]["truth"] == option["truth"]
+            for option in frozen["option_checks"]
+        )
+        rationale_comparisons = []
+        merged_option_checks = []
+        for option in frozen["option_checks"]:
+            option_id = option["option_id"]
+            rationale = rationales[option_id]
+            is_correct = option["truth"] == "correct"
+            common = {
+                "option_id": option_id,
+                "offered_option_text": visible_options[option_id]["text"],
+                "frozen_truth": option["truth"],
+                "author_truth": rationale["truth"],
+                "truth_label_matches_frozen": rationale["truth"] == option["truth"],
+                "author_derivation": rationale["derivation"],
+                "author_misconception": rationale["misconception"],
+                "frozen_truth_evidence": option["evidence"],
+                "verdict": "pass",
+            }
+            if is_correct:
+                comparison_evidence = manual["correct_proof_evidence"]
+                common["correct_proof_comparison"] = {
+                    "verdict": "pass",
+                    "evidence": comparison_evidence,
+                    "misconception_is_null": rationale["misconception"] is None,
+                    "authority": "Previously frozen independent solution/true set.",
+                }
+            else:
+                replay = replays[option_id]
+                comparison_evidence = (
+                    "Declared wrong procedure replay: "
+                    + replay["evidence"]
+                    + " Frozen false-option check: "
+                    + option["evidence"]
+                )
+                common["wrong_program_comparison"] = {
+                    "verdict": "pass",
+                    "replayed_output": replay["replayed_output"],
+                    "evidence": replay["evidence"],
+                    "produces_offered_option": True,
+                    "offered_option_is_false_from_frozen_view": True,
+                    "declared_misconception_matches_replayed_procedure": True,
+                    "authority": "Author procedure as a comparison target, not source authority.",
+                }
+            rationale_comparisons.append(common)
+            merged_option_checks.append({
+                "option_id": option_id,
+                "truth": option["truth"],
+                "evidence": option["evidence"] + " Internal comparison: "
+                            + comparison_evidence,
+            })
+        math_verdict = "pass" if key_agrees and all_labels_agree else "revise"
+        question_reviews.append({
+            "question_id": question_id,
+            "task_fidelity": copy.deepcopy(prior["task_fidelity"]),
+            "redundancy": copy.deepcopy(prior["redundancy"]),
+            "answer_leakage": copy.deepcopy(prior["answer_leakage"]),
+            "mathematics": {
+                "verdict": math_verdict,
+                "independent_solution": prior["mathematics"]["independent_solution"],
+                "correct": copy.deepcopy(frozen["correct"]),
+                "option_checks": merged_option_checks,
+            },
+        })
+        declared_limits = author["intent"]["limitations"]
+        limit_defect = question_id == "n56-1092-constructions"
+        question_comparisons.append({
+            "question_id": question_id,
+            "source_task_ids": copy.deepcopy(frozen["source_task_ids"]),
+            "key_comparison": {
+                "verdict": "pass" if key_agrees else "revise",
+                "frozen_exact_true_set": frozen["correct"],
+                "author_correct_set": author["key"]["correct"],
+                "exact_true_set_matches": key_agrees,
+                "all_rationale_truth_labels_match": all_labels_agree,
+            },
+            "source_solution_proof_comparison": {
+                "verdict": "pass",
+                "author_source_solution": author["intent"]["source_solution"],
+                "independent_evidence": manual["correct_proof_evidence"],
+                "author_solution_used_as_fresh_authority": False,
+            },
+            "correct_proofs_and_wrong_programs": rationale_comparisons,
+            "unit_and_limitations_comparison": {
+                "verdict": "revise" if limit_defect else "pass",
+                "author_task": author["intent"]["task"],
+                "author_unit_reason": author["intent"]["unit_reason"],
+                "author_concept_blocks": author["intent"]["concept_blocks"],
+                "author_limitations": declared_limits,
+                "observed_frozen_view_capacity_losses": prior.get("capacity_losses", []),
+                "evidence": (
+                    "The initial SSS setup is common to all options; physical drawing "
+                    "losses are declared, but the separate loss of independently "
+                    "discriminating an initial SSS plan is not. Internal wording "
+                    "needs the narrow qualification recorded in targeted_findings."
+                    if limit_defect else
+                    "The complete response unit agrees with the frozen fidelity "
+                    "record; the author explicitly declares independent production "
+                    "loss rather than claiming recognition proves written performance."
+                ),
+            },
+        })
+
+    source_reviews = []
+    coverage_comparisons = []
+    for source in sources["source_reviews"]:
+        number = source["source_number"]
+        declared = coverage_by_source[number]
+        tasks = [t["task_id"] for t in source["tasks"]]
+        expected_question_ids = [
+            q["question_id"] for q in frozen_math["all_visible_truths"]
+            if any(task_id in tasks for task_id in q["source_task_ids"])
+        ]
+        referenced_question_ids = [
+            q["id"] for q in draft["questions"] if number in q["source_numbers"]
+        ]
+        declared_ids_match = (
+            set(declared["question_ids"]) == set(expected_question_ids)
+            == set(referenced_question_ids)
+        )
+        if number == "1106":
+            verdict = "blocked"
+        elif number == "1092" or not declared_ids_match:
+            verdict = "revise"
+        else:
+            verdict = "pass"
+        coverage_text = COVERAGE_EVIDENCE[batch][number]
+        source_reviews.append({
+            "source_number": number,
+            "independent_solution": source["independent_solution"],
+            "coverage": {"verdict": verdict, "evidence": coverage_text},
+        })
+        coverage_comparisons.append({
+            "source_number": number,
+            "frozen_source_task_ids": tasks,
+            "frozen_source_task_count": len(tasks),
+            "frozen_visible_question_ids": expected_question_ids,
+            "draft_source_reference_question_ids": referenced_question_ids,
+            "declared_coverage": copy.deepcopy(declared),
+            "question_id_relationships_match": declared_ids_match,
+            "verdict": verdict,
+            "evidence": coverage_text,
+            "source_blocker_preserved": number == "1106",
+            "omission_declaration_compared": True,
+        })
+
+    verdicts = [
+        source["coverage"]["verdict"] for source in source_reviews
+    ] + [
+        q[field]["verdict"]
+        for q in question_reviews
+        for field in ("task_fidelity", "redundancy", "answer_leakage", "mathematics")
+    ]
+    outcome = (
+        "blocked" if "blocked" in verdicts
+        else "revise" if "revise" in verdicts
+        else "pass"
+    )
+    review = {
+        "schema": "s10y-choice-review-v1",
+        "seed_sha256": hashes(seed_raw)["canonical_sha256"],
+        "draft_sha256": hashes(draft_raw)["canonical_sha256"],
+        "reviewer": copy.deepcopy(view_checks["reviewer"]),
+        "source_reviews": source_reviews,
+        "figure_checks": [],
+        "new_figure_reviews": [],
+        "question_reviews": question_reviews,
+        "outcome": outcome,
+    }
+    review_path = owned / "review.json"
+    with review_path.open("x", encoding="utf-8") as stream:
+        json.dump(review, stream, ensure_ascii=True, indent=2)
+        stream.write("\n")
+
+    option_comparisons = [
+        option for q in question_comparisons
+        for option in q["correct_proofs_and_wrong_programs"]
+    ]
+    receipt = {
+        "schema": "s10y-choice-internal-comparison-receipt-v1",
+        "batch": batch,
+        "phase": "INTERNAL_COMPARISON",
+        "outcome": outcome,
+        "bindings": {
+            "seed_snapshot": {"path": str(seed_path.relative_to(ROOT)),
+                              **hashes(seed_raw)},
+            "draft_snapshot": {"path": str(draft_path.relative_to(ROOT)),
+                               **hashes(draft_raw)},
+            "unchanged_source_solutions": {
+                "path": str(sources_path.relative_to(ROOT)), **hashes(sources_raw),
+            },
+            "unchanged_view_checks": {
+                "path": str(checks_path.relative_to(ROOT)), **hashes(checks_raw),
+            },
+            "unchanged_view_math": {
+                "path": str(math_path.relative_to(ROOT)), **hashes(math_raw),
+            },
+            "manual_comparison_evidence": {
+                "path": str(evidence_path.relative_to(ROOT)), **hashes(evidence_raw),
+            },
+            "review": {"path": str(review_path.relative_to(ROOT)),
+                       **hashes(review_path.read_bytes())},
+        },
+        "counts": {
+            "source_count": len(sources["source_reviews"]),
+            "source_task_count": sum(len(s["tasks"]) for s in sources["source_reviews"]),
+            "source_coverage_comparisons": len(coverage_comparisons),
+            "question_count": len(question_comparisons),
+            "exact_key_comparisons": len(question_comparisons),
+            "exact_key_matches": sum(
+                q["key_comparison"]["exact_true_set_matches"]
+                for q in question_comparisons
+            ),
+            "source_solution_proof_comparisons": len(question_comparisons),
+            "correct_option_proof_comparisons": sum(
+                "correct_proof_comparison" in o for o in option_comparisons
+            ),
+            "false_wrong_program_comparisons": sum(
+                "wrong_program_comparison" in o for o in option_comparisons
+            ),
+            "total_rationale_comparisons": len(option_comparisons),
+            "truth_label_matches": sum(
+                o["truth_label_matches_frozen"] for o in option_comparisons
+            ),
+            "source_blocker_count": len(sources["source_blockers"]),
+            "narrow_author_fix_count": sum(
+                finding["verdict"] == "revise"
+                for finding in evidence["targeted_findings"]
+            ),
+        },
+        "snapshot_reuse": {
+            "draft_view_matches_frozen_view": (
+                input_freeze["draft_view_matches_frozen_pure_view"]
+            ),
+            "source_solutions_unchanged": (
+                hashes(sources_raw) == input_freeze["unchanged_source_solutions_hashes"]
+            ),
+            "view_checks_unchanged": (
+                hashes(checks_raw) == input_freeze["unchanged_view_checks_hashes"]
+            ),
+            "view_math_unchanged": (
+                hashes(math_raw) == input_freeze["unchanged_view_math_hashes"]
+            ),
+            "source_or_view_math_repeated": False,
+        },
+        "question_comparisons": question_comparisons,
+        "coverage_and_limitations_comparisons": coverage_comparisons,
+        "source_ambiguities_preserved": sources["source_ambiguities"],
+        "source_blockers_preserved": sources["source_blockers"],
+        "targeted_findings": evidence["targeted_findings"],
+        "n57_prior_omission_evidence_status": (
+            "Explicit blocked omission now inspected and matched; underlying "
+            "1106 source-reference-frame blocker remains unresolved."
+            if batch == "5m-n57" else None
+        ),
+        "scope": {
+            "explicit_shell_workdir": str(ROOT),
+            "only_owned_reviewer_directories_written": True,
+            "author_draft_or_core_files_edited": False,
+            "author_original_source_solutions_opened": False,
+            "author_solution_treated_as_fresh_source_authority": False,
+            "separate_wrong_program_projection_needed": False,
+            "wrong_programs_read_from_author_draft_rationales": True,
+            "validators_or_canonical_commands_run": False,
+            "images_opened": False,
+            "git_db_env_dependencies_app_schema_global_checks_used": False,
+            "other_chats_or_subdelegation_used": False,
+            "whole_group_approved": outcome == "pass",
+        },
+        "ready": True,
+    }
+    receipt_path = owned / "comparison-receipts.json"
+    with receipt_path.open("x", encoding="utf-8") as stream:
+        json.dump(receipt, stream, ensure_ascii=True, indent=2)
+        stream.write("\n")
+    print(json.dumps({
+        "batch": batch,
+        "ready": True,
+        "outcome": outcome,
+        "counts": receipt["counts"],
+        "snapshot_reuse": receipt["snapshot_reuse"],
+        "review_hashes": hashes(review_path.read_bytes()),
+        "comparison_receipt_hashes": hashes(receipt_path.read_bytes()),
+        "targeted_findings": evidence["targeted_findings"],
+    }, ensure_ascii=True, indent=2))

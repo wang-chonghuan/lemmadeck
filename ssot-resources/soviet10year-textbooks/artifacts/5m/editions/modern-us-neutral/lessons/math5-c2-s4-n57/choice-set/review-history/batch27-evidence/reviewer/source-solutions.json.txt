@@ -1,0 +1,365 @@
+{
+  "schema": "s10y-choice-source-solutions-v1",
+  "phase": "SOURCE",
+  "batch": "5m-n57",
+  "reviewer": {
+    "kind": "independent_agent",
+    "identity": "reviewer-5m-n57"
+  },
+  "input_binding": {
+    "snapshot_path": ".intentfold/tickets/STEMROBIN-182/tmp/reviewer-5m-n57/input-snapshot/seed.json",
+    "seed_sha256": "9161ba2d7d9bcd6f21b37b56fa56b7de884ff8956c32787869346f33e0214b2a",
+    "seed_bytes_sha256": "cc89d384fa350206078c4a70ae43c380934c64cc22e71eb6710c582f304880b6",
+    "seed_byte_count": 6741
+  },
+  "scope": {
+    "authority": "Frozen seed prose and its two selected definitions only.",
+    "author_draft_seen": false,
+    "view_seen": false,
+    "author_solutions_seen": false,
+    "author_keys_seen": false,
+    "wrong_programs_seen": false,
+    "previous_choices_or_answers_seen": false,
+    "trace_targets_opened": false,
+    "image_assets_opened": false,
+    "validators_run": false,
+    "canonical_command_run": false
+  },
+  "counts": {
+    "source_count": 15,
+    "source_review_count": 15,
+    "task_count": 34,
+    "solved_task_count": 33,
+    "conditional_task_count": 1,
+    "unresolved_task_count": 1,
+    "omitted_task_count": 0,
+    "concept_count": 2,
+    "concept_interpretation_count": 2,
+    "source_figure_count": 0,
+    "image_reference_count": 0,
+    "counting_rule": "One task per numbered subpart; each of 1104's three semicolon-separated numbers is a task, and the two requested outputs in 1105 are separate tasks. Other unnumbered word problems count once. Each 1099 task includes BOTH simplification and evaluation; each 1100 task includes BOTH explicitly required methods. The sole conditional task is also the sole unresolved unconditional-answer task, not an additional omitted task."
+  },
+  "concept_interpretations": [
+    {
+      "block": 1,
+      "interpretation": "A decimal integer consisting of 1 followed by n zeros is 10^n. Its exponent counts those zeros, not the total number of digits; it has n+1 digits. Products of powers of 10 add exponents and quotients subtract exponents.",
+      "domain": "For the literal zero-count statement n is a nonnegative integer, including n=0 for 1. Every exponent in the selected power tasks is a positive integer. As an algebraic extension, the multiplication/division identities hold for integer exponents because 10 is nonzero; negative exponents denote reciprocals, not a negative number of appended zeros.",
+      "relevant_sources": ["1093", "1094", "1095", "1096", "1097", "1102", "1103", "1104"]
+    },
+    {
+      "block": 5,
+      "interpretation": "Write a positive number as a*10^n with a normalized coefficient between 1 and 10. For every actual numerical task here the computed coefficient is strictly inside (1,10), so no boundary convention is needed for any original answer. Multiply coefficients and add exponents, renormalizing if necessary; converting back to decimal reverses the operation.",
+      "domain": "All numbers in the selected normalization tasks are positive, with positive integer n and 1<a<10. The usual complete positive-number convention is 1<=a<10 and n an integer, allowing n=0 and negative n for small positive numbers; with that convention representation is unique. The supplied phrase 'between 1 and 10' does not explicitly settle whether endpoints are included. If both 1 and 10 were allowed, exact powers would be nonunique; if neither were allowed, exact powers could not be normalized. Zero cannot be represented with positive a, and a rule for signed coefficients of negative numbers is not supplied. These wider boundaries must not be silently certified from this prose.",
+      "relevant_sources": ["1094", "1095", "1096", "1097", "1102", "1103"],
+      "boundary_status": "No selected source value is an endpoint case. A later view testing coefficients 1 or 10, zero, negative numbers or negative exponents needs explicit domain/convention assessment."
+    }
+  ],
+  "source_reviews": [
+    {
+      "source_number": "1093",
+      "task_count": 4,
+      "independent_solution": "Add exponents for products and subtract denominator exponent from numerator exponent for quotients. The powers are 10^12, 10^2, 10^12 and 10^4.",
+      "tasks": [
+        {"task_id": "1093.1", "task": "10^5*10^7", "derivation": "10^(5+7)=10^12.", "answer": "10^12", "status": "solved"},
+        {"task_id": "1093.2", "task": "10^6/10^4", "derivation": "10^(6-4)=10^2; denominator 10^4 is nonzero.", "answer": "10^2", "status": "solved"},
+        {"task_id": "1093.3", "task": "10^10*10^2", "derivation": "10^(10+2)=10^12.", "answer": "10^12", "status": "solved"},
+        {"task_id": "1093.4", "task": "10^9/10^5", "derivation": "10^(9-5)=10^4; denominator 10^5 is nonzero.", "answer": "10^4", "status": "solved"}
+      ],
+      "coverage": "All four original power expressions solved."
+    },
+    {
+      "source_number": "1094",
+      "task_count": 4,
+      "independent_solution": "Each given integer has eight decimal digits, so use exponent 7 and move the decimal point seven places: 1.3,7.55,2.968,8.9 times 10^7.",
+      "tasks": [
+        {"task_id": "1094.1", "task": "Normalize 13 000 000.", "derivation": "13 000 000/10^7=1.3, which is strictly between 1 and 10.", "answer": "1.3*10^7", "status": "solved"},
+        {"task_id": "1094.2", "task": "Normalize 75 500 000.", "derivation": "75 500 000/10^7=7.55.", "answer": "7.55*10^7", "status": "solved"},
+        {"task_id": "1094.3", "task": "Normalize 29 680 000.", "derivation": "29 680 000/10^7=2.968; all significant digits are retained.", "answer": "2.968*10^7", "status": "solved"},
+        {"task_id": "1094.4", "task": "Normalize 89 000 000.", "derivation": "89 000 000/10^7=8.9.", "answer": "8.9*10^7", "status": "solved"}
+      ],
+      "coverage": "All four integers converted to normalized rather than merely equivalent unnormalized products."
+    },
+    {
+      "source_number": "1095",
+      "task_count": 2,
+      "independent_solution": "Multiply the exact decimal coefficients and add power exponents: 6.88*10^6 and 4.4*10^24. Both coefficients already satisfy normalization.",
+      "tasks": [
+        {"task_id": "1095.1", "task": "Normalize 2.15*10^2*3.2*10^4.", "derivation": "2.15*3.2=6.88 and 2+4=6.", "answer": "6.88*10^6", "status": "solved"},
+        {"task_id": "1095.2", "task": "Normalize 4*10^11*1.1*10^13.", "derivation": "4*1.1=4.4 and 11+13=24.", "answer": "4.4*10^24", "status": "solved"}
+      ],
+      "coverage": "Both full products normalized."
+    },
+    {
+      "source_number": "1096",
+      "task_count": 1,
+      "independent_solution": "Use only the supplied speed and seconds per year: (3*10^5 km/s)*(3.16*10^7 s)=9.48*10^12 km in one year. The light-year is a distance, not a time unit. Equivalently the same speed is 9.48*10^12 km/year under the problem's year conversion.",
+      "tasks": [
+        {
+          "task_id": "1096",
+          "task": "Find the distance light travels in the stated one year.",
+          "derivation": "Coefficient 3*3.16=9.48; exponent 5+7=12. Seconds cancel, leaving kilometres.",
+          "answer": {"distance_km": "9.48*10^12", "same_speed_km_per_given_year": "9.48*10^12"},
+          "domain_check": "Positive constant speed times positive elapsed time. The given 3.16*10^7 seconds is used as supplied, without replacing it by external astronomical or calendar data.",
+          "status": "solved"
+        }
+      ],
+      "coverage": "The complete physical word problem is solved with the speed/distance distinction retained."
+    },
+    {
+      "source_number": "1097",
+      "task_count": 1,
+      "independent_solution": "Area is length times width: (2.5*10^3)*(2.2*10^3)=5.5*10^6 mm^2, equivalent to 5.5 m^2.",
+      "tasks": [
+        {
+          "task_id": "1097",
+          "task": "Find the rectangle area from two lengths in millimetres.",
+          "derivation": "2.5*2.2=5.5 and 3+3=6. Units multiply to mm^2. Since 1 m^2=10^6 mm^2, the equivalent area is 5.5 m^2.",
+          "answer": {"area_mm_squared": "5.5*10^6", "area_m_squared": "5.5"},
+          "domain_check": "Both side lengths are positive; area is squared length, not millimetres or a perimeter.",
+          "status": "solved"
+        }
+      ],
+      "coverage": "The full area computation and units are solved."
+    },
+    {
+      "source_number": "1098",
+      "task_count": 2,
+      "independent_solution": "The first coefficient sum is 1, giving x=7/11. The second expression is (15/16)y+7/16, with a CONSTANT final term; at y=8/5 it equals 31/16.",
+      "tasks": [
+        {
+          "task_id": "1098.1",
+          "task": "Evaluate (3/7)x+(5/14)x+(3/14)x at x=7/11.",
+          "derivation": "3/7+5/14+3/14=(6+5+3)/14=1, so the expression equals x for every real x, then equals 7/11 at the specified x.",
+          "answer": {"simplified_expression": "x", "value": "7/11"},
+          "status": "solved"
+        },
+        {
+          "task_id": "1098.2",
+          "task": "Evaluate (5/8)y+(5/16)y+7/16 at y=8/5.",
+          "derivation": "The y coefficient is (10+5)/16=15/16; 7/16 is not multiplied by y. At 8/5, (15/16)*(8/5)+7/16=3/2+7/16=31/16=1 15/16.",
+          "answer": {"simplified_expression": "(15/16)y+7/16", "value": "31/16"},
+          "status": "solved"
+        }
+      ],
+      "coverage": "Both evaluations solved; the constant-vs-variable distinction is explicitly preserved."
+    },
+    {
+      "source_number": "1099",
+      "task_count": 2,
+      "independent_solution": "Distribute both negative factors. The expressions simplify to 9y-3 and 9y-4 for all real y. At y=13/5 their values are 102/5=20.4 and 97/5=19.4.",
+      "tasks": [
+        {
+          "task_id": "1099.1",
+          "task": "Simplify -6*(1/6-(1/3)y)-2*(1-(3 1/2)y) AND evaluate at y=2 3/5.",
+          "derivation": "-6*(1/6-(1/3)y)=-1+2y; -2*(1-(7/2)y)=-2+7y. Sum=9y-3. At y=13/5, 117/5-15/5=102/5.",
+          "answer": {"simplified_expression": "9y-3", "value": "102/5", "decimal_value": "20.4"},
+          "domain": "All real y; all denominators are fixed nonzero integers.",
+          "status": "solved"
+        },
+        {
+          "task_id": "1099.2",
+          "task": "Simplify -8*(1/8-(1/4)y)-3*(1-(2 1/3)y) AND evaluate at y=2 3/5.",
+          "derivation": "-8*(1/8-(1/4)y)=-1+2y; -3*(1-(7/3)y)=-3+7y. Sum=9y-4. At y=13/5, 117/5-20/5=97/5.",
+          "answer": {"simplified_expression": "9y-4", "value": "97/5", "decimal_value": "19.4"},
+          "domain": "All real y; all denominators are fixed nonzero integers.",
+          "status": "solved"
+        }
+      ],
+      "coverage": "Each of the two original subparts has both required outputs: an identity simplification and the specified substitution value."
+    },
+    {
+      "source_number": "1100",
+      "task_count": 2,
+      "independent_solution": "Provide TWO methods per subpart as explicitly requested. Barley occupies 1400 ha: either subtract individual rye/wheat areas from the total or multiply by the complementary fraction 4/15. Each shirt costs 4.55 USD: either subtract coat/uniform costs and divide the remainder by four or compute the complementary spending fraction before dividing.",
+      "tasks": [
+        {
+          "task_id": "1100.1",
+          "task": "Find barley area in hectares by two methods from total 52.5 km^2, rye fraction 2/5 and wheat fraction 1/3.",
+          "method_1": "Convert 52.5 km^2 to 5250 ha using 1 km^2=100 ha. Rye=5250*(2/5)=2100 ha; wheat=5250*(1/3)=1750 ha. Barley=5250-2100-1750=1400 ha.",
+          "method_2": "Barley fraction=1-2/5-1/3=(15-6-5)/15=4/15. Barley=52.5*(4/15)=14 km^2=1400 ha.",
+          "answer": {"barley_ha": "1400", "barley_km_squared": "14"},
+          "domain_check": "The two assigned fractions sum to 11/15<1; the remaining area is positive. All fractions refer to the same given total and the final requested unit is hectares.",
+          "status": "solved"
+        },
+        {
+          "task_id": "1100.2",
+          "task": "Find the price of each of four identical shirts by two methods.",
+          "method_1": "Coat costs 72.8/2=36.4 USD; uniform costs 72.8/4=18.2 USD. Remaining shirt total=72.8-36.4-18.2=18.2 USD. Each of four equal shirts costs 18.2/4=4.55 USD.",
+          "method_2": "Shirts together use fraction 1-1/2-1/4=1/4 of the original money. Each shirt uses 1/16 of it, so 72.8/16=4.55 USD.",
+          "answer": {"each_shirt_usd": "4.55", "exact_each_shirt_usd": "91/20", "all_shirts_usd": "18.2"},
+          "domain_check": "Both the coat fraction and uniform fraction are of the stated total, not successive remainders. The four shirts have equal price.",
+          "status": "solved"
+        }
+      ],
+      "coverage": "Both applications solved with two genuine methods each, not merely two notations for a single final answer."
+    },
+    {
+      "source_number": "1101",
+      "task_count": 2,
+      "independent_solution": "The first equation reduces to (6/5)z=-5/6, so z=-25/36. The second reduces to (34/3)y=17/2, so y=3/4. Both have exactly one real solution and no variable denominator restrictions.",
+      "tasks": [
+        {
+          "task_id": "1101.1",
+          "task": "Solve 2*((2/5)z+1)+3 1/3=4-(1/2)*((4/5)z-1).",
+          "derivation": "Left=(4/5)z+16/3; right=9/2-(2/5)z. Therefore (6/5)z=9/2-16/3=-5/6 and z=-25/36. Substitution gives both sides 43/9.",
+          "answer": {"complete_real_solution_set": ["-25/36"]},
+          "domain": "All real z are initially admissible; the nonzero coefficient 6/5 proves uniqueness. Negative z is not excluded by the source.",
+          "status": "solved"
+        },
+        {
+          "task_id": "1101.2",
+          "task": "Solve 5-((1 1/2)y+1/3)*6=(2 1/3)y-5 1/2.",
+          "derivation": "Left=5-(9y+2)=3-9y; right=(7/3)y-11/2. Thus 17/2=(34/3)y, and y=(17/2)*(3/34)=3/4. Substitution gives both sides -15/4.",
+          "answer": {"complete_real_solution_set": ["3/4"]},
+          "domain": "All real y are initially admissible; the nonzero coefficient 34/3 proves uniqueness.",
+          "status": "solved"
+        }
+      ],
+      "coverage": "Both equations solved over their complete domains with substitution checks."
+    },
+    {
+      "source_number": "1102",
+      "task_count": 4,
+      "independent_solution": "The normalized forms are 6.5*10^4, 8.81*10^7, 2.2*10^8 and 7.71*10^8.",
+      "tasks": [
+        {"task_id": "1102.1", "task": "Normalize 65 000.", "derivation": "65 000/10^4=6.5.", "answer": "6.5*10^4", "status": "solved"},
+        {"task_id": "1102.2", "task": "Normalize 88 100 000.", "derivation": "88 100 000/10^7=8.81.", "answer": "8.81*10^7", "status": "solved"},
+        {"task_id": "1102.3", "task": "Normalize 220 000 000.", "derivation": "220 000 000/10^8=2.2.", "answer": "2.2*10^8", "status": "solved"},
+        {"task_id": "1102.4", "task": "Normalize 771 000 000.", "derivation": "771 000 000/10^8=7.71.", "answer": "7.71*10^8", "status": "solved"}
+      ],
+      "coverage": "All four integers normalized with strictly interior coefficients."
+    },
+    {
+      "source_number": "1103",
+      "task_count": 2,
+      "independent_solution": "The products normalize to 8.52*10^12 and 9.8596*10^10. Exact decimal multiplication retains all digits; no precision reduction is requested.",
+      "tasks": [
+        {"task_id": "1103.1", "task": "Normalize 7.1*10^8*1.2*10^4.", "derivation": "7.1*1.2=8.52 and 8+4=12.", "answer": "8.52*10^12", "status": "solved"},
+        {"task_id": "1103.2", "task": "Normalize 3.14*10^7*3.14*10^3.", "derivation": "3.14*3.14=9.8596 and 7+3=10; 9.8596<10, so the exponent remains 10.", "answer": "9.8596*10^10", "status": "solved"}
+      ],
+      "coverage": "Both products normalized exactly."
+    },
+    {
+      "source_number": "1104",
+      "task_count": 3,
+      "independent_solution": "Multiply by the stated decimal powers, or shift the decimal point right by the exponent: 23000,105000,8000000.",
+      "tasks": [
+        {"task_id": "1104.1", "task": "Convert 2.3*10^4 to an ordinary decimal number.", "derivation": "2.3*10000=23000.", "answer": "23000", "status": "solved"},
+        {"task_id": "1104.2", "task": "Convert 1.05*10^5 to an ordinary decimal number.", "derivation": "1.05*100000=105000; the internal zero is retained.", "answer": "105000", "status": "solved"},
+        {"task_id": "1104.3", "task": "Convert 8*10^6 to an ordinary decimal number.", "derivation": "8*1000000=8000000.", "answer": "8000000", "status": "solved"}
+      ],
+      "coverage": "All three semicolon-separated original conversions solved."
+    },
+    {
+      "source_number": "1105",
+      "task_count": 2,
+      "independent_solution": "They travel for the same time before meeting. Their distances have ratio A:B=4:3 and sum 21 km, so A walks 12 km and B 9 km. At A's speed 6 km/h the meeting time is 2 h; B's speed is 9/2=4.5 km/h. Check (6+4.5)*2=21.",
+      "tasks": [
+        {
+          "task_id": "1105.time",
+          "task": "Find elapsed time until the two walkers meet.",
+          "derivation": "Let B's distance be d>0, then A's distance=(4/3)d and (7/3)d=21, so d=9 and A's distance=12. Time=12/6=2 hours.",
+          "answer": {"meeting_time_hours": "2"},
+          "domain_check": "They start simultaneously and approach one another, so the distances add to 21 and both use the same positive elapsed time. The stated speed is treated as constant in the word problem.",
+          "status": "solved"
+        },
+        {
+          "task_id": "1105.speed_b",
+          "task": "Find B's speed.",
+          "derivation": "B travels 9 km in 2 hours, so v_B=9/2 km/h. Alternatively equal time makes speed ratio equal distance ratio, giving v_B=6/(4/3)=9/2. Check distances and total closing speed.",
+          "answer": {"speed_b_km_per_hour": "9/2", "decimal_speed_b_km_per_hour": "4.5"},
+          "domain_check": "The speed is positive and lower than A's, consistent with the directional ratio A's distance=4/3 of B's.",
+          "status": "solved"
+        }
+      ],
+      "coverage": "Both explicitly requested outputs solved, with the shared-distance relation preserved."
+    },
+    {
+      "source_number": "1106",
+      "task_count": 1,
+      "independent_solution": "Let v be still-water speed and c current speed, with 0<=c<v. Equal distances give 15(v-c)=13(v+c), hence 2v=28c or v=14c. IF the unqualified 'boat speed 70 km/h' denotes still-water v, c=5 km/h, upstream speed 65, downstream speed 75 and each trip distance 975 km. The seed does not explicitly say still-water speed. If 70 instead denotes upstream speed, c=70/13; if it denotes downstream speed, c=14/3. Thus the conventional answer is derived conditionally, and a unique unconditional current cannot be certified without the speed reference frame.",
+      "tasks": [
+        {
+          "task_id": "1106",
+          "task": "Find current speed from equal upstream/downstream distances over 15 and 13 hours and the stated boat speed 70 km/h.",
+          "derivation": "In the constant-speed model, upstream=v-c and downstream=v+c. Equality 15(v-c)=13(v+c) yields v=14c. Under v=70, c=70/14=5. Check 15*65=13*75=975. Under v-c=70, 13c=70 so c=70/13, v=980/13, equal distance=1050. Under v+c=70, 15c=70 so c=14/3, v=196/3, equal distance=910.",
+          "answer": {
+            "if_70_is_still_water_speed": {"current_km_per_hour": "5", "upstream_speed_km_per_hour": "65", "downstream_speed_km_per_hour": "75", "each_distance_km": "975"},
+            "if_70_is_upstream_speed": {"current_km_per_hour": "70/13", "still_water_speed_km_per_hour": "980/13", "each_distance_km": "1050"},
+            "if_70_is_downstream_speed": {"current_km_per_hour": "14/3", "still_water_speed_km_per_hour": "196/3", "each_distance_km": "910"},
+            "unconditional_single_value": null
+          },
+          "domain_and_nonuniqueness": "0<=c<v ensures the positive upstream trip is possible. The unequal positive times and equal positive distances imply c>0. For the general equation, every pair v=14c with c>0 is admissible until the speed datum's reference frame is specified. Each of the three named interpretations then has a unique positive solution.",
+          "status": "conditional"
+        }
+      ],
+      "coverage": "The original task has been independently analyzed in full, including its conventional answer, complete physical domain and reference-frame ambiguity; an unconditional unique answer remains blocked."
+    },
+    {
+      "source_number": "1107",
+      "task_count": 2,
+      "independent_solution": "Use exact fractions for the decimals. In subpart 1 the first division is 5/4, the parenthesis is 3 and the final result is 2. In subpart 2 the parenthesis is 12/25+13/25=1 and the final result is 7.",
+      "tasks": [
+        {
+          "task_id": "1107.1",
+          "task": "((2 1/12):(1 2/3)+1.75):(1 1/3)-0.25",
+          "derivation": "(25/12)/(5/3)=5/4; add 1.75=7/4 to get 3. Divide by 4/3 to get 9/4; subtract 0.25=1/4 to get 2.",
+          "answer": "2",
+          "domain_check": "Both actual divisors 5/3 and 4/3 are nonzero; the decimal terms are exact 7/4 and 1/4.",
+          "status": "solved"
+        },
+        {
+          "task_id": "1107.2",
+          "task": "(0.8*(3/5)+0.26:(1/2)):(3/8)+4 1/3",
+          "derivation": "0.8=4/5, giving 12/25. 0.26=13/50 and (13/50)/(1/2)=13/25. Parenthesis=1. Then 1/(3/8)+13/3=8/3+13/3=7.",
+          "answer": "7",
+          "domain_check": "Both actual divisors 1/2 and 3/8 are nonzero; multiplication/division precede the addition inside parentheses.",
+          "status": "solved"
+        }
+      ],
+      "coverage": "Both complete compound expressions solved exactly with division domains checked."
+    }
+  ],
+  "source_ambiguities": [
+    {
+      "id": "n57-normalized-coefficient-endpoints",
+      "concept_block": 5,
+      "source_numbers": ["1094", "1095", "1096", "1097", "1102", "1103"],
+      "issue": "The selected definition says 'between 1 and 10' without explicit endpoint inequalities or a domain for zero/negative values.",
+      "status": "open_for_future_boundary_questions_only",
+      "resolution": "All original normalized answers have coefficients strictly between 1 and 10, so they are determined under every sensible reading of those endpoints. Conventional 1<=a<10 is stated as a convention rather than falsely attributed to an explicit inequality in the seed.",
+      "blocks_source_phase": false,
+      "later_view_check": "Do not certify exact-power endpoint cases or zero/negative-number extensions without resolving the relevant convention."
+    },
+    {
+      "id": "n57-boat-speed-reference-frame",
+      "source_number": "1106",
+      "task_id": "1106",
+      "issue": "The given speed 70 km/h is unqualified: the seed does not explicitly identify it as still-water, upstream or downstream speed.",
+      "status": "unresolved_source_reference_frame",
+      "resolution": "The conventional still-water interpretation gives 5 km/h, while the other two reference frames give 70/13 and 14/3 km/h respectively. All have been independently derived; no single reference frame is guessed.",
+      "blocks_unconditional_source_answer": true,
+      "blocks_source_record_freeze": false
+    }
+  ],
+  "source_blockers": [
+    {
+      "id": "n57-boat-speed-reference-frame",
+      "source_number": "1106",
+      "task_id": "1106",
+      "required_resolution": "Clarify that 70 km/h is the boat's still-water speed, or explicitly choose and justify a different reference frame from authorized source evidence.",
+      "effect": "Blocks an unconditional unique-answer certification for 1106, not the completion/freezing of this source-only conditional analysis.",
+      "conditional_result_available": "5 km/h if 70 km/h is still-water speed."
+    }
+  ],
+  "verification": {
+    "method": "Independent algebra, exact decimal products and unit reasoning, followed by scoped Python standard-library Fraction arithmetic for the fractional expressions, equations and word-problem quantities.",
+    "external_source_used": false,
+    "validator_or_canonical_used": false,
+    "all_original_tasks_accounted_for": true,
+    "two_methods_recorded_for_each_1100_subpart": true,
+    "both_simplification_and_evaluation_recorded_for_each_1099_subpart": true
+  },
+  "phase_status": "source_frozen_with_source_ambiguity",
+  "next_disclosure": "VIEW only after this source solution snapshot is frozen; retain the unresolved 1106 source blocker. No option construction or option assessment has occurred."
+}

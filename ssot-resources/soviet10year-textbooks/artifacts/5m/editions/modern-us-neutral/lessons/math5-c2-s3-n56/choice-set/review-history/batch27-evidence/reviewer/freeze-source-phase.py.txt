@@ -1,0 +1,107 @@
+import hashlib
+import json
+import pathlib
+
+
+ROOT = pathlib.Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+TICKET_TMP = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp"
+
+
+def hashes(raw):
+    canonical = json.dumps(
+        json.loads(raw), sort_keys=True, ensure_ascii=True, separators=(",", ":")
+    ).encode("utf-8")
+    return {
+        "canonical_sha256": hashlib.sha256(canonical).hexdigest(),
+        "bytes_sha256": hashlib.sha256(raw).hexdigest(),
+        "byte_count": len(raw),
+    }
+
+
+for batch in ("5m-n56", "5m-n57"):
+    owned = TICKET_TMP / ("reviewer-" + batch)
+    input_path = owned / "input-snapshot/seed.json"
+    solutions_path = owned / "source-solutions.json"
+    seed = json.loads(input_path.read_bytes())
+    solution_bytes = solutions_path.read_bytes()
+    solutions = json.loads(solution_bytes)
+    sources = solutions["source_reviews"]
+    tasks = [task for source in sources for task in source["tasks"]]
+    ready = {
+        "schema": "s10y-choice-source-phase-ready-v1",
+        "phase": "SOURCE",
+        "batch": batch,
+        "source_phase_ready": True,
+        "source_phase_complete": True,
+        "source_frozen": True,
+        "status": solutions["phase_status"],
+        "input_snapshot": {
+            "path": str(input_path.relative_to(ROOT)),
+            **hashes(input_path.read_bytes()),
+        },
+        "source_solutions_snapshot": {
+            "path": str(solutions_path.relative_to(ROOT)),
+            **hashes(solution_bytes),
+        },
+        "canonicalization": (
+            'json.dumps(value, sort_keys=True, ensure_ascii=True, '
+            'separators=(",", ":")).encode("utf-8")'
+        ),
+        "counts": {
+            "seed_source_count": len(seed["exercises"]),
+            "source_review_count": len(sources),
+            "task_count": len(tasks),
+            "source_tasks_analyzed": len(tasks),
+            "unconditionally_solved_task_count": sum(
+                task["status"] == "solved" for task in tasks
+            ),
+            "conditionally_analyzed_task_count": sum(
+                task["status"] == "conditional" for task in tasks
+            ),
+            "unresolved_unconditional_answer_task_count": sum(
+                task["status"] == "conditional" for task in tasks
+            ),
+            "omitted_task_count": 0,
+            "seed_concept_count": len(seed["concepts"]),
+            "concept_interpretation_count": len(solutions["concept_interpretations"]),
+            "source_figure_count": len(seed["figures"]),
+            "image_reference_count": 0,
+            "source_ambiguity_count": len(solutions["source_ambiguities"]),
+            "source_blocker_count": len(solutions["source_blockers"]),
+            "counting_rule": solutions["counts"]["counting_rule"],
+        },
+        "source_task_counts": [
+            {"source_number": source["source_number"],
+             "task_count": len(source["tasks"])}
+            for source in sources
+        ],
+        "source_math_fully_determinate": not solutions["source_blockers"],
+        "source_ambiguities": solutions["source_ambiguities"],
+        "source_blockers": solutions["source_blockers"],
+        "staged_disclosure": {
+            "current_phase_complete": "SOURCE",
+            "stopped": True,
+            "awaiting_parent_disclosure": True,
+            "next_expected_disclosure": "VIEW only",
+            "view_seen": False,
+            "options_constructed": False,
+            "options_checked": False,
+            "author_internal_solution_or_key_seen": False,
+        },
+        "operational_scope": {
+            "explicit_shell_workdir": str(ROOT),
+            "owned_directories": [
+                str((TICKET_TMP / "reviewer-5m-n56").relative_to(ROOT)),
+                str((TICKET_TMP / "reviewer-5m-n57").relative_to(ROOT)),
+            ],
+            "seed_authority_only": True,
+            "git_db_env_dependencies_app_schema_global_checks_used": False,
+            "validators_or_canonical_commands_run": False,
+            "other_chats_or_subdelegation_used": False,
+            "paused_agents_touched": False,
+        },
+    }
+    with (owned / "source-phase-ready.json").open("x", encoding="utf-8") as stream:
+        json.dump(ready, stream, ensure_ascii=True, indent=2)
+        stream.write("\n")
+    print(json.dumps(ready, ensure_ascii=True, indent=2))

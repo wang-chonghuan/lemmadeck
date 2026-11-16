@@ -1,0 +1,195 @@
+"""Exact arithmetic receipts for the already authored alternatives, not a generator."""
+
+import argparse
+import json
+from fractions import Fraction as F
+from math import lcm
+
+
+def run_n56():
+    rows = []
+
+    def check(name, computed, displayed):
+        computed = tuple(map(F, computed))
+        displayed = tuple(map(F, displayed))
+        assert computed == displayed, (name, computed, displayed)
+        rows.append({"check": name, "exact_values": list(map(str, computed))})
+
+    groups = [
+        ((F(7, 24), F(11, 36)), 72, (21, 22)),
+        ((F(53, 120), F(77, 70)), 840, (371, 924)),
+        ((F(5, 18), F(8, 15), F(13, 30)), 90, (25, 48, 39)),
+        ((F(23, 70), F(4, 105), F(6, 49)), 1470, (483, 56, 180)),
+    ]
+    original_denominators = [(24, 36), (120, 70), (18, 15, 30), (70, 105, 49)]
+    for i, ((values, denominator, numerators), originals) in enumerate(
+        zip(groups, original_denominators), 1
+    ):
+        assert lcm(*originals) == denominator
+        check(f"1081-g{i}-equivalence", values, [F(n, denominator) for n in numerators])
+        rows.append({"check": f"1081-g{i}-minimality", "lcm_of_original_denominators": denominator})
+    assert 144 > 72 and 144 % 24 == 144 % 36 == 0
+    assert 8400 > 840 and 8400 % 120 == 8400 % 70 == 0
+    assert 270 > 90 and all(270 % d == 0 for d in (18, 15, 30))
+    assert 14700 > 1470 and all(14700 % d == 0 for d in (70, 105, 49))
+    check("1081-g1-nonminimal", [F(42, 144), F(44, 144)], groups[0][0])
+    check("1081-g2-nonminimal", [F(3710, 8400), F(9240, 8400)], groups[1][0])
+    check("1081-g3-nonminimal", [F(75, 270), F(144, 270), F(117, 270)], groups[2][0])
+    check("1081-g4-nonminimal", [F(4830, 14700), F(560, 14700), F(1800, 14700)], groups[3][0])
+    assert F(7, 72) != F(7, 24) and F(11, 72) != F(11, 36)
+    assert F(77, 840) != F(77, 70)
+    assert 30 % 18 != 0 and F(5, 30) != F(5, 18)
+    assert 210 % 49 != 0 and F(6, 210) != F(6, 49)
+
+    check("1082-e1-correct-and-wrong", [F(7, 20)+F(11, 30), F(7+11, 20+30), F(7+11, 60)], [F(43, 60), F(9, 25), F(3, 10)])
+    check("1082-e2-correct-and-wrong", [F(8, 45)-F(16, 60), F(8, 45)+F(16, 60), F(16, 60)-F(8, 45)], [F(-4, 45), F(4, 9), F(4, 45)])
+    check("1082-e3-correct-and-wrong", [F(5, 48)+F(17, 36), F(5+17, 144), F(5+17, 48+36)], [F(83, 144), F(11, 72), F(11, 42)])
+    check("1082-e4-correct-and-wrong", [F(16, 45)-F(11, 30), F(11, 30)-F(16, 45), F(16, 45)+F(11, 30)], [F(-1, 90), F(1, 90), F(13, 18)])
+    check("1083-e1-correct-and-wrong", [F(5, 8)+F(1, 4)+F(7, 12), F(5+1+7, 24), F(5, 8)+F(7, 12)], [F(35, 24), F(13, 24), F(29, 24)])
+    check("1083-e2-correct-and-wrong", [F(5, 6)-F(3, 8)+F(1, 12), F(5, 6)+F(3, 8)+F(1, 12), F(5, 6)-F(3, 8)-F(1, 12)], [F(13, 24), F(31, 24), F(3, 8)])
+    check("1083-e3-correct-and-wrong", [F(3, 7)+F(11, 14)-F(2, 21), F(3, 7)+F(11, 14)+F(2, 21), F(3+11-2, 42)], [F(47, 42), F(55, 42), F(2, 7)])
+    check("1083-e4-correct-and-wrong", [F(1, 5)+F(1, 7)-F(1, 9), F(1, 5)+F(1, 7)+F(1, 9), F(1+1-1, 5+7+9)], [F(73, 315), F(143, 315), F(1, 21)])
+    check("1084-e1-correct-and-wrong", [3+F(5, 8)-F(3, 4)+2+F(7, 12), 3+F(5, 8)+F(3, 4)+2+F(7, 12), 3*F(5, 8)-F(3, 4)+2*F(7, 12)], [F(131, 24), F(167, 24), F(55, 24)])
+    check("1084-e2-correct-and-wrong", [4+F(3, 4)+1+F(7, 12)-2-F(4, 9), 3+F(3+7-4, 36), 4+F(3, 4)+1+F(7, 12)+2+F(4, 9)], [F(35, 9), F(19, 6), F(79, 9)])
+
+    a = F(11, 2)
+    b = a-F(4, 5)
+    c = a+b-F(21, 4)
+    c_wrong = a-F(21, 4)
+    b_wrong = a+F(4, 5)
+    c_with_b_wrong = a+b_wrong-F(21, 4)
+    check("1085-correct-and-wrong-models", [25-a-b-c, 25-a-b-c_wrong, 25-a-b_wrong-c_with_b_wrong], [F(197, 20), F(291, 20), F(133, 20)])
+    check("1086-correct-and-wrong-signs", [F(35, 4)+F(17, 8)-F(34, 9), F(35, 4)+F(17, 8)+F(34, 9), F(35, 4)-F(17, 8)-F(34, 9)], [F(511, 72), F(1055, 72), F(205, 72)])
+
+    second = F(109, 5)/(F(12, 7)+1+F(2, 5))
+    check("1087-boxes-full-allocation", [second*F(12, 7), second, second*F(2, 5)], [12, 7, F(14, 5)])
+    assert sum((F(7), F(12), F(14, 5))) == F(109, 5)
+    assert F(7, 12) != F(12, 7)
+    equal_box = F(109, 5)/3
+    check("1087-boxes-equal-shares-wrong", [equal_box]*3, [F(109, 15)]*3)
+    cucumber = F(5100)/(F(8, 7)+1+F(2, 7))
+    check("1087-crops-full-allocation", [cucumber*F(8, 7), cucumber, cucumber*F(2, 7)], [2400, 2100, 600])
+    assert F(2400, 2100) != F(7, 8)
+    check("1087-crops-equal-shares-wrong", [F(5100, 3)]*3, [1700]*3)
+
+    parenthesis = 7-F(27, 23)*F(23, 6)+F(19, 6)*F(3, 19)
+    check("1088-e1-correct-and-wrong", [parenthesis/F(2, 3)-F(2, 3), parenthesis*F(2, 3)-F(2, 3), parenthesis/F(2, 3)], [F(23, 6), F(4, 3), F(9, 2)])
+    numerator = F(3, 16)*F(8, 5)
+    divisor = F(15, 2)*F(1, 10)-F(3, 5)
+    divisor_wrong = F(15, 2)*F(1, 10)+F(3, 5)
+    tail = F(7, 2)/F(14, 3)
+    check("1088-e2-correct-and-wrong", [numerator/divisor-tail, numerator/divisor_wrong-tail, numerator/divisor-F(7, 2)*F(14, 3)], [F(5, 4), F(-19, 36), F(-43, 3)])
+    check("1089-e1-correct-and-wrong", [F(5, 6)+F(7, 12), F(5+7, 12), F(5+7, 6+12)], [F(17, 12), 1, F(2, 3)])
+    check("1089-e2-correct-and-wrong", [F(8, 45)-F(11, 30), F(11, 30)-F(8, 45), F(8, 45)+F(11, 30)], [F(-17, 90), F(17, 90), F(49, 90)])
+    check("1089-e3-correct-and-wrong", [F(7, 12)-F(8, 15)+F(9, 20), F(7, 12)+F(8, 15)+F(9, 20), F(7, 12)-F(8, 15)-F(9, 20)], [F(1, 2), F(47, 30), F(-2, 5)])
+    check("1089-e4-correct-and-wrong", [F(9, 10)-F(9, 20)-F(9, 50), F(9, 10)-(F(9, 20)-F(9, 50)), F(9, 10)+F(9, 20)+F(9, 50)], [F(27, 100), F(63, 100), F(153, 100)])
+    check("1090-e1-correct-and-wrong", [F(11, 4)-F(5, 6)+F(15, 8), F(11, 4)-F(5, 6)+F(7, 8), F(11, 4)+F(5, 6)+F(15, 8)], [F(91, 24), F(67, 24), F(131, 24)])
+    check("1090-e2-correct-and-wrong", [F(9, 2)-(F(5, 4)+F(23, 10)), F(9, 2)-F(5, 4)+F(23, 10), F(9, 2)+F(5, 4)+F(23, 10)], [F(19, 20), F(111, 20), F(161, 20)])
+    check("1091-correct-and-wrong-signs", [F(97, 4)-F(71, 8)+F(13, 2), F(97, 4)+F(71, 8)-F(13, 2), F(97, 4)-F(71, 8)-F(13, 2)], [F(175, 8), F(213, 8), F(71, 8)])
+    check("1092-nondegenerate-height-squared", [F(43, 10)**2-F(7, 4)**2], [F(6171, 400)])
+    assert F(6171, 400) > 0
+    assert abs(F(43, 10)-F(7, 2)) < F(43, 10) < F(43, 10)+F(7, 2)
+    assert F(43, 10) != F(7, 2)
+    rows.append({"check": "1092-geometry", "evidence": "Both circle pairs intersect nondegenerately. Endpoint-distance preservation proves the correct reflection. Swapped radii violate those distances; projection creates collinear triples. Full proof is in source-solutions.md and draft intent."})
+    return rows
+
+
+def run_n57():
+    rows = []
+
+    def check(name, computed, displayed):
+        computed = tuple(map(F, computed))
+        displayed = tuple(map(F, displayed))
+        assert computed == displayed, (name, computed, displayed)
+        rows.append({"check": name, "exact_values": list(map(str, computed))})
+
+    check("1093-correct-powers", [10**5*10**7, F(10**6, 10**4), 10**10*10**2, F(10**9, 10**5)], [10**12, 10**2, 10**12, 10**4])
+    assert (5*7, 10*2) == (35, 20)
+    assert (6+4, 9+5) == (10, 14)
+    numbers = (13000000, 75500000, 29680000, 89000000)
+    coefficients = tuple(map(F, ("1.3", "7.55", "2.968", "8.9")))
+    check("1094-value-preservation", [c*10**7 for c in coefficients], numbers)
+    assert all(1 < c < 10 for c in coefficients)
+    assert all(c*10**6 != n for c, n in zip(coefficients, numbers))
+    check("1094-nonstandard-equivalence", [F(c)*10**6 for c in ("13", "75.5", "29.68", "89")], numbers)
+    assert all(F(c) > 10 for c in ("13", "75.5", "29.68", "89"))
+    check("1095-e1-coefficients-and-wrong-exponent", [F("2.15")*F("3.2"), F("2.15")+F("3.2"), F(2)*4], [F("6.88"), F("5.35"), 8])
+    check("1095-e2-coefficients-and-wrong-exponent", [F(4)*F("1.1"), 4+F("1.1"), F(11)*13], [F("4.4"), F("5.1"), 143])
+    check("1096-correct-and-wrong-models", [300000*F("3.16")*10**7, F(300000, 1000)*F("3.16")*10**7, (3+F("3.16"))*10**12], [F("9.48")*10**12, F("9.48")*10**9, F("6.16")*10**12])
+    check("1097-correct-and-wrong-formulas", [F("2.5")*10**3*F("2.2")*10**3, 2*(F("2.5")+F("2.2"))*10**3, F("2.5")*F("2.2")*10**3], [F("5.5")*10**6, F("9.4")*10**3, F("5.5")*10**3])
+
+    x = F(7, 11)
+    check("1098-e1-correct-coefficient-and-value", [F(3, 7)+F(5, 14)+F(3, 14), (F(3, 7)+F(5, 14)+F(3, 14))*x], [1, x])
+    check("1098-e1-wrong-pairs", [F(3+5+3, 14), F(3+5+3, 14)*x, F(11, 14)*x+F(3, 14)], [F(11, 14), F(1, 2), F(5, 7)])
+    y = F(8, 5)
+    check("1098-e2-correct-and-wrong-values", [(F(5, 8)+F(5, 16))*y+F(7, 16), F(10+5+7, 16)*y, F(5+5, 16)*y+F(7, 16)], [F(31, 16), F(11, 5), F(23, 16)])
+    y = F(13, 5)
+    check("1099-e1-correct-and-wrong-values", [-6*(F(1, 6)-y/3)-2*(1-F(7, 2)*y), 5*y-3, 9*y+1], [F(102, 5), 10, F(122, 5)])
+    check("1099-e2-correct-and-wrong-values", [-8*(F(1, 8)-y/4)-3*(1-F(7, 3)*y), 5*y-4, 9*y+2], [F(97, 5), 9, F(127, 5)])
+    assert (2+7, -1-2) == (9, -3)
+    assert (2+7, -1-3) == (9, -4)
+
+    total = F("52.5")
+    complement = total*(1-F(2, 5)-F(1, 3))
+    separate = total-total*F(2, 5)-total/3
+    wrong_wheat = (total-total*F(2, 5))/3
+    check("1100-barley-both-methods-and-wrong-methods", [complement*100, separate*100, complement, (total-total*F(2, 5)-wrong_wheat)*100], [1400, 1400, 14, 2100])
+    total = F("72.8")
+    shirt_group = total-total/2-total/4
+    check("1100-shirts-both-methods-and-wrong-methods", [shirt_group/4, total*(1-F(1, 2)-F(1, 4))/4, shirt_group, (total-total/2)/4], [F("4.55"), F("4.55"), F("18.2"), F("9.1")])
+
+    z = (F(9, 2)-F(16, 3))/F(6, 5)
+    check("1101-e1-correct-and-wrong-roots", [z, (F(7, 2)-F(16, 3))/F(6, 5), (F(9, 2)-F(16, 3))/F(2, 5)], [F(-25, 36), F(-55, 36), F(-25, 12)])
+    assert 2*(F(2, 5)*z+1)+F(10, 3) == 4-F(1, 2)*(F(4, 5)*z-1) == F(43, 9)
+    y = F(17, 2)/F(34, 3)
+    check("1101-e2-correct-and-wrong-roots", [y, (F(14, 3)+F(11, 2))/F(34, 3), (7+F(11, 2))/F(34, 3)], [F(3, 4), F(61, 68), F(75, 68)])
+    assert 5-(F(3, 2)*y+F(1, 3))*6 == F(7, 3)*y-F(11, 2) == F(-15, 4)
+
+    numbers = (65000, 88100000, 220000000, 771000000)
+    coefficients = tuple(map(F, ("6.5", "8.81", "2.2", "7.71")))
+    exponents = (4, 7, 8, 8)
+    check("1102-value-preservation", [c*10**e for c, e in zip(coefficients, exponents)], numbers)
+    assert all(1 < c < 10 for c in coefficients)
+    assert all(c*10**(e-1) != n for c, e, n in zip(coefficients, exponents, numbers))
+    check("1102-nonstandard-equivalence", [F("65")*10**3, F("88.1")*10**6, F("22")*10**7, F("77.1")*10**7], numbers)
+    assert all(F(c) > 10 for c in ("65", "88.1", "22", "77.1"))
+    check("1103-e1-correct-and-wrong-coefficients", [F("7.1")*F("1.2"), F("7.1")+F("1.2")], [F("8.52"), F("8.3")])
+    assert F("85.2")*10**11 == F("8.52")*10**12
+    assert F("85.2") > 10
+    check("1103-e2-correct-and-wrong-coefficients", [F("3.14")**2, F("3.14")+F("3.14"), F("9.86")-F("3.14")**2], [F("9.8596"), F("6.28"), F("0.0004")])
+    check("1104-all-expansions", [F("2.3")*10**4, F("1.05")*10**5, 8*10**6], [23000, 105000, 8000000])
+    check("1104-one-fewer-shift", [F("2.3")*10**3, F("1.05")*10**4, 8*10**5], [2300, 10500, 800000])
+    check("1104-dropped-interior-zero", [F("1.5")*10**5], [150000])
+
+    second_distance = F(21)/(1+F(4, 3))
+    time = second_distance*F(4, 3)/6
+    second_speed = second_distance/time
+    check("1105-full-correct-pair", [time, second_speed], [2, F("4.5")])
+    check("1105-reversed-ratio-pair", [F(21)/(6+6*F(4, 3)), 6*F(4, 3)], [F("1.5"), 8])
+    check("1105-dropped-whole-ratio-pair", [F(21)/(6+6*3), 6*3], [F(7, 8), 18])
+    current_still = F((15-13)*70, 15+13)
+    current_upstream = (F(15*70, 13)-70)/2
+    current_downstream = (70-F(13*70, 15))/2
+    check("1106-conditional-only-not-a-key", [current_still, current_upstream, current_downstream], [5, F(70, 13), F(14, 3)])
+    assert len({current_still, current_upstream, current_downstream}) == 3
+
+    inner = F(25, 12)/F(5, 3)+F("1.75")
+    inner_wrong = F(25, 12)*F(5, 3)+F("1.75")
+    check("1107-e1-correct-and-wrong", [inner/F(4, 3)-F(".25"), inner_wrong/F(4, 3)-F(".25"), inner*F(4, 3)-F(".25")], [2, F(11, 3), F(15, 4)])
+    inner = F(".8")*F(3, 5)+F(".26")/F(1, 2)
+    inner_wrong = F(".8")*F(3, 5)+F(".26")*F(1, 2)
+    check("1107-e2-correct-and-wrong", [inner/F(3, 8)+F(13, 3), inner_wrong/F(3, 8)+F(13, 3), inner*F(3, 8)+F(13, 3)], [7, F(149, 25), F(113, 24)])
+    return rows
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("course", choices=("n56", "n57"))
+args = parser.parse_args()
+checks = run_n56() if args.course == "n56" else run_n57()
+print(json.dumps({
+    "role": "Author exact-arithmetic evidence only; not structural validation, canonical review or approval.",
+    "course": args.course,
+    "status": "pass",
+    "check_count": len(checks),
+    "checks": checks,
+}, indent=2))

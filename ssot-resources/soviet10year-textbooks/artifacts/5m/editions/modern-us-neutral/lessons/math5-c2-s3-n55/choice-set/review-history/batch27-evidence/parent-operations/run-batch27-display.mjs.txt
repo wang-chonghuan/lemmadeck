@@ -1,0 +1,88 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { spawnSync } from 'node:child_process'
+
+const [book, lesson, choiceDir = ''] = process.argv.slice(2)
+assert(book && lesson)
+const repo = process.cwd()
+assert.equal(repo, '/Users/yong/.codex/worktrees/d9b1/lemmadeck')
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const evidence = `${scratch}/batch27-render`
+fs.mkdirSync(evidence, { recursive: true })
+const source = `ssot-resources/soviet10year-textbooks/artifacts/${book}`
+const core = `${source}/editions/modern-us-neutral/lessons/${lesson}`
+const selected = choiceDir || `${core}/choice-set`
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const seed = read(`${selected}/seed.json`)
+const review = read(`${selected}/review.json`)
+assert.equal(seed.source.lesson, lesson)
+assert(['pass', 'blocked'].includes(review.outcome))
+const env = { ...process.env, PLAYWRIGHT_HTML_OPEN: 'never',
+  S10Y_REPORT_NAME: `${lesson}-batch27-report.json`,
+  S10Y_CHOICE_DIRS: JSON.stringify(choiceDir ? { [lesson]: choiceDir } : {}) }
+delete env.PWDEBUG
+const inputs = ['lesson.json', 'exercises.json', 'figures.json']
+  .map(name => `${core}/${name}`)
+  .concat(['seed.json', 'draft.json', 'review.json'].map(name => `${selected}/${name}`))
+const bindings = () => inputs.map(file => ({ path: file, sha256: hash(file) }))
+const initial = bindings()
+function run(name, command, cwd = repo) {
+  const output = `${evidence}/${book}-${lesson}-${name}-command.json`
+  assert(!fs.existsSync(output), output)
+  const started = new Date().toISOString()
+  const result = spawnSync(command[0], command.slice(1),
+    { cwd, env, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 })
+  fs.writeFileSync(output, JSON.stringify({
+    command, cwd, started, finished: new Date().toISOString(),
+    exit_code: result.status, signal: result.signal, error: result.error?.message ?? null,
+    stdout: result.stdout, stderr: result.stderr, inputs: bindings(),
+    PWDEBUG_cleared: true, PLAYWRIGHT_HTML_OPEN: 'never',
+    S10Y_REPORT_NAME: env.S10Y_REPORT_NAME, S10Y_CHOICE_DIRS: env.S10Y_CHOICE_DIRS,
+    execution_count: 1, semantic_outcome: review.outcome,
+    rendered: name === 'capture' ? ['text', 'exercises', 'choices'].map(surface => {
+      const file = `.tmp/ld-s10y-lesson/render/${book}/modern-us-neutral/${lesson}/${surface}.html`
+      return { path: file, sha256: hash(file) }
+    }) : [],
+    scope: 'First offline render/capture of the reviewed snapshot; no semantic rerun.',
+    model: null, usage: null,
+  }, null, 2) + '\n', { flag: 'wx' })
+  assert.equal(result.status, 0, result.stderr || result.stdout)
+  assert.deepEqual(bindings(), initial)
+}
+let renderSource = source
+if (choiceDir) {
+  env.S10Y_BATCH = `batch27-render/${book}-${lesson}-shadow`
+  run('stage', ['node', `${scratch}/stage-batch-render.mjs`, book, lesson])
+  renderSource = `${scratch}/${env.S10Y_BATCH}/${book}`
+  assert(fs.existsSync(renderSource))
+}
+run('render', choiceDir
+  ? ['node', '.claude/skills/ld-s10y-lesson/tools/render_lesson.js',
+      renderSource, '--edition', 'modern-us-neutral', '--lesson', lesson,
+      '--out', `.tmp/ld-s10y-lesson/render/${book}/modern-us-neutral`]
+  : ['.claude/skills/ld-s10y-lesson/.venv/bin/python',
+      '.claude/skills/ld-s10y-lesson/tools/p2c.py', 'render',
+      '--book', book, '--edition', 'modern-us-neutral', '--lesson', lesson])
+run('capture', ['node', `../${scratch}/offline-check.mjs`, book, lesson],
+  path.join(repo, 'app'))
+const directory = `${scratch}/offline-evidence/${book}`
+const screenshots = fs.readdirSync(directory).filter(file =>
+  file.startsWith(`${lesson}-`) && file.endsWith('.png')).map(file => ({
+    path: `${directory}/${file}`, sha256: hash(`${directory}/${file}`),
+  }))
+assert(screenshots.length > 0)
+const rendered = ['text', 'exercises', 'choices'].map(surface => {
+  const file = `.tmp/ld-s10y-lesson/render/${book}/modern-us-neutral/${lesson}/${surface}.html`
+  return { path: file, sha256: hash(file) }
+})
+fs.writeFileSync(`${evidence}/${book}-${lesson}-capture-manifest.json`,
+  JSON.stringify({ book, lesson, status: 'pass', screenshots,
+    report: `${directory}/${env.S10Y_REPORT_NAME}`,
+    inputs: bindings(), rendered, parent_image_opens: 0,
+    browser: 'isolated headless, closed after capture', model: null, usage: null,
+  }, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ status: 'pass', book, lesson,
+  screenshots: screenshots.length, parent_image_opens: 0 }))

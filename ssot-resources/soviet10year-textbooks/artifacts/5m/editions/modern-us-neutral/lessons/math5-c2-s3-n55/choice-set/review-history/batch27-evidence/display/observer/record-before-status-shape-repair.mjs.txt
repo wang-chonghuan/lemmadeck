@@ -1,0 +1,68 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+assert.equal(process.cwd(), '/Users/yong/.codex/worktrees/d9b1/lemmadeck')
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const root = `${scratch}/reviewer-5m-n55-display`
+const read = file => JSON.parse(fs.readFileSync(file))
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const bind = file => ({ path: path.resolve(file), sha256: hash(file) })
+const desktopFile = `${root}/desktop-primary.json`
+const mobileFile = `${root}/mobile-primary.json`
+const supplementsFile = `${root}/supplement-observations.json`
+const desktop = read(desktopFile)
+const mobile = read(mobileFile)
+const supplements = read(supplementsFile)
+assert.equal(desktop.status, 'pass-with-gaps')
+assert.equal(mobile.status, 'pass-with-gaps')
+assert.equal(supplements.status, 'pass')
+const commandFile = `${root}/supplement-command.json`
+const command = read(commandFile)
+assert.equal(command.exit_code, 0)
+assert.equal(command.captures.length, 9)
+assert.equal(command.objects.length, 54)
+assert.equal(command.all_protected_hashes_unchanged, true)
+assert(command.objects.every(row =>
+  row.whole_object_covered_by_primary.length || row.supplement_ids.length))
+const inventoryFile = `${root}/native-inventory.json`
+const inventory = read(inventoryFile)
+assert.equal(inventory.montages.length, 4)
+const manifestFile = `${scratch}/batch27-render/5m-math5-c2-s3-n55-capture-manifest.json`
+const manifest = read(manifestFile)
+assert.equal(manifest.screenshots.length, 12)
+for (const row of [...manifest.screenshots, ...command.protectedFiles,
+  ...command.captures, ...inventory.montages]) {
+  assert.equal(hash(row.path), row.sha256)
+}
+const output = `${root}/actual-observations.json`
+assert(!fs.existsSync(output))
+fs.writeFileSync(output, JSON.stringify({
+  schema: 's10y-actual-display-observations@1', ticket: 'STEMROBIN-182',
+  book: '5m', lesson: 'math5-c2-s3-n55', status: 'pass', outcome: 'pass',
+  recorded_at: new Date().toISOString(),
+  reviewer: { kind: 'independent_agent',
+    identity: 'Fresh bounded Turing desktop, Euclid mobile and Singer supplement observers; parent aggregates text only.' },
+  manifest: bind(manifestFile), bounded_reviews: [desktopFile, mobileFile, supplementsFile].map(bind),
+  supplement_command: bind(commandFile), native_inventory: bind(inventoryFile),
+  protected_render_and_core_bindings: command.protectedFiles,
+  primary_images: manifest.screenshots, supplemental_images: command.captures,
+  native_montages: inventory.montages, full_object_coverage_ledger: command.objects,
+  counts: { primary_PNGs: 12, primary_actual_opened: 11,
+    unopened_identical_aliases: 1, supplementary_PNGs: 9,
+    native_montages: 4, fresh_context_image_counts: [5, 6, 4],
+    original_and_supplement_PNGs: 21, actual_distinct_PNG_inputs: 20,
+    unique_questions: 8, unique_options: 25, original_written_sources: 8,
+    unique_surface_viewport_combinations: 6, additional_unique_combinations: 0 },
+  complete_prose_written_questions_options_and_terminal_coverage: true,
+  original_partials_retained_as_partial: true, identical_desktop_text_alias_not_opened: true,
+  parent_image_opens: 0, image_payloads_returned_to_parent: false,
+  unchanged_semantic_or_canonical_reruns: 0,
+  browser_boundary: { headless: true, isolated_contexts: true, user_profile: false,
+    PWDEBUG_cleared: true, PLAYWRIGHT_HTML_OPEN: 'never', browser_closed: true },
+  formal_application_acceptance_or_new_semantic_approval_claimed: false,
+  model: null, usage: null,
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ status: 'pass', screenshots: 21, distinct_actual_inputs: 20,
+  primary_opens: 11, montage_opens: 4, parent_image_opens: 0 }))
