@@ -133,6 +133,18 @@ function proseFlow(blocks, sectionBreaks = []) {
   })
 }
 
+function withVectorGlyphFont(svg) {
+  if (!svg.includes("\u20d7") || !svg.includes("data-label-id")
+    || svg.includes('data-ld-vector-font="katex-main"')) return svg
+  const root = svg.match(/^\s*<svg\b[^>]*>/)
+  if (!root) throw new Error("Vector figure must have an SVG root")
+  // A combining vector mark needs a font covering the entire letter/accent cluster.
+  const style = '<style>svg[data-ld-vector-font="katex-main"] text[data-label-id]'
+    + '{font-family:KaTeX_Main,Arial,Helvetica,sans-serif}</style>'
+  return svg.replace(root[0], root[0].slice(0, -1)
+    + ' data-ld-vector-font="katex-main">' + style)
+}
+
 /** 插图取矢量优先；SVG 直接内联，宿主可用 CSS 换色（fill 是 currentColor）。 */
 function figureSvg(bookDir, id) {
   const svg = path.join(bookDir, "figures", `${id}.svg`)
@@ -155,4 +167,5 @@ module.exports = {
   sectionBreakIndices,
   proseFlow,
   figureSvg,
+  withVectorGlyphFont,
 }

@@ -14,7 +14,7 @@
 const fs = require("fs");
 const path = require("path");
 const katex = require("katex");
-const { proseFlow } = require("./htmlfrag.js");
+const { proseFlow, withVectorGlyphFont } = require("./htmlfrag.js");
 const { sourceNumberForArtifact } = require("./publish_merge.js");
 
 const SKILL = path.resolve(__dirname, "..");
@@ -125,7 +125,7 @@ function figure(contentRoot, id, label, strictEdition) {
       return `<p class="err">缺少现代分层图片 ${esc(id)}</p>`;
     }
     const b64 = fs.readFileSync(artwork).toString("base64");
-    const vector = fs.readFileSync(svg, "utf8").replace(/<\?xml[^>]*\?>/, "");
+    const vector = withVectorGlyphFont(fs.readFileSync(svg, "utf8").replace(/<\?xml[^>]*\?>/, ""));
     return open + `<div class="figure-layered"><img class="figure-artwork" `
       + `alt="${esc(label || id)}" src="data:image/png;base64,${b64}">`
       + `<div class="figure-vector">${vector}</div></div>` + close;
@@ -136,7 +136,7 @@ function figure(contentRoot, id, label, strictEdition) {
       + `src="data:image/png;base64,${b64}">` + close;
   }
   if (fs.existsSync(svg)) {
-    return open + fs.readFileSync(svg, "utf8").replace(/<\?xml[^>]*\?>/, "") + close;
+    return open + withVectorGlyphFont(fs.readFileSync(svg, "utf8").replace(/<\?xml[^>]*\?>/, "")) + close;
   }
   if (fs.existsSync(png)) {
     const b64 = fs.readFileSync(png).toString("base64");

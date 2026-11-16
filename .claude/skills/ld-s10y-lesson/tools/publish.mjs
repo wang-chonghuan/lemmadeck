@@ -26,7 +26,7 @@ import { fileURLToPath } from 'node:url'
 
 const require = createRequire(import.meta.url)
 const postgres = require('postgres')
-const { inline, proseInline, proseFlow } = require('./htmlfrag.js')
+const { inline, proseInline, proseFlow, withVectorGlyphFont } = require('./htmlfrag.js')
 const { publicationPlan } = require('./lesson_order.js')
 const { preserveExerciseMetadata, preserveChoiceMetadata, sourceNumberForArtifact } = require('./publish_merge.js')
 
@@ -119,7 +119,7 @@ function figureAssetStrict(id, manifest) {
     if (/<(?:image|foreignObject|script)\b/i.test(svg) || /(?:data:|https?:\/\/)/i.test(linkScan)) {
       throw new Error(`${svgPath} 含位图、脚本、data URI 或外链`)
     }
-    return svg
+    return withVectorGlyphFont(svg)
   }
 
   const common = {

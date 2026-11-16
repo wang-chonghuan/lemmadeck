@@ -1,0 +1,158 @@
+/**
+ * 文本 → 可直接嵌进宿主页面的 HTML 片段。
+ *
+ * 与 render_lesson.js 的整份自包含文档不同，这里产出的是**片段**：没有 <style>、
+ * 没有内联字体、没有自己的排版。给 app 用的就是它——课文塞进 iframe 会变成"文档中的
+ * 文档"，字体和版式与产品两套，高度还得靠 JS 猜（正是操作栏被压住的由来）。片段则由
+ * 宿主排版，KaTeX 的 CSS 宿主装一次即可。
+ */
+const fs = require("fs")
+const path = require("path")
+const katex = require("katex")
+
+const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+const escText = (s) => esc(s).replace(/\r?\n/g, "<br>")
+const PROSE_MATH = /[A-Za-z0-9]+(?:\.[0-9]+)*/g
+const escProseText = (text) => {
+  let out = "", last = 0
+  for (const match of text.matchAll(PROSE_MATH)) {
+    out += esc(text.slice(last, match.index))
+    out += `<span class="sr-prose-math">${esc(match[0])}</span>`
+    last = match.index + match[0].length
+  }
+  return (out + esc(text.slice(last))).replace(/\r?\n/g, "<br>")
+}
+// 原书用黑体排定义句，转写时记成 **…**
+const strong = (h) => h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+const MATH = /\$\$(.+?)\$\$|\$([^$]+?)\$/gs
+// 公式后面紧跟的标点要与公式绑在一起，否则 `$…$;` 的分号会被甩到下一行
+const TRAIL = /^[;,.、，。：:！!？?)）\]]+/
+
+function renderInline(text, renderText) {
+  let out = "", last = 0
+  for (const m of text.matchAll(MATH)) {
+    out += renderText(text.slice(last, m.index))
+    const tex = m[1] ?? m[2]
+    let html
+    try {
+      html = katex.renderToString(tex, { displayMode: !!m[1], throwOnError: false })
+    } catch {
+      html = `<span class="sr-tex-err">${esc(tex)}</span>`
+    }
+    last = m.index + m[0].length
+    const t = (text.slice(last).match(TRAIL) || [""])[0]
+    last += t.length
+    out += `<span class="sr-nb">${html}${esc(t)}</span>`
+  }
+  return strong(out + renderText(text.slice(last)))
+}
+
+const inline = (text) => renderInline(text, escText)
+const proseInline = (text) => renderInline(text, escProseText)
+
+function proseParagraphs(text) {
+  return String(text ?? "")
+    .split(/\n{2,}/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean)
+}
+
+function proseOutline(blocks) {
+  let index = 0
+  return blocks.flatMap((block, blockIndex) => {
+    if (block.kind !== "p") return []
+    return proseParagraphs(block.text).map((text, paragraphInBlock) => ({
+      index: index++,
+      blockIndex,
+      paragraphInBlock,
+      text,
+    }))
+  })
+}
+
+function sectionBreakIndices(blocks, sectionBreaks = []) {
+  if (!Array.isArray(sectionBreaks)) {
+    throw new Error("section_breaks must be an array")
+  }
+  const outline = proseOutline(blocks)
+  const indices = sectionBreaks.map((boundary, boundaryIndex) => {
+    if (Number.isInteger(boundary)) return boundary
+    if (
+      !boundary
+      || typeof boundary !== "object"
+      || typeof boundary.before !== "string"
+      || !boundary.before.trim()
+      || typeof boundary.after !== "string"
+      || !boundary.after.trim()
+    ) {
+      throw new Error(
+        `section_breaks[${boundaryIndex}] must contain non-empty before/after paragraph text`,
+      )
+    }
+    const matches = outline
+      .slice(1)
+      .filter((item) =>
+        outline[item.index - 1].text === boundary.before.trim()
+        && item.text === boundary.after.trim())
+      .map((item) => item.index)
+    if (matches.length !== 1) {
+      throw new Error(
+        `section_breaks[${boundaryIndex}] must identify exactly one adjacent paragraph pair; `
+        + `matched ${matches.length}`,
+      )
+    }
+    return matches[0]
+  })
+  if (indices.some((index) => index <= 0 || index >= outline.length)) {
+    throw new Error("section_breaks must point between prose paragraphs")
+  }
+  if (indices.some((index, position) => position > 0 && index <= indices[position - 1])) {
+    throw new Error("section_breaks must be strictly increasing and unique")
+  }
+  return indices
+}
+
+function proseFlow(blocks, sectionBreaks = []) {
+  const breaks = new Set(sectionBreakIndices(blocks, sectionBreaks))
+  let paragraphIndex = 0
+  return blocks.flatMap((block) => {
+    if (block.kind !== "p") return [block]
+    const paragraphs = proseParagraphs(block.text).map((text) => {
+      const item = {
+        ...block,
+        text,
+        ...(breaks.has(paragraphIndex) ? { sectionBreak: true } : {}),
+      }
+      paragraphIndex += 1
+      return item
+    })
+    return [
+      ...paragraphs,
+      ...(block.figures ?? []).map((figure) => ({ ...figure, kind: "fig" })),
+    ]
+  })
+}
+
+/** 插图取矢量优先；SVG 直接内联，宿主可用 CSS 换色（fill 是 currentColor）。 */
+function figureSvg(bookDir, id) {
+  const svg = path.join(bookDir, "figures", `${id}.svg`)
+  if (fs.existsSync(svg)) {
+    return fs.readFileSync(svg, "utf8").replace(/<\?xml[^>]*\?>/, "").trim()
+  }
+  const png = path.join(bookDir, "figures", `${id}.png`)
+  if (fs.existsSync(png)) {
+    return `<img alt="" src="data:image/png;base64,${fs.readFileSync(png).toString("base64")}">`
+  }
+  return null
+}
+
+module.exports = {
+  esc,
+  inline,
+  proseInline,
+  proseParagraphs,
+  proseOutline,
+  sectionBreakIndices,
+  proseFlow,
+  figureSvg,
+}
