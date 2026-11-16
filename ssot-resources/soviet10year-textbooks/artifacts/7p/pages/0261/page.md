@@ -1,0 +1,94 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7p",
+  "page": 261,
+  "printed_page": 250,
+  "source": {
+    "pdf": "6-7p 苏联中学课本 物理 六-七年级.pdf",
+    "pdf_sha256": "46e2b2e4a92b7c00fab9adfc6a8a9b5340a9519fa90f1b82e79bc1e1432fcbb0",
+    "pdf_page": 261
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1472,
+    "h": 2161,
+    "sha256": "6dc743c6c023428a4f61e6867a9c620e9c139f12c743b75112a55112f149ce53"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "本页全部属于 phy7-c1-s2-n100；首段是新起段而不是上页已闭合的λ段的 cont。",
+    "正文无编号表格明确 owner-lesson phy7-c1-s2-n100；单独表题保留为 cap，不属于任何问题。表格以原始裁图保存，不把数据行另写成正文以重复计行。",
+    "例如段的原书指数为10^6；前文及表内为10^5。忠实保留，不现代化或修正物理数值。",
+    "例如段中3.4与×10^6在相邻两条印刷行；完整公式内用↵保存原断点。",
+    "问题(1)至(4)在本课问题栏目依次保留，末题已闭合；不读取或补写下一物理页。"
+  ],
+  "errata": [
+    {
+      "id": "p0261-ice-latent-exponent",
+      "block": "p0261#3",
+      "original": "$3.4\\times10^6$",
+      "reason": "For the same one-kilogram, zero-degree water/ice example, the preceding paragraph gives $3.4\\times10^5$ joules. The exponent 6 contradicts that stated example by a factor of ten. Preserve the printed formula in SOURCE; correct only the bound modern example."
+    }
+  ],
+  "printed_lines": 17,
+  "figures": [
+    {
+      "id": "tbl-p0261-01",
+      "label": "表",
+      "box": [
+        181,
+        864,
+        1159,
+        548
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+各种物质的熔解热用实验来测定. 例如经实验测出，冰
+的熔解热为$3.4\times10^5$焦耳/千克，或80千卡/千克. 这就是
+说，把一块质量为1千克$0^\circ\mathrm{C}$的冰变为同温度的水需要消耗
+$3.4\times10^5$焦耳或80千卡的能量.
+
+<!-- p -->
+可见，**在熔点时1千克*液态物质*的内能比相同质量的同
+种固态*物质*的内能多，所多的量值就等于这种*物质*的熔解热.**
+
+<!-- p -->
+例如，1千克$0^\circ\mathrm{C}$的水比1千克同温度的冰的内能多$3.4↵\times10^6$焦耳.
+
+<!-- cap 表 owner-lesson phy7-c1-s2-n100 -->
+**一些物质的熔解热**
+
+<!-- fig 表 box 181,864,1159,548 owner-lesson phy7-c1-s2-n100 -->
+![表](figures/tbl-p0261-01.png)
+
+<!-- exhead -->
+问题
+
+<!-- ex 1 -->
+(1) 如何解释在熔解进行的整个过程中，晶体的温度始
+终保持不变？
+
+<!-- ex 2 -->
+(2) 当晶体正在熔解时，加热器中燃烧着的燃料所放出
+的能量都用在哪儿了？
+
+<!-- ex 3 -->
+(3) 什么是熔解热？
+
+<!-- ex 4 -->
+(4) 熔解热都有哪些量度单位？
+
+<!-- foot -->
+250
