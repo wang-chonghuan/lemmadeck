@@ -1,0 +1,120 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 204,
+  "printed_page": 195,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 204
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "2bd0eec32eff0b579751ffd91492e0530a50a8b50dbf8865d604525f786f1966"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "One individual original-page view:17 physical printed rows including footer. Captions156/157 share one row; caption158 shares row6 of the following seven-row prose object.",
+    "Incoming corrected203 ends 此 with cont open; initial figures/captions and incoming footnote① are transparent. First prose starts 时 and closes82.",
+    "Three captioned figures:156 variable capacitor;157 one group of three components;158 jar/discharger. Small157 markings remain exact pixel facts, not reconstructed.",
+    "83 starts at its printed heading. Internal bold subheading remains prose. Final full-width row ends 电 and stays cont open to205.",
+    "Lower-right triangular shadow and page-edge marks are scan artifacts. No counting override approved or applied."
+  ],
+  "errata": [],
+  "counting": {
+    "edge_margin_px": 120,
+    "reason": "Independently opened original PDF page 204: the leftmost and rightmost 120 px contain scan-edge strokes, specks and the lower-right triangular shadow, but no owned source text, caption or page number. The frozen extra band [2149, 2177] lies below the printed footer. Exclude only these side margins in the counting copy; preserve all source pixels, physical text rows, formula rows and figure rectangles."
+  },
+  "printed_lines": 17,
+  "figures": [
+    {
+      "id": "fig-156",
+      "label": "图156",
+      "box": [
+        313,
+        290,
+        501,
+        408
+      ]
+    },
+    {
+      "id": "fig-157",
+      "label": "图157",
+      "box": [
+        943,
+        243,
+        190,
+        515
+      ]
+    },
+    {
+      "id": "fig-158",
+      "label": "图158",
+      "box": [
+        969,
+        1478,
+        339,
+        373
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- fig 图156 box 313,290,501,408 -->
+![图156](figures/fig-156.png)
+
+<!-- fig 图157 box 943,243,190,515 -->
+![图157](figures/fig-157.png)
+
+<!-- cap 图156 -->
+图156
+
+<!-- cap 图157 samerow -->
+图157
+
+<!-- p cont -->
+时，改变了金属片重叠部分的面积，因此改变了电容器的电
+容. 空气是这种电容器的电介质.
+
+<!-- p -->
+在电解电容器中，由于减小了两极板间的距离，其电容显
+著地增大(图157). 在这种电容器中，敷在一个极板(金属箔
+片)上的一层很薄的氧化膜作为电介质. 浸过专门物质溶液
+(电解液)的纸作为第二个极板.
+
+<!-- p -->
+还有其他类型的电容器.
+
+<!-- h3 -->
+83. 带电电容器的能量　电容器的应用
+
+<!-- p open -->
+**带电电容器的能量**　带电的电容
+器具有能量. 如果使电容器放电，例
+如，利用专用的放电器使莱顿瓶放电
+(图158)，则可以相信带电的电容器
+具有能量. 此时，在放电器的小球和
+电容器极板间产生火花. 电容器的能
+
+<!-- fig 图158 box 969,1478,339,373 -->
+![图158](figures/fig-158.png)
+
+<!-- cap 图158 samerow -->
+图158
+
+<!-- p cont open -->
+量转变为其他形式的能量: 机械能、光能、热能. 电容器的电
+
+<!-- foot -->
+· 195 ·

@@ -115,7 +115,7 @@ function sectionBreakIndices(blocks, sectionBreaks = []) {
 function proseFlow(blocks, sectionBreaks = []) {
   const breaks = new Set(sectionBreakIndices(blocks, sectionBreaks))
   let paragraphIndex = 0
-  return blocks.flatMap((block) => {
+  const flow = blocks.flatMap((block) => {
     if (block.kind !== "p") return [block]
     const paragraphs = proseParagraphs(block.text).map((text) => {
       const item = {
@@ -131,6 +131,33 @@ function proseFlow(blocks, sectionBreaks = []) {
       ...(block.figures ?? []).map((figure) => ({ ...figure, kind: "fig" })),
     ]
   })
+  const ordered = []
+  for (let index = 0; index < flow.length;) {
+    if (!["fig", "cap"].includes(flow[index].kind)) {
+      ordered.push(flow[index++])
+      continue
+    }
+    const start = index
+    while (index < flow.length && ["fig", "cap"].includes(flow[index].kind)) index += 1
+    const group = flow.slice(start, index)
+    const figures = group.filter((block) => block.kind === "fig")
+    const captions = group.filter((block) => block.kind === "cap")
+    if (!figures.length || !captions.length) {
+      ordered.push(...group)
+      continue
+    }
+    const attached = new Map(figures.map((figure) => [figure, []]))
+    for (const caption of captions) {
+      const matches = figures.filter((figure) =>
+        typeof caption.label === "string" && caption.label === figure.label)
+      if (matches.length !== 1) {
+        throw new Error(`Figure caption must match exactly one adjacent figure: ${caption.label}`)
+      }
+      attached.get(matches[0]).push(caption)
+    }
+    for (const figure of figures) ordered.push(figure, ...attached.get(figure))
+  }
+  return ordered
 }
 
 function withVectorGlyphFont(svg) {
