@@ -1,0 +1,75 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 227,
+  "printed_page": 218,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 227
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "c7c93a0a7dd595e9bc9c649237ef5c3e1f4628637b2ae686341dba23e4c02d7e"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "D023 author-only physical227 candidate, one original-detail grid open; exactly four source grids in this batch, no crops/reopens or independent SOURCE/science/geometry/card/delivery approval.",
+    "Incoming p cont joins physical226 传给电 to 流的，. No figures on this page. Source emphasis dots and bold Joule-Lenz wording are typographic emphasis, not additional printed rows.",
+    "Visually authored 25 printed rows, including footer. Equation (9-12) and the inline V^2/R fraction stack each remain one physical row. Literal source electron/ion heating explanation and historical wording are not modernized.",
+    "Final p open ends 表述如下：载流导体放出的热量等于电流强度的平方、导体的. Physical228 has not been prepared or opened here; no completion, inferred formula, punctuation closure or next-page text is authored."
+  ],
+  "errata": [],
+  "printed_lines": 25,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+流的，并在$\Delta t$时间内在该段电路上放出的能量，等于电流的
+功(9-11).
+
+<!-- p -->
+如果在一段电路上没有任何运动的导体，则这段电路的
+内能将增加. 在均匀导体中，内能的增加意味着它的温度升
+高. 实际上，载流导体被加热了，并向周围物体放热.
+
+<!-- p -->
+上述的具体过程如下. 电场加速电子. 电子跟晶体点阵
+的离子碰撞以后，把自己的能量传给了离子. 结果，离子在平
+衡位置附近的紊乱运动能量增大了. 这就是说增加了内能.
+导体的温度升高，从而它开始向周围的物体放热. 接通电路
+以后经过很短的时间上述过程就完成了，温度不再随时间改
+变. 由于电场做功，能量不断地传给导体. 但是，它的内能是
+保持不变的，因为导体传给周围物体的热量等于电流的功. 由
+此可见，电流的功的公式(9-11)，确定了均匀导体传给其他物
+体的热量.
+
+<!-- p -->
+迄今，我们没有利用欧姆定律. 如果在公式(9-11)中，根
+据一段均匀电路的欧姆定律，或用电流代替电压，或用电压代
+替电流，则得到电流的功的三个等价公式：
+$A=IV\Delta t=I^2R\Delta t=\frac{V^2}{R}\Delta t$.　　　　　　　　　(9-12)
+
+<!-- p -->
+对于导体的串联电路，利用公式$A=I^2R\Delta t$比较方便. 当
+并联时，公式$A=\frac{V^2}{R}\Delta t$比较方便，因为所有导体的电压都
+相同.
+
+<!-- p open -->
+确定载流导体向周围介质放出的热量的定律 首先是英
+国学者焦耳和俄国学者楞次用实验建立的. 焦耳－楞次定律
+表述如下：载流导体放出的热量等于电流强度的平方、导体的
+
+<!-- foot -->
+· 218 ·

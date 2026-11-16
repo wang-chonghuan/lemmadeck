@@ -1,0 +1,92 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 229,
+  "printed_page": 220,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 229
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "198aa958351337b6b00b3a50a0ff982ebf33f497d17cc42f6547dbcb87755a57"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "D024 source-only AUTHOR-not-approved; one original-detail native grid open, no crop/reopen or independent review.",
+    "Incoming ex1 cont joins physical228 加电阻中通过的电流相同， to 因此，. Example1 derivation is printed on nine physical rows, including both separate rows of the V equality.",
+    "Visually authored 24 physical rows including footer. Fraction stacks, including the full horizontal chain ending R_分=0.02欧姆, are single rows.",
+    "Figure178 rough inventory includes all external current arrows and labels as well as both parallel branches; caption shares 不超过I_0(图178). 这个电流小于被测. No crop or geometry approval.",
+    "Example3 is ex3 open with last literal characters 电阻r_4上的电; no unseen end authored."
+  ],
+  "errata": [],
+  "printed_lines": 24,
+  "figures": [
+    {
+      "id": "fig-178",
+      "label": "图 178",
+      "box": [
+        940,
+        1009,
+        390,
+        296
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 1 cont -->
+因此，
+$V_0=IR_{\text{内}}$；
+$V=V_0+V_{\text{附加}}$
+$=IR_{\text{内}}+IR_{\text{附加}}$.
+由此得出
+$n=\frac{V}{V_0}=\frac{R_{\text{内}}+R_{\text{附加}}}{R_{\text{内}}}$，
+或
+$R_{\text{附加}}=R_{\text{内}}(n-1)$；
+$R_{\text{附加}}=5000$欧姆.
+
+<!-- ex 2 open -->
+2. 内阻$R_a=0.3$欧姆的安培计，最大量程$I_0=2.5$安培.
+必须并联一个多大的电阻（分路），才能测量电路中的电流
+$I=40$安培？仪器的灵敏度降低了多
+少倍？
+
+<!-- ex 2 cont open -->
+解　当连接分路时，被测电流的一
+部分$I_{\text{分}}$通过它. 通过安培计的电流仍然
+
+<!-- fig 图 178 box 940,1009,390,296 -->
+![图 178](figures/fig-178.png)
+
+<!-- ex 2 cont open -->
+不超过$I_0$(图178). 这个电流小于被测
+
+<!-- cap 图 178 samerow -->
+图 178
+
+<!-- ex 2 cont -->
+电流，$n=\frac{I}{I_0}=16$. 因此，安培计的灵敏度降低为原来的$\frac{1}{16}$倍.
+安培计的刻度数值扩大了16倍. 当并联时，$I=I_0+I_{\text{分}}$，而分
+路电压和安培计电压相等：$I_0R_a=I_{\text{分}}R_{\text{分}}$. 由此得出
+$n=\frac{I}{I_0}=\frac{R_a+R_{\text{分}}}{R_{\text{分}}}$；$R_{\text{分}}=\frac{R_a}{n-1}$；$R_{\text{分}}=0.02$欧姆.
+
+<!-- ex 3 open -->
+3. 在由电阻分别为$r_1=r_2=10$欧姆，$r_3=r_4=20$欧姆的
+几个导体所组成的电路的两端加稳恒电压$V=110$伏特（图
+179）. 试求电阻$r_1$上每秒钟放出的热量$P$，电阻$r_4$上的电
+
+<!-- foot -->
+· 220 ·

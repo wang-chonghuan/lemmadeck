@@ -1,0 +1,77 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 239,
+  "printed_page": 230,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 239
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "15c4596450549d22fa1a7a3b2494e891939899f770efbeabb9f62b97382695a9"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "D025 SOURCE AUTHOR only; AUTHOR-not-approved. Physical239 native page.grid.png opened exactly once, fourth and last authorized grid open; total exactly4 image opens. No original-page open, crop, reopen or other image.",
+    "This page starts chapter10 and numbered unit97; no incoming prose or exercise continuation is printed. No figures, captions, formulas, equation numbers or Cyrillic subitem labels appear on this page.",
+    "All source claims about conductors, insulators, electrolytes, plasma and semiconductors are transcribed literally, with no modern physics correction.",
+    "Outgoing p open preserves the literal last-line tail 当开始从理论上，而后又从实验上发现和研究了可以控. Physical240 is outside scope and is not read; no completion is invented.",
+    "Physical235 remains excluded and source unit96 remains incomplete despite the new chapter boundary. No source-fidelity review, lesson closure approval, counting override or counting run."
+  ],
+  "errata": [],
+  "printed_lines": 22,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- h1 -->
+第十章 各种介质中的电流
+
+<!-- h3 -->
+97. 各种物质的导电性
+
+<!-- p -->
+物质按传导电流的性质可以分成几类. 一类物质含有很
+多的自由带电粒子，因此，在它们中很容易形成电流. 人们把
+它们叫做导体.
+
+<!-- p -->
+另一类物质含有很少的自由带电粒子. 因此，甚至在电
+势差很大时，其中的电流强度也是很小的. 这些物质叫做绝
+缘体或电介质.
+
+<!-- p -->
+把物质分为导体和绝缘体是相对的. 在自然界中，理想
+的绝缘体是没有的. 就连大家熟知的较好的绝缘体，也具有
+一些比导体少的自由带电粒子. 琥珀、瓷器、玻璃、橡胶、石
+蜡、煤油是最好的绝缘体. 金属，其中的银和铜是最好的导
+体. 水溶液或电解液. 电离了的气体——等离子体，也是良
+导体.
+
+<!-- p -->
+绝大多数的物质构成了中间的一类. 如果把它们叫做导
+体，而这些物质的导电性又不太好，如果把它们划在绝缘体
+中，而这些物质的导电性又不太坏. 因此，它们就得到了半导
+体这个称号.
+
+<!-- p -->
+在不太久之前，半导体还没有起到明显的实际作用. 在
+电子技术和无线电技术中，只利用各种导体和绝缘体.
+
+<!-- p open -->
+当开始从理论上，而后又从实验上发现和研究了可以控
+
+<!-- foot -->
+· 230 ·

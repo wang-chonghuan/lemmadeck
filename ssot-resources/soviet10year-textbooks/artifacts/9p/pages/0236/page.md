@@ -1,0 +1,104 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 236,
+  "printed_page": 227,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 236
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "64ad58e255740e285934553932ef0ea49a909db8beee489827dd258f9e8a6ba2"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "D025 SOURCE AUTHOR only; AUTHOR-not-approved. Physical236 native page.grid.png opened exactly once, first of four authorized grid opens; no original-page open, crop or reopen.",
+    "Incoming p cont starts with 起电机 and follows the failed physical235 Markdown tail 相反的，静电. That text is continuation context only, not accepted source evidence. Source unit96 remains incomplete while physical235 is excluded.",
+    "Source electromotive-force glyph is epsilon, transcribed as \\varepsilon; an explicit space separates a LaTeX control from any following Latin letter.",
+    "Figures185 and186 are separate rough boxes; their separately printed captions share a physical row, recorded with samerow on the second caption. No crop, snap or geometry approval.",
+    "The printed inequality at the end of one line is followed by 0 on the next printed line; the physical line break is retained without inventing text.",
+    "Outgoing p open ends at 对于图186所示的电路， and continues on physical237. Peripheral scan-edge ink and isolated lower-margin specks are not transcribed as body text; no counting override or counting run."
+  ],
+  "errata": [],
+  "counting": {
+    "edge_margin_px": 64,
+    "reason": "Independent INITIAL source236 review maps all19 printed rows; native band20 is only lower scan-edge dirt at x5-60 and x1460-1503. Both64px margins contain no printed text. Counting-only exclusion; source and figure pixels unchanged."
+  },
+  "printed_lines": 19,
+  "figures": [
+    {
+      "id": "fig-185",
+      "label": "图 185",
+      "box": [
+        404,
+        1061,
+        388,
+        367
+      ]
+    },
+    {
+      "id": "fig-186",
+      "label": "图 186",
+      "box": [
+        833,
+        1081,
+        336,
+        341
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+起电机的内阻是很大的：几千万或几亿欧姆. 这是起电机的
+两个圆盘之间的绝缘体（空气）的电阻. 因此，当电动势为几
+万伏特时，电路中的电流强度也是很小的.
+
+<!-- p -->
+如果电路中含有几个串联的电池，电池的电动势分别为
+$\varepsilon_1$、$\varepsilon_2$、$\varepsilon_3$等等（图185），则电路的总电动势等于各个电池电动
+势的代数和. 为了确定电源电动势的符号，应当事先任意选
+定回路的正方向. 在图185上，规定逆时针的方向为回路正
+方向. 因此，如果回路是从电源的负极到正极，则电动势$\varepsilon>↵0$. 此时，电源内部的外来力做正功. 在相反的情况下，电动势
+是负的. 例如，对于图185的电路，
+
+<!-- p -->
+$\varepsilon=\varepsilon_1+\varepsilon_2+\varepsilon_3=|\varepsilon_1|-|\varepsilon_2|+|\varepsilon_3|$.
+
+<!-- fig 图 185 box 404,1061,388,367 -->
+![图 185](figures/fig-185.png)
+
+<!-- fig 图 186 box 833,1081,336,341 -->
+![图 186](figures/fig-186.png)
+
+<!-- cap 图 185 -->
+图 185
+
+<!-- cap 图 186 samerow -->
+图 186
+
+<!-- p -->
+如果$\varepsilon>0$，则根据（9-18）式，电流强度$I>0$，即电流的方
+向与回路的方向是一致的. 相反的，当$\varepsilon<0$时，电流的方向
+与回路的方向相反.
+
+<!-- p open -->
+当几个相同的干电池（或其他电源）并联时，电池组的电
+动势等于一个电池的电动势（图186）. 电池组的内电阻按电
+阻并联的一般法则计算. 对于图186所示的电路，
+
+<!-- foot -->
+· 227 ·

@@ -1,0 +1,101 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 233,
+  "printed_page": 224,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 233
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "50ebdbf3998eb157eda6c045e4f85ff4c7fa4fa0449260c34527b40d349e6fb2"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "SOURCE AUTHOR ONLY nextD024; AUTHOR-not-approved. Original native page.grid.png opened once, no crops or reopens.",
+    "20 visually authored physical rows including footer: p cont 2; paired figure captions 1; p 10; p 4; p open 2; foot 1.",
+    "Figures182 and183 are separate source objects with nonoverlapping rough boxes. Both captions occupy the same row; only caption183 carries samerow.",
+    "Figure182 inventory: closed rounded rectangular conductor loop and shaded source chamber marked 电源; left plus terminal and right minus terminal; charge dots and force/direction arrows on the left downward, right upward and bottom rightward segments; source-region opposed arrows; vector F=q vector E labels on source and three external segments, and external-force vector F with Cyrillic ст subscript. No numeric givens inside diagram.",
+    "Figure183 inventory: closed rounded rectangular pipe loop; horizontal dash liquid texture throughout pipe and upper pump chamber; central vertically hatched piston; label 泵; visible black particle dots and circulation arrows on the left downward, bottom rightward and right upward portions, with upper returning flow. No scale, numeric givens or additional caption labels.",
+    "Tiny top-source force subscript and terminal minus strokes are small; provisional inventory reading ст and minus, retained for INITIAL reviewer without cropping. Scattered outside-margin specks are not assigned to printed rows.",
+    "Incoming p cont closes 力作用下运动...图182. Outgoing p open ends 伏打电池是由浸在硫酸溶液里的锌和铜两个电极组成; next page must continue without invented text."
+  ],
+  "errata": [],
+  "printed_lines": 20,
+  "figures": [
+    {
+      "id": "fig-182",
+      "label": "图 182",
+      "box": [
+        269,
+        366,
+        412,
+        377
+      ]
+    },
+    {
+      "id": "fig-183",
+      "label": "图 183",
+      "box": [
+        777,
+        372,
+        412,
+        369
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+力作用下运动（正电荷从负极向正极运动），而在所有其他电
+路上，带电粒子是在电场力作用下运动（图182）.
+
+<!-- fig 图 182 box 269,366,412,377 -->
+![图 182](figures/fig-182.png)
+
+<!-- fig 图 183 box 777,372,412,369 -->
+![图 183](figures/fig-183.png)
+
+<!-- cap 图 182 -->
+图 182
+
+<!-- cap 图 183 samerow -->
+图 183
+
+<!-- p -->
+为了便于理解，我们把导体中的电流和液体沿管道流动
+作对比. 液体在水平管中流动，是因为这一段的两端有压
+强差. 液体朝着压强减小的方向移动. 但是，液体中的压
+力——弹性力的一种形式，和库仑力一样，是保守力. 这些保
+守力在闭合路径上的功等于零，因此，只是这些力不能使液体
+沿管道长时间的循环流动. 由于摩擦力的作用，液体流动还
+伴随着能量损失. 为了使水循环流动，必须有水泵. 泵的活
+塞对液体的小质元作用，并在泵的入口和出口处产生恒定的
+压强差（图183）. 由此，液体沿着管道流动. 泵类似于电源，
+而运动的活塞对水的作用力起着外来力的作用.
+
+<!-- p -->
+外来力的性质可以是各式各样的. 在发电站的发电机中，
+外来力是磁场对运动着的导体中的电子的作用力. 关于这个
+问题在七年级物理课中曾简单地谈过，在本书第十一章里再
+详细讨论.
+
+<!-- p open -->
+在干电池中，例如伏打电池，外来力是电磁性质的化学
+力. 伏打电池是由浸在硫酸溶液里的锌和铜两个电极组成
+
+<!-- foot -->
+· 224 ·
