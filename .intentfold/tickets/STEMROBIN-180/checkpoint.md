@@ -1,11 +1,79 @@
 # 生产检查点
 
-## 第二十批源批待提交
+## 第二十批现代82完成待提交
 
-230234五批准源页、四原图及装订87/88闭合和89开头可独立保存。
-本次仅保存完整源批及84/85已批准TEXT/SOURCE记录，不新增完整现代课，
-不暂存82/84/85未完成现代资源、235+源稿、108/private/重复答案/env/app。
-成功源审/当前绑定/晋升/装订不重跑；全项目测试和构建仍留正式handoff前。
+82现完整：17现代项、15实际文字段、4概念anchors、4原书书写题、
+4derived/ungraded最终答案、2single选择题9选项、批准图208209。
+FINAL Sagan全部四完整答案FIRST main PASS127当前绑定；作者0/1。
+官方retain/finalize各一次0，candidate
+`0fb74d4cd3d652c3836a944fd99fa966bd20974aa28a4d4bd4c881710a0c362b`。
+CHOICE Bacon全部9项纯view真值/保真/泄漏/覆盖先冻，再读全部作者源解、
+intent/rationale/misconception/coverage，FIRST main PASS65当前绑定，
+真集合C/B，作者0/1，四源任务均覆盖。首次主绑定误用后来工具epoch
+退出1保留，纠正历史source-first epoch绑定后一次0；候选字节未改，
+不是作者修复。带review validate/retain各一次0。
+
+officialrender及隔离headless桌面1440x960/手机390x844六页面各一次0；
+全部六original整页已实际打开至末端，两完整图及全部4题/9选项可见，
+图宽480/358，无文字标签，min-font不适用，无整页溢出或答案键泄漏，
+浏览器已关闭。render统计19prose objects含图/图题，不冒称19文字段。
+现有renderer的单星号可见为字面字符，文本仍可读，不扩展改应用。
+证据`tmp/offline-evidence-phy7-c1-s1-n82/report.json`。成功步骤不重跑。
+
+86 TEXT Ramanujan唯一FIRST全文PASS，18项/7题/17段/5anchors，
+main66当前绑定一次0，作者机械1/1保留；214218现代图尚未批准。
+235 sole emphasis修复1/1冻结后Sagan affected-only PASS，复用其他235
+和236238 FIRST；批准union18文件/四页/35块/92行/两题块/原图223225。
+未晋升或装订，239仍BLOCKED且不跨越。211 FIRST Feynman全部原图/
+完整84上下文/3对象3断言/六native PASS，尚待main绑定和晋升，
+不解除210或把84称完整。
+
+240244源作者冻结54块/8题块/一表；242首finalize23 authored/22 counted
+FAIL保留，分式行和独立“多少？”行合带，242预算0/1尚未授权修复；
+Ramanujan唯一FIRST全源审在途，可分开保真与机械。245+未授权。
+87/88主已读完整源及全部11题、实际打开219222，私有源解先冻
+7/5绑定一次0、不提交不分享作者。Bacon分别SOURCE-only87/88，
+Feynman TEXT87、Volta TEXT88、Wegener现代214再215隔离作者在途。
+累计确认图服务34，未来214215未先加计，tokens/实收费用未知。
+只提交完整82、批准208212及已完成审查/阻塞记录；
+108/private/重复答案/unfinished资源/env/app/依赖排除。
+无DB/发布/合并/部署/关闭/正式handoff/全项目checks，8p仍未开始。
+
+## 第二十批新增审批与阻塞
+
+212 FIRST main全原图/85完整上下文/111对象53断言/六native已实际检查PASS，
+91当前绑定/officialrecord/freeze/promotion各一次0。作者机械1/1耗尽保留；
+不得重图审/render。208 Ramanujan仅F208-1/F208-2 affected-only PASS，
+其余FIRST通过复用，main17绑定/promotion各一次0，作者hybrid修复1/1。
+82批准正文copy/retain/adapt-finalize各一次0：17条15段4anchors/
+四题两图208209。answerprepare一次0，FINAL Sagan/CHOICE Bacon在途，
+尚无最终答案/选择题审批或render/display，不计完整课。
+
+235239 FIRST Sagan FAIL：235 p0235#3漏可见/不可见的着重强调，
+235尚0/1，Wegener仅授权repair-235-01受影响首修；239 p0239#2
+错把普通“总起来说，”加粗，预算已机械1/1耗尽BLOCKED，不另修/晋升。
+236238及223224225原图FIRST PASS复用，未晋升235239，
+不越过239装订。240244隔离源作者继续，245+未授权。
+
+210 sole1/1修复原生图法兰后，实际六native检查发现image.at错位，
+场景被截断、双手/塞子蒸汽及大部分管体缺失，BLOCKED，不另修或独审晋升。
+213 sole1/1后Copper标签仍render碰撞，BLOCKED，无native/独审/晋升。
+84/85因此不计完整。210211实际图片请求各一次成功exit0/retry0，
+输出和元数据已有，累计确认34；不是批准图数，tokens/实收费用仍未知。
+
+86 SOURCE Bacon七完整答案已冻；main完整JSON/MD与先行私有源解
+完成FIRST比较，68当前绑定一次exit0。86 TEXT Feynman18条/七题/
+17段/五anchors已冻，机械lines修复1/1耗尽，Ramanujan唯一FIRST
+全文独审新授权。不改canonical，不重作者门禁，无DB/正式handoff。
+
+## 第二十批源批已提交推送
+
+实际commit `70c9ff60fa2c00c980a676795b6471c777167da4`，
+2026-11-16T07:05:38Z；同一分支fetch确认HEAD/origin0/0后commit/push各0。
+45限定文件18JSON：230234五批准源页、四原图、87/88闭合和89开头，
+及84/85已批准TEXT/SOURCE记录。没有新增完整现代课，未暂存82/84/85
+未完成现代资源、235+源稿、108/private/重复答案/env/app。
+成功源审/当前绑定/晋升/装订不重跑；全项目测试和构建留正式handoff前。
 现代20批继续推进，不把源批提交称为完整三册交付。
 
 ## 第二十批进行中
