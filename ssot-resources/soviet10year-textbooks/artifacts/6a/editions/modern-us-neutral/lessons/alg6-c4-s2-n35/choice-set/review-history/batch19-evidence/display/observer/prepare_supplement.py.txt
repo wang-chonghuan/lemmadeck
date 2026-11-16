@@ -1,0 +1,121 @@
+"""Copy complete supplement screenshots, at native scale, into compact labeled montages."""
+
+import json
+from pathlib import Path
+
+from PIL import Image, ImageDraw
+
+from prepare_primary import OUT, ROOT, TMP, native_montage, sha
+
+
+def packed_montages(entries):
+    pending = []
+    for entry in entries:
+        with Image.open(ROOT / entry["path"]) as image:
+            image.load()
+            pending.append((entry, image.convert("RGB")))
+    pending.sort(key=lambda pair: (-pair[1].height, -pair[1].width))
+    pages = []
+    for entry, image in pending:
+        slot = None
+        for page in pages:
+            for shelf in page["shelves"]:
+                if image.height + 36 <= shelf["height"] and shelf["x"] + image.width + 12 <= 2000:
+                    slot = (page, shelf)
+                    break
+            if slot:
+                break
+            y = sum(shelf["height"] for shelf in page["shelves"]) + 12
+            if y + image.height + 36 <= 2100:
+                shelf = {"x": 12, "y": y, "height": image.height + 36}
+                page["shelves"].append(shelf)
+                slot = (page, shelf)
+                break
+        if not slot:
+            shelf = {"x": 12, "y": 12, "height": image.height + 36}
+            page = {"shelves": [shelf], "members": []}
+            pages.append(page)
+            slot = (page, shelf)
+        page, shelf = slot
+        page["members"].append((entry, image, shelf["x"], shelf["y"]))
+        shelf["x"] += image.width + 12
+    results = []
+    for index, page in enumerate(pages):
+        width = max(x + image.width + 12 for _, image, x, _ in page["members"])
+        height = max(y + image.height + 36 for _, image, _, y in page["members"])
+        canvas = Image.new("RGB", (width, height), "white")
+        draw = ImageDraw.Draw(canvas)
+        members = []
+        for entry, image, x, y in page["members"]:
+            draw.text((x, y + 5), entry["label"], fill="black")
+            canvas.paste(image, (x, y + 28))
+            members.append({**entry, "member_rect": [x, y + 28, image.width, image.height], "resized": False})
+        filename = OUT / f"supplement-regions-{index + 1:02}.png"
+        if filename.exists():
+            raise RuntimeError("Preserve existing region montage")
+        canvas.save(filename)
+        for member in members:
+            x, y, w, h = member["member_rect"]
+            with Image.open(ROOT / member["path"]) as original:
+                assert canvas.crop((x, y, x + w, y + h)).tobytes() == original.convert("RGB").tobytes()
+        results.append({
+            "path": str(filename.relative_to(ROOT)), "sha256": sha(filename),
+            "size": list(canvas.size), "members": members,
+            "all_complete_native_member_pixels_verified_equal": True,
+        })
+    return results
+
+
+def main():
+    report_paths = [
+        TMP / "batch19-render/6a-alg6-c4-s2-n35-independent-display-supplement.json",
+        TMP / "batch19-render/6a-alg6-c4-s2-n35-independent-choice-region-supplement.json",
+    ]
+    reports = [json.loads(path.read_text()) for path in report_paths]
+    assert all(report["status"] == "captured_not_yet_observed" for report in reports)
+    entries = []
+    for report in reports:
+        for entry in report["screenshots"]:
+            assert sha(ROOT / entry["path"]) == entry["sha256"]
+            with Image.open(ROOT / entry["path"]) as image:
+                image.load()
+                size = list(image.size)
+            entries.append({
+                **entry, "size": size,
+                "label": f'{entry["surface"]} {entry["viewport_width"]} {entry["kind"]}',
+            })
+    assert len({entry["path"] for entry in entries}) == len(entries)
+    montages = []
+    for width in (1440, 390):
+        tables = [entry for entry in entries if entry.get("candidate_table_number") and entry["viewport_width"] == width]
+        batch_size = 12 if width == 1440 else 14
+        for start in range(0, len(tables), batch_size):
+            montages.append(native_montage(
+                tables[start:start + batch_size],
+                f"supplement-tables-{width}-{start // batch_size + 1:02}.png",
+                columns=3 if width == 1440 else 4,
+            ))
+    other = [entry for entry in entries if not entry.get("candidate_table_number")]
+    montages.extend(packed_montages(other))
+    assert sum(len(montage["members"]) for montage in montages) == len(entries)
+    for report in reports:
+        for item in report["html_checks"]:
+            assert item["unchanged"]
+            assert sha(ROOT / item["path"]) == item["sha256"]
+    result = {
+        "lesson": "alg6-c4-s2-n35", "status": "native montages prepared, not yet observed",
+        "screenshots": entries, "montages": montages,
+        "capture_reports": [{"path": str(path.relative_to(ROOT)), "sha256": sha(path)} for path in report_paths],
+        "actual_supplement_png_count": len(entries),
+        "additional_unique_surface_viewport_combinations": 0,
+    }
+    with (OUT / "supplement-native-manifest.json").open("x") as handle:
+        json.dump(result, handle, indent=2)
+        handle.write("\n")
+    print(f"Prepared {len(entries)} supplementary PNGs in {len(montages)} native montages.")
+    for montage in montages:
+        print(Path(montage["path"]).name, montage["size"], len(montage["members"]))
+
+
+if __name__ == "__main__":
+    main()

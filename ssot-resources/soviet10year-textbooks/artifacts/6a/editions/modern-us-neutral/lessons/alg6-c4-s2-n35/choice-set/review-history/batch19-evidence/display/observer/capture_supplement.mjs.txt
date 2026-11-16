@@ -1,0 +1,206 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { createRequire } from 'node:module'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+
+delete process.env.PWDEBUG
+process.env.PLAYWRIGHT_HTML_OPEN = 'never'
+const require = createRequire(path.join(process.cwd(), 'package.json'))
+const { chromium } = require('@playwright/test')
+const repo = path.resolve(process.cwd(), '..')
+const own = path.dirname(fileURLToPath(import.meta.url))
+const tmp = path.dirname(own)
+const output = path.join(tmp, 'batch19-render')
+const prefix = '6a-alg6-c4-s2-n35-'
+const primary = JSON.parse(fs.readFileSync(path.join(own, 'primary-native-manifest.json')))
+const hash = (filename) => crypto.createHash('sha256').update(fs.readFileSync(filename)).digest('hex')
+const screenshots = []
+const inventories = []
+const errors = []
+const htmlChecks = primary.rendered_html.map((item) => {
+  const actual = hash(path.join(repo, item.path))
+  if (actual !== item.sha256) throw new Error(`Existing HTML changed: ${item.path}`)
+  return { ...item, before_sha256: actual }
+})
+const recordPath = path.join(output, `${prefix}independent-display-supplement.json`)
+if (fs.existsSync(recordPath)) throw new Error('Preserve existing supplement report')
+
+async function settle(page) {
+  await page.evaluate(async () => {
+    await document.fonts.ready
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+  })
+  await page.waitForTimeout(180)
+}
+
+async function save(page, locator, meta) {
+  const filename = `${prefix}${meta.surface}-${meta.viewport_width}-${meta.kind}.png`
+  const target = path.join(output, filename)
+  if (fs.existsSync(target)) throw new Error(`Preserve existing screenshot: ${target}`)
+  await settle(page)
+  if (locator) await locator.screenshot({ path: target, animations: 'disabled' })
+  else await page.screenshot({ path: target, animations: 'disabled' })
+  screenshots.push({
+    ...meta, filename, path: path.relative(repo, target), sha256: hash(target),
+    origin: 'same_html_supplement', actually_opened: false,
+    screenshot_saved_not_yet_visually_approved: true,
+  })
+}
+
+async function scrollHandle(target) {
+  const handle = await target.evaluateHandle((node) => {
+    for (let parent = node.parentElement; parent; parent = parent.parentElement) {
+      if (parent.scrollWidth > parent.clientWidth + 1
+        && ['auto', 'scroll'].includes(getComputedStyle(parent).overflowX)) return parent
+    }
+    return null
+  })
+  return handle.asElement()
+}
+
+async function captureWindows(page, target, meta) {
+  const scroller = await scrollHandle(target)
+  if (!scroller) {
+    await target.scrollIntoViewIfNeeded()
+    await save(page, target, { ...meta, kind: `${meta.kind}-full`, window: 'full' })
+    return
+  }
+  const dimensions = await scroller.evaluate((node) => ({
+    width: node.clientWidth, total: node.scrollWidth, height: node.clientHeight,
+    max: node.scrollWidth - node.clientWidth,
+  }))
+  const offsets = [0]
+  while (offsets.at(-1) + dimensions.width < dimensions.total) {
+    const next = Math.min(dimensions.max, offsets.at(-1) + dimensions.width - 32)
+    if (next <= offsets.at(-1)) throw new Error('Cannot advance overlapping display windows')
+    offsets.push(next)
+  }
+  for (let index = 0; index < offsets.length; index++) {
+    await scroller.evaluate((node, left) => { node.scrollLeft = left }, offsets[index])
+    await scroller.scrollIntoViewIfNeeded()
+    const actual = await scroller.evaluate((node) => node.scrollLeft)
+    if (Math.abs(actual - offsets[index]) > 1) throw new Error('Horizontal scroll did not reach target')
+    const window = index === 0 ? 'left' : index === offsets.length - 1 ? 'right' : `middle-${index}`
+    await save(page, scroller, {
+      ...meta, kind: `${meta.kind}-${window}`, window,
+      scroll_left: actual, scroll_width: dimensions.total, client_width: dimensions.width,
+      complete_horizontal_coverage_group: `${meta.surface}-${meta.viewport_width}-${meta.kind}`,
+      covered_interval: [actual, Math.min(dimensions.total, actual + dimensions.width)],
+    })
+  }
+  await scroller.evaluate((node) => { node.scrollLeft = 0 })
+}
+
+const browser = await chromium.launch({ headless: true })
+try {
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1 })
+    try {
+      const page = await context.newPage()
+      page.on('pageerror', (error) => errors.push(error.message))
+      for (const surface of ['text', 'exercises', 'choices']) {
+        const html = htmlChecks.find((item) => item.path.endsWith(`/${surface}.html`))
+        await page.goto(pathToFileURL(path.join(repo, html.path)).href)
+        await settle(page)
+        const base = { surface, viewport_width: viewport.width, viewport_height: viewport.height }
+        const inventory = { ...base, candidate_table_count: 0, overflow_formula_regions: [] }
+        if (surface === 'choices' || (surface === 'exercises' && viewport.width === 390)) {
+          await page.evaluate(() => window.scrollTo(0, 0))
+          await settle(page)
+          const top = await page.evaluate(() => window.scrollY)
+          if (top !== 0) throw new Error('Fresh first endpoint is not at document top')
+          await save(page, null, { ...base, kind: 'fresh-first', scroll_y: top })
+        }
+        if (surface === 'choices') {
+          const tables = page.locator('.choice table')
+          inventory.candidate_table_count = await tables.count()
+          if (inventory.candidate_table_count !== 24) throw new Error('Expected exactly 24 candidate tables')
+          for (let index = 0; index < 24; index++) {
+            const table = tables.nth(index)
+            const structure = await table.evaluate((node) => ({
+              rows: node.rows.length, cells_per_row: [...node.rows].map((row) => row.cells.length),
+              question_number: [...document.querySelectorAll('.choice')].indexOf(node.closest('.choice')) + 1,
+              option_number: [...node.closest('.choice-options').children]
+                .indexOf(node.closest('.choice-options>li')) + 1,
+            }))
+            await captureWindows(page, table, {
+              ...base, kind: `candidate-table-${String(index + 1).padStart(2, '0')}`,
+              candidate_table_number: index + 1, structure,
+            })
+          }
+        }
+        if (surface === 'exercises') {
+          const exercises = page.locator('li.ex')
+          for (const index of viewport.width === 390 ? [0, 1, 2] : [2]) {
+            const item = exercises.nth(index)
+            const dimensions = await item.boundingBox()
+            if (dimensions.height > viewport.height - 30) throw new Error('Exercise region needs vertical slices')
+            await item.scrollIntoViewIfNeeded()
+            await save(page, item, { ...base, kind: `exercise-region-${610 + index}` })
+          }
+          if (viewport.width === 390) {
+            const figures = page.locator('svg,img')
+            if (await figures.count() !== 2) throw new Error('Unexpected source media count')
+            for (let index = 0; index < 2; index++) {
+              await captureWindows(page, figures.nth(index), {
+                ...base, kind: `source-figure-${index + 1}`,
+                source_figure_number: index + 1,
+              })
+            }
+          }
+        }
+        const formulas = page.locator('.katex-html').filter({ hasNot: page.locator('table') })
+        const overflow = await page.locator('.katex-html').evaluateAll((nodes) => {
+          const regions = []
+          nodes.forEach((node, mathIndex) => {
+            if (node.closest('table')) return
+            for (let parent = node.parentElement; parent; parent = parent.parentElement) {
+              if (parent.scrollWidth > parent.clientWidth + 1
+                && ['auto', 'scroll'].includes(getComputedStyle(parent).overflowX)) {
+                if (!regions.some((item) => item.node === parent)) {
+                  regions.push({ node: parent, mathIndex })
+                }
+                break
+              }
+            }
+          })
+          return regions.map(({ node, mathIndex }) => ({
+            math_index: mathIndex, client_width: node.clientWidth, scroll_width: node.scrollWidth,
+          }))
+        })
+        for (let index = 0; index < overflow.length; index++) {
+          const region = overflow[index]
+          inventory.overflow_formula_regions.push(region)
+          await captureWindows(page, page.locator('.katex-html').nth(region.math_index), {
+            ...base, kind: `formula-region-${index + 1}`, math_index: region.math_index,
+          })
+        }
+        inventories.push(inventory)
+      }
+    } finally {
+      await context.close()
+    }
+  }
+} catch (error) {
+  errors.push(error.stack || String(error))
+  process.exitCode = 1
+} finally {
+  await browser.close()
+  for (const item of htmlChecks) {
+    item.after_sha256 = hash(path.join(repo, item.path))
+    item.unchanged = item.before_sha256 === item.after_sha256
+    if (!item.unchanged) errors.push(`Existing HTML changed: ${item.path}`)
+  }
+  fs.writeFileSync(recordPath, `${JSON.stringify({
+    lesson: 'alg6-c4-s2-n35', scope: 'existing HTML supplemental display captures only',
+    status: errors.length ? 'blocked' : 'captured_not_yet_observed',
+    browser_headless: true, isolated_contexts: true, browser_closed_finally: true,
+    pwdebug_cleared: true, html_report_open: 'never',
+    unique_surface_viewport_combinations: 6, additional_unique_surface_viewport_combinations: 0,
+    html_checks: htmlChecks, inventories, screenshots, actual_supplement_png_count: screenshots.length,
+    errors,
+  }, null, 2)}\n`, { flag: 'wx' })
+  if (errors.length) process.exitCode = 1
+  console.log(JSON.stringify({ supplemental_png_count: screenshots.length, errors }))
+}

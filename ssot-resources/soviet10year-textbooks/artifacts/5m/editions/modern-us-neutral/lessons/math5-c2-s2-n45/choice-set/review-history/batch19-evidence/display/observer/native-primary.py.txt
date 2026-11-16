@@ -1,0 +1,43 @@
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image, ImageDraw
+
+ROOT = Path(__file__).resolve().parent
+PRIMARY = ROOT.parent / "offline-evidence/5m"
+PREFIX = "math5-c2-s2-n45-"
+files = sorted(PRIMARY.glob(PREFIX + "*.png"))
+groups = {}
+for file in files:
+    surface, width, purpose = file.name.removeprefix(PREFIX).split("-", 2)
+    kind = "page" if purpose in ["first.png", "last.png"] else "figure"
+    groups.setdefault((surface, width, kind), []).append(file)
+records = []
+for (surface, width, kind), members in groups.items():
+    batch_size = 2 if kind == "page" else 3
+    for start in range(0, len(members), batch_size):
+        batch = members[start:start + batch_size]
+        images = [Image.open(file).convert("RGB") for file in batch]
+        vertical = kind == "page" and width == "1440"
+        canvas = Image.new("RGB", (
+            max(i.width for i in images) if vertical else sum(i.width for i in images),
+            sum(i.height + 36 for i in images) if vertical else max(i.height for i in images) + 36,
+        ), "#e8e8e8")
+        draw = ImageDraw.Draw(canvas)
+        slots = []
+        x = y = 0
+        for file, image in zip(batch, images):
+            draw.text((x + 4, y + 4), file.name, fill="black")
+            canvas.paste(image, (x, y + 36))
+            slots.append({"path": str(file), "sha256": hashlib.sha256(file.read_bytes()).hexdigest(), "native_dimensions": [image.width, image.height], "montage_rect": [x, y + 36, image.width, image.height], "resized": False})
+            if vertical:
+                y += image.height + 36
+            else:
+                x += image.width
+        output = ROOT / f"native-{surface}-{width}-{kind}-{start // batch_size + 1:02d}.png"
+        canvas.save(output)
+        records.append({"path": str(output), "sha256": hashlib.sha256(output.read_bytes()).hexdigest(), "images": slots, "native_dimensions": [canvas.width, canvas.height]})
+result = {"actual_primary_filename_count": len(files), "native_montage_count": len(records), "max_images_per_montage": 3, "montages": records}
+(ROOT / "primary-image-inventory.json").write_text(json.dumps(result, indent=2) + "\n")
+print(json.dumps({k: v for k, v in result.items() if k != "montages"}))

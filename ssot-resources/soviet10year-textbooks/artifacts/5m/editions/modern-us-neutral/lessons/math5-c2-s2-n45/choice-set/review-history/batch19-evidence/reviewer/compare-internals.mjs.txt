@@ -1,0 +1,545 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const root = path.dirname(new URL(import.meta.url).pathname);
+const read = (name) => JSON.parse(fs.readFileSync(path.join(root, name), 'utf8'));
+const sha = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex');
+const ordered = (value) => Array.isArray(value) ? value.map(ordered)
+  : value && typeof value === 'object'
+    ? Object.fromEntries(Object.keys(value).sort().map((key) => [key, ordered(value[key])]))
+    : value;
+const digest = (value) => sha(JSON.stringify(ordered(value)).replace(
+  /[\u007f-\uffff]/g, (character) => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`,
+));
+const source = read('source-solutions.json');
+const frozen = read('view-checks-revised.json');
+const seedBytes = fs.readFileSync(path.join(root, '../5m-n45/source.json'));
+const draftBytes = fs.readFileSync(path.join(root, '../5m-n45/draft.json'));
+const seed = JSON.parse(seedBytes);
+const draft = JSON.parse(draftBytes);
+const repair = read('../5m-n45/repair-813-818-record.json');
+const projected = { questions: draft.questions.map((q) => ({ id: q.id, ...q.view })) };
+if (JSON.stringify(projected) !== JSON.stringify(frozen.frozen_revised_view)) {
+  throw new Error('Authorized draft visible content differs from the frozen revised view');
+}
+if (sha(seedBytes) !== source.source_file_sha256 ||
+    sha(draftBytes) !== repair.after_sha256.draft) {
+  throw new Error('Source/draft binding changed during the authorized comparison');
+}
+
+// Individually adjudicated wrong procedures from the current rationales.
+// Their outputs are compared with the already frozen mathematical evidence.
+const programs = {
+  'n45-804': {
+    A: 'Add the side to itself:7/8+7/8=7/4, then mislabel the length as area.',
+    C: 'Copy the side numeral7/8 without squaring, then label it square meters.',
+    D: 'Use perimeter4*(7/8)=7/2 instead of area.',
+  },
+  'n45-805': {
+    B: 'Divide price by mass:(4/5)/(3/4)=16/15;(4/5)/(5/4)=16/25.',
+    C: 'Replace the given4/5 unit price by1; output masses3/4,5/4 as dollar amounts.',
+  },
+  'n45-806a': {
+    A: 'Multiply numerators but add denominators:15/11,3/12=1/4,14/16=7/8.',
+    C: 'Add both fraction components:(3+5)/(4+7)=8/11;(1+3)/(8+4)=1/3;(2+7)/(5+11)=9/16.',
+  },
+  'n45-806b': {
+    B: 'Keep correct magnitudes11/6,3/14,8/15; retain a leading minus on the double-negative middle product, emitting11/6,-3/14,-8/15.',
+    C: 'Discard all product minus signs, emitting11/6,3/14,8/15 instead of a negative final product.',
+  },
+  'n45-807a': {
+    B: 'Use numerator products and denominator sums:20/13,88/21,6/7,33/10.',
+    C: 'Use component sums:9/13,19/21,5/7,(11+3)/(5+5)=7/5.',
+  },
+  'n45-807b': {
+    A: 'Leave the first two and fourth products correct but drop the third single-negative sign, giving+1/10.',
+    B: 'Leave the first three products correct but retain minus in(-1/8)*(-8/11), giving-1/11.',
+  },
+  'n45-808a': {
+    A: 'Use component sums:9/23,11/15,5/5=1,11/7. The reciprocal case coincidentally agrees; the other cells do not.',
+    C: 'Divide first fraction by second:15/16,5/9,4/9,12/25. Division by6/6=1 coincidentally agrees.',
+  },
+  'n45-808b': {
+    B: 'Compute magnitudes44,8,2/5,3/4, but drop both single-negative signs.',
+    C: 'Multiply signed numerators and sum denominators:2464/15,1768/30=884/15,-60/31,-84/23. The current derivation1768/30 does generate the displayed reduced884/15.',
+  },
+  'n45-809': {
+    A: 'Use73*41=2993 but four places rather than3+2=5; emit2993/10000=0.2993 in both methods and declare equality.',
+    C: 'Keep fraction2993/100000=0.02993; move only the decimal product one place right to0.2993, then correctly note the resulting wrong-method outputs differ.',
+  },
+  'n45-810': {
+    B: 'Replace multiplication by component addition, emitting(a+c)/(b+d) and(r+m)/(x+n) while retaining original exclusions. For b=1,d=-1, original denominators are admissible but the proposed denominator vanishes.',
+    C: 'Invert second factors:c/d becomes d/c and m/n becomes n/m; emit ad/(bc),rn/(xm), exclude c,m instead of d,n and falsely require all original numerators nonzero.',
+  },
+  'n45-811a': {
+    A: 'Put each integer multiplier in the denominator:3/(8*2)=3/16,5/(18*6)=5/108,5/(16*12)=5/192,1/(10*25)=1/250.',
+    C: 'Add the multiplier to the numerator:(3+2)/8=5/8,(5+6)/18=11/18,(5+12)/16=17/16,(1+25)/10=13/5.',
+  },
+  'n45-811b': {
+    B: 'Multiply denominators by the integers:1/60,1/980,1/4800,7/121.',
+    C: 'Add integers to fraction numerators:31/2,141/7,301/16,18/11.',
+  },
+  'n45-811c': {
+    A: 'Keep56/3,45/2,2/3 but replace the zero-factor rule by the identity rule, leaving19/20.',
+    B: 'Divide by the nonzero integer factors:7/(15*40)=7/600,15/(16*24)=5/128; handle identity and zero separately and correctly.',
+  },
+  'n45-812': {
+    A: 'Convert mixed numbers using(whole+numerator)/denominator:6/7,10/11,2/3,-3/3; multiply by3,11,4,6 to get18/7,10,8/3,-6.',
+    C: 'Multiply only each whole part and retain its fraction:12+2/7,88+2/11,4+1/3,-(12+1/3).',
+  },
+  'n45-813-818': {
+    A: 'Keep the two-factor product, decimal check and law correct; replace multiplication by2/3 with division in both chains. Left(3/8)/(2/3)=9/16; right(1/2)*((3/4)/(2/3))=(1/2)*(9/8)=9/16. Equal wrong totals do not verify the printed multiplication.',
+    C: 'Keep fraction product, conversions, law and groupings correct; compute digit product5*75=375 but count only the second factor two decimal places, emitting3.75. Copy the fraction-check equality3.75=3/8 despite its falsehood.',
+  },
+  'n45-814': {
+    A: 'Use denominator addition27/(16+4)=27/20 and define factor exchange as swapping only numerators; the true symbolic ab=ba does not repair that wrong verbal/numerical record.',
+    C: 'Substitute verbal/symbolic associativity for requested commutativity and give only one correct27/64 product, not both orders.',
+  },
+  'n45-815': {
+    B: 'Use wrong decimal denominators75/10 and8/100; multiplying by4/9 and5/8 yields10/3 and1/20.',
+    C: 'Keep conversions3/4,4/5; invert the second factors, giving(3/4)/(4/9)=27/16 and(4/5)/(5/8)=32/25.',
+  },
+  'n45-816': {
+    A: 'Convert1/5 by copying denominator digit5 to tenths0.5; replace20 by10 in3/20 to get0.3. Multiply these wrong conversions by0.3,6.4 to get0.15,1.92.',
+    C: 'Keep0.2,0.15 conversions but drop one decimal place in each product, giving0.6 and9.6 instead of0.06 and0.96.',
+  },
+  'n45-817': {
+    B: 'Multiply all numerators but add all denominators:30/(5+7+6)=5/3;70/(10+49+3)=35/31.',
+    C: 'Stop after two factors, giving6/35 and35/490=1/14; omit5/6 and2/3.',
+  },
+  'n45-819': {
+    A: 'Compute speed divided by each time:5/(3/4)=20/3,5/(1/2)=10,5/(1/10)=50.',
+    C: 'Replace speed5 by1, copying times3/4,1/2,1/10 as kilometer numerals.',
+  },
+  'n45-820': {
+    B: 'Stop after the first two dimensions:(2/5)*(3/5)=6/25; label this area numeral as volume.',
+    C: 'Add all dimensions:2/5+3/5+25/4=29/4 and label the sum as volume.',
+  },
+  'n45-821': {
+    B: 'Keep the target1/6 as the second factor after choosing1/2, emitting1/6=(1/2)*(1/6) even though its product is1/12.',
+    D: 'Keep target3/4 as a factor and attach1/2 without compensation, emitting target equals half target.',
+    E: 'Insist on repeating3/4 as both proper factors to represent numerator9; denominator4*4 becomes16, twice the required8.',
+    H: 'Treat1/2 as a multiplicative identity, claiming4/8=(4/8)*(1/2), whose actual right side is1/4.',
+  },
+  'n45-822': {
+    A: 'Use the original250 sheets as second base:250*(4/5)=200.',
+    C: 'Use the first consumed150 sheets as second base:250*(3/5)*(4/5)=120.',
+    D: 'Compute final remainder100*(1-4/5)=20, but report it as second consumption.',
+  },
+  'n45-823': {
+    B: 'Report the brother share90*(3/10)=27 instead of its complement.',
+    C: 'Replace3/10 by1/3; compute90*(1-1/3)=60.',
+  },
+  'n45-824': {
+    B: 'Use(whole+numerator)/denominator conversions4/5,6/4,4/4,6/7,8/6,8/23,3/2,4/15; their products6/5,6/7,32/69,2/5 match the displayed wrong chains.',
+    C: 'Keep all conversions right but divide by each second factor; results32/75,49/48,529/180,75/64.',
+  },
+  'n45-825a': {
+    A: 'Use whole-plus-numerator mixed conversion:3/7*2/4=3/14;6/3*2/5=4/5;4/9*5/4=5/9;5/4*4/11=5/11.',
+    C: 'Correctly convert mixed factors but divide by second factors, emitting36/35,35/3,16/99,121/16.',
+  },
+  'n45-825b': {
+    B: 'Leave other results right but keep a minus on(-5/3)*(-12/5), giving-4.',
+    C: 'Read-7 3/11 as-7+3/11=-74/11; multiply by99/40 to get-333/20. All other cells remain right.',
+  },
+  'n45-826a': {
+    A: 'Divide converted speed19/2 by time9/2, giving19/9.',
+    C: 'Use wrong mixed conversions(9+1)/2=5,(4+1)/2=5/2; multiply to25/2.',
+  },
+  'n45-826b': {
+    B: 'Divide18/5 by5/6, giving108/25.',
+    C: 'Convert3 3/5 using(3+3)/5=6/5, then multiply by5/6 to get1.',
+  },
+  'n45-827': {
+    A: 'Omit the third dimension and compute4/5*5/2=2.',
+    B: 'Add dimensions:4/5+5/2+7/4=101/20.',
+  },
+  'n45-828': {
+    B: 'Divide density39/5 by volume10/3 to get117/50.',
+    C: 'Add density and volume:39/5+10/3=167/15.',
+  },
+  'n45-829': {
+    A: 'Compute remainder35/4*(2/5)=7/2, then half of that remainder7/4 instead of half first sales.',
+    C: 'Omit first-day fraction and take half the original35/4, giving35/8.',
+  },
+  'n45-830': {
+    B: 'Use same-side equal-distance points on each perpendicular; these are M,P,K themselves, so join the unchanged triangle.',
+    C: 'Replace the actual midpoint-line reflection by a presumed apex-fixed vertex permutation:fixM and swap namesP,K. The resulting point-set triangle is unchanged, whereas M is offDE and must move.',
+  },
+  'n45-831': {
+    A: 'Require the image parallel to pass through the centerP instead of retaining the nonzero offset; output that unique parallel.',
+    C: 'Output the source-to-center perpendicular throughP as the image, confusing its construction/reference line with the reflected parallel.',
+    D: 'Use Xprime=P-(X-P)/2 for two source points instead of2P-X; their image line is parallel but only half the original offset.',
+  },
+  'n45-832': {
+    B: 'Apply point symmetry aboutM toA,B. Since M is on each source line, their half-turn image lines are the original x,y.',
+    C: 'ReflectA in its own source x andB in its own source y, fixing both; draw the unchanged source lines.',
+  },
+  'n45-833': {
+    B: 'Use whole-plus-numerator mixed conversion:5/5=1,7/8,5/5=1,7/2,9/3=3,16/11; keep both decimal fractions right.',
+    C: 'Keep mixed conversions right but use375/10=75/2 and525/10=105/2 instead of hundredths.',
+  },
+  'n45-834a': {
+    A: 'Invert the three source fractions and reduce:24/18=4/3,15/350=3/70,600/180=10/3.',
+    C: 'Replace numerator/denominator factor products with sums:11/11=1,39/16,41/49.',
+  },
+  'n45-834b': {
+    B: 'Invert all three fractions and reduce:45/30=3/2,45/270=1/6,1260/270=14/3.',
+    C: 'Add each pair of factors rather than multiply:13/14,37/14,37/83.',
+  },
+  'n45-836a': {
+    B: 'Treat waste fraction0.28 as retained yield; recover8.4/0.28=30.',
+    C: 'Apply another forward yield to finished8.4:8.4*0.72=6.048.',
+  },
+  'n45-836b': {
+    A: 'Treat waste0.18 as retained yield; compute7.2/0.18=40.',
+    C: 'Apply forward retained fraction to finished mass:7.2*0.82=5.904.',
+  },
+  'n45-837a': {
+    A: 'Attach four-drawer coefficient to named three-drawer count:4a+3(25-a)=91 givesa=16,complement9; report those as three/four counts. Actual drawers48+36=84.',
+    C: 'Assign the same counta to both types:3a+4a=91 gives13 each; totals26 desks rather than25.',
+  },
+  'n45-837b': {
+    B: 'Reverse named room coefficients:3b+2(72-b)=168 givesb=24 and complement48; actual declared-type rooms48+144=192.',
+    C: 'Keep the correct equation/root48 but swap reported type labels to24 two-room and48 three-room units.',
+  },
+  'n45-838a': {
+    B: 'Negate only final variable coefficients:-1.75x=9.87 and-0.6x=0.18 produce-5.64,-0.3.',
+    C: 'First transfer-0.69 with wrong sign:1.75x=9.18-0.69=8.49 gives849/175. Second omit outside-0.48:0.2x-0.06=0.8x+0.24 gives-0.5.',
+  },
+  'n45-838b': {
+    A: 'Negate only final coefficients:-11.35x=31.78,-0.1x=0.08 produce-2.8,-0.8.',
+    C: 'First use28.12-3.66=24.46, giving2446/1135. Second omit outside+0.08:0.4x-0.24=0.5x-0.4 gives1.6.',
+  },
+  'n45-839a': {
+    A: 'Make the first double-negative product negative:-2.08+5.46=3.38; keep second-9.7.',
+    C: 'Keep first7.54; reverse2-4.3 to4.3-2, giving-3.03+6.67=3.64.',
+  },
+  'n45-839b': {
+    B: 'Keep minus on(-3.8)*(-0.9), yielding-3.42+2.68=-0.74; second stays4.08.',
+    C: 'Keep first6.1; drop negative quotient sign in second, giving6.06+10.14=16.2.',
+  },
+  'n45-840a': {
+    B: 'Keep correct quotients29.3,60.5 but replace addition by subtraction29.3-60.5=-31.2.',
+    C: 'Keep quotients but multiply them29.3*60.5=1772.65.',
+  },
+  'n45-840b': {
+    A: 'Keep quotients40.6,30.5 but subtract40.6-30.5=10.1.',
+    C: 'Keep quotients but multiply40.6*30.5=1238.3.',
+  },
+  'n45-841a': {
+    B: 'Use component sums14/16,26/46,43/64,54/12 rather than fraction products.',
+    C: 'Use numerator products and denominator sums:45/16,120/46=60/23,442/64=221/32,560/12=140/3.',
+  },
+  'n45-841b': {
+    A: 'Drop the first single-negative sign, changing-9 to+9; retain the other three results.',
+    C: 'Keep minus on the second double-negative product, changing25/6 to-25/6; retain other cells.',
+  },
+  'n45-841c': {
+    B: 'Cancel101 against202 and51 against102 by deleting both ratios entirely, dropping each residual1/2 and emitting1 instead of1/4.',
+    C: 'Multiply whole parts only:5*2+1/5=10 1/5;4*2+2/7=8 2/7;-(1*3+1/12)=-3 1/12; first fraction product remains1/4.',
+  },
+  'n45-842a': {
+    B: 'Divide coefficient2/5 by each input rather than multiply:4/5,1,4/25,16/75,32/75.',
+    C: 'Discard coefficient2/5 and copy the five m values.',
+  },
+  'n45-842b': {
+    A: 'Divide4/9 by each x to get16/9,8/81,1.',
+    C: 'Discard coefficient4/9 and copy the three x values.',
+  },
+  'n45-843': {
+    A: 'Relabel hour numerals as minutes without multiplying by60; multiply by1/12 to get1/16,1/20,5/72.',
+    C: 'Divide hours by60:1/80,1/100,1/72 minutes; multiply each by1/12 to get1/960,1/1200,1/864.',
+  },
+  'n45-844': {
+    A: 'Stop at first-two-dimension area4/9*3/4=1/3.',
+    C: 'Add all dimensions4/9+3/4+1/3=55/36.',
+  },
+  'n45-845': {
+    A: 'Use whole-plus-numerator mixed conversion5/4,7/7=1,21/17,29/37; leave decimals131/25,33/4 right.',
+    C: 'Keep mixed conversions but use tenths524/10=262/5 and825/10=165/2.',
+  },
+  'n45-846a': {
+    B: 'Wrong mixed numerators6,2,16,12,4,10 give6/5*2/9=4/15;16/15*12/11=64/55;4/25*10/16=1/10.',
+    C: 'Correctly convert factors, then divide:18/5 divided10/9=81/25;44/15 divided72/11=121/270;52/25 divided25/16=832/625.',
+  },
+  'n45-846b': {
+    A: 'Discard the single-negative second-product sign, turning-63 to63 while leaving5/2,40.',
+    C: 'Keep a minus on the third double-negative product, turning40 to-40 while leaving5/2,-63.',
+  },
+  'n45-847': {
+    B: 'Apply6/7 to original27 rather than remainder21, giving162/7.',
+    C: 'Apply6/7 to canteen share6 rather than remainder21, giving36/7.',
+  },
+  'n45-848': {
+    A: 'Use side rather than volume:39/5*5/2=39/2.',
+    C: 'Use side squared rather than cubed:39/5*(5/2)^2=195/4.',
+  },
+  'n45-849': {
+    B: 'Give the truck the same3.5-hour travel time as the first vehicle;151.2/3.5=43.2.',
+    C: 'Add delay instead of subtracting:151.2/(3.5+0.7)=36.',
+  },
+  'n45-850': {
+    A: 'Subtract half-difference from mean:2.7-0.8/2=2.3, reporting smaller rather than larger.',
+    C: 'Treat mean as smaller and add the full difference:2.7+0.8=3.5.',
+  },
+  'n45-851': {
+    B: 'Keep first term0.46; lose the sign of a+b or fail subtraction-of-negative, emitting0.46-1.64=-1.18.',
+    C: 'Replace a-2b by a+2b=-0.6; evaluate2.3*(-0.6)-4.1*(-0.4)=-1.38+1.64=0.26.',
+  },
+};
+
+const falseChecks = [];
+const correctChecks = [];
+const setChecks = [];
+for (const q of draft.questions) {
+  const previous = frozen.question_reviews.find((item) => item.question_id === q.id);
+  const sameSet = JSON.stringify([...q.key.correct].sort()) ===
+    JSON.stringify([...previous.mathematics.correct].sort());
+  if (!sameSet) throw new Error(`Author set disagrees with frozen set:${q.id}`);
+  setChecks.push({
+    question_id: q.id,
+    verdict: 'pass',
+    independently_frozen_correct: previous.mathematics.correct,
+    author_correct: q.key.correct,
+    evidence: previous.mathematics.independent_solution,
+  });
+  for (const rationale of q.key.rationales) {
+    const truth = previous.mathematics.option_checks.find(
+      (item) => item.option_id === rationale.option_id,
+    );
+    if (rationale.truth !== truth.truth) throw new Error(`Truth mismatch:${q.id}/${rationale.option_id}`);
+    const common = {
+      question_id: q.id,
+      option_id: rationale.option_id,
+      verdict: 'pass',
+      author_derivation: rationale.derivation,
+      author_misconception: rationale.misconception,
+      independently_frozen_evidence: truth.evidence,
+    };
+    if (rationale.truth === 'incorrect') {
+      const generation = programs[q.id]?.[rationale.option_id];
+      if (!generation) throw new Error(`Missing individual adjudication:${q.id}/${rationale.option_id}`);
+      falseChecks.push({
+        ...common,
+        generation,
+        falsehood: truth.evidence,
+        comparison: 'Current stated erroneous rule and its derivation generate the displayed alternative, including any correct unchanged components; frozen evidence establishes why the whole alternative is false.',
+      });
+    } else {
+      correctChecks.push({
+        ...common,
+        proof_comparison: truth.evidence,
+        comparison: 'Current correct derivation was individually read against this independently frozen proof/result, the source solution and requested method/domain. Correct components do not rely on author source-solutions or a key-derived mathematical solution.',
+      });
+    }
+  }
+}
+
+const losses = {
+  '804': 'Area recognition does not independently produce squaring or squared-unit reasoning.',
+  '805': 'Paired cost recognition does not independently produce both price calculations.',
+  '806': 'Complete three-result rows do not certify unaided multiplication/sign work for every one of six products; a decisive mismatch can eliminate a whole row.',
+  '807': 'Complete rows preserve eight products but do not independently produce cross-cancellation or reduction.',
+  '808': 'Complete rows preserve all eight factors, unity/reciprocal cases and signs; cancellation chains are not produced.',
+  '809': 'Both full methods and their comparison are recognized, not independently executed.',
+  '810': 'The two formulas and original denominator domains are recognized, not transformed in writing.',
+  '811': 'All twelve products including one/zero remain visible, but writing each integer-as-fraction calculation is not assessed.',
+  '812': 'Full-list recognition does not independently produce mixed conversion and whole-negative multiplication.',
+  '813': 'Every merged option supplies3/8 and factor conversions0.5,0.75; those common entries neither discriminate responses nor assess independent product/conversion production. The decimal-product/check distinction is still judged.',
+  '814': 'Complete verbal law, variable identity and two-order numerical verification are recognized rather than composed.',
+  '815': 'Requested decimal-to-fraction conversions and products are recognized, not independently produced.',
+  '816': 'Requested fraction-to-decimal conversions and decimal products are recognized, not independently produced.',
+  '817': 'Both triple products remain, but cancellation chains and unaided arithmetic are untested.',
+  '818': 'Every merged option supplies the same verbal and symbolic associative law; stating/composing or discriminating that law is untested. Both complete grouping computations still distinguish the records, but unaided written verification is not certified.',
+  '819': 'Complete three-distance correspondence is recognized rather than constructed.',
+  '820': 'Three-factor volume is selected rather than independently written with cubic units.',
+  '821': 'Four targets and non-unique valid pairs are recognized, not freely generated; the open-ended family is untested.',
+  '822': 'Second-use result recognition does not produce the first-use/remainder model.',
+  '823': 'Complementary payment is selected rather than independently calculated.',
+  '824': 'All factor-conversion chains are present but conversion and multiplication production are untested.',
+  '825': 'Eight complete products retain whole-negative signs but do not assess written conversion, reduction and signed arithmetic.',
+  '826': 'Both distances retain distinct units; forming the unit-consistent products unaided is not assessed.',
+  '827': 'Three-dimensional volume remains, but writing mixed conversions and cancellations is lost.',
+  '828': 'Density times directly given volume is recognized rather than formed and calculated.',
+  '829': 'Second-day reference to first-day sales remains, but the nested-reference chain is not written independently.',
+  '830': 'Arbitrary-triangle construction is recognized; producing the original triangle, midpoints, perpendiculars and reflected vertices with instruments is untested.',
+  '831': 'Central symmetry and whole-line construction are recognized rather than drawn or executed.',
+  '832': 'The62-degree configuration is supplied; drawing/measuring it and constructing both image lines are untested.',
+  '833': 'All eight exact conversions are recognized rather than producing each mixed numerator/decimal denominator.',
+  '834': 'All six literal fractions remain, including15*1; legal reduction/cancellation chains are not produced.',
+  '835': 'The entire full-line construction and both three-point substitution directions are absent pending authoritative wording clarification; no alternate source meaning is assumed.',
+  '836': 'Both inverse-yield quantities are recognized rather than forming/solving the two retained-percentage equations.',
+  '837': 'The variable roles are supplied and full equation/count records recognized; choosing a variable and producing both equation models unaided are untested.',
+  '838': 'All four roots are recognized rather than distributing, balancing and solving the original equations.',
+  '839': 'All four signed decimal results are recognized rather than producing each parenthesized chain.',
+  '840': 'Both sums preserve complete nonzero denominator differences, but writing the small differences, divisions and additions is untested.',
+  '841': 'All twelve fraction/mixed/sign products remain, but independent cancellation/sign chains are not certified.',
+  '842': 'Both ordered tables retain every rational input, but substitution of all eight values is not independently produced.',
+  '843': 'The three minute conversions and distances are recognized rather than independently executed.',
+  '844': 'Three-dimension volume is recognized rather than written.',
+  '845': 'Six exact improper fractions are recognized rather than independently generated.',
+  '846': 'Six mixed/signed products remain, but unaided mixed conversion, sign handling and reduction are untested.',
+  '847': 'The remainder-base allocation is recognized rather than modeled/calculated independently.',
+  '848': 'Cubing side before density multiplication remains mathematically necessary; producing the volume/mass chain unaided is untested.',
+  '849': 'Delay subtraction and common-arrival model are recognized rather than independently formulated.',
+  '850': 'The requested larger number is selected rather than forming/solving the mean-and-difference equations.',
+  '851': 'Full negative substitution is recognized rather than producing grouped signed arithmetic.',
+};
+const productionLosses = frozen.visible_source_coverage.map((visible) => {
+  const actual = draft.coverage.find((entry) => entry.source_number === visible.source_number);
+  const mapped = draft.questions.filter((q) => q.source_numbers.includes(visible.source_number));
+  if (JSON.stringify(actual.question_ids) !== JSON.stringify(mapped.map((q) => q.id)) ||
+      JSON.stringify(actual.question_ids) !== JSON.stringify(visible.question_ids)) {
+    throw new Error(`Source mapping changed:${visible.source_number}`);
+  }
+  const mergedSource = ['813', '818'].includes(visible.source_number);
+  return {
+    source_number: visible.source_number,
+    question_ids: actual.question_ids,
+    observed_loss: losses[visible.source_number],
+    author_limitations: mapped.map((q) => ({ question_id: q.id, limitations: q.intent.limitations })),
+    author_omitted_tasks: actual.omitted_tasks,
+    author_coverage_reason: actual.reason,
+    verdict: visible.source_number === '835' ? 'blocked' : mergedSource ? 'revise' : 'pass',
+    evidence: visible.source_number === '835'
+      ? 'The author explicitly defers the entire graph/six-cases task and keys no question. This is honest blocked coverage, not a requested author guess.'
+      : mergedSource
+        ? 'The merged unit_reason acknowledges common fraction product and law, but limitations/omitted_tasks only name decimal-check and grouped-computation production. Explicitly add supplied product/conversions and supplied law as unassessed production/discrimination, and qualify the generic all-tasks-retained claim.'
+        : `The original view-observed loss is accounted for by the author limitations and coverage omission, with all original data and recognition-level mathematical distinctions retained. ${visible.evidence}`,
+  };
+});
+
+const source835 = frozen.source835_conditional_evidence;
+const comparison = {
+  stage: 'n45_current_internal_comparison_complete',
+  reviewer: source.reviewer,
+  outcome: 'blocked',
+  visible_mathematics_outcome: 'pass',
+  nonblocked_internal_outcome: 'revise',
+  seed_sha256: digest(seed),
+  draft_sha256: digest(draft),
+  source_file_sha256: sha(seedBytes),
+  draft_file_sha256: sha(draftBytes),
+  frozen_view_file_sha256: frozen.view_file_sha256,
+  snapshot_note: 'Contract JSON digests are computed locally only for review snapshot binding; no canonical corpus/artifact, canonical tool, structural checker, freshness operation, renderer, service or backend was used.',
+  input_boundary: 'Authorized current n45 draft and repair record/patch; own source and frozen revised pure-view reviews only. No author source-solutions or answers were opened. No author.mjs file was opened. The authorized repair patch bundled serializer hunks, incidentally exposed during its first read; these are excluded from mathematical evidence and do not replace the independent source/view freezes. No historical draft was opened. N44 work is separate.',
+  repair_diff_review: {
+    verdict: 'pass',
+    evidence: 'Reviewed the JSON draft/view diff: standalone813 and818 were replaced by the merged unit, its source pair and complete rationale records; coverage813/818 point to that unit. The current draft projection equals the entire independently frozen revised view. Author assertions about62 unchanged internals are not treated as independent evidence: every current rationale and intent was read.',
+    byte_binding_matches_author_repaired_snapshot: true,
+    unchanged_view_question_evidence_reused: 62,
+    unchanged_view_option_evidence_reused: 194,
+    merged_independent_true_set: ['B'],
+  },
+  counts: {
+    source_reviews: 48,
+    covered_sources: 47,
+    blocked_sources: 1,
+    questions: setChecks.length,
+    options: falseChecks.length + correctChecks.length,
+    true_options: correctChecks.length,
+    false_options: falseChecks.length,
+    complete_true_sets_matching_author: setChecks.length,
+    option_truths_matching_author: falseChecks.length + correctChecks.length,
+    correct_proof_records: correctChecks.length,
+    correct_proof_pass: correctChecks.length,
+    false_generation_records: falseChecks.length,
+    false_generation_pass: falseChecks.length,
+    false_generation_revise: 0,
+    key_or_truth_disagreements: 0,
+    source_figures: 0,
+    new_figures: 0,
+  },
+  comparison: {
+    view_snapshot: { verdict: 'pass', evidence: 'Every current draft id/view, including ordered options, exact stems, modes and figure arrays, equals the frozen63-question revised pure view. No new pure-view solving was performed.' },
+    complete_true_sets: { verdict: 'pass', evidence: 'All63 complete author sets and197 per-option labels equal the independent frozen sets/labels; correctness was not inferred from the author key.' },
+    correct_proofs: { verdict: 'pass', evidence: 'All66 current correct derivations were read against the independent evidence, including complete result rows, symbolic domains, whole-negative mixed numerals, law verifications, full-line/triangle construction arguments, yield/count/travel models and signed decimal chains.' },
+    false_generation: { verdict: 'pass', evidence: 'All131 erroneous programs were individually traced below; compound alternatives include every retained correct component and every wrong computation. Numerator1768 over denominator30 reduces to displayed884/15 in808b/C; no spurious mismatch was introduced.' },
+    source_mathematics: { verdict: 'pass', evidence: 'All author intent.source_solution entries for the47 covered sources agree with independent source reasoning, including both methods809, domains810, law order/grouping814/818, arbitrary triangle830, central versus axial line symmetry831/832, literal15*1 in834, all sign cases and target identities. Source835 has no question/intent and is separately blocked.' },
+    source_coverage: { verdict: 'blocked', evidence: 'All48 source mappings were compared. Sources813/818 are legitimately merged and all other visible relationships match the freeze. Source835 is explicitly omitted for unresolved wording;47 valid covered sources cannot establish complete package coverage.' },
+    production_disclosure: { verdict: 'revise', evidence: 'One merged-unit disclosure repair affects both813 and818. The shared3/8 product, shared conversions and common law are supplied in every alternative, so their independent production/discrimination is lost, beyond the stated written decimal/grouping losses. No visible or key repair is needed.' },
+    package_dependencies: { verdict: 'pass', evidence: 'Frozen revised dependency findings remain applicable to the identical view. The old813/818 full-answer leak is removed;821-D receives only a transferred product, not its complete eight-option set. Other method transfers and source repetitions are not complete-answer disclosure.' },
+    figures: { verdict: 'pass', evidence: 'Neither the n45 seed nor current draft uses or registers figures; no new image review or browser work is involved.' },
+  },
+  correct_set_comparisons: setChecks,
+  correct_option_proof_checks: correctChecks,
+  false_option_generation_checks: falseChecks,
+  production_losses: productionLosses,
+  source_intent_comparisons: draft.questions.map((q) => ({
+    question_id: q.id,
+    source_numbers: q.source_numbers,
+    verdict: 'pass',
+    author_task: q.intent.task,
+    author_source_solution: q.intent.source_solution,
+    author_unit_reason: q.intent.unit_reason,
+    independently_frozen_sources: q.source_numbers.map((number) => ({
+      source_number: number,
+      independent_solution: source.source_reviews.find((record) => record.source_number === number).independent_solution,
+    })),
+    evidence: frozen.question_reviews.find((record) => record.question_id === q.id).task_fidelity.evidence,
+  })),
+  source835_conditional_evidence: source835,
+  repair_requests: [{
+    id: 'R1',
+    affected: [
+      'n45-813-818 intent.limitations',
+      'coverage813 omitted_tasks/reason',
+      'coverage818 omitted_tasks/reason',
+    ],
+    request: 'Keep the frozen view and key. Explicitly record that every candidate supplies the same3/8 product,0.5/0.75 factor conversions, and verbal/symbolic associative law, so independent production and correctness discrimination of those common entries are untested. Preserve recognition of decimal verification and both grouping computations; qualify the generic all-original-tasks-retained wording accordingly.',
+  }],
+  handoff: 'Blocked only on unresolved source835, with one definite internal disclosure revision. Do not fabricate835 or claim full coverage. Current review is snapshot-bound; source/view freezes and author draft are unchanged. No validation, canonical workflow, rendering, durable integration or promotion was performed.',
+};
+
+const review = {
+  schema: 's10y-choice-review-v1',
+  seed_sha256: comparison.seed_sha256,
+  draft_sha256: comparison.draft_sha256,
+  reviewer: source.reviewer,
+  source_reviews: source.source_reviews.map((record) => {
+    const visible = frozen.visible_source_coverage.find((entry) => entry.source_number === record.source_number);
+    const loss = productionLosses.find((entry) => entry.source_number === record.source_number);
+    return {
+      source_number: record.source_number,
+      independent_solution: record.source_number === '835'
+        ? `${source835.interpretation} Conditional points:${source835.conditional_points.join(',')}. ${source835.note} The original source-only calculation is retained as history, but the later frozen pure-view interpretation boundary supersedes any unconditional wording; no authority for the proportional interpretation is claimed.`
+        : [record.independent_solution, record.reasoning, record.checks].filter(Boolean).join(' '),
+      coverage: {
+        verdict: loss.verdict,
+        evidence: `${visible.evidence} Observed loss:${loss.observed_loss} Internal comparison:${loss.evidence} Author omission:${loss.author_omitted_tasks.join(' ')}`,
+      },
+    };
+  }),
+  figure_checks: [],
+  new_figure_reviews: [],
+  question_reviews: structuredClone(frozen.question_reviews),
+  outcome: 'blocked',
+};
+for (const q of review.question_reviews) {
+  q.mathematics.independent_solution += ' Authorized current internal comparison finds the same complete true set and every option truth; all proofs/programs were read without replacing the independent freeze.';
+  for (const option of q.mathematics.option_checks) {
+    const records = option.truth === 'correct' ? correctChecks : falseChecks;
+    const record = records.find((entry) => entry.question_id === q.question_id && entry.option_id === option.option_id);
+    option.evidence += option.truth === 'correct'
+      ? ` Current correct-proof comparison(pass):${record.author_derivation} Independent basis:${record.proof_comparison}`
+      : ` Current wrong-program comparison(pass):${record.generation} Falsehood:${record.falsehood}`;
+  }
+  if (q.question_id === 'n45-813-818') {
+    q.task_fidelity.verdict = 'revise';
+    q.task_fidelity.evidence += ' Later internal comparison:unit_reason acknowledges shared product/law, but limitations and both coverage records omit explicit loss of their independent assessment and shared factor-conversion production. Make only the recorded internal disclosure repair; visible fidelity, mathematics and leakage remain as frozen.';
+  }
+}
+for (const [name, value] of [
+  ['final-comparison-result.json', comparison],
+  ['review.json', review],
+]) {
+  fs.writeFileSync(path.join(root, name), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+}
+console.log(JSON.stringify({
+  outcome: comparison.outcome,
+  nonblocked_internal_outcome: comparison.nonblocked_internal_outcome,
+  ...comparison.counts,
+  files: ['final-comparison-result.json', 'review.json'],
+}));

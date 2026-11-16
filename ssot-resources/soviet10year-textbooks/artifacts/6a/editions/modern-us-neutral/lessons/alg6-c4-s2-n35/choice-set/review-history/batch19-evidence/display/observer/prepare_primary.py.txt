@@ -1,0 +1,122 @@
+"""Preserve supplied capture evidence and copy native pixels into montages."""
+
+import hashlib
+import json
+import re
+from pathlib import Path
+
+from PIL import Image, ImageDraw
+
+
+ROOT = Path(__file__).resolve().parents[5]
+OUT = Path(__file__).resolve().parent
+TMP = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp"
+LESSON = "alg6-c4-s2-n35"
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def native_montage(entries, name, columns=3):
+    images = []
+    for entry in entries:
+        with Image.open(ROOT / entry["path"]) as image:
+            image.load()
+            images.append(image.convert("RGB"))
+    width = max(image.width for image in images)
+    height = max(image.height for image in images)
+    rows = (len(images) + columns - 1) // columns
+    canvas = Image.new(
+        "RGB", (columns * (width + 12) + 12, rows * (height + 36) + 12), "white",
+    )
+    draw = ImageDraw.Draw(canvas)
+    members = []
+    for index, (entry, image) in enumerate(zip(entries, images)):
+        x = 12 + index % columns * (width + 12)
+        y = 12 + index // columns * (height + 36)
+        draw.text((x, y + 5), entry["label"], fill="black")
+        canvas.paste(image, (x, y + 28))
+        members.append({
+            **entry, "member_rect": [x, y + 28, image.width, image.height],
+            "resized": False,
+        })
+    path = OUT / name
+    if path.exists():
+        raise RuntimeError(f"Preserve existing montage: {path}")
+    canvas.save(path)
+    for member, image in zip(members, images):
+        x, y, width, height = member["member_rect"]
+        assert canvas.crop((x, y, x + width, y + height)).tobytes() == image.tobytes()
+    return {
+        "path": str(path.relative_to(ROOT)), "sha256": sha(path),
+        "size": list(canvas.size), "members": members,
+        "all_complete_native_member_pixels_verified_equal": True,
+    }
+
+
+def main():
+    manifest_path = TMP / "batch19-render/6a-alg6-c4-s2-n35-capture-manifest.json"
+    report_path = TMP / "offline-evidence/6a/alg6-c4-s2-n35-batch19-report.json"
+    manifest = json.loads(manifest_path.read_text())
+    preservation = []
+    for source in (manifest_path, report_path):
+        target = OUT / f"preserved-{source.name}"
+        with target.open("xb") as handle:
+            handle.write(source.read_bytes())
+        preservation.append({
+            "original": str(source.relative_to(ROOT)),
+            "preserved": str(target.relative_to(ROOT)),
+            "sha256": sha(source),
+        })
+    entries = []
+    for entry in manifest["screenshots"]:
+        path = ROOT / entry["path"]
+        assert sha(path) == entry["sha256"]
+        match = re.fullmatch(
+            rf"{LESSON}-(text|exercises|choices)-(1440|390)-(.+)\.png", path.name,
+        )
+        assert match, path
+        with Image.open(path) as image:
+            image.load()
+            size = list(image.size)
+        surface, width, kind = match.group(1), int(match.group(2)), match.group(3)
+        entries.append({
+            **entry, "filename": path.name, "surface": surface,
+            "viewport_width": width, "kind": kind, "size": size,
+            "label": f"{surface} {width} {kind}", "origin": "primary",
+        })
+    assert len(entries) == 29
+    montages = []
+    for surface in ("text", "exercises", "choices"):
+        endpoints = [
+            entry for entry in entries
+            if entry["surface"] == surface and entry["kind"] in ("first", "last")
+        ]
+        endpoints.sort(key=lambda entry: (entry["viewport_width"], entry["kind"]))
+        montages.append(native_montage(
+            endpoints, f"primary-{surface}-endpoints.png", columns=2,
+        ))
+    regions = [entry for entry in entries if entry["kind"] not in ("first", "last")]
+    for start in range(0, len(regions), 9):
+        montages.append(native_montage(
+            regions[start:start + 9], f"primary-regions-{start // 9 + 1:02}.png",
+        ))
+    payload = {
+        "lesson": LESSON, "status": "native montages prepared, not yet observed",
+        "screenshots": entries, "montages": montages,
+        "source_evidence_preserved": preservation,
+        "rendered_html": manifest["rendered"],
+        "unique_surface_viewport_combinations": 6,
+        "additional_unique_surface_viewport_combinations": 0,
+    }
+    with (OUT / "primary-native-manifest.json").open("x") as handle:
+        json.dump(payload, handle, indent=2)
+        handle.write("\n")
+    print(f"Prepared {len(entries)} primary PNGs in {len(montages)} native montages.")
+    for montage in montages:
+        print(Path(montage["path"]).name, montage["size"], len(montage["members"]))
+
+
+if __name__ == "__main__":
+    main()

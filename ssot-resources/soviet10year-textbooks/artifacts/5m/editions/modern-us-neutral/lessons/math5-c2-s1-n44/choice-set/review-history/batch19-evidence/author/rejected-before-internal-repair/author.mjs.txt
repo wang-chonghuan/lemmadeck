@@ -1,0 +1,216 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const dir = path.dirname(fileURLToPath(import.meta.url))
+const seed = JSON.parse(fs.readFileSync(path.join(dir, 'source.json'), 'utf8'))
+const frozen = JSON.parse(fs.readFileSync(path.join(dir, 'source-solutions.json'), 'utf8'))
+const questions = []
+const c = (text, derivation) => ({ text, truth: 'correct', derivation, misconception: null })
+const w = (text, derivation, misconception) => ({ text, truth: 'incorrect', derivation, misconception })
+function q(number, suffix, mode, stem, choices, unit, concepts = []) {
+  const source = seed.exercises.find(s => s.number === number)
+  const solution = frozen.solutions.find(s => s.source_number === number)
+  const options = choices.map((choice, index) => ({
+    id: String.fromCharCode(65 + index), text: choice.text, figure_ids: [],
+  }))
+  questions.push({
+    id: `n44-${number}${suffix}`, source_numbers: [number],
+    view: { mode, stem, figure_ids: source.figure_ids, options },
+    intent: {
+      task: solution.task, source_solution: solution.solution, unit_reason: unit,
+      concept_blocks: concepts, limitations: solution.losses,
+      figure_observations: source.figure_ids.map(figure_id => ({
+        figure_id, observation: frozen.figure_observations[figure_id],
+      })),
+    },
+    key: {
+      correct: options.filter((_, i) => choices[i].truth === 'correct').map(o => o.id),
+      rationales: choices.map((choice, i) => ({
+        option_id: options[i].id, truth: choice.truth,
+        derivation: choice.derivation, misconception: choice.misconception,
+      })),
+    },
+  })
+}
+
+q('788', '', 'multiple', '图中共有六个图形。按对称轴的个数分类，选出所有正确的说法。网格和字母标记不算图形。',
+  [
+    c('左上钟形有一个对称轴。', 'Only its vertical centerline preserves the bell; a horizontal reflection moves its flat bottom to its pointed top.'),
+    c('右上菱形有两个对称轴。', 'The two diagonals preserve the non-square rhombus; lines through opposite edge midpoints do not.'),
+    w('中央五角星只有一个对称轴。', 'Keeping only the visible vertical axis gives 1; the four axes through the other tips also preserve the regular star.', 'Count only vertical mirror lines and overlook oblique axes.'),
+    c('左下三角形有一个对称轴。', 'It is isosceles but not equilateral; only apex-to-base-midpoint reflection preserves it.'),
+    c('中下倒置三角形有多于两个对称轴。', 'The equilateral triangle has three vertex-to-opposite-midpoint axes.'),
+    c('右下正方形有多于两个对称轴。', 'Its two diagonals and two opposite-midpoint lines give four axes.'),
+    w('左下三角形有多于两个对称轴。', 'Treating it as equilateral produces three, but its drawn base differs from its equal sides.', 'Overgeneralize the three-axis rule of an equilateral triangle to every isosceles triangle.'),
+    c('中央五角星有多于两个对称轴。', 'The five lines through tips and opposite indentations are reflection axes.'),
+    w('右下正方形恰好有两个对称轴。', 'Counting only the horizontal and vertical axes produces two and misses the two diagonal reflections.', 'Omit diagonal axes from a square.'),
+  ], 'One native multiple question jointly classifies all six diagrams; options are direct mathematical assertions, not coded combinations.', [0])
+
+q('789', '', 'single', '一条非退化线段和一条完整直线各有多少个对称轴？',
+  [
+    w('线段一个；直线一个。', 'Counting only each supporting line returns 1,1, missing perpendicular reflections.', 'Assume every axis must lie along the original object.'),
+    c('线段两个；直线无穷多个。', 'The segment has its supporting line and perpendicular bisector; a whole line has itself and every perpendicular line.'),
+    w('线段两个；直线两个。', 'Correctly find the segment axes but wrongly choose one distinguished midpoint for an unbounded line.', 'Transfer the segment midpoint restriction to a whole line.'),
+    w('线段无穷多个；直线无穷多个。', 'Allowing every perpendicular to the supporting line gives infinitely many for both, but off-midpoint reflection moves the segment endpoints.', 'Ignore the finite endpoints of a segment.'),
+  ], 'The finite-endpoint versus whole-line distinction is one coherent paired result.', [0])
+
+q('790', '', 'single', '一个圆周与它的一条直径线段的并集有多少个对称轴？这些轴在哪里？',
+  [
+    w('一个：只有这条直径所在的直线。', 'Keeping only the fixed-endpoint reflection misses the axis exchanging the diameter endpoints.', 'Require both endpoints to stay fixed rather than allow them to exchange.'),
+    w('无穷多个：过圆心的任意直线。', 'Every centerline preserves the circle, but most move the distinguished diameter to a different one.', 'Judge only the circle and discard the added diameter.'),
+    c('两个：这条直径所在的直线和它的垂直平分线。', 'Both preserve the circumference and the endpoint set of the distinguished diameter.'),
+    w('两个：这条直径所在的直线和过它一个端点的垂线。', 'A perpendicular through an endpoint maps the center and other endpoint to different points, unlike the midpoint perpendicular.', 'Use an endpoint instead of the midpoint for the exchanging reflection.'),
+  ], 'One complete count-and-location result retains the restriction introduced by the diameter.', [0])
+
+q('791', '', 'single', '两圆相交，圆心都在直线 $l$ 上。哪段论证能证明 $l$ 是两圆并集的对称轴，并且对图中半径相等和半径不等的情况都成立？',
+  [
+    c('关于 $l$ 的反射固定每个圆心，并保持到该圆心的距离，所以每个圆都变成自身，两个圆的并集也变成自身。', 'Centers on l are fixed; the defining radius of each circle is preserved separately.'),
+    w('关于 $l$ 的反射把第一个圆心变成第二个圆心，因此两个圆互换位置，两个圆的并集变成自身。', 'This proposed center swap cannot occur: both centers lie on the axis and are fixed.', 'Confuse the line of centers with its perpendicular bisector.'),
+    w('关于 $l$ 的反射固定两圆的每一个交点，因此固定每个圆上的所有点，两个圆的并集变成自身。', 'The two intersection points are on opposite sides of l and exchange, rather than remain fixed.', 'Assume the intersection points lie on the line of centers.'),
+    w('两圆都与 $l$ 相交，因此关于 $l$ 的反射保持每个圆，两个圆的并集也变成自身。', 'A secant not through a circle center does not preserve that circle; intersection alone is insufficient.', 'Replace passing through the center with merely meeting the circle.'),
+  ], 'A full distance-preservation proof is the response, covering both actual circle configurations.', [0])
+
+q('792', '', 'single', '等腰三角形 $ABC$ 中，$AB=BC$，$D$ 是底边 $AC$ 的中点。哪段论证能证明直线 $BD$ 是三角形的对称轴？',
+  [
+    w('$AD=DC$，所以任何经过 $D$ 的直线都交换 $A,C$；$BD$ 经过 $D$，因此它保持三角形。', 'Passing through a midpoint without perpendicularity does not exchange the endpoints under reflection.', 'Treat every midpoint line as the perpendicular bisector.'),
+    c('$AB=BC$、$AD=DC$、$BD$ 公共，所以两小三角形全等；在 $D$ 处的两角相等且互补，故 $BD\\perp AC$。反射固定 $B$ 并交换 $A,C$。', 'SSS gives equal supplementary angles at D, then the perpendicular-bisector reflection fixes B and swaps the base endpoints.'),
+    w('$AB=BC$，所以 $A,C$ 到 $B$ 等距；任何经过 $B$ 的直线都交换 $A,C$，因此 $BD$ 保持三角形。', 'Equal distance to one point does not make every line through that point a mirror between the endpoints.', 'Discard the midpoint condition and perpendicular-bisector requirement.'),
+    w('$D$ 是底边中点，所以关于 $BD$ 的反射交换 $B,D$，同时交换 $A,C$，因此三角形保持不变。', 'Both B and D are on the proposed axis and must be fixed, not exchanged.', 'Confuse reflection across a line with exchanging two points along that line.'),
+  ], 'One complete congruence-to-reflection argument retains the proof task as proof recognition.', [0])
+
+q('793', '', 'single', '依次比较这四对分数：$\\frac57$ 与 $\\frac7{10}$；$\\frac{11}8$ 与 $\\frac{13}{11}$；$\\frac47$ 与 $\\frac7{10}$；$\\frac{12}{11}$ 与 $\\frac{11}{10}$。下面哪一行的四个符号都正确？符号表示左边分数与右边分数的关系。',
+  [
+    w('$<,\\ <,\\ <,\\ >$', 'Compare numerators alone: 5<7,11<13,4<7,12>11.', 'Ignore the denominators.'),
+    w('$>,\\ >,\\ >,\\ <$', 'Compare denominators alone, assuming smaller denominator always gives a larger fraction: 7<10,8<11,7<10,11>10.', 'Apply the same-numerator comparison rule to unequal numerators.'),
+    c('$>,\\ >,\\ <,\\ <$', 'Positive cross-products are respectively 50>49,121>104,40<49,120<121.'),
+    w('$<,\\ <,\\ >,\\ >$', 'Reverse every inequality obtained from the valid cross-products.', 'Reverse inequality direction despite multiplying by positive denominators.'),
+  ], 'One complete ordered comparison result covers all four source pairs without isolated clicks.')
+
+for (const [suffix, stem, choices] of [
+  ['a', '哪段论证能证明 $\\frac{200}{4201}<\\frac1{20}$？', [
+    w('因为 $200<4201$，所以该分数小于 $\\frac1{20}$。', '200<4201 proves only that the fraction is below 1, not below 1/20.', 'Substitute comparison with 1 for comparison with 1/20.'),
+    c('两边乘以正数 $4201\\cdot20$，只需验证 $4000<4201$。', '200*20=4000<4201*1; positive multiplication preserves order.'),
+    w('两边乘以正数 $4201\\cdot20$，只需验证 $200<20$。', 'This drops factors rather than multiplying each numerator by the opposite denominator.', 'Cancel unmatched denominators across an inequality.'),
+  ]],
+  ['b', '哪段论证能证明 $\\frac{125}{361}>\\frac13$？', [
+    c('两边乘以正数 $361\\cdot3$，只需验证 $375>361$。', '125*3=375>361*1; both denominators are positive.'),
+    w('因为 $125>3$，所以左边分数大于 $\\frac13$。', 'Comparing 125 with the other denominator 3 gives no valid fraction comparison.', 'Compare mismatched numerator and denominator directly.'),
+    w('两边乘以正数 $361\\cdot3$，只需验证 $125>1083$。', '361*3=1083 is the denominator product, not the right cross-product.', 'Multiply the right denominator twice instead of cross-multiplying.'),
+  ]],
+]) q('794', suffix, 'single', stem, choices, 'The two inequalities require independent positive cross-product proofs; each response is a whole argument.')
+
+q('795', '', 'single', '把 $720,1890,840,1440$ 依次分解成质因数。哪一行全部正确？',
+  [
+    w('$2^3 3^2 5;\\ 3^3 5 7;\\ 2^2 3 5 7;\\ 2^4 3^2 5$', 'Removing one factor 2 from each valid factorization returns half of each source integer.', 'Stop the repeated division by 2 one step too early.'),
+    w('$2^4 3 5;\\ 2\\cdot3^2 5 7;\\ 2^3 5 7;\\ 2^5 3 5$', 'Removing one factor 3 from each valid factorization returns one third of each source integer.', 'Fail to record one division by 3.'),
+    c('$2^4 3^2 5;\\ 2\\cdot3^3 5 7;\\ 2^3 3 5 7;\\ 2^5 3^2 5$', 'The products are 720,1890,840,1440 and every base is prime.'),
+    w('$2^5 3^2 5;\\ 2^2 3^3 5 7;\\ 2^4 3 5 7;\\ 2^6 3^2 5$', 'Adding one extra factor 2 doubles each integer.', 'Record the final quotient 1 as another division by 2.'),
+  ], 'A complete four-number prime-factorization list retains every integer and all prime multiplicities.')
+
+q('796', '', 'single', '分别考虑两个条件：① $2\\le x\\le6$；② $3\\le y\\le5$。点 $M(x,y)$ 的位置怎样描述？',
+  [
+    c('① 含边界的竖直条带，$y$ 为任意实数；② 含边界的水平条带，$x$ 为任意实数。', 'Each inequality constrains only its own coordinate, with equality included.'),
+    w('① 和② 都是矩形 $[2,6]\\times[3,5]$，边界全包含。', 'Intersecting the two separate case conditions produces the rectangle.', 'Treat alternative cases as simultaneous constraints.'),
+    w('① 不含边界的竖直条带；② 不含边界的水平条带，另一坐标任意。', 'Replacing <= with < removes both boundary lines in each case.', 'Omit equality endpoints.'),
+    w('① 含边界的水平条带，$x$ 任意；② 含边界的竖直条带，$y$ 任意。', 'Swap x and y when translating coordinate inequalities to directions.', 'Confuse abscissa with ordinate.'),
+  ], 'One paired locus description keeps both independent cases and their unrestricted real-coordinate domains.')
+
+q('797', 'a', 'single', 'Alex 捕到的鱼中，2条各长20厘米，5条各长16厘米，1条长12厘米。平均长度是多少？',
+  [
+    w('$16$ 厘米', '(20+16+12)/3=16 gives an unweighted average of the distinct lengths.', 'Give each length category equal weight instead of each fish.'),
+    w('$44$ 厘米', '(2*20+5*16+12)/3=132/3=44 divides the weighted total by category count.', 'Divide by three categories rather than eight fish.'),
+    c('$16.5$ 厘米', '(40+80+12)/(2+5+1)=132/8=16.5.'),
+    w('$6$ 厘米', '(20+16+12)/8=48/8=6 uses unweighted numerator with total fish count.', 'Sum distinct lengths without their multiplicities.'),
+  ], 'Alex and Sam are independent weighted-mean word problems; one complete result per catch.')
+q('797', 'b', 'single', 'Sam 捕到的鱼中，1条长52厘米，5条各长48厘米，2条各长34厘米。平均长度是多少？',
+  [
+    c('$45$ 厘米', '(52+240+68)/(1+5+2)=360/8=45.'),
+    w('$44\\frac23$ 厘米', '(52+48+34)/3=134/3=44 2/3.', 'Average the three distinct lengths without multiplicities.'),
+    w('$120$ 厘米', '360/3=120 uses category count rather than fish count.', 'Divide the weighted total by three categories.'),
+    w('$16.75$ 厘米', '134/8=16.75 sums lengths only once but divides by all eight fish.', 'Discard multiplicity in the numerator only.'),
+  ], 'One independent weighted mean retains all eight fish and centimeter units.')
+
+q('798', '', 'single', '图中的八边形各角合同。每个内角是多少度？哪一组角度和顶点关系正确？',
+  [
+    w('$90^\\circ$；$\\alpha+90^\\circ=180^\\circ$。', 'Assume a straight angle and only one octagon angle: alpha=90.', 'Replace the full three-tile vertex by two angles on a straight line.'),
+    c('$135^\\circ$；$2\\alpha+90^\\circ=360^\\circ$。', 'Two equal octagon angles and a square angle fill a full turn; alpha=270/2=135.'),
+    w('$45^\\circ$；$2\\alpha+90^\\circ=180^\\circ$。', 'Two octagon angles plus square incorrectly fill a half-turn: alpha=45.', 'Use 180 instead of 360 for an interior tiling vertex.'),
+    w('$270^\\circ$；$\\alpha+90^\\circ=360^\\circ$。', 'One octagon angle plus square incorrectly fills a full turn: alpha=270.', 'Omit the second octagon angle at the shared vertex.'),
+  ], 'The response is an angle together with its local geometric relation, not copying a visible number.')
+
+q('799', 'a', 'single', '计算 $[(169.68:5.6-22.8)\\cdot9.4+9.7]\\cdot22.5$。',
+  [
+    w('$1595.95$', '30.3-22.8=7.5; 7.5*9.4*22.5+9.7=1586.25+9.7=1595.95.', 'Move +9.7 outside the outer multiplication.'),
+    c('$1804.5$', '7.5*9.4+9.7=80.2; 80.2*22.5=1804.5.'),
+    w('$80.2$', 'The inner bracket is 80.2.', 'Stop before the final multiplication by 22.5.'),
+  ], 'Each nested decimal expression is independently computed as a complete arithmetic result.')
+q('799', 'b', 'single', '计算 $[(253.26:6.3-31.7)\\cdot8.6+7.4]\\cdot32.6$。',
+  [
+    w('$80.5$', '40.2-31.7=8.5; 8.5*8.6+7.4=80.5.', 'Omit the outer multiplication by 32.6.'),
+    w('$2390.46$', '8.5*8.6*32.6+7.4=2383.06+7.4=2390.46.', 'Apply the outer multiplier to only the first summand.'),
+    c('$2624.3$', '80.5*32.6=2624.3.'),
+  ], 'The second expression is independent of the first and retains its full parentheses.')
+
+q('800', '', 'multiple', '只按图中画出的字形判断。选出所有完整、正确的字母分组；“有铅垂轴”和“有水平轴”的组可以重叠。',
+  [
+    c('有铅垂对称轴：A、H、I、M、O、T、U。', 'Each listed glyph is invariant under its vertical centerline; all other displayed glyphs fail it.'),
+    w('有铅垂对称轴：A、H、I、M、N、O、T、U。', 'Adding N confuses half-turn symmetry with vertical reflection: its diagonal reverses slope.', 'Count rotational symmetry as reflection symmetry.'),
+    c('有水平对称轴：B、C、D、E、H、I、K、O。', 'The drawn equal lobes/arms in B,C,D,E,K and both-axis H,I,O match horizontal reflection.'),
+    w('有水平对称轴：C、D、E、H、I、K、O。', 'Removing B overlooks that this particular drawn B has equal top and bottom lobes.', 'Substitute a different font with unequal B lobes for the supplied glyph.'),
+    w('兼有两种轴：H、I、O、S。', 'S is half-turn invariant but reflection changes its bends.', 'Treat central symmetry as having both perpendicular reflection axes.'),
+    c('兼有两种轴：H、I、O。', 'Intersection of the full vertical and horizontal lists is H,I,O.'),
+    c('没有对称轴：F、L、N、P、R、S。', 'None of these six survives any line reflection; N,S have only half-turn symmetry.'),
+    w('没有对称轴：B、F、L、N、P、R、S。', 'Adding B ignores the equal lobes observed in the actual image.', 'Use a remembered font rather than the drawn shape.'),
+  ], 'One native multiple selection covers all four full groups and all 18 glyphs, avoiding questions whose answers disclose the later intersections.', [0])
+
+q('801', '', 'single', '画任意非退化三角形 $ABC$，作它关于边 $AB$ 所在直线的对称图形。哪一项给出了正确作法，并说明为什么两三角形的并集有对称轴？',
+  [
+    w('固定 $C$，交换 $A,B$，得到同一个三角形；因此 $AB$ 是并集的对称轴。', 'An axis through A,B fixes those points rather than exchanging them; a general C is not fixed.', 'Apply an endpoint swap along AB instead of reflection across AB.'),
+    c('固定 $A,B$；作 $CH\\perp AB$，在另一侧取 $C\'$ 使 $HC\'=HC$。关于 $AB$ 的反射交换两三角形，所以保持它们的并集。', 'The perpendicular equal-distance construction reflects C; reflection involution exchanges the triangles and fixes their union.'),
+    w('固定 $A,B$；作 $CH\\perp AB$，在同一侧取 $C\'$ 使 $HC\'=HC$。两三角形相同，所以 $AB$ 必为它们并集的对称轴。', 'The same-side equal-distance point is C, giving only the original triangle, which is not generally symmetric about its side.', 'Do not reverse the perpendicular direction when reflecting C.'),
+    w('固定 $A,B$；作 $CH\\perp AB$，在另一侧取 $C\'$ 使 $HC\'=2HC$。关于 $AB$ 的反射交换两三角形，所以保持并集。', 'Doubling the distance prevents C,Cprime from being reflection partners.', 'Reflect the side of the point but change its distance to the mirror.'),
+  ], 'A complete generic construction-and-proof response preserves arbitrary triangles without introducing candidate diagrams.', [0])
+
+q('802', '', 'single', '一年利率为3%，一年后本金和利息合计412美元。原来存入多少美元？',
+  [
+    w('$399.64$ 美元', '412*(1-0.03)=399.64 subtracts 3% of the final balance.', 'Take interest as a percentage of the final balance instead of principal.'),
+    w('$424.36$ 美元', '412*(1+0.03)=424.36 adds interest to the already final balance.', 'Use forward growth instead of reversing growth.'),
+    c('$400$ 美元', '412/1.03=400 and 400*0.03=12.'),
+    w('$13733\\frac13$ 美元', '412/0.03=13733 1/3 treats 412 as interest alone.', 'Ignore that the final balance includes the principal.'),
+  ], 'One complete principal result retains the inverse percentage relationship and dollar units.')
+
+q('803', 'a', 'single', '计算 $40.4\\cdot[26.3-(37.76:5.9+41.39):8.1]$。',
+  [
+    c('$824.16$', '6.4+41.39=47.79; /8.1=5.9; 26.3-5.9=20.4; *40.4=824.16.'),
+    w('$20.4$', '20.4 is the outer bracket value.', 'Omit the factor 40.4.'),
+    w('$1300.88$', 'Replace 26.3-5.9 by 26.3+5.9=32.2, then 40.4*32.2=1300.88.', 'Change the outer subtraction to addition.'),
+  ], 'The first expression is a complete independent nested arithmetic task.')
+q('803', 'b', 'single', '计算 $30.3\\cdot[124.9-(48.96:6.8+36.04):9.2]$。',
+  [
+    w('$3926.88$', 'Change 124.9-4.7 to 124.9+4.7=129.6; 30.3*129.6=3926.88.', 'Change the outer subtraction to addition.'),
+    w('$120.2$', '120.2 is the outer bracket value.', 'Omit the factor 30.3.'),
+    c('$3642.06$', '7.2+36.04=43.24; /9.2=4.7; 124.9-4.7=120.2; *30.3=3642.06.'),
+  ], 'The second expression has independent data and a complete result.')
+
+const draft = {
+  schema: 's10y-choice-draft-v1', seed_sha256: frozen.seed_sha256, new_figures: [],
+  questions,
+  coverage: frozen.solutions.map(solution => ({
+    source_number: solution.source_number,
+    question_ids: questions.filter(q => q.source_numbers.includes(solution.source_number)).map(q => q.id),
+    omitted_tasks: solution.losses,
+    reason: 'All mathematical source tasks and data are retained as complete result, classification, or proof/construction recognition. Listed production losses remain untested; semantic review is pending.',
+  })),
+}
+const view = { questions: questions.map(({ id, view }) => ({ id, ...view })) }
+for (const [name, value] of [['draft.json', draft], ['view.json', view]]) {
+  fs.writeFileSync(path.join(dir, name), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+}
+console.log(JSON.stringify({
+  sources: seed.exercises.length, questions: questions.length,
+  single: questions.filter(q => q.view.mode === 'single').length,
+  multiple: questions.filter(q => q.view.mode === 'multiple').length,
+  options: questions.reduce((n, q) => n + q.view.options.length, 0),
+  semantic_review: 'not run',
+}, null, 2))

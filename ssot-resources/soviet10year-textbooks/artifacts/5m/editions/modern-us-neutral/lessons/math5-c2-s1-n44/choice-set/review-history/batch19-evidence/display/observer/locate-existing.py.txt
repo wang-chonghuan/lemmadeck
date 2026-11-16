@@ -1,0 +1,42 @@
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image
+
+ROOT = Path(__file__).resolve().parent
+PRIMARY = ROOT.parent / "offline-evidence" / "5m"
+geometry = json.loads((ROOT / "supplement-geometry.json").read_text())
+results = {}
+for combination, details in geometry.items():
+    surface, width = combination.split("-")
+    figures = [n for n in details["nodes"] if n["class"] == "figure-media"]
+    found = {}
+    for purpose in ["first", "last"]:
+        page = Image.open(PRIMARY / f"math5-c2-s1-n44-{combination}-{purpose}.png").convert("RGB")
+        matches = []
+        for index, figure in enumerate(figures):
+            filename_index = [1, 3, 5, 6][index] if surface == "text" else index + 1
+            media = Image.open(PRIMARY / f"math5-c2-s1-n44-{combination}-figure-{filename_index}.png").convert("RGB")
+            x = round(figure["rect"]["x"])
+            media_x = x - int(figure["rect"]["x"])
+            sample_width = min(240, page.width - x, media.width)
+            rowmap = {}
+            for y in range(media.height):
+                row = bytes(v < 100 for v in media.crop((media_x, y, media_x + sample_width, y + 1)).convert("L").tobytes())
+                if 5 < sum(row) < sample_width - 5:
+                    rowmap.setdefault(hashlib.sha256(row).digest(), []).append(y)
+            votes = {}
+            for y in range(page.height):
+                row = bytes(v < 100 for v in page.crop((x, y, x + sample_width, y + 1)).convert("L").tobytes())
+                for media_y in rowmap.get(hashlib.sha256(row).digest(), []):
+                    offset = round(figure["rect"]["y"]) + media_y - y
+                    votes[offset] = votes.get(offset, 0) + 1
+            if votes:
+                best, count = max(votes.items(), key=lambda pair: pair[1])
+                if count > 8:
+                    matches.append({"figure": filename_index, "offset": best, "thresholded_pixel_rows": count})
+        found[purpose] = {"matches": matches, "png_height": page.height}
+    results[combination] = found
+(ROOT / "existing-page-pixel-offsets.json").write_text(json.dumps(results, indent=2) + "\n")
+print(json.dumps(results, indent=2))

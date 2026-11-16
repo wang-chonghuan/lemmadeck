@@ -1,0 +1,65 @@
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image, ImageDraw
+
+ROOT = Path(__file__).resolve().parent
+REPO = ROOT.parents[4]
+PRIMARY = ROOT.parent / "offline-evidence" / "5m"
+PREFIX = "math5-c2-s1-n44-"
+files = sorted(PRIMARY.glob(f"{PREFIX}*.png"))
+groups = {}
+for file in files:
+    suffix = file.name.removeprefix(PREFIX)
+    surface, width, _ = suffix.split("-", 2)
+    purpose = "page" if suffix.endswith(("-first.png", "-last.png")) else "figure"
+    groups.setdefault((surface, width, purpose), []).append(file)
+
+records = []
+for (surface, width, purpose), members in groups.items():
+    batch_size = 2 if purpose == "page" else 3
+    for start in range(0, len(members), batch_size):
+        batch = members[start:start + batch_size]
+        images = [Image.open(file).convert("RGB") for file in batch]
+        vertical = purpose == "page" and width == "1440"
+        canvas_width = max(image.width for image in images) if vertical else sum(image.width for image in images)
+        canvas_height = sum(image.height + 36 for image in images) if vertical else max(image.height for image in images) + 36
+        canvas = Image.new("RGB", (canvas_width, canvas_height), "#e8e8e8")
+        draw = ImageDraw.Draw(canvas)
+        x = y = 0
+        slots = []
+        for file, image in zip(batch, images):
+            draw.text((x + 4, y + 4), file.name, fill="black")
+            canvas.paste(image, (x, y + 36))
+            slots.append({
+                "original": str(file),
+                "sha256": hashlib.sha256(file.read_bytes()).hexdigest(),
+                "native_width": image.width,
+                "native_height": image.height,
+                "montage_pixel_rect": [x, y + 36, image.width, image.height],
+                "resized": False,
+            })
+            if vertical:
+                y += image.height + 36
+            else:
+                x += image.width
+        output = ROOT / f"native-{surface}-{width}-{purpose}-{start // batch_size + 1:02d}.png"
+        canvas.save(output)
+        records.append({
+            "path": str(output),
+            "sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
+            "width": canvas.width,
+            "height": canvas.height,
+            "originals": slots,
+            "image_count": len(slots),
+            "method": "Unscaled original pixels pasted into a labelled canvas; no resampling, no cropping.",
+        })
+result = {
+    "primary_actual_filename_count": len(files),
+    "montage_count": len(records),
+    "max_originals_per_montage": max(record["image_count"] for record in records),
+    "montages": records,
+}
+(ROOT / "native-montage-inventory.json").write_text(json.dumps(result, indent=2) + "\n")
+print(json.dumps({"primary_actual_filename_count": len(files), "native_montage_count": len(records)}))

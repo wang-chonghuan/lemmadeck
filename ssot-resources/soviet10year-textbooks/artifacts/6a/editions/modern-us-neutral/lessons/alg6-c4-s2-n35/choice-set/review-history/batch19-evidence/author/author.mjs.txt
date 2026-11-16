@@ -1,0 +1,280 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import { spawnSync } from 'node:child_process'
+
+const root = '.intentfold/tickets/STEMROBIN-182/tmp/6a-n35'
+const seed = JSON.parse(fs.readFileSync(`${root}/seed.json`, 'utf8'))
+const source = JSON.parse(fs.readFileSync(`${root}/source-solutions.json`, 'utf8'))
+const option = (text, truth, derivation, misconception = null) => ({
+  text, truth, derivation, misconception,
+})
+const table = (letters, values, domains) =>
+  '| 小问 | 化简结果 | 原式允许的变量 |\n| --- | --- | --- |\n' +
+  values.map((value, i) => `| ${letters[i]}) | $${value}$ | ${domains[i]} |`).join('\n')
+const questions = []
+function add(id, number, stem, candidates, task, reason, loss, figures = []) {
+  const ids = ['A', 'B', 'C', 'D']
+  questions.push({
+    id, source_numbers: [number],
+    view: { mode: 'single', stem, figure_ids: figures,
+      options: candidates.map((row, i) => ({ id: ids[i], text: row.text, figure_ids: [] })) },
+    intent: {
+      task, source_solution: source.sources.find(row => row.number === number).solution,
+      unit_reason: reason, concept_blocks: [], limitations: [loss],
+      figure_observations: figures.map(id => ({
+        figure_id: id, observation: source.figures.find(row => row.id === id).observation,
+      })),
+    },
+    key: { correct: candidates.flatMap((row, i) => row.truth === 'correct' ? [ids[i]] : []),
+      rationales: candidates.map((row, i) => ({
+        option_id: ids[i], truth: row.truth, derivation: row.derivation,
+        misconception: row.misconception,
+      })) },
+  })
+}
+const domainLoss = 'Recognition of the complete result/domain record does not establish independently writing every reduction or preserving cancelled-factor domains during that written work.'
+const domains1 = ['$b$ 任意', '$y\\ne0$，$c$ 任意', '$p,q\\ne0$', '$x,d\\ne0$，$c$ 任意']
+const values1 = [String.raw`\frac b3`, String.raw`\frac{7c}{4y}`,
+  String.raw`\frac7{12q}`, String.raw`\frac{25c}{18x}`]
+add('numeric-and-common-factor-reductions', '610',
+  String.raw`化简下列四个分式。变量均取实数，哪份记录的结果和原定义域全部正确？
+a) $\frac{5b}{15}$；
+b) $\frac{42c}{24y}$；
+c) $\frac{7p}{12pq}$；
+d) $\frac{25cd}{18xd}$。`,
+  [
+    option(table('abcd', ['3b', String.raw`\frac{4c}{7y}`, String.raw`\frac{12}{7q}`,
+      String.raw`\frac{18c}{25x}`], domains1), 'incorrect',
+    'Reduce the variable factors correctly but invert each scalar coefficient:1/3,7/4,7/12,25/18 become3,4/7,12/7,18/25. Original domains stay unchanged.',
+    'Invert the numeric coefficient alone when reducing a fraction.'),
+    option(table('abcd', values1, domains1), 'correct',
+    '5/15=1/3,42/24=7/4; cancel p and d only on their original nonzero domains. The remaining denominators require y,q,x nonzero.'),
+    option(table('abcd', values1, ['$b$ 任意', '$y\\ne0$，$c$ 任意',
+      '$q\\ne0$，$p$ 任意', '$x\\ne0$，$c,d$ 任意']), 'incorrect',
+    'The results are numerically correct, but reading only the final denominator falsely allows p=0 in c and d=0 in d.',
+    'Replace the original domain by the simplified denominator domain.'),
+    option(table('abcd', ['75b', String.raw`\frac{1008c}{y}`, String.raw`\frac{84}{q}`,
+      String.raw`\frac{450c}{x}`], domains1), 'incorrect',
+    'Cancel the common letters correctly but multiply numerator and denominator scalar factors instead of dividing:5*15,42*24,7*12,25*18.',
+    'Treat the denominator numeric factor as a numerator multiplier during cancellation.'),
+  ],
+  'Reduce four scalar/common-factor fractions and retain original cancelled-letter exclusions.',
+  'These four expressions compare scalar reduction with cancellation of one common factor; each complete record couples the values and their original domains.',
+  domainLoss)
+
+const domains2 = ['$a,b\\ne0$', '$p\\ne0$', '$x\\ne0$', '$b\\ne0$']
+const values2 = [String.raw`\frac1{5b}`, String.raw`\frac6{5p}`,
+  String.raw`-\frac{2x^2}{3}`, String.raw`\frac2{5b^3}`]
+add('power-cancellation-zero-exclusions', '610',
+  String.raw`化简下列四式。变量均取实数，哪份完整结果和原定义域记录正确？
+e) $\frac{3a}{15ab}$；
+f) $\frac{54p}{45p^2}$；
+g) $\frac{-8x^3}{12x}$；
+h) $\frac{26b^2}{65b^5}$。`,
+  [
+    option(table('efgh', values2, ['$b\\ne0$，$a$ 任意', '$p\\ne0$',
+      '$x$ 任意', '$b\\ne0$']), 'incorrect',
+    'All four values are simplified correctly, but looking only at final denominators restores a=0 in e and x=0 in g, where original fractions are undefined.',
+    'Forget the zeros excluded by completely cancelled denominator factors.'),
+    option(table('efgh', [String.raw`\frac5b`, String.raw`\frac5{6p}`,
+      String.raw`-\frac{3x^2}{2}`, String.raw`\frac5{2b^3}`], domains2), 'incorrect',
+    'Invert reduced scalar coefficients1/5,6/5,-2/3,2/5, preserving sign, variable powers and original domains.',
+    'Invert only the numeric coefficient after otherwise correct variable cancellation.'),
+    option(table('efgh', [String.raw`\frac{a^2b}5`, String.raw`\frac{6p^3}5`,
+      String.raw`-\frac{2x^4}3`, String.raw`\frac{2b^7}5`], domains2), 'incorrect',
+    'Move denominator variable factors into the numerator without a reciprocal. Exponents add: a1+a1,b1; p1+p2; x3+x1; b2+b5. Numeric scalars and original restrictions remain correct.',
+    'Add denominator powers to numerator powers instead of subtracting them.'),
+    option(table('efgh', values2, domains2), 'correct',
+    'Reduce coefficients and subtract denominator exponents: a cancels,b stays below; p1/p2=1/p; x3/x=x2; b2/b5=1/b3. Exclude every original denominator zero.'),
+  ],
+  'Reduce four fractions comparing complete cancellation and remaining denominator powers.',
+  'This four-expression unit distinguishes cancellation from extending the original domain and preserves positive-power versus reciprocal-power outcomes.',
+  domainLoss)
+
+const domains3 = ['$x,y\\ne0$，$g$ 任意', '$a\\ne0$', '$x\\ne0$', '$c,x\\ne0$']
+const values3 = [String.raw`\frac{7g^2}{5xy}`, String.raw`\frac2{a^6}`,
+  String.raw`-\frac{2x^5}{3}`, String.raw`\frac1{4x^6}`]
+add('signed-higher-power-reductions', '610',
+  String.raw`化简下列四式。变量均取实数，哪份结果和原定义域全部正确？
+i) $\frac{-77g^2}{-55xy}$；
+j) $\frac{12a^6}{6a^{12}}$；
+k) $\frac{10x^{15}}{-15x^{10}}$；
+l) $\frac{7c^3x^3}{28c^3x^9}$。`,
+  [
+    option(table('ijkl', values3, domains3), 'correct',
+    'Two negatives in i cancel. Coefficients reduce to7/5,2,-2/3,1/4; exponent differences yield g2/(xy),a^-6,x5,x^-6. Original c=0 remains excluded in l.'),
+    option(table('ijkl', [String.raw`-\frac{7g^2}{5xy}`, String.raw`-\frac2{a^6}`,
+      String.raw`\frac{2x^5}3`, String.raw`-\frac1{4x^6}`], domains3), 'incorrect',
+    'Reverse quotient sign parity: equal signs give a negative and opposite signs a positive. Magnitudes, exponents and domains are unchanged, so all four results are negated.',
+    'Reverse the sign rule when dividing signed expressions.'),
+    option(table('ijkl', [String.raw`\frac{7g^2xy}5`, '2a^{18}',
+      String.raw`-\frac{2x^{25}}3`, String.raw`\frac{c^6x^{12}}4`], domains3), 'incorrect',
+    'Multiply by denominator variable factors instead of their reciprocals: xy goes above, a6+a12=18,x15+x10=25,c3+c3=6,x3+x9=12. Numeric reductions and original restrictions are kept.',
+    'Move denominator variable powers above the fraction bar without reciprocals.'),
+    option(table('ijkl', values3, ['$x,y\\ne0$，$g$ 任意', '$a\\ne0$',
+      '$x$ 任意', '$x\\ne0$，$c$ 任意']), 'incorrect',
+    'Use only final denominators. This wrongly restores x=0 in k and c=0 in l despite original denominator powers.',
+    'Restore completely cancelled original denominator zeros.'),
+  ],
+  'Reduce four signed high-power quotients and preserve original zero exclusions.',
+  'The four-expression unit compares sign parity, positive and reciprocal exponent differences, and a cancelled parameter domain.',
+  domainLoss)
+
+const domains4 = ['$a\\ne0$', '$a\\ne0$', '$a,y\\ne0$', '$b,x\\ne0$']
+const values4 = [String.raw`\frac5{2a^7}`, String.raw`\frac{a^3}{10}`,
+  String.raw`\frac{a^3}{y^9}`, String.raw`\frac1{b^{12}}`]
+add('nested-powers-and-original-domains', '611',
+  String.raw`化简下列四式。变量均取实数，哪份结果和原定义域全部正确？
+a) $\frac{5a^7}{2a^3\cdot a^{11}}$；
+b) $\frac{a^4\cdot a^5}{10a^6}$；
+c) $\frac{(a^2y)^5}{(ay^2)^7}$；
+d) $\frac{(-bx^3)^6}{(-b^3x^2)^6}$。`,
+  [
+    option(table('abcd', [String.raw`\frac{5a^{21}}2`, String.raw`\frac{a^{15}}{10}`,
+      'a^{17}y^{19}', 'b^{24}x^{30}'], domains4), 'incorrect',
+    'Expand nested powers correctly but move denominator powers to numerator without a reciprocal: a7+a3+a11=21,a4+a5+a6=15,a10+a7=17,y5+y14=19,b6+b18=24,x18+x12=30.',
+    'Add denominator powers rather than subtracting them in the quotient.'),
+    option(table('abcd', values4, ['$a\\ne0$', '$a$ 任意',
+      '$y\\ne0$，$a$ 任意', '$b\\ne0$，$x$ 任意']), 'incorrect',
+    'All simplified values are correct but final denominators omit a=0 in b/c and x=0 in d, which are excluded by the original expressions.',
+    'Replace the original domain with the domain of the reduced expression.'),
+    option(table('abcd', values4, domains4), 'correct',
+    'Denominator exponents subtract after nested exponent multiplication:7-3-11=-7,4+5-6=3,10-7=3 and5-14=-9,6-18=-12 and18-12=0. Even powers remove minus signs.'),
+    option(table('abcd', [String.raw`\frac2{5a^7}`, '10a^3',
+      String.raw`\frac{a^3}{y^9}`, String.raw`\frac1{b^{12}}`], domains4), 'incorrect',
+    'Invert the final scalar alone:5/2 becomes2/5 and1/10 becomes10. Scalar1 in c/d stays1. Correct exponents and domains do not rescue the first two rows.',
+    'Invert only the reduced scalar coefficient.'),
+  ],
+  'Reduce four products and nested powers before quotient cancellation.',
+  'This unit compares same-base products with nested exponent multiplication and the persistence of cancelled-letter domains.',
+  domainLoss)
+
+const domains5 = ['$p,q\\ne0$', '$b\\ne0$', '$a\\ne0$', '$b,y\\ne0$']
+const values5 = [String.raw`\frac{2q^2}{9p}`, String.raw`\frac1{b^{10}}`,
+  '-a', String.raw`-\frac1{100b^2}`]
+add('signed-nested-coefficient-powers', '611',
+  String.raw`化简下列四式。变量均取实数，哪份结果和原定义域全部正确？
+e) $\frac{(2pq^4)^3}{(6p^2q^5)^2}$；
+f) $\frac{(b^5)^2}{(-b^3)^2b^{14}}$；
+g) $\frac{(-a^4)^3\cdot a^5}{(-a^8)^2}$；
+h) $\frac{(10by^3)^4}{(-100b^2y^4)^3}$。`,
+  [
+    option(table('efgh', values5, domains5), 'correct',
+    'Numeric powers yield8/36=2/9,1,-1,10000/(-1000000)=-1/100. Exponent differences give q2/p,b^-10,a,b^-2; retain original q and y exclusions.'),
+    option(table('efgh', [String.raw`\frac{q^2}{3p}`, String.raw`-\frac1{b^{10}}`,
+      'a', String.raw`-\frac1{10b^2}`], domains5), 'incorrect',
+    'Raise variable magnitudes correctly but do not raise the signed scalar coefficients. e uses2/6 rather than2^3/6^2; f keeps denominator coefficient-1 under square; g keeps both negative coefficients, giving positive; h uses10/(-100).',
+    'Apply an outer power only to variable factors, leaving signed numeric coefficients unchanged.'),
+    option(table('efgh', [String.raw`\frac{2p^7q^{22}}9`, 'b^{30}',
+      '-a^{33}', String.raw`-\frac{b^{10}y^{24}}{100}`], domains5), 'incorrect',
+    'Expand every power correctly then add denominator variable exponents: p3+p4=7,q12+q10=22,b10+b6+b14=30,a12+a5+a16=33,b4+b6=10,y12+y12=24.',
+    'Treat denominator variable factors as numerator multipliers.'),
+    option(table('efgh', values5, ['$p\\ne0$，$q$ 任意', '$b\\ne0$',
+      '$a$ 任意', '$b\\ne0$，$y$ 任意']), 'incorrect',
+    'Reading only final denominators falsely allows q=0 in e,a=0 in g,y=0 in h. All three were excluded before cancellation.',
+    'Forget completely cancelled original denominator factors.'),
+  ],
+  'Reduce four signed nested powers of variable and numeric coefficients.',
+  'The common task is exponent scope over all factors, including negative coefficients, followed by domain-preserving cancellation.',
+  domainLoss)
+
+const tuple = values => '$(' + values.join(',\\ ') + ')$'
+add('common-base-numeric-quotients', '612',
+  String.raw`依次计算下面六个式子。哪组完整结果正确？
+a) $\frac{4^{10}}{2^{18}}$；
+b) $\frac{8^8}{2^{25}}$；
+c) $\frac{(9^3)^5}{3^{13}\cdot3^{17}}$；
+d) $\frac{6^6}{2^5\cdot3^7}$；
+e) $\frac{5^7\cdot2^9}{10^8}$；
+f) $\frac{10^{12}}{5^6\cdot2^{12}}$。`,
+  [
+    option(tuple([String.raw`\frac14`, '2', '1', String.raw`\frac32`,
+      String.raw`\frac52`, String.raw`\frac1{15625}`]), 'incorrect',
+    'Convert to common prime bases correctly but subtract numerator exponents from denominator exponents, reversing each quotient. c stays1 because both exponents are30.',
+    'Reverse the exponent difference in every quotient.'),
+    option(tuple(['4', String.raw`\frac12`, '1', String.raw`\frac23`,
+      String.raw`\frac25`, '15625']), 'correct',
+    'Prime-base exponent differences give2^(20-18),2^(24-25),3^(30-13-17),2^(6-5)3^(6-7),5^(7-8)2^(9-8),5^(12-6)2^(12-12).'),
+    option(tuple([String.raw`\frac1{64}`, String.raw`\frac1{16384}`,
+      String.raw`\frac1{3^{20}}`, String.raw`\frac23`, String.raw`\frac25`, '15625']),
+    'incorrect',
+    'Use (u^r)^s=u^(r+s) instead of multiplying nested exponents:4^10=(2^2)^10 ->2^12;8^8=(2^3)^8 ->2^11;(9^3)^5=((3^2)^3)^5 ->3^(2+3+5)=3^10. d/e/f contain no nested power after product-base distribution and stay correct.',
+    'Add exponents in a power of a power.'),
+  ],
+  'Evaluate all six numeric quotients using prime-base exponent laws.',
+  'One ordered tuple retains comparisons between nested powers, equal exponents and mixed prime-base products; it is not six isolated value clicks.',
+  'Recognizing a complete tuple does not establish independently writing all six prime-base transformations.')
+
+const graphTable = values => '| $x$ | $-2$ | $-1$ | $0$ | $1$ | $2$ | $3$ |\n' +
+  '| --- | --- | --- | --- | --- | --- | --- |\n' +
+  '| $f(x)$ 约读值 | ' + values.map(value => `$${value}$`).join(' | ') + ' |'
+add('approximate-full-graph-table', '613',
+  String.raw`根据所示函数图像填完整表。这里将各项视为近似读图值，允许约 $0.2$ 个纵轴单位的读图误差，不将未标注的点当作精确坐标。哪份表的六列都符合图像？`,
+  [
+    option(graphTable(['-1.5', '-0.5', '0.5', '-1.0', '-2.1', '-2.3']), 'incorrect',
+    'Read each vertical height magnitude but reverse the y-axis sign. The six values are negatives of the source graphical estimates; several discrepancies exceed the explicit0.2 tolerance.',
+    'Reverse positive and negative vertical directions when reading f(x).'),
+    option(graphTable(['2.3', '2.1', '1.0', '-0.5', '0.5', '1.5']), 'incorrect',
+    'Read approximate heights at the six specified positions but assign them in right-to-left order to the left-to-right x columns.',
+    'Reverse the column correspondence between x and f(x).'),
+    option(graphTable(['1.5', '0.5', '-0.5', '1.0', '2.1', '2.3']), 'correct',
+    'The graph has heights near1.5,0.5,-0.5,1,2.1,2.3 at the six given abscissas. All are graphical estimates, particularly the two unmarked last values, and lie within the visible0.2 tolerance.'),
+    option(graphTable(['-2', '-1', '0', '1', '2', '3']), 'incorrect',
+    'Copy the x coordinates into the y row, treating the arbitrary curve as y=x. Atx=-2,-1,0,3 the observed heights differ by much more than0.2.',
+    'Confuse the input coordinate with the function output.'),
+  ],
+  'Read all six paired inputs/outputs from the complete source graph and blank table.',
+  'The whole-table recognition preserves correspondence, sign and the two unmarked right-side readings. The visible0.2 tolerance is an explicit new choice condition, not an original printed precision or an inferred formula.',
+  'Writing six graphical readings is replaced by recognition. The choice explicitly allows0.2 vertical-unit error because the source gives a graph rather than marked exact coordinates; no exact rational or analytic function is asserted.',
+  ['tbl-p0173-01', 'fig-107'])
+
+add('parallel-line-through-fixed-point', '614',
+  String.raw`直线 $y=kx+l$ 经过点 $A(-3,2)$，并且与 $x-2y=1$ 平行。哪组系数同时满足两个条件？`,
+  [
+    option(String.raw`$k=-\frac12,\quad l=\frac12$`, 'incorrect',
+    'Wrongly rearrange x-2y=1 to y=-x/2+1/2, taking slope-1/2. Then impose A correctly: l=2-(-1/2)(-3)=1/2. This line goes through A but is not parallel.',
+    'Reverse both signs when isolating y in the reference equation.'),
+    option(String.raw`$k=\frac12,\quad l=\frac12$`, 'incorrect',
+    'Find the reference slope1/2 correctly but substitute A as x=+3 rather than-3: l=2-3/2=1/2.',
+    'Drop the negative sign of the given abscissa while imposing the point condition.'),
+    option(String.raw`$k=2,\quad l=8$`, 'incorrect',
+    'Read denominator coefficient2 as slope2 instead of solving for y. Then impose A correctly: l=2-2(-3)=8.',
+    'Use the coefficient magnitude in front of y as the slope without dividing the equation.'),
+    option(String.raw`$k=\frac12,\quad l=\frac72$`, 'correct',
+    'Reference y=x/2-1/2 has slope1/2. Parallelism fixesk=1/2;2=(-3)/2+l givesl=7/2, a distinct parallel line throughA.'),
+  ],
+  'Determine both line coefficients using parallelism and the fixed point together.',
+  'One paired coefficient result preserves the two coupled conditions; neither slope nor intercept is fixed across all candidates.',
+  'Recognizing the coefficient pair does not establish independently writing the rearrangement and substitution.')
+
+const digest = spawnSync('python3', ['.agents/skills/ld-s10y-choice/scripts/prepare.py',
+  'digest', `${root}/seed.json`], { encoding: 'utf8' })
+assert.equal(digest.status, 0, digest.stderr)
+const draft = {
+  schema: 's10y-choice-draft-v1', seed_sha256: digest.stdout.trim(),
+  new_figures: [], questions,
+  coverage: seed.exercises.map(ex => ({
+    source_number: ex.number,
+    question_ids: questions.filter(q => q.source_numbers.includes(ex.number)).map(q => q.id),
+    omitted_tasks: ex.number === '613'
+      ? ['Independently writing the six graphical readings is replaced by recognition; an explicit0.2-unit tolerance is added, with no claim of original exact precision.']
+      : ['Independent written reduction or coefficient derivation is replaced by complete-record recognition.'],
+    reason: questions.filter(q => q.source_numbers.includes(ex.number))
+      .map(q => q.intent.unit_reason).join(' '),
+  })),
+}
+for (const [name, value] of [['draft.json', draft],
+  ['view.json', questions.map(q => ({ id: q.id, view: q.view }))]]) {
+  fs.writeFileSync(`${root}/${name}`, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+}
+const args = ['.agents/skills/ld-s10y-choice/scripts/validate.py', '--repo', '.',
+  '--seed', `${root}/seed.json`, '--draft', `${root}/draft.json`]
+const check = spawnSync('python3', args, { encoding: 'utf8' })
+fs.writeFileSync(`${root}/validation-result.json`, JSON.stringify({
+  executable: 'python3', args, exit_code: check.status,
+  stdout: check.stdout, stderr: check.stderr, structural_only: true,
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ questions: questions.length,
+  options: questions.reduce((n, q) => n + q.view.options.length, 0),
+  exit_code: check.status }))
+process.exitCode = check.status

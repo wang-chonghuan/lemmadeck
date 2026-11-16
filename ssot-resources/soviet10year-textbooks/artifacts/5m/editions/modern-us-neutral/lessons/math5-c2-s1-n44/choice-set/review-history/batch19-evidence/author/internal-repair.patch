@@ -1,0 +1,133 @@
+diff --git a/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/5m-n44/rejected-before-internal-repair/author.mjs b/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/5m-n44/author.mjs
+index b23028c1..a480c9f2 100644
+--- a/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/5m-n44/rejected-before-internal-repair/author.mjs
++++ b/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/5m-n44/author.mjs
+@@ -47,6 +47,11 @@ q('788', '', 'multiple', '图中共有六个图形。按对称轴的个数分类
+     w('右下正方形恰好有两个对称轴。', 'Counting only the horizontal and vertical axes produces two and misses the two diagonal reflections.', 'Omit diagonal axes from a square.'),
+   ], 'One native multiple question jointly classifies all six diagrams; options are direct mathematical assertions, not coded combinations.', [0])
+ 
++const suppliedCountLoss = 'The stem supplies the count of six shapes; the original task of independently counting the shapes is not assessed.'
++const intent788 = questions.find(q => q.id === 'n44-788').intent
++intent788.task = 'Classify every drawn shape by one, two, or more than two axes. The stem supplies six as the shape count; this response does not assess the original independent-counting task.'
++intent788.limitations = [...intent788.limitations, suppliedCountLoss]
++
+ q('789', '', 'single', '一条非退化线段和一条完整直线各有多少个对称轴？',
+   [
+     w('线段一个；直线一个。', 'Counting only each supporting line returns 1,1, missing perpendicular reflections.', 'Assume every axis must lie along the original object.'),
+@@ -67,7 +72,7 @@ q('791', '', 'single', '两圆相交，圆心都在直线 $l$ 上。哪段论证
+   [
+     c('关于 $l$ 的反射固定每个圆心，并保持到该圆心的距离，所以每个圆都变成自身，两个圆的并集也变成自身。', 'Centers on l are fixed; the defining radius of each circle is preserved separately.'),
+     w('关于 $l$ 的反射把第一个圆心变成第二个圆心，因此两个圆互换位置，两个圆的并集变成自身。', 'This proposed center swap cannot occur: both centers lie on the axis and are fixed.', 'Confuse the line of centers with its perpendicular bisector.'),
+-    w('关于 $l$ 的反射固定两圆的每一个交点，因此固定每个圆上的所有点，两个圆的并集变成自身。', 'The two intersection points are on opposite sides of l and exchange, rather than remain fixed.', 'Assume the intersection points lie on the line of centers.'),
++    w('关于 $l$ 的反射固定两圆的每一个交点，因此固定每个圆上的所有点，两个圆的并集变成自身。', 'The wrong program first places both circle intersection points on the line of centers l, so it declares them fixed by reflection. It then falsely infers that fixing these two intersection points fixes every point of both circles, and concludes that the union is unchanged. In the supplied configurations the intersections are off l and exchange. Even if two points were fixed, that alone would not imply that all circle points are fixed; points off a reflection axis move.', 'Falsely place the intersections on the axis, then generalize from fixing two points to fixing every point of both circles.'),
+     w('两圆都与 $l$ 相交，因此关于 $l$ 的反射保持每个圆，两个圆的并集也变成自身。', 'A secant not through a circle center does not preserve that circle; intersection alone is insufficient.', 'Replace passing through the center with merely meeting the circle.'),
+   ], 'A full distance-preservation proof is the response, covering both actual circle configurations.', [0])
+ 
+@@ -91,12 +96,12 @@ for (const [suffix, stem, choices] of [
+   ['a', '哪段论证能证明 $\\frac{200}{4201}<\\frac1{20}$？', [
+     w('因为 $200<4201$，所以该分数小于 $\\frac1{20}$。', '200<4201 proves only that the fraction is below 1, not below 1/20.', 'Substitute comparison with 1 for comparison with 1/20.'),
+     c('两边乘以正数 $4201\\cdot20$，只需验证 $4000<4201$。', '200*20=4000<4201*1; positive multiplication preserves order.'),
+-    w('两边乘以正数 $4201\\cdot20$，只需验证 $200<20$。', 'This drops factors rather than multiplying each numerator by the opposite denominator.', 'Cancel unmatched denominators across an inequality.'),
++    w('两边乘以正数 $4201\\cdot20$，只需验证 $200<20$。', 'The wrong rule for comparing a/b with c/d outputs the left numerator a and the right denominator d. On 200/4201 and 1/20 it outputs 200 and 20, leaves the relation sign unchanged, and falsely labels the comparison 200<20 as multiplying both sides by 4201*20. It never scales the left numerator by 20 and replaces the right fraction by its denominator. The actual common multiplication yields 4000<4201, not 200<20; the printed 200<20 is itself false.', 'Keep the left numerator unscaled and substitute the right denominator for the right fraction, while falsely calling this multiplication of both sides by the denominator product.'),
+   ]],
+   ['b', '哪段论证能证明 $\\frac{125}{361}>\\frac13$？', [
+     c('两边乘以正数 $361\\cdot3$，只需验证 $375>361$。', '125*3=375>361*1; both denominators are positive.'),
+     w('因为 $125>3$，所以左边分数大于 $\\frac13$。', 'Comparing 125 with the other denominator 3 gives no valid fraction comparison.', 'Compare mismatched numerator and denominator directly.'),
+-    w('两边乘以正数 $361\\cdot3$，只需验证 $125>1083$。', '361*3=1083 is the denominator product, not the right cross-product.', 'Multiply the right denominator twice instead of cross-multiplying.'),
++    w('两边乘以正数 $361\\cdot3$，只需验证 $125>1083$。', 'The wrong rule for comparing a/b with c/d outputs the left numerator a unscaled and the product b*d of both denominators on the right. On 125/361 and 1/3 it keeps 125, computes 361*3=1083, leaves the relation sign unchanged, and falsely labels 125>1083 as multiplying both sides by 361*3. Actual common multiplication instead scales 125 by 3 to 375 and reduces the right side to 361, giving 375>361. The printed 125>1083 is itself false.', 'Leave the left numerator unscaled and use the product of both denominators as the right-hand value, falsely claiming this is common multiplication.'),
+   ]],
+ ]) q('794', suffix, 'single', stem, choices, 'The two inequalities require independent positive cross-product proofs; each response is a whole argument.')
+ 
+@@ -199,13 +204,20 @@ const draft = {
+   coverage: frozen.solutions.map(solution => ({
+     source_number: solution.source_number,
+     question_ids: questions.filter(q => q.source_numbers.includes(solution.source_number)).map(q => q.id),
+-    omitted_tasks: solution.losses,
+-    reason: 'All mathematical source tasks and data are retained as complete result, classification, or proof/construction recognition. Listed production losses remain untested; semantic review is pending.',
++    omitted_tasks: solution.source_number === '788' ? [...solution.losses, suppliedCountLoss] : solution.losses,
++    reason: solution.source_number === '788'
++      ? 'Symmetry classification of all six source shapes is retained, but the stem supplies the count six instead of testing independent counting. Counting is an explicit omitted source task; independent enumeration and drawing of the axes also remain untested. Semantic review is pending.'
++      : 'All mathematical source tasks and data are retained as complete result, classification, or proof/construction recognition. Listed production losses remain untested; semantic review is pending.',
+   })),
+ }
+ const view = { questions: questions.map(({ id, view }) => ({ id, ...view })) }
++const outputDir = process.argv[2] ? path.resolve(dir, process.argv[2]) : dir
++if (outputDir !== dir && !outputDir.startsWith(`${dir}${path.sep}`)) {
++  throw new Error('Serializer outputs must stay inside this assigned n44 directory')
++}
++if (outputDir !== dir) fs.mkdirSync(outputDir)
+ for (const [name, value] of [['draft.json', draft], ['view.json', view]]) {
+-  fs.writeFileSync(path.join(dir, name), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
++  fs.writeFileSync(path.join(outputDir, name), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+ }
+ console.log(JSON.stringify({
+   sources: seed.exercises.length, questions: questions.length,
+
+diff --git a/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/5m-n44/rejected-before-internal-repair/draft.json b/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/5m-n44/repaired-internal-snapshot/draft.json
+index 45e0ff2b..967a0cab 100644
+--- a/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/5m-n44/rejected-before-internal-repair/draft.json
++++ b/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/5m-n44/repaired-internal-snapshot/draft.json
+@@ -63,14 +63,15 @@
+         ]
+       },
+       "intent": {
+-        "task": "Count the shapes and classify every drawn shape by one, two, or more than two axes.",
++        "task": "Classify every drawn shape by one, two, or more than two axes. The stem supplies six as the shape count; this response does not assess the original independent-counting task.",
+         "source_solution": "There are six shapes, excluding the bell's grid and s annotation. Bell: one vertical axis. Non-square rhombus: two diagonal axes. Regular five-point star: five axes. Lower-left non-equilateral isosceles triangle: one axis through apex and base midpoint. Inverted equilateral triangle: three axes. Square: four axes. Therefore one-axis group = bell, lower-left triangle; two-axis group = rhombus; more-than-two group = star, inverted triangle, square.",
+         "unit_reason": "One native multiple question jointly classifies all six diagrams; options are direct mathematical assertions, not coded combinations.",
+         "concept_blocks": [
+           0
+         ],
+         "limitations": [
+-          "Choice recognition does not demonstrate independently enumerating and drawing every axis."
++          "Choice recognition does not demonstrate independently enumerating and drawing every axis.",
++          "The stem supplies the count of six shapes; the original task of independently counting the shapes is not assessed."
+         ],
+         "figure_observations": [
+           {
+@@ -369,8 +370,8 @@
+           {
+             "option_id": "C",
+             "truth": "incorrect",
+-            "derivation": "The two intersection points are on opposite sides of l and exchange, rather than remain fixed.",
+-            "misconception": "Assume the intersection points lie on the line of centers."
++            "derivation": "The wrong program first places both circle intersection points on the line of centers l, so it declares them fixed by reflection. It then falsely infers that fixing these two intersection points fixes every point of both circles, and concludes that the union is unchanged. In the supplied configurations the intersections are off l and exchange. Even if two points were fixed, that alone would not imply that all circle points are fixed; points off a reflection axis move.",
++            "misconception": "Falsely place the intersections on the axis, then generalize from fixing two points to fixing every point of both circles."
+           },
+           {
+             "option_id": "D",
+@@ -595,8 +596,8 @@
+           {
+             "option_id": "C",
+             "truth": "incorrect",
+-            "derivation": "This drops factors rather than multiplying each numerator by the opposite denominator.",
+-            "misconception": "Cancel unmatched denominators across an inequality."
++            "derivation": "The wrong rule for comparing a/b with c/d outputs the left numerator a and the right denominator d. On 200/4201 and 1/20 it outputs 200 and 20, leaves the relation sign unchanged, and falsely labels the comparison 200<20 as multiplying both sides by 4201*20. It never scales the left numerator by 20 and replaces the right fraction by its denominator. The actual common multiplication yields 4000<4201, not 200<20; the printed 200<20 is itself false.",
++            "misconception": "Keep the left numerator unscaled and substitute the right denominator for the right fraction, while falsely calling this multiplication of both sides by the denominator product."
+           }
+         ]
+       }
+@@ -658,8 +659,8 @@
+           {
+             "option_id": "C",
+             "truth": "incorrect",
+-            "derivation": "361*3=1083 is the denominator product, not the right cross-product.",
+-            "misconception": "Multiply the right denominator twice instead of cross-multiplying."
++            "derivation": "The wrong rule for comparing a/b with c/d outputs the left numerator a unscaled and the product b*d of both denominators on the right. On 125/361 and 1/3 it keeps 125, computes 361*3=1083, leaves the relation sign unchanged, and falsely labels 125>1083 as multiplying both sides by 361*3. Actual common multiplication instead scales 125 by 3 to 375 and reduces the right side to 361, giving 375>361. The printed 125>1083 is itself false.",
++            "misconception": "Leave the left numerator unscaled and use the product of both denominators as the right-hand value, falsely claiming this is common multiplication."
+           }
+         ]
+       }
+@@ -1581,9 +1582,10 @@
+         "n44-788"
+       ],
+       "omitted_tasks": [
+-        "Choice recognition does not demonstrate independently enumerating and drawing every axis."
++        "Choice recognition does not demonstrate independently enumerating and drawing every axis.",
++        "The stem supplies the count of six shapes; the original task of independently counting the shapes is not assessed."
+       ],
+-      "reason": "All mathematical source tasks and data are retained as complete result, classification, or proof/construction recognition. Listed production losses remain untested; semantic review is pending."
++      "reason": "Symmetry classification of all six source shapes is retained, but the stem supplies the count six instead of testing independent counting. Counting is an explicit omitted source task; independent enumeration and drawing of the axes also remain untested. Semantic review is pending."
+     },
+     {
+       "source_number": "789",

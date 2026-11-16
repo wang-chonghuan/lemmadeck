@@ -1,0 +1,439 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const dir = path.dirname(fileURLToPath(import.meta.url))
+const seed = JSON.parse(fs.readFileSync(path.join(dir, 'source.json'), 'utf8'))
+const frozen = JSON.parse(fs.readFileSync(path.join(dir, 'source-solutions.json'), 'utf8'))
+const questions = []
+const c = (text, derivation) => ({ text, truth: 'correct', derivation, misconception: null })
+const w = (text, derivation, misconception) => ({ text, truth: 'incorrect', derivation, misconception })
+function q(number, suffix, mode, stem, choices, unit, concepts = []) {
+  const sourceNumbers = Array.isArray(number) ? number : [number]
+  const sourceSolutions = sourceNumbers.map(n => frozen.solutions.find(s => s.source_number === n))
+  const solution = Array.isArray(number) ? {
+    task: sourceSolutions.map(s => s.task).join(' '),
+    solution: sourceSolutions.map(s => `${s.source_number}: ${s.solution}`).join('\n'),
+    losses: [...new Set(sourceSolutions.flatMap(s => s.losses))],
+  } : sourceSolutions[0]
+  const options = choices.map((choice, index) => ({
+    id: String.fromCharCode(65 + index), text: choice.text, figure_ids: [],
+  }))
+  questions.push({
+    id: `n45-${sourceNumbers.join('-')}${suffix}`, source_numbers: sourceNumbers,
+    view: { mode, stem, figure_ids: [], options },
+    intent: {
+      task: solution.task, source_solution: solution.solution, unit_reason: unit,
+      concept_blocks: concepts, limitations: solution.losses, figure_observations: [],
+    },
+    key: {
+      correct: options.filter((_, i) => choices[i].truth === 'correct').map(o => o.id),
+      rationales: choices.map((choice, i) => ({
+        option_id: options[i].id, truth: choice.truth,
+        derivation: choice.derivation, misconception: choice.misconception,
+      })),
+    },
+  })
+}
+function list(number, suffix, expressions, choices, unit, concepts = [10, 13]) {
+  q(number, suffix, 'single', `依次计算：${expressions}。哪一行的结果全部正确？`, choices, unit, concepts)
+}
+
+q('804', '', 'single', '正方形边长为 $\\frac78$ 米，面积是多少？', [
+  w('$\\frac74$ 平方米', '2*(7/8)=7/4 is twice the side, not its square.', 'Add two side lengths instead of multiplying them.'),
+  c('$\\frac{49}{64}$ 平方米', '(7/8)*(7/8)=49/64; units are square meters.'),
+  w('$\\frac78$ 平方米', 'Repeating the side value gives 7/8.', 'Leave the side unchanged when converting length to area.'),
+  w('$\\frac72$ 平方米', '4*(7/8)=7/2 computes perimeter.', 'Use the square perimeter formula for area.'),
+], 'One area result retains squaring and squared units.', [10, 16])
+
+q('805', '', 'single', '糖果每公斤 $\\frac45$ 美元。$\\frac34$ 公斤和 $\\frac54$ 公斤依次各值多少美元？', [
+  c('$\\frac35$ 美元；$1$ 美元', '(4/5)*(3/4)=3/5; (4/5)*(5/4)=1.'),
+  w('$\\frac{16}{15}$ 美元；$\\frac{16}{25}$ 美元', '(4/5)/(3/4)=16/15; (4/5)/(5/4)=16/25.', 'Divide unit price by mass rather than multiply.'),
+  w('$\\frac34$ 美元；$\\frac54$ 美元', 'Copy mass values as prices.', 'Treat unit price as 1 dollar per kilogram.'),
+], 'One paired result expresses the same price correspondence at both original masses.', [10, 16])
+
+list('806', 'a', '$\\frac34\\cdot\\frac57$；$\\frac18\\cdot\\frac34$；$\\frac25\\cdot\\frac7{11}$', [
+  w('$\\frac{15}{11};\\ \\frac14;\\ \\frac78$', 'Multiply numerators but add denominators: 15/(4+7),3/(8+4),14/(5+11).', 'Use a denominator sum in fraction multiplication.'),
+  c('$\\frac{15}{28};\\ \\frac3{32};\\ \\frac{14}{55}$', 'Numerator and denominator products give 15/28,3/32,14/55.'),
+  w('$\\frac8{11};\\ \\frac13;\\ \\frac9{16}$', 'Add both numerators and denominators: 8/11,4/12=1/3,9/16.', 'Apply mediant addition instead of multiplication.'),
+], 'A full three-product positive-fraction segment tests the common numerator/denominator rule; the signed/improper segment is distinct.')
+list('806', 'b', '$\\frac12\\cdot\\frac{11}3$；$-\\frac37\\cdot(-\\frac12)$；$\\frac45\\cdot(-\\frac23)$', [
+  c('$\\frac{11}6;\\ \\frac3{14};\\ -\\frac8{15}$', 'Product magnitudes 11/6,3/14,8/15; signs +,+,-.'),
+  w('$\\frac{11}6;\\ -\\frac3{14};\\ -\\frac8{15}$', 'The magnitudes are right, but retaining the first negative sign in a double-negative product makes -3/14.', 'Keep a leading negative sign even when both factors are negative.'),
+  w('$\\frac{11}6;\\ \\frac3{14};\\ \\frac8{15}$', 'Discard the sign of the final negative factor.', 'Treat every fraction product as positive.'),
+], 'The segment jointly covers an improper result and both sign patterns, not per-cell arithmetic.')
+
+list('807', 'a', '$\\frac47\\cdot\\frac56$；$\\frac{11}{12}\\cdot\\frac89$；$\\frac25\\cdot\\frac32$；$\\frac{11}5\\cdot\\frac35$', [
+  c('$\\frac{10}{21};\\ \\frac{22}{27};\\ \\frac35;\\ \\frac{33}{25}$', '20/42,88/108,6/10,33/25 reduce to this row.'),
+  w('$\\frac{20}{13};\\ \\frac{88}{21};\\ \\frac67;\\ \\frac{33}{10}$', 'Multiply numerators and add denominators: 20/(7+6),88/(12+9),6/(5+2),33/(5+5).', 'Add denominator factors rather than multiply them.'),
+  w('$\\frac9{13};\\ \\frac{19}{21};\\ \\frac57;\\ \\frac75$', 'Add numerators and denominators: 9/13,19/21,5/7,14/10=7/5.', 'Replace multiplication with the mediant operation.'),
+], 'One four-result segment retains reductions and a same-denominator improper product.')
+list('807', 'b', '$\\frac{15}{16}\\cdot\\frac59$；$\\frac{12}5\\cdot\\frac9{16}$；$-\\frac25\\cdot\\frac14$；$-\\frac18\\cdot(-\\frac8{11})$', [
+  w('$\\frac{25}{48};\\ \\frac{27}{20};\\ \\frac1{10};\\ \\frac1{11}$', 'Drop the negative in the third product -2/20.', 'Ignore a single negative factor.'),
+  w('$\\frac{25}{48};\\ \\frac{27}{20};\\ -\\frac1{10};\\ -\\frac1{11}$', 'Keep a negative in the fourth product despite its two negative factors.', 'Fail to cancel the two negative signs.'),
+  c('$\\frac{25}{48};\\ \\frac{27}{20};\\ -\\frac1{10};\\ \\frac1{11}$', '75/144=25/48;108/80=27/20;-2/20=-1/10;8/88=1/11.'),
+], 'One full segment checks reductions together with the two contrasting sign patterns.')
+
+list('808', 'a', '$\\frac38\\cdot\\frac6{15}$；$\\frac59\\cdot\\frac66$；$\\frac23\\cdot\\frac32$；$\\frac65\\cdot\\frac52$', [
+  w('$\\frac9{23};\\ \\frac{11}{15};\\ 1;\\ \\frac{11}7$', 'Add numerators/denominators:9/23,11/15,5/5=1,11/7. One coincidental reciprocal result remains correct but the whole row is false.', 'Use the mediant rather than multiplication.'),
+  c('$\\frac3{20};\\ \\frac59;\\ 1;\\ 3$', '18/120=3/20;6/6=1; reciprocal product=1;30/10=3.'),
+  w('$\\frac{15}{16};\\ \\frac59;\\ \\frac49;\\ \\frac{12}{25}$', 'Divide first factor by second:15/16,5/9,4/9,12/25.', 'Replace the product by division.'),
+], 'A coherent four-result segment retains unity and reciprocal cases alongside ordinary multiplication.')
+list('808', 'b', '$\\frac{32}7\\cdot\\frac{77}8$；$\\frac{26}{17}\\cdot\\frac{68}{13}$；$-\\frac56\\cdot\\frac{12}{25}$；$\\frac47\\cdot(-\\frac{21}{16})$', [
+  c('$44;\\ 8;\\ -\\frac25;\\ -\\frac34$', '32/8*77/7=44;26/13*68/17=8;-60/150=-2/5;-84/112=-3/4.'),
+  w('$44;\\ 8;\\ \\frac25;\\ \\frac34$', 'Compute all magnitudes but omit both single negative signs.', 'Ignore the signs of negative factors.'),
+  w('$\\frac{2464}{15};\\ \\frac{884}{15};\\ -\\frac{60}{31};\\ -\\frac{84}{23}$', 'Multiply signed numerators and add denominators:2464/(7+8),1768/(17+13),-60/(6+25),-84/(7+16).', 'Use denominator sums rather than products.'),
+], 'The second segment retains large cancellations and both signed outputs.')
+
+q('809', '', 'single', '分别用分数乘法和小数乘法计算 $\\frac{73}{1000}\\cdot\\frac{41}{100}$，并比较结果。哪一项两种方法都正确？', [
+  w('$\\frac{2993}{10000}=0.2993$；$0.073\\cdot0.41=0.2993$，两者相等。', '73*41=2993 but using four instead of five decimal places makes denominator 10000 and decimal .2993.', 'Count total decimal places one too few in both representations.'),
+  c('$\\frac{2993}{100000}=0.02993$；$0.073\\cdot0.41=0.02993$，两者相等。', '1000*100=100000; three plus two decimal places yield .02993.'),
+  w('$\\frac{2993}{100000}=0.02993$；$0.073\\cdot0.41=0.2993$，两者不相等。', 'The fraction method is correct, but the decimal method shifts the result one place right.', 'Lose a decimal place in the decimal method only.'),
+], 'One full two-method-and-comparison unit preserves the explicit verification task.', [10])
+
+q('810', '', 'single', '把 $\\frac ab\\cdot\\frac cd$ 和 $\\frac rx\\cdot\\frac mn$ 依次化成分式。原式中的分母均不为零。哪一项结果和适用条件都正确？', [
+  c('$\\frac{ac}{bd}$，$b,d\\ne0$；$\\frac{rm}{xn}$，$x,n\\ne0$。分子可以为零。', 'Multiply numerators and denominators, retaining exactly the original denominator exclusions.'),
+  w('$\\frac{a+c}{b+d}$，$b,d\\ne0$；$\\frac{r+m}{x+n}$，$x,n\\ne0$。分子可以为零。', 'Add numerator and denominator expressions instead of multiplying; sums can also be zero despite nonzero original denominators.', 'Use mediant addition as the fraction-product rule.'),
+  w('$\\frac{ad}{bc}$，$b,c\\ne0$；$\\frac{rn}{xm}$，$x,m\\ne0$。原分子均须不为零。', 'Invert the second factor, giving division and adding exclusions c,m that the product did not have.', 'Treat multiplication as division and change the domain.'),
+], 'One complete symbolic pair preserves original zero-denominator exclusions without restricting numerator values.', [10])
+
+list('811', 'a', '$\\frac38\\cdot2$；$6\\cdot\\frac5{18}$；$\\frac5{16}\\cdot12$；$25\\cdot\\frac1{10}$', [
+  w('$\\frac3{16};\\ \\frac5{108};\\ \\frac5{192};\\ \\frac1{250}$', 'Put each integer multiplier into the denominator:3/(8*2),5/(18*6),5/(16*12),1/(10*25).', 'Divide by the integer instead of multiplying by it.'),
+  c('$\\frac34;\\ \\frac53;\\ \\frac{15}4;\\ \\frac52$', '6/8,30/18,60/16,25/10 reduce to these four values.'),
+  w('$\\frac58;\\ \\frac{11}{18};\\ \\frac{17}{16};\\ \\frac{13}5$', 'Add the integer to the numerator: (3+2)/8,(5+6)/18,(5+12)/16,(1+25)/10.', 'Add the multiplier to the numerator instead of multiplying.'),
+], 'One four-result integer-factor segment tests integer-as-fraction multiplication.', [10, 11, 13])
+list('811', 'b', '$\\frac12\\cdot30$；$140\\cdot\\frac17$；$300\\cdot\\frac1{16}$；$\\frac7{11}\\cdot11$', [
+  c('$15;\\ 20;\\ \\frac{75}4;\\ 7$', '30/2,140/7,300/16,77/11 give these values.'),
+  w('$\\frac1{60};\\ \\frac1{980};\\ \\frac1{4800};\\ \\frac7{121}$', 'Multiply each denominator by the integer factor.', 'Place the integer in the denominator rather than numerator.'),
+  w('$\\frac{31}2;\\ \\frac{141}7;\\ \\frac{301}{16};\\ \\frac{18}{11}$', 'Add each integer to the fraction numerator.', 'Replace numerator multiplication with addition.'),
+], 'A full four-result segment retains exact noninteger outputs and exact cancellation.', [10, 11, 13])
+list('811', 'c', '$40\\cdot\\frac7{15}$；$24\\cdot\\frac{15}{16}$；$\\frac23\\cdot1$；$\\frac{19}{20}\\cdot0$', [
+  w('$\\frac{56}3;\\ \\frac{45}2;\\ \\frac23;\\ \\frac{19}{20}$', 'The first three are correct; treating zero like the multiplicative identity leaves the last fraction unchanged.', 'Confuse multiplication by zero with multiplication by one.'),
+  w('$\\frac7{600};\\ \\frac5{128};\\ \\frac23;\\ 0$', 'Use denominator 15*40=600 and 16*24=384, giving15/384=5/128 for the second; leave one/zero cases correct.', 'Divide by nonzero integer factors instead of multiply.'),
+  c('$\\frac{56}3;\\ \\frac{45}2;\\ \\frac23;\\ 0$', '280/15=56/3;360/16=45/2; identity factor 1; zero factor 0.'),
+], 'The final full segment includes both large products and the indispensable one/zero boundary cases.', [10, 11, 13])
+
+list('812', '', '$4\\frac27\\cdot3$；$8\\frac2{11}\\cdot11$；$1\\frac13\\cdot4$；$-2\\frac13\\cdot6$', [
+  w('$\\frac{18}7;\\ 10;\\ \\frac83;\\ -6$', 'Wrong conversion (whole+numerator)/denominator gives6/7,10/11,2/3,-3/3; multiplying by3,11,4,6 gives18/7,10,8/3,-6.', 'Use whole-plus-numerator conversion rather than whole-times-denominator-plus-numerator.'),
+  c('$\\frac{90}7;\\ 90;\\ \\frac{16}3;\\ -14$', '30/7*3=90/7;90/11*11=90;4/3*4=16/3;-7/3*6=-14.'),
+  w('$12\\frac27;\\ 88\\frac2{11};\\ 4\\frac13;\\ -12\\frac13$', 'Multiply whole parts alone:4*3+2/7,8*11+2/11,1*4+1/3; keep the negative of 2*6+1/3.', 'Leave each fractional part unmultiplied.'),
+], 'One complete four-result unit preserves mixed-number conversion and the signed whole number.', [10, 11])
+
+q(['813', '818'], '', 'single', '先求 $\\frac12\\cdot\\frac34$，把两个因数化成小数验算；再叙述乘法结合律，用变量表示，并用 $\\frac12,\\frac34,\\frac23$ 验证两种分组。下面哪份完整记录全部正确？', [
+  w('分数积：$\\frac12\\cdot\\frac34=\\frac38$。\n小数验算：$\\frac12=0.5$，$\\frac34=0.75$，$0.5\\cdot0.75=0.375=\\frac38$。\n结合律：只改变三个因数的分组，积不变；$(ab)c=a(bc)$。\n左分组：$(\\frac12\\cdot\\frac34)\\cdot\\frac23=\\frac38\\cdot\\frac23=\\frac9{16}$。\n右分组：$\\frac12\\cdot(\\frac34\\cdot\\frac23)=\\frac12\\cdot\\frac98=\\frac9{16}$。', 'The two-factor product and decimal check are valid. For both three-factor computations, the wrong program treats the final factor 2/3 as a divisor: left (3/8)/(2/3)=9/16; right (1/2)*((3/4)/(2/3))=(1/2)*(9/8)=9/16. These complete, equal totals are not the products printed in the record; both actual groupings equal1/4.', 'Replace multiplication by the third factor with division in both groupings. Equality of two completed outputs alone does not validate the computations.'),
+  c('分数积：$\\frac12\\cdot\\frac34=\\frac38$。\n小数验算：$\\frac12=0.5$，$\\frac34=0.75$，$0.5\\cdot0.75=0.375=\\frac38$。\n结合律：只改变三个因数的分组，积不变；$(ab)c=a(bc)$。\n左分组：$(\\frac12\\cdot\\frac34)\\cdot\\frac23=\\frac38\\cdot\\frac23=\\frac14$。\n右分组：$\\frac12\\cdot(\\frac34\\cdot\\frac23)=\\frac12\\cdot\\frac12=\\frac14$。', '1/2*3/4=3/8; decimals0.5 and0.75 multiply to0.375=3/8. Associativity changes grouping only. Left3/8*2/3=6/24=1/4; right inner3/4*2/3=6/12=1/2, then1/2*1/2=1/4. The verbal law, identity, decimal check, and both complete groupings are all valid.'),
+  w('分数积：$\\frac12\\cdot\\frac34=\\frac38$。\n小数验算：$\\frac12=0.5$，$\\frac34=0.75$，$0.5\\cdot0.75=3.75=\\frac38$。\n结合律：只改变三个因数的分组，积不变；$(ab)c=a(bc)$。\n左分组：$(\\frac12\\cdot\\frac34)\\cdot\\frac23=\\frac38\\cdot\\frac23=\\frac14$。\n右分组：$\\frac12\\cdot(\\frac34\\cdot\\frac23)=\\frac12\\cdot\\frac12=\\frac14$。', 'The fraction result, law and both three-factor groupings are valid. The wrong decimal program multiplies integer digits5*75=375, but places only two decimal digits rather than1+2=3, yielding3.75 instead of0.375. Therefore neither the printed decimal product nor its equality to3/8 is valid; correct groupings do not validate the decimal check.', 'Count only the second decimal factor digits rather than adding the decimal-place counts of both factors.'),
+], 'These source tasks share exactly the first two factors and their product. One compound single-choice record keeps the product, decimal verification, verbal and symbolic associative law, and both full groupings together, so no separate question supplies another question answer. Every candidate includes all response components; all candidates share the same first fraction product and law. The learner must judge the decimal check and both completed grouping computations, not just find matching totals. Independent written production remains untested.', [10, 15])
+
+q('814', '', 'single', '哪一项正确叙述乘法交换律，用变量表示它，并用 $\\frac9{16}$ 和 $\\frac34$ 验证？', [
+  w('交换因数只需交换分子：$ab=ba$；两种次序的积都为 $\\frac{27}{20}$。', '27/(16+4)=27/20 comes from adding denominator factors; the law statement incorrectly refers only to numerators.', 'Use denominator addition and an incomplete meaning of factor exchange.'),
+  c('交换两个因数，积不变：$ab=ba$；$\\frac9{16}\\cdot\\frac34=\\frac34\\cdot\\frac9{16}=\\frac{27}{64}$。', '9*3/(16*4)=27/64 in either complete factor order.'),
+  w('改变三个因数的分组，积不变：$(ab)c=a(bc)$；$\\frac9{16}\\cdot\\frac34=\\frac{27}{64}$。', 'The product is right, but the verbal and symbolic law is associativity and the reverse order is not verified.', 'Substitute associativity for the requested commutativity law.'),
+], 'One law/identity/two-order verification unit cannot be reduced to its final fraction.', [15])
+
+q('815', '', 'single', '先把第一个因数化成分数，再计算 $0.75\\cdot\\frac49$ 和 $0.8\\cdot\\frac58$。哪组转换和结果全部正确？', [
+  c('$0.75=\\frac34$，积为 $\\frac13$；$0.8=\\frac45$，积为 $\\frac12$。', '3/4*4/9=1/3;4/5*5/8=1/2.'),
+  w('$0.75=\\frac{75}{10}$，积为 $\\frac{10}3$；$0.8=\\frac8{100}$，积为 $\\frac1{20}$。', 'Wrong decimal scales give75/10*4/9=10/3 and8/100*5/8=1/20.', 'Use the wrong power of ten for the decimal denominator.'),
+  w('$0.75=\\frac34$，积为 $\\frac{27}{16}$；$0.8=\\frac45$，积为 $\\frac{32}{25}$。', 'Conversions are right; dividing3/4 by4/9 yields27/16, and4/5 by5/8 yields32/25.', 'Invert the second factor after a correct conversion.'),
+], 'One paired conversion-and-product unit retains the expressly requested fraction method.', [10])
+
+q('816', '', 'single', '先把第一个因数化成小数，再计算 $\\frac15\\cdot0.3$ 和 $\\frac3{20}\\cdot6.4$。哪组转换和结果全部正确？', [
+  w('$\\frac15=0.5$，积为 $0.15$；$\\frac3{20}=0.3$，积为 $1.92$。', 'Use denominator digit5 as decimal tenths .5; divide3 by10 instead of20 to get.3; multiply wrong conversions.', 'Convert fractions by decimal digit placement rather than numerator division by denominator.'),
+  c('$\\frac15=0.2$，积为 $0.06$；$\\frac3{20}=0.15$，积为 $0.96$。', '.2*.3=.06;.15*6.4=.96.'),
+  w('$\\frac15=0.2$，积为 $0.6$；$\\frac3{20}=0.15$，积为 $9.6$。', 'Correct conversions but shift both product decimals one place right.', 'Count the product decimal places one too few.'),
+], 'One full conversion-and-product pair retains the explicitly requested decimal method.', [10])
+
+list('817', '', '$\\frac35\\cdot\\frac27\\cdot\\frac56$；$\\frac7{10}\\cdot\\frac5{49}\\cdot\\frac23$', [
+  c('$\\frac17;\\ \\frac1{21}$', '30/210=1/7 and70/1470=1/21.'),
+  w('$\\frac53;\\ \\frac{35}{31}$', 'Multiply numerators but add all denominators:30/(5+7+6)=5/3;70/(10+49+3)=35/31.', 'Use a denominator sum rather than the product of all three denominators.'),
+  w('$\\frac6{35};\\ \\frac1{14}$', 'Stop after the first two factors:3/5*2/7=6/35;7/10*5/49=1/14.', 'Omit the third factor.'),
+], 'One paired triple-product result requires using every factor, including the last one.', [10, 13, 15])
+
+q('819', '', 'single', '步行速度为5公里/小时。在 $\\frac34,\\frac12,\\frac1{10}$ 小时内，依次走多少公里？', [
+  w('$\\frac{20}3;\\ 10;\\ 50$ 公里', '5 divided by each time gives20/3,10,50.', 'Divide speed by time instead of multiplying.'),
+  c('$\\frac{15}4;\\ \\frac52;\\ \\frac12$ 公里', '5t gives15/4,5/2,1/2.'),
+  w('$\\frac34;\\ \\frac12;\\ \\frac1{10}$ 公里', 'Copy the three time values as distances.', 'Treat speed as 1 kilometer per hour.'),
+], 'One complete time-distance correspondence preserves all three input times and units.', [10, 11, 16])
+
+q('820', '', 'single', '长方体的三个度量为 $\\frac25,\\frac35,\\frac{25}4$ 分米。体积是多少？', [
+  c('$\\frac32$ 立方分米', '(2/5)*(3/5)*(25/4)=3/2.'),
+  w('$\\frac6{25}$ 立方分米', '(2/5)*(3/5)=6/25 omits height.', 'Compute base area only.'),
+  w('$\\frac{29}4$ 立方分米', '2/5+3/5+25/4=1+25/4=29/4.', 'Add dimensions rather than multiplying them.'),
+], 'One volume result retains all three dimensions and cubic units.', [10, 16])
+
+q('821', '', 'multiple', '把每个数表示成两个分数的积。下面哪些等式成立？选出所有成立的等式，不要求表示方法唯一。', [
+  c('$\\frac16=\\frac12\\cdot\\frac13$', '1/(2*3)=1/6.'),
+  w('$\\frac16=\\frac12\\cdot\\frac16$', 'The proposed product is1/12, because using the target itself after1/2 halves it.', 'Keep the full target as the second factor instead of compensating for the first.'),
+  c('$\\frac34=\\frac32\\cdot\\frac12$', '3/(2*2)=3/4.'),
+  w('$\\frac34=\\frac34\\cdot\\frac12$', 'The proposed product is3/8, half the target.', 'Use target times one-half without adjusting the target.'),
+  w('$\\frac98=\\frac34\\cdot\\frac34$', '3*3/(4*4)=9/16, not9/8; choosing denominator4 twice doubles the intended denominator.', 'Insist on two copies of the same proper fraction instead of matching the target denominator.'),
+  c('$\\frac98=\\frac32\\cdot\\frac34$', '9/(2*4)=9/8.'),
+  c('$\\frac48=\\frac23\\cdot\\frac34$', '6/12=1/2=4/8.'),
+  w('$\\frac48=\\frac48\\cdot\\frac12$', 'The proposed product is1/4, not1/2.', 'Treat multiplying by one-half as leaving the value unchanged.'),
+], 'One native multiple validity judgment covers the four targets without claiming unique factorizations; generation of arbitrary valid pairs is explicitly lost.', [10, 13])
+
+q('822', '', 'single', '一叠纸250张。第一个手稿用了全部的 $\\frac35$，第二个用了剩余纸张的 $\\frac45$。第二个手稿用了多少张？', [
+  w('$200$ 张', '250*(4/5)=200 applies the second fraction to the original whole.', 'Use all paper rather than the remaining paper as the second base.'),
+  c('$80$ 张', 'Remaining250*(2/5)=100; second100*(4/5)=80.'),
+  w('$120$ 张', '250*(3/5)*(4/5)=120 applies the second fraction to first use150.', 'Use the consumed quantity rather than the remainder.'),
+  w('$20$ 张', '100*(1/5)=20 is paper left after the second use.', 'Report the final remainder rather than the second use.'),
+], 'One complete remainder-of-remainder result retains both reference quantities.', [10, 16])
+
+q('823', '', 'single', '一本书90美分，哥哥付了书价的 $\\frac3{10}$，妹妹付其余的钱。妹妹付了多少？', [
+  c('$63$ 美分', '90*(1-3/10)=63.'),
+  w('$27$ 美分', '90*(3/10)=27 is the brother share.', 'Report the named first share instead of its complement.'),
+  w('$60$ 美分', '90/3*2=60 assumes the brother paid1/3 rather than3/10.', 'Replace three-tenths by one-third.'),
+], 'One complementary-price result retains the reference to the sister and cents.', [10, 16])
+
+q('824', '', 'single', '把每个因数化成假分数再乘：$1\\frac35\\cdot3\\frac34$；$1\\frac34\\cdot1\\frac57$；$3\\frac56\\cdot1\\frac7{23}$；$2\\frac12\\cdot2\\frac2{15}$。哪一行转换和结果全部正确？', [
+  c('$\\frac85\\cdot\\frac{15}4=6$；$\\frac74\\cdot\\frac{12}7=3$；$\\frac{23}6\\cdot\\frac{30}{23}=5$；$\\frac52\\cdot\\frac{32}{15}=\\frac{16}3$。', 'Whole*denominator+numerator gives8,15,7,12,23,30,5,32; products6,3,5,16/3.'),
+  w('$\\frac45\\cdot\\frac64=\\frac65$；$\\frac44\\cdot\\frac67=\\frac67$；$\\frac86\\cdot\\frac8{23}=\\frac{32}{69}$；$\\frac32\\cdot\\frac4{15}=\\frac25$。', 'Wrong numerators whole+numerator yield4,6,4,6,8,8,3,4; the displayed products then follow.', 'Omit multiplication of each whole part by its denominator.'),
+  w('$\\frac85\\cdot\\frac{15}4=\\frac{32}{75}$；$\\frac74\\cdot\\frac{12}7=\\frac{49}{48}$；$\\frac{23}6\\cdot\\frac{30}{23}=\\frac{529}{180}$；$\\frac52\\cdot\\frac{32}{15}=\\frac{75}{64}$。', 'Conversions are right but divide by the second fractions:32/75,49/48,529/180,75/64.', 'Invert the second factor during multiplication.'),
+], 'One complete four-chain unit preserves conversion of every mixed factor, not just final products.', [10, 13])
+
+list('825', 'a', '$1\\frac27\\cdot1\\frac14$；$4\\frac23\\cdot\\frac25$；$\\frac49\\cdot2\\frac34$；$2\\frac34\\cdot\\frac4{11}$', [
+  w('$\\frac3{14};\\ \\frac45;\\ \\frac59;\\ \\frac5{11}$', 'Use (whole+numerator)/denominator:3/7*2/4=3/14;6/3*2/5=4/5;4/9*5/4=5/9;5/4*4/11=5/11.', 'Convert mixed numbers by adding whole and numerator only.'),
+  c('$\\frac{45}{28};\\ \\frac{28}{15};\\ \\frac{11}9;\\ 1$', '9/7*5/4;14/3*2/5;4/9*11/4;11/4*4/11 give the row.'),
+  w('$\\frac{36}{35};\\ \\frac{35}3;\\ \\frac{16}{99};\\ \\frac{121}{16}$', 'Divide first factor by second after correct conversion:36/35,35/3,16/99,121/16.', 'Invert the second factor rather than multiply.'),
+], 'One four-result segment jointly tests mixed conversion, mixed-factor position and a reciprocal pair.')
+list('825', 'b', '$3\\frac14\\cdot4$；$10\\cdot5\\frac25$；$-1\\frac23\\cdot(-2\\frac25)$；$-7\\frac3{11}\\cdot2\\frac{19}{40}$', [
+  c('$13;\\ 54;\\ 4;\\ -18$', '13/4*4=13;10*27/5=54;(-5/3)*(-12/5)=4;(-80/11)*(99/40)=-18.'),
+  w('$13;\\ 54;\\ -4;\\ -18$', 'All magnitudes are right but retain the negative in the double-negative third product.', 'Fail to cancel both negative signs.'),
+  w('$13;\\ 54;\\ 4;\\ -\\frac{333}{20}$', 'Read -7 3/11 as -7+3/11=-74/11; times99/40=-333/20.', 'Apply the negative sign only to the whole part of a mixed number.'),
+], 'The second segment retains integer factors, double-negative multiplication and the whole-negative mixed number.')
+
+q('826', 'a', 'single', '按 $s=vt$，$v=9\\frac12$ 公里/小时、$t=4\\frac12$ 小时。距离是多少？', [
+  w('$\\frac{19}9$ 公里', '(19/2)/(9/2)=19/9.', 'Divide speed by time.'),
+  c('$\\frac{171}4$ 公里', '(19/2)*(9/2)=171/4.'),
+  w('$\\frac{25}2$ 公里', 'Wrong mixed conversions(9+1)/2=5,(4+1)/2=5/2 give5*5/2=25/2.', 'Use whole-plus-numerator instead of whole-times-denominator-plus-numerator for both factors.'),
+], 'This independent distance task retains kilometer/hour units and both mixed-number factors.', [10, 16])
+q('826', 'b', 'single', '按 $s=vt$，$v=3\\frac35$ 米/分、$t=\\frac56$ 分。距离是多少？', [
+  c('$3$ 米', '(18/5)*(5/6)=3.'),
+  w('$\\frac{108}{25}$ 米', '(18/5)/(5/6)=108/25.', 'Divide speed by time.'),
+  w('$1$ 米', 'Wrong conversion(3+3)/5=6/5;6/5*5/6=1.', 'Add whole and numerator without multiplying the whole by denominator.'),
+], 'A separate complete distance result is justified by independent data and minute/meter units.', [10, 16])
+
+q('827', '', 'single', '按 $V=abc$，$a=\\frac45$ 分米、$b=2\\frac12$ 分米、$c=1\\frac34$ 分米。体积是多少？', [
+  w('$2$ 立方分米', '(4/5)*(5/2)=2 omits c.', 'Stop at base area.'),
+  w('$\\frac{101}{20}$ 立方分米', '4/5+5/2+7/4=(16+50+35)/20=101/20.', 'Add three dimensions instead of multiplying.'),
+  c('$\\frac72$ 立方分米', '4/5*5/2*7/4=7/2.'),
+], 'One full volume result retains all original mixed dimensions and cubic units.', [10, 16])
+
+q('828', '', 'single', '1立方分米铁的质量为 $7\\frac45$ 公斤。体积 $3\\frac13$ 立方分米的铁制零件质量是多少？', [
+  c('$26$ 公斤', '39/5*10/3=26.'),
+  w('$\\frac{117}{50}$ 公斤', '39/5 divided by10/3=117/50.', 'Divide density by volume.'),
+  w('$\\frac{167}{15}$ 公斤', '39/5+10/3=(117+50)/15=167/15.', 'Add density and volume.'),
+], 'One mass result preserves the density-volume relationship.', [10, 16])
+
+q('829', '', 'single', '共有 $8\\frac34$ 吨土豆。第一天售出全部的 $\\frac35$，第二天售出第一天销售量的 $\\frac12$。第二天售出多少吨？', [
+  w('$\\frac74$ 吨', 'Remaining35/4*(2/5)=7/2; half remainder=7/4.', 'Use half the remaining amount instead of half the first sale.'),
+  c('$\\frac{21}8$ 吨', '35/4*3/5*1/2=21/8.'),
+  w('$\\frac{35}8$ 吨', '35/4*1/2=35/8.', 'Take half of all potatoes, omitting first-day fraction.'),
+], 'One complete nested-reference result retains the exact first-day reference, unlike the remainder problem.', [10, 16])
+
+q('830', '', 'single', '作任意非退化三角形 $MPK$，取 $MK,MP$ 的中点 $D,E$，令直线 $x=DE$。怎样作三角形关于 $x$ 的对称图形？', [
+  c('分别从 $M,P,K$ 向 $x$ 作垂线，在各自垂足另一侧取等距点 $M\',P\',K\'$，再连接三点。', 'Perpendicular feet and opposite equal distances give the reflection of each vertex; joining images reflects every side.'),
+  w('分别从 $M,P,K$ 向 $x$ 作垂线，在各自垂足同一侧取等距点 $M\',P\',K\'$，再连接三点。', 'Same-side equal-distance points reproduce the original vertices rather than their reflections.', 'Fail to reverse the perpendicular direction across the axis.'),
+  w('固定 $M$，交换 $P,K$ 的名称，连接这三点，便是关于 $x$ 的对称图形。', 'M is off the midpoint line and therefore moves; simply renaming vertices leaves the original triangle unchanged.', 'Assume an arbitrary triangle has an axis through its apex, despite the axis being its midpoint line.'),
+], 'A full generic construction description keeps arbitrary triangle geometry; actual midpoint/perpendicular/drawing production is explicitly unverified.')
+
+q('831', '', 'single', '已知直线 $k$ 和线外一点 $P$，要作 $k$ 关于点 $P$ 的对称图形。哪种作法正确？', [
+  w('直接过 $P$ 作一条与 $k$ 平行的直线，把这条过 $P$ 的平行线作为所求图形。', 'The actual image line is parallel but remains the same nonzero perpendicular distance from P as k; it cannot pass through P.', 'Require the image to pass through the symmetry center instead of preserving the offset.'),
+  c('取 $k$ 上不同的两点 $A,B$，作 $A\',B\'$ 使 $P$ 分别是 $AA\',BB\'$ 的中点，连 $A\'B\'$。', 'The point images are Aprime=2P-A and Bprime=2P-B. Their joining line is parallel to k on the opposite side of P at equal distance.'),
+  w('从 $P$ 向 $k$ 作垂线，直接把这条过 $P$ 的垂线作为所求图形。', 'The half-turn image of k is parallel to k and does not pass through external P; this perpendicular has wrong direction and position.', 'Treat the line joining center to source as the image line.'),
+  w('取 $k$ 上不同的两点 $A,B$，在直线 $PA,PB$ 上分别于 $P$ 另一侧取点，使 $PA\'=\\frac12PA$、$PB\'=\\frac12PB$，连两点。', 'Opposite half-distance points produce a parallel line only half as far from P as k, not equal-distance half-turn images.', 'Use half the center-to-point distance in central reflection.'),
+], 'One full two-point construction recognizes a whole line image without conflating point and axis symmetry.')
+
+q('832', '', 'single', '两直线 $x,y$ 过 $M$，夹角为 $62^\\circ$。要分别作 $x$ 关于 $y$ 的像、$y$ 关于 $x$ 的像，哪种作法两项都正确？', [
+  c('取 $A\\in x$、$B\\in y$，且均不同于 $M$；把 $A$ 关于 $y$ 反射到 $A\'$，把 $B$ 关于 $x$ 反射到 $B\'$。两条像直线分别是 $MA\'$ 和 $MB\'$。', 'M lies on both mirror axes and is fixed; reflecting one additional point determines each full image line.'),
+  w('取 $A\\in x$、$B\\in y$，且均不同于 $M$；把 $A,B$ 关于点 $M$ 对称到 $A\',B\'$。两条像直线分别是 $MA\'$ 和 $MB\'$。', 'Half-turn about a point on each original line leaves that line unchanged; line reflection at62 degrees does not.', 'Replace line-axis reflection by point symmetry.'),
+  w('取 $A\\in x$、$B\\in y$，且均不同于 $M$；把 $A$ 关于 $x$ 反射到 $A\'$，把 $B$ 关于 $y$ 反射到 $B\'$。两条像直线分别是 $MA\'$ 和 $MB\'$。', 'Each selected point lies on its chosen axis and stays fixed; both resulting lines are the originals.', 'Use each line as its own mirror instead of the other line.'),
+], 'One paired construction is the native unit for the reciprocal mirror tasks, retaining the62-degree condition and unrestricted line orientations.')
+
+list('833', '', '$4\\frac15$、$1\\frac68$、$2\\frac35$、$6\\frac12$、$7\\frac23$、$10\\frac6{11}$、$3.75$、$5.25$（化成假分数）', [
+  c('$\\frac{21}5;\\ \\frac74;\\ \\frac{13}5;\\ \\frac{13}2;\\ \\frac{23}3;\\ \\frac{116}{11};\\ \\frac{15}4;\\ \\frac{21}4$', 'Whole*denominator+numerator; decimals375/100 and525/100 reduce to15/4,21/4.'),
+  w('$1;\\ \\frac78;\\ 1;\\ \\frac72;\\ 3;\\ \\frac{16}{11};\\ \\frac{15}4;\\ \\frac{21}4$', 'Wrong mixed numerators4+1,1+6,2+3,6+1,7+2,10+6; leave decimal conversions correct.', 'Add whole and numerator without denominator multiplication.'),
+  w('$\\frac{21}5;\\ \\frac74;\\ \\frac{13}5;\\ \\frac{13}2;\\ \\frac{23}3;\\ \\frac{116}{11};\\ \\frac{75}2;\\ \\frac{105}2$', 'Mixed conversions right; decimals use denominator10 rather than100:375/10=75/2,525/10=105/2.', 'Lose one decimal place when making decimal fractions.'),
+], 'One complete conversion list retains every value and equivalent reduced spellings.', [])
+
+list('834', 'a', '$\\frac{2\\cdot9}{3\\cdot8}$；$\\frac{14\\cdot25}{15\\cdot1}$；$\\frac{36\\cdot5}{25\\cdot24}$（约分）', [
+  w('$\\frac43;\\ \\frac3{70};\\ \\frac{10}3$', 'Invert all source fractions and reduce.', 'Swap numerator and denominator while reducing.'),
+  c('$\\frac34;\\ \\frac{70}3;\\ \\frac3{10}$', '18/24,350/15,180/600 reduce to3/4,70/3,3/10.'),
+  w('$1;\\ \\frac{39}{16};\\ \\frac{41}{49}$', 'Add numerator factors and denominator factors:(2+9)/(3+8)=1;(14+25)/(15+1)=39/16;(36+5)/(25+24)=41/49.', 'Replace factor multiplication by addition before reduction.'),
+], 'One full three-fraction reduction segment retains the literal denominator15*1.', [13])
+list('834', 'b', '$\\frac{3\\cdot10}{5\\cdot9}$；$\\frac{27\\cdot10}{5\\cdot9}$；$\\frac{27\\cdot10}{20\\cdot63}$（约分）', [
+  c('$\\frac23;\\ 6;\\ \\frac3{14}$', '30/45=2/3;270/45=6;270/1260=3/14.'),
+  w('$\\frac32;\\ \\frac16;\\ \\frac{14}3$', 'Invert all source fractions and reduce.', 'Swap numerator and denominator while reducing.'),
+  w('$\\frac{13}{14};\\ \\frac{37}{14};\\ \\frac{37}{83}$', 'Replace each numerator factor product and denominator factor product by sums:13/14,37/14,37/83.', 'Read multiplication dots as addition.'),
+], 'One full reduction segment keeps all three different denominators.', [13])
+
+q('836', 'a', 'single', '做李子酱时废料占李子的28%。要得到8.4吨李子酱，需用多少吨李子？', [
+  c('$\\frac{35}3$ 吨', 'Retained72%;8.4/.72=35/3.'),
+  w('$30$ 吨', '8.4/.28=30 uses waste percentage as yield.', 'Divide by discarded fraction rather than retained fraction.'),
+  w('$6.048$ 吨', '8.4*.72=6.048 applies forward yield to finished mass.', 'Multiply by yield instead of recovering initial mass.'),
+], 'The plum yield is an independent inverse-percentage task and retains an exact nonterminating answer.')
+q('836', 'b', 'single', '做樱桃酱时废料占樱桃的18%。要得到7.2吨樱桃酱，需用多少吨樱桃？', [
+  w('$40$ 吨', '7.2/.18=40.', 'Treat waste as the retained fraction.'),
+  c('$\\frac{360}{41}$ 吨', 'Retained82%;7.2/.82=360/41.'),
+  w('$5.904$ 吨', '7.2*.82=5.904.', 'Compute a further yield from the finished mass.'),
+], 'The cherry case is independent and retains its distinct yield and exact fraction.')
+
+q('837', 'a', 'single', '实验室有25张桌子，分三屉桌和四屉桌，共91个抽屉。设三屉桌为 $a$ 张，哪一项方程和两种桌数都正确？', [
+  w('$4a+3(25-a)=91$；三屉桌16张、四屉桌9张。', 'Reversing drawer coefficients gives75+a=91,a=16, but labeling a as three-drawer desks makes the actual count84.', 'Assign the four-drawer coefficient to the three-drawer variable.'),
+  c('$3a+4(25-a)=91$；三屉桌9张、四屉桌16张。', '100-a=91 gives9; complement16;27+64=91.'),
+  w('$3a+4a=91$；三屉桌13张、四屉桌13张。', '7a=91 gives13 of each but total26 desks.', 'Use the same count for both categories instead of the complement.'),
+], 'One equation-and-two-count response preserves the modeling requirement and both integer totals.')
+q('837', 'b', 'single', '一栋楼有两间一套和三间一套的住宅共72套，共168个房间。设两间一套住宅为 $b$ 套，哪一项方程和两种套数都正确？', [
+  c('$2b+3(72-b)=168$；两间一套48套、三间一套24套。', '216-b=168 gives48; complement24;96+72=168.'),
+  w('$3b+2(72-b)=168$；两间一套24套、三间一套48套。', 'Reversed coefficients give144+b=168,b=24, but the declared types then have192 rooms.', 'Reverse the room-count coefficients for the named variable.'),
+  w('$2b+3(72-b)=168$；两间一套24套、三间一套48套。', 'Correct equation gives48, but exchange the reported two type counts.', 'Solve for the complement and label it as the variable.'),
+], 'The apartment data define an independent model, not another answer slot of the desk problem.')
+
+list('838', 'a', '$-2.7(1.5x-3.4)=-2.3x-0.69$；$0.2(x-0.3)=0.8(x+0.3)-0.48$（求 $x$）', [
+  c('$5.64;\\ 0.3$', '1.75x=9.87 and.6x=.18.'),
+  w('$-5.64;\\ -0.3$', 'Reverse only the variable coefficient sign when moving terms, giving-1.75x=9.87 and-.6x=.18.', 'Change the coefficient difference sign without changing the constant difference.'),
+  w('$\\frac{849}{175};\\ -0.5$', 'First wrongly transfer-.69 to give1.75x=9.18-.69=8.49,x=849/175. Second omit the outside-.48, giving.2x-.06=.8x+.24, hence x=-.5.', 'Transfer a negative constant with the wrong sign and omit an outside constant.'),
+], 'One two-equation solution segment retains complete balanced equations and their independent roots.', [])
+list('838', 'b', '$-3.7(2.5x-7.6)=-3.66+2.1x$；$0.4(x-0.6)=0.5(x-0.8)+0.08$（求 $x$）', [
+  w('$-2.8;\\ -0.8$', 'Reverse only the final variable coefficient signs in11.35x=31.78 and.1x=.08.', 'Change the coefficient difference sign on one side only.'),
+  c('$2.8;\\ 0.8$', '11.35x=31.78 and.1x=.08 give2.8,.8.'),
+  w('$\\frac{2446}{1135};\\ 1.6$', 'First use28.12-3.66=24.46 instead of+3.66; second omit final+.08, so.4x-.24=.5x-.4 gives x=1.6.', 'Mishandle transfer of a negative constant and omit an outside constant.'),
+], 'One full second two-equation segment retains both decimal roots.', [])
+
+list('839', 'a', '$-2.6(3-3.8)+4.2(4-2.7)$；$-1.212:0.4+2.9(2-4.3)$', [
+  w('$3.38;\\ -9.7$', 'First change(-2.6)*(-.8) from+2.08 to-2.08, then add5.46; second stays correct.', 'Treat a double-negative product as negative.'),
+  c('$7.54;\\ -9.7$', '2.08+5.46=7.54;-3.03-6.67=-9.7.'),
+  w('$7.54;\\ 3.64$', 'First correct; second incorrectly use2.9*(4.3-2)=+6.67, giving-3.03+6.67=3.64.', 'Reverse the subtraction inside the second parentheses.'),
+], 'A full two-result signed-arithmetic segment retains both multiplication and division.', [])
+list('839', 'b', '$-3.8(4-4.9)+13.4(3-2.8)$；$-3.636:0.6+2.6(5-1.1)$', [
+  c('$6.1;\\ 4.08$', '3.42+2.68=6.1;-6.06+10.14=4.08.'),
+  w('$-0.74;\\ 4.08$', 'First give the double-negative product a negative sign:-3.42+2.68=-.74.', 'Keep the sign of the first factor in a two-negative product.'),
+  w('$6.1;\\ 16.2$', 'Second discard the sign of the quotient:6.06+10.14=16.2.', 'Treat negative divided by positive as positive.'),
+], 'The second pair retains all original signed expressions rather than per-parenthesis clicks.', [])
+
+q('840', 'a', 'single', '计算 $222.68:(880.08-26.6\\cdot32.8)+285.56:(660.04-12.7\\cdot51.6)$。', [
+  c('$89.8$', 'Denominators7.6,4.72; quotients29.3,60.5; sum89.8.'),
+  w('$-31.2$', '29.3-60.5=-31.2 replaces the outer plus.', 'Subtract the two correct quotients.'),
+  w('$1772.65$', '29.3*60.5=1772.65.', 'Multiply the two quotients instead of adding.'),
+], 'One complete independent sum of quotients retains both parenthesized denominators.')
+q('840', 'b', 'single', '计算 $290.29:(650.03-32.8\\cdot19.6)+90.89:(1140.02-24.4\\cdot46.6)$。', [
+  w('$10.1$', '40.6-30.5=10.1.', 'Replace the outer addition with subtraction.'),
+  c('$71.1$', 'Denominators7.15,2.98; quotients40.6,30.5; sum71.1.'),
+  w('$1238.3$', '40.6*30.5=1238.3.', 'Multiply the correct quotients instead of adding.'),
+], 'The second sum has independent decimal data and is kept as a complete expression.')
+
+list('841', 'a', '$\\frac9{10}\\cdot\\frac56$；$\\frac6{25}\\cdot\\frac{20}{21}$；$\\frac{17}{13}\\cdot\\frac{26}{51}$；$\\frac{40}7\\cdot\\frac{14}5$', [
+  c('$\\frac34;\\ \\frac8{35};\\ \\frac23;\\ 16$', '45/60;120/525;442/663;560/35 reduce to the row.'),
+  w('$\\frac{14}{16};\\ \\frac{26}{46};\\ \\frac{43}{64};\\ \\frac{54}{12}$', 'Add numerator and denominator factors:14/16,26/46,43/64,54/12.', 'Use the mediant operation instead of multiplication.'),
+  w('$\\frac{45}{16};\\ \\frac{60}{23};\\ \\frac{221}{32};\\ \\frac{140}3$', 'Multiply numerators but add denominators:45/16,120/46=60/23,442/64=221/32,560/12=140/3.', 'Use sums of denominators.'),
+], 'One four-product segment keeps small and large cross-cancellations.')
+list('841', 'b', '$\\frac{21}5\\cdot(-\\frac{15}7)$；$-\\frac{10}{13}\\cdot(-\\frac{65}{12})$；$\\frac{57}{37}\\cdot\\frac{74}{85}$；$\\frac{81}{115}\\cdot\\frac{46}{81}$', [
+  w('$9;\\ \\frac{25}6;\\ \\frac{114}{85};\\ \\frac25$', 'Discard the single negative in the first product.', 'Ignore the negative sign of one factor.'),
+  c('$-9;\\ \\frac{25}6;\\ \\frac{114}{85};\\ \\frac25$', '-315/35=-9;650/156=25/6;57*2/85=114/85;46/115=2/5.'),
+  w('$-9;\\ -\\frac{25}6;\\ \\frac{114}{85};\\ \\frac25$', 'Keep a negative in the double-negative second product.', 'Fail to cancel two negative signs.'),
+], 'One full segment retains both sign patterns and the two large reductions.')
+list('841', 'c', '$\\frac{101}{102}\\cdot\\frac{51}{202}$；$5\\cdot2\\frac15$；$4\\frac27\\cdot2$；$-1\\frac1{12}\\cdot3$', [
+  c('$\\frac14;\\ 11;\\ \\frac{60}7;\\ -\\frac{13}4$', 'Half*half=1/4;5*11/5=11;30/7*2=60/7;-13/12*3=-13/4.'),
+  w('$1;\\ 11;\\ \\frac{60}7;\\ -\\frac{13}4$', 'In the first product cancel101 with202 and51 with102 by removing both ratios instead of retaining1/2 each; get1.', 'Drop residual denominator factors after cancellation.'),
+  w('$\\frac14;\\ 10\\frac15;\\ 8\\frac27;\\ -3\\frac1{12}$', 'Multiply only whole parts of mixed numbers:5*2+1/5,4*2+2/7,-(1*3+1/12).', 'Leave the fractional parts unmultiplied.'),
+], 'The final segment keeps large reciprocal-related cancellation and all integer-times-mixed products.', [10, 11, 13])
+
+q('842', 'a', 'single', '求 $\\frac25m$ 在 $m=\\frac12,\\frac25,\\frac52,\\frac{15}8,\\frac{15}{16}$ 时的值。依次哪一行全部正确？', [
+  c('$\\frac15;\\ \\frac4{25};\\ 1;\\ \\frac34;\\ \\frac38$', 'Multiply every original m by2/5 in its given order.'),
+  w('$\\frac45;\\ 1;\\ \\frac4{25};\\ \\frac{16}{75};\\ \\frac{32}{75}$', 'Divide2/5 by each m:4/5,1,4/25,16/75,32/75.', 'Use division instead of the defined multiplication correspondence.'),
+  w('$\\frac12;\\ \\frac25;\\ \\frac52;\\ \\frac{15}8;\\ \\frac{15}{16}$', 'Copy the five input values.', 'Ignore the coefficient2/5.'),
+], 'One complete ordered table retains every rational m, including the self-product and reciprocal.', [10])
+q('842', 'b', 'single', '求 $\\frac49x$ 在 $x=\\frac14,\\frac92,\\frac49$ 时的值。依次哪一行全部正确？', [
+  w('$\\frac{16}9;\\ \\frac8{81};\\ 1$', 'Divide4/9 by each x instead of multiply.', 'Reverse the multiplication rule to division.'),
+  c('$\\frac19;\\ 2;\\ \\frac{16}{81}$', '4/9*1/4=1/9;4/9*9/2=2;4/9*4/9=16/81.'),
+  w('$\\frac14;\\ \\frac92;\\ \\frac49$', 'Copy all three inputs.', 'Discard coefficient4/9.'),
+], 'The second expression defines an independent complete three-input correspondence.', [10])
+
+q('843', '', 'single', '蜗牛速度为 $\\frac1{12}$ 米/分。经过 $\\frac34,\\frac35,\\frac56$ 小时，时间换算成分钟和距离依次是哪一组？', [
+  w('$\\frac34,\\frac35,\\frac56$ 分；距离 $\\frac1{16},\\frac1{20},\\frac5{72}$ 米。', 'Use the hour numerals directly as minutes and multiply by1/12.', 'Omit the factor60 in hours-to-minutes conversion.'),
+  c('$45,36,50$ 分；距离 $\\frac{15}4,3,\\frac{25}6$ 米。', 'Hours*60 gives45,36,50; divide each by12.'),
+  w('$\\frac1{80},\\frac1{100},\\frac1{72}$ 分；距离 $\\frac1{960},\\frac1{1200},\\frac1{864}$ 米。', 'Divide the hour values by60, then by12.', 'Use the inverse conversion factor from hours to minutes.'),
+], 'One complete conversion-and-distance table preserves every duration and the minute-based speed.', [10, 16])
+
+q('844', '', 'single', '长方体长 $\\frac49$ 米、宽 $\\frac34$ 米、高 $\\frac13$ 米。体积是多少？', [
+  w('$\\frac13$ 立方米', '4/9*3/4=1/3 omits height.', 'Compute base area rather than volume.'),
+  c('$\\frac19$ 立方米', '4/9*3/4*1/3=1/9.'),
+  w('$\\frac{55}{36}$ 立方米', '4/9+3/4+1/3=(16+27+12)/36=55/36.', 'Add the dimensions instead of multiplying.'),
+], 'One three-factor volume result preserves all dimensions and cubic meters.', [10, 16])
+
+list('845', '', '$2\\frac34$、$3\\frac47$、$20\\frac1{17}$、$14\\frac{15}{37}$、$5.24$、$8.25$（化成假分数）', [
+  w('$\\frac54;\\ 1;\\ \\frac{21}{17};\\ \\frac{29}{37};\\ \\frac{131}{25};\\ \\frac{33}4$', 'Use whole+numerator for mixed numerators5,7,21,29; decimal conversions stay right.', 'Omit whole-times-denominator conversion.'),
+  c('$\\frac{11}4;\\ \\frac{25}7;\\ \\frac{341}{17};\\ \\frac{533}{37};\\ \\frac{131}{25};\\ \\frac{33}4$', 'Compute proper mixed numerators and reduce524/100,825/100.'),
+  w('$\\frac{11}4;\\ \\frac{25}7;\\ \\frac{341}{17};\\ \\frac{533}{37};\\ \\frac{262}5;\\ \\frac{165}2$', 'Use denominator10 rather than100 for both decimals:524/10,825/10.', 'Lose one place in decimal fraction conversion.'),
+], 'One full six-value list retains all original numbers and exact equivalent fractions.', [])
+
+list('846', 'a', '$3\\frac35\\cdot1\\frac19$；$2\\frac{14}{15}\\cdot6\\frac6{11}$；$2\\frac2{25}\\cdot1\\frac9{16}$', [
+  c('$4;\\ \\frac{96}5;\\ \\frac{13}4$', '18/5*10/9=4;44/15*72/11=96/5;52/25*25/16=13/4.'),
+  w('$\\frac4{15};\\ \\frac{64}{55};\\ \\frac1{10}$', 'Wrong mixed numerators6,2,16,12,4,10 yield6/5*2/9=4/15;16/15*12/11=64/55;4/25*10/16=1/10.', 'Use whole-plus-numerator conversion for both factors.'),
+  w('$\\frac{81}{25};\\ \\frac{121}{270};\\ \\frac{832}{625}$', 'Divide after correct conversion:18/5 divided10/9;44/15 divided72/11;52/25 divided25/16.', 'Invert the second factor instead of multiplying.'),
+], 'One three-product conversion/cancellation segment keeps both mixed factors in each expression.')
+list('846', 'b', '$\\frac{13}{43}\\cdot8\\frac7{26}$；$-6\\frac29\\cdot10\\frac18$；$-5\\frac56\\cdot(-6\\frac67)$', [
+  w('$\\frac52;\\ 63;\\ 40$', 'All magnitudes are right; the second single-negative product is made positive.', 'Discard a single leading negative.'),
+  c('$\\frac52;\\ -63;\\ 40$', '13/43*215/26=5/2;-56/9*81/8=-63;(-35/6)*(-48/7)=40.'),
+  w('$\\frac52;\\ -63;\\ -40$', 'The third double-negative product is wrongly kept negative.', 'Fail to cancel two leading negatives.'),
+], 'The final segment retains a mixed-factor cancellation and both negative sign patterns.')
+
+q('847', '', 'single', '收获27吨西瓜，$\\frac29$ 送食堂，剩余的 $\\frac67$ 送市场。送市场多少吨？', [
+  c('$18$ 吨', '27*(1-2/9)*(6/7)=21*6/7=18.'),
+  w('$\\frac{162}7$ 吨', '27*(6/7)=162/7.', 'Apply the second fraction to the original total rather than remainder.'),
+  w('$\\frac{36}7$ 吨', '27*(2/9)*(6/7)=36/7.', 'Apply the second fraction to the canteen share.'),
+], 'One complete fraction-of-remainder result retains the first distribution and target destination.', [10, 16])
+
+q('848', '', 'single', '1立方分米铁的质量为 $7\\frac45$ 公斤。边长 $2\\frac12$ 分米的立方体铁块质量是多少？', [
+  w('$\\frac{39}2$ 公斤', '39/5*5/2=39/2.', 'Multiply density by side length without computing volume.'),
+  c('$\\frac{975}8$ 公斤', 'Cube side:(5/2)^3=125/8; times39/5=975/8.'),
+  w('$\\frac{195}4$ 公斤', '39/5*(5/2)^2=195/4.', 'Use side squared rather than cubed for volume.'),
+], 'One mass result retains the decisive cubic-volume step, not merely mixed-number multiplication.', [10, 16])
+
+q('849', '', 'single', '公共汽车以43.2公里/小时行驶151.2公里。载重汽车晚0.7小时出发，行驶同一路程且同时到达。载重汽车的速度是多少？', [
+  c('$54$ 公里/小时', 'Bus time151.2/43.2=3.5h; truck2.8h;151.2/2.8=54.'),
+  w('$43.2$ 公里/小时', 'Use the same3.5h travel time for the truck.', 'Ignore the later departure.'),
+  w('$36$ 公里/小时', '151.2/(3.5+.7)=151.2/4.2=36.', 'Add the delay to truck travel time instead of subtracting.'),
+], 'One delayed-travel result keeps the common destination and simultaneous arrival; the source first-vehicle naming is normalized without new data.')
+
+q('850', '', 'single', '某数比另一个数大0.8，两数的算术平均数为2.7。这个较大的数是多少？', [
+  w('$2.3$', '2.7-.8/2=2.3 is the smaller number.', 'Report the smaller rather than the requested larger number.'),
+  c('$3.1$', 'Mean plus half-difference:2.7+.4=3.1.'),
+  w('$3.5$', '2.7+.8=3.5 adds the full difference to the mean.', 'Treat the mean as the smaller number.'),
+], 'One complete requested-number result retains the larger-number quantifier.')
+
+q('851', '', 'single', '设 $a=b=-0.2$，求 $2.3(a-2b)-4.1(a+b)$ 的值。', [
+  c('$2.1$', 'a-2b=.2;a+b=-.4; .46-(-1.64)=2.10.'),
+  w('$-1.18$', 'Use.46-1.64=-1.18 by losing the sign of a+b.', 'Fail to reverse the sign when subtracting a negative product.'),
+  w('$0.26$', 'Take a-2b as a+2b=-.6:2.3*(-.6)-4.1*(-.4)=-1.38+1.64=.26.', 'Replace subtraction of2b with addition.'),
+], 'One full negative-substitution result preserves both grouped expressions and coefficients.')
+
+const draft = {
+  schema: 's10y-choice-draft-v1', seed_sha256: frozen.seed_sha256,
+  new_figures: [], questions,
+  coverage: frozen.solutions.map(solution => ({
+    source_number: solution.source_number,
+    question_ids: questions.filter(q => q.source_numbers.includes(solution.source_number)).map(q => q.id),
+    omitted_tasks: solution.losses,
+    reason: solution.blocked
+      ? 'Blocked: unresolved source wording permits different coordinate relations. Conditional full solutions are frozen, but no question is keyed.'
+      : 'All original mathematical tasks and data are retained as complete result segments, conversions, laws, models or construction recognition. Production losses are explicit; semantic review is pending.',
+  })),
+}
+const view = { questions: questions.map(({ id, view }) => ({ id, ...view })) }
+const outputDir = process.argv[2] ? path.resolve(dir, process.argv[2]) : dir
+if (outputDir !== dir && !outputDir.startsWith(`${dir}${path.sep}`)) {
+  throw new Error('Serializer outputs must stay inside this assigned n45 directory')
+}
+if (outputDir !== dir) fs.mkdirSync(outputDir)
+for (const [name, value] of [['draft.json', draft], ['view.json', view]]) {
+  fs.writeFileSync(path.join(outputDir, name), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+}
+console.log(JSON.stringify({
+  sources: seed.exercises.length, represented_sources: 47,
+  questions: questions.length,
+  single: questions.filter(q => q.view.mode === 'single').length,
+  multiple: questions.filter(q => q.view.mode === 'multiple').length,
+  options: questions.reduce((n, q) => n + q.view.options.length, 0),
+  blocked_sources: ['835'], semantic_review: 'not run',
+}, null, 2))

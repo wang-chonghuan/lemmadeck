@@ -1,0 +1,130 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { fileURLToPath } from 'node:url'
+import { spawnSync } from 'node:child_process'
+
+const dir = path.dirname(fileURLToPath(import.meta.url))
+const before = path.join(dir, 'rejected-before-internal-repair')
+const after = path.join(dir, 'repaired-internal-snapshot')
+const read = (root, name) => fs.readFileSync(path.join(root, name))
+const json = (root, name) => JSON.parse(read(root, name).toString('utf8'))
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
+const write = (name, value) => fs.writeFileSync(path.join(dir, name),
+  JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+const phase = process.argv[2]
+
+if (phase === 'freeze') {
+  const entries = fs.readdirSync(dir).filter(name => name !== 'internal-repair.mjs')
+  fs.mkdirSync(before)
+  for (const name of entries) {
+    fs.cpSync(path.join(dir, name), path.join(before, name), {
+      recursive: true, force: false, errorOnExist: true,
+    })
+  }
+  const files = []
+  function inventory(folder, prefix = '') {
+    for (const entry of fs.readdirSync(folder, { withFileTypes: true })) {
+      const name = path.join(prefix, entry.name)
+      if (entry.isDirectory()) inventory(path.join(folder, entry.name), name)
+      else files.push({ name, sha256: hash(read(before, name)) })
+    }
+  }
+  inventory(before)
+  fs.writeFileSync(path.join(before, 'manifest.json'), JSON.stringify({
+    reason: 'Exact rejected n44 author snapshot before the explicitly requested internal-only repair.',
+    files,
+  }, null, 2) + '\n', { flag: 'wx' })
+  console.log(JSON.stringify({ rejected_snapshot: before, preserved_files: files.length }, null, 2))
+} else if (phase === 'retain') {
+  for (const entry of json(before, 'manifest.json').files) {
+    assert.equal(hash(read(before, entry.name)), entry.sha256, `Rejected history changed: ${entry.name}`)
+    if (entry.name !== 'author.mjs') {
+      assert(read(dir, entry.name).equals(read(before, entry.name)),
+        `Concurrent edit to ${entry.name}; do not overwrite`)
+    }
+  }
+  const oldDraft = json(before, 'draft.json')
+  const newDraft = json(after, 'draft.json')
+  const expected = structuredClone(oldDraft)
+  const changes = []
+  function setField(target, old, current, field, location) {
+    assert.notDeepEqual(current[field], old[field], `${location}/${field} must change`)
+    target[field] = current[field]
+    changes.push({ path: `${location}/${field}`, before: old[field], after: current[field] })
+  }
+  const old788 = oldDraft.questions.find(q => q.id === 'n44-788')
+  const new788 = newDraft.questions.find(q => q.id === 'n44-788')
+  const expected788 = expected.questions.find(q => q.id === 'n44-788')
+  for (const field of ['task', 'limitations']) {
+    setField(expected788.intent, old788.intent, new788.intent, field, '/questions/n44-788/intent')
+  }
+  for (const id of ['n44-791', 'n44-794a', 'n44-794b']) {
+    const old = oldDraft.questions.find(q => q.id === id).key.rationales.find(r => r.option_id === 'C')
+    const current = newDraft.questions.find(q => q.id === id).key.rationales.find(r => r.option_id === 'C')
+    const target = expected.questions.find(q => q.id === id).key.rationales.find(r => r.option_id === 'C')
+    for (const field of ['derivation', 'misconception']) {
+      setField(target, old, current, field, `/questions/${id}/key/rationales/C`)
+    }
+  }
+  const oldCoverage = oldDraft.coverage.find(c => c.source_number === '788')
+  const newCoverage = newDraft.coverage.find(c => c.source_number === '788')
+  const expectedCoverage = expected.coverage.find(c => c.source_number === '788')
+  for (const field of ['omitted_tasks', 'reason']) {
+    setField(expectedCoverage, oldCoverage, newCoverage, field, '/coverage/788')
+  }
+  assert.deepEqual(newDraft, expected, 'A field outside the exact internal repair allowlist changed')
+  assert(read(after, 'view.json').equals(read(before, 'view.json')), 'Visible view bytes changed')
+  assert.deepEqual(json(after, 'view.json'), {
+    questions: newDraft.questions.map(({ id, view }) => ({ id, ...view })),
+  })
+  const diffs = ['author.mjs', 'draft.json'].map(name => {
+    const current = name === 'author.mjs' ? dir : after
+    const result = spawnSync('git', ['diff', '--no-index', '--no-ext-diff', '--no-color',
+      '--', path.join(before, name), path.join(current, name)], { encoding: 'utf8' })
+    assert.equal(result.status, 1)
+    assert.equal(result.stderr, '')
+    return result.stdout
+  })
+  fs.writeFileSync(path.join(dir, 'internal-repair.patch'), diffs.join('\n'), { flag: 'wx' })
+  write('internal-repair-record.json', {
+    rejected_snapshot: path.relative(process.cwd(), before),
+    repaired_snapshot: path.relative(process.cwd(), after),
+    changes, changed_internal_fields: changes.length,
+    source_bytes_unchanged: true, frozen_solution_bytes_unchanged: true,
+    question_order_unchanged: true, correct_sets_unchanged: true,
+    visible_text_unchanged: true, view_bytes_unchanged: true,
+    before_view_sha256: hash(read(before, 'view.json')),
+    after_view_sha256: hash(read(after, 'view.json')),
+    before_draft_sha256: hash(read(before, 'draft.json')),
+    after_draft_sha256: hash(read(after, 'draft.json')),
+    semantic_review: 'pending; reviewer files are untouched',
+  })
+  fs.copyFileSync(path.join(after, 'draft.json'), path.join(dir, 'draft.json'))
+  assert(read(dir, 'draft.json').equals(read(after, 'draft.json')))
+  assert(read(dir, 'view.json').equals(read(before, 'view.json')))
+  console.log(JSON.stringify({
+    changed_internal_fields: changes.length,
+    view_bytes_unchanged: true, view_sha256: hash(read(dir, 'view.json')),
+    questions: newDraft.questions.length,
+    options: newDraft.questions.reduce((n, q) => n + q.view.options.length, 0),
+    exact_diff: path.join(dir, 'internal-repair.patch'),
+  }, null, 2))
+} else if (phase === 'check') {
+  const relative = path.relative(process.cwd(), dir)
+  const args = ['.agents/skills/ld-s10y-choice/scripts/validate.py', '--repo', '.',
+    '--seed', `${relative}/source.json`, '--draft', `${relative}/draft.json`]
+  const result = spawnSync('python3', args, { encoding: 'utf8' })
+  const record = {
+    command: `python3 ${args.join(' ')}`, exit_code: result.status,
+    stdout: result.stdout, stderr: result.stderr,
+    structural_only: true, changed_snapshot_only: true,
+    semantic_review: 'not run; independent re-review pending',
+  }
+  write('structural-check-internal-repair.json', record)
+  console.log(JSON.stringify(record, null, 2))
+  process.exitCode = result.status ?? 1
+} else {
+  throw new Error('Specify freeze, retain, or check')
+}

@@ -1,0 +1,81 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { createRequire } from 'node:module'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+
+delete process.env.PWDEBUG
+process.env.PLAYWRIGHT_HTML_OPEN = 'never'
+const require = createRequire(path.join(process.cwd(), 'package.json'))
+const { chromium } = require('@playwright/test')
+const repo = path.resolve(process.cwd(), '..')
+const own = path.dirname(fileURLToPath(import.meta.url))
+const output = path.join(path.dirname(own), 'batch19-render')
+const prefix = '6a-alg6-c4-s2-n35-'
+const hash = (filename) => crypto.createHash('sha256').update(fs.readFileSync(filename)).digest('hex')
+const primary = JSON.parse(fs.readFileSync(path.join(own, 'primary-native-manifest.json')))
+const html = primary.rendered_html.find((item) => item.path.endsWith('/choices.html'))
+const before = hash(path.join(repo, html.path))
+if (before !== html.sha256) throw new Error('Existing choices HTML changed')
+const report = path.join(output, `${prefix}independent-choice-region-supplement.json`)
+if (fs.existsSync(report)) throw new Error('Preserve existing region report')
+const screenshots = []
+const errors = []
+const browser = await chromium.launch({ headless: true })
+try {
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1 })
+    try {
+      const page = await context.newPage()
+      page.on('pageerror', (error) => errors.push(error.message))
+      await page.goto(pathToFileURL(path.join(repo, html.path)).href)
+      await page.evaluate(() => document.fonts.ready)
+      const save = async (locator, kind) => {
+        const filename = `${prefix}choices-${viewport.width}-${kind}.png`
+        const target = path.join(output, filename)
+        if (fs.existsSync(target)) throw new Error('Preserve existing region PNG')
+        await locator.scrollIntoViewIfNeeded()
+        await page.evaluate(() => new Promise((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(resolve))))
+        await page.waitForTimeout(180)
+        const bounds = await locator.boundingBox()
+        if (bounds.height > viewport.height - 20) throw new Error('Region needs vertical slices')
+        await locator.screenshot({ path: target, animations: 'disabled' })
+        screenshots.push({
+          path: path.relative(repo, target), filename, sha256: hash(target),
+          surface: 'choices', viewport_width: viewport.width, viewport_height: viewport.height,
+          kind, origin: 'same_html_supplement', actually_opened: false,
+          screenshot_saved_not_yet_visually_approved: true,
+        })
+      }
+      for (let index = 1; index < 6; index++) {
+        await save(page.locator('.choice-stem').nth(index), `question-${index + 1}-stem`)
+      }
+      const numericOptions = page.locator('.choice').nth(5).locator('.choice-options>li')
+      if (await numericOptions.count() !== 3) throw new Error('Expected three numeric-tuple options')
+      for (let index = 0; index < 3; index++) {
+        await save(numericOptions.nth(index), `numeric-option-${index + 1}`)
+      }
+    } finally {
+      await context.close()
+    }
+  }
+} catch (error) {
+  errors.push(error.stack || String(error))
+  process.exitCode = 1
+} finally {
+  await browser.close()
+  const after = hash(path.join(repo, html.path))
+  if (after !== before) errors.push('Choices HTML changed')
+  fs.writeFileSync(report, `${JSON.stringify({
+    lesson: 'alg6-c4-s2-n35', scope: 'display region coverage only',
+    status: errors.length ? 'blocked' : 'captured_not_yet_observed',
+    html_checks: [{ ...html, before_sha256: before, after_sha256: after, unchanged: before === after }],
+    browser_headless: true, isolated_contexts: true, browser_closed_finally: true,
+    pwdebug_cleared: true, html_report_open: 'never',
+    additional_unique_surface_viewport_combinations: 0,
+    screenshots, actual_supplement_png_count: screenshots.length, errors,
+  }, null, 2)}\n`, { flag: 'wx' })
+  if (errors.length) process.exitCode = 1
+  console.log(JSON.stringify({ supplemental_region_png_count: screenshots.length, errors }))
+}

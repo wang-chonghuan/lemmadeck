@@ -1,0 +1,20 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { spawnSync } from 'node:child_process'
+
+const dir = path.dirname(fileURLToPath(import.meta.url))
+const relative = path.relative(process.cwd(), dir)
+const args = ['.agents/skills/ld-s10y-choice/scripts/validate.py', '--repo', '.',
+  '--seed', `${relative}/source.json`, '--draft', `${relative}/draft.json`]
+const result = spawnSync('python3', args, { encoding: 'utf8' })
+const record = {
+  command: `python3 ${args.join(' ')}`, exit_code: result.status,
+  stdout: result.stdout, stderr: result.stderr,
+  structural_only: true, changed_snapshot_only: true,
+  semantic_review: 'not run; independent re-review pending',
+}
+fs.writeFileSync(path.join(dir, 'structural-check-813-818-repair.json'),
+  JSON.stringify(record, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify(record, null, 2))
+process.exitCode = result.status ?? 1

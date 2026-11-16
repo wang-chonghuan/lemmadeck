@@ -1,0 +1,427 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const root = path.dirname(new URL(import.meta.url).pathname);
+const r = String.raw;
+
+// Exact visible text retained from the previously authorized original view read.
+// This is reviewer evidence, not an author serializer or an internal draft input.
+const priorUnchanged = [
+  ['n45-804', r`正方形边长为 $\frac78$ 米，面积是多少？`, [
+    r`$\frac74$ 平方米`, r`$\frac{49}{64}$ 平方米`, r`$\frac78$ 平方米`, r`$\frac72$ 平方米`,
+  ]],
+  ['n45-805', r`糖果每公斤 $\frac45$ 美元。$\frac34$ 公斤和 $\frac54$ 公斤依次各值多少美元？`, [
+    r`$\frac35$ 美元；$1$ 美元`, r`$\frac{16}{15}$ 美元；$\frac{16}{25}$ 美元`, r`$\frac34$ 美元；$\frac54$ 美元`,
+  ]],
+  ['n45-806a', r`依次计算：$\frac34\cdot\frac57$；$\frac18\cdot\frac34$；$\frac25\cdot\frac7{11}$。哪一行的结果全部正确？`, [
+    r`$\frac{15}{11};\ \frac14;\ \frac78$`, r`$\frac{15}{28};\ \frac3{32};\ \frac{14}{55}$`, r`$\frac8{11};\ \frac13;\ \frac9{16}$`,
+  ]],
+  ['n45-806b', r`依次计算：$\frac12\cdot\frac{11}3$；$-\frac37\cdot(-\frac12)$；$\frac45\cdot(-\frac23)$。哪一行的结果全部正确？`, [
+    r`$\frac{11}6;\ \frac3{14};\ -\frac8{15}$`, r`$\frac{11}6;\ -\frac3{14};\ -\frac8{15}$`, r`$\frac{11}6;\ \frac3{14};\ \frac8{15}$`,
+  ]],
+  ['n45-807a', r`依次计算：$\frac47\cdot\frac56$；$\frac{11}{12}\cdot\frac89$；$\frac25\cdot\frac32$；$\frac{11}5\cdot\frac35$。哪一行的结果全部正确？`, [
+    r`$\frac{10}{21};\ \frac{22}{27};\ \frac35;\ \frac{33}{25}$`, r`$\frac{20}{13};\ \frac{88}{21};\ \frac67;\ \frac{33}{10}$`, r`$\frac9{13};\ \frac{19}{21};\ \frac57;\ \frac75$`,
+  ]],
+  ['n45-807b', r`依次计算：$\frac{15}{16}\cdot\frac59$；$\frac{12}5\cdot\frac9{16}$；$-\frac25\cdot\frac14$；$-\frac18\cdot(-\frac8{11})$。哪一行的结果全部正确？`, [
+    r`$\frac{25}{48};\ \frac{27}{20};\ \frac1{10};\ \frac1{11}$`, r`$\frac{25}{48};\ \frac{27}{20};\ -\frac1{10};\ -\frac1{11}$`, r`$\frac{25}{48};\ \frac{27}{20};\ -\frac1{10};\ \frac1{11}$`,
+  ]],
+  ['n45-808a', r`依次计算：$\frac38\cdot\frac6{15}$；$\frac59\cdot\frac66$；$\frac23\cdot\frac32$；$\frac65\cdot\frac52$。哪一行的结果全部正确？`, [
+    r`$\frac9{23};\ \frac{11}{15};\ 1;\ \frac{11}7$`, r`$\frac3{20};\ \frac59;\ 1;\ 3$`, r`$\frac{15}{16};\ \frac59;\ \frac49;\ \frac{12}{25}$`,
+  ]],
+  ['n45-808b', r`依次计算：$\frac{32}7\cdot\frac{77}8$；$\frac{26}{17}\cdot\frac{68}{13}$；$-\frac56\cdot\frac{12}{25}$；$\frac47\cdot(-\frac{21}{16})$。哪一行的结果全部正确？`, [
+    r`$44;\ 8;\ -\frac25;\ -\frac34$`, r`$44;\ 8;\ \frac25;\ \frac34$`, r`$\frac{2464}{15};\ \frac{884}{15};\ -\frac{60}{31};\ -\frac{84}{23}$`,
+  ]],
+  ['n45-809', r`分别用分数乘法和小数乘法计算 $\frac{73}{1000}\cdot\frac{41}{100}$，并比较结果。哪一项两种方法都正确？`, [
+    r`$\frac{2993}{10000}=0.2993$；$0.073\cdot0.41=0.2993$，两者相等。`,
+    r`$\frac{2993}{100000}=0.02993$；$0.073\cdot0.41=0.02993$，两者相等。`,
+    r`$\frac{2993}{100000}=0.02993$；$0.073\cdot0.41=0.2993$，两者不相等。`,
+  ]],
+  ['n45-810', r`把 $\frac ab\cdot\frac cd$ 和 $\frac rx\cdot\frac mn$ 依次化成分式。原式中的分母均不为零。哪一项结果和适用条件都正确？`, [
+    r`$\frac{ac}{bd}$，$b,d\ne0$；$\frac{rm}{xn}$，$x,n\ne0$。分子可以为零。`,
+    r`$\frac{a+c}{b+d}$，$b,d\ne0$；$\frac{r+m}{x+n}$，$x,n\ne0$。分子可以为零。`,
+    r`$\frac{ad}{bc}$，$b,c\ne0$；$\frac{rn}{xm}$，$x,m\ne0$。原分子均须不为零。`,
+  ]],
+  ['n45-811a', r`依次计算：$\frac38\cdot2$；$6\cdot\frac5{18}$；$\frac5{16}\cdot12$；$25\cdot\frac1{10}$。哪一行的结果全部正确？`, [
+    r`$\frac3{16};\ \frac5{108};\ \frac5{192};\ \frac1{250}$`, r`$\frac34;\ \frac53;\ \frac{15}4;\ \frac52$`, r`$\frac58;\ \frac{11}{18};\ \frac{17}{16};\ \frac{13}5$`,
+  ]],
+  ['n45-811b', r`依次计算：$\frac12\cdot30$；$140\cdot\frac17$；$300\cdot\frac1{16}$；$\frac7{11}\cdot11$。哪一行的结果全部正确？`, [
+    r`$15;\ 20;\ \frac{75}4;\ 7$`, r`$\frac1{60};\ \frac1{980};\ \frac1{4800};\ \frac7{121}$`, r`$\frac{31}2;\ \frac{141}7;\ \frac{301}{16};\ \frac{18}{11}$`,
+  ]],
+  ['n45-811c', r`依次计算：$40\cdot\frac7{15}$；$24\cdot\frac{15}{16}$；$\frac23\cdot1$；$\frac{19}{20}\cdot0$。哪一行的结果全部正确？`, [
+    r`$\frac{56}3;\ \frac{45}2;\ \frac23;\ \frac{19}{20}$`, r`$\frac7{600};\ \frac5{128};\ \frac23;\ 0$`, r`$\frac{56}3;\ \frac{45}2;\ \frac23;\ 0$`,
+  ]],
+  ['n45-812', r`依次计算：$4\frac27\cdot3$；$8\frac2{11}\cdot11$；$1\frac13\cdot4$；$-2\frac13\cdot6$。哪一行的结果全部正确？`, [
+    r`$\frac{18}7;\ 10;\ \frac83;\ -6$`, r`$\frac{90}7;\ 90;\ \frac{16}3;\ -14$`, r`$12\frac27;\ 88\frac2{11};\ 4\frac13;\ -12\frac13$`,
+  ]],
+  ['n45-814', r`哪一项正确叙述乘法交换律，用变量表示它，并用 $\frac9{16}$ 和 $\frac34$ 验证？`, [
+    r`交换因数只需交换分子：$ab=ba$；两种次序的积都为 $\frac{27}{20}$。`,
+    r`交换两个因数，积不变：$ab=ba$；$\frac9{16}\cdot\frac34=\frac34\cdot\frac9{16}=\frac{27}{64}$。`,
+    r`改变三个因数的分组，积不变：$(ab)c=a(bc)$；$\frac9{16}\cdot\frac34=\frac{27}{64}$。`,
+  ]],
+  ['n45-815', r`先把第一个因数化成分数，再计算 $0.75\cdot\frac49$ 和 $0.8\cdot\frac58$。哪组转换和结果全部正确？`, [
+    r`$0.75=\frac34$，积为 $\frac13$；$0.8=\frac45$，积为 $\frac12$。`,
+    r`$0.75=\frac{75}{10}$，积为 $\frac{10}3$；$0.8=\frac8{100}$，积为 $\frac1{20}$。`,
+    r`$0.75=\frac34$，积为 $\frac{27}{16}$；$0.8=\frac45$，积为 $\frac{32}{25}$。`,
+  ]],
+  ['n45-816', r`先把第一个因数化成小数，再计算 $\frac15\cdot0.3$ 和 $\frac3{20}\cdot6.4$。哪组转换和结果全部正确？`, [
+    r`$\frac15=0.5$，积为 $0.15$；$\frac3{20}=0.3$，积为 $1.92$。`,
+    r`$\frac15=0.2$，积为 $0.06$；$\frac3{20}=0.15$，积为 $0.96$。`,
+    r`$\frac15=0.2$，积为 $0.6$；$\frac3{20}=0.15$，积为 $9.6$。`,
+  ]],
+  ['n45-817', r`依次计算：$\frac35\cdot\frac27\cdot\frac56$；$\frac7{10}\cdot\frac5{49}\cdot\frac23$。哪一行的结果全部正确？`, [
+    r`$\frac17;\ \frac1{21}$`, r`$\frac53;\ \frac{35}{31}$`, r`$\frac6{35};\ \frac1{14}$`,
+  ]],
+  ['n45-819', r`步行速度为5公里/小时。在 $\frac34,\frac12,\frac1{10}$ 小时内，依次走多少公里？`, [
+    r`$\frac{20}3;\ 10;\ 50$ 公里`, r`$\frac{15}4;\ \frac52;\ \frac12$ 公里`, r`$\frac34;\ \frac12;\ \frac1{10}$ 公里`,
+  ]],
+  ['n45-820', r`长方体的三个度量为 $\frac25,\frac35,\frac{25}4$ 分米。体积是多少？`, [
+    r`$\frac32$ 立方分米`, r`$\frac6{25}$ 立方分米`, r`$\frac{29}4$ 立方分米`,
+  ]],
+  ['n45-821', r`把每个数表示成两个分数的积。下面哪些等式成立？选出所有成立的等式，不要求表示方法唯一。`, [
+    r`$\frac16=\frac12\cdot\frac13$`, r`$\frac16=\frac12\cdot\frac16$`,
+    r`$\frac34=\frac32\cdot\frac12$`, r`$\frac34=\frac34\cdot\frac12$`,
+    r`$\frac98=\frac34\cdot\frac34$`, r`$\frac98=\frac32\cdot\frac34$`,
+    r`$\frac48=\frac23\cdot\frac34$`, r`$\frac48=\frac48\cdot\frac12$`,
+  ]],
+  ['n45-822', r`一叠纸250张。第一个手稿用了全部的 $\frac35$，第二个用了剩余纸张的 $\frac45$。第二个手稿用了多少张？`, [
+    r`$200$ 张`, r`$80$ 张`, r`$120$ 张`, r`$20$ 张`,
+  ]],
+  ['n45-823', r`一本书90美分，哥哥付了书价的 $\frac3{10}$，妹妹付其余的钱。妹妹付了多少？`, [
+    r`$63$ 美分`, r`$27$ 美分`, r`$60$ 美分`,
+  ]],
+  ['n45-824', r`把每个因数化成假分数再乘：$1\frac35\cdot3\frac34$；$1\frac34\cdot1\frac57$；$3\frac56\cdot1\frac7{23}$；$2\frac12\cdot2\frac2{15}$。哪一行转换和结果全部正确？`, [
+    r`$\frac85\cdot\frac{15}4=6$；$\frac74\cdot\frac{12}7=3$；$\frac{23}6\cdot\frac{30}{23}=5$；$\frac52\cdot\frac{32}{15}=\frac{16}3$。`,
+    r`$\frac45\cdot\frac64=\frac65$；$\frac44\cdot\frac67=\frac67$；$\frac86\cdot\frac8{23}=\frac{32}{69}$；$\frac32\cdot\frac4{15}=\frac25$。`,
+    r`$\frac85\cdot\frac{15}4=\frac{32}{75}$；$\frac74\cdot\frac{12}7=\frac{49}{48}$；$\frac{23}6\cdot\frac{30}{23}=\frac{529}{180}$；$\frac52\cdot\frac{32}{15}=\frac{75}{64}$。`,
+  ]],
+  ['n45-825a', r`依次计算：$1\frac27\cdot1\frac14$；$4\frac23\cdot\frac25$；$\frac49\cdot2\frac34$；$2\frac34\cdot\frac4{11}$。哪一行的结果全部正确？`, [
+    r`$\frac3{14};\ \frac45;\ \frac59;\ \frac5{11}$`, r`$\frac{45}{28};\ \frac{28}{15};\ \frac{11}9;\ 1$`, r`$\frac{36}{35};\ \frac{35}3;\ \frac{16}{99};\ \frac{121}{16}$`,
+  ]],
+  ['n45-825b', r`依次计算：$3\frac14\cdot4$；$10\cdot5\frac25$；$-1\frac23\cdot(-2\frac25)$；$-7\frac3{11}\cdot2\frac{19}{40}$。哪一行的结果全部正确？`, [
+    r`$13;\ 54;\ 4;\ -18$`, r`$13;\ 54;\ -4;\ -18$`, r`$13;\ 54;\ 4;\ -\frac{333}{20}$`,
+  ]],
+  ['n45-826a', r`按 $s=vt$，$v=9\frac12$ 公里/小时、$t=4\frac12$ 小时。距离是多少？`, [
+    r`$\frac{19}9$ 公里`, r`$\frac{171}4$ 公里`, r`$\frac{25}2$ 公里`,
+  ]],
+  ['n45-826b', r`按 $s=vt$，$v=3\frac35$ 米/分、$t=\frac56$ 分。距离是多少？`, [
+    r`$3$ 米`, r`$\frac{108}{25}$ 米`, r`$1$ 米`,
+  ]],
+  ['n45-827', r`按 $V=abc$，$a=\frac45$ 分米、$b=2\frac12$ 分米、$c=1\frac34$ 分米。体积是多少？`, [
+    r`$2$ 立方分米`, r`$\frac{101}{20}$ 立方分米`, r`$\frac72$ 立方分米`,
+  ]],
+  ['n45-828', r`1立方分米铁的质量为 $7\frac45$ 公斤。体积 $3\frac13$ 立方分米的铁制零件质量是多少？`, [
+    r`$26$ 公斤`, r`$\frac{117}{50}$ 公斤`, r`$\frac{167}{15}$ 公斤`,
+  ]],
+  ['n45-829', r`共有 $8\frac34$ 吨土豆。第一天售出全部的 $\frac35$，第二天售出第一天销售量的 $\frac12$。第二天售出多少吨？`, [
+    r`$\frac74$ 吨`, r`$\frac{21}8$ 吨`, r`$\frac{35}8$ 吨`,
+  ]],
+  ['n45-830', r`作任意非退化三角形 $MPK$，取 $MK,MP$ 的中点 $D,E$，令直线 $x=DE$。怎样作三角形关于 $x$ 的对称图形？`, [
+    r`分别从 $M,P,K$ 向 $x$ 作垂线，在各自垂足另一侧取等距点 $M',P',K'$，再连接三点。`,
+    r`分别从 $M,P,K$ 向 $x$ 作垂线，在各自垂足同一侧取等距点 $M',P',K'$，再连接三点。`,
+    r`固定 $M$，交换 $P,K$ 的名称，连接这三点，便是关于 $x$ 的对称图形。`,
+  ]],
+  ['n45-831', r`已知直线 $k$ 和线外一点 $P$，要作 $k$ 关于点 $P$ 的对称图形。哪种作法正确？`, [
+    r`直接过 $P$ 作一条与 $k$ 平行的直线，把这条过 $P$ 的平行线作为所求图形。`,
+    r`取 $k$ 上不同的两点 $A,B$，作 $A',B'$ 使 $P$ 分别是 $AA',BB'$ 的中点，连 $A'B'$。`,
+    r`从 $P$ 向 $k$ 作垂线，直接把这条过 $P$ 的垂线作为所求图形。`,
+    r`取 $k$ 上不同的两点 $A,B$，在直线 $PA,PB$ 上分别于 $P$ 另一侧取点，使 $PA'=\frac12PA$、$PB'=\frac12PB$，连两点。`,
+  ]],
+  ['n45-832', r`两直线 $x,y$ 过 $M$，夹角为 $62^\circ$。要分别作 $x$ 关于 $y$ 的像、$y$ 关于 $x$ 的像，哪种作法两项都正确？`, [
+    r`取 $A\in x$、$B\in y$，且均不同于 $M$；把 $A$ 关于 $y$ 反射到 $A'$，把 $B$ 关于 $x$ 反射到 $B'$。两条像直线分别是 $MA'$ 和 $MB'$。`,
+    r`取 $A\in x$、$B\in y$，且均不同于 $M$；把 $A,B$ 关于点 $M$ 对称到 $A',B'$。两条像直线分别是 $MA'$ 和 $MB'$。`,
+    r`取 $A\in x$、$B\in y$，且均不同于 $M$；把 $A$ 关于 $x$ 反射到 $A'$，把 $B$ 关于 $y$ 反射到 $B'$。两条像直线分别是 $MA'$ 和 $MB'$。`,
+  ]],
+  ['n45-833', r`依次计算：$4\frac15$、$1\frac68$、$2\frac35$、$6\frac12$、$7\frac23$、$10\frac6{11}$、$3.75$、$5.25$（化成假分数）。哪一行的结果全部正确？`, [
+    r`$\frac{21}5;\ \frac74;\ \frac{13}5;\ \frac{13}2;\ \frac{23}3;\ \frac{116}{11};\ \frac{15}4;\ \frac{21}4$`,
+    r`$1;\ \frac78;\ 1;\ \frac72;\ 3;\ \frac{16}{11};\ \frac{15}4;\ \frac{21}4$`,
+    r`$\frac{21}5;\ \frac74;\ \frac{13}5;\ \frac{13}2;\ \frac{23}3;\ \frac{116}{11};\ \frac{75}2;\ \frac{105}2$`,
+  ]],
+  ['n45-834a', r`依次计算：$\frac{2\cdot9}{3\cdot8}$；$\frac{14\cdot25}{15\cdot1}$；$\frac{36\cdot5}{25\cdot24}$（约分）。哪一行的结果全部正确？`, [
+    r`$\frac43;\ \frac3{70};\ \frac{10}3$`, r`$\frac34;\ \frac{70}3;\ \frac3{10}$`, r`$1;\ \frac{39}{16};\ \frac{41}{49}$`,
+  ]],
+  ['n45-834b', r`依次计算：$\frac{3\cdot10}{5\cdot9}$；$\frac{27\cdot10}{5\cdot9}$；$\frac{27\cdot10}{20\cdot63}$（约分）。哪一行的结果全部正确？`, [
+    r`$\frac23;\ 6;\ \frac3{14}$`, r`$\frac32;\ \frac16;\ \frac{14}3$`, r`$\frac{13}{14};\ \frac{37}{14};\ \frac{37}{83}$`,
+  ]],
+  ['n45-836a', r`做李子酱时废料占李子的28%。要得到8.4吨李子酱，需用多少吨李子？`, [
+    r`$\frac{35}3$ 吨`, r`$30$ 吨`, r`$6.048$ 吨`,
+  ]],
+  ['n45-836b', r`做樱桃酱时废料占樱桃的18%。要得到7.2吨樱桃酱，需用多少吨樱桃？`, [
+    r`$40$ 吨`, r`$\frac{360}{41}$ 吨`, r`$5.904$ 吨`,
+  ]],
+  ['n45-837a', r`实验室有25张桌子，分三屉桌和四屉桌，共91个抽屉。设三屉桌为 $a$ 张，哪一项方程和两种桌数都正确？`, [
+    r`$4a+3(25-a)=91$；三屉桌16张、四屉桌9张。`,
+    r`$3a+4(25-a)=91$；三屉桌9张、四屉桌16张。`,
+    r`$3a+4a=91$；三屉桌13张、四屉桌13张。`,
+  ]],
+  ['n45-837b', r`一栋楼有两间一套和三间一套的住宅共72套，共168个房间。设两间一套住宅为 $b$ 套，哪一项方程和两种套数都正确？`, [
+    r`$2b+3(72-b)=168$；两间一套48套、三间一套24套。`,
+    r`$3b+2(72-b)=168$；两间一套24套、三间一套48套。`,
+    r`$2b+3(72-b)=168$；两间一套24套、三间一套48套。`,
+  ]],
+  ['n45-838a', r`依次计算：$-2.7(1.5x-3.4)=-2.3x-0.69$；$0.2(x-0.3)=0.8(x+0.3)-0.48$（求 $x$）。哪一行的结果全部正确？`, [
+    r`$5.64;\ 0.3$`, r`$-5.64;\ -0.3$`, r`$\frac{849}{175};\ -0.5$`,
+  ]],
+  ['n45-838b', r`依次计算：$-3.7(2.5x-7.6)=-3.66+2.1x$；$0.4(x-0.6)=0.5(x-0.8)+0.08$（求 $x$）。哪一行的结果全部正确？`, [
+    r`$-2.8;\ -0.8$`, r`$2.8;\ 0.8$`, r`$\frac{2446}{1135};\ 1.6$`,
+  ]],
+  ['n45-839a', r`依次计算：$-2.6(3-3.8)+4.2(4-2.7)$；$-1.212:0.4+2.9(2-4.3)$。哪一行的结果全部正确？`, [
+    r`$3.38;\ -9.7$`, r`$7.54;\ -9.7$`, r`$7.54;\ 3.64$`,
+  ]],
+  ['n45-839b', r`依次计算：$-3.8(4-4.9)+13.4(3-2.8)$；$-3.636:0.6+2.6(5-1.1)$。哪一行的结果全部正确？`, [
+    r`$6.1;\ 4.08$`, r`$-0.74;\ 4.08$`, r`$6.1;\ 16.2$`,
+  ]],
+  ['n45-840a', r`计算 $222.68:(880.08-26.6\cdot32.8)+285.56:(660.04-12.7\cdot51.6)$。`, [
+    r`$89.8$`, r`$-31.2$`, r`$1772.65$`,
+  ]],
+  ['n45-840b', r`计算 $290.29:(650.03-32.8\cdot19.6)+90.89:(1140.02-24.4\cdot46.6)$。`, [
+    r`$10.1$`, r`$71.1$`, r`$1238.3$`,
+  ]],
+  ['n45-841a', r`依次计算：$\frac9{10}\cdot\frac56$；$\frac6{25}\cdot\frac{20}{21}$；$\frac{17}{13}\cdot\frac{26}{51}$；$\frac{40}7\cdot\frac{14}5$。哪一行的结果全部正确？`, [
+    r`$\frac34;\ \frac8{35};\ \frac23;\ 16$`, r`$\frac{14}{16};\ \frac{26}{46};\ \frac{43}{64};\ \frac{54}{12}$`, r`$\frac{45}{16};\ \frac{60}{23};\ \frac{221}{32};\ \frac{140}3$`,
+  ]],
+  ['n45-841b', r`依次计算：$\frac{21}5\cdot(-\frac{15}7)$；$-\frac{10}{13}\cdot(-\frac{65}{12})$；$\frac{57}{37}\cdot\frac{74}{85}$；$\frac{81}{115}\cdot\frac{46}{81}$。哪一行的结果全部正确？`, [
+    r`$9;\ \frac{25}6;\ \frac{114}{85};\ \frac25$`, r`$-9;\ \frac{25}6;\ \frac{114}{85};\ \frac25$`, r`$-9;\ -\frac{25}6;\ \frac{114}{85};\ \frac25$`,
+  ]],
+  ['n45-841c', r`依次计算：$\frac{101}{102}\cdot\frac{51}{202}$；$5\cdot2\frac15$；$4\frac27\cdot2$；$-1\frac1{12}\cdot3$。哪一行的结果全部正确？`, [
+    r`$\frac14;\ 11;\ \frac{60}7;\ -\frac{13}4$`, r`$1;\ 11;\ \frac{60}7;\ -\frac{13}4$`, r`$\frac14;\ 10\frac15;\ 8\frac27;\ -3\frac1{12}$`,
+  ]],
+  ['n45-842a', r`求 $\frac25m$ 在 $m=\frac12,\frac25,\frac52,\frac{15}8,\frac{15}{16}$ 时的值。依次哪一行全部正确？`, [
+    r`$\frac15;\ \frac4{25};\ 1;\ \frac34;\ \frac38$`, r`$\frac45;\ 1;\ \frac4{25};\ \frac{16}{75};\ \frac{32}{75}$`, r`$\frac12;\ \frac25;\ \frac52;\ \frac{15}8;\ \frac{15}{16}$`,
+  ]],
+  ['n45-842b', r`求 $\frac49x$ 在 $x=\frac14,\frac92,\frac49$ 时的值。依次哪一行全部正确？`, [
+    r`$\frac{16}9;\ \frac8{81};\ 1$`, r`$\frac19;\ 2;\ \frac{16}{81}$`, r`$\frac14;\ \frac92;\ \frac49$`,
+  ]],
+  ['n45-843', r`蜗牛速度为 $\frac1{12}$ 米/分。经过 $\frac34,\frac35,\frac56$ 小时，时间换算成分钟和距离依次是哪一组？`, [
+    r`$\frac34,\frac35,\frac56$ 分；距离 $\frac1{16},\frac1{20},\frac5{72}$ 米。`,
+    r`$45,36,50$ 分；距离 $\frac{15}4,3,\frac{25}6$ 米。`,
+    r`$\frac1{80},\frac1{100},\frac1{72}$ 分；距离 $\frac1{960},\frac1{1200},\frac1{864}$ 米。`,
+  ]],
+  ['n45-844', r`长方体长 $\frac49$ 米、宽 $\frac34$ 米、高 $\frac13$ 米。体积是多少？`, [
+    r`$\frac13$ 立方米`, r`$\frac19$ 立方米`, r`$\frac{55}{36}$ 立方米`,
+  ]],
+  ['n45-845', r`依次计算：$2\frac34$、$3\frac47$、$20\frac1{17}$、$14\frac{15}{37}$、$5.24$、$8.25$（化成假分数）。哪一行的结果全部正确？`, [
+    r`$\frac54;\ 1;\ \frac{21}{17};\ \frac{29}{37};\ \frac{131}{25};\ \frac{33}4$`,
+    r`$\frac{11}4;\ \frac{25}7;\ \frac{341}{17};\ \frac{533}{37};\ \frac{131}{25};\ \frac{33}4$`,
+    r`$\frac{11}4;\ \frac{25}7;\ \frac{341}{17};\ \frac{533}{37};\ \frac{262}5;\ \frac{165}2$`,
+  ]],
+  ['n45-846a', r`依次计算：$3\frac35\cdot1\frac19$；$2\frac{14}{15}\cdot6\frac6{11}$；$2\frac2{25}\cdot1\frac9{16}$。哪一行的结果全部正确？`, [
+    r`$4;\ \frac{96}5;\ \frac{13}4$`, r`$\frac4{15};\ \frac{64}{55};\ \frac1{10}$`, r`$\frac{81}{25};\ \frac{121}{270};\ \frac{832}{625}$`,
+  ]],
+  ['n45-846b', r`依次计算：$\frac{13}{43}\cdot8\frac7{26}$；$-6\frac29\cdot10\frac18$；$-5\frac56\cdot(-6\frac67)$。哪一行的结果全部正确？`, [
+    r`$\frac52;\ 63;\ 40$`, r`$\frac52;\ -63;\ 40$`, r`$\frac52;\ -63;\ -40$`,
+  ]],
+  ['n45-847', r`收获27吨西瓜，$\frac29$ 送食堂，剩余的 $\frac67$ 送市场。送市场多少吨？`, [
+    r`$18$ 吨`, r`$\frac{162}7$ 吨`, r`$\frac{36}7$ 吨`,
+  ]],
+  ['n45-848', r`1立方分米铁的质量为 $7\frac45$ 公斤。边长 $2\frac12$ 分米的立方体铁块质量是多少？`, [
+    r`$\frac{39}2$ 公斤`, r`$\frac{975}8$ 公斤`, r`$\frac{195}4$ 公斤`,
+  ]],
+  ['n45-849', r`公共汽车以43.2公里/小时行驶151.2公里。载重汽车晚0.7小时出发，行驶同一路程且同时到达。载重汽车的速度是多少？`, [
+    r`$54$ 公里/小时`, r`$43.2$ 公里/小时`, r`$36$ 公里/小时`,
+  ]],
+  ['n45-850', r`某数比另一个数大0.8，两数的算术平均数为2.7。这个较大的数是多少？`, [
+    r`$2.3$`, r`$3.1$`, r`$3.5$`,
+  ]],
+  ['n45-851', r`设 $a=b=-0.2$，求 $2.3(a-2b)-4.1(a+b)$ 的值。`, [
+    r`$2.1$`, r`$-1.18$`, r`$0.26$`,
+  ]],
+];
+
+const read = (name) => JSON.parse(fs.readFileSync(path.join(root, name), 'utf8'));
+const old = read('view-checks.json');
+const inputPath = path.join(root, '../5m-n45/view.json');
+const bytes = fs.readFileSync(inputPath);
+const revised = JSON.parse(bytes.toString('utf8'));
+const originals = priorUnchanged.map(([id, stem, options]) => ({
+  id,
+  mode: id === 'n45-821' ? 'multiple' : 'single',
+  stem,
+  figure_ids: [],
+  options: options.map((text, index) => ({
+    id: String.fromCharCode(65 + index),
+    text,
+    figure_ids: [],
+  })),
+}));
+const project = (question) => ({
+  id: question.id,
+  mode: question.mode,
+  stem: question.stem,
+  figure_ids: question.figure_ids,
+  options: question.options.map((option) => ({
+    id: option.id,
+    text: option.text,
+    figure_ids: option.figure_ids,
+  })),
+});
+const mismatches = [];
+for (const previous of originals) {
+  const current = revised.questions.find((q) => q.id === previous.id);
+  if (!current || JSON.stringify(project(current)) !== JSON.stringify(previous)) {
+    mismatches.push(previous.id);
+  }
+}
+if (mismatches.length) {
+  console.log(JSON.stringify({ projection_mismatches: mismatches }));
+  process.exitCode = 1;
+} else {
+  const merged = {
+    question_id: 'n45-813-818',
+    task_fidelity: {
+      verdict: 'pass',
+      evidence: 'The merged complete-record response retains source813 fraction product and decimal verification and source818 verbal associativity, variable identity, and both original three-factor groupings. Recognition replaces independent production. All three records supply the same fraction result3/8 and the same individual conversions0.5,0.75 and law; those shared elements are not independently discriminated by the response. The complete-record and grouping judgments still require mathematical checking, so this is an explicit recognition limitation rather than a missing source task.',
+    },
+    redundancy: {
+      verdict: 'pass',
+      evidence: 'The product1/2*3/4 is genuinely both source813 goal and source818 left-group intermediate. One compound response uses it coherently instead of having a separately answer-revealing question. A,B,C differ on grouping computation or decimal verification; none are equivalent complete records.',
+    },
+    answer_leakage: {
+      verdict: 'pass',
+      evidence: 'There are no longer separate813 and818 responses: their shared result lies within one complete record. The common3/8 prefix cannot pick an option because every record contains it. C can be rejected by the mathematical inequality3.75!=3/8, while A versus B still requires valid multiplication in both groupings. No exact complete merged answer is supplied by another question.',
+    },
+    mathematics: {
+      verdict: 'pass',
+      independent_solution: 'From the original sources,1/2*3/4=3/8 and0.5*0.75=0.375=3/8. Associativity is(ab)c=a(bc): left(3/8)*(2/3)=6/24=1/4; right(1/2)*((3/4)*(2/3))=(1/2)*(1/2)=1/4. Independently checking all five lines of all three records leaves onlyB complete and correct.',
+      correct: ['B'],
+      option_checks: [
+        {
+          option_id: 'A',
+          truth: 'incorrect',
+          evidence: 'Fraction-product line3/8 is correct. Both individual decimal conversions and0.375 verification are correct. Verbal/variable associativity is correct. Left grouping is false:3/8*2/3=1/4, not9/16;9/16 instead equals(3/8)/(2/3). Right grouping has false inner product3/4*2/3=1/2, not9/8;9/8 instead is(3/4)/(2/3). Its final1/2*9/8=9/16 is internally correct for that wrong intermediate, but the original right grouping is1/4. The equal9/16 endpoints do not verify the original multiplication groupings.',
+        },
+        {
+          option_id: 'B',
+          truth: 'correct',
+          evidence: 'All five lines are correct: fraction product3/8; exact conversions1/2=0.5,3/4=0.75 and product0.375=3/8; regrouping law(ab)c=a(bc); left(3/8)*(2/3)=1/4; right inner(3/4)*(2/3)=1/2 and outer(1/2)*(1/2)=1/4. Complete true set is{B}.',
+        },
+        {
+          option_id: 'C',
+          truth: 'incorrect',
+          evidence: 'Fraction-product line, individual conversions, law, and both grouping chains are correct. The decimal-verification line is false twice:0.5*0.75=0.375, not3.75, and3.75!=3/8=0.375. Its shared correct groupings do not repair the false check, so the complete record is incorrect.',
+        },
+      ],
+    },
+  };
+  const output = structuredClone(old);
+  output.stage = 'revised_pure_view_truths_frozen_before_internals';
+  output.view_file_sha256 = crypto.createHash('sha256').update(bytes).digest('hex');
+  output.binding = 'Actual revised view-file bytes; no canonical digest or validator. Snapshot includes all63 questions and197 options. Original view-checks.json remains unchanged.';
+  output.input_boundary = 'Only revised questions-only view.json and the reviewer original frozen view-checks.json were read. Original authorized visible text from the earlier read was used as the explicit reference for62 unchanged units. No n45 draft, author internal, source-solutions file, key, answer, serializer, validator, renderer, backend, or service was read.';
+  output.review_order = 'Revised fidelity/redundancy/leakage and package relationships were judged before undisclosed keys. The merged record was independently solved line by line. Unchanged mathematical evidence was retained only after exact comparison of every visible field with the previously read original projection.';
+  output.unchanged_projection_check = {
+    verdict: 'pass',
+    method: 'The62 prior units were explicitly transcribed from the earlier authorized full-view tool output into this reviewer reference, not recovered from a draft or guessed from question IDs. Compared id, mode, exact stem, all source figure IDs, ordered option IDs, exact option texts, and all option figure IDs using parsed JSON objects. The current full view was also read visually as text. This compares parsed projection content; it does not claim original file-byte identity.',
+    unchanged_questions: originals.length,
+    unchanged_options: originals.reduce((n, q) => n + q.options.length, 0),
+    mismatch_ids: [],
+    removed_original_ids: ['n45-813', 'n45-818'],
+    added_revised_ids: ['n45-813-818'],
+    preserved_relative_order: JSON.stringify(revised.questions.filter((q) => q.id !== merged.question_id).map((q) => q.id)) === JSON.stringify(originals.map((q) => q.id)),
+    records: originals.map((q) => ({
+      question_id: q.id,
+      option_count: q.options.length,
+      all_visible_fields_match_original: true,
+      retained_evidence: 'Original independent all-option calculations retained after exact same-input comparison; no key or author truth was read.',
+    })),
+  };
+  output.question_reviews = revised.questions.map((q) => q.id === merged.question_id
+    ? structuredClone(merged)
+    : structuredClone(old.question_reviews.find((record) => record.question_id === q.id)));
+  output.question_reviews.find((q) => q.question_id === 'n45-814').answer_leakage.evidence =
+    'The merged813-818 records state associativity, not the requested commutative verification. General law transfer does not give the specific two-order27/64 verification needed here; no old818-B response remains.';
+  output.question_reviews.find((q) => q.question_id === 'n45-821').answer_leakage.evidence =
+    'All merged813-818 records supply1/2*3/4=3/8, the commuted product in false optionD here. This reveals one incorrect equality after commutativity transfer, not the eight-option complete true set. Independently recomputing all eight products still givesA,C,F,G; recognizing those products remains the original task.';
+  output.package_checks.task_fidelity.evidence =
+    'The revised63-question package retains all covered source tasks804-834 and836-851. Sources813 and818 now share one mathematically justified complete record using their identical intermediate product. Source835 remains absent and conditionally unresolved; valid other questions and the repaired merge do not resolve that source blocker. Do not guess a convention or claim full source coverage.';
+  output.package_checks.task_fidelity.production_losses =
+    old.package_checks.task_fidelity.production_losses.map((text) => text
+      .replace('809/813', '809 and merged813-818')
+      .replace('814/818', '814 and merged813-818'));
+  output.package_checks.task_fidelity.production_losses.push(
+    'Merged813-818 supplies the same3/8 fraction product, individual factor conversions, and associative law in every option; these common entries are not independently discriminated. Its decimal verification and both grouping computations remain meaningful complete-record distinctions. No independent written computation, law composition, or verification production is certified.',
+  );
+  output.package_checks.task_fidelity.limit =
+    'These view-observed recognition losses are recorded explicitly. Author disclosure is not yet authorized. Source835 remains blocked on the unresolved condition/omission; no demand is made for an unsupported replacement.';
+  output.package_checks.redundancy.evidence =
+    'All62 other visible units match the original projection exactly. The repeated1/2*3/4 intermediate now appears within one merged813-818 response rather than two independently graded responses. Both original task chains are retained. Remaining repeated numerical methods are native source repetition, not duplicate complete questions.';
+  output.package_checks.answer_leakage = {
+    verdict: 'pass',
+    evidence: 'The original818-to-813 complete-answer leak is removed because neither old standalone question remains. Shared3/8 within merged choices cannot distinguishA/B/C. The relation to821-D is one mathematical product transfer, not disclosure of its full multiple-response set. 814 repeats a general law as a wrong-task alternative but does not supply the merged complete calculations. All other package dependencies were reconsidered against the unchanged full projection and retain their substantive original distinctions.',
+  };
+  output.package_checks.dependencies = [
+    {
+      questions: ['n45-813-818'],
+      verdict: 'pass',
+      relationship: 'Replaces the old813 and818 responses by one compound record. All fraction/decimal/grouping tasks are visible. Common prefix3/8 is explicit recognition support, not a separately exposed answer.',
+    },
+    {
+      questions: ['n45-813-818', 'n45-821'],
+      verdict: 'pass',
+      relationship: 'The merged shared prefix lets a learner transfer3/8 to reject821-D, but does not determineA/C/F/G or the other seven truth judgments. All eight were independently rechecked:1/6,1/12,3/4,3/8,9/16,9/8,1/2,1/4.',
+    },
+    {
+      questions: ['n45-814', 'n45-813-818'],
+      verdict: 'pass',
+      relationship: '814-C states associativity as a wrong-task option; it supplies the law but neither decimal check nor the two original grouped computations. The merged unit does not supply the27/64 commutative verification requested in814.',
+    },
+    ...old.package_checks.dependencies.filter((dep) =>
+      dep.questions.every((id) => id !== 'n45-813' && id !== 'n45-818')),
+    {
+      questions: ['n45-815', 'n45-816', 'n45-813-818'],
+      verdict: 'pass',
+      relationship: 'Shared fraction/decimal conversion methods remain source concept transfer. The distinct original products of815/816 are not answered by the merged grouping record.',
+    },
+  ];
+  for (const number of ['813', '818']) {
+    const coverage = output.visible_source_coverage.find((c) => c.source_number === number);
+    coverage.question_ids = ['n45-813-818'];
+    coverage.verdict = 'pass';
+    coverage.evidence = number === '813'
+      ? 'The merged response retains fraction product and exact decimal verification. Shared fraction/conversion entries are recognition support and not independently discriminated; the original standalone-answer leak is removed.'
+      : 'The merged response retains verbal associativity, variable identity, and both original groupings. Equal intermediate product gives a mathematical justification for merging with813, not omitting either chain.';
+  }
+  const blocker = output.visible_source_coverage.find((c) => c.source_number === '835');
+  blocker.verdict = 'blocked';
+  blocker.evidence =
+    'Still no835 question in the revised view. The wording about ordinate being smaller by half, especially with the specified negative abscissa, remains an unresolved source interpretation rather than a convention to guess. Conditional proportional interpretation y=x/2 gives(3,3/2),(-5,-5/2),(6,3),(5,5/2),(3,3/2),(2,1); those computations do not establish source authority or resolve omission. Preserve honest blocking until authorized source clarification.';
+  output.package_checks.coverage.evidence = blocker.evidence;
+  output.source835_conditional_evidence = {
+    verdict: 'blocked',
+    interpretation: 'Only if the original sentence is confirmed to mean proportional halving: y=x/2 on the full real line.',
+    conditional_points: ['(3,3/2)', '(-5,-5/2)', '(6,3)', '(5,5/2)', '(3,3/2)', '(2,1)'],
+    note: 'These are six requested substitutions and five distinct points, but the conditional solution is not a resolution. Do not require the author to invent authoritative source meaning.',
+  };
+  const optionChecks = output.question_reviews.flatMap((q) => q.mathematics.option_checks);
+  output.counts = {
+    questions: output.question_reviews.length,
+    options: optionChecks.length,
+    single_questions: revised.questions.filter((q) => q.mode === 'single').length,
+    multiple_questions: revised.questions.filter((q) => q.mode === 'multiple').length,
+    question_math_checks: output.question_reviews.length,
+    option_checks: optionChecks.length,
+    true_options: optionChecks.filter((o) => o.truth === 'correct').length,
+    false_options: optionChecks.filter((o) => o.truth === 'incorrect').length,
+    unchanged_questions_confirmed: originals.length,
+    unchanged_option_evidence_retained_after_comparison: originals.reduce((n, q) => n + q.options.length, 0),
+    revised_questions_independently_solved: 1,
+    revised_options_independently_solved: 3,
+    source_exercises: 48,
+    visibly_covered_source_exercises: 47,
+    missing_source_exercises: 1,
+  };
+  output.outcome = 'blocked';
+  output.visible_question_outcome = 'pass';
+  output.outcome_scope =
+    'All63 visible complete true sets and197 substantive option checks are frozen before n45 internals. Revised merged unit and affected dependencies pass recognition-level semantic review; source835 remains honestly blocked. No final author-key comparison, new-figure approval, validation, or integration is claimed.';
+  output.frozen_revised_view = revised;
+  const outputPath = path.join(root, 'view-checks-revised.json');
+  fs.writeFileSync(outputPath, JSON.stringify(output, null, 2) + '\n', { flag: 'wx' });
+  console.log(JSON.stringify({
+    output: outputPath,
+    projection_comparison: 'all62 unchanged',
+    ...output.counts,
+    visible_question_outcome: output.visible_question_outcome,
+    outcome: output.outcome,
+  }));
+}

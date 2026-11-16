@@ -1,0 +1,33 @@
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image, ImageDraw
+
+ROOT = Path(__file__).resolve().parent
+evidence = json.loads((ROOT / "capture-evidence.json").read_text())
+groups = {}
+for capture in evidence["captures"]:
+    groups.setdefault(capture["combination"], []).append(capture)
+records = []
+for combination, images in groups.items():
+    for start in range(0, len(images), 3):
+        batch = images[start:start + 3]
+        bitmaps = [Image.open(item["path"]).convert("RGB") for item in batch]
+        widths = [max(380, image.width) for image in bitmaps]
+        canvas = Image.new("RGB", (sum(widths), max(i.height for i in bitmaps) + 40), "#e8e8e8")
+        draw = ImageDraw.Draw(canvas)
+        x = 0
+        members = []
+        for item, image, width in zip(batch, bitmaps, widths):
+            draw.text((x + 4, 4), item["filename"], fill="black")
+            draw.text((x + 4, 21), item["uncovered"]["kind"], fill="black")
+            canvas.paste(image, (x, 40))
+            members.append({"path": item["path"], "sha256": item["sha256"], "native_dimensions": [image.width, image.height], "montage_rect": [x, 40, image.width, image.height], "uncovered": item["uncovered"], "resized": False})
+            x += width
+        output = ROOT / f"native-supplement-{combination}-{start // 3 + 1:02d}.png"
+        canvas.save(output)
+        records.append({"path": str(output), "sha256": hashlib.sha256(output.read_bytes()).hexdigest(), "native_dimensions": [canvas.width, canvas.height], "images": members})
+result = {"supplement_png_count": len(evidence["captures"]), "native_montage_count": len(records), "max_images_per_montage": 3, "montages": records}
+(ROOT / "supplement-image-inventory.json").write_text(json.dumps(result, indent=2) + "\n")
+print(json.dumps({k: v for k, v in result.items() if k != "montages"}))

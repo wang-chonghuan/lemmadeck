@@ -1,0 +1,151 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import { spawnSync } from 'node:child_process'
+
+const root = '.intentfold/tickets/STEMROBIN-182/tmp/6a-n36'
+const seed = JSON.parse(fs.readFileSync(`${root}/seed.json`))
+const source = JSON.parse(fs.readFileSync(`${root}/source-solutions.json`))
+const digest = file => {
+  const result = spawnSync('python3', ['.agents/skills/ld-s10y-choice/scripts/prepare.py',
+    'digest', file], { encoding: 'utf8' })
+  assert.equal(result.status, 0, result.stderr)
+  return result.stdout.trim()
+}
+const option = (text, truth, derivation, misconception = null) => ({
+  text, truth, derivation, misconception,
+})
+const questions = []
+function add(id, number, mode, stem, candidates, task, reason, loss) {
+  const ids = ['A', 'B', 'C', 'D']
+  questions.push({ id, source_numbers: [number],
+    view: { mode, stem, figure_ids: [], options: candidates.map((row, i) => ({
+      id: ids[i], text: row.text, figure_ids: [],
+    })) },
+    intent: { task, source_solution: source.sources.find(row => row.number === number).solution,
+      unit_reason: reason, concept_blocks: [], limitations: [loss], figure_observations: [] },
+    key: { correct: candidates.flatMap((row, i) => row.truth === 'correct' ? [ids[i]] : []),
+      rationales: candidates.map((row, i) => ({ option_id: ids[i], truth: row.truth,
+        derivation: row.derivation, misconception: row.misconception })) },
+  })
+}
+add('two-routes-numeric-verification', '615', 'single',
+  String.raw`取 $a=\frac23,b=-\frac56,c=\frac9{10},d=\frac15$，验证 $\frac ab\cdot\frac cd=\frac{ac}{bd}$。哪份两边运算与验证记录全部正确？`,
+  [
+    option(String.raw`$\frac ab=-\frac59,\ \frac cd=\frac9{50},\ ac=\frac35,\ bd=-\frac16$；两边都算得 $-\frac1{10}$，所以相等。`, 'incorrect',
+      'Replace division of fractions by direct multiplication. Then a/b=-5/9,c/d=9/50, their product=-1/10. Compute ac=3/5 and bd=-1/6 correctly, but again replace their division by multiplication, obtaining -1/10.',
+      'Divide two fractions by multiplying them without taking the divisor reciprocal.'),
+    option(String.raw`$\frac ab=-\frac45,\ \frac cd=\frac92,\ ac=\frac35,\ bd=-\frac16$；左边 $-\frac45\cdot\frac92=-\frac{18}{5}$，右边 $\frac35\div(-\frac16)=-\frac{18}{5}$，所以相等。`, 'correct',
+      'Reciprocal division gives -4/5 and9/2; multiplying gives -18/5. ac=3/5,bd=-1/6, and (3/5)*(-6)=-18/5. Both independently evaluated routes match.'),
+    option(String.raw`$\frac ab=-\frac32,\ \frac cd=\frac{45}{11},\ ac=\frac{18}{13},\ bd=-\frac5{11}$；左边算得 $-\frac{135}{13}$，右边算得 $-11$，所以不相等。`, 'incorrect',
+      'After reciprocal conversion, multiply fraction numerators but add denominators: a/b=-12/(3+5)=-3/2,c/d=45/(10+1)=45/11. Applying the same wrong multiplication gives lhs=-135/(2+11). ac=18/13,bd=-5/11; reciprocal conversion and the same rule give rhs=-198/(13+5)=-11.',
+      'When multiplying fractions, multiply numerators but add denominators, including products introduced by reciprocal division.'),
+  ],
+  'Verify both independent numeric routes for the given equality.',
+  'Both left and right calculations are one equality-verification unit, with every intermediate target varied somewhere rather than fixed in every candidate.',
+  'Recognizing a complete verification does not establish independently writing both numeric calculation routes.')
+
+const rows = (expressions, domains) => '| 小问 | 化简结果 | 原式允许的变量 |\n| --- | --- | --- |\n' +
+  expressions.map((value, i) => `| ${String.fromCharCode(97 + i)}) | $${value}$ | ${domains[i]} |`).join('\n')
+const domains616 = ['$y$ 为任意实数', '$a\\ne0$', '$b\\ne0$', '$c\\ne0$',
+  '$x,y$ 为任意实数', '$a\\ne0$，$b$ 任意', '$a\\ne0$', '$x\\ne0$',
+  '$y\\ne0$，$x$ 任意', '$m\\ne0,n\\ne0$', '$b\\ne0,x\\ne0,y\\ne0$，$a$ 任意', '$x\\ne0,y\\ne0$']
+const values616 = [String.raw`\frac y{16}`, '6', String.raw`\frac b2`, String.raw`\frac3{4c}`,
+  String.raw`\frac{xy}5`, '5b', String.raw`\frac3{2a}`, String.raw`\frac3{2x^2}`,
+  String.raw`\frac{x^3}3`, String.raw`\frac{3m}{2n^2}`, String.raw`\frac{5a^2x}{6by^2}`, String.raw`\frac{3x^6}{7y^2}`]
+const source616 = seed.exercises.find(row => row.number === '616').text.replace(/^616[．.]\s*/, '')
+add('twelve-products-with-original-domains', '616', 'single',
+  source616 + '\n\n哪份完整记录把十二个原式化成最简分式，并保留原式全部非零限制？变量均取实数。',
+  [
+    option(rows(['16y', String.raw`\frac16`, '2b', String.raw`\frac4{3c}`, '5xy',
+      String.raw`\frac b5`, String.raw`\frac2{3a}`, String.raw`\frac2{3x^2}`, '3x^3',
+      String.raw`\frac{2m}{3n^2}`, String.raw`\frac{6a^2x}{5by^2}`, String.raw`\frac{7x^6}{3y^2}`], domains616),
+    'incorrect', 'Simplify all variable factors and preserve original domains, but invert each final nonzero rational scalar. Correct scalars1/16,6,1/2,3/4,1/5,5,3/2,3/2,1/3,3/2,5/6,3/7 become16,1/6,2,4/3,5,1/5,2/3,2/3,3,2/3,6/5,7/3.',
+    'Reverse the numerator/denominator of each reduced numeric coefficient without reversing the variable factor.'),
+    option(rows(values616, ['$y$ 为任意实数', '$a$ 任意', '$b$ 任意', '$c\\ne0$',
+      '$x,y$ 任意', '$a,b$ 任意', '$a\\ne0$', '$x\\ne0$', '$x,y$ 任意',
+      '$n\\ne0$，$m$ 任意', '$b\\ne0,y\\ne0$，$a,x$ 任意', '$y\\ne0$，$x$ 任意']),
+    'incorrect', 'Compute every simplified value correctly but use only its new denominator to specify the domain. This falsely restores a=0 in b/f,b=0 in c,y=0 in i,m=0 in j,x=0 in k/l; unchanged exclusions in d/g/h do not rescue the complete record.',
+    'Forget excluded zeros of factors cancelled from the original denominator and replace the original domain by the simplified-expression domain.'),
+    option(rows(values616, domains616), 'correct',
+      'Multiply numerators/denominators, reduce numeric scalars and subtract denominator powers. All twelve results match the independently solved source; original denominator factors, including those cancelled entirely, remain excluded.'),
+  ],
+  'Reduce all twelve products while retaining cancelled-factor zero exclusions.',
+  'One complete ordered reduction/domain record binds each result to its original denominator and keeps the variable-zero distinctions coupled to cancellation.',
+  'Recognizing the complete record does not establish independently multiplying, cancelling and writing the twelve derivations.')
+
+const values617 = ['2a^2y', String.raw`-\frac3{2b}`, String.raw`-\frac{6p}{5q}`, String.raw`\frac y{4a^4x^6}`]
+const domains617 = ['$y\\ne0$，$a$ 任意', '$b\\ne0,c\\ne0$', '$p\\ne0,q\\ne0$', '$a\\ne0,x\\ne0,y\\ne0$']
+add('four-signed-products', '617', 'single',
+  seed.exercises.find(row => row.number === '617').text.replace(/^617[．.]\s*/, '') +
+    '\n\n哪份完整化简结果和原定义域记录正确？变量均取实数。',
+  [
+    option(rows(values617, domains617), 'correct',
+      'Exact scalar products are2,-3/2,-6/5,1/4. Variable powers reduce to a^2y,1/b,p/q,y/(a^4x^6); original denominators impose the displayed restrictions.'),
+    option(rows(['-2a^2y', String.raw`\frac3{2b}`, String.raw`\frac{6p}{5q}`, String.raw`-\frac y{4a^4x^6}`], domains617),
+      'incorrect', 'Preserve magnitudes, powers and original domains but reverse the multiplication sign-parity rule: an even number of negative factors is declared negative and an odd number positive. This negates every correct result.',
+      'Reverse the parity rule for the signs of multiplied negative factors.'),
+    option(rows(['2a^2y^5', String.raw`-\frac{3b^5c^2}{2}`, String.raw`-\frac{6p^7q^{11}}5`, String.raw`\frac{a^{12}x^{12}y^{17}}4`], domains617),
+      'incorrect', 'Keep numeric coefficients/signs and original restrictions, but treat every denominator variable power as an extra numerator factor. Exponents add rather than subtract: y3+y2,b2+b3 andc1+c1,p4+p3 andq6+q5,a4+a8,x9+x3,y8+y9.',
+      'Move variable denominator factors to the numerator without taking reciprocals, then add all exponents.'),
+  ],
+  'Reduce the four signed products with exact decimals and nested denominator powers.',
+  'The ordered four-result unit compares numeric sign parity and variable reciprocal scope while retaining the original zero exclusions.',
+  'Recognizing the complete reduction does not establish independently writing four signed cancellation derivations.')
+
+add('two-unit-value-proofs', '618', 'multiple',
+  String.raw`对每个非零实数 $x$，证明 $\frac{2^{12}}{x^6}\cdot\frac{(-x^3)^2}{8^4}$ 与 $\frac{3^9}{x^7}\cdot\frac{9^3}{x^2}\cdot\frac{(x^3)^3}{27^5}$ 的值都等于 $1$。选择所有对两个式子均有效的完整论证。`,
+  [
+    option(String.raw`第一式中 $(-x^3)^2=-x^6$，故值为 $-1$；第二式指数相消得 $1$。因此两个式子都等于 $1$。`, 'incorrect',
+      'Fail to raise the minus sign to the even power, obtaining -x^6 and first value-1; correctly simplify the second. The final both-one conclusion contradicts even the displayed first calculation.',
+      'Keep a negative sign unchanged under an even power and overlook the resulting contradiction.'),
+    option(String.raw`因为 $x\ne0$，第一式 $(-x^3)^2=x^6,\ 8^4=2^{12}$，故化为 $\frac{2^{12}x^6}{2^{12}x^6}=1$。第二式 $9^3=3^6,\ 27^5=3^{15},\ (x^3)^3=x^9$，故化为 $\frac{3^{15}x^9}{3^{15}x^9}=1$。`, 'correct',
+      'Both common numerator/denominator quantities are nonzero on x!=0. Correct nested powers and same-base multiplication establish each cancellation to1.'),
+    option(String.raw`约分后两个式子都没有分母，因此 $x=0$ 也属于原定义域。把 $x=0$ 代入可得 $\frac00=1$，所以原式对所有实数都等于 $1$。`, 'incorrect',
+      'The original denominators vanish at zero, and0/0 is undefined, not1. Extending the domain after cancellation invalidates this claimed proof even though the requested nonzero-domain conclusion is true.',
+      'Restore a cancelled zero denominator and interpret0/0 as1.'),
+    option(String.raw`在 $x\ne0$ 上分别重排因子：第一式为 $\frac{2^{12}}{8^4}\cdot\frac{(-x^3)^2}{x^6}=1\cdot1$；第二式为 $\frac{3^9\cdot9^3}{27^5}\cdot\frac{(x^3)^3}{x^7x^2}=1\cdot1$。重排没有改变原定义域。`, 'correct',
+      'Commutativity and associativity legally group constant and variable ratios; each is1 by8^4=2^12,9^3=3^6,27^5=3^15 and(x^3)^3=x^9, with all variable denominators nonzero.'),
+  ],
+  'Prove both source identities on the complete original nonzero domain.',
+  'Two legal proof routes can both be selected natively; the given target1 is the original proposition to prove, not a newly leaked answer.',
+  'Selecting valid proofs does not establish independently composing and writing both cancellation arguments.')
+
+add('natural-quotient-proofs', '619', 'multiple',
+  String.raw`证明：当 $n$ 是任意自然数时，$\frac{10^n+2}{3}$ 是自然数。选择所有有效论证。不指定自然数是否包含 $0$；论证应对所取的自然数范围成立。`,
+  [
+    option(String.raw`当 $n\ge1$ 时，$10\equiv1\pmod3$，所以 $10^n+2\equiv1+2\equiv0\pmod3$；分子为正，商是正整数。若自然数包含 $0$，该值在 $n=0$ 时为 $1$。`, 'correct',
+      'Modulo3 gives divisibility for every positive integral n, positivity gives a positive integer quotient, and the zero case is separately exactly1. No N-membership convention is chosen.'),
+    option(String.raw`记 $Q_n=\frac{10^n+2}{3}$。有 $Q_0=1$ 且 $Q_{n+1}=10Q_n+6$，所以由归纳法可知所有 $Q_n$ 都是正整数。`, 'incorrect',
+      'The recurrence must be10Qn-6, not+6:10Qn=(10^(n+1)+20)/3. The wrong recurrence givesQ1=16 whereas the source expression at1 is4.',
+      'Move the extra constant20 down to2 using the wrong sign, adding6 instead of subtracting6 in the recurrence.'),
+    option(String.raw`记 $Q_n=\frac{10^n+2}{3}$。从 $Q_0=1$ 出发，恒有 $Q_{n+1}=10Q_n-6$。若 $Q_n$ 是正整数，则 $Q_{n+1}\ge4$ 也是正整数。因此对所有非负整数都成立，任一种自然数范围都是其中的子集。`, 'correct',
+      'Exact recurrence10Qn-6 and the base1 give induction on all nonnegative integers;10Qn-6>=4 forQn>=1. Restricting this proved superset to either natural-number convention is valid.'),
+    option(String.raw`因为 $10\equiv0\pmod3$，对每个正整数 $n$ 都有 $10^n+2\equiv2\pmod3$，所以这个商不是自然数。`, 'incorrect',
+      '10 actually has remainder1 modulo3, not0. At n=1 the claimed conclusion already fails because(10+2)/3=4. The false base residue propagates to the displayed remainder2.',
+      'Treat a decimal terminal zero as remainder zero modulo3.'),
+  ],
+  'Prove integer divisibility and positive quotient for every natural exponent.',
+  'Two genuinely valid general proofs preserve quantification and the optional zero case without choosing a source convention or reducing the task to a single numeric test.',
+  'Selecting general proofs does not establish independently constructing a congruence or induction argument.')
+
+const draft = { schema: 's10y-choice-draft-v1', seed_sha256: digest(`${root}/seed.json`),
+  new_figures: [], questions, coverage: seed.exercises.map(ex => ({
+    source_number: ex.number,
+    question_ids: questions.filter(q => q.source_numbers.includes(ex.number)).map(q => q.id),
+    omitted_tasks: ['Independent written calculation or proof production is replaced by recognition of complete records.'],
+    reason: questions.find(q => q.source_numbers.includes(ex.number)).intent.unit_reason,
+  })) }
+for (const [name, value] of [['draft.json', draft],
+  ['view.json', questions.map(q => ({ id: q.id, view: q.view }))]]) {
+  fs.writeFileSync(`${root}/${name}`, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+}
+const args = ['.agents/skills/ld-s10y-choice/scripts/validate.py', '--repo', '.',
+  '--seed', `${root}/seed.json`, '--draft', `${root}/draft.json`]
+const check = spawnSync('python3', args, { encoding: 'utf8' })
+fs.writeFileSync(`${root}/validation-result.json`, JSON.stringify({
+  executable: 'python3', args, exit_code: check.status, stdout: check.stdout,
+  stderr: check.stderr, scope: 'Structural check once only, no semantic approval.',
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ questions: questions.length,
+  options: questions.reduce((n, q) => n + q.view.options.length, 0), exit_code: check.status }))
+process.exitCode = check.status

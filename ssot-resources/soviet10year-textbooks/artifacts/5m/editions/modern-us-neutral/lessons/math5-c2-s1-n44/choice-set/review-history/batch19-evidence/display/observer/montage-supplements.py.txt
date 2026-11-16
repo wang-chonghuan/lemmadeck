@@ -1,0 +1,48 @@
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image, ImageDraw
+
+ROOT = Path(__file__).resolve().parent
+evidence = json.loads((ROOT / "supplement-capture-evidence.json").read_text())
+groups = {}
+for capture in evidence["captures"]:
+    groups.setdefault(capture["combination"], []).append(capture)
+records = []
+for combination, captures in groups.items():
+    for start in range(0, len(captures), 3):
+        batch = captures[start:start + 3]
+        images = [Image.open(c["path"]).convert("RGB") for c in batch]
+        slots = [max(380, image.width) for image in images]
+        canvas = Image.new("RGB", (sum(slots), max(image.height for image in images) + 50), "#e8e8e8")
+        draw = ImageDraw.Draw(canvas)
+        x = 0
+        members = []
+        for capture, image, slot_width in zip(batch, images, slots):
+            draw.text((x + 4, 4), capture["filename"], fill="black")
+            draw.text((x + 4, 22), capture["uncovered"]["kind"], fill="black")
+            canvas.paste(image, (x, 50))
+            members.append({
+                "path": capture["path"],
+                "sha256": capture["sha256"],
+                "native_width": image.width,
+                "native_height": image.height,
+                "montage_pixel_rect": [x, 50, image.width, image.height],
+                "resized": False,
+                "uncovered": capture["uncovered"],
+            })
+            x += slot_width
+        file = ROOT / f"native-supplement-{combination}-{start // 3 + 1:02d}.png"
+        canvas.save(file)
+        records.append({
+            "path": str(file),
+            "sha256": hashlib.sha256(file.read_bytes()).hexdigest(),
+            "width": canvas.width,
+            "height": canvas.height,
+            "originals": members,
+            "method": "Unscaled, uncropped supplement pixels; grey padding and separate filename bands only.",
+        })
+result = {"supplement_png_count": len(evidence["captures"]), "native_supplement_montage_count": len(records), "max_images_per_montage": 3, "montages": records}
+(ROOT / "supplement-montage-inventory.json").write_text(json.dumps(result, indent=2) + "\n")
+print(json.dumps({key: value for key, value in result.items() if key != "montages"}))

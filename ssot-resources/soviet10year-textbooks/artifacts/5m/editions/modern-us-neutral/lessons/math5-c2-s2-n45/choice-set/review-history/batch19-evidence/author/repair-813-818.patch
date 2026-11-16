@@ -1,0 +1,320 @@
+diff --git a/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/5m-n45/rejected-before-813-818-merge/author.mjs b/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/5m-n45/author.mjs
+index 2a6fa51b..22577b3d 100644
+--- a/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/5m-n45/rejected-before-813-818-merge/author.mjs
++++ b/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/5m-n45/author.mjs
+@@ -9,12 +9,18 @@ const questions = []
+ const c = (text, derivation) => ({ text, truth: 'correct', derivation, misconception: null })
+ const w = (text, derivation, misconception) => ({ text, truth: 'incorrect', derivation, misconception })
+ function q(number, suffix, mode, stem, choices, unit, concepts = []) {
+-  const solution = frozen.solutions.find(s => s.source_number === number)
++  const sourceNumbers = Array.isArray(number) ? number : [number]
++  const sourceSolutions = sourceNumbers.map(n => frozen.solutions.find(s => s.source_number === n))
++  const solution = Array.isArray(number) ? {
++    task: sourceSolutions.map(s => s.task).join(' '),
++    solution: sourceSolutions.map(s => `${s.source_number}: ${s.solution}`).join('\n'),
++    losses: [...new Set(sourceSolutions.flatMap(s => s.losses))],
++  } : sourceSolutions[0]
+   const options = choices.map((choice, index) => ({
+     id: String.fromCharCode(65 + index), text: choice.text, figure_ids: [],
+   }))
+   questions.push({
+-    id: `n45-${number}${suffix}`, source_numbers: [number],
++    id: `n45-${sourceNumbers.join('-')}${suffix}`, source_numbers: sourceNumbers,
+     view: { mode, stem, figure_ids: [], options },
+     intent: {
+       task: solution.task, source_solution: solution.solution, unit_reason: unit,
+@@ -113,11 +119,11 @@ list('812', '', '$4\\frac27\\cdot3$；$8\\frac2{11}\\cdot11$；$1\\frac13\\cdot4
+   w('$12\\frac27;\\ 88\\frac2{11};\\ 4\\frac13;\\ -12\\frac13$', 'Multiply whole parts alone:4*3+2/7,8*11+2/11,1*4+1/3; keep the negative of 2*6+1/3.', 'Leave each fractional part unmultiplied.'),
+ ], 'One complete four-result unit preserves mixed-number conversion and the signed whole number.', [10, 11])
+ 
+-q('813', '', 'single', '求 $\\frac12\\cdot\\frac34$，并把两个因数化成小数验算。哪一项全部正确？', [
+-  c('$\\frac38$；$0.5\\cdot0.75=0.375$。', '3/8=.375; .5*.75=.375.'),
+-  w('$\\frac54$；$0.5+0.75=1.25$。', 'Add instead of multiply in both methods:1/2+3/4=5/4 and.5+.75=1.25.', 'Use addition for the requested product in both representations.'),
+-  w('$\\frac32$；$0.5:0.75=\\frac23$。', 'Invert the first fraction in the product:2*(3/4)=3/2; the decimal line divides instead of multiplying and yields2/3.', 'Invert a factor and substitute division for decimal multiplication.'),
+-], 'The full product-and-decimal-check unit retains verification as a distinct task.', [10])
++q(['813', '818'], '', 'single', '先求 $\\frac12\\cdot\\frac34$，把两个因数化成小数验算；再叙述乘法结合律，用变量表示，并用 $\\frac12,\\frac34,\\frac23$ 验证两种分组。下面哪份完整记录全部正确？', [
++  w('分数积：$\\frac12\\cdot\\frac34=\\frac38$。\n小数验算：$\\frac12=0.5$，$\\frac34=0.75$，$0.5\\cdot0.75=0.375=\\frac38$。\n结合律：只改变三个因数的分组，积不变；$(ab)c=a(bc)$。\n左分组：$(\\frac12\\cdot\\frac34)\\cdot\\frac23=\\frac38\\cdot\\frac23=\\frac9{16}$。\n右分组：$\\frac12\\cdot(\\frac34\\cdot\\frac23)=\\frac12\\cdot\\frac98=\\frac9{16}$。', 'The two-factor product and decimal check are valid. For both three-factor computations, the wrong program treats the final factor 2/3 as a divisor: left (3/8)/(2/3)=9/16; right (1/2)*((3/4)/(2/3))=(1/2)*(9/8)=9/16. These complete, equal totals are not the products printed in the record; both actual groupings equal1/4.', 'Replace multiplication by the third factor with division in both groupings. Equality of two completed outputs alone does not validate the computations.'),
++  c('分数积：$\\frac12\\cdot\\frac34=\\frac38$。\n小数验算：$\\frac12=0.5$，$\\frac34=0.75$，$0.5\\cdot0.75=0.375=\\frac38$。\n结合律：只改变三个因数的分组，积不变；$(ab)c=a(bc)$。\n左分组：$(\\frac12\\cdot\\frac34)\\cdot\\frac23=\\frac38\\cdot\\frac23=\\frac14$。\n右分组：$\\frac12\\cdot(\\frac34\\cdot\\frac23)=\\frac12\\cdot\\frac12=\\frac14$。', '1/2*3/4=3/8; decimals0.5 and0.75 multiply to0.375=3/8. Associativity changes grouping only. Left3/8*2/3=6/24=1/4; right inner3/4*2/3=6/12=1/2, then1/2*1/2=1/4. The verbal law, identity, decimal check, and both complete groupings are all valid.'),
++  w('分数积：$\\frac12\\cdot\\frac34=\\frac38$。\n小数验算：$\\frac12=0.5$，$\\frac34=0.75$，$0.5\\cdot0.75=3.75=\\frac38$。\n结合律：只改变三个因数的分组，积不变；$(ab)c=a(bc)$。\n左分组：$(\\frac12\\cdot\\frac34)\\cdot\\frac23=\\frac38\\cdot\\frac23=\\frac14$。\n右分组：$\\frac12\\cdot(\\frac34\\cdot\\frac23)=\\frac12\\cdot\\frac12=\\frac14$。', 'The fraction result, law and both three-factor groupings are valid. The wrong decimal program multiplies integer digits5*75=375, but places only two decimal digits rather than1+2=3, yielding3.75 instead of0.375. Therefore neither the printed decimal product nor its equality to3/8 is valid; correct groupings do not validate the decimal check.', 'Count only the second decimal factor digits rather than adding the decimal-place counts of both factors.'),
++], 'These source tasks share exactly the first two factors and their product. One compound single-choice record keeps the product, decimal verification, verbal and symbolic associative law, and both full groupings together, so no separate question supplies another question answer. Every candidate includes all response components; all candidates share the same first fraction product and law. The learner must judge the decimal check and both completed grouping computations, not just find matching totals. Independent written production remains untested.', [10, 15])
+ 
+ q('814', '', 'single', '哪一项正确叙述乘法交换律，用变量表示它，并用 $\\frac9{16}$ 和 $\\frac34$ 验证？', [
+   w('交换因数只需交换分子：$ab=ba$；两种次序的积都为 $\\frac{27}{20}$。', '27/(16+4)=27/20 comes from adding denominator factors; the law statement incorrectly refers only to numerators.', 'Use denominator addition and an incomplete meaning of factor exchange.'),
+@@ -143,12 +149,6 @@ list('817', '', '$\\frac35\\cdot\\frac27\\cdot\\frac56$；$\\frac7{10}\\cdot\\fr
+   w('$\\frac6{35};\\ \\frac1{14}$', 'Stop after the first two factors:3/5*2/7=6/35;7/10*5/49=1/14.', 'Omit the third factor.'),
+ ], 'One paired triple-product result requires using every factor, including the last one.', [10, 13, 15])
+ 
+-q('818', '', 'single', '哪一项正确叙述乘法结合律，用变量表示，并用 $\\frac12,\\frac34,\\frac23$ 验证两种分组？', [
+-  c('只改变分组，积不变：$(ab)c=a(bc)$；左式为 $\\frac38\\cdot\\frac23=\\frac14$，右式为 $\\frac12\\cdot\\frac12=\\frac14$。', 'Both groupings use the same three factors and produce1/4.'),
+-  w('交换两个因数，积不变：$ab=ba$；$\\frac12\\cdot\\frac34=\\frac34\\cdot\\frac12=\\frac38$。', 'This states commutativity and verifies only two factors, omitting2/3.', 'Replace the three-factor grouping task with a two-factor order task.'),
+-  w('只改变分组，积不变：$(ab)c=a(bc)$；左式为 $\\frac38$，右式为 $\\frac12$，所以两式相等。', 'Stop each grouping at its inner product:3/8 versus1/2; they are not equal and each still requires the outer factor.', 'Omit the remaining outer factor in each grouped product.'),
+-], 'One complete grouping-law and two-calculation unit distinguishes associativity from the earlier two-factor verification.', [15])
+-
+ q('819', '', 'single', '步行速度为5公里/小时。在 $\\frac34,\\frac12,\\frac1{10}$ 小时内，依次走多少公里？', [
+   w('$\\frac{20}3;\\ 10;\\ 50$ 公里', '5 divided by each time gives20/3,10,50.', 'Divide speed by time instead of multiplying.'),
+   c('$\\frac{15}4;\\ \\frac52;\\ \\frac12$ 公里', '5t gives15/4,5/2,1/2.'),
+@@ -421,8 +421,13 @@ const draft = {
+   })),
+ }
+ const view = { questions: questions.map(({ id, view }) => ({ id, ...view })) }
++const outputDir = process.argv[2] ? path.resolve(dir, process.argv[2]) : dir
++if (outputDir !== dir && !outputDir.startsWith(`${dir}${path.sep}`)) {
++  throw new Error('Serializer outputs must stay inside this assigned n45 directory')
++}
++if (outputDir !== dir) fs.mkdirSync(outputDir)
+ for (const [name, value] of [['draft.json', draft], ['view.json', view]]) {
+-  fs.writeFileSync(path.join(dir, name), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
++  fs.writeFileSync(path.join(outputDir, name), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+ }
+ console.log(JSON.stringify({
+   sources: seed.exercises.length, represented_sources: 47,
+
+diff --git a/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/5m-n45/rejected-before-813-818-merge/draft.json b/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/5m-n45/repaired-813-818-snapshot/draft.json
+index debed519..5932e91a 100644
+--- a/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/5m-n45/rejected-before-813-818-merge/draft.json
++++ b/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/5m-n45/repaired-813-818-snapshot/draft.json
+@@ -940,66 +940,69 @@
+       }
+     },
+     {
+-      "id": "n45-813",
++      "id": "n45-813-818",
+       "source_numbers": [
+-        "813"
++        "813",
++        "818"
+       ],
+       "view": {
+         "mode": "single",
+-        "stem": "求 $\\frac12\\cdot\\frac34$，并把两个因数化成小数验算。哪一项全部正确？",
++        "stem": "先求 $\\frac12\\cdot\\frac34$，把两个因数化成小数验算；再叙述乘法结合律，用变量表示，并用 $\\frac12,\\frac34,\\frac23$ 验证两种分组。下面哪份完整记录全部正确？",
+         "figure_ids": [],
+         "options": [
+           {
+             "id": "A",
+-            "text": "$\\frac38$；$0.5\\cdot0.75=0.375$。",
++            "text": "分数积：$\\frac12\\cdot\\frac34=\\frac38$。\n小数验算：$\\frac12=0.5$，$\\frac34=0.75$，$0.5\\cdot0.75=0.375=\\frac38$。\n结合律：只改变三个因数的分组，积不变；$(ab)c=a(bc)$。\n左分组：$(\\frac12\\cdot\\frac34)\\cdot\\frac23=\\frac38\\cdot\\frac23=\\frac9{16}$。\n右分组：$\\frac12\\cdot(\\frac34\\cdot\\frac23)=\\frac12\\cdot\\frac98=\\frac9{16}$。",
+             "figure_ids": []
+           },
+           {
+             "id": "B",
+-            "text": "$\\frac54$；$0.5+0.75=1.25$。",
++            "text": "分数积：$\\frac12\\cdot\\frac34=\\frac38$。\n小数验算：$\\frac12=0.5$，$\\frac34=0.75$，$0.5\\cdot0.75=0.375=\\frac38$。\n结合律：只改变三个因数的分组，积不变；$(ab)c=a(bc)$。\n左分组：$(\\frac12\\cdot\\frac34)\\cdot\\frac23=\\frac38\\cdot\\frac23=\\frac14$。\n右分组：$\\frac12\\cdot(\\frac34\\cdot\\frac23)=\\frac12\\cdot\\frac12=\\frac14$。",
+             "figure_ids": []
+           },
+           {
+             "id": "C",
+-            "text": "$\\frac32$；$0.5:0.75=\\frac23$。",
++            "text": "分数积：$\\frac12\\cdot\\frac34=\\frac38$。\n小数验算：$\\frac12=0.5$，$\\frac34=0.75$，$0.5\\cdot0.75=3.75=\\frac38$。\n结合律：只改变三个因数的分组，积不变；$(ab)c=a(bc)$。\n左分组：$(\\frac12\\cdot\\frac34)\\cdot\\frac23=\\frac38\\cdot\\frac23=\\frac14$。\n右分组：$\\frac12\\cdot(\\frac34\\cdot\\frac23)=\\frac12\\cdot\\frac12=\\frac14$。",
+             "figure_ids": []
+           }
+         ]
+       },
+       "intent": {
+-        "task": "Multiply one-half and three-quarters and check with decimals.",
+-        "source_solution": "Fraction product=(1*3)/(2*4)=3/8. Decimal conversion: 1/2=0.5,3/4=0.75; 0.5*0.75=0.375=3/8.",
+-        "unit_reason": "The full product-and-decimal-check unit retains verification as a distinct task.",
++        "task": "Multiply one-half and three-quarters and check with decimals. State associativity verbally and symbolically and verify both groupings.",
++        "source_solution": "813: Fraction product=(1*3)/(2*4)=3/8. Decimal conversion: 1/2=0.5,3/4=0.75; 0.5*0.75=0.375=3/8.\n818: Changing grouping, without changing factors or order, leaves the product unchanged: (ab)c=a(bc). For 1/2,3/4,2/3: ((1/2)*(3/4))*(2/3)=(3/8)*(2/3)=1/4; (1/2)*((3/4)*(2/3))=(1/2)*(1/2)=1/4.",
++        "unit_reason": "These source tasks share exactly the first two factors and their product. One compound single-choice record keeps the product, decimal verification, verbal and symbolic associative law, and both full groupings together, so no separate question supplies another question answer. Every candidate includes all response components; all candidates share the same first fraction product and law. The learner must judge the decimal check and both completed grouping computations, not just find matching totals. Independent written production remains untested.",
+         "concept_blocks": [
+-          10
++          10,
++          15
+         ],
+         "limitations": [
+-          "Choice recognition does not demonstrate independently running the decimal check."
++          "Choice recognition does not demonstrate independently running the decimal check.",
++          "Selecting a complete law-and-verification unit does not demonstrate writing both grouped computations."
+         ],
+         "figure_observations": []
+       },
+       "key": {
+         "correct": [
+-          "A"
++          "B"
+         ],
+         "rationales": [
+           {
+             "option_id": "A",
+-            "truth": "correct",
+-            "derivation": "3/8=.375; .5*.75=.375.",
+-            "misconception": null
++            "truth": "incorrect",
++            "derivation": "The two-factor product and decimal check are valid. For both three-factor computations, the wrong program treats the final factor 2/3 as a divisor: left (3/8)/(2/3)=9/16; right (1/2)*((3/4)/(2/3))=(1/2)*(9/8)=9/16. These complete, equal totals are not the products printed in the record; both actual groupings equal1/4.",
++            "misconception": "Replace multiplication by the third factor with division in both groupings. Equality of two completed outputs alone does not validate the computations."
+           },
+           {
+             "option_id": "B",
+-            "truth": "incorrect",
+-            "derivation": "Add instead of multiply in both methods:1/2+3/4=5/4 and.5+.75=1.25.",
+-            "misconception": "Use addition for the requested product in both representations."
++            "truth": "correct",
++            "derivation": "1/2*3/4=3/8; decimals0.5 and0.75 multiply to0.375=3/8. Associativity changes grouping only. Left3/8*2/3=6/24=1/4; right inner3/4*2/3=6/12=1/2, then1/2*1/2=1/4. The verbal law, identity, decimal check, and both complete groupings are all valid.",
++            "misconception": null
+           },
+           {
+             "option_id": "C",
+             "truth": "incorrect",
+-            "derivation": "Invert the first fraction in the product:2*(3/4)=3/2; the decimal line divides instead of multiplying and yields2/3.",
+-            "misconception": "Invert a factor and substitute division for decimal multiplication."
++            "derivation": "The fraction result, law and both three-factor groupings are valid. The wrong decimal program multiplies integer digits5*75=375, but places only two decimal digits rather than1+2=3, yielding3.75 instead of0.375. Therefore neither the printed decimal product nor its equality to3/8 is valid; correct groupings do not validate the decimal check.",
++            "misconception": "Count only the second decimal factor digits rather than adding the decimal-place counts of both factors."
+           }
+         ]
+       }
+@@ -1266,71 +1269,6 @@
+         ]
+       }
+     },
+-    {
+-      "id": "n45-818",
+-      "source_numbers": [
+-        "818"
+-      ],
+-      "view": {
+-        "mode": "single",
+-        "stem": "哪一项正确叙述乘法结合律，用变量表示，并用 $\\frac12,\\frac34,\\frac23$ 验证两种分组？",
+-        "figure_ids": [],
+-        "options": [
+-          {
+-            "id": "A",
+-            "text": "只改变分组，积不变：$(ab)c=a(bc)$；左式为 $\\frac38\\cdot\\frac23=\\frac14$，右式为 $\\frac12\\cdot\\frac12=\\frac14$。",
+-            "figure_ids": []
+-          },
+-          {
+-            "id": "B",
+-            "text": "交换两个因数，积不变：$ab=ba$；$\\frac12\\cdot\\frac34=\\frac34\\cdot\\frac12=\\frac38$。",
+-            "figure_ids": []
+-          },
+-          {
+-            "id": "C",
+-            "text": "只改变分组，积不变：$(ab)c=a(bc)$；左式为 $\\frac38$，右式为 $\\frac12$，所以两式相等。",
+-            "figure_ids": []
+-          }
+-        ]
+-      },
+-      "intent": {
+-        "task": "State associativity verbally and symbolically and verify both groupings.",
+-        "source_solution": "Changing grouping, without changing factors or order, leaves the product unchanged: (ab)c=a(bc). For 1/2,3/4,2/3: ((1/2)*(3/4))*(2/3)=(3/8)*(2/3)=1/4; (1/2)*((3/4)*(2/3))=(1/2)*(1/2)=1/4.",
+-        "unit_reason": "One complete grouping-law and two-calculation unit distinguishes associativity from the earlier two-factor verification.",
+-        "concept_blocks": [
+-          15
+-        ],
+-        "limitations": [
+-          "Selecting a complete law-and-verification unit does not demonstrate writing both grouped computations."
+-        ],
+-        "figure_observations": []
+-      },
+-      "key": {
+-        "correct": [
+-          "A"
+-        ],
+-        "rationales": [
+-          {
+-            "option_id": "A",
+-            "truth": "correct",
+-            "derivation": "Both groupings use the same three factors and produce1/4.",
+-            "misconception": null
+-          },
+-          {
+-            "option_id": "B",
+-            "truth": "incorrect",
+-            "derivation": "This states commutativity and verifies only two factors, omitting2/3.",
+-            "misconception": "Replace the three-factor grouping task with a two-factor order task."
+-          },
+-          {
+-            "option_id": "C",
+-            "truth": "incorrect",
+-            "derivation": "Stop each grouping at its inner product:3/8 versus1/2; they are not equal and each still requires the outer factor.",
+-            "misconception": "Omit the remaining outer factor in each grouped product."
+-          }
+-        ]
+-      }
+-    },
+     {
+       "id": "n45-819",
+       "source_numbers": [
+@@ -4359,7 +4297,7 @@
+     {
+       "source_number": "813",
+       "question_ids": [
+-        "n45-813"
++        "n45-813-818"
+       ],
+       "omitted_tasks": [
+         "Choice recognition does not demonstrate independently running the decimal check."
+@@ -4409,7 +4347,7 @@
+     {
+       "source_number": "818",
+       "question_ids": [
+-        "n45-818"
++        "n45-813-818"
+       ],
+       "omitted_tasks": [
+         "Selecting a complete law-and-verification unit does not demonstrate writing both grouped computations."
+
+diff --git a/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/5m-n45/rejected-before-813-818-merge/view.json b/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/5m-n45/repaired-813-818-snapshot/view.json
+index 21b3e437..b64e8ee5 100644
+--- a/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/5m-n45/rejected-before-813-818-merge/view.json
++++ b/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/5m-n45/repaired-813-818-snapshot/view.json
+@@ -328,24 +328,24 @@
+       ]
+     },
+     {
+-      "id": "n45-813",
++      "id": "n45-813-818",
+       "mode": "single",
+-      "stem": "求 $\\frac12\\cdot\\frac34$，并把两个因数化成小数验算。哪一项全部正确？",
++      "stem": "先求 $\\frac12\\cdot\\frac34$，把两个因数化成小数验算；再叙述乘法结合律，用变量表示，并用 $\\frac12,\\frac34,\\frac23$ 验证两种分组。下面哪份完整记录全部正确？",
+       "figure_ids": [],
+       "options": [
+         {
+           "id": "A",
+-          "text": "$\\frac38$；$0.5\\cdot0.75=0.375$。",
++          "text": "分数积：$\\frac12\\cdot\\frac34=\\frac38$。\n小数验算：$\\frac12=0.5$，$\\frac34=0.75$，$0.5\\cdot0.75=0.375=\\frac38$。\n结合律：只改变三个因数的分组，积不变；$(ab)c=a(bc)$。\n左分组：$(\\frac12\\cdot\\frac34)\\cdot\\frac23=\\frac38\\cdot\\frac23=\\frac9{16}$。\n右分组：$\\frac12\\cdot(\\frac34\\cdot\\frac23)=\\frac12\\cdot\\frac98=\\frac9{16}$。",
+           "figure_ids": []
+         },
+         {
+           "id": "B",
+-          "text": "$\\frac54$；$0.5+0.75=1.25$。",
++          "text": "分数积：$\\frac12\\cdot\\frac34=\\frac38$。\n小数验算：$\\frac12=0.5$，$\\frac34=0.75$，$0.5\\cdot0.75=0.375=\\frac38$。\n结合律：只改变三个因数的分组，积不变；$(ab)c=a(bc)$。\n左分组：$(\\frac12\\cdot\\frac34)\\cdot\\frac23=\\frac38\\cdot\\frac23=\\frac14$。\n右分组：$\\frac12\\cdot(\\frac34\\cdot\\frac23)=\\frac12\\cdot\\frac12=\\frac14$。",
+           "figure_ids": []
+         },
+         {
+           "id": "C",
+-          "text": "$\\frac32$；$0.5:0.75=\\frac23$。",
++          "text": "分数积：$\\frac12\\cdot\\frac34=\\frac38$。\n小数验算：$\\frac12=0.5$，$\\frac34=0.75$，$0.5\\cdot0.75=3.75=\\frac38$。\n结合律：只改变三个因数的分组，积不变；$(ab)c=a(bc)$。\n左分组：$(\\frac12\\cdot\\frac34)\\cdot\\frac23=\\frac38\\cdot\\frac23=\\frac14$。\n右分组：$\\frac12\\cdot(\\frac34\\cdot\\frac23)=\\frac12\\cdot\\frac12=\\frac14$。",
+           "figure_ids": []
+         }
+       ]
+@@ -442,29 +442,6 @@
+         }
+       ]
+     },
+-    {
+-      "id": "n45-818",
+-      "mode": "single",
+-      "stem": "哪一项正确叙述乘法结合律，用变量表示，并用 $\\frac12,\\frac34,\\frac23$ 验证两种分组？",
+-      "figure_ids": [],
+-      "options": [
+-        {
+-          "id": "A",
+-          "text": "只改变分组，积不变：$(ab)c=a(bc)$；左式为 $\\frac38\\cdot\\frac23=\\frac14$，右式为 $\\frac12\\cdot\\frac12=\\frac14$。",
+-          "figure_ids": []
+-        },
+-        {
+-          "id": "B",
+-          "text": "交换两个因数，积不变：$ab=ba$；$\\frac12\\cdot\\frac34=\\frac34\\cdot\\frac12=\\frac38$。",
+-          "figure_ids": []
+-        },
+-        {
+-          "id": "C",
+-          "text": "只改变分组，积不变：$(ab)c=a(bc)$；左式为 $\\frac38$，右式为 $\\frac12$，所以两式相等。",
+-          "figure_ids": []
+-        }
+-      ]
+-    },
+     {
+       "id": "n45-819",
+       "mode": "single",

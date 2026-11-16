@@ -1,0 +1,163 @@
+import copy
+import hashlib
+import json
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
+AUTHOR = ROOT.parent / "5m-n45"
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def contract_digest(value):
+    return sha(json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":")).encode())
+
+
+def formatted(value):
+    return (json.dumps(value, ensure_ascii=False, indent=2) + "\n").encode()
+
+
+def locate(value, pointer):
+    parts = [p.replace("~1", "/").replace("~0", "~") for p in pointer.split("/")[1:]]
+    for part in parts[:-1]:
+        value = value[int(part)] if isinstance(value, list) else value[part]
+    return value, int(parts[-1]) if isinstance(value, list) else parts[-1]
+
+
+draft_bytes = (AUTHOR / "draft.json").read_bytes()
+draft = json.loads(draft_bytes)
+receipt_bytes = (AUTHOR / "structural-check-common-entry-loss-repair.json").read_bytes()
+receipt = json.loads(receipt_bytes)
+old_review_bytes = (ROOT / "review-before-common-entry-loss-repair.json").read_bytes()
+old_final_bytes = (ROOT / "final-comparison-result-before-common-entry-loss-repair.json").read_bytes()
+old_review = json.loads(old_review_bytes)
+old_final = json.loads(old_final_bytes)
+frozen = json.loads((ROOT / "view-checks-revised.json").read_text())
+if (ROOT / "review.json").read_bytes() != old_review_bytes or (ROOT / "final-comparison-result.json").read_bytes() != old_final_bytes:
+    raise RuntimeError("Current review history is not the preserved initial snapshot")
+if sha(draft_bytes) != "47ed8126826e55e7eaf6c4caf4491dc62dba586b5523c8c1bf093c42c7a87b4d":
+    raise RuntimeError("Current draft byte binding differs from authorized repair")
+if contract_digest(draft) != "aa0ccd9b054d57fe172993b27d6fd8270bb17f21510e383296e644f885539a4a":
+    raise RuntimeError("Current contract snapshot binding differs")
+expected_paths = [
+    "/questions/14/intent/limitations",
+    "/coverage/9/omitted_tasks",
+    "/coverage/9/reason",
+    "/coverage/14/omitted_tasks",
+    "/coverage/14/reason",
+]
+if receipt["changed_paths"] != expected_paths or [c["path"] for c in receipt["changes"]] != expected_paths:
+    raise RuntimeError("The repair is not the five authorized internal fields")
+before = copy.deepcopy(draft)
+for change in receipt["changes"]:
+    parent, key = locate(before, change["path"])
+    if change["op"] != "replace" or parent[key] != change["value"]:
+        raise RuntimeError("Current field differs from receipt new value")
+    parent[key] = change["previous_value"]
+if sha(formatted(before)) != old_final["draft_file_sha256"]:
+    raise RuntimeError("Reversing the five fields does not reproduce the reviewed original draft bytes")
+if contract_digest(before) != old_final["draft_sha256"] or contract_digest(before) != old_review["draft_sha256"]:
+    raise RuntimeError("Reconstructed previous draft does not match both original review bindings")
+if formatted(draft) != draft_bytes:
+    raise RuntimeError("Byte-format reconstruction is not exact")
+projection = {"questions": [{"id": q["id"], **q["view"]} for q in draft["questions"]]}
+if projection != frozen["frozen_revised_view"]:
+    raise RuntimeError("Current complete visible projection differs from the independently frozen view")
+for q, previous in zip(draft["questions"], before["questions"]):
+    if (q["id"], q["source_numbers"], q["view"], q["key"]) != (previous["id"], previous["source_numbers"], previous["view"], previous["key"]):
+        raise RuntimeError("Visible/source/key/rationale identity changed")
+
+questions = {q["id"]: q for q in draft["questions"]}
+frozen_sets = {r["question_id"]: r["independently_frozen_correct"] for r in old_final["correct_set_comparisons"]}
+for q in draft["questions"]:
+    if q["key"]["correct"] != frozen_sets[q["id"]]:
+        raise RuntimeError("Complete true set changed")
+for proof in old_final["correct_option_proof_checks"] + old_final["false_option_generation_checks"]:
+    rationale = next(r for r in questions[proof["question_id"]]["key"]["rationales"] if r["option_id"] == proof["option_id"])
+    if rationale["derivation"] != proof["author_derivation"] or rationale["misconception"] != proof["author_misconception"]:
+        raise RuntimeError("Previously traced proof or erroneous program changed")
+
+evidence = {
+    expected_paths[0]: "The third limitation explicitly names the common3/8 fraction product,0.5/0.75 factor conversions and the same verbal/symbolic associative law, and says neither independent production nor correctness discrimination of any common entry is tested. It preserves recognition of decimal checking and both grouping computations.",
+    expected_paths[1]: "Source813 omission now explicitly includes the supplied3/8 value and0.5/0.75 factor conversions, with both independent production and correctness discrimination untested, in addition to the original written decimal-check loss.",
+    expected_paths[2]: "Source813 reason now retains only recognition of original data and decimal checking and explicitly says common conversions are not independently produced or discriminated and not every original task is tested. The shared fraction-product loss is explicit in its omission and the linked question limitation.",
+    expected_paths[3]: "Source818 omission now explicitly includes the shared verbal/symbolic associative law and shared3/8/conversions as supplied, unproduced and not correctness-discriminated; writing both grouping computations remains separately untested.",
+    expected_paths[4]: "Source818 reason retains recognition of both grouping computations only, explicitly excludes independent production/discrimination of common law/conversions and rejects an every-original-task-tested claim. The linked limitation also explicitly identifies the supplied fraction product.",
+}
+comparison_evidence = "All five current values were independently read. The common3/8 result,0.5/0.75 factor conversions and verbal/symbolic associativity are now explicitly supplied and untested for independent production or correctness discrimination. Decimal-check and both grouping recognition remain tested; their written-production losses remain explicit. Both coverage reasons deny that every original task is assessed. This resolves R1 without a visible, key or rationale change."
+review = copy.deepcopy(old_review)
+review["draft_sha256"] = contract_digest(draft)
+for source in review["source_reviews"]:
+    if source["source_number"] in ["813", "818"]:
+        old_loss = next(loss["observed_loss"] for loss in old_final["production_losses"] if loss["source_number"] == source["source_number"])
+        source["coverage"] = {"verdict": "pass", "evidence": old_loss + " Current five-field internal disclosure comparison: " + comparison_evidence}
+for question in review["question_reviews"]:
+    if question["question_id"] == "n45-813-818":
+        question["task_fidelity"] = {
+            "verdict": "pass",
+            "evidence": "The unchanged merged response retains source813 decimal checking and source818 both grouping judgments. The complete source/view mathematics and dependency freeze is reused, not re-solved. " + comparison_evidence,
+        }
+
+final = copy.deepcopy(old_final)
+final["stage"] = "n45_five_field_internal_loss_disclosure_repair_comparison_complete"
+final["draft_sha256"] = contract_digest(draft)
+final["draft_file_sha256"] = sha(draft_bytes)
+final["nonblocked_internal_outcome"] = "pass"
+final["comparison"]["production_disclosure"] = {"verdict": "pass", "evidence": comparison_evidence}
+final["comparison"]["source_coverage"]["evidence"] = "All48 source mappings remain unchanged except the two authorized disclosure records. The47 covered sources retain recognition-level mathematical judgments, with explicit production/common-entry discrimination losses; this is not full original-task assessment. Source835 remains explicitly unkeyed and blocked for unresolved source wording. The five-field disclosure repair does not resolve835."
+final["repair_requests"] = []
+final["resolved_repair_requests"] = [{**request, "verdict": "pass", "evidence": comparison_evidence} for request in old_final["repair_requests"]]
+final["input_boundary"] = "For this incremental comparison, read only the authorized current draft and five-field JSON receipt plus own prior final/review and independently frozen revised-view records. No author history, source-solutions file, serializer/author.mjs, answers, structural checker, renderer, canonical corpus/tool, service or backend was opened or executed. The receipt's structural result and hashes of prohibited files were not used as semantic evidence. The old comparison's incidental mixed-patch exposure remains honestly preserved in byte-exact history."
+final["snapshot_note"] = "Contract digest computed with the documented canonical-JSON formula only for local review binding, not by a canonical/validator tool. Reversing exactly the five declared replacements reproduces the whole previously reviewed draft's byte SHA and contract digest. The complete current view equals the reviewer-owned63q197option freeze. All66 proofs and131 erroneous programs are exactly unchanged and their concrete original comparisons are retained."
+for loss in final["production_losses"]:
+    if loss["source_number"] in ["813", "818"]:
+        coverage = next(c for c in draft["coverage"] if c["source_number"] == loss["source_number"])
+        loss["author_limitations"] = [{"question_id": "n45-813-818", "limitations": draft["questions"][14]["intent"]["limitations"]}]
+        loss["author_omitted_tasks"] = coverage["omitted_tasks"]
+        loss["author_coverage_reason"] = coverage["reason"]
+        loss["verdict"] = "pass"
+        loss["evidence"] = comparison_evidence
+final["disclosure_repair_comparison"] = {
+    "verdict": "pass",
+    "exact_changed_field_count": 5,
+    "receipt_path": str(AUTHOR / "structural-check-common-entry-loss-repair.json"),
+    "receipt_byte_sha256": sha(receipt_bytes),
+    "current_draft_byte_sha256": sha(draft_bytes),
+    "current_contract_draft_sha256": contract_digest(draft),
+    "reconstructed_previous_byte_sha256": sha(formatted(before)),
+    "reconstructed_previous_contract_sha256": contract_digest(before),
+    "whole_prior_draft_identity_proven_by_reverse_patch": True,
+    "current_projection_equals_own_frozen_view": True,
+    "frozen_view_file_sha256": frozen["view_file_sha256"],
+    "unchanged_questions": 63,
+    "unchanged_option_truths": 197,
+    "unchanged_correct_proofs_reused": 66,
+    "unchanged_false_program_generations_reused": 131,
+    "all_source_relationships_keys_rationales_order_unchanged": True,
+    "changes": [{**change, "verdict": "pass", "independent_evidence": evidence[change["path"]]} for change in receipt["changes"]],
+    "prior_history": [
+        {"path": str(ROOT / "review-before-common-entry-loss-repair.json"), "sha256": sha(old_review_bytes), "byte_identical_to_original": True},
+        {"path": str(ROOT / "final-comparison-result-before-common-entry-loss-repair.json"), "sha256": sha(old_final_bytes), "byte_identical_to_original": True},
+    ],
+    "source835_coverage_record_exactly_unchanged": next(c for c in draft["coverage"] if c["source_number"] == "835") == next(c for c in before["coverage"] if c["source_number"] == "835"),
+    "source835_review_exactly_unchanged": next(s for s in review["source_reviews"] if s["source_number"] == "835") == next(s for s in old_review["source_reviews"] if s["source_number"] == "835"),
+    "structural_receipt_not_semantic_evidence": True,
+    "no_validator_render_or_canonical_workflow_run": True,
+}
+final["handoff"] = "Current review and final comparison are bound to repaired draftaa0ccd9b054d57fe172993b27d6fd8270bb17f21510e383296e644f885539a4a, byte SHA47ed8126826e55e7eaf6c4caf4491dc62dba586b5523c8c1bf093c42c7a87b4d. Every nonblocked check passes; source835 alone remains blocked, with conditional evidence unchanged and no fabricated question or full-coverage claim. Initial rejected review/final comparison are preserved byte-identically. No validator, render, canonical workflow, promotion or durable integration was performed."
+if sha((AUTHOR / "draft.json").read_bytes()) != sha(draft_bytes):
+    raise RuntimeError("Current draft changed during comparison")
+(ROOT / "review.json").write_bytes(formatted(review))
+(ROOT / "final-comparison-result.json").write_bytes(formatted(final))
+print(json.dumps({
+    "outcome": final["outcome"],
+    "nonblocked_internal_outcome": final["nonblocked_internal_outcome"],
+    "draft_sha256": final["draft_sha256"],
+    "draft_file_sha256": final["draft_file_sha256"],
+    "five_changed_fields": True,
+    "view_truths_proofs_false_programs_unchanged": [197, 66, 131],
+    "review_file_sha256": sha((ROOT / "review.json").read_bytes()),
+    "final_result_file_sha256": sha((ROOT / "final-comparison-result.json").read_bytes()),
+}))

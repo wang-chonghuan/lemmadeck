@@ -1,0 +1,68 @@
+import json
+import math
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
+geometry = json.loads((ROOT / "geometry.json").read_text())
+captures = []
+observed = {}
+
+
+def remove(intervals, a, b):
+    result = []
+    for start, end in intervals:
+        if end <= a or start >= b:
+            result.append((start, end))
+        else:
+            if start < a:
+                result.append((start, a))
+            if end > b:
+                result.append((b, end))
+    return result
+
+
+for combination, details in geometry.items():
+    surface, width = combination.split("-")
+    width = int(width)
+    height = 960 if width == 1440 else 844
+    observed[combination] = [[0, height], [details["height"] - height, details["height"]]]
+    intervals = [(height, details["height"] - height)]
+    for node in details["nodes"]:
+        if node["class"] == "figure-media":
+            intervals = remove(intervals, math.floor(node["rect"]["y"]), math.ceil(node["rect"]["y"] + node["rect"]["height"]))
+    safe = sorted({math.floor(n["rect"]["y"]) for n in details["nodes"] if n["tag"] == "LI" or n["class"] in ["para", "choice-heading"]})
+    for start, end in intervals:
+        while start < end:
+            stop = min(start + 780, end)
+            if stop < end:
+                candidates = [y for y in safe if start + 100 <= y <= stop]
+                if candidates:
+                    stop = max(candidates)
+            captures.append({
+                "combination": combination,
+                "filename": f"supplement-{combination}-{len(captures) + 1:03d}.png",
+                "rect": {"x": 377 if width == 1440 else 16, "y": start, "width": 686 if width == 1440 else 358, "height": stop - start},
+                "reason": "This previously unseen document band is strictly between original first/last captures and excludes already-observed figure media.",
+                "uncovered": {"kind": "middle-document-band", "document_y_interval": [start, stop]},
+            })
+            start = stop
+for combination, details in geometry.items():
+    for node in details["math_scrollers"]:
+        if node["scrollWidth"] <= node["clientWidth"]:
+            continue
+        r = node["rect"]
+        delta = node["scrollWidth"] - node["clientWidth"]
+        captures.append({
+            "combination": combination,
+            "filename": f"supplement-{combination}-{len(captures) + 1:03d}.png",
+            "rect": {"x": math.ceil(r["x"] + r["width"]) - delta, "y": math.floor(r["y"]), "width": delta, "height": math.ceil(r["height"]) + 1},
+            "scroll": {"index": node["index"], "offset": delta},
+            "reason": "Only the formerly hidden right-end pixels of this horizontal formula scroller; the already observed beginning is excluded.",
+            "uncovered": {"kind": "formula-right-end", "math_index": node["index"], "source_x_interval": [node["clientWidth"], node["scrollWidth"]], "display_text": node["text"]},
+        })
+result = {"original_page_observed_intervals": observed, "original_figures_already_completely_observed": True, "same_six_combinations_only": True, "captures": captures}
+output = ROOT / "capture-plan.json"
+if output.exists():
+    raise RuntimeError("No repeated capture plan")
+output.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+print(json.dumps({"planned_supplement_pngs": len(captures), "by_combination": {key: sum(c["combination"] == key for c in captures) for key in geometry}}))

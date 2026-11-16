@@ -1,0 +1,94 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = path.dirname(new URL(import.meta.url).pathname);
+const read = (name) => JSON.parse(fs.readFileSync(path.join(root, name), 'utf8'));
+const source = read('source-solutions.json');
+const view = read('view-checks.json');
+const images = read('image-observations.json');
+const comparison = read('final-comparison-result.json');
+
+// Assemble already-adjudicated evidence, without consulting author files again.
+const review = {
+  schema: 's10y-choice-review-v1',
+  seed_sha256: comparison.seed_sha256,
+  draft_sha256: comparison.draft_sha256,
+  reviewer: comparison.reviewer,
+  source_reviews: source.source_reviews.map((record) => {
+    const coverage = view.visible_source_coverage.find(
+      (item) => item.source_number === record.source_number,
+    );
+    const loss = comparison.production_losses.find(
+      (item) => item.source_number === record.source_number,
+    );
+    return {
+      source_number: record.source_number,
+      independent_solution: [
+        record.independent_solution,
+        record.reasoning,
+      ].filter(Boolean).join(' '),
+      coverage: {
+        verdict: loss.verdict,
+        evidence: [
+          coverage.evidence,
+          `Observed production loss: ${loss.observed_loss}`,
+          `Internal disclosure comparison: ${loss.author_disclosure}`,
+        ].join(' '),
+      },
+    };
+  }),
+  figure_checks: images.figure_checks.map((figure) => ({
+    figure_id: figure.figure_id,
+    asset_path: figure.asset_path,
+    asset_sha256: figure.asset_sha256,
+    observation: [
+      `Actually opened ${figure.viewed_image_path}; PNG SHA-256 ${figure.viewed_image_sha256}.`,
+      figure.observation,
+      figure.mathematical_evidence,
+      figure.interpretation_boundary,
+    ].join(' '),
+  })),
+  new_figure_reviews: [],
+  question_reviews: structuredClone(view.question_reviews),
+  outcome: comparison.outcome,
+};
+
+for (const record of review.question_reviews) {
+  record.mathematics.independent_solution +=
+    ' Subsequent authorized comparison found the author complete true set and every truth label equal to this independently frozen result.';
+  for (const option of record.mathematics.option_checks) {
+    const generation = comparison.false_option_generation_checks.find(
+      (item) => item.question_id === record.question_id &&
+        item.option_id === option.option_id,
+    );
+    if (!generation) continue;
+    option.evidence += [
+      ` Author-program check (${generation.verdict}): ${generation.generation}`,
+      `Falsehood independently checked: ${generation.falsehood}`,
+      generation.repair && `Internal repair required: ${generation.repair}`,
+    ].filter(Boolean).join(' ');
+    if (generation.verdict === 'revise') {
+      record.mathematics.verdict = 'revise';
+      record.mathematics.independent_solution +=
+        ` Option ${option.option_id} stays false, but the internal mistaken-program derivation needs the recorded repair.`;
+    }
+  }
+  if (record.question_id === 'n44-788') {
+    record.task_fidelity.verdict = 'revise';
+    record.task_fidelity.evidence +=
+      ' The later internal comparison shows that intent.task promises counting, but the six-shape count is supplied. Neither intent.limitations nor coverage.omitted_tasks records this independent-count loss. Disclose it separately from axis drawing/enumeration and qualify the internal full-coverage claim; the view and true set need not change.';
+  }
+}
+
+const output = path.join(root, 'review.json');
+fs.writeFileSync(output, JSON.stringify(review, null, 2) + '\n', { flag: 'wx' });
+console.log(JSON.stringify({
+  output,
+  outcome: review.outcome,
+  source_reviews: review.source_reviews.length,
+  figure_checks: review.figure_checks.length,
+  question_reviews: review.question_reviews.length,
+  option_checks: review.question_reviews.reduce(
+    (count, item) => count + item.mathematics.option_checks.length, 0,
+  ),
+}));

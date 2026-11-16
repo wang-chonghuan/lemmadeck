@@ -1,0 +1,109 @@
+import json
+import math
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
+geometry = json.loads((ROOT / "supplement-geometry.json").read_text())
+observed = {
+    "text-1440": [[0, 960], [763, 1723]],
+    "text-390": [[0, 844], [938, 1782]],
+    "exercises-1440": [[175, 1135], [3616, 4576]],
+    "exercises-390": [[234, 1078], [4273, 5116]],
+    "choices-1440": [[360, 1320], [7943, 8903]],
+    "choices-390": [[417, 1261], [9435, 10279]],
+}
+captures = []
+
+
+def add(combination, rect, reason, coverage, scroll=None):
+    record = {
+        "combination": combination,
+        "filename": f"supplement-{combination}-{len(captures) + 1:02d}.png",
+        "rect": rect,
+        "reason": reason,
+        "uncovered": coverage,
+    }
+    if scroll:
+        record["scroll"] = scroll
+    captures.append(record)
+
+
+def subtract(intervals, remove):
+    result = []
+    for start, end in intervals:
+        a, b = remove
+        if end <= a or start >= b:
+            result.append((start, end))
+        else:
+            if start < a:
+                result.append((start, a))
+            if end > b:
+                result.append((b, end))
+    return result
+
+
+for combination, details in geometry.items():
+    surface, width = combination.split("-")
+    width = int(width)
+    nodes = details["nodes"]
+    if surface == "text":
+        captions = [n for n in nodes if n["class"] == "figcap"][2:]
+        jump = next(n for n in nodes if n["class"] == "jump")
+        a = math.floor(captions[0]["rect"]["y"])
+        b = math.ceil(jump["rect"]["y"] + jump["rect"]["height"])
+        add(combination, {"x": 377 if width == 1440 else 16, "y": a, "width": 686 if width == 1440 else 358, "height": b - a},
+            "The original text last-page capture stops within square media; figure141/142 captions and navigation are not captured.",
+            {"kind": "text-footer", "captions": [141, 142], "jump": True})
+        continue
+    intervals = [(0, details["documentHeight"])]
+    for region in observed[combination]:
+        intervals = subtract(intervals, region)
+    for figure in [n for n in nodes if n["class"] == "figure-media"]:
+        r = figure["rect"]
+        intervals = subtract(intervals, [math.floor(r["y"]), math.ceil(r["y"] + r["height"])])
+    safe_cuts = sorted({math.floor(n["rect"]["y"]) for n in nodes if n["tag"] == "LI" or n["class"] == "choice-heading"})
+    for start, end in intervals:
+        while start < end:
+            stop = min(start + 700, end)
+            if stop < end:
+                candidates = [cut for cut in safe_cuts if start + 120 <= cut <= stop]
+                if candidates:
+                    stop = max(candidates)
+            relevant = []
+            for node in nodes:
+                if node["tag"] not in ["LI", "H1"] and node["class"] not in ["crumb", "choice-heading", "choice-stem"]:
+                    continue
+                r = node["rect"]
+                if r["y"] < stop and r["y"] + r["height"] > start:
+                    relevant.append({"id": node["id"], "class": node["class"], "visible_text_prefix": (node.get("text") or "")[:70]})
+            add(combination, {"x": 377 if width == 1440 else 16, "y": start, "width": 686 if width == 1440 else 358, "height": stop - start},
+                "This document band is outside both observed first/last page captures and excludes all already-observed figure-media bands.",
+                {"kind": "missing-document-band", "document_interval": [start, stop], "visible_units": relevant})
+            start = stop
+
+mobile = geometry["exercises-390"]
+for index, figure in enumerate(n for n in mobile["nodes"] if n["class"] == "figure-media"):
+    r = figure["rect"]
+    y = math.ceil(r["y"])
+    end = math.floor(r["y"] + r["height"])
+    while y < end:
+        h = min(700, end - y)
+        add("exercises-390", {"x": 64, "y": y, "width": 20, "height": h},
+            "Start/end mobile exercise crops cover source0..310 and330..640; this captures only the approximately20px central missing strip.",
+            {"kind": "figure-central-gap", "figure_id": 143 + index, "source_x_interval": [310, 330], "subpixel_boundary_tolerance": "<1 raster pixel"},
+            {"selector": f"#fig-{143 + index}", "offset": 310})
+        y += h
+
+for index, node in enumerate(n for n in mobile["nodes"] if n["class"] == "nb"):
+    if node["scrollWidth"] <= node["clientWidth"]:
+        continue
+    r = node["rect"]
+    delta = node["scrollWidth"] - node["clientWidth"]
+    add("exercises-390", {"x": 374 - delta, "y": math.floor(r["y"]), "width": delta, "height": math.ceil(r["height"]) + 1},
+        "Only the formula's previously unseen right-end pixels are captured after horizontal scrolling; already visible formula beginnings are excluded.",
+        {"kind": "formula-right-end", "exercise": 799 if r["y"] < 4000 else 803, "formula": 1 if r["y"] in [3800.6875, 4831.21875] else 2, "source_x_interval": [node["clientWidth"], node["scrollWidth"]]},
+        {"selector": ".nb", "index": index, "offset": delta})
+
+plan = {"existing_observed_page_intervals": observed, "same_six_combinations_only": True, "captures": captures}
+(ROOT / "capture-plan.json").write_text(json.dumps(plan, ensure_ascii=False, indent=2) + "\n")
+print(json.dumps({"planned_captures": len(captures), "by_combination": {key: sum(c["combination"] == key for c in captures) for key in geometry}}))

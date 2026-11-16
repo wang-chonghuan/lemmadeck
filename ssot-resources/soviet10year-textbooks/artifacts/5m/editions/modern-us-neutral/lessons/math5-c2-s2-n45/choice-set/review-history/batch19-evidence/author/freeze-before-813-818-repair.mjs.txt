@@ -1,0 +1,25 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { fileURLToPath } from 'node:url'
+
+const dir = path.dirname(fileURLToPath(import.meta.url))
+const target = path.join(dir, 'rejected-before-813-818-merge')
+fs.mkdirSync(target)
+const files = [
+  'source.json', 'source-solutions.json', 'draft.json', 'view.json',
+  'author.mjs', 'check.mjs', 'structural-check.json',
+]
+const records = files.map(name => {
+  const source = path.join(dir, name)
+  fs.copyFileSync(source, path.join(target, name), fs.constants.COPYFILE_EXCL)
+  return {
+    name, sha256: crypto.createHash('sha256').update(fs.readFileSync(source)).digest('hex'),
+    preservation: 'exact byte copy before changing the rejected snapshot',
+  }
+})
+fs.writeFileSync(path.join(target, 'manifest.json'), JSON.stringify({
+  reason: 'Independent reviewer requested repair of 813/818 cross-question answer disclosure.',
+  files: records,
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ directory: target, preserved_files: records }, null, 2))

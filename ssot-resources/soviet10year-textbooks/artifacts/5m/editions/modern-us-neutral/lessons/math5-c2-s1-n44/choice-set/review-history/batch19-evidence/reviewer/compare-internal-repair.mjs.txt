@@ -1,0 +1,222 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const root = path.dirname(new URL(import.meta.url).pathname);
+const read = (name) => JSON.parse(fs.readFileSync(path.join(root, name), 'utf8'));
+const sha = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex');
+const ordered = (value) => Array.isArray(value) ? value.map(ordered)
+  : value && typeof value === 'object'
+    ? Object.fromEntries(Object.keys(value).sort().map((key) => [key, ordered(value[key])]))
+    : value;
+const digest = (value) => sha(JSON.stringify(ordered(value)).replace(
+  /[\u007f-\uffff]/g, (character) => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`,
+));
+const previous = read('final-comparison-result.json');
+const originalReview = read('review.json');
+const frozen = read('view-checks.json');
+const source = read('source-solutions.json');
+const repair = read('../5m-n44/internal-repair-record.json');
+const draftBytes = fs.readFileSync(path.join(root, '../5m-n44/draft.json'));
+const viewBytes = fs.readFileSync(path.join(root, '../5m-n44/view.json'));
+const seedBytes = fs.readFileSync(path.join(root, '../5m-n44/source.json'));
+const draft = JSON.parse(draftBytes);
+const actualView = JSON.parse(viewBytes);
+const projection = { questions: draft.questions.map((q) => ({ id: q.id, ...q.view })) };
+if (sha(viewBytes) !== frozen.view_file_sha256 ||
+    JSON.stringify(projection) !== JSON.stringify(actualView)) {
+  throw new Error('Current view is not identical to the original frozen view');
+}
+if (sha(seedBytes) !== source.source_file_sha256 ||
+    sha(draftBytes) !== repair.after_draft_sha256) {
+  throw new Error('Current source/draft byte binding differs from the disclosed snapshot');
+}
+
+// Reverse only the ten disclosed semantic fields, then bind the whole preimage
+// to the independently recorded original draft, rather than trusting a diff claim.
+const locate = (document, pointer) => {
+  const parts = pointer.split('/').slice(1);
+  let current = document;
+  for (const part of parts.slice(0, -1)) {
+    current = Array.isArray(current)
+      ? current.find((item) => item.id === part || item.source_number === part || item.option_id === part)
+      : current[part];
+    if (!current) throw new Error(`Missing disclosed repair path:${pointer}`);
+  }
+  return [current, parts.at(-1)];
+};
+const preimage = structuredClone(draft);
+const fieldComparisons = repair.changes.map((change) => {
+  const [target, key] = locate(draft, change.path);
+  if (JSON.stringify(target[key]) !== JSON.stringify(change.after)) {
+    throw new Error(`Current field differs from repaired value:${change.path}`);
+  }
+  const [oldTarget, oldKey] = locate(preimage, change.path);
+  oldTarget[oldKey] = structuredClone(change.before);
+  return { ...change, verdict: 'pass', current_value_matches_after: true };
+});
+const originalSerialized = JSON.stringify(preimage, null, 2) + '\n';
+const preimageDigest = digest(preimage);
+const preimageByteSha = sha(originalSerialized);
+if (preimageDigest !== previous.draft_sha256 ||
+    preimageByteSha !== previous.draft_file_sha256 ||
+    preimageByteSha !== repair.before_draft_sha256) {
+  throw new Error('Reconstructed preimage does not bind to the reviewed original draft');
+}
+
+const changedPrograms = [
+  {
+    question_id: 'n44-791',
+    option_id: 'C',
+    verdict: 'pass',
+    generation: 'First falsely place both intersections on l; apply the valid axis-fixed-point rule to these falsely located points. Then falsely generalize fixed intersections to pointwise fixation of each whole circle, and infer union invariance. The current derivation and misconception explicitly generate both defective steps.',
+    falsehood: 'In both actual source configurations the intersections lie off l and exchange. Even if two points were fixed, a unit circle reflected about its x-axis fixes the two x-intercepts but moves its top/bottom points, so pointwise whole-circle fixation does not follow.',
+  },
+  {
+    question_id: 'n44-794a',
+    option_id: 'C',
+    verdict: 'pass',
+    generation: 'For a/b compared with c/d, output a and d instead of cross-products and preserve the relation sign. On200/4201<1/20, this selects200 and20, emitting200<20 while falsely naming the process common multiplication by4201*20.',
+    falsehood: 'Actual positive common multiplication gives200*20=4000 and1*4201=4201; the displayed200<20 is false and is not the scaled comparison.',
+  },
+  {
+    question_id: 'n44-794b',
+    option_id: 'C',
+    verdict: 'pass',
+    generation: 'For a/b compared with c/d, keep a unscaled on the left and use b*d on the right. On125/361>1/3 this selects125 and361*3=1083, emitting125>1083 while falsely calling it common multiplication. The incompatible3*3 explanation is removed.',
+    falsehood: 'Actual positive scaling gives125*3=375 and1*361=361.125>1083 is false, and361*3 is a denominator product, not the right cross-product.',
+  },
+].map((record) => {
+  const q = draft.questions.find((item) => item.id === record.question_id);
+  const rationale = q.key.rationales.find((item) => item.option_id === record.option_id);
+  return {
+    ...record,
+    author_derivation: rationale.derivation,
+    author_misconception: rationale.misconception,
+    previous_verdict: 'revise',
+    truth_retained: rationale.truth,
+  };
+});
+
+const current = structuredClone(previous);
+current.stage = 'n44_ten_field_internal_repair_comparison_complete';
+current.outcome = 'pass';
+current.draft_sha256 = digest(draft);
+current.draft_file_sha256 = sha(draftBytes);
+current.input_boundary = 'Only authorized current n44 draft, internal repair record and the draft.json portion of its patch were newly examined. Serializer hunks were filtered out before display; no author.mjs, author source-solutions or answers were opened for this comparison. Independent source/actual-image observations and the original frozen pure-view evidence are reused. No new pure-view solving or image review was performed. N45 comparison is separate.';
+current.snapshot_note = 'Only local contract snapshot digests and byte hashes are used for binding. No canonical corpus or canonical tool, validator, structural check, freshness read, rendering, browser, backend, service or promotion was used.';
+current.counts.false_generation_pass = 55;
+current.counts.false_generation_revise = 0;
+current.counts.changed_internal_fields = fieldComparisons.length;
+current.counts.changed_false_programs_rechecked = changedPrograms.length;
+current.counts.unchanged_false_programs_reused = 52;
+current.counts.visible_option_truths_reused = 83;
+current.comparison.view_snapshot = {
+  verdict: 'pass',
+  evidence: 'Actual current view bytes SHA equals the independently frozen original view SHA. Every current draft id/view equals that unchanged view, including order, modes, options and figure arrays. No additional pure-view pass is claimed or needed.',
+};
+current.comparison.source_coverage_relationships = {
+  verdict: 'pass',
+  evidence: 'The reconstructed whole original draft binds to both its previously reviewed contract digest and original byte digest after reversing exactly the ten disclosed fields. Thus all source mappings, other coverage fields and all unaffected internals are unchanged. Coverage788 now explicitly omits independent counting because six is supplied, separately from axis drawing/enumeration.',
+};
+current.comparison.internal_repair = {
+  verdict: 'pass',
+  evidence: 'All four original requests are resolved by exactly ten changed internal fields. Source/view bytes are independently bound; key.correct, question order, source membership and every unaffected field are established unchanged by the reconstructed whole-preimage match.',
+};
+current.comparison.complete_true_sets.evidence += ' For the repaired snapshot all20 complete sets and83 truth labels remain exactly those independently frozen sets/labels; only three false-program explanations changed.';
+current.production_losses.find((loss) => loss.source_number === '788').author_disclosure =
+  'intent.task now says six is supplied and counting is not assessed; limitations and coverage.omitted_tasks both explicitly list independent counting separately from axis enumeration/drawing, and coverage.reason no longer claims counting is retained.';
+current.production_losses.find((loss) => loss.source_number === '788').verdict = 'pass';
+for (const replacement of changedPrograms) {
+  const index = current.false_option_generation_checks.findIndex(
+    (item) => item.question_id === replacement.question_id && item.option_id === replacement.option_id,
+  );
+  current.false_option_generation_checks[index] = replacement;
+}
+current.repair_requests = [];
+current.repair_resolutions = previous.repair_requests.map((request) => ({
+  ...request,
+  verdict: 'pass',
+  resolution: request.id === 'R1'
+    ? 'The four counting/disclosure fields explicitly acknowledge the supplied count and retain axis-production loss as a separate limitation.'
+    : changedPrograms.find((record) => request.affected[0].startsWith(record.question_id)).generation,
+}));
+current.changed_field_comparisons = fieldComparisons;
+current.binding_comparison = {
+  verdict: 'pass',
+  actual_view_bytes_sha256: sha(viewBytes),
+  original_frozen_view_bytes_sha256: frozen.view_file_sha256,
+  actual_source_bytes_sha256: sha(seedBytes),
+  original_source_bytes_sha256: source.source_file_sha256,
+  current_draft_bytes_sha256: sha(draftBytes),
+  reconstructed_original_draft_bytes_sha256: preimageByteSha,
+  previously_reviewed_original_draft_bytes_sha256: previous.draft_file_sha256,
+  reconstructed_original_contract_digest: preimageDigest,
+  previously_reviewed_original_contract_digest: previous.draft_sha256,
+  exact_fields_changed: fieldComparisons.map((record) => record.path),
+  evidence: 'Every after value matched the current draft. Replacing only these ten values with disclosed before values reproduces the whole original reviewed draft byte-for-byte and its contract digest. This independently confirms the author change-scope claim, not just the visible projection.',
+};
+current.handoff = 'All four original internal repairs pass for this exact current draft. Original rejected review and comparison are preserved byte-for-byte in reviewer history. No canonical/structural validation, rendering or promotion was performed; this is semantic comparison only.';
+
+const review = {
+  schema: 's10y-choice-review-v1',
+  seed_sha256: current.seed_sha256,
+  draft_sha256: current.draft_sha256,
+  reviewer: current.reviewer,
+  source_reviews: source.source_reviews.map((record) => {
+    const visible = frozen.visible_source_coverage.find((item) => item.source_number === record.source_number);
+    const loss = current.production_losses.find((item) => item.source_number === record.source_number);
+    return {
+      source_number: record.source_number,
+      independent_solution: [record.independent_solution, record.reasoning].filter(Boolean).join(' '),
+      coverage: {
+        verdict: loss.verdict,
+        evidence: `${visible.evidence} Observed production loss:${loss.observed_loss} Current internal disclosure:${loss.author_disclosure}`,
+      },
+    };
+  }),
+  figure_checks: originalReview.figure_checks,
+  new_figure_reviews: originalReview.new_figure_reviews,
+  question_reviews: structuredClone(frozen.question_reviews),
+  outcome: 'pass',
+};
+for (const q of review.question_reviews) {
+  q.mathematics.independent_solution += ' Current repaired internal comparison preserves the independently frozen complete true set and every option truth; unchanged evidence is reused after whole-snapshot preimage binding.';
+  for (const option of q.mathematics.option_checks) {
+    const program = current.false_option_generation_checks.find(
+      (item) => item.question_id === q.question_id && item.option_id === option.option_id,
+    );
+    if (program) option.evidence += ` Current author-program comparison(pass):${program.generation} Falsehood:${program.falsehood}`;
+  }
+  if (q.question_id === 'n44-788') {
+    q.task_fidelity.evidence += ' The repaired task, limitations and coverage now explicitly disclose that the stem supplies six, so independent counting is omitted, separately from axis drawing/enumeration. No mathematical/view change is required.';
+  }
+}
+
+const histories = [
+  ['review.json', 'review-before-internal-repair.json'],
+  ['final-comparison-result.json', 'final-comparison-result-before-internal-repair.json'],
+];
+current.preserved_history = histories.map(([original, history]) => ({
+  path: path.join(root, history),
+  original_bytes_sha256: sha(fs.readFileSync(path.join(root, original))),
+}));
+for (const [original, history] of histories) {
+  fs.copyFileSync(path.join(root, original), path.join(root, history), fs.constants.COPYFILE_EXCL);
+  if (sha(fs.readFileSync(path.join(root, history))) !== sha(fs.readFileSync(path.join(root, original)))) {
+    throw new Error(`History byte preservation failed:${original}`);
+  }
+}
+for (const [name, value] of [
+  ['final-comparison-result.json', current],
+  ['review.json', review],
+]) {
+  fs.writeFileSync(path.join(root, name), JSON.stringify(value, null, 2) + '\n');
+}
+console.log(JSON.stringify({
+  outcome: current.outcome,
+  draft_sha256: current.draft_sha256,
+  current_draft_file_sha256: current.draft_file_sha256,
+  ...current.counts,
+  original_history_preserved: histories.map(([, history]) => history),
+}));

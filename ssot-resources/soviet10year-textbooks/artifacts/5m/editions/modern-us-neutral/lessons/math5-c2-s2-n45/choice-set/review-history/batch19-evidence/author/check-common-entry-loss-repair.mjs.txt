@@ -1,0 +1,58 @@
+import fs from "node:fs";
+import crypto from "node:crypto";
+import { spawnSync } from "node:child_process";
+import assert from "node:assert/strict";
+
+const root = ".intentfold/tickets/STEMROBIN-182/tmp/5m-n45";
+const history = `${root}/history-before-common-entry-loss-20261116`;
+const before = JSON.parse(fs.readFileSync(`${history}/draft.json`, "utf8"));
+const after = JSON.parse(fs.readFileSync(`${root}/draft.json`, "utf8"));
+const replacements = [];
+function compare(a, b, path = "") {
+  if (JSON.stringify(a) === JSON.stringify(b)) return;
+  if (Array.isArray(a) && Array.isArray(b) && !path.endsWith("limitations") && !path.endsWith("omitted_tasks")) {
+    assert.equal(a.length, b.length);
+    a.forEach((v, i) => compare(v, b[i], `${path}/${i}`));
+  } else if (a && b && !Array.isArray(a) && typeof a === "object" && typeof b === "object") {
+    assert.deepEqual(Object.keys(a), Object.keys(b));
+    Object.keys(a).forEach(k => compare(a[k], b[k], `${path}/${k}`));
+  } else {
+    replacements.push({ op: "replace", path, value: b, previous_value: a });
+  }
+}
+compare(before, after);
+const qi = after.questions.findIndex(q => q.id === "n45-813-818");
+const ci813 = after.coverage.findIndex(c => c.source_number === "813");
+const ci818 = after.coverage.findIndex(c => c.source_number === "818");
+assert.deepEqual(replacements.map(p => p.path).sort(), [
+  `/questions/${qi}/intent/limitations`,
+  `/coverage/${ci813}/omitted_tasks`, `/coverage/${ci813}/reason`,
+  `/coverage/${ci818}/omitted_tasks`, `/coverage/${ci818}/reason`
+].sort());
+for (const f of ["view.json", "source.json", "source-solutions.json", "author.mjs"]) {
+  assert(fs.readFileSync(`${history}/${f}`).equals(fs.readFileSync(`${root}/${f}`)), `${f} changed`);
+}
+const sha = path => crypto.createHash("sha256").update(fs.readFileSync(path)).digest("hex");
+const diff = spawnSync("git", ["diff", "--no-index", "--", `${history}/draft.json`, `${root}/draft.json`], { encoding: "utf8" });
+assert.equal(diff.status, 1);
+fs.writeFileSync(`${root}/repair-common-entry-loss.patch`, diff.stdout, { flag: "wx" });
+fs.writeFileSync(`${root}/repair-common-entry-loss.json-patch.json`, JSON.stringify(replacements.map(({ previous_value, ...p }) => p), null, 2) + "\n", { flag: "wx" });
+const args = [".agents/skills/ld-s10y-choice/scripts/validate.py", "--repo", ".", "--seed", `${root}/source.json`, "--draft", `${root}/draft.json`];
+const result = spawnSync("python3", args, { encoding: "utf8" });
+const receipt = {
+  changed_paths: replacements.map(p => p.path),
+  changes: replacements,
+  history,
+  byte_sha256: {
+    before_draft: sha(`${history}/draft.json`), after_draft: sha(`${root}/draft.json`),
+    view_before: sha(`${history}/view.json`), view_after: sha(`${root}/view.json`),
+    source: sha(`${root}/source.json`), source_solutions: sha(`${root}/source-solutions.json`)
+  },
+  canonical_draft_sha256: spawnSync("python3", [".agents/skills/ld-s10y-choice/scripts/prepare.py", "digest", `${root}/draft.json`], { encoding: "utf8" }).stdout.trim(),
+  unchanged: ["all view subtrees", "view.json bytes", "all keys", "all rationales", "question and option order", "source.json bytes", "source-solutions.json bytes", "serializer bytes"],
+  structural: { command: `python3 ${args.join(" ")}`, stdout: result.stdout, stderr: result.stderr, exit_code: result.status },
+  semantic_status: "No review performed or overwritten; source 835 remains blocked."
+};
+fs.writeFileSync(`${root}/structural-check-common-entry-loss-repair.json`, JSON.stringify(receipt, null, 2) + "\n", { flag: "wx" });
+console.log(JSON.stringify(receipt, null, 2));
+process.exitCode = result.status;

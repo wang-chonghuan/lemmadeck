@@ -1,0 +1,98 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { fileURLToPath } from 'node:url'
+import { spawnSync } from 'node:child_process'
+
+const dir = path.dirname(fileURLToPath(import.meta.url))
+const before = path.join(dir, 'rejected-before-813-818-merge')
+const after = path.join(dir, 'repaired-813-818-snapshot')
+const read = (root, name) => fs.readFileSync(path.join(root, name))
+const json = (root, name) => JSON.parse(read(root, name).toString('utf8'))
+const digest = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
+const removed = ['n45-813', 'n45-818']
+const isRemoved = q => removed.includes(q.id)
+const oldDraft = json(before, 'draft.json')
+const newDraft = json(after, 'draft.json')
+const oldView = json(before, 'view.json')
+const newView = json(after, 'view.json')
+for (const name of ['source.json', 'source-solutions.json', 'draft.json', 'view.json']) {
+  assert(read(dir, name).equals(read(before, name)), `${name} changed after freezing; do not overwrite concurrent edits`)
+}
+for (const manifest of json(before, 'manifest.json').files) {
+  assert.equal(digest(read(before, manifest.name)), manifest.sha256)
+}
+const newUnit = newDraft.questions.find(q => q.id === 'n45-813-818')
+assert(newUnit)
+assert.deepEqual(newUnit.source_numbers, ['813', '818'])
+assert(!newDraft.questions.some(isRemoved))
+assert(!newView.questions.some(isRemoved))
+assert.equal(newDraft.questions.length, oldDraft.questions.length - 1)
+assert.deepEqual(
+  newDraft.questions.filter(q => q.id !== newUnit.id),
+  oldDraft.questions.filter(q => !isRemoved(q)),
+)
+assert.deepEqual(
+  newView.questions.filter(q => q.id !== newUnit.id),
+  oldView.questions.filter(q => !isRemoved(q)),
+)
+assert.deepEqual(
+  newDraft.coverage.filter(c => !['813', '818'].includes(c.source_number)),
+  oldDraft.coverage.filter(c => !['813', '818'].includes(c.source_number)),
+)
+for (const number of ['813', '818']) {
+  const original = oldDraft.coverage.find(c => c.source_number === number)
+  const repaired = newDraft.coverage.find(c => c.source_number === number)
+  assert.deepEqual(repaired, { ...original, question_ids: [newUnit.id] })
+}
+assert.equal(newDraft.seed_sha256, oldDraft.seed_sha256)
+assert.deepEqual(newDraft.new_figures, oldDraft.new_figures)
+assert.deepEqual(newView, {
+  questions: newDraft.questions.map(({ id, view }) => ({ id, ...view })),
+})
+const unchanged = oldDraft.questions.filter(q => !isRemoved(q)).map(q => ({
+  id: q.id,
+  pretty_serialized_bytes_unchanged: Buffer.from(JSON.stringify(q, null, 2)).equals(
+    Buffer.from(JSON.stringify(newDraft.questions.find(n => n.id === q.id), null, 2))),
+}))
+assert(unchanged.every(q => q.pretty_serialized_bytes_unchanged))
+const diffs = ['author.mjs', 'draft.json', 'view.json'].map(name => {
+  const current = name === 'author.mjs' ? dir : after
+  const result = spawnSync('git', ['diff', '--no-index', '--no-ext-diff', '--no-color',
+    '--', path.join(before, name), path.join(current, name)], { encoding: 'utf8' })
+  assert.equal(result.status, 1, `${name} must have an exact repair diff`)
+  assert.equal(result.stderr, '')
+  return result.stdout
+})
+fs.writeFileSync(path.join(dir, 'repair-813-818.patch'), diffs.join('\n'), { flag: 'wx' })
+const record = {
+  rejected_snapshot: path.relative(process.cwd(), before),
+  repaired_snapshot: path.relative(process.cwd(), after),
+  serializer: path.relative(process.cwd(), path.join(dir, 'author.mjs')),
+  removed_question_ids: removed, added_question_id: newUnit.id,
+  updated_coverage_sources: ['813', '818'],
+  source_bytes_unchanged: true, frozen_solution_bytes_unchanged: true,
+  source_835_coverage_unchanged: true,
+  unchanged_questions: unchanged,
+  before_sha256: { draft: digest(read(before, 'draft.json')), view: digest(read(before, 'view.json')) },
+  after_sha256: { draft: digest(read(after, 'draft.json')), view: digest(read(after, 'view.json')) },
+  measured_pure_view: {
+    questions: newView.questions.length,
+    options: newView.questions.reduce((n, q) => n + q.options.length, 0),
+    single: newView.questions.filter(q => q.mode === 'single').length,
+    multiple: newView.questions.filter(q => q.mode === 'multiple').length,
+  },
+  semantic_review: 'pending; reviewer records were not written',
+}
+fs.writeFileSync(path.join(dir, 'repair-813-818-record.json'), JSON.stringify(record, null, 2) + '\n', { flag: 'wx' })
+for (const name of ['draft.json', 'view.json']) {
+  fs.copyFileSync(path.join(after, name), path.join(dir, name))
+  assert(read(dir, name).equals(read(after, name)))
+}
+console.log(JSON.stringify({
+  unchanged_units: unchanged.length, source_835_unchanged: true,
+  ready_draft: path.join(dir, 'draft.json'), ready_view: path.join(dir, 'view.json'),
+  exact_diff: path.join(dir, 'repair-813-818.patch'),
+  ...record.measured_pure_view,
+}, null, 2))

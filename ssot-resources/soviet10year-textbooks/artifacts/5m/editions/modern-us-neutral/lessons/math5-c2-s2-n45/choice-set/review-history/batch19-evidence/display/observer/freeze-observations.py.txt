@@ -1,0 +1,314 @@
+import hashlib
+import json
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
+REPO = ROOT.parents[4]
+TMP = ROOT.parent
+
+
+def read(path):
+    return json.loads(path.read_text())
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+geometry = read(ROOT / "geometry.json")
+primary = read(ROOT / "primary-image-inventory.json")
+supplement = read(ROOT / "supplement-image-inventory.json")
+capture = read(ROOT / "capture-evidence.json")
+plan = read(ROOT / "capture-plan.json")
+manifest = TMP / "batch19-render/5m-math5-c2-s2-n45-capture-manifest.json"
+report = TMP / "offline-evidence/5m/math5-c2-s2-n45-batch19-report.json"
+all_montages = primary["montages"] + supplement["montages"]
+image_records = {}
+for montage in all_montages:
+    for image in montage["images"]:
+        image_records[image["path"]] = {
+            **image,
+            "observed": True,
+            "observation_method": "Actually opened native unscaled montage with original detail",
+            "montage_path": montage["path"],
+            "montage_sha256": montage["sha256"],
+        }
+
+bands = {key: [] for key in geometry}
+for path, image in image_records.items():
+    name = Path(path).name
+    for combination in geometry:
+        if f"-{combination}-" not in name:
+            continue
+        height = 960 if combination.endswith("1440") else 844
+        if name.endswith("-first.png"):
+            bands[combination].append((0, height, path))
+        elif name.endswith("-last.png"):
+            h = geometry[combination]["height"]
+            bands[combination].append((h - height, h, path))
+for entry in capture["captures"]:
+    if entry["uncovered"]["kind"] == "middle-document-band":
+        a, b = entry["uncovered"]["document_y_interval"]
+        bands[entry["combination"]].append((a, b, entry["path"]))
+
+
+def images_for(combination, rect):
+    a, b = rect["y"], rect["y"] + rect["height"]
+    result = []
+    for start, end, path in bands[combination]:
+        if start < b and end > a:
+            result.append({
+                "png": path,
+                "sha256": image_records[path]["sha256"],
+                "montage": image_records[path]["montage_path"],
+                "observed_document_y_interval": [max(a, start), min(b, end)],
+            })
+    for entry in capture["captures"]:
+        r = entry["rect"]
+        if (entry["combination"] == combination
+                and entry["uncovered"]["kind"] == "formula-right-end"
+                and r["y"] < b and r["y"] + r["height"] > a):
+            result.append({
+                "png": entry["path"],
+                "sha256": entry["sha256"],
+                "montage": image_records[entry["path"]]["montage_path"],
+                "observed_formula_source_x_interval": entry["uncovered"]["source_x_interval"],
+                "math_index": entry["uncovered"]["math_index"],
+            })
+    return result
+
+
+choice_details = {
+    1: "Square-area stem and four separate fraction/unit alternatives.",
+    2: "Two candy quantities and both dollar amounts in every row.",
+    3: "Three multiplication expressions and all three fraction-result rows.",
+    4: "Positive/negative signs, parentheses and all three results per row.",
+    5: "Four products and four result fractions per alternative.",
+    6: "Four remaining products and the entire result sequence in each row.",
+    7: "Eight-result rows, including negative entries; no truncated rightmost result.",
+    8: "Second grouped multiplication record; complete stems and rows.",
+    9: "Fraction and decimal verification paths; the complete final decimal values.",
+    10: "Symbolic fraction domains and both algebraic products wrap without collision.",
+    11: "Six-result natural-number multiplication rows, including right-end fractions.",
+    12: "Second six-result record includes multiplication by one and zero.",
+    13: "Mixed-number products and all four result entries.",
+    14: "Commutative-law formulas and verification fractions in every alternative.",
+    15: "All five lines of each merged A/B/C record: initial fraction product, decimal check, common product, associativity law and numerical verification.",
+    16: "Associativity/grouping formulas, every numerator and denominator, and conclusions.",
+    17: "Both decimal-to-fraction conversions and both resulting products.",
+    18: "Both fraction-to-decimal conversions and decimal products, including 9.6.",
+    19: "Both three-factor chains and both result fractions in each row.",
+    20: "All three time fractions and three distances with kilometer unit.",
+    21: "Three box dimensions and each cubic-decimeter answer.",
+    22: "All eight A-H factorization equalities, including complete H and both factors per row.",
+    23: "Paper-total/remainder wording and all four count alternatives.",
+    24: "Book price, payment share, remaining-payment wording and cent units.",
+    25: "Four mixed-number conversions/products per A/B/C row; last result intact.",
+    26: "Four mixed-number products and all four fractions per row.",
+    27: "Four signed products, negative parentheses and all final signs.",
+    28: "s=vt, mixed-number speed/time and kilometer answers.",
+    29: "s=vt, meter/minute speed, time fraction and meter answers.",
+    30: "V=abc and all three dimensions; three cubic-decimeter options.",
+    31: "Iron density and volume, mixed numbers, complete kilogram fractions.",
+    32: "Both successive potato sales and every ton answer.",
+    33: "Triangle/midpoint construction; primes M',P',K' and perpendicular-foot instructions readable.",
+    34: "All four line/point reflection constructions; midpoint and half-distance formulas intact.",
+    35: "62-degree datum, both reflection directions and all primed points/supporting lines.",
+    36: "Eight improper-fraction conversions in each alternative, including final two decimals.",
+    37: "Three cancellation fractions and all three simplified fractions.",
+    38: "Three further cancellation fractions and all complete result denominators.",
+    39: "Waste percentage, jam target and all ton amounts.",
+    40: "Cherry-waste wording, 7.2-ton target and every fraction answer.",
+    41: "Table/drawer equation and both table counts per alternative.",
+    42: "Apartment equation and both apartment counts; long lines wrap normally.",
+    43: "Two decimal equations; both results and all signs in each row.",
+    44: "Two further decimal equations, both right-hand ends; mobile end-only strips complete original exercise parallels.",
+    45: "Both decimal-expression stems and both numeric results.",
+    46: "Second signed-decimal pair; negative division and all endings.",
+    47: "Long two-division expression; mobile initial horizontal slice plus separately observed right end 660.04-12.7*51.6 and closing parenthesis.",
+    48: "Second long division expression; mobile initial slice plus separately observed right end 1140.02-24.4*46.6 and closing parenthesis.",
+    49: "Four fraction products and four complete results per row.",
+    50: "Two signed and two unsigned fraction products; all result signs and fractions.",
+    51: "Four products including negative mixed number; every row's fourth result.",
+    52: "Five specified m values and every five-result row.",
+    53: "Three specified x values and all three results.",
+    54: "Snail time conversion and three distances per alternative; six values intact.",
+    55: "Three box dimensions and full cubic-meter answers.",
+    56: "Six conversion results per alternative, including both decimal-derived fractions.",
+    57: "Three mixed-number products and three fraction results per row.",
+    58: "Three signed mixed-number products; all positive/negative distinctions visible.",
+    59: "Two successive watermelon allocations and all ton values.",
+    60: "Cubic iron block side and density; all large kilogram fractions.",
+    61: "Bus/truck delayed departure and simultaneous arrival; entire wrapped stem and speed units.",
+    62: "Difference and mean statement plus all decimal options.",
+    63: "a=b=-0.2 substitution expression, both parenthesized groups and all signed answers.",
+}
+
+question_observations = []
+for width in [1440, 390]:
+    combination = f"choices-{width}"
+    for q in geometry[combination]["questions"]:
+        question_observations.append({
+            "viewport_width": width,
+            "question_number": q["number"],
+            "status": "pass",
+            "heading_images": images_for(combination, q["heading"]["rect"]),
+            "stem_images": images_for(combination, q["stem"]["rect"]),
+            "actual_pixel_observation": choice_details[q["number"]],
+            "stem_complete": True,
+            "option_observations": [{
+                "option_id": option["label"],
+                "status": "pass",
+                "document_rect": option["rect"],
+                "images": images_for(combination, option["rect"]),
+                "actual_pixel_observation": (
+                    f"Printed {option['label']} marker and complete alternative were actually seen "
+                    f"at this rectangle in the cited native images. {choice_details[q['number']]} "
+                    "Numerator/denominator lines and unit/last punctuation are legible; "
+                    "boundary-split rows are joined by adjacent, nonduplicated document bands."
+                ),
+            } for option in q["options"]],
+        })
+
+exercise_observations = []
+paragraph_observations = []
+for width in [1440, 390]:
+    for index, node in enumerate(
+            n for n in geometry[f"exercises-{width}"]["nodes"] if n["class"] == "ex"):
+        exercise_observations.append({
+            "viewport_width": width,
+            "source_exercise": int(node["id"].removeprefix("ex-")),
+            "status": "pass",
+            "document_rect": node["rect"],
+            "images": images_for(f"exercises-{width}", node["rect"]),
+            "actual_pixel_observation": (
+                "Full prose and every enumerated written subpart were actually read across "
+                "the cited first/middle/last image bands. Inline fractions, signs, units and "
+                "last line are readable. For 838(2)/(4) and 840(1)/(2) on mobile, "
+                "the cited narrow right-end strips complete the horizontally scrollable formulas. "
+                "835's wording is displayed, not reinterpreted or semantically approved."
+            ),
+        })
+    for index, node in enumerate(
+            n for n in geometry[f"text-{width}"]["nodes"] if n["class"] == "para"):
+        paragraph_observations.append({
+            "viewport_width": width,
+            "paragraph_index": index,
+            "status": "pass",
+            "document_rect": node["rect"],
+            "images": images_for(f"text-{width}", node["rect"]),
+            "actual_pixel_observation": (
+                "Complete paragraph/example actually observed, including every separate display "
+                "formula and its final value/unit. Example 3's 8/15 chain is visible in middle "
+                "supplements; natural-number and cancellation chains continue into original "
+                "last captures. Mobile final example is completed by its 6 4/5 end-only strip."
+            ),
+        })
+
+figure_observations = []
+for width in [1440, 390]:
+    for number, ordinal in [(148, 1), (149, 2)]:
+        images = [
+            value for path, value in image_records.items()
+            if f"-text-{width}-figure-{ordinal}" in Path(path).name
+        ]
+        figure_observations.append({
+            "viewport_width": width,
+            "figure_id": str(number),
+            "status": "pass",
+            "images": images,
+            "actual_pixel_observation": (
+                "Six-cell rectangular grid, shaded lower-left cell, complete 1 dm, 1/2 dm "
+                "and 1/3 dm dimensions; the bottom and right dimension arrows are actually visible."
+                if number == 148 else
+                "Fifteen-cell rectangular grid, first four columns of lower two rows shaded; "
+                "complete 1 dm, 2/3 dm and 4/5 dm labels and bottom/right arrows actually visible."
+            ),
+            "mobile_horizontal_coverage": (
+                "Original start and end images each show 358 px of the 640 px media; "
+                "their overlap covers the middle, and together show the complete left and right edges."
+                if width == 390 else "Complete full-width figure in original figure PNG."
+            ),
+        })
+
+observations = {
+    "schema": "independent-actual-display-observations-v1",
+    "lesson": "math5-c2-s2-n45",
+    "reviewer": "independent staged reviewer; actual pixel-only phase",
+    "status": "pass",
+    "scope": "Display completeness and legibility only. No semantic reopening, canonical checks, validator, renderer rerun, services, durable writes, or new combinations.",
+    "manifest": {"path": str(manifest), "sha256": sha(manifest)},
+    "report": {"path": str(report), "sha256": sha(report),
+               "role": "Display inventory/geometry evidence, never substitute for opening PNGs"},
+    "actual_primary_filename_count": len(read(manifest)["screenshots"]),
+    "actual_primary_observed_png_count": primary["actual_primary_filename_count"],
+    "supplement_png_count": supplement["supplement_png_count"],
+    "actual_supplement_observed_png_count": len(capture["captures"]),
+    "actual_observed_png_total": len(image_records),
+    "native_montage_count": len(all_montages),
+    "primary_native_montage_count": len(primary["montages"]),
+    "supplement_native_montage_count": len(supplement["montages"]),
+    "montages_counted_as_png_observations": False,
+    "maximum_images_per_montage": 3,
+    "rejected_images": [],
+    "image_failures": [],
+    "provider_image_limit_failures": [],
+    "initial_coverage_insufficient": "Original 18 PNGs cover first/last regions and figures, not full middle content or seven mobile formula right ends. No pass inferred from that original report.",
+    "supplement_policy": "Only genuinely unseen middle bands and previously hidden formula right-end pixels, same existing HTML and six existing combinations. No recapture of already observed bands or figure media.",
+    "execution": {key: capture[key] for key in [
+        "headless", "PWDEBUG_cleared", "isolated_contexts", "reports_open", "browser_closed"]},
+    "html_bindings_before_after": capture["bindings"],
+    "combination_observations": [{
+        "surface": key.split("-")[0],
+        "viewport_width": int(key.split("-")[1]),
+        "viewport_height": 960 if key.endswith("1440") else 844,
+        "status": "pass",
+        "supplement_png_count": sum(c["combination"] == key for c in capture["captures"]),
+        "question_count": len(details["questions"]),
+        "option_count": sum(len(q["options"]) for q in details["questions"]),
+        "exercise_count": sum(n["class"] == "ex" for n in details["nodes"]),
+        "paragraph_count": sum(n["class"] == "para" for n in details["nodes"]),
+        "table_count": details["table_count"],
+        "actual_pixel_observation": "Full first/middle/last visible content inspected in actual native images; all long paragraphs and formulas complete after only gap supplements. No overlap, unreadable fractions, collision or missing final option. Figures checked separately.",
+    } for key, details in geometry.items()],
+    "question_observations": question_observations,
+    "exercise_observations": exercise_observations,
+    "paragraph_observations": paragraph_observations,
+    "figure_observations": figure_observations,
+    "formula_right_end_observations": [{
+        "combination": entry["combination"],
+        "math_index": entry["uncovered"]["math_index"],
+        "png": entry["path"],
+        "sha256": entry["sha256"],
+        "montage": image_records[entry["path"]]["montage_path"],
+        "source_x_interval": entry["uncovered"]["source_x_interval"],
+        "status": "pass",
+        "actual_pixel_observation": {
+            ("text-390", 43): "Final mixed-number 6 4/5 visible, joined to previously observed example's left portion.",
+            ("exercises-390", 133): "Narrow hidden ending of 0.48 actually seen; this tiny strip is the newly exposed glyph portion only, not a complete stand-alone formula.",
+            ("exercises-390", 135): "Narrow hidden ending of 0.08 actually seen; combined with initial visible formula band, no end gap remains.",
+            ("exercises-390", 140): "Second division term through 660.04-12.7*51.6 and closing parenthesis actually visible.",
+            ("exercises-390", 141): "Second division term through 1140.02-24.4*46.6 and closing parenthesis actually visible.",
+            ("choices-390", 385): "Question 47 hidden right end 660.04-12.7*51.6 and closing parenthesis actually visible.",
+            ("choices-390", 389): "Question 48 hidden right end 1140.02-24.4*46.6 and closing parenthesis actually visible.",
+        }[(entry["combination"], entry["uncovered"]["math_index"])],
+    } for entry in capture["captures"] if entry["uncovered"]["kind"] == "formula-right-end"],
+    "image_observations": list(image_records.values()),
+    "native_montage_observations": [{
+        "path": m["path"], "sha256": m["sha256"], "actually_opened": True,
+        "detail": "original", "resized": False, "source_png_count": len(m["images"]),
+    } for m in all_montages],
+}
+target = ROOT / "observations.json"
+if target.exists():
+    raise RuntimeError("Frozen observation file already exists; do not overwrite")
+target.write_text(json.dumps(observations, ensure_ascii=False, indent=2) + "\n")
+print(json.dumps({
+    "status": observations["status"], "sha256": sha(target),
+    "primary": observations["actual_primary_filename_count"],
+    "supplements": observations["supplement_png_count"],
+    "observed_pngs": observations["actual_observed_png_total"],
+    "montages": observations["native_montage_count"],
+    "questions_per_viewport": [len(geometry[f"choices-{w}"]["questions"]) for w in [1440, 390]],
+    "options_per_viewport": [sum(len(q["options"]) for q in geometry[f"choices-{w}"]["questions"]) for w in [1440, 390]],
+}))
