@@ -1,0 +1,34 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { own, read, write, record, assert, digest, frozen, runOnce } from './source-pipeline.mjs';
+const n = Number(process.argv[2]);
+const directory = own(n);
+const seedFile = path.join(directory, 'seed.json');
+const solutionFile = path.join(directory, 'source-solutions.json');
+const seed = read(seedFile);
+const solutions = read(solutionFile);
+const script = path.join(own(7), 'verify-source-math.py');
+frozen(n);
+assert(!fs.existsSync(path.join(directory, 'draft.json')), 'No options may precede source freeze');
+assert(JSON.stringify(solutions.sources.map(x => x.number)) === JSON.stringify(seed.exercises.map(x => x.number)), 'Every actual source task needs independent solution');
+const stdout = runOnce(n, 'source-math', ['python3', script], [script, seedFile, solutionFile], [], fs.readFileSync(seedFile));
+write(path.join(directory, 'source-calculation.json'), JSON.parse(stdout));
+const notebook = solutions.sources.map(item => {
+  const text = seed.exercises.find(x => x.number === item.number).text;
+  return `## ${item.number}\n\n${text}\n\n${item.solution}\n\nRequired tasks:\n${item.required_tasks.map(x => '- '+x).join('\n')}\n\nLosses:\n${item.losses.map(x => '- '+x).join('\n')}\n\nBlockers:\n${item.blockers.length ? item.blockers.map(x => '- '+x).join('\n') : 'None.'}`;
+}).join('\n\n');
+fs.writeFileSync(path.join(directory, 'source-solutions.md'), notebook+'\n', { flag: 'wx' });
+write(path.join(directory, 'source-frozen.json'), {
+  status: 'complete_source_only_frozen_before_options_pending_parent_independent_assignment',
+  actual_lesson_id: seed.source.lesson, seed_digest: digest(seed), selected_originals: seed.exercises.map(x => x.number),
+  complete_source_count: seed.exercises.length, all_conditions_domains_and_tasks_retained: true,
+  relevant_definition_blocks: seed.concepts.map(x => x.block), source_image_count: seed.figures.length,
+  actual_source_image_observations: [], no_referenced_images_to_open: seed.figures.length === 0,
+  source_gaps: [], downstream_graph_gate: n === 7 ? ['95 deterministic graph and independent actual-image review still required'] : [],
+  artifacts: [seedFile, solutionFile, path.join(directory, 'source-solutions.md'), path.join(directory, 'source-calculation.json'),
+    path.join(directory, 'source-selection.json'), path.join(directory, 'source-inventory.json'),
+    path.join(directory, 'commands/source-math.json'), script].map(record),
+  no_options_or_keys_created: true, previous_choices_answers_or_reviewer_materials_used: false,
+  authoring_scope: 'Own 7a-n7/7a-n8 only. No6a re-execution, n9, app, durable promotion, services or dependencies.',
+});
+console.log(JSON.stringify({ lesson: seed.source.lesson, sources: seed.exercises.length, frozen: path.join(directory, 'source-frozen.json'), options_created: false }));

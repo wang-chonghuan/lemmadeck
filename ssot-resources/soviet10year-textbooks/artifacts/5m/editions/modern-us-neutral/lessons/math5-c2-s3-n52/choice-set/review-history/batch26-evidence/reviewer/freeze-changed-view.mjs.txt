@@ -1,0 +1,197 @@
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+
+const tmp = "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp";
+const root = path.join(tmp, "reviewer-5m-n52");
+const sha = bytes => createHash("sha256").update(bytes).digest("hex");
+const originalReviewPath = path.join(root, "view-checks.json");
+const originalViewPath = path.join(root, "opened-view-snapshot.json");
+const currentViewPath = path.join(tmp, "5m-n52/view.json");
+const deltaPath = path.join(tmp, "5m-n52/view-repair-delta.json");
+const originalReviewBytes = fs.readFileSync(originalReviewPath);
+const originalViewBytes = fs.readFileSync(originalViewPath);
+const currentViewBytes = fs.readFileSync(currentViewPath);
+const deltaBytes = fs.readFileSync(deltaPath);
+const oldReview = JSON.parse(originalReviewBytes);
+const before = JSON.parse(originalViewBytes);
+const after = JSON.parse(currentViewBytes);
+const receipt = JSON.parse(deltaBytes);
+
+assert.equal(sha(originalReviewBytes), "32f31ab55f341f78798bb9704c1c65c0209a5af577355d7e5f89244f8291e5ad");
+assert.equal(sha(originalViewBytes), "fb9ba6d2cb3a4caeb5d0f94efed62afb2980e4e2e8cb1f8b12d3553a3102992a");
+assert.equal(sha(currentViewBytes), "b6a1245d87d8081c23cbda20aeff92e4a12220357ee609a5a3d9ce5dd42d633b");
+assert.equal(sha(originalViewBytes), receipt.before_sha256);
+assert.equal(sha(currentViewBytes), receipt.sha256);
+assert.equal(oldReview.outcome, "revise");
+assert.equal(oldReview.findings.length, 1);
+assert.equal(oldReview.findings[0].id, "n52-993-fixed-second-result");
+
+const differences = [];
+function compare(a, b, pointer = "") {
+  if (a === b) return;
+  if (a !== null && b !== null && typeof a === "object" && typeof b === "object") {
+    assert.deepEqual(Object.keys(a), Object.keys(b));
+    for (const key of Object.keys(a)) compare(a[key], b[key], `${pointer}/${key}`);
+  } else differences.push({ pointer, before: a, after: b });
+}
+compare(before, after);
+assert.deepEqual(differences, receipt.delta);
+assert.equal(differences.length, 1);
+assert.equal(differences[0].pointer, "/questions/7/view/options/0/text");
+assert.equal(before.questions[7].id, "n52-993");
+assert.equal(after.questions[7].id, "n52-993");
+assert.equal(before.questions[7].view.options[0].id, "A");
+assert.equal(after.questions[7].view.options[0].id, "A");
+assert.equal(differences[0].after,
+  differences[0].before.replace("\\frac7{11}", "\\frac{15}{11}"));
+const inverse = structuredClone(after);
+inverse.questions[7].view.options[0].text = differences[0].before;
+assert.deepEqual(inverse, before);
+assert.equal(after.questions.length, 26);
+let unchangedQuestions = 0;
+let unchangedOptions = 0;
+for (let i = 0; i < after.questions.length; i += 1) {
+  if (i !== 7) {
+    assert.deepEqual(after.questions[i], before.questions[i]);
+    unchangedQuestions += 1;
+  }
+  for (let j = 0; j < after.questions[i].view.options.length; j += 1) {
+    if (i !== 7 || j !== 0) {
+      assert.deepEqual(after.questions[i].view.options[j], before.questions[i].view.options[j]);
+      unchangedOptions += 1;
+    }
+  }
+}
+assert.equal(unchangedQuestions, 25);
+assert.equal(unchangedOptions, 77);
+
+const record = structuredClone(oldReview);
+record.stage = "changed-component-only-pureview-rebind";
+record.outcome = "pass";
+record.view_snapshot.byte_sha256 = sha(currentViewBytes);
+record.view_snapshot.frozen_exact_byte_copy = path.join(root, "opened-view-changed-snapshot.json");
+record.previous_rejected_review = {
+  path: originalReviewPath,
+  byte_sha256: sha(originalReviewBytes),
+  outcome: oldReview.outcome,
+  original_opened_view_path: originalViewPath,
+  original_opened_view_byte_sha256: sha(originalViewBytes),
+  original_files_preserved_unchanged: true
+};
+record.change_only_review = {
+  authorized_key_free_delta_path: deltaPath,
+  delta_byte_sha256: sha(deltaBytes),
+  independently_observed_differences: differences,
+  receipt_matches_actual_visible_difference: true,
+  reverse_restoration_exact_whole_json_equality: true,
+  unchanged_whole_questions: unchangedQuestions,
+  unchanged_option_objects: unchangedOptions,
+  unchanged_other_components_of_993A: 5,
+  changed_option_objects: 1,
+  changed_numeric_components: 1,
+  independent_changed_component_judgment: {
+    verdict: "pass",
+    evidence: "For the unchanged source expression1-4/11, write1=11/11 and subtract4/11 to obtain7/11. The repaired993A component15/11 instead equals1+4/11 and is false. This checks the visible value only; no author mistake-program, intent or key has been disclosed.",
+    second_components_in_current_options: { A: "15/11", B: "7/11", C: "7/11" },
+    source_target_no_longer_correctly_prefilled_in_all_options: true,
+    changed_option_complete_truth: "incorrect",
+    current_independent_complete_true_set: ["B"]
+  },
+  reused_truths_basis: "All25 other question objects and77 other option objects are exactly equal to the byte-frozen original view's parsed content. Their original independent mathematical evidence is copied without re-solving. The five other993A components are unchanged; B/C are exact old objects. The one altered A component is newly checked and remains false.",
+  source_or_unchanged_mathematics_recomputed: false,
+  internal_delta_not_read_or_claimed_verified: true
+};
+record.review_order = [
+  "Compare authorized key-free repaired view with own exact original view and the disclosed key-free delta.",
+  "Check only the changed993A component, its effect on the fixed source target and relevant leakage/coverage relationships.",
+  "Reuse exact-unchanged original question/option evidence and the complete independently frozen true sets.",
+  "Freeze a new snapshot while preserving the original revise record; stop before author internals."
+];
+record.counts.concrete_view_findings = 0;
+record.counts.resolved_prior_view_findings = 1;
+record.counts.changed_components_newly_checked = 1;
+record.counts.unchanged_question_objects_rebound = unchangedQuestions;
+record.counts.unchanged_option_objects_rebound = unchangedOptions;
+record.findings = [];
+record.resolved_findings = oldReview.findings.map(finding => ({
+  ...finding,
+  original_verdict: finding.verdict,
+  current_verdict: "pass",
+  repair_evidence: "The second entries are now15/11,7/11,7/11, so evaluating1-4/11 can reject A. The actual result7/11 is not correctly supplied by every alternative. All other five source targets remain varied as in the frozen first view. No number/operation in the source or stem changed."
+}));
+record.package_checks.task_fidelity = {
+  verdict: "pass",
+  evidence: "The only original defect, a universally correct second993 component, is resolved by the one false15/11 component. All17 source contexts and their original visible targets otherwise rebind exactly. The prior source-model and method/construction-loss observations remain unchanged; this does not claim to have inspected author coverage."
+};
+record.package_checks.answer_leakage = {
+  verdict: "pass",
+  evidence: "The second993 target is no longer fixed correctly in every alternative.15/11 is a false candidate that requires distinguishing subtraction from addition. B/C still require the other signed-fraction judgments. Unchanged prior stem/checksum/cross-question leakage evidence is reused; no new literal source answer or candidate-median selector has been introduced."
+};
+record.package_checks.componentwise_selector.evidence +=
+  " The sole changed second993 entry becomes15/11, while its first-entry median remains the false C value1/4. Thus this local change does not turn a componentwise median rule into a selector of the complete correct record.";
+
+const changedQuestion = record.question_reviews.find(q => q.question_id === "n52-993");
+assert.ok(changedQuestion);
+changedQuestion.task_fidelity = {
+  verdict: "pass",
+  evidence: "All six original calculations remain. The second result now differs in false A, so1-4/11 is once again an actual discriminatory target; the other five components are literal unchanged values."
+};
+changedQuestion.answer_leakage = {
+  verdict: "pass",
+  evidence: "Second components15/11,7/11,7/11 no longer prefill the correct result in all candidates. A remains rejectable using the second original calculation, and distinguishing B/C still requires original signed arithmetic."
+};
+changedQuestion.mathematics.independent_solution =
+  "Reuse the original independent record(-1/4,7/11,-7/5,-1/10,-2/5,-9/17). Only the changed A second entry is newly checked:15/11=1+4/11, not1-4/11=7/11. B remains the sole complete true record; no other original computation is repeated.";
+const changedOption = changedQuestion.mathematics.option_checks.find(o => o.option_id === "A");
+assert.ok(changedOption);
+changedOption.evidence =
+  "Reuse the frozen false first7/4,third3/5,fourth19/10 and correct fifth-2/5,sixth-9/17 judgments. The only new component15/11 is also false because the second expression1-4/11 equals7/11. Hence A remains incorrect; author internal error programs are not yet evaluated.";
+const coverage = record.source_coverage_checks.find(s => s.source_number === "993");
+assert.ok(coverage);
+coverage.verdict = "pass";
+coverage.evidence =
+  "All six original calculations are visible and every result now varies in at least one incorrect alternative. The repaired second A value15/11 differs from7/11, restoring the second task's judgment. Other source coverage and production-loss observations are literal unchanged evidence.";
+record.read_boundary.new_author_files_read = [currentViewPath, deltaPath];
+delete record.read_boundary.new_author_file_read;
+record.read_boundary.only_key_free_view_delta_authorized_and_read = true;
+record.operations = {
+  source_mathematics_reruns: 0,
+  unchanged_pureview_mathematics_reruns: 0,
+  changed_component_only_reviews: 1,
+  structural_validation_runs: 0,
+  canonical_validation_runs: 0,
+  browser_or_render_runs: 0,
+  figure_opens: 0,
+  author_or_durable_writes: 0,
+  db_network_model_dependency_calls: 0,
+  in_flight_operations: []
+};
+record.next_stage =
+  "Changed pureview gate pass; all26 complete true sets and78 option truths are bound to the new frozen view. Await separate first author-internals disclosure; do not read draft/key/serializer/intent or run validation.";
+
+const outputSnapshot = path.join(root, "opened-view-changed-snapshot.json");
+const outputReview = path.join(root, "changed-view-checks.json");
+fs.writeFileSync(outputSnapshot, currentViewBytes, { flag: "wx" });
+fs.writeFileSync(outputReview, JSON.stringify(record, null, 2) + "\n", { flag: "wx" });
+assert.equal(sha(fs.readFileSync(originalReviewPath)), sha(originalReviewBytes));
+assert.equal(sha(fs.readFileSync(originalViewPath)), sha(originalViewBytes));
+assert.equal(sha(fs.readFileSync(currentViewPath)), sha(currentViewBytes));
+assert.equal(sha(fs.readFileSync(oldReview.source_snapshot.path)), oldReview.source_snapshot.byte_sha256);
+console.log(JSON.stringify({
+  outcome: record.outcome,
+  questions: record.question_reviews.length,
+  options: record.question_reviews.reduce((n, q) => n + q.mathematics.option_checks.length, 0),
+  changed_components: 1,
+  unchanged_question_objects: unchangedQuestions,
+  unchanged_option_objects: unchangedOptions,
+  complete_true_set_for_993: changedQuestion.mathematics.correct,
+  current_view_byte_sha256: sha(currentViewBytes),
+  review_path: outputReview,
+  review_byte_sha256: sha(fs.readFileSync(outputReview)),
+  frozen_view_path: outputSnapshot,
+  original_revise_preserved: true,
+  internal_read: false,
+  validation_runs: 0
+}));

@@ -1,0 +1,40 @@
+import hashlib
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+OWN = Path(__file__).resolve().parent
+mode = sys.argv[1]
+python = ROOT / ".claude/skills/ld-s10y-lesson/.venv/bin/python"
+if mode in ("graph", "graph-repair"):
+    stem = OWN / ("new-figures/fig-choice-n53-linear-reading" + (".revised" if mode == "graph-repair" else ""))
+    command = ["node", ".agents/skills/ld-s10y-image/scripts/render_spec.mjs",
+               "--spec", str(stem) + ".spec.json", "--svg", str(stem) + ".svg",
+               "--png", str(stem) + ".preview.png", "--report", str(stem) + ".render.json"]
+elif mode == "structure":
+    command = [str(python), ".agents/skills/ld-s10y-choice/scripts/validate.py",
+               "--repo", str(ROOT), "--seed", str(OWN / "source.json"), "--draft", str(OWN / "draft.json")]
+else:
+    raise RuntimeError("Unknown bounded step")
+receipt = OWN / f"command-{mode}-once.json"
+if receipt.exists():
+    raise RuntimeError("This command has already been recorded; do not rerun")
+environment = os.environ.copy()
+environment.pop("PWDEBUG", None)
+environment["PLAYWRIGHT_HTML_OPEN"] = "never"
+environment["PYTHON"] = str(python)
+result = subprocess.run(command, cwd=ROOT, env=environment, text=True, capture_output=True)
+record = {"argv": command, "cwd": str(ROOT), "exit_code": result.returncode,
+          "stdout": result.stdout, "stderr": result.stderr, "run_count": 1,
+          "pwdebug_cleared": True, "reporter_open": "never",
+          "source_byte_sha256": hashlib.sha256((OWN / "source.json").read_bytes()).hexdigest()}
+if (OWN / "draft.json").exists():
+    record["draft_byte_sha256"] = hashlib.sha256((OWN / "draft.json").read_bytes()).hexdigest()
+receipt.write_text(json.dumps(record, indent=2) + "\n")
+print(json.dumps({"receipt": str(receipt), "exit_code": result.returncode,
+                  "stdout": result.stdout, "stderr": result.stderr[:1200]}, indent=2))
+sys.exit(result.returncode)

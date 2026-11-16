@@ -1,0 +1,128 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { own, repo, read, record, write, assert, sha, digest, canonical, frozen, runOnce } from './source-pipeline.mjs';
+
+const n=Number(process.argv[2]);
+const directory=own(n);
+const seed=read(path.join(directory,'seed.json'));
+const source=read(path.join(directory,'source-solutions.json'));
+const split=n===7?{90:4,91:2,92:2,93:4,94:2}:{99:6,100:3,102:6,103:4,104:2,105:3,106:4,108:4};
+const multi=n===7?new Set(['q91-a','q91-b']):new Set(['q96-97','q100-a','q100-b','q100-c','q107']);
+const ids=seed.exercises.filter(x=>x.number!=='97').flatMap(x=>{
+  if(x.number==='96')return['q96-97'];
+  const count=split[x.number]??1;
+  return count===1?[`q${x.number}`]:Array.from({length:count},(_,i)=>`q${x.number}-${String.fromCharCode(97+i)}`);
+});
+const phase=process.argv[3];
+frozen(n);
+if(phase==='plan'){
+  const singles=ids.filter(id=>!multi.has(id));
+  const ranked=[...singles].sort((a,b)=>{
+    const hash=id=>crypto.createHash('sha256').update(`${digest(seed)}:new-native-display:${id}`).digest('hex');
+    return hash(a).localeCompare(hash(b));
+  });
+  const limits=[Math.ceil(singles.length/3),Math.ceil(2*singles.length/3)];
+  const labels=Object.fromEntries(ranked.map((id,i)=>[id,i<limits[0]?'A':i<limits[1]?'B':'C']));
+  const sequence=singles.map(id=>labels[id]).join('');
+  assert([1,2,3,4,5,6].every(period=>[...sequence].some((letter,i)=>i>=period&&letter!==sequence[i-period])),'No periodic single-answer plan');
+  write(path.join(directory,'display-plan.json'),{question_ids:ids,native_multiple_ids:[...multi],
+    single_correct_labels:labels,single_correct_sequence:sequence,
+    policy:'Balanced nonperiodic labels frozen before literal alternatives. Native modes derived from mathematical response units, not a correct-count quota.'});
+  console.log(JSON.stringify({lesson:seed.source.lesson,questions:ids.length,single:singles.length,multiple:multi.size,sequence}));
+}else if(phase==='author'){
+  const plan=read(path.join(directory,'display-plan.json'));
+  const {units}=await import(path.join(directory,'authored-units.mjs'));
+  assert(canonical(units.map(x=>x.id))===canonical(ids),'All planned full source tasks in source order');
+  const programs=[];
+  const questions=units.map(unit=>{
+    const sources=(unit.numbers??[unit.number]).map(String);
+    const expectedMode=multi.has(unit.id)?'multiple':'single';
+    assert(unit.mode===expectedMode,'Native mode must match pre-authoring mathematical plan');
+    let options=unit.options;
+    if(unit.mode==='single'){
+      assert(options.length===3&&options.filter(x=>x.correct).length===1,'Single needs one independently true option');
+      const trueOption=options.find(x=>x.correct);
+      const falseOptions=options.filter(x=>!x.correct);
+      options=[...'ABC'].map(label=>({...((label===plan.single_correct_labels[unit.id])?trueOption:falseOptions.shift()),label}));
+    }else assert(options.every(x=>x.label),'Multiple display labels must be literal author decisions');
+    for(const option of options.filter(x=>!x.correct)){
+      assert(option.program&&Object.hasOwn(option.program,'expected'),'Actual program required for every false assertion');
+      programs.push({question_id:unit.id,option_id:option.label,displayed_text:option.text,...option.program});
+    }
+    const figures=unit.figure_ids??[];
+    return{id:unit.id,source_numbers:sources,
+      view:{mode:unit.mode,stem:unit.stem,figure_ids:figures,
+        options:options.map(x=>({id:x.label,text:x.text,figure_ids:[]}))},
+      intent:{task:sources.map(number=>seed.exercises.find(x=>x.number===number).text).join('\n\n'),
+        source_solution:sources.map(number=>source.sources.find(x=>x.number===number).solution).join('\n\n'),
+        unit_reason:unit.reason,concept_blocks:unit.concept_blocks??(n===7?
+          (unit.id==='q90-a'?[5]:unit.id.startsWith('q90-')?[7]:unit.id.startsWith('q91-')?[3,5,7]:
+            unit.id.startsWith('q92-')?[5,7]:unit.id.startsWith('q94-')?[17,19]:unit.id==='q93-b'?[7]:[]):
+          (unit.id==='q107'||unit.id.startsWith('q108-')?[]:[0,2,3])),
+        limitations:[...new Set(sources.flatMap(number=>source.sources.find(x=>x.number===number).losses))],
+        figure_observations:figures.map(figure_id=>({figure_id,
+          observation:read(path.join(own(7),'graph95/author-observation.json')).observation+' Independent image gate pending.'}))},
+      key:{correct:options.filter(x=>x.correct).map(x=>x.label),rationales:options.map(x=>({
+        option_id:x.label,truth:x.correct?'correct':'incorrect',derivation:`显示${x.label}：${x.text}\n${x.derivation}`,
+        misconception:x.correct?null:x.misconception}))}};
+  });
+  const coverage=seed.exercises.map(exercise=>({source_number:exercise.number,
+    question_ids:questions.filter(q=>q.source_numbers.includes(exercise.number)).map(q=>q.id),
+    omitted_tasks:source.sources.find(x=>x.number===exercise.number).losses,
+    reason:'Complete written-source data and mathematical tasks retained; production losses explicitly recorded. No semantic or figure self-approval.'}));
+  const newFigures=n===7?[{id:'fig-choice-7a-n7-95',path:path.relative(repo,path.join(directory,'graph95/fig-choice-7a-n7-95.svg')),
+    sha256:sha(path.join(directory,'graph95/fig-choice-7a-n7-95.svg')),
+    basis:'New authored graph from source95 only: I=3x²,II=2x², both complete visible symmetric branches/common vertex; compare negative input-2. Explicit unequal axis scales; no fabricated original, answer marks or guides. Independent actual-image review pending.'}]:[];
+  const draft={schema:'s10y-choice-draft-v1',seed_sha256:digest(seed),new_figures:newFigures,questions,coverage};
+  write(path.join(directory,'draft.json'),draft);
+  write(path.join(directory,'wrong-programs.json'),{seed_sha256:digest(seed),draft_sha256:digest(draft),programs});
+  write(path.join(directory,'pureview.json'),questions.map(q=>q.view));
+  const markdown=questions.map((q,i)=>[`## ${i+1}`,q.view.stem,
+    ...q.view.figure_ids.map(id=>`![图象](${path.join(repo,newFigures.find(x=>x.id===id).path)})`),
+    ...q.view.options.map(x=>`${x.id}. ${x.text}`)].join('\n\n')).join('\n\n');
+  fs.writeFileSync(path.join(directory,'pureview.md'),markdown+'\n',{flag:'wx'});
+  write(path.join(directory,'authored-snapshot.json'),{draft_digest:digest(draft),
+    artifacts:['draft.json','pureview.json','pureview.md','wrong-programs.json','authored-units.mjs','display-plan.json'].map(name=>record(path.join(directory,name))),
+    source_checkpoint:record(path.join(directory,'source-frozen.json')),source_count:seed.exercises.length,
+    question_count:questions.length,program_count:programs.length,independent_approved:false});
+  console.log(JSON.stringify({questions:questions.length,sources:coverage.length,wrong_programs:programs.length,new_figures:newFigures.length}));
+}else if(phase==='programs'){
+  const file=path.join(directory,'wrong-programs.json'),script=path.join(own(7),'verify-wrong-programs.py');
+  runOnce(n,'wrong-programs',['python3',script],[file,script,path.join(directory,'draft.json')],[],fs.readFileSync(file));
+}else if(phase==='structure'){
+  assert(read(path.join(directory,'commands/wrong-programs.json')).pass,'Actual wrong derivations must execute first');
+  const script=path.join(repo,'.agents/skills/ld-s10y-choice/scripts/validate.py');
+  runOnce(n,'structure',['python3',script,'--repo',repo,'--seed',path.join(directory,'seed.json'),'--draft',path.join(directory,'draft.json')],
+    [script,path.join(directory,'seed.json'),path.join(directory,'draft.json')]);
+}else if(phase==='ready'){
+  const draft=read(path.join(directory,'draft.json'));
+  assert(read(path.join(directory,'commands/structure.json')).pass&&read(path.join(directory,'commands/wrong-programs.json')).pass,'Once structural/arithmetic checks required');
+  const snapshot=read(path.join(directory,'authored-snapshot.json'));
+  for(const item of snapshot.artifacts)assert(sha(item.path)===item.sha256,'Checked author artifact changed');
+  assert(digest(draft)===snapshot.draft_digest,'Checked draft digest changed');
+  assert(canonical(read(path.join(directory,'pureview.json')))===canonical(draft.questions.map(q=>q.view)),'Key-free projection drift');
+  for(const q of draft.questions)for(const rationale of q.key.rationales){
+    const option=q.view.options.find(x=>x.id===rationale.option_id);
+    assert(rationale.derivation.startsWith(`显示${option.id}：${option.text}\n`),'Visible label/rationale mismatch');
+  }
+  const singles=draft.questions.filter(x=>x.view.mode==='single');
+  write(path.join(directory,'ready.json'),{
+    status:'offline_author_complete_structure_pass_pending_parent_independent_gate',
+    lesson:seed.source.lesson,originals:seed.exercises.map(x=>x.number),source_count:seed.exercises.length,
+    coverage_count:draft.coverage.length,question_count:draft.questions.length,
+    native_modes:{single:singles.length,multiple:draft.questions.length-singles.length},
+    actual_wrong_program_count:read(path.join(directory,'wrong-programs.json')).programs.length,
+    structure_invocations:1,review_checker_invocations:0,
+    single_correct_display_counts:Object.fromEntries([...'ABC'].map(label=>[label,singles.filter(x=>x.key.correct[0]===label).length])),
+    source_checkpoint_immutable:true,source_data_order_domains_preserved:true,production_losses_recorded:true,
+    source_gaps:[],actual_source_images:0,authored_figures:draft.new_figures.length,
+    independent_gate:{approved:false,question_review:'parent_assignment_pending',figure_review:n===7?'required_for95_pending':'not_applicable',
+      semantic_self_approval:false},
+    graph95:n===7?{observation:record(path.join(directory,'graph95/author-observation.json')),actual_declared640_opened:true,independent_approved:false}:null,
+    seed:record(path.join(directory,'seed.json')),draft:record(path.join(directory,'draft.json')),draft_digest:digest(draft),
+    artifacts:['pureview.json','pureview.md','source-frozen.json','wrong-programs.json','commands/wrong-programs.json','commands/structure.json'].map(name=>record(path.join(directory,name))),
+    no_previous_choice_answer_or_reviewer_authoring_inputs:true,no6a_operation_reexecution:true,
+    no_durable_app_db_service_dependencies_paid_models_or_promotion:true});
+  console.log(JSON.stringify({ready:path.join(directory,'ready.json'),questions:draft.questions.length,independent_approved:false}));
+}else throw Error('Expected plan,author,programs,structure,ready');

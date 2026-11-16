@@ -1,0 +1,178 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const tmp = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp');
+const own = path.join(tmp, 'reviewer-5m-n53');
+const sha = value => createHash('sha256').update(value).digest('hex');
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const record = file => ({ path: file, sha256: sha(fs.readFileSync(file)), bytes: fs.statSync(file).size });
+const write = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+function canonical(value) {
+  if (typeof value === 'string') return JSON.stringify(value).replace(/[\u007f-\uffff]/g,
+    char => `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`);
+  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
+  if (value !== null && typeof value === 'object')
+    return `{${Object.keys(value).sort().map(key => `${canonical(key)}:${canonical(value[key])}`).join(',')}}`;
+  return JSON.stringify(value);
+}
+const digest = value => sha(canonical(value));
+function delta(before, after, keys = []) {
+  if (canonical(before) === canonical(after)) return [];
+  if (before !== null && after !== null && typeof before === 'object' && typeof after === 'object' &&
+      Array.isArray(before) === Array.isArray(after) && canonical(Object.keys(before)) === canonical(Object.keys(after)))
+    return Object.keys(before).flatMap(key => delta(before[key], after[key], [...keys, key]));
+  return [{ path: '/' + keys.join('/'), before, after }];
+}
+const receiptFile = path.join(tmp, '5m-n53/retained-figure-path-receipt.json');
+const receipt = read(receiptFile);
+const originalDraftFile = path.join(own, 'opened-draft-original.json');
+const currentDraftFile = path.join(tmp, '5m-n53/draft.json');
+const originalReviewFile = path.join(own, 'review.json');
+const originalComparisonFile = path.join(own, 'final-comparison.json');
+const originalReview = read(originalReviewFile);
+const originalComparison = read(originalComparisonFile);
+const frozenInternal = read(path.join(own, 'opened-internal-snapshot.json'));
+const figureFreeze = read(path.join(own, 'new-figure-review.json'));
+const files = [
+  receiptFile, originalDraftFile, currentDraftFile, originalReviewFile, originalComparisonFile,
+  path.join(own, 'opened-internal-snapshot.json'), path.join(own, 'new-figure-review.json'),
+  path.join(own, 'new-figure-actual-observations.json'), path.join(own, 'new-figure-capture-receipt.json'),
+  path.join(own, 'source-solutions.json'), path.join(own, 'view-checks.json'),
+  ...Object.values(receipt.old_files).map(file => path.join(repo, file)),
+  ...Object.values(receipt.new_files).map(file => path.join(repo, file)),
+  ...receipt.original_history.map(item => path.join(repo, item.target)),
+];
+const inputHashes = [...new Set(files)].map(record);
+const started = path.join(own, 'retained-path-comparison.started.json');
+write(started, {
+  argv: ['node', path.join(own, 'compare-retained-path-only.mjs')], cwd: repo,
+  once_guard: true, scope: 'Path/hash-only transport of the original independent gate; no new math/visual review',
+  input_hashes: inputHashes, script: record(path.join(own, 'compare-retained-path-only.mjs')),
+});
+try {
+  assert.equal(record(originalReviewFile).sha256, 'a17af5f792d6ef7be138f4a8c91e2667a1a9a4238628c152c5b0c6c99d33632a');
+  assert.equal(record(originalComparisonFile).sha256, '88c57f408a4ecae307eb72cf7c2dff292b5f278ac9b08e7a1183da713e2fe935');
+  assert.equal(record(originalDraftFile).sha256, frozenInternal.draft_file_sha256);
+  assert.equal(record(path.join(own, 'source-solutions.json')).sha256, originalComparison.bindings.source_solutions_sha256);
+  assert.equal(record(path.join(own, 'view-checks.json')).sha256, originalComparison.bindings.view_checks_sha256);
+  for (const item of receipt.original_history)
+    assert.equal(record(path.join(repo, item.target)).sha256, item.sha256, 'Preserved history drift');
+  const oldDraft = read(originalDraftFile), current = read(currentDraftFile);
+  assert.equal(digest(oldDraft), originalReview.draft_sha256);
+  assert.equal(digest(oldDraft), frozenInternal.draft_sha256);
+  assert.equal(oldDraft.new_figures.length, 1);
+  assert.equal(current.new_figures.length, 1);
+  const draftDelta = delta(oldDraft, current);
+  assert.deepEqual(draftDelta, [{
+    path: '/new_figures/0/path', before: receipt.old_files.svg, after: receipt.new_files.svg,
+  }]);
+  const reversed = structuredClone(current);
+  reversed.new_figures[0].path = receipt.old_files.svg;
+  assert.deepEqual(reversed, oldDraft);
+  assert.equal(sha(JSON.stringify(reversed, null, 2) + '\n'), frozenInternal.draft_file_sha256);
+  const byteChecks = [];
+  for (const kind of ['svg', 'spec']) {
+    const oldFile = path.join(repo, receipt.old_files[kind]), newFile = path.join(repo, receipt.new_files[kind]);
+    assert(fs.readFileSync(oldFile).equals(fs.readFileSync(newFile)), `${kind} bytes differ`);
+    assert.equal(record(newFile).sha256, figureFreeze.bindings[`${kind}_sha256`]);
+    assert.equal(record(newFile).sha256, receipt.current_hashes[kind]);
+    byteChecks.push({ kind, original: record(oldFile), retained: record(newFile), byte_identical: true });
+  }
+  assert.equal(current.new_figures[0].sha256, figureFreeze.asset_sha256);
+  const oldRender = read(path.join(repo, receipt.old_files.render));
+  const newRenderFile = path.join(repo, receipt.new_files.render);
+  const newRender = read(newRenderFile);
+  assert.equal(record(path.join(repo, receipt.old_files.render)).sha256, figureFreeze.bindings.render_sha256);
+  assert.equal(record(newRenderFile).sha256, receipt.current_hashes.render);
+  const renderDelta = delta(oldRender, newRender);
+  assert.deepEqual(renderDelta, [
+    { path: '/spec/path', before: receipt.old_files.spec, after: receipt.new_files.spec },
+    { path: '/output/svg/path', before: receipt.old_files.svg, after: receipt.new_files.svg },
+  ]);
+  assert.equal(newRender.spec.sha256, figureFreeze.bindings.spec_sha256);
+  assert.equal(newRender.output.svg.sha256, figureFreeze.asset_sha256);
+  const oldFigureReviewFile = path.join(repo, receipt.old_files.review);
+  const newFigureReviewFile = path.join(repo, receipt.new_files.review);
+  const oldFigureReview = read(oldFigureReviewFile), newFigureReview = read(newFigureReviewFile);
+  assert.equal(record(oldFigureReviewFile).sha256, originalComparison.new_figure_basis_and_binding.formal_independent_review_sha256);
+  assert.equal(record(newFigureReviewFile).sha256, receipt.current_hashes.review);
+  const figureReviewDelta = delta(oldFigureReview, newFigureReview);
+  assert.deepEqual(figureReviewDelta, [
+    { path: '/spec/path', before: receipt.old_files.spec, after: receipt.new_files.spec },
+    { path: '/render/path', before: receipt.old_files.render, after: receipt.new_files.render },
+    { path: '/render/sha256', before: record(path.join(repo, receipt.old_files.render)).sha256, after: record(newRenderFile).sha256 },
+    { path: '/outputs/svg/path', before: receipt.old_files.svg, after: receipt.new_files.svg },
+  ]);
+  assert.equal(newFigureReview.status, 'pass');
+  assert.equal(newFigureReview.outputs.svg.sha256, figureFreeze.asset_sha256);
+  assert.equal(record(path.join(own, 'new-figure-actual-observations.json')).sha256, figureFreeze.bindings.actual_observations_sha256);
+  assert.equal(record(path.join(own, 'new-figure-capture-receipt.json')).sha256, figureFreeze.bindings.actual_capture_sha256);
+  assert.equal(originalReview.outcome, 'blocked');
+  const blocked = originalReview.source_reviews.filter(item => item.coverage.verdict === 'blocked');
+  assert.deepEqual(blocked.map(item => item.source_number), ['1030']);
+  assert.equal(originalComparison.authoring_defects.length, 0);
+  const priorConditional = oldDraft.coverage.find(item => item.source_number === '1030');
+  assert.deepEqual(current.coverage.find(item => item.source_number === '1030'), priorConditional);
+  const reviewed = structuredClone(originalReview);
+  reviewed.draft_sha256 = digest(current);
+  const figureCheck = reviewed.figure_checks.find(item => item.figure_id === current.new_figures[0].id);
+  assert.equal(figureCheck.asset_path, receipt.old_files.svg);
+  figureCheck.asset_path = receipt.new_files.svg;
+  const choiceReviewDelta = delta(originalReview, reviewed);
+  assert.deepEqual(choiceReviewDelta.map(item => item.path), ['/draft_sha256', '/figure_checks/2/asset_path']);
+  const reviewRetained = path.join(own, 'review-retained.json');
+  const comparisonRetained = path.join(own, 'retained-comparison.json');
+  const afterHashes = inputHashes.map(item => record(item.path));
+  assert.deepEqual(afterHashes, inputHashes, 'Input changed during retained comparison');
+  write(reviewRetained, reviewed);
+  write(comparisonRetained, {
+    schema: 'independent-retained-path-only-comparison-v1',
+    outcome: 'blocked', retained_path_hash_gate: 'pass',
+    outcome_reason: originalComparison.outcome_reason,
+    authoring_defects: originalComparison.authoring_defects,
+    retained_source_blockers_and_notices: originalComparison.retained_source_blockers_and_notices,
+    original_review: record(originalReviewFile), original_comparison: record(originalComparisonFile),
+    retained_review: record(reviewRetained), author_retention_receipt: record(receiptFile),
+    draft: record(currentDraftFile), draft_canonical_sha256: digest(current),
+    original_draft_canonical_sha256: originalReview.draft_sha256,
+    exact_draft_delta: draftDelta, reverse_delta_restores_original_draft_bytes: true,
+    all_40_questions_121_truths_keys_80_false_programs_coverage_intents_limits_and_figure_basis_unchanged: true,
+    counts_from_previous_completed_gate_not_reexecuted: {
+      question_count: originalComparison.question_count, option_count: originalComparison.option_count,
+      key_count: originalComparison.key_comparisons.length, false_program_count: 80,
+    },
+    byte_identity: byteChecks, exact_render_metadata_delta: renderDelta,
+    exact_formal_figure_review_metadata_delta: figureReviewDelta,
+    exact_choice_review_delta: choiceReviewDelta,
+    formal_retained_figure_review: record(newFigureReviewFile),
+    original_formal_figure_review: record(oldFigureReviewFile),
+    frozen_actual_observations: record(path.join(own, 'new-figure-actual-observations.json')),
+    input_hashes: inputHashes, after_input_hashes: afterHashes, inputs_unchanged: true,
+    original_review_and_final_comparison_unchanged: true,
+    scope: 'Independent path/hash comparison only. Original offline declared640px observation reused for identical bytes, not a new pixel/product review.',
+    source_1030_original_dimensional_conditional_notice_retained_verbatim: true,
+    no_source_math_view_or_false_program_reexecution_pixels_render_validator_canonical_pipeline_or_promotion: true,
+    no_durable_write_app_db_service_dependencies_paid_call_or_git_operation: true,
+  });
+  for (const item of inputHashes) assert.equal(record(item.path).sha256, item.sha256);
+  write(path.join(own, 'retained-path-comparison.command.json'), {
+    started: record(started), argv: ['node', path.join(own, 'compare-retained-path-only.mjs')],
+    exit_code: 0, input_hashes: inputHashes,
+    output_hashes: [record(reviewRetained), record(comparisonRetained)],
+    once_guard: true, path_hash_gate: 'pass', aggregate_outcome: 'blocked_only_source1030',
+  });
+  console.log(JSON.stringify({
+    review: record(reviewRetained), comparison: record(comparisonRetained),
+    final_draft_canonical_sha256: digest(current), retained_path_hash_gate: 'pass',
+    outcome: 'blocked_only_source1030',
+  }, null, 2));
+} catch (error) {
+  write(path.join(own, 'retained-path-comparison.rejected.json'), {
+    status: 'stopped_for_diagnosis', message: error.message, stack: error.stack,
+    frozen_input_hashes: inputHashes, outputs_not_to_be_treated_as_approved: true,
+  });
+  throw error;
+}

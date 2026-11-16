@@ -1,0 +1,271 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const ticket = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp');
+const root = n => path.join(ticket, `7a-n${n}`);
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const record = file => ({ path: file, sha256: sha(fs.readFileSync(file)), bytes: fs.statSync(file).size });
+const write = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+const ascii = text => JSON.stringify(text).replace(/[\u007f-\uffff]/g, char =>
+  `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`);
+function canonical(value) {
+  if (typeof value === 'string') return ascii(value);
+  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
+  if (value !== null && typeof value === 'object')
+    return `{${Object.keys(value).sort().map(key => `${ascii(key)}:${canonical(value[key])}`).join(',')}}`;
+  return JSON.stringify(value);
+}
+const digest = value => sha(canonical(value));
+const allowed = n => n === 7 ? ['q95'] : ['q98', 'q103-c'];
+const mutable = new Set(['draft.json', 'authored-units.mjs', 'wrong-programs.json', 'pureview.json', 'pureview.md']);
+const commandDir = n => path.join(root(n), 'view-repair-commands');
+function retained(n) {
+  const manifestPath = path.join(root(n), 'history-before-view-repair/before-manifest.json');
+  const manifest = read(manifestPath);
+  for (const item of manifest.snapshots) {
+    assert.equal(record(item.preserved_path).sha256, item.sha256, 'Frozen history changed');
+    if (!mutable.has(item.relative_path))
+      assert.equal(record(item.original_path).sha256, item.sha256, `Unrelated prior file changed: ${item.relative_path}`);
+  }
+  assert.equal(record(manifest.reviewer_record.preserved_path).sha256, manifest.reviewer_record.sha256);
+  assert.equal(record(manifest.reviewer_record.original_path).sha256, manifest.reviewer_record.sha256);
+  return manifest;
+}
+function inputs(n) {
+  const seedFile = path.join(root(n), 'seed.json');
+  const seed = read(seedFile);
+  const bound = [...seed.trace, ...seed.figures.flatMap(figure => figure.assets)];
+  for (const item of bound) assert.equal(record(path.join(repo, item.path)).sha256, item.sha256, 'Source input hash drift');
+  return [record(seedFile), ...bound.map(item => record(path.join(repo, item.path)))];
+}
+function differences(before, after, segments = []) {
+  if (canonical(before) === canonical(after)) return [];
+  if (before !== null && after !== null && typeof before === 'object' && typeof after === 'object' &&
+      Array.isArray(before) === Array.isArray(after) &&
+      canonical(Object.keys(before)) === canonical(Object.keys(after))) {
+    return Object.keys(before).flatMap(key => differences(before[key], after[key], [...segments, key]));
+  }
+  return [{ op: 'replace', path: '/' + segments.map(x => x.replaceAll('~', '~0').replaceAll('/', '~1')).join('/'),
+    segments, before, after }];
+}
+function reverse(value, delta) {
+  const output = structuredClone(value);
+  for (const change of [...delta].reverse()) {
+    let target = output;
+    for (const key of change.segments.slice(0, -1)) target = target[key];
+    const key = change.segments.at(-1);
+    assert.equal(canonical(target[key]), canonical(change.after));
+    target[key] = change.before;
+  }
+  return output;
+}
+function compare(n) {
+  const manifest = retained(n);
+  const old = read(path.join(root(n), 'history-before-view-repair/original/draft.json'));
+  const draft = read(path.join(root(n), 'draft.json'));
+  assert.equal(draft.questions.length, n === 7 ? 15 : 36);
+  const changed = draft.questions.filter((q, i) => canonical(q) !== canonical(old.questions[i]));
+  assert.deepEqual(changed.map(q => q.id), allowed(n));
+  for (const q of changed) {
+    const prev = old.questions.find(p => p.id === q.id);
+    assert.deepEqual(q.intent, prev.intent);
+    assert.deepEqual(q.source_numbers, prev.source_numbers);
+    assert.deepEqual(q.key.correct, prev.key.correct);
+    assert.equal(q.view.stem, prev.view.stem);
+    assert.equal(q.view.mode, prev.view.mode);
+    assert.deepEqual(q.view.figure_ids, prev.view.figure_ids);
+  }
+  assert.deepEqual(draft.coverage, old.coverage);
+  assert.deepEqual(draft.new_figures, old.new_figures);
+  assert.equal(draft.seed_sha256, old.seed_sha256);
+  if (n === 8) {
+    for (const [id, labels] of [['q98', ['B']], ['q103-c', ['B', 'C']]]) {
+      const current = draft.questions.find(q => q.id === id), prior = old.questions.find(q => q.id === id);
+      for (const label of labels) {
+        assert.deepEqual(current.view.options.find(x => x.id === label), prior.view.options.find(x => x.id === label));
+        assert.deepEqual(current.key.rationales.find(x => x.option_id === label), prior.key.rationales.find(x => x.option_id === label));
+      }
+    }
+  }
+  const delta = differences(old, draft);
+  for (const change of delta) {
+    const [top, index, field, ...suffix] = change.segments;
+    assert.equal(top, 'questions');
+    assert(allowed(n).includes(draft.questions[index].id));
+    assert((field === 'view' && suffix[0] === 'options' && suffix[2] === 'text') ||
+      (field === 'key' && suffix[0] === 'rationales' && ['derivation', 'misconception'].includes(suffix[2])));
+  }
+  const restored = reverse(draft, delta);
+  assert.deepEqual(restored, old);
+  const originalBytes = fs.readFileSync(path.join(root(n), 'history-before-view-repair/original/draft.json'));
+  assert.equal(sha(JSON.stringify(restored, null, 2) + '\n'), sha(originalBytes), 'Reverse JSON delta must restore exact original draft bytes');
+  const programs = read(path.join(root(n), 'wrong-programs.json'));
+  const previousPrograms = read(path.join(root(n), 'history-before-view-repair/original/wrong-programs.json'));
+  const changedPrograms = programs.programs.filter((p, i) => canonical(p) !== canonical(previousPrograms.programs[i]));
+  assert.deepEqual(changedPrograms.map(p => [p.question_id, p.option_id]),
+    n === 7 ? [['q95', 'B'], ['q95', 'C']] : [['q98', 'A'], ['q98', 'C'], ['q103-c', 'A']]);
+  assert.equal(programs.programs.length, previousPrograms.programs.length);
+  assert.equal(programs.seed_sha256, previousPrograms.seed_sha256);
+  for (const q of draft.questions) for (const rationale of q.key.rationales) {
+    const option = q.view.options.find(x => x.id === rationale.option_id);
+    assert(rationale.derivation.startsWith(`显示${option.id}：${option.text}\n`));
+  }
+  return { manifest, old, draft, changed, delta, programs, previousPrograms, changedPrograms };
+}
+function runOnce(n, name, argv, boundInputs, stdin = undefined) {
+  const directory = commandDir(n);
+  fs.mkdirSync(directory, { recursive: true });
+  const startedPath = path.join(directory, `${name}.started.json`);
+  const before = boundInputs.map(record);
+  write(startedPath, { argv, cwd: repo, input_hashes: before,
+    stdin_sha256: stdin === undefined ? null : sha(stdin), once_guard: true, started_at: new Date().toISOString() });
+  const result = spawnSync(argv[0], argv.slice(1), { cwd: repo, input: stdin, encoding: 'utf8',
+    env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', PWDEBUG: '', PLAYWRIGHT_HTML_OPEN: 'never' },
+    maxBuffer: 8 * 1024 * 1024 });
+  const stdout = path.join(directory, `${name}.stdout.txt`), stderr = path.join(directory, `${name}.stderr.txt`);
+  fs.writeFileSync(stdout, result.stdout ?? '', { flag: 'wx' });
+  fs.writeFileSync(stderr, result.stderr ?? '', { flag: 'wx' });
+  const after = boundInputs.map(record);
+  const immutable = canonical(before) === canonical(after);
+  const receipt = { argv, cwd: repo, exit_code: result.status, signal: result.signal, error: result.error?.message ?? null,
+    input_hashes: before, after_input_hashes: after, inputs_unchanged: immutable,
+    output_hashes: [record(stdout), record(stderr)], pass: result.status === 0 && immutable,
+    finished_at: new Date().toISOString(), no_review_self_approval: true };
+  write(path.join(directory, `${name}.json`), receipt);
+  assert(receipt.pass, `Stopped; preserve failed ${name} command evidence for diagnosis`);
+  return receipt;
+}
+function markdown(views, n) {
+  const figures = read(path.join(root(n), 'draft.json')).new_figures;
+  return views.map((view, i) => [`## ${i + 1}`, view.stem,
+    ...view.figure_ids.map(id => `![图象](${path.join(repo, figures.find(x => x.id === id).path)})`),
+    ...view.options.map(x => `${x.id}. ${x.text}`)].join('\n\n')).join('\n\n') + '\n';
+}
+const phase = process.argv[2];
+if (phase === 'derive') {
+  for (const n of [7, 8]) {
+    const c = compare(n);
+    const started = path.join(root(n), 'view-repair-derive.started.json');
+    write(started, { once_guard: true, inputs: [record(path.join(root(n), 'draft.json')),
+      record(path.join(root(n), 'wrong-programs.json')), ...inputs(n)],
+      before_manifest: record(path.join(root(n), 'history-before-view-repair/before-manifest.json')) });
+    const full = c.draft.questions.map(q => q.view), narrow = c.changed.map(q => q.view);
+    fs.writeFileSync(path.join(root(n), 'pureview.json'), JSON.stringify(full, null, 2) + '\n');
+    fs.writeFileSync(path.join(root(n), 'pureview.md'), markdown(full, n));
+    write(path.join(root(n), 'fullpureview.json'), full);
+    write(path.join(root(n), 'changed-pureview.json'), narrow);
+    fs.writeFileSync(path.join(root(n), 'changed-pureview.md'), markdown(narrow, n), { flag: 'wx' });
+    c.programs.draft_sha256 = digest(c.draft);
+    fs.writeFileSync(path.join(root(n), 'wrong-programs.json'), JSON.stringify(c.programs, null, 2) + '\n');
+    const { units } = await import(path.join(root(n), 'authored-units.mjs'));
+    for (const q of c.changed) {
+      const unit = units.find(x => x.id === q.id), trueOption = unit.options.find(x => x.correct);
+      const falseOptions = unit.options.filter(x => !x.correct);
+      for (const option of q.view.options) {
+        const expected = q.key.correct.includes(option.id) ? trueOption : falseOptions.shift();
+        assert.equal(option.text, expected.text, 'Patched template/draft drift');
+        const rationale = q.key.rationales.find(x => x.option_id === option.id);
+        assert.equal(rationale.derivation, `显示${option.id}：${expected.text}\n${expected.derivation}`);
+        if (!q.key.correct.includes(option.id)) {
+          const program = c.programs.programs.find(p => p.question_id === q.id && p.option_id === option.id);
+          assert.equal(program.expr, expected.program.expr);
+          assert.deepEqual(program.expected, expected.program.expected);
+        }
+      }
+    }
+    const revised = compare(n);
+    assert.equal(revised.programs.draft_sha256, digest(revised.draft));
+    write(path.join(root(n), 'view-repair-delta.json'), {
+      schema: 's10y-narrow-author-repair-delta-v1', lesson: read(path.join(root(n), 'seed.json')).source.lesson,
+      original_draft: record(path.join(root(n), 'history-before-view-repair/original/draft.json')),
+      current_draft: record(path.join(root(n), 'draft.json')),
+      original_canonical_sha256: digest(c.old), current_canonical_sha256: digest(c.draft),
+      changes: c.delta, reverse_json_restores_exact_original_bytes: true,
+      changed_question_ids: allowed(n), unchanged_question_count: c.draft.questions.length - c.changed.length,
+      coverage_count: c.draft.coverage.length, all_coverage_unchanged: true,
+      all_source_solutions_intents_graph_bytes_correct_keys_and_modes_unchanged: true,
+      false_program_changes: differences(c.previousPrograms, revised.programs),
+      reviewer_findings: record(path.join(root(n), 'history-before-view-repair/reviewer-view-checks.json')),
+      before_manifest: record(path.join(root(n), 'history-before-view-repair/before-manifest.json')),
+      full_pureview: record(path.join(root(n), 'pureview.json')),
+      narrow_changed_pureview: record(path.join(root(n), 'changed-pureview.json')),
+      no_semantic_self_approval: true,
+    });
+    console.log(JSON.stringify({ n, changed_question_ids: allowed(n), leaf_draft_changes: c.delta.length,
+      unchanged_question_count: c.draft.questions.length - c.changed.length, all_coverage_unchanged: true }));
+  }
+} else if (phase === 'programs') {
+  const comparisons = [7, 8].map(n => compare(n));
+  for (let i = 0; i < comparisons.length; i++)
+    assert.equal(comparisons[i].programs.draft_sha256, digest(comparisons[i].draft));
+  const inputFile = path.join(root(7), 'view-repair-five-programs.json');
+  write(inputFile, { programs: comparisons.flatMap(c => c.changedPrograms),
+    bindings: [7, 8].flatMap(n => ['draft.json', 'wrong-programs.json'].map(name => record(path.join(root(n), name)))) });
+  const script = path.join(root(7), 'verify-view-repair-programs.py');
+  runOnce(7, 'five-changed-programs', ['python3', script],
+    [script, inputFile, ...[7, 8].flatMap(n => ['draft.json', 'wrong-programs.json'].map(name => path.join(root(n), name)))],
+    fs.readFileSync(inputFile));
+  console.log('Five changed mistaken procedures executed; exact displayed content matched.');
+} else if (phase === 'structure') {
+  const n = Number(process.argv[3]);
+  assert([7, 8].includes(n));
+  assert(read(path.join(commandDir(7), 'five-changed-programs.json')).pass);
+  const c = compare(n);
+  assert.equal(c.programs.draft_sha256, digest(c.draft));
+  const script = path.join(repo, '.agents/skills/ld-s10y-choice/scripts/validate.py');
+  const sourceInputs = inputs(n);
+  runOnce(n, 'changed-snapshot-structure', ['python3', script, '--repo', repo,
+    '--seed', path.join(root(n), 'seed.json'), '--draft', path.join(root(n), 'draft.json')],
+    [script, path.join(repo, '.agents/skills/ld-s10y-choice/scripts/prepare.py'),
+      ...sourceInputs.map(x => x.path), path.join(root(n), 'draft.json'),
+      ...c.draft.new_figures.map(figure => path.join(repo, figure.path))]);
+  console.log(JSON.stringify({ n, structure_invocations_for_changed_snapshot: 1, semantic_review_run: false }));
+} else if (phase === 'ready') {
+  for (const n of [7, 8]) {
+    const c = compare(n), full = c.draft.questions.map(q => q.view), narrow = c.changed.map(q => q.view);
+    const structure = path.join(commandDir(n), 'changed-snapshot-structure.json');
+    assert(read(structure).pass);
+    assert(read(path.join(commandDir(7), 'five-changed-programs.json')).pass);
+    assert.deepEqual(read(path.join(root(n), 'pureview.json')), full);
+    assert.deepEqual(read(path.join(root(n), 'fullpureview.json')), full);
+    assert.deepEqual(read(path.join(root(n), 'changed-pureview.json')), narrow);
+    const checkedInputs = read(structure).input_hashes;
+    for (const item of checkedInputs) assert.equal(record(item.path).sha256, item.sha256);
+    const delta = path.join(root(n), 'view-repair-delta.json');
+    assert.equal(read(delta).current_draft.sha256, record(path.join(root(n), 'draft.json')).sha256);
+    const history = path.join(root(n), 'history-before-view-repair');
+    write(path.join(root(n), 'view-repair-ready.json'), {
+      status: 'author_narrow_repair_ready_pending_independent_changed_view_gate',
+      lesson: read(path.join(root(n), 'seed.json')).source.lesson,
+      question_count: c.draft.questions.length, changed_question_ids: allowed(n),
+      unchanged_question_count: c.draft.questions.length - c.changed.length,
+      coverage_count: c.draft.coverage.length, coverage_unchanged: true, package_total_questions: 51,
+      package_changed_questions: 3, package_unchanged_questions: 48,
+      source_checkpoint_unchanged: true, source_solutions_unchanged: true,
+      correct_keys_and_positions_unchanged: true, original_production_losses_retained: true,
+      old_history_and_commands_unchanged: true,
+      before_manifest: record(path.join(history, 'before-manifest.json')),
+      original_ready: record(path.join(history, 'original/ready.json')),
+      draft: record(path.join(root(n), 'draft.json')), draft_canonical_sha256: digest(c.draft),
+      artifacts: ['pureview.json', 'pureview.md', 'fullpureview.json', 'changed-pureview.json', 'changed-pureview.md',
+        'view-repair-delta.json', 'wrong-programs.json', 'authored-units.mjs'].map(name => record(path.join(root(n), name))),
+      guarded_commands: [record(structure), record(path.join(commandDir(7), 'five-changed-programs.json'))],
+      changed_snapshot_structural_invocations: 1,
+      checker_scope: 'Existing checker has no question filter; exactly one current changed lesson snapshot, not old-pipeline reexecution.',
+      independent_gate: { approved: false, changed_view_review: 'parent_assignment_pending',
+        semantic_self_approval: false, graph: n === 7 ? {
+          id: c.draft.new_figures[0].id, asset_sha256: c.draft.new_figures[0].sha256,
+          bytes_unchanged: true, existing_independent_pass_retained_without_reopening: true,
+          evidence_reference: read(path.join(history, 'reviewer-view-checks.json')).figure_gate.review_path,
+        } : null },
+      no_browser_capture_math_pipeline_canonical_promotion_durable_app_db_dependency_paid_or_git_operations: true,
+    });
+    console.log(JSON.stringify({ ready: path.join(root(n), 'view-repair-ready.json'),
+      questions: c.draft.questions.length, independent_changed_view_gate: 'pending' }));
+  }
+} else throw new Error('Expected derive, programs, structure <7|8>, or ready');

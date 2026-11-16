@@ -1,0 +1,93 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+import { repo, own, read, record, write, assert, frozen, runOnce } from './source-pipeline.mjs';
+
+const directory = path.join(own(7), 'graph95');
+const id = 'fig-choice-7a-n7-95';
+const specFile = path.join(directory, 'spec.json');
+const svgFile = path.join(directory, id + '.svg');
+const renderFile = path.join(directory, id + '.render.json');
+const pngFile = path.join(directory, id + '.640.png');
+const constructionFile = path.join(directory, 'construction.json');
+const seedFile = path.join(own(7), 'seed.json');
+const entry = process.argv[2];
+frozen(7);
+if (entry === 'generate') {
+  const seed = read(seedFile);
+  const box = [-4,28,4,-4];
+  const curves = [3,2].map((coefficient, index) => {
+    const limit = Math.sqrt(28/coefficient);
+    const points = Array.from({length:1001}, (_,i) => {
+      const x = -limit+2*limit*i/1000;
+      return [x,coefficient*x*x];
+    });
+    assert(points.every(([x,y]) => Math.abs(y-coefficient*x*x)<1e-10), 'Curve source coefficient changed');
+    return { id: `curve-${index ? 'II' : 'I'}`, type:'svgPath',
+      d:points.map(([x,y],i)=>`${i?'L':'M'} ${(x+4).toFixed(10)} ${(28-y).toFixed(10)}`).join(' '),
+      stroke:'ink',strokeWidth:3,points,coefficient,
+      max_midpoint_canvas_error_px:coefficient*(2*limit/1000)**2/4*25 };
+  });
+  const objects = [
+    {id:'inspection-grid',type:'grid',bounds:[-3,24,3,0],xStep:1,yStep:4,stroke:'grid',strokeWidth:1},
+    {id:'x-axis',type:'axis',from:[-3.5,0],to:[3.5,0],strokeWidth:2,
+      ticks:[-3,-2,-1,1,2,3].map(x=>({at:[x,0],label:String(x),fontSize:24,size:0.06,labelPlacement:{position:'S',gap:20}}))},
+    {id:'y-axis',type:'axis',from:[0,-2],to:[0,26],strokeWidth:2,
+      ticks:[4,8,12,16,20,24].map(y=>({at:[0,y],label:String(y),fontSize:24,size:0.06,labelPlacement:{position:'W',gap:20}}))},
+    ...curves.map(({points,coefficient,max_midpoint_canvas_error_px,...object})=>object),
+    {id:'I-identity',type:'text',at:[2.7,3*2.7**2],text:'I',fontSize:24,labelPlacement:{position:'NW',gap:24}},
+    {id:'II-identity',type:'text',at:[-2.8,2*2.8**2],text:'II',fontSize:24,labelPlacement:{position:'NE',gap:24}},
+    {id:'x-name',type:'text',at:[3.65,-1],text:'x',fontSize:24,labelPlacement:{position:'CENTER'}},
+    {id:'y-name',type:'text',at:[0.5,27],text:'y',fontSize:24,labelPlacement:{position:'CENTER'}},
+    {id:'origin',type:'text',at:[0,0],text:'0',fontSize:24,labelPlacement:{position:'SW',gap:25}},
+  ];
+  const spec = {
+    schema:'ld-s10y-image/figure-spec@2',id,mode:'deterministic',
+    description:'Compare two complete visible upward parabola branches at the written negative input, using one coordinate system.',
+    source:{authoredBasis:'New written-source choice graph, not a recovered original. I=3x^2, II=2x^2. Both full visible left/right branches and the common vertex preserved. Unequal x/y scales are explicitly numbered; no solution marks or root-value tags. Viewing boundary clipping does not restrict the full function domain.',
+      authoritativeText:[{lesson:seed.source.lesson,exercise:'95',text:seed.exercises.find(x=>x.number==='95').text}],
+      inventory:[
+        {id:'source-two-parabolas',description:'Both written functions with coefficients3 and2, vertex0 and y-axis symmetry; exact sampled equations and approximation evidence in construction, not certified by object count alone.',
+          objects:['curve-I','curve-II'],assertions:['both-curves']},
+        {id:'new-inspection-grid',description:'Authored numbered plotting aid, not source image rows.',objects:['inspection-grid'],
+          assertions:['grid-cells'],requires:['gridDimensions']},
+      ]},
+    canvas:{width:800,height:800,boundingBox:box,keepAspectRatio:false,background:'paper'},
+    display:{purpose:'instructional',layout:'scroll',widths:[640],minTextPx:16},
+    objects,assertions:[{id:'both-curves',type:'objectCount',objectType:'svgPath',count:2},
+      {id:'grid-cells',type:'gridDimensions',grid:'inspection-grid',columns:6,rows:6}],
+    layout:{minLabelGap:4},
+  };
+  write(specFile,spec);
+  write(constructionFile,{source_checkpoint:record(path.join(own(7),'source-frozen.json')),seed:record(seedFile),
+    curves,coordinates:'x unit100 canvas px, y unit25 canvas px; explicit axis values, not implied equal-unit scale.',
+    independent_review_pending:true});
+  const validator=path.join(repo,'.agents/skills/ld-s10y-image/scripts/validate_spec.py');
+  const renderer=path.join(repo,'.agents/skills/ld-s10y-image/scripts/render_spec.mjs');
+  runOnce(7,'graph95-validate',['python3',validator,specFile,'--stage','draft'],[validator,specFile,constructionFile]);
+  runOnce(7,'graph95-render',['node',renderer,'--spec',specFile,'--svg',svgFile,'--report',renderFile],
+    [renderer,specFile],[svgFile,renderFile]);
+  console.log(JSON.stringify({spec:specFile,svg:svgFile,independent_approved:false}));
+} else if (entry === 'capture') {
+  const require=createRequire(path.join(repo,'.agents/skills/ld-s10y-image/scripts/render_spec.mjs'));
+  const {chromium}=require('playwright-core');
+  const executablePath=[chromium.executablePath(),'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'].find(x=>fs.existsSync(x));
+  assert(!fs.existsSync(pngFile),'No pixel replay');
+  let browser;
+  let metrics;
+  try {
+    browser=await chromium.launch({executablePath,headless:true});
+    const page=await browser.newPage({viewport:{width:640,height:640},deviceScaleFactor:1});
+    await page.route('**/*',route=>route.abort());
+    await page.setContent(`<!doctype html><style>html,body{margin:0;background:white}svg{display:block;width:640px;height:640px}</style>${fs.readFileSync(svgFile,'utf8')}`);
+    metrics=await page.locator('svg').evaluate(svg=>({width:svg.getBoundingClientRect().width,height:svg.getBoundingClientRect().height,
+      labels:[...svg.querySelectorAll('text')].map(t=>({text:t.textContent,font_px:Number(t.getAttribute('font-size'))*.8}))}));
+    await page.locator('svg').screenshot({path:pngFile});
+  } finally { if(browser) await browser.close(); }
+  write(path.join(directory,'capture.json'),{svg:record(svgFile),preview:record(pngFile),metrics,
+    scope:'Offline isolated headless declared640px, not live headed product.',browser_closed:true,independent_approved:false});
+} else if (entry === 'capture-once') {
+  const script=path.join(own(7),'graph95.mjs');
+  runOnce(7,'graph95-full640-capture',['node',script,'capture'],[script,svgFile,specFile,renderFile],
+    [pngFile,path.join(directory,'capture.json')]);
+} else throw Error('Expected generate or capture-once');

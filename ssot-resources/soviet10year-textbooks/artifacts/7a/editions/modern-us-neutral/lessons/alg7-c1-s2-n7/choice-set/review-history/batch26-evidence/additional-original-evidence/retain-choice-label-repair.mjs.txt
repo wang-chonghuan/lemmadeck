@@ -1,0 +1,123 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { spawnSync } from 'node:child_process'
+
+const [book, lesson, figureId, author, reviewer, specFile, svgFile,
+  renderFile, formalFile, observationFile, identity] = process.argv.slice(2)
+assert(identity)
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const root = `ssot-resources/soviet10year-textbooks/artifacts/${book}/editions/modern-us-neutral/lessons/${lesson}/choice-set`
+const oldReview = read(`${scratch}/${reviewer}/review-retained.json`)
+const snapshot = oldReview.outcome === 'pass' ? root : `${root}/review-history/unresolved-source`
+const assetRoot = `${root}/figures/${figureId}`
+const oldDraft = read(`${snapshot}/draft.json`)
+assert.deepEqual(oldDraft, read(`${scratch}/${author}/draft.json`))
+assert.deepEqual(oldReview, read(`${snapshot}/review.json`))
+const oldSpec = read(`${assetRoot}.spec.json`)
+const newSpec = read(specFile)
+const geometry = spec => {
+  const value = structuredClone(spec)
+  delete value.display
+  for (const object of value.objects) {
+    delete object.fontSize
+    delete object.labelPlacement
+    for (const tick of object.ticks ?? []) {
+      delete tick.fontSize
+      delete tick.labelPlacement
+    }
+  }
+  return value
+}
+assert.deepEqual(geometry(oldSpec), geometry(newSpec))
+const render = read(renderFile)
+const formal = read(formalFile)
+assert.equal(render.status, 'pass')
+assert.equal(formal.status, 'pass')
+assert.equal(render.spec.sha256, sha(specFile))
+assert.equal(render.output.svg.sha256, sha(svgFile))
+assert.equal(formal.spec.sha256, sha(specFile))
+assert.equal(formal.render.sha256, sha(renderFile))
+assert.equal(formal.outputs.svg.sha256, sha(svgFile))
+assert.deepEqual(render.assets, [])
+const figure = oldDraft.new_figures.find(item => item.id === figureId)
+assert(figure && figure.sha256 === sha(`${assetRoot}.svg`))
+assert.equal(figure.basis, newSpec.source.authoredBasis)
+const history = `${scratch}/${author}/history-before-final-label-repair`
+assert(!fs.existsSync(history))
+fs.mkdirSync(history)
+const originals = [
+  ...['svg', 'spec.json', 'render.json', 'review.json'].map(ext => `${assetRoot}.${ext}`),
+  `${snapshot}/draft.json`, `${snapshot}/review.json`,
+  `${scratch}/${author}/draft.json`, `${scratch}/${reviewer}/review-retained.json`,
+]
+const retained = originals.map((source, index) => {
+  const target = `${history}/${index}-${path.basename(source)}.txt`
+  fs.copyFileSync(source, target, fs.constants.COPYFILE_EXCL)
+  assert.equal(sha(source), sha(target))
+  return { source, target, sha256: sha(source) }
+})
+fs.copyFileSync(specFile, `${assetRoot}.spec.json`)
+fs.copyFileSync(svgFile, `${assetRoot}.svg`)
+render.spec.path = `${assetRoot}.spec.json`
+render.output.svg.path = `${assetRoot}.svg`
+fs.writeFileSync(`${assetRoot}.render.json`, JSON.stringify(render, null, 2) + '\n')
+formal.spec.path = `${assetRoot}.spec.json`
+formal.render.path = `${assetRoot}.render.json`
+formal.render.sha256 = sha(`${assetRoot}.render.json`)
+formal.outputs.svg.path = `${assetRoot}.svg`
+fs.writeFileSync(`${assetRoot}.review.json`, JSON.stringify(formal, null, 2) + '\n')
+const draft = structuredClone(oldDraft)
+draft.new_figures.find(item => item.id === figureId).sha256 = sha(svgFile)
+const inverse = structuredClone(draft)
+inverse.new_figures.find(item => item.id === figureId).sha256 = figure.sha256
+assert.deepEqual(inverse, oldDraft)
+for (const destination of [`${snapshot}/draft.json`, `${scratch}/${author}/draft.json`]) {
+  fs.writeFileSync(destination, JSON.stringify(draft, null, 2) + '\n')
+}
+const digest = spawnSync('python3', [
+  '.agents/skills/ld-s10y-choice/scripts/prepare.py', 'digest', `${snapshot}/draft.json`,
+], { encoding: 'utf8' })
+assert.equal(digest.status, 0)
+assert(/^[0-9a-f]{64}$/.test(digest.stdout.trim()))
+const review = structuredClone(oldReview)
+review.draft_sha256 = digest.stdout.trim()
+const observation = `Existing independent source, task, key and curve geometry evidence reused. Independent label-only repair by ${identity}; same labels and mathematical anchors, enlarged fonts and isolated placement offsets. Actual complete figure and target question windows inspected at desktop/mobile widths, no clipping or collision; all labels at least 16px. Original rejected sizing/placement reports retained. No source, question, option, key, or misconception program changed.`
+const check = review.figure_checks.find(item => item.figure_id === figureId)
+assert(check)
+check.asset_sha256 = sha(svgFile)
+check.observation = observation
+const figureReview = review.new_figure_reviews.find(item => item.figure_id === figureId)
+assert(figureReview)
+figureReview.asset_sha256 = sha(svgFile)
+figureReview.reviewer = { kind: 'independent_agent', identity }
+figureReview.verdict = 'pass'
+figureReview.evidence = observation
+assert.deepEqual(review.question_reviews, oldReview.question_reviews)
+assert.deepEqual(review.source_reviews, oldReview.source_reviews)
+assert.equal(review.outcome, oldReview.outcome)
+for (const destination of [`${snapshot}/review.json`,
+  `${scratch}/${reviewer}/review-label-repaired.json`]) {
+  fs.writeFileSync(destination, JSON.stringify(review, null, 2) + '\n')
+}
+const receipt = {
+  status: 'label-assets-and-bindings-retained',
+  book, lesson, semantic_outcome: oldReview.outcome,
+  original_history: retained, independent_observations: {
+    path: observationFile, sha256: sha(observationFile),
+  },
+  formal_review: { path: `${assetRoot}.review.json`, sha256: sha(`${assetRoot}.review.json`) },
+  all_nonlabel_geometry_and_basis_unchanged: true,
+  source_and_question_reviews_unchanged: true,
+  draft_inverse_restores_all_values: true,
+  draft_changes_only_new_figure_sha256: true,
+  no_semantic_math_or_source_rerun: true,
+  next: 'Validate only this changed final asset/snapshot binding; unchanged results remain reused.',
+}
+fs.writeFileSync(`${scratch}/${author}/final-label-retention.json`,
+  JSON.stringify(receipt, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ status: receipt.status, lesson,
+  semantic_outcome: oldReview.outcome, draft_digest: review.draft_sha256 }))

@@ -1,0 +1,152 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { createRequire } from 'node:module';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+delete process.env.PWDEBUG;
+process.env.PLAYWRIGHT_HTML_OPEN = 'never';
+const output = path.dirname(fileURLToPath(import.meta.url));
+const repo = path.resolve(output, '../../../../..');
+const require = createRequire(path.join(repo, 'app/package.json'));
+const { chromium } = require('@playwright/test');
+const manifestPath = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp/batch26-render/5m-math5-c2-s3-n53-capture-manifest.json');
+const primary = JSON.parse(fs.readFileSync(manifestPath));
+const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const bindings = [...primary.inputs, ...primary.rendered, ...primary.screenshots,
+  { path: path.relative(repo, manifestPath), sha256: sha(manifestPath) },
+  { path: primary.report, sha256: sha(path.join(repo, primary.report)) }];
+for (const binding of bindings) {
+  if (sha(path.join(repo, binding.path)) !== binding.sha256) throw new Error(`Changed input: ${binding.path}`);
+}
+const report = { scope: 'Independent display coverage only; no source, mathematical, canonical or standalone figure re-review',
+  started_at: new Date().toISOString(), bindings, browser: { headless: true, isolated: true,
+    device_scale_factor: 1, PWDEBUG_cleared: true, PLAYWRIGHT_HTML_OPEN: 'never',
+    external_requests: [], finally_closed: false }, surfaces: [], captures: [] };
+const inspectOnly = process.argv.includes('--inspect');
+const browser = await chromium.launch({ headless: true });
+try {
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1 });
+    try {
+      await context.route(/^(https?|wss?):/, (route) => {
+        report.browser.external_requests.push(route.request().url());
+        return route.abort();
+      });
+      const page = await context.newPage();
+      const errors = [];
+      page.on('pageerror', (error) => errors.push(error.message));
+      for (const surface of ['text', 'exercises', 'choices']) {
+        await page.goto(pathToFileURL(path.join(repo,
+          `.tmp/ld-s10y-lesson/render/5m/modern-us-neutral/math5-c2-s3-n53/${surface}.html`)).href);
+        await page.evaluate(() => document.fonts.ready);
+        await page.locator('img').evaluateAll((nodes) => Promise.all(nodes.map((node) => node.decode())));
+        const selector = { text: '.para', exercises: 'li.ex', choices: '.choice' }[surface];
+        const items = page.locator(selector);
+        const count = await items.count();
+        const geometry = await page.evaluate(({ selector }) => {
+          const box = (node) => {
+            const r = node.getBoundingClientRect();
+            return { x: r.x + scrollX, y: r.y + scrollY, width: r.width, height: r.height };
+          };
+          return {
+            document: { width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight },
+            sheet: box(document.querySelector('.sheet')),
+            items: [...document.querySelectorAll(selector)].map((node, index) => ({
+              index: index + 1, id: node.id || `${index + 1}`, box: box(node),
+              heading: node.querySelector('.no,.choice-heading')?.textContent.trim() || null,
+              options: [...node.querySelectorAll('.choice-options>li')].map((option, n) => ({
+                index: n + 1, id: option.querySelector('.option-id')?.textContent.trim(), box: box(option) })),
+              image_count: node.querySelectorAll('img,svg').length,
+            })),
+            images: [...document.querySelectorAll('img,svg')].map((node, i) => ({
+              index: i + 1, box: box(node), loaded: node.tagName !== 'IMG' || (node.complete && node.naturalWidth > 0),
+              natural_width: node.naturalWidth || null, natural_height: node.naturalHeight || null,
+            })),
+            scrolls: [...document.querySelectorAll('.sheet *')].filter((node) =>
+              node.scrollWidth > node.clientWidth + 1 &&
+              ['auto', 'scroll'].includes(getComputedStyle(node).overflowX)).map((node, i) => {
+                node.dataset.reviewerScroll = `${i + 1}`;
+                return { id: i + 1, tag: node.tagName, class: node.className, box: box(node),
+                  width: node.clientWidth, scroll_width: node.scrollWidth, max: node.scrollWidth - node.clientWidth,
+                  item_index: [...document.querySelectorAll(selector)].findIndex((item) => item.contains(node)) + 1 };
+              }),
+            errors: document.querySelectorAll('.err,.katex-error').length,
+          };
+        }, { selector });
+        await items.first().scrollIntoViewIfNeeded();
+        const firstY = await page.evaluate(() => scrollY);
+        await items.last().scrollIntoViewIfNeeded();
+        const lastY = await page.evaluate(() => scrollY);
+        const entry = { surface, viewport, count, ...geometry, primary_windows: {
+          first: { y: firstY, bottom: firstY + viewport.height },
+          last: { y: lastY, bottom: lastY + viewport.height } }, errors };
+        for (const item of entry.items) {
+          item.primary_full = Object.entries(entry.primary_windows)
+            .filter(([, window]) => item.box.y >= window.y - 1 &&
+              item.box.y + item.box.height <= window.bottom + 1)
+            .map(([name]) => `${surface}-${viewport.width}-${name}`);
+        }
+        report.surfaces.push(entry);
+        if (inspectOnly) continue;
+        const missing = entry.items.filter((item) => item.primary_full.length === 0);
+        const groups = [];
+        for (const item of missing) {
+          const last = groups.at(-1);
+          if (last && item.index === last.at(-1).index + 1 &&
+            item.box.y + item.box.height - last[0].box.y < 1550) last.push(item);
+          else groups.push([item]);
+        }
+        let sequence = 0;
+        for (const group of groups) {
+          const top = Math.max(0, Math.floor(group[0].box.y) - 8);
+          const bottom = Math.ceil(group.at(-1).box.y + group.at(-1).box.height) + 8;
+          const left = Math.max(0, Math.floor(Math.min(...group.map((item) => item.box.x))) - 8);
+          const right = Math.min(viewport.width, Math.ceil(Math.max(...group.map((item) => item.box.x + item.box.width))) + 8);
+          const clip = { x: left, y: top, width: right - left, height: Math.min(bottom, entry.document.height) - top };
+          const filename = `${surface}-${viewport.width}-gap-${++sequence}.png`;
+          await page.screenshot({ path: path.join(output, filename), clip, fullPage: true });
+          report.captures.push({ path: filename, sha256: sha(path.join(output, filename)), surface,
+            viewport, kind: 'full-uncovered-objects', item_indices: group.map((item) => item.index), clip,
+            native: true, scale: 1 });
+        }
+        for (const scroll of entry.scrolls) {
+          const locator = page.locator(`[data-reviewer-scroll="${scroll.id}"]`);
+          // Initial windows in primary/full-object captures are reused, not recaptured.
+          const step = Math.max(1, scroll.width - 32);
+          const offsets = [];
+          for (let left = Math.min(step, scroll.max); ; left = Math.min(left + step, scroll.max)) {
+            offsets.push(left);
+            if (left === scroll.max) break;
+          }
+          for (const left of offsets) {
+            await locator.evaluate((node, left) => { node.scrollLeft = left; }, left);
+            await locator.scrollIntoViewIfNeeded();
+            const filename = `${surface}-${viewport.width}-scroll-${scroll.id}-${left}.png`;
+            await locator.screenshot({ path: path.join(output, filename) });
+            report.captures.push({ path: filename, sha256: sha(path.join(output, filename)), surface,
+              viewport, kind: 'uncovered-formula-window', scroll_id: scroll.id, item_index: scroll.item_index,
+              horizontal_window: { left, right: left + scroll.width, max: scroll.max },
+              native: true, scale: 1 });
+          }
+          await locator.evaluate((node) => { node.scrollLeft = 0; });
+        }
+      }
+    } finally {
+      await context.close();
+    }
+  }
+} finally {
+  await browser.close();
+  report.browser.finally_closed = true;
+}
+report.finished_at = new Date().toISOString();
+report.bindings_unchanged = bindings.every((binding) => sha(path.join(repo, binding.path)) === binding.sha256);
+fs.writeFileSync(path.join(output, inspectOnly ? 'dom-coverage-plan.json' : 'supplement-manifest.json'), JSON.stringify(report, null, 2) + '\n');
+console.log(JSON.stringify({ inspect_only: inspectOnly, bindings_unchanged: report.bindings_unchanged,
+  captures: report.captures.length, browser: report.browser, surfaces: report.surfaces.map((entry) => ({
+    surface: entry.surface, width: entry.viewport.width, count: entry.count,
+    options: entry.items.reduce((n, item) => n + item.options.length, 0),
+    images: entry.images.length, scrolls: entry.scrolls,
+    missing: entry.items.filter((item) => !item.primary_full.length).map((item) => item.index),
+  })) }, null, 2));

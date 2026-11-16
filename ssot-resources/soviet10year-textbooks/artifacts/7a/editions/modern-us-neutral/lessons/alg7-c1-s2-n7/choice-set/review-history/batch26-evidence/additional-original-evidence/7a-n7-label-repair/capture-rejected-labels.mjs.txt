@@ -1,0 +1,81 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { chromium } from '/Users/yong/.codex/worktrees/d9b1/lemmadeck/.agents/skills/node_modules/playwright-core/index.mjs'
+
+delete process.env.PWDEBUG
+process.env.PLAYWRIGHT_HTML_OPEN = 'never'
+const own = path.dirname(new URL(import.meta.url).pathname)
+const figure = 'fig-choice-7a-n7-95'
+const record = file => ({
+  path: file, sha256: crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex'),
+  bytes: fs.statSync(file).size,
+})
+const frozen = JSON.parse(fs.readFileSync(path.join(own, 'input-freeze.json'), 'utf8')).inputs
+for (const input of frozen) assert.equal(record(input.path).sha256, input.sha256)
+const commandDir = path.join(own, 'commands/capture-rejected-once')
+fs.mkdirSync(commandDir)
+const svgPath = path.join(own, `${figure}.svg`)
+const svg = fs.readFileSync(svgPath, 'utf8')
+fs.writeFileSync(path.join(commandDir, 'invocation.json'), JSON.stringify({
+  argv: [process.execPath, process.argv[1]], svg: record(svgPath), widths: [480, 358],
+  scope: 'Diagnostic standalone SVG pixels for a rejected render; no new spec/render_spec invocation, lesson/app or approval.',
+  headless: true, PWDEBUG: null, PLAYWRIGHT_HTML_OPEN: 'never', deviceScaleFactor: 1,
+}, null, 2) + '\n', { flag: 'wx' })
+const executablePath = [chromium.executablePath(), '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome']
+  .find(file => fs.existsSync(file))
+assert(executablePath)
+const browser = await chromium.launch({ executablePath, headless: true })
+const evidence = []
+let error = null
+try {
+  for (const width of [480, 358]) {
+    const page = await browser.newPage({ viewport: { width, height: width }, deviceScaleFactor: 1 })
+    await page.setContent(`<!doctype html><style>
+      :root{--ld-figure-ink:#15201f;--ld-figure-muted:#4c5a58;--ld-figure-accent:#15201f;--ld-figure-accent-soft:#8a9795;--ld-figure-grid:#e3eae9;--ld-figure-paper:#fff}
+      html,body{margin:0;background:white}svg{display:block}
+    </style>${svg}`)
+    await page.locator('svg').evaluate((node, width) => {
+      node.setAttribute('width', String(width)); node.setAttribute('height', String(width))
+      node.style.width = `${width}px`; node.style.height = `${width}px`
+    }, width)
+    await page.evaluate(() => document.fonts.ready)
+    const metrics = await page.locator('svg').evaluate(node => {
+      const bounds = node.getBoundingClientRect()
+      return {
+        bounds: { width: bounds.width, height: bounds.height },
+        labels: [...node.querySelectorAll('text')].map(label => {
+          const matrix = label.getScreenCTM(), bbox = label.getBBox(), rect = label.getBoundingClientRect()
+          return {
+            id: label.getAttribute('data-label-id'), text: label.textContent,
+            px: Number.parseFloat(label.getAttribute('font-size')) * Math.hypot(matrix.a, matrix.b),
+            intrinsicBBox: { x: bbox.x, y: bbox.y, width: bbox.width, height: bbox.height },
+            actualRect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+            paddedIntrinsicBBox: { x: bbox.x - 4, y: bbox.y - 4, width: bbox.width + 8, height: bbox.height + 8 },
+          }
+        }),
+      }
+    })
+    assert.equal(metrics.labels.length, 17)
+    assert(metrics.labels.every(label => label.px >= 16))
+    const png = path.join(own, `${figure}.${width}.png`)
+    assert(!fs.existsSync(png))
+    await page.locator('svg').screenshot({ path: png })
+    evidence.push({ width, ...metrics, png: record(png) })
+    await page.close()
+  }
+} catch (failure) {
+  error = failure.stack
+  throw failure
+} finally {
+  await browser.close()
+  for (const input of frozen) assert.equal(record(input.path).sha256, input.sha256)
+  assert.equal(record(svgPath).sha256, crypto.createHash('sha256').update(svg).digest('hex'))
+  fs.writeFileSync(path.join(own, 'capture.json'), JSON.stringify({
+    schema: 'ld-s10y/rejected-label-diagnostic-capture@1', figure, svg: record(svgPath),
+    evidence, error, browserClosedInFinally: true, headless: true, deviceScaleFactor: 1,
+    status: 'diagnostic-only-render-remains-rejected', independentReview: 'not-approved',
+    noHeadedProductClaim: true, noLessonHtml: true, frozenInputsByteIdentical: true,
+  }, null, 2) + '\n', { flag: 'wx' })
+}

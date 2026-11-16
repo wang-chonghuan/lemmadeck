@@ -1,0 +1,169 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { spawnSync } from 'node:child_process'
+import { chromium } from '/Users/yong/.codex/worktrees/d9b1/lemmadeck/.agents/skills/node_modules/playwright-core/index.mjs'
+
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck'
+const tmp = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp')
+const own = path.join(tmp, '7a-n7-label-repair')
+const baseDir = path.join(tmp, '7a-n7/graph95')
+const durableDir = path.join(repo, 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c1-s2-n7/choice-set/figures')
+const figure = 'fig-choice-7a-n7-95'
+const skill = path.join(repo, '.agents/skills/ld-s10y-image')
+const candidate = path.join(own, 'spec.json')
+const sha = value => crypto.createHash('sha256').update(value).digest('hex')
+const record = file => ({ path: file, sha256: sha(fs.readFileSync(file)), bytes: fs.statSync(file).size })
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const write = (name, value) => fs.writeFileSync(path.join(own, name), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+const protectedFiles = [
+  ...['spec.json', `${figure}.svg`, `${figure}.render.json`, 'construction.json'].map(name => path.join(baseDir, name)),
+  ...fs.readdirSync(durableDir).map(name => path.join(durableDir, name)),
+  ...['render_spec.mjs', 'validate_spec.py', 'materialize_arrowheads.mjs'].map(name => path.join(skill, 'scripts', name)),
+  path.join(skill, 'assets/figure-spec.schema.json'),
+]
+function frozen() {
+  const inputs = read(path.join(own, 'input-freeze.json')).inputs
+  for (const item of inputs) assert.equal(record(item.path).sha256, item.sha256, `Frozen bytes changed: ${item.path}`)
+  return inputs
+}
+function geometry(spec) {
+  const result = structuredClone(spec)
+  delete result.display
+  for (const object of result.objects) {
+    delete object.fontSize
+    delete object.labelPlacement
+    for (const tick of object.ticks || []) {
+      delete tick.fontSize
+      delete tick.labelPlacement
+    }
+  }
+  return result
+}
+function diff(a, b, pointer = '') {
+  if (JSON.stringify(a) === JSON.stringify(b)) return []
+  if (a && b && typeof a === 'object' && typeof b === 'object' && Array.isArray(a) === Array.isArray(b))
+    return [...new Set([...Object.keys(a), ...Object.keys(b)])].flatMap(key => diff(a[key], b[key], `${pointer}/${key}`))
+  return [{ pointer, before: a, after: b }]
+}
+const phase = process.argv[2]
+if (phase === 'freeze') {
+  assert(!fs.existsSync(candidate))
+  const spec = read(path.join(baseDir, 'spec.json'))
+  fs.mkdirSync(path.join(own, 'commands'))
+  fs.mkdirSync(path.join(own, 'before'))
+  for (const name of ['spec.json', `${figure}.svg`, `${figure}.render.json`])
+    fs.copyFileSync(path.join(baseDir, name), path.join(own, 'before', name), fs.constants.COPYFILE_EXCL)
+  write('input-freeze.json', {
+    schema: 'ld-s10y/label-repair-input-freeze@1', figure, inputs: protectedFiles.map(record),
+    sourceGeometryAndAssertionsSha256: sha(JSON.stringify(geometry(spec))),
+    actualMediaWidthsPx: [480, 358], originalCanvas: spec.canvas,
+    minimumCanvasFontPx: 16 * 800 / 358, chosenFontPx: 36,
+    scope: 'One author label-only repair; unchanged functions, curves, axis/grid geometry, source basis and original data. No source/view/math/key re-solving.',
+  })
+} else if (phase === 'delta') {
+  frozen()
+  const base = read(path.join(baseDir, 'spec.json')), spec = read(candidate)
+  assert.deepEqual(geometry(base), geometry(spec))
+  const delta = diff(base, spec)
+  for (const item of delta)
+    assert(/^\/objects\/[12]\/ticks\/[0-5]\/fontSize$/.test(item.pointer) ||
+      /^\/objects\/[5-9]\/fontSize$/.test(item.pointer) ||
+      item.pointer === '/objects/6/labelPlacement/offset' ||
+      ['/display/widths/1', '/display/widths/2'].includes(item.pointer), `Unexpected delta: ${item.pointer}`)
+  assert.equal(delta.filter(item => item.pointer.endsWith('/fontSize')).length, 17)
+  write('geometry-hash-delta.json', {
+    schema: 'ld-s10y/label-only-delta@1', figure,
+    baseSpec: record(path.join(baseDir, 'spec.json')), candidateSpec: record(candidate),
+    delta, completeNonLabelSpecEquality: true,
+    sourceGeometryAndAssertionsSha256: sha(JSON.stringify(geometry(spec))),
+    exactCurveStrings: base.objects.filter(object => object.type === 'svgPath').map(object => ({
+      id: object.id, sha256: sha(object.d), unchanged: object.d === spec.objects.find(item => item.id === object.id).d,
+    })),
+    labelCount: 17,
+    rationale: '36px yields21.6px at480 and16.11px at358. Only II label offset[-14,0] adjusts the enlarged label footprint within the gap between unchanged branches.',
+    independentReview: 'pending',
+  })
+} else if (phase === 'render') {
+  frozen()
+  assert(fs.existsSync(path.join(own, 'geometry-hash-delta.json')))
+  const guard = path.join(own, 'commands/render-once')
+  fs.mkdirSync(guard)
+  const args = [path.join(skill, 'scripts/render_spec.mjs'), '--spec', candidate,
+    '--svg', path.join(own, `${figure}.svg`), '--png', path.join(own, `${figure}.preview.png`),
+    '--report', path.join(own, `${figure}.render.json`)]
+  fs.writeFileSync(path.join(guard, 'invocation.json'), JSON.stringify({
+    executable: process.execPath, args, cwd: repo,
+    inputs: [record(candidate), record(args[0])], onceGuard: true,
+    environment: { PWDEBUG: null, PLAYWRIGHT_HTML_OPEN: 'never' },
+  }, null, 2) + '\n', { flag: 'wx' })
+  const env = { ...process.env, PLAYWRIGHT_HTML_OPEN: 'never' }
+  delete env.PWDEBUG
+  const result = spawnSync(process.execPath, args, { cwd: repo, env, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 })
+  for (const name of ['stdout', 'stderr']) fs.writeFileSync(path.join(guard, `${name}.txt`), result[name] || '', { flag: 'wx' })
+  fs.writeFileSync(path.join(guard, 'result.json'), JSON.stringify({
+    exitCode: result.status, signal: result.signal, outputs: ['svg', 'render.json', 'preview.png']
+      .filter(ext => fs.existsSync(path.join(own, `${figure}.${ext}`))).map(ext => record(path.join(own, `${figure}.${ext}`))),
+  }, null, 2) + '\n', { flag: 'wx' })
+  frozen()
+  assert.equal(result.status, 0, 'Retain rejected render and stop; no second spec repair or render')
+} else if (phase === 'capture') {
+  delete process.env.PWDEBUG
+  process.env.PLAYWRIGHT_HTML_OPEN = 'never'
+  frozen()
+  const captureDir = path.join(own, 'commands/capture-once')
+  fs.mkdirSync(captureDir)
+  assert.equal(read(path.join(own, `${figure}.render.json`)).status, 'pass')
+  const svgPath = path.join(own, `${figure}.svg`), svg = fs.readFileSync(svgPath, 'utf8')
+  fs.writeFileSync(path.join(captureDir, 'invocation.json'), JSON.stringify({
+    argv: [process.execPath, process.argv[1], 'capture'], input: record(svgPath),
+    widths: [480, 358], headless: true, noLessonHtml: true,
+  }, null, 2) + '\n', { flag: 'wx' })
+  const executablePath = [chromium.executablePath(), '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome']
+    .find(file => fs.existsSync(file))
+  assert(executablePath, 'Use only existing browser dependency')
+  const browser = await chromium.launch({ executablePath, headless: true })
+  const evidence = []
+  let error = null
+  try {
+    for (const width of [480, 358]) {
+      const page = await browser.newPage({ viewport: { width, height: width }, deviceScaleFactor: 1 })
+      await page.setContent(`<!doctype html><style>
+        :root{--ld-figure-ink:#15201f;--ld-figure-muted:#4c5a58;--ld-figure-accent:#15201f;--ld-figure-accent-soft:#8a9795;--ld-figure-grid:#e3eae9;--ld-figure-paper:#fff}
+        html,body{margin:0;background:white}svg{display:block}
+      </style>${svg}`)
+      await page.locator('svg').evaluate((node, width) => {
+        node.setAttribute('width', String(width)); node.setAttribute('height', String(width))
+        node.style.width = `${width}px`; node.style.height = `${width}px`
+      }, width)
+      await page.evaluate(() => document.fonts.ready)
+      const metrics = await page.locator('svg').evaluate(node => ({
+        bounds: { width: node.getBoundingClientRect().width, height: node.getBoundingClientRect().height },
+        labels: [...node.querySelectorAll('text')].map(label => {
+          const matrix = label.getScreenCTM()
+          return { id: label.getAttribute('data-label-id'), text: label.textContent,
+            px: Number.parseFloat(label.getAttribute('font-size')) * Math.hypot(matrix.a, matrix.b) }
+        }),
+      }))
+      assert.equal(metrics.labels.length, 17)
+      assert(metrics.labels.every(label => label.px >= 16))
+      const png = path.join(own, `${figure}.${width}.png`)
+      assert(!fs.existsSync(png))
+      await page.locator('svg').screenshot({ path: png })
+      evidence.push({ width, ...metrics, png: record(png) })
+      await page.close()
+    }
+  } catch (failure) {
+    error = failure.stack
+    throw failure
+  } finally {
+    await browser.close()
+    write('capture.json', {
+      schema: 'ld-s10y/isolated-label-preview@1', figure, svg: record(svgPath),
+      evidence, error, browserClosedInFinally: true, headless: true, deviceScaleFactor: 1,
+      scope: 'Full standalone SVG at the actual measured widths, not headed product or full lesson capture.',
+      frozenInputsByteIdentical: frozen(),
+    })
+  }
+} else throw new Error('Use freeze, delta, render or capture')

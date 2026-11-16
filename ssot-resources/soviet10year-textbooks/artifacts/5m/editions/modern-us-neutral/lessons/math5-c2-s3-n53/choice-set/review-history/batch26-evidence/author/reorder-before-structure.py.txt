@@ -1,0 +1,92 @@
+import hashlib
+import json
+import shutil
+from pathlib import Path
+
+
+OWN = Path(__file__).resolve().parent
+history = OWN / "history-before-prestructure-position-adjustment"
+if history.exists():
+    raise RuntimeError("Prestructure position adjustment already recorded")
+history.mkdir()
+
+
+def digest(value):
+    return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def byte_hash(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+names = ["draft.json", "view.json", "wrong-program-results.json", "response-unit-decisions.json",
+         "positions-notice.json", "new-figure-author-observations.json"]
+history_receipts = []
+for name in names:
+    original, saved = OWN / name, history / name
+    shutil.copyfile(original, saved)
+    if byte_hash(original) != byte_hash(saved):
+        raise RuntimeError("Original bytes not preserved")
+    history_receipts.append({"path": str(original), "saved_path": str(saved), "sha256": byte_hash(saved)})
+draft = json.loads((OWN / "draft.json").read_text())
+before_digest = digest(draft)
+mappings = {}
+for question in draft["questions"]:
+    if question["id"] not in ("n53-1016", "n53-1018"):
+        continue
+    old_options = question["view"]["options"]
+    true_id = question["key"]["correct"][0]
+    ordered = [option for option in old_options if option["id"] == true_id] + [option for option in old_options if option["id"] != true_id]
+    mapping = {option["id"]: new_id for new_id, option in zip("ABC", ordered)}
+    old_rationales = {item["option_id"]: item for item in question["key"]["rationales"]}
+    question["view"]["options"] = [{**option, "id": mapping[option["id"]]} for option in ordered]
+    question["key"]["correct"] = [mapping[item] for item in question["key"]["correct"]]
+    question["key"]["rationales"] = [{**old_rationales[option["id"]], "option_id": mapping[option["id"]]} for option in ordered]
+    mappings[question["id"]] = mapping
+before = json.loads((history / "draft.json").read_text())
+for old, new in zip(before["questions"], draft["questions"]):
+    if old["id"] not in mappings:
+        if old != new:
+            raise RuntimeError("Unrelated question changed")
+        continue
+    old_by_text = {item["text"]: item["id"] for item in old["view"]["options"]}
+    new_by_text = {item["text"]: item["id"] for item in new["view"]["options"]}
+    if set(old_by_text) != set(new_by_text) or old["intent"] != new["intent"] or old["view"]["stem"] != new["view"]["stem"]:
+        raise RuntimeError("Position-only adjustment changed content")
+    for text, old_id in old_by_text.items():
+        old_rationale = next(item for item in old["key"]["rationales"] if item["option_id"] == old_id)
+        new_rationale = next(item for item in new["key"]["rationales"] if item["option_id"] == new_by_text[text])
+        if {k: v for k, v in old_rationale.items() if k != "option_id"} != {k: v for k, v in new_rationale.items() if k != "option_id"}:
+            raise RuntimeError("Rationale changed beyond label")
+wrong = json.loads((OWN / "wrong-program-results.json").read_text())
+for record in wrong["procedures"]:
+    if record["question_id"] in mappings:
+        record["option_id"] = mappings[record["question_id"]][record["option_id"]]
+wrong["draft_sha256"] = digest(draft)
+positions = ["".join(question["key"]["correct"]) for question in draft["questions"]]
+new_files = {
+    "draft.json": draft,
+    "view.json": {"questions": [{"id": question["id"], **question["view"]} for question in draft["questions"]]},
+    "wrong-program-results.json": wrong,
+    "positions-notice.json": {
+        "lesson": "math5-c2-s3-n53", "sequence": positions,
+        "single_position_counts": {label: positions.count(label) for label in "ABC"},
+        "content_and_rationale_exact_rebinding": True,
+        "prestructure_position_only_adjustment": ["n53-1016", "n53-1018"],
+        "reason": "Break the incidental five-B run without changing mathematical options or true sets.",
+        "not_independent_leakage_approval": True,
+    },
+}
+for name, value in new_files.items():
+    (OWN / name).write_text(json.dumps(value, indent=2, ensure_ascii=True) + "\n")
+receipt = {
+    "before_draft_sha256": before_digest, "after_draft_sha256": digest(draft),
+    "preserved_files": history_receipts, "label_maps": mappings,
+    "all_option_contents_and_rationale_math_exactly_preserved": True,
+    "all_38_other_questions_exactly_preserved": True,
+    "source_freeze_and_seed_unchanged": True, "structural_runs_before_adjustment": 0,
+}
+(OWN / "prestructure-position-adjustment-receipt.json").write_text(json.dumps(receipt, indent=2) + "\n")
+print(json.dumps({"history": str(history), "modified_question_ids": list(mappings),
+                  "single_position_counts": new_files["positions-notice.json"]["single_position_counts"],
+                  "current_draft_sha256": digest(draft)}, indent=2))

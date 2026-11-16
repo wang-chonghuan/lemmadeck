@@ -1,0 +1,130 @@
+import hashlib
+import json
+from pathlib import Path
+
+
+OWN = Path(__file__).resolve().parent
+ROOT = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+
+
+def byte_hash(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def canonical(value):
+    return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":")).encode()).hexdigest()
+
+
+draft = json.loads((OWN / "draft.json").read_text())
+source = json.loads((OWN / "source.json").read_text())
+view = json.loads((OWN / "view.json").read_text())
+structure = json.loads((OWN / "command-structure-once.json").read_text())
+programs = json.loads((OWN / "wrong-program-results.json").read_text())
+if structure["exit_code"] != 0 or structure["run_count"] != 1:
+    raise RuntimeError("The one structural check did not pass")
+if structure["draft_byte_sha256"] != byte_hash(OWN / "draft.json"):
+    raise RuntimeError("Draft changed after the one structural check")
+if programs["draft_sha256"] != canonical(draft):
+    raise RuntimeError("Wrong-program records are stale")
+expected_view = {"questions": [{"id": item["id"], **item["view"]} for item in draft["questions"]]}
+if view != expected_view:
+    raise RuntimeError("Pure view does not exactly match the draft")
+figure_report = OWN / "new-figures/fig-choice-n53-linear-reading.revised.render.json"
+if json.loads(figure_report.read_text())["status"] != "pass":
+    raise RuntimeError("Repaired graph render failed; no second repair authorized")
+for figure in source["figures"]:
+    for asset in figure["assets"]:
+        if byte_hash(ROOT / asset["path"]) != asset["sha256"]:
+            raise RuntimeError("Opened source asset changed")
+history = json.loads((OWN / "prestructure-position-adjustment-receipt.json").read_text())
+for item in history["preserved_files"]:
+    if byte_hash(Path(item["saved_path"])) != item["sha256"]:
+        raise RuntimeError("Rejected/initial author history bytes changed")
+files = ["source.json", "source-solutions.json", "task-unit-inventory.json", "source-image-observations.json",
+         "draft.json", "view.json", "wrong-program-results.json", "response-unit-decisions.json",
+         "positions-notice.json", "command-structure-once.json", "new-figure-author-observations.json",
+         "graph-label-repair.json", "command-graph-once.json", "command-graph-repair-once.json",
+         "prestructure-position-adjustment-receipt.json"]
+ready = {
+    "lesson": "math5-c2-s3-n53", "status": "ready_for_independent_review",
+    "author_ready": True, "approval_status": "not_approved", "semantic_review_status": "pending",
+    "book": "5m", "seed_sha256": canonical(source), "draft_sha256": canonical(draft),
+    "view_sha256": canonical(view),
+    "files": [{"path": str(OWN / name), "byte_sha256": byte_hash(OWN / name)} for name in files],
+    "counts": {
+        "source_originals": 27, "source_range": "1006-1032", "independent_source_subtasks_recorded": 105,
+        "questions": len(draft["questions"]),
+        "single_questions": sum(item["view"]["mode"] == "single" for item in draft["questions"]),
+        "multiple_questions": sum(item["view"]["mode"] == "multiple" for item in draft["questions"]),
+        "options": sum(len(item["view"]["options"]) for item in draft["questions"]),
+        "true_options": sum(len(item["key"]["correct"]) for item in draft["questions"]),
+        "false_options_with_actual_procedures": len(programs["procedures"]),
+        "selected_concept_blocks": [0], "source_figure_ids": ["fig-160", "fig-161"],
+        "actually_opened_source_assets": 3, "new_figures": 1,
+    },
+    "structural_check": {"path": str(OWN / "command-structure-once.json"),
+                         "exit_code": 0, "run_count": 1, "with_review": False,
+                         "meaning": "Mechanical checks only; semantic review still required."},
+    "prepared_source_reused_without_prepare": True,
+    "independent_math_record_written_before_alternatives": True,
+    "source_original_and_freeze_unchanged": True,
+    "source_figures": {
+        "observations": str(OWN / "source-image-observations.json"),
+        "svg_raster_binding": str(OWN / "source-assets/raster-bindings.json"),
+        "all_three_actual_assets_opened": True,
+        "source_only_observation_not_figure_approval": True,
+    },
+    "new_figure_pending_independent_review": {
+        "id": "fig-choice-n53-linear-reading",
+        "spec": str(OWN / "new-figures/fig-choice-n53-linear-reading.revised.spec.json"),
+        "svg": str(OWN / "new-figures/fig-choice-n53-linear-reading.revised.svg"),
+        "preview": str(OWN / "new-figures/fig-choice-n53-linear-reading.revised.preview.png"),
+        "render": str(figure_report),
+        "render_status": "pass",
+        "author_actual_preview_opened": True,
+        "independent_review_status": "pending",
+        "original_rejected_render_collision_ids": ["y-axis-tick-5-label", "origin-label-label"],
+        "one_label_only_repair": True,
+        "original_spec_svg_preview_report_and_failed_receipt_preserved": True,
+        "source_authoredBasis_not_fabricated_original": True,
+    },
+    "source_notices": [
+        {"source_number": "1030", "status": "original_wording_unresolved",
+         "original_issue": "A speed noun is used with a 9.8-metre increment, not a speed unit; source images have no numerical interval evidence.",
+         "authored_boundary": "The visible item explicitly assumes per-one-second interval distances increasing by9.8m. The answer44.1m belongs only to that conditional variant.",
+         "no_claim_of_full_unconditional_original_resolution": True},
+    ],
+    "production_losses": [
+        "Independent verbal/symbolic proof and complete written computation/verification production remain unproven by choice recognition.",
+        "1021: drawing both complete reflected figures P and N with instruments.",
+        "1022: independently plotting and joining the coordinate triangle.",
+        "1025: independently drawing the line; actual graph-reading recognition is retained via a new fine-grid authored figure.",
+        "1032: independently constructing the equilateral triangle and its three complete axis lines.",
+    ],
+    "position_adjustment": {
+        "affected_questions": ["n53-1016", "n53-1018"],
+        "content_and_rationales_exactly_preserved": True,
+        "history": str(OWN / "history-before-prestructure-position-adjustment"),
+        "structural_runs_before_position_adjustment": 0,
+        "not_semantic_or_independent_leakage_approval": True,
+    },
+    "review_order": [
+        "Independent reviewer reads prepared source.json and actual source assets first, without author solutions/options.",
+        "Only after independent source freeze disclose view.json and the new authored graph for task fidelity, redundancy, leakage and all-option truths.",
+        "Only after pure-view freeze authorize draft internals for rationale/key/coverage comparison.",
+        "A separate actual-image review must bind the revised graph spec/render/SVG; author does not self-approve it.",
+    ],
+    "review_json_written": False,
+    "canonical_runs": 0, "lesson_render_runs": 0, "promotion_or_publish": False,
+    "paid_calls": 0, "dependency_changes": 0, "db_or_application_changes": False,
+    "browser_sessions": "Isolated headless, PWDEBUG cleared, reports never, contexts/browser closed finally.",
+    "writes_only_author_scratch": str(OWN),
+}
+destination = OWN / "ready.json"
+if destination.exists():
+    raise RuntimeError("Never overwrite an author-ready snapshot")
+destination.write_text(json.dumps(ready, indent=2, ensure_ascii=True) + "\n")
+print(json.dumps({"ready": str(destination), "ready_byte_sha256": byte_hash(destination),
+                  "status": ready["status"], "counts": ready["counts"],
+                  "structural_exit": 0, "semantic_approval": False,
+                  "new_figure_review": "pending", "source_1030": "original wording unresolved"}, indent=2))

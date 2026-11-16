@@ -1,0 +1,116 @@
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image, ImageChops, ImageDraw
+
+ROOT = Path(__file__).resolve().parents[5]
+OUT = Path(__file__).resolve().parent
+MANIFEST = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp/batch26-render/5m-math5-c2-s3-n52-capture-manifest.json"
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def image_record(path, **metadata):
+    with Image.open(path) as image:
+        width, height = image.size
+    return {
+        **metadata,
+        "path": str(path),
+        "sha256": digest(path),
+        "width": width,
+        "height": height,
+    }
+
+
+manifest = json.loads(MANIFEST.read_text())
+primary = []
+for item in manifest["screenshots"]:
+    path = ROOT / item["path"]
+    assert digest(path) == item["sha256"], str(path)
+    primary.append(image_record(path, manifest_sha256=item["sha256"]))
+inventory = {
+    "manifest": str(MANIFEST),
+    "manifest_sha256": digest(MANIFEST),
+    "primary_count": len(primary),
+    "all_primary_hashes_match": True,
+    "primary": primary,
+    "supplements": [],
+    "montages": [],
+}
+
+command = OUT / "supplement-command.json"
+if command.exists():
+    data = json.loads(command.read_text())
+    supplements = [image_record(Path(item["path"]), phase="body", **{
+        key: value for key, value in item.items() if key not in ["path", "sha256"]
+    }) for item in data["captures"]]
+    right_command = OUT / "horizontal-supplement-command.json"
+    if right_command.exists():
+        right_data = json.loads(right_command.read_text())
+        supplements.extend(image_record(Path(item["path"]), phase="horizontal", **{
+            key: value for key, value in item.items() if key not in ["path", "sha256"]
+        }) for item in right_data["captures"])
+    inventory["supplements"] = supplements
+    montage_dir = OUT / "montages"
+    montage_dir.mkdir(exist_ok=True)
+    groups = {}
+    for item in supplements:
+        groups.setdefault((item["surface"], item["viewport"]["width"], item["phase"]), []).append(item)
+    for (surface, viewport, phase), items in groups.items():
+        batches = []
+        current = []
+        for item in items:
+            trial = current + [item]
+            width = sum(entry["width"] for entry in trial) + 16 * (len(trial) - 1)
+            height = max(entry["height"] for entry in trial) + 24
+            if current and (width > 1500 or width * height > 2100000):
+                batches.append(current)
+                current = []
+            current.append(item)
+        if current:
+            batches.append(current)
+        for number, batch in enumerate(batches, 1):
+            suffix = "" if phase == "body" else f"-{phase}"
+            path = montage_dir / f"{surface}-{viewport}{suffix}-{number:02d}.png"
+            width = sum(item["width"] for item in batch) + 16 * (len(batch) - 1)
+            height = max(item["height"] for item in batch) + 24
+            canvas = Image.new("RGB", (width, height), "#d8d8d8")
+            draw = ImageDraw.Draw(canvas)
+            members = []
+            x = 0
+            for item in batch:
+                with Image.open(item["path"]) as image:
+                    image = image.convert("RGB")
+                    canvas.paste(image, (x, 24))
+                    assert ImageChops.difference(
+                        canvas.crop((x, 24, x + image.width, 24 + image.height)),
+                        image,
+                    ).getbbox() is None
+                draw.text((x, 4), Path(item["path"]).stem, fill="black")
+                members.append({
+                    "path": item["path"], "sha256": item["sha256"],
+                    "rect": [x, 24, item["width"], item["height"]],
+                    "native_pixels_identical": True,
+                })
+                x += item["width"] + 16
+            if path.exists():
+                with Image.open(path) as existing:
+                    assert existing.size == canvas.size
+                    assert ImageChops.difference(existing.convert("RGB"), canvas).getbbox() is None
+            else:
+                canvas.save(path)
+            inventory["montages"].append(image_record(
+                path, surface=surface, viewport_width=viewport, phase=phase,
+                scale=1, cropping=False, members=members,
+            ))
+inventory_path = OUT / "native-inventory.json"
+inventory_path.write_text(json.dumps(inventory, ensure_ascii=False, indent=2) + "\n")
+print(json.dumps({
+    "inventory": str(inventory_path), "primary": len(primary),
+    "supplements": len(inventory["supplements"]),
+    "montages": len(inventory["montages"]),
+    "all_primary_hashes_match": True,
+}))

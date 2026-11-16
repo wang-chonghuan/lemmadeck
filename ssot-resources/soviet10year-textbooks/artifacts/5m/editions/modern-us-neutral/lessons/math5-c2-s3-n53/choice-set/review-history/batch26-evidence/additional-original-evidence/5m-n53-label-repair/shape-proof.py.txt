@@ -1,0 +1,95 @@
+import hashlib
+import json
+from pathlib import Path
+import xml.etree.ElementTree as ET
+
+OWN = Path(__file__).resolve().parent
+REPO = OWN.parents[4]
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def write(name, value):
+    with (OWN / name).open("x") as output:
+        json.dump(value, output, indent=2, ensure_ascii=True)
+        output.write("\n")
+
+
+def svg_shape(path):
+    root = ET.parse(path).getroot()
+    label_layers = [node for node in root if node.attrib.get("id", "").endswith("-label-layer")]
+    assert len(label_layers) == 1
+    labels = [
+        {"id": node.attrib.get("data-label-id"), "text": node.text, "attributes": dict(node.attrib)}
+        for node in label_layers[0]
+    ]
+    root.remove(label_layers[0])
+
+    def tree(node):
+        return [node.tag, sorted(node.attrib.items()), (node.text or "").strip(), [tree(child) for child in node]]
+
+    return tree(root), labels
+
+
+original_path = OWN / "before/fig-choice-n53-linear-reading.svg"
+candidate_path = OWN / "fig-choice-n53-linear-reading.svg"
+old_shape, old_labels = svg_shape(original_path)
+new_shape, new_labels = svg_shape(candidate_path)
+same_shape = old_shape == new_shape
+same_label_values = [(label["id"], label["text"]) for label in old_labels] == [
+    (label["id"], label["text"]) for label in new_labels
+]
+frozen = json.loads((OWN / "input-freeze.json").read_text())
+preserved = [{**item, "currentSha256": sha(Path(item["path"]))} for item in frozen["files"]]
+assert all(item["sha256"] == item["currentSha256"] for item in preserved)
+write("svg-shape-proof.json", {
+    "schema": "ld-s10y/label-only-svg-shape-proof@1",
+    "original": {"path": str(original_path), "sha256": sha(original_path)},
+    "candidate": {"path": str(candidate_path), "sha256": sha(candidate_path)},
+    "method": "Parse SVG as XML, remove only the identified direct label-layer group, compare the full ordered remaining SVG tree and attributes. No raster or mathematical re-solving.",
+    "nonLabelSvgTreeExactEquality": same_shape,
+    "nonLabelSvgTreeSha256": hashlib.sha256(json.dumps(old_shape, sort_keys=True).encode()).hexdigest(),
+    "allLabelIdsAndStringsUnchanged": same_label_values,
+    "labelCount": len(new_labels),
+    "labelAttributeDelta": [{"id": old["id"], "before": old["attributes"], "after": new["attributes"]}
+                            for old, new in zip(old_labels, new_labels) if old != new],
+    "protectedOriginalDurableReviewAndToolByteIdentity": preserved,
+    "scope": "Independent mechanical shape comparison, not an independent semantic/visual gate or headed-product review.",
+})
+assert same_shape and same_label_values
+report = json.loads((OWN / "fig-choice-n53-linear-reading.render.json").read_text())
+outputs = [
+    {"path": str(OWN / name), "sha256": sha(OWN / name)}
+    for name in ["fig-choice-n53-linear-reading.spec.json", "fig-choice-n53-linear-reading.svg",
+                 "fig-choice-n53-linear-reading.render.json", "fig-choice-n53-linear-reading.preview.png",
+                 "geometry-hash-delta.json", "svg-shape-proof.json"]
+]
+write("ready.json", {
+    "schema": "ld-s10y/label-repair-ready@1",
+    "figure": report["figure"],
+    "status": "blocked-render-label-collisions",
+    "rendererInvocations": 1,
+    "wrapperPreRenderDirectoryFailure": "wrapper-before-render.rejected.json",
+    "renderExitCode": 2,
+    "outputs": outputs,
+    "nonLabelSvgTreeExactEquality": same_shape,
+    "sourceMathProofAndAssertionsUnchanged": True,
+    "allThirtyLabelsSizePass": report["displayChecks"],
+    "blockers": report["collisions"],
+    "actualAuthorOpen": {
+        "method": "functions.view_image detail=original",
+        "path": str(OWN / "fig-choice-n53-linear-reading.preview.png"),
+        "sha256": sha(OWN / "fig-choice-n53-linear-reading.preview.png"),
+        "observations": "Full640x800 image opened. All grid, axis values, line and step labels present. Enlarged labels readable. Render report finds padded spacing at x-name near6 tick and x-step near9 tick; this remains a rejection despite readable glyphs. O and the two shifted y labels are visible. No self-approval.",
+    },
+    "minimumNextChangesForParentAuthorization": [
+        "Move only x-name label a few pixels right from its existing anchor, preserving all geometry.",
+        "Move only x-step label a few pixels left from its existing anchor to clear the padded9-tick box.",
+    ],
+    "independentReview": "pending; rejected render must not be promoted",
+    "noDraftCoreDurableCanonicalOrLessonRenderChanges": True,
+})
+print(json.dumps({"ready": str(OWN / "ready.json"), "status": "blocked-render-label-collisions",
+                  "shape_exact": same_shape, "render_count": 1}))

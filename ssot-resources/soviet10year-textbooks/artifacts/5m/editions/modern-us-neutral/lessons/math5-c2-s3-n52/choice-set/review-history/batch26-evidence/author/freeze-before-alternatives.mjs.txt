@@ -1,0 +1,22 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+const root = '.intentfold/tickets/STEMROBIN-182/tmp/5m-n52'
+assert(!fs.existsSync(`${root}/draft.json`))
+const files = ['source.json', 'source-solutions.json']
+const records = {}
+for (const name of files) {
+  const bytes = fs.readFileSync(`${root}/${name}`)
+  const target = `${root}/before-alternatives/${name}`
+  fs.mkdirSync(path.dirname(target), { recursive: true })
+  fs.writeFileSync(target, bytes, { flag: 'wx' })
+  records[name] = crypto.createHash('sha256').update(bytes).digest('hex')
+}
+fs.writeFileSync(`${root}/before-alternatives/receipt.json`, JSON.stringify({
+  stage: 'Source mathematics frozen before considering alternatives',
+  files: records, created_at: new Date().toISOString(),
+  draft_existed: false, source_images: [], independent_reviewer_approval: false,
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify(records))

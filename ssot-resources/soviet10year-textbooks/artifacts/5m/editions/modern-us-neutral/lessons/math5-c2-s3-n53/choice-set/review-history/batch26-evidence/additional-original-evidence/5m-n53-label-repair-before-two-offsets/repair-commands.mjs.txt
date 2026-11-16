@@ -1,0 +1,156 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { spawnSync } from 'node:child_process'
+
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck'
+const ticket = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp')
+const own = path.join(ticket, '5m-n53-label-repair')
+const base = path.join(ticket, '5m-n53/new-figures/fig-choice-n53-linear-reading.revised')
+const retained = path.join(repo, 'ssot-resources/soviet10year-textbooks/artifacts/5m/editions/modern-us-neutral/lessons/math5-c2-s3-n53/choice-set/figures/fig-choice-n53-linear-reading')
+const skill = path.join(repo, '.agents/skills/ld-s10y-image')
+const specPath = path.join(own, 'fig-choice-n53-linear-reading.spec.json')
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const write = (name, value) => fs.writeFileSync(path.join(own, name), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+const protectedPaths = [
+  ...['spec.json', 'svg', 'render.json'].map(ext => `${base}.${ext}`),
+  ...['spec.json', 'svg', 'render.json', 'review.json'].map(ext => `${retained}.${ext}`),
+  path.join(ticket, 'reviewer-5m-n53/review.json'),
+  path.join(ticket, 'reviewer-5m-n53/final-comparison.json'),
+  path.join(ticket, 'reviewer-5m-n53-display/actual-observations.json'),
+  path.join(ticket, 'reviewer-5m-n53-display/display-text-metrics.json'),
+  ...['render_spec.mjs', 'validate_spec.py', 'materialize_arrowheads.mjs'].map(file => path.join(skill, 'scripts', file)),
+  path.join(skill, 'assets/figure-spec.schema.json'),
+]
+
+function geometry(spec) {
+  const result = structuredClone(spec)
+  delete result.display
+  for (const object of result.objects) {
+    delete object.fontSize
+    delete object.labelPlacement
+    for (const tick of object.ticks || []) {
+      delete tick.fontSize
+      delete tick.labelPlacement
+    }
+  }
+  return result
+}
+
+function differences(a, b, pointer = '') {
+  if (JSON.stringify(a) === JSON.stringify(b)) return []
+  if (a && b && typeof a === 'object' && typeof b === 'object' && Array.isArray(a) === Array.isArray(b)) {
+    return [...new Set([...Object.keys(a), ...Object.keys(b)])].flatMap(key =>
+      differences(a[key], b[key], `${pointer}/${key}`))
+  }
+  return [{ pointer, before: a, after: b }]
+}
+
+function verifyFrozen() {
+  for (const input of read(path.join(own, 'input-freeze.json')).files) {
+    assert.equal(hash(fs.readFileSync(input.path)), input.sha256, `Frozen input changed: ${input.path}`)
+  }
+}
+
+function runOnce(name, executable, args) {
+  verifyFrozen()
+  const commandDir = path.join(own, 'commands', name)
+  fs.mkdirSync(commandDir)
+  const inputs = [specPath, path.resolve(repo, args[0])].map(file => ({ path: file, sha256: hash(fs.readFileSync(file)) }))
+  fs.writeFileSync(path.join(commandDir, 'invocation.json'), JSON.stringify({
+    executable, args, cwd: repo, inputs,
+    environmentOverrides: { PWDEBUG: null, PLAYWRIGHT_HTML_OPEN: 'never' },
+    scope: 'Single scratch figure only; no lesson render, canonical or durable writes.',
+  }, null, 2) + '\n', { flag: 'wx' })
+  const environment = { ...process.env, PLAYWRIGHT_HTML_OPEN: 'never' }
+  delete environment.PWDEBUG
+  const result = spawnSync(executable, args, { cwd: repo, env: environment, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 })
+  fs.writeFileSync(path.join(commandDir, 'stdout.txt'), result.stdout || '', { flag: 'wx' })
+  fs.writeFileSync(path.join(commandDir, 'stderr.txt'), result.stderr || '', { flag: 'wx' })
+  fs.writeFileSync(path.join(commandDir, 'result.json'), JSON.stringify({
+    exitCode: result.status, signal: result.signal, error: result.error?.message,
+    stdoutSha256: hash(Buffer.from(result.stdout || '')), stderrSha256: hash(Buffer.from(result.stderr || '')),
+    outputs: ['svg', 'render.json', 'preview.png'].flatMap(ext => {
+      const file = path.join(own, `fig-choice-n53-linear-reading.${ext}`)
+      return fs.existsSync(file) ? [{ path: file, bytes: fs.statSync(file).size, sha256: hash(fs.readFileSync(file)) }] : []
+    }),
+  }, null, 2) + '\n', { flag: 'wx' })
+  verifyFrozen()
+  assert.equal(result.status, 0, `Rejected ${name}; retain evidence and stop.`)
+}
+
+switch (process.argv[2]) {
+  case 'freeze': {
+    assert(!fs.existsSync(specPath), 'Freeze must precede scratch spec edits')
+    const original = read(`${base}.spec.json`)
+    const files = protectedPaths.map(file => ({ path: file, bytes: fs.statSync(file).size, sha256: hash(fs.readFileSync(file)) }))
+    assert.equal(files[0].sha256, '76076e68d57b1d101131a11b14cc81896996b9a75356992044a2229d9906e7f8')
+    assert.equal(files[1].sha256, 'c3f00f710a5a62780877acf91ef4f5d27bff18ccb6b05253851cc3a53b0aa791')
+    write('input-freeze.json', {
+      schema: 'ld-s10y/label-repair-input-freeze@1',
+      figure: original.id, files,
+      originalCanvas: original.canvas,
+      geometryAndSourceSha256: hash(JSON.stringify(geometry(original))),
+      instruction: 'Label-only repair. Frozen source basis, assertions, coordinates, grid, tick values, curve, styles and canvas are immutable. No semantic re-solving.',
+    })
+    fs.mkdirSync(path.join(own, 'before'))
+    for (const ext of ['spec.json', 'svg', 'render.json']) {
+      fs.copyFileSync(`${base}.${ext}`, path.join(own, 'before', `fig-choice-n53-linear-reading.${ext}`), fs.constants.COPYFILE_EXCL)
+    }
+    break
+  }
+  case 'delta': {
+    verifyFrozen()
+    const original = read(`${base}.spec.json`)
+    const candidate = read(specPath)
+    assert.deepEqual(geometry(candidate), geometry(original), 'Any non-label geometry/source change is forbidden')
+    const delta = differences(original, candidate)
+    const allowed = new Set([
+      '/display/widths/1', '/display/widths/2',
+      '/objects/1/fontSize', '/objects/2/fontSize',
+      '/objects/2/ticks/5/labelPlacement/offset/1',
+      '/objects/2/ticks/6/labelPlacement/offset/0',
+      '/objects/4/fontSize', '/objects/5/fontSize', '/objects/6/fontSize',
+      '/objects/6/labelPlacement/offset',
+      '/objects/7/fontSize', '/objects/8/fontSize',
+    ])
+    for (const item of delta) assert(allowed.has(item.pointer), `Unexpected changed leaf ${item.pointer}`)
+    const reverse = structuredClone(candidate)
+    reverse.display = structuredClone(original.display)
+    for (let index = 0; index < original.objects.length; index++) {
+      for (const field of ['fontSize', 'labelPlacement']) {
+        if (field in original.objects[index]) reverse.objects[index][field] = structuredClone(original.objects[index][field])
+        else delete reverse.objects[index][field]
+      }
+      if (original.objects[index].ticks) reverse.objects[index].ticks = structuredClone(original.objects[index].ticks)
+    }
+    assert.deepEqual(reverse, original)
+    write('geometry-hash-delta.json', {
+      schema: 'ld-s10y/label-only-delta@1',
+      baseSpecSha256: hash(fs.readFileSync(`${base}.spec.json`)),
+      candidateSpecSha256: hash(fs.readFileSync(specPath)),
+      delta, reverseStructuralEquality: true,
+      completeNonLabelSpecEquality: true,
+      sourceAssertionsCanvasGridReadingsAndStylesUnchanged: true,
+      geometryAndSourceSha256: hash(JSON.stringify(geometry(candidate))),
+      minimumRequiredCanvasFontPx: 16 * 640 / 358,
+      chosenFontPx: 29,
+      rationale: 'Uniform 29px labels give 16.221875px at358 and21.75px at480. Move only O to the upper-left origin vicinity, y=1 label farther left and y=-1 label slightly down to separate enlarged labels. Keep mathematical anchors intact.',
+      independentReview: 'pending',
+    })
+    break
+  }
+  case 'render':
+    assert(fs.existsSync(path.join(own, 'geometry-hash-delta.json')))
+    runOnce('render-once', process.execPath, [
+      path.join(skill, 'scripts/render_spec.mjs'), '--spec', specPath,
+      '--svg', path.join(own, 'fig-choice-n53-linear-reading.svg'),
+      '--png', path.join(own, 'fig-choice-n53-linear-reading.preview.png'),
+      '--report', path.join(own, 'fig-choice-n53-linear-reading.render.json'),
+    ])
+    break
+  default:
+    throw new Error('Use freeze, delta or render')
+}

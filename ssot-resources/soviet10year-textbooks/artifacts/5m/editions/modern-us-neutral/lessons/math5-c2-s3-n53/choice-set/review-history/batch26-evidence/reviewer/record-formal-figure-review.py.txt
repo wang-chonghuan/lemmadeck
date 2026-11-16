@@ -1,0 +1,96 @@
+import hashlib
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+
+OWN = Path(__file__).resolve().parent
+REPO = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def save(name, value):
+    with (OWN / name).open("x", encoding="utf-8") as handle:
+        json.dump(value, handle, indent=2, ensure_ascii=False)
+        handle.write("\n")
+
+
+save("formal-figure-review-run.started.json", {"once_guard": True, "scope": "one independent current new-figure review record only"})
+review = json.loads((OWN / "new-figure-review.json").read_bytes())
+observations = json.loads((OWN / "new-figure-actual-observations.json").read_bytes())
+snapshot = json.loads((OWN / "opened-view-snapshot.json").read_bytes())
+assert review["verdict"] == observations["verdict"] == "pass"
+assert review["bindings"]["actual_observations_sha256"] == sha((OWN / "new-figure-actual-observations.json").read_bytes())
+for item in snapshot["inputs"]:
+    assert sha(Path(item["path"]).read_bytes()) == item["sha256"]
+output = OWN / "fig-choice-n53-linear-reading.review.json"
+assert not output.exists()
+notes = (
+    "Independent reviewer-5m-n53 (not author). Prior source freeze27 originals; source seed bytes "
+    "7fdd196a0318878426a27d8e10ed148a6d7947dd56021a8bda8bd93d5bf28698. "
+    "Actual full revisedSVG640x800 pixels opened independently and compared with authoredBasis and "
+    "written1025:40x45 quarter-x/third-y grid, complete positive/negative y=4x/3 line, all six "
+    "forward/inverse query regions within grid, no answer-labelled points, min actual text18px. "
+    "Rational values are analytically confirmed, not claimed precisely read from raster. "
+    "Hash-bound independent actual observations4b37449015febcc468c7a8e9c6343c0b86fb9a6baefdb247a8d272d2b54ce918; "
+    "capture df9592ec16128db3444cfc78d9f842f8448b5a59d4c5a968627ef6c546027064. "
+    "Scope ONLY isolated offline headless declared640px media width; no headed/live-product, "
+    "mobile responsiveness, whole-choice semantic pass or promotion. Original source images were not recaptured."
+)
+argv = [
+    sys.executable, str(REPO / ".agents/skills/ld-s10y-image/scripts/record_review.py"),
+    "--spec", observations["spec_path"], "--render", observations["render_path"],
+    "--output", str(output), "--status", "pass", "--notes", notes,
+]
+completed = subprocess.run(argv, cwd=REPO, text=True, capture_output=True)
+receipt = {
+    "argv": argv,
+    "execution_count": 1,
+    "exit_code": completed.returncode,
+    "stdout": completed.stdout,
+    "stderr": completed.stderr,
+    "wrapper_sha256": sha(Path(__file__).read_bytes()),
+    "tool_sha256": sha((REPO / ".agents/skills/ld-s10y-image/scripts/record_review.py").read_bytes()),
+    "inputs": snapshot["inputs"],
+    "actual_observations_sha256": sha((OWN / "new-figure-actual-observations.json").read_bytes()),
+}
+if output.exists():
+    receipt["output"] = {"path": str(output), "sha256": sha(output.read_bytes())}
+save("formal-figure-review-command.json", receipt)
+assert completed.returncode == 0, receipt
+record = json.loads(output.read_bytes())
+assert record["schema"] == "ld-s10y-image/review@1" and record["status"] == "pass"
+for item in snapshot["inputs"]:
+    assert sha(Path(item["path"]).read_bytes()) == item["sha256"]
+save("pure-view-phase-ready.json", {
+    "status": "ready-for-FIRST-internal-comparison",
+    "view_file_sha256": snapshot["view_file_sha256"],
+    "complete_originals": 27,
+    "independently_reviewed_questions": 40,
+    "independently_checked_options": 121,
+    "independent_true_sets": 40,
+    "findings": [],
+    "figure_status": "independent offline640px pass only",
+    "formal_figure_review": receipt["output"],
+    "frozen_records": [
+        {"path": str(OWN / name), "sha256": sha((OWN / name).read_bytes())}
+        for name in ["opened-view-snapshot.json", "view-checks.json", "pre-math-view-fidelity.json", "independent-view-math.json", "new-figure-actual-observations.json", "new-figure-review.json", "formal-figure-review-command.json", "view-review-receipt.json"]
+    ],
+    "conditional1030": "Judged only under visible explicit interval-distance assumption. Not interpreted as an unconditional unique physical model.",
+    "not_final_choice_approval": True,
+    "pending_parent_disclosure": ["author draft and key comparison", "all claimed wrong programs", "coverage/production losses and conditional notice"],
+    "author_internal_material_not_read": True,
+    "author_candidates_original_bytes_unchanged": True,
+    "no_source_re_solve_or_recapture": True,
+    "no_structure_canonical_durable_promotion": True,
+    "browser_closed": True,
+})
+print(json.dumps({
+    "status": "ready-for-FIRST-internal-comparison",
+    "formal_figure_review": receipt["output"],
+    "phase_ready_sha256": sha((OWN / "pure-view-phase-ready.json").read_bytes()),
+}, indent=2))

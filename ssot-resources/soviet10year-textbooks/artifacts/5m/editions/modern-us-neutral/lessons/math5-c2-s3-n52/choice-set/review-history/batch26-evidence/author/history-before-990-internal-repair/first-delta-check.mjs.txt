@@ -1,0 +1,35 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import crypto from 'node:crypto'
+
+const root = '.intentfold/tickets/STEMROBIN-182/tmp/5m-n52'
+const oldPath = `${root}/history-before-990-internal-repair/draft.json`
+const newPath = `${root}/draft.json`
+const old = JSON.parse(fs.readFileSync(oldPath))
+const current = JSON.parse(fs.readFileSync(newPath))
+const oldText = old.questions[1].key.rationales[2].misconception
+const newText = current.questions[1].key.rationales[2].misconception
+assert.equal(current.questions[1].id, 'n52-990')
+assert.equal(current.questions[1].key.rationales[2].option_id, 'C')
+assert.notEqual(newText, oldText)
+const reversed = structuredClone(current)
+reversed.questions[1].key.rationales[2].misconception = oldText
+assert.deepEqual(reversed, old)
+assert.equal(1 / 4 + 1, 5 / 4)
+assert.equal(1 + 2 / 7, 9 / 7)
+assert.equal(1 + 1 / 6, 7 / 6)
+assert.equal(1 + 8 / 9, 17 / 9)
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const record = {
+  status: 'pass',
+  exact_delta: [{ pointer: '/questions/1/key/rationales/2/misconception', before: oldText, after: newText }],
+  old_path: oldPath, old_byte_sha256: sha(oldPath),
+  current_path: newPath, current_byte_sha256: sha(newPath),
+  inverse_restores_complete_original: true,
+  view_keys_all_derivations_sources_coverage_unchanged: true,
+  unchanged_whole_questions: 25,
+  stated_program_output: ['5/4', '9/7', '7/6', '17/9'],
+  no_structure_canonical_source_or_view_recheck: true,
+}
+fs.writeFileSync(`${root}/990-internal-repair-delta.json`, JSON.stringify(record, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify(record, null, 2))

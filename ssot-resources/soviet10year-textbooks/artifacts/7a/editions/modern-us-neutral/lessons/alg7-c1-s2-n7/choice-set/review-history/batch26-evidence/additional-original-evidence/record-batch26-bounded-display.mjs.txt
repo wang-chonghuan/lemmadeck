@@ -1,0 +1,110 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const bind = file => ({ path: path.resolve(file), sha256: hash(file) })
+const observer = `${scratch}/reviewer-7a-n7-display`
+const reports = ['bounded-desktop-primary', 'bounded-mobile-primary',
+  'bounded-desktop-supplements', 'bounded-mobile-supplements']
+  .map(name => `${observer}/${name}.json`)
+const records = reports.map(read)
+const labelFile = `${scratch}/reviewer-batch26-label-displays/observations.json`
+const labels = read(labelFile)
+assert.equal(labels.displayRecords.length, 2)
+assert(labels.displayRecords.every(row => row.status === 'pass'))
+const primary = records.slice(0, 2).flatMap(record => record.entries)
+const montages = records.slice(2).flatMap(record => record.entries)
+assert.equal(primary.length, 13)
+assert.equal(montages.length, 13)
+for (const entry of [...primary, ...montages]) {
+  assert.equal(hash(entry.path), entry.sha256 ?? entry.hash)
+  assert(entry.observation && entry.verdict.startsWith('pass'))
+}
+const duplicate = records[0].duplicate_alias
+assert.equal(hash(duplicate.path), hash(duplicate.alias_of))
+assert.equal(duplicate.opened, false)
+const manifestFile = `${scratch}/batch26-render/7a-alg7-c1-s2-n7-capture-manifest.json`
+const supplementFile = `${observer}/supplement-command.json`
+const inventoryFile = `${observer}/native-inventory.json`
+const manifest = read(manifestFile)
+const supplement = read(supplementFile)
+const inventory = read(inventoryFile)
+assert.equal(manifest.screenshots.length, 14)
+assert.equal(supplement.exit_code, 0)
+assert.equal(supplement.captures.length, 33)
+assert.equal(supplement.objects.length, 92)
+assert.equal(supplement.all_protected_hashes_unchanged, true)
+assert(supplement.objects.every(row =>
+  row.whole_object_covered_by_primary.length > 0 || row.supplement_ids.length > 0))
+assert.equal(inventory.montages.length, 13)
+for (const montage of inventory.montages) {
+  assert.equal(hash(montage.path), montage.sha256)
+  assert.equal(montage.scale, 1)
+  assert.equal(montage.cropped, false)
+  assert(montage.members.every(member => member.pixels_byte_identical))
+}
+const common = {
+  schema: 's10y-actual-display-observations@1', ticket: 'STEMROBIN-182',
+  recorded_at: new Date().toISOString(), status: 'pass', outcome: 'pass',
+  independent_label_display_observations: bind(labelFile),
+  source_math_review_reruns: 0, new_unique_surface_viewport_combinations: 0,
+  parent_image_opens: 0, image_payloads_returned_to_parent: false,
+  browser_boundary: {
+    headless: true, isolated_contexts: true,
+    user_profile: false, browser_closed: true,
+    PWDEBUG_cleared: true, PLAYWRIGHT_HTML_OPEN: 'never',
+  },
+  model: null, usage: null,
+}
+const n7 = {
+  ...common, book: '7a', lesson: 'alg7-c1-s2-n7',
+  reviewer: {
+    kind: 'independent_agent',
+    identity: 'Four fresh bounded display observers plus Curie for the changed labels; parent aggregates their text records only.',
+  },
+  manifest: bind(manifestFile), supplement_command: bind(supplementFile),
+  native_inventory: bind(inventoryFile), bounded_reviews: reports.map(bind),
+  primary_images: primary, byte_identical_unopened_alias: duplicate,
+  opened_native_montages: montages, supplemental_images: supplement.captures,
+  full_object_coverage_ledger: supplement.objects,
+  changed_figure_capture: bind(`${scratch}/7a-n7-label-repair/display-offset/capture.json`),
+  composition: 'Old complete prose, written tasks and options retained; only the label layer of the sole graph changed. Exact one-SVG HTML replacement and actual complete desktop/mobile target-question observations establish the changed region. Old figure screenshots do not claim the new pixels.',
+  counts: {
+    primary_PNGs: 14, primary_actual_opened: 13, unopened_identical_aliases: 1,
+    supplemental_PNGs: 33, native_montages: 13, montage_actual_opens: 13,
+    original_and_supplement_PNGs: 47, unique_surface_viewport_combinations: 6,
+    missing_original_observation_opens: 26, fresh_context_image_counts: [6, 7, 7, 6],
+    changed_figure_and_question_PNGs: 3, additional_unique_combinations: 0,
+    original_written_sources: 6, unique_questions: 15, unique_options: 47,
+  },
+}
+fs.writeFileSync(`${observer}/actual-observations.json`,
+  JSON.stringify(n7, null, 2) + '\n', { flag: 'wx' })
+const oldN53 = `${scratch}/reviewer-5m-n53-display/actual-observations.json`
+const n53 = {
+  ...common, book: '5m', lesson: 'math5-c2-s3-n53',
+  reviewer: { kind: 'independent_agent',
+    identity: 'Original independent display observer; Dirac and Curie independently observed only the repaired label region.' },
+  original_observations: bind(oldN53),
+  original_display_failure_preserved: true, resolved_display_finding: 'D1',
+  changed_figure_capture: bind(`${scratch}/5m-n53-label-repair/display-offsets/capture.json`),
+  standalone_changed_label_review: bind(`${scratch}/reviewer-5m-n53-label-offsets/observations.json`),
+  composition: 'Original independently observed text, written tasks and all option windows are reused unchanged. Only graph27 label sizing/placement is repaired; complete target-question desktop/mobile observations and exact reversible one-SVG HTML replacement supplement the preserved old display failure.',
+  semantic_outcome: 'blocked', blocked_source_numbers: ['1030'],
+  choice_group_approved: false,
+  counts: {
+    reused_primary_PNGs: 26, reused_supplemental_PNGs: 63,
+    reused_native_montages: 25, changed_region_PNGs: 5,
+    changed_region_fresh_context_image_counts: [3, 5],
+    unique_surface_viewport_combinations: 6, additional_unique_combinations: 0,
+    unique_questions: 40, unique_options: 121,
+  },
+}
+fs.writeFileSync(`${scratch}/reviewer-5m-n53-display/actual-observations-label-repaired.json`,
+  JSON.stringify(n53, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ status: 'pass', lessons: [n7.lesson, n53.lesson],
+  parent_image_opens: 0, no_unchanged_capture_or_semantic_reruns: true }))

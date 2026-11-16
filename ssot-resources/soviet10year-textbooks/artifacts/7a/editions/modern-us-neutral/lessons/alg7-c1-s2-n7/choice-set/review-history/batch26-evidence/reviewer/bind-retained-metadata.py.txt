@@ -1,0 +1,225 @@
+import copy
+import hashlib
+import json
+from pathlib import Path
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+TMP = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp"
+OWN = TMP / "reviewer-7a-n7"
+AUTHOR = TMP / "7a-n7"
+DECODER = json.JSONDecoder()
+
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def digest(value):
+    return sha(json.dumps(value, sort_keys=True, ensure_ascii=True,
+                          separators=(",", ":")).encode())
+
+
+def read(path):
+    return json.loads(path.read_bytes())
+
+
+def token_spans(text):
+    spans = {}
+
+    def skip(position):
+        while position < len(text) and text[position].isspace():
+            position += 1
+        return position
+
+    def walk(position, pointer):
+        position = skip(position)
+        start = position
+        if text[position] == "{":
+            position = skip(position + 1)
+            if text[position] == "}":
+                return position + 1
+            while True:
+                key, position = DECODER.raw_decode(text, position)
+                assert isinstance(key, str)
+                position = skip(position)
+                assert text[position] == ":"
+                escaped = key.replace("~", "~0").replace("/", "~1")
+                position = skip(walk(position + 1, pointer + "/" + escaped))
+                if text[position] == "}":
+                    return position + 1
+                assert text[position] == ","
+                position = skip(position + 1)
+        elif text[position] == "[":
+            position = skip(position + 1)
+            if text[position] == "]":
+                return position + 1
+            index = 0
+            while True:
+                position = skip(walk(position, pointer + "/" + str(index)))
+                if text[position] == "]":
+                    return position + 1
+                assert text[position] == ","
+                index += 1
+                position = skip(position + 1)
+        else:
+            _, end = DECODER.raw_decode(text, position)
+            spans[pointer] = (start, end)
+            return end
+
+    assert skip(walk(0, "")) == len(text)
+    return spans
+
+
+def differences(before, after, pointer=""):
+    if isinstance(before, dict) and isinstance(after, dict):
+        assert before.keys() == after.keys()
+        result = []
+        for key in before:
+            escaped = key.replace("~", "~0").replace("/", "~1")
+            result += differences(before[key], after[key], pointer + "/" + escaped)
+        return result
+    if isinstance(before, list) and isinstance(after, list):
+        assert len(before) == len(after)
+        return [leaf for i, pair in enumerate(zip(before, after))
+                for leaf in differences(*pair, pointer + "/" + str(i))]
+    return [] if before == after else [pointer]
+
+
+def inverse_proof(before_path, after_path, expected):
+    before_bytes, after_bytes = before_path.read_bytes(), after_path.read_bytes()
+    before_text, after_text = before_bytes.decode(), after_bytes.decode()
+    changed = differences(json.loads(before_text), json.loads(after_text))
+    assert set(changed) == set(expected), (changed, expected)
+    before_spans, after_spans = token_spans(before_text), token_spans(after_text)
+    inverse = after_text
+    evidence = []
+    for pointer in sorted(changed, key=lambda item: after_spans[item][0], reverse=True):
+        old_start, old_end = before_spans[pointer]
+        new_start, new_end = after_spans[pointer]
+        old_token = before_text[old_start:old_end]
+        new_token = after_text[new_start:new_end]
+        evidence.append({
+            "pointer": pointer,
+            "before_raw_token": old_token,
+            "after_raw_token": new_token,
+            "before_token_sha256": sha(old_token.encode()),
+            "after_token_sha256": sha(new_token.encode()),
+        })
+        inverse = inverse[:new_start] + old_token + inverse[new_end:]
+    assert inverse.encode() == before_bytes
+    return {
+        "before_path": str(before_path),
+        "after_path": str(after_path),
+        "before_byte_sha256": sha(before_bytes),
+        "after_byte_sha256": sha(after_bytes),
+        "before_canonical_sha256": digest(json.loads(before_text)),
+        "after_canonical_sha256": digest(json.loads(after_text)),
+        "changed_leaves": sorted(changed),
+        "raw_tokens": evidence,
+        "inverse_raw_bytes_identical": True,
+        "inverse_byte_sha256": sha(inverse.encode()),
+        "all_other_bytes_including_whitespace_unchanged": True,
+    }
+
+
+def save(path, value):
+    with path.open("x", encoding="utf-8") as stream:
+        json.dump(value, stream, ensure_ascii=True, indent=2)
+        stream.write("\n")
+
+
+receipt_path = AUTHOR / "retained-figure-path-receipt.json"
+receipt = read(receipt_path)
+archive = AUTHOR / "history-before-retained-figure-path"
+preserved = []
+for entry in receipt["originals"]:
+    path = ROOT / entry["retained"]
+    assert sha(path.read_bytes()) == entry["sha256"]
+    preserved.append({"path": str(path), "sha256": entry["sha256"]})
+for name in ["review.json", "final-comparison.json", "fig-choice-7a-n7-95.review.json"]:
+    assert (OWN / name).read_bytes() == (archive / "reviewer" / (name + ".txt")).read_bytes()
+
+draft_path = AUTHOR / "draft.json"
+draft = read(draft_path)
+files = {key: ROOT / value for key, value in receipt["new_files"].items()}
+draft_proof = inverse_proof(
+    archive / "author/draft.json.txt", draft_path,
+    ["/new_figures/0/path", "/new_figures/0/basis"],
+)
+assert digest(read(archive / "author/draft.json.txt")) == read(OWN / "review.json")["draft_sha256"]
+for key, archived in [
+    ("svg", archive / "author/fig-choice-7a-n7-95.svg.txt"),
+    ("spec", archive / "author/spec.json.txt"),
+]:
+    assert files[key].read_bytes() == archived.read_bytes()
+spec, render, formal = (read(files[key]) for key in ["spec", "render", "review"])
+assert draft["new_figures"][0]["basis"] == spec["source"]["authoredBasis"] == formal["source"]["authoredBasis"]
+assert draft["new_figures"][0]["path"] == receipt["new_files"]["svg"]
+assert draft["new_figures"][0]["sha256"] == sha(files["svg"].read_bytes())
+assert formal["schema"] == "ld-s10y-image/review@1" and formal["status"] == "pass"
+assert render["status"] == "pass"
+assert formal["figure"] == render["figure"] == draft["new_figures"][0]["id"]
+for entry, key in [
+    (render["spec"], "spec"), (render["output"]["svg"], "svg"),
+    (formal["spec"], "spec"), (formal["render"], "render"),
+    (formal["outputs"]["svg"], "svg"),
+]:
+    assert entry == {"path": receipt["new_files"][key], "sha256": sha(files[key].read_bytes())}
+render_proof = inverse_proof(
+    archive / "author/fig-choice-7a-n7-95.render.json.txt", files["render"],
+    ["/spec/path", "/output/svg/path"],
+)
+formal_proof = inverse_proof(
+    archive / "reviewer/fig-choice-7a-n7-95.review.json.txt", files["review"],
+    ["/spec/path", "/render/path", "/render/sha256", "/outputs/svg/path"],
+)
+previous = read(OWN / "final-comparison.json")
+for name, expected in previous["binding"]["own_frozen_records_preserved"].items():
+    assert sha((OWN / name).read_bytes()) == expected
+assert digest([question["view"] for question in draft["questions"]]) == previous["binding"]["pure_view_canonical_sha256"]
+
+review = copy.deepcopy(read(OWN / "review.json"))
+review["draft_sha256"] = digest(draft)
+review["figure_checks"][0]["asset_path"] = receipt["new_files"]["svg"]
+assert differences(read(OWN / "review.json"), review) == [
+    "/draft_sha256", "/figure_checks/0/asset_path",
+]
+comparison = copy.deepcopy(previous)
+comparison["phase"] = "retained_metadata_only_rebind"
+comparison["binding"]["draft_byte_sha256"] = sha(draft_path.read_bytes())
+comparison["binding"]["draft_canonical_sha256"] = digest(draft)
+comparison["binding"]["original_internal_comparison_preserved"] = {
+    "path": str(OWN / "final-comparison.json"),
+    "sha256": sha((OWN / "final-comparison.json").read_bytes()),
+}
+comparison["retained_metadata_proof"] = {
+    "draft": draft_proof, "render": render_proof, "formal_review": formal_proof,
+    "svg_and_spec_exact_bytes_preserved": True,
+    "basis_equals_spec_and_formal_authoredBasis": True,
+    "current_files": {
+        key: {"path": str(path), "sha256": sha(path.read_bytes())}
+        for key, path in files.items()
+    },
+    "original_archive_receipt_verified_independently": preserved,
+    "receipt": {"path": str(receipt_path), "sha256": sha(receipt_path.read_bytes())},
+    "review_changed_leaves_only": ["/draft_sha256", "/figure_checks/0/asset_path"],
+    "semantic_option_and_source_records_reused_without_rerun": True,
+}
+comparison["formal_graph_sidecar"] = {
+    "path": str(files["review"]), "sha256": sha(files["review"].read_bytes()),
+    "status": formal["status"], "evidence": "Existing actual graph pass; only retained metadata paths/hash rebound.",
+}
+comparison["parent_pending"] = "Parent owns the sole subsequent canonical validation. No canonical command run here."
+comparison["review_path"] = str(OWN / "review-retained.json")
+comparison["boundary"] = "Only independent raw-token inverse metadata/hash binding. No source, mathematics, view, pixels, capture, canonical, validator or render rerun; no author/durable edits."
+save(OWN / "review-retained.json", review)
+save(OWN / "retained-comparison.json", comparison)
+print(json.dumps({
+    "outcome": "pass",
+    "draft_byte_sha256": sha(draft_path.read_bytes()),
+    "draft_canonical_sha256": digest(draft),
+    "changed_draft_leaves": draft_proof["changed_leaves"],
+    "inverse_raw_bytes_identical": True,
+    "saved": [str(OWN / "review-retained.json"), str(OWN / "retained-comparison.json")],
+}, indent=2))

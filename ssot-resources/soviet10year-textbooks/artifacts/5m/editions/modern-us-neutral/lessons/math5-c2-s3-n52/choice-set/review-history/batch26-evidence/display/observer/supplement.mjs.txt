@@ -1,0 +1,198 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
+
+delete process.env.PWDEBUG;
+process.env.PLAYWRIGHT_HTML_OPEN = 'never';
+const { chromium } = createRequire(path.join(process.cwd(), 'package.json'))('@playwright/test');
+const repo = path.resolve(process.cwd(), '..');
+const tmp = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp');
+const out = path.join(tmp, 'reviewer-5m-n52-display');
+const pngDir = path.join(out, 'supplements');
+const record = path.join(out, 'supplement-command.json');
+assert(!fs.existsSync(record), 'This narrow capture command must not be repeated.');
+fs.mkdirSync(pngDir, { recursive: true });
+const primary = JSON.parse(fs.readFileSync(path.join(tmp,
+  'batch26-render/5m-math5-c2-s3-n52-capture-manifest.json')));
+const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const protectedFiles = [...primary.screenshots, ...primary.rendered, ...primary.inputs];
+for (const item of protectedFiles) assert.equal(sha(path.join(repo, item.path)), item.sha256);
+const started = new Date().toISOString();
+const captures = [];
+const layouts = [];
+const browserErrors = [];
+let failure = null;
+let browser;
+let browserClosed = false;
+let contextsClosed = 0;
+let externalRequestsBlocked = 0;
+
+async function paint(page) {
+  await page.evaluate(() => new Promise((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(resolve))));
+}
+
+async function capture(target, name, metadata) {
+  const file = path.join(pngDir, `${name}.png`);
+  assert(!fs.existsSync(file));
+  await target.screenshot({ path: file, animations: 'disabled' });
+  captures.push({ ...metadata, path: file, sha256: sha(file) });
+}
+
+async function scrollRegions(item) {
+  return item.evaluate((node) => [...node.querySelectorAll('*')].flatMap((part, index) => {
+    const style = getComputedStyle(part);
+    if (!['auto', 'scroll'].includes(style.overflowX)
+      || part.scrollWidth <= part.clientWidth + 1) return [];
+    return [{
+      descendant_index: index, class: part.className,
+      clientWidth: part.clientWidth, scrollWidth: part.scrollWidth,
+      maximum: part.scrollWidth - part.clientWidth,
+      text: part.querySelector('annotation')?.textContent || part.innerText,
+    }];
+  }));
+}
+
+try {
+  browser = await chromium.launch({ headless: true });
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1 });
+    try {
+      await context.route(/^https?:/, async (route) => {
+        externalRequestsBlocked += 1;
+        await route.abort();
+      });
+      const page = await context.newPage();
+      page.on('pageerror', (error) => browserErrors.push(error.message));
+      for (const surface of ['text', 'exercises', 'choices']) {
+        const html = primary.rendered.find((item) => item.path.endsWith(`/${surface}.html`));
+        await page.goto(pathToFileURL(path.join(repo, html.path)).href);
+        await page.evaluate(() => document.fonts.ready);
+        await paint(page);
+        layouts.push({
+          surface, viewport,
+          geometry: await page.evaluate(() => ({
+            devicePixelRatio, viewport: { width: innerWidth, height: innerHeight },
+            documentWidth: document.documentElement.scrollWidth,
+            bodyFont: getComputedStyle(document.body).fontSize,
+            bodyTransforms: [...document.querySelectorAll('.sheet,.choice,.ex,.katex')]
+              .filter((node) => getComputedStyle(node).transform !== 'none').length,
+            lessonMedia: document.querySelectorAll('.figure-media').length,
+          })),
+        });
+        if (surface === 'text' && viewport.width === 390) {
+          const target = page.locator('.jump');
+          await target.scrollIntoViewIfNeeded();
+          await paint(page);
+          await capture(target, 'text-390-terminal-button', {
+            surface, viewport, kind: 'previously-clipped-terminal',
+            target: '.jump', reason: 'Primary bottom edge cuts off the blue button lower boundary.',
+          });
+        }
+        if (surface === 'exercises') {
+          const first = 993;
+          const last = viewport.width === 1440 ? 999 : 1001;
+          for (let number = first; number <= last; number++) {
+            const item = page.locator(`#ex-${number}`);
+            await item.scrollIntoViewIfNeeded();
+            await paint(page);
+            await capture(item, `exercises-${viewport.width}-${number}-full-left`, {
+              surface, viewport, kind: 'missing-full-written-object',
+              target: `#ex-${number}`, source_number: number,
+              reason: 'Primary first/last viewport does not contain this complete written task.',
+              horizontal_regions: await scrollRegions(item),
+            });
+          }
+          if (viewport.width === 390) {
+            const item = page.locator('#ex-1005');
+            const regions = await scrollRegions(item);
+            await item.evaluate((node) => {
+              for (const part of node.querySelectorAll('*')) {
+                if (['auto', 'scroll'].includes(getComputedStyle(part).overflowX)
+                  && part.scrollWidth > part.clientWidth + 1) part.scrollLeft = part.scrollWidth;
+              }
+            });
+            await item.scrollIntoViewIfNeeded();
+            await paint(page);
+            await capture(item, 'exercises-390-1005-full-right', {
+              surface, viewport, kind: 'previously-clipped-full-written-right-window',
+              target: '#ex-1005', source_number: 1005, horizontal_regions: regions,
+              actual_scrolls: await item.evaluate((node) => [...node.querySelectorAll('*')]
+                .filter((part) => part.scrollLeft > 0)
+                .map((part) => ({ class: part.className, left: part.scrollLeft }))),
+              reason: 'Both long formula endings are outside the existing mobile primary screenshot.',
+            });
+          }
+        }
+        if (surface === 'choices') {
+          const first = viewport.width === 1440 ? 4 : 3;
+          const last = viewport.width === 1440 ? 23 : 24;
+          for (let number = first; number <= last; number++) {
+            const item = page.locator('.choice').nth(number - 1);
+            await item.scrollIntoViewIfNeeded();
+            await paint(page);
+            await capture(item, `choices-${viewport.width}-${number}-full-left`, {
+              surface, viewport, kind: 'missing-full-choice-object',
+              target: `.choice index ${number - 1}`, question_number: number,
+              question_id: await item.getAttribute('id'),
+              reason: 'Primary first/last viewport does not contain the complete stem and all three options.',
+              horizontal_regions: await scrollRegions(item),
+            });
+          }
+          if (viewport.width === 390) {
+            const item = page.locator('.choice').nth(25);
+            const regions = await scrollRegions(item);
+            await item.evaluate((node) => {
+              for (const part of node.querySelectorAll('*')) {
+                if (['auto', 'scroll'].includes(getComputedStyle(part).overflowX)
+                  && part.scrollWidth > part.clientWidth + 1) part.scrollLeft = part.scrollWidth;
+              }
+            });
+            await item.scrollIntoViewIfNeeded();
+            await paint(page);
+            await capture(item, 'choices-390-26-full-right', {
+              surface, viewport, kind: 'previously-clipped-full-choice-right-window',
+              target: '.choice index 25', question_number: 26,
+              question_id: await item.getAttribute('id'), horizontal_regions: regions,
+              actual_scrolls: await item.evaluate((node) => [...node.querySelectorAll('*')]
+                .filter((part) => part.scrollLeft > 0)
+                .map((part) => ({ class: part.className, left: part.scrollLeft }))),
+              reason: 'The primary mobile last screenshot clips the final multiplication 4.1 times 0.8.',
+            });
+          }
+        }
+        assert.equal(sha(path.join(repo, html.path)), html.sha256);
+      }
+    } finally {
+      await context.close();
+      contextsClosed += 1;
+    }
+  }
+  assert.deepEqual(browserErrors, []);
+} catch (error) {
+  failure = { message: error.message, stack: error.stack };
+} finally {
+  if (browser) {
+    await browser.close();
+    browserClosed = true;
+  }
+  const allProtectedHashesUnchanged = protectedFiles.every((item) =>
+    sha(path.join(repo, item.path)) === item.sha256);
+  fs.writeFileSync(record, `${JSON.stringify({
+    status: failure ? 'capture-failed' : 'captured-awaiting-pixel-review',
+    command: ['node', '../.intentfold/tickets/STEMROBIN-182/tmp/reviewer-5m-n52-display/supplement.mjs'],
+    cwd: process.cwd(), execution_count: 1, exit_code: failure ? 1 : 0,
+    started, finished: new Date().toISOString(), failure, browserErrors,
+    captures, layouts, protectedFiles, allProtectedHashesUnchanged,
+    primary_capture_repeated: false, primary_render_repeated: false,
+    additional_unique_combinations: 0, headless: true, isolated_contexts: true,
+    deviceScaleFactor: 1, PWDEBUG_cleared: true, PLAYWRIGHT_HTML_OPEN: 'never',
+    user_profile: false, CDP: false, contextsClosed, browser_closed: browserClosed,
+    externalRequestsBlocked, durable_or_html_writes: false, model: null, usage: null,
+  }, null, 2)}\n`, { flag: 'wx' });
+}
+if (failure) throw new Error(failure.message);
+console.log(JSON.stringify({ captures: captures.length, record, browser_closed: browserClosed }));

@@ -1,0 +1,119 @@
+import hashlib
+import json
+from pathlib import Path
+
+
+OWN = Path(__file__).resolve().parent
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def load(name):
+    return json.loads((OWN / name).read_bytes())
+
+
+with (OWN / "ready-run.started.json").open("x") as handle:
+    json.dump({"once_guard": True, "scope": "freeze source-phase receipts only"}, handle)
+    handle.write("\n")
+
+freeze = load("input-freeze.json")
+captures = load("capture-receipt.json")
+solutions = load("source-solutions.json")
+observations = load("source-image-observations.json")
+solution_receipt = load("solution-receipt.json")
+for item in freeze["allowed_inputs"]:
+    assert sha(Path(item["path"]).read_bytes()) == item["sha256"]
+source_path = Path(freeze["allowed_inputs"][0]["path"])
+assert source_path.read_bytes() == (OWN / "source.frozen.json").read_bytes()
+seed = json.loads(source_path.read_bytes())
+assert [item["source_number"] for item in solutions["source_reviews"]] == [str(n) for n in range(1006, 1033)]
+for original, solved in zip(seed["exercises"], solutions["source_reviews"]):
+    assert original["number"] == solved["source_number"]
+    assert original["text"] == solved["source_text"]
+    assert original["figure_ids"] == solved["source_figure_ids"]
+    assert solved["independent_solution"] and solved["subtasks"] and solved["domain_and_conventions"]
+assert solutions["source_image_observations_sha256"] == sha((OWN / "source-image-observations.json").read_bytes())
+assert solution_receipt["output_sha256"] == sha((OWN / "source-solutions.json").read_bytes())
+assert solutions["solver_script_sha256"] == sha((OWN / "solve-source.py").read_bytes())
+assert captures["script_sha256"] == sha((OWN / "capture-source.mjs").read_bytes())
+assert captures["browser_closed"] and captures["headless"]
+for item in captures["captures"]:
+    assert sha(Path(item["path"]).read_bytes()) == item["sha256"]
+declared = {(item["path"], item["sha256"]) for item in freeze["allowed_inputs"] if "figure_id" in item}
+observed = {(item["asset_path"], item["asset_sha256"]) for item in observations["asset_observations"]}
+assert declared == observed and len(observed) == 3
+assert not observations["unresolved_visual_blockers"]
+
+artifact_names = [
+    "source.frozen.json", "input-freeze.json", "source-solutions.json",
+    "source-image-observations.json", "capture-receipt.json", "solution-receipt.json",
+    "capture-source.mjs", "solve-source.py", "freeze-ready.py",
+    "capture-run.started.json", "solution-run.started.json", "ready-run.started.json",
+    "fig-160-640.png", "fig-161-svg-640.png", "fig-161-composite-640.png",
+]
+ready = {
+    "schema": "independent-source-phase-ready-v1",
+    "status": "source-phase-ready-awaiting-parent-view-disclosure",
+    "source": seed["source"],
+    "source_file_sha256": sha(source_path.read_bytes()),
+    "seed_sha256": solutions["seed_sha256"],
+    "complete_originals": [str(n) for n in range(1006, 1033)],
+    "original_count": 27,
+    "subtask_records_including_intermediates_and_constructions": solution_receipt["subtask_records"],
+    "subtask_record_count_is_not_choice_unit_count": True,
+    "declared_figures": 2,
+    "actual_declared_assets_opened": 3,
+    "complete_svg_captures": 2,
+    "explicit_source_only_two_layer_composites": 1,
+    "unresolved_blockers": [],
+    "conditional_source_notices": solutions["conditional_source_notices"],
+    "inputs_original_bytes_unchanged": True,
+    "author_7a_and_6a_files_written": False,
+    "author_5m_material_read": ["source.json", "three actual declared source assets"],
+    "author_5m_material_not_read": [
+        "source-solutions", "draft", "view", "ready", "keys", "new graphs",
+        "specs", "serializers", "previous answers/choices/ticket results",
+    ],
+    "production_tasks_retained": ["1006 law statement and verification", "1007 law statement and verification", "1008 nine addition checks", "1021 two ordered reflection constructions", "1022 triangle plotting", "1023 two full equation models", "1025 line construction and six bidirectional graph readings", "1032 triangle and all symmetry-axis construction"],
+    "no_choice_validator_or_final_review": True,
+    "no_author_candidate_or_figure_approval": True,
+    "browser": {"isolated": True, "headless": True, "network_aborted": True, "closed_in_finally": True, "no_live_product_claim": True},
+    "commands": [
+        {
+            "argv": ["node", ".intentfold/tickets/STEMROBIN-182/tmp/reviewer-5m-n53/capture-source.mjs"],
+            "execution_count": 1,
+            "exit_code": 0,
+            "receipt": str(OWN / "capture-receipt.json"),
+        },
+        {
+            "argv": ["python3", ".intentfold/tickets/STEMROBIN-182/tmp/reviewer-5m-n53/solve-source.py"],
+            "execution_count": 1,
+            "exit_code": 0,
+            "receipt": str(OWN / "solution-receipt.json"),
+        },
+        {
+            "argv": ["python3", ".intentfold/tickets/STEMROBIN-182/tmp/reviewer-5m-n53/freeze-ready.py"],
+            "execution_count": 1,
+            "operation": "input/source/capture identity and evidence-binding checks; not mathematical/choice validation",
+        },
+    ],
+    "frozen_artifacts": [
+        {"path": str(OWN / name), "sha256": sha((OWN / name).read_bytes()), "bytes": (OWN / name).stat().st_size}
+        for name in artifact_names
+    ],
+    "allowed_next_phase": "Parent explicitly discloses key-free candidate view; fidelity and independent visible truth sets before author-key comparison. Not authorized now.",
+}
+with (OWN / "source-phase-ready.json").open("x", encoding="utf-8") as handle:
+    json.dump(ready, handle, indent=2, ensure_ascii=False)
+    handle.write("\n")
+print(json.dumps({
+    "status": ready["status"],
+    "original_count": ready["original_count"],
+    "subtask_records": ready["subtask_records_including_intermediates_and_constructions"],
+    "assets_opened": ready["actual_declared_assets_opened"],
+    "source_phase_ready_sha256": sha((OWN / "source-phase-ready.json").read_bytes()),
+    "source_solutions_sha256": sha((OWN / "source-solutions.json").read_bytes()),
+    "source_image_observations_sha256": sha((OWN / "source-image-observations.json").read_bytes()),
+}, indent=2))

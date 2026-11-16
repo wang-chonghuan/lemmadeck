@@ -1,0 +1,32 @@
+import hashlib
+import json
+from pathlib import Path
+
+
+OWN = Path(__file__).resolve().parent
+stem = OWN / "new-figures/fig-choice-n53-linear-reading"
+original = Path(str(stem) + ".spec.json")
+spec = json.loads(original.read_text())
+changes = []
+for item in spec["objects"]:
+    if item["id"] == "origin-label":
+        changes.append({"path": "objects/origin-label/at", "before": item["at"], "after": [0.35, -0.40]})
+        item["at"] = [0.35, -0.40]
+    if item["id"] == "y-axis":
+        for tick in item["ticks"]:
+            if tick["label"] == "-1":
+                changes.append({"path": "objects/y-axis/ticks/-1/labelPlacement", "before": tick["labelPlacement"],
+                                "after": {"position": "E", "offset": [8, 0]}})
+                tick["labelPlacement"] = {"position": "E", "offset": [8, 0]}
+revised = Path(str(stem) + ".revised.spec.json")
+if revised.exists():
+    raise RuntimeError("Targeted repair has already been made")
+revised.write_text(json.dumps(spec, indent=2) + "\n")
+(OWN / "graph-label-repair.json").write_text(json.dumps({
+    "repair_count": 1, "original_spec": str(original),
+    "original_spec_sha256": hashlib.sha256(original.read_bytes()).hexdigest(),
+    "revised_spec": str(revised), "revised_spec_sha256": hashlib.sha256(revised.read_bytes()).hexdigest(),
+    "changes": changes, "original_svg_render_preview_and_receipt_retained_unchanged": True,
+    "geometry_grid_assertions_unchanged": True, "independent_figure_review_pending": True,
+}, indent=2) + "\n")
+print(revised)

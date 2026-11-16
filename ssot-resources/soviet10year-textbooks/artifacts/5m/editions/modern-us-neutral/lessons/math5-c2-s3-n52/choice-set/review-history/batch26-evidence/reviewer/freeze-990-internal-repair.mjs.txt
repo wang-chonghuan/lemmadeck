@@ -1,0 +1,223 @@
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+
+const tmp = "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp";
+const root = path.join(tmp, "reviewer-5m-n52");
+const sha = bytes => createHash("sha256").update(bytes).digest("hex");
+const names = {
+  currentDraft: path.join(tmp, "5m-n52/draft.json"),
+  delta: path.join(tmp, "5m-n52/990-internal-repair-delta.json"),
+  oldDraft: path.join(root, "draft-compared-first-internal-snapshot.json"),
+  oldReview: path.join(root, "review.json"),
+  oldComparison: path.join(root, "final-comparison.json"),
+  oldEvidence: path.join(root, "author-comparison-evidence.json"),
+  frozenViewReview: path.join(root, "changed-view-checks.json"),
+  frozenView: path.join(root, "opened-view-changed-snapshot.json"),
+  source: path.join(root, "source-solutions.json"),
+  originalViewReview: path.join(root, "view-checks.json")
+};
+const bytes = Object.fromEntries(Object.entries(names).map(([name, filename]) =>
+  [name, fs.readFileSync(filename)]));
+const current = JSON.parse(bytes.currentDraft);
+const previous = JSON.parse(bytes.oldDraft);
+const delta = JSON.parse(bytes.delta);
+const priorReview = JSON.parse(bytes.oldReview);
+const priorComparison = JSON.parse(bytes.oldComparison);
+const priorEvidence = JSON.parse(bytes.oldEvidence);
+const frozenViewReview = JSON.parse(bytes.frozenViewReview);
+assert.equal(sha(bytes.currentDraft), "27ffe3ba0efc93f830dcdd75e1e9615f714a3f6bf9d857a44346d988a9f6cd06");
+assert.equal(sha(bytes.oldDraft), "d7c09512332aa34e0c850ba159a84fce7cc50a4b629f9729e8f6a4ec99f88f34");
+assert.equal(sha(bytes.oldReview), "450ab13882e4a49999a96b2709546628b758cf29b64e6fcaab0bb82536fa5b23");
+assert.equal(sha(bytes.frozenViewReview), "2f036485747aed1a83f61f801a1a3ceb7598abeffcc38c4282a92009221e8b22");
+assert.equal(sha(bytes.frozenView), "b6a1245d87d8081c23cbda20aeff92e4a12220357ee609a5a3d9ce5dd42d633b");
+assert.equal(sha(bytes.source), "061cfc78b872b0ab70063f3c2f81e147748cdd16ac29d7c3f4bdababab74b16c");
+assert.equal(sha(bytes.originalViewReview), "32f31ab55f341f78798bb9704c1c65c0209a5af577355d7e5f89244f8291e5ad");
+assert.equal(priorReview.outcome, "revise");
+assert.equal(priorComparison.minimum_findings.length, 1);
+assert.equal(priorComparison.minimum_findings[0].id, "n52-990-C-non-generating-first-component");
+
+const differences = [];
+function compare(a, b, pointer = "") {
+  if (a === b) return;
+  if (a !== null && b !== null && typeof a === "object" && typeof b === "object") {
+    assert.deepEqual(Object.keys(a), Object.keys(b));
+    for (const key of Object.keys(a)) compare(a[key], b[key], `${pointer}/${key}`);
+  } else differences.push({ pointer, before: a, after: b });
+}
+compare(previous, current);
+assert.deepEqual(differences, delta.exact_delta);
+assert.equal(differences.length, 1);
+assert.equal(differences[0].pointer, "/questions/1/key/rationales/2/misconception");
+assert.equal(delta.old_byte_sha256, sha(bytes.oldDraft));
+assert.equal(delta.current_byte_sha256, sha(bytes.currentDraft));
+assert.equal(differences[0].after,
+  "第1式先正确算1-3/4=1/4，却误把验算中加回的量写成1，并把1/4+1=5/4报告为差；第2、3、4式把减法改为加法，分别算1+2/7=9/7、1+1/6=7/6、1+8/9=17/9，组成所列完整记录。");
+const inverse = structuredClone(current);
+inverse.questions[1].key.rationales[2].misconception = differences[0].before;
+assert.deepEqual(inverse, previous);
+assert.deepEqual(current.seed_sha256, previous.seed_sha256);
+
+const changedEvidence =
+  "Changed-internal-only review of the new C misconception: in the first expression it correctly obtains1/4, then wrongly substitutes1 for the subtrahend in the inverse addition and reports1/4+1=5/4 as the difference. In the other three expressions it replaces subtraction with addition:1+2/7=9/7,1+1/6=7/6,1+8/9=17/9. These explicit errors generate every frozen candidate component. The first error is a wrong verification operand/output, not an arbitrary change of3/4, and no error cancellation produces a true answer. The already frozen candidate remains incorrect. This review uses independent exact fraction identities, not the parent's float/BigInt helper or its assertions.";
+
+const finalReview = structuredClone(priorReview);
+finalReview.draft_sha256 = "c74e5eac036ab5a3f340644729e9f7f93eca5a3f2099857d615670119cba1355";
+finalReview.outcome = "pass";
+const changedQuestion = finalReview.question_reviews.find(q => q.question_id === "n52-990");
+const priorViewQuestion = frozenViewReview.question_reviews.find(q => q.question_id === "n52-990");
+assert.ok(changedQuestion && priorViewQuestion);
+assert.equal(changedQuestion.mathematics.verdict, "revise");
+changedQuestion.mathematics.verdict = "pass";
+changedQuestion.mathematics.independent_solution =
+  priorViewQuestion.mathematics.independent_solution +
+  " Reuse the first internal comparison of the unchanged complete key, correct derivation and B procedure. Only C's repaired misconception is newly checked; it now explicitly generates(5/4,9/7,7/6,17/9). The independent true set remains A, without re-solving source/view mathematics.";
+const changedOption = changedQuestion.mathematics.option_checks.find(o => o.option_id === "C");
+const frozenOption = priorViewQuestion.mathematics.option_checks.find(o => o.option_id === "C");
+assert.ok(changedOption && frozenOption);
+changedOption.evidence = `${frozenOption.evidence} ${changedEvidence}`;
+assert.deepEqual(changedQuestion.mathematics.correct, ["A"]);
+assert.equal(changedOption.truth, "incorrect");
+
+const verdicts = [
+  ...finalReview.source_reviews.map(s => s.coverage.verdict),
+  ...finalReview.question_reviews.flatMap(q =>
+    [q.task_fidelity.verdict, q.redundancy.verdict, q.answer_leakage.verdict, q.mathematics.verdict])
+];
+assert.ok(verdicts.every(v => v === "pass"));
+const snapshotPath = path.join(root, "draft-compared-990-internal-repaired-snapshot.json");
+const reviewPath = path.join(root, "review-final.json");
+const comparisonPath = path.join(root, "final-comparison-repaired.json");
+const result = {
+  stage: "changed-internal-only-990C",
+  stage_complete: true,
+  outcome: "pass",
+  reviewer: finalReview.reviewer,
+  snapshots: {
+    seed_canonical_sha256: finalReview.seed_sha256,
+    current_draft_path: names.currentDraft,
+    current_draft_byte_sha256: sha(bytes.currentDraft),
+    current_draft_canonical_sha256: finalReview.draft_sha256,
+    draft_digest_command: "python3 -B .agents/skills/ld-s10y-choice/scripts/prepare.py digest .intentfold/tickets/STEMROBIN-182/tmp/5m-n52/draft.json",
+    current_compared_snapshot_path: snapshotPath,
+    prior_compared_draft_path: names.oldDraft,
+    prior_compared_draft_byte_sha256: sha(bytes.oldDraft),
+    prior_compared_draft_canonical_sha256: priorReview.draft_sha256,
+    original_source_path: names.source,
+    original_source_byte_sha256: sha(bytes.source),
+    frozen_changed_view_path: names.frozenView,
+    frozen_changed_view_byte_sha256: sha(bytes.frozenView),
+    frozen_changed_view_review_path: names.frozenViewReview,
+    frozen_changed_view_review_byte_sha256: sha(bytes.frozenViewReview),
+    final_review_path: reviewPath
+  },
+  changed_field_review: {
+    verdict: "pass",
+    field_count: 1,
+    question_id: "n52-990",
+    option_id: "C",
+    exact_differences: differences,
+    current_derivation_and_candidate_unchanged: true,
+    evidence: changedEvidence,
+    independently_checked_program_output: ["5/4", "9/7", "7/6", "17/9"],
+    unchanged_independent_true_set: ["A"],
+    unchanged_independent_candidate_truth: "incorrect"
+  },
+  exact_inverse_binding: {
+    verdict: "pass",
+    receipt_path: names.delta,
+    receipt_byte_sha256: sha(bytes.delta),
+    receipt_equals_independently_observed_delta: true,
+    inverse_restores_entire_previously_compared_json: true,
+    all_views_keys_derivations_sources_coverage_and_other_fields_unchanged: true,
+    unchanged_whole_questions: 25,
+    author_old_history_or_checker_helpers_read: false,
+    inverse_basis: "Use only own byte-frozen first-internal draft snapshot. Restore the one previously recorded misconception string in a clone of the current draft; its full JSON equals the previously compared snapshot."
+  },
+  counts: {
+    sources: 17,
+    questions: 26,
+    independently_bound_options: 78,
+    keys_unchanged_and_reused: 26,
+    correct_derivations_unchanged_and_reused: 26,
+    incorrect_procedures_unchanged_and_reused: 51,
+    incorrect_procedures_newly_checked: 1,
+    current_incorrect_procedures_generating_candidates: 52,
+    unchanged_option_internal_evidence_reused: 77,
+    coverage_records_unchanged_and_reused: 17,
+    current_minimum_findings: 0,
+    independent_key_or_truth_disagreements: 0,
+    used_figures: 0,
+    new_figures: 0
+  },
+  minimum_findings: [],
+  resolved_findings: [{
+    ...priorComparison.minimum_findings[0],
+    original_verdict: "revise",
+    current_verdict: "pass",
+    repaired_misconception: differences[0].after,
+    repair_evidence: changedEvidence
+  }],
+  preserved_prior_records: [
+    { path: names.oldReview, byte_sha256: sha(bytes.oldReview), verdict: "revise", unchanged: true },
+    { path: names.oldComparison, byte_sha256: sha(bytes.oldComparison), verdict: "revise", unchanged: true },
+    { path: names.oldEvidence, byte_sha256: sha(bytes.oldEvidence), verdict: "revise", unchanged: true },
+    { path: names.originalViewReview, byte_sha256: sha(bytes.originalViewReview), verdict: "revise", unchanged: true }
+  ],
+  prior_full_internal_evidence_path: names.oldEvidence,
+  prior_complete_comparison_path: names.oldComparison,
+  source_model_and_construction_caveats: priorComparison.drawing_and_method_loss_decisions,
+  source_notices_retained_without_reinterpretation: priorComparison.source_notices_retained,
+  read_boundary: {
+    newly_authorized_author_files_read: [names.currentDraft, names.delta],
+    own_compared_snapshot_used_not_author_history: true,
+    no_serializer_author_source_solutions_other_history_or_checker_script_read: true,
+    parent_float_failure_or_exact_checker_success_not_used_as_semantic_authority: true,
+    no_source_image_view_math_or_unchanged_option_checks_repeated: true,
+    no_independent_true_set_normalized_to_key: true
+  },
+  operations: {
+    changed_misconception_reviews: 1,
+    source_image_or_pureview_reruns: 0,
+    unchanged_internal_program_reruns: 0,
+    structural_validation_runs: 0,
+    canonical_validation_runs: 0,
+    browser_or_render_runs: 0,
+    author_or_durable_writes: 0,
+    db_network_paid_model_dependency_calls: 0,
+    in_flight_operations: []
+  },
+  validation: {
+    command: null,
+    exit_code: null,
+    execution_count: 0,
+    evidence: "Only the final canonical-contract review is frozen. No validate.py, structure/canonical gate, renderer or promotion was executed; the parent owns first canonical."
+  },
+  next_stage: "Final internal changed-snapshot pass. Parent may run first canonical on review-final.json. This reviewer stops; no author edit or promotion.",
+  model: null,
+  usage: null
+};
+fs.writeFileSync(snapshotPath, bytes.currentDraft, { flag: "wx" });
+fs.writeFileSync(reviewPath, JSON.stringify(finalReview, null, 2) + "\n", { flag: "wx" });
+result.snapshots.final_review_byte_sha256 = sha(fs.readFileSync(reviewPath));
+fs.writeFileSync(comparisonPath, JSON.stringify(result, null, 2) + "\n", { flag: "wx" });
+for (const [name, filename] of Object.entries(names)) {
+  assert.equal(sha(fs.readFileSync(filename)), sha(bytes[name]));
+}
+console.log(JSON.stringify({
+  outcome: finalReview.outcome,
+  changed_internal_fields: 1,
+  inverse_binding: "pass",
+  incorrect_program_output: result.changed_field_review.independently_checked_program_output,
+  questions: 26,
+  options: 78,
+  wrong_procedures_generating_candidates: 52,
+  draft_canonical_sha256: finalReview.draft_sha256,
+  review_path: reviewPath,
+  review_byte_sha256: result.snapshots.final_review_byte_sha256,
+  comparison_path: comparisonPath,
+  prior_rejections_preserved: true,
+  canonical_validation_runs: 0,
+  in_flight_operations: []
+}));

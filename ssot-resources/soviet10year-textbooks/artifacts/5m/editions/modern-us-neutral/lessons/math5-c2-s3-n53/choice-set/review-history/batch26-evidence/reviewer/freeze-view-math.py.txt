@@ -1,0 +1,337 @@
+import hashlib
+import json
+import re
+from collections import Counter
+from fractions import Fraction as F
+from pathlib import Path
+
+
+OWN = Path(__file__).resolve().parent
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def load(name):
+    return json.loads((OWN / name).read_bytes())
+
+
+def save(name, value):
+    with (OWN / name).open("x", encoding="utf-8") as handle:
+        json.dump(value, handle, indent=2, ensure_ascii=False)
+        handle.write("\n")
+
+
+save("view-math-run.started.json", {
+    "once_guard": True,
+    "prerequisite": "pre-math-view-fidelity.json already frozen",
+    "scope": "complete121 visible option checks and40 independent true sets; no author key/internal solution access",
+})
+snapshot = load("opened-view-snapshot.json")
+fidelity = load("pre-math-view-fidelity.json")
+source_freeze = load("source-solutions.json")
+source = {item["source_number"]: item for item in source_freeze["source_reviews"]}
+assert fidelity["view_file_sha256"] == snapshot["view_file_sha256"]
+assert sha((OWN / "source-solutions.json").read_bytes()) == "7c9a6c9b0fd3c2b479671707f54611aa14472750648515bf2704cf58ceb38aa8"
+assert not (OWN / "independent-view-math.json").exists()
+
+
+def frozen(number, *subtasks):
+    available = {item["subtask"]: item for item in source[str(number)]["subtasks"]}
+    return [
+        {
+            "value": F(available[label]["exact_result"]),
+            "target": available[label]["source_expression_or_target"],
+            "working": available[label]["working"],
+            "units": available[label]["units"],
+        }
+        for label in subtasks
+    ]
+
+
+def geometry_expected(label, value, working):
+    return {"value": F(value), "target": label, "working": working, "units": None}
+
+
+expected = {
+    "n53-1008-proper": frozen(1008, "1", "2", "3", "4", "5"),
+    "n53-1008-mixed": frozen(1008, "6", "7", "8", "9"),
+    "n53-1009-borrow": frozen(1009, "1", "2", "3", "4", "5"),
+    "n53-1009-signed": frozen(1009, "6", "9"),
+    "n53-1009-proper-subtrahend": frozen(1009, "7", "8"),
+    "n53-1010": frozen(1010, "1", "2", "3", "4"),
+    "n53-1011-parentheses": frozen(1011, "1"),
+    "n53-1011-sequential": frozen(1011, "2"),
+    "n53-1012-addends": frozen(1012, "1", "2"),
+    "n53-1012-subtraction-roles": frozen(1012, "3", "4"),
+    "n53-1013": frozen(1013, "1-a", "1-b", "2-a", "2-b"),
+    "n53-1014": frozen(1014, "cherry-count"),
+    "n53-1015": frozen(1015, "second-truck", "total"),
+    "n53-1016": frozen(1016, "sugar"),
+    "n53-1017": frozen(1017, "second-box", "total"),
+    "n53-1018": frozen(1018, "doors", "total"),
+    "n53-1019": frozen(1019, "total"),
+    "n53-1020-first-divisors": frozen(1020, "1", "2"),
+    "n53-1020-second-divisors": frozen(1020, "3", "4"),
+    "n53-1022": [
+        geometry_expected("AK底长", 8, "冻结源图构造：AK从x=-2到6，底长8。"),
+        geometry_expected("B到AK垂足横坐标", 1, "源B横坐标1；水平底AK的垂足为(1,-2)。"),
+        geometry_expected("B到AK垂足纵坐标", -2, "源A、K纵坐标均-2，垂足在此水平线上。"),
+        geometry_expected("对应高", 7, "B的y=5距底y=-2为7，不是5。"),
+        geometry_expected("面积", 28, "冻结源解：8×7/2=28平方单位。"),
+    ],
+    "n53-1024": frozen(1024, "fridge-cost-dollars"),
+    "n53-1025": frozen(1025, "x-to-y-1", "x-to-y-2", "x-to-y-3", "y-to-x-1", "y-to-x-2", "y-to-x-3"),
+    "n53-1026-1": frozen(1026, "1"),
+    "n53-1026-2": frozen(1026, "2"),
+    "n53-1026-3": frozen(1026, "3"),
+    "n53-1026-4": frozen(1026, "4"),
+    "n53-1027-whole": frozen(1027, "1", "2", "3", "4", "5", "6"),
+    "n53-1027-mixed": frozen(1027, "7", "8", "9"),
+    "n53-1028-addition": frozen(1028, "1", "2", "3", "5", "6", "8"),
+    "n53-1028-subtraction": frozen(1028, "4", "7", "9"),
+    "n53-1029-regroup": frozen(1029, "1"),
+    "n53-1029-signed-terms": frozen(1029, "2", "3", "4"),
+    "n53-1030-conditional": frozen(1030, "cumulative-at-3-seconds"),
+    "n53-1031": frozen(1031, "total-hours"),
+}
+
+
+def parse_value(cell):
+    match = re.fullmatch(r"\$(.+)\$(?:\s+(.+))?", cell.strip())
+    assert match, f"Unexpected visible result cell: {cell!r}"
+    expression, units = match.groups()
+    fraction = re.fullmatch(r"(-?)\\frac\{(\d+)\}\{(\d+)\}", expression)
+    if fraction:
+        sign, numerator, denominator = fraction.groups()
+        value = F(int(numerator), int(denominator))
+        if sign:
+            value = -value
+    else:
+        assert re.fullmatch(r"-?\d+(?:\.\d+)?", expression), expression
+        value = F(expression)
+    return value, units
+
+
+def table_rows(text):
+    rows = [line.strip() for line in text.splitlines() if line.strip()]
+    assert len(rows) >= 3 and rows[0] == "| 项目 | 结果 |" and rows[1] == "|---|---|"
+    parsed = []
+    for row in rows[2:]:
+        cells = row.split("|")
+        assert len(cells) == 4 and not cells[0].strip() and not cells[-1].strip()
+        value, units = parse_value(cells[2])
+        parsed.append({"label": cells[1].strip(), "value": value, "units": units})
+    return parsed
+
+
+manual = {
+    "n53-1006": {
+        "A": (False, "所写交换律本身对，但5/6+1/4=10/12+3/12=13/12，不是3/5；完整规律+验证组合为假。"),
+        "B": (False, "a-b=7/12而b-a=-7/12；减法不满足所写交换律，且两边不都为7/12。"),
+        "C": (True, "a+b=b+a为有理数交换律；10/12+3/12=3/12+10/12=13/12，两次序验证均成立。"),
+    },
+    "n53-1007": {
+        "A": (False, "(a-b)-c=-1/2，但a-(b-c)=1/2-(-1/3)=5/6；所写减法结合等式和两边值均不成立。"),
+        "B": (False, "加法结合等式正确，但两边均(1/2+1/3)+2/3=3/2，而非1/2。"),
+        "C": (True, "左(1/2+1/3)+2/3=5/6+4/6=3/2；右1/2+(1/3+2/3)=1/2+1=3/2，结合律与验证都成立。"),
+    },
+    "n53-1021": {
+        "A": (False, "R_m∘R_l是保持方向的向右2d平移，不是单次反射。源native A=(72,120)：N_A=(396,120)，直接R_m(A)=(724,120)，不相同；只有K在l上导致该一个点的两种结果相合，不救整三角形。"),
+        "B": (True, "R_l:(x,y)→(2L-x,y)，再R_m得到(x+2(M-L),y)；M>L，向l到m方向2d，顶点顺序方向经两次翻转恢复。"),
+        "C": (False, "P的K像仍K且在l，不在不同的m；源l:x236、m:x398。水平坐标高度不变这一半句真，但整句的轴归属假。"),
+        "D": (True, "K在l故固定；A与A'、D与D'分别等高且中点x=L，所以l均垂直平分其对应连线。源A72与A'400的中点236验证。"),
+    },
+    "n53-1023-office": {
+        "A": (False, "r=2,c=6的3r-c=0，不是短缺3；c-2r=2虽成立，第一条原条件被删去。所给修改方程内部可成立，不表示源模型成立。"),
+        "B": (True, "c=3r-3=2r+2给r=5,c=12；3×5-12=3短缺，12-2×5=2剩余，两原条件及整数数量都满足。"),
+        "C": (False, "r=3,c=6时3r-c=3成立，但c-2r=0，不是多2；修改方程丢掉第二个剩余条件。"),
+    },
+    "n53-1023-kindergarten": {
+        "A": (False, "r=2,s=6时s-3r=0，不是多6；4r-s=2成立但第一条源条件被删。"),
+        "B": (True, "s=3r+6=4r-2给r=8,s=30；30-24=6剩余，32-30=2短缺，模型与两个计数均成立。"),
+        "C": (False, "r=6,s=24时s-3r=6成立，但4r-s=0，不是少2；第二条原条件丢失。"),
+    },
+    "n53-1032": {
+        "A": (True, "正ABC三个顶点各与对边中点相连所得完整直线分别固定该顶点、交换另外两点；共三条相异反射轴。"),
+        "B": (False, "边所在直线固定两个顶点，把第三点反到三角形外，不保持原三角形；数字3对不能使错误画法为真。"),
+        "C": (False, "正三角形每条顶点到对边中点线就是同一对边的垂直平分线；两组各三条实际重合，只有3条，不能计为6条。"),
+    },
+}
+
+
+question_checks = []
+findings = []
+for question in snapshot["questions"]:
+    question_id = question["id"]
+    option_checks = []
+    if question_id in expected:
+        targets = expected[question_id]
+        for option in question["options"]:
+            rows = table_rows(option["text"])
+            assert len(rows) == len(targets), (question_id, option["id"], len(rows), len(targets))
+            row_checks = []
+            for index, (row, target) in enumerate(zip(rows, targets), 1):
+                right_number = row["value"] == target["value"]
+                contextual_sugar_unit = (
+                    question_id == "n53-1016" and target["units"] == "吨糖"
+                    and row["units"] == "吨" and "制糖" in question["stem"]
+                )
+                right_unit = not target["units"] or row["units"] == target["units"] or contextual_sugar_unit
+                row_checks.append({
+                    "row": index,
+                    "visible_label": row["label"],
+                    "source_target": target["target"],
+                    "visible_exact_value": str(row["value"]),
+                    "independent_exact_value": str(target["value"]),
+                    "visible_units": row["units"],
+                    "required_units": target["units"],
+                    "truth": "correct" if right_number and right_unit else "incorrect",
+                    "evidence": f"该原/可见目标独立关系：{target['working']}；此行给{row['value']}" +
+                                (f"，与应得{target['value']}一致。" if right_number else f"，不等于应得{target['value']}。") +
+                                (" stem明确求制糖，故该吨为吨糖，单位语义相同。" if contextual_sugar_unit else "") +
+                                ("" if right_unit else f"单位应{target['units']}，却给{row['units']}。"),
+                })
+            truth = all(row["truth"] == "correct" for row in row_checks)
+            discrepancies = [row["row"] for row in row_checks if row["truth"] != "correct"]
+            evidence = "完整表全部行的数值、方向和单位均成立。" if truth else f"完整表为合取判断，行{discrepancies}不成立；其他真行不改变该选项为假。"
+            if question_id.startswith("n53-1008-"):
+                evidence += " 每个独立差加回原减数恢复原被减数；错误差的加回验算不会通过，九个验算任务均有对应行。"
+            if question_id == "n53-1030-conditional":
+                evidence += " 只按stem明确假设，区间路程4.9、14.7、24.5之和44.1；不主张原“速度/米”文字已规定唯一瞬时运动模型。"
+            if question_id == "n53-1025":
+                evidence += " 六行分别是三次x→y和三次y→x；用独立实际图网格/直线与解析值核对，不因原共享点(-3,-4)重复而删除方向任务。"
+            option_checks.append({
+                "option_id": option["id"],
+                "truth": "correct" if truth else "incorrect",
+                "visible_text_sha256": sha(option["text"].encode()),
+                "evidence": evidence,
+                "all_row_checks": row_checks,
+            })
+        independent_solution = "按可见表的目标顺序，完整独立结果为：" + ", ".join(str(target["value"]) + (f" {target['units']}" if target["units"] else "") for target in targets) + "。细节与全行真值见option_checks；数值依据先前独立源解，未重新执行源求解脚本。"
+    else:
+        assert question_id in manual, question_id
+        assert set(manual[question_id]) == {option["id"] for option in question["options"]}
+        for option in question["options"]:
+            truth, evidence = manual[question_id][option["id"]]
+            option_checks.append({
+                "option_id": option["id"], "truth": "correct" if truth else "incorrect",
+                "visible_text_sha256": sha(option["text"].encode()), "evidence": evidence,
+            })
+        independent_solution = "逐一按可见整句/模型判断；正确半句、内部自洽的改错模型或正确数字不使完整选项自动为真。全部独立验证见option_checks。"
+    true_set = [option["option_id"] for option in option_checks if option["truth"] == "correct"]
+    if not true_set or (question["mode"] == "single" and len(true_set) != 1):
+        findings.append({"question_id": question_id, "verdict": "revise", "evidence": f"可见{question['mode']}题的独立完整真集合为{true_set}，不符合其响应模式。"})
+    question_checks.append({
+        "question_id": question_id,
+        "mode": question["mode"],
+        "mathematics": {
+            "verdict": "pass" if true_set and (question["mode"] != "single" or len(true_set) == 1) else "revise",
+            "independent_solution": independent_solution,
+            "correct": true_set,
+            "option_checks": option_checks,
+        },
+    })
+
+assert len(question_checks) == 40
+assert sum(len(item["mathematics"]["option_checks"]) for item in question_checks) == 121
+assert set(expected) | set(manual) == {q["id"] for q in snapshot["questions"]}
+single_labels = [item["mathematics"]["correct"][0] for item in question_checks if item["mode"] == "single"]
+periods = [
+    period for period in range(1, len(single_labels) // 2 + 1)
+    if all(single_labels[i] == single_labels[i % period] for i in range(len(single_labels)))
+]
+label_counts = dict(Counter(single_labels))
+math_freeze = {
+    "schema": "independent-key-free-option-math-freeze-v1",
+    "phase": "first-pure-view; before any author internal/key comparison",
+    "reviewer": {"kind": "independent_agent", "identity": "reviewer-5m-n53; separate from5m author"},
+    "view_file_sha256": snapshot["view_file_sha256"],
+    "opened_view_snapshot_sha256": sha((OWN / "opened-view-snapshot.json").read_bytes()),
+    "source_file_sha256": source_freeze["source_file_sha256"],
+    "source_solutions_sha256": sha((OWN / "source-solutions.json").read_bytes()),
+    "prior_fidelity_freeze_sha256": sha((OWN / "pre-math-view-fidelity.json").read_bytes()),
+    "question_count": 40, "option_count": 121,
+    "independent_true_set_count": 40,
+    "question_checks": question_checks,
+    "display_label_observation": {
+        "single_count": len(single_labels), "single_true_label_counts": label_counts,
+        "single_true_label_sequence": single_labels,
+        "exact_repeating_whole_sequence_periods_at_most_half_length": periods,
+        "all_first_answer": len(set(single_labels)) == 1 and single_labels[0] == "A",
+        "multiple_true_sets": [
+            {"question_id": item["question_id"], "correct": item["mathematics"]["correct"]}
+            for item in question_checks if item["mode"] == "multiple"
+        ],
+        "evidence": "显示位置来自独立逐选项判定，不从作者键读取；不等量配额并非缺陷，39单选没有整包固定周期或全A。",
+    },
+    "1030_scope": "Under the visible explicit interval-distance assumption only. No unqualified physical interpretation, instantaneous-velocity/acceleration model, release height or impact branch inferred.",
+    "author_wrong_programs_not_yet_checked_or_read": True,
+    "author_keys_not_yet_compared": True,
+    "findings": findings,
+    "script_sha256": sha(Path(__file__).read_bytes()),
+}
+save("independent-view-math.json", math_freeze)
+fidelity_by_id = {item["question_id"]: item for item in fidelity["question_checks"]}
+combined = []
+for item in question_checks:
+    merged = dict(fidelity_by_id[item["question_id"]])
+    merged["mathematics"] = item["mathematics"]
+    combined.append(merged)
+new_figure = load("new-figure-review.json")
+assert new_figure["verdict"] == "pass"
+checks = {
+    "schema": "independent-pure-view-checks-v1",
+    "status": "ready-for-FIRST-internal-comparison" if not findings else "specific-view-defects-frozen",
+    "view_file_sha256": snapshot["view_file_sha256"],
+    "opened_view_snapshot_sha256": sha((OWN / "opened-view-snapshot.json").read_bytes()),
+    "source_file_sha256": source_freeze["source_file_sha256"],
+    "source_solutions_sha256": sha((OWN / "source-solutions.json").read_bytes()),
+    "pre_math_fidelity_sha256": sha((OWN / "pre-math-view-fidelity.json").read_bytes()),
+    "independent_math_freeze_sha256": sha((OWN / "independent-view-math.json").read_bytes()),
+    "new_figure_review_sha256": sha((OWN / "new-figure-review.json").read_bytes()),
+    "actual_new_figure_observations_sha256": sha((OWN / "new-figure-actual-observations.json").read_bytes()),
+    "reviewer": math_freeze["reviewer"],
+    "complete_original_count": 27,
+    "question_count": 40, "option_count": 121,
+    "independent_true_set_count": 40,
+    "question_checks": combined,
+    "new_figure_gate": new_figure,
+    "findings": findings,
+    "pending_FIRST_internal_comparison": [
+        "Match author keys to these independently frozen40 true sets, never normalize a disagreement.",
+        "Check every author's claimed wrong program actually produces its121-option snapshot's false output; these programs are not yet disclosed.",
+        "Check source coverage, unit-reason/limitations/omitted_tasks for independent drawing, proof/law/verification writing, model generation and1030 conditional scope.",
+        "Check figure registration binds the current revised SVG/spec/render and independent figure record; no promotion authorized.",
+    ],
+    "not_a_final_choice_semantic_gate": True,
+    "no_author_internal_draft_source_solutions_ready_wrong_programs_serializer_keys_read": True,
+    "no_source_re_solve_or_source_recapture": True,
+    "no_structure_canonical_promotion": True,
+}
+save("view-checks.json", checks)
+for input_record in snapshot["inputs"]:
+    assert sha(Path(input_record["path"]).read_bytes()) == input_record["sha256"]
+source_phase_ready = load("source-phase-ready.json")
+for item in source_phase_ready["frozen_artifacts"]:
+    assert sha(Path(item["path"]).read_bytes()) == item["sha256"]
+save("view-review-receipt.json", {
+    "script_sha256": math_freeze["script_sha256"],
+    "view_file_sha256": snapshot["view_file_sha256"],
+    "author_disclosed_inputs_unchanged": True,
+    "original_source_phase_artifacts_unchanged": True,
+    "source_original_count": 27, "question_count": 40, "option_count": 121,
+    "independent_true_set_count": 40,
+    "status": checks["status"],
+    "frozen_outputs": [
+        {"path": str(OWN / name), "sha256": sha((OWN / name).read_bytes())}
+        for name in ["opened-view-snapshot.json", "pre-math-view-fidelity.json", "independent-view-math.json", "view-checks.json", "new-figure-review.json", "new-figure-actual-observations.json", "new-figure-capture-receipt.json"]
+    ],
+})
+print(json.dumps({
+    "status": checks["status"], "questions": 40, "options": 121,
+    "single_true_labels": label_counts, "single_fixed_periods": periods,
+    "multiple_true_sets": math_freeze["display_label_observation"]["multiple_true_sets"],
+    "findings": findings, "view_checks_sha256": sha((OWN / "view-checks.json").read_bytes()),
+}, indent=2))

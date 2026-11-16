@@ -1,0 +1,204 @@
+"""Freeze already-read key-free views and inspect existing SVG coordinates."""
+
+import hashlib
+import json
+import math
+from pathlib import Path
+import re
+import struct
+import xml.etree.ElementTree as ET
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+TMP = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp"
+
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def canonical(value):
+    return digest(
+        json.dumps(
+            value, sort_keys=True, ensure_ascii=True, separators=(",", ":")
+        ).encode("utf-8")
+    )
+
+
+def file_record(path):
+    data = path.read_bytes()
+    return {
+        "path": str(path),
+        "sha256": digest(data),
+        "bytes": len(data),
+    }
+
+
+def save_new(path, value):
+    with path.open("x", encoding="utf-8") as handle:
+        json.dump(value, handle, indent=2, ensure_ascii=True)
+        handle.write("\n")
+
+
+for lesson in ("n7", "n8"):
+    path = TMP / f"7a-{lesson}/pureview.json"
+    original_bytes = path.read_bytes()
+    questions = json.loads(original_bytes)
+    reviewer = TMP / f"reviewer-7a-{lesson}"
+    frozen_source = reviewer / "source-solutions.json"
+    snapshot = {
+        "schema": "s10y-opened-keyfree-view-snapshot-v1",
+        "lesson": f"alg7-c1-{'s2-n7' if lesson == 'n7' else 's3-n8'}",
+        "phase": "first_key_free_view",
+        "actually_read_in_full": True,
+        "input": file_record(path),
+        "view_canonical_sha256": canonical(questions),
+        "frozen_independent_source": file_record(frozen_source),
+        "author_internal_materials_opened": False,
+        "indexing": "One-based array order; the input has no question IDs.",
+        "question_count": len(questions),
+        "option_count": sum(len(q["options"]) for q in questions),
+        "question_digests": [
+            {
+                "view_index": index,
+                "question_canonical_sha256": canonical(question),
+                "options": [
+                    {
+                        "option_id": option["id"],
+                        "option_canonical_sha256": canonical(option),
+                    }
+                    for option in question["options"]
+                ],
+            }
+            for index, question in enumerate(questions, 1)
+        ],
+        "opened_view": questions,
+    }
+    save_new(reviewer / "opened-view-snapshot.json", snapshot)
+
+
+graph = TMP / "7a-n7/graph95"
+spec_path = graph / "spec.json"
+svg_path = graph / "fig-choice-7a-n7-95.svg"
+png_path = graph / "fig-choice-7a-n7-95.640.png"
+spec = json.loads(spec_path.read_bytes())
+root = ET.parse(svg_path).getroot()
+paths = [
+    element
+    for element in root.iter()
+    if element.tag.endswith("path") and element.get("stroke-width") == "3"
+]
+parents = {child: parent for parent in root.iter() for child in parent}
+spec_paths = [obj for obj in spec["objects"] if obj["type"] == "svgPath"]
+assert len(paths) == len(spec_paths) == 2
+
+curve_evidence = []
+for element, obj, coefficient in zip(paths, spec_paths, (3, 2)):
+    assert element.get("d") == obj["d"]
+    transform = parents[element].get("transform")
+    assert transform == "scale(100 25)"
+    tokens = re.findall(r"[ML]|[-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?", element.get("d"))
+    assert len(tokens) % 3 == 0
+    assert all(tokens[i] == ("M" if i == 0 else "L") for i in range(0, len(tokens), 3))
+    points = [
+        (float(tokens[i + 1]) - 4, 28 - float(tokens[i + 2]))
+        for i in range(0, len(tokens), 3)
+    ]
+    assert all(points[i + 1][0] > points[i][0] for i in range(len(points) - 1))
+    queried = []
+    for query in (-2, -1, 0, 1, 2):
+        for left, right in zip(points, points[1:]):
+            if left[0] <= query <= right[0]:
+                ratio = (query - left[0]) / (right[0] - left[0])
+                interpolated = left[1] + ratio * (right[1] - left[1])
+                queried.append(
+                    {
+                        "x": query,
+                        "exact_source_y": coefficient * query * query,
+                        "rendered_polyline_y": interpolated,
+                        "position_at_640": [80 * (query + 4), 20 * (28 - interpolated)],
+                    }
+                )
+                break
+    curve_evidence.append(
+        {
+            "spec_object_id": obj["id"],
+            "spec_and_svg_path_bytes_equal_as_strings": True,
+            "svg_parent_transform": transform,
+            "screen_to_math": "x=raw_x-4; y=28-raw_y, with native SVG scale(100 25)",
+            "independently_tested_formula": f"y={coefficient}x^2",
+            "sampled_vertices_checked": len(points),
+            "max_abs_equation_residual": max(abs(y - coefficient * x * x) for x, y in points),
+            "max_abs_symmetry_x_residual": max(abs(a[0] + b[0]) for a, b in zip(points, reversed(points))),
+            "max_abs_symmetry_y_residual": max(abs(a[1] - b[1]) for a, b in zip(points, reversed(points))),
+            "math_x_range": [points[0][0], points[-1][0]],
+            "math_y_range": [min(y for _, y in points), max(y for _, y in points)],
+            "visible_top_limit": 28,
+            "expected_top_abs_x": math.sqrt(28 / coefficient),
+            "max_chord_interpolation_error_bound_math_y": max(
+                coefficient * (b[0] - a[0]) ** 2 / 4 for a, b in zip(points, points[1:])
+            ),
+            "queried_coordinates": queried,
+        }
+    )
+
+labels = [element for element in root.iter() if element.tag.endswith("text")]
+png = png_path.read_bytes()
+assert png[:8] == b"\x89PNG\r\n\x1a\n"
+width, height = struct.unpack(">II", png[16:24])
+geometry = {
+    "schema": "s10y-independent-existing-svg-geometry-observations-v1",
+    "source": "Frozen independent source mathematics, existing key-free spec, existing SVG and already-opened PNG only",
+    "spec": file_record(spec_path),
+    "svg": file_record(svg_path),
+    "opened_png": {
+        **file_record(png_path),
+        "width": width,
+        "height": height,
+        "actually_opened": True,
+        "method": "functions.view_image; full native 640x640 supplied PNG, without resize or browser recapture",
+    },
+    "native_product_coordinates": {
+        "origin": [320, 560],
+        "x_pixels_per_unit": 80,
+        "y_pixels_per_unit": 20,
+        "note": "Unequal x and y scales are labeled explicitly; four vertical math units occupy the same 80px as one horizontal math unit.",
+    },
+    "curves": curve_evidence,
+    "all_svg_labels": [
+        {
+            "text": element.text,
+            "native_svg_font_px": float(element.get("font-size")),
+            "effective_640_font_px": float(element.get("font-size")) * 640 / 800,
+            "x": float(element.get("x")),
+            "y": float(element.get("y")),
+        }
+        for element in labels
+    ],
+    "assertion_scope": "Existing objectCount and gridDimensions do not prove parabola equations. The independent extraction above checks every existing polyline vertex, symmetry, continuity order and query interpolation without executing an author validator or renderer.",
+    "no_browser_render_source_refresh_or_author_validator_run": True,
+}
+save_new(TMP / "reviewer-7a-n7/graph95-geometry-observations.json", geometry)
+print(
+    json.dumps(
+        {
+            "saved_snapshots": [
+                str(TMP / "reviewer-7a-n7/opened-view-snapshot.json"),
+                str(TMP / "reviewer-7a-n8/opened-view-snapshot.json"),
+            ],
+            "geometry_saved": str(TMP / "reviewer-7a-n7/graph95-geometry-observations.json"),
+            "curve_summary": [
+                {
+                    "id": curve["spec_object_id"],
+                    "vertices": curve["sampled_vertices_checked"],
+                    "max_equation_error": curve["max_abs_equation_residual"],
+                    "x_range": curve["math_x_range"],
+                    "y_range": curve["math_y_range"],
+                    "query": curve["queried_coordinates"][0],
+                }
+                for curve in curve_evidence
+            ],
+        },
+        indent=2,
+    )
+)

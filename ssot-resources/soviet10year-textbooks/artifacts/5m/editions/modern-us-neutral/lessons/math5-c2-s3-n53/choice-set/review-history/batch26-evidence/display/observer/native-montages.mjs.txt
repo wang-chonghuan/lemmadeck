@@ -1,0 +1,93 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { createRequire } from 'node:module';
+import { fileURLToPath } from 'node:url';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const repo = path.resolve(here, '../../../../..');
+const require = createRequire(path.join(repo, 'app/package.json'));
+const { PNG } = require(path.join(repo, 'app/node_modules/playwright-core/lib/utilsBundle.js'));
+const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const primary = JSON.parse(fs.readFileSync(path.join(repo,
+  '.intentfold/tickets/STEMROBIN-182/tmp/batch26-render/5m-math5-c2-s3-n53-capture-manifest.json')));
+const supplement = JSON.parse(fs.readFileSync(path.join(here, 'supplement-manifest.json')));
+const previouslyOpened = [
+  'text-1440-first', 'text-390-first', 'choices-1440-first', 'choices-1440-last',
+  'choices-390-first', 'choices-390-last', 'exercises-1440-first', 'exercises-1440-last',
+  'exercises-390-first', 'exercises-390-last',
+];
+const pending = primary.screenshots.filter((item) =>
+  !previouslyOpened.some((suffix) => item.path.endsWith(`-${suffix}.png`)));
+const groups = [
+  ['primary-text-duplicates', pending.filter((item) => item.path.includes('-text-'))],
+  ['primary-figures-desktop', pending.filter((item) => item.path.includes('-1440-figure-'))],
+  ['primary-figures-mobile', pending.filter((item) => item.path.includes('-390-figure-'))],
+  ...['exercises', 'choices'].flatMap((surface) => [1440, 390].map((width) =>
+    [`${surface}-${width}`, supplement.captures.filter((item) =>
+      item.surface === surface && item.viewport.width === width && item.kind === 'full-uncovered-objects')])),
+  ['formula-scroll-ends', supplement.captures.filter((item) => item.kind === 'uncovered-formula-window')],
+];
+const montages = [];
+for (const [name, inputs] of groups) {
+  const maxWidth = name === 'formula-scroll-ends' ? 400 : 2000;
+  const rows = [];
+  let row = [];
+  let width = 0;
+  for (const input of inputs) {
+    const file = input.path.startsWith('.intentfold/') ? path.join(repo, input.path) : path.join(here, input.path);
+    if (sha(file) !== input.sha256) throw new Error(`Changed PNG: ${file}`);
+    const image = PNG.sync.read(fs.readFileSync(file));
+    if (width + image.width + 8 > maxWidth && row.length) {
+      rows.push(row);
+      row = [];
+      width = 0;
+    }
+    row.push({ ...input, file, image });
+    width += image.width + 8;
+  }
+  if (row.length) rows.push(row);
+  const batches = name === 'formula-scroll-ends' ? [rows.flat()] : rows;
+  for (const [index, batch] of batches.entries()) {
+    const vertical = name === 'formula-scroll-ends';
+    const width = vertical ? Math.max(...batch.map((item) => item.image.width)) :
+      batch.reduce((n, item) => n + item.image.width, 0) + (batch.length - 1) * 8;
+    const height = vertical ? batch.reduce((n, item) => n + item.image.height, 0) + (batch.length - 1) * 8 :
+      Math.max(...batch.map((item) => item.image.height));
+    const montage = new PNG({ width, height });
+    montage.data.fill(235);
+    for (let offset = 3; offset < montage.data.length; offset += 4) montage.data[offset] = 255;
+    const placements = [];
+    let offset = 0;
+    for (const item of batch) {
+      const x = vertical ? 0 : offset;
+      const y = vertical ? offset : 0;
+      PNG.bitblt(item.image, montage, 0, 0, item.image.width, item.image.height, x, y);
+      // Exact decoded RGBA equality proves the assembly did not resample or crop.
+      for (let row = 0; row < item.image.height; row++) {
+        const start = ((y + row) * width + x) * 4;
+        if (!montage.data.subarray(start, start + item.image.width * 4)
+          .equals(item.image.data.subarray(row * item.image.width * 4, (row + 1) * item.image.width * 4))) {
+          throw new Error(`Pixel-copy mismatch: ${item.file}`);
+        }
+      }
+      placements.push({ source: path.relative(repo, item.file), source_sha256: item.sha256, x, y,
+        width: item.image.width, height: item.image.height, full_native: true, no_crop: true,
+        decoded_rgba_exact: true, item_indices: item.item_indices || [],
+        kind: item.kind || 'retained-primary', scroll_id: item.scroll_id || null,
+        item_index: item.item_index || null, surface: item.surface || null,
+        viewport: item.viewport || null, horizontal_window: item.horizontal_window || null });
+      offset += (vertical ? item.image.height : item.image.width) + 8;
+    }
+    const filename = `montage-${name}-${index + 1}.png`;
+    fs.writeFileSync(path.join(here, filename), PNG.sync.write(montage));
+    montages.push({ path: filename, sha256: sha(path.join(here, filename)), width, height,
+      scale: 1, placements, actual_open: 'pending' });
+  }
+}
+fs.writeFileSync(path.join(here, 'native-montage-manifest.json'), JSON.stringify({
+  scope: 'Lossless native pixel assembly only; not a browser render or recapture',
+  primary_opened_directly: previouslyOpened, montages,
+}, null, 2) + '\n');
+console.log(JSON.stringify(montages.map(({ path, width, height, placements }) =>
+  ({ path, width, height, sources: placements.map((item) => item.source.split('/').at(-1)) })), null, 2));

@@ -1,0 +1,231 @@
+"""Execute each newly authored mistaken procedure; no files or prior answers read."""
+from fractions import Fraction as F
+import json
+import math
+import sys
+
+
+def root(a, b, c):
+    return (F(c)-F(b))/F(a)
+
+
+def scale(equation, factor):
+    return [F(value)*F(factor) for value in equation]
+
+
+def add_eq(equation, value):
+    a, b, c = map(F, equation)
+    return [a, b+F(value), c+F(value)]
+
+
+def left_scale(equation, factor):
+    a, b, c = map(F, equation)
+    return [a*F(factor), b*F(factor), c]
+
+
+def direct(result, target):
+    return {"result": result, "matches_target": result == list(map(F, target))}
+
+
+def add_affine(left, right, addition):
+    return {"left": [F(a)+F(b) for a, b in zip(left, addition)],
+            "right": [F(a)+F(b) for a, b in zip(right, addition)]}
+
+
+def solve(a, b, c, d, e, f):
+    a, b, c, d, e, f = map(F, (a, b, c, d, e, f))
+    det = a*e-b*d
+    assert det
+    return [(c*e-b*f)/det, (a*f-c*d)/det]
+
+
+def witness_claim(point, lines):
+    x, y = map(F, point)
+    membership = [F(a)*x+F(b)*y == F(c) for a,b,c in lines]
+    # The deliberate wrong inference promotes one witness to a universal proof.
+    return {"membership": membership, "claimed_universal_proof": all(membership)}
+
+
+def zero_union(first, second):
+    result = []
+    for value in first+second:
+        value = F(value)
+        if value not in result:
+            result.append(value)
+    return result
+
+
+def zero_intersection(first, second):
+    return [F(value) for value in first if F(value) in list(map(F, second))]
+
+
+def filter_roots(candidates, exclusions):
+    return [F(value) for value in candidates if F(value) not in list(map(F, exclusions))]
+
+
+def sorted_roots(values):
+    return sorted(map(F, values))
+
+
+def require_zero_constant(value):
+    assert F(value) != 0
+    return []
+
+
+def union_lines(lines, point):
+    x,y = map(F, point)
+    residuals = [F(a)*x+F(b)*y-F(c) for a,b,c in lines]
+    return {"lines": [[F(v) for v in line] for line in lines],
+            "witness_in_union": any(value == 0 for value in residuals),
+            "square_sum": sum(value*value for value in residuals)}
+
+
+def ratio(numerator, denominator):
+    return "undefined" if F(denominator) == 0 else F(numerator)/F(denominator)
+
+
+def wrong_zero_fraction(numerator, denominator):
+    assert F(numerator) == 0
+    return {"numerator": F(numerator), "denominator": F(denominator), "claimed_value": F(0)}
+
+
+def wrong_zero_division(numerator, denominator):
+    return F(0) if F(denominator) == 0 else F(numerator)/F(denominator)
+
+
+def classify98(mode):
+    numerator = [F("3.6")/F("1.2")-3,
+                 (F(11,9)/F(22,3)-F(1,6))*F(".23"),
+                 -8/F(".4")+F(".02")*1000,
+                 (F(1,4)-F(1,6))*8-F(2,3)]
+    denominator = [F("5.6")*F("2.1")-F("11.76"),F(17,8)+F("1.2"),
+                   F("1.753")*F(".8")+F("1.2"),F("1.85")-F("1.62")]
+    if mode == "ignore_denominator":
+        return ["zero" if n == 0 else "nonzero" for n in numerator]
+    if mode == "mixed_number_bug":
+        numerator[1] = (F(1+2,9)/F(7+1,3)-F(1,6))*F(".23")
+    else:
+        raise ValueError(mode)
+    return ["undefined" if d == 0 else "zero" if n == 0 else "nonzero"
+            for n,d in zip(numerator,denominator)]
+
+
+def existence101(mode):
+    numerator_roots = [[root(1,-2,0)],[],[root(1,0,0)],[],[],[root(1,5,0)]]
+    denominator_roots = [[],[root(1,-2,0)],[],[root(1,0,0)],[root(1,5,0)],[]]
+    if mode == "swap_numerator_denominator":
+        return denominator_roots
+    if mode == "union_denominator_zeros":
+        return [zero_union(n,d) for n,d in zip(numerator_roots,denominator_roots)]
+    raise ValueError(mode)
+
+
+def positive_square_root(n):
+    value = math.isqrt(n)
+    assert value*value == n
+    return F(value)
+
+
+def signed_square_roots(n):
+    value = positive_square_root(n)
+    return [-value,value]
+
+
+def positive_square_sum_roots(n):
+    assert F(n) > 0
+    return []
+
+
+def axis_linear(a,b,d):
+    return {"x_axis":[[root(a,b,0),F(0)]],"y_axis":[[F(0),F(b)/F(d)]]}
+
+
+def swap_axis_intercepts(x_value,y_value):
+    return {"x_axis":[[F(y_value),F(0)]],"y_axis":[[F(0),F(x_value)]]}
+
+
+def wrong_unit_intercepts(d):
+    value = root(1,0,d)
+    return {"x_axis":[[value,F(0)]],"y_axis":[[F(0),value]]}
+
+
+def wrong_extra_denominator_variable(d):
+    assert F(d) != 0
+    constant_value = F(1)/F(d)
+    excluded_x = F(0)
+    assert constant_value != 0 and excluded_x == 0
+    return {"x_axis":[],"y_axis":[]}
+
+
+def axis_product(first_constant,second_constant,denominator):
+    return {"x_axis":[[root(1,first_constant,0),F(0)],[root(1,second_constant,0),F(0)]],
+            "y_axis":[[F(0),F(first_constant)*F(second_constant)/F(denominator)]]}
+
+
+def drop_product_root(candidates,y_intercept):
+    return {"x_axis":[[F(candidates[1]),F(0)]],"y_axis":[[F(0),F(y_intercept)]]}
+
+
+def denominator_as_axis_root(a,b,y_value):
+    return {"x_axis":[[root(a,b,0),F(0)]],"y_axis":[[F(0),F(y_value)]]}
+
+
+def poly_sub(first,second):
+    size = max(len(first),len(second))
+    return [F(first[i] if i<len(first) else 0)-F(second[i] if i<len(second) else 0)
+            for i in range(size)]
+
+
+def wrong_square_difference_polynomial():
+    wrong_constant = (F(1)-F(-1))**2
+    return [wrong_constant,F(-4)]
+
+
+def wrong_formula(mode, values):
+    p = {key:F(value) for key,value in values.items()}
+    if mode == "t":
+        return {"formula":"v/s","value":p["v"]/p["s"]}
+    if mode == "V":
+        return {"formula":"rho/m","value":p["rho"]/p["m"]}
+    if mode == "Rc_reciprocal":
+        return {"R_formula":"4S/(abc)","R_value":4*p["S"]/(p["a"]*p["b"]*p["c"]),
+                "c_formula":"ab/(4RS)","c_value":p["a"]*p["b"]/(4*p["R"]*p["S"])}
+    if mode == "Rc_drop4":
+        return {"R_formula":"abc/S","R_value":p["a"]*p["b"]*p["c"]/p["S"],
+                "c_formula":"RS/(ab)","c_value":p["R"]*p["S"]/(p["a"]*p["b"])}
+    if mode == "ac_sign":
+        return {"a_formula":"bc/(b+c)","a_value":p["b"]*p["c"]/(p["b"]+p["c"]),
+                "c_formula":"ab/(a-b)","c_value":p["a"]*p["b"]/(p["a"]-p["b"])}
+    if mode == "ac_no_reciprocal":
+        return {"a_formula":"(b-c)/(bc)","a_value":(p["b"]-p["c"])/(p["b"]*p["c"]),
+                "c_formula":"(a+b)/(ab)","c_value":(p["a"]+p["b"])/(p["a"]*p["b"])}
+    raise ValueError(mode)
+
+
+def normalize(value):
+    if isinstance(value,bool) or value is None or isinstance(value,str):
+        return value
+    if isinstance(value,(int,F)):
+        return str(value)
+    if isinstance(value,(list,tuple)):
+        return [normalize(item) for item in value]
+    if isinstance(value,dict):
+        return {key:normalize(item) for key,item in value.items()}
+    raise TypeError(type(value).__name__)
+
+
+payload=json.load(sys.stdin)
+environment={name:value for name,value in globals().copy().items()
+             if callable(value) and not name.startswith("_")}
+results=[]
+for item in payload["programs"]:
+    try:
+        actual=normalize(eval(item["expr"],{"__builtins__":{}},environment))
+        results.append({**item,"actual":actual,"pass":actual==item["expected"]})
+    except Exception as error:
+        results.append({**item,"pass":False,"error":str(error)})
+failures=[item for item in results if not item["pass"]]
+print(json.dumps({"scope":"New option-generating wrong procedures only, not semantic self-review.",
+                  "draft_sha256":payload["draft_sha256"],"executed":len(results),
+                  "failures":failures,"results":results},ensure_ascii=True,indent=2))
+sys.exit(2 if failures else 0)

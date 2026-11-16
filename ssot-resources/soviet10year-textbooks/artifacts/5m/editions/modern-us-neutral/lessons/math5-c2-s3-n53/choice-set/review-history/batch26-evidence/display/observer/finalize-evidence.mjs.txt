@@ -1,0 +1,147 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import { fileURLToPath } from 'node:url';
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const repo = path.resolve(here, '../../../../..');
+const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const load = (name) => JSON.parse(fs.readFileSync(path.join(here, name)));
+const observations = load('actual-observations.json');
+const supplement = load('supplement-manifest.json');
+const montageManifest = load('native-montage-manifest.json');
+const primary = JSON.parse(fs.readFileSync(path.join(repo,
+  '.intentfold/tickets/STEMROBIN-182/tmp/batch26-render/5m-math5-c2-s3-n53-capture-manifest.json')));
+assert.equal(observations.opens.length, 35);
+assert.equal(observations.actual_image_inputs, observations.opens.length);
+assert(observations.opens.length < 50);
+const opens = observations.opens.map((open) => {
+  const file = path.join(open.directory === 'primary' ? observations.primary_directory : here, open.file);
+  return { ...open, path: file, sha256: sha(file), tool: observations.open_method, detail: observations.detail };
+});
+const opened = new Map(opens.map((open) => [open.path, open]));
+const observedSources = new Map();
+for (const open of opens) {
+  if (open.directory === 'primary') observedSources.set(path.relative(repo, open.path), open.path);
+}
+for (const montage of montageManifest.montages) {
+  const montagePath = path.join(here, montage.path);
+  assert(opened.has(montagePath), `Montage not actually opened: ${montage.path}`);
+  assert.equal(sha(montagePath), montage.sha256);
+  montage.actual_open = { path: montagePath, tool: observations.open_method, detail: observations.detail,
+    notes: opened.get(montagePath).notes };
+  for (const placement of montage.placements) {
+    assert.equal(sha(path.join(repo, placement.source)), placement.source_sha256);
+    assert(placement.decoded_rgba_exact && placement.full_native && placement.no_crop);
+    observedSources.set(placement.source, montagePath);
+  }
+}
+for (const image of primary.screenshots) {
+  assert(observedSources.has(image.path), `Unopened primary: ${image.path}`);
+  assert.equal(sha(path.join(repo, image.path)), image.sha256);
+}
+for (const capture of supplement.captures) {
+  assert(observedSources.has(path.relative(repo, path.join(here, capture.path))), `Unopened capture: ${capture.path}`);
+  assert.equal(sha(path.join(here, capture.path)), capture.sha256);
+}
+const coverage = [];
+for (const surface of supplement.surfaces) {
+  assert.equal(surface.errors.length, 0);
+  assert.equal(surface.document.width, surface.viewport.width);
+  const items = surface.items.map((item) => {
+    const fullCaptures = supplement.captures.filter((capture) => capture.surface === surface.surface &&
+      capture.viewport.width === surface.viewport.width && capture.item_indices?.includes(item.index));
+    assert(item.primary_full.length || fullCaptures.length, `Missing object ${surface.surface}/${item.index}`);
+    for (const capture of fullCaptures) {
+      assert(capture.clip.y <= item.box.y && capture.clip.y + capture.clip.height >= item.box.y + item.box.height);
+      assert(capture.clip.x <= item.box.x && capture.clip.x + capture.clip.width >= item.box.x + item.box.width - 1);
+    }
+    const proof = [
+      ...item.primary_full.map((name) => {
+        const image = primary.screenshots.find((image) => image.path.endsWith(`-${name}.png`));
+        assert(image && observedSources.has(image.path));
+        return { path: path.join(repo, image.path), actual_open: observedSources.get(image.path) };
+      }),
+      ...fullCaptures.map((capture) => ({ path: path.join(here, capture.path),
+        actual_open: observedSources.get(path.relative(repo, path.join(here, capture.path))) })),
+    ];
+    return { index: item.index, id: item.id, options: item.options.map(({ index, id }) => ({ index, id })),
+      image_count: item.image_count, full_object_evidence: proof };
+  });
+  const scrolls = surface.scrolls.map((scroll) => {
+    const ends = supplement.captures.filter((capture) => capture.surface === surface.surface &&
+      capture.viewport.width === surface.viewport.width && capture.scroll_id === scroll.id);
+    const windows = [{ left: 0, right: scroll.width }, ...ends.map((capture) => capture.horizontal_window)]
+      .sort((a, b) => a.left - b.left);
+    let coveredRight = 0;
+    for (const window of windows) {
+      assert(window.left <= coveredRight);
+      coveredRight = Math.max(coveredRight, window.right);
+    }
+    assert(coveredRight >= scroll.scroll_width);
+    assert(ends.length > 0);
+    return { id: scroll.id, item_index: scroll.item_index, scroll_width: scroll.scroll_width, windows,
+      continuous_pixel_coverage: true, end_evidence: ends.map((capture) => ({
+        path: path.join(here, capture.path),
+        actual_open: observedSources.get(path.relative(repo, path.join(here, capture.path))) })) };
+  });
+  const expected = { text: 6, exercises: 27, choices: 40 }[surface.surface];
+  assert.equal(items.length, expected);
+  const optionCount = items.reduce((n, item) => n + item.options.length, 0);
+  if (surface.surface === 'choices') assert.equal(optionCount, 121);
+  coverage.push({ surface: surface.surface, viewport: surface.viewport,
+    complete_objects: items.length, complete_options: optionCount, complete_image_occurrences: surface.images.length,
+    scroll_windows: scrolls, items, actual_pixel_coverage: 'complete',
+    display_status: surface.surface === 'choices' ? 'blocked-D1' : 'pass' });
+}
+const protectedBindings = supplement.bindings.map((binding) => {
+  const current = sha(path.join(repo, binding.path));
+  assert.equal(current, binding.sha256, `Protected input changed: ${binding.path}`);
+  return { ...binding, final_sha256: current, unchanged: true };
+});
+const historyNames = ['render-command', 'render-recovery-command', 'capture-command',
+  'shadow-figure-path-rebind', 'blocked-shadow'];
+const history = historyNames.map((name) => {
+  const file = path.join(repo,
+    `.intentfold/tickets/STEMROBIN-182/tmp/batch26-render/5m-math5-c2-s3-n53-${name}.json`);
+  return { path: file, sha256: sha(file), preserved_read_only: true };
+});
+const write = (name, value) => fs.writeFileSync(path.join(here, name), JSON.stringify(value, null, 2) + '\n');
+write('native-montage-manifest.json', montageManifest);
+write('coverage-proof.json', { scope: 'Mechanical evidence accounting, not semantic review',
+  actual_image_inputs: opens.length, primary_pngs_observed: 26, supplemental_pngs_observed: 63,
+  native_montages_observed: 25, all_source_pixels_exact: true, surfaces: coverage });
+write('actual-open-bindings.json', { scope: 'Hash-bound actual opens, including seven inherited tool-open records',
+  opens, source_to_actual_open: [...observedSources].map(([source, actual_open]) => ({
+    source: path.join(repo, source), sha256: sha(path.join(repo, source)), actual_open })) });
+write('input-preservation.json', { protected_bindings: protectedBindings, all_unchanged: true,
+  browser_finally_closed: supplement.browser.finally_closed, external_requests: supplement.browser.external_requests,
+  parent_history: history, inherited_history: {
+    first_canonical_exit: 3, first_render: 'failed shadow containment; retained',
+    path_only_scratch_recovery_render: 'succeeded; not rerun',
+    first_parent_capture: 'succeeded; 26 originals retained and not recaptured',
+    metric_attempt: 'Initial img locator timed out because choice 27 uses inline svg; finally closed. Corrected metric-only attempt succeeded without captures.'
+  }, excluded_actions: ['canonical', 'source/math review', 'answer/key review', 'standalone figure rerun',
+    'shared renderer edit', 'content edit', 'app/server/user browser', 'database/cloud', 'dependency install',
+    'paid call', 'commit', 'promotion'] });
+const evidenceNames = ['actual-observations.json', 'actual-open-bindings.json', 'coverage-proof.json',
+  'input-preservation.json', 'supplement-manifest.json', 'native-montage-manifest.json', 'display-text-metrics.json'];
+write('display-review.json', {
+  schema: 'ld-s10y/independent-display-review@1', ticket: 'STEMROBIN-182', book: '5m', lesson: 'math5-c2-s3-n53',
+  scope: 'Independent actual-pixel gate for six existing offline surfaces only',
+  recorded_at: new Date().toISOString(), status: 'blocked', display_status: 'blocked',
+  display_findings: observations.display_findings, actual_pixel_coverage: 'complete',
+  surfaces: coverage.map(({ surface, viewport, complete_objects, complete_options, complete_image_occurrences, display_status }) =>
+    ({ surface, viewport, complete_objects, complete_options, complete_image_occurrences, display_status })),
+  semantic_status: 'blocked', semantic_blocked_source_numbers: ['1030'], group_status: 'blocked',
+  semantic_approval_granted: false, promotion_approval_granted: false,
+  observations: { primary_pngs: 26, supplemental_pngs: 63, native_montage_opens: 25, actual_image_inputs: 35 },
+  all_protected_inputs_unchanged: true, browser_closed: true,
+  formal_standalone_figure_reviews: 'Not rerun or changed; this record grants no figure approval',
+  evidence: evidenceNames.map((name) => ({ path: path.join(here, name), sha256: sha(path.join(here, name)) })),
+  finish: 'New independent display gate finished, blocked D1; semantic group remains blocked solely on 1030. No repairs or promotion.'
+});
+console.log(JSON.stringify({ status: 'blocked', display_findings: ['D1'], semantic_blocked: ['1030'],
+  actual_opens: opens.length, surfaces: coverage.length, protected_inputs: protectedBindings.length,
+  full_coverage: true, output: path.join(here, 'display-review.json') }, null, 2));

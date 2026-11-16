@@ -1,0 +1,260 @@
+import copy
+import hashlib
+import json
+from pathlib import Path
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+TMP = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp"
+
+
+def read(path):
+    return json.loads(path.read_bytes())
+
+
+def bytehash(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def digest(value):
+    raw = json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def save(path, value):
+    with path.open("x", encoding="utf-8") as stream:
+        json.dump(value, stream, ensure_ascii=True, indent=2)
+        stream.write("\n")
+
+
+REPAIRS = {
+    "7": {
+        "indices": [15],
+        "changed": [{
+            "view_index": 15,
+            "source_units": ["95"],
+            "task_fidelity": {
+                "verdict": "pass",
+                "evidence": "A and C both retain the independently true f(-2)<g(-2). Both are internally consistent possible label assignments without seeing the image: A assigns the higher I to g, whereas C assigns the lower I to f. Arithmetic alone cannot choose between them. The frozen actual graph, where I=3x^2 is above II=2x^2, selects A. All candidates contrast assignment and/or vertical ordering, rather than supplying a unique numeric pair.",
+            },
+            "redundancy": {
+                "verdict": "pass",
+                "evidence": "This remains the sole source95 shared-coordinate graph comparison. Assignment, height and function ordering form one coherent graph task, not repeated independent arithmetic questions.",
+            },
+            "answer_leakage": {
+                "verdict": "pass",
+                "evidence": "The prior numeric 8/12 versus 12/8 versus negative-value cue is removed. Knowing 8<12 leaves both A and C possible; no stem text assigns I or II. Only the unchanged actually opened graph resolves the labeling.",
+            },
+            "mathematics": {
+                "verdict": "pass",
+                "independent_solution": "Reuse the frozen opened graph: I=g=3x^2 and II=f=2x^2. At x=-2 their heights are 12 and 8, respectively. I is higher and f(-2)<g(-2). No image has been reopened or rerendered.",
+                "correct": ["A"],
+                "option_checks": [
+                    {"option_id": "A", "truth": "correct", "evidence": "All three claims match the frozen image: I=g, II=f, I above II at -2, and f(-2)=8<12=g(-2)."},
+                    {"option_id": "B", "truth": "incorrect", "evidence": "I=f and II=g contradict the frozen labels. The asserted f(-2)>g(-2) is also false because 8<12. Its I-above-II statement alone is true but cannot rescue the conjunction."},
+                    {"option_id": "C", "truth": "incorrect", "evidence": "The inequality f(-2)<g(-2) is true, but the label assignment is swapped and the actual I is above, not below, II. This is a genuine graph-dependent false alternative despite correct arithmetic ordering."},
+                ],
+            },
+        }],
+        "coverage": "All six source originals and all15 visible questions remain. Source95 now requires an actual label/height judgment. The pre-drawn graph still replaces independent graph construction; this acknowledged production loss does not remove the graph-comparison mathematics.",
+    },
+    "8": {
+        "indices": [2, 21],
+        "changed": [{
+            "view_index": 2,
+            "source_units": ["98a", "98b", "98c", "98d"],
+            "task_fidelity": {
+                "verdict": "pass",
+                "evidence": "Every original full fraction is unchanged. In a-d order A now claims zero,zero,nonzero,nonzero; B undefined,zero,zero,zero; C undefined,nonzero,zero,undefined. Each original state has a contrasting candidate, particularly c nonzero versus zero and d nonzero versus zero versus undefined. Full-record recognition retains all four fraction-state distinctions; ordinary elimination is not itself a loss.",
+            },
+            "redundancy": {
+                "verdict": "pass",
+                "evidence": "The four distinct arithmetic fractions remain bundled once. c and d are no longer invariant answers copied from every alternative.",
+            },
+            "answer_leakage": {
+                "verdict": "pass",
+                "evidence": "Neither c nor d is labeled zero in every option anymore. All four state entries must be mathematical claims rather than an invariant printed answer; no author key or rationale was consulted.",
+            },
+            "mathematics": {
+                "verdict": "pass",
+                "independent_solution": "Reuse the frozen exact source arithmetic: all numerators are zero; a-d denominators are 0,133/40,3253/1250,23/100. Thus the complete state tuple is undefined,zero,zero,zero.",
+                "correct": ["B"],
+                "option_checks": [
+                    {"option_id": "A", "truth": "incorrect", "evidence": "Its a claim calls 0/0 zero, while its c and d claims call defined zero fractions nonzero. Only b is correct."},
+                    {"option_id": "B", "truth": "correct", "evidence": "a is undefined and each of b,c,d has zero numerator and the respective nonzero exact denominator; all four entries are correct."},
+                    {"option_id": "C", "truth": "incorrect", "evidence": "a undefined and c zero are true, but b has value zero, not nonzero, and d has nonzero denominator 23/100, so it is zero rather than undefined."},
+                ],
+            },
+        }, {
+            "view_index": 21,
+            "source_units": ["103c"],
+            "task_fidelity": {
+                "verdict": "pass",
+                "evidence": "The original (x+5)(x-7)/10 and request for all intersections with both axes are unchanged. A now contrasts the y-intercept +7/2 with the correct -7/2 in B/C while retaining its reversed x roots. C still tests completeness by omitting (-5,0). Both-axis claims now have a genuine contrast.",
+            },
+            "redundancy": {
+                "verdict": "pass",
+                "evidence": "This is still one complete two-axis intersection judgment for the original function; no extra question or repeated arithmetic unit was introduced.",
+            },
+            "answer_leakage": {
+                "verdict": "pass",
+                "evidence": "The y-axis point is no longer (0,-7/2) in every option. A claims the opposite sign, so the actual x=0 evaluation has a visible wrong counterpart. Normal whole-option elimination remains possible and is not misclassified as leakage.",
+            },
+            "mathematics": {
+                "verdict": "pass",
+                "independent_solution": "Reuse the frozen source result: setting y=0 gives x=-5 or7; setting x=0 gives 5*(-7)/10=-7/2. The complete set is {(-5,0),(7,0),(0,-7/2)}.",
+                "correct": ["B"],
+                "option_checks": [
+                    {"option_id": "A", "truth": "incorrect", "evidence": "Neither reversed x root is correct: f(5)=-2 and f(-7)=14/5. The newly changed y-intercept +7/2 also has the wrong sign; f(0)=-7/2."},
+                    {"option_id": "B", "truth": "correct", "evidence": "Both numerator roots are retained and the y-intercept is the exact negative product -35/10=-7/2."},
+                    {"option_id": "C", "truth": "incorrect", "evidence": "Its (7,0) and (0,-7/2) are correct but its 'only' x-axis intersection claim omits the valid second point (-5,0)."},
+                ],
+            },
+        }],
+        "coverage": "All13 originals,36 visible questions,113 options and the prior48/51 source inventory remain. The three formerly unrequired source outputs98c,98d and103c y-intercept now contrast in the candidates. Original108 complete domain/zero branches and100 extra-zero construction quantifiers are unchanged and retain their previous pass.",
+    },
+}
+
+
+for number, repair in REPAIRS.items():
+    own = TMP / f"reviewer-7a-n{number}"
+    full_path = TMP / f"7a-n{number}/pureview.json"
+    changed_path = TMP / f"7a-n{number}/changed-pureview.json"
+    old_path = own / "view-checks.json"
+    old_snapshot_path = own / "opened-view-snapshot.json"
+    source_path = own / "source-solutions.json"
+    old = read(old_path)
+    old_snapshot = read(old_snapshot_path)
+    old_views = old_snapshot["opened_view"]
+    current = read(full_path)
+    changed = read(changed_path)
+    actual_indices = [
+        index + 1
+        for index, (before, after) in enumerate(zip(old_views, current))
+        if before != after
+    ]
+    assert len(old_views) == len(current)
+    assert actual_indices == repair["indices"], actual_indices
+    assert changed == [current[index - 1] for index in actual_indices]
+    assert bytehash(source_path) == old["binding"]["source_freeze_byte_sha256"]
+    original_hashes = {
+        path.name: bytehash(path)
+        for path in [old_path, old_snapshot_path, source_path]
+    }
+    binding = {
+        "full_view_path": str(full_path),
+        "full_view_byte_sha256": bytehash(full_path),
+        "full_view_canonical_sha256": digest(current),
+        "changed_view_path": str(changed_path),
+        "changed_view_byte_sha256": bytehash(changed_path),
+        "changed_view_canonical_sha256": digest(changed),
+        "original_freezes": [
+            {"path": str(own / name), "byte_sha256": value}
+            for name, value in original_hashes.items()
+        ],
+        "actual_content_changed_indices": actual_indices,
+        "unchanged_questions": len(current) - len(actual_indices),
+        "unchanged_question_equality": "Exact parsed JSON equality against own original opened-view-snapshot; no author delta or mapping used.",
+        "indexing": "One-based order in the complete key-free array.",
+    }
+    math = {
+        "schema": "s10y-independent-changed-view-math-v1",
+        "lesson": old["lesson"],
+        "phase": "changed_key_free_view_only",
+        "reviewer": old["reviewer"],
+        "binding": binding,
+        "outcome": "pass",
+        "changed_question_reviews": repair["changed"],
+        "all_changed_complete_true_sets_equal_own_original_freeze": True,
+        "unchanged_truths_reused_from": str(old_path),
+        "author_internals_opened": False,
+    }
+    revised = copy.deepcopy(old)
+    revised["phase"] = "repaired_key_free_view"
+    revised["outcome"] = "pass"
+    revised["handoff"] = "Ready for first internal comparison only; author internals still unopened."
+    revised["binding"] = binding
+    revised["review_order"] = [
+        "Actually read the three authorized changed key-free questions.",
+        "Reassess only their fidelity, leakage, coverage and mathematical claims.",
+        "Prove every other visible question content-identical to own frozen opened snapshot.",
+        "Reuse all unchanged option truths and source/image observations; freeze the final complete key-free view digest.",
+    ]
+    replacement_by_index = {item["view_index"]: item for item in repair["changed"]}
+    revised["question_reviews"] = [
+        copy.deepcopy(replacement_by_index.get(item["view_index"], item))
+        for item in old["question_reviews"]
+    ]
+    for item in revised["task_fidelity_reviews"]:
+        if item["verdict"] == "revise":
+            item["verdict"] = "pass"
+            item["evidence"] = repair["coverage"]
+            item.pop("narrow_repair_requirement", None)
+    revised["answer_leakage_review"] = {
+        "verdict": "pass",
+        "evidence": "All prior passing units are exact-content unchanged. The only previously failed leakage/task-bypass relationships have been removed as documented in changed-view-math.json.",
+    }
+    revised["coverage_review"] = {
+        "verdict": "pass",
+        "evidence": repair["coverage"],
+        "count_mismatch_is_itself_a_loss": False,
+        "production_losses_reused_from_original_freeze": True,
+        "author_internal_limitations_not_yet_compared": True,
+    }
+    revised["changed_review"] = str(own / "changed-view-math.json")
+    revised["retention"] = "Original view-checks.json and opened-view-snapshot.json remain byte-identical rejected history; this is a distinct current-view freeze."
+    snapshot = {
+        "schema": "s10y-opened-repaired-keyfree-view-snapshot-v1",
+        "lesson": old["lesson"],
+        "binding": binding,
+        "changed_subtrees_actually_read": True,
+        "unchanged_subtrees_reused_by_exact_content_equality": True,
+        "view": current,
+        "question_digests": [
+            {
+                "view_index": index,
+                "sha256": digest(question),
+                "options": [
+                    {"option_id": option["id"], "sha256": digest(option)}
+                    for option in question["options"]
+                ],
+            }
+            for index, question in enumerate(current, 1)
+        ],
+    }
+    ready = {
+        "schema": "s10y-independent-repaired-pure-view-ready-v1",
+        "lesson": old["lesson"],
+        "status": "ready_for_first_internal_comparison",
+        "outcome": "pass",
+        "binding": binding,
+        "counts": old["counts"],
+        "changed_questions": len(actual_indices),
+        "changed_options_actually_judged": sum(len(item["options"]) for item in changed),
+        "all_options_independently_frozen": True,
+        "remaining_view_defects": [],
+        "author_internals_opened": False,
+        "source_graph_rerun_or_reopen": False,
+        "canonical_validator_render_browser_or_promotion_run": False,
+        "artifacts": [
+            str(own / "view-checks-repaired.json"),
+            str(own / "changed-view-math.json"),
+            str(own / "opened-repaired-view-snapshot.json"),
+        ],
+    }
+    save(own / "changed-view-math.json", math)
+    save(own / "view-checks-repaired.json", revised)
+    save(own / "opened-repaired-view-snapshot.json", snapshot)
+    save(own / "pure-view-repaired-ready.json", ready)
+    assert original_hashes == {
+        path.name: bytehash(path)
+        for path in [old_path, old_snapshot_path, source_path]
+    }
+    print(json.dumps({
+        "lesson": old["lesson"],
+        "saved": str(own / "view-checks-repaired.json"),
+        "outcome": "pass",
+        "changed_indices": actual_indices,
+        "unchanged_questions": binding["unchanged_questions"],
+        "full_view_canonical_sha256": binding["full_view_canonical_sha256"],
+    }))

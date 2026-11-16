@@ -1,0 +1,129 @@
+import hashlib
+import json
+from fractions import Fraction as F
+from pathlib import Path
+
+
+OWN = Path(__file__).resolve().parent
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def save(name, value):
+    with (OWN / name).open("x", encoding="utf-8") as handle:
+        json.dump(value, handle, indent=2, ensure_ascii=False)
+        handle.write("\n")
+
+
+capture = json.loads((OWN / "new-figure-capture-receipt.json").read_bytes())
+snapshot = json.loads((OWN / "opened-view-snapshot.json").read_bytes())
+for input_record in capture["inputs"]:
+    assert sha(Path(input_record["path"]).read_bytes()) == input_record["sha256"]
+assert sha(Path(capture["capture"]["path"]).read_bytes()) == capture["capture"]["sha256"]
+geometry = capture["visible_svg_geometry"]
+vertical = [line for line in geometry["lines"] if "_ld-fine-grid-v-" in line["id"]]
+horizontal = [line for line in geometry["lines"] if "_ld-fine-grid-h-" in line["id"]]
+assert len(vertical) == 41 and len(horizontal) == 46
+unit = F(800, 17)
+origin = (F(4640, 17), F(8000, 17))
+step_x, step_y = unit / 4, unit / 3
+for i, line in enumerate(vertical):
+    assert abs(float(line["x1"]) - float(origin[0] + (-4 + F(i, 4)) * unit)) < 1e-8
+for i, line in enumerate(horizontal):
+    assert abs(float(line["y1"]) - float(origin[1] - (-6 + F(i, 3)) * unit)) < 1e-8
+drawn_line = next(line for line in geometry["lines"] if line["id"].endswith("_ld-derived-line"))
+assert abs(float(drawn_line["y2"]) - float(drawn_line["y1"]) + F(4, 3) * (float(drawn_line["x2"]) - float(drawn_line["x1"]))) < 1e-8
+assert geometry["min_text_px"] == 18
+queries = [
+    ("forward-x=5", F(5), F(20, 3)), ("forward-x=-3", F(-3), F(-4)),
+    ("forward-x=9/4", F(9, 4), F(3)), ("inverse-y=2/3", F(1, 2), F(2, 3)),
+    ("inverse-y=-4", F(-3), F(-4)), ("inverse-y=0", F(0), F(0)),
+]
+query_checks = []
+for label, x, y in queries:
+    assert y == F(4, 3) * x
+    column, row_from_bottom = (x + 4) * 4, (y + 6) * 3
+    assert column.denominator == row_from_bottom.denominator == 1
+    assert 0 <= column <= 40 and 0 <= row_from_bottom <= 45
+    px = origin[0] + unit * x
+    py = origin[1] - unit * y
+    query_checks.append({
+        "query": label, "exact_point": [str(x), str(y)],
+        "grid_column_from_left": int(column), "grid_row_from_bottom": int(row_from_bottom),
+        "svg_pixel_position": [round(float(px), 5), round(float(py), 5)],
+        "basis": "exact fraction values from prior independent source freeze; this is an analytic SVG-coordinate confirmation, not claiming fractional values were measured precisely from raster pixels",
+    })
+observations = {
+    "schema": "independent-authored-figure-actual-observations-v1",
+    "figure_id": "fig-choice-n53-linear-reading",
+    "asset_path": capture["inputs"][3]["path"],
+    "asset_sha256": capture["inputs"][3]["sha256"],
+    "spec_path": capture["inputs"][1]["path"],
+    "spec_sha256": capture["inputs"][1]["sha256"],
+    "render_path": capture["inputs"][2]["path"],
+    "render_sha256": capture["inputs"][2]["sha256"],
+    "preview_opened": capture["inputs"][4],
+    "independent_capture_actually_opened_in_full": capture["capture"],
+    "capture_receipt_sha256": sha((OWN / "new-figure-capture-receipt.json").read_bytes()),
+    "source_file_sha256": "7fdd196a0318878426a27d8e10ed148a6d7947dd56021a8bda8bd93d5bf28698",
+    "source_solutions_sha256": sha((OWN / "source-solutions.json").read_bytes()),
+    "provenance": "1025 has written mathematics only and no source figure; authoredBasis line/grid are modern supporting additions, not recovered source pixels.",
+    "actual_opening_scope": "Full 640x800 PNG preview and separately captured full current SVG opened with view_image. Independent SVG capture used an isolated explicitly headless browser, PWDEBUG cleared, reports never open, all network aborted, closed in finally. No headed product or app lesson surface observed.",
+    "actual_pixels": [
+        "Full image shows x axis from -4 to6, y axis from -6 to9, origin O, visible positive and negative signs, and y=(4/3)x passing through the origin from bottom-left to top-right.",
+        "Fine grid is complete, including its rightmost edge x=6 and bottommost edge y=-6. Quarter x subdivisions and third y subdivisions are readable at the declared640px width.",
+        "All queried graph regions are within the fine grid: positive x=5 meets the line between y6 and7, negative x=-3 meets y=-4, x=9/4 meets y3, y=2/3 meets x=1/2, y=-4 meets x=-3, and zero meets the origin.",
+        "Exact rational values were already independently derived and are confirmed on the discrete grid/visible SVG geometry; this review does not claim subpixel extraction of20/3 or1/2 from raster.",
+        "Generic integer tick labels, x/y/O, and two step captions are visible without overlap. y=-1 sits on the right side separately from the origin label; signs remain legible.",
+        "No special answer point, query label, projection segment, fraction20/3 label, or option-specific marker appears. Ordinary integer ticks such as5 and-4 are part of the full uniform scale, not answer-only annotations.",
+        "The straight line continues outside the finite grid to the full canvas boundary, representing an unbounded line seen through a finite window; these clipping positions are not newly imposed domain endpoints."
+    ],
+    "svg_geometry": {
+        "grid_vertical_lines": len(vertical),
+        "grid_horizontal_lines": len(horizontal),
+        "grid_cells": [40, 45],
+        "coordinate_bounds": {"x": [-4, 6], "y": [-6, 9]},
+        "grid_steps": {"x": "1/4", "y": "1/3"},
+        "unit_px": str(unit),
+        "fine_cell_px": {"x": float(step_x), "y": float(step_y)},
+        "origin_px": [float(origin[0]), float(origin[1])],
+        "rendered_line": drawn_line,
+        "query_checks": query_checks,
+        "visible_label_count": len(geometry["labels"]),
+        "actual_effective_min_font_px": 18,
+        "text_bboxes_bound_to_capture_receipt": True,
+    },
+    "cultural_visual_observation": "Only English x/y/step captions, standard numerals and mathematical diagram; no copied cultural scene, Cyrillic/Chinese annotation, or decorative historical symbol.",
+    "verdict": "pass",
+    "scope_limit": "Offline declared fixed640px media-width figure pass only. Not live headed product, responsive mobile fit, choice-semantic approval or promotion.",
+    "source_not_recaptured": True,
+    "author_internal_material_not_read": True,
+    "script_sha256": sha(Path(__file__).read_bytes()),
+}
+save("new-figure-actual-observations.json", observations)
+save("new-figure-review.json", {
+    "schema": "independent-choice-new-figure-review-v1",
+    "figure_id": observations["figure_id"],
+    "asset_sha256": observations["asset_sha256"],
+    "reviewer": {"kind": "independent_agent", "identity": "reviewer-5m-n53; not author of this SVG"},
+    "verdict": "pass",
+    "evidence": "Actual full currentSVG pixels at640x800,40×45 fine cells with1/4 and1/3 scales, all six forward/inverse regions inside, exact y=4x/3 geometry and no answer-labelled points. Minimum actual effective text18px. Independent observations hash-bound; offline-only, no live-product claim.",
+    "bindings": {
+        "source_file_sha256": observations["source_file_sha256"],
+        "source_solutions_sha256": observations["source_solutions_sha256"],
+        "view_file_sha256": snapshot["view_file_sha256"],
+        "spec_sha256": observations["spec_sha256"],
+        "render_sha256": observations["render_sha256"],
+        "svg_sha256": observations["asset_sha256"],
+        "actual_capture_sha256": capture["capture"]["sha256"],
+        "actual_observations_sha256": sha((OWN / "new-figure-actual-observations.json").read_bytes()),
+    },
+    "no_live_product_or_promotion_claim": True,
+})
+print(json.dumps({
+    "figure_verdict": "pass", "asset_sha256": observations["asset_sha256"],
+    "observations_sha256": sha((OWN / "new-figure-actual-observations.json").read_bytes()),
+    "review_sha256": sha((OWN / "new-figure-review.json").read_bytes()),
+}, indent=2))

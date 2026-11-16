@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import { spawnSync } from 'node:child_process'
+
+const root = '.intentfold/tickets/STEMROBIN-182/tmp/5m-n52'
+assert(!fs.existsSync(`${root}/structural-validation.json`))
+const command = ['python3', '.agents/skills/ld-s10y-choice/scripts/validate.py',
+  '--repo', '.', '--seed', `${root}/source.json`, '--draft', `${root}/draft.json`]
+const started = new Date().toISOString()
+const result = spawnSync(command[0], command.slice(1), { encoding: 'utf8' })
+const record = {
+  command, started_at: started, finished_at: new Date().toISOString(),
+  exit_code: result.status, stdout: result.stdout, stderr: result.stderr,
+  signal: result.signal, error: result.error?.message ?? null,
+  execution_count: 1, semantic_review: 'not performed; independent source stage pending',
+  questions: 26, options: 78, sources: 17, new_figures: 0,
+}
+fs.writeFileSync(`${root}/structural-validation.json`, JSON.stringify(record, null, 2) + '\n',
+  { flag: 'wx' })
+console.log(JSON.stringify(record, null, 2))
+process.exitCode = result.status ?? 2

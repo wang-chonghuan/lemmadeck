@@ -1,0 +1,88 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { createRequire } from 'node:module'
+import { pathToFileURL } from 'node:url'
+
+delete process.env.PWDEBUG
+process.env.PLAYWRIGHT_HTML_OPEN = 'never'
+const require = createRequire(path.resolve('app/package.json'))
+const { chromium } = require('@playwright/test')
+const [book, lesson, figure, candidate, output, questionIndex] = process.argv.slice(2)
+assert(book && lesson && figure && candidate && output && questionIndex)
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
+const bind = file => ({ path: path.resolve(file), sha256: hash(fs.readFileSync(file)) })
+const original = `.tmp/ld-s10y-lesson/render/${book}/modern-us-neutral/${lesson}/choices.html`
+const oldFigure = `ssot-resources/soviet10year-textbooks/artifacts/${book}/editions/modern-us-neutral/lessons/${lesson}/choice-set/figures/${figure}.svg`
+const originalHtml = fs.readFileSync(original, 'utf8')
+const oldSvg = fs.readFileSync(oldFigure, 'utf8')
+const newSvg = fs.readFileSync(candidate, 'utf8')
+assert.equal(originalHtml.split(oldSvg).length - 1, 1)
+const modified = originalHtml.replace(oldSvg, newSvg)
+assert.equal(modified.replace(newSvg, oldSvg), originalHtml)
+assert(!fs.existsSync(output))
+fs.mkdirSync(output, { recursive: true })
+const html = `${output}/choices-label-repair.html`
+fs.writeFileSync(html, modified, { flag: 'wx' })
+const result = {
+  status: 'pending-actual-pixels',
+  scope: 'Only the changed figure and its containing question; no unchanged-page recapture.',
+  book, lesson, figure, question_index: Number(questionIndex),
+  original_html: bind(original), old_figure: bind(oldFigure),
+  new_figure: bind(candidate), modified_html: bind(html),
+  one_svg_replacement: true, all_other_html_bytes_unchanged: true,
+  headless: true, isolated_contexts: true, browser_closed: false,
+  PWDEBUG_cleared: true, PLAYWRIGHT_HTML_OPEN: 'never',
+  captures: [], new_unique_surface_viewport_combinations: 0,
+}
+const browser = await chromium.launch({ headless: true })
+try {
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1 })
+    try {
+      await context.route(/^(https?|wss?):/, route => route.abort())
+      const page = await context.newPage()
+      await page.goto(pathToFileURL(path.resolve(html)).href)
+      await page.evaluate(() => document.fonts.ready)
+      const question = page.locator('.choice').nth(Number(questionIndex))
+      await question.scrollIntoViewIfNeeded()
+      assert.equal(await question.locator('svg').count(), 1)
+      const metrics = await question.locator('svg').evaluate(svg => {
+        const rect = svg.getBoundingClientRect()
+        return {
+          width: rect.width, height: rect.height,
+          labels: [...svg.querySelectorAll('text')].map(text => {
+            const matrix = text.getScreenCTM()
+            return {
+              id: text.getAttribute('data-label-id'), text: text.textContent,
+              font_px: parseFloat(getComputedStyle(text).fontSize) *
+                Math.hypot(matrix.a, matrix.b),
+            }
+          }),
+        }
+      })
+      assert(metrics.labels.length > 0)
+      assert(metrics.labels.every(label => label.font_px >= 16))
+      const box = await question.boundingBox()
+      assert(box && box.width <= viewport.width && box.height > 0)
+      const screenshot = `${output}/question-${viewport.width}.png`
+      await question.screenshot({ path: screenshot, animations: 'disabled' })
+      result.captures.push({
+        viewport, ...bind(screenshot), box, metrics,
+        expected_region: 'Whole target question, all options and the changed full figure.',
+      })
+    } finally {
+      await context.close()
+    }
+  }
+} finally {
+  await browser.close()
+  result.browser_closed = true
+}
+assert.equal(hash(fs.readFileSync(original)), result.original_html.sha256)
+assert.equal(hash(fs.readFileSync(oldFigure)), result.old_figure.sha256)
+result.status = 'DOM-and-size-pass-awaiting-independent-pixels'
+fs.writeFileSync(`${output}/capture.json`, JSON.stringify(result, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ status: result.status, captures: result.captures.length,
+  minimums: result.captures.map(row => Math.min(...row.metrics.labels.map(label => label.font_px))) }))

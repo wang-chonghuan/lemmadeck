@@ -1,0 +1,261 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const out = path.dirname(fileURLToPath(import.meta.url));
+const repo = path.resolve(out, '../../../../../');
+const manifestPath = path.join(repo,
+  '.intentfold/tickets/STEMROBIN-182/tmp/batch26-render/5m-math5-c2-s3-n52-capture-manifest.json');
+const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const read = (file) => JSON.parse(fs.readFileSync(file, 'utf8'));
+const manifest = read(manifestPath);
+const inventory = read(path.join(out, 'native-inventory.json'));
+const bodyCommand = read(path.join(out, 'supplement-command.json'));
+const rightCommand = read(path.join(out, 'horizontal-supplement-command.json'));
+const file = path.join(out, 'actual-observations.json');
+assert(!fs.existsSync(file), 'Preserve the first completed observation record.');
+
+const primaryNotes = {
+  'choices-1440-first': 'Full questions 1-3 and all A/B/C records are visible; question 4 begins but is not complete.',
+  'choices-1440-last': 'Tail of question 23, then complete questions 24-26 and final C=-15.53 are visible. Question 23 stem/A are not proved by this image.',
+  'choices-390-first': 'Questions 1-2 complete; question 3 stem appears but its options lie below the viewport.',
+  'choices-390-last': 'Question 24 begins mid-stem; its options and complete questions 25-26 options are visible. Question 26 formula right end is clipped.',
+  'exercises-1440-first': 'Original 989-992 complete; 993 appears partially, without its final sixth row.',
+  'exercises-1440-last': 'Original 1000-1005 complete, both 1005 formulas and bottom navigation visible.',
+  'exercises-390-first': 'Original 989-992 complete; only the start of 993 appears.',
+  'exercises-390-last': 'Tail of 1001, then full 1002-1004 and 1005 left formula windows. Both 1005 formula right ends are outside these windows.',
+  'text-1440-figure-1': 'Complete five-sector circle; full circular right/bottom outlines and radial lines visible.',
+  'text-1440-first': 'Complete heading, concept circle, complement explanation, two formulas, caption and navigation.',
+  'text-1440-last': 'Actually opened separately after continuation. Entire text/circle/formulas/caption and button fit; same hash as first.',
+  'text-390-figure-1': 'Complete circle with two darker right sectors and three lighter sectors; neither right nor bottom outline is lost.',
+  'text-390-first': 'Text, circle, complement formulas and caption fit. Blue bottom button lower edge falls outside this screenshot.',
+  'text-390-last': 'Actually opened separately after continuation. Same full prose/formulas/figure and same lower-button boundary deficiency as first.',
+};
+const primary = inventory.primary.map((item) => {
+  const stem = path.basename(item.path, '.png').replace('math5-c2-s3-n52-', '');
+  assert(primaryNotes[stem]);
+  return {
+    ...item, actual_opened: true, open_method: 'view_image detail original, individually',
+    observation: primaryNotes[stem],
+    first_open_stage: stem.endsWith('-last') && stem.startsWith('text-')
+      ? 'current continuation' : 'prior portion of this same display task; frozen tool observation reused',
+  };
+});
+assert.equal(primary.length, 14);
+
+const montageNotes = {
+  'exercises-1440-01': '993 all six signed expressions and 994 all four equations including fourth division are complete.',
+  'exercises-1440-02': '995 pool and 996 digging prose show all durations, ending questions and full line endings.',
+  'exercises-1440-03': '997 all six arithmetic subparts; 998 entire two-step line/point symmetry construction text with all vertex names.',
+  'exercises-1440-04': '999 both stories, 230/15% and 4.2/16% values, units, bases and terminal questions clear.',
+  'choices-1440-01': 'Questions 4-5 parenthesized subtraction/product/division stems and all six labelled fractional candidates complete.',
+  'choices-1440-02': 'Questions 6-7 nested parentheses, subtraction signs and all fraction numerators/denominators clear.',
+  'choices-1440-03': 'Question 8 six-component records including repaired 15/11 visible, then complete question 9 equation/candidates.',
+  'choices-1440-04': 'Questions 10-11 equations, variable names, negative signs and all A/B/C values visible.',
+  'choices-1440-05': 'Question 12 equation complete; question 13 constant-rate/empty-pool qualification, durations and all options clear.',
+  'choices-1440-06': 'Question 14 constant-rate/additive-work qualification and all candidates; question 15 all six source expressions and complete candidate tuples.',
+  'choices-1440-07': 'Question 16 A/B/C coordinates, right-angle premise, line then point symmetry steps and final coordinate closures complete. Question 17 230 and 15% story/options clear.',
+  'choices-1440-08': 'Question 18 actual-use/16%-saving wording and units; question 19 inverse-addition verification instruction and all four-component records complete.',
+  'choices-1440-09': 'Question 20 all four signed expressions and tuples; question 21 full k equation and three signed/fractional candidates.',
+  'choices-1440-10': 'Question 22 multiplication equation; question 23 additive tractor-work wording and all A/B/C fractions visible through final C.',
+  'text-390-01': 'Full blue navigation button, arrow, lower corners and boundary now visible.',
+  'exercises-390-01': '993 six rows, 994 four equations, 995 and 996 full wrapped stories; gutters show one number per item without duplicate prefixes.',
+  'exercises-390-02': '997 six arithmetic rows, 998 full symmetry-construction prose, 999 both percent-base stories, 1000 all four subparts and explicit addition verification.',
+  'exercises-390-03': '1001 all four rows. 1005 full-object right window retains numbering and formula rows; endings +6.2 times 1.9 and +4.1 times 0.8 complete with overlap against primary left windows.',
+  'choices-390-01': 'Questions 3-6 complete through each C; complement=1 definition, four-item records, parentheses and fraction bars readable.',
+  'choices-390-02': 'Questions 7,9,10 complete. Question 8 candidate six-tuples complete, but stem final 8/17 minus 1 is clipped and required a right window.',
+  'choices-390-03': 'Questions 11-14 complete; model premises for pool and digging remain readable and all candidate letters/fractions separated.',
+  'choices-390-04': 'Questions 17-18 complete. Question 15 final ordered source sum is clipped; question 16 B final P coordinate is clipped. Both retained as incomplete left-window evidence.',
+  'choices-390-05': 'Questions 19-22 complete: inverse-addition instruction, four-component signed records, both equations and all options readable.',
+  'choices-390-06': 'Questions 23-24 full prose and A/B/C; question 26 full-object right window shows final +4.1 times 0.8 and all options including final C=-15.53.',
+  'choices-390-horizontal-01': 'Question 8 final 8/17 minus 1, question 15 final 11/14 plus 8/21, and question 16 B P=(-15,-5) plus closing parentheses fully visible. Left/right overlaps preserve the entire formulas/coordinate records.',
+};
+const montages = inventory.montages.map((item) => {
+  const stem = path.basename(item.path, '.png');
+  assert(montageNotes[stem]);
+  return {
+    ...item, actual_opened: true, open_method: 'view_image detail original',
+    observation: montageNotes[stem],
+  };
+});
+assert.equal(montages.length, 25);
+const openedSupplementPaths = new Set(montages.flatMap((item) => item.members.map((member) => member.path)));
+assert.equal(openedSupplementPaths.size, 64);
+const supplements = inventory.supplements.map((item) => ({
+  ...item,
+  actual_opened: openedSupplementPaths.has(item.path),
+  open_method: 'all native pixels viewed in mapped unscaled montage',
+  opened_in: montages.filter((montage) => montage.members.some((member) => member.path === item.path))
+    .map((montage) => ({ path: montage.path, sha256: montage.sha256 })),
+}));
+
+const primaryPath = (surface, width, suffix) => primary.find((item) =>
+  item.path.endsWith(`${surface}-${width}-${suffix}.png`)).path;
+const supplementPath = (name) => supplements.find((item) => item.path.endsWith(`/${name}.png`)).path;
+const coverage = [];
+for (const width of [1440, 390]) {
+  coverage.push({
+    surface: 'text', viewport: { width, height: width === 1440 ? 960 : 844 },
+    status: 'pass', full_prose: true, full_formulas: 2, complete_display_figure_count: 1,
+    choice_seed_figure_count: 0,
+    windows: ['first', 'last', 'figure-1'].map((suffix) => primaryPath('text', width, suffix)),
+    terminal_supplement: width === 390 ? supplementPath('text-390-terminal-button') : null,
+    observation: 'Heading, entire five-sector concept figure, complement relation and both full formulas/caption readable. This figure is display/concept-only, not a choice seed figure.',
+  });
+  const written = [];
+  for (let number = 989; number <= 1005; number++) {
+    const usesSupplement = width === 1440
+      ? number >= 993 && number <= 999 : number >= 993 && number <= 1001;
+    const windows = [usesSupplement
+      ? supplementPath(`exercises-${width}-${number}-full-left`)
+      : primaryPath('exercises', width, number <= 992 ? 'first' : 'last')];
+    if (width === 390 && number === 1005) windows.push(supplementPath('exercises-390-1005-full-right'));
+    written.push({
+      source_number: number, complete_original_visible: true, windows,
+      all_subparts_and_terminating_values_visible: true,
+      right_end: width === 390 && number === 1005
+        ? 'Overlapping original left plus new full-object right windows; both formula endings observed.'
+        : 'Fits the actual opened complete object/window.',
+    });
+  }
+  coverage.push({
+    surface: 'exercises', viewport: { width, height: width === 1440 ? 960 : 844 },
+    status: 'pass', original_count: 17, units: written,
+    observation: 'All 989-1005 original items and ordered subparts visibly present; no duplicate written number gutters or raw-TeX headings.',
+  });
+  const questions = [];
+  for (let number = 1; number <= 26; number++) {
+    const usesSupplement = width === 1440
+      ? number >= 4 && number <= 23 : number >= 3 && number <= 24;
+    const windows = [usesSupplement
+      ? supplementPath(`choices-${width}-${number}-full-left`)
+      : primaryPath('choices', width, number <= (width === 1440 ? 3 : 2) ? 'first' : 'last')];
+    if (width === 390 && [8, 15, 16, 26].includes(number)) {
+      windows.push(supplementPath(`choices-390-${number}-full-right`));
+    }
+    questions.push({
+      display_number: number, complete_stem_visible: true, options: ['A', 'B', 'C'],
+      all_options_and_final_components_visible: true, windows,
+      scope: 'Actual glyph/complete object display; frozen mathematical truths were not recalculated.',
+    });
+  }
+  coverage.push({
+    surface: 'choices', viewport: { width, height: width === 1440 ? 960 : 844 },
+    status: 'pass', question_count: 26, option_count: 78, units: questions,
+    observation: 'Every complete stem and A/B/C record visible. Fractions, negative signs, percent bases, model qualifications, ordered tuples and coordinate closures readable.',
+  });
+}
+
+const rejectedCompleteness = primary.filter((item) => {
+  const stem = path.basename(item.path, '.png');
+  return stem.includes('-choices-') || stem.includes('-exercises-') || stem.includes('-text-390-first')
+    || stem.includes('-text-390-last');
+}).map((item) => ({
+  path: item.path, sha256: item.sha256, bytes_preserved: true,
+  classification: 'valid actual partial viewport, rejected as proof of complete surface/object coverage',
+  observation: item.observation,
+  resolution: 'Complete missing bodies/terminal windows supplied from exact same HTML; not a primary recapture.',
+}));
+const observedIntermediatePartials = supplements.filter((item) =>
+  item.viewport.width === 390 && item.kind === 'missing-full-choice-object'
+    && [8, 15, 16].includes(item.question_number)).map((item) => ({
+      path: item.path, sha256: item.sha256, bytes_preserved: true,
+      classification: 'valid complete object left window, insufficient horizontal endpoint evidence alone',
+      resolution: supplementPath(`choices-390-${item.question_number}-full-right`),
+    }));
+
+const result = {
+  schema: 's10y-actual-display-observations@1',
+  lesson: 'math5-c2-s3-n52', book: '5m', status: 'pass', outcome: 'pass',
+  reviewer: { kind: 'independent_agent', identity: 'Sartre; staged source/view/internal evidence frozen before display' },
+  stage: 'FIRST actual-pixel display observation, supplemented only where opened pixels showed gaps',
+  recorded_at: new Date().toISOString(),
+  manifest: { path: manifestPath, sha256: sha(manifestPath) },
+  rendered_HTML: manifest.rendered.map((item) => ({
+    path: path.join(repo, item.path), sha256: item.sha256,
+    unchanged: sha(path.join(repo, item.path)) === item.sha256,
+  })),
+  retained_core_bindings: manifest.inputs.map((item) => ({
+    path: path.join(repo, item.path), sha256: item.sha256,
+    role: 'Byte hash guard only; no renewed author-internals or semantic inspection.',
+  })),
+  native_inventory: { path: path.join(out, 'native-inventory.json'), sha256: sha(path.join(out, 'native-inventory.json')) },
+  counts: {
+    primary_PNGs: 14, primary_actual_opened: 14, primary_bytes_unchanged: 14,
+    supplemental_PNGs: 64, supplemental_actual_opened_via_native_montages: 64,
+    native_unscaled_montages: 25, montages_actual_opened: 25,
+    original_and_supplement_PNGs: 78, total_PNG_files_including_montages: 103,
+    image_provider_opens: 39,
+    unique_surface_viewport_combinations: 6, additional_unique_combinations: 0,
+    original_written_sources: 17, unique_questions: 26, unique_options: 78,
+    written_viewport_instances: 34, question_viewport_instances: 52, option_viewport_instances: 156,
+    tables: 0, display_only_concept_figure_count: 1, choice_seed_figure_count: 0,
+    new_primary_renders: 0, new_primary_captures: 0,
+    semantic_or_canonical_reruns: 0, narrow_supplement_commands: 2,
+  },
+  primary_images: primary,
+  supplemental_images: supplements,
+  montages,
+  coverage_windows: coverage,
+  rejected_as_complete_primary_evidence: rejectedCompleteness,
+  preserved_intermediate_horizontal_partials: observedIntermediatePartials,
+  incomplete_paint_failures: [],
+  mathematical_display_observations: [
+    'Complement relation with 1 and both text formulas have intact fraction bars, numerators/denominators and equality signs.',
+    'All original ordered arithmetic/equation rows visible; negative signs, variable names, parentheses, multiplication and division symbols remain readable.',
+    'Inverse-addition verification instruction remains visible in the written and choice surfaces; no precomputed output or semantic conclusion was newly introduced by capture.',
+    'The explicit pool/digging/additive-work, tractor-work and barrel-rate qualifications are legible; display inspection does not remove their frozen modeling caveats.',
+    '998 two-step line/point symmetry statement and choice coordinate witness fully visible; every final coordinate closure is covered at mobile. Original drawing-production loss remains, with no invented diagram.',
+    '999 two percent-base stories and units visible. 1005/choice final formula ends are read from overlapping native left/right windows, not tiny isolated KaTeX fragments.',
+  ],
+  legibility_and_terminal_observations: [
+    'Heading shows 52. 分数的补数 in Chinese, no raw TeX; written number prefixes appear once.',
+    'Concept circle has all five sectors, two darker right sectors, three lighter sectors, and full outer right/bottom boundaries at both viewport widths.',
+    'Candidate A/B/C labels separated from their values; no overlapping rows, missing numerator/denominator or clipped final candidate after supplementation.',
+    'Mobile wrapped prose remains legible. Horizontal overflow is local and scrollable without layout/font scaling.',
+    'Navigation button lower border/corners proved by the narrow complete-button supplement; desktop navigation fits the original viewport.',
+    'Body font measured 16px, device scale 1, no CSS transforms on bodies/questions/formulas; actual opened native pixels, not those DOM facts alone, establish readability.',
+  ],
+  commands: [
+    {
+      path: path.join(out, 'supplement-command.json'), sha256: sha(path.join(out, 'supplement-command.json')),
+      command: bodyCommand.command, cwd: bodyCommand.cwd, execution_count: 1,
+      exit_code: bodyCommand.exit_code, captures: bodyCommand.captures.length,
+      browser_closed: bodyCommand.browser_closed, contexts_closed: bodyCommand.contextsClosed,
+    },
+    {
+      path: path.join(out, 'horizontal-supplement-command.json'), sha256: sha(path.join(out, 'horizontal-supplement-command.json')),
+      command: rightCommand.command, cwd: rightCommand.cwd, execution_count: 1,
+      exit_code: rightCommand.exit_code, captures: rightCommand.captures.length,
+      browser_closed: rightCommand.browser_closed, context_closed: rightCommand.contextClosed,
+    },
+  ],
+  browser_boundary: {
+    explicit_headless: true, isolated_contexts: true, deviceScaleFactor: 1,
+    PWDEBUG_cleared: true, PLAYWRIGHT_HTML_OPEN: 'never',
+    headed_debug_ui_Inspector: false, user_window_activation: false,
+    user_profile: false, CDP: false, external_services_used: false,
+    finally_closed: bodyCommand.browser_closed && rightCommand.browser_closed,
+    in_flight_browser_or_execution_sessions: 0,
+  },
+  integrity: {
+    all_primary_manifest_hashes_match: true,
+    all_guarded_core_HTML_primary_and_previous_supplement_hashes_unchanged:
+      bodyCommand.allProtectedHashesUnchanged && rightCommand.allProtectedHashesUnchanged,
+    montage_constituents_1_to_1_pixel_identical: true,
+    font_or_layout_scaling: false, dropped_constituent_pixels: false,
+    HTML_or_core_mutation: false, durable_writes: false,
+  },
+  limitations: [
+    'Aggregate evidence passes; original first/last captures alone do not cover the full package and their partial-window limitations remain explicitly retained.',
+    'No new source-solving, pure-view math, internal program comparison, canonical validation or figure semantic review was performed.',
+    'Frozen source-model and construction-production caveats remain unchanged; pixel readability cannot resolve missing premises or restore drawing production.',
+    'Observed only the six authorized static offline surface/viewport combinations, not a full application or user-session/browser test.',
+    'No retention, promotion, DB, application/dependency changes, paid/model services or commit performed. Stop awaiting next 8a source-only disclosure.',
+  ],
+  model: null, usage: null,
+};
+fs.writeFileSync(file, `${JSON.stringify(result, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: result.status, path: file, sha256: sha(file), counts: result.counts }));

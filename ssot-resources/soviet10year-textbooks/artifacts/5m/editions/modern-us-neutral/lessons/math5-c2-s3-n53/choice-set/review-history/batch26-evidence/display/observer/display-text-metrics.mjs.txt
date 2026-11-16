@@ -1,0 +1,50 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { createRequire } from 'node:module';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+delete process.env.PWDEBUG;
+process.env.PLAYWRIGHT_HTML_OPEN = 'never';
+const here = path.dirname(fileURLToPath(import.meta.url));
+const repo = path.resolve(here, '../../../../..');
+const require = createRequire(path.join(repo, 'app/package.json'));
+const { chromium } = require('@playwright/test');
+const html = path.join(repo, '.tmp/ld-s10y-lesson/render/5m/modern-us-neutral/math5-c2-s3-n53/choices.html');
+const sha = () => crypto.createHash('sha256').update(fs.readFileSync(html)).digest('hex');
+const before = sha();
+const metrics = { scope: 'Existing choice 27 displayed SVG text sizing only; no capture, standalone figure gate, geometry or math evaluation',
+  html: path.relative(repo, html), sha256: before, measurements: [], browser_closed: false };
+const browser = await chromium.launch({ headless: true });
+try {
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1 });
+    try {
+      await context.route(/^(https?|wss?):/, (route) => route.abort());
+      const page = await context.newPage();
+      await page.goto(pathToFileURL(html).href);
+      await page.evaluate(() => document.fonts.ready);
+      const measurement = await page.locator('.choice').nth(26).locator('svg').evaluate((svg) => {
+        const viewBox = svg.getAttribute('viewBox').split(/\s+/).map(Number);
+        const rect = svg.getBoundingClientRect();
+        const scale = rect.width / viewBox[2];
+        return { image_width_px: rect.width, image_height_px: rect.height, svg_viewbox: viewBox, scale,
+          text: [...svg.querySelectorAll('text,foreignObject')].map((node) => {
+            const text = node.tagName === 'foreignObject' ? node.firstElementChild : node;
+            return { text: text.textContent, font_size_svg: getComputedStyle(text).fontSize,
+              scaled_font_px: parseFloat(getComputedStyle(text).fontSize) * scale,
+              displayed_box: { width: text.getBoundingClientRect().width, height: text.getBoundingClientRect().height } };
+          }) };
+      });
+      metrics.measurements.push({ viewport, ...measurement });
+    } finally {
+      await context.close();
+    }
+  }
+} finally {
+  await browser.close();
+  metrics.browser_closed = true;
+}
+metrics.html_unchanged = before === sha();
+fs.writeFileSync(path.join(here, 'display-text-metrics.json'), JSON.stringify(metrics, null, 2) + '\n');
+console.log(JSON.stringify(metrics, null, 2));

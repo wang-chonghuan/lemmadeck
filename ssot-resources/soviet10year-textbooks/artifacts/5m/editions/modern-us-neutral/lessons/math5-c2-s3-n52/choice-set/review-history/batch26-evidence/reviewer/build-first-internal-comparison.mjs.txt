@@ -1,0 +1,510 @@
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+
+const tmp = "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp";
+const root = path.join(tmp, "reviewer-5m-n52");
+const sha = bytes => createHash("sha256").update(bytes).digest("hex");
+const read = filename => JSON.parse(fs.readFileSync(filename));
+const draftPath = path.join(tmp, "5m-n52/draft.json");
+const oldDraftPath = path.join(tmp, "5m-n52/history-before-single-view-component-repair/draft.json");
+const deltaPath = path.join(tmp, "5m-n52/internal-repair-delta.json");
+const sourcePath = path.join(root, "source-solutions.json");
+const viewReviewPath = path.join(root, "changed-view-checks.json");
+const rejectedViewReviewPath = path.join(root, "view-checks.json");
+const frozenViewPath = path.join(root, "opened-view-changed-snapshot.json");
+const draftBytes = fs.readFileSync(draftPath);
+const oldDraftBytes = fs.readFileSync(oldDraftPath);
+const deltaBytes = fs.readFileSync(deltaPath);
+const sourceBytes = fs.readFileSync(sourcePath);
+const viewReviewBytes = fs.readFileSync(viewReviewPath);
+const rejectedViewReviewBytes = fs.readFileSync(rejectedViewReviewPath);
+const frozenViewBytes = fs.readFileSync(frozenViewPath);
+const draft = JSON.parse(draftBytes);
+const oldDraft = JSON.parse(oldDraftBytes);
+const delta = JSON.parse(deltaBytes);
+const source = JSON.parse(sourceBytes);
+const frozen = JSON.parse(viewReviewBytes);
+const frozenView = JSON.parse(frozenViewBytes);
+assert.equal(sha(draftBytes), "d7c09512332aa34e0c850ba159a84fce7cc50a4b629f9729e8f6a4ec99f88f34");
+assert.equal(sha(oldDraftBytes), "b080a04bfe7d646c5b2645e0e6a9d95692f607223597f6e62ff4adbea962fb48");
+assert.equal(sha(sourceBytes), "061cfc78b872b0ab70063f3c2f81e147748cdd16ac29d7c3f4bdababab74b16c");
+assert.equal(sha(viewReviewBytes), "2f036485747aed1a83f61f801a1a3ceb7598abeffcc38c4282a92009221e8b22");
+assert.equal(sha(rejectedViewReviewBytes), "32f31ab55f341f78798bb9704c1c65c0209a5af577355d7e5f89244f8291e5ad");
+assert.equal(sha(frozenViewBytes), "b6a1245d87d8081c23cbda20aeff92e4a12220357ee609a5a3d9ce5dd42d633b");
+assert.equal(frozen.outcome, "pass");
+assert.deepEqual({ questions: draft.questions.map(q => ({ id: q.id, view: q.view })) }, frozenView);
+assert.equal(draft.seed_sha256, source.seed.canonical_sha256);
+assert.deepEqual(draft.new_figures, []);
+
+const actualDelta = [];
+function compare(before, after, pointer = "") {
+  if (before === after) return;
+  if (before !== null && after !== null && typeof before === "object" && typeof after === "object") {
+    assert.deepEqual(Object.keys(before), Object.keys(after));
+    for (const key of Object.keys(before)) compare(before[key], after[key], `${pointer}/${key}`);
+  } else actualDelta.push({ pointer, before, after });
+}
+compare(oldDraft, draft);
+assert.deepEqual(actualDelta, delta.exact_delta);
+assert.equal(actualDelta.length, 3);
+assert.deepEqual(actualDelta.map(d => d.pointer), [
+  "/questions/7/view/options/0/text",
+  "/questions/7/key/rationales/0/derivation",
+  "/questions/7/key/rationales/0/misconception"
+]);
+assert.equal(delta.old_draft_sha256, sha(oldDraftBytes));
+assert.equal(delta.draft_sha256, sha(draftBytes));
+const inverse = structuredClone(draft);
+for (const change of actualDelta) {
+  const parts = change.pointer.split("/").slice(1);
+  let parent = inverse;
+  for (const key of parts.slice(0, -1)) parent = parent[key];
+  assert.deepEqual(parent[parts.at(-1)], change.after);
+  parent[parts.at(-1)] = change.before;
+}
+assert.deepEqual(inverse, oldDraft);
+let unchangedQuestions = 0;
+for (let i = 0; i < draft.questions.length; i += 1) {
+  if (i !== 7) {
+    assert.deepEqual(draft.questions[i], oldDraft.questions[i]);
+    unchangedQuestions += 1;
+  }
+  assert.deepEqual(draft.questions[i].key.correct, oldDraft.questions[i].key.correct);
+}
+assert.equal(unchangedQuestions, 25);
+assert.deepEqual(draft.coverage, oldDraft.coverage);
+
+const pass = evidence => ({ verdict: "pass", evidence });
+const revise = evidence => ({ verdict: "revise", evidence });
+// These are reviewer-authored program comparisons, not generated answer keys.
+const programs = {
+  "n52-989": {
+    A: pass("Keeping numerator1 while appending each requested denominator generates exactly1/2,1/3,1/11,1/20. Their false values agree with the frozen option judgments."),
+    B: pass("The correct derivation n/d=1 iff n=d, for d nonzero, generates2/2,3/3,11/11,20/20 and matches the independent complete record."),
+    C: pass("Putting each requested denominator into the numerator and retaining denominator1 generates2/1,3/1,11/1,20/1, exactly the false candidate.")
+  },
+  "n52-990": {
+    A: pass("The correct differences1/4,5/7,5/6,1/9 and the four additions back to1 match the frozen complete independent solution and verification relation."),
+    B: pass("Copying each original subtrahend generates precisely3/4,2/7,1/6,8/9; the author's inverse sums3/2,4/7,1/3,16/9 are correct false-record evidence."),
+    C: revise("The stated uniform wrong procedure1+a gives(7/4,9/7,7/6,17/9), not the displayed(5/4,9/7,7/6,17/9). In particular4+3=7, not5. Candidate C remains false and the author's greater-than1 falsity argument is valid, but this misconception does not generate its first component.")
+  },
+  "n52-991": {
+    A: pass("Using1 plus the original number gives16/11,20/13,47/40,1.01; this produces every displayed false component with no extra arithmetic invention."),
+    B: pass("Treating complement as a synonym for the original input copies5/11,7/13,7/40,0.01 exactly; the p+c=1 condition fails."),
+    C: pass("The correct complement-to1 derivation gives6/11,6/13,33/40,0.99, and adding each original input yields1.")
+  },
+  "n52-992a": {
+    A: pass("After correct complements3/8 and2/3, replacing multiplication with addition gives9/24+16/24=25/24, exactly A."),
+    B: pass("The correct product(3/8)*(2/3)=6/24=1/4 matches the independent result."),
+    C: pass("The false identity(1-a)(1-b)=1-ab yields1-(5/8)*(1/3)=19/24, exactly C; omitted cross terms make it false.")
+  },
+  "n52-992b": {
+    A: pass("The correct division multiplies5/12 by8/5, giving2/3; the nonzero divisor5/8 is explicitly preserved."),
+    B: pass("Using multiplication instead of division on the two correct complements gives(5/12)*(5/8)=25/96, exactly B."),
+    C: pass("Swapping dividend and divisor gives(5/8)/(5/12)=3/2, exactly C.")
+  },
+  "n52-992c": {
+    A: pass("Removing parentheses while changing only the first inner sign yields1-3/5+1/4=13/20, exactly A."),
+    B: pass("Wrong numerator/denominator addition gives(3+1)/(5+4)=4/9; subtracting that from1 gives5/9, exactly B."),
+    C: pass("The correct common-denominator sum17/20 followed by complement3/20 agrees with the frozen result.")
+  },
+  "n52-992d": {
+    A: pass("Wrongly retaining the negative sign on5/12 after removing parentheses yields1/4-1-5/12=-7/6, exactly A."),
+    B: pass("The correct inner7/12 and outer3/12-7/12=-1/3 agree with the independent signed result."),
+    C: pass("Reversing the outer subtraction after computing7/12 gives7/12-1/4=1/3, exactly C.")
+  },
+  "n52-993": {
+    A: pass("The repaired explicit mixed symbol-reading procedure generates the full record: drop leading unary minus in parts1/3/4 to get7/4,3/5,19/10; misread binary minus as plus in part2 to get15/11; keep parts5/6 as-2/5,-9/17. No unstated change of numeric data or compensating error is needed."),
+    B: pass("The correct six-entry signed derivation(-1/4,7/11,-7/5,-1/10,-2/5,-9/17) matches all frozen independent values."),
+    C: pass("Computing the six correct results and taking absolute values of the five negative ones produces1/4,7/11,7/5,1/10,2/5,9/17 exactly, retaining the sole original positive result.")
+  },
+  "n52-994a": {
+    A: pass("The correct right side11/30, root19/30 and substitution1-19/30=11/30 match the independent equation solution."),
+    B: pass("The false rearrangement1-x=r -> x=r-1 applied to11/30 gives-19/30; its stated left-side49/30 falsity check is correct."),
+    C: pass("Treating1-x as x directly reports the correctly evaluated right side11/30, exactly C; substitution gives19/30 rather than11/30.")
+  },
+  "n52-994b": {
+    A: pass("Using the wrong rearrangementy-1=r -> y=r-1 on r=-5/14 gives-19/14, exactly A; subtracting1 then gives-33/14."),
+    B: pass("The correct right side-5/14 gives y=9/14 and the author's substitution agrees with the frozen independent check."),
+    C: pass("Reversing the right-side subtraction gives6/7-1/2=5/14; then correctly adding1 gives19/14, exactly C.")
+  },
+  "n52-994c": {
+    A: pass("After the correct product1/12, wrongly adding1 to solve x+1=r gives13/12, exactly A."),
+    B: pass("Ignoring the left-side+1 reports x=1/12 directly, exactly B."),
+    C: pass("The correct product1/12 and subtraction of1 give-11/12, with correct substitution.")
+  },
+  "n52-994d": {
+    A: pass("Replacing the right-side division with multiplication gives25/24; then correctly subtracting1 gives1/24, exactly A. The mistake is in the quotient, not the final rearrangement."),
+    B: pass("The correct quotient(5/12)*(2/5)=1/6 and root-5/6 agree with the frozen source and substitution."),
+    C: pass("After the correct quotient1/6, the wrong rearrangement y=r+1 gives7/6, exactly C.")
+  },
+  "n52-995": {
+    A: pass("The correct full-pool-rate model gives filled5/12 and remaining7/12; it stays within capacity and matches the frozen explicit model."),
+    B: pass("Computing the filled5/12 correctly but omitting the final complement outputs5/12 as the remainder, exactly B."),
+    C: pass("Adding the two separate full-fill times4+6=10, incorrectly treating1/10 as the combined rate, then taking1-1/10 produces9/10, exactly C.")
+  },
+  "n52-996": {
+    A: pass("Adding the two correct work contributions3/8+5/12=19/24 but reporting completed work instead of the remainder generates A."),
+    B: pass("Replacing addition by5/12-3/8=1/24, then correctly taking its complement, generates23/24 exactly. No absolute-value or undocumented sign step is needed."),
+    C: pass("The correct completed19/24 and remaining5/24 derivation agrees with the independent whole-ditch model.")
+  },
+  "n52-997": {
+    A: pass("The stated program expressly handles the like-denominator second item correctly and applies(a/b) +/- (c/d)=(a +/- c)/(b +/- d) to the other five. It gives1,-4/5,3/7,8/25,-2/5,19/35 exactly. None of these five wrong denominator operations has a zero divisor here."),
+    B: pass("The correct common denominators12,10,40,150,60,42 and numerators-1,-8,33,5,25,49 reduce to the independently frozen complete record."),
+    C: pass("Taking absolute values of the first two correct negative results while retaining the four positive ones generates C exactly.")
+  },
+  "n52-998": {
+    A: pass("The correct author geometry uses the legal witness, fixes A/B under y=x reflection, sends C to M=(5,0), then applies2M-X to obtain K=(10,0),P=(5,-5). It matches the independently frozen two-stage geometric reasoning."),
+    B: pass("Using the wrong axis y=-x and(x,y)->(-y,-x) sends C to(-5,0). Correctly performing the half-turn about that wrong M gives K=(-10,0),P=(-15,-5). The second step is consistent but does not cancel the false first reflection."),
+    C: pass("Keeping the correct first image M but using A=(0,0) as the second center gives2A-A=(0,0),2A-B=(-5,-5), exactly C. The original required center M is not preserved.")
+  },
+  "n52-999a": {
+    A: pass("Using actual230 as the incorrect percentage base and subtracting15 percent gives230*0.85=195.5 exactly."),
+    B: pass("The correct equation230=1.15p gives200 hectares; the percentage base is the original plan."),
+    C: pass("Using actual230 as base and increasing it again by15 percent gives264.5 exactly; the wrong direction/base are both explicit.")
+  },
+  "n52-999b": {
+    A: pass("The correct equation4.2=0.84p gives5 cubic metres; the source base is the original allocation."),
+    B: pass("Adding16 percent of the actual used4.2 rather than reversing the original-base decrease gives4.2*1.16=4.872 exactly."),
+    C: pass("Reducing actual4.2 by another16 percent gives4.2*0.84=3.528 exactly.")
+  },
+  "n52-1000": {
+    A: pass("Copying the original subtrahends generates A, and the stated sums back20/11,14/15,16/15,9/10 are correct falsity evidence."),
+    B: pass("Uniformly replacing subtraction with addition gives1+10/11=21/11,1+7/15=22/15,1+8/15=23/15,1+9/20=29/20, exactly every component of B."),
+    C: pass("The correct differences1/11,8/15,7/15,11/20 and four additions back to1 match the frozen independent verification.")
+  },
+  "n52-1001": {
+    A: pass("The correct same-denominator signed forms give-21/13,-19/25,-31/40,-29/30, matching the full independent record."),
+    B: pass("Taking absolute values of all four correct negative results produces21/13,19/25,31/40,29/30 exactly."),
+    C: pass("Replacing only a leading-1 by+1 gives5/13,31/25 and31/30 in parts1/2/4, while part3 has no leading-1 and remains-31/40. This generates every component of C.")
+  },
+  "n52-1002a": {
+    A: pass("After the correct right-side7/10, rearranging1-k=r wrongly as k=r-1 gives-3/10 exactly."),
+    B: pass("The correct right-side7/10 yields k=3/10 and correct substitution."),
+    C: pass("Ignoring1 minus the variable reports the evaluated right-side7/10 directly as k, exactly C.")
+  },
+  "n52-1002b": {
+    A: pass("After the correct product2/3, adding rather than subtracting1 gives5/3 exactly."),
+    B: pass("Ignoring the left-side+1 reports the right-side product2/3 directly, exactly B."),
+    C: pass("The correct product2/3 and t=2/3-1=-1/3 match the frozen independent root and substitution.")
+  },
+  "n52-1003": {
+    A: pass("The correct additive-work interpretation completes8/9 of the field and leaves1/9, matching the frozen view's explicit model."),
+    B: pass("Computing8/9 completed work but omitting the complement reports8/9 as remaining, exactly B."),
+    C: pass("Replacing the work sum by the difference2/3-2/9=4/9, then taking1-4/9, generates5/9 exactly. This is the author's actual program, independently checked, not an assumed program from the earlier false-value judgment.")
+  },
+  "n52-1004": {
+    A: pass("Correct consumption2/7+3/5=31/35, wrongly reported without the final complement, generates A."),
+    B: pass("The correct duration/car pairings consume31/35 and leave4/35, matching the independently frozen model."),
+    C: pass("Swapping the duration/car pairings gives3/7+2/5=15/35+14/35=29/35 consumed, then6/35 remaining, exactly C. It changes pairings explicitly rather than inventing a gasoline amount.")
+  },
+  "n52-1005a": {
+    A: pass("Dropping only the first unary minus gives+17.76-25.23-13.78+11.78=-9.47. The derivation's increase2*17.76 is correct."),
+    B: pass("The correct signed products-17.76,-25.23,-13.78,+11.78 sum exactly to the independently frozen-44.99."),
+    C: pass("Changing only the final plus to minus gives-17.76-25.23-13.78-11.78=-68.55. The result is lower by2*11.78, exactly as stated.")
+  },
+  "n52-1005b": {
+    A: pass("The correct exact quotients and product give-2.7,-10.3,+0.75,+3.28, totaling-8.97 without rounding, as independently frozen."),
+    B: pass("Dropping the first unary minus gives+2.7-10.3+0.75+3.28=-3.57, an increase2*2.7."),
+    C: pass("Changing only the final plus to minus gives-2.7-10.3+0.75-3.28=-15.53, lower by2*3.28.")
+  }
+};
+
+const finding = {
+  id: "n52-990-C-non-generating-first-component",
+  verdict: "revise",
+  question_id: "n52-990",
+  option_id: "C",
+  field: "key.rationales[C].misconception",
+  json_pointer: "/questions/1/key/rationales/2/misconception",
+  observed: draft.questions[1].key.rationales[2].misconception,
+  evidence: programs["n52-990"].C.evidence,
+  current_visible_candidate: draft.questions[1].view.options[2].text,
+  stated_program_actual_output: "(7/4,9/7,7/6,17/9)",
+  frozen_candidate_truth: "incorrect",
+  independent_complete_true_set: ["A"],
+  minimum_repair: "Change only C's misconception to a concrete procedure that generates all current values; do not change the approved view/key/source. One executable mixed-error path is: first compute the first difference1/4, then incorrectly add1 and report5/4 as the difference; for the other three expressions replace subtraction by addition to get9/7,7/6,17/9. Spell out both errors rather than falsely saying the same1+a procedure produces the whole record.",
+  author_edit_performed: false,
+  mathematical_true_sets_or_view_changes_needed: false
+};
+assert.equal(finding.observed, "把减法改为加法：1+a，分别把分母与原分子相加，得到5/4、9/7、7/6、17/9。");
+
+const coverageNotes = {
+  "989": "All four denominator representations are present. The intent and omitted_tasks explicitly acknowledge that record selection does not demonstrate independently writing fractions.",
+  "990": "All four original differences and the addition-back verification relation are retained. Intent and coverage disclose loss of independently writing verification. The correct proof includes all four additions; the separate C-generating-procedure defect is mathematical/rationale-only, not a coverage omission.",
+  "991": "All four complements, including the decimal, and the definition sum-to1 are present. The author solution matches the independent complement interpretation and the declaration admits loss of producing the four values.",
+  "992": "Four separate original expressions cite source992. The shared internal source_solution contains the four correct results and nonzero divisor5/8; each task's distinct product/division/grouping/sign target matches its visible unit. Written arithmetic production is explicitly declared lost.",
+  "993": "All six source expressions and varied targets are preserved after the one-component repair. The full repaired false record has an explicit executable mixed symbol-error path. Separate writing of every operation is listed as a loss; no original numeric subpart is silently omitted.",
+  "994": "All four x/y equations are separately mapped and every full root/substitution matches the frozen source. The author records lost independent equation solving rather than claiming a selection establishes that ability.",
+  "995": "The intent explicitly identifies full-pool unit rates1/4 and1/6, and limitations explicitly say initial empty pool and constant flows are view conditions. These are conditional standard-model disclosures, not proof of an arbitrary original physical initial state. Independent construction of the capacity-rate model is listed as a loss.",
+  "996": "The original3/8 and5/12 work contributions and remainder are both retained under the visible constant-efficiency/additive-work model. The intent's common-whole interpretation and coverage loss of independently deriving contributions/remainder match the frozen source.",
+  "997": "All six exact original signed/common-denominator operations occur in the complete record, including negative and improper results. The internal solution and correct derivation match all independent outputs. Common-denominator written production is explicitly declared lost.",
+  "998": "The author labels A=(0,0),B=(5,5),C=(0,5) as a legal freely chosen visible witness, not source-given coordinates. The two ordered whole-triangle reflections are correct. Limitations and coverage explicitly deny actual triangle drawing, perpendicular construction and equal-opposite-distance construction. A supplied initial triangle does not demonstrate independent free initial drawing; these concrete losses are preserved, without inventing missing lengths or a new figure.",
+  "999": "Both inverse-percent contexts are mapped separately, with original plan/allocation as the base, correct115/84 percent factors and area/volume units. Coverage explicitly declares loss of independently selecting the base and writing equations.",
+  "1000": "All four differences and addition-back checks match the original. The internal correct derivation preserves four numerator sums equal to their denominators. Limitations and coverage explicitly record lost independently written verification.",
+  "1001": "All four exact negative results and signs remain in the complete response; the correct derivation matches the independent record. Independent arithmetic production is listed as a loss.",
+  "1002": "Both original k/t equations and distinct sum/product operations are mapped and correctly solved. Independent equation solving and checking are explicitly declared lost.",
+  "1003": "The additive common-field model is explicit in the view and intent. The limitations do not claim knowledge of otherwise unspecified overlapping physical regions. The frozen alternative1/9+rho remains an independent notice, not a guessed zero overlap outside this premise. Whole-field/remainder modeling production is listed as a loss.",
+  "1004": "Both original endurance/use pairings and the common starting barrel are retained. The constant-consumption premise is explicitly disclosed; consumption/remainder modeling production is declared lost. No speed, capacity or distance is invented.",
+  "1005": "Both full four-term signed decimal expressions remain distinct and all exact products/quotients are correct without rounding. Lost production of each operation and signed sum is explicitly declared."
+};
+
+const questionReviews = [];
+const optionEvidence = [];
+const intentChecks = [];
+let correctProofs = 0;
+let incorrectProcedures = 0;
+let generatingFalseProcedures = 0;
+for (const question of draft.questions) {
+  const prior = frozen.question_reviews.find(q => q.question_id === question.id);
+  assert.ok(prior);
+  assert.deepEqual(question.source_numbers, prior.source_numbers_inferred_from_visible_content);
+  assert.deepEqual(question.key.correct, prior.mathematics.correct);
+  assert.deepEqual(question.intent.concept_blocks, []);
+  assert.deepEqual(question.intent.figure_observations, []);
+  assert.deepEqual(question.view.figure_ids, []);
+  assert.ok(question.intent.limitations.length > 0);
+  const checks = programs[question.id];
+  assert.ok(checks);
+  assert.equal(Object.keys(checks).length, question.view.options.length);
+  let verdict = "pass";
+  const optionChecks = prior.mathematics.option_checks.map(option => {
+    const internal = question.key.rationales.find(r => r.option_id === option.option_id);
+    const check = checks[option.option_id];
+    assert.ok(internal && check);
+    assert.equal(internal.truth, option.truth);
+    if (option.truth === "correct") {
+      assert.equal(internal.misconception, null);
+      assert.equal(check.verdict, "pass");
+      correctProofs += 1;
+    } else {
+      assert.equal(typeof internal.misconception, "string");
+      incorrectProcedures += 1;
+      if (check.verdict === "pass") generatingFalseProcedures += 1;
+    }
+    if (check.verdict !== "pass") verdict = check.verdict;
+    optionEvidence.push({
+      question_id: question.id,
+      option_id: option.option_id,
+      frozen_independent_truth: option.truth,
+      verdict: check.verdict,
+      author_derivation: internal.derivation,
+      author_misconception: internal.misconception,
+      independent_program_comparison: check.evidence,
+      independent_visible_evidence_reused: option.evidence
+    });
+    return {
+      option_id: option.option_id,
+      truth: option.truth,
+      evidence: `${option.evidence} First authorized internal comparison[${check.verdict}]: ${check.evidence}`
+    };
+  });
+  questionReviews.push({
+    question_id: question.id,
+    task_fidelity: prior.task_fidelity,
+    redundancy: prior.redundancy,
+    answer_leakage: prior.answer_leakage,
+    mathematics: {
+      verdict,
+      independent_solution: prior.mathematics.independent_solution +
+        (verdict === "pass"
+          ? " First internal comparison: the complete author key/truths agree with the frozen independent set; correct derivations and all wrong procedures have separately been checked, without re-solving the visible question from its key."
+          : " The complete author key/truths still agree with the frozen independent set. The C misconception does not generate its first5/4 component; preserve the true set and false candidate rather than normalizing the evidence to the author's claim."),
+      correct: [...prior.mathematics.correct],
+      option_checks: optionChecks
+    }
+  });
+  intentChecks.push({
+    question_id: question.id,
+    source_numbers: question.source_numbers,
+    verdict: "pass",
+    author_intent: question.intent,
+    evidence: coverageNotes[question.source_numbers[0]]
+  });
+}
+assert.equal(correctProofs, 26);
+assert.equal(incorrectProcedures, 52);
+assert.equal(generatingFalseProcedures, 51);
+assert.equal(optionEvidence.length, 78);
+
+const sourceReviews = [];
+const coverageChecks = [];
+assert.equal(draft.coverage.length, 17);
+assert.equal(new Set(draft.coverage.map(c => c.source_number)).size, 17);
+for (const row of source.source_solutions) {
+  const coverage = draft.coverage.find(c => c.source_number === row.source_number);
+  const prior = frozen.source_coverage_checks.find(c => c.source_number === row.source_number);
+  assert.ok(coverage && prior && coverageNotes[row.source_number]);
+  const actualIds = draft.questions.filter(q => q.source_numbers.includes(row.source_number)).map(q => q.id);
+  assert.deepEqual(coverage.question_ids, actualIds);
+  assert.deepEqual(coverage.question_ids, prior.question_ids_inferred);
+  assert.equal(prior.verdict, "pass");
+  assert.ok(coverage.omitted_tasks.length > 0);
+  const evidence = `${prior.evidence} First author coverage/intent comparison: ${coverageNotes[row.source_number]} Author recorded losses: ${coverage.omitted_tasks.join(" ; ")}`;
+  sourceReviews.push({
+    source_number: row.source_number,
+    independent_solution: `${row.original_tasks} Frozen independent solution: ${row.independent_solution} Domain/model scope: ${row.domain}` +
+      (row.source_notice ? ` Frozen source notice retained: ${row.source_notice}` : ""),
+    coverage: { verdict: "pass", evidence }
+  });
+  coverageChecks.push({
+    source_number: row.source_number,
+    verdict: "pass",
+    author_record: coverage,
+    evidence
+  });
+}
+const usedFigures = [...new Set(draft.questions.flatMap(q =>
+  [...q.view.figure_ids, ...q.view.options.flatMap(o => o.figure_ids)]))];
+assert.deepEqual(usedFigures, []);
+
+const review = {
+  schema: "s10y-choice-review-v1",
+  seed_sha256: source.seed.canonical_sha256,
+  draft_sha256: "09db8b9d39cdadd3215722002598eb5d139f6506011a6cddd6d3c5be397d6e5b",
+  reviewer: source.reviewer,
+  source_reviews: sourceReviews,
+  figure_checks: [],
+  new_figure_reviews: [],
+  question_reviews: questionReviews,
+  outcome: "revise"
+};
+const evidence = {
+  stage: "first-author-internals-comparison",
+  outcome: "revise",
+  independent_complete_keys_and_truths_agree: true,
+  question_program_checks: Object.entries(programs).map(([question_id, options]) => ({
+    question_id, options
+  })),
+  option_level_author_program_evidence: optionEvidence,
+  question_intent_checks: intentChecks,
+  source_coverage_checks: coverageChecks,
+  findings: [finding],
+  model: null,
+  usage: null
+};
+const result = {
+  stage: "first-author-internals-final-comparison",
+  stage_complete: true,
+  outcome: "revise",
+  reviewer: review.reviewer,
+  snapshots: {
+    seed_canonical_sha256: review.seed_sha256,
+    seed_binding_basis: "The independent source record's frozen seed digest equals draft.seed_sha256; no new seed/source refresh was performed.",
+    draft_path: draftPath,
+    draft_byte_sha256: sha(draftBytes),
+    draft_canonical_sha256: review.draft_sha256,
+    draft_digest_command: "python3 -B .agents/skills/ld-s10y-choice/scripts/prepare.py digest .intentfold/tickets/STEMROBIN-182/tmp/5m-n52/draft.json",
+    draft_compared_snapshot: path.join(root, "draft-compared-first-internal-snapshot.json"),
+    source_solution_path: sourcePath,
+    source_solution_byte_sha256: sha(sourceBytes),
+    changed_pureview_review_path: viewReviewPath,
+    changed_pureview_review_byte_sha256: sha(viewReviewBytes),
+    frozen_changed_pureview_path: frozenViewPath,
+    frozen_changed_pureview_byte_sha256: sha(frozenViewBytes),
+    draft_view_equals_frozen_changed_pureview: true
+  },
+  exact_three_leaf_repair: {
+    verdict: "pass",
+    current_draft_byte_sha256: sha(draftBytes),
+    permitted_old_draft_path: oldDraftPath,
+    old_draft_byte_sha256: sha(oldDraftBytes),
+    permitted_delta_path: deltaPath,
+    delta_byte_sha256: sha(deltaBytes),
+    independently_observed_exact_delta: actualDelta,
+    actual_delta_equals_receipt: true,
+    inverse_restores_complete_old_json: true,
+    unchanged_whole_questions: unchangedQuestions,
+    all_correct_records_and_keys_unchanged: true,
+    whole_coverage_unchanged: true,
+    old_draft_used_only_for_exact_difference_not_source_authority: true,
+    other_history_files_read: false
+  },
+  counts: {
+    sources: 17,
+    questions: 26,
+    keys_compared: 26,
+    options_compared: 78,
+    correct_derivations_compared: correctProofs,
+    incorrect_procedures_compared: incorrectProcedures,
+    incorrect_procedures_generating_exact_candidates: generatingFalseProcedures,
+    non_generating_procedure_findings: 1,
+    independent_key_or_truth_disagreements: 0,
+    question_intents_compared: intentChecks.length,
+    coverage_records_compared: coverageChecks.length,
+    used_figures: 0,
+    new_figures: 0
+  },
+  minimum_findings: [finding],
+  option_and_coverage_evidence_path: path.join(root, "author-comparison-evidence.json"),
+  source_notices_retained: source.source_notices,
+  drawing_and_method_loss_decisions: {
+    inverse_addition990_and1000: "All original inverse-addition relations survive; intent/coverage acknowledge that selecting a record does not demonstrate separately writing the verification. This is not marked as a silent missing numeric task.",
+    geometry998: "The supplied coordinates are explicitly a freely chosen legal witness, with correct ordered line and point symmetries. Actual free initial drawing, perpendicular/equal-distance construction and triangle drawing are not claimed; the losses are disclosed. No missing lengths, image or new figure is invented.",
+    percentages999: "Both original bases and contexts are retained and correctly derived; author coverage acknowledges lost independent base selection/equation writing.",
+    model_notices995_996_1003_1004: "Explicit view models and author intent/limitations are accepted as conditional task interpretations. Frozen initial-water and arbitrary-field-overlap alternatives remain notices, not silently set to a chosen physical value."
+  },
+  read_boundary: {
+    newly_authorized_author_files: [draftPath, deltaPath, oldDraftPath],
+    no_author_serializer_source_solutions_ready_other_history_or_other_reviewers_read: true,
+    own_frozen_source_and_pureview_reused: true,
+    original_source_or_visible_truths_not_re_solved: true,
+    no_independent_truth_normalized_to_author_key: true
+  },
+  preserved_original_view_rejection: {
+    path: rejectedViewReviewPath,
+    byte_sha256: sha(rejectedViewReviewBytes),
+    original_revision_record_and_original_view_snapshot_not_modified: true,
+    fixed993_view_defect_resolved_before_first_internal_comparison: true
+  },
+  operations: {
+    source_mathematics_reruns: 0,
+    pureview_or_image_review_reruns: 0,
+    first_internal_comparisons: 1,
+    structural_validation_runs: 0,
+    canonical_validation_runs: 0,
+    browser_or_render_runs: 0,
+    author_or_durable_writes: 0,
+    db_network_paid_model_dependency_calls: 0,
+    in_flight_operations: []
+  },
+  validation: {
+    execution_count: 0,
+    command: null,
+    exit_code: null,
+    evidence: "No validate.py/canonical/structural gate was executed; the parent owns the first canonical command. The prepare.py digest command is snapshot metadata only."
+  },
+  next_stage: "Parent may minimally repair the one C misconception and separately authorize changed-internal-only review. This reviewer has not edited the author. No canonical execution or promotion.",
+  model: null,
+  usage: null
+};
+
+function writeJSON(name, value) {
+  fs.writeFileSync(path.join(root, name), JSON.stringify(value, null, 2) + "\n", { flag: "wx" });
+}
+fs.writeFileSync(path.join(root, "draft-compared-first-internal-snapshot.json"), draftBytes, { flag: "wx" });
+writeJSON("author-comparison-evidence.json", evidence);
+writeJSON("review.json", review);
+result.snapshots.review_path = path.join(root, "review.json");
+result.snapshots.review_byte_sha256 = sha(fs.readFileSync(result.snapshots.review_path));
+writeJSON("final-comparison.json", result);
+assert.equal(sha(fs.readFileSync(draftPath)), sha(draftBytes));
+assert.equal(sha(fs.readFileSync(oldDraftPath)), sha(oldDraftBytes));
+assert.equal(sha(fs.readFileSync(sourcePath)), sha(sourceBytes));
+assert.equal(sha(fs.readFileSync(viewReviewPath)), sha(viewReviewBytes));
+assert.equal(sha(fs.readFileSync(rejectedViewReviewPath)), sha(rejectedViewReviewBytes));
+assert.equal(sha(fs.readFileSync(frozenViewPath)), sha(frozenViewBytes));
+console.log(JSON.stringify({
+  outcome: review.outcome,
+  counts: result.counts,
+  finding: finding.id,
+  draft_sha256: review.draft_sha256,
+  review_path: result.snapshots.review_path,
+  review_byte_sha256: result.snapshots.review_byte_sha256,
+  final_comparison_path: path.join(root, "final-comparison.json"),
+  author_comparison_evidence_path: path.join(root, "author-comparison-evidence.json"),
+  canonical_validation_runs: 0,
+  author_writes: 0
+}));

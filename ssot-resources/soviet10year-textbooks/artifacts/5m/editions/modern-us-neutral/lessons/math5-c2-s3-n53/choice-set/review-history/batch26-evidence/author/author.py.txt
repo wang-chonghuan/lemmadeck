@@ -1,0 +1,595 @@
+import hashlib
+import json
+import random
+from fractions import Fraction as F
+from pathlib import Path
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+OWN = Path(__file__).resolve().parent
+source = json.loads((OWN / "source.json").read_text())
+freeze = json.loads((OWN / "source-solutions.json").read_text())
+solutions = {item["source_number"]: item for item in freeze["records"]}
+rng = random.Random("n53-source-023125930891-independent-author")
+questions = []
+program_records = []
+unit_records = []
+graph_id = "fig-choice-n53-linear-reading"
+graph_path = OWN / "new-figures/fig-choice-n53-linear-reading.revised.svg"
+graph_spec = OWN / "new-figures/fig-choice-n53-linear-reading.revised.spec.json"
+graph_report = OWN / "new-figures/fig-choice-n53-linear-reading.revised.render.json"
+
+
+def digest(value):
+    return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def file_hash(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def rational(value):
+    value = F(value)
+    return str(value.numerator) if value.denominator == 1 else f"{value.numerator}/{value.denominator}"
+
+
+def latex(value):
+    value = F(value)
+    if value.denominator == 1:
+        return str(value.numerator)
+    sign = "-" if value < 0 else ""
+    return sign + r"\frac{" + str(abs(value.numerator)) + "}{" + str(value.denominator) + "}"
+
+
+def m(integer, numerator, denominator):
+    return F(integer) + (-1 if integer < 0 else 1) * F(numerator, denominator)
+
+
+def vals(number, indices=None):
+    rows = solutions[str(number)]["subtasks"]
+    if indices is not None:
+        rows = [rows[index - 1] for index in indices]
+    return [F(row["result"]) for row in rows]
+
+
+def table(expressions):
+    return "| 项目 | 算式 |\n|---|---|\n" + "\n".join(
+        f"| {i + 1} | ${expression}$ |" for i, expression in enumerate(expressions))
+
+
+def result_table(values, labels=None, unit=""):
+    labels = labels or [str(i + 1) for i in range(len(values))]
+    return "| 项目 | 结果 |\n|---|---|\n" + "\n".join(
+        f"| {label} | ${latex(value)}$" + (f" {unit}" if unit else "") + " |"
+        for label, value in zip(labels, values))
+
+
+source_figure_observations = {
+    "fig-160": "Actually opened the full source SVG raster: AKD has A/D on the left, K on l, l and m are distinct parallel vertical lines with m to the right; all A,K,D,l,m labels, triangle edges and lower axis ends visible. No P/N or source scale is supplied.",
+    "fig-161": "Actually opened full 480x720 SVG overlay and artwork separately: dashed descent guide plus helicopter/rotor, package and complete lower camp scene. No time labels, distance scale or acceleration data appear in these layers.",
+    graph_id: "Author actually opened the revised full native preview: positive/negative graph window with 40x45 fine-grid cells, x step 1/4, y step 1/3, integer axis labels and straight line through the origin. Queried outputs are not marked. Original O/-1 collisions preserved; two label-only changes repaired them. Independent asset review is still required.",
+}
+
+
+def add_question(identifier, numbers, stem, candidates, task, unit_reason, limitations=None,
+                 figures=None, mode="single"):
+    numbers = [str(number) for number in numbers]
+    figures = figures or []
+    candidate_contents = [item["text"] for item in candidates]
+    if len(set(candidate_contents)) != len(candidate_contents):
+        raise RuntimeError("Duplicate visible candidate")
+    rng.shuffle(candidates)
+    options = []
+    rationales = []
+    correct = []
+    for label, candidate in zip("ABCD", candidates):
+        truth = candidate["truth"]
+        options.append({"id": label, "text": candidate["text"], "figure_ids": []})
+        rationales.append({"option_id": label, "truth": "correct" if truth else "incorrect",
+                           "derivation": candidate["derivation"],
+                           "misconception": None if truth else candidate["procedure"]})
+        if truth:
+            correct.append(label)
+        else:
+            program_records.append({"question_id": identifier, "option_id": label,
+                                    "procedure": candidate["procedure"],
+                                    "actual_result": candidate.get("actual_result", candidate["text"]),
+                                    "visible_candidate": candidate["text"],
+                                    "execution": candidate.get("execution", "explicit symbolic/geometric calculation in derivation"),
+                                    "false_under_current_stem": True})
+    if not correct or (mode == "single" and len(correct) != 1):
+        raise RuntimeError("Invalid native true set")
+    used = set(figures)
+    for number in numbers:
+        used.update(next(item["figure_ids"] for item in source["exercises"] if item["number"] == number))
+    source_solution = "\n".join(f"{number}: {solutions[number]['independent_solution']}" for number in numbers)
+    question = {
+        "id": identifier, "source_numbers": numbers,
+        "view": {"mode": mode, "stem": stem, "figure_ids": figures, "options": options},
+        "intent": {"task": task, "source_solution": source_solution, "unit_reason": unit_reason,
+                   "concept_blocks": [0], "limitations": limitations or [],
+                   "figure_observations": [{"figure_id": figure, "observation": source_figure_observations[figure]}
+                                           for figure in sorted(used)]},
+        "key": {"correct": correct, "rationales": rationales},
+    }
+    questions.append(question)
+    unit_records.append({"question_id": identifier, "source_numbers": numbers, "unit_reason": unit_reason,
+                         "task": task, "limitations": limitations or []})
+
+
+def numeric(identifier, number, stem, correct, wrong1, procedure1, wrong2, procedure2,
+            unit_reason, labels=None, unit="", limitations=None, figures=None, task=None):
+    correct, wrong1, wrong2 = [[F(value) for value in row] for row in (correct, wrong1, wrong2)]
+    if len(correct) != len(wrong1) or len(correct) != len(wrong2):
+        raise RuntimeError("Incomplete numeric candidate")
+    if correct == wrong1 or correct == wrong2 or wrong1 == wrong2:
+        raise RuntimeError("A false program coincides with a true or duplicate complete output")
+    numbers = number if isinstance(number, list) else [number]
+    full_solution = "\n".join(solutions[str(item)]["independent_solution"] for item in numbers)
+    candidates = []
+    for values, truth, procedure in [(correct, True, None), (wrong1, False, procedure1), (wrong2, False, procedure2)]:
+        exact = [rational(value) for value in values]
+        candidates.append({
+            "text": result_table(values, labels, unit), "truth": truth, "procedure": procedure,
+            "actual_result": exact,
+            "execution": "Python Fraction evaluates the explicitly authored operations; exact materialized outputs, not sampled nearby numbers.",
+            "derivation": (full_solution if truth else procedure) + " Exact ordered output: " + ", ".join(exact) + ".",
+        })
+    add_question(identifier, numbers, stem, candidates, task or "Determine every complete result in the displayed order.",
+                 unit_reason, limitations, figures)
+
+
+writing_loss = "Choice recognition does not demonstrate independently writing the whole computation or proof."
+
+add_question("n53-1006", [1006],
+             r"加法交换律对有理数如何表述？当 $a=\frac56,\ b=\frac14$ 时，哪份“定律与验证”记录正确？",
+             [
+                 {"text": r"$a+b=b+a$；交换两个加数不改变和。两边均为 $\frac{13}{12}$。",
+                  "truth": True, "derivation": "5/6+1/4=10/12+3/12=13/12; the reversed sum is the same. This is exactly commutation."},
+                 {"text": r"$a-b=b-a$；交换两个被相减的数不改变差。两边均为 $\frac{7}{12}$。",
+                  "truth": False, "procedure": "Transfer the commutative addition law to subtraction and retain the absolute difference for both directions.",
+                  "derivation": "5/6-1/4=7/12, but 1/4-5/6=-7/12. The mistaken absolute-difference procedure reports +7/12 twice.", "actual_result": ["7/12", "7/12"]},
+                 {"text": r"$a+b=b+a$；交换两个加数不改变和。两边均为 $\frac35$。",
+                  "truth": False, "procedure": "Add numerators and denominators separately: (5+1)/(6+4).",
+                  "derivation": "(5+1)/(6+4)=6/10=3/5 instead of 13/12; the law statement is right but this numerical verification is false.", "actual_result": ["3/5", "3/5"]},
+             ],
+             "State the commutative law and check both sides for the supplied fractions.",
+             "One complete law-and-verification judgment keeps the symbolic and numerical parts connected.", [writing_loss])
+add_question("n53-1007", [1007],
+             r"加法结合律对有理数如何表述？用 $a=\frac12,\ b=\frac13,\ c=\frac23$ 验证，哪份完整记录正确？",
+             [
+                 {"text": r"$(a+b)+c=a+(b+c)$；改变加数的分组不改变和。两边均为 $\frac32$。",
+                  "truth": True, "derivation": "Left=5/6+2/3=3/2; right=1/2+(1/3+2/3)=3/2. Grouping changes, not operand signs."},
+                 {"text": r"$(a-b)-c=a-(b-c)$；改变被相减各数的分组不改变差。两边均为 $-\frac12$。",
+                  "truth": False, "procedure": "Apply the associative addition rule to subtraction and reuse the left-hand result on the right.",
+                  "derivation": "Left=1/2-1/3-2/3=-1/2; right=1/2-(1/3-2/3)=5/6. Reusing -1/2 for the right side falsely claims equality.", "actual_result": ["-1/2", "-1/2"]},
+                 {"text": r"$(a+b)+c=a+(b+c)$；改变加数的分组不改变和。两边均为 $\frac12$。",
+                  "truth": False, "procedure": "Treat the sum of three fractions as the quotient of all numerator sums by all denominator sums.",
+                  "derivation": "(1+1+2)/(2+3+3)=4/8=1/2 instead of 3/2.", "actual_result": ["1/2", "1/2"]},
+             ],
+             "Identify association and verify both parenthesizations.",
+             "The law and its full verification form one mathematical unit.", [writing_loss])
+
+first1008 = [F(row["minuend"]) for row in solutions["1008"]["subtasks"][:5]]
+sub1008 = [F(row["subtrahend"]) for row in solutions["1008"]["subtasks"][:5]]
+numeric("n53-1008-proper", 1008,
+        "计算表中各差，并分别用“差＋原减数＝原被减数”验算。哪份完整结果能通过全部验算？\n\n" +
+        table([r"2-\frac56", r"4-\frac15", r"2-\frac35", r"5-\frac56", r"9-\frac{11}{12}"]),
+        vals(1008, [1, 2, 3, 4, 5]),
+        [a - b + 1 for a, b in zip(first1008, sub1008)],
+        "Borrow a unit to form the fractional complement but fail to decrease the integer part: N-p/q becomes N+(q-p)/q, the true difference plus one. These candidates do not return the minuend when the original fraction is added back.",
+        [(a - b.numerator) / b.denominator for a, b in zip(first1008, sub1008)],
+        "Put the integer over the denominator without multiplying it by that denominator: N-p/q becomes (N-p)/q. Adding each original p/q back returns N/q, not N.",
+        "The five whole-minus-proper-fraction calculations share the same borrowing and additive-verification distinction.",
+        limitations=[writing_loss, "The learner judges full verification eligibility; independently producing nine written addition checks is not demonstrated."])
+numeric("n53-1008-mixed", 1008,
+        "计算表中各差，并分别用差加回原减数验算。哪份完整记录正确？\n\n" +
+        table([r"7-1\frac78", r"3-1\frac23", r"5-2\frac25", r"6-5\frac58"]),
+        vals(1008, [6, 7, 8, 9]), [value + 1 for value in vals(1008, [6, 7, 8, 9])],
+        "For N-(M+p/q), use N-M+(q-p)/q without decreasing N-M by one; every result is one too large and fails addition verification.",
+        [F(6), F(2), F(3), F(1)],
+        "Discard the fractional part of each subtrahend, evaluating only 7-1,3-1,5-2,6-5.",
+        "The mixed subtrahends require first removing their integer part, unlike the previous proper-fraction group.",
+        limitations=[writing_loss, "Written additive-verification production remains a capacity loss."])
+
+positive1009 = solutions["1009"]["subtasks"][:5]
+numeric("n53-1009-borrow", 1009,
+        "计算下列带分数的差，结果按表中顺序排列。哪份完整记录正确？\n\n" +
+        table([r"8\frac5{11}-3\frac6{11}", r"10\frac12-4\frac9{14}", r"7\frac47-5\frac79",
+               r"2\frac3{10}-1\frac{11}{15}", r"5\frac38-3\frac56"]),
+        vals(1009, [1, 2, 3, 4, 5]), [value + 1 for value in vals(1009, [1, 2, 3, 4, 5])],
+        "All five fractional minuends are smaller than their fractional subtrahends. Borrowing without decreasing the integer difference adds one to each true result.",
+        [F(F(row["minuend"]).numerator - F(row["subtrahend"]).numerator, F(row["minuend"]).denominator) for row in positive1009],
+        "Convert each operand to an improper fraction, then subtract numerators while retaining only the first operand's denominator, without common-denominator conversion.",
+        "One complete record tests borrowing across equal and unequal denominators, not one click per fractional cell.",
+        limitations=[writing_loss])
+numeric("n53-1009-signed", 1009,
+        "计算两个含负带分数的式子，负号作用于整个带分数。哪份完整记录正确？\n\n" +
+        table([r"-3\frac16-1\frac34", r"-5\frac78+\frac9{10}"]),
+        vals(1009, [6, 9]),
+        [F(-3) + F(1, 6) - m(1, 3, 4), F(-5) + F(7, 8) + F(9, 10)],
+        "Attach the leading minus only to the integer part: -3 1/6 becomes -3+1/6 and -5 7/8 becomes -5+7/8; keep the remaining operations unchanged.",
+        [m(-3, 1, 6) + m(1, 3, 4), m(-5, 7, 8) - F(9, 10)],
+        "Reverse each displayed outer addition/subtraction after the correctly signed mixed operand: add 1 3/4 in the first, subtract 9/10 in the second.",
+        "Whole-negative mixed-number interpretation is a distinct signed-number task; the nonadjacent source parts belong together.",
+        limitations=[writing_loss])
+numeric("n53-1009-proper-subtrahend", 1009,
+        "计算下表中带分数与真分数的差。哪份完整记录正确？\n\n" +
+        table([r"1\frac5{12}-\frac9{10}", r"6\frac3{10}-\frac{11}{15}"]),
+        vals(1009, [7, 8]),
+        [(F(17) - 9) / (12 - 10), (F(63) - 11) / (10 - 15)],
+        "After forming 17/12 and 63/10, subtract both numerator and denominator: (17-9)/(12-10), (63-11)/(10-15).",
+        [F(17, 12) + F(9, 10), F(63, 10) + F(11, 15)],
+        "Replace the two subtractions by additions while keeping both operands.",
+        "This pair isolates subtraction of proper fractions from mixed numbers without repeating the whole-negative interpretation.", limitations=[writing_loss])
+numeric("n53-1010", 1010,
+        "计算小数与分数混合的四个式子。哪份完整记录正确？\n\n" +
+        table([r"2.4+1\frac23", r"3\frac7{10}-2\frac25", r"4\frac12-6.2", r"9\frac45-1.8"]),
+        vals(1010), [F("2.4") - m(1, 2, 3), m(3, 7, 10) + m(2, 2, 5), m(4, 1, 2) + F("6.2"), m(9, 4, 5) + F("1.8")],
+        "Interchange the operation signs: perform subtraction in the first and addition in each of the remaining rows.",
+        [F("2.4") + 1, F(3) - 2, F(4) - F("6.2"), F(9) - F("1.8")],
+        "Omit every fractional part of a printed mixed number but retain the terminating decimal inputs.",
+        "A complete four-result record tests exact decimal/fraction conversion and a negative difference.", limitations=[writing_loss])
+
+a, b, c = m(6, 3, 16), m(2, 3, 8), m(3, 5, 12)
+numeric("n53-1011-parentheses", 1011, r"计算 $6\frac3{16}-\left(2\frac38+3\frac5{12}\right)$。",
+        vals(1011, [1]), [a - (b - c)], "Change the plus inside the subtracted parentheses to a minus, evaluating A-(B-C).",
+        [a + (b + c)], "Change the outer subtraction into addition, evaluating A+(B+C).",
+        "Subtracting an entire sum is independent of the sequential-subtraction exercise.", limitations=[writing_loss])
+a, b, c = m(8, 1, 12), m(3, 4, 15), m(1, 7, 30)
+numeric("n53-1011-sequential", 1011, r"计算 $8\frac1{12}-3\frac4{15}-1\frac7{30}$。",
+        vals(1011, [2]), [a - (b - c)], "Group the two subtrahends as a difference, replacing A-B-C by A-(B-C).",
+        [F(8) - 3 - 1], "Discard all fractional parts and subtract only the integer parts.",
+        "Sequential subtraction tests preservation of both negative signs; it is not the same operand task as the parenthesized sum.", limitations=[writing_loss])
+numeric("n53-1012-addends", 1012,
+        "每行是独立方程。依次求未知数 $x,a$，哪份完整记录正确？\n\n" +
+        table([r"x+2\frac2{11}=5", r"26\frac58+a=30"]),
+        vals(1012, [1, 2]), [F(5) + m(2, 2, 11), F(30) + m(26, 5, 8)],
+        "Add the known addend to the total instead of subtracting it to isolate the unknown addend.",
+        [m(2, 2, 11) - 5, m(26, 5, 8) - 30],
+        "Subtract the total from the known addend, reversing the subtraction direction.",
+        "Both equations solve for an unknown addend and allow ordered complete verification.", labels=["x", "a"], limitations=[writing_loss])
+numeric("n53-1012-subtraction-roles", 1012,
+        "每行是独立方程。依次求未知数 $a,x$，哪份完整记录正确？\n\n" +
+        table([r"a-6\frac56=\frac29", r"11\frac14-x=3\frac7{10}"]),
+        vals(1012, [3, 4]), [F(2, 9) - m(6, 5, 6), vals(1012, [4])[0]],
+        "In the first equation treat the unknown minuend as if it were a difference: a=2/9-6 5/6. Solve the second equation correctly.",
+        [vals(1012, [3])[0], m(11, 1, 4) + m(3, 7, 10)],
+        "Solve the first correctly, but add the difference to the minuend in the second instead of using x=11 1/4-3 7/10.",
+        "Contrasts unknown minuend and unknown subtrahend without treating independent equations as one system.", labels=["a", "x"], limitations=[writing_loss])
+numeric("n53-1013", 1013,
+        r"已知 $A=6\frac12-a$。先求 $a=2\frac78,8$ 时的 $A$，再求 $A=1\frac56,7\frac15$ 时的 $a$。哪份完整记录正确？",
+        vals(1013), [F(29, 8), -F(3, 2), -F(14, 3), F(7, 10)],
+        "Evaluate the two forward rows correctly, but invert the relation as a=A-13/2 instead of a=13/2-A.",
+        [F(13, 2) + F(23, 8), F(13, 2) + 8, F(11, 6) - F(13, 2), F(36, 5) - F(13, 2)],
+        "Replace the original relation by A=13/2+a and use its consistent inverse a=A-13/2.",
+        "One complete bidirectional correspondence retains both negative outputs and the two directions.",
+        labels=[r"$a=2\frac78$ 时的 $A$", r"$a=8$ 时的 $A$", r"$A=1\frac56$ 时的 $a$", r"$A=7\frac15$ 时的 $a$"],
+        limitations=[writing_loss])
+numeric("n53-1014", 1014,
+        r"学生栽了 1 200 000 棵树苗，松树占 $\frac3{10}$，云杉占 $\frac25$，杨树占 $\frac15$，其余是樱树。樱树苗有多少棵？",
+        [F(120000)], [F(1200000) * (1 - F(3 + 2 + 1, 10 + 5 + 5))],
+        "Add allocation fractions by adding all numerators and denominators, obtaining 6/20=3/10, then take the remaining 7/10 of the total.",
+        [F(1200000) * F(1, 5)], "Reuse the poplar fraction 1/5 as the remaining cherry fraction rather than subtracting all allocated fractions.",
+        "The remaining-share model is one task; allocated types are inputs, not separate arithmetic clicks.", unit="棵", limitations=[writing_loss])
+numeric("n53-1015", 1015,
+        r"第一辆汽车装 $4\frac7{10}$ 吨，第二辆比第一辆少装 $1\frac25$ 吨。第二辆的载重与两辆总载重分别是多少？",
+        [F(33, 10), F(8)], [F(47, 10) + F(7, 5), F(47, 10) * 2 + F(7, 5)],
+        "Read 'less' as 'more': second=47/10+7/5, then add the first load to that second load.",
+        [F(33, 10), F(33, 10)], "Compute the second load correctly but report it again as the two-truck total, omitting the first load.",
+        "One dependent two-load model keeps the subtraction-to-addition chain intact.", labels=["第二辆", "两辆合计"], unit="吨", limitations=[writing_loss])
+mon, tue = F(425, 2), F(510)
+numeric("n53-1016", 1016,
+        r"糖厂星期一运进 $212\frac12$ 吨甜菜，星期二是星期一的 $2\frac25$ 倍，星期三是星期一与星期二之和的 $\frac25$。每 7 吨甜菜制 1 吨糖。三天甜菜共能制糖多少吨？",
+        [F(289, 2)], [(mon + tue + mon * F(2, 5)) / 7],
+        "Apply Wednesday's 2/5 only to Monday: Wednesday=85, total=1615/2, sugar=(1615/2)/7=1615/14.",
+        [(mon + tue + tue * F(2, 5)) / 7],
+        "Apply Wednesday's 2/5 only to Tuesday: Wednesday=204, total=1853/2, sugar=(1853/2)/7=1853/14.",
+        "The three-day dependency and beet-to-sugar conversion form one complete multi-stage model.", unit="吨", limitations=[writing_loss])
+numeric("n53-1017", 1017,
+        r"第一箱葡萄有 $5\frac3{10}$ 公斤，第二箱比第一箱多 $2\frac45$ 公斤。第二箱及两箱合计分别是多少？",
+        [F(81, 10), F(67, 5)], [F(53, 10) - F(14, 5), F(53, 10) * 2 - F(14, 5)],
+        "Read 'more' as 'less': second=53/10-14/5=5/2; add the two resulting box masses.",
+        [F(81, 10), F(14, 5)], "Compute the second box correctly, but report the excess 14/5 as the combined mass.",
+        "This independent larger-than word problem contrasts its positive excess with the smaller-load problem without reusing answers.", labels=["第二箱", "两箱合计"], unit="公斤", limitations=[writing_loss])
+floor, windows, gap = m(10, 23, 25), F(27, 10), F(23, 5)
+numeric("n53-1018", 1018,
+        r"窗子用漆 $2\frac7{10}$ 公斤，地板用漆 $10\frac{23}{25}$ 公斤，门比地板少用 $4\frac35$ 公斤。门的用漆量及三处合计分别是多少？",
+        [floor - gap, windows + floor + floor - gap],
+        [floor + gap, windows + floor + floor + gap],
+        "Reverse 'door uses less than floor': door=floor+23/5, then add windows, floor and this erroneous door amount.",
+        [floor - gap, windows + floor - gap],
+        "Compute the door correctly, then total only windows plus door, omitting the entire floor amount.",
+        "All three objects and the indirect door-to-floor relationship must enter one total.", labels=["门", "三处合计"], unit="公斤", limitations=[writing_loss])
+prices = [F(11, 25), F(9, 10), F(18, 5), F(3, 2)]
+masses = [F(3, 4), F(2, 5), F(2, 5), F(6, 25)]
+numeric("n53-1019", 1019,
+        r"面粉、砂糖、奶油、蜜饯的单价依次为 $\frac{11}{25},\frac9{10},\frac{18}{5},\frac32$ 美元/公斤。做大蛋糕依次用 $\frac34,\frac25,\frac25,\frac6{25}$ 公斤。原料总价是多少美元？",
+        [sum(price * mass for price, mass in zip(prices, masses))], [sum(prices)],
+        "Ignore all ingredient masses and add the four one-kilogram prices, giving 161/25 dollars.",
+        [sum(prices) * sum(masses)],
+        "Replace the sum of matched price-mass products by (sum of all prices)*(sum of all masses), creating cross-ingredient products: (161/25)*(179/100)=28819/2500.",
+        "Matched ingredient costs must all enter the total; the complete cost model is not four independent price clicks.", unit="美元", limitations=[writing_loss])
+
+numeric("n53-1020-first-divisors", 1020,
+        "每行是独立比例方程，未知数均须非零。依次求两个 $x$，哪份完整记录正确？\n\n" +
+        table([r"3\frac25:x=6\frac47:1\frac23", r"4\frac25:x=8\frac45:2\frac12"]),
+        vals(1020, [1, 2]), [m(3, 2, 5) * m(6, 4, 7) / m(1, 2, 3), m(4, 2, 5) * m(8, 4, 5) / m(2, 1, 2)],
+        "For A:x=B:C mistakenly solve x=A*B/C instead of A*C/B, using the wrong cross-product pairing.",
+        [m(6, 4, 7) * m(1, 2, 3) / m(3, 2, 5), m(8, 4, 5) * m(2, 1, 2) / m(4, 2, 5)],
+        "For A:x=B:C mistakenly solve x=B*C/A; move A to the denominator rather than B.",
+        "Both unknowns occupy the second place of the first ratio; the complete two-result record keeps their nonzero natural domains.", limitations=[writing_loss])
+numeric("n53-1020-second-divisors", 1020,
+        "每行是独立比例方程，未知数均须非零。依次求 $a,y$，哪份完整记录正确？\n\n" +
+        table([r"6\frac12:3\frac34=3\frac14:a", r"7\frac13:2\frac12=3\frac23:y"]),
+        vals(1020, [3, 4]),
+        [m(6, 1, 2) * m(3, 1, 4) / m(3, 3, 4), m(7, 1, 3) * m(3, 2, 3) / m(2, 1, 2)],
+        "For A:B=C:z mistakenly solve z=A*C/B instead of B*C/A.",
+        [1 / value for value in vals(1020, [3, 4])],
+        "Solve for the reciprocal 1/z but report it as z: A/(B*C), giving 8/15 and 4/5.",
+        "These unknowns occupy the second ratio's divisor position and are separate from the first pair's correspondence direction.", labels=["a", "y"], limitations=[writing_loss])
+add_question("n53-1021", [1021],
+             r"图中 $l,m$ 是两条不同的平行直线，$m$ 在 $l$ 的右侧。把 $\triangle AKD$ 关于 $l$ 对称得到 $P$，再把 $P$ 关于 $m$ 对称得到 $N$。选出所有正确的作图性质。记两轴的垂直距离为 $d$。",
+             [
+                 {"text": r"在 $P$ 中，$K$ 的对应点仍是 $K$；$l$ 垂直平分 $A,D$ 各自与其对应点的连线。",
+                  "truth": True, "derivation": "K lies on l in the actual source image, so it is fixed. Each off-axis point and reflection have l as the perpendicular bisector."},
+                 {"text": r"在 $P$ 中，$K$ 的对应点在 $m$ 上，并且位于原来 $K$ 的同一条水平线上。",
+                  "truth": False, "procedure": "Snap the vertex on the first axis to the second parallel axis instead of fixing it under the first reflection.",
+                  "derivation": "Use l:x=0,m:x=d. The wrong snap sends K=(0,k) to (d,k), whereas reflection in l sends it to (0,k); d>0 makes the proposed P vertex wrong.", "actual_result": "K'=(d,k), not (0,k)"},
+                 {"text": r"$N$ 可由原三角形向 $l$ 到 $m$ 的方向平移 $2d$ 得到，顶点次序的方向不变。",
+                  "truth": True, "derivation": "With l:x=0,m:x=d, x maps first to -x, then to 2d+x. This is translation by +2d, with orientation preserved after two reflections."},
+                 {"text": r"$N$ 与原三角形直接关于 $m$ 的对称图形相同，顶点次序的方向与原三角形相反。",
+                  "truth": False, "procedure": "Skip the first reflection and reflect the original triangle directly in m.",
+                  "derivation": "The wrong single reflection sends x to 2d-x; the actual composition sends x to x+2d. For A with x=-a,a>0, the wrong coordinate is 2d+a while actual is 2d-a. One reflection reverses orientation, but two preserve it.", "actual_result": "x_N=2d-x and reversed orientation"},
+             ],
+             "Determine vertex construction conditions for P and the complete two-reflection transformation for N.",
+             "A native multiple judgment uses the actual source incidence and reflection-composition geometry rather than copying the requested order.",
+             ["Independently drawing the original axes/triangle and both full reflected figures P and N with instruments is not demonstrated by selecting construction properties."],
+             ["fig-160"], "multiple")
+numeric("n53-1022", 1022,
+        r"在坐标平面标出 $A(-2,-2),B(1,5),K(6,-2)$ 并连接成三角形。以 $AK$ 为底，哪份“底长、垂足坐标、对应高、面积”记录与所作三角形一致？",
+        [F(8), F(1), F(-2), F(7), F(28)],
+        [F(8), F(1), F(-2), F(7), F(56)],
+        "Plot the vertices and perpendicular foot correctly, but use base*height as the triangle area without the factor 1/2.",
+        [F(8), F(1), F(-2), F(5), F(20)],
+        "Use B's y-coordinate 5 as the height instead of its distance 5-(-2)=7 from the base line y=-2, then calculate 8*5/2.",
+        "One complete coordinate-geometry record combines plotted incidence with the base/height area relation.",
+        labels=["底长", "垂足的横坐标", "垂足的纵坐标", "高", "面积"],
+        limitations=["Independently plotting and joining the three vertices on a coordinate plane is not demonstrated; the choice assesses the completed plot's incidence and measurement record."])
+
+add_question("n53-1023-office", [1023],
+             r"办公室买了一批椅子。每房间放 3 把少 3 把；每房间放 2 把多 2 把。设有 $r$ 个房间、$c$ 把椅子，哪份方程及数量记录正确？",
+             [
+                 {"text": r"$c=3r-3=2r+2$；$r=5,\ c=12$。",
+                  "truth": True, "derivation": "3r-3=2r+2 gives r=5; c=12. Checks:15 needed is short3,10 needed leaves2."},
+                 {"text": r"$c=3r=2r+2$；$r=2,\ c=6$。",
+                  "truth": False, "procedure": "Omit the shortage of three in the three-per-room condition, but keep the two-per-room surplus.",
+                  "derivation": "3r=2r+2 yields r=2,c=6. This buys exactly three per room, not three fewer.", "actual_result": ["2 rooms", "6 chairs"]},
+                 {"text": r"$c=3r-3=2r$；$r=3,\ c=6$。",
+                  "truth": False, "procedure": "Keep the first shortage but omit the surplus of two in the two-per-room condition.",
+                  "derivation": "3r-3=2r yields r=3,c=6, leaving zero surplus at two per room rather than two.", "actual_result": ["3 rooms", "6 chairs"]},
+             ],
+             "Translate shortage/surplus conditions into equal seat counts and solve positive-integer quantities.",
+             "This office inventory is an independent simultaneous-condition model, not a second click for the kindergarten model.", [writing_loss])
+add_question("n53-1023-kindergarten", [1023],
+             r"幼儿园买了一批凳子。每房间放 3 个多 6 个；每房间放 4 个少 2 个。设有 $r$ 个房间、$s$ 个凳子，哪份方程及数量记录正确？",
+             [
+                 {"text": r"$s=3r+6=4r-2$；$r=8,\ s=30$。",
+                  "truth": True, "derivation": "3r+6=4r-2 gives r=8,s=30. Checks:24+6=30 and32-2=30."},
+                 {"text": r"$s=3r=4r-2$；$r=2,\ s=6$。",
+                  "truth": False, "procedure": "Omit the six-stool surplus in the three-per-room condition.",
+                  "derivation": "3r=4r-2 gives r=2,s=6; there is no surplus at three per room.", "actual_result": ["2 rooms", "6 stools"]},
+                 {"text": r"$s=3r+6=4r$；$r=6,\ s=24$。",
+                  "truth": False, "procedure": "Omit the two-stool shortage in the four-per-room condition.",
+                  "derivation": "3r+6=4r gives r=6,s=24; there is no shortage at four per room.", "actual_result": ["6 rooms", "24 stools"]},
+             ],
+             "Form the two surplus/shortage counts for the same stool stock and solve them.",
+             "Different occupancy rates and signs make this a genuinely separate model from the office task.", [writing_loss])
+numeric("n53-1024", 1024,
+        "电表现读数为 1226.7 度，上次为 1146.7 度，冰箱占耗电量的 85%。每度电 4 美元美分，冰箱的电费是多少美元？",
+        [F(68, 25)], [(F("1226.7") - F("1146.7")) * F(85, 100) * 4],
+        "Correctly obtain 68 refrigerator kWh, but treat 4 cents as 4 dollars; 68*4=272 dollars.",
+        [(F("1226.7") - F("1146.7")) * F(4, 100)],
+        "Compute the entire home's 80 kWh bill at 4 cents/kWh and omit the 85% refrigerator share; total bill=16/5 dollars.",
+        "The meter subtraction, percentage and cents/dollars conversion must all apply to one refrigerator bill.", unit="美元", limitations=[writing_loss])
+numeric("n53-1025", 1025,
+        r"图中直线按“纵坐标是相应横坐标的 $\frac43$”画出。横向每小格为 $\frac14$，纵向每小格为 $\frac13$。按图读取：先求横坐标 $5,-3,\frac94$ 对应的纵坐标，再求纵坐标 $\frac23,-4,0$ 对应的横坐标。哪份完整记录正确？",
+        [F(20, 3), F(-4), F(3), F(1, 2), F(-3), F(0)],
+        [F(5) * F(3, 4), F(-3) * F(3, 4), F(9, 4) * F(3, 4), F(2, 3) * F(4, 3), F(-4) * F(4, 3), F(0)],
+        "Reverse the correspondence factor, reading the given line as y=3x/4 and its inverse as x=4y/3. This produces 15/4,-9/4,27/16 and8/9,-16/3,0, not the displayed graph's intersections.",
+        [F(20, 3), F(4), F(3), F(1, 2), F(3), F(0)],
+        "Read negative axis distances as unsigned magnitudes, dropping the minus on the negative-quadrant forward/inverse correspondence.",
+        "All six forward/inverse intersections belong to one whole-graph correspondence; the fine grid permits exact reading without output labels.",
+        labels=[r"$x=5$ 时的 $y$", r"$x=-3$ 时的 $y$", r"$x=\frac94$ 时的 $y$",
+                r"$y=\frac23$ 时的 $x$", r"$y=-4$ 时的 $x$", r"$y=0$ 时的 $x$"],
+        limitations=["Independently constructing the straight line is not demonstrated. The supplied graph supports actual reading recognition rather than falsely calling algebra-only substitution a graphical task.",
+                     "The new authored graph has no original source image and awaits independent figure review; no author approval is claimed."],
+        figures=[graph_id])
+
+q1, q2, q3 = F("503.44") / F("12.4"), F("225.36") / F("7.2"), F("1.6905") / F("0.49")
+numeric("n53-1026-1", 1026, r"计算 $(503.44:12.4-225.36:7.2)\cdot(1.6905:0.49)$。",
+        vals(1026, [1]), [q1 - q2 * q3],
+        "Omit the first parenthesis: use 40.6-31.3*3.45 instead of (40.6-31.3)*3.45.",
+        [(q1 - q2) / q3], "Reverse the last quotient, using 0.49/1.6905=1/3.45, then multiply the correct first difference by it.",
+        "This independent expression contrasts parenthesis distribution and division direction.", limitations=[writing_loss])
+q1, q2, q3, q4 = F("495.3") / F("7.8"), F("15.7744"), F("3.4"), F("5.8")
+numeric("n53-1026-2", 1026, r"计算 $(495.3:7.8+15.7744)\cdot(3.4\cdot5.8)$。",
+        vals(1026, [2]), [(q1 + q2) * (q3 + q4)],
+        "Replace the inner product 3.4*5.8 by the sum 3.4+5.8 while preserving the first bracket.",
+        [q1 * q3 * q4], "Drop the additive 15.7744 term and multiply only the first quotient by 3.4*5.8.",
+        "The additive bracket and product bracket form a distinct numerical operation chain.", limitations=[writing_loss])
+q1, q2, q3 = F("971.1") / F("23.4"), F("211.14") / F("6.9"), F("6.5704") / F("0.86")
+numeric("n53-1026-3", 1026, r"计算 $(971.1:23.4-211.14:6.9)\cdot(6.5704:0.86)$。",
+        vals(1026, [3]), [q1 - q2 * q3],
+        "Omit the first parenthesis: use 41.5-30.6*7.64 instead of (41.5-30.6)*7.64.",
+        [(q1 - q2) / q3], "Reverse 6.5704/0.86 and multiply the first difference by 0.86/6.5704 instead.",
+        "This is an independent exact-decimal task with different operands; no result is disclosed by the earlier expression.", limitations=[writing_loss])
+q1, q2, q3, q4 = F("213.12") / F("6.4"), F("106.4352"), F("8.8"), F("7.9")
+numeric("n53-1026-4", 1026, r"计算 $(213.12:6.4+106.4352):(8.8\cdot7.9)$。",
+        vals(1026, [4]), [q1 + q2 / (q3 * q4)],
+        "Drop the numerator parentheses and divide only the second addend: 33.3+106.4352/(8.8*7.9).",
+        [(q1 + q2) / q3 * q4],
+        "Replace division by the denominator product with left-to-right division by 8.8 followed by multiplication by 7.9.",
+        "Division by a product rather than multiplication by a quotient is a separate structural distinction.", limitations=[writing_loss])
+
+rows = solutions["1027"]["subtasks"][:6]
+numeric("n53-1027-whole", 1027,
+        "计算表中各差，哪份完整结果正确？\n\n" +
+        table([r"1-\frac57", r"3-\frac2{11}", r"4-\frac5{13}", r"4-3\frac49", r"17-12\frac7{19}", r"45-44\frac38"]),
+        vals(1027, [1, 2, 3, 4, 5, 6]), [value + 1 for value in vals(1027, [1, 2, 3, 4, 5, 6])],
+        "Borrow a denominator's worth of fractional units but forget to decrease the integer difference, adding one to each result.",
+        [F(1 - 5, 7), F(3 - 2, 11), F(4 - 5, 13), F(4 - 3 - 4, 9), F(17 - 12 - 7, 19), F(45 - 44 - 3, 8)],
+        "Subtract the fraction numerator directly from the whole-number difference, then divide that difference by the fraction denominator: (N-M-p)/q.",
+        "One ordered record retains all whole-number borrowing cases including results below one.", limitations=[writing_loss])
+rows = solutions["1027"]["subtasks"][6:]
+operands = [(F(row["minuend"]), F(row["subtrahend"])) for row in rows]
+numeric("n53-1027-mixed", 1027,
+        "计算下列带分数的差，哪份完整记录正确？\n\n" +
+        table([r"6\frac7{15}-3\frac15", r"10\frac3{23}-7\frac{19}{46}", r"16\frac5{26}-11\frac9{13}"]),
+        vals(1027, [7, 8, 9]),
+        [F(6 - 3) + abs(F(7, 15) - F(1, 5)), F(10 - 7) + abs(F(3, 23) - F(19, 46)), F(16 - 11) + abs(F(5, 26) - F(9, 13))],
+        "Subtract integer parts, then append the absolute fractional difference without borrowing. The first row happens to remain right; the other two lose the sign of their fractional differences.",
+        [F(a.numerator - b.numerator, a.denominator) for a, b in operands],
+        "Use improper-fraction numerator differences over the first denominator without converting the second operand to that denominator.",
+        "The complete mixed-number group contrasts no-borrow and borrow cases, so one correct row does not certify the table.", limitations=[writing_loss])
+add_indices = [1, 2, 3, 5, 6, 8]
+wrong_mediants = [F(94) + F(1 + 2, 6 + 18), F(3) + F(4 + 3, 15 + 20), F(46) + F(1 + 7, 8 + 12),
+                  F(51) + F(5 + 5, 6 + 9), F(48) + F(5 + 7, 7 + 8), F(13) + F(0 + 3, 1 + 4)]
+wrong_carry = vals(1028, add_indices)
+wrong_carry[3] -= 1
+wrong_carry[4] -= 1
+numeric("n53-1028-addition", 1028,
+        "计算下表中的和，哪份完整记录正确？\n\n" +
+        table([r"91\frac16+3\frac2{18}", r"1\frac4{15}+2\frac3{20}", r"5\frac18+41\frac7{12}",
+               r"39\frac56+12\frac59", r"36\frac57+12\frac78", r"5+8\frac34"]),
+        vals(1028, add_indices), wrong_mediants,
+        "Add integer parts, then combine the printed fractional parts by (p+r)/(q+s) rather than a common denominator; for a whole number use fractional part 0/1.",
+        wrong_carry,
+        "Compute fractional sums but discard any whole-unit carry; only source parts 5 and6 have fractional sums exceeding one, so subtract one from their true results and leave the other rows unchanged.",
+        "All addition cases share commutation/common-denominator/carry structure while preserving their source ordering.", limitations=[writing_loss])
+numeric("n53-1028-subtraction", 1028,
+        "计算下表中的差，哪份完整记录正确？\n\n" +
+        table([r"7\frac23-1\frac25", r"101\frac12-19\frac5{14}", r"8\frac7{15}-3"]),
+        vals(1028, [4, 7, 9]), [m(7, 2, 3) + m(1, 2, 5), m(101, 1, 2) + m(19, 5, 14), m(8, 7, 15) + 3],
+        "Replace all three subtractions by additions of the original operands.",
+        [F(6), F(82), F(5)], "Subtract only the integer parts and omit all fractional remainders.",
+        "These three subtraction tasks have different sign structure from the same source's addition group.", limitations=[writing_loss])
+numeric("n53-1029-regroup", 1029, r"计算 $7\frac18+2\frac35+2\frac78$。",
+        vals(1029, [1]), [F(11) + F(1 + 3 + 7, 8 + 5 + 8)],
+        "Add the three integer parts (11), then add fractional numerators and denominators separately to obtain 11/21.",
+        [F(11) + F(3, 5)],
+        "Regroup the first and third addends but drop the whole-unit carry from 1/8+7/8=1, retaining only their integer parts 7+2.",
+        "This sum's complementary eighths support the source lesson's commutative/associative simplification.", limitations=[writing_loss])
+numeric("n53-1029-signed-terms", 1029,
+        "计算三个含减号的式子，哪份完整记录正确？\n\n" +
+        table([r"3\frac5{16}+\frac14-2\frac1{16}", r"6\frac{11}{12}-3\frac16-1\frac14", r"3\frac79-1\frac5{18}+3\frac12"]),
+        vals(1029, [2, 3, 4]),
+        [m(3, 5, 16) + F(1, 4) + m(2, 1, 16), m(6, 11, 12) + m(3, 1, 6) + m(1, 1, 4),
+         m(3, 7, 9) + m(1, 5, 18) + m(3, 1, 2)],
+        "Treat every term as positive when regrouping; replace each displayed minus by a plus.",
+        [m(3, 5, 16) - F(1, 4) + m(2, 1, 16), m(6, 11, 12) - m(3, 1, 6) + m(1, 1, 4),
+         m(3, 7, 9) - (m(1, 5, 18) + m(3, 1, 2))],
+        "Misapply subtraction regrouping: row1 A+B-C becomes A-B+C, row2 A-B-C becomes A-B+C, row3 A-B+C becomes A-(B+C).",
+        "A full signed-term record distinguishes legal association from changing the signs of terms.", limitations=[writing_loss])
+numeric("n53-1030-conditional", 1030,
+        "从直升飞机投下物品，第一秒内下降 4.9 米。假定以后每个一秒区间内下降的距离都比前一个一秒区间多 9.8 米。按这一条件，第三秒末总共下降多少米？",
+        [F("4.9") + F("14.7") + F("24.5")], [F("4.9") + 2 * F("9.8")],
+        "Compute the third one-second interval's distance 4.9+2*9.8=24.5 and report it as the cumulative three-second distance.",
+        [3 * F("9.8")], "Treat the 9.8-m increment as the entire travelled distance in each of three intervals, omitting the initial 4.9-m sequence.",
+        "One explicitly conditional three-interval accumulation task; not a continuous-acceleration inference from decorative artwork.",
+        unit="米", figures=["fig-161"],
+        limitations=["The original says speed increases by a number measured in metres. This source wording ambiguity is retained unresolved; the visible item explicitly adds an interval-distance condition and covers only that conditional reading.",
+                     "No exact acceleration law, physically measured picture scale, or independent written summation is established."])
+numeric("n53-1031", 1031,
+        r"加工一个零件，车床用 $2\frac14$ 小时，铣床用 $3\frac16$ 小时，刨床用 $1\frac1{15}$ 小时。共用多少小时？",
+        [F(389, 60)], [F(6) + F(1 + 1 + 1, 4 + 6 + 15)],
+        "Add integer parts (6) and fraction numerators/denominators separately, using 3/25 for the fractional duration.",
+        [F(6) + F(1 + 1 + 1, 60)],
+        "Choose common denominator 60 but fail to scale the three numerators; use (1+1+1)/60=3/60.",
+        "The complete duration is one common-denominator addition model with all three machining stages.", unit="小时", limitations=[writing_loss])
+add_question("n53-1032", [1032],
+             r"作正三角形 $ABC$ 及它的全部对称轴。哪份“轴的数量及画法”记录正确？",
+             [
+                 {"text": "共 3 条轴：分别画通过一个顶点与其对边中点的整条直线。",
+                  "truth": True, "derivation": "Each vertex-to-opposite-midpoint line is median, altitude, angle bisector and perpendicular bisector in an equilateral triangle. These are the same three lines, and each swaps the other two vertices."},
+                 {"text": "共 6 条轴：分别画三条顶点到对边中点的直线，再画三条对边的垂直平分线。",
+                  "truth": False, "procedure": "Count medians and perpendicular bisectors as six distinct lines, forgetting that they coincide pairwise in an equilateral triangle.",
+                  "derivation": "In the model A(0,sqrt3),B(-1,0),C(1,0), both listed families give x=0,y=(x+1)/sqrt3,y=(1-x)/sqrt3. The wrong program counts the two identical three-element lists separately and outputs6.", "actual_result": "6 counted entries but3 distinct lines"},
+                 {"text": "共 3 条轴：分别延长三条边，得到三条边所在的整条直线。",
+                  "truth": False, "procedure": "Treat each side line as a symmetry axis instead of the vertex-to-opposite-midpoint line.",
+                  "derivation": "Reflect A(0,sqrt3) in side BC:y=0 to get (0,-sqrt3), not any vertex of the original triangle. The side-line procedure outputs three lines but none is an axis.", "actual_result": "the three side lines; reflection ofA leaves the triangle"},
+             ],
+             "Determine exactly three distinct symmetry axes and the complete vertex/midpoint construction.",
+             "A single complete count-and-construction judgment prevents separate yes/no clicks for duplicated descriptions of the same axis.",
+             ["Independently drawing an equilateral triangle and extending all three axes with instruments is not demonstrated by recognizing the complete construction description."])
+
+if digest(source) != freeze["seed_sha256"]:
+    raise RuntimeError("Source changed after the pre-alternative freeze")
+render = json.loads(graph_report.read_text())
+if render["status"] != "pass":
+    raise RuntimeError("Repaired authored graph is not render-ready; stop without another repair")
+limitations_by_source = {}
+coverage = []
+for item in source["exercises"]:
+    number = item["number"]
+    matching = [question for question in questions if number in question["source_numbers"]]
+    losses = []
+    for question in matching:
+        for loss in question["intent"]["limitations"]:
+            if loss not in losses:
+                losses.append(loss)
+    limitations_by_source[number] = losses
+    coverage.append({
+        "source_number": number, "question_ids": [question["id"] for question in matching],
+        "omitted_tasks": losses,
+        "reason": "The independent source freeze supplies every original subtask. Complete mathematical response units are stated in the linked intents; independent written or drawing production is not claimed."
+                  + (" Original speed/metre wording remains unresolved; only the visible conditional interval-distance variant is authored." if number == "1030" else "")
+                  + (" Actual graph reading uses a new authoredBasis asset, with independent figure review still pending." if number == "1025" else ""),
+    })
+draft = {
+    "schema": "s10y-choice-draft-v1", "seed_sha256": digest(source),
+    "new_figures": [{"id": graph_id, "path": str(graph_path.relative_to(ROOT)), "sha256": file_hash(graph_path),
+                     "basis": json.loads(graph_spec.read_text())["source"]["authoredBasis"]}],
+    "questions": questions, "coverage": coverage,
+}
+view = {"questions": [{"id": question["id"], **question["view"]} for question in questions]}
+position_sequence = ["".join(question["key"]["correct"]) for question in questions]
+source_hash = file_hash(OWN / "source-solutions.json")
+files = {
+    "draft.json": draft,
+    "view.json": view,
+    "wrong-program-results.json": {
+        "lesson": source["source"]["lesson"], "seed_sha256": digest(source), "draft_sha256": digest(draft),
+        "status": "author_exact_program_outputs_recorded_not_independent_semantic_approval",
+        "false_option_count": len(program_records), "procedures": program_records,
+        "no_random_nearby_values": True,
+    },
+    "response-unit-decisions.json": {"lesson": source["source"]["lesson"], "source_freeze_sha256": source_hash,
+                                    "units": unit_records, "original_count": 27, "independent_source_subtasks": 105},
+    "positions-notice.json": {"lesson": source["source"]["lesson"], "sequence": position_sequence,
+                              "single_position_counts": {label: sum(sequence == label for sequence in position_sequence) for label in "ABC"},
+                              "fixed_content_before_position_shuffle": True,
+                              "shuffle_is_only_serialization_of_authored_content": True,
+                              "not_independent_leakage_approval": True},
+    "new-figure-author-observations.json": {
+        "figure_id": graph_id, "spec_path": str(graph_spec), "spec_sha256": file_hash(graph_spec),
+        "svg_path": str(graph_path), "svg_sha256": file_hash(graph_path),
+        "render_path": str(graph_report), "render_sha256": file_hash(graph_report),
+        "preview_path": str(OWN / "new-figures/fig-choice-n53-linear-reading.revised.preview.png"),
+        "actually_opened": True, "observer_kind": "author", "status": "independent_review_pending",
+        "observation": source_figure_observations[graph_id],
+        "first_rejected_spec_svg_preview_render_and_receipt_preserved": True, "label_repair_count": 1,
+        "new_figure_reviews": [],
+    },
+}
+for name, value in files.items():
+    path = OWN / name
+    if path.exists():
+        raise RuntimeError("Do not overwrite author snapshot: " + name)
+    path.write_text(json.dumps(value, indent=2, ensure_ascii=True) + "\n")
+print(json.dumps({"draft": str(OWN / "draft.json"), "view": str(OWN / "view.json"),
+                  "question_count": len(questions), "option_count": sum(len(question["view"]["options"]) for question in questions),
+                  "true_option_count": sum(len(question["key"]["correct"]) for question in questions),
+                  "false_option_count": len(program_records), "single_positions": position_sequence,
+                  "source_freeze_unchanged": file_hash(OWN / "source-solutions.json") == source_hash,
+                  "new_figure_independent_review_pending": True, "source_1030_wording_unresolved": True}, indent=2))

@@ -1,0 +1,29 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+
+const root = '.intentfold/tickets/STEMROBIN-182/tmp'
+const target = `${root}/5m-n52/history-before-990-internal-repair`
+assert(!fs.existsSync(target))
+fs.mkdirSync(target)
+const inputs = [
+  ['draft.json', `${root}/5m-n52/draft.json`],
+  ['view.json', `${root}/5m-n52/view.json`],
+  ['author-draft.mjs', `${root}/5m-n52/author-draft.mjs`],
+  ['review.json', `${root}/reviewer-5m-n52/review.json`],
+  ['final-comparison.json', `${root}/reviewer-5m-n52/final-comparison.json`],
+  ['author-comparison-evidence.json', `${root}/reviewer-5m-n52/author-comparison-evidence.json`],
+]
+const files = inputs.map(([name, source]) => {
+  const destination = path.join(target, name)
+  fs.copyFileSync(source, destination, fs.constants.COPYFILE_EXCL)
+  const bytes = fs.readFileSync(source)
+  assert(bytes.equals(fs.readFileSync(destination)))
+  return { source, destination, sha256: crypto.createHash('sha256').update(bytes).digest('hex') }
+})
+fs.writeFileSync(`${target}/receipt.json`, JSON.stringify({
+  purpose: 'Exact first-internal rejected snapshot before one misconception repair; no view/key/source changes.',
+  files,
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ retained_files: files.length, target }))

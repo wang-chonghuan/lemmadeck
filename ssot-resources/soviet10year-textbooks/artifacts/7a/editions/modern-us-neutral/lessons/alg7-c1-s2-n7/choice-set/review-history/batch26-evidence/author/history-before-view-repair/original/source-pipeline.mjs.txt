@@ -1,0 +1,92 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+
+export const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const ticketTmp = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+export const own = n => {
+  if (![7, 8].includes(Number(n))) throw Error('Only 7a n7/n8 authorized');
+  return path.join(ticketTmp, `7a-n${n}`);
+};
+export const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+export const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+export const record = file => ({ path: file, sha256: sha(file), bytes: fs.statSync(file).size });
+export const assert = (ok, message) => { if (!ok) throw Error(`STOP: ${message}`); };
+export const write = (file, value) => {
+  assert([own(7), own(8)].some(root => file.startsWith(root + '/')), 'Writes only in two owned sidecars');
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+};
+export const canonical = value => {
+  const sorted = x => Array.isArray(x) ? x.map(sorted) : x && typeof x === 'object'
+    ? Object.fromEntries(Object.keys(x).sort().map(k => [k, sorted(x[k])])) : x;
+  return JSON.stringify(sorted(value)).replace(/[\x7f-\uffff]/g, c =>
+    `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);
+};
+export const digest = value => crypto.createHash('sha256').update(canonical(value)).digest('hex');
+export function frozen(n) {
+  const bound = read(path.join(own(n), 'source-inputs-before.json'));
+  for (const item of bound.inputs) assert(sha(item.path) === item.sha256, `Source bytes changed: ${item.path}`);
+  if (fs.existsSync(path.join(own(n), 'source-frozen.json'))) {
+    for (const item of read(path.join(own(n), 'source-frozen.json')).artifacts)
+      assert(sha(item.path) === item.sha256, `Source checkpoint changed: ${item.path}`);
+  }
+}
+export function runOnce(n, name, argv, inputFiles, outputs = [], input = undefined) {
+  const prefix = path.join(own(n), 'commands', name);
+  assert(!fs.existsSync(prefix + '.started.json'), 'No command replay');
+  for (const file of outputs) assert(!fs.existsSync(file), 'Do not replace existing output');
+  frozen(n);
+  const inputs = inputFiles.map(record);
+  write(prefix + '.started.json', { at: new Date().toISOString(), argv, cwd: repo, inputs });
+  const result = spawnSync(argv[0], argv.slice(1), { cwd: repo, input, maxBuffer: 32 * 1024 * 1024,
+    env: { ...process.env, PWDEBUG: '', PLAYWRIGHT_HTML_OPEN: 'never', PYTHONDONTWRITEBYTECODE: '1' } });
+  fs.writeFileSync(prefix + '.stdout.txt', result.stdout ?? '', { flag: 'wx' });
+  fs.writeFileSync(prefix + '.stderr.txt', result.stderr ?? '', { flag: 'wx' });
+  let failure = result.error?.message ?? (result.status === 0 ? null : `Exit ${result.status}`);
+  try {
+    frozen(n);
+    for (const item of inputs) assert(sha(item.path) === item.sha256, 'Command changed input');
+  } catch (error) { failure = error.message; }
+  write(prefix + '.json', { argv, exit_code: result.status, pass: !failure, failure, inputs,
+    outputs: outputs.filter(file => fs.existsSync(file)).map(record),
+    stdout: record(prefix + '.stdout.txt'), stderr: record(prefix + '.stderr.txt') });
+  assert(!failure, `${name} failed; retained exact evidence; no replay`);
+  return result.stdout.toString();
+}
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const n = Number(process.argv[2]);
+  const directory = own(n);
+  const tool = path.join(repo, '.agents/skills/ld-s10y-choice/scripts/prepare.py');
+  if (process.argv[3] === 'inspect') {
+    const base = path.join(repo, 'ssot-resources/soviet10year-textbooks/artifacts/7a');
+    const book = path.join(base, 'book.json');
+    const ids = read(book).lessons.map(x => x.id).filter(id => id.endsWith(`-n${n}`));
+    assert(ids.length === 1, 'Book must identify exactly one actual target lesson');
+    const lesson = ids[0];
+    const inputs = [book, ...['lesson.json', 'exercises.json', 'figures.json'].map(name =>
+      path.join(base, 'editions/modern-us-neutral/lessons', lesson, name))];
+    write(path.join(directory, 'source-inputs-before.json'), { book: '7a', actual_lesson_id: lesson,
+      lesson_id_authority: 'Unique book.lessons id ending with explicitly requested n7 or n8; prepare inspect independently validates identity.',
+      inputs: inputs.map(record), allowed_authoring_inputs: 'Whitelist modern written tasks, relevant definitions and actual referenced image bytes only.' });
+    const stdout = runOnce(n, 'inspect', ['python3', tool, 'inspect', '--repo', repo, '--book', '7a', '--lesson', lesson],
+      [tool, ...inputs]);
+    write(path.join(directory, 'source-inventory.json'), JSON.parse(stdout));
+    console.log(stdout);
+  } else if (process.argv[3] === 'prepare') {
+    const selectionFile = path.join(directory, 'source-selection.json');
+    const selection = read(selectionFile);
+    const id = read(path.join(directory, 'source-inputs-before.json')).actual_lesson_id;
+    const inventory = read(path.join(directory, 'source-inventory.json'));
+    assert(canonical(selection.exercises) === canonical(inventory.exercises.map(x => x.number)), 'Explicit selection must cover full actual lesson, source order');
+    const argv = ['python3', tool, 'prepare', '--repo', repo, '--book', '7a', '--lesson', id,
+      ...selection.exercises.flatMap(x => ['--exercise', x]),
+      ...(selection.concept_blocks.length ? selection.concept_blocks.flatMap(x => ['--concept-block', String(x)]) : ['--no-concepts']),
+      ...(selection.concept_figures ?? []).flatMap(x => ['--concept-figure', x]),
+      '--out', path.join(directory, 'seed.json')];
+    console.log(runOnce(n, 'prepare', argv, [tool, selectionFile, path.join(directory, 'source-inventory.json')],
+      [path.join(directory, 'seed.json')]));
+  } else throw Error('Expected inspect or prepare');
+}

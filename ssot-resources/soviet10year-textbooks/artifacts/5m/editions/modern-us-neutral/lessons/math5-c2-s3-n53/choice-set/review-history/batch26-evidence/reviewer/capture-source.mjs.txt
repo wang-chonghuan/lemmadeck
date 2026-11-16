@@ -1,0 +1,85 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const own = path.dirname(new URL(import.meta.url).pathname);
+const seedPath = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp/5m-n53/source.json');
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const writeNew = (name, value) => fs.writeFile(path.join(own, name), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+await writeNew('capture-run.started.json', { script: 'capture-source.mjs', once_guard: true });
+const seedBytes = await fs.readFile(seedPath);
+assert.equal(sha(seedBytes), '7fdd196a0318878426a27d8e10ed148a6d7947dd56021a8bda8bd93d5bf28698');
+const seed = JSON.parse(seedBytes);
+assert.deepEqual(seed.exercises.map(item => item.number), Array.from({ length: 27 }, (_, i) => String(1006 + i)));
+const inputs = [{ path: seedPath, sha256: sha(seedBytes), bytes: seedBytes.length }];
+const assets = new Map();
+for (const figure of seed.figures) {
+  for (const asset of figure.assets) {
+    const absolute = path.join(repo, asset.path);
+    const bytes = await fs.readFile(absolute);
+    assert.equal(sha(bytes), asset.sha256);
+    inputs.push({ path: absolute, sha256: sha(bytes), bytes: bytes.length, figure_id: figure.id });
+    assets.set(path.basename(absolute), bytes);
+  }
+}
+for (const name of ['review.md', 'contract.md']) {
+  const absolute = path.join(repo, '.agents/skills/ld-s10y-choice/references', name);
+  const bytes = await fs.readFile(absolute);
+  inputs.push({ path: absolute, sha256: sha(bytes), bytes: bytes.length, role: 'review-contract' });
+}
+await writeNew('input-freeze.json', {
+  schema: 'independent-source-input-freeze-v1',
+  source: seed.source,
+  source_numbers: seed.exercises.map(item => item.number),
+  allowed_inputs: inputs,
+  excluded: ['seed trace paths (metadata only)', 'author solutions/draft/view/ready/keys', 'author new graphs/specs/serializers', 'previous answers/choices/ticket results'],
+});
+await fs.writeFile(path.join(own, 'source.frozen.json'), seedBytes, { flag: 'wx' });
+const require = createRequire(path.join(repo, '.agents/skills/ld-s10y-image/scripts/render_spec.mjs'));
+const { chromium } = require('playwright-core');
+delete process.env.PWDEBUG;
+process.env.PLAYWRIGHT_HTML_OPEN = 'never';
+const svg160 = assets.get('fig-160.svg').toString();
+const svg161 = assets.get('fig-161.svg').toString();
+const artwork = `data:image/png;base64,${assets.get('fig-161.artwork.png').toString('base64')}`;
+const cases = [
+  { name: 'fig-160-640.png', width: 640, height: 640, body: svg160, composition: 'complete source SVG; intrinsic 480x480 scaled to 640x640' },
+  { name: 'fig-161-svg-640.png', width: 640, height: 960, body: svg161, composition: 'complete source SVG only; intrinsic 480x720 scaled to 640x960' },
+  { name: 'fig-161-composite-640.png', width: 640, height: 960, body: `<img src="${artwork}">${svg161}`, composition: 'authorized artwork PNG and source SVG share their 480x720 coordinate box; source SVG above artwork; no source bytes edited' },
+];
+const receipt = { scope: 'isolated offline source pixels; no live product, author figure, validator or lesson rendering', headless: true, network: 'all requests aborted; source bytes embedded in memory', inputs, captures: [] };
+let browser;
+try {
+  browser = await chromium.launch({ headless: true });
+  receipt.browser_version = browser.version();
+  const context = await browser.newContext({ viewport: { width: 640, height: 1000 }, deviceScaleFactor: 1 });
+  await context.route('**/*', route => route.abort());
+  const page = await context.newPage();
+  for (const item of cases) {
+    const file = path.join(own, item.name);
+    await assert.rejects(fs.access(file), { code: 'ENOENT' });
+    await page.setContent(`<html><head><style>html,body{margin:0;background:white}#source{position:relative;width:${item.width}px;height:${item.height}px}svg,img{position:absolute;inset:0;width:100%;height:100%;display:block}</style></head><body><div id="source">${item.body}</div></body></html>`);
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      await Promise.all([...document.images].map(image => image.decode()));
+    });
+    const pixels = await page.locator('#source').screenshot({ path: file, animations: 'disabled' });
+    receipt.captures.push({ path: file, sha256: sha(pixels), width_px: item.width, height_px: item.height, composition: item.composition });
+  }
+} catch (error) {
+  await writeNew('capture-run.failed.json', { error: String(error), stack: error.stack, receipt });
+  throw error;
+} finally {
+  if (browser) await browser.close();
+}
+for (const input of inputs) {
+  assert.equal(sha(await fs.readFile(input.path)), input.sha256, `Changed source input: ${input.path}`);
+}
+receipt.browser_closed = true;
+receipt.original_inputs_unchanged = true;
+receipt.script_sha256 = sha(await fs.readFile(new URL(import.meta.url)));
+await writeNew('capture-receipt.json', receipt);
+console.log(JSON.stringify(receipt, null, 2));

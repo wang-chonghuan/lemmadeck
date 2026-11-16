@@ -1,0 +1,62 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { createHash } from 'node:crypto';
+
+const ticket = '/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp';
+const sha = value => createHash('sha256').update(value).digest('hex');
+async function inventory(root, relative = '') {
+  const files = [];
+  for (const entry of (await fs.readdir(path.join(root, relative), { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name))) {
+    if (entry.name === 'history-before-view-repair' || entry.name === 'freeze-view-repair.mjs') continue;
+    const name = path.join(relative, entry.name);
+    assert(!entry.isSymbolicLink(), `Do not follow an unexpected symlink: ${name}`);
+    if (entry.isDirectory()) files.push(...await inventory(root, name));
+    else if (entry.isFile()) files.push(name);
+  }
+  return files;
+}
+for (const lesson of ['7a-n7', '7a-n8']) {
+  const root = path.join(ticket, lesson);
+  const history = path.join(root, 'history-before-view-repair');
+  await assert.rejects(fs.access(history), { code: 'ENOENT' });
+  const files = await inventory(root);
+  const reviewerPath = path.join(ticket, `reviewer-${lesson}`, 'view-checks.json');
+  const reviewerBytes = await fs.readFile(reviewerPath);
+  const review = JSON.parse(reviewerBytes);
+  const draft = JSON.parse(await fs.readFile(path.join(root, 'draft.json')));
+  const view = await fs.readFile(path.join(root, 'pureview.json'));
+  assert.equal(sha(view), review.binding.view_byte_sha256);
+  assert.equal(draft.questions.length, lesson === '7a-n7' ? 15 : 36);
+  assert.equal(review.outcome, 'revise');
+  await fs.mkdir(path.join(history, 'original'), { recursive: true });
+  const snapshots = [];
+  for (const name of files) {
+    const source = path.join(root, name);
+    const bytes = await fs.readFile(source);
+    const destination = path.join(history, 'original', name);
+    await fs.mkdir(path.dirname(destination), { recursive: true });
+    await fs.writeFile(destination, bytes, { flag: 'wx' });
+    assert.equal(sha(await fs.readFile(destination)), sha(bytes));
+    snapshots.push({ relative_path: name, original_path: source, preserved_path: destination, sha256: sha(bytes), bytes: bytes.length });
+  }
+  const preservedReview = path.join(history, 'reviewer-view-checks.json');
+  await fs.writeFile(preservedReview, reviewerBytes, { flag: 'wx' });
+  for (const snapshot of snapshots) assert.equal(sha(await fs.readFile(snapshot.original_path)), snapshot.sha256);
+  const manifest = {
+    schema: 'exact-author-history-before-view-repair-v1',
+    lesson: draft.questions[0].source_numbers ? lesson : null,
+    once_guard: true,
+    original_question_count: draft.questions.length,
+    original_coverage_count: draft.coverage.length,
+    original_view_sha256: sha(view),
+    reviewer_record: { original_path: reviewerPath, preserved_path: preservedReview, sha256: sha(reviewerBytes), bytes: reviewerBytes.length },
+    snapshots,
+    allowed_question_ids: lesson === '7a-n7' ? ['q95'] : ['q98', 'q103-c'],
+    all_source_files_graph_files_prior_command_logs_preserved: true,
+    all_copies_exact_original_bytes: true,
+    freeze_script_sha256: sha(await fs.readFile(new URL(import.meta.url))),
+  };
+  await fs.writeFile(path.join(history, 'before-manifest.json'), JSON.stringify(manifest, null, 2) + '\n', { flag: 'wx' });
+  console.log(JSON.stringify({ lesson, preserved_files: snapshots.length, view_sha256: sha(view), review_sha256: sha(reviewerBytes), history }, null, 2));
+}

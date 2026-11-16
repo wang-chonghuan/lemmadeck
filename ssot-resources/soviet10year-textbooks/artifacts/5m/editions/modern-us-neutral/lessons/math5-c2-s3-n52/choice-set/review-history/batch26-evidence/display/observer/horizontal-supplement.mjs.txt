@@ -1,0 +1,92 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
+
+delete process.env.PWDEBUG;
+process.env.PLAYWRIGHT_HTML_OPEN = 'never';
+const { chromium } = createRequire(path.join(process.cwd(), 'package.json'))('@playwright/test');
+const repo = path.resolve(process.cwd(), '..');
+const out = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp/reviewer-5m-n52-display');
+const record = path.join(out, 'horizontal-supplement-command.json');
+assert(!fs.existsSync(record), 'Do not repeat these three missing right windows.');
+const base = JSON.parse(fs.readFileSync(path.join(out, 'supplement-command.json')));
+const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const protectedFiles = [...base.protectedFiles, ...base.captures];
+const absolute = (file) => path.isAbsolute(file) ? file : path.join(repo, file);
+for (const item of protectedFiles) assert.equal(sha(absolute(item.path)), item.sha256);
+const html = base.protectedFiles.find((item) => item.path.endsWith('/choices.html'));
+const started = new Date().toISOString();
+const captures = [];
+let failure = null;
+let browser;
+let context;
+let browserClosed = false;
+let contextClosed = false;
+const browserErrors = [];
+const viewport = { width: 390, height: 844 };
+
+try {
+  browser = await chromium.launch({ headless: true });
+  context = await browser.newContext({ viewport, deviceScaleFactor: 1 });
+  await context.route(/^https?:/, (route) => route.abort());
+  const page = await context.newPage();
+  page.on('pageerror', (error) => browserErrors.push(error.message));
+  await page.goto(pathToFileURL(absolute(html.path)).href);
+  await page.evaluate(() => document.fonts.ready);
+  for (const question of [8, 15, 16]) {
+    const item = page.locator('.choice').nth(question - 1);
+    const regions = await item.evaluate((node) => [...node.querySelectorAll('*')]
+      .flatMap((part) => {
+        if (!['auto', 'scroll'].includes(getComputedStyle(part).overflowX)
+          || part.scrollWidth <= part.clientWidth + 1) return [];
+        part.scrollLeft = part.scrollWidth;
+        return [{
+          class: part.className, clientWidth: part.clientWidth,
+          scrollWidth: part.scrollWidth, actualLeft: part.scrollLeft,
+          maximum: part.scrollWidth - part.clientWidth,
+          text: part.querySelector('annotation')?.textContent || part.innerText,
+        }];
+      }));
+    assert.equal(regions.length, 1);
+    assert(Math.abs(regions[0].actualLeft - regions[0].maximum) <= 1);
+    await item.scrollIntoViewIfNeeded();
+    await page.evaluate(() => new Promise((resolve) =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    const file = path.join(out, 'supplements', `choices-390-${question}-full-right.png`);
+    assert(!fs.existsSync(file));
+    await item.screenshot({ path: file, animations: 'disabled' });
+    captures.push({
+      surface: 'choices', viewport, question_number: question,
+      question_id: await item.getAttribute('id'), target: `.choice index ${question - 1}`,
+      kind: 'actual-observed-full-choice-right-gap',
+      reason: question === 8 ? 'Full-left pixels clip final 8/17 minus 1.'
+        : question === 15 ? 'Full-left pixels clip the last ordered calculation 11/14 plus 8/21.'
+          : 'Full-left pixels clip option B final coordinate P=(-15,-5).',
+      horizontal_regions: regions, path: file, sha256: sha(file),
+    });
+  }
+  assert.deepEqual(browserErrors, []);
+} catch (error) {
+  failure = { message: error.message, stack: error.stack };
+} finally {
+  if (context) { await context.close(); contextClosed = true; }
+  if (browser) { await browser.close(); browserClosed = true; }
+  fs.writeFileSync(record, `${JSON.stringify({
+    status: failure ? 'capture-failed' : 'captured-awaiting-pixel-review',
+    command: ['node', '../.intentfold/tickets/STEMROBIN-182/tmp/reviewer-5m-n52-display/horizontal-supplement.mjs'],
+    cwd: process.cwd(), execution_count: 1, exit_code: failure ? 1 : 0,
+    started, finished: new Date().toISOString(), failure, browserErrors,
+    captures, protectedFiles,
+    allProtectedHashesUnchanged: protectedFiles.every((item) => sha(absolute(item.path)) === item.sha256),
+    primary_render_repeated: false, primary_capture_repeated: false,
+    additional_unique_combinations: 0, headless: true, isolated_contexts: true,
+    deviceScaleFactor: 1, PWDEBUG_cleared: true, PLAYWRIGHT_HTML_OPEN: 'never',
+    user_profile: false, CDP: false, contextClosed, browser_closed: browserClosed,
+    durable_or_html_writes: false, model: null, usage: null,
+  }, null, 2)}\n`, { flag: 'wx' });
+}
+if (failure) throw new Error(failure.message);
+console.log(JSON.stringify({ captures: captures.length, record, browser_closed: browserClosed }));

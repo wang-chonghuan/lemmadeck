@@ -1,0 +1,106 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const own = path.dirname(new URL(import.meta.url).pathname);
+const author = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp/5m-n53');
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const save = (name, value) => fs.writeFile(path.join(own, name), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+await save('open-view-run.started.json', { once_guard: true, scope: 'key-free view and one newly disclosed authored SVG; no source recapture' });
+const expected = [
+  ['view.json', '67d57fba1d110e9f7aee2c5b4b8da8179227d9b19de3c45054f73a9e712002d0'],
+  ['new-figures/fig-choice-n53-linear-reading.revised.spec.json', '76076e68d57b1d101131a11b14cc81896996b9a75356992044a2229d9906e7f8'],
+  ['new-figures/fig-choice-n53-linear-reading.revised.render.json', 'b016b2bfc0428a3c186ad027daad63fecc521c141706f7375113cd7ca4cc76e9'],
+  ['new-figures/fig-choice-n53-linear-reading.revised.svg', 'c3f00f710a5a62780877acf91ef4f5d27bff18ccb6b05253851cc3a53b0aa791'],
+  ['new-figures/fig-choice-n53-linear-reading.revised.preview.png', '43ba0e32f94ce91bae356f00861733b15c24b318db2a6b066548c93e036bd59b'],
+];
+const buffers = new Map();
+const inputs = [];
+for (const [relative, digest] of expected) {
+  const absolute = path.join(author, relative);
+  const bytes = await fs.readFile(absolute);
+  assert.equal(sha(bytes), digest);
+  buffers.set(relative, bytes);
+  inputs.push({ path: absolute, sha256: digest, bytes: bytes.length });
+}
+const viewBytes = buffers.get('view.json');
+const view = JSON.parse(viewBytes);
+assert.deepEqual(Object.keys(view), ['questions']);
+assert.equal(view.questions.length, 40);
+assert.equal(view.questions.reduce((total, item) => total + item.options.length, 0), 121);
+const spec = JSON.parse(buffers.get(expected[1][0]));
+const render = JSON.parse(buffers.get(expected[2][0]));
+const svgPath = path.join(repo, render.output.svg.path);
+assert.equal(svgPath, inputs[3].path);
+assert.equal(render.spec.sha256, inputs[1].sha256);
+assert.equal(render.output.svg.sha256, inputs[3].sha256);
+assert.deepEqual(spec.display.widths, [640]);
+await fs.writeFile(path.join(own, 'opened-view-original.json'), viewBytes, { flag: 'wx' });
+await save('opened-view-snapshot.json', {
+  schema: 'independent-key-free-view-snapshot-v1',
+  source_phase_ready_sha256: sha(await fs.readFile(path.join(own, 'source-phase-ready.json'))),
+  view_file_sha256: sha(viewBytes),
+  author_disclosure: 'view only; no author draft, source-solutions, ready, wrong programs, serializer or keys',
+  inputs,
+  questions: view.questions,
+  original_author_bytes_copied_unchanged: true,
+});
+const require = createRequire(path.join(repo, '.agents/skills/ld-s10y-image/scripts/render_spec.mjs'));
+const { chromium } = require('playwright-core');
+delete process.env.PWDEBUG;
+process.env.PLAYWRIGHT_HTML_OPEN = 'never';
+const receipt = { scope: 'one authored SVG full-image offline headless inspection, not render_spec or lesson/app rendering', inputs, headless: true, network: 'all requests aborted' };
+let browser;
+try {
+  browser = await chromium.launch({ headless: true });
+  receipt.browser_version = browser.version();
+  const context = await browser.newContext({ viewport: { width: 640, height: 820 }, deviceScaleFactor: 1 });
+  await context.route('**/*', route => route.abort());
+  const page = await context.newPage();
+  await page.setContent(`<html><head><style>html,body{margin:0;background:white}#asset{width:640px;height:800px}svg{display:block;width:640px;height:800px}</style></head><body><div id="asset">${buffers.get(expected[3][0]).toString()}</div></body></html>`);
+  await page.evaluate(() => document.fonts.ready);
+  const file = path.join(own, 'new-linear-reading-640.png');
+  await assert.rejects(fs.access(file), { code: 'ENOENT' });
+  const pixels = await page.locator('#asset').screenshot({ path: file, animations: 'disabled' });
+  receipt.capture = { path: file, sha256: sha(pixels), width_px: 640, height_px: 800 };
+  receipt.visible_svg_geometry = await page.evaluate(() => {
+    const svg = document.querySelector('svg');
+    const texts = [...svg.querySelectorAll('text')].map(text => {
+      const box = text.getBoundingClientRect();
+      const matrix = text.getScreenCTM();
+      return {
+        text: text.textContent,
+        id: text.getAttribute('data-label-id'),
+        font_size_css_px: parseFloat(getComputedStyle(text).fontSize),
+        effective_font_px: parseFloat(getComputedStyle(text).fontSize) * Math.hypot(matrix.a, matrix.b),
+        bbox: { x: box.x, y: box.y, width: box.width, height: box.height },
+      };
+    });
+    return {
+      view_box: svg.getAttribute('viewBox'),
+      rendered_width: svg.getBoundingClientRect().width,
+      rendered_height: svg.getBoundingClientRect().height,
+      labels: texts,
+      min_text_px: Math.min(...texts.map(text => text.effective_font_px)),
+      lines: [...svg.querySelectorAll('line')].filter(line => getComputedStyle(line).display !== 'none').map(line => ({
+        id: line.id, x1: line.getAttribute('x1'), y1: line.getAttribute('y1'),
+        x2: line.getAttribute('x2'), y2: line.getAttribute('y2'), stroke_width: line.getAttribute('stroke-width'),
+      })),
+      paths: [...svg.querySelectorAll('path')].filter(item => getComputedStyle(item).display !== 'none').map(item => ({ id: item.id, d: item.getAttribute('d') })),
+    };
+  });
+} catch (error) {
+  await save('open-view-run.failed.json', { error: String(error), stack: error.stack, receipt });
+  throw error;
+} finally {
+  if (browser) await browser.close();
+}
+for (const input of inputs) assert.equal(sha(await fs.readFile(input.path)), input.sha256);
+receipt.browser_closed = true;
+receipt.original_inputs_unchanged = true;
+receipt.script_sha256 = sha(await fs.readFile(new URL(import.meta.url)));
+await save('new-figure-capture-receipt.json', receipt);
+console.log(JSON.stringify({ inputs, capture: receipt.capture, min_text_px: receipt.visible_svg_geometry.min_text_px, labels: receipt.visible_svg_geometry.labels.length, browser_closed: true }, null, 2));

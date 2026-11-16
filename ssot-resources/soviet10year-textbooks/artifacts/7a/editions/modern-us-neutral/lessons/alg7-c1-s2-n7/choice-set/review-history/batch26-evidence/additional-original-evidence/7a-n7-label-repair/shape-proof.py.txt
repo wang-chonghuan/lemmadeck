@@ -1,0 +1,78 @@
+import hashlib
+import json
+from pathlib import Path
+import xml.etree.ElementTree as ET
+
+OWN = Path(__file__).resolve().parent
+FIGURE = "fig-choice-7a-n7-95"
+
+
+def record(path):
+    return {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "bytes": path.stat().st_size}
+
+
+def write(name, data):
+    with (OWN / name).open("x") as file:
+        json.dump(data, file, ensure_ascii=True, indent=2)
+        file.write("\n")
+
+
+def shape(path):
+    root = ET.parse(path).getroot()
+    layer = [child for child in root if child.attrib.get("id", "").endswith("-label-layer")]
+    assert len(layer) == 1
+    labels = [(child.attrib.get("data-label-id"), child.text) for child in layer[0]]
+    root.remove(layer[0])
+
+    def tree(node):
+        return [node.tag, sorted(node.attrib.items()), (node.text or "").strip(), [tree(child) for child in node]]
+
+    return tree(root), labels
+
+
+old_path = OWN / "before" / (FIGURE + ".svg")
+new_path = OWN / (FIGURE + ".svg")
+old_shape, old_labels = shape(old_path)
+new_shape, new_labels = shape(new_path)
+frozen = json.loads((OWN / "input-freeze.json").read_text())["inputs"]
+byte_identity = [{**item, "currentSha256": record(Path(item["path"]))["sha256"]} for item in frozen]
+assert all(item["sha256"] == item["currentSha256"] for item in byte_identity)
+assert old_shape == new_shape
+assert old_labels == new_labels
+assert len(new_labels) == 17
+write("svg-shape-proof.json", {
+    "schema": "ld-s10y/label-only-svg-shape-proof@1",
+    "method": "XML parser removes only the identified direct label-layer group, then compares the complete ordered SVG tree, exact attributes and text. No raster equality, source re-solving or mathematical re-review claimed.",
+    "original": record(old_path), "candidate": record(new_path),
+    "fullNonLabelSvgTreeExactEquality": True,
+    "allSeventeenLabelIdsAndStringsUnchanged": True,
+    "geometryTreeSha256": hashlib.sha256(json.dumps(old_shape, sort_keys=True).encode()).hexdigest(),
+    "protectedOriginalDurableAndToolByteIdentity": byte_identity,
+})
+render = json.loads((OWN / (FIGURE + ".render.json")).read_text())
+capture_path = OWN / "capture.json"
+capture = json.loads(capture_path.read_text()) if capture_path.exists() else None
+observation_path = OWN / "author-actual-observations.json"
+observations = json.loads(observation_path.read_text()) if observation_path.exists() else None
+write("ready.json", {
+    "schema": "ld-s10y/label-repair-ready@1", "figure": FIGURE,
+    "status": "ready-for-independent-changed-label-review" if render["status"] == "pass" and capture and observations else "blocked",
+    "rendererInvocations": 1, "renderStatus": render["status"],
+    "renderChecks": render["displayChecks"], "renderCollisions": render["collisions"],
+    "fullNonLabelSvgTreeExactEquality": True,
+    "sourceBasisCurvesAxesGridTicksReadingsAndAssertionsUnchanged": True,
+    "seventeenLabelsUnchangedValues": True,
+    "outputs": [record(OWN / name) for name in [
+        "spec.json", FIGURE + ".svg", FIGURE + ".render.json", FIGURE + ".preview.png",
+        FIGURE + ".480.png", FIGURE + ".358.png", "geometry-hash-delta.json",
+        "svg-shape-proof.json", "capture.json", "author-actual-observations.json"
+    ] if (OWN / name).exists()],
+    "isolatedHeadlessCapture": capture,
+    "authorActualObservation": observations,
+    "independentReview": "pending; no FigureReview or self-approval",
+    "noDraftCoreCanonicalLessonRenderDurableAppDbOrDependencyChanges": True,
+    "wrapperFailureRetained": "wrapper-module-resolution.rejected.json",
+})
+print(json.dumps({"ready": str(OWN / "ready.json"), "renderStatus": render["status"],
+                  "shape_exact": True, "labels": 17}))

@@ -1,0 +1,232 @@
+import hashlib
+import json
+from fractions import Fraction as F
+from pathlib import Path
+
+
+OWN = Path(__file__).resolve().parent
+ROOT = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+source = json.loads((OWN / "source.json").read_text())
+
+
+def canonical(value):
+    return hashlib.sha256(json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":")).encode()).hexdigest()
+
+
+def fraction(value):
+    value = F(value)
+    return str(value.numerator) if value.denominator == 1 else f"{value.numerator}/{value.denominator}"
+
+
+def mixed(integer, numerator, denominator):
+    sign = -1 if integer < 0 else 1
+    return F(integer) + sign * F(numerator, denominator)
+
+
+records = []
+
+
+def add(number, task, solution, subtasks, notices=None):
+    records.append({"source_number": str(number), "source_task": task, "independent_solution": solution,
+                    "subtasks": subtasks, "source_notices": notices or [], "status": "solved"})
+
+
+add(1006, "State, symbolize and numerically verify the commutative law of addition.",
+    "For all rational a,b, a+b=b+a: exchanging the two addends preserves the sum. With a=5/6,b=1/4, both sums are 10/12+3/12=13/12.",
+    [{"id": "law", "result": "a+b=b+a"}, {"id": "verification", "result": "13/12 on both sides"}])
+add(1007, "State, symbolize and numerically verify the associative law of addition.",
+    "For all rational a,b,c, (a+b)+c=a+(b+c). With 1/2,1/3,2/3, left=5/6+2/3=3/2 and right=1/2+1=3/2.",
+    [{"id": "law", "result": "(a+b)+c=a+(b+c)"}, {"id": "verification", "result": "3/2 on both sides"}])
+
+subtractions = {
+    1008: [(F(2), F(5, 6)), (F(4), F(1, 5)), (F(2), F(3, 5)), (F(5), F(5, 6)),
+           (F(9), F(11, 12)), (F(7), mixed(1, 7, 8)), (F(3), mixed(1, 2, 3)),
+           (F(5), mixed(2, 2, 5)), (F(6), mixed(5, 5, 8))],
+    1009: [(mixed(8, 5, 11), mixed(3, 6, 11)), (mixed(10, 1, 2), mixed(4, 9, 14)),
+           (mixed(7, 4, 7), mixed(5, 7, 9)), (mixed(2, 3, 10), mixed(1, 11, 15)),
+           (mixed(5, 3, 8), mixed(3, 5, 6)), (mixed(-3, 1, 6), mixed(1, 3, 4)),
+           (mixed(1, 5, 12), F(9, 10)), (mixed(6, 3, 10), F(11, 15)),
+           (mixed(-5, 7, 8), -F(9, 10))],
+    1027: [(F(1), F(5, 7)), (F(3), F(2, 11)), (F(4), F(5, 13)), (F(4), mixed(3, 4, 9)),
+           (F(17), mixed(12, 7, 19)), (F(45), mixed(44, 3, 8)),
+           (mixed(6, 7, 15), mixed(3, 1, 5)), (mixed(10, 3, 23), mixed(7, 19, 46)),
+           (mixed(16, 5, 26), mixed(11, 9, 13))],
+}
+for number in (1008, 1009):
+    rows = []
+    for index, (a, b) in enumerate(subtractions[number], 1):
+        difference = a - b
+        rows.append({"id": str(index), "minuend": fraction(a), "subtrahend": fraction(b),
+                     "result": fraction(difference),
+                     "derivation": f"{fraction(a)} - ({fraction(b)}) = {fraction(difference)}",
+                     "addition_verification": f"{fraction(difference)} + ({fraction(b)}) = {fraction(a)}"})
+    add(number, "Compute every printed subtraction/signed expression; addition-verification required explicitly for 1008.",
+        "Convert mixed numbers including their whole negative sign to rational numbers, take a common denominator, subtract and reduce. Every returned difference plus its original subtrahend equals the minuend.",
+        rows)
+
+values1010 = [F("2.4") + mixed(1, 2, 3), mixed(3, 7, 10) - mixed(2, 2, 5),
+              mixed(4, 1, 2) - F("6.2"), mixed(9, 4, 5) - F("1.8")]
+add(1010, "Compute four decimal/fraction sums and differences.",
+    "Treat terminating decimals as exact tenths and the negative difference with its proper sign.",
+    [{"id": str(i + 1), "result": fraction(value)} for i, value in enumerate(values1010)])
+values1011 = [mixed(6, 3, 16) - (mixed(2, 3, 8) + mixed(3, 5, 12)),
+              mixed(8, 1, 12) - mixed(3, 4, 15) - mixed(1, 7, 30)]
+add(1011, "Compute subtraction of a parenthesized sum and sequential subtraction.",
+    "First: denominator 48 gives 297/48-(114/48+164/48)=19/48. Second: denominator 60 gives 485/60-196/60-74/60=43/12.",
+    [{"id": str(i + 1), "result": fraction(value)} for i, value in enumerate(values1011)])
+values1012 = [F(5) - mixed(2, 2, 11), F(30) - mixed(26, 5, 8),
+              F(2, 9) + mixed(6, 5, 6), mixed(11, 1, 4) - mixed(3, 7, 10)]
+add(1012, "Solve four independent additive equations; distinguish an unknown minuend from an unknown subtrahend.",
+    "Isolate the unknown by the inverse operation. In the last equation x=11 1/4-3 7/10, not their reversed difference. Substitution into each original equation verifies the result.",
+    [{"id": str(i + 1), "variable": ["x", "a", "a", "x"][i], "result": fraction(value)} for i, value in enumerate(values1012)])
+values1013 = [F(13, 2) - mixed(2, 7, 8), F(13, 2) - F(8),
+              F(13, 2) - mixed(1, 5, 6), F(13, 2) - mixed(7, 1, 5)]
+add(1013, "Evaluate A for two supplied a values and recover a for two supplied A values.",
+    "A=13/2-a and a=13/2-A; all four substitutions are real-valued, with negative outputs allowed. Results preserve the listed input order.",
+    [{"id": label, "result": fraction(value)} for label, value in zip(["1-a=23/8", "1-a=8", "2-A=11/6", "2-A=36/5"], values1013)])
+add(1014, "Find remaining cherry seedlings from the complete allocation.",
+    "Allocated fraction=3/10+2/5+1/5=9/10, remaining=1/10, count=1200000/10=120000.",
+    [{"id": "remaining_fraction", "result": "1/10"}, {"id": "count", "result": "120000 seedlings"}])
+add(1015, "Find both-truck total when the second load is smaller.",
+    "Second=47/10-7/5=33/10 tons. Total=47/10+33/10=8 tons.",
+    [{"id": "second", "result": "33/10 tons"}, {"id": "total", "result": "8 tons"}])
+monday = F(425, 2)
+tuesday = monday * F(12, 5)
+wednesday = (monday + tuesday) * F(2, 5)
+total_beets = monday + tuesday + wednesday
+add(1016, "Follow three-day dependency and convert the entire beet mass to sugar.",
+    f"Monday={fraction(monday)}, Tuesday=Monday*12/5={fraction(tuesday)}, Wednesday=(Monday+Tuesday)*2/5={fraction(wednesday)} tons. Total={fraction(total_beets)} tons, sugar=Total/7={fraction(total_beets / 7)} tons.",
+    [{"id": label, "result": fraction(value) + " tons"} for label, value in
+     [("tuesday", tuesday), ("wednesday", wednesday), ("total_beets", total_beets), ("sugar", total_beets / 7)]])
+add(1017, "Find the total for two grape boxes with the second larger.",
+    "Second=53/10+14/5=81/10 kg; total=53/10+81/10=67/5 kg.",
+    [{"id": "second", "result": "81/10 kg"}, {"id": "total", "result": "67/5 kg"}])
+floor = mixed(10, 23, 25)
+door = floor - mixed(4, 3, 5)
+add(1018, "Find door paint from floor paint, then include windows, door and floor.",
+    f"Door={fraction(floor)}-23/5={fraction(door)} kg. Total=27/10+{fraction(door)}+{fraction(floor)}={fraction(F(27, 10) + door + floor)} kg.",
+    [{"id": "door", "result": fraction(door) + " kg"}, {"id": "total", "result": fraction(F(27, 10) + door + floor) + " kg"}])
+costs = [F(11, 25) * F(3, 4), F(9, 10) * F(2, 5), F(18, 5) * F(2, 5), F(3, 2) * F(6, 25)]
+add(1019, "Multiply each unit price by its own ingredient mass, then sum four costs.",
+    "Costs in flour/sugar/butter/preserve order are " + ", ".join(fraction(value) for value in costs) +
+    "; total=" + fraction(sum(costs)) + " dollars.",
+    [{"id": label, "result": fraction(value) + " dollars"} for label, value in
+     zip(["flour", "sugar", "butter", "preserve", "total"], costs + [sum(costs)])])
+values1020 = [mixed(3, 2, 5) * mixed(1, 2, 3) / mixed(6, 4, 7),
+              mixed(4, 2, 5) * mixed(2, 1, 2) / mixed(8, 4, 5),
+              mixed(3, 1, 4) * mixed(3, 3, 4) / mixed(6, 1, 2),
+              mixed(3, 2, 3) * mixed(2, 1, 2) / mixed(7, 1, 3)]
+add(1020, "Solve four proportions with unknown divisors and preserve their nonzero domains.",
+    "Cross multiplication gives (17/5)*5/3=(46/7)x, (22/5)*5/2=(44/5)x, (13/2)a=(15/4)*(13/4), (22/3)y=(5/2)*(11/3). Each solution is nonzero; substitution verifies the original ratios.",
+    [{"id": str(i + 1), "variable": ["x", "x", "a", "y"][i], "domain": "variable != 0",
+      "result": fraction(value)} for i, value in enumerate(values1020)])
+add(1021, "Construct the first reflection P in l, then reflect P in the distinct parallel line m to obtain N.",
+    "The opened figure shows l and m parallel with m to the right, K on l, and A/D to its left. In P, K stays fixed; A and D reflect horizontally to equal perpendicular distances on the other side of l. Reflect these three P vertices in m, then join corresponding vertices. If d is the perpendicular spacing l-to-m, the net map is translation by 2d from l toward m, preserving heights, lengths, angles and orientation. Reversing order translates in the opposite direction. No numerical distance is inferable from an unscaled source drawing.",
+    [{"id": "P", "result": "K'=K; l perpendicular-bisects AA' and DD'; join A'K'D'"},
+     {"id": "N", "result": "m perpendicular-bisects each corresponding P/N vertex segment; join N vertices"},
+     {"id": "composition", "result": "translation by twice the axis spacing, from l to m"}])
+add(1022, "Plot all three vertices, join the triangle and find its area.",
+    "A(-2,-2) and K(6,-2) give a horizontal base of length 8 on y=-2. Perpendicular foot from B(1,5) is H(1,-2), on the base segment; height=7. Area=8*7/2=28 square coordinate units.",
+    [{"id": "plot", "result": "join (-2,-2),(1,5),(6,-2); H=(1,-2)"}, {"id": "area", "result": "28 square units"}])
+add(1023, "Form and solve room-count/seat-count equations for two independent shortage/surplus situations.",
+    "Office: r rooms,c chairs satisfy c=3r-3=2r+2, hence r=5,c=12. Kindergarten: r rooms,s stools satisfy s=3r+6=4r-2, hence r=8,s=30. All counts are positive integers.",
+    [{"id": "1", "equation": "3r-3=2r+2", "result": "5 rooms,12 chairs"},
+     {"id": "2", "equation": "3r+6=4r-2", "result": "8 rooms,30 stools"}])
+add(1024, "Subtract meter readings, take the refrigerator share and apply cents-per-kWh tariff.",
+    "Consumption=1226.7-1146.7=80 kWh. Refrigerator=80*85/100=68 kWh. Cost=68*4=272 US cents=68/25=2.72 dollars.",
+    [{"id": "consumption", "result": "80 kWh"}, {"id": "refrigerator", "result": "68 kWh"},
+     {"id": "cost", "result": "272 cents=68/25 dollars"}])
+add(1025, "Draw y=(4/3)x; locate/read three forward and three inverse correspondences from its graph.",
+    "The line passes through O(0,0), (3,4), and (-3,-4), rises left-to-right, and has both positive and negative portions. At x=5,-3,9/4, y=20/3,-4,3. At y=2/3,-4,0, x=1/2,-3,0. Exact rational coordinates follow the given relation; an actual graph must supply axis scales and locate these intersections if the task is genuinely graph-reading.",
+    [{"id": "graph", "result": "complete line y=4x/3 through origin"},
+     {"id": "forward-5", "result": "(5,20/3)"}, {"id": "forward--3", "result": "(-3,-4)"},
+     {"id": "forward-9/4", "result": "(9/4,3)"}, {"id": "inverse-2/3", "result": "(1/2,2/3)"},
+     {"id": "inverse--4", "result": "(-3,-4)"}, {"id": "inverse-0", "result": "(0,0)"}],
+    ["No original figure is supplied for this exercise. Any choice graph must be explicitly authoredBasis, not an alleged source figure."])
+values1026 = [
+    (F("503.44") / F("12.4") - F("225.36") / F("7.2")) * (F("1.6905") / F("0.49")),
+    (F("495.3") / F("7.8") + F("15.7744")) * (F("3.4") * F("5.8")),
+    (F("971.1") / F("23.4") - F("211.14") / F("6.9")) * (F("6.5704") / F("0.86")),
+    (F("213.12") / F("6.4") + F("106.4352")) / (F("8.8") * F("7.9")),
+]
+add(1026, "Compute all four nested decimal operations without rounding intermediate quotients.",
+    "Exact terminating decimals are rational inputs; evaluate inner quotients and parentheses before the final product or quotient.",
+    [{"id": str(i + 1), "result": fraction(value)} for i, value in enumerate(values1026)])
+rows1027 = [{"id": str(i + 1), "minuend": fraction(a), "subtrahend": fraction(b), "result": fraction(a - b)}
+            for i, (a, b) in enumerate(subtractions[1027])]
+add(1027, "Compute all nine whole-number/mixed-number differences.",
+    "Use a common denominator and borrow from the integral part when the fractional minuend is smaller; reduce each signed rational result.",
+    rows1027)
+values1028 = [mixed(91, 1, 6) + mixed(3, 2, 18), mixed(1, 4, 15) + mixed(2, 3, 20),
+              mixed(5, 1, 8) + mixed(41, 7, 12), mixed(7, 2, 3) - mixed(1, 2, 5),
+              mixed(39, 5, 6) + mixed(12, 5, 9), mixed(36, 5, 7) + mixed(12, 7, 8),
+              mixed(101, 1, 2) - mixed(19, 5, 14), F(5) + mixed(8, 3, 4), mixed(8, 7, 15) - F(3)]
+add(1028, "Compute all nine mixed-number additions and subtractions.",
+    "Convert to reduced improper fractions, add/subtract at common denominators and include any carry from the fractional parts.",
+    [{"id": str(i + 1), "result": fraction(value)} for i, value in enumerate(values1028)])
+values1029 = [mixed(7, 1, 8) + mixed(2, 3, 5) + mixed(2, 7, 8),
+              mixed(3, 5, 16) + F(1, 4) - mixed(2, 1, 16),
+              mixed(6, 11, 12) - mixed(3, 1, 6) - mixed(1, 1, 4),
+              mixed(3, 7, 9) - mixed(1, 5, 18) + mixed(3, 1, 2)]
+add(1029, "Evaluate all four multi-term fractional expressions, using commutation/association only when legal.",
+    "First can group 7 1/8 with 2 7/8 to get 10 before adding 2 3/5. Other expressions keep the signs on subtracted terms when regrouping.",
+    [{"id": str(i + 1), "result": fraction(value)} for i, value in enumerate(values1029)])
+add(1030, "Find total descent by the end of the third one-second interval.",
+    "Under the interval-distance reading of the metre data, distances are 4.9,4.9+9.8=14.7,4.9+2*9.8=24.5 metres; total=44.1 metres. This uses a discrete sum, not an invented exact acceleration law. The opened helicopter/package artwork and dashed overlay have no scale or interval numerals and do not resolve units.",
+    [{"id": "conditional-interval-distances", "result": "49/10,147/10,49/2 metres"},
+     {"id": "conditional-total", "result": "441/10 metres"}],
+    ["Original wording says speed is faster by 9.8 metres, mixing a speed noun with distance units. The computed 44.1 is conditional on treating each one-second interval's travelled distance as increasing by 9.8 m. A visible conditional formulation must not be represented as having resolved this original wording."])
+records[-1]["status"] = "conditional_source_wording_notice"
+time = mixed(2, 1, 4) + mixed(3, 1, 6) + mixed(1, 1, 15)
+add(1031, "Add all three machining durations.",
+    f"Common denominator 60:135/60+190/60+64/60=389/60 hours={fraction(time)} hours, equivalent to 6 hours29 minutes.",
+    [{"id": "time", "result": "389/60 hours=6h29min"}])
+add(1032, "Determine and draw every symmetry axis of an equilateral triangle.",
+    "There are exactly three axes, each the full line through a vertex and the midpoint of its opposite side. Each is simultaneously median, perpendicular bisector, angle bisector and altitude. A side line is not an axis. For an explicit construction one may use A(0,sqrt(3)),B(-1,0),C(1,0): the axes are x=0, y=(x+1)/sqrt(3), y=(1-x)/sqrt(3). This is an authored coordinate model, not source data.",
+    [{"id": "count", "result": "3 axes"}, {"id": "construction", "result": "three vertex-to-opposite-midpoint full lines"}])
+
+if {item["source_number"] for item in records} != {item["number"] for item in source["exercises"]}:
+    raise RuntimeError("Source coverage mismatch")
+observations = [
+    {"figure_id": "fig-160", "asset_path": source["figures"][0]["assets"][0]["path"],
+     "asset_sha256": source["figures"][0]["assets"][0]["sha256"], "actually_opened": True,
+     "opened_raster": str(OWN / "source-assets/fig-160-svg-native.png"),
+     "observation": "Complete 480x480 source rendering opened: full scalene AKD boundary, A upper left/D lower left, K incident with l, two parallel vertical axes l and m with m to the right, all five labels and both axes' bottom ends visible. No P or N is pre-drawn; no coordinate grid or numeric spacing. Pixel coordinates may describe raster incidence but must not be asserted as source metric data."},
+    {"figure_id": "fig-161", "asset_path": source["figures"][1]["assets"][0]["path"],
+     "asset_sha256": source["figures"][1]["assets"][0]["sha256"], "actually_opened": True,
+     "opened_raster": str(OWN / "source-assets/fig-161-svg-native.png"),
+     "observation": "Complete 480x720 SVG rendering actually opened: transparent mathematical layer contains one vertical dashed descent guide, no interval labels, distance scale, graph axes or measured heights. Sparse pixels are expected for this overlay, not a failed complete-artwork render."},
+    {"figure_id": "fig-161", "asset_path": source["figures"][1]["assets"][1]["path"],
+     "asset_sha256": source["figures"][1]["assets"][1]["sha256"], "actually_opened": True,
+     "observation": "Full native 480x720 artwork opened: helicopter and complete rotor at top, suspended/falling package below, camp dome/flag/two people/equipment at bottom, transparent background; rightmost rotor/tail and bottom tent/equipment all visible. No numerical facts or one-second markers are supplied by artwork."},
+]
+for observation in observations:
+    if hashlib.sha256((ROOT / observation["asset_path"]).read_bytes()).hexdigest() != observation["asset_sha256"]:
+        raise RuntimeError("Observed source asset changed")
+    if "opened_raster" in observation:
+        observation["raster_sha256"] = hashlib.sha256(Path(observation["opened_raster"]).read_bytes()).hexdigest()
+
+output = {"lesson": source["source"]["lesson"], "seed_sha256": canonical(source),
+          "source_byte_sha256": hashlib.sha256((OWN / "source.json").read_bytes()).hexdigest(),
+          "author_identity": "offline_n53_author", "phase": "independent_source_reasoning_before_any_alternatives",
+          "records": sorted(records, key=lambda item: int(item["source_number"])),
+          "figure_observations": observations, "original_count": len(records),
+          "recorded_subtask_count": sum(len(item["subtasks"]) for item in records),
+          "previous_choices_answers_or_author_records_read": False}
+for name, value in [
+    ("source-solutions.json", output),
+    ("task-unit-inventory.json", {"lesson": output["lesson"], "seed_sha256": output["seed_sha256"],
+      "source_numbers": [{"number": item["source_number"], "task": item["source_task"],
+                          "subtask_ids": [subtask["id"] for subtask in item["subtasks"]],
+                          "status": item["status"], "source_notices": item["source_notices"]} for item in output["records"]],
+      "original_count": len(records), "subtask_count": output["recorded_subtask_count"]}),
+    ("source-image-observations.json", {"lesson": output["lesson"], "seed_sha256": output["seed_sha256"],
+                                      "observations": observations, "new_figure_approval": False}),
+]:
+    path = OWN / name
+    if path.exists():
+        raise RuntimeError("Never overwrite the independent source freeze")
+    path.write_text(json.dumps(value, indent=2, ensure_ascii=True) + "\n")
+print(json.dumps({"source_freeze": str(OWN / "source-solutions.json"), "originals": len(records),
+                  "subtasks": output["recorded_subtask_count"],
+                  "results": {item["source_number"]: item["subtasks"] for item in output["records"]}}, indent=2))

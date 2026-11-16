@@ -1,0 +1,59 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import { spawnSync } from 'node:child_process'
+
+const root = '.intentfold/tickets/STEMROBIN-182/tmp/5m-n52'
+const read = file => JSON.parse(fs.readFileSync(file))
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const before = `${root}/history-before-single-view-component-repair`
+const oldDraft = read(`${before}/draft.json`)
+const draft = read(`${root}/draft.json`)
+const oldView = read(`${before}/view.json`)
+const view = read(`${root}/view.json`)
+function differences(a, b, pointer = '') {
+  if (JSON.stringify(a) === JSON.stringify(b)) return []
+  if (a && b && typeof a === 'object' && typeof b === 'object') {
+    assert.deepEqual(Object.keys(a), Object.keys(b))
+    return Object.keys(a).flatMap(key => differences(a[key], b[key], `${pointer}/${key}`))
+  }
+  return [{ pointer, before: a, after: b }]
+}
+const delta = differences(oldDraft, draft)
+const viewDelta = differences(oldView, view)
+const index = draft.questions.findIndex(q => q.id === 'n52-993')
+assert(index >= 0)
+assert.deepEqual(delta.map(row => row.pointer), [
+  `/questions/${index}/view/options/0/text`,
+  `/questions/${index}/key/rationales/0/derivation`,
+  `/questions/${index}/key/rationales/0/misconception`,
+])
+assert.equal(viewDelta.length, 1)
+assert.equal(viewDelta[0].pointer, `/questions/${index}/view/options/0/text`)
+assert.deepEqual(view.questions, draft.questions.map(q => ({ id: q.id, view: q.view })))
+const restored = structuredClone(draft)
+restored.questions[index].view.options[0].text = oldDraft.questions[index].view.options[0].text
+restored.questions[index].key.rationales[0] = oldDraft.questions[index].key.rationales[0]
+assert.deepEqual(restored, oldDraft)
+const save = (name, value) => fs.writeFileSync(`${root}/${name}`, JSON.stringify(value, null, 2) + '\n',
+  { flag: 'wx' })
+save('view-repair-delta.json', {
+  stage: 'one changed pureview component only; no internals disclosed', question: 'n52-993',
+  before_sha256: hash(`${before}/view.json`), sha256: hash(`${root}/view.json`), delta: viewDelta,
+})
+save('internal-repair-delta.json', {
+  question: 'n52-993', exact_delta: delta, full_inverse_binding: true,
+  old_draft_sha256: hash(`${before}/draft.json`), draft_sha256: hash(`${root}/draft.json`),
+  unchanged_questions: 25, correct_record_and_all_keys_unchanged: true,
+})
+const command = ['python3', '.agents/skills/ld-s10y-choice/scripts/validate.py',
+  '--repo', '.', '--seed', `${root}/source.json`, '--draft', `${root}/draft.json`]
+const result = spawnSync(command[0], command.slice(1), { encoding: 'utf8' })
+save('structural-after-single-component-repair.json', {
+  command, exit_code: result.status, stdout: result.stdout, stderr: result.stderr,
+  execution_count_for_changed_snapshot: 1, source_review_reruns: 0,
+  original_structural_command_retained: true, semantic_review_pending: true,
+})
+console.log(JSON.stringify({ changed_leaves: delta.length, changed_view_components: viewDelta.length,
+  structure_exit_code: result.status, inverse_binding: true }))
+process.exitCode = result.status ?? 2

@@ -1,0 +1,45 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { createRequire } from "node:module";
+import { fileURLToPath, pathToFileURL } from "node:url";
+
+delete process.env.PWDEBUG;
+process.env.PLAYWRIGHT_HTML_OPEN = "never";
+const root = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const own = path.dirname(fileURLToPath(import.meta.url));
+const require = createRequire(path.join(root, "app/package.json"));
+const { chromium } = require("playwright");
+const sha = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const source = JSON.parse(fs.readFileSync(path.join(own, "source.json")));
+const directory = path.join(own, "source-assets");
+fs.mkdirSync(directory, { recursive: true });
+const records = [];
+const browser = await chromium.launch({ channel: "chrome", headless: true });
+try {
+  for (const figure of source.figures) {
+    for (const asset of figure.assets.filter((item) => item.path.endsWith(".svg"))) {
+      const input = path.join(root, asset.path);
+      if (sha(fs.readFileSync(input)) !== asset.sha256) throw new Error("Source hash changed");
+      const height = figure.id === "fig-160" ? 480 : 720;
+      const output = path.join(directory, `${figure.id}-svg-native.png`);
+      if (fs.existsSync(output)) throw new Error("Never overwrite source observation pixels");
+      const context = await browser.newContext({ viewport: { width: 480, height }, deviceScaleFactor: 1, serviceWorkers: "block" });
+      try {
+        await context.route("**/*", (route) => /^(file:|data:|about:)/.test(route.request().url()) ? route.continue() : route.abort());
+        const page = await context.newPage();
+        await page.goto(pathToFileURL(input).href);
+        await page.evaluate(() => document.fonts.ready);
+        await page.screenshot({ path: output, scale: "css" });
+        records.push({ figure_id: figure.id, asset_path: asset.path, asset_sha256: asset.sha256,
+          raster_path: output, raster_sha256: sha(fs.readFileSync(output)),
+          width: 480, height, scale: 1, actually_opened: false });
+      } finally { await context.close(); }
+    }
+  }
+} finally { await browser.close(); }
+fs.writeFileSync(path.join(directory, "raster-bindings.json"), JSON.stringify({
+  records, isolated_headless: true, browser_closed_in_finally: true, pwdebug_cleared: true,
+  reporter_open: "never", source_bytes_unchanged: true, status: "actual_open_pending",
+}, null, 2) + "\n", { flag: "wx" });
+console.log(JSON.stringify(records, null, 2));
