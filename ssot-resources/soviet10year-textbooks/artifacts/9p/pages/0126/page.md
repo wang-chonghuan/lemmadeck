@@ -1,0 +1,97 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 126,
+  "printed_page": 117,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 126
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "3c10ae265b535a7e5d2c1247d3702e562042f1404fbe5747b68add56f5a3d7fd"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "原印铬镍钢E=21×10^10牛顿/米平方、铝E=7×10^7牛顿/米平方，指数忠实照录，不改成其他数值或登记猜测勘误。铝等式跨印刷两行，用一个↵记录，中文单位留在数学区外。",
+    "图84包括固定端、受压棒和两支方向相反的力及力标签；图题与左侧压缩段末行同排，用cap samerow，不漏行。",
+    "图85 а/б是下页图的前向引用，按源profile西里尔分图约定；几何层名ab、cd及角α保留原样，本页不造图85框。",
+    "页末弹性切变正比句有句号，段落闭合。目视含页码25行，页底扫描黑影不属于正文。"
+  ],
+  "errata": [],
+  "printed_lines": 25,
+  "counting": {
+    "edge_margin_px": 100,
+    "reason": "Independent source F1: the bottom-corner scan-shadow band y2135-2176 follows the actual footer y2025-2050 and is not printed text. Both outer100px side strips contain no page text; existing edge exclusion returns25 actual rows without changing source pixels, body lines, formulas or figure crop."
+  },
+  "figures": [
+    {
+      "id": "fig-84",
+      "label": "图 84",
+      "box": [
+        829,
+        962,
+        508,
+        188
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+对于绝大多数广为使用的材料来说，杨氏模量是用实验
+测定的，对于铬镍钢，$E=21\times10^{10}$ 牛顿/米$^2$，对于铝，$E=↵7\times10^7$ 牛顿/米$^2$. 在其它条件完全相同($F$、$S$、$l$ 相同)的情
+况下，$E$越大，棒的形变越小. 杨氏模量表征材料对拉伸形变
+(或压缩形变)的阻碍程度.
+
+<!-- p -->
+把(6-3)式代到公式(6-2)中，则得
+$F=\frac{ES}{l_0}\cdot|\Delta l|$.　(6-4)
+
+<!-- p -->
+因此，
+$\sigma=E\cdot\frac{|\Delta l|}{l_0}=E\cdot|\varepsilon|$.　(6-5)
+
+<!-- p -->
+如果沿着棒的轴线用力$\vec{F}$
+压一端固定的棒，则棒产生压
+缩形变(图 84). 对于压缩形变，
+公式 (6-1)～(6-5)仍然正确.
+
+<!-- fig 图 84 box 829,962,508,188 -->
+![图 84](figures/fig-84.png)
+
+<!-- cap 图 84 samerow -->
+图 84
+
+<!-- p -->
+当拉伸或压缩时，物体的横截面积改变. 拉伸一个事先
+套有金属环的橡皮管，可以发现这一点. 当拉伸到相当程度
+时，环就落下. 相反的，当压缩时，物体的横截面积增大. 不
+过，对于大多数固体来说，这个效应是很小的.
+
+<!-- p -->
+**切变**　取一块橡皮，在它的表面上划有水平线和竖直线，
+把它固定在桌子上(图 85 а). 把一个板条从上面固定在橡皮
+块上，并对它施以水平力$\vec{F}$(图 85 б). 橡皮块的各层$ab$、$cd$
+等保持平行地移动，而竖直边仍然是平直的，但倾斜一定角度
+$\alpha$. 物体各层彼此相对移动的这种形变，叫做切变.
+
+<!-- p -->
+如果力$\vec{F}$增大 1 倍，则角$\alpha$也增大 1 倍. 实验表明，**弹性
+形变时，切变角$\alpha$与作用力的大小$F$成正比.**
+
+<!-- foot -->
+· 117 ·

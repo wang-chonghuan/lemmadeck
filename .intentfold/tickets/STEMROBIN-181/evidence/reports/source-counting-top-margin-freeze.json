@@ -1,0 +1,91 @@
+{
+  "ticket": "STEMROBIN-181",
+  "status": "author-tool-correction-ready-for-main-affected-recheck",
+  "independentApproval": false,
+  "scope": "Only initial main source128-131 F1 counting-tool correction. No source draft, source pixel, crop, source science, F2/F3, previously passed source gate or figure evidence changed or rereviewed.",
+  "initialReview": {
+    "path": ".intentfold/tickets/STEMROBIN-181/tmp/source-review-9p-0128-0131.json",
+    "sha256": "21570bec02ba34714deb63a407b99ce865968d10166899b06f56b788b2ec52b1"
+  },
+  "sourceBindingForMainRecheck": {
+    "path": ".tmp/ld-s10y-lesson/9p/pages/0128/page.png",
+    "sha256": "22a95b2342ee15d98dcf3fba209719599522832a31346ac2fd8a1b8fde01e5d9"
+  },
+  "changedFiles": [
+    {
+      "before": {
+        "path": ".intentfold/tickets/STEMROBIN-181/tmp/counting-top-margin/before/layout.py",
+        "sha256": "85ee05d1e6508ddc59b5510183dd92c52143692de960ea7b075318a4f3b97eac"
+      },
+      "current": {
+        "path": ".claude/skills/ld-s10y-lesson/tools/layout.py",
+        "sha256": "1f15ccc0f09c5a7c380bef761c2cb4309e6229fe5870eab1f0517da4a5aa5586"
+      },
+      "change": "Add optional keyword-only top_margin_px to line_bands. Omission/None retains the old default. Explicit values must be built-in integers, not booleans, from1 through floor(page_height/10). Mask rows[:top_margin_px] only on the existing counting copy without changing source coordinates or extraction pixels."
+    },
+    {
+      "before": {
+        "path": ".intentfold/tickets/STEMROBIN-181/tmp/counting-top-margin/before/p2c.py",
+        "sha256": "6225589acc0d693f44f14df54fae2c41905b5526676bb6dd71913be4b4062416"
+      },
+      "current": {
+        "path": ".claude/skills/ld-s10y-lesson/tools/p2c.py",
+        "sha256": "895a8feb214272e5a3aa8932bcb7b42c99888eb463e262dde3da0a7742faa70e"
+      },
+      "change": "Add _counting_line_bands for page counting metadata and call it only in the finalize counting step. Explicit counting.top_margin_px rejects null/booleans/nonintegers; either configured boundary requires a nonblank string source-inspection reason. Range is checked by line_bands. Invalid metadata remains a finalize error, not an accepted fallback. Existing fig86/87 exclusion helpers and all crop/extraction integration are untouched."
+    },
+    {
+      "before": {
+        "path": ".intentfold/tickets/STEMROBIN-181/tmp/counting-top-margin/before/SKILL.md",
+        "sha256": "66b37d5199ca73ee0784bda6e0ba85d8a8cf03c349c380ba4d2c3f642484d6d7"
+      },
+      "current": {
+        "path": ".claude/skills/ld-s10y-lesson/SKILL.md",
+        "sha256": "fb0640bcc42c532d44b9627e0d2b3f65e3fe38d9cf05301a01fe278813a2b38d"
+      },
+      "change": "One sentence extends the existing source-inspected counting-boundary convention to the top margin; excluding any printed text remains prohibited."
+    }
+  ],
+  "newTests": {
+    "path": ".claude/skills/ld-s10y-lesson/tests/test_counting_top_margin.py",
+    "sha256": "a9ce61f869755c2e8f92c9a4333f0365d5fa2cb3a011475c9651e959d8d58323"
+  },
+  "focusedTestRun": {
+    "command": ".claude/skills/ld-s10y-lesson/.venv/bin/python -B -m unittest discover -s .claude/skills/ld-s10y-lesson/tests -p test_counting_top_margin.py -v",
+    "exitCode": 0,
+    "tests": 11,
+    "failures": 0,
+    "errors": 0,
+    "skips": 0,
+    "runtimeSeconds": 0.066,
+    "output": {
+      "path": ".intentfold/tickets/STEMROBIN-181/tmp/counting-top-margin/test-output.txt",
+      "sha256": "fd7d0aabff6550ccc04eef847e5d629a58df5cb746c8a6d4a62f772022a6d440"
+    },
+    "expectationBasis": "New synthetic fixtures have three explicitly drawn printed rows, one separately drawn interior top artifact and optionally one side artifact. Expectations and source-coordinate row intervals are specified from those constructions, not reverse-engineered from real-page counter output.",
+    "coverage": [
+      "Only the explicitly declared top artifact is excluded; input ink unchanged.",
+      "Old default, explicit None API default and no-boundary page metadata remain identical.",
+      "Text beginning exactly at the boundary and a standalone printed glyph remain counted at their original coordinates.",
+      "Upper printed heading is not implicitly discarded; metadata without a source-inspection reason rejects.",
+      "Top and side boundaries work independently and compose.",
+      "Zero, negatives, above10%, booleans, floats, strings, collections and nonnative integer values reject, including empty-page input.",
+      "Lower1px bound and floor(height/10) bound accepted; next pixel rejects.",
+      "Missing/blank/nonstring reasons and explicit metadata null/boolean/noninteger values reject.",
+      "The finalize counting entry forwards both boundaries to the native line_bands API.",
+      "Source PNG bytes, image pixels and native crop bytes remain identical."
+    ]
+  },
+  "authorScopeCheck": "Diff against exact before copies is limited to line_bands parameter/copy mask, the p2c counting-entry helper/call, and one SKILL.md sentence. Existing crop ownership helper region is byte-identical. This is author change-scope verification, not an independent review.",
+  "mainAffectedRecheck": {
+    "required": true,
+    "candidateTopMarginPx": 205,
+    "candidateEdgeMarginPx": 100,
+    "basis": "Main's initial F1 observes internal stain y179-204, first printed row227 and bottom shadow y2147-2182. A top205px counting-only boundary would exclude the complete stain while remaining above the first text; main must confirm the actual source-bound value/range and26 rows.",
+    "draftMetadataWrittenByThisAuthor": false,
+    "actualPageCounterRunByThisAuthor": false,
+    "sourcePixelReviewByThisAuthor": false,
+    "remainingSourceFindings": "F2/F3 remain Einstein's separate authorship and main's source recheck."
+  },
+  "limits": "No full suite, old source-page check, actual source finalize, source/draft edit, independent self-approval, source science correction, assembly, promotion, DB, git, app, dependency, browser, network or other-chat operation. Files are frozen after the focused run; no command or write remains in flight."
+}

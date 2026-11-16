@@ -333,11 +333,16 @@ def _connected_radical_row(
 
 
 def line_bands(
-    ink: np.ndarray, content_w: int, *, edge_margin_px: int | None = None
+    ink: np.ndarray, content_w: int, *, edge_margin_px: int | None = None,
+    top_margin_px: int | None = None,
 ) -> list[tuple[int, int]]:
     """Count printed rows after masking model-identified figures."""
     # Work on a counting-only copy; extraction pixels are never changed.
     ink = ink.copy()
+    if top_margin_px is not None:
+        if type(top_margin_px) is not int or not 1 <= top_margin_px * 10 <= ink.shape[0]:
+            raise ValueError("counting top margin must be an integer from 1..10% of page height")
+        ink[:top_margin_px] = False
     edge = (
         max(1, int(ink.shape[1] * 0.01))
         if edge_margin_px is None
@@ -641,12 +646,23 @@ def snap(ink: np.ndarray, box: list[int]) -> tuple[list[int], dict]:
         "components": int(took), "from": box}
 
 
-def crop(png: Path, box: list[int], out: Path, pad: int = 12) -> None:
+def crop(
+    png: Path, box: list[int], out: Path, pad: int = 12,
+    exclude_boxes: list[list[int]] | None = None,
+) -> None:
     img = Image.open(png)
     x, y, w, h = box
     out.parent.mkdir(parents=True, exist_ok=True)
-    img.crop((max(0, x - pad), max(0, y - pad),
-              min(img.width, x + w + pad), min(img.height, y + h + pad))).save(out)
+    left, top = max(0, x - pad), max(0, y - pad)
+    right, bottom = min(img.width, x + w + pad), min(img.height, y + h + pad)
+    result = img.crop((left, top, right, bottom))
+    draw = ImageDraw.Draw(result)
+    for ex, ey, ew, eh in exclude_boxes or []:
+        x0, y0 = max(left, ex), max(top, ey)
+        x1, y1 = min(right, ex + ew), min(bottom, ey + eh)
+        if x0 < x1 and y0 < y1:
+            draw.rectangle((x0 - left, y0 - top, x1 - left - 1, y1 - top - 1), fill="white")
+    result.save(out)
 
 
 def ink_coverage(ink: np.ndarray, boxes: list[list[int]]) -> dict:

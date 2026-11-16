@@ -21,9 +21,16 @@
   },
   "notes": [
     "表面能下标沿用 text{п} 转写，原印 n 形字形的字母表身份未定。",
-    "原印面积差的顺序及其后 S1-S2=lh 陈述均忠实保留，尚未作现代科学勘误。"
+    "原印 S1-S2=lh 忠实保留；初次独立 SCI F1 已确认面积增加关系的符号问题，仅登记供现代版使用的元数据勘误，原始正文与块不改。"
   ],
-  "errata": [],
+  "errata": [
+    {
+      "id": "p0116-film-area-increase",
+      "block": "p0116#4",
+      "original": "$S_1-S_2=lh$",
+      "reason": "Initial independent SCI finding F1: S1 is the initial area and S2 the final area of one film face. A positive downward displacement h of a wire of length l increases that face's area by lh. The printed initial-minus-final order conflicts with this area increase and the surrounding positive-work expression using final-minus-initial area. Correct only this complete formula in the modern edition; preserve all raw printed body, blocks, other equations, counting and crops."
+    }
+  ],
   "counting": {
     "edge_margin_px": 100,
     "reason": "Independent source review: lower outer scan shadows create an extra row below the footer; the excluded side strips contain no printed page text."

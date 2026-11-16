@@ -163,6 +163,23 @@ def _reusable_figure_geometry(
     return None
 
 
+def _counting_line_bands(meta: dict, ink, content_w: int) -> list[tuple[int, int]]:
+    counting = meta.get("counting", {})
+    if not isinstance(counting, dict):
+        raise ValueError("counting must be an object")
+    edge_margin_px = counting.get("edge_margin_px")
+    top_margin_px = counting.get("top_margin_px")
+    if "top_margin_px" in counting and type(top_margin_px) is not int:
+        raise ValueError("counting.top_margin_px must be an integer, not a boolean or null")
+    if edge_margin_px is not None or "top_margin_px" in counting:
+        reason = counting.get("reason")
+        if not isinstance(reason, str) or not reason.strip():
+            raise ValueError("counting boundary requires a source inspection reason")
+    return layout.line_bands(
+        ink, content_w, edge_margin_px=edge_margin_px, top_margin_px=top_margin_px
+    )
+
+
 def _figure_crop_padding(meta: dict, figure_id: str) -> int:
     overrides = meta.get("figure_crops", {})
     if not isinstance(overrides, dict):
@@ -178,6 +195,61 @@ def _figure_crop_padding(meta: dict, figure_id: str) -> int:
     if not isinstance(override.get("reason"), str) or not override["reason"].strip():
         raise ValueError(f"figure_crops.{figure_id} requires a source inspection reason")
     return padding
+
+
+def _figure_crop_exclusions(meta: dict, figure: dict, figures: list[dict]) -> list[dict]:
+    override = meta.get("figure_crops", {}).get(figure["id"], {})
+    ids = override.get("exclude_figures", [])
+    if not isinstance(ids, list) or any(not isinstance(item, str) for item in ids):
+        raise ValueError(f"figure_crops.{figure['id']}.exclude_figures must be a list of figure ids")
+    if len(ids) != len(set(ids)):
+        raise ValueError(f"figure_crops.{figure['id']}.exclude_figures contains duplicates")
+    if ids:
+        _figure_crop_padding(meta, figure["id"])
+    known = {item["id"]: item for item in figures}
+    exclusions = []
+    x, y, w, h = figure["box"]
+    for figure_id in ids:
+        if figure_id == figure["id"] or figure_id not in known:
+            raise ValueError(f"figure_crops.{figure['id']} excludes itself or an unknown figure")
+        if meta.get("figure_crops", {}).get(figure_id, {}).get("exclude_figures"):
+            raise ValueError("figure crop exclusions cannot be mutual or chained")
+        other = known[figure_id]
+        ox, oy, ow, oh = other["box"]
+        if not (x < ox + ow and ox < x + w and y < oy + oh and oy < y + h):
+            raise ValueError(f"figure_crops.{figure['id']} excludes a nonoverlapping figure")
+        pad = _figure_crop_padding(meta, figure_id)
+        exclusions.append({"id": figure_id, "box": [ox - pad, oy - pad, ow + 2 * pad, oh + 2 * pad]})
+    return exclusions
+
+
+def _figure_overlap_error(ink, first: dict, second: dict) -> str | None:
+    (ax, ay, aw, ah), (bx, by, bw, bh) = first["box"], second["box"]
+    x0, y0 = max(ax, bx), max(ay, by)
+    x1, y1 = min(ax + aw, bx + bw), min(ay + ah, by + bh)
+    if x0 >= x1 or y0 >= y1:
+        return None
+    message = f"{first['id']} 与 {second['id']} 框重叠，同一块墨迹会被裁两次"
+    if not any(
+        entry["id"] == other["id"]
+        for figure, other in [(first, second), (second, first)]
+        for entry in figure.get("crop_excluded_figures", [])
+    ):
+        return message
+    original = ink[y0:y1, x0:x1]
+    owned = []
+    for figure in (first, second):
+        mask = original.copy()
+        for entry in figure.get("crop_excluded_figures", []):
+            ex, ey, ew, eh = entry["box"]
+            left, top = max(x0, ex), max(y0, ey)
+            right, bottom = min(x1, ex + ew), min(y1, ey + eh)
+            if left < right and top < bottom:
+                mask[top - y0:bottom - y0, left - x0:right - x0] = False
+        owned.append(mask)
+    if (owned[0] & owned[1]).any() or (original & ~(owned[0] | owned[1])).any():
+        return message + "；排除后墨迹必须恰好保留一次"
+    return None
 
 
 TEMPLATE = """---
@@ -325,7 +397,6 @@ def cmd_finalize(a) -> int:
         except ValueError as error:
             errors.append(str(error))
             continue
-        layout.crop(render_path, box, work / "figures" / f"{b['id']}.png", pad=padding)
         if b["id"] in meta.get("figure_crops", {}):
             info["crop_padding_px"] = padding
         else:
@@ -333,12 +404,6 @@ def cmd_finalize(a) -> int:
         figs.append({"id": b["id"], "label": b.get("label"), "box": box, **info})
         if info.get("components", 0) == 0:
             errors.append(f"{b['id']}: 粗框里没有完整连通域，框可能给错了")
-    for i in range(len(figs)):
-        for j in range(i + 1, len(figs)):
-            (x1, y1, w1, h1), (x2, y2, w2, h2) = figs[i]["box"], figs[j]["box"]
-            if x1 < x2 + w2 and x2 < x1 + w1 and y1 < y2 + h2 and y2 < y1 + h1:
-                errors.append(f"{figs[i]['id']} 与 {figs[j]['id']} 框重叠，"
-                              "同一块墨迹会被裁两次")
     crop_overrides = meta.get("figure_crops", {})
     if not isinstance(crop_overrides, dict):
         errors.append("figure_crops must be an object")
@@ -346,6 +411,27 @@ def cmd_finalize(a) -> int:
     unknown_crops = set(crop_overrides) - {f["id"] for f in figs}
     if unknown_crops:
         errors.append(f"figure_crops contains unknown or invalid figures: {sorted(unknown_crops)}")
+    for figure in figs:
+        figure.pop("crop_excluded_figures", None)
+        try:
+            exclusions = _figure_crop_exclusions(meta, figure, figs)
+            padding = _figure_crop_padding(meta, figure["id"])
+        except ValueError as error:
+            errors.append(str(error))
+            continue
+        if exclusions:
+            figure["crop_excluded_figures"] = exclusions
+        layout.crop(
+            render_path, figure["box"], work / "figures" / f"{figure['id']}.png",
+            pad=padding, exclude_boxes=[entry["box"] for entry in exclusions],
+        )
+        if exclusions and not layout.ink_mask(Image.open(work / "figures" / f"{figure['id']}.png")).any():
+            errors.append(f"{figure['id']}: 排除相邻图后没有保留本图墨迹")
+    for i in range(len(figs)):
+        for j in range(i + 1, len(figs)):
+            error = _figure_overlap_error(ink, figs[i], figs[j])
+            if error:
+                errors.append(error)
     keep = {f"{f['id']}.png" for f in figs}
     for stale in (work / "figures").glob("*.png"):
         if stale.name not in keep:
@@ -358,14 +444,8 @@ def cmd_finalize(a) -> int:
         masked[max(0, y):y + h, max(0, x):x + w] = False
     cols = ink.any(axis=0).nonzero()[0]
     content_w = int(cols[-1] - cols[0] + 1) if cols.size else img.width
-    counting = meta.get("counting", {})
-    edge_margin_px = counting.get("edge_margin_px")
-    if edge_margin_px is not None and not counting.get("reason", "").strip():
-        errors.append("counting.edge_margin_px requires a source inspection reason")
     try:
-        want = len(layout.line_bands(
-            masked, content_w, edge_margin_px=edge_margin_px
-        ))
+        want = len(_counting_line_bands(meta, masked, content_w))
     except (ValueError, TypeError) as error:
         errors.append(f"invalid counting boundary: {error}")
         want = len(layout.line_bands(masked, content_w))
