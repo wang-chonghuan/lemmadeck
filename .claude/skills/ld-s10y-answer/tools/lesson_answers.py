@@ -374,6 +374,45 @@ def cmd_prepare(args: argparse.Namespace) -> int:
     return 0
 
 
+def declared_lesson_history(
+    exercise_path: Path, lesson: str, edition: str | None, term: str, source_ref: object,
+) -> bool:
+    """Bind a history answer to a declared paragraph without naming it in the question."""
+    if not isinstance(source_ref, str) or not source_ref.strip():
+        return False
+    lesson_path = exercise_path.with_name("lesson.json")
+    if not lesson_path.exists():
+        return False
+    document = load(lesson_path)
+    source = document.get("source", {}).get("data", {})
+    if (
+        document.get("card_id") != lesson
+        or document.get("edition") != edition
+        or source.get("card_id") != lesson
+    ):
+        return False
+    original_blocks = source.get("prose", [])
+    for index, block in enumerate(document.get("prose", [])):
+        if source_ref not in block.get("source_refs", []):
+            continue
+        if index >= len(original_blocks):
+            return False
+        original = original_blocks[index]
+        return (
+            term in block.get("text", "")
+            and term in block.get("source_text", "")
+            and original.get("text") == block.get("source_text")
+            and original.get("source_refs") == block.get("source_refs")
+            and any(
+                item.get("term") == term and isinstance(item.get("reason"), str)
+                and item["reason"].strip()
+                for item in block.get("historical_entities", [])
+                if isinstance(item, dict)
+            )
+        )
+    return False
+
+
 def validate_lesson(
     path: Path,
     exercise_path: Path,
@@ -451,8 +490,14 @@ def validate_lesson(
                         continue
                     if not isinstance(reason, str) or not reason.strip():
                         errors.append(f"{entity_label}.reason 不能为空")
-                    if term not in prompt:
-                        errors.append(f"{entity_label}.term={term!r} 不在对应题面中")
+                    if term not in prompt and not declared_lesson_history(
+                        exercise_path, lesson, edition, term,
+                        declaration.get("lessonSourceRef"),
+                    ):
+                        errors.append(
+                            f"{entity_label}.term={term!r} 不在对应题面中，"
+                            "也未绑定已声明的来源课文段落"
+                        )
                     if isinstance(display, str) and term not in display:
                         errors.append(f"{entity_label}.term={term!r} 不在标准答案中")
                     allowed_historical.add(term)

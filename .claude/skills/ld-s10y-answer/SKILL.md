@@ -135,7 +135,10 @@ node .claude/skills/ld-s10y-answer/tools/publish.mjs \
 11. `modern-us-neutral` 不得在 `displayAnswer` 中重新引入已被 edition 替换的虚构俄文或
     苏联人物姓名；必须使用题面中的英文姓名，并与题面保持逐人一致。科学史题保留真实
     历史实体时，在答案项的 `historical_entities` 中逐项声明 `term` 和 `reason`；该词
-    必须同时出现在对应 edition 题面和标准答案中，不能用声明绕过无来源的文化词检查。
+    必须出现在标准答案中，并出现在对应 edition 题面中；“谁发现的”等不能提前给出姓名
+    的题，可另带 `lessonSourceRef`（如 `p0193#6`），绑定本课已登记同一实体的来源段落。
+    校验器要求该段现代文本、原文快照、逐块来源引用和历史声明一致；不改变题面，不把
+    人名提前泄漏给学生，不能用声明绕过无来源的文化词检查。
 
 稳定产物为每个 lesson 一份：
 
