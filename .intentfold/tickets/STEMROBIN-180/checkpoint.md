@@ -1,5 +1,61 @@
 # 生产检查点
 
+## 第十四批验证完成待提交
+
+选择性暂存guard一次PASS110限定文件、48JSON、43现代索引项，
+仅新增完整s9；未完成s4/s7/s8、211214未来源、108/env/app/依赖排除，
+私有盲解记录不入持久课程，无scratch资源依赖。
+
+仅新增完整c5-s9：17正文块、4书写题、4derived/ungraded答案、
+2选择题9项（single1/multiple1）、0图。全文首次PASS38绑定、
+四源解首次PASS12绑定及最终答案首次PASS31绑定复用；
+官方答案retain/finalize各一次exit0。main先冻结四源解，pureview
+全9项盲解冻结c230f13a95b8675d6ed7dd476732fd4ceb43fa1d7ba500d495d78194990e530f，
+再完整比较作者源解/真值/推导/误解/coverage，45绑定PASS；
+官方reviewedvalidate/retain各一次exit0。官方render一次、
+既有隔离headless六桌面手机页面一次PASS，main实际打开全部六完整页面，
+原80%近似、全部书写题及九选项到末端可读，没有键泄漏或整页溢出。
+
+176main首次独审PASS91绑定及record/promote完成，作者1/1修复记录不变；
+180/181 Feynman首次全文/原图/全对象断言/完整SVG/六既有native独审
+PASS及官方record各一次，main20交接绑定当前、晋升各一次exit0。
+186main首次独审PASS60绑定及record/promote各一次exit0，一Azure/0重试、
+repair0；累计确认图服务调用30，不重复计算176，费用未知。
+
+187作者sole1/1后O标签碰撞BLOCKED，95冻结绑定PASS；s5排除完整课，
+停止未开始的s5服务，182–184deferred/185未开始/188既有候选保留。
+s5源解首次REVISE只脚踏施力位置与101300Pa源定义；唯一修复受影响
+比较PASS52绑定，六答案/八panel/肩挑追问旧PASS复用，不做最终keys/choices。
+
+206–210源首次67块117行16题4图，207只缺前半句着重；唯一修复受影响
+独审PASS，approved-active-union a30002f1b06968d9043ca97a4537501a2cb4d07241f23adf6e6b9f85a792b2ed。
+main171绑定/51精确复制PASS。初晋升helper错误将历史规范化前MD哈希
+当当前输出，失败原样保留；只修helper绑定当前冻结，不改作者/批准字节。
+filtered210 prepare/官方assemble/promote各一次exit0：
+199有效页87源项425题记录202编号图；旧107open/108排除；
+196两条及209/210两条真实非致命textcircled提示保留。
+s10、s11、s12源完整；s13虽本页正文closed但211题目尚未获准装订，
+不冒称s13或全6p完整。
+
+s4精确TEXT bindingcopy/retain完成，官方首次误用默认work读取旧备料
+exit2保留，明确绑定work后finalizeexit0，26块7题2bodyfigures。
+只是final现代文字/图已收口，最终答案和choices作者在途，排除完整现代索引。
+s7/s8已prepare一次、TEXT作者在途；211–214源作者冻结，
+Wegener首次全页独审在途，未晋升/装订。7p/8p未开始，274范围未完成。
+无DB/发布/合并/部署/正式handoff；全项目检查仍留正式handoff。
+
+## 第十三批已提交推送
+
+实际提交 `d331dce38edd3ccc4e1c26d24a7644d6eef54a78`，commit/push 各 exit0，
+同一 `origin/codex/STEMROBIN-180-textbooks`。142 限定文件、55 JSON、
+42 现代索引项，仅新增完整 c5-s6。下文“待提交”是提交前历史状态，
+不重复任何已通过门禁、测试或四页显示检查。
+
+第十四批继续首次176图审、s9全文及源解比较；187作者最终BLOCKED、
+sole1/1耗尽，s5不计完整课。未启动的s5后续图服务请求已叫停，
+已开始任务原样保留并据实际ledger记数，不预填费用或未来调用。
+无DB、发布、合并、部署或正式handoff。
+
 ## 第十三批验证完成待提交
 
 选择性暂存边界一次PASS：142限定文件、55JSON、42现代索引项，
