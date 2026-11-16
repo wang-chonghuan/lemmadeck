@@ -1,5 +1,49 @@
 # 生产检查点
 
+## 第二十一批源层完成待提交
+
+235238批准union main117当前绑定/40exactcopy一次0；
+240241243244批准子集main54当前绑定/32exactcopy一次0，
+242仍未晋升，239仍BLOCKED。源页240+虽独立批准保留，
+不进入跨缺口装订。独立approved-through238 cohort仅连续215238
+24页，official带TOC assemble一次0、main110输入绑定/晋升一次0：
+10源单元/45原题/19编号图，81至89已闭合，90 p0238#7尾
+“所需的”open。此前81至88文件字节全部未改。
+首次main晋升检查把numeric pages当array.length退出1，
+未复制任何产物；纠正schema后一次0，失败保留，不是作者修复。
+没有装订239+或伪称90/91/93闭合。
+
+211 FIRST Feynman全文/原图/3对象3断言/六native批准复用，
+main152当前绑定和晋升各一次0，输出/geometry字节不改，
+作者0/1保留。不解除210或把84计完整。
+87/88完整SOURCE-only三/八源解，main完整JSON及Markdown/
+每个method/condition/note/coverage实际比较FIRST PASS；
+28/24当前文件绑定各一次0。首次mainidentity摘要误用非排序
+UTF-8 JSON，纠正为作者sorted-ASCII canonical digest后一次0，
+原失败保留，候选字节未改、作者各0/1。这不是最终modernkeys审批。
+
+87 TEXT Sagan与88 TEXT Feynman唯一FIRST完整独审在途；
+87作者0/1，88作者mechanical1/1耗尽保持。
+242 FIRST全文source保真PASS但M242-1计行合并FAIL，
+Volta仅授权sole机械-inclusive1/1最小因果修复和affected finalize一次；
+原MD/JSON文字/图框不改，原失败不可覆盖，Ramanujan等待精确修复SHA
+后仅affected复核。工具改动暂不计批准或提交。
+Wegener现代214再215在途；Ramanujan新216再217独立图作者，
+各新0/1，218未授权，不读答案或choices。
+8p未开始，完整三册尚未完成，无DB/发布/正式handoff或全项目checks。
+
+## 第二十批现代82已提交推送
+
+实际commit `2587e524b5457cb12182b573361e950af7d26b43`，
+2026-11-16T07:33:21Z，48限定文件/18JSON，modern索引只新增82，
+批准208212与已完成审查/阻塞记录保留。samebranchfreshfetch0、
+HEAD/origin0/0后commit/push各0。首次staging发现冻结source-solution.md
+末尾空白行，精确hash/字节比对原作者快照后只对该文件允许blank-at-eof，
+其余文件严格check，纠正一次0；未改候选/预算或全局Git配置。
+下文待提交为历史记录，成功门禁/显示不重跑。
+unfinishedfuture/108/private/重复源解/env/app/依赖排除，
+无DB/发布/合并/部署/关闭/正式handoff。
+
 ## 第二十批现代82完成待提交
 
 82现完整：17现代项、15实际文字段、4概念anchors、4原书书写题、
