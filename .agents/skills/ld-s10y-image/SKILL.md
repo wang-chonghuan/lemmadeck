@@ -23,6 +23,23 @@ This skill owns the complete modern-edition figure workflow:
 `ld-s10y-lesson` owns extraction, lesson assembly, edition text, and publishing.
 It must delegate modern figure work here.
 
+## Image batches
+
+These rules cover source pages, figures, crops and verification screenshots:
+
+- Read at most 8 images per batch. Count every image loaded into the current
+  context, including reopens and crops; never let that total exceed 24.
+- For multiple batches, when delegation is available and authorized, use a fresh
+  subagent per batch with only the needed text and image paths, not image-bearing
+  history. Finish that batch and return only textual observations and existing
+  evidence paths/hashes before starting the next. The parent must not reopen the
+  whole batch or receive its image payloads; inspect specific findings only.
+- Without bounded delegation, return a textual checkpoint and load the next batch
+  only after compaction has removed the old image history or in a fresh context.
+  Waiting, smaller tool calls,
+  smaller images and returning text do not clear image history. Do not rely on
+  token-triggered automatic compaction to stay below the image limit.
+
 ## Capabilities
 
 ### cap1 — Plan one figure
