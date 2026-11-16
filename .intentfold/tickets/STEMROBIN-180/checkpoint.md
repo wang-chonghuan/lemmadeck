@@ -1,5 +1,78 @@
 # 生产检查点
 
+## 第十八批验证完成待提交
+
+仅新增完整7p83：8正文块/13实际段、2书写题、2derived/ungraded最终答案、
+2选择题9选项（single1/multiple1），0图，3概念分隔。
+既有SOURCE/TEXT通过直接复用；最终两完整答案FIRST main PASS38绑定，
+作者0/1，officialretain/finalize各一次0。能量转化的内部状态条件及
+锻锤/氢气原书近似比较范围完整保留，不补g/效率/气体状态。
+
+choice主先冻结两源解，再冻结全部9pure-view真值/保真/无泄漏/覆盖，
+才读完整作者源解、intent、全部rationale/misconception与coverage，
+FIRST main PASS39绑定，完整真集合ACD/A，作者各0/1，无修复。
+官方带review validate、retain各一次0；自主论证/举例能力损失明记，
+两原书书写题仍完整，不新增输入交互。
+officialrender与既有隔离headless六桌面手机页面各一次0；main已实际
+打开全部六original整页至末端，13段/2题/9项/长数值可见，无溢出/键泄漏，
+浏览器已关闭。本批不是全册或正式handoff。
+
+预备6p205206 FIRST Sagan完整对象/断言/上下文/12native PASS，
+officialrecord各一次0，main各13当前绑定、promotion各一次0；
+205作者0/1、206作者1/1保留，不重render。204先前批准直接复用，
+203仍BLOCKED故t1不完整。207 FIRST Sagan审/208209作者/84 TEXT作者/
+225229 FIRST源审/230234源作者在途，未计完整或批准，不阻塞83提交。
+累计图服务确认31，本批新增0，tokens/费用未知。108/私有/重复源稿/
+未完成现代图课/env/app/依赖排除；无DB/发布/合并/部署/正式handoff。
+
+## 第十八批进行中
+
+83 FIRST Volta全文TEXT PASS8块2题13段3锚点，main16当前交接绑定、
+三模板exactcopy/retain/officialadapt-finalize各一次0，零owned图闭包。
+官方两答案prepare一次0；Volta final作者/Bacon choice作者在途。
+尚未approve最终keys/choices或render/显示，不计完整课程。
+81–83 Feynman全部10SOURCE-only FIRST main完整比较PASS19/20/16绑定，
+fullAnswer/method/conditions/notes及三完整Markdown实际读完；82双阶段/
+碰撞两物体及热运动总和、83不由整体状态决定但可做功转化完整，
+全部原prompt/group/ref绑定，作者0/1不改，私有源解不提交。
+82 FIRST Ramanujan全文TEXT PASS17块4题，main24当前绑定一次0，
+reviewhandoff f136463edb874f10ca405a86385329ff2b7388047042a9ae81db96c4874f287d；
+208209未批准，Bacon仅83choice冻结后开始各图author。
+225229来源Wegener已冻54块110行16源题块5图，各0/1无FAIL，
+Feynman FIRST全页独审在途；229 p0229#12 open尾“为了创”，未晋升。
+Wegener新授权230234 source-first隔离续接，235+未授权。
+下文“在途”均为更早历史状态，成功门禁不重跑。
+
+第十七批成功门禁/render/显示/commit/push不重跑。新增7p81–83全部
+10完整main源解已在作者答案/keys/choice internals前冻结，三个实际原图
+207208209全图已打开，15输入绑定（5/6/4）一次exit0，私有文件不提交。
+81 FIRST Feynman全文TEXT PASS，main9当前交接绑定一次0；尚无现代207
+批准，不能计完整。82作者17块4题0/1已冻、Ramanujan FIRST审在途；
+83作者8块2题0图、13段0/1已冻、Volta FIRST审在途。
+Feynman新source-only作者81/82/83逐课隔离，未批准最终答案或choices。
+
+204 FIRST Bacon完整source/22条context两题/49对象43断言/
+六native PASS，officialrecord一次0；main11交接绑定及晋升各一次0，
+作者1/1不重置，不重render，203仍BLOCKED故t1不计完整。
+205206作者Volta已冻（0/1、1/1），Sagan FIRST独审在途，不能计批准。
+Ramanujan先82审后207新作者；Wegener225229首次源作者隔离进行，
+未晋升或装订，230+未授权。Bacon204审已完成。
+
+现有工单scratch保留/绑定copy/答案/choices/离线显示helper仅增加
+S10Y_BOOK参数，默认6p不变；7p即复用同一流程，不是稳定技能或
+应用变更，不以重跑旧成功批次作检查。累计确认图服务31，
+本批暂无新增，tokens/费用未知。未进行正式handoff/全项目checks、
+DB/发布/合并/部署或关闭工单；108/私有/重复源稿/未批准图仍排除。
+
+## 第十七批已提交推送
+
+实际提交`1fb1ccf05096a898c63db6ca4476d9935ae22f21`，
+2026-11-16T05:55:52Z，commit/push各exit0，同一origin分支。
+153限定文件、63JSON、46现代索引项，仅新增完整s12，另保留10批准
+7p源页及批准预备图/报告。下文“待提交”为历史状态，不重复成功门禁。
+继续第十八批7p81–83，既有阻塞不第三修、不重置作者预算；
+未完成现代课不计完整，无DB/发布/合并/部署/关闭/正式handoff。
+
 ## 第十七批验证完成待提交
 
 本批仅新增完整s12：7正文块/9实际段、5书写题、5derived/ungraded最终
