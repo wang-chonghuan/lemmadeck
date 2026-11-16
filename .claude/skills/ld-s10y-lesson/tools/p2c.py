@@ -279,6 +279,38 @@ def cmd_prepare(a) -> int:
 
 
 # ---------------------------------------------------------------- cap1 收口
+def _counting_mask(ink, figures: list[dict], blocks: list[dict]):
+    masked = ink.copy()
+    for figure in figures:
+        x, y, w, h = figure["box"]
+        masked[max(0, y):y + h, max(0, x):x + w] = False
+    regions, errors = [], []
+    for block in blocks:
+        if block["kind"] != "cap" or not block.get("box"):
+            continue
+        x, y, w, h = block["box"]
+        label = block.get("label")
+        if w <= 0 or h <= 0 or x < 0 or y < 0 or x + w > ink.shape[1] or y + h > ink.shape[0]:
+            errors.append(f"cap {label}: 图题 box 超出原页或为空")
+            continue
+        if not any(
+            x < fx + fw and fx < x + w and y < fy + fh and fy < y + h
+            for fx, fy, fw, fh in (figure["box"] for figure in figures)
+        ):
+            errors.append(f"cap {label}: 图题 box 未与插图框相交")
+            continue
+        caption = ink[y:y + h, x:x + w]
+        lines = len(layout.line_bands(caption, w))
+        expected = len(block["lines"]) + sum(line.count(B.WRAP) for line in block["lines"])
+        if lines == 0 or lines != expected:
+            errors.append(f"cap {label}: 图题区域印刷 {lines} 行，块体 {expected} 行")
+            continue
+        # A complete figure rectangle can enclose its separately transcribed caption.
+        masked[y:y + h, x:x + w] = caption
+        regions.append({"label": label, "box": block["box"], "lines": lines})
+    return masked, regions, errors
+
+
 def cmd_finalize(a) -> int:
     pdir = _page_dir(a, a.page)
     work = _work_page_dir(a, a.page)
@@ -339,10 +371,8 @@ def cmd_finalize(a) -> int:
             stale.unlink()
 
     # 2) 行数对账：挖掉插图后的印刷行数 == 块体行数。页级唯一的完整性硬证据。
-    masked = ink.copy()
-    for f in figs:
-        x, y, w, h = f["box"]
-        masked[max(0, y):y + h, max(0, x):x + w] = False
+    masked, caption_regions, caption_errors = _counting_mask(ink, figs, blks)
+    errors += caption_errors
     cols = ink.any(axis=0).nonzero()[0]
     content_w = int(cols[-1] - cols[0] + 1) if cols.size else img.width
     want = len(layout.line_bands(masked, content_w))
@@ -406,6 +436,7 @@ def cmd_finalize(a) -> int:
     _dump(pdir / "page.json", {"meta": meta, "blocks": blks})
     _dump(pdir / "audit.json", {"page": a.page, "lines_printed": want, "lines_md": got,
                                 "figures": figs, "normalizations": applied,
+                                **({"caption_regions": caption_regions} if caption_regions else {}),
                                 "unknown_chars": unknown, "katex_warnings": m_warn,
                                 "errata": len(meta.get("errata", [])),
                                 "errors": errors})

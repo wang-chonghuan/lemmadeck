@@ -1,5 +1,151 @@
 # 生产检查点
 
+## 第十二批验证完成待提交
+
+2026-11-16，最终仅`phy6-c5-s1`完整：25正文块、12书写题、
+12答案auto3/ungraded9、9选择题37项。官方render一次exit0；
+既有离线脚本一次隔离headless桌面1440x960/手机390x844六页面PASS，
+`tmp/offline-evidence-phy6-c5-s1/report.json`保留。
+主审实际打开全部37手机选项、12书写题及四个重叠正文区域至末端。
+两组例题array使用既有`.nb`横向滚动，不是截字；
+仅补此前未观察的数组端点，未重复render或六页检查。
+`array-scroll-observation.json`一次exit0：桌面476/501px完整，
+手机client358px、total476/501px，实际字号18.656px。
+主审打开桌面完整数组和手机右端，确认2000000结果及“提升的高度”解释完整；
+没有文字、内容或渲染器修复，两次隔离浏览器均已关闭。
+
+193/195 sole标点修复受影响独审PASS，精确批准union manifest
+`b057d5250aaf5d0134bdf1b156304348c2184e9bb6c574cf6d8e83df6c9eac36`；
+191/192/194及五图原PASS复用，不重审。尚未晋升，196至200首次全文独审在途；
+batch12仍只提交through190源及c5-s1完整现代课。全项目检查留正式handoff，
+没有写库、发布、合并或部署，274项范围未完成。
+
+## 第十二批进行中
+
+最终本批目标仅c5-s1：25块12题0图，12答案auto3/ungraded9，
+选择9题37项（single5/multiple4）全独审PASS。源解先冻→纯view
+全37项盲解冻结b4edef63de012f31158db16aea8370ccda399968f36f02c0a8bea5303da0c6ca
+→作者源解/全部truth与misconception/12coverage比较，29绑定；
+officialreviewedvalidate及retain各一次exit0，无作者修复。
+c5-s2正文表tbl-p0188-01 sole1/1编码修复后canonicalrender仍exit2，
+八标签碰撞；75unique冻结绑定核对，0/6native、不再修/重渲染/晋升。
+figure-tbl-p0188-01-blocker.md保留，s2排除完整课；不是TEXT内容错误。
+
+后续源仍隔离：193195repairhandoff48b1217908328b696e4d9579e5eb9ec634445424d1eab9973c496e6fe07436a0
+已通知Ramanujan只affected审。196200作者61块85行11图freeze
+74402bc79d09c5383025e773522162f4478ef0dd51d145e4279ee409690fe931；
+仅196两①标记换supportedtextcircled1为sole1/1，首FAIL保留，
+Feynman首次完整独审在途，未晋升/装订。Bacon新201205源作者已授权；
+206+未委托。本批源索引仍through190，不把后续源混进提交。
+
+最新2026-11-16：c5-s1补g3-2的affected-TEXT PASS/77绑定复用，
+25旧正文及11旧题对象/四边界不变；独立binding副本retain与official
+adapt-finalize各一次exit0，现代25块12题0图ready。原作者numeric-signature
+声明与实际checker差异保留，main直接literal2/1/0.05核对PASS。
+Feynman全12最终答案freeze67a59f6c8bf71f1ff7e003962b2746cfe5dbcdae7bfd134cba99e97cacb4652b；
+main源解先冻→全最终prompt/键比较PASS，11文件绑定；retain/finalize
+各一次exit0，derived12/auto3/ungraded9，无交互。main首helper的二进制
+浮点尾数假失败保留，仅改精确有理数预期，作者键不变。Sagan选择题在途。
+
+c5-s2作者机械首FAIL及sole1/1FAIL保留；最终候选daf75806e2d09d87987642fd8753505f2a91423173ef934471fd7b0c3ad88915
+没有再修。main首次独立31块12题TEXT PASS及37绑定，确认剩余guard仅
+prose[2]/[7]闭合黑体前换行，actualhtmlfrag完整strong无标记泄漏，
+复用38旧源单元/33KaTeX及五个修后签名，不冒称两条失败命令成功。
+独立exactbinding副本text-binding-c5-s2-frozen保留；Volta现获正文表
+tbl-p0188-01作者授权，实际原PNG/六数据/历史身份/六native主题，
+总repair1含机械预算不变。尚无现代表/完整课批准。
+
+175sole修复Volta仅受影响接触复核PASS，134绑定/47对象50关系/
+六既有接触样本实际打开；affected-review9f5416eeb2cd860fed79f769a0168325cb1de1263b5ba0942943a086192c5317，
+reviewhandoff96601678b4f98ab677eea51f98052a2fdd8b6db58db9c24b01838bd3c04d2fb4。
+main精确晋升exit0，原FAIL及修后两实质报告保留；仅预备图，s20仍被174阻塞。
+191195完整源独审仅F193-1/F195-1两标点FAIL，其余页与五图PASS复用。
+Bacon只193195在repair-01 sole修复，Ramanujan待affected-onlyfreeze；
+另196200源作者已授权，201+未委托。195引用的185图须下一批准源批存在后
+才能装订through195，不把该源批误算完整现代课。
+
+186190源独审已PASS并晋升：manifest
+0328c53d395371237e915633c1bc4d64945ee31c6aceb0cbe04f07fd72f53823，
+reviewhandoffa6441025b823c8583f02db2285152c1801818129db39c278e8a58273801dcde9。
+仅186187repair-01、188189原root、190caption-repair-01批准union；
+main284绑定/55精确copyexit0，filtered190prepare/官方assemble/promote
+各一次exit0：179页77源项373题记录179编号图，0KaTeXwarning，
+108排除；oldp0107#7/newp0190#11open，不把简单机械课算完整。
+c5-s1为25块12题0图，c5-s2为31块12题1正文功率表；拟本批两课24题，
+不是完整现代交付。Sagan在新root补s1g3-2/来源绑定，Wegener作者s2全文，
+Feynman/Bacon分别新12题source-only独立解，最终键等最终modern绑定。
+
+main已实际打开186189四原PNG并先行冻结新增g3-2解和s2完整12源解，
+分别四/13绑定；此前11题私有freeze不改，不向作者披露。
+175Volta一次完整独审FAIL仅支承悬空；47对象47关系/全文2题/完整SVG/
+六native与46绑定其余PASS复用。Ramanujan sole1/1只修支承接触，
+独立修复root handofff975d3d191673998f2bcacb6cdee7ffa26ea5e869718fb6ee98742d549165981；
+affectedrender/native各一次exit0/六接触区域无空白，Volta只审受影响单位，
+尚未批准晋升。191195Bacon67块110行13题图180184作者freeze
+89aabd89c03c7b7b1fe3f62875fe497752cd8459035d62d3f32588219e0f8a17，
+15官方调用exit0/repair0，Ramanujan接源独审；196+未委托。
+
+2026-11-16接续更正：c5-s1在185页的25块11题只是已审前缀；
+186页还含家庭作业第2题，须等批准源装订后在独立副本补齐，
+不覆盖原作者freeze或Sagan前缀全文PASS。最终批次题量据装订重算。
+原11题私有源解冻结保留，新题先独立源解再比较作者键。
+
+172main同一次完整独审收尾FAIL：104冻结文件绑定、322实际源墨迹段
+（a137/b185；waterline168/165）、380对象369关系及全部可见SVG核对PASS，
+此前完整原图/全文/六native样本观察复用。现有accent/print局部6x裁图
+确认水填色矩形越过弧形闭合容器底边约7.75canvas像素，无容器clip。
+唯一1/1玻璃内层修复已耗尽，不二修/重渲染/晋升；figure-172-blocker.md
+保留全审证据，s19不计完整现代课，TEXT与独立源解冻结继续保留。
+175作者47对象47关系/六native样本冻结，Volta接独审；173费用预检
+尚无请求，作者获只读查询官方费用依据授权。174作者仍在途。
+
+随后174作者BLOCKED冻结c8829388ce552831c6aa42c5387121c31181534bb5f367fe7ba6169943e9a667；
+main核110记录/94unique绑定。首次a/b标签碰撞exit2后sole1/1补标签带，
+修后renderexit0/85对象65关系；随后六native-preview首次invocation
+因scratch的playwright-core导入失败exit1，0/6样本/aux未执行，
+不修runner、不重试/晋升/自批。figure-174-blocker.md保留，s20排除完整课；
+173暂停新图请求保留preflight，175现有独审继续，服务调用仍0。
+Sagan等待批准186190装订通知后只补c5-s1扩展；Ramanujan等待191195源freeze
+后独审，不重复Feynman的186190源审。源canonical仍through185。
+
+171Ramanujan完整原图/15题上下文/50对象34关系/完整SVG/六native独审
+PASS及officialrecord一次exit0复用，49绑定已核；main晋升最终exit0。
+首helper仅缺scratch实质报告导致部分copy后失败，复制已有报告原字节
+后成功，不改图/作者freeze、不计作者修复；tmp记录保留。
+
+190sole1/1源修复已执行：只增加cap176.box=[670,573,129,32]，
+独立root source190-caption-repair-01/handoff
+b8cb4df55c459bcc79a51b5c0855ec9d46a66edf19da82de2158135a85755f95。
+p2c仅在计行副本恢复明确真实图题墨迹，八个针对性测试PASS；
+官方finalize13/13exit0、normalization0，源文字/图矩形/四PNG+SVG不变，
+没有再次vectorize。main为修复作者不自批；Feynman审186189全文及190
+首全文/计行修复，尚未批准晋升。canonical仍through185，108排除。
+Bacon接191195隔离源作者；196+未委托，全项目checks留正式handoff。
+
+2026-11-16：拟s19/s20/c5-s1三闭合源课20题，第四课需等186190批准源
+装订后才确定。s19完整TEXT PASS64绑定；s20完整TEXT PASS51绑定，
+原数据/历史身份与固定体积/净升力限制保留。main新s20两题/c5-s1十一题
+私有源解已冻结，实际173174175原PNG已打开，不披露给作者。
+172Volta、173Wegener、174Sagan（c5-s1全文独审后）、175Ramanujan
+（171独审后）制作；各独立完整上下文，含mechanics总repair1预算不变。
+s19Feynman先独立原文七题源解，最终答案等172批准及modern-finalize。
+168独审PASS复用已晋升，但s18仍被170sole1/1阻塞，不能算完整现代课。
+186190Bacon源作者仍在途；没有本批完整显示/提交或正式handoff。
+
+## 第十一批已提交推送
+
+176文件提交`93efee0e7a8789b08b376c1b6199882bf21d3530`，实际pushexit0，
+同一origin/codex/STEMROBIN-180-textbooks。两课10答案、七选择题29项、
+12页隔离headless显示PASS及through185批准源保留。没有正式handoff、
+写库/发布/合并/部署，不重跑全项目checks，继续下一小批。
+
+下一批：168Sagan完整118对象113关系/完整SVG/六native样本独审PASS及
+officialrecordexit0复用，main精确晋升exit0，repair0/services0。
+s19main完整6块7题TEXT PASS，64冻结绑定与原始快照检查exit0，
+handoffccc5371642afaf8a068daee6f54aca53102822aea081cd30a137b36e484523ee；
+仅§65数字识别首FAIL的affected-reference修复复用，不重跑全文门禁。
+172待作者，171独审Ramanujan在途，170sole1/1阻塞不动。
+
 ## 第十一批验证完成待提交
 
 暂存边界检查最终exit0：176文件、78JSON、40现代索引项，仅新增s17及
