@@ -1,5 +1,72 @@
 # 生产检查点
 
+## 第四十一批限定暂存通过
+
+一次限定暂存PASS：23文件/5JSON，328/329六SOURCE页文件、图279两个
+持久精确副本、十三完成报告及checkpoint/usage；原报告EOF及失败debit不变。
+凭据、后组稿、未完成modern/index、错书6p和Sagan草稿排除，
+HEAD/origin0/0，41fetch一次0复用。只增量重暂存两份计量记录，
+再commit/push各一次，不重整体暂存、源审、绑定、收口或全项目检查。
+
+Bohr334335/Kuhn7172作者继续，336337/7374仅备料；7p67/8p13/
+raw54-21-85/完整现代新增0保持。父图0、小时监督保持；
+无DB、发布、合并、部署、关闭、正式handoff或额外监督。
+
+## 第四十一批限定完成资源与报告提交准备
+
+拟限定23文件/5JSON：328/329六SOURCE页文件、图279两个持久精确副本、
+十三份完成报告及checkpoint/usage。7p67/8p13/raw54-21-85/现代新增0保持。
+不含未批准330/67/68/332333/6970资源、在途334335/7172稿、
+未完成modern/index、错书6p、Sagan草稿、private/tmp/env/newticket。
+41同分支fetch一次0复用，不重源审、收口、绑定或全项目检查。
+
+Bohr334/335与Kuhn71/72两组fresh作者已启动，复用原prepare并只给纯结构和
+最新67/13缺口/额度说明。336/337及8p73/74 prepare各一次exit0，
+仅备料待335/72纯结构，无作者、候选、FIRST或SOURCE批准，不重prepare。
+原报告、FIRST、失败debit及库存字节不改，所有已完成代理已关闭。
+父图片0，小时监督保持，无DB/发布/合并/部署/关闭/正式handoff或其它chat消息。
+
+## 第四十一批328/329已晋级，下一纯结构入口
+
+Ampere仅受影响斜体单元PASS并以Avicenna未变FIRST合成两页SOURCE PASS；
+原拒绝、四非阻断不确定和图279未证明的精确箭头总数保持。
+Main26返回owned叶直接绑定一次0，Main165修复与97原审复用；
+只绑定15必要当前资源/work复制叶，17独占精确复制晋级一次0。
+328“柔软”MD/JSON各加9字节，329连续斜体条件句各加18；
+各used1/unused0/sourceactual1，无新修复/重审/收口/全页或图像重开。
+7p批准/晋级67页；8p13/raw54-21-85/完整现代新增0保持。
+
+330 Descartes SOURCE FIRST三独立字/粗体缺陷和两不确定，Main16一次0；
+预算used1/unused0机械1已耗尽，不修或替换审阅。返回manifest原值归档，
+不改审者文件或filter/binder。67 Plato两个作者库存关系声明缺陷、
+一个审者页脚斜体未决，0候选或最终图缺陷，Main30一次0。
+68 Hume两个确定排版缺陷、四不确定，Main27一次0；两页各used0/unused1，
+不把多独立问题合成一次修复。66到67结构冲突不是独立SOURCE66缺陷。
+
+Lagrange332/333与Curie69/70作者完成关闭，Main62/39绑定各一次0。
+332/333各两原图不确定加一库存声明缺陷，14/26行13/11块2/1图；
+69/70两/六字体不确定，22/24行9/8块1/0图。FIRST各一次0，
+各used0/unused1，无SOURCE FIRST或批准。333末正文closed、下页cont未知；
+两组纯结构原字节冻结，最新67/13和330/67/68/332333/6970缺口另给，
+不改incoming/原库存/报告。334335/7172原prepare复用，待派作者。
+本批未暂存提交、41fetch一次0、父图片0、无DB/发布/合并/部署/正式handoff。
+
+## 第四十批已提交推送，第四十一批接续
+
+commit/push各一次exit0，HEAD/origin
+`6ed008c3b99ac39bec893940f29c2862111655a7`，push完成
+2026-11-16T22:06:41.268Z。16文件/3JSON：326三SOURCE资源、十一完成报告及
+checkpoint/usage；无完整现代新增。下方待提交措辞为历史，不重成功命令。
+7p65/8p13/raw54-21-85/8pentries0现代0numberingUNSET保持。
+
+Ampere仅328/329受影响斜体复核，Descartes330/Plato67/Hume68唯一SOURCE FIRST，
+Lagrange332333/Curie6970作者六组继续。334/335及8p71/72备料各一次0，
+待333/70纯结构，无作者、候选、FIRST或SOURCE批准，不重prepare。
+原FIRST、失败debit、未变源观察及旧报告不改；父图片0、小时监督保持。
+41同分支fetch一次exit0，不同步其它分支；41未暂存提交，
+同一rolling OFFLINE invocation；无DB、发布、合并、部署、
+关闭、正式handoff或额外监督。
+
 ## 第四十批限定暂存通过，328/329受影响复核
 
 一次限定暂存PASS：16文件/3JSON，326三SOURCE资源、十一完成报告及
