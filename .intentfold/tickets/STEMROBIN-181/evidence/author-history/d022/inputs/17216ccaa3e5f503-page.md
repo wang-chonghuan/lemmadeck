@@ -1,0 +1,103 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 211,
+  "printed_page": 202,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 211
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "e00ec4f2c23bfb50c1ca91ab6cee4b61d5ae4915a3ce04dc9b9cf56a152e45e0"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "One individual original-page view, no grid/detail/reopen:24 physical printed rows excluding figure, including footer.",
+    "Initial two-row paragraph is new prose in85, not p cont from210's closed paragraph.",
+    "Three source-listed current effects remain prose paragraphs, not numbered exercises or new lessons. Third paragraph is seven source rows; figure164/caption are transparent between row6 and the full-width final row.",
+    "Caption164 shares the sixth row of the magnetic-effect paragraph ending 化学效应，. Section reference §92 is an ordinary source reference, not a footnote.",
+    "86 begins only at its printed heading. Source formula9-1, I, q and Delta t are retained. Final paragraph ends 也可 and is open to unviewed212.",
+    "No outgoing completion, source/science approval, counting override or reconstructed magnetic diagram."
+  ],
+  "errata": [],
+  "printed_lines": 24,
+  "figures": [
+    {
+      "id": "fig-164",
+      "label": "图164",
+      "box": [
+        718,
+        753,
+        541,
+        197
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+我们不能直接观察导体中粒子的运动. 然而，根据与电
+流同时发生的作用或现象，可以断定电流的存在.
+
+<!-- p -->
+第一，**通有电流的导体，被加热.**
+
+<!-- p -->
+第二，**电流可以改变导体的化学成份**，例如，析出导体的
+一部分化学成份(硫酸铜溶液中的铜)，不是所有导体，而只
+是电解质溶液才能看到这类过程. 酸、碱、盐是电解质.
+
+<!-- p open -->
+第三，**电流产生磁效应.** 例如，通电导体附近的小磁针偏
+转(图164). 磁效应与化学
+效应和热效应不同，它是最
+基本的效应，因为所有导体
+没有例外的都有磁效应. 只
+有电解液才能看到化学效应，
+
+<!-- fig 图164 box 718,753,541,197 -->
+![图164](figures/fig-164.png)
+
+<!-- cap 图164 samerow -->
+图164
+
+<!-- p cont -->
+而超导体没有热效应(参阅§92).
+
+<!-- h3 -->
+86. 电流强度
+
+<!-- p -->
+如果电路中有电流，则这就是说，电荷经常不断地通过导
+体的横截面. 单位时间内通过的电量，作为电流的定量的表
+示，叫做电流强度. 如果在$\Delta t$时间内通过导体横截面的电量
+为$q$，则电流强度为
+
+<!-- p -->
+$I=\frac{q}{\Delta t}.$　(9-1)
+
+<!-- p -->
+由此可见，**电流强度等于在$\Delta t$时间间隔内通过导体横截面
+的电量跟该时间间隔的比值.**
+
+<!-- p -->
+如果电流强度不随时间改变，则电流叫做稳恒电流.
+
+<!-- p open -->
+电流强度，跟电量一样，是一个标量. 它可以为正，也可
+
+<!-- foot -->
+· 202 ·
