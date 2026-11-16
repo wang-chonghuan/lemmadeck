@@ -29,3 +29,17 @@ $S_{OAD}=\frac{1}{2}|OA|\cdot|OD|\cdot\sin x=\frac{1}{2}\sin x$，$S_{OAB}=\frac
 这样，对于区间 $]-\frac{\pi}{2},\frac{\pi}{2}[$ 里所有 $x\ne0$ 的值，完全证明了不等式(1).
 
 定理 1　在整个数轴上，余弦函数是连续的，也就是对于任意 $x_0\in R$，$\lim_{x\to x_0}\cos x=\cos x_0$.
+
+证明　我们来估计 $|\cos x-\cos x_0|$.$|\cos x-\cos x_0|=\left|2\sin\frac{x_0-x}{2}\sin\frac{x+x_0}{2}\right|=2\left|\sin\frac{x_0-x}{2}\right|\cdot\left|\sin\frac{x+x_0}{2}\right|\leqslant2\left|\sin\frac{x-x_0}{2}\right|\leqslant2\left|\frac{x-x_0}{2}\right|=|x-x_0|$.
+
+因此，如果对于任意的 $\varepsilon>0$，设 $\delta=\varepsilon$，当 $|x-x_0|<\delta$ 时，就有：$|\cos x-\cos x_0|\leqslant|x-x_0|<\varepsilon$.
+
+这就是说，$\lim_{x\to x_0}\cos x=\cos x_0$，也就是余弦函数在点 $x_0$ 是连续的.
+
+类似地，可以证明定理 2：
+
+定理 2　在整个数轴上，正弦函数是连续的，也就是对于任意 $x_0\in R$，$\lim_{x\to x_0}\sin x=\sin x_0$.
+
+定理 3　正切函数和余切函数在它的定义域内都是连续的，就是对于任意 $x_0\in D(\operatorname{tg})$，$\lim_{x\to x_0}\operatorname{tg}x=\operatorname{tg}x_0$；对于任意 $x_0\in D(\operatorname{ctg})$，$\lim_{x\to x_0}\operatorname{ctg}x=\operatorname{ctg}x_0$.
+
+证明　实际上，如果 $x_0\ne\frac{\pi}{2}+k\pi$，$k\in Z$，那么 $\cos x_0\ne0$.于是，$\lim_{x\to x_0}\operatorname{tg}x=\lim_{x\to x_0}\frac{\sin x}{\cos x}=\frac{\lim_{x\to x_0}\sin x}{\lim_{x\to x_0}\cos x}=\frac{\sin x_0}{\cos x_0}=\operatorname{tg}x_0$，类似地，可以证明定理 3 的第二部分.

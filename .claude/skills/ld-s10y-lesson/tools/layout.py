@@ -76,7 +76,7 @@ def _merge_close(spans, gap: float):
     out = [list(spans[0])]
     for a, b in spans[1:]:
         if a - out[-1][1] <= gap:
-            out[-1][1] = b
+            out[-1][1] = max(out[-1][1], b)
         else:
             out.append([a, b])
     return [(a, b) for a, b in out]
@@ -214,6 +214,108 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
     if glyph_rows:
         remaining = np.union1d(remaining, glyph_rows)
     return not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h
+
+
+def _subscript_continues(
+    ink: np.ndarray, a: int, split: int, b: int, glyph_h: float
+) -> bool:
+    """Require small lower glyphs to belong to a matching local upper group."""
+    if (
+        split <= a or split > b
+        or b - a + 1 > 2.8 * glyph_h
+        or b - split + 1 > 1.4 * glyph_h
+    ):
+        return False
+    bounds = [
+        bounds for bounds in ndimage.find_objects(ndimage.label(ink[a:b + 1])[0])
+        if bounds is not None
+    ]
+    upper, lower = [], []
+    for rows, columns in bounds:
+        height, width = rows.stop - rows.start, columns.stop - columns.start
+        if rows.stop <= split - a and height >= 0.2 * glyph_h:
+            upper.append((columns.start, columns.stop - 1, height))
+        elif rows.start >= split - a - 0.2 * glyph_h:
+            if height >= 0.6 * glyph_h and width >= 0.2 * glyph_h:
+                return False
+            if height >= 0.1 * glyph_h and width >= 2:
+                lower.append((columns.start, columns.stop - 1, height))
+        elif height >= 0.6 * glyph_h:
+            return False
+    supported = False
+    for left, right in _merge_close(
+        sorted((x, y) for x, y, _ in lower), max(2, 0.4 * glyph_h)
+    ):
+        # Isolated punctuation/scan specks do not establish a lower text group.
+        members = [(x, y, h) for x, y, h in lower if left <= x <= y <= right]
+        if len(members) < 3:
+            continue
+        width = right - left + 1
+        local_upper = [
+            (x, y, h) for x, y, h in upper
+            if left - 0.25 * glyph_h <= x <= right + 0.25 * glyph_h
+        ]
+        if not local_upper or not any(h >= 0.6 * glyph_h for _, _, h in local_upper):
+            return False
+        x = min(x for x, _, _ in local_upper)
+        y = max(y for _, y, _ in local_upper)
+        if not (
+            0.7 * glyph_h <= y - x + 1 <= 2.5 * glyph_h
+            and 0.55 <= width / (y - x + 1) <= 1.6
+            and abs((left + right) - (x + y)) <= 0.8 * glyph_h
+        ):
+            return False
+        supported = True
+    return supported
+
+
+def _fraction_tail_split(
+    ink: np.ndarray, a: int, b: int, content_w: int, glyph_h: float
+) -> int | None:
+    """Separate an ordinary preceding row from a tall, independently valid fraction."""
+    if b - a + 1 <= 3 * glyph_h or _single_fraction_row(ink, a, b, glyph_h):
+        return None
+    fragments = _row_fragments(ink[a:b + 1], content_w)
+    for (_, prev_b), (next_a, _) in zip(fragments, fragments[1:]):
+        cut = a + (prev_b + next_a + 1) // 2
+        if not 0.6 * glyph_h <= cut - a <= 1.5 * glyph_h:
+            continue
+        if b - cut + 1 < 2 * glyph_h:
+            continue
+        horizontal = ndimage.binary_opening(
+            ink[cut:b + 1],
+            structure=np.ones((1, max(2, int(2 * glyph_h))), dtype=bool),
+        )
+        rules = ndimage.find_objects(ndimage.label(horizontal)[0])
+        if (
+            any(
+                rows.stop - rows.start <= 0.25 * glyph_h
+                for bounds in rules if bounds is not None for rows, _ in [bounds]
+            )
+            and _single_fraction_row(ink, cut, b, glyph_h)
+        ):
+            return cut
+    return None
+
+
+def _small_text_rows(ink: np.ndarray, fragments, glyph_h: float) -> bool:
+    """Retain repeated, independently supported rows in a smaller local font."""
+    if len(fragments) < 2:
+        return False
+    bounds = ndimage.find_objects(ndimage.label(ink)[0])
+    heights = []
+    for a, b in fragments:
+        local = [
+            rows.stop - rows.start
+            for item in bounds if item is not None for rows, columns in [item]
+            if a <= rows.start and rows.stop - 1 <= b
+            and 0.35 * glyph_h <= rows.stop - rows.start < 0.6 * glyph_h
+            and columns.stop - columns.start >= 0.2 * glyph_h
+        ]
+        if len(local) < 2:
+            return False
+        heights.append(float(np.median(local)))
+    return max(heights) <= 1.25 * min(heights)
 
 
 def _decorated_folio(ink: np.ndarray, a: int, b: int, glyph_h: float) -> bool:
@@ -384,6 +486,10 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
                 ) * max(widths)
                 and large[0] <= small[0] <= small[-1] <= large[-1]
             )
+            subscript_continues = (
+                a - prev_b <= 0.75 * min(line_h, glyph_h)
+                and _subscript_continues(ink, prev_a, a, b, glyph_h)
+            )
             if (
                 a - prev_b <= (
                     0.6 if min(heights) < 0.4 * line_h else 0.5
@@ -394,13 +500,34 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
                     and _single_fraction_row(ink, prev_a, b, min(line_h, glyph_h))
                     or fraction_spill
                 )
+                or subscript_continues
             ):
                 joined[-1] = (prev_a, b)
                 if fraction_spill:
                     fraction_starts.add(prev_a)
                 continue
         joined.append((a, b))
-    merged = joined
+    merged = []
+    index = 0
+    while index < len(joined):
+        a, b = joined[index]
+        cut = _fraction_tail_split(ink, a, b, content_w, glyph_h)
+        if cut is None and index + 1 < len(joined):
+            next_a, next_b = joined[index + 1]
+            if (
+                b - a + 1 >= 1.8 * glyph_h
+                and next_a - b <= 0.75 * glyph_h
+                and next_b - a + 1 <= 6 * glyph_h
+            ):
+                cut = _fraction_tail_split(ink, a, next_b, content_w, glyph_h)
+                if cut is not None:
+                    b = next_b
+                    index += 1
+        if cut is not None:
+            merged.extend(((a, cut - 1), (cut, b)))
+        else:
+            merged.append((a, b))
+        index += 1
 
     # Dense glyphs or staggered side-by-side text can keep the row projection
     # continuously live across two or more printed rows. Recover the row count
@@ -419,16 +546,24 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     for a, b in merged:
         band_h = b - a + 1
         count = 1
+        fragments = _row_fragments(ink[a:b + 1], content_w)
         glyph_rows = [
             (x, y)
-            for x, y in _row_fragments(ink[a:b + 1], content_w)
+            for x, y in fragments
             if y - x + 1 >= 0.6 * glyph_h
         ]
+        if _small_text_rows(ink[a:b + 1], fragments, glyph_h):
+            glyph_rows = fragments
         compact_text_rows = len(glyph_rows) >= 2 and all(
             y - x + 1 <= 1.5 * glyph_h for x, y in glyph_rows
         )
+        subscript_row = any(
+            _subscript_continues(ink, a, a + x, b, glyph_h)
+            for x, _ in fragments[1:]
+        )
         if (
             a not in fraction_starts
+            and not subscript_row
             and (
                 band_h > 2.0 * min(typical_h, glyph_h)
                 or compact_text_rows

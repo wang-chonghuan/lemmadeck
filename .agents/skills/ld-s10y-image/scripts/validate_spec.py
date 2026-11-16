@@ -63,6 +63,21 @@ def coordinate(value: Any) -> bool:
     )
 
 
+def has_visible_representation(obj: Any, current: bool) -> bool:
+    if not isinstance(obj, dict):
+        return False
+    if obj.get("visible") is not False:
+        return True
+    # Point visibility controls its marker; the renderer draws labels separately.
+    label = obj.get("label")
+    return (
+        current
+        and obj.get("type") == "point"
+        and isinstance(label, str)
+        and bool(label.strip())
+    )
+
+
 def point_map(objects: list[dict]) -> dict[str, tuple[float, float]]:
     points = {}
     for item in objects:
@@ -238,7 +253,7 @@ def relation_membership_errors(
         )
         for item in objects
         if isinstance(item, dict)
-        and item.get("visible") is not False
+        and has_visible_representation(item, current)
         and isinstance(item.get("id"), str)
         and (
             item.get("type") == "point"
@@ -304,15 +319,34 @@ def relation_membership_errors(
         if position is None:
             continue
 
-        if member.get("type") == "text":
-            font_size = member.get("fontSize", 16)
-            text = member.get("text", "")
+        hidden_label = member.get("type") == "point" and member.get("visible") is False
+        if member.get("type") == "text" or hidden_label:
+            font_size = member.get("fontSize", 28 if hidden_label else 16)
+            text = member.get("label" if hidden_label else "text", "")
             half_height = font_size * 0.5 if finite_number(font_size) else 8
             half_width = (
                 font_size * 0.3 * max(len(text), 1)
                 if finite_number(font_size)
                 else 8
             )
+            if hidden_label:
+                placement = member.get("labelPlacement", {})
+                if not isinstance(placement, dict):
+                    placement = {}
+                label_font = font_size if finite_number(font_size) else 28
+                gap = placement.get("gap", max(10, label_font * 0.45))
+                if not finite_number(gap):
+                    gap = max(10, label_font * 0.45)
+                offset = placement.get("offset", [0, 0])
+                if not coordinate(offset):
+                    offset = [0, 0]
+                # Reserve the full label reach for automatic or fixed-side placement.
+                reach = 1 if placement.get("position") == "CENTER" else 2
+                half_width = half_width * reach + abs(offset[0])
+                half_height = half_height + abs(offset[1])
+                if reach > 1:
+                    half_width += gap
+                    half_height += gap
             required_clearance = (
                 max(half_height, half_width) * user_units_per_canvas_px
                 + 4 * user_units_per_product_px
@@ -405,7 +439,7 @@ def completeness_errors(
                     errors.append(f"{label}.objects must be nonempty")
                 for object_id in required_objects:
                     obj = by_id.get(object_id) if isinstance(object_id, str) else None
-                    if obj is None or obj.get("visible") is False:
+                    if not has_visible_representation(obj, current):
                         errors.append(f"{label}: missing visible object {object_id!r}")
                 for assertion_id in required_assertions:
                     if assertion_id not in assertions_by_id:
@@ -508,7 +542,7 @@ def completeness_errors(
         return errors
     xmin, ymax, xmax, ymin = box
     for obj in objects:
-        if not isinstance(obj, dict) or obj.get("visible") is False:
+        if not has_visible_representation(obj, current):
             continue
         kind = obj.get("type")
         # Infinite lines and viewport grids are intentionally bounded by the viewport.

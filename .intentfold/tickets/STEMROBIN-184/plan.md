@@ -739,3 +739,196 @@ Ptolemy仅复用10c15/16已存在源审和初始分段诊断，查极限下标�
 choice review状态齐全。git cached whitespace检查exit2，仅源确认批准证据
 geo910-n3-plane-space-source-confirmation.md三行引用的Markdown双空格换行；
 这是保留原书印刷行的合法内容，不删除或改写已批准证据，不冒称该命令exit0。
+
+第五批提交`586905649881616ed6a93684fe0a7b91aa272971`已commit/push，
+实际提交时间2026-11-16T01:28:01Z；恢复时HEAD/origin同分支0/0。
+本条操作后记录随下一批保留，不amend既有提交。继续第六批，不以16课冒称
+四册365项全量完成，正式handoff/全项目机械检查仍未执行。
+
+后批9-10g32–35唯一源审完成，33完整PASS；32额外计行的678暗像素全部在右页边
+污迹，审查冻结局部[1380,1208,60,42]且x<1350无正文墨迹；35定理6漏两处“内”。
+仅登记32这一计数副本排除、恢复35两字，初始页三文件已保存，不改块边界/图框。
+34题73末点身份仍未决，不猜补、不改数学/闭合边界；新页不提前计完整现代课。
+Ptolemy复用10c15/16真实五处lim诊断，授权现有joining/expansion路径最小修复和
+独立预期focused测试；不是强求一条放宽条件，不改源或期待行数，不跑全项目suite。
+
+32/35实际finalize18/18及22/22 PASS；Peirce既有源审changed-only完整块/裁图
+绑定PASS，34末点限制保留。五新矢量保真PASS，隔离strict8–35 assemble PASS：
+76题/30编号图/10源单元，n8的57–68与n9的69–76全部闭合，其他旧源三文件
+逐字节相等。已提升批准索引，n3/n4/n7仅book trace/依赖hash重绑，各当前validator
+一次exit0；n3/n7恢复原紧凑JSON排版，parsed新对象深等，不重复数学或显示。
+n8/n9各adapt-prepare一次，Banach正文作者、Aristotle选择题source-first作者，
+母方先全文/20原题/原PNG21–29冻结独立数学与实图清单；n10仍只有开头，
+Confucius36–39作者/Peirce唯一源审接续，不把这些源前置计完整现代课。
+
+10c17/18母方只打开页脚以下局部原像素，确认独立源审所报底边扫描线，
+分别在2452以后的底部5%登记count-only排除，原三文件初稿保留；
+页脚2312/2319已结束，不改body/源PNG/图4。实际finalize等待共享计行修复
+focused验证完成，不拿在途layout版本签收结果。16已确认源分号/栏目/升高星
+仍待定点修正，18下标体系未决仍保留。
+
+第六批接续：10c计行真实下标归属修复focused验证已完成，实际15/16/17/18
+finalize22/20/19/23 PASS；16仅恢复源分号、exhead栏目及两升高星号，17/18
+仅计数副本底边噪迹排除，全部初始三文件保留。源字形及改动定点复核待收口，
+18下标字符体系未决不改为全字形PASS，未提升该书索引或计新完整课。
+
+n8现代14正文对象/12书写题完整独立比较PASS；n9现代13对象/8题全部请求、
+给定量及构造步骤保留，但原例题M=D时E=F=D，两项源“不平行”仍满足。
+母方冻结源解与作者分别确认该错误，只在p0033#5 frontmatter登记原作法的
+最小补充条件M≠D，忠实正文/图/题不改，初始页三文件及现代模板完整保存。
+使用官方源/勘误绑定后仅授权现代例题题设定点更正；不以有利图示遮掉端点，
+不要求全点内点，不更改任何69–76原题。
+
+n9定点题设及同位置section_break文字锚点修正已PASS，初次旧锚点不匹配的
+完整FAIL保留。两课批准文字原字节留存，官方21–29figure contexts已建立，
+Aristotle21–23、Confucius24–26、Banach27–29确定性作者，母方负责唯一独立图审。
+图27小写c源事实保留，现代允许显式记作题69的大写C；不能冒称原图印大写。
+n8/n9标准答案正文单次独立比对发现59将异面点划记号误释为相交；只修59，
+初稿全字节保留，其余19题PASS复用。修后59源定义/反证依据changed-only PASS，
+正式答案JSON仍等批准图及finalize，不提前计完整课。
+
+36/37源审R36/R37明确修复：77/79保留现见实心上标、84(1)补“的”、37notes
+改20+1，actualfinalize各21/21；独立changed-only PASS，38/39已批准内容复用、
+39图36上平面字形解释未决保留。10c15/16源定点复核PASS，17计数PASS、18
+仍限定字形。隔离strict7–16装订PASS：41题/3图/4源单元，77的32–41闭合，
+75/76源三文件逐字节相同；78标题升高星未被当前认领器认出且证明仍open，
+作为partial x4保留，不计完整课、不猜改源标题。已提升批准索引，75/76仅
+booktrace及派生hash重绑，各currentvalidator一次exit0，语义及显示证据复用。
+77adapt-prepare一次，Dalton现代文字作者、Peirce选择题源解、Ptolemy答案源解；
+母方完整原文/十题/原PNG3独立冻结。19–22源作者已收口，两计行FAIL保留，
+Ptolemy作为唯一源审接续，不将这些未来页计入第三课。
+
+第六批恢复检查点（2026-11-16）：9-10g已完成隔离strict8–39装订，88题/
+36编号图/11源单元，n10的77–84闭合、n11的88仍open；现有n1–n9源三文件
+原字节复用。批准book索引已提升，hash为36210f9798446fe7017f163e64493e6217353
+08069884b0d48ab9c5127a1f1cbf；不把边界n11计完整。旧choice仅来源trace重绑
+及currentvalidator的成功证据复用，没有重新求解或重复显示检查。
+
+n8图21/26和n9图27/29均在唯一允许修复后仍rendererFAIL，已保存官方fail
+review，停止进一步尝试。22/23/24/25/28完整spec/批准文字及native/240neutral/
+346print独立PASS，当前来源/输出绑定确认后原spec/SVG字节提升，只有证据路径
+重绑；28的已完成观察跨检查点直接复用。n8/n9均未finalize，答案仍只到批准
+正文，没有正式JSON/choice种子或完成声明。下一候选转为77/78/n10，不凑批数。
+
+77的21个正文对象和10题完整独立语义PASS，两模板批准hash原字节留存，全部
+proof branches/domains/footnote、40双证明、41证明与作图保留。图3首次命令只在
+preflight拒绝五个hidden-labelled anchors，实际render为0；原失败spec/诊断
+完整保留。作者与只读诊断确认renderer的visible仅管点标记、label单独绘制。
+通用validator据此接受v2有非空string label的hiddenpoint表示，保留无标签/
+非point拒绝、逐点组内关系覆盖、anchor bounds和setmember inside/标签含offset
+留白；没有增点、改source或特判图号。新10及既有29focused tests一次PASS，
+FigureSpec合同同步澄清，作者接续相同几何首次实际render及至多一次标签修复。
+
+78真实源heading为`78$^{*}$　弦长与弦所对的弧长的比的极限`，原稿无句点；
+仅SEC_NUM支持实际空白或原标点分隔及非空题名，两个captures/TOC一致性不变。
+六个focused tests（真实heading、11正/11负边界、数字prose及TOC冲突）一次PASS，
+不重复运行。18五处几何正弦下标r/г字形体系仍未决，正在定点像素诊断，未盲目
+扩装订或把整页无条件glyphPASS。现代字面归一不得冒充源字符已确认。
+
+19–22唯一源审完成：人工20/16/16/23行，六图表完整PASS；四处标点和十个升高
+star恢复，作者初稿三文件逐字节保存。父方仅实际打开19/20既有底部源crop，
+folio2315/2309以下bottom5%只有扫描线/散点，分别登记[0,2452,1695,128]计数
+副本排除，不改源像素、图或正文。actualfinalize19/20/22为20/20、16/16、
+23/23，21的16/16成功证据复用；独立changed-only复核在途。50原印]∞,∞[
+明确保留，数学修订须另登记；79闭合但80仅开头，不提前计现代完整课。
+
+n10母方全文/77–84独立数学及原PNG30–32观察已冻结，再读作者源解；四边形
+判定成立，五边形及每个n>5有凸反例，不补相交前提；84两独立直径方向足够，
+不捏造90度或“只有直径才可用”。p35的B1/B和p36交线C/c待定点原像素判别，
+未source修复/prepare现代。累计仍16完整课、151答案、138选择题、589选项；
+本批尚无新增完整课或提交，所有生产/合并/部署禁令不变。
+
+后续检查点：19–22定点标点/十个升高star及计数metadata唯一changed-only复核
+PASS，21原16/16复用；18字形r/г仍UNRESOLVED，忠实U+0433及说明保留。
+现代使用同一带单位角函数的text{ang}语言标签，不冒称恢复码点。隔离strict7–19
+assemble PASS45题/4图/5源单元，n78的42–45闭合、n79仍partial；75/76三源文件
+字节不变。已批准bookhash为b5e21d927a814e45fe4bbce64e05a88b622d6d01aa6f76be3e1f2a21ee6b102b；
+旧choice稳定批次hash重绑待收口，不重复语义/浏览器。
+
+n77图03同一spec首次actualrender PASS，12对象/6标签，repair0；母方唯一
+全文/原源/640native/240neutral/346print视觉PASS，官方review及spec/SVG
+原字节提升，仅metadata路径重绑。官方adapt-finalize/render PASS，实际22段/
+10只读书写题。桌面/手机四完整截图已打开；两长公式走既有横向mathscroll，
+targeted实图最右端可达且清楚，未改内容/渲染器或重跑fullpage。初诊误猜只有
+两个overflow容器而实际七个（含五个2px字形overhang），只该count断言FAIL；
+改为全部实际overflow派生+nonempty，samecommand PASS，失败原因留存。
+
+n77正式10答案candidate独立Gate2 PASS，八numeric值0/1/1/sqrt2/2/0/1/1/0，
+40/41完整proof/graph且ungraded；官方template/prompt/provenance/figureEvidence
+绑定PASS，原字节提升后actualfinalize一次auto8/ungraded2 PASS。choice官方seed
+已prepare32–41、concept1/13/18/19，无图/例题，作者稿及view-only审查仍待到达；
+尚不算完整课。n78两模板15对象/4题唯一完整文本比较PASS，所有proof/examples/
+unit-note/derivative保留，批准bytes提升成durabledraft；officialfig04context
+已建，Confuciussolefigureauthor，不提前finalize或计完成。
+
+n10四既有原glyphcrop确认beta1/beta/C均是原印，忠实body不改，仅35/36登记
+三勘误targetB1/B/c，actualfinalize22/22和21/21 PASS。唯一metadata复核发现
+第一reason误称symbolicproof也有B1；只修reason为图供B1/B、已知a∩b=B，
+35affectedfinalize仍22/22，reason-only独立PASS、body/blocks/auditbytes不变。
+当前35pageJSONhash0592376c1eb2ef169e3db4a7b943114c34a667c63ad92cea7b3921455e9013ad。
+n10两现代templateauthor在途，两个35erratumsourcehash需作者handoff后仅绑定；
+三个原fig30–32inventory/routing已留存，不重复开图或提前spec。Ptolemy接续
+一次独立source-first完整答案prose，尚无正式JSON。第六批仍零新增完整课。
+
+最新接续：n77选择题六题24选项已完成母方先view-only全选项冻结及内部Stage3
+比较PASS；作者在冻结时改四个条件文字的快照差异完整保留，只对四字符串复核。
+真集c/a/a+d/b+c/b/c，当前官方带review校验一次exit0，显示HTML包含全部最终
+choiceHtml且既有桌面手机完整截图复用。答案及批准choice/evidence原字节留存，
+n77为第六批第一课完整，累计17课、161答案、144选择题、613选项。
+
+n78图04初始dash2视觉点状，唯一修复dash3后renderer及母方完整source/spec/
+native640/240neutral/346print PASS，批准spec/SVG原字节提升。官方adapt-finalize/
+render及一次桌面手机离线检查PASS；四完整截图现已打开，四习题及图字完整。
+长公式仅接续末端可达检查，不重复fullpage。官方答案template和choice seed已
+prepare一次；Dalton复用批准推导填写正式JSON，Peirce独立choice作者在途。
+
+n10两模板23对象/八题完整独立语义PASS，35两sourcehash及单reason定点绑定，
+官方三errata验证PASS；批准text仅durabledraft。图30–32官方context已建，各作者
+返回后母方唯一figure gate；30/31额外preview计数FAIL先诊断，不改通过render的
+图或突破repair上限。母方复用先行源冻结，与Ptolemy完整答案prose逐项一次比较
+13单元PASS，现代图/template证据仍待正式绑定。没有第六批commit/push或正式
+handoff；全部生产写入、发布、合并、关闭及部署禁令不变。
+
+n78完整离线收口：四正式答案独立Gate2及template/provenance匹配PASS，
+actualfinalize一次auto4；三选择题12选项先view-only全部冻结c/a+c/d，再作者
+键/推导/误解/全四来源coverage单次比较PASS，官方带review校验exit0。
+桌面手机全choice截图已打开，批准choice、答案及source/figure/显示证据原字节
+留存。第六批2/3完整，累计18课、165答案、147选择题、625选项。
+
+n10三图完整独立PASS且官方review/原specSVG提升，modernfinalize/render
+PASS。actual21正文段/八书写题初始四完整截图已打开；77/79bullet+中文句点
+触发真实重复题号。只扩展现有两prefixregex，源/现代/答案prompt/图不变。
+独立62正反casePASS、持久新增六及既有12真实rendercasePASS；官方render后
+proseHTML逐字节相同，未重复正文browser。affectedexercise-only桌面手机PASS，
+两修后完整截图已打开，题号单次显示、实心上标保留，图32实际310.015625px
+手机字22.28125px。原FAIL视觉截图/初始结构PASSreport/HTML完整保留。
+
+n10八正式答案完整13单元Gate2及官方template/figureEvidence/current资产
+绑定PASS，批准candidate原字节提升，actualfinalize一次auto0/ungraded8。
+choice官方prepare一次，77–84及概念0/7/9/11，Aristotle唯一作者在途；
+尚不算完整n10，不commit第六批。75/76稳定p7–19booktrace/dependentdigest
+仅重绑，其他三hash/全语义deep-equal，各currentvalidator一次exit0，不重复数学
+或显示。后批9-10g40–43作者Confucius/审者Peirce，10c23–26作者Banach在途，
+不动稳定book，未来页不提前stage或计完整课。
+
+n10选择题完整离线收口：全部32项先独立view-only冻结真集
+ABD/CD/AD/C/AC/B/D/AB，q84A初稿只复述结论的保真性REVISE及完整初稿保留。
+作者唯一最小修复A的完整c-or-parallel-c反证及重合分支，只有五个相关字段
+改变；母方changed-view冻结PASS后才读完整内部稿，32推导/误解/八来源13任务
+coverage单次Stage3 PASS，其余31项及七题复用。官方带review校验一次exit0，
+最终桌面手机选择题全截图已打开，八题32选项及图32/长证明均完整清晰。
+批准choice、答案、三figure包及所有真实初始失败原字节留存。
+
+第六批77/78/n10共三完整课、22原题/标准答案、17选择题/68选项；累计19课、
+173答案、155选择题、657选项。75/76稳定来源哈希重绑后的n76原紧凑排版已恢复，
+严格parsed深等，未重跑语义/显示/validator。提交尚未执行，不冒称已push。
+后批9-10g40–43及10c23–26作者已immutable停写，唯一源审分别Peirce/Dalton
+接续；前者四页首次机械PASS，后者前三页FAIL全部保留。未来源未批准/未stage/
+未改稳定索引，不以它们计完成课。正式handoff及全项目机械检查仍未执行。
+
+第六批提交前fetch同分支，HEAD/origin为0/0。暂存640文件范围检查PASS；
+三课lesson/exercises/figures/answers均ready、choice review均pass，凭据字串扫描
+无匹配。未stage未来10c20–26、9g40–43、blocked现代5/6/8/9、.env/.venv或app/
+schema/Charter。忠实边界n79/n11为稳定索引所需partial源对象，不计完整现代课。
+cached whitespace检查exit2：仅忠实源/初稿MD尾空格及保留审查报告末空行；
+原字节和源绑定保留，不删除证据或重跑已通过的数学/显示/全项目检查。

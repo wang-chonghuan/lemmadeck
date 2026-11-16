@@ -1,0 +1,70 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10c",
+  "page": 15,
+  "printed_page": 9,
+  "source": {
+    "pdf": "10c 苏联十年制学校数学教材 代数和分析初步 十年级.pdf",
+    "pdf_sha256": "47b0358c5781f509ce35e0e22de13c6bb539b246099ade66e8856c9288954e40",
+    "pdf_page": 15
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1695,
+    "h": 2580,
+    "sha256": "eb8a734d0f3823857b8fbc1f9c72eed5c40a7486fece8e80548e69cbf80a0a41"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "本页承接印刷第8页的定理1，页首为新证明段；页末正切连续性证明以逗号结束，续至下一页。",
+    "全页原图人工观察为21个正文/公式横排及1个页脚横排；多行等式用实际断点，底部含极限的复分式为一个印刷横排。左边离散黑点及上下页边细线不属于正文；未登记排除框或修改源像素。"
+  ],
+  "errata": [],
+  "printed_lines": 22,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+证明　我们来估计 $|\cos x-\cos x_0|$.
+$|\cos x-\cos x_0|=\left|2\sin\frac{x_0-x}{2}\sin\frac{x+x_0}{2}\right|↵=2\left|\sin\frac{x_0-x}{2}\right|\cdot\left|\sin\frac{x+x_0}{2}\right|\leqslant2\left|\sin\frac{x-x_0}{2}\right|↵\leqslant2\left|\frac{x-x_0}{2}\right|=|x-x_0|$.
+
+<!-- p -->
+因此，如果对于任意的 $\varepsilon>0$，设 $\delta=\varepsilon$，当 $|x-x_0|<\delta$ 时，
+就有：
+$|\cos x-\cos x_0|\leqslant|x-x_0|<\varepsilon$.
+
+<!-- p -->
+这就是说，
+$\lim_{x\to x_0}\cos x=\cos x_0$，
+也就是余弦函数在点 $x_0$ 是连续的.
+
+<!-- p -->
+类似地，可以证明定理 2：
+
+<!-- p -->
+定理 2　在整个数轴上，正弦函数是连续的，也就是对于
+任意 $x_0\in R$，
+$\lim_{x\to x_0}\sin x=\sin x_0$.
+
+<!-- p -->
+定理 3　正切函数和余切函数在它的定义域内都是连续
+的，就是
+对于任意 $x_0\in D(\operatorname{tg})$，$\lim_{x\to x_0}\operatorname{tg}x=\operatorname{tg}x_0$；
+对于任意 $x_0\in D(\operatorname{ctg})$，$\lim_{x\to x_0}\operatorname{ctg}x=\operatorname{ctg}x_0$.
+
+<!-- p open -->
+证明　实际上，如果 $x_0\ne\frac{\pi}{2}+k\pi$，$k\in Z$，那么 $\cos x_0\ne0$.
+于是，
+$\lim_{x\to x_0}\operatorname{tg}x=\lim_{x\to x_0}\frac{\sin x}{\cos x}=\frac{\lim_{x\to x_0}\sin x}{\lim_{x\to x_0}\cos x}=\frac{\sin x_0}{\cos x_0}=\operatorname{tg}x_0$，
+
+<!-- foot -->
+· 9 ·

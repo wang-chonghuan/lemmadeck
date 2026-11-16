@@ -17,7 +17,15 @@ The canonical schema is
   `requires: ["pointRelationships"]` for source-bound relations among multiple
   points. Record source requirements first, give them stable IDs, then map
   them to the object and assertion IDs that realize each requirement.
-  Missing, invisible, or unresolved IDs fail validation. Reused specs are not
+  Missing, invisible, or unresolved IDs fail validation. In v2 a point with
+  `visible: false` and a nonblank string `label` has a visible label
+  representation: the flag hides only its marker, not the renderer-owned
+  text. Such an anchor still requires source-faithful naming, complete point
+  relationships, canvas bounds, and all label/display checks. It cannot
+  remove a dot that the source actually prints. Hidden unlabelled points and
+  hidden non-point objects do not satisfy inventory visibility. Labelled
+  hidden set members retain mandatory `inside` evidence and label-footprint
+  clearance, including placement offsets. Reused specs are not
   evidence: rebuild or recheck this inventory against the original PNG, not
   the prior SVG or object list. State modern regularization or additions as
   additions rather than source-image facts.
