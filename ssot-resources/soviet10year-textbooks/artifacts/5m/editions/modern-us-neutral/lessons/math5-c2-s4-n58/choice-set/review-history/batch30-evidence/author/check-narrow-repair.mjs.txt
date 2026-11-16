@@ -1,0 +1,56 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import crypto from 'node:crypto'
+
+const root = '.intentfold/tickets/STEMROBIN-182/tmp/5m-n58'
+const read = (base, name) => JSON.parse(fs.readFileSync(`${base}/${name}`, 'utf8'))
+const before = `${root}/before-1109-invariant-repair`
+const oldDraft = read(before, 'draft.json')
+const draft = read(root, 'draft.json')
+const oldView = read(before, 'view.json')
+const view = read(root, 'view.json')
+const oldPrograms = read(before, 'wrong-programs.json')
+const programs = read(root, 'wrong-programs.json')
+const clone = value => structuredClone(value)
+const restoredDraft = clone(draft)
+const oldConversion = oldDraft.questions.find(q => q.id === 'q1109')
+const conversion = restoredDraft.questions.find(q => q.id === 'q1109')
+conversion.view.options.find(o => o.id === 'b').text = oldConversion.view.options.find(o => o.id === 'b').text
+conversion.key.rationales = clone(oldConversion.key.rationales)
+const oldGeometry = oldDraft.questions.find(q => q.id === 'q1115')
+const geometry = restoredDraft.questions.find(q => q.id === 'q1115')
+for (const field of ['task', 'unit_reason', 'limitations']) geometry.intent[field] = clone(oldGeometry.intent[field])
+restoredDraft.coverage.find(c => c.source_number === '1115').omitted_tasks =
+  clone(oldDraft.coverage.find(c => c.source_number === '1115').omitted_tasks)
+restoredDraft.coverage.find(c => c.source_number === '1115').reason =
+  oldDraft.coverage.find(c => c.source_number === '1115').reason
+assert.deepEqual(restoredDraft, oldDraft)
+assert.deepEqual(draft.questions.map(q => q.view), view)
+assert.deepEqual(draft.questions.map(q => q.key.correct), oldDraft.questions.map(q => q.key.correct))
+const restoredView = clone(view)
+restoredView[1].options.find(o => o.id === 'b').text = oldView[1].options.find(o => o.id === 'b').text
+assert.deepEqual(restoredView, oldView)
+const restoredPrograms = clone(programs)
+const programIndex = programs.programs.findIndex(p => p.question_id === 'q1109' && p.option_id === 'b')
+restoredPrograms.programs[programIndex] = clone(oldPrograms.programs[programIndex])
+assert.deepEqual(restoredPrograms, oldPrograms)
+for (const name of ['seed.json', 'source-checkpoint.json', 'source-solutions-parent.json', 'author-source-record.json']) {
+  assert(fs.readFileSync(`${root}/${name}`).equals(fs.readFileSync(`${before}/${name}`)))
+}
+const hash = name => crypto.createHash('sha256').update(fs.readFileSync(`${root}/${name}`)).digest('hex')
+const record = {
+  schema: 's10y-n58-narrow-repair-proof-v1',
+  changed_questions: ['q1109 visible incorrect option b and its false rationale', 'q1115 internal capacity description only'],
+  changed_wrong_programs: ['q1109:b'],
+  changed_coverage: ['1115 internal production losses only'],
+  view_change: 'Entry2 option b first coordinate0.3125 to0.03125; all other visible bytes unchanged.',
+  unchanged_keys: 16, unchanged_wrong_programs: 49,
+  all_sources_and_author_original_records_byte_unchanged: true,
+  inverse_restores_complete_original_draft_view_and_programs: true,
+  hashes: Object.fromEntries(['draft.json', 'view.json', 'wrong-programs.json'].map(name => [name, hash(name)])),
+  initial_apply_patch_context_mismatch: 'No files changed; expected multiline formatting while original author used inline option objects. Correct patch applied to actual original lines.',
+  structural_or_semantic_reruns: 0,
+  scope: 'Implementation-scope proof only; independent changed-snapshot semantic review still required.',
+}
+fs.writeFileSync(`${root}/narrow-repair-proof.json`, JSON.stringify(record, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify(record, null, 2))

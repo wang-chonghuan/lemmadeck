@@ -1,0 +1,87 @@
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const { spawnSync } = require("node:child_process");
+
+const root = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const relative = ".intentfold/tickets/STEMROBIN-182/tmp/5m-n59";
+const scratch = path.join(root, relative);
+const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const writeNew = (name, bytes) => fs.writeFileSync(path.join(scratch, name), bytes, { flag: "wx" });
+const json = (value) => JSON.stringify(value, null, 2) + "\n";
+
+if (process.cwd() !== root) throw new Error("Unexpected working directory");
+if (fs.existsSync(path.join(scratch, "structural-command.txt"))) {
+  throw new Error("The single structural invocation has already been recorded");
+}
+
+const frozenBefore = Object.fromEntries(["seed.json", "source-checkpoint.json"].map((name) => [
+  name, hash(fs.readFileSync(path.join(scratch, name)))
+]));
+const draft = JSON.parse(fs.readFileSync(path.join(scratch, "draft.json"), "utf8"));
+
+// This is only the exact learner-view projection, not an authoring transform.
+writeNew("views.json", json(draft.questions.map((question) => question.view)));
+
+const wrongArgs = ["-B", relative + "/wrong-programs.py"];
+const wrongCommand = "python3 " + wrongArgs.join(" ");
+writeNew("wrong-programs-command.txt", wrongCommand + "\n");
+const wrong = spawnSync("python3", wrongArgs, { cwd: root, maxBuffer: 8 * 1024 * 1024 });
+writeNew("wrong-programs-output.json", wrong.stdout || Buffer.alloc(0));
+writeNew("wrong-programs-stderr.txt", wrong.stderr || Buffer.alloc(0));
+writeNew("wrong-programs-exit.json", json({
+  command: wrongCommand,
+  workdir: root,
+  exit_code: wrong.status,
+  signal: wrong.signal,
+  error: wrong.error ? String(wrong.error) : null
+}));
+if (wrong.status !== 0) throw new Error("Wrong-program reproduction failed; exact evidence retained");
+
+const args = [
+  "-B", ".agents/skills/ld-s10y-choice/scripts/validate.py",
+  "--repo", ".",
+  "--seed", relative + "/seed.json",
+  "--draft", relative + "/draft.json"
+];
+const command = "python3 " + args.join(" ");
+writeNew("structural-command.txt", command + "\n");
+const result = spawnSync("python3", args, { cwd: root, maxBuffer: 8 * 1024 * 1024 });
+writeNew("structural-stdout.txt", result.stdout || Buffer.alloc(0));
+writeNew("structural-stderr.txt", result.stderr || Buffer.alloc(0));
+const frozenAfter = Object.fromEntries(["seed.json", "source-checkpoint.json"].map((name) => [
+  name, hash(fs.readFileSync(path.join(scratch, name)))
+]));
+const receipt = {
+  command,
+  executable: "python3",
+  argv: args,
+  workdir: root,
+  exit_code: result.status,
+  signal: result.signal,
+  error: result.error ? String(result.error) : null,
+  stdout_path: relative + "/structural-stdout.txt",
+  stdout_sha256: hash(result.stdout || Buffer.alloc(0)),
+  stderr_path: relative + "/structural-stderr.txt",
+  stderr_sha256: hash(result.stderr || Buffer.alloc(0)),
+  structural_checker_invocations: 1,
+  canonical_review_performed: false,
+  semantic_approval_claimed: false,
+  frozen_before: frozenBefore,
+  frozen_after: frozenAfter,
+  frozen_bytes_unchanged: JSON.stringify(frozenBefore) === JSON.stringify(frozenAfter),
+  question_count: draft.questions.length,
+  single_count: draft.questions.filter((question) => question.view.mode === "single").length,
+  multiple_count: draft.questions.filter((question) => question.view.mode === "multiple").length,
+  option_count: draft.questions.reduce((total, question) => total + question.view.options.length, 0),
+  draft_sha256: hash(fs.readFileSync(path.join(scratch, "draft.json"))),
+  views_sha256: hash(fs.readFileSync(path.join(scratch, "views.json"))),
+  source_solutions_sha256: hash(fs.readFileSync(path.join(scratch, "source-solutions.json"))),
+};
+writeNew("structural-result.json", json(receipt));
+process.stdout.write(json(receipt));
+process.stdout.write("EXACT CHECKER STDOUT:\n");
+process.stdout.write(result.stdout || Buffer.alloc(0));
+process.stdout.write("EXACT CHECKER STDERR:\n");
+process.stdout.write(result.stderr || Buffer.alloc(0));
+process.exitCode = result.status === null ? 1 : result.status;

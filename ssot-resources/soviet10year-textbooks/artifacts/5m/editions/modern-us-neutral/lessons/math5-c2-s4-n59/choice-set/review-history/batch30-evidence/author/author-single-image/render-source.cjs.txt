@@ -1,0 +1,67 @@
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const { pathToFileURL } = require("node:url");
+const { chromium } = require("/Users/yong/.local/opt/node-v24.16.0/lib/node_modules/playwright");
+
+const root = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const seedPath = path.join(root, ".intentfold/tickets/STEMROBIN-182/tmp/5m-n59/seed.json");
+const seed = JSON.parse(fs.readFileSync(seedPath, "utf8"));
+const asset = seed.figures.find((figure) => figure.id === "fig-165").assets[0];
+const source = path.join(root, asset.path);
+const output = path.join(__dirname, "fig-165-native.png");
+const sha256 = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+
+async function main() {
+  if (process.cwd() !== root) throw new Error("Unexpected working directory");
+  if (fs.existsSync(output)) throw new Error("Refusing to overwrite the rendition");
+  const sourceHash = sha256(fs.readFileSync(source));
+  if (sourceHash !== asset.sha256) throw new Error("Frozen source asset changed");
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const context = await browser.newContext({ deviceScaleFactor: 1 });
+    await context.route("**/*", (route) => {
+      if (route.request().url() === pathToFileURL(source).href) return route.continue();
+      return route.abort();
+    });
+    const page = await context.newPage();
+    await page.goto(pathToFileURL(source).href, { waitUntil: "load" });
+    const size = await page.evaluate(() => {
+      const svg = document.documentElement;
+      return { width: svg.width.baseVal.value, height: svg.height.baseVal.value };
+    });
+    if (!Number.isInteger(size.width) || !Number.isInteger(size.height)) {
+      throw new Error("Noninteger native dimensions need an explicitly authorized rendering");
+    }
+    await page.setViewportSize(size);
+    await page.evaluate(() => document.fonts.ready);
+    const frame = await page.evaluate(() => {
+      const rect = document.documentElement.getBoundingClientRect();
+      return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+    });
+    if (frame.x !== 0 || frame.y !== 0 || frame.width !== size.width || frame.height !== size.height) {
+      throw new Error("SVG is not completely framed at its native dimensions");
+    }
+    await page.screenshot({ path: output, fullPage: true });
+    console.log(JSON.stringify({
+      source_path: source,
+      source_sha256: sourceHash,
+      rendition_path: output,
+      rendition_sha256: sha256(fs.readFileSync(output)),
+      native_size_px: size,
+      svg_frame_px: frame,
+      device_scale_factor: 1,
+      full_page: true,
+      navigation_count: 1,
+      image_view_count_before_open: 0
+    }, null, 2));
+    await context.close();
+  } finally {
+    await browser.close();
+  }
+}
+
+main().catch((error) => {
+  console.error(error.stack);
+  process.exitCode = 1;
+});

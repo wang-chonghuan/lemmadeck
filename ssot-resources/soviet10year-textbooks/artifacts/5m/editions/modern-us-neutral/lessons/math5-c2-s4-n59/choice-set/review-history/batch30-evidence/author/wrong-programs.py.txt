@@ -1,0 +1,157 @@
+"""Reproduce manually authored mistakes; never generate questions or options."""
+
+import json
+from decimal import Decimal, ROUND_HALF_UP, localcontext
+from fractions import Fraction as F
+
+
+rows = []
+pi = F(314, 100)
+
+
+def decimal(value):
+    value = F(value)
+    with localcontext() as context:
+        context.prec = 40
+        return format(Decimal(value.numerator) / Decimal(value.denominator), "f")
+
+
+def rounded(value, places):
+    value = F(value)
+    with localcontext() as context:
+        context.prec = 40
+        quantum = Decimal(1).scaleb(-places)
+        result = Decimal(value.numerator) / Decimal(value.denominator)
+        return format(result.quantize(quantum, rounding=ROUND_HALF_UP), "f")
+
+
+def record(question, option, steps, result):
+    rows.append({
+        "question_id": question,
+        "option_id": option,
+        "mistaken_steps": steps,
+        "computed_result": result,
+    })
+
+
+units = ["cm", "dm", "m"]
+radii = [F(24), F(47, 10), F(185, 10)]
+record("q-circ-radii", "a", "Use pi*r instead of 2*pi*r.",
+       {"values": [decimal(pi*r) for r in radii], "units": units})
+record("q-circ-radii", "b", "Round pi to the integer 3; use 2*3*r.",
+       {"values": [decimal(6*r) for r in radii], "units": units})
+record("q-circ-radii", "d", "Compute d=2*r, then incorrectly use 2*pi*d.",
+       {"values": [decimal(4*pi*r) for r in radii], "units": units})
+
+record("q-circ-round", "b", "First round the radii to tenths, then round final C to hundredths.",
+       [rounded(2*pi*F(85, 10), 2), rounded(2*pi*F(56, 10), 2)])
+record("q-circ-round", "c", "Omit the factor 2, then round to hundredths.",
+       [rounded(pi*F(851, 100), 2), rounded(pi*F(562, 100), 2)])
+record("q-circ-round", "d", "Use 22/7 directly rather than first rounding pi to hundredths.",
+       [rounded(2*F(22, 7)*F(851, 100), 2), rounded(2*F(22, 7)*F(562, 100), 2)])
+
+equator = F(12756)*F(31416, 10000)
+record("q-equator", "a", "Treat the given diameter as a radius.", rounded(2*equator, 0))
+record("q-equator", "b", "Replace the specified 3.1416 by 3.14.",
+       rounded(F(12756)*pi, 0))
+record("q-equator", "c", "Always round a positive noninteger upward.",
+       str(-(-equator.numerator // equator.denominator)))
+
+# These are observations calibrated by the actual visible '1 cm' bar, not exact source givens.
+estimated_diameter_cm = F(236, 100)
+record("q-arc", "a", "Stop at the measured radius, omitting the arc-length calculation.",
+       {"estimated_cm": rounded(estimated_diameter_cm/2, 1)})
+record("q-arc", "c", "Add the diameter to the semicircular arc although only the arc is requested.",
+       {"estimated_cm": rounded(pi*estimated_diameter_cm/2 + estimated_diameter_cm, 1)})
+record("q-arc", "d", "Use the full circumference rather than half.",
+       {"estimated_cm": rounded(pi*estimated_diameter_cm, 1)})
+
+digit, ignored_remainder = divmod(17*10, 51)
+record("q-terminating", "c", "Discard the first long-division remainder and classify the truncation as the original number.",
+       {"wrong_decimal": "5."+str(digit), "ignored_remainder": ignored_remainder,
+        "wrong_classification": "finite"})
+
+mixed = [F(7)+F(1, 16), F(12)+F(3, 8), F(2)+F(7, 50), F(9)+F(9, 25)]
+truncated = [F((v*100).numerator // (v*100).denominator, 100) for v in mixed]
+record("q-decimal-table", "a", "Truncate every exact decimal to two places without permission.",
+       [rounded(v, 2) for v in truncated])
+record("q-decimal-table", "b", "Replace every fractional denominator by 100 without scaling its numerator.",
+       [rounded(F(n)+F(a, 100), 2) for n, a in [(7, 1), (12, 3), (2, 7), (9, 9)]])
+record("q-decimal-table", "c", "Divide the fractional part by 10 one extra time.",
+       [decimal(F(n)+fraction/10) for n, fraction in [(7, F(1, 16)), (12, F(3, 8)),
+                                                    (2, F(7, 50)), (9, F(9, 25))]])
+
+record("q-current-average", "a", "Use an unweighted arithmetic mean for both journeys.",
+       [str(F(16+24, 2)), str(F(16+20, 2))])
+record("q-current-average", "c", "Use the equal-distance harmonic-mean shortcut even for unequal distances.",
+       [decimal(F(2*16*24, 16+24)), str(F(2*16*20, 16+20))])
+record("q-current-average", "d", "Weight speeds by distance rather than calculating total distance / total time.",
+       [str(F(96*16+240*24, 336)), str(F(240*16+240*20, 480))])
+
+record("q-feed-rate", "a", "Average the two independent durations.", str((F(5)+F(10, 3))/2))
+record("q-feed-rate", "b", "Add the durations as if they described successive separate stocks.",
+       str(F(5)+F(10, 3)))
+record("q-feed-rate", "d", "Add consumption rates and label that rate as a duration, without inversion.",
+       str(F(1, 5)+F(3, 10)))
+
+isolated_linear_product = (F(1)+F(18, 5))/F(23, 9)+F(6, 5)
+record("q-equation-linear", "b", "Treat the isolated (11/3)*x value as x.",
+       str(isolated_linear_product))
+record("q-equation-linear", "c", "Multiply rather than divide by the remaining coefficient.",
+       str(isolated_linear_product*F(11, 3)))
+record("q-equation-linear", "d", "Omit adding 6/5 inside the isolated bracket.",
+       str(((F(1)+F(18, 5))/F(23, 9))/F(11, 3)))
+
+divisor_bracket = (F(13, 3)-F(38, 15))/F(9, 4)
+divisor_numerator = F(228, 25)
+record("q-equation-divisor", "a", "Invert the final ratio for the unknown divisor.",
+       str((F(16)-divisor_bracket)/divisor_numerator))
+record("q-equation-divisor", "b", "Omit dividing the isolated RHS by the outer 9/4.",
+       str(divisor_numerator/(F(16)-(F(13, 3)-F(38, 15)))))
+record("q-equation-divisor", "d", "Use 16+4/5 instead of 16-4/5 when isolating 9.12/x.",
+       str(divisor_numerator/(F(16)+divisor_bracket)))
+
+record("q-thread-comparison", "b", "Use C=2*pi*d by treating d as r; divide by d.",
+       rounded(2*pi, 2))
+record("q-thread-comparison", "c", "Compute d/C rather than C/d.", rounded(1/pi, 4))
+record("q-thread-comparison", "d", "Use a semicircular arc formula for a complete circle.",
+       rounded(pi/2, 2))
+
+second_radii = [F(36), F(44, 100), F(125)]
+second_units = ["cm", "m", "km"]
+record("q-circ-three", "a", "Use pi*r instead of 2*pi*r.",
+       {"values": [decimal(pi*r) for r in second_radii], "units": second_units})
+record("q-circ-three", "c", "Double the diameter again, giving 4*pi*r.",
+       {"values": [decimal(4*pi*r) for r in second_radii], "units": second_units})
+record("q-circ-three", "d", "Use pi=3 despite the visible 3.14 condition.",
+       {"values": [decimal(6*r) for r in second_radii], "units": second_units})
+
+wheel_coefficient = (F(180, 100)*500/F(5, 2))*60/1000
+record("q-wheel-speed", "a", "Treat the diameter as a radius.",
+       {"coefficient_of_pi": decimal(2*wheel_coefficient), "claimed_unit": "km/h"})
+record("q-wheel-speed", "b", "Treat 180 cm as 180 m, omitting /100.",
+       {"coefficient_of_pi": decimal(100*wheel_coefficient), "claimed_unit": "km/h"})
+record("q-wheel-speed", "c", "Convert m to km, but retain the per-minute value and claim per hour.",
+       {"coefficient_of_pi": decimal(wheel_coefficient/60), "claimed_unit": "km/h"})
+
+first_term = (F(1, 14)-F(2, 7))/F(-3)
+second_expression = (F(7)-F(44, 5))*F(25, 9)-F(15)/(F(1, 8)-F(3, 4))
+record("q-signed-pair", "a", "Treat a positive number divided by its negative as +1.",
+       [str(first_term-F(1)), str(second_expression)])
+record("q-signed-pair", "b", "Lose the negative sign on 15/(-5/8).",
+       [str(first_term-F(-1)), str((F(7)-F(44, 5))*F(25, 9)-F(24))])
+record("q-signed-pair", "d", "Replace division by -3 with multiplication by -3.",
+       [str((F(1, 14)-F(2, 7))*F(-3)-F(-1)), str(second_expression)])
+
+print(json.dumps({
+    "role": "Reproducible arithmetic for manually selected incorrect alternatives; not tests or a semantic review.",
+    "approximate_image_input": {
+        "figure": "fig-165",
+        "actual_visible_scale": "1 cm",
+        "observed_endpoint_separation_px": 236,
+        "observed_scale_bar_px": 100,
+        "precision": "visual estimates from the one original-detail full image view",
+    },
+    "wrong_program_count": len(rows),
+    "programs": rows,
+}, ensure_ascii=False, indent=2))

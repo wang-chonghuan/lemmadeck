@@ -1,0 +1,51 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import crypto from 'node:crypto'
+
+const root = '.intentfold/tickets/STEMROBIN-182/tmp/5m-n59'
+const before = `${root}/before-1131-deferred`
+const read = (base, name) => JSON.parse(fs.readFileSync(`${base}/${name}`, 'utf8'))
+const original = read(before, 'draft.json')
+const draft = read(root, 'draft.json')
+const view = read(root, 'views.json')
+const index = original.questions.findIndex(q => q.id === 'q-thread-comparison')
+assert.equal(index, 10)
+assert.equal(draft.questions.length, 13)
+assert.deepEqual(draft.questions.map(q => q.view), view)
+assert.deepEqual(draft.questions, original.questions.filter(q => q.id !== 'q-thread-comparison'))
+const restored = structuredClone(draft)
+restored.questions.splice(index, 0, original.questions[index])
+restored.coverage[restored.coverage.findIndex(c => c.source_number === '1131')] =
+  original.coverage.find(c => c.source_number === '1131')
+assert.deepEqual(restored, original)
+for (const name of ['seed.json', 'source-checkpoint.json', 'source-solutions.json', 'author-checkpoint.json']) {
+  assert(fs.readFileSync(`${root}/${name}`).equals(fs.readFileSync(`${before}/${name}`)))
+}
+const programs = read(before, 'wrong-programs-output.json')
+const removed = programs.programs.filter(p => p.question_id === 'q-thread-comparison')
+assert.equal(removed.length, 3)
+const finalPrograms = structuredClone(programs)
+finalPrograms.programs = programs.programs.filter(p => p.question_id !== 'q-thread-comparison')
+finalPrograms.wrong_program_count = finalPrograms.programs.length
+assert.equal(finalPrograms.wrong_program_count, 37)
+fs.writeFileSync(`${root}/wrong-programs-final.json`, JSON.stringify(finalPrograms, null, 2) + '\n', { flag: 'wx' })
+const hash = name => crypto.createHash('sha256').update(fs.readFileSync(`${root}/${name}`)).digest('hex')
+const record = {
+  schema: 's10y-n59-deferred-source-proof-v1',
+  removed_question: 'q-thread-comparison',
+  original_questions: 14, retained_questions: 13,
+  original_options: 55, retained_options: draft.questions.reduce((n, q) => n + q.view.options.length, 0),
+  removed_wrong_programs: 3, unchanged_retained_wrong_programs: 37,
+  unchanged_retained_correct_proofs: 14,
+  source_1131: 'Full unperformed empirical task explicitly deferred; seed unchanged and whole group remains blocked.',
+  inverse_restores_entire_original_draft: true,
+  all_remaining_views_keys_rationales_intents_and_coverage_byte_semantics_unchanged: true,
+  original_source_records_and_author_checkpoint_unchanged: true,
+  final_wrong_programs_are_exact_subset_of_executed_original_results: true,
+  original_wrong_program_script_and_results_preserved_not_rerun: true,
+  hashes: Object.fromEntries(['draft.json', 'views.json', 'wrong-programs-final.json'].map(n => [n, hash(n)])),
+  structural_or_semantic_reruns: 0,
+  independent_changed_only_review: 'pending',
+}
+fs.writeFileSync(`${root}/deferred-source-proof.json`, JSON.stringify(record, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify(record, null, 2))
