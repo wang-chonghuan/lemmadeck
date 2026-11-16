@@ -9,7 +9,7 @@
  * 按 ; 匹配会一个字体都替换不到，页面看着能用（系统字体兜底）但并不自包含。
  * 所以内联数为 0 直接抛错，不允许静默降级。
  *
- * 用法: render_lesson.js <bookDir> --out <dir> [--edition <name>] [--lesson <lessonId>]...
+ * 用法: render_lesson.js <bookDir> --out <dir> [--edition <name>] [--lesson <lessonId>]... [--text-only]
  */
 const fs = require("fs");
 const path = require("path");
@@ -25,6 +25,7 @@ const args = process.argv.slice(2);
 const bookDir = args.find((arg) => !arg.startsWith("--"));
 const editionName = args.includes("--edition") ? args[args.indexOf("--edition") + 1] : null;
 const outRoot = args.includes("--out") ? args[args.indexOf("--out") + 1] : null;
+const textOnly = args.includes("--text-only");
 const onlyLessons = new Set(args.flatMap((arg, index) =>
   arg === "--lesson" && args[index + 1] ? [args[index + 1]] : []));
 if (!bookDir || !outRoot) {
@@ -59,8 +60,9 @@ const escProseText = (text) => {
   }
   return (out + esc(text.slice(last))).replace(/\r?\n/g, "<br>");
 };
-// 原书用黑体排定义句，转写时记成 **…**，这里还原成 <strong>
-const strong = (h) => h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+// 还原转写中的黑体和强调标记，不改变正文。
+const strong = (h) => h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+  .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, "<em>$1</em>");
 const MATH = /\$\$(.+?)\$\$|\$([^$]+?)\$/gs;
 // 公式后面紧跟的标点必须与公式绑在一起，否则 `$…$;` 的分号会被甩到下一行
 const TRAIL = /^[;,.、，。：:！!？?)）\]]+/;
@@ -253,6 +255,10 @@ for (const lid of lessonDirs) {
   if (fs.existsSync(choiceDir)) body += `<a class="jump" href="choices.html">选择题 →</a>`;
   fs.writeFileSync(path.join(outDir, "text.html"),
     page(L.printed_title || L.title, crumb, body));
+  if (textOnly) {
+    done.push({ lesson: lid, surface: "text", prose: prose.length, output: outDir });
+    continue;
+  }
 
   // ---- 习题页：每题独立编号，带自己的图
   let group = null, out = "";

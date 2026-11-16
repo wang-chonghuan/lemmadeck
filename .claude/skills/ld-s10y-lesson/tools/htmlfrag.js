@@ -22,8 +22,9 @@ const escProseText = (text) => {
   }
   return (out + esc(text.slice(last))).replace(/\r?\n/g, "<br>")
 }
-// 原书用黑体排定义句，转写时记成 **…**
+// 还原转写中的黑体和强调标记，不改变正文。
 const strong = (h) => h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+  .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, "<em>$1</em>")
 const MATH = /\$\$(.+?)\$\$|\$([^$]+?)\$/gs
 // 公式后面紧跟的标点要与公式绑在一起，否则 `$…$;` 的分号会被甩到下一行
 const TRAIL = /^[;,.、，。：:！!？?)）\]]+/
@@ -115,7 +116,7 @@ function sectionBreakIndices(blocks, sectionBreaks = []) {
 function proseFlow(blocks, sectionBreaks = []) {
   const breaks = new Set(sectionBreakIndices(blocks, sectionBreaks))
   let paragraphIndex = 0
-  return blocks.flatMap((block) => {
+  const flow = blocks.flatMap((block) => {
     if (block.kind !== "p") return [block]
     return proseParagraphs(block.text).map((text) => {
       const item = {
@@ -127,6 +128,31 @@ function proseFlow(blocks, sectionBreaks = []) {
       return item
     })
   })
+  const out = []
+  for (let index = 0; index < flow.length;) {
+    if (!["fig", "cap"].includes(flow[index].kind)) {
+      out.push(flow[index++])
+      continue
+    }
+    const start = index
+    while (index < flow.length && ["fig", "cap"].includes(flow[index].kind)) index++
+    const group = flow.slice(start, index)
+    const figures = group.filter((block) => block.kind === "fig")
+    const captions = group.filter((block) => block.kind === "cap")
+    const labels = new Set(figures.map((block) => block.label))
+    const byLabel = new Map(captions.map((block) => [block.label, block]))
+    // 并排扫描图的块序可能是 fig/fig/cap/cap，只配对唯一、完整的同组图号。
+    const paired = figures.length > 0
+      && figures.length === captions.length
+      && labels.size === figures.length
+      && byLabel.size === captions.length
+      && figures.every((block) => typeof block.label === "string"
+        && block.label.trim() && byLabel.has(block.label))
+    out.push(...(paired
+      ? figures.flatMap((block) => [block, byLabel.get(block.label)])
+      : group))
+  }
+  return out
 }
 
 /** 插图取矢量优先；SVG 直接内联，宿主可用 CSS 换色（fill 是 currentColor）。 */

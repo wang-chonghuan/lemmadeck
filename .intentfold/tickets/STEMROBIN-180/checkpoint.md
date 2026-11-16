@@ -1,5 +1,120 @@
 # 生产检查点
 
+## 第二十二批显示收口待提交
+
+2026-11-16。88 FINAL八题及89 FINAL两题已独立FIRST PASS并
+retain/finalize，全部derived/ungraded、parts0；89实际reviewer Galileo
+的身份更正另存，旧报告不覆盖。88 CHOICE四题18项与89两单选八项
+全独审PASS并retain；Main当前绑定41/52，全部十道原书书写题保留，
+88的3/g2-3仍只作书写任务。既有实质审批不重跑。
+
+一次原批次isolated headless桌面1440x960/手机390x844检查12页PASS；
+88首显示PASS/P3、89首显示FAIL均原样保留。89的223图注被224隔开，
+以及两课单星强调未渲染，是真实共享显示工具缺陷。仅改proseFlow：
+同一连续图/图注组、完整唯一同名label才配对，不跨正文、不改原始
+块序或任何canonical文字；两个显示器还原单星强调。新增text-only
+入口仅重渲染两课正文，不重出习题/choices或重复其门禁。受影响正文
+四页面检查一次0，fresh Meitner仅打开四张全页截图，affected-only
+PASS；图注关联、强调与新增碰撞/截断通过，原其余八页面证据继续
+有效。FIRST报告SHA5160e566保留，affected handoff SHA4c1f7b87。
+定向测试首次4PASS/1FAIL只是新断言忘记既有拉丁math-span；修正
+测试投影后8PASS一次0，失败receipt保留，不计作者修复或重置预算。
+未改课文、答案、选项、图件字节，未重源/题/图/生成/native审批。
+
+218219220223224已批准晋升，245247及248至253源批准晋升；
+246仍1/1耗尽阻塞，239242246缺口不跨越。250251首次24块50行9题
+PASS，252253首次17块34行0题及227228源图PASS。连续248253
+cohort仅装订一次0；n95引用耗尽图210，不能计现代完整。t16源完整
+18块0题2图保留canonical原书层，尚未现代批准，raw book追加属于
+下一批不暂存。254255首次18块46行4题PASS已晋升，独立cohort
+装订一次0，权威TOC为phy7-c1-s2-n96；其源保留及现代prepare一次0，
+现代作者在途。256 FIRST强调遗漏REVISE，唯一修复在途；257 FIRST
+强调遗漏且机械1/1已耗尽BLOCKED，不再修或跨越。258259作者
+21块45行7题1图已冻，FIRST独审在途。t16 TEXT作者已冻23段，
+75项机械PASS，绑定preflight预算1/1保持，FIRST独立TEXT在途。
+这些下一批源、原书索引和稿件不在第二十二批完成课程或暂存集合中。
+
+本批准备限定暂存两现代课、五批准现代图、八批准源页、必要原图、
+对应报告及三份同步图片批次说明；另含上述最小真实显示工具修复与
+定向测试。图片服务新请求0、累计45；token/实收费用未知。仍无DB、
+发布、合并、部署、关闭、正式handoff或全项目测试/构建；8p未开始，
+全组范围未完成。每小时巡检仍暂停，不向其他会话发送消息。
+
+## 第二十二批接续
+
+恢复后223仅补独立overlay一图，复用原FIRST源/全文/artwork/六native
+审查；Main97当前绑定、officialrecord及晋升各一次0，作者1/1不重置。
+220唯一FIRST七图PASS，Main29绑定及晋升一次0；218219224审批保留。
+此轮无新Azure请求，累计45；模型token、实收费用未知。
+
+88 FINAL唯一独立FIRST八答案PASS，95当前绑定，retain/finalize各
+一次0；CHOICE唯一FIRST四题18项PASS，41当前绑定及retain一次0。
+3/g2-3保持书写任务；原覆盖范围误判FAIL及既有live工单范围校正保留。
+接入helper误用索引文件hash和view包装的两次失败原样留存，非作者
+修复；本课索引投影与全部题面/选项字节未变。officialrender一次0，
+仍待完整批次桌面/手机显示，不提前计为交付完成。
+
+89已retain现代课文和223224，adapt-finalize/answerprepare各一次0；
+FINAL两答案首次PASS待纠正reviewer身份元数据并接入；CHOICE作者
+两单选八项0/1已冻，唯一新上下文FIRST在途，不计完整。
+
+SOURCE245247首次审查分别PASS，246两处错误且1/1耗尽BLOCKED；
+Main208当前绑定，只晋升245247，未虚称旧作者五页冻结完整。
+248249两处sole修复的affected-only审查PASS，87当前绑定及晋升，
+未变FIRST部分复用，两页均1/1。审阅者入口只读exec偏离其noexec
+指令的事实保留，不把执行合规记为PASS。239242246缺口不跨越。
+
+250251作者24块50行9题0图、252253作者17块34行0题2图已冻，
+各0/1；两组fresh FIRST源审在途。254255及256257 prepare各一次0，
+各组新作者在途。所有新读图代理fork_context=false，父不开新图片，
+每批8/每context24，只有文字和路径回传，浏览器isolatedheadless。
+当前无新commit/push、DB、发布、合并、部署、正式handoff或全项目检查。
+
+## 恢复小批生产
+
+2026-11-16T10:59:36Z。用户明确“让181，180，184也继续”，解除本单
+暂停；原worktree/branch接续，未rebase、初始化或Grill。最小同步
+67e612a8实际新增的image/choice/lesson三份说明，已有工具与lesson
+补丁保留，answer入口不改。已读live180，Finish=review/Grill=self，
+不向其他会话发送消息，每小时巡检仍暂停。
+
+旧六个含图子上下文已停止并关闭；新读图代理fork_context=false，
+每批最多8图、每context24图，父不再开整批图片。88 FINAL/CHOICE
+各唯一FIRST新代理在途；220原图加六native七图FIRST在途；223仅
+缺独立SVG层观察一图新代理补齐，不重源/全文/两层/六native审查。
+245247源七图与248249源两图分开新context首次复核，复用机械证据。
+所有浏览器isolatedheadless，禁止用户profile/窗口抢占。
+
+218 Bacon唯一FIRST PASS复用，Main47当前绑定及晋升各一次0；
+219 Volta唯一FIRST PASS复用，Main39当前绑定及晋升各一次0。
+224暂停前106绑定/record/晋升成功继续有效。三图未新提交。
+88/89未计完整，86/87仍有耗尽blocker，239242缺口不跨越。
+图片请求已确认221及223各一，累计45；实收费用/全会话tokens未知。
+已有准备层31b1b46f已push，下一批完成即限定commit/push后续做。
+
+## 全部暂停
+
+2026-11-16T08:20:42Z收到总会话转达的用户明确“全部先暂停”指令，
+立即覆盖持续生产授权。六个子代理均已确认暂停；主与子代理无在途
+exec、任务浏览器或外部请求，无需额外安全收尾。等待用户明确恢复。
+不再生成、修改技能、审题、测试、浏览器检查、commit/push或晋升；
+仅记录本暂停位置，所有成果、未提交改动及失败证据原样保留。
+
+暂停前224 Main当前106绑定、official record及晋升各一次exit0，
+尚未提交；223已有源/全文/图元/六native观察，独立SVG层截图helper
+刚添加但尚未执行，未绑定、record或晋升，不补做。218作者及独审
+报告/official record/handoff据作者确认已冻；219FIRST PASS已返回，
+两图Main尚未绑定或晋升。88 FINAL与CHOICE作者已冻，Main尚未首审
+答案或纯view盲审，不计完整课；89尚未retain/finalize。
+245249 SOURCE只保留已写草稿/首FAIL，最终manifest/handoff未生成；
+220按Sagan确认停住，不补查状态。221耗尽阻塞保持。
+
+既有准备层commit `31b1b46f`、push完成于2026-11-16T08:13:07.419Z；
+本次暂停无新commit/push。下文“待提交”是该提交前历史状态。
+累计图片请求记录仍43，已确认221与223各一待恢复时入账；不在暂停
+期间补写usage。108/private/重复源解/unfinished/env等排除边界不变，
+无DB、发布、合并、部署、关闭或正式handoff。
+
 ## 第二十一批准备层待提交
 
 215唯一FIRST Main全源/86全文七题/8对象19断言/两层六native PASS，
