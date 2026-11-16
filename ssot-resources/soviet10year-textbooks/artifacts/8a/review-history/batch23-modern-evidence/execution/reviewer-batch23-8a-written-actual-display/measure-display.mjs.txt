@@ -1,0 +1,91 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { createRequire } from "node:module";
+import { pathToFileURL } from "node:url";
+
+delete process.env.PWDEBUG;
+process.env.PLAYWRIGHT_HTML_OPEN = "never";
+const root = path.dirname(new URL(import.meta.url).pathname);
+const require = createRequire("/Users/yong/.codex/worktrees/d9b1/lemmadeck/app/package.json");
+const { chromium } = require("@playwright/test");
+const inputs = JSON.parse(fs.readFileSync(path.join(root, "input-inventory.json")));
+const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const browser = await chromium.launch({ headless: true });
+const layouts = [];
+try {
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    const context = await browser.newContext({ viewport, serviceWorkers: "block" });
+    try {
+      await context.route("**/*", (route) => route.request().url().startsWith("file:")
+        ? route.continue() : route.abort());
+      const page = await context.newPage();
+      for (const render of inputs.render_HTML) {
+        if (hash(fs.readFileSync(render.path)) !== render.sha256) throw new Error("HTML changed");
+        await page.goto(pathToFileURL(render.path).href, { waitUntil: "load" });
+        await page.evaluate(async () => {
+          await document.fonts.ready;
+          await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        });
+        const layout = await page.evaluate(() => {
+          const box = (node) => {
+            const r = node.getBoundingClientRect();
+            return { x: r.x, y: r.y + scrollY, width: r.width, height: r.height };
+          };
+          const items = [...document.querySelectorAll(".para,li.ex,figure,.sheet>h1,.sheet>.cap,.jump")];
+          return {
+            height: document.documentElement.scrollHeight,
+            width: document.documentElement.scrollWidth,
+            viewport: { width: innerWidth, height: innerHeight },
+            sheet: box(document.querySelector(".sheet")),
+            objects: items.map((node, index) => ({
+              index, tag: node.tagName, class: node.className,
+              number: node.querySelector(".ex-num")?.textContent || null,
+              text_length: node.textContent.length,
+              box: box(node),
+              children: [...node.children].slice(0, 3).map((child) => ({
+                tag: child.tagName, class: child.className, box: box(child),
+                display: getComputedStyle(child).display,
+                visibility: getComputedStyle(child).visibility,
+                opacity: getComputedStyle(child).opacity,
+              })),
+            })),
+            horizontal_regions: [...document.querySelectorAll("*")]
+              .filter((node) => node.scrollWidth > node.clientWidth + 1 &&
+                ["auto", "scroll"].includes(getComputedStyle(node).overflowX))
+              .map((node, index) => ({
+                index, tag: node.tagName, class: node.className,
+                box: box(node), client_width: node.clientWidth, scroll_width: node.scrollWidth,
+                client_height: node.clientHeight, scroll_height: node.scrollHeight,
+              })),
+          };
+        });
+        const selector = render.surface === "text" ? ".para" : "li.ex";
+        const items = page.locator(selector);
+        await items.last().scrollIntoViewIfNeeded();
+        const lastY = await page.evaluate(() => scrollY);
+        await items.first().scrollIntoViewIfNeeded();
+        const firstY = await page.evaluate(() => scrollY);
+        layouts.push({
+          lesson: render.lesson, surface: render.surface, HTML_path: render.path,
+          HTML_sha256: render.sha256, ...layout,
+          reconstructed_primary_endpoints: { first_scroll_y: firstY, last_scroll_y: lastY },
+          geometry_is_not_actual_pixel_pass: true,
+        });
+      }
+    } finally {
+      await context.close();
+    }
+  }
+} finally {
+  await browser.close();
+}
+const out = path.join(root, "display-layout.json");
+fs.writeFileSync(out, `${JSON.stringify(layouts, null, 2)}\n`, { flag: "wx" });
+console.log(JSON.stringify(layouts.map((layout) => ({
+  lesson: layout.lesson, surface: layout.surface, viewport: layout.viewport,
+  page_height: layout.height, objects: layout.objects.length,
+  scroll_regions: layout.horizontal_regions.length,
+  endpoints: layout.reconstructed_primary_endpoints,
+  first_exercise: layout.objects.find((object) => object.class === "ex"),
+})), null, 2));

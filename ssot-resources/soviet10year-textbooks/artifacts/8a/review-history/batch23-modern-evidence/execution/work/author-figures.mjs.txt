@@ -1,0 +1,329 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+import { fileURLToPath } from 'node:url'
+
+const work = path.dirname(fileURLToPath(import.meta.url))
+const root = path.join(path.dirname(work), 'root/8a')
+const edition = 'modern-us-neutral'
+const destination = path.join(root, 'editions', edition, 'figures')
+const templates = id => path.join(work, 'adapt/8a', edition, 'lessons', id)
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const record = file => ({ path: file, sha256: sha(file), bytes: fs.statSync(file).size })
+const save = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+const frozen = read(path.join(work, 'source-only-frozen/freeze-receipt.json'))
+assert.equal(sha(path.join(work, 'source-only-interpretation.json')), frozen.interpretation_sha256)
+for (const asset of frozen.actual_source_assets) assert.equal(sha(asset.path), asset.sha256)
+const interpretation = read(path.join(work, 'source-only-interpretation.json'))
+const round = n => Number(n.toFixed(9))
+const point = (id, at, label, placement = 'SE') => ({
+  id, type: 'point', at, size: 2, stroke: 'ink', fill: 'ink', strokeWidth: 1,
+  ...(label ? { label, fontSize: 28, labelPlacement: placement === 'SW'
+    ? { position: 'SW', gap: 16, offset: [0, 24] }
+    : placement === 'NW' ? { position: 'NW', gap: 16, offset: [-8, -8] }
+      : { position: placement, offset: [8, 8] } } : {})
+})
+const text = (id, at, value, fontSize = 28) =>
+  ({ id, type: 'text', at, text: value, fontSize, labelColor: 'ink', labelPlacement: { position: 'CENTER' } })
+const segment = (id, from, to, dash = 0) =>
+  ({ id, type: 'segment', from, to, stroke: 'ink', strokeWidth: 2, dash })
+const arrow = (id, from, to) =>
+  ({ id, type: 'arrow', from, to, stroke: 'ink', strokeWidth: 3 })
+const connects = (id, from, to) => ({ id: `${id}-connects`, type: 'connects', arrow: id, from, to })
+const displacement = (id, from, to, dx, dy) =>
+  ({ id, type: 'displacement', from, to, dx, dy })
+const group = (id, description, objects, assertions, requires = []) =>
+  ({ id, description, objects, assertions, ...(requires.length ? { requires } : {}) })
+function sourceText(lessonId) {
+  const lesson = read(path.join(templates(lessonId), 'lesson.template.json'))
+  const exercises = read(path.join(templates(lessonId), 'exercises.template.json'))
+  return [
+    ...lesson.prose.filter(b => b.text).map(b => ({ lesson: lessonId, text: b.text })),
+    ...exercises.exercises.map(e => ({ lesson: lessonId, exercise: e.number, text: e.text }))
+  ]
+}
+function base(id, lessonId, canvas, display) {
+  const asset = frozen.actual_source_assets.find(a => a.id === id)
+  return {
+    schema: 'ld-s10y-image/figure-spec@2', id, mode: 'deterministic',
+    description: '', source: { image: { path: asset.path, sha256: asset.sha256 },
+      authoritativeText: sourceText(lessonId), inventory: [] },
+    canvas: { ...canvas, background: 'paper' }, display, objects: [], assertions: []
+  }
+}
+function gridFrame(spec, bounds, step, columns, rows, xTicks, yTicks) {
+  const [xmin, ymax, xmax, ymin] = bounds
+  spec.objects.push(
+    { id: 'source-grid', type: 'grid', bounds, xStep: step, yStep: step,
+      xOffset: 0, yOffset: 0, stroke: 'grid', strokeWidth: 1.2 },
+    { id: 'source-frame', type: 'polygon',
+      points: [[xmin, ymin], [xmax, ymin], [xmax, ymax], [xmin, ymax]],
+      stroke: 'ink', strokeWidth: 2, fillOpacity: 0 },
+    { id: 'x-axis', type: 'axis', from: [xmin, 0], to: [xmax, 0], stroke: 'ink', strokeWidth: 2.5,
+      ticks: xTicks.map(([value, label]) => ({ at: [value, 0], label, size: .09,
+        fontSize: 28, labelPlacement: { position: 'S', offset: [0, 12] } })) },
+    { id: 'y-axis', type: 'axis', from: [0, ymin], to: [0, ymax], stroke: 'ink', strokeWidth: 2.5,
+      ticks: yTicks.map(([value, label]) => ({ at: [0, value], label, size: .09,
+        fontSize: 28, labelPlacement: { position: 'W', offset: [-12, 0] } })) },
+    arrow('x-positive-arrow', [xmax - .6, 0], [xmax, 0]),
+    arrow('y-positive-arrow', [0, ymax - .6], [0, ymax]),
+    text('x-label', [xmax + .48, -.25], 'x'),
+    text('y-label', [-.25, ymax + .48], 'y')
+  )
+  spec.assertions.push(
+    { id: 'source-grid-dimensions', type: 'gridDimensions', grid: 'source-grid', columns, rows },
+    { id: 'axes-perpendicular', type: 'perpendicular',
+      a: [xmin, 0], b: [xmax, 0], c: [0, ymin], d: [0, ymax] },
+    connects('x-positive-arrow', [xmax - .6, 0], [xmax, 0]),
+    connects('y-positive-arrow', [0, ymax - .6], [0, ymax])
+  )
+  spec.source.inventory.push(group('source-grid-and-axes',
+    `Source has one shared${columns}-column by${rows}-row grid;step${step};bounds${JSON.stringify(bounds)}. Preserve its finite border,axes,positive arrows,and the source tick labels. No new numbered ticks.`,
+    ['source-grid', 'source-frame', 'x-axis', 'y-axis', 'x-positive-arrow', 'y-positive-arrow', 'x-label', 'y-label'],
+    ['source-grid-dimensions', 'axes-perpendicular', 'x-positive-arrow-connects', 'y-positive-arrow-connects'],
+    ['gridDimensions']))
+}
+function parabola(spec, id, a, m, n, bounds) {
+  const [xmin, ymax, xmax, ymin] = bounds
+  const radius = Math.sqrt(((a > 0 ? ymax : ymin) - n) / a)
+  const lo = Math.max(xmin, m - radius), hi = Math.min(xmax, m + radius)
+  const evaluate = x => a * (x - m) ** 2 + n
+  const control = [(lo + hi) / 2, evaluate(lo) + a * (lo - m) * (hi - lo)]
+  const [bxmin, bymax, bxmax, bymin] = spec.canvas.boundingBox
+  assert.equal(round((bxmax - bxmin) / (bymax - bymin)),
+    round(spec.canvas.width / spec.canvas.height), 'Raw path and JSXGraph must share the exact screen transform')
+  const sourceScreenUnits = ([x, y]) => [
+    round(x - bxmin), round(bymax - y)
+  ]
+  const p0 = [lo, evaluate(lo)], p2 = [hi, evaluate(hi)]
+  const xy = p => sourceScreenUnits(p).join(' ')
+  spec.objects.push({ id, type: 'svgPath',
+    d: `M ${xy(p0)} Q ${xy(control)} ${xy(p2)}`, stroke: 'ink', strokeWidth: 3.5 })
+  const checks = [0, .25, .5, .75, 1].map(t => {
+    const x = (1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * control[0] + t ** 2 * p2[0]
+    const y = (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * control[1] + t ** 2 * p2[1]
+    assert(Math.abs(y - evaluate(x)) < 1e-8)
+    return { t, x: round(x), y: round(y), equation_residual: round(y - evaluate(x)) }
+  })
+  return { id, coefficients: { a, m, n }, shown_window: bounds,
+    source_space_quadratic_bezier: [p0, control, p2].map(p => p.map(round)), exact_curve_checks: checks }
+}
+const outputRecords = []
+function retain(spec, lessonId, curves, additions) {
+  const file = path.join(destination, `${spec.id}.spec.json`)
+  save(file, spec)
+  const observation = interpretation.actual_figure_observations.find(o => o.id === spec.id)
+  save(path.join(work, `${spec.id}-author-context.json`), {
+    source: record(spec.source.image.path), source_only_interpretation_sha256: frozen.interpretation_sha256,
+    original_png_opened_individually: true, actual_source_observation: observation,
+    templates: ['lesson.template.json', 'exercises.template.json'].map(name => record(path.join(templates(lessonId), name))),
+    authoritativeText: spec.source.authoritativeText, source_inventory: spec.source.inventory,
+    curve_geometry: curves, modern_additions_or_regularization: additions,
+    curve_assertion_limit: 'Existing FigureSpec uses svgPath for exact quadratic Bezier curves. Independent review must compare the actual curve with source readings;sample residuals and renderer determinism are not source-fidelity approval.',
+    independent_figure_review: 'pending parent dispatch;no review pass created', spec: record(file)
+  })
+  const manifestFile = path.join(templates(lessonId), 'figures.template.json')
+  const manifest = read(manifestFile), index = manifest.figures.findIndex(f => f.id === spec.id)
+  assert(index >= 0)
+  const entry = manifest.figures[index]
+  for (const field of ['png', 'artwork', 'generation']) delete entry[field]
+  Object.assign(entry, {
+    spec: `figures/${spec.id}.spec.json`, svg: `figures/${spec.id}.svg`,
+    render: `figures/${spec.id}.render.json`, review: `figures/${spec.id}.review.json`
+  })
+  fs.writeFileSync(manifestFile, JSON.stringify(manifest, null, 2) + '\n')
+  outputRecords.push({ id: spec.id, lesson: lessonId, spec: record(file),
+    independent_review: 'pending', actual_source_png: record(spec.source.image.path) })
+}
+
+fs.mkdirSync(destination, { recursive: true })
+const scroll = { purpose: 'instructional', layout: 'scroll', widths: [640], minTextPx: 16 }
+const n3 = 'alg8-c1-s1-n3', n4 = 'alg8-c1-s2-n4'
+
+{
+  const bounds = [-4.5, 5, 4.5, -4]
+  const spec = base('fig-01', n3, { width: 900, height: 900, boundingBox: [-5.5, 6, 5.5, -5] }, scroll)
+  spec.description = 'Read four distinct quadratic coefficients from the source I/II/III/IV curves in one unchanged half-unit coordinate frame. Do not print their equations or coefficients.'
+  gridFrame(spec, bounds, .5, 18, 18,
+    [-3, -2, -1, 1, 2, 3].map(x => [x, String(x)]), [-3, -2, -1, 1, 2, 3, 4].map(y => [y, String(y)]))
+  spec.objects.push(point('origin', [0, 0], 'O', 'SW'))
+  const curves = []
+  for (const [id, label, a, at] of [
+    ['curve-I', 'I', 1, [2.3, 4]], ['curve-II', 'II', 2, [1.15, 4]],
+    ['curve-III', 'III', -.25, [2.75, -2.7]], ['curve-IV', 'IV', -1, [1.3, -2.9]]
+  ]) {
+    curves.push(parabola(spec, id, a, 0, 0, bounds))
+    spec.objects.push(text(`${id}-label`, at, label))
+    spec.assertions.push(displacement(`${id}-readout`, [0, 0], [1, a], 1, a))
+    spec.source.inventory.push(group(`source-${id}`,
+      `Source solid parabola${label} passes through the common origin. Independently read x1/y${a};keep the entire shown branch and Roman label. The readout is internal,not an added visible marker or coefficient label.`,
+      [id, `${id}-label`, 'origin'], [`${id}-readout`]))
+  }
+  spec.assertions.push({ id: 'four-source-curves', type: 'objectCount', objectType: 'svgPath', count: 4 })
+  spec.source.inventory.push(group('source-four-curve-count', 'Exactly four source curves share this frame.',
+    ['curve-I', 'curve-II', 'curve-III', 'curve-IV'], ['four-source-curves']))
+  retain(spec, n3, curves, [
+    'Regularize scanned branches to exact quadratics inferred from original coordinate readings;no equations/coefficients or extra visible readout points.',
+    'Preserve the18-by18 half-unit lattice;semantic grid color improves contrast without removing instructional lines.',
+    '640px scroll media width is a conservative current-renderer authoring check;parent owns headed-product display review.'
+  ])
+}
+{
+  const bounds = [-3, 15, 15, -3]
+  const spec = base('fig-02', n4, { width: 900, height: 900, boundingBox: [-4, 16, 16, -4] }, scroll)
+  spec.description = 'Worked source graph through all seven table coordinates,with vertex(8,3),one18-by18 unit lattice,and the original8/3 axis labels.'
+  gridFrame(spec, bounds, 1, 18, 18, [[8, '8']], [[3, '3']])
+  spec.objects.push(point('origin', [0, 0], 'O', 'SW'))
+  const curves = [parabola(spec, 'worked-parabola', .5, 8, 3, bounds)]
+  const points = [7.5, 5, 3.5, 3, 3.5, 5, 7.5].map((y, i) => {
+    const id = `table-point-${i + 5}`, x = i + 5
+    spec.objects.push(point(id, [x, y]))
+    spec.assertions.push(displacement(`${id}-coordinates`, 'origin', id, x, y))
+    return id
+  })
+  spec.assertions.push({ id: 'seven-plotted-table-points', type: 'objectCount', objectType: 'point', count: 8 })
+  spec.source.inventory.push(group('source-seven-table-points',
+    'All seven table coordinates are source plotting data,not authored answers. The eighth point is the labelled coordinate origin.',
+    ['origin', ...points, 'worked-parabola'],
+    [...points.map(id => `${id}-coordinates`), 'seven-plotted-table-points'], ['pointRelationships']))
+  retain(spec, n4, curves, ['Clean exact curve and source data markers;only source8/3 labels,with no additional numbered ticks.'])
+}
+{
+  const spec = base('tbl-p0020-01', n4,
+    { width: 960, height: 320, boundingBox: [-.2, 2.2, 8.2, -.2], keepAspectRatio: false }, scroll)
+  spec.description = 'Retain the complete prose table:two rows,eight columns including the x/y headers,and every original coordinate value.'
+  spec.objects.push({ id: 'source-table-grid', type: 'grid', bounds: [0, 2, 8, 0],
+    xStep: 1, yStep: 1, stroke: 'ink', strokeWidth: 2 })
+  const values = [['x', '5', '6', '7', '8', '9', '10', '11'], ['y', '7.5', '5', '3.5', '3', '3.5', '5', '7.5']]
+  const labels = []
+  values.forEach((row, r) => row.forEach((value, c) => {
+    const id = `cell-${r}-${c}`; labels.push(id)
+    spec.objects.push(text(id, [c + .5, 1.5 - r], value, 32))
+  }))
+  spec.assertions.push(
+    { id: 'source-table-dimensions', type: 'gridDimensions', grid: 'source-table-grid', columns: 8, rows: 2 },
+    { id: 'sixteen-source-cells', type: 'objectCount', objectType: 'text', count: 16 }
+  )
+  spec.source.inventory.push(group('source-complete-table',
+    'Full8-column,2-row table includes the x/y label column. Values in source order are x5..11 and y7.5,5,3.5,3,3.5,5,7.5.',
+    ['source-table-grid', ...labels], ['source-table-dimensions', 'sixteen-source-cells'], ['gridDimensions']))
+  retain(spec, n4, [], ['Equalized clean cell widths retain every given value and the full lattice,including rightmost cells.'])
+}
+{
+  const bounds = [-5, 15, 13, -3]
+  const spec = base('fig-03', n4, { width: 900, height: 900, boundingBox: [-6, 16, 14, -4] }, scroll)
+  spec.description = 'Source forward translation of Phi to Phi-prime:one shared18-by18 unit grid,vertices O andO-prime(8,3),translation arrow and both dashed coordinate projections.'
+  gridFrame(spec, bounds, 1, 18, 18, [[-2, '-2'], [2, '2'], [8, '8']], [[3, '3']])
+  spec.objects.push(point('origin', [0, 0], 'O', 'SW'), point('translated-origin', [8, 3], "O'", 'SE'),
+    arrow('translation-arrow', 'origin', 'translated-origin'),
+    segment('projection-x8', [8, 0], 'translated-origin', 2),
+    segment('projection-y3', [0, 3], 'translated-origin', 2),
+    text('base-curve-label', [-2.5, 5.5], '\u03a6'), text('image-curve-label', [6.5, 7], "\u03a6'"))
+  const curves = [parabola(spec, 'base-parabola', .5, 0, 0, bounds),
+    parabola(spec, 'image-parabola', .5, 8, 3, bounds)]
+  spec.assertions.push(displacement('source-translation', 'origin', 'translated-origin', 8, 3),
+    connects('translation-arrow', 'origin', 'translated-origin'),
+    { id: 'two-source-parabolas', type: 'objectCount', objectType: 'svgPath', count: 2 })
+  spec.source.inventory.push(group('source-translation-pair',
+    'Original O/Phi and O-prime/Phi-prime share the same coordinate frame. Arrow and dashed8/3 projections express the source translation(8,3).',
+    ['origin', 'translated-origin', 'translation-arrow', 'projection-x8', 'projection-y3',
+      'base-parabola', 'image-parabola', 'base-curve-label', 'image-curve-label'],
+    ['source-translation', 'translation-arrow-connects', 'two-source-parabolas'], ['pointRelationships']))
+  retain(spec, n4, curves, ['Exact equally shaped curves;preserve arrow direction and solid-versus-dashed roles.'])
+}
+{
+  const bounds = [-4, 15, 14, -3]
+  const spec = base('fig-04', n4, { width: 900, height: 900, boundingBox: [-5, 16, 15, -4] }, scroll)
+  spec.description = 'Source vector addition proof:the full directed O,M,O-prime,M-prime parallelogram,basis arrows e1/e2,and every symbolic coordinate projection in one shared18-by18 grid.'
+  gridFrame(spec, bounds, 1, 18, 18, [[2, 'x0'], [8, '8'], [10, 'x0+8']], [[3, '3'], [6, 'y0'], [9, 'y0+3']])
+  spec.objects.push(point('O', [0, 0], 'O', 'SW'), point('M', [2, 6], 'M', 'NW'),
+    point('O-prime', [8, 3], "O'", 'SE'), point('M-prime', [10, 9], "M'", 'NW'))
+  const arrows = [
+    ['vector-OM', 'O', 'M'], ['vector-OO-prime', 'O', 'O-prime'],
+    ['vector-OM-prime', 'O', 'M-prime'], ['vector-MM-prime', 'M', 'M-prime'],
+    ['vector-O-prime-M-prime', 'O-prime', 'M-prime'],
+    ['basis-e1', 'O', [1, 0]], ['basis-e2', 'O', [0, 1]]
+  ]
+  arrows.forEach(([id, from, to]) => {
+    spec.objects.push(arrow(id, from, to))
+    spec.assertions.push(connects(id, from, to))
+  })
+  spec.objects.push(
+    text('basis-e1-label', [.75, -1], 'e1'), text('basis-e2-label', [-.6, .85], 'e2'),
+    segment('projection-x0', [2, 0], 'M', 2), segment('projection-y0', [0, 6], 'M', 2),
+    segment('projection-x8', [8, 0], 'O-prime', 2), segment('projection-y3', [0, 3], 'O-prime', 2),
+    segment('projection-shifted-x', [10, 0], 'M-prime', 2),
+    segment('projection-shifted-y', [0, 9], 'M-prime', 2)
+  )
+  spec.assertions.push(
+    displacement('source-OO-prime-displacement', 'O', 'O-prime', 8, 3),
+    displacement('source-MM-prime-displacement', 'M', 'M-prime', 8, 3),
+    { id: 'source-parallel-original-image-vectors', type: 'parallel', a: 'O', b: 'M', c: 'O-prime', d: 'M-prime' },
+    { id: 'source-equal-original-image-vectors', type: 'equalDistance', a: 'O', b: 'M', c: 'O-prime', d: 'M-prime' },
+    { id: 'basis-perpendicular', type: 'perpendicular', a: 'O', b: [1, 0], c: 'O', d: [0, 1] }
+  )
+  spec.source.inventory.push(group('source-vector-parallelogram',
+    'Every source named point O,M,O-prime,M-prime is mapped. Both source translations have displacement(8,3),and the original/image point vectors are equal and parallel. M is illustrative;no numeric x0/y0 values are printed.',
+    ['O', 'M', 'O-prime', 'M-prime', ...arrows.slice(0, 5).map(a => a[0])],
+    ['source-OO-prime-displacement', 'source-MM-prime-displacement',
+      'source-parallel-original-image-vectors', 'source-equal-original-image-vectors',
+      ...arrows.slice(0, 5).map(a => `${a[0]}-connects`)], ['pointRelationships']))
+  spec.source.inventory.push(group('source-basis-and-coordinate-guides',
+    'Preserve e1/e2 arrows at O and all six dashed projections labelled x0,y0,8,3,x0+8,y0+3. The numeric tick positions2/6/10/9 are an illustrative realization,not added printed source coordinates.',
+    ['basis-e1', 'basis-e2', 'basis-e1-label', 'basis-e2-label', 'projection-x0', 'projection-y0',
+      'projection-x8', 'projection-y3', 'projection-shifted-x', 'projection-shifted-y'],
+    ['basis-e1-connects', 'basis-e2-connects', 'basis-perpendicular']))
+  retain(spec, n4, [], [
+    'Use M=(2,6),M-prime=(10,9) only as the regularized illustrative placement;visible labels stay symbolic x0/y0 and their source offsets.',
+    'All five source vector arrows,both basis arrows,and every dashed guide remain;no reduction to a final coordinate answer.'
+  ])
+}
+{
+  const bounds = [-2.5, 14, 4.5, -2]
+  const spec = base('fig-05', n4,
+    { width: 480, height: 960, boundingBox: [-3, 16, 6, -2] },
+    { purpose: 'instructional', layout: 'inline', maxWidthPx: 480, widths: [320, 400, 480], minTextPx: 16 })
+  spec.description = 'Original23-owned schematic:given Phi and its equal-shape translated image with vertexO-prime(2,5),both complete visible branches and dashed2/5 projections. No answer equation or extra translation arrow.'
+  spec.objects.push(
+    { id: 'x-axis', type: 'axis', from: [-2.5, 0], to: [5.5, 0], stroke: 'ink', strokeWidth: 2.5,
+      ticks: [{ at: [2, 0], label: '2', size: .1, fontSize: 28, labelPlacement: { position: 'S', offset: [0, 14] } }] },
+    { id: 'y-axis', type: 'axis', from: [0, -1.4], to: [0, 15.2], stroke: 'ink', strokeWidth: 2.5,
+      ticks: [{ at: [0, 5], label: '5', size: .1, fontSize: 28, labelPlacement: { position: 'W', offset: [-12, 0] } }] },
+    arrow('x-positive-arrow', [4.9, 0], [5.5, 0]),
+    arrow('y-positive-arrow', [0, 14.6], [0, 15.2]),
+    text('x-label', [5.35, -.6], 'x'), text('y-label', [-.45, 15.35], 'y'),
+    point('origin', [0, 0], 'O', 'SW'), point('translated-origin', [2, 5], "O'", 'SE'),
+    segment('projection-x2', [2, 0], 'translated-origin', 2),
+    segment('projection-y5', [0, 5], 'translated-origin', 2),
+    text('base-curve-label', [1.65, 9.4], '\u03a6'), text('image-curve-label', [3.5, 12.8], "\u03a6'")
+  )
+  const curves = [parabola(spec, 'base-parabola', 1.5, 0, 0, bounds),
+    parabola(spec, 'image-parabola', 1.5, 2, 5, bounds)]
+  spec.assertions.push(
+    displacement('source-vertex-displacement', 'origin', 'translated-origin', 2, 5),
+    connects('x-positive-arrow', [4.9, 0], [5.5, 0]),
+    connects('y-positive-arrow', [0, 14.6], [0, 15.2]),
+    { id: 'two-source-parabolas', type: 'objectCount', objectType: 'svgPath', count: 2 }
+  )
+  spec.source.inventory.push(group('source-two-parabolas-and-given-vertices',
+    'Source has two solid upward parabolas Phi/Phi-prime with O andO-prime(2,5). Preserve the given vertex coordinates without printing the image equation requested by original23.',
+    ['origin', 'translated-origin', 'base-parabola', 'image-parabola', 'base-curve-label', 'image-curve-label'],
+    ['source-vertex-displacement', 'two-source-parabolas'], ['pointRelationships']))
+  spec.source.inventory.push(group('source-no-grid-axes-and-projections',
+    'Original is a tall no-grid schematic with positive x/y arrows,only2 and5 coordinate labels,and two dashed projections. Do not add a grid or OO-prime arrow.',
+    ['x-axis', 'y-axis', 'x-positive-arrow', 'y-positive-arrow', 'x-label', 'y-label', 'projection-x2', 'projection-y5'],
+    ['x-positive-arrow-connects', 'y-positive-arrow-connects']))
+  retain(spec, n4, curves, [
+    'Clean tall schematic with equal coordinate units and exact translated shape;no source grid invented and no requested equation supplied.',
+    '320/400/480px inline widths are authoring checks only;parent owns actual media-width review.'
+  ])
+}
+save(path.join(work, 'figure-authoring-receipt.json'), {
+  argv: ['node', fileURLToPath(import.meta.url)], source_first_freeze: record(path.join(work, 'source-only-frozen/freeze-receipt.json')),
+  deterministic_figures: outputRecords, independent_approval: 'pending parent dispatch',
+  services_dependencies_durable_writes: false,
+  next: 'Validate/render each spec separately once. Parent reviews source/current output before any review pass or modern finalization.'
+})
+console.log(JSON.stringify({ specs_authored: outputRecords.length, independent_reviews: 0, figures: outputRecords.map(r => r.id) }))

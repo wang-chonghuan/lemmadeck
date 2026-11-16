@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+
+const work = path.dirname(fileURLToPath(import.meta.url))
+const file = path.join(work, 'adapt/8a/modern-us-neutral/lessons/alg8-c1-s1-n3/lesson.template.json')
+const document = JSON.parse(fs.readFileSync(file, 'utf8'))
+const result = spawnSync('node', ['.claude/skills/ld-s10y-lesson/tools/prose_flow.mjs', '--stdin'], {
+  input: JSON.stringify({ ...document, section_breaks: [] }), encoding: 'utf8',
+})
+assert.equal(result.status, 0, result.stderr)
+const outline = JSON.parse(result.stdout)
+const index = outline.paragraphs.findIndex(row => row.text === document.prose[7].text)
+assert(index >= 0)
+const boundary = { before: outline.paragraphs[index].text,
+  after: outline.paragraphs[index + 1].text }
+assert.equal(boundary.after, document.section_breaks[2].after)
+fs.writeFileSync(path.join(work, 'r03-derived-section-boundary.json'), JSON.stringify({
+  command: ['node', '.claude/skills/ld-s10y-lesson/tools/prose_flow.mjs', '--stdin'],
+  input: 'Current candidate prose, with section_breaks omitted to derive the actual paragraph outline.',
+  exit_code: result.status, old_boundary: document.section_breaks[2], boundary,
+  layout_only: true, semantic_re_review: false,
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify(boundary, null, 2))

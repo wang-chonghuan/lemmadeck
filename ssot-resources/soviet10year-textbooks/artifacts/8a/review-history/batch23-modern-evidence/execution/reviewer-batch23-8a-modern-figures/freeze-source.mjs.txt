@@ -1,0 +1,54 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+
+const workspace = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const own = path.join(workspace, ".intentfold/tickets/STEMROBIN-182/tmp/reviewer-batch23-8a-modern-figures");
+const raw = "ssot-resources/soviet10year-textbooks/artifacts/8a";
+const lessonIds = ["alg8-c1-s1-n3", "alg8-c1-s2-n4"];
+const figureIds = ["fig-01", "fig-02", "fig-03", "fig-04", "fig-05", "tbl-p0020-01"];
+const inputs = [
+  ...lessonIds.flatMap(id => ["lesson.json", "lesson.md", "exercises.json"].map(file => `${raw}/lessons/${id}/${file}`)),
+  ...["0019", "0020", "0021", "0022", "0023"].flatMap(page => ["page.json", "page.md"].map(file => `${raw}/pages/${page}/${file}`)),
+  ...figureIds.flatMap(id => ["png", "svg"].map(ext => `${raw}/figures/${id}.${ext}`)),
+  ".agents/skills/ld-s10y-image/SKILL.md",
+  ".agents/skills/ld-s10y-image/references/quality-gate.md",
+  ".agents/skills/ld-s10y-image/references/figure-spec.md",
+];
+const hash = bytes => crypto.createHash("sha256").update(bytes).digest("hex");
+const output = path.join(own, "source-inputs.json");
+if (fs.existsSync(output) || fs.existsSync(path.join(own, "frozen-inputs"))) {
+  throw new Error("Source freeze is once-only; an existing checkpoint must not be overwritten.");
+}
+const started = new Date().toISOString();
+const records = inputs.map(relative => {
+  const source = path.join(workspace, relative);
+  const bytes = fs.readFileSync(source);
+  const destination = path.join(own, "frozen-inputs", relative);
+  fs.mkdirSync(path.dirname(destination), { recursive: true });
+  fs.writeFileSync(destination, bytes, { flag: "wx" });
+  const record = { path: source, frozen_path: destination, bytes: bytes.length, sha256: hash(bytes) };
+  if (relative.endsWith(".png")) {
+    if (bytes.subarray(0, 8).toString("hex") !== "89504e470d0a1a0a") throw new Error(`Not PNG: ${relative}`);
+    record.width = bytes.readUInt32BE(16);
+    record.height = bytes.readUInt32BE(20);
+  }
+  if (hash(fs.readFileSync(source)) !== record.sha256 || hash(fs.readFileSync(destination)) !== record.sha256) {
+    throw new Error(`Input changed during freeze: ${relative}`);
+  }
+  return record;
+});
+const manifest = {
+  schema: "stemrobin/source-input-freeze@1",
+  status: "source-input-bytes-frozen",
+  started_at: started,
+  completed_at: new Date().toISOString(),
+  workspace,
+  owner_directory: own,
+  scope: { book: "8a", lessons: lessonIds, figures: figureIds, phase: "independent-source-first-only" },
+  command: { argv: ["node", path.join(own, "freeze-source.mjs")], cwd: workspace, script_sha256: hash(fs.readFileSync(path.join(own, "freeze-source.mjs"))) },
+  exclusions: ["modern candidates/specs/context", "answers", "choices", "retention/review-history", "author/reviewer ticket materials"],
+  records,
+};
+fs.writeFileSync(output, `${JSON.stringify(manifest, null, 2)}\n`, { flag: "wx" });
+console.log(JSON.stringify({ status: manifest.status, input_count: records.length, manifest: output, sha256: hash(fs.readFileSync(output)), pngs: records.filter(record => record.width) }, null, 2));

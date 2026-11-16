@@ -1,0 +1,104 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { createRequire } from "node:module";
+
+const workspace = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const own = path.join(workspace, ".intentfold/tickets/STEMROBIN-182/tmp/reviewer-batch23-8a-modern-figures");
+const require = createRequire(path.join(workspace, ".agents/skills/ld-s10y-image/scripts/render_spec.mjs"));
+const { chromium } = require("playwright-core");
+const hash = bytes => crypto.createHash("sha256").update(bytes).digest("hex");
+const inputPath = path.join(own, "final-candidate-inputs.json");
+const inputs = JSON.parse(fs.readFileSync(inputPath, "utf8"));
+const outputPath = path.join(own, "actual-svg-display-evidence.json");
+const displayRoot = path.join(own, "actual-display");
+if (fs.existsSync(outputPath) || fs.existsSync(displayRoot)) throw new Error("Once-only display evidence already exists.");
+fs.mkdirSync(displayRoot);
+const records = [];
+let browser;
+let context;
+const blockedRequests = [];
+try {
+  browser = await chromium.launch({ headless: true });
+  context = await browser.newContext({ deviceScaleFactor: 1, locale: "en-US", colorScheme: "light" });
+  await context.route("**/*", route => {
+    blockedRequests.push(route.request().url());
+    return route.abort();
+  });
+  for (const candidate of inputs.candidates) {
+    const spec = JSON.parse(fs.readFileSync(candidate.spec.frozen_path, "utf8"));
+    const svgBytes = fs.readFileSync(candidate.svg.frozen_path);
+    if (hash(svgBytes) !== candidate.svg.sha256) throw new Error(`Frozen SVG drift: ${candidate.id}`);
+    for (const width of spec.display.widths) {
+      const height = Math.ceil(width * spec.canvas.height / spec.canvas.width);
+      const page = await context.newPage();
+      try {
+        await page.setViewportSize({ width, height });
+        await page.setContent(`<!doctype html><html><head><meta charset="utf-8"><style>
+          html,body{margin:0;padding:0;background:white;}
+          :root{--ld-figure-ink:#202020;--ld-figure-muted:#575757;--ld-figure-accent:#156f60;--ld-figure-accent-soft:#e7f3ef;--ld-figure-grid:#a5a5a5;--ld-figure-paper:#fff;}
+          #surface{width:${width}px;}#surface>svg{display:block;width:${width}px;height:auto;}
+        </style></head><body><div id="surface">${svgBytes.toString("utf8")}</div></body></html>`, { waitUntil: "load" });
+        await page.evaluate(() => document.fonts.ready);
+        const metrics = await page.evaluate(() => {
+          const svg = document.querySelector("#surface>svg");
+          const rect = svg.getBoundingClientRect();
+          const labels = Array.from(svg.querySelectorAll("text")).map(element => {
+            const matrix = element.getScreenCTM();
+            const box = element.getBoundingClientRect();
+            const style = getComputedStyle(element);
+            const fontSize = Number.parseFloat(style.fontSize);
+            const glyphs = Array.from({ length: element.getNumberOfChars() }, (_, index) => {
+              const extent = element.getExtentOfChar(index);
+              const start = new DOMPoint(extent.x, extent.y).matrixTransform(matrix);
+              const end = new DOMPoint(extent.x + extent.width, extent.y + extent.height).matrixTransform(matrix);
+              return { character: element.textContent[index], screen_bounds: [start.x, start.y, end.x, end.y] };
+            });
+            return {
+              id: element.id,
+              text: element.textContent,
+              font_size_svg_units: fontSize,
+              screen_transform: { a: matrix.a, b: matrix.b, c: matrix.c, d: matrix.d, e: matrix.e, f: matrix.f },
+              effective_font_size_px: fontSize * Math.hypot(matrix.c, matrix.d),
+              screen_bounds: [box.left, box.top, box.right, box.bottom],
+              glyphs,
+            };
+          });
+          return { svg_css_width: rect.width, svg_css_height: rect.height, viewBox: svg.getAttribute("viewBox"), label_count: labels.length, labels, measured_min_label_font_px: Math.min(...labels.map(label => label.effective_font_size_px)) };
+        });
+        const pngPath = path.join(displayRoot, `${candidate.id}-w${width}.png`);
+        await page.locator("#surface>svg").screenshot({ path: pngPath, animations: "disabled" });
+        records.push({
+          figure: candidate.id, declared_width: width, declared_min_text_px: spec.display.minTextPx,
+          svg: candidate.svg, spec: candidate.spec, render: candidate.render,
+          screenshot: { path: pngPath, sha256: hash(fs.readFileSync(pngPath)), bytes: fs.statSync(pngPath).size },
+          ...metrics,
+        });
+      } finally {
+        await page.close();
+      }
+    }
+  }
+} finally {
+  if (context) await context.close();
+  if (browser) await browser.close();
+}
+for (const record of inputs.records) {
+  if (hash(fs.readFileSync(record.path)) !== record.sha256 || hash(fs.readFileSync(record.frozen_path)) !== record.sha256) {
+    throw new Error(`Candidate input changed during observation: ${record.path}`);
+  }
+}
+const payload = {
+  schema: "stemrobin/actual-offline-svg-display-evidence@1",
+  recorded_at: new Date().toISOString(),
+  command: { argv: ["node", path.join(own, "observe-final-svg.mjs")], cwd: workspace, script_sha256: hash(fs.readFileSync(path.join(own, "observe-final-svg.mjs"))) },
+  candidate_inputs: { path: inputPath, sha256: hash(fs.readFileSync(inputPath)) },
+  operation: "Isolated offline Chromium displays the unchanged final SVG bytes, at each declared CSS width. No render_spec, validator, app, server, asset regeneration or service.",
+  blocked_requests: blockedRequests,
+  browser_and_context_closed: true,
+  label_metric_scope: "Actual SVG screen transform and effective font size on this controlled offline surface; not a live/headed product width claim.",
+  current_and_frozen_candidate_bytes_unchanged: true,
+  records,
+};
+fs.writeFileSync(outputPath, `${JSON.stringify(payload, null, 2)}\n`, { flag: "wx" });
+console.log(JSON.stringify({ output: outputPath, sha256: hash(fs.readFileSync(outputPath)), browser_closed: true, records: records.map(record => ({ figure: record.figure, width: record.declared_width, actual_width: record.svg_css_width, min_label_px: record.measured_min_label_font_px, screenshot: record.screenshot.path })) }, null, 2));

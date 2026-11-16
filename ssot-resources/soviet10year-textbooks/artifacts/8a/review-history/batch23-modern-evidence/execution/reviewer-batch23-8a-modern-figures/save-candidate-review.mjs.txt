@@ -1,0 +1,130 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+
+const workspace = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const own = path.join(workspace, ".intentfold/tickets/STEMROBIN-182/tmp/reviewer-batch23-8a-modern-figures");
+const hash = bytes => crypto.createHash("sha256").update(bytes).digest("hex");
+const readOwn = name => JSON.parse(fs.readFileSync(path.join(own, name), "utf8"));
+const recordOwn = name => {
+  const file = path.join(own, name);
+  const bytes = fs.readFileSync(file);
+  return { path: file, sha256: hash(bytes), bytes: bytes.length };
+};
+const writeNew = (name, data) => fs.writeFileSync(path.join(own, name), `${JSON.stringify(data, null, 2)}\n`, { flag: "wx" });
+const outputs = ["candidate-review.json", "actual-asset-observations.json", "candidate-review-command.json", "candidate-review-status.json"];
+for (const name of outputs) if (fs.existsSync(path.join(own, name))) throw new Error(`Existing review evidence must not be overwritten: ${name}`);
+const review = readOwn("candidate-review.notes.json");
+const observations = readOwn("actual-asset-observations.notes.json");
+const candidateInputs = readOwn("final-candidate-inputs.json");
+const sourceBasis = readOwn("source-basis.json");
+const sourceInputs = readOwn("source-inputs.json");
+const displays = readOwn("actual-svg-display-evidence.json");
+for (const [name, expected] of [
+  ["source-basis.json", review.source_basis_sha256],
+  ["source-image-observations.json", review.source_observations_sha256],
+  ["final-candidate-inputs.json", review.candidate_checkpoint_sha256],
+  ["actual-svg-display-evidence.json", review.actual_svg_display_evidence_sha256],
+]) {
+  if (recordOwn(name).sha256 !== expected) throw new Error(`Written review hash does not bind ${name}`);
+}
+const candidateIdentity = candidateInputs.records.map(record => {
+  const current = hash(fs.readFileSync(record.path));
+  const frozen = hash(fs.readFileSync(record.frozen_path));
+  if (current !== record.sha256 || frozen !== record.sha256) throw new Error(`Candidate input drift: ${record.path}`);
+  return { path: record.path, sha256: record.sha256, current_and_frozen_identical: true };
+});
+const sourceIdentity = sourceInputs.records.map(record => {
+  if (hash(fs.readFileSync(record.path)) !== record.sha256 || hash(fs.readFileSync(record.frozen_path)) !== record.sha256) throw new Error(`Frozen source drift: ${record.path}`);
+  return { path: record.path, sha256: record.sha256, unchanged: true };
+});
+const sourceBindings = [];
+for (const candidate of candidateInputs.candidates) {
+  const spec = JSON.parse(fs.readFileSync(candidate.spec.frozen_path, "utf8"));
+  const render = JSON.parse(fs.readFileSync(candidate.render.frozen_path, "utf8"));
+  const original = sourceBasis.figures.find(figure => figure.id === candidate.id);
+  const source = spec.source.image;
+  const sourceCurrent = hash(fs.readFileSync(source.path));
+  const svgOutput = render.output.svg;
+  if (source.sha256 !== original.source_bindings.png.sha256 || sourceCurrent !== source.sha256) throw new Error(`Invalid source binding: ${candidate.id}`);
+  if (render.spec.sha256 !== candidate.spec.sha256 || svgOutput.sha256 !== candidate.svg.sha256) throw new Error(`Stale producer hash binding: ${candidate.id}`);
+  if (path.resolve(workspace, svgOutput.path) !== candidate.svg.path) throw new Error(`Producer output path mismatch: ${candidate.id}`);
+  const binding = {
+    source_png: { path: source.path, sha256: source.sha256, matches_independent_raw_freeze: true },
+    source_basis: recordOwn("source-basis.json"),
+    source_basis_figure_id: original.id,
+    spec: candidate.spec,
+    svg: candidate.svg,
+    producer_render: candidate.render,
+    producer_render_spec_and_output_hashes_current: true,
+    provided_preview: candidate.preview,
+    current_template_bindings: candidateInputs.templates.filter(template => template.lesson === original.lesson),
+  };
+  sourceBindings.push({ figure: candidate.id, ...binding });
+  review.figures.find(figure => figure.id === candidate.id).bindings = binding;
+}
+review.evidence_bindings = {
+  source_checkpoint: recordOwn("source-inputs.json"),
+  source_basis: recordOwn("source-basis.json"),
+  source_image_observations: recordOwn("source-image-observations.json"),
+  candidate_checkpoint: recordOwn("final-candidate-inputs.json"),
+  actual_svg_display: recordOwn("actual-svg-display-evidence.json"),
+  notes: recordOwn("candidate-review.notes.json"),
+};
+review.current_template_bindings = candidateInputs.templates;
+review.input_identity = { source: sourceIdentity, candidate: candidateIdentity };
+review.recorded_at = new Date().toISOString();
+observations.evidence_bindings = review.evidence_bindings;
+for (const open of observations.opens) {
+  const display = displays.records.find(record => record.figure === open.figure && record.declared_width === open.width);
+  if (hash(fs.readFileSync(display.screenshot.path)) !== display.screenshot.sha256) throw new Error(`Actual screenshot drift: ${open.figure}`);
+  open.screenshot = display.screenshot;
+  open.actual_svg_metrics = display;
+  open.candidate_source_binding = sourceBindings.find(binding => binding.figure === open.figure);
+}
+observations.recorded_at = review.recorded_at;
+writeNew("candidate-review.json", review);
+writeNew("actual-asset-observations.json", observations);
+const command = {
+  schema: "stemrobin/independent-candidate-review-command@1",
+  argv: ["node", path.join(own, "save-candidate-review.mjs")],
+  cwd: workspace,
+  script: recordOwn("save-candidate-review.mjs"),
+  inputs: ["candidate-review.notes.json", "actual-asset-observations.notes.json", "final-candidate-inputs.json", "actual-svg-display-evidence.json", "source-inputs.json", "source-basis.json", "source-image-observations.json"].map(recordOwn),
+  operation: "Hash-bind the independently written actual visual observations and findings, preserving immutable source and candidate inputs. No figure validator, render_spec, asset mutation or promotion.",
+  outputs: ["candidate-review.json", "actual-asset-observations.json"].map(recordOwn),
+  source_bindings: sourceBindings,
+  source_identity: sourceIdentity,
+  candidate_identity: candidateIdentity,
+  prior_candidate_phase_readonly_failure: {
+    command: "cat .agents/skills/ld-s10y-image/assets/review.schema.json",
+    exit_code: 1,
+    stderr: "cat: .agents/skills/ld-s10y-image/assets/review.schema.json: No such file or directory\n",
+    disposition: "The nonexistent optional schema was not guessed or created; no formal FigureReview was generated.",
+  },
+  exit_code: 0,
+};
+writeNew("candidate-review-command.json", command);
+const status = {
+  schema: "stemrobin/independent-candidate-review-status@1",
+  status: "review-complete-revisions-required-awaiting-parent-authorization",
+  pass: review.figures.filter(figure => figure.status === "pass").map(figure => figure.id),
+  revise: review.figures.filter(figure => figure.status === "revise").map(figure => figure.id),
+  minimum_revisions: review.minimum_revision_summary,
+  full_actual_width_views: observations.opens.length,
+  minimum_measured_effective_label_font_px: Math.min(...displays.records.map(record => record.measured_min_label_font_px)),
+  source_inputs_unchanged: sourceIdentity.length,
+  candidate_inputs_unchanged: candidateIdentity.length,
+  browser_closed: displays.browser_and_context_closed,
+  source_basis_unchanged: recordOwn("source-basis.json"),
+  formal_figure_reviews_created: [],
+  candidate_edits: false,
+  validators_or_render_spec_run: false,
+  durable_writes_or_promotion: false,
+  app_or_db_or_services: false,
+  actual_product_display_claim: false,
+  evidence: ["candidate-review.json", "actual-asset-observations.json", "candidate-review-command.json"].map(recordOwn),
+  next: "Parent authorizes repairs. Retain unchanged fig-03/04/05 pass evidence by hash; changed-region review only for repaired assets.",
+};
+writeNew("candidate-review-status.json", status);
+console.log(JSON.stringify({ status: status.status, pass: status.pass, revise: status.revise, min_label_px: status.minimum_measured_effective_label_font_px, actual_width_views: status.full_actual_width_views, sources_unchanged: status.source_inputs_unchanged, candidates_unchanged: status.candidate_inputs_unchanged, outputs: status.evidence, status_record: recordOwn("candidate-review-status.json") }, null, 2));

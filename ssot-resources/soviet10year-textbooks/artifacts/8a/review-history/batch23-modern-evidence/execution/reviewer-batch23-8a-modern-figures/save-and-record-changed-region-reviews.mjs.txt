@@ -1,0 +1,160 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+const own = path.dirname(fileURLToPath(import.meta.url));
+const repo = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const python = path.join(repo, ".claude/skills/ld-s10y-lesson/.venv/bin/python");
+const tool = path.join(repo, ".agents/skills/ld-s10y-image/scripts/record_review.py");
+const hash = bytes => crypto.createHash("sha256").update(bytes).digest("hex");
+const record = file => ({ path: file, sha256: hash(fs.readFileSync(file)), bytes: fs.statSync(file).size });
+const ownRecord = name => record(path.join(own, name));
+const read = name => JSON.parse(fs.readFileSync(path.join(own, name), "utf8"));
+const write = (name, value) => fs.writeFileSync(path.join(own, name), `${JSON.stringify(value, null, 2)}\n`, { flag: "wx" });
+const assert = (ok, text) => { if (!ok) throw Error(`STOP: ${text}`); };
+const inputs = read("changed-region-inputs.json");
+const displays = read("changed-region-display-evidence.json");
+const notes = read("changed-region-actual-observations.notes.json");
+const previous = read("candidate-review.json");
+assert(!fs.existsSync(path.join(own, "changed-region-review.json")), "Changed-region review already recorded.");
+assert(ownRecord("candidate-review.json").sha256 === "1866f87aae1499eb0e7b39409dbf7ef55d6ca5fe145a40268d1df1446afc9830", "Original review drift.");
+assert(ownRecord("source-basis.json").sha256 === previous.source_basis_sha256, "Original source basis drift.");
+assert(displays.browser_and_context_closed && displays.exact_pixels_unchanged_claim === false, "Capture scope/closure mismatch.");
+assert(notes.figures.every(item => item.status === "pass" && item.regions.every(region => region.actually_opened)), "Actual changed-region inspection incomplete.");
+function frozen() {
+  for (const item of inputs.original_inputs) {
+    assert(record(item.path).sha256 === item.sha256, `Source/template/unchanged candidate drift: ${item.path}`);
+    if (item.frozen_path) assert(record(item.frozen_path).sha256 === item.sha256, "Frozen copy drift.");
+  }
+  for (const candidate of inputs.candidates) {
+    for (const item of [candidate.spec, candidate.svg, candidate.render]) {
+      assert(record(item.path).sha256 === item.sha256 && record(item.frozen_path).sha256 === item.sha256, "Changed candidate drift.");
+    }
+  }
+  for (const capture of displays.captures) for (const region of capture.regions) {
+    assert(record(region.screenshot.path).sha256 === region.screenshot.sha256, "Actual region screenshot drift.");
+  }
+}
+frozen();
+const actual = {
+  schema: "stemrobin/hash-bound-independent-changed-region-observations@1",
+  at: new Date().toISOString(),
+  source_basis: ownRecord("source-basis.json"),
+  original_full_figure_review: ownRecord("candidate-review.json"),
+  input_freeze: ownRecord("changed-region-inputs.json"),
+  display_evidence: ownRecord("changed-region-display-evidence.json"),
+  observation_notes: ownRecord("changed-region-actual-observations.notes.json"),
+  figures: notes.figures.map(item => ({
+    ...item,
+    captures: displays.captures.find(capture => capture.id === item.id).regions,
+    current_bindings: inputs.candidates.find(candidate => candidate.id === item.id),
+    independent_visible_property_probe: ownRecord(`${item.id}.changed-region-visible-property-probe.json`),
+  })),
+  exact_pixels_unchanged: false,
+  no_repeated_source_full_geometry_or_passing_figure_review: true,
+  author_rgb_failure_retained: inputs.retained_author_rgb_failure,
+  private_capture_command_diagnosis: notes.private_capture_command_diagnosis,
+};
+write("changed-region-actual-observations.json", actual);
+const review = {
+  schema: "stemrobin/independent-changed-region-review@1",
+  at: new Date().toISOString(),
+  status: "pass",
+  reviewer: { kind: "independent_agent", identity: notes.reviewer },
+  scope: "Composed offline review: original independently opened full-figure source/math/culture evidence, unchanged semantic inputs, plus actual new authorized region pixels at declared640px. Not a repeated full gate or headed-product approval.",
+  original_source_basis: ownRecord("source-basis.json"),
+  original_full_figure_review: ownRecord("candidate-review.json"),
+  original_actual_full_figure_observations: ownRecord("actual-asset-observations.json"),
+  current_input_freeze: ownRecord("changed-region-inputs.json"),
+  new_actual_region_observations: ownRecord("changed-region-actual-observations.json"),
+  actual_region_display_evidence: ownRecord("changed-region-display-evidence.json"),
+  figures: notes.figures.map(item => {
+    const old = previous.figures.find(figure => figure.id === item.id);
+    const candidate = inputs.candidates.find(figure => figure.id === item.id);
+    const capture = displays.captures.find(figure => figure.id === item.id);
+    const probe = read(`${item.id}.changed-region-visible-property-probe.json`);
+    assert(candidate.independent_spec_scope_match && capture.independent_visible_svg_delta_matches_authorization, "Changed scope not matched.");
+    assert(item.id !== "fig-01" || probe.result.only_two_label_y_attributes_changed, "fig01 property evidence incomplete.");
+    return {
+      id: item.id,
+      status: "pass",
+      original_recorded_verdict_retained_as: old.status,
+      original_required_revisions_resolved: old.findings,
+      independent_new_region_observations: item.regions,
+      minimum_remaining_revision: null,
+      current_spec: candidate.spec,
+      current_svg: candidate.svg,
+      current_render: candidate.render,
+      current_source_png: old.bindings.source_png,
+      old_spec: candidate.old_spec,
+      old_svg: candidate.old_svg,
+      unchanged_mathematical_and_textual_basis: "Inherited through original review, unchanged source/template hashes and authorized-only spec/SVG property delta; no source/full geometry rereview.",
+      visible_svg_property_evidence: ownRecord(`${item.id}.changed-region-visible-property-probe.json`),
+      actual_screenshot_bindings: capture.regions,
+      min_effective_label_font_px: capture.min_effective_text_px,
+      label_metric_scope: capture.text_metric_scope ?? "Current DOM font multiplied by actual640px SVG screen transform.",
+      review_limit: item.review_scope,
+      exact_pixels_unchanged_claim: false,
+    };
+  }),
+  limits: notes.limits,
+  retained_author_failed_strict_rgb_evidence: inputs.retained_author_rgb_failure,
+  retained_private_nonpassing_capture_commands: ["changed-region-rejected-readonly-command.json", "changed-region-observe.command.json", "changed-region-resume.command.json"].map(ownRecord),
+  no_candidates_templates_durable_app_db_service_dependency_git_finalize_or_promotion_writes: true,
+  passing_fig03_fig04_fig05_not_reopened_or_rejudged: true,
+};
+write("changed-region-review.json", review);
+const formal = [];
+for (const candidate of inputs.candidates) {
+  const id = candidate.id;
+  const output = path.join(own, `${id}.review.json`);
+  const guardName = `${id}.formal-review.once.json`;
+  const commandName = `${id}.formal-review.command.json`;
+  assert(![output, path.join(own, guardName), path.join(own, commandName)].some(file => fs.existsSync(file)), `Formal output/once guard already exists: ${id}`);
+  frozen();
+  const current = review.figures.find(item => item.id === id);
+  const evidenceFiles = [
+    ownRecord("source-basis.json"), ownRecord("candidate-review.json"), ownRecord("actual-asset-observations.json"),
+    ownRecord("changed-region-inputs.json"), ownRecord("changed-region-display-evidence.json"),
+    ownRecord("changed-region-actual-observations.json"), ownRecord("changed-region-review.json"),
+    ownRecord(`${id}.changed-region-visible-property-probe.json`),
+    ...current.actual_screenshot_bindings.map(item => item.screenshot),
+  ];
+  const reviewNotes = [
+    "Independent composed figure review passed. Retain the previous full source/math/culture review and original revise record; this pass resolves only its authorized changed regions.",
+    "Scope: offline isolated headless Chromium SVG at declared CSS640px. No live/headed product display or actual product media-size approval.",
+    `Minimum effective label font ${current.min_effective_label_font_px}px. ${current.label_metric_scope}`,
+    ...current.independent_new_region_observations.map(item => `${item.id}: ${item.observation}`),
+    "Current source/spec/render/SVG bindings match the frozen changed snapshot. Source inputs, six templates and fig03/04/05 remain byte-identical; none was reopened or semantically rereviewed.",
+    "Exact outside-region RGB equality is NOT claimed. The author strict RGB proof remains failed; independently checked visible SVG properties delimit the allowed changes. Do not infer an unmeasured raster cause.",
+    "Private capture failures remain recorded. The resume completed evidence/input hashes/closure before a console-summary error; its exit1 is not called a pass. No capture rerun.",
+    ...evidenceFiles.map(item => `Evidence ${item.path}; SHA-256 ${item.sha256}.`),
+    "No promotion, candidate/template edit, finalize, lesson render, app, DB, services, dependencies or git.",
+  ].join("\n");
+  const argv = [python, "-B", tool, "--spec", candidate.spec.path, "--render", candidate.render.path, "--output", output, "--status", "pass", "--notes", reviewNotes];
+  const commandInputs = { source: record(current.current_source_png.path), spec: record(candidate.spec.path), svg: record(candidate.svg.path), render: record(candidate.render.path), evidence: evidenceFiles };
+  write(guardName, { id, authorization: "Parent authorized exactly one record_review.py call after this changed-region independent pass.", argv, inputs: commandInputs });
+  const result = spawnSync(argv[0], argv.slice(1), { cwd: repo, encoding: "utf8", maxBuffer: 1024 * 1024 });
+  frozen();
+  write(commandName, {
+    argv, cwd: repo, wrapper: ownRecord("save-and-record-changed-region-reviews.mjs"), tool: record(tool),
+    inputs: commandInputs, exit_code: result.status, stdout: result.stdout ?? "", stderr: result.stderr ?? "",
+    stdout_sha256: hash(Buffer.from(result.stdout ?? "")), stderr_sha256: hash(Buffer.from(result.stderr ?? "")),
+    output: fs.existsSync(output) ? record(output) : null, bytecode_writes_disabled: true,
+    no_separate_validator_or_renderer_invocation: true,
+  });
+  assert(result.status === 0 && fs.existsSync(output), `Formal record failed for ${id}; retain exact attempted record, do not repeat.`);
+  formal.push({ figure: id, status: "recorded-pass", review: record(output), command: ownRecord(commandName) });
+}
+write("changed-region-review-status.json", {
+  status: "three_authorized_changed_regions_independently_passed_and_formally_recorded",
+  review: ownRecord("changed-region-review.json"), actual_observations: ownRecord("changed-region-actual-observations.json"), formal,
+  original_three_revise_records_unchanged: ownRecord("candidate-review.json"),
+  previous_fig03_fig04_fig05_formal_reviews_unchanged: ["fig-03.review.json", "fig-04.review.json", "fig-05.review.json"].map(ownRecord),
+  declared_offline_width_only: 640, headed_product_pass_claimed: false, exact_pixels_unchanged_claimed: false,
+  source_full_geometry_or_passing_five_review_repeated: false, promotion: false,
+  next: "Parent owns lesson finalization/promotion/display; reviewer can now return to disjoint6a author repair planning.",
+});
+console.log(JSON.stringify({ status: ownRecord("changed-region-review-status.json"), review: ownRecord("changed-region-review.json"), formal }, null, 2));

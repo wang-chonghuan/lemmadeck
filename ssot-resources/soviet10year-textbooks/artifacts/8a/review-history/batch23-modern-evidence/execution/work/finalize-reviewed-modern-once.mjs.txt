@@ -1,0 +1,80 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+
+const work = path.dirname(fileURLToPath(import.meta.url))
+const root = path.join(work, '../root')
+const T = path.resolve(work, '../..')
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const save = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2) + '\n', { flag: 'wx' })
+const id = process.argv[2]
+assert(['alg8-c1-s1-n3', 'alg8-c1-s2-n4'].includes(id))
+const reviewPath = path.join(T, 'reviewer-batch23-8a-modern-text/changed-text-review.json')
+const review = read(reviewPath)
+assert.equal(review.status, 'pass')
+const binding = []
+for (const row of review.candidate_files) {
+  if (sha(row.path) !== row.sha256) {
+    assert(row.path.endsWith('alg8-c1-s1-n3/lesson.template.json'))
+    const current = read(row.path)
+    const previous = read(row.snapshot_path)
+    const derived = read(path.join(work, 'r03-derived-section-boundary.json'))
+    assert.deepEqual(current.section_breaks[2], derived.boundary)
+    current.section_breaks[2] = previous.section_breaks[2]
+    assert.deepEqual(current, previous)
+    binding.push({ path: row.path, old_sha256: row.sha256, sha256: sha(row.path),
+      only_delta: '/section_breaks/2/before', reviewed_prose_and_all_other_fields_equal: true })
+  } else binding.push({ path: row.path, sha256: row.sha256, byte_unchanged: true })
+}
+const privateEdition = path.join(root, '8a/editions/modern-us-neutral')
+const figureReviews = path.join(T, 'reviewer-batch23-8a-modern-figures')
+const figureRecords = []
+for (const fid of ['fig-01', 'fig-02', 'fig-03', 'fig-04', 'fig-05', 'tbl-p0020-01']) {
+  const file = path.join(figureReviews, `${fid}.review.json`)
+  const figureReview = read(file)
+  assert.equal(figureReview.status, 'pass')
+  assert.equal(sha(figureReview.spec.path), figureReview.spec.sha256)
+  assert.equal(sha(figureReview.render.path), figureReview.render.sha256)
+  assert.equal(sha(figureReview.outputs.svg.path), figureReview.outputs.svg.sha256)
+  assert.equal(sha(figureReview.source.path), figureReview.source.sha256)
+  const destination = path.join(privateEdition, 'figures', `${fid}.review.json`)
+  if (!fs.existsSync(destination)) fs.copyFileSync(file, destination, fs.constants.COPYFILE_EXCL)
+  assert(fs.readFileSync(destination).equals(fs.readFileSync(file)))
+  figureRecords.push({ review: file, sha256: sha(file), destination })
+}
+const frozen = read(path.join(work, 'inputs-before.json'))
+const immutable = frozen.copies.filter(row =>
+  !row.destination.endsWith('8a/editions/modern-us-neutral/book.json'))
+for (const row of immutable) assert.equal(sha(row.destination), row.sha256)
+const output = path.join(work, `command-finalize-${id}.json`)
+const started = path.join(work, `command-finalize-${id}.started.json`)
+assert(!fs.existsSync(output) && !fs.existsSync(started))
+const history = path.join(work, 'history/before-first-modern-finalize')
+if (!fs.existsSync(history)) {
+  fs.mkdirSync(history)
+  fs.copyFileSync(path.join(privateEdition, 'book.json'), path.join(history, 'book.json'),
+    fs.constants.COPYFILE_EXCL)
+}
+const command = ['.claude/skills/ld-s10y-lesson/.venv/bin/python',
+  '.claude/skills/ld-s10y-lesson/tools/p2c.py', 'adapt-finalize', '--book', '8a',
+  '--edition', 'modern-us-neutral', '--root', root, '--work', work, '--lesson', id]
+save(started, { command, at: new Date().toISOString(), binding, figureRecords })
+const result = spawnSync(command[0], command.slice(1), {
+  encoding: 'utf8', maxBuffer: 16 * 1024 * 1024,
+  env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', PLAYWRIGHT_HTML_OPEN: 'never' },
+})
+const evidence = {
+  command, started: read(started).at, finished: new Date().toISOString(),
+  exit_code: result.status, stdout: result.stdout, stderr: result.stderr,
+  error: result.error?.message ?? null, signal: result.signal,
+  execution_count: 1, independent_text_review: reviewPath, binding, figureRecords,
+  semantic_reruns: 0, figure_rerenders: 0, durable_writes: 0,
+}
+save(output, evidence)
+console.log(JSON.stringify(evidence, null, 2))
+assert.equal(result.status, 0, result.stderr || result.stdout)
+for (const row of immutable) assert.equal(sha(row.destination), row.sha256)

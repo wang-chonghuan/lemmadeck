@@ -1,0 +1,343 @@
+"""Source-owned task cells, not unordered value bags, authorize column layouts."""
+import copy
+import sys
+import unittest
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+import blocks
+import edition
+
+
+CASES = {
+    "23": (
+        [
+            "23. 用式子表示：$a$与$b$的和减去$40$。当$a$、$b$等于下列各数",
+            "时计算这个式子的值：",
+            "1) $a=200$　　2) $a=90$　　3) $a=190$",
+            "$b=300$　　$b=130$　　$b=320$",
+            "4) $a=290$　　5) $a=320$",
+            "$b=160$　　$b=200$",
+        ],
+        "23. 用式子表示：$a$与$b$的和减去$40$。当$a$、$b$等于下列各数时计算这个式子的值：\n"
+        "1) $a=200$，$b=300$。\n2) $a=90$，$b=130$。\n3) $a=190$，$b=320$。\n"
+        "4) $a=290$，$b=160$。\n5) $a=320$，$b=200$。",
+    ),
+    "51": (
+        [
+            "51*. 1) 比较下面每竖行中的数：当右面添一个零时，这个数",
+            "扩大多少倍？添两个零呢？添三个零呢？",
+            "1　　2　　5　　7　　38",
+            "10　　20　　50　　70　　380",
+            "100　　200　　500　　700　　3 800",
+            "1 000　　2 000　　5 000　　7 000　　38 000",
+            "2) 如果把1 000，2 000，5 000，70 000这些数的右边去",
+            "掉一个零，它们会如何变化？去掉两个零呢？去掉",
+            "三个零呢？",
+        ],
+        "51*.\n1) 比较下面每组中的数：当右面添一个零时，这个数扩大多少倍？添两个零呢？添三个零呢？"
+        "各组为：1，10，100，1 000；2，20，200，2 000；5，50，500，5 000；7，70，700，7 000；38，380，3 800，38 000。\n"
+        "2) 如果把1 000，2 000，5 000，70 000这些数的右边去掉一个零，它们会如何变化？去掉两个零呢？去掉三个零呢？",
+    ),
+    "61": (
+        [
+            "61. 观察下面写的数，说明怎样看出它们含有多少个一，多",
+            "少个十，多少个百，多少个千，多少个十千。",
+            "在58 743中：　　在923 027中：",
+            "58 743个一　　923 027个一",
+            "5 874个十　　92 302个十",
+            "587个百　　9 230个百",
+            "58个千　　923个千",
+            "5个十千　　92个十千",
+        ],
+        "61. 观察下面写的数，说明怎样看出它们含有多少个一，多少个十，多少个百，多少个千，多少个十千。\n"
+        "在58 743中：58 743个一，5 874个十，587个百，58个千，5个十千。\n"
+        "在923 027中：923 027个一，92 302个十，9 230个百，923个千，92个十千。",
+    ),
+    "67": (
+        [
+            r"67. 1) $36\cdot2$　$26\cdot3$　2) $(100+200)\cdot3$　$100-19\cdot2$",
+            r"$17\cdot3$　$14\cdot5$　$(820-800)\cdot8$　$64+20\cdot5$",
+            r"$23\cdot4$　$12\cdot8$　$(240-40)\cdot4$　$200-40\cdot2$",
+            r"3) $80:5$　$72:3$　4) $96-28:7$　$49\ 000:100\cdot10$",
+            r"$70:5$　$72:4$　$86+42:3$　$50\ 100\cdot10:100$",
+            r"$60:4$　$72:6$　$17-68:4$　$1\ 000\cdot574:10$",
+            r"$90:5$　$96:8$　$49+81:3$　$10\cdot2\ 070:100$",
+        ],
+        "67.\n"
+        r"1) $36\cdot2$；$26\cdot3$；$17\cdot3$；$14\cdot5$；$23\cdot4$；$12\cdot8$。" "\n"
+        r"2) $(100+200)\cdot3$；$100-19\cdot2$；$(820-800)\cdot8$；$64+20\cdot5$；$(240-40)\cdot4$；$200-40\cdot2$。" "\n"
+        r"3) $80:5$；$72:3$；$70:5$；$72:4$；$60:4$；$72:6$；$90:5$；$96:8$。" "\n"
+        r"4) $96-28:7$；$49\ 000:100\cdot10$；$86+42:3$；$50\ 100\cdot10:100$；$17-68:4$；$1\ 000\cdot574:10$；$49+81:3$；$10\cdot2\ 070:100$。",
+    ),
+    "70": (
+        [
+            "70. 1) 用米和厘米表示：　　2) 用卢布和戈比表示：",
+            "6 380厘米　　725戈比",
+            "32 483厘米　　15 780戈比",
+            "85 054厘米　　63 078戈比",
+            "13 005厘米　　50 106戈比",
+        ],
+        "70.\n1) 用米和厘米表示：6 380厘米，32 483厘米，85 054厘米，13 005厘米。\n"
+        "2) 用美元和美分表示：725美分，15 780美分，63 078美分，50 106美分。",
+    ),
+    "86": (
+        [
+            "86*. 1) 做下列有余数的除法：",
+            "$78:9$　$44:7$　$65:8$　$43:5$　$21:4$",
+            "$57:6$　$38:8$　$30:7$　$76:8$　$25:3$",
+            "$62:9$　$24:7$　$47:5$　$29:4$　$70:9$",
+            "2) 做下列除法，并比较每一对式子中两个式子的大小：",
+            "$72:4$　$48:3$　$36:2$　$55:5$　$90:6$",
+            "$75:4$　$50:3$　$37:2$　$58:5$　$94:6$",
+        ],
+        "86*.\n1) 做下列有余数的除法："
+        "$78:9$；$44:7$；$65:8$；$43:5$；$21:4$；$57:6$；$38:8$；$30:7$；$76:8$；$25:3$；"
+        "$62:9$；$24:7$；$47:5$；$29:4$；$70:9$。\n"
+        "2) 做下列除法，并比较每一对式子中两个式子的大小："
+        "$72:4$与$75:4$；$48:3$与$50:3$；$36:2$与$37:2$；$55:5$与$58:5$；$90:6$与$94:6$。",
+    ),
+}
+
+
+class SourceColumnComparisonTests(unittest.TestCase):
+    def validate(self, number, modern=None, lines=None, source=None):
+        original_lines, original_modern = CASES[number]
+        lines = original_lines if lines is None else lines
+        return edition.validate_text(
+            blocks.text_of({"lines": lines}) if source is None else source,
+            original_modern if modern is None else modern,
+            ["layout", "currency-context"] if number == "70" else ["layout"],
+            [], "exercise", [], source_lines=lines,
+        )
+
+    def assert_rejected(self, number, modern):
+        self.assertTrue(self.validate(number, modern), (number, modern))
+
+    def test_actual_five_assignment_columns(self):
+        self.assertEqual(self.validate("23"), [])
+
+    def test_actual_five_four_number_vertical_groups_and_removal(self):
+        self.assertEqual(self.validate("51"), [])
+
+    def test_actual_two_five_unit_example_columns(self):
+        self.assertEqual(self.validate("61"), [])
+
+    def test_actual_two_header_batches_of_four_multi_cell_groups(self):
+        self.assertEqual(self.validate("67"), [])
+
+    def test_actual_length_and_currency_columns(self):
+        self.assertEqual(self.validate("70"), [])
+
+    def test_actual_fifteen_row_order_divisions_and_five_ordered_pairs(self):
+        self.assertEqual(self.validate("86"), [])
+
+    def test_assignment_lower_cells_cannot_swap_columns(self):
+        modern = CASES["23"][1].replace("$b=300$", "$b=130$", 1).replace(
+            "2) $a=90$，$b=130$", "2) $a=90$，$b=300$"
+        )
+        self.assert_rejected("23", modern)
+
+    def test_assignment_order_within_pair_is_fixed(self):
+        self.assert_rejected("23", CASES["23"][1].replace("$a=200$，$b=300$", "$b=300$，$a=200$"))
+
+    def test_equal_formula_bag_does_not_preserve_task_boundaries(self):
+        self.assert_rejected("23", CASES["23"][1].replace(
+            "1) $a=200$，$b=300$。\n2) $a=90$", "1) $a=200$。\n2) $b=300$，$a=90$"
+        ))
+
+    def test_assignment_missing_duplicate_wrong_formula(self):
+        for before, after in (("$b=300$", ""), ("$b=300$", "$b=300$，$b=300$"),
+                              ("$b=300$", "$b=301$"), ("$b=300$", "$c=300$")):
+            with self.subTest(after=after):
+                self.assert_rejected("23", CASES["23"][1].replace(before, after, 1))
+
+    def test_vertical_groups_cannot_be_swapped(self):
+        self.assert_rejected("51", CASES["51"][1].replace(
+            "1，10，100，1 000；2，20，200，2 000", "2，20，200，2 000；1，10，100，1 000"
+        ))
+
+    def test_same_number_order_with_wrong_group_boundary_is_rejected(self):
+        self.assert_rejected("51", CASES["51"][1].replace(
+            "100，1 000；2，20", "100；1 000，2，20"
+        ))
+
+    def test_vertical_missing_duplicate_wrong_cell(self):
+        for before, after in (("1，10，100，1 000", "1，10，100"),
+                              ("1，10，100，1 000", "1，10，100，100，1 000"),
+                              ("1，10，100，1 000", "1，11，100，1 000")):
+            with self.subTest(after=after):
+                self.assert_rejected("51", CASES["51"][1].replace(before, after))
+
+    def test_vertical_removal_subtask_cannot_disappear(self):
+        self.assert_rejected("51", CASES["51"][1].split("\n2)")[0])
+
+    def test_unit_columns_cannot_swap_values(self):
+        self.assert_rejected("61", CASES["61"][1].replace("5 874个十", "92 302个十").replace(
+            "923 027个一，92 302个十", "923 027个一，5 874个十"
+        ))
+
+    def test_unit_row_names_are_part_of_cell_binding(self):
+        self.assert_rejected("61", CASES["61"][1].replace("587个百，58个千", "587个千，58个百"))
+
+    def test_unit_missing_duplicate_wrong_value(self):
+        for before, after in (("587个百，", ""), ("587个百，", "587个百，587个百，"),
+                              ("587个百", "588个百")):
+            with self.subTest(after=after):
+                self.assert_rejected("61", CASES["61"][1].replace(before, after))
+
+    def test_math_cells_cannot_cross_group_or_row_order(self):
+        modern = CASES["67"][1]
+        for after in (
+            modern.replace(r"$26\cdot3$；$17\cdot3$", r"$17\cdot3$；$26\cdot3$"),
+            modern.replace(r"$12\cdot8$。" "\n2) ", "\n2) " r"$12\cdot8$；"),
+            modern.replace(r"2) $(100+200)\cdot3$", r"2) $100-19\cdot2$").replace(
+                r"$100-19\cdot2$；$(820-800)", r"$(100+200)\cdot3$；$(820-800)"
+            ),
+        ):
+            with self.subTest(after=after):
+                self.assert_rejected("67", after)
+
+    def test_math_missing_duplicate_wrong_cell(self):
+        for before, after in ((r"$14\cdot5$；", ""), (r"$14\cdot5$", r"$14\cdot5$；$14\cdot5$"),
+                              (r"$14\cdot5$", r"$14\cdot6$")):
+            with self.subTest(after=after):
+                self.assert_rejected("67", CASES["67"][1].replace(before, after))
+
+    def test_quantities_cannot_swap_columns(self):
+        self.assert_rejected("70", CASES["70"][1].replace("6 380厘米", "725厘米").replace(
+            "725美分", "6 380美分"
+        ))
+
+    def test_length_unit_cannot_change_or_leak_into_currency(self):
+        for before, after in (("6 380厘米", "6 380毫米"), ("725美分", "725厘米"),
+                              ("用米和厘米表示", "用米和毫米表示")):
+            with self.subTest(after=after):
+                self.assert_rejected("70", CASES["70"][1].replace(before, after))
+
+    def test_quantity_missing_duplicate_wrong_value(self):
+        for before, after in (("725美分，", ""), ("725美分，", "725美分，725美分，"),
+                              ("725美分", "726美分")):
+            with self.subTest(after=after):
+                self.assert_rejected("70", CASES["70"][1].replace(before, after))
+
+    def test_pair_lower_cells_and_upper_lower_order_cannot_swap(self):
+        for after in (
+            CASES["86"][1].replace("$72:4$与$75:4$", "$75:4$与$72:4$"),
+            CASES["86"][1].replace("$72:4$与$75:4$；$48:3$与$50:3$",
+                                  "$72:4$与$50:3$；$48:3$与$75:4$"),
+        ):
+            with self.subTest(after=after):
+                self.assert_rejected("86", after)
+
+    def test_pair_boundaries_cannot_change_while_formula_order_stays_same(self):
+        self.assert_rejected("86", CASES["86"][1].replace(
+            "$72:4$与$75:4$；$48:3$与$50:3$", "$72:4$；$75:4$与$48:3$与$50:3$"
+        ))
+
+    def test_first_fifteen_divisions_must_keep_row_order(self):
+        self.assert_rejected("86", CASES["86"][1].replace("$78:9$；$44:7$", "$44:7$；$78:9$"))
+
+    def test_pair_missing_duplicate_wrong_formula(self):
+        for before, after in (("$72:4$与$75:4$；", ""), ("$75:4$", "$75:4$与$75:4$"),
+                              ("$75:4$", "$75:5$")):
+            with self.subTest(after=after):
+                self.assert_rejected("86", CASES["86"][1].replace(before, after))
+
+    def test_misbound_source_lines_cannot_authorize_a_swap(self):
+        lines = copy.deepcopy(CASES["23"][0])
+        lines[3] = "$b=130$　　$b=300$　　$b=320$"
+        self.assertTrue(any("source_lines" in error for error in self.validate(
+            "23", lines=lines, source=blocks.text_of({"lines": CASES["23"][0]})
+        )))
+
+    def test_source_missing_leading_middle_trailing_cells_fail_closed(self):
+        for number, row in (("23", 3), ("51", 3), ("61", 4), ("67", 1), ("70", 2), ("86", 6)):
+            original = CASES[number][0]
+            cells = edition._source_cells(original[row])
+            for column in (0, len(cells) // 2, len(cells) - 1):
+                lines = copy.deepcopy(original)
+                missing = cells[:]
+                missing[column] = ""
+                lines[row] = "　　".join(missing)
+                with self.subTest(number=number, column=column):
+                    self.assertTrue(any("原行/列任务不明确" in error for error in self.validate(number, lines=lines)))
+
+    def test_missing_source_row_and_blank_row_are_not_silently_filtered(self):
+        for number, row in (("51", 3), ("61", 4), ("86", 6)):
+            for blank in (False, True):
+                lines = copy.deepcopy(CASES[number][0])
+                if blank:
+                    lines[row] = ""
+                else:
+                    del lines[row]
+                with self.subTest(number=number, blank=blank):
+                    self.assertTrue(any("原行/列任务不明确" in error for error in self.validate(number, lines=lines)))
+
+    def test_duplicate_source_marker_and_missing_unit_header_fail_closed(self):
+        lines = copy.deepcopy(CASES["23"][0])
+        lines[2] = lines[2].replace("2)", "1)")
+        self.assertTrue(any("原行/列任务不明确" in error for error in self.validate("23", lines=lines)))
+        lines = copy.deepcopy(CASES["61"][0])
+        lines[2] = "在58 743中：　　"
+        self.assertTrue(any("原行/列任务不明确" in error for error in self.validate("61", lines=lines)))
+
+    def test_blank_group_and_malformed_numeric_cell_fail_closed(self):
+        for before, after in (("100，1 000；2，20", "100，1 000；；2，20"),
+                              ("1，10，100，1 000", "1，item10，100，1 000"),
+                              ("1，10，100，1 000", "1，10abc，100，1 000")):
+            with self.subTest(after=after):
+                self.assert_rejected("51", CASES["51"][1].replace(before, after))
+
+    def test_wrapped_formula_keeps_exact_control_word_and_scope(self):
+        lines = ["Compute $\\frac{12+", "3}{5}$; then $7+2$."]
+        source = blocks.text_of({"lines": lines})
+        for modern, accepted in (
+            (r"Compute $\frac{12+3}{5}$;" "\n" r"then $7+2$.", True),
+            (r"Compute $\frac{12+4}{5}$; then $7+2$.", False),
+            (r"Compute $\frac{12+3}{5}$; then $7+3$.", False),
+            (r"Compute $\frac12+3{5}$; then $7+2$.", False),
+        ):
+            with self.subTest(modern=modern):
+                errors = edition.validate_text(source, modern, ["layout"], [], "exercise", [], source_lines=lines)
+                self.assertEqual(not errors, accepted)
+
+    def test_math_internal_column_spaces_are_not_cell_gaps(self):
+        lines = copy.deepcopy(CASES["23"][0])
+        lines[2] = lines[2].replace("$a=200$", "$a=　　200$")
+        modern = CASES["23"][1].replace("$a=200$", "$a= 200$")
+        self.assertEqual(self.validate("23", modern=modern, lines=lines), [])
+
+    def test_unbound_flat_source_cannot_enable_column_reordering(self):
+        lines, modern = CASES["23"]
+        self.assertTrue(edition.validate_text(
+            blocks.text_of({"lines": lines}), modern, ["layout"], [], "exercise", [],
+        ))
+
+
+class ChineseNumericBoundaryTests(unittest.TestCase):
+    def test_adjacent_chinese_units_are_numeric_facts(self):
+        self.assertEqual(edition.number_signature("有12个；5 874个十；587个百"), ["12", "5", "874", "587"])
+
+    def test_ascii_and_other_unicode_identifiers_are_not_numeric_facts(self):
+        self.assertEqual(edition.number_signature("x12 item_3 12abc v1.2 α12"), [])
+
+    def test_decimals_signs_thousands_and_prose_quantities_remain_ordered(self):
+        self.assertEqual(edition.number_signature("温度-12.5度，3 100个，体积0.04升，共20人"),
+                         ["-12.5", "3", "100", "0.04", "20"])
+
+    def test_digit_next_to_chinese_change_is_rejected(self):
+        errors = edition.validate_text("共有537个。", "共有573个。", ["wording"], [], "exercise", [])
+        self.assertTrue(any("非公式数字变化" in error for error in errors))
+
+    def test_latex_text_numeric_fact_cannot_hide_in_identifier(self):
+        errors = edition.validate_text(r"$x+\text{12个}$", r"$x+\text{x12个}$",
+                                      ["wording"], [], "exercise", [])
+        self.assertTrue(any("数学公式变化" in error for error in errors))
+
+    def test_decimal_fragment_cannot_bypass_identifier_boundary(self):
+        self.assertEqual(edition.number_signature("x12.5 1.2.3 abc_12.5"), [])
+
+
+if __name__ == "__main__":
+    unittest.main()

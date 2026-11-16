@@ -1,0 +1,159 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+import { fileURLToPath } from 'node:url'
+
+const work = path.dirname(fileURLToPath(import.meta.url))
+const base = path.dirname(work)
+const figureDir = path.join(base, 'root/8a/editions/modern-us-neutral/figures')
+const history = path.join(work, 'history/figure-render-attempt1')
+const ids = ['fig-01', 'fig-02', 'fig-03', 'fig-04', 'fig-05', 'tbl-p0020-01']
+const changedIds = ids.filter(id => id !== 'tbl-p0020-01')
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const record = file => ({ path: file, bytes: fs.statSync(file).size, sha256: sha(file) })
+const save = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+const pointer = parts => '/' + parts.map(p => String(p).replaceAll('~', '~0').replaceAll('/', '~1')).join('/')
+function leaves(before, after, parts = []) {
+  if (JSON.stringify(before) === JSON.stringify(after)) return []
+  if (before && after && typeof before === 'object' && typeof after === 'object') {
+    return [...new Set([...Object.keys(before), ...Object.keys(after)])]
+      .flatMap(key => leaves(before[key], after[key], [...parts, key]))
+  }
+  return [{ path: pointer(parts), before, after }]
+}
+function restore(value, changes) {
+  const restored = structuredClone(value)
+  for (const change of changes) {
+    const keys = change.path.slice(1).split('/').map(p => p.replaceAll('~1', '/').replaceAll('~0', '~'))
+    let at = restored
+    for (const key of keys.slice(0, -1)) at = at[key]
+    if (change.before === undefined) delete at[keys.at(-1)]
+    else at[keys.at(-1)] = change.before
+  }
+  return restored
+}
+if (process.argv[2] === 'snapshot') {
+  assert(!fs.existsSync(history), 'First-render history must be new')
+  const files = [
+    ...ids.flatMap(id => [
+      ...['spec.json', 'svg', 'render.json'].map(ext => path.join(figureDir, `${id}.${ext}`)),
+      path.join(work, `${id}.preview.png`), path.join(work, `${id}-author-context.json`),
+      ...['validate', 'render'].flatMap(step =>
+        ['json', 'started.json'].map(ext => path.join(work, `command-${id}-${step}.${ext}`)))
+    ]),
+    ...['author-figures.mjs', 'figure-authoring-receipt.json', 'modern-once.mjs',
+      'source-only-interpretation.json', 'text-authoring-receipt.json',
+      'prose-flow-alg8-c1-s1-n3.json', 'prose-flow-alg8-c1-s2-n4.json'].map(name => path.join(work, name)),
+    ...['alg8-c1-s1-n3', 'alg8-c1-s2-n4'].flatMap(id =>
+      ['lesson.template.json', 'exercises.template.json', 'figures.template.json']
+        .map(name => path.join(work, 'adapt/8a/modern-us-neutral/lessons', id, name)))
+  ]
+  fs.mkdirSync(history, { recursive: true })
+  const snapshots = files.map(file => {
+    const target = path.join(history, path.relative(base, file))
+    fs.mkdirSync(path.dirname(target), { recursive: true })
+    fs.copyFileSync(file, target, fs.constants.COPYFILE_EXCL)
+    assert(fs.readFileSync(file).equals(fs.readFileSync(target)))
+    return { ...record(file), preserved: target }
+  })
+  save(path.join(history, 'receipt.json'), {
+    argv: ['node', fileURLToPath(import.meta.url), 'snapshot'],
+    findings: {
+      curve_encoding: 'Author supplied pixel coordinates, but existing renderer scales svgPath by user-unit scale again. Original curves absent in previews.',
+      label_constraints: 'Origin offsets overlap their point footprint; fig-04 M/M-prime and e1 also collide.',
+      table: 'First validation/render passed and actual preview was opened; leave it byte-identical.'
+    },
+    snapshots
+  })
+  console.log(JSON.stringify({ preserved: history, files: snapshots.length }))
+} else if (process.argv[2] === 'repair') {
+  const frozen = read(path.join(history, 'receipt.json'))
+  const receiptPath = path.join(work, 'figure-repair1-receipt.json')
+  assert(!fs.existsSync(receiptPath), 'Only one figure repair')
+  for (const item of frozen.snapshots) assert.equal(sha(item.preserved), item.sha256)
+  const records = []
+  for (const id of changedIds) {
+    const specFile = path.join(figureDir, `${id}.spec.json`)
+    const snapshot = frozen.snapshots.find(item => item.path === specFile)
+    assert.equal(sha(specFile), snapshot.sha256, 'Snapshot must precede the spec edit')
+    const before = read(specFile), after = structuredClone(before)
+    const [xmin, ymax, xmax, ymin] = before.canvas.boundingBox
+    const scaleX = before.canvas.width / (xmax - xmin)
+    const scaleY = before.canvas.height / (ymax - ymin)
+    const context = read(path.join(work, `${id}-author-context.json`))
+    const curves = []
+    for (const object of after.objects) {
+      if (object.type !== 'svgPath') continue
+      const tokens = object.d.split(/\s+/)
+      assert.equal(tokens.length, 8)
+      assert.equal(tokens[0], 'M')
+      assert.equal(tokens[3], 'Q')
+      const pixels = [tokens.slice(1, 3), tokens.slice(4, 6), tokens.slice(6, 8)]
+        .map(pair => pair.map(Number))
+      const encoded = pixels.map(([x, y]) => [x / scaleX, y / scaleY])
+      const originalCurve = context.curve_geometry.find(curve => curve.id === object.id)
+      assert(originalCurve)
+      const sourcePoints = encoded.map(([x, y]) => [x + xmin, ymax - y])
+      for (let p = 0; p < 3; p++) for (let axis = 0; axis < 2; axis++) {
+        assert(Math.abs(sourcePoints[p][axis] - originalCurve.source_space_quadratic_bezier[p][axis]) < 1e-7)
+      }
+      object.d = `M ${encoded[0].join(' ')} Q ${encoded[1].join(' ')} ${encoded[2].join(' ')}`
+      const renderedPixels = encoded.map(([x, y]) => [x * scaleX, y * scaleY])
+      const maximumPixelResidual = Math.max(...pixels.flatMap((pair, p) =>
+        pair.map((value, axis) => Math.abs(value - renderedPixels[p][axis]))))
+      assert(maximumPixelResidual < 1e-7)
+      curves.push({ id: object.id, original_intended_pixels: pixels, repaired_path_units: encoded,
+        renderer_pixels: renderedPixels, max_pixel_residual: maximumPixelResidual,
+        source_geometry_and_coefficients_unchanged: true })
+    }
+    const origin = after.objects.find(object => object.id === 'origin' || object.id === 'O')
+    assert(origin)
+    origin.labelPlacement = { position: 'SW', gap: 16, offset: [0, 24] }
+    if (id === 'fig-04') {
+      for (const name of ['M', 'M-prime']) {
+        after.objects.find(object => object.id === name).labelPlacement =
+          { position: 'NW', gap: 16, offset: [-8, -8] }
+      }
+      after.objects.find(object => object.id === 'basis-e1-label').at = [.75, -1]
+    }
+    const diff = leaves(before, after)
+    assert(diff.length)
+    for (const change of diff) {
+      assert(/^\/objects\/\d+\/(?:d|labelPlacement\/(?:position|gap|offset\/\d+)|at\/\d+)$/.test(change.path),
+        `Unexpected edit: ${change.path}`)
+    }
+    assert.deepEqual(restore(after, diff), before)
+    assert.deepEqual(after.source, before.source)
+    assert.deepEqual(after.assertions, before.assertions)
+    fs.writeFileSync(specFile, JSON.stringify(after, null, 2) + '\n')
+    const diffFile = path.join(work, `${id}-repair1-leaf-diff.json`)
+    save(diffFile, { figure: id, exact_leaf_diff: diff, inverse_reconstructs_original_json: true,
+      before: snapshot, after: record(specFile), curve_transform_proof: curves })
+    const updatedContext = structuredClone(context)
+    updatedContext.spec = record(specFile)
+    updatedContext.repair = {
+      history: path.join(history, 'receipt.json'), exact_diff: record(diffFile),
+      scope: 'Only renderer path-unit encoding and collision-producing label positions. Original geometry, inventory, assertions, authoritative text and templates unchanged.',
+      independent_review: 'Pending parent dispatch; this is author evidence only.'
+    }
+    const contextFile = path.join(work, `${id}-author-context-repair1.json`)
+    save(contextFile, updatedContext)
+    records.push({ figure: id, spec: record(specFile), diff: record(diffFile), context: record(contextFile) })
+  }
+  const immutable = frozen.snapshots.filter(item =>
+    !changedIds.some(id => item.path === path.join(figureDir, `${id}.spec.json`)) &&
+    item.path !== path.join(work, 'author-figures.mjs'))
+  for (const item of immutable) assert.equal(sha(item.path), item.sha256)
+  save(receiptPath, {
+    argv: ['node', fileURLToPath(import.meta.url), 'repair'],
+    first_failures_preserved: record(path.join(history, 'receipt.json')),
+    repair_count_per_changed_figure: 1, changed_specs: records,
+    source_math_templates_assertions_inventory_unchanged: true,
+    unchanged_original_evidence: immutable.map(record => ({ path: record.path, sha256: record.sha256 })),
+    author_helper_synced_but_not_rerun: record(path.join(work, 'author-figures.mjs')),
+    next: 'One repair1 validation/render per changed figure; no further repair or self-approved independent review.'
+  })
+  console.log(JSON.stringify({ repaired: records.map(r => r.figure), receipt: receiptPath }))
+} else throw new Error('Use snapshot or repair')

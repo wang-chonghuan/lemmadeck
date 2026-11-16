@@ -1,0 +1,583 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import assert from "node:assert/strict";
+import { fileURLToPath } from "node:url";
+
+const root = path.dirname(fileURLToPath(import.meta.url));
+const read = (name) => JSON.parse(fs.readFileSync(path.join(root, name)));
+const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const inventory = read("input-inventory.json");
+const supplemental = read("supplement-capture.json");
+const layouts = read("display-layout.json");
+const primarySheets = read("native-montages.json");
+const supplementalSheets = read("supplement-montages.json");
+const comboKey = (item) => `${item.lesson}/${item.surface}/${item.viewport?.width ?? item.viewport_width}`;
+const sameCombo = (left, right) => comboKey(left) === comboKey(right);
+const verify = (record) => {
+  const bytes = fs.readFileSync(record.path);
+  assert.equal(hash(bytes), record.sha256, record.path);
+  if (record.snapshot_path) {
+    assert.ok(bytes.equals(fs.readFileSync(record.snapshot_path)), record.snapshot_path);
+  }
+};
+const jsonNames = [
+  "input-inventory.json",
+  "display-layout.json",
+  "supplement-capture.json",
+  "native-montages.json",
+  "supplement-montages.json",
+];
+const supportingRecords = jsonNames.map((name) => {
+  const file = path.join(root, name);
+  const bytes = fs.readFileSync(file);
+  return { path: file, sha256: hash(bytes), bytes: bytes.length };
+});
+
+inventory.primary_PNGs.forEach(verify);
+inventory.render_HTML.forEach(verify);
+inventory.evidence_records.forEach(verify);
+supplemental.screenshots.forEach(verify);
+[...primarySheets, ...supplementalSheets].forEach(verify);
+assert.equal(inventory.primary_PNGs.length, 77);
+assert.equal(supplemental.screenshots.length, 29);
+assert.equal(primarySheets.length, 17);
+assert.equal(supplementalSheets.length, 8);
+assert.equal(new Set(inventory.primary_PNGs.map((file) => file.filename)).size, 77);
+assert.equal(new Set(supplemental.screenshots.map((file) => file.filename)).size, 29);
+assert.deepEqual(
+  fs.readdirSync(path.join(root, "supplements")).filter((name) => name.endsWith(".png")).sort(),
+  supplemental.screenshots.map((file) => file.filename).sort(),
+);
+assert.equal(supplemental.page_errors.length, 0);
+assert.equal(supplemental.browser.finally_closed, true);
+
+// These viewing attestations record actual image-tool calls, not geometry results.
+const nativeMontages = [...primarySheets, ...supplementalSheets].map((sheet, index) => ({
+  ...sheet,
+  opened: true,
+  actual_open: {
+    tool: "functions.view_image",
+    detail: "original",
+    ordinal: index + 1,
+    phase: index < 20 ? "before_compaction" : "continuation",
+  },
+  hash_reverified_at_closeout: true,
+}));
+const sheetFor = new Map();
+for (const sheet of nativeMontages) {
+  for (const input of sheet.inputs) {
+    assert.equal(sheetFor.has(input.filename), false, input.filename);
+    assert.equal(input.native_unscaled, true);
+    assert.equal(input.pasted_pixels_verified, true);
+    sheetFor.set(input.filename, {
+      path: sheet.path,
+      sha256: sheet.sha256,
+      x: input.x,
+      y: input.y,
+      width: input.width,
+      height: input.height,
+      input_sha256: input.input_sha256,
+      open_ordinal: sheet.actual_open.ordinal,
+      native_unscaled: true,
+      pasted_pixels_verified: true,
+    });
+  }
+}
+assert.equal(sheetFor.size, 106);
+const viewed = (file) => {
+  const sheet = sheetFor.get(file.filename);
+  assert.ok(sheet, file.filename);
+  assert.equal(sheet.input_sha256, file.sha256);
+  return {
+    opened: true,
+    opened_via_native_montage: sheet,
+    direct_individual_open_claimed: false,
+    hash_reverified_at_closeout: true,
+  };
+};
+
+const primaryEndpointObservations = {
+  "alg8-c1-s1-n3/text/1440": {
+    first: "Heading, metadata, opening prose and factorization formula starts are readable. The endpoint alone omits intervening examples.",
+    last: "Later worked-example prose, inline formulas, final paragraph and navigation are readable; the lower page edge is visible.",
+  },
+  "alg8-c1-s1-n3/text/390": {
+    first: "Heading and opening prose fit the mobile sheet. Long formula starts are visible but their right ends are not complete in this input.",
+    last: "Later example lines, final prose and navigation are readable within the mobile margins; preceding middle prose is absent from this endpoint alone.",
+  },
+  "alg8-c1-s1-n3/exercises/1440": {
+    first: "Heading and originals 12-14, including task bodies and written subparts, are readable. Middle originals require intervening windows.",
+    last: "Figure 1 lower-page context, original 22 and navigation are visible. This endpoint is not proof of originals 15-20 by itself.",
+  },
+  "alg8-c1-s1-n3/exercises/390": {
+    first: "Heading and original numbers 12/13 are visible, but their task-body areas are blank. Rejected as positive complete-body evidence; original bytes are retained.",
+    last: "The lower figure window, original 22 with its written subparts and navigation are readable. Only the visible figure window is evidence.",
+  },
+  "alg8-c1-s2-n4/text/1440": {
+    first: "Formula-bearing heading, opening paragraphs, complete table and beginning of the first graph context are visible.",
+    last: "Later prose/formulas, final paragraph and navigation are legible; middle graph/prose transitions require additional page windows.",
+  },
+  "alg8-c1-s2-n4/text/390": {
+    first: "The formula-bearing heading wraps cleanly and the opening prose fits. Only the beginning window of the wide table is shown.",
+    last: "Final section prose and inline formulas wrap readably; last paragraph, navigation and bottom margin are visible.",
+  },
+  "alg8-c1-s2-n4/exercises/1440": {
+    first: "Starts at reconstructed scroll y=183, below the h1 and original 23 prefix. Graph context is visible; missing header is not treated as covered.",
+    last: "Originals 29-33 toward the end, review heading, last task body and navigation are visible with readable written subparts.",
+  },
+  "alg8-c1-s2-n4/exercises/390": {
+    first: "Starts at reconstructed scroll y=124 and does not include the full heading. Original 23/figure 5 visible areas do not substitute for header proof.",
+    last: "Later originals, review heading, original 33 and navigation are readable within the mobile sheet; bottom edge is visible.",
+  },
+};
+
+const primaryFiles = inventory.primary_PNGs.map((file) => {
+  let observation;
+  let adequacy;
+  let rejected = false;
+  if (file.small_glyph_only) {
+    observation = `Actual ${file.width}x${file.height} KaTeX SVG/glyph fragment opened. It shows only an isolated formula component, not a whole formula, paragraph, task body or source figure.`;
+    adequacy = "rejected_as_whole_object_proof";
+    rejected = true;
+  } else if (file.height < 100) {
+    observation = `Actual ${file.width}x${file.height} low-height formula-end window opened. It lacks complete surrounding prose/body context; only its visible pixels are recorded. Complete formula/context proof is elsewhere.`;
+    adequacy = "rejected_as_whole_body_proof";
+    rejected = true;
+  } else if (["first", "last"].includes(file.kind)) {
+    observation = primaryEndpointObservations[comboKey(file)][file.kind];
+    rejected = comboKey(file) === "alg8-c1-s1-n3/exercises/390" && file.kind === "first";
+    adequacy = rejected ? "rejected_as_positive_task_body_proof" : "positive_page_window_not_whole_page";
+  } else if (file.lesson.endsWith("n3")) {
+    observation = file.kind.endsWith("-end")
+      ? "Figure 1 right/end window actually opened, including the outer/right labels and graph edge. Whole-asset evidence uses the start/end union and, on mobile, the supplemental middle."
+      : "Figure 1 starting window actually opened. Blank pixels beyond the scroll-container clip are not hidden-asset proof. Mobile start/end windows alone leave a 20px central gap.";
+    adequacy = "positive_visible_media_window_union_required";
+  } else if (file.surface === "exercises") {
+    observation = "Actual figure 5 tall asset is visible from upper y-arrow/curve region through lower x/O edge, with labels legible. Surrounding task/header proof uses page contexts.";
+    adequacy = "positive_complete_display_asset";
+  } else {
+    const label = {
+      "figure-1": "table",
+      "figure-2": "graph 2",
+      "figure-4": "graph 3",
+      "figure-5": "vector diagram 4",
+    }[file.kind.replace(/-end$/, "")];
+    observation = file.viewport_width === 390
+      ? `Actual ${label} ${file.kind.endsWith("-end") ? "right/end" : "start"} window opened. Only pixels within the 358px scroll viewport are proof; start/end windows overlap and together cover the asset. Outside-container blank pixels are excluded.`
+      : `Actual complete ${label} display asset opened at native dimensions. Labels and extreme edges are visible; full-sheet supplements supply its neighboring prose and captions.`;
+    adequacy = file.viewport_width === 390
+      ? "positive_visible_media_window_union_required"
+      : "positive_complete_display_asset";
+  }
+  return {
+    ...file,
+    ...viewed(file),
+    actual_observation: observation,
+    proof_adequacy: adequacy,
+    rejected_as_whole_object_or_positive_body_proof: rejected,
+    preserved_original_and_snapshot: true,
+  };
+});
+
+const supplementObservations = {
+  "alg8-c1-s1-n3-text-1440-missing-body-gap-1.png": "Complete middle prose, worked examples 1/2 and formula lines are readable; overlaps the first and last primary windows.",
+  "alg8-c1-s1-n3-exercises-1440-missing-body-gap-1.png": "Originals 15-18 task bodies, fraction numerators/denominators and systems are readable, continuing the original first window.",
+  "alg8-c1-s1-n3-exercises-1440-missing-body-gap-2.png": "Originals 18-21 body continuations and figure 1 upper context are visible; overlap joins the original lower-page endpoint.",
+  "alg8-c1-s2-n4-text-1440-missing-body-gap-1.png": "Graph 2 lower region, adjacent prose, caption and next section transition are visible without overlap.",
+  "alg8-c1-s2-n4-text-1440-missing-body-gap-2.png": "Graph 3/vector diagram 4 vertical region and adjacent page spacing are visible; graphic extremes are covered by full-asset primaries.",
+  "alg8-c1-s2-n4-text-1440-missing-body-gap-3.png": "Vector diagram lower region, captions 3/4, vector formula lines and following prose are readable. Caption 2 is covered by the earlier middle window.",
+  "alg8-c1-s2-n4-exercises-1440-missing-header-top.png": "Previously absent h1/metadata and complete original 23 written prefix are readable; the graph continues below and is independently covered by its full primary asset.",
+  "alg8-c1-s2-n4-exercises-1440-missing-body-gap-1.png": "Figure 5 bottom, originals 24-27 and their written subparts are readable in complete page context.",
+  "alg8-c1-s2-n4-exercises-1440-missing-body-gap-2.png": "Originals 27-31 continuations and the review-section transition are visible; joins the primary last window.",
+  "alg8-c1-s1-n3-text-390-missing-body-gap-1.png": "Previously unseen middle paragraph bodies and formula starts are readable; the displayed line clipping is resolved by separately opened formula-right contexts.",
+  "alg8-c1-s1-n3-text-390-missing-body-gap-2.png": "Example 1 header/body and multiline displayed formulas are readable, followed by the start of example 2.",
+  "alg8-c1-s1-n3-text-390-missing-body-gap-3.png": "Example 2 body and fraction line, example 3 systems and example 4 start are visible; joins the original final page window.",
+  "alg8-c1-s1-n3-text-390-missing-fullformula-1-right-context.png": "The first long expansion now shows its rightmost bracket/term with surrounding prose. The unscrolled primary start and this right window overlap; neither is claimed whole alone.",
+  "alg8-c1-s1-n3-text-390-missing-fullformula-2-right-context.png": "The second long identity now ends visibly with its final terms. Full prose is also present; horizontal union overlaps the unscrolled middle-body window.",
+  "alg8-c1-s1-n3-text-390-missing-fullformula-3-right-context.png": "Example 2 long factorization now shows the final right-hand factor. Its beginning is visible in the unscrolled body-gap window; overlapping windows cover the complete line.",
+  "alg8-c1-s1-n3-exercises-390-missing-complete-body-positive-top.png": "Positive same-HTML complete-body context: originals 12/13 and the beginning of 14 are now actually readable, with all visible subpart lines. The blank-body original is retained and not used as positive task proof.",
+  "alg8-c1-s1-n3-exercises-390-missing-body-gap-1.png": "Original 14 continuation, originals 15-17 and start of 18 are readable; fractions and inequality signs are not clipped.",
+  "alg8-c1-s1-n3-exercises-390-missing-body-gap-2.png": "Original 18 systems, complete written bodies 19/20 and original 21 prefix are readable; the first figure window begins below.",
+  "alg8-c1-s1-n3-exercises-390-missing-figure-union-middle-context.png": "Full-height center of figure 1 is visible with axes/O and inner labels. It closes the 20px gap between prior left/right windows; outermost labels are covered by the preserved endpoint assets.",
+  "alg8-c1-s2-n4-text-390-missing-body-gap-1.png": "Table lower rows, following prose and graph 2 upper/middle vertical context are visible; horizontal completeness uses prior native start/end assets.",
+  "alg8-c1-s2-n4-text-390-missing-body-gap-2.png": "Graph 2 bottom, adjacent paragraphs/caption 2, next section text and graph 3 start are readable and separated.",
+  "alg8-c1-s2-n4-text-390-missing-body-gap-3.png": "Graph 3 lower region and vector diagram 4 upper vertical region are visible; right/end primaries retain their clipped-out horizontal pixels.",
+  "alg8-c1-s2-n4-text-390-missing-body-gap-4.png": "Vector diagram bottom, captions 3/4 and succeeding vector formulas/prose are visible; only the long vector line's rightmost edge requires its right-context supplement.",
+  "alg8-c1-s2-n4-text-390-missing-body-gap-5.png": "Previously unseen middle/later paragraphs and section separators are readable through the general equation and following text; this is a pixel observation, not another proof-direction review.",
+  "alg8-c1-s2-n4-text-390-missing-fullformula-1-right-context.png": "The long vector expression now includes the rightmost basis-vector/subscript term at maximum scroll, with neighboring prose. The starting body window overlaps this end window.",
+  "alg8-c1-s2-n4-exercises-390-missing-header-top.png": "Complete formula-bearing h1 wraps over two lines within the mobile sheet; metadata and original 23 prefix fit, and figure 5 begins below.",
+  "alg8-c1-s2-n4-exercises-390-missing-body-gap-1.png": "Originals 24-26 and the start of 27 are readable, including their written subparts and task tails.",
+  "alg8-c1-s2-n4-exercises-390-missing-body-gap-2.png": "Original 27 continuation, complete originals 28/29 and original 30 start are readable; no text collisions or missing subpart ends.",
+  "alg8-c1-s2-n4-exercises-390-missing-body-gap-3.png": "Original 30 continuation, complete original 31, review heading and originals 32/33 are readable; primary last covers the remaining bottom/navigation edge.",
+};
+assert.equal(Object.keys(supplementObservations).length, 29);
+const supplementFiles = supplemental.screenshots.map((file) => {
+  assert.ok(supplementObservations[file.filename], file.filename);
+  const bytes = fs.readFileSync(file.path);
+  return {
+    ...file,
+    ...viewed(file),
+    width: bytes.readUInt32BE(16),
+    height: bytes.readUInt32BE(20),
+    actual_observation: supplementObservations[file.filename],
+    proof_adequacy: file.horizontal ? "positive_context_window_horizontal_union_required" : "positive_complete_body_page_window",
+  };
+});
+
+const mergeIntervals = (intervals) => {
+  const merged = [];
+  for (const [start, end] of intervals.toSorted((a, b) => a[0] - b[0])) {
+    const previous = merged.at(-1);
+    if (previous && start <= previous[1] + 0.01) previous[1] = Math.max(previous[1], end);
+    else merged.push([start, end]);
+  }
+  return merged;
+};
+const gapsIn = (start, end, intervals) => {
+  const gaps = [];
+  let cursor = start;
+  for (const [left, right] of mergeIntervals(intervals)) {
+    if (right <= cursor || left >= end) continue;
+    if (left > cursor + 0.01) gaps.push([cursor, Math.min(left, end)]);
+    cursor = Math.max(cursor, right);
+    if (cursor >= end) break;
+  }
+  if (cursor < end - 0.01) gaps.push([cursor, end]);
+  return gaps;
+};
+const comboObservations = {
+  "alg8-c1-s1-n3/text/1440": "Native first/middle/last page pixels cover the entire sheet. Opening sections, all worked-example blocks, formulas, separators and last navigation are readable.",
+  "alg8-c1-s1-n3/text/390": "All mobile prose blocks and worked examples are visible across overlapping vertical windows; three long formula unions show both starts and rightmost ends without scaling.",
+  "alg8-c1-s1-n3/exercises/1440": "Originals 12-22 and every written subpart are visible, with systems/fractions legible. Figure 1 full horizontal union, neighboring task prose and footer are covered.",
+  "alg8-c1-s1-n3/exercises/390": "Originals 12-22 have positive body pixels across supplemental top/middle and preserved last windows. The rejected blank primary is not relied on. Figure 1 start/middle/end union is complete.",
+  "alg8-c1-s2-n4/text/1440": "Entire prose sheet, actual table, three graphs/vector displays, three captions, formulas and last navigation are visible across native full assets and overlapping page windows.",
+  "alg8-c1-s2-n4/text/390": "Entire mobile prose sheet is visible; wide table and three graphics have overlapping horizontal start/end windows. All captions and the long vector formula end are actually visible in page context.",
+  "alg8-c1-s2-n4/exercises/1440": "Supplemental top closes the primary header gap. Originals 23-33, tall figure 5, task subparts, review heading and bottom/navigation are readable across the opened windows.",
+  "alg8-c1-s2-n4/exercises/390": "Supplemental top shows the complete two-line heading and first task prefix. Originals 23-33, all written subparts, tall figure 5, section heading and bottom/navigation fit their mobile contexts.",
+};
+
+const combinations = supplemental.contexts.map((context) => {
+  const key = comboKey(context);
+  const primaries = primaryFiles.filter((file) => sameCombo(file, context));
+  const supplements = supplementFiles.filter((file) => sameCombo(file, context));
+  const primaryFirst = primaries.find((file) => file.kind === "first");
+  const primaryLast = primaries.find((file) => file.kind === "last");
+  const pageWindows = [
+    ...(!primaryFirst.rejected_as_whole_object_or_positive_body_proof
+      ? [{ filename: primaryFirst.filename, interval: context.primary_first_interval }] : []),
+    { filename: primaryLast.filename, interval: context.primary_last_interval },
+    ...supplements.filter((file) => !file.horizontal).map((file) => ({
+      filename: file.filename,
+      interval: [file.scroll_y, file.scroll_y + context.viewport.height],
+    })),
+  ];
+  const bodyUnion = mergeIntervals(pageWindows.map((window) => window.interval));
+  const gaps = gapsIn(0, context.page_height, bodyUnion);
+  assert.deepEqual(gaps, [], key);
+  let paragraphOrdinal = 0;
+  let captionOrdinal = 0;
+  const objects = context.objects.map((object) => {
+    const start = object.box.y;
+    const end = start + object.box.height;
+    const evidence = pageWindows.filter((window) => window.interval[1] > start && window.interval[0] < end);
+    assert.deepEqual(gapsIn(start, end, evidence.map((window) => window.interval)), [], `${key}/${object.index}`);
+    let label;
+    if (object.class.split(" ").includes("para")) label = `rendered-paragraph-${++paragraphOrdinal}`;
+    else if (object.class === "figcap") label = `rendered-caption-${++captionOrdinal}`;
+    else if (object.tag === "LI") label = `visible-original-${object.number.replace(/\.$/, "")}`;
+    else if (object.tag === "H1") label = "heading";
+    else if (object.class === "jump") label = "bottom-navigation";
+    else label = `display-asset-${object.id}`;
+    return {
+      rendered_visual_label: label,
+      rendered_position: object.index,
+      visible_original_number: object.number,
+      tag: object.tag,
+      class: object.class,
+      y_interval: [start, end],
+      full_vertical_pixels_observed: true,
+      page_window_filenames: evidence.map((window) => window.filename),
+      horizontal_asset_or_formula_union_required: object.tag === "FIGURE" ||
+        (context.surface === "text" && context.viewport.width === 390),
+      geometry_role: "Locator/interval index only; substantive acceptance comes from actual opened PNG pixels.",
+    };
+  });
+  const originalReport = inventory.combinations.find((check) => sameCombo(check, context));
+  return {
+    lesson: context.lesson,
+    surface: context.surface,
+    viewport: context.viewport,
+    HTML_path: context.HTML_path,
+    exact_render_SHA256: context.HTML_sha256,
+    primary_PNGs: primaries.length,
+    supplementary_PNGs: supplements.length,
+    actual_PNG_files: primaries.length + supplements.length,
+    new_combination: false,
+    inherited_primary_evidence_limit: originalReport.evidence_limit ?? null,
+    actual_observation: comboObservations[key],
+    status: "pass",
+    rendered_prose_blocks: paragraphOrdinal,
+    written_original_numbers: objects.filter((object) => object.visible_original_number)
+      .map((object) => Number(object.visible_original_number.replace(/\.$/, ""))),
+    page_height: context.page_height,
+    positive_complete_body_windows: pageWindows,
+    positive_vertical_union: bodyUnion,
+    remaining_vertical_gaps: gaps,
+    header_metadata_left_right_edges_observed: true,
+    final_object_and_bottom_edge_observed: true,
+    objects,
+  };
+});
+assert.equal(new Set(combinations.map(comboKey)).size, 8);
+assert.equal(combinations.reduce((count, combo) => count + combo.objects.length, 0), 160);
+for (const width of [1440, 390]) {
+  const exercises = combinations.filter((combo) => combo.surface === "exercises" && combo.viewport.width === width);
+  assert.equal(exercises.reduce((count, combo) => count + combo.written_original_numbers.length, 0), 22);
+  assert.equal(combinations.filter((combo) => combo.surface === "text" && combo.viewport.width === width)
+    .reduce((count, combo) => count + combo.rendered_prose_blocks, 0), 41);
+}
+
+const horizontalCoverage = layouts.flatMap((layout) => {
+  let formula = 0;
+  let figure = 0;
+  return layout.horizontal_regions.filter((region) => region.scroll_width - region.client_width > 8).map((region) => {
+    const supplements = supplementFiles.filter((file) => sameCombo(file, layout));
+    const unscrolled = combinations.find((combo) => sameCombo(combo, layout)).positive_complete_body_windows;
+    let intervals = [[0, region.client_width]];
+    let files = unscrolled.filter((window) => window.interval[0] <= region.box.y &&
+      window.interval[1] >= region.box.y + region.box.height).map((window) => window.filename);
+    let description;
+    if (region.tag === "SPAN") {
+      const suffix = `missing-fullformula-${++formula}-right-context.png`;
+      const right = supplements.find((file) => file.filename.endsWith(suffix));
+      assert.ok(right);
+      intervals.push([right.horizontal.scroll_left, right.horizontal.scroll_left + right.horizontal.client_width]);
+      files.push(right.filename);
+      description = "Actual starting formula pixels and rightmost complete-context pixels overlap; full line height is visible in each relevant window.";
+    } else {
+      const primaryKind = layout.lesson.endsWith("n3")
+        ? "figure-1"
+        : ["figure-1", "figure-2", "figure-4", "figure-5"][figure++];
+      const endpoints = primaryFiles.filter((file) => sameCombo(file, layout) &&
+        [primaryKind, `${primaryKind}-end`].includes(file.kind));
+      assert.equal(endpoints.length, 2);
+      files.push(...endpoints.map((file) => file.filename));
+      intervals.push([region.scroll_width - region.client_width, region.scroll_width]);
+      if (layout.lesson.endsWith("n3") && layout.viewport.width === 390) {
+        const middle = supplements.find((file) => file.filename.endsWith("missing-figure-union-middle-context.png"));
+        intervals.push([middle.horizontal.scroll_left, middle.horizontal.scroll_left + middle.horizontal.client_width]);
+        files.push(middle.filename);
+        description = "Actual native starting and ending figure windows left 20px unseen centrally; the full-height middle window closes that gap with overlaps.";
+      } else {
+        description = "Actually opened full-height starting/ending media windows overlap; blank pixels outside the scroll viewport are not counted as asset evidence.";
+      }
+    }
+    const merged = mergeIntervals(intervals);
+    assert.deepEqual(gapsIn(0, region.scroll_width, merged), []);
+    return {
+      lesson: layout.lesson,
+      surface: layout.surface,
+      viewport: layout.viewport,
+      HTML_sha256: layout.HTML_sha256,
+      region_tag: region.tag,
+      y: region.box.y,
+      visible_window_width: region.client_width,
+      full_content_width: region.scroll_width,
+      native_horizontal_intervals: intervals,
+      union: merged,
+      remaining_horizontal_gaps: [],
+      actual_input_filenames: [...new Set(files)],
+      actual_observation: description,
+      status: "pass",
+    };
+  });
+});
+assert.equal(horizontalCoverage.length, 10);
+
+const rejectedOriginals = primaryFiles.filter((file) => file.rejected_as_whole_object_or_positive_body_proof)
+  .map((file) => ({
+    filename: file.filename,
+    path: file.path,
+    snapshot_path: file.snapshot_path,
+    sha256: file.sha256,
+    opened: true,
+    proof_adequacy: file.proof_adequacy,
+    actual_observation: file.actual_observation,
+    original_bytes_preserved: true,
+  }));
+assert.equal(rejectedOriginals.length, 44);
+const closedGaps = [
+  {
+    gap: "First/last-only primary sets omit intervening prose/original task bodies.",
+    closure: "24 first-time full-page header/body windows, including positive n3 mobile top, actually opened in 8 native supplementary sheets.",
+  },
+  {
+    gap: "Four mobile long formula right ends had only clipped starts or glyph-only/low-height evidence.",
+    closure: "Four full-height page-context maximum-scroll windows opened; starts and ends overlap with no horizontal union gap.",
+  },
+  {
+    gap: "Mobile figure 1 endpoint windows cover 310px each of a 640px asset, leaving 20px centrally unseen.",
+    closure: "One full-height middle context opened; start/middle/end union covers the complete asset.",
+  },
+  {
+    gap: "n3 mobile first primary displays task numbers but blank task bodies.",
+    closure: "Same unchanged HTML positive supplemental top shows originals 12/13 plus original 14 start; following body window shows original 14 continuation. Root cause is not established, and the rejected original remains preserved.",
+  },
+  {
+    gap: "Both n4 exercises first primary windows begin below the full h1.",
+    closure: "First-time missing-header-top screenshots at both viewports show full h1, metadata and task 23 prefix. Original first files remain unchanged.",
+  },
+];
+const observations = {
+  schema: "independent-written-actual-pixel-observations/v1",
+  ticket: "STEMROBIN-182",
+  batch: "batch23",
+  book: "8a",
+  reviewed_on: "2026-11-16",
+  owner_directory: root,
+  status: "pass",
+  status_scope: "Independent written-only actual pixel display; not semantic approval, capture-command approval or promotion.",
+  decision_basis: "All 77 primary and 29 necessary supplementary input PNGs were actually opened through 25 hash-verified native unscaled montages. Positive complete-page/body windows, horizontal formula/media unions and all extreme edges were visually inspected before this pass was recorded. DOM/report status alone is not acceptance.",
+  primary_PNGs: 77,
+  supplementary_PNGs: 29,
+  actual_PNG_files: 106,
+  native_montages: 25,
+  unique_written_combinations: 8,
+  new_combinations: 0,
+  choice_combinations: 0,
+  supplementary_full_body_or_header_PNGs: 24,
+  supplementary_formula_end_context_PNGs: 4,
+  supplementary_figure_middle_context_PNGs: 1,
+  count_basis: "Distinct input filenames, not hashes or copied snapshots. Native derived sheets are viewing carriers, not additional inputs or combinations.",
+  coverage: {
+    inherited_frozen_prose_object_scope: 42,
+    frozen_prose_scope_semantically_reaudited: false,
+    scope_count_basis: "42 objects is the previously frozen source/text contract supplied for this phase. Full displayed content is covered below without reopening source/templates or reconstructing source-object mapping.",
+    all_frozen_scope_rendered_text_pixels_observed_at_both_viewports: true,
+    rendered_paragraph_slots_per_viewport: 41,
+    rendered_paragraph_count_note: "Final prose-flow rendering has 19 n3 and 22 n4 .para blocks. Rendered paragraph slots are not the earlier 42 source-contract objects; this record does not invent a new source mapping.",
+    written_originals_per_viewport: 22,
+    written_original_ranges: { "alg8-c1-s1-n3": [12, 22], "alg8-c1-s2-n4": [23, 33] },
+    original_viewport_observations: 44,
+    display_assets_per_viewport: 6,
+    display_asset_note: "Figure 1, actual table, graphs 2/3, vector diagram 4 and tall figure 5; presence/legibility/edge coverage only, not another FigureReview.",
+    captions_per_viewport: 3,
+    headings_per_viewport: 4,
+    bottom_navigation_objects_per_viewport: 4,
+    rendered_objects_across_eight_combinations: 160,
+    viewports: [{ width: 1440, height: 960 }, { width: 390, height: 844 }],
+    complete_written_subparts_prose_formulas_tables_and_graphic_edges_observed: true,
+    remaining_actual_pixel_gaps: [],
+    correctable_layout_bugs_found: [],
+    minimum_layout_fix: null,
+  },
+  exact_render_HTML: inventory.render_HTML.map((file) => ({
+    ...file,
+    hash_reverified_at_closeout: true,
+    original_bytes_unchanged: true,
+    rerendered_by_this_observer: false,
+  })),
+  combinations,
+  horizontal_formula_and_media_coverage: horizontalCoverage,
+  primary_files: primaryFiles,
+  supplementary_files: supplementFiles,
+  opened_native_montages: nativeMontages,
+  rejected_original_evidence: rejectedOriginals,
+  closed_actual_capture_gaps: closedGaps,
+  evidence_history: {
+    records: inventory.evidence_records,
+    original_capture_exit_code: 1,
+    original_capture_not_relabelled_pass: true,
+    failure_limitation: "Original capture stopped at n4 desktop heading literal-TeX versus rendered MathML/visible-text assertion. This actual-pixel pass does not change that exit1 or certify the old checker.",
+    inherited_n3_desktop_combinations: inventory.inherited_n3_desktop_combinations,
+    inherited_n3_desktop_primary_filenames: primaryFiles.filter((file) => file.lesson.endsWith("n3") &&
+      file.viewport_width === 1440).map((file) => file.filename),
+    inherited_n3_desktop_primary_PNGs: 7,
+    inherited_n3_desktop_combinations_count: 2,
+    original_in_memory_counters_recovered_or_invented: false,
+    subsequent_primary_PNGs: 70,
+    prior_report_lookup_history: inventory.prior_lookup_history,
+    prior_source_text_and_path_failure_history: "Earlier reviewer-batch23-8a-modern-text artifacts remain untouched. This display-only phase did not reopen, overwrite or reinterpret their frozen source/text or path-failure history.",
+    preparation_inventory_opened_false_note: "Unmodified preparation manifests retain pre-view opened:false fields. The actual_open attestations in this final record are authoritative for the completed image-tool observations.",
+    supporting_records: supportingRecords,
+  },
+  browser: {
+    ...supplemental.browser,
+    existing_app_playwright: true,
+    persistent_context: false,
+    user_window_access: false,
+    no_browser_opened_during_closeout: true,
+    no_own_browser_left_running: true,
+    page_errors: supplemental.page_errors,
+  },
+  prohibited_operations_performed: {
+    render_runs: 0,
+    primary_overwrites: 0,
+    primary_recaptures: 0,
+    source_semantic_reruns: 0,
+    text_semantic_reruns: 0,
+    figure_semantic_reruns: 0,
+    answer_key_or_choice_reads: 0,
+    other_reviewer_reads: 0,
+    candidate_or_shared_renderer_edits: 0,
+    durable_or_production_writes: 0,
+    finalize_or_promotion_runs: 0,
+    service_dependency_database_git_or_model_calls: 0,
+  },
+  limitations: [
+    "Written-only display observation of the exact four HTML byte sequences and the two specified viewports. No choices, answer keys, source fidelity, mathematical correctness, proof semantics, FigureReview or publication decision is claimed.",
+    "Every actual PNG input was seen via one native unscaled sheet insertion whose pixels and source hashes were verified, not via a separate individual image-tool call. The 25 sheet opens span the pre-compaction work and this continuation.",
+    "38 tiny glyph inputs and 5 low-height formula-end inputs are retained but rejected as whole-object/body proof. The additional blank n3 mobile first input is rejected as positive task-body proof; positive supplemental pixels close that gap without proving the original capture's root cause.",
+    "Oversized media crops containing outside-scroll blank pixels prove only their visible scroll windows. Full asset coverage comes from overlapping start/end unions, and the n3 mobile middle supplement, never from blank or isolated-glyph areas.",
+    "No original in-memory counters were reconstructed for the two inherited n3 desktop combinations. Exact render/primary/snapshot hashes and actual positive pixels are bound independently; original exit1 remains a failure.",
+    "Geometry indexes only organize previously missing body windows and actual opened pixel coverage. They are not independent structural/math checks or a basis to pass unseen content.",
+    "The captured presentation uses the existing Chinese prose with formula-based headings. This pass is confined to pixel legibility/layout and does not audit language, localization, content policy or modern-text semantics.",
+    "Only the owned reviewer-batch23-8a-written-actual-display directory was written. Finalization and promotion remain with the parent.",
+  ],
+};
+assert.equal(observations.evidence_history.inherited_n3_desktop_primary_filenames.length, 7);
+assert.equal(primaryFiles.filter((file) => file.small_glyph_only).length, 38);
+assert.equal(primaryFiles.filter((file) => file.height < 100 && !file.small_glyph_only).length, 5);
+assert.equal(supplementFiles.filter((file) => !file.horizontal).length, 24);
+assert.equal(supplementFiles.filter((file) => file.horizontal && file.filename.includes("fullformula")).length, 4);
+
+const output = path.join(root, "actual-observations.json");
+const markdown = path.join(root, "actual-observations.md");
+assert.equal(fs.existsSync(output), false, "Preserve an existing final record instead of overwriting it.");
+assert.equal(fs.existsSync(markdown), false);
+fs.writeFileSync(output, `${JSON.stringify(observations, null, 2)}\n`, { flag: "wx" });
+fs.writeFileSync(markdown, [
+  "# Batch23 8a Written Actual Pixels",
+  "",
+  "Status: pass, restricted to actual written-only display.",
+  "",
+  "- 77 primary PNGs + 29 necessary supplementary PNGs = 106 distinct actual input files.",
+  "- 25 actually opened native unscaled montages; derived sheets and frozen copies are not extra inputs.",
+  "- 8 existing lesson/surface/viewport combinations, 0 new combinations, 0 choices.",
+  "- Complete displayed scope corresponding to the earlier 42-prose-object contract and all 22 originals at both 1440x960 and 390x844.",
+  "- Final flow contains 19 n3 + 22 n4 rendered paragraph slots per viewport; these are not relabelled as source-object counts.",
+  "- Full vertical page unions, all six display assets, three captions, four headings, formula scroll endpoints and final/bottom objects covered at each viewport.",
+  "- Supplements: 24 missing complete-body/header windows, 4 long-formula right-context windows and 1 figure-union middle context.",
+  "",
+  "No correctable layout bug was found in the positive complete coverage. No render, primary overwrite, semantic rerun, candidate edit or promotion was performed.",
+  "",
+  "Retained limitations: original capture exit1 stays exit1; 7 n3 desktop primary PNGs/two combinations remain inherited without invented old counters. All 38 glyph fragments, 5 low-height formula-end inputs and the blank-body n3 mobile first primary are retained and rejected as whole-object or positive task-body proof. The same unchanged HTML positive top/body supplement closes the latter pixel gap without claiming a root cause.",
+  "",
+  "All original/copy/supplement/render/sheet hashes, per-input actual observations and per-object coverage are bound in actual-observations.json. Existing source/text/path-failure history remains untouched. Parent owns promotion.",
+  "",
+].join("\n"), { flag: "wx" });
+console.log(JSON.stringify({
+  status: observations.status,
+  output,
+  markdown,
+  output_sha256: hash(fs.readFileSync(output)),
+  primary_PNGs: observations.primary_PNGs,
+  supplementary_PNGs: observations.supplementary_PNGs,
+  actual_PNG_files: observations.actual_PNG_files,
+  native_montages: observations.native_montages,
+  unique_written_combinations: observations.unique_written_combinations,
+  new_combinations: observations.new_combinations,
+  rendered_object_observations: 160,
+  remaining_gaps: 0,
+}, null, 2));

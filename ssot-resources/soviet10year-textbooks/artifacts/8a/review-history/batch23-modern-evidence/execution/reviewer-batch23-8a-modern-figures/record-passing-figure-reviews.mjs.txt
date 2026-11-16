@@ -1,0 +1,129 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { spawnSync } from "node:child_process";
+
+const workspace = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const own = path.join(workspace, ".intentfold/tickets/STEMROBIN-182/tmp/reviewer-batch23-8a-modern-figures");
+const python = path.join(workspace, ".claude/skills/ld-s10y-lesson/.venv/bin/python");
+const tool = path.join(workspace, ".agents/skills/ld-s10y-image/scripts/record_review.py");
+const hash = bytes => crypto.createHash("sha256").update(bytes).digest("hex");
+const read = name => JSON.parse(fs.readFileSync(path.join(own, name), "utf8"));
+const fileRecord = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: file, sha256: hash(bytes), bytes: bytes.length };
+};
+const ownRecord = name => fileRecord(path.join(own, name));
+const writeNew = (name, data) => fs.writeFileSync(path.join(own, name), `${JSON.stringify(data, null, 2)}\n`, { flag: "wx" });
+const statusName = "formal-passing-figure-review-status.json";
+if (fs.existsSync(path.join(own, statusName))) throw new Error("Formal review recording already completed; do not repeat.");
+const inputManifest = read("final-candidate-inputs.json");
+const review = read("candidate-review.json");
+const observations = read("actual-asset-observations.json");
+const displays = read("actual-svg-display-evidence.json");
+const sourceBasis = ownRecord("source-basis.json");
+const independentReview = ownRecord("candidate-review.json");
+const independentObservations = ownRecord("actual-asset-observations.json");
+const displayEvidence = ownRecord("actual-svg-display-evidence.json");
+const records = [];
+for (const id of ["fig-03", "fig-04", "fig-05"]) {
+  const output = path.join(own, `${id}.review.json`);
+  const guardName = `${id}.formal-review.once.json`;
+  const commandName = `${id}.formal-review.command.json`;
+  if ([output, path.join(own, guardName), path.join(own, commandName)].some(file => fs.existsSync(file))) {
+    records.push({ figure: id, status: "stopped-existing-once-guard-or-output" });
+    continue;
+  }
+  const candidate = inputManifest.candidates.find(item => item.id === id);
+  const verdict = review.figures.find(item => item.id === id);
+  const mismatches = [];
+  if (verdict.status !== "pass") mismatches.push("Independent candidate verdict is not pass.");
+  if (sourceBasis.sha256 !== review.source_basis_sha256) mismatches.push("Independent source-basis hash changed.");
+  if (independentReview.sha256 !== "1866f87aae1499eb0e7b39409dbf7ef55d6ca5fe145a40268d1df1446afc9830") mismatches.push("Independent candidate review hash changed.");
+  if (independentObservations.sha256 !== "1d14a76fb51e301bd6151fdc5fef1d9ba732c64d59b52f3714c4ed7261fbbf41") mismatches.push("Independent actual asset observations changed.");
+  if (displayEvidence.sha256 !== review.actual_svg_display_evidence_sha256) mismatches.push("Actual display evidence changed.");
+  for (const item of [candidate.spec, candidate.svg, candidate.render]) {
+    if (fileRecord(item.path).sha256 !== item.sha256 || fileRecord(item.frozen_path).sha256 !== item.sha256) mismatches.push(`Candidate input changed: ${item.path}`);
+  }
+  const source = verdict.bindings.source_png;
+  if (fileRecord(source.path).sha256 !== source.sha256) mismatches.push(`Source input changed: ${source.path}`);
+  const widthEvidence = displays.records.filter(item => item.figure === id);
+  for (const item of widthEvidence) {
+    if (fileRecord(item.screenshot.path).sha256 !== item.screenshot.sha256) mismatches.push(`Prior screenshot changed: ${item.screenshot.path}`);
+  }
+  const observedOpens = observations.opens.filter(item => item.figure === id);
+  if (observedOpens.some(item => !item.full_image_opened) || observedOpens.length !== widthEvidence.length) mismatches.push("Prior actual image-open evidence does not cover every declared width.");
+  if (mismatches.length) {
+    const stopped = { figure: id, status: "stopped-input-change-or-evidence-mismatch", mismatches, no_record_review_invocation: true };
+    writeNew(commandName, stopped);
+    records.push(stopped);
+    continue;
+  }
+  const widths = widthEvidence.map(item => item.declared_width);
+  const notes = [
+    "Independent source-first mathematical, cultural and visual review previously passed; this command records that existing decision without reopening images or repeating the review.",
+    `Scope: isolated headless Chromium, offline SVG only, declared CSS widths ${widths.join(",")}px; no live/headed product surface or actual product media-size claim.`,
+    `Minimum measured effective label font ${Math.min(...widthEvidence.map(item => item.measured_min_label_font_px))}px on those declared-width surfaces.`,
+    `Independent frozen source basis: ${sourceBasis.path}; SHA-256 ${sourceBasis.sha256}.`,
+    `Independent candidate review: ${independentReview.path}; SHA-256 ${independentReview.sha256}.`,
+    `Independent actual asset observations: ${independentObservations.path}; SHA-256 ${independentObservations.sha256}.`,
+    `Actual offline SVG evidence: ${displayEvidence.path}; SHA-256 ${displayEvidence.sha256}.`,
+    ...widthEvidence.map(item => `Previously opened full-width screenshot ${item.declared_width}px: ${item.screenshot.path}; SHA-256 ${item.screenshot.sha256}.`),
+    "Source/spec/render/SVG bytes still match the exact reviewed frozen snapshot. No promotion, candidate/template edits, app, DB, services, dependencies, git or finalize.",
+  ].join("\n");
+  const argv = ["-B", tool, "--spec", candidate.spec.path, "--render", candidate.render.path, "--output", output, "--status", "pass", "--notes", notes];
+  const commandInputs = {
+    source: fileRecord(source.path),
+    spec: fileRecord(candidate.spec.path),
+    render: fileRecord(candidate.render.path),
+    svg: fileRecord(candidate.svg.path),
+    independent_source_basis: sourceBasis,
+    independent_review: independentReview,
+    independent_actual_observations: independentObservations,
+    actual_display_evidence: displayEvidence,
+    screenshots: widthEvidence.map(item => item.screenshot),
+  };
+  writeNew(guardName, { figure: id, authorization: "Parent explicitly authorized one existing record_review.py call for this already-passing unchanged figure.", argv: [python, ...argv], input_hashes: commandInputs, recorded_at: new Date().toISOString() });
+  const result = spawnSync(python, argv, { cwd: workspace, encoding: "utf8", maxBuffer: 1024 * 1024 });
+  const afterMismatches = [];
+  for (const item of [commandInputs.source, commandInputs.spec, commandInputs.render, commandInputs.svg]) {
+    if (fileRecord(item.path).sha256 !== item.sha256) afterMismatches.push(`Input drift during recording: ${item.path}`);
+  }
+  const payload = {
+    schema: "stemrobin/formal-figure-review-command@1",
+    figure: id,
+    argv: [python, ...argv],
+    cwd: workspace,
+    wrapper: ownRecord("record-passing-figure-reviews.mjs"),
+    existing_record_review_tool: fileRecord(tool),
+    inputs: commandInputs,
+    exit_code: result.status,
+    error: result.error ? String(result.error) : null,
+    stdout: result.stdout ?? "",
+    stderr: result.stderr ?? "",
+    stdout_sha256: hash(Buffer.from(result.stdout ?? "")),
+    stderr_sha256: hash(Buffer.from(result.stderr ?? "")),
+    post_input_mismatches: afterMismatches,
+    output: fs.existsSync(output) ? fileRecord(output) : null,
+    scope: "Records previous independent offline declared-width review; no new image inspection or headed-product approval.",
+    bytecode_writes_disabled: true,
+  };
+  payload.status = result.status === 0 && afterMismatches.length === 0 ? "recorded-pass" : "stopped-recording-failure-or-input-drift";
+  writeNew(commandName, payload);
+  records.push({ figure: id, status: payload.status, command: ownRecord(commandName), output: payload.output });
+}
+const status = {
+  schema: "stemrobin/formal-passing-figure-review-status@1",
+  recorded_at: new Date().toISOString(),
+  figures: records,
+  original_independent_candidate_review_unchanged: independentReview,
+  original_independent_actual_observations_unchanged: independentObservations,
+  unchanged_revise: ["fig-01", "fig-02", "tbl-p0020-01"],
+  no_images_reopened: true,
+  no_independent_review_repeated: true,
+  no_promotion: true,
+  no_headed_product_claim: true,
+  next: "Wait for parent disclosure and authorization of changed-region review for fig-01, fig-02 and table.",
+};
+writeNew(statusName, status);
+console.log(JSON.stringify({ status: ownRecord(statusName), figures: records, unchanged_revise: status.unchanged_revise }, null, 2));

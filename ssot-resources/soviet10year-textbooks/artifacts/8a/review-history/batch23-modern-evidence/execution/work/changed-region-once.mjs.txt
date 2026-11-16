@@ -1,0 +1,198 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+
+const work = path.dirname(fileURLToPath(import.meta.url))
+const base = path.dirname(work)
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck'
+const figureDir = path.join(base, 'root/8a/editions/modern-us-neutral/figures')
+const ids = ['fig-01', 'fig-02', 'tbl-p0020-01']
+const history = path.join(work, 'history/before-parent-authorized-three-region-repair')
+const imageSkill = path.join(repo, '.agents/skills/ld-s10y-image')
+const python = path.join(repo, '.claude/skills/ld-s10y-lesson/.venv/bin/python')
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const record = file => ({ path: file, sha256: sha(file), bytes: fs.statSync(file).size })
+const save = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+const receiptFile = path.join(history, 'receipt.json')
+const candidateFile = path.join(work, 'candidate-ready.json')
+const reviewFile = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp/reviewer-batch23-8a-modern-figures/candidate-review.json')
+const outputFiles = id => [
+  ...['spec.json', 'svg', 'render.json'].map(suffix => path.join(figureDir, `${id}.${suffix}`)),
+  path.join(work, `${id}.preview.png`),
+]
+const allowed = new Set(ids.flatMap(outputFiles))
+
+function check() {
+  const frozen = read(receiptFile)
+  for (const item of frozen.snapshots) {
+    assert.equal(sha(item.preserved), item.sha256, `History changed: ${item.preserved}`)
+    if (!allowed.has(item.path)) assert.equal(sha(item.path), item.sha256, `Unchanged file changed: ${item.path}`)
+  }
+  const inputs = read(path.join(work, 'inputs-before.json'))
+  for (const item of inputs.inputs) assert.equal(sha(item.path), item.sha256)
+  for (const item of inputs.copies) assert.equal(sha(item.destination), item.sha256)
+  return frozen
+}
+
+function leafDiff(before, after, pointer = '') {
+  if (JSON.stringify(before) === JSON.stringify(after)) return []
+  if (before && after && typeof before === 'object' && typeof after === 'object'
+    && Array.isArray(before) === Array.isArray(after)) {
+    return [...new Set([...Object.keys(before), ...Object.keys(after)])].flatMap(key =>
+      leafDiff(before[key], after[key], `${pointer}/${key.replaceAll('~', '~0').replaceAll('/', '~1')}`))
+  }
+  return [{ path: pointer, ...(before === undefined ? {} : { before }),
+    ...(after === undefined ? {} : { after }),
+    op: before === undefined ? 'add' : after === undefined ? 'remove' : 'replace' }]
+}
+
+const action = process.argv[2]
+if (action === 'freeze') {
+  assert(!fs.existsSync(history))
+  const candidate = read(candidateFile)
+  const files = [
+    candidateFile, path.join(work, 'candidate-ready.sha256.json'),
+    path.join(work, 'candidate-observations.json'),
+    ...candidate.candidates.flatMap(c =>
+      ['spec', 'svg', 'render', 'preview', 'author_context', 'validation_command', 'render_command'].map(k => c[k].path)),
+    ...candidate.lessons.flatMap(l => l.templates.map(t => t.path)),
+    ...['author-figures.mjs', 'figure-repair-once.mjs', 'modern-once.mjs', 'candidate-ready.mjs',
+      'figure-repair1-receipt.json', 'figure-authoring-receipt.json', 'text-authoring-receipt.json',
+      'source-only-interpretation.json', 'source-only-frozen/freeze-receipt.json',
+      'source-and-core-unchanged.json', 'inputs-before.json'].map(n => path.join(work, n)),
+    ...['scripts/render_spec.mjs', 'scripts/validate_spec.py', 'assets/figure-spec.schema.json']
+      .map(n => path.join(imageSkill, n)),
+    path.join(repo, '.claude/skills/ld-s10y-lesson/tools/edition.py'),
+    path.join(repo, '.claude/skills/ld-s10y-lesson/tests/test_edition_columns.py'),
+  ]
+  fs.mkdirSync(history, { recursive: true })
+  const snapshots = [...new Set(files)].map(file => {
+    const destination = file.startsWith(base + '/') ? path.relative(base, file) : path.join('repo', path.relative(repo, file))
+    const preserved = path.join(history, destination)
+    fs.mkdirSync(path.dirname(preserved), { recursive: true })
+    fs.copyFileSync(file, preserved, fs.constants.COPYFILE_EXCL)
+    assert(fs.readFileSync(file).equals(fs.readFileSync(preserved)))
+    return { ...record(file), preserved }
+  })
+  save(receiptFile, { purpose: 'Exact rejected/current bytes before three explicitly parent-authorized figure-region edits.',
+    at: new Date().toISOString(), argv: ['node', fileURLToPath(import.meta.url), action],
+    review: record(reviewFile), findings: read(reviewFile).figures.filter(f => ids.includes(f.id))
+      .map(f => ({ id: f.id, findings: f.findings })), snapshots })
+  check()
+  console.log(JSON.stringify({ preserved: snapshots.length, receipt: receiptFile }))
+} else if (action === 'diff') {
+  const frozen = check()
+  const diffs = ids.map(id => {
+    const specFile = path.join(figureDir, `${id}.spec.json`)
+    const old = frozen.snapshots.find(item => item.path === specFile)
+    const before = read(old.preserved), after = read(specFile)
+    assert.deepEqual(before.source.image, after.source.image)
+    assert.deepEqual(before.source.authoritativeText, after.source.authoritativeText)
+    assert.deepEqual(before.canvas, after.canvas)
+    assert.deepEqual(before.display, after.display)
+    if (id === 'fig-01') {
+      const copy = structuredClone(after)
+      const oldAxis = before.objects.find(o => o.id === 'x-axis')
+      const newAxis = copy.objects.find(o => o.id === 'x-axis')
+      for (const tick of newAxis.ticks) if (['-1', '1'].includes(tick.label)) {
+        tick.labelPlacement = oldAxis.ticks.find(t => t.label === tick.label).labelPlacement
+      }
+      assert.deepEqual(copy, before, 'fig01 must differ only at two labelPlacement objects')
+    } else if (id === 'fig-02') {
+      assert.deepEqual(after.objects.filter(o => o.id !== 'source-horizontal-projection'), before.objects)
+      assert.deepEqual(after.assertions.filter(a => !a.id.startsWith('source-horizontal-projection')), before.assertions)
+      assert.deepEqual(after.source.inventory.filter(i => i.id !== 'source-horizontal-projection'), before.source.inventory)
+    } else {
+      assert.deepEqual(after.objects.filter(o => o.type === 'text'), before.objects.filter(o => o.type === 'text'))
+      const segments = after.objects.filter(o => o.type === 'segment')
+      assert.equal(segments.length, 10)
+      assert.deepEqual(segments.filter(o => o.from[1] === o.to[1]).map(o => [o.from, o.to]),
+        [0, 1, 2].map(y => [[0, y], [8, y]]))
+      assert.deepEqual(segments.filter(o => o.from[0] === o.to[0]).map(o => [o.from, o.to]),
+        [1, 2, 3, 4, 5, 6, 7].map(x => [[x, 0], [x, 2]]))
+      assert.deepEqual(after.objects.filter(o => o.type !== 'text' && o.type !== 'segment'), [])
+    }
+    const file = path.join(work, `${id}-parent-authorized-region-leaf-diff.json`)
+    const changes = leafDiff(before, after)
+    save(file, { id, before: old, after: record(specFile), changes })
+    return { id, before_sha256: old.sha256, after_sha256: sha(specFile), diff: record(file), changed_leaves: changes.length }
+  })
+  save(path.join(work, 'three-region-exact-diff-receipt.json'), { diffs, other_frozen_files_byte_identical: true })
+  console.log(JSON.stringify(diffs))
+} else if (['validate', 'render'].includes(action)) {
+  const id = process.argv[3]
+  assert(ids.includes(id))
+  check()
+  assert(fs.existsSync(path.join(work, 'three-region-exact-diff-receipt.json')))
+  const name = `command-${id}-${action}-parent-authorized-region`
+  const start = path.join(work, `${name}.started.json`), resultFile = path.join(work, `${name}.json`)
+  assert(!fs.existsSync(start) && !fs.existsSync(resultFile), 'Changed spec command already attempted')
+  const spec = path.join(figureDir, `${id}.spec.json`)
+  const executable = action === 'validate' ? python : 'node'
+  const args = action === 'validate'
+    ? [path.join(imageSkill, 'scripts/validate_spec.py'), spec, '--stage', 'draft', '--json']
+    : [path.join(imageSkill, 'scripts/render_spec.mjs'), '--spec', spec,
+      '--svg', path.join(figureDir, `${id}.svg`), '--report', path.join(figureDir, `${id}.render.json`),
+      '--png', path.join(work, `${id}.preview.png`)]
+  if (action === 'render') assert(read(path.join(work, `command-${id}-validate-parent-authorized-region.json`)).pass)
+  save(start, { at: new Date().toISOString(), argv: [executable, ...args], spec: record(spec) })
+  const temp = path.join(work, 'runtime-temp')
+  fs.mkdirSync(temp, { recursive: true })
+  const result = spawnSync(executable, args, { cwd: repo, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024,
+    env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', PYTHON: python, TMPDIR: temp } })
+  let failure = result.error?.message ?? (result.status === 0 ? null : `Exit ${result.status}`)
+  try { check() } catch (error) { failure = error.message }
+  save(resultFile, { at: new Date().toISOString(), argv: [executable, ...args],
+    status: result.status, pass: !failure, failure, stdout: result.stdout, stderr: result.stderr,
+    outputs: outputFiles(id).filter(fs.existsSync).map(record) })
+  process.stdout.write(result.stdout ?? '')
+  process.stderr.write(result.stderr ?? '')
+  if (failure) process.exitCode = result.status || 1
+} else if (action === 'ready') {
+  const frozen = check()
+  const observations = read(path.join(work, 'three-region-author-observations.json'))
+  const changed = ids.map(id => {
+    const validation = path.join(work, `command-${id}-validate-parent-authorized-region.json`)
+    const renderCommand = path.join(work, `command-${id}-render-parent-authorized-region.json`)
+    const files = outputFiles(id).map(record)
+    const report = read(path.join(figureDir, `${id}.render.json`))
+    assert.equal(report.spec.sha256, files[0].sha256)
+    assert.equal(report.output.svg.sha256, files[1].sha256)
+    return { id, files, validation: record(validation), render_command: record(renderCommand),
+      validator_pass: read(validation).pass, renderer_pass: read(renderCommand).pass,
+      render_status: report.status, display_checks: report.displayChecks,
+      author_observation: observations.figures.find(f => f.id === id),
+      independent_changed_region_approval: 'Pending parent authorization to Boyle; not self-approved.' }
+  })
+  const byteProof = frozen.snapshots.map(item => ({ path: item.path, preserved: item.preserved,
+    before_sha256: item.sha256, after_sha256: sha(item.path), unchanged: sha(item.path) === item.sha256 }))
+  save(path.join(work, 'three-region-before-after-byte-hashes.json'), { files: byteProof })
+  const readyFile = path.join(work, 'changed-candidate-ready.json')
+  save(readyFile, {
+    status: 'three-changed-candidates-ready-for-parent-dispatch',
+    scope: 'Offline 8a n3/n4 author-only changed-region candidates; no finalize, promotion or independent self-approval.',
+    changed, history: record(receiptFile),
+    exact_diffs: record(path.join(work, 'three-region-exact-diff-receipt.json')),
+    byte_proofs: record(path.join(work, 'three-region-before-after-byte-hashes.json')),
+    scaled_preview_receipt: record(path.join(work, 'three-region-scaled-preview-receipt.json')),
+    visible_svg_proof: record(path.join(work, 'three-region-visible-svg-proof.json')),
+    retained_failed_strict_rgb_proof: record(path.join(work, 'three-region-pixel-proof.json')),
+    svg_and_raster_inspection: record(path.join(work, 'three-region-svg-inspection.json')),
+    author_observations: record(path.join(work, 'three-region-author-observations.json')),
+    original_candidate_ready: record(candidateFile),
+    original_independent_review: record(reviewFile),
+    unchanged_assets: ['fig-03', 'fig-04', 'fig-05'],
+    unchanged_templates: 6, immutable_input_copies: read(path.join(work, 'inputs-before.json')).copies.length,
+    source_blockers: [], original_failures_and_rejected_candidates_retained: true,
+    display_limit: 'Only declared offline widths; no headed-product or independent approval claimed.',
+    forbidden_actions_not_run: ['adapt-finalize', 'whole-lesson-render', 'promotion', 'FigureReview-self-approval',
+      'DB', 'services', 'dependencies', 'git'],
+    next: 'Parent may authorize Boyle to review only changed regions using unchanged asset/template hashes.'
+  })
+  save(path.join(work, 'changed-candidate-ready.sha256.json'), { ready: record(readyFile) })
+  console.log(JSON.stringify({ ready: record(readyFile), unchanged_templates: 6, unchanged_assets: 3 }))
+} else throw new Error('Use freeze, diff, validate <id>, render <id>, or ready.')

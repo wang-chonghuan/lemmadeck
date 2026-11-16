@@ -1,0 +1,125 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck'
+const work = path.dirname(fileURLToPath(import.meta.url))
+const root = path.join(path.dirname(work), 'root')
+const raw = path.join(repo, 'ssot-resources/soviet10year-textbooks/artifacts/8a')
+const edition = 'modern-us-neutral'
+const lessonSkill = path.join(repo, '.claude/skills/ld-s10y-lesson')
+const imageSkill = path.join(repo, '.agents/skills/ld-s10y-image')
+const targets = ['alg8-c1-s1-n3', 'alg8-c1-s2-n4']
+const figures = ['fig-01', 'fig-02', 'fig-03', 'fig-04', 'fig-05', 'tbl-p0020-01']
+const python = path.join(lessonSkill, '.venv/bin/python')
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const record = file => ({ path: file, sha256: sha(file), bytes: fs.statSync(file).size })
+const save = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2) + '\n', { flag: 'wx' })
+const frozenFile = path.join(work, 'inputs-before.json')
+
+function check() {
+  const frozen = read(frozenFile)
+  for (const item of frozen.inputs) assert.equal(sha(item.path), item.sha256, `Input changed: ${item.path}`)
+  for (const item of frozen.copies) assert.equal(sha(item.destination), item.sha256, `Immutable copy changed: ${item.destination}`)
+  return frozen
+}
+function once(name, executable, args, outputs = []) {
+  check()
+  const start = path.join(work, `${name}.started.json`), output = path.join(work, `${name}.json`)
+  assert(!fs.existsSync(start) && !fs.existsSync(output), `Already attempted: ${name}`)
+  save(start, { at: new Date().toISOString(), argv: [executable, ...args] })
+  const temporary = path.join(work, 'runtime-temp')
+  fs.mkdirSync(temporary, { recursive: true })
+  const result = spawnSync(executable, args, {
+    cwd: repo, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024,
+    env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', PYTHON: python, TMPDIR: temporary }
+  })
+  let failure = result.error?.message ?? (result.status === 0 ? null : `Exit ${result.status}`)
+  try { check() } catch (error) { failure = error.message }
+  save(output, {
+    at: new Date().toISOString(), argv: [executable, ...args], status: result.status,
+    stdout: result.stdout, stderr: result.stderr, pass: !failure, failure,
+    outputs: outputs.filter(fs.existsSync).map(record)
+  })
+  process.stdout.write(result.stdout ?? '')
+  process.stderr.write(result.stderr ?? '')
+  if (failure) process.exitCode = result.status || 1
+}
+
+if (process.argv[2] === 'freeze') {
+  assert(!fs.existsSync(root) && !fs.existsSync(frozenFile), 'Private root must be new')
+  const names = [
+    'book.json',
+    ...fs.readdirSync(path.join(raw, 'pages')).flatMap(p =>
+      ['page.md', 'page.json', 'audit.json'].map(f => `pages/${p}/${f}`)),
+    ...fs.readdirSync(path.join(raw, 'lessons')).flatMap(id =>
+      ['lesson.md', 'lesson.json', 'exercises.json'].map(f => `lessons/${id}/${f}`)),
+    ...fs.readdirSync(path.join(raw, 'figures')).filter(f => /\.(png|svg)$/.test(f)).map(f => `figures/${f}`),
+    `editions/${edition}/book.json`,
+    ...['alg8-c1-s1-n1', 'alg8-c1-s1-n2'].flatMap(id =>
+      ['lesson.json', 'exercises.json', 'figures.json', 'adaptation.audit.json']
+        .map(f => `editions/${edition}/lessons/${id}/${f}`)),
+    ...['svg', 'spec.json', 'render.json', 'review.json'].map(f => `editions/${edition}/figures/tbl-p0011-01.${f}`)
+  ]
+  assert(names.every(n => !/(choice|answer|interaction|retention|history)/i.test(n)))
+  const copies = names.map(name => ({
+    source: path.join(raw, name), destination: path.join(root, '8a', name), sha256: sha(path.join(raw, name))
+  }))
+  const context = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp/batch22-work-8a/parent-raw-review.json')
+  const toc = path.join(repo, 'ssot-resources/soviet10year-textbooks/toc/8a/zh.json')
+  const facts = targets.map(id => {
+    const lesson = read(path.join(raw, 'lessons', id, 'lesson.json'))
+    const exercises = read(path.join(raw, 'lessons', id, 'exercises.json'))
+    assert.equal(exercises.count, 11)
+    return { id, prose_blocks: lesson.prose.length, originals: exercises.exercises.map(e => e.number),
+      figure_ids: lesson.figures.map(f => f.id) }
+  })
+  assert.equal(facts.reduce((n, t) => n + t.prose_blocks, 0), 42)
+  assert.deepEqual(facts.flatMap(t => t.originals), Array.from({ length: 22 }, (_, i) => String(i + 12)))
+  const frozen = {
+    at: new Date().toISOString(), root, work, targets: facts,
+    scope: 'Modern n3/n4 only. Exact RAW source and existing modern core copies; n5 is immutable boundary/index context,not authored. No RAW rerun,choice,answers,interactions,env,DB,model service,dependency,app or durable write.',
+    inputs: [...new Set([...copies.map(c => c.source), context, toc])].map(record),
+    copies, prior_modern_core_purpose: 'Immutable preservation only,not new text/figure authority.',
+    parent_observation_context: record(context), independent_figure_approval: 'Parent must dispatch;none authored.'
+  }
+  save(frozenFile, frozen)
+  for (const copy of copies) {
+    fs.mkdirSync(path.dirname(copy.destination), { recursive: true })
+    fs.copyFileSync(copy.source, copy.destination, fs.constants.COPYFILE_EXCL)
+    assert.equal(sha(copy.destination), copy.sha256)
+  }
+  check()
+  console.log(JSON.stringify({ root, work, copied_files: copies.length, targets: facts }))
+} else if (process.argv[2] === 'prepare') {
+  const args = [path.join(lessonSkill, 'tools/p2c.py'), 'adapt-prepare',
+    '--book', '8a', '--edition', edition, '--root', root, '--work', work]
+  for (const id of targets) args.push('--lesson', id)
+  once('command-modern-prepare', python, args)
+  if (!process.exitCode) save(path.join(work, 'templates-before-editing.json'), {
+    templates: targets.flatMap(id => ['lesson.template.json', 'exercises.template.json', 'figures.template.json']
+      .map(f => record(path.join(work, 'adapt/8a', edition, 'lessons', id, f))))
+  })
+} else if (['validate', 'render'].includes(process.argv[2])) {
+  const figure = process.argv[3], repair = process.argv[4] === 'repair1' ? '-repair1' : ''
+  assert(figures.includes(figure), 'Only six current source assets')
+  const dir = path.join(root, '8a/editions', edition, 'figures')
+  const spec = path.join(dir, `${figure}.spec.json`)
+  if (process.argv[2] === 'validate') once(`command-${figure}-validate${repair}`, python,
+    [path.join(imageSkill, 'scripts/validate_spec.py'), spec, '--stage', 'draft', '--json'])
+  else {
+    assert(read(path.join(work, `command-${figure}-validate${repair}.json`)).pass, 'Spec validation must pass first')
+    const svg = path.join(dir, `${figure}.svg`), report = path.join(dir, `${figure}.render.json`)
+    const png = path.join(work, `${figure}.preview.png`)
+    once(`command-${figure}-render${repair}`, 'node',
+      [path.join(imageSkill, 'scripts/render_spec.mjs'), '--spec', spec, '--svg', svg, '--report', report, '--png', png],
+      [spec, svg, report, png])
+  }
+} else if (process.argv[2] === 'check') {
+  const frozen = check()
+  console.log(JSON.stringify({ immutable_source_and_prior_core_unchanged: true, copies: frozen.copies.length }))
+} else throw new Error('Use freeze,prepare,validate <figure>,render <figure>,check. No RAW/finalize/publish action.')

@@ -1,0 +1,234 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import { createRequire } from 'node:module'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+
+delete process.env.PWDEBUG
+process.env.PLAYWRIGHT_HTML_OPEN = 'never'
+const require = createRequire(path.join(process.cwd(), 'package.json'))
+const { chromium, expect } = require('@playwright/test')
+const repo = path.resolve(process.cwd(), '..')
+const { proseFlow } = require(path.join(repo,
+  '.claude/skills/ld-s10y-lesson/tools/htmlfrag.js'))
+const here = path.dirname(fileURLToPath(import.meta.url))
+const [book = '7a', ...requestedLessons] = process.argv.slice(2)
+const artifact = process.env.S10Y_ARTIFACT_ROOT
+  ? path.resolve(repo, process.env.S10Y_ARTIFACT_ROOT)
+  : path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp/batch16-source', book)
+const edition = path.join(artifact, 'editions/modern-us-neutral')
+const renderRoot = process.env.S10Y_RENDER_ROOT
+  ? path.resolve(repo, process.env.S10Y_RENDER_ROOT)
+  : path.join(repo, '.tmp/ld-s10y-lesson/render', book, 'modern-us-neutral')
+const output = process.env.S10Y_OUTPUT_ROOT
+  ? path.resolve(repo, process.env.S10Y_OUTPUT_ROOT)
+  : path.join(here, 'batch16-offline-evidence', book)
+fs.mkdirSync(output, { recursive: true })
+const lessons = requestedLessons.length
+  ? requestedLessons
+  : ['alg7-c1-s1-n1', 'alg7-c1-s1-n2', 'alg7-c1-s1-n3']
+const checks = []
+const choiceDirs = JSON.parse(process.env.S10Y_CHOICE_DIRS || '{}')
+const browser = await chromium.launch({ headless: true })
+
+try {
+  for (const viewport of JSON.parse(process.env.S10Y_VIEWPORTS_JSON ||
+    '[{"width":1440,"height":960},{"width":390,"height":844}]')) {
+    const context = await browser.newContext({ viewport })
+    const page = await context.newPage()
+    const errors = []
+    page.on('pageerror', (error) => errors.push(error.message))
+    for (const lesson of lessons) {
+      const dir = path.join(edition, 'lessons', lesson)
+      const prose = JSON.parse(fs.readFileSync(path.join(dir, 'lesson.json')))
+      const exercises = JSON.parse(fs.readFileSync(path.join(dir, 'exercises.json')))
+      const draftPath = choiceDirs[lesson]
+        ? path.resolve(repo, choiceDirs[lesson], 'draft.json')
+        : path.join(dir, 'choice-set/draft.json')
+      const draft = fs.existsSync(draftPath) ? JSON.parse(fs.readFileSync(draftPath)) : null
+      const surfaces = [
+        { name: 'text', selector: '.para',
+          count: proseFlow(prose.prose, prose.section_breaks)
+            .filter((block) => !['fig', 'cap'].includes(block.kind)).length },
+        { name: 'exercises', selector: 'li.ex', count: exercises.count },
+        ...(draft ? [{ name: 'choices', selector: '.choice', count: draft.questions.length }] : []),
+      ]
+      for (const surface of surfaces) {
+        const filename = path.join(renderRoot, lesson, `${surface.name}.html`)
+        const html = fs.readFileSync(filename, 'utf8')
+        if (surface.name === 'choices') {
+          for (const privateName of ['source_solution', 'source_numbers', 'rationales', 'seed_sha256']) {
+            expect(html).not.toContain(privateName)
+          }
+        }
+        await page.goto(pathToFileURL(filename).href)
+        await page.evaluate(() => document.fonts.ready)
+        await expect(page.locator('.sheet')).toBeVisible()
+        await expect(page.locator('.err,.katex-error')).toHaveCount(0)
+        await expect(page.locator('input,button,textarea,script')).toHaveCount(0)
+        const items = page.locator(surface.selector)
+        const count = await items.count()
+        if (surface.name === 'text') {
+          await expect(page.locator('.sheet>h1')).toHaveText(prose.printed_title || prose.title)
+          await expect(page.locator('.jump')).toBeVisible()
+          await expect(page.locator('.jump')).toHaveAttribute('href', 'exercises.html')
+        } else {
+          expect(count).toBeGreaterThan(0)
+        }
+        if (surface.count != null) expect(count).toBe(surface.count)
+        if (surface.minimum != null) expect(count).toBeGreaterThanOrEqual(surface.minimum)
+        expect(await page.evaluate(() =>
+          document.documentElement.scrollWidth <= window.innerWidth + 1,
+        )).toBe(true)
+        for (let index = 0; index < count; index++) {
+          const item = items.nth(index)
+          await item.scrollIntoViewIfNeeded()
+          await expect(item).toBeVisible()
+          expect((await item.innerText()).trim().length).toBeGreaterThan(0)
+          if (surface.name === 'choices') {
+            await expect(item.locator('.choice-options>li'))
+              .toHaveCount(draft.questions[index].view.options.length)
+            const verticalScroll = await item.locator('.choice-stem,.choice-option-body')
+              .evaluateAll((nodes) => nodes.filter((node) => {
+                const overflow = getComputedStyle(node).overflowY
+                return ['auto', 'scroll'].includes(overflow)
+                  && node.scrollHeight > node.clientHeight + 1
+              }).map((node) => ({ class: node.className, height: node.clientHeight,
+                scrollHeight: node.scrollHeight })))
+            expect(verticalScroll).toEqual([])
+            const clippedMath = await item.locator('.choice-stem,.choice-option-body')
+              .evaluateAll((nodes) => nodes.flatMap((node) => {
+                const container = node.getBoundingClientRect()
+                return [...node.querySelectorAll('.katex-html')].filter((math) => {
+                  const bounds = math.getBoundingClientRect()
+                  return bounds.top < container.top - 1
+                    || bounds.bottom > container.bottom + 1
+                }).map((math) => math.textContent)
+              }))
+            expect(clippedMath).toEqual([])
+          }
+        }
+        const media = page.locator('svg,img')
+        for (let index = 0; index < await media.count(); index++) {
+          const image = media.nth(index)
+          await image.scrollIntoViewIfNeeded()
+          await expect(image).toBeVisible()
+          const dimensions = await image.evaluate((node) => {
+            const bounds = node.getBoundingClientRect()
+            return {
+              width: bounds.width,
+              height: bounds.height,
+              loaded: !(node instanceof HTMLImageElement)
+                || (node.complete && node.naturalWidth > 0),
+            }
+          })
+          expect(dimensions.width).toBeGreaterThan(0)
+          expect(dimensions.height).toBeGreaterThan(0)
+          expect(dimensions.loaded).toBe(true)
+          await image.screenshot({
+            path: path.join(output,
+              `${lesson}-${surface.name}-${viewport.width}-figure-${index + 1}.png`),
+          })
+          const scrollRegion = await image.evaluateHandle((node) => {
+            for (let parent = node.parentElement; parent; parent = parent.parentElement) {
+              if (parent.scrollWidth > parent.clientWidth + 1
+                && ['auto', 'scroll'].includes(getComputedStyle(parent).overflowX)) {
+                return parent
+              }
+            }
+            return null
+          })
+          const scrollElement = scrollRegion.asElement()
+          if (scrollElement) {
+            const end = await scrollElement.evaluate((node) => {
+              node.scrollLeft = node.scrollWidth
+              return { left: node.scrollLeft, max: node.scrollWidth - node.clientWidth }
+            })
+            expect(end.left).toBeGreaterThan(0)
+            expect(Math.abs(end.left - end.max)).toBeLessThanOrEqual(1)
+            const rightEdge = await image.evaluate((node) => {
+              const imageBounds = node.getBoundingClientRect()
+              const regionBounds = node.parentElement.getBoundingClientRect()
+              return imageBounds.right <= Math.min(regionBounds.right, innerWidth) + 1
+            })
+            expect(rightEdge).toBe(true)
+            await scrollElement.screenshot({
+              path: path.join(output,
+                `${lesson}-${surface.name}-${viewport.width}-figure-${index + 1}-end.png`),
+            })
+            await scrollElement.evaluate((node) => { node.scrollLeft = 0 })
+          }
+          await scrollRegion.dispose()
+        }
+        const tables = page.locator('.choice table')
+        for (let index = 0; index < await tables.count(); index++) {
+          const table = tables.nth(index)
+          await table.scrollIntoViewIfNeeded()
+          await expect(table).toBeVisible()
+          const lastCell = table.locator('tr').last().locator('th,td').last()
+          await expect(lastCell).not.toBeEmpty()
+          const region = await table.evaluateHandle((node) => {
+            for (let parent = node.parentElement; parent; parent = parent.parentElement) {
+              if (parent.scrollWidth > parent.clientWidth + 1
+                && ['auto', 'scroll'].includes(getComputedStyle(parent).overflowX)) {
+                return parent
+              }
+            }
+            return null
+          })
+          const element = region.asElement()
+          if (element) {
+            const end = await element.evaluate((node) => {
+              node.scrollTo({ left: node.scrollWidth, behavior: 'instant' })
+              return { left: node.scrollLeft, max: node.scrollWidth - node.clientWidth }
+            })
+            expect(Math.abs(end.left - end.max)).toBeLessThanOrEqual(1)
+            const bounds = await lastCell.boundingBox()
+            const viewportBounds = await element.boundingBox()
+            expect(bounds.x + bounds.width)
+              .toBeLessThanOrEqual(Math.min(viewportBounds.x + viewportBounds.width,
+                viewport.width) + 1)
+            if (bounds.width <= viewportBounds.width + 1) {
+              expect(bounds.x).toBeGreaterThanOrEqual(viewportBounds.x - 1)
+            } else {
+              // A wide cell must be readable at both ends, not fit in one viewport.
+              await element.evaluate((node, left) => {
+                node.scrollTo({ left, behavior: 'instant' })
+              }, Math.max(0, end.left + bounds.x - viewportBounds.x))
+              const leftBounds = await lastCell.boundingBox()
+              expect(leftBounds.x).toBeGreaterThanOrEqual(viewportBounds.x - 1)
+              expect(leftBounds.x).toBeLessThan(viewportBounds.x + viewportBounds.width)
+              await element.screenshot({ path: path.join(output,
+                `${lesson}-${surface.name}-${viewport.width}-table-${index + 1}-cell-start.png`) })
+              await element.evaluate((node) => {
+                node.scrollTo({ left: node.scrollWidth, behavior: 'instant' })
+              })
+            }
+            await element.screenshot({ path: path.join(output,
+              `${lesson}-${surface.name}-${viewport.width}-table-${index + 1}-end.png`) })
+            await element.evaluate((node) => { node.scrollLeft = 0 })
+          }
+          await region.dispose()
+        }
+        for (const position of ['first', 'last']) {
+          const target = count
+            ? (position === 'first' ? items.first() : items.last())
+            : page.locator('.sheet>h1')
+          await target.scrollIntoViewIfNeeded()
+          await page.screenshot({
+            path: path.join(output, `${lesson}-${surface.name}-${viewport.width}-${position}.png`),
+          })
+        }
+        checks.push({ book, lesson, surface: surface.name, viewport, count,
+          figureCount: await media.count(), tableCount: await tables.count(), passed: true })
+      }
+    }
+    expect(errors).toEqual([])
+    await context.close()
+  }
+} finally {
+  await browser.close()
+}
+fs.writeFileSync(path.join(output, process.env.S10Y_REPORT_NAME || 'report.json'), JSON.stringify({
+  status: 'pass', recordedAt: new Date().toISOString(), checks,
+}, null, 2) + '\n')
+console.log(JSON.stringify({ status: 'pass', surfaces: checks.length, output }, null, 2))

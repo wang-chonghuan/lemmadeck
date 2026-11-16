@@ -1,0 +1,84 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import assert from "node:assert/strict";
+
+const repo = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const root = path.dirname(new URL(import.meta.url).pathname);
+const display = path.join(path.dirname(root), "batch23-modern-8a/display");
+const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const copy = (source, destination) => {
+  const bytes = fs.readFileSync(source);
+  fs.mkdirSync(path.dirname(destination), { recursive: true });
+  if (!fs.existsSync(destination)) fs.copyFileSync(source, destination, fs.constants.COPYFILE_EXCL);
+  assert.ok(bytes.equals(fs.readFileSync(destination)));
+  return { path: source, snapshot_path: destination, sha256: hash(bytes), bytes: bytes.length, copy_hash_verified: true };
+};
+const manifestPath = path.join(display, "capture-manifest.json");
+const manifest = JSON.parse(fs.readFileSync(manifestPath));
+assert.equal(manifest.primary_PNGs.length, 77);
+assert.equal(manifest.unique_written_surface_viewport_combinations, 8);
+const records = [
+  "capture-manifest.json",
+  "captures/batch23-written-report.json",
+  "capture-command.json",
+  "render-command.json",
+  "capture-desktop-n4-command.json",
+  "capture-mobile-both-command.json",
+].map((relative) => copy(path.join(display, relative), path.join(root, "input-history", relative)));
+const primary = manifest.primary_PNGs.map((file, index) => {
+  const source = path.resolve(repo, file.path);
+  const bytes = fs.readFileSync(source);
+  assert.equal(hash(bytes), file.sha256);
+  const name = path.basename(source);
+  const parsed = /^(alg8-c1-s[12]-n[34])-(text|exercises)-(1440|390)-(.+)\.png$/.exec(name);
+  assert.ok(parsed);
+  return {
+    index: index + 1,
+    ...copy(source, path.join(root, "primary-snapshot", name)),
+    filename: name,
+    lesson: parsed[1],
+    surface: parsed[2],
+    viewport_width: Number(parsed[3]),
+    kind: parsed[4],
+    width: bytes.readUInt32BE(16),
+    height: bytes.readUInt32BE(20),
+    small_glyph_only: bytes.readUInt32BE(16) < 100 && bytes.readUInt32BE(20) < 100,
+    opened: false,
+  };
+});
+const renderCommand = JSON.parse(fs.readFileSync(path.join(display, "render-command.json")));
+assert.equal(renderCommand.exit_code, 0);
+const renderOutput = JSON.parse(renderCommand.stdout);
+const renders = renderOutput.lessons.flatMap((lesson) =>
+  ["text", "exercises"].map((surface) => {
+    const source = path.join(lesson.output, `${surface}.html`);
+    return { lesson: lesson.lesson, surface, ...copy(source, path.join(root, "render-snapshot", lesson.lesson, `${surface}.html`)) };
+  }),
+);
+const failed = JSON.parse(fs.readFileSync(path.join(display, "capture-command.json")));
+assert.equal(failed.exit_code, 1);
+const inventory = {
+  schema: "independent-written-actual-display-inputs/v1",
+  ticket: "STEMROBIN-182",
+  batch: "batch23",
+  book: "8a",
+  primary_PNGs: primary,
+  render_HTML: renders,
+  evidence_records: records,
+  combinations: manifest.checks,
+  original_capture_exit_code: 1,
+  original_capture_not_relabelled_pass: true,
+  inherited_n3_desktop_combinations: manifest.checks.filter((check) => check.inherited_completed_before_later_failure),
+  original_primary_count: 77,
+  prior_lookup_history: {
+    attempted_report: path.join(display, "batch23-written-report.json"),
+    resolved_report: path.join(display, "captures/batch23-written-report.json"),
+    interpretation: "Report path resolution only, not actual missing evidence.",
+  },
+  no_render_or_primary_capture_repeated: true,
+};
+const output = path.join(root, "input-inventory.json");
+assert.ok(!fs.existsSync(output));
+fs.writeFileSync(output, `${JSON.stringify(inventory, null, 2)}\n`, { flag: "wx" });
+console.log(JSON.stringify({ inventory: output, primary: primary.length, small_glyph_inputs: primary.filter((file) => file.small_glyph_only).length, render_HTML: renders, original_capture_exit_code: 1 }, null, 2));

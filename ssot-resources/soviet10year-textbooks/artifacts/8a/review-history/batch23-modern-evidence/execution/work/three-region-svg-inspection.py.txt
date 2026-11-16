@@ -1,0 +1,67 @@
+"""Inspect existing SVG bytes and raster differences without rerendering."""
+import hashlib
+import json
+from pathlib import Path
+import xml.etree.ElementTree as ET
+
+from PIL import Image, ImageChops
+
+WORK = Path(__file__).resolve().parent
+BASE = WORK.parent
+HISTORY = WORK / "history/before-parent-authorized-three-region-repair"
+SUFFIX = Path("root/8a/editions/modern-us-neutral/figures")
+PIXEL = json.loads((WORK / "three-region-pixel-proof.json").read_text())
+records = []
+for item in PIXEL["records"]:
+    figure = item["id"]
+    old_svg = HISTORY / SUFFIX / f"{figure}.svg"
+    new_svg = BASE / SUFFIX / f"{figure}.svg"
+    old = ET.parse(old_svg).getroot()
+    new = ET.parse(new_svg).getroot()
+    by_id = lambda root: {e.get("id"): e for e in root.iter() if e.get("id")}
+    a, b = by_id(old), by_id(new)
+    changes = []
+    for key in sorted(a.keys() | b.keys()):
+        left, right = a.get(key), b.get(key)
+        if left is None or right is None:
+            node = right if left is None else left
+            changes.append({"id": key, "op": "add" if left is None else "remove",
+                            "tag": node.tag, "attributes": node.attrib})
+        elif left.attrib != right.attrib or left.text != right.text:
+            changes.append({"id": key, "op": "replace",
+                            "before_attributes": left.attrib, "after_attributes": right.attrib,
+                            "before_text": left.text, "after_text": right.text})
+    with Image.open(item["before"]["path"]) as before, Image.open(item["after"]["path"]) as after:
+        diff = ImageChops.difference(before.convert("RGB"), after.convert("RGB"))
+        outside_values = []
+        boxes = item["allowed_changed_regions_canvas_px"]
+        for y in range(diff.height):
+            for x in range(diff.width):
+                if any(l <= x <= r and t <= y <= bot for l, t, r, bot in boxes):
+                    continue
+                value = max(diff.getpixel((x, y)))
+                if value:
+                    outside_values.append(value)
+        raster = {
+            "outside_changed_pixel_count": len(outside_values),
+            "outside_max_channel_delta": max(outside_values, default=0),
+            "outside_pixels_delta_over_4": sum(value > 4 for value in outside_values),
+        }
+    records.append({
+        "id": figure, "before_svg": str(old_svg), "after_svg": str(new_svg),
+        "before_svg_sha256": hashlib.sha256(old_svg.read_bytes()).hexdigest(),
+        "after_svg_sha256": hashlib.sha256(new_svg.read_bytes()).hexdigest(),
+        "elements_added": sum(change["op"] == "add" for change in changes),
+        "elements_removed": sum(change["op"] == "remove" for change in changes),
+        "elements_changed": sum(change["op"] == "replace" for change in changes),
+        "changes": changes, "raster": raster,
+    })
+output = WORK / "three-region-svg-inspection.json"
+with output.open("x", encoding="utf-8") as stream:
+    json.dump({"method": "Existing SVG XML attributes and raster differences only; no rendering.",
+               "records": records}, stream, indent=2)
+    stream.write("\n")
+print(json.dumps({"report": str(output), "records": [
+    {key: record[key] for key in ("id", "elements_added", "elements_removed", "elements_changed", "raster")}
+    for record in records
+]}))

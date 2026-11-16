@@ -1,0 +1,246 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { createRequire } from "node:module";
+
+const repo = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const own = path.join(repo, ".intentfold/tickets/STEMROBIN-182/tmp/reviewer-batch23-8a-modern-figures");
+const authorWork = path.join(repo, ".intentfold/tickets/STEMROBIN-182/tmp/batch23-modern-8a/work");
+const readyPath = path.join(authorWork, "changed-candidate-ready.json");
+const output = path.join(own, "changed-region-display-evidence.json");
+const scratch = path.join(own, "changed-region-inputs");
+const screenshots = path.join(own, "changed-region-display");
+const require = createRequire(path.join(repo, ".agents/skills/ld-s10y-image/scripts/render_spec.mjs"));
+const { chromium } = require("playwright-core");
+const hash = bytes => crypto.createHash("sha256").update(bytes).digest("hex");
+const record = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: file, sha256: hash(bytes), bytes: bytes.length };
+};
+const read = file => JSON.parse(fs.readFileSync(file, "utf8"));
+const equal = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const assert = (ok, message) => { if (!ok) throw Error(`STOP: ${message}`); };
+const originals = read(path.join(own, "final-candidate-inputs.json"));
+const priorReview = read(path.join(own, "candidate-review.json"));
+const ready = read(readyPath);
+const inputRecords = [];
+function verify(item, frozen = false) {
+  assert(record(item.path).sha256 === item.sha256, `Input changed: ${item.path}`);
+  if (frozen) assert(record(item.frozen_path).sha256 === item.sha256, `Preserved input changed: ${item.frozen_path}`);
+  inputRecords.push({ ...item });
+}
+assert(!fs.existsSync(output) && !fs.existsSync(scratch) && !fs.existsSync(screenshots), "Changed-region capture already attempted.");
+assert(record(path.join(own, "candidate-review.json")).sha256 === "1866f87aae1499eb0e7b39409dbf7ef55d6ca5fe145a40268d1df1446afc9830", "Original independent verdict changed.");
+assert(record(path.join(own, "actual-asset-observations.json")).sha256 === "1d14a76fb51e301bd6151fdc5fef1d9ba732c64d59b52f3714c4ed7261fbbf41", "Original actual observations changed.");
+for (const item of read(path.join(own, "source-inputs.json")).records) verify(item, true);
+for (const item of originals.templates) verify(item, true);
+for (const candidate of originals.candidates.filter(item => ["fig-03", "fig-04", "fig-05"].includes(item.id))) {
+  for (const item of [candidate.spec, candidate.svg, candidate.render]) verify(item, true);
+}
+assert(equal(ready.changed.map(item => item.id), ["fig-01", "fig-02", "tbl-p0020-01"]), "Changed target set mismatch.");
+verify(ready.exact_diffs);
+verify(ready.retained_failed_strict_rgb_proof);
+const diffReceipt = read(ready.exact_diffs.path);
+fs.mkdirSync(scratch);
+fs.mkdirSync(screenshots);
+function copy(item, name) {
+  verify(item);
+  const frozenPath = path.join(scratch, name);
+  fs.writeFileSync(frozenPath, fs.readFileSync(item.path), { flag: "wx" });
+  assert(record(frozenPath).sha256 === item.sha256, `Copy mismatch: ${name}`);
+  return { ...item, frozen_path: frozenPath };
+}
+const candidates = ready.changed.map(candidate => {
+  const files = Object.fromEntries(["spec", "svg", "render"].map(kind => {
+    const suffix = kind === "svg" ? ".svg" : `.${kind}.json`;
+    const item = candidate.files.find(file => file.path.endsWith(suffix));
+    assert(item, `Missing ${kind}: ${candidate.id}`);
+    return [kind, copy(item, `${candidate.id}${suffix}`)];
+  }));
+  const old = originals.candidates.find(item => item.id === candidate.id);
+  for (const item of [old.spec, old.svg, old.render]) {
+    assert(record(item.frozen_path).sha256 === item.sha256, "Old independent candidate copy changed.");
+  }
+  const diff = diffReceipt.diffs.find(item => item.id === candidate.id);
+  verify(diff.diff);
+  const disclosed = read(diff.diff.path);
+  assert(record(disclosed.before.preserved).sha256 === old.spec.sha256, "Author-preserved old spec differs from independently retained old spec.");
+  const oldSpec = read(old.spec.frozen_path);
+  const newSpec = read(files.spec.frozen_path);
+  const restored = structuredClone(newSpec);
+  if (candidate.id === "fig-01") {
+    for (const tick of restored.objects.find(item => item.id === "x-axis").ticks.filter(item => ["-1", "1"].includes(item.label))) {
+      assert(tick.labelPlacement.position === "N" && equal(tick.labelPlacement.offset, [0, -12]), "Unexpected changed tick placement.");
+      tick.labelPlacement = { position: "S", offset: [0, 12] };
+    }
+    assert(equal(restored, oldSpec), "fig01 has changes beyond the two authorized placements.");
+  } else if (candidate.id === "fig-02") {
+    const projection = restored.objects.find(item => item.id === "source-horizontal-projection");
+    assert(equal(projection, { id: "source-horizontal-projection", type: "segment", from: [0, 3], to: "table-point-8", stroke: "ink", strokeWidth: 2, dash: 2 }), "Unexpected projection geometry/style.");
+    assert(equal(restored.objects.find(item => item.id === "table-point-8").at, [8, 3]), "Projection endpoint changed.");
+    restored.objects = restored.objects.filter(item => item.id !== "source-horizontal-projection");
+    restored.assertions = restored.assertions.filter(item => !item.id.startsWith("source-horizontal-projection-"));
+    restored.source.inventory = restored.source.inventory.filter(item => item.id !== "source-horizontal-projection");
+    assert(equal(restored, oldSpec), "fig02 changes exceed the single projection and its evidence bindings.");
+  } else {
+    const segments = restored.objects.filter(item => item.type === "segment");
+    assert(segments.length === 10, "Table needs exactly ten retained rules.");
+    for (let y = 0; y <= 2; y++) {
+      const item = segments.find(item => item.id === `source-table-h-${y}`);
+      assert(equal(item.from, [0, y]) && equal(item.to, [8, y]), "Table horizontal endpoint changed.");
+    }
+    for (let x = 1; x <= 7; x++) {
+      const item = segments.find(item => item.id === `source-table-v-${x}`);
+      assert(equal(item.from, [x, 0]) && equal(item.to, [x, 2]), "Table interior divider changed.");
+    }
+    assert(!segments.some(item => item.from[0] === item.to[0] && [0, 8].includes(item.from[0])), "An exterior vertical border remains.");
+    assert(equal(restored.objects.filter(item => item.type === "text"), oldSpec.objects.filter(item => item.type === "text")), "Table label text/placement/style changed.");
+    restored.objects = oldSpec.objects;
+    restored.assertions = oldSpec.assertions;
+    restored.source.inventory = oldSpec.source.inventory;
+    assert(equal(restored, oldSpec), "Table has unrelated non-rule changes.");
+  }
+  const render = read(files.render.frozen_path);
+  assert(render.status === "pass" && render.spec.sha256 === files.spec.sha256 && render.output.svg.sha256 === files.svg.sha256, "Stale producer render binding.");
+  return { id: candidate.id, ...files, old_spec: old.spec, old_svg: old.svg, old_render: old.render, exact_disclosed_diff: copy(diff.diff, `${candidate.id}.disclosed-diff.json`), independent_spec_scope_match: true, prior_verdict: priorReview.figures.find(item => item.id === candidate.id).status };
+});
+const readyRecord = copy({ ...record(readyPath) }, "changed-candidate-ready.json");
+const rgbFailure = copy(ready.retained_failed_strict_rgb_proof, "retained-author-failed-strict-rgb-proof.json");
+const inputPath = path.join(own, "changed-region-inputs.json");
+fs.writeFileSync(inputPath, `${JSON.stringify({
+  schema: "stemrobin/changed-region-input-freeze@1", at: new Date().toISOString(), candidates, original_inputs: inputRecords,
+  declared_width: 640, ready: readyRecord, retained_author_rgb_failure: rgbFailure,
+  unchanged_passing_figures: ["fig-03", "fig-04", "fig-05"], unchanged_templates: originals.templates.length,
+  source_checkpoint_reused_no_semantic_or_pixel_rereview: record(path.join(own, "source-basis.json")),
+  original_full_review: record(path.join(own, "candidate-review.json")),
+}, null, 2)}\n`, { flag: "wx" });
+let browser;
+let context;
+const captures = [];
+const blockedRequests = [];
+try {
+  browser = await chromium.launch({ headless: true });
+  context = await browser.newContext({ deviceScaleFactor: 1, locale: "en-US", colorScheme: "light" });
+  await context.route("**/*", route => {
+    blockedRequests.push(route.request().url());
+    return route.abort();
+  });
+  for (const candidate of candidates) {
+    const page = await context.newPage();
+    try {
+      const spec = read(candidate.spec.frozen_path);
+      const height = Math.ceil(640 * spec.canvas.height / spec.canvas.width);
+      await page.setViewportSize({ width: 640, height });
+      const svg = fs.readFileSync(candidate.svg.frozen_path, "utf8");
+      await page.setContent(`<!doctype html><html><head><meta charset="utf-8"><style>
+        html,body{margin:0;padding:0;background:white;}
+        :root{--ld-figure-ink:#202020;--ld-figure-muted:#575757;--ld-figure-accent:#156f60;--ld-figure-accent-soft:#e7f3ef;--ld-figure-grid:#a5a5a5;--ld-figure-paper:#fff;}
+        #surface{width:640px;}#surface>svg{display:block;width:640px;height:auto;}
+        </style></head><body><div id="surface">${svg}</div></body></html>`, { waitUntil: "load" });
+      await page.evaluate(() => document.fonts.ready);
+      const evidence = await page.evaluate(({ oldSvg, id }) => {
+        const visible = doc => [...doc.querySelectorAll("path,line,circle,ellipse,rect,polygon,polyline,text,image")]
+          .filter(element => !element.closest("defs,clipPath,marker,pattern") && element.getAttribute("display") !== "none" && !/display:\s*none|visibility:\s*hidden/.test(element.getAttribute("style") ?? ""))
+          .map((element, index) => {
+            const key = element.getAttribute("data-label-id") || element.id || `${element.tagName}-${index}`;
+            return { key, tag: element.tagName.toLowerCase(), text: element.tagName.toLowerCase() === "text" ? element.textContent : null, attrs: Object.fromEntries([...element.attributes].sort((a, b) => a.name.localeCompare(b.name)).map(attr => [attr.name, attr.value])) };
+          });
+        const before = visible(new DOMParser().parseFromString(oldSvg, "image/svg+xml"));
+        const after = visible(document.querySelector("#surface>svg"));
+        const normalize = item => {
+          const copy = structuredClone(item);
+          if (id === "tbl-p0020-01") {
+            copy.key = copy.key.replace("ld-source-table-h-", "ld-source-table-grid-h-").replace("ld-source-table-v-", "ld-source-table-grid-v-");
+            if (copy.attrs.id) copy.attrs.id = copy.key;
+          }
+          return copy;
+        };
+        const oldMap = new Map(before.map(item => [item.key, item]));
+        const newMap = new Map(after.map(normalize).map(item => [item.key, item]));
+        const changes = [...new Set([...oldMap.keys(), ...newMap.keys()])].flatMap(key => {
+          const previous = oldMap.get(key);
+          const current = newMap.get(key);
+          return JSON.stringify(previous) === JSON.stringify(current) ? [] : [{ key, before: previous ?? null, after: current ?? null }];
+        });
+        const root = document.querySelector("#surface>svg");
+        const rootBox = root.getBoundingClientRect();
+        const fonts = [...root.querySelectorAll("text")].map(element => {
+          const matrix = element.getScreenCTM();
+          return Number.parseFloat(getComputedStyle(element).fontSize) * Math.hypot(matrix.c, matrix.d);
+        });
+        const wanted = id === "fig-01" ? ["x-axis-tick-2-label", "x-axis-tick-3-label"]
+          : id === "fig-02" ? ["value-3"] : ["cell-0-0", "cell-1-0", "cell-0-7", "cell-1-7"];
+        const labels = [...root.querySelectorAll("text")].filter(element => wanted.includes(element.getAttribute("data-label-id")) || (id === "fig-02" && element.textContent === "3")).map(element => {
+          const box = element.getBoundingClientRect();
+          const matrix = element.getScreenCTM();
+          const glyphs = Array.from({ length: element.getNumberOfChars() }, (_, index) => {
+            const bounds = element.getExtentOfChar(index);
+            const p = new DOMPoint(bounds.x, bounds.y).matrixTransform(matrix);
+            const q = new DOMPoint(bounds.x + bounds.width, bounds.y + bounds.height).matrixTransform(matrix);
+            return { character: element.textContent[index], screen_bounds: [p.x, p.y, q.x, q.y] };
+          });
+          return { label_id: element.getAttribute("data-label-id"), text: element.textContent, screen_bounds: [box.left, box.top, box.right, box.bottom], glyphs };
+        });
+        const lineIds = id === "fig-02" ? ["ld-fig-02_ld-source-horizontal-projection"]
+          : id === "tbl-p0020-01" ? [0, 1, 2].map(y => `ld-tbl-p0020-01_ld-source-table-h-${y}`) : [];
+        const lines = lineIds.map(lineId => {
+          const element = document.getElementById(lineId);
+          const matrix = element.getScreenCTM();
+          const start = new DOMPoint(Number(element.getAttribute("x1")), Number(element.getAttribute("y1"))).matrixTransform(matrix);
+          const end = new DOMPoint(Number(element.getAttribute("x2")), Number(element.getAttribute("y2"))).matrixTransform(matrix);
+          return { id: lineId, start_px: [start.x, start.y], end_px: [end.x, end.y], dash: element.getAttribute("stroke-dasharray"), stroke_width: element.getAttribute("stroke-width") };
+        });
+        return { visible_svg_attribute_delta: changes, visible_leaf_counts: { before: before.length, after: after.length }, css_width: rootBox.width, css_height: rootBox.height, min_effective_text_px: Math.min(...fonts), targeted_labels: labels, changed_or_retained_rule_endpoints: lines, all_glyphs_reviewer_opened: false };
+      }, { oldSvg: fs.readFileSync(candidate.old_svg.frozen_path, "utf8"), id: candidate.id });
+      const changes = evidence.visible_svg_attribute_delta;
+      if (candidate.id === "fig-01") {
+        assert(changes.length === 2 && changes.every(item => ["x-axis-tick-2-label", "x-axis-tick-3-label"].includes(item.key)), "Unexpected fig01 visible SVG changes.");
+        for (const change of changes) {
+          const restored = structuredClone(change.after);
+          restored.attrs.y = change.before.attrs.y;
+          assert(equal(restored, change.before), "fig01 changed a visible property other than the two label y positions.");
+        }
+      } else if (candidate.id === "fig-02") {
+        assert(changes.length === 1 && changes[0].before === null && changes[0].key === "ld-fig-02_ld-source-horizontal-projection", "Unexpected fig02 visible SVG delta.");
+      } else {
+        assert(changes.length === 2 && changes.every(item => item.after === null && ["ld-tbl-p0020-01_ld-source-table-grid-v-0", "ld-tbl-p0020-01_ld-source-table-grid-v-8"].includes(item.key)), "Unexpected visible table delta after rule-ID normalization.");
+      }
+      const regions = candidate.id === "fig-01" ? [
+        { id: "negative-tick-neighborhood", clip: { x: 225, y: 285, width: 80, height: 112 } },
+        { id: "positive-tick-neighborhood", clip: { x: 342, y: 285, width: 80, height: 112 } },
+      ] : candidate.id === "fig-02" ? [
+        { id: "horizontal-guide-endpoints-and-label", clip: { x: 92, y: 380, width: 330, height: 82 } },
+      ] : [
+        { id: "left-open-edge-and-three-rule-endpoints", clip: { x: 0, y: 4, width: 82, height: height - 4 } },
+        { id: "right-open-edge-and-three-rule-endpoints", clip: { x: 566, y: 4, width: 74, height: height - 4 } },
+      ];
+      const images = [];
+      for (const region of regions) {
+        const file = path.join(screenshots, `${candidate.id}-${region.id}-w640.png`);
+        await page.screenshot({ path: file, clip: region.clip, animations: "disabled" });
+        images.push({ region: region.id, surface_clip_px: region.clip, screenshot: record(file) });
+      }
+      captures.push({ id: candidate.id, svg: candidate.svg, spec: candidate.spec, render: candidate.render, ...evidence, regions: images, independent_visible_svg_delta_matches_authorization: true });
+    } finally {
+      await page.close();
+    }
+  }
+} finally {
+  if (context) await context.close();
+  if (browser) await browser.close();
+}
+for (const item of inputRecords) {
+  assert(record(item.path).sha256 === item.sha256, `Input drift during changed-region observation: ${item.path}`);
+}
+fs.writeFileSync(output, `${JSON.stringify({
+  schema: "stemrobin/independent-offline-changed-region-display@1",
+  at: new Date().toISOString(),
+  command: { argv: ["node", path.join(own, "observe-changed-regions.mjs")], script: record(path.join(own, "observe-changed-regions.mjs")) },
+  frozen_inputs: record(inputPath), captures, browser_and_context_closed: true, blocked_requests: blockedRequests,
+  actual_image_open_pending: true,
+  scope: "Only parent-authorized changed neighborhoods at declared640px. Original source/full-figure semantic review retained; no repeated source/geometry/full-figure gate.",
+  author_strict_rgb_failure_retained: rgbFailure,
+  exact_pixels_unchanged_claim: false,
+  no_rerender_spec_validator_lesson_render_promotion_or_headed_product: true,
+}, null, 2)}\n`, { flag: "wx" });
+console.log(JSON.stringify({ evidence: record(output), browser_closed: true, captures: captures.map(item => ({ id: item.id, css_width: item.css_width, min_text_px: item.min_effective_text_px, svg_delta: item.visible_svg_attribute_delta.length, images: item.regions })) }, null, 2));

@@ -1,0 +1,47 @@
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image, ImageDraw, ImageFont
+
+ROOT = Path(__file__).resolve().parent
+capture = json.loads((ROOT / "supplement-capture.json").read_text())
+font = ImageFont.load_default(size=10)
+sheets = []
+for context in capture["contexts"]:
+    files = [f for f in capture["screenshots"]
+             if f["lesson"] == context["lesson"] and f["surface"] == context["surface"]
+             and f["viewport"]["width"] == context["viewport"]["width"]]
+    columns = 1 if context["viewport"]["width"] == 1440 else (3 if len(files) == 6 else 2)
+    width = context["viewport"]["width"]
+    height = context["viewport"]["height"]
+    rows = (len(files) + columns - 1) // columns
+    canvas = Image.new("RGB", (columns * width, rows * (height + 32)), "#d4d4d4")
+    draw = ImageDraw.Draw(canvas)
+    positions = []
+    for index, record in enumerate(files):
+        x = (index % columns) * width
+        y = (index // columns) * (height + 32)
+        image = Image.open(record["path"]).convert("RGB")
+        suffix = record["filename"].split(f'-{width}-')[1]
+        draw.text((x + 3, y + 2), suffix, font=font, fill="black")
+        draw.text((x + 3, y + 16), f'y={record["scroll_y"]} / {record["sha256"][:20]}', font=font, fill="black")
+        canvas.paste(image, (x, y + 32))
+        assert canvas.crop((x, y + 32, x + width, y + 32 + height)).tobytes() == image.tobytes()
+        positions.append({
+            "path": record["path"], "filename": record["filename"], "input_sha256": record["sha256"],
+            "x": x, "y": y + 32, "width": width, "height": height,
+            "native_unscaled": True, "pasted_pixels_verified": True,
+        })
+    destination = ROOT / "supplement-montages" / f'{len(sheets)+1:02d}-{context["lesson"]}-{context["surface"]}-{width}.png'
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    assert not destination.exists()
+    canvas.save(destination)
+    sheets.append({
+        "path": str(destination), "sha256": hashlib.sha256(destination.read_bytes()).hexdigest(),
+        "width": canvas.width, "height": canvas.height, "inputs": positions,
+        "opened": False, "derived_sheet_not_additional_input": True,
+    })
+assert sum(len(sheet["inputs"]) for sheet in sheets) == 29
+(ROOT / "supplement-montages.json").write_text(json.dumps(sheets, indent=2) + "\n")
+print(json.dumps([{"path": s["path"], "width": s["width"], "height": s["height"], "inputs": len(s["inputs"])} for s in sheets], indent=2))

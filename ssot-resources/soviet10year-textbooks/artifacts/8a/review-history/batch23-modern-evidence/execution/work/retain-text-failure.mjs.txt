@@ -1,0 +1,27 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { fileURLToPath } from 'node:url'
+
+const work = path.dirname(fileURLToPath(import.meta.url))
+const history = path.join(work, 'history/text-authoring-attempt1')
+fs.mkdirSync(history, { recursive: true })
+const names = ['author-text.py', ...['alg8-c1-s1-n3', 'alg8-c1-s2-n4'].flatMap(id =>
+  ['lesson.template.json', 'exercises.template.json', 'figures.template.json']
+    .map(name => `adapt/8a/modern-us-neutral/lessons/${id}/${name}`))]
+const snapshots = names.map(name => {
+  const source = path.join(work, name), target = path.join(history, name)
+  fs.mkdirSync(path.dirname(target), { recursive: true })
+  fs.copyFileSync(source, target, fs.constants.COPYFILE_EXCL)
+  return { source, preserved: target,
+    sha256: crypto.createHash('sha256').update(fs.readFileSync(target)).digest('hex') }
+})
+fs.writeFileSync(path.join(history, 'command-failure.json'), JSON.stringify({
+  command: '.claude/skills/ld-s10y-lesson/.venv/bin/python .intentfold/tickets/STEMROBIN-182/tmp/batch23-modern-8a/work/author-text.py',
+  exit_code: 1, stdout: '',
+  stderr: 'Traceback (most recent call last):\n  File "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/batch23-modern-8a/work/author-text.py", line 130, in <module>\n    assert not errors, errors\n           ^^^^^^^^^^\nAssertionError: [\'alg8-c1-s2-n4.prose[4] 未改写但 changes 非空\']\n',
+  finding: 'The local signature check passed a nonempty changes list for an unchanged prose block. No formula or number change.',
+  targeted_repair: 'Compute the changes list from actual text inequality before signature checking. Resume uses the same exact source-only freeze.',
+  snapshots
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ failure_preserved: history, files: snapshots.length }))

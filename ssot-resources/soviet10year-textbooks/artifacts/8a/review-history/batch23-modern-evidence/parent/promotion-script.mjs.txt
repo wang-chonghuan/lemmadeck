@@ -1,0 +1,193 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const work = `${scratch}/batch23-modern-8a`
+const source = `${work}/root/8a`
+const durable = 'ssot-resources/soviet10year-textbooks/artifacts/8a'
+const edition = 'editions/modern-us-neutral'
+const evidence = `${durable}/review-history/batch23-modern-evidence`
+const observer = `${scratch}/reviewer-batch23-8a-written-actual-display`
+const read = file => JSON.parse(fs.readFileSync(file))
+const bytes = file => fs.readFileSync(file)
+const hash = data => crypto.createHash('sha256').update(data).digest('hex')
+const json = value => Buffer.from(JSON.stringify(value, null, 2) + '\n')
+const relative = file => path.isAbsolute(file) ? path.relative(process.cwd(), file) : file
+const walk = directory => fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+  const file = path.join(directory, entry.name)
+  return entry.isDirectory() ? walk(file) : [file]
+})
+const targets = ['alg8-c1-s1-n3', 'alg8-c1-s2-n4']
+const figures = ['fig-01', 'fig-02', 'fig-03', 'fig-04', 'fig-05', 'tbl-p0020-01']
+assert(!fs.existsSync(evidence))
+const textReview = read(`${scratch}/reviewer-batch23-8a-modern-text/changed-text-review.json`)
+assert.equal(textReview.status, 'pass')
+assert.equal(read(`${scratch}/reviewer-batch23-8a-modern-text/r03-transport-review.json`).status, 'pass')
+const observed = read(`${observer}/actual-observations.json`)
+assert.equal(observed.status, 'pass')
+assert.equal(observed.primary_PNGs, 77)
+assert.equal(observed.supplementary_PNGs, 29)
+assert.equal(observed.actual_PNG_files, 106)
+assert.equal(observed.unique_written_combinations, 8)
+assert.deepEqual(observed.coverage.remaining_actual_pixel_gaps, [])
+assert(observed.coverage.complete_written_subparts_prose_formulas_tables_and_graphic_edges_observed)
+assert(observed.primary_files.every(row => row.opened))
+assert(observed.supplementary_files.every(row => row.opened))
+for (const id of targets) {
+  assert.equal(read(`${work}/work/command-finalize-${id}.json`).exit_code, 0)
+  for (const name of ['lesson.json', 'exercises.json']) {
+    assert(bytes(`${source}/lessons/${id}/${name}`).equals(bytes(`${durable}/lessons/${id}/${name}`)))
+  }
+}
+for (const id of ['alg8-c1-s1-n1', 'alg8-c1-s1-n2']) {
+  for (const name of ['lesson.json', 'exercises.json', 'figures.json', 'adaptation.audit.json']) {
+    assert(bytes(`${source}/${edition}/lessons/${id}/${name}`)
+      .equals(bytes(`${durable}/${edition}/lessons/${id}/${name}`)))
+  }
+}
+const pending = new Map()
+const mappings = new Map()
+const retained = {}
+function remember(file, target) {
+  file = relative(file)
+  if (mappings.has(file)) return
+  assert(!fs.existsSync(target))
+  const data = bytes(file)
+  pending.set(target, data)
+  mappings.set(file, target)
+  retained[path.relative(evidence, target)] = {
+    original_bytes_sha256: hash(data), retained_bytes_sha256: hash(data),
+    inactive_history: target.endsWith('.txt'),
+  }
+}
+remember(`${durable}/${edition}/book.json`, `${evidence}/before/edition-book.json.txt`)
+for (const directory of [
+  `${work}/work`, `${work}/display`,
+  `${scratch}/reviewer-batch23-8a-modern-figures`,
+  `${scratch}/reviewer-batch23-8a-modern-text`, observer,
+]) {
+  for (const file of walk(directory)) {
+    if (file.includes('/__pycache__/')) continue
+    remember(file, `${evidence}/execution/${path.basename(directory)}/${path.relative(directory, file)}${
+      /\.(json|md|mjs|cjs|js|py|log|html)$/.test(file) ? '.txt' : ''}`)
+  }
+}
+remember(`${scratch}/promote-batch23-8a-modern.mjs`, `${evidence}/parent/promotion-script.mjs.txt`)
+const promoted = []
+function promote(file, data = bytes(file), metadataOnly = false) {
+  const target = file.replace(source, durable)
+  assert(file.startsWith(`${source}/${edition}/`))
+  assert(!fs.existsSync(target) || target === `${durable}/${edition}/book.json`)
+  remember(file, `${evidence}/original-core/${path.relative(`${source}/${edition}`, file)}.txt`)
+  mappings.set(file, target)
+  if (target.endsWith('.json')) assert.doesNotMatch(data.toString(), /\.intentfold\/|\.tmp\/|\/Users\//)
+  pending.set(target, data)
+  promoted.push({ destination: target, original_sha256: hash(bytes(file)), sha256: hash(data),
+    metadata_rebinding_only: metadataOnly })
+}
+for (const id of targets) {
+  for (const name of ['lesson.json', 'exercises.json', 'figures.json', 'adaptation.audit.json']) {
+    promote(`${source}/${edition}/lessons/${id}/${name}`)
+  }
+}
+const figureMetadata = []
+for (const id of figures) {
+  const figureRoot = `${source}/${edition}/figures/${id}`
+  const spec = read(`${figureRoot}.spec.json`)
+  const render = read(`${figureRoot}.render.json`)
+  const review = read(`${figureRoot}.review.json`)
+  assert.equal(render.status, 'pass')
+  assert.equal(review.status, 'pass')
+  assert.equal(hash(bytes(`${figureRoot}.spec.json`)), render.spec.sha256)
+  assert.equal(hash(bytes(`${figureRoot}.render.json`)), review.render.sha256)
+  assert.equal(hash(bytes(`${figureRoot}.svg`)), render.output.svg.sha256)
+  assert.equal(hash(bytes(`${figureRoot}.svg`)), review.outputs.svg.sha256)
+  assert.equal(hash(bytes(review.source.path)), review.source.sha256)
+  const originalSource = relative(spec.source.image.path)
+  assert(originalSource.startsWith(`${source}/figures/`))
+  const finalSource = originalSource.replace(source, durable)
+  assert(bytes(originalSource).equals(bytes(finalSource)))
+  mappings.set(originalSource, finalSource)
+  spec.source.image.path = finalSource
+  const finalRoot = `${durable}/${edition}/figures/${id}`
+  render.spec.path = `${finalRoot}.spec.json`
+  render.spec.sha256 = hash(json(spec))
+  render.output.svg.path = `${finalRoot}.svg`
+  review.source.path = finalSource
+  review.spec = structuredClone(render.spec)
+  review.render.path = `${finalRoot}.render.json`
+  review.render.sha256 = hash(json(render))
+  review.outputs.svg = structuredClone(render.output.svg)
+  for (const suffix of ['spec.json', 'render.json', 'review.json']) {
+    remember(`${figureRoot}.${suffix}`, `${evidence}/original-core/figures/${id}.${suffix}.txt`)
+    mappings.set(`${figureRoot}.${suffix}`, `${finalRoot}.${suffix}`)
+  }
+  mappings.set(`${figureRoot}.svg`, `${finalRoot}.svg`)
+  figureMetadata.push({ id, figureRoot, spec, render, review })
+}
+function rebind(value) {
+  if (Array.isArray(value)) return value.map(rebind)
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value)
+    .map(([key, child]) => [key, rebind(child)]))
+  if (typeof value !== 'string') return value
+  const normalized = relative(value)
+  if (mappings.has(normalized)) return mappings.get(normalized)
+  if (normalized.startsWith(`${scratch}/`) || normalized.startsWith('.tmp/')) {
+    return `Historical execution location, not retained dependency: ${normalized.slice(normalized.indexOf('/') + 1)}`
+  }
+  return value
+}
+function rebindNotes(text) {
+  for (const [from, to] of [...mappings].sort((a, b) => b[0].length - a[0].length)) {
+    text = text.split(path.resolve(from)).join(to).split(from).join(to)
+  }
+  assert.doesNotMatch(text, /\.intentfold\/|\.tmp\/|\/Users\//)
+  return text
+}
+for (const row of figureMetadata) {
+  row.review.notes = rebindNotes(row.review.notes) +
+    ` Parent metadata-only promotion retains all original FigureReview/source/render failures and original bytes. ` +
+    `Observed SVG bytes are unchanged. Offline display scope and limitations: ${evidence}/actual-observations.json. ` +
+    `No new semantic, figure, canonical, pipeline or display verification was run.`
+  for (const [suffix, value] of [['spec.json', row.spec], ['render.json', row.render], ['review.json', row.review]]) {
+    promote(`${row.figureRoot}.${suffix}`, json(value), true)
+  }
+  promote(`${row.figureRoot}.svg`)
+}
+const index = read(`${source}/${edition}/book.json`)
+index.profile.path = relative(index.profile.path)
+assert.equal(hash(bytes(index.profile.path)), index.profile.sha256)
+promote(`${source}/${edition}/book.json`, json(index), true)
+pending.set(`${evidence}/actual-observations.json`, json(rebind(observed)))
+pending.set(`${evidence}/parent-promotion.json`, json({
+  status: 'pass', reviewer_kind: 'self_review',
+  scope: 'Metadata-only integration of independently reviewed text, six figures and actual written pixels.',
+  closed_targets: targets, original_exercises: 22, frozen_source_prose_objects: 42,
+  rendered_paragraph_slots_per_viewport: 41, source_vs_rendered_counts_not_reinterpreted: true,
+  written_only_combinations: 8, choice_questions_completed: 0,
+  observed_primary_PNGs: 77, observed_supplement_PNGs: 29, actual_PNG_files: 106,
+  observed_svg_bytes_unchanged: true, earlier_modern_n1_n2_unchanged: true,
+  source_layer_unchanged: true,
+  text_review: mappings.get(`${scratch}/reviewer-batch23-8a-modern-text/changed-text-review.json`),
+  derived_transport_review: mappings.get(`${scratch}/reviewer-batch23-8a-modern-text/r03-transport-review.json`),
+  actual_observations: `${evidence}/actual-observations.json`,
+  figure_original_reviews: figures.map(id => `${evidence}/original-core/figures/${id}.review.json.txt`),
+  semantic_canonical_display_or_pipeline_reruns: 0, promoted, usage: null,
+}))
+pending.set(`${evidence}/retention.json`, json({
+  status: 'pass', core_files_promoted: promoted.length, retained,
+  original_textual_execution_files_are_inactive_history: true,
+  parent_promotion: `${evidence}/parent-promotion.json`,
+  actual_observations: `${evidence}/actual-observations.json`,
+}))
+assert.equal(promoted.length, 33)
+for (const [file, data] of pending) {
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  fs.writeFileSync(file, data)
+}
+for (const row of promoted) assert.equal(hash(bytes(row.destination)), row.sha256)
+console.log(JSON.stringify({ status: 'pass', core_files_promoted: promoted.length,
+  retained_files: Object.keys(retained).length + 3, observed_svg_bytes_unchanged: true,
+  written_combinations: 8, choice_completion_added: 0 }))

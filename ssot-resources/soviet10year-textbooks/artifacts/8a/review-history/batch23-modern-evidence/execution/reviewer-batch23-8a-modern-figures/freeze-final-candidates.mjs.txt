@@ -1,0 +1,52 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+
+const workspace = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const own = path.join(workspace, ".intentfold/tickets/STEMROBIN-182/tmp/reviewer-batch23-8a-modern-figures");
+const summaryPath = path.join(workspace, ".intentfold/tickets/STEMROBIN-182/tmp/batch23-modern-8a/work/candidate-ready.json");
+const output = path.join(own, "final-candidate-inputs.json");
+const snapshotRoot = path.join(own, "candidate-inputs");
+if (fs.existsSync(output) || fs.existsSync(snapshotRoot)) throw new Error("Candidate freeze already exists; do not overwrite.");
+const hash = bytes => crypto.createHash("sha256").update(bytes).digest("hex");
+const summaryBytes = fs.readFileSync(summaryPath);
+const summary = JSON.parse(summaryBytes);
+const records = [];
+const freeze = (source, relative, expected) => {
+  const bytes = fs.readFileSync(source);
+  const sha256 = hash(bytes);
+  const frozen = path.join(snapshotRoot, relative);
+  fs.mkdirSync(path.dirname(frozen), { recursive: true });
+  fs.writeFileSync(frozen, bytes, { flag: "wx" });
+  if (hash(fs.readFileSync(source)) !== sha256) throw new Error(`Input changed while freezing: ${source}`);
+  const record = { path: source, frozen_path: frozen, bytes: bytes.length, sha256, summary_sha256: expected ?? null, matches_summary: expected ? sha256 === expected : null };
+  records.push(record);
+  return record;
+};
+freeze(summaryPath, "candidate-ready.json");
+const candidates = summary.candidates.map(candidate => ({
+  id: candidate.id,
+  ...Object.fromEntries(["spec", "svg", "render", "preview"].map(name => [
+    name, freeze(candidate[name].path, `figures/${candidate.id}.${name === "preview" ? "preview.png" : name === "spec" || name === "render" ? `${name}.json` : name}`, candidate[name].sha256),
+  ])),
+}));
+const templates = summary.lessons.flatMap(lesson => lesson.templates.map(template => ({
+  lesson: lesson.id,
+  ...freeze(template.path, `lessons/${lesson.id}/${path.basename(template.path)}`, template.sha256),
+})));
+const sourceEvidence = ["source-inputs.json", "source-basis.json", "source-image-observations.json"].map(name => {
+  const file = path.join(own, name);
+  return { path: file, sha256: hash(fs.readFileSync(file)) };
+});
+const manifest = {
+  schema: "stemrobin/independent-final-candidate-inputs@1",
+  recorded_at: new Date().toISOString(),
+  command: { argv: ["node", path.join(own, "freeze-final-candidates.mjs")], cwd: workspace, script_sha256: hash(fs.readFileSync(path.join(own, "freeze-final-candidates.mjs"))) },
+  scope: "Only disclosed candidate spec/SVG/render/preview and complete current n3/n4 templates; no author-private contexts, solutions, answers, choices or prior history files.",
+  source_evidence: sourceEvidence,
+  candidates,
+  templates,
+  records,
+};
+fs.writeFileSync(output, `${JSON.stringify(manifest, null, 2)}\n`, { flag: "wx" });
+console.log(JSON.stringify({ output, sha256: hash(fs.readFileSync(output)), inputs: records.length, candidates: candidates.map(c => c.id), differences_from_summary: records.filter(r => r.matches_summary === false) }, null, 2));

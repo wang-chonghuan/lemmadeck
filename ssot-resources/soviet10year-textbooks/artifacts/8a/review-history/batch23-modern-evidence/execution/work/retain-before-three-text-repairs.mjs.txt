@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const work = path.dirname(fileURLToPath(import.meta.url))
+const history = path.join(work, 'history/before-three-text-review-repairs')
+assert(!fs.existsSync(history))
+const files = ['alg8-c1-s1-n3', 'alg8-c1-s2-n4'].flatMap(id =>
+  ['lesson.template.json', 'exercises.template.json', 'figures.template.json']
+    .map(name => `adapt/8a/modern-us-neutral/lessons/${id}/${name}`))
+const records = files.map(relative => {
+  const source = path.join(work, relative)
+  const retained = path.join(history, relative)
+  fs.mkdirSync(path.dirname(retained), { recursive: true })
+  fs.copyFileSync(source, retained, fs.constants.COPYFILE_EXCL)
+  assert(fs.readFileSync(source).equals(fs.readFileSync(retained)))
+  return { source, retained, sha256: crypto.createHash('sha256')
+    .update(fs.readFileSync(source)).digest('hex') }
+})
+fs.writeFileSync(path.join(history, 'retention.json'), JSON.stringify({
+  rejected_review: path.resolve(work, '../../reviewer-batch23-8a-modern-text/modern-text-review.json'),
+  purpose: 'Original six template bytes retained before only R01/R02/R03 modern wording repairs.',
+  RAW_changes: 0, formula_changes: 0, records,
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ history, retained_files: records.length }))

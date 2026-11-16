@@ -1,0 +1,31 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+
+const work = path.dirname(fileURLToPath(import.meta.url))
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const receipt = path.join(work, 'three-region-scaled-preview-receipt.json')
+assert(!fs.existsSync(receipt))
+const results = []
+for (const id of ['fig-01', 'fig-02', 'tbl-p0020-01']) {
+  const input = path.join(work, `${id}.preview.png`)
+  const output = path.join(work, `${id}.parent-authorized-region.640.png`)
+  assert(!fs.existsSync(output))
+  const inputHash = sha(input)
+  const args = ['--resampleWidth', '640', input, '--out', output]
+  const result = spawnSync('/usr/bin/sips', args, { encoding: 'utf8' })
+  assert.equal(sha(input), inputHash)
+  results.push({ id, argv: ['/usr/bin/sips', ...args], status: result.status,
+    stdout: result.stdout, stderr: result.stderr,
+    input: { path: input, sha256: inputHash },
+    output: fs.existsSync(output) ? { path: output, sha256: sha(output) } : null })
+}
+fs.writeFileSync(receipt, JSON.stringify({
+  method: 'Scale each newly rendered PNG to declared640px media width without SVG/spec regeneration. This is a scaled author raster preview, not an independent actual-SVG browser or headed-product display review.',
+  results,
+}, null, 2) + '\n', { flag: 'wx' })
+assert(results.every(result => result.status === 0))
+console.log(JSON.stringify({ receipt, previews: results.map(result => result.output) }))

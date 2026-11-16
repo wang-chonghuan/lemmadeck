@@ -1,0 +1,239 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const own = path.join(root, '.intentfold/tickets/STEMROBIN-182/tmp/reviewer-batch23-8a-modern-text');
+const raw = path.join(root, 'ssot-resources/soviet10year-textbooks/artifacts/8a');
+const lessons = ['alg8-c1-s1-n3', 'alg8-c1-s2-n4'];
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const expectedReadHashes = {
+  'alg8-c1-s1-n3/lesson.json': '898541bd293c43b4ea484c1a30f9a46b8be3d99e7d36ed79887a63e73eb3a3ac',
+  'alg8-c1-s1-n3/exercises.json': 'e02f726b4f0e3066f71ef9b42365f669ef605e728556f14889b4dfe274095b37',
+  'alg8-c1-s2-n4/lesson.json': 'e0ccb56813cba32f6240b53452a75bff1315d7a7f15d543fe7774782f0b0ab10',
+  'alg8-c1-s2-n4/exercises.json': '244c7e2e59ba099f7d1ba3ce5b29c3f1cb9172560d89ad3d55c05e832a7acb97',
+};
+const blockRoles = {
+  'alg8-c1-s1-n3': [
+    'definition', 'discriminant-overview', 'distinct-root-factorization',
+    'Vieta-proof', 'double-root-extension', 'negative-discriminant',
+    'real-linear-factor-contradiction', 'example-introduction',
+    'example-1-statement', 'example-1-worked-source',
+    'example-2-statement', 'example-2-worked-source',
+    'example-3-statement', 'example-3-worked-source',
+    'example-4-statement', 'example-4-worked-source',
+  ],
+  'alg8-c1-s2-n4': [
+    'graph-example-statement', 'completing-square', 'same-pair-solution-set',
+    'minimum-and-symmetry', 'table-introduction', 'source-table',
+    'plotting-explanation', 'figure-2', 'translation-conjecture',
+    'figure-2-caption', 'proof-introduction', 'point-coordinate-translation',
+    'figure-3', 'figure-4', 'figure-3-caption', 'figure-4-caption',
+    'vector-proof', 'forward-point-inclusion', 'forward-substitution',
+    'forward-set-inclusion', 'reverse-quantifier-ambiguity',
+    'example-conclusion', 'general-quadratic-translation',
+    'vertex-axis-opening-definitions', 'translated-parabola-properties',
+    'general-function-domain-translation',
+  ],
+};
+const tasks = {
+  12: ['求六式的实根', '六式因式分解并保留首项系数'],
+  13: ['九式分解如果可能', '保留正/零/负判别式和无理实根情形'],
+  14: ['三式写成两个一次式的积', '保留精确小数和分数系数'],
+  15: ['六式约分', '保留每个原分母的全部禁值'],
+  16: ['两分式函数实际作图', '保留直线上的空心删点'],
+  17: ['解四个严格二次不等式', '保留符号与开端点'],
+  18: ['解四个不等式组', '组内交集、负数除法反向、空集及闭端点'],
+  19: ['实际作图', '回答对称轴是否存在', '曲线名称'],
+  20: ['实际作图', '对称轴', '第三/第四象限与原点排除', '最大值及取得位置'],
+  21: ['打开来源图1', '对四条标号曲线逐条读系数'],
+  22: ['两式配方', '保留第二式平方外系数2'],
+  23: ['打开来源图5', '按既定系数及平移向量写目标方程'],
+  24: ['同一源曲线的四个平移目标方程'],
+  25: ['同一平移作用于两个不同符号系数的源函数'],
+  26: ['从四个目标方程反求平移终点'],
+  27: ['六式同时识别系数a和平移终点'],
+  28: ['制作模型板', '利用模型板作四幅图', '小数逗号解释需明确'],
+  29: ['利用原上开口模型板作四幅下开口图', '反射/翻转并平移'],
+  30: ['四幅图的顶点坐标', '画草图并保留开口和形状'],
+  31: ['四式配方', '在平面实际标顶点和对称轴', '判断开口'],
+  32: ['两个实参数的取值集合', '两个不同实根的严格边界', '分析a=0退化情形'],
+  33: ['两高次多项式的全部实根', '提因子不丢零根', '不引入复数域'],
+};
+const assetNotes = {
+  'fig-01': {
+    lesson: lessons[0], ownership: { written_source: '21', prose: false },
+    observation: '完整四条过O的曲线、I/II/III/IV、x/y两轴和正负刻度实际可见；上宽/上窄/下窄/下宽按非零横坐标读点分别为a=1,2,-1,-1/4。原粗线和网格重叠，不能把扫描像素误当额外精确数学条件。',
+    mathematical_inventory: ['O', 'x-axis', 'y-axis', 'I', 'II', 'III', 'IV', 'positive-and-negative-ticks'],
+  },
+  'tbl-p0020-01': {
+    lesson: lessons[1], ownership: { prose_block: 5, written_source: null },
+    observation: '完整x行5,6,7,8,9,10,11与y行7.5,5,3.5,3,3.5,5,7.5逐列可读；最左行头及最右列都已看到。对称中心为x=8。',
+    mathematical_inventory: { x: [5, 6, 7, 8, 9, 10, 11], y: [7.5, 5, 3.5, 3, 3.5, 5, 7.5] },
+  },
+  'fig-02': {
+    lesson: lessons[1], ownership: { prose_block: 7, written_source: null },
+    observation: '上开口抛物线、坐标轴/O、8和3、顶点向轴的虚线及描点实际可见；图的顶点是(8,3)，不得从像素方格假设两轴同单位长度。',
+    mathematical_inventory: ['O', 'x-axis', 'y-axis', 'vertex-(8,3)', 'projection-lines', 'plotted-points'],
+  },
+  'fig-03': {
+    lesson: lessons[1], ownership: { prose_block: 12, written_source: null },
+    observation: 'Phi/Phi-prime两条上开口同形曲线、O、O-prime(8,3)及连接平移向量、8/3辅助标记实际可见；曲线交点不等于两顶点重合。',
+    mathematical_inventory: ['Phi', 'Phi-prime', 'O', 'O-prime', 'translation-vector', '8', '3'],
+  },
+  'fig-04': {
+    lesson: lessons[1], ownership: { prose_block: 13, written_source: null },
+    observation: 'O/O-prime/M/M-prime及e1/e2、x0/y0、x0+8/y0+3、8/3和虚线投影实际可见，向量平移关系完整；x0/y0是任意点的符号坐标，不新增示意数值。',
+    mathematical_inventory: ['O', 'O-prime', 'M', 'M-prime', 'e1', 'e2', 'x0', 'y0', 'x0+8', 'y0+3', '8', '3'],
+  },
+  'fig-05': {
+    lesson: lessons[1], ownership: { written_source: '23', prose: false },
+    observation: 'Phi过O，Phi-prime顶点为O-prime；2和5两轴标记及投影虚线、两曲线标签均实际可见。方程系数1.5由题面给定，不从示意轮廓反测。',
+    mathematical_inventory: ['Phi', 'Phi-prime', 'O', 'O-prime-(2,5)', 'x-axis', 'y-axis', '2', '5', 'projection-lines'],
+  },
+};
+const record = {
+  schema: 's10y-source-first-modern-text-freeze-v1',
+  ticket: 'STEMROBIN-182', batch: 23, book: '8a',
+  status: 'source_frozen_waiting_candidate_authorization',
+  reviewer: { kind: 'independent_agent', identity: 'batch23-8a-source-first', owned_directory: own },
+  frozen_at: new Date().toISOString(),
+  scope: '两课忠实RAW来源的逐块理论/例题及22原题合同；不是现代稿评审或选择题/答案审查。',
+  modern_candidates_read: false,
+  independent_answer_files_or_keys_read: false,
+  separate_options_read: false,
+  worked_examples_policy: '获准lesson.json自带的例题和解答按原课文块阅读；未打开独立答案/答案键文件。合同中的原题验算是从原题自行推导。',
+  files_read: [],
+  separate_figure_manifests: [],
+  actual_source_assets_opened: [],
+  lessons: [],
+  ambiguities: [
+    { id: 'A01', topic: '实数域省略', scope: 'n3定义/负判别式与n4参数题及高次求根', constraint: '只在实变量/实系数/实根范围评判。' },
+    { id: 'A02', topic: '约分禁值未重述', scope: 'n3例2、15、16', constraint: '原定义域不扩大，已约掉的分母因子仍产生禁值与删点。' },
+    { id: 'A03', topic: '象限单数', scope: 'n3题20', constraint: '除原点外在第三、第四象限，不要求唯一象限。' },
+    { id: 'A04', topic: 'a非零隐含', scope: 'n4块22-24', constraint: '抛物线/唯一顶点要求a非零。' },
+    { id: 'A05', topic: '小数逗号', scope: 'n4题28б', exact_source_token: '0.5(x+2,5)^2-3', constraint: '2.5解释是条件解释，不是已改写的来源；禁止无说明改变数学区。' },
+    { id: 'A06', topic: '两个根的重数约定', scope: 'n4题32а', constraint: '依源的D=0唯一根定义，两个不同实根要求c<169/10，不能静默包含边界。' },
+    { id: 'A07', topic: '反向证明量词', scope: 'n4块20', constraint: '完整反向包含需量化任意目标图象点，而非再次仅量化源图象点。' },
+    { id: 'A08', topic: '例4求根措辞和参数符号', scope: 'n3块15', constraint: '求根不限制任意变量x；sqrt(b^2)=abs(b)，b可正可负可零。' },
+    { id: 'A09', topic: '作图方法不构成更强定理', scope: 'n4块6与来源图', constraint: '有限点不唯一决定任意曲线；示意图不反测题面既定系数。' },
+  ],
+  actions: {
+    durable_or_other_agent_files_modified: false,
+    finalize_or_render_invoked: false,
+    git_or_database_invoked: false,
+    model_service_invoked: false,
+    author_ready_templates_or_Boyle_review_read: false,
+    source_only_bitmap_measurement: '仅对已打开fig-01.png做只读暗像素行观察，以核对粗网格下的读点；没有生成新图或调用渲染器。',
+  },
+  stop_point: '源冻结后停止，等待父方明确授权指定现代候选；不主动读取候选或继续渲染。',
+};
+await fs.mkdir(path.join(own, 'source-snapshot/figures'), { recursive: true });
+await fs.mkdir(path.join(own, 'history'), { recursive: true });
+const snapshotFile = async (absolute, destination, expected = null) => {
+  const bytes = await fs.readFile(absolute);
+  const sha256 = hash(bytes);
+  if (expected && sha256 !== expected) throw new Error('Reviewed source bytes changed: ' + absolute);
+  await fs.mkdir(path.dirname(destination), { recursive: true });
+  await fs.copyFile(absolute, destination);
+  if (hash(await fs.readFile(destination)) !== sha256) throw new Error('Snapshot copy changed bytes');
+  return { path: absolute, sha256, snapshot_path: destination, copy_hash_verified: true };
+};
+for (const lessonId of lessons) {
+  const documents = {};
+  for (const filename of ['lesson.json', 'exercises.json']) {
+    const source = path.join(raw, 'lessons', lessonId, filename);
+    const binding = await snapshotFile(source, path.join(own, 'source-snapshot/lessons', lessonId, filename),
+      expectedReadHashes[`${lessonId}/${filename}`]);
+    record.files_read.push({ ...binding, read: true });
+    documents[filename] = JSON.parse(await fs.readFile(binding.snapshot_path, 'utf8'));
+  }
+  const independentManifest = path.join(raw, 'lessons', lessonId, 'figures.json');
+  try {
+    await fs.access(independentManifest);
+    record.separate_figure_manifests.push({
+      path: independentManifest, status: 'became_available_but_not_read',
+      note: '新出现的独立清单未作为本次已完成观察的依据；来源绑定仍为已读内嵌清单及实图。',
+    });
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    record.separate_figure_manifests.push({
+      path: independentManifest, status: 'not_in_observed_RAW_layout',
+      read: false, sha256: null,
+      authoritative_source_used: 'lesson.figures + prose kind=fig + exercises.figure_refs/figures + actual RAW PNG',
+      actual_source_data_missing: false,
+    });
+  }
+  const lesson = documents['lesson.json'];
+  const exercises = documents['exercises.json'];
+  if (lesson.prose.length !== blockRoles[lessonId].length) throw new Error('Block inventory changed');
+  record.lessons.push({
+    id: lessonId, title: lesson.title,
+    prose_objects: lesson.prose.map((block, index) => ({
+      block_index: index, role: blockRoles[lessonId][index],
+      kind: block.kind, text: block.text,
+      text_sha256: hash(Buffer.from(block.text, 'utf8')),
+      figure_id: block.id, label: block.label,
+      printed_page: block.printed_page, source_refs: block.source_refs,
+      contract_location: `source-contract.md: ${lessonId === lessons[0] ? 'n3' : 'n4'} 逐块合同，块 ${index}`,
+      independently_reviewed: true,
+    })),
+    figure_inventory: lesson.figures,
+    written_sources: exercises.exercises.map(exercise => ({
+      number: exercise.number, group: exercise.group, group_id: exercise.group_id,
+      text: exercise.text, text_sha256: hash(Buffer.from(exercise.text, 'utf8')),
+      pages: exercise.pages, figure_refs: exercise.figure_refs,
+      task_contract: tasks[exercise.number],
+      independent_mathematical_conditions_location: `source-contract.md: ${exercise.number} 号原题`,
+      independently_reviewed: true,
+    })),
+  });
+}
+for (const [id, note] of Object.entries(assetNotes)) {
+  const source = path.join(raw, 'figures', `${id}.png`);
+  const binding = await snapshotFile(source, path.join(own, 'source-snapshot/figures', `${id}.png`));
+  record.actual_source_assets_opened.push({
+    id, ...binding, ...note,
+    opened: true, open_method: 'functions.view_image detail=original on actual original source PNG',
+    derived_or_new_render: false,
+  });
+}
+record.counts = {
+  source_lessons: record.lessons.length,
+  source_text_JSONs_read: record.files_read.length,
+  separate_figures_JSONs_read: 0,
+  theory_example_caption_figure_blocks: record.lessons.reduce((n, lesson) => n + lesson.prose_objects.length, 0),
+  n3_blocks: record.lessons[0].prose_objects.length,
+  n4_blocks: record.lessons[1].prose_objects.length,
+  written_sources: record.lessons.reduce((n, lesson) => n + lesson.written_sources.length, 0),
+  original_PNGs_opened: record.actual_source_assets_opened.length,
+  ambiguities_frozen: record.ambiguities.length,
+};
+if (record.counts.written_sources !== 22 || record.counts.theory_example_caption_figure_blocks !== 42) {
+  throw new Error('Source object inventory mismatch');
+}
+const history = {
+  kind: 'parent_path_correction_not_actual_missing_data',
+  original_requested_prefix: path.join(raw, 'raw/lessons'),
+  initially_attempted_paths: lessons.flatMap(id => ['lesson.json', 'exercises.json', 'figures.json']
+    .map(filename => path.join(raw, 'raw/lessons', id, filename))),
+  initial_tool_result: 'ENOENT on the incorrectly supplied raw/ prefix',
+  correction: 'Human explicitly corrected durable RAW to artifacts/8a/lessons and confirmed no other authorization changed.',
+  corrected_source_prefix: path.join(raw, 'lessons'),
+  actual_source_data_missing: false,
+  separate_manifest_layout_note: record.separate_figure_manifests,
+  no_modern_candidate_fallback: true,
+};
+const historyPath = path.join(own, 'history/path-resolution.json');
+await fs.writeFile(historyPath, JSON.stringify(history, null, 2) + '\n');
+record.path_resolution_history = { path: historyPath, sha256: hash(await fs.readFile(historyPath)) };
+const contractPath = path.join(own, 'source-contract.md');
+record.source_contract = { path: contractPath, sha256: hash(await fs.readFile(contractPath)) };
+const destination = path.join(own, 'source-freeze.json');
+await fs.writeFile(destination, JSON.stringify(record, null, 2) + '\n');
+console.log(JSON.stringify({
+  path: destination, sha256: hash(await fs.readFile(destination)),
+  status: record.status, counts: record.counts,
+  source_contract: record.source_contract,
+  modern_candidates_read: false,
+}, null, 2));

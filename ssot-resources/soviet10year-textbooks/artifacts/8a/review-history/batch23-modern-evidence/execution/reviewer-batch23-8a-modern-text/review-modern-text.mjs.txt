@@ -1,0 +1,504 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import assert from "node:assert/strict";
+
+const root = path.dirname(new URL(import.meta.url).pathname);
+const read = (file) => fs.readFileSync(file);
+const json = (file) => JSON.parse(read(file));
+const sha256 = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const freezePath = path.join(root, "candidate-freeze.json");
+const freeze = json(freezePath);
+const source = json(path.join(root, "source-freeze.json"));
+const input = (lesson, filename) =>
+  freeze.authorized_candidate_files.find(
+    (file) => file.path.endsWith(`/${lesson}/${filename}`),
+  );
+const mathSpans = (text) =>
+  [...(text || "").matchAll(/\$([^$]*)\$/g)].map((match) =>
+    match[1].replace(/\s+/g, ""),
+  );
+const textLine = (file, text) => {
+  const bytes = read(file).toString("utf8");
+  const offset = bytes.indexOf(`"text": ${JSON.stringify(text)}`);
+  assert.ok(offset >= 0);
+  return bytes.slice(0, offset).split("\n").length;
+};
+
+const blockNotes = {
+  "alg8-c1-s1-n3": [
+    ["pass", "变量x与实数常数a,b,c明确区分；a不为零保留。新增实根/实系数一次因式限定对应源A01，不改变知识域。", ["A01"]],
+    ["pass", "判别式b²−4ac、根存在与实系数一次因式存在的关系保留；未把不可实分解误说成不可复分解。", ["A01"]],
+    ["pass", "D>0的两根与a(x−x1)(x−x2)恒等式均保留；结合实数范围和D>0，两根不同，不是只在根处成立。"],
+    ["pass", "展开积、韦达和/积两式及恢复三项系数的完整证明保留；首项系数a及a≠0未丢失。"],
+    ["pass", "D=0仍称唯一实数根并令x1=x2；重根平方形式及首项系数保留，为题32的不同根计数提供上下文。", ["A06"]],
+    ["pass", "D<0的无根与不可写成两个一次式均明确限定为实数/实系数，符合源合同。", ["A01"]],
+    ["pass", "反证假设k,m,p,q为实数且k,p不为零；代入−m/k推出实根，矛盾方向与量词完整。", ["A01"]],
+    ["revise", "仍承接恒等式（1）的例题，但新增句子重复“例子”，形成不完整的搭配；最小删去末尾“的例子”。", [], ["R03"]],
+    ["pass", "例1两式及“如果可能”完整；Latin a/b与原两个小题顺序一一对应。"],
+    ["pass", "例1保留D为正/零、根3及−1/2、唯一根1/5；两种因式形式及负首项系数−25完整，没有符号或常因子损失。"],
+    ["pass", "例2仍要求约分原完整分式；未缩减为仅分解分母。"],
+    ["pass", "例2分母两根及(3x+2)(x−5)保留，约分链正确。新增原定义域/原分母非零提醒保留x≠5,−2/3，未补定义点；不强求另列数值禁值。", ["A02"]],
+    ["pass", "例3原严格二次不等式保留，未改为非严格条件。"],
+    ["pass", "例3因式、两异号不等式组的并集、第二组空集及开区间]-4,5[均保留；两端不包含。"],
+    ["pass", "例4原多项式完整；任务仍为关于x因式分解，参数b未被附加符号条件。", ["A08"]],
+    ["pass_with_retained_source_wording", "例4D=b²、sqrt(b²)=|b|、无序两根及最终恒等式保留。b可正、负或零，零时两根重合。用b表示变量x仍承袭源措辞，但根公式上下文明确是在求根，未把结果施加给任意x；可选改为“用b表示这个三项式的根”。", ["A08"]],
+  ],
+  "alg8-c1-s2-n4": [
+    ["pass", "引入仍是作给定函数图象，二次、一次与常数项和方程（1）编号完整。"],
+    ["pass", "配方后的(x−8)²/2+3与原式完全相等，方程（2）编号保留，未近似化。"],
+    ["pass", "两个方程“同解”的图象关系保留；本处对象为完整(x,y)点集而不是横坐标零点。"],
+    ["pass", "x=8取最小值3、关于8的对称取值以及x=6/10时y=5保留。"],
+    ["pass", "表格引入仍绑定同一函数的点，不改变为新例题或新数据任务。"],
+    ["binding_only", "正文表对象仍为tbl-p0020-01；标签与源PNG哈希一致。七列数据的现代实际图形不在本次文本审范围，不能据清单宣称数据像素通过。"],
+    ["pass_with_retained_source_wording", "描点并用光滑曲线连接的作图过程、既定函数及图2引用完整。作为已给函数的常规作图说明读取，未新增有限点唯一决定任意曲线的定理。", ["A09"]],
+    ["binding_only", "正文fig-02对象及图2标签/源PNG哈希匹配；本次不审现代顶点、刻度或曲线像素。"],
+    ["pass", "图3比较Phi与Phi'两方程并提出平移猜想；O到O'(8,3)方向正确，系数1/2不变，未以图示取代证明。"],
+    ["pass", "图2题注的文本、kind=cap和标签身份保留；不重定为图3。这里只审身份，不判断实际题注布局。"],
+    ["pass", "证明引入仍承接上一平移猜想，无额外条件或新定理。"],
+    ["pass", "任意点M(x0,y0)正向加8、加3到M'；实平面上的固定平移及任意点量词保留。"],
+    ["binding_only", "正文fig-03及图3标签/源PNG哈希匹配；实际两曲线、向量与点标注交由独立图审。"],
+    ["binding_only", "正文fig-04及图4标签/源PNG哈希匹配；本次不复审向量图的实际标签、辅助投影或布局。"],
+    ["pass", "图3题注文本与标签身份保留，不改附着身份；实际位置不在文本结论内。"],
+    ["pass", "图4题注文本与标签身份保留；没有把示意坐标改成具体数值。"],
+    ["pass", "OM、OO'及OM'=OM+OO'的向量等式和标准基系数逐项相加保留，得到x0+8,y0+3。"],
+    ["pass", "从任意源抛物线点M到目标点M'的正向成员关系保留；本段只承担正向。"],
+    ["pass", "从y0=x0²/2代入目标方程的正向计算完整，x横移符号正确。"],
+    ["pass", "明确量化所有Phi点，正确建立T(Phi)包含于Phi'；不把该段单独视为集合相等证明。"],
+    ["revise", "原来的反向量词仍是“Phi上的每一个点”，只说明源点能由某目标点逆移得到。新增减去位移和互逆唯一性未验证任意Phi'点逆像属于Phi，故仍未证明反向包含。", ["A07"], ["R01"]],
+    ["revise_dependency", "图象确为平移像这一结论本身正确，但“由两个方向的对应”依赖上一块未完成的反向包含；修复块20即可，无须改结论或方程。", ["A07"], ["R01"]],
+    ["pass", "一般定理平移(m,n)及系数不变保留；新增二次项非零与实变量限定，足以约束随后抛物线顶点论述。", ["A01", "A04"]],
+    ["pass", "顶点定义、基本抛物线轴y轴和顶点O、开口随a正负变化保留，承接块22的非零系数条件。", ["A04"]],
+    ["pass", "与同系数基本抛物线合同、顶点(m,n)、轴x=m及开口方向保留；未称不同a的所有抛物线合同。", ["A04"]],
+    ["pass", "一般函数公式f(x−m)+n与平移向量保留；新增定义域随横移平移、不补未定义点，含义为D→D+m，不被前面二次函数非零条件错误限制。", ["A02"]],
+  ],
+};
+
+const exerciseNotes = {
+  "alg8-c1-s1-n3": [
+    ["pass", "六小题变量与系数符号原样保留，同时要求求根和因式分解；不是只交根或只交因式。"],
+    ["pass", "九小题全保留，“如果可能”未删除；包括负判别式、重根和无理实根情形，不强求全部可分解。", ["A01"]],
+    ["pass", "三小题的精确小数/分数及任务“两个一次式的积”保留，没有把非整数系数归一化丢掉。"],
+    ["pass", "六原分式完整，并新增原分母非零限制。原禁值仍为x≠1；a≠−2,−9/2；b≠−5,5；y≠−9,9；c≠11,−2；末题a≠−1,14/11。", ["A02"]],
+    ["pass", "两原分式及实际作图任务完整，新增原分式定义域提醒；因此x=2和x=1/2的删点仍属合同，没有直接改成完整直线。", ["A02"]],
+    ["pass", "四二次不等式的<、>与负首项系数保留；源要求的严格边界不变。"],
+    ["pass", "四不等式组及每组两个条件都保留；唯一非严格小题的两个≤未丢，组内交集/空解情形仍完整。"],
+    ["pass", "系数0.25及作图、对称轴是否存在、曲线名称三个任务完整。"],
+    ["revise", "作图、对称轴和最大值任务保留；象限仍问“哪个”，没有处理源A03。非原点图象在第三、第四两个象限，要求唯一象限无合法完整回答。", ["A03"], ["R02"]],
+    ["pass_binding_only_for_figure", "图1引用及每条曲线分别指出a的任务保留；fig-01仍只归本题并与源PNG哈希绑定。四曲线现代像素不由本审宣称通过。", ["A09"]],
+    ["pass", "两原三项式与配方任务完整；第二式仍有二次项系数2，不能因“一个平方”误丢平方外系数。"],
+  ],
+  "alg8-c1-s2-n4": [
+    ["pass_binding_only_for_figure", "图5、两曲线身份、已给系数1.5、O'(2,5)和平移方向及写目标方程任务完整。系数取题面而非示意轮廓；绑定fig-05，未复审像素。", ["A09"]],
+    ["pass", "共同源函数8x²与四平移终点完整，包含零横移/零纵移小题；方程任务不减为只求顶点。"],
+    ["pass", "同一平移(−3,5)作用于两个源函数，系数1及−2.5完整；上移没有偷换下开口符号。"],
+    ["pass", "源函数5x²、四目标方程及反求O'任务完整；括号正号和负纵移保留，零位移未遗漏。"],
+    ["pass", "六目标方程与同时指出a、O'两项要求完整；省略系数1/−1的原式未被改为未定系数。"],
+    ["pass", "制作模型板与利用它实际作四图的任务完整。保留源数学token x+2,5并明说逗号是小数分隔符；是显式来源记号解释，不是未经说明把式子改为x+2.5。", ["A05"]],
+    ["pass", "仍利用上开口2x²模型板画四条系数−2的图；任务没有被缩为只能平移，也没有丢负号。翻转模型的步骤可由学生完成，不必在题面泄露步骤答案。"],
+    ["pass", "四方程、顶点坐标任务及尾句“画草图”完整；a=3,−2,2,1保持各自形状和开口。"],
+    ["pass", "四式配方为顶点式、在坐标平面实际标绘顶点与轴、判断开口三类任务均保留，没有只剩代数计算。"],
+    ["pass_with_retained_source_convention", "两个参数集合任务保留。题面未局部补写“不同实根”，按n3块4唯一实根约定，第一题须严格排除重根边界；第二题未新增a≠0，a=0的一次退化情形仍需学生分析。无候选解答可审，不把独立边界推导当作者答案。", ["A01", "A06"]],
+    ["pass", "两高次多项式求根任务、y公因子及四次式完整；按冻结的实数域理解，未删零根，也未要求复根。", ["A01"]],
+  ],
+};
+
+const ambiguities = [
+  {
+    id: "A01",
+    disposition: "clarified_in_n3_and_n4_context",
+    candidate_handling: "n3块0/1/4/5/6明确实数根和实系数；n4块22明确实变量。题32/33未局部重述，但未引入复数或改变冻结的实数知识域。",
+    judgment: "pass",
+    limitation: "不要求每个题面重复章节实数范围；本报告不包含任何作者解答的实/复根核验。",
+  },
+  {
+    id: "A02",
+    disposition: "explicitly_clarified",
+    candidate_handling: "n3例2新增原分式有定义及原分母非零；题15/16明确保留原分母/原分式定义域；n4块25明说定义域随横移平移、不补未定义点。",
+    judgment: "pass",
+    limitation: "一般性定义域提醒数学上足够，不要求题面列出答案式的所有禁值；不审未获授权的答案或实际作图。",
+  },
+  {
+    id: "A03",
+    disposition: "retained_unresolved",
+    candidate_handling: "n3题20仍问“这个图象在哪个象限内”，没有复数象限措辞。",
+    judgment: "revise",
+    findings: ["R02"],
+    limitation: "这是继承来源疑义的现代措辞建议，不宣告RAW印刷错误，不授权改源或运行勘误。",
+  },
+  {
+    id: "A04",
+    disposition: "explicitly_clarified_in_theorem",
+    candidate_handling: "n4块22明确二次项系数不为零；块23/24在同一论述内承接此条件。",
+    judgment: "pass",
+    limitation: "非零系数仅约束抛物线论述，不能据此强加题32参数a≠0。",
+  },
+  {
+    id: "A05",
+    disposition: "explicit_source_notation_interpretation",
+    candidate_handling: "题28保留x+2,5原token，新增“括号中的逗号是小数分隔符”，明确小数逗号解释。",
+    judgment: "pass",
+    limitation: "这里只接受显式记号解释，不宣告源已被正规化，也不授权改动数学token或持久RAW。",
+  },
+  {
+    id: "A06",
+    disposition: "retained_but_defined_by_source_context",
+    candidate_handling: "题32仍为“两个根/没有根”；n3块4明确D=0为唯一实数根，提供不同根计数约定。未新增a≠0。",
+    judgment: "pass_with_retained_source_convention",
+    limitation: "独立合同仍冻结第一题严格边界及第二题a=0退化分析；本次没有作者答案可验证，不把缺少答案当文本缺失。",
+  },
+  {
+    id: "A07",
+    disposition: "attempted_clarification_still_incomplete",
+    candidate_handling: "n4块20保留量化Phi点的原句，补充逆向减去位移和两次互逆唯一性；块21新增“由两个方向的对应”。",
+    judgment: "revise",
+    findings: ["R01"],
+    limitation: "最小补足目标点量词与成员关系，不改变方程、数字或RAW，也不是自动勘误授权。",
+  },
+  {
+    id: "A08",
+    disposition: "retained_wording_correct_in_root_formula_context",
+    candidate_handling: "n3例4仍说用b表示变量x，但上下文为根公式；|b|、两无序分支及恒等式保留，没有b≥0假设。",
+    judgment: "pass_with_retained_source_wording",
+    optional_wording: "可将“可以用b表示变量x”改为“可以用b表示这个三项式的根”，只澄清对象，不改任何公式。",
+    limitation: "不把原句上下文之外的任意变量误读强加给候选；不要求作者给b=0另解，现有公式已覆盖。",
+  },
+  {
+    id: "A09",
+    disposition: "retained_at_plotting_method_level",
+    candidate_handling: "n4块6仍是已给函数的描点法说明，没有新增有限点决定任意函数的定理。题23的1.5仍由题面给定；图1逐曲线任务和绑定保留。",
+    judgment: "pass_text_scope",
+    limitation: "不以现代示意图轮廓反测系数；现代实际图形/像素、刻度与可读性不在本次结论中。",
+  },
+];
+
+const findings = [
+  {
+    id: "R01",
+    priority: 2,
+    lesson: "alg8-c1-s2-n4",
+    filename: "lesson.template.json",
+    pointer: "/prose/20/text",
+    line: 358,
+    title: "反向包含仍未覆盖任意目标图象点",
+    source_ambiguity: "A07",
+    reason: "正向段证明T(Phi)⊆Phi'。现反向段只称每个Phi点由某个Phi'点逆移得到，仍等价于正向可达；全平面平移互逆只能确保逆像存在唯一，不能单靠它证明该逆像属于Phi。块21却依赖“两个方向”推出图象相等。",
+    minimum_revision: "仅替换块20的反向段：任取曲线Phi'上的点Q(u,v)，由v=(u−8)²/2+3可得v−3=(u−8)²/2。因此逆向平移把Q映到Phi上的点(u−8,v−3)，且由平移互逆，这个原象唯一。",
+    acceptance_check: "量词显式覆盖所有Phi'点，并验证逆像满足Phi方程；与块19的正向包含合成相等。块21的结论和所有原数字/方程无需更改。",
+    modifies_math_statement: false,
+    candidate_edited: false,
+  },
+  {
+    id: "R02",
+    priority: 2,
+    lesson: "alg8-c1-s1-n3",
+    filename: "exercises.template.json",
+    pointer: "/exercises/8/text",
+    line: 218,
+    title: "图象象限提问仍预设只有一个象限",
+    source_ambiguity: "A03",
+    reason: "y=−x²/3在x<0时位于第三象限，在x>0时位于第四象限，原点不属于象限；“这个图象在哪个象限内”无法给出唯一合法象限。这是源疑义被原样保留，不是新增算式错误。",
+    minimum_revision: "只把“这个图象在哪个象限内？”改为“图象除坐标轴上的点外位于哪些象限？”；保留作图、对称轴和最大值任务及原公式。",
+    acceptance_check: "题面不预设唯一象限，不把原点归入象限，且不泄露第三/第四象限答案；所有原任务完整。",
+    modifies_math_statement: false,
+    source_errata_authorized: false,
+    candidate_edited: false,
+  },
+  {
+    id: "R03",
+    priority: 3,
+    lesson: "alg8-c1-s1-n3",
+    filename: "lesson.template.json",
+    pointer: "/prose/7/text",
+    line: 142,
+    title: "例题引入重复“例子”",
+    reason: "当前“下面通过几个例子应用恒等式（1）的例子”重复宾语/修饰结构，属于现代改写新增的语句问题。",
+    minimum_revision: "改成“下面通过几个例子应用恒等式（1）。”，只删句末“的例子”，保留引用编号。",
+    acceptance_check: "句子通顺并仍引出恒等式（1）的四个例题，无内容或数学改动。",
+    modifies_math_statement: false,
+    candidate_edited: false,
+  },
+];
+
+for (const binding of freeze.source_bindings) {
+  assert.equal(sha256(read(binding.path)), binding.sha256);
+}
+assert.equal(source.lessons.length, 2);
+const lessons = source.lessons.map((lesson) => {
+  const lessonFile = input(lesson.id, "lesson.template.json");
+  const exerciseFile = input(lesson.id, "exercises.template.json");
+  const figureFile = input(lesson.id, "figures.template.json");
+  const modern = json(lessonFile.snapshot_path);
+  const written = json(exerciseFile.snapshot_path);
+  const manifest = json(figureFile.snapshot_path);
+  assert.equal(modern.id, lesson.id);
+  assert.equal(written.lesson, lesson.id);
+  assert.equal(manifest.lesson, lesson.id);
+  assert.equal(modern.title, lesson.title);
+  assert.deepEqual(modern.figures, lesson.figure_inventory);
+  assert.equal(modern.prose.length, blockNotes[lesson.id].length);
+  assert.equal(written.exercises.length, exerciseNotes[lesson.id].length);
+  assert.equal(modern.prose.length, lesson.prose_objects.length);
+  assert.equal(written.exercises.length, lesson.written_sources.length);
+
+  const prose = modern.prose.map((object, index) => {
+    const original = lesson.prose_objects[index];
+    const [status, observation, ambiguityIds = [], findingIds = []] =
+      blockNotes[lesson.id][index];
+    assert.equal(object.kind, original.kind);
+    assert.equal(object.id || null, original.figure_id);
+    assert.equal(object.label || null, original.label);
+    assert.deepEqual(object.source_refs, original.source_refs);
+    assert.deepEqual(mathSpans(object.text), mathSpans(original.text));
+    return {
+      block_index: index,
+      role: original.role,
+      kind: object.kind,
+      candidate_file: lessonFile.path,
+      candidate_file_sha256: lessonFile.sha256,
+      candidate_pointer: `/prose/${index}`,
+      source_text_sha256: original.text_sha256,
+      candidate_text_sha256: sha256(Buffer.from(object.text || "")),
+      candidate_text: object.text || "",
+      figure_id: object.id || null,
+      label: object.label || null,
+      source_refs: original.source_refs,
+      math_spans_unchanged_whitespace_only: true,
+      independently_compared_to_own_source_freeze: true,
+      status,
+      observation,
+      ambiguity_ids: ambiguityIds,
+      finding_ids: findingIds,
+      modern_figure_pixels_reviewed: false,
+    };
+  });
+  const exercises = written.exercises.map((object, index) => {
+    const original = lesson.written_sources[index];
+    const [status, observation, ambiguityIds = [], findingIds = []] =
+      exerciseNotes[lesson.id][index];
+    assert.equal(object.number, original.number);
+    assert.equal(object.group || null, original.group);
+    assert.equal(object.group_id, original.group_id);
+    assert.deepEqual(object.figure_refs, original.figure_refs);
+    assert.deepEqual(
+      (object.figures || []).map((figure) => figure.id),
+      original.figure_refs,
+    );
+    assert.deepEqual(mathSpans(object.text), mathSpans(original.text));
+    const labels = [...object.text.matchAll(/\b([a-i])\)/g)].map(
+      (match) => match[1],
+    );
+    if (labels.length) {
+      assert.deepEqual(
+        labels,
+        labels.map((_, labelIndex) => String.fromCharCode(97 + labelIndex)),
+      );
+    }
+    return {
+      number: original.number,
+      candidate_file: exerciseFile.path,
+      candidate_file_sha256: exerciseFile.sha256,
+      candidate_pointer: `/exercises/${index}`,
+      source_text_sha256: original.text_sha256,
+      candidate_text_sha256: sha256(Buffer.from(object.text)),
+      candidate_text: object.text,
+      group: object.group || null,
+      group_id: object.group_id,
+      figure_refs: object.figure_refs,
+      source_task_contract: original.task_contract,
+      source_mathematical_conditions: original.independent_mathematical_conditions_location,
+      math_spans_unchanged_whitespace_only: true,
+      latin_subpart_order_checked: true,
+      independently_compared_to_own_source_freeze: true,
+      status,
+      observation,
+      ambiguity_ids: ambiguityIds,
+      finding_ids: findingIds,
+      modern_figure_pixels_reviewed: false,
+    };
+  });
+  const sourceAssets = source.actual_source_assets_opened.filter(
+    (asset) => asset.lesson === lesson.id,
+  );
+  assert.deepEqual(
+    manifest.figures.map((figure) => figure.id),
+    sourceAssets.map((asset) => asset.id),
+  );
+  const figures = manifest.figures.map((figure) => {
+    const asset = sourceAssets.find((sourceAsset) => sourceAsset.id === figure.id);
+    const inventory = lesson.figure_inventory.find(
+      (sourceFigure) => sourceFigure.id === figure.id,
+    );
+    assert.equal(figure.label, inventory.label);
+    assert.equal(figure.source.png.sha256, asset.sha256);
+    assert.equal(figure.source.png.path, `figures/${figure.id}.png`);
+    const proseUses = prose
+      .filter((object) => object.figure_id === figure.id)
+      .map((object) => object.block_index);
+    const writtenUses = exercises
+      .filter((exercise) => exercise.figure_refs.includes(figure.id))
+      .map((exercise) => exercise.number);
+    if (asset.ownership.prose_block !== undefined) {
+      assert.deepEqual(proseUses, [asset.ownership.prose_block]);
+      assert.deepEqual(writtenUses, []);
+    } else {
+      assert.deepEqual(proseUses, []);
+      assert.deepEqual(writtenUses, [asset.ownership.written_source]);
+    }
+    return {
+      id: figure.id,
+      label: figure.label,
+      candidate_manifest: figureFile.path,
+      candidate_manifest_sha256: figureFile.sha256,
+      source_png_sha256: asset.sha256,
+      source_png_hash_matches_own_freeze: true,
+      prose_block_uses: proseUses,
+      written_source_uses: writtenUses,
+      linked_spec: figure.spec,
+      linked_svg: figure.svg,
+      linked_render: figure.render,
+      linked_review: figure.review,
+      linked_files_read: false,
+      status: "binding_pass_only",
+      modern_pixels_reviewed: false,
+      modern_pixel_verdict: "outside_scope",
+    };
+  });
+  return {
+    lesson: lesson.id,
+    title: modern.title,
+    counts: {
+      prose_objects: prose.length,
+      textual_objects: prose.filter((object) => object.kind !== "fig").length,
+      figure_prose_objects: prose.filter((object) => object.kind === "fig").length,
+      written_sources: exercises.length,
+      figure_bindings: figures.length,
+    },
+    prose,
+    exercises,
+    figure_bindings: figures,
+  };
+});
+
+for (const finding of findings) {
+  const file = input(finding.lesson, finding.filename);
+  const modern = json(file.snapshot_path);
+  const object = finding.pointer.startsWith("/prose")
+    ? modern.prose[Number(finding.pointer.split("/")[2])]
+    : modern.exercises[Number(finding.pointer.split("/")[2])];
+  assert.equal(textLine(file.snapshot_path, object.text), finding.line);
+  finding.candidate_file = file.path;
+  finding.candidate_snapshot = file.snapshot_path;
+  finding.candidate_file_sha256 = file.sha256;
+  finding.exact_candidate_text = object.text;
+}
+assert.deepEqual(
+  ambiguities.map((ambiguity) => ambiguity.id),
+  source.ambiguities.map((ambiguity) => ambiguity.id),
+);
+const currentVerification = freeze.authorized_candidate_files.map((file) => {
+  const current = read(file.path);
+  const snapshot = read(file.snapshot_path);
+  assert.equal(sha256(current), file.sha256);
+  assert.equal(sha256(snapshot), file.sha256);
+  assert.ok(current.equals(snapshot));
+  return {
+    path: file.path,
+    snapshot_path: file.snapshot_path,
+    sha256: file.sha256,
+    bytes: current.length,
+    unchanged_since_freeze: true,
+    snapshot_byte_identity_verified: true,
+  };
+});
+const counts = {
+  authorized_candidate_templates: currentVerification.length,
+  lessons: lessons.length,
+  prose_objects_reviewed: lessons.reduce((sum, lesson) => sum + lesson.prose.length, 0),
+  textual_objects_reviewed: lessons.reduce((sum, lesson) => sum + lesson.counts.textual_objects, 0),
+  figure_prose_objects_binding_only: lessons.reduce((sum, lesson) => sum + lesson.counts.figure_prose_objects, 0),
+  n3_worked_examples_reviewed: 4,
+  n4_introductory_worked_graph_example_reviewed: 1,
+  written_sources_reviewed: lessons.reduce((sum, lesson) => sum + lesson.exercises.length, 0),
+  source_ambiguities_assessed: ambiguities.length,
+  figure_manifest_bindings_checked: lessons.reduce((sum, lesson) => sum + lesson.figure_bindings.length, 0),
+  actual_source_PNGs_opened_in_prior_source_freeze: source.actual_source_assets_opened.length,
+  new_source_image_opens: 0,
+  modern_image_opens: 0,
+  renders: 0,
+  findings: findings.length,
+  substantive_findings: findings.filter((finding) => finding.priority === 2).length,
+  wording_findings: findings.filter((finding) => finding.priority === 3).length,
+};
+assert.equal(counts.authorized_candidate_templates, 6);
+assert.equal(counts.prose_objects_reviewed, 42);
+assert.equal(counts.textual_objects_reviewed, 38);
+assert.equal(counts.figure_prose_objects_binding_only, 4);
+assert.equal(counts.written_sources_reviewed, 22);
+assert.equal(counts.source_ambiguities_assessed, 9);
+assert.equal(counts.figure_manifest_bindings_checked, 6);
+assert.equal(counts.actual_source_PNGs_opened_in_prior_source_freeze, 6);
+const report = {
+  schema: "independent-source-first-modern-text-review/v1",
+  ticket: "STEMROBIN-182",
+  batch: "batch23",
+  book: "8a",
+  reviewer: "reviewer-batch23-8a-modern-text",
+  recorded_at: new Date().toISOString(),
+  status: "revise",
+  source_first_freeze_reused: true,
+  source_freeze_unchanged: true,
+  source_contract_unchanged: true,
+  source_bindings: freeze.source_bindings,
+  source_path_resolution_history: source.path_resolution_history,
+  candidate_freeze: { path: freezePath, sha256: sha256(read(freezePath)) },
+  candidate_files: currentVerification,
+  counts,
+  math_fidelity: {
+    status: "pass_for_authorized_text",
+    method: "All 42 prose objects and 22 written sources manually compared to own source freeze; dollar-delimited math arrays checked after whitespace-only normalization.",
+    every_math_span_unchanged: true,
+    mechanical_comparison_is_not_semantic_proof: true,
+    original_task_verbs_and_scope_reviewed: true,
+    domains_and_exclusions_reviewed: true,
+    proof_direction_reviewed: true,
+    task_completeness_reviewed: true,
+  },
+  findings,
+  source_ambiguity_dispositions: ambiguities,
+  lessons,
+  boundaries: {
+    only_six_authorized_templates_read: true,
+    author_inline_metadata_not_used_as_independent_proof: true,
+    own_source_freeze_is_source_authority: true,
+    durable_source_re_reviewed: false,
+    author_ready_or_candidate_ready_read: false,
+    author_prose_flow_reports_or_explanations_read: false,
+    other_reviewer_material_read: false,
+    Boyle_conclusions_read: false,
+    independent_answer_files_or_keys_read: false,
+    separate_options_read: false,
+    modern_figure_pixel_review_repeated: false,
+    candidates_or_shared_renderer_modified: false,
+    persistent_directories_modified: false,
+    other_agent_directories_modified: false,
+    finalize_or_render_or_promotion_run: false,
+    git_or_DB_or_services_or_model_calls_run: false,
+    source_ambiguities_are_not_errata_authorization: true,
+  },
+  limitations: [
+    "This is a hash-bound modern-text review, not a final-render/display gate or FigureReview.",
+    "Four figure prose objects and two exercise-only assets were checked for identities, ownership and source PNG binding only. No linked modern spec/SVG/render/review was opened; no modern pixels were judged.",
+    "Prior six actual source PNG observations remain in unchanged source-freeze.json; none reopened or re-reviewed in this candidate stage.",
+    "No author answers or answer keys were authorized. Domain/boundary observations are inherited independent source-contract constraints, not assertions about unseen author answers.",
+    "A06 is retained under the source's unique-root convention; A08/A09 are accepted in their existing contextual scope, not treated as blanket errata.",
+    "R01/R02 request minimum clarification of inherited source ambiguities; R03 fixes candidate-introduced wording. No edits or errata action were performed.",
+    "Pass on unchanged formulas and bindings does not override overall revise for proof completeness and task wording.",
+    "The initial erroneous RAW path history remains unchanged and is not described as actual missing source data.",
+  ],
+  stop_point: "Independent text review complete for these six hashes; stop without editing, finalizing, rendering or promoting candidates. Revised bytes require a separately authorized follow-up.",
+};
+const reportPath = path.join(root, "modern-text-review.json");
+assert.ok(!fs.existsSync(reportPath), "Preserve any prior review; do not overwrite.");
+fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`, { flag: "wx" });
+console.log(JSON.stringify({ report_path: reportPath, status: report.status, counts, findings: findings.map(({ id, priority, title, line }) => ({ id, priority, title, line })) }, null, 2));

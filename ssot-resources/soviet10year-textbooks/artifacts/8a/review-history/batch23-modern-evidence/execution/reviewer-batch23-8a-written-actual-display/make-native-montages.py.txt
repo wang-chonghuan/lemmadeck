@@ -1,0 +1,69 @@
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+from PIL import Image, ImageDraw, ImageFont
+
+ROOT = Path(__file__).resolve().parent
+inventory = json.loads((ROOT / "input-inventory.json").read_text())
+inputs = inventory["primary_PNGs"]
+font = ImageFont.load_default(size=11)
+sheets = []
+groups = []
+for lesson in ("alg8-c1-s1-n3", "alg8-c1-s2-n4"):
+    for surface in ("text", "exercises"):
+        for viewport in (1440, 390):
+            group = [f for f in inputs if f["lesson"] == lesson and f["surface"] == surface and f["viewport_width"] == viewport]
+            endpoints = sorted([f for f in group if f["kind"] in ("first", "last")], key=lambda f: f["kind"])
+            groups.append((f"{lesson}-{surface}-{viewport}-endpoints", endpoints, 1 if viewport == 1440 else 2))
+            media = [f for f in group if f["kind"] not in ("first", "last") and f["height"] >= 100]
+            for offset in range(0, len(media), 4):
+                groups.append((f"{lesson}-{surface}-{viewport}-media-{offset // 4 + 1}", media[offset:offset + 4], 2))
+small = [f for f in inputs if f["kind"] not in ("first", "last") and f["height"] < 100]
+for offset in range(0, len(small), 36):
+    groups.append((f"small-rejected-fragments-{offset // 36 + 1}", small[offset:offset + 36], 2))
+
+for label, files, columns in groups:
+    if not files:
+        continue
+    widths = [max(f["width"], 690 if f["height"] < 100 else 390) for f in files]
+    cell_width = max(widths)
+    rows = [files[i:i + columns] for i in range(0, len(files), columns)]
+    row_heights = [max(f["height"] for f in row) + 32 for row in rows]
+    sheet = Image.new("RGB", (columns * cell_width, sum(row_heights)), "#d4d4d4")
+    draw = ImageDraw.Draw(sheet)
+    positions = []
+    y = 0
+    for row, row_height in zip(rows, row_heights):
+        for column, record in enumerate(row):
+            x = column * cell_width
+            image = Image.open(record["snapshot_path"]).convert("RGB")
+            draw.text((x + 3, y + 2), f'{record["index"]:02d} {record["filename"]}', fill="black", font=font)
+            draw.text((x + 3, y + 15), f'{image.width}x{image.height} native / {record["sha256"][:16]}', fill="black", font=font)
+            sheet.paste(image, (x, y + 32))
+            copied = sheet.crop((x, y + 32, x + image.width, y + 32 + image.height))
+            assert copied.tobytes() == image.tobytes()
+            positions.append({
+                "primary_index": record["index"],
+                "filename": record["filename"],
+                "input_sha256": record["sha256"],
+                "x": x, "y": y + 32, "width": image.width, "height": image.height,
+                "native_unscaled": True, "pasted_pixels_verified": True,
+            })
+        y += row_height
+    destination = ROOT / "native-montages" / f"{len(sheets) + 1:02d}-{label}.png"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    assert not destination.exists()
+    sheet.save(destination)
+    sheets.append({
+        "path": str(destination),
+        "sha256": hashlib.sha256(destination.read_bytes()).hexdigest(),
+        "width": sheet.width, "height": sheet.height,
+        "inputs": positions, "opened": False,
+        "derived_sheet_not_additional_input": True,
+    })
+covered = [p["primary_index"] for s in sheets for p in s["inputs"]]
+assert sorted(covered) == list(range(1, 78))
+(ROOT / "native-montages.json").write_text(json.dumps(sheets, indent=2) + "\n")
+print(json.dumps([{"path": s["path"], "width": s["width"], "height": s["height"], "inputs": len(s["inputs"])} for s in sheets], indent=2))

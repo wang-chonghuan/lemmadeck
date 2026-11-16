@@ -1,0 +1,121 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+
+const workspace = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const own = path.join(workspace, ".intentfold/tickets/STEMROBIN-182/tmp/reviewer-batch23-8a-modern-figures");
+const hash = bytes => crypto.createHash("sha256").update(bytes).digest("hex");
+const readOwn = name => JSON.parse(fs.readFileSync(path.join(own, name), "utf8"));
+const manifestPath = path.join(own, "source-inputs.json");
+const manifestBytes = fs.readFileSync(manifestPath);
+const manifest = JSON.parse(manifestBytes);
+const basis = readOwn("source-basis.notes.json");
+const observations = readOwn("source-image-observations.notes.json");
+const outputNames = ["source-basis.json", "source-image-observations.json", "source-evidence-command.json", "status.json"];
+for (const name of outputNames) {
+  if (fs.existsSync(path.join(own, name))) throw new Error(`Once-only evidence output already exists: ${name}`);
+}
+if (hash(manifestBytes) !== basis.method.checkpoint_sha256 || hash(manifestBytes) !== observations.checkpoint_sha256) {
+  throw new Error("The written observations do not bind this input checkpoint.");
+}
+const byteIdentity = manifest.records.map(record => {
+  const current = hash(fs.readFileSync(record.path));
+  const frozen = hash(fs.readFileSync(record.frozen_path));
+  if (current !== record.sha256 || frozen !== record.sha256) throw new Error(`Frozen input drift: ${record.path}`);
+  return { path: record.path, frozen_path: record.frozen_path, sha256: record.sha256, current_and_copy_identical: true };
+});
+const binding = relative => manifest.records.find(record => record.path === path.join(workspace, relative));
+const raw = "ssot-resources/soviet10year-textbooks/artifacts/8a";
+const readFrozenJson = relative => JSON.parse(fs.readFileSync(binding(relative).frozen_path, "utf8"));
+const bindOwn = name => {
+  const file = path.join(own, name);
+  const bytes = fs.readFileSync(file);
+  return { path: file, bytes: bytes.length, sha256: hash(bytes) };
+};
+const checkpoint = { path: manifestPath, sha256: hash(manifestBytes), input_count: manifest.records.length };
+basis.source_input_checkpoint = checkpoint;
+observations.source_input_checkpoint = checkpoint;
+basis.raw_context = manifest.scope.lessons.map(id => ({
+  lesson_id: id,
+  bindings: ["lesson.json", "lesson.md", "exercises.json"].map(file => binding(`${raw}/lessons/${id}/${file}`)),
+  lesson: readFrozenJson(`${raw}/lessons/${id}/lesson.json`),
+  exercises: readFrozenJson(`${raw}/lessons/${id}/exercises.json`),
+}));
+for (const figure of basis.figures) {
+  const page = String(figure.pdf_page).padStart(4, "0");
+  const pageObject = readFrozenJson(`${raw}/pages/${page}/page.json`);
+  const figureEntry = pageObject.meta.figures.find(entry => entry.id === figure.id);
+  const figureBlock = pageObject.blocks.find(block => block.kind === "fig" && block.id === figure.id);
+  figure.source_bindings = {
+    png: binding(`${raw}/figures/${figure.id}.png`),
+    retained_svg: binding(`${raw}/figures/${figure.id}.svg`),
+    raw_lesson_json: binding(`${raw}/lessons/${figure.lesson}/lesson.json`),
+    raw_lesson_md: binding(`${raw}/lessons/${figure.lesson}/lesson.md`),
+    raw_exercises_json: binding(`${raw}/lessons/${figure.lesson}/exercises.json`),
+    raw_page_json: binding(`${raw}/pages/${page}/page.json`),
+    raw_page_md: binding(`${raw}/pages/${page}/page.md`),
+    crop_metadata: figureEntry,
+    raw_figure_block: figureBlock,
+    original_pdf_provenance_from_raw_page: pageObject.meta.source,
+    original_page_render_provenance_from_raw_page: pageObject.meta.render,
+    raw_page_registered_errata: pageObject.meta.errata,
+  };
+}
+for (const observation of observations.observations) {
+  observation.source_png = binding(`${raw}/figures/${observation.id}.png`);
+  observation.retained_svg = binding(`${raw}/figures/${observation.id}.svg`);
+  observation.retained_svg_visual_reviewed = false;
+}
+basis.target_discovery = basis.raw_context.map(context => ({
+  lesson: context.lesson_id,
+  manifest_figures: context.lesson.figures,
+  prose_figures: context.lesson.prose.filter(block => block.kind === "fig").map(block => ({ id: block.id, source_refs: block.source_refs })),
+  exercise_figures: context.exercises.exercises.filter(exercise => exercise.figure_refs.length).map(exercise => ({
+    source_number: exercise.source_number, figure_refs: exercise.figure_refs, pages: exercise.pages,
+  })),
+}));
+const provenanceNames = ["source-basis.notes.json", "source-image-observations.notes.json", "source-observation-amendments.json", "rejected-readonly-commands.json", "provisional-before-reread.source-basis.notes.json", "provisional-before-reread.source-image-observations.notes.json"];
+basis.private_authoring_records = provenanceNames.map(bindOwn);
+observations.private_authoring_records = provenanceNames.map(bindOwn);
+const writeNew = (name, data) => fs.writeFileSync(path.join(own, name), `${JSON.stringify(data, null, 2)}\n`, { flag: "wx" });
+writeNew("source-basis.json", basis);
+writeNew("source-image-observations.json", observations);
+const evidenceOutputs = ["source-basis.json", "source-image-observations.json"].map(bindOwn);
+const command = {
+  schema: "stemrobin/source-evidence-command@1",
+  argv: ["node", path.join(own, "finalize-source-evidence.mjs")],
+  cwd: workspace,
+  script: bindOwn("finalize-source-evidence.mjs"),
+  recorded_at: new Date().toISOString(),
+  input_checkpoint: checkpoint,
+  note_inputs: provenanceNames.map(bindOwn),
+  operation: "Bind independent written source observations to exact frozen RAW bytes. Byte-identity audit only; not a figure/schema/math/render/product validator.",
+  outputs: evidenceOutputs,
+  input_identity: byteIdentity,
+  exit_code: 0,
+};
+writeNew("source-evidence-command.json", command);
+const status = {
+  schema: "stemrobin/source-first-reviewer-status@1",
+  status: "source-frozen-awaiting-final-candidate-disclosure-and-explicit-review-authorization",
+  book: "8a",
+  lessons: manifest.scope.lessons,
+  figures: manifest.scope.figures,
+  counts: { frozen_inputs: manifest.records.length, requested_figures: 6, individually_opened_original_pngs: 6, full_original_image_open_events: 7, retained_svgs_frozen_not_rendered: 6, raw_lesson_contexts: 2 },
+  sources_unchanged: { count: byteIdentity.length, all_current_and_frozen_byte_identical: true },
+  outputs: evidenceOutputs,
+  command_record: bindOwn("source-evidence-command.json"),
+  source_checkpoint: checkpoint,
+  source_observation_amendments: bindOwn("source-observation-amendments.json"),
+  rejected_readonly_commands: bindOwn("rejected-readonly-commands.json"),
+  modern_candidates_read: false,
+  figure_review_generated: false,
+  validators_run: false,
+  rendering_or_capture_run: false,
+  durable_writes: false,
+  services_or_dependency_changes: false,
+  promotion: false,
+  wait_for: "Parent disclosure of final modern candidate asset/spec/render and separate authorization of actual visual review.",
+};
+writeNew("status.json", status);
+console.log(JSON.stringify({ status: status.status, counts: status.counts, source_identity: status.sources_unchanged, outputs: evidenceOutputs, status_record: bindOwn("status.json") }, null, 2));

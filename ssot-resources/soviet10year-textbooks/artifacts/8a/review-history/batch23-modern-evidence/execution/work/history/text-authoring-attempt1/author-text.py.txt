@@ -1,0 +1,163 @@
+"""Source-bound prose edits plus existing deterministic label/layout normalization."""
+import hashlib
+import json
+import shutil
+import sys
+from pathlib import Path
+
+WORK = Path(__file__).resolve().parent
+REPO = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+ROOT = WORK.parent / "root" / "8a"
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+import edition
+
+TARGETS = ["alg8-c1-s1-n3", "alg8-c1-s2-n4"]
+BASE = WORK / "adapt/8a/modern-us-neutral/lessons"
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def dump(path, value):
+    with path.open("x", encoding="utf-8") as output:
+        json.dump(value, output, ensure_ascii=False, indent=2)
+        output.write("\n")
+
+
+freeze = WORK / "source-only-frozen"
+freeze.mkdir()
+interpretation = WORK / "source-only-interpretation.json"
+shutil.copyfile(interpretation, freeze / interpretation.name)
+originals = []
+for lesson_id in TARGETS:
+    for name in ("lesson.template.json", "exercises.template.json", "figures.template.json"):
+        file = BASE / lesson_id / name
+        target = freeze / lesson_id / name
+        target.parent.mkdir(exist_ok=True)
+        shutil.copyfile(file, target)
+        assert file.read_bytes() == target.read_bytes()
+        originals.append({"path": str(file), "sha256": sha(file), "preserved": str(target)})
+assets = [
+    {"id": fid, "path": str(ROOT / "figures" / (fid + ".png")),
+     "sha256": sha(ROOT / "figures" / (fid + ".png")), "actual_png_opened_individually": True}
+    for fid in ("fig-01", "fig-02", "fig-03", "fig-04", "fig-05", "tbl-p0020-01")
+]
+dump(freeze / "freeze-receipt.json", {
+    "interpretation_sha256": sha(interpretation), "templates_before_edits": originals,
+    "actual_source_assets": assets,
+    "source_only_stage_frozen_before_text_edits_and_figurespec_construction": True,
+    "independent_figure_approval": "not claimed; parent dispatch required"
+})
+
+# Only prose outside source formulas is rewritten. Formula signatures are checked below.
+replacements = {
+    "alg8-c1-s1-n3": {
+        0: [
+            ("我们已经不只一次地遇到过多项式因式分解的例子. 现在", "前面已经学习过多项式分解因式。现在"),
+            ("是某一个数", "是实数常数"),
+        ],
+        1: [("能不能分解因式，决定于这个三项式有没有根", "能否分解成实系数一次式的积，取决于它是否有实数根")],
+        2: [("我们来证明在这种情况下", "下面证明在这种情况下")],
+        3: [("为了证明这一点，把式", "把式"), ("因此，当", "因此，当")],
+        4: [("唯一的根", "唯一的实数根")],
+        5: [("三项式没有根", "三项式没有实数根"), ("两个一次多项式", "两个实系数一次多项式")],
+        6: [("任何数", "实数"), ("但这与已知条件矛盾", "这与没有实数根的条件矛盾")],
+        7: [("我们来看几个应用", "下面通过几个例子应用")],
+        9: [("所得到的结果", "这个结果")],
+        11: [("现在可以这样来约分", "在原分式有定义的范围内，可以这样约分")],
+        13: [("验明", "确认"), ("解集合", "解集")],
+        15: [("我们用", "可以用"), ("因此，", "因此，")],
+    },
+    "alg8-c1-s2-n4": {
+        0: [("假设需要作出", "先考虑如何作出")],
+        1: [("由三项式分出一个二项式的平方后，我们把这个方程写成另一形式", "从三项式中分出一个二项式的平方，把方程改写成另一形式")],
+        2: [("我们来看看", "下面研究")],
+        3: [("我们求出", "先求出"), ("容易看出", "可以看出")],
+        6: [("描出上表中给出坐标的点并用光滑的曲线把它们连结后", "在坐标平面上描出表中各点，再用光滑曲线连接")],
+        8: [("可以推测", "可以提出这样的猜想：")],
+        10: [("现在我们证明实际上就是这样", "下面证明这个猜想")],
+        16: [("事实上，由图4可以看出", "图4中的向量关系给出")],
+        17: [("容易理解，如果", "要验证的是：如果")],
+        18: [("实际上，如果", "如果")],
+        19: [("就是说，无论我们取", "因此，无论取")],
+        20: [("反过来说也对，就是", "反过来，")],
+        21: [("于是，", "由两个方向的对应可知，")],
+        22: [("通过类似的讨论，可以证明", "类似地，可以证明")],
+        23: [("我们知道，", "")],
+        25: [("我们弄清楚了", "前面的证明说明")],
+    },
+}
+appendices = {
+    ("alg8-c1-s1-n3", 0): "本节只讨论实数范围内的根和实系数一次因式。",
+    ("alg8-c1-s1-n3", 11): "约去公因子后，仍须保留原分母不为零的限制。",
+    ("alg8-c1-s2-n4", 20): "逆向平移把横坐标减去水平位移，把纵坐标减去竖直位移；两次平移互逆，因此原象唯一。",
+    ("alg8-c1-s2-n4", 22): "这里二次项系数不为零，变量取实数。",
+    ("alg8-c1-s2-n4", 25): "原函数的定义域也随横向位移平移，不能补入原来未定义的点。",
+}
+
+
+def latin_parts(text):
+    labels = dict(zip(edition.CYRILLIC_PARTS, edition.LATIN_PARTS))
+    masked = edition.masked_math(text)
+    depths = edition.nesting_depths(masked)
+    markers = [
+        m for m in edition.PART_MARKER.finditer(masked)
+        if m.group("label") in labels and depths[m.start()] == 0
+    ]
+    for marker in reversed(markers):
+        a, b = marker.span("label")
+        text = text[:a] + labels[marker.group("label")] + text[b:]
+    return text
+
+
+results = []
+for lesson_id in TARGETS:
+    lesson_path = BASE / lesson_id / "lesson.template.json"
+    exercise_path = BASE / lesson_id / "exercises.template.json"
+    lesson = json.loads(lesson_path.read_text())
+    exercises = json.loads(exercise_path.read_text())
+    for index, block in enumerate(lesson["prose"]):
+        if block["kind"] != "p":
+            continue
+        text = block["source_text"]
+        for old, new in replacements[lesson_id].get(index, []):
+            assert old in text, (lesson_id, index, old)
+            text = text.replace(old, new)
+        if (lesson_id, index) in appendices:
+            text += "\n" + appendices[lesson_id, index]
+        text = edition.normalize_prose_layout(latin_parts(text))
+        errors = edition.validate_text(
+            block["source_text"], text, ["layout", "wording"], [], f"{lesson_id}.prose[{index}]", []
+        )
+        assert not errors, errors
+        block["text"] = text
+        block["changes"] = ["layout", "wording"] if text != block["source_text"] else []
+    for index, exercise in enumerate(exercises["exercises"]):
+        text = latin_parts(exercise["source_text"])
+        if exercise["number"] == "15":
+            text = text.replace("约分：", "约分，并保留原分母不为零的限制：")
+        elif exercise["number"] == "16":
+            text = text.replace("作出函数的图象：", "作出函数的图象，保留原分式的定义域：")
+        elif exercise["number"] == "28":
+            text = text.replace("利用这个模型板作出", "括号中的逗号是小数分隔符。利用这个模型板作出")
+        text = edition.normalize_numbered_subparts(text)
+        changes = ["layout", "wording"] if text != exercise["source_text"] else []
+        errors = edition.validate_text(
+            exercise["source_text"], text, changes, [], f"{lesson_id}.exercise[{index}]", [],
+            source_lines=exercises["source"]["data"]["exercises"][index]["lines"]
+        )
+        assert not errors, errors
+        exercise["text"], exercise["lines"], exercise["changes"] = text, text.splitlines(), changes
+    assert len(lesson["prose"]) == (16 if lesson_id.endswith("n3") else 26)
+    assert len(exercises["exercises"]) == 11
+    for path, value in ((lesson_path, lesson), (exercise_path, exercises)):
+        path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+        results.append({"path": str(path), "sha256": sha(path)})
+dump(WORK / "text-authoring-receipt.json", {
+    "source_prose_blocks": 42, "originals": list(range(12, 34)), "original_count": 22,
+    "all_source_formula_and_number_signatures_preserved": True,
+    "source_figures_and_exercise_ownership_unchanged": True,
+    "latin_subparts_and_short_prose_layout": True,
+    "domains_and_inverse_translation_proof_explicit": True,
+    "source28_decimal_comma_preserved_and_explained": True,
+    "templates": results, "independent_review": "pending parent dispatch"
+})
+print(json.dumps({"text_templates_authored": True, "prose": 42, "originals": 22}))

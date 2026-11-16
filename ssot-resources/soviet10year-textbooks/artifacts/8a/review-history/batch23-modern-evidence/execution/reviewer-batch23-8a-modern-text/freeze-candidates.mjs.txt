@@ -1,0 +1,87 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import assert from "node:assert/strict";
+
+const root = path.dirname(new URL(import.meta.url).pathname);
+const candidateRoot = path.join(
+  path.dirname(root),
+  "batch23-modern-8a/work/adapt/8a/modern-us-neutral/lessons",
+);
+const sha256 = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const expected = {
+  "alg8-c1-s1-n3/lesson.template.json":
+    "89a6741da2c36cd9f507546da1417e5ec175aa9c39880ab34aa6cb44ecef6294",
+  "alg8-c1-s1-n3/exercises.template.json":
+    "061fb1193a9a6dedf323e63abd0882f021e04479e41e3eec823b4f031d1a40fa",
+  "alg8-c1-s1-n3/figures.template.json":
+    "ac988446a29a99a1f30860bd3e1379cdbbf19c6d2f9a3c44aa4dd77fc1cced8b",
+  "alg8-c1-s2-n4/lesson.template.json":
+    "7e3617ad28db58f62ec198fe15a5cfb11dbe8444c5c994d9dc22b98334fb7add",
+  "alg8-c1-s2-n4/exercises.template.json":
+    "82e655eef3d621cb93598b9dd07a88b42e0398d3d31ed8f28da960268a4972f2",
+  "alg8-c1-s2-n4/figures.template.json":
+    "dd45a588d760ce9dfc19c8d5ab3bd3e4fd99ab1cd974403a4c672e2fafea8fe3",
+};
+const sourceBindings = [
+  [
+    "source-freeze.json",
+    "aa96d94c59cd7c1e0f8560add4d52eff1bc70e73fe09c1a942295c18a8e47213",
+  ],
+  [
+    "source-contract.md",
+    "e135148db4e3cf4fb945fcd2597cb82fab604accc8939762b08eb94598537cc8",
+  ],
+].map(([relativePath, expectedHash]) => {
+  const sourcePath = path.join(root, relativePath);
+  const actualHash = sha256(fs.readFileSync(sourcePath));
+  assert.equal(actualHash, expectedHash, `Source freeze changed: ${relativePath}`);
+  return { path: sourcePath, sha256: actualHash };
+});
+const inputs = Object.entries(expected).map(([relativePath, expectedHash]) => {
+  const inputPath = path.join(candidateRoot, relativePath);
+  const bytes = fs.readFileSync(inputPath);
+  assert.equal(sha256(bytes), expectedHash, `Candidate changed: ${relativePath}`);
+  return { relativePath, inputPath, bytes, expectedHash };
+});
+const files = inputs.map(({ relativePath, inputPath, bytes, expectedHash }) => {
+  const snapshotPath = path.join(root, "candidate-snapshot/lessons", relativePath);
+  fs.mkdirSync(path.dirname(snapshotPath), { recursive: true });
+  if (!fs.existsSync(snapshotPath)) {
+    fs.copyFileSync(inputPath, snapshotPath, fs.constants.COPYFILE_EXCL);
+  }
+  const snapshotBytes = fs.readFileSync(snapshotPath);
+  assert.ok(bytes.equals(snapshotBytes), `Snapshot differs: ${relativePath}`);
+  assert.equal(sha256(fs.readFileSync(inputPath)), expectedHash);
+  return {
+    path: inputPath,
+    snapshot_path: snapshotPath,
+    sha256: expectedHash,
+    snapshot_sha256: sha256(snapshotBytes),
+    bytes: bytes.length,
+    byte_identity_verified: true,
+  };
+});
+const record = {
+  schema: "independent-modern-text-candidate-freeze/v1",
+  ticket: "STEMROBIN-182",
+  batch: "batch23",
+  book: "8a",
+  reviewer: "reviewer-batch23-8a-modern-text",
+  frozen_at: new Date().toISOString(),
+  source_bindings: sourceBindings,
+  authorized_candidate_files: files,
+  counts: { candidate_templates: files.length },
+  scope: "Only six user-authorized modern text/figure manifests; source freeze reused.",
+  figure_policy: "Manifest identity/binding only; no linked specs, SVGs or review reports read.",
+  prohibited_material_read: false,
+  candidate_modified: false,
+};
+const recordPath = path.join(root, "candidate-freeze.json");
+if (!fs.existsSync(recordPath)) {
+  fs.writeFileSync(recordPath, `${JSON.stringify(record, null, 2)}\n`, { flag: "wx" });
+} else {
+  const prior = JSON.parse(fs.readFileSync(recordPath, "utf8"));
+  assert.deepEqual(prior.authorized_candidate_files, files);
+}
+console.log(JSON.stringify({ record_path: recordPath, files }, null, 2));

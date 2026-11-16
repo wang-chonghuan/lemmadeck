@@ -1,0 +1,220 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import assert from "node:assert/strict";
+
+const root = path.dirname(new URL(import.meta.url).pathname);
+const read = (file) => fs.readFileSync(file);
+const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const reportPath = path.join(root, "changed-text-review.json");
+const mdPath = path.join(root, "changed-text-review.md");
+const oldReportBytes = read(reportPath);
+const oldMdBytes = read(mdPath);
+assert.equal(hash(oldReportBytes), "632f20ea1c55a1311a71bfc04b41c8f037b99d661b3aaebfd58849232582d714");
+assert.equal(hash(oldMdBytes), "1e7e030dbc01ceaa39423cc235be5fed247e7265255735cc58867eaf2c002039");
+const oldReport = JSON.parse(oldReportBytes);
+assert.equal(oldReport.status, "pass");
+const changedFile = oldReport.candidate_files.find((file) =>
+  file.path.endsWith("/alg8-c1-s1-n3/lesson.template.json"),
+);
+const oldCandidateBytes = read(changedFile.snapshot_path);
+const currentBytes = read(changedFile.path);
+assert.equal(hash(oldCandidateBytes), "6c9d98d0991775db8b80a2283a987ccca8d4f3a31af0a10bb3f93eb7fc0c9b94");
+assert.equal(hash(currentBytes), "56c945ba5a632b7ee973dad5a76d371d81b8605b22550a9c2846302c52e9e509");
+const before = JSON.parse(oldCandidateBytes);
+const after = JSON.parse(currentBytes);
+assert.equal(after.section_breaks[2].before, after.prose[7].text);
+assert.equal(after.section_breaks[2].after, before.section_breaks[2].after);
+assert.equal(after.section_breaks[2].after, after.prose[8].text);
+assert.deepEqual(after.prose, before.prose);
+
+// Exact literal substitution proves that every other byte, not merely every JSON value, is retained.
+const oldLiteral = `"before": ${JSON.stringify(before.section_breaks[2].before)}`;
+const newLiteral = `"before": ${JSON.stringify(after.section_breaks[2].before)}`;
+const oldString = oldCandidateBytes.toString("utf8");
+assert.ok(oldString.includes(oldLiteral));
+assert.equal(oldString.indexOf(oldLiteral), oldString.lastIndexOf(oldLiteral));
+assert.ok(Buffer.from(oldString.replace(oldLiteral, newLiteral)).equals(currentBytes));
+const evidencePath = path.join(path.dirname(root), "batch23-modern-8a/work/r03-derived-section-boundary.json");
+const evidenceBytes = read(evidencePath);
+assert.equal(hash(evidenceBytes), "716669be6c841ab6d6543e4968775e0d4246eb5cad376eb4bd0fdf8750f25044");
+const evidence = JSON.parse(evidenceBytes);
+assert.equal(evidence.exit_code, 0);
+assert.deepEqual(evidence.old_boundary, before.section_breaks[2]);
+assert.deepEqual(evidence.boundary, after.section_breaks[2]);
+assert.equal(evidence.layout_only, true);
+assert.equal(evidence.semantic_re_review, false);
+const preserveCopy = (sourcePath, targetPath, bytes) => {
+  fs.mkdirSync(path.dirname(targetPath), { recursive: true });
+  assert.ok(!fs.existsSync(targetPath), "Do not overwrite transport history.");
+  fs.copyFileSync(sourcePath, targetPath, fs.constants.COPYFILE_EXCL);
+  assert.ok(read(targetPath).equals(bytes));
+};
+const history = path.join(root, "history/before-r03-transport-rebind");
+const historicalReport = path.join(history, "changed-text-review.json");
+const historicalMd = path.join(history, "changed-text-review.md");
+preserveCopy(reportPath, historicalReport, oldReportBytes);
+preserveCopy(mdPath, historicalMd, oldMdBytes);
+const transportSnapshot = path.join(root, "transport-candidate-snapshot/lessons/alg8-c1-s1-n3/lesson.template.json");
+preserveCopy(changedFile.path, transportSnapshot, currentBytes);
+const evidenceSnapshot = path.join(root, "transport-candidate-snapshot/r03-derived-section-boundary.json");
+preserveCopy(evidencePath, evidenceSnapshot, evidenceBytes);
+for (const file of oldReport.candidate_files) {
+  assert.equal(hash(read(file.snapshot_path)), file.sha256);
+  if (file.path !== changedFile.path) assert.equal(hash(read(file.path)), file.sha256);
+}
+for (const binding of oldReport.preserved_prior_records) {
+  assert.equal(hash(read(binding.path)), binding.sha256);
+}
+assert.equal(hash(read(oldReport.current_candidate_freeze.path)), oldReport.current_candidate_freeze.sha256);
+const difference = {
+  pointer: "/section_breaks/2/before",
+  before: before.section_breaks[2].before,
+  after: after.section_breaks[2].before,
+};
+const reboundFiles = oldReport.candidate_files.map((file) => {
+  if (file.path !== changedFile.path) return file;
+  const rebound = {
+    ...file,
+    sha256: hash(currentBytes),
+    bytes: currentBytes.length,
+    snapshot_path: transportSnapshot,
+    previous_text_review_snapshot: file.snapshot_path,
+    previous_text_review_sha256: file.sha256,
+    differences: [...file.differences, difference],
+    initial_text_delta_matches_ready_record: true,
+    current_delta_matches_ready_plus_transport_rebind: true,
+    exact_byte_delta_from_previous_text_review: [difference],
+    all_other_bytes_unchanged_from_previous_text_review: true,
+    unchanged_content_semantically_re_reviewed: false,
+  };
+  delete rebound.ready_delta_matches_independent_mechanical_diff;
+  return rebound;
+});
+const transportReview = {
+  schema: "independent-r03-literal-transport-review/v1",
+  ticket: "STEMROBIN-182",
+  batch: "batch23",
+  book: "8a",
+  recorded_at: new Date().toISOString(),
+  status: "pass",
+  scope: "Only /section_breaks/2/before literal transport; no new semantic text review.",
+  candidate_file: changedFile.path,
+  previous_sha256: changedFile.sha256,
+  sha256: hash(currentBytes),
+  previous_snapshot: changedFile.snapshot_path,
+  current_snapshot: transportSnapshot,
+  exact_byte_delta: [difference],
+  actual_after_unchanged: true,
+  before_equals_repaired_prose7_exactly: true,
+  after_equals_adjacent_prose8_literal: true,
+  boundary_equals_authorized_derived_evidence: true,
+  prose_array_byte_transport_unchanged: true,
+  original_formulas_numbers_and_source_bytes_unchanged: true,
+  reviewer_prose_flow_runs: 0,
+  text_decision_reused: "R03 pass, by exact literal-only byte substitution with all prose bytes unchanged.",
+  authorized_derived_evidence: {
+    path: evidencePath,
+    snapshot_path: evidenceSnapshot,
+    sha256: hash(evidenceBytes),
+    bytes: evidenceBytes.length,
+    snapshot_byte_identity_verified: true,
+    command_record_read_not_reexecuted: evidence.command,
+  },
+  previous_changed_only_records_preserved: [
+    { path: historicalReport, sha256: hash(oldReportBytes) },
+    { path: historicalMd, sha256: hash(oldMdBytes) },
+    oldReport.current_candidate_freeze,
+  ],
+  no_candidate_edits_or_render_or_finalize_or_promotion: true,
+  new_semantic_object_reviews: 0,
+  new_literal_transport_checks: 1,
+};
+const transportReviewPath = path.join(root, "r03-transport-review.json");
+assert.ok(!fs.existsSync(transportReviewPath));
+fs.writeFileSync(transportReviewPath, `${JSON.stringify(transportReview, null, 2)}\n`, { flag: "wx" });
+const transportFreeze = {
+  schema: "independent-transport-rebound-candidate-freeze/v1",
+  frozen_at: new Date().toISOString(),
+  candidate_files: reboundFiles,
+  retained_previous_text_freeze: oldReport.current_candidate_freeze,
+  transport_review: { path: transportReviewPath, sha256: hash(read(transportReviewPath)) },
+  previous_changed_only_records_preserved: transportReview.previous_changed_only_records_preserved,
+};
+const transportFreezePath = path.join(root, "transport-candidate-freeze.json");
+assert.ok(!fs.existsSync(transportFreezePath));
+fs.writeFileSync(transportFreezePath, `${JSON.stringify(transportFreeze, null, 2)}\n`, { flag: "wx" });
+
+const report = {
+  ...oldReport,
+  recorded_at: new Date().toISOString(),
+  scope: "Changed-only R01/R02/R03 review plus authorized R03 /section_breaks/2/before literal transport rebind. Text decisions reused; not a new full or display/figure review.",
+  current_candidate_freeze: { path: transportFreezePath, sha256: hash(read(transportFreezePath)) },
+  retained_previous_text_freeze: oldReport.current_candidate_freeze,
+  candidate_files: reboundFiles,
+  counts: {
+    ...oldReport.counts,
+    metadata_or_transport_delta_leaves: 3,
+    total_changed_leaves: 6,
+    new_literal_transport_checks: 1,
+    new_semantic_object_reviews_after_text_pass: 0,
+    reviewer_prose_flow_runs: 0,
+  },
+  changed_object_reviews: oldReport.changed_object_reviews.map((inspection) =>
+    inspection.finding === "R03"
+      ? {
+          ...inspection,
+          candidate_file_sha256: hash(currentBytes),
+          candidate_snapshot: transportSnapshot,
+          previous_text_review_file_sha256: changedFile.sha256,
+          previous_text_review_snapshot: changedFile.snapshot_path,
+          pass_reused_by_exact_byte_transport: true,
+          new_semantic_review: false,
+        }
+      : inspection,
+  ),
+  transport_rebind_review: { ...transportReview, path: transportReviewPath, report_sha256: hash(read(transportReviewPath)) },
+  independent_delta_checks: {
+    ...oldReport.independent_delta_checks,
+    all_current_hashes_match_ready_delta_or_authorized_transport_rebind: true,
+    only_six_authorized_leaves_changed: true,
+    transport_or_metadata_leaves: 3,
+    literal_transport_delta_verified_by_exact_single_literal_substitution: true,
+  },
+  boundaries: {
+    ...oldReport.boundaries,
+    extra_scope_only_section_breaks_2_before_literal_and_authorized_boundary_evidence: true,
+    no_additional_semantic_review_after_prior_text_pass: true,
+    source_formulas_and_numbers_byte_preserved_by_transport: true,
+  },
+  limitations: [
+    ...oldReport.limitations.map((limitation, index) => index === 0
+      ? "Pass closes only R01/R02/R03 for the current six template hashes, with initial text-repair delta and authorized R03 boundary evidence both hash-bound."
+      : limitation),
+    "The original mechanical ready delta binds the first text-repair bytes; the new n3 lesson hash is instead bound by authorized R03 derived-boundary evidence and an exact single-literal byte substitution.",
+    "Only one section boundary before literal was rebound; after and all prose bytes remain unchanged. The adjacent after literal was compared only for transport identity, not re-reviewed semantically.",
+    "The previous changed-only pass record, MD and repaired candidate snapshot remain intact in own history/snapshot paths.",
+  ],
+};
+delete report.independent_delta_checks.all_current_hashes_match_ready_delta;
+delete report.independent_delta_checks.only_five_authorized_leaves_changed;
+assert.equal(report.status, "pass");
+assert.deepEqual(report.closures, ["R01", "R02", "R03"]);
+assert.equal(report.candidate_files.reduce((sum, file) => sum + file.differences.length, 0), 6);
+for (const file of report.candidate_files) {
+  assert.equal(hash(read(file.path)), file.sha256);
+  assert.ok(read(file.path).equals(read(file.snapshot_path)));
+}
+assert.equal(hash(read(evidencePath)), hash(evidenceBytes));
+for (const binding of oldReport.preserved_prior_records) assert.equal(hash(read(binding.path)), binding.sha256);
+fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`);
+console.log(JSON.stringify({
+  status: report.status,
+  closures: report.closures,
+  rebound_n3_sha256: hash(currentBytes),
+  exact_transport_pointer: difference.pointer,
+  new_semantic_reviews: 0,
+  counts: report.counts,
+  historical_changed_review_sha256: hash(read(historicalReport)),
+  current_changed_review_sha256: hash(read(reportPath)),
+}, null, 2));

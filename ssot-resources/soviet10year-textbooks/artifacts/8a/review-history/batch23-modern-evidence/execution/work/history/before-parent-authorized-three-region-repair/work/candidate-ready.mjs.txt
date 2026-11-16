@@ -1,0 +1,162 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+import { fileURLToPath } from 'node:url'
+
+const work = path.dirname(fileURLToPath(import.meta.url))
+const base = path.dirname(work)
+const root = path.join(base, 'root')
+const edition = 'modern-us-neutral'
+const figureDir = path.join(root, '8a/editions', edition, 'figures')
+const templateDir = path.join(work, 'adapt/8a', edition, 'lessons')
+const history = path.join(work, 'history/figure-candidate-observed-r1')
+const ids = ['fig-01', 'fig-02', 'fig-03', 'fig-04', 'fig-05', 'tbl-p0020-01']
+const lessons = ['alg8-c1-s1-n3', 'alg8-c1-s2-n4']
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const record = file => ({ path: file, sha256: sha(file), bytes: fs.statSync(file).size })
+const save = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+const observationsFile = path.join(work, 'candidate-observations.json')
+const observations = read(observationsFile)
+assert(!fs.existsSync(history), 'Observed candidate snapshot must be new')
+assert(!fs.existsSync(path.join(work, 'candidate-ready.json')), 'Ready receipt must be new')
+
+// Preserve the observed candidate, including the layout-revise output, before any later parent-authorized edit.
+const candidates = ids.map(id => {
+  const suffix = id === 'tbl-p0020-01' ? '' : '-repair1'
+  const specFile = path.join(figureDir, `${id}.spec.json`)
+  const svgFile = path.join(figureDir, `${id}.svg`)
+  const renderFile = path.join(figureDir, `${id}.render.json`)
+  const previewFile = path.join(work, `${id}.preview.png`)
+  const validationFile = path.join(work, `command-${id}-validate${suffix}.json`)
+  const commandFile = path.join(work, `command-${id}-render${suffix}.json`)
+  const contextFile = path.join(work, `${id}-author-context${suffix}.json`)
+  const spec = read(specFile), report = read(renderFile)
+  const validation = read(validationFile), command = read(commandFile)
+  assert(validation.pass && command.pass)
+  assert.equal(report.status, 'pass')
+  assert.equal(report.spec.sha256, sha(specFile))
+  assert.equal(report.output.svg.sha256, sha(svgFile))
+  const observation = observations.figures.find(figure => figure.id === id)
+  assert(observation)
+  const tickEvidence = id === 'fig-01' ? (() => {
+    const [xmin, ymax, xmax, ymin] = spec.canvas.boundingBox
+    const sx = spec.canvas.width / (xmax - xmin), sy = spec.canvas.height / (ymax - ymin)
+    const axis = spec.objects.find(object => object.id === 'x-axis')
+    return axis.ticks.filter(tick => ['-1', '1'].includes(tick.label)).map(tick => ({
+      label: tick.label, source_curve: 'curve-III', source_curve_at_tick: [tick.at[0], -.25],
+      curve_canvas_px: [(tick.at[0] - xmin) * sx, (ymax + .25) * sy],
+      current_tick_label_canvas_center_px: [
+        (tick.at[0] - xmin) * sx,
+        ymax * sy + Math.max(10, tick.fontSize * .45) + tick.labelPlacement.offset[1]
+      ],
+      font_size_canvas_px: tick.fontSize
+    }))
+  })() : []
+  return {
+    id, status: observation.status, defects: observation.defects,
+    spec: record(specFile), svg: record(svgFile), render: record(renderFile), preview: record(previewFile),
+    author_context: record(contextFile), validation_command: record(validationFile),
+    render_command: record(commandFile), source_image: record(spec.source.image.path),
+    declared_display: spec.display, display_checks: report.displayChecks,
+    automatic_render_status: report.status, author_visual_observation: observation,
+    tick_label_defect_evidence: tickEvidence, independent_approval: 'pending parent authorization'
+  }
+})
+const templateFiles = lessons.flatMap(id =>
+  ['lesson.template.json', 'exercises.template.json', 'figures.template.json']
+    .map(name => path.join(templateDir, id, name)))
+const snapshotFiles = [
+  observationsFile,
+  ...candidates.flatMap(candidate =>
+    ['spec', 'svg', 'render', 'preview', 'author_context', 'validation_command', 'render_command']
+      .map(key => candidate[key].path)),
+  ...templateFiles,
+  ...['author-figures.mjs', 'figure-repair-once.mjs', 'figure-repair1-receipt.json',
+    'figure-authoring-receipt.json', 'text-authoring-receipt.json',
+    'prose-flow-alg8-c1-s1-n3.json', 'prose-flow-alg8-c1-s2-n4.json'].map(name => path.join(work, name)),
+  ...ids.filter(id => id !== 'tbl-p0020-01').map(id => path.join(work, `${id}-repair1-leaf-diff.json`))
+]
+fs.mkdirSync(history, { recursive: true })
+const snapshots = snapshotFiles.map(file => {
+  const target = path.join(history, path.relative(base, file))
+  fs.mkdirSync(path.dirname(target), { recursive: true })
+  fs.copyFileSync(file, target, fs.constants.COPYFILE_EXCL)
+  assert(fs.readFileSync(file).equals(fs.readFileSync(target)))
+  return { ...record(file), preserved: target }
+})
+const historyReceipt = path.join(history, 'receipt.json')
+save(historyReceipt, {
+  argv: ['node', fileURLToPath(import.meta.url)],
+  purpose: 'Exact current byte snapshot and actual author visual observations before any further changed-region authorization. Render pass is retained verbatim; fig-01 remains layout revise.',
+  snapshots
+})
+const inputsFile = path.join(work, 'inputs-before.json')
+const inputs = read(inputsFile)
+const inputChecks = inputs.inputs.map(item => ({ path: item.path, before_sha256: item.sha256,
+  current_sha256: sha(item.path), unchanged: sha(item.path) === item.sha256 }))
+const copyChecks = inputs.copies.map(item => ({ path: item.destination, before_sha256: item.sha256,
+  current_sha256: sha(item.destination), unchanged: sha(item.destination) === item.sha256 }))
+assert(inputChecks.every(item => item.unchanged))
+assert(copyChecks.every(item => item.unchanged))
+const lessonRecords = lessons.map(id => {
+  const lesson = read(path.join(templateDir, id, 'lesson.template.json'))
+  const exercises = read(path.join(templateDir, id, 'exercises.template.json'))
+  const flowFile = path.join(work, `prose-flow-${id}.json`)
+  const flow = read(flowFile)
+  assert.equal(exercises.exercises.length, 11)
+  return {
+    id, source_prose_blocks: lesson.prose.length,
+    originals: exercises.exercises.map(exercise => exercise.number),
+    section_breaks: lesson.section_breaks.length,
+    prose_flow: record(flowFile), prose_flow_evidence: flow,
+    templates: ['lesson.template.json', 'exercises.template.json', 'figures.template.json']
+      .map(name => record(path.join(templateDir, id, name))),
+    finalization: 'Not performed; parent owns text review and independent figure approval.'
+  }
+})
+assert.equal(lessonRecords.reduce((n, lesson) => n + lesson.source_prose_blocks, 0), 42)
+assert.deepEqual(lessonRecords.flatMap(lesson => lesson.originals), Array.from({ length: 22 }, (_, i) => String(i + 12)))
+const commandFiles = fs.readdirSync(work)
+  .filter(name => /^command-.*\.json$/.test(name) && !name.endsWith('.started.json'))
+  .map(name => path.join(work, name))
+const commands = commandFiles.map(file => {
+  const command = read(file)
+  return { ...record(file), argv: command.argv, status: command.status,
+    pass: command.pass, failure: command.failure }
+})
+const unchangedFile = path.join(work, 'source-and-core-unchanged.json')
+save(unchangedFile, { inputs: inputChecks, exact_private_copies: copyChecks,
+  copied_files: copyChecks.length, source_and_existing_modern_core_byte_identical: true })
+const readyFile = path.join(work, 'candidate-ready.json')
+save(readyFile, {
+  scope: 'Offline MODERN 8a n3/n4 only; private author candidates, not promotion readiness.',
+  root, work, lessons: lessonRecords, totals: { source_prose_blocks: 42, originals: 22,
+    figures: 6, deterministic_spec_and_render_pass: 6, layout_revise: 1,
+    figure_candidates_without_observed_defect: 5, independent_approvals: 0 },
+  source_only_freeze: record(path.join(work, 'source-only-frozen/freeze-receipt.json')),
+  input_whitelist: record(inputsFile), unchanged_source_and_core: record(unchangedFile),
+  source_interpretation: record(path.join(work, 'source-only-interpretation.json')),
+  source_blockers: [], candidate_observations: record(observationsFile),
+  available_input_layout_revisions: observations.figures.filter(figure => figure.defects.length),
+  text_wording_notice: observations.text.wording_notice,
+  text_authoring_receipt: record(path.join(work, 'text-authoring-receipt.json')),
+  figure_repair_receipt: record(path.join(work, 'figure-repair1-receipt.json')),
+  first_failed_output_history: record(path.join(work, 'history/figure-render-attempt1/receipt.json')),
+  observed_current_candidate_history: record(historyReceipt),
+  candidates, commands,
+  boundaries: {
+    raw_rerun: false, durable_write: false, adapt_finalize: false, lesson_render: false,
+    publication: false, db: false, paid_or_model_call: false, dependencies_changed: false,
+    other_author_directories_modified: false, independent_self_approval: false
+  },
+  next: 'Parent text review; Boyle SOURCE-FIRST freeze, then parent-authorized final-candidate review. Fig-01 requires only its concrete tick-label layout region reviewed before further narrow repair. No blanket rerenders or unchanged checks.',
+  display_approval: 'Not claimed; author preview/display report is not headed-product approval.'
+})
+const digestFile = path.join(work, 'candidate-ready.sha256.json')
+save(digestFile, { ready: record(readyFile), source_and_core_proof: record(unchangedFile),
+  observations: record(observationsFile), exact_current_history: record(historyReceipt) })
+console.log(JSON.stringify({ ready: record(readyFile), digest_receipt: digestFile,
+  source_blocks: 42, originals: 22, figures: 6, layout_revise: ['fig-01'],
+  source_blockers: [], independent_approvals: 0 }))

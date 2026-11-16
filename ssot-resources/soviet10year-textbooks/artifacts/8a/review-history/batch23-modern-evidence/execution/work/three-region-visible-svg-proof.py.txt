@@ -1,0 +1,101 @@
+"""Prove retained visible geometry/label attributes from existing SVG XML."""
+from collections import Counter
+import json
+from pathlib import Path
+import xml.etree.ElementTree as ET
+
+WORK = Path(__file__).resolve().parent
+BASE = WORK.parent
+HISTORY = WORK / "history/before-parent-authorized-three-region-repair"
+SUFFIX = Path("root/8a/editions/modern-us-neutral/figures")
+SHAPES = {"line", "path", "polygon", "polyline", "ellipse", "circle", "rect", "text"}
+
+
+def visible_nodes(root):
+    nodes = []
+
+    def visit(element):
+        tag = element.tag.rsplit("}", 1)[-1]
+        style = element.get("style", "").replace(" ", "")
+        if tag == "defs" or element.get("display") == "none" or "visibility:hidden" in style:
+            return
+        if tag in SHAPES:
+            nodes.append(element)
+        for child in element:
+            visit(child)
+
+    visit(root)
+    return nodes
+
+
+def canonical(element):
+    return json.dumps({
+        "tag": element.tag, "attributes": {k: v for k, v in element.attrib.items() if k != "id"},
+        "text": element.text,
+    }, sort_keys=True)
+
+
+records = []
+for figure in ("fig-01", "fig-02", "tbl-p0020-01"):
+    old = visible_nodes(ET.parse(HISTORY / SUFFIX / f"{figure}.svg").getroot())
+    new = visible_nodes(ET.parse(BASE / SUFFIX / f"{figure}.svg").getroot())
+    old_excluded, new_excluded = set(), set()
+    details = []
+    if figure == "fig-01":
+        for label in ("x-axis-tick-2-label", "x-axis-tick-3-label"):
+            a = next(node for node in old if node.get("data-label-id") == label)
+            b = next(node for node in new if node.get("data-label-id") == label)
+            assert a.text == b.text
+            assert {k: v for k, v in a.attrib.items() if k != "y"} == {
+                k: v for k, v in b.attrib.items() if k != "y"
+            }
+            assert abs(float(a.get("y")) - float(b.get("y")) - 49.2) < 1e-9
+            old_excluded.add(a)
+            new_excluded.add(b)
+            details.append({"label": label, "text": a.text, "before_y": a.get("y"), "after_y": b.get("y"),
+                            "other_label_attributes_equal": True})
+    elif figure == "fig-02":
+        guide = next(node for node in new if node.get("id") == "ld-fig-02_ld-source-horizontal-projection")
+        assert [guide.get(key) for key in ("x1", "y1", "x2", "y2", "stroke-dasharray")] == [
+            "180", "585", "540", "585", "5,5"
+        ]
+        new_excluded.add(guide)
+        details.append({"only_visible_addition": guide.attrib})
+    else:
+        for direction, values in (("h", range(3)), ("v", range(1, 8))):
+            for index in values:
+                a = next(node for node in old if node.get("id") ==
+                         f"ld-tbl-p0020-01_ld-source-table-grid-{direction}-{index}")
+                b = next(node for node in new if node.get("id") ==
+                         f"ld-tbl-p0020-01_ld-source-table-{direction}-{index}")
+                assert canonical(a) == canonical(b)
+                old_excluded.add(a)
+                new_excluded.add(b)
+                details.append({"old_id": a.get("id"), "new_id": b.get("id"),
+                                "all_visible_rule_attributes_equal_except_id": True})
+        for index in (0, 8):
+            border = next(node for node in old if node.get("id") ==
+                          f"ld-tbl-p0020-01_ld-source-table-grid-v-{index}")
+            old_excluded.add(border)
+            details.append({"only_visible_removal": border.get("id")})
+    a = Counter(canonical(node) for node in old if node not in old_excluded)
+    b = Counter(canonical(node) for node in new if node not in new_excluded)
+    assert a == b, figure
+    records.append({"id": figure, "all_other_visible_shape_and_label_attributes_equal": True,
+                    "details": details})
+result = {
+    "pass": True, "method": "Parse retained/current SVG bytes; no rerender or structural validator.",
+    "records": records,
+    "retained_strict_rgb_failure": str(WORK / "three-region-pixel-proof.json"),
+    "raster_notice": (
+        "Exact region-only RGB equality failed for fig02/table: respectively1115 pixels with max "
+        "channel delta2 and12 pixels with max delta1 outside the region boxes. No pixel exceeded "
+        "delta4. Visible SVG geometry and text attributes are proven unchanged there; do not "
+        "mislabel these PNGs as byte/pixel identical or infer an unmeasured raster cause."
+    ),
+}
+with (WORK / "three-region-visible-svg-proof.json").open("x", encoding="utf-8") as output:
+    json.dump(result, output, indent=2)
+    output.write("\n")
+print(json.dumps({"pass": True, "visible_proof": str(WORK / "three-region-visible-svg-proof.json"),
+                  "retained_rgb_failure": result["retained_strict_rgb_failure"]}))

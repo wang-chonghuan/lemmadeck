@@ -1,0 +1,158 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { createRequire } from "node:module";
+import { pathToFileURL } from "node:url";
+
+delete process.env.PWDEBUG;
+process.env.PLAYWRIGHT_HTML_OPEN = "never";
+const root = path.dirname(new URL(import.meta.url).pathname);
+const require = createRequire("/Users/yong/.codex/worktrees/d9b1/lemmadeck/app/package.json");
+const { chromium } = require("@playwright/test");
+const inputs = JSON.parse(fs.readFileSync(path.join(root, "input-inventory.json")));
+const layouts = JSON.parse(fs.readFileSync(path.join(root, "display-layout.json")));
+const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const out = path.join(root, "supplements");
+fs.mkdirSync(out, { recursive: true });
+const browser = await chromium.launch({ headless: true });
+const screenshots = [];
+const contexts = [];
+const errors = [];
+const settle = async (page) => {
+  await page.evaluate(() => new Promise((resolve) =>
+    requestAnimationFrame(() => requestAnimationFrame(resolve))));
+  await page.waitForTimeout(80);
+};
+try {
+  for (const layout of layouts) {
+    const context = await browser.newContext({ viewport: layout.viewport, serviceWorkers: "block" });
+    try {
+      await context.route("**/*", (route) => route.request().url().startsWith("file:")
+        ? route.continue() : route.abort());
+      const page = await context.newPage();
+      page.on("pageerror", (error) => errors.push(String(error)));
+      if (hash(fs.readFileSync(layout.HTML_path)) !== layout.HTML_sha256) throw new Error("HTML changed");
+      await page.goto(pathToFileURL(layout.HTML_path).href, { waitUntil: "load" });
+      await page.evaluate(() => document.fonts.ready);
+      await settle(page);
+      const objects = await page.evaluate(() => {
+        const boxes = [...document.querySelectorAll(".para,li.ex,.figcap,figure,.sheet>h1,.jump")];
+        return boxes.map((node, index) => {
+          const box = node.getBoundingClientRect();
+          return {
+            index, tag: node.tagName, class: node.className, id: node.id,
+            number: node.querySelector(".no")?.textContent || null,
+            box: { x: box.x, y: box.y, width: box.width, height: box.height },
+            text_length: node.textContent.length,
+          };
+        });
+      });
+      const capture = async (y, suffix, reason, horizontal = null) => {
+        await page.evaluate((top) => window.scrollTo({ top, behavior: "instant" }), y);
+        await settle(page);
+        const filename = `${layout.lesson}-${layout.surface}-${layout.viewport.width}-${suffix}.png`;
+        const target = path.join(out, filename);
+        if (fs.existsSync(target)) throw new Error("Never overwrite evidence");
+        await page.screenshot({ path: target });
+        const state = await page.evaluate(() => ({
+          scroll_y: scrollY, page_height: document.documentElement.scrollHeight,
+          viewport_width: innerWidth, viewport_height: innerHeight,
+        }));
+        const bytes = fs.readFileSync(target);
+        screenshots.push({
+          path: target, filename, sha256: hash(bytes), bytes: bytes.length,
+          lesson: layout.lesson, surface: layout.surface, viewport: layout.viewport,
+          HTML_path: layout.HTML_path, HTML_sha256: layout.HTML_sha256,
+          reason, horizontal, ...state,
+          primary_overwritten: false, new_combination: false, opened: false,
+        });
+      };
+      const endpoint = layout.reconstructed_primary_endpoints;
+      const h = layout.viewport.height;
+      if (endpoint.first_scroll_y > 0) {
+        await capture(0, "missing-header-top", "Original first image starts below the h1/header and first task prefix.");
+      }
+      if (layout.lesson.endsWith("n3") && layout.surface === "exercises" && layout.viewport.width === 390) {
+        await capture(0, "missing-complete-body-positive-top", "Original mobile first image has visible task numbers but blank task bodies; first complete-body positive context was missing.");
+      }
+      const gapStart = endpoint.first_scroll_y + h;
+      const gapEnd = endpoint.last_scroll_y;
+      let tile = 0;
+      for (let y = Math.max(0, gapStart - 30); y < gapEnd; y += h - 60) {
+        await capture(y, `missing-body-gap-${++tile}`, "First/last primaries do not show this intervening full prose/exercise page window.");
+        if (y + h >= gapEnd) break;
+      }
+      const regions = await page.locator("span.nb,figure.fig").evaluateAll((nodes) =>
+        nodes.filter((node) => node.scrollWidth - node.clientWidth > 8 &&
+          ["auto", "scroll"].includes(getComputedStyle(node).overflowX))
+          .map((node) => {
+            const box = node.getBoundingClientRect();
+            return {
+              tag: node.tagName, class: node.className, id: node.id,
+              y: box.y + scrollY, height: box.height,
+              client_width: node.clientWidth, scroll_width: node.scrollWidth,
+            };
+          }));
+      let formula = 0;
+      for (const region of regions) {
+        if (region.tag === "SPAN") {
+          const locator = page.locator("span.nb").filter({ has: page.locator(".katex") });
+          const candidates = await locator.elementHandles();
+          let selected;
+          for (const candidate of candidates) {
+            const box = await candidate.evaluate((node) => ({
+              y: node.getBoundingClientRect().y + scrollY,
+              overflow: node.scrollWidth - node.clientWidth,
+            }));
+            if (Math.abs(box.y - region.y) < 1 && box.overflow > 8) selected = candidate;
+          }
+          if (!selected) throw new Error("Missing formula scroll handle");
+          const horizontal = await selected.evaluate((node) => {
+            node.scrollLeft = node.scrollWidth;
+            return { scroll_left: node.scrollLeft, max_scroll: node.scrollWidth - node.clientWidth, client_width: node.clientWidth, scroll_width: node.scrollWidth };
+          });
+          await capture(Math.max(0, region.y - 100), `missing-fullformula-${++formula}-right-context`, "Only tiny KaTeX SVG fragments or clipped starting formula were primary; full formula right edge with prose context was missing.", horizontal);
+          await selected.evaluate((node) => { node.scrollLeft = 0; });
+        }
+        if (region.tag === "FIGURE" && layout.lesson.endsWith("n3") && layout.viewport.width === 390) {
+          const locator = page.locator(`figure#${region.id}`);
+          const horizontal = await locator.evaluate((node) => {
+            node.scrollLeft = (node.scrollWidth - node.clientWidth) / 2;
+            return { scroll_left: node.scrollLeft, max_scroll: node.scrollWidth - node.clientWidth, client_width: node.clientWidth, scroll_width: node.scrollWidth };
+          });
+          await capture(Math.max(0, region.y - 130), "missing-figure-union-middle-context", "310px starting and ending windows of a 640px figure leave a 20px central union gap; full-height middle context was missing.", horizontal);
+          await locator.evaluate((node) => { node.scrollLeft = 0; });
+        }
+      }
+      contexts.push({
+        lesson: layout.lesson, surface: layout.surface, viewport: layout.viewport,
+        HTML_path: layout.HTML_path, HTML_sha256: layout.HTML_sha256,
+        page_height: layout.height, objects,
+        primary_first_interval: [endpoint.first_scroll_y, endpoint.first_scroll_y + h],
+        primary_last_interval: [endpoint.last_scroll_y, endpoint.last_scroll_y + h],
+        original_primary_limit: layout.lesson.endsWith("n3") && layout.surface === "exercises" && layout.viewport.width === 390
+          ? "First primary has blank bodies; its interval is not positive task-body proof." : null,
+      });
+      if (hash(fs.readFileSync(layout.HTML_path)) !== layout.HTML_sha256) throw new Error("HTML changed");
+    } finally {
+      await context.close();
+    }
+  }
+} finally {
+  await browser.close();
+}
+const result = {
+  screenshots, contexts, page_errors: errors,
+  browser: { headless: true, isolated_contexts: true, user_profile: false, PWDEBUG_cleared: true, reports: "never", network_blocked: true, finally_closed: true },
+  new_combinations: 0, render_runs: 0, primary_overwrites: 0,
+};
+fs.writeFileSync(path.join(root, "supplement-capture.json"), `${JSON.stringify(result, null, 2)}\n`, { flag: "wx" });
+console.log(JSON.stringify({
+  supplementary_PNGs: screenshots.length,
+  per_combo: contexts.map((context) => ({
+    lesson: context.lesson, surface: context.surface, width: context.viewport.width,
+    objects: context.objects.length,
+    supplements: screenshots.filter((shot) => shot.lesson === context.lesson && shot.surface === context.surface && shot.viewport.width === context.viewport.width).length,
+  })),
+  browser: result.browser, page_errors: errors,
+}, null, 2));

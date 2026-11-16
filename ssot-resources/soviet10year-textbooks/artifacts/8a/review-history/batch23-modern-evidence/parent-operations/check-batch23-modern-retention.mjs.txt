@@ -1,0 +1,58 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a/review-history/batch23-modern-evidence'
+const read = file => JSON.parse(fs.readFileSync(file))
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const registry = read(`${root}/retention.json`)
+const promotion = read(`${root}/parent-promotion.json`)
+const failures = []
+let hashes = 0
+let activeJSON = 0
+function inspect(value, file, pointer = '') {
+  if (Array.isArray(value)) return value.forEach((child, i) => inspect(child, file, `${pointer}/${i}`))
+  if (value && typeof value === 'object') return Object.entries(value)
+    .forEach(([key, child]) => inspect(child, file, `${pointer}/${key}`))
+  if (typeof value !== 'string' || value.startsWith('Historical ')) return
+  if (value.startsWith('.tmp/') || value.includes('/.tmp/') || value.includes('.intentfold/tickets/')) {
+    failures.push({ file, pointer, scratch_reference: value })
+  }
+  if (value.startsWith('ssot-resources/') && !fs.existsSync(value)) {
+    failures.push({ file, pointer, missing_retained_path: value })
+  }
+}
+for (const [relative, record] of Object.entries(registry.retained)) {
+  const file = `${root}/${relative}`
+  hashes++
+  if (!fs.existsSync(file) || hash(file) !== record.retained_bytes_sha256) {
+    failures.push({ file, expected: record.retained_bytes_sha256 })
+  }
+}
+for (const row of promotion.promoted) {
+  hashes++
+  if (hash(row.destination) !== row.sha256) failures.push({ file: row.destination, expected: row.sha256 })
+}
+const files = promotion.promoted.filter(row => row.destination.endsWith('.json'))
+  .map(row => row.destination).concat(['retention.json', 'parent-promotion.json', 'actual-observations.json'].map(name => `${root}/${name}`))
+for (const file of files) {
+  const value = read(file)
+  inspect(value, file)
+  activeJSON++
+  if (value.schema === 'ld-s10y-image/review@1') {
+    for (const binding of [value.source, value.spec, value.render, value.outputs.svg]) {
+      hashes++
+      if (hash(binding.path) !== binding.sha256) failures.push({ file, binding })
+    }
+  }
+}
+const output = `${scratch}/batch23-modern-retained-reference-check.json`
+assert(!fs.existsSync(output))
+const result = { status: failures.length ? 'fail' : 'pass',
+  scope: 'Only 33 batch23 modern core files and retained metadata/evidence; no semantic, pipeline, display or whole-project checks.',
+  active_JSON_files: activeJSON, hash_checks: hashes, failures }
+fs.writeFileSync(output, JSON.stringify(result, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify(result, null, 2))
+assert.equal(failures.length, 0)

@@ -1,0 +1,54 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+const own = path.dirname(fileURLToPath(import.meta.url));
+const repo = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const python = path.join(repo, ".claude/skills/ld-s10y-lesson/.venv/bin/python");
+const hash = bytes => crypto.createHash("sha256").update(bytes).digest("hex");
+const record = file => ({ path: file, sha256: hash(fs.readFileSync(file)), bytes: fs.statSync(file).size });
+const manifest = JSON.parse(fs.readFileSync(path.join(own, "changed-region-inputs.json"), "utf8"));
+const candidate = manifest.candidates.find(item => item.id === "fig-01");
+const output = path.join(own, "fig-01.changed-region-visible-property-probe.json");
+if (fs.existsSync(output)) throw Error("fig01 property evidence already exists.");
+const input = {
+  before: fs.readFileSync(candidate.old_svg.frozen_path, "utf8"),
+  after: fs.readFileSync(candidate.svg.frozen_path, "utf8"),
+};
+const code = `
+import json, sys, xml.etree.ElementTree as ET
+value = json.load(sys.stdin)
+old, new = (ET.fromstring(value[key]) for key in ("before", "after"))
+changes = []
+def compare(a, b, location):
+    if a.tag != b.tag or len(a) != len(b) or a.text != b.text or a.tail != b.tail:
+        raise RuntimeError("Unexpected SVG tree/text change at " + location)
+    for key in sorted(set(a.attrib) | set(b.attrib)):
+        if a.get(key) != b.get(key):
+            changes.append({"node": location, "label_id": b.get("data-label-id"), "attribute": key, "before": a.get(key), "after": b.get(key)})
+    for i, (left, right) in enumerate(zip(a, b)):
+        compare(left, right, location + "/" + str(i))
+compare(old, new, "/svg")
+assert len(changes) == 2
+assert {change["label_id"] for change in changes} == {"x-axis-tick-2-label", "x-axis-tick-3-label"}
+assert all(change["attribute"] == "y" for change in changes)
+print(json.dumps({"status": "scope-match", "only_two_label_y_attributes_changed": True, "changes": changes, "all_other_svg_tree_text_and_attributes_identical": True}, indent=2))
+`;
+const result = spawnSync(python, ["-B", "-c", code], { input: JSON.stringify(input), encoding: "utf8" });
+const payload = {
+  schema: "stemrobin/fig01-readonly-svg-property-evidence@1",
+  method: "Independently parse frozen old/new SVG XML; attribute/tree comparison only, no browser, pixels, renderer, validator or mathematical gate.",
+  code_sha256: hash(Buffer.from(code)),
+  script: record(path.join(own, "record-fig01-visible-delta.mjs")),
+  before: candidate.old_svg,
+  after: candidate.svg,
+  exit_code: result.status,
+  stdout: result.stdout,
+  stderr: result.stderr,
+  result: result.status === 0 ? JSON.parse(result.stdout) : null,
+};
+fs.writeFileSync(output, `${JSON.stringify(payload, null, 2)}\n`, { flag: "wx" });
+if (result.status !== 0) throw Error(`Property-only evidence failed: ${result.stderr}`);
+console.log(JSON.stringify({ output: record(output), result: payload.result }, null, 2));

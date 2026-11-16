@@ -1,0 +1,53 @@
+"""Compare retained and changed rendered PNGs; do not regenerate any image."""
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+from PIL import Image, ImageChops, ImageDraw
+
+WORK = Path(__file__).resolve().parent
+HISTORY = WORK / "history/before-parent-authorized-three-region-repair"
+REGIONS = {
+    "fig-01": [(345, 438, 390, 545), (510, 438, 554, 545)],
+    "fig-02": [(175, 580, 545, 590)],
+    "tbl-p0020-01": [(20, 24, 27, 297), (934, 24, 940, 297)],
+}
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+records = []
+for figure, boxes in REGIONS.items():
+    before = HISTORY / "work" / f"{figure}.preview.png"
+    after = WORK / f"{figure}.preview.png"
+    with Image.open(before) as old, Image.open(after) as new:
+        assert old.size == new.size
+        difference = ImageChops.difference(old.convert("RGB"), new.convert("RGB"))
+        mask = Image.new("RGB", old.size, (255, 255, 255))
+        draw = ImageDraw.Draw(mask)
+        for box in boxes:
+            draw.rectangle(box, fill=(0, 0, 0))
+        outside = ImageChops.multiply(difference, mask)
+        records.append({
+            "id": figure, "before": {"path": str(before), "sha256": sha(before)},
+            "after": {"path": str(after), "sha256": sha(after)},
+            "canvas_size": old.size, "allowed_changed_regions_canvas_px": boxes,
+            "actual_difference_bbox": difference.getbbox(),
+            "outside_authorized_regions_bbox": outside.getbbox(),
+            "outside_regions_byte_equal_rgb_pixels": outside.getbbox() is None,
+        })
+result = {
+    "argv": [sys.executable, *sys.argv],
+    "method": "Exact RGB pixel comparison of retained old and current renderer PNGs; no rendering or further structural checks.",
+    "records": records,
+    "pass": all(item["outside_regions_byte_equal_rgb_pixels"] for item in records),
+}
+with (WORK / "three-region-pixel-proof.json").open("x", encoding="utf-8") as output:
+    json.dump(result, output, indent=2)
+    output.write("\n")
+print(json.dumps(result))
+if not result["pass"]:
+    raise SystemExit(1)
