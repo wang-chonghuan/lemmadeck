@@ -1,0 +1,85 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 186,
+  "printed_page": 177,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 186
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "0949d05d4d6572e118024fa472cd459ee903a76c82026dbfb08561d43c6633ab"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "counting": {
+    "edge_margin_px": 100,
+    "reason": "Actual full page and footer detail show a bottom corner scan shadow within the side100px margins, below the real footer. No printed text lies in the excluded side strips; only the counting copy changes."
+  },
+  "notes": [
+    "The volt-to-electrostatic-unit conversion has two physical printed rows and is preserved with one genuine formula wrap.",
+    "Unit74 closes before the heading75. Point-charge potential starts here; the final paragraph continues on PDF187."
+  ],
+  "errata": [],
+  "printed_lines": 22,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+**电势差的单位** 利用公式(8-27)来建立电势差的单位.
+
+<!-- p -->
+在国际单位制中，功的单位是焦耳，而电荷的单位是库仑. 因
+此，如果 **1库仑的电荷从一点移到另一点时电场所做的功为
+1焦耳，则两点间的电势差等于1焦耳/库仑. 这个单位叫做
+伏特**.
+
+<!-- p -->
+在静电单位制中，把移动1个静电单位的电荷电场所做
+的功为1尔格，作为电势差的单位.
+
+<!-- p -->
+两个单位之间的关系为：
+
+<!-- p -->
+$1\text{伏特}=\frac{1\text{焦耳}}{1\text{库仑}}=\frac{10^7\text{尔格}}{3\times10^9\text{静电制电量单位}}↵=\frac{1}{300}\text{静电制电势差单位}$.
+
+<!-- h3 -->
+75. 点电荷电场的电势
+
+<!-- p -->
+推导点电荷电场的电势公式，不是简单的，我们不去推导
+而引入电势的公式.
+
+<!-- p -->
+在国际单位制中，点电荷电场的电势等于
+
+<!-- p -->
+$U=\frac{q}{4\pi\varepsilon_0\varepsilon r}$. (8-28)
+
+<!-- p -->
+在静电单位制中，
+
+<!-- p -->
+$U=\frac{q}{\varepsilon r}$. (8-29)
+
+<!-- p open -->
+显然，正电荷($q>0$)电场中某点的电势是正的($U>0$)，
+而负电荷($q<0$)电场中某点的电势是负的($U<0$). 公式(8-
+28)和(8-29)可以用来确定零电势. 规定离开点电荷无限远
+处的电势等于零. 当 $r\to\infty$ 时，$U\to0$. 这样选择电势零点是
+
+<!-- foot -->
+· 177 ·

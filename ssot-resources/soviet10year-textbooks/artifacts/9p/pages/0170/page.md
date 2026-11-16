@@ -1,0 +1,120 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 170,
+  "printed_page": 161,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 170
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "b516a424846425a7f1cddfd06311f309fce5f702c4323c0c3d28e2cd1d1449c6"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "counting": {
+    "edge_margin_px": 100,
+    "reason": "Actual page170 has a nontext triangular bottom-right scan shadow and extreme side-edge noise below/beside the printed body. No printed body, caption, figure or footer lies within the 100px side strips. Only counting-copy side pixels are excluded."
+  },
+  "notes": [
+    "Author-only scratch. First paragraph continues p0169#12.",
+    "Figure113 is one source figure containing both а/б subfigures; figure114 is a separate complete source figure. Original letter identities are retained only in source pixels.",
+    "The two captions share one physical printed row; the second caption has samerow.",
+    "Independent author physical row inventory: 20 including footer and one shared caption row, excluding figure ink and scan shadow. No SCI correction or invented numerical geometry."
+  ],
+  "errata": [],
+  "printed_lines": 20,
+  "figures": [
+    {
+      "id": "fig-113",
+      "label": "图113",
+      "box": [
+        292,
+        403,
+        462,
+        276
+      ]
+    },
+    {
+      "id": "fig-114",
+      "label": "图114",
+      "box": [
+        917,
+        355,
+        430,
+        327
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+径背向$q$；**如果$q<0$**，则电场强度的方向是沿着半径指向$q$
+(图113).
+
+<!-- fig 图113 box 292,403,462,276 -->
+![图113](figures/fig-113.png)
+
+<!-- cap 图113 -->
+图113
+
+<!-- fig 图114 box 917,355,430,327 -->
+![图114](figures/fig-114.png)
+
+<!-- cap 图114 samerow -->
+图114
+
+<!-- p -->
+在静电单位制中，点电荷的电场强度
+
+<!-- p -->
+$E=\frac{|q|}{\varepsilon r^2}$. (8-14)
+
+<!-- p -->
+**场的叠加原理** 两个电荷$q_1$和$q_2$对点电荷$q$的作用力
+的合力，等于每个电荷$q_1$和$q_2$的作用力$\vec{F}_1$和$\vec{F}_2$的几何和.
+
+<!-- p -->
+因为
+
+<!-- p -->
+$\vec{F}_1=q\vec{E}_1$ 和 $\vec{F}_2=q\vec{E}_2$，
+
+<!-- p -->
+式中$\vec{E}_1$和$\vec{E}_2$是电荷$q_1$和$q_2$产生的电场强度，所以，
+
+<!-- p -->
+$\vec{F}=q\vec{E}_1+q\vec{E}_2=q(\vec{E}_1+\vec{E}_2)$.
+
+<!-- p -->
+从这个等式可以得出：应当把几何和$\vec{E}_1+\vec{E}_2$**看做为电荷$q$**
+**所在的点的合电场强度**$\vec{E}$(图114)：
+
+<!-- p -->
+$\vec{E}=\frac{\vec{F}}{q}=\vec{E}_1+\vec{E}_2$.
+
+<!-- p -->
+这就是场的**叠加原理**.
+
+<!-- p -->
+在一般情况下，叠加原理表述为：**如果几个不同的带电**
+**粒子在空间某一点产生的电场强度分别为$\vec{E}_1$、$\vec{E}_2$、$\vec{E}_3$等等，则**
+**在该点的合电场强度等于**
+
+<!-- p -->
+$\vec{E}=\vec{E}_1+\vec{E}_2+\vec{E}_3+\cdots$. (8-15)
+
+<!-- foot -->
+· 161 ·
