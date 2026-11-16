@@ -1,5 +1,93 @@
 # 生产检查点
 
+## 第三十六批限定暂存通过
+
+一次限定暂存PASS：10文件/1JSON，仅八份完成报告及checkpoint/usage；
+没有SOURCE资源或完整现代新增。报告字节与冻结EOF保持，58失败绑定
+仍为失败，修复报告仅按精确归档保留。凭据、后组稿及未完成索引排除，
+HEAD/origin0/0，同分支fetch一次0复用。只增量重暂存checkpoint/usage，
+随后commit/push各一次；不重整体暂存检查、源审、收口或失败绑定。
+四个后组代理继续，63/11/raw54-21-85/现代完成0保持。
+
+## 第三十六批限定报告提交准备
+
+拟限定10文件/1JSON：320/321作者、320审阅及两阻断报告，57/58作者、
+57阻断、58机械修复及集成阻断报告，加checkpoint/usage。
+58修复报告仅按失败归档的原字节保留，不追认失败Main绑定或SOURCE批准。
+无SOURCE资源或完整现代新增；322323/5960后组报告与稿件、
+324325/6162备料、未完成modern/index、错书6p/private/tmp/env/newticket排除。
+同分支fetch一次0复用，不重源收口、源审、全项目检查或失败绑定。
+
+Main74与101当前作者绑定各一次0，323纯结构13828字节、
+60纯结构12067字节冻结。59干净审阅入口一次0、36直接叶，
+没有重做101叶哈希或读失败正文。Epicurus唯一322/323FIRST、
+Leibniz唯一59FIRST、Rawls324/325作者及Confucius61/62作者在途。
+原prepare各一次0复用；最新320/58/60缺口只传结构、不改冻结incoming。
+批准63/11、raw54-21-85/完整现代0保持；父图片0，费用token未知。
+
+## 第三十六批320首次阻断，后组作者已完成
+
+Gauss唯一320 SOURCE FIRST：一译注/页脚角色缺陷及两不确定，
+永久BLOCKED；总已用1/未用0、机械1/实际源纠正0，不再修复或替换审阅。
+Main33当前review绑定一次exit0，Gauss已关闭，图片3/reopen0/父0。
+320缺口及终态额度已给Aristotle结构状态；321未被审阅或改写。
+
+Aristotle322/323作者完成关闭，FIRST各一次0：24行15块0图、
+22行13块2图，各已用0/未用1。Ramanujan59/60作者完成关闭，
+59 FIRST一次0、23行11块0图；60一次exit1，源/块体25、机器26行，
+12块0图，永久BLOCKED，各已用0/未用1。当前待Main直接作者绑定，
+只对通过页启动唯一fresh源审及后续纯结构作者，未SOURCE批准或晋升。
+58首次绑定失败精确归档已一次0，不重试、不修binder或启动源审。
+63/11批准页、raw54-21-85/现代完成0保持；batch36未暂存提交。
+
+## 第三十六批58集成首次阻断
+
+Pasteur唯一机械修复一次0，26/26行13块0图，两派生accent警告保留；
+MD只两圈号字符串、JSON只对应两行，原audit等价预期false与metadata
+分类调整如实保留，不改源内容或追加修复。总已用1/未用0/实际源纠正0，
+Pasteur关闭，图片0；SOURCE审查尚未做。
+
+Main首次当前packet绑定在外部Python运行时叶的工作区路径断言exit1，
+没有完成44绑定记录或晋升，不能把机械pass当SOURCE批准。
+额度已尽，不修binder、不过滤外部叶重试、不启动替换review或SOURCE审。
+失败helper/call/streams/currentmanifest及必要输出将一次精确归档；
+不重执行绑定、修复finalize或源审。58永久INTEGRATION BLOCKED，
+其终态额度及缺口仅给Ramanujan59/60结构状态，不给失败正文图。
+当前Gauss320FIRST/Aristotle322323作者/Ramanujan5960作者，批准63/11
+及raw54-21-85/现代完成0保持；父图片0，batch36尚未暂存提交。
+
+## 后续324/325及8p61/62仅备料
+
+Main四页原prepare各一次exit0，仅原图/网格/layout/模板，
+待323/60纯结构，未转写、FIRST或批准，不重prepare。
+本批同分支fetch一次exit0，不同步其它分支或重fetch。
+Gauss320FIRST/Pasteur58单符号修复/Aristotle322323作者/
+Ramanujan5960作者继续，63/11/raw54-21-85/现代完成0保持。
+
+## 第三十五批已提交推送，第三十六批接续
+
+commit/push各一次exit0，HEAD/origin
+`cba4ecd57e6c3d1d99a69327ea60d0389034c5a0`，push完成
+2026-11-16T20:38:39.276Z。9文件/1JSON，仅七完成报告与checkpoint/usage；
+无SOURCE资源或完整现代新增。下方待提交措辞为历史，不重成功命令。
+
+Nietzsche320/321完成关闭：320 FIRST一次exit1，同一圈号两处白名单错误，
+冻结失败后唯一机械表示修复一次0、23/23行11块0图，已用1/未用0/
+实际源纠正0。321因FIG274 B/В身份未定，候选前永久BLOCKED，
+行/块/实际图/错误均未测量，不记零，实际0/未用1。
+Main85当前作者绑定一次0，12128字节321纯结构冻结；Gauss仅320唯一
+freshSOURCEFIRST，干净57叶，已用1/未用0不重置，不读321失败正文图。
+
+Goodall57/58完成关闭：57 FIRST一次exit1、19/21行8块1图，两独立错误
+永久BLOCKED；58 FIRST一次exit1、26/26行13块0图，仅两处同一圈号编码错误，
+各实际0/未用1。Main82当前作者绑定一次0，18941字节58纯结构冻结。
+58作者BLOCKED旧措辞和FIRST/失败保持；Main仅允许原未用额度内单一
+机械圈号表示修复，不删源标记或改工具/profile，不认定SOURCE批准。
+Pasteur独占58修复包在途，图片0；Ramanujan59/60与Aristotle322/323作者
+复用原prepare，只给纯结构及当前321/57缺口和58修复pending。
+当前四代理，63/11/raw54-21-85/现代完成0保持；父图片0，服务46/retry0。
+小时监督及离线边界保持，batch36尚未暂存提交，token费用未知。
+
 ## 第三十五批限定暂存通过
 
 一次限定暂存PASS：9文件/1JSON，仅七完成报告及checkpoint/usage；
