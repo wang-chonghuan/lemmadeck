@@ -9,7 +9,7 @@
  * 按 ; 匹配会一个字体都替换不到，页面看着能用（系统字体兜底）但并不自包含。
  * 所以内联数为 0 直接抛错，不允许静默降级。
  *
- * 用法: render_lesson.js <bookDir> --out <dir> [--edition <name>] [--lesson <lessonId>]... [--text-only | --titles-only]
+ * 用法: render_lesson.js <bookDir> --out <dir> [--edition <name>] [--lesson <lessonId>]... [--text-only | --titles-only | --groups-only]
  */
 const fs = require("fs");
 const path = require("path");
@@ -27,7 +27,10 @@ const editionName = args.includes("--edition") ? args[args.indexOf("--edition") 
 const outRoot = args.includes("--out") ? args[args.indexOf("--out") + 1] : null;
 const textOnly = args.includes("--text-only");
 const titlesOnly = args.includes("--titles-only");
-if (textOnly && titlesOnly) throw new Error("Select only one partial render surface");
+const groupsOnly = args.includes("--groups-only");
+if ([textOnly, titlesOnly, groupsOnly].filter(Boolean).length > 1) {
+  throw new Error("Select only one partial render surface");
+}
 const onlyLessons = new Set(args.flatMap((arg, index) =>
   arg === "--lesson" && args[index + 1] ? [args[index + 1]] : []));
 if (!bookDir || !outRoot) {
@@ -240,6 +243,33 @@ for (const lid of lessonDirs) {
     ? JSON.parse(fs.readFileSync(path.join(dir, "figures.json"), "utf8")).figures : [];
   const renderFigure = (id, label) => figure(contentRoot, id, label, !!editionName, manifest);
   const choiceDir = path.join(dir, "choice-set");
+  if (groupsOnly) {
+    const counts = new Map();
+    let previous = null;
+    for (const exercise of X.exercises) {
+      if (exercise.group === previous) continue;
+      previous = exercise.group;
+      const label = previous || "练习";
+      counts.set(label, (counts.get(label) || 0) + 1);
+    }
+    const file = path.join(outDir, "exercises.html");
+    let html = fs.readFileSync(file, "utf8");
+    let changed = 0;
+    for (const [label, count] of counts) {
+      const before = `<div class="exgroup">${esc(label)}</div>`;
+      const after = `<div class="exgroup">${inline(label)}</div>`;
+      if (before === after) continue;
+      if (html.split(before).length - 1 !== count) {
+        throw new Error(`${lid}: existing group heading does not match approved label`);
+      }
+      html = html.split(before).join(after);
+      changed += count;
+    }
+    if (!changed) throw new Error(`${lid}: no unrendered group headings`);
+    fs.writeFileSync(file, html);
+    done.push({ lesson: lid, surface: "groups", headings: changed, output: outDir });
+    continue;
+  }
   if (titlesOnly) {
     const title = L.printed_title || L.title;
     const surfaces = [["text", title], ["exercises", `${title} · 习题`]];
@@ -285,7 +315,7 @@ for (const lid of lessonDirs) {
     if (e.group !== group) {
       if (out) out += "</ol>";
       group = e.group;
-      out += `<div class="exgroup">${esc(group || "练习")}</div><ol class="ex">`;
+      out += `<div class="exgroup">${inline(group || "练习")}</div><ol class="ex">`;
     }
     const figs = (e.figures || [])
       .map((f) => renderFigure(f.id, f.label)).join("");
