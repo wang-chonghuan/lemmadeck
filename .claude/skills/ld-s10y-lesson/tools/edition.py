@@ -130,6 +130,22 @@ def _authoritative_source_targets(
             candidate,
             numbering,
         )
+    if any(block.get("owner_lesson") for block in merged):
+        toc = book.parent.parent / "toc" / book.name / "zh.json"
+        if not toc.is_file():
+            raise SystemExit(
+                f"ERROR: 缺少 {toc}，无法从权威页绑定 owner-lesson 来源身份"
+            )
+        assemble.check_toc(
+            candidates,
+            toc,
+            book.name,
+            {
+                block["printed_page"]
+                for block in stream
+                if block.get("printed_page") is not None
+            },
+        )
     figure_errors, _ = assemble.claim_figures(candidates, merged)
     if figure_errors:
         raise SystemExit(
@@ -162,6 +178,18 @@ def _authoritative_source_targets(
         )
 
     candidate = matches[0]
+    if candidate.get("card_id") and any(
+        source_id is not None and source_id != candidate["card_id"]
+        for source_id in (
+            lesson.get("id"),
+            lesson.get("card_id"),
+            exercises.get("lesson"),
+        )
+    ):
+        raise SystemExit(
+            "ERROR: lesson/exercises 来源身份与权威 TOC 卡片不一致；"
+            "请重新运行 assemble"
+        )
     raw_prose = lesson.get("prose", [])
     source_prose = candidate.get("prose", [])
     if len(raw_prose) != len(source_prose):

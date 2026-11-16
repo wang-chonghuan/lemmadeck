@@ -167,6 +167,44 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
             rules.append((columns.start, columns.stop - 1, (rows.start + rows.stop) / 2))
     if not rules:
         return False
+    # An underlined side column is not a fraction when another column has
+    # separate body rows, even if its last row contains only one CJK glyph.
+    outside = band.copy()
+    for left, right, _ in rules:
+        margin = int(0.5 * line_h)
+        outside[:, max(0, left - margin):min(outside.shape[1], right + margin + 1)] = False
+    outside_components, _ = ndimage.label(outside)
+    outside_bounds = [
+        bounds for bounds in ndimage.find_objects(outside_components) if bounds is not None
+    ]
+    for left, right in _merge_close(_runs(outside.any(axis=0)), line_h):
+        glyphs = [
+            (rows, columns)
+            for rows, columns in outside_bounds
+            if left <= columns.start and columns.stop - 1 <= right
+            and 0.75 * line_h <= rows.stop - rows.start <= 1.35 * line_h
+            and 0.2 * line_h <= columns.stop - columns.start <= 1.3 * line_h
+        ]
+        centers = [(rows.start + rows.stop) / 2 for rows, _ in glyphs]
+        row_groups = _merge_close(
+            [(center, center) for center in sorted(centers)], 0.4 * line_h
+        )
+        body_rows = []
+        for start, end in row_groups:
+            fragments = [
+                (columns.start, columns.stop - 1, rows.stop - rows.start)
+                for rows, columns in glyphs
+                if start <= (rows.start + rows.stop) / 2 <= end
+            ]
+            height = float(np.median([height for _, _, height in fragments]))
+            widths = _merge_close([(x, y) for x, y, _ in sorted(fragments)], 0)
+            if any(
+                max(0.65 * line_h, 0.85 * height) <= y - x + 1 <= 1.3 * line_h
+                for x, y in widths
+            ):
+                body_rows.append((start, end))
+        if len(body_rows) >= 2 and body_rows[-1][0] - body_rows[0][1] >= 1.5 * line_h:
+            return False
     for left, right, _ in rules:
         margin = int(0.5 * line_h)
         band[:, max(0, left - margin):min(band.shape[1], right + margin + 1)] = False
@@ -280,7 +318,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             and 0.1 * glyph_h <= columns.stop - columns.start <= 1.3 * glyph_h
         ]
         aligned_sequence = len(centers) >= 2 and all(
-            any(columns.start <= center <= columns.stop for columns in body_columns)
+            any(columns.start - 1 <= center <= columns.stop + 1 for columns in body_columns)
             for center in centers
         )
         if not (regular_sequence or aligned_sequence):

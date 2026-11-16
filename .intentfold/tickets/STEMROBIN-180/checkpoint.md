@@ -1,6 +1,191 @@
 # 生产检查点
 
-## 第九批在途
+## 第十批验证完成待提交
+
+暂存守卫首FAIL发现s13两份作者freeze复制品依赖scratch路径；已只移除
+持久目录这两份未提交复制品，作者原freeze不变。最小修retention过滤，
+题/键/审批/解答/图/HTML均未改，复用原审批和显示证据，不重复语义审查。
+首FAIL及处理记录batch10-retention-first-failure.md保留。
+受影响暂存边界复核exit0：234文件、38现代索引项仅新增指定三课，
+JSON全部可解析、无scratch资源依赖/env/app/108/171+；同分支freshfetch
+exit0且HEAD/origin0/0，无pull/rebase。commit/push尚待实际执行。
+
+2026-11-16接续：s13/s15/s15-t1三课正式modern-finalize、14份答案
+prepare/retain/finalize均已退出0；八份s13为auto2/ungraded6，六份s15
+为derived/ungraded，补充课零题不强编。先行私有源解、最终全文/实际
+现代图及作者完整解答独立PASS复用，原作者freeze不改。
+s15四选择题18项完成源解→纯view盲解冻结→全项作者依据/覆盖比较PASS，
+reviewedvalidate一次exit0及retainexit0；加s13六题25项，本批十题43项。
+水柱10.3m在题面供应，汞/酒精种子未带密度所以数字高度没有点选评估，
+反密度符号关系仍保留；不声称覆盖所有原题数值计算和实作能力。
+
+官方三课render恰一次exit0，既有隔离headless检查16桌面/手机页面PASS。
+main实际打开43全部手机选项、s15六完整书写题和末端、补充课末端/161、
+152右端150/12km及160b手机右端/桌面合成，未见裁切、遮挡或内部键泄漏。
+152固定640/16px，160固定640/22px（手机书写330+310=640），161手机
+358px/min19.01875px。完整证据在tmp/offline-evidence-
+phy6-c4-s13-phy6-c4-s15-phy6-c4-s15-t1/report.json，复用不重跑。
+
+153 Feynman完整独审PASS及officialrecord/main晋升exit0；有效预备图
+146147149151153可提交。154155作者必要连接FAIL、156157 Volta完整
+独审遗漏顶部刻线FAIL，均sole1/1用尽，不修/不晋升；s11/s12/s14仍排除。
+图服务累计25请求、本批六请求、transportretry0，费用/token未知。
+本批批准源边界仍through170，108与171+排除；不是正式handoff，无写库、
+发布、合并或部署，全项目tests/build仍留正式handoff。
+
+下一批准备：171175唯一五footer/175“浸→浮”修复Ramanujan受影响PASS，
+批准manifest9f3978be8398182bce2877a1911c4f13048f09f936c9db163676b0f5ea6b53ac，
+尚未晋升/装订。176180 Bacon完整独审176179内容PASS、180REVISE：
+p0180#7错误open及第一“飞机”漏粗体；Wegener另副本最小修并仅对
+176177180当前字节officialfinalize，原freeze/首FAIL保留。
+s16完整TEXT PASS和三条数字checker修复PASS复用；162Wegener、
+163164Volta作者，Ramanujan四题源解先行，最终现代图/答案/选择题尚未收口。
+7p/8p未开始，274项目标仍未完成。
+
+## 第十批在途
+
+工具修复收口：Sagan新10项及既有18项affected测试已实际PASS；
+两个测试runner/fixture首次失败完整明记，未声称首命令成功。
+main同一production修复审查与测试证据复用，officialadapt-finalize
+s15首次+s15-t1失败后重试合并一次exit0；原170erratum与source字节未动。
+补充课official答案prepare/retain零模板/finalize各一次exit0。
+s15六题officialprepare一次exit0，Ramanujan开始finalkeys，
+Sagan开始source-first choices，main私有解不披露。
+同分支fetchexit0，HEAD/origin0/0；不pull/rebase、不同步其它组。
+
+2026-11-16跨压缩接续：160 main一次完整独审及officialrecord PASS复用，
+按批准字节晋升exit0；s15独立binding副本retainexit0，尚未finalize。
+161 Sagan完整14块/72对象23关系/六native主题独审PASS及officialrecord
+复用，已晋升；s15-t1文字已retain，但首次adapt-finalize exit2保留，
+原170数学erratum触发权威source-rebuild缺少TOC身份的工具缺陷。
+Sagan只修edition.py并作focused正反身份检查；不得删erratum或重装through170。
+
+171175 Ramanujan一次完整54块119行/四实际裁图独审FAIL：
+五页footer漏两圆点，175p0175#12实际“浮在”抄成“浸在”。
+其余body/crop结论PASS可复用，不晋升此cohort；Wegener先冻结176180，
+再另副本最小修五footer及一字，原freeze/firstFAIL保留。
+153作者冻结待Feynman一次独审；154155必要连接作者FAIL且sole1/1用尽，
+s14排除完整课，不再修这两图。156157 Bacon作者在途，Volta等冻结后一次独审。
+s16 main已完整raw四题及162163164实际原图先行私有源解冻结；
+Feynman现代text仍等待同一工具修复，不绕过source-errata。
+本批仍无display/commit，7p/8p未开始；现25实际图服务请求未新增。
+
+2026-11-16接续：s13八答案最终prompt/152绑定已完成，main原独立全解
+PASS复用；officialprepare/retain/finalize各一次退出0，auto2/ungraded6。
+s13新选择题先行源解→纯view盲解冻结→作者全部25项及八源覆盖比较PASS，
+6题（2单/4多）/25项，无新图；reviewed validate一次exit0及retainexit0。
+完整实作/自由论证能力损失明记，未虚构学校读数或泛化现代飞机舱压。
+152原完整像素审批复用，不重审。浏览器批次检查仍pending，未提交第十批。
+
+s14 Volta完整TEXT独立PASS复用，s15/s15-t1 main完整TEXT独立PASS已存；
+作者原freeze不改。160Feynman作者在途，161Bacon原稿冻结后交Sagan
+一次完整独审；0/1修复预算，尚未批准。Ramanujan s15六题源解冻结，
+等待最终现代正文/160后绑定，不把源解称已收口答案。153–155Volta作者，
+156/157Bacon作者，158/159未派；仅目标s13/s15/s15-t1三单元14原题。
+
+166–170原56块/111实际行/四裁图完整独审PASS已存，170首次24vs25
+计行FAIL保留。main只修_single_fraction_row正文列保护；裁小图测试
+首FAIL3vs4、改完整页仍FAIL24vs25，最后保护断开的CJK笔画后四窄测试PASS。
+原page.md/page.json及输入png/layout/grid/template字节不变，内容PASS
+复用，仅受影响审计25/25PASS，报告source-review-170-counter-repaired.md。
+approved union=166..169原PASS+170修复PASS，108作者冻结文件hash核对，
+原冻结和firstFAIL不改；晋升正确副本exit0。filtered170prepare159pages，
+officialassemble恰一次exit0及promoteexit0，159有效页/70源项/320装订题/
+165编号图，open为p0107#7/p0170#15；320含尾部open碎片，不冒称320闭合题。
+原数学勘误16480/16.5kN保留，未改原文；不重跑through165或矢量化。
+Wegener171–175新源冻结（manifest744afca4d6ea94b1a8b8f7e76b8e7f8db7923622f8a23591097ef38de558fa6f），
+交Ramanujan完整独审；176+未派。无写库/发布/合并/部署/fullhandoff。
+以下保留较早pending状态，不改写为预先通过。
+
+2026-11-16接续：150 Ramanujan完整原图/全文4题/104对象76关系/
+完整SVG/六固定640媒体主题及既有手机端点/局部独审FAIL。
+指针上杆被opaque mechanism-window遮住，标号两端源细分遗漏；
+官方record一次FAIL，sole1/1截图修复已用尽。main复用失败，不重看/
+重修/晋升。s12因此排除，Volta四答案冻结及151独审PASS/晋升保留。
+148作者sole1/1后上半球两侧接头缺失BLOCK，149 main完整独审PASS/
+record/promoteexit0，原wallstart修复1/1保留。s11继续blocked。
+
+152 main原图→全文10块8题→全部202对象178关系→六native主题及
+六306scrollstart/end一次独审PASS。12印刷读数逐列一致，海平面760
+来自课文不冒称原印刷；媒体固定640/all50labels16px/滚动0..334，
+末端150/12km可达。官方record/promoteexit0，sole1/1原FAIL保留。
+s13独立binding副本retain及officialadapt-finalizeexit0，作者freeze不改。
+八答案main先行源解与完整finalprompt/实图一次比较PASS，最后作者
+figure/prompt绑定及officialprepare/retain/finalize待完成；Saganchoice作者启动。
+
+预备第十批改为s13/s15/s15-t1三单元14原题，后两者仍pending不冒称完整。
+s14 Bacon20块3题7图冻结，Volta一次独立TEXT review在途；Feynman
+s15/s15t1文字作者在途。main读完整两源/实际160161并私有先行源解
+answer-source-c4-s15-s15t1.md冻结，不披露作者。
+实际图片ledger一次核对新增6请求（147两/148两/149一/portrait拒绝一），
+累计25请求/0transportretry；不是六幅审批图，费用token未知。
+
+161165 Bacon完整5页/46块104行/9题4图独审PASS复用，
+exactmanifestd2d03ec4162969a9634734e80010f58d3369e2d0308051cf2258dad8a33992a7
+绑定91作者文件；main正确字节晋升exit0，filtered165准备154pages、
+官方assemble恰一次exit0及promoteexit0。现154有效页69源项311题161编号图，
+open仅p0107#7/p0165#7，108仍排除；不把源items称完整现代课。
+s14闭合20块3题7图，Bacon现代全文作者；main读全raw及实际153..159
+先行完整私有源解answer-source-c4-s14.md，不向未来题/答案作者披露。
+Wegener新source166170作者接续，171+未派。
+
+真工具缺陷最小修正：build_context.py只在引用检索时把合法null图题视为空，
+输出figureLabel仍保留null，不改原图身份/文本。新增null/missing/numbered
+三个独立预期窄测试一次3/3 PASS；不重跑旧图或重新请求blockedportrait，
+不重置1/1预算。layout157已有7/7及16/16证据继续复用。
+161165作者新freeze a7878f1262edfb8bf791b784ee4ddc6a1cea37f4450c51b0f86e861977abe04d，
+46块104行9题4图，Bacon完整独审在途。Ramanujan转s13答案作者，
+finaltext/现代152绑定待完成，不读main私有源解。
+
+接续：146 Wegener完整原图/全文/14对象13关系/六native主题独审PASS，
+官方record一次exit0，main复用审批并晋升exit0，机械总修复1/1用尽。
+147 main完整原图/全文8题/10对象7关系/分层及六实际306640主题独审PASS，
+官方record一次及批准字节晋升exit0，sole1/1首FAIL保留，实请求2/重试0。
+s12 Volta完整8块/4题/脚注/2anchors冻结，main完整TEXT独审PASS，
+报告modern-text-review-c4-s12.md；150151交Volta作者，Wegener转s12答案，
+main先行源解不向作者披露。s13 Sagan文字作者在途。
+
+tbl-p0153-02作者终止BLOCKED：null-label context builder首失败，
+唯一scratch修复后单次图片请求33557字符超32000上限HTTP400，
+未生成PNG，修复总1/1用尽，不再请求/修复/预览/独审/晋升。
+freeze beced5bdfaaea82927124355889526ca2c1482597931bc2489aa48fe267a577b，
+作者报告及全部firstFAIL/终止证据保留。s11不得计完整课程，
+148149仍作者在途，有效预备图可保留。Ramanujan161165源作者、
+Bacon冻结后一次独审；166+未派。现有下一批工作继续，无成批commit。
+
+2026-11-15 23:48:51 UTC：156页脚/157计行affected PASS与158..160
+原完整PASS合并复用，精确manifestc2a40d22baaa2c96c8573e10ef402f145695594add9dc6e0bd5c66adf11212d8
+绑定新156/157及原158..160，main按hash晋升正确副本退出0。
+filtered through160准备含全部现有SVG，官方assemble恰一次退出0，
+149有效页/66源项/302题/157编号图，随后晋升退出0；没有重复
+vectorize/装订/全文审查。open仅p0107#7及p0160#8，108继续排除。
+s12第三题跨页拼接和独立q1完整闭合，main原先私有源解接续绑定；
+s13八题/完整正文/实际152先行私有求解已冻结，不披露未来作者。
+这些源计数不是完整现代课数量。
+
+下一小批目标s11/s12/s13共20原题，当前未成批：
+s11TEXT独审PASS复用；146Wegener独审在途，147Sagan作者、
+148149Feynman作者。146首preview导入失败后runner机械修复依用户
+总上限保守计1/1，不沿作者原freeze0/1再允许修图；原freeze保留，
+后续必要缺陷即block。tbl-p0153-02实际是托里拆利肖像，不是表格，
+main最初按filename误分类的委托已立即纠正；原PNG/fulltext实际
+核对后交Bacon decorative compactportrait作者，稳定ID不改。
+Volta s12text作者在途；Sagan先完成147后接s13text；Ramanujan
+只获新161–165孤立source作者委托，166+未派。无本批答案、
+choice/display或commit，图片请求实际ledger待冻结后核，不预估费用。
+
+接续第九批已推送，批准156..160新副本准备晋升/filtered装订；
+s11全文PASS复用，146..149作图在途。尚未形成完整第十批，不提前
+声明答案/选择题/显示PASS，7p/8p仍未开始。
+
+## 第九批已提交推送
+
+第九批271文件提交`653178538348ddb2a5151257ec8f7d91f5571fbf`，
+push实际退出0，已推送同一origin/codex/STEMROBIN-180-textbooks。
+三课/10标准答案/8选择题36项/十必需现代图及一次16页离线检查完成；
+六有效预备图、through155批准源保留。108、156+、layout补丁、
+unfinished现代稿均排除。不是正式handoff，无写库/合并/部署，继续。
+以下保留提交前真实状态，不将pending历史改写成预先完成。
 
 暂存范围已PASS，271文件：三课现代产物/十必需图、六有效预备图、
 through155批准源及相应记录，108、156+、layout补丁及s11现代稿排除。

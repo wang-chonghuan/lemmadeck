@@ -54,7 +54,7 @@ def prose_context(blocks: list[dict], figure_id: str) -> list[dict]:
         figure_label = block.get("label", "")
         references = {
             normalized_reference(figure_id),
-            normalized_reference(figure_label),
+            normalized_reference(figure_label or ""),
         }
         direct = []
         for candidate in blocks:
