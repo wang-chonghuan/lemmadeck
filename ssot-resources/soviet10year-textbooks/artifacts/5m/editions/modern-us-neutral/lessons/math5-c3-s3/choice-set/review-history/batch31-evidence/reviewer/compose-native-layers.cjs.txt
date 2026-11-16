@@ -1,0 +1,70 @@
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const { PNG } = require("/Users/yong/.codex/worktrees/d9b1/lemmadeck/.agents/skills/node_modules/playwright-core/lib/utilsBundle.js");
+
+const root = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+if (process.cwd() !== root) throw new Error("Unexpected working directory");
+const own = path.join(root, ".intentfold/tickets/STEMROBIN-182/tmp/reviewer-5m-c3-s3");
+const log = JSON.parse(fs.readFileSync(path.join(own, "image-source-render-log.json"), "utf8"));
+const sha256 = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const records = [];
+for (const record of log.records.filter((item) =>
+  ["fig-191", "fig-192", "fig-193", "fig-194"].includes(item.figure_id))) {
+  const artworkAsset = record.seed_assets.find((item) => item.path.endsWith(".png"));
+  const artwork = PNG.sync.read(fs.readFileSync(path.join(root, artworkAsset.path)));
+  const overlayBytes = fs.readFileSync(record.rendered_image_path);
+  if (sha256(overlayBytes) !== record.rendered_image_sha256) throw new Error("Overlay changed");
+  const overlay = PNG.sync.read(overlayBytes);
+  if (artwork.width !== overlay.width || artwork.height !== overlay.height) {
+    throw new Error("Native layer dimensions differ");
+  }
+  const whiteRects = record.inventory.polygons
+    .filter((item) => item.fill.includes("--ld-figure-paper") && item["fill-opacity"] === "1")
+    .map((item) => {
+      const points = item.points.split(" ").map((point) => point.split(",").map(Number));
+      const xs = [...new Set(points.map(([x]) => x))];
+      const ys = [...new Set(points.map(([, y]) => y))];
+      if (xs.length !== 2 || ys.length !== 2) throw new Error("Nonrectangular paper fill");
+      return { left: Math.min(...xs), right: Math.max(...xs),
+        top: Math.min(...ys), bottom: Math.max(...ys) };
+    });
+  const complete = new PNG({ width: overlay.width, height: overlay.height });
+  // Recover the white-backed overlay without discarding meaningful white pole stripes.
+  for (let y = 0; y < overlay.height; y++) {
+    for (let x = 0; x < overlay.width; x++) {
+      const i = (y * overlay.width + x) * 4;
+      const alpha = artwork.data[i + 3] / 255;
+      const ink = overlay.data[i] !== 255 ||
+        overlay.data[i + 1] !== 255 || overlay.data[i + 2] !== 255;
+      const paper = whiteRects.some((rect) => x + 0.5 >= rect.left &&
+        x + 0.5 <= rect.right && y + 0.5 >= rect.top && y + 0.5 <= rect.bottom);
+      for (let channel = 0; channel < 3; channel++) {
+        complete.data[i + channel] = ink ? overlay.data[i + channel] :
+          paper ? 255 : Math.round(artwork.data[i + channel] * alpha + 255 * (1 - alpha));
+      }
+      complete.data[i + 3] = 255;
+    }
+  }
+  const output = path.join(own, `${record.figure_id}.complete-native.png`);
+  const bytes = PNG.sync.write(complete);
+  fs.writeFileSync(output, bytes, { flag: "wx" });
+  records.push({
+    figure_id: record.figure_id,
+    artwork_asset: artworkAsset,
+    overlay_asset_path: record.asset_path,
+    overlay_asset_sha256: record.asset_sha256,
+    reused_native_raster_sha256: record.rendered_image_sha256,
+    complete_native_path: output,
+    complete_native_sha256: sha256(bytes),
+    width: complete.width,
+    height: complete.height,
+    white_native_rectangles_preserved: whiteRects.length,
+    additional_headless_renders: 0,
+    composition_note: "Full unscaled seed artwork under native SVG raster; white background keyed out, native opaque white pole rectangles restored. This is source inspection evidence, not product-render approval.",
+  });
+  console.log(JSON.stringify(records.at(-1)));
+}
+fs.writeFileSync(path.join(own, "native-layer-composition-log.json"),
+  `${JSON.stringify({ records, additional_headless_renders: 0 }, null, 2)}\n`,
+  { flag: "wx" });

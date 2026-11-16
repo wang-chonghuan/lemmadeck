@@ -1,0 +1,110 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { pathToFileURL } from "node:url";
+import { chromium } from "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.agents/skills/node_modules/playwright-core/index.mjs";
+
+const root = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+if (process.cwd() !== root) throw new Error("Unexpected working directory");
+const own = path.join(root, ".intentfold/tickets/STEMROBIN-182/tmp/reviewer-5m-c3-s3");
+const seedPath = path.join(root, ".intentfold/tickets/STEMROBIN-182/tmp/5m-c3-s3/seed.json");
+const seed = JSON.parse(fs.readFileSync(seedPath, "utf8"));
+const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const figures = [...seed.figures].sort((a, b) => a.id.localeCompare(b.id));
+if (figures.length !== 8) throw new Error("Expected exactly eight seed figures");
+const logPath = path.join(own, "image-source-render-log.json");
+if (fs.existsSync(logPath)) throw new Error("Do not duplicate an existing render run");
+for (const figure of figures) {
+  if (fs.existsSync(path.join(own, `${figure.id}.native.png`))) {
+    throw new Error(`Existing render must not be duplicated: ${figure.id}`);
+  }
+  for (const asset of figure.assets) {
+    if (hash(fs.readFileSync(path.join(root, asset.path))) !== asset.sha256) {
+      throw new Error(`Seed asset changed: ${asset.path}`);
+    }
+  }
+}
+const records = [];
+const browser = await chromium.launch({ headless: true });
+let closed = false;
+try {
+  const context = await browser.newContext({ deviceScaleFactor: 1 });
+  await context.route("**/*", (route) => {
+    const protocol = new URL(route.request().url()).protocol;
+    return ["file:", "data:", "about:"].includes(protocol) ? route.continue() : route.abort();
+  });
+  const page = await context.newPage();
+  for (const figure of figures) {
+    const asset = figure.assets.find((candidate) => candidate.path.endsWith(".svg"));
+    const svgPath = path.join(root, asset.path);
+    await page.goto(pathToFileURL(svgPath).href, { waitUntil: "load" });
+    const dimensions = await page.locator("svg").evaluate((svg) => ({
+      width: Number(svg.getAttribute("width")),
+      height: Number(svg.getAttribute("height")),
+      viewBox: svg.getAttribute("viewBox"),
+    }));
+    await page.setViewportSize({ width: dimensions.width, height: dimensions.height });
+    const inventory = await page.locator("svg").evaluate((svg) => {
+      const visible = (node) => {
+        const style = getComputedStyle(node);
+        return style.display !== "none" && style.visibility !== "hidden";
+      };
+      const attrs = (node, names) => Object.fromEntries(
+        names.map((name) => [name, node.getAttribute(name)]),
+      );
+      return {
+        labels: [...svg.querySelectorAll("text")].filter(visible).map((node) => ({
+          ...attrs(node, ["id", "data-label-id", "x", "y", "font-size"]),
+          text: node.textContent,
+        })),
+        polygons: [...svg.querySelectorAll("polygon")].filter(visible).map((node) =>
+          attrs(node, ["id", "points", "fill", "fill-opacity"])),
+        lines: [...svg.querySelectorAll("line")].filter(visible).map((node) =>
+          attrs(node, ["id", "x1", "y1", "x2", "y2"])),
+        rawPaths: [...svg.querySelectorAll('[id$="-raw-path-layer"] path')].filter(visible)
+          .map((node) => attrs(node, ["d", "fill", "stroke"])),
+        embeddedImages: [...svg.querySelectorAll("image")].filter(visible).map((node) => ({
+          ...attrs(node, ["id", "x", "y", "width", "height", "preserveAspectRatio"]),
+          hrefType: (node.getAttribute("href") ||
+            node.getAttributeNS("http://www.w3.org/1999/xlink", "href") || "").split(",")[0],
+        })),
+      };
+    });
+    const embeddedPngHashes = [...fs.readFileSync(svgPath, "utf8")
+      .matchAll(/data:image\/png;base64,([A-Za-z0-9+/=]+)/g)]
+      .map((match) => hash(Buffer.from(match[1], "base64")));
+    const output = path.join(own, `${figure.id}.native.png`);
+    await page.locator("svg").screenshot({ path: output, animations: "disabled" });
+    const record = {
+      figure_id: figure.id,
+      seed_assets: figure.assets,
+      asset_path: asset.path,
+      asset_sha256: asset.sha256,
+      rendered_image_path: output,
+      rendered_image_sha256: hash(fs.readFileSync(output)),
+      dimensions,
+      embedded_png_sha256: embeddedPngHashes,
+      inventory,
+      native_complete_svg_render: true,
+      network_requests_permitted: false,
+    };
+    records.push(record);
+    console.log(JSON.stringify({
+      figure_id: figure.id,
+      rendered_image_sha256: record.rendered_image_sha256,
+      dimensions,
+      labels: inventory.labels,
+      embedded_png_sha256: embeddedPngHashes,
+    }));
+  }
+} finally {
+  await browser.close();
+  closed = true;
+}
+fs.writeFileSync(logPath, `${JSON.stringify({
+  seed_file_sha256: hash(fs.readFileSync(seedPath)),
+  native_renders: records.length,
+  browser_closed: closed,
+  no_new_figures: true,
+  records,
+}, null, 2)}\n`, { flag: "wx" });

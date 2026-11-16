@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+assert.equal(process.cwd(), '/Users/yong/.codex/worktrees/d9b1/lemmadeck')
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const manifestFile = `${scratch}/batch31-render/5m-math5-c3-s3-capture-manifest.json`
+const manifest = JSON.parse(fs.readFileSync(manifestFile))
+assert.equal(manifest.lesson, 'math5-c3-s3')
+const output = `${scratch}/reviewer-batch31-c3-s3-primary`
+assert(!fs.existsSync(output))
+const unique = new Map()
+const aliases = []
+for (const [index, image] of manifest.screenshots.entries()) {
+  const bytes = fs.readFileSync(image.path)
+  assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), image.sha256)
+  const match = path.basename(image.path).match(/-(text|exercises|choices)-(1440|390)-/)
+  assert(match)
+  if (unique.has(image.sha256)) {
+    aliases.push({ original_manifest_index: index, path: path.resolve(image.path),
+      sha256: image.sha256, same_pixels_as_capture_id: unique.get(image.sha256).id,
+      role: 'Hash alias only; no new observation or bottom-of-page credit.' })
+    continue
+  }
+  unique.set(image.sha256, {
+    id: unique.size + 1, original_manifest_index: index, path: path.resolve(image.path),
+    sha256: image.sha256, surface: match[1],
+    viewport: { width: Number(match[2]), height: match[2] === '1440' ? 960 : 844 },
+    index: index + 1,
+  })
+}
+fs.mkdirSync(output)
+fs.writeFileSync(`${output}/supplement-command.json`, JSON.stringify({
+  exit_code: 0, role: 'Native montage metadata projection only; not a new capture.',
+  original_capture_manifest: manifestFile, captures: [...unique.values()], aliases,
+  actual_capture_count: 0, browser_started: false, parent_image_opens: 0,
+  primary_captures_repeated: false, original_primary_files: manifest.screenshots.length,
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ output, primary_files: manifest.screenshots.length,
+  unique_native_inputs: unique.size, aliases: aliases.length }))

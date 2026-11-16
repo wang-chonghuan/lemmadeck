@@ -1,0 +1,247 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck'
+assert.equal(process.cwd(), repo)
+const scratch = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp')
+const output = path.join(scratch, 'reviewer-batch31-c3-s3-display/actual-observations.json')
+assert(!fs.existsSync(output))
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const bind = file => ({ path: path.resolve(file), sha256: hash(file) })
+const filename = (directory, file) => path.join(scratch, directory, file)
+const sets = Object.fromEntries(['primary', 'display', 'targets'].map(group => {
+  const directory = `reviewer-batch31-c3-s3-${group}`
+  return [group, {
+    command: read(filename(directory, 'supplement-command.json')),
+    inventory: read(filename(directory, 'native-inventory.json')),
+    command_binding: bind(filename(directory, 'supplement-command.json')),
+    inventory_binding: bind(filename(directory, 'native-inventory.json')),
+    observations: new Map(),
+    observed_montages: new Set(),
+  }]
+}))
+const reviewSpecs = [
+  ['primary', 'primary-a', 'primary-observations.json', 8],
+  ['primary', 'primary-b', 'primary-observations.json', 8],
+  ['primary', 'primary-c', 'primary-observations.json', 8],
+  ['primary', 'primary-d', 'primary-observations.json', 1],
+  ['display', 'supplement-a', 'supplement-observations.json', 8],
+  ['display', 'supplement-b', 'supplement-observations.json', 8],
+  ['display', 'supplement-c', 'supplement-observations.json', 2],
+  ['targets', 'target-observer-a', 'targeted-observations.json', 8],
+  ['targets', 'target-observer-b', 'targeted-observations.json', 1],
+]
+const reviews = []
+for (const [group, suffix, file, loads] of reviewSpecs) {
+  const source = filename(`reviewer-batch31-c3-s3-${suffix}`, file)
+  const original = read(source)
+  const set = sets[group]
+  const montageRows = original.montages ?? [original.montage]
+  for (const montage of montageRows) {
+    const position = montage.index ?? montage.position ?? montage.zero_based_position
+      ?? montage.array_position ?? montage.array_index
+    assert(Number.isInteger(position), suffix)
+    assert(!set.observed_montages.has(position), `${suffix} duplicate montage`)
+    set.observed_montages.add(position)
+    const inventory = set.inventory.montages[position]
+    assert.equal(montage.path, inventory.path)
+    assert.equal(montage.sha256, inventory.sha256)
+    assert.equal(hash(montage.path), montage.sha256)
+    const members = montage.members ?? original.members.filter(member =>
+      member.montage_array_position === position || original.montage)
+    assert.equal(members.length, inventory.members.length, `${suffix} members`)
+    for (const member of members) {
+      const id = member.capture_id ?? member.id
+      const expected = inventory.members.find(row => row.capture_id === id)
+      assert(expected, `${suffix} capture ${id}`)
+      assert.equal(member.path, expected.path)
+      assert.equal(member.sha256, expected.sha256)
+      assert.equal(hash(member.path), member.sha256)
+      assert(!set.observations.has(id), `${group} duplicate member ${id}`)
+      const status = member.status ?? (member.ranges.partial.length ? 'partial' : 'pass')
+      assert(['pass', 'partial', 'complete'].includes(status), `${suffix} ${status}`)
+      set.observations.set(id, {
+        group, capture_id: id, original_status: status,
+        observation_file: bind(source), montage_position: position,
+        observation: member,
+      })
+    }
+  }
+  assert.equal(montageRows.length, loads, suffix)
+  reviews.push({ group, ...bind(source), actual_image_loads: loads, original_observation: original })
+}
+for (const [group, set] of Object.entries(sets)) {
+  assert.equal(set.observed_montages.size, set.inventory.montages.length, group)
+  assert.equal(set.observations.size, set.command.captures.length, group)
+  for (const capture of set.command.captures) {
+    assert.equal(hash(capture.path), capture.sha256)
+    assert(set.observations.has(capture.id), `${group} capture ${capture.id}`)
+  }
+}
+const ref = (group, id, role) => {
+  const row = sets[group].observations.get(id)
+  assert(row, `${group}/${id}`)
+  return { group, capture_id: id, role, path: row.observation.path,
+    sha256: row.observation.sha256, original_status: row.original_status,
+    observation_file: row.observation_file, montage_position: row.montage_position }
+}
+const P = (id, role = 'Actually visible content in original primary member.') => ref('primary', id, role)
+const S = (id, role = 'Actually visible content in original supplement member.') => ref('display', id, role)
+const T = (id, role = 'Actually visible content in targeted member.') => ref('targets', id, role)
+const rows = new Map()
+function cover(surface, width, index, support, evidence) {
+  const key = `${surface}/${width}/${index}`
+  assert(!rows.has(key), key)
+  rows.set(key, { surface, viewport_width: width, object_index: index,
+    status: 'pass', scope: 'Joint object content, not simultaneous full-object or page visibility.',
+    support, evidence, original_partial_statuses_preserved: true })
+}
+cover('text', 1440, 1, [P(42)], 'Complete opening paragraph, including both sentences and final period.')
+cover('text', 1440, 2, [P(42)], 'Complete wooden reel, winding mechanism, outgoing tape and terminal loop; actual caption 189.')
+cover('text', 1440, 3, [S(1), T(1)], 'Complete ring, riveted free strip, coil and clips; targeted adjacent caption 190.')
+cover('text', 1440, 4, [S(2), T(2)], 'Complete person and A-frame, both feet, entire baseline; adjacent caption 191.')
+cover('text', 1440, 5, [S(3), T(3)], 'Two people, three upright rods, final dashed endpoint and both horizontal rods; adjacent caption 192.')
+cover('text', 1440, 6, [S(4)], 'Complete middle paragraph through the final definition of setting a straight line.')
+cover('text', 1440, 7, [S(5), P(38), P(43)], 'Complete crossed-board tripod, all feet and Top view inset; actual caption 193 in primary43. Isolated figure is content evidence, not page-location credit.')
+cover('text', 1440, 8, [P(43)], 'Both final prose sentences complete through reference194 and the final period.')
+cover('text', 1440, 9, [T(4)], 'Complete combined survey scene, both rods, tripod feet, right dashed endpoints, Ground plan inset and adjacent caption194.')
+cover('text', 1440, 10, [T(5)], 'Complete literal jump label and local button contour; no surrounding clearance, page-bottom or interaction claim.')
+cover('text', 390, 1, [P(48)], 'Complete title, metadata and both opening sentences; references do not certify unseen figures.')
+cover('text', 390, 2, [T(6), T(7)], 'Complementary actual left case/crank and right case/tape/terminal-loop windows with caption189 in each. Both windows remain partial.')
+cover('text', 390, 3, [P(44), P(45), S(16), T(8)], 'Actual left ring/fasteners/coil and right arched strip/coil/clips jointly cover the object; target8 establishes actual caption190. No whole coil simultaneously visible.')
+cover('text', 390, 4, [P(46), P(47), S(17), T(9)], 'Primary46 contains complete person/A-frame/feet and right baseline endpoint. Primary47 contains the left baseline start and span. Target9 supplies actual caption191 only; neither baseline fragment nor caption invents hidden apparatus.')
+cover('text', 390, 5, [S(18), T(10), P(10, 'Previously observed right scene pixels only; text capture figure7-end is a byte-identical alias, not a separate page-position observation.')],
+  'Actual left two people/held rods and right third rod, final dashed endpoint, both horizontal rods jointly cover scene; target10 supplies actual caption192. Alias binds right-scene bytes only. Primary21 is the wooden apparatus and is not used as rod-scene evidence.')
+cover('text', 390, 6, [S(19)], 'All five middle prose lines, both references192 and final definition are complete.')
+cover('text', 390, 7, [T(11), T(12)], 'Actual left wooden head/cross/pegs/two legs and right slanted foot/Top view cross/label jointly cover the combined object, with actual caption193; both windows remain partial.')
+cover('text', 390, 8, [P(49)], 'Both final prose sentences complete, including wrapped193 reference and final194 reference.')
+cover('text', 390, 9, [T(13), T(14)], 'Actual left rod/person/instrument/three feet and right person/rod/dashed endpoints/Ground plan inset jointly cover scene; actual caption194 in both. No whole scene at once.')
+cover('text', 390, 10, [T(15)], 'Complete jump label and local contour only; no external clearance, page extent or interaction credit.')
+for (let index = 1; index <= 14; index++) {
+  const support = index <= 4 ? [P(30)] : index === 5 ? [S(7), S(8)] : [P(31)]
+  if (index === 4) support.push(S(6))
+  cover('exercises', 1440, index, support,
+    index === 4 ? 'Complete1204 prose, gray boundary/opening and scale1cm observed; complementary local window preserves original viewport partial.'
+      : index === 5 ? 'Complete1205 prose, three region borders and all crop/scale labels in actual supplement windows.'
+        : index === 14 ? 'Literal return-to-text label and local contour; not page-exterior or interaction evidence.'
+          : `Complete written exercise${1200 + index} prose in actual primary ranges; no measurement/construction execution certified.`)
+}
+for (let index = 1; index <= 14; index++) {
+  const support = index <= 3 ? [P(36)]
+    : index === 4 ? [S(21), S(22), S(23)]
+      : index === 5 ? [S(24), S(25), S(26)]
+        : index === 6 ? [S(27)] : index === 7 ? [S(28)] : [P(37)]
+  cover('exercises', 390, index, support,
+    index === 4 ? 'All1204 prose, left notch/scale and right opening/boundary in complementary observed windows. Each figure window stays partial.'
+      : index === 5 ? 'All1205 prose; left Potatoes/scale and right complete Cucumbers/Cabbage/region outlines jointly observed. Capture26 left-clipped label remains partial; complete label credit comes only from25.'
+        : index === 14 ? 'Literal return-to-text label and local contour only.'
+          : `Complete written exercise${1200 + index} prose in actual observed ranges; no practical execution certified.`)
+}
+for (let index = 1; index <= 10; index++) {
+  const support = index === 1 ? [P(8)] : index >= 9 ? [P(9)] : [S(index + 7)]
+  cover('choices', 1440, index, support,
+    `Complete question${index} heading/stem and all four option endings in actual observations, including applicable figure objects. No mathematics or practical approval.`)
+}
+const mobileChoices = [
+  [S(29), S(30), P(24)],
+  [S(31)], [S(32)], [S(33), S(34)], [S(35), S(36)],
+  [S(37), S(38), S(39)], [S(40)], [S(41), S(42), S(43)], [S(44)], [P(25)],
+]
+for (const [zeroIndex, support] of mobileChoices.entries()) {
+  const index = zeroIndex + 1
+  cover('choices', 390, index, support,
+    index === 1 ? 'Complete stem/options; primary24 supplies intact people/held rods, supplement30 supplies far-right rod/dashed endpoint/horizontal rods. No individual window is made whole.'
+      : index === 4 ? 'Complete stem/options plus complementary left notch/scale and right opening/boundary.'
+        : index === 5 ? 'Complete stem/options plus left Potatoes/scale and right complete Cucumbers/Cabbage/borders. Original clipped Cuc in35 remains partial; intact label credit comes from36.'
+          : index === 6 ? 'Complete stem/options; main tripod/feet and right Top view cross in37/38, main survey scene/feet and right Ground plan scene/endpoints in37/39. Each partial remains partial.'
+            : index === 8 ? 'Complete stem/options; upper reel left details in41 and right tape/loop in42; lower coil/ring left details in41 and right curve/clip in43. No whole figure simultaneously visible.'
+              : `Complete question${index} heading, stem and all four option endings; no mathematics or practical approval.`)
+}
+assert.equal(rows.size, 68)
+for (const object of sets.display.command.objects) {
+  const row = rows.get(`${object.surface}/${object.viewport.width}/${object.index}`)
+  assert(row, 'Missing actual object support')
+  row.selector = object.selector
+  row.object_id = object.geometry.id
+  row.DOM_text_is_identity_metadata_not_visual_proof = object.geometry.text
+}
+const textAlias = sets.primary.command.aliases.find(row =>
+  row.path.endsWith('text-390-figure-7-end.png'))
+assert.equal(textAlias.same_pixels_as_capture_id, 10)
+assert.equal(textAlias.sha256, sets.primary.observations.get(10).observation.sha256)
+const captureManifest = filename('batch31-render', '5m-math5-c3-s3-capture-manifest.json')
+const manifest = read(captureManifest)
+for (const record of [...manifest.inputs, ...manifest.rendered]) {
+  assert.equal(hash(path.resolve(repo, record.path)), record.sha256)
+}
+const walk = directory => fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+  const file = path.join(directory, entry.name)
+  return entry.isDirectory() ? walk(file) : [file]
+})
+const directories = [...new Set(reviewSpecs.map(([, suffix]) =>
+  `reviewer-batch31-c3-s3-${suffix}`)),
+  'reviewer-batch31-c3-s3-primary', 'reviewer-batch31-c3-s3-display',
+  'reviewer-batch31-c3-s3-targets', 'reviewer-batch31-c3-s3-primary-d-path-failure']
+const supportFiles = directories.flatMap(directory => walk(path.join(scratch, directory)))
+  .filter(file => file !== output)
+  .map(bind)
+for (const file of ['prepare-batch31-c3-s3-primary.mjs',
+  'run-batch31-c3-s3-supplements.mjs', 'capture-batch31-c3-s3-targets.mjs',
+  'consolidate-batch31-c3-s3-display.mjs']) supportFiles.push(bind(path.join(scratch, file)))
+const actualCaptures = Object.entries(sets).flatMap(([group, set]) =>
+  set.command.captures.map(capture => ({ group, ...capture,
+    original_observation: set.observations.get(capture.id) })))
+assert.equal(actualCaptures.length, 109)
+assert.equal(new Set(actualCaptures.map(capture => capture.sha256)).size, 109)
+const result = {
+  schema: 's10y-actual-display-observations@1',
+  ticket: 'STEMROBIN-182', book: '5m', lesson: 'math5-c3-s3',
+  status: 'pass', outcome: 'pass',
+  scope: 'Diagnostic joint rendered-object content only; source task, mathematical and full-page application acceptance remain outside this pass.',
+  reviewer: { kind: 'independent_agent',
+    identity: 'Nine fresh non-forked bounded image batches; parent consolidates text/path/hash evidence only.' },
+  manifest: bind(captureManifest),
+  bounded_reviews: reviews,
+  inventories: Object.fromEntries(Object.entries(sets).map(([group, set]) =>
+    [group, { command: set.command_binding, inventory: set.inventory_binding }])),
+  capture_observations: actualCaptures,
+  original_aliases: sets.primary.command.aliases,
+  joint_objects: [...rows.values()],
+  title_and_local_controls: [
+    { surface: 'text', viewport_width: 1440, support: [P(42), T(5)] },
+    { surface: 'text', viewport_width: 390, support: [P(48), T(15)] },
+    { surface: 'exercises', viewport_width: 1440, support: [P(30), P(31)] },
+    { surface: 'exercises', viewport_width: 390, support: [P(36), P(37)] },
+    { surface: 'choices', viewport_width: 1440, support: [P(8)], no_button_present_in_render: true },
+    { surface: 'choices', viewport_width: 390, support: [T(16)], no_button_present_in_render: true },
+  ],
+  corrections_to_unverified_resume_notes: [{
+    subject: 'Mobile text figure192 right-scene support',
+    actual_primary_capture_id: 10, incorrectly_suggested_capture_id: 21,
+    evidence: 'Original text figure7-end alias hash is bound to10. Observation10 describes right rod/horizontal rods;21 describes wooden tripod. Neither alias gains separate position or footer credit.',
+    text_alias: textAlias,
+  }],
+  counts: {
+    primary_PNG_files: 92, distinct_primary_inputs: 49, aliases_without_separate_credit: 43,
+    supplement_PNG_files: 44, targeted_PNG_files: 16, total_PNG_files: 152,
+    actual_distinct_PNG_inputs: 109, actual_member_observations: 109,
+    actual_view_image_calls: 52, loads_per_fresh_context: [8, 8, 8, 1, 8, 8, 2, 8, 1],
+    context_maximum: 8, parent_image_opens: 0, joint_render_objects: 68,
+    unique_surface_viewport_combinations: 6, extra_combinations_from_supplements: 0,
+  },
+  preserved_limitations: [
+    'All original per-member partial conclusions, clipped-label observations and zero-load path failure remain unchanged.',
+    'Calculated first/last windows are not actual coverage. No hidden pixels, full-page terminal, external button clearance, interaction, or scroll-discoverability is inferred.',
+    'Hash aliases identify already observed bytes only; they add no load, independent observation, page-position or footer credit.',
+    'Complementary object windows establish only jointly observed content, not simultaneous whole-object visibility.',
+    'Measured dimensions, physical calibration, actual campus tasks and complete physical plans remain unresolved; this display result does not approve mathematics or practical execution.',
+  ],
+  protected_input_and_HTML_hashes_unchanged: true,
+  source_VIEW_canonical_structural_render_and_capture_reruns: 0,
+  all_support_files: supportFiles,
+}
+fs.writeFileSync(output, JSON.stringify(result, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ output, sha256: hash(output), status: result.status, counts: result.counts }))

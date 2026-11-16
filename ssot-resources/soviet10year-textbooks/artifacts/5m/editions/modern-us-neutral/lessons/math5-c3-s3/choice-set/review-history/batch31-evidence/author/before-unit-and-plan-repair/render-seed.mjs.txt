@@ -1,0 +1,71 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { createRequire } from 'node:module';
+
+const root = process.cwd();
+const out = path.join(root, '.intentfold/tickets/STEMROBIN-182/tmp/5m-c3-s3');
+const require = createRequire(path.join(root, 'app/package.json'));
+const { chromium } = require('playwright');
+const seed = JSON.parse(fs.readFileSync(path.join(out, 'seed.json'), 'utf8'));
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const records = [];
+const browser = await chromium.launch({ headless: true });
+try {
+  for (const figure of [...seed.figures].sort((a, b) => a.id.localeCompare(b.id))) {
+    const assets = figure.assets.map(asset => {
+      const bytes = fs.readFileSync(path.join(root, asset.path));
+      if (hash(bytes) !== asset.sha256) throw new Error(`Changed asset: ${asset.path}`);
+      return { ...asset, bytes };
+    });
+    const svg = assets.find(asset => asset.path.endsWith('.svg')).bytes.toString('utf8');
+    const width = Number(svg.match(/<svg[^>]*\bwidth="(\d+)"/)[1]);
+    const height = Number(svg.match(/<svg[^>]*\bheight="(\d+)"/)[1]);
+    const artwork = assets.find(asset => asset.path.endsWith('.png'));
+    const nativeArtwork = artwork
+      ? { width: artwork.bytes.readUInt32BE(16), height: artwork.bytes.readUInt32BE(20) }
+      : null;
+    const scale = nativeArtwork
+      ? Math.max(1, nativeArtwork.width / width, nativeArtwork.height / height)
+      : 1;
+    const context = await browser.newContext({
+      viewport: { width, height },
+      deviceScaleFactor: scale,
+      serviceWorkers: 'block'
+    });
+    await context.route('**/*', route => route.abort('blockedbyclient'));
+    const page = await context.newPage();
+    const image = artwork
+      ? `<img src="data:image/png;base64,${artwork.bytes.toString('base64')}" style="position:absolute;width:100%;height:100%;object-fit:contain" />`
+      : '';
+    await page.setContent(`<html><head><style>html,body{margin:0;width:${width}px;height:${height}px;background:white}svg{position:absolute;inset:0}</style></head><body>${image}${svg}</body></html>`);
+    await page.locator('svg').waitFor();
+    await page.evaluate(async () => {
+      await Promise.all([...document.images].map(image => image.decode()));
+      await document.fonts.ready;
+    });
+    const screenshot = path.join(out, `${figure.id}.actual.png`);
+    await page.screenshot({ path: screenshot, fullPage: false });
+    records.push({
+      figure_id: figure.id,
+      assets: assets.map(({ bytes, ...asset }) => asset),
+      svg_canvas: { width, height },
+      native_artwork: nativeArtwork,
+      device_scale_factor: scale,
+      screenshot_path: screenshot,
+      screenshot_sha256: hash(fs.readFileSync(screenshot)),
+      complete_canvas: true,
+      external_requests_blocked: true
+    });
+    await context.close();
+  }
+} finally {
+  await browser.close();
+}
+fs.writeFileSync(path.join(out, 'render-receipt.json'), JSON.stringify({
+  purpose: 'Actual seed SVG and declared artwork, full-canvas observation only; not new choice figures',
+  headless: true,
+  browser_closed: true,
+  generated_screenshot_count: records.length,
+  records
+}, null, 2) + '\n');

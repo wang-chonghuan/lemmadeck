@@ -1,0 +1,113 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const cwd = process.cwd();
+const dir = '.intentfold/tickets/STEMROBIN-182/tmp/5m-c3-s3';
+const receiptPath = path.join(cwd, dir, 'validation-command.json');
+if (fs.existsSync(receiptPath)) throw new Error('The one structural run already has a receipt.');
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const read = name => JSON.parse(fs.readFileSync(path.join(cwd, dir, name), 'utf8'));
+const command = 'python3';
+const args = [
+  '.agents/skills/ld-s10y-choice/scripts/validate.py',
+  '--repo', '.',
+  '--seed', `${dir}/seed.json`,
+  '--draft', `${dir}/draft.json`
+];
+const started = new Date().toISOString();
+const result = spawnSync(command, args, {
+  cwd,
+  env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+  encoding: 'utf8'
+});
+const ended = new Date().toISOString();
+const checks = [];
+const check = (name, value) => checks.push({ name, succeeded: Boolean(value) });
+const draft = read('draft.json');
+const views = read('view.json');
+const proofs = read('correct-proofs.json').proofs;
+const programs = read('wrong-programs.json').programs;
+const solutions = read('source-solutions.json');
+const render = read('render-receipt.json');
+const pair = record => `${record.question_id}:${record.option_id}`;
+const expectedCorrect = draft.questions.flatMap(question =>
+  question.key.rationales.filter(option => option.truth === 'correct')
+    .map(option => `${question.id}:${option.option_id}`));
+const expectedWrong = draft.questions.flatMap(question =>
+  question.key.rationales.filter(option => option.truth === 'incorrect')
+    .map(option => `${question.id}:${option.option_id}`));
+const sameIdentifiers = (actual, expected) =>
+  actual.length === new Set(actual).size &&
+  JSON.stringify([...actual].sort()) === JSON.stringify([...expected].sort());
+check('exact_pure_array_view_projection', Array.isArray(views) &&
+  views.every(view => Object.keys(view).sort().join(',') === 'figure_ids,mode,options,stem') &&
+  JSON.stringify(views) === JSON.stringify(draft.questions.map(question => question.view)));
+check('one_proof_for_every_keyed_correct_option', sameIdentifiers(proofs.map(pair), expectedCorrect));
+check('one_program_for_every_keyed_wrong_option', sameIdentifiers(programs.map(pair), expectedWrong));
+check('all_originals_have_independent_source_records',
+  sameIdentifiers(solutions.sources.map(source => source.source_number), read('seed.json').exercises.map(source => source.number)));
+check('seed_byte_immutable', hash(fs.readFileSync(path.join(cwd, dir, 'seed.json'))) ===
+  '95d72cc0eb4255851af7cba68067b0a9c108ad1387a64720828dec92decda2de');
+check('prepare_receipt_byte_immutable', hash(fs.readFileSync(path.join(cwd, dir, 'prepare-command.json'))) ===
+  'e145348892e9fe98f8b9bd974193edae3dfb6e0536b730fd3740a13758d954e0');
+check('exactly_eight_complete_seed_renders', render.records.length === 8 &&
+  render.generated_screenshot_count === 8 && render.browser_closed &&
+  render.records.every(record => record.complete_canvas && record.external_requests_blocked &&
+    hash(fs.readFileSync(record.screenshot_path)) === record.screenshot_sha256));
+check('no_new_choice_figures', draft.new_figures.length === 0);
+const counts = {
+  originals: solutions.sources.length,
+  source_units: solutions.sources.reduce((total, source) => total + source.source_units.length, 0),
+  questions: draft.questions.length,
+  single: draft.questions.filter(question => question.view.mode === 'single').length,
+  multiple: draft.questions.filter(question => question.view.mode === 'multiple').length,
+  options: draft.questions.reduce((total, question) => total + question.view.options.length, 0),
+  correct_proofs: proofs.length,
+  wrong_programs: programs.length,
+  partially_represented_sources: draft.coverage.filter(source => source.question_ids.length > 0).length,
+  fully_omitted_sources: draft.coverage.filter(source => source.question_ids.length === 0).length,
+  original_tasks_fully_completed: 0,
+  actual_seed_figures: render.records.length,
+  actual_asset_files: render.records.reduce((total, record) => total + record.assets.length, 0),
+  figures_used_in_views: new Set(draft.questions.flatMap(question => question.view.figure_ids)).size,
+  generated_observation_screenshots: render.records.length,
+  context_image_loads: 8,
+  reopens: 0,
+  crops: 0,
+  new_choice_figures: 0
+};
+const receipt = {
+  role: 'structural_evidence_only_no_semantic_approval',
+  invocation_count: 1,
+  exact_command: [command, ...args].join(' '),
+  argv: [command, ...args],
+  workdir: cwd,
+  environment_override: { PYTHONDONTWRITEBYTECODE: '1' },
+  started_at: started,
+  ended_at: ended,
+  duration_ms: Date.parse(ended) - Date.parse(started),
+  exit_code: result.status,
+  signal: result.signal,
+  process_error: result.error ? result.error.message : null,
+  stdout: result.stdout,
+  stderr: result.stderr,
+  companion_integrity_checks: checks,
+  counts,
+  semantic_gate: 'not_run; parent owns independent source->view->internal gate'
+};
+fs.writeFileSync(receiptPath, JSON.stringify(receipt, null, 2) + '\n');
+const names = [
+  'seed.json', 'prepare-command.json', 'source-solutions.json', 'draft.json',
+  'view.json', 'correct-proofs.json', 'wrong-programs.json',
+  'render-seed.mjs', 'render-receipt.json', 'run-structural.mjs', 'validation-command.json'
+];
+console.log(JSON.stringify({
+  ...receipt,
+  artifacts: names.map(name => ({
+    path: path.join(cwd, dir, name),
+    sha256: hash(fs.readFileSync(path.join(cwd, dir, name)))
+  }))
+}, null, 2));
+process.exitCode = result.status === 0 && checks.every(check => check.succeeded) ? 0 : 2;

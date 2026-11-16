@@ -1,0 +1,134 @@
+import hashlib
+import json
+from decimal import Decimal
+from pathlib import Path
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+assert Path.cwd() == ROOT, "Unexpected working directory"
+OWN = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp/reviewer-5m-c3-s3"
+SEED_PATH = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp/5m-c3-s3/seed.json"
+SOLUTION_PATH = OWN / "source-solutions.json"
+
+
+def file_hash(file_path):
+    return hashlib.sha256(file_path.read_bytes()).hexdigest()
+
+
+def canonical_hash(value):
+    return hashlib.sha256(json.dumps(
+        value, sort_keys=True, ensure_ascii=True, separators=(",", ":")
+    ).encode("utf8")).hexdigest()
+
+
+def read_json(file_path):
+    return json.loads(file_path.read_bytes())
+
+
+seed = read_json(SEED_PATH)
+solution = read_json(SOLUTION_PATH)
+render = read_json(OWN / "image-source-render-log.json")
+compositions = read_json(OWN / "native-layer-composition-log.json")
+authority = solution["input_authority"]
+assert file_hash(SEED_PATH) == authority["file_sha256"]
+assert canonical_hash(seed) == authority["canonical_sha256"]
+assert seed["source"]["book"] == authority["book"] == "5m"
+assert seed["source"]["lesson"] == authority["lesson"] == "math5-c3-s3"
+assert [entry["block"] for entry in seed["concepts"]] == [0, 9, 12]
+assert [entry["number"] for entry in seed["exercises"]] == authority["exercise_numbers"]
+assert [entry["source_number"] for entry in solution["source_reviews"]] == authority["exercise_numbers"]
+assert len(solution["source_reviews"]) == 13
+units = [unit for entry in solution["source_reviews"] for unit in entry["task_units"]]
+assert len(units) == solution["coverage_accounting"]["source_task_units_recorded"] == 41
+assert len({unit["id"] for unit in units}) == len(units)
+for entry in solution["source_reviews"]:
+    assert len(entry["independent_solution"]) > 150
+    assert entry["production_losses"]
+    assert not entry["original_physical_production_completed"]
+    for unit in entry["task_units"]:
+        assert unit["required"] and len(unit["solution"]) > 15
+    if entry["source_number"] not in ["1201", "1207"]:
+        assert entry["block_conditions"]
+    if entry["source_number"] in solution["coverage_accounting"]["missing_actual_data_sources"]:
+        assert entry["numeric_result"] is None
+
+observations = solution["figure_observations"]
+assert len(observations) == len(seed["figures"]) == 8
+seed_figures = {entry["id"]: entry for entry in seed["figures"]}
+assert set(seed_figures) == {entry["figure_id"] for entry in observations}
+assert [entry["context_load_number"] for entry in observations] == list(range(1, 9))
+asset_count = 0
+for observation in observations:
+    assert observation["complete_image_inspected"]
+    assert observation["reopens_or_crops"] == 0
+    assert len(observation["observation"]) > 200
+    assert observation["seed_assets"] == seed_figures[observation["figure_id"]]["assets"]
+    for asset in observation["seed_assets"]:
+        assert file_hash(ROOT / asset["path"]) == asset["sha256"], asset["path"]
+        asset_count += 1
+    assert file_hash(Path(observation["opened_image_path"])) == observation["opened_image_sha256"]
+assert asset_count == 14
+assert render["native_renders"] == 8 and render["browser_closed"]
+assert render["seed_file_sha256"] == authority["file_sha256"]
+assert compositions["additional_headless_renders"] == 0
+assert len(compositions["records"]) == 4
+for record in render["records"]:
+    assert file_hash(Path(record["rendered_image_path"])) == record["rendered_image_sha256"]
+for record in compositions["records"]:
+    assert file_hash(Path(record["complete_native_path"])) == record["complete_native_sha256"]
+    native = next(item for item in render["records"] if item["figure_id"] == record["figure_id"])
+    assert native["rendered_image_sha256"] == record["reused_native_raster_sha256"]
+    observation = next(item for item in observations if item["figure_id"] == record["figure_id"])
+    assert observation["opened_image_sha256"] == record["complete_native_sha256"]
+assert solution["image_accounting"]["actual_context_image_loads"] == 8
+assert solution["image_accounting"]["additional_headless_renders"] == 0
+assert solution["image_accounting"]["browser_closed"]
+
+
+def polygon_area(points):
+    pairs = [[Decimal(coordinate) for coordinate in point] for point in points]
+    return abs(sum(
+        point[0] * pairs[(index + 1) % len(pairs)][1]
+        - pairs[(index + 1) % len(pairs)][0] * point[1]
+        for index, point in enumerate(pairs)
+    )) / 2
+
+
+# This tolerance checks arithmetic consistency of native asset coordinates, not physical measurement precision.
+arithmetic_tolerance = Decimal("1e-10")
+plot = next(item for item in observations if item["figure_id"] == "fig-195")
+geometry = plot["geometry_native_px"]
+bar = Decimal(geometry["bar_endpoints"][1][0]) - Decimal(geometry["bar_endpoints"][0][0])
+net_are = (polygon_area(geometry["outer_vertices"])
+           - polygon_area(geometry["blank_rectangle_vertices"])) / bar**2
+assert abs(net_are - Decimal(plot["area_data_approx"]["shaded_ground_are"])) < arithmetic_tolerance
+crop = next(item for item in observations if item["figure_id"] == "fig-196")
+geometry = crop["geometry_native_px"]
+bar = Decimal(geometry["bar_endpoints"][1][0]) - Decimal(geometry["bar_endpoints"][0][0])
+for name in ["potatoes", "cucumbers", "cabbage"]:
+    area_are = polygon_area(geometry[f"{name}_vertices"]) / bar**2
+    recorded = Decimal(crop["area_data_approx"][f"{name}_ground_are"])
+    assert abs(area_are - recorded) < arithmetic_tolerance
+
+ready_path = OWN / "SOURCE-ready.json"
+if ready_path.exists():
+    ready = read_json(ready_path)
+    assert ready["stage"] == "SOURCE" and ready["view_opened"] is False
+    assert ready["seed_snapshot"]["file_sha256"] == file_hash(SEED_PATH)
+    assert ready["seed_snapshot"]["canonical_sha256"] == canonical_hash(seed)
+    assert ready["solution_snapshot"]["file_sha256"] == file_hash(SOLUTION_PATH)
+    assert ready["solution_snapshot"]["canonical_sha256"] == canonical_hash(solution)
+    assert ready["counts"]["originals"] == 13
+    assert ready["counts"]["source_task_units"] == 41
+    assert ready["counts"]["actual_context_image_loads"] == 8
+    for evidence in ready["evidence_snapshots"]:
+        assert file_hash(ROOT / evidence["path"]) == evidence["file_sha256"]
+    print("SOURCE_ready_file_sha256=" + file_hash(ready_path))
+    print("SOURCE_ready_canonical_sha256=" + canonical_hash(ready))
+
+print("checks=PASS; originals=13; task_units=41; figures=8; seed_asset_hashes=14")
+print("context_image_loads=8; reopens=0; crops=0; headless_renders=8; extra_headless_renders=0; browser_closed=true")
+print("source_file_sha256=" + file_hash(SOLUTION_PATH))
+print("source_canonical_sha256=" + canonical_hash(solution))
+print("render_log_file_sha256=" + file_hash(OWN / "image-source-render-log.json"))
+print("composition_log_file_sha256=" + file_hash(OWN / "native-layer-composition-log.json"))

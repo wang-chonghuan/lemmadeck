@@ -1,0 +1,123 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { createRequire } from 'node:module'
+import { pathToFileURL } from 'node:url'
+
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck'
+assert.equal(process.cwd(), repo)
+const scratch = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp')
+const output = path.join(scratch, 'reviewer-batch31-c3-s3-targets')
+const recordFile = path.join(output, 'supplement-command.json')
+assert(!fs.existsSync(output))
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const command = JSON.parse(fs.readFileSync(path.join(scratch,
+  'reviewer-batch31-c3-s3-display/supplement-command.json')))
+const protectedFiles = [...command.protectedFiles, ...command.captures]
+for (const row of protectedFiles) assert.equal(sha(path.resolve(repo, row.path)), row.sha256)
+const { chromium } = createRequire(path.join(repo, 'app/package.json'))('@playwright/test')
+delete process.env.PWDEBUG
+process.env.PLAYWRIGHT_HTML_OPEN = 'never'
+fs.mkdirSync(path.join(output, 'captures'), { recursive: true })
+const captures = []
+const started = new Date().toISOString()
+let browser
+let closedContexts = 0
+let browserClosed = false
+let failure = null
+try {
+  browser = await chromium.launch({ headless: true })
+  for (const width of [1440, 390]) {
+    const viewport = { width, height: width === 1440 ? 960 : 844 }
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1 })
+    try {
+      await context.route(/^https?:/, route => route.abort())
+      const page = await context.newPage()
+      const html = path.join(repo,
+        '.tmp/ld-s10y-lesson/render/5m/modern-us-neutral/math5-c3-s3/text.html')
+      await page.goto(pathToFileURL(html).href)
+      await page.evaluate(() => document.fonts.ready)
+      const figureNumbers = width === 1440 ? [190, 191, 192, 194] : [189, 190, 191, 192, 193, 194]
+      for (const number of figureNumbers) {
+        const locator = page.locator(`#fig-${number}`)
+        assert.equal(await locator.count(), 1)
+        const positions = width === 390 && [189, 193, 194].includes(number) ? ['left', 'right'] : ['left']
+        for (const position of positions) {
+          const geometry = await locator.evaluate((node, position) => {
+            node.scrollLeft = position === 'right' ? node.scrollWidth - node.clientWidth : 0
+            const caption = node.nextElementSibling
+            if (!caption?.classList.contains('figcap')) throw new Error('Expected adjacent figure caption')
+            const rect = node.getBoundingClientRect()
+            const cap = caption.getBoundingClientRect()
+            const top = rect.top + scrollY
+            const bottom = cap.bottom + scrollY
+            window.scrollTo(0, Math.max(0, top - 16))
+            return { figure_id: node.id, caption: caption.innerText,
+              scroll_left: node.scrollLeft, maximum: node.scrollWidth - node.clientWidth,
+              width: node.clientWidth, height: rect.height, top, caption_bottom: bottom,
+              target: 'Combination of artwork/vector figure and adjacent caption in a new focused viewport.' }
+          }, position)
+          await page.evaluate(() => new Promise(resolve =>
+            requestAnimationFrame(() => requestAnimationFrame(resolve))))
+          const file = path.join(output, 'captures', `text-${width}-fig-${number}-${position}-caption.png`)
+          await page.screenshot({ path: file, animations: 'disabled' })
+          const bounds = await locator.evaluate(node => {
+            const figure = node.getBoundingClientRect()
+            const caption = node.nextElementSibling.getBoundingClientRect()
+            return { figure: { top: figure.top, bottom: figure.bottom, left: figure.left, right: figure.right },
+              caption: { top: caption.top, bottom: caption.bottom }, scroll_y: scrollY }
+          })
+          assert(bounds.figure.top >= -1)
+          assert(bounds.caption.bottom <= viewport.height + 1)
+          captures.push({ id: captures.length + 1, index: number, surface: 'text', viewport,
+            kind: 'missing-composite-and-caption-focused-viewport', path: file, sha256: sha(file),
+            geometry, actual_viewport_bounds: bounds, position,
+            actual_pixel_observation_pending: true })
+        }
+      }
+      const button = page.locator('.jump')
+      assert.equal(await button.count(), 1)
+      const buttonFile = path.join(output, 'captures', `text-${width}-jump.png`)
+      await button.screenshot({ path: buttonFile, animations: 'disabled' })
+      captures.push({ id: captures.length + 1, index: 10, surface: 'text', viewport,
+        kind: 'missing-button-label-and-local-contour', path: buttonFile, sha256: sha(buttonFile),
+        literal_DOM_label_is_metadata_only: await button.innerText(),
+        no_page_extent_clearance_or_interaction_claim: true })
+      if (width === 390) {
+        await page.goto(pathToFileURL(path.join(repo,
+          '.tmp/ld-s10y-lesson/render/5m/modern-us-neutral/math5-c3-s3/choices.html')).href)
+        await page.evaluate(() => document.fonts.ready)
+        const heading = page.locator('h1')
+        assert.equal(await heading.count(), 1)
+        const file = path.join(output, 'captures', 'choices-390-title.png')
+        await heading.screenshot({ path: file, animations: 'disabled' })
+        captures.push({ id: captures.length + 1, index: 0, surface: 'choices', viewport,
+          kind: 'missing-mobile-choice-title', path: file, sha256: sha(file),
+          DOM_title_is_metadata_only: await heading.innerText() })
+      }
+      await page.close()
+    } finally {
+      await context.close()
+      closedContexts++
+    }
+  }
+} catch (error) {
+  failure = { message: error.message, stack: error.stack }
+} finally {
+  if (browser) { await browser.close(); browserClosed = true }
+  const unchanged = protectedFiles.every(row => sha(path.resolve(repo, row.path)) === row.sha256)
+  fs.writeFileSync(recordFile, JSON.stringify({
+    status: failure ? 'failed-preserved' : 'captured-awaiting-actual-observation',
+    exit_code: failure ? 1 : 0, started, finished: new Date().toISOString(), failure,
+    captures, protectedFiles, all_protected_hashes_unchanged: unchanged,
+    browser_closed: browserClosed, closed_contexts: closedContexts,
+    headless: true, user_profile_or_tabs: false, network_requests_aborted: true,
+    initial_render_capture_or_generic_supplement_reruns: 0,
+    canonical_SOURCE_or_VIEW_reruns: 0, HTML_style_asset_writes: 0,
+    parent_image_opens: 0, additional_unique_combinations: 0,
+    purpose: 'Only actual missing figure-caption/composite endpoints, local jump labels, and mobile choice title.',
+  }, null, 2) + '\n', { flag: 'wx' })
+}
+if (failure) throw new Error(failure.message)
+console.log(JSON.stringify({ captures: captures.length, recordFile, browser_closed: browserClosed }))
