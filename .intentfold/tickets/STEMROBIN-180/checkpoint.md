@@ -1,5 +1,79 @@
 # 生产检查点
 
+## 第四十批限定暂存通过，328/329受影响复核
+
+一次限定暂存PASS：16文件/3JSON，326三SOURCE资源、十一完成报告及
+checkpoint/usage。原报告EOF和失败debit保持，无完整现代新增，
+凭据、后组资源、未完成索引、错书6p、Sagan草稿排除，HEAD/origin0/0。
+40同分支fetch一次0复用，只增量重暂存两份记录，再commit/push各一次。
+
+Arendt修复完成关闭：328只“柔软”em标签、MD/JSON各增9字节；
+329一条连续条件斜体句跨两印刷行各用平衡em标签、MD/JSON各增18字节。
+唯一finalize各一次0、19/25行，used1/unused0/sourceactual1，父图及作者图0；
+metadata/audit/work/图279/其余内容均不变、意外delta0。
+Main165修复PARTIAL绑定一次0，无SOURCE批准或晋级；61叶受影响入口冻结一次0。
+Ampere仅两个已确认斜体单元复核在途，不替换SOURCE FIRST、不重全页或看图279，
+原Avicenna未变FIRST及非阻断不确定保留，不虚构箭头总数或追加修复。
+
+334/335与8p71/72 prepare各一次exit0，仅备料待333/70纯结构，
+没有作者、候选、FIRST或SOURCE批准，不重prepare。
+Descartes330、Plato67、Hume68首审，Lagrange332333、Curie6970作者继续。
+7p65/8p13/raw54-21-85/现代新增0/父图0保持；无DB、发布、合并、部署、
+关闭、正式handoff、其它chat消息或额外监督。
+
+## 第四十批限定已完成产物提交准备
+
+拟限定16文件/3JSON：326三SOURCE资源、十一份完成报告和checkpoint/usage。
+326的唯一斜体修复经受影响复核PASS后已晋级，7p65/8p13/raw54-21-85不变。
+不含328/329在途修复或后组330/67/68审阅、332333/6970作者产物，
+不含未完成modern/index、错书6p、Sagan草稿、private/tmp/env/newticket。
+40同分支fetch一次0复用，不重SOURCE收口、审阅、绑定或全项目检查。
+
+Arendt328329唯一隔离修复、Descartes330/Plato67/Hume68唯一SOURCE FIRST、
+Lagrange332333/Curie6970作者六组独占在途。每组图片至多8/上下文24，
+无重开或父图载荷。作者复用prepare并仅接纯结构与最新状态覆盖；
+原incoming、FIRST、失败账与报告字节不改。没有完整现代新增、
+DB、发布、合并、部署、关闭、正式handoff或额外监督。
+
+## 第四十批新结果绑定与后续干净入口
+
+Main110 绑定 Gibbs 唯一65 SOURCE FIRST 一次exit0：九个独立字重表示缺陷、
+三个未决来源项和一项单列审者页脚证据分歧。不是仅启动HOLD；
+原 SOURCEBLOCKED/HOLD 及无永久拒绝措辞不改。本页不可装订，不将九处
+合成一次最小修复，used0/unused1保持，无批准、修复、替换审阅或晋级。
+
+Main69 绑定 Raman67/68作者一次exit0：18/24行10/12块2/1图，
+FIRST各一次0、各used0/unused1。66到67的closed/cont冲突仍只作结构缺口，
+不认定独立SOURCE66缺陷。Main100绑定Singer330/331作者一次exit0：
+33024行1肖像AUTHORREADY；33120行1图AUTHORBLOCKED，两个独立刻度不确定
+加一个库存0标签证据缺陷。共享记录器路径唯一实际机械修复逐页保守used1/
+unused0/sourceactual0，原失败和FIRST保持。Singer已关闭，不再修331或启动源审。
+
+三个待审页各生成干净SOURCE FIRST入口；67/68仅结构化摘录本页作者清单，
+独立完整源库存必须先于候选及作者库存冻结。331及68的纯结构原字节传下组，
+最新65/331/326/328329状态另给，不改冻结incoming或历史报告。
+Main一次读取在绑定完成前触及未存在文件的探查竞态单列归档，
+不是SOURCE缺陷或预算修复，不重成功绑定。
+
+Arendt328/329唯一隔离斜体修复在途；330/67/68首审及332333/6970作者待派。
+7p65/8p13/raw54-21-85/完整现代新增0，父图片0，40同分支fetch一次0保持。
+本批未暂存提交，无DB、发布、合并、部署、关闭或正式handoff。
+
+## 第三十九批已提交推送，第四十批接续
+
+commit/push各一次exit0，HEAD/origin
+`88193f85973afacb74f01b666ad9817b0ad51cb8`，push完成
+2026-11-16T21:48:36.973Z。17文件/5JSON：63/64六SOURCE文件、
+九完成报告及checkpoint/usage；326修复报告不是SOURCE批准，未晋级326。
+无完整现代新增，下方待提交措辞为历史，不重成功命令。
+40同分支fetch一次exit0，不同步其它分支，7p64/8p13/raw54-21-85保持。
+
+Locke仅326受影响斜体复核、Avicenna328/329、Gibbs65 SOURCE FIRST、
+Singer330/331与Raman8p67/68作者继续；332/333及8p69/70备料各一次0，
+待331/68纯结构，无作者、候选、FIRST或SOURCE批准，不重prepare。
+五组独占作用域、父图片0、小时监督保持；40未暂存提交，
+无DB、发布、合并、部署、关闭、正式handoff或额外监督。
+
 ## 第三十九批限定暂存通过
 
 一次限定暂存PASS：17文件/5JSON，63/64六SOURCE文件与九完成报告、
