@@ -1,5 +1,84 @@
 # 生产检查点
 
+## 第十九批验证完成待提交
+
+仅新增完整7p81：6正文项/8实际段、4书写题、4derived/ungraded最终答案、
+4选择题18项（single3/multiple1）、1图207、3概念分隔。
+FIRST SOURCE/TEXT与207独审成功直接复用；FINAL main全四答案PASS96绑定。
+main绑定脚本首次误用空模板identity字段退出1，纠正核对权威exercise/source
+后一次0，失败保留；非作者修复，作者0/1。officialretain/finalize各一次0。
+选择题全部四源解预冻，18pure-view真值/保真/泄漏/覆盖先冻再读internals；
+全作者源解/intent/rationale/misconception/coverage FIRST main PASS51绑定，
+完整真集合B/C/C/ACEF。带review官方validate/retain各一次0，作者各0/1。
+解释/自主举例能力损失明记，四原书书写题保留，不新增交互。
+
+officialrender/隔离headless六桌面手机页各一次0；main已实际打开全部六
+original整页至末端，8段/4题/18项/完整图207和长分子数量可见。
+媒体桌面640、手机358，图内无文字标签字号不适用；无溢出/答案键泄漏，
+浏览器已关闭。不是生产/全册/正式handoff。尚未commit/push。
+
+209 FIRST Volta全原图/17上下文项4题/19对象14断言/六native PASS，
+官方record一次0、main24当前绑定一次0。首次mainpromotion因embedded
+authority JSON的input_binding/mechanics执行路径退出1；只移除该两path
+保留hash/bytes并规范原图路径，完整上下文/几何/输出字节不改，纠正promotion
+一次0。原失败保留；这是main provenance晋升，不重置作者1/1或重图审。
+207与209批准图可保留本批；208 FIRST F208-1/F208-2 FAIL保存，
+Bacon sole1/1 semantic路由及可见关系修复在途，未批准。
+
+84SOURCE-only全六完整答案FIRST main PASS37绑定，作者0/1，不冒称FINAL。
+84 TEXT FIRST F84-1因q1新增强制初温记录REVISE；Ramanujan sole1/1
+最小修复已冻，Sagan仅affected审在途。85 TEXT作者已冻，唯一格式修复1/1
+耗尽，Volta FIRST全TEXT审在途；main九完整源解已私有冻结6绑定一次0，
+Feynman SOURCE-only新作者。上述不计本批完整课。
+230234 FIRST Sagan源PASS49块110行11题块4图，未晋升/装订，本批不等它；
+235239 Wegener在途，240+未授权。累计图服务确认31，208新调用尚无成功
+证据，不先加计；tokens/费用未知。108/private/重复源稿/unfinished/env/
+app/依赖排除。无DB/发布/合并/部署/关闭/正式handoff/全项目checks。
+选择性暂存PASS75文件34JSON，现代索引保留83并仅新增81，工作索引不改。
+首次staging因19个源页合法句点后拼接空格失败，保留命令；只对225229五
+sourcepage.md逐行验证单空格，其他文件严格check，未改源字节/Git全局配置，
+纠正一次0。freshsamebranchfetch0，HEAD/origin0/0，不pull/rebase。
+208 artwork服务实际一次成功exit0，request1/retry0，有输出与元数据；
+累计确认图服务现32，新增1但图仍修复在途未批准。tokens/费用未知。
+
+## 第十九批进行中
+
+接续81/82/84，不重跑83或既有SOURCE/TEXT成功证据。
+207 FIRST Sagan完整原图/6正文项4题/236对象354断言/六native PASS，
+main30当前绑定与promotion各一次0，几何/输出字节不改；作者1/1
+预检机械失败预算保留。81复用既有FIRST TEXT/SOURCE批准，三模板
+copy/retain各一次0；首次adapt-finalize因漏--work退出1，原失败保留，
+补正确scratch参数后一次0：6正文项4题1图。不是作者内容修复，
+TEXT预算0/1。official四答案prepare一次0，FINAL/CHOICE待完成，
+本批尚未render/显示，不计完整现代课。
+
+225229 FIRST Feynman全54块110行16源题块5图PASS；main413绑定/
+55exactcopy与带TOC assemble各一次0。7p当前15页7源项32原题12编号图；
+81至86闭合，87 p0229#12 open尾“为了创”。224当前incoming尾为
+p0224#10，不沿用旧#7。源审核/渲染/晋升成功证据不重跑。
+
+84完整原文/六原题及210211原图已在作者答案/choice内部前私有冻结，
+不提交；Ramanujan TEXT已冻17项6题22实际段，作者0/1；
+Sagan FIRST TEXT审在途。208 FIRST Ramanujan图审、209 FIRST Volta
+图审接续，209 sole机械修复1/1已用尽，原native失败保留。
+230234 Wegener已冻49块110行11题块4图，234 open尾“例”，
+Sagan FIRST源审排队，不冒称批准；Wegener新授权235239隔离源作者，
+240+未授权。Feynman新85 TEXT作者，212213现代图尚未制作。
+main已读85完整原文九题并实际打开212213原图，私有九源解冻结接续，
+原题身份保留g1 1至4/g2 g2-1至g2-4及5。既有阻塞不第三修。
+累计确认图服务31，新增0，tokens/费用未知。无DB/发布/合并/部署/
+关闭/正式handoff/全项目checks；108/private/重复源稿/unfinished排除。
+
+## 第十八批已提交推送
+
+实际commit `915ea04ba342228a6cb98c6598069146b288fbbf`，
+2026-11-16T06:23:53Z；commit/push各exit0，同一origin分支。
+52限定文件、20JSON、7p现代索引仅83。83完整正文/两答案/两选择题9项
+与六离线显示PASS，以及预备204205206审批产物/81–83有效阶段证据
+保留。future/108/private/重复源稿/env/app/依赖均未暂存。
+下文“待提交”为历史状态，不重复门禁；尚无正式handoff/DB/发布/
+合并/部署/关闭工单，完整三册范围仍未完成。
+
 ## 第十八批验证完成待提交
 
 仅新增完整7p83：8正文块/13实际段、2书写题、2derived/ungraded最终答案、
