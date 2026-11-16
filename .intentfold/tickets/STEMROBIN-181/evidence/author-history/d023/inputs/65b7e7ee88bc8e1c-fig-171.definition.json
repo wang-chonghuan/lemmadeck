@@ -1,0 +1,63 @@
+{
+  "schema": "ld-s10y-image/figure-spec@2",
+  "id": "fig-171",
+  "mode": "deterministic",
+  "description": "Unscaled schematic of resistivity rho against Celsius temperature t: a positive rho0 baseline and one solid finite rising linear-model segment. The depicted positive-coefficient model is restricted to a finite interval; no numerical temperature limits, physical slope or extrapolation are assigned.",
+  "canvas": {
+    "width": 640,
+    "height": 384,
+    "boundingBox": [-1.35, 3.35, 5.45, -0.73],
+    "background": "paper",
+    "keepAspectRatio": true
+  },
+  "display": {
+    "layout": "inline",
+    "purpose": "instructional",
+    "maxWidthPx": 640,
+    "minTextPx": 16,
+    "widths": [640, 342, 331]
+  },
+  "layout": {"minLabelGap": 4},
+  "objects": [
+    {"id": "origin", "type": "point", "at": [0, 0], "visible": false},
+    {"id": "model-intercept", "type": "point", "at": [0, 1], "visible": false},
+    {"id": "model-end", "type": "point", "at": [4.25, 2.6], "visible": false},
+    {"id": "temperature-left", "type": "point", "at": [-0.36, 0], "visible": false},
+    {"id": "temperature-tip", "type": "point", "at": [5, 0], "visible": false},
+    {"id": "resistivity-bottom", "type": "point", "at": [0, -0.45], "visible": false},
+    {"id": "resistivity-tip", "type": "point", "at": [0, 2.9], "visible": false},
+    {"id": "marker-bottom", "type": "point", "at": [-0.26, 0], "visible": false},
+    {"id": "marker-top", "type": "point", "at": [-0.26, 1], "visible": false},
+    {"id": "guide-left", "type": "point", "at": [-0.36, 1], "visible": false},
+    {"id": "temperature-axis", "type": "arrow", "from": "temperature-left", "to": "temperature-tip", "stroke": "ink", "strokeWidth": 3},
+    {"id": "resistivity-axis", "type": "arrow", "from": "resistivity-bottom", "to": "resistivity-tip", "stroke": "ink", "strokeWidth": 3},
+    {"id": "intercept-guide", "type": "segment", "from": "guide-left", "to": "model-intercept", "stroke": "ink", "strokeWidth": 2.5},
+    {"id": "rho-zero-marker-up", "type": "arrow", "from": "marker-bottom", "to": "marker-top", "stroke": "muted", "strokeWidth": 2},
+    {"id": "rho-zero-marker-down", "type": "arrow", "from": "marker-top", "to": "marker-bottom", "stroke": "muted", "strokeWidth": 2},
+    {"id": "finite-model", "type": "segment", "from": "model-intercept", "to": "model-end", "stroke": "accent", "strokeWidth": 4, "dash": 0},
+    {"id": "resistivity-label", "type": "text", "at": [0, 2.9], "text": "\u03c1", "fontSize": 34, "fontWeight": 500, "labelColor": "ink", "labelPlacement": {"position": "W", "gap": 20}},
+    {"id": "temperature-label", "type": "text", "at": [5, 0], "text": "t", "fontSize": 34, "fontWeight": 500, "labelColor": "ink", "labelPlacement": {"position": "S", "gap": 26}},
+    {"id": "origin-label", "type": "text", "at": [0, 0], "text": "0", "fontSize": 34, "fontWeight": 500, "labelColor": "ink", "labelPlacement": {"position": "SW", "gap": 20}},
+    {"id": "rho-zero-label", "type": "text", "at": [-0.26, 0.5], "text": "\u03c1\u2080", "fontSize": 34, "fontWeight": 500, "labelColor": "ink", "labelPlacement": {"position": "W", "gap": 18}}
+  ],
+  "assertions": [
+    {"id": "axes-perpendicular", "type": "perpendicular", "a": "temperature-left", "b": "temperature-tip", "c": "resistivity-bottom", "d": "resistivity-tip"},
+    {"id": "origin-on-temperature-axis", "type": "pointOnLine", "point": "origin", "a": "temperature-left", "b": "temperature-tip"},
+    {"id": "origin-on-resistivity-axis", "type": "pointOnLine", "point": "origin", "a": "resistivity-bottom", "b": "resistivity-tip"},
+    {"id": "temperature-axis-endpoints", "type": "connects", "arrow": "temperature-axis", "from": "temperature-left", "to": "temperature-tip"},
+    {"id": "temperature-axis-direction", "type": "displacement", "from": "temperature-left", "to": "temperature-tip", "dx": 5.36, "dy": 0},
+    {"id": "resistivity-axis-endpoints", "type": "connects", "arrow": "resistivity-axis", "from": "resistivity-bottom", "to": "resistivity-tip"},
+    {"id": "resistivity-axis-direction", "type": "displacement", "from": "resistivity-bottom", "to": "resistivity-tip", "dx": 0, "dy": 3.35},
+    {"id": "positive-baseline", "type": "displacement", "from": "origin", "to": "model-intercept", "dx": 0, "dy": 1},
+    {"id": "guide-to-intercept", "type": "connects", "arrow": "intercept-guide", "from": "guide-left", "to": "model-intercept"},
+    {"id": "guide-horizontal", "type": "displacement", "from": "guide-left", "to": "model-intercept", "dx": 0.36, "dy": 0},
+    {"id": "marker-up-endpoints", "type": "connects", "arrow": "rho-zero-marker-up", "from": "marker-bottom", "to": "marker-top"},
+    {"id": "marker-down-endpoints", "type": "connects", "arrow": "rho-zero-marker-down", "from": "marker-top", "to": "marker-bottom"},
+    {"id": "marker-height", "type": "displacement", "from": "marker-bottom", "to": "marker-top", "dx": 0, "dy": 1},
+    {"id": "marker-bottom-on-zero", "type": "pointOnLine", "point": "marker-bottom", "a": "temperature-left", "b": "temperature-tip"},
+    {"id": "marker-top-on-intercept-level", "type": "pointOnLine", "point": "marker-top", "a": "guide-left", "b": "model-intercept"},
+    {"id": "model-endpoints", "type": "connects", "arrow": "finite-model", "from": "model-intercept", "to": "model-end"},
+    {"id": "model-positive-rise", "type": "displacement", "from": "model-intercept", "to": "model-end", "dx": 4.25, "dy": 1.6},
+    {"id": "intercept-on-resistivity-axis", "type": "pointOnLine", "point": "model-intercept", "a": "resistivity-bottom", "b": "resistivity-tip"}
+  ]
+}

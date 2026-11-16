@@ -1,0 +1,90 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 219,
+  "printed_page": 210,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 219
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "07b09ff9713a4f7c3958112339fb0940d83deaadb06e600541a1444fb64e3fc3"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "Author-only scratch candidate. Physical219 grid opened once at original resolution; no crop or reopen. No independent SOURCE/science review or native finalization.",
+    "电阻 is a bold inline paragraph lead. Preserve the printed reference §77, original voltage symbol V, and the same-row fraction R=V/I; the fraction's numerator and denominator are not separate printed rows.",
+    "Unnumbered prose portrait of G. S. 欧姆: one head-and-shoulders engraved likeness with hair, face, coat and surrounding hatching, no printed diagram number, mathematical labels or exercise ownership. Rough box contains the whole portrait but excludes adjacent biographical text. Geometry not approved.",
+    "Ten small-font biographical caption rows accompany the portrait: nine beside it, then the final row spans below it. They are cap 欧姆, not an exercise, and not samerow with preceding large-font body text. Reuse independent S219-01 period PASS from prior219 affected SOURCE report SHA256 dc55350274504076a138affb0458bb3b1040ae6cb678d5edb010208389cadd2d; the final row still ends 关系. INITIAL220 observation B219-220-01 from report SHA256 b4a1e81d355cb0f5d713f021ccfd72eb7a48c25c030e60fc456c82dad0548073 establishes ordinary resistance prose and no biography continuation on220. Remove only the unsupported cap open token; no219 glyph re-review, image open, recount or portrait change. Boundary flag/note correction awaits independent affected review; no source89, closed-caption approval or complete-card claim.",
+    "27 visually authored printed rows including all ten biographical caption rows and the footer. No unreadable glyph blocker identified during author transcription. Default counting retained."
+  ],
+  "errata": [],
+  "printed_lines": 27,
+  "figures": [
+    {
+      "id": "tbl-p0219-01",
+      "label": "欧姆",
+      "box": [
+        150,
+        1364,
+        447,
+        566
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+欧姆定律的形式很简单，但证明它的正确性是很困难的.
+或许就是因为这个原因，欧姆的工作没有立即被当时的人们
+所公认. 问题是在于：甚至当电流强度很大时，一段金属导
+体的电势差也是很小的，因为导体的电阻很小. 在§77中讲
+过的静电计不能测量很小的电压，它的灵敏度太小，需要一个
+非常灵敏的仪器.
+
+<!-- p -->
+常用的测量电压的仪器——伏特计，其原理就是利用了
+欧姆定律.
+
+<!-- p -->
+伏特计的结构原理跟安培计一样. 通过伏特计的电流强
+度是由接入电路的两点之间的电压来确定. 因此，知道伏特
+计的电阻时，可以根据电流强度测定出电压. 实际上，仪器的
+刻度是直接指出电压的伏特数.
+
+<!-- p -->
+**电阻** 电阻是导体的基本电性质. 当给定电压时，导体
+中的电流强度由这个量来决定. 导体的电阻好象是导体阻碍
+在其中产生电流的本领的量度. 利用欧姆定律(9-3)，可以测
+定导体的电阻$R=\frac{V}{I}$. 为此，需要测量电压和电流强度.
+
+<!-- fig 欧姆 box 150,1364,447,566 -->
+![欧姆](figures/tbl-p0219-01.png)
+
+<!-- cap 欧姆 -->
+G. S. 欧姆(1787～1854)——杰出的
+德国物理学家，中学教师. 他发现了部分
+电路上电流强度和电压的关系的定律，
+以及在全电路中确定电流强度的定律.
+为此，他克服了很大的困难，制成了测量
+电流强度的灵敏仪器. 欧姆利用热电偶
+(两根不同金属焊在一起的导体)作为电
+源. 欧姆用增大焊点的温度差来改变电
+压(电压与温度差成正比). 此外，欧姆还
+发现了电阻与导体的长度及其横截面积的关系.
+
+<!-- foot -->
+· 210 ·

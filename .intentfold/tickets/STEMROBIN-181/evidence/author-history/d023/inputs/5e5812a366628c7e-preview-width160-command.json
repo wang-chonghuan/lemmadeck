@@ -1,0 +1,16 @@
+{
+  "cwd": "/Users/yong/.codex/worktrees/00b1/lemmadeck",
+  "argv": [
+    "/Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-c",
+    "from pathlib import Path\nfrom PIL import Image\nimport json, hashlib\nsource = Path(\"/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d023-n90-ohm-author/tbl-p0219-01.png\")\noutput = Path(\"/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d023-n90-ohm-author/tbl-p0219-01.w160.png\")\nassert not output.exists(), \"Refusing to overwrite preview\"\nwith Image.open(source) as image:\n    image.load()\n    assert image.size == (1024, 1024)\n    rendered = image.convert(\"RGB\").resize((160, 160), Image.Resampling.LANCZOS)\n    rendered.save(output, format=\"PNG\")\nwith Image.open(output) as preview:\n    preview.load()\n    assert preview.size == (160, 160)\n    assert max(preview.convert(\"L\").getextrema()) - min(preview.convert(\"L\").getextrema()) > 32\n    print(json.dumps({\"status\":\"pass\",\"source\":{\"path\":str(source),\"sha256\":hashlib.sha256(source.read_bytes()).hexdigest()},\"output\":{\"path\":str(output),\"sha256\":hashlib.sha256(output.read_bytes()).hexdigest(),\"width\":160,\"height\":160},\"method\":\"Pillow LANCZOS raster resampling at actual160px, no browser/product width measured\",\"embeddedText\":\"prohibited; requires author pixel observation\",\"minTextPx\":16,\"textSizeCheck\":\"not applicable to unlabelled portrait; FigureSpec preserves required minTextPx16\"}))"
+  ],
+  "startedAt": "2026-11-16T15:22:40.600Z",
+  "finishedAt": "2026-11-16T15:22:40.682Z",
+  "exitCode": 0,
+  "signal": null,
+  "stdout": "{\"status\": \"pass\", \"source\": {\"path\": \"/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d023-n90-ohm-author/tbl-p0219-01.png\", \"sha256\": \"1c10f3e7de380c9173a0cd63cdb33955069917d0cfd32917ec6bc6c1a5f87975\"}, \"output\": {\"path\": \"/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d023-n90-ohm-author/tbl-p0219-01.w160.png\", \"sha256\": \"2344d3d116c01722019a1ba033a309f2f6077d05e7adfd9f6951197c865fd85d\", \"width\": 160, \"height\": 160}, \"method\": \"Pillow LANCZOS raster resampling at actual160px, no browser/product width measured\", \"embeddedText\": \"prohibited; requires author pixel observation\", \"minTextPx\": 16, \"textSizeCheck\": \"not applicable to unlabelled portrait; FigureSpec preserves required minTextPx16\"}\n",
+  "stderr": "",
+  "spawnError": null,
+  "environmentValuesRecorded": false
+}
