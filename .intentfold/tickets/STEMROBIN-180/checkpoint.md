@@ -1,5 +1,133 @@
 # 生产检查点
 
+## 第四十三批限定暂存通过
+
+一次限定暂存PASS：42文件/15JSON，完整t8、两张批准图、合法零题答案、
+已完成报告及HEAD八课只加t8的隔离官方索引。dirty工作树索引不动；
+未完成103/104/105/109、错书6p、Sagan、newticket/ticket/private/tmp/env排除。
+仅增量重暂存checkpoint/usage，然后commit/push各一次，成功立即继续；
+不重源审、图审、显示观察、收口或全项目检查。348/349、85/86作者与84
+SOURCE FIRST在途，68/14/raw54-21-85、父图片0和40分钟巡检保持。
+不是发布、部署或正式handoff。
+
+## 第四十三批铸造完整离线课限定提交
+
+t8「金属的铸造」完整：8源块/6短段、两图两字幕、零题零选择；
+TEXT及两图独审PASS，retain/adapt-finalize/空答案prepare-finalize/
+render/四页headless browser各一次0。230唯一两引用provenance修正
+在只读复制权限EACCES、未写入后继续同一冻结输出完成，原失败均留存；
+total used1/unused0，visual0/生成未增加；231used0/unused1。
+
+DISPLAY FIRST仅拒绝父任务误称的640桌面宽，原FAIL/Main6原字节保留。
+同一Ptolemy只核实产品/离线默认inline30em及scroll40em契约，
+未重开图片或全文，撤回无权威640判据；实际480/358、两标签
+24.375/18.1796875像素和原未变完整观察合成PASS，Main3一次0。
+DISPLAYused0/unused1。qualification把sender称user的出处误写另说明：
+实际是父代理依据直接live工单改正自身假设，不是新增人类指令。
+
+344/345 SOURCEBLOCKED12/13未决及345一字替换；81/82各一页脚未决，
+82另有逗号改句点。346/347独审各两未决，347一作者图内字体清单
+缺陷，确定candidate/crop缺陷0；审者R01增大误读撤回、freeze不改。
+Main15/13/9各一次0、各used0/unused1、不修或晋级。83/84作者
+Main82一次0：83 FIRST1、11/11/14机械HOLD，84 FIRST0、29行；
+各实际repair0/unused1，FIRSTdebit1/0分列。
+
+现拟限定完整t8、两图、已完成报告和隔离官方九课索引暂存；
+HEAD八课只追加t8，dirty索引及103/104/105/109等后续稿原样保留。
+348/349、85/86作者与84SOURCE FIRST继续，350/351、87/88未备料。
+68/14/raw54-21-85、8p0条目现代0编号UNSET、父图片0、40分钟巡检保持。
+commit/push成功后立即继续，无DB/发布/合并/部署/正式handoff/全项目检查。
+
+## 第四十三批两图独审通过，230晋级引用局部修正
+
+231独立FIRST PASS/Main5一次0，现有helper晋级一次0；
+230独立FIRST PASS/Main9一次0，但晋级FIRST一次1：generated分支
+未迁移spec.assets[0]的path和metadata两临时引用。失败部分输出、
+原spec/生成/像素/独审原字节均保留，仅两引用与最终哈希绑定局部修正；
+230 total used1/unused0，provenance1/visual0，新生成及视觉重审0。
+不把视觉PASS或部分晋级当完整课完成。下一步retain、adapt-finalize、
+合法空答案prepare/finalize、一次离线显示检查及独审。
+344/345、81/82 SOURCE FIRST与346/347、83/84作者继续；父图片0，
+40分钟巡检不变，无DB/发布/合并/部署/正式handoff/全项目检查。
+
+## 第四十三批两图独审与下一来源组接续
+
+Euler230完成关闭/Main50绑定一次0，generated模式，生成1、
+validation1/native preview1/render0、repair0/unused1。与231合计本批
+实际图像调用2，全局观察48；真实账单及模型token仍未知。
+Fermat230与Chandrasekhar231各唯一独立FIRST在途，尚无晋级。
+Planck344/345、Aristotle81/82唯一SOURCE FIRST在途；
+Schrodinger346/347、Banach83/84复用成功prepare及纯结构接续。
+尚无现代完整新增/暂存提交；父图片0、40分钟巡检不变，
+无DB/发布/合并/部署/正式handoff/全项目检查或额外计量框架。
+
+## 第四十三批344/345及81/82作者接收
+
+Dirac与Poincare完成关闭，Main73/81作者绑定各一次0；
+344/345 FIRST各0、25/13行、10题两图一图题，作者原图未决6/8；
+81/82 FIRST各0、24/23行、原图未决3/2。各实际repair0/unused1，
+FIRST失败debit0；尚无SOURCE批准，作者未知不冒称永久独审拒绝。
+345和82纯结构独占精确冻结，346/347与83/84复用成功prepare继续。
+Nietzsche231 AUTHORREADY hybrid，Main25绑定一次0，实际生成1；
+render/validation/preview各1、repair0/unused1，独立图FIRST在途，
+未晋级或现代收口。230作者继续；现有40分钟巡检和父图片0不变。
+本批完整课新增暂0，未暂存提交；无DB/发布/合并/部署/正式handoff或全项目检查。
+
+## 第四十三批342/343来源首审接收
+
+Jason唯一SOURCE FIRST完成关闭，Main39绑定一次0：
+34217行一表、8独立未决记录含3审者库存信心限制；
+34322行五独立公式、13未决记录。candidate/crop/作者库存确定缺陷0，
+不可把审者库存不足改称新来源失败或修复。SOURCEBLOCKED、各used0/unused1，
+原freeze、FIRST、报告及图290未重开事实保持，不修、换审或晋级。
+两图作者与344/345、81/82作者四组继续；346/347、83/84备料一次0待纯结构。
+本批完整现代新增暂0，无DB/发布/合并/部署/正式handoff或全项目检查。
+
+## 第四十三批金属铸造正文批准，两图与来源继续
+
+Hooke唯一TEXT FIRST PASS，8/8源块、6/6短段、图230→231身份、
+零习题完整核对，Main8绑定一次0；budgetused0/unused1、图片0。
+初稿原字节保留；审前官方normalize_prose_layout只新增空白段界、
+非空白delta0，无拒绝/修复。审者找不到本树Python及系统PIL后提取
+原工具未改AST做同一文本规范化，偏离如实记在报告；不是源页或环境修复。
+现代课尚未retain/finalize、两图未批准。官方两figure context各一次0，
+输入是批准现代全文独占副本及两原图精确副本；
+Euler230/Nietzsche231独立源清单→生成在途，无新图片调用已收回可计。
+
+Rawls342/343已完成关闭，Main98作者绑定一次0；
+FIRST17/22行各一次0、一表五公式行、原图不确定6/9、
+各used0/unused1，Jason唯一SOURCE FIRST在途，无SOURCE批准或晋级。
+343纯结构精确冻结，Dirac344/345复用prepare在途。
+Lorentz340/341源审完成关闭/Main12一次0，19/18行，
+独立未决5/28记录，确定candidate/crop/inventory缺陷0；
+初始marker猜测已撤回、freeze及撤回说明保留，未修或换审。
+
+Sartre79/80关闭/Main52一次0，FIRST各1；
+源/MD/机器16/16/18及22/22/23、原图不确定4/3，
+各实际修复0/未用1、FIRSTdebit1分列。80纯结构已精确冻结，
+Poincare81/82复用prepare在途。后续346/347和83/84备料各一次0，
+仅待345/82纯结构，未派作者或SOURCE批准，不重prepare。
+68/14/raw54-21-85、8p0条目/现代0/编号UNSET、父图片0保持。
+43本批未暂存提交；40分钟巡检不变；无DB、发布、合并、部署、
+正式handoff、全项目检查或额外监督/计量框架。
+
+## 第四十二批已推送，第四十三批立即接续
+
+commit/push各一次exit0，HEAD/origin
+`a7802a283ff2d81274d5fed25aa011962c019139`，
+push完成2026-11-16T23:15:29.208Z。51文件/15JSON，新增完整离线102一课，
+七书写对象、七答案、两选择题十选项及334/72来源资源；首DISPLAY拒绝保留，
+唯一两标签修复加受影响独审PASS，未变全文/原截图不重审。
+下方待提交措辞为历史，不重成功命令，不视push为停工点。
+
+43同分支fetch一次0；继续Rawls342/343、Sartre79/80作者和Lorentz340/341
+唯一SOURCE FIRST。t8「金属的铸造」adapt-prepare一次0，八源块、
+两原图、零题；现代文本只标点/分行完整保留工艺事实，FIRST候选冻结待独审。
+新增完整课暂0、两图未制作或批准。不把n101引用图229但空图清单计完成；
+n90末段open及239缺口、t16图227耗尽、旧103/104/105/109稿继续保留。
+68/14/raw54-21-85、8p0装订条目/现代0/编号UNSET、父图片0保持。
+40分钟巡检不变；无DB、发布、合并、部署、正式handoff或全项目检查。
+
 ## 第四十二批限定暂存通过
 
 一次限定暂存PASS：51文件/15JSON，完整102七书写对象及答案、
