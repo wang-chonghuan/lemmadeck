@@ -168,6 +168,52 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
     return not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h
 
 
+def _fraction_across_split(
+    ink: np.ndarray, a: int, split: int, b: int, glyph_h: float
+) -> bool:
+    """Recognize an outer rule bundled with its denominator projection."""
+    band = ink[a:b + 1]
+    labels, _ = ndimage.label(band)
+    boxes = [bounds for bounds in ndimage.find_objects(labels) if bounds is not None]
+    glyphs = [
+        (rows, columns) for rows, columns in boxes
+        if rows.stop - rows.start >= 0.3 * glyph_h
+        and columns.stop - columns.start >= 0.1 * glyph_h
+    ]
+    supported = []
+    for rows, columns in boxes:
+        centre = a + (rows.start + rows.stop) / 2
+        if not (
+            rows.stop - rows.start <= 0.2 * glyph_h
+            and columns.stop - columns.start >= 2 * glyph_h
+            and abs(centre - split) <= 0.5 * glyph_h
+        ):
+            continue
+        contained = [
+            (top, side) for top, side in glyphs
+            if columns.start <= (side.start + side.stop) / 2 < columns.stop
+        ]
+        if (
+            any(top.stop <= rows.start and a + top.start < split for top, _ in contained)
+            and any(top.start >= rows.stop for top, _ in contained)
+        ):
+            supported.append((rows, columns))
+    if not supported:
+        return False
+    # Fraction columns may be tall; unrelated shorter wrapped rows must survive.
+    for rows, columns in glyphs:
+        centre_x = (columns.start + columns.stop) / 2
+        centre_y = (rows.start + rows.stop) / 2
+        if not any(
+            rule_columns.start - 0.15 * glyph_h <= centre_x
+            <= rule_columns.stop + 0.15 * glyph_h
+            or abs(centre_y - (rule_rows.start + rule_rows.stop) / 2) <= 0.9 * glyph_h
+            for rule_rows, rule_columns in supported
+        ):
+            return False
+    return _single_fraction_row(ink, a, b, glyph_h)
+
+
 def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     """Count printed rows after masking model-identified figures."""
     # Work on a counting-only copy; extraction pixels are never changed.
@@ -191,6 +237,21 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     glyph_h = (
         float(np.percentile(glyph_heights, 75)) if len(glyph_heights) >= 3 else line_h
     )
+    supporting_rows = {
+        (a, b) for a, b in raw
+        if any(
+            a <= rows.start and rows.stop - 1 <= b
+            and rows.stop - rows.start >= 0.2 * glyph_h
+            and columns.stop - columns.start >= 0.1 * glyph_h
+            and not (
+                rows.stop - rows.start > 1.8 * line_h
+                and columns.stop - columns.start < 0.5 * line_h
+                and columns.stop - columns.start < 0.2 * (rows.stop - rows.start)
+            )
+            for bounds in bounds_list if bounds is not None
+            for rows, columns in [bounds]
+        )
+    }
     # Isolated thin scan streaks have no neighboring numerator or glyph row.
     for a, b in raw:
         xs = np.flatnonzero(ink[a:b + 1].any(axis=0))
@@ -199,6 +260,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             and xs.size and xs[-1] - xs[0] + 1 > 2 * glyph_h
             and not any(
                 (c, d) != (a, b)
+                and (c, d) in supporting_rows
                 and max(c - b, a - d) <= 1.5 * glyph_h
                 for c, d in raw
             )
@@ -314,6 +376,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
                     and np.ptp(np.flatnonzero(ink[c:d + 1].any(axis=0))) >= 0.7 * glyph_h
                     for c, d in raw
                 )
+                and not _fraction_across_split(ink, prev_a, a, b, glyph_h)
             )
             if (
                 a - prev_b <= merge_gap

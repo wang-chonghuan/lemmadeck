@@ -1,0 +1,74 @@
+{
+  "schema": "batch16-8a-source-defects@1",
+  "status": "blocked-page-line-audits",
+  "tool_patch_authorized": false,
+  "tool_patch_performed": false,
+  "finalize_repeated": false,
+  "evidence_basis": "Original 300dpi full pages reopened one at a time, then exact native crops; retained prepare line bands. No new finalize or substitute line audit.",
+  "defects": [
+    {
+      "id": "8a-p0008-scan-blemish-counted-as-text",
+      "page": 8,
+      "printed_page": 1,
+      "audit_path": "8a/pages/0008/audit.json",
+      "retained_gate": {
+        "exit_code": 1,
+        "lines_printed": 22,
+        "lines_md": 21
+      },
+      "observation": "Retained band 22 at y3404..3433 is an isolated lower-right scan blemish below the real printed footer. The chapter decorative rule was already excluded and is not the cause of the extra count. Full source has 21 text/footer rows, all transcribed.",
+      "offending_retained_bands": [
+        {
+          "index": 22,
+          "y": [
+            3404,
+            3433
+          ]
+        }
+      ],
+      "correct_footer_band": {
+        "index": 21,
+        "y": [
+          3164,
+          3207
+        ]
+      },
+      "evidence_png": "8a/evidence/p0008-footer-and-blemish.png",
+      "evidence_sha256": "f20e41bc5a5bf4359db1518687bf63ceb5c455a40ded64a43f7eee537e5146ed",
+      "disposition": "Preserve failure; do not add a text row, figure, or fake line break for the blemish."
+    },
+    {
+      "id": "8a-p0009-single-nested-fraction-split",
+      "page": 9,
+      "printed_page": 2,
+      "audit_path": "8a/pages/0009/audit.json",
+      "retained_gate": {
+        "exit_code": 1,
+        "lines_printed": 19,
+        "lines_md": 18
+      },
+      "observation": "Retained bands 9 and 10 at y1362..1497 and y1503..1569 belong to one horizontally aligned equality with a nested numerator on the right. The second band contains the outer fraction bars and denominators, not another independent printed equation. Full source has 18 text/footer rows, all transcribed.",
+      "offending_retained_bands": [
+        {
+          "index": 9,
+          "y": [
+            1362,
+            1497
+          ]
+        },
+        {
+          "index": 10,
+          "y": [
+            1503,
+            1569
+          ]
+        }
+      ],
+      "source_formula": "$\\frac{-b\\pm\\sqrt{D}}{2a}=\\frac{-\\frac{b}{2}\\pm\\frac{1}{2}\\sqrt{D}}{a}$.",
+      "evidence_png": "8a/evidence/p0009-single-nested-fraction-row.png",
+      "evidence_sha256": "af43098bf8384596ea70b42e082c85df7516f1934a60f991ecc04139a783d79c",
+      "disposition": "Preserve failure; do not insert a fake ↵ into a single printed fraction row."
+    }
+  ],
+  "next_action": "Any counting-tool repair or repeated page gate requires separate parent authorization and independently expected positive/negative fixtures. Scratch assembly is not evidence that these failed page gates passed."
+}
