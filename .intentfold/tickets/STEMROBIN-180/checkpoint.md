@@ -1,5 +1,85 @@
 # 生产检查点
 
+## 第二十一批准备层待提交
+
+215唯一FIRST Main全源/86全文七题/8对象19断言/两层六native PASS，
+215当前绑定及officialrecord/晋升各一次0，作者1/1耗尽保持。
+首次Main错把历史generation调用preview工具epoch当当前脚本，
+exit1保留；原调用inputs精确快照绑定纠正一次0，非作者修复。
+不重图审、生成或native门禁。
+
+仅准备提交批准215216222及已完成SOURCE/TEXT/阻塞报告，
+没有新增完整现代课；88收口资源与新增索引仍未提交，待FINAL/
+CHOICE/一次批次离线显示。218作者0/1已冻，待FIRST独审，
+219作者0/1已冻，新授权Volta唯一FIRST独审；各实际Azure1/retry0，
+累计已确认43。其他在途图不凭目录提前加计。245249SOURCE在途，
+没有跨239242缺口装订。
+
+## 第二十一批继续：批准216222，88已收口，217最终阻塞
+
+2026-11-16T08:04:27Z。216 Main唯一FIRST全原图/86全文七题/
+13对象26断言/两层/六native PASS，30当前绑定、officialrecord、
+晋升各一次0，作者0/1保留。批准资源已持久保留，86因214217
+仍不完整，不重图审或render。
+
+217 sole artwork修复解决原水体分裂/蒸汽裁切，但画成两个独立冰块，
+违反源与现代文字的“一小块冰”。作者1/1耗尽，实际Azure2/retry0，
+BLOCKED；无spec/render/native/独审/晋升，不再修复。
+
+89 SOURCE两完整解Main唯一FIRST全文JSON/MD及全部method/condition/
+note/coverage与先行私有冻结比较PASS12绑定；TEXT唯一FIRST全文
+10项/两题/14段/anchor9 PASS9绑定，作者两单元各0/1。
+223224原图已实际打开；现代图仍待作者，不计完整课。
+
+222 Volta作者0/1，Main唯一FIRST全原图/88全文八题/六源组/
+23对象26断言/分离两层及六既有native PASS。72当前绑定、
+officialrecord、晋升各一次0。仅本次独审补一张独立SVG层观察，
+未重域render/native门禁。88 TEXT现有364绑定复用：误向同文件
+再写的EEXIST失败保留，不重试、不改候选或预算。批准模板copy/
+retain/officialadapt-finalize/answerprepare各一次0，八题一图；
+FINAL Feynman及CHOICE Ramanujan排在各自当前图作者之后，
+尚无最终键/选择题审批或批次显示，不计完整课。
+
+215 Wegener作者已冻，sole overlay修复1/1，待Main唯一FIRST图审；
+实际图像请求只有一次，repair元数据是原响应字节副本，不重复加计。
+累计确认图服务41：先前36 + 216一 + 217二 + 222一 + 215一；
+215响应input2805/output1372，实收费用未知，非全会话模型token。
+219220 Sagan、221 Feynman、223 Bacon、224 Ramanujan作者继续；
+218新授权Volta独立0/1。245249新授权WegenerSOURCE-only，
+此前页/缺口不重跑或跨越装订。8p仍未开始，全范围未完成。
+没有DB、发布、合并、部署、关闭、正式handoff或全项目检查。
+
+## 第二十一批源层已提交推送，两项最终阻塞
+
+源层实际提交 `c3e11a4e`，commit/push均exit0，推送完成于
+2026-11-16T07:42:36Z。57个限定文件、26JSON，只保留批准源页、
+连续215238装订及批准图211，没有新增完整现代课。下文待提交为历史记录，
+成功源审、晋升、装订和图审均复用，不重跑。
+
+242唯一机械修复focused tests一次exit1：7PASS/1FAIL。总行数虽达到23，
+短行仍与下一题分式重新合带，独立行带预期未满足；失败候选与原始失败
+均冻结，生产layout.py已精确撤回本次补丁。预算mechanical-inclusive1/1耗尽，
+没有新official finalize、affected复核或晋升，不再修复。新增失败回归文件
+已由作者按原字节归档出稳定suite；已有源文字PASS不等于机械PASS。
+
+214首次图片两处视觉关系FAIL，sole artwork修复后首spec校验exit2，
+`fill:"none"`不符合semantic颜色合同；预算1/1耗尽，BLOCKED，
+无render/native/独审/晋升，不再修复。实际图片请求2、retry0；
+返回input tokens2675/2904、output tokens1372/1372，实收费用未知。
+这些是图片响应用量，不是全会话模型计量。
+
+87 Sagan唯一FIRST TEXT PASS：15项/3题/14段/5anchors，作者0/1；
+220图尺寸仅reviewer metadata勘误，实际192x397，旧冻结字节与PASS不改。
+88 Feynman唯一FIRST TEXT PASS：10项/8题/17段/3anchors，作者机械1/1保留。
+两课仍待现代图，TEXT PASS不计完整课程。Main只核对当前绑定，
+不重复正文实质审查、门禁或render。
+
+既有授权任务继续：Wegener215、Ramanujan216217、Volta222；
+Bacon已冻89两SOURCE-only完整解，随后独立TEXT89。Sagan新授权219220、
+Feynman新授权221，各图独立首次0/1，完整批准87上下文，不读答案或choices。
+218、245+尚未授权；239与242缺口不跨越。没有DB、发布、合并、部署、
+关闭、正式handoff或全项目检查；8p仍未开始，完整范围未完成。
+
 ## 第二十一批源层完成待提交
 
 235238批准union main117当前绑定/40exactcopy一次0；
