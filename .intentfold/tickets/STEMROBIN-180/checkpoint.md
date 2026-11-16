@@ -1,5 +1,125 @@
 # 生产检查点
 
+## 第十一批验证完成待提交
+
+暂存边界检查最终exit0：176文件、78JSON、40现代索引项，仅新增s17及
+s17-t1两完整课；through185批准源与165/166/167/169/portrait批准图保留。
+108、下一批现代资源、env/app/依赖排除，无scratch资源依赖。继承的
+code-owned profile绝对路径与HEAD对象、SHA及tracked文件一致；首两次
+helper误判及修复记录保留在tmp/batch11-staging-first-failure.md。
+S10Y_VERIFY_ONLY只读索引复核通过，没有改课件/图稿或消耗图修复预算。
+同分支fetch已exit0且HEAD/origin0/0，无pull/rebase；提交推送待实际执行。
+
+2026-11-16：s17九份完整答案main源解→最终prompt/原图及批准图比较PASS，
+27finalhandoff绑定PASS，9f27b7023db99ed9d5a77837f58abccf3ca5246094b5ce30f6a99ba4a91c382a。
+officialprepare/retain/finalize各一次exit0，derived9/ungraded9；加补充课
+共10答案。六选择题25项源解→pureid/view盲解冻结→所有作者推导/误思/
+九coverage比较PASS；reviewedvalidate/retain各一次exit0，无候选修复。
+加补充课共七选择题29项，数值查表与实作损失明确，不新增交互。
+
+两课officialrender恰一次exit0，隔离headless桌面1440x960/手机390x844
+既有offline-check一次12pagesPASS。main实际打开全部29手机选项、
+十书写题/正文末端、165桌面完整与手机右端、160px肖像；
+640media/21.333125px，手机358client+282end=640，无裁切/内部键。
+证据tmp/offline-evidence-phy6-c4-s17-phy6-c4-s17-t1/report.json。
+166Sagan完整96对象43关系/全文15题/完整SVG/六native主题独审PASS
+officialrecord一次exit0，main复用晋升exit0；169main完整77对象84关系/
+94visibleSVGshape/六native主题独审PASS，43freeze+14direct绑定，
+officialrecord/promote各一次exit0。168Sagan收到确切freeze接独审；
+170sole1/1阻塞仍不重试，s18不计完整课。
+
+下一批仅在途：s20与c5-s1officialprepare各一次exit0，Wegener/Feynman
+分别TEXT作者；Bacon获授权186190隔离源作者。Volta171后接s19TEXT。
+准备产物不进入本批现代完整课程索引。无正式handoff、写库、发布或部署。
+
+2026-11-16接续：181185 Ramanujan完整源独审PASS（仅184repair-01），
+approvedmanifest dfa82250b8a6e393b7a2448c17ccb4aa8961ae428f4e7729ef3e3d87e9bfaabc。
+首main晋升helper误把历史inputSHA当当前文件失败已保留；改为显式140文件
+清单后176绑定/copyexit0，源55块109行2图不改。filtered185prepare/
+officialassemble/promote各一次exit0：174有效页75源项360题记录175编号图，
+0KaTeXwarning，108排除，仅旧p0107#7open。s20闭合2题3图，c5-s1
+闭合25块11题0图，186+未委托，不把源装订计为现代课完成。
+167同一次main独审收尾PASS：原图/全文15题/92对象85关系/完整SVG，
+六actual306/640主题均已打开，17.2125px/36px；46绑定复用，
+repair0/services0，无重复门禁。官方record/promote各一次exit0。
+
+2026-11-16继续：165同一次main完整独审收尾PASS，157对象63关系、
+完整SVG结构与neutral/accent/print640full及306start/end均实际检查，
+fixed640/21.333125px/end334；officialrecord/promote各exit0。s17批准
+文字另binding副本retain+officialadapt-finalize各一次exit0，原freeze不改，
+九题答案/选择题作者已收到最终正文与两批准图通知。
+s18完整15块15题TEXT PASS；firstmechanics仅q8未改写却changes非空，
+affected-only清空changes PASS复用，首次FAIL不删，不重跑完整门禁。
+
+补充课选择题main先行源解→pureview盲解冻结→全部四作者推导/误思/
+coverage比较PASS；one single4options，officialreviewedvalidate一次
+exit0，retainexit0。首main字节helper误把booklessonprojectionSHA当
+整文件SHA失败，读canonicalbook_lesson_hash后正确绑定PASS，未改
+seed/draft/作者freeze，不计作者修复。新executionJSON不进入持久资源。
+
+170Volta sole1/1修复后canonicalrender仍exit2 Openingcollision，
+61冻结文件绑定PASS，handoffc29379582354b57b4b7bfcb786071b84570e6d8630967ea012187d83af5ce34d；
+0/6主题、不独审/晋升/再修。s18排除完整课，本批先收口s17/s17-t1
+两课10题；其余有效预备图保留，s19完整源七题私有解已冻结，
+Volta171后接s19文字。181185仍待Ramanujan一次独立源审，未晋升；
+186+未授权委托。没有本批显示/提交、写库/发布或正式handoff。
+
+2026-11-16新接续：176180affected-only独审PASS，批准manifest
+0fe8a062932d9431a44ac2b1dface9944ace716993372a2977c570e639421c56。
+main385字节绑定检查/精确晋升exit0，filtered180prepare/officialassemble/
+promote各一次exit0：169有效源页、74源项、347题记录、173编号图，
+仅保留旧p0107#7open；s18闭合为15题6图，s20只有开头，不能算现代完成。
+未重跑既有源内容/crop/SVG门禁。s18modernprepare一次exit0，Volta文字作者。
+
+162唯一修复准备runner缺recursive，exit1/ERR_FS_EISDIR，未形成修复spec/
+SVG/预览，1/1总预算耗尽保持BLOCKED。精确交接c7762b857cf9681a0cbd5b9fd71
+fee2281e949cbb0bc81f6bf6e6973478ca617及原FAIL保留，不修runner或重试。
+Wegener等待冻结s18全文后制作166，Feynman等全文制作167/169；
+168/170/171作者尚待分配，完整s18不能提前计入本批。
+
+s17完整TEXT PASS复用；tbl-p0171-01portrait新main完整原PNG/现代1024PNG/
+六actual160样本独审PASS，officialrecordexit0、精确晋升exit0。
+作者Azure实际1请求/retry0/fail0/repair0，prompt4396字符；
+累计图请求26，本批1，成本/token仍未知。fig165尚未完成批准。
+补充课TEXT PASS及officialfinalize已完成；Ramanujan原完整源解复用，
+最终q1绑定/完整答案main独审PASS，officialanswerprepare/retain/finalize
+各一次exit0，1derived/ungraded、0auto/parts，不新增交互。先行s18完整15题私有源解已冻结；
+甘油原液体表缺行，实际NIOSH页面额外物性核验不是教材给定数据或实测。
+
+当前拟三课s17/s17-t1/s18共25题；此前14是含s16的初始计划，不是新计数。
+未完成完整本批、显示检查、提交；7p/8p未开始，274项目标未完成。
+以下旧状态保留，不把已发生的后续结果改写为预先完成。
+
+新状态：163164各sole1/1编码修复后canonicalrenderexit2标签碰撞，
+作者BLOCKED冻结/原FAIL保留，主题预览0/6、独审0/晋升0，不再修/预览。
+s16因此排除完整课，现代全文PASS与四源解冻结保留；拟以s18补成三课，
+该课须等176180修复源PASS、晋升/装订闭合才开始最终产物。
+162 main一次完整原图/全文四题/67对象35关系/完整SVG/六native主题独审
+FAIL漏左右相向侧压力箭头；官方recordFAILexit0。原0/1预算，Wegener
+唯一独立副本补箭头/映射关系；其余已审结论PASS复用，不再次全图审。
+176180修复已freeze COMPLETE，Volta接仅180两单元/176177180当前字节
+受影响独审，Bacon继续新181185源作者；186+未委托。
+
+171175批准字节晋升exit0，filtered175 prepare包含全部现有页级SVG、
+164有效页。main首argv把root/work误放子命令前被argparse退出2，未执行
+装订或改源；纠正参数位置后officialassemble实际恰一次exit0并promoteexit0。
+现72源项332习题记录168编号图，open为p0107#7/p0175#12，尾题图169尚缺；
+不冒称332闭合题。原133KaTeX源警告复用，原数学勘误170不改。
+下一小批拟s16/s17/s17-t1三单元14闭合原题（4/9/1）。
+main完整s17九题/补充题先行私有源解已冻结；原165观察复用，新portrait
+和液体密度表实际打开，不披露解答作者。s17注册例题勘误须official绑定，
+补充课保持传说身份及题中20000/10000数值，不拿正文19.3替代题设。
+现代文字、图、答案/选择题与本批显示检查尚未完整。
+
+## 第十批已提交推送
+
+234文件提交`9e11acdfdde1ed1d7638c2de1f297ed9c7360d34`，push实际exit0，
+同一origin/codex/STEMROBIN-180-textbooks。三课14答案、十选择题43项、
+三必需现代图与五有效预备图、through170批准源及受影响工具修复已保留。
+没有正式handoff/写库/合并/部署，不重复tests/build，继续下一小批。
+下一步171175批准源晋升与filtered175装订；176180修复、s16图稿在途。
+以下提交前状态保留，不改写历史pending为预先完成。
+
 ## 第十批验证完成待提交
 
 暂存守卫首FAIL发现s13两份作者freeze复制品依赖scratch路径；已只移除
