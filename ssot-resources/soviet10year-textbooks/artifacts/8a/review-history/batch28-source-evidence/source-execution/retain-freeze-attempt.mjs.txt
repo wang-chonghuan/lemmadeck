@@ -1,0 +1,17 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { fileURLToPath } from 'node:url'
+
+const work = path.dirname(fileURLToPath(import.meta.url))
+const history = path.join(work, 'history/freeze-setup-attempt1')
+fs.mkdirSync(history, { recursive: true })
+const file = path.join(work, 'source-once.mjs')
+const old = path.join(history, 'source-once.mjs')
+fs.copyFileSync(file, old, fs.constants.COPYFILE_EXCL)
+fs.writeFileSync(path.join(history, 'receipt.json'), JSON.stringify({
+  command: ['node', file, 'freeze'], status: 1,
+  error: 'TypeError: Cannot read properties of undefined (reading flatMap), at TOC contents without lessons.',
+  preserved: old, sha256: crypto.createHash('sha256').update(fs.readFileSync(old)).digest('hex'),
+  private_root_created: false, correction: 'Treat TOC terminal non-chapter nodes as having no lessons.',
+}, null, 2) + '\n', { flag: 'wx' })

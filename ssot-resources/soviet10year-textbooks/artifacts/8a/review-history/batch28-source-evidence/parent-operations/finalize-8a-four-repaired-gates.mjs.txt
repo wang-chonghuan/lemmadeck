@@ -1,0 +1,71 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { spawnSync } from 'node:child_process'
+
+const repo = process.cwd()
+assert.equal(repo, '/Users/yong/.codex/worktrees/d9b1/lemmadeck')
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const candidate = `${scratch}/batch25-source-8a`
+const evidence = `${scratch}/8a-four-row-gates-repair/finalize`
+assert(!fs.existsSync(evidence))
+fs.mkdirSync(evidence)
+const read = file => JSON.parse(fs.readFileSync(file))
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const probes = read(`${scratch}/8a-four-row-gates-repair/probes-final.json`)
+assert.equal(probes.all_four_pass, true)
+assert.equal(hash(probes.layout.path), probes.layout.sha256)
+const pages = []
+for (const probe of probes.pages) {
+  const padded = String(probe.pdf_page).padStart(4, '0')
+  const dir = `${candidate}/root/8a/pages/${padded}`
+  const work = `${candidate}/work/8a/pages/${padded}`
+  const history = `${evidence}/p${padded}-before`
+  fs.mkdirSync(history)
+  const protectedFiles = [`${dir}/page.md`, `${dir}/page.json`,
+    `${work}/page.png`, `${work}/layout.json`]
+  const oldAudit = read(`${dir}/audit.json`)
+  assert.equal(oldAudit.lines_printed, probe.retained_blocked_counter)
+  for (const figure of oldAudit.figures) {
+    for (const extension of ['png', 'svg']) {
+      const file = `${work}/figures/${figure.id}.${extension}`
+      if (fs.existsSync(file)) protectedFiles.push(file)
+    }
+  }
+  const initial = protectedFiles.map(file => ({ path: file, sha256: hash(file) }))
+  for (const name of ['page.md', 'page.json', 'audit.json']) {
+    fs.copyFileSync(`${dir}/${name}`, `${history}/${name}`, fs.constants.COPYFILE_EXCL)
+  }
+  const args = ['.claude/skills/ld-s10y-lesson/tools/p2c.py', 'finalize',
+    '--book', '8a', '--page', String(probe.pdf_page),
+    '--root', path.resolve(`${candidate}/root`),
+    '--work', path.resolve(`${candidate}/work`)]
+  const started = new Date().toISOString()
+  const result = spawnSync('.claude/skills/ld-s10y-lesson/.venv/bin/python', args,
+    { encoding: 'utf8', maxBuffer: 4 * 1024 * 1024 })
+  const command = { command: ['.claude/skills/ld-s10y-lesson/.venv/bin/python', ...args],
+    cwd: repo, started, finished: new Date().toISOString(),
+    exit_code: result.status, stdout: result.stdout, stderr: result.stderr,
+    signal: result.signal, error: result.error?.message ?? null,
+    original_failures_preserved: history, source_bindings_before: initial }
+  fs.writeFileSync(`${evidence}/p${padded}-command.json`,
+    JSON.stringify(command, null, 2) + '\n', { flag: 'wx' })
+  assert.equal(result.status, 0, result.stdout || result.stderr)
+  const audit = read(`${dir}/audit.json`)
+  assert.equal(audit.lines_printed, probe.independent_expected)
+  assert.equal(audit.lines_md, probe.independent_expected)
+  assert.deepEqual(audit.errors, [])
+  assert.deepEqual(audit.figures, oldAudit.figures)
+  for (const file of initial) assert.equal(hash(file.path), file.sha256, file.path)
+  pages.push({ page: probe.pdf_page, printed_rows: audit.lines_printed,
+    exit_code: result.status, protected_inputs_unchanged: true,
+    exact_figure_geometry_unchanged: true, original_failure: `${history}/audit.json`,
+    final_audit: { path: `${dir}/audit.json`, sha256: hash(`${dir}/audit.json`) } })
+}
+fs.writeFileSync(`${evidence}/receipt.json`, JSON.stringify({
+  status: 'pass', pages, only_four_changed_gates_run: true,
+  unchanged_25_gates_not_rerun: true, no_assembly_or_promotion: true,
+  fig08_crop_blocker_not_resolved: true, parent_image_opens: 0,
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ status: 'pass', pages }))

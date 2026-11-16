@@ -1,0 +1,171 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+assert.equal(process.cwd(), '/Users/yong/.codex/worktrees/d9b1/lemmadeck')
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const candidate = `${scratch}/batch25-source-8a`
+const source = `${candidate}/root/8a`
+const durable = 'ssot-resources/soviet10year-textbooks/artifacts/8a'
+const evidence = `${durable}/review-history/batch28-source-evidence`
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const walk = dir => fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+  const file = path.join(dir, entry.name)
+  return entry.isDirectory() ? walk(file) : [file]
+})
+assert(!fs.existsSync(evidence), 'Once-only source promotion')
+const originalReviewFile = `${scratch}/reviewer-batch25-8a-raw-source/source-review.json`
+const originalReview = read(originalReviewFile)
+assert.equal(originalReview.findings.length, 5)
+assert.equal(originalReview.counts.original_exercises, 83)
+const gatesFile = `${scratch}/8a-four-row-gates-repair/finalize/receipt.json`
+const gates = read(gatesFile)
+assert.equal(gates.status, 'pass')
+assert.deepEqual(gates.pages.map(row => row.page), [30, 37, 41, 53])
+const cropFile = `${scratch}/8a-fig08-crop-repair/parent-finalize/receipt.json`
+const crop = read(cropFile)
+assert.equal(crop.status, 'pass')
+assert.equal(crop.approved_crop_bytes_identical_after_finalize, true)
+const cropReviewFile = `${scratch}/reviewer-8a-fig08-crop-repair/observations.json`
+assert.equal(read(cropReviewFile).status, 'pass')
+for (const lesson of originalReview.lessons) {
+  for (const binding of lesson.raw_files) assert.equal(hash(binding.path), binding.sha256)
+}
+const book = read(`${source}/book.json`)
+assert.deepEqual(book.audit.errors, [])
+assert.equal(book.audit.exercise_count, 116)
+assert.equal(book.audit.warnings.length, 0)
+const targets = ['alg8-c1-s2-n5', 'alg8-c1-s2-n6', 'alg8-c1-ex',
+  'alg8-c2-s1-n7', 'alg8-c2-s1-n8']
+assert.deepEqual(targets, originalReview.lessons.map(row => row.id))
+assert.deepEqual(targets.map(id => read(`${source}/lessons/${id}/exercises.json`).count),
+  [9, 12, 33, 14, 15])
+for (const id of ['alg8-c1-s1-n1', 'alg8-c1-s1-n2', 'alg8-c1-s1-n3', 'alg8-c1-s2-n4']) {
+  for (const name of ['lesson.md', 'lesson.json', 'exercises.json']) {
+    assert.equal(hash(`${source}/lessons/${id}/${name}`),
+      hash(`${durable}/lessons/${id}/${name}`))
+  }
+}
+const names = ['book.json']
+for (let page = 26; page <= 54; page++) {
+  const padded = String(page).padStart(4, '0')
+  const audit = read(`${source}/pages/${padded}/audit.json`)
+  assert.deepEqual(audit.errors, [], padded)
+  assert.equal(audit.lines_printed, audit.lines_md, padded)
+  for (const name of ['page.md', 'page.json', 'audit.json']) {
+    names.push(`pages/${padded}/${name}`)
+  }
+}
+const figures = originalReview.figures.map(row => row.id)
+assert.equal(figures.length, 13)
+for (const id of figures) {
+  for (const extension of ['png', 'svg']) names.push(`figures/${id}.${extension}`)
+}
+const boundary = 'alg8-c2-s2-n9'
+for (const id of [...targets, boundary]) {
+  for (const name of ['lesson.md', 'lesson.json', 'exercises.json']) {
+    names.push(`lessons/${id}/${name}`)
+  }
+}
+assert.equal(names.length, 132)
+const pending = []
+const retained = {}
+const files = new Map()
+function retain(file, relative) {
+  if (files.has(path.resolve(file))) return files.get(path.resolve(file))
+  const target = `${evidence}/${relative}`
+  assert(!fs.existsSync(target), target)
+  const bytes = fs.readFileSync(file)
+  const digest = hash(file)
+  files.set(path.resolve(file), target)
+  pending.push({ target, bytes })
+  retained[relative] = { original_bytes_sha256: digest, retained_bytes_sha256: digest,
+    inactive_history: target.endsWith('.txt') }
+  return target
+}
+const promoted = names.map(name => {
+  const file = `${source}/${name}`
+  const target = `${durable}/${name}`
+  const bytes = fs.readFileSync(file)
+  if (name.endsWith('.json')) {
+    JSON.parse(bytes.toString('utf8'))
+    assert.doesNotMatch(bytes.toString('utf8'), /\.intentfold\/|\.tmp\/|\/Users\//)
+  }
+  const previous = fs.existsSync(target) ? hash(target) : null
+  if (previous) retain(target, `before/${name}.txt`)
+  pending.push({ target, bytes })
+  return { destination: target, sha256: hash(file), previous_sha256: previous,
+    partial_only: name.includes(boundary) }
+})
+const groups = [
+  ['source-execution', `${candidate}/work`],
+  ['source-reviewer', `${scratch}/reviewer-batch25-8a-raw-source`],
+  ['row-repair', `${scratch}/8a-four-row-gates-repair`],
+  ['crop-repair', `${scratch}/8a-fig08-crop-repair`],
+  ['crop-reviewer', `${scratch}/reviewer-8a-fig08-crop-repair`],
+]
+for (const [category, root] of groups) {
+  for (const file of walk(root)) {
+    if (file.includes('/__pycache__/') || file.includes('/runtime-temp/')) continue
+    const inactive = /\.(json|md|mjs|cjs|js|py|log|html)$/.test(file) ? '.txt' : ''
+    retain(file, `${category}/${path.relative(root, file)}${inactive}`)
+  }
+}
+for (const name of ['finalize-8a-four-repaired-gates.mjs',
+  'finalize-8a-fig08-repair.py', 'promote-batch28-8a-source.mjs']) {
+  retain(`${scratch}/${name}`, `parent-operations/${name}.txt`)
+}
+function binding(file) {
+  const retainedPath = files.get(path.resolve(file))
+  assert(retainedPath, file)
+  return { path: retainedPath, sha256: hash(file) }
+}
+const review = {
+  schema: 's10y-raw-source-retained-review@1', ticket: 'STEMROBIN-182',
+  batch: 28, book: '8a', status: 'pass',
+  reviewer: { kind: 'self_review',
+    identity: 'Parent aggregates prior independent source fidelity, fresh bounded crop review and actual repaired page gates; no new broad source review.' },
+  independent_original_source_review: binding(originalReviewFile),
+  independent_changed_crop_review: binding(cropReviewFile),
+  repaired_four_page_gates: binding(gatesFile), repaired_crop_finalization: binding(cropFile),
+  unchanged_reviewed_lesson_bytes: originalReview.lessons.map(row => ({
+    id: row.id, status: 'pass', original_count: row.original_count,
+    raw_files: row.raw_files.map(file => ({
+      path: `${durable}/lessons/${row.id}/${path.basename(file.path)}`,
+      sha256: file.sha256,
+    })),
+  })),
+  old_five_blocked_findings_retained_unchanged: true,
+  resolved_findings: ['page-gate-30', 'page-gate-37', 'page-gate-41',
+    'page-gate-53', 'crop-fig08-caption-fragment'],
+  raw_only_approval: true, modern_or_choice_completion: false,
+  new_pages: 29, original_exercises: 83, numbered_lessons: 4,
+  separate_chapter_exercise_cards: 1, partial_boundary_not_complete: boundary,
+  printed_rows: names.filter(name => name.endsWith('/audit.json')).reduce((sum, name) =>
+    sum + read(`${source}/${name}`).lines_md, 0),
+  final_promotion_byte_identical: true, promoted,
+  unchanged_25_source_gates_reused: true, unchanged_semantic_evidence_reused: true,
+  exact_reviewed_crop_and_SVG_reused: true, parent_image_opens: 0,
+  no_database_or_application_operations: true,
+  existing_choice_book_trace_rebinding_required_next: true, usage: null,
+}
+pending.push({ target: `${evidence}/source-review.json`,
+  bytes: Buffer.from(JSON.stringify(review, null, 2) + '\n') })
+pending.push({ target: `${evidence}/retention.json`, bytes: Buffer.from(JSON.stringify({
+  status: 'pass', core_files_promoted: promoted.length, closed_target_lessons: 5,
+  numbered_target_lessons: 4, separate_chapter_exercise_cards: 1,
+  partial_context_lessons_not_complete: [boundary], new_pages: 29,
+  parent_observations: `${evidence}/source-review.json`, retained,
+  original_textual_execution_files_are_inactive_history: true,
+}, null, 2) + '\n') })
+for (const row of pending) {
+  fs.mkdirSync(path.dirname(row.target), { recursive: true })
+  fs.writeFileSync(row.target, row.bytes)
+}
+assert(promoted.every(row => hash(row.destination) === row.sha256))
+console.log(JSON.stringify({ status: 'pass', core_files_promoted: promoted.length,
+  evidence_files: Object.keys(retained).length + 2, new_pages: 29,
+  closed_RAW_lessons: 5, original_exercises: 83,
+  printed_rows: review.printed_rows, existing_choice_trace_rebinding_pending: true }))

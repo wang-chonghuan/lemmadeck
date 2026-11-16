@@ -1,0 +1,111 @@
+"""Preserve exact snapshots and rebind only a changed raw/edition book trace."""
+import argparse
+import copy
+import importlib.util
+import json
+from pathlib import Path
+import re
+import sys
+
+sys.dont_write_bytecode = True
+parser = argparse.ArgumentParser()
+parser.add_argument("--book", required=True)
+parser.add_argument("--trace", required=True)
+parser.add_argument("--before", required=True)
+parser.add_argument("--batch", required=True)
+parser.add_argument("--out", required=True)
+parser.add_argument("--groups", type=int, required=True)
+args = parser.parse_args()
+repo = Path.cwd()
+spec = importlib.util.spec_from_file_location(
+    "choice_prepare", repo / ".agents/skills/ld-s10y-choice/scripts/prepare.py")
+prepare = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(prepare)
+root = repo / "ssot-resources/soviet10year-textbooks/artifacts" / args.book
+before = prepare.file_hash(repo / args.before)
+after = prepare.file_hash(repo / args.trace)
+assert before != after
+output = repo / args.out
+assert not output.exists()
+pending = []
+records = []
+
+
+def replace_fields(original, old, new, fields):
+    result = original
+    for field in fields:
+        pattern = re.compile(
+            rb'("' + field.encode() + rb'"\s*:\s*")'
+            + re.escape(old[field].encode()) + rb'(")')
+        assert len(pattern.findall(result)) == 1, field
+        result = pattern.sub(lambda m: m[1] + new[field].encode() + m[2], result, count=1)
+    assert json.loads(result) == new
+    assert len(result) == len(original)
+    return result
+
+
+for choice in sorted((root / "editions/modern-us-neutral/lessons").glob("*/choice-set")):
+    approved = choice / "seed.json"
+    blocked = choice / "review-history/unresolved-source/seed.json"
+    assert not (approved.exists() and blocked.exists())
+    seed_path = approved if approved.exists() else blocked
+    if not seed_path.exists():
+        continue
+    paths = {name: seed_path.parent / f"{name}.json" for name in ("seed", "draft", "review")}
+    original = {name: file.read_bytes() for name, file in paths.items()}
+    old = {name: json.loads(data) for name, data in original.items()}
+    seed = old["seed"]
+    fresh = prepare.prepare_seed(
+        repo, args.book, seed["source"]["lesson"],
+        [row["number"] for row in seed["exercises"]],
+        [row["block"] for row in seed["concepts"]],
+        seed["source"]["concept_figure_ids"])
+    expected = copy.deepcopy(seed)
+    changes = []
+    for row in expected["trace"]:
+        if row["path"] == args.trace:
+            assert row["sha256"] == before
+            changes.append({"path": args.trace, "before": before, "after": after})
+            row["sha256"] = after
+        else:
+            assert prepare.file_hash(repo / row["path"]) == row["sha256"]
+    assert len(changes) == 1
+    assert fresh == expected, seed["source"]["lesson"]
+    assert old["draft"]["seed_sha256"] == prepare.digest(seed)
+    assert old["review"]["seed_sha256"] == prepare.digest(seed)
+    assert old["review"]["draft_sha256"] == prepare.digest(old["draft"])
+    new = {"seed": fresh, "draft": copy.deepcopy(old["draft"]), "review": copy.deepcopy(old["review"])}
+    new["draft"]["seed_sha256"] = prepare.digest(fresh)
+    new["review"]["seed_sha256"] = prepare.digest(fresh)
+    new["review"]["draft_sha256"] = prepare.digest(new["draft"])
+    old_token, new_token = f'"{before}"'.encode(), f'"{after}"'.encode()
+    assert original["seed"].count(old_token) == 1
+    seed_bytes = original["seed"].replace(old_token, new_token)
+    assert json.loads(seed_bytes) == fresh
+    replacements = {
+        "seed": seed_bytes,
+        "draft": replace_fields(original["draft"], old["draft"], new["draft"], ("seed_sha256",)),
+        "review": replace_fields(original["review"], old["review"], new["review"],
+                                 ("seed_sha256", "draft_sha256"))}
+    archive = choice / f"review-history/book-trace-{before[:12]}-{args.batch}"
+    assert not archive.exists()
+    for name, data in original.items():
+        pending.extend([(archive / f"{name}.json.txt", data), (paths[name], replacements[name])])
+    records.append({
+        "lesson": seed["source"]["lesson"], "snapshot_root": seed_path.parent.relative_to(repo).as_posix(),
+        "original_bytes_archive": archive.relative_to(repo).as_posix(), "trace_changes": changes,
+        "unchanged": ["all source exercises/concepts/figures", "questions", "coverage", "all semantic evidence and outcome"],
+        "before": {name: prepare.digest(value) for name, value in old.items()},
+        "after": {name: prepare.digest(value) for name, value in new.items()},
+        "formatting_and_nonbinding_bytes_preserved": True,
+        "semantic_canonical_or_display_reruns": 0})
+assert len(records) == args.groups
+for file, data in pending:
+    file.parent.mkdir(parents=True, exist_ok=True)
+    file.write_bytes(data)
+output.parent.mkdir(parents=True, exist_ok=True)
+output.write_text(json.dumps({
+    "status": "pass", "scope": f"{args.groups} existing {args.book} trace bindings only.",
+    "fresh_seed_exactly_old_except_one_trace": True, "new_semantic_approval": False,
+    "records": records}, ensure_ascii=False, indent=2) + "\n")
+print(json.dumps({"status": "pass", "groups": len(records), "semantic_reruns": 0}))

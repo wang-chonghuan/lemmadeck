@@ -230,6 +230,19 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     line_h = int(np.median([b - a + 1 for a, b in raw]))
     components, _ = ndimage.label(ink)
     bounds_list = ndimage.find_objects(components)
+    sizes = np.bincount(components.ravel())
+    compact = sorted(
+        (rows.stop - rows.start, int(sizes[component_id]))
+        for component_id, bounds in enumerate(bounds_list, 1) if bounds is not None
+        for rows, columns in [bounds]
+        if 0.2 * (rows.stop - rows.start)
+        <= columns.stop - columns.start <= 2 * (rows.stop - rows.start)
+    )
+    if compact:
+        # Many tiny specks can outvote printed glyphs, but not their ink area.
+        cumulative = np.cumsum([area for _, area in compact])
+        supported_h = compact[int(np.searchsorted(cumulative, 0.75 * cumulative[-1]))][0]
+        line_h = max(line_h, supported_h)
     glyph_heights = [
         rows.stop - rows.start
         for bounds in bounds_list if bounds is not None
@@ -240,6 +253,47 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     glyph_h = (
         float(np.percentile(glyph_heights, 75)) if len(glyph_heights) >= 3 else line_h
     )
+    glyph_boxes = [
+        bounds for bounds in bounds_list if bounds is not None
+        for rows, columns in [bounds]
+        if rows.stop - rows.start >= 0.6 * glyph_h
+        and columns.stop - columns.start >= 0.2 * glyph_h
+    ]
+    short_rows = [
+        (a, b) for a, b in _merge_close(raw, 0.4 * glyph_h)
+        if 0.3 * glyph_h <= b - a + 1 < 0.65 * glyph_h
+        and 0.5 * glyph_h <= np.ptp(
+            np.flatnonzero(ink[a:b + 1].any(axis=0))
+        ) + 1 <= 2 * glyph_h
+    ]
+    for component_id, bounds in enumerate(bounds_list, 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        height, width = rows.stop - rows.start, columns.stop - columns.start
+        isolated_fragment = height < 0.3 * glyph_h or (
+            height < 0.65 * glyph_h and width >= 0.5 * glyph_h
+            and sizes[component_id] >= 0.35 * width * height
+        )
+        thin_rule = height <= 0.2 * glyph_h and width >= 0.7 * glyph_h
+        if isolated_fragment and not (
+            height < 0.3 * glyph_h
+            and any(a <= rows.start and rows.stop - 1 <= b for a, b in short_rows)
+        ) and not any(
+            (
+                abs((rows.start + rows.stop) - (other_rows.start + other_rows.stop))
+                <= 1.5 * glyph_h
+                or (thin_rule or height >= 0.3 * glyph_h)
+                and max(rows.start - other_rows.stop, other_rows.start - rows.stop)
+                <= (1.0 if thin_rule else 0.5) * glyph_h
+            )
+            and max(columns.start - other_columns.stop,
+                    other_columns.start - columns.stop) <= 1.5 * glyph_h
+            for other_rows, other_columns in glyph_boxes
+        ):
+            region = ink[bounds]
+            region[components[bounds] == component_id] = False
+    raw = _row_fragments(ink, content_w)
     supporting_rows = {
         (a, b) for a, b in raw
         if any(
@@ -302,7 +356,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     raw = _row_fragments(ink, content_w)
     if not raw:
         return []
-    line_h = int(np.median([b - a + 1 for a, b in raw]))
+    line_h = max(glyph_h, int(np.median([b - a + 1 for a, b in raw])))
     # Fraction-heavy pages inflate row heights without enlarging printed digits.
     number_glyph_h = min(line_h, glyph_h)
     # Projection thresholds can miss a narrow standalone quotient such as 1 or 7.

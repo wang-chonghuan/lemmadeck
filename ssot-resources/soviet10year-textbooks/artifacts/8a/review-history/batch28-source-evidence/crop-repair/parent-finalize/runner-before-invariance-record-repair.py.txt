@@ -1,0 +1,125 @@
+import copy
+import hashlib
+import json
+import shutil
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+repo = Path.cwd()
+assert repo == Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+tools = repo / ".claude/skills/ld-s10y-lesson/tools"
+sys.path.insert(0, str(tools))
+import blocks as B
+
+scratch = repo / ".intentfold/tickets/STEMROBIN-182/tmp"
+candidate = scratch / "batch25-source-8a"
+repair = scratch / "8a-fig08-crop-repair"
+evidence = repair / "parent-finalize"
+assert not evidence.exists()
+evidence.mkdir()
+
+
+def read(file):
+    return json.loads(file.read_text())
+
+
+def sha(file):
+    return hashlib.sha256(file.read_bytes()).hexdigest()
+
+
+def save(file, value):
+    with file.open("x") as stream:
+        stream.write(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+
+
+review_file = scratch / "reviewer-8a-fig08-crop-repair/observations.json"
+review = read(review_file)
+assert review["status"] == "pass" and review["verdict"]["status"] == "pass"
+receipt = read(repair / "repair-receipt.json")
+old_box = receipt["geometry"]["old_logical_box_xywh"]
+new_box = receipt["geometry"]["proposed_logical_box_xywh"]
+assert receipt["geometry"]["logical_box_delta_xywh"] == [0, 0, 0, -9]
+page = candidate / "root/8a/pages/0029"
+work = candidate / "work/8a/pages/0029"
+original = {}
+for name in ("page.md", "page.json", "audit.json"):
+    original[name] = (page / name).read_bytes()
+    shutil.copyfile(page / name, evidence / ("before-" + name))
+for name in ("fig-08.png", "fig-08.svg"):
+    shutil.copyfile(work / "figures" / name, evidence / ("before-" + name))
+
+meta, blocks = B.parse(original["page.md"].decode())
+before_meta, before_blocks = copy.deepcopy(meta), copy.deepcopy(blocks)
+figures = [block for block in blocks if block["kind"] == "fig"]
+assert len(figures) == 1 and figures[0]["box"] == old_box
+figures[0]["box"] = new_box
+assert len(meta["figures"]) == 1 and meta["figures"][0]["box"] == old_box
+meta["figures"][0]["box"] = new_box
+
+# The reviewed machine crop is an exact geometry cache, not a new page-gate result.
+cache = read(page / "audit.json")
+assert cache["figures"][0]["box"] == old_box
+cache["figures"][0]["box"] = new_box
+cache["geometry_binding"] = {
+    "purpose": "Reuse independently reviewed machine crop; not a new finalize result.",
+    "review": str(review_file.relative_to(repo)),
+    "review_sha256": sha(review_file),
+    "generator_receipt_sha256": sha(repair / "repair-receipt.json"),
+}
+(page / "page.md").write_text(B.dump(meta, blocks, 29))
+(page / "audit.json").write_text(json.dumps(cache, ensure_ascii=False, indent=2) + "\n")
+save(evidence / "geometry-cache-input.json", cache)
+python = repo / ".claude/skills/ld-s10y-lesson/.venv/bin/python"
+
+
+def run(name, args):
+    command = [str(python), str(tools / "p2c.py"), *args,
+               "--book", "8a", "--root", str(candidate / "root"),
+               "--work", str(candidate / "work")]
+    started = datetime.now(timezone.utc).isoformat()
+    result = subprocess.run(command, cwd=repo, text=True, capture_output=True)
+    save(evidence / (name + "-command.json"), {
+        "command": command, "cwd": str(repo), "started": started,
+        "finished": datetime.now(timezone.utc).isoformat(),
+        "exit_code": result.returncode, "stdout": result.stdout,
+        "stderr": result.stderr, "execution_count": 1,
+    })
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+run("finalize-p0029", ["finalize", "--page", "29"])
+final = read(page / "page.json")
+inverse_meta = copy.deepcopy(final["meta"])
+inverse_meta["figures"][0]["box"] = old_box
+inverse_blocks = copy.deepcopy(final["blocks"])
+inverse_blocks[[i for i, b in enumerate(inverse_blocks) if b["kind"] == "fig"][0]]["box"] = old_box
+assert inverse_meta == before_meta
+assert inverse_blocks == before_blocks
+audit = read(page / "audit.json")
+assert audit["lines_printed"] == audit["lines_md"] == 24 and not audit["errors"]
+approved_png = repair / "work/8a/pages/0029/figures/fig-08.png"
+approved_svg = repair / "work/8a/pages/0029/figures/fig-08.svg"
+assert (work / "figures/fig-08.png").read_bytes() == approved_png.read_bytes()
+shutil.copyfile(approved_svg, work / "figures/fig-08.svg")
+run("assemble-reviewed-crop", ["assemble", "--toc",
+    str(repo / "ssot-resources/soviet10year-textbooks/toc/8a/zh.json")])
+book = read(candidate / "root/8a/book.json")
+assert not book["audit"]["errors"]
+assert book["audit"]["exercise_count"] == 116
+assert (candidate / "root/8a/figures/fig-08.png").read_bytes() == approved_png.read_bytes()
+assert (candidate / "root/8a/figures/fig-08.svg").read_bytes() == approved_svg.read_bytes()
+save(evidence / "receipt.json", {
+    "status": "pass", "page": 29, "printed_rows": 24,
+    "review": str(review_file.relative_to(repo)), "review_sha256": sha(review_file),
+    "only_figure_box_changed_in_page_source": True,
+    "approved_crop_bytes_identical_after_finalize": True,
+    "approved_svg_reused_without_revectorization": True,
+    "original_page_gate_and_rejected_crop_bytes_retained": True,
+    "only_changed_page_finalized": True, "unchanged_pages_not_rerun": True,
+    "assembly_exit_code": 0, "assembled_originals": 116,
+    "parent_image_opens": 0, "durable_promotion_or_database_writes": False,
+})
+print(json.dumps({"status": "pass", "page": 29, "printed_rows": 24,
+                  "approved_crop_unchanged": True, "assembly": 116}))

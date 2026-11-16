@@ -1,0 +1,45 @@
+---
+{
+  "printed_page": 34,
+  "notes": [
+    "实际打开完整page.png；本页只有87题八项及页码，下部大片为空白扫描噪点，不转成正文或图块。原а/б及в/г同行，其余四项各一行。"
+  ],
+  "errata": [],
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "8a",
+  "page": 41,
+  "source": {
+    "pdf": "8a 苏联十年制学校数学教材 代数 八年级.pdf",
+    "pdf_sha256": "5978388efc80df4085400f80d5912f710efb052a806222633b172b0a9479b071",
+    "pdf_page": 41
+  },
+  "render": {
+    "dpi": 300,
+    "w": 2480,
+    "h": 3509,
+    "sha256": "83a8243aa3417c599deac22536d06da04577bb5f2701592bbfa39a6a9f72f16f"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 8,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 87 -->
+87. 求下列各式的定义域：
+а) $\sqrt{x}+\sqrt{4-x^2}$；　б) $\sqrt{x+1}+\sqrt{3x-x^2}$；
+в) $\frac{2}{x}+\sqrt{x^2-5x+6}$；г) $\frac{12}{x-18}-\sqrt{x^2-7x+6}$；
+д) $\sqrt{7x-14}-\sqrt{x^2-15x+56}$；
+е) $\sqrt{x^2-6x+9}-\sqrt{6-x}$；
+ж) $\frac{\sqrt{4x^2-12x-7}}{x}-6x$；
+з) $\frac{\sqrt{15-19x+6x^2}}{x-1}+\frac{4}{x}$.
+
+<!-- foot -->
+34

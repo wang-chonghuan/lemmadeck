@@ -1,0 +1,38 @@
+const fs = require("node:fs");
+const path = require("node:path");
+const { createRequire } = require("node:module");
+const sharp = createRequire("/Users/yong/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/package.json")("sharp");
+const base = path.resolve(".intentfold/tickets/STEMROBIN-182/tmp/batch25-source-8a/root/8a/figures");
+const out = __dirname;
+const groups = [
+  { name: "tables-native", axis: "vertical", ids: ["tbl-p0027-01", "tbl-p0028-01"] },
+  { name: "n5-graphs-native", axis: "horizontal", ids: ["fig-06", "fig-07", "fig-08"] },
+  { name: "n6-examples-native", axis: "horizontal", ids: ["fig-09", "fig-10", "fig-11"] },
+  { name: "classification-translation-native", axis: "horizontal", ids: ["fig-12", "fig-13"] },
+  { name: "n7-figures-native", axis: "vertical", ids: ["fig-14", "fig-15"] }
+];
+async function main() {
+  const records = [];
+  for (const group of groups) {
+    const items = [];
+    let offset = 0;
+    for (const id of group.ids) {
+      const input = path.join(base, `${id}.png`);
+      const m = await sharp(input).metadata();
+      const left = group.axis === "horizontal" ? offset : 0;
+      const top = group.axis === "vertical" ? offset : 0;
+      items.push({ id, input, left, top, width: m.width, height: m.height });
+      offset += (group.axis === "horizontal" ? m.width : m.height) + 16;
+    }
+    const width = Math.max(...items.map(i => i.left + i.width));
+    const height = Math.max(...items.map(i => i.top + i.height));
+    const output = path.join(out, `${group.name}.png`);
+    await sharp({ create: { width, height, channels: 3, background: "white" } })
+      .composite(items.map(({ input, left, top }) => ({ input, left, top })))
+      .png().toFile(output);
+    records.push({ output, width, height, scale: 1, interpolation: "none", items });
+  }
+  fs.writeFileSync(path.join(out, "native-montage-layout.json"), JSON.stringify(records, null, 2) + "\n");
+  console.log(JSON.stringify(records.map(({ output, width, height }) => ({ output, width, height })), null, 2));
+}
+main().catch(e => { console.error(e); process.exitCode = 1; });

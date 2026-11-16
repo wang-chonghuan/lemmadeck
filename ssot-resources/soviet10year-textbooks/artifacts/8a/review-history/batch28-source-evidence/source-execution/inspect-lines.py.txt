@@ -1,0 +1,41 @@
+"""Inspect a failed page's counted line bands; no finalizer or production edit."""
+import json
+import sys
+from pathlib import Path
+
+from PIL import Image, ImageDraw
+
+WORK = Path(__file__).resolve().parent
+REPO = WORK.parents[5]
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+import blocks
+import layout
+
+page = int(sys.argv[1])
+root = WORK.parent / "root/8a/pages" / f"{page:04d}"
+source = WORK / "8a/pages" / f"{page:04d}"
+audit = json.loads((root / "audit.json").read_text())
+meta, parts = blocks.load(root / "page.md")
+image = Image.open(source / "page.png").convert("RGB")
+ink = layout.ink_mask(image)
+masked = ink.copy()
+for figure in audit["figures"]:
+    x, y, w, h = figure["box"]
+    masked[y:y + h, x:x + w] = False
+columns = ink.any(axis=0).nonzero()[0]
+width = int(columns[-1] - columns[0] + 1)
+bands = layout.line_bands(masked, width)
+draw = ImageDraw.Draw(image)
+for index, (start, end) in enumerate(bands):
+    draw.rectangle((int(columns[0]), int(start), int(columns[-1]), int(end)), outline="red", width=2)
+    draw.text((int(columns[-1]) + 12, int(start)), str(index + 1), fill="red")
+output = WORK / f"p{page:04d}-line-bands.png"
+image.save(output)
+receipt = WORK / f"p{page:04d}-line-band-inspection.json"
+with receipt.open("x", encoding="utf-8") as stream:
+    json.dump({"page": page, "image": str(output), "bands": [[int(a), int(b)] for a, b in bands],
+               "counted": len(bands), "transcribed": blocks.printed_lines(parts),
+               "blocks": [{"kind": b["kind"], "label": b["label"], "lines": b["lines"]}
+                          for b in parts]}, stream, ensure_ascii=False, indent=2)
+    stream.write("\n")
+print(json.dumps({"receipt": str(receipt), "counted": len(bands), "transcribed": blocks.printed_lines(parts)}))

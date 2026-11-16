@@ -1,0 +1,145 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck'
+const work = path.dirname(fileURLToPath(import.meta.url))
+const base = path.dirname(work)
+const root = path.join(base, 'root')
+const raw = path.join(repo, 'ssot-resources/soviet10year-textbooks/artifacts/8a')
+const pdf = path.join(repo, 'ssot-resources/soviet10year-textbooks/sources/soviet10years/8a 苏联十年制学校数学教材 代数 八年级.pdf')
+const toc = path.join(repo, 'ssot-resources/soviet10year-textbooks/toc/8a/zh.json')
+const tocMd = path.join(repo, 'ssot-resources/soviet10year-textbooks/sources/toc/8a.md')
+const skill = path.join(repo, '.claude/skills/ld-s10y-lesson')
+const python = path.join(skill, '.venv/bin/python')
+const pipeline = path.join(skill, 'tools/p2c.py')
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const record = file => ({ path: file, sha256: sha(file), bytes: fs.statSync(file).size })
+const save = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+const frozenFile = path.join(work, 'source-base-frozen.json')
+const action = process.argv[2]
+const pdir = page => path.join(root, '8a/pages', String(page).padStart(4, '0'))
+const wdir = page => path.join(work, '8a/pages', String(page).padStart(4, '0'))
+
+function check() {
+  const frozen = read(frozenFile)
+  for (const file of frozen.inputs) assert.equal(sha(file.path), file.sha256, `Input changed: ${file.path}`)
+  for (const file of frozen.immutable_copies) assert.equal(sha(file.path), file.sha256, `Old core changed: ${file.path}`)
+  return frozen
+}
+
+function once(name, args, outputs = []) {
+  check()
+  const start = path.join(work, `${name}.started.json`), output = path.join(work, `${name}.json`)
+  assert(!fs.existsSync(start) && !fs.existsSync(output), `Already run: ${name}`)
+  save(start, { at: new Date().toISOString(), argv: [python, ...args] })
+  const temp = path.join(work, 'runtime-temp')
+  fs.mkdirSync(temp, { recursive: true })
+  const result = spawnSync(python, args, { cwd: repo, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024,
+    env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', TMPDIR: temp } })
+  let failure = result.error?.message ?? (result.status === 0 ? null : `Exit ${result.status}`)
+  try { check() } catch (error) { failure = error.message }
+  save(output, { argv: [python, ...args], at: new Date().toISOString(), status: result.status,
+    pass: !failure, failure, stdout: result.stdout, stderr: result.stderr,
+    outputs: outputs.filter(fs.existsSync).map(record) })
+  process.stdout.write(result.stdout ?? '')
+  process.stderr.write(result.stderr ?? '')
+  if (failure) process.exitCode = result.status || 1
+}
+
+if (action === 'freeze') {
+  assert(!fs.existsSync(root) && !fs.existsSync(frozenFile))
+  const book = read(path.join(raw, 'book.json'))
+  const pages = fs.readdirSync(path.join(raw, 'pages')).filter(p => /^\d{4}$/.test(p))
+  assert.equal(Math.max(...pages.map(Number)), 25)
+  const copies = [
+    'book.json',
+    ...pages.flatMap(page => ['page.md', 'page.json', 'audit.json'].map(f => `pages/${page}/${f}`)),
+    ...fs.readdirSync(path.join(raw, 'lessons')).flatMap(id =>
+      ['lesson.md', 'lesson.json', 'exercises.json'].map(f => `lessons/${id}/${f}`)),
+    ...fs.readdirSync(path.join(raw, 'figures')).filter(f => /\.(png|svg)$/.test(f)).map(f => `figures/${f}`),
+  ].map(relative => ({ source: path.join(raw, relative), path: path.join(root, '8a', relative),
+    sha256: sha(path.join(raw, relative)), relative }))
+  assert(copies.every(c => !/(answers|choice|interaction|edition|review)/i.test(c.relative)))
+  const offsets = pages.map(page => {
+    const doc = read(path.join(raw, 'pages', page, 'page.json'))
+    return doc.meta.page - doc.meta.printed_page
+  })
+  assert(offsets.every(offset => offset === 7))
+  const targets = JSON.parse(fs.readFileSync(toc, 'utf8')).contents.flatMap(c =>
+    (c.lessons ?? []).flatMap(l => (l.topics ?? []).map(t => ({ id: t.id, number: t.printedNumber,
+      title: t.title, printed_start: t.page, pdf_start: t.page + 7 }))))
+    .filter(t => t.number >= 5 && t.number <= 9)
+  for (const file of copies) {
+    fs.mkdirSync(path.dirname(file.path), { recursive: true })
+    fs.copyFileSync(file.source, file.path, fs.constants.COPYFILE_EXCL)
+    assert.equal(sha(file.path), file.sha256)
+  }
+  const immutable = copies.filter(c => !['book.json', ...['lesson.md', 'lesson.json', 'exercises.json']
+    .map(f => `lessons/alg8-c1-s2-n5/${f}`)].includes(c.relative))
+  const frozen = {
+    at: new Date().toISOString(), root, work, pdf: record(pdf), toc: record(toc), original_toc: record(tocMd),
+    current_book: book, old_pages: pages, pdf_offset: 7, new_pdf_pages: [26, 54],
+    targets: targets.filter(t => t.number <= 8), next_boundary: targets.find(t => t.number === 9),
+    intervening_card: { id: 'alg8-c1-ex', printed_start: 28, printed_end: 34, pdf_start: 35, pdf_end: 41,
+      purpose: 'Faithful intervening contiguous source pages; separately counted, not one of four numbered targets.' },
+    inputs: [...new Set([...copies.map(c => c.source), pdf, toc, tocMd,
+      ...['p2c.py', 'layout.py', 'assemble.py', 'blocks.py', 'normalize.py', 'mathcheck.py', 'vectorize.py']
+        .map(f => path.join(skill, 'tools', f)), path.join(skill, 'profiles/soviet-cn.json')])].map(record),
+    copies, immutable_copies: immutable.map(c => ({ ...record(c.path), source: c.source })),
+    prohibited_inputs: ['answers', 'choices', 'modern drafts', 'review history'],
+    scope: 'RAW-only private copy. Existing18 source pages and n1..4 core remain byte-identical; n5 source boundary extends naturally by assembly.'
+  }
+  save(frozenFile, frozen)
+  check()
+  console.log(JSON.stringify({ copied: copies.length, old_pages: pages.length, targets: frozen.targets,
+    next_boundary: frozen.next_boundary, intervening_card: frozen.intervening_card }))
+} else if (action === 'prepare' || action === 'finalize') {
+  const page = Number(process.argv[3]), suffix = process.argv[4] === 'repair1' ? '-repair1' : ''
+  assert(Number.isInteger(page) && page >= 26 && page <= 54)
+  assert(action === 'finalize' || !suffix)
+  const outputs = action === 'prepare' ? ['page.png', 'page.grid.png', 'layout.json', 'page.template.md']
+    .map(f => path.join(wdir(page), f))
+    : ['page.md', 'page.json', 'audit.json'].map(f => path.join(pdir(page), f))
+  once(`command-p${String(page).padStart(4, '0')}-${action}${suffix}`,
+    [pipeline, action, '--book', '8a', '--page', String(page), '--root', root, '--work', work,
+      '--pdf', pdf], outputs)
+} else if (action === 'retain-failure' || action === 'retain-page') {
+  const page = Number(process.argv[3])
+  const receipt = read(path.join(work, `command-p${String(page).padStart(4, '0')}-finalize.json`))
+  assert(action === 'retain-page' || !receipt.pass)
+  const history = path.join(work, 'history', `p${String(page).padStart(4, '0')}-${action === 'retain-page' ? 'before-ownership-repair' : 'first-finalize-failure'}`)
+  assert(!fs.existsSync(history))
+  const files = [
+    ...['page.md', 'page.json', 'audit.json'].map(f => path.join(pdir(page), f)),
+    ...['page.png', 'page.grid.png', 'layout.json', 'page.template.md'].map(f => path.join(wdir(page), f)),
+    path.join(work, `command-p${String(page).padStart(4, '0')}-finalize.json`),
+    ...(fs.existsSync(path.join(wdir(page), 'figures')) ? fs.readdirSync(path.join(wdir(page), 'figures'), { withFileTypes: true }) : [])
+      .filter(f => f.isFile()).map(f => path.join(wdir(page), 'figures', f.name)),
+  ].filter(fs.existsSync)
+  fs.mkdirSync(history, { recursive: true })
+  const snapshots = files.map(file => {
+    const preserved = path.join(history, path.relative(base, file))
+    fs.mkdirSync(path.dirname(preserved), { recursive: true })
+    fs.copyFileSync(file, preserved, fs.constants.COPYFILE_EXCL)
+    assert.equal(sha(file), sha(preserved))
+    return { ...record(file), preserved }
+  })
+  save(path.join(history, 'receipt.json'), { snapshots, failure: receipt })
+  console.log(JSON.stringify({ retained: snapshots.length, history }))
+} else if (action === 'assemble') {
+  const phase = process.argv[3]
+  assert(['source', 'after-vectorize'].includes(phase))
+  once(`command-assemble-${phase}`, [pipeline, 'assemble', '--book', '8a', '--root', root,
+    '--work', work, '--toc', toc], [path.join(root, '8a/book.json')])
+} else if (action === 'vectorize') {
+  once('command-vectorize-new-source', [pipeline, 'vectorize', '--book', '8a',
+    '--root', root, '--work', work])
+} else if (action === 'check') {
+  const frozen = check()
+  console.log(JSON.stringify({ source_and_old_core_unchanged: true, files: frozen.immutable_copies.length }))
+} else throw new Error('Only freeze, prepare/finalize <page>, retain-failure <page>, assemble <phase>, vectorize, check.')

@@ -1,0 +1,78 @@
+---
+{
+  "printed_page": 30,
+  "notes": [
+    "实际打开完整page.png；65续两项，原е项无y=照抄；图13明确归67，整体保留方格与两折线。68в题干跨页。"
+  ],
+  "errata": [],
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "8a",
+  "page": 37,
+  "source": {
+    "pdf": "8a 苏联十年制学校数学教材 代数 八年级.pdf",
+    "pdf_sha256": "5978388efc80df4085400f80d5912f710efb052a806222633b172b0a9479b071",
+    "pdf_page": 37
+  },
+  "render": {
+    "dpi": 300,
+    "w": 2480,
+    "h": 3509,
+    "sha256": "4338efc7eaf1e9eedf0bf0cc60d8c2eb36cc6d9052ab6a6c637aff6fbc2065df"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 18,
+  "figures": [
+    {
+      "id": "fig-13",
+      "label": "图 13",
+      "box": [
+        775,
+        1459,
+        847,
+        609
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 65 cont -->
+д) $y=\frac{\sqrt{5-x}}{x^2-2x-80}$；　е) $\frac{x^2+x-6}{\sqrt{9-x^2}}$.
+
+<!-- exhead -->
+第4小节
+
+<!-- ex 66 -->
+66. 平移$\overrightarrow{OO'}$（$O$是坐标原点）把抛物线$\Phi$（方程$y=15x^2$的图
+象）映射到抛物线$\Phi'$. 写出抛物线$\Phi'$的方程，如果$O'$点
+的坐标等于：
+а) $(5,10)$；б) $(-8,11)$；в) $(0,6)$；г) $(-7,0)$.
+
+<!-- ex 67 -->
+67. 在图13中作出了函数$y=|x|$的图象和在平移$O(0,0)\to ↵O'(5,2)$下它的象的图象. 写出函数$y=|x|$的图象的象
+的方程.
+
+<!-- fig 图 13 box 775,1459,847,609 owner-ex 67 -->
+![图 13](figures/fig-13.png)
+
+<!-- cap 图 13 -->
+图13
+
+<!-- ex 68 open -->
+68. 求平移$\overrightarrow{OO'}$（指出$O'$点的坐标，已知$O$是坐标原点），
+使得：
+а) 函数$y=|x|$的图象映射到函数$y=|x+8|-5$的
+图象；
+б) 函数$y=\sqrt{x}$的图象映射到函数$y=\sqrt{x}+50$的
+图象；
+в) 函数$y=4x^3$的图象映射到函数$y=4\left(x-\frac{2}{3}\right)^3$的图
+
+<!-- foot -->
+30

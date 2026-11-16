@@ -1,0 +1,57 @@
+# Four Row Counting Repair
+
+Workdir: `/Users/yong/.codex/worktrees/d9b1/lemmadeck`.
+
+Production change: `.claude/skills/ld-s10y-lesson/tools/layout.py`.
+Focused new test: `.claude/skills/ld-s10y-lesson/tests/test_four_row_pixel_support.py`.
+All other sidecar files are in this directory.
+
+The repair uses pixel geometry only: an ink-area-supported glyph scale and
+unsupported-fragment filtering on the counting copy. It contains no page IDs,
+expected counts, source text parsing, or source transformations.
+
+## Actual Results
+
+| PDF page | Retained counter | Independent rows | Final probe |
+| --- | --- | --- | --- |
+| 30 | 22 | 21 | 21 |
+| 37 | 19 | 18 | 18 |
+| 41 | 36 | 8 | 8 |
+| 53 | 24 | 25 | 25 |
+
+`probes-final.json` binds the final layout SHA-256:
+`f61fd9a1c9e14fa75be00ad909f7f98907d3e1450afbe98a669a390e6fed59c4`.
+The four probes all pass and leave input masks unchanged. The 67 protected input
+and record files match `baseline.json`, including current blocked records, RAW
+page bytes, reviewer records, existing overlays and first-failure history.
+
+`affected-final.json` and `affected-final.txt`: 75 tests run, zero failures,
+zero errors; four existing source-page subcases skipped because their local
+renders are absent. All ten new focused tests pass in this selection.
+Scoped `git diff --check` passes.
+
+## Reproduce
+
+From the exact authorized workdir, with the existing skill Python:
+
+```text
+.claude/skills/ld-s10y-lesson/.venv/bin/python -B .intentfold/tickets/STEMROBIN-182/tmp/8a-four-row-gates-repair/run_tests.py new-test-receipt --affected
+.claude/skills/ld-s10y-lesson/.venv/bin/python -B .intentfold/tickets/STEMROBIN-182/tmp/8a-four-row-gates-repair/probe.py new-probe-receipt --baseline baseline
+```
+
+Receipt names must be new: scripts use exclusive creation and do not overwrite
+earlier results. First synthetic/affected failures and intermediate four-page
+probes remain in this directory.
+
+## Limits
+
+Exactly one fresh visual batch opened the four original source PNGs and four
+existing overlays, eight images total. No extra images, crops or reopens.
+No source text/math, existing RAW/core, edition.py, test_edition_columns.py,
+staged products, database, environment, application or dependencies were changed
+by this sidecar. No commit, new agent, global checks, finalize or assembly.
+
+The four counting defects are resolved in direct probes only. Existing blocked
+records remain blocked and unchanged; this is not whole-batch finalization.
+The independently recorded `crop-fig08-caption-fragment` blocker on PDF29 remains
+outside this repair.

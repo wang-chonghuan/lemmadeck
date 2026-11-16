@@ -1,0 +1,280 @@
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const workspace = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const batch = path.join(workspace, ".intentfold/tickets/STEMROBIN-182/tmp/batch25-source-8a");
+const root = path.join(batch, "root/8a");
+const work = path.join(batch, "work");
+const out = __dirname;
+const read = p => JSON.parse(fs.readFileSync(p, "utf8"));
+const sha = b => crypto.createHash("sha256").update(b).digest("hex");
+const objectSha = o => sha(Buffer.from(JSON.stringify(o)));
+function bind(p, expected) {
+  const b = fs.readFileSync(p);
+  return {
+    path: p,
+    sha256: sha(b),
+    bytes: b.length,
+    ...(expected ? { receipt_sha256: expected, matches_receipt: sha(b) === expected } : {})
+  };
+}
+function pngSize(p) {
+  const b = fs.readFileSync(p);
+  return { width: b.readUInt32BE(16), height: b.readUInt32BE(20) };
+}
+const review = read(path.join(out, "review-notes.json"));
+const readyPath = path.join(work, "source-ready.json");
+const receiptPath = path.join(work, "page-receipts.json");
+const proofPath = path.join(work, "source-and-old-core-byte-proof.json");
+const ready = read(readyPath);
+const receipts = read(receiptPath);
+const proof = read(proofPath);
+const receiptPages = new Map(receipts.pages.map(p => [p.page, p]));
+const authorCards = [...ready.target_lessons, ready.intervening_card];
+review.bindings = {
+  source_pdf: bind(ready.source_pdf.path, ready.source_pdf.sha256),
+  toc: bind(ready.toc.path, ready.toc.sha256),
+  source_ready: bind(readyPath),
+  page_receipts: bind(receiptPath, ready.page_gates.receipt.sha256),
+  source_figure_author_observations: bind(path.join(work, "source-figure-observations.json"), ready.actual_images.sha256),
+  source_and_old_core_byte_proof: bind(proofPath, ready.unchanged_old_core.sha256),
+  reviewer_notes: bind(path.join(out, "review-notes.json")),
+  reviewer_montage_script: bind(path.join(out, "make-native-montages.cjs")),
+  reviewer_record_script: bind(__filename)
+};
+review.old_core_preservation = {
+  evidence_kind: "authorized existing metadata, not old-content independent re-review",
+  author_reported_unchanged: proof.unchanged,
+  original_input_records: proof.original_inputs.length,
+  immutable_private_copy_records: proof.immutable_private_copies.length,
+  old_page_records: proof.old_pages.length,
+  reported_before_after_mismatch_count: proof.original_inputs.filter(i => i.sha256 !== i.after_sha256 || !i.unchanged).length,
+  old_content_files_opened_for_this_proof: 0,
+  unchanged_by_reviewer: true
+};
+const pageJson = new Map();
+for (const p of review.pages) {
+  const code = String(p.pdf_page).padStart(4, "0");
+  const receipt = receiptPages.get(p.pdf_page);
+  const png = p.pdf_page === 25 ? path.join(out, "pdf25-boundary.png") : receipt.source_png.path;
+  p.printed_page = p.pdf_page - 7;
+  p.actual_page_png = { ...bind(png, receipt?.source_png.sha256), ...pngSize(png), opened: true, detail: "original", resize: false };
+  p.raw_source_files = ["page.md", "page.json", "audit.json"].map(name => {
+    const file = path.join(root, "pages", code, name);
+    const declared = receipt?.source_snapshot.find(s => s.path === file);
+    return bind(file, declared?.sha256);
+  });
+  pageJson.set(p.pdf_page, read(path.join(root, "pages", code, "page.json")));
+  p.transcription_comparison = "all observed prose/formulas/task rows retained; literal source notices separately recorded";
+  if (receipt) {
+    p.existing_page_gate = {
+      status: receipt.status,
+      counter: receipt.current_lines.counter,
+      faithful_transcribed: receipt.current_lines.faithful_transcribed,
+      errors_retained: receipt.errors,
+      first_finalize_receipt: bind(receipt.first_finalize.path, receipt.first_finalize.sha256),
+      repair_finalize_receipt: receipt.repair_finalize ? bind(receipt.repair_finalize.path, receipt.repair_finalize.sha256) : null,
+      rerun_by_reviewer: false
+    };
+  } else {
+    p.existing_page_gate = { scope: "previous boundary page; not one of29 newly gated pages", rerun_by_reviewer: false };
+  }
+}
+function sourceBlock(ref) {
+  const match = /^p(\d+)#(\d+)$/.exec(ref);
+  if (!match) return { ref, binding_error: "unrecognized source ref" };
+  const page = Number(match[1]);
+  const block = pageJson.get(page)?.blocks[Number(match[2]) - 1];
+  return block ? { ref, pdf_page: page, kind: block.kind, block_json_sha256: objectSha(block), continuation: block.cont, open: block.open } :
+    { ref, binding_error: "missing source block" };
+}
+const exercises = new Map();
+for (const lesson of review.lessons) {
+  const dir = path.join(root, "lessons", lesson.id);
+  const author = authorCards.find(c => c.id === lesson.id);
+  lesson.raw_files = ["lesson.md", "lesson.json", "exercises.json"].map(name => {
+    const file = path.join(dir, name);
+    return bind(file, author.snapshots.find(s => s.path === file)?.sha256);
+  });
+  const assembled = read(path.join(dir, "lesson.json"));
+  const ex = read(path.join(dir, "exercises.json"));
+  lesson.actual_counts = {
+    exercises: ex.exercises.length,
+    prose_entries: assembled.prose.length,
+    prose_p_entries: assembled.prose.filter(p => p.kind === "p").length,
+    declared_figure_ids: assembled.figures.map(f => typeof f === "string" ? f : f.id)
+  };
+  lesson.prose_entry_bindings = assembled.prose.map((p, i) => ({
+    ordinal: i + 1,
+    kind: p.kind,
+    figure_id: p.id,
+    exact_text_sha256: sha(Buffer.from(p.text)),
+    source_blocks: p.source_refs.map(sourceBlock),
+    actual_original_page_comparison_completed: true
+  }));
+  lesson.original_numbers_observed = ex.exercises.map(e => e.number);
+  for (const e of ex.exercises) exercises.set(Number(e.number), { ...e, lesson_id: lesson.id });
+}
+for (const original of review.originals) {
+  const e = exercises.get(original.number);
+  if (!e) throw new Error(`Missing authorized RAW source original ${original.number}`);
+  original.lesson_id = e.lesson_id;
+  original.exact_raw_text_sha256 = sha(Buffer.from(e.text));
+  const { lesson_id, ...rawRecord } = e;
+  original.raw_exercise_record_sha256 = objectSha(rawRecord);
+  original.source_blocks = e.pages.map(sourceBlock);
+  original.figure_refs = e.figure_refs;
+  original.original_prose_math_tasks_comparison = "pass";
+  original.raw_lesson_status = review.lessons.find(l => l.id === e.lesson_id).status;
+}
+const layout = read(path.join(out, "native-montage-layout.json"));
+review.native_montages = layout.map(sheet => ({
+  ...sheet,
+  file: bind(sheet.output),
+  opened: true,
+  detail: "original",
+  source_pixels_unscaled: true,
+  counts_as_new_source_input: false
+}));
+for (const figure of review.figures) {
+  const rp = receiptPages.get(figure.pdf_page);
+  const rf = rp.figures.find(f => f.id === figure.id);
+  figure.png = { ...bind(rf.gallery_png.path, rf.gallery_png.sha256), ...pngSize(rf.gallery_png.path) };
+  figure.source_work_png = bind(rf.png.path, rf.png.sha256);
+  figure.original_crop_and_gallery_bytes_equal = figure.png.sha256 === figure.source_work_png.sha256;
+  figure.raw_svg_byte_binding_only = bind(rf.gallery_svg.path, rf.gallery_svg.sha256);
+  figure.raw_work_svg_byte_binding_only = bind(rf.svg.path, rf.svg.sha256);
+  figure.svg_rendered_or_approved_by_reviewer = false;
+  figure.actual_original_page_image = review.pages.find(p => p.pdf_page === figure.pdf_page).actual_page_png;
+  const sheet = layout.find(s => s.items.some(i => i.id === figure.id));
+  figure.viewed_evidence = sheet ?
+    { path: sheet.output, sha256: sha(fs.readFileSync(sheet.output)), montage_region: sheet.items.find(i => i.id === figure.id), scale: 1, opened: true } :
+    { path: figure.png.path, sha256: figure.png.sha256, scale: 1, opened: true, detail: "original" };
+}
+review.existing_line_band_evidence = [30, 37, 41, 53].map(page => {
+  const file = path.join(work, `p${String(page).padStart(4, "0")}-line-bands.png`);
+  return { pdf_page: page, ...bind(file), ...pngSize(file), opened: true, detail: "original", overlay_not_source_text: true };
+});
+for (const finding of review.findings) {
+  if (!finding.id.startsWith("page-gate-")) continue;
+  const receipt = receiptPages.get(finding.pdf_page);
+  finding.blocker_record = bind(receipt.blocker.path, receipt.blocker.sha256);
+  finding.existing_overlay = review.existing_line_band_evidence.find(e => e.pdf_page === finding.pdf_page);
+  const history = ready.rejected_history.find(h => h.name === `p${String(finding.pdf_page).padStart(4, "0")}-first-finalize-failure`);
+  finding.preserved_first_failure_history_receipt = bind(history.receipt.path, history.receipt.sha256);
+  finding.failed_history_left_untouched = true;
+}
+review.partial_n9_binding = {
+  status: "excluded-incomplete",
+  pdf_page: 54,
+  counts_as_complete: false,
+  author_reported_prose_entries: ready.next_boundary.prose_blocks,
+  author_reported_exercises: ready.next_boundary.exercises,
+  page_image_observed: true,
+  modern_or_publication_approval: false
+};
+const allBound = [];
+function collect(value) {
+  if (!value || typeof value !== "object") return;
+  if (typeof value.path === "string" && typeof value.sha256 === "string" && typeof value.bytes === "number") allBound.push(value);
+  Object.values(value).forEach(collect);
+}
+collect(review);
+const unique = [...new Map(allBound.map(b => [b.path, b])).values()];
+review.binding_summary = {
+  hashed_unique_file_paths: unique.length,
+  receipt_bound_unique_paths: unique.filter(b => b.receipt_sha256).length,
+  receipt_hash_mismatches: unique.filter(b => b.matches_receipt === false),
+  missing_source_block_references: review.lessons.flatMap(l => l.prose_entry_bindings.flatMap(p => p.source_blocks)).concat(review.originals.flatMap(e => e.source_blocks)).filter(b => b.binding_error),
+  note: "Hash/ref accounting only; no page validator, canonical check, freshness/setup or pipeline rerun."
+};
+review.observation_accounting = {
+  full_page_pngs: 30,
+  standalone_crop_png_inputs: 13,
+  line_band_overlay_pngs: 4,
+  distinct_actual_input_png_paths: 47,
+  native_montage_sheets_opened: 5,
+  actual_image_open_calls: 40,
+  svg_pixel_observation_count: 0,
+  rejected_clean_crop_approvals: ["fig-08"],
+  rejected_actual_page_gate_approvals: [30, 37, 41, 53],
+  omitted_originals: [],
+  unobserved_target_source_figures: [],
+  no_new_browser_or_source_recrop: true
+};
+const jsonPath = path.join(out, "source-review.json");
+fs.writeFileSync(jsonPath, JSON.stringify(review, null, 2) + "\n");
+const md = [
+  "# Batch25 8a Independent RAW Source Review",
+  "",
+  "## Verdict",
+  "",
+  "Overall: **blocked**. This is retained RAW source review only, not modern-edition, choice, publication or promotion approval.",
+  "",
+  "| RAW lesson/card | Originals | Actual PDF pages | Verdict | Retained blockers |",
+  "|---|---:|---|---|---|",
+  ...review.lessons.map(l => `| ${l.id} | ${l.original_count} (${l.original_range.join("-")}) | ${l.pdf_pages.join(", ")} | ${l.status} | ${l.blockers.join("; ") || "none"} |`),
+  "",
+  "n7 independently passes retained RAW source after all26 prose entries,14 originals and actual fig14/15 comparison. Its pass does not authorize modern publication. Partial n9 on54 is excluded.",
+  "",
+  "## Evidence",
+  "",
+  "- Full original pages25-54 actually observed at original detail:29 new pages26-54 plus25 boundary.",
+  "-83 originals34-116 compared, including separate chapter1ex55-87 and every continuation.",
+  "-13 actual source crops observed;12 through five native unscaled montages and fig16 individually. Four existing line-band overlays also opened.",
+  "-47 distinct actual PNG input paths;40 image-open calls;montages are derived evidence,not additional source inputs.",
+  "- All input/render/crop/raw-lesson/task bindings and substantive per-object observations are in source-review.json.",
+  "",
+  "## Retained Findings",
+  "",
+  ...review.findings.map(f => `- **${f.id}: blocked.** ${f.observed} ${f.decision}`),
+  "",
+  "## Literal Source Notices",
+  "",
+  ...review.literal_source_notices.map(n => `- PDF${n.pdf_page}: ${n.observed} ${n.raw_decision}`),
+  "",
+  "## Lesson Coverage",
+  "",
+  ...review.lessons.flatMap(l => [
+    `### ${l.id}`,
+    "",
+    l.coverage,
+    "",
+    l.math_review,
+    "",
+    ...l.source_defined_assumptions.map(s => `- ${s}`),
+    ""
+  ]),
+  "## Page Comparison",
+  "",
+  ...review.pages.map(p => `- PDF${p.pdf_page} (printed${p.printed_page}): ${p.observed}`),
+  "",
+  "## Original Task Comparison",
+  "",
+  ...review.originals.map(e => `- ${e.number} (${e.source_blocks.map(s => s.ref).join(", ")}): ${e.evidence}`),
+  "",
+  "## Figure Comparison",
+  "",
+  ...review.figures.map(f => `- ${f.id},PDF${f.pdf_page},${f.status}: ${f.observed}`),
+  "",
+  "## Bindings And Limits",
+  "",
+  `- Original PDF SHA256: \`${review.bindings.source_pdf.sha256}\`.`,
+  `- TOC SHA256: \`${review.bindings.toc.sha256}\`.`,
+  `- source-ready SHA256: \`${review.bindings.source_ready.sha256}\`.`,
+  `- page-receipts SHA256: \`${review.bindings.page_receipts.sha256}\`.`,
+  `- ${review.binding_summary.hashed_unique_file_paths} unique file paths hash-bound;${review.binding_summary.receipt_hash_mismatches.length} receipt mismatches;${review.binding_summary.missing_source_block_references.length} missing source-block refs.`,
+  "- Old-core byte proof is authorized metadata only;old math/answers/choices were not opened and are not approved.",
+  ...review.limits.map(s => `- ${s}`),
+  "",
+  "No author or durable source files were edited. No gate reruns or overrides. Await parent.",
+  ""
+].join("\n");
+const mdPath = path.join(out, "source-review.md");
+fs.writeFileSync(mdPath, md);
+console.log(JSON.stringify({
+  outputs: [bind(jsonPath), bind(mdPath)],
+  verdicts: review.lessons.map(l => ({ id: l.id, status: l.status })),
+  counts: review.counts,
+  bindings: review.binding_summary
+}, null, 2));

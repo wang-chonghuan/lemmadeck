@@ -1,0 +1,199 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+import { fileURLToPath } from 'node:url'
+
+const work = path.dirname(fileURLToPath(import.meta.url))
+const base = path.dirname(work)
+const root = path.join(base, 'root/8a')
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const file = p => ({ path: p, sha256: sha(p), bytes: fs.statSync(p).size })
+const save = (name, data) => fs.writeFileSync(path.join(work, name),
+  JSON.stringify(data, null, 2) + '\n', { flag: 'wx' })
+const frozen = read(path.join(work, 'source-base-frozen.json'))
+const observations = read(path.join(work, 'source-figure-observations.json'))
+const book = read(path.join(root, 'book.json'))
+const pages = Array.from({ length: 29 }, (_, i) => i + 26)
+const pageReceipts = pages.map(page => {
+  const id = String(page).padStart(4, '0')
+  const own = path.join(root, 'pages', id)
+  const runtime = path.join(work, '8a/pages', id)
+  const first = path.join(work, `command-p${id}-finalize.json`)
+  const repair = path.join(work, `command-p${id}-finalize-repair1.json`)
+  const audit = read(path.join(own, 'audit.json'))
+  const latest = read(fs.existsSync(repair) ? repair : first)
+  const source = read(path.join(own, 'page.json'))
+  const blockers = path.join(work, `p${id}-source-blocker.json`)
+  return {
+    page, printed_page: source.meta.printed_page,
+    full_source_png_opened: observations.full_original_pages_opened.includes(page),
+    prepare: file(path.join(work, `command-p${id}-prepare.json`)),
+    first_finalize: { ...file(first), pass: read(first).pass },
+    repair_finalize: fs.existsSync(repair) ? { ...file(repair), pass: read(repair).pass } : null,
+    status: latest.pass ? 'page-gate-pass' : 'blocked-line-count',
+    current_lines: { counter: audit.lines_printed, faithful_transcribed: audit.lines_md },
+    errors: audit.errors,
+    source_png: file(path.join(runtime, 'page.png')),
+    source_snapshot: ['page.md', 'page.json', 'audit.json'].map(f => file(path.join(own, f))),
+    figures: audit.figures.map(f => ({
+      ...f,
+      png: file(path.join(runtime, 'figures', `${f.id}.png`)),
+      svg: file(path.join(runtime, 'figures', `${f.id}.svg`)),
+      gallery_png: file(path.join(root, 'figures', `${f.id}.png`)),
+      gallery_svg: file(path.join(root, 'figures', `${f.id}.svg`)),
+      author_observation: observations.crops_actually_opened.find(o => o.id === f.id),
+    })),
+    blocker: fs.existsSync(blockers) ? { ...file(blockers), finding: read(blockers) } : null,
+  }
+})
+assert(pageReceipts.every(p => p.full_source_png_opened))
+assert.equal(pageReceipts.filter(p => p.first_finalize.pass).length, 25)
+assert.deepEqual(pageReceipts.filter(p => p.status !== 'page-gate-pass').map(p => p.page), [30,37,41,53])
+const proofs = frozen.inputs.map(before => ({ ...before, after_sha256: sha(before.path),
+  unchanged: sha(before.path) === before.sha256 }))
+const copies = frozen.immutable_copies.map(before => ({ ...before, after_sha256: sha(before.path),
+  unchanged: sha(before.path) === before.sha256 }))
+assert(proofs.every(p => p.unchanged) && copies.every(p => p.unchanged))
+save('source-and-old-core-byte-proof.json', {
+  frozen: file(path.join(work, 'source-base-frozen.json')),
+  original_inputs: proofs, immutable_private_copies: copies,
+  unchanged: true, old_pages: frozen.old_pages,
+  scope: 'Documentation of frozen byte hashes, not a pipeline or project validation rerun.',
+})
+save('page-receipts.json', { pages: pageReceipts })
+const ids = frozen.targets.map(t => t.id)
+const blockersByLesson = {
+  'alg8-c1-s2-n5': [30], 'alg8-c1-s2-n6': [30],
+  'alg8-c1-ex': [37,41], 'alg8-c2-s1-n7': [], 'alg8-c2-s1-n8': [53],
+}
+function coverage(id) {
+  const dir = path.join(root, 'lessons', id)
+  const lesson = read(path.join(dir, 'lesson.json'))
+  const exercises = read(path.join(dir, 'exercises.json'))
+  const indexed = book.lessons.find(l => l.id === id)
+  assert.equal(lesson.card_id, id)
+  const sourceRefs = [
+    ...lesson.prose.flatMap(p => p.source_refs),
+    ...exercises.exercises.flatMap(e => e.pages),
+  ]
+  const ownedPages = [...new Set(sourceRefs.map(r => Number(r.match(/^p(\d+)#/)[1])))].sort((a,b) => a-b)
+  const blocks = Object.fromEntries(['p','fig','cap'].map(kind =>
+    [kind, lesson.prose.filter(p => p.kind === kind).length]))
+  return {
+    ...indexed, prose_kind_counts: blocks, source_ref_pdf_pages: ownedPages,
+    exercise_numbers: exercises.exercises.map(e => e.number),
+    exercise_ranges: exercises.count ? [exercises.exercises[0].number, exercises.exercises.at(-1).number] : [],
+    figure_ids: lesson.figures.map(f => f.id),
+    snapshots: ['lesson.md','lesson.json','exercises.json'].map(f => file(path.join(dir, f))),
+    source_object_closed: id !== frozen.next_boundary.id,
+    page_gate_blockers: blockersByLesson[id] ?? [],
+    crop_defects: id === 'alg8-c1-s2-n5' ? ['fig-08: caption top-ink fragment retained'] : [],
+    independent_review: 'pending-parent-dispatch',
+    publication_ready: false,
+  }
+}
+const targets = ids.map(coverage)
+const intervening = coverage(frozen.intervening_card.id)
+const boundary = coverage(frozen.next_boundary.id)
+const vector = read(path.join(work, 'command-vectorize-new-source.json'))
+assert(vector.pass)
+const lines = vector.stdout.trim().split('\n')
+const vectorAssets = lines.slice(0, -1).map(line => {
+  const m = line.match(/^\s*(✓|✗)\s+(\d{4})\/(\S+)\s+不匹配\s+([\d.]+)%\s+(\d+)KB$/)
+  assert(m, `Unparsed retained vectorize line: ${line}`)
+  return { page: Number(m[2]), id: m[3], pass: m[1] === '✓',
+    mismatch_percent_as_reported: Number(m[4]), reported_svg_kb: Number(m[5]), exact_retained_line: line }
+})
+assert.equal(vectorAssets.length, 13)
+assert(vectorAssets.every(a => a.pass))
+const historyRoot = path.join(work, 'history')
+const histories = fs.readdirSync(historyRoot).filter(n => /^p\d{4}-/.test(n)).map(n => {
+  const receipt = path.join(historyRoot, n, 'receipt.json')
+  const data = read(receipt)
+  for (const s of data.snapshots) assert.equal(sha(s.preserved), s.sha256)
+  return { name: n, receipt: file(receipt), exact_snapshots_preserved: true }
+})
+const ownershipReceipt = read(path.join(historyRoot, 'p0032-before-ownership-repair/receipt.json'))
+const oldPageJson = ownershipReceipt.snapshots.find(s => s.path.endsWith('/page.json')).preserved
+const oldDoc = read(oldPageJson)
+const newDoc = read(path.join(root, 'pages/0032/page.json'))
+const diffs = []
+function leaves(a,b,p='') {
+  if (JSON.stringify(a) === JSON.stringify(b)) return
+  if (a && b && typeof a === 'object' && typeof b === 'object'
+      && Array.isArray(a) === Array.isArray(b)) {
+    for (const k of new Set([...Object.keys(a),...Object.keys(b)])) {
+      leaves(a[k],b[k],`${p}/${k.replaceAll('~','~0').replaceAll('/','~1')}`)
+    }
+  } else diffs.push({ path:p, before:a, after:b })
+}
+leaves(oldDoc,newDoc)
+assert.equal(diffs.length,1)
+assert.equal(diffs[0].path, '/blocks/8/open')
+save('p0032-ownership-only-diff.json', {
+  reason: 'PDF33 actually contains exercise44 continuation; single open marker repaired before latest no-passed-page-edit instruction.',
+  before: file(oldPageJson), after: file(path.join(root, 'pages/0032/page.json')),
+  exact_json_leaf_diff: diffs,
+})
+const newFiles = [
+  ...pageReceipts.flatMap(p => [...p.source_snapshot, p.source_png,
+    ...p.figures.flatMap(f => [f.png, f.svg, f.gallery_png, f.gallery_svg])]),
+  ...targets.flatMap(t => t.snapshots), ...intervening.snapshots, ...boundary.snapshots,
+  file(path.join(root, 'book.json')),
+]
+save('candidate-file-manifest.json', { files: newFiles })
+const totals = targets.reduce((a,t) => ({
+  original_exercises: a.original_exercises+t.exercises,
+  prose_blocks_including_figures_captions: a.prose_blocks_including_figures_captions+t.prose_blocks,
+  actual_prose_p_blocks: a.actual_prose_p_blocks+t.prose_kind_counts.p,
+  figures: a.figures+t.figures,
+}), { original_exercises:0,prose_blocks_including_figures_captions:0,actual_prose_p_blocks:0,figures:0 })
+save('source-ready.json', {
+  status:'source-candidate-ready-for-independent-review-with-page-gate-blockers',
+  ticket:'STEMROBIN-182', invocation:'continued-parent-owned',
+  private_root:path.dirname(root), work, source_pdf:frozen.pdf, toc:frozen.toc,
+  durable_writes:false, source_only:true, no_modern_or_answers_or_choice_inputs:true,
+  boundaries:{ previous_durable_pdf:25,new_pdf:[26,54],new_printed:[19,47],
+    new_pages:29,private_total_pages:book.pages, reused_old_pages:frozen.old_pages.length,
+    target_numbered_cards:4,intervening_card_separate:true },
+  target_lessons:targets,target_totals:totals,
+  intervening_card:intervening,
+  newly_transcribed_original_exercises:book.audit.exercise_count-frozen.current_book.audit.exercise_count,
+  next_boundary:{...boundary, source_object_closed:false, counts_as_complete:false,
+    notice:'n9 prose only on its first page. No claim that n9 is complete.'},
+  actual_ssot_index:book.lessons,
+  assembly:{source:file(path.join(work,'command-assemble-source.json')),
+    after_vectorize:file(path.join(work,'command-assemble-after-vectorize.json')),
+    object_audit:book.audit,
+    notice:'Object-level pass does not override failed page-level line counts.'},
+  page_gates:{first_finalize_calls:29,first_passes:25,first_failures:4,
+    latest_passes:25,remaining_failures:4,blocked_pdf_pages:[30,37,41,53],
+    narrow_repair_calls:[{page:32,scope:'one continuation open tag',pass:true},
+      {page:37,scope:'one TeX command delimiter',pass:false,remaining:'line-count'}],
+    receipt:file(path.join(work,'page-receipts.json'))},
+  vectors:{calls:1,new_assets:13,new_numbered_figures:11,new_tables:2,
+    pass:13,fail:0,command:file(path.join(work,'command-vectorize-new-source.json')),
+    per_asset:vectorAssets},
+  actual_images: file(path.join(work,'source-figure-observations.json')),
+  source_notices:observations.source_ambiguities,
+  crop_defects:observations.crops_actually_opened.flatMap(o => o.defects.map(d => ({id:o.id,page:o.page,defect:d}))),
+  rejected_history:histories,
+  unchanged_old_core:file(path.join(work,'source-and-old-core-byte-proof.json')),
+  file_manifest:file(path.join(work,'candidate-file-manifest.json')),
+  failed_pages:pageReceipts.filter(p => p.status !== 'page-gate-pass').map(p => p.blocker),
+  in_flight:[], active_commands:[],
+  independent_approval:false, independent_review:'pending-parent-dispatch',
+  complete_book:false, publication_ready:false,
+  prohibitions_honored:['no setup/backend/freshness','no production tool edits','no dependencies',
+    'no services/paid model/image','no durable promotion','no modern/choice/answer inputs',
+    'no browser','no git','no project-wide check','no count-fitting source rewrites'],
+})
+console.log(JSON.stringify({
+  ready:file(path.join(work,'source-ready.json')), targets:targets.map(t => ({
+    id:t.id,exercises:t.exercises,prose:t.prose_blocks,figures:t.figures,closed:t.source_object_closed,
+    page_gate_blockers:t.page_gate_blockers
+  })), totals,new_pages:29,blocked_pages:[30,37,41,53],vectors:13,
+  old_core_unchanged:copies.length,
+}))

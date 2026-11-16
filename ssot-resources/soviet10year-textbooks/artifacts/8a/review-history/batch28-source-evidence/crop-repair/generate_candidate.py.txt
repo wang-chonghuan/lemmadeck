@@ -1,0 +1,244 @@
+"""One-shot, source-pixel-only fig-08 candidate; never finalize or promote."""
+import hashlib
+import json
+import shutil
+import subprocess
+import sys
+import tempfile
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+OWN = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp/8a-fig08-crop-repair"
+BATCH = OWN.parent / "batch25-source-8a"
+TOOLS = ROOT / ".claude/skills/ld-s10y-lesson/tools"
+assert Path.cwd() == ROOT, "BLOCKED: unexpected working directory"
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(TOOLS))
+
+import layout
+import numpy as np
+import vectorize
+from PIL import Image
+from scipy import ndimage
+
+
+def file_record(path):
+    return {
+        "path": str(path),
+        "sha256": layout.sha256_file(path),
+        "bytes": path.stat().st_size,
+    }
+
+
+def emit_json(path, value):
+    assert path.is_relative_to(OWN)
+    with path.open("x", encoding="utf-8") as handle:
+        json.dump(value, handle, indent=2, ensure_ascii=True)
+        handle.write("\n")
+
+
+def require(condition, message):
+    if not condition:
+        raise RuntimeError("BLOCKED: " + message)
+
+
+def main():
+    page = BATCH / "work/8a/pages/0029/page.png"
+    original = BATCH / "root/8a/figures/fig-08.png"
+    metadata = BATCH / "root/8a/pages/0029"
+    page_json = json.loads((metadata / "page.json").read_text())
+    pdf = (
+        ROOT / "ssot-resources/soviet10year-textbooks/sources/soviet10years"
+        / page_json["meta"]["source"]["pdf"]
+    )
+    inputs = [
+        page, original, BATCH / "root/8a/figures/fig-08.svg",
+        BATCH / "work/8a/pages/0029/figures/fig-08.png",
+        BATCH / "work/8a/pages/0029/figures/fig-08.svg",
+        BATCH / "work/8a/pages/0029/layout.json",
+        metadata / "page.md", metadata / "page.json", metadata / "audit.json",
+        OWN.parent / "reviewer-batch25-8a-raw-source/source-review.json", pdf,
+        TOOLS / "layout.py", TOOLS / "vectorize.py", TOOLS / "svg_raster.js",
+        ROOT / ".claude/skills/ld-s10y-lesson/SKILL.md",
+        ROOT / ".agents/skills/ld-s10y-image/SKILL.md",
+    ]
+    before = [file_record(path) for path in inputs]
+    emit_json(OWN / "inputs-before.json", before)
+    require(
+        layout.sha256_file(page) == page_json["meta"]["render"]["sha256"],
+        "authoritative page render hash differs",
+    )
+    require(
+        layout.sha256_file(pdf) == page_json["meta"]["source"]["pdf_sha256"],
+        "authoritative source PDF hash differs",
+    )
+    old_box = page_json["meta"]["figures"][0]["box"]
+    require(old_box == [1178, 1056, 838, 890], "source geometry changed")
+    require(
+        layout.sha256_file(original)
+        == layout.sha256_file(inputs[3]),
+        "root/work rejected PNG bytes differ",
+    )
+    require(
+        layout.sha256_file(inputs[2]) == layout.sha256_file(inputs[4]),
+        "root/work rejected SVG bytes differ",
+    )
+    old_rect = [1166, 1044, 2028, 1958]
+    new_box = [1178, 1056, 838, 881]
+    new_rect = [1166, 1044, 2028, 1949]
+    with Image.open(page) as page_image, Image.open(original) as old_image:
+        old_pixels = np.asarray(old_image)
+        require(old_image.size == (862, 914), "rejected dimensions changed")
+        require(
+            np.array_equal(old_pixels, np.asarray(page_image.crop(old_rect))),
+            "rejected crop is not the expected exact source rectangle",
+        )
+        ink = layout.ink_mask(old_image)
+        removed_y, removed_x = np.nonzero(ink[905:])
+        allowed = ((removed_x >= 380) & (removed_x <= 421)) | (
+            (removed_x >= 499) & (removed_x <= 506)
+        )
+        require(
+            len(removed_x) == 257 and bool(allowed.all()),
+            "removed ink differs from visually identified caption fragments",
+        )
+        require(not ink[902:905].any(), "cut is not in the observed blank gap")
+        labels, _ = ndimage.label(ink)
+        sizes = np.bincount(labels.ravel())
+        graph_label = int(np.argmax(sizes[1:]) + 1)
+        graph = labels == graph_label
+        require(not graph[905:].any(), "trim intersects connected graph ink")
+        graph_y, graph_x = np.nonzero(graph)
+        graph_bbox = [
+            int(graph_x.min()), int(graph_y.min()),
+            int(graph_x.max()) + 1, int(graph_y.max()) + 1,
+        ]
+        require(graph_bbox == [14, 12, 846, 886], "graph bounds changed")
+
+        rejected = OWN / "rejected"
+        rejected.mkdir()
+        shutil.copyfile(original, rejected / "fig-08.png")
+        shutil.copyfile(inputs[2], rejected / "fig-08.svg")
+        source = OWN / "source"
+        source.mkdir()
+        for src in [page, inputs[5], *inputs[6:9]]:
+            shutil.copyfile(src, source / src.name)
+
+        candidate = OWN / "work/8a/pages/0029/figures/fig-08.png"
+        layout.crop(page, new_box, candidate, pad=12)
+        with Image.open(candidate) as candidate_image:
+            pixels = np.asarray(candidate_image)
+            require(candidate_image.size == (862, 905), "candidate dimensions differ")
+            require(
+                np.array_equal(pixels, old_pixels[:905])
+                and np.array_equal(pixels, np.asarray(page_image.crop(new_rect))),
+                "retained source pixels changed",
+            )
+            pixel_sha256 = hashlib.sha256(pixels.tobytes()).hexdigest()
+
+        region = OWN / "changed-region"
+        region.mkdir()
+        layout.crop(original, [0, 860, 862, 54], region / "original.png", pad=0)
+        layout.crop(candidate, [0, 860, 862, 45], region / "candidate.png", pad=0)
+        # Both review strips use original page pixels and show only the lower edge.
+        layout.crop(page, [1536, 1946, 150, 55], region / "source-caption.png", pad=0)
+
+    scratch = OWN / "scratch"
+    scratch.mkdir()
+    tempfile.tempdir = str(scratch)
+    svg = candidate.with_suffix(".svg")
+    trace = vectorize.vectorize(candidate, svg, turdsize=2, alphamax=1.0)
+    emit_json(OWN / "vectorize.report.json", trace)
+    require(trace.get("ok"), "RAW vectorizer fidelity gate failed")
+    render = OWN / "fig-08.vectorized.png"
+    render_command = [
+        "node", str(TOOLS / "svg_raster.js"), str(svg), str(render),
+    ]
+    rendered = subprocess.run(
+        render_command, cwd=str(ROOT), capture_output=True, text=True,
+    )
+    render_log = {
+        "argv": render_command, "cwd": str(ROOT),
+        "exit_code": rendered.returncode,
+        "stdout": rendered.stdout, "stderr": rendered.stderr,
+    }
+    emit_json(OWN / "raster-command.json", render_log)
+    require(rendered.returncode == 0, "RAW SVG evidence rasterization failed")
+    after = [file_record(path) for path in inputs]
+    require(before == after, "a source input changed during generation")
+    emit_json(OWN / "inputs-after.json", after)
+    outputs = [
+        file_record(path)
+        for path in sorted(OWN.rglob("*"))
+        if path.is_file()
+    ]
+    receipt = {
+        "schema": "bounded-raw-crop-repair-candidate@1",
+        "ticket": "STEMROBIN-182", "figure": "fig-08", "pdf_page": 29,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "status": "candidate-awaiting-fresh-independent-region-review",
+        "approval": False, "finalized": False, "assembled": False, "promoted": False,
+        "original_sources_unchanged": before == after,
+        "generator_command": [
+            str(ROOT / ".claude/skills/ld-s10y-lesson/.venv/bin/python"),
+            "-B", str(OWN / "generate_candidate.py"),
+        ],
+        "generator_workdir": str(ROOT),
+        "crop_api": "layout.crop(authoritative_page, [1178,1056,838,881], candidate, pad=12)",
+        "vectorize_api": "vectorize.vectorize(candidate, candidate.with_suffix('.svg'), turdsize=2, alphamax=1.0)",
+        "vectorizer_temporary_directory": str(scratch),
+        "geometry": {
+            "coordinates": "original 300-dpi page pixels, rectangles half-open",
+            "old_logical_box_xywh": old_box,
+            "proposed_logical_box_xywh": new_box,
+            "logical_box_delta_xywh": [0, 0, 0, -9],
+            "crop_padding_px": 12,
+            "old_source_rectangle_xyxy": old_rect,
+            "proposed_source_rectangle_xyxy": new_rect,
+            "source_rectangle_delta_xyxy": [0, 0, 0, -9],
+            "old_crop_size": [862, 914],
+            "candidate_crop_size": [862, 905],
+            "removed_local_rectangle_xyxy": [0, 905, 862, 914],
+            "removed_source_rectangle_xyxy": [1166, 1949, 2028, 1958],
+            "graph_component_local_bbox_xyxy": graph_bbox,
+            "graph_component_ink_pixels": int(graph.sum()),
+            "lowest_graph_ink_local_y": int(graph_y.max()),
+            "clearance_after_lowest_graph_ink_px": 19,
+            "removed_ink_pixels_threshold_128": int(len(removed_y)),
+            "removed_ink_interpretation": "top fragments of separate printed caption, not graph ink",
+            "blank_rows_immediately_before_cut_local_y": [902, 903, 904],
+            "retained_rgb_pixels_byte_identical": True,
+            "retained_rgb_pixel_bytes_sha256": pixel_sha256,
+            "snap_run": False,
+        },
+        "independent_review_region": {
+            "original_local_rectangle_xyxy": [0, 860, 862, 914],
+            "candidate_local_rectangle_xyxy": [0, 860, 862, 905],
+            "source_page_rectangle_xyxy": [1166, 1904, 2028, 1958],
+            "paths": [
+                str(region / "original.png"), str(region / "candidate.png"),
+                str(region / "source-caption.png"),
+            ],
+        },
+        "vectorize_result": trace,
+        "raster_command_result": render_log,
+        "inputs": before,
+        "outputs_at_generation": outputs,
+        "next_owner_action": "Fresh independent observer inspects changed lower edge only. Parent owns affected-page finalization once; no approval or original-page mutation performed here.",
+    }
+    emit_json(OWN / "repair-receipt.json", receipt)
+    print(json.dumps({
+        "status": receipt["status"], "candidate": file_record(candidate),
+        "svg": file_record(svg), "receipt": file_record(OWN / "repair-receipt.json"),
+        "logical_box_delta_xywh": [0, 0, 0, -9],
+        "vectorize_result": trace, "original_sources_unchanged": True,
+    }, indent=2))
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except Exception as error:
+        print(f"BLOCKED: {error}", file=sys.stderr)
+        raise SystemExit(1)

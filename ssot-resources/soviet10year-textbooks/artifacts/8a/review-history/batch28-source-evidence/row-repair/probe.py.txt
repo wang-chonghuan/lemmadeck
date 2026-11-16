@@ -1,0 +1,165 @@
+"""Read-only four-source row probes; receipts never replace existing gates."""
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+import numpy as np
+from PIL import Image
+from scipy import ndimage
+
+REPO = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+OWN = Path(__file__).resolve().parent
+REVIEW = REPO / (
+    ".intentfold/tickets/STEMROBIN-182/tmp/"
+    "reviewer-batch25-8a-raw-source/source-review.json"
+)
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+import layout
+
+
+def binding(path):
+    path = Path(path)
+    data = path.read_bytes()
+    return {"path": str(path), "sha256": hashlib.sha256(data).hexdigest(),
+            "bytes": len(data)}
+
+
+def inputs():
+    review = json.loads(REVIEW.read_text())
+    findings = {f["pdf_page"]: f for f in review["findings"]
+                if f["id"].startswith("page-gate-")}
+    for page in review["pages"]:
+        number = page["pdf_page"]
+        if number not in findings:
+            continue
+        finding = findings[number]
+        source = Path(page["actual_page_png"]["path"])
+        audit = next(Path(f["path"]) for f in page["raw_source_files"]
+                     if Path(f["path"]).name == "audit.json")
+        with Image.open(source) as image:
+            ink = layout.ink_mask(image)
+        xs = np.flatnonzero(ink.any(axis=0))
+        width = int(xs[-1] - xs[0] + 1) if xs.size else ink.shape[1]
+        figures = json.loads(audit.read_text())["figures"]
+        for figure in figures:
+            x, y, w, h = figure["box"]
+            ink[max(0, y):y + h, max(0, x):x + w] = False
+        yield page, finding, ink, width, figures
+
+
+def diagnostics(ink, width):
+    clean = ink.copy()
+    edge = max(1, int(clean.shape[1] * 0.01))
+    clean[:, :edge] = False
+    clean[:, -edge:] = False
+    labels, _ = ndimage.label(clean)
+    sizes = np.bincount(labels.ravel())
+    boxes = ndimage.find_objects(labels)
+    rows = [{"y": [r.start, r.stop - 1], "x": [c.start, c.stop - 1],
+             "h": r.stop - r.start, "w": c.stop - c.start,
+             "area": int(sizes[i])}
+            for i, box in enumerate(boxes, 1) if box is not None
+            for r, c in [box]]
+    raw = layout._row_fragments(clean, width)
+    line_h = int(np.median([b - a + 1 for a, b in raw]))
+    candidates = [r for r in rows
+                  if 0.25 * line_h <= r["h"] <= 1.3 * line_h
+                  and 0.2 * line_h <= r["w"] <= 1.3 * line_h]
+    glyph_h = float(np.percentile([r["h"] for r in candidates], 75))
+    compact = [r for r in rows if 0.2 * r["h"] <= r["w"] <= 2 * r["h"]]
+    ordered = sorted(compact, key=lambda r: r["h"])
+    total = sum(r["area"] for r in ordered)
+    running = 0
+    weighted = {}
+    for row in ordered:
+        running += row["area"]
+        for percentile in (50, 60, 75):
+            if percentile not in weighted and running >= total * percentile / 100:
+                weighted[percentile] = row["h"]
+    return {
+        "initial_line_h": line_h, "initial_glyph_h": glyph_h,
+        "compact_ink_weighted_height": weighted,
+        "raw": raw, "components": rows,
+    }
+
+
+def protected_files(pages):
+    files = {REVIEW}
+    for page, finding, *_ in pages:
+        files.update(Path(f["path"]) for f in page["raw_source_files"])
+        files.add(Path(page["actual_page_png"]["path"]))
+        files.add(Path(finding["existing_overlay"]["path"]))
+        files.add(Path(finding["blocker_record"]["path"]))
+        files.add(Path(finding["preserved_first_failure_history_receipt"]["path"]))
+        gate = page["existing_page_gate"]
+        for key in ("first_finalize_receipt", "repair_finalize_receipt"):
+            if gate[key]:
+                files.add(Path(gate[key]["path"]))
+        history = Path(finding["preserved_first_failure_history_receipt"]["path"]).parent
+        files.update(path for path in history.rglob("*") if path.is_file())
+    return sorted(files)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("name")
+    parser.add_argument("--diagnostics", action="store_true")
+    parser.add_argument("--baseline")
+    args = parser.parse_args()
+    assert Path.cwd() == REPO, "Run only from the explicitly authorized workdir."
+    pages = list(inputs())
+    receipt = {
+        "schema": "four-source-row-probe@1",
+        "workdir": str(REPO),
+        "layout": binding(layout.__file__),
+        "review": binding(REVIEW),
+        "source_markdown_used_for_counting": False,
+        "finalize_or_assembly_executed": False,
+        "pages": [],
+        "protected_files": [binding(path) for path in protected_files(pages)],
+    }
+    for page, finding, ink, width, figures in pages:
+        before = ink.copy()
+        bands = layout.line_bands(ink, width)
+        assert np.array_equal(before, ink), "Counting changed extraction pixels."
+        result = {
+            "pdf_page": page["pdf_page"],
+            "source": binding(page["actual_page_png"]["path"]),
+            "content_width": width, "masked_figures": figures,
+            "independent_expected": finding["faithful_transcribed_lines"],
+            "retained_blocked_counter": finding["counter_lines"],
+            "actual": len(bands),
+            "pass": len(bands) == finding["faithful_transcribed_lines"],
+            "bands": [[int(a), int(b)] for a, b in bands],
+            "input_pixels_unchanged": True,
+        }
+        if args.diagnostics:
+            result["diagnostics"] = diagnostics(ink, width)
+        receipt["pages"].append(result)
+    if args.baseline:
+        baseline = json.loads((OWN / f"{args.baseline}.json").read_text())
+        now = {item["path"]: item for item in receipt["protected_files"]}
+        receipt["preservation_mismatches"] = [
+            item["path"] for item in baseline["protected_files"]
+            if item != now.get(item["path"])
+        ]
+    receipt["all_four_pass"] = all(page["pass"] for page in receipt["pages"])
+    output = OWN / f"{args.name}.json"
+    with output.open("x") as stream:
+        json.dump(receipt, stream, indent=2)
+        stream.write("\n")
+    print(json.dumps({
+        "receipt": str(output),
+        "pages": [{key: p[key] for key in (
+            "pdf_page", "independent_expected", "actual", "pass"
+        )} for p in receipt["pages"]],
+        "preservation_mismatches": receipt.get("preservation_mismatches"),
+    }))
+
+
+if __name__ == "__main__":
+    main()
