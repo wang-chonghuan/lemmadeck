@@ -198,7 +198,7 @@ def _small_prose_continuation(
     if (
         bottom_top - top_bottom <= 0.15 * glyph_h
         or not all(
-            0.5 * glyph_h <= b - a + 1 <= 1.2 * glyph_h
+            0.5 * glyph_h <= b - a + 1 <= 1.3 * glyph_h
             for a, b in ((top, top_bottom), (bottom_top, bottom))
         )
     ):
