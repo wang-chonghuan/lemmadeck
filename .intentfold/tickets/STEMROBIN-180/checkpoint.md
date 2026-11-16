@@ -1,5 +1,72 @@
 # 生产检查点
 
+## 第三十八批限定暂存通过
+
+一次限定暂存PASS：15文件/3JSON，325三SOURCE文件与十份完成报告、
+checkpoint/usage；原报告EOF及失败debit不变，无完整现代新增。
+凭据、后组草稿、未完成索引及错书6p排除，HEAD/origin0/0；
+38同分支fetch一次0复用。仅增量重暂存两份计量记录后commit/push各一次，
+不重整体暂存、SOURCE审阅、收口或失败绑定。
+后续330/331与8p67/68 prepare各一次exit0，仅备料待329/66纯结构；
+没有作者、候选或SOURCE批准，不重prepare。五个当前代理继续，
+7p64/8p11/raw54-21-85/完整现代新增0保持。
+
+## 第三十八批325已晋级，62永久源阻断
+
+325 Halley唯一SOURCE FIRST PASS：25行15块0图、0确定缺陷、
+3非阻断不确定；页脚两侧饰点明确保留于metadata。Main67审阅及126作者
+绑定复用，只新增3必要work绑定，7文件精确晋级一次exit0；不重审或收口。
+7p批准/晋级64页，原索引54页21项85题不变，不批准完整128/129。
+原325报告的322/323 HOLD上下文保留历史；当前启动HOLD已解除，
+接续同一原审者发现的322漏字与323粗体范围缺陷真实SOURCEBLOCKED。
+
+62 Ampere唯一SOURCE FIRST发现3独立斜体遗漏、5不确定组与1字体冲突，
+Main63当前绑定一次exit0；总used0/unused1，不把三个缺陷合成一次修复。
+原报告的61修复在途措辞不改；Confucius唯一14句点表示修复已完成关闭，
+25行9块0图、只14个U3002→U002E字形替换，used1/unused0/sourceactual0；
+Main66修复PARTIAL绑定复用，Heisenberg唯一新SOURCE FIRST继续，无晋级。
+
+Huygens326/327及Russell8p63/64作者完成关闭，FIRST各一次0；
+前者各24行10块0图，后者24/26行10/11块0图，各used0/unused1。
+Main131及111作者绑定各一次0；两组干净独审入口及纯结构冻结一次0，
+不重叶集哈希或跟随历史aggregate。Franklin326/327及Herschel63/64
+唯一fresh SOURCE FIRST在途；Mendel328/329、Popper8p65/66作者
+复用既有prepare。各后组只收到最新结构覆盖，旧incoming/report字节不改。
+
+拟限定15文件/3JSON：325三SOURCE文件、十份完成报告及checkpoint/usage。
+不含后组326327/6364报告与稿件、未完成modern/index、错书6p、
+private/tmp/env/newticket。38同分支fetch一次0复用，不同步其它分支。
+8p11/entries0/现代完成0/numberingUNSET，父图片0、新服务调用0保持。
+本轮不是正式handoff，无DB、发布、合并、部署、关闭或额外监督。
+
+## 后续328/329及8p65/66仅备料
+
+四页prepare各一次exit0，仅原图/网格/layout/模板，
+分别待327/64纯结构；没有作者、转写、FIRST或SOURCE批准，不重prepare。
+第38批同分支fetch一次exit0，无其它分支同步或重fetch。
+Halley325FIRST、Ampere62FIRST、Confucius61机械修复、
+Huygens326/327作者、Russell63/64作者五组继续，父图片0，
+63/11/raw54-21-85/完整现代新增0保持。322/323启动HOLD已解除，
+其真实源缺陷在接续报告中保持；没有追加内容修复或替换审阅。
+
+## 第三十七批已提交推送，第三十八批接续
+
+commit/push各一次exit0，HEAD/origin
+`568add9c75195fb1d4e112df77eab675afc43e85`，push完成
+2026-11-16T21:16:14.597Z。9文件/1JSON，七完成报告与checkpoint/usage，
+没有SOURCE资源或完整现代新增。下方待暂存/提交措辞为历史，不重成功命令。
+
+Epicurus同次接续完成关闭：正确既有解释器每页裁图一次0，
+实际环境修复1/未用0/sourceactual0，原失败debit及37叶字节保持。
+首次未开始的candidate比对各一次：322漏字一个确定缺陷，323粗体范围
+一个确定缺陷，另五不确定组；真实SOURCE BLOCKED，不再修内容。
+Main72接续review绑定一次0；累计图片8/reopen0/父0，
+FIG275/276实际裁图保真PASS仅保留、不晋升。启动HOLD已解除，
+322/323现为真实源缺口；结构更新已给Huygens，不改冻结incoming。
+Halley325FIRST、Ampere62FIRST、Confucius61机械修复、
+Huygens326/327作者、Russell63/64作者继续，批准63/11/raw54-21-85不变。
+第三十八批未暂存提交；同一离线invocation和小时监督保持。
+
 ## 第三十七批限定暂存通过
 
 一次限定暂存PASS：9文件/1JSON，七完成报告及checkpoint/usage，
