@@ -1,5 +1,124 @@
 # 生产检查点
 
+## 第二十四批已验，限定提交待执行
+
+限定暂存已实际一次PASS：49文件/24JSON，审批与精确字节、原必需EOL、
+secrets排除通过。只重暂存本检查点和usage两进度文件，不改批次范围；
+下一步一次commit/push。所有未完成未来稿与私有文件仍在工作区保留。
+
+2026-11-16。Cicero六新标题截图affected-only FIRST PASS，
+handoffSHA6f80e2198790b1195013ea9d789c48023e583ed7613e6bba75d889ecea30a335。
+Main54当前绑定一次0；Dalton原六全页body PASS与唯一title FAIL保留，
+全部canonical字节、原HTML/截图和未变正文不覆盖。n99现为完整离线课：
+11短段、2原书书写题、2derived/ungraded答案、2choice8项，无图。
+不是liveapp/发布或全组三册完成，实质审查不重跑。
+
+本批限定范围是完整n99、266269四批准源页、fig232原PNG、
+完整原书n103/n104准备层及对应冻结报告，另含两个真实工具缺陷的
+最小修复与各三项已完成定向测试。全部在途现代n103/n104、270271、
+private/tmp/env/6p108/duplicate及未完成课程索引排除。samebranch fetch
+一次0，尚未commit/push；暂存通过后记录实际文件计数，再一次提交推送。
+图片服务累计确认46/retry0，tokens/实收费未知，不跑全项目检查。
+
+## 第二十四批标题 sole 修复，新增源阻塞
+
+2026-11-16。Dalton六张全页截图唯一FIRST DISPLAY实际FAIL：
+标题直接显示`*物质*`星号；全部11段正文、2书写题、2choice8项及末尾
+显示PASS仍复用。FIRST报告/HTML/六截图保持原位不覆盖。Main标题
+显示unit唯一修复1/1，render_lesson.js的h1复用安全inline；新titles-only
+入口只改三HTML的h1，不重正文/图/choices门禁。三定向测试一次PASS，
+独立副本titles-only渲染一次0，六标题affected-only isolatedheadless检查
+一次PASS，完整正文HTML之外除h1字节相同、全部canonical资源与FIRST不变。
+Cicero新上下文只看六张新标题区域截图affected-FIRST在途，未计n99完整。
+不能把本次toolunit预算当成重置已有TEXT/SOURCE/FIG预算。
+
+Popper n103 soleFIRST TEXT PASS，18当前绑定/三批准模板精确copy一次0；
+原独审完成冻结packet保留，不因其后未完成元数据followup或真实n99显示工具
+漂移重做实质审查。Kant图232fresh作者在途，只scratch；主不开图片。
+Kierkegaard n104 FIRST内容失败及sole修复1/1保留，normalize2/proseFlow2、
+TEXT检查1/KaTeX1通过，Fermat唯一独立TEXT FIRST在途；不可再修/重置。
+Lorentz9完整SOURCE答案0/1已冻；Main先行私有解早于作者inputfreeze，
+完整无截断JSON/Markdown及全部字段唯一首审PASS，19绑定一次0，
+derived9/ungraded9/parts0。不是现代FINAL键，无重复审查或写库。
+
+Einstein270271唯一FIRST270PASS/271REVISE，271p0271#2第3行漏三个
+术语下的九着重点；两页作者因FIRST记录器启动失败均已1/1耗尽，
+因此271永久BLOCKED，不修复/晋升/重审或跨它装订。批准subset仅270，
+尚未canonical晋升，作为下一批准备。图233原图仅本次源审，不是现代图。
+8p未开始，源索引当前仍51页/19完整条目/73题；未提前加入270。
+每小时巡检暂停、无其他chat消息。图片服务累计确认46/retry0，Kant新调用
+未确认不提前计，tokens/实收费未知；无DB/发布/合并/部署/关闭/正式handoff
+或全项目检查，完整范围仍未完成。
+
+## 第二十四批收口中，第二十五批准备
+
+2026-11-16T12:58:56Z。n99 FINAL Russell0/1，Main唯一独立完整FIRST
+已对照先行私有解PASS；44当前绑定/retain/officialanswer-finalize各一次0，
+两答案derived/ungraded/parts[]，不重复审查。Rawls CHOICE唯一盲审
+PASS两题八选项，实际formal校验一次0；31当前绑定/exactcopy/retain各
+一次0。FIRST输入范围偏离是曾打印允许现代JSON内嵌source provenance，
+不是作者键或私有答案提前曝光；严格modern-prose-only隔离不冒称PASS。
+两个操作包装失败如实保留，未启动validator者不计作者修复；作者0/1。
+原两道书写题不变，choice不证明独立说明，前过渡动能变化等能力损失明记。
+officialrender一次0，isolatedheadless桌面1440x960/手机390x844六页面
+检查一次PASS；Dalton新上下文六截图唯一FIRST显示在途，未计完整。
+
+266唯一嵌套斜体修复affected-only Helmholtz仅一张既有detailcrop PASS；
+61绑定/16exactcopies晋升一次0，266预算1/1不重置，267复用原FIRST。
+SOURCE268269 Laplace唯一FIRST22块49行4原题0图PASS；
+220绑定/14exactcopies晋升一次0，各0/1。历史assemble.py旧哈希绑定
+作者immutable snapshot，不错绑已修live工具；当前SOURCE/candidate不变。
+批准连续267269 cohort装订一次0，仅完整n104四题保留，prefix103及
+unfinished105排除，不跨永久缺口。源索引51批准页、19完整条目、73原题，
+旧条目不变。该计数不是现代课程完成量。
+
+265267 fullybold numberedheading FIRST实际身份FAIL虽exit0，原x2/x3、
+nullcardid输出保持；唯一parser修复1/1只为数号匹配解外层粗体，印刷标题、
+SOURCE不变。定向三测试一次PASS，affectedcohort一次装订并确认n103
+全部正文/图/五题与FIRST不变，完整SOURCE已保留。新增持久缺陷报告，
+不重SOURCE或全局装订。
+
+Copernicus n103 TEXT19短段/3分界/5题/图232上下文已冻，181预检0错误，
+作者0/1，Popper唯一独立FIRST在途；尚未制作现代232或retain现代n103。
+n104adaptprepare一次0，Kierkegaard只在独占scratch生产。Ohm270271
+SOURCE作者在途，不晋升或暂存未完成未来稿。每小时巡检暂停，不消息其他chat；
+8p未开始，图片服务累计46/retry0，tokens/实收费未知。无DB/发布/合并/
+部署/关闭/正式handoff、app/依赖/schema变更或全项目检查。
+
+## 第二十三批已提交，第二十四批接续
+
+2026-11-16。第二十三批实际 commit/push 各一次 exit0：
+`998f922937129e6ea01d3bfe6cf4b0188a8363a6`，推送完成
+12:32:35.738Z，HEAD/origin 同分支 0/0。114 限定文件、51 JSON；
+仅 n96 计完整现代离线课，余为已批准源和准备层。下方待提交描述是
+提交前历史，不重复暂存、审查或成功命令。
+
+第二十四批 n99 现代模板 retain/official adapt-finalize 各一次0，
+5源正文块、11短段、2原题、0图；SOURCE/TEXT审批复用。
+尚无现代 FINAL/CHOICE/显示批准，不提前计完整。266267作者冻结
+21块、50物理行、5题、原图232，首次 finalize 各一次0，repair各0/1；
+Linnaeus唯一独立 FIRST 在途，尚未晋升。103待跨265267完整装订，
+104在267#11尾“只”仍open。永久阻塞和不跨缺口约束不变。
+8p未开始，图片服务累计46/retry0，tokens/实收费用未知。
+每小时巡检暂停；无DB、发布、合并、部署、关闭、正式handoff或全项目检查。
+
+Linnaeus唯一FIRST：267PASS/266仅p0266#3粗体定义内“凝结”斜体遗漏
+REVISE，20块及五题/图232PASS，4实际图片无重开。FIRST交接SHA
+38bc30ce89f4cd1b94cd21192b3ebc2305d92659f91b7e55afba41342300d053，
+reviewer完成后关闭。Main隔离副本唯一修复只加一对斜体星号：
+prepare39绑定8exactcopies/officialfinalize26行/冻结各一次0，
+md仅该处差异、JSON仅该行变化/meta相同、audit及全部工作图/布局
+字节不变；266预算1/1耗尽。Helmholtz仅一张既有detailcrop
+affected-only在途，不重整页/图/题/门禁。267仍复用FIRST。
+
+n99 Russell FIRST两答案JSON/Markdown已封存，Main唯一独立FINAL
+完整读取每题全部答案/方法/条件/精度/备注/覆盖并对照先行私有解
+PASS，derived/ungraded/parts[]，作者0/1。此处独立reviewer是Main，
+不是作者；不再另派第二个实质审查。尚待作者最终绑定/retain/finalize。
+Bernoulli CHOICE仍在生产。268269 Hegel SOURCE在途；Main早先引用
+的267长尾并非实际页文，已经中断更正为当前JSON三行、尾“只”，
+不把错误引用作为来源或消耗作者修复；保留转达纠正事实。
+
 ## 第二十三批收口中
 
 2026-11-16。n96 FINAL Poincare唯一FIRST四答案PASS/Main83绑定，

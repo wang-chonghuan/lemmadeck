@@ -119,7 +119,10 @@ def cut_lessons(stream: list[dict]) -> list[dict]:
             continue
         if b["kind"] == "h3":
             title = B.text_of(b)
-            m = SEC_NUM.match(title)
+            numbered_title = title.strip()
+            if numbered_title.startswith("**") and numbered_title.endswith("**"):
+                numbered_title = numbered_title[2:-2].strip()
+            m = SEC_NUM.match(numbered_title)
             cur = {"chapter": pending["h1"], "section": pending["h2"],
                    "number": m.group(1) if m else None,
                    "title": m.group(2).strip() if m else title,

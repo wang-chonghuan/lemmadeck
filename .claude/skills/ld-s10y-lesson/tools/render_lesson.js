@@ -9,7 +9,7 @@
  * 按 ; 匹配会一个字体都替换不到，页面看着能用（系统字体兜底）但并不自包含。
  * 所以内联数为 0 直接抛错，不允许静默降级。
  *
- * 用法: render_lesson.js <bookDir> --out <dir> [--edition <name>] [--lesson <lessonId>]... [--text-only]
+ * 用法: render_lesson.js <bookDir> --out <dir> [--edition <name>] [--lesson <lessonId>]... [--text-only | --titles-only]
  */
 const fs = require("fs");
 const path = require("path");
@@ -26,6 +26,8 @@ const bookDir = args.find((arg) => !arg.startsWith("--"));
 const editionName = args.includes("--edition") ? args[args.indexOf("--edition") + 1] : null;
 const outRoot = args.includes("--out") ? args[args.indexOf("--out") + 1] : null;
 const textOnly = args.includes("--text-only");
+const titlesOnly = args.includes("--titles-only");
+if (textOnly && titlesOnly) throw new Error("Select only one partial render surface");
 const onlyLessons = new Set(args.flatMap((arg, index) =>
   arg === "--lesson" && args[index + 1] ? [args[index + 1]] : []));
 if (!bookDir || !outRoot) {
@@ -218,7 +220,7 @@ li.ex .body .fig[data-figure-layout="scroll"] .figure-media{
 function page(title, crumb, bodyHtml) {
   return `<!DOCTYPE html><meta charset="utf-8"><title>${esc(title)}</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<style>${CSS}</style><div class="sheet"><h1>${esc(title)}</h1>
+<style>${CSS}</style><div class="sheet"><h1>${inline(title)}</h1>
 <div class="crumb">${esc(crumb)}</div>${bodyHtml}</div>`;
 }
 
@@ -238,6 +240,23 @@ for (const lid of lessonDirs) {
     ? JSON.parse(fs.readFileSync(path.join(dir, "figures.json"), "utf8")).figures : [];
   const renderFigure = (id, label) => figure(contentRoot, id, label, !!editionName, manifest);
   const choiceDir = path.join(dir, "choice-set");
+  if (titlesOnly) {
+    const title = L.printed_title || L.title;
+    const surfaces = [["text", title], ["exercises", `${title} · 习题`]];
+    if (fs.existsSync(choiceDir)) surfaces.push(["choices", `${title} · 选择题`]);
+    const replacements = surfaces.map(([surface, heading]) => {
+      const file = path.join(outDir, `${surface}.html`);
+      const html = fs.readFileSync(file, "utf8");
+      const oldHeading = `<h1>${esc(heading)}</h1>`;
+      if (html.split(oldHeading).length !== 2 || (html.match(/<h1>/g) || []).length !== 1) {
+        throw new Error(`${lid}/${surface}: existing plain heading does not match approved title`);
+      }
+      return { file, html: html.replace(oldHeading, () => `<h1>${inline(heading)}</h1>`) };
+    });
+    for (const replacement of replacements) fs.writeFileSync(replacement.file, replacement.html);
+    done.push({ lesson: lid, surface: "titles", pages: replacements.length, output: outDir });
+    continue;
+  }
   const crumb = [L.chapter, L.section, `印刷页 ${L.start_printed ?? "?"}`]
     .filter(Boolean).join(" · ");
 
