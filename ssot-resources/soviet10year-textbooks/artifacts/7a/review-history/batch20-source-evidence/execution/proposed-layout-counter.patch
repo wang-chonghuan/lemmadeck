@@ -1,0 +1,21 @@
+--- a/.claude/skills/ld-s10y-lesson/tools/layout.py
++++ b/.claude/skills/ld-s10y-lesson/tools/layout.py
+@@ -158,7 +158,8 @@
+             continue
+         rows, columns = bounds
+         if (
+-            rows.stop - rows.start > 1.8 * line_h
++            rows.stop - rows.start < 0.6 * line_h
++            or rows.stop - rows.start > 1.8 * line_h
+             and columns.stop - columns.start < 0.6 * line_h
+         ):
+             region = band[bounds]
+@@ -177,7 +178,7 @@
+     boxes = [bounds for bounds in ndimage.find_objects(labels) if bounds is not None]
+     glyphs = [
+         (rows, columns) for rows, columns in boxes
+-        if rows.stop - rows.start >= 0.3 * glyph_h
++        if rows.stop - rows.start >= 0.6 * glyph_h
+         and columns.stop - columns.start >= 0.1 * glyph_h
+     ]
+     supported = []

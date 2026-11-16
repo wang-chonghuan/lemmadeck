@@ -1,0 +1,103 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+
+const dir = path.dirname(fileURLToPath(import.meta.url))
+const history = path.join(dir, 'history/before-870b-C-wrong-program-repair')
+const names = [
+  'source.json', 'source-solutions.json', 'draft.json', 'view.json', 'author.mjs',
+  'revised-option-position-view.json', 'option-position-permutation-plan.json'
+]
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
+const read = (root, name) => fs.readFileSync(path.join(root, name))
+const write = (name, value) => fs.writeFileSync(
+  path.join(dir, name), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' }
+)
+const snapshot = root => Object.fromEntries(names.map(name => {
+  const bytes = read(root, name)
+  return [name, { byte_sha256: hash(bytes), bytes: bytes.length }]
+}))
+const oldDerivation = 'Invert both correct roots, confusing the unknown with its reciprocal.'
+const oldMisconception = 'Report the reciprocal of the solved unknown.'
+const derivation = 'The third source equation reduces to y/(3/2)=7/9. Wrongly rewrite it as (3/2)/y=7/9, equivalently (7/9)y=3/2, so y=(3/2)/(7/9)=27/14 instead of y=(7/9)*(3/2). The fourth reduces to (10/3)/k=2/3, with k!=0. After clearing k, wrongly write (10/3)k=2/3 instead of (2/3)k=10/3; then k=(2/3)/(10/3)=1/5.'
+const misconception = 'For y, exchange the unknown dividend and known divisor, then use unknown-divisor recovery. For k, swap the coefficient and right-hand value after clearing the unknown denominator, reversing the required quotient.'
+
+if (process.argv[2] === 'before') {
+  fs.mkdirSync(history, { recursive: false })
+  for (const name of names) {
+    fs.copyFileSync(path.join(dir, name), path.join(history, name), fs.constants.COPYFILE_EXCL)
+    assert(read(dir, name).equals(read(history, name)))
+  }
+  fs.writeFileSync(path.join(history, 'snapshot-byte-hashes.json'),
+    JSON.stringify({ history, files: snapshot(history), serializer_executed: false }, null, 2) + '\n',
+    { flag: 'wx' })
+  console.log(JSON.stringify({ history, exact_original_bytes_preserved: true }))
+} else if (process.argv[2] === 'after') {
+  const before = JSON.parse(read(history, 'draft.json'))
+  const after = JSON.parse(read(dir, 'draft.json'))
+  const index = before.questions.findIndex(q => q.id === 'n47-870b')
+  assert(index >= 0)
+  const expected = structuredClone(before)
+  const rationale = expected.questions[index].key.rationales[2]
+  assert.equal(rationale.option_id, 'C')
+  assert.equal(rationale.derivation, oldDerivation)
+  assert.equal(rationale.misconception, oldMisconception)
+  rationale.derivation = derivation
+  rationale.misconception = misconception
+  assert.deepEqual(after, expected)
+  const oldAuthor = read(history, 'author.mjs').toString('utf8')
+  const expectedAuthor = oldAuthor.replace(oldDerivation, derivation).replace(oldMisconception, misconception)
+  assert.notEqual(expectedAuthor, oldAuthor)
+  assert.equal(read(dir, 'author.mjs').toString('utf8'), expectedAuthor)
+  const unchanged = names.filter(name => !['draft.json', 'author.mjs'].includes(name))
+  for (const name of unchanged) assert(read(dir, name).equals(read(history, name)))
+
+  const base = `/questions/${index}/key/rationales/2`
+  const changes = [
+    { path: `${base}/derivation`, before: oldDerivation, after: derivation },
+    { path: `${base}/misconception`, before: oldMisconception, after: misconception }
+  ]
+  write('repair-870b-C-json-diff.json', { question_id: 'n47-870b', option_id: 'C', changes })
+  write('repair-870b-C-json-patch.json', changes.map(c => ({ op: 'replace', path: c.path, value: c.after })))
+  for (const name of ['draft.json', 'author.mjs']) {
+    const diff = spawnSync('diff', ['-u', '--label', `${name}.before`, '--label', `${name}.after`,
+      path.join(history, name), path.join(dir, name)], { encoding: 'utf8' })
+    assert.equal(diff.status, 1)
+    assert.equal(diff.stderr, '')
+    fs.writeFileSync(path.join(dir, `repair-870b-C-${name}.patch`), diff.stdout, { flag: 'wx' })
+  }
+  const relative = path.relative(process.cwd(), dir)
+  const args = [
+    '.agents/skills/ld-s10y-choice/scripts/validate.py', '--repo', '.',
+    '--seed', `${relative}/source.json`, '--draft', `${relative}/draft.json`
+  ]
+  const check = spawnSync('python3', args, { encoding: 'utf8' })
+  const structural = {
+    command: `python3 ${args.join(' ')}`,
+    stdout: check.stdout, stderr: check.stderr, exit_code: check.status,
+    draft_byte_sha256: hash(read(dir, 'draft.json')),
+    structural_runs_for_changed_snapshot: 1,
+    semantic_status: 'Narrow author repair only; independent changed-field comparison pending.'
+  }
+  write('structural-check-after-870b-C-rationale-repair.json', structural)
+  const receipt = {
+    history, before: snapshot(history), after: snapshot(dir),
+    changed_paths: changes.map(c => c.path),
+    exactly_two_draft_fields_changed: true,
+    all_other_draft_content_unchanged: true,
+    unchanged_files: unchanged,
+    source_view_options_correct_set_coverage_order_positions_unchanged: true,
+    serializer_change_only_corresponding_derivation_and_misconception: true,
+    serializer_executed: false,
+    reviewers_read_or_modified: false,
+    structural
+  }
+  write('repair-870b-C-bytehash-receipt.json', receipt)
+  console.log(JSON.stringify(receipt, null, 2))
+  process.exitCode = check.status ?? 1
+} else {
+  throw new Error('Use before or after; never execute the author serializer.')
+}

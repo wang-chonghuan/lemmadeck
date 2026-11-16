@@ -1,0 +1,54 @@
+import json
+import sys
+from pathlib import Path
+
+from PIL import Image, ImageDraw
+
+repo = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+work = repo / ".intentfold/tickets/STEMROBIN-182/tmp/batch20-work-7a"
+root = repo / ".intentfold/tickets/STEMROBIN-182/tmp/batch20-source-7a"
+sys.path.insert(0, str(repo / ".claude/skills/ld-s10y-lesson/tools"))
+import blocks
+import layout
+
+image = Image.open(work / "7a/pages/0041/page.png")
+ink = layout.ink_mask(image)
+columns = ink.any(axis=0).nonzero()[0]
+content_width = int(columns[-1] - columns[0] + 1)
+bands = layout.line_bands(ink, content_width)
+meta, parsed = blocks.load(root / "7a/pages/0041/page.md")
+observed = [
+    {"block": f"p0041#{index + 1}", "kind": block["kind"],
+     "label": block["label"], "lines": block["lines"],
+     "printed_lines": blocks.printed_lines([block])}
+    for index, block in enumerate(parsed)
+]
+annotated = image.convert("RGB")
+draw = ImageDraw.Draw(annotated)
+for index, (top, bottom) in enumerate(bands, 1):
+    draw.rectangle((160, top, 1400, bottom), outline="#cc2222", width=2)
+    draw.text((75, top), str(index), fill="#cc2222", stroke_width=1)
+output = {
+    "page": 41,
+    "source_image": str(work / "7a/pages/0041/page.png"),
+    "content_width": content_width,
+    "counter_bands": bands,
+    "counter_count": len(bands),
+    "author_independent_visual_row_count": 19,
+    "author_blocks": observed,
+    "excess_band_mapping": [
+        {"actual_row": "original98 shared а)/б) row", "bands": [8, 9, 10],
+         "y": [785, 966], "actual_count": 1, "counter_count": 3},
+        {"actual_row": "original98 г) fraction row", "bands": [12, 13],
+         "y": [1116, 1249], "actual_count": 1, "counter_count": 2},
+    ],
+    "status": "diagnosis_only_no_finalize_rerun_no_source_text_change",
+}
+(work / "page41-band-diagnosis.json").write_text(
+    json.dumps(output, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+)
+annotated.save(work / "page41-counter-bands.png")
+image.crop((160, 730, 1370, 1270)).save(work / "page41-original98-detail.png")
+annotated.crop((160, 730, 1370, 1270)).save(work / "page41-original98-bands.png")
+print(json.dumps({"bands": bands, "counter_count": len(bands),
+                  "author_visual_rows": 19}))

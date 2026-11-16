@@ -1,0 +1,86 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const scratch = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp');
+const root = path.join(scratch, 'batch20-source-7a');
+const work = path.join(scratch, 'batch20-work-7a');
+const skill = path.join(repo, '.claude/skills/ld-s10y-lesson');
+const freezeFile = path.join(work, 'authorized-continuation-inputs.json');
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const record = file => ({ path: file, sha256: sha(file), bytes: fs.statSync(file).size });
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const exclusiveJson = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+const oldCommands = path.join(work, 'commands.json');
+const pageDir = page => path.join(root, '7a/pages', String(page).padStart(4, '0'));
+const inputs = [
+  oldCommands,
+  path.join(skill, 'tools/layout.py'),
+  path.join(skill, 'tools/p2c.py'),
+  path.join(skill, 'tools/blocks.py'),
+  path.join(skill, 'tools/normalize.py'),
+  path.join(skill, 'profiles/soviet-cn.json'),
+  ...[41, 42, 43].map(page => path.join(work, '7a/pages', String(page).padStart(4, '0'), 'page.png')),
+  ...[41].flatMap(page => ['audit.json', 'page.json', 'page.md'].map(name => path.join(pageDir(page), name))),
+  path.join(repo, 'ssot-resources/soviet10year-textbooks/sources/manifest.json'),
+  path.join(repo, 'ssot-resources/soviet10year-textbooks/toc/7a/zh.json'),
+  path.join(repo, 'ssot-resources/soviet10year-textbooks/sources/soviet10years/7a 苏联十年制学校数学教材 代数 七年级.pdf'),
+];
+
+if (process.argv[2] === 'preserve') {
+  if (fs.existsSync(freezeFile)) throw Error('Continuation already frozen');
+  const records = inputs.map(record);
+  const backup = path.join(work, 'rejected-page41-before-authorized-counter');
+  fs.mkdirSync(backup, { recursive: false });
+  const copies = [
+    [oldCommands, path.join(backup, 'commands.json')],
+    ...['audit.json', 'page.json', 'page.md'].map(name => [
+      path.join(pageDir(41), name), path.join(backup, name),
+    ]),
+  ];
+  for (const [source, destination] of copies) {
+    fs.copyFileSync(source, destination, fs.constants.COPYFILE_EXCL);
+    if (sha(source) !== sha(destination)) throw Error('Exact-byte preservation failed');
+  }
+  const failure = read(path.join(backup, 'audit.json'));
+  if (failure.lines_printed !== 22 || failure.lines_md !== 19 || failure.errors.length !== 1) {
+    throw Error('Unexpected rejected audit');
+  }
+  exclusiveJson(freezeFile, {
+    at: new Date().toISOString(),
+    authorization: 'Human confirmed revised parent verification: 52 related cases, 48 executed pass, 4 uncached-source skips; actual41 19 rows and unchanged original pixels. Authorize finalize41 once, new42/43 once; no assembly/vectorization/promotion.',
+    inputs: records,
+    preserved_rejection: copies.map(([source, destination]) => ({ source: record(source), copy: record(destination) })),
+  });
+  console.log(JSON.stringify({ preserved_files: copies.length, frozen_inputs: records.length, layout_sha256: sha(path.join(skill, 'tools/layout.py')) }));
+} else if (process.argv[2] === 'finalize') {
+  const page = Number(process.argv[3]);
+  if (![41, 42, 43].includes(page)) throw Error('Only authorized41/42/43');
+  const frozen = read(freezeFile);
+  const priorPages = [41, 42, 43].filter(value => value < page);
+  for (const prior of priorPages) {
+    const priorResult = path.join(work, `continuation-finalize-${prior}.json`);
+    if (!fs.existsSync(priorResult) || read(priorResult).status !== 0) throw Error('Prior authorized page must pass first');
+  }
+  for (const input of frozen.inputs) {
+    if (input.path.startsWith(pageDir(41) + path.sep)) continue;
+    if (sha(input.path) !== input.sha256) throw Error(`Frozen input changed: ${input.path}`);
+  }
+  for (const item of frozen.preserved_rejection) {
+    if (sha(item.copy.path) !== item.copy.sha256) throw Error('Rejected evidence changed');
+  }
+  const resultFile = path.join(work, `continuation-finalize-${page}.json`);
+  if (fs.existsSync(resultFile) || fs.existsSync(`${resultFile}.started.json`)) throw Error('One authorized finalize per page');
+  exclusiveJson(`${resultFile}.started.json`, { at: new Date().toISOString(), page, md: record(path.join(pageDir(page), 'page.md')) });
+  const executable = path.join(skill, '.venv/bin/python');
+  const args = [path.join(skill, 'tools/p2c.py'), 'finalize', '--book', '7a', '--page', String(page), '--root', root, '--work', work];
+  const result = spawnSync(executable, args, { cwd: repo, encoding: 'utf8', env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' } });
+  exclusiveJson(resultFile, { at: new Date().toISOString(), page, argv: [executable, ...args], status: result.status, stdout: result.stdout, stderr: result.stderr, outputs: ['page.md', 'page.json', 'audit.json'].map(name => record(path.join(pageDir(page), name))) });
+  process.stdout.write(result.stdout ?? '');
+  process.stderr.write(result.stderr ?? '');
+  process.exitCode = result.status ?? 1;
+} else {
+  throw Error('Expected preserve or finalize');
+}

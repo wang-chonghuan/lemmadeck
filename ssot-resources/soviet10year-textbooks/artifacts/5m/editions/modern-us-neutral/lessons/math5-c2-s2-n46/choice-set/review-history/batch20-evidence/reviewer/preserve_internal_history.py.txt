@@ -1,0 +1,31 @@
+import hashlib
+import json
+from pathlib import Path
+
+
+root = Path(__file__).resolve().parent
+history = root / "history-before-option-position-internal-comparison"
+assert not history.exists(), "Refuse to replace an existing history snapshot"
+names = ["review.json", "final-comparison-result.json"]
+snapshots = {name: (root / name).read_bytes() for name in names}
+history.mkdir()
+records = []
+for name, data in snapshots.items():
+    destination = history / name
+    with destination.open("xb") as output:
+        output.write(data)
+    assert destination.read_bytes() == data == (root / name).read_bytes()
+    records.append(
+        {
+            "original": str(root / name),
+            "history": str(destination),
+            "sha256": hashlib.sha256(data).hexdigest(),
+            "byte_count": len(data),
+            "byte_identical": True,
+            "original_record_remains_unchanged": True,
+        }
+    )
+with (history / "preservation.json").open("x", encoding="utf-8") as output:
+    json.dump({"records": records, "rejected_outcome_preserved": "blocked"}, output, indent=2)
+    output.write("\n")
+print(json.dumps(records))

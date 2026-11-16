@@ -1,0 +1,265 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import { spawnSync } from 'node:child_process'
+
+const root = '.intentfold/tickets/STEMROBIN-182/tmp/6a-n38'
+const seed = JSON.parse(fs.readFileSync(`${root}/seed.json`, 'utf8'))
+const source = JSON.parse(fs.readFileSync(`${root}/source-solutions.json`, 'utf8'))
+const option = (text, truth, derivation, misconception = null) => ({
+  text, truth, derivation, misconception,
+})
+const table = (letters, values) => '| 小问 | 结果 |\n| --- | --- |\n' +
+  values.map((value, i) => `| ${letters[i]}) | ${value} |`).join('\n')
+const mathTable = (letters, values) => table(letters, values.map(v => `$${v}$`))
+const tuple = values => '$(' + values.join(',\\ ') + ')$'
+const questions = []
+function add(id, number, stem, candidates, task, reason, losses, figures = []) {
+  const ids = ['A', 'B', 'C', 'D']
+  questions.push({
+    id, source_numbers: [number],
+    view: { mode: 'single', stem, figure_ids: figures,
+      options: candidates.map((row, i) => ({ id: ids[i], text: row.text, figure_ids: [] })) },
+    intent: { task, source_solution: source.sources.find(row => row.number === number).solution,
+      unit_reason: reason, concept_blocks: ['624', '625'].includes(number) ? [1] : [],
+      limitations: losses, figure_observations: figures.map(id => ({
+        figure_id: id, observation: source.figures.find(row => row.id === id).observation,
+      })) },
+    key: { correct: candidates.flatMap((row, i) => row.truth === 'correct' ? [ids[i]] : []),
+      rationales: candidates.map((row, i) => ({
+        option_id: ids[i], truth: row.truth, derivation: row.derivation,
+        misconception: row.misconception,
+      })) },
+  })
+}
+const powerLoss = 'Recognizing the complete fraction record does not establish independently expanding and writing every power. Original domains are retained, not extended after rewriting.'
+add('three-basic-ratio-powers', '624',
+  String.raw`在各原式有意义的实数变量范围内，把下列三式写成单个分式。哪份完整记录正确？
+a) $\left(\frac{x}{2y}\right)^3$；
+b) $\left(\frac{3a}{c}\right)^4$；
+c) $\left(\frac{-a}{3b}\right)^3$。`,
+  [
+    option(mathTable('abc', [String.raw`\frac{x^4}{8y^4}`, String.raw`\frac{81a^5}{c^5}`,
+      String.raw`-\frac{a^4}{27b^4}`]), 'incorrect',
+    'Power numeric coefficients and signs correctly, but regard every variable as a first power and add the outer exponent:1+3=4,1+4=5,1+3=4 in both numerator and denominator.',
+    'Add inner and outer variable exponents instead of multiplying them.'),
+    option(mathTable('abc', [String.raw`\frac{x^3}{2y^3}`, String.raw`\frac{3a^4}{c^4}`,
+      String.raw`-\frac{a^3}{3b^3}`]), 'incorrect',
+    'Raise variable powers correctly but leave numeric coefficients unchanged: denominator2 instead of8, numerator3 instead of81, denominator3 instead of27.',
+    'Apply the power only to variables, not numeric coefficients.'),
+    option(mathTable('abc', [String.raw`\frac{x^3}{8y^3}`, String.raw`\frac{81a^4}{c^4}`,
+      String.raw`-\frac{a^3}{27b^3}`]), 'correct',
+    'Power both numerator and denominator.2^3=8,3^4=81,3^3=27; the negative coefficient stays negative under the odd cube. Domains remain y,c,b nonzero in the respective rows.'),
+    option(mathTable('abc', [String.raw`\frac{8y^3}{x^3}`, String.raw`\frac{c^4}{81a^4}`,
+      String.raw`-\frac{27b^3}{a^3}`]), 'incorrect',
+    'After correctly raising the fractions, invert each whole result as though a power operation required a reciprocal. These values are reciprocals of the actual ones and are also undefined at some permitted numerator-zero inputs.',
+    'Take an unnecessary reciprocal after raising a fraction to a power.'),
+  ],
+  'Expand three basic fraction powers with coefficient and odd/even sign scope.',
+  'One three-result record compares coefficient exponentiation, variable powers and the explicit odd negative sign while keeping each original fraction domain as an input condition.',
+  [powerLoss])
+
+add('three-higher-variable-powers', '624',
+  String.raw`在各原式有意义的实数变量范围内，把三式写成单个分式。哪份完整记录正确？
+d) $\left(-\frac{m^2}{10q}\right)^3$；
+e) $\left(\frac{10a^4}{3x^4}\right)^4$；
+f) $\left(-\frac{x^5}{y^2}\right)^4$。`,
+  [
+    option(mathTable('def', [String.raw`-\frac{m^6}{1000q^3}`,
+      String.raw`\frac{10000a^{16}}{81x^{16}}`, String.raw`\frac{x^{20}}{y^8}`]),
+    'correct',
+    'Multiply nested exponents and power all numeric coefficients. The cube gives -m6/(1000q3); the fourth powers give10000/81 and a positive sign in f. Original q,x,y denominator zeros remain excluded.'),
+    option(mathTable('def', [String.raw`-\frac{m^6}{10q^3}`,
+      String.raw`\frac{10a^{16}}{3x^{16}}`, String.raw`-\frac{x^{20}}{y^8}`]),
+    'incorrect',
+    'Raise variable factors but leave each signed numeric coefficient unchanged: -1/10,10/3,-1 are retained instead of -1/1000,10000/81,+1.',
+    'Leave signed numeric coefficients outside the scope of the outer power.'),
+    option(mathTable('def', [String.raw`-\frac{m^5}{1000q^4}`,
+      String.raw`\frac{10000a^8}{81x^8}`, String.raw`\frac{x^9}{y^6}`]),
+    'incorrect',
+    'Power coefficients/signs correctly but add inner and outer exponents:m2+3=5,q1+3=4,a4+4=x4+4=8,x5+4=9,y2+4=6.',
+    'Add nested variable exponents instead of multiplying them.'),
+    option(mathTable('def', [String.raw`-\frac{1000q^3}{m^6}`,
+      String.raw`\frac{81x^{16}}{10000a^{16}}`, String.raw`\frac{y^8}{x^{20}}`]),
+    'incorrect',
+    'Raise each ratio correctly then invert the whole result unnecessarily. At permitted zero numerators the inverted records may be undefined, so neither values nor complete original-domain equivalence are preserved.',
+    'Take the reciprocal after a power where no division-by-that-result occurs.'),
+  ],
+  'Expand three fraction powers combining nested variable exponents and signed coefficients.',
+  'This unit separates coefficient scope from nested exponents and retains the fourth-power removal of an explicit negative sign.',
+  [powerLoss])
+
+add('three-composite-ratio-powers-qualified', '624',
+  String.raw`把三式写成单个分式：
+g) $\left(\frac2{-p^4q^3}\right)^6$；
+h) $\left(-\frac{a^8b^0}{5c^6}\right)^3$；
+i) $\left(\frac{2x^5}{0.2y^{10}}\right)^5$。
+变量为实数，各原分母不为零；h) 另取 $b\ne0$。在这个明确范围内，哪份完整记录正确？`,
+  [
+    option(mathTable('ghi', [String.raw`\frac2{p^{24}q^{18}}`,
+      String.raw`-\frac{a^{24}}{5c^{18}}`, String.raw`\frac{10x^{25}}{y^{50}}`]),
+    'incorrect',
+    'Use b0=1 on b!=0 and multiply variable exponents correctly, but leave reduced numeric coefficients2,-1/5,10 unchanged rather than raising them to6,3,5.',
+    'Do not raise the numeric coefficient when powering the reduced ratio.'),
+    option(mathTable('ghi', [String.raw`\frac{64}{p^{10}q^9}`,
+      String.raw`-\frac{a^{11}}{125c^9}`, String.raw`\frac{100000x^{10}}{y^{15}}`]),
+    'incorrect',
+    'First replace b0 by1 on the visible nonzero-b domain and reduce i coefficient to10. Power numeric factors correctly but add variable exponents:p4+6=10,q3+6=9,a8+3=11,c6+3=9,x5+5=10,y10+5=15.',
+    'Simplify the zero power on its qualified domain, then add nested variable exponents.'),
+    option(mathTable('ghi', [String.raw`\frac{p^{24}q^{18}}{64}`,
+      String.raw`-\frac{125c^{18}}{a^{24}}`, String.raw`\frac{y^{50}}{100000x^{25}}`]),
+    'incorrect',
+    'Compute all three actual powers then take their reciprocals. In h/i these candidates additionally exclude allowed a=0 or x=0 even though the original numerators may vanish.',
+    'Take an unnecessary reciprocal of the finished power.'),
+    option(mathTable('ghi', [String.raw`\frac{64}{p^{24}q^{18}}`,
+      String.raw`-\frac{a^{24}}{125c^{18}}`, String.raw`\frac{100000x^{25}}{y^{50}}`]),
+    'correct',
+    'An even sixth power removes the denominator minus and gives2^6=64. On the explicit b!=0 domain b0=1, and the cube gives -a24/(125c18). In i,2/0.2=10 and10^5=100000; exponents multiply to25 and50. This proves only the visible qualified h domain, not the unresolved original b=0 case.'),
+  ],
+  'Expand three composite fraction powers while explicitly isolating the unresolved zero-base input.',
+  'A complete three-result record keeps the even denominator sign, qualified zero power and decimal coefficient power together; no convention for0^0 is silently adopted.',
+  [powerLoss, 'The original624h case b=0 cannot be certified from the selected definition. The visible b!=0 qualification preserves its determinate part but leaves that original zero-base domain task unresolved.'])
+
+add('four-nested-products-and-quotient', '625',
+  seed.exercises.find(row => row.number === '625').text.replace(/^625[．.]\s*/, '') +
+  '\n\n在各原式有意义的实数变量范围内，哪份四式化简记录全部正确？',
+  [
+    option(mathTable('abcd', ['ab^{10}', String.raw`-\frac y{2x^2}`,
+      String.raw`\frac{a^{12}}{3x^8}`, String.raw`-\frac{3a}2`]), 'incorrect',
+    'Raise variable factors correctly but leave signed numeric coefficients unchanged. a scalar1 stays1;b scalar(-2)*(1/4)=-1/2;c scalar(-3)/(-9)=1/3;d scalar(8/9)*(-27/16)=-3/2. The last three differ from the actual powered coefficients.',
+    'Exclude all signed numeric coefficients from the nested powers.'),
+    option(mathTable('abcd', ['ab^{10}', String.raw`\frac y{4x^2}`,
+      String.raw`\frac{a^{12}}{243x^8}`, '2a']), 'correct',
+    'Expand powers then combine: a a^(9-8)b^(16-6);b(16/64)x^(16-18)y^(21-20);c(-3)/(-729) times a^(24-12)x^(7-15);d(512/729)*(729/256)*a^(9-8)b^(6-6). Retain original nonzero denominator/divisor variables.'),
+    option(mathTable('abcd', [String.raw`\frac1{ab^{10}}`, String.raw`\frac{4x^2}y`,
+      String.raw`\frac{243x^8}{a^{12}}`, String.raw`\frac1{2a}`]), 'incorrect',
+    'After obtaining the correct reduced fractions, invert every entire result, incorrectly carrying over a reciprocal operation to all products and the finished quotient.',
+    'Take the reciprocal of the final simplification even when no reciprocal is required.'),
+    option(mathTable('abcd', ['a^{17}b^{22}', String.raw`\frac{x^{34}y^{41}}4`,
+      String.raw`\frac{a^{36}x^{22}}{243}`, '2a^{17}b^{12}']), 'incorrect',
+    'Expand powers and numeric coefficients correctly, including reciprocal division in c. Then move all denominator variable factors above the fraction bar:9+8=17,6+16=22;16+18=34,20+21=41;24+12=36,7+15=22;9+8=17,6+6=12.',
+    'Add denominator powers to numerator powers after otherwise correct expansion.'),
+  ],
+  'Reduce all four nested-power products and the signed quotient on their original domains.',
+  'One four-result record compares product cancellation with a powered divisor, coefficient exponentiation and sign scope.',
+  [powerLoss])
+
+const impossible = '在规定的底数范围内，不能写成平方或立方恒等式'
+add('rational-monomial-square-cube-records', '626',
+  seed.exercises.find(row => row.number === '626').text.replace(/^626[．.]\s*/, '') +
+  '\n\n本题明确只允许把有理数系数、变量整数指数的单项分式作为平方或立方的底数，要求在原式的实数定义域上恒等。哪份六行记录正确？',
+  [
+    option(mathTable('abcdef', [String.raw`\left(\frac{x^2}{y^4}\right)^2`,
+      String.raw`\left(\frac{8a^6}{b^3}\right)^3`, String.raw`\left(-\frac{25}{x^6}\right)^3`,
+      String.raw`\left(-\frac{1000x^3}{y^6}\right)^3`,
+      String.raw`\left(-\frac{p^6}{27q^9}\right)^3`, String.raw`\left(\frac{a^{30}}{6b^6}\right)^2`]),
+    'incorrect',
+    'Wrap each original expression in an extra square or cube instead of finding a base whose power equals it. All nonconstant exponents and coefficients are then powered a second time; e.g.a becomesx4/y8,b becomes512a18/b9.',
+    'Treat writing an expression as a power as raising the unchanged expression to another power.'),
+    option(mathTable('abcdef', [String.raw`\left(\frac x{y^2}\right)^2`,
+      String.raw`\left(\frac{8a^2}b\right)^3`, String.raw`\left(-\frac{25}{x^2}\right)^3`,
+      String.raw`\left(-\frac{1000x}{y^2}\right)^3`,
+      String.raw`\left(-\frac{p^2}{27q^3}\right)^3`, String.raw`\left(\frac{a^{15}}{6b^3}\right)^2`]),
+    'incorrect',
+    'Divide variable exponents by the proposed outer power but keep every original numeric coefficient inside the base. a coefficient1 happens to remain right; b coefficient8 cubes to512,c -25 cubes to-15625,d -1000 cubes to-10^9,e -1/27 cubes to-1/19683,f1/6 squares to1/36.',
+    'Take inverse powers of variable factors but not of the numeric coefficient.'),
+    option(table('abcdef', [String.raw`$\left(\frac x{y^2}\right)^2$`,
+      String.raw`$\left(\frac{2a^2}b\right)^3$`, impossible,
+      String.raw`$\left(-\frac{10x}{y^2}\right)^3$`,
+      String.raw`$\left(-\frac{p^2}{3q^3}\right)^3$`, impossible]), 'correct',
+    'a,b,d,e expand exactly. c is negative for every allowedx, so cannot be a real square; its coefficient-25 is not a rational cube. f coefficient1/6 is neither a rational square nor cube because its2- and3-adic denominator exponents are-1. Thus c/f have no base in the explicitly restricted rational-coefficient integer-exponent monomial class. Real-coefficient root extensions exist and are retained internally; this is not an absolute impossibility claim.'),
+  ],
+  'Recognize six square/cube representations in an explicitly qualified base class.',
+  'The complete six-line unit preserves inverse exponent and coefficient reasoning. The rational-coefficient monomial base restriction is new and visible, not attributed to the original unqualified wording; real-coefficient extensions of626c/f remain in the source solution.',
+  ['Independently producing the six power representations is replaced by recognition. The visible rational-monomial restriction narrows the unqualified original task: real-coefficient cube-root/square-root representations of626c/f are not tested, and their existence is retained rather than denied.'])
+
+add('two-prime-base-power-values', '627',
+  String.raw`依次计算 $\frac{4^3\cdot3^{10}}{6^{10}}$ 与 $\frac{2^6\cdot6^{18}}{2^{25}\cdot9^9}$。哪组完整结果正确？`,
+  [
+    option(tuple(['16', '2']), 'incorrect',
+    'Prime-base conversion is correct but the quotient exponent differences are reversed. Actual exponents-4,-1 are treated as+4,+1, giving16 and2.',
+    'Subtract numerator exponents from denominator exponents and keep the reciprocal result.'),
+    option(tuple([String.raw`\frac1{16}`, String.raw`\frac12`]), 'correct',
+    '4^3=2^6 and6^10=2^10*3^10 give2^-4.6^18=2^18*3^18 and9^9=3^18 give2^(6+18-25)=2^-1.'),
+    option(tuple([String.raw`\frac1{32}`, String.raw`\frac{2187}2`]), 'incorrect',
+    'Use (u^r)^s=u^(r+s) only at nested powers produced by prime-base conversion.4^3=(2^2)^3 becomes2^5, giving2^(5-10)=1/32.9^9=(3^2)^9 becomes3^11, giving2^-1*3^(18-11)=2187/2.',
+    'Add rather than multiply exponents in converted powers of a power.'),
+  ],
+  'Evaluate both exact power quotients by common-prime-base conversion.',
+  'The paired result tests the two different cancellations without giving either result in another unit.',
+  ['Recognition does not establish independently writing both prime-base reductions.'])
+
+add('four-negative-power-comparisons', '628',
+  seed.exercises.find(row => row.number === '628').text.replace(/^628[．.]\s*/, '') +
+  '\n\n按a、b、c、d的顺序，哪组符号全部正确？',
+  [
+    option(tuple(['>', '<', '=', '=']), 'incorrect',
+    'Assume every negative base remains negative irrespective of exponent parity. Then a comparespositive0.3^16 with wronglynegative(-0.3)^16, giving>;b correctly comparesnegativeodd withpositive;<;c both sides are wronglynegative equal;d both are negative equal.',
+    'Retain the sign of a negative base even under an even exponent.'),
+    option(tuple(['=', '=', '<', '<']), 'incorrect',
+    'Replace parenthesized negative bases by their magnitudes before every power while preserving unparenthesized outer minus signs. a stays=,b becomespositive/positive=,c remainsnegative/positive<,d becomesnegative/positive<.',
+    'Discard the sign of every parenthesized negative base before exponentiation.'),
+    option(tuple(['=', '<', '=', '=']), 'incorrect',
+    'Treat each unparenthesized leading minus as part of the base. In c this changes -5.6^4 to(-5.6)^4, making an incorrect equality; a,b,d keep their actual relations.',
+    'Extend the power scope to a leading minus that lies outside parentheses.'),
+    option(tuple(['=', '<', '<', '=']), 'correct',
+    'Even16 removes the negative base sign; odd21 preserves it; an unparenthesized minus remains outside the even fourth power; at odd11 both outside-minus and negative-base forms coincide.'),
+  ],
+  'Compare four exact powers distinguishing sign parity from parentheses scope.',
+  'The complete four-sign tuple couples even/odd parity with the scope of a leading minus; each required comparison differs in at least one candidate.',
+  ['Recognition does not establish independently writing all four comparison justifications.'])
+
+const widths = (count, values) =>
+  `共 $${count}$ 个；按宽度为1、2、3、4个小格分组，数量依次为 ${tuple(values)}。`
+add('all-rectangle-widths', '629',
+  '图中总共有多少个矩形？选择总数与按宽度分组的完整记录。',
+  [
+    option(widths('4', ['4', '0', '0', '0']), 'incorrect',
+    'Count only the four smallest one-cell rectangles and exclude every rectangle made from adjoining cells, yielding widths4,0,0,0 and total4.',
+    'Count only elementary cells rather than all rectangles.'),
+    option(widths('10', ['4', '3', '2', '1']), 'correct',
+    'Five vertical boundaries and two horizontal boundaries giveC(5,2)=10. Width classes have4,3,2,1 legal starting positions, summing to10.'),
+    option(widths('16', ['4', '4', '4', '4']), 'incorrect',
+    'For every width1..4 count all four cell-left starting positions, without checking whether the right edge stays inside the diagram. This gives4 per width and16 total.',
+    'Ignore the right boundary when counting legal starting positions.'),
+    option(widths('6', ['3', '2', '1', '0']), 'incorrect',
+    'Omit the far-right outer vertical boundary, leaving only four vertical boundaries and three usable cells. Width classes then3,2,1,0 sum to6.',
+    'Forget the complete outermost right boundary when selecting rectangle sides.'),
+  ],
+  'Count every rectangle, including unions of adjacent cells, from the actual complete source figure.',
+  'A total with all four width groups retains complete-boundary counting rather than cell-only recognition.',
+  ['Recognition does not establish independently enumerating or drawing every counted rectangle.'],
+  ['fig-108'])
+
+const digest = spawnSync('python3', ['.agents/skills/ld-s10y-choice/scripts/prepare.py',
+  'digest', `${root}/seed.json`], { encoding: 'utf8' })
+assert.equal(digest.status, 0, digest.stderr)
+const draft = {
+  schema: 's10y-choice-draft-v1', seed_sha256: digest.stdout.trim(),
+  new_figures: [], questions,
+  coverage: seed.exercises.map(ex => ({
+    source_number: ex.number,
+    question_ids: questions.filter(q => q.source_numbers.includes(ex.number)).map(q => q.id),
+    omitted_tasks: ex.number === '624'
+      ? ['Original624h b=0 case remains unresolved: no0^0 convention is declared. Determinate b!=0 transformations are retained, while written production is replaced by recognition.']
+      : ex.number === '626'
+        ? ['Unqualified real-coefficient root representations of626c/f are not tested by the visibly rational-monomial base restriction; both extensions are retained internally. Independent written construction is replaced by recognition.']
+        : ['Independent written simplification, comparison or rectangle enumeration is replaced by complete-record recognition.'],
+    reason: questions.filter(q => q.source_numbers.includes(ex.number))
+      .map(q => q.intent.unit_reason).join(' '),
+  })),
+}
+for (const [name, value] of [['draft.json', draft],
+  ['view.json', questions.map(q => ({ id: q.id, view: q.view }))]]) {
+  fs.writeFileSync(`${root}/${name}`, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+}
+const args = ['.agents/skills/ld-s10y-choice/scripts/validate.py', '--repo', '.',
+  '--seed', `${root}/seed.json`, '--draft', `${root}/draft.json`]
+const check = spawnSync('python3', args, { encoding: 'utf8' })
+fs.writeFileSync(`${root}/validation-result.json`, JSON.stringify({
+  executable: 'python3', args, exit_code: check.status,
+  stdout: check.stdout, stderr: check.stderr, structural_only: true,
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ questions: questions.length,
+  options: questions.reduce((n, q) => n + q.view.options.length, 0),
+  exit_code: check.status }))
+process.exitCode = check.status

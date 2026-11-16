@@ -1,0 +1,57 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+import { spawnSync } from 'node:child_process'
+
+const repo = process.cwd()
+const revision = process.argv[2] ?? 'after-patch'
+const root = '.intentfold/tickets/STEMROBIN-182/tmp/batch20-work-7a'
+const python = path.resolve('.claude/skills/ld-s10y-lesson/.venv/bin/python')
+const tests = path.resolve('.claude/skills/ld-s10y-lesson/tests')
+const modules = [
+  'test_fraction_component_support', 'test_layout', 'test_isolated_scan_streak',
+  'test_inline_fraction_row', 'test_fraction_dominated_short_digits',
+  'test_nested_fraction_scan_noise', 'test_compound_fraction_rows',
+  'test_fraction_line_spacing',
+]
+const code = [
+  'import hashlib,json,sys',
+  'from pathlib import Path',
+  'import numpy as np',
+  'from PIL import Image',
+  'sys.path.insert(0,".claude/skills/ld-s10y-lesson/tools")',
+  'import layout',
+  `p=Path("${root}/7a/pages/0041/page.png")`,
+  'before=hashlib.sha256(p.read_bytes()).hexdigest()',
+  'ink=layout.ink_mask(Image.open(p)); original=ink.copy()',
+  'xs=np.flatnonzero(ink.any(axis=0))',
+  'bands=layout.line_bands(ink,int(xs[-1]-xs[0]+1))',
+  'assert len(bands)==19,bands',
+  'assert bands[7]==(785,966),bands[7]',
+  'assert bands[9]==(1116,1249),bands[9]',
+  'assert bands[-1]==(2023,2055),bands[-1]',
+  'assert np.array_equal(ink,original)',
+  'assert hashlib.sha256(p.read_bytes()).hexdigest()==before',
+  'print(json.dumps({"status":"pass","independently_observed_expected":19,"bands":bands,"source_image_sha256":before,"input_pixels_unchanged":True}))',
+].join('\n')
+const records = []
+for (const [name, args, cwd] of [
+  ['related-layout-tests', ['-m', 'unittest', ...modules], tests],
+  ['actual-page41', ['-c', code], repo],
+]) {
+  const output = `${root}/${name}-${revision}.json`
+  assert(!fs.existsSync(output))
+  const started = new Date().toISOString()
+  const result = spawnSync(python, args, {
+    cwd, encoding: 'utf8', env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+  })
+  const record = {
+    command: [python, ...args], cwd, started, finished: new Date().toISOString(),
+    exit_code: result.status, stdout: result.stdout, stderr: result.stderr,
+    execution_count: 1, source_transcription_changes: 0,
+  }
+  fs.writeFileSync(output, JSON.stringify(record, null, 2) + '\n', { flag: 'wx' })
+  records.push({ output, exit_code: result.status })
+  console.log(JSON.stringify(record, null, 2))
+}
+assert(records.every(record => record.exit_code === 0))

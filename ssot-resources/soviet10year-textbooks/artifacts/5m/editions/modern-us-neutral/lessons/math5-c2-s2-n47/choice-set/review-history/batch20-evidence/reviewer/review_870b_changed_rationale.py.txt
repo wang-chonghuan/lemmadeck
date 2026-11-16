@@ -1,0 +1,188 @@
+import copy
+import hashlib
+import json
+from fractions import Fraction
+from pathlib import Path
+
+
+OWN = Path(__file__).resolve().parent
+AUTHOR = OWN.parent / "5m-n47"
+HISTORY = OWN / "history-before-870b-internal-rationale-repair"
+INPUTS = {}
+
+
+def load(path):
+    raw = path.read_bytes()
+    INPUTS[path] = hashlib.sha256(raw).hexdigest()
+    return json.loads(raw)
+
+
+def binding(path):
+    return {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+
+
+def digest(value):
+    raw = json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def save(path, value, mode="x"):
+    with path.open(mode, encoding="utf-8") as output:
+        json.dump(value, output, ensure_ascii=True, indent=2)
+        output.write("\n")
+
+
+draft_path = AUTHOR / "draft.json"
+draft = load(draft_path)
+assert INPUTS[draft_path] == "0285e06a560ccaf5ead04705b007c0e5fcf72dce2290f0720cc5fdf66224d6aa"
+diff_path = AUTHOR / "repair-870b-C-json-diff.json"
+receipt_path = AUTHOR / "repair-870b-C-bytehash-receipt.json"
+delta = load(diff_path)
+receipt = load(receipt_path)
+old_draft = load(HISTORY / "draft-input-preserved-current-internal-comparison.json")
+old_review = load(HISTORY / "currentreview.json")
+old_result = load(HISTORY / "final-comparison-result.json")
+history_receipt = load(HISTORY / "preservation.json")
+for record in history_receipt["records"]:
+    data = Path(record["history"]).read_bytes()
+    assert hashlib.sha256(data).hexdigest() == record["sha256"]
+    assert len(data) == record["byte_count"]
+assert (OWN / "currentreview.json").read_bytes() == (HISTORY / "currentreview.json").read_bytes()
+assert (OWN / "final-comparison-result.json").read_bytes() == (HISTORY / "final-comparison-result.json").read_bytes()
+expected_paths = {
+    "/questions/13/key/rationales/2/derivation",
+    "/questions/13/key/rationales/2/misconception",
+}
+assert len(delta["changes"]) == 2
+assert {row["path"] for row in delta["changes"]} == expected_paths
+recovered = copy.deepcopy(draft)
+for change in delta["changes"]:
+    field = change["path"].split("/")[-1]
+    target = recovered["questions"][13]["key"]["rationales"][2]
+    assert target[field] == change["after"]
+    assert old_draft["questions"][13]["key"]["rationales"][2][field] == change["before"]
+    target[field] = change["before"]
+assert recovered == old_draft
+assert digest(old_draft) == old_review["draft_sha256"]
+assert receipt["before"]["draft.json"]["byte_sha256"] == INPUTS[
+    HISTORY / "draft-input-preserved-current-internal-comparison.json"
+]
+assert receipt["after"]["draft.json"]["byte_sha256"] == INPUTS[draft_path]
+frozen_view_path = OWN / "view-input-preserved-option-position-revised.json"
+frozen_view = load(frozen_view_path)
+assert INPUTS[frozen_view_path] == "9eb96cc34cbd2303d3dd0f6bcc3175bc5caef79b1fa46cebd57fe95993e3c91f"
+assert {"questions": [{"id": q["id"], **q["view"]} for q in draft["questions"]]} == frozen_view
+
+rationale = draft["questions"][13]["key"]["rationales"][2]
+assert draft["questions"][13]["id"] == "n47-870b"
+assert rationale["option_id"] == "C" and rationale["truth"] == "incorrect"
+wrong_y = Fraction(3, 2) / Fraction(7, 9)
+wrong_k = Fraction(2, 3) / Fraction(10, 3)
+assert wrong_y == Fraction(27, 14) and wrong_k == Fraction(1, 5)
+assert wrong_y / Fraction(3, 2) == Fraction(9, 7) != Fraction(7, 9)
+assert Fraction(10, 3) / wrong_k == Fraction(50, 3) != Fraction(2, 3)
+explanation = (
+    "Actually read the revised derivation and misconception. For y the declared "
+    "exchange rewrites y/(3/2)=7/9 as (3/2)/y=7/9, giving "
+    "y=(3/2)/(7/9)=27/14. For k the declared coefficient/right-hand swap "
+    "writes (10/3)k=2/3 instead of (2/3)k=10/3, giving k=1/5. "
+    "These are exactly both displayed C values, and k is nonzero. Substitution "
+    "in the actual equations gives 9/7 rather than7/9 and50/3 rather than2/3, "
+    "so the whole alternative remains false. The misconception describes both "
+    "actual wrong operations. Exact inverse delta restores the complete prior "
+    "independently compared draft; all134 truths,44 keys and coverage are reused."
+)
+evidence_path = OWN / "870b-C-changed-rationale-check.json"
+evidence = {
+    "question_id": "n47-870b", "option_id": "C", "verdict": "pass",
+    "current_rationale": rationale, "actual_wrong_outputs": [str(wrong_y), str(wrong_k)],
+    "evidence": explanation,
+    "current_draft_binding": binding(draft_path),
+    "diff_binding": binding(diff_path), "receipt_binding": binding(receipt_path),
+    "inverse_delta_whole_draft_exact_match": True,
+    "changed_field_count": 2, "new_option_truth_reviews": 0,
+    "prior_comparison_binding": binding(HISTORY / "final-comparison-result.json"),
+    "unopened_author_source_or_serializer_receipt_claims_verified": False,
+    "canonical_structure_render_services_run": False,
+}
+review = copy.deepcopy(old_review)
+review["draft_sha256"] = digest(draft)
+question = next(row for row in review["question_reviews"] if row["question_id"] == "n47-870b")
+assert question["mathematics"]["verdict"] == "revise"
+question["mathematics"]["verdict"] = "pass"
+option = next(row for row in question["mathematics"]["option_checks"] if row["option_id"] == "C")
+option["evidence"] = (
+    "Frozen independent truth remains incorrect: y=27/14 yields9/7, not7/9; "
+    "k=1/5 yields50/3, not2/3. Revised author-procedure comparison: " + explanation
+)
+assert review["outcome"] == "blocked"
+assert [r["source_number"] for r in review["source_reviews"] if r["coverage"]["verdict"] != "pass"] == ["882"]
+assert all(q["mathematics"]["verdict"] == "pass" for q in review["question_reviews"])
+
+report = copy.deepcopy(old_result)
+compare = next(row for row in report["question_comparisons"] if row["question_id"] == "n47-870b")
+check = next(row for row in compare["option_rationale_checks"] if row["option_id"] == "C")
+check["current_author_rationale"] = rationale
+for field in ("declared_derivation_check", "actual_declared_wrong_procedure_check"):
+    check[field]["verdict"] = "pass"
+    check[field]["evidence"] = explanation
+check["actual_declared_wrong_procedure_check"]["reproduces_entire_false_alternative_or_wrong_method_claim"] = True
+check["verdict"] = "pass"
+compare["mathematics_verdict"] = "pass"
+report["schema"] = "independent-changed-rationale-final-comparison-v1"
+report["scope"] = "Authorized current draft and two-field870b C internal delta/receipt only; actually check changed wrong procedure, reuse remainder by exact whole-draft inverse identity. No repeat of134 option mathematics."
+report["current_draft_binding"] = binding(draft_path)
+snapshot = OWN / "draft-input-preserved-after-870b-rationale-repair.json"
+report["current_draft_preserved_binding"] = {"path": str(snapshot), "sha256": INPUTS[draft_path]}
+report["standard_snapshot_digests"]["current_draft_sha256"] = digest(draft)
+report["prior_review_and_comparison_preserved"] = {
+    "currentreview": binding(HISTORY / "currentreview.json"),
+    "final_comparison": binding(HISTORY / "final-comparison-result.json"),
+    "preservation": binding(HISTORY / "preservation.json"),
+}
+report["previous_stage_input_bindings"] = report.pop("current_stage_input_bindings")
+report["current_stage_input_bindings"] = [binding(path) for path in INPUTS]
+report["independent_manual_comparison_evidence_binding"] = binding(HISTORY / "internal-comparison-evidence.json")
+report["changed_rationale_evidence_binding"] = {"path": str(evidence_path)}
+report["changed_rationale_inverse_delta_proof"] = {
+    "verdict": "pass", "whole_draft_exactly_restored": True,
+    "unchanged_truths_reused": 134, "unchanged_complete_keys_reused": 44,
+    "unchanged_coverage_rows_reused": 34, "new_option_truth_reviews": 0,
+    "changed_internal_rationale_checks": 1,
+}
+report["counts"].update({
+    "declared_derivations_pass": 134, "declared_derivations_revise": 0,
+    "declared_wrong_procedures_pass": 88, "declared_wrong_procedures_revise": 0,
+    "question_internal_comparison_pass": 44, "question_internal_comparison_revise": 0,
+    "new_option_truth_reviews": 0, "changed_internal_rationale_checks": 1,
+})
+report["complete_current_key_and_all_rationales_outcome"] = "pass"
+report["nonblocked_checks_all_pass"] = True
+report["resolved_findings"] = [
+    {"original_finding": row, "current_verdict": "pass", "evidence": explanation}
+    for row in report["findings"] if row.get("verdict") == "revise"
+]
+report["findings"] = [row for row in report["findings"] if row.get("verdict") == "blocked"]
+report["required_narrow_repairs"] = []
+report["handoff"] = "All nonblocked checks pass; new870b C actual wrong program generates27/14,1/5. Entire prior draft restored by inverse two-field delta, reusing134 truths/44 keys/coverage. Only882 original convention remains blocked; no canonical tool or source approval."
+report["recording_script_binding"] = binding(Path(__file__).resolve())
+assert not (OWN / "review.json").exists() and not snapshot.exists() and not evidence_path.exists()
+for path, value in INPUTS.items():
+    assert binding(path)["sha256"] == value
+with snapshot.open("xb") as output:
+    output.write(draft_path.read_bytes())
+save(evidence_path, evidence)
+save(OWN / "review.json", review)
+report["standard_review_binding"] = binding(OWN / "review.json")
+report["canonical_review_binding"] = report["standard_review_binding"]
+report["changed_rationale_evidence_binding"] = binding(evidence_path)
+save(OWN / "final-comparison-result.json", report, "w")
+for path, value in INPUTS.items():
+    assert binding(path)["sha256"] == value
+print(json.dumps({
+    "review": binding(OWN / "review.json"),
+    "final_comparison": binding(OWN / "final-comparison-result.json"),
+    "draft_sha256": review["draft_sha256"],
+    "nonblocked_checks_all_pass": True, "only_source_blocker": "882",
+    "counts": report["counts"],
+}))

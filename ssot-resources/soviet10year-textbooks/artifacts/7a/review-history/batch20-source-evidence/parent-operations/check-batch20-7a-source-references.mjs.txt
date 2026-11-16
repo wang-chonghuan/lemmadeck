@@ -1,0 +1,79 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { execFileSync } from 'node:child_process'
+
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const resultName = process.argv[2] ?? 'batch20-7a-source-reference-check.json'
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/7a'
+const evidence = `${root}/review-history/batch20-source-evidence`
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const failures = []
+const source = read(`${evidence}/parent-source-review.json`)
+const retained = read(`${evidence}/retention.json`)
+const bindings = read(`${evidence}/choice-trace-rebinding.json`)
+const bindingFiles = bindings.records.flatMap(row =>
+  Object.keys(row.after).map(name => `${row.snapshot_root}/${name}.json`))
+const canonicalDigests = JSON.parse(execFileSync('python3', ['-c', [
+  'import hashlib, json, sys',
+  'def digest(file):',
+  '    with open(file) as stream: value = json.load(stream)',
+  '    encoded = json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":"))',
+  '    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()',
+  'print(json.dumps({file: digest(file) for file in sys.argv[1:]}))',
+].join('\n'), ...bindingFiles], { encoding: 'utf8' }))
+const files = new Set(source.promoted.map(row => row.destination))
+let hashChecks = 0
+function compare(file, expected, canonical = false) {
+  const actual = fs.existsSync(file) ? (canonical ? canonicalDigests[file] : hash(file)) : null
+  if (actual !== expected) failures.push({ file, expected, actual })
+  hashChecks++
+}
+source.promoted.forEach(row => compare(row.destination, row.sha256))
+Object.entries(retained.retained).forEach(([relative, row]) =>
+  compare(`${evidence}/${relative}`, row.retained_bytes_sha256))
+for (const row of bindings.records) {
+  for (const [name, expected] of Object.entries(row.after)) {
+    const file = `${row.snapshot_root}/${name}.json`
+    compare(file, expected, true)
+    files.add(file)
+  }
+  for (const change of row.trace_changes) compare(change.path, change.after)
+}
+for (const name of ['parent-source-review.json', 'retention.json', 'choice-trace-rebinding.json']) {
+  files.add(`${evidence}/${name}`)
+}
+function inspect(value, file, pointer = '') {
+  if (Array.isArray(value)) return value.forEach((child, i) => inspect(child, file, `${pointer}/${i}`))
+  if (value && typeof value === 'object') return Object.entries(value)
+    .forEach(([key, child]) => inspect(child, file, `${pointer}/${key}`))
+  if (typeof value !== 'string' || value.startsWith('Historical ') ||
+      value.startsWith('Executed command:') || pointer.endsWith('/executed_command')) return
+  const normalized = value.startsWith(process.cwd() + '/')
+    ? value.slice(process.cwd().length + 1) : value
+  if (normalized.startsWith(scratch + '/') || normalized.startsWith('.tmp/') ||
+      normalized.includes('/.tmp/')) failures.push({ file, pointer, scratch_dependency: value })
+  if (normalized.startsWith('ssot-resources/') && !fs.existsSync(normalized)) {
+    failures.push({ file, pointer, missing_retained_path: value })
+  }
+}
+let jsonChecks = 0
+for (const file of files) {
+  if (!file.endsWith('.json')) continue
+  inspect(read(file), file)
+  jsonChecks++
+}
+const result = {
+  status: failures.length ? 'fail' : 'pass',
+  scope: '66 promoted RAW files, retained source evidence and four existing choice trace rebindings only.',
+  checked_active_json_files: jsonChecks,
+  retained_or_promoted_hash_checks: hashChecks,
+  semantic_canonical_display_or_pipeline_reruns: 0,
+  failures,
+}
+fs.writeFileSync(`${scratch}/${resultName}`,
+  JSON.stringify(result, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify(result, null, 2))
+assert.equal(failures.length, 0)

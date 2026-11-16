@@ -1,0 +1,1465 @@
+{
+  "status": "in_memory_proposal_only_not_shared_code_not_finalize",
+  "proposal_single_source": "def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool:\n    \"\"\"Distinguish tall inline fractions from two full text rows.\"\"\"\n    band = ink[a:b + 1].copy()\n    height = band.shape[0]\n    rules = []\n    components, _ = ndimage.label(band)\n    for bounds in ndimage.find_objects(components):\n        if bounds is None:\n            continue\n        rows, columns = bounds\n        if (\n            columns.stop - columns.start >= 0.7 * line_h\n            and rows.stop - rows.start <= 0.2 * line_h\n            and 0.3 * height <= (rows.start + rows.stop) / 2 <= 0.7 * height\n        ):\n            rules.append((columns.start, columns.stop - 1))\n    horizontal = ndimage.binary_opening(\n        band, structure=np.ones((1, max(2, int(0.7 * line_h))), dtype=bool)\n    )\n    rule_components, _ = ndimage.label(horizontal)\n    for bounds in ndimage.find_objects(rule_components):\n        if bounds is None:\n            continue\n        rows, columns = bounds\n        if (\n            rows.stop - rows.start <= 0.25 * line_h\n            and (\n                0.3 * height <= (rows.start + rows.stop) / 2 <= 0.7 * height\n                # A nested denominator moves its long outer rule above centre.\n                or height > 3 * line_h\n                and columns.stop - columns.start >= 2 * line_h\n                and 0.2 * height <= (rows.start + rows.stop) / 2 <= 0.8 * height\n            )\n        ):\n            rules.append((columns.start, columns.stop - 1))\n    if not rules:\n        return False\n    for left, right in rules:\n        margin = int(0.5 * line_h)\n        band[:, max(0, left - margin):min(band.shape[1], right + margin + 1)] = False\n    components, _ = ndimage.label(band)\n    for component_id, bounds in enumerate(ndimage.find_objects(components), 1):\n        if bounds is None:\n            continue\n        rows, columns = bounds\n        if (\n            rows.stop - rows.start < 0.6 * line_h\n            or rows.stop - rows.start > 1.8 * line_h\n            and columns.stop - columns.start < 0.6 * line_h\n        ):\n            region = band[bounds]\n            region[components[bounds] == component_id] = False\n    counts = band.sum(axis=1)\n    remaining = np.flatnonzero(counts > max(8, 0.25 * counts.max()))\n    return not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h\n",
+  "proposal_across_source": "def _fraction_across_split(\n    ink: np.ndarray, a: int, split: int, b: int, glyph_h: float\n) -> bool:\n    \"\"\"Recognize an outer rule bundled with its denominator projection.\"\"\"\n    band = ink[a:b + 1]\n    labels, _ = ndimage.label(band)\n    boxes = [bounds for bounds in ndimage.find_objects(labels) if bounds is not None]\n    glyphs = [\n        (rows, columns) for rows, columns in boxes\n        if rows.stop - rows.start >= 0.6 * glyph_h\n        and columns.stop - columns.start >= 0.1 * glyph_h\n    ]\n    supported = []\n    for rows, columns in boxes:\n        centre = a + (rows.start + rows.stop) / 2\n        if not (\n            rows.stop - rows.start <= 0.2 * glyph_h\n            and columns.stop - columns.start >= 2 * glyph_h\n            and abs(centre - split) <= 0.5 * glyph_h\n        ):\n            continue\n        contained = [\n            (top, side) for top, side in glyphs\n            if columns.start <= (side.start + side.stop) / 2 < columns.stop\n        ]\n        if (\n            any(top.stop <= rows.start and a + top.start < split for top, _ in contained)\n            and any(top.start >= rows.stop for top, _ in contained)\n        ):\n            supported.append((rows, columns))\n    if not supported:\n        return False\n    # Fraction columns may be tall; unrelated shorter wrapped rows must survive.\n    for rows, columns in glyphs:\n        centre_x = (columns.start + columns.stop) / 2\n        centre_y = (rows.start + rows.stop) / 2\n        if not any(\n            rule_columns.start - 0.15 * glyph_h <= centre_x\n            <= rule_columns.stop + 0.15 * glyph_h\n            or abs(centre_y - (rule_rows.start + rule_rows.stop) / 2) <= 0.9 * glyph_h\n            for rule_rows, rule_columns in supported\n        ):\n            return False\n    return _single_fraction_row(ink, a, b, glyph_h)\n",
+  "cases": [
+    {
+      "name": "full_actual41_all_19_rows_including_footer",
+      "expected": 19,
+      "selection_y": [
+        0,
+        2288
+      ],
+      "source_page": 41,
+      "observation_box": [
+        0,
+        0,
+        1504,
+        2289
+      ],
+      "expected_basis": "Independently observed printed rows, not counter output",
+      "baseline": [
+        [
+          225,
+          263
+        ],
+        [
+          299,
+          337
+        ],
+        [
+          375,
+          416
+        ],
+        [
+          445,
+          487
+        ],
+        [
+          586,
+          628
+        ],
+        [
+          652,
+          691
+        ],
+        [
+          717,
+          758
+        ],
+        [
+          785,
+          845
+        ],
+        [
+          846,
+          905
+        ],
+        [
+          906,
+          966
+        ],
+        [
+          1003,
+          1084
+        ],
+        [
+          1116,
+          1216
+        ],
+        [
+          1219,
+          1249
+        ],
+        [
+          1297,
+          1338
+        ],
+        [
+          1368,
+          1455
+        ],
+        [
+          1499,
+          1588
+        ],
+        [
+          1619,
+          1662
+        ],
+        [
+          1695,
+          1734
+        ],
+        [
+          1763,
+          1802
+        ],
+        [
+          1827,
+          1865
+        ],
+        [
+          1896,
+          1978
+        ],
+        [
+          2023,
+          2055
+        ]
+      ],
+      "baseline_count": 22,
+      "proposal": [
+        [
+          225,
+          263
+        ],
+        [
+          299,
+          337
+        ],
+        [
+          375,
+          416
+        ],
+        [
+          445,
+          487
+        ],
+        [
+          586,
+          628
+        ],
+        [
+          652,
+          691
+        ],
+        [
+          717,
+          758
+        ],
+        [
+          785,
+          966
+        ],
+        [
+          1003,
+          1084
+        ],
+        [
+          1116,
+          1249
+        ],
+        [
+          1297,
+          1338
+        ],
+        [
+          1368,
+          1455
+        ],
+        [
+          1499,
+          1588
+        ],
+        [
+          1619,
+          1662
+        ],
+        [
+          1695,
+          1734
+        ],
+        [
+          1763,
+          1802
+        ],
+        [
+          1827,
+          1865
+        ],
+        [
+          1896,
+          1978
+        ],
+        [
+          2023,
+          2055
+        ]
+      ],
+      "proposal_count": 19,
+      "proposal_pass": true
+    },
+    {
+      "name": "actual98_ab_shared_row",
+      "expected": 1,
+      "selection_y": [
+        775,
+        979
+      ],
+      "source_page": 41,
+      "observation_box": [
+        0,
+        775,
+        1504,
+        980
+      ],
+      "expected_basis": "Independently observed printed rows, not counter output",
+      "baseline": [
+        [
+          785,
+          845
+        ],
+        [
+          846,
+          905
+        ],
+        [
+          906,
+          966
+        ]
+      ],
+      "baseline_count": 3,
+      "proposal": [
+        [
+          785,
+          966
+        ]
+      ],
+      "proposal_count": 1,
+      "proposal_pass": true
+    },
+    {
+      "name": "actual98_g_nested_fraction_row",
+      "expected": 1,
+      "selection_y": [
+        1100,
+        1259
+      ],
+      "source_page": 41,
+      "observation_box": [
+        0,
+        1100,
+        1504,
+        1260
+      ],
+      "expected_basis": "Independently observed printed rows, not counter output",
+      "baseline": [
+        [
+          1116,
+          1216
+        ],
+        [
+          1219,
+          1249
+        ]
+      ],
+      "baseline_count": 2,
+      "proposal": [
+        [
+          1116,
+          1249
+        ]
+      ],
+      "proposal_count": 1,
+      "proposal_pass": true
+    },
+    {
+      "name": "actual98_v_ordinary_fraction_control",
+      "expected": 1,
+      "selection_y": [
+        990,
+        1094
+      ],
+      "source_page": 41,
+      "observation_box": [
+        0,
+        990,
+        1504,
+        1095
+      ],
+      "expected_basis": "Independently observed printed rows, not counter output",
+      "baseline": [
+        [
+          1003,
+          1084
+        ]
+      ],
+      "baseline_count": 1,
+      "proposal": [
+        [
+          1003,
+          1084
+        ]
+      ],
+      "proposal_count": 1,
+      "proposal_pass": true
+    },
+    {
+      "name": "actual99_two_distinct_fraction_rows",
+      "expected": 2,
+      "selection_y": [
+        1350,
+        1599
+      ],
+      "source_page": 41,
+      "observation_box": [
+        0,
+        1350,
+        1504,
+        1600
+      ],
+      "expected_basis": "Independently observed printed rows, not counter output",
+      "baseline": [
+        [
+          1368,
+          1455
+        ],
+        [
+          1499,
+          1588
+        ]
+      ],
+      "baseline_count": 2,
+      "proposal": [
+        [
+          1368,
+          1455
+        ],
+        [
+          1499,
+          1588
+        ]
+      ],
+      "proposal_count": 2,
+      "proposal_pass": true
+    },
+    {
+      "name": "actual98_three_distinct_fraction_rows",
+      "expected": 3,
+      "selection_y": [
+        775,
+        1259
+      ],
+      "source_page": 41,
+      "observation_box": [
+        0,
+        775,
+        1504,
+        1260
+      ],
+      "expected_basis": "Independently observed printed rows, not counter output",
+      "baseline": [
+        [
+          785,
+          845
+        ],
+        [
+          846,
+          905
+        ],
+        [
+          906,
+          966
+        ],
+        [
+          1003,
+          1084
+        ],
+        [
+          1116,
+          1216
+        ],
+        [
+          1219,
+          1249
+        ]
+      ],
+      "baseline_count": 6,
+      "proposal": [
+        [
+          785,
+          966
+        ],
+        [
+          1003,
+          1084
+        ],
+        [
+          1116,
+          1249
+        ]
+      ],
+      "proposal_count": 3,
+      "proposal_pass": true
+    },
+    {
+      "name": "actual98_stem_and_ab_row_remain_two",
+      "expected": 2,
+      "selection_y": [
+        700,
+        979
+      ],
+      "source_page": 41,
+      "observation_box": [
+        0,
+        700,
+        1504,
+        980
+      ],
+      "expected_basis": "Independently observed printed rows, not counter output",
+      "baseline": [
+        [
+          717,
+          758
+        ],
+        [
+          785,
+          845
+        ],
+        [
+          846,
+          905
+        ],
+        [
+          906,
+          966
+        ]
+      ],
+      "baseline_count": 4,
+      "proposal": [
+        [
+          717,
+          758
+        ],
+        [
+          785,
+          966
+        ]
+      ],
+      "proposal_count": 2,
+      "proposal_pass": true
+    },
+    {
+      "name": "actual41_two_prose_rows",
+      "expected": 2,
+      "selection_y": [
+        575,
+        701
+      ],
+      "source_page": 41,
+      "observation_box": [
+        0,
+        575,
+        1504,
+        702
+      ],
+      "expected_basis": "Independently observed printed rows, not counter output",
+      "baseline": [
+        [
+          586,
+          628
+        ],
+        [
+          652,
+          691
+        ]
+      ],
+      "baseline_count": 2,
+      "proposal": [
+        [
+          586,
+          628
+        ],
+        [
+          652,
+          691
+        ]
+      ],
+      "proposal_count": 2,
+      "proposal_pass": true
+    },
+    {
+      "name": "actual41_footer_remains_one",
+      "expected": 1,
+      "selection_y": [
+        2000,
+        2079
+      ],
+      "source_page": 41,
+      "observation_box": [
+        0,
+        2000,
+        1504,
+        2080
+      ],
+      "expected_basis": "Independently observed printed rows, not counter output",
+      "baseline": [
+        [
+          2023,
+          2055
+        ]
+      ],
+      "baseline_count": 1,
+      "proposal": [
+        [
+          2023,
+          2055
+        ]
+      ],
+      "proposal_count": 1,
+      "proposal_pass": true
+    },
+    {
+      "name": "actual40_brace_system_two_rows",
+      "expected": 2,
+      "selection_y": [
+        935,
+        1049
+      ],
+      "source_page": 40,
+      "observation_box": [
+        470,
+        935,
+        890,
+        1050
+      ],
+      "expected_basis": "Independently observed printed rows, not counter output",
+      "baseline": [
+        [
+          938,
+          970
+        ],
+        [
+          1004,
+          1037
+        ]
+      ],
+      "baseline_count": 2,
+      "proposal": [
+        [
+          938,
+          970
+        ],
+        [
+          1004,
+          1037
+        ]
+      ],
+      "proposal_count": 2,
+      "proposal_pass": true
+    },
+    {
+      "name": "synthetic_rule_between_two_full_text_rows",
+      "expected": 2,
+      "expected_basis": "Two authored glyph rows separated by unsupported horizontal rule",
+      "baseline": [
+        [
+          25,
+          52
+        ],
+        [
+          130,
+          157
+        ]
+      ],
+      "baseline_count": 2,
+      "proposal": [
+        [
+          25,
+          52
+        ],
+        [
+          130,
+          157
+        ]
+      ],
+      "proposal_count": 2,
+      "proposal_pass": true
+    }
+  ],
+  "helpers": [
+    {
+      "name": "actual_ab",
+      "y": [
+        785,
+        966
+      ],
+      "glyph_h": 36,
+      "expected_single": true,
+      "baseline_single": false,
+      "proposal_single": true,
+      "baseline_ink_decision": {
+        "return": false,
+        "rules": [
+          [
+            348,
+            557
+          ],
+          [
+            558,
+            689
+          ],
+          [
+            824,
+            1249
+          ],
+          [
+            348,
+            557
+          ],
+          [
+            558,
+            689
+          ],
+          [
+            824,
+            1249
+          ]
+        ],
+        "remaining_y": [
+          860,
+          965
+        ],
+        "remaining_span": 106
+      },
+      "proposal_ink_decision": {
+        "return": true,
+        "rules": [
+          [
+            348,
+            557
+          ],
+          [
+            558,
+            689
+          ],
+          [
+            824,
+            1249
+          ],
+          [
+            348,
+            557
+          ],
+          [
+            558,
+            689
+          ],
+          [
+            824,
+            1249
+          ]
+        ],
+        "remaining_y": [
+          860,
+          888
+        ],
+        "remaining_span": 29
+      },
+      "proposal_pass": true
+    },
+    {
+      "name": "actual_g",
+      "y": [
+        1116,
+        1249
+      ],
+      "glyph_h": 36,
+      "expected_single": true,
+      "baseline_single": false,
+      "proposal_single": true,
+      "baseline_ink_decision": {
+        "return": false,
+        "rules": [
+          [
+            400,
+            439
+          ],
+          [
+            485,
+            524
+          ],
+          [
+            658,
+            699
+          ],
+          [
+            379,
+            700
+          ],
+          [
+            485,
+            524
+          ],
+          [
+            400,
+            439
+          ],
+          [
+            658,
+            699
+          ],
+          [
+            379,
+            700
+          ]
+        ],
+        "remaining_y": [
+          1118,
+          1216
+        ],
+        "remaining_span": 99
+      },
+      "proposal_ink_decision": {
+        "return": true,
+        "rules": [
+          [
+            400,
+            439
+          ],
+          [
+            485,
+            524
+          ],
+          [
+            658,
+            699
+          ],
+          [
+            379,
+            700
+          ],
+          [
+            485,
+            524
+          ],
+          [
+            400,
+            439
+          ],
+          [
+            658,
+            699
+          ],
+          [
+            379,
+            700
+          ]
+        ],
+        "remaining_y": [],
+        "remaining_span": 0
+      },
+      "split": 1219,
+      "baseline_across": false,
+      "proposal_across": true,
+      "proposal_pass": true
+    },
+    {
+      "name": "actual_ab_plus_v",
+      "y": [
+        785,
+        1084
+      ],
+      "glyph_h": 36,
+      "expected_single": false,
+      "baseline_single": false,
+      "proposal_single": false,
+      "baseline_ink_decision": {
+        "return": false,
+        "rules": [
+          [
+            824,
+            1249
+          ],
+          [
+            967,
+            1007
+          ],
+          [
+            348,
+            557
+          ],
+          [
+            558,
+            689
+          ],
+          [
+            824,
+            1249
+          ],
+          [
+            967,
+            1007
+          ]
+        ],
+        "remaining_y": [
+          864,
+          1082
+        ],
+        "remaining_span": 219
+      },
+      "proposal_ink_decision": {
+        "return": false,
+        "rules": [
+          [
+            824,
+            1249
+          ],
+          [
+            967,
+            1007
+          ],
+          [
+            348,
+            557
+          ],
+          [
+            558,
+            689
+          ],
+          [
+            824,
+            1249
+          ],
+          [
+            967,
+            1007
+          ]
+        ],
+        "remaining_y": [
+          860,
+          1083
+        ],
+        "remaining_span": 224
+      },
+      "proposal_pass": true
+    },
+    {
+      "name": "actual_v_plus_g",
+      "y": [
+        1003,
+        1249
+      ],
+      "glyph_h": 36,
+      "expected_single": false,
+      "baseline_single": false,
+      "proposal_single": false,
+      "baseline_ink_decision": {
+        "return": false,
+        "rules": [
+          [
+            400,
+            439
+          ],
+          [
+            485,
+            524
+          ],
+          [
+            658,
+            699
+          ],
+          [
+            485,
+            524
+          ],
+          [
+            400,
+            439
+          ],
+          [
+            658,
+            699
+          ]
+        ],
+        "remaining_y": [
+          1007,
+          1246
+        ],
+        "remaining_span": 240
+      },
+      "proposal_ink_decision": {
+        "return": false,
+        "rules": [
+          [
+            400,
+            439
+          ],
+          [
+            485,
+            524
+          ],
+          [
+            658,
+            699
+          ],
+          [
+            485,
+            524
+          ],
+          [
+            400,
+            439
+          ],
+          [
+            658,
+            699
+          ]
+        ],
+        "remaining_y": [
+          1005,
+          1247
+        ],
+        "remaining_span": 243
+      },
+      "split": 1116,
+      "baseline_across": false,
+      "proposal_across": false,
+      "proposal_pass": true
+    },
+    {
+      "name": "actual99_two_rows",
+      "y": [
+        1368,
+        1588
+      ],
+      "glyph_h": 36,
+      "expected_single": false,
+      "baseline_single": false,
+      "proposal_single": false,
+      "baseline_ink_decision": {
+        "return": false,
+        "rules": [
+          [
+            389,
+            466
+          ],
+          [
+            962,
+            1196
+          ],
+          [
+            661,
+            748
+          ]
+        ],
+        "remaining_y": [
+          1395,
+          1554
+        ],
+        "remaining_span": 160
+      },
+      "proposal_ink_decision": {
+        "return": false,
+        "rules": [
+          [
+            389,
+            466
+          ],
+          [
+            962,
+            1196
+          ],
+          [
+            661,
+            748
+          ]
+        ],
+        "remaining_y": [
+          1390,
+          1553
+        ],
+        "remaining_span": 164
+      },
+      "split": 1499,
+      "baseline_across": false,
+      "proposal_across": false,
+      "proposal_pass": true
+    },
+    {
+      "name": "actual_v_ordinary_fraction",
+      "y": [
+        1003,
+        1084
+      ],
+      "glyph_h": 36,
+      "expected_single": true,
+      "baseline_single": true,
+      "proposal_single": true,
+      "baseline_ink_decision": {
+        "return": true,
+        "rules": [
+          [
+            433,
+            749
+          ],
+          [
+            757,
+            799
+          ],
+          [
+            374,
+            432
+          ],
+          [
+            433,
+            749
+          ],
+          [
+            757,
+            799
+          ],
+          [
+            374,
+            432
+          ]
+        ],
+        "remaining_y": [
+          1039,
+          1056
+        ],
+        "remaining_span": 18
+      },
+      "proposal_ink_decision": {
+        "return": true,
+        "rules": [
+          [
+            433,
+            749
+          ],
+          [
+            757,
+            799
+          ],
+          [
+            374,
+            432
+          ],
+          [
+            433,
+            749
+          ],
+          [
+            757,
+            799
+          ],
+          [
+            374,
+            432
+          ]
+        ],
+        "remaining_y": [],
+        "remaining_span": 0
+      },
+      "proposal_pass": true
+    },
+    {
+      "name": "actual_ab_scaled_1x",
+      "expected_single": true,
+      "proposal_single": true,
+      "proposal_pass": true
+    },
+    {
+      "name": "actual_ab_scaled_2x",
+      "expected_single": true,
+      "proposal_single": true,
+      "proposal_pass": true
+    },
+    {
+      "name": "actual_ab_scaled_3x",
+      "expected_single": true,
+      "proposal_single": true,
+      "proposal_pass": true
+    },
+    {
+      "name": "full_sized_unrelated_row_outside_fraction_columns",
+      "expected_single": false,
+      "proposal_single": false,
+      "proposal_pass": true
+    }
+  ],
+  "ambiguity_probe": {
+    "name": "unsupported_rule_between_two_full_text_rows",
+    "expected_full_page_count": 2,
+    "baseline_single": true,
+    "proposal_single": true,
+    "classification": "Geometrically indistinguishable from one wide fraction when presented to helper alone. Both baseline and proposal return true; line_bands still preserves two authored rows. This preexisting helper ambiguity is not an acceptance assertion."
+  },
+  "causal_ablation": [
+    {
+      "variant": "unchanged",
+      "bands": [
+        [
+          225,
+          263
+        ],
+        [
+          299,
+          337
+        ],
+        [
+          375,
+          416
+        ],
+        [
+          445,
+          487
+        ],
+        [
+          586,
+          628
+        ],
+        [
+          652,
+          691
+        ],
+        [
+          717,
+          758
+        ],
+        [
+          785,
+          845
+        ],
+        [
+          846,
+          905
+        ],
+        [
+          906,
+          966
+        ],
+        [
+          1003,
+          1084
+        ],
+        [
+          1116,
+          1216
+        ],
+        [
+          1219,
+          1249
+        ],
+        [
+          1297,
+          1338
+        ],
+        [
+          1368,
+          1455
+        ],
+        [
+          1499,
+          1588
+        ],
+        [
+          1619,
+          1662
+        ],
+        [
+          1695,
+          1734
+        ],
+        [
+          1763,
+          1802
+        ],
+        [
+          1827,
+          1865
+        ],
+        [
+          1896,
+          1978
+        ],
+        [
+          2023,
+          2055
+        ]
+      ],
+      "count": 22
+    },
+    {
+      "variant": "residual_glyph_support_only",
+      "bands": [
+        [
+          225,
+          263
+        ],
+        [
+          299,
+          337
+        ],
+        [
+          375,
+          416
+        ],
+        [
+          445,
+          487
+        ],
+        [
+          586,
+          628
+        ],
+        [
+          652,
+          691
+        ],
+        [
+          717,
+          758
+        ],
+        [
+          785,
+          966
+        ],
+        [
+          1003,
+          1084
+        ],
+        [
+          1116,
+          1216
+        ],
+        [
+          1219,
+          1249
+        ],
+        [
+          1297,
+          1338
+        ],
+        [
+          1368,
+          1455
+        ],
+        [
+          1499,
+          1588
+        ],
+        [
+          1619,
+          1662
+        ],
+        [
+          1695,
+          1734
+        ],
+        [
+          1763,
+          1802
+        ],
+        [
+          1827,
+          1865
+        ],
+        [
+          1896,
+          1978
+        ],
+        [
+          2023,
+          2055
+        ]
+      ],
+      "count": 20
+    },
+    {
+      "variant": "across_split_glyph_support_only",
+      "bands": [
+        [
+          225,
+          263
+        ],
+        [
+          299,
+          337
+        ],
+        [
+          375,
+          416
+        ],
+        [
+          445,
+          487
+        ],
+        [
+          586,
+          628
+        ],
+        [
+          652,
+          691
+        ],
+        [
+          717,
+          758
+        ],
+        [
+          785,
+          845
+        ],
+        [
+          846,
+          905
+        ],
+        [
+          906,
+          966
+        ],
+        [
+          1003,
+          1084
+        ],
+        [
+          1116,
+          1216
+        ],
+        [
+          1219,
+          1249
+        ],
+        [
+          1297,
+          1338
+        ],
+        [
+          1368,
+          1455
+        ],
+        [
+          1499,
+          1588
+        ],
+        [
+          1619,
+          1662
+        ],
+        [
+          1695,
+          1734
+        ],
+        [
+          1763,
+          1802
+        ],
+        [
+          1827,
+          1865
+        ],
+        [
+          1896,
+          1978
+        ],
+        [
+          2023,
+          2055
+        ]
+      ],
+      "count": 22
+    },
+    {
+      "variant": "both_minimal_changes",
+      "bands": [
+        [
+          225,
+          263
+        ],
+        [
+          299,
+          337
+        ],
+        [
+          375,
+          416
+        ],
+        [
+          445,
+          487
+        ],
+        [
+          586,
+          628
+        ],
+        [
+          652,
+          691
+        ],
+        [
+          717,
+          758
+        ],
+        [
+          785,
+          966
+        ],
+        [
+          1003,
+          1084
+        ],
+        [
+          1116,
+          1249
+        ],
+        [
+          1297,
+          1338
+        ],
+        [
+          1368,
+          1455
+        ],
+        [
+          1499,
+          1588
+        ],
+        [
+          1619,
+          1662
+        ],
+        [
+          1695,
+          1734
+        ],
+        [
+          1763,
+          1802
+        ],
+        [
+          1827,
+          1865
+        ],
+        [
+          1896,
+          1978
+        ],
+        [
+          2023,
+          2055
+        ]
+      ],
+      "count": 19
+    }
+  ],
+  "derived_helper_diff": "--- baseline helpers\n+++ in-memory proposed helpers\n@@ -44,7 +44,8 @@\n             continue\n         rows, columns = bounds\n         if (\n-            rows.stop - rows.start > 1.8 * line_h\n+            rows.stop - rows.start < 0.6 * line_h\n+            or rows.stop - rows.start > 1.8 * line_h\n             and columns.stop - columns.start < 0.6 * line_h\n         ):\n             region = band[bounds]\n@@ -62,7 +63,7 @@\n     boxes = [bounds for bounds in ndimage.find_objects(labels) if bounds is not None]\n     glyphs = [\n         (rows, columns) for rows, columns in boxes\n-        if rows.stop - rows.start >= 0.3 * glyph_h\n+        if rows.stop - rows.start >= 0.6 * glyph_h\n         and columns.stop - columns.start >= 0.1 * glyph_h\n     ]\n     supported = []\n",
+  "protected_hashes_before": {
+    "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.claude/skills/ld-s10y-lesson/tools/layout.py": "11990829859ef75fd2b83a6980afc809ec50ab1cb343da5e03f55212b6790bee",
+    "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/batch20-work-7a/commands.json": "09b68d873b3b7963d940a48aecfde7a2c5cafbcd82dd2a0365dd977a754f08fd",
+    "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/batch20-source-7a/7a/pages/0041/page.md": "bec530e3f9113e2c39b8c50e5d1ef5b8ff1a69c23a33ae69c5481fe9e4f6cbae",
+    "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/batch20-source-7a/7a/pages/0041/page.json": "378dd33e2b3450da746131983ed288ea1fe40fcc2cc71653db698bb61049114b",
+    "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/batch20-source-7a/7a/pages/0041/audit.json": "bdefdfed698ef09008423c69ff1a857fef5852eb7b64d852b5a33da078542b14"
+  },
+  "protected_hashes_after": {
+    "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.claude/skills/ld-s10y-lesson/tools/layout.py": "11990829859ef75fd2b83a6980afc809ec50ab1cb343da5e03f55212b6790bee",
+    "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/batch20-work-7a/commands.json": "09b68d873b3b7963d940a48aecfde7a2c5cafbcd82dd2a0365dd977a754f08fd",
+    "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/batch20-source-7a/7a/pages/0041/page.md": "bec530e3f9113e2c39b8c50e5d1ef5b8ff1a69c23a33ae69c5481fe9e4f6cbae",
+    "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/batch20-source-7a/7a/pages/0041/page.json": "378dd33e2b3450da746131983ed288ea1fe40fcc2cc71653db698bb61049114b",
+    "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/batch20-source-7a/7a/pages/0041/audit.json": "bdefdfed698ef09008423c69ff1a857fef5852eb7b64d852b5a33da078542b14"
+  },
+  "all_cases_pass": true,
+  "fixture_contract": "line_bands receives full actual page context so its normal glyph-height estimator remains valid; selected band assertions use independently observed page rows. Helper cases fix glyph_h=36 from actual page trace.",
+  "preliminary_probes": "counter-proposal-results.json and counter-proposal-results-v2.json retained unchanged. Fraction-only crops remove page-height calibration. V2 also tried an ambiguous horizontal-rule helper expectation, whose baseline already returns true. No source transcription or finalize changed."
+}

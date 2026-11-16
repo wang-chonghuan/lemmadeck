@@ -1,0 +1,32 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const work = `${scratch}/batch20-work-7a`
+const source = `${scratch}/batch20-source-7a/7a`
+const record = file => ({
+  path: file, sha256: crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex'),
+})
+const output = `${work}/parent-source-observations-42-43.json`
+assert(!fs.existsSync(output))
+const observations = [
+  [42, 'Original101 ge/de/ye closes across41/42.102 retains all six fractions,103 retains all four function/axis questions without inventing a printed graph,104 retains full-domain zero identities, and105 retains all three equivalence pairs. Every numerator/denominator, sign, coefficient and row ending matches the full actual page.'],
+  [43, '106 retains all four original fraction equations and both opposed denominators in b/c;107 retains all four signed inequalities;108 retains every forward/inverse variable request and the two requested reciprocal rearrangements. The actual n9 heading follows complete108, with only an open colon-ending introduction. N9 is partial, not a complete target.'],
+].map(([page, evidence]) => {
+  const id = String(page).padStart(4, '0')
+  return {
+    page, printed_page: page - 6, independent_printed_rows: 18,
+    source_fidelity: 'pass', actual_full_page_opened: true, evidence,
+    image: record(`${work}/7a/pages/${id}/page.png`),
+    compared_transcription: record(`${source}/pages/${id}/page.md`),
+    reused_once_finalize_record: record(`${work}/continuation-finalize-${page}.json`),
+  }
+})
+fs.writeFileSync(output, JSON.stringify({
+  status: 'pass', scope: 'Parent actual faithful source comparison42/43 only.',
+  observations, parent_source_or_command_changes: 0,
+  rawsourceclosed: false, pending: 'Object assembly/vectorization/reconciliation and scoped promotion.',
+  excluded_partial_lesson: 'n9', semantic_choice_approval: false, model_usage: null,
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ output, actual_pages: 2, source_fidelity: 'pass' }))

@@ -1,0 +1,91 @@
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image, ImageDraw
+
+
+OWN = Path(__file__).resolve().parent
+manifest_path = OWN / "supplement-capture-manifest.json"
+captures = json.loads(manifest_path.read_bytes())["captures"]
+grouped = {}
+for row in captures:
+    key = (
+        row["surface"], row["kind"],
+        row.get("item_number", row.get("question_number") or row.get("exercise_number") or 0),
+        row.get("region", "whole"),
+        row.get("index", -1),
+        row.get("endpoint", "left"),
+    )
+    grouped.setdefault(key, []).append(row)
+surface_order = {"text": 0, "exercises": 1, "choices": 2}
+kind_order = {"missing_region": 0, "figure_middle_gap": 1, "horizontal_end": 2}
+region_order = {"heading": 0, "stem": 1, "text-before-already-observed-figure": 1, "whole": 1, "options": 2, "caption": 3}
+ordered = sorted(
+    grouped,
+    key=lambda key: (surface_order[key[0]], kind_order[key[1]], key[2], region_order.get(key[3], 1), key[4]),
+)
+packs = []
+pack = []
+height = 8
+for key in ordered:
+    members = []
+    for entry in grouped[key]:
+        path = Path(entry["path"])
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == entry["sha256"]
+        image = Image.open(path).convert("RGB")
+        assert image.height <= 1700 and image.width <= 686
+        members.append((entry, image))
+    row_height = max(image.height for _, image in members) + 36
+    if pack and (height + row_height > 1900 or pack[-1][0][0] != key[0]):
+        packs.append((pack, height))
+        pack, height = [], 8
+    pack.append((key, members, row_height))
+    height += row_height
+if pack:
+    packs.append((pack, height))
+index = {
+    "supplement_manifest": str(manifest_path),
+    "supplement_manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+    "source_png_count": len(captures),
+    "montages": [],
+}
+seen = set()
+for i, (rows, height) in enumerate(packs, 1):
+    canvas = Image.new("RGB", (1076, height), "#dddddd")
+    draw = ImageDraw.Draw(canvas)
+    members = []
+    y = 32
+    for key, entries, row_height in rows:
+        for entry, image in entries:
+            assert entry["path"] not in seen
+            seen.add(entry["path"])
+            x = 8 if entry["viewport"]["width"] == 1440 else 710
+            draw.text((x, y - 22), f"{key[0]} {key[2]} {key[3]} {key[5]} / {entry['viewport']['width']}", fill="black")
+            canvas.paste(image, (x, y))
+            box = [x, y, x + image.width, y + image.height]
+            assert canvas.crop(box).tobytes() == image.tobytes()
+            members.append({
+                **entry, "dimensions": list(image.size), "montage_box": box,
+                "rgb_pixel_sha256": hashlib.sha256(image.tobytes()).hexdigest(),
+                "native_pixel_copy_verified": True,
+            })
+        y += row_height
+    path = OWN / f"supplement-{i:02d}-{rows[0][0][0]}-native-montage.png"
+    assert not path.exists()
+    canvas.save(path)
+    saved = Image.open(path).convert("RGB")
+    for member in members:
+        assert hashlib.sha256(saved.crop(member["montage_box"]).tobytes()).hexdigest() == member["rgb_pixel_sha256"]
+    index["montages"].append({
+        "path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "resized": False, "dimensions": list(canvas.size), "members": members,
+    })
+assert seen == {row["path"] for row in captures}
+with (OWN / "supplement-montage-index.json").open("x", encoding="utf-8") as output:
+    json.dump(index, output, indent=2)
+    output.write("\n")
+print(json.dumps({
+    "source_png_count": len(seen), "montage_count": len(packs),
+    "montages": [{"path": row["path"], "members": len(row["members"]), "dimensions": row["dimensions"]} for row in index["montages"]],
+}))

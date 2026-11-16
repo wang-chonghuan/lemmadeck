@@ -1,0 +1,30 @@
+diff --git a/.intentfold/tickets/STEMROBIN-182/tmp/5m-n47/history/before-option-position-permutation/author.mjs b/.intentfold/tickets/STEMROBIN-182/tmp/5m-n47/author.mjs
+index 548eb942..67b3f92d 100644
+--- a/.intentfold/tickets/STEMROBIN-182/tmp/5m-n47/history/before-option-position-permutation/author.mjs
++++ b/.intentfold/tickets/STEMROBIN-182/tmp/5m-n47/author.mjs
+@@ -1,6 +1,7 @@
+ import fs from 'node:fs'
+ import path from 'node:path'
+ import { fileURLToPath } from 'node:url'
++import { rebindOptionPositions } from './option-position-permutation.mjs'
+ 
+ const dir = path.dirname(fileURLToPath(import.meta.url))
+ const seed = JSON.parse(fs.readFileSync(path.join(dir, 'source.json'), 'utf8'))
+@@ -251,7 +252,7 @@ q('893','','single','400名学生中180人参加课外小组，每人每年资
+   c('$131.85$ 美元','(180*150+220*117)/400=52740/400=131.85.'),
+   w('$117$ 美元','150*(1-.22)=117 is the rate of nonparticipants only.','Apply the reduced rate to all400 students.'),
+ ],'One weighted-mean result retains both group counts, discount and annual dollars per student.')
+-q('894','','single','三个数依次相差0.7，算术平均数是8.9。按从第一到第三的顺序，这三个数是多少？',[
++q('894','','single','第二个数比第一个数大0.7，第三个数比第二个数也大0.7，三个数的算术平均数是8.9。按从第一到第三的顺序，这三个数是多少？',[
+   c('$8.2,\\ 8.9,\\ 9.6$','For equal spacing the mean is the middle;subtract/add.7.'),
+   w('$8.9,\\ 9.6,\\ 10.3$','Treat mean8.9 as the first value and add.7 twice.','Identify the average with the first rather than middle number.'),
+   w('$7.5,\\ 8.9,\\ 10.3$','Use1.4 as each successive difference.','Use the total first-to-third gap for each neighboring gap.'),
+@@ -267,6 +268,8 @@ q('895','b','single','计算 $[0.32674:0.34+0.3471:(12.47-3.57)]:0.01$。',[
+   w('$0.01$','1*.01=.01.','Multiply by.01 instead of divide.'),
+ ],'The second independent decimal expression retains its nested divisor and final hundredfold scaling.')
+ 
++rebindOptionPositions(questions, path.join(dir, 'option-position-permutation-plan.json'))
++
+ const draft = {
+   schema: 's10y-choice-draft-v1', seed_sha256: frozen.seed_sha256, new_figures: [], questions,
+   coverage: frozen.solutions.map(s => ({

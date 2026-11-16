@@ -1,0 +1,189 @@
+import hashlib
+import inspect
+import json
+import sys
+from pathlib import Path
+
+import numpy as np
+from PIL import Image
+from scipy import ndimage
+
+repo = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+scratch = repo / ".intentfold/tickets/STEMROBIN-182/tmp"
+work = scratch / "batch20-work-7a"
+root = scratch / "batch20-source-7a"
+sys.path.insert(0, str(repo / ".claude/skills/ld-s10y-lesson/tools"))
+import layout
+
+
+def digest(file):
+    return hashlib.sha256(file.read_bytes()).hexdigest()
+
+
+def plain(value):
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, (list, tuple, set)):
+        return [plain(item) for item in value]
+    if isinstance(value, dict):
+        return {key: plain(item) for key, item in value.items()}
+    return value
+
+
+def boxes(mask, offset=0):
+    labels, _ = ndimage.label(mask)
+    return [
+        {"x": [column.start, column.stop - 1],
+         "y": [row.start + offset, row.stop - 1 + offset],
+         "width": column.stop - column.start,
+         "height": row.stop - row.start,
+         "area": int(np.count_nonzero(labels[bounds] == index))}
+        for index, bounds in enumerate(ndimage.find_objects(labels), 1)
+        if bounds is not None
+        for row, column in [bounds]
+    ]
+
+
+protected = [
+    Path(layout.__file__),
+    work / "commands.json",
+    root / "7a/pages/0041/page.md",
+    root / "7a/pages/0041/page.json",
+    root / "7a/pages/0041/audit.json",
+    work / "7a/pages/0041/page.png",
+]
+before = {str(file): digest(file) for file in protected}
+trace = {"source": str(Path(layout.__file__)), "hashes_before": before,
+         "helper_calls": [], "merge": [], "join": [], "expand": []}
+helper_frames = {}
+cleaned = None
+function_start = {
+    name: inspect.getsourcelines(getattr(layout, name))[1]
+    for name in ["line_bands", "_single_fraction_row", "_fraction_across_split"]
+}
+
+
+def monitor(frame, event, arg):
+    global cleaned
+    if frame.f_code.co_filename != layout.__file__:
+        return monitor
+    name = frame.f_code.co_name
+    local = frame.f_locals
+    line = frame.f_lineno
+    if name == "_single_fraction_row":
+        if event == "call":
+            helper_frames[id(frame)] = {
+                "a": local["a"], "b": local["b"], "line_h": local["line_h"],
+                "caller_line": frame.f_back.f_lineno, "accepted_rules": [],
+            }
+        elif event == "line" and line in [130, 149]:
+            rows, columns = local["rows"], local["columns"]
+            helper_frames[id(frame)]["accepted_rules"].append({
+                "detector": "component" if line == 130 else "horizontal_opening",
+                "x": [columns.start, columns.stop - 1],
+                "y": [local["a"] + rows.start, local["a"] + rows.stop - 1],
+                "height": rows.stop - rows.start,
+                "width": columns.stop - columns.start,
+            })
+        elif event == "return":
+            entry = helper_frames.pop(id(frame))
+            entry["return"] = bool(arg)
+            entry["rules"] = local.get("rules", [])
+            remaining = local.get("remaining")
+            if remaining is not None:
+                entry["remaining_y"] = (
+                    [int(remaining[0]) + local["a"], int(remaining[-1]) + local["a"]]
+                    if remaining.size else []
+                )
+                entry["remaining_span"] = int(remaining[-1] - remaining[0] + 1) if remaining.size else 0
+                entry["maximum_remaining_span"] = 2 * local["line_h"]
+                entry["remaining_components"] = boxes(local["band"], local["a"])
+            trace["helper_calls"].append(plain(entry))
+    if name == "_fraction_across_split" and event == "return":
+        trace.setdefault("across_split", []).append(plain({
+            "a": local["a"], "split": local["split"], "b": local["b"],
+            "glyph_h": local["glyph_h"], "return": bool(arg),
+            "supported": [
+                {"x": [columns.start, columns.stop - 1],
+                 "y": [rows.start + local["a"], rows.stop - 1 + local["a"]]}
+                for rows, columns in local.get("supported", [])
+            ],
+            "rejecting_glyph": (
+                {"x": [local["columns"].start, local["columns"].stop - 1],
+                 "y": [local["rows"].start + local["a"],
+                       local["rows"].stop - 1 + local["a"]],
+                 "height": local["rows"].stop - local["rows"].start,
+                 "width": local["columns"].stop - local["columns"].start,
+                 "centre_x": local.get("centre_x"),
+                 "centre_y_local": local.get("centre_y")}
+                if line == 213 else None
+            ),
+        }))
+    if name == "line_bands" and event == "line":
+        if line == 355:
+            cleaned = local["ink"].copy()
+            trace["raw"] = plain(local["raw"])
+            trace["line_h"] = local["line_h"]
+            trace["glyph_h"] = local["glyph_h"]
+            trace["stacked_centres"] = plain(local["stacked_centres"])
+        if line in [387, 389] and "prev_a" in local:
+            trace["merge"].append(plain({
+                "line": line, "previous": [local["prev_a"], local["prev_b"]],
+                "next": [local["a"], local["b"]], "merge_gap": local["merge_gap"],
+                "separate_tall_rows": local["separate_tall_rows"],
+                "separate_full_text": local["separate_full_text"],
+                "row_widths": local["row_widths"],
+                "action": "merge" if line == 387 else "append",
+            }))
+        if line in [436, 440] and "prev_x" in local:
+            trace["join"].append(plain({
+                "line": line, "previous": [local["prev_a"], local["prev_b"]],
+                "next": [local["a"], local["b"]], "widths": local["widths"],
+                "heights": local["heights"], "compact_fragment": local["compact_fragment"],
+                "aligned": local["aligned"], "fraction_spill": local["fraction_spill"],
+                "separate_full_row": local["separate_full_row"],
+                "action": "join" if line == 436 else "append",
+            }))
+        if line == 447:
+            trace["joined"] = plain(local["merged"])
+            trace["fraction_starts"] = plain(local["fraction_starts"])
+        if line == 479:
+            trace["expand"].append(plain({
+                "band": [local["a"], local["b"]], "count": local["count"],
+                "typical_h": local["typical_h"], "typical_gap": local["typical_gap"],
+                "pitch": local["pitch"],
+            }))
+    return monitor
+
+
+image = Image.open(work / "7a/pages/0041/page.png")
+ink = layout.ink_mask(image)
+columns = np.flatnonzero(ink.any(axis=0))
+content_width = int(columns[-1] - columns[0] + 1)
+sys.settrace(monitor)
+try:
+    result = layout.line_bands(ink, content_width)
+finally:
+    sys.settrace(None)
+trace["result"] = result
+trace["content_width"] = content_width
+np.save(work / "page41-counting-ink.npy", cleaned)
+trace["original98_components"] = boxes(cleaned[785:1250], 785)
+trace["hashes_after"] = {str(file): digest(file) for file in protected}
+assert trace["hashes_after"] == before, "Protected file changed"
+(work / "layout41-branch-trace.json").write_text(
+    json.dumps(plain(trace), indent=2) + "\n", encoding="utf-8"
+)
+print(json.dumps({
+    "line_h": trace["line_h"], "glyph_h": trace["glyph_h"],
+    "raw98": [band for band in trace["raw"] if 780 <= band[0] <= 1250],
+    "joined98": [band for band in trace["joined"] if 780 <= band[0] <= 1250],
+    "expand98": [entry for entry in trace["expand"] if 780 <= entry["band"][0] <= 1250],
+    "helpers98": [
+        {key: value for key, value in entry.items() if key != "remaining_components"}
+        for entry in trace["helper_calls"] if 780 <= entry["a"] <= 1250
+    ],
+    "protected_unchanged": True,
+}, indent=2))

@@ -1,0 +1,87 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const scratch = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp');
+const root = path.join(scratch, 'batch20-source-7a');
+const work = path.join(scratch, 'batch20-work-7a');
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const dump = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n');
+const frozen = read(path.join(root, 'input-hashes-before.json'));
+const after = frozen.inputs.map(input => {
+  const file = path.join(repo, input.path);
+  return { ...input, current_sha256: sha(file), unchanged: sha(file) === input.sha256 };
+});
+const commands = read(path.join(work, 'commands.json'));
+const observations = [
+  [27, 'Full page and footer21 read. Original66 ends before section2/heading5. Final introductory sentence is complete; PDF28 begins a distinct example paragraph, so no open-label repair is justified. Retained page27 untouched.'],
+  [28, 'Full page and footer22 read. Implication examples and equation/inequality discussion complete. Final quoted difference statements end with a period. No figure or incomplete sentence; next page begins a separate paragraph.'],
+  [29, 'Full page and footer23 read. Equivalence definition, arrows and examples retained. Original67 starts with its stem and а) and remains open to PDF30. No figure.'],
+  [30, 'Full page and footer24 read. Original67 continues with б)/в)/г), originals68-71 complete, original72 stem ends midword and remains open. Original68 formula breaks retained with genuine wrap markers. No figure.'],
+  [31, 'Full page and footer25 read. Original72 completes; 73-75 complete. Original76 ends midword 不等 and remains open. Cyrillic labels and each horizontal printed row preserved. No figure.'],
+  [32, 'Full page and footer26 read. Original76 completes with 价. Originals77-81 complete; review group heading retained. Original82 contains first three fractions and remains open to PDF33. Graph-production prompts79-81 have no preprinted figures.'],
+  [33, 'Full page and footer27 read. Original82 fourth fraction closes before heading6. Truth-set definitions preserve interval ]-infinity,5]. Last quoted natural-number statement is part of an unfinished paragraph continued on PDF34. No figure.'],
+  [34, 'Full page and grid individually read, footer28 confirmed. Natural-number paragraph continues from33. Figure2 has A wholly inside larger B; both labels and A-subset-B retained in actual crop, caption separate. Caption shares row with sixth wrapped line; prose open/cont rejoins after caption. Exact crop inspected; no surrounding prose or caption inside it.'],
+  [35, 'Full page and footer29 read. Originals83-87 complete. Enlarged source85 inspected: actual label sequence а),б),г) preserved rather than silently renumbered. Prompts85-86 require learner-made graphics; no source figure.'],
+  [36, 'Full page and footer30 read. Review88-89 close before heading7. All five equality properties and subsequent prose retained. No figure or open paragraph.'],
+  [37, 'Full page and footer31 read. Printed equation chain1-5, property discussion, two-variable example and system definition retained as source text only. No added solving or semantic math judgments. Final system-definition sentence is complete.'],
+  [38, 'Full page and footer32 read. System uses two actual equation rows. Product(x+2)(x-3)=0, quoted OR x+3=0 or x-3=0, later prose x+2=0 or x-3=0 all preserved. Valid erratum p0038-math-1 binds p0038#3 and exact original $x+3=0$. Originals90-92 complete. No figure.'],
+  [39, 'Full page and footer33 read. Originals93-95 close before section3/heading8. Graph95 is a production prompt, not a missing figure. Fractions0/5,0/(-0.7),0/(mixed2 3/11),0/0 retained. Final zero-fraction definition remains open to PDF40.'],
+  [40, 'Full page and footer34 read. Definition continues with 和b!=0 and printed equivalence. All worked-example equations, nested denominators and two-row systems faithfully retained. Genuine formula wrap3+x!=0 recorded. Last substitution-introduction paragraph remains open to41.'],
+  [41, 'Full page and footer35 read. Printed substitution statements and source answer retained, not newly authored solutions. Originals96-100 complete;101 remains open. Nested fractions98 and printed two-column99 order retained without simplification. Independent visual count19 conflicts with counter22; actual overlay attributes all three excess bands to fraction row98а)/б) and row98г). Stop; no rewrite to fit.'],
+].map(([page, observation]) => {
+  const auditPath = path.join(root, `7a/pages/${String(page).padStart(4, '0')}/audit.json`);
+  const audit = read(auditPath);
+  const frozenScan = frozen.copies.find(copy => copy.destination.endsWith(`7a/pages/${String(page).padStart(4, '0')}/page.png`));
+  return { pdf_page: page, printed_page: page - 6, observation,
+    full_source_image: frozenScan.destination, source_image_sha256: frozenScan.sha256,
+    lines_printed_counter: audit.lines_printed, lines_md: audit.lines_md,
+    audit_errors: audit.errors, finalize_in_this_run: page !== 27 };
+});
+const audit34 = read(path.join(root, '7a/pages/0034/audit.json'));
+const diagnosis = read(path.join(work, 'page41-band-diagnosis.json'));
+const status = {
+  ticket: 'STEMROBIN-182',
+  scope: 'Offline RAW source extraction only, private ticket tmp/batch20-source-7a and tmp/batch20-work-7a.',
+  status: 'stopped_for_line_counter_diagnosis',
+  rawsourceclosed: false,
+  parent_review_required: true,
+  root, work,
+  targets: frozen.targets,
+  full_actual_source_pages_opened_this_run: Array.from({ length: 15 }, (_, index) => index + 27),
+  pages_not_opened_or_authored_this_run: [42, 43],
+  finalize_attempts: commands.filter(command => command.command === 'finalize').length,
+  finalize_passes: commands.filter(command => command.command === 'finalize' && command.status === 0).length,
+  finalize_failures: commands.filter(command => command.status !== 0),
+  finalize_reruns: 0,
+  prepare_runs: 0,
+  assemble_runs: 0,
+  vectorize_runs: 0,
+  diagnosis,
+  raw_transcription_objects: {
+    n5: { id: 'alg7-c1-s2-n5', source_page_facts: [27, 33], originals: [67, 82], assembled: false },
+    n6: { id: 'alg7-c1-s2-n6', source_page_facts: [33, 36], originals: [83, 89], source_figure: 2, assembled: false },
+    n7: { id: 'alg7-c1-s2-n7', source_page_facts: [36, 39], originals: [90, 95], erratum: 'p0038-math-1', assembled: false },
+    n8: { id: 'alg7-c1-s3-n8', source_page_facts: [39, 41], originals_closed_so_far: [96, 100], original101: 'open', pending_pages: [42, 43], assembled: false },
+    n9: { id: 'alg7-c1-s3-n9', status: 'partial_boundary_only_per_inventory; not transcribed in this stopped run; never completion target' },
+  },
+  figure2: { page: 34, geometry: audit34.figures, png_sha256: sha(path.join(work, '7a/pages/0034/figures/fig-02.png')), inspected: true, vectorized: false },
+  page27: { changed: sha(path.join(root, '7a/pages/0027/page.md')) !== frozen.copies.find(copy => copy.destination.endsWith('batch20-source-7a/7a/pages/0027/page.md')).sha256, label_repair: 'none; source does not prove same-paragraph continuity' },
+  input_preservation: { count: after.length, changed_files: after.filter(input => !input.unchanged), pass: after.every(input => input.unchanged) },
+  prohibited_operations: { durable_writes: 0, edition_or_choice_or_answer_authorship: 0, db: 0, env_reads: 0, dependency_changes: 0, model_service: 0, app: 0, promotion: 0, publication: 0, backend_rereads: 0, setup_or_freshness_or_grill: 0 },
+  next_action: 'Parent diagnoses and owns any narrowly scoped line-counter repair under original specification. Do not alter source rows or rerun page41 silently. PDF42-43 remain pending; then explicit-TOC assemble, vectorize only34, reassemble and object closure still required.',
+};
+dump(path.join(root, 'source-scope-and-status.json'), status);
+dump(path.join(root, 'full-actual-page-observations.json'), observations);
+dump(path.join(root, 'input-hashes-after.json'), after);
+const outputs = [];
+for (let page = 28; page <= 41; page++) {
+  for (const name of ['page.md', 'page.json', 'audit.json']) {
+    const file = path.join(root, `7a/pages/${String(page).padStart(4, '0')}/${name}`);
+    outputs.push({ path: path.relative(repo, file), sha256: sha(file), bytes: fs.statSync(file).size });
+  }
+}
+dump(path.join(root, 'output-hashes.json'), outputs);
+console.log(JSON.stringify({ status: status.status, rawsourceclosed: false, finalize_attempts: status.finalize_attempts, finalize_passes: status.finalize_passes, inputs_unchanged: status.input_preservation.pass, pending: [42, 43] }));

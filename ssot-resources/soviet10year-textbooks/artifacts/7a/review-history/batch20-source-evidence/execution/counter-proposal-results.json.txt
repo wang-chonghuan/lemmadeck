@@ -1,0 +1,1182 @@
+{
+  "status": "in_memory_proposal_only_not_shared_code_not_finalize",
+  "proposal_single_source": "def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool:\n    \"\"\"Distinguish tall inline fractions from two full text rows.\"\"\"\n    band = ink[a:b + 1].copy()\n    height = band.shape[0]\n    rules = []\n    components, _ = ndimage.label(band)\n    for bounds in ndimage.find_objects(components):\n        if bounds is None:\n            continue\n        rows, columns = bounds\n        if (\n            columns.stop - columns.start >= 0.7 * line_h\n            and rows.stop - rows.start <= 0.2 * line_h\n            and 0.3 * height <= (rows.start + rows.stop) / 2 <= 0.7 * height\n        ):\n            rules.append((columns.start, columns.stop - 1))\n    horizontal = ndimage.binary_opening(\n        band, structure=np.ones((1, max(2, int(0.7 * line_h))), dtype=bool)\n    )\n    rule_components, _ = ndimage.label(horizontal)\n    for bounds in ndimage.find_objects(rule_components):\n        if bounds is None:\n            continue\n        rows, columns = bounds\n        if (\n            rows.stop - rows.start <= 0.25 * line_h\n            and (\n                0.3 * height <= (rows.start + rows.stop) / 2 <= 0.7 * height\n                # A nested denominator moves its long outer rule above centre.\n                or height > 3 * line_h\n                and columns.stop - columns.start >= 2 * line_h\n                and 0.2 * height <= (rows.start + rows.stop) / 2 <= 0.8 * height\n            )\n        ):\n            rules.append((columns.start, columns.stop - 1))\n    if not rules:\n        return False\n    for left, right in rules:\n        margin = int(0.5 * line_h)\n        band[:, max(0, left - margin):min(band.shape[1], right + margin + 1)] = False\n    components, _ = ndimage.label(band)\n    for component_id, bounds in enumerate(ndimage.find_objects(components), 1):\n        if bounds is None:\n            continue\n        rows, columns = bounds\n        if (\n            rows.stop - rows.start > 1.8 * line_h\n            and columns.stop - columns.start < 0.6 * line_h\n        ):\n            region = band[bounds]\n            region[components[bounds] == component_id] = False\n    # Residual row support must come from glyph-sized components, not specks.\n    components, _ = ndimage.label(band)\n    for component_id, bounds in enumerate(ndimage.find_objects(components), 1):\n        if bounds is not None and bounds[0].stop - bounds[0].start < 0.6 * line_h:\n            region = band[bounds]\n            region[components[bounds] == component_id] = False\n    counts = band.sum(axis=1)\n    remaining = np.flatnonzero(counts > max(8, 0.25 * counts.max()))\n    return not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h\n",
+  "proposal_across_source": "def _fraction_across_split(\n    ink: np.ndarray, a: int, split: int, b: int, glyph_h: float\n) -> bool:\n    \"\"\"Recognize an outer rule bundled with its denominator projection.\"\"\"\n    band = ink[a:b + 1]\n    labels, _ = ndimage.label(band)\n    boxes = [bounds for bounds in ndimage.find_objects(labels) if bounds is not None]\n    glyphs = [\n        (rows, columns) for rows, columns in boxes\n        if rows.stop - rows.start >= 0.6 * glyph_h\n        and columns.stop - columns.start >= 0.1 * glyph_h\n    ]\n    supported = []\n    for rows, columns in boxes:\n        centre = a + (rows.start + rows.stop) / 2\n        if not (\n            rows.stop - rows.start <= 0.2 * glyph_h\n            and columns.stop - columns.start >= 2 * glyph_h\n            and abs(centre - split) <= 0.5 * glyph_h\n        ):\n            continue\n        contained = [\n            (top, side) for top, side in glyphs\n            if columns.start <= (side.start + side.stop) / 2 < columns.stop\n        ]\n        if (\n            any(top.stop <= rows.start and a + top.start < split for top, _ in contained)\n            and any(top.start >= rows.stop for top, _ in contained)\n        ):\n            supported.append((rows, columns))\n    if not supported:\n        return False\n    # Fraction columns may be tall; unrelated shorter wrapped rows must survive.\n    for rows, columns in glyphs:\n        centre_x = (columns.start + columns.stop) / 2\n        centre_y = (rows.start + rows.stop) / 2\n        if not any(\n            rule_columns.start - 0.15 * glyph_h <= centre_x\n            <= rule_columns.stop + 0.15 * glyph_h\n            or abs(centre_y - (rule_rows.start + rule_rows.stop) / 2) <= 0.9 * glyph_h\n            for rule_rows, rule_columns in supported\n        ):\n            return False\n    return _single_fraction_row(ink, a, b, glyph_h)\n",
+  "cases": [
+    {
+      "name": "full_actual41_all_19_rows_including_footer",
+      "expected": 19,
+      "source_page": 41,
+      "box": [
+        0,
+        0,
+        1504,
+        2289
+      ],
+      "expected_basis": "Independently observed printed rows, not counter output",
+      "baseline": [
+        [
+          225,
+          263
+        ],
+        [
+          299,
+          337
+        ],
+        [
+          375,
+          416
+        ],
+        [
+          445,
+          487
+        ],
+        [
+          586,
+          628
+        ],
+        [
+          652,
+          691
+        ],
+        [
+          717,
+          758
+        ],
+        [
+          785,
+          845
+        ],
+        [
+          846,
+          905
+        ],
+        [
+          906,
+          966
+        ],
+        [
+          1003,
+          1084
+        ],
+        [
+          1116,
+          1216
+        ],
+        [
+          1219,
+          1249
+        ],
+        [
+          1297,
+          1338
+        ],
+        [
+          1368,
+          1455
+        ],
+        [
+          1499,
+          1588
+        ],
+        [
+          1619,
+          1662
+        ],
+        [
+          1695,
+          1734
+        ],
+        [
+          1763,
+          1802
+        ],
+        [
+          1827,
+          1865
+        ],
+        [
+          1896,
+          1978
+        ],
+        [
+          2023,
+          2055
+        ]
+      ],
+      "baseline_count": 22,
+      "proposal": [
+        [
+          225,
+          263
+        ],
+        [
+          299,
+          337
+        ],
+        [
+          375,
+          416
+        ],
+        [
+          445,
+          487
+        ],
+        [
+          586,
+          628
+        ],
+        [
+          652,
+          691
+        ],
+        [
+          717,
+          758
+        ],
+        [
+          785,
+          966
+        ],
+        [
+          1003,
+          1084
+        ],
+        [
+          1116,
+          1249
+        ],
+        [
+          1297,
+          1338
+        ],
+        [
+          1368,
+          1455
+        ],
+        [
+          1499,
+          1588
+        ],
+        [
+          1619,
+          1662
+        ],
+        [
+          1695,
+          1734
+        ],
+        [
+          1763,
+          1802
+        ],
+        [
+          1827,
+          1865
+        ],
+        [
+          1896,
+          1978
+        ],
+        [
+          2023,
+          2055
+        ]
+      ],
+      "proposal_count": 19,
+      "proposal_pass": true
+    },
+    {
+      "name": "actual98_ab_shared_row",
+      "expected": 1,
+      "source_page": 41,
+      "box": [
+        0,
+        775,
+        1504,
+        980
+      ],
+      "expected_basis": "Independently observed printed rows, not counter output",
+      "baseline": [
+        [
+          10,
+          17
+        ],
+        [
+          18,
+          25
+        ],
+        [
+          26,
+          32
+        ],
+        [
+          33,
+          40
+        ],
+        [
+          41,
+          48
+        ],
+        [
+          49,
+          56
+        ],
+        [
+          57,
+          64
+        ],
+        [
+          65,
+          71
+        ],
+        [
+          72,
+          79
+        ],
+        [
+          80,
+          87
+        ],
+        [
+          88,
+          95
+        ],
+        [
+          96,
+          103
+        ],
+        [
+          104,
+          110
+        ],
+        [
+          111,
+          118
+        ],
+        [
+          119,
+          126
+        ],
+        [
+          127,
+          134
+        ],
+        [
+          135,
+          142
+        ],
+        [
+          143,
+          149
+        ],
+        [
+          150,
+          157
+        ],
+        [
+          158,
+          165
+        ],
+        [
+          173,
+          176
+        ],
+        [
+          178,
+          182
+        ],
+        [
+          186,
+          192
+        ]
+      ],
+      "baseline_count": 23,
+      "proposal": [
+        [
+          10,
+          17
+        ],
+        [
+          18,
+          25
+        ],
+        [
+          26,
+          32
+        ],
+        [
+          33,
+          40
+        ],
+        [
+          41,
+          48
+        ],
+        [
+          49,
+          56
+        ],
+        [
+          57,
+          64
+        ],
+        [
+          65,
+          71
+        ],
+        [
+          72,
+          79
+        ],
+        [
+          80,
+          87
+        ],
+        [
+          88,
+          95
+        ],
+        [
+          96,
+          103
+        ],
+        [
+          104,
+          110
+        ],
+        [
+          111,
+          118
+        ],
+        [
+          119,
+          126
+        ],
+        [
+          127,
+          134
+        ],
+        [
+          135,
+          142
+        ],
+        [
+          143,
+          149
+        ],
+        [
+          150,
+          157
+        ],
+        [
+          158,
+          165
+        ],
+        [
+          173,
+          176
+        ],
+        [
+          178,
+          182
+        ],
+        [
+          186,
+          192
+        ]
+      ],
+      "proposal_count": 23,
+      "proposal_pass": false
+    },
+    {
+      "name": "actual98_g_nested_fraction_row",
+      "expected": 1,
+      "source_page": 41,
+      "box": [
+        0,
+        1100,
+        1504,
+        1260
+      ],
+      "expected_basis": "Independently observed printed rows, not counter output",
+      "baseline": [
+        [
+          16,
+          116
+        ],
+        [
+          119,
+          149
+        ]
+      ],
+      "baseline_count": 2,
+      "proposal": [
+        [
+          16,
+          49
+        ],
+        [
+          50,
+          82
+        ],
+        [
+          83,
+          116
+        ],
+        [
+          119,
+          149
+        ]
+      ],
+      "proposal_count": 4,
+      "proposal_pass": false
+    },
+    {
+      "name": "actual98_v_ordinary_fraction_control",
+      "expected": 1,
+      "source_page": 41,
+      "box": [
+        0,
+        990,
+        1504,
+        1095
+      ],
+      "expected_basis": "Independently observed printed rows, not counter output",
+      "baseline": [
+        [
+          13,
+          94
+        ]
+      ],
+      "baseline_count": 1,
+      "proposal": [
+        [
+          13,
+          94
+        ]
+      ],
+      "proposal_count": 1,
+      "proposal_pass": true
+    },
+    {
+      "name": "actual99_two_distinct_fraction_rows",
+      "expected": 2,
+      "source_page": 41,
+      "box": [
+        0,
+        1350,
+        1504,
+        1600
+      ],
+      "expected_basis": "Independently observed printed rows, not counter output",
+      "baseline": [
+        [
+          17,
+          105
+        ],
+        [
+          149,
+          238
+        ]
+      ],
+      "baseline_count": 2,
+      "proposal": [
+        [
+          17,
+          105
+        ],
+        [
+          149,
+          238
+        ]
+      ],
+      "proposal_count": 2,
+      "proposal_pass": true
+    },
+    {
+      "name": "actual98_three_distinct_fraction_rows",
+      "expected": 3,
+      "source_page": 41,
+      "box": [
+        0,
+        775,
+        1504,
+        1260
+      ],
+      "expected_basis": "Independently observed printed rows, not counter output",
+      "baseline": [
+        [
+          10,
+          70
+        ],
+        [
+          71,
+          130
+        ],
+        [
+          131,
+          191
+        ],
+        [
+          228,
+          309
+        ],
+        [
+          341,
+          441
+        ],
+        [
+          444,
+          474
+        ]
+      ],
+      "baseline_count": 6,
+      "proposal": [
+        [
+          10,
+          191
+        ],
+        [
+          228,
+          309
+        ],
+        [
+          341,
+          474
+        ]
+      ],
+      "proposal_count": 3,
+      "proposal_pass": true
+    },
+    {
+      "name": "actual98_stem_and_ab_row_remain_two",
+      "expected": 2,
+      "source_page": 41,
+      "box": [
+        0,
+        700,
+        1504,
+        980
+      ],
+      "expected_basis": "Independently observed printed rows, not counter output",
+      "baseline": [
+        [
+          17,
+          24
+        ],
+        [
+          25,
+          33
+        ],
+        [
+          34,
+          41
+        ],
+        [
+          42,
+          50
+        ],
+        [
+          51,
+          58
+        ],
+        [
+          85,
+          93
+        ],
+        [
+          94,
+          101
+        ],
+        [
+          102,
+          110
+        ],
+        [
+          111,
+          119
+        ],
+        [
+          120,
+          127
+        ],
+        [
+          128,
+          136
+        ],
+        [
+          137,
+          145
+        ],
+        [
+          146,
+          153
+        ],
+        [
+          154,
+          162
+        ],
+        [
+          163,
+          171
+        ],
+        [
+          172,
+          179
+        ],
+        [
+          180,
+          188
+        ],
+        [
+          189,
+          197
+        ],
+        [
+          198,
+          205
+        ],
+        [
+          206,
+          214
+        ],
+        [
+          215,
+          223
+        ],
+        [
+          224,
+          231
+        ],
+        [
+          232,
+          240
+        ],
+        [
+          248,
+          251
+        ],
+        [
+          253,
+          257
+        ],
+        [
+          261,
+          266
+        ]
+      ],
+      "baseline_count": 26,
+      "proposal": [
+        [
+          17,
+          24
+        ],
+        [
+          25,
+          33
+        ],
+        [
+          34,
+          41
+        ],
+        [
+          42,
+          50
+        ],
+        [
+          51,
+          58
+        ],
+        [
+          85,
+          93
+        ],
+        [
+          94,
+          101
+        ],
+        [
+          102,
+          110
+        ],
+        [
+          111,
+          119
+        ],
+        [
+          120,
+          127
+        ],
+        [
+          128,
+          136
+        ],
+        [
+          137,
+          145
+        ],
+        [
+          146,
+          153
+        ],
+        [
+          154,
+          162
+        ],
+        [
+          163,
+          171
+        ],
+        [
+          172,
+          179
+        ],
+        [
+          180,
+          188
+        ],
+        [
+          189,
+          197
+        ],
+        [
+          198,
+          205
+        ],
+        [
+          206,
+          214
+        ],
+        [
+          215,
+          223
+        ],
+        [
+          224,
+          231
+        ],
+        [
+          232,
+          240
+        ],
+        [
+          248,
+          251
+        ],
+        [
+          253,
+          257
+        ],
+        [
+          261,
+          266
+        ]
+      ],
+      "proposal_count": 26,
+      "proposal_pass": false
+    },
+    {
+      "name": "actual41_two_prose_rows",
+      "expected": 2,
+      "source_page": 41,
+      "box": [
+        0,
+        575,
+        1504,
+        702
+      ],
+      "expected_basis": "Independently observed printed rows, not counter output",
+      "baseline": [
+        [
+          11,
+          53
+        ],
+        [
+          76,
+          117
+        ]
+      ],
+      "baseline_count": 2,
+      "proposal": [
+        [
+          11,
+          53
+        ],
+        [
+          76,
+          117
+        ]
+      ],
+      "proposal_count": 2,
+      "proposal_pass": true
+    },
+    {
+      "name": "actual41_footer_remains_one",
+      "expected": 1,
+      "source_page": 41,
+      "box": [
+        0,
+        2000,
+        1504,
+        2080
+      ],
+      "expected_basis": "Independently observed printed rows, not counter output",
+      "baseline": [
+        [
+          24,
+          55
+        ]
+      ],
+      "baseline_count": 1,
+      "proposal": [
+        [
+          24,
+          55
+        ]
+      ],
+      "proposal_count": 1,
+      "proposal_pass": true
+    },
+    {
+      "name": "actual40_brace_system_two_rows",
+      "expected": 2,
+      "source_page": 40,
+      "box": [
+        470,
+        935,
+        890,
+        1050
+      ],
+      "expected_basis": "Independently observed printed rows, not counter output",
+      "baseline": [
+        [
+          3,
+          35
+        ],
+        [
+          69,
+          102
+        ]
+      ],
+      "baseline_count": 2,
+      "proposal": [
+        [
+          3,
+          35
+        ],
+        [
+          69,
+          102
+        ]
+      ],
+      "proposal_count": 2,
+      "proposal_pass": true
+    },
+    {
+      "name": "synthetic_rule_between_two_full_text_rows",
+      "expected": 2,
+      "expected_basis": "Two authored glyph rows separated by unsupported horizontal rule",
+      "baseline": [
+        [
+          25,
+          52
+        ],
+        [
+          130,
+          157
+        ]
+      ],
+      "baseline_count": 2,
+      "proposal": [
+        [
+          25,
+          52
+        ],
+        [
+          130,
+          157
+        ]
+      ],
+      "proposal_count": 2,
+      "proposal_pass": true
+    },
+    {
+      "name": "synthetic_full_text_outside_fraction_columns_not_absorbed",
+      "expected": 2,
+      "expected_basis": "Actual fraction row plus separately authored full-sized text row outside its columns",
+      "baseline": [
+        [
+          10,
+          17
+        ],
+        [
+          18,
+          25
+        ],
+        [
+          26,
+          32
+        ],
+        [
+          33,
+          40
+        ],
+        [
+          41,
+          48
+        ],
+        [
+          49,
+          56
+        ],
+        [
+          57,
+          64
+        ],
+        [
+          65,
+          71
+        ],
+        [
+          72,
+          79
+        ],
+        [
+          80,
+          87
+        ],
+        [
+          88,
+          95
+        ],
+        [
+          96,
+          103
+        ],
+        [
+          104,
+          110
+        ],
+        [
+          111,
+          118
+        ],
+        [
+          119,
+          126
+        ],
+        [
+          127,
+          134
+        ],
+        [
+          135,
+          142
+        ],
+        [
+          143,
+          149
+        ],
+        [
+          150,
+          157
+        ],
+        [
+          158,
+          165
+        ],
+        [
+          173,
+          176
+        ],
+        [
+          178,
+          182
+        ],
+        [
+          186,
+          192
+        ]
+      ],
+      "baseline_count": 23,
+      "proposal": [
+        [
+          10,
+          17
+        ],
+        [
+          18,
+          25
+        ],
+        [
+          26,
+          32
+        ],
+        [
+          33,
+          40
+        ],
+        [
+          41,
+          48
+        ],
+        [
+          49,
+          56
+        ],
+        [
+          57,
+          64
+        ],
+        [
+          65,
+          71
+        ],
+        [
+          72,
+          79
+        ],
+        [
+          80,
+          87
+        ],
+        [
+          88,
+          95
+        ],
+        [
+          96,
+          103
+        ],
+        [
+          104,
+          110
+        ],
+        [
+          111,
+          118
+        ],
+        [
+          119,
+          126
+        ],
+        [
+          127,
+          134
+        ],
+        [
+          135,
+          142
+        ],
+        [
+          143,
+          149
+        ],
+        [
+          150,
+          157
+        ],
+        [
+          158,
+          165
+        ],
+        [
+          173,
+          176
+        ],
+        [
+          178,
+          182
+        ],
+        [
+          186,
+          192
+        ]
+      ],
+      "proposal_count": 23,
+      "proposal_pass": false
+    }
+  ],
+  "helpers": [
+    {
+      "name": "actual_ab",
+      "y": [
+        785,
+        966
+      ],
+      "glyph_h": 36,
+      "expected_single": true,
+      "baseline_single": false,
+      "proposal_single": true
+    },
+    {
+      "name": "actual_g",
+      "y": [
+        1116,
+        1249
+      ],
+      "glyph_h": 36,
+      "expected_single": true,
+      "baseline_single": false,
+      "proposal_single": true,
+      "split": 1219,
+      "baseline_across": false,
+      "proposal_across": true
+    },
+    {
+      "name": "actual_ab_plus_v",
+      "y": [
+        785,
+        1084
+      ],
+      "glyph_h": 36,
+      "expected_single": false,
+      "baseline_single": false,
+      "proposal_single": false
+    },
+    {
+      "name": "actual_v_plus_g",
+      "y": [
+        1003,
+        1249
+      ],
+      "glyph_h": 36,
+      "expected_single": false,
+      "baseline_single": false,
+      "proposal_single": false,
+      "split": 1116,
+      "baseline_across": false,
+      "proposal_across": false
+    },
+    {
+      "name": "actual99_two_rows",
+      "y": [
+        1368,
+        1588
+      ],
+      "glyph_h": 36,
+      "expected_single": false,
+      "baseline_single": false,
+      "proposal_single": false,
+      "split": 1499,
+      "baseline_across": false,
+      "proposal_across": false
+    }
+  ],
+  "protected_hashes_before": {
+    "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.claude/skills/ld-s10y-lesson/tools/layout.py": "11990829859ef75fd2b83a6980afc809ec50ab1cb343da5e03f55212b6790bee",
+    "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/batch20-work-7a/commands.json": "09b68d873b3b7963d940a48aecfde7a2c5cafbcd82dd2a0365dd977a754f08fd",
+    "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/batch20-source-7a/7a/pages/0041/page.md": "bec530e3f9113e2c39b8c50e5d1ef5b8ff1a69c23a33ae69c5481fe9e4f6cbae",
+    "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/batch20-source-7a/7a/pages/0041/page.json": "378dd33e2b3450da746131983ed288ea1fe40fcc2cc71653db698bb61049114b",
+    "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/batch20-source-7a/7a/pages/0041/audit.json": "bdefdfed698ef09008423c69ff1a857fef5852eb7b64d852b5a33da078542b14"
+  },
+  "protected_hashes_after": {
+    "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.claude/skills/ld-s10y-lesson/tools/layout.py": "11990829859ef75fd2b83a6980afc809ec50ab1cb343da5e03f55212b6790bee",
+    "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/batch20-work-7a/commands.json": "09b68d873b3b7963d940a48aecfde7a2c5cafbcd82dd2a0365dd977a754f08fd",
+    "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/batch20-source-7a/7a/pages/0041/page.md": "bec530e3f9113e2c39b8c50e5d1ef5b8ff1a69c23a33ae69c5481fe9e4f6cbae",
+    "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/batch20-source-7a/7a/pages/0041/page.json": "378dd33e2b3450da746131983ed288ea1fe40fcc2cc71653db698bb61049114b",
+    "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/batch20-source-7a/7a/pages/0041/audit.json": "bdefdfed698ef09008423c69ff1a857fef5852eb7b64d852b5a33da078542b14"
+  },
+  "all_cases_pass": false
+}

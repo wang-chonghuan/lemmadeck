@@ -1,0 +1,255 @@
+import ast
+import difflib
+import hashlib
+import inspect
+import json
+import sys
+from pathlib import Path
+
+import numpy as np
+from PIL import Image, ImageDraw
+from scipy import ndimage
+
+repo = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+scratch = repo / ".intentfold/tickets/STEMROBIN-182/tmp"
+work = scratch / "batch20-work-7a"
+root = scratch / "batch20-source-7a"
+sys.path.insert(0, str(repo / ".claude/skills/ld-s10y-lesson/tools"))
+import layout
+
+original_single = layout._single_fraction_row
+original_across = layout._fraction_across_split
+single_source = inspect.getsource(original_single)
+across_source = inspect.getsource(original_across)
+candidate_single_source = single_source.replace(
+    "            rows.stop - rows.start > 1.8 * line_h",
+    "            rows.stop - rows.start < 0.6 * line_h\n"
+    "            or rows.stop - rows.start > 1.8 * line_h",
+)
+assert candidate_single_source != single_source
+candidate_across_source = across_source.replace(
+    "rows.stop - rows.start >= 0.3 * glyph_h",
+    "rows.stop - rows.start >= 0.6 * glyph_h",
+)
+assert candidate_across_source != across_source
+candidate_namespace = dict(layout.__dict__)
+exec(compile(ast.parse(candidate_single_source), "<scratch-proposed-single>", "exec"), candidate_namespace)
+exec(compile(ast.parse(candidate_across_source), "<scratch-proposed-across>", "exec"), candidate_namespace)
+candidate_single = candidate_namespace["_single_fraction_row"]
+candidate_across = candidate_namespace["_fraction_across_split"]
+
+
+def digest(file):
+    return hashlib.sha256(file.read_bytes()).hexdigest()
+
+
+protected = [Path(layout.__file__), work / "commands.json",
+             work / "7a/pages/0040/page.png", work / "7a/pages/0041/page.png",
+             work / "page41-counting-ink.npy"]
+protected += [root / f"7a/pages/0041/{name}" for name in ["page.md", "page.json", "audit.json"]]
+before = {str(file): digest(file) for file in protected}
+image41 = Image.open(work / "7a/pages/0041/page.png")
+original_ink = layout.ink_mask(image41)
+cleaned = np.load(work / "page41-counting-ink.npy")
+image40 = Image.open(work / "7a/pages/0040/page.png")
+ink40 = layout.ink_mask(image40)
+cases = []
+
+
+def actual(name, box, expected, image=image41):
+    fixture = layout.ink_mask(image)
+    cases.append({"name": name, "ink": fixture, "expected": expected,
+                  "selection_y": [box[1], box[3] - 1],
+                  "source_page": 41 if image is image41 else 40, "observation_box": box,
+                  "expected_basis": "Independently observed printed rows, not counter output"})
+    return layout.ink_mask(image.crop(box))
+
+
+def count(mask):
+    columns = np.flatnonzero(mask.any(axis=0))
+    width = int(columns[-1] - columns[0] + 1) if columns.size else mask.shape[1]
+    return layout.line_bands(mask, width)
+
+
+actual("full_actual41_all_19_rows_including_footer", (0, 0, 1504, 2289), 19)
+ab = actual("actual98_ab_shared_row", (0, 775, 1504, 980), 1)
+g = actual("actual98_g_nested_fraction_row", (0, 1100, 1504, 1260), 1)
+actual("actual98_v_ordinary_fraction_control", (0, 990, 1504, 1095), 1)
+actual("actual99_two_distinct_fraction_rows", (0, 1350, 1504, 1600), 2)
+actual("actual98_three_distinct_fraction_rows", (0, 775, 1504, 1260), 3)
+actual("actual98_stem_and_ab_row_remain_two", (0, 700, 1504, 980), 2)
+actual("actual41_two_prose_rows", (0, 575, 1504, 702), 2)
+actual("actual41_footer_remains_one", (0, 2000, 1504, 2080), 1)
+# Independently visible first two-equation brace system on PDF40.
+actual("actual40_brace_system_two_rows", (470, 935, 890, 1050), 2, image40)
+
+# Synthetic negatives have explicit authored topology, not inferred expectations.
+synthetic = np.zeros((260, 600), dtype=bool)
+for y in [25, 130]:
+    for x in range(100, 440, 50):
+        synthetic[y:y + 28, x:x + 18] = True
+synthetic[90:94, 80:460] = True
+cases.append({"name": "synthetic_rule_between_two_full_text_rows",
+              "ink": synthetic, "expected": 2,
+              "expected_basis": "Two authored glyph rows separated by unsupported horizontal rule"})
+results = []
+for case in cases:
+    layout._single_fraction_row = original_single
+    layout._fraction_across_split = original_across
+    baseline = count(case["ink"])
+    layout._single_fraction_row = candidate_single
+    layout._fraction_across_split = candidate_across
+    proposed = count(case["ink"])
+    if "selection_y" in case:
+        top, bottom = case["selection_y"]
+        baseline = [band for band in baseline if band[0] <= bottom and top <= band[1]]
+        proposed = [band for band in proposed if band[0] <= bottom and top <= band[1]]
+    results.append({key: value for key, value in case.items() if key != "ink"} | {
+        "baseline": baseline, "baseline_count": len(baseline),
+        "proposal": proposed, "proposal_count": len(proposed),
+        "proposal_pass": len(proposed) == case["expected"],
+    })
+layout._single_fraction_row = original_single
+layout._fraction_across_split = original_across
+helper_results = []
+
+
+def inspect_helper(function, mask, a, b, glyph_h):
+    captured = {}
+
+    def monitor(frame, event, arg):
+        if frame.f_code is function.__code__ and event == "return":
+            local = frame.f_locals
+            remaining = local.get("remaining")
+            captured.update({
+                "return": bool(arg),
+                "rules": local.get("rules", []),
+                "remaining_y": (
+                    [int(remaining[0]) + a, int(remaining[-1]) + a]
+                    if remaining is not None and remaining.size else []
+                ),
+                "remaining_span": (
+                    int(remaining[-1] - remaining[0] + 1)
+                    if remaining is not None and remaining.size else 0
+                ),
+            })
+        return monitor
+
+    sys.settrace(monitor)
+    try:
+        function(mask, a, b, glyph_h)
+    finally:
+        sys.settrace(None)
+    return captured
+
+
+for name, a, b, split, expected in [
+    ("actual_ab", 785, 966, None, True),
+    ("actual_g", 1116, 1249, 1219, True),
+    ("actual_ab_plus_v", 785, 1084, None, False),
+    ("actual_v_plus_g", 1003, 1249, 1116, False),
+    ("actual99_two_rows", 1368, 1588, 1499, False),
+    ("actual_v_ordinary_fraction", 1003, 1084, None, True),
+]:
+    record = {"name": name, "y": [a, b], "glyph_h": 36,
+              "expected_single": expected,
+              "baseline_single": original_single(cleaned, a, b, 36),
+              "proposal_single": candidate_single(cleaned, a, b, 36)}
+    record["baseline_ink_decision"] = inspect_helper(original_single, cleaned, a, b, 36)
+    record["proposal_ink_decision"] = inspect_helper(candidate_single, cleaned, a, b, 36)
+    if split:
+        record |= {"split": split,
+                   "baseline_across": original_across(cleaned, a, split, b, 36),
+                   "proposal_across": candidate_across(cleaned, a, split, b, 36)}
+    record["proposal_pass"] = bool(record["proposal_single"]) == expected and (
+        split is None or bool(record["proposal_across"]) == expected
+    )
+    helper_results.append(record)
+for factor in [1, 2, 3]:
+    scaled = np.repeat(np.repeat(cleaned[785:967], factor, axis=0), factor, axis=1)
+    helper_results.append({
+        "name": f"actual_ab_scaled_{factor}x", "expected_single": True,
+        "proposal_single": bool(candidate_single(scaled, 0, len(scaled) - 1, 36 * factor)),
+        "proposal_pass": bool(candidate_single(scaled, 0, len(scaled) - 1, 36 * factor)),
+    })
+outside = cleaned[785:967].copy()
+outside[20:48, 100:118] = True
+helper_results.append({
+    "name": "full_sized_unrelated_row_outside_fraction_columns",
+    "expected_single": False,
+    "proposal_single": bool(candidate_single(outside, 0, len(outside) - 1, 36)),
+    "proposal_pass": not bool(candidate_single(outside, 0, len(outside) - 1, 36)),
+})
+ambiguity_probe = {
+    "name": "unsupported_rule_between_two_full_text_rows",
+    "expected_full_page_count": 2,
+    "baseline_single": bool(original_single(synthetic, 25, 157, 36)),
+    "proposal_single": bool(candidate_single(synthetic, 25, 157, 36)),
+    "classification": "Geometrically indistinguishable from one wide fraction when presented to helper alone. Both baseline and proposal return true; line_bands still preserves two authored rows. This preexisting helper ambiguity is not an acceptance assertion.",
+}
+ablation = []
+for name, single, across in [
+    ("unchanged", original_single, original_across),
+    ("residual_glyph_support_only", candidate_single, original_across),
+    ("across_split_glyph_support_only", original_single, candidate_across),
+    ("both_minimal_changes", candidate_single, candidate_across),
+]:
+    layout._single_fraction_row = single
+    layout._fraction_across_split = across
+    candidate_namespace["_single_fraction_row"] = single
+    bands = count(original_ink)
+    ablation.append({"variant": name, "bands": bands, "count": len(bands)})
+layout._single_fraction_row = original_single
+layout._fraction_across_split = original_across
+candidate_namespace["_single_fraction_row"] = candidate_single
+derived_patch = "".join(difflib.unified_diff(
+    (single_source + "\n" + across_source).splitlines(keepends=True),
+    (candidate_single_source + "\n" + candidate_across_source).splitlines(keepends=True),
+    fromfile="baseline helpers", tofile="in-memory proposed helpers",
+))
+proposal_bands = results[0]["proposal"]
+overlay = image41.convert("RGB")
+draw = ImageDraw.Draw(overlay)
+for index, (top, bottom) in enumerate(proposal_bands, 1):
+    draw.rectangle((160, top, 1400, bottom), outline="#117733", width=2)
+    draw.text((75, top), str(index), fill="#117733", stroke_width=1)
+overlay.save(work / "page41-proposed-counter-overlay.png")
+after = {str(file): digest(file) for file in protected}
+assert before == after, "Protected state changed"
+baseline_other_rows = [
+    band for band in results[0]["baseline"]
+    if not (785 <= band[0] <= 966 or 1116 <= band[0] <= 1249)
+]
+proposal_other_rows = [
+    band for band in results[0]["proposal"]
+    if not (785 <= band[0] <= 966 or 1116 <= band[0] <= 1249)
+]
+assert baseline_other_rows == proposal_other_rows and len(proposal_other_rows) == 17
+report = {
+    "status": "in_memory_proposal_only_not_shared_code_not_finalize",
+    "proposal_single_source": candidate_single_source,
+    "proposal_across_source": candidate_across_source,
+    "cases": results, "helpers": helper_results,
+    "ambiguity_probe": ambiguity_probe,
+    "causal_ablation": ablation,
+    "derived_helper_diff": derived_patch,
+    "all_other_17_bands_identical": True,
+    "protected_hashes_before": before, "protected_hashes_after": after,
+    "all_cases_pass": all(case["proposal_pass"] for case in results + helper_results),
+    "fixture_contract": "line_bands receives full actual page context so its normal glyph-height estimator remains valid; selected band assertions use independently observed page rows. Helper cases fix glyph_h=36 from actual page trace.",
+    "preliminary_probes": "counter-proposal-results.json and counter-proposal-results-v2.json retained unchanged. Fraction-only crops remove page-height calibration. V2 also tried an ambiguous horizontal-rule helper expectation, whose baseline already returns true. No source transcription or finalize changed.",
+}
+(work / "counter-proposal-results-v4.json").write_text(
+    json.dumps(report, ensure_ascii=False, indent=2,
+               default=lambda value: value.item() if isinstance(value, np.generic) else str(value))
+    + "\n", encoding="utf-8"
+)
+print(json.dumps({"cases": [
+    {key: case[key] for key in ["name", "expected", "baseline_count", "proposal_count", "proposal_pass"]}
+    for case in results], "helpers": helper_results,
+    "ambiguity_probe": ambiguity_probe,
+    "causal_ablation": [{key: entry[key] for key in ["variant", "count"]}
+                        for entry in ablation],
+    "protected_unchanged": True}, indent=2,
+    default=lambda value: value.item() if isinstance(value, np.generic) else str(value)))
+assert report["all_cases_pass"], "Focused contract case failed; see retained report"

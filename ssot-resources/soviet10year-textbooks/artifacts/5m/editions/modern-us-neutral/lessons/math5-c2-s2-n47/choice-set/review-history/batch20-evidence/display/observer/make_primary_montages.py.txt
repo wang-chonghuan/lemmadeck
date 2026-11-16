@@ -1,0 +1,80 @@
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image, ImageDraw
+
+
+REPO = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+OWN = Path(__file__).resolve().parent
+manifest_path = REPO / ".intentfold/tickets/STEMROBIN-182/tmp/batch20-render/5m-math5-c2-s2-n47-capture-manifest.json"
+manifest = json.loads(manifest_path.read_bytes())
+assert manifest["lesson"] == "math5-c2-s2-n47"
+images = {}
+for member in manifest["screenshots"]:
+    path = REPO / member["path"]
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == member["sha256"]
+    image = Image.open(path)
+    image.load()
+    assert image.format == "PNG"
+    images[path.name] = (member, path, image.convert("RGB"))
+assert len(images) == 32
+index = {
+    "manifest_path": str(manifest_path),
+    "manifest_sha256": hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
+    "primary_png_count": 32, "montages": [],
+}
+seen = set()
+
+
+def save_montage(name, canvas, placements):
+    draw = ImageDraw.Draw(canvas)
+    members = []
+    for filename, x, y in placements:
+        member, path, image = images[filename]
+        assert filename not in seen
+        seen.add(filename)
+        draw.text((x, y - 22), filename.removeprefix("math5-c2-s2-n47-"), fill="black")
+        canvas.paste(image, (x, y))
+        box = (x, y, x + image.width, y + image.height)
+        assert canvas.crop(box).tobytes() == image.tobytes()
+        members.append({
+            "path": str(path), "sha256": member["sha256"],
+            "dimensions": list(image.size), "montage_box": list(box),
+            "rgb_pixel_sha256": hashlib.sha256(image.tobytes()).hexdigest(),
+            "native_pixel_copy_verified": True,
+        })
+    path = OWN / name
+    assert not path.exists()
+    canvas.save(path)
+    saved = Image.open(path).convert("RGB")
+    for member in members:
+        assert hashlib.sha256(saved.crop(member["montage_box"]).tobytes()).hexdigest() == member["rgb_pixel_sha256"]
+    index["montages"].append({
+        "path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "dimensions": list(canvas.size), "resized": False, "members": members,
+    })
+
+
+for surface in ("text", "exercises", "choices"):
+    endpoints = [
+        f"math5-c2-s2-n47-{surface}-{width}-{end}.png"
+        for width in (1440, 390) for end in ("first", "last")
+    ]
+    save_montage(
+        f"primary-{surface}-endpoints-native-montage.png",
+        Image.new("RGB", (1862, 1984), "#dddddd"),
+        [(filename, 8 if i < 2 else 1464, 32 + (i % 2) * 984) for i, filename in enumerate(endpoints)],
+    )
+    media = sorted(filename for filename in images if f"-{surface}-" in filename and "-figure-" in filename)
+    height = ((len(media) + 1) // 2) * 517 + 8
+    save_montage(
+        f"primary-{surface}-media-native-montage.png",
+        Image.new("RGB", (1320, height), "#dddddd"),
+        [(filename, 8 + (i % 2) * 660, 32 + (i // 2) * 517) for i, filename in enumerate(media)],
+    )
+assert seen == set(images)
+with (OWN / "primary-montage-index.json").open("x", encoding="utf-8") as output:
+    json.dump(index, output, indent=2)
+    output.write("\n")
+print(json.dumps({"primary_png_count": 32, "montages": [{"path": row["path"], "members": len(row["members"])} for row in index["montages"]]}))

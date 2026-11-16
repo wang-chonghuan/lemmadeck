@@ -1,0 +1,293 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { rebindOptionPositions } from './option-position-permutation.mjs'
+
+const dir = path.dirname(fileURLToPath(import.meta.url))
+const seed = JSON.parse(fs.readFileSync(path.join(dir, 'source.json'), 'utf8'))
+const frozen = JSON.parse(fs.readFileSync(path.join(dir, 'source-solutions.json'), 'utf8'))
+const questions = []
+const c = (text, derivation) => ({ text, truth: 'correct', derivation, misconception: null })
+const w = (text, derivation, misconception) => ({ text, truth: 'incorrect', derivation, misconception })
+function q(number, suffix, mode, stem, choices, unit) {
+  const source = seed.exercises.find(s => s.number === number)
+  const solution = frozen.solutions.find(s => s.source_number === number)
+  const options = choices.map((o, i) => ({ id: String.fromCharCode(65 + i), text: o.text, figure_ids: [] }))
+  questions.push({
+    id: `n47-${number}${suffix}`, source_numbers: [number],
+    view: { mode, stem, figure_ids: source.figure_ids, options },
+    intent: { task: solution.task, source_solution: solution.solution, unit_reason: unit,
+      concept_blocks: [], limitations: solution.losses,
+      figure_observations: source.figure_ids.map(figure_id => ({
+        figure_id, observation: frozen.figure_observations[figure_id],
+      })) },
+    key: {
+      correct: options.filter((_, i) => choices[i].truth === 'correct').map(o => o.id),
+      rationales: choices.map((o, i) => ({ option_id: options[i].id, truth: o.truth,
+        derivation: o.derivation, misconception: o.misconception })),
+    },
+  })
+}
+function list(number, suffix, expressions, choices, unit) {
+  q(number, suffix, 'single', `依次${expressions}。哪一行全部正确？`, choices, unit)
+}
+
+q('862','a','single','把 $\\frac67:\\frac38$；$\\frac5{12}:\\frac{10}3$；$\\frac{16}{12}:2$；$\\frac59:\\frac13$ 依次改写成积。哪一行全部正确？',[
+  c('$\\frac67\\cdot\\frac83$；$\\frac5{12}\\cdot\\frac3{10}$；$\\frac{16}{12}\\cdot\\frac12$；$\\frac59\\cdot3$。','Keep each dividend and multiply by its nonzero divisor reciprocal.'),
+  w('$\\frac67\\cdot\\frac38$；$\\frac5{12}\\cdot\\frac{10}3$；$\\frac{16}{12}\\cdot2$；$\\frac59\\cdot\\frac13$。','Replace each colon with multiplication without changing either factor.','Fail to invert the divisor.'),
+  w('$\\frac76\\cdot\\frac38$；$\\frac{12}5\\cdot\\frac{10}3$；$\\frac{12}{16}\\cdot2$；$\\frac95\\cdot\\frac13$。','Invert the dividend and keep the divisor, giving reciprocals of the requested quotients.','Invert the wrong operand.'),
+],'One complete numeric/integer rewrite segment preserves all four original forms without replacing rewriting by answer-only calculation.')
+q('862','b','single','把 $\\frac mk:\\frac c4$ 和 $\\frac ab:\\frac cd$ 依次改写成积，并保留原式的定义条件。哪一项正确？',[
+  w('$\\frac mk\\cdot\\frac c4$，$k,c\\ne0$；$\\frac ab\\cdot\\frac cd$，$b,c,d\\ne0$。','Keep divisors rather than invert them;domain exclusions alone do not fix the wrong products.','Change division to multiplication without inversion.'),
+  c('$\\frac mk\\cdot\\frac4c$，$k,c\\ne0$；$\\frac ab\\cdot\\frac dc$，$b,c,d\\ne0$。$m,a$ 可以为零。','Invert only the nonzero divisor and retain all original denominator exclusions.'),
+  w('$\\frac mk\\cdot\\frac4c$，只须 $k,c\\ne0$；$\\frac ab\\cdot\\frac dc$，只须 $b,c\\ne0$，$d$ 可以为零。','The rewritten products are algebraically right but permitting d=0 extends the second original undefined divisor c/d.','Drop the original divisor denominator after it becomes a numerator.'),
+],'The symbolic rewrite segment preserves original zero exclusions, especially d, not an unrestricted formal identity.')
+
+list('863','a','计算 $\\frac38:\\frac75$；$\\frac15:\\frac94$；$\\frac45:\\frac47$',[
+  c('$\\frac{15}{56};\\ \\frac4{45};\\ \\frac75$','3/8*5/7;1/5*4/9;4/5*7/4.'),
+  w('$\\frac{21}{40};\\ \\frac9{20};\\ \\frac{16}{35}$','Multiply dividend and divisor directly.','Do not invert the divisor.'),
+  w('$\\frac{56}{15};\\ \\frac{45}4;\\ \\frac57$','Invert each correct quotient, equivalent to reversing dividend and divisor.','Reverse the division direction.'),
+],'One full three-quotient segment retains proper and improper results.')
+list('863','b','计算 $\\frac3{16}:\\frac54$；$\\frac35:\\frac9{25}$；$-\\frac3{25}:(-\\frac95)$',[
+  w('$\\frac{15}{64};\\ \\frac{27}{125};\\ \\frac{27}{125}$','Multiply each dividend by divisor rather than reciprocal, retaining double-negative positivity.','Use multiplication in place of division.'),
+  c('$\\frac3{20};\\ \\frac53;\\ \\frac1{15}$','3/16*4/5;3/5*25/9;(-3/25)*(-5/9).'),
+  w('$\\frac3{20};\\ \\frac53;\\ -\\frac1{15}$','Compute magnitudes correctly but keep a negative in the double-negative quotient.','Fail to cancel the two negative signs.'),
+],'The second segment keeps the negative-divisor distinction and all three quotient computations.')
+list('864','a','计算 $\\frac78:2$；$\\frac87:2$；$\\frac37:\\frac12$',[
+  c('$\\frac7{16};\\ \\frac47;\\ \\frac67$','Divide first two by2 and multiply the last by2.'),
+  w('$\\frac74;\\ \\frac{16}7;\\ \\frac3{14}$','Multiply directly by the original divisors.','Ignore inversion for both integer and fractional divisors.'),
+  w('$\\frac{16}7;\\ \\frac74;\\ \\frac76$','Reverse each original division direction.','Invert the dividend instead of divisor.'),
+],'A full segment contrasts division by2 with division by one-half.')
+list('864','b','计算 $\\frac{15}{16}:5$；$\\frac{21}8:\\frac17$；$-\\frac1{10}:\\frac1{12}$',[
+  w('$\\frac{75}{16};\\ \\frac38;\\ -\\frac1{120}$','Multiply by5,1/7,1/12 directly.','Use divisor rather than its reciprocal.'),
+  c('$\\frac3{16};\\ \\frac{147}8;\\ -\\frac65$','15/16*1/5;21/8*7;-1/10*12.'),
+  w('$\\frac3{16};\\ \\frac{147}8;\\ \\frac65$','Correct magnitudes but remove the negative dividend sign.','Assume division by a positive fraction makes a negative dividend positive.'),
+],'One full segment preserves integer division, small reciprocal divisor and a signed quotient.')
+
+q('865','','single','先把被除数化成分数，再计算 $0.25:\\frac34$ 和 $0.6:\\frac25$。哪组转换和商都正确？',[
+  c('$0.25=\\frac14$，商 $\\frac13$；$0.6=\\frac35$，商 $\\frac32$。','1/4*4/3=1/3;3/5*5/2=3/2.'),
+  w('$0.25=\\frac14$，商 $\\frac3{16}$；$0.6=\\frac35$，商 $\\frac6{25}$。','Conversions right but multiply by divisors directly.','Fail to take divisor reciprocals after conversion.'),
+  w('$0.25=\\frac52$，商 $\\frac{10}3$；$0.6=\\frac3{50}$，商 $\\frac3{20}$。','Use25/10 and6/100 instead of25/100 and6/10,then divide.','Choose the wrong power-of-ten denominator for the decimal dividend.'),
+],'A full conversion-and-quotient pair retains the requested fraction method.')
+q('866','','single','先把被除数化成小数，再计算 $\\frac4{25}:0.2$ 和 $\\frac38:0.375$。哪组转换和商都正确？',[
+  w('$\\frac4{25}=0.16$，商 $0.032$；$\\frac38=0.375$，商 $0.140625$。','Correct conversions followed by.16*.2 and.375*.375.','Multiply instead of divide after conversion.'),
+  c('$\\frac4{25}=0.16$，商 $0.8$；$\\frac38=0.375$，商 $1$。','.16/.2=.8;.375/.375=1.'),
+  w('$\\frac4{25}=0.016$，商 $0.08$；$\\frac38=0.0375$，商 $0.1$。','Shift each correct dividend conversion one decimal place left, then divide normally.','Place an extra zero in each decimal conversion.'),
+],'One complete conversion-and-division unit retains the decimal method and equal dividend/divisor case.')
+q('867','','single','把 $\\frac mn:\\frac pk$ 和 $\\frac ab:\\frac cd$ 依次写成一个分数。哪一项形式和原式定义条件都正确？',[
+  c('$\\frac{mk}{np}$，$n,k,p\\ne0$；$\\frac{ad}{bc}$，$b,c,d\\ne0$。$m,a$ 可以为零。','Multiply each dividend by inverse divisor and retain original denominators k,d.'),
+  w('$\\frac{mp}{nk}$，$n,k,p\\ne0$；$\\frac{ac}{bd}$，$b,c,d\\ne0$。$m,a$ 可以为零。','Multiply fractions rather than divide.','Do not invert the second fraction.'),
+  w('$\\frac{mk}{np}$，只须 $n,p\\ne0$；$\\frac{ad}{bc}$，只须 $b,c\\ne0$。$k,d$ 可以为零。','Correct result formulas extended to k=0 or d=0,where the original divisors are undefined.','Discard original denominator exclusions after rewriting.'),
+],'One symbolic fraction-and-domain pair covers both source identities and preserves their complete original domains.')
+list('868','','计算 $(\\frac{51}{60}\\cdot\\frac{12}{17}):\\frac3{10}$ 和 $(\\frac{12}{95}:\\frac9{38})\\cdot\\frac{15}{16}$',[
+  w('$\\frac9{50};\\ \\frac{81}{2888}$','First replace final division with multiplication:3/5*3/10=9/50. Second replace inner division with multiplication:12/95*9/38*15/16=81/2888.','Use multiplication at each division sign.'),
+  c('$2;\\ \\frac12$','Inner values3/5 and8/15;then divide by3/10 or multiply by15/16.'),
+  w('$\\frac35;\\ \\frac8{15}$','Return the two inner-parenthesis values without the outer operations.','Stop after parentheses and omit the remaining factor or divisor.'),
+],'One full paired result preserves operation order and both distinct mixed-operation patterns.')
+
+list('869','a','计算 $3\\frac12:\\frac23$；$4\\frac12:1\\frac12$；$1\\frac23:1\\frac1{10}$',[
+  c('$\\frac{21}4;\\ 3;\\ \\frac{50}{33}$','7/2*3/2;9/2*2/3;5/3*10/11.'),
+  w('$\\frac73;\\ \\frac{27}4;\\ \\frac{11}6$','Multiply original factors after correct mixed conversion.','Do not invert the divisor.'),
+  w('$\\frac4{21};\\ \\frac13;\\ \\frac{33}{50}$','Invert the correct quotients.','Reverse dividend and divisor.'),
+],'One full three-result mixed-division segment preserves both proper and mixed divisors.')
+list('869','b','计算 $\\frac4{15}:3\\frac15$；$10\\frac13:2\\frac23$；$4\\frac34:3$',[
+  w('$\\frac{64}{75};\\ \\frac{248}9;\\ \\frac{57}4$','Multiply each original divisor after mixed conversion.','Replace division with direct multiplication.'),
+  c('$\\frac1{12};\\ \\frac{31}8;\\ \\frac{19}{12}$','4/15*5/16;31/3*3/8;19/4*1/3.'),
+  w('$12;\\ \\frac8{31};\\ \\frac{12}{19}$','Reverse each quotient.','Invert the dividend rather than divisor.'),
+],'The second segment retains three other mixed/integer divisor forms and all source computations.')
+list('870','a','解方程 $\\frac27x=2\\frac17+\\frac17$ 和 $\\frac35y=2\\frac9{10}-\\frac2{10}$（依次给出 $x,y$）',[
+  c('$8;\\ \\frac92$','Right sides16/7 and27/10;divide by2/7 and3/5.'),
+  w('$\\frac{32}{49};\\ \\frac{81}{50}$','Multiply right sides by coefficients instead of reciprocal coefficients.','Use forward scaling when undoing a coefficient.'),
+  w('$\\frac{15}2;\\ \\frac{29}6$','Omit the final added1/7 or subtracted2/10;solve with15/7 and29/10.','Ignore the last term of each right-hand expression.'),
+],'A full two-equation root segment retains right-hand arithmetic and inverse scaling.')
+list('870','b','解方程 $y:1\\frac12=2\\frac13\\cdot\\frac13$ 和 $3\\frac13:k=1\\frac13:2$（依次给出 $y,k$）',[
+  w('$\\frac{14}{27};\\ \\frac{20}9$','For y divide7/9 by3/2 instead of multiplying;for k multiply10/3 by2/3 instead of dividing.','Treat unknown dividend and unknown divisor with the same incorrect inverse operation.'),
+  c('$\\frac76;\\ 5$，其中 $k\\ne0$。','y=(7/9)*(3/2)=7/6;k=(10/3)/(2/3)=5.'),
+  w('$\\frac{27}{14};\\ \\frac15$，其中 $k\\ne0$。','Invert both correct roots, confusing the unknown with its reciprocal.','Report the reciprocal of the solved unknown.'),
+],'The unknown-dividend versus unknown-divisor contrast is a coherent full two-result unit and retains k nonzero.')
+q('871','','single','按 $S=ab$：① $a=4\\frac15,b=\\frac37$ 时求 $S$；② $S=15,b=7\\frac12$ 时求 $a$。哪一项计算都正确？',[
+  c('① $S=\\frac{21}5\\cdot\\frac37=\\frac95$；② $a=15:\\frac{15}2=2$。','Forward product9/5;inverse side2;source provides no concrete unit.'),
+  w('① $S=\\frac{21}5:\\frac37=\\frac{49}5$；② $a=15\\cdot\\frac{15}2=\\frac{225}2$。','Divide when area needs multiplication; multiply when recovering side needs division.','Exchange the forward and inverse uses of the rectangle formula.'),
+  w('① $S=\\frac{21}5\\cdot\\frac37=\\frac95$；② $a=\\frac{15}2:15=\\frac12$。','First result right;second reverses the side-recovery quotient.','Use b/S instead of S/b.'),
+],'One forward/inverse formula pair preserves both source tasks without invented measurement units.')
+q('872','','single','拖拉机要走15公里，所用时间分别为 $\\frac56$ 小时和 $\\frac53$ 小时。所需时速依次是多少？',[
+  w('$\\frac{25}2;\\ 25$ 公里/小时','Multiply distance by time:15*5/6 and15*5/3.','Use distance-times-time rather than distance divided by time.'),
+  c('$18;\\ 9$ 公里/小时','15*6/5=18;15*3/5=9.'),
+  w('$9;\\ 18$ 公里/小时','Compute correct speeds then reverse the association with the given times.','Assign larger speed to the longer time.'),
+],'One time-speed correspondence retains both original durations and km/h units.')
+q('873','','single','买 $\\frac45$ 公斤糖用了 $\\frac25$ 美元。1公斤糖多少钱，1美元能买多少糖？',[
+  c('$\\frac12$ 美元；$2$ 公斤','Price=(2/5)/(4/5)=1/2;quantity per dollar is inverse2.'),
+  w('$2$ 美元；$\\frac12$ 公斤','Reverse both unit-rate quotients and label them as their opposite quantities.','Confuse dollars per kilogram with kilograms per dollar.'),
+  w('$\\frac8{25}$ 美元；$\\frac8{25}$ 公斤','Multiply cost and mass in both directions:2/5*4/5=8/25.','Use products rather than ratios for unit rates.'),
+],'A complete reciprocal unit-rate pair preserves both requested directions and their different units.')
+q('874','','single','第一合作社修路的 $\\frac57$，第二合作社修其余部分。第一合作社修的长度是第二合作社的多少倍？',[
+  w('$\\frac25$ 倍','Second/first=(2/7)/(5/7)=2/5.','Reverse the requested first-to-second comparison.'),
+  c('$\\frac52$ 倍','Second share2/7;first/second=5/2.'),
+  w('$\\frac57$ 倍','Return first share of the whole rather than its ratio to the second share.','Keep the entire road as denominator.'),
+],'One full share-ratio result retains the complement and requested comparison direction.')
+q('875','','single','70吨粮食是一日脱粒总量的 $\\frac78$。一天脱粒的总量是多少？',[
+  c('$80$ 吨','70/(7/8)=80.'),
+  w('$61.25$ 吨','70*(7/8)=61.25.','Apply the fraction again instead of recovering the whole.'),
+  w('$10$ 吨','70/7=10 is one eighth of the whole.','Find one fractional part but fail to multiply by8.'),
+],'One inverse-share result retains the70-ton part and full daily output.')
+q('876','','single','25公担小麦制成面粉、麦糁和麸子。面粉是小麦的 $\\frac45$，麦糁是面粉的 $\\frac1{40}$。麸子是多少公担？',[
+  w('$\\frac{35}8$ 公担','Flour20;use25/40=5/8 for grain;bran25-20-5/8=35/8.','Use wheat rather than flour as the grain-product base.'),
+  c('$\\frac92$ 公担','Flour20;grain20/40=1/2;bran25-20-1/2=9/2.'),
+  w('$5$ 公担','25-20=5 ignores the grain-product mass.','Assign every nonflour product to bran.'),
+],'One complete residual-mass result retains all three products and the nested grain fraction.')
+q('877','','single','第一天走计划全程的 $\\frac5{24}$，第二天走第一天的 $\\frac45$。第二天走24公里，计划全程是多少？',[
+  c('$144$ 公里','Second fraction=(5/24)*(4/5)=1/6;24 divided1/6=144.'),
+  w('$30$ 公里','24/(4/5)=30 recovers first day only.','Stop after recovering the first-day distance.'),
+  w('$\\frac{576}5$ 公里','24/(5/24)=576/5 treats24 as first-day distance.','Ignore that24 is the second-day value.'),
+],'One nested inverse-route result retains both fractional reference levels.')
+q('878','','single','幼儿园4年，每年472美元；普通学校8年，每年费用是472美元的 $\\frac14$；寄宿学校2年，每年比472美元多219美元。总费用和平均每年费用依次是多少？',[
+  w('$1281$ 美元；$427$ 美元/年','Sum only annual rates472+118+691=1281;divide by3 institutions=427.','Ignore unequal durations and average the three annual rates unweighted.'),
+  c('$4214$ 美元；$301$ 美元/年','4*472+8*118+2*691=4214;divide14years=301.'),
+  w('$3776$ 美元；$\\frac{1888}7$ 美元/年','Use boarding annual472 rather than691:1888+944+944=3776;divide14.','Omit the219-dollar annual boarding premium.'),
+],'One complete duration-weighted total-and-mean result preserves all periods, rates and units.')
+list('879','','求这些数的倒数：$2\\frac35+1\\frac15$；$5\\frac7{10}-4\\frac2{10}$；$4\\frac47+2\\frac17$；$6\\frac7{12}-5\\frac1{12}$',[
+  c('$\\frac5{19};\\ \\frac23;\\ \\frac7{47};\\ \\frac23$','Aggregates19/5,3/2,47/7,3/2 are all nonzero;invert each aggregate.'),
+  w('$\\frac{19}5;\\ \\frac32;\\ \\frac{47}7;\\ \\frac32$','Compute all aggregates but do not invert them.','Return sums or differences instead of their reciprocals.'),
+  w('$\\frac{95}{78};\\ -\\frac{25}{399};\\ \\frac{329}{480};\\ -\\frac{216}{4819}$','Take separate reciprocals then add/subtract:5/13+5/6=95/78;10/57-10/42=-25/399;7/32+7/15=329/480;12/79-12/61=-216/4819.','Assume reciprocal distributes over addition or subtraction.'),
+],'One complete four-aggregate reciprocal list preserves which operations occur before inversion.')
+list('880','','计算 $\\frac{18}{35}\\cdot1\\frac1{24}\\cdot5\\frac35$ 和 $\\frac5{28}\\cdot\\frac{24}{25}\\cdot1\\frac{17}{18}$',[
+  w('$\\frac{15}{28};\\ \\frac6{35}$','Compute the first two factors only:18/35*25/24=15/28;5/28*24/25=6/35.','Omit the final mixed-number factor.'),
+  c('$3;\\ \\frac13$','Convert25/24,28/5,35/18 and cancel all three factors in each product.'),
+  w('$\\frac{12}{175};\\ \\frac6{35}$','Use(1+1)/24=1/12,(5+3)/5=8/5,(1+17)/18=1 as wrong mixed conversions;18/35*1/12*8/5=12/175;the other product is6/35.','Convert mixed numbers by whole-plus-numerator without denominator multiplication.'),
+],'One full paired triple-product result retains all factors and both final reciprocal values.')
+
+q('881','','single','在任意非退化三角形 $ABY$ 中，$M,K$ 分别是 $AB,BY$ 的中点。沿有向线段 $MK$ 平移三角形。哪项作法和结论都正确？',[
+  c('各顶点按从 $M$ 指向 $K$ 的同一方向移动长度 $MK$，连接像点；$A$ 的像是 $AY$ 的中点。','K-M=(Y-A)/2;apply this same vector to each vertex;Aprime=(A+Y)/2.'),
+  w('各顶点按从 $K$ 指向 $M$ 的同一方向移动长度 $MK$，连接像点；$A$ 的像是 $AY$ 的中点。','Use opposite vector(A-Y)/2;Aprime=(3A-Y)/2,not midpoint.','Reverse the directed translation vector.'),
+  w('各顶点关于直线 $MK$ 反射，连接像点；$A$ 的像是 $AY$ 的中点。','Line reflection fixes M,K rather than mapping M to K;it is not the requested translation.','Replace a directed-segment translation by axis reflection.'),
+],'A complete generic construction/property unit preserves directed translation and both source midpoint definitions; drawing production is explicitly lost.')
+
+for (const [suffix, stem, rate, choices] of [
+  ['a','两队分别收割360和400公顷，每天分别收割50和60公顷。',[360,400,50,60],[
+    c('第一次相等是在第4天，均剩160公顷。','360-50*4=400-60*4=160;both still working.'),
+    c('第3天尚未相等，分别剩210和220公顷。','360-150=210;400-180=220.'),
+    w('第一次相等是在第40天，因为两块地的总面积相差40公顷。','Taking initial area difference40 as days ignores rate difference10 ha/day and both completions.','Use area difference numerically as elapsed time.'),
+    w('两块地都收完以后，它们剩余面积也不会相等。','At t>=7.2 both remaining areas are zero under the stated stopping rule.','Continue negative linear remaining areas after completion instead of stopping.'),
+  ]],
+  ['b','两队分别收割47和39公顷，每天分别收割8和6公顷。',[47,39,8,6],[
+    w('第一次相等是在第8天，因为两块地的总面积相差8公顷。','Treat initial difference8 as days;active equation divides by rate difference2 and gives4.','Use an area difference as a time without dividing by rate difference.'),
+    c('第一次相等是在第4天，均剩15公顷。','47-32=39-24=15;both unfinished.'),
+    c('第3天尚未相等，分别剩23和21公顷。','47-24=23;39-18=21.'),
+    w('两块地都收完以后，它们剩余面积也不会相等。','At t>=6.5 both have zero remaining area.','Extend linear formulas to impossible negative remaining areas.'),
+  ]],
+]) {
+  q('883',suffix,'multiple',`${stem}两队同时开始，各队收完自己的地便停止。选出所有正确说法，判断剩余面积第一次何时相等。`,choices,
+    `Independent work-rate problem ${rate.join(',')}; one native multiple unit covers first equality and the complete stopping-domain distinction. Stopping and first-equality criteria are visibly authored additions, recorded in limitations.`)
+}
+
+q('884','','single','图示 $AC=600$ 米、$\\angle BAC=60^\\circ$、$\\angle BCA=45^\\circ$。作比例尺 $1:10000$ 的平面图后，测量并换算 $AB,CB$，距离取最接近的10米。哪一组比例换算和距离正确？',[
+  w('图上 $AC=60$ 厘米；$AB\\approx4390$ 米，$CB\\approx5380$ 米。','Use10 m/cm instead of100 m/cm to set baseline60cm;enlarged plan sides are43.923...cm and53.794...cm. Misconvert with100m/cm to4392.30...m and5379.45...m;round nearest10m to4390,5380.','Use inconsistent scale factors when drawing and converting back.'),
+  c('图上 $AC=6$ 厘米；$AB\\approx440$ 米，$CB\\approx540$ 米。','1cm=100m;exact AB439.230...,CB537.945... round to440,540m.'),
+  w('图上 $AC=6$ 厘米；$AB\\approx540$ 米，$CB\\approx440$ 米。','Correct scale and lengths but exchange the opposite45-degree and60-degree sides.','Assign the longer side to the smaller opposite angle.'),
+],'One full scale-and-two-length recognition unit retains all source survey data. Nearest10m rounding is explicit; actual plan construction and instrument measurement remain lost.')
+
+list('885','','化简 $-10(0.68y+1.25)+20(0.13-0.27y)-12.6$ 和 $-20(0.37k-1.14)+10(2.11-0.46k)-14.5$',[
+  c('$-12.2y-22.5;\\ -12k+29.4$','Expand all terms and collect coefficients and constants.'),
+  w('$-1.4y-22.5;\\ -2.8k+29.4$','Change20*(-.27y) to+5.4y and10*(-.46k) to+4.6k;other terms right.','Lose the negative sign on a subtracted variable term.'),
+  w('$-12.2y+2.5;\\ -12k-16.2$','Change-10*1.25 to+12.5 and-20*(-1.14) to-22.8;constants become2.5,-16.2.','Distribute the outer negative incorrectly to the constant terms.'),
+],'One full pair of simplified expressions retains all coefficients and constants.')
+q('886','a','single','$-3.24y+4.88$ 和 $-2.41y+1.045$ 相等时，$y$ 的精确值是多少？',[
+  w('$-\\frac{767}{166}$','Use-.83y=+3.835 after moving constants with the wrong sign.','Change only one side sign in the final equation.'),
+  c('$\\frac{767}{166}$','Equalities give.83y=3.835;3835/830=767/166.'),
+  w('$\\frac{1185}{166}$','Use.83y=4.88+1.045=5.925 instead of the difference;5925/830=1185/166.','Add constants rather than subtract them when equating expressions.'),
+],'One independent expression-equality task retains exact nonterminating root without silently rounding.')
+q('886','b','single','$-4.18x+5.16$ 和 $-3.19x+11.595$ 相等时，$x$ 是多少？',[
+  c('$-6.5$','-.99x=6.435 givesx=-6.5.'),
+  w('$6.5$','Use+.99x=6.435,losing the coefficient difference sign.','Subtract coefficient magnitudes in the wrong order.'),
+  w('$-\\frac{1117}{66}$','Use-.99x=5.16+11.595=16.755;root=-16755/990=-1117/66.','Add constants instead of taking their difference.'),
+],'Independent x-equation has its own exact root and cannot be inferred from the y case.')
+q('887','a','single','计算 $90-\\{80-[70-(0.054+9.15\\cdot6.84)]\\}$。',[
+  w('$142.64$','Inner aggregate62.64;flatten nested subtraction as90-80+70+62.64=142.64.','Give the innermost aggregate a positive rather than negative sign.'),
+  c('$17.36$','Aggregate62.64;90-80+70-62.64=17.36.'),
+  w('$72.64$','80-(70-62.64)=72.64 is the outer brace value.','Omit the final90 minus operation.'),
+],'One independent whole nested-subtraction result retains every grouping.')
+q('887','b','single','计算 $80-\\{70-[60-(0.036+8.16\\cdot7.15)]\\}$。',[
+  c('$11.62$','Aggregate58.38;80-70+60-58.38=11.62.'),
+  w('$128.38$','Flatten as80-70+60+58.38=128.38.','Fail to carry the innermost negative through nested subtraction.'),
+  w('$68.38$','70-(60-58.38)=68.38 is brace value.','Omit the last outer subtraction from80.'),
+],'A separate full result is justified by independent decimal data.')
+
+list('888','a','计算 $\\frac49:\\frac38$；$\\frac{17}{60}:\\frac{34}9$；$-\\frac37:\\frac9{14}$',[
+  w('$\\frac16;\\ \\frac{289}{270};\\ -\\frac{27}{98}$','Multiply directly by divisors:4/9*3/8;17/60*34/9;-3/7*9/14.','Replace division with multiplication.'),
+  c('$\\frac{32}{27};\\ \\frac3{40};\\ -\\frac23$','Multiply by divisor reciprocals and reduce.'),
+  w('$\\frac{32}{27};\\ \\frac3{40};\\ \\frac23$','All magnitudes correct;delete the final negative dividend sign.','Treat a negative divided by a positive as positive.'),
+],'One complete three-quotient segment preserves both reductions and the sign contrast.')
+list('888','b','计算 $\\frac{86}{119}:(-\\frac{43}{51})$；$\\frac{27}{64}:9$；$-8:(-\\frac23)$',[
+  c('$-\\frac67;\\ \\frac3{64};\\ 12$','86/119*(-51/43)=-6/7;27/64*1/9=3/64;(-8)*(-3/2)=12.'),
+  w('$-\\frac67;\\ \\frac{243}{64};\\ \\frac{16}3$','First division right;other two multiply by the original divisors9 and-2/3.','Fail to invert integer and signed fractional divisors.'),
+  w('$\\frac67;\\ \\frac3{64};\\ -12$','Give first quotient positive and last negative despite the actual sign rules.','Treat divisor signs as if they never affect the dividend sign.'),
+],'One full segment retains negative divisor, integer divisor and double-negative division.')
+list('889','','计算 $2\\frac17:1\\frac{11}{14}$；$3\\frac35:1\\frac{11}{25}$；$2\\frac3{23}:7\\frac{21}{46}$；$2\\frac{47}{49}:12\\frac37$',[
+  c('$\\frac65;\\ \\frac52;\\ \\frac27;\\ \\frac5{21}$','Convert15/7,25/14;18/5,36/25;49/23,343/46;145/49,87/7;divide to get row.'),
+  w('$\\frac56;\\ \\frac25;\\ \\frac72;\\ \\frac{21}5$','Reverse all four quotients after conversion.','Invert the dividend instead of divisor.'),
+  w('$\\frac{375}{98};\\ \\frac{648}{125};\\ \\frac{16807}{1058};\\ \\frac{12615}{343}$','Multiply original mixed values rather than dividing.','Keep divisor rather than its reciprocal.'),
+],'One complete four-result mixed-quotient unit preserves every source pair and exact simplifications.')
+list('890','a','计算 $7\\frac18:4\\frac34\\cdot8$ 和 $11\\frac13:\\frac4{21}:4\\frac14$，同级运算按从左到右进行',[
+  w('$\\frac3{16};\\ \\frac{2023}8$','Group first as(57/8)/[(19/4)*8]=3/16;group second as(34/3)/[(4/21)/(17/4)]=2023/8.','Group successive multiplicative operands as one compound divisor.'),
+  c('$12;\\ 14$','Left to right:3/2*8=12;119/2 divided17/4=14.'),
+  w('$\\frac32;\\ \\frac{119}2$','Stop after the first division in each chain.','Omit the remaining multiplication or division.'),
+],'One full two-chain result retains the same-precedence left-to-right distinction.')
+list('890','b','计算 $1\\frac79\\cdot2\\frac25:1\\frac35$ 和 $\\frac78\\cdot\\frac89:1\\frac19$',[
+  c('$\\frac83;\\ \\frac7{10}$','16/9*12/5*5/8=8/3;7/9*9/10=7/10.'),
+  w('$\\frac{512}{75};\\ \\frac{70}{81}$','Multiply by the final divisor rather than reciprocal:16/9*12/5*8/5=512/75;7/9*10/9=70/81.','Replace the final division by multiplication.'),
+  w('$\\frac{64}{15};\\ \\frac79$','Return each initial two-factor product without final division.','Stop before the last operation.'),
+],'One complete second chain segment retains the final fractional/mixed divisors.')
+q('891','','single','车轮周长依次为 $\\frac6{25},\\frac34,\\frac45$ 米。各走48米，依次转多少圈？',[
+  w('$\\frac{288}{25};\\ 36;\\ \\frac{192}5$ 圈','Multiply48 by each circumference.','Use distance times circumference instead of distance per circumference.'),
+  c('$200;\\ 64;\\ 60$ 圈','48 divided each circumference gives200,64,60.'),
+  w('$\\frac1{200};\\ \\frac1{64};\\ \\frac1{60}$ 圈','Divide each circumference by48.','Reverse the distance/circumference quotient.'),
+],'One complete three-wheel correspondence retains all original circumferences and revolution counts.')
+q('892','','single','长方形长80厘米，宽是长的 $\\frac5{16}$。周长是多少？',[
+  c('$210$ 厘米','Width25;perimeter2*(80+25)=210.'),
+  w('$105$ 厘米','80+25=105 sums one length and one width only.','Omit the factor2 in perimeter.'),
+  w('$2000$ 厘米','80*25=2000 computes area and assigns length units.','Use the area formula for perimeter.'),
+],'One width-to-perimeter result preserves both source computations and centimeter units.')
+q('893','','single','400名学生中180人参加课外小组，每人每年资助150美元，其余学生每人少22%。平均每名学生每年资助多少美元？',[
+  w('$133.5$ 美元','Other rate117;unweighted average(150+117)/2=133.5.','Average two rates equally rather than weight by180 and220 students.'),
+  c('$131.85$ 美元','(180*150+220*117)/400=52740/400=131.85.'),
+  w('$117$ 美元','150*(1-.22)=117 is the rate of nonparticipants only.','Apply the reduced rate to all400 students.'),
+],'One weighted-mean result retains both group counts, discount and annual dollars per student.')
+q('894','','single','第二个数比第一个数大0.7，第三个数比第二个数也大0.7，三个数的算术平均数是8.9。按从第一到第三的顺序，这三个数是多少？',[
+  c('$8.2,\\ 8.9,\\ 9.6$','For equal spacing the mean is the middle;subtract/add.7.'),
+  w('$8.9,\\ 9.6,\\ 10.3$','Treat mean8.9 as the first value and add.7 twice.','Identify the average with the first rather than middle number.'),
+  w('$7.5,\\ 8.9,\\ 10.3$','Use1.4 as each successive difference.','Use the total first-to-third gap for each neighboring gap.'),
+],'One full ordered triple preserves both successive-difference conditions and the mean.')
+q('895','a','single','计算 $3.65\\cdot(558.78:6.95-40.02)-(9.87+16.9)$。',[
+  w('$147.387$','80.4-40.02=40.38;times3.65=147.387.','Omit the final subtraction of26.77.'),
+  c('$120.617$','147.387-(9.87+16.9)=120.617.'),
+  w('$174.157$','147.387+26.77=174.157.','Change the outer subtraction into addition.'),
+],'The first independent nested-decimal task is preserved as one complete result.')
+q('895','b','single','计算 $[0.32674:0.34+0.3471:(12.47-3.57)]:0.01$。',[
+  c('$100$','Inner quotients.961 and.039 sum1;1/.01=100.'),
+  w('$1$','Return the bracket sum.961+.039=1.','Omit final division by.01.'),
+  w('$0.01$','1*.01=.01.','Multiply by.01 instead of divide.'),
+],'The second independent decimal expression retains its nested divisor and final hundredfold scaling.')
+
+rebindOptionPositions(questions, path.join(dir, 'option-position-permutation-plan.json'))
+
+const draft = {
+  schema: 's10y-choice-draft-v1', seed_sha256: frozen.seed_sha256, new_figures: [], questions,
+  coverage: frozen.solutions.map(s => ({
+    source_number: s.source_number,
+    question_ids: questions.filter(q => q.source_numbers.includes(s.source_number)).map(q => q.id),
+    omitted_tasks: s.losses,
+    reason: s.blocked ? 'Blocked: angle boundary-versus-filled-region convention is unresolved; conditional construction/intersection solutions retained, with no guessed key.'
+      : 'All original data and mathematical tasks retained as complete results, rewrites, models or construction recognition. Listed production losses and visible authored conditions are explicit. Semantic review pending.',
+  })),
+}
+const view = { questions: questions.map(({ id, view }) => ({ id, ...view })) }
+for (const [name, value] of [['draft.json', draft], ['view.json', view]]) {
+  fs.writeFileSync(path.join(dir, name), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+}
+console.log(JSON.stringify({
+  sources: seed.exercises.length, represented_sources: draft.coverage.filter(c => c.question_ids.length).length,
+  questions: view.questions.length, single: view.questions.filter(q => q.mode === 'single').length,
+  multiple: view.questions.filter(q => q.mode === 'multiple').length,
+  options: view.questions.reduce((n, q) => n + q.options.length, 0), blocked_sources: ['882'],
+  pure_view_shape: '{questions:[{id,mode,stem,figure_ids,options:[{id,text,figure_ids}]}]}',
+}, null, 2))

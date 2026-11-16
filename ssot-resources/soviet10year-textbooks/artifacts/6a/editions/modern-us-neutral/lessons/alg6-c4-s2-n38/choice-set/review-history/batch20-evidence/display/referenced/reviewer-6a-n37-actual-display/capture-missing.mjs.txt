@@ -1,0 +1,361 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { createRequire } from 'node:module'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+
+delete process.env.PWDEBUG
+process.env.PLAYWRIGHT_HTML_OPEN = 'never'
+
+const script = fileURLToPath(import.meta.url)
+const root = path.resolve(path.dirname(script), '../../../../..')
+const ticket = path.join(root, '.intentfold/tickets/STEMROBIN-182/tmp')
+const appRequire = createRequire(path.join(root, 'app/package.json'))
+const runtimeRequire = createRequire(
+  '/Users/yong/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/package.json',
+)
+const { chromium } = appRequire('@playwright/test')
+const sharp = runtimeRequire('sharp')
+const sha = (bytes) => crypto.createHash('sha256').update(bytes).digest('hex')
+const started = new Date().toISOString()
+const logs = new Map()
+const manifests = new Map()
+const pageErrors = []
+const launchOptions = { headless: true }
+
+for (const number of [37, 38]) {
+  const manifestPath = path.join(ticket, 'batch20-render',
+    `6a-alg6-c4-s2-n${number}-capture-manifest.json`)
+  const manifest = JSON.parse(fs.readFileSync(manifestPath))
+  manifests.set(number, manifest)
+  const logPath = path.join(ticket,
+    `reviewer-6a-n${number}-actual-display/supplemental-capture-log.json`)
+  if (fs.existsSync(logPath)) throw new Error(`No rerun/overwrite: ${logPath}`)
+  for (const entry of [...manifest.rendered, ...manifest.screenshots]) {
+    if (sha(fs.readFileSync(path.join(root, entry.path))) !== entry.sha256) {
+      throw new Error(`Frozen HTML/capture hash changed: ${entry.path}`)
+    }
+  }
+  logs.set(number, {
+    lesson: manifest.lesson,
+    command: [process.execPath, script],
+    cwd: root,
+    started,
+    execution_count: 1,
+    scope: 'Only recorded actual-pixel coverage holes, same existing HTML bytes.',
+    new_surface_viewport_combinations: 0,
+    primary_render_or_checker_reruns: 0,
+    PWDEBUG_cleared: !Object.hasOwn(process.env, 'PWDEBUG'),
+    PLAYWRIGHT_HTML_OPEN: process.env.PLAYWRIGHT_HTML_OPEN,
+    launchOptions,
+    executable: chromium.executablePath(),
+    isolated_contexts: true,
+    user_profile_or_CDP: false,
+    network_policy: 'Only local file/data/about requests; external requests aborted.',
+    captures: [],
+    measurements: [],
+    browser_closed: false,
+    status: 'pending',
+  })
+}
+
+async function settle(page) {
+  await page.evaluate(() => document.fonts.ready)
+  await page.evaluate(() => new Promise((resolve) => {
+    requestAnimationFrame(() => requestAnimationFrame(resolve))
+  }))
+  await page.waitForTimeout(180)
+}
+
+async function box(locator) {
+  return locator.evaluate((node) => {
+    const bounds = node.getBoundingClientRect()
+    return {
+      x: bounds.x + scrollX,
+      y: bounds.y + scrollY,
+      width: bounds.width,
+      height: bounds.height,
+    }
+  })
+}
+
+async function captureBox(page, number, surface, viewport, label, bounds, reason) {
+  const available = viewport.height - 24
+  const tiles = Math.ceil(bounds.height / available)
+  for (let index = 0; index < tiles; index++) {
+    const offset = index * available
+    const height = Math.min(available, bounds.height - offset)
+    await page.evaluate((top) => scrollTo({ top, left: 0, behavior: 'instant' }),
+      Math.max(0, bounds.y + offset - 12))
+    await settle(page)
+    const origin = await page.evaluate(() => ({ x: scrollX, y: scrollY }))
+    const x = Math.max(0, Math.floor(bounds.x - origin.x))
+    const y = Math.max(0, Math.floor(bounds.y + offset - origin.y))
+    const width = Math.min(Math.ceil(bounds.width), viewport.width - x)
+    const clipHeight = Math.min(Math.ceil(height), viewport.height - y)
+    if (width < 1 || clipHeight < height - 2) {
+      throw new Error(`Requested native region not visible: ${label}`)
+    }
+    const filename = `${surface}-${viewport.width}-${label}`
+      + (tiles > 1 ? `-tile-${index + 1}` : '') + '.png'
+    const output = path.join(ticket,
+      `reviewer-6a-n${number}-actual-display/supplements`, filename)
+    if (fs.existsSync(output)) throw new Error(`No capture overwrite: ${output}`)
+    const viewportPixels = await page.screenshot({ animations: 'disabled' })
+    const pixels = await sharp(viewportPixels)
+      .extract({ left: x, top: y, width, height: clipHeight }).png().toBuffer()
+    const stats = await sharp(pixels).stats()
+    if (stats.channels.slice(0, 3).every((channel) => channel.min > 245)) {
+      throw new Error(`Blank pixel capture rejected: ${label}`)
+    }
+    fs.writeFileSync(output, pixels, { flag: 'wx' })
+    logs.get(number).captures.push({
+      path: output,
+      sha256: sha(pixels),
+      width,
+      height: clipHeight,
+      label: `${surface}-${viewport.width}-${label}`,
+      group: `${surface}-${viewport.width}`,
+      viewport,
+      surface,
+      target: label,
+      missing_coverage_reason: reason,
+      tile_index: index + 1,
+      tile_count: tiles,
+      document_bounds: bounds,
+      scroll: origin,
+      native_viewport_crop: { x, y, width, height: clipHeight },
+      resized: false,
+    })
+  }
+}
+
+async function capture(page, number, surface, viewport, label, locator, reason) {
+  await locator.scrollIntoViewIfNeeded()
+  await settle(page)
+  await captureBox(page, number, surface, viewport, label, await box(locator), reason)
+}
+
+async function range(page, number, surface, viewport, label, first, last, reason) {
+  await first.scrollIntoViewIfNeeded()
+  await settle(page)
+  const a = await box(first)
+  const b = await box(last)
+  await captureBox(page, number, surface, viewport, label, {
+    x: a.x,
+    y: a.y,
+    width: Math.max(a.width, b.width),
+    height: b.y + b.height - a.y,
+  }, reason)
+}
+
+async function horizontalRegion(locator) {
+  return locator.evaluateHandle((node) => {
+    for (let parent = node; parent; parent = parent.parentElement) {
+      if (parent.scrollWidth > parent.clientWidth + 1
+        && ['auto', 'scroll'].includes(getComputedStyle(parent).overflowX)) {
+        return parent
+      }
+    }
+    return null
+  })
+}
+
+async function extraHorizontal(page, number, surface, viewport, label, locator,
+  skipKnownRight, reason) {
+  const handle = await horizontalRegion(locator)
+  const element = handle.asElement()
+  if (!element) {
+    await handle.dispose()
+    return
+  }
+  const metrics = await element.evaluate((node) => ({
+    clientWidth: node.clientWidth,
+    scrollWidth: node.scrollWidth,
+  }))
+  logs.get(number).measurements.push({ label, ...metrics })
+  const max = metrics.scrollWidth - metrics.clientWidth
+  const positions = max > metrics.clientWidth ? [max / 2, max] : [max]
+  for (const position of positions) {
+    if (skipKnownRight && position === max) continue
+    await element.evaluate((node, value) => {
+      node.scrollLeft = value
+    }, position)
+    await settle(page)
+    await capture(page, number, surface, viewport,
+      `${label}-${position === max ? 'right' : 'middle'}`,
+      element, reason)
+  }
+  await element.evaluate((node) => { node.scrollLeft = 0 })
+  await handle.dispose()
+}
+
+const browser = await chromium.launch(launchOptions)
+let failure = null
+try {
+  for (const number of [37, 38]) {
+    const output = path.join(ticket,
+      `reviewer-6a-n${number}-actual-display/supplements`)
+    fs.mkdirSync(output, { recursive: true })
+    for (const viewport of [{ width: 1440, height: 960 },
+      { width: 390, height: 844 }]) {
+      const context = await browser.newContext({ viewport, deviceScaleFactor: 1 })
+      try {
+        const page = await context.newPage()
+        page.on('pageerror', (error) => pageErrors.push(String(error)))
+        await page.route('**/*', (route) => {
+          const protocol = new URL(route.request().url()).protocol
+          return ['file:', 'data:', 'about:'].includes(protocol)
+            ? route.continue() : route.abort()
+        })
+        const htmlPath = path.join(root, '.tmp/ld-s10y-lesson/render/6a',
+          'modern-us-neutral', `alg6-c4-s2-n${number}`, 'choices.html')
+        await page.goto(pathToFileURL(htmlPath).href)
+        await settle(page)
+        const questions = page.locator('.choice')
+        const option = (q, o) => questions.nth(q - 1)
+          .locator('.choice-options>li').nth(o - 1)
+        if (number === 37) {
+          await range(page, number, 'choices', viewport, 'missing-title-and-q1-stem',
+            page.locator('.sheet>h1'), questions.nth(0).locator('.choice-stem'),
+            'Primary first viewport begins in C table; header and complete source620 stem absent.')
+          for (const o of [1, 2, 3]) {
+            const candidate = option(1, o)
+            const scroll = await horizontalRegion(candidate.locator('table'))
+            if (scroll.asElement()) {
+              await scroll.asElement().evaluate((node) => { node.scrollLeft = 0 })
+            }
+            await scroll.dispose()
+            await capture(page, number, 'choices', viewport, `q1-option-${o}-left`,
+              candidate, viewport.width === 390
+                ? 'Existing right-end tables omit left row labels/option identification.'
+                : 'Primary desktop captures omit A/B and top of C.')
+          }
+          await capture(page, number, 'choices', viewport, 'q2-complete',
+            questions.nth(1), 'Original screenshots do not expose source621 stem or three options.')
+          if (viewport.width === 390) {
+            await capture(page, number, 'choices', viewport, 'q3-complete',
+              questions.nth(2), 'Mobile original screenshots omit all source622 options.')
+            const exercises = path.join(path.dirname(htmlPath), 'exercises.html')
+            await page.goto(pathToFileURL(exercises).href)
+            await settle(page)
+            await capture(page, number, 'exercises', viewport, 'missing-title',
+              page.locator('.sheet>h1'), 'Primary mobile first starts at620, not the title.')
+          }
+        } else {
+          if (viewport.width === 390) {
+            await range(page, number, 'choices', viewport, 'missing-title-and-q1-stem',
+              page.locator('.sheet>h1'), questions.nth(0).locator('.choice-stem'),
+              'Primary mobile first omits title and the beginning of the domain-qualified stem.')
+            await capture(page, number, 'choices', viewport, 'q1-option-4-complete',
+              option(1, 4), 'Primary mobile first cuts off the last two D rows.')
+          } else {
+            await capture(page, number, 'choices', viewport, 'missing-title',
+              page.locator('.sheet>h1'), 'Primary desktop first starts at question1, omitting the title.')
+          }
+          for (const q of [2, 3, 4]) {
+            await capture(page, number, 'choices', viewport, `q${q}-complete`,
+              questions.nth(q - 1),
+              'Both primary endpoint screenshots omit this entire middle question and candidate tables.')
+          }
+          await capture(page, number, 'choices', viewport, 'q5-complete-stem',
+            questions.nth(4).locator('.choice-stem'),
+            'No primary viewport shows the original expressions and complete Q/R qualification.')
+          for (const o of [1, 2, 3]) {
+            const candidate = option(5, o)
+            const scroll = await horizontalRegion(candidate.locator('table'))
+            if (scroll.asElement()) {
+              await scroll.asElement().evaluate((node) => { node.scrollLeft = 0 })
+            }
+            await scroll.dispose()
+            await capture(page, number, 'choices', viewport, `q5-option-${o}-left`,
+              candidate, 'Primary captures omit A/B tables and C left/Q-class contents.')
+            await extraHorizontal(page, number, 'choices', viewport,
+              `q5-option-${o}`, candidate.locator('table'),
+              viewport.width === 390 && o === 3,
+              'Fill only uncovered horizontal table spans; existing mobile C right-end image is reused.')
+          }
+          await capture(page, number, 'choices', viewport, 'q6-complete',
+            questions.nth(5),
+            'Primary screenshots omit both numerical expressions and all three pairs.')
+          if (viewport.width === 390) {
+            await range(page, number, 'choices', viewport, 'q7-stem-and-options-1-3',
+              questions.nth(6).locator('.choice-stem'), option(7, 3),
+              'Mobile primary last retains only D; stem and first three tuples absent.')
+            const figure = questions.nth(7).locator('figure.fig')
+            const region = await horizontalRegion(figure)
+            if (region.asElement()) {
+              const metrics = await region.asElement().evaluate((node) => {
+                const max = node.scrollWidth - node.clientWidth
+                node.scrollLeft = max / 2
+                return { max, left: node.scrollLeft, clientWidth: node.clientWidth }
+              })
+              logs.get(number).measurements.push({
+                label: 'choices-fig108-middle', ...metrics,
+              })
+              await capture(page, number, 'choices', viewport, 'fig108-missing-middle',
+                region.asElement(),
+                'Existing left/right captures leave the central divider outside their painted spans.')
+            }
+            await region.dispose()
+            const exercises = path.join(path.dirname(htmlPath), 'exercises.html')
+            await page.goto(pathToFileURL(exercises).href)
+            await settle(page)
+            for (const index of [0, 1, 2]) {
+              await capture(page, number, 'exercises', viewport,
+                `source-${624 + index}-complete`,
+                page.locator('li.ex').nth(index),
+                index < 2
+                  ? 'Primary mobile first shows blank unpainted624/625 bodies despite headings.'
+                  : 'Neither primary endpoint shows all six original626 rows.')
+            }
+            const sourceFigure = page.locator('figure.fig')
+            const sourceRegion = await horizontalRegion(sourceFigure)
+            if (sourceRegion.asElement()) {
+              await sourceRegion.asElement().evaluate((node) => {
+                node.scrollLeft = (node.scrollWidth - node.clientWidth) / 2
+              })
+              await capture(page, number, 'exercises', viewport,
+                'fig108-missing-middle', sourceRegion.asElement(),
+                'Reuse existing left/right figure captures; supplement only the central boundary span.')
+            }
+            await sourceRegion.dispose()
+          } else {
+            await capture(page, number, 'choices', viewport, 'q7-complete-stem',
+              questions.nth(6).locator('.choice-stem'),
+              'Desktop last shows all tuples but starts after a/b source comparisons.')
+          }
+        }
+      } finally {
+        await context.close()
+      }
+    }
+  }
+} catch (error) {
+  failure = String(error.stack || error)
+} finally {
+  await browser.close()
+  for (const number of [37, 38]) {
+    const log = logs.get(number)
+    log.finished = new Date().toISOString()
+    log.browser_closed = true
+    log.page_errors = pageErrors
+    log.failure = failure
+    log.status = failure ? 'failed-preserved-no-blind-rerun' : 'capture-complete-pixel-review-pending'
+    log.exit_code = failure ? 1 : 0
+    log.same_HTML_and_primary_bytes_unchanged = manifests.get(number).rendered
+      .concat(manifests.get(number).screenshots)
+      .every((entry) => sha(fs.readFileSync(path.join(root, entry.path))) === entry.sha256)
+    const logPath = path.join(ticket,
+      `reviewer-6a-n${number}-actual-display/supplemental-capture-log.json`)
+    fs.writeFileSync(logPath, JSON.stringify(log, null, 2) + '\n', { flag: 'wx' })
+    console.log(JSON.stringify({
+      number,
+      supplemental_files: log.captures.length,
+      browser_closed: log.browser_closed,
+      status: log.status,
+      logPath,
+    }))
+  }
+}
+if (failure) throw new Error(failure)

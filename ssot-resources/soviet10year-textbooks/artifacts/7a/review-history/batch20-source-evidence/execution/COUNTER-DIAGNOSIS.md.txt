@@ -1,0 +1,160 @@
+# PDF41 Counter Diagnosis and Unapplied Proposal
+
+Status: diagnosis complete; `rawsourceclosed: false`; awaiting explicit parent
+authorization. Shared code is unchanged. No finalize, assembly, vectorization,
+PDF42/43 continuation, source edits or durable writes in this diagnosis turn.
+The original `commands.json` and failed PDF41 artifacts remain frozen.
+
+## Exact Baseline Branches
+
+Coordinates below are inclusive bounds in the actual 1504x2289 prepared page,
+not guessed layout coordinates. The line counter uses `line_h=40`,
+`glyph_h=36`, `merge_gap=14.4`, `typical_gap=30`, and `pitch=70`.
+
+### Shared Original98 а)/б) Row
+
+The first merge/join passes already produce one band, y785-966 (182 pixels).
+The original fraction rules are correctly detected:
+
+- Left outer rule pieces: x348-557/y871-876 and x558-689/y871-875.
+- Right outer rule: x824-1249/y875-880.
+
+The false negative is `_single_fraction_row`'s residual-component filter and
+final span check (`layout.py:160-168`), not rule detection:
+
+- After masking fraction columns, actual labels remain near y855-888.
+- A shallow left-margin blemish at x39-55/y960-966, width17/height7/area56,
+  also survives. The existing filter only removes tall narrow components.
+- The remaining projection above threshold spans y860-965: 106 pixels.
+  `106 > 2*36 = 72`, so the helper returns false.
+- Expansion at `layout.py:460-488` treats the band as three rows:
+  `round((182+30)/70)=3`. The fraction exception at line476 calls the
+  helper, receives false, and therefore does not suppress expansion.
+- The emitted y785-845, y846-905 and y906-966 bands are computed thirds
+  of one actual row, not three independently printed rows.
+
+### Original98 г) Fraction Row
+
+Raw numerator support occupies y1116-1203; the outer rule occupies
+x379-700/y1205-1210 (width322/height6/area1155). The denominator digits
+occupy y1219-1249, with individual digit heights28-29.
+
+- `_fraction_across_split`, called for a1116/split1219/b1249, correctly
+  finds that long outer rule with numerator and denominator support.
+- Its glyph filter at `layout.py:178-182` admits a margin speck:
+  x1473-1484/y1116-1127, width12/height12/area77. Height12 passes the
+  current `0.3*36=10.8` threshold.
+- The speck's x-centre1479 is outside the rule column, and its y-centre6
+  (relative to a1116) is 85.5 pixels from the outer rule centre91.5.
+  That exceeds the permitted `0.9*36=32.4` baseline distance.
+- Consequently the unrelated-glyph rejection at `layout.py:207-213`
+  returns false before the final `_single_fraction_row` call.
+- First merge's `separate_full_text` at line370 is therefore true, leaving
+  y1116-1216 separate from y1219-1249 despite a 3-pixel gap.
+- The fallback join cannot rescue it: `fraction_spill` at lines402-405
+  rejects the combined height134 because `134 > 3.2*40=128`.
+  `compact_fragment` is also false because the shorter height31 is not
+  below `0.75*40=30`. No gap or width relaxation is warranted.
+- Expansion recognizes the numerator-only band as one nested fraction row,
+  and the denominator remains another row. Hence the final excess is one.
+- Calling `_single_fraction_row` on the full combined band also returns
+  false under baseline: surviving speck gives residual y1118-1216,
+  span99 >72. Both helper filters need the same glyph-support standard.
+
+## Smallest Tested Proposal
+
+`proposed-layout-counter.patch` is an unapplied proposal, not a shared edit:
+
+1. In the existing post-rule residual-component loop, also ignore components
+   shorter than `0.6*line_h` for the helper's row-support decision.
+2. In `_fraction_across_split`'s glyph-support list, use `0.6*glyph_h`
+   instead of `0.3*glyph_h`.
+
+The `0.6` glyph-height standard already appears in the counter's full-row,
+standalone-digit and footer support checks. This proposal applies it
+consistently to evidence that claims an unrelated full printed row.
+It does not change rule detectors, global ink cleanup, crop pixels, gap limits,
+join width ratios, expansion pitch, page-number handling or source text.
+No page ID, coordinate, expected row total, exercise label or source formula
+is hard-coded into the proposed helper logic.
+
+With the in-memory proposal, а)/б) residual support is y860-888 (29 pixels),
+and full г) residual support is empty after fraction masking and glyph
+qualification. Both helpers now recognize their actual fraction rows.
+
+## Focused Evidence
+
+`counter-proposal-results-v4.json` retains every expected value and actual
+result. The script uses the full actual page for `line_bands`, retaining its
+normal glyph-height calibration; helper cases explicitly use traced glyph36.
+
+- Full page41: baseline22, proposed19, including footer35.
+- Shared а)/б): baseline3, proposed1.
+- г): baseline2, proposed1.
+- Ordinary в) fraction: remains1.
+- Three actual fraction rows of original98: remain3, not collapsed together.
+- Two separate original99 fraction rows: remain2.
+- Original98 heading and its shared fraction row: remain2.
+- Two ordinary prose rows: remain2.
+- Actual two-row brace system on page40: remains2.
+- Footer: remains1.
+- Synthetic horizontal separator between two full glyph rows: counter remains2.
+- Helper negatives reject actual neighboring а)/б)+в), в)+г), both original99
+  rows, and a full-sized unrelated row outside the fraction columns.
+- а)/б) helper positive is scale-invariant at 1x, 2x and 3x.
+
+All 11 line-level cases and 10 helper cases pass. Every other one of the 17
+page41 bands has exactly the baseline bounds. Assertions make a failing
+contract case or protected-file change exit nonzero.
+
+Causal isolation:
+
+| In-memory variant | Full page count |
+|---|---:|
+| Baseline | 22 |
+| Residual glyph-support change only | 20 |
+| Across-split glyph-support change only | 22 |
+| Both minimal changes | 19 |
+
+The proposed full-page overlay was actually opened and inspected:
+`page41-proposed-counter-overlay.png`.
+
+## Preserved Failed Probes and Limits
+
+The first diagnostic-script attempt failed only while serializing a NumPy
+boolean to JSON; no shared or source writes occurred. Subsequent diagnostics
+used explicit scalar serialization.
+
+`counter-proposal-results.json` preserves rejected fraction-only crop probes:
+such crops remove the ordinary-row height calibration and are not valid
+standalone page-counter fixtures. They were not promoted as passing evidence.
+
+`counter-proposal-results-v2.json` preserves an attempted ambiguous helper
+negative: two glyph rows fully inside a wide rule's columns can geometrically
+represent a single fraction. Both the baseline and proposal helper return
+true there, although the line-level counter preserves two rows. This existing
+helper ambiguity is recorded separately in v3/v4, not changed into a claim
+that the helper can infer prose or math semantics.
+
+The proposal is deliberately narrow. It does not prove all unseen smaller
+fonts are safe, and it does not change the page-global height estimator.
+Parent review and explicit authorization are still required before applying
+shared code or continuing source extraction.
+
+## Reproduce
+
+From the shared checkout, with existing dependencies only:
+
+```text
+env PYTHONDONTWRITEBYTECODE=1 .claude/skills/ld-s10y-lesson/.venv/bin/python .intentfold/tickets/STEMROBIN-182/tmp/batch20-work-7a/trace-layout41.py
+env PYTHONDONTWRITEBYTECODE=1 .claude/skills/ld-s10y-lesson/.venv/bin/python .intentfold/tickets/STEMROBIN-182/tmp/batch20-work-7a/probe-counter-proposal.py
+```
+
+`layout41-branch-trace.json` retains the original helper decisions, detected
+rule/component bounds, rejection geometry, first-merge/join and expansion
+decisions. `counter-proposal-results-v4.json` retains the in-memory source
+proposal, derived diff, focused cases, ablation and before/after SHA-256s.
+The original shared layout SHA-256 remains
+`11990829859ef75fd2b83a6980afc809ec50ab1cb343da5e03f55212b6790bee`;
+frozen extraction commands remain
+`09b68d873b3b7963d940a48aecfde7a2c5cafbcd82dd2a0365dd977a754f08fd`.

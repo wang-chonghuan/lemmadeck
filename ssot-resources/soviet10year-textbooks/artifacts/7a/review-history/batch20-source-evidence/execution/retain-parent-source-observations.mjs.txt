@@ -1,0 +1,56 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const work = `${scratch}/batch20-work-7a`
+const raw = `${scratch}/batch20-source-7a/7a`
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const record = file => ({ path: file, sha256: sha(file) })
+const observations = [
+  [28, 26, 'Implication examples, even6 counterexample, x^2-8x and x+5 factors, y>8 to y>4, and final x-5/5-x statements match the full actual page.'],
+  [29, 25, 'Both implication directions, bold equivalence definition, parallelogram statements, (x-1)(x+1)=0 versus x^2-1=0, and only67a before the next page match.'],
+  [30, 27, '67b/c/d, all68 implications with actual formula wraps,69, all70/71 subparts and the open72 stem are preserved. No theorem conclusion is substituted for the original question.'],
+  [31, 27, '72 continued six comparisons, all73-75 items, complete76a and the genuinely interrupted76b ending are preserved, including decimal/fraction thresholds and original inequality directions.'],
+  [32, 25, '76b continuation,77/78, review heading, required graph-construction79-81 and82a/b/c before the boundary all match. No printed source figure is invented for these construction tasks.'],
+  [33, 24, '82d closes the prior exercise before n6 begins. Truth-set definitions, {10,11,12,13,14}, {8}, closed ray to5, ordered pairs for y=x+2 and the last open prose match.'],
+  [34, 26, 'Prior prose closes at divisibility by5. A/B lists, implication/subset relationships, empty antecedent special case and final equivalence paragraph match; shared caption/prose row and paragraph continuity are preserved.'],
+  [35, 27, '83-87 complete sources match. Actual85 third sublabel is Cyrillic ge, not ve; no silent relabeling in the faithful layer. Inclusive inequalities, two-variable pairs, and y=6/x remain unchanged.'],
+  [36, 23, 'Review88/89 and n7 equality properties1-5 match. The coefficient/sign/denominator structure in89 and arbitrary-c equality premises are unchanged.'],
+  [37, 24, 'All five equation steps, reversible multipliers7 and1/7, two-variable sum-of-squares example and the final system-definition paragraph match.'],
+  [38, 23, 'Actual original product is (x+2)(x-3), middle quoted disjunction says x+3=0, and following prose returns x+2=0. This inconsistency is retained exactly and p0038-math-1 names only its original middle formula;90-92 match.'],
+  [39, 21, '93/94, construction95, section3/n8 and the fraction-zero condition match; the final iff statement is genuinely continued on40. Mixed denominator2+3/11 is retained, not simplified.'],
+  [40, 21, 'Continued b!=0 guard, both fraction-equation examples and both numerator/denominator systems match. Original second numerator x^2-2x and negative paired denominator give x^2-5x; last substitution line continues on41.'],
+  [41, 19, 'Full original and counter overlay actually opened. Both initial truth statements,96-101, all nested mixed fractions in98, both original horizontal rows of99 and open101 are faithful. The shared98a/b formula row is one printed row,98g is one printed row, and footer35 is retained; current failed22-row counter is not accepted.'],
+].map(([page, printedRows, evidence]) => {
+  const id = String(page).padStart(4, '0')
+  return {
+    page, printed_page: page - 6, independently_observed_printed_rows: printedRows,
+    actual_full_page_opened: true,
+    image: record(`${work}/7a/pages/${id}/page.png`),
+    compared_transcription: record(`${raw}/pages/${id}/page.md`),
+    source_fidelity: 'pass', evidence,
+    page_finalize_status: page === 41 ? 'failed baseline retained; narrow counter repair pending' : 'existing once-pass receipt reused',
+  }
+})
+const result = {
+  status: 'source-transcription-observed; page41 finalize pending',
+  observer: 'parent actual independent source comparison, distinct from raw author',
+  pages: observations,
+  actual_full_pages_opened: observations.length,
+  source_layer_promotion_or_publication: false,
+  rawsourceclosed: false,
+  figure2: {
+    actual_full_page_and_crop_opened: true,
+    image: record(`${work}/7a/pages/0034/figures/fig-02.png`),
+    evidence: 'Small circle A wholly inside outer circle B. Both original labels and A subset B remain complete in the crop; caption is outside the crop and retained in prose. No new mathematical diagram is substituted.',
+  },
+  counter_overlay: record(`${work}/page41-counter-bands.png`),
+  remaining: 'Parent has not opened or compared42/43. No assemble/vectorize or durable source promotion has occurred.',
+  repeated_semantic_or_command_execution: false,
+  model_usage: null,
+}
+const destination = `${work}/parent-source-observations-28-41.json`
+assert(!fs.existsSync(destination))
+fs.writeFileSync(destination, JSON.stringify(result, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ output: destination, full_actual_pages: observations.length, rawsourceclosed: false }))

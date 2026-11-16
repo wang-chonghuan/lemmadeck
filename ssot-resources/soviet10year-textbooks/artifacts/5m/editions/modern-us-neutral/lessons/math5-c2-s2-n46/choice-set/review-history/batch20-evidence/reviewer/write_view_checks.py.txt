@@ -1,0 +1,613 @@
+"""Record independently reasoned pure-view judgments; never load author internals."""
+
+import hashlib
+import json
+from collections import Counter
+from pathlib import Path
+
+
+TMP = Path(__file__).resolve().parent.parent
+
+
+def judgment(correct, solution, **options):
+    return {"correct": list(correct), "solution": solution, "options": options}
+
+
+N46 = {
+    "852a": judgment(
+        "B",
+        "A reciprocal r satisfies xr=1. Inverting each positive input gives (10/7,4/11,1/5,9/8).",
+        A="Negation is not reciprocation: (7/10)(-7/10)=-49/100, (11/4)(-11/4)=-121/16, 5(-5)=-25 and (8/9)(-8/9)=-64/81; none equals 1.",
+        B="The four products are (7/10)(10/7)=1, (11/4)(4/11)=1, 5(1/5)=1 and (8/9)(9/8)=1. Every entry is correct.",
+        C="Retaining the inputs gives products 49/100,121/16,25,64/81 rather than 1.",
+    ),
+    "852b": judgment(
+        "A",
+        "The reciprocals of (1/5,1,-2/3,-5/4) are (5,1,-3/2,-4/5). Inversion preserves the sign.",
+        A="Products are (1/5)5=1, 1*1=1, (-2/3)(-3/2)=1 and (-5/4)(-4/5)=1.",
+        B="First two entries are correct, but the negative inputs times the displayed positive 3/2 and 4/5 both give -1, not 1.",
+        C="Products with the four inputs are -1/25,-1,-4/9,-25/16; negating each input fails every reciprocal test.",
+    ),
+    "853": judgment(
+        "ABCD",
+        "Check all six pair products, not only the four selected ones: (1,1,1,1,49/6,0). The complete true set is A,B,C,D.",
+        A="7 2/5=37/5, and (37/5)(5/37)=1.",
+        B="48(1/48)=1.",
+        C="0.2=1/5, and (1/5)5=1.",
+        D="2.5=5/2 and 0.4=2/5; (5/2)(2/5)=1.",
+        E="3 1/2=7/2 and 2 1/3=7/3; their product is 49/6, not 1.",
+        F="0*1=0; zero has no reciprocal.",
+    ),
+    "854": judgment(
+        "B",
+        "Associate the last two factors: (5/6)(6/5)=1 and (7/3)(3/7)=1. The complete results are 158/81 and 17/5=3.4.",
+        A="395/243 and 119/15 are only the first-stage products (158/81)(5/6) and (17/5)(7/3); each omits its final factor.",
+        B="1 77/81=158/81 remains after the reciprocal factors cancel; the second initial factor 3.4 remains likewise.",
+        C="Only each reciprocal-factor pair equals 1. The uncanceled initial factors 158/81 and 3.4 are not 1.",
+    ),
+    "855a": judgment(
+        "A",
+        "For nonzero c, cx=1 implies x=1/c. The four solutions are (4/3,20/23,5/4,4).",
+        A="Substitution gives (3/4)(4/3)=1, (23/20)(20/23)=1, (4/5)(5/4)=1 and (1/4)4=1.",
+        B="Substitution gives 9/16,529/400,16/25,1/16 on the left, not 1; copying the coefficient is not solving.",
+        C="Each proposed value is the negative of the required reciprocal, so all four left sides equal -1.",
+    ),
+    "855b": judgment(
+        "B",
+        "Divide each side by its equal nonzero coefficient; both unknowns are 1.",
+        A="The proposed reciprocals make both left sides 1, but the required right sides are 8/19 and 12/5.",
+        B="(8/19)*1=8/19 and (12/5)*1=12/5.",
+        C="Substitution gives 512/6859 and 1728/125, not 8/19 and 12/5. Multiplying the two sides' coefficients is not division by the coefficient.",
+    ),
+    "857a": judgment(
+        "A",
+        "Multiply numerators and denominators, then reduce: 4/36=1/9,80/108=20/27,408/425=24/25.",
+        A="All three displayed values equal the reduced products 1/9,20/27,24/25.",
+        B="4/13,80/21,68/7 use denominator sums 4+9,12+9,17+25 instead of denominator products. They differ from every required result.",
+        C="9/16,15/64,200/867 are the corresponding quotients, not the products 1/9,20/27,24/25.",
+    ),
+    "857b": judgment(
+        "B",
+        "The complete products are -15/330=-1/22, (1/7)(35/6)=5/6 and (14/3)(7/2)=49/3.",
+        A="The second and third entries are correct; the first has one negative factor and must be -1/22, not +1/22.",
+        B="Converting both mixed numbers and preserving the first product's negative sign gives exactly (-1/22,5/6,49/3).",
+        C="The first entry is correct. The second and third wrongly convert a mixed number w n/d into (w+n)/d: (1/7)((5+5)/6)=5/21 and ((4+2)/3)((3+1)/2)=4. Proper conversions give 5/6 and 49/3.",
+    ),
+    "858a": judgment(
+        "A",
+        "Let original counts be x and 1.5x. After transfer they are x-5 and 1.5x+5; 1.5x+5=2(x-5) gives x=30 and second=45.",
+        A="The model changes both trains correctly. Original (30,45) becomes (25,50), and 50=2*25; total 75 is conserved.",
+        B="The model ignores the first train losing five. Claimed originals (10,15) become (5,20), whose ratio is 4 rather than 2.",
+        C="The model ignores the second train gaining five. Originals (20,30) become (15,35), and 35 is not 2*15.",
+    ),
+    "858b": judgment(
+        "B",
+        "With second=z and first=2.5z, the transfer gives first=2.5z+5 and second=z-5. Solving 2.5z+5=3(z-5) gives z=40 and first=100.",
+        A="The equation ignores the second stack losing five. Originals (25,10) become (30,5), whose ratio is 6, not 3.",
+        B="The model changes both stacks. Originals (100,40) become (105,35), and 105=3*35; total 140 is conserved.",
+        C="The model ignores the first stack gaining five. Originals (75,30) become (80,25), and 80 is not 3*25.",
+    ),
+    "859a": judgment(
+        "A",
+        "Invert all seven nonzero inputs. The ordered row is (27/10,59/12,98/23,122/11,15/2,3/10,8/41); 315/42=15/2.",
+        A="The seven input-output products are all 1; the fifth uses (42/315)(15/2)=1 after reduction.",
+        B="Six entries agree with the correct row, but the fifth 2/15 is the reduced input 42/315, not its reciprocal. Its product with that input is 4/225.",
+        C="Each displayed value is the negative of the required positive reciprocal, so all seven products are -1.",
+    ),
+    "859b": judgment(
+        "B",
+        "Convert 11 11/12=143/12, 0.5=1/2 and 1.2=6/5. Inverting all seven gives (12/143,20,1/80,1/100,1,2,5/6).",
+        A="The last six entries are correct. The first 6/11 is not 12/143: (143/12)(6/11)=13/2, not 1.",
+        B="Every entry gives input times reciprocal equal to 1, including (143/12)(12/143)=1 and (6/5)(5/6)=1.",
+        C="The first five entries are correct, but 0.5*0.2=0.1 and 1.2*(1/12)=0.1, not 1.",
+    ),
+    "860a": judgment(
+        "B",
+        "Cancel legitimate common factors: (8/11)(33/4)=6, (21/13)(26/7)=6 and (14/3)(3/7)=2.",
+        A="The factor pairs are not reciprocal pairs; their products are 6,6,2, not 1,1,1.",
+        B="The three canceled products are exactly 6,6,2 in the requested order.",
+        C="88/5,273/10,21/5 use denominator sums: 264/(11+4),546/(13+7),42/(3+7). Required denominator products instead give 6,6,2.",
+    ),
+    "860b": judgment(
+        "A",
+        "Cancel magnitudes and then apply signs: -108/9=-12, -69/23=-3 and (+21/42)=1/2.",
+        A="The first two products have one negative factor each; the third has two. All magnitudes and signs match (-12,-3,1/2).",
+        B="The magnitudes are correct, but the first and second products must be negative, not positive.",
+        C="The first two entries are correct, but the product of two negative factors is +1/2, not -1/2.",
+    ),
+    "861": judgment(
+        "B",
+        "Use the 2.5-tonne target as denominator: completed 3.2/2.5=1.28, excess (3.2-2.5)/2.5=0.28.",
+        A="28% is the excess and 128% the completion rate; their order is reversed relative to the two requested quantities.",
+        B="Completion is 128% and excess is 28%; both use the target baseline.",
+        C="78.125%=2.5/3.2 and 21.875%=0.7/3.2 use the achieved total as denominator, not the task's target.",
+    ),
+}
+
+
+N47 = {
+    "862a": judgment(
+        "A",
+        "Replace each division by multiplication by the divisor's reciprocal, leaving the dividend fixed. The products evaluate to (16/7,1/8,2/3,5/3).",
+        A="All four replacements invert only the divisor: 3/8 -> 8/3,10/3 -> 3/10,2 -> 1/2 and 1/3 -> 3.",
+        B="None of the four divisors is inverted; these products are 9/28,25/18,8/3,5/27, not the original quotient values.",
+        C="It inverts the dividend instead. Its values (7/16,8,3/2,3/5) are the reciprocals of the required quotients.",
+    ),
+    "862b": judgment(
+        "B",
+        "The products are (m/k)(4/c) with k,c nonzero and (a/b)(d/c) with b,c,d nonzero. Original d!=0 survives; m,a may be zero.",
+        A="The stated exclusions are sufficient, but neither divisor is inverted. For m=1,k=1,c=2, the first original quotient is 2 while the proposed product is 1/2.",
+        B="Both product forms are correct, and all original denominator and nonzero-divisor exclusions are retained. Zero dividend numerators remain allowed.",
+        C="Both product forms are correct where the original is defined, but d=0 makes c/d undefined. The assertion that d may be zero does not preserve the original domain.",
+    ),
+    "863a": judgment(
+        "A",
+        "Multiply by divisor reciprocals: (3/8)(5/7)=15/56, (1/5)(4/9)=4/45 and (4/5)(7/4)=7/5.",
+        A="Every entry equals its required quotient, in order (15/56,4/45,7/5).",
+        B="The entries (21/40,9/20,16/35) multiply the two original fractions instead of dividing them.",
+        C="The entries (56/15,45/4,5/7) reverse each division and are reciprocals of the required results.",
+    ),
+    "863b": judgment(
+        "B",
+        "The quotient row is ((3/16)(4/5),(3/5)(25/9),(-3/25)(-5/9))=(3/20,5/3,1/15).",
+        A="The row (15/64,27/125,27/125) consists of the original fraction products, not the quotients.",
+        B="The reduced quotients are 3/20,5/3,1/15; the two negative operands in the last quotient give a positive result.",
+        C="First two entries are correct; the last quotient has two negative operands and equals +1/15, not -1/15.",
+    ),
+    "864a": judgment(
+        "A",
+        "Dividing the first two by 2 halves them; dividing by 1/2 doubles the third. Results are (7/16,4/7,6/7).",
+        A="The row (7/16,4/7,6/7) applies the reciprocal divisor correctly in all three cases.",
+        B="The row (7/4,16/7,3/14) multiplies by the original divisor and therefore changes all three required values.",
+        C="The row (16/7,7/4,7/6) reverses each quotient, yielding the reciprocal of each required result.",
+    ),
+    "864b": judgment(
+        "B",
+        "Use reciprocals 1/5,7,12: the row is (3/16,147/8,-6/5).",
+        A="75/16,3/8,-1/120 multiply by the divisors 5,1/7,1/12 instead of their reciprocals.",
+        B="(15/16)(1/5)=3/16, (21/8)7=147/8 and (-1/10)12=-6/5, including the last sign.",
+        C="First two entries are correct; the last quotient retains its single negative sign and must be -6/5.",
+    ),
+    "865": judgment(
+        "A",
+        "Convert exact decimals first: 0.25=1/4 and 0.6=3/5. The quotients are (1/4)(4/3)=1/3 and (3/5)(5/2)=3/2.",
+        A="Both conversions and both quotient values match the requested operations.",
+        B="The conversions are correct, but 3/16 and 6/25 are products with the original divisors, not quotients.",
+        C="Both conversions are wrong: 5/2=2.5 rather than 0.25, and 3/50=0.06 rather than 0.6. The following quotients use those changed inputs.",
+    ),
+    "866": judgment(
+        "B",
+        "4/25=0.16 and 3/8=0.375 exactly. Division then gives 0.16/0.2=0.8 and 0.375/0.375=1.",
+        A="The conversions are correct, but 0.032 and 0.140625 are decimal products, not quotients.",
+        B="Both exact conversions and the quotient row (0.8,1) are correct.",
+        C="Both converted decimals are one tenth of the actual fractions. Thus both claimed conversions and the quotient results (0.08,0.1) fail.",
+    ),
+    "867": judgment(
+        "A",
+        "For the frozen supplied division tasks, (m/n):(p/k)=mk/(np) and (a/b):(c/d)=ad/(bc). Domains are n,k,p!=0 and b,c,d!=0; numerator m or a may be zero.",
+        A="Both single-fraction forms and all original restrictions are correct, including k,d although they become numerators.",
+        B="mp/(nk) and ac/(bd) are the original fractions' products, not the displayed quotients. Example m=n=k=1,p=2 gives required 1/2 but proposed 2.",
+        C="The reduced fraction forms are correct on the original domain, but k=0 or d=0 makes the original divisor fraction undefined. The proposed enlarged domain is false.",
+    ),
+    "868": judgment(
+        "B",
+        "First inner product is 3/5, followed by division by 3/10 giving 2. Second inner quotient is 8/15, followed by multiplication by 15/16 giving 1/2.",
+        A="9/50 replaces the first final division by multiplication. 81/2888 replaces the second inner division by multiplication; neither is the required result.",
+        B="Both complete expressions, not only their inner parentheses, evaluate to (2,1/2).",
+        C="3/5 and 8/15 are correct inner intermediate values, but each omits the final operation.",
+    ),
+    "869a": judgment(
+        "A",
+        "Convert mixed numbers and invert divisors: (7/2)(3/2)=21/4, (9/2)(2/3)=3, (5/3)(10/11)=50/33.",
+        A="All three reduced quotients match (21/4,3,50/33).",
+        B="7/3,27/4,11/6 are products with the original divisors, not quotients.",
+        C="4/21,1/3,33/50 reverse the divisions and are reciprocals of the required quotient row.",
+    ),
+    "869b": judgment(
+        "B",
+        "The divisors are 16/5,8/3,3. Quotients are (4/15)(5/16)=1/12, (31/3)(3/8)=31/8 and (19/4)(1/3)=19/12.",
+        A="64/75,248/9,57/4 are the original operands' products, not the required quotients.",
+        B="All three conversions, inversions and reductions give the displayed (1/12,31/8,19/12).",
+        C="12,8/31,12/19 are reciprocals of the required results, corresponding to reversing each division.",
+    ),
+    "870a": judgment(
+        "A",
+        "Right sides are 16/7 and 27/10. Divide by 2/7 and 3/5 respectively to obtain x=8,y=9/2.",
+        A="Substitution gives (2/7)8=16/7 and (3/5)(9/2)=27/10, exactly the two right sides.",
+        B="32/49 and 81/50 multiply each right side by its coefficient instead of dividing; their left sides do not equal 16/7 or 27/10.",
+        C="x=15/2 gives left side 15/7, not 16/7; y=29/6 gives left side 29/10, not 27/10. The extra right-side terms cannot be omitted.",
+    ),
+    "870b": judgment(
+        "B",
+        "The first right side is 7/9, so y=(7/9)(3/2)=7/6. The second is 2/3, so (10/3)/k=2/3 gives k=5 with k nonzero.",
+        A="y=14/27 divided by 3/2 is 28/81, not 7/9. k=20/9 gives (10/3)/k=3/2, not 2/3.",
+        B="(7/6)/(3/2)=7/9 and (10/3)/5=2/3; the nonzero-divisor condition is satisfied.",
+        C="y=27/14 gives quotient 9/7, not 7/9. k=1/5 gives quotient 50/3, not 2/3.",
+    ),
+    "871": judgment(
+        "A",
+        "Directly S=(21/5)(3/7)=9/5; inversely a=S/b=15/(15/2)=2.",
+        A="Both the direct multiplication and inverse division are correct and yield S=9/5,a=2.",
+        B="The displayed operations are numerically evaluated correctly but use division for S and multiplication for a, contrary to S=ab.",
+        C="The direct result is correct; the second computes b/S=1/2 rather than the required S/b=2.",
+    ),
+    "872": judgment(
+        "B",
+        "Speed equals distance/time. Thus 15/(5/6)=18 and 15/(5/3)=9 km/h.",
+        A="25/2 and 25 equal distance times time, not distance divided by time.",
+        B="18*(5/6)=15 and 9*(5/3)=15; both speeds produce the requested distance.",
+        C="The two correct speed values are reversed; 9*(5/6)=7.5 and 18*(5/3)=30, not 15.",
+    ),
+    "873": judgment(
+        "A",
+        "Unit price is (2/5)/(4/5)=1/2 USD per kg. Quantity for one dollar is (4/5)/(2/5)=2 kg.",
+        A="The distinct price and quantity units match their correctly oriented quotients, 1/2 USD and 2 kg for the quantities requested.",
+        B="It swaps the unit-price and quantity-per-dollar numerical values; 2 USD/kg would charge 8/5 USD for 4/5 kg, not 2/5.",
+        C="8/25 is the product of cost and mass and equals neither required quotient.",
+    ),
+    "874": judgment(
+        "B",
+        "The second share is 1-5/7=2/7. First divided by second is (5/7)/(2/7)=5/2.",
+        A="2/5 is the second-to-first ratio, reversing the comparison requested.",
+        B="The first-to-second ratio is exactly 5/2.",
+        C="5/7 is the first share of the whole, not its ratio to the second share.",
+    ),
+    "875": judgment(
+        "A",
+        "Let T be total tonnes; (7/8)T=70, so T=70*(8/7)=80.",
+        A="(7/8)*80=70, reproducing the given partial tonnage.",
+        B="61.25=70*(7/8) shrinks the known portion instead of recovering the total.",
+        C="10=70/7 is one eighth of the total, not the entire day's total.",
+    ),
+    "876": judgment(
+        "B",
+        "Flour=25*(4/5)=20, groats=20/40=1/2, bran=25-20-1/2=9/2 quintals.",
+        A="35/8 results from subtracting 25/40=5/8 as groats; the groats base is flour 20, not wheat 25.",
+        B="9/2 accounts for both flour and groats with the stated nested fraction base.",
+        C="5=25-20 omits the 1/2 quintal of groats and is too large for the residual bran.",
+    ),
+    "877": judgment(
+        "A",
+        "Second-day share is (4/5)(5/24)=1/6 of the whole. Whole=24/(1/6)=144 km; first day=30 km.",
+        A="144*(5/24)=30 and 30*(4/5)=24, satisfying both linked stages.",
+        B="30 km is the first-day distance, not the whole plan; if whole were 30, second day would be 5 km.",
+        C="576/5 recovers a whole by treating 24 as the first-day 5/24 share; its actual second-day distance would be 19.2 km.",
+    ),
+    "878": judgment(
+        "B",
+        "Annual rates are 472,118,691. Duration-weighted total is 4*472+8*118+2*691=4214 over 14 years; mean=301.",
+        A="1281=472+118+691 sums one annual rate from each stage; 427 divides this by three. It ignores the 4,8,2 year durations.",
+        B="4214 and 301 use the complete duration-weighted total and the correct 14-year denominator.",
+        C="3776=4*472+8*118+2*472 omits the boarding increase 219 in each of two years. Its mean 1888/7 inherits that loss.",
+    ),
+    "879": judgment(
+        "A",
+        "First form the four numbers (19/5,3/2,47/7,3/2), then invert, giving (5/19,2/3,7/47,2/3).",
+        A="Each displayed reciprocal multiplied by its entire requested sum or difference equals 1.",
+        B="19/5,3/2,47/7,3/2 are the sums/differences themselves; all four omit reciprocation.",
+        C="The displayed row adds or subtracts individual reciprocals: 5/13+5/6=95/78,10/57-10/42=-25/399,7/32+7/15=329/480,12/79-12/61=-216/4819. These do not equal reciprocals of the whole expressions.",
+    ),
+    "880": judgment(
+        "B",
+        "Use mixed factors 25/24,28/5,35/18. Complete products are (18/35)(25/24)(28/5)=3 and (5/28)(24/25)(35/18)=1/3.",
+        A="15/28 and 6/35 are the first-two-factor products; both omit their respective final mixed-number factor.",
+        B="Both complete three-factor products reduce to the displayed (3,1/3).",
+        C="12/175=(18/35)((1+1)/24)((5+3)/5) wrongly converts each mixed number w n/d into (w+n)/d. The second entry 6/35 omits its final factor entirely.",
+    ),
+    "881": judgment(
+        "A",
+        "M=(A+B)/2 and K=(B+Y)/2 give K-M=(Y-A)/2. The translation A'=A+(K-M)=(A+Y)/2 is the midpoint of AY.",
+        A="Every vertex moves by the same directed vector K-M; direction M-to-K and length MK define that vector. The displayed midpoint conclusion follows for every nondegenerate triangle.",
+        B="The reversed vector gives A'=A-(Y-A)/2=(3A-Y)/2, not (A+Y)/2 unless A=Y, excluded by nondegeneracy.",
+        C="Reflection is not the specified translation. Counterexample A=(0,0),B=(0,2),Y=(2,0) gives line MK:y=1, reflected A=(0,2), whereas the AY midpoint is (1,0).",
+    ),
+    "883a": judgment(
+        "AB",
+        "Remaining areas are max(360-50t,0) and max(400-60t,0). Before either finishes, equality gives t=4 with 160 ha each; at t=3 they are 210,220. Both are zero after both finish.",
+        A="360-50*4=400-60*4=160. The initial 40-ha gap decreases by 10 ha/day, so no earlier t>=0 gives equality.",
+        B="At t=3 the areas are 360-150=210 and 400-180=220; they are unequal as stated.",
+        C="The 40-ha initial difference must be divided by the 10-ha/day rate difference. At day 40 both are zero, but first equality was day 4.",
+        D="After both finish, both remaining areas are 0, which are equal. The statement denying that equality is false.",
+    ),
+    "883b": judgment(
+        "BC",
+        "Remaining areas are max(47-8t,0) and max(39-6t,0). Equality before stopping gives 8=2t, hence t=4 and 15 ha; at t=3 they are 23,21.",
+        A="The 8-ha initial gap is closed at 2 ha/day, not 1. At day 8 both are zero, but first equality was day 4.",
+        B="47-8*4=39-6*4=15; the linear gap has no earlier nonnegative zero.",
+        C="47-8*3=23 and 39-6*3=21; they remain unequal at day 3.",
+        D="Both eventually stop with 0 ha remaining, so their remaining areas are also equal then.",
+    ),
+    "884": judgment(
+        "B",
+        "Reuse actually opened fig151: AC=600 m, angles at A,C are 60,45 degrees. Scale 1:10000 gives AC=6 cm; lengths are about 4.3923,5.3795 cm, hence AB,CB round to 440,540 m under the explicit nearest-10-m condition.",
+        A="600 m=60000 cm, and 60000/10000=6 cm, not 60. The displayed side distances are also about ten times the source-supported lengths.",
+        B="The scale conversion is 6 cm. The independently checked AB about 439.2305 m and CB about 537.9453 m round to 440 m and 540 m respectively; the rounded readings are not claimed exact.",
+        C="The scale is correct, but the two sides are exchanged. AB opposite 45 degrees is shorter than CB opposite 60 degrees, so AB cannot be the 540-m entry.",
+    ),
+    "885": judgment(
+        "A",
+        "Expand fully: -6.8y-12.5+2.6-5.4y-12.6=-12.2y-22.5; -7.4k+22.8+21.1-4.6k-14.5=-12k+29.4.",
+        A="Both variable coefficients and constants equal the independently collected results -12.2,-22.5 and -12,29.4.",
+        B="The constants are correct, but variable coefficients -1.4=-6.8+5.4 and -2.8=-7.4+4.6 lose the negative signs from the positive multipliers times negative variable terms.",
+        C="The variable coefficients are correct. Constants +2.5 and -16.2 result from losing the sign reversal in -10*1.25 and -20*(-1.14), and differ from -22.5 and +29.4.",
+    ),
+    "886a": judgment(
+        "B",
+        "Equality gives -0.83y=-3.835, hence y=3.835/0.83=767/166 exactly; 4.62 is only an approximation and is not used.",
+        A="The proposed negative value makes -0.83y positive +3.835, not the required -3.835.",
+        B="(-83/100)(767/166)=-767/200=-3.835, so it exactly satisfies the rearranged equality.",
+        C="(-83/100)(1185/166)=-1185/200=-5.925, not -3.835; summing the constants would produce the wrong numerator.",
+    ),
+    "886b": judgment(
+        "A",
+        "Equality gives -0.99x=11.595-5.16=6.435, so x=-6.5.",
+        A="(-0.99)(-6.5)=6.435 exactly. Original expressions both equal 32.33.",
+        B="(-0.99)(+6.5)=-6.435, which has the wrong sign.",
+        C="(-99/100)(-1117/66)=16.755, not 6.435; 16.755 sums rather than subtracts the two constants.",
+    ),
+    "887a": judgment(
+        "B",
+        "Inner product 9.15*6.84=62.586, inner sum=62.64. The nested results are 7.36,72.64,17.36 from inside outward.",
+        A="142.64=90-80+70+62.64 changes the final expanded inner term's sign. Correct expansion is 90-80+70-62.64=17.36.",
+        B="90-(80-(70-62.64))=90-72.64=17.36.",
+        C="72.64 is only the brace value 80-(70-62.64), omitting the outer 90 minus.",
+    ),
+    "887b": judgment(
+        "A",
+        "Inner product 8.16*7.15=58.344, inner sum=58.38. Successive nested results are 1.62,68.38,11.62.",
+        A="80-(70-(60-58.38))=80-68.38=11.62.",
+        B="128.38=80-70+60+58.38 changes the final expanded inner term's sign. Correct expansion is 80-70+60-58.38=11.62.",
+        C="68.38 is the brace intermediate, not the final result after subtracting it from 80.",
+    ),
+    "888a": judgment(
+        "B",
+        "Multiply by reciprocals: (4/9)(8/3)=32/27, (17/60)(9/34)=3/40 and (-3/7)(14/9)=-2/3.",
+        A="1/6,289/270,-27/98 are the original fractions' products rather than their quotients.",
+        B="All three quotients reduce to (32/27,3/40,-2/3), retaining the third negative sign.",
+        C="First two entries are correct; a negative divided by a positive is negative, so the last must be -2/3.",
+    ),
+    "888b": judgment(
+        "A",
+        "Quotients are (86/119)(-51/43)=-6/7, (27/64)(1/9)=3/64 and (-8)(-3/2)=12.",
+        A="Every displayed value and sign matches (-6/7,3/64,12).",
+        B="The first entry is correct. 243/64 and 16/3 multiply by the original divisors 9 and -2/3 rather than their reciprocals.",
+        C="The middle entry is correct; first and last signs are wrong, because positive/negative is negative and negative/negative is positive.",
+    ),
+    "889": judgment(
+        "A",
+        "Mixed-number quotients are (15/7)(14/25)=6/5, (18/5)(25/36)=5/2, (49/23)(46/343)=2/7 and (145/49)(7/87)=5/21.",
+        A="All four mixed-number conversions and reciprocal-divisor products reduce to the displayed (6/5,5/2,2/7,5/21).",
+        B="5/6,2/5,7/2,21/5 reverse each division and are reciprocals of the required results.",
+        C="375/98,648/125,16807/1058,12615/343 multiply the original mixed operands; none is the requested quotient.",
+    ),
+    "890a": judgment(
+        "B",
+        "Apply equal-precedence operations left-to-right: ((57/8)/(19/4))*8=12 and ((34/3)/(4/21))/(17/4)=14.",
+        A="3/16 groups (19/4)*8 into the first denominator, contradicting left-to-right. 2023/8 multiplies the second inner quotient 119/2 by 17/4 rather than dividing.",
+        B="First intermediate is 3/2 followed by times 8=12; second is 119/2 followed by division by 17/4=14.",
+        C="3/2 and 119/2 are only the first-operation intermediates; both final operations are omitted.",
+    ),
+    "890b": judgment(
+        "A",
+        "Complete left-to-right products/quotients: ((16/9)(12/5))/(8/5)=8/3 and ((7/8)(8/9))/(10/9)=7/10.",
+        A="Both complete chains give the displayed (8/3,7/10).",
+        B="512/75 and 70/81 multiply the intermediate products by 8/5 and 10/9, instead of dividing by these final factors.",
+        C="64/15 and 7/9 are correct initial products but omit both final divisions.",
+    ),
+    "891": judgment(
+        "B",
+        "Revolutions equal travel divided by circumference: 48/(6/25)=200,48/(3/4)=64,48/(4/5)=60.",
+        A="288/25,36,192/5 multiply travel by circumference rather than dividing; they do not give the revolution counts.",
+        B="Multiplying counts (200,64,60) by the respective circumferences reproduces 48 m in all three cases.",
+        C="1/200,1/64,1/60 divide circumference by travel, reversing the required counts.",
+    ),
+    "892": judgment(
+        "A",
+        "Width=80*(5/16)=25 cm. Perimeter=2*(80+25)=210 cm.",
+        A="210 cm counts both lengths and both widths.",
+        B="105 cm=80+25 is the semiperimeter and omits the second pair of sides.",
+        C="2000=80*25 is the area, with square-centimetre units, not the requested perimeter in cm.",
+    ),
+    "893": judgment(
+        "B",
+        "Other rate=150*(1-0.22)=117. There are 180 and 220 students; total=27000+25740=52740, mean=52740/400=131.85.",
+        A="133.5=(150+117)/2 ignores unequal group sizes 180 and 220.",
+        B="131.85 USD is the correctly weighted mean for all 400 students.",
+        C="117 USD is only the reduced group's rate; it omits all 180 students receiving 150 USD.",
+    ),
+    "894": judgment(
+        "A",
+        "The source's increasing sequence is (8.2,8.9,9.6). Under the literal less-specific view, A still satisfies the mean and absolute gaps, and B,C do not. The unlisted descending (9.6,8.9,8.2) also satisfies the literal stem: missing direction is a fidelity defect, not a different displayed true set.",
+        A="Sum=26.7, mean=8.9, and both successive increases are 0.7; it satisfies both source and literal view.",
+        B="Sum=28.8 and mean=9.6, not 8.9, although the successive increases are 0.7.",
+        C="Mean is 8.9, but successive increases are both 1.4, not 0.7.",
+    ),
+    "895a": judgment(
+        "B",
+        "558.78/6.95=80.4; subtract 40.02 ->40.38; multiply by 3.65 ->147.387; subtract (9.87+16.9)=26.77 ->120.617.",
+        A="147.387 is the multiplication intermediate before the final subtraction of 26.77.",
+        B="147.387-26.77=120.617 exactly.",
+        C="174.157=147.387+26.77 adds instead of subtracting the final parentheses.",
+    ),
+    "895b": judgment(
+        "A",
+        "12.47-3.57=8.9; the two quotients are 0.961 and 0.039, summing to 1. The outer division 1/0.01 gives 100.",
+        A="Every inner operation and the final division gives exactly 100.",
+        B="1 is the bracket intermediate and omits division by 0.01.",
+        C="0.01=1*0.01 multiplies the bracket value by the final divisor rather than dividing.",
+    ),
+}
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def binding(path):
+    return {"path": str(path), "sha256": sha(path)}
+
+
+def save_new(path, value):
+    with path.open("x", encoding="utf-8") as handle:
+        json.dump(value, handle, ensure_ascii=True, indent=2)
+        handle.write("\n")
+
+
+def main():
+    for number, judgments, expected_counts in (
+        ("46", N46, (15, 48, 18, 30)),
+        ("47", N47, (44, 134, 46, 88)),
+    ):
+        own = TMP / f"reviewer-5m-n{number}"
+        view_path = TMP / f"5m-n{number}/view.json"
+        preserved_path = own / "view-input-preserved.json"
+        fidelity_path = own / "view-fidelity-checks.json"
+        source_path = own / "source-solutions.json"
+        figure_record = own / "source-image-observations.json"
+        view = json.loads(view_path.read_text())
+        fidelity = json.loads(fidelity_path.read_text())
+        source = json.loads(source_path.read_text())
+        assert sha(view_path) == sha(preserved_path) == fidelity["view_binding"]["sha256"]
+        assert sha(source_path) == fidelity["frozen_source_binding"]["sha256"]
+        assert {q["id"] for q in view["questions"]} == {
+            f"n{number}-{suffix}" for suffix in judgments
+        }
+        stage_questions = {q["question_id"]: q for q in fidelity["question_reviews"]}
+        reviews = []
+        truth_counts = Counter()
+        single_positions = Counter()
+        for question in view["questions"]:
+            checked = judgments[question["id"].split("-", 1)[1]]
+            option_ids = [option["id"] for option in question["options"]]
+            assert set(option_ids) == set(checked["options"])
+            assert set(checked["correct"]) <= set(option_ids)
+            if question["mode"] == "single":
+                assert len(checked["correct"]) == 1
+                single_positions.update(checked["correct"])
+            option_checks = []
+            for option in question["options"]:
+                truth = "correct" if option["id"] in checked["correct"] else "incorrect"
+                truth_counts[truth] += 1
+                option_checks.append({
+                    "option_id": option["id"],
+                    "truth": truth,
+                    "evidence": checked["options"][option["id"]],
+                    "visible_text": option["text"],
+                    "visible_figure_ids": option["figure_ids"],
+                })
+            review = dict(stage_questions[question["id"]])
+            review["mode"] = question["mode"]
+            review["stem"] = question["stem"]
+            review["figure_ids"] = question["figure_ids"]
+            review["mathematics"] = {
+                "verdict": "pass",
+                "scope": "Independent visible-option truth only; no author key comparison authorized or performed.",
+                "wrong_procedure_evidence_scope": "Any procedure described here is independently reconstructed from visible values, not attributed to an unread author rationale. Matching the author's actual declared procedure remains a later check.",
+                "independent_solution": checked["solution"],
+                "correct": checked["correct"],
+                "option_checks": option_checks,
+                "all_visible_options_independently_checked": True,
+                "complete_true_set": True,
+            }
+            reviews.append(review)
+        actual_counts = (
+            len(reviews),
+            sum(len(q["mathematics"]["option_checks"]) for q in reviews),
+            truth_counts["correct"],
+            truth_counts["incorrect"],
+        )
+        assert actual_counts == expected_counts, (actual_counts, expected_counts)
+        image_evidence = json.loads(figure_record.read_text())
+        result = {
+            "schema": "independent-pure-view-review-v1",
+            "lesson": source["lesson"],
+            "reviewer": {"kind": "independent_agent", "identity": "independent source-first pure-view reviewer"},
+            "scope": "Only current learner-facing view plus previously frozen independent source reasoning and source-asset observations. Not final semantic, canonical, rendered-display or package approval.",
+            "status": "blocked",
+            "outcome": "blocked",
+            "check_order": [
+                "Frozen independent source solutions and actually opened source image layers",
+                "Task fidelity, redundancy, answer leakage and whole-package source coverage saved separately",
+                "Every visible option independently solved and complete true sets frozen here",
+                "Stop before author internals and key comparison",
+            ],
+            "view_binding": binding(view_path),
+            "view_preserved_binding": binding(preserved_path),
+            "fidelity_stage_binding": binding(fidelity_path),
+            "frozen_source_binding": binding(source_path),
+            "recording_script_binding": binding(Path(__file__).resolve()),
+            "visible_question_count": actual_counts[0],
+            "visible_option_count": actual_counts[1],
+            "independently_true_option_count": actual_counts[2],
+            "independently_false_option_count": actual_counts[3],
+            "all_visible_options_checked": True,
+            "question_reviews": reviews,
+            "complete_true_sets": {
+                q["question_id"]: q["mathematics"]["correct"] for q in reviews
+            },
+            "source_coverage": fidelity["source_coverage"],
+            "coverage_outcome": "blocked",
+            "coverage_note": fidelity["coverage_note"],
+            "represented_task_fidelity_outcome": "pass" if number == "46" else "revise",
+            "visible_option_mathematics_outcome": "pass",
+            "redundancy_outcome": "pass",
+            "answer_leakage_outcome": "pass",
+            "whole_package_relationships": fidelity["whole_package_relationships"],
+            "notices_and_findings": fidelity["notices_and_findings"],
+            "position_distribution_notice": {
+                "single_question_count": sum(single_positions.values()),
+                "independently_solved_true_option_positions": dict(sorted(single_positions.items())),
+                "verdict": "notice",
+                "evidence": "No single question has C as its independently true option. This is a package position imbalance, not evidence that a stem discloses a correct answer; no feedback or author key was read.",
+            },
+            "source_figure_observations_reused": {
+                "binding": binding(figure_record),
+                "observations": image_evidence.get("observations", []),
+                "actual_prior_image_open_count": image_evidence["actually_opened_image_count"],
+                "new_image_opens_this_view_stage": 0,
+                "layer_observations_only": True,
+                "no_composite_product_display_or_new_figure_approval": True,
+            },
+            "figure_checks": source.get("figure_checks", []),
+            "new_figure_reviews": [],
+            "new_source_errata_created": False,
+            "frozen_convention_notes": source["unresolved_source_numbers"],
+            "author_internal_comparison": {
+                "status": "not_authorized",
+                "draft_key_solution_rationales_serializer_answerdata_read": False,
+                "remaining_checks": [
+                    "Explicit coverage omission/deferment for the unresolved original source task",
+                    "Every intent/source_solution and declared local production loss",
+                    "Complete author key and every declared derivation/wrong procedure compared against these frozen judgments",
+                ],
+            },
+            "structural_or_canonical_validator_run": False,
+            "render_or_browser_run": False,
+            "db_services_promotion_or_core_change": False,
+            "handoff": (
+                "48 independent option judgments frozen. No represented-task math defect found; 856 coverage remains blocked pending explicit authorized deferment comparison. Ready for internals only after authorization."
+                if number == "46" else
+                "134 independent option judgments frozen. Visible mathematics has complete true sets; n47-894 requires restoring explicit increasing direction. 882 coverage remains blocked pending explicit authorized deferment comparison. Ready for internals only after authorization."
+            ),
+        }
+        out = own / "view-checks.json"
+        save_new(out, result)
+        saved = json.loads(out.read_text())
+        assert saved["view_binding"]["sha256"] == sha(view_path)
+        assert len(saved["question_reviews"]) == expected_counts[0]
+        assert sum(len(q["mathematics"]["option_checks"]) for q in saved["question_reviews"]) == expected_counts[1]
+        print(json.dumps({
+            "saved": str(out),
+            "sha256": sha(out),
+            "questions": actual_counts[0],
+            "options": actual_counts[1],
+            "true": actual_counts[2],
+            "false": actual_counts[3],
+            "outcome": result["outcome"],
+            "represented_task_fidelity": result["represented_task_fidelity_outcome"],
+            "visible_option_mathematics": "pass",
+        }))
+
+
+if __name__ == "__main__":
+    main()

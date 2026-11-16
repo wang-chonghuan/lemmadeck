@@ -1,0 +1,129 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { rebindOptionPositions } from './option-position-permutation.mjs'
+
+const dir = path.dirname(fileURLToPath(import.meta.url))
+const seed = JSON.parse(fs.readFileSync(path.join(dir, 'source.json'), 'utf8'))
+const frozen = JSON.parse(fs.readFileSync(path.join(dir, 'source-solutions.json'), 'utf8'))
+const questions = []
+const c = (text, derivation) => ({ text, truth: 'correct', derivation, misconception: null })
+const w = (text, derivation, misconception) => ({ text, truth: 'incorrect', derivation, misconception })
+function q(number, suffix, mode, stem, choices, unit, concepts = []) {
+  const solution = frozen.solutions.find(s => s.source_number === number)
+  const options = choices.map((o, i) => ({ id: String.fromCharCode(65 + i), text: o.text, figure_ids: [] }))
+  questions.push({
+    id: `n46-${number}${suffix}`, source_numbers: [number],
+    view: { mode, stem, figure_ids: [], options },
+    intent: { task: solution.task, source_solution: solution.solution, unit_reason: unit,
+      concept_blocks: concepts, limitations: solution.losses, figure_observations: [] },
+    key: {
+      correct: options.filter((_, i) => choices[i].truth === 'correct').map(o => o.id),
+      rationales: choices.map((o, i) => ({ option_id: options[i].id, truth: o.truth,
+        derivation: o.derivation, misconception: o.misconception })),
+    },
+  })
+}
+
+q('852','a','single','依次求 $\\frac7{10},\\frac{11}4,\\frac51,\\frac89$ 的倒数。哪一行全部正确？',[
+  w('$-\\frac7{10};\\ -\\frac{11}4;\\ -5;\\ -\\frac89$','Negate each original value rather than invert it.','Confuse additive inverse with multiplicative inverse.'),
+  c('$\\frac{10}7;\\ \\frac4{11};\\ \\frac15;\\ \\frac98$','Each product with its original fraction equals1.'),
+  w('$\\frac7{10};\\ \\frac{11}4;\\ 5;\\ \\frac89$','Repeat the original values without inversion.','Assume every number is self-reciprocal.'),
+],'One complete four-value reciprocal segment preserves both proper and improper inputs without isolated clicks.')
+q('852','b','single','依次求 $\\frac15,\\frac55,-\\frac23,-\\frac54$ 的倒数。哪一行全部正确？',[
+  c('$5;\\ 1;\\ -\\frac32;\\ -\\frac45$','5/5=1;negative reciprocals keep signs and all four products equal1.'),
+  w('$5;\\ 1;\\ \\frac32;\\ \\frac45$','Invert magnitudes but delete both negative signs.','Treat reciprocals as always positive.'),
+  w('$-\\frac15;\\ -1;\\ \\frac23;\\ \\frac54$','Negate each original number instead of inverting it.','Use additive inverses rather than multiplicative inverses.'),
+],'The second full segment retains unity and the two signed values.')
+q('853','','multiple','下面哪些数对互为倒数？选出所有符合条件的数对。',[
+  c('$7\\frac25$ 和 $\\frac5{37}$','37/5*5/37=1.'),
+  c('$48$ 和 $\\frac1{48}$','48/48=1.'),
+  c('$0.2$ 和 $5$','.2*5=1.'),
+  c('$2.5$ 和 $0.4$','2.5*.4=1.'),
+  w('$3\\frac12$ 和 $2\\frac13$','7/2*7/3=49/6,not1.','Mistake complementary-looking mixed numbers for reciprocal values without multiplying.'),
+  w('$0$ 和 $1$','0*1=0;no reciprocal of zero exists.','Assume the multiplicative identity is a reciprocal of zero.'),
+],'One native multiple question judges all six original pairs by the same product-one criterion.')
+q('854','','single','依次计算 $(1\\frac{77}{81}\\cdot\\frac56)\\cdot\\frac65$ 和 $(3.4\\cdot\\frac73)\\cdot\\frac37$。',[
+  w('$\\frac{395}{243};\\ \\frac{119}{15}$','Stop after first multiplication:158/81*5/6=395/243;3.4*7/3=119/15.','Omit the last reciprocal factor.'),
+  c('$\\frac{158}{81};\\ 3.4$','Regroup each nonzero reciprocal pair into1.'),
+  w('$1;\\ 1$','Evaluate the reciprocal pair as1 but discard the remaining first factor.','Drop the original factor when cancelling the reciprocal factors.'),
+],'One complete paired-result unit tests undoing a scaling in both mixed-number and decimal settings.',[4])
+q('855','a','single','分别解方程 $\\frac34x=1$、$\\frac{23}{20}y=1$、$0.8a=1$、$0.25b=1$。依次哪一行解全部正确？',[
+  c('$x=\\frac43;\\ y=\\frac{20}{23};\\ a=\\frac54;\\ b=4$','Each variable is the reciprocal of its nonzero coefficient.'),
+  w('$x=\\frac34;\\ y=\\frac{23}{20};\\ a=0.8;\\ b=0.25$','Copy coefficients as roots.','Multiply the right-hand1 by the coefficient instead of dividing.'),
+  w('$x=-\\frac43;\\ y=-\\frac{20}{23};\\ a=-\\frac54;\\ b=-4$','Negate each reciprocal, giving coefficient-times-root=-1.','Insert a negative sign into reciprocal cancellation.'),
+],'One four-equation segment retains all original nonzero coefficient forms.',[4])
+q('855','b','single','分别解方程 $\\frac8{19}x=\\frac8{19}$ 和 $\\frac{12}5y=\\frac{12}5$。哪一项两解都正确？',[
+  w('$x=\\frac{19}8;\\ y=\\frac5{12}$','Take each coefficient reciprocal while ignoring that the right side is the coefficient,not1.','Apply the preceding coefficient-times-variable-equals1 procedure to a different right side.'),
+  c('$x=1;\\ y=1$','Divide each side by its identical nonzero coefficient.'),
+  w('$x=\\frac{64}{361};\\ y=\\frac{144}{25}$','Multiply the two identical coefficient values instead of dividing.','Multiply by the coefficient rather than its reciprocal.'),
+],'The two coefficient-equals-itself equations form a meaningful boundary segment distinct from right-hand1.',[4])
+q('857','a','single','依次计算 $\\frac14\\cdot\\frac49$；$\\frac5{12}\\cdot\\frac{16}9$；$\\frac8{17}\\cdot\\frac{51}{25}$。',[
+  c('$\\frac19;\\ \\frac{20}{27};\\ \\frac{24}{25}$','4/36,80/108,408/425 reduce to these results.'),
+  w('$\\frac4{13};\\ \\frac{80}{21};\\ \\frac{68}7$','Multiply numerators but add denominators:4/13,80/21,408/42=68/7.','Use denominator sums instead of products.'),
+  w('$\\frac9{16};\\ \\frac{15}{64};\\ \\frac{200}{867}$','Divide first fraction by second:9/16,45/192=15/64,200/867.','Invert the second factor during multiplication.'),
+],'One full three-product fraction segment preserves cancellation and all inputs.')
+q('857','b','single','依次计算 $\\frac3{10}\\cdot(-\\frac5{33})$；$\\frac17\\cdot5\\frac56$；$4\\frac23\\cdot3\\frac12$。',[
+  w('$\\frac1{22};\\ \\frac56;\\ \\frac{49}3$','Compute all magnitudes correctly but delete the first negative sign.','Ignore a single negative factor.'),
+  c('$-\\frac1{22};\\ \\frac56;\\ \\frac{49}3$','-15/330=-1/22;1/7*35/6=5/6;14/3*7/2=49/3.'),
+  w('$-\\frac1{22};\\ \\frac5{21};\\ 4$','Convert5 5/6 as(5+5)/6=5/3 and4 2/3,3 1/2 as6/3,4/2;products5/21,4.','Use whole-plus-numerator conversion for mixed numbers.'),
+],'The second segment jointly retains the negative product and both mixed-factor problems.')
+q('858','a','single','两列货车，第二列原有车厢数是第一列的1.5倍。从第一列移5个车厢到第二列后，第二列是第一列的2倍。设第一列原有 $x$ 个，哪一项模型和原数都正确？',[
+  c('$1.5x+5=2(x-5)$；第一列30个，第二列45个。','1.5x+5=2x-10 givesx=30;1.5x=45.'),
+  w('$1.5x+5=2x$；第一列10个，第二列15个。','Ignore donor decrease; .5x=5 gives10,15.','Change the recipient only and leave the donor unchanged.'),
+  w('$1.5x=2(x-5)$；第一列20个，第二列30个。','Ignore recipient increase; .5x=10 gives20,30.','Change the donor only and leave the recipient unchanged.'),
+],'This independent transfer problem needs a whole conservation model and both original counts.')
+q('858','b','single','第一叠笔记本原有数量是第二叠的2.5倍。从第二叠取5本放到第一叠后，第一叠是第二叠的3倍。设第二叠原有 $z$ 本，哪一项模型和原数都正确？',[
+  w('$2.5z+5=3z$；第一叠25本，第二叠10本。','Ignoring donor decrease gives.5z=5,z=10,first25.','Update the recipient but not the donor.'),
+  c('$2.5z+5=3(z-5)$；第一叠100本，第二叠40本。','.5z=20 gives40;first100;after105=3*35.'),
+  w('$2.5z=3(z-5)$；第一叠75本，第二叠30本。','Ignoring recipient increase gives.5z=15,z=30,first75.','Update the donor but not the recipient.'),
+],'The notebook transfer has independent quantities and reversed transfer direction, justifying its own complete response.')
+q('859','a','single','依次求 $\\frac{10}{27},\\frac{12}{59},\\frac{23}{98},\\frac{11}{122},\\frac{42}{315},\\frac{10}3,\\frac{41}8$ 的倒数。',[
+  c('$\\frac{27}{10};\\ \\frac{59}{12};\\ \\frac{98}{23};\\ \\frac{122}{11};\\ \\frac{15}2;\\ \\frac3{10};\\ \\frac8{41}$','Invert each original nonzero fraction;315/42 reduces to15/2.'),
+  w('$\\frac{27}{10};\\ \\frac{59}{12};\\ \\frac{98}{23};\\ \\frac{122}{11};\\ \\frac2{15};\\ \\frac3{10};\\ \\frac8{41}$','Reduce42/315 to2/15 but fail to invert that element; all others inverted.','Treat reduction as already taking the reciprocal.'),
+  w('$-\\frac{27}{10};\\ -\\frac{59}{12};\\ -\\frac{98}{23};\\ -\\frac{122}{11};\\ -\\frac{15}2;\\ -\\frac3{10};\\ -\\frac8{41}$','Negate all otherwise correct reciprocals, so all products equal-1.','Confuse a reciprocal with a negative reciprocal.'),
+],'One complete seven-fraction list retains the reducible representation and both improper inputs.')
+q('859','b','single','依次求 $11\\frac{11}{12},\\frac1{20},80,100,1,0.5,1.2$ 的倒数。',[
+  w('$\\frac6{11};\\ 20;\\ \\frac1{80};\\ \\frac1{100};\\ 1;\\ 2;\\ \\frac56$','Wrong mixed conversion(11+11)/12=11/6 yields6/11;other reciprocals correct.','Add whole and numerator before reciprocal inversion.'),
+  c('$\\frac{12}{143};\\ 20;\\ \\frac1{80};\\ \\frac1{100};\\ 1;\\ 2;\\ \\frac56$','Mixed143/12;decimals1/2,6/5;invert all seven nonzero values.'),
+  w('$\\frac{12}{143};\\ 20;\\ \\frac1{80};\\ \\frac1{100};\\ 1;\\ 0.2;\\ \\frac1{12}$','Ignore decimal points in.5 and1.2, treating them as5 and12 before inversion.','Invert digit strings instead of decimal values.'),
+],'One complete mixed/integer/decimal reciprocal list preserves the unity boundary and all original inputs.')
+q('860','a','single','依次计算 $\\frac8{11}\\cdot\\frac{33}4$；$\\frac{21}{13}\\cdot\\frac{26}7$；$\\frac{14}3\\cdot\\frac37$。',[
+  w('$1;\\ 1;\\ 1$','Delete both members of every cancellation pair without retaining residual factors2,3,3,2,2.','Drop residual factors when cancelling.'),
+  c('$6;\\ 6;\\ 2$','8/4*33/11=2*3;21/7*26/13=3*2;14/7=2.'),
+  w('$\\frac{88}5;\\ \\frac{273}{10};\\ \\frac{21}5$','Multiply numerators and add denominators:264/15,546/20,42/10.','Use denominator sums.'),
+],'One full three-product cancellation result retains all residual factors.')
+q('860','b','single','依次计算 $-\\frac59\\cdot\\frac{108}5$；$\\frac{31}{23}\\cdot(-\\frac{69}{31})$；$-\\frac{41}{42}\\cdot(-\\frac{21}{41})$。',[
+  c('$-12;\\ -3;\\ \\frac12$','-108/9=-12;-69/23=-3;21/42=1/2.'),
+  w('$12;\\ 3;\\ \\frac12$','Ignore both single negatives while keeping the double-negative magnitude.','Treat all signed products as positive.'),
+  w('$-12;\\ -3;\\ -\\frac12$','Keep a leading negative in the last double-negative product.','Fail to cancel the two negative signs.'),
+],'The signed segment contrasts single-negative and double-negative cancellation without three separate clicks.')
+q('861','','single','任务是收集2.5吨废铁，实际收集3.2吨。完成任务的百分率和超额完成的百分率依次是多少？',[
+  w('$28\\%$；$128\\%$','Compute correct completion and excess ratios but exchange their labels.','Report excess as completion and completion as excess.'),
+  c('$128\\%$；$28\\%$','3.2/2.5=1.28;(.7)/2.5=.28.'),
+  w('$78.125\\%$；$21.875\\%$','2.5/3.2=.78125 and.7/3.2=.21875 use actual output as denominator.','Use collected quantity rather than assigned task as the percentage base.'),
+],'One paired-percentage unit preserves both required percentages and their common target denominator.')
+
+rebindOptionPositions(questions, path.join(dir, 'option-position-permutation-plan.json'))
+
+const draft = {
+  schema: 's10y-choice-draft-v1', seed_sha256: frozen.seed_sha256, new_figures: [], questions,
+  coverage: frozen.solutions.map(s => ({
+    source_number: s.source_number,
+    question_ids: questions.filter(q => q.source_numbers.includes(s.source_number)).map(q => q.id),
+    omitted_tasks: s.losses,
+    reason: s.blocked ? 'Blocked: proper/improper-fraction domain is unresolved; the original universal task is retained with conditional solutions, not narrowed.'
+      : 'All mathematical tasks and original data retained as complete results, pair classification or full models; production losses are explicit. Semantic review pending.',
+  })),
+}
+const view = { questions: questions.map(({ id, view }) => ({ id, ...view })) }
+for (const [name, value] of [['draft.json', draft], ['view.json', view]]) {
+  fs.writeFileSync(path.join(dir, name), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+}
+console.log(JSON.stringify({
+  sources: seed.exercises.length, represented_sources: draft.coverage.filter(c => c.question_ids.length).length,
+  questions: view.questions.length, single: view.questions.filter(q => q.mode === 'single').length,
+  multiple: view.questions.filter(q => q.mode === 'multiple').length,
+  options: view.questions.reduce((n, q) => n + q.options.length, 0), blocked_sources: ['856'],
+  pure_view_shape: '{questions:[{id,mode,stem,figure_ids,options:[{id,text,figure_ids}]}]}',
+}, null, 2))

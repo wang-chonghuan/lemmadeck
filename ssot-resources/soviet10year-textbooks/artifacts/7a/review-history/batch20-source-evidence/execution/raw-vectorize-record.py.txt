@@ -1,0 +1,32 @@
+"""Retain the single authorized pipeline trace result without tracing twice."""
+import json
+import sys
+from pathlib import Path
+
+WORK = Path(__file__).resolve().parent
+REPO = WORK.parents[4]
+TOOLS = REPO / ".claude/skills/ld-s10y-lesson/tools"
+sys.path.insert(0, str(TOOLS))
+
+import p2c
+import vectorize
+
+original = vectorize.vectorize
+results = []
+expected = WORK / "7a/pages/0034/figures/fig-02.png"
+
+
+def recorded(png, svg, **kwargs):
+    if results or png.resolve() != expected:
+        raise RuntimeError("Only the one authorized page34 figure may be traced")
+    result = original(png, svg, **kwargs)
+    results.append(result)
+    with (WORK / "raw-vectorize-34-details.json").open("x", encoding="utf-8") as output:
+        json.dump({"results": results, "pipeline_function_calls": 1}, output, ensure_ascii=False, indent=2)
+        output.write("\n")
+    return result
+
+
+vectorize.vectorize = recorded
+sys.argv = sys.argv[1:]
+raise SystemExit(p2c.main())

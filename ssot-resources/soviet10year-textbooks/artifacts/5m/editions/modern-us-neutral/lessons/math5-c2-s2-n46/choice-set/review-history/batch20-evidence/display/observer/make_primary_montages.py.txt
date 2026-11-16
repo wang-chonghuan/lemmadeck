@@ -1,0 +1,69 @@
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image, ImageDraw
+
+
+REPO = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+OWN = Path(__file__).resolve().parent
+MANIFEST = REPO / ".intentfold/tickets/STEMROBIN-182/tmp/batch20-render/5m-math5-c2-s2-n46-capture-manifest.json"
+manifest = json.loads(MANIFEST.read_bytes())
+assert manifest["lesson"] == "math5-c2-s2-n46"
+members = {}
+for entry in manifest["screenshots"]:
+    path = REPO / entry["path"]
+    data = path.read_bytes()
+    assert hashlib.sha256(data).hexdigest() == entry["sha256"], path
+    image = Image.open(path)
+    image.load()
+    assert image.format == "PNG"
+    members[path.name] = (path, image.convert("RGB"), entry["sha256"])
+assert len(members) == 12
+index = {
+    "scope": "Native primary screenshot copy only; images await actual observer opening.",
+    "manifest": str(MANIFEST),
+    "manifest_sha256": hashlib.sha256(MANIFEST.read_bytes()).hexdigest(),
+    "primary_png_count": len(members),
+    "montages": [],
+}
+for surface in ("text", "exercises", "choices"):
+    names = [
+        f"math5-c2-s2-n46-{surface}-{width}-{end}.png"
+        for width in (1440, 390) for end in ("first", "last")
+    ]
+    canvas = Image.new("RGB", (1862, 1984), "#dddddd")
+    draw = ImageDraw.Draw(canvas)
+    montage_members = []
+    for i, name in enumerate(names):
+        path, image, expected = members[name]
+        x = 8 if i < 2 else 1464
+        y = 32 + (i % 2) * 984
+        draw.text((x, y - 22), name, fill="black")
+        canvas.paste(image, (x, y))
+        box = (x, y, x + image.width, y + image.height)
+        assert canvas.crop(box).tobytes() == image.tobytes()
+        montage_members.append({
+            "path": str(path), "sha256": expected,
+            "dimensions": list(image.size), "montage_box": list(box),
+            "rgb_pixel_sha256": hashlib.sha256(image.tobytes()).hexdigest(),
+            "native_pixel_copy_verified": True,
+        })
+    output = OWN / f"primary-{surface}-native-montage.png"
+    assert not output.exists()
+    canvas.save(output)
+    saved = Image.open(output).convert("RGB")
+    for member in montage_members:
+        crop = saved.crop(tuple(member["montage_box"]))
+        assert hashlib.sha256(crop.tobytes()).hexdigest() == member["rgb_pixel_sha256"]
+    index["montages"].append({
+        "path": str(output),
+        "sha256": hashlib.sha256(output.read_bytes()).hexdigest(),
+        "dimensions": list(canvas.size),
+        "resized": False,
+        "members": montage_members,
+    })
+with (OWN / "primary-montage-index.json").open("x", encoding="utf-8") as output:
+    json.dump(index, output, indent=2)
+    output.write("\n")
+print(json.dumps(index))

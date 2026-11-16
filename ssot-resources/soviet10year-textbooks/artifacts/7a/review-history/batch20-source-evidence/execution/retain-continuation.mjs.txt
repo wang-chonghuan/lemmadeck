@@ -1,0 +1,94 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const scratch = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp');
+const root = path.join(scratch, 'batch20-source-7a');
+const work = path.join(scratch, 'batch20-work-7a');
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const record = file => ({ path: file, sha256: sha(file), bytes: fs.statSync(file).size });
+const frozen = read(path.join(work, 'authorized-continuation-inputs.json'));
+const originalFreeze = read(path.join(root, 'input-hashes-before.json'));
+const results = [41, 42, 43].map(page => read(path.join(work, `continuation-finalize-${page}.json`)));
+const unchangedAuthorizedInputs = frozen.inputs.filter(input => !input.path.startsWith(path.join(root, '7a/pages/0041') + path.sep)).map(input => ({
+  ...input, current_sha256: sha(input.path), unchanged: sha(input.path) === input.sha256,
+}));
+const rejection = frozen.preserved_rejection.map(item => ({
+  ...item, copy_unchanged: sha(item.copy.path) === item.copy.sha256,
+  original_command_log_unchanged: item.source.path.endsWith('/commands.json') ? sha(item.source.path) === item.source.sha256 : null,
+}));
+const oldOutputHashes = read(path.join(root, 'output-hashes.json'));
+const priorPages = oldOutputHashes.filter(output => /\/pages\/00(?:2[89]|3\d|40)\//.test(output.path)).map(output => ({
+  ...output, current_sha256: sha(path.join(repo, output.path)),
+  unchanged: sha(path.join(repo, output.path)) === output.sha256,
+}));
+const page41Md = frozen.inputs.find(input => input.path.endsWith('/0041/page.md'));
+const rawSourceInputs = originalFreeze.inputs.filter(input => input.path.startsWith('ssot-resources/')).map(input => ({
+  ...input, current_sha256: sha(path.join(repo, input.path)),
+  unchanged: sha(path.join(repo, input.path)) === input.sha256,
+}));
+const observations = [
+  {
+    pdf_page: 42, printed_page: 36,
+    observed_actual_full_page: true,
+    image: record(path.join(work, '7a/pages/0042/page.png')),
+    observation: 'Full actual source image and footer36 individually opened. Top г)/д)/е) completes original101; г)13/x, д)(x^2+1)/(x+5), е)(x+5)/(x^2+1). Original102 has three printed horizontal rows, including denominator x^2-7 in в), not simplified. Original103 is two printed function-formula rows and a graph/axis prompt with no printed graph. Original104 retains both fractions and its proof instruction. Original105 has all three equation pairs and ends before footer. No source figures, missing text or open object at page end.',
+    objects: ['original101 cont closes', 'original102 complete', 'original103 complete', 'original104 complete', 'original105 complete', 'footer36'],
+    parent_actual_source_comparison: 'pending',
+  },
+  {
+    pdf_page: 43, printed_page: 37,
+    observed_actual_full_page: true,
+    image: record(path.join(work, '7a/pages/0043/page.png')),
+    observation: 'Full actual source image and footer37 individually opened. Original106 has а)/б) sharing one printed row followed by в) and г); both y^3+64 denominator forms in г) preserved. Review heading follows. Original107 inequalities preserve all signs and decimal values. Original108 includes all four parameter-rearrangement instructions, with а),в),г) split across actual printed lines. Original108 closes before heading9. N9 has only heading and the one introductory line 假设需要解方程：, preserved as p open. No source figure.',
+    objects: ['original106 complete', 'review heading', 'original107 complete', 'original108 complete', 'n9 heading', 'n9 introduction open', 'footer37'],
+    parent_actual_source_comparison: 'pending',
+  },
+];
+const audits = [41, 42, 43].map(page => ({
+  page,
+  audit: read(path.join(root, `7a/pages/${String(page).padStart(4, '0')}/audit.json`)),
+  outputs: ['page.md', 'page.json', 'audit.json'].map(name => record(path.join(root, `7a/pages/${String(page).padStart(4, '0')}/${name}`))),
+}));
+const checks = {
+  authorized_inputs_unchanged: unchangedAuthorizedInputs.every(input => input.unchanged),
+  rejected_artifacts_exact: rejection.every(item => item.copy_unchanged),
+  original_rejected_command_log_exact: rejection.find(item => item.original_command_log_unchanged !== null).original_command_log_unchanged,
+  prior_pages28_40_unchanged: priorPages.every(input => input.unchanged),
+  page41_transcription_unchanged: sha(page41Md.path) === page41Md.sha256,
+  authoritative_raw_inputs_unchanged: rawSourceInputs.every(input => input.unchanged),
+  three_finalizes_pass: results.every(result => result.status === 0),
+  three_audits_pass: audits.every(item => item.audit.errors.length === 0),
+};
+const report = {
+  at: new Date().toISOString(),
+  status: 'page_extraction_pass_awaiting_parent_actual_comparison42_43',
+  rawsourceclosed: false,
+  reason: 'All page facts now finalized, but parent comparison42/43 and authorized explicit-TOC assembly/figure vectorization/object reconciliation are still pending.',
+  authorization: frozen.authorization,
+  scope: 'Own private batch20 scratch only; no other source text edits beyond new pages42/43. Page41 authorized regeneration only; transcription exact unchanged.',
+  observations, audits, results, checks,
+  preserved_rejection: rejection,
+  frozen_inputs_after: unchangedAuthorizedInputs,
+  prior_page_hashes_after: priorPages,
+  authoritative_raw_input_hashes_after: rawSourceInputs,
+  target_source_boundaries: [
+    { id: 'alg7-c1-s2-n5', pages: [27, 33], originals: [67, 82], page_level_complete: true, assembled: false },
+    { id: 'alg7-c1-s2-n6', pages: [33, 36], originals: [83, 89], source_figure: 'fig-02', page_level_complete: true, assembled: false },
+    { id: 'alg7-c1-s2-n7', pages: [36, 39], originals: [90, 95], erratum: 'p0038-math-1', page_level_complete: true, assembled: false },
+    { id: 'alg7-c1-s3-n8', pages: [39, 43], originals: [96, 108], page_level_complete: true, parent_comparison42_43: 'pending', assembled: false },
+    { id: 'alg7-c1-s3-n9', pages: [43], originals: [], status: 'partial_boundary_only', open: true, completion_target: false },
+  ],
+  operations_this_continuation: {
+    finalize41: 1, finalize42: 1, finalize43: 1,
+    duplicate_parent_tests: 0, prepare: 0, assemble: 0, vectorize: 0,
+    promotion: 0, publication: 0, durable_writes: 0, app: 0, db: 0,
+    config_changes: 0, dependency_changes: 0, source_guessing: 0,
+    edition_choices_answers_authorship: 0,
+  },
+};
+fs.writeFileSync(path.join(work, 'authorized-continuation-results.json'), JSON.stringify(report, null, 2) + '\n', { flag: 'wx' });
+console.log(JSON.stringify({ status: report.status, rawsourceclosed: false, lines: audits.map(item => ({ page: item.page, printed: item.audit.lines_printed, md: item.audit.lines_md })), checks }));
+if (!Object.values(checks).every(Boolean)) process.exitCode = 1;

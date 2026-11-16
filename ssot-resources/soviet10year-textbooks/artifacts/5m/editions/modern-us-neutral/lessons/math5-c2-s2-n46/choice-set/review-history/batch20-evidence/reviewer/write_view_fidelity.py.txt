@@ -1,0 +1,181 @@
+"""Preserve the pure-view fidelity stage before recording independent option truth sets."""
+
+import hashlib
+import json
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[5]
+TMP = Path(__file__).resolve().parent.parent
+
+TASKS46 = {
+    "852": (["n46-852a", "n46-852b"], "Eight original reciprocals, split as parts 1-4 and 5-8; signs and the self-reciprocal value 5/5 are retained."),
+    "853": (["n46-853"], "All six original pairs remain visible; multiple mode requires the complete product-one set including rejection of the zero pair."),
+    "854": (["n46-854"], "Both original associativity/reciprocal-factor expressions remain; complete ordered result pair is judged."),
+    "855": (["n46-855a", "n46-855b"], "All six equations remain, split into four unit-right-side equations and two equal-coefficient/right-side equations."),
+    "856": ([], "Both universal proper/improper-fraction assertions are absent. Frozen source convention is unresolved; no unconditional interpretation is supplied by this view."),
+    "857": (["n46-857a", "n46-857b"], "All six products remain; second unit retains negative multiplication and both mixed-number products."),
+    "858": (["n46-858a", "n46-858b"], "Both transfers retain original direction, ratio and five-object movement. Model plus original counts are jointly judged. Notebook first-stack labeling is made explicit and agrees with the only integral-count source solution."),
+    "859": (["n46-859a", "n46-859b"], "All fourteen values remain across the two original lists. Complete rows test recognition; they do not certify independent production of every entry."),
+    "860": (["n46-860a", "n46-860b"], "All six products remain, preserving negative-factor combinations and their ordered results."),
+    "861": (["n46-861"], "Both target-based completion and excess percentages are requested in the original order and units."),
+}
+TASKS47 = {
+    "862": (["n47-862a", "n47-862b"], "Numeric original parts 1,2,5,6 are explicitly reordered in the first stem; symbolic original parts 3,4 form the second unit. Dividend/divisor roles and original domain restrictions are retained."),
+    "863": (["n47-863a", "n47-863b"], "All six quotients remain, including the negative-over-negative case."),
+    "864": (["n47-864a", "n47-864b"], "All six integer/fraction-divisor quotients remain, including the negative result."),
+    "865": (["n47-865"], "Both required decimal-to-fraction conversions and quotients are explicitly judged, not only final values."),
+    "866": (["n47-866"], "Both required fraction-to-decimal conversions and quotients are explicitly judged."),
+    "867": (["n47-867"], "Both supplied seed quotients become one fraction, retaining original canceled numerator-factor exclusions. Retained original multiplication versus supplied division history is not resolved anew."),
+    "868": (["n47-868"], "Both full parenthesized mixed-operation expressions remain; intermediate-only rows are alternatives, not new source givens."),
+    "869": (["n47-869a", "n47-869b"], "All six mixed-number divisions remain in explicit three-part units."),
+    "870": (["n47-870a", "n47-870b"], "All four equations remain; unknown dividend and unknown nonzero divisor roles are distinct and preserved."),
+    "871": (["n47-871"], "Both direct area and inverse side-length uses of S=ab remain; options include computations and units are not invented."),
+    "872": (["n47-872"], "Both original travel times and required speeds retain the 15-km distance and km/h units."),
+    "873": (["n47-873"], "Price per kilogram and quantity per dollar are both retained with their different units."),
+    "874": (["n47-874"], "First-to-second ratio uses the complementary second share, not the whole-road share."),
+    "875": (["n47-875"], "Original known 7/8 portion and requested total tonnage remain."),
+    "876": (["n47-876"], "The groats fraction is explicitly of flour, and bran remains the residual of the original wheat mass."),
+    "877": (["n47-877"], "Second-day fraction remains of first-day distance, with second-day 24 km used to recover the whole plan."),
+    "878": (["n47-878"], "All three durations, annual-rate dependencies, total cost and weighted annual average remain. No claim about an actual funding program is introduced."),
+    "879": (["n47-879"], "All four reciprocal-of-sum/difference tasks remain; parentheses are semantically supplied by the wording."),
+    "880": (["n47-880"], "Both three-factor products and every mixed-number factor remain."),
+    "881": (["n47-881"], "Midpoints, nondegeneracy, direction M-to-K, common displacement length and translated A-midpoint relation are retained. Actual drawing is reduced to recognition of a valid construction and conclusion."),
+    "882": ([], "Original 135-degree central-symmetry construction/intersection is absent. Frozen rays-versus-filled-region convention remains unresolved; no interpretation is guessed."),
+    "883": (["n47-883a", "n47-883b"], "Both original harvest models remain. Simultaneous start, stopping on completion and first equality are explicit refinements consistent with physical nonnegative remaining areas; multiple statements test earlier and later boundaries."),
+    "884": (["n47-884"], "Actual referenced fig151 is retained. Supplied AC=600, angles 60/45 and scale 1:10000 are unchanged. Nearest-10-m precision is explicitly added and is consistent with the frozen source scale-drawing interpretation."),
+    "885": (["n47-885"], "Both exact decimal linear-expression simplifications remain."),
+    "886": (["n47-886a", "n47-886b"], "Both equal-expression equations remain. Exact precision is explicitly requested for the nonterminating first solution; no source coefficient is changed."),
+    "887": (["n47-887a", "n47-887b"], "Both original nested subtractions and all exact decimal operands remain."),
+    "888": (["n47-888a", "n47-888b"], "All six quotients remain, including signed fractions and negative integer over negative fraction."),
+    "889": (["n47-889"], "All four original mixed-number quotients remain as an explicitly ordered result row."),
+    "890": (["n47-890a", "n47-890b"], "All four mixed-operation chains remain. Left-to-right convention is expressly reinforced in the first pair, not changed."),
+    "891": (["n47-891"], "All three circumferences, 48-m travel and revolution counts remain."),
+    "892": (["n47-892"], "Original length and fractional width remain; requested quantity is perimeter, not semiperimeter or area."),
+    "893": (["n47-893"], "180 of 400 at 150 and the other students' 22-percent reduction remain; requested mean is weighted per student."),
+    "894": (["n47-894"], "The source explicitly says the second is larger than the first by 0.7 and the third larger than the second by 0.7. The view only says consecutive numbers differ by 0.7 and does not state increasing direction."),
+    "895": (["n47-895a", "n47-895b"], "Both original decimal calculations retain every operand, nesting and final operation."),
+}
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def save(path, data):
+    with path.open("x") as handle:
+        json.dump(data, handle, ensure_ascii=True, indent=2)
+        handle.write("\n")
+
+
+def main():
+    for number, tasks, expected_options in (("46", TASKS46, 48), ("47", TASKS47, 134)):
+        own = TMP / f"reviewer-5m-n{number}"
+        view_path = TMP / f"5m-n{number}/view.json"
+        view = json.loads(view_path.read_text())
+        source_path = own / "source-solutions.json"
+        source = json.loads(source_path.read_text())
+        assert sum(len(item["options"]) for item in view["questions"]) == expected_options
+        coverage = []
+        for source_number, (ids, evidence) in tasks.items():
+            coverage.append({
+                "source_number": source_number, "visible_question_ids": ids,
+                "verdict": "blocked" if not ids else "revise" if source_number == "894" else "pass",
+                "evidence": evidence,
+            })
+        question_reviews = []
+        for question in view["questions"]:
+            source_number, task = next((n, info[1]) for n, info in tasks.items() if question["id"] in info[0])
+            finding = question["id"] == "n47-894"
+            question_reviews.append({
+                "question_id": question["id"], "source_numbers_independently_mapped": [source_number],
+                "task_fidelity": {
+                    "verdict": "revise" if finding else "pass",
+                    "evidence": task,
+                },
+                "redundancy": {
+                    "verdict": "pass",
+                    "evidence": "No two entire visible alternatives make the same mathematical claim. Shared correct subentries in rows are recognition limitations, not duplicate complete alternatives. This unit supplies a distinct original subtask or result group.",
+                },
+                "answer_leakage": {
+                    "verdict": "pass",
+                    "evidence": "Stem provides original data and requested operations, not a stated correct result or another question's answer. Source-alignment IDs are not stem content. Complete result/model rows remain candidates requiring mathematical judgment.",
+                },
+                "production_loss": "Recognizing a complete correct alternative does not establish independent written production of every requested value or step.",
+            })
+        preservation = own / "view-input-preserved.json"
+        with preservation.open("xb") as handle:
+            handle.write(view_path.read_bytes())
+        assert sha(preservation) == sha(view_path)
+        notices = [
+            {
+                "kind": "deferred_source_convention",
+                "source_number": source["unresolved_source_numbers"][0],
+                "verdict": "blocked",
+                "evidence": "Not represented by any pure-view question; the frozen source has conditional solutions only. Later internal comparison must check a concrete omission/deferment record, not silently claim full source coverage.",
+            },
+            {
+                "kind": "row_recognition_limit",
+                "verdict": "notice",
+                "evidence": (
+                    "Complete-row alternatives allow legitimate elimination using one distinguishing subentry. n46-859a leaves six entries identical between A and B. Independent production of every entry is not demonstrated; declared local production losses must be checked at the authorized internal stage. This does not automatically invalidate complete-row recognition."
+                    if number == "46" else
+                    "Complete-row alternatives allow legitimate elimination using one distinguishing subentry. n47-880 shares its second entry between A and C. Independent production of every entry is not demonstrated; declared local production losses must be checked at the authorized internal stage. This does not automatically invalidate complete-row recognition."
+                ),
+            },
+        ]
+        if number == "47":
+            notices.extend([
+                {
+                    "kind": "direction_condition_removed", "question_id": "n47-894",
+                    "verdict": "revise",
+                    "evidence": "The descending tuple (9.6,8.9,8.2) has mean 8.9 and successive absolute gaps 0.7, so it fits the literal view but violates the source's next-number-is-larger condition. Restore explicit increasing direction. The displayed A tuple is still valid; option truth and missing source condition are separate checks.",
+                },
+                {
+                    "kind": "historical_notice_not_new_erratum", "source_numbers": ["867", "884"],
+                    "verdict": "notice",
+                    "evidence": "The view follows the already frozen supplied seed: division in 867(1) and AC=600 in 884. Retained original multiplication / AB wording conflicts stay recorded in source-solutions and are not re-adjudicated as new defects.",
+                },
+                {
+                    "kind": "construction_recognition_loss", "source_numbers": ["881", "884"],
+                    "verdict": "notice",
+                    "evidence": "881 recognizes instructions and a midpoint conclusion, without producing a diagram. 884 recognizes scale conversion and rounded distances without proving construction/measurement ability. The geometric direction, scale and distance distinctions survive; the internal stage must check explicit local production-loss declarations.",
+                },
+            ])
+        package_relationships = (
+            "852/859 and 857/860 repeat concepts on different original values. 858's two transfer equations have different directions and ratios. No exact source result is supplied as an authoritative answer in another stem."
+            if number == "46" else
+            "862b and 867 deliberately revisit the same symbolic quotient in different requested forms (product versus single fraction); transfer of the rule is source-inherent practice, not a newly inserted answer. Both 883 source cases happen to first match at t=4, but their remaining-area and t=3 statements differ and must be checked separately. Other repeated division tasks use different original operands."
+        )
+        result = {
+            "lesson": source["lesson"], "scope": "pure view fidelity stage before option-truth recording",
+            "reviewer": {"kind": "independent_agent", "identity": "independent pure-view reviewer"},
+            "status": "blocked", "visible_question_count": len(view["questions"]),
+            "visible_option_count": expected_options,
+            "view_binding": {"path": str(view_path), "sha256": sha(view_path)},
+            "view_preserved_binding": {"path": str(preservation), "sha256": sha(preservation)},
+            "frozen_source_binding": {"path": str(source_path), "sha256": sha(source_path)},
+            "source_coverage": coverage,
+            "coverage_outcome": "blocked",
+            "coverage_note": (
+                "All determinate source tasks are represented; convention-blocked 856 is absent pending declared deferment. No silent complete-package approval."
+                if number == "46" else
+                "All determinate source tasks are represented, with the 894 direction exception identified separately; convention-blocked 882 is absent pending declared deferment. No silent complete-package approval."
+            ),
+            "question_reviews": question_reviews,
+            "whole_package_relationships": {"verdict": "pass", "evidence": package_relationships},
+            "notices_and_findings": notices,
+            "author_keys_or_internals_read": False,
+            "new_source_errata_created": False,
+            "render_validation_db_run": False,
+        }
+        save(own / "view-fidelity-checks.json", result)
+        print(json.dumps({
+            "saved": str(own / "view-fidelity-checks.json"),
+            "questions": len(view["questions"]), "options": expected_options,
+            "source_coverage": "blocked", "definite_view_findings": int(number == "47"),
+        }))
+
+
+if __name__ == "__main__":
+    main()

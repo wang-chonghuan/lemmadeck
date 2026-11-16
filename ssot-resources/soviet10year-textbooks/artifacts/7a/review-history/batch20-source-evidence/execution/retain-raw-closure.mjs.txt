@@ -1,0 +1,277 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const scratch = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp');
+const root = path.join(scratch, 'batch20-source-7a');
+const work = path.join(scratch, 'batch20-work-7a');
+const durable = path.join(repo, 'ssot-resources/soviet10year-textbooks/artifacts/7a');
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const digest = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const sha = file => digest(fs.readFileSync(file));
+const record = file => ({ path: file, sha256: sha(file), bytes: fs.statSync(file).size });
+const write = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+const assert = (ok, reason) => { if (!ok) throw Error(reason); };
+const walk = dir => fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+  const file = path.join(dir, entry.name);
+  assert(!entry.isSymbolicLink(), `Unexpected symlink: ${file}`);
+  return entry.isDirectory() ? walk(file) : [file];
+}).sort();
+const original = read(path.join(root, 'input-hashes-before.json'));
+const assemblyFreeze = read(path.join(work, 'raw-assembly-inputs.json'));
+const stageFiles = ['assemble-1', 'vectorize-34', 'assemble-2'].map(stage => path.join(work, `raw-${stage}.json`));
+const stages = stageFiles.map(read);
+assert(stages.every(stage => stage.pass && stage.status === 0), 'All three authorized operations must pass');
+for (const item of assemblyFreeze.protected) assert(sha(item.path) === item.sha256, `Protected evidence changed: ${item.path}`);
+const inputs = original.inputs.map(item => ({
+  ...item, current_sha256: sha(path.resolve(repo, item.path)),
+}));
+const inputChanges = inputs.filter(item => item.current_sha256 !== item.sha256);
+assert(inputChanges.length === 1
+  && inputChanges[0].path === '.claude/skills/ld-s10y-lesson/tools/layout.py'
+  && inputChanges[0].current_sha256 === '0dcb2118a9adcedc72c7c3144cd68daa3e29badba246846472bb36676253f96d',
+'Only the parent intentional layout repair may differ among178 inputs');
+const allowedCopiedChanges = new Set(assemblyFreeze.allowed_changed_copies.map(item => item.destination));
+const copies = original.copies.map(item => ({
+  ...item,
+  source_sha256_now: sha(path.resolve(repo, item.source)),
+  destination_sha256_now: sha(path.resolve(repo, item.destination)),
+}));
+assert(copies.length === 149 && copies.every(item => item.source_sha256_now === item.sha256), 'Original149 source bytes changed');
+const changedCopies = copies.filter(item => item.destination_sha256_now !== item.sha256);
+assert(changedCopies.length === 4 && changedCopies.every(item => allowedCopiedChanges.has(item.destination)), 'Unapproved changed copied artifact');
+const rawBefore = new Map(assemblyFreeze.private_raw_before.map(item => [item.path, item]));
+const rawNow = walk(path.join(root, '7a')).map(record);
+const newFiles = rawNow.filter(item => !rawBefore.has(item.path));
+const changedFiles = rawNow.filter(item => rawBefore.has(item.path) && rawBefore.get(item.path).sha256 !== item.sha256);
+assert(assemblyFreeze.private_raw_before.every(item => fs.existsSync(item.path)), 'Previously copied file deleted');
+assert(newFiles.length === 14 && changedFiles.length === 4, 'Unexpected new/changed derived RAW artifact count');
+const secondChanges = stages[2].outputs.filter(item => {
+  const previous = stages[0].outputs.find(old => old.path === item.path);
+  return !previous || previous.sha256 !== item.sha256;
+});
+assert(secondChanges.length === 1 && secondChanges[0].path.endsWith('/figures/fig-02.svg'), 'Second assembly changed more than the new SVG library entry');
+for (const output of stages[2].outputs) assert(sha(output.path) === output.sha256, 'Final assembly output changed');
+
+const pageDocuments = new Map();
+const sourceBlocks = new Map();
+for (const file of walk(path.join(root, '7a/pages')).filter(file => file.endsWith('/page.json'))) {
+  const document = read(file);
+  pageDocuments.set(document.meta.page, document);
+  document.blocks.forEach((block, index) => sourceBlocks.set(`p${String(document.meta.page).padStart(4, '0')}#${index + 1}`, block));
+}
+const rawObservations = read(path.join(root, 'full-actual-page-observations.json'));
+const authorizedObservations = read(path.join(work, 'authorized-continuation-results.json')).observations;
+const parentOld = read(path.join(work, 'parent-source-observations-28-41.json'));
+const parentNew = read(path.join(work, 'parent-source-observations-42-43.json'));
+const observedPages = Array.from({ length: 17 }, (_, index) => index + 27).map(page => {
+  const directory = path.join(root, '7a/pages', String(page).padStart(4, '0'));
+  const document = pageDocuments.get(page);
+  const audit = read(path.join(directory, 'audit.json'));
+  const image = path.join(work, '7a/pages', String(page).padStart(4, '0'), 'page.png');
+  const author = rawObservations.find(item => item.pdf_page === page)
+    ?? authorizedObservations.find(item => item.pdf_page === page);
+  const parent = parentOld.pages.find(item => item.page === page)
+    ?? parentNew.observations.find(item => item.page === page) ?? null;
+  assert(author && audit.errors.length === 0 && audit.lines_md === audit.lines_printed, `Missing observation or page audit: ${page}`);
+  assert(document.meta.printed_page === page - 6 && sha(image) === document.meta.render.sha256, 'Page identity/hash mismatch');
+  const footer = document.blocks.filter(block => block.kind === 'foot');
+  assert(footer.length === 1 && footer[0].lines[0] === String(page - 6), 'Actual footer mismatch');
+  if (parent) {
+    const rows = parent.independently_observed_printed_rows ?? parent.independent_printed_rows;
+    assert(rows === audit.lines_printed && parent.source_fidelity === 'pass', 'Parent/counter row mismatch');
+  }
+  return {
+    pdf_page: page, printed_page: page - 6,
+    image: record(image), files: ['page.md', 'page.json', 'audit.json'].map(name => record(path.join(directory, name))),
+    author_full_actual_page_observation: author,
+    parent_actual_comparison: parent,
+    current_audit: audit, retained_footer: footer[0],
+    source_blocks: document.blocks.map((block, index) => ({
+      ref: `p${String(page).padStart(4, '0')}#${index + 1}`, ...block,
+    })),
+    finalize_receipt: page === 27 ? 'Copied existing pass; not refinalized'
+      : page <= 40 ? `Frozen original commands.json finalize${page}`
+        : `Authorized continuation-finalize-${page}.json once-pass`,
+    page41_rejected_audit_is_historical: page === 41,
+  };
+});
+
+const book = read(path.join(root, '7a/book.json'));
+const tocFile = path.join(repo, 'ssot-resources/soviet10year-textbooks/toc/7a/zh.json');
+const toc = read(tocFile);
+const topics = toc.contents.flatMap(chapter => chapter.lessons ?? []).flatMap(section => section.topics ?? []);
+const targets = original.targets.map(target => {
+  const directory = path.join(root, '7a/lessons', target.lesson);
+  const lesson = read(path.join(directory, 'lesson.json'));
+  const exercises = read(path.join(directory, 'exercises.json'));
+  const actualToc = topics.find(topic => topic.id === target.lesson);
+  assert(actualToc.id === lesson.card_id && actualToc.page === lesson.start_printed
+    && String(actualToc.printedNumber) === lesson.number, 'Target TOC mismatch');
+  const objectRefs = [ ...lesson.prose.flatMap(block => block.source_refs), ...exercises.exercises.flatMap(exercise => exercise.pages) ];
+  const pages = [...new Set(objectRefs.map(ref => Number(ref.match(/^p(\d+)#/)[1])).concat(lesson.start_page))].sort((a, b) => a - b);
+  assert(pages[0] === target.actual_source_pages_pdf[0] && pages.at(-1) === target.actual_source_pages_pdf[1], 'Actual target object bounds mismatch');
+  const objectRecord = (object, refs) => ({
+    ...object, text_sha256: digest(Buffer.from(object.text, 'utf8')),
+    source_bindings: refs.map(ref => {
+      const page = Number(ref.match(/^p(\d+)#/)[1]);
+      return { ref, pdf_page: page, printed_page: page - 6,
+        page_json_sha256: sha(path.join(root, `7a/pages/${String(page).padStart(4, '0')}/page.json`)),
+        source_lines: sourceBlocks.get(ref).lines };
+    }),
+  });
+  return {
+    id: target.lesson, rawsourceclosed: true, actual_toc: actualToc,
+    actual_pdf_pages: pages, actual_printed_pages: pages.map(page => page - 6),
+    source_boundary_evidence: target.boundary_evidence,
+    counts: { originals: exercises.count, prose_blocks: lesson.prose.length, figures: lesson.figures.length },
+    originals: exercises.exercises.map(exercise => Number(exercise.number)),
+    source_files: ['lesson.md', 'lesson.json', 'exercises.json'].map(name => record(path.join(directory, name))),
+    prose: lesson.prose.map(block => objectRecord(block, block.source_refs)),
+    exercises: exercises.exercises.map(exercise => objectRecord(exercise, exercise.pages)),
+    figure_bindings: lesson.figures,
+    closure_evidence: 'Explicit TOC identity, complete original range, exact source lines and block refs, no target open tails, next actual printed heading; both assembly reconciliations passed.',
+    modern_or_semantic_solution_approval: false,
+  };
+});
+assert(targets.reduce((count, target) => count + target.counts.originals, 0) === 42, 'New originals total mismatch');
+
+const errataPage = pageDocuments.get(38);
+const erratum = errataPage.meta.errata.find(item => item.id === 'p0038-math-1');
+const errataLesson = targets.find(target => target.id === 'alg7-c1-s2-n7');
+const boundProse = errataLesson.prose.find(block => block.source_refs.includes(erratum.block));
+const nextProse = errataLesson.prose.find(block => block.source_refs.includes('p0038#4'));
+assert(erratum.original === '$x+3=0$' && erratum.reason && boundProse.text.includes(erratum.original)
+  && boundProse.text.includes('$(x+2)(x-3)=0$') && nextProse.text.includes('$x+2=0$'), 'Erratum source binding invalid');
+const erratumBinding = {
+  ...erratum, validation: 'pass; original substring, exact block, printed/product/prose inconsistency retained',
+  pdf_page: 38, printed_page: 32,
+  source_pdf_sha256: errataPage.meta.source.pdf_sha256,
+  source_render_sha256: errataPage.meta.render.sha256,
+  page_json: record(path.join(root, '7a/pages/0038/page.json')),
+  page_md: record(path.join(root, '7a/pages/0038/page.md')),
+  assembled_lesson: 'alg7-c1-s2-n7',
+  assembled_lesson_json: record(path.join(root, '7a/lessons/alg7-c1-s2-n7/lesson.json')),
+  bound_prose: boundProse, later_printed_prose: nextProse,
+  raw_correction_applied: false, corrected_formula_authored: false,
+};
+const crop = path.join(work, '7a/pages/0034/figures/fig-02.png');
+const svg = path.join(work, '7a/pages/0034/figures/fig-02.svg');
+const sourceFigure = sourceBlocks.get('p0034#4');
+const figureLesson = targets.find(target => target.id === 'alg7-c1-s2-n6');
+const figureProse = figureLesson.prose.filter(block => block.source_refs.some(ref => ref.startsWith('p0034#')));
+assert(figureLesson.figure_bindings.length === 1 && sourceFigure.id === 'fig-02'
+  && figureProse.some(block => block.source_refs.includes('p0034#3')), 'Figure2 source/prose binding invalid');
+assert(sha(crop) === sha(path.join(root, '7a/figures/fig-02.png'))
+  && sha(svg) === sha(path.join(root, '7a/figures/fig-02.svg')), 'Figure library does not match page34 bytes');
+const figureBinding = {
+  id: 'fig-02', raw_lesson: figureLesson.id, source_ref: 'p0034#4',
+  pdf_page: 34, printed_page: 28, source_box: sourceFigure.box,
+  actual_observation: 'A inner, B outer; source crop includes printed A subset B. Deterministic tracing only, no invented diagram.',
+  crop: record(crop), svg: record(svg),
+  private_library: ['fig-02.png', 'fig-02.svg'].map(name => record(path.join(root, '7a/figures', name))),
+  fidelity: read(path.join(work, 'raw-vectorize-34-details.json')),
+  prose_refs: figureProse.map(block => block.source_refs),
+  caption_source_ref: 'p0034#6', caption_text: sourceBlocks.get('p0034#6').lines,
+  parent_source_evidence: record(path.join(work, 'parent-source-observations-28-41.json')),
+};
+const n9Directory = path.join(root, '7a/lessons/alg7-c1-s3-n9');
+const n9 = read(path.join(n9Directory, 'lesson.json'));
+const partial = {
+  id: n9.id, actual_toc: topics.find(topic => topic.id === n9.id), rawsourceclosed: false,
+  status: 'excluded_partial_boundary_only', pdf_page: 43, printed_page: 37, originals: [],
+  source_ref: 'p0043#6', source_block: sourceBlocks.get('p0043#6'), derived: n9,
+  source_files: ['lesson.md', 'lesson.json', 'exercises.json'].map(name => record(path.join(n9Directory, name))),
+  closed_target_promotion_candidate: false,
+};
+
+function candidate(file, category) {
+  const relative = path.relative(path.join(root, '7a'), file);
+  const destination = path.join(durable, relative);
+  return {
+    category, private: record(file), proposed_destination: destination,
+    destination_existed_at_entry: original.inputs.some(item => path.resolve(repo, item.path) === destination),
+    destination_current_sha256: fs.existsSync(destination) ? sha(destination) : null,
+    parent_actual_review_required: true, promoted: false,
+  };
+}
+const candidates = [
+  ...observedPages.filter(page => page.pdf_page >= 28).flatMap(page => page.files.map(file => candidate(file.path, 'new_raw_page'))),
+  ...targets.flatMap(target => target.source_files.map(file => candidate(file.path, 'closed_target_raw_lesson'))),
+  ...figureBinding.private_library.map(file => candidate(file.path, 'new_source_figure')),
+  candidate(path.join(root, '7a/book.json'), 'derived_raw_book_index'),
+];
+assert(candidates.length === 63, 'Closed-scope candidate count mismatch');
+const preservation = {
+  frozen_input_count: inputs.length, unchanged_inputs: inputs.length - inputChanges.length,
+  intentional_tool_hash_changes: inputChanges,
+  copied_file_count: copies.length, source_bytes_unchanged: copies.length,
+  destination_bytes_unchanged: copies.length - changedCopies.length,
+  allowed_private_derived_changes: changedCopies,
+  raw_copies: copies.filter(item => item.source.startsWith('ssot-resources/soviet10year-textbooks/artifacts/7a/')).length,
+  reused_prepared_copies: copies.filter(item => !item.source.startsWith('ssot-resources/soviet10year-textbooks/artifacts/7a/')).length,
+  all_inputs: inputs, all_copies: copies,
+  private_raw_new_files_since_assembly_freeze: newFiles,
+  private_raw_changed_files_since_assembly_freeze: changedFiles,
+  second_assembly_only_added_svg_library_entry: secondChanges,
+  old_n1_n4_and_originals1_66_byte_identical: true,
+  original_durable_copied_resources_untouched: true,
+  page27_untouched_no_unjustified_open_repair: true,
+  rejected_commands: record(path.join(work, 'commands.json')),
+  rejected_exact_copies: walk(path.join(work, 'rejected-page41-before-authorized-counter')).map(record),
+  authorized_page41_retry: record(path.join(work, 'continuation-finalize-41.json')),
+};
+const commandEvidence = {
+  original_failed_log: record(path.join(work, 'commands.json')),
+  once_guarded_wrapper: record(path.join(work, 'raw-assemble-once.mjs')),
+  vectorize_result_capture: record(path.join(work, 'raw-vectorize-record.py')),
+  assembly_freeze: record(path.join(work, 'raw-assembly-inputs.json')),
+  stages: stageFiles.map((file, index) => ({ record: record(file), ...stages[index] })),
+  operations_this_authorization: {
+    assemble: 2, vectorize: 1, traced_figures: 1, finalized_pages: 0, prepare: 0,
+    source_text_edits: 0, shared_code_edits: 0, duplicate_parent_tests: 0,
+    promotion: 0, durable_resource_writes: 0, publication: 0,
+    edition_choice_answer_authorship: 0, db_app_env_dependency_modelservice: 0,
+  },
+};
+write(path.join(work, 'raw-closure-preservation.json'), preservation);
+write(path.join(work, 'raw-closure-command-evidence.json'), commandEvidence);
+write(path.join(root, 'raw-closure-output-hashes.json'), { at: new Date().toISOString(), outputs: rawNow });
+write(path.join(root, 'scoped-promotion-candidates.json'), {
+  status: 'candidate_only_not_promoted', parent_owns_actual_review_promotion_and_rebinding: true,
+  closed_target_ids: targets.map(target => target.id), candidate_count: candidates.length, candidates,
+  excluded_partial: partial,
+  raw_book_index_note: 'The pipeline book.json includes n9 as a partial raw boundary, and page43 retains its heading/introduction. The three n9 derived files are not among the63 closed-scope candidates. Parent must retain them explicitly as partial RAW context or rebind the index before choosing a coherent durable promotion scope; no agent-side dropping or editing.',
+  excluded_unchanged: 'All copied old pages7-27, old figure1, and n1-n4 lessons; all modern editions, choices, answers and other resources.',
+});
+write(path.join(root, 'raw-source-closure.json'), {
+  at: new Date().toISOString(), ticket: 'STEMROBIN-182', rawsourceclosed: true,
+  closure_scope: 'Only alg7-c1-s2-n5/n6/n7 and alg7-c1-s3-n8. N9 remains partial and excluded.',
+  parent_owns_actual_assembled_object_review_and_scoped_promotion: true,
+  source_scope: { pdf_pages: [27, 43], printed_pages: [21, 37], toc: record(tocFile), source_pdf: toc.source.scan },
+  counts: { closed_target_lessons: 4, new_originals: 42, retained_originals: 66,
+    assembled_originals: 108, new_source_figures: 1, total_source_figures: 2,
+    reused_observed_pages: 17, raw_book_pages: 37, raw_book_lessons_including_partial: 9 },
+  book_audit: book.audit, target_objects: targets, full_actual_page_observations: observedPages,
+  erratum_source_binding: erratumBinding, source_figure_binding: figureBinding,
+  excluded_partial: partial,
+  preservation_summary: {
+    original178_inputs_177_exact_plus_parent_layout_repair: true,
+    original149_copied_sources_all_exact: true, copied_destinations145_exact_4_allowed_derived_changes: true,
+    old_n1_n4_old_fig1_old_pages7_27_exact: true, original_durable_resources_untouched: true,
+    original_failed_commands_and_rejected41_artifacts_exact: true,
+  },
+  evidence_files: [
+    path.join(work, 'raw-closure-preservation.json'), path.join(work, 'raw-closure-command-evidence.json'),
+    path.join(root, 'raw-closure-output-hashes.json'), path.join(root, 'scoped-promotion-candidates.json'),
+  ].map(record),
+  operations: commandEvidence.operations_this_authorization,
+  raw_only: true, semantic_math_solution_approval: false, promoted: false,
+});
+console.log(JSON.stringify({
+  rawsourceclosed: true, target_counts: targets.map(target => [target.id, target.counts.originals]),
+  new_originals: 42, unchanged_copied_destinations: 145, allowed_changed_copies: 4,
+  unchanged_durable_raw_files: preservation.raw_copies, reused_prepared_files: preservation.reused_prepared_copies,
+  candidates: 63, n9: 'excluded_partial', reports_saved: true,
+}));

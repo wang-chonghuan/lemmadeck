@@ -1,0 +1,703 @@
+import copy
+import hashlib
+import json
+from collections import Counter
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parent.parent
+INPUTS = {}
+
+
+def load(path):
+    data = path.read_bytes()
+    INPUTS[str(path)] = hashlib.sha256(data).hexdigest()
+    return json.loads(data)
+
+
+def digest(value, ascii=True):
+    data = json.dumps(
+        value, sort_keys=True, ensure_ascii=ascii, separators=(",", ":")
+    ).encode("utf-8")
+    return hashlib.sha256(data).hexdigest()
+
+
+def binding(path):
+    return {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+
+
+def content(value, excluded):
+    return {key: item for key, item in value.items() if key != excluded}
+
+
+def project(draft):
+    return {"questions": [{"id": q["id"], **q["view"]} for q in draft["questions"]]}
+
+
+def reverse_replacements(current, replacements):
+    previous = copy.deepcopy(current)
+    seen = set()
+    for change in replacements:
+        assert change["op"] == "replace"
+        assert change["path"] not in seen
+        seen.add(change["path"])
+        parts = change["path"].strip("/").split("/")
+        parent = previous
+        for part in parts[:-1]:
+            parent = parent[int(part)] if isinstance(parent, list) else parent[part]
+        key = int(parts[-1]) if isinstance(parent, list) else parts[-1]
+        assert parent[key] == change["value"], change["path"]
+        parent[key] = change["old_value"]
+    return previous
+
+
+def frozen_solution(row):
+    mathematics = row["mathematics"]
+    solution = mathematics.get("frozen_independent_solution") or mathematics[
+        "independent_solution"
+    ]
+    return (
+        "Reused independent pre-internals content solution; any option labels "
+        "in the following historical prose refer to its prior frozen view: "
+        + solution
+        + " Current content-rebound complete true set: "
+        + ", ".join(mathematics["correct"])
+        + "."
+    )
+
+
+def common(number):
+    own = ROOT / f"reviewer-5m-n{number}"
+    author = ROOT / f"5m-n{number}"
+    draft = load(author / "draft.json")
+    source = load(own / "source-solutions.json")
+    seed = load(own / "source-input-preserved.json")
+    frozen = load(own / "view-checks-option-position-revised.json")
+    frozen_view = load(own / "view-input-preserved-option-position-revised.json")
+    assert digest(seed) == draft["seed_sha256"]
+    assert project(draft) == frozen_view
+    assert frozen["position_repair_stage_status"] == "pass"
+    assert draft["new_figures"] == []
+    assert len(draft["questions"]) == frozen["visible_question_count"]
+    receipt = load(author / "option-position-permutation-receipt.json")
+    diff = load(author / "option-position-json-diff.json")
+    assert receipt["file_byte_sha256"]["draft.json"]["after"] == INPUTS[
+        str(author / "draft.json")
+    ]
+    assert receipt["revised_view_byte_sha256"] == INPUTS[
+        str(own / "view-input-preserved-option-position-revised.json")
+    ]
+    return own, author, draft, source, seed, frozen, receipt, diff
+
+
+def standard_record(draft, seed, source, question_reviews, source_reviews):
+    return {
+        "schema": "s10y-choice-review-v1",
+        "seed_sha256": digest(seed),
+        "draft_sha256": digest(draft),
+        "reviewer": {
+            "kind": "independent_agent",
+            "identity": "independent source-first reviewer; authorized current internal comparison",
+        },
+        "source_reviews": source_reviews,
+        "figure_checks": [
+            {
+                key: figure[key]
+                for key in ("figure_id", "asset_path", "asset_sha256", "observation")
+            }
+            for figure in source["figure_checks"]
+        ],
+        "new_figure_reviews": [],
+        "question_reviews": question_reviews,
+        "outcome": "blocked",
+    }
+
+
+def n46():
+    own, author, draft, source, seed, frozen, receipt, diff = common(46)
+    history = own / "history-before-option-position-internal-comparison"
+    old_review = load(history / "review.json")
+    old_result = load(history / "final-comparison-result.json")
+    preservation = load(history / "preservation.json")
+    old_draft = load(own / "draft-input-preserved-at-internal-comparison.json")
+    assert digest(old_draft) == old_review["draft_sha256"]
+    assert INPUTS[str(own / "draft-input-preserved-at-internal-comparison.json")] == (
+        old_result["current_draft_preserved_binding"]["sha256"]
+    )
+    assert binding(own / "review.json") == {
+        "path": str(own / "review.json"),
+        "sha256": preservation["records"][0]["sha256"],
+    }
+    assert binding(own / "final-comparison-result.json")["sha256"] == (
+        preservation["records"][1]["sha256"]
+    )
+    mapping = load(author / "option-position-content-mapping.json")
+    mapped = {row["question_id"]: row for row in mapping["questions"]}
+    assert len(mapped) == len(draft["questions"]) == 15
+    recovered = copy.deepcopy(draft)
+    old_questions = {q["id"]: q for q in old_draft["questions"]}
+    old_comparisons = {q["question_id"]: q for q in old_result["question_comparisons"]}
+    old_standard = {q["question_id"]: q for q in old_review["question_reviews"]}
+    new_frozen = {q["question_id"]: q for q in frozen["question_reviews"]}
+    comparisons = []
+    standard_questions = []
+    for index, question in enumerate(draft["questions"]):
+        qid = question["id"]
+        previous = old_questions[qid]
+        permutation = {
+            item["old_option_id"]: item["new_option_id"]
+            for item in new_frozen[qid]["option_content_rebindings"]
+        }
+        inverse = {new: old for old, new in permutation.items()}
+        assert len(permutation) == len(inverse) == len(question["view"]["options"])
+        author_mapping = mapped[qid]
+        assert {
+            item["old_id"]: item["new_id"] for item in author_mapping["old_to_new"]
+        } == permutation
+        new_options = {option["id"]: option for option in question["view"]["options"]}
+        new_rationales = {
+            rationale["option_id"]: rationale
+            for rationale in question["key"]["rationales"]
+        }
+        old_rationales = {
+            rationale["option_id"]: rationale
+            for rationale in previous["key"]["rationales"]
+        }
+        for old_option in previous["view"]["options"]:
+            old_id = old_option["id"]
+            new_id = permutation[old_id]
+            assert content(old_option, "id") == content(new_options[new_id], "id")
+            assert content(old_rationales[old_id], "option_id") == content(
+                new_rationales[new_id], "option_id"
+            )
+            item = next(
+                item for item in author_mapping["old_to_new"] if item["old_id"] == old_id
+            )
+            assert item["option_content_sha256_before"] == digest(
+                content(old_option, "id"), ascii=False
+            )
+            assert item["option_content_sha256_after"] == digest(
+                content(new_options[new_id], "id"), ascii=False
+            )
+            assert item["rationale_content_sha256_before"] == digest(
+                content(old_rationales[old_id], "option_id"), ascii=False
+            )
+            assert item["rationale_content_sha256_after"] == digest(
+                content(new_rationales[new_id], "option_id"), ascii=False
+            )
+            assert item["option_text_byte_sha256"] == hashlib.sha256(
+                old_option["text"].encode("utf-8")
+            ).hexdigest()
+            assert item["correct_membership_unchanged"]
+        target = recovered["questions"][index]
+        target["view"]["options"] = [
+            {**new_options[permutation[old["id"]]], "id": old["id"]}
+            for old in previous["view"]["options"]
+        ]
+        target["key"]["rationales"] = [
+            {**new_rationales[permutation[old["option_id"]]], "option_id": old["option_id"]}
+            for old in previous["key"]["rationales"]
+        ]
+        target["key"]["correct"] = [inverse[oid] for oid in question["key"]["correct"]]
+        assert target == previous, qid
+        assert set(question["key"]["correct"]) == set(
+            new_frozen[qid]["mathematics"]["correct"]
+        )
+        compare = copy.deepcopy(old_comparisons[qid])
+        compare["current_intent"] = question["intent"]
+        compare["complete_key_check"] = {
+            "verdict": "pass",
+            "current_author_correct": question["key"]["correct"],
+            "independently_frozen_correct": new_frozen[qid]["mathematics"]["correct"],
+            "evidence": "Entire correct membership matches the content-rebound frozen true set; inverse permutation also recovers the exact previously checked key list.",
+        }
+        old_option_comparisons = {
+            item["option_id"]: item for item in compare["option_rationale_checks"]
+        }
+        compare["option_rationale_checks"] = []
+        for option in question["view"]["options"]:
+            oid = option["id"]
+            old_id = inverse[oid]
+            check = copy.deepcopy(old_option_comparisons[old_id])
+            assert content(check["current_author_rationale"], "option_id") == content(
+                new_rationales[oid], "option_id"
+            )
+            check["option_id"] = oid
+            check["current_author_rationale"] = new_rationales[oid]
+            check["prior_option_id"] = old_id
+            check["exact_rationale_content_identity"] = True
+            check["previously_checked_procedure_reused_without_math_rerun"] = True
+            check["previous_internal_comparison_binding"] = binding(
+                history / "final-comparison-result.json"
+            )
+            compare["option_rationale_checks"].append(check)
+        compare["answer_leakage"] = new_frozen[qid]["answer_leakage"]
+        compare["exact_inverse_permutation"] = {
+            "verdict": "pass",
+            "whole_question_restored_exactly": True,
+            "old_to_new": permutation,
+            "intent_source_solution_source_numbers_and_other_fields_unchanged": True,
+        }
+        comparisons.append(compare)
+        canonical = copy.deepcopy(old_standard[qid])
+        canonical["answer_leakage"] = new_frozen[qid]["answer_leakage"]
+        canonical["mathematics"]["independent_solution"] = frozen_solution(new_frozen[qid])
+        canonical["mathematics"]["correct"] = new_frozen[qid]["mathematics"]["correct"]
+        old_canonical_checks = {
+            check["option_id"]: check
+            for check in canonical["mathematics"]["option_checks"]
+        }
+        canonical["mathematics"]["option_checks"] = [
+            {
+                **old_canonical_checks[inverse[option["id"]]],
+                "option_id": option["id"],
+                "evidence": (
+                    old_canonical_checks[inverse[option["id"]]]["evidence"]
+                    + " Current rebinding: exact option and rationale content "
+                    "identity under the independently recovered inverse "
+                    "permutation; prior derivation/procedure check reused."
+                ),
+            }
+            for option in question["view"]["options"]
+        ]
+        standard_questions.append(canonical)
+    assert recovered == old_draft
+    assert reverse_replacements(draft, diff["draft"]) == old_draft
+    assert reverse_replacements(project(draft), diff["view"]) == project(old_draft)
+    assert draft["coverage"] == old_draft["coverage"]
+    review = standard_record(
+        draft, seed, source, standard_questions, copy.deepcopy(old_review["source_reviews"])
+    )
+    report = copy.deepcopy(old_result)
+    report.update(
+        {
+            "schema": "independent-position-revised-internal-comparison-v1",
+            "scope": "Authorized n46 current draft/diff/mapping/receipt only, compared against this reviewer's exact old draft and full internal comparison. Whole-draft inverse equality proves that all 48 rationales, 15 keys/intents/source solutions and 10 coverage rows are unchanged except label/order. No mathematics re-reviewed.",
+            "question_comparisons": comparisons,
+            "current_draft_binding": binding(author / "draft.json"),
+            "current_draft_preserved_binding": {
+                "path": str(own / "draft-input-preserved-current-internal-comparison.json"),
+                "sha256": INPUTS[str(author / "draft.json")],
+            },
+            "frozen_view_checks_binding": binding(own / "view-checks-option-position-revised.json"),
+            "frozen_view_preserved_binding": binding(own / "view-input-preserved-option-position-revised.json"),
+            "standard_snapshot_digests": {
+                "seed_sha256": review["seed_sha256"],
+                "current_draft_sha256": review["draft_sha256"],
+                "inverse_recovered_old_draft_sha256": digest(recovered),
+            },
+            "exact_inverse_permutation_proof": {
+                "verdict": "pass",
+                "whole_draft_equals_previously_reviewed_snapshot": recovered == old_draft,
+                "whole_draft_diff_reverse_equals_same_snapshot": True,
+                "all_author_content_hashes_independently_matched": True,
+                "author_mapping_equals_independently_frozen_content_mapping": True,
+                "unchanged": ["schema", "seed_sha256", "new_figures", "question order", "stems", "mode", "figure_ids", "source_numbers", "intent", "source_solution", "unit_reason", "limitations", "coverage", "option content", "rationale derivation/misconception/truth by content", "complete key membership by content"],
+                "math_checks_reexecuted": 0,
+            },
+            "prior_review_and_comparison_preserved": {
+                "review": binding(history / "review.json"),
+                "final_comparison": binding(history / "final-comparison-result.json"),
+                "preservation": binding(history / "preservation.json"),
+                "old_review_json_remains_unchanged": True,
+                "old_blocked_and_position_revise_history_retained": True,
+            },
+            "package_position_pattern_outcome": "pass",
+            "nonblocked_checks_all_pass": True,
+            "required_narrow_repairs": [],
+            "prohibited_inputs_read": {
+                "author_source_solutions": False,
+                "author_serializer_or_scripts": False,
+                "answerdata": False,
+                "n47_internals_are_separately_authorized_in_this_current_stage": True,
+            },
+            "findings": [
+                {
+                    "kind": "original_source_convention_unresolved",
+                    "source_number": "856",
+                    "verdict": "blocked",
+                    "evidence": "Exact unchanged coverage honestly defers both universal fraction claims. Equality/zero conventions remain unresolved; documentation pass is not source-task approval.",
+                }
+            ],
+            "whole_package_relationships": {
+                "original_task_relationships": old_result["whole_package_relationships"]["original_task_relationships"],
+                "position_shortcut": frozen["position_distribution_notice"],
+                "outcome": "pass",
+            },
+            "standard_review_binding": {"path": str(own / "currentreview.json")},
+            "canonical_review_binding": {"path": str(own / "currentreview.json")},
+            "recording_script_binding": binding(Path(__file__).resolve()),
+            "status": "blocked",
+            "outcome": "blocked",
+            "handoff": "All nonblocked n46 checks pass by exact inverse permutation and the independently frozen position-repair pass. 856 remains source-convention blocked. No narrow authoring repair requested; parent owns canonical validation and any retention.",
+        }
+    )
+    report["counts"].update(
+        {
+            "single_questions_with_package_position_finding": 0,
+            "exact_inverse_question_proofs": 15,
+            "rationales_reused_by_exact_identity": 48,
+            "new_math_checks": 0,
+        }
+    )
+    return own, draft, review, report
+
+
+def n47():
+    own, author, draft, source, seed, frozen, receipt, diff = common(47)
+    evidence_path = own / "internal-comparison-evidence.json"
+    evidence = load(evidence_path)
+    direction = load(author / "direction-repair-diff.json")
+    prior_view = load(own / "view-input-preserved-revised.json")
+    original_view = load(own / "view-input-preserved.json")
+    previous = reverse_replacements(draft, diff["draft"])
+    assert project(previous) == prior_view
+    assert reverse_replacements(project(draft), diff["view"]) == prior_view
+    assert direction["changed_field_count"] == len(direction["changes"]) == 1
+    change = direction["changes"][0]
+    assert change["pointer"] == "/questions/41/view/stem"
+    assert previous["questions"][41]["view"]["stem"] == change["after"]
+    initial = copy.deepcopy(previous)
+    initial["questions"][41]["view"]["stem"] = change["before"]
+    assert project(initial) == original_view
+    assert previous["coverage"] == initial["coverage"] == draft["coverage"]
+    frozen_rows = {row["question_id"]: row for row in frozen["question_reviews"]}
+    source_rows = {row["source_number"]: row for row in source["solutions"]}
+    coverage_rows = {row["source_number"]: row for row in draft["coverage"]}
+    assert len(coverage_rows) == len(draft["coverage"]) == len(seed["exercises"]) == 34
+    assert set(coverage_rows) == set(source_rows)
+    procedure_failures = {
+        (finding["question_id"], finding["option_id"]): finding
+        for finding in evidence["procedure_findings"]
+    }
+    expected_wrong = {
+        (question["id"], rationale["option_id"])
+        for question in draft["questions"]
+        for rationale in question["key"]["rationales"]
+        if rationale["truth"] == "incorrect"
+    }
+    assert {
+        (qid, oid)
+        for qid, procedures in evidence["wrong_procedure_evidence"].items()
+        for oid in procedures
+    } == expected_wrong
+    counts = Counter()
+    comparisons = []
+    standard_questions = []
+    for question in draft["questions"]:
+        qid = question["id"]
+        independent = frozen_rows[qid]
+        number = independent["source_numbers_independently_mapped"][0]
+        assert question["source_numbers"] == [number]
+        assert source_rows[number]["status"] == "pass"
+        assert set(question["key"]["correct"]) == set(independent["mathematics"]["correct"])
+        assert question["intent"]["concept_blocks"] == []
+        assert question["intent"]["limitations"] == coverage_rows[number]["omitted_tasks"]
+        assert question["intent"]["unit_reason"] and question["intent"]["task"]
+        counts["complete_keys_checked"] += 1
+        counts["complete_keys_matching"] += 1
+        counts["intent_and_source_solution_checks"] += 1
+        counts["local_production_loss_checks"] += 1
+        independent_options = {
+            check["option_id"]: check for check in independent["mathematics"]["option_checks"]
+        }
+        options = {option["id"]: option for option in question["view"]["options"]}
+        rationales = {rationale["option_id"]: rationale for rationale in question["key"]["rationales"]}
+        assert set(options) == set(rationales) == set(independent_options)
+        option_checks = []
+        canonical_checks = []
+        for option in question["view"]["options"]:
+            oid = option["id"]
+            rationale = rationales[oid]
+            frozen_option = independent_options[oid]
+            assert rationale["truth"] == frozen_option["truth"]
+            assert option["text"] == frozen_option["visible_text"]
+            assert option["figure_ids"] == frozen_option["visible_figure_ids"]
+            correct = rationale["truth"] == "correct"
+            assert (rationale["misconception"] is None) if correct else bool(rationale["misconception"])
+            procedure = (
+                "The actual declared correct derivation agrees with the unchanged "
+                "independent content-level calculation: " + frozen_option["evidence"]
+                if correct else evidence["wrong_procedure_evidence"][qid][oid]
+            )
+            verdict = "revise" if (qid, oid) in procedure_failures else "pass"
+            if (qid, oid) in procedure_failures:
+                assert rationale["derivation"] == procedure_failures[(qid, oid)][
+                    "actual_declared_procedure"
+                ]
+            counts["rationales_checked"] += 1
+            counts["rationale_truth_matches"] += 1
+            counts["correct" if correct else "incorrect"] += 1
+            counts["declared_derivations_checked"] += 1
+            counts["declared_derivations_" + verdict] += 1
+            if not correct:
+                counts["declared_wrong_procedures_checked"] += 1
+                counts["declared_wrong_procedures_" + verdict] += 1
+            option_checks.append(
+                {
+                    "option_id": oid,
+                    "visible_text": option["text"],
+                    "visible_figure_ids": option["figure_ids"],
+                    "independent_truth": frozen_option["truth"],
+                    "current_author_rationale": rationale,
+                    "independent_visible_option_evidence": frozen_option["evidence"],
+                    "truth_agreement": {"verdict": "pass", "matches": True},
+                    "declared_derivation_check": {"verdict": verdict, "evidence": procedure},
+                    "actual_declared_wrong_procedure_check": {
+                        "verdict": verdict,
+                        "applicable": not correct,
+                        "reproduces_entire_false_alternative_or_wrong_method_claim": (
+                            None if correct else verdict == "pass"
+                        ),
+                        "evidence": procedure,
+                    },
+                    "verdict": verdict,
+                }
+            )
+            canonical_checks.append(
+                {
+                    "option_id": oid,
+                    "truth": frozen_option["truth"],
+                    "evidence": frozen_option["evidence"] + " Current author-procedure comparison: " + procedure,
+                }
+            )
+        math_verdict = "revise" if any(c["verdict"] == "revise" for c in option_checks) else "pass"
+        counts["question_internal_comparison_" + math_verdict] += 1
+        figures = question["intent"]["figure_observations"]
+        if qid == "n47-884":
+            assert [figure["figure_id"] for figure in figures] == ["fig-151"]
+            figure_evidence = evidence["special_scope_checks"]["fig151_layers"]
+        else:
+            assert figures == []
+            figure_evidence = "No source, stem or option figure is used in this unit; the empty intent figure-observation list is appropriate."
+        comparison = {
+            "question_id": qid,
+            "current_intent": question["intent"],
+            "intent_task_check": independent["task_fidelity"],
+            "current_source_solution_check": {
+                "verdict": "pass",
+                "evidence": evidence["source_solution_evidence"][number],
+            },
+            "unit_reason_check": {
+                "verdict": "pass",
+                "evidence": (
+                    "The current response unit is exactly the independently frozen "
+                    "question/segment, not a new source split or merge. "
+                    + independent["task_fidelity"]["evidence"]
+                    + " Actual author unit_reason: " + question["intent"]["unit_reason"]
+                ),
+            },
+            "concept_blocks_check": {
+                "verdict": "pass",
+                "evidence": "No definition blocks are selected in the frozen seed or asserted in the current intent.",
+            },
+            "local_production_loss_check": {
+                "verdict": "pass",
+                "evidence": (
+                    "Current intent and coverage list exactly the same explicit losses: "
+                    + json.dumps(question["intent"]["limitations"], ensure_ascii=True)
+                    + " These limit recognition versus independent production of the "
+                    "named operations/construction; the response is not credited as "
+                    "performing the missing work."
+                    + (
+                        " Direction restoration retains the original source conditions, "
+                        "not a new loss or invented convention."
+                        if qid == "n47-894" else ""
+                    )
+                ),
+            },
+            "figure_observations_check": {"verdict": "pass", "evidence": figure_evidence},
+            "complete_key_check": {
+                "verdict": "pass",
+                "current_author_correct": question["key"]["correct"],
+                "independently_frozen_correct": independent["mathematics"]["correct"],
+                "evidence": "The entire current key agrees with the already frozen content-rebound true set; not only one marked option.",
+            },
+            "option_rationale_checks": option_checks,
+            "task_fidelity": independent["task_fidelity"],
+            "redundancy": independent["redundancy"],
+            "answer_leakage": independent["answer_leakage"],
+            "mathematics_verdict": math_verdict,
+        }
+        comparisons.append(comparison)
+        standard_questions.append(
+            {
+                "question_id": qid,
+                "task_fidelity": independent["task_fidelity"],
+                "redundancy": independent["redundancy"],
+                "answer_leakage": independent["answer_leakage"],
+                "mathematics": {
+                    "verdict": math_verdict,
+                    "independent_solution": frozen_solution(independent),
+                    "correct": independent["mathematics"]["correct"],
+                    "option_checks": canonical_checks,
+                },
+            }
+        )
+    assert counts["rationales_checked"] == counts["rationale_truth_matches"] == 134
+    assert counts["correct"] == 46 and counts["incorrect"] == 88
+    assert counts["declared_wrong_procedures_checked"] == 88
+    assert counts["declared_wrong_procedures_pass"] == 87
+    assert counts["declared_wrong_procedures_revise"] == 1
+    assert counts["declared_derivations_pass"] == 133
+    source_reviews = []
+    coverage_checks = []
+    for number, current in coverage_rows.items():
+        mapped_questions = [
+            question["id"]
+            for question in draft["questions"]
+            if number in question["source_numbers"]
+        ]
+        assert current["question_ids"] == mapped_questions
+        assert set(mapped_questions) == {
+            row["question_id"] for row in frozen["question_reviews"]
+            if number in row["source_numbers_independently_mapped"]
+        }
+        blocked = number == "882"
+        if blocked:
+            assert current["question_ids"] == []
+            assert current["omitted_tasks"] and current["reason"].startswith("Blocked:")
+            explanation = evidence["special_scope_checks"]["blocked882"]
+        else:
+            explanation = (
+                evidence["source_solution_evidence"][number]
+                + " Explicit production losses: "
+                + json.dumps(current["omitted_tasks"], ensure_ascii=True)
+                + " These are recognition-versus-production limitations, not "
+                "silent omissions of the determinate mathematical tasks."
+            )
+        coverage_checks.append(
+            {
+                "source_number": number,
+                "current_coverage": current,
+                "source_mapping_check": {"verdict": "pass", "evidence": "Derived actual question source_numbers match the complete coverage IDs and the independent source mapping."},
+                "declared_local_losses_check": {"verdict": "pass", "evidence": explanation},
+                "explicit_deferment_check": {"verdict": "pass", "evidence": explanation} if blocked else None,
+                "source_and_coverage_outcome": "blocked" if blocked else "pass",
+            }
+        )
+        source_reviews.append(
+            {
+                "source_number": number,
+                "independent_solution": json.dumps(source_rows[number], ensure_ascii=True, separators=(",", ":")),
+                "coverage": {"verdict": "blocked" if blocked else "pass", "evidence": explanation},
+            }
+        )
+    review = standard_record(draft, seed, source, standard_questions, source_reviews)
+    image_observations = load(own / "source-image-observations.json")
+    assert image_observations["actually_opened_image_count"] == 2
+    assert image_observations["full_two_layer_composite_actually_opened"] is False
+    counts["coverage_rows"] = 34
+    counts["source_convention_blocked_rows"] = 1
+    report = {
+        "schema": "independent-current-internal-comparison-v1",
+        "lesson": source["lesson"],
+        "scope": "First authorized current n47 draft internals compared to this reviewer's frozen source and revised option-position view. Every current key, rationale, intent/source solution, unit reason, loss and coverage row inspected. No author source-solutions, serializer, answers, validators or rendering.",
+        "reviewer": review["reviewer"],
+        "current_draft_binding": binding(author / "draft.json"),
+        "current_draft_preserved_binding": {
+            "path": str(own / "draft-input-preserved-current-internal-comparison.json"),
+            "sha256": INPUTS[str(author / "draft.json")],
+        },
+        "frozen_seed_preserved_binding": binding(own / "source-input-preserved.json"),
+        "frozen_source_binding": binding(own / "source-solutions.json"),
+        "frozen_view_checks_binding": binding(own / "view-checks-option-position-revised.json"),
+        "frozen_view_preserved_binding": binding(own / "view-input-preserved-option-position-revised.json"),
+        "independent_manual_comparison_evidence_binding": binding(evidence_path),
+        "standard_snapshot_digests": {"seed_sha256": review["seed_sha256"], "current_draft_sha256": review["draft_sha256"]},
+        "current_draft_view_exactly_equals_independently_frozen_view": True,
+        "direction_and_permutation_evidence": {
+            "permutation_diff_binding": binding(author / "option-position-json-diff.json"),
+            "direction_diff_binding": binding(author / "direction-repair-diff.json"),
+            "receipt_binding": binding(author / "option-position-permutation-receipt.json"),
+            "reverse_permutation_view_equals_independently_frozen_direction_repaired_view": True,
+            "reverse_direction_only_view_equals_original_rejected_view": True,
+            "current_stem_894_equals_frozen_repaired_increasing_stem": True,
+            "author_historical_drafts_or_serializer_not_opened": True,
+            "receipt_claims_about_unopened_author_sources_or_serializer_not_independently_verified": True,
+        },
+        "counts": dict(counts),
+        "question_comparisons": comparisons,
+        "coverage_comparisons": coverage_checks,
+        "current_intents_and_source_solutions_outcome": "pass",
+        "complete_current_key_outcome": "pass",
+        "all_current_rationale_truths_outcome": "pass",
+        "complete_current_key_and_all_rationales_outcome": "revise",
+        "local_production_loss_declarations_outcome": "pass",
+        "package_position_pattern_outcome": "pass",
+        "882_explicit_deferment_record_outcome": "pass",
+        "882_original_source_convention_outcome": "blocked",
+        "source_layer_figure_observations_outcome": "pass",
+        "figure_observations_reused": source["figure_checks"],
+        "source_layer_actual_image_observations": image_observations,
+        "new_figure_reviews": [],
+        "actual_two_layer_display_or_modern_figure_approval_claimed": False,
+        "whole_package_relationships": frozen["whole_package_relationships"],
+        "historical_notices": evidence["special_scope_checks"]["historical_notices"],
+        "findings": evidence["procedure_findings"] + [
+            {
+                "source_number": "882",
+                "verdict": "blocked",
+                "evidence": evidence["special_scope_checks"]["blocked882"],
+            }
+        ],
+        "nonblocked_checks_all_pass": False,
+        "required_narrow_repairs": evidence["procedure_findings"],
+        "standard_review_binding": {"path": str(own / "currentreview.json")},
+        "recording_script_binding": binding(Path(__file__).resolve()),
+        "original_source_and_view_review_records_preserved": True,
+        "author_or_durable_files_modified": False,
+        "standard_snapshot_hash_computed_without_validator": True,
+        "structural_or_canonical_validator_run": False,
+        "render_browser_db_model_services_or_promotion_run": False,
+        "prohibited_inputs_read": {"author_source_solutions": False, "author_serializer_or_scripts": False, "answerdata": False},
+        "status": "blocked",
+        "outcome": "blocked",
+        "handoff": "All 44 complete keys and 134 option truth labels match the independent freeze. 133 derivations and 87/88 actual wrong procedures pass; n47-870b C requires an internal rationale-only repair because reciprocal(7/6)=6/7, not27/14. Intents/source solutions, declared losses, position repair, source fig151 observations and honest882 deferment documentation pass. 882 remains source-convention blocked; no overall approval.",
+    }
+    return own, draft, review, report
+
+
+pending = [n46(), n47()]
+for own, _, _, _ in pending:
+    assert not (own / "currentreview.json").exists()
+    assert not (own / "draft-input-preserved-current-internal-comparison.json").exists()
+    if own.name == "reviewer-5m-n47":
+        assert not (own / "final-comparison-result.json").exists()
+for path, expected in INPUTS.items():
+    assert binding(Path(path))["sha256"] == expected, f"Input changed during comparison: {path}"
+for own, _, review, report in pending:
+    author_draft = ROOT / own.name.replace("reviewer-", "") / "draft.json"
+    raw_draft = author_draft.read_bytes()
+    with (own / "draft-input-preserved-current-internal-comparison.json").open("xb") as output:
+        output.write(raw_draft)
+    with (own / "currentreview.json").open("x", encoding="utf-8") as output:
+        json.dump(review, output, ensure_ascii=True, indent=2)
+        output.write("\n")
+    report["standard_review_binding"] = binding(own / "currentreview.json")
+    if "canonical_review_binding" in report:
+        report["canonical_review_binding"] = report["standard_review_binding"]
+    report["current_stage_input_bindings"] = [
+        {"path": path, "sha256": sha} for path, sha in INPUTS.items()
+        if f"/{own.name}/" in path or f"/{own.name.replace('reviewer-', '')}/" in path
+    ]
+    mode = "w" if own.name == "reviewer-5m-n46" else "x"
+    with (own / "final-comparison-result.json").open(mode, encoding="utf-8") as output:
+        json.dump(report, output, ensure_ascii=True, indent=2)
+        output.write("\n")
+    print(
+        json.dumps(
+            {
+                "lesson": report["lesson"],
+                "current_review": binding(own / "currentreview.json"),
+                "final_comparison": binding(own / "final-comparison-result.json"),
+                "digests": report["standard_snapshot_digests"],
+                "counts": report["counts"],
+                "outcome": report["outcome"],
+                "nonblocked_checks_all_pass": report["nonblocked_checks_all_pass"],
+                "required_narrow_repairs": report["required_narrow_repairs"],
+            }
+        )
+    )
+for path, expected in INPUTS.items():
+    assert binding(Path(path))["sha256"] == expected, f"Input changed after recording: {path}"

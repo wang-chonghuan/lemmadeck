@@ -1,0 +1,176 @@
+"""Review the authorized one-stem pure-view repair without reading the draft."""
+
+import copy
+import hashlib
+import json
+from pathlib import Path
+
+
+OWN = Path(__file__).resolve().parent
+AUTHOR = OWN.parent / "5m-n47"
+
+
+def binding(path):
+    return {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+
+
+def save(path, value):
+    with path.open("x", encoding="utf-8") as handle:
+        json.dump(value, handle, ensure_ascii=True, indent=2)
+        handle.write("\n")
+
+
+def main():
+    original_checks_path = OWN / "view-checks.json"
+    original_view_path = OWN / "view-input-preserved.json"
+    new_view_path = AUTHOR / "view.json"
+    diff_path = AUTHOR / "direction-repair-diff.json"
+    position_path = OWN / "position-pattern-assessment-before-internals.json"
+    original_hash = binding(original_checks_path)["sha256"]
+    original = json.loads(original_checks_path.read_text())
+    old_view = json.loads(original_view_path.read_text())
+    view = json.loads(new_view_path.read_text())
+    diff = json.loads(diff_path.read_text())
+    positions = json.loads(position_path.read_text())
+    old_questions = {q["id"]: q for q in old_view["questions"]}
+    assert [q["id"] for q in old_view["questions"]] == [q["id"] for q in view["questions"]]
+    differences = []
+    for index, q in enumerate(view["questions"]):
+        old_q = old_questions[q["id"]]
+        for field in q:
+            if q[field] != old_q[field]:
+                differences.append({
+                    "question_id": q["id"], "index": index, "field": field,
+                    "before": old_q[field], "after": q[field],
+                })
+    assert len(differences) == 1
+    change = differences[0]
+    assert (change["question_id"], change["index"], change["field"]) == ("n47-894", 41, "stem")
+    assert diff["changed_field_count"] == 1
+    assert diff["changes"] == [{
+        "pointer": "/questions/41/view/stem",
+        "before": change["before"], "after": change["after"],
+    }]
+    assert binding(new_view_path)["sha256"] == diff["view_byte_sha256"]
+    assert set(view) == set(old_view) == {"questions"}
+    assert all(set(q) == set(old_questions[q["id"]]) for q in view["questions"])
+    new_preserved_path = OWN / "view-input-preserved-revised.json"
+    with new_preserved_path.open("xb") as handle:
+        handle.write(new_view_path.read_bytes())
+    assert binding(new_preserved_path)["sha256"] == binding(new_view_path)["sha256"]
+
+    revised = copy.deepcopy(original)
+    revised["view_binding"] = binding(new_view_path)
+    revised["view_preserved_binding"] = binding(new_preserved_path)
+    revised["initial_fidelity_stage_binding"] = revised.pop("fidelity_stage_binding")
+    revised["original_frozen_view_checks_binding"] = binding(original_checks_path)
+    revised["recording_script_binding"] = binding(Path(__file__).resolve())
+    revised["authorized_direction_repair_diff_binding"] = binding(diff_path)
+    revised["scope"] = (
+        "Revised pure view only: independently compare its one changed stem to the frozen source; "
+        "reuse unchanged source observations and visible option judgments. No n47 draft, key or internals read."
+    )
+    fidelity_evidence = (
+        "Current stem explicitly says the second is larger than the first by 0.7 and the third "
+        "larger than the second by 0.7. This restores the source direction and fixes the ordered "
+        "sequence uniquely: x,x+0.7,x+1.4 have mean x+0.7=8.9, so x=8.2."
+    )
+    for q in revised["question_reviews"]:
+        if q["question_id"] == "n47-894":
+            q["stem"] = change["after"]
+            q["task_fidelity"] = {"verdict": "pass", "evidence": fidelity_evidence}
+            q["mathematics"]["independent_solution"] = (
+                "With explicit increases, write x,x+0.7,x+1.4. Mean x+0.7=8.9 gives "
+                "(8.2,8.9,9.6) uniquely in source order. A is true; B has mean 9.6; "
+                "C has successive increases 1.4. The former descending (9.6,8.9,8.2) "
+                "counterexample is now excluded. Complete displayed true set remains A."
+            )
+            q["mathematics"]["rechecked_after_direction_repair"] = True
+            assert q["mathematics"]["correct"] == ["A"]
+            for option in q["mathematics"]["option_checks"]:
+                option["evidence"] = {
+                    "A": "The sequence 8.2,8.9,9.6 has the explicitly required two positive increases 0.7 and mean 26.7/3=8.9.",
+                    "B": "The sequence 8.9,9.6,10.3 increases by 0.7 twice, but its mean is 28.8/3=9.6, not 8.9.",
+                    "C": "The sequence 7.5,8.9,10.3 has mean 8.9, but each positive increase is 1.4, not 0.7.",
+                }[option["option_id"]]
+        if q["mode"] == "single":
+            q["answer_leakage"] = {
+                "verdict": "revise",
+                "evidence": (
+                    "No local stem discloses the answer, but the supplied ordered package has "
+                    "33 initial single questions alternating A/B and 40/41 alternating transitions "
+                    "overall, established before author internals. This item's independent truth "
+                    "is unchanged; the package position shortcut is a separate fidelity risk."
+                ),
+            }
+    for row in revised["source_coverage"]:
+        if row["source_number"] == "894":
+            row["verdict"] = "pass"
+            row["evidence"] = fidelity_evidence
+    for notice in revised["notices_and_findings"]:
+        if notice["kind"] == "direction_condition_removed":
+            notice["kind"] = "resolved_direction_condition_history"
+            notice["initial_verdict"] = "revise"
+            notice["verdict"] = "pass"
+            notice["evidence"] += " Current explicit increasing wording resolves this finding; the rejected original record is preserved unchanged."
+    revised["notices_and_findings"].append({
+        "kind": "predictable_package_position_sequence", "verdict": "revise",
+        "evidence": positions["evidence"], "binding": binding(position_path),
+    })
+    revised["direction_repair_review"] = {
+        "independently_observed_view_changes": differences,
+        "verdict": "pass",
+        "displayed_complete_true_set_before": ["A"],
+        "displayed_complete_true_set_after": ["A"],
+        "complete_claim_change": "The explicit increasing condition excludes descending sequences that previously met the stem. It does not change the truth of any displayed option.",
+        "unchanged_option_checks_reused": 131,
+        "changed_stem_options_independently_rechecked": 3,
+        "total_visible_option_checks": 134,
+        "all_question_ids_modes_option_texts_order_figures_unchanged": True,
+        "n47_draft_hashes_in_supplied_diff_not_independently_read_or_verified": True,
+        "structural_report_not_read": True,
+    }
+    revised["represented_task_fidelity_outcome"] = "pass"
+    revised["answer_leakage_outcome"] = "revise"
+    revised["position_distribution_notice"] = {
+        **positions, "binding": binding(position_path),
+        "unchanged_after_direction_repair": True,
+    }
+    revised["whole_package_relationships"] = {
+        "verdict": "revise",
+        "original_source_task_relationship_evidence": original["whole_package_relationships"]["evidence"],
+        "evidence": "Changing 894's stem does not alter any option position, correct set, source split/merge or repeated calculation. The genuine A/B sequence risk therefore remains unresolved.",
+    }
+    revised["coverage_note"] = (
+        "All determinate source tasks are represented and 894's direction now matches. "
+        "882 remains absent and source-convention-blocked; no n47 internal deferment comparison is authorized."
+    )
+    revised["check_order"] = [
+        "Original source and all 134 pure-view option judgments frozen independently",
+        "Position-sequence assessment saved before any author draft was opened",
+        "Compare revised n47 pure view and authorized direction diff only",
+        "Recheck one-stem fidelity and its three option truths; reuse other 131 option checks",
+        "Stop before n47 author internals",
+    ]
+    revised["handoff"] = (
+        "894 direction repair passes; all 134 visible option truths remain frozen. "
+        "Package position pattern requires revision and 882 remains convention/coverage blocked. "
+        "Ready for n47 internals only after separate authorization."
+    )
+    assert len(revised["question_reviews"]) == 44
+    assert sum(len(q["mathematics"]["option_checks"]) for q in revised["question_reviews"]) == 134
+    assert revised["complete_true_sets"] == original["complete_true_sets"]
+    assert binding(original_checks_path)["sha256"] == original_hash
+    out = OWN / "view-checks-revised.json"
+    save(out, revised)
+    print(json.dumps({
+        "saved": str(out), "sha256": binding(out)["sha256"],
+        "changed_stem_fidelity": "pass", "options": 134,
+        "option_true_sets_unchanged": True,
+        "package_position_pattern": "revise", "outcome": "blocked",
+        "n47_internals_read": False,
+    }))
+
+
+if __name__ == "__main__":
+    main()

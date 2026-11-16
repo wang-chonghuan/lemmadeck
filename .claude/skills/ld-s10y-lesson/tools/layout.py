@@ -158,7 +158,8 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
             continue
         rows, columns = bounds
         if (
-            rows.stop - rows.start > 1.8 * line_h
+            rows.stop - rows.start < 0.6 * line_h
+            or rows.stop - rows.start > 1.8 * line_h
             and columns.stop - columns.start < 0.6 * line_h
         ):
             region = band[bounds]
@@ -202,6 +203,8 @@ def _fraction_across_split(
         return False
     # Fraction columns may be tall; unrelated shorter wrapped rows must survive.
     for rows, columns in glyphs:
+        if rows.stop - rows.start < 0.6 * glyph_h:
+            continue
         centre_x = (columns.start + columns.stop) / 2
         centre_y = (rows.start + rows.stop) / 2
         if not any(

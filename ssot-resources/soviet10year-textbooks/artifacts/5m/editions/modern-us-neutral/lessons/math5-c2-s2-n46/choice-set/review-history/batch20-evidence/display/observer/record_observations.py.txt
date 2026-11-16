@@ -1,0 +1,106 @@
+import hashlib
+import json
+from pathlib import Path
+
+
+OWN = Path(__file__).resolve().parent
+REPO = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+primary_index = json.loads((OWN / "primary-montage-index.json").read_bytes())
+supplement_index = json.loads((OWN / "supplement-montage-index.json").read_bytes())
+capture = json.loads((OWN / "supplement-capture-manifest.json").read_bytes())
+montages = primary_index["montages"] + supplement_index["montages"]
+primary_evidence = {
+    ("text", "first"): "Entire five-block prose visible: reciprocal8/15 and15/8, multiplication equals1,7 and1/7 example,a/b andb/a product, and final parenthesized x multiplication chain ending=x. Heading and bottom exercise link complete; fractions and parentheses legible without overlap.",
+    ("text", "last"): "Same complete page as first endpoint at this viewport, verified byte-identical; all five blocks and final=x/link visible. This is not an additional unique page or display combination.",
+    ("exercises", "first"): "852 all eight listed fractions/signs,853 all six pairs and854 both parenthesized products visible. 855 begins at viewport bottom; its complete six-equation region is supplied separately. No blank/partial paint; bottom viewport cut is normal scrolling.",
+    ("exercises", "last"): "859 both seven-number reciprocal lists,860 all six signed products and861 scrap-metal prose visible through the bottom return link. Desktop also shows complete858; mobile starts with its tail, supplemented by the whole858 region.",
+    ("choices", "first"): "Q1/Q2 stems and all A-C fraction tuples visible. Desktop includes entireQ3 A-F; mobile ends afterQ3 C and its missing D-F are supplied in wholeQ3 supplement. Native fraction bars/negative signs are distinct and option labels do not collide.",
+    ("choices", "last"): "Q13-Q15 complete stems and all A-C alternatives visible, including third negative-parenthesized product ending(-21/41), final1/2 terms and both percentage values. Desktop starts withQ12 alternatives; fullQ12 stem/candidates supplied separately. No blank or corrupt paint.",
+}
+region_evidence = {
+    855: "All six equation lines are painted:3/4 x=1,23/20 y=1,0.8a=1,0.25b=1,8/19 x=8/19,12/5 y=12/5. Numerators/denominators and final line complete.",
+    856: "Both original universal true/proper versus improper fraction statements complete and legible. Display only: no convention or semantic resolution is claimed.",
+    857: "All six multiplication expressions complete through4 2/3 multiplied by3 1/2. Negative(-5/33) parentheses, mixed-number fractions and final punctuation visible.",
+    858: "Both train-car transfer and notebook-stack applications fully painted, including1.5,2.5,5 transferred, final2/3 relationships and both ending questions. Mobile wraps without lost tail or overlapping lines.",
+    3: "Entire multiple-choice stem and A-F visible, includingD2.5/0.4,E0.2/5,F0/1. Mixed-number fractions complete; F is painted at bottom.",
+    4: "Both parenthesized product expressions and all A-C two-result alternatives complete; final119/15,3.4 and1 endings visible.",
+    5: "Four-equation stem and all A-C full x,y,a,b result rows complete. Mobile wraps the stem but retains0.25b=1 and final b values; fraction bars/signs unobstructed.",
+    6: "Both equations, entire ending question and all A-C x/y pairs complete. Mobile stem wraps after the last Chinese phrase; all denominators361,25,8,12 and final y=1 remain visible.",
+    7: "Three fraction products and all A-C three-result tuples complete, including final68/7,24/25,200/867. No truncated denominator.",
+    8: "All three signed/mixed-number products, negative parentheses and all A-C result triples visible through final49/3 or4. No crop of final mixed-number stem.",
+    9: "Entire train-car stem, all A-C equation/model-and-two-count responses painted. Mobile wraps counts onto following lines without overlap and each ending count45/15/30 is visible.",
+    10: "Entire notebook transfer stem and A-C model/count alternatives painted. Mobile wraps ending counts30/40 onto next lines; final punctuation and z variables visible.",
+    11: "Seven-number stem and all A-C seven-entry fraction rows fully observed. Mobile B runs close to the right edge but its last negative8/41 numerator, fraction bar and denominator41 are visible; no hidden horizontal region was found during capture selection.",
+    12: "Seven-number stem including mixed11 11/12 and all A-C seven-result rows fully painted; final5/6,1/12,5/6 terms complete. Mobile formula rows fit and retain denominators.",
+}
+observations = []
+for montage in montages:
+    path = Path(montage["path"])
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == montage["sha256"]
+    for member in montage["members"]:
+        source = Path(member["path"])
+        assert hashlib.sha256(source.read_bytes()).hexdigest() == member["sha256"]
+        assert member["native_pixel_copy_verified"]
+        if "kind" in member:
+            evidence = region_evidence[member["item_number"]]
+            category = "supplement"
+            surface = member["surface"]
+            width = member["viewport"]["width"]
+        else:
+            parts = source.stem.split("-")
+            surface, width, endpoint = parts[-3], int(parts[-2]), parts[-1]
+            evidence = primary_evidence[(surface, endpoint)]
+            category = "primary"
+        observations.append({
+            "filename": source.name, "path": str(source), "sha256": member["sha256"],
+            "category": category, "surface": surface, "viewport_width": width,
+            "actually_opened": True, "opened_via_native_montage": str(path),
+            "montage_sha256": montage["sha256"], "montage_box": member["montage_box"],
+            "rgb_pixel_sha256": member["rgb_pixel_sha256"],
+            "native_pixel_copy_verified": True,
+            "status": "pass", "evidence": evidence,
+            "observer": "independent_agent actual pixel observer; view_image native montage member inspection",
+        })
+assert len(observations) == len({row["path"] for row in observations}) == 38
+record = {
+    "lesson": "math5-c2-s2-n46", "status": "pass",
+    "scope": "Actual display only, not semantic/source-convention or core approval.",
+    "semantic_outcome": "blocked", "unresolved_source_number": "856",
+    "observations": observations,
+    "primary_png_count": 12, "supplemental_png_count": 26,
+    "actual_png_count": 38, "unique_observed_file_hash_count": len({row["sha256"] for row in observations}),
+    "derived_montage_count": 7, "view_image_montage_open_count": 7,
+    "montages_not_counted_as_additional_source_pngs": True,
+    "unique_surface_viewport_combinations": 6,
+    "supplement_unique_surface_viewport_combinations_added": 0,
+    "coverage": {
+        "text_blocks_complete_each_viewport": 5,
+        "original_exercises_complete_each_viewport": list(range(852, 862)),
+        "choice_questions_complete_each_viewport": 15,
+        "choice_options_complete_each_viewport": 48,
+        "source_figure_count": 0, "table_count": 0,
+        "figure_or_table_approval_not_applicable": True,
+        "horizontal_endpoint_supplements": 0,
+        "evidence": "Primary endpoints plus native missing-region supplements jointly cover the entire prose,852-861 and15 questions/48 options at1440 and390. Genuine horizontal overflow scan including inline sr-nb found no required right-end region; all visible formula suffixes were actually inspected.",
+    },
+    "rejected_original_captures": [],
+    "natural_viewport_edge_cuts_not_misreported_as_partial_paint": True,
+    "unreviewed_regions": [], "required_narrow_captures": [],
+    "montages": [{"path": row["path"], "sha256": row["sha256"], "resized": False, "member_count": len(row["members"])} for row in montages],
+    "initial_manifest_binding": {"path": primary_index["manifest"], "sha256": primary_index["manifest_sha256"]},
+    "report_binding": {
+        "path": str(REPO / ".intentfold/tickets/STEMROBIN-182/tmp/offline-evidence/5m/math5-c2-s2-n46-batch20-report.json"),
+        "sha256": hashlib.sha256((REPO / ".intentfold/tickets/STEMROBIN-182/tmp/offline-evidence/5m/math5-c2-s2-n46-batch20-report.json").read_bytes()).hexdigest(),
+    },
+    "supplement_manifest_binding": {"path": str(OWN / "supplement-capture-manifest.json"), "sha256": hashlib.sha256((OWN / "supplement-capture-manifest.json").read_bytes()).hexdigest()},
+    "supplement_browser_closed": capture["browser_closed"],
+    "rendered_html_hashes_unchanged": capture["html_byte_hashes_unchanged"],
+    "PWDEBUG_cleared": capture["PWDEBUG_cleared"],
+    "PLAYWRIGHT_HTML_OPEN": capture["PLAYWRIGHT_HTML_OPEN"],
+    "canonical_structure_render_semantic_rerun": False,
+    "source_content_renderer_app_db_or_services_modified": False,
+}
+with (OWN / "observations.json").open("x", encoding="utf-8") as output:
+    json.dump(record, output, ensure_ascii=True, indent=2)
+    output.write("\n")
+print(json.dumps({"saved": str(OWN / "observations.json"), "status": record["status"], "primary": 12, "supplements": 26, "actual_png_count": 38, "unique_combinations": 6}))

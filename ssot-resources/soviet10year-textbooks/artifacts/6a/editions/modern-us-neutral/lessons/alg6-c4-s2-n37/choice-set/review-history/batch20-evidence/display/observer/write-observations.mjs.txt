@@ -1,0 +1,207 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { fileURLToPath } from 'node:url'
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../../..')
+const ticket = path.join(root, '.intentfold/tickets/STEMROBIN-182/tmp')
+const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const read = (file) => JSON.parse(fs.readFileSync(file, 'utf8'))
+const common = {
+  reviewer_kind: 'independent_agent',
+  stage: 'actual-pixel-only',
+  status: 'pass',
+  model: null,
+  usage: null,
+  primary_capture_executions_by_this_reviewer: 0,
+  render_executions_by_this_reviewer: 0,
+  canonical_or_structural_executions_by_this_reviewer: 0,
+  original_surface_viewport_combinations: 6,
+  extra_surface_viewport_combinations: 0,
+  viewport_combinations: ['text-1440', 'text-390', 'exercises-1440',
+    'exercises-390', 'choices-1440', 'choices-390'],
+  viewports: [{ width: 1440, height: 960 }, { width: 390, height: 844 }],
+  scope: 'Actual existing PNG pixels, plus narrowly captured missing regions of the same unchanged HTML. No semantic re-review.',
+  method: 'All listed primary and supplemental images actually viewed through native RGB montages. Montage scripts assert source-pixel identity and never resize. One large supplemental montage was reopened with detail=original after provider downsampling.',
+  original_and_revised_source_view_math_records_frozen: true,
+  source_blockers_resolved_by_pixels: false,
+  remaining_pixel_coverage_holes: [],
+  durable_core_source_changes: false,
+  services_DB_dependencies_user_UI_used: false,
+}
+
+const notes = {
+  37: {
+    source_count: 4,
+    question_count: 4,
+    option_count: 15,
+    option_coverage: [
+      { question: 1, source: 620, options: ['A', 'B', 'C', 'D'],
+        rows_per_option: 12,
+        observation: 'All a-l labels, fraction numerators/denominators and allowed-variable columns were read. Mobile left captures identify A/B/C and every row; existing four table-end images expose complete domain text and final l rows. Desktop supplement exposes A/B/C and original first exposes D. Negative signs, zero exclusions, arbitrary-variable qualifiers and final a,x,y exclusions are visible, without merged columns.' },
+      { question: 2, source: 621, options: ['A', 'B', 'C'],
+        observation: 'Same-HTML desktop/mobile supplement shows both quotient equations and all three paired candidates, including each negative b expression and terminal fraction denominator. No option hidden below the crop.' },
+      { question: 3, source: 622, options: ['A', 'B', 'C', 'D'],
+        observation: 'Original desktop last and mobile supplement show A(0,6), B(-4,0), question text and all four y=... candidates. Slope signs/fractions and +6/-6 are individually legible.' },
+      { question: 4, source: 623, options: ['A', 'B', 'C', 'D'],
+        observation: 'Original last desktop/mobile screenshots show pump statement, numeric inputs, all four candidates and final D unit m^3/h. Terminal option not inferred from DOM.' },
+    ],
+    surfaces: [
+      { surface: 'text', observation: 'Desktop/mobile first-last captures show title, complete prose and final a/(50b^3) example with exercise navigation. Duplicate first/last bytes are legitimate because the lesson fits. No cut superscripts, overlapping lines or missing terminal content.' },
+      { surface: 'exercises', observation: 'Desktop captures include620-623 and page title. Mobile first/last jointly show all twelve620 items, both621 equations,622 axes intercepts and623 pump problem; supplemental title fills only the omitted title. Last written task and navigation are actually visible.' },
+      { surface: 'choices', observation: 'All15 options actually exposed, with48 table rows from620. Horizontal scrolling preserves native math size; supplemental left identity and existing right domain spans are complementary. Non-table options and terminal D are complete.' },
+    ],
+    rejected: [
+      { basename: 'alg6-c4-s2-n37-choices-1440-first.png',
+        rejection: 'Not a first endpoint: starts inside C lower rows and then D. Preserved as useful C-bottom/D-table evidence; not credited for header/stem/A/B/C-top.' },
+      { basename: 'alg6-c4-s2-n37-choices-390-first.png',
+        rejection: 'Not a first endpoint: begins in lower C table and D rather than title/question1. Preserved as local table evidence.' },
+    ],
+    figure_observations: [],
+    frozen_semantic_outcome: 'pass',
+    notices: ['Physical display observation adds no source tasks or semantic validation.'],
+  },
+  38: {
+    source_count: 6,
+    question_count: 8,
+    option_count: 30,
+    option_coverage: [
+      { question: 1, source: 624, options: ['A', 'B', 'C', 'D'],
+        rows_per_option: 3,
+        observation: 'Original first captures and mobile D supplement expose every a-c row, option label, odd-power negative sign and full fraction. Supplemental mobile header/stem restores real-variable/meaningful-domain qualification.' },
+      { question: 2, source: 624, options: ['A', 'B', 'C', 'D'],
+        rows_per_option: 3,
+        observation: 'Both viewports supplemented only the missing middle question: all d-f rows for four candidates, minus signs and powers q^3/q^4, x^16/x^8, y^8/x^20 are actually visible. Native vertical tiles jointly retain final D row.' },
+      { question: 3, source: 624, options: ['A', 'B', 'C', 'D'],
+        rows_per_option: 3,
+        observation: 'Both viewports show g-i source expressions, explicit b!=0 restriction, all twelve candidate rows and terminal i fractions. 0.2, b^0 and high superscripts remain distinguishable. This display qualification does not settle the unknown original b=0/0^0 convention.' },
+      { question: 4, source: 625, options: ['A', 'B', 'C', 'D'],
+        rows_per_option: 4,
+        observation: 'Both viewports expose original four ordered expressions and all sixteen candidate rows; native tiles preserve C lower and full D rows, including reciprocal and large-exponent candidates.' },
+      { question: 5, source: 626, options: ['A', 'B', 'C'],
+        rows_per_option: 6,
+        observation: 'Both viewports show all six original expressions and complete Q/R class qualification. Desktop has complete three-column A/B/C tables. Mobile A/B fully fit; C left supplement plus the existing table19-end image cover all Q/R entries with horizontal overlap. c real cube and no real square, f real square OR cube, both Q impossibility statements, radical indices and final row are actually read. Table has19 total candidates across this lesson,70 total candidate rows. Original unspecified class remains a source blocker.' },
+      { question: 6, source: 627, options: ['A', 'B', 'C'],
+        observation: 'Both viewports supplement the missing numerical-expression pair and all three ordered result pairs. Bases, exponent values, denominators and the final2187/2 are fully visible.' },
+      { question: 7, source: 628, options: ['A', 'B', 'C', 'D'],
+        observation: 'Desktop original last gives four tuples; supplement gives missing a/b beginning and complete c/d. Mobile supplement gives full four comparisons and A/B/C; original last gives D. Unary negatives are distinguishable from parenthesized negative bases, and all four relation symbols in each tuple are visible.' },
+      { question: 8, source: 629, options: ['A', 'B', 'C', 'D'],
+        observation: 'Original endpoint images show the rectangle-count statement and all four numeric candidates on both viewports. Actual fig108 left/middle/right spans cover complete figure, not a guessed count based on DOM.' },
+    ],
+    surfaces: [
+      { surface: 'text', observation: 'Both viewports show title, quotient-power rule, parenthesized bases and terminal navigation. All existing tiny SVG crops were opened: they are KaTeX braces/root glyphs, not additional source diagrams. Ten-factor underbrace labels and formula right ends are intact.' },
+      { surface: 'exercises', observation: 'Desktop first/last expose624-629. Original mobile first has genuinely blank624/625 bodies despite headings; preserved as partial-paint failure. Narrow same-HTML supplements show all nine624 expressions, all four625 expressions and all six626 expressions. Original mobile last already fully shows627-629, terminal control and source figure end; those tasks were not recaptured.' },
+      { surface: 'choices', observation: 'All30 options actually viewed,19 candidate tables/70 rows complete across native tiles and horizontal spans. Missing q2-q6 middle content supplemented; q7 existing complete options reused. No line/column text overlap that changes mathematical reading. Existing right-end C Q/R table reused without recapture.' },
+    ],
+    rejected: [
+      { basename: 'alg6-c4-s2-n38-exercises-390-first.png',
+        rejection: 'Actual partial paint: headings624/625 present with blank math bodies. Cannot certify those sources from this PNG; preserved and supplemented sameHTML without rerender.' },
+      { basename: 'alg6-c4-s2-n38-choices-390-first.png',
+        rejection: 'Not complete first endpoint: header/qualified beginning absent and D last two rows outside viewport. Useful A/B/C evidence retained; only omitted header/D supplemented.' },
+      { basename: 'alg6-c4-s2-n38-choices-1440-first.png',
+        rejection: 'Starts at question1 rather than page title. Full q1 is useful; only missing title supplemented.' },
+      { basename: 'alg6-c4-s2-n38-choices-390-figure-4.png',
+        rejection: 'Full-width SVG capture paints left visible portion and white remainder, so not credited as complete figure. Existing right end and native middle supplement supply actual coverage.' },
+      { basename: 'alg6-c4-s2-n38-exercises-390-figure-1.png',
+        rejection: 'Full-width SVG capture does not paint the hidden horizontal portion. Retained as left-span evidence only, combined with actual right-end and middle captures.' },
+    ],
+    figure_observations: [
+      { figure: 'fig108',
+        observation: 'Desktop choices figure4 and exercises figure1 show five full vertical boundaries (two outer plus three inner), joined by top/bottom edges, producing four adjacent rectangular cells. Far right outer boundary and bottom horizontal line are intact. Mobile actual left/right evidence and native middle supplements overlap and expose all dividers, including the central one. No missing terminal segment, labels or cropped bottom.',
+        mobile_choices_scroll: { clientWidth: 358, maxScrollLeft: 282, supplementedMiddleScrollLeft: 141 },
+        mathematical_truth_reused_not_recomputed: true },
+    ],
+    frozen_semantic_outcome: 'blocked',
+    notices: [
+      'Source626 unspecified coefficient/base-expression grammar remains the sole essential source blocker; visible Q/R conditional completeness does not select an original grammar.',
+      'Source624h b=0 and 0^0 unknown convention notice is retained; visible b!=0 scope is legible but not an original convention recovery.',
+    ],
+  },
+}
+
+for (const number of [37, 38]) {
+  const directory = path.join(ticket, `reviewer-6a-n${number}-actual-display`)
+  const primaryPath = path.join(directory, 'primary-montage-inventory.json')
+  const supplementPath = path.join(directory, 'supplement-montage-inventory.json')
+  const logPath = path.join(directory, 'supplemental-capture-log.json')
+  const primary = read(primaryPath)
+  const supplement = read(supplementPath)
+  const log = read(logPath)
+  if (!log.browser_closed || !log.same_HTML_and_primary_bytes_unchanged
+    || log.exit_code !== 0 || log.page_errors.length) {
+    throw new Error('Capture integrity or browser closure failure')
+  }
+  const manifest = read(primary.manifest_path)
+  const bind = (file) => ({ path: file, sha256: sha(file) })
+  const actualPrimary = primary.primary_files.map((entry) => {
+    if (sha(entry.path) !== entry.sha256) throw new Error('Primary bytes changed')
+    return { ...entry, actually_opened_via_native_montage: true }
+  })
+  const actualSupplements = supplement.supplement_files.map((entry) => {
+    if (sha(entry.path) !== entry.sha256) throw new Error('Supplement bytes changed')
+    return { ...entry, actually_opened_via_native_montage: true }
+  })
+  const montages = [...primary.montages, ...supplement.montages].map((entry) => {
+    if (sha(entry.path) !== entry.sha256) throw new Error('Montage bytes changed')
+    return { ...entry, actually_opened: true }
+  })
+  const result = {
+    schema: 's10y-actual-display-observations-v1',
+    ...common,
+    lesson_id: `alg6-c4-s2-n${number}`,
+    recorded_at: new Date().toISOString(),
+    ...notes[number],
+    counts: {
+      original_primary_PNGs: actualPrimary.length,
+      supplements: actualSupplements.length,
+      primary_montages: primary.montage_count,
+      supplement_montages: supplement.montage_count,
+      actually_opened_unique_native_montages: montages.length,
+      combinations: 6,
+      extra_combinations: 0,
+    },
+    capture_manifest: bind(primary.manifest_path),
+    unchanged_existing_HTML: manifest.rendered.map((entry) => {
+      const file = path.join(root, entry.path)
+      if (sha(file) !== entry.sha256) throw new Error('HTML changed')
+      return bind(file)
+    }),
+    primary_inventory: bind(primaryPath),
+    supplement_inventory: bind(supplementPath),
+    frozen_semantic_evidence: ['source-solutions.json', 'view-checks-revised.json',
+      'review.json', 'final-comparison-result.json'].map((filename) =>
+      bind(path.join(ticket, `reviewer-6a-n${number}`, filename))),
+    actually_opened_primary_files: actualPrimary,
+    actually_opened_supplement_files: actualSupplements,
+    actually_opened_montages: montages,
+    rejected_originals: notes[number].rejected.map((item) => ({
+      ...item,
+      ...bind(path.join(ticket, 'offline-evidence/6a', item.basename)),
+      original_bytes_preserved: true,
+    })),
+    supplemental_execution: {
+      ...bind(logPath),
+      command: log.command,
+      command_display: `node ${path.relative(root, path.join(ticket,
+        'reviewer-6a-n37-actual-display/capture-missing.mjs'))}`,
+      execution_count: 1,
+      same_HTML_and_primary_bytes_unchanged: true,
+      explicit_launch: log.launchOptions,
+      executable: log.executable,
+      PWDEBUG_cleared: log.PWDEBUG_cleared,
+      PLAYWRIGHT_HTML_OPEN: log.PLAYWRIGHT_HTML_OPEN,
+      isolated_contexts: true,
+      external_network_aborted: true,
+      all_contexts_closed_in_finally: true,
+      browser_closed_in_finally: true,
+      page_errors: [],
+      exit_code: 0,
+      no_in_flight_browser_or_command: true,
+    },
+  }
+  delete result.rejected
+  const destination = path.join(directory, 'observations.json')
+  fs.writeFileSync(destination, JSON.stringify(result, null, 2) + '\n', { flag: 'wx' })
+  console.log(JSON.stringify({ number, status: result.status,
+    counts: result.counts, ...bind(destination) }))
+}

@@ -1,0 +1,259 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const scratch = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp');
+const root = path.join(scratch, 'batch20-source-7a');
+const work = path.join(scratch, 'batch20-work-7a');
+const skill = path.join(repo, '.claude/skills/ld-s10y-lesson');
+const toc = path.join(repo, 'ssot-resources/soviet10year-textbooks/toc/7a/zh.json');
+const freezeFile = path.join(work, 'raw-assembly-inputs.json');
+const old = path.join(work, 'commands.json');
+const rejectedHash = '09b68d873b3b7963d940a48aecfde7a2c5cafbcd82dd2a0365dd977a754f08fd';
+const layoutHash = '0dcb2118a9adcedc72c7c3144cd68daa3e29badba246846472bb36676253f96d';
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const record = file => ({ path: file, sha256: sha(file), bytes: fs.statSync(file).size });
+const write = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+const assert = (ok, message) => { if (!ok) throw Error(message); };
+const walk = dir => fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+  const file = path.join(dir, entry.name);
+  assert(!entry.isSymbolicLink(), `Unexpected symlink: ${file}`);
+  return entry.isDirectory() ? walk(file) : [file];
+}).sort();
+const allowedDerived = file => file === path.join(root, '7a/book.json')
+  || /^7a\/lessons\/alg7-c1-s2-n5\/(lesson\.md|lesson\.json|exercises\.json)$/.test(path.relative(root, file));
+const frozenOriginal = read(path.join(root, 'input-hashes-before.json'));
+const stages = ['assemble-1', 'vectorize-34', 'assemble-2'];
+const resultFile = stage => path.join(work, `raw-${stage}.json`);
+
+function preservation() {
+  const inputs = frozenOriginal.inputs.map(input => {
+    const file = path.resolve(repo, input.path);
+    const current = sha(file);
+    const intentional = input.path === '.claude/skills/ld-s10y-lesson/tools/layout.py' && current === layoutHash;
+    return { ...input, current_sha256: current, unchanged: current === input.sha256, intentional_layout_change: intentional };
+  });
+  const copies = frozenOriginal.copies.map(copy => {
+    const source = sha(path.resolve(repo, copy.source));
+    const destination = sha(path.resolve(repo, copy.destination));
+    return {
+      ...copy, source_sha256_now: source, destination_sha256_now: destination,
+      source_unchanged: source === copy.sha256, destination_unchanged: destination === copy.sha256,
+      allowed_private_derived: allowedDerived(path.resolve(repo, copy.destination)),
+    };
+  });
+  return { inputs, copies };
+}
+
+function checkInputs(frozen, allowDerived) {
+  const state = preservation();
+  assert(state.inputs.length === 178 && state.copies.length === 149, 'Original inventory size changed');
+  assert(state.inputs.every(item => item.unchanged || item.intentional_layout_change), 'Unapproved original input change');
+  assert(state.copies.every(item => item.source_unchanged), 'Original copied resource changed');
+  assert(state.copies.every(item => item.destination_unchanged || (allowDerived && item.allowed_private_derived)), 'Unapproved private copy change');
+  assert(sha(old) === rejectedHash, 'Rejected command log changed');
+  for (const item of frozen.protected) assert(sha(item.path) === item.sha256, `Protected input changed: ${item.path}`);
+  return state;
+}
+
+const textOf = lines => {
+  let text = '';
+  for (const raw of lines) {
+    const line = raw.replaceAll('\u21b5', '');
+    if ((text.endsWith('$') && line.startsWith('$')) || (text.endsWith(')') && /^[A-Za-z\u0400-\u04ff]\)/u.test(line))) text += ' ';
+    text += line;
+  }
+  return text.trim();
+};
+
+function reconcile() {
+  const book = read(path.join(root, '7a/book.json'));
+  assert(book.pages === 37 && book.audit.errors.length === 0, 'Book audit/page reconciliation failed');
+  assert(book.audit.exercise_count === 108 && JSON.stringify(book.audit.exercise_range) === '[1,108]', 'Book exercise count/range failed');
+  assert(JSON.stringify(book.audit.figure_numbers) === '[1,2]', 'Figure numbering failed');
+  assert(book.audit.katex_warnings.length === 0, 'Unexpected formula warning');
+  assert(book.audit.warnings.length === 1 && book.audit.warnings[0].endsWith('p0043#6'), 'Unexpected continuation or TOC warning');
+  const topics = read(toc).contents.flatMap(chapter => chapter.lessons ?? []).flatMap(section => section.topics ?? []);
+  const blocks = new Map();
+  for (const file of walk(path.join(root, '7a/pages')).filter(file => file.endsWith('/page.json'))) {
+    const page = read(file);
+    page.blocks.forEach((block, index) => blocks.set(`p${String(page.meta.page).padStart(4, '0')}#${index + 1}`, block));
+  }
+  const usedExercises = new Set();
+  const usedProse = new Set();
+  const exerciseOwnedFigures = new Set();
+  const allNumbers = [];
+  for (const entry of book.lessons) {
+    const directory = path.join(root, '7a/lessons', entry.id);
+    const lesson = read(path.join(directory, 'lesson.json'));
+    const exercises = read(path.join(directory, 'exercises.json'));
+    const card = topics.find(topic => topic.id === entry.id);
+    assert(card && lesson.card_id === card.id && lesson.start_printed === card.page
+      && String(lesson.number) === String(card.printedNumber), `TOC identity mismatch: ${entry.id}`);
+    assert(exercises.count === entry.exercises && lesson.exercise_count === entry.exercises, `Count mismatch: ${entry.id}`);
+    for (const exercise of exercises.exercises) {
+      for (const figure of exercise.figures) exerciseOwnedFigures.add(figure.id);
+      allNumbers.push(Number(exercise.number));
+      const fragments = exercise.pages.map(ref => {
+        const block = blocks.get(ref);
+        assert(block?.kind === 'ex' && String(block.label) === String(exercise.number), `Exercise source mismatch: ${ref}`);
+        assert(!usedExercises.has(ref), `Exercise fragment used twice: ${ref}`);
+        usedExercises.add(ref);
+        return block;
+      });
+      assert(!fragments[0].cont && !fragments.at(-1).open, `Incomplete exercise: ${exercise.number}`);
+      fragments.forEach((block, index) => {
+        if (index) assert(block.cont && fragments[index - 1].open, `Broken continuation: ${exercise.number}`);
+      });
+      const lines = fragments.flatMap(block => block.lines);
+      assert(JSON.stringify(exercise.lines) === JSON.stringify(lines) && exercise.text === textOf(lines), `Exercise bytes/lines mismatch: ${exercise.number}`);
+    }
+    for (const prose of lesson.prose) {
+      const fragments = prose.source_refs.map(ref => {
+        const block = blocks.get(ref);
+        assert(block?.kind === prose.kind && !usedProse.has(ref), `Prose source mismatch: ${ref}`);
+        usedProse.add(ref);
+        return block;
+      });
+      assert(prose.text === textOf(fragments.flatMap(block => block.lines)), `Prose text mismatch: ${prose.source_refs}`);
+      if (entry.id !== 'alg7-c1-s3-n9') assert(!fragments[0].cont && !fragments.at(-1).open, `Incomplete target prose: ${entry.id}`);
+      fragments.forEach((block, index) => {
+        if (index) assert(block.cont && fragments[index - 1].open, `Broken prose continuation: ${prose.source_refs}`);
+      });
+    }
+  }
+  assert(JSON.stringify(allNumbers) === JSON.stringify(Array.from({ length: 108 }, (_, index) => index + 1)), 'Exercise identities are not exactly 1-108');
+  for (const [ref, block] of blocks) {
+    if (block.kind === 'ex') assert(usedExercises.has(ref), `Unassigned exercise: ${ref}`);
+    if (block.kind === 'p') assert(usedProse.has(ref), `Unassigned prose: ${ref}`);
+    if (block.kind === 'cap' && !usedProse.has(ref)) {
+      const figure = [...blocks.values()].find(item => item.kind === 'fig' && item.label === block.label);
+      assert(figure && exerciseOwnedFigures.has(figure.id), `Unassigned caption: ${ref}`);
+    }
+  }
+  const targets = frozenOriginal.targets.map(target => {
+    const directory = path.join(root, '7a/lessons', target.lesson);
+    const lesson = read(path.join(directory, 'lesson.json'));
+    const exercises = read(path.join(directory, 'exercises.json'));
+    const numbers = exercises.exercises.map(exercise => Number(exercise.number));
+    const expected = Array.from({ length: target.original_count }, (_, index) => target.originals[0] + index);
+    assert(JSON.stringify(numbers) === JSON.stringify(expected), `Target originals mismatch: ${target.lesson}`);
+    assert(lesson.start_page === target.actual_source_pages_pdf[0], `Target start page mismatch: ${target.lesson}`);
+    return { id: target.lesson, actual_toc: target.actual_toc, originals: numbers, count: numbers.length };
+  });
+  const n9 = read(path.join(root, '7a/lessons/alg7-c1-s3-n9/lesson.json'));
+  assert(n9.exercise_count === 0 && n9.prose.length === 1 && n9.prose[0].source_refs[0] === 'p0043#6', 'N9 partial boundary changed');
+  return { pass: true, targets, excluded_partial: 'alg7-c1-s3-n9', book_audit: book.audit };
+}
+
+const action = process.argv[2];
+if (action === 'freeze') {
+  assert(!fs.existsSync(freezeFile), 'Assembly already frozen');
+  assert(sha(old) === rejectedHash && read(old).some(item => item.page === '41' && item.status === 1), 'Original rejected finalize missing');
+  assert(!read(old).some(item => ['assemble', 'vectorize'].includes(item.command)), 'Earlier RAW assembly/vectorization already present');
+  const evidenceFiles = [
+    old, path.join(root, 'input-hashes-before.json'), path.join(work, 'authorized-continuation-inputs.json'),
+    path.join(work, 'authorized-continuation-results.json'),
+    ...[41, 42, 43].map(page => path.join(work, `continuation-finalize-${page}.json`)),
+    path.join(work, 'parent-source-observations-28-41.json'), path.join(work, 'parent-source-observations-42-43.json'),
+    ...walk(path.join(work, 'rejected-page41-before-authorized-counter')),
+    path.join(work, 'raw-vectorize-record.py'), path.join(work, 'raw-assemble-once.mjs'),
+  ];
+  for (const page of [41, 42, 43]) {
+    const result = read(path.join(work, `continuation-finalize-${page}.json`));
+    assert(result.status === 0, `Authorized finalize did not pass: ${page}`);
+    for (const output of result.outputs) assert(sha(output.path) === output.sha256, 'Authorized output changed');
+  }
+  const priorReview = read(path.join(work, 'parent-source-observations-28-41.json'));
+  const boundaryReview = read(path.join(work, 'parent-source-observations-42-43.json'));
+  assert(boundaryReview.status === 'pass', 'Parent42/43 did not pass');
+  for (const item of [...priorReview.pages, ...boundaryReview.observations]) {
+    assert(item.actual_full_page_opened && item.source_fidelity === 'pass', `Parent source comparison failed: ${item.page}`);
+    for (const input of [item.image, item.compared_transcription, item.reused_once_finalize_record].filter(Boolean)) {
+      assert(sha(path.resolve(repo, input.path)) === input.sha256, 'Parent compared input changed');
+    }
+  }
+  const state = preservation();
+  const protectedFiles = [
+    ...frozenOriginal.inputs.map(item => path.resolve(repo, item.path)),
+    ...frozenOriginal.copies.map(item => path.resolve(repo, item.destination)).filter(file => !allowedDerived(file)),
+    ...walk(path.join(root, '7a/pages')),
+    path.join(work, '7a/pages/0034/figures/fig-02.png'),
+    ...evidenceFiles,
+  ];
+  const frozen = {
+    at: new Date().toISOString(),
+    authorization: 'Human parent actual42/43 pass: authorize private RAW assemble once with actual7a zhTOC, vectorize only new figure page34 once, then second assemble once; preserve original failed command log and use authorized41 retry; stop on reconciliation error; no promotion.',
+    authorized_page41_retry: record(path.join(work, 'continuation-finalize-41.json')),
+    parent_source_comparisons: [28, 42].map(page => record(path.join(work, `parent-source-observations-${page === 28 ? '28-41' : '42-43'}.json`))),
+    protected: [...new Set(protectedFiles)].map(record),
+    original178_inputs_and149_copies: state,
+    private_raw_before: walk(path.join(root, '7a')).map(record),
+    allowed_changed_copies: frozenOriginal.copies.filter(item => allowedDerived(path.resolve(repo, item.destination))),
+  };
+  checkInputs(frozen, false);
+  write(freezeFile, frozen);
+  console.log(JSON.stringify({ frozen: true, original_inputs: 178, original_copies: 149, protected_files: frozen.protected.length }));
+} else {
+  const stage = action;
+  const index = stages.indexOf(stage);
+  assert(index >= 0, 'Expected freeze or one of three authorized stages');
+  const frozen = read(freezeFile);
+  checkInputs(frozen, true);
+  for (const prior of stages.slice(0, index)) assert(read(resultFile(prior)).pass === true, 'Prior stage must pass');
+  assert(!fs.existsSync(resultFile(stage)) && !fs.existsSync(`${resultFile(stage)}.started.json`), 'Stage may run only once');
+  if (stage === 'vectorize-34') assert(!fs.existsSync(path.join(work, '7a/pages/0034/figures/fig-02.svg')), 'New figure already vectorized');
+  const executable = path.join(skill, '.venv/bin/python');
+  const cliArgs = [path.join(skill, 'tools/p2c.py'), stage === 'vectorize-34' ? 'vectorize' : 'assemble',
+    '--book', '7a', '--root', root, '--work', work];
+  if (stage === 'vectorize-34') cliArgs.push('--page', '34');
+  else cliArgs.push('--toc', toc);
+  const args = stage === 'vectorize-34' ? [path.join(work, 'raw-vectorize-record.py'), ...cliArgs] : cliArgs;
+  const temporary = path.join(work, 'raw-runtime-temp');
+  fs.mkdirSync(temporary, { recursive: true });
+  write(`${resultFile(stage)}.started.json`, {
+    at: new Date().toISOString(), stage, argv: [executable, ...args], pipeline_argv: [executable, ...cliArgs],
+    authorized_page41_retry: frozen.authorized_page41_retry, rejected_commands_sha256: sha(old),
+  });
+  const result = spawnSync(executable, args, {
+    cwd: repo, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024,
+    env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', TMPDIR: temporary },
+  });
+  let reconciliation = null;
+  let failure = result.error?.message ?? null;
+  try {
+    assert(result.status === 0, `Pipeline exited ${result.status}`);
+    if (stage === 'vectorize-34') {
+      const report = read(path.join(work, 'raw-vectorize-34-details.json'));
+      assert(report.results.length === 1 && report.results[0].ok && report.results[0].ink_pixels > 0, 'Figure fidelity failed');
+      assert(sha(path.join(work, '7a/pages/0034/figures/fig-02.png')) === frozen.protected.find(item => item.path.endsWith('/0034/figures/fig-02.png')).sha256, 'Figure crop changed');
+      reconciliation = { pass: true, vectorize: report };
+    } else {
+      reconciliation = reconcile();
+    }
+    checkInputs(frozen, true);
+  } catch (error) {
+    failure = error.message;
+  }
+  const snapshot = path.join(work, `raw-${stage}-snapshot`);
+  fs.mkdirSync(snapshot);
+  const outputs = walk(path.join(root, '7a')).filter(file => !file.includes('/pages/'));
+  for (const file of outputs) {
+    const destination = path.join(snapshot, path.relative(path.join(root, '7a'), file));
+    fs.mkdirSync(path.dirname(destination), { recursive: true });
+    fs.copyFileSync(file, destination, fs.constants.COPYFILE_EXCL);
+  }
+  write(resultFile(stage), {
+    at: new Date().toISOString(), stage, argv: [executable, ...args], pipeline_argv: [executable, ...cliArgs],
+    status: result.status, stdout: result.stdout, stderr: result.stderr, pass: !failure,
+    failure, reconciliation, preservation: preservation(), outputs: outputs.map(record), snapshot,
+  });
+  process.stdout.write(result.stdout ?? '');
+  process.stderr.write(result.stderr ?? '');
+  if (failure) console.error(`STOP: ${failure}`);
+  else console.log(`Recorded ${stage}: reconciliation pass`);
+  process.exitCode = failure ? 1 : 0;
+}

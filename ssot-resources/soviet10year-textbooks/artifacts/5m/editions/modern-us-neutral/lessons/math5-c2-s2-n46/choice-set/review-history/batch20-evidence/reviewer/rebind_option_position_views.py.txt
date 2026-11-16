@@ -1,0 +1,530 @@
+import copy
+import hashlib
+import json
+from collections import Counter
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parent.parent
+CONFIG = {
+    46: {
+        "view_name": "view-input-preserved.json",
+        "checks_name": "view-checks.json",
+        "view_sha256": "9722ae2d6c7492abc646995eef905b11ab85bcf1b92190a4e4f769421cfb2af4",
+        "checks_sha256": "8572e341cc8262f50b0fca0609a7845bf4a604be03022179569e9235e087ea22",
+        "question_count": 15,
+        "option_count": 48,
+        "true_count": 18,
+        "false_count": 30,
+        "deferred_source": "856",
+        "pattern_evidence": (
+            "The former initial 11-question B/A alternation and 12/13 "
+            "alternating transitions are absent. Current single positions are "
+            "C C B C C B A A C A A C C B, with A=4, B=3, C=7. "
+            "The initial alternating run has length 1 and the longest strict "
+            "two-position alternation has length 3. Short repeats remain: "
+            "CCB twice at single ordinals 1-6 and AAC twice at 7-12. "
+            "Each cycle breaks at the next available ordinal; they are different "
+            "cycles, not one continuing answer rule. These localized repeats "
+            "and the C-heavy frequency remain notices, not proof of random "
+            "ordering. The previously documented near-package-wide two-position "
+            "shortcut is resolved in this supplied view."
+        ),
+        "local_repeats": [
+            {"single_ordinals": [1, 6], "period": 3, "cycle": "CCB"},
+            {"single_ordinals": [7, 12], "period": 3, "cycle": "AAC"},
+        ],
+    },
+    47: {
+        "view_name": "view-input-preserved-revised.json",
+        "checks_name": "view-checks-revised.json",
+        "view_sha256": "4a73fd94b6a9629d0243c333460065bdce3e21a3e9e250e586233d12e49a759f",
+        "checks_sha256": "12a6ae1c8e9251834505ffb9f53ccceeff5fb470465f482dd417d14ee60e40e4",
+        "question_count": 44,
+        "option_count": 134,
+        "true_count": 46,
+        "false_count": 88,
+        "deferred_source": "882",
+        "pattern_evidence": (
+            "The former initial 33-question A/B alternation and 40/41 "
+            "alternating transitions are absent. Current 42 single positions "
+            "use A=14, B=15, C=13 and include all nine ordered A/B/C transition "
+            "types, including AA, BB and CC. The initial strict two-position "
+            "alternation has length 2; the longest has length 5. Local "
+            "three-position cycles occur at single ordinals 14-20 (ABCABCA) "
+            "and 21-26 (CBACBA), but each breaks at the next ordinal and "
+            "neither continues across the package. Short runs, including three "
+            "consecutive A positions, remain explicitly documented; frequency "
+            "balance alone is not the basis of the verdict. The previously "
+            "documented near-package-wide two-position shortcut is resolved "
+            "in this supplied view, not certified statistically random."
+        ),
+        "local_repeats": [
+            {"single_ordinals": [14, 20], "period": 3, "cycle": "ABC"},
+            {"single_ordinals": [21, 26], "period": 3, "cycle": "CBA"},
+        ],
+    },
+}
+
+
+def sha256(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def binding(path, data):
+    return {"path": str(path), "sha256": sha256(data)}
+
+
+def content(option):
+    # Match the entire allowed content subtree, never its previous label.
+    return json.dumps(
+        {key: value for key, value in option.items() if key != "id"},
+        sort_keys=True,
+        ensure_ascii=True,
+        separators=(",", ":"),
+    )
+
+
+def alternating_run(sequence, start):
+    if start + 1 == len(sequence) or sequence[start] == sequence[start + 1]:
+        return 1
+    end = start + 2
+    while (
+        end < len(sequence)
+        and sequence[end] == sequence[end - 2]
+        and sequence[end] != sequence[end - 1]
+    ):
+        end += 1
+    return end - start
+
+
+def position_stats(question_reviews):
+    rows = [
+        {"question_id": row["question_id"], "position": row["mathematics"]["correct"][0]}
+        for row in question_reviews
+        if row["mode"] == "single"
+    ]
+    sequence = [row["position"] for row in rows]
+    runs = []
+    start = 0
+    for end in range(1, len(sequence) + 1):
+        if end == len(sequence) or sequence[end] != sequence[start]:
+            runs.append(
+                {
+                    "position": sequence[start],
+                    "single_ordinals": [start + 1, end],
+                    "length": end - start,
+                }
+            )
+            start = end
+    transition_counts = Counter(
+        before + after for before, after in zip(sequence, sequence[1:])
+    )
+    return {
+        "single_sequence": rows,
+        "sequence_string": " ".join(sequence),
+        "single_question_count": len(sequence),
+        "position_counts": {label: sequence.count(label) for label in "ABC"},
+        "ordered_transition_counts": dict(sorted(transition_counts.items())),
+        "total_transition_count": len(sequence) - 1,
+        "same_position_transition_count": sum(
+            count for pair, count in transition_counts.items() if pair[0] == pair[1]
+        ),
+        "initial_strict_two_position_alternating_run_length": alternating_run(sequence, 0),
+        "longest_strict_two_position_alternating_run_length": max(
+            alternating_run(sequence, index) for index in range(len(sequence))
+        ),
+        "longest_same_position_run_length": max(run["length"] for run in runs),
+        "same_position_runs": runs,
+    }
+
+
+def build(number, config):
+    reviewer_dir = ROOT / f"reviewer-5m-n{number}"
+    old_view_path = reviewer_dir / config["view_name"]
+    old_checks_path = reviewer_dir / config["checks_name"]
+    pattern_path = reviewer_dir / "position-pattern-assessment-before-internals.json"
+    new_view_path = ROOT / f"5m-n{number}" / "revised-option-position-view.json"
+    old_view_bytes = old_view_path.read_bytes()
+    old_checks_bytes = old_checks_path.read_bytes()
+    pattern_bytes = pattern_path.read_bytes()
+    new_view_bytes = new_view_path.read_bytes()
+    assert sha256(old_view_bytes) == config["view_sha256"]
+    assert sha256(old_checks_bytes) == config["checks_sha256"]
+    old_view = json.loads(old_view_bytes)
+    old_checks = json.loads(old_checks_bytes)
+    new_view = json.loads(new_view_bytes)
+    old_pattern = json.loads(pattern_bytes)
+    assert set(old_view) == set(new_view) == {"questions"}
+    assert len(new_view["questions"]) == config["question_count"]
+    assert [q["id"] for q in old_view["questions"]] == [
+        q["id"] for q in new_view["questions"]
+    ]
+    frozen_rows = {row["question_id"]: row for row in old_checks["question_reviews"]}
+    assert set(frozen_rows) == {question["id"] for question in old_view["questions"]}
+    rows = []
+    changed_questions = []
+    unchanged_questions = []
+    moved_options = 0
+
+    for before, after in zip(old_view["questions"], new_view["questions"]):
+        question_id = after["id"]
+        assert set(before) == set(after) == {
+            "id", "mode", "stem", "figure_ids", "options"
+        }
+        assert {key: value for key, value in before.items() if key != "options"} == {
+            key: value for key, value in after.items() if key != "options"
+        }, question_id
+        assert all(
+            set(option) == {"id", "text", "figure_ids"}
+            for option in before["options"] + after["options"]
+        )
+        assert [option["id"] for option in before["options"]] == [
+            option["id"] for option in after["options"]
+        ]
+        before_contents = Counter(content(option) for option in before["options"])
+        after_contents = Counter(content(option) for option in after["options"])
+        assert before_contents == after_contents, question_id
+        assert all(count == 1 for count in before_contents.values()), question_id
+        old_options = {content(option): option for option in before["options"]}
+        frozen = frozen_rows[question_id]
+        assert frozen["stem"] == before["stem"]
+        assert frozen["mode"] == before["mode"]
+        assert frozen["figure_ids"] == before["figure_ids"]
+        assert frozen["mathematics"]["verdict"] == "pass"
+        old_option_checks = {
+            check["option_id"]: check
+            for check in frozen["mathematics"]["option_checks"]
+        }
+        assert set(old_option_checks) == {option["id"] for option in before["options"]}
+        frozen_true = {
+            check["option_id"]
+            for check in old_option_checks.values()
+            if check["truth"] == "correct"
+        }
+        assert frozen_true == set(frozen["mathematics"]["correct"])
+        assert frozen_true == set(old_checks["complete_true_sets"][question_id])
+
+        row = copy.deepcopy(frozen)
+        new_checks = []
+        rebindings = []
+        for new_ordinal, option in enumerate(after["options"], start=1):
+            old_option = old_options[content(option)]
+            old_check = old_option_checks[old_option["id"]]
+            assert old_check["visible_text"] == old_option["text"]
+            assert old_check["visible_figure_ids"] == old_option["figure_ids"]
+            new_check = copy.deepcopy(old_check)
+            new_check["option_id"] = option["id"]
+            new_check["visible_text"] = option["text"]
+            new_check["visible_figure_ids"] = option["figure_ids"]
+            new_check["truth_reused_by_exact_content"] = True
+            new_check["frozen_option_id"] = old_option["id"]
+            new_check["frozen_option_check_binding"] = binding(
+                old_checks_path, old_checks_bytes
+            )
+            new_checks.append(new_check)
+            moved_options += old_option["id"] != option["id"]
+            rebindings.append(
+                {
+                    "old_option_id": old_option["id"],
+                    "new_option_id": option["id"],
+                    "new_display_ordinal": new_ordinal,
+                    "visible_text": option["text"],
+                    "visible_figure_ids": option["figure_ids"],
+                    "truth": old_check["truth"],
+                    "exact_content_match": True,
+                }
+            )
+        correct = [
+            check["option_id"] for check in new_checks if check["truth"] == "correct"
+        ]
+        assert correct and (after["mode"] != "single" or len(correct) == 1)
+        row["mathematics"] = {
+            **row["mathematics"],
+            "independent_solution": (
+                "The unchanged frozen content-level solution is retained below. "
+                "Any option letters in that historical prose refer only to the "
+                "bound pre-position-repair view, not this new order. The complete "
+                "true set in this new view is " + ", ".join(correct) + "."
+            ),
+            "frozen_independent_solution": frozen["mathematics"]["independent_solution"],
+            "frozen_independent_solution_label_scope": "Bound prior frozen pure view only.",
+            "correct": correct,
+            "option_checks": new_checks,
+            "scope": (
+                "Reuse every independently frozen truth and derivation by exact "
+                "{text, figure_ids} content within this question. No mathematics "
+                "re-solve or current author-internal comparison."
+            ),
+            "new_mathematical_solves": 0,
+            "frozen_option_judgments_reused": len(new_checks),
+            "all_visible_options_rebound": True,
+            "complete_true_set": True,
+        }
+        row["answer_leakage"] = {
+            "verdict": "pass",
+            "evidence": (
+                "Stem, mode and all candidate content are byte-for-byte equal "
+                "as decoded strings/arrays to the independent frozen view. "
+                "No new wording cue or cross-question answer was added. "
+                "The formerly diagnosed package-wide A/B positional shortcut "
+                "is resolved; see the full position sequence and retained "
+                "local-repeat notices in position_distribution_notice."
+            ),
+        }
+        row["option_content_rebindings"] = rebindings
+        row["reused_fidelity_and_redundancy_label_scope"] = (
+            "Inherited observations refer to the prior frozen option labels; "
+            "this stage only changes their content-bound labels/order."
+        )
+        rows.append(row)
+        if before["options"] != after["options"]:
+            changed_questions.append(question_id)
+        else:
+            unchanged_questions.append(question_id)
+
+    stats = position_stats(rows)
+    sequence = [row["position"] for row in stats["single_sequence"]]
+    for repeat in config["local_repeats"]:
+        first, last = repeat["single_ordinals"]
+        cycle = repeat["cycle"]
+        assert all(
+            sequence[index] == cycle[(index - (first - 1)) % len(cycle)]
+            for index in range(first - 1, last)
+        )
+        assert last < len(sequence)
+        assert sequence[last] != cycle[(last - (first - 1)) % len(cycle)]
+    total = sum(len(row["mathematics"]["option_checks"]) for row in rows)
+    true_count = sum(len(row["mathematics"]["correct"]) for row in rows)
+    assert total == config["option_count"]
+    assert true_count == config["true_count"]
+    assert total - true_count == config["false_count"]
+
+    position_review = {
+        "verdict": "pass",
+        "scope": (
+            "Resolution of the independently diagnosed long two-position "
+            "answer shortcut in the supplied order; not statistical randomness "
+            "or current author-key/whole-source approval."
+        ),
+        "former_genuine_predictable_package_pattern_resolved": True,
+        "residual_short_local_repeats_observed_not_erased": config["local_repeats"],
+        "residual_local_repeat_verdict": "notice",
+        "mere_frequency_balance_used_as_pass_basis": False,
+        "evidence": config["pattern_evidence"],
+        "limits": [
+            "No runtime randomization, feedback behavior, author intent or current key was inspected or assumed.",
+            "Short local repeats are retained as explicit residual observations, not proof of randomness.",
+            "A pure-view repair pass does not resolve convention-blocked source coverage or approve unread current internals.",
+        ],
+        "before_repair": {
+            "binding": binding(pattern_path, pattern_bytes),
+            "verdict": old_pattern["verdict"],
+            "position_counts": old_pattern["position_counts"],
+            "initial_alternating_run_length": old_pattern[
+                "first_unbroken_alternating_run"
+            ]["count"],
+            "alternating_transition_count": old_pattern["alternating_transition_count"],
+            "total_transition_count": old_pattern["total_transition_count"],
+        },
+        **stats,
+    }
+    preserved_path = reviewer_dir / "view-input-preserved-option-position-revised.json"
+    record_path = reviewer_dir / "view-checks-option-position-revised.json"
+    record = copy.deepcopy(old_checks)
+    record.update(
+        {
+            "schema": "independent-pure-view-option-position-revision-v1",
+            "scope": (
+                "Only the newly authorized pure view and this reviewer's frozen "
+                "prior view/truth evidence. Exact option-content rebinding, "
+                "unchanged stem/mode/figure check and actual position judgment. "
+                "No sources reopened, mathematics repeated, current internals "
+                "compared, render, validator or promotion."
+            ),
+            "check_order": [
+                "Exact question/stem/mode/figure and option-content preservation",
+                "Content-based rebinding of all independently frozen option truths",
+                "New complete true sets and supplied-order package position judgment",
+            ],
+            "view_binding": binding(new_view_path, new_view_bytes),
+            "view_preserved_binding": binding(preserved_path, new_view_bytes),
+            "prior_independent_frozen_view_binding": binding(old_view_path, old_view_bytes),
+            "prior_independent_frozen_checks_binding": binding(
+                old_checks_path, old_checks_bytes
+            ),
+            "recording_script_binding": binding(
+                Path(__file__).resolve(), Path(__file__).read_bytes()
+            ),
+            "position_repair_stage_status": "pass",
+            "status": "blocked",
+            "outcome": "blocked",
+            "represented_task_fidelity_outcome": "pass",
+            "redundancy_outcome": "pass",
+            "answer_leakage_outcome": "pass",
+            "visible_option_mathematics_outcome": "pass",
+            "coverage_outcome": "blocked",
+            "position_distribution_notice": position_review,
+            "question_reviews": rows,
+            "complete_true_sets": {
+                row["question_id"]: row["mathematics"]["correct"] for row in rows
+            },
+            "visible_question_count": len(rows),
+            "visible_option_count": total,
+            "independently_true_option_count": true_count,
+            "independently_false_option_count": total - true_count,
+            "all_visible_options_checked": True,
+            "all_visible_options_current_truths_rebound_by_exact_content": True,
+            "visible_option_judgments_reused": total,
+            "new_visible_option_math_solves": 0,
+            "exact_content_comparison": {
+                "verdict": "pass",
+                "question_ids_and_order_identical": True,
+                "all_stems_modes_and_question_figure_ids_identical": True,
+                "all_option_texts_and_figure_ids_exact_bijective_match": True,
+                "label_slots_unchanged": True,
+                "only_option_label_content_association_or_order_changed": True,
+                "questions_with_changed_option_order": changed_questions,
+                "questions_with_unchanged_option_order": unchanged_questions,
+                "option_contents_assigned_a_different_label": moved_options,
+                "duplicate_exact_contents_within_a_question": 0,
+                "unmatched_option_contents": 0,
+                "author_mapping_or_receipt_used": False,
+            },
+            "source_reads_this_stage": [],
+            "current_author_internal_comparison": {
+                "status": "not_authorized_this_stage",
+                "current_draft_or_key_read": False,
+                "author_receipt_diff_or_mapping_read": False,
+                "author_source_solutions_serializer_or_answerdata_read": False,
+                "ready_for_separate_authorization": True,
+            },
+            "original_frozen_records_modified": False,
+            "new_source_errata_created": False,
+            "structural_or_canonical_validator_run": False,
+            "render_or_browser_run": False,
+            "db_services_promotion_or_core_change": False,
+            "handoff": (
+                f"Position-only pure-view repair passes; {total} independent "
+                "truths and all complete true sets are rebound by exact content. "
+                f"Source {config['deferred_source']} remains convention/coverage "
+                "blocked. Ready for separately authorized current internal "
+                "comparison, not final package approval."
+            ),
+        }
+    )
+    record["author_internal_comparison"] = {
+        **record["current_author_internal_comparison"],
+        "historical_n46_comparison_existed_before_this_stage": number == 46,
+        "n47_author_internals_ever_opened": False if number == 47 else None,
+        "prior_n46_comparison_not_rebound_or_modified_this_stage": number == 46,
+    }
+    prior_relationships = old_checks["whole_package_relationships"]
+    record["whole_package_relationships"] = {
+        "verdict": "pass",
+        "unchanged_source_task_relationships_reused": (
+            prior_relationships.get("original_source_task_relationship_evidence")
+            or prior_relationships["evidence"]
+        ),
+        "evidence": (
+            "Question order, all stems, modes, candidates and figures are "
+            "unchanged by exact comparison. The prior determinate task "
+            "split/merge and cross-question dependencies therefore remain "
+            "unchanged; the separately diagnosed position shortcut is now "
+            "resolved, with finite short-repeat notices preserved. This "
+            "relationship check does not approve omitted blocked source tasks."
+        ),
+    }
+    record["notices_and_findings"] = [
+        notice
+        for notice in record["notices_and_findings"]
+        if notice["kind"] != "predictable_package_position_sequence"
+    ]
+    record["notices_and_findings"].extend(
+        [
+            {
+                "kind": "resolved_predictable_package_position_sequence",
+                "verdict": "pass",
+                "original_verdict": "revise",
+                "original_rejected_history_binding": binding(pattern_path, pattern_bytes),
+                "evidence": config["pattern_evidence"],
+            },
+            {
+                "kind": "short_local_position_repeats_not_randomness_approval",
+                "verdict": "notice",
+                "observed": config["local_repeats"],
+                "evidence": (
+                    "Short repeats are visible and retained. The repair verdict "
+                    "addresses the former long sustained two-position shortcut, "
+                    "not an assertion that no finite local pattern exists."
+                ),
+            },
+        ]
+    )
+    record["inherited_notice_option_label_scope"] = (
+        "Any prior row-recognition examples mentioning option letters refer "
+        "only to the bound prior frozen view; their contents are unchanged."
+    )
+    record["coverage_note"] = (
+        f"Frozen source {config['deferred_source']} remains explicitly "
+        "convention/coverage blocked. Position repair does not reopen the "
+        "source or settle its deferment; no full-package pass is issued."
+    )
+    if number == 47:
+        direction_row = next(
+            row for row in rows if row["question_id"] == "n47-894"
+        )
+        record["direction_repair_review"] = {
+            "verdict": "pass",
+            "explicit_increasing_stem_exactly_preserved": True,
+            "current_stem": direction_row["stem"],
+            "prior_true_set": old_checks["complete_true_sets"]["n47-894"],
+            "current_true_set": direction_row["mathematics"]["correct"],
+            "all_three_option_contents_unchanged": True,
+            "truths_reused": 3,
+            "math_rechecked_this_stage": 0,
+            "evidence": (
+                "Exact stem match to the independently frozen direction-repaired "
+                "view, including both next-number-is-larger conditions. The "
+                "complete correct content (8.2,8.9,9.6) is now labelled B, "
+                "not A. No direction or truth change was introduced."
+            ),
+        }
+    protected = [
+        binding(old_view_path, old_view_bytes),
+        binding(old_checks_path, old_checks_bytes),
+        binding(pattern_path, pattern_bytes),
+        binding(new_view_path, new_view_bytes),
+    ]
+    record["inputs_checked_unchanged_after_recording"] = protected
+    return record_path, preserved_path, new_view_bytes, record, protected
+
+
+pending = [build(number, config) for number, config in CONFIG.items()]
+for record_path, preserved_path, _, _, _ in pending:
+    assert not record_path.exists(), f"Refuse to overwrite {record_path}"
+    assert not preserved_path.exists(), f"Refuse to overwrite {preserved_path}"
+for record_path, preserved_path, new_view_bytes, record, protected in pending:
+    with preserved_path.open("xb") as output:
+        output.write(new_view_bytes)
+    with record_path.open("x", encoding="utf-8") as output:
+        json.dump(record, output, ensure_ascii=True, indent=2)
+        output.write("\n")
+    for prior in protected:
+        assert sha256(Path(prior["path"]).read_bytes()) == prior["sha256"]
+    print(
+        json.dumps(
+            {
+                "saved": binding(record_path, record_path.read_bytes()),
+                "view_preserved": binding(preserved_path, preserved_path.read_bytes()),
+                "position_repair_stage_status": record["position_repair_stage_status"],
+                "aggregate_outcome": record["outcome"],
+                "reused_option_count": record["visible_option_judgments_reused"],
+                "true_false_counts": [
+                    record["independently_true_option_count"],
+                    record["independently_false_option_count"],
+                ],
+                "position_counts": record["position_distribution_notice"]["position_counts"],
+            }
+        )
+    )

@@ -1,0 +1,175 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import { spawnSync } from 'node:child_process'
+
+const root = '.intentfold/tickets/STEMROBIN-182/tmp/6a-n37'
+const seed = JSON.parse(fs.readFileSync(`${root}/seed.json`, 'utf8'))
+const source = JSON.parse(fs.readFileSync(`${root}/source-solutions.json`, 'utf8'))
+const option = (text, truth, derivation, misconception = null) => ({
+  text, truth, derivation, misconception,
+})
+const table = (values, domains) =>
+  '| 小问 | 单个最简分式或数 | 原式允许的变量 |\n| --- | --- | --- |\n' +
+  values.map((value, i) =>
+    `| ${String.fromCharCode(97 + i)}) | $${value}$ | ${domains[i]} |`).join('\n')
+const questions = []
+function add(id, number, stem, candidates, task, reason, loss) {
+  const ids = ['A', 'B', 'C', 'D']
+  questions.push({
+    id, source_numbers: [number],
+    view: { mode: 'single', stem, figure_ids: [],
+      options: candidates.map((row, i) => ({ id: ids[i], text: row.text, figure_ids: [] })) },
+    intent: { task, source_solution: source.sources.find(row => row.number === number).solution,
+      unit_reason: reason, concept_blocks: [], limitations: [loss], figure_observations: [] },
+    key: {
+      correct: candidates.flatMap((row, i) => row.truth === 'correct' ? [ids[i]] : []),
+      rationales: candidates.map((row, i) => ({
+        option_id: ids[i], truth: row.truth, derivation: row.derivation,
+        misconception: row.misconception,
+      })),
+    },
+  })
+}
+const values = [String.raw`\frac3{10}`, '3', String.raw`-\frac16`,
+  String.raw`-\frac{ab}8`, String.raw`\frac x{200}`, String.raw`\frac5{6p}`,
+  String.raw`\frac{7b}{2a}`, String.raw`\frac3{4x}`, String.raw`\frac{2ab}{13}`,
+  String.raw`-\frac{2z}5`, String.raw`\frac{20a}c`, String.raw`\frac{3ay}{10x}`]
+const domains = ['$x\\ne0$', '$p,q\\ne0$', '$m,n\\ne0$', '$a,b\\ne0$',
+  '$x\\ne0$', '$p\\ne0$', '$a,b\\ne0$', '$x\\ne0$', '$a,b\\ne0$',
+  '$y,z\\ne0$', '$a,b,c\\ne0$', '$a,x,y\\ne0$']
+add('twelve-quotients-and-divisor-domains', '620',
+  seed.exercises.find(row => row.number === '620').text.replace(/^620[．.]\s*/, '') +
+  '\n\n把每式写成一个分式并化简。变量取实数，哪份完整记录同时保留原分母不为零及除数不为零的条件？',
+  [
+    option(table([String.raw`\frac{2x^2}{15}`, String.raw`\frac{p^2}{3q^2}`,
+      String.raw`-\frac{3m^2}{2n^2}`, String.raw`-\frac{2b^3}{a^3}`, '2x^3',
+      String.raw`\frac{p^3}{30}`, String.raw`\frac{50a}{7b}`,
+      String.raw`\frac{169x^3}{27}`, String.raw`\frac{128b^3}{13a}`,
+      String.raw`-\frac{81y^2}{250z}`, String.raw`\frac{45a^3b^4}{4c}`,
+      String.raw`\frac{3456a^7x^7}{125y^3}`],
+    ['$x$ 任意', '$q\\ne0$，$p$ 任意', '$n\\ne0$，$m$ 任意',
+      '$a\\ne0$，$b$ 任意', '$x$ 任意', '$p$ 任意',
+      '$b\\ne0$，$a$ 任意', '$x$ 任意', '$a\\ne0$，$b$ 任意',
+      '$z\\ne0$，$y$ 任意', '$c\\ne0$，$a,b$ 任意', '$y\\ne0$，$a,x$ 任意']),
+    'incorrect',
+    'Replace division by multiplication without taking the divisor reciprocal and use the resulting product domain. Numeric products give2/15,1/3,-3/2,-2,2,1/30,50/7,169/27,128/13,-81/250,45/4,3456/125 with the displayed variable powers. The product domains drop divisor-numerator zero exclusions but retain actual denominators q,n,a,b,z,c,y where applicable.',
+    'Multiply by the divisor itself and judge only the domain of that erroneous product.'),
+    option(table([String.raw`\frac{10}3`, String.raw`\frac13`, '-6',
+      String.raw`-\frac8{ab}`, String.raw`\frac{200}x`, String.raw`\frac{6p}5`,
+      String.raw`\frac{2a}{7b}`, String.raw`\frac{4x}3`, String.raw`\frac{13}{2ab}`,
+      String.raw`-\frac5{2z}`, String.raw`\frac c{20a}`, String.raw`\frac{10x}{3ay}`],
+    ['$x$ 任意', '$p,q$ 任意', '$m,n$ 任意', '$a,b$ 任意',
+      '$x$ 任意', '$p$ 任意', '$a,b$ 任意', '$x$ 任意', '$a,b$ 任意',
+      '$y,z$ 任意', '$a,b,c$ 任意', '$a,x,y$ 任意']),
+    'incorrect',
+    'Interchange dividend and divisor, obtaining the reciprocal of each nonzero correct result, then disregard all original nonzero conditions and formally permit every occurring variable to be any real number. Both the quotient values and claimed domains are wrong.',
+    'Reverse the order of division and ignore the original denominator and nonzero-divisor conditions.'),
+    option(table(values, domains), 'correct',
+    'Take the divisor reciprocal, convert13/6,16/13,-9/25,3/4 exactly and reduce. The original fraction denominators and all divisor numerators must be nonzero. Their union excludes exactly every occurring variable listed in each row, including completely cancelled ones.'),
+    option(table(values, ['$x$ 任意', '$p,q$ 任意', '$m,n$ 任意', '$a,b$ 任意',
+      '$x$ 任意', '$p\\ne0$', '$a\\ne0$，$b$ 任意', '$x\\ne0$', '$a,b$ 任意',
+      '$y,z$ 任意', '$c\\ne0$，$a,b$ 任意', '$x\\ne0$，$a,y$ 任意']),
+    'incorrect',
+    'Reduce all values correctly but compute domains only from the final reduced expressions. f/h keep their actual remaining p/x denominator restriction; most other rows wrongly restore cancelled variables or original nonzero divisor factors.',
+    'Replace the original quotient domain by the reduced-expression domain.'),
+  ],
+  'Convert all twelve quotients to single reduced fractions while preserving denominators and nonzero divisor conditions.',
+  'The complete ordered record compares one quotient rule across constants, mixed numbers, decimals and powers. Simplification and the explicit original-domain record extend the source fraction-form instruction transparently without removing any of its twelve transformations.',
+  'Recognizing twelve complete records does not establish independently writing all reciprocal transformations, reductions and domain arguments.')
+
+const pair = (a, b) => `a) $x=${a}$；b) $x=${b}$。`
+add('two-universal-divisor-replacements', '621',
+  String.raw`分别用一个关于 $a,b$ 的式子代替 $x$，使两条等式对所有非零实数 $a,b$ 都成立：
+a) $\frac{12a^2}{5b^3}:x=\frac{3b}{2a}$；
+b) $\frac{25b^3}{12a^4}:x=-\frac{5b}{4a}$。
+哪份完整替换记录正确？`,
+  [
+    option(pair(String.raw`\frac{18a}{5b^2}`, String.raw`-\frac{125b^4}{48a^5}`),
+    'incorrect',
+    'ForA/x=B wrongly setx=A*B. Exact products are(12a2/(5b3))*(3b/(2a))=18a/(5b2) and(25b3/(12a4))*(-5b/(4a))=-125b4/(48a5). At a=b=1 these do not give the required quotients.',
+    'Multiply the dividend by the desired quotient instead of dividing it by that quotient.'),
+    option(pair(String.raw`\frac{8a^3}{5b^4}`, String.raw`-\frac{5b^2}{3a^3}`),
+    'correct',
+    'A/x=B with nonzeroA,B forcesx=A/B. Take the desired quotient reciprocal to obtain8a3/(5b4) and-5b2/(3a3); both are nonzero throughout the stated original domain and direct substitution verifies each identity.'),
+    option(pair(String.raw`\frac{5b^4}{8a^3}`, String.raw`-\frac{3a^3}{5b^2}`),
+    'incorrect',
+    'Setx=B/A rather thanA/B. This yields the reciprocal of each required replacement, exactly5b4/(8a3) and-3a3/(5b2). For a=b=1, the first quotient becomes96/25 rather than3/2.',
+    'Reverse the quotient when solving for an unknown divisor.'),
+  ],
+  'Find two divisor expressions valid for every allowed pair of parameters, not only one substitution.',
+  'The two replacements form one unknown-divisor identity task with a shared universal domain; all components vary across the records.',
+  'Recognizing a valid replacement pair does not establish independently deriving or writing both universal quotient identities.')
+
+add('line-from-two-axis-intersections', '622',
+  String.raw`一条直线与坐标轴的交点为 $A(0,6)$ 和 $B(-4,0)$。哪个方程同时经过这两个点？`,
+  [
+    option(String.raw`$y=-\frac32x+6$`, 'incorrect',
+    'Keep vertical intercept6 but drop the negative sign of B abscissa in the slope computation:(6-0)/(0-4)=-3/2. At the actualB the equation givesy=12, not0.',
+    'Treat the negative horizontal intercept as positive when computing slope.'),
+    option(String.raw`$y=\frac23x+6$`, 'incorrect',
+    'Keep intercept6 but use run/rise=4/6 instead of rise/run=6/4. AtB it givesy=10/3 rather than0.',
+    'Invert the slope ratio.'),
+    option(String.raw`$y=\frac32x-6$`, 'incorrect',
+    'Compute slope3/2 correctly but take the vertical intercept with the opposite sign. AtA it gives-6, not6; atB it gives-12, not0.',
+    'Reverse the sign of the specified vertical intercept.'),
+    option(String.raw`$y=\frac32x+6$`, 'correct',
+    'The slope is(6-0)/(0-(-4))=3/2 and the vertical intercept6. Substitution of bothA andB gives their exact stated coordinates.'),
+  ],
+  'Find the equation of the line through both specified axis intersections.',
+  'A single complete equation retains the coupled intercept and slope conditions rather than separately supplied coefficients.',
+  'Recognizing the equation does not establish independently writing the slope derivation and both-point verification.')
+
+const pump = (system, first, second) =>
+  `令 $p,q$ 分别为第一、第二台每小时抽水量：$${system}$。解得 $p=${first},q=${second}$，单位均为 $\\mathrm{m^3/h}$。`
+add('two-pump-event-model-and-rates', '623',
+  seed.exercises.find(row => row.number === '623').text.replace(/^623[．.]\s*/, '') +
+  '\n\n哪份模型与按第一、第二台顺序给出的速率全部正确？',
+  [
+    option(pump(String.raw`\begin{cases}2p+3q=102\\p+\frac52q=69\end{cases}`, '24', '18'),
+    'correct',
+    'The separate operating events give2p+3q=102 andp+2.5q=69. Twice the second minus the first gives2q=36; thereforeq=18,p=24. Both event volumes verify and rate units are cubic metres per hour.'),
+    option(pump(String.raw`\begin{cases}2p+3q=102\\p+\frac52q=69\end{cases}`, '18', '24'),
+    'incorrect',
+    'Build and solve the correct model but exchange first/second pump rates when assigning the solution labels. The displayed rates give108 instead of102 for the first event and78 instead of69 for the second.',
+    'Swap the two pump identities after solving the coupled equations.'),
+    option(pump(String.raw`\begin{cases}2p+3q=102\\p+3q=69\end{cases}`, '33', '12'),
+    'incorrect',
+    'Round the second pump2.5-hour time up to3 before modeling. Subtracting the modified second from the first givesp=33, thenq=12. The original second event would pump33+2.5*12=63, not69.',
+    'Round the given mixed-number operating duration before forming the model.'),
+    option(pump(String.raw`\begin{cases}2p=102\\\frac52q=69\end{cases}`, '51', '27.6'),
+    'incorrect',
+    'Assign the entire first-event volume to the first pump alone and entire second-event volume to the second pump alone. Divide to obtain102/2=51 and69/2.5=27.6; this omits the other pump in each event.',
+    'Ignore one simultaneously contributing pump in each total-volume equation.'),
+  ],
+  'Model both operating events and solve for the two ordered pump rates with units.',
+  'A complete two-equation model and ordered rate pair retain the simultaneous contributions and the exact half-hour duration.',
+  'Recognizing the model and rates does not establish independently constructing, solving and writing the simultaneous equations.')
+
+const digest = spawnSync('python3', ['.agents/skills/ld-s10y-choice/scripts/prepare.py',
+  'digest', `${root}/seed.json`], { encoding: 'utf8' })
+assert.equal(digest.status, 0, digest.stderr)
+const draft = {
+  schema: 's10y-choice-draft-v1', seed_sha256: digest.stdout.trim(),
+  new_figures: [], questions,
+  coverage: seed.exercises.map(ex => ({
+    source_number: ex.number,
+    question_ids: questions.filter(q => q.source_numbers.includes(ex.number)).map(q => q.id),
+    omitted_tasks: ['Independently writing the full conversion, identity, equation or model derivation is replaced by complete-record recognition.'],
+    reason: questions.find(q => q.source_numbers.includes(ex.number)).intent.unit_reason,
+  })),
+}
+for (const [name, value] of [['draft.json', draft],
+  ['view.json', questions.map(q => ({ id: q.id, view: q.view }))]]) {
+  fs.writeFileSync(`${root}/${name}`, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+}
+const args = ['.agents/skills/ld-s10y-choice/scripts/validate.py', '--repo', '.',
+  '--seed', `${root}/seed.json`, '--draft', `${root}/draft.json`]
+const check = spawnSync('python3', args, { encoding: 'utf8' })
+fs.writeFileSync(`${root}/validation-result.json`, JSON.stringify({
+  executable: 'python3', args, exit_code: check.status,
+  stdout: check.stdout, stderr: check.stderr, structural_only: true,
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ questions: questions.length,
+  options: questions.reduce((n, q) => n + q.view.options.length, 0),
+  exit_code: check.status }))
+process.exitCode = check.status

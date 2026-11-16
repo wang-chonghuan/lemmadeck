@@ -1,0 +1,202 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
+import { contentHash, rebindOptionPositions } from './option-position-permutation.mjs'
+
+const ticket = '.intentfold/tickets/STEMROBIN-182/tmp'
+const phase = process.argv[2]
+assert(['prepare', 'apply'].includes(phase))
+const byteHash = value => crypto.createHash('sha256').update(value).digest('hex')
+const json = p => JSON.parse(fs.readFileSync(p, 'utf8'))
+const saveNew = (p, v) => fs.writeFileSync(p, JSON.stringify(v, null, 2) + '\n', { flag: 'wx' })
+
+function positionAudit(draft) {
+  const sequence = draft.questions.filter(q => q.view.mode === 'single').map(q => q.key.correct[0])
+  const periods = []
+  for (let p = 1; p <= Math.min(8, Math.floor(sequence.length / 2)); p++) {
+    if (sequence.every((v, i) => i < p || v === sequence[i - p])) periods.push(p)
+  }
+  let longest = 0
+  let run = 0
+  let previous = null
+  for (const id of sequence) {
+    run = id === 'A' || id === 'B'
+      ? (previous !== null && (previous === 'A' || previous === 'B') && previous !== id ? run + 1 : 1)
+      : 0
+    longest = Math.max(longest, run)
+    previous = id
+  }
+  return {
+    single_sequence: sequence,
+    counts: sequence.reduce((v, id) => ({ ...v, [id]: (v[id] ?? 0) + 1 }), {}),
+    whole_sequence_periods_1_to_8: periods,
+    longest_contiguous_A_B_alternating_run: longest
+  }
+}
+
+function leafDiff(a, b, at = '', result = []) {
+  if (JSON.stringify(a) === JSON.stringify(b)) return result
+  if (a && b && typeof a === 'object' && typeof b === 'object') {
+    assert.deepEqual(Object.keys(a), Object.keys(b))
+    for (const k of Object.keys(a)) leafDiff(a[k], b[k], `${at}/${k}`, result)
+  } else {
+    result.push({ op: 'replace', path: at, old_value: a, value: b })
+  }
+  return result
+}
+
+for (const lesson of [46, 47]) {
+  const dir = `${ticket}/5m-n${lesson}`
+  const history = `${dir}/history/before-option-position-permutation`
+  const beforeBytes = fs.readFileSync(`${history}/draft.json`)
+  const before = JSON.parse(beforeBytes)
+  assert(fs.readFileSync(`${dir}/draft.json`).equals(beforeBytes), 'Draft changed since preserved snapshot')
+  const planPath = `${dir}/option-position-permutation-plan.json`
+
+  if (phase === 'prepare') {
+    const plan = {
+      schema: 'finite-option-position-permutation-v1',
+      selection: 'One independent Fisher-Yates draw per existing option array using crypto.randomInt; no truth-directed placement, position quotas, exact balance, alternating schedule or cyclic formula. Save this finite draw and reuse it without resampling.',
+      base_draft_byte_sha256: byteHash(beforeBytes),
+      questions: before.questions.map(q => {
+        const ids = q.view.options.map(o => o.id)
+        const shuffled = [...ids]
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = crypto.randomInt(i + 1)
+          ;[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]
+        }
+        return {
+          question_id: q.id, old_order_ids: ids, new_order_old_ids: shuffled,
+          old_content_hashes: q.view.options.map(({ id, ...value }) => contentHash(value))
+        }
+      })
+    }
+    saveNew(planPath, plan)
+    const candidate = structuredClone(before)
+    rebindOptionPositions(candidate.questions, planPath)
+    console.log(JSON.stringify({ lesson, plan: planPath, before: positionAudit(before), after: positionAudit(candidate) }, null, 2))
+    continue
+  }
+
+  const plan = json(planPath)
+  assert.equal(plan.base_draft_byte_sha256, byteHash(beforeBytes))
+  const currentAuthor = fs.readFileSync(`${dir}/author.mjs`, 'utf8')
+  let normalizedAuthor = currentAuthor
+    .replace("import { rebindOptionPositions } from './option-position-permutation.mjs'\n", '')
+    .replace("rebindOptionPositions(questions, path.join(dir, 'option-position-permutation-plan.json'))\n\n", '')
+  if (lesson === 47) {
+    const current894 = before.questions.find(q => q.id === 'n47-894').view.stem
+    assert(currentAuthor.includes(`q('894','','single','${current894}',[`))
+    normalizedAuthor = normalizedAuthor.replace(current894, '三个数依次相差0.7，算术平均数是8.9。按从第一到第三的顺序，这三个数是多少？')
+  }
+  assert.equal(normalizedAuthor, fs.readFileSync(`${history}/author.mjs`, 'utf8'), 'Unexpected serializer edit')
+  const after = structuredClone(before)
+  rebindOptionPositions(after.questions, planPath)
+  const mapping = before.questions.map((oldQ, i) => {
+    const newQ = after.questions[i]
+    const permutation = plan.questions[i]
+    const oldById = new Map(oldQ.view.options.map(o => [o.id, o]))
+    const newByOldId = new Map(permutation.new_order_old_ids.map((id, j) => [id, newQ.view.options[j]]))
+    const oldRationales = new Map(oldQ.key.rationales.map(r => [r.option_id, r]))
+    const newRationales = new Map(newQ.key.rationales.map(r => [r.option_id, r]))
+    const inverseId = new Map([...newByOldId].map(([oldId, o]) => [o.id, oldId]))
+    const normalized = structuredClone(newQ)
+    normalized.view.options = oldQ.view.options.map(oldO => ({ ...newByOldId.get(oldO.id), id: oldO.id }))
+    normalized.key.correct = newQ.key.correct.map(id => inverseId.get(id))
+    normalized.key.rationales = oldQ.key.rationales.map(oldR => ({
+      ...newRationales.get(newByOldId.get(oldR.option_id).id), option_id: oldR.option_id
+    }))
+    assert.deepEqual(normalized, oldQ, `${oldQ.id}: non-permutation content changed`)
+    return {
+      question_id: oldQ.id,
+      old_order_ids: permutation.old_order_ids,
+      new_order_old_ids: permutation.new_order_old_ids,
+      old_correct_ids: oldQ.key.correct,
+      new_correct_ids: newQ.key.correct,
+      old_to_new: oldQ.view.options.map((oldO, j) => {
+        const newO = newByOldId.get(oldO.id)
+        const { id: oi, ...oldContent } = oldById.get(oldO.id)
+        const { id: ni, ...newContent } = newO
+        const { option_id: ori, ...oldReason } = oldRationales.get(oldO.id)
+        const { option_id: nri, ...newReason } = newRationales.get(newO.id)
+        assert.deepEqual(oldContent, newContent)
+        assert.deepEqual(oldReason, newReason)
+        assert.equal(oldQ.key.correct.includes(oldO.id), newQ.key.correct.includes(newO.id))
+        return {
+          old_id: oldO.id, old_position: j + 1,
+          new_id: newO.id, new_position: newQ.view.options.findIndex(o => o.id === newO.id) + 1,
+          option_content_sha256_before: contentHash(oldContent),
+          option_content_sha256_after: contentHash(newContent),
+          option_text_byte_sha256: byteHash(Buffer.from(oldO.text)),
+          rationale_content_sha256_before: contentHash(oldReason),
+          rationale_content_sha256_after: contentHash(newReason),
+          correct_membership_unchanged: true
+        }
+      }),
+      inverse_permutation_recovers_exact_question: true
+    }
+  })
+  const differences = leafDiff(before, after)
+  assert(differences.every(d => /^\/questions\/\d+\/(view\/options\/\d+\/(id|text|figure_ids)|key\/correct\/\d+|key\/rationales\/\d+\/(option_id|truth|derivation|misconception))($|\/)/.test(d.path)))
+  assert.deepEqual(before.coverage, after.coverage)
+  const beforeView = json(`${history}/view.json`)
+  assert.deepEqual(beforeView.questions, before.questions.map(q => ({ id: q.id, ...q.view })))
+  const afterView = { questions: after.questions.map(q => ({ id: q.id, ...q.view })) }
+  const afterAudit = positionAudit(after)
+  assert.equal(afterAudit.whole_sequence_periods_1_to_8.length, 0, 'New full-sequence period needs attention')
+  assert(afterAudit.counts.C > 0, 'Finite draw did not use C at all')
+  assert(afterAudit.longest_contiguous_A_B_alternating_run < positionAudit(before).longest_contiguous_A_B_alternating_run)
+  for (const name of ['draft.json', 'view.json']) {
+    const value = name === 'draft.json' ? after : afterView
+    fs.writeFileSync(`${dir}/${name}`, JSON.stringify(value, null, 2) + '\n')
+  }
+  fs.copyFileSync(`${dir}/view.json`, `${dir}/revised-option-position-view.json`, fs.constants.COPYFILE_EXCL)
+  saveNew(`${dir}/option-position-content-mapping.json`, {
+    hash_algorithm: 'SHA-256 of recursively key-sorted UTF-8 JSON; exclude option id / rationale option_id only. Text byte hash is raw UTF-8.',
+    questions: mapping
+  })
+  saveNew(`${dir}/option-position-json-diff.json`, {
+    draft: differences, view: leafDiff(beforeView, afterView)
+  })
+  saveNew(`${dir}/option-position-json-patch.json`, differences.map(({ old_value, ...p }) => p))
+  for (const name of ['draft.json', 'view.json', 'author.mjs']) {
+    const diff = spawnSync('git', ['diff', '--no-index', '--', `${history}/${name}`, `${dir}/${name}`], { encoding: 'utf8' })
+    assert([0, 1].includes(diff.status))
+    fs.writeFileSync(`${dir}/option-position-${name}.patch`, diff.stdout, { flag: 'wx' })
+  }
+  const oldHashes = json(`${history}/snapshot-byte-hashes.json`).files
+  const fileHashes = Object.fromEntries(Object.keys(oldHashes).map(name => {
+    const current = byteHash(fs.readFileSync(path.join(dir, name)))
+    if (!['draft.json', 'view.json', 'author.mjs'].includes(name)) assert.equal(current, oldHashes[name], `${name} changed`)
+    return [name, { before: oldHashes[name], after: current, unchanged: current === oldHashes[name] }]
+  }))
+  const args = ['.agents/skills/ld-s10y-choice/scripts/validate.py', '--repo', '.', '--seed', `${dir}/source.json`, '--draft', `${dir}/draft.json`]
+  const check = spawnSync('python3', args, { encoding: 'utf8' })
+  saveNew(`${dir}/structural-check-option-position-permutation.json`, {
+    command: `python3 ${args.join(' ')}`, stdout: check.stdout, stderr: check.stderr, exit_code: check.status,
+    semantic_status: 'Structural once only. Independent mathematics and position review reuse requires parent authorization; no reviewer read or overwritten.'
+  })
+  const receipt = {
+    lesson: `math5-c2-s2-n${lesson}`, history,
+    file_byte_sha256: fileHashes,
+    revised_view_byte_sha256: byteHash(fs.readFileSync(`${dir}/revised-option-position-view.json`)),
+    pure_view_counts: { questions: afterView.questions.length, options: afterView.questions.reduce((n, q) => n + q.options.length, 0) },
+    all_questions_inverse_normalize_to_exact_before_content: true,
+    unchanged: ['question order', 'stems including current repaired894', 'source_numbers', 'mode', 'intent', 'coverage', 'new_figures', 'seed_sha256', 'option content', 'rationale content', 'correct membership by option content', 'all sources and source assets'],
+    serializer_executed: false,
+    static_serializer_diff_exactly_matches_authorized_updates: true,
+    serializer_change: lesson === 47
+      ? 'Add finite option-permutation postprocessing and synchronize stale894 serializer stem to the already-repaired current draft text, without changing the draft stem.'
+      : 'Add only finite option-permutation postprocessing.',
+    reviewer_files_read_or_written: false,
+    blocked_source: lesson === 46 ? '856' : '882',
+    positions: { before: positionAudit(before), after: afterAudit },
+    structural_report: `${dir}/structural-check-option-position-permutation.json`,
+    structural_exit_code: check.status
+  }
+  saveNew(`${dir}/option-position-permutation-receipt.json`, receipt)
+  console.log(JSON.stringify(receipt, null, 2))
+  if (check.status !== 0) process.exitCode = check.status ?? 1
+}

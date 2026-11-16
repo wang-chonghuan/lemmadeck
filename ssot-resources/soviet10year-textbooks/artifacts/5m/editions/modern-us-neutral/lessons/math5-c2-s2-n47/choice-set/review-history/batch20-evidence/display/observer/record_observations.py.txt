@@ -1,0 +1,313 @@
+import hashlib
+import json
+import re
+from collections import Counter
+from pathlib import Path
+
+
+OWN = Path(__file__).resolve().parent
+REPO = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+primary_index = json.loads((OWN / "primary-montage-index.json").read_bytes())
+supplement_index = json.loads((OWN / "supplement-montage-index.json").read_bytes())
+capture = json.loads((OWN / "supplement-capture-manifest.json").read_bytes())
+montages = primary_index["montages"] + supplement_index["montages"]
+
+# Pixel judgments were frozen during the 20 actual view_image montage opens.
+endpoint_evidence = {
+    ("text", 1440, "first"): "Rectangle 5/7 area and 3/4 side example, reciprocal/division explanation, 12/5 divided by 16/15 and 7/8 divided by 6 examples, application introduction and problem2 visible. Fraction bars and final lines are painted without overlap.",
+    ("text", 1440, "last"): "Full fig150 and caption visible, followed by 2/5 x=800 discussion, final 800 divided by 2/5=2000 and bottom link. Entire bottom prose is painted.",
+    ("text", 390, "first"): "Early seven text blocks visible with complete fractions, division examples and application introduction. Problem2 stem is outside this endpoint and was actually opened in its separate native supplement.",
+    ("text", 390, "last"): "Fig150 scroll-start and last two explanatory paragraphs visible through final 2000 and bottom link. The viewport alone is not full-width figure evidence; paired right-end image covers the hidden region.",
+    ("exercises", 1440, "first"): "862-864 complete and 865 begins. Signed fractions, division symbols and all six 864 expressions are painted. The natural bottom cut of 865 is covered by its whole-region supplement.",
+    ("exercises", 1440, "last"): "890-895 complete with 889 tail above. All final word problems and two 895 expressions visible through bottom link; no blank painting.",
+    ("exercises", 390, "first"): "862-863 complete; 864 is naturally cut by the viewport bottom. All six 864 expressions were independently opened in the missing-region supplement.",
+    ("exercises", 390, "last"): "892-895 prose visible through bottom link. The two 895 long expressions have intentional horizontal clipping at scroll-start; actual right strips complete their final parentheses and :0.01.",
+    ("choices", 1440, "first"): "Q1-Q3 complete stems and all A-C candidates; Q4 begins. Fraction numerators, denominators, signs and labels distinct. Q4 onward covered separately.",
+    ("choices", 1440, "last"): "Q42-Q44 complete stems and A-C triples/values, with Q41 tail above. Final long-expression parentheses and :0.01 visible. No blank painting.",
+    ("choices", 390, "first"): "Q1-Q2 complete stems and all A-C candidates; Q3 is naturally cut at bottom. Full Q3 was opened in the native region supplement.",
+    ("choices", 390, "last"): "Q42 stem begins above this viewport; Q43-Q44 candidates complete. Full increasing-direction Q42 stem and triples supplied separately. Q43/Q44 long stem suffixes actually opened in right-end strips.",
+}
+exercise_evidence = {
+    864: "All six signed division expressions visible with complete fraction bars, parentheses and final punctuation.",
+    865: "Decimal division expressions including 0.25 and 0.6 completely painted; all listed endings visible.",
+    866: "Fraction-to-decimal list including 4/25 and 3/8 completely painted; denominators and final line legible.",
+    867: "Algebraic quotient fractions fully painted, with complete variable denominators, signs and parentheses. Display only, not a new source erratum judgment.",
+    868: "Both paired parenthesized expressions visible with complete divisions and closing parentheses.",
+    869: "All six mixed-number divisions visible; whole-number parts and numerator/denominator alignment do not overlap.",
+    870: "All four equation statements visible through the final equation; coefficients, fractions and variable labels unobstructed.",
+    871: "S=ab application tasks fully visible, including both requested calculations and final prose.",
+    872: "Tractor application prose wraps completely through its ending question; quantities and units unobstructed.",
+    873: "Sugar/cost application completely painted through its ending question, with readable quantities and units.",
+    874: "Road remainder application completely painted; mixed-number quantities and final question retained on mobile wraps.",
+    875: "Grain application prose completely painted through final question; fraction and quantity units legible.",
+    876: "Wheat-yield application prose completely painted through final question without overlapping lines.",
+    877: "Tourist application prose completely painted; distance/fraction data and ending question visible.",
+    878: "Education-cost application prose completely painted through final question; numerals and units readable.",
+    879: "All four sum/difference reciprocal tasks visible, with full mixed-number fractions and final punctuation.",
+    880: "Both product expressions visible with full signed/mixed-number fractions and their final terms.",
+    881: "Translation construction prose completely painted; labels, direction instruction and ending construction text visible.",
+    882: "Entire 135-degree reflection/intersection prose is painted and legible. This display observation does not resolve the frozen source-convention blocker.",
+    883: "Both mowing applications fully painted, with complete quantities, stopping statements and ending questions.",
+    884: "Entire source stem before fig151 visible, including scale 1:10000 and ending measurement instruction. Figure pixels are bound separately, not inferred from this text crop.",
+    885: "Both algebraic expressions painted. Desktop suffixes complete; mobile scroll-start hides long right suffixes, which were actually opened separately through -12.6 and -14.5.",
+    886: "Both equality statements fully painted; fractions, variables and final terms visible.",
+    887: "Both nested expressions painted. Desktop closings complete; mobile left views require the independently opened right strips for final )]} and punctuation.",
+    888: "All six signed divisions visible, including complete denominators and final line.",
+    889: "All four mixed-number divisions visible with complete parentheses and numerator/denominator alignment.",
+    890: "All four expressions fully painted; final line and punctuation visible.",
+    891: "Entire wheel/48m application painted through final question; units and wrapped tail visible.",
+}
+choice_evidence = {
+    3: "Entire Q3 stem and all A-C fraction tuples painted; final denominators and option labels unobstructed.",
+    4: "Entire Q4 stem and all A-C conversion alternatives painted through their final statements.",
+    5: "Entire Q5 stem and all A-C conversion values painted; signs and fraction bars distinct.",
+    6: "Entire Q6 stem and all A-C signed-fraction tuples visible through the final candidate.",
+    7: "Entire Q7 stem and all A-C tuples visible; no missing denominator or wrapped tail.",
+    8: "Decimal-conversion stem and all A-C candidates visible; longest final value 0.140625 fully painted.",
+    9: "Domain-statement stem and all A-C statements painted through m/a-can-be-zero tails. Display only, not semantic reassessment.",
+    10: "Paired-fraction stem and all A-C paired candidates complete; final fractions unobstructed.",
+    11: "Mixed-number division stem and all A-C triples painted, with final denominators complete.",
+    12: "Mixed-number division stem and all A-C triples fully visible through their final terms.",
+    13: "Equation stem and all A-C x/y root pairs visible; labels and denominators do not overlap.",
+    14: "Entire equation stem and all A-C pairs visible, including C 27/14,1/5 and k-not-zero wording. Actual display only; no derivation or key re-review.",
+    15: "S=ab calculations with circled 1/2 indicators and all A-C alternatives visible; final 225/2 complete.",
+    16: "Tractor application stem and all A-C quantities/units fully painted through final candidate.",
+    17: "Sugar/cost application stem and all A-C values/units fully visible; wrapped tails retained.",
+    18: "Road application stem and all A-C values fully visible through final candidate.",
+    19: "Grain application stem and all A-C values/units completely painted.",
+    20: "Wheat-yield application stem and all A-C values/units completely painted.",
+    21: "Tourist application stem and all A-C values/units visible through final punctuation.",
+    22: "Education-cost application stem and all A-C values/units fully visible without overlapping lines.",
+    23: "All four mixed-number sum/difference expressions and A-C four-entry tuples visible through final entries.",
+    24: "Both product expressions and all A-C paired values fully painted; fraction bars unobstructed.",
+    25: "Translation/reflection/reversed-direction instructions completely wrap; all A-C statements retain their AY-midpoint tails.",
+    26: "Entire multiple-choice stem and all A-D stopping claims visible; final 160ha fully painted.",
+    27: "Entire multiple-choice mowing stem and all A-D stopping claims visible through final statement.",
+    29: "Both algebraic stems and all A-C simplified-expression pairs visible. Mobile stem suffixes require separately opened right strips; all candidate expressions themselves complete.",
+    30: "Equality stem and all A-C root pairs fully painted through final fraction.",
+    31: "Equality stem and all A-C root pairs completely painted; no lost denominator.",
+    32: "Nested-brace expression stem and all A-C values complete, including mobile final closings.",
+    33: "Nested-brace expression stem and all A-C values complete; mobile whole expression fits with final closings visible.",
+    34: "Signed-fraction division stem and all A-C triples fully painted, including final denominators 66 and 98.",
+    35: "Signed-fraction division stem and all A-C triples fully painted, including denominator 64 and final 16/3.",
+    36: "Four mixed-number divisions and all A-C four-result tuples complete; longest denominators including 1058 and 343 unobstructed.",
+    37: "Left-to-right operation instruction and expression stem completely painted; all A-C paired values visible.",
+    38: "Entire expression stem and all A-C paired values complete through final candidate.",
+    39: "Wheel application stem and all A-C values/units completely painted.",
+    40: "Rectangle application stem and all A-C values/units fully visible through final candidate.",
+    41: "Funding application stem and all A-C values/units complete; wrapped tails retained.",
+    42: "Entire increasing-direction stem, including second/third each larger by 0.7, and all A-C triples visible. This records wording pixels, not renewed semantic approval.",
+}
+q28_evidence = {
+    "heading": "Q28 heading and question marker fully visible; this crop does not claim stem/options coverage.",
+    "stem": "Complete scale/angle stem painted. The stem element naturally includes an overlapping fig151 composite. Desktop full figure visible; mobile figure remains scroll-start clipped and is completed by the already opened primary right end. This overlap is not a new figure or unique combination.",
+    "options": "All Q28 A-C distance alternatives completely painted; final 540,5380,440 tails visible.",
+}
+horizontal_evidence = {
+    ("exercises", 1): "Actual native right endpoint of 885 first expression fully paints terminal -12.6 and punctuation.",
+    ("exercises", 2): "Actual native right endpoint of 885 second expression fully paints terminal -14.5 and punctuation.",
+    ("exercises", 3): "Actual native right endpoint of 887 first nested expression fully paints final )]} and punctuation.",
+    ("exercises", 4): "Actual native right endpoint of 887 second nested expression fully paints final )]} and punctuation.",
+    ("exercises", 5): "Actual native right endpoint of 895 first expression fully paints closing (9.87+16.9) and punctuation.",
+    ("exercises", 6): "Actual native right endpoint of 895 second expression fully paints ]:0.01 and punctuation.",
+    ("choices", 1): "Actual native right endpoint of Q29 first stem expression fully paints -12.6 and punctuation.",
+    ("choices", 2): "Actual native right endpoint of Q29 second stem expression fully paints -14.5 and punctuation.",
+    ("choices", 3): "Actual native right endpoint of Q43 stem expression fully paints closing (9.87+16.9) and punctuation.",
+    ("choices", 4): "Actual native right endpoint of Q44 stem expression fully paints ]:0.01 and punctuation.",
+}
+
+
+def binding(path):
+    path = Path(path)
+    return {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+
+
+def primary_judgment(path):
+    match = re.fullmatch(
+        r"math5-c2-s2-n47-(text|exercises|choices)-(1440|390)-(first|last|figure-[12](?:-end)?)",
+        path.stem,
+    )
+    assert match
+    surface, width, part = match.groups()
+    width = int(width)
+    standalone = True
+    if part in ("first", "last"):
+        evidence = endpoint_evidence[(surface, width, part)]
+    elif surface == "text":
+        if width == 1440:
+            evidence = "Full actual fig150 two-layer composite painted: five-part parallelogram rink, right two shaded parts, complete cleaner/tree artwork and bottom Cleaned:800m-squared (2/5) label. No figure cropping or label occlusion."
+        elif part.endswith("-end"):
+            evidence = "Native mobile fig150 right window fully paints shaded right portion, cleaner and complete bottom 800m-squared (2/5) label. Left [0,358] and right [282,640] overlap to cover full width."
+        else:
+            evidence = "Actual mobile fig150 left window painted. The 640-wide element screenshot has white outside the visible 358px scroll window; rejected as standalone full-asset evidence. Full width is covered jointly with the already opened right endpoint."
+            standalone = False
+    elif width == 1440:
+        evidence = "Actual fig151 composite painted: tree above B, dotted AB/BC, solid AC baseline, river crossing, A60-degrees/C45-degrees and 600m label. Exercise surface has slight horizontal overflow; its primary start/end pair jointly covers full width."
+    elif surface == "choices" and part.endswith("-end"):
+        evidence = "Native choice-mobile fig151 right window paints C,45-degrees and complete 600m. Its 358px left/right windows overlap and jointly cover full width."
+    elif surface == "choices":
+        evidence = "Actual choice-mobile fig151 left window paints A,60-degrees, tree/B and dotted lines. White outside visible scroll window is not full-asset coverage; independently opened right window completes the figure."
+        standalone = False
+    elif part.endswith("-end"):
+        evidence = "Actual exercise-mobile fig151 right window paints C/45-degrees, but cuts leading 6 from 600m. Left/right 310px windows leave about 20px middle gap. Rejected as standalone complete-label evidence; actually opened scroll165 middle supplement paints full 600m and connects both windows."
+        standalone = False
+    else:
+        evidence = "Actual exercise-mobile fig151 left window paints A/60-degrees, tree/B and river/dotted crossing. The 641-wide element screenshot has white outside its about310px scroll window. Rejected as standalone full-asset evidence; left/middle/right actual windows provide continuous coverage."
+        standalone = False
+    return surface, width, part, evidence, standalone
+
+
+observations = []
+limited_originals = []
+for montage in montages:
+    montage_path = Path(montage["path"])
+    assert binding(montage_path)["sha256"] == montage["sha256"]
+    for member in montage["members"]:
+        source = Path(member["path"])
+        assert binding(source)["sha256"] == member["sha256"]
+        assert member["native_pixel_copy_verified"]
+        if "kind" not in member:
+            surface, width, region, evidence, standalone = primary_judgment(source)
+            category = "primary"
+        else:
+            category = "supplement"
+            surface, width = member["surface"], member["viewport"]["width"]
+            region = member.get("region", member["kind"])
+            standalone = True
+            if member["kind"] == "figure_middle_gap":
+                evidence = "Native fig151 exercise-mobile middle window at scroll165/max330 actually paints the full 600m label, solid baseline and river/dotted crossing. It fills the real gap between prior 310px left/right windows; no blank painting."
+            elif member["kind"] == "horizontal_end":
+                evidence = horizontal_evidence[(surface, member["index"])]
+            elif surface == "text":
+                evidence = "Entire mobile problem2 stem painted, including 2/5,800 square metres and the ending question. This fills the genuine gap between text first/last endpoints."
+            elif surface == "exercises":
+                evidence = exercise_evidence[member["item_number"]]
+                if width == 390 and member["item_number"] in (885, 887):
+                    standalone = False
+            elif member["item_number"] == 28:
+                evidence = q28_evidence[member["region"]]
+                standalone = member["region"] != "stem" or width == 1440
+            else:
+                evidence = choice_evidence[member["item_number"]]
+                if width == 390 and member["item_number"] == 29:
+                    standalone = False
+        observation = {
+            "filename": source.name, "path": str(source), "sha256": member["sha256"],
+            "category": category, "surface": surface, "viewport_width": width,
+            "region": region, "actually_opened": True,
+            "opened_via_native_montage": str(montage_path),
+            "montage_sha256": montage["sha256"], "montage_box": member["montage_box"],
+            "dimensions": member["dimensions"], "rgb_pixel_sha256": member["rgb_pixel_sha256"],
+            "native_pixel_copy_verified": True, "status": "pass",
+            "status_applies_to": "Painted region and jointly completed display, not standalone whole-page/full-asset approval.",
+            "standalone_complete_region_evidence": standalone,
+            "evidence": evidence, "observer": "independent_agent",
+            "observation_method": "Actual view_image original-detail native montage member inspection, completed before this recording step.",
+        }
+        for field in ("kind", "item_number", "question_number", "exercise_number",
+                      "option_count", "endpoint", "scroll_metrics"):
+            if field in member:
+                observation[field] = member[field]
+        observations.append(observation)
+        if category == "primary" and not standalone:
+            limited_originals.append({
+                "path": str(source), "sha256": member["sha256"], "status": "rejected",
+                "rejected_claim": "Standalone complete figure/full-label evidence.",
+                "reason": evidence, "original_bytes_retained": True,
+                "not_a_blank_or_corrupt_paint_failure": True,
+                "resolved_by_joint_actual_window_coverage": True,
+            })
+
+assert len(observations) == len({row["path"] for row in observations}) == 179
+counts = Counter(row["category"] for row in observations)
+supplement_kinds = Counter(row.get("kind") for row in observations if row["category"] == "supplement")
+assert counts == {"primary": 32, "supplement": 147}
+assert supplement_kinds == {"missing_region": 136, "horizontal_end": 10, "figure_middle_gap": 1}
+combinations = sorted({(row["surface"], row["viewport_width"]) for row in observations})
+assert len(combinations) == 6
+assert len(montages) == 20
+manifest_binding = binding(primary_index["manifest_path"])
+assert manifest_binding["sha256"] == primary_index["manifest_sha256"]
+primary_manifest = json.loads(Path(manifest_binding["path"]).read_bytes())
+expected_primary = {str(REPO / row["path"]): row["sha256"] for row in primary_manifest["screenshots"]}
+actual_primary = {row["path"]: row["sha256"] for row in observations if row["category"] == "primary"}
+assert expected_primary == actual_primary
+assert {row["path"] for row in capture["captures"]} == {
+    row["path"] for row in observations if row["category"] == "supplement"
+}
+for row in capture["rendered_bindings"]:
+    assert binding(row["path"])["sha256"] == row["sha256"]
+assert capture["browser_closed"] and capture["html_byte_hashes_unchanged"]
+
+record = {
+    "lesson": "math5-c2-s2-n47", "status": "pass", "observer": "independent_agent",
+    "scope": "Actual display only. No semantic/source-convention, new-figure, core or promotion approval.",
+    "semantic_outcome": "blocked", "unresolved_source_number": "882",
+    "rejected_history_not_semantic_approval": True,
+    "observations": observations, "primary_png_count": counts["primary"],
+    "primary_endpoint_png_count": 12, "primary_figure_layer_window_png_count": 20,
+    "supplemental_png_count": counts["supplement"], "actual_png_count": len(observations),
+    "unique_observed_file_hash_count": len({row["sha256"] for row in observations}),
+    "supplement_counts_by_kind": dict(supplement_kinds),
+    "derived_montage_count": len(montages), "view_image_montage_open_count": 20,
+    "additional_image_opens_during_recording": 0,
+    "montages_not_counted_as_additional_source_pngs": True,
+    "unique_surface_viewport_combinations": len(combinations),
+    "surface_viewport_combinations": [
+        {"surface": surface, "width": width, "height": 960 if width == 1440 else 844}
+        for surface, width in combinations
+    ],
+    "supplement_unique_surface_viewport_combinations_added": 0,
+    "coverage": {
+        "text_blocks_complete_each_viewport": 10,
+        "original_exercises_complete_each_viewport": list(range(862, 896)),
+        "choice_questions_complete_each_viewport": 44,
+        "choice_options_complete_each_viewport": 134,
+        "distinct_actual_figures": [
+            {"figure": "fig150", "surfaces": ["text"], "coverage": "Desktop full composite; mobile overlapping358px left/right actual windows cover640px width and bottom label."},
+            {"figure": "fig151", "surfaces": ["exercises", "choices"], "coverage": "Desktop start/end exercise pair and full choice composite; choice mobile overlapping358px left/right windows; exercise mobile310px left/middle/right windows include full600m and bottom baseline."},
+        ],
+        "distinct_actual_figure_count": 2, "table_count": 0,
+        "layer_dom_counts_not_distinct_figure_counts": True,
+        "choice28_stem_capture_naturally_overlaps_previously_observed_figure": True,
+        "horizontal_formula_end_supplements": 10, "figure_middle_gap_supplements": 1,
+        "source_or_modern_figure_semantic_approval_claimed": False,
+        "evidence": "All20 actual native montage opens cover32primary and147supplement files. Endpoints plus missing regions jointly cover text,862-895 and44questions/134options at each viewport. Final signs, numerators/denominators, brackets, units, stem/option tails and fig150/151 right/bottom regions were actually observed. No blank/corrupt painting, unreadable overlap or remaining missing region found.",
+    },
+    "rejected_original_captures": limited_originals,
+    "blank_or_corrupt_paint_failures": [],
+    "original_primary_files_preserved": True,
+    "natural_viewport_edge_cuts_not_misreported_as_partial_paint": True,
+    "scroll_start_and_end_clipping_not_accepted_as_standalone_whole_assets": True,
+    "unreviewed_regions": [], "required_narrow_captures": [],
+    "montages": [
+        {"path": row["path"], "sha256": row["sha256"], "resized": False,
+         "member_count": len(row["members"]), "actually_opened": True,
+         "tool": "view_image", "detail": "original"}
+        for row in montages
+    ],
+    "initial_manifest_binding": manifest_binding,
+    "report_binding": binding(REPO / primary_manifest["report"]),
+    "primary_montage_index_binding": binding(OWN / "primary-montage-index.json"),
+    "supplement_manifest_binding": binding(OWN / "supplement-capture-manifest.json"),
+    "supplement_montage_index_binding": binding(OWN / "supplement-montage-index.json"),
+    "rendered_html_bindings": capture["rendered_bindings"],
+    "supplement_browser_closed": capture["browser_closed"],
+    "supplement_headless": capture["headless"],
+    "supplement_isolated_contexts": capture["isolated_contexts"],
+    "rendered_html_hashes_unchanged": capture["html_byte_hashes_unchanged"],
+    "PWDEBUG_cleared": capture["PWDEBUG_cleared"],
+    "PLAYWRIGHT_HTML_OPEN": capture["PLAYWRIGHT_HTML_OPEN"],
+    "canonical_structure_render_semantic_rerun": False,
+    "source_content_renderer_app_db_or_services_modified": False,
+}
+with (OWN / "observations.json").open("x", encoding="utf-8") as output:
+    json.dump(record, output, ensure_ascii=True, indent=2)
+    output.write("\n")
+print(json.dumps({
+    "saved": str(OWN / "observations.json"), "status": record["status"],
+    "primary": counts["primary"], "supplements": counts["supplement"],
+    "actual_png_count": len(observations),
+    "unique_observed_file_hash_count": record["unique_observed_file_hash_count"],
+    "unique_combinations": len(combinations), "semantic_outcome": record["semantic_outcome"],
+}))

@@ -1,0 +1,147 @@
+import copy
+import hashlib
+import json
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parent.parent
+N46 = ROOT / "reviewer-5m-n46"
+N47 = ROOT / "reviewer-5m-n47"
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def serialized(value):
+    return (json.dumps(value, ensure_ascii=True, indent=2) + "\n").encode("utf-8")
+
+
+def preserve(directory, paths):
+    originals = {path: path.read_bytes() for path in paths}
+    assert not directory.exists(), directory
+    directory.mkdir()
+    records = []
+    for path, data in originals.items():
+        target = directory / path.name
+        with target.open("xb") as output:
+            output.write(data)
+        assert target.read_bytes() == data
+        records.append({
+            "original": str(path),
+            "history": str(target),
+            "sha256": sha(data),
+            "byte_count": len(data),
+            "byte_identical": True,
+        })
+    return originals, records
+
+
+old_history = N46 / "history-before-option-position-internal-comparison"
+old_manifest = json.loads((old_history / "preservation.json").read_bytes())
+for record in old_manifest["records"]:
+    data = Path(record["history"]).read_bytes()
+    assert sha(data) == record["sha256"]
+    assert len(data) == record["byte_count"]
+assert (N46 / "review.json").read_bytes() == (old_history / "review.json").read_bytes()
+
+expected = {
+    N46 / "currentreview.json": "9ba9c04dd2bf616f97eb9e92f961df1f5edb52276ff81b83a3f8e885648dafca",
+    N46 / "final-comparison-result.json": "f73dec8cbee6dc3e60c23977584b60a637a473357c73d43d0fc19aa68623c071",
+    N47 / "currentreview.json": "247bc117f4c26c93ab59a75efcbf853c88841cc3493b292e3900d0a1d99d9f48",
+    N47 / "final-comparison-result.json": "ecf67f17319859ac206a417dca743c593534b4f4951b027824de2dbee58b45c3",
+}
+for path, value in expected.items():
+    assert sha(path.read_bytes()) == value, f"Record changed: {path}"
+
+history46 = N46 / "history-before-active-review-path-rebind"
+history47 = N47 / "history-before-870b-internal-rationale-repair"
+paths46 = [N46 / name for name in (
+    "review.json", "currentreview.json", "final-comparison-result.json",
+)]
+paths47 = [N47 / name for name in (
+    "currentreview.json", "final-comparison-result.json",
+    "internal-comparison-evidence.json",
+    "draft-input-preserved-current-internal-comparison.json",
+    "source-solutions.json", "source-input-preserved.json",
+    "view-checks.json", "view-checks-revised.json",
+    "view-checks-option-position-revised.json",
+    "view-input-preserved.json", "view-input-preserved-revised.json",
+    "view-input-preserved-option-position-revised.json",
+)]
+separate47 = (N47 / "review.json").exists()
+if separate47:
+    paths47.append(N47 / "review.json")
+assert not history46.exists() and not history47.exists()
+originals46, records46 = preserve(history46, paths46)
+originals47, records47 = preserve(history47, paths47)
+
+before = json.loads(originals46[N46 / "final-comparison-result.json"])
+after = copy.deepcopy(before)
+review_bytes = originals46[N46 / "currentreview.json"]
+for field in ("standard_review_binding", "canonical_review_binding"):
+    assert before[field] == {
+        "path": str(N46 / "currentreview.json"), "sha256": sha(review_bytes),
+    }
+    after[field]["path"] = str(N46 / "review.json")
+    before[field]["path"] = str(N46 / "review.json")
+assert after == before
+assert after["nonblocked_checks_all_pass"] is True
+assert after["856_original_source_convention_outcome"] == "blocked"
+
+# No semantic fields change; the current review itself is copied byte-for-byte.
+for path, data in {**originals46, **originals47}.items():
+    assert path.read_bytes() == data, f"Concurrent record change: {path}"
+with (N46 / "review.json").open("wb") as output:
+    output.write(review_bytes)
+with (N46 / "final-comparison-result.json").open("wb") as output:
+    output.write(serialized(after))
+assert (N46 / "review.json").read_bytes() == (N46 / "currentreview.json").read_bytes()
+for path, data in originals47.items():
+    assert path.read_bytes() == data
+for record in old_manifest["records"]:
+    assert sha(Path(record["history"]).read_bytes()) == record["sha256"]
+
+receipt46 = {
+    "scope": "Authorized scratch active-review byte copy and two path-only rebindings; no semantic change or canonical tool.",
+    "records": records46,
+    "original_review_and_comparison_preservation_verified": old_manifest["records"],
+    "active_review": {
+        "path": str(N46 / "review.json"), "sha256": sha(review_bytes),
+        "byte_identical_to_currentreview": True,
+    },
+    "changed_comparison_fields_only": [
+        "standard_review_binding.path", "canonical_review_binding.path",
+    ],
+    "current_final_comparison": {
+        "path": str(N46 / "final-comparison-result.json"),
+        "sha256": sha((N46 / "final-comparison-result.json").read_bytes()),
+    },
+    "previous_root_review_replaced_only_after_byte_preservation": True,
+    "semantic_review_reexecuted": False,
+    "canonical_structure_render_services_run": False,
+}
+receipt47 = {
+    "scope": "Preserve first authorized internal review and frozen evidence before awaiting the author's two-field rationale repair.",
+    "records": records47,
+    "separate_root_review_json_existed": separate47,
+    "initial_standard_review_filename": "currentreview.json",
+    "active_records_unchanged": True,
+    "pending_author_diff_only": [
+        "n47-870b C key.rationales[2].derivation",
+        "n47-870b C key.rationales[2].misconception",
+    ],
+    "future_review_boundary": "Check actual changed rationale and exact unchanged remainder; reuse all 134 frozen truths. Await explicit author difference; no author files opened in this preservation step.",
+    "source882_still_blocked": True,
+    "canonical_structure_render_services_run": False,
+}
+for directory, receipt in ((history46, receipt46), (history47, receipt47)):
+    with (directory / "preservation.json").open("xb") as output:
+        output.write(serialized(receipt))
+    print(json.dumps({
+        "history": str(directory),
+        "preservation_record": str(directory / "preservation.json"),
+        "preserved_file_count": len(receipt["records"]),
+        "active_review": receipt.get("active_review"),
+        "waiting_for_author_diff": directory == history47,
+    }))

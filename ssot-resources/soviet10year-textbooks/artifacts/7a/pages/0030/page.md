@@ -1,0 +1,69 @@
+---
+{
+  "printed_page": 24,
+  "notes": [],
+  "errata": [],
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 30,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 30
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "80f70c868151d7f0bf3fde1ddd83ec6ce63a5592d327b0165d5003edfb29ff54"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 27,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 67 cont -->
+б) “$y$ 是哺乳动物”，“$y$ 是脊椎动物”；
+в) “$\triangle ABC$ 中 $\angle A=50^\circ$”，“$\triangle ABC$ 是锐角三角形”；
+г) “$\triangle ABC$ 中 $\angle A=120^\circ$”，“$\triangle ABC$ 是钝角三角形”。
+
+<!-- ex 68 -->
+68. 下列命题是不是真命题？
+а) （$\angle A$，$\angle B$ 和 $\angle C$ 是三角形的内角）$\Longrightarrow$（$\widehat A+\widehat B+\widehat C↵=180^\circ$）；
+б) （$[AC]$ 和 $[BD]$ 是矩形的对角线）$\Longrightarrow$（$[AC]=↵[BD]$）；
+в) （$[AC]$ 和 $[BD]$ 是菱形的对角线）$\Longrightarrow$（$(AC)\perp↵(BD)$）；
+г) （$\angle A\cong\angle B$）$\Longrightarrow$（$\angle A$ 和 $\angle B$ 是对顶角）。
+
+<!-- ex 69 -->
+69. 写出从语句“四边形 $ABCD$ 是正方形”推出的一个语
+句。
+
+<!-- ex 70 -->
+70. 证明：
+а) 从“数 $x$ 是整数”不能推出“数 $x$ 是自然数”；
+б) 从“数 $y$ 是整数”不能推出“数 $\frac{1}{y}$ 是分数”；
+в) 从“$b^2=16$”不能推出“$b=4$”；
+г) 从“四边形 $ABCD$ 的对角线 $[AC]$ 和 $[BD]$ 互相垂
+直”不能推出“$ABCD$ 是菱形”。
+
+<!-- ex 71 -->
+71. 下列各题中，从前一个方程能不能推出第二个方程（肯定
+回答时，用符号 $\Longrightarrow$ 写出结论）？
+а) $3x-1=0$，$(3x-1)(x-6)=0$；
+б) $(x+2)(x-7)=0$，$x+2=0$；
+в) $x-1=5$，$(x-1)^2=25$；
+г) $x^2=36$，$x=6$。
+
+<!-- ex 72 open -->
+72. 下列各题中，从其中一个不等式能不能推出另一个不等
+
+<!-- foot -->
+24

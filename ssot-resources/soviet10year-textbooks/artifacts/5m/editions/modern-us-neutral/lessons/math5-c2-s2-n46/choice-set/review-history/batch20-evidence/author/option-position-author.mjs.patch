@@ -1,0 +1,21 @@
+diff --git a/.intentfold/tickets/STEMROBIN-182/tmp/5m-n46/history/before-option-position-permutation/author.mjs b/.intentfold/tickets/STEMROBIN-182/tmp/5m-n46/author.mjs
+index 4bfa281d..99455435 100644
+--- a/.intentfold/tickets/STEMROBIN-182/tmp/5m-n46/history/before-option-position-permutation/author.mjs
++++ b/.intentfold/tickets/STEMROBIN-182/tmp/5m-n46/author.mjs
+@@ -1,6 +1,7 @@
+ import fs from 'node:fs'
+ import path from 'node:path'
+ import { fileURLToPath } from 'node:url'
++import { rebindOptionPositions } from './option-position-permutation.mjs'
+ 
+ const dir = path.dirname(fileURLToPath(import.meta.url))
+ const seed = JSON.parse(fs.readFileSync(path.join(dir, 'source.json'), 'utf8'))
+@@ -103,6 +104,8 @@ q('861','','single','任务是收集2.5吨废铁，实际收集3.2吨。完成
+   w('$78.125\\%$；$21.875\\%$','2.5/3.2=.78125 and.7/3.2=.21875 use actual output as denominator.','Use collected quantity rather than assigned task as the percentage base.'),
+ ],'One paired-percentage unit preserves both required percentages and their common target denominator.')
+ 
++rebindOptionPositions(questions, path.join(dir, 'option-position-permutation-plan.json'))
++
+ const draft = {
+   schema: 's10y-choice-draft-v1', seed_sha256: frozen.seed_sha256, new_figures: [], questions,
+   coverage: frozen.solutions.map(s => ({

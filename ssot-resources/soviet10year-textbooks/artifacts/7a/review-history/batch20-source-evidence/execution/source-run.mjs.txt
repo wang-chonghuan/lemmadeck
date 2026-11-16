@@ -1,0 +1,90 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const scratch = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp');
+const root = path.join(scratch, 'batch20-source-7a');
+const work = path.join(scratch, 'batch20-work-7a');
+const original = path.join(repo, 'ssot-resources/soviet10year-textbooks/artifacts/7a');
+const inventoryPath = path.join(scratch, 'remaining-7a-inventory/inventory.json');
+const toc = path.join(repo, 'ssot-resources/soviet10year-textbooks/toc/7a/zh.json');
+const skill = path.join(repo, '.claude/skills/ld-s10y-lesson');
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const record = file => ({ path: path.relative(repo, file), sha256: sha(file), bytes: fs.statSync(file).size });
+const dump = (file, value) => {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+};
+const files = dir => fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+  if (['editions', 'choice-set', 'answers', 'answer-keys'].includes(entry.name)) return [];
+  const file = path.join(dir, entry.name);
+  return entry.isDirectory() ? files(file) : entry.isFile() ? [file] : [];
+}).sort();
+
+if (process.argv[2] === 'freeze-copy') {
+  const inventory = JSON.parse(fs.readFileSync(inventoryPath, 'utf8'));
+  const topics = JSON.parse(fs.readFileSync(toc, 'utf8')).contents
+    .flatMap(chapter => chapter.lessons ?? []).flatMap(section => section.topics ?? []);
+  const targets = inventory.next_four_lesson_source_batch.map(target => {
+    const actual = topics.find(topic => topic.id === target.lesson);
+    if (!actual || actual.page !== target.toc_start_printed) throw Error('TOC target mismatch');
+    return { ...target, actual_toc: actual };
+  });
+  const copies = ['pages', 'figures', 'lessons'].flatMap(part => files(path.join(original, part)))
+    .concat(path.join(original, 'book.json'))
+    .map(source => ({ source, destination: path.join(root, '7a', path.relative(original, source)) }));
+  for (const page of inventory.observed_pages) {
+    const dir = path.dirname(path.join(repo, page.image_path));
+    if (sha(path.join(dir, 'page.png')) !== page.image_sha256) throw Error('Inventory image hash mismatch');
+    for (const source of files(dir)) {
+      copies.push({ source, destination: path.join(work, '7a/pages', String(page.pdf_page).padStart(4, '0'), path.relative(dir, source)) });
+    }
+  }
+  const extra = [
+    inventoryPath, toc,
+    path.join(repo, 'ssot-resources/soviet10year-textbooks/sources/manifest.json'),
+    path.join(repo, JSON.parse(fs.readFileSync(toc, 'utf8')).source.scan),
+    path.join(skill, 'SKILL.md'),
+    ...files(path.join(skill, 'tools')).filter(file => !file.includes('__pycache__')),
+    ...files(path.join(skill, 'profiles')),
+  ];
+  const inputPaths = [...new Set(copies.map(item => item.source).concat(extra))].sort();
+  dump(path.join(root, 'input-hashes-before.json'), {
+    frozen_at: new Date().toISOString(),
+    scope: 'RAW only: retained pages, figures, lessons, book; prepared PDF27-43; source/TOC/tool contracts. No edition, choice, answer, DB or environment inputs.',
+    targets,
+    inputs: inputPaths.map(record),
+    copies: copies.map(item => ({ source: path.relative(repo, item.source), destination: path.relative(repo, item.destination), sha256: sha(item.source) })),
+  });
+  for (const { source, destination } of copies) {
+    fs.mkdirSync(path.dirname(destination), { recursive: true });
+    fs.copyFileSync(source, destination, fs.constants.COPYFILE_EXCL);
+    if (sha(source) !== sha(destination)) throw Error('Copy hash mismatch');
+  }
+  dump(path.join(root, 'before-page27.json'), JSON.parse(fs.readFileSync(path.join(original, 'pages/0027/page.json'), 'utf8')));
+  console.log(JSON.stringify({ inputs: inputPaths.length, copies: copies.length, targets: targets.map(target => target.lesson), root, work }));
+} else if (process.argv[2] === 'run') {
+  const command = process.argv[3];
+  const page = process.argv[4];
+  if (!['finalize', 'assemble', 'vectorize'].includes(command)) throw Error('RAW commands only');
+  if (command !== 'assemble' && !page) throw Error('Explicit page required');
+  if (command === 'vectorize' && page !== '34') throw Error('Only new figure page34');
+  const args = [path.join(skill, 'tools/p2c.py'), command, '--book', '7a', '--root', root, '--work', work];
+  if (page) args.push('--page', page);
+  if (command === 'assemble') args.push('--toc', toc);
+  const existing = fs.existsSync(path.join(work, 'commands.json')) ? JSON.parse(fs.readFileSync(path.join(work, 'commands.json'), 'utf8')) : [];
+  if (existing.some(item => item.status !== 0)) throw Error('Prior failure: stop for diagnosis');
+  if (command === 'finalize' && existing.some(item => item.command === command && item.page === page)) throw Error('Finalize once per page');
+  if (command === 'assemble' && existing.filter(item => item.command === command).length >= 2) throw Error('Assemble at most twice');
+  if (command === 'vectorize' && existing.some(item => item.command === command)) throw Error('Vectorize once');
+  const result = spawnSync(path.join(skill, '.venv/bin/python'), args, { cwd: repo, encoding: 'utf8', env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' } });
+  existing.push({ command, page, argv: [path.join(skill, '.venv/bin/python'), ...args], at: new Date().toISOString(), status: result.status, stdout: result.stdout, stderr: result.stderr });
+  fs.writeFileSync(path.join(work, 'commands.json'), JSON.stringify(existing, null, 2) + '\n');
+  process.stdout.write(result.stdout ?? '');
+  process.stderr.write(result.stderr ?? '');
+  process.exitCode = result.status ?? 1;
+} else {
+  throw Error('Expected freeze-copy or run');
+}

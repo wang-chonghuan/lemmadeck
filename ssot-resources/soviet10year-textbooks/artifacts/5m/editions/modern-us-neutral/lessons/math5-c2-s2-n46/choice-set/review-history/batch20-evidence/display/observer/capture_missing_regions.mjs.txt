@@ -1,0 +1,140 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { createRequire } from 'node:module'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+
+delete process.env.PWDEBUG
+process.env.PLAYWRIGHT_HTML_OPEN = 'never'
+const require = createRequire(path.join(process.cwd(), 'package.json'))
+const { chromium } = require('@playwright/test')
+const repo = path.resolve(process.cwd(), '..')
+const own = path.dirname(fileURLToPath(import.meta.url))
+const manifestPath = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp/batch20-render/5m-math5-c2-s2-n46-capture-manifest.json')
+const initial = JSON.parse(fs.readFileSync(manifestPath, 'utf8'))
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const rendered = initial.rendered.map(entry => ({ ...entry, file: path.join(repo, entry.path) }))
+for (const entry of rendered) {
+  if (hash(entry.file) !== entry.sha256) throw new Error(`HTML changed: ${entry.file}`)
+}
+const output = path.join(own, 'supplements')
+if (fs.existsSync(output)) throw new Error('Supplement output already exists')
+fs.mkdirSync(output)
+const report = {
+  lesson: initial.lesson,
+  scope: 'Missing visible regions and genuine horizontal ends only; same existing HTML, no re-render/checker/semantic inputs.',
+  unique_surface_viewport_combinations_added: 0,
+  existing_unique_surface_viewport_combinations: 6,
+  rendered_bindings: rendered.map(({ file, sha256 }) => ({ path: file, sha256 })),
+  primary_files_not_modified: true,
+  headless: true,
+  isolated_contexts: true,
+  PWDEBUG_cleared: !('PWDEBUG' in process.env),
+  PLAYWRIGHT_HTML_OPEN: process.env.PLAYWRIGHT_HTML_OPEN,
+  captures: [],
+  dom_inventory_for_capture_selection_only: [],
+  browser_closed: false,
+}
+const browser = await chromium.launch({ headless: true })
+async function capture(locator, name, metadata) {
+  const filename = path.join(output, name)
+  if (fs.existsSync(filename)) throw new Error(`Refusing overwrite: ${filename}`)
+  await locator.scrollIntoViewIfNeeded()
+  await locator.page().evaluate(async () => {
+    await document.fonts.ready
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+  })
+  await locator.screenshot({ path: filename, animations: 'disabled' })
+  report.captures.push({ path: filename, sha256: hash(filename), ...metadata })
+}
+try {
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1 })
+    try {
+      const page = await context.newPage()
+      for (const surface of ['exercises', 'choices']) {
+        const entry = rendered.find(item => item.path.endsWith(`/${surface}.html`))
+        await page.goto(pathToFileURL(entry.file).href)
+        await page.evaluate(() => document.fonts.ready)
+        const selector = surface === 'choices' ? '.choice' : 'li.ex'
+        const items = page.locator(selector)
+        const count = await items.count()
+        const inventory = {
+          surface, viewport, count,
+          option_count: surface === 'choices' ? await page.locator('.choice-options>li').count() : null,
+          source_media_count: await page.locator('img,svg').count(),
+          table_count: await page.locator('table').count(),
+        }
+        report.dom_inventory_for_capture_selection_only.push(inventory)
+        const range = surface === 'exercises'
+          ? (viewport.width === 1440 ? [3, 4, 5] : [3, 4, 5, 6])
+          : (viewport.width === 1440 ? [3, 4, 5, 6, 7, 8, 9, 10, 11] : [2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
+        for (const index of range) {
+          const item = items.nth(index)
+          const number = surface === 'choices' ? index + 1 : 852 + index
+          await capture(item, `math5-c2-s2-n46-${surface}-${viewport.width}-region-${number}-left.png`, {
+            kind: 'missing_region', surface, viewport, item_index: index,
+            item_number: number,
+            option_count: surface === 'choices' ? await item.locator('.choice-options>li').count() : null,
+          })
+        }
+        const scrollNodes = await page.evaluate(() =>
+          [...document.querySelectorAll('*')].filter(node =>
+            node.clientWidth > 0 && node.scrollWidth > node.clientWidth + 1
+            && ['auto', 'scroll'].includes(getComputedStyle(node).overflowX)
+          ).map((node, index) => {
+            node.setAttribute('data-observer-overflow-index', String(index))
+            const choice = node.closest('.choice')
+            const exercise = node.closest('li.ex')
+            return {
+              index, class_name: node.className,
+              question_number: choice ? [...document.querySelectorAll('.choice')].indexOf(choice) + 1 : null,
+              exercise_number: exercise ? [...document.querySelectorAll('li.ex')].indexOf(exercise) + 852 : null,
+              option_id: node.closest('.choice-options>li')?.querySelector('.option-id')?.textContent || null,
+              client_width: node.clientWidth, scroll_width: node.scrollWidth,
+              visible_formula_tex: [...node.querySelectorAll('annotation[encoding="application/x-tex"]')].map(n => n.textContent),
+            }
+          }),
+        )
+        inventory.horizontal_regions = scrollNodes
+        for (const row of scrollNodes) {
+          const region = page.locator(`[data-observer-overflow-index="${row.index}"]`)
+          const positions = row.scroll_width > row.client_width * 2 ? ['middle', 'right'] : ['right']
+          for (const position of positions) {
+            const metrics = await region.evaluate((node, position) => {
+              node.scrollLeft = position === 'right'
+                ? node.scrollWidth : (node.scrollWidth - node.clientWidth) / 2
+              return {
+                scroll_left: node.scrollLeft, maximum: node.scrollWidth - node.clientWidth,
+                client_width: node.clientWidth, scroll_width: node.scrollWidth,
+              }
+            }, position)
+            if (position === 'right' && Math.abs(metrics.scroll_left - metrics.maximum) > 1)
+              throw new Error('Horizontal end not reached')
+            await capture(region, `math5-c2-s2-n46-${surface}-${viewport.width}-horizontal-${row.index + 1}-${position}.png`, {
+              kind: 'horizontal_end', surface, viewport, ...row,
+              endpoint: position, scroll_metrics: metrics,
+            })
+          }
+          await region.evaluate(node => { node.scrollLeft = 0 })
+        }
+      }
+    } finally {
+      await context.close()
+    }
+  }
+} finally {
+  await browser.close()
+  report.browser_closed = true
+  report.html_byte_hashes_unchanged = rendered.every(entry => hash(entry.file) === entry.sha256)
+  report.supplemental_png_count = report.captures.length
+  fs.writeFileSync(path.join(own, 'supplement-capture-manifest.json'), JSON.stringify(report, null, 2) + '\n', { flag: 'wx' })
+}
+if (!report.html_byte_hashes_unchanged) throw new Error('HTML changed during supplemental capture')
+console.log(JSON.stringify({
+  report: path.join(own, 'supplement-capture-manifest.json'),
+  captured: report.captures.length,
+  horizontal_ends: report.captures.filter(row => row.kind === 'horizontal_end').length,
+  browser_closed: report.browser_closed,
+  html_byte_hashes_unchanged: report.html_byte_hashes_unchanged,
+}))

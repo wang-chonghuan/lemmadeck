@@ -1,0 +1,407 @@
+"""Compare the sole authorized n46 draft to frozen independent source/view work."""
+
+import hashlib
+import json
+from collections import Counter
+from pathlib import Path
+
+
+OWN = Path(__file__).resolve().parent
+AUTHOR = OWN.parent / "5m-n46"
+
+SOURCE_EVIDENCE = {
+    "852": "All eight author reciprocal results match the frozen products-one proof: 10/7,4/11,1/5,9/8,5,1,-3/2,-4/5. Unity and both negative signs survive.",
+    "853": "The author classifies all six pairs by products 1,1,1,1,49/6,0; this agrees with the independent source, including no reciprocal for zero.",
+    "854": "Both author results retain the initial 158/81 and 3.4 after reciprocal-factor cancellation; they match the independent associativity solution and selected definition block 4.",
+    "855": "All six separately solved equations agree: 4/3,20/23,5/4,4,1,1. The author's distinction between right side 1 and right side equal to the coefficient is mathematically correct.",
+    "857": "All six author products agree with the independent source: 1/9,20/27,24/25,-1/22,5/6,49/3. Both mixed conversions and the lone negative factor are retained.",
+    "858": "Both author conservation models and original count pairs match the frozen solution: trains (30,45) become (25,50), notebooks (100,40) become (105,35). The first-stack label is justified by the whole-count problem: the opposite initial larger-stack assignment would give 40/13 and 100/13 notebooks, so it is not a second valid integer solution. The later sentence alone is not being treated as an independent naming definition.",
+    "859": "Both seven-entry author reciprocal lists match the independently frozen fourteen results. The reductions 315/42=15/2,143/12 ->12/143 and decimal reciprocals 2,5/6 are correct; equivalent fractions are not duplicate answer alternatives.",
+    "860": "All six author cancellation results match 6,6,2,-12,-3,1/2. Both single negatives and the double-negative contrast are correct.",
+    "861": "Author completion and excess calculations use target 2.5: 3.2/2.5=1.28 and 0.7/2.5=0.28. The stated 100-percentage-point difference is correct.",
+}
+
+UNIT_EVIDENCE = {
+    "852a": "Parts 1-4 are one whole reciprocal row with both proper and improper positive inputs.",
+    "852b": "Parts 5-8 form a distinct complete row containing a unit value and two negative inputs.",
+    "853": "All six original pair classifications remain in one native multiple unit; each mathematical pair is distinct.",
+    "854": "The two complete products share the reciprocal-undoing relationship while retaining mixed and decimal initial factors.",
+    "855a": "The first four independent equations have right side 1 and preserve all four nonzero coefficient forms.",
+    "855b": "The final two independent equations have equal coefficient/right-side values; this is a meaningful boundary case rather than a duplicated solution row.",
+    "857a": "The first three products retain all fraction operands and legal reduction distinctions as a full row.",
+    "857b": "The second three products retain the negative case and both mixed-number cases as a separate full row.",
+    "858a": "The carriage task has its own conserved quantities, direction and final 2:1 ratio, tested with model and both original counts.",
+    "858b": "The notebook task has different quantities, the opposite transfer direction and final 3:1 ratio, justifying a separate model/count unit.",
+    "859a": "The first complete seven-fraction reciprocal list retains reduction and improper representations, although A/B differ only in its fifth entry.",
+    "859b": "The second complete list retains mixed-number conversion, integers, unity and decimals; it is not a copied version of the first list.",
+    "860a": "The first three positive cancellation tasks retain their residual factors and complete result order.",
+    "860b": "The signed cancellation tasks form a distinct group contrasting one and two negative factors.",
+    "861": "The paired rate unit retains both completion and excess, their labels, units and common target denominator.",
+}
+
+LOSS_EVIDENCE = {
+    "852": "Declared loss correctly limits the claim to reciprocal recognition, not independent production of each of eight inversions.",
+    "853": "The original yes/no pair judgment survives; selecting the complete set does not prove the learner wrote all six products, as declared.",
+    "854": "Declared absence of written regrouping/cancellation is real; the complete numeric alternatives still distinguish stopping early or dropping the initial factor.",
+    "855": "Declared unaided equation-solving loss is real; substituting or deriving complete rows still tests the distinct nonzero-coefficient equations.",
+    "857": "Declared independent conversion/reduction loss is real. Full-row discrimination still distinguishes denominator addition, divisor inversion, sign error and malformed mixed conversion.",
+    "858": "Declared independent modeling/solving loss is real. Each alternative includes a whole transfer equation and both original counts; wrong donor/recipient updates remain mathematically distinguishable.",
+    "859": "Declared independent representation-conversion loss is real. In 859a, six entries are shared by A/B and one can eliminate B using the fifth value alone; recognition cannot certify all seven inversions. This is an accepted declared production limitation, not proof of no judgment at all.",
+    "860": "Declared absence of written legal cancellations is real; residual-factor and negative-sign distinctions remain in the complete rows.",
+    "861": "Declared independent denominator-selection/ratio-formation loss is real; the paired alternatives still distinguish swapped labels and the wrong percentage base.",
+}
+
+PROCEDURE_EVIDENCE = {
+    "852a": {
+        "A": "The declared negation procedure produces exactly (-7/10,-11/4,-5,-8/9), the displayed row. Its products with the originals are negative squares rather than 1.",
+        "B": "Inverting each input gives exactly (10/7,4/11,1/5,9/8); every paired product is 1, supporting the declared correct rationale.",
+        "C": "The declared repeat-input procedure gives precisely (7/10,11/4,5,8/9). Their squares are 49/100,121/16,25,64/81, so the whole row is false.",
+    },
+    "852b": {
+        "A": "The declared unity/sign reasoning gives exactly (5,1,-3/2,-4/5), and all four products are 1.",
+        "B": "Inverting magnitudes but removing negative signs gives exactly (5,1,3/2,4/5). The last two products are -1, so the declared error reproduces the false row.",
+        "C": "Negating all four original inputs gives exactly (-1/5,-1,2/3,5/4). None is its original's reciprocal; the declared additive-inverse confusion is actually instantiated.",
+    },
+    "853": {
+        "A": "The current rationale (37/5)(5/37)=1 matches both the mixed-number conversion and original displayed pair.",
+        "B": "The current rationale 48*(1/48)=1 exactly verifies this original pair.",
+        "C": "The current rationale 0.2*5=1 exactly verifies this original pair.",
+        "D": "The current rationale 2.5*0.4=1 exactly verifies this original pair.",
+        "E": "The original displayed mixed pair gives (7/2)(7/3)=49/6, not 1. The declared untested complementary-looking judgment would wrongly accept this actual false pair; this is a pair-classification distractor, not a fabricated numerical result.",
+        "F": "The displayed original pair has 0*1=0. Treating the identity 1 as a reciprocal of zero would wrongly accept this pair, exactly the declared classification error.",
+    },
+    "854": {
+        "A": "Stopping after the first multiplication gives (158/81)(5/6)=395/243 and (17/5)(7/3)=119/15, exactly both displayed wrong values.",
+        "B": "Regrouping each reciprocal-factor pair into 1 leaves 158/81 and 17/5=3.4, exactly the displayed correct results.",
+        "C": "Canceling the reciprocal pair but discarding the remaining initial factor leaves (1,1), exactly the false row; the discarded factors are not themselves 1.",
+    },
+    "855a": {
+        "A": "Reciprocals of 3/4,23/20,4/5,1/4 yield exactly (4/3,20/23,5/4,4) and each substitution gives 1.",
+        "B": "Multiplying right-hand 1 by the coefficient gives precisely the coefficient-copy row (3/4,23/20,0.8,0.25); its substituted left sides are not 1.",
+        "C": "Negating each correct reciprocal gives exactly the displayed negative root row; each equation's left side becomes -1.",
+    },
+    "855b": {
+        "A": "Ignoring the actual right side and applying cx=1 gives the proposed coefficient reciprocals (19/8,5/12); they produce left side 1 instead of 8/19 and 12/5.",
+        "B": "Dividing identical nonzero coefficients gives x=y=1, satisfying both original equations.",
+        "C": "Multiplying the right side by its equal coefficient gives (8/19)^2=64/361 and (12/5)^2=144/25, exactly the false displayed values.",
+    },
+    "857a": {
+        "A": "The stated raw products 4/36,80/108,408/425 reduce respectively to 1/9,20/27,24/25, exactly the full correct row.",
+        "B": "Multiplying numerators but adding denominators yields 4/(4+9)=4/13,80/(12+9)=80/21,408/(17+25)=68/7, reproducing every false entry.",
+        "C": "Dividing first by second, instead of multiplying, gives 9/16,45/192=15/64,200/867, exactly the current false row.",
+    },
+    "857b": {
+        "A": "Deleting only the first negative sign from the correct row produces (1/22,5/6,49/3), exactly this false alternative.",
+        "B": "The current derivation -15/330,(1/7)(35/6),(14/3)(7/2) reduces to the complete (-1/22,5/6,49/3).",
+        "C": "The actual declared w n/d ->(w+n)/d conversion gives 5 5/6 ->5/3 and factors 4 2/3 ->2,3 1/2 ->2. Products become 5/21 and 4, while the first stays -1/22; it reproduces the entire displayed false row.",
+    },
+    "858a": {
+        "A": "Updating both counts gives 1.5x+5=2(x-5), hence x=30 and 45. After transfer (25,50) satisfies the required double relationship.",
+        "B": "Leaving the donor unchanged gives 1.5x+5=2x, hence x=10 and second=15, exactly the displayed model/count row. Actual transfer would yield (5,20), so it is false for the source.",
+        "C": "Leaving the recipient unchanged gives 1.5x=2(x-5), hence x=20 and second=30, exactly the alternative. Actual transfer yields (15,35), not 2:1.",
+    },
+    "858b": {
+        "A": "Ignoring donor decrease gives 2.5z+5=3z, hence z=10 and first=25. This reproduces the displayed row; the actual transfer gives (30,5), not 3:1.",
+        "B": "Updating both stacks gives 2.5z+5=3(z-5), hence z=40 and first=100. Actual after-counts (105,35) verify the complete correct row.",
+        "C": "Ignoring recipient increase gives 2.5z=3(z-5), hence z=30 and first=75. This reproduces the row, but actual after-counts (80,25) are not 3:1.",
+    },
+    "859a": {
+        "A": "Inverting all seven nonzero fractions and reducing 315/42 gives exactly the frozen full row, including 15/2 in entry five.",
+        "B": "Reducing 42/315 to 2/15 without inverting it, and correctly inverting the other six entries, gives exactly this row. The fifth input-output product is 4/225, not 1.",
+        "C": "Negating all otherwise correct reciprocals gives precisely the seven displayed negatives, and each original times its proposed reciprocal equals -1.",
+    },
+    "859b": {
+        "A": "The actual declared mixed conversion (11+11)/12=11/6, followed by inversion, gives 6/11. The other six conversions/inversions are correct, exactly reproducing this false row.",
+        "B": "Correct conversion 143/12 and decimal conversions 1/2,6/5, with inversion of all seven, produce exactly (12/143,20,1/80,1/100,1,2,5/6).",
+        "C": "Deleting decimal points turns 0.5 into 5 and 1.2 into 12; inversion gives 0.2 and 1/12, while the other five entries remain correct. The declared digit-string error reproduces the full false row.",
+    },
+    "860a": {
+        "A": "The declared over-cancellation removes the residual factors as well as the common factors. Removing residual 2 and 3 in the first,3 and 2 in the second,and 2 in the third leaves 1,1,1, exactly the false row.",
+        "B": "Legal cancellations retain (8/4)(33/11)=2*3,(21/7)(26/13)=3*2 and 14/7=2, exactly (6,6,2).",
+        "C": "Numerator multiplication with denominator addition gives 264/15=88/5,546/20=273/10,42/10=21/5, exactly all three false displayed values.",
+    },
+    "860b": {
+        "A": "Current magnitude cancellations -108/9=-12,-69/23=-3,+21/42=1/2 retain the correct signs in all three entries.",
+        "B": "Ignoring the two single negatives but retaining the double-negative positive magnitude yields exactly (12,3,1/2), the false row.",
+        "C": "Keeping a negative sign after the last double-negative multiplication gives exactly (-12,-3,-1/2), with only its third entry wrong.",
+    },
+    "861": {
+        "A": "Computing the target-based rates correctly but exchanging their labels gives precisely (28%,128%), reversed from the requested completion/excess order.",
+        "B": "The declared quotients 3.2/2.5=1.28 and 0.7/2.5=0.28 yield exactly (128%,28%) in source order.",
+        "C": "Using actual collected mass as denominator gives 2.5/3.2=0.78125 and 0.7/3.2=0.21875, exactly (78.125%,21.875%), which are not the target-based rates requested.",
+    },
+}
+
+
+def digest(value):
+    data = json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+    return hashlib.sha256(data.encode("utf-8")).hexdigest()
+
+
+def binding(path):
+    return {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+
+
+def save(path, value):
+    with path.open("x", encoding="utf-8") as handle:
+        json.dump(value, handle, ensure_ascii=True, indent=2)
+        handle.write("\n")
+
+
+def main():
+    draft_path = AUTHOR / "draft.json"
+    source_path = OWN / "source-solutions.json"
+    view_checks_path = OWN / "view-checks.json"
+    view_preserved_path = OWN / "view-input-preserved.json"
+    seed_preserved_path = OWN / "source-input-preserved.json"
+    position_path = OWN / "position-pattern-assessment-before-internals.json"
+    draft = json.loads(draft_path.read_text())
+    source = json.loads(source_path.read_text())
+    independent = json.loads(view_checks_path.read_text())
+    frozen_view = json.loads(view_preserved_path.read_text())
+    seed = json.loads(seed_preserved_path.read_text())
+    positions = json.loads(position_path.read_text())
+    assert {"questions": [{"id": q["id"], **q["view"]} for q in draft["questions"]]} == frozen_view
+    assert digest(seed) == draft["seed_sha256"]
+    assert draft["new_figures"] == []
+    assert seed["figures"] == []
+    frozen_questions = {q["question_id"]: q for q in independent["question_reviews"]}
+    frozen_sources = {s["source_number"]: s for s in source["solutions"]}
+    before_bindings = [binding(p) for p in (draft_path, source_path, view_checks_path, view_preserved_path, seed_preserved_path, position_path)]
+    questions = []
+    canonical_questions = []
+    counts = Counter()
+    for question in draft["questions"]:
+        qid = question["id"]
+        suffix = qid.split("-", 1)[1]
+        frozen = frozen_questions[qid]
+        sn = frozen["source_numbers_independently_mapped"][0]
+        assert question["source_numbers"] == [sn]
+        assert set(PROCEDURE_EVIDENCE[suffix]) == {
+            r["option_id"] for r in question["key"]["rationales"]
+        }
+        key_matches = set(question["key"]["correct"]) == set(frozen["mathematics"]["correct"])
+        counts["complete_keys_checked"] += 1
+        counts["complete_keys_matching"] += key_matches
+        independent_options = {o["option_id"]: o for o in frozen["mathematics"]["option_checks"]}
+        options = []
+        for rationale in question["key"]["rationales"]:
+            oid = rationale["option_id"]
+            own = independent_options[oid]
+            match = rationale["truth"] == own["truth"]
+            counts["rationales_checked"] += 1
+            counts["rationale_truth_matches"] += match
+            counts[own["truth"]] += 1
+            is_correct = own["truth"] == "correct"
+            misconception_shape = rationale["misconception"] is None if is_correct else bool(rationale["misconception"])
+            assert misconception_shape
+            options.append({
+                "option_id": oid, "independent_truth": own["truth"],
+                "current_author_rationale": rationale,
+                "independent_visible_option_evidence": own["evidence"],
+                "declared_derivation_check": {
+                    "verdict": "pass", "evidence": PROCEDURE_EVIDENCE[suffix][oid],
+                },
+                "actual_declared_wrong_procedure_check": {
+                    "verdict": "pass",
+                    "applicable": not is_correct,
+                    "evidence": (
+                        "Correct alternative: misconception is null; the current derivation matches the independent exact solution."
+                        if is_correct else PROCEDURE_EVIDENCE[suffix][oid]
+                    ),
+                    "reproduces_entire_false_alternative_or_original_pair_misclassification": not is_correct,
+                },
+                "truth_agreement": {"verdict": "pass" if match else "revise", "matches": match},
+                "verdict": "pass" if match else "revise",
+            })
+        math_verdict = "pass" if key_matches and all(o["verdict"] == "pass" for o in options) else "revise"
+        local_leakage = frozen["answer_leakage"]
+        if question["view"]["mode"] == "single":
+            local_leakage = {
+                "verdict": "revise",
+                "evidence": (
+                    "No explicit local answer disclosure. However, before reading the author key, "
+                    "the independently solved package showed its first 11 single questions alternating B/A "
+                    "and 12/13 alternating transitions overall, with C never correct. This ordered "
+                    "package shortcut remains despite this option's correct mathematics."
+                ),
+            }
+        questions.append({
+            "question_id": qid,
+            "current_intent": question["intent"],
+            "intent_task_check": {"verdict": "pass", "evidence": frozen["task_fidelity"]["evidence"]},
+            "current_source_solution_check": {"verdict": "pass", "evidence": SOURCE_EVIDENCE[sn]},
+            "unit_reason_check": {"verdict": "pass", "evidence": UNIT_EVIDENCE[suffix]},
+            "concept_blocks_check": {
+                "verdict": "pass",
+                "evidence": "Block 4 is selected in the seed and used where cancellation or nonzero-coefficient inversion is referenced; empty selections do not assert an unavailable definition.",
+            },
+            "local_production_loss_check": {"verdict": "pass", "evidence": LOSS_EVIDENCE[sn]},
+            "figure_observations_check": {
+                "verdict": "pass", "evidence": "No source, stem or option figure is used; the empty observation list is appropriate.",
+            },
+            "complete_key_check": {
+                "verdict": "pass" if key_matches else "revise",
+                "current_author_correct": question["key"]["correct"],
+                "independently_frozen_correct": frozen["mathematics"]["correct"],
+                "evidence": "Compared the entire author set, not only one selected option, to the pre-internals frozen true set.",
+            },
+            "option_rationale_checks": options,
+            "task_fidelity": frozen["task_fidelity"],
+            "redundancy": frozen["redundancy"],
+            "answer_leakage": local_leakage,
+            "mathematics_verdict": math_verdict,
+        })
+        canonical_questions.append({
+            "question_id": qid,
+            "task_fidelity": frozen["task_fidelity"],
+            "redundancy": frozen["redundancy"],
+            "answer_leakage": local_leakage,
+            "mathematics": {
+                "verdict": math_verdict,
+                "independent_solution": frozen["mathematics"]["independent_solution"],
+                "correct": frozen["mathematics"]["correct"],
+                "option_checks": [
+                    {
+                        "option_id": o["option_id"], "truth": o["independent_truth"],
+                        "evidence": o["independent_visible_option_evidence"] + " Current-author comparison: " + o["declared_derivation_check"]["evidence"],
+                    }
+                    for o in options
+                ],
+            },
+        })
+    assert counts["rationales_checked"] == 48
+    assert counts["correct"] == 18 and counts["incorrect"] == 30
+    coverage = []
+    canonical_sources = []
+    for row in draft["coverage"]:
+        sn = row["source_number"]
+        actual_ids = [q["id"] for q in draft["questions"] if sn in q["source_numbers"]]
+        assert row["question_ids"] == actual_ids
+        if sn == "856":
+            evidence = (
+                "Current coverage explicitly defers the complete two-universal-claim task pending a proper/improper "
+                "fraction domain, gives no question IDs, and says the quantifier is not narrowed. This is honest "
+                "deferment, not silent omission. The frozen source convention is still unresolved: equality and "
+                "zero inclusion affect the universal statements. No unconditional answer or whole-source approval follows."
+            )
+            coverage_verdict = "blocked"
+            deferment = {"verdict": "pass", "evidence": evidence}
+        else:
+            evidence = SOURCE_EVIDENCE[sn] + " " + LOSS_EVIDENCE[sn]
+            coverage_verdict = "pass"
+            deferment = None
+            assert row["omitted_tasks"]
+        coverage.append({
+            "source_number": sn,
+            "current_coverage": row,
+            "source_mapping_check": {
+                "verdict": "pass", "evidence": f"Current question IDs {actual_ids} match the independently mapped original task.",
+            },
+            "declared_local_losses_check": {"verdict": "pass", "evidence": evidence},
+            "explicit_deferment_check": deferment,
+            "source_and_coverage_outcome": coverage_verdict,
+        })
+        canonical_sources.append({
+            "source_number": sn,
+            "independent_solution": json.dumps(frozen_sources[sn], ensure_ascii=True, separators=(",", ":")),
+            "coverage": {"verdict": coverage_verdict, "evidence": evidence},
+        })
+    assert {r["source_number"] for r in coverage} == {str(n) for n in range(852, 862)}
+    assert all(binding(Path(b["path"])) == b for b in before_bindings)
+    canonical = {
+        "schema": "s10y-choice-review-v1",
+        "seed_sha256": digest(seed),
+        "draft_sha256": digest(draft),
+        "reviewer": {"kind": "independent_agent", "identity": "independent source-first reviewer; n46-only authorized internal comparison"},
+        "source_reviews": canonical_sources,
+        "figure_checks": [],
+        "new_figure_reviews": [],
+        "question_reviews": canonical_questions,
+        "outcome": "blocked",
+    }
+    final_path = OWN / "final-comparison-result.json"
+    canonical_path = OWN / "review.json"
+    preserved_draft_path = OWN / "draft-input-preserved-at-internal-comparison.json"
+    assert not any(p.exists() for p in (final_path, canonical_path, preserved_draft_path))
+    with preserved_draft_path.open("xb") as handle:
+        handle.write(draft_path.read_bytes())
+    assert binding(preserved_draft_path)["sha256"] == binding(draft_path)["sha256"]
+    save(canonical_path, canonical)
+    final = {
+        "schema": "independent-internal-comparison-v1",
+        "lesson": source["lesson"],
+        "scope": "Only authorized current n46 draft compared to frozen own source and pure-view review. No author source-solutions, serializer, answers, validators or rendering.",
+        "reviewer": canonical["reviewer"],
+        "status": "blocked",
+        "outcome": "blocked",
+        "current_draft_binding": binding(draft_path),
+        "current_draft_preserved_binding": binding(preserved_draft_path),
+        "frozen_source_binding": binding(source_path),
+        "frozen_view_checks_binding": binding(view_checks_path),
+        "frozen_view_preserved_binding": binding(view_preserved_path),
+        "frozen_seed_preserved_binding": binding(seed_preserved_path),
+        "position_assessment_before_internals_binding": binding(position_path),
+        "canonical_review_binding": binding(canonical_path),
+        "recording_script_binding": binding(Path(__file__).resolve()),
+        "current_draft_view_exactly_equals_independently_frozen_view": True,
+        "standard_snapshot_hash_computed_without_validator": True,
+        "counts": {
+            **dict(counts),
+            "intent_and_source_solution_checks": 15,
+            "local_production_loss_checks": 15,
+            "coverage_rows": 10,
+            "source_convention_blocked_rows": 1,
+            "declared_wrong_procedures_checked": 30,
+            "declared_derivations_checked": 48,
+            "single_questions_with_package_position_finding": 14,
+        },
+        "question_comparisons": questions,
+        "coverage_comparisons": coverage,
+        "complete_current_key_and_all_rationales_outcome": "pass",
+        "current_intents_and_source_solutions_outcome": "pass",
+        "local_production_loss_declarations_outcome": "pass",
+        "856_explicit_deferment_record_outcome": "pass",
+        "856_original_source_convention_outcome": "blocked",
+        "package_position_pattern_outcome": "revise",
+        "whole_package_relationships": {
+            "original_task_relationships": independent["whole_package_relationships"],
+            "position_shortcut": positions,
+            "outcome": "revise",
+        },
+        "findings": [
+            {
+                "kind": "predictable_package_position_sequence", "verdict": "revise",
+                "evidence": positions["evidence"],
+                "required_change": "Vary positions/order without changing option mathematics or complete truth sets. Reviewer made no authoring change.",
+            },
+            {
+                "kind": "original_source_convention_unresolved", "source_number": "856",
+                "verdict": "blocked",
+                "evidence": "Explicit deferment is properly declared, but it does not resolve proper/improper equality and zero conventions or restore the absent universal task. The source-only blocked record remains unchanged.",
+            },
+        ],
+        "prohibited_inputs_read": {
+            "author_source_solutions": False,
+            "author_serializer_or_scripts": False,
+            "answerdata": False,
+            "n47_draft_or_internals": False,
+        },
+        "structural_or_canonical_validator_run": False,
+        "render_browser_db_model_services_or_promotion_run": False,
+        "author_or_durable_files_modified": False,
+        "original_source_and_view_review_records_preserved": True,
+        "handoff": "All 48 current n46 rationales and 15 complete keys agree with the independent freeze; declared wrong procedures reproduce the actual false alternatives. Ten coverage rows and all local losses checked; 856 deferment is explicit but its convention remains blocked. Predictable package positions require revision. No final pass or promotion is claimed.",
+    }
+    save(final_path, final)
+    print(json.dumps({
+        "saved": str(final_path), "review_saved": str(canonical_path),
+        "rationales": 48, "complete_keys": 15,
+        "internal_math_and_procedures": "pass",
+        "856_deferment_documentation": "pass", "856_source_convention": "blocked",
+        "position_pattern": "revise", "outcome": "blocked",
+    }))
+
+
+if __name__ == "__main__":
+    main()

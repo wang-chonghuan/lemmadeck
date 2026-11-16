@@ -1,0 +1,35 @@
+import fs from 'node:fs'
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+
+export function contentHash(value) {
+  function sorted(v) {
+    if (Array.isArray(v)) return v.map(sorted)
+    if (v && typeof v === 'object') {
+      return Object.fromEntries(Object.keys(v).sort().map(k => [k, sorted(v[k])]))
+    }
+    return v
+  }
+  return crypto.createHash('sha256').update(JSON.stringify(sorted(value))).digest('hex')
+}
+
+export function rebindOptionPositions(questions, planPath) {
+  const plan = JSON.parse(fs.readFileSync(planPath, 'utf8'))
+  assert.deepEqual(questions.map(q => q.id), plan.questions.map(q => q.question_id))
+  questions.forEach((q, i) => {
+    const row = plan.questions[i]
+    const oldOptions = q.view.options
+    assert.deepEqual(oldOptions.map(o => o.id), row.old_order_ids)
+    assert.deepEqual(oldOptions.map(({ id, ...value }) => contentHash(value)), row.old_content_hashes)
+    assert.deepEqual([...row.new_order_old_ids].sort(), [...row.old_order_ids].sort())
+    const byId = new Map(oldOptions.map(o => [o.id, o]))
+    const rationales = new Map(q.key.rationales.map(r => [r.option_id, r]))
+    assert.equal(rationales.size, oldOptions.length)
+    const rebound = new Map(row.new_order_old_ids.map((id, j) => [id, String.fromCharCode(65 + j)]))
+    q.view.options = row.new_order_old_ids.map(oldId => ({ ...byId.get(oldId), id: rebound.get(oldId) }))
+    q.key.correct = q.key.correct.map(oldId => rebound.get(oldId))
+    q.key.rationales = row.new_order_old_ids.map(oldId => ({
+      ...rationales.get(oldId), option_id: rebound.get(oldId)
+    }))
+  })
+}

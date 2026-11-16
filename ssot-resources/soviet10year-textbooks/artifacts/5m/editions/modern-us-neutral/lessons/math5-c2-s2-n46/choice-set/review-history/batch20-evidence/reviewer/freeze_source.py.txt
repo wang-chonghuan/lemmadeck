@@ -1,0 +1,289 @@
+"""Verify independent exact arithmetic and bind source-only records to the bytes inspected."""
+
+import hashlib
+import json
+import math
+from fractions import Fraction as F
+from pathlib import Path
+
+from PIL import Image
+
+
+ROOT = Path(__file__).resolve().parents[5]
+TMP = Path(__file__).resolve().parent.parent
+CHECKS = {"46": [], "47": []}
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def mixed(whole, numerator, denominator):
+    return F(whole) + F(numerator, denominator)
+
+
+def check(lesson, source_number, values, expected):
+    normalized = [F(value) for value in values]
+    wanted = [F(value) for value in expected]
+    assert normalized == wanted, (lesson, source_number, normalized, wanted)
+    CHECKS[lesson].append({
+        "source_number": str(source_number),
+        "exact_results_checked": [str(value) for value in normalized],
+        "status": "pass",
+    })
+
+
+def arithmetic():
+    check("46", 852, [1 / value for value in [
+        F(7, 10), F(11, 4), F(5), F(8, 9), F(1, 5), F(1), F(-2, 3), F(-5, 4),
+    ]], ["10/7", "4/11", "1/5", "9/8", "5", "1", "-3/2", "-4/5"])
+    check("46", 853, [
+        mixed(7, 2, 5) * F(5, 37), F(48) * F(1, 48),
+        F("0.2") * 5, F("2.5") * F("0.4"), mixed(3, 1, 2) * mixed(2, 1, 3), F(0),
+    ], ["1", "1", "1", "1", "49/6", "0"])
+    check("46", 854, [
+        mixed(1, 77, 81) * F(5, 6) * F(6, 5), F("3.4") * F(7, 3) * F(3, 7),
+    ], ["158/81", "17/5"])
+    check("46", 855, [1 / F(3, 4), 1 / F(23, 20), 1 / F("0.8"),
+                      1 / F("0.25"), F(8, 19) / F(8, 19), F(12, 5) / F(12, 5)],
+          ["4/3", "20/23", "5/4", "4", "1", "1"])
+    check("46", 857, [
+        F(1, 4) * F(4, 9), F(5, 12) * F(16, 9), F(8, 17) * F(51, 25),
+        F(3, 10) * F(-5, 33), F(1, 7) * mixed(5, 5, 6), mixed(4, 2, 3) * mixed(3, 1, 2),
+    ], ["1/9", "20/27", "24/25", "-1/22", "5/6", "49/3"])
+    first = F(15) / (F(2) - F("1.5"))
+    second = F("1.5") * first
+    small_stack = F(20) / (F(3) - F("2.5"))
+    large_stack = F("2.5") * small_stack
+    check("46", 858, [first, second, first - 5, second + 5,
+                      large_stack, small_stack, large_stack + 5, small_stack - 5,
+                      F(40, 13), F(100, 13)],
+          ["30", "45", "25", "50", "100", "40", "105", "35", "40/13", "100/13"])
+    assert second + 5 == 2 * (first - 5)
+    assert large_stack + 5 == 3 * (small_stack - 5)
+    assert F(40, 13) + 5 == 3 * (F(100, 13) - 5)
+    check("46", 859, [1 / value for value in [
+        F(10, 27), F(12, 59), F(23, 98), F(11, 122), F(42, 315), F(10, 3), F(41, 8),
+        mixed(11, 11, 12), F(1, 20), F(80), F(100), F(1), F("0.5"), F("1.2"),
+    ]], ["27/10", "59/12", "98/23", "122/11", "15/2", "3/10", "8/41",
+         "12/143", "20", "1/80", "1/100", "1", "2", "5/6"])
+    check("46", 860, [
+        F(8, 11) * F(33, 4), F(21, 13) * F(26, 7), F(14, 3) * F(3, 7),
+        F(-5, 9) * F(108, 5), F(31, 23) * F(-69, 31), F(-41, 42) * F(-21, 41),
+    ], ["6", "6", "2", "-12", "-3", "1/2"])
+    check("46", 861, [F("3.2") / F("2.5") * 100,
+                      (F("3.2") - F("2.5")) / F("2.5") * 100], ["128", "28"])
+
+    check("47", 862, [F(6, 7) / F(3, 8), F(5, 12) / F(10, 3),
+                      F(16, 12) / 2, F(5, 9) / F(1, 3)], ["16/7", "1/8", "2/3", "5/3"])
+    check("47", 863, [F(3, 8) / F(7, 5), F(1, 5) / F(9, 4), F(4, 5) / F(4, 7),
+                      F(3, 16) / F(5, 4), F(3, 5) / F(9, 25), F(-3, 25) / F(-9, 5)],
+          ["15/56", "4/45", "7/5", "3/20", "5/3", "1/15"])
+    check("47", 864, [F(7, 8) / 2, F(8, 7) / 2, F(3, 7) / F(1, 2),
+                      F(15, 16) / 5, F(21, 8) / F(1, 7), F(-1, 10) / F(1, 12)],
+          ["7/16", "4/7", "6/7", "3/16", "147/8", "-6/5"])
+    check("47", 865, [F("0.25") / F(3, 4), F("0.6") / F(2, 5)], ["1/3", "3/2"])
+    check("47", 866, [F(4, 25) / F("0.2"), F(3, 8) / F("0.375")], ["0.8", "1"])
+    check("47", 868, [F(51, 60) * F(12, 17) / F(3, 10),
+                      F(12, 95) / F(9, 38) * F(15, 16)], ["2", "1/2"])
+    check("47", 869, [mixed(3, 1, 2) / F(2, 3), mixed(4, 1, 2) / mixed(1, 1, 2),
+                      mixed(1, 2, 3) / mixed(1, 1, 10), F(4, 15) / mixed(3, 1, 5),
+                      mixed(10, 1, 3) / mixed(2, 2, 3), mixed(4, 3, 4) / 3],
+          ["21/4", "3", "50/33", "1/12", "31/8", "19/12"])
+    check("47", 870, [
+        (mixed(2, 1, 7) + F(1, 7)) / F(2, 7),
+        (mixed(2, 9, 10) - F(2, 10)) / F(3, 5),
+        mixed(2, 1, 3) * F(1, 3) * mixed(1, 1, 2),
+        mixed(3, 1, 3) / (mixed(1, 1, 3) / 2),
+    ], ["8", "9/2", "7/6", "5"])
+    check("47", 871, [mixed(4, 1, 5) * F(3, 7), F(15) / mixed(7, 1, 2)], ["9/5", "2"])
+    check("47", 872, [F(15) / F(5, 6), F(15) / F(5, 3)], ["18", "9"])
+    check("47", 873, [F(2, 5) / F(4, 5), F(4, 5) / F(2, 5)], ["1/2", "2"])
+    check("47", 874, [F(5, 7) / (1 - F(5, 7))], ["5/2"])
+    check("47", 875, [F(70) / F(7, 8)], ["80"])
+    flour = 25 * F(4, 5)
+    groats = flour / 40
+    check("47", 876, [flour, groats, 25 - flour - groats], ["20", "1/2", "9/2"])
+    check("47", 877, [F(24) / (F(5, 24) * F(4, 5))], ["144"])
+    total = 4 * F(472) + 8 * F(472, 4) + 2 * F(472 + 219)
+    check("47", 878, [total, total / (4 + 8 + 2)], ["4214", "301"])
+    check("47", 879, [
+        1 / (mixed(2, 3, 5) + mixed(1, 1, 5)),
+        1 / (mixed(5, 7, 10) - mixed(4, 2, 10)),
+        1 / (mixed(4, 4, 7) + mixed(2, 1, 7)),
+        1 / (mixed(6, 7, 12) - mixed(5, 1, 12)),
+    ], ["5/19", "2/3", "7/47", "2/3"])
+    check("47", 880, [F(18, 35) * mixed(1, 1, 24) * mixed(5, 3, 5),
+                      F(5, 28) * F(24, 25) * mixed(1, 17, 18)], ["3", "1/3"])
+    t1, t2 = F(400 - 360, 60 - 50), F(47 - 39, 8 - 6)
+    check("47", 883, [t1, t2, 360 - 50 * t1, 400 - 60 * t1,
+                      47 - 8 * t2, 39 - 6 * t2], ["4", "4", "160", "160", "15", "15"])
+    check("47", 885, [-10 * F("0.68") - 20 * F("0.27"),
+                      -10 * F("1.25") + 20 * F("0.13") - F("12.6"),
+                      -20 * F("0.37") - 10 * F("0.46"),
+                      20 * F("1.14") + 10 * F("2.11") - F("14.5")],
+          ["-12.2", "-22.5", "-12", "29.4"])
+    y = (F("1.045") - F("4.88")) / (F("-3.24") - F("-2.41"))
+    x = (F("11.595") - F("5.16")) / (F("-4.18") - F("-3.19"))
+    check("47", 886, [y, x], ["767/166", "-13/2"])
+    assert -F("3.24") * y + F("4.88") == -F("2.41") * y + F("1.045")
+    assert -F("4.18") * x + F("5.16") == -F("3.19") * x + F("11.595")
+    assert F("0.83") * F("4.62") != F("3.835")
+    check("47", 887, [
+        90 - (80 - (70 - (F("0.054") + F("9.15") * F("6.84")))),
+        80 - (70 - (60 - (F("0.036") + F("8.16") * F("7.15")))),
+    ], ["17.36", "11.62"])
+    check("47", 888, [F(4, 9) / F(3, 8), F(17, 60) / F(34, 9), F(-3, 7) / F(9, 14),
+                      F(86, 119) / F(-43, 51), F(27, 64) / 9, F(-8) / F(-2, 3)],
+          ["32/27", "3/40", "-2/3", "-6/7", "3/64", "12"])
+    check("47", 889, [mixed(2, 1, 7) / mixed(1, 11, 14),
+                      mixed(3, 3, 5) / mixed(1, 11, 25),
+                      mixed(2, 3, 23) / mixed(7, 21, 46),
+                      mixed(2, 47, 49) / mixed(12, 3, 7)], ["6/5", "5/2", "2/7", "5/21"])
+    check("47", 890, [mixed(7, 1, 8) / mixed(4, 3, 4) * 8,
+                      mixed(11, 1, 3) / F(4, 21) / mixed(4, 1, 4),
+                      mixed(1, 7, 9) * mixed(2, 2, 5) / mixed(1, 3, 5),
+                      F(7, 8) * F(8, 9) / mixed(1, 1, 9)], ["12", "14", "8/3", "7/10"])
+    check("47", 891, [48 / F(6, 25), 48 / F(3, 4), 48 / F(4, 5)], ["200", "64", "60"])
+    check("47", 892, [2 * (80 + 80 * F(5, 16))], ["210"])
+    check("47", 893, [(180 * F(150) + 220 * F(150) * (1 - F("0.22"))) / 400], ["131.85"])
+    check("47", 894, [F("8.9") - F("0.7"), F("8.9"), F("8.9") + F("0.7")], ["8.2", "8.9", "9.6"])
+    check("47", 895, [
+        F("3.65") * (F("558.78") / F("6.95") - F("40.02")) - (F("9.87") + F("16.9")),
+        (F("0.32674") / F("0.34") + F("0.3471") / (F("12.47") - F("3.57"))) / F("0.01"),
+    ], ["120.617", "100"])
+    ab = 600 * (math.sqrt(3) - 1)
+    cb = 300 * (3 * math.sqrt(2) - math.sqrt(6))
+    assert abs(ab / 600 - math.sin(math.pi / 4) / math.sin(5 * math.pi / 12)) < 1e-12
+    assert abs(cb / 600 - math.sin(math.pi / 3) / math.sin(5 * math.pi / 12)) < 1e-12
+    CHECKS["47"].append({
+        "source_number": "884", "status": "pass",
+        "analytic_cross_check_only_not_exact_ruler_readings": {"AB_m": ab, "CB_m": cb},
+    })
+
+
+def save_json(path, data):
+    with path.open("x") as handle:
+        json.dump(data, handle, indent=2, ensure_ascii=True)
+        handle.write("\n")
+
+
+def binding(path):
+    return {"path": str(path.relative_to(ROOT)), "sha256": sha(path)}
+
+
+def preserve_copy(source, target):
+    with target.open("xb") as handle:
+        handle.write(source.read_bytes())
+    assert sha(source) == sha(target)
+    return {"original": binding(source), "preserved": binding(target), "byte_identical": True}
+
+
+def main():
+    arithmetic()
+    for number in ("46", "47"):
+        own = TMP / f"reviewer-5m-n{number}"
+        source_path = TMP / f"5m-n{number}/source.json"
+        source = json.loads(source_path.read_text())
+        reasoning_path = own / "source-reasoning.json"
+        result = json.loads(reasoning_path.read_text())
+        assert source["source"]["lesson"] == result["lesson"]
+        assert [item["number"] for item in source["exercises"]] == [
+            item["source_number"] for item in result["solutions"]
+        ]
+        assert len(result["solutions"]) == result["source_exercise_count"]
+        provenance = [binding(source_path)]
+        for item in source["trace"]:
+            file = ROOT / item["path"]
+            assert sha(file) == item["sha256"], f"Allowed source snapshot changed: {file}"
+            provenance.append(binding(file))
+        original_dir = ROOT / "ssot-resources/soviet10year-textbooks/artifacts/5m/lessons"
+        for filename in ("lesson.json", "exercises.json"):
+            provenance.append(binding(original_dir / result["lesson"] / filename))
+        definitions = ["math5-c1-s2-n12", "math5-c2-s1-n38"] if number == "46" else [
+            "math5-c1-s2-n15", "math5-c1-s2-n11", "math5-c1-s1-n2",
+        ]
+        provenance.extend(binding(original_dir / lesson / "lesson.json") for lesson in definitions)
+        preserved_source = preserve_copy(source_path, own / "source-input-preserved.json")
+        calculation = {
+            "scope": "Independent rational arithmetic verification; not structural/canonical validation",
+            "status": "pass", "checks": CHECKS[number],
+            "symbolic_domains_and_geometric_conventions": "Reasoned separately in source-solutions; no convention inferred by this arithmetic program.",
+        }
+        save_json(own / "arithmetic-checks.json", calculation)
+        result["source_file"] = binding(source_path)
+        result["source_input_preservation"] = preserved_source
+        result["allowed_input_bindings"] = provenance
+        result["independent_reasoning_binding"] = binding(reasoning_path)
+        result["arithmetic_verification"] = binding(own / "arithmetic-checks.json")
+        result["prohibited_material_read"] = False
+        result["structural_or_canonical_validator_run"] = False
+        result["render_or_browser_run"] = False
+        if number == "47":
+            figure = source["figures"][0]
+            assert figure["id"] == "fig-151"
+            assets = []
+            for asset in figure["assets"]:
+                asset_path = ROOT / asset["path"]
+                assert sha(asset_path) == asset["sha256"]
+                assets.append(binding(asset_path))
+            supplied = TMP / "5m-n47/source-assets"
+            evidence_path = supplied / "render-evidence.json"
+            evidence = json.loads(evidence_path.read_text())[0]
+            assert evidence["asset"] == assets[0]["path"]
+            assert evidence["sha256"] == assets[0]["sha256"]
+            assets_dir = own / "source-assets"
+            assets_dir.mkdir(exist_ok=True)
+            png_source = supplied / "fig-151-browser.png"
+            preservation = [
+                preserve_copy(png_source, assets_dir / "fig-151-browser.png"),
+                preserve_copy(ROOT / assets[1]["path"], assets_dir / "fig-151.artwork.png"),
+            ]
+            image_observations = []
+            for note, copied in zip(result["figure_observation_notes"], preservation):
+                viewed_path = ROOT / note["actual_opened_file"]
+                with Image.open(viewed_path) as image:
+                    image.load()
+                    size = list(image.size)
+                image_observations.append({
+                    **note, "status": "pass", "scope": "source asset observation only",
+                    "observer": "independent_agent", "actual_opened_file": str(viewed_path),
+                    "sha256": sha(viewed_path), "size": size, "preserved_copy": copied,
+                })
+            image_record = {
+                "lesson": result["lesson"], "figure_id": "fig-151",
+                "status": "pass", "scope": "actually opened source layers; not product display or new-figure approval",
+                "assets": assets, "rasterization_evidence": binding(evidence_path),
+                "rasterization_evidence_is_not_author_visual_approval": True,
+                "actually_opened_image_count": 2, "observations": image_observations,
+                "full_two_layer_composite_actually_opened": False,
+            }
+            save_json(own / "source-image-observations.json", image_record)
+            result["figure_checks"] = [{
+                "figure_id": "fig-151", "asset_path": assets[0]["path"],
+                "asset_sha256": assets[0]["sha256"],
+                "observation": image_observations[0]["observation"],
+                "actually_opened_raster": binding(png_source),
+                "artwork_asset_opened": assets[1],
+                "image_observations": binding(own / "source-image-observations.json"),
+                "source_layer_observation_only": True,
+            }]
+        else:
+            save_json(own / "source-image-observations.json", {
+                "lesson": result["lesson"], "status": "not_applicable",
+                "evidence": "The allowed source package has no referenced figures.",
+                "actually_opened_image_count": 0, "observations": [],
+            })
+        result["source_image_observation_record"] = binding(own / "source-image-observations.json")
+        save_json(own / "source-solutions.json", result)
+        print(json.dumps({
+            "saved": str(own / "source-solutions.json"), "status": result["status"],
+            "source_exercises_addressed": len(result["solutions"]),
+            "convention_blocked_sources": result["unresolved_source_numbers"],
+            "arithmetic_check_groups": len(CHECKS[number]),
+            "new_browser_or_render_run": False,
+        }))
+
+
+if __name__ == "__main__":
+    main()

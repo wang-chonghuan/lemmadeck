@@ -1,0 +1,85 @@
+"""Freeze the package-position assessment using independent view results only."""
+
+import hashlib
+import json
+from pathlib import Path
+
+
+TMP = Path(__file__).resolve().parent.parent
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def main():
+    for number, prefix_count in (("46", 11), ("47", 33)):
+        own = TMP / f"reviewer-5m-n{number}"
+        frozen_path = own / "view-checks.json"
+        frozen = json.loads(frozen_path.read_text())
+        singles = [
+            {"question_id": q["question_id"], "position": q["mathematics"]["correct"][0]}
+            for q in frozen["question_reviews"] if q["mode"] == "single"
+        ]
+        breaks = [
+            {"before": a, "after": b, "single_ordinal_after": i + 2}
+            for i, (a, b) in enumerate(zip(singles, singles[1:]))
+            if a["position"] == b["position"]
+        ]
+        assert len(breaks) == 1
+        assert breaks[0]["single_ordinal_after"] == prefix_count + 1
+        assert all(q["position"] in {"A", "B"} for q in singles)
+        result = {
+            "lesson": frozen["lesson"],
+            "scope": "Position-pattern judgment before opening any author draft; independent frozen view solutions only.",
+            "reviewer": {"kind": "independent_agent", "identity": "source-first pure-view reviewer"},
+            "verdict": "revise",
+            "genuine_predictable_package_pattern": True,
+            "mere_position_imbalance": False,
+            "independent_frozen_view_checks": {"path": str(frozen_path), "sha256": sha(frozen_path)},
+            "single_sequence": singles,
+            "single_question_count": len(singles),
+            "position_counts": {
+                p: sum(q["position"] == p for q in singles) for p in ("A", "B", "C")
+            },
+            "alternating_transition_count": len(singles) - 1 - len(breaks),
+            "total_transition_count": len(singles) - 1,
+            "first_unbroken_alternating_run": {
+                "count": prefix_count,
+                "first": singles[0],
+                "last": singles[prefix_count - 1],
+            },
+            "only_break": breaks[0],
+            "evidence": (
+                f"The first {prefix_count} single questions alternate A/B in the supplied order, "
+                f"and {len(singles) - 2} of {len(singles) - 1} transitions alternate overall. "
+                "All single correct positions exclude C. This repeated two-position sequence across "
+                "different mathematical tasks is stronger evidence than unequal position frequencies. "
+                "Once a learner recognizes its phase from easy solved items, continuing the sequence "
+                "can replace mathematical judgment on a long contiguous block."
+            ),
+            "limits": [
+                "The single same-position break prevents claiming one alternating rule determines every answer.",
+                "No hidden author key, feedback behavior, author intent or runtime randomization was inspected or assumed.",
+                "This is a defect risk in the supplied ordered package, not a claim that a stem explicitly states an answer.",
+                "Independent option truth sets and all source mathematical judgments remain unchanged.",
+            ],
+            "handoff": "Vary correct-option positions/order before package approval, preserving each mathematical alternative and complete true set. Reviewer does not author or reorder options.",
+            "prior_notice_interpretation_superseded": "The original immutable record treated only marginal A/B frequency imbalance as a notice; this new assessment adds the observed sequence and revises the package leakage judgment.",
+            "author_internals_read_at_assessment": False,
+            "original_frozen_records_modified": False,
+        }
+        path = own / "position-pattern-assessment-before-internals.json"
+        with path.open("x") as handle:
+            json.dump(result, handle, ensure_ascii=True, indent=2)
+            handle.write("\n")
+        print(json.dumps({
+            "saved": str(path), "verdict": "revise",
+            "first_alternating_run": prefix_count, "single_count": len(singles),
+            "alternating_transitions": result["alternating_transition_count"],
+            "total_transitions": result["total_transition_count"],
+        }))
+
+
+if __name__ == "__main__":
+    main()
