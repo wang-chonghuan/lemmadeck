@@ -1,0 +1,221 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+assert.equal(process.cwd(), '/Users/yong/.codex/worktrees/d9b1/lemmadeck')
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const root = `${scratch}/reviewer-batch30-n61-display`
+const read = file => JSON.parse(fs.readFileSync(file))
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const bind = file => ({ path: path.resolve(file), sha256: hash(file) })
+const manifestFile = `${scratch}/batch30-render/5m-math5-c2-s4-n61-capture-manifest.json`
+const commandFile = `${root}/supplement-command.json`
+const primaryInventoryFile = `${scratch}/reviewer-batch30-n61-primary/native-inventory.json`
+const inventoryFile = `${root}/native-inventory.json`
+const primaryFiles = ['a', 'b'].map(name =>
+  `${scratch}/reviewer-batch30-n61-primary-${name}/primary-observations.json`)
+const supplementFiles = 'abcdefghij'.split('').map(name =>
+  `${scratch}/reviewer-batch30-n61-supplement-${name}/supplement-observations.json`)
+const headingFile = `${scratch}/reviewer-batch30-n61-heading-observer/heading-observations.json`
+const headingCommandFile = `${scratch}/reviewer-batch30-n61-remaining-headings/capture-command.json`
+const terminalFile = `${scratch}/reviewer-batch30-n61-terminal-observer/terminal-observations.json`
+const terminalCommandFile = `${scratch}/reviewer-batch30-n61-choice17-terminals/capture-command.json`
+const manifest = read(manifestFile)
+const command = read(commandFile)
+const primaryInventory = read(primaryInventoryFile)
+const inventory = read(inventoryFile)
+const primary = primaryFiles.map(read)
+const supplements = supplementFiles.map(read)
+const heading = read(headingFile)
+const headingCommand = read(headingCommandFile)
+const terminal = read(terminalFile)
+const terminalCommand = read(terminalCommandFile)
+assert.equal(command.exit_code, 0)
+assert.equal(command.browser_closed, true)
+assert.equal(headingCommand.exit_code, 0)
+assert.equal(headingCommand.browser_closed, true)
+assert.equal(heading.image_count, 7)
+assert.equal(heading.counts.pass, 3)
+assert.equal(heading.counts.partial, 4)
+assert.equal(terminalCommand.exit_code, 0)
+assert.equal(terminalCommand.browser.closed, true)
+
+function collect(reviews, files, expectedInventory) {
+  const montages = new Map()
+  const members = new Map()
+  reviews.forEach((review, batch) => {
+    assert(review.image_count <= 8)
+    assert.equal(review.image_count, review.montages.length)
+    for (const montage of review.montages) {
+      const expected = expectedInventory.montages[montage.index]
+      assert(expected && !montages.has(montage.index))
+      assert.equal(montage.actualopened, true)
+      assert.equal(montage.path, expected.path)
+      assert.equal(montage.sha256, expected.sha256)
+      assert.equal(hash(montage.path), montage.sha256)
+      assert.equal(montage.members.length, expected.members.length)
+      montages.set(montage.index, { ...montage, actual_review: bind(files[batch]) })
+      for (const member of montage.members) {
+        const original = expected.members.find(row => row.capture_id === member.capture_id)
+        assert(original && !members.has(member.capture_id))
+        assert.equal(member.path, original.path)
+        assert.equal(member.sha256, original.sha256)
+        assert.equal(hash(member.path), member.sha256)
+        assert(member.visible_evidence && Object.keys(member.visible_evidence).length)
+        members.set(member.capture_id, { ...member, actual_review: bind(files[batch]) })
+      }
+    }
+  })
+  return { montages, members }
+}
+const originals = collect(primary, primaryFiles, primaryInventory)
+const extra = collect(supplements, supplementFiles, inventory)
+assert.equal(originals.montages.size, 10)
+assert.equal(originals.members.size, 16)
+assert.equal(extra.montages.size, 76)
+assert.equal(extra.members.size, 203)
+for (const row of [...manifest.inputs, ...manifest.rendered, ...command.protectedFiles,
+  ...headingCommand.protectedFiles]) assert.equal(hash(row.path), row.sha256)
+const headings = new Map(heading.captures.map(row => {
+  assert.equal(row.actual_opened, true)
+  assert.equal(hash(row.path), row.sha256)
+  assert(['pass', 'partial'].includes(row.status))
+  return [row.id, { ...row, actual_review: bind(headingFile) }]
+}))
+const sourceFiguresFile = 'ssot-resources/soviet10year-textbooks/artifacts/5m/editions/modern-us-neutral/lessons/math5-c2-s4-n61/figures.json'
+assert.deepEqual(read(sourceFiguresFile).figures, [])
+for (const id of [5, 6, 9, 10]) assert.equal(originals.members.get(id).status, 'fail')
+assert.equal(originals.members.get(13).sha256, originals.members.get(14).sha256)
+assert.equal(originals.members.get(15).sha256, originals.members.get(16).sha256)
+
+const jointReasons = new Map([
+  ['text/390/8', 'Actual primary15 supplies the complete16.04 multiplication start and interior chain through12.0. Actual shifted supplement96 supplies the shared16.04 product-over4,4.01 times3 and terminal12.03 plus point. The individual clipped starts/ends are retained.'],
+  ['text/390/10', 'Actual primary15 supplies the complete3.63 division start, quotient chain and6.05 plus point. Shifted supplement97 independently supplies the common product-over3,1.21 times5 and terminal6.05 plus point, but its first glyph is clipped. Neither original observation is relabeled.'],
+  ['exercises/390/15', 'Actual supplement109 shows1162 and all12subitem starts, with four clipped expression ends. Complementary110 ends item1 with closing bracket divided by4.8;111 ends item5 with minus84.5 plus4.45;112 ends item6 with11.3 closing bracket plus13.79;113 ends item8 with(3.45 minus4.65) divided by6. Their literal shared interior terms bind the four distinct rows, and all other8rows plus final point are visible in109. All5individual partials remain.'],
+  ['exercises/390/52', 'Actual primary12 shows1199 and its complete start3 times(2 1/2 a minus0.2), then minus15 1/15 equals8 minus(2/3 minus a clipped0. Actual shifted147 overlaps from the1/2 a minus0.2 term through minus15 1/15 equals8, and ends with minus(2/3 minus0.5a), closing parenthesis and point. This is union of two actual windows, not whole-equation visibility in either.'],
+  ['choices/390/17', 'Actual163 supplies the complete choice17 heading, all four starts, row3 and all three result alternatives. Shifted164/165 overlap the first two rows, but their final numeric glyph boundaries remain unproved in those original partials. The two separate fresh terminal captures establish the fully contained+4.45 after the closing parenthesis and+13.79 after the closing bracket; neither includes punctuation. The original I report separately observes each semicolon on the following line. Actual166 overlaps row4 and supplies its full(3.45 minus4.65) divided by6 and point. This is union across actual windows only; all four original partials remain.'],
+])
+const ledger = command.objects.map(row => {
+  const identity = `${row.surface}/${row.viewport.width}/${row.index}`
+  const observed = row.supplement_ids.map(id => {
+    assert(extra.members.has(id))
+    return extra.members.get(id)
+  })
+  const actualPrimary = []
+  const actualTargets = []
+  let joint = null
+  const desktop = row.viewport.width === 1440
+  if (!observed.length) {
+    if (row.surface === 'text') {
+      if (row.index === 11) actualTargets.push(headings.get(desktop ? 1 : 5))
+      else actualPrimary.push(originals.members.get(desktop ? 13 : 15))
+    } else if (row.surface === 'exercises') {
+      if (row.index === 54) actualTargets.push(headings.get(desktop ? 3 : 7))
+      else if (row.index <= 3) actualPrimary.push(originals.members.get(desktop ? 7 : 11))
+      else {
+        assert(desktop ? row.index >= 47 : [49, 50, 51, 53].includes(row.index), identity)
+        actualPrimary.push(originals.members.get(desktop ? 8 : 12))
+      }
+    } else {
+      assert.equal(row.surface, 'choices')
+      assert(desktop ? [1, 2, 55, 56].includes(row.index) : [1, 55, 56].includes(row.index))
+      actualPrimary.push(originals.members.get(row.index <= 2 ? (desktop ? 1 : 3) : (desktop ? 2 : 4)))
+    }
+  } else if (!observed.some(member => member.status === 'pass')) {
+    assert(observed.every(member => member.status === 'partial'), identity)
+    assert(jointReasons.has(identity), `No literal joint evidence: ${identity}`)
+    if (row.surface === 'text') actualPrimary.push(originals.members.get(15))
+    if (identity === 'exercises/390/52') actualPrimary.push(originals.members.get(12))
+    if (identity === 'choices/390/17') {
+      assert.equal(terminal.captures.length, 2)
+      for (const capture of terminal.captures) {
+        assert.equal(capture.actual_opened, true)
+        assert.equal(capture.status, 'complete-narrow-terminal-target')
+        assert.equal(capture.visible_evidence.end.fully_contained, true)
+        assert.equal(capture.visible_evidence.end.all_digit_glyphs_complete, true)
+        assert.equal(hash(capture.path), capture.sha256)
+        actualTargets.push({ ...capture, actual_review: bind(terminalFile) })
+      }
+    }
+    const windows = row.regions.map(region => {
+      const captures = command.captures.filter(capture =>
+        row.supplement_ids.includes(capture.id) &&
+        capture.region?.descendant_index === region.descendant_index)
+      const positions = [...new Set([0, ...captures.map(capture => capture.actual_left)])].sort((a, b) => a - b)
+      assert.equal(positions.at(-1), region.maximum)
+      for (let i = 1; i < positions.length; i++) assert(positions[i] < positions[i - 1] + region.width)
+      return { region, observed_window_positions: positions,
+        role: 'Geometry binds the already observed complementary windows; coordinates or DOM prose alone are not credited as visibility.' }
+    })
+    joint = { status: 'pass-joint-object-content-only', evidence: jointReasons.get(identity), windows }
+  }
+  assert(actualPrimary.every(Boolean) && actualTargets.every(Boolean))
+  assert(observed.length || actualPrimary.length || actualTargets.length, identity)
+  const buttonOnly = row.index === (row.surface === 'text' ? 11 : row.surface === 'exercises' ? 54 : -1)
+  return { ...row, actual_primary_observations: actualPrimary,
+    actual_supplement_observations: observed, actual_targeted_observations: actualTargets,
+    joint_only_coverage: joint,
+    coverage_scope: buttonOnly ? 'Complete button label, arrow and local contours only; surrounding placement and clearance remain unproved.'
+      : 'Complete rendered object content, using actual literal observation rather than computed primary first/last ranges.',
+    individual_partial_or_failed_observations_preserved: true }
+})
+assert.equal(ledger.length, 242)
+const images = [...manifest.screenshots, ...command.captures, ...headingCommand.captures,
+  ...terminalCommand.captures]
+const freshCounts = [...primary.map(row => row.image_count),
+  ...supplements.map(row => row.image_count), heading.image_count, 2]
+const output = {
+  schema: 's10y-actual-display-observations@1', ticket: 'STEMROBIN-182',
+  book: '5m', lesson: 'math5-c2-s4-n61', status: 'pass', outcome: 'pass',
+  scope: 'Diagnostic joint rendered-object content only; not mathematical or full-page application acceptance.',
+  reviewer: { kind: 'independent_agent', identity: 'Fresh bounded image observers; parent integrates text and path/hash bindings only.' },
+  manifest: bind(manifestFile), supplement_command: bind(commandFile),
+  primary_inventory: bind(primaryInventoryFile), native_inventory: bind(inventoryFile),
+  bounded_reviews: [...primaryFiles, ...supplementFiles, headingFile, terminalFile].map(bind),
+  primary_actual_observations: primary, supplemental_actual_observations: supplements,
+  heading_actual_observations: heading, heading_capture_receipt: bind(headingCommandFile),
+  terminal_actual_observations: terminal, terminal_capture_receipt: bind(terminalCommandFile),
+  primary_images: manifest.screenshots, supplemental_images: command.captures,
+  targeted_heading_and_button_images: headingCommand.captures,
+  targeted_terminal_images: terminalCommand.captures,
+  primary_native_montages: primaryInventory.montages, native_montages: inventory.montages,
+  actual_full_object_coverage_ledger: ledger,
+  actual_heading_coverage: {
+    text_desktop: originals.members.get(13), text_mobile: headings.get(4),
+    exercises_desktop: headings.get(2), exercises_mobile: headings.get(6),
+    choices_desktop: originals.members.get(1), choices_mobile: originals.members.get(3),
+  },
+  counts: { primary_PNGs: 16, primary_native_montages: 10,
+    supplementary_PNGs: 203, supplementary_native_montages: 76,
+    targeted_heading_and_button_PNGs: 7, targeted_terminal_PNGs: 2,
+    total_PNG_files: images.length,
+    actual_distinct_PNG_inputs: new Set(images.map(row => row.sha256)).size,
+    fresh_context_image_counts: freshCounts,
+    actual_view_image_calls: freshCounts.reduce((sum, value) => sum + value, 0),
+    unique_choice_questions: 56, unique_choice_options: 169, source_written_exercises: 53,
+    rendered_selector_nodes: ledger.length, unique_surface_viewport_combinations: 6,
+    additional_unique_combinations: 0 },
+  unusable_original_formula_strips: {
+    capture_ids: [5, 6, 9, 10], individual_verdict: 'fail-retained',
+    source_figure_manifest: bind(sourceFiguresFile), source_figures: 0,
+    DOM_classification: headingCommand.formulaSVGClassification,
+    classification_is_metadata_not_complete_formula_visual_evidence: true,
+  },
+  primary_same_hash_aliases: [[13, 14], [15, 16]],
+  aliases_not_credited_as_independent_bottom_of_page_observations: true,
+  original_individual_partial_or_failed_observations_not_overwritten: true,
+  complete_joint_prose_written_options_and_terminal_content_coverage: true,
+  complete_local_button_labels_and_contours_observed: true,
+  full_page_extent_or_footer_surrounding_clearance_pass_claimed: false,
+  simultaneous_whole_formula_visibility_or_scroll_discoverability_claimed: false,
+  source_blocks: ['1172', '1173', '1194', '1198'],
+  unperformed_1198_empirical_tasks: 9,
+  semantic_or_canonical_or_primary_render_or_capture_reruns: 0,
+  formal_application_acceptance_or_new_mathematical_approval_claimed: false,
+  parent_image_opens: 0, image_payloads_returned_to_parent: false,
+  browser: { headless: true, isolated: true, closed: true },
+}
+fs.writeFileSync(`${root}/actual-observations.json`, JSON.stringify(output, null, 2) + '\n',
+  { flag: 'wx' })
+console.log(JSON.stringify(output.counts))

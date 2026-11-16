@@ -1,0 +1,154 @@
+"""Bookkeeping only: project handwritten units; never calculate/create alternatives."""
+import hashlib
+import json
+from pathlib import Path
+import re
+
+HERE = Path(__file__).resolve().parent
+ROOT = HERE.parents[4]
+
+
+def read(name):
+    return json.loads((HERE / name).read_text(encoding="utf-8"))
+
+
+def digest(value):
+    data = json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+    return hashlib.sha256(data.encode("utf-8")).hexdigest()
+
+
+def write_new(name, value):
+    with (HERE / name).open("x", encoding="utf-8") as handle:
+        json.dump(value, handle, ensure_ascii=False, indent=2)
+        handle.write("\n")
+
+
+seed = read("seed.json")
+source_record = read("author-source-record.json")
+units = read("authored-units.json")
+sources = {s["source_number"]: s for s in source_record["sources"]}
+prose = {s["number"]: s["text"] for s in seed["exercises"]}
+
+# Hand-selected layout of already authored alternatives, not an option generator.
+layout = {
+    "q1151a": [0, 2, 1], "q1151b": [1, 0, 2], "q1152": [0, 2, 1],
+    "q1154": [0, 2, 1], "q1155": [2, 0, 1], "q1157": [1, 2, 0],
+    "q1159": [2, 0, 1], "q1160": [2, 0, 3, 1], "q1161": [1, 0, 2],
+    "q1162c": [1, 0, 2], "q1164": [1, 0, 2], "q1165": [0, 2, 1],
+    "q1166": [0, 2, 1], "q1168": [0, 2, 1], "q1169": [0, 2, 1],
+    "q1170": [1, 2, 0], "q1171": [1, 0, 2], "q1173": [1, 2, 0],
+    "q1174": [1, 0, 2], "q1175": [0, 2, 1], "q1176": [1, 0, 2],
+    "q1177": [0, 2, 1], "q1178": [2, 0, 1], "q1179": [1, 2, 0],
+    "q1180": [2, 0, 1], "q1182": [2, 0, 1], "q1183": [1, 0, 2],
+    "q1184": [0, 2, 1], "q1186": [1, 0, 2], "q1187": [0, 2, 1],
+    "q1188": [2, 0, 1], "q1191": [2, 0, 1], "q1192": [1, 2, 0],
+    "q1194": [2, 0, 1], "q1195": [1, 0, 2], "q1196": [0, 2, 1],
+    "q1197": [0, 2, 1], "q1199": [0, 2, 1], "q1200": [2, 0, 1],
+}
+questions = []
+programs = []
+for unit in units:
+    number = unit["n"]
+    text = re.sub(r"^\d+\.\s*", "", prose[number], count=1)
+    stem = unit.get("stem", text + "\n请选择完整结果。")
+    losses = unit.get("losses", [])
+    options = []
+    rationales = []
+    correct = []
+    option_order = layout.get(unit["id"], list(range(len(unit["options"]))))
+    for position, source_index in enumerate(option_order):
+        handwritten = unit["options"][source_index]
+        option_id = chr(65 + position)
+        truth = bool(handwritten.get("c", False))
+        options.append({"id": option_id, "text": handwritten["t"], "figure_ids": []})
+        if truth:
+            correct.append(option_id)
+        rationales.append({
+            "option_id": option_id,
+            "truth": "correct" if truth else "incorrect",
+            "derivation": handwritten["p"],
+            "misconception": None if truth else handwritten["p"],
+        })
+        programs.append({
+            "question_id": unit["id"],
+            "source_number": number,
+            "option_id": option_id,
+            "truth": "correct" if truth else "incorrect",
+            "assertion": handwritten["t"],
+            "proof" if truth else "false_procedure": handwritten["p"],
+            "origin": "handwritten in authored-units.json before projection",
+        })
+    questions.append({
+        "id": unit["id"],
+        "source_numbers": [number],
+        "view": {"mode": unit.get("mode", "single"), "stem": stem,
+                 "figure_ids": [], "options": options},
+        "intent": {
+            "task": re.sub(r"^\d+\.\s*", "", prose[number], count=1),
+            "source_solution": sources[number]["solution"],
+            "unit_reason": unit["unit"],
+            "concept_blocks": [2] if number in {
+                "1148", "1150", "1151", "1152", "1158", "1161", "1185", "1188"
+            } else [],
+            "limitations": losses,
+            "figure_observations": [],
+        },
+        "key": {"correct": correct, "rationales": rationales},
+    })
+
+coverage = []
+for exercise in seed["exercises"]:
+    number = exercise["number"]
+    source = sources[number]
+    source_units = [u for u in units if u["n"] == number]
+    omissions = source.get("blocked_tasks", []) + source.get("production_losses", [])
+    reason = "完整原题任务经人工复算后映射到有数学依据的完整结果组。"
+    if omissions:
+        reason = (
+            "可确定的条件结论或完整文字计划已保留；列出的缺少条件与生产任务"
+            "仍未完成，不能据选择识别宣称完整原题通过。"
+        )
+    coverage.append({
+        "source_number": number,
+        "question_ids": [u["id"] for u in source_units],
+        "omitted_tasks": omissions,
+        "reason": reason,
+    })
+
+draft = {
+    "schema": "s10y-choice-draft-v1",
+    "seed_sha256": digest(seed),
+    "new_figures": [],
+    "questions": questions,
+    "coverage": coverage,
+}
+counts = {
+    "sources": len(coverage),
+    "parent_defined_source_tasks_recomputed_and_accounted": sum(
+        s["task_units"] for s in sources.values()
+    ),
+    "response_units": len(questions),
+    "single": sum(q["view"]["mode"] == "single" for q in questions),
+    "multiple": sum(q["view"]["mode"] == "multiple" for q in questions),
+    "options": len(programs),
+    "correct_option_proofs": sum(p["truth"] == "correct" for p in programs),
+    "wrong_option_programs": sum(p["truth"] == "incorrect" for p in programs),
+    "sources_with_conditions_or_production_losses": sum(
+        bool(c["omitted_tasks"]) for c in coverage
+    ),
+    "source_figures": 0,
+    "new_figures": 0,
+}
+write_new("draft.json", draft)
+write_new("view.json", [q["view"] for q in questions])
+write_new("wrong-programs.json", {
+    "schema": "s10y-author-option-programs-v1",
+    "seed_sha256": digest(seed),
+    "draft_sha256": digest(draft),
+    "scope": "All manually derived false procedures and all correct proofs; author evidence only.",
+    "options": programs,
+    "counts": counts,
+})
+print(json.dumps(counts, ensure_ascii=False, indent=2))
+print("draft_sha256=" + digest(draft))
+print("view is a pure ARRAY of {mode,stem,figure_ids,options}.")

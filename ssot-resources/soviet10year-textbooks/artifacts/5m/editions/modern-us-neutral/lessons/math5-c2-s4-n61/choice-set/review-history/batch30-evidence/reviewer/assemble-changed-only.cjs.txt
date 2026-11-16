@@ -1,0 +1,299 @@
+// Serialize the narrow disclosure review; no source, option, or proof evaluation.
+"use strict";
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const root = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+if (process.cwd() !== root) throw new Error("Explicit reviewer workdir required");
+const base = ".intentfold/tickets/STEMROBIN-182/tmp/";
+const own = base + "reviewer-5m-n61/";
+const pins = {
+  "5m-n61/draft.json": "2ae0fb8f400418edcdad4faa5e8a1e74dca43b2081abbce6652fc8fba8f5da8c",
+  "5m-n61/changed-rate-limitations-delta.json": "3f1058885fe7270ece78116fa289c4cbfd189a02f9fae5eec1e187447b4b88d7",
+  "reviewer-5m-n61/review-original.json": "9ec87180b41897ad7456383cd560175f28320b70fa279ae52d1c51dc672bf20d",
+  "reviewer-5m-n61/internal-comparison-original.json": "9577635e276b1ae53cb2966f56a340be97b2a4864525fd66194c936a9a75f392"
+};
+const sha = bytes => crypto.createHash("sha256").update(bytes).digest("hex");
+const sort = value => Array.isArray(value) ? value.map(sort) :
+  value && typeof value === "object" ?
+    Object.fromEntries(Object.keys(value).sort().map(key => [key, sort(value[key])])) : value;
+const canonical = value => JSON.stringify(sort(value)).replace(/[\u007f-\uffff]/g,
+  character => "\\u" + character.charCodeAt(0).toString(16).padStart(4, "0"));
+const digest = value => sha(canonical(value));
+const clone = value => JSON.parse(JSON.stringify(value));
+const inputs = {};
+const inputHashes = [];
+for (const [relative, expected] of Object.entries(pins)) {
+  const bytes = fs.readFileSync(base + relative);
+  if (sha(bytes) !== expected) throw new Error("Changed-only input changed: " + relative);
+  const value = JSON.parse(bytes);
+  inputs[relative] = value;
+  inputHashes.push({path: base + relative, bytes_sha256: expected, canonical_sha256: digest(value)});
+}
+const draft = inputs["5m-n61/draft.json"];
+const parentDelta = inputs["5m-n61/changed-rate-limitations-delta.json"];
+const original = inputs["reviewer-5m-n61/review-original.json"];
+const internal = inputs["reviewer-5m-n61/internal-comparison-original.json"];
+if (digest(internal.freeze) !== internal.freeze_sha256 ||
+    digest(original) !== internal.freeze.bindings.canonical_review.canonical_sha256 ||
+    pins["reviewer-5m-n61/review-original.json"] !== internal.freeze.bindings.canonical_review.bytes_sha256) {
+  throw new Error("Original rejection binding mismatch");
+}
+if (digest(draft) !== "a5aba19f79b2bd271feac300a177c48976a93343f3539c31d432f2a1f5526da3" ||
+    parentDelta.changed_sha256 !== pins["5m-n61/draft.json"] ||
+    parentDelta.original_sha256 !== internal.freeze.bindings.original_draft_bytes_sha256 ||
+    parentDelta.status !== "pass") {
+  throw new Error("Current draft or parent delta binding mismatch");
+}
+
+const assessments = {
+  "1172": {
+    question_id: "q1172",
+    transparency_evidence: "The new limitation explicitly conditions24 days/key C on fixed unchanged independent additive worker rates over the same workload, denies unconditional approval, and discloses loss of independent reciprocal-rate equation construction. The new omitted_tasks/reason accurately retain both gaps. This agrees with frozen SOURCE/VIEW/INTERNAL; no learner-facing condition was added.",
+    final_coverage_evidence: "Changed-only transparency passes: current q1172 intent.limitations and coverage now disclose the fixed unchanged independent additive same-workload model required for24 days/key C, and that result recognition does not demonstrate independent reciprocal-rate equation construction. The original VIEW/key/proof and original author SOURCE/handoff remain historical evidence, not current unconditional approval. The frozen unconditional complete true set remains null and conditional set C is retained. Coverage verdict remains blocked; the missing model has not been supplied to VIEW.",
+    conditional_set: ["C"],
+    removed_metadata_value: ["B1172-work-model"]
+  },
+  "1173": {
+    question_id: "q1173",
+    transparency_evidence: "The new limitation explicitly conditions first15h/second10h/key C on uniform unchanged independent additive rates in both phases, including the remaining second vehicle's final five hours. The omission/reason retain unresolved solo extrapolation and unperformed independent half-work/labelled-rate derivation. Roles and frozen condition remain intact; disclosure is not a model added to VIEW.",
+    final_coverage_evidence: "Changed-only transparency passes: current q1173 intent.limitations and coverage explicitly retain uniform unchanged independent additive rates through both work phases, including the second vehicle's final five hours, as conditions for first15h/second10h/key C. Independent half-work, rate and vehicle-role derivations are not demonstrated by paired-result recognition. Original VIEW/key/proof and original SOURCE/handoff are preserved as historical evidence. Frozen unconditional complete true set remains null, conditional set C remains, and coverage stays blocked because VIEW still does not establish that model.",
+    conditional_set: ["C"],
+    removed_metadata_value: ["B1173-work-model"]
+  },
+  "1194": {
+    question_id: "q1194",
+    transparency_evidence: "The new limitation separates determined five-minute totals600L/200L and average120/40L per minute from unqualified constant/instantaneous rates. The omission/reason explicitly require average-flow semantics or constant flows, deny an invented profile, and disclose loss of independent remaining-volume equation construction. It matches the frozen rate-profile blocker rather than silently strengthening the visible task.",
+    final_coverage_evidence: "Changed-only transparency passes: current q1194 intent.limitations and coverage distinguish the determined five-minute totals600L/200L and averages120/40L per minute from the unresolved average-versus-constant/instantaneous meaning of the unqualified VIEW rate pair/key A. They disclose that recognition does not demonstrate independent remaining-volume equation construction and do not claim a unique profile. Original VIEW/key/proof and original SOURCE/handoff remain historical evidence. Frozen unconditional complete true set remains null; A is conditional on five-minute-average semantics or constant flows. Coverage remains blocked.",
+    conditional_set: ["A"],
+    removed_metadata_value: ["B1194-rate-profile"]
+  }
+};
+
+const restoredDraft = clone(draft);
+const finalReview = clone(original);
+const authorChanges = [];
+const removedMetadata = [];
+const finalChanges = [{
+  pointer: "/draft_sha256", before: original.draft_sha256, after: digest(draft),
+  reason: "Bind final contract review to the disclosure-repaired draft only"
+}];
+finalReview.draft_sha256 = digest(draft);
+for (const [number, assessment] of Object.entries(assessments)) {
+  const questionIndex = draft.questions.findIndex(item => item.id === assessment.question_id);
+  const coverageIndex = draft.coverage.findIndex(item => item.source_number === number);
+  const reviewSourceIndex = original.source_reviews.findIndex(item => item.source_number === number);
+  const reviewQuestionIndex = original.question_reviews.findIndex(item => item.question_id === assessment.question_id);
+  const oldQuestion = internal.freeze.question_comparisons.find(item => item.question_id === assessment.question_id);
+  const oldSource = internal.freeze.source_comparisons.find(item => item.source_number === number);
+  if ([questionIndex, coverageIndex, reviewSourceIndex, reviewQuestionIndex].includes(-1) ||
+      !oldQuestion || !oldSource) throw new Error("Missing affected source relationship");
+  const changedFields = [
+    {
+      pointer: "/questions/" + questionIndex + "/intent/limitations",
+      before: oldQuestion.author_intent.limitations,
+      after: draft.questions[questionIndex].intent.limitations
+    },
+    {
+      pointer: "/coverage/" + coverageIndex + "/omitted_tasks",
+      before: oldSource.author_coverage.omitted_tasks,
+      after: draft.coverage[coverageIndex].omitted_tasks
+    },
+    {
+      pointer: "/coverage/" + coverageIndex + "/reason",
+      before: oldSource.author_coverage.reason,
+      after: draft.coverage[coverageIndex].reason
+    }
+  ];
+  if (changedFields.some(item => canonical(item.before) === canonical(item.after))) {
+    throw new Error("Expected disclosure field did not change");
+  }
+  restoredDraft.questions[questionIndex].intent.limitations = clone(oldQuestion.author_intent.limitations);
+  restoredDraft.coverage[coverageIndex].omitted_tasks = clone(oldSource.author_coverage.omitted_tasks);
+  restoredDraft.coverage[coverageIndex].reason = oldSource.author_coverage.reason;
+  const sourceReview = finalReview.source_reviews[reviewSourceIndex];
+  const questionReview = finalReview.question_reviews[reviewQuestionIndex];
+  if (sourceReview.coverage.verdict !== "blocked" ||
+      questionReview.task_fidelity.verdict !== "blocked" ||
+      questionReview.mathematics.verdict !== "blocked" ||
+      questionReview.mathematics.correct !== null ||
+      canonical(questionReview.task_fidelity.unresolved_ids) !== canonical(assessment.removed_metadata_value)) {
+    throw new Error("Frozen affected verdict/set/metadata mismatch");
+  }
+  const evidencePointer = "/source_reviews/" + reviewSourceIndex + "/coverage/evidence";
+  finalChanges.push({
+    pointer: evidencePointer, before: sourceReview.coverage.evidence,
+    after: assessment.final_coverage_evidence,
+    reason: "Reflect disclosure changes only; blocked coverage verdict unchanged"
+  });
+  sourceReview.coverage.evidence = assessment.final_coverage_evidence;
+  const removal = {
+    pointer: "/question_reviews/" + reviewQuestionIndex + "/task_fidelity/unresolved_ids",
+    value: clone(questionReview.task_fidelity.unresolved_ids),
+    reason: "Noncontract metadata removed only from finalcontractreview.json; retained byte-for-byte in review-original.json and the independent INTERNAL freeze",
+    original_internal_location: "/freeze/question_comparisons/" + (oldQuestion.ordinal - 1) +
+      "/task_fidelity/unresolved_ids"
+  };
+  removedMetadata.push(removal);
+  finalChanges.push({pointer: removal.pointer, before: removal.value, action: "remove", reason: removal.reason});
+  delete questionReview.task_fidelity.unresolved_ids;
+  authorChanges.push({
+    source_number: number,
+    question_id: assessment.question_id,
+    changed_fields: changedFields,
+    transparency_review: {verdict: "pass", evidence: assessment.transparency_evidence},
+    source_coverage_verdict: "blocked",
+    task_fidelity_verdict: "blocked",
+    mathematics_verdict: "blocked",
+    unconditional_complete_true_set: null,
+    inherited_conditional_complete_true_set: assessment.conditional_set,
+    frozen_condition_records: clone(oldQuestion.frozen_conditional_true_sets),
+    semantic_resolution: false
+  });
+}
+if (digest(restoredDraft) !== internal.freeze.bindings.original_draft_sha256) {
+  throw new Error("Changes outside the nine authorized disclosure fields");
+}
+
+// Exact inverse of the seven final-review operations proves all other fields unchanged.
+const restoredReview = clone(finalReview);
+restoredReview.draft_sha256 = original.draft_sha256;
+for (const [number, assessment] of Object.entries(assessments)) {
+  const sourceIndex = original.source_reviews.findIndex(item => item.source_number === number);
+  const questionIndex = original.question_reviews.findIndex(item => item.question_id === assessment.question_id);
+  restoredReview.source_reviews[sourceIndex].coverage.evidence = original.source_reviews[sourceIndex].coverage.evidence;
+  restoredReview.question_reviews[questionIndex].task_fidelity.unresolved_ids = clone(assessment.removed_metadata_value);
+}
+if (canonical(restoredReview) !== canonical(original) || finalReview.outcome !== "blocked") {
+  throw new Error("Unauthorized final-review change");
+}
+const serialize = value => JSON.stringify(value, null, 2) + "\n";
+const finalBytes = serialize(finalReview);
+const scopeFreeze = {
+  stage: "CHANGED-ONLY disclosure comparison complete; entire package remains blocked",
+  date: "2026-11-16",
+  scope: {
+    changed_sources: ["1172", "1173", "1194"],
+    authorized_author_changes: "Only three intent.limitations arrays and corresponding coverage omitted_tasks/reason fields",
+    author_field_groups_changed: 9,
+    final_contract_changes: "One draft digest, three affected source coverage evidence strings, and exactly three requested noncontract metadata removals",
+    new_source_math_view_proof_or_full_semantic_checks: 0,
+    canonical_validator_runs: 0
+  },
+  bindings: {
+    inputs: inputHashes,
+    seed_sha256: original.seed_sha256,
+    original_draft_sha256: original.draft_sha256,
+    current_draft_sha256: digest(draft),
+    current_draft_bytes_sha256: pins["5m-n61/draft.json"],
+    inverse_delta_restores_original_draft_sha256: digest(restoredDraft),
+    original_review_bytes_sha256: pins["reviewer-5m-n61/review-original.json"],
+    original_internal_comparison_bytes_sha256: pins["reviewer-5m-n61/internal-comparison-original.json"],
+    original_internal_freeze_sha256: internal.freeze_sha256,
+    inherited_SOURCE_freeze_sha256: internal.freeze.bindings.source_freeze_sha256,
+    inherited_VIEW_math_freeze_sha256: internal.freeze.bindings.view_math_freeze_sha256,
+    inherited_VIEW_sha256: internal.freeze.bindings.frozen_view_sha256,
+    finalcontractreview: {
+      path: own + "finalcontractreview.json", canonical_sha256: digest(finalReview), bytes_sha256: sha(finalBytes)
+    },
+    original_rejection_preserved_byte_for_byte: true
+  },
+  parent_delta_evidence: {
+    path: base + "5m-n61/changed-rate-limitations-delta.json",
+    bytes_sha256: pins["5m-n61/changed-rate-limitations-delta.json"],
+    recorded_status: parentDelta.status,
+    recorded_claims: parentDelta,
+    interpretation: "Parent's once-run delta record is read, not rerun. Its11-file byte-invariance statement is retained as parent evidence; no forbidden file or archive was opened to recheck it.",
+    independent_mechanical_evidence: "Reversing exactly the nine authorized draft field changes restores the independently bound original canonical draft digest, proving unchanged remaining draft structure, VIEW, keys and embedded proof text without reviewing them again.",
+    archive_evidence: "User states12 originals archived before-rate-limitations; archives were not opened or searched."
+  },
+  changed_source_reviews: authorChanges,
+  final_review_changes: finalChanges,
+  removed_noncontract_metadata: removedMetadata,
+  affected_package_relationships: {
+    transparency: "All three new disclosures pass narrowly: the formerly missing internal limitations/omissions are now explicit.",
+    visible_model_conditions: "None added to VIEW. No frozen unconditional null set is replaced by an author key.",
+    author_keys: "Original C,C,A survive only as the already frozen model-specific conditional sets, not newly approved complete answers.",
+    source_and_handoff: "Unchanged original source records and handoff remain historical author evidence. Their original solved claims/omitted rate blockers are not interpreted as current approval.",
+    programs: "Unchanged original proofs/programs and their original-draft binding remain original evidence. No program/proof re-evaluation or normalization occurred.",
+    final_binding: "Only finalcontractreview binds to the new canonical draft digest. review-original and original INTERNAL remain bound to the original draft and rejection.",
+    metadata_only: "Three unresolved_ids arrays are removed only from finalcontractreview.task_fidelity for contract shape; exact pointers/values are recorded here. Blocked verdicts, evidence strings and frozen condition records are untouched.",
+    source_1198: "All nine empirical tasks remain unperformed and blocked; their existing source review and question record are exactly preserved.",
+    constructions_1164_1167: "All prior construction/plotting losses remain exactly preserved; no physical completion claim is introduced."
+  },
+  counts: {
+    changed_sources_reviewed: 3,
+    transparency_passes: 3,
+    changed_author_field_groups: 9,
+    source_coverage_evidence_updates: 3,
+    draft_digest_updates: 1,
+    removed_noncontract_metadata_fields: 3,
+    final_contract_changed_locations: 7,
+    inherited_source_reviews: original.source_reviews.length,
+    inherited_question_reviews: original.question_reviews.length,
+    inherited_SOURCE_task_units_accounted_not_claimed_completed: 143,
+    inherited_options_compared_in_original_not_rechecked: 169,
+    inherited_correct_proofs_not_rechecked: 57,
+    inherited_false_procedures_not_rechecked: 112,
+    retained_unconditional_null_complete_sets: 3,
+    retained_conditional_complete_sets: 3,
+    retained_unconditionally_undetermined_option_records_in_original_freeze: 9,
+    retained_canonical_option_checks: original.question_reviews.reduce((sum, item) => sum + item.mathematics.option_checks.length, 0),
+    retained_blocked_source_coverage_records: 4,
+    retained_blocked_question_math_records: 3,
+    retained_unperformed_1198_empirical_tasks: 9,
+    source_figures: 0,
+    new_figures: 0,
+    new_mathematical_checks: 0,
+    verdicts_changed: 0,
+    question_evidence_strings_changed: 0
+  },
+  disposition: {
+    transparency_outcome: "pass",
+    package_outcome: "blocked",
+    approved: false,
+    original_rejection_retained: true,
+    blocking_rate_sources: ["1172", "1173", "1194"],
+    empirical_source_blocker: "1198: nine individual tasks",
+    stop: "Changed-only comparison ends here; no source/view/math/proof recheck, package approval or further repair."
+  },
+  boundary: {
+    workdir: root, writes_only: own,
+    manual_code_and_judgment_edits: "apply_patch",
+    output_serialization: "Mechanical cloning, narrow field substitution and recorded metadata removal",
+    source_VIEW_math_proofs_programs_recomputed_or_rechecked: false,
+    canonical_validator_or_parent_delta_script_run: false,
+    original_review_or_internal_freeze_edited: false,
+    archives_or_other_author_files_opened: false,
+    render_browser_image_git_skills_network_DB_app_other_chats_agents_used: false
+  }
+};
+const changedReview = {
+  schema: "s10y-choice-changed-only-review-v1",
+  ticket: "STEMROBIN-182",
+  reviewer: "reviewer-5m-n61",
+  state: "changed-disclosures-pass-entire-package-blocked",
+  freeze_sha256: digest(scopeFreeze),
+  digest_definition: "SHA-256 of complete freeze using sorted keys, ensure_ascii=True and compact separators; byte hashes bind preserved originals and the final contract file.",
+  freeze: scopeFreeze
+};
+for (const name of ["changed-only-review.json", "finalcontractreview.json"]) {
+  if (fs.existsSync(own + name)) throw new Error("Refusing to replace a saved changed-only review");
+}
+for (const [relative, expected] of Object.entries(pins)) {
+  if (sha(fs.readFileSync(base + relative)) !== expected) throw new Error("Input changed during serialization");
+}
+for (const [name, bytes] of [
+  ["changed-only-review.json", serialize(changedReview)],
+  ["finalcontractreview.json", finalBytes]
+]) {
+  fs.writeFileSync(path.resolve(root, own, name), bytes, {flag: "wx"});
+}
+console.log(JSON.stringify({
+  finalreview_path: path.resolve(root, own, "finalcontractreview.json"),
+  finalreview_canonical_sha256: digest(finalReview),
+  finalreview_bytes_sha256: sha(finalBytes),
+  changed_only_review_path: path.resolve(root, own, "changed-only-review.json"),
+  counts: scopeFreeze.counts,
+  outcome: finalReview.outcome
+}, null, 2));

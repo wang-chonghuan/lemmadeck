@@ -1,0 +1,697 @@
+// Mechanical serialization of manually reviewed original evidence and frozen judgments.
+// This does not evaluate source expressions, solve options, or invoke a validator.
+"use strict";
+
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const root = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+if (process.cwd() !== root) throw new Error("Explicit reviewer workdir required");
+const base = ".intentfold/tickets/STEMROBIN-182/tmp/";
+const own = base + "reviewer-5m-n61/";
+const author = base + "5m-n61/";
+const sha = value => crypto.createHash("sha256").update(value).digest("hex");
+const sorted = value => Array.isArray(value) ? value.map(sorted) :
+  value && typeof value === "object" ?
+    Object.fromEntries(Object.keys(value).sort().map(key => [key, sorted(value[key])])) : value;
+const canonical = value => JSON.stringify(sorted(value)).replace(/[\u007f-\uffff]/g,
+  character => "\\u" + character.charCodeAt(0).toString(16).padStart(4, "0"));
+const digest = value => sha(canonical(value));
+const expectedBytes = {
+  "5m-n61/draft.json": "ea91a9eb43716e4091490b481f76eb4608c5867740309449c6c88d3bc6ded4c1",
+  "5m-n61/wrong-programs.json": "a083cb80f96d7c091a19e77d95db66ee6be43b16ea3e33864582db4d9c14948a",
+  "5m-n61/author-source-record.json": "7fbb7d720c115b9c09d926eee820194dfa5b1ef62c84ce9309198d745d0ca046",
+  "5m-n61/author-handoff.json": "be5ebd9286455ed9c9cc88266fc63fb75b27a2cfaf4c5f7cc84695328aa3c1a4",
+  "reviewer-5m-n61/SOURCE-ready.json": "0b0382cdef9c7b410c843ceaeee21e251d928687f1b5c135fbccb84306284530",
+  "reviewer-5m-n61/source-solutions.json": "eaba2ff99175d2ee534651e759c3ef43bba2ce80a5c0b89a25a6a8b94e5f9bd3",
+  "reviewer-5m-n61/view-checks.json": "1ae8dcd282083cc203add784f3de5423b94bd511771a3a27e1b685e5cd49e6f9",
+  "reviewer-5m-n61/frozen-view-math.json": "f3f9d964c7807c0ede1cb65024a0ebd5558b9edc6a9508c974d6084e481660ca"
+};
+const inputs = {};
+const snapshots = [];
+for (const [relative, expected] of Object.entries(expectedBytes)) {
+  const bytes = fs.readFileSync(base + relative);
+  if (sha(bytes) !== expected) throw new Error("Original/frozen input changed: " + relative);
+  const data = JSON.parse(bytes);
+  inputs[relative] = data;
+  snapshots.push({path: base + relative, bytes_sha256: expected, canonical_sha256: digest(data)});
+}
+if (fs.existsSync(author + "correct-proofs.json")) {
+  throw new Error("Previously absent authorized filename changed; do not overwrite original comparison");
+}
+const draft = inputs["5m-n61/draft.json"];
+const programs = inputs["5m-n61/wrong-programs.json"];
+const authorSource = inputs["5m-n61/author-source-record.json"];
+const handoff = inputs["5m-n61/author-handoff.json"];
+const sourceReady = inputs["reviewer-5m-n61/SOURCE-ready.json"];
+const source = inputs["reviewer-5m-n61/source-solutions.json"];
+const viewChecks = inputs["reviewer-5m-n61/view-checks.json"];
+const math = inputs["reviewer-5m-n61/frozen-view-math.json"];
+const draftHash = digest(draft);
+if (draftHash !== "efb45ecbfb2e328332403ca35e9657aa61d80684de261dbc57d9e44e56e45ac4" ||
+    digest(draft.questions.map(question => question.view)) !== math.freeze.view_sha256 ||
+    digest(sourceReady.freeze) !== sourceReady.freeze_sha256 ||
+    digest(math.freeze) !== math.freeze_sha256) {
+  throw new Error("Original draft projection or frozen binding mismatch");
+}
+
+// Each pair is a manual assessment of that exact author's false procedure.
+// Reproduction of a bad algorithm is distinct from unconditional option falsity.
+const falseAudits = {
+  q1148: {
+    A: "Division is replaced by multiplication in all six expressions; the displayed products 40.96,.18,20.16,26/9,207/50,44/5 match that error, not the frozen quotient tuple.",
+    C: "Exchanging dividend and divisor gives the six reciprocal results 4,1/8,2/7,13/8,18/23,16/55; each differs from the requested quotient."
+  },
+  q1149: {
+    B: "Treating each nested reciprocal as its denominator, while retaining the innermost ordinary fractions, gives 10/3 and 17/2. The procedure is explicit and loses the reciprocal nesting.",
+    C: "7/4 and 16/7 are the final denominators before the outer reciprocal/addition. Returning them reproduces the option but stops before the requested full values."
+  },
+  q1150: {
+    A: "Reversing each full numerator and denominator gives 9,1/3,50/231,30; the procedure exactly inverts the four frozen results.",
+    B: "Omitting each numerator's first factor gives 5/108,30/17,11/20,1/70. This changes the original expressions rather than legitimately cancelling matching factors."
+  },
+  q1151a: {
+    A: "Dividing each decimal operand by ten scales all six results by ten, yielding 51/1000,803/2000,41/20,33/2500,1/4,13/25. No source authorizes that extra denominator zero.",
+    B: "The six specified multiplication/division reversals reproduce 68/75,1606/625,25/738,1331/12000,6125/8,65/882 and contradict the printed operation signs."
+  },
+  q1151b: {
+    A: "Keeping only the signed fractional parts of the mixed numbers produces .5,10.4,4.2,-12.6,-50.4,.63; every integer part is improperly discarded.",
+    C: "The listed operation reversals with correctly converted mixed numbers give 225/62,91/5,320/189,-56,-56/9,43/84. Correct conversion does not justify reversing multiplication and division."
+  },
+  q1152: {
+    A: "162/7,77/20,459/125,58/15 are whole numerators only; the procedure reproduces them by omitting the nonunit outer denominators.",
+    C: "Swapping the final full fraction gives 5/108,100/77,1/24,3/58. These are reciprocals of the four answers, not an equivalent evaluation."
+  },
+  q1153: {
+    B: "120 is the correctly derived speed, then incorrectly labelled as seven-and-a-half-hour distance; multiplication by the specified time is missing.",
+    C: "Treating the observed 330-km trip distance as an hourly speed gives 2475. It ignores that 330 km required 2.75 hours."
+  },
+  q1154: {
+    A: "25.5/5=5.10 spends all the money rather than the stated three-fifths, so it reproduces the alternative while dropping the purchase fraction.",
+    B: "Replacing expenditure multiplication by division gives (25.5/.6)/5=8.50; the direction of the money-share relation is reversed."
+  },
+  q1155: {
+    B: "The explicitly inverted relation B=.7F gives 245 and 1000/7 kg. The actual source says F=.7B, so both conversion directions are wrong.",
+    C: "Returning 5 and .7 centners as kilograms reproduces the option's hundredfold unit errors. The actual requested masses require conversion to kilograms."
+  },
+  q1156: {
+    A: "Testing 2+3=5 then generalizing to every prime pair is the stated false procedure. The defined counterexample 3+5=8 refutes the universal claim.",
+    B: "Inferring that prime factors imply a prime product confuses factor primality with product primality; 2 is a proper divisor of 2*3=6."
+  },
+  q1157: {
+    A: "Second-minus-first reverses all four required differences and their reported comparisons. Subtraction direction is a substantive original instruction.",
+    B: "The invalid rule (a-c)/(b-d) gives 2/2,1/3,-3/4,-2/2 and the stated sign-based relations. Some relation signs coincide, but all required differences are wrong."
+  },
+  q1158: {
+    A: "Second-divided-by-first gives 117/121 and 272/285, then the procedure misuses those reciprocal ratios as the requested first/second quotients.",
+    C: "Multiplication without taking the divisor reciprocal gives 99/143 and 240/323. Their being below one is irrelevant to the requested positive-number division comparison."
+  },
+  q1159: {
+    B: "The complements are correct, but using the same ordering for originals and complements reverses every requested winner; complement order must be reversed.",
+    C: "Computing a-1 instead of 1-a gives all the listed negative complements; retaining the inverse complement-order rule then reverses the four winners."
+  },
+  q1160: {
+    A: "Applying a single outside minus to both factors makes two minuses and recovers ab. The a=b=1 counterexample is within the real domain; equality only at ab=0 is not universality.",
+    D: "The false reciprocal-distribution rule is explicit. a=b=1 also satisfies a,b,a+b nonzero and gives 1/2 versus 2, so the domain-qualified universal assertion is false."
+  },
+  q1161: {
+    A: "The four stated same-side products, rather than cross-products, give -122/85,-27/20,-16/5,-42/5. They alter proportional equations and do not solve the original ratios.",
+    C: "Equating only numerators gives three contradictions and 14/15 in the fourth. Dropping unequal denominators is the reproducible mistake, not evidence of no original solutions."
+  },
+  q1162a: {
+    A: "Removing unary negative signs while keeping binary subtraction gives 367/120,-67/5,-5/12,4/5. The distinction between unary signs and subtraction is explicit and reproducible.",
+    B: "The four identified omitted operations give -131/48,13/5,1/2,1/10. Each omission is located concretely; none is an equivalent simplification of the full expression."
+  },
+  q1162b: {
+    B: "The specified omissions and /.1-to-*.1 replacement give 53821/10,-2369/50,-98,-7/10. These change operators or drop terms rather than preserving the requested evaluation.",
+    C: "Rounding exact results to integers produces 5387,19,1,0. The third coordinate is coincidentally right, but the source requests exact values and the other three fail."
+  },
+  q1162c: {
+    B: "Replacing every division by multiplication gives 77/15,-106/9,66,7807/1323; the last expression explicitly uses 124/27-72/49+25/9, matching the asserted false output.",
+    C: "Integer rounding gives 4,1,8,5. The second coordinate survives, but the three nonintegral exact values are improperly replaced."
+  },
+  q1163: {
+    A: "Changing only the collected x-coefficient signs gives 52 and -18. The constants remain fixed, so this is a definite sign error, not another solution branch.",
+    B: "Failure to negate the second term in the subtracted bracket gives -12 and -18/19. Both displayed wrong equations reproduce those roots."
+  },
+  q1164: {
+    A: "Copying AB=4.5 as BC creates a wrong square. The four vectors bisect exterior instead of interior angles; all four directions agree with the stated 90-degree rotation error.",
+    C: "Using opposite-vertex diagonals gives component magnitudes 4.5 and 6.4 instead of equal components. The rectangle survives, but none of its four diagonals bisects its right interior angle."
+  },
+  q1165: {
+    A: "Exchanging M and N angle labels creates M=27,N=109,K=44 and an exterior foot beyond N. This is a coherent but wrong reflected angle assignment, not the source ASA construction.",
+    B: "Replacing 109 with its supplement 71 gives K=82 and an interior foot. Those are valid consequences of the wrong acute triangle, not of the original obtuse-M triangle."
+  },
+  q1166: {
+    A: "Returning only the two diagonal axes x=3,y=3 reproduces an incomplete ALL-axes list; the correct center does not cover the omitted y=x and y=6-x axes.",
+    C: "Swapping C,D in perimeter order produces a crossed polygon and using origin-centered axes gives the wrong full axis set and center. An incidentally genuine y=x axis cannot repair the tuple."
+  },
+  q1167: {
+    B: "Deleting the two-hour departure delay yields car arrival at t=5 and intersection (3,180). These match the wrong simultaneous-start graph, not the complete required piecewise motion.",
+    C: "Swapping speeds to truck90/car60 gives arrival times5 and9.5, intersection(3.8,342), and1.8 hours after car departure. The procedure is consistent but changes the vehicle-speed assignment."
+  },
+  q1168: {
+    A: "Using speed sums instead of catch-speed differences gives 108/13 and156/17 in the two declared shore frames. Both distances fail while the retained nonuniqueness clause is true.",
+    B: "Treating the three-hour delay as a three-kilometre lead gives27/5 and13/3. This author's derivation is coherent even though the frozen review noted another coincident way to obtain those wrong numbers; neither is a correct dock distance."
+  },
+  q1169: {
+    A: "Using speed difference4.5 as speed sum gives62/4.5=124/9 hours. The optional20:11 partition reproduces the same error rather than the actual common-time relation.",
+    C: "The18-km distance difference is returned directly as18 hours. Omitting division by the4.5-km/h speed difference is the explicit dimensional error."
+  },
+  q1170: {
+    A: "Adding+10% and-10% on different side-length bases gives a false zero area change; the claim that both numerical sides are necessary also ignores cancellation of L,W.",
+    B: "Giving the product cross-term the wrong positive sign produces+1%; retaining L after cancellation gives the separate false only-30cm redundancy claim. Both mistakes are concrete."
+  },
+  q1171: {
+    B: "Adding two ten-percent increments against the original base yields20%, dropping the second increment on the already increased productivity.",
+    C: "Reporting only the second stage's10% reproduces the answer but omits the first stage when the reference base is the original productivity."
+  },
+  q1172: {
+    A: "12-8=4 reproduces the proposed time by subtracting durations instead of additive rates. It is false under the frozen constant-independent-additive model, but the actual unqualified VIEW does not determine the second solo time.",
+    B: "Adding1/8+1/12=5/24 then inverting gives24/5. This is the opposite rate operation under the frozen model; without that model, unconditional falsity remains undetermined."
+  },
+  q1173: {
+    A: "Equal splitting of a1/6 joint rate gives both12-hour solo durations; the remaining vehicle then cannot finish the stated half-job in five hours under uniform rates. The unstated uniform-model condition remains essential.",
+    B: "Swapping the remaining and departing vehicle labels reproduces10,15 instead of15,10 under the frozen uniform model. The actual VIEW still does not establish unchanged independent solo rates."
+  },
+  q1174: {
+    B: "Replacing remainder+9 by-9 gives46.5 and130.5. The arithmetic reproduces the alternative but does not satisfy the required quotient-and-positive-remainder relation.",
+    C: "Discarding the remainder gives177/4 and531/4. Their sum fits, but their ratio is exactly3 with zero remainder rather than9."
+  },
+  q1175: {
+    A: "The mistaken higher-yield-per-hectare-implies-larger-area rule swaps40,20 to20,40. The resulting first-minus-second total yield is-2100, not+1500; no missing efficiency model is involved.",
+    C: "Reversing the total-yield difference gives70/3 and110/3 hectares and-1500 tonnes first-minus-second. The per-hectare yields are supplied directly, so this is a sign error, not a rate convention."
+  },
+  q1176: {
+    A: "Changing remaining first-minus-second from+5 to-5 gives removals15,30 and remaining95,100. This is a labelled stock-difference error, not unspecified productivity.",
+    C: "Dropping the initial20-tonne stock gap gives removals5,10. They leave105,120 rather than first five tonnes more; time or efficiency assumptions are not needed."
+  },
+  q1177: {
+    A: "Assigning opposite signs to magnitudes153,81 creates gap234 and opposite-signed percent products. Both mixed-sign pairs fail the explicitly declared real absolute-difference problem.",
+    B: "Returning ratio integers17,9 without scaling their gap8 to72 reproduces both listed sign branches but fails the difference requirement; completeness requires scale magnitude9."
+  },
+  q1178: {
+    B: "Ignoring the relative mass shares and dividing85.5 equally produces28.5 each. The sum alone is right; both specified ratios fail.",
+    C: "Using the total85.5 as the second-group base produces64.125,85.5,94.05. Those match the erroneous base choice and exceed the stated total."
+  },
+  q1179: {
+    A: "Returning the correctly derived completed distance18 instead of remaining distance42 is a target-label mistake; the full job is not just the intermediate result.",
+    B: "Removing the3.5 multiplier gives remaining24. The procedure changes the explicitly nested remaining-to-completed ratio."
+  },
+  q1180: {
+    B: "Replacing .8*2.5 by2.5-.8=1.7 gives800/9,1360/9 and a corresponding conditional27/5-day total. The future-rate caveat survives, but the actual area ratio is wrong.",
+    C: "Four is the conditional additional duration160/40; calling it the total omits the two elapsed days. The conditional qualifier does not cure the requested-time-label error."
+  },
+  q1181: {
+    A: "Adding milling90% and baking increment40% as1.3 times raw wheat gives568750. The percentages have different mass bases and must be applied in sequence.",
+    C: "Using .4 rather than1.4 of flour gives157500. This returns the increment alone instead of the final bread mass."
+  },
+  q1182: {
+    B: "Treating first as80% of the total gives28800,7200; the source instead makes first80% of second.",
+    C: "Reversing which farm is80% of the other swaps20000,16000. The sum fits but the labelled ratio does not."
+  },
+  q1183: {
+    A: "Equating spent amounts gives the8:9 original-money ratio and224/17,252/17. The source equates remaining amounts, so the base fractions are wrong.",
+    C: "Equating initial amounts from equal final remainders gives14 each. Their remaining fractions differ, contradicting the actual equality."
+  },
+  q1184: {
+    A: "Taking the truck's5/8 share of total169 gives845/8 and507/8. The ratio is to car distance, not total distance.",
+    B: "Swapping vehicle labels produces104,65. These preserve the sum while reversing the required5:8 truck-to-car ratio."
+  },
+  q1185: {
+    A: "The six explicit operation reversals give361/100,316/175,25/32,2197/14000,17069/1100,234623/30. Converted mixed numbers do not justify flipping the operators.",
+    B: "Adding a denominator zero to each decimal operand yields one tenth of every frozen result: .004,.553,.018,.0182,1.111,.69."
+  },
+  q1186: {
+    A: "Omitting the550-km sea section uses7150 as the base and gives2000/143%. The original explicitly defines the entire rail-plus-sea route.",
+    C: "Using the shortened6700-km route as denominator gives1000/67%. A reduction percentage must use the original7700-km route."
+  },
+  q1187: {
+    A: "Inverting the new-to-original route ratio gives650/629 cm. The shared map scale requires length to increase with route length, not its reciprocal.",
+    B: "Multiplying3145 by130 instead of dividing by130 km/cm gives408850 with an invalid unit label. The author identifies the exact reversed scale operation."
+  },
+  q1188: {
+    B: "Inverting the three complete fractions gives5/3,30,3/14. These are the reproducible reversed numerator/denominator results.",
+    C: "Omitting the first numerator factors4.2,5.25,8.4 gives1/7,2/315,5/9, changing each original fraction."
+  },
+  q1189: {
+    B: "Dropping every mixed-number integer part gives42/5,139/15,37/30,79/7. The fourth output increases because an integer inside the subtracted bracket was lost.",
+    C: "Replacing every k+r byk-r gives77/5,136/15,53/30,61/7. This is a consistent mixed-number sign mistake, not legitimate regrouping."
+  },
+  q1190: {
+    A: "Removing all mixed-number whole parts gives77/10,191/28,84,-43/30. Both additions and subtractions reflect that same stated omission.",
+    C: "Replacing each mixed number k+r byk-r gives721/20,75/28,2014/25,-11/10; the printed enclosing subtraction is otherwise retained."
+  },
+  q1191: {
+    B: "Changing the final subtractions to additions gives coefficients2.5 and3.5 and outputs.25,-11.2 at the supplied inputs.",
+    C: "Returning coefficients1/2,-1/2 without substituting the supplied variables reproduces the option but stops before expression evaluation."
+  },
+  q1192: {
+    A: "After obtaining-x=-44.9 and-x=-2.1, deleting the left minus produces the two negative wrong roots.",
+    B: "Solving A-x=B asx=A+B gives55.6 and443/30. The exact mixed terms in the second should cancel, not both be added."
+  },
+  q1193: {
+    A: "Decimal clock readings1.15h,1.30h give260/3 km/h and299/3 km. The bad equation reproduces both values but incorrectly converts minutes to hundredths of an hour.",
+    C: "Dividing speed decrement10 by duration difference.25 gives40, then distance50. The omitted longer-duration factor is needed in the equal-distance equation."
+  },
+  q1194: {
+    B: "Reversing the final-volume difference in360-10r givesr32 andfirst96 under constant/average semantics. Falsity under those semantics is frozen; rates at an unspecified instant are not thereby excluded.",
+    C: "Omitting the five-minute multiplier gives totals600,200 labelled as L/min. The dimensional mistake reproduces the alternative, but these instantaneous values are not unconditionally ruled out for variable proportional flows."
+  },
+  q1195: {
+    A: "Using mean25.5 as the first term then adding7 produces the listed sequence, whose mean is36 rather than25.5.",
+    C: "Using four gaps for a four-term progression gives a fictitious28 first-to-last difference, then11.5 as first term; listing only four terms yields mean22, not25.5."
+  },
+  q1196: {
+    A: "Making a negative square stay negative gives4.84-.04=4.8 and-.01. This reproduces the pair while violating nonnegativity of real squares.",
+    B: "Replacing each square by multiplication by2 gives4 and-.2. The exponent is not a scalar coefficient."
+  },
+  q1197: {
+    A: "Miscomputing only(-6)*(-3) as-18 gives-18x+(-10)=5 andx=-5/6. The single identified sign error is sufficient.",
+    C: "Multiplying only the first term of each bracket gives-12x-3+8-3x=5 andx=0, reproducing the incomplete-distribution result."
+  },
+  q1198: {
+    B: "Removing1/2 from all three area formulas doubles every nondegenerate triangle's area. This invalid plan does not require invented measurements to refute.",
+    C: "Substituting a sloping adjacent side for perpendicular height fails for acute and obtuse triangles because h=l*sin(theta) with sin(theta)<1. The right-triangle leg formula is correct but does not make the three-class procedure valid."
+  },
+  q1199: {
+    A: "Failing to distribute the right-side outside minus to the a term yields8a=23 anda=23/8. This is a concrete sign-distribution error.",
+    B: "Treating15+1/15 as15*(1/15)=1 yields7a=134/15 anda=134/105. The incorrect mixed-number conversion reproduces the claimed root."
+  },
+  q1200: {
+    B: "Dropping the first outside minus gives coefficient-1.9 and.019,.19; incompletely negating the second bracket gives.5-.2x-.8y and7.46. Both specified mistakes reproduce the full tuple.",
+    C: "Substituting absolute values for all given negative inputs gives-.055,-.55,.7; the y terms still cancel, but all three requested evaluations are wrong."
+  }
+};
+
+const rateFindings = {
+  "1172": {
+    id: "ORIGINAL-RATE-1172",
+    evidence: "The original q1172 VIEW, key C and proof assert24 days without explicitly fixed independent additive unchanged rates. The author's SOURCE sentence mentions that model, but status is solved, results are unqualified, intent.limitations=[], coverage.omitted_tasks=[], and the handoff omits1172. Frozen unconditional correct remains null; conditional set is C only.",
+    condition: "Constant unchanged independent additive worker rates over the same workload"
+  },
+  "1173": {
+    id: "ORIGINAL-RATE-1173",
+    evidence: "The original q1173 VIEW, key C and proof infer half the job in three joint hours and extrapolate the second vehicle's last five hours to a solo full-job time without explicit uniform unchanged independent additive rates. SOURCE status solved and empty intent/coverage limitations omit this condition; the handoff omits1173. Conditional first15h/second10h and C are retained; unconditional correct remains null.",
+    condition: "Uniform unchanged independent additive snowplough rates, including the final five hours"
+  },
+  "1194": {
+    id: "ORIGINAL-RATE-1194",
+    evidence: "The original q1194 VIEW, key A and proof use one constant r over five minutes. The seed fixes total outflows600L and200L, and average rates120 and40L/min, but it does not specify constant versus average/instantaneous rate meaning. SOURCE is solved, intent.limitations and coverage omissions are empty, and the handoff omits1194. Conditional A is retained; unconditional correct remains null.",
+    condition: "The numbers denote five-minute average outflows, or both proportional rates are constant over those five minutes"
+  }
+};
+
+const sourceNotes = {
+  "1157": "Required first-minus-second subtraction and its sign are retained, not merely bare comparison winners.",
+  "1158": "Required first-divided-by-second positive ratios and comparison with one are retained.",
+  "1159": "All four comparisons retain complements relative to one and reversal of complement order.",
+  "1160": "All four relations and their complete real/nonzero domains are retained. The frozen SOURCE is exact on defined expressions: nonzero restrictions are inferable, not unresolved new data. The author conservatively labels a conditional-domain blocker for nonexistent unconditional zero reciprocals; do not import that as a reviewer blocker or declare undefined expressions numerically false.",
+  "1164": "All five task units are represented: the4.5-by6.4 rectangle and four inward45-degree bisectors. Coordinates, full directions and non-square diagonal distinction agree. Author intent/coverage/handoff honestly disclose that no rectangle or bisector was physically drawn; plan coverage is not production completion.",
+  "1165": "Both ASA construction and perpendicular-to-the-full-line tasks are retained, including M109,N27,K44 and the exterior foot beyondM. Author intent/coverage/handoff disclose no actual triangle/protractor/perpendicular drawing. Do not replace the full line by the segment or claim executed construction.",
+  "1166": "The given square, all four reflection axes and center are retained. Plotting and axis drawing are disclosed production losses; determining(3,3) is not evidence that a diagram was produced.",
+  "1167": "Both motion graphs use the declared truck-departure time/position frame, including the car wait, finite travel endpoints, intersection and elapsed car time. Graph plotting, axes and scales remain unperformed and disclosed; no post-arrival behavior is invented.",
+  "1168": "The source reference frame remains unresolved, but VIEW explicitly evaluates both shore9 and water9 branches, giving108/5 and52/3 km and denying a unique unconditional distance. Author disclosures agree; the conditional-analysis option C is determinate without selecting a frame.",
+  "1170": "Both the1% decrease and redundancy of both30cm/20cm dimensions for the percentage are retained. Absolute dimensions are not falsely treated as absent or needed for the relative percentage.",
+  "1175": "The stated85 and95 tonnes/hectare are direct yield data, not unknown time-efficiency rates. The60-hectare sum and first-greater1500-tonne yield difference determine40,20 hectares; author key/proof and both false procedures agree with the frozen exact solution. No efficiency blocker is invented.",
+  "1176": "This is stock accounting, not a work-efficiency extrapolation: initial110,130 tonnes, removedx,2x, and remaining first-greater5 determine25,50 tonnes. Author key/proof and both false procedures agree; no missing rate convention exists.",
+  "1177": "Explicit real-domain absolute-difference VIEW includes both{153,81} and{-153,-81}; labelled percent roles and both sign branches are complete. Source positivity/orientation is not silently normalized. Author limitation remains a unique-pair limitation, not a reason to discard the complete visible set.",
+  "1180": "Completed80ha and remaining160ha are exact; total6days is visibly conditional on continuing the prior40ha/day average. Future rate remains unresolved. Author splits two grouped outputs while the reviewer has one completion-time task containing this reasoning; no output is silently omitted.",
+  "1198": "Correct procedure A covers all three triangle classes with real measurements, perpendicular heights, external obtuse-height foot, common units and factor1/2. Nonetheless all nine SOURCE tasks remain blocked: acute/right/obtuse cutout, measurement and numerical area each. The author honestly groups the deficits into three categories and does not fabricate readings; that grouping is not completion of any of the nine tasks."
+};
+const findings = [
+  ...Object.entries(rateFindings).map(([sourceNumber, record]) => ({
+    id: record.id, severity: "blocking", source_numbers: [sourceNumber],
+    question_ids: ["q" + sourceNumber], verdict: "blocked", evidence: record.evidence,
+    required_resolution: "Explicitly qualify the visible task and author claims, or supply authorized source evidence for the missing model. No repair was performed."
+  })),
+  {
+    id: "ORIGINAL-EMPIRICAL-1198", severity: "blocking", source_numbers: ["1198"],
+    question_ids: ["q1198"], verdict: "blocked", unperformed_task_count: 9,
+    evidence: sourceNotes["1198"],
+    required_resolution: "Actual cutouts, actual lengths and three numeric areas require empirical work/evidence, or explicit acceptance of that deferred capability. Choosing a plan is not execution."
+  },
+  {
+    id: "ORIGINAL-FILENAME-PROOFS", severity: "packaging_note", verdict: "revise",
+    path: author + "correct-proofs.json", evidence: "The explicitly authorized filename is absent; no alternative filename was searched. The handoff identifies wrong-programs.json as the combined proof/procedure file, which contains all57 author-correct proofs and all112 author-false procedures and matches every draft rationale. This is not missing mathematical evidence for those57 records."
+  },
+  {
+    id: "ORIGINAL-TASK-GRANULARITY", severity: "accounting_note", verdict: "pass",
+    evidence: "The author reports137 parent-defined tasks, not the independently derived143. Differences are1198:3 versus9,1180:2 versus1,1194:1 versus2; net reviewer+6. All53 source mappings exist. Neither accounting for137 nor analyzing143 means empirical or construction tasks were performed."
+  },
+  {
+    id: "ORIGINAL-CONSTRUCTION-LOSSES", severity: "retained_limitation", verdict: "pass",
+    source_numbers: ["1164", "1165", "1166", "1167"],
+    evidence: "All four complete textual construction/graph plans pass the frozen visible gate. The author discloses actual drawing/plotting losses in intents, coverage and handoff. Thirteen mapped source task units are represented; no actual construction or graph production is claimed."
+  },
+  {
+    id: "ORIGINAL-1160-DOMAIN-CLASSIFICATION", severity: "classification_note", verdict: "pass",
+    source_numbers: ["1160"], evidence: sourceNotes["1160"]
+  }
+];
+
+const sourceComparisons = source.source_reviews.map(record => {
+  const number = record.source_number;
+  const authorRecord = authorSource.sources.find(item => item.source_number === number);
+  const coverage = draft.coverage.find(item => item.source_number === number);
+  const mapped = viewChecks.ordinal_checks.filter(item => item.source_numbers.includes(number));
+  if (!authorRecord || !coverage || !mapped.length) throw new Error("Missing source mapping: " + number);
+  const mappedTasks = mapped.flatMap(item => item.source_task_ids);
+  if (canonical([...mappedTasks].sort()) !== canonical(record.task_units.map(task => task.id).sort())) {
+    throw new Error("Frozen SOURCE task mapping mismatch: " + number);
+  }
+  const actualQuestions = mapped.map(item => draft.questions[item.ordinal - 1].id);
+  if (canonical([...actualQuestions].sort()) !== canonical([...coverage.question_ids].sort())) {
+    throw new Error("Original source coverage IDs mismatch: " + number);
+  }
+  const rate = rateFindings[number];
+  const note = rate ? rate.evidence : sourceNotes[number] ||
+    "Author solution and labelled outputs agree with the already frozen independent SOURCE; all task units are represented by the listed question(s). Complete-result recognition is not a new demonstration of independently written working.";
+  const blocked = Boolean(rate) || number === "1198";
+  return {
+    source_number: number,
+    independent_solution: record.independent_solution,
+    frozen_source_status: record.status,
+    independent_task_count: record.task_units.length,
+    independent_task_ids: record.task_units.map(task => task.id),
+    independent_task_statuses: record.task_units.map(task => ({id: task.id, status: task.status})),
+    author_task_count: authorRecord.task_units,
+    author_status: authorRecord.status,
+    author_solution: authorRecord.solution,
+    author_results: authorRecord.results,
+    author_blocked_tasks: authorRecord.blocked_tasks || [],
+    author_production_losses: authorRecord.production_losses || [],
+    question_ids: actualQuestions,
+    ordinal_mapping: mapped.map(item => item.ordinal),
+    author_coverage: coverage,
+    author_intent_limitations: actualQuestions.map(id => ({
+      question_id: id, limitations: draft.questions.find(question => question.id === id).intent.limitations
+    })),
+    mathematics_comparison: {verdict: rate ? "blocked" : "pass", evidence: note},
+    coverage: {verdict: blocked ? "blocked" : "pass", evidence: note},
+    completion_limit: number === "1198" ? "Nine actual empirical tasks unperformed; no measured numeric areas" :
+      ["1164", "1165", "1166", "1167"].includes(number) ?
+        "Complete plan represented; actual construction/plotting not performed" :
+        record.status === "conditional" ? "Frozen conditional SOURCE meaning retained; not an unconditional completion claim" :
+          "Frozen solution/task analysis retained; not a claim of learner execution or new SOURCE solving",
+    finding_ids: findings.filter(item => item.source_numbers?.includes(number)).map(item => item.id)
+  };
+});
+
+const questionComparisons = draft.questions.map((question, index) => {
+  const frozen = math.freeze.ordinal_math[index];
+  const content = viewChecks.ordinal_checks[index];
+  if (frozen.ordinal !== index + 1 || canonical(frozen.source_numbers) !== canonical(question.source_numbers)) {
+    throw new Error("Frozen ordinal/author source mapping mismatch");
+  }
+  const records = programs.options.filter(record => record.question_id === question.id);
+  if (records.length !== question.view.options.length) throw new Error("Missing/duplicate option record");
+  const rate = rateFindings[question.source_numbers[0]];
+  const conditioned = frozen.complete_true_set === null;
+  const conditionalSets = frozen.conditional_true_sets || [];
+  const comparableSet = conditioned ? conditionalSets[0].option_ids : frozen.complete_true_set;
+  if (canonical([...question.key.correct].sort()) !== canonical([...comparableSet].sort())) {
+    throw new Error("Unexpected original key mismatch needs manual assessment: " + question.id);
+  }
+  const options = question.view.options.map((option, position) => {
+    const record = records.find(item => item.option_id === option.id);
+    const rationale = question.key.rationales.find(item => item.option_id === option.id);
+    const frozenCheck = frozen.option_checks[position];
+    if (!record || !rationale || frozenCheck.option_id !== option.id ||
+        record.source_number !== question.source_numbers[0] ||
+        record.assertion !== option.text || record.truth !== rationale.truth ||
+        (record.proof || record.false_procedure) !== rationale.derivation ||
+        (record.truth === "incorrect" && rationale.misconception !== record.false_procedure) ||
+        (record.truth === "correct" && !question.key.correct.includes(option.id))) {
+      throw new Error("Original option evidence linkage mismatch: " + question.id + "/" + option.id);
+    }
+    const falseProcedure = record.truth === "incorrect";
+    const manual = falseAudits[question.id]?.[option.id];
+    if (falseProcedure !== Boolean(manual)) throw new Error("Missing/extraneous manual false-procedure assessment");
+    const expectedTruth = conditioned ? frozenCheck.truth_under_declared_model :
+      frozenCheck.truth === "true";
+    if ((record.truth === "correct") !== expectedTruth) throw new Error("Unexpected proof truth discrepancy");
+    const proofEvidence = rate ?
+      "The displayed proof reaches the same model-specific result as frozen SOURCE/VIEW, but silently promotes the model to the unqualified answer. " + rate.evidence :
+      "The author's full proof supports this exact visible assertion and agrees with the frozen independent solution: " +
+        frozen.independent_solution + (frozen.production_loss ? " " + frozen.production_loss : "") +
+        (frozen.empirical_source_completion ? " " + frozen.empirical_source_completion.evidence : "");
+    return {
+      option_id: option.id,
+      option_ordinal: position + 1,
+      assertion: option.text,
+      author_truth: record.truth,
+      evidence_kind: falseProcedure ? "false_procedure" : "correct_proof",
+      author_evidence: record.proof || record.false_procedure,
+      evidence_locations: [
+        author + "draft.json#/questions/" + index + "/key/rationales/" + position,
+        author + "wrong-programs.json#/options/" + programs.options.indexOf(record)
+      ],
+      draft_and_program_evidence_identical: true,
+      frozen_truth: frozenCheck.truth,
+      frozen_component_truth: frozenCheck.component_truth || null,
+      frozen_evidence: frozenCheck.evidence,
+      truth_under_frozen_declared_model: conditioned ? frozenCheck.truth_under_declared_model : null,
+      author_algorithm_reproduction: falseProcedure ? {
+        verdict: "pass", evidence: manual,
+        meaning: "The stated bad procedure reproduces the assertion; this does not approve that assertion as mathematically true."
+      } : null,
+      independent_evidence_comparison: {
+        verdict: conditioned ? "blocked" : "pass",
+        evidence: falseProcedure ? manual + " Frozen independent check: " + frozenCheck.evidence : proofEvidence,
+        condition: rate?.condition || null
+      }
+    };
+  });
+  return {
+    ordinal: index + 1,
+    question_id: question.id,
+    source_numbers: question.source_numbers,
+    source_task_ids: content.source_task_ids,
+    draft_view_matches_frozen_ordinal: true,
+    task_fidelity: content.task_fidelity,
+    redundancy: content.redundancy,
+    answer_leakage: content.answer_leakage,
+    independent_solution: frozen.independent_solution,
+    frozen_math_verdict: frozen.verdict,
+    frozen_complete_true_set: frozen.complete_true_set,
+    frozen_conditional_true_sets: conditionalSets,
+    unresolved_ids: frozen.unresolved_ids || [],
+    original_key: question.key.correct,
+    key_comparison: {
+      verdict: conditioned ? "blocked" : "pass",
+      determinate_set_equal: conditioned ? null : true,
+      conditional_set_equal: conditioned ? true : null,
+      evidence: conditioned ? rate.evidence :
+        "Original full key equals the complete true set independently frozen before INTERNAL; no key-derived normalization."
+    },
+    author_intent: question.intent,
+    original_limitations_comparison: rate ?
+      {verdict: "blocked", evidence: rate.evidence} :
+      {verdict: "pass", evidence: sourceNotes[question.source_numbers[0]] ||
+        "The complete result-group intent retains the frozen tasks and labels; recognition does not demonstrate independently written intermediate working."},
+    production_loss: frozen.production_loss || null,
+    empirical_source_completion: frozen.empirical_source_completion || null,
+    option_comparisons: options
+  };
+});
+
+const canonicalReview = {
+  schema: "s10y-choice-review-v1",
+  seed_sha256: source.seed_sha256,
+  draft_sha256: draftHash,
+  reviewer: {kind: "independent_agent", identity: "STEMROBIN-182 reviewer-5m-n61 original INTERNAL; SOURCE and key-free VIEW frozen before author evidence"},
+  source_reviews: sourceComparisons.map(item => ({
+    source_number: item.source_number,
+    independent_solution: item.independent_solution,
+    coverage: item.coverage
+  })),
+  figure_checks: [],
+  new_figure_reviews: [],
+  question_reviews: questionComparisons.map(item => ({
+    question_id: item.question_id,
+    task_fidelity: item.task_fidelity,
+    redundancy: item.redundancy,
+    answer_leakage: item.answer_leakage,
+    mathematics: {
+      verdict: item.frozen_math_verdict,
+      independent_solution: item.independent_solution +
+        (item.frozen_complete_true_set === null ?
+          " Frozen unconditional complete set remains null. Conditional complete set(s): " +
+          item.frozen_conditional_true_sets.map(set => set.option_ids.join(",") + " iff " + set.condition).join("; ") +
+          ". All visible options remain unconditionally undetermined; full per-option condition checks are retained in internal-comparison-original.json." : "") +
+        (item.production_loss ? " " + item.production_loss : "") +
+        (item.empirical_source_completion ? " " + item.empirical_source_completion.evidence : ""),
+      correct: item.frozen_complete_true_set,
+      option_checks: item.frozen_complete_true_set === null ? [] : item.option_comparisons.map(option => ({
+        option_id: option.option_id,
+        truth: option.frozen_truth === "true" ? "correct" : "incorrect",
+        evidence: option.frozen_evidence + " Original INTERNAL evidence comparison: " +
+          option.independent_evidence_comparison.evidence
+      }))
+    }
+  })),
+  outcome: "blocked"
+};
+const serialize = value => JSON.stringify(value, null, 2) + "\n";
+const reviewBytes = serialize(canonicalReview);
+const allOptions = questionComparisons.flatMap(item => item.option_comparisons);
+const falseRecords = allOptions.filter(item => item.evidence_kind === "false_procedure");
+const correctRecords = allOptions.filter(item => item.evidence_kind === "correct_proof");
+const countVerdicts = records => records.reduce((result, item) => {
+  const verdict = item.independent_evidence_comparison.verdict;
+  result[verdict] = (result[verdict] || 0) + 1;
+  return result;
+}, {});
+if (questionComparisons.length !== 56 || sourceComparisons.length !== 53 ||
+    allOptions.length !== 169 || falseRecords.length !== 112 || correctRecords.length !== 57 ||
+    sourceComparisons.reduce((sum, item) => sum + item.independent_task_count, 0) !== 143 ||
+    sourceComparisons.reduce((sum, item) => sum + item.author_task_count, 0) !== 137) {
+  throw new Error("Original/frozen accounting mismatch");
+}
+
+const freeze = {
+  stage: "ORIGINAL INTERNAL comparison complete; rejected/blocked; no repair",
+  date: "2026-11-16",
+  authority: {
+    mathematical: "Previously frozen independent SOURCE/VIEW/math only; author claims are comparison evidence, not mathematical authority",
+    author_files_read: snapshots.filter(item => item.path.startsWith(author)).map(item => item.path),
+    missing_authorized_filename: author + "correct-proofs.json",
+    missing_filename_hunt_performed: false,
+    forbidden_references_not_opened: "Parent SOURCE, checkpoint, solver, author ledger/projector, canonical validator and all other unlisted files"
+  },
+  bindings: {
+    seed: sourceReady.freeze.seed,
+    original_draft_sha256: draftHash,
+    original_draft_bytes_sha256: expectedBytes["5m-n61/draft.json"],
+    source_freeze_sha256: sourceReady.freeze_sha256,
+    source_solutions_sha256: digest(source),
+    frozen_view_sha256: math.freeze.view_sha256,
+    frozen_view_bytes_sha256: math.freeze.view_bytes_sha256,
+    draft_view_projection_sha256: digest(draft.questions.map(question => question.view)),
+    draft_projection_equals_frozen_view: true,
+    view_math_freeze_sha256: math.freeze_sha256,
+    view_checks_sha256: digest(viewChecks),
+    inputs: snapshots,
+    canonical_review: {
+      path: own + "review-original.json", canonical_sha256: digest(canonicalReview), bytes_sha256: sha(reviewBytes),
+      bound_to_original_not_repaired_draft: true
+    },
+    digest_note: "Canonical JSON uses sorted keys, ensure_ascii=True and compact separators. Seed/VIEW byte hashes are inherited from prior freezes; those files were not reopened in INTERNAL."
+  },
+  counts: {
+    full_original_sources: 53,
+    reviewer_source_tasks_analyzed_and_accounted: 143,
+    author_parent_defined_tasks_accounted: 137,
+    prior_SOURCE_exact_arithmetic_checks_not_rerun: 131,
+    response_units: 56,
+    options_compared: 169,
+    author_correct_proofs_read_and_compared: 57,
+    author_false_procedures_read_and_compared: 112,
+    draft_program_linkage_matches: 169,
+    determinate_keys_equal_frozen_complete_sets: 53,
+    unconditional_key_comparisons_blocked: 3,
+    conditional_author_keys_equal_frozen_model_sets: 3,
+    frozen_option_truths: {true: 54, false: 106, undetermined: 9},
+    correct_proof_comparison_verdicts: countVerdicts(correctRecords),
+    false_procedure_comparison_verdicts: countVerdicts(falseRecords),
+    false_algorithm_reproduction_passes: 112,
+    canonical_mathematics_verdicts: {pass: 53, blocked: 3},
+    canonical_source_coverage_verdicts: {pass: 49, blocked: 4},
+    task_fidelity_verdicts: {pass: 53, blocked: 3},
+    redundancy_verdicts: {pass: 56},
+    answer_leakage_verdicts: {pass: 56},
+    construction_loss_sources: 4,
+    construction_plan_mapped_task_units: 13,
+    empirical_SOURCE_tasks_still_unperformed: 9,
+    source_figures: 0,
+    new_figures: 0,
+    findings: findings.length,
+    blocking_findings: 4
+  },
+  package_comparison: {
+    verdict: "blocked",
+    source_coverage: "All53 originals and all143 independent task identifiers are mapped; this is coverage/accounting, not execution or unconditional completion.",
+    task_granularity_differences: sourceComparisons.filter(item => item.independent_task_count !== item.author_task_count).map(item => ({
+      source_number: item.source_number, reviewer_tasks: item.independent_task_count, author_tasks: item.author_task_count,
+      evidence: sourceNotes[item.source_number]
+    })),
+    response_unit_basis: "The56-unit layout retains coherent complete tuples and native multiple assertions.1151 splits1-6/7-12;1162 splits1-4/5-8/9-12; no task is duplicated or silently dropped.",
+    selected_concept: "Only selected block2 is used; quotient scaling still requires a nonzero common multiplier. Author concept metadata does not resolve unstated rate semantics.",
+    conditions_properly_retained: ["1160 complete reciprocal domains", "1168 both reference frames", "1177 both real sign branches", "1180 conditional future efficiency"],
+    undeclared_rate_conditions: ["1172", "1173", "1194"],
+    no_efficiency_blockers_for_1175_1176: sourceNotes["1175"] + " " + sourceNotes["1176"],
+    author_handoff_original_status: handoff.status,
+    author_handoff_original_approved: handoff.approved,
+    author_handoff_blocked_source_numbers: handoff.blocked_original_tasks.map(item => item.source_number),
+    missing_from_author_blocked_list: ["1172", "1173", "1194"],
+    conservative_author_domain_block_not_adopted: "1160 is exact on defined expressions in independent SOURCE, not an unknown numerical-domain blocker.",
+    author_parent_agreement: "Embedded parent agreement is an author claim only. Parent/checkpoint/solver files were neither opened nor used as independent evidence.",
+    standalone_correct_proofs: "Absent at the authorized filename; all57 proofs were nevertheless read in the expressly declared combined wrong-programs file and draft.",
+    author_structural_validation_claim: "Recorded as an author claim only; no canonical validator was run and no semantic approval follows from its stated exit0.",
+    missing_or_fabricated_measurements: "No numeric areas invented; all nine1198 tasks remain individually blocked.",
+    complete_source_completion_claimed_by_reviewer: false
+  },
+  source_comparisons: sourceComparisons,
+  question_comparisons: questionComparisons,
+  findings,
+  disposition: {
+    outcome: "blocked",
+    approved: false,
+    original_rejection_retained: true,
+    rate_blocking_ordinals: [28, 29, 50],
+    additional_empirical_source_deferral: {
+      source_number: "1198", ordinal: 54, task_ids: sourceComparisons.find(item => item.source_number === "1198").independent_task_ids,
+      unperformed_tasks: 9
+    },
+    construction_losses_retained: ["1164", "1165", "1166", "1167"],
+    stop: "Original INTERNAL comparison ends here. No changed-only repair review or repair is authorized by this output."
+  },
+  boundary: {
+    explicit_workdir: root,
+    writes_only: own,
+    manual_assessment_and_code_edits: "apply_patch",
+    serialization: "Mechanical copying/mapping of frozen reviewer evidence and manually recorded original-procedure assessments",
+    SOURCE_recomputation: false,
+    VIEW_math_recomputation: false,
+    frozen_files_changed: false,
+    author_files_changed: false,
+    canonical_validation_run: false,
+    network_DB_app_git_skills_images_browser_other_agents_or_chats_used: false,
+    physical_tasks_performed: false,
+    repairs_performed: false
+  }
+};
+const comparison = {
+  schema: "s10y-choice-internal-comparison-original-v1",
+  ticket: "STEMROBIN-182",
+  reviewer: "reviewer-5m-n61",
+  artifact_role: "Immutable original rejection and complete original INTERNAL evidence comparison",
+  state: "original-comparison-complete-blocked",
+  freeze_sha256: digest(freeze),
+  digest_definition: "SHA-256 of the full freeze object using sorted keys, ensure_ascii=True, separators=(',', ':'); byte hashes separately bind original files.",
+  freeze
+};
+const outputNames = ["review-original.json", "internal-comparison-original.json"];
+for (const name of outputNames) {
+  if (fs.existsSync(own + name)) throw new Error("Refusing to replace an original report: " + name);
+}
+for (const [relative, expected] of Object.entries(expectedBytes)) {
+  if (sha(fs.readFileSync(base + relative)) !== expected) throw new Error("Input changed during serialization");
+}
+for (const [name, bytes] of [
+  ["review-original.json", reviewBytes],
+  ["internal-comparison-original.json", serialize(comparison)]
+]) {
+  const destination = path.resolve(root, own, name);
+  if (!destination.startsWith(path.resolve(root, own) + path.sep)) throw new Error("Output ownership violation");
+  fs.writeFileSync(destination, bytes, {flag: "wx"});
+}
+console.log(JSON.stringify({
+  paths: outputNames.map(name => path.resolve(root, own, name)),
+  counts: freeze.counts,
+  outcome: "blocked",
+  original_draft_sha256: draftHash,
+  original_comparison_freeze_sha256: comparison.freeze_sha256,
+  canonical_review_sha256: digest(canonicalReview)
+}, null, 2));

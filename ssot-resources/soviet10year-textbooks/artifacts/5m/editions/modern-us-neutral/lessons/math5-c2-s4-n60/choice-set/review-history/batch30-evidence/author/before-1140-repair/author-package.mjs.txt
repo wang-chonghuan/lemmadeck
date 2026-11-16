@@ -1,0 +1,193 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { spawnSync } from "node:child_process";
+
+const root = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const relative = ".intentfold/tickets/STEMROBIN-182/tmp/5m-n60";
+const out = path.join(root, relative);
+const digestBytes = bytes => crypto.createHash("sha256").update(bytes).digest("hex");
+const read = name => JSON.parse(fs.readFileSync(path.join(out, name), "utf8"));
+const writeNew = (name, value) => fs.writeFileSync(
+  path.join(out, name), JSON.stringify(value, null, 2) + "\n", { flag: "wx" },
+);
+const draft = read("draft.json");
+const source = read("author-source-record.json");
+const rendering = read("author-render-record.json");
+
+// Only serialize previously authored prose; no options or mathematical claims are generated.
+writeNew("view.json", draft.questions.map(question => ({
+  mode: question.view.mode,
+  stem: question.view.stem,
+  figure_ids: question.view.figure_ids,
+  options: question.view.options,
+})));
+writeNew("wrong-programs.json", {
+  schema: "s10y-choice-wrong-programs-v1",
+  seed_sha256: draft.seed_sha256,
+  origin: "Extracted without rewriting from the manually reasoned draft rationales.",
+  programs: draft.questions.flatMap(question => question.key.rationales
+    .filter(rationale => rationale.truth === "incorrect")
+    .map(rationale => ({
+      question_id: question.id,
+      source_numbers: question.source_numbers,
+      option_id: rationale.option_id,
+      false_claim: question.view.options.find(option => option.id === rationale.option_id).text,
+      procedure: rationale.misconception,
+      reproducible_steps_and_falsity: rationale.derivation,
+    }))),
+});
+writeNew("correct-proofs.json", {
+  schema: "s10y-choice-correct-proofs-v1",
+  seed_sha256: draft.seed_sha256,
+  origin: "Author proofs only, not an independent or canonical approval.",
+  proofs: draft.questions.map(question => ({
+    question_id: question.id,
+    source_numbers: question.source_numbers,
+    source_solution: question.intent.source_solution,
+    correct_options: question.key.rationales
+      .filter(rationale => rationale.truth === "correct")
+      .map(rationale => ({
+        option_id: rationale.option_id,
+        claim: question.view.options.find(option => option.id === rationale.option_id).text,
+        proof: rationale.derivation,
+      })),
+  })),
+});
+
+const command = [
+  "python3", "-B", ".agents/skills/ld-s10y-choice/scripts/validate.py",
+  "--repo", ".",
+  "--seed", `${relative}/seed.json`,
+  "--draft", `${relative}/draft.json`,
+];
+const started = new Date().toISOString();
+const result = spawnSync(command[0], command.slice(1), {
+  cwd: root,
+  encoding: "utf8",
+  maxBuffer: 1024 * 1024,
+});
+const structural = {
+  command,
+  workdir: root,
+  execution_count: 1,
+  started,
+  finished: new Date().toISOString(),
+  exit_code: result.status,
+  signal: result.signal,
+  stdout: result.stdout || "",
+  stderr: result.stderr || "",
+  error: result.error ? String(result.error) : null,
+  scope: "Structural/input freshness only. No review supplied; semantic review remains pending. Python -B prevents writes to skill __pycache__.",
+};
+writeNew("author-structural-command.json", structural);
+
+const names = [
+  "seed.json", "source-checkpoint.json", "prepare-command.json",
+  "author-source-record.json", "draft.json", "view.json",
+  "wrong-programs.json", "correct-proofs.json",
+  "author-render-record.json", "author-pixel-record.json",
+  "author-structural-command.json",
+];
+const files = names.map(name => {
+  const bytes = fs.readFileSync(path.join(out, name));
+  return { path: `${relative}/${name}`, bytes: bytes.length, sha256: digestBytes(bytes) };
+});
+writeNew("author-handoff.json", {
+  schema: "s10y-choice-author-handoff-v1",
+  ticket: "STEMROBIN-182",
+  role: "AUTHOR",
+  workdir: root,
+  ownership: "Only new files under .intentfold/tickets/STEMROBIN-182/tmp/5m-n60. Frozen inputs not edited; no other agent's changes reverted.",
+  status: "blocked",
+  deliverable_status: "Authored partial offline draft; full selected-source package remains blocked. No publication or integration.",
+  approvals: {
+    independent_source_review_read: false,
+    independent_choice_review: false,
+    canonical_approval: false,
+    choice_approval: false,
+    structural_success_is_not_approval: true,
+  },
+  counts: {
+    source_exercises: source.source_tasks.length,
+    source_figures_opened: rendering.figures.length,
+    context_image_loads: source.image_loads.used,
+    maximum_image_loads: source.image_loads.limit,
+    crops: 0,
+    reopens: 0,
+    candidate_images: 0,
+    new_figures: draft.new_figures.length,
+    questions: draft.questions.length,
+    options: draft.questions.reduce((sum, q) => sum + q.view.options.length, 0),
+    false_procedures: draft.questions.reduce((sum, q) => sum + q.key.rationales.filter(r => r.truth === "incorrect").length, 0),
+    correct_proofs: draft.questions.reduce((sum, q) => sum + q.key.correct.length, 0),
+    determinate_source_exercises: source.source_tasks.filter(task => task.status === "determinate").length,
+    blocked_source_exercises: source.source_tasks.filter(task => task.status === "blocked").length,
+    structural_check_runs: 1,
+  },
+  response_units: [
+    "1136: complete stage area",
+    "1138: whole pentagon area, quarter-circle area and comparison",
+    "1139: coherent orbital length/speed pair",
+    "1140: decimal expansions and relative approximation error",
+    "1141: second worker solo time",
+    "1142: two independent complete mass tuples, shared reference versus ratio chain",
+    "1143: one complete four-expression result tuple",
+    "1145: family ticket total",
+    "1146: current-free speed",
+    "1147: whole tree expression and final value",
+  ],
+  blockers: source.source_tasks
+    .filter(task => task.status === "blocked")
+    .map(task => ({
+      source_number: task.source_number,
+      status: "blocked",
+      reason: task.missing_convention,
+      independent_work: task.solution,
+      omitted_tasks: draft.coverage.find(row => row.source_number === task.source_number).omitted_tasks,
+    })),
+  production_losses: draft.questions.map(question => ({
+    question_id: question.id,
+    losses: question.intent.limitations,
+  })),
+  author_semantic_observations: [
+    "No fixed item quota or per-cell/per-blank clicks. Both ratio systems and all four arithmetic expressions are accounted for.",
+    "The full-result arithmetic tuple permits elimination after fewer than four computations; this is a concrete production loss, not proof of having calculated all four.",
+    "The pentagon stem requires reading the source grid and supplies no correct coordinate tuple. Its complete options include both area calculations and the comparison.",
+    "The tree uses all source numbers and all branch operators. Incorrect expressions have independently calculated values that actually follow from the stated altered operator or order.",
+    "Measured lengths and areas are transparently approximate; no convenient exact radii, inscribed square, square rectangle, rounding or tolerance is invented.",
+    "Decimal-expansion recognition cannot demonstrate independent long division. Shared candidate expansions permit comparison-only elimination, recorded in coverage.",
+    "This is the author's assessment only. A source-first independent reviewer must judge mathematical equivalence, fidelity and losses; no independent or canonical approval is claimed.",
+  ],
+  browser_closed: rendering.browser_closed,
+  source_figure_evidence: rendering.figures.map(figure => ({
+    figure_id: figure.figure_id,
+    asset_path: figure.asset_path,
+    asset_sha256: figure.asset_sha256,
+    native_size: figure.native_size,
+    screenshot_path: figure.screenshot_path,
+    screenshot_sha256: figure.screenshot_sha256,
+    complete_view_observation: source.figure_observations.find(row => row.figure_id === figure.figure_id).full_view,
+  })),
+  structural_command_record: `${relative}/author-structural-command.json`,
+  structural_result: structural,
+  failures_preserved: source.preserved_failures,
+  files,
+  excluded_actions: [
+    "No network, installation or model call",
+    "No .env read or database access",
+    "No publish, application or product-code change",
+    "No skill edit, git operation, other-agent or chat access",
+    "No old choices, answers, interactions, tests, history or reviewer-source read",
+    "No new diagram or canonical/independent approval",
+  ],
+  parent_return: "Text-only paths/counts/hashes/observations. Do not send image payloads or reopen the batch in the parent.",
+});
+console.log(JSON.stringify({
+  status: "blocked",
+  structural,
+  counts: read("author-handoff.json").counts,
+  browser_closed: rendering.browser_closed,
+  files,
+}, null, 2));
+if (result.status !== 0) process.exitCode = result.status || 1;

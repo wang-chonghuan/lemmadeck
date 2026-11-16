@@ -1,0 +1,70 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { createRequire } from "node:module";
+
+const root = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const out = path.join(root, ".intentfold/tickets/STEMROBIN-182/tmp/5m-n60");
+const require = createRequire(path.join(root, ".agents/skills/package.json"));
+const { PNG } = require(path.join(root, ".agents/skills/node_modules/playwright-core/lib/utilsBundle.js"));
+const requests = [
+  [167, "bar endpoint caps", "row", 923, 220, 420, 100],
+  [167, "top circle vertical diameter", "column", 320, 75, 340, 100],
+  [167, "bottom circle vertical diameter", "column", 320, 365, 875, 100],
+  [168, "bar endpoint caps", "row", 985, 220, 420, 100],
+  [168, "annulus outer top", "column", 320, 55, 65, 100],
+  [168, "annulus outer bottom", "column", 320, 511, 521, 100],
+  [168, "annulus inner top", "column", 320, 139, 151, 100],
+  [168, "annulus inner bottom", "column", 320, 425, 437, 100],
+  [168, "rectangle left and right", "row", 768, 80, 560, 100],
+  [168, "rectangle top", "column", 320, 580, 595, 100],
+  [168, "rectangle bottom", "column", 320, 942, 955, 100],
+  [168, "rectangle circle top", "column", 320, 640, 655, 100],
+  [168, "rectangle circle bottom", "column", 320, 883, 899, 100],
+  [169, "bar endpoint caps", "row", 636, 75, 190, 100],
+  [169, "all seven vertical grid lines", "row", 80, 50, 610, 240],
+  [169, "all seven horizontal grid lines", "column", 570, 45, 595, 240],
+  [170, "bar endpoint caps", "row", 938, 225, 415, 100],
+  [170, "semicircle top", "column", 320, 40, 52, 100],
+  [170, "semicircle diameter", "column", 320, 266, 279, 100],
+  [170, "circle outer top", "column", 320, 448, 460, 100],
+  [170, "circle outer bottom", "column", 320, 900, 912, 100],
+  [170, "square top", "column", 320, 580, 593, 100],
+  [170, "square bottom", "column", 320, 767, 780, 100],
+  [170, "square left and right", "row", 670, 220, 420, 100],
+];
+const decoded = new Map();
+const scans = [];
+for (const [number, label, axis, fixed, lo, hi, threshold] of requests) {
+  if (!decoded.has(number)) {
+    const filename = path.join(out, `author-fig-${number}-native.png`);
+    const bytes = fs.readFileSync(filename);
+    decoded.set(number, {
+      png: PNG.sync.read(bytes),
+      screenshot_sha256: crypto.createHash("sha256").update(bytes).digest("hex"),
+    });
+  }
+  const { png, screenshot_sha256 } = decoded.get(number);
+  const runs = [];
+  let start = null;
+  for (let t = lo; t <= hi + 1; t++) {
+    const x = axis === "row" ? t : fixed;
+    const y = axis === "column" ? t : fixed;
+    const offset = 4 * (y * png.width + x);
+    const ink = t <= hi && png.data[offset + 3] > 0 &&
+      Math.max(...png.data.subarray(offset, offset + 3)) < threshold;
+    if (ink && start === null) start = t;
+    if (!ink && start !== null) {
+      runs.push({ first: start, last: t - 1, midpoint: (start + t - 1) / 2 });
+      start = null;
+    }
+  }
+  scans.push({ figure_id: `fig-${number}`, screenshot_sha256, label, axis, fixed, range: [lo, hi], threshold, runs });
+}
+const report = {
+  method: "Decode existing native screenshots with the PNG decoder bundled in the existing Playwright. Scan raster RGB thresholds; do not read SVG geometry or create/reopen an image in the model context.",
+  context_image_loads: 5,
+  scans,
+};
+fs.writeFileSync(path.join(out, "author-pixel-record.json"), JSON.stringify(report, null, 2) + "\n", { flag: "wx" });
+console.log(JSON.stringify(report, null, 2));

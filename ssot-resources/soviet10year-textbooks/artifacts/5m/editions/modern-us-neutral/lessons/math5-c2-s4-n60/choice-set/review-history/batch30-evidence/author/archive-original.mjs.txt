@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+assert.equal(process.cwd(), '/Users/yong/.codex/worktrees/d9b1/lemmadeck')
+const root = '.intentfold/tickets/STEMROBIN-182/tmp/5m-n60'
+const destination = `${root}/before-1140-repair`
+assert(!fs.existsSync(destination))
+const files = fs.readdirSync(root).filter(name => name !== 'archive-original.mjs')
+assert(files.every(name => fs.statSync(`${root}/${name}`).isFile()))
+fs.mkdirSync(destination)
+const hashes = {}
+for (const name of files) {
+  const source = `${root}/${name}`
+  const target = `${destination}/${name}`
+  fs.copyFileSync(source, target, fs.constants.COPYFILE_EXCL)
+  const bytes = fs.readFileSync(source)
+  assert(bytes.equals(fs.readFileSync(target)))
+  hashes[path.basename(target)] = crypto.createHash('sha256').update(bytes).digest('hex')
+}
+fs.writeFileSync(`${destination}/snapshot-hashes.json`, JSON.stringify({
+  files: hashes, original_files: files.length, source_images_reopened: 0,
+  source_or_view_or_math_checks_rerun: 0,
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ destination, original_files: files.length, byte_identical: true }))
