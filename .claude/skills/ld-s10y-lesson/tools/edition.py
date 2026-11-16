@@ -437,7 +437,7 @@ def math_signature(text: str) -> list[str]:
 
 
 def number_signature(text: str) -> list[str]:
-    without_math = MATH.sub("", text)
+    without_math = MATH.sub(" ", text)
     # Printed punctuation and adjacent units/CJK must not hide a numeric token.
     return re.findall(r"-?\d+(?:\.\d+)?", without_math)
 
@@ -584,6 +584,22 @@ def normalize_numbered_subparts(text: str) -> str:
     order = marker_order(markers)
     if order is None:
         return text
+    # A separately paragraphed tail is not a continuation of the last subpart.
+    def paragraph_suffix(start: int) -> tuple[int, str]:
+        for gap in re.finditer(r"\r?\n(?:[ \t\u3000]*\r?\n)*", text[start:]):
+            boundary = start + gap.start()
+            if masked_text[boundary:boundary + len(gap.group())] != gap.group():
+                continue
+            preceding = text[start:boundary].rstrip().rstrip("\"'”’）)]】")
+            sentence_end = preceding.endswith(
+                (".", "。", "．", "!", "！", "?", "？", ";", "；")
+            ) and masked_text[start + len(preceding) - 1] == preceding[-1]
+            if text[markers[-1].end():boundary].strip() and (
+                gap.group().count("\n") > 1 or sentence_end
+            ):
+                return boundary, text[boundary:].replace("\r\n", "\n").rstrip()
+        return len(text), ""
+
     if len(markers) == 2:
         formulas = list(MATH.finditer(text, markers[0].end()))
         run = []
@@ -613,23 +629,25 @@ def normalize_numbered_subparts(text: str) -> str:
                     " ".join(match.group() for match in run[column::2])
                     for column in range(2)
                 ]
-                suffix = text[run[-1].end():].strip()
-                if suffix:
-                    columns[-1] += suffix
+                body_end, suffix = paragraph_suffix(run[-1].end())
+                tail = text[run[-1].end():body_end].strip()
+                if tail:
+                    columns[-1] += tail
                 prefix = text[:markers[0].start()].rstrip()
                 return "\n".join(
                     ([prefix] if prefix else []) + columns
-                )
+                ) + suffix
 
+    body_end, suffix = paragraph_suffix(markers[-1].end())
     prefix = text[:markers[0].start()].rstrip()
     parts = []
     for index, marker in enumerate(markers):
-        end = markers[index + 1].start() if index + 1 < len(markers) else len(text)
+        end = markers[index + 1].start() if index + 1 < len(markers) else body_end
         part = text[marker.start():end]
         part = re.sub(r"[\t \u3000\r\n]+", " ", part).strip()
         parts.append((order[marker.group("label")], part))
     ordered = [part for _, part in sorted(parts)]
-    return "\n".join(([prefix] if prefix else []) + ordered)
+    return "\n".join(([prefix] if prefix else []) + ordered) + suffix
 
 
 def validate_numbered_subpart_layout(text: object) -> list[str]:
@@ -1378,12 +1396,6 @@ def validate_errata(
             continue
         if corrected == source_record["original"]:
             errors.append(f"lesson.errata[{erratum_id}].corrected 不得照抄错误原式")
-            continue
-        if (
-            not math_signature(source_record["original"])
-            or not math_signature(corrected)
-        ):
-            errors.append(f"lesson.errata[{erratum_id}] 必须绑定数学原式与修正式")
             continue
         target = source_record["target"]
         source_text = source_targets.get(target)

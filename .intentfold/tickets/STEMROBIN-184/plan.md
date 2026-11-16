@@ -562,3 +562,180 @@ PASS后，才披露作者内部稿供Stage3比较；尚未提前提升choice-set
 不以工具PASS冒称独立内容批准。准备commit/push同一分支，实际SHA操作后追加；
 不改写之前提交，不写共享库、publish、生产交互、合并、关闭或部署。
 全项目测试和构建仍仅在正式handoff前一次，实际token/费用未知。
+
+第四批提交`f548b566593be5575e9c886d1c8a58d4749d4c86`已成功push至
+`origin/codex/STEMROBIN-184-textbooks`，HEAD与远程跟踪ref相等；实际commit时间
+2026-11-15T23:24:06Z。本操作后记录随下一批带入，不amend已推送提交。
+接续第五批：9-10g物理24–27源作者Confucius，仅四新页，不动稳定8–21索引；
+6-8g60–63独立源审已完成，报告REVISE两处源字符且60/61计行仍FAIL。父方保存
+四页初稿，分别恢复61页材料间逗号及62页“不很近”，仅重验受影响字符。
+计行源证据表明同一folio字形跨过投影阈值间隙，被decorated-folio保护拆为两带；
+不遮页码、不改人工期望数，将验证最小连通域归属修复。未组装或计新完整课。
+
+第五批源层继续：60/61/62实际finalize一次为25/21/24 PASS，63原24 PASS复用。
+最小folio修复要求既有合并后页码谓词且真实数字连通块跨上下带；页边细线不能
+代替数字连通块。6新、9相关folio测试PASS，分式13PASS/4缺本地fixture SKIP。
+两处字符及audit-only改动独立changed-only PASS，五图PNG/bbox不变；五个
+忠实SVG均vectorize保真PASS。精确隔离11–63 strict assemble PASS：153题、
+75编号图、15源单元，原1–13课三源文件逐字节相等；14历史阅读闭合，章末题集
+仅152/153开头。批准索引提升，七个旧choice-set只重绑book trace及派生hash，
+非trace输入与语义审查深等、各一次当前validator exit0，不重审数学或显示。
+
+14历史课prepare一次：22源对象（12正文/5图/5图题）、21实际显示段落、零题。
+Peirce现代正文完成，Aristotle先行source-only冻结后接续Stage2，不强编题。
+Banach仅71/73/74 source inventory/routing，Confucius仅72/75清单与路由；
+父方也已逐张重开五原PNG并在tmp冻结独立源图清单，未披露spec前保留数学/
+物理图的区别。72暂选generated instructional，75暂选hybrid；服务费用边界及
+批准text context未收口前没有生成调用。Peirce空闲后接续9-10g新28–31页，
+不重复Confucius24–27或Ptolemy正在进行的源审。第五批尚无完整新现代课。
+
+2026-11-16接续：已重读live184及179恢复评论，仍按同分支滚动批次、finish review、
+无生产写入执行。History14文字独立Stage2 PASS，批准模板已原字节保存到现代课目录。
+图71/73/74首次独立复核PASS：母方先冻结原PNG，再实际检查当前完整spec、全部相关
+正文、native/240neutral/346print预览；图74一次可读性修正的完整拒绝快照保留。
+三图spec/SVG原字节提升，仅重绑render/review的持久路径及派生哈希，不重渲染或
+重复浏览器。图72生成与75hybrid仍由Confucius执行此前授权的两次既有Azure helper
+调用，retries0；实际调用/结果尚未返回，不补调用、不声称已生成或费用已知。
+
+9-10g物理24–27独立审查：24–26 PASS；27可读内容/计数/边界及五图PASS，末尾极小
+标点仍不确定，不猜写、不冒称全字形PASS。Peirce28–31实际finalize26/19/24/19 PASS，
+六裁图已观察；Ptolemy作为唯一非作者审查者接续。严格隔离8–25装订43题/18图；
+图17虽物理上在§7标题之前，但唯有n7正文引用。现有assemble仅修这个跨标题真实
+归属问题，五新及八已有定点测试PASS，重装订后旧n1–n4三源文件均原字节相等。
+n6现10正文对象/3图，n7仍未闭合；n4仅重绑索引trace，未变审查及显示直接复用。
+
+p22原例题最后一步的MQ/QP面归属及半开括号已由母方与独立答案作者分别确认。
+只在忠实页frontmatter登记两条errata，原正文/块/图不改；实际finalize25/25 PASS，
+初始三源文件保留。Aristotle使用官方source_ref/source_errata只刷新绑定，未重复
+prepare；现代两式已更正，n6移除错误图17及caption，其余文字和14题原字节保留。
+母方独立全文审查PASS，四份文字/书写题模板原字节保存，图清单仍draft。
+正式figure contexts12–16已建立；Peirce负责12/13，Banach负责14/15/16，仅scratch
+作者图稿，不自行批准/提升。投影交叉不是空间交点，图14反证假设不能伪装成一致
+实际空间模型；全部原题条件限制保留。答案/选择题待批准现代实图，不重复既有源解。
+本批仍没有完整现代课，不提前commit为完成批次；全项目测试/构建仍等正式handoff。
+
+第五批接续：72/75实际Azure调用共3次成功，均retries0：72一次，75初稿一次及
+唯一一次深色衣服定点修复。75初稿背景移除删除浅色肩/袖/躯干，完整26文件原字节
+保存在initial；修后轮廓完整，native细亮边及另一鞋底2.951/3.949/2.647px偏移
+如实记录，不冒称精确站姿。母方独立分层/全图/240检查PASS；72完整玻璃边、
+透明重叠、厚板和单杆在native及240/346检查PASS。72 generated和75 hybrid已
+提升，raw/alpha/full-canvas artwork/SVG字节不变；只重绑素材、生成/渲染、review
+路径及派生哈希。75保留独立artwork与overlay，不发布扁平合成图。实际token/费用
+未知，累计真实图像调用4次（本批3次），不追加调用或伪造预算。
+
+History14五图清单绑定后adapt-finalize/render PASS，21实际正文段/零题，桌面
+1440x960与手机390x844一次离线检查PASS，四完整截图已打开；实际手机图宽358px。
+无题材料不生成答案或选择题。本批现1课完整，尚未满足提交批次条件。
+
+9-10g新28–31源复核完成：内容、26/19/24/19行及六裁图PASS；局部后MD观察的
+顺序限制保留，不改成无条件盲审。p27末尾微小标点仍未决。p26定理3“已知平面”
+应为“已知直线”经两名非现代作者确认，frontmatter-only登记勘误并finalize26/26。
+原块/crop不变，初始三文件保留。严格隔离8–31装订66题/25图/8单元PASS，
+n7闭合44–56共13题，n8边界未确认；原n1–n6三源文件逐字节相等，n4仅trace
+重绑一次、当前validator exit0，不重审未变数学或显示。
+
+n7真实纯prose勘误被旧math_signature限定误拒：仅移除这一额外guard，源哈希、
+目标、理由、唯一原文/修文及旧文门禁全部保留；7新/6既有定点测试PASS，实际
+勘误内存校验PASS。n7完整现代稿已交接，另一个真实helper缺陷会把第53源自带
+证明/研究/注压进2)末项，正在最小修正，尚未提升或finalize。不改原题、不开全suite。
+
+图12/13唯一标签修复后第二次renderer仍FAIL，保留BLOCKED，不再修/提升；
+n6第40题引用12，故n5及n6都不计完整课，14–16图通过也不能绕过此依赖。
+下一闭合路线为History14/n7/n3三课；n3尚未prepare，先确认源名词勘误及8–10
+实图清单。其他阻塞源23–25计行及s10图53不另起重复修复。继续现有代理：
+Aristotle最小分题helper修复，Banach独立n7文本，Ptolemy仅n3名词源确认，
+Peirce仅n3三图source inventory；Confucius已交接72/75待新定点任务。
+
+n7通用分题后缀修复已完成：保留已有空行段落及公式外句末换行，不按题号或关键词
+特判；18新及19既有受影响测试共37PASS。首轮12/14PASS的masked-formula真实
+缺陷和CRLF新测试期望错误均如实保留后修正。实际n7内存校验exit0、整exercises
+deep-equal，第53题27行及三模板字节不变。Banach独立23正文对象/13原题语义PASS，
+批准模板原字节保留；官方17–20contexts建立，Confucius只制作确定性图。Ptolemy
+仅答案正文，Aristotle仅选择题source-first求解，完整53源worked example不作seed。
+仍无n7finalize或整课完成声明。
+
+n3物理17名词已由Ptolemy定点原像素确认：原印“这个平面”确属数学statement错误。
+仅frontmatter登记p0017-half-space-point-set，actualfinalize20/20PASS；完整blocks、
+render、crop和MDbody逐字节相等，初始三文件保留。源对象不变，未多跑assemble。
+prepare一次21正文对象/11题/3图，Banach只写两现代文字模板，Peirce三实图
+inventory已完成、等待批准context。母方已先冻结完整源数学和三原PNG清单。
+14–16图完整spec/text/native/240neutral/346print独立PASS并原spec/SVG字节提升，
+路径及派生hash重绑；这仍不解除n5/n6对失败12的依赖。
+
+n3现代正文/11题独立语义PASS，21对象/18实际正文段、全部源条件和两层26小问
+保留。唯一数字签名误拒来自移除圈号公式后将26与1拼成26.1；现有helper只将
+公式替换为空格，5新/5既有数字测试及2既有布局签名测试PASS。首次相对runtime
+路径错误在运行前exit127，改绝对路径后两选定测试通过。作者相同实际只读合同
+affected-only复核一次exit0，五类errors空、源/模板hash不变；初始FAIL完整保留，
+不加numeric_changes或改真实小数。两批准文字模板原字节留存，figmanifest仍draft，
+官方08–10contexts建立，Peirce接续已有清单确定性制作，每图仅一次定点修复。
+
+n7选择题作者Stage1冻结12原题并排除53worked example。44原“任意一条”两种量词
+读法保留，新题允许明确“存在至少一条”后问必要/充分，不改源定理或假定唯一键。
+Banach接续独立choice源解，尚未披露作者options/key；正式prepare等待现代finalize。
+Ptolemy两课答案正文冻结、等待实际批准图及官方模板；不是正式答案批准。
+本批仍只有History14一课完整，未commit/push；无新增生成调用，计量费用仍未知。
+
+n7四图已独立全文/spec及native/240neutral/346print逐图PASS，17/19各唯一标签修复
+初始FAIL保留，18/20首次rendererPASS。spec/SVG原字节提升，路径及派生hash重绑。
+首次adapt-finalize只因母方更新durable清单而未同步work模板exit2，原audit保留；
+同份四图绑定同步模板后实际finalize/renderPASS。正文19实际段/13书写题桌面手机
+一次离线PASS，四完整截图已打开并原字节留存，实际手机正文图358px、题内图20
+310.015625px，最小字26.85/23.251px。答案prepare一次，Ptolemy正式JSON作者；
+Aristotle正式选择题种子已prepare，Banach先核绑定、仍未披露options/key。
+两课答案正文与母方先行源解比较一致，正式JSON与实际figureEvidence仍待审。
+Confucius接续后批9-10g32–35源作者，仅四新页，不动稳定8–31索引，不计本批完整课。
+
+n3图08–10已有独立全文/spec/native640/240neutral/346print PASS复用，三份官方
+review通过、spec/SVG原字节提升，仅render/review路径及派生hash重绑；三份作者
+handoff与母方source-first记录已原字节保留。scratch图清单绑定后实际adapt-finalize/
+renderPASS，答案prepare一次。初次桌面/手机18正文段、11书写题结构PASS，四完整
+截图已打开，发现六题数字在公式外的圈号前缀重复。现有render_lesson.js仅补识别
+`16$^{\circ}$.`式前缀，既有六和新增六独立预期case通过；实际n3 renderPASS，
+正文HTML与初始逐字节相等，现代模板/题面不改。affected习题-only桌面/手机PASS，
+两完整截图已打开且题号单次出现。初始HTML/report/四截图与修后证据均保留，
+未重复正文浏览器检查。
+
+n7选择题11题45选项作者结构检查一次PASS；母方一次桌面/手机view显示PASS、
+两完整截图已打开。Banach官方seed绑定PASS后接续view-only Stage2，内部稿/键
+仍未披露。n3官方choice seed已prepare、作者接续原冻结源解，不读答案。两课
+正式答案draft已到达，母方实际逐题prompt/source/figureEvidence严格匹配官方
+templates：n7共13、n3共11，全部ungraded/empty parts、无伪造bookRaw；完整
+说明与已批准答案正文一致。作者实际资产绑定handoff待返回，尚未finalize或
+计完整课。本批仍只有History14已完整；没有第五批commit/push或生产写入。
+
+两课正式答案候选已独立Gate2 PASS并按批准hash原字节留存；实际官方finalize一次
+n7 auto0/ungraded13、n3 auto0/ungraded11均PASS。作者当前spec/SVG/context及既有
+完整预览绑定已读，历史preview的pending/pre-finalize hash限制保留，不据此伪造
+审批或重复浏览器。n3选择题source-first/官方seed绑定、view-only Stage2全40选项
+冻结、再内部Stage3 key/derivation/misconception/11来源coverage比较PASS；当前
+validate-with-review一次exit0。10题40选项及批准seed/draft/review原字节留存，
+桌面/手机各一次显示PASS，两完整截图已打开，n3现在完整离线课。本批已有
+History14+n3两课完整；n7 Stage2由Banach独立全45选项/11题PASS，19真26假，
+54错误构造但面积正确、51三点平面存在却不平行、56正确四点但自交等具体辨析
+冻结。Stage3内部比较授权后进行中，未提前算n7完整或第五批push。
+
+后批前置源32–35由Confucius作者、Peirce唯一独立源审（先单原PNG再MD）继续；
+已有32初次19/18计行FAIL、33/34首次17/17及25/25PASS不视为整批内容批准。
+Ptolemy仅复用10c15/16已存在源审和初始分段诊断，查极限下标误拆行的通用原因，
+只读实现/像素并写原诊断目录，不改代码或源、不重复finalize。两项不计第五批
+完整课，不提交尚未批准/失败的未来页。
+
+第五批三课完整离线收口：History14（21正文段、五图、零题）、n7（19正文段、
+四图、13书写题/完整标准答案、11选择题45选项）、n3（18正文段、三图、
+11书写题/完整标准答案、10选择题40选项）。n7独立Stage3全键/推导/误解及
+12来源覆盖PASS，49/50合理合并、53源worked例题明确排除，54一般四面体构造
+生产损失诚实声明；当前带review官方校验仅一次exit0。批准三份choice-set及
+源审记录原字节留存，已有桌面/手机显示复用，不重审源解/选项或重跑浏览器。
+本批新增24标准答案、21选择题、85选项；累计16完整离线课、151标准答案、
+138选择题、589选项。范围仍未完成，无生产写入/交互/合并/部署/handoff。
+
+提交前已fetch同分支，HEAD与origin分支0/0；只stage本批批准内容、必要忠实
+源扩展/索引绑定、已验证最小helper修正及证据。未stage9-10g32–35、10c/9c
+失败未来页、blocked现代n5/n6和现代图12–16、.venv或任何.env。仅当前stage
+快照commit/push，成功后按既有记录追加实际SHA，接续后批，不做全项目测试。
+
+当前258 staged文件范围/credential-path检查PASS，两数学课ready答案及pass
+choice review状态齐全。git cached whitespace检查exit2，仅源确认批准证据
+geo910-n3-plane-space-source-confirmation.md三行引用的Markdown双空格换行；
+这是保留原书印刷行的合法内容，不删除或改写已批准证据，不冒称该命令exit0。

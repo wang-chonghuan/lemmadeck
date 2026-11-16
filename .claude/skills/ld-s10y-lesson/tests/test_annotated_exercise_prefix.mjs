@@ -20,6 +20,12 @@ test('annotated source numbers render once without consuming other mathematics',
     { number: '6', text: '$5^{\\circ}$. Mismatched.', bodyMath: true, annotation: false },
     { number: '7', text: 'Before $7^{\\circ}$. Internal.', bodyMath: true, annotation: false },
     { number: '8', text: '8. Ordinary.', body: 'Ordinary.', annotation: false },
+    { number: '16', text: '16$^{\\circ}$. Outside.', body: 'Outside.', annotation: true },
+    { number: '18', text: ' 18$^{\\circ}$*. Starred.', body: 'Starred.', annotation: true },
+    { number: '19', text: '19$^{*}$． Fullwidth.', body: 'Fullwidth.', annotation: true },
+    { number: '21', text: '20$^{\\circ}$. Mismatched outside.', bodyMath: true, annotation: false },
+    { number: '22', text: 'Before 22$^{\\circ}$. Internal outside.', bodyMath: true, annotation: false },
+    { number: '26', text: '26$^{\\circ}$. Use $x^2$.', bodyMath: true, annotation: true },
   ]
   fs.writeFileSync(path.join(lesson, 'lesson.json'), JSON.stringify({ title: 'Fixture', prose: [] }))
   fs.writeFileSync(path.join(lesson, 'exercises.json'), JSON.stringify({

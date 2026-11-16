@@ -245,7 +245,8 @@ for (const lid of lessonDirs) {
     const hasPrintedPrefix = prefix && prefix[1] === String(printedNumber);
     const marker = hasPrintedPrefix && prefix[2] !== "." ? esc(prefix[2]) : "";
     const annotatedPrefix = printedNumber == null ? null
-      : e.text.match(/^\s*\$(\d+)\^\{(\\circ|\*)\}\$(\*)?[.．]\s*/);
+      : (e.text.match(/^\s*\$(\d+)\^\{(\\circ|\*)\}\$(\*)?[.．]\s*/)
+        || e.text.match(/^\s*(\d+)\$\^\{(\\circ|\*)\}\$(\*)?[.．]\s*/));
     const hasAnnotatedPrefix = annotatedPrefix && annotatedPrefix[1] === String(printedNumber);
     const numberLabel = hasAnnotatedPrefix
       ? inline(`$${annotatedPrefix[1]}^{${annotatedPrefix[2]}}$${annotatedPrefix[3] || ""}.`)

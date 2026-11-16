@@ -241,6 +241,25 @@ def _decorated_folio(ink: np.ndarray, a: int, b: int, glyph_h: float) -> bool:
     )
 
 
+def _folio_fragment_continues(
+    ink: np.ndarray, prev_a: int, prev_b: int, a: int, b: int, glyph_h: float
+) -> bool:
+    if not _decorated_folio(ink, prev_a, b, glyph_h):
+        return False
+    components, _ = ndimage.label(ink[prev_a:b + 1])
+    shared = np.intersect1d(
+        np.unique(components[:prev_b - prev_a + 1]),
+        np.unique(components[a - prev_a:]),
+    )
+    bounds = ndimage.find_objects(components)
+    return any(
+        rows.stop - rows.start >= 0.4 * glyph_h
+        and columns.stop - columns.start >= max(2, 0.1 * glyph_h)
+        for component_id in shared if component_id
+        for rows, columns in [bounds[component_id - 1]]
+    )
+
+
 def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     """Count printed rows after masking model-identified figures."""
     # Work on a counting-only copy; extraction pixels are never changed.
@@ -318,7 +337,11 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         if merged:
             prev_a, prev_b = merged[-1]
             if _decorated_folio(ink, a, b, glyph_h):
-                merged.append((a, b))
+                # A sparse digit neck can split one folio's row projection.
+                if _folio_fragment_continues(ink, prev_a, prev_b, a, b, glyph_h):
+                    merged[-1] = (prev_a, b)
+                else:
+                    merged.append((a, b))
                 continue
             separate_tall_rows = (
                 min(prev_b - prev_a + 1, b - a + 1) >= 1.8 * glyph_h
@@ -334,7 +357,10 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         if joined:
             prev_a, prev_b = joined[-1]
             if _decorated_folio(ink, a, b, glyph_h):
-                joined.append((a, b))
+                if _folio_fragment_continues(ink, prev_a, prev_b, a, b, glyph_h):
+                    joined[-1] = (prev_a, b)
+                else:
+                    joined.append((a, b))
                 continue
             prev_x = np.flatnonzero(ink[prev_a:prev_b + 1].any(axis=0))
             next_x = np.flatnonzero(ink[a:b + 1].any(axis=0))

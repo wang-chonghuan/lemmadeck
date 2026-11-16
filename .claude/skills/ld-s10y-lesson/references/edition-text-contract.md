@@ -19,10 +19,16 @@ Run `node .claude/skills/ld-s10y-lesson/tools/prose_flow.mjs <lesson.template.js
 reported boundary object. The command, validator, offline renderer, and publisher all use
 `htmlfrag.js` `proseParagraphs`/`proseFlow`. Do not count prose blocks or blank lines independently.
 
+Numbered subparts join ordinary wrapped continuations, but an existing blank-line boundary or a sentence-ending newline outside math after the final subpart preserves the following independent paragraphs and their sentence newlines instead of folding them into that subpart.
+
 ## Source-Bound Errata
 
 A confirmed mathematical printing error remains unchanged in the faithful page block and is recorded
 in that page's frontmatter:
+
+`original` and `corrected` may be a formula or a mathematical statement written in prose.
+Math delimiters are not required for a statement correction; the same exact source binding,
+nonempty replacement, unique original span and removal of the original wording are required.
 
 ```json
 {

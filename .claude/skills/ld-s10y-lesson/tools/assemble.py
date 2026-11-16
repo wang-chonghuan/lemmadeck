@@ -268,6 +268,55 @@ def promote_figures(book: Path, work: Path | None, warnings: list[str]) -> None:
                 shutil.copy2(source, library / source.name)
 
 
+def _claim_next_lesson_prose_figures(lessons: list[dict]) -> None:
+    """A page-top figure can precede the heading of its uniquely referencing lesson."""
+    prose_refs = [
+        {
+            number
+            for block in lesson["prose"]
+            if block["kind"] not in ("fig", "cap")
+            for number in FIGREF.findall(B.text_of(block))
+        }
+        for lesson in lessons
+    ]
+    exercise_refs = [
+        {
+            number
+            for exercise in lesson["exercises"]
+            for number in FIGREF.findall(exercise["text"])
+        }
+        for lesson in lessons
+    ]
+    for index, lesson in enumerate(lessons[:-1]):
+        target = lessons[index + 1]
+        for figure in list(lesson["blocks"]):
+            if figure["kind"] != "fig" or figure.get("owner_exercise"):
+                continue
+            numbers = set(FIGREF.findall(figure.get("label") or ""))
+            if not numbers or numbers & (prose_refs[index] | exercise_refs[index]):
+                continue
+            owners = [i for i, refs in enumerate(prose_refs) if numbers & refs]
+            if owners != [index + 1] or figure["page"] != target["start_page"]:
+                continue
+            captions = [
+                block for block in lesson["prose"]
+                if block["kind"] == "cap"
+                and set(FIGREF.findall(" ".join(filter(None, (
+                    block.get("label"), B.text_of(block),
+                ))))) == numbers
+            ]
+            moved = [figure, *captions]
+            refs = {block["ref"] for block in moved}
+            for field in ("blocks", "prose"):
+                lesson[field] = [block for block in lesson[field] if block["ref"] not in refs]
+                anchor = next(
+                    i for i, block in enumerate(target[field])
+                    if block["kind"] not in ("fig", "cap")
+                    and numbers & set(FIGREF.findall(B.text_of(block)))
+                )
+                target[field][anchor + 1:anchor + 1] = moved
+
+
 def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], list[str]]:
     """按语义认领图：正文图留正文，练习共享图只在练习区展示一次。"""
     errors, warn = [], []
@@ -279,6 +328,7 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
         for n in FIGREF.findall(b.get("label") or ""):
             fig_by_num.setdefault(n, []).append(b)
 
+    _claim_next_lesson_prose_figures(lessons)
     referenced = set()
     for lesson in lessons:
         exercises_by_number: dict[str, list[dict]] = {}
