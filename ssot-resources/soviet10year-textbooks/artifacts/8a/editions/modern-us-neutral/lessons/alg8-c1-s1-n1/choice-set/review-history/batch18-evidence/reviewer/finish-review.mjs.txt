@@ -1,0 +1,77 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import { spawnSync } from 'node:child_process'
+
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const own = `${scratch}/reviewer-8a-n1`
+const author = `${scratch}/8a-n1`
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const source = read(`${own}/source-solutions.json`)
+const view = read(`${own}/view-checks.json`)
+const seed = read(`${author}/seed.json`)
+const draft = read(`${author}/draft.json`)
+const digest = file => {
+  const result = spawnSync('python3', ['.agents/skills/ld-s10y-choice/scripts/prepare.py',
+    'digest', file], { encoding: 'utf8' })
+  assert.equal(result.status, 0, result.stderr)
+  return result.stdout.trim()
+}
+assert.equal(view.counts.option_truths, 21)
+for (const question of draft.questions) {
+  const independent = view.questions.find(row => row.id === question.id)
+  assert.deepEqual(question.key.correct, independent.correct)
+  assert(question.intent.limitations.length > 0)
+  for (const option of independent.options) {
+    const rationale = question.key.rationales.find(row => row.option_id === option.id)
+    assert.equal(rationale.truth, option.truth)
+    assert.equal(rationale.misconception === null, option.truth === 'correct')
+  }
+}
+const coverage = {
+  '1': 'All eight equations and complete real root sets remain, including D=0 singleton and D<0 empty set. Independent written calculation is explicitly lost, not silently claimed.',
+  '2': 'All six formula B records retain H, Q and roots, including two Q=0 cases; the required half-coefficient method is not replaced by final roots alone.',
+  '3': 'Both equations retain both methods and both root branches. Independent writing of four derivations is expressly recorded in omitted_tasks and local limitations.',
+  '4': 'All four standard forms and full roots remain. Constant denominators introduce no domain restriction and nonzero scalar equivalents are acknowledged.',
+  '5': 'All six coefficient-derived sums/products retain the without-solving restriction and real-root existence. No individual roots are disclosed as an alternative method.',
+  '6': 'All original denominators and four cleared equations remain, with exclusions and final sets jointly checked. Extraneous 3 and 1 are rejected; opposite-denominator b sign is essential.',
+}
+const internalEvidence = [
+  'Q1 A replaces -b by b, correctly negating every existing root; C collapses all D<=0 to D=0 and generates the false 1/2. Correct eight discriminants, factorisations and singleton/empty distinctions match independently frozen source.',
+  'Q2 B uses H=b and propagates Q=H^2-ac to every stated radical; C drops ac and generates {0,-b/a}. Correct half coefficients, Q values and formula B roots match all six originals.',
+  'Q3 A deletes zero and negative branches in both methods. B scales only b/c, preserving a incorrectly, and both methods coherently solve the changed equations. Correct formula and nonformula rows preserve every branch.',
+  'Q4 A distributes the scalar only to the last addend, generating all four listed wrong forms and roots. B fails transposition sign changes, yielding discriminants 196,1801,400,529. D changes -b to b. Correct expansion, factoring and all root sets match.',
+  'Q5 A uses b/a,-c/a; C swaps two correct outputs; D reverses b^2-4ac and makes all six discriminants negative. These exact procedures generate all false records; coefficient-comparison proof correctly avoids solving individual roots.',
+  'Q6 A drops original domains. B multiplies the same rather than complementary factor, exactly generating its four wrong polynomials and filtered roots. C fails to change the sign for 5-x, yielding 2x^2-15x-50. Correct source calculations and all direct substitutions match.',
+]
+const review = {
+  schema: 's10y-choice-review-v1',
+  seed_sha256: digest(`${author}/seed.json`), draft_sha256: digest(`${author}/draft.json`),
+  reviewer: { kind: 'self_review',
+    identity: 'Parent Codex source-first independent-stance review, separate from Chandrasekhar author; inline parent review honestly labeled self_review.' },
+  source_reviews: seed.exercises.map(ex => ({ source_number: ex.number,
+    independent_solution: source.sources.find(row => row.number === ex.number).solution,
+    coverage: { verdict: 'pass', evidence: coverage[ex.number] } })),
+  figure_checks: [], new_figure_reviews: [],
+  question_reviews: view.questions.map(row => ({
+    question_id: row.id,
+    task_fidelity: { verdict: 'pass', evidence: row.fidelity },
+    redundancy: { verdict: 'pass', evidence: row.redundancy },
+    answer_leakage: { verdict: 'pass', evidence: row.leakage },
+    mathematics: { verdict: 'pass',
+      independent_solution: row.options.filter(option => option.truth === 'correct')
+        .map(option => option.evidence).join(' '),
+      correct: row.correct,
+      option_checks: row.options.map(option => ({
+        option_id: option.id, truth: option.truth, evidence: option.evidence,
+      })) },
+  })),
+  outcome: 'pass',
+}
+for (const [name, value] of [
+  ['final-comparison-result.json', { status: 'pass', questions: 6, options: 21,
+    correct_derivations_read: 6, incorrect_misprocedures_read: 15,
+    source_view_internals_order: true, local_production_losses_read: true,
+    core_changes: 0, internal_evidence: internalEvidence }],
+  ['review.json', review],
+]) fs.writeFileSync(`${own}/${name}`, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ outcome: 'pass', questions: 6, options: 21 }))

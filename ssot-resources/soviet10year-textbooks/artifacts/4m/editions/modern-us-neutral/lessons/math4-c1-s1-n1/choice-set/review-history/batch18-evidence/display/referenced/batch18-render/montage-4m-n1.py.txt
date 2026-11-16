@@ -1,0 +1,64 @@
+"""Lossless native-size endpoint montage; no browser or semantic checks."""
+
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image, ImageChops
+
+
+ROOT = Path.cwd()
+BASE = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp"
+SOURCE = BASE / "offline-evidence/4m"
+OUT = BASE / "batch18-render/4m-n1-native-montages"
+OUT.mkdir(exist_ok=False)
+LESSON = "math4-c1-s1-n1"
+
+
+def sha(file):
+    return hashlib.sha256(file.read_bytes()).hexdigest()
+
+
+groups = []
+for surface in ("text", "exercises", "choices"):
+    for width in (1440, 390):
+        entries = []
+        images = []
+        for endpoint in ("first", "last"):
+            file = SOURCE / f"{LESSON}-{surface}-{width}-{endpoint}.png"
+            image = Image.open(file).convert("RGB")
+            images.append(image)
+            background = Image.new("RGB", image.size, image.getpixel((0, 0)))
+            entries.append({
+                "path": str(file), "sha256": sha(file),
+                "size": list(image.size), "endpoint": endpoint,
+                "non_background_bbox": ImageChops.difference(image, background).getbbox(),
+            })
+        if width == 1440:
+            canvas = Image.new("RGB", (1440, 1928), "#dddddd")
+            positions = [(0, 0), (0, 968)]
+        else:
+            canvas = Image.new("RGB", (788, 844), "#dddddd")
+            positions = [(0, 0), (398, 0)]
+        for image, entry, position in zip(images, entries, positions):
+            canvas.paste(image, position)
+            entry["montage_xy"] = list(position)
+            entry["copied_pixels_equal"] = ImageChops.difference(
+                image, canvas.crop((*position,
+                                    position[0] + image.width,
+                                    position[1] + image.height)),
+            ).getbbox() is None
+        target = OUT / f"{surface}-{width}-first-last-native.png"
+        canvas.save(target)
+        groups.append({
+            "path": str(target), "sha256": sha(target), "size": list(canvas.size),
+            "resampling": "none", "scale": 1, "constituents": entries,
+        })
+
+with (OUT / "manifest.json").open("x") as handle:
+    json.dump({
+        "operation": "Native-size lossless pixel copy, 8px external separator only.",
+        "new_display_combinations": 0, "original_endpoint_images": 12, "groups": groups,
+    }, handle, indent=2)
+    handle.write("\n")
+print(json.dumps({"groups": len(groups), "originals": 12, "output": str(OUT)}, indent=2))

@@ -1,0 +1,88 @@
+"""Bind manually written choices to this task's frozen source work."""
+import copy
+import hashlib
+import json
+from pathlib import Path
+
+
+DIRECTORY = Path(".intentfold/tickets/STEMROBIN-182/tmp/8a-n1")
+
+
+def load(name):
+    return json.loads((DIRECTORY / name).read_text(encoding="utf-8"))
+
+
+def digest(value):
+    serialized = json.dumps(
+        value, sort_keys=True, ensure_ascii=True, separators=(",", ":")
+    )
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+
+def byte_digest(name):
+    return hashlib.sha256((DIRECTORY / name).read_bytes()).hexdigest()
+
+
+def save_new(name, value):
+    with (DIRECTORY / name).open("x", encoding="utf-8") as handle:
+        handle.write(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+
+
+seed = load("seed.json")
+source = load("source-solutions.json")
+manuscript = load("author-manuscript.json")
+assert digest(seed) == source["seed_sha256"]
+sources = {
+    item["source_number"]: item["independent_solution"]
+    for item in source["sources"]
+}
+questions = copy.deepcopy(manuscript["questions"])
+for question in questions:
+    question["intent"]["source_solution"] = sources[question["source_numbers"][0]]
+    question["intent"]["figure_observations"] = []
+draft = {
+    "schema": "s10y-choice-draft-v1",
+    "seed_sha256": digest(seed),
+    "new_figures": [],
+    "questions": questions,
+    "coverage": manuscript["coverage"],
+}
+view = {
+    "questions": [
+        {field: question[field] for field in ("id", "source_numbers", "view")}
+        for question in questions
+    ]
+}
+save_new("draft.json", draft)
+save_new("view.json", view)
+freeze = {
+    "stage": "author_source_then_manually_constructed_draft_and_pure_view_frozen",
+    "author_identity": source["author"]["identity"],
+    "lesson": seed["source"]["lesson"],
+    "seed_sha256": digest(seed),
+    "draft_sha256": digest(draft),
+    "view_sha256": digest(view),
+    "source_solutions_byte_sha256": byte_digest("source-solutions.json"),
+    "draft_byte_sha256": byte_digest("draft.json"),
+    "view_byte_sha256": byte_digest("view.json"),
+    "sources": len(seed["exercises"]),
+    "source_subparts": source["counts"]["source_subparts"],
+    "questions": len(questions),
+    "options": sum(len(question["view"]["options"]) for question in questions),
+    "single_questions": sum(question["view"]["mode"] == "single" for question in questions),
+    "multiple_questions": sum(question["view"]["mode"] == "multiple" for question in questions),
+    "source_figures": len(seed["figures"]),
+    "new_figures": 0,
+    "source_blockers": source["source_blockers"],
+    "notices": [
+        "FormulaB's half coefficient andquarter discriminant are preserved as method outputs rather than fixed correct intermediates.",
+        "Both equations in source3 retain both requested methods and full solution branches, with independent-production loss recorded.",
+        "Source4 retains both standard forms and roots; source5 does not display or solve individual roots.",
+        "Source6 retains original exclusions, opposite-denominator signs and extraneous-root filtering.",
+        "This is authoring only; independent semantic and canonical review remain pending."
+    ],
+    "model": None,
+    "usage": None,
+}
+save_new("freeze.json", freeze)
+print(json.dumps(freeze, ensure_ascii=False, indent=2))

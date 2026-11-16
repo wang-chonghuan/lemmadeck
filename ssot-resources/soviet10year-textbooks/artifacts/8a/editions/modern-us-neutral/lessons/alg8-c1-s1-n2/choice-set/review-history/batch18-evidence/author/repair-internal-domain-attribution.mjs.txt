@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import crypto from 'node:crypto'
+
+const root = '.intentfold/tickets/STEMROBIN-182/tmp/8a-n2'
+const old = "The lesson's positive-square reasoning establishes the real-number domain rather than complex roots."
+const corrected = 'These are real-domain solutions, as explicitly stated in the choice views; the selected original definitions do not themselves explicitly fix R versus C. Over C, source9c also has roots +/-2sqrt2*i and source9d also has roots +/-sqrt3*i. This is an explicit view-domain qualification, not a claim of an original domain declaration.'
+const bytes = fs.readFileSync(`${root}/draft.json`)
+const draft = JSON.parse(bytes)
+const history = `${root}/history/before-internal-domain-attribution-repair`
+assert(!fs.existsSync(history))
+const changed = []
+for (const [index, question] of draft.questions.entries()) {
+  if (!question.source_numbers.includes('9')) continue
+  assert(question.intent.source_solution.endsWith(old), question.id)
+  changed.push({ path: `/questions/${index}/intent/source_solution`,
+    question_id: question.id, removed: old, added: corrected })
+  question.intent.source_solution = question.intent.source_solution.slice(0, -old.length) + corrected
+}
+assert.equal(changed.length, 5)
+const before = JSON.parse(bytes)
+assert.deepEqual(draft.questions.map(q => q.view), before.questions.map(q => q.view))
+assert.deepEqual(draft.questions.map(q => q.key), before.questions.map(q => q.key))
+assert.deepEqual(draft.coverage, before.coverage)
+fs.mkdirSync(history, { recursive: true })
+fs.writeFileSync(`${history}/draft.json`, bytes, { flag: 'wx' })
+fs.writeFileSync(`${root}/draft.json`, JSON.stringify(draft, null, 2) + '\n')
+fs.writeFileSync(`${root}/internal-domain-attribution-diff.json`, JSON.stringify({
+  status: 'five-internal-fields-only', changed, view_key_coverage_unchanged: true,
+  original_draft_bytes_sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+  original_author_source_record_and_serializer_retained_as_history_not_reexecuted: true,
+  canonical_or_semantic_runs: 0,
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ changed_fields: changed.length, visible_or_key_changes: 0 }))

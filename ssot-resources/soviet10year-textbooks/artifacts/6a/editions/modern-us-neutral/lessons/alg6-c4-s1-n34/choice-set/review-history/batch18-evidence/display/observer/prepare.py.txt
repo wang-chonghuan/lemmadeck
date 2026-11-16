@@ -1,0 +1,66 @@
+"""Pack the twelve existing n34 endpoints at native resolution."""
+
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image, ImageDraw
+
+
+ROOT = Path.cwd()
+OUT = Path(__file__).resolve().parent
+SOURCE = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp/offline-evidence/6a"
+LESSON = "alg6-c4-s1-n34"
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def main():
+    manifest = {"lesson": LESSON, "endpoints": [], "montages": []}
+    for surface in ("text", "exercises", "choices"):
+        canvas = Image.new("RGB", (1854, 1992), "white")
+        draw = ImageDraw.Draw(canvas)
+        members = []
+        for width, height, x in ((1440, 960, 8), (390, 844, 1456)):
+            for index, endpoint in enumerate(("first", "last")):
+                path = SOURCE / f"{LESSON}-{surface}-{width}-{endpoint}.png"
+                with Image.open(path) as image:
+                    image = image.convert("RGB")
+                    if image.size != (width, height):
+                        raise RuntimeError(f"Unexpected endpoint dimensions: {path}")
+                    y = 8 + index * 992
+                    draw.text((x, y + 4), f"n34 {surface} {width} {endpoint}", fill="black")
+                    canvas.paste(image, (x, y + 24))
+                entry = {
+                    "path": str(path.relative_to(ROOT)),
+                    "filename": path.name,
+                    "sha256": sha(path),
+                    "surface": surface,
+                    "viewport_width": width,
+                    "endpoint": endpoint,
+                    "size": [width, height],
+                    "member_rect": [x, y + 24, width, height],
+                    "resized": False,
+                }
+                members.append(entry)
+                manifest["endpoints"].append(entry)
+        output = OUT / f"{surface}-native-endpoints.png"
+        if output.exists():
+            raise RuntimeError(f"Refusing to overwrite: {output}")
+        canvas.save(output)
+        manifest["montages"].append({
+            "path": str(output.relative_to(ROOT)),
+            "sha256": sha(output),
+            "size": list(canvas.size),
+            "members": members,
+        })
+    with (OUT / "endpoint-manifest.json").open("x") as handle:
+        json.dump(manifest, handle, indent=2)
+        handle.write("\n")
+    print("Prepared three native montages containing all twelve actual endpoints.")
+
+
+if __name__ == "__main__":
+    main()

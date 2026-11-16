@@ -1,0 +1,299 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+
+const own = path.dirname(fileURLToPath(import.meta.url))
+const read = name => JSON.parse(fs.readFileSync(path.join(own, name), 'utf8'))
+const seed = read('seed.json')
+const source = read('source-solutions.json')
+const solutions = new Map(source.source_solutions.map(row => [row.number, row.solution]))
+const questions = []
+const correct = (text, derivation) => ({ text, truth: 'correct', derivation, misconception: null })
+const wrong = (text, derivation, misconception) => ({ text, truth: 'incorrect', derivation, misconception })
+function question(id, number, mode, stem, options, task, unitReason, limitation, conceptBlocks = [3]) {
+  const ids = ['A', 'B', 'C', 'D']
+  questions.push({
+    id, source_numbers: [number],
+    view: { mode, stem, figure_ids: [], options: options.map((option, index) => ({
+      id: ids[index], text: option.text, figure_ids: [],
+    })) },
+    intent: { task, source_solution: solutions.get(number), unit_reason: unitReason,
+      concept_blocks: conceptBlocks, limitations: [limitation], figure_observations: [] },
+    key: { correct: options.flatMap((option, index) => option.truth === 'correct' ? [ids[index]] : []),
+      rationales: options.map((option, index) => ({
+        option_id: ids[index], truth: option.truth, derivation: option.derivation,
+        misconception: option.misconception,
+      })) },
+  })
+}
+const calculationLoss = 'Recognition of complete results does not establish independently writing the substitution, factorization or equation-solving derivation.'
+const constructionLoss = 'Selecting legal polynomials does not establish independently constructing and expanding one; the visible task retains no degree, monic or uniqueness restriction.'
+
+question('root-tests', '7', 'multiple',
+  String.raw`从下列数中选出所有使多项式 $x^4-7x^2+3x+6$ 的值等于零的数。`,
+  [
+    wrong('$1$', 'P(1)=1-7+3+6=3, not zero. Dropping the linear term gives 1-7+6=0.',
+      'Omit the 3x term during substitution.'),
+    wrong(String.raw`$\sqrt{2}$`, 'P(sqrt(2))=3sqrt(2)-4 is about 0.243, not zero. Rounding that result to the nearest integer gives zero and falsely certifies the test value as a root.',
+      'Treat a rounded zero polynomial value as exact root membership.'),
+    correct('$2$', 'P(2)=16-28+6+6=0.'),
+  ],
+  'Judge root membership by evaluating the entire polynomial.',
+  'The three specified test values form one native multiple-selection task; no quartic-root enumeration is added.',
+  calculationLoss)
+
+question('quadratic-root-vector', '8', 'single',
+  String.raw`依次求下列四个二次三项式的全部实根，选出完整的根集合列。
+a) $x^2-2x-48$；
+b) $3y^2+y-30$；
+c) $5x^2-x-22$；
+d) $4p^2-11p+7$。`,
+  [
+    wrong(String.raw`a) $\{-6,8\}$；b) $\{-10,9\}$；c) $\{-10,11\}$；d) $\{4,7\}$。`,
+      'Discriminants are 196,361,441,9. Dividing each numerator by 2 rather than 2a yields this vector; a happens to remain correct because its leading coefficient is one.',
+      'Use the monic quadratic denominator 2 for every leading coefficient.'),
+    correct(String.raw`a) $\{-6,8\}$；b) $\{-\frac{10}{3},3\}$；c) $\{-2,\frac{11}{5}\}$；d) $\{1,\frac74\}$。`,
+      'The factors are (x-8)(x+6), (3y+10)(y-3), (5x-11)(x+2), (4p-7)(p-1); both zero factors give every displayed root.'),
+    wrong(String.raw`a) $\{-8,6\}$；b) $\{-3,\frac{10}{3}\}$；c) $\{-\frac{11}{5},2\}$；d) $\{-\frac74,-1\}$。`,
+      'Replacing the linear coefficient b by -b leaves each discriminant unchanged and negates both roots, producing the displayed sets.',
+      'Reverse the sign of the linear coefficient before applying the quadratic formula.'),
+  ],
+  'Retain leading coefficients and both roots for all four quadratics.',
+  'One ordered vector compares a common quadratic-root method across monic and nonmonic cases; the candidates change different components so no complete subanswer is fixed in every candidate.',
+  calculationLoss)
+
+question('linear-and-zero-factor', '9', 'single',
+  String.raw`依次求多项式 $2x-3$ 和 $x^3-4x$ 的完整实根集合。`,
+  [
+    correct(String.raw`$\{\frac32\}$；$\{-2,0,2\}$。`,
+      '2x=3 gives 3/2; x^3-4x=x(x-2)(x+2) gives -2,0,2.'),
+    wrong(String.raw`$\{-\frac32\}$；$\{-2,0,2\}$。`,
+      'Move -3 to the right without changing sign: 2x=-3 gives -3/2. Correctly factor the cubic.',
+      'Keep the sign of the moved constant in the linear equation.'),
+    wrong(String.raw`$\{\frac32\}$；$\{-2,2\}$。`,
+      'Solve the linear polynomial correctly, but cancel x from x(x^2-4)=0, leaving x^2=4 and losing zero.',
+      'Divide by a possibly zero variable when determining a complete zero set.'),
+  ],
+  'Distinguish solving a linear polynomial from retaining the zero factor in a cubic.',
+  'The pair contrasts nonzero linear division with a zero-factor case; both ordered root sets must be judged together.',
+  calculationLoss)
+
+question('positive-quadratic', '9', 'single',
+  String.raw`多项式 $z^2+8$ 的实根集合是什么？`,
+  [
+    wrong(String.raw`$\{-\sqrt8,\sqrt8\}$。`, 'Move +8 to the right without changing sign, obtaining z^2=8 and the displayed two values.',
+      'Transpose an added positive constant without reversing its sign.'),
+    wrong('$\\{0\\}$。', 'Ignore the constant 8 and solve z^2=0, obtaining zero; at zero the original polynomial equals 8.',
+      'Drop the nonzero constant when searching for roots.'),
+    correct(String.raw`$\varnothing$。`, 'For every real z, z^2>=0, so z^2+8>=8>0.'),
+  ],
+  'Recognize an empty real zero set through square nonnegativity.',
+  'This positivity task is independent of extracting real roots from the adjacent quartic; combining them would blur the no-root argument.',
+  calculationLoss)
+
+question('quartic-real-branches', '9', 'single',
+  String.raw`多项式 $y^4-9$ 的完整实根集合是什么？`,
+  [
+    wrong(String.raw`$\{-3,3\}$。`, 'Replace y^4=9 by y^2=9 and take both square roots, giving +/-3.',
+      'Discard one level of squaring in a fourth-power equation.'),
+    correct(String.raw`$\{-\sqrt3,\sqrt3\}$。`, 'y^4-9=(y^2-3)(y^2+3); the second factor is strictly positive on the reals and the first gives both +/-sqrt(3).'),
+    wrong(String.raw`$\{\sqrt3\}$。`, 'Obtain y^2=3 correctly, then keep only the principal positive square root.',
+      'Confuse a positive square-root value with the complete solution set of a square equation.'),
+  ],
+  'Retain both real branches of a fourth-power zero equation.',
+  'The complete quartic zero set is one response unit; its two roots are not separate clicks.',
+  calculationLoss)
+
+question('repeated-root-zero-sets', '9', 'single',
+  String.raw`依次求多项式 $x^3-10x^2+25x$ 和 $y^3+12y^2+36y$ 的完整实根集合。`,
+  [
+    wrong(String.raw`$\{5\}$；$\{-6\}$。`, 'Cancel x and y, respectively, before solving (x-5)^2=0 and (y+6)^2=0, omitting zero from both.',
+      'Cancel a zero-capable factor and lose its root.'),
+    wrong(String.raw`$\{-5,0\}$；$\{0,6\}$。`, 'Factor correctly as x(x-5)^2 and y(y+6)^2, then misread x-5=0 as x=-5 and y+6=0 as y=6.',
+      'Reverse the root signs of linear zero factors.'),
+    correct(String.raw`$\{0,5\}$；$\{-6,0\}$。`, 'The factors are x(x-5)^2 and y(y+6)^2. Multiplicity does not duplicate set elements, and the leading variable factor contributes zero.'),
+  ],
+  'Determine both repeated-root cubic zero sets without omitting zero or reversing linear signs.',
+  'The pair uses the same variable-times-square structure with opposite linear signs; complete sets preserve both mathematical distinctions.',
+  calculationLoss)
+
+question('grouping-root-sets', '9', 'single',
+  String.raw`依次求多项式 $x^3+10x^2-x-10$ 和 $z^3-8z^2-2z+16$ 的完整实根集合。`,
+  [
+    correct(String.raw`$\{-10,-1,1\}$；$\{-\sqrt2,\sqrt2,8\}$。`, 'Group into (x+10)(x^2-1) and (z-8)(z^2-2). Each linear factor and both real square roots contribute.'),
+    wrong(String.raw`$\{-10\}$；$\{8\}$。`, 'Group correctly but assert that x^2-1 and z^2-2 are always positive merely because they contain squares; retain only the linear factors.',
+      'Treat a square minus a positive constant as an everywhere-positive factor.'),
+    wrong(String.raw`$\{-1,1,10\}$；$\{-8,-\sqrt2,\sqrt2\}$。`, 'Solve the quadratic factors correctly, but x+10=0 is read as x=10 and z-8=0 as z=-8.',
+      'Keep the written constant sign instead of transposing it in a linear zero factor.'),
+  ],
+  'Use grouping and the zero-product property to determine every real root.',
+  'The two grouped cubics contrast integer and irrational square roots while retaining the separate linear roots.',
+  calculationLoss)
+
+question('construct-two-positive-roots', '10', 'multiple',
+  String.raw`选出所有实根集合恰好为 $\{2,3\}$ 的多项式。不限制次数和首项系数。`,
+  [
+    correct('$x^2-5x+6$', '(x-2)(x-3) expands to x^2-5x+6, with exactly roots 2 and 3.'),
+    correct('$2x^2-10x+12$', 'This is 2(x-2)(x-3); the nonzero scalar creates or removes no root.'),
+    wrong('$x^2+5x+6$', '(x+2)(x+3) expands to this polynomial with roots -2 and -3.',
+      'Write x+r rather than x-r for a prescribed positive root.'),
+    wrong('$x^3-5x^2+6x$', 'Multiplying the intended quadratic by x gives x(x-2)(x-3), introducing the extra root zero.',
+      'Assume multiplication by any polynomial preserves the exact root set.'),
+  ],
+  'Judge exact root-set constructions without a monic or minimum-degree restriction.',
+  'Different legal coefficient sets and an extra-root construction test the meaning of any polynomial; native multiple mode does not impose uniqueness.',
+  constructionLoss, [3, 8])
+
+question('construct-symmetric-roots', '10', 'multiple',
+  String.raw`选出所有实根集合恰好为 $\{-5,5\}$ 的多项式。不限制次数和首项系数。`,
+  [
+    wrong('$x^2+25$', 'Use x^2+r^2 instead of x^2-r^2 for symmetric roots +/-5. The resulting polynomial is positive for every real x.',
+      'Use the sum of squares in place of the difference of squares for two opposite roots.'),
+    correct('$x^4-50x^2+625$', 'This is (x^2-25)^2. Its roots remain exactly +/-5; repeated multiplicity adds no new root.'),
+    correct('$3x^2-75$', 'This is 3(x-5)(x+5), giving exactly -5 and 5.'),
+    wrong('$x^2-5$', 'Put the magnitude 5 directly in the constant position of x^2-constant; this gives +/-sqrt(5), not +/-5.',
+      'Forget to square the intended symmetric root magnitude.'),
+  ],
+  'Allow repeated roots and nonzero scalars while preserving an exact symmetric zero set.',
+  'Four concrete polynomials compare zero sets, not polynomial degree; repetition is legitimate because the source specifies a set.',
+  constructionLoss, [3, 8])
+
+question('construct-zero-and-seven', '10', 'multiple',
+  String.raw`选出所有实根集合恰好为 $\{0,7\}$ 的多项式。不限制次数和首项系数。`,
+  [
+    correct('$x^2-7x$', 'x(x-7) has exactly roots zero and seven.'),
+    wrong('$x^2+7x$', 'x(x+7) has roots zero and -7 after using x+7 for the prescribed positive root.',
+      'Choose the wrong sign for the nonzero linear root factor.'),
+    correct('$4x^2-28x$', '4x(x-7) differs by a nonzero scalar and has the same exact roots.'),
+    wrong('$x^2-49$', '(x-7)(x+7) has roots -7 and 7, omitting zero.',
+      'Replace the factor for zero by the symmetric negative-root factor.'),
+  ],
+  'Preserve a zero root and a specified nonzero root in a construction.',
+  'The complete polynomial is the unit; isolated checks of two requested roots would fail to exclude extra roots.',
+  constructionLoss, [3, 8])
+
+question('construct-singleton', '10', 'multiple',
+  String.raw`选出所有实根集合恰好为 $\{4\}$ 的多项式。不限制次数和首项系数。`,
+  [
+    wrong('$x^2-16$', 'Replace a singleton construction by a difference of squares: (x-4)(x+4), introducing -4.',
+      'Turn a single required root into an unintended symmetric pair.'),
+    correct('$x^2-8x+16$', '(x-4)^2 expands to this polynomial; its repeated root set is {4}.'),
+    wrong('$x+4$', 'Use x+4 for the prescribed root 4; the actual root is -4.',
+      'Reverse the sign in the prescribed linear factor.'),
+    correct('$3x-12$', '3(x-4) has exactly the single root 4.'),
+  ],
+  'Distinguish singleton zero sets from symmetric pairs and allow multiplicity.',
+  'Linear and repeated quadratic constructions are both legal; the task does not falsely require one degree.',
+  constructionLoss, [3, 8])
+
+question('construct-empty-set', '10', 'multiple',
+  String.raw`选出所有实根集合为空集的多项式。不限制次数和首项系数。`,
+  [
+    wrong('$x^2-1$', 'Choose a nonzero constant term as if it alone excluded roots; x^2-1 vanishes at +/-1.',
+      'Mistake a nonzero constant term for proof that a polynomial never vanishes.'),
+    correct('$x^2+1$', 'x^2+1>=1 for every real x, so its zero set is empty.'),
+    correct('$-2x^2-8$', '-2x^2-8<=-8<0 for every real x; negativity also prevents a zero.'),
+    wrong('$x^2$', 'Choose a nonnegative square as if nonnegative meant strictly positive; it equals zero at x=0.',
+      'Confuse nonnegativity with the strict nonzero condition required by an empty root set.'),
+  ],
+  'Construct a rootless real polynomial without requiring positivity or a monic form.',
+  'Always-positive and always-negative examples distinguish absence of zeros from a chosen sign.',
+  constructionLoss, [3, 8])
+
+question('construct-three-roots', '10', 'multiple',
+  String.raw`选出所有实根集合恰好为 $\{-1,0,5\}$ 的多项式。不限制次数和首项系数。`,
+  [
+    correct('$x^3-4x^2-5x$', 'x(x+1)(x-5) expands to x^3-4x^2-5x; the factors give exactly -1,0,5.'),
+    wrong('$x^3+4x^2-5x$', 'Reverse both nonzero root signs and form x(x-1)(x+5), giving -5,0,1.',
+      'Use the prescribed root values as factor constants without the required sign reversal.'),
+    correct('$2x^3-8x^2-10x$', 'This is 2x(x+1)(x-5); a nonzero scalar preserves the exact three-root set.'),
+    wrong('$x^2-4x-5$', 'Form only (x+1)(x-5), retaining -1 and 5 but omitting the factor for zero.',
+      'Omit the zero-root factor from a prescribed three-root construction.'),
+  ],
+  'Construct exactly three prescribed roots, including zero, without added restrictions.',
+  'Whole-polynomial recognition checks all roots and potential omissions; each candidate must be judged independently in native multiple mode.',
+  constructionLoss, [3, 8])
+
+const axisTable = rows => '| 不等式 | 解集合 | 坐标轴上的表示 |\n| --- | --- | --- |\n' +
+  rows.map(([label, set, ray]) => `| ${label} | $${set}$ | ${ray} |`).join('\n')
+question('four-axis-solutions', '11', 'single',
+  String.raw`解下列不等式，并选出四行都正确的解集合和坐标轴表示。
+a) $5x-0.7<3x+5.1$；
+b) $0.8x+4.5\geqslant5-1.2x$；
+c) $2x+4.2\leqslant4x+7.8$；
+d) $3x-2.6>5.5x-3.1$。`,
+  [
+    wrong(axisTable([
+      ['a)', 'x<\\frac{11}{5}', '端点 $\\frac{11}{5}$ 空心，向左的射线'],
+      ['b)', 'x\\geqslant\\frac{19}{4}', '端点 $\\frac{19}{4}$ 实心，向右的射线'],
+      ['c)', 'x\\geqslant-6', '端点 $-6$ 实心，向右的射线'],
+      ['d)', 'x<\\frac{57}{25}', '端点 $\\frac{57}{25}$ 空心，向左的射线'],
+    ]), 'For ax+b compared with cx+d, incorrectly use d+b instead of d-b on the right, retaining the proper coefficient a-c. This gives boundaries 11/5,19/4,-6,57/25. Divide negative coefficients with the correct reversal and draw the corresponding wrong-boundary rays.',
+    'Keep the sign of the moved left-hand constant while collecting an inequality.'),
+    correct(axisTable([
+      ['a)', 'x<\\frac{29}{10}', '端点 $\\frac{29}{10}$ 空心，向左的射线'],
+      ['b)', 'x\\geqslant\\frac14', '端点 $\\frac14$ 实心，向右的射线'],
+      ['c)', 'x\\geqslant-\\frac95', '端点 $-\\frac95$ 实心，向右的射线'],
+      ['d)', 'x<\\frac15', '端点 $\\frac15$ 空心，向左的射线'],
+    ]), 'Collecting coefficients and constants gives 2x<5.8,2x>=0.5,-2x<=3.6,-2.5x>-0.5. Division gives the displayed sets; strict signs are open and nonstrict signs closed, with left/right rays matching the order relation.'),
+    wrong(axisTable([
+      ['a)', 'x<\\frac{29}{40}', '端点 $\\frac{29}{40}$ 空心，向左的射线'],
+      ['b)', 'x\\leqslant-\\frac54', '端点 $-\\frac54$ 实心，向左的射线'],
+      ['c)', 'x\\leqslant\\frac35', '端点 $\\frac35$ 实心，向左的射线'],
+      ['d)', 'x>-\\frac1{17}', '端点 $-\\frac1{17}$ 空心，向右的射线'],
+    ]), 'Keep the right-hand x coefficient sign when moving it left, using a+c rather than a-c. With the correct constant d-b this gives 8x<5.8,-0.4x>=0.5,6x<=3.6,8.5x>-0.5 and the displayed sets/rays.',
+    'Add instead of subtracting the moved variable coefficient.'),
+    wrong(axisTable([
+      ['a)', 'x\\leqslant\\frac{29}{10}', '端点 $\\frac{29}{10}$ 实心，向左的射线'],
+      ['b)', 'x>\\frac14', '端点 $\\frac14$ 空心，向右的射线'],
+      ['c)', 'x>-\\frac95', '端点 $-\\frac95$ 空心，向右的射线'],
+      ['d)', 'x\\leqslant\\frac15', '端点 $\\frac15$ 实心，向左的射线'],
+    ]), 'Compute all four boundary numbers and ray directions correctly but exchange strict with nonstrict comparison in every row. This admits the forbidden endpoints for a/d and excludes the allowed endpoints for b/c.',
+    'Swap strict and nonstrict comparisons and consequently reverse endpoint inclusion.'),
+  ],
+  'Solve all four inequalities and preserve every numeric boundary, ray direction and endpoint inclusion.',
+  'One complete four-row axis plan keeps each inequality paired with its full coordinate-axis meaning; candidates vary thresholds as well as endpoint status, so the solver cannot obtain every boundary by merely copying shared option data.',
+  'Textual recognition of complete coordinate-axis plans does not establish independently drawing an axis, locating the endpoint or shading the ray.')
+
+const draft = {
+  schema: 's10y-choice-draft-v1',
+  seed_sha256: '88930ff157cd7cbc3e6755546bb729fc54db1bc9391778af1bcfd37ce1be190f',
+  new_figures: [], questions,
+  coverage: seed.exercises.map(exercise => ({
+    source_number: exercise.number,
+    question_ids: questions.filter(row => row.source_numbers.includes(exercise.number)).map(row => row.id),
+    omitted_tasks: exercise.number === '10' ? [constructionLoss] :
+      exercise.number === '11' ? ['Actual independent coordinate-axis drawing, endpoint placement and ray shading are replaced by recognizing a complete plan.'] :
+        [calculationLoss],
+    reason: exercise.number === '7' ? 'All three original test values are retained in one root-membership multiple question.' :
+      exercise.number === '8' ? 'All four original quadratics and both roots of each are retained in one complete vector.' :
+        exercise.number === '9' ? 'All eight original polynomials retain their complete real zero sets across five mathematically coherent response units.' :
+          exercise.number === '10' ? 'All six prescribed zero sets are tested against complete polynomial constructions, with multiple legal answers and no artificial degree or leading-coefficient restriction.' :
+            'All four inequalities retain their full solution sets, endpoint inclusion and coordinate-axis ray direction; only physical drawing is not demonstrated.',
+  })),
+}
+assert.equal(questions.length, 14)
+assert.equal(questions.reduce((count, row) => count + row.view.options.length, 0), 49)
+for (const [name, value] of [['draft.json', draft],
+  ['view.json', questions.map(({ id, view }) => ({ id, view }))]]) {
+  fs.writeFileSync(path.join(own, name), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+}
+const args = ['.agents/skills/ld-s10y-choice/scripts/validate.py', '--repo', '.',
+  '--seed', path.relative(process.cwd(), path.join(own, 'seed.json')),
+  '--draft', path.relative(process.cwd(), path.join(own, 'draft.json'))]
+const started = new Date().toISOString()
+const validation = spawnSync('python3', args, { encoding: 'utf8' })
+fs.writeFileSync(path.join(own, 'validation-result.json'), JSON.stringify({
+  executable: 'python3', args, started, finished: new Date().toISOString(),
+  exit_code: validation.status, stdout: validation.stdout, stderr: validation.stderr,
+  signal: validation.signal, error: validation.error?.message ?? null,
+}, null, 2) + '\n', { flag: 'wx' })
+assert.equal(validation.status, 0, validation.stderr)
+fs.writeFileSync(path.join(own, 'ready.json'), JSON.stringify({
+  questions: questions.length, options: 49, structural_once: true,
+  semantic_review_pending: true, canonical_runs: 0,
+  source_first_authoring: true, new_figures: 0, model_service_calls: 0,
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ questions: questions.length, options: 49, structural: validation.status }))

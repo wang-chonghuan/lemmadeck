@@ -1,0 +1,99 @@
+"""Native-size lossless galleries of the existing n2 captures; no browser."""
+
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image, ImageChops, ImageDraw
+
+
+ROOT = Path.cwd()
+BASE = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp"
+SOURCE = BASE / "offline-evidence/8a"
+OUT = BASE / "batch18-render/8a-alg8-c1-s1-n2-native-montages"
+OUT.mkdir(exist_ok=False)
+LESSON = "alg8-c1-s1-n2"
+
+
+def sha(file):
+    return hashlib.sha256(file.read_bytes()).hexdigest()
+
+
+def member(file, image, position):
+    return {
+        "path": str(file), "sha256": sha(file), "size": list(image.size),
+        "montage_xy": list(position),
+    }
+
+
+def finish(canvas, name, members):
+    for item in members:
+        original = Image.open(item["path"]).convert("RGB")
+        x, y = item["montage_xy"]
+        copied = canvas.crop((x, y, x + original.width, y + original.height))
+        item["copied_pixels_equal"] = ImageChops.difference(original, copied).getbbox() is None
+        if not item["copied_pixels_equal"]:
+            raise RuntimeError("A native pixel copy differs")
+    target = OUT / name
+    canvas.save(target)
+    groups.append({
+        "path": str(target), "sha256": sha(target), "size": list(canvas.size),
+        "resampling": "none", "scale": 1, "constituents": members,
+    })
+
+
+groups = []
+used = set()
+for surface in ("text", "exercises", "choices"):
+    for width in (1440, 390):
+        canvas = Image.new("RGB", (1440, 1928) if width == 1440 else (788, 844), "#dddddd")
+        positions = [(0, 0), (0, 968)] if width == 1440 else [(0, 0), (398, 0)]
+        members = []
+        for endpoint, position in zip(("first", "last"), positions):
+            file = SOURCE / f"{LESSON}-{surface}-{width}-{endpoint}.png"
+            image = Image.open(file).convert("RGB")
+            canvas.paste(image, position)
+            entry = member(file, image, position)
+            entry["endpoint"] = endpoint
+            members.append(entry)
+            used.add(file)
+        finish(canvas, f"{surface}-{width}-first-last-native.png", members)
+
+remaining = sorted(set(SOURCE.glob(f"{LESSON}-*.png")) - used)
+canvas = Image.new("RGB", (1440, 1900), "#dddddd")
+members = []
+x = y = row_height = 0
+index = 1
+for file in remaining:
+    image = Image.open(file).convert("RGB")
+    if image.width > 1440 or image.height + 22 > 1900:
+        raise RuntimeError(f"Native image needs explicit splitting: {file}")
+    if x + image.width > 1440:
+        x = 0
+        y += row_height + 12
+        row_height = 0
+    if y + image.height + 22 > 1900:
+        finish(canvas.crop((0, 0, 1440, y + row_height)), f"auxiliary-{index}-native.png", members)
+        index += 1
+        canvas = Image.new("RGB", (1440, 1900), "#dddddd")
+        members = []
+        x = y = row_height = 0
+    ImageDraw.Draw(canvas).text((x, y), file.name, fill="#222222")
+    position = (x, y + 22)
+    canvas.paste(image, position)
+    members.append(member(file, image, position))
+    x += image.width + 12
+    row_height = max(row_height, image.height + 22)
+if members:
+    finish(canvas.crop((0, 0, 1440, y + row_height)), f"auxiliary-{index}-native.png", members)
+
+with (OUT / "manifest.json").open("x") as handle:
+    json.dump({
+        "operation": "Native 1:1 pixel copies only; external labels/separators, no resize.",
+        "new_display_combinations": 0,
+        "original_endpoint_images": 12, "other_primary_captures": len(remaining),
+        "groups": groups,
+    }, handle, indent=2)
+    handle.write("\n")
+print(json.dumps({"groups": len(groups), "originals": len(used) + len(remaining),
+                  "output": str(OUT)}, indent=2))

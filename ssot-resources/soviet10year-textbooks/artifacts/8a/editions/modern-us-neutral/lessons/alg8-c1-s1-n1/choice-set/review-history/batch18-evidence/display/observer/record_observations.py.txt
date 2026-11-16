@@ -1,0 +1,468 @@
+"""Record completed independent pixel observations; never capture or render."""
+
+import hashlib
+import json
+from collections import Counter
+from datetime import datetime, timezone
+from pathlib import Path
+
+from PIL import Image
+
+
+ROOT = Path(__file__).resolve().parents[5]
+OUT = Path(__file__).resolve().parent
+LESSON = "alg8-c1-s1-n1"
+OBSERVER = "Codex independent actual-display reviewer (Kierkegaard)"
+
+# These notes describe view_image observations, not automated ink or DOM checks.
+ADDITIONAL_OPENED_NOTES = {
+    "choices-endpoints-01.png": (
+        "All four mobile members actually inspected. Original first starts inside "
+        "table 1 instead of at the title/stem; original last stops before the full "
+        "final option D. Both are rejected as endpoint evidence, not called blank "
+        "painting. Fresh first paints the title, stem and initial table. Fresh last "
+        "reaches table 21's final row and bottom; separately opened horizontal "
+        "slices expose its off-window right columns."
+    ),
+    "choices-endpoints-02.png": (
+        "All four desktop members actually inspected. Original first starts inside "
+        "table 1 and omits the title/stem; original last stops before complete final "
+        "option D. These positioning failures are rejected as endpoint evidence. "
+        "Fresh first paints complete title/stem and initial table; fresh last "
+        "reaches final table 21, its final row and bottom. No blank-paint verdict "
+        "is inferred from a mispositioned endpoint."
+    ),
+    "exercises-endpoints-01.png": (
+        "All four desktop/mobile first/last members actually inspected. Visible "
+        "exercise bodies and mathematical glyphs are painted without overlapping "
+        "prose; final return link is visible in last captures. Normal continuation "
+        "across a viewport edge is not missing painting."
+    ),
+    "text-endpoints-01.png": (
+        "All four desktop/mobile first/last members actually inspected. Title, "
+        "prose, displayed/inline formulas, superscripts, fractions and radicals "
+        "paint; last captures expose the final exercise link. No observed blank "
+        "painting or incoherent text/formula overlap."
+    ),
+    "original-table-ends-01.png": (
+        "All nine supplied native table-end/cell-start members actually inspected. "
+        "Mobile tables 5 and 7-11 show painted final columns, table borders, "
+        "radical/set endings or initial wide-cell text. Horizontal-window leading "
+        "crops are expected. These strips are companion evidence, not whole tables; "
+        "the separately opened complete-table slices cover both ends."
+    ),
+    "original-table-ends-02.png": (
+        "All eight supplied native table-end members actually inspected. Mobile "
+        "tables 12, 13, 17-21 and desktop table 8 expose painted ending cells, prose "
+        "endings, final row and borders. Cropped leading columns are intentional "
+        "horizontal-end windows; full companion slices supply the other columns."
+    ),
+    "original-katex-regions-choices-01.png": (
+        "All nine native members actually inspected. Tiny radical regions include "
+        "Q, 91, 37 and 3 beneath painted radical strokes. Repeated table-5 right-end "
+        "regions show painted rows and final braces. Glyph-only captures are not "
+        "whole-table evidence. No unexpected blank painting observed."
+    ),
+    "original-katex-regions-choices-02.png": (
+        "All nine native members actually inspected. Tiny radicals include 37, 3 "
+        "and 163 with visible bars and digits; table-5 end regions show all their "
+        "visible row endings, including the 199 radical row. Leading horizontal "
+        "crops are expected. No unexpected blank painting observed."
+    ),
+    "original-katex-regions-choices-03.png": (
+        "All nine native members actually inspected. Mobile isolated radicals "
+        "199, 3 and 849 have visible stems, bars and digits. Three six-row table "
+        "end regions show signed/slash-fraction expressions and final braces. "
+        "The lower right four-row table end paints the empty-set glyph, all "
+        "radical rows and right/bottom border. Left-window truncation is expected."
+    ),
+    "original-katex-regions-choices-04.png": (
+        "All nine native members actually inspected. Mobile radicals 849, 167 "
+        "and 1689 paint complete digits and radical bars. Five repeated right-end "
+        "table regions show the header, empty-set row, three radical-set rows, "
+        "closing braces and final border. No blank body rows or overlap observed."
+    ),
+    "original-katex-regions-choices-05.png": (
+        "All nine native members actually inspected. Mobile radicals 1689, 1801 "
+        "and 13 paint complete digits/bars. Table-end strips expose four final "
+        "set rows, signed expressions, closing braces and bottom/right borders; "
+        "the last two include painted equation endings and empty-set row. Leading "
+        "cell text is intentionally off-window, supplied in companion full slices."
+    ),
+    "original-katex-regions-choices-06.png": (
+        "All nine tiny native desktop glyph members actually inspected. Radicals "
+        "Q, 91, 91, 37, 37, 3, 3, 163 and 163 paint at native size with legible "
+        "digits/letter and bars. Montage label crowding is outside source-member "
+        "rectangles, not application text overlap or missing screenshot pixels."
+    ),
+    "original-katex-regions-choices-07.png": (
+        "All nine tiny native desktop glyph members actually inspected. Radicals "
+        "199, 199, 3, 3, 849, 849, 167, 167 and 1689 show complete stems, bars "
+        "and digits. These are individual KaTeX glyph regions, not source figures "
+        "or whole-table observations."
+    ),
+    "original-katex-regions-choices-08.png": (
+        "All five tiny native desktop members actually inspected. Radicals "
+        "1689, 1801, 1801, 13 and 13 show painted stems, bars and complete digits. "
+        "No member is blank; no whole-table or source-figure claim is made."
+    ),
+    "original-katex-regions-text-01.png": (
+        "All nine mobile native members actually inspected. Repeated D radicals "
+        "paint, as do the stacked half coefficient and fractional radicands "
+        "beneath radical bars. The end-region contains the painted half-times-"
+        "radical expression with fraction bar; isolated glyph regions are not "
+        "proof of a larger surrounding formula."
+    ),
+    "original-katex-regions-text-02.png": (
+        "All nine native members actually inspected. Mobile radical 81 and "
+        "desktop D radicals paint. Desktop half-times-radical expression has "
+        "painted numerator, denominator, fraction bar and radical; fractional "
+        "radicand glyphs are visible. No source member is unexpectedly blank."
+    ),
+    "original-katex-regions-text-03.png": (
+        "Both native desktop members actually inspected. A fractional radicand "
+        "and radical 81 show painted fraction/radical strokes and digits. Tiny "
+        "overlapping montage labels are outside the native source pixels."
+    ),
+    "formula-supplements-01.png": (
+        "All four supplied native formula-slice members actually inspected. "
+        "At mobile and desktop widths, both slices show the stacked half "
+        "coefficient followed by radical D; numerator, denominator, fraction "
+        "bar, radical stem/bar and D are painted. These two slices per width "
+        "are one formula region, not four different formulas or new displays."
+    ),
+}
+
+TABLE_SHAPES = (
+    (1, 3, "two headers and all a-h rows"),
+    (4, 6, "four headers and all a-f rows"),
+    (7, 9, "four headers and all four method rows"),
+    (10, 13, "three headers and all a-d rows"),
+    (14, 17, "three headers and all a-f rows"),
+    (18, 21, "four headers and all a-d rows"),
+)
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def read_json(path):
+    return json.loads(path.read_text())
+
+
+def create_json(name, payload):
+    with (OUT / name).open("x") as handle:
+        json.dump(payload, handle, indent=2)
+        handle.write("\n")
+
+
+def reject_reason(entry):
+    if entry["surface"] != "choices" or entry["kind"] not in ("first", "last"):
+        return None
+    if entry["kind"] == "first":
+        return (
+            "Original first capture starts inside candidate table 1, omitting "
+            "the title and question stem. Rejected as complete first-endpoint "
+            "evidence; this is positioning/incomplete coverage, not blank paint."
+        )
+    return (
+        "Original last capture stops before the complete final option D/table "
+        "21. Rejected as complete last-endpoint evidence; this is positioning/"
+        "incomplete coverage, not blank paint."
+    )
+
+
+def table_evidence(entry):
+    data = entry["supplement"]
+    index, segment, segments = data["tableIndex"], data["segment"], data["segments"]
+    shape = next(
+        description for start, end, description in TABLE_SHAPES
+        if start <= index <= end
+    )
+    evidence = (
+        f"Candidate table {index}, {entry['viewport_width']}px, native horizontal "
+        f"slice {segment}/{segments} actually inspected. Across its opened "
+        f"companion slices, {shape} are painted, with readable row labels, "
+        "mathematical/prose cells and final borders. "
+    )
+    if segments == 1:
+        return evidence + (
+            "This supplied slice exposes the whole table; no unexpected blank "
+            "body rows or incoherent text overlap observed."
+        )
+    if index == 8 and entry["viewport_width"] == 390 and segment == 2:
+        return evidence + (
+            "This middle window has no header text because it lies between the "
+            "wide step-column heading and next heading. Both headings appear "
+            "in opened companion slices; all body rows here paint. The supplied "
+            "row-ink flag is not a missing-content finding."
+        )
+    if segment == 1:
+        position = "Left headers/row labels and initial cells are painted."
+    elif segment == segments:
+        position = "Final cells, expression/prose endings and right border are painted."
+    else:
+        position = "Middle wide-cell content and row continuations are painted."
+    return evidence + position + (
+        " Cropped off-window columns are not counted as missing painting; "
+        "the whole table is covered collectively, not in this window alone."
+    )
+
+
+def verify(manifest, notes):
+    screenshots = manifest["screenshots"]
+    names = [entry["filename"] for entry in screenshots]
+    assert len(names) == len(set(names)) == 184
+    assert manifest["lesson"] == LESSON
+    assert len(manifest["montages"]) == 27
+    assert set(notes) == {Path(entry["path"]).name for entry in manifest["montages"]}
+    mounted = []
+    for montage in manifest["montages"]:
+        path = ROOT / montage["path"]
+        assert sha(path) == montage["sha256"], path
+        with Image.open(path) as original:
+            pixels = original.convert("RGB")
+        assert list(pixels.size) == montage["size"]
+        for entry in montage["members"]:
+            mounted.append(entry["filename"])
+            source = ROOT / entry["path"]
+            assert sha(source) == entry["sha256"], source
+            with Image.open(source) as original:
+                member = original.convert("RGB")
+            assert list(member.size) == entry["size"]
+            assert entry["resized"] is False
+            x, y, width, height = entry["member_rect"]
+            assert (width, height) == member.size
+            assert pixels.crop((x, y, x + width, y + height)).tobytes() == member.tobytes()
+    assert Counter(mounted) == Counter(names)
+    for entry in screenshots:
+        assert sha(ROOT / entry["path"]) == entry["sha256"]
+    for entry in manifest["source_evidence"]:
+        assert sha(ROOT / entry["original"]["path"]) == entry["original"]["sha256"]
+        assert sha(ROOT / entry["preserved"]["path"]) == entry["preserved"]["sha256"]
+        assert entry["original"]["sha256"] == entry["preserved"]["sha256"]
+    combinations = {(entry["surface"], entry["viewport_width"]) for entry in screenshots}
+    assert combinations == {
+        (surface, width)
+        for surface in ("text", "exercises", "choices")
+        for width in (1440, 390)
+    }
+    tables = [
+        entry for entry in screenshots
+        if entry["kind"].startswith("complete-table-")
+    ]
+    assert len(tables) == 59
+    assert Counter(entry["viewport_width"] for entry in tables) == {1440: 22, 390: 37}
+    for table in manifest["candidate_table_inventory"]:
+        entries = [
+            entry for entry in tables
+            if entry["supplement"]["tableIndex"] == table["table_index"]
+            and entry["viewport_width"] == table["viewport_width"]
+        ]
+        assert len(entries) == table["reported_slice_count"]
+        assert {entry["supplement"]["segment"] for entry in entries} == set(
+            range(1, table["reported_slice_count"] + 1)
+        )
+    assert {entry["supplement"]["tableIndex"] for entry in tables} == set(range(1, 22))
+    assert len(manifest["candidate_table_inventory"]) == 42
+    return screenshots, combinations
+
+
+def main():
+    manifest = read_json(OUT / "native-manifest.json")
+    previous_notes = read_json(OUT / "opened-montage-notes.json")
+    notes = dict(previous_notes["opened"])
+    assert len(notes) == 9
+    assert not set(notes).intersection(ADDITIONAL_OPENED_NOTES)
+    notes.update(ADDITIONAL_OPENED_NOTES)
+    screenshots, combinations = verify(manifest, notes)
+    montages_by_file = {
+        entry["filename"]: montage
+        for montage in manifest["montages"] for entry in montage["members"]
+    }
+    members_by_file = {
+        entry["filename"]: entry
+        for montage in manifest["montages"] for entry in montage["members"]
+    }
+    observations = []
+    rejected = []
+    for entry in screenshots:
+        montage = montages_by_file[entry["filename"]]
+        member = members_by_file[entry["filename"]]
+        montage_name = Path(montage["path"]).name
+        reason = reject_reason(entry)
+        evidence = (
+            table_evidence(entry)
+            if entry["kind"].startswith("complete-table-") else notes[montage_name]
+        )
+        if reason:
+            evidence = reason + " Fresh companion endpoint actually opened and complete."
+        record = {
+            "filename": entry["filename"],
+            "path": str(ROOT / entry["path"]),
+            "sha256": entry["sha256"],
+            "actually_opened": True,
+            "observer": OBSERVER,
+            "status": "rejected" if reason else "pass",
+            "evidence": evidence,
+            "surface": entry["surface"],
+            "viewport_width": entry["viewport_width"],
+            "capture_kind": entry["kind"],
+            "size": entry["size"],
+            "opened_via": {
+                "tool": "view_image",
+                "detail": "original",
+                "montage": str(ROOT / montage["path"]),
+                "montage_sha256": montage["sha256"],
+                "member_rect": member["member_rect"],
+                "resized": False,
+                "source_member_pixels_verified_equal": True,
+            },
+        }
+        if entry["supplement"]:
+            record["region_identity"] = {
+                key: value for key, value in entry["supplement"].items()
+                if key != "bounds"
+            }
+        if reason:
+            replacement = entry["filename"].replace(
+                f"-{entry['kind']}.png", f"-fresh-{entry['kind']}.png"
+            )
+            record["replacement_filename"] = replacement
+            assert replacement in members_by_file
+            rejected.append(record)
+        observations.append(record)
+    assert len(rejected) == 4
+    assert sum(entry["actually_opened"] for entry in observations) == 184
+    stamp = datetime.now(timezone.utc).isoformat()
+    history = {
+        "lesson": LESSON,
+        "scope": "Rejected capture evidence; not rejected lesson semantics.",
+        "recorded_at": stamp,
+        "observer": OBSERVER,
+        "status": "rejected",
+        "rejected_observations": rejected,
+        "original_pngs_preserved_in_place": True,
+        "source_evidence_preserved": manifest["source_evidence"],
+        "author_display_pass_claimed": False,
+        "author_provider_failure_preserved_separately": True,
+        "unexpected_partial_paint_failures_actually_observed": [],
+        "author_row_ink_flag_assessment": {
+            "flag": manifest["author_row_ink_flags_not_visual_verdicts"],
+            "independent_disposition": (
+                "Not independently rejected: mobile table 8 slice 2's header "
+                "window falls between painted headings; opened companion slices "
+                "show both headings and all body rows. Preserved flag is not "
+                "converted into a fabricated partial-paint finding."
+            ),
+        },
+    }
+    create_json("rejected-capture-history.json", history)
+    completed_notes = {
+        "lesson": LESSON,
+        "status": "all supplied native members actually opened",
+        "observer": OBSERVER,
+        "opened": notes,
+        "montage_count": 27,
+        "source_png_count": 184,
+    }
+    create_json("completed-montage-notes.json", completed_notes)
+    coverage = []
+    for table in manifest["candidate_table_inventory"]:
+        entries = [
+            entry for entry in observations
+            if entry.get("region_identity", {}).get("tableIndex") == table["table_index"]
+            and entry["viewport_width"] == table["viewport_width"]
+        ]
+        coverage.append({
+            **table,
+            "status": "pass",
+            "whole_table_actually_opened_across_native_slices": True,
+            "files": [entry["filename"] for entry in entries],
+            "additional_unique_surface_viewport_combinations": 0,
+        })
+    payload = {
+        "lesson": LESSON,
+        "status": "pass",
+        "scope": "Independent existing-screenshot actual display only.",
+        "observer": OBSERVER,
+        "recorded_at": stamp,
+        "semantic_approval": False,
+        "choice_authoring_approval": False,
+        "source_figure_approval": False,
+        "author_display_approval_inferred": False,
+        "observations": observations,
+        "unique_surface_viewport_combinations": len(combinations),
+        "additional_unique_surface_viewport_combinations": 0,
+        "combinations": [
+            {"surface": surface, "viewport_width": width,
+             "viewport_height": 960 if width == 1440 else 844, "status": "pass"}
+            for surface, width in sorted(combinations)
+        ],
+        "counts": {
+            "supplied_source_pngs": 184,
+            "actually_opened_source_pngs": 184,
+            "native_no_scale_montages_actually_opened": 27,
+            "original_endpoint_pngs_actually_opened": 12,
+            "fresh_endpoint_pngs_actually_opened": 4,
+            "accepted_endpoint_positions": 12,
+            "original_endpoint_pngs_rejected": 4,
+            "unique_candidate_tables": 21,
+            "candidate_table_viewport_coverage_records": 42,
+            "complete_table_native_slice_pngs": 59,
+            "complete_table_desktop_slices": 22,
+            "complete_table_mobile_slices": 37,
+            "original_table_end_or_cell_start_pngs": 17,
+            "original_katex_region_pngs": 88,
+            "supplement_formula_region_slice_pngs": 4,
+            "unique_supplement_formula_regions": 1,
+            "independently_accepted_observation_files": 180,
+            "independently_rejected_observation_files": 4,
+        },
+        "candidate_table_coverage": coverage,
+        "rejected_capture_history": str(OUT / "rejected-capture-history.json"),
+        "rejected_originals_remain_rejected": [
+            entry["filename"] for entry in rejected
+        ],
+        "findings": [
+            "Original choice first/last captures at both widths are incomplete "
+            "endpoint evidence; fresh actually opened endpoints resolve coverage, "
+            "without changing the rejected disposition of originals.",
+            "All 21 candidate tables at both widths are painted and collectively "
+            "complete across their native slices. No unexpected blank body rows "
+            "or incoherent text/formula overlap observed.",
+            "Mobile table 8's middle header window is intentionally text-free; "
+            "both headings and every body row paint in companion opened slices.",
+            "Tiny SVG-region captures are KaTeX-internal graphics. Their painted "
+            "radicals/fraction parts do not constitute source-figure approval.",
+        ],
+        "missing_regions": [],
+        "source_evidence_preserved": manifest["source_evidence"],
+        "verification": {
+            "all_source_png_hashes_match_supplied_manifest": True,
+            "all_preserved_json_hashes_match_originals": True,
+            "all_montage_hashes_match_native_manifest": True,
+            "all_member_rectangles_equal_complete_native_source_pixels": True,
+            "no_duplicate_observation_filenames": True,
+            "all_reported_table_segments_present_and_actually_opened": True,
+        },
+        "reviewer_actions": {
+            "browser_runs": 0,
+            "capture_runs": 0,
+            "render_runs": 0,
+            "canonical_or_semantic_checks": 0,
+            "durable_or_core_edits": 0,
+        },
+    }
+    create_json("observations.json", payload)
+    print(
+        "Saved observations.json: display-only pass; 184 actually opened source "
+        "PNGs, 27 native montages, 21 candidates, 59 full-table slices, six "
+        "unique display combinations. Four original endpoints remain rejected."
+    )
+    print("Saved rejected-capture-history.json and completed-montage-notes.json.")
+
+
+if __name__ == "__main__":
+    main()

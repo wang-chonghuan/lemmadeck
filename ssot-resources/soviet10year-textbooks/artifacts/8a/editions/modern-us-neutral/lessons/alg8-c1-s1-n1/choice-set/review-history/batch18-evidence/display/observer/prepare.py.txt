@@ -1,0 +1,173 @@
+"""Prepare only supplied 8a n1 native pixels and preserve author evidence."""
+
+import hashlib
+import json
+import re
+from pathlib import Path
+
+from PIL import Image, ImageDraw
+
+
+ROOT = Path.cwd()
+OUT = Path(__file__).resolve().parent
+TMP = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp"
+SOURCE = TMP / "offline-evidence/8a"
+LESSON = "alg8-c1-s1-n1"
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def file_record(path):
+    return {"path": str(path.relative_to(ROOT)), "sha256": sha(path)}
+
+
+def preserve(path):
+    backup = OUT / f"preserved-{path.name}"
+    if backup.exists():
+        raise RuntimeError(f"Do not overwrite history: {backup}")
+    backup.write_bytes(path.read_bytes())
+    return {"original": file_record(path), "preserved": file_record(backup)}
+
+
+def montage(entries, name, columns):
+    images = []
+    for entry in entries:
+        with Image.open(ROOT / entry["path"]) as image:
+            image.load()
+            images.append(image.convert("RGB"))
+    width = max(image.width for image in images)
+    height = max(image.height for image in images)
+    rows = (len(entries) + columns - 1) // columns
+    canvas = Image.new(
+        "RGB", (columns * (width + 8) + 8, rows * (height + 32) + 8), "white",
+    )
+    draw = ImageDraw.Draw(canvas)
+    members = []
+    for index, (entry, image) in enumerate(zip(entries, images)):
+        x = 8 + index % columns * (width + 8)
+        y = 8 + index // columns * (height + 32)
+        draw.text((x, y + 5), entry["label"], fill="black")
+        canvas.paste(image, (x, y + 24))
+        members.append({
+            **entry, "member_rect": [x, y + 24, image.width, image.height],
+            "resized": False,
+        })
+    path = OUT / f"{name}.png"
+    if path.exists():
+        raise RuntimeError(f"Do not overwrite native montage: {path}")
+    canvas.save(path)
+    return {**file_record(path), "size": list(canvas.size), "members": members}
+
+
+def natural_key(entry):
+    return [
+        int(part) if part.isdigit() else part
+        for part in re.split(r"(\d+)", entry["filename"])
+    ]
+
+
+def main():
+    captures_path = TMP / "batch18-render/8a-n1-capture-manifest.json"
+    supplements_path = TMP / "batch18-render/8a-n1-supplement-captures.json"
+    paint_path = TMP / "batch18-render/8a-n1-paint-inventory.json"
+    failure_path = TMP / "batch18-render/8a-n1-author-observer-provider-failure.json"
+    captures = json.loads(captures_path.read_text())
+    supplements = json.loads(supplements_path.read_text())
+    paint = json.loads(paint_path.read_text())
+    if supplements["failure"] is not None or not supplements["browser_closed"]:
+        raise RuntimeError("Capture supplement not complete/closed")
+    expected = {}
+    metadata = {}
+    for entry in captures["screenshots"]:
+        expected[Path(entry["path"]).name] = entry["sha256"]
+    for entry in supplements["observations"]:
+        name = Path(entry["screenshot"]).name
+        expected[name] = entry["sha256"]
+        metadata[name] = {
+            key: entry[key] for key in (
+                "kind", "tableIndex", "questionIndex", "option",
+                "regionId", "segment", "segments", "bounds",
+            ) if key in entry
+        }
+    entries = []
+    for path in sorted(SOURCE.glob(f"{LESSON}-*.png")):
+        if path.name not in expected:
+            raise RuntimeError(f"Screenshot lacks supplied provenance: {path}")
+        if sha(path) != expected[path.name]:
+            raise RuntimeError(f"Supplied screenshot changed: {path}")
+        match = re.match(rf"{LESSON}-(text|exercises|choices)-(1440|390)-(.+)\.png", path.name)
+        if not match:
+            raise RuntimeError(f"Unexpected screenshot filename: {path}")
+        with Image.open(path) as image:
+            image.load()
+            size = list(image.size)
+        surface, width, kind = match.group(1), int(match.group(2)), match.group(3)
+        label = f"{surface} {width} {kind}"
+        entry = {
+            **file_record(path), "filename": path.name, "surface": surface,
+            "viewport_width": width, "kind": kind, "label": label,
+            "size": size, "supplement": metadata.get(path.name),
+        }
+        entries.append(entry)
+    if len(entries) != len(expected):
+        raise RuntimeError("Some supplied screenshots are absent")
+    groups = {}
+    for entry in entries:
+        if entry["kind"] in ("first", "last", "fresh-first", "fresh-last"):
+            group = f"{entry['surface']}-endpoints"
+        elif entry["kind"].startswith("complete-table-"):
+            group = f"complete-tables-{entry['viewport_width']}"
+        elif entry["kind"].startswith("table-"):
+            group = "original-table-ends"
+        elif entry["kind"].startswith("formula-region-"):
+            group = "formula-supplements"
+        else:
+            group = f"original-katex-regions-{entry['surface']}"
+        groups.setdefault(group, []).append(entry)
+    montages = []
+    for group, members in groups.items():
+        members.sort(key=natural_key)
+        batch_size = 4 if group.endswith("endpoints") else (
+            6 if group == "complete-tables-1440" else 9
+        )
+        columns = 2 if group.endswith("endpoints") else 3
+        for offset in range(0, len(members), batch_size):
+            number = offset // batch_size + 1
+            batch = members[offset:offset + batch_size]
+            montages.append(montage(batch, f"{group}-{number:02}", columns))
+    payload = {
+        "lesson": LESSON,
+        "status": "actual native pixel observation pending",
+        "screenshots": entries,
+        "montages": montages,
+        "source_evidence": [
+            preserve(path) for path in (
+                captures_path, supplements_path, paint_path, failure_path,
+            )
+        ],
+        "author_row_ink_flags_not_visual_verdicts": paint["row_ink_failures"],
+        "candidate_table_inventory": [
+            {
+                "table_index": entry["tableIndex"],
+                "question": entry["questionIndex"],
+                "option": entry["option"],
+                "viewport_width": entry["viewport"]["width"],
+                "reported_slice_count": entry["slices"],
+            }
+            for entry in supplements["tableInventories"]
+        ],
+        "unique_surface_viewport_combinations": 6,
+        "scope": "Independent supplied screenshot display only, not author or semantic approval.",
+    }
+    with (OUT / "native-manifest.json").open("x") as handle:
+        json.dump(payload, handle, indent=2)
+        handle.write("\n")
+    print(f"Prepared {len(entries)} supplied PNGs in {len(montages)} native no-scale montages.")
+    for entry in montages:
+        print(f"{Path(entry['path']).name}: {len(entry['members'])} members; {entry['size']}")
+
+
+if __name__ == "__main__":
+    main()

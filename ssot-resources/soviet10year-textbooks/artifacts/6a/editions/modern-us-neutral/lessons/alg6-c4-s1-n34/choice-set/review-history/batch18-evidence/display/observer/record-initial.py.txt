@@ -1,0 +1,81 @@
+"""Record actual endpoint observations before supplementary ending pixels."""
+
+import hashlib
+import json
+from pathlib import Path
+
+
+ROOT = Path.cwd()
+OUT = Path(__file__).resolve().parent
+NOTES = {
+    ("text", 1440, "first"): "Title, chapter line, introductory prose and initial examples paint. Exponents 13, 5 and 13-5 and the zero-power discussion are readable. No blank painting or overlap observed.",
+    ("text", 1440, "last"): "Final definition and zero-power examples paint, including the parenthesized negative fraction with exponent zero. Terminal prose and exercise link are visible and nonoverlapping.",
+    ("text", 390, "first"): "Complete title and chapter line paint; opening prose, first two examples and beginning of the third paint. Inline superscripts and subtraction in an exponent are legible. The bottom continuation is a normal viewport crop.",
+    ("text", 390, "last"): "Final prose, zero-power definition and numerical examples are fully painted in the visible region; final sentence and exercise link are visible. A formula's punctuation wraps to its next line without overlap. No blank painting observed.",
+    ("exercises", 1440, "first"): "Bodies 601-603 and beginning of 604 paint. The eight visible subparts of 601, four of 602 and six of 603 have readable superscripts, parentheses and fractions; no missing bodies or overlap observed.",
+    ("exercises", 1440, "last"): "Tail of 605, complete 606-607 bodies and 608-609 prose paint. Fractions and superscripts are visible, and the final return link paints. Ordinary preceding-item crop at the top is not a painting failure.",
+    ("exercises", 390, "first"): "Title and chapter line, complete 601-602 bodies and visible 603 subparts paint. Powers and parenthesized fractions are legible and nonoverlapping. Lower 603 continuation is an ordinary viewport crop.",
+    ("exercises", 390, "last"): "Tail of 606 and complete visible 607-609 bodies paint. Nested powers, fractions and cubic-unit superscripts are readable. Final prose and return link are complete; no partial blank painting observed.",
+    ("choices", 1440, "first"): "Visible stems/options for 1-2 and beginning of 3 paint. Exponent lists, parentheses and stacked fractions are legible without overlap. Visible right endings fit in desktop rows.",
+    ("choices", 1440, "last"): "Tail of 7 and complete 8-9 stems/options paint. Numerical options, slash fractions and cubic-unit superscripts are legible and nonoverlapping.",
+    ("choices", 390, "first"): "Visible 1-2 stems/options paint and their fractions/superscripts are legible. Option 1B's final parenthesized fraction exponent is cut at the right edge and terminal punctuation is off-window. Reject this starting-scroll capture as complete ending evidence until supplementary pixels actually establish reachability.",
+    ("choices", 390, "last"): "Tail of 7C and complete 8-9 stems/options are painted and readable, including all four options for each final item. No right-edge loss, overlap or blank painting observed in these visible rows.",
+}
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def main():
+    manifest = json.loads((OUT / "endpoint-manifest.json").read_text())
+    capture = json.loads((OUT.parent / "batch18-render/capture-manifest.json").read_text())
+    observations = []
+    for montage in manifest["montages"]:
+        if sha(ROOT / montage["path"]) != montage["sha256"]:
+            raise RuntimeError("Opened montage changed")
+        for entry in montage["members"]:
+            if sha(ROOT / entry["path"]) != entry["sha256"]:
+                raise RuntimeError("Actual screenshot changed")
+            observations.append({
+                "filename": entry["filename"],
+                "sha256": entry["sha256"],
+                "actually_opened": True,
+                "evidence": {
+                    "method": "All four native endpoint members actually opened in labeled surface montage; no resizing.",
+                    "display_observation": NOTES[(entry["surface"], entry["viewport_width"], entry["endpoint"])],
+                    "surface": entry["surface"],
+                    "viewport_width": entry["viewport_width"],
+                    "endpoint": entry["endpoint"],
+                    "montage": {
+                        "path": montage["path"], "sha256": montage["sha256"],
+                        "member_rect": entry["member_rect"], "resized": False,
+                    },
+                    "report": capture["report"],
+                    "scope": "Actual display only; no semantic/core, source-figure or publication approval.",
+                },
+                "observer": "Codex independent actual-display-only observer, current chat",
+            })
+    payload = {
+        "lesson": manifest["lesson"],
+        "status": "blocked",
+        "observations": observations,
+        "unique_surface_viewport_combinations": 6,
+        "blocked_findings": [{
+            "filename": "alg6-c4-s1-n34-choices-390-first.png",
+            "finding": "Option 1B final exponent/punctuation is off-window at starting scroll.",
+            "disposition": "Retain initial incomplete evidence; require actually opened right-end pixels.",
+        }],
+        "partial_paint_failures": [],
+        "inputs": capture["inputs"],
+        "rendered": capture["rendered"],
+        "scope": "Actual supplied endpoint pixels only; not semantic approval or unseen intermediate-row inspection.",
+    }
+    with (OUT / "observations-before-supplement.json").open("x") as handle:
+        json.dump(payload, handle, indent=2)
+        handle.write("\n")
+    print("Retained initial blocked endpoint observations: 12 opened PNGs, six combinations.")
+
+
+if __name__ == "__main__":
+    main()

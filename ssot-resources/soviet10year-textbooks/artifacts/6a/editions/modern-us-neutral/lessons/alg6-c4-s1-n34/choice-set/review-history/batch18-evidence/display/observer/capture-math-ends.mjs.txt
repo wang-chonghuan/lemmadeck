@@ -1,0 +1,99 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import { createRequire } from 'node:module'
+import { pathToFileURL } from 'node:url'
+
+delete process.env.PWDEBUG
+process.env.PLAYWRIGHT_HTML_OPEN = 'never'
+const require = createRequire(path.join(process.cwd(), 'package.json'))
+const { chromium } = require('@playwright/test')
+const repo = path.resolve(process.cwd(), '..')
+const lesson = 'alg6-c4-s1-n34'
+const tmp = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp')
+const output = path.join(tmp, 'offline-evidence/6a')
+const report = path.join(tmp, 'reviewer-n34-actual-display/math-end-captures.json')
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+assert(!fs.existsSync(report), 'Do not overwrite supplemental evidence')
+const observations = []
+const scans = []
+const html = []
+const browser = await chromium.launch({ headless: true })
+try {
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    const context = await browser.newContext({ viewport })
+    try {
+      const page = await context.newPage()
+      const errors = []
+      page.on('pageerror', error => errors.push(error.message))
+      for (const surface of ['text', 'exercises', 'choices']) {
+        const file = path.join(repo, '.tmp/ld-s10y-lesson/render/6a/modern-us-neutral',
+          lesson, `${surface}.html`)
+        const before = hash(file)
+        await page.goto(pathToFileURL(file).href)
+        await page.evaluate(() => document.fonts.ready)
+        const regions = await page.evaluate(() => {
+          const candidates = [...document.querySelectorAll(
+            '.nb,.sr-nb,.body,.choice-stem,.choice-option-body',
+          )].filter(node => node.clientWidth > 0 && node.querySelector('.katex-html')
+            && ['auto', 'scroll'].includes(getComputedStyle(node).overflowX)
+            && node.scrollWidth > node.clientWidth + 1)
+          return candidates.filter(node =>
+            !candidates.some(child => child !== node && node.contains(child)),
+          ).map((node, index) => {
+            node.dataset.actualMathEnd = String(index)
+            const choice = node.closest('.choice')
+            const option = node.closest('.choice-options>li')
+            return {
+              index, className: node.className, width: node.clientWidth,
+              scrollWidth: node.scrollWidth,
+              question: choice ? [...document.querySelectorAll('.choice')].indexOf(choice) + 1 : null,
+              option: choice ? option?.querySelector('.option-id')?.textContent || 'stem' : null,
+              exercise: node.closest('li.ex')?.querySelector('.no')?.textContent || null,
+            }
+          })
+        })
+        scans.push({ surface, viewport, actual_overflow_regions: regions.length })
+        for (const region of regions) {
+          const element = page.locator(`[data-actual-math-end="${region.index}"]`)
+          await element.scrollIntoViewIfNeeded()
+          const end = await element.evaluate(async node => {
+            node.scrollTo({ left: node.scrollWidth, behavior: 'instant' })
+            await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+            const bounds = node.getBoundingClientRect()
+            const math = [...node.querySelectorAll('.katex-html')].at(-1).getBoundingClientRect()
+            return { left: node.scrollLeft, max: node.scrollWidth - node.clientWidth,
+              regionRight: bounds.right, mathRight: math.right, viewportRight: innerWidth }
+          })
+          assert(end.left > 0 && Math.abs(end.left - end.max) <= 1)
+          assert(end.mathRight <= Math.min(end.regionRight, end.viewportRight) + 1)
+          const screenshot = path.join(output,
+            `${lesson}-${surface}-${viewport.width}-actual-math-${region.index}-end.png`)
+          assert(!fs.existsSync(screenshot), 'Do not overwrite endpoint evidence')
+          await element.screenshot({ path: screenshot })
+          observations.push({
+            surface, viewport, region, end,
+            filename: path.basename(screenshot), screenshot,
+            sha256: hash(screenshot), html_sha256: before,
+          })
+        }
+        assert.equal(hash(file), before, 'Same HTML must remain unchanged')
+        html.push({ surface, viewport, path: file, sha256: before })
+      }
+      assert.deepEqual(errors, [])
+    } finally {
+      await context.close()
+    }
+  }
+} finally {
+  await browser.close()
+}
+fs.writeFileSync(report, JSON.stringify({
+  lesson, status: observations.length ? 'actual-pixel-observation-pending' : 'not_applicable',
+  observations, scans, html, browser_closed: true, isolated_headless: true,
+  additional_unique_surface_viewport_combinations: 0,
+  method: 'Capture only innermost actual overflowing mathematical regions, including inline sr-nb option spans.',
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ math_end_captures: observations.length, additional_combinations: 0,
+  browser_closed: true }))

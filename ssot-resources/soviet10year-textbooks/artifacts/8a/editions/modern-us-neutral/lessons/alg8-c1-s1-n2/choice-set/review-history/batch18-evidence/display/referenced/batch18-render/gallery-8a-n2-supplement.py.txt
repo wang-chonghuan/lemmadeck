@@ -1,0 +1,80 @@
+"""Lossless native galleries for the one bounded same-HTML supplement."""
+
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image, ImageChops, ImageDraw
+
+
+ROOT = Path.cwd()
+BASE = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp/batch18-render"
+PREFIX = "8a-alg8-c1-s1-n2-"
+RECORD = BASE / f"{PREFIX}supplement-command.json"
+OUT = BASE / f"{PREFIX}supplement-native-montages"
+OUT.mkdir(exist_ok=False)
+observations = json.loads(RECORD.read_text())["observations"]
+groups = []
+canvas = Image.new("RGB", (1440, 1900), "#dddddd")
+members = []
+x = y = row_height = 0
+index = 1
+
+
+def sha(file):
+    return hashlib.sha256(file.read_bytes()).hexdigest()
+
+
+def finish():
+    height = y + row_height
+    cropped = canvas.crop((0, 0, 1440, height))
+    for member in members:
+        image = Image.open(member["path"]).convert("RGB")
+        left, top = member["montage_xy"]
+        copied = cropped.crop((left, top, left + image.width, top + image.height))
+        member["copied_pixels_equal"] = ImageChops.difference(image, copied).getbbox() is None
+        if not member["copied_pixels_equal"]:
+            raise RuntimeError("Native copy differs")
+    file = OUT / f"supplement-{index}-native.png"
+    cropped.save(file)
+    groups.append({
+        "path": str(file), "sha256": sha(file), "size": list(cropped.size),
+        "scale": 1, "resampling": "none", "constituents": list(members),
+    })
+
+
+for observation in observations:
+    file = Path(observation["path"])
+    image = Image.open(file).convert("RGB")
+    if image.width > 1440 or image.height + 22 > 1900:
+        raise RuntimeError(f"Image needs explicit native splitting: {file}")
+    if x + image.width > 1440:
+        x = 0
+        y += row_height + 12
+        row_height = 0
+    if y + image.height + 22 > 1900:
+        finish()
+        index += 1
+        canvas = Image.new("RGB", (1440, 1900), "#dddddd")
+        members = []
+        x = y = row_height = 0
+    label = file.name[:max(1, image.width // 6)]
+    ImageDraw.Draw(canvas).text((x, y), label, fill="#222222")
+    canvas.paste(image, (x, y + 22))
+    members.append({
+        "path": str(file), "sha256": sha(file), "size": list(image.size),
+        "montage_xy": [x, y + 22],
+    })
+    x += image.width + 12
+    row_height = max(row_height, image.height + 22)
+if members:
+    finish()
+with (OUT / "manifest.json").open("x") as handle:
+    json.dump({
+        "source_record": str(RECORD), "source_sha256": sha(RECORD),
+        "operation": "Native pixel copy only; no resampling or browser run.",
+        "new_display_combinations": 0, "images": len(observations), "groups": groups,
+    }, handle, indent=2)
+    handle.write("\n")
+print(json.dumps({"groups": len(groups), "images": len(observations),
+                  "output": str(OUT)}, indent=2))

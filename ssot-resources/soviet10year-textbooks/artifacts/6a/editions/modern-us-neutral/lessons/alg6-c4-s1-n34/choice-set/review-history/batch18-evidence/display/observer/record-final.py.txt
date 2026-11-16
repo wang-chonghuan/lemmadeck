@@ -1,0 +1,151 @@
+"""Record opened n34 endpoint and derived right-end pixels as display-only evidence."""
+
+import copy
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image
+
+
+ROOT = Path.cwd()
+OUT = Path(__file__).resolve().parent
+SCOPE = (
+    "Actual endpoint/region display only. Not semantic correctness, source-figure "
+    "approval, choice-core approval or publication approval. No inspection claim "
+    "for unseen intermediate rows. No content edits or canonical run."
+)
+ENDS = {
+    (1, "B"): "The final (1/3)^28 and terminal punctuation are fully visible.",
+    (5, "A"): "The final 1/5 and terminal punctuation are fully visible.",
+    (5, "B"): "The final 5 and terminal punctuation are fully visible.",
+    (5, "C"): "The final -1/5 and terminal punctuation are fully visible.",
+    (5, "D"): "The final 1/5 and terminal punctuation are fully visible.",
+}
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def verify(entry):
+    if sha(ROOT / entry["path"]) != entry["sha256"]:
+        raise RuntimeError(f"Evidence changed: {entry['path']}")
+
+
+def main():
+    before_path = OUT / "observations-before-supplement.json"
+    before_sha = sha(before_path)
+    initial = json.loads(before_path.read_text())
+    if initial["status"] != "blocked" or len(initial["observations"]) != 12:
+        raise RuntimeError("Expected preserved initial blocked endpoint evidence")
+    endpoints = json.loads((OUT / "endpoint-manifest.json").read_text())
+    for montage in endpoints["montages"]:
+        verify(montage)
+        with Image.open(ROOT / montage["path"]) as image:
+            image = image.convert("RGB")
+            for entry in montage["members"]:
+                verify(entry)
+                x, y, width, height = entry["member_rect"]
+                with Image.open(ROOT / entry["path"]) as source:
+                    if image.crop((x, y, x + width, y + height)).tobytes() != source.convert("RGB").tobytes():
+                        raise RuntimeError("Native endpoint montage pixels changed")
+    supplemental = json.loads((OUT / "math-end-montage-manifest.json").read_text())
+    verify(supplemental["report"])
+    verify(supplemental["montage"])
+    final = copy.deepcopy(initial)
+    with Image.open(ROOT / supplemental["montage"]["path"]) as image:
+        image = image.convert("RGB")
+        for entry in supplemental["members"]:
+            path = Path(entry["screenshot"])
+            if sha(path) != entry["sha256"]:
+                raise RuntimeError("Actually opened math ending pixels changed")
+            x, y, width, height = entry["member_rect"]
+            with Image.open(path) as source:
+                if image.crop((x, y, x + width, y + height)).tobytes() != source.convert("RGB").tobytes():
+                    raise RuntimeError("Native end-strip montage pixels changed")
+            key = (entry["region"]["question"], entry["region"]["option"])
+            final["observations"].append({
+                "filename": entry["filename"],
+                "sha256": entry["sha256"],
+                "actually_opened": True,
+                "evidence": {
+                    "method": "Actually opened all five labeled native ending strips in montage; no resizing.",
+                    "display_observation": (
+                        ENDS[key]
+                        + " No blank/black painting, missing terminal glyph "
+                          "or overlap observed. Earlier terms are intentionally "
+                          "off-window at this right scroll position; this is "
+                          "not a claim that the full row fits simultaneously "
+                          "or a mathematical correctness judgment."
+                    ),
+                    "surface": entry["surface"],
+                    "viewport_width": entry["viewport"]["width"],
+                    "endpoint": "horizontal-math-end",
+                    "region": entry["region"],
+                    "reported_scroll_end": entry["end"],
+                    "image_size": entry["image_size"],
+                    "html_sha256": entry["html_sha256"],
+                    "report": supplemental["report"],
+                    "montage": {
+                        **supplemental["montage"],
+                        "member_rect": entry["member_rect"],
+                        "label": entry["label"],
+                        "resized": False,
+                    },
+                    "additional_unique_surface_viewport_combinations": 0,
+                    "scope": SCOPE,
+                },
+                "observer": "Codex independent actual-display-only observer, current chat",
+            })
+    for entry in final["inputs"] + final["rendered"]:
+        verify(entry)
+    if final["observations"][:12] != initial["observations"]:
+        raise RuntimeError("Initial observations must remain unchanged")
+    if len(final["observations"]) != 17:
+        raise RuntimeError("Expected exactly seventeen opened PNGs")
+    final["status"] = "pass"
+    final["scope"] = SCOPE
+    final["blocked_findings"] = []
+    final["capture_summary"] = {
+        "endpoint_screenshots": 12,
+        "necessary_math_end_screenshots": 5,
+        "actually_opened_screenshots": 17,
+        "unique_surface_viewport_combinations": 6,
+        "additional_unique_surface_viewport_combinations": 0,
+        "render_runs": 1,
+        "existing_offline_checker_runs": 1,
+        "supplemental_math_scan_runs": 1,
+        "fresh_endpoint_recaptures": 0,
+        "partial_paint_failures_observed": 0,
+        "figure_regions": 0,
+        "table_regions": 0,
+        "all_browser_sessions_closed": True,
+        "durable_inputs_listed_in_record_unchanged": True,
+    }
+    final["initial_blocked_history"] = {
+        "path": str(before_path.relative_to(ROOT)),
+        "sha256": before_sha,
+        "observations_unchanged": True,
+        "filename": "alg6-c4-s1-n34-choices-390-first.png",
+        "initial_capture_disposition": (
+            "Retained and rejected as complete right-end evidence at its "
+            "starting scroll position. New actually opened 1B ending pixels "
+            "resolve reachability; the initial capture is not retroactively "
+            "passed for completeness."
+        ),
+    }
+    target = OUT / "observations.json"
+    with target.open("x") as handle:
+        json.dump(final, handle, indent=2)
+        handle.write("\n")
+    if sha(before_path) != before_sha:
+        raise RuntimeError("Preserved blocked history changed")
+    if json.loads(target.read_text()) != final:
+        raise RuntimeError("Final observation record did not round-trip")
+    print(f"SAVED {target.relative_to(ROOT)}")
+    print(f"display-only pass; 17 opened PNGs; 6 unique combinations; sha256={sha(target)}")
+
+
+if __name__ == "__main__":
+    main()

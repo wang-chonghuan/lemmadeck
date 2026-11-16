@@ -1,0 +1,63 @@
+"""Pack only the five actually overflowing n34 formula end captures."""
+
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image, ImageDraw
+
+
+ROOT = Path.cwd()
+OUT = Path(__file__).resolve().parent
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def main():
+    report_path = OUT / "math-end-captures.json"
+    report = json.loads(report_path.read_text())
+    entries = report["observations"]
+    if len(entries) != 5:
+        raise RuntimeError("Expected the five derived actual overflow captures")
+    images = []
+    for entry in entries:
+        path = Path(entry["screenshot"])
+        if sha(path) != entry["sha256"]:
+            raise RuntimeError(f"Changed region pixels: {path}")
+        with Image.open(path) as image:
+            images.append(image.convert("RGB"))
+    width = max(image.width for image in images)
+    height = max(image.height for image in images)
+    canvas = Image.new("RGB", (2 * (width + 8) + 8, 3 * (height + 32) + 8), "white")
+    draw = ImageDraw.Draw(canvas)
+    members = []
+    for index, (entry, image) in enumerate(zip(entries, images)):
+        x = 8 + index % 2 * (width + 8)
+        y = 8 + index // 2 * (height + 32)
+        label = f"n34 choice {entry['region']['question']}{entry['region']['option']} right end"
+        draw.text((x, y + 4), label, fill="black")
+        canvas.paste(image, (x, y + 24))
+        members.append({
+            **entry, "label": label,
+            "member_rect": [x, y + 24, image.width, image.height],
+            "image_size": list(image.size), "resized": False,
+        })
+    output = OUT / "actual-math-ends-native.png"
+    if output.exists():
+        raise RuntimeError(f"Do not overwrite: {output}")
+    canvas.save(output)
+    payload = {
+        "report": {"path": str(report_path.relative_to(ROOT)), "sha256": sha(report_path)},
+        "montage": {"path": str(output.relative_to(ROOT)), "sha256": sha(output)},
+        "members": members,
+    }
+    with (OUT / "math-end-montage-manifest.json").open("x") as handle:
+        json.dump(payload, handle, indent=2)
+        handle.write("\n")
+    print(f"Prepared five native ending strips in {output.relative_to(ROOT)}")
+
+
+if __name__ == "__main__":
+    main()
