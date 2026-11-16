@@ -1,0 +1,29 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+
+const [book, lesson, author, reviewer, seedName = 'seed.json', reviewName = 'review.json'] = process.argv.slice(2)
+const review = JSON.parse(fs.readFileSync(path.join(reviewer, reviewName), 'utf8'))
+assert(['pass', 'blocked'].includes(review.outcome))
+const root = path.join('ssot-resources/soviet10year-textbooks/artifacts', book,
+  'editions/modern-us-neutral/lessons', lesson, 'choice-set')
+const target = review.outcome === 'pass'
+  ? root : path.join(root, 'review-history/unresolved-source')
+for (const name of ['seed.json', 'draft.json', 'review.json']) {
+  assert(!fs.existsSync(path.join(target, name)), `Snapshot file already exists: ${path.join(target, name)}`)
+}
+const sources = { 'seed.json': path.join(author, seedName),
+  'draft.json': path.join(author, 'draft.json'), 'review.json': path.join(reviewer, reviewName) }
+const hashes = {}
+fs.mkdirSync(target, { recursive: true })
+for (const [name, source] of Object.entries(sources)) {
+  const bytes = fs.readFileSync(source)
+  fs.copyFileSync(source, path.join(target, name), fs.constants.COPYFILE_EXCL)
+  assert(bytes.equals(fs.readFileSync(path.join(target, name))))
+  hashes[name] = crypto.createHash('sha256').update(bytes).digest('hex')
+}
+const localReview = path.join(author, 'review.json')
+if (!fs.existsSync(localReview)) fs.copyFileSync(sources['review.json'], localReview)
+console.log(JSON.stringify({ target, outcome: review.outcome, hashes,
+  evidenceReuse: 'Final snapshots copied byte-identically; no duplicate semantic review or validation.' }, null, 2))

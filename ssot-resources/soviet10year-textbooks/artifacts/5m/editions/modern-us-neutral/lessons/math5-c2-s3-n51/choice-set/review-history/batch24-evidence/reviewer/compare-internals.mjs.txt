@@ -1,0 +1,590 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import assert from "node:assert/strict";
+
+const root = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const tmp = path.join(root, ".intentfold/tickets/STEMROBIN-182/tmp");
+const own = path.join(tmp, "reviewer-5m-n51");
+const sha = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const read = (file) => {
+  const bytes = fs.readFileSync(file);
+  return { path: file, json: JSON.parse(bytes), sha256: sha(bytes) };
+};
+const rel = (file) => path.relative(root, file);
+function sorted(value) {
+  if (Array.isArray(value)) return value.map(sorted);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.keys(value).sort().map((k) => [k, sorted(value[k])]));
+  }
+  return value;
+}
+function digest(value) {
+  return sha(JSON.stringify(sorted(value)).replace(/[\u007f-\uffff]/g,
+    (c) => `\\u${c.charCodeAt(0).toString(16).padStart(4, "0")}`));
+}
+const draft = read(path.join(tmp, "5m-n51-sartre-repair/repaired-draft.json"));
+const frozen = read(path.join(own, "changed-view-checks.json"));
+const source = read(path.join(own, "source-solutions.json"));
+const images = read(path.join(own, "image-observations.json"));
+const seedDigest = "a1453fb45e7c563c8d14fa5e1fc6ca3c240fbd1b272743fa8781f5c7f9bfcb95";
+assert.equal(source.sha256, frozen.json.binding.frozen_source_record_byte_sha256);
+assert.equal(images.sha256, frozen.json.binding.frozen_source_image_record_byte_sha256);
+assert.equal(draft.json.seed_sha256, seedDigest);
+assert.equal(frozen.json.changed_view_gate_verdict, "pass");
+for (const name of ["review.json", "final-comparison.json"]) {
+  assert(!fs.existsSync(path.join(own, name)), `Preserve existing ${name}`);
+}
+const byId = new Map(draft.json.questions.map((q) => [q.id, q]));
+const truthById = new Map(frozen.json.full156_option_truth_evidence.map((q) => [q.id, q]));
+
+// This calculator executes the disclosed wrong programs; it does not re-solve sources.
+const gcd = (a, b) => {
+  a = a < 0n ? -a : a; b = b < 0n ? -b : b;
+  while (b) [a, b] = [b, a % b];
+  return a;
+};
+class R {
+  constructor(n, d = 1n) {
+    n = BigInt(n); d = BigInt(d);
+    assert.notEqual(d, 0n);
+    if (d < 0n) { n = -n; d = -d; }
+    const g = gcd(n, d);
+    this.n = n / g; this.d = d / g;
+  }
+  add(v) { const r = q(v); return new R(this.n * r.d + r.n * this.d, this.d * r.d); }
+  sub(v) { const r = q(v); return new R(this.n * r.d - r.n * this.d, this.d * r.d); }
+  mul(v) { const r = q(v); return new R(this.n * r.n, this.d * r.d); }
+  div(v) { const r = q(v); return new R(this.n * r.d, this.d * r.n); }
+  pow(n) { return new R(this.n ** BigInt(n), this.d ** BigInt(n)); }
+  neg() { return new R(-this.n, this.d); }
+  abs() { return new R(this.n < 0n ? -this.n : this.n, this.d); }
+  toString() { return this.d === 1n ? String(this.n) : `${this.n}/${this.d}`; }
+}
+function q(v) {
+  if (v instanceof R) return v;
+  const s = String(v);
+  if (s.includes("/")) return new R(...s.split("/"));
+  if (s.includes(".")) {
+    const minus = s.startsWith("-");
+    const [whole, dec] = (minus ? s.slice(1) : s).split(".");
+    return new R(BigInt((whole || "0") + dec) * (minus ? -1n : 1n), 10n ** BigInt(dec.length));
+  }
+  return new R(s);
+}
+function normalized(v) {
+  if (Object.is(v, -0)) return 0;
+  if (v instanceof R) return v.toString();
+  if (Array.isArray(v)) return v.map(normalized);
+  if (v && typeof v === "object") {
+    return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, normalized(x)]));
+  }
+  return v;
+}
+const executions = [];
+function record(id, option, program, generated, expected, notes = "", method = "independent exact-rational execution") {
+  const question = byId.get(`n51-${id}`);
+  const truth = truthById.get(question.id).options.find((o) => o.id === option);
+  const rationale = question.key.rationales.find((r) => r.option_id === option);
+  assert.equal(truth.truth, false);
+  assert.equal(rationale.truth, "incorrect");
+  assert.deepEqual(normalized(generated), normalized(expected), `${id}/${option}: generated output mismatch`);
+  executions.push({
+    question_id: question.id, option_id: option, method,
+    author_derivation: rationale.derivation, author_misconception: rationale.misconception,
+    reviewer_encoded_program: program,
+    generated_output: normalized(generated),
+    complete_visible_output_semantics: normalized(expected),
+    visible_text: truth.text, visible_content_sha256: truth.visible_content_sha256,
+    all_output_components_match_false_option: true,
+    frozen_falsity_evidence: truth.independent_evidence,
+    notes, verdict: "pass"
+  });
+}
+function numeric(id, op, program, execute, expected, notes = "") {
+  record(id, op, program, execute(), expected.map(q), notes);
+}
+function symbolic(id, op, program, execute, expected, notes = "") {
+  record(id, op, program, execute(), expected, notes, "independent symbolic/geometric execution and hand-derived domain proof");
+}
+const component = (pairs, rule) => pairs.map(([a,b,c,d]) =>
+  new R(BigInt(a + c), rule === "product" ? BigInt(b * d) :
+    rule === "sum" ? BigInt(b + d) : rule === "max" ? BigInt(Math.max(b,d)) :
+      BigInt(b * d) / gcd(BigInt(b), BigInt(d))));
+const frozenMagnitudes = (id) => {
+  const f = truthById.get(`n51-${id}`);
+  const text = f.options.find((o) => o.truth).text;
+  return text.match(/-?\d+(?:\.\d+)?(?:\/\d+)?/g).map((x) => q(x).abs());
+};
+const componentCall = (id, op, pairs, rule, expected) => numeric(id, op,
+  `Signed original numerator combinations over ${rule} denominators; ordered inputs ${JSON.stringify(pairs)}.`,
+  () => component(pairs, rule), expected);
+const absoluteCall = (id, op, expected) => numeric(id, op,
+  "Reuse the frozen correct ordered results, erase each negative result sign, retain all magnitudes.",
+  () => frozenMagnitudes(id), expected, "No new source calculation; the complete frozen tuple is transformed.");
+
+componentCall("963a","A",[[1,4,1,5],[1,3,1,7],[3,5,3,4],[1,2,7,9]],"product",["1/10","2/21","3/10","4/9"]);
+componentCall("963a","C",[[1,4,1,5],[1,3,1,7],[3,5,3,4],[1,2,7,9]],"sum",["2/9","1/5","2/3","8/11"]);
+componentCall("963b","B",[[1,2,-1,3],[2,5,-2,3],[-3,5,4,7],[-1,6,5,7]],"sum",["0","0","1/12","4/13"]);
+absoluteCall("963b","C",["1/6","4/15","1/35","23/42"]);
+numeric("963c","A","Replace every subtracted second fraction with addition.",
+  () => [q("-3/4").add("4/5"),q("-1/2").add("2/3"),q("-5/6").add("2/5"),q("-3/4").add("8/9")],
+  ["1/20","1/6","-13/30","5/36"]);
+componentCall("963c","B",[[-3,4,-4,5],[-1,2,-2,3],[-5,6,-2,5],[-3,4,-8,9]],"sum",["-7/9","-3/5","-7/11","-11/13"]);
+componentCall("964a","B",[[1,2,5,8],[3,4,-1,2],[3,5,-7,10],[-1,6,-5,12]],"max",["3/4","1/2","-2/5","-1/2"]);
+absoluteCall("964a","C",["9/8","1/4","1/10","7/12"]);
+numeric("964b","B","Return each first operand unchanged; omit all second operands.",
+  () => ["5/9","7/9","7/20","11/12"].map(q),["5/9","7/9","7/20","11/12"]);
+componentCall("964b","C",[[5,9,-5,12],[7,9,-5,12],[7,20,-7,12],[11,12,-10,11]],"product",["0","1/54","0","1/132"]);
+absoluteCall("964c","A",["29/24","1/20","11/24","7/30"]);
+componentCall("964c","B",[[-5,6,-3,8],[-1,4,1,5],[5,12,-7,8],[-1,6,-1,15]],"sum",["-4/7","0","-1/10","-2/21"]);
+numeric("965","B","Convert5/100 and4/100, then add1/4 and3/5; output both conversions and both totals.",
+  () => { const a=q(5).div(100),b=q(4).div(100); return [a,a.add("1/4"),b,q("3/5").add(b)]; },
+  ["1/20","3/10","1/25","16/25"]);
+numeric("965","C","Retain conversions1/2,2/5; add numerator and denominator components of both sums.",
+  () => [q("1/2"),new R(1+1,2+4),q("2/5"),new R(3+2,5+5)],["1/2","1/3","2/5","1/2"]);
+numeric("966","A","Correct terminating conversions shifted one extra decimal place left; then perform original add/subtract.",
+  () => { const a=q("0.35").div(10),b=q("0.75").div(10);return [a,q("2.15").add(a),b,b.sub("0.35")]; },
+  ["0.035","2.185","0.075","-0.275"]);
+numeric("966","B","Retain conversions.35,.75; replace both requested operations by multiplication.",
+  () => [q("0.35"),q("2.15").mul("0.35"),q("0.75"),q("0.75").mul("0.35")],
+  ["0.35","0.7525","0.75","0.2625"]);
+numeric("967a","B","19/20-(1/4*2/5)",()=>[q("19/20").sub(q("1/4").mul("2/5"))],["17/20"]);
+numeric("967a","C","19/20-1/4+2/5",()=>[q("19/20").sub("1/4").add("2/5")],["11/10"]);
+numeric("967b","A","1/30+3/5+1/6",()=>[q("1/30").add("3/5").add("1/6")],["4/5"]);
+numeric("967b","C","1/30+(3/5*1/6)",()=>[q("1/30").add(q("3/5").mul("1/6"))],["2/15"]);
+numeric("968a","B","x=(2/3+2/5)+4/15",()=>[q("2/3").add("2/5").add("4/15")],["4/3"]);
+numeric("968a","C","x=2/3-4/15; omit2/5",()=>[q("2/3").sub("4/15")],["2/5"]);
+numeric("968b","B","y=(5/8-3/10)-5/20",()=>[q("5/8").sub("3/10").sub("5/20")],["3/40"]);
+numeric("968b","C","y=5/8+5/20; omit3/10",()=>[q("5/8").add("5/20")],["7/8"]);
+numeric("968c","A","x=4/5-25/30; omit13/20",()=>[q("4/5").sub("25/30")],["-1/30"]);
+numeric("968c","C","x=25/30-(4/5+13/20)",()=>[q("25/30").sub(q("4/5").add("13/20"))],["-37/60"]);
+numeric("968d","A","Wrong expansion2/3+7/9+a=1/3: a=1/3-2/3-7/9",()=>[q("1/3").sub("2/3").sub("7/9")],["-10/9"]);
+numeric("968d","C","Wrong expansion2/3-7/9-a=1/3: a=2/3-7/9-1/3",()=>[q("2/3").sub("7/9").sub("1/3")],["-4/9"]);
+numeric("969","A","Use the increase1/5km as the entire second day; total3/20+1/5km.",()=>[q("3/20").add("1/5")],["7/20"],"The emitted unit remains km.");
+numeric("969","C","Apply increase to both days:2*(3/20+1/5)km.",()=>[q("3/20").add("1/5").mul(2)],["7/10"],"The emitted unit remains km.");
+numeric("970","A","Ignore beet delivery;11/20-14/25 tonnes.",()=>[q("11/20").sub("14/25")],["-1/100"]);
+numeric("970","C","Treat sale as incoming:11/20+17/50+14/25 tonnes.",()=>[q("11/20").add("17/50").add("14/25")],["29/20"]);
+numeric("971","A","Return occupied minutes45*(2/5)+45*(2/15).",()=>[q(45).mul("2/5").add(q(45).mul("2/15"))],["24"]);
+numeric("971","B","Use60 minutes per whole period, multiply frozen remaining share7/15.",()=>[q(60).mul("7/15")],["28"]);
+for (const [op, rule, expected] of [
+  ["B","mean",["5/72","5/18","36/5"]],
+  ["C","sum-times",["1/30","2/15","15"]]
+]) {
+  symbolic("972",op,rule==="mean"?"rate=(1/18+1/12)/2; outputrate,4*rate,half/rate,capability.":
+    "rate=1/(18+12); outputrate,4*rate,half/rate,capability.",
+  () => {
+    const rate=rule==="mean"?q("1/18").add("1/12").div(2):q(1).div(q(18).add(12));
+    const time=q("1/2").div(rate);
+    return {rate_per_day:rate,four_day_fraction:rate.mul(4),half_time_days:time,
+      can_finish_half_within_four_days:time.n<=4n*time.d};
+  },{rate_per_day:q(expected[0]),four_day_fraction:q(expected[1]),half_time_days:q(expected[2]),can_finish_half_within_four_days:false});
+}
+numeric("973a","B","(3*2)*(7/6)",()=>[q(3).mul(2).mul("7/6")],["7"]);
+numeric("973a","C","Return3^2 and omit7/6",()=>[q(3).pow(2)],["9"]);
+numeric("973b","B","(8/3)*2^3",()=>[q("8/3").mul(q(2).pow(3))],["64/3"]);
+numeric("973b","C","(8/3)/(2*3)",()=>[q("8/3").div(q(2).mul(3))],["4/9"]);
+numeric("973c","B","3*3.1+2.75",()=>[q("3.1").mul(3).add("2.75")],["12.05"]);
+numeric("973c","C","3.1^3-2.75",()=>[q("3.1").pow(3).sub("2.75")],["27.041"]);
+numeric("973d","A","(26-2.1)^2",()=>[q(26).sub("2.1").pow(2)],["571.21"]);
+numeric("973d","C","26-2*2.1",()=>[q(26).sub(q("2.1").mul(2))],["21.8"]);
+numeric("973e","B","Attach negative sign to even square magnitude, then times negative cube.",()=>[q("3/2").pow(2).neg().mul(q(-2).pow(3))],["18"]);
+numeric("973e","C","(-3/2)^2/(-2)^3",()=>[q("-3/2").pow(2).div(q(-2).pow(3))],["-9/32"]);
+numeric("973f","A","Delete odd negative cube sign before division.",()=>[q("2/3").pow(3).div(q("2/3").pow(2))],["2/3"]);
+numeric("973f","C","(-2/3)^3*(2/3)^2",()=>[q("-2/3").pow(3).mul(q("2/3").pow(2))],["-32/243"]);
+for (const [id,op,total,part,target,expression,expected] of [
+  ["974a","A","2.5","0.4","3.2","2.5/0.4",["25/4","20"]],
+  ["974a","B","2.5","0.4","3.2","0.4/(2.5-0.4)",["4/21","64/105"]],
+  ["974b","A","6.5","2.6","10.5","2.6/(6.5-2.6)",["2/3","7"]],
+  ["974b","B","6.5","2.6","10.5","6.5/2.6",["5/2","26.25"]]
+]) {
+  const inverse=(id==="974a"&&op==="A")||(id==="974b"&&op==="B");
+  symbolic(id,op,`Emit ${id==="974a"?"z":"w"}/${target}=${expression}; solve using this wrong ratio.`,
+    () => {
+      const r=inverse?q(total).div(part):q(part).div(q(total).sub(part));
+      return {ratio_equation:`${id==="974a"?"z":"w"}/${target}=${expression}`,ratio:r,mass:r.mul(target),unit:"kg"};
+    },{ratio_equation:`${id==="974a"?"z":"w"}/${target}=${expression}`,ratio:q(expected[0]),mass:q(expected[1]),unit:"kg"});
+}
+symbolic("975","A","Swap endpoint rules: intersection[min starts,max ends]; union[max starts,min ends]; subtract endpoints.",
+  () => {
+    const i=[Math.min(0,124),Math.max(180,304)],u=[Math.max(0,124),Math.min(180,304)];
+    return {intersection:{interval:i,width:i[1]-i[0]},union:{interval:u,width:u[1]-u[0]},closed:true,vertex_included:true,rays:"infinite"};
+  },{intersection:{interval:[0,304],width:304},union:{interval:[124,180],width:56},closed:true,vertex_included:true,rays:"infinite"});
+symbolic("975","B","Use start offset124 as overlap width; start both intervals at0; union width180+180-124.",
+  () => {
+    const w=124-0,u=(180-0)+(304-124)-w;
+    return {intersection:{interval:[0,w],width:w},union:{interval:[0,u],width:u},closed:true,vertex_included:true,rays:"infinite"};
+  },{intersection:{interval:[0,124],width:124},union:{interval:[0,236],width:236},closed:true,vertex_included:true,rays:"infinite"});
+
+function wedge(origin,v1,v2) {
+  if (v1[0]*v2[1]-v1[1]*v2[0]<0) [v1,v2]=[v2,v1];
+  return [[-v1[1],v1[0],v1[0]*origin[1]-v1[1]*origin[0]],
+    [v2[1],-v2[0],v2[1]*origin[0]-v2[0]*origin[1]]];
+}
+function intersectionEvidence(planes) {
+  const feasible=([x,y])=>planes.every(([a,b,c])=>a*x+b*y>=c-1e-10);
+  const unique=(xs)=>[...new Map(xs.map((p)=>[p.join(","),p])).values()].sort((a,b)=>a[0]-b[0]||a[1]-b[1]);
+  const vertices=[];
+  for(let i=0;i<planes.length;i++)for(let j=i+1;j<planes.length;j++) {
+    const [a,b,c]=planes[i],[d,e,f]=planes[j],det=a*e-b*d;
+    if(det===0)continue;
+    const p=[(c*e-b*f)/det,(a*f-c*d)/det].map((n)=>Object.is(n,-0)?0:n);
+    if(feasible(p))vertices.push(p);
+  }
+  const directions=[];
+  for(const [a,b] of planes)for(const v of [[b,-a],[-b,a]]) {
+    if(v[0]===0&&v[1]===0)continue;
+    if(planes.every(([c,d])=>c*v[0]+d*v[1]>=0)) {
+      const g=Number(gcd(BigInt(v[0]),BigInt(v[1])));
+      directions.push(v.map((n)=>Object.is(n,-0)?0:n/g));
+    }
+  }
+  return {halfplanes_a_x_plus_b_y_ge_c:planes,vertices:unique(vertices),recession_directions:unique(directions)};
+}
+const Aplanes=wedge([0,0],[4,0],[1,1]);
+symbolic("976b","A","AtB flip y sign of each slant ray only, retaining BA; intersect the resulting closed cones with unchanged A.",
+  () => ({
+    I:{...intersectionEvidence([...Aplanes,...wedge([4,0],[-4,0],[-1,-1])]),set:"y=0;0<=x<=4",shape:"closed segment"},
+    II:{...intersectionEvidence([...Aplanes,...wedge([4,0],[-4,0],[-1,1])]),set:"0<=y<=min(x,4-x)",shape:"filled closed triangle"}
+  }),{
+    I:{halfplanes_a_x_plus_b_y_ge_c:[[0,4,0],[1,-1,0],[0,-4,0],[-1,1,-4]],vertices:[[0,0],[4,0]],recession_directions:[],set:"y=0;0<=x<=4",shape:"closed segment"},
+    II:{halfplanes_a_x_plus_b_y_ge_c:[[0,4,0],[1,-1,0],[-1,-1,-4],[0,4,0]],vertices:[[0,0],[2,2],[4,0]],recession_directions:[],set:"0<=y<=min(x,4-x)",shape:"filled closed triangle"}
+  },"Halfplanes are reduced by hand: opposite y signs force y=0 inI, then x>=0 and x<=4;II has y>=0,y<=x,y<=4-x. All boundary points included.");
+symbolic("976b","B","AtB flip x sign of EVERY ray, including BA. Intersect rightward upper/lower B cones with unchanged A.",
+  () => ({
+    I:{...intersectionEvidence([...Aplanes,...wedge([4,0],[4,0],[1,1])]),set:"x>=4;0<=y<=x-4",shape:"unbounded closed wedge",vertex:[4,0],edge_directions:[[1,0],[1,1]]},
+    II:{...intersectionEvidence([...Aplanes,...wedge([4,0],[4,0],[1,-1])]),set:"y=0;x>=4",shape:"closed positive-x ray",endpoint:[4,0]}
+  }),{
+    I:{halfplanes_a_x_plus_b_y_ge_c:[[0,4,0],[1,-1,0],[0,4,0],[1,-1,4]],vertices:[[4,0]],recession_directions:[[1,0],[1,1]],set:"x>=4;0<=y<=x-4",shape:"unbounded closed wedge",vertex:[4,0],edge_directions:[[1,0],[1,1]]},
+    II:{halfplanes_a_x_plus_b_y_ge_c:[[0,4,0],[1,-1,0],[1,1,4],[0,-4,0]],vertices:[[4,0]],recession_directions:[[1,0]],set:"y=0;x>=4",shape:"closed positive-x ray",endpoint:[4,0]}
+  },"ForI y<=x-4 is stronger than y<=x and implies x>=4;II y>=0,y<=0 force y=0 and then x>=4. This generates unbounded sets, not finite source intersections.");
+
+const nearest=(x,step)=>Math.round(x/step)*step;
+symbolic("977","A","Draw using1000m/cm, then convert the shrunken AB using100m/cm; retain angle62.",
+  () => {
+    const planCA=600/1000,planCB=400/1000,planAB=542.8200898/1000;
+    return {plan_CA_cm:planCA,plan_CB_cm:planCB,included_angle_degrees:62,
+      actual_AB_nearest_10_m:nearest(planAB*100,10)};
+  },{plan_CA_cm:0.6,plan_CB_cm:0.4,included_angle_degrees:62,actual_AB_nearest_10_m:50},
+  "Frozen correct AB benchmark542.8200898m is scaled, not re-solved; wrong plan AB=.5428200898cm and wrong back-conversion54.28200898m generate50m. Connecting A,B completes the wrong plan recipe.");
+symbolic("977","C","Use included-angle supplement180-62=118, retaining correct6cm/4cm plan lengths; execute wrong cosine-law triangle.",
+  () => ({plan_CA_cm:6,plan_CB_cm:4,included_angle_degrees:180-62,
+    actual_AB_nearest_10_m:nearest(Math.sqrt(600**2+400**2-2*600*400*Math.cos((180-62)*Math.PI/180)),10)}),
+  {plan_CA_cm:6,plan_CB_cm:4,included_angle_degrees:118,actual_AB_nearest_10_m:860},
+  "The wrong triangle has AB approximately863.334437m; its complete scale/construction/rounding record, not the original geometry, is executed.");
+symbolic("978","A","Place lighthouse(10,10) from initialNE only. Minimize10^2+(10-t)^2 on0<=t<=10.",
+  () => ({route_cm:10,lighthouse_plan:{relative_to:"finish",direction:"east",offset_cm:10},
+    start_distance_km:nearest(Math.hypot(10,10),0.1).toFixed(1),
+    finish_distance_km:Math.hypot(10,0).toFixed(1),minimum_km:"10.0",minimizer:"finish",final_bearing:"east"}),
+  {route_cm:10,lighthouse_plan:{relative_to:"finish",direction:"east",offset_cm:10},start_distance_km:"14.1",finish_distance_km:"10.0",minimum_km:"10.0",minimizer:"finish",final_bearing:"east"},
+  "The constrained square is minimized at t=10, yielding10km. Every option distance and plan offset generated; the ignored southeast bearing makes the full record false.");
+symbolic("978","B","Reflect frozen lighthouse(5,5) across routex=0; preserve its distances/minimizer and reverse E/W.",
+  () => {
+    const L=[-5,5];
+    return {route_cm:10,lighthouse_plan:{relative_to:"midpoint",direction:L[0]<0?"west":"east",offset_cm:Math.abs(L[0])},
+      start_distance_km:nearest(Math.hypot(...L),0.1).toFixed(1),
+      finish_distance_km:nearest(Math.hypot(L[0],L[1]-10),0.1).toFixed(1),
+      minimum_km:Math.abs(L[0]).toFixed(1),minimizer:"midpoint",bearings:["northwest","southwest"]};
+  },{route_cm:10,lighthouse_plan:{relative_to:"midpoint",direction:"west",offset_cm:5},start_distance_km:"7.1",finish_distance_km:"7.1",minimum_km:"5.0",minimizer:"midpoint",bearings:["northwest","southwest"]},
+  "Correct magnitudes do not rescue the east/west reversal. The finite route contains t=5; the direction record is compared in addition to all three distances.");
+numeric("979a","A","Wrong coefficient=-8.1*5-3.4*7; retain constant=(-8.1)*(-2.4)+3.4*1.3.",
+  ()=>[q("-8.1").mul(5).sub(q("3.4").mul(7)),q("-8.1").mul("-2.4").add(q("3.4").mul("1.3"))],["-64.3","23.86"],"Ordered output is k coefficient, constant.");
+numeric("979a","B","Retain coefficient; wrong constant=-8.1*2.4+3.4*1.3.",
+  ()=>[q("-8.1").mul(5).add(q("3.4").mul(7)),q("-8.1").mul("2.4").add(q("3.4").mul("1.3"))],["-16.7","-15.02"]);
+numeric("979b","A","Retain coefficient; wrong constant=4.6*3.8-2.7*1.8.",
+  ()=>[q("4.6").mul(4).sub(q("2.7").mul(11)),q("4.6").mul("3.8").sub(q("2.7").mul("1.8"))],["-11.3","12.62"]);
+numeric("979b","B","Wrong coefficient=4.6*4+2.7*11; retain correct constant.",
+  ()=>[q("4.6").mul(4).add(q("2.7").mul(11)),q("4.6").mul("3.8").add(q("2.7").mul("1.8"))],["48.1","22.34"]);
+numeric("979c","B","Retain coefficient; wrong constant=2.6*3.5+4.1*1.9.",
+  ()=>[q("2.6").mul(-8).sub(q("4.1").mul(3)),q("2.6").mul("3.5").add(q("4.1").mul("1.9"))],["-33.1","16.89"]);
+numeric("979c","C","Wrong coefficient=-2.6*8+4.1*3; retain correct constant.",
+  ()=>[q("2.6").mul(-8).add(q("4.1").mul(3)),q("2.6").mul("3.5").sub(q("4.1").mul("1.9"))],["-8.5","1.31"]);
+numeric("979d","B","Retain coefficient; wrong firstconstant+3.9*1.6, then+2.5*4.6.",
+  ()=>[q("-3.9").mul(6).sub(q("2.5").mul(2)),q("3.9").mul("1.6").add(q("2.5").mul("4.6"))],["-28.4","17.74"]);
+numeric("979d","C","Wrong coefficient=-3.9*6+2.5*2; retain correct constant.",
+  ()=>[q("-3.9").mul(6).add(q("2.5").mul(2)),q("-3.9").mul("1.6").add(q("2.5").mul("4.6"))],["-18.4","5.26"]);
+for(const [id,op,wrongFirst,expected] of [
+  ["980a","A",true,["2.3","3.6","35.972","129.4992","841.7448"]],
+  ["980a","B",false,["2.3","3.6","6.8","24.48","1224/325"]],
+  ["980b","A",false,["2.9","2.6","6.2","16.12","806/225"]],
+  ["980b","C",true,["2.9","2.6","52.142","135.5692","610.0614"]]
+]) {
+  const first=id==="980a",D=first?"4.2-1.9":"1.6+1.3",E=first?"1.7+1.9":"5.4-2.8",a=first?"15.64":"17.98",k=first?"6.5":"4.5";
+  const expressions={d:D,e:E,f:`${a}${wrongFirst?"*":"/"}d`,g:"f*e",h:`g${wrongFirst?"*":"/"}${k}`};
+  symbolic(id,op,`Execute all nodes in order: ${JSON.stringify(expressions)}. The${wrongFirst?"first division is replaced by multiplication":"last multiplication is replaced by division"}.`,
+    ()=>{
+      const d=first?q("4.2").sub("1.9"):q("1.6").add("1.3"),
+        e=first?q("1.7").add("1.9"):q("5.4").sub("2.8"),
+        f=wrongFirst?q(a).mul(d):q(a).div(d),g=f.mul(e),h=wrongFirst?g.mul(k):g.div(k);
+      return {expressions,values:{d,e,f,g,h},dependencies:{d:[],e:[],f:["d"],g:["f","e"],h:["g"]}};
+    },{expressions,values:Object.fromEntries(["d","e","f","g","h"].map((n,i)=>[n,q(expected[i])])),
+      dependencies:{d:[],e:[],f:["d"],g:["f","e"],h:["g"]}},
+    "Every named input and node output is generated, including shared supplied d/e values. Their non-discrimination loss remains explicitly recorded, not treated as a full source computation pass.");
+}
+componentCall("981a","A",[[1,2,1,3],[1,4,2,5],[2,3,1,4],[3,4,2,5]],"product",["1/3","3/20","1/4","1/4"]);
+componentCall("981a","C",[[1,2,1,3],[1,4,2,5],[2,3,1,4],[3,4,2,5]],"sum",["2/5","1/3","3/7","5/9"]);
+absoluteCall("981b","B",["23/42","5/12","16/45","19/15"]);
+componentCall("981b","C",[[5,7,-1,6],[-3,4,1,3],[4,9,-4,5],[-2,3,-3,5]],"sum",["4/13","-2/7","0","-5/8"]);
+componentCall("981c","A",[[5,8,-2,3],[-7,10,-4,7],[1,12,-9,11],[-4,5,-5,6]],"sum",["3/11","-11/17","-8/23","-9/11"]);
+absoluteCall("981c","B",["1/24","89/70","97/132","49/30"]);
+componentCall("982a","A",[[1,8,1,4],[2,3,-5,9],[1,2,3,8],[3,4,-5,12]],"max",["1/4","-1/3","1/2","-1/6"]);
+componentCall("982a","C",[[1,8,1,4],[2,3,-5,9],[1,2,3,8],[3,4,-5,12]],"sum",["1/6","-1/4","2/5","-1/8"]);
+componentCall("982b","A",[[1,4,7,12],[23,40,-3,8],[5,9,3,4],[3,4,-1,6]],"lcm",["2/3","1/2","2/9","1/6"]);
+componentCall("982b","C",[[1,4,7,12],[23,40,-3,8],[5,9,3,4],[3,4,-1,6]],"sum",["1/2","5/12","8/13","1/5"]);
+componentCall("982c","A",[[-1,3,2,9],[-7,10,-4,15],[-5,6,7,8],[-5,12,-7,18]],"sum",["1/12","-11/25","1/7","-2/5"]);
+absoluteCall("982c","C",["1/9","29/30","1/24","29/36"]);
+numeric("983a","B","5/8+2/5+3/20",()=>[q("5/8").add("2/5").add("3/20")],["47/40"]);
+numeric("983a","C","5/8-2/5; omit3/20",()=>[q("5/8").sub("2/5")],["9/40"]);
+numeric("983b","A","1/8-5/9-1/4",()=>[q("1/8").sub("5/9").sub("1/4")],["-49/72"]);
+numeric("983b","B","1/8+5/9-1/4",()=>[q("1/8").add("5/9").sub("1/4")],["31/72"]);
+numeric("983c","A","5/6-(3/10*2/5)",()=>[q("5/6").sub(q("3/10").mul("2/5"))],["107/150"]);
+numeric("983c","C","5/6-3/10+2/5",()=>[q("5/6").sub("3/10").add("2/5")],["14/15"]);
+numeric("983d","A","(3/4*1/8)-5/8",()=>[q("3/4").mul("1/8").sub("5/8")],["-17/32"]);
+numeric("983d","C","3/4+1/8+5/8",()=>[q("3/4").add("1/8").add("5/8")],["3/2"]);
+numeric("984a","A","x=34/35+(3/7+2/5)",()=>[q("34/35").add("3/7").add("2/5")],["9/5"]);
+numeric("984a","B","x=34/35-3/7; omit2/5",()=>[q("34/35").sub("3/7")],["19/35"]);
+numeric("984b","A","x=1/6-(4/17+5/51)",()=>[q("1/6").sub(q("4/17").add("5/51"))],["-1/6"]);
+numeric("984b","B","x=4/17-5/51-1/6",()=>[q("4/17").sub("5/51").sub("1/6")],["-1/34"]);
+numeric("985","B","One-hour output=1/(6+8)",()=>[q(1).div(q(6).add(8))],["1/14"]);
+numeric("985","C","One-hour output=1/((6+8)/2)",()=>[q(1).div(q(6).add(8).div(2))],["1/7"]);
+numeric("986","B","Remaining gap=1-1/(5+6)",()=>[q(1).sub(q(1).div(q(5).add(6)))],["10/11"]);
+numeric("986","C","Return closed distance1/5+1/6, not its complement",()=>[q("1/5").add("1/6")],["11/30"]);
+symbolic("987","A","Reuse frozen formalBC=8/50 andAC=9/50; infer triangle realizability from all sides being positive only.",
+  ()=> {
+    const sides=[q("17/50"),q("8/50"),q("9/50")];
+    return {BC:sides[1],AC:sides[2],unit:"m",all_positive:sides.every((s)=>s.n>0n),
+      claimed_nondegenerate_triangle:sides.every((s)=>s.n>0n)};
+  },{BC:q("4/25"),AC:q("9/50"),unit:"m",all_positive:true,claimed_nondegenerate_triangle:true},
+  "Actual frozen equalityBC+AC=AB refutes the positivity-only implication; correct arithmetic does not make this full option true.");
+symbolic("987","C","Reverse 'shorter' to addition:BC=17/50+9/50;AC=17/25-17/50-BC; reject a negative side.",
+  ()=>{
+    const BC=q("17/50").add("9/50"),AC=q("17/25").sub("17/50").sub(BC);
+    return {BC,formal_AC:AC,unit:"m",claimed_nondegenerate_triangle:AC.n>0n};
+  },{BC:q("13/25"),formal_AC:q("-9/50"),unit:"m",claimed_nondegenerate_triangle:false},
+  "The false arithmetic generates both displayed lengths despite the same final nonexistence verdict. The original source blocker remains independent of this incorrect program.");
+symbolic("988","A","Build source polyline then take coordinate midpointK=(A+C)/2 and assert rayBK gives equal36-degree halves.",
+  ()=>{
+    const B=[0,0],A=[7.1,0],C=[5.9*Math.cos(72*Math.PI/180),5.9*Math.sin(72*Math.PI/180)];
+    const K=A.map((n,i)=>(n+C[i])/2);
+    assert.notEqual(Number((Math.atan2(K[1],K[0])*180/Math.PI).toFixed(6)),36);
+    return {vertex:"B",BA_cm:7.1,BC_cm:5.9,included_degrees:72,
+      K_rule:"midpoint of AC",AK_over_KC:1,ray:"BK",claimed_halves_degrees:[72/2,72/2]};
+  },{vertex:"B",BA_cm:7.1,BC_cm:5.9,included_degrees:72,K_rule:"midpoint of AC",AK_over_KC:1,ray:"BK",claimed_halves_degrees:[36,36]},
+  "Midpoint coordinates are actually calculated. Frozen angle-bisector ratioBA/BC=71/59!=1 disproves the asserted equal halves. The generated claim, not the true median angle, is the false option's output.");
+const wrongC=[5.9*Math.cos(72*Math.PI/180),5.9*Math.sin(72*Math.PI/180)];
+const wrongK=[(7.1+wrongC[0])/2,wrongC[1]/2];
+const wrongMedianAngle=Math.atan2(wrongK[1],wrongK[0])*180/Math.PI;
+executions.at(-1).independent_wrong_construction_trace={
+  coordinate_orientation:"B=(0,0),BA along positive x; one allowed orientation",
+  A:[7.1,0],C:wrongC,K:wrongK,actual_median_halves_degrees:[wrongMedianAngle,72-wrongMedianAngle],
+  midpoint_ratio:q(1).toString(),required_bisector_ratio:q("7.1").div("5.9").toString(),
+  equality_of_half_angles:false
+};
+symbolic("988","C","Relabel source vertexB asA and sourceBC asAC, then bisect the relabeled72-degree angle.",
+  ()=>({vertex:"A",AB_cm:7.1,AC_cm:5.9,included_degrees:72,ray:"internal angle-A bisector",halves_degrees:[72/2,72/2]}),
+  {vertex:"A",AB_cm:7.1,AC_cm:5.9,included_degrees:72,ray:"internal angle-A bisector",halves_degrees:[36,36]},
+  "This construction is self-consistent for the wrong labeled angle; it does not realize the requestedB-vertex/BC data.");
+
+const sourceDecision = {
+  "963":"All twelve original unlike-denominator signed operands are distributed in three complete four-result units. Domain is fixed rational numbers with positive nonzero denominators; the entire common-denominator/numerator/reduction writing production loss is disclosed.",
+  "964":"All twelve expressions, including equal original numerators, repeated-7/30 outcomes and tiny1/132, survive in three complete segments. Numerator scaling and signed calculation production is explicitly lost, not replaced by a claim of independent work.",
+  "965":"Both decimal-to-fraction conversions1/2,2/5 and their respective results3/4,1 are affirmative components. Independent conversion/writing is explicitly lost; the requested fraction method is not silently replaced with value-only answers.",
+  "966":"Both terminating conversions.35,.75 and results2.5,.4 are retained in the requested direction. Recognition replaces actually performing the method and this is disclosed.",
+  "967":"Both grouped expressions retain the inner sum/difference and outer sign. Each is an independent complete calculation, not a shared intermediate answer click. Written parentheses/final-operation production loss is explicit.",
+  "968":"All four unique real solutions and original unknown signs are represented. Denominators are fixed, not variable domain exclusions. Coverage discloses denominator conversion, inverse-operation and substitution-check production losses.",
+  "969":"The original excess, not whole second-day amount, determines day2 and total. The single response preserves that model relationship; independent construction/writing of both quantities is explicitly lost.",
+  "970":"Both deliveries and total sale enter the inventory model; positive remainder is the whole question. Constructing the model and converting denominators independently is disclosed as lost.",
+  "971":"45-minute lesson, two occupied shares and residual minute conversion are preserved; whole-hour substitution is a false option, not a source change. Independent summing and residual conversion production is disclosed.",
+  "972":"Capability within4days is distinguished from exactly-half output after4full-rate days. Joint rate,4day share and half completion time are all assessed together. Independent rate argument production is lost and disclosed.",
+  "973":"All six original power/mixed-number/sign expressions retain fixed nonzero divisors and operation order. Full-expression values are separate independent tasks; power/conversion/remaining-operation written production loss is explicit.",
+  "974":"Both lamb and pork component-to-total proportions and solutions are affirmative records. Inverse fraction and complementary base are false procedures. Independent proportion formation and written solutions are explicitly lost; neither original proportion task is omitted.",
+  "975":"Restored unit uses a valid supplied common-vertex witness of two closed180degree sectors, including both infinite boundary rays and vertex. It assesses complete overlap[124,180]/56 and reflex union[0,304]/304. Free construction, actual drawing of both angles and overlap/union regions are disclosed as lost; stated conventions are not falsely attributed to every original angle arrangement.",
+  "976":"The merged unit now affirmatively assesses both original subtasks: different-vertex acute closed sectors intersect in a filled bounded triangle and in a finite closed segment. All three vertices, two endpoints, infinite rays and boundary inclusion are preserved. Independent free placement/drawing/coloring losses for(1)and(2) are separately declared.",
+  "977":"The original actual figure supplies600m/400m surrounding includedC62degrees. The1:10000 construction and metric result survive; the schematic is not treated as a physical scale plan. Actual plan/ruler measurement production loss and added nearest10m reporting rule are both explicit.",
+  "978":"Both actual cardinal bearings,10km northward finite route,1:100000 plan, both endpoint distances and interior perpendicular minimum are retained. Physical plan drawing, both ruler measurements and constructing the perpendicular minimum are lost and disclosed;0.1km precision is added visibly, not an original exact-measurement promise.",
+  "979":"All four polynomial identities retain signed distributions for every real input; both variable coefficients and constants are checked. Writing distributions/collections independently is explicitly lost.",
+  "980":"Both complete named-node dependency programs and propagated final values remain. Actual program-diagram drawing is lost. Crucially every alternative supplies correctd/e2.3,3.6 and2.9,2.6: BOTH independent production and correctness discrimination of these common calculations are expressly untested. Later division/product dependencies still require judgment; no full-discrimination coverage claim is made.",
+  "981":"All twelve additional signed rational expressions are retained, including small-negative and improper results. Complete three-segment recognition replaces independent numerator/denominator computation, with that production loss disclosed.",
+  "982":"All twelve multiple/general-denominator expressions and sign-crossing cases, including tiny positive1/24, are retained. Common-denominator written production loss is explicit; no equal-numerator cancellation is authorized.",
+  "983":"All four original grouped three-term expressions retain their exact parentheses and outer signs. The independent full results remain assessed; writing grouped fraction arithmetic is lost and disclosed.",
+  "984":"Both real additive-unknown equations retain the minus coefficient/parentheses and unique solutions. Independent algebraic transformations and substitution verification are lost and disclosed.",
+  "985":"Both reciprocal work rates and their joint one-hour task fraction are retained under full-task normalization; output is below1 so no truncation is needed. Independent inverse-time rate derivation is lost and disclosed.",
+  "986":"The simultaneous approach uses a common full route; gap after1h is premeeting positive distance, not closed distance. Original5h/6h solo travel and relative-rate model survive. Independent model construction production is explicitly lost.",
+  "987":"FormalBC8/50 andAC9/50 implyBC+AC=AB17/50. Current intent, source solution, unit reason, limitations, coverage and correct proof all preserve nondegenerate source realizability as blocked; no numeral or degenerate convention is invented. Conditional arithmetic/existence recognition can pass while the original impossible triangle remains blocked.",
+  "988":"Both unequal finite polyline lengths at vertexB72degrees and the genuine internal bisector construction survive. Equal radial marks and equal arcs plus commonBK giveSSS and36degree halves; neither midpoint median nor unequal finite-segment symmetry substitutes. Actual ruler/protractor/compass drawing/measurement loss is declared."
+};
+const proofDecision = {
+  "963a":"All four scaled numerator sums, product denominators and final reductions match the frozen tuple.",
+  "963b":"All four signed scaled differences/cancellation results match; negative-4/15 and-1/35 are retained.",
+  "963c":"Every negative operand and subtraction contributes its negative magnitude; all four improper negative results match.",
+  "964a":"Larger common denominators8,4,10,12 have corresponding numerator scaling; both negative results retained.",
+  "964b":"Each stated common denominator and scaled numerator matches the frozen four results; equal unscaled numerators do not cancel.",
+  "964c":"All four signed common-denominator combinations and negative outcomes match the frozen record.",
+  "965":"Correct rationale's two sums are valid after the conversions explicitly stated in its full visible option and intent.",
+  "966":"Both exact terminating conversions and the ensuing decimal add/subtract agree; method direction unchanged.",
+  "967a":"Parenthesis value13/20 is subtracted as a whole;6/20 reduction matches.",
+  "967b":"Inner signed13/30 plus1/30 matches; no grouping inversion.",
+  "968a":"Right side16/15 minus left constant4/15 correctly isolates positive-coefficientx.",
+  "968b":"Restoring the subtracted1/4 to13/40 correctly yields23/40.",
+  "968c":"Constant29/20 minus RHS5/6 accounts for the minus coefficient ofx.",
+  "968d":"Outer subtraction changes inner-a to+a;4/9 matches the frozen unique real solution.",
+  "969":"The proof explicitly computesday2=7/20 and total1/2; it does not treat excess asday2.",
+  "970":"Both incoming masses form89/100; total sold56/100 leaves33/100.",
+  "971":"Whole period is45min; occupied8/15 leaves7/15 and21min.",
+  "972":"The rate5/36, four-day5/9>1/2, half-time18/5<=4 jointly justify capability, not exact-half-at4days.",
+  "973a":"Power9 and mixed-number7/6 multiply to21/2.",
+  "973b":"Mixed-number8/3 divides by cube8, not its reciprocal direction.",
+  "973c":"Correct cube29.791 plus2.75 matches32.541.",
+  "973d":"Only2.1 is squared;26-4.41 matches21.59.",
+  "973e":"Even square9/4 and negative odd cube-8 multiply to-18.",
+  "973f":"Negative cube-8/27 divided by positive square4/9 yields-2/3.",
+  "974a":"Protein per total meat0.16, not its inverse/complement base, gives matching visible proportion and0.512kg.",
+  "974b":"Fat per total meat0.4 gives the matching visible proportion and4.2kg.",
+  "975":"Both max/min closed intersection and overlapping envelope union, including vertex/boundaries, match the frozen56degree/304degree full region proof.",
+  "976b":"Simultaneous closed inequalities establish the ENTIRE triangle withA,B,(2,2) and the ENTIRE finite segment[0,4]; all four sectors remain45degree acute with different vertices.",
+  "977":"1cm=100m gives6cm/4cm62degree SAS; frozen5.428200898cm benchmark converts to542.8200898m then nearest10m540.",
+  "978":"Both bearings jointly determine eastern midpoint lighthouse; frozen endpoint/minimum proof respects0<=t<=10 and1cm=1km.",
+  "979a":"Every signed distributed coefficient/constant in rationale agrees with the frozen identity for all realk.",
+  "979b":"Outer subtraction applies to variable and negative constant;18.4-29.7 and17.48+4.86 match.",
+  "979c":"Both second-bracket terms are subtracted; coefficient-33.1 and constant1.31 match.",
+  "979d":"First negative constant and both negative variable contributions match coefficient-28.4 and constant5.26.",
+  "980a":"Correct parenthesis branches feeddivision then two sequential products; completef/g/h values and dependencies match frozen evidence.",
+  "980b":"Both independent branches feeddivision and subsequent products; all five nodes and final72.54 agree.",
+  "981a":"All four positive scaled fraction sums match the frozen tuple; correct rationale supplies numerators and denominators.",
+  "981b":"Scaled numerators30-7,-9+4,20-36,-10-9 over the respective common denominators match all signs and results.",
+  "981c":"All four scaled differences stay negative;15-16,-49-40,11-108,-24-25 match the full tuple.",
+  "982a":"Numerator scaling into8,9,8,12 matches all four result components.",
+  "982b":"The stated scaled sums/differences into12,40,36,12 match all results.",
+  "982c":"Each signed scaled numerator is correct, including tiny positive(-20+21)/24.",
+  "983a":"Both grouped difference and final addend are present;15/40=3/8.",
+  "983b":"Outer minus distributes to both inner terms;9-40+18=-13 over72 agrees.",
+  "983c":"Inner sum7/10 is subtracted whole;2/15 agrees.",
+  "983d":"Both inner addends then outer5/8 subtraction give2/8.",
+  "984a":"Grouped29/35 must be subtracted from34/35; unique1/7 agrees.",
+  "984b":"Outer minus makes+5/51; constant1/3 minusx gives unique1/6.",
+  "985":"Task/hour rate addition7/24, with1h output below completion, matches.",
+  "986":"Proof distinguishes closed11/30 and remaining19/30 and checks time1h before meeting.",
+  "987":"Arithmetic and strict-inequality failure agree with frozenB; proof explicitly declines source numeral repair or permitted degeneracy.",
+  "988":"EqualBD/BE, equalDK/EK, commonBK giveSSS. K is an interior nonvertex intersection;D/E may lie within5.9cm. Unequal original finite sides are not claimed symmetric."
+};
+
+assert.equal(executions.length,104);
+const executionById = new Map(executions.map((r)=>[`${r.question_id}/${r.option_id}`,r]));
+assert.equal(executionById.size,104);
+const questionComparisons = draft.json.questions.map((question,index)=>{
+  const f=truthById.get(question.id);
+  const visible={id:question.id,...question.view};
+  const frozenVisible={id:f.id,mode:f.mode,stem:f.stem,figure_ids:f.figure_ids,
+    options:f.options.map(({id,text,figure_ids})=>({id,text,figure_ids}))};
+  assert.deepEqual(visible,frozenVisible);
+  assert.equal(index+1,f.ordinal);
+  assert.deepEqual(question.key.correct,f.reviewer_true_set);
+  const rationaleById=new Map(question.key.rationales.map((r)=>[r.option_id,r]));
+  const options=f.options.map((option)=>{
+    const rationale=rationaleById.get(option.id),truth=option.truth?"correct":"incorrect";
+    assert.equal(rationale.truth,truth);
+    const execution=option.truth?null:executionById.get(`${question.id}/${option.id}`);
+    assert(option.truth||execution);
+    const proof=proofDecision[question.id.replace("n51-","")];
+    assert(proof);
+    return {option_id:option.id,truth,visible_text:option.text,
+      frozen_independent_evidence:option.independent_evidence,
+      current_author_derivation:rationale.derivation,current_author_misconception:rationale.misconception,
+      correct_proof_comparison:option.truth?{verdict:"pass",evidence:proof,
+        frozen_independent_solution:f.independent_derivation}:null,
+      false_program_execution:execution,verdict:"pass"};
+  });
+  const n=question.source_numbers[0],s=source.json.source_reviews.find((r)=>r.source_number===n);
+  assert(s);
+  return {question_id:question.id,ordinal:index+1,visible_identity:{equal_to_frozen:true,sha256:f.question_visible_sha256},
+    source_numbers:question.source_numbers,frozen_true_set:f.reviewer_true_set,author_correct:question.key.correct,
+    key_verdict:"pass",independent_solution:f.independent_derivation,
+    intent_comparison:{verdict:"pass",author_intent:question.intent,
+      frozen_source_domain:s.domain,frozen_source_subtasks:s.subtasks,
+      evidence:sourceDecision[n],unit_specific_correct_proof:proofDecision[question.id.replace("n51-","")]},
+    task_fidelity:f.task_fidelity,redundancy:f.redundancy,answer_leakage:f.prose_answer_leakage,
+    option_comparisons:options};
+});
+const sourceComparisons=source.json.source_reviews.map((s)=>{
+  const c=draft.json.coverage.find((r)=>r.source_number===s.source_number);
+  const questions=draft.json.questions.filter((q)=>q.source_numbers.includes(s.source_number));
+  assert.deepEqual(c.question_ids,questions.map((q)=>q.id));
+  const verdict=s.source_number==="987"?"blocked":"pass";
+  return {source_number:s.source_number,verdict,
+    frozen_original_domain:s.domain,frozen_original_subtasks:s.subtasks,
+    independent_solution:[s.independent_solution,JSON.stringify(s.subtasks),s.domain].join(" "),
+    original_production_tasks_and_recognition_losses:s.production_tasks_and_recognition_losses||[],
+    source_questions_or_ambiguities:s.questions_or_ambiguities||[],
+    current_author_coverage:c,current_question_intent_limitations:questions.map((q)=>({id:q.id,limitations:q.intent.limitations})),
+    coverage_and_loss_comparison:{verdict,evidence:sourceDecision[s.source_number]},
+    complete_determinate_tasks_retained:true,
+    full_independent_production_claim:false,
+    source_realizability_blocked:s.source_number==="987"};
+});
+assert.equal(questionComparisons.length,52);
+assert.equal(sourceComparisons.length,26);
+assert.equal(questionComparisons.flatMap((q)=>q.option_comparisons).length,156);
+const figureChecks=images.json.figures.filter((f)=>["fig-157","fig-158"].includes(f.figure_id)).map((f)=>({
+  figure_id:f.figure_id,asset_path:f.asset_path,asset_sha256:f.actual_asset_sha256,
+  observation:`Reused source-only actual observation, hash-bound by ${images.sha256}; no new opening. ${f.observation} ${f.mathematical_use}`
+}));
+assert.equal(figureChecks.length,2);
+assert.equal(draft.json.new_figures.length,0);
+const reviewer={kind:"independent_agent",identity:"Tesla (01a1e240-9cc2-73e0-80bb-02ba30596454), source -> pureview -> internal"};
+const review={
+  schema:"s10y-choice-review-v1",seed_sha256:seedDigest,draft_sha256:digest(draft.json),reviewer,
+  source_reviews:sourceComparisons.map((s)=>({source_number:s.source_number,
+    independent_solution:s.independent_solution,coverage:s.coverage_and_loss_comparison})),
+  figure_checks:figureChecks,new_figure_reviews:[],
+  question_reviews:questionComparisons.map((c)=>({
+    question_id:c.question_id,
+    task_fidelity:{verdict:"pass",evidence:`${c.task_fidelity.evidence} Internal intent/coverage comparison: ${sourceDecision[c.source_numbers[0]]}`},
+    redundancy:c.redundancy,answer_leakage:c.answer_leakage,
+    mathematics:{verdict:"pass",independent_solution:c.independent_solution,correct:c.frozen_true_set,
+      option_checks:c.option_comparisons.map((o)=>({option_id:o.option_id,truth:o.truth,
+        evidence:o.truth==="correct"?`${o.frozen_independent_evidence} Current correct proof comparison: ${o.correct_proof_comparison.evidence}`:
+          `${o.frozen_independent_evidence} Independently executed wrong program: ${o.false_program_execution.reviewer_encoded_program} Full generated record: ${JSON.stringify(o.false_program_execution.generated_output)}. ${o.false_program_execution.notes}`}))}
+  })),outcome:"blocked"
+};
+const final={
+  schema:"independent-choice-final-comparison-v1",stage:"first-authorized-n51-repaired-internals-complete",reviewer,
+  outcome:"blocked",nonblocked_checks_verdict:"pass",remaining_revision_requests:[],
+  blocked_scope:[{source_number:"987",evidence:sourceDecision["987"],question_math_verdict:"pass",question_correct:["B"],
+    request:"Retain honest original source blocker; do not guess a numerical or degeneracy repair."}],
+  bindings:{draft_path:rel(draft.path),draft_byte_sha256:draft.sha256,draft_canonical_sha256:digest(draft.json),
+    original_seed_path:source.json.seed_path,original_seed_byte_sha256:source.json.seed_byte_sha256,
+    original_seed_canonical_sha256:seedDigest,author_seed_binding_matches_original_seed:true,
+    seed_digest_basis:"Original prepared snapshot canonical digest computed earlier in this invocation; no freshness reconstruction.",
+    frozen_source_record:{path:rel(source.path),sha256:source.sha256},
+    frozen_image_record:{path:rel(images.path),sha256:images.sha256},
+    frozen_changed_view_record:{path:rel(frozen.path),sha256:frozen.sha256},
+    repaired_view_path:frozen.json.binding.repaired_view_path,
+    repaired_view_byte_sha256:frozen.json.binding.repaired_view_byte_sha256,
+    entire_current_draft_visible_projection_equal_to_52_frozen_units:true,
+    original_unchanged50_view_and150_truths_reused:true,new975_and_modified976b_six_truths_reused:true,
+    review_file:"review.json",review_byte_sha256:sha(JSON.stringify(review,null,2)+"\n")},
+  counts:{source_reviews:26,coverage_entries_compared:26,question_keys_compared:52,
+    correct_proofs_compared:52,false_programs_independently_executed:104,
+    all_option_truths_compared:156,correct_options:52,incorrect_options:104,
+    used_source_figures:2,new_figures:0,source_blockers:1,remaining_revise:0,
+    new_source_solves:0,new_visible_math_solves:0,image_reopens:0,browser_sessions:0,validator_runs:0},
+  authority:{author_artifacts_read:[rel(draft.path)],separate_author_solutions_or_program_evidence_read:false,
+    unchanged_source_images_math_view_and_position_not_rereviewed:true,
+    script_purpose:"Independent reviewer rational/symbolic calculator and evidence serialization; no external validator, canonical runner, structural checker or source refresh.",
+    render_display_promote_git_db_service_operations:"none",write_scope:rel(own),old_frozen_records_modified:false},
+  whole_package_relationships_reused:frozen.json.whole_package_relationships,
+  production_disclosure_comparisons:sourceComparisons,
+  question_comparisons:questionComparisons,
+  independently_executed_false_programs:executions,
+  reused_actual_figure_observations:figureChecks,
+  concept_or_artwork_observations:"Kept in original image-observations.json; canonical figure_checks contains only actual used fig-157/fig-158.",
+  minimal_requested_diffs:[],
+  conclusion:"All52 exact correct sets,52 correct proofs,104 concrete wrong-program outputs and26 source coverage/loss entries agree with frozen evidence. Only original987 source nondegenerate-triangle realizability remains blocked. Display, canonical checking and promotion are not performed or approved here."
+};
+for(const [name,value]of[["review.json",review],["final-comparison.json",final]]) {
+  fs.writeFileSync(path.join(own,name),JSON.stringify(value,null,2)+"\n",{flag:"wx"});
+}
+console.log(JSON.stringify({outcome:review.outcome,nonblocked_checks:"pass",counts:final.counts,
+  draft_byte_sha256:draft.sha256,draft_canonical_sha256:review.draft_sha256,
+  review_byte_sha256:final.bindings.review_byte_sha256,
+  final_comparison_byte_sha256:sha(fs.readFileSync(path.join(own,"final-comparison.json")))},null,2));

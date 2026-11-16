@@ -1,0 +1,131 @@
+import assert from "node:assert/strict";
+
+const first = [0, 180];
+const second = [124, 304];
+const overlap = [Math.max(first[0], second[0]), Math.min(first[1], second[1])];
+const envelope = [Math.min(first[0], second[0]), Math.max(first[1], second[1])];
+const width = ([a, b]) => b - a;
+
+const angular = {
+  C: { intersection: overlap, intersection_degrees: width(overlap),
+    union: envelope, union_degrees: width(envelope) },
+  A: { intersection: envelope, intersection_degrees: width(envelope),
+    union: overlap, union_degrees: width(overlap) },
+  B: { intersection: [0, second[0]], intersection_degrees: second[0],
+    union: [0, 180 + 180 - second[0]], union_degrees: 180 + 180 - second[0] }
+};
+
+assert.deepEqual(angular.C, {
+  intersection: [124, 180], intersection_degrees: 56,
+  union: [0, 304], union_degrees: 304
+});
+assert.deepEqual(angular.A, {
+  intersection: [0, 304], intersection_degrees: 304,
+  union: [124, 180], union_degrees: 56
+});
+assert.deepEqual(angular.B, {
+  intersection: [0, 124], intersection_degrees: 124,
+  union: [0, 236], union_degrees: 236
+});
+
+const inA = ([x, y]) => y >= 0 && y <= x;
+const inB = ([x, y], horizontal, vertical) =>
+  horizontal * (x - 4) >= 0 &&
+  vertical * y >= 0 &&
+  vertical * y <= horizontal * (x - 4);
+const inIntersection = (point, horizontal, vertical) =>
+  inA(point) && inB(point, horizontal, vertical);
+
+// The four sign choices are the declared B-ray reflections, not invented values.
+function describeIntersection(horizontal, vertical) {
+  if (horizontal === -1 && vertical === 1) {
+    return { set: "0<=y<=min(x,4-x)", type: "closed triangle",
+      vertices: [[0, 0], [4, 0], [2, 2]], boundaries: "all included" };
+  }
+  if (horizontal === -1 && vertical === -1) {
+    return { set: "y=0, 0<=x<=4", type: "closed segment",
+      endpoints: [[0, 0], [4, 0]], boundaries: "both endpoints included" };
+  }
+  if (horizontal === 1 && vertical === 1) {
+    return { set: "x>=4, 0<=y<=x-4", type: "unbounded closed angle",
+      vertex: [4, 0], directions: [[1, 0], [1, 1]], boundaries: "both rays included" };
+  }
+  return { set: "y=0, x>=4", type: "closed rightward ray",
+    endpoint: [4, 0], direction: [1, 0], boundaries: "endpoint included" };
+}
+
+const constructions = {
+  C: null,
+  A: null,
+  B: null
+};
+const trueDirections = {
+  I: [[-1, 0], [-1, 1]],
+  II: [[-1, 0], [-1, -1]]
+};
+for (const [option, xMultiplier, yMultiplier] of [
+  ["C", 1, 1], ["A", 1, -1], ["B", -1, 1]
+]) {
+  const transform = (directions) => directions.map(([x, y]) =>
+    [x * xMultiplier, y === 0 ? 0 : y * yMultiplier]);
+  const I = transform(trueDirections.I), II = transform(trueDirections.II);
+  constructions[option] = {
+    I: describeIntersection(I[0][0], I[1][1]),
+    II: describeIntersection(II[0][0], II[1][1]),
+    B_directions_I: I,
+    B_directions_II: II
+  };
+}
+const angleDegrees = (u, v) => Math.atan2(
+  Math.abs(u[0] * v[1] - u[1] * v[0]), u[0] * v[0] + u[1] * v[1]
+) * 180 / Math.PI;
+const actualAngles = [
+  angleDegrees([1, 0], [1, 1]),
+  angleDegrees(...trueDirections.I),
+  angleDegrees([1, 0], [1, 1]),
+  angleDegrees(...trueDirections.II)
+];
+assert.deepEqual(actualAngles, [45, 45, 45, 45]);
+
+for (const point of [[0, 0], [4, 0], [2, 2], [2, 1]]) {
+  assert.equal(inIntersection(point, -1, 1), true);
+}
+assert.equal(inIntersection([2, 1], -1, -1), false);
+for (const point of [[0, 0], [2, 0], [4, 0]]) {
+  assert.equal(inIntersection(point, -1, -1), true);
+}
+assert.equal(inIntersection([5, 0], -1, 1), false);
+assert.equal(inIntersection([5, 0], -1, -1), false);
+assert.equal(inIntersection([5, 0], 1, 1), true);
+assert.equal(inIntersection([5, 0], 1, -1), true);
+assert.equal(inIntersection([0, 0], 1, -1), false);
+assert.equal(inIntersection([2, 2], 1, 1), false);
+
+// Confirm each generated half-plane intersection on a finite witness grid.
+for (let xi = -2; xi <= 12; xi += 1) {
+  for (let yi = -6; yi <= 8; yi += 1) {
+    const x = xi / 2, y = yi / 2;
+    assert.equal(inIntersection([x, y], -1, 1),
+      y >= 0 && y <= Math.min(x, 4 - x));
+    assert.equal(inIntersection([x, y], -1, -1), y === 0 && x >= 0 && x <= 4);
+    assert.equal(inIntersection([x, y], 1, 1), x >= 4 && y >= 0 && y <= x - 4);
+    assert.equal(inIntersection([x, y], 1, -1), y === 0 && x >= 4);
+  }
+}
+
+export const wrongProgramEvidence = {
+  scope: "Only independently frozen source975/976 and the two handwritten replacement units.",
+  angular,
+  constructions,
+  counterexamples: {
+    "975-A": "0 degrees is in the union but not the intersection.",
+    "975-B": "0 degrees is not in the second angle; 304 degrees is in its union.",
+    "976-A": "(2,1) belongs to true I and not true II; the erroneous reflection swaps this.",
+    "976-B": "(5,0) lies in both erroneous rightward outputs, but in neither true output; (0,0) is in the true segment but not the erroneous ray."
+  },
+  endpoints_checked: [[0, 0], [4, 0], [2, 2]],
+  actual_angle_degrees: actualAngles,
+  finite_grid_role: "Concrete reproduction/counterexample check only; the exact all-point inequalities and proof remain in source-freeze.json and rationales.",
+  assertion_result: "pass",
+  author_key_or_reviewer_truth_input: false
+};

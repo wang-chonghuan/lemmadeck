@@ -1,0 +1,434 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+
+const root = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const own = path.join(root, ".intentfold/tickets/STEMROBIN-182/tmp/reviewer-5m-n51-actual-display");
+const absolute = (p) => path.resolve(root, p);
+const sha = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const hashFile = (p) => sha(fs.readFileSync(absolute(p)));
+const load = (name) => JSON.parse(fs.readFileSync(path.join(own, name)));
+const primary = load("primary-inventory.json");
+const geometry = load("dom-display-map.json");
+const supplement = load("supplement-capture.json");
+const manifest = JSON.parse(fs.readFileSync(absolute(primary.manifest_path)));
+const reportPath = absolute(manifest.report);
+
+// These notes record actual view_image observations, not results inferred from DOM.
+const sheetNotes = {
+  "primary-native-01.png": "Desktop layered tree and lighthouse are legible in full native figure inputs. Choice first viewport shows1-3 complete and4 beginning; last shows50 tail,51/52. Table4 end is only a right-hand slice, not a whole option.",
+  "primary-native-02.png": "Mobile choice figures have clipped ancestors: nominal640px screenshots show left pixels and white beyond the ancestor, not full objects. End PNGs show right-only windows. First/last choices and table edge slices readable. Desktop48x7 exercise SVG is a KaTeX angle-mark fragment, rejected as a figure.",
+  "primary-native-03.png": "Desktop exercise tree and lighthouse layer pairs/end slices readable; clipped13px right edge is supplied by end windows. Tree has A/B/C,400m/600m/62deg, swamp and trees. Lighthouse N/S/W/E, boats, arrow, sight lines and Lighthouse label. Written963 and most964 rows seen.",
+  "primary-native-04.png": "Desktop written last shows982 tail and983-988 fully. Mobile written first shows963 and964 beginning. Mobile figures are clipped left windows plus separate right windows; no full640px claim. Mobile48x7 KaTeX fragment preserved but rejected as standalone figure.",
+  "primary-native-05.png": "Mobile written last shows983 tail and984-988. Both identical desktop prose PNGs show the same24px scroll state with all10 paragraphs, including final paragraph. Mobile prose first shows upper paragraphs and left part of long formula.",
+  "primary-native-06.png": "Mobile prose last shows remaining paragraphs and worked examples through final paragraph/button. Two long formula chains still require their right-side horizontal supplements; not claimed complete from this PNG alone.",
+  "supplement-native-01.png": "Desktop written964 tail through972 and then972-977 stem. All grouped rows, conversion expressions, proportion statements and975/976 drawing statements are readable across32px seams.",
+  "supplement-native-02.png": "Desktop tree/lighthouse contexts and978 through982 rows; all four979 expressions and both980 program expressions seen, followed by981 and982 fractions. Existing primary end windows supply full figure right ends.",
+  "supplement-native-03.png": "Desktop choices4 lower options through11. Three options per unit and all8 conversion records seen with intact digits/signs.",
+  "supplement-native-04.png": "Desktop choices12-18 complete,19 beginning. Equation parentheses, fraction bars, unit labels and three complete records per finished unit readable.",
+  "supplement-native-05.png": "Desktop choices19-26 complete,27 beginning. Powers, mixed-number notation, proportion statements and units readable.",
+  "supplement-native-06.png": "Desktop27 all three tables;28 entire long stem and three table bodies across seam;29 stem/tree beginning.28A/C extend right outside the viewport; primary table4/6-end windows supply those ends.28B fits.",
+  "supplement-native-07.png": "Desktop29 stem/figure/options and30 lighthouse/stem/options;31/32 complete,33 beginning. Figure bottom/right labels supplied by already-opened native primary layer/end PNGs.",
+  "supplement-native-08.png": "Desktop33 tail,34,35 all five program nodes in each option,36 across seam,37-39 and40 heading. Long program records wrap without overlap; endings remain readable.",
+  "supplement-native-09.png": "Desktop40-46 all stems and A/B/C records;47 stem/A/B seen, C continues on next sheet. Fractions, minus signs and equation right ends are intact.",
+  "supplement-native-10.png": "Desktop47C through49 and50 stem. Mobile two formula-end windows expose complete rightmost17/30 and-7/18 results while retaining surrounding prose. Nine mobile written windows cover964 tail through983 beginning, all979/980 expression ends, both source drawing tasks, and the previously missing middle figure pixels. Tree offset300 shows A and right600m region; lighthouse offset300 shows E and full Lighthouse label. Edge windows alone are not whole figures.",
+  "supplement-native-11.png": "Mobile choices3 tail through36 beginning. Every conversion record/proportion unit, all27 direction-table rows, long28 construction stem and left table columns,29/30 stem/figure-left/options,31-34, and35 five-node programs read. Table28 and figure right sides are explicitly completed by other already-opened windows.",
+  "supplement-native-12.png": "Mobile36 remaining program nodes,37-50 all options,51 stem/A edge and paired28 table-middle supplement. Long stems wrap; fraction signs/results and final nodes readable.28A/C offset297 supplies the gap between edge windows.51 lower B/C and52 are on the already-opened mobile-last primary.",
+};
+
+const sheets = [...primary.native_montages, ...supplement.native_montages].map((s) => ({
+  ...s,
+  path: absolute(s.path),
+  source_pngs: s.source_pngs.map((p) => ({ ...p, path: absolute(p.path) })),
+  actually_opened: true,
+  tool: "functions.view_image",
+  detail: "original",
+  interpolation: "none; native1:1 compositing",
+  observation: sheetNotes[path.basename(s.path)],
+}));
+const openedVia = new Map();
+for (const s of sheets) {
+  if (!s.observation || hashFile(s.path) !== s.sha256) throw Error("Missing or changed observed sheet");
+  for (const p of s.source_pngs) {
+    if (hashFile(p.path) !== p.sha256) throw Error("Changed PNG input");
+    if (openedVia.has(p.path)) throw Error("Duplicate input path in derived sheets");
+    openedVia.set(p.path, { path: s.path, sha256: s.sha256, placement: p.placement });
+  }
+}
+const describePrimary = (r) => {
+  const n = path.basename(r.path);
+  if (r.width === 48 && r.height === 7) return {
+    evidence_scope: "observed tiny KaTeX angle-mark fragment only",
+    accepted_as_full_object: false,
+    rejected_reason: "48x7 raster is not a standalone source figure or a complete formula; counted/preserved, never used to close object coverage.",
+  };
+  if (/-(first|last)\.png$/.test(n)) return {
+    evidence_scope: "actual viewport pixels; objects may span adjoining windows",
+    accepted_as_full_object: false,
+    limit: "Only objects/rows inside the recorded viewport interval; no assumption that first/last closes middle page gaps.",
+  };
+  if (n.includes("-table-")) return {
+    evidence_scope: "native horizontal table slice",
+    accepted_as_full_object: false,
+    limit: "Isolated start/end table slice omits other columns or labels; accepted only as part of the contextual pixel union.",
+  };
+  if (n.includes("-390-figure-") && !n.endsWith("-end.png")) return {
+    evidence_scope: "actual left figure window clipped by its scroll ancestor",
+    accepted_as_full_object: false,
+    rejected_reason: "Nominal640/641px element capture has blank pixels beyond the310/358px visible ancestor. Rejected as full-figure evidence; its genuinely visible left pixels remain usable.",
+  };
+  if (n.includes("-figure-") && n.endsWith("-end.png")) return {
+    evidence_scope: "native figure right-edge scroll window",
+    accepted_as_full_object: false,
+    limit: "Right window alone does not show the complete source figure or accompanying exercise.",
+  };
+  if (n.includes("-exercises-1440-figure-")) return {
+    evidence_scope: "actual desktop figure left window,627px ancestor inside640px artwork",
+    accepted_as_full_object: false,
+    limit: "Rightmost13px supplied by separate end window; IMG/SVG layer files are duplicate captures of one logical composite, not extra source figures.",
+  };
+  return {
+    evidence_scope: "full native desktop composite figure, with its adjacent stem in contextual windows",
+    accepted_as_full_object: true,
+    limit: "Two IMG/SVG layer inputs may have identical bytes; path counts and logical figure counts are distinct.",
+  };
+};
+const allInputs = [
+  ...primary.records.map((r) => ({
+    ...r, path: absolute(r.path), origin: "primary", ...describePrimary(r),
+  })),
+  ...supplement.records.map((r) => ({
+    ...r, path: absolute(r.path), rendered_path: absolute(r.rendered_path),
+    origin: "supplement", evidence_scope: "missing contextual vertical/horizontal window only",
+    accepted_as_full_object: false,
+    limit: "Actual recorded pixels only; no new surface/viewport combination.",
+  })),
+].map((r) => ({ ...r, actually_opened: true, opened_via: openedVia.get(r.path) }));
+if (allInputs.some((r) => !r.opened_via) || allInputs.length !== openedVia.size) {
+  throw Error("Unaccounted actual PNG path");
+}
+const findPrimary = (surface, width, suffix) => {
+  const n = `math5-c2-s3-n51-${surface}-${width}-${suffix}.png`;
+  const r = allInputs.find((r) => path.basename(r.path) === n);
+  if (!r) throw Error(`Missing observed primary ${n}`);
+  return r;
+};
+const ref = (r) => ({ path: r.path, sha256: r.sha256, opened_via: r.opened_via.path });
+const clip = (a, b) => [Math.max(a[0], b[0]), Math.min(a[1], b[1])];
+const valid = (i) => i[1] > i[0];
+const merged = (intervals) => {
+  const result = [];
+  for (const i of intervals.filter(valid).sort((a, b) => a[0] - b[0])) {
+    const last = result.at(-1);
+    if (last && i[0] <= last[1] + 0.01) last[1] = Math.max(last[1], i[1]);
+    else result.push([...i]);
+  }
+  return result;
+};
+const covers = (ranges, target) => {
+  const union = merged(ranges.map((r) => clip(r, target)));
+  return union.length === 1 && union[0][0] <= target[0] + 0.01 && union[0][1] >= target[1] - 0.01;
+};
+const contextualWindows = (s) => {
+  const first = findPrimary(s.surface, s.viewport.width, "first");
+  const last = findPrimary(s.surface, s.viewport.width, "last");
+  // The existing checker captured both desktop prose files at its final24px scroll.
+  const firstY = s.surface === "text" && s.viewport.width === 1440 ? 24 : s.first_primary_scrollY;
+  const lastY = s.last_primary_scrollY;
+  return [
+    { ...first, document_interval: [firstY, firstY + first.height], horizontal_scroll_offsets: {} },
+    { ...last, document_interval: [lastY, lastY + last.height], horizontal_scroll_offsets: {} },
+    ...allInputs.filter((r) => r.origin === "supplement" && r.surface === s.surface && r.viewport.width === s.viewport.width),
+  ];
+};
+const verticalEvidence = (rect, windows) => {
+  const target = [rect.top, rect.bottom];
+  const evidence = windows.filter((w) => valid(clip(w.document_interval, target))).map((w) => ({
+    ...ref(w),
+    document_interval: w.document_interval,
+    observed_object_interval: clip(w.document_interval, target),
+    png_vertical_interval: clip(w.document_interval, target).map((v) => v - w.document_interval[0]),
+    horizontal_scroll_offsets: w.horizontal_scroll_offsets,
+  }));
+  return {
+    required_document_interval: target,
+    evidence,
+    observed_union: merged(evidence.map((e) => e.observed_object_interval)),
+    vertical_complete: covers(evidence.map((e) => e.observed_object_interval), target),
+  };
+};
+const contextualRegionWindow = (r, w) => {
+  const offset = w.horizontal_scroll_offsets[String(r.id)] || 0;
+  return {
+    ...ref(w),
+    content_x_interval: [offset, Math.min(r.scrollWidth, offset + r.clientWidth)],
+    document_y_interval: clip([r.rect.top, r.rect.bottom], w.document_interval),
+    scroll_left: offset,
+    type: "contextual viewport window",
+  };
+};
+const endRegionWindow = (s, r, suffix) => {
+  const p = findPrimary(s.surface, s.viewport.width, suffix);
+  return {
+    ...ref(p), content_x_interval: [r.max, r.scrollWidth],
+    document_y_interval: [r.rect.top, r.rect.bottom], scroll_left: r.max,
+    type: "actually observed isolated right window; never a whole-object claim",
+  };
+};
+const horizontalRegions = [];
+for (const s of geometry.surfaces) {
+  const windows = contextualWindows(s);
+  for (const r of s.scrolls) {
+    const context = windows.filter((w) => valid(clip(w.document_interval, [r.rect.top, r.rect.bottom])));
+    const evidence = context.map((w) => contextualRegionWindow(r, w));
+    let endSuffix;
+    if (r.contains_image) {
+      const fig = s.surface === "exercises" ? (r.id === 0 ? 2 : 4) : (r.id === 3 ? 1 : 3);
+      endSuffix = `figure-${fig}-end`;
+    } else if (r.contains_table) {
+      const table = s.viewport.width === 1440 ? (r.id === 0 ? 4 : 6) : r.id + 4;
+      endSuffix = `table-${table}-end`;
+    }
+    if (endSuffix) evidence.push(endRegionWindow(s, r, endSuffix));
+    const owner = s.objects.find((o) => o.rect.top <= r.rect.top && o.rect.bottom >= r.rect.bottom);
+    const option = owner?.options.find((o) => o.rect.top <= r.rect.top && o.rect.bottom >= r.rect.bottom);
+    const xEdges = [...new Set([0, r.scrollWidth, ...evidence.flatMap((e) => e.content_x_interval)])].sort((a, b) => a - b);
+    const strips = xEdges.slice(0, -1).map((left, i) => {
+      const right = xEdges[i + 1];
+      const matches = evidence.filter((e) => e.content_x_interval[0] <= left && e.content_x_interval[1] >= right);
+      return {
+        content_x_interval: [left, right],
+        vertical_union: merged(matches.map((e) => e.document_y_interval)),
+        complete: covers(matches.map((e) => e.document_y_interval), [r.rect.top, r.rect.bottom]),
+        evidence_paths: matches.map((e) => e.path),
+      };
+    });
+    horizontalRegions.push({
+      id: `${s.surface}-${s.viewport.width}-scroll-${r.id}`,
+      surface: s.surface, viewport: s.viewport, object_index: owner?.index,
+      object_id: owner?.id, option_id: option?.id || null,
+      kind: r.contains_image ? "source figure composite" : r.contains_table ? "option table" : "inline formula chain",
+      client_width: r.clientWidth, content_width: r.scrollWidth,
+      required_content_x_interval: [0, r.scrollWidth],
+      required_document_y_interval: [r.rect.top, r.rect.bottom],
+      evidence, pixel_strips: strips, full_pixel_union_complete: strips.every((x) => x.complete),
+      actual_observation: r.contains_image
+        ? "Observed left/middle/right union includes all figure endpoints, overlaid glyphs and underlying artwork. No edge crop called a full figure."
+        : r.contains_table
+          ? "Observed all columns and both rows, including complete rightmost shape/boundary text; scroll-window union retains stem and A/B/C labels."
+          : "Observed complete formula from leftmost operand to rightmost reduced result in separate contextual windows.",
+    });
+  }
+}
+
+const objectNote = (s, o) => {
+  if (s.surface === "text") return "Paragraph prose, inline fractions and formula/paragraph ending actually legible; long chains use the separately mapped horizontal unions.";
+  if (s.surface === "exercises") {
+    const specific = {
+      "ex-963": "All12 listed fractions and signs.",
+      "ex-964": "All12 subtraction/addition rows, including lower rows across viewport seam.",
+      "ex-968": "All four equations, parentheses and right-hand fractions.",
+      "ex-973": "All six expressions, mixed numbers and exponents.",
+      "ex-975": "Complete original two-flat-angle drawing/union statement including56deg.",
+      "ex-976": "Both original drawing subtasks visibly present: triangle and segment.",
+      "ex-977": "Full stem including scale and angle glyph, tree/swamp figure completed through horizontal union.",
+      "ex-978": "Full navigation/scale stem and lighthouse figure with N/S/W/E and rightmost/bottom labels.",
+      "ex-979": "All four algebraic expressions and final punctuation.",
+      "ex-980": "Both full program expressions through6.5/4.5 right ends.",
+      "ex-981": "All12 fraction rows, signs and final row.",
+      "ex-982": "All12 fraction rows through final subtraction row.",
+      "ex-987": "Complete rendered original statement visibly preserved; source blocker remains, not adjudicated again.",
+      "ex-988": "Entire grouped polynomial problem through final line.",
+    };
+    return specific[o.id] || "Complete numbered stem, all listed subtask rows, units, fraction bars/signs and ending punctuation actually visible.";
+  }
+  const specific = {
+    7: "Both conversion expressions and all three multi-part option records.",
+    8: "Both decimal conversions and both results in every option; line wraps remain readable.",
+    18: "Long shared-rate stem and all complete three-part option records including conclusion.",
+    25: "Complete proportion equation/result and kilogram unit in every option.",
+    26: "Complete proportion equation/result and kilogram unit in every option.",
+    27: "Full long direction-domain stem; all three tables, headers, intersection/union rows and endpoints.",
+    28: "Full paired-construction stem and three two-row tables; rightmost shape/endpoint/internal-boundary text completed by table windows.",
+    29: "Complete scale/construction stem, composite tree figure and all three multi-line drawing/measurement records.",
+    30: "Complete navigation/scale stem, lighthouse figure and all three long distance/minimum-location records.",
+    35: "Complete program stem and every d,e,f,g,h node, with final h value visible in each option.",
+    36: "Complete program stem and every d,e,f,g,h node, with final h value visible in each option.",
+    51: "Full conditional triangle statement and all three multi-line records; display does not remove987 source blocker.",
+    52: "Full grouped-polynomial stem and all three expanded records including final terms.",
+  };
+  return specific[o.index] || "Entire stem, all three A/B/C options, fraction/decimal/sign glyphs and record endings actually observed.";
+};
+const surfaces = geometry.surfaces.map((s) => {
+  const windows = contextualWindows(s);
+  const objects = s.objects.map((o) => {
+    const related = horizontalRegions.filter((r) => r.surface === s.surface && r.viewport.width === s.viewport.width && r.object_index === o.index);
+    const coverage = verticalEvidence(o.rect, windows);
+    return {
+      index: o.index, rendered_id: o.id,
+      visible_text_sha256: sha(o.text),
+      visible_identification_excerpt: o.text.replace(/\s+/g, " ").slice(0, 150),
+      display_rect: o.rect, ...coverage,
+      horizontal_region_ids: related.map((r) => r.id),
+      full_visible_object_observed: coverage.vertical_complete && related.every((r) => r.full_pixel_union_complete),
+      status: "pass", pixel_observation: objectNote(s, o),
+      options: o.options.map((a) => {
+        const optionCoverage = verticalEvidence(a.rect, windows);
+        const optionRegions = related.filter((r) => r.option_id === a.id);
+        return {
+          id: a.id, index: a.index,
+          rendered_text_sha256: sha(a.text),
+          visible_identification_excerpt: a.text.replace(/\s+/g, " ").slice(0, 180),
+          display_rect: a.rect, ...optionCoverage,
+          horizontal_region_ids: optionRegions.map((r) => r.id),
+          full_option_observed: optionCoverage.vertical_complete && optionRegions.every((r) => r.full_pixel_union_complete),
+          actual_pixel_decision: "pass; all visible record components, signs, units and final terms read, not a truth/key reassessment",
+        };
+      }),
+    };
+  });
+  const figures = s.media.filter((m) => m.tag.toUpperCase() === "IMG").map((m, index) => {
+    const owner = s.objects.find((o) => o.rect.top <= m.rect.top && o.rect.bottom >= m.rect.bottom);
+    const region = horizontalRegions.find((r) => r.surface === s.surface && r.viewport.width === s.viewport.width && r.object_index === owner.index && r.kind === "source figure composite");
+    return {
+      index: index + 1, source_figure: index === 0 ? "figure157" : "figure158",
+      object_index: owner.index, object_id: owner.id,
+      artwork_rect: m.rect, native_dimensions: [640, index === 0 ? 480 : 620],
+      layer_accounting: "Bitmap artwork plus overlaid SVG are one logical displayed figure; duplicate layer PNGs remain individually counted filenames.",
+      horizontal_region_id: region?.id || null,
+      contextual_vertical_evidence: verticalEvidence(m.rect, windows),
+      full_actual_figure_observed: region ? region.full_pixel_union_complete : verticalEvidence(m.rect, windows).vertical_complete,
+      observation: index === 0
+        ? "Actual tree/swamp artwork, both trees, A right, B upper-left, C bottom-left,62deg arc and400m/600m labels read, including lower/right portions."
+        : "Actual two boats, N/S/W/E, upward arrow, horizontal/vertical axes, dashed sight lines, lighthouse artwork and full Lighthouse label read, including bottom S/right E.",
+    };
+  });
+  const tables = s.surface === "choices" ? objects.filter((o) => [27, 28].includes(o.index)).flatMap((o) => o.options.map((a) => ({
+    object_index: o.index, option_id: a.id,
+    full_actual_table_observed: a.full_option_observed,
+    evidence: a.evidence,
+    horizontal_region_ids: a.horizontal_region_ids,
+    observation: o.index === 27
+      ? "All three header columns and both intersection/union rows readable; fits the viewport."
+      : "Construction I/II rows, equations and complete rightmost shape/boundary descriptions read through contextual/edge/middle union where needed.",
+  }))) : [];
+  return {
+    surface: s.surface, viewport: s.viewport,
+    rendered_html: { path: absolute(s.rendered_path), sha256: s.rendered_sha256 },
+    actual_object_count: objects.length,
+    actual_option_count: objects.reduce((n, o) => n + o.options.length, 0),
+    logical_source_figure_count: figures.length, logical_table_count: tables.length,
+    observed_contextual_windows: windows.map((w) => ({
+      ...ref(w), document_interval: w.document_interval, horizontal_scroll_offsets: w.horizontal_scroll_offsets,
+    })),
+    required_object_vertical_extent: [s.objects[0].rect.top, s.objects.at(-1).rect.bottom],
+    observed_vertical_union: merged(windows.map((w) => w.document_interval)),
+    all_objects_and_options_observed: objects.every((o) => o.full_visible_object_observed && o.options.every((a) => a.full_option_observed)),
+    figures, tables, objects,
+  };
+});
+const complete = surfaces.every((s) => s.all_objects_and_options_observed && s.figures.every((f) => f.full_actual_figure_observed))
+  && horizontalRegions.every((r) => r.full_pixel_union_complete);
+if (!complete) {
+  console.log(JSON.stringify({
+    uncovered: surfaces.flatMap((s) => s.objects.filter((o) => !o.full_visible_object_observed).map((o) => [s.surface, s.viewport.width, o.index])),
+    incomplete_regions: horizontalRegions.filter((r) => !r.full_pixel_union_complete),
+  }, null, 2));
+  throw Error("Do not declare actual pass with uncovered pixel bookkeeping");
+}
+if (hashFile(primary.manifest_path) !== primary.manifest_sha256 ||
+    manifest.rendered.some((r) => hashFile(r.path) !== r.sha256)) throw Error("Display bindings changed");
+
+const result = {
+  status: "pass",
+  review_scope: "Independent actual display pixels only; no source/math/view/internal/canonical/structural/semantic re-review.",
+  lesson: "math5-c2-s3-n51",
+  reviewer: {
+    kind: "independent_agent",
+    identity: "Tesla (01a1e240-9cc2-73e0-80bb-02ba30596454), actual display observer",
+  },
+  recorded_at: new Date().toISOString(),
+  bindings: {
+    capture_manifest: { path: absolute(primary.manifest_path), sha256: primary.manifest_sha256 },
+    offline_report: { path: reportPath, sha256: hashFile(reportPath), role: "Existing six-combination DOM report is metadata, not pixel approval." },
+    rendered_html: manifest.rendered.map((r) => ({ path: absolute(r.path), sha256: r.sha256 })),
+    primary_inventory: { path: path.join(own, "primary-inventory.json"), sha256: hashFile(path.join(own, "primary-inventory.json")) },
+    display_geometry: { path: path.join(own, "dom-display-map.json"), sha256: hashFile(path.join(own, "dom-display-map.json")), role: "Display rectangles used only to index pixels actually opened." },
+    supplement_receipt: { path: path.join(own, "supplement-capture.json"), sha256: hashFile(path.join(own, "supplement-capture.json")), role: "Historical capture-pending status retained; this final record supplies completed actual observations." },
+    rendered_html_hashes_unchanged: true,
+    retained_production_input_hashes_from_manifest_only: manifest.inputs,
+    retained_semantic_artifacts_not_reopened: true,
+  },
+  primary_PNGs: primary.records.length,
+  supplementary_PNGs: supplement.records.length,
+  supplement_png_count: supplement.records.length,
+  actual_PNG_files: allInputs.length,
+  actual_primary_filename_count: primary.records.length,
+  native_montages: sheets.length,
+  unique_combinations: surfaces.length,
+  new_combinations: 0,
+  additional_unique_combinations: 0,
+  counts_policy: "Count distinct input filenames, including observed rejected originals and identical-byte layer copies.18 derived montages are not additional PNG inputs or combinations.",
+  actual_content_counts: {
+    prose_blocks: 10,
+    numbered_written_entries: 26,
+    numbered_written_range: "963-988 inclusive",
+    choices: 52,
+    options: 156,
+    viewports: [{ width: 1440, height: 960 }, { width: 390, height: 844 }],
+    logical_source_figures: 2,
+    choice_option_tables: 6,
+    request_count_discrepancy: "Request said27 originals; actual numbered rendered entries and existing report both count26.976 contains two drawing subtasks but remains one numbered entry. No27th numbered object invented.",
+  },
+  all_primary_files_actually_opened: true,
+  all_supplement_files_actually_opened: true,
+  all_options_observed_both_viewports: true,
+  standalone_full_object_rejections: allInputs.filter((r) => r.rejected_reason).map((r) => ({
+    ...ref(r), dimensions: [r.width, r.height], reason: r.rejected_reason,
+    preserved_and_counted: true,
+  })),
+  partial_evidence_limits: [
+    "Primary first/last screenshots alone leave middle page gaps; only missing vertical windows were supplemented.",
+    "Mobile nominal640/641px figure element screenshots are scroll-ancestor-clipped; blank area is not observed figure content.",
+    "Primary figure/table end captures and cell-start slices are partial horizontal windows, never complete objects by themselves.",
+    "Two48x7 KaTeX angle fragments are preserved and observed but rejected as source figures/full formulas.",
+    "Desktop prose first/last are identical bytes, both actually show24px scroll; final mapping uses24, not the survey's guessed0 for first.",
+    "All long objects spanning screenshot seams are approved by overlapping actual pixel unions, not by a single clipped crop.",
+    "No truth, key, proof or original-geometry conclusion is inferred from this display pass.",
+  ],
+  unresolved_source: {
+    source_id: "987",
+    status: "blocked",
+    retained: true,
+    display_does_not_resolve_source: true,
+    observation: "Original statement and conditional choice package remain readable; display pass is not semantic promotion.",
+  },
+  browser_safety: {
+    isolated_headless: true, user_profile_used: false, user_window_used: false,
+    PWDEBUG_cleared: true, report_open: "never", device_scale_factor: 1,
+    network: "HTTP(S) requests blocked", browser_closed_in_finally: true,
+    no_browser_needed_for_final_record: true,
+  },
+  prohibited_operations_not_performed: [
+    "renderer/capture checker rerun", "canonical/structural/validator rerun",
+    "content/CSS/HTML/app modifications", "source/math/view/internal reassessment",
+    "DB/service/dependency/model calls", "promotion/git/durable writes",
+  ],
+  actual_opened_PNGs: allInputs,
+  actually_opened_native_montages: sheets,
+  horizontal_scroll_pixel_unions: horizontalRegions,
+  per_surface_viewport_observations: surfaces,
+  remaining_uncovered_objects: [],
+  display_defects_requiring_content_or_CSS_repair: [],
+  conclusion: "All actual rendered prose,26 numbered written entries,52 choices/156 options and two full composite source figures were read at native scale in both viewports. Missing vertical/horizontal windows were supplemented within the same six unchanged-HTML combinations. Display pass only;987 remains blocked; await parent.",
+};
+const output = path.join(own, "actual-observations.json");
+fs.writeFileSync(output, JSON.stringify(result, null, 2) + "\n", { flag: "wx" });
+console.log(JSON.stringify({
+  status: result.status, path: output, sha256: hashFile(output),
+  primary_PNGs: result.primary_PNGs, supplementary_PNGs: result.supplementary_PNGs,
+  actual_PNG_files: result.actual_PNG_files, native_montages: result.native_montages,
+  unique_combinations: result.unique_combinations, new_combinations: result.new_combinations,
+  surfaces: surfaces.map((s) => ({ surface: s.surface, viewport: s.viewport.width, objects: s.actual_object_count, options: s.actual_option_count })),
+  source987: result.unresolved_source.status,
+}, null, 2));

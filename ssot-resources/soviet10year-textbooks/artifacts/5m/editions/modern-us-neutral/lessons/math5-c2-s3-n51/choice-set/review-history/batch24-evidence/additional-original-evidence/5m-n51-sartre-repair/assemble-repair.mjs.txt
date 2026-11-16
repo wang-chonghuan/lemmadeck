@@ -1,0 +1,163 @@
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { wrongProgramEvidence } from "./wrong-programs.mjs";
+
+const repo = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const tmp = path.join(repo, ".intentfold/tickets/STEMROBIN-182/tmp");
+const output = path.join(tmp, "5m-n51-sartre-repair");
+const originalPath = path.join(tmp, "5m-n51/draft.json");
+const sourcePath = path.join(tmp, "5m-n51/source.json");
+const hash = value => createHash("sha256").update(value).digest("hex");
+const read = filename => fs.readFileSync(filename, "utf8");
+const originalBytes = fs.readFileSync(originalPath);
+const sourceBytes = fs.readFileSync(sourcePath);
+assert.equal(hash(originalBytes), "a698650f69e25346cf729fdb911e3a9de713efa5111ca6a8a02dbd74cee1a37c");
+assert.equal(hash(sourceBytes), "fe50451baa888286698f65bb210fcc24e8c5b9616f17358b9b6577eea91f7510");
+const original = JSON.parse(originalBytes);
+const replacement = JSON.parse(read(path.join(output, "replacement-units.json")));
+const repaired = structuredClone(original);
+
+const ascii = text => text.replace(/[\u007f-\uffff]/g,
+  char => `\\u${char.charCodeAt(0).toString(16).padStart(4, "0")}`);
+const formatters = [];
+for (const spaces of [2, 4]) {
+  for (const asciiOnly of [false, true]) {
+    for (const finalNewline of [false, true]) {
+      const serialize = value => {
+        const json = JSON.stringify(value, null, spaces);
+        return (asciiOnly ? ascii(json) : json) + (finalNewline ? "\n" : "");
+      };
+      formatters.push({ spaces, asciiOnly, finalNewline, serialize });
+    }
+  }
+}
+const formatter = formatters.find(candidate => candidate.serialize(original) === originalBytes.toString("utf8"));
+assert.ok(formatter, "Original formatting is not recognized; stop instead of rewriting unrelated bytes.");
+const serialize = formatter.serialize;
+const write = (name, bytes) => {
+  const target = path.join(output, name);
+  assert.equal(path.dirname(target), output);
+  fs.writeFileSync(target, bytes, { flag: "wx" });
+};
+const writeJSON = (name, value) => write(name, JSON.stringify(value, null, 2) + "\n");
+
+assert.equal(original.questions.length, 51);
+assert.equal(original.questions.reduce((n, q) => n + q.view.options.length, 0), 153);
+assert.equal(original.questions.filter(q => q.id === "n51-976b").length, 1);
+assert.equal(original.questions.filter(q => q.source_numbers.includes("975")).length, 0);
+const targetIndex = repaired.questions.findIndex(q => q.id === "n51-976b");
+repaired.questions[targetIndex] = replacement.replacement_question;
+repaired.questions.splice(targetIndex, 0, replacement.new_question);
+for (const changed of replacement.coverage_replacements) {
+  const index = repaired.coverage.findIndex(row => row.source_number === changed.source_number);
+  assert.ok(index >= 0);
+  repaired.coverage[index] = changed;
+}
+
+const unaffected = original.questions.filter(q => q.id !== "n51-976b");
+assert.equal(unaffected.length, 50);
+const unchangedProof = unaffected.map(before => {
+  const after = repaired.questions.find(q => q.id === before.id);
+  assert.deepEqual(after, before);
+  assert.equal(serialize(before), serialize(after));
+  return {
+    question_id: before.id,
+    serialized_before_sha256: hash(serialize(before)),
+    serialized_after_sha256: hash(serialize(after)),
+    canonical_content_and_all_keys_source_mapping_intent_unchanged: true
+  };
+});
+for (const before of original.coverage) {
+  if (["975", "976"].includes(before.source_number)) continue;
+  assert.deepEqual(repaired.coverage.find(row => row.source_number === before.source_number), before);
+}
+assert.deepEqual(repaired.new_figures, original.new_figures);
+assert.equal(repaired.seed_sha256, original.seed_sha256);
+assert.deepEqual(repaired.questions.find(q => q.id === "n51-976b").source_numbers,
+  original.questions.find(q => q.id === "n51-976b").source_numbers);
+assert.equal(repaired.questions.find(q => q.id === "n51-976b").view.mode,
+  original.questions.find(q => q.id === "n51-976b").view.mode);
+assert.deepEqual(repaired.questions.find(q => q.id === "n51-976b").view.options.map(o => o.id),
+  original.questions.find(q => q.id === "n51-976b").view.options.map(o => o.id));
+assert.equal(repaired.questions.length, 52);
+assert.equal(repaired.questions.reduce((n, q) => n + q.view.options.length, 0), 156);
+
+const escapePointer = segment => String(segment).replaceAll("~", "~0").replaceAll("/", "~1");
+function differences(before, after, pointer = "") {
+  if (JSON.stringify(before) === JSON.stringify(after)) return [];
+  if (Array.isArray(before) && Array.isArray(after) && before.length === after.length) {
+    return before.flatMap((value, index) => differences(value, after[index], `${pointer}/${index}`));
+  }
+  if (before && after && !Array.isArray(before) && !Array.isArray(after) &&
+      typeof before === "object" && typeof after === "object" &&
+      JSON.stringify(Object.keys(before)) === JSON.stringify(Object.keys(after))) {
+    return Object.keys(before).flatMap(key =>
+      differences(before[key], after[key], `${pointer}/${escapePointer(key)}`));
+  }
+  return [{ path: pointer, before, after }];
+}
+const targetBefore = original.questions[targetIndex];
+const aligned = structuredClone(repaired);
+aligned.questions.splice(targetIndex, 1);
+const fieldDeltas = differences(original, aligned);
+assert.ok(fieldDeltas.every(delta =>
+  delta.path.startsWith(`/questions/${targetIndex}/`) ||
+  delta.path.startsWith(`/coverage/${original.coverage.findIndex(r => r.source_number === "975")}/`) ||
+  delta.path.startsWith(`/coverage/${original.coverage.findIndex(r => r.source_number === "976")}/`)
+));
+
+const projection = draft => ({
+  questions: draft.questions.map(q => ({ id: q.id, ...q.view }))
+});
+const repairedBytes = serialize(repaired);
+const viewBytes = JSON.stringify(projection(repaired), null, 2) + "\n";
+write("original-draft.json", originalBytes);
+write("original-source.json", sourceBytes);
+writeJSON("original-pureview-from-draft.json", projection(original));
+write("repaired-draft.json", repairedBytes);
+write("repaired-view.json", viewBytes);
+writeJSON("wrong-program-evidence.json", wrongProgramEvidence);
+writeJSON("exact-delta.json", {
+  operation: "One inserted source975 unit; only current n51-976b and coverage975/976 replaced.",
+  authoring_role_not_independent_review: true,
+  source_sha256: hash(sourceBytes),
+  original_draft_byte_sha256: hash(originalBytes),
+  repaired_draft_byte_sha256: hash(repairedBytes),
+  repaired_view_byte_sha256: hash(viewBytes),
+  original_question_count: 51,
+  repaired_question_count: 52,
+  original_option_count: 153,
+  repaired_option_count: 156,
+  original_target_question_index: targetIndex,
+  inserted_question: {
+    index: targetIndex,
+    complete_after: replacement.new_question
+  },
+  field_deltas_after_removing_inserted_question: fieldDeltas,
+  changed_existing_leaf_record_count: fieldDeltas.length,
+  existing_correct_set_opaque_equality: JSON.stringify(targetBefore.key.correct) ===
+    JSON.stringify(replacement.replacement_question.key.correct),
+  unaffected_question_count: 50,
+  unaffected_question_proof: unchangedProof,
+  unaffected_coverage_count: original.coverage.length - 2,
+  source987_coverage_and_all_source987_units_unchanged: true,
+  formatting_preserved: {
+    spaces: formatter.spaces,
+    ascii_only: formatter.asciiOnly,
+    final_newline: formatter.finalNewline
+  },
+  pure_view_fields: ["id", "mode", "stem", "figure_ids", "options"],
+  original_unit_read_boundary: "Only n51-976b view and coverage975/976 displayed after source freeze. Other author questions/internal keys are transported opaquely without mathematical review; no author source-solutions or reviewer truth/key inputs.",
+  no_author_directory_writes: true
+});
+assert.equal(hash(fs.readFileSync(originalPath)), hash(originalBytes));
+assert.equal(hash(fs.readFileSync(sourcePath)), hash(sourceBytes));
+console.log(JSON.stringify({
+  status: "repair assembled; independent semantic review pending",
+  questions: repaired.questions.length, options: 156,
+  existing_leaf_deltas: fieldDeltas.length,
+  unchanged_questions: 50,
+  output_directory: output
+}, null, 2));

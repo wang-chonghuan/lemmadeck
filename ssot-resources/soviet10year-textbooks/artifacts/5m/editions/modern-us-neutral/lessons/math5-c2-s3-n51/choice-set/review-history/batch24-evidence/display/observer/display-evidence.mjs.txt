@@ -1,0 +1,214 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { createRequire } from "node:module";
+import { pathToFileURL } from "node:url";
+
+delete process.env.PWDEBUG;
+process.env.PLAYWRIGHT_HTML_OPEN = "never";
+const root="/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const tmp=path.join(root,".intentfold/tickets/STEMROBIN-182/tmp");
+const own=path.join(tmp,"reviewer-5m-n51-actual-display");
+const manifestPath=path.join(tmp,"batch24-render/5m-math5-c2-s3-n51-capture-manifest.json");
+const manifest=JSON.parse(fs.readFileSync(manifestPath));
+const bundleRequire=createRequire("/Users/yong/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/package.json");
+const sharp=bundleRequire("sharp");
+const appRequire=createRequire(path.join(root,"app/package.json"));
+const sha=(v)=>crypto.createHash("sha256").update(v).digest("hex");
+const relative=(p)=>path.relative(root,p);
+const readHash=(p)=>sha(fs.readFileSync(p));
+fs.mkdirSync(own,{recursive:true});
+function write(name,value) {
+  fs.writeFileSync(path.join(own,name),JSON.stringify(value,null,2)+"\n",{flag:"wx"});
+}
+async function makeMontages(records,prefix) {
+  const sheets=[];
+  let remaining=[...records];
+  while(remaining.length) {
+    const placements=[];
+    let x=0,y=24,rowHeight=0,width=0;
+    for(let i=0;i<remaining.length;) {
+      const r=remaining[i];
+      if(r.width>2200||r.height>2600)throw Error(`Oversize native input ${r.path}`);
+      if(x+r.width>2200) {x=0;y+=rowHeight+24;rowHeight=0;}
+      if(y+r.height>2624)break;
+      placements.push({record:r,left:x,top:y,label_index:records.indexOf(r)+1});
+      width=Math.max(width,x+r.width);
+      x+=r.width+12;rowHeight=Math.max(rowHeight,r.height);
+      remaining.splice(i,1);
+    }
+    if(!placements.length)throw Error("No native input fits montage.");
+    const height=y+rowHeight+24;
+    const filename=path.join(own,`${prefix}-${String(sheets.length+1).padStart(2,"0")}.png`);
+    await sharp({create:{width,height,channels:3,background:"#c4c4c4"}}).composite(
+      placements.map((p)=>({input:path.join(root,p.record.path),left:p.left,top:p.top}))
+    ).png().toFile(filename);
+    sheets.push({path:relative(filename),sha256:readHash(filename),width,height,
+      native_unscaled:true,source_pngs:placements.map((p)=>({path:p.record.path,sha256:p.record.sha256,
+        placement:{left:p.left,top:p.top,width:p.record.width,height:p.record.height}}))});
+  }
+  return sheets;
+}
+const phase=process.argv[2];
+if(phase==="primary") {
+  const records=[];
+  for(const [index,r]of manifest.screenshots.entries()) {
+    const file=path.join(root,r.path),m=await sharp(file).metadata();
+    const h=readHash(file);
+    if(h!==r.sha256)throw Error(`Primary binding mismatch ${r.path}`);
+    records.push({index:index+1,path:r.path,sha256:h,width:m.width,height:m.height,
+      role:/-(first|last)\.png$/.test(r.path)?"full viewport context":"isolated figure/table/fragment"});
+  }
+  const sheets=await makeMontages(records,"primary-native");
+  write("primary-inventory.json",{manifest_path:relative(manifestPath),manifest_sha256:readHash(manifestPath),
+    primary_PNGs:records.length,records,native_montages:sheets});
+  console.log(JSON.stringify({records:records.map((r)=>({index:r.index,name:path.basename(r.path),w:r.width,h:r.height})),
+    sheets:sheets.map((s)=>({name:path.basename(s.path),w:s.width,h:s.height,inputs:s.source_pngs.map((p)=>path.basename(p.path))}))},null,2));
+} else if(phase==="survey") {
+  const {chromium}=appRequire("playwright");
+  const browser=await chromium.launch({headless:true});
+  const surfaces=[];
+  try {
+    for(const viewport of [{width:1440,height:960},{width:390,height:844}]) {
+      const context=await browser.newContext({viewport,deviceScaleFactor:1});
+      await context.route("**/*",(route)=>/^https?:/.test(route.request().url())?route.abort():route.continue());
+      try {
+        const page=await context.newPage();
+        for(const surface of ["text","exercises","choices"]) {
+          const rendered=manifest.rendered.find((r)=>r.path.endsWith(`/${surface}.html`));
+          const file=path.join(root,rendered.path);
+          if(readHash(file)!==rendered.sha256)throw Error("HTML binding mismatch");
+          await page.goto(pathToFileURL(file).href);
+          await page.evaluate(()=>document.fonts.ready);
+          const selector=surface==="text"?".para":surface==="exercises"?"li.ex":".choice";
+          const inventory=await page.evaluate(({selector,surface})=>{
+            const rect=(e)=>{const r=e.getBoundingClientRect();return {left:r.left,top:r.top+scrollY,right:r.right,
+              bottom:r.bottom+scrollY,width:r.width,height:r.height};};
+            const objects=[...document.querySelectorAll(selector)].map((e,i)=>({
+              index:i+1,id:e.dataset.questionId||e.id||e.querySelector(".no")?.textContent||`${surface}-${i+1}`,
+              text:e.innerText,rect:rect(e),
+              options:[...e.querySelectorAll(".choice-options>li")].map((o,j)=>({id:o.querySelector(".option-id").textContent,
+                index:j+1,text:o.innerText,rect:rect(o),body_rect:rect(o.querySelector(".choice-option-body"))}))
+            }));
+            const scrolls=[...document.querySelectorAll("*")].filter((e)=>e.clientWidth>0&&
+              e.scrollWidth>e.clientWidth+1&&["auto","scroll"].includes(getComputedStyle(e).overflowX)).map((e,i)=>{
+                e.dataset.displayReviewScroll=String(i);
+                return {id:i,class:e.className,tag:e.tagName,rect:rect(e),clientWidth:e.clientWidth,
+                  scrollWidth:e.scrollWidth,max:e.scrollWidth-e.clientWidth,owner:e.closest(".choice")?.dataset.questionId||
+                    e.closest(".choice")?.id||e.closest("li.ex")?.querySelector(".no")?.textContent||
+                    e.closest(".para")?.id||null,text:e.innerText,
+                  contains_image:!!e.querySelector("img"),contains_svg:!!e.querySelector("svg"),
+                  contains_table:!!e.querySelector("table")};
+            });
+            const media=[...document.querySelectorAll("svg,img")].map((e,i)=>({index:i+1,tag:e.tagName,
+              class:e.getAttribute("class"),src:e.getAttribute("src")?.slice(0,180),rect:rect(e),
+              owner:e.closest(".choice")?.id||e.closest("li.ex")?.querySelector(".no")?.textContent}));
+            return {objects,scrolls,media,documentHeight:document.documentElement.scrollHeight,sheet:rect(document.querySelector(".sheet"))};
+          },{selector,surface});
+          await page.evaluate(()=>window.scrollTo(0,document.documentElement.scrollHeight));
+          await page.locator(selector).first().scrollIntoViewIfNeeded();
+          const firstY=await page.evaluate(()=>scrollY);
+          await page.locator(selector).last().scrollIntoViewIfNeeded();
+          const lastY=await page.evaluate(()=>scrollY);
+          surfaces.push({surface,viewport,rendered_path:rendered.path,rendered_sha256:rendered.sha256,
+            first_primary_scrollY:firstY,last_primary_scrollY:lastY,...inventory});
+        }
+      } finally {await context.close();}
+    }
+  } finally {await browser.close();}
+  write("dom-display-map.json",{purpose:"Display geometry and existing-primary coverage only; not a semantic or canonical check.",
+    headless:true,isolated:true,PWDEBUG_cleared:true,report_open:"never",network:"http(s) blocked",
+    browser_closed:true,surfaces});
+  console.log(JSON.stringify(surfaces.map((s)=>({surface:s.surface,width:s.viewport.width,objects:s.objects.length,
+    height:s.documentHeight,firstY:s.first_primary_scrollY,lastY:s.last_primary_scrollY,
+    scrolls:s.scrolls.map((r)=>({id:r.id,owner:r.owner,class:r.class,max:r.max,w:r.rect.width,h:r.rect.height})),
+    media:s.media.map((m)=>({i:m.index,tag:m.tag,w:m.rect.width,h:m.rect.height}))})),null,2));
+} else if(phase==="supplement") {
+  const map=JSON.parse(fs.readFileSync(path.join(own,"dom-display-map.json")));
+  const {chromium}=appRequire("playwright");
+  const browser=await chromium.launch({headless:true});
+  const records=[];
+  const primaryHashes=new Set(manifest.screenshots.map((p)=>p.sha256));
+  try {
+    for(const s of map.surfaces) {
+      const context=await browser.newContext({viewport:s.viewport,deviceScaleFactor:1});
+      await context.route("**/*",(route)=>/^https?:/.test(route.request().url())?route.abort():route.continue());
+      try {
+        const page=await context.newPage();
+        const file=path.join(root,s.rendered_path);
+        if(readHash(file)!==s.rendered_sha256)throw Error("Bound HTML changed.");
+        await page.goto(pathToFileURL(file).href);
+        await page.evaluate(()=>document.fonts.ready);
+        await page.evaluate(()=>{
+          [...document.querySelectorAll("*")].filter((e)=>e.clientWidth>0&&e.scrollWidth>e.clientWidth+1&&
+            ["auto","scroll"].includes(getComputedStyle(e).overflowX)).forEach((e,i)=>e.dataset.displayReviewScroll=String(i));
+        });
+        let number=0;
+        const capture=async(y,height,reason,scrolls={})=>{
+          await page.evaluate(({y,scrolls})=>{
+            document.querySelectorAll("[data-display-review-scroll]").forEach((e)=>e.scrollLeft=
+              scrolls[e.dataset.displayReviewScroll]||0);
+            window.scrollTo({top:y,left:0,behavior:"instant"});
+          },{y,scrolls});
+          const actual=await page.evaluate(()=>({y:scrollY,scrolls:
+            Object.fromEntries([...document.querySelectorAll("[data-display-review-scroll]")].map((e)=>
+              [e.dataset.displayReviewScroll,e.scrollLeft]))}));
+          const filename=path.join(own,`supplement-${s.surface}-${s.viewport.width}-${String(++number).padStart(2,"0")}.png`);
+          if(fs.existsSync(filename))throw Error("Do not overwrite evidence.");
+          await page.screenshot({path:filename,clip:{x:0,y:0,width:s.viewport.width,height}});
+          const hash=readHash(filename);
+          if(primaryHashes.has(hash))throw Error("Supplement duplicates an existing primary; inspect the plan.");
+          records.push({path:relative(filename),sha256:hash,width:s.viewport.width,height,
+            surface:s.surface,viewport:s.viewport,document_interval:[actual.y,actual.y+height],
+            horizontal_scroll_offsets:actual.scrolls,reason,
+            intersecting_object_indices:s.objects.filter((o)=>o.rect.bottom>actual.y&&o.rect.top<actual.y+height).map((o)=>o.index),
+            rendered_path:s.rendered_path,rendered_sha256:s.rendered_sha256});
+        };
+        if(s.surface!=="text") {
+          const start=s.viewport.height,end=s.last_primary_scrollY;
+          let y=start;
+          while(y<end) {
+            const height=Math.min(s.viewport.height,end-y);
+            await capture(y,height,"Previously unobserved vertical gap between original first/last viewport PNGs; consecutive windows have32px seam context.");
+            if(y+height>=end)break;
+            y+=height-32;
+          }
+        }
+        if(s.surface==="text"&&s.viewport.width===390) {
+          for(const r of s.scrolls) {
+            const y=Math.max(0,Math.min(Math.floor(r.rect.top-200),s.documentHeight-s.viewport.height));
+            await capture(y,s.viewport.height,
+              `Missing rightmost inline-formula window:scroll${r.id}, original covers[0,${r.clientWidth}], max${r.max}; preserve paragraph context.`,
+              {[r.id]:r.max});
+          }
+        }
+        if(s.surface==="exercises"&&s.viewport.width===390) {
+          for(const r of s.scrolls) {
+            const y=Math.floor(r.rect.top-180);
+            await capture(y,s.viewport.height,
+              `Actual figure native horizontal gap:original left window[0,310] and right window[330,640] leave[310,330] uncovered. Add middle window[300,610] only, with original exercise context.`,
+              {[r.id]:300});
+          }
+        }
+        if(s.surface==="choices"&&s.viewport.width===390) {
+          const needsMiddle=s.scrolls.filter((r)=>r.contains_table&&r.max>r.clientWidth);
+          const y=Math.floor(Math.min(...needsMiddle.map((r)=>r.rect.top))-300);
+          await capture(y,s.viewport.height,
+            "Missing middle table pixels:tablesA/C width699 exceed two321px edge windows; initial[0,321] and end[378,699] leave[321,378]. Add offset297 windows[297,618] for both tables, keeping whole paired-question context.",
+            Object.fromEntries(needsMiddle.map((r)=>[r.id,297])));
+        }
+      } finally {await context.close();}
+    }
+  } finally {await browser.close();}
+  const sheets=await makeMontages(records,"supplement-native");
+  write("supplement-capture.json",{status:"captured; actual pixel observation still pending",
+    primary_capture_not_rerun:true,renderer_not_rerun:true,
+    six_existing_combinations_only:true,additional_unique_combinations:0,
+    headless:true,isolated_contexts:true,device_scale_factor:1,PWDEBUG_cleared:true,
+    report_open:"never",network:"http(s) blocked",browser_closed_in_finally:true,
+    original_rendered_hashes_unchanged:manifest.rendered.every((r)=>readHash(path.join(root,r.path))===r.sha256),
+    supplementary_PNGs:records.length,records,native_montages:sheets});
+  console.log(JSON.stringify({supplements:records.length,sheets:sheets.map((s)=>({name:path.basename(s.path),
+    inputs:s.source_pngs.map((p)=>path.basename(p.path))})),records:records.map((r)=>({name:path.basename(r.path),
+      objects:r.intersecting_object_indices,interval:r.document_interval,scrolls:r.horizontal_scroll_offsets}))},null,2));
+} else throw Error("Use primary, survey or supplement.");

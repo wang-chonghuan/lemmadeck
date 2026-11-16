@@ -1,0 +1,89 @@
+import argparse
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image, ImageChops, ImageDraw
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+OWN = Path(__file__).resolve().parent
+MANIFEST = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp/batch24-render/5m-math5-c2-s2-n50-capture-manifest.json"
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def compose(name, sources, columns):
+    images = [Image.open(item["path"]).convert("RGB") for item in sources]
+    rows = (len(images) + columns - 1) // columns
+    widths = [max(image.width for image in images[col::columns]) for col in range(columns)]
+    heights = [max(image.height for image in images[row * columns:(row + 1) * columns]) for row in range(rows)]
+    canvas = Image.new("RGB", (sum(widths) + 8 * (columns - 1), sum(heights) + 26 * rows + 8 * (rows - 1)), "#d8d8d8")
+    draw = ImageDraw.Draw(canvas)
+    members = []
+    for i, (source, image) in enumerate(zip(sources, images)):
+        row, col = divmod(i, columns)
+        x = sum(widths[:col]) + col * 8
+        y = sum(heights[:row]) + row * 34
+        draw.text((x + 3, y + 4), source["label"], fill="black")
+        y += 26
+        canvas.paste(image, (x, y))
+        if ImageChops.difference(image, canvas.crop((x, y, x + image.width, y + image.height))).getbbox():
+            raise RuntimeError("Member pixels changed")
+        members.append({**source, "montage_rect": [x, y, image.width, image.height], "native_scale": 1,
+                        "pixel_copy_verified": True, "all_source_pixels_included": True})
+    destination = OWN / name
+    if destination.exists():
+        raise RuntimeError("Do not overwrite a montage")
+    canvas.save(destination)
+    return {"path": str(destination), "sha256": digest(destination), "dimensions": list(canvas.size),
+            "members": members, "actually_opened": False, "resized": False, "cropped": False}
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("mode", choices=["primary", "supplement"])
+args = parser.parse_args()
+if args.mode == "primary":
+    manifest = json.loads(MANIFEST.read_text())
+    items = []
+    for i, source in enumerate(manifest["screenshots"], 1):
+        path = ROOT / source["path"]
+        if digest(path) != source["sha256"]:
+            raise RuntimeError("Primary hash mismatch")
+        with Image.open(path) as image:
+            dimensions = list(image.size)
+        items.append({"path": str(path), "filename": path.name, "sha256": source["sha256"],
+                      "dimensions": dimensions, "label": f"P{i:02d} " + path.name.replace("math5-c2-s2-n50-", "")})
+    groups = []
+    for surface in ("text", "exercises", "choices"):
+        selected = [item for item in items if f"-{surface}-1440-" in item["filename"] and "-figure-" not in item["filename"]]
+        groups.append(compose(f"primary-{surface}-desktop.png", selected, 1))
+    mobile = [item for item in items if "-390-" in item["filename"] and "-figure-" not in item["filename"]]
+    groups.append(compose("primary-mobile-edges.png", mobile, 3))
+    figures = [item for item in items if "-figure-" in item["filename"]]
+    for start in range(0, len(figures), 6):
+        group = figures[start:start + 6]
+        groups.append(compose(f"primary-figures-{start // 6 + 1:02d}.png", group, min(3, len(group))))
+    result = {"manifest_path": str(MANIFEST), "manifest_sha256": digest(MANIFEST), "items": items, "montages": groups}
+else:
+    captures = json.loads((OWN / "supplement-inventory.json").read_text())
+    items = captures["screenshots"]
+    groups = []
+    for width, maximum, columns in ((1440, 2, 1), (390, 6, 3)):
+        selected = [item for item in items if item["viewport"]["width"] == width]
+        for start in range(0, len(selected), maximum):
+            sources = [{**item, "label": item["filename"].replace("math5-c2-s2-n50-", "")}
+                       for item in selected[start:start + maximum]]
+            for item in sources:
+                if digest(Path(item["path"])) != item["sha256"]:
+                    raise RuntimeError("Supplement hash mismatch")
+            groups.append(compose(f"supplement-{width}-{start // maximum + 1:02d}.png", sources, min(columns, len(sources))))
+    result = {"items": items, "montages": groups}
+destination = OWN / f"{args.mode}-montage-index.json"
+if destination.exists():
+    raise RuntimeError("Do not overwrite index")
+destination.write_text(json.dumps(result, indent=2) + "\n")
+print(json.dumps({"index": str(destination), "items": len(items),
+                  "montages": [{"path": item["path"], "dimensions": item["dimensions"]} for item in groups]}, indent=2))

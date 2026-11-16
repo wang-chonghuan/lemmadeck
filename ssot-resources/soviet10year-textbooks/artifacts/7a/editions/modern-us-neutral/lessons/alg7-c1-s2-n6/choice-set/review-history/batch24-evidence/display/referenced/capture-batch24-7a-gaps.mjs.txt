@@ -1,0 +1,137 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { createRequire } from 'node:module'
+import { pathToFileURL } from 'node:url'
+
+delete process.env.PWDEBUG
+process.env.PLAYWRIGHT_HTML_OPEN = 'never'
+const repo = process.cwd()
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const require = createRequire(path.join(repo, 'app/package.json'))
+const { chromium } = require('playwright')
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const browser = await chromium.launch({ headless: true })
+try {
+  for (const lesson of ['alg7-c1-s2-n5', 'alg7-c1-s2-n6']) {
+    const own = `${scratch}/reviewer-${lesson}-actual-display`
+    fs.mkdirSync(own, { recursive: true })
+    assert(!fs.existsSync(`${own}/supplement-inventory.json`))
+    const manifest = JSON.parse(fs.readFileSync(`${scratch}/batch24-render/7a-${lesson}-capture-manifest.json`))
+    const rows = []
+    const screenshots = []
+    for (const check of manifest.checks) {
+      const { surface, viewport } = check
+      const input = manifest.rendered.find(row => row.path.endsWith(`/${surface}.html`))
+      assert.equal(hash(input.path), input.sha256)
+      const context = await browser.newContext({ viewport, deviceScaleFactor: 1, serviceWorkers: 'block' })
+      try {
+        await context.route('**/*', route => /^(file:|data:|about:)/.test(route.request().url())
+          ? route.continue() : route.abort())
+        const page = await context.newPage()
+        await page.goto(pathToFileURL(path.resolve(input.path)).href, { waitUntil: 'load' })
+        await page.evaluate(() => document.fonts.ready)
+        const selector = surface === 'text' ? 'p.para' : surface === 'exercises' ? 'li.ex' : 'section.choice'
+        const geometry = await page.evaluate(selector => {
+          const rect = el => {
+            const r = el.getBoundingClientRect()
+            return { x: r.x + scrollX, y: r.y + scrollY, width: r.width, height: r.height }
+          }
+          const units = [...document.querySelectorAll(selector)]
+          const media = [...document.querySelectorAll('svg,img')]
+          const overflows = [...document.querySelectorAll('body *')].filter(el =>
+            ['auto', 'scroll'].includes(getComputedStyle(el).overflowX) && el.scrollWidth > el.clientWidth + 1)
+          return {
+            document_height: document.documentElement.scrollHeight,
+            units: units.map((el, i) => ({ index: i + 1, rect: rect(el),
+              label: el.querySelector('.no,.choice-heading')?.textContent.trim(),
+              options: [...el.querySelectorAll('.choice-options>li')].map((opt, j) => ({ index: j + 1, rect: rect(opt) })),
+            })),
+            media: media.map((el, i) => ({ index: i + 1, rect: rect(el), is_katex_fragment: !!el.closest('.katex') })),
+            overflows: overflows.map((el, i) => ({ index: i, rect: rect(el),
+              client_width: el.clientWidth, scroll_width: el.scrollWidth,
+              media_indices: media.flatMap((m, j) => el.contains(m) ? [j + 1] : []),
+            })),
+          }
+        }, selector)
+        for (const locator of [page.locator(selector), page.locator('svg,img'), page.locator('.choice table')]) {
+          for (let i = 0; i < await locator.count(); i++) await locator.nth(i).scrollIntoViewIfNeeded()
+        }
+        const intervals = []
+        const primary_ranges = []
+        for (const position of ['first', 'last']) {
+          const item = position === 'first' ? page.locator(selector).first() : page.locator(selector).last()
+          await item.scrollIntoViewIfNeeded()
+          const y = await page.evaluate(() => scrollY)
+          intervals.push([y, Math.min(geometry.document_height, y + viewport.height)])
+          primary_ranges.push({ filename: `${lesson}-${surface}-${viewport.width}-${position}.png`,
+            y, height: viewport.height, reconstructed_from_exact_existing_helper: true })
+        }
+        const capture = async (suffix, rect, reason, horizontal_offset = null) => {
+          const file = `${own}/${lesson}-${surface}-${viewport.width}-${suffix}.png`
+          assert(!fs.existsSync(file))
+          await page.evaluate(y => window.scrollTo(0, y), rect.y)
+          await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))))
+          const y = await page.evaluate(() => scrollY)
+          await page.screenshot({ path: file, scale: 'css', clip: {
+            x: rect.x, y: rect.y - y, width: rect.width, height: rect.height,
+          } })
+          screenshots.push({ path: file, sha256: hash(file), surface, viewport,
+            document_rect: rect, reason, horizontal_offset, native_scale: 1 })
+        }
+        intervals.sort((a, b) => a[0] - b[0])
+        const gaps = []
+        let cursor = 0
+        for (const [start, end] of intervals) {
+          if (start > cursor) gaps.push([cursor, start])
+          cursor = Math.max(cursor, end)
+        }
+        if (cursor < geometry.document_height) gaps.push([cursor, geometry.document_height])
+        let gap = 0
+        for (const [start, end] of gaps) {
+          for (let y = start; y < end; y += viewport.height) {
+            await capture(`missing-${String(++gap).padStart(2, '0')}`, {
+              x: 0, y, width: viewport.width, height: Math.min(viewport.height, end - y),
+            }, 'Only document pixels absent from existing primary first/last ranges.')
+          }
+        }
+        for (const overflow of geometry.overflows) {
+          const hasEnd = overflow.media_indices.some(i => manifest.screenshots.some(row =>
+            row.path.endsWith(`${surface}-${viewport.width}-figure-${i}-end.png`)))
+          const positions = []
+          if (overflow.scroll_width > 2 * overflow.client_width) positions.push('middle')
+          if (!hasEnd) positions.push('end')
+          for (const position of positions) {
+            const offset = await page.evaluate(({ index, position }) => {
+              const nodes = [...document.querySelectorAll('body *')].filter(el =>
+                ['auto', 'scroll'].includes(getComputedStyle(el).overflowX) && el.scrollWidth > el.clientWidth + 1)
+              const el = nodes[index]
+              el.scrollLeft = position === 'middle' ? (el.scrollWidth - el.clientWidth) / 2 : el.scrollWidth
+              return { scroll_left: el.scrollLeft, client_width: el.clientWidth, scroll_width: el.scrollWidth }
+            }, { index: overflow.index, position })
+            const r = overflow.rect
+            assert(r.height <= viewport.height, 'Tall overflow requires explicit sliced capture; do not claim coverage')
+            await capture(`overflow-${overflow.index + 1}-${position}`, {
+              x: Math.max(0, Math.floor(r.x)), y: Math.floor(r.y),
+              width: Math.min(viewport.width - Math.max(0, Math.floor(r.x)), Math.ceil(r.width)),
+              height: Math.ceil(r.height),
+            }, 'Previously unobserved horizontal formula/table region.', offset)
+          }
+        }
+        rows.push({ ...check, input, ...geometry, primary_ranges, vertical_gap_count: gap })
+      } finally { await context.close() }
+      assert.equal(hash(input.path), input.sha256)
+    }
+    fs.writeFileSync(`${own}/supplement-inventory.json`, JSON.stringify({
+      lesson, status: 'pixels_pending_actual_open', rows, screenshots, additional_combinations: 0,
+      headless: true, contexts_isolated: true, PWDEBUG_cleared: true, HTML_report_open: 'never',
+      network_blocked: true, HTML_unchanged: true, renderer_or_semantic_reruns: 0,
+    }, null, 2) + '\n', { flag: 'wx' })
+    console.log(JSON.stringify({ lesson, screenshots: screenshots.length, rows: rows.map(row => ({
+      surface: row.surface, width: row.viewport.width, units: row.units.length,
+      options: row.units.reduce((n, unit) => n + unit.options.length, 0), gaps: row.vertical_gap_count,
+      overflow: row.overflows.length,
+    })) }))
+  }
+} finally { await browser.close() }

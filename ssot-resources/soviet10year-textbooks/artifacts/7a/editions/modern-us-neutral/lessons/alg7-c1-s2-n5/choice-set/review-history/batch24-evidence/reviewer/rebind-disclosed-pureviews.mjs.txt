@@ -1,0 +1,133 @@
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+
+const repo = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const tmp = path.join(repo, ".intentfold/tickets/STEMROBIN-182/tmp");
+const hash = value => createHash("sha256").update(value).digest("hex");
+for (const n of [5, 6]) {
+  const root = path.join(tmp, `reviewer-7a-n${n}`);
+  const originalReviewPath = path.join(root, "view-checks.json");
+  const blockedPath = path.join(root, "revised-view-checks.json");
+  const originalReviewBytes = fs.readFileSync(originalReviewPath);
+  const blockedBytes = fs.readFileSync(blockedPath);
+  const original = JSON.parse(originalReviewBytes);
+  const blocked = JSON.parse(blockedBytes);
+  const disclosedPath = path.join(tmp, `7a-n${n}/history-before-first-pureview-repair/view.json`);
+  const disclosedBytes = fs.readFileSync(disclosedPath);
+  assert.equal(hash(disclosedBytes), original.view_snapshot.byte_sha256);
+  const before = JSON.parse(disclosedBytes);
+  const afterBytes = fs.readFileSync(path.join(root, "revised-pureview-snapshot.json"));
+  assert.equal(hash(afterBytes), blocked.view_snapshot.byte_sha256);
+  const after = JSON.parse(afterBytes);
+  assert.deepEqual(Object.keys(before), ["questions"]);
+  assert.deepEqual(before.questions.map(q => q.id), after.questions.map(q => q.id));
+  const expected = n === 5
+    ? ["n5-74b", "n5-77", "n5-78", "n5-79", "n5-80", "n5-82"]
+    : ["n6-83c", "n6-85", "n6-86ab"];
+  let unchangedOptions = 0, changedOptions = 0;
+  const differences = [];
+  const unchangedQuestions = [];
+  for (let index = 0; index < before.questions.length; index += 1) {
+    const old = before.questions[index], fresh = after.questions[index];
+    assert.deepEqual(Object.keys(old).sort(), ["figure_ids", "id", "mode", "options", "stem"]);
+    assert.equal(old.mode, fresh.mode);
+    assert.deepEqual(old.figure_ids, fresh.figure_ids);
+    assert.deepEqual(old.options.map(o => o.id), fresh.options.map(o => o.id));
+    const fields = [];
+    if (old.stem !== fresh.stem) fields.push({ field: "stem", before: old.stem, after: fresh.stem });
+    for (let oi = 0; oi < old.options.length; oi += 1) {
+      assert.deepEqual(old.options[oi].figure_ids, fresh.options[oi].figure_ids);
+      if (JSON.stringify(old.options[oi]) === JSON.stringify(fresh.options[oi])) unchangedOptions += 1;
+      else {
+        changedOptions += 1;
+        fields.push({ field: `options/${oi}/text`,
+          before: old.options[oi].text, after: fresh.options[oi].text });
+      }
+    }
+    if (fields.length) differences.push({ question_id: old.id, fields });
+    else {
+      assert.deepEqual(old, fresh);
+      unchangedQuestions.push({
+        question_id: old.id,
+        before_content_sha256: hash(JSON.stringify(old)),
+        after_content_sha256: hash(JSON.stringify(fresh)),
+        complete_visible_content_equal: true
+      });
+    }
+  }
+  assert.deepEqual(differences.map(row => row.question_id), expected);
+  assert.equal(changedOptions, n === 5 ? 10 : 5);
+  const result = structuredClone(blocked);
+  result.stage_complete = true;
+  result.outcome = "pass";
+  result.mathematics_outcome = "pass";
+  result.blocker_scope = null;
+  result.exact_content_comparison = {
+    verdict: "pass",
+    evidence: "父方本轮只披露旧key-free pureview；实际字节SHA与原冻结记录匹配。逐题核全字段/题序/模式/候选ID/图引用；实际仅六/三受影响单位变化，其余完整单位逐JSON相等。原数学及已通过修订数学不重算，仅补快照绑定。",
+    disclosed_original_view_path: disclosedPath,
+    disclosed_original_view_byte_sha256: hash(disclosedBytes),
+    original_frozen_byte_sha256: original.view_snapshot.byte_sha256,
+    original_path_was_overwritten: true,
+    previously_observed_overwritten_byte_sha256: blocked.exact_content_comparison.observed_current_original_path_byte_sha256,
+    previous_binding_blocked_record_path: blockedPath,
+    previous_binding_blocked_record_byte_sha256: hash(blockedBytes),
+    previous_blocked_record_unchanged: true,
+    exact_unchanged_question_count: unchangedQuestions.length,
+    exact_unchanged_option_count: unchangedOptions,
+    changed_option_text_count: changedOptions,
+    changes: differences,
+    unchanged_questions: unchangedQuestions
+  };
+  result.counts.original_units_waiting_exact_rebind = 0;
+  result.counts.exact_unchanged_full_units_rebound = unchangedQuestions.length;
+  result.counts.exact_unchanged_option_contents = unchangedOptions;
+  result.counts.changed_option_contents = changedOptions;
+  result.counts.options_reassessed_in_changed_records = changedOptions;
+  for (const question of result.question_reviews) {
+    question.current_snapshot_binding = {
+      verdict: "pass",
+      evidence: expected.includes(question.question_id)
+        ? "已通过的受影响单位数学/目的证据原样复用；精确旧/新可见字段差异已核，当前绑定通过。"
+        : "披露旧view字节匹配原冻结SHA；该单位全部可见字段与修订view相同，原真集/每项证明原样复用，未重算。"
+    };
+  }
+  if (n === 5) {
+    const check = result.question_reviews.find(q => q.question_id === "n5-79")
+      .mathematics.option_checks.find(o => o.option_id === "A");
+    check.evidence += " 精确diff另确认A新增经过(0,0),(-1,1),(1,1)的完整抛物线构造描述；这是已冻结y=x²图像的同一解析构造，原数值、逆像与区间全部未变，不新增求解。";
+  }
+  for (const trueSet of result.complete_true_sets) trueSet.binding = "pass: exact snapshot rebound";
+  result.package_checks.task_fidelity.evidence += " 其余原通过单位现已完成exact-unchanged绑定，不再存在全包快照证据缺口。";
+  result.next_stage = "两份pureview rebind均pass后，按父方既有明确授权首次读取当前draft内部；无canonical或其他执行。";
+  result.read_boundary.author_history_read = "Only the explicitly disclosed key-free view.json; no sibling files.";
+  result.read_boundary.disclosed_old_pureview_only = [disclosedPath];
+  const writeJSON = (name, object) =>
+    fs.writeFileSync(path.join(root, name), JSON.stringify(object, null, 2) + "\n", { flag: "wx" });
+  fs.writeFileSync(path.join(root, "original-pureview-disclosed-snapshot.json"), disclosedBytes, { flag: "wx" });
+  writeJSON("revised-view-checks-rebound.json", result);
+  writeJSON("pureview-rebind-result.json", {
+    status: "pass",
+    old_path_overwritten_fact_preserved: true,
+    disclosed_view_path: disclosedPath,
+    old_byte_sha256: hash(disclosedBytes),
+    revised_byte_sha256: hash(afterBytes),
+    changed_units: expected,
+    unchanged_full_units: unchangedQuestions.length,
+    unchanged_option_contents: unchangedOptions,
+    changed_option_texts: changedOptions,
+    mathematics_recomputed: false,
+    original_and_previous_blocked_records_unchanged: true,
+    author_draft_or_key_read_during_rebind: false,
+    result_path: path.join(root, "revised-view-checks-rebound.json")
+  });
+  assert.equal(hash(fs.readFileSync(originalReviewPath)), hash(originalReviewBytes));
+  assert.equal(hash(fs.readFileSync(blockedPath)), hash(blockedBytes));
+  console.log(JSON.stringify({
+    lesson: n, status: "pass", unchanged_units: unchangedQuestions.length,
+    unchanged_option_contents: unchangedOptions, changed_option_contents: changedOptions,
+    rebound_path: path.join(root, "revised-view-checks-rebound.json")
+  }));
+}

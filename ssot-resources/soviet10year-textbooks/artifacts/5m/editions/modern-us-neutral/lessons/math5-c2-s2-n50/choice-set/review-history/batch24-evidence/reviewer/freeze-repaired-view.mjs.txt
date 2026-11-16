@@ -1,0 +1,246 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import assert from "node:assert/strict";
+
+const root = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const tmp = path.join(root, ".intentfold/tickets/STEMROBIN-182/tmp");
+const own = path.join(tmp, "reviewer-5m-n50");
+const sha = (value) => crypto.createHash("sha256").update(value).digest("hex");
+const read = (file) => {
+  const bytes = fs.readFileSync(file);
+  return { path: file, bytes, json: JSON.parse(bytes), sha256: sha(bytes) };
+};
+const rel = (file) => path.relative(root, file);
+const content = (option) => JSON.stringify({ text: option.text, figure_ids: option.figure_ids });
+const oldView = read(path.join(tmp, "5m-n50/history/before-two-local-position-repair/view.json"));
+const currentView = read(path.join(tmp, "5m-n50/view.json"));
+const prior = read(path.join(own, "view-checks.json"));
+const priorEvidence = read(path.join(own, "view-evidence.json"));
+const output = path.join(own, "repaired-view-checks.json");
+assert(!fs.existsSync(output), "Preserve an existing repair freeze.");
+assert.equal(oldView.sha256, prior.json.binding.view_byte_sha256);
+assert.equal(priorEvidence.sha256, prior.json.binding.independent_option_evidence_byte_sha256);
+assert.equal(currentView.json.questions.length, 40);
+assert.equal(oldView.json.questions.length, 40);
+const changedIds = new Set(["n50-944b", "n50-953b"]);
+
+function leaves(before, after, pointer = "") {
+  if (JSON.stringify(before) === JSON.stringify(after)) return [];
+  if (before !== null && after !== null &&
+      typeof before === "object" && typeof after === "object" &&
+      Array.isArray(before) === Array.isArray(after)) {
+    assert.deepEqual(Object.keys(before), Object.keys(after));
+    return Object.keys(before).flatMap((key) =>
+      leaves(before[key], after[key], `${pointer}/${key.replaceAll("~", "~0").replaceAll("/", "~1")}`)
+    );
+  }
+  return [{ pointer, before, after }];
+}
+
+function runs(labels, questions) {
+  const found = [];
+  for (let i = 0; i < labels.length;) {
+    let end = i + 1;
+    while (end < labels.length && labels[end] === labels[i]) end++;
+    found.push({
+      start_ordinal: i + 1, end_ordinal: end, label: labels[i], length: end - i,
+      question_ids: questions.slice(i, end).map((q) => q.id)
+    });
+    i = end;
+  }
+  return found;
+}
+
+function blocks(labels, questions) {
+  const found = [];
+  for (let period = 2; period <= Math.floor(labels.length / 2); period++) {
+    for (let i = 0; i + 2 * period <= labels.length; i++) {
+      const pattern = labels.slice(i, i + period);
+      if (new Set(pattern).size < 2) continue;
+      let primitive = true;
+      for (let smaller = 1; smaller < period; smaller++) {
+        if (period % smaller === 0 &&
+            pattern.every((v, k) => v === pattern[k % smaller])) primitive = false;
+      }
+      if (!primitive) continue;
+      let end = i + period;
+      while (end < labels.length && labels[end] === labels[i + (end - i) % period]) end++;
+      if (end - i >= 2 * period &&
+          (i === 0 || labels[i - 1] !== labels[i - 1 + period])) {
+        found.push({
+          start_ordinal: i + 1, end_ordinal: end, period,
+          pattern: pattern.join(""), complete_repetitions: Math.floor((end - i) / period),
+          trailing_prefix_length: (end - i) % period,
+          question_ids: questions.slice(i, end).map((q) => q.id)
+        });
+      }
+    }
+  }
+  return found;
+}
+
+const leafDiff = leaves(oldView.json, currentView.json);
+assert.deepEqual(leafDiff.map((d) => d.pointer), [
+  "/questions/1/options/0/text", "/questions/1/options/1/text",
+  "/questions/20/options/0/text", "/questions/20/options/1/text"
+]);
+const unchanged = [];
+const changes = [];
+const questions = currentView.json.questions.map((visible, index) => {
+  const before = oldView.json.questions[index];
+  const frozen = prior.json.question_checks[index];
+  assert.equal(visible.id, before.id);
+  assert.equal(visible.id, frozen.id);
+  assert.equal(sha(JSON.stringify(before)), frozen.question_visible_sha256);
+  assert.equal(visible.mode, before.mode);
+  assert.equal(visible.stem, before.stem);
+  assert.deepEqual(visible.figure_ids, before.figure_ids);
+  assert.deepEqual(visible.options.map((o) => o.id), ["A", "B", "C"]);
+  assert.deepEqual(before.options.map((o) => content(o)).sort(), visible.options.map((o) => content(o)).sort());
+  const fromFrozen = new Map(frozen.options.map((o) => [content(o), o]));
+  assert.equal(fromFrozen.size, 3);
+  const options = visible.options.map((option) => {
+    const evidence = fromFrozen.get(content(option));
+    assert(evidence, `No frozen content truth for ${visible.id}/${option.id}`);
+    assert.equal(sha(content(option)), evidence.visible_content_sha256);
+    return { ...evidence, id: option.id, text: option.text, figure_ids: option.figure_ids };
+  });
+  const trueSet = options.filter((o) => o.truth).map((o) => o.id);
+  assert.equal(trueSet.length, 1);
+  if (changedIds.has(visible.id)) {
+    assert.equal(content(visible.options[0]), content(before.options[1]));
+    assert.equal(content(visible.options[1]), content(before.options[0]));
+    assert.equal(JSON.stringify(visible.options[2]), JSON.stringify(before.options[2]));
+    changes.push({
+      id: visible.id, ordinal: index + 1, verdict: "pass",
+      prior_true_set: frozen.reviewer_true_set, current_true_set: trueSet,
+      mapping: visible.options.map((option) => ({
+        old_label: before.options.find((old) => content(old) === content(option)).id,
+        current_label: option.id, content_sha256: sha(content(option)),
+        reused_truth: fromFrozen.get(content(option)).truth
+      })),
+      evidence: visible.id === "n50-944b"
+        ? "The identical 5/7/3 negative-factor expansion moves A->B. Exponent-as-multiplier moves B->A, and unsigned odd-factor expansion stays C. All original truth reasons are reused by exact content, not recomputed."
+        : "The identical beet/meat3/5 proportion and360g result moves A->B. Inverted5/3 proportion and1000g moves B->A; beet/total3/8 and225g stays C. All original truth reasons are reused by exact content, not recomputed."
+    });
+  } else {
+    assert.equal(JSON.stringify(visible), JSON.stringify(before));
+    unchanged.push({
+      id: visible.id, ordinal: index + 1,
+      complete_question_json_equal: true,
+      visible_sha256: sha(JSON.stringify(visible)),
+      prior_true_set: frozen.reviewer_true_set, current_true_set: trueSet,
+      evidence: "Entire visible question object equals the hash-bound original: id, mode, stem, figure references, labels, all three exact option contents and order. Reuse the frozen complete truth set and all three option proofs."
+    });
+    assert.deepEqual(trueSet, frozen.reviewer_true_set);
+  }
+  return {
+    ...frozen, question_visible_sha256: sha(JSON.stringify(visible)),
+    reviewer_true_set: trueSet, options,
+    mathematics_review_method: "Reuse prior independent evidence by exact within-question content; no math/source solving repeated."
+  };
+});
+assert.equal(changes.length, 2);
+assert.equal(unchanged.length, 38);
+const priorLabels = prior.json.question_checks.map((q) => q.reviewer_true_set[0]);
+const labels = questions.map((q) => q.reviewer_true_set[0]);
+const priorBlocks = blocks(priorLabels, questions);
+const currentBlocks = blocks(labels, questions);
+const currentRuns = runs(labels, questions);
+const tripleBlocks = currentBlocks.filter((b) => b.complete_repetitions >= 3);
+const maxRun = Math.max(...currentRuns.map((r) => r.length));
+assert.equal(tripleBlocks.length, 0);
+assert.equal(maxRun, 3);
+assert.equal(labels.join(""), "ABCACACBCAABABBBABBABAAABCAABCCAAABCCBBC");
+
+const history = path.join(own, "history/before-two-local-position-repair");
+fs.mkdirSync(history, { recursive: true });
+const historyCopies = [
+  [prior, "view-checks.json"], [priorEvidence, "view-evidence.json"], [oldView, "view.json"]
+].map(([original, name]) => {
+  const destination = path.join(history, name);
+  fs.copyFileSync(original.path, destination, fs.constants.COPYFILE_EXCL);
+  assert.equal(sha(fs.readFileSync(destination)), original.sha256);
+  return { original_path: rel(original.path), history_path: rel(destination), sha256: original.sha256, exact_bytes_preserved: true };
+});
+const position = {
+  verdict: "pass",
+  scope: "All40 single-choice positions in original question/source order; all adjacent primitive periods fitting at least two full repetitions are recorded, and all periods fitting three are checked against the unchanged original decision rule.",
+  before_sequence: priorLabels.join(""), current_sequence: labels.join(""),
+  label_counts: Object.fromEntries(["A", "B", "C"].map((id) => [id, labels.filter((v) => v === id).length])),
+  before_maximum_identical_run: 5, current_maximum_identical_run: maxRun,
+  current_identical_runs_length_at_least_three: currentRuns.filter((r) => r.length >= 3),
+  before_adjacent_blocks_at_least_two_repetitions: priorBlocks,
+  current_adjacent_blocks_at_least_two_repetitions: currentBlocks,
+  current_adjacent_blocks_at_least_three_repetitions: tripleBlocks,
+  current_runs_length_at_least_four: currentRuns.filter((r) => r.length >= 4),
+  evidence: "Old ordinals2-7 ACACAC now have BCACAC; the surviving ordinals3-7 CACAC contain only two complete repeats plus a prefix, not three. Old ordinals20-24 AAAAA are now ABAAA, so the longest run is3. The full40-position sequence contains no adjacent primitive period with three complete repeats and no run of4 or more.",
+  short_cluster_disclosure: "New ordinals19-22 BABA have two complete repeats; the prior BBA two-repeat block15-20 extends by one prefix letter through21. These are explicitly recorded, not claimed absent. Under the original policy ordinary double repeats/triples alone do not establish leakage, and no balancing quota or new stricter threshold is imposed."
+};
+const record = {
+  ...prior.json,
+  schema: "independent-pure-view-position-repair-checks-v1",
+  stage: "repaired-pure-view-all-content-truths-rebound-frozen",
+  outcome: "pass", visible_package_verdict: "pass",
+  binding: {
+    ...prior.json.binding,
+    view_byte_sha256: currentView.sha256,
+    prior_view_path: rel(oldView.path), prior_view_byte_sha256: oldView.sha256,
+    prior_review_path: rel(prior.path), prior_review_byte_sha256: prior.sha256
+  },
+  authority: {
+    read_scope: "Only authorized current/old n50 pure views and own previously frozen view-checks/view-evidence. No source solving, image reopening, n51 repair reads or author internal reads.",
+    no_author_draft_key_ready_delta_internal_reads: true,
+    no_validator_canonical_render_browser_git_service_operations: true,
+    no_author_edits: true,
+    original_reviews_and_evidence_preserved_unmodified: true,
+    writes: "Only reviewer-5m-n50 new repair record, script and exact-byte history copies."
+  },
+  content_identity_comparison: {
+    verdict: "pass",
+    before_view_hash_matches_original_freeze: true,
+    question_count: 40, option_count: 120,
+    changed_question_count: 2, unchanged_question_count: 38,
+    exact_json_leaf_change_count: leafDiff.length, exact_json_leaf_diff: leafDiff,
+    only_expected_two_ab_swaps: true,
+    whole_question_order_modes_stems_figures_unchanged: true,
+    all120_option_contents_preserved_exactly: true,
+    all_other_json_equal: true,
+    content_bound_label_changes: changes, unchanged_question_evidence: unchanged
+  },
+  history_preservation: historyCopies,
+  counts: {
+    ...prior.json.counts,
+    all_content_truths_reused: 120, changed_label_bindings: 4,
+    unchanged_question_objects: 38, repeated_math_solves: 0
+  },
+  whole_package_relationships: {
+    ...prior.json.whole_package_relationships,
+    position_checks: position,
+    repair_reuse_evidence: "The exact four-leaf text-slot exchange changes no stem, content, figure, source order, mode or mathematical relationship. Prior fidelity, redundancy, prose-leakage, all19 source coverage findings and recorded production losses are therefore inherited without new solving; internal disclosure remains unread."
+  },
+  question_checks: questions,
+  findings: [],
+  resolved_prior_findings: prior.json.findings.map((finding) => ({
+    ...finding, prior_verdict: finding.verdict, current_verdict: "pass",
+    resolution_evidence: position.evidence,
+    old_finding_preserved_in_exact_history: true
+  })),
+  next_gate: "n50 revised pure-view gate ready. Await first explicit internal comparison authorization; no author internals have been read."
+};
+assert.equal(sha(fs.readFileSync(prior.path)), prior.sha256);
+assert.equal(sha(fs.readFileSync(priorEvidence.path)), priorEvidence.sha256);
+assert.equal(sha(fs.readFileSync(oldView.path)), oldView.sha256);
+assert.equal(sha(fs.readFileSync(currentView.path)), currentView.sha256);
+const bytes = `${JSON.stringify(record, null, 2)}\n`;
+fs.writeFileSync(output, bytes, { flag: "wx" });
+console.log(JSON.stringify({
+  path: output, sha256: sha(bytes), outcome: record.outcome,
+  current_view_byte_sha256: currentView.sha256,
+  questions: questions.length, options: questions.reduce((n, q) => n + q.options.length, 0),
+  changed_questions: changes.length, unchanged_questions: unchanged.length,
+  exact_changed_json_leaves: leafDiff.length, maximum_run: maxRun,
+  adjacent_three_repeat_blocks: tripleBlocks.length,
+  prior_review_and_evidence_history_exact: true
+}));

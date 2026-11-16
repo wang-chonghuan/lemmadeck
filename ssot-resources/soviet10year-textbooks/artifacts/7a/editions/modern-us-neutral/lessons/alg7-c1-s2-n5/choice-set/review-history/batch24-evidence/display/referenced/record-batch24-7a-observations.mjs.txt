@@ -1,0 +1,115 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const read = file => JSON.parse(fs.readFileSync(file))
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const opened = {
+  'alg7-c1-s2-n5': {
+    'native-desktop-01.png': 'Choice title/first three questions and final questions22-24; written title67-71 and tail78-82. All shown option IDs, degree marks, fractions and final domain sets paint without overlap.',
+    'native-desktop-02.png': 'Prose implication/equivalence definitions and full examples; retained narrow middle continuation; written72-75 with all directional inequalities and six predicate pairs.',
+    'native-desktop-03.png': 'Written76-78; choices3-12 across adjacent native windows, including reciprocal definedness, complete coordinate candidates, inequality directions and complete four-group bound records.',
+    'native-desktop-04.png': 'Choices13-22 with conditional natural-number branches, parity arguments, two-angle candidates, complete equation root sets and parabola-property records. Window boundaries join the adjacent observed windows.',
+    'native-mobile-01.png': 'Mobile choice title/questions1-2 and tail23-24; written67-69 and79-82; prose opening and final definitions. Chinese wraps and stacked math remain within the page.',
+    'native-mobile-02.png': 'Mobile middle prose, written70-78 and choices2-5. All inequalities, degree caps and source exercise identities are readable; partial top/bottom lines join adjacent opened windows.',
+    'native-mobile-03.png': 'Mobile choices5-18: full candidate coordinates, implication directions, strongest bounds, both natural-number branches and parity/proof entries. All visible A-F labels remain aligned with their options.',
+    'native-mobile-04.png': 'Mobile choices18-23: distinct-angle configurations, natural-number relationships, root-set comparison, upward/downward parabola records and radical level preimages; no horizontal math regions are present in this lesson.',
+    'native-small-01.png': 'Native small crops show radical fragments sqrt2/sqrt6 and angle-hat marks. They paint, but are not complete formula evidence. Full surrounding questions are observed in desktop/mobile page windows.',
+    'native-small-02.png': 'Further native sqrt6 and angle-hat crops paint. They are fragment-only evidence and do not establish any whole geometric diagram.',
+    'native-small-03.png': 'Final eight native angle-hat crops paint. Montage filename labels are crowded; the JSON slot index supplies identity. No readability claim is made for the montage labels or fragment mathematical context.',
+  },
+  'alg7-c1-s2-n6': {
+    'native-desktop-01.png': 'Complete fig2 containment circles with inner A, outer B and A-subset-B caption; choice title/questions1-3 and15-17. Full circles, labels, fractions and final rational-domain entries paint.',
+    'native-desktop-02.png': 'Written83-89 and prose opening: truth sets, equations, absolute values and review problems; standalone fig2 complete boundary/labels. Adjacent written first/last windows overlap.',
+    'native-desktop-03.png': 'Prose tail with fig2 and implication/subset/equivalence explanations; choices3-7 with full natural-pair records, signed integer products, complete quadratic root sets and intervals.',
+    'native-desktop-04.png': 'Choices7-15, including all three containment assignment tables, interval relations, complete finite truth sets and two-variable set parameterizations. Partial table/window boundaries are completed in the adjacent observed window.',
+    'native-mobile-01.png': 'Mobile opening/tail of choices, written83-89 and prose; title wraps deliberately to two lines. Fractions and absolute-value expressions paint without overlap.',
+    'native-mobile-02.png': 'Middle mobile prose and full fig2 across adjacent windows; written86 continuation; choices3-8, complete contained-circle graphic and candidate tables. Long pair-set lines have separate horizontal ends.',
+    'native-mobile-03.png': 'Mobile choices8-15 including remaining candidate table rows, interval implications, finite solution sets and both complete two-variable line families across adjoining windows.',
+    'native-small-01.png': 'Seven native mobile horizontal end windows show complete closing pair coordinates, braces and punctuation for questions3/4. Initial left windows plus these ends cover each scroll region; no middle range is needed because each width is at most twice its client width.',
+  },
+}
+for (const [lesson, evidence] of Object.entries(opened)) {
+  const own = `${scratch}/reviewer-${lesson}-actual-display`
+  const inventory = read(`${own}/supplement-inventory.json`)
+  const index = read(`${own}/native-montage-index.json`)
+  const manifest = read(`${scratch}/batch24-render/7a-${lesson}-capture-manifest.json`)
+  const actualMontages = [...new Set(index.files.map(row => path.basename(row.opened_via_native_montage)))].sort()
+  assert.deepEqual(actualMontages, Object.keys(evidence).sort())
+  const observations = index.files.map(row => {
+    assert.equal(hash(row.path), row.sha256)
+    const small = row.original_dimensions[1] < 100
+    return {
+      ...row, actually_opened: true, display_window_status: 'pass',
+      evidence: evidence[path.basename(row.opened_via_native_montage)],
+      standalone_full_object_claim: false,
+      fragment_only_not_full_formula: small && lesson.endsWith('n5'),
+    }
+  })
+  const coverage = inventory.rows.map(row => {
+    const ranges = row.primary_ranges.map(r => ({
+      path: manifest.screenshots.find(s => s.path.endsWith(r.filename)).path,
+      start: r.y, end: Math.min(row.document_height, r.y + r.height),
+    })).concat(inventory.screenshots.filter(s => s.surface === row.surface &&
+      s.viewport.width === row.viewport.width && !s.horizontal_offset).map(s => ({
+        path: s.path, start: s.document_rect.y, end: s.document_rect.y + s.document_rect.height,
+      }))).sort((a, b) => a.start - b.start)
+    let end = 0
+    for (const range of ranges) {
+      assert(range.start <= end + 1, 'Unobserved vertical gap')
+      end = Math.max(end, range.end)
+    }
+    assert(end >= row.document_height - 1)
+    const filesFor = r => ranges.filter(s => s.start < r.y + r.height && s.end > r.y).map(s => s.path)
+    return {
+      surface: row.surface, viewport: row.viewport,
+      rendered_path: row.input.path, rendered_sha256: row.input.sha256,
+      vertical_document_coverage_complete: true,
+      units: row.units.map(unit => ({
+        index: unit.index, label: unit.label, status: 'pass-observed-across-listed-windows',
+        windows: filesFor(unit.rect),
+        options: unit.options.map(option => ({ index: option.index, windows: filesFor(option.rect),
+          status: 'pass-observed-across-listed-windows' })),
+      })),
+      horizontal_regions: row.overflows.map(region => {
+        const ends = inventory.screenshots.filter(s => s.surface === row.surface &&
+          s.viewport.width === row.viewport.width && s.path.endsWith(`overflow-${region.index + 1}-end.png`))
+        assert.equal(ends.length, 1)
+        assert(region.scroll_width <= 2 * region.client_width)
+        return { index: region.index, initial_left_covered_by_vertical_windows: true,
+          right_end: ends[0].path, client_width: region.client_width,
+          scroll_width: region.scroll_width, continuous_union_no_middle_gap: true }
+      }),
+    }
+  })
+  const destination = `${own}/actual-observations.json`
+  assert(!fs.existsSync(destination))
+  fs.writeFileSync(destination, JSON.stringify({
+    lesson, status: 'pass', observer: { kind: 'self_review', identity: 'parent actual pixel observer' },
+    scope: 'Actual offline display pixels only. Does not repeat mathematical, source, pureview, canonical, figure-source or app acceptance review.',
+    observations, coverage, opened_native_montages: Object.entries(evidence).map(([name, text]) => ({
+      path: `${own}/${name}`, sha256: hash(`${own}/${name}`), actually_opened: true, evidence: text,
+    })),
+    counts: {
+      primary_PNGs: index.primary_count, supplement_PNGs: index.supplement_count,
+      actual_PNG_files_observed: index.files.length, native_montages: actualMontages.length,
+      unique_surface_viewport_combinations: 6, additional_combinations: 0,
+      missing_requested_objects: 0, incomplete_horizontal_regions: 0,
+    },
+    limitations: [
+      'Screenshots at adjacent window boundaries are intentionally partial; full coverage is their union, not each screenshot alone.',
+      'Native desktop montage previews crop only outer whitespace, preserving the full sheet without image scaling; original screenshots remain unchanged.',
+      'Small KaTeX fragments do not prove complete mathematical figures or formulas.',
+      'This is offline rendered content, not app navigation, saving, grading, or production verification.',
+    ],
+    evidence_helpers: [
+      `${scratch}/capture-batch24-7a-gaps.mjs`, `${scratch}/montage-batch24-7a.py`,
+      `${scratch}/record-batch24-7a-observations.mjs`,
+    ],
+    browser_closed_in_finally: true, headless_isolated: true, new_semantic_or_renderer_runs: 0,
+  }, null, 2) + '\n', { flag: 'wx' })
+  console.log(JSON.stringify({ lesson, status: 'pass', primary: index.primary_count,
+    supplement: index.supplement_count, montages: actualMontages.length }))
+}

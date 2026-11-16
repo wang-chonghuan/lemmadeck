@@ -1,0 +1,51 @@
+"""Record final ready-only metadata differences; run no validator or serializer."""
+
+from hashlib import sha256
+import json
+from pathlib import Path
+
+
+T = Path(__file__).resolve().parent.parent
+
+
+def changes(left, right, path=""):
+    if isinstance(left, dict) and isinstance(right, dict):
+        result = []
+        for key in sorted(left.keys() | right.keys()):
+            child = path + "/" + key
+            if key not in left or key not in right:
+                result.append({
+                    "path": child, "before_present": key in left,
+                    "after_present": key in right,
+                    "before": left.get(key), "after": right.get(key),
+                })
+            else:
+                result.extend(changes(left[key], right[key], child))
+        return result
+    return [] if left == right else [{"path": path, "before": left, "after": right}]
+
+
+for name in ("7a-n5", "7a-n6"):
+    own = T / name
+    before = own / "history-before-first-pureview-repair" / "ready.json"
+    after = own / "ready.json"
+    old_bytes, new_bytes = before.read_bytes(), after.read_bytes()
+    receipt = json.loads((own / "pureview-repair-bytehash-receipt.json").read_bytes())
+    assert sha256(new_bytes).hexdigest() == receipt["current"]["ready.json"]["sha256"]
+    assert sha256(old_bytes).hexdigest() == next(
+        row["sha256"] for row in receipt["old"] if row["path"].endswith("/ready.json")
+    )
+    out = own / "pureview-repair-ready-json-diff.json"
+    record = {
+        "stage": "Exact final ready metadata diff; original bytes already preserved",
+        "before": {"path": str(before), "sha256": sha256(old_bytes).hexdigest()},
+        "after": {"path": str(after), "sha256": sha256(new_bytes).hexdigest()},
+        "changes": changes(json.loads(old_bytes), json.loads(new_bytes)),
+        "ready_bytes_unchanged_by_this_recording": True,
+        "no_structure_canonical_render_or_author_serializer_rerun": True,
+    }
+    with out.open("x", encoding="utf-8") as handle:
+        json.dump(record, handle, ensure_ascii=True, indent=2)
+        handle.write("\n")
+    assert before.read_bytes() == old_bytes and after.read_bytes() == new_bytes
+    print(name, str(out), sha256(out.read_bytes()).hexdigest())

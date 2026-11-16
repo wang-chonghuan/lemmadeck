@@ -1,0 +1,146 @@
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { spawnSync } from "node:child_process";
+
+const repo = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const tmp = path.join(repo, ".intentfold/tickets/STEMROBIN-182/tmp");
+const root = path.join(tmp, "5m-n51-sartre-repair");
+const hash = value => createHash("sha256").update(value).digest("hex");
+const bytes = filename => fs.readFileSync(filename);
+const json = filename => JSON.parse(bytes(filename));
+const original = json(path.join(root, "original-draft.json"));
+const repaired = json(path.join(root, "repaired-draft.json"));
+const record = json(path.join(root, "exact-delta.json"));
+const outputJSON = (name, value) =>
+  fs.writeFileSync(path.join(root, name), JSON.stringify(value, null, 2) + "\n", { flag: "wx" });
+for (const name of ["delta-check-result.json", "structural-validation-result.json", "ready.json"]) {
+  assert.equal(fs.existsSync(path.join(root, name)), false, "No second structural execution.");
+}
+
+const currentDraftPath = path.join(tmp, "5m-n51/draft.json");
+const currentSourcePath = path.join(tmp, "5m-n51/source.json");
+assert.equal(hash(bytes(currentDraftPath)), record.original_draft_byte_sha256);
+assert.equal(hash(bytes(currentSourcePath)), record.source_sha256);
+assert.equal(record.existing_correct_set_opaque_equality, true);
+const byId = new Map(repaired.questions.map(q => [q.id, q]));
+assert.equal(repaired.questions.length - original.questions.length, 1);
+assert.equal(byId.size, repaired.questions.length);
+assert.deepEqual(repaired.questions.map(q => q.id).filter(id => id !== "n51-975"),
+  original.questions.map(q => q.id));
+for (const question of original.questions) {
+  if (question.id === "n51-976b") continue;
+  assert.deepEqual(byId.get(question.id), question);
+}
+for (const coverage of original.coverage) {
+  if (["975", "976"].includes(coverage.source_number)) continue;
+  assert.deepEqual(repaired.coverage.find(row => row.source_number === coverage.source_number), coverage);
+}
+assert.deepEqual(repaired.seed_sha256, original.seed_sha256);
+assert.deepEqual(repaired.new_figures, original.new_figures);
+const restored = structuredClone(repaired);
+restored.questions = restored.questions.filter(q => q.id !== "n51-975").map(q =>
+  q.id === "n51-976b" ? structuredClone(original.questions.find(o => o.id === q.id)) : q);
+restored.coverage = restored.coverage.map(row =>
+  ["975", "976"].includes(row.source_number)
+    ? structuredClone(original.coverage.find(o => o.source_number === row.source_number)) : row);
+assert.deepEqual(restored, original);
+assert.deepEqual(json(path.join(root, "repaired-view.json")), {
+  questions: repaired.questions.map(q => ({ id: q.id, ...q.view }))
+});
+outputJSON("delta-check-result.json", {
+  command: `node ${path.join(root, "check-delta-and-structure.mjs")}`,
+  delta_check_execution_count: 1,
+  result: "pass",
+  mode: "Mechanical read-only comparison of original and repaired author data; no independent semantic review or reviewer truths consumed.",
+  inverse_restores_complete_original_json: true,
+  unaffected_questions: 50,
+  unaffected_coverage_rows: original.coverage.length - 2,
+  preserved_existing_question_order_keys_and_mapping: true,
+  changed_existing_questions: ["n51-976b"],
+  inserted_questions: ["n51-975"],
+  changed_coverage: ["975", "976"],
+  changed_existing_leaf_record_count: record.changed_existing_leaf_record_count,
+  source987_all_units_and_coverage_unchanged: true,
+  current_author_files_still_original_byte_identical: true,
+  repaired_view_exact_key_free_projection: true
+});
+
+const seed = currentSourcePath;
+const draft = path.join(root, "repaired-draft.json");
+const args = [
+  path.join(repo, ".agents/skills/ld-s10y-choice/scripts/validate.py"),
+  "--repo", repo, "--seed", seed, "--draft", draft
+];
+const command = ["python3", ...args].join(" ");
+const startedAt = new Date().toISOString();
+const result = spawnSync("python3", args, { cwd: repo, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 });
+outputJSON("structural-validation-result.json", {
+  command,
+  execution_count: 1,
+  started_at: startedAt,
+  completed_at: new Date().toISOString(),
+  exit_code: result.status,
+  signal: result.signal,
+  stdout: result.stdout,
+  stderr: result.stderr,
+  spawn_error: result.error?.message ?? null,
+  structural_result: result.status === 0 ? "pass" : "failed",
+  semantic_review: "pending parent-authorized Tesla changes-only review; no canonical command",
+  no_review_argument: true,
+  original_author_files_unchanged_after_command:
+    hash(bytes(currentDraftPath)) === record.original_draft_byte_sha256 &&
+    hash(bytes(currentSourcePath)) === record.source_sha256
+});
+const digestArgs = [
+  path.join(repo, ".agents/skills/ld-s10y-choice/scripts/prepare.py"), "digest"
+];
+function canonicalDigest(filename) {
+  const result = spawnSync("python3", [...digestArgs, filename],
+    { cwd: repo, encoding: "utf8" });
+  assert.equal(result.status, 0);
+  return result.stdout.trim();
+}
+outputJSON("ready.json", {
+  status: result.status === 0 ? "frozen repair ready for independent changes-only review" : "structural failure preserved; no rerun",
+  role: "repair author, not semantic reviewer",
+  original_author_directory_modified: false,
+  seed_path: seed,
+  seed_canonical_sha256: canonicalDigest(seed),
+  source_freeze_path: path.join(root, "source-freeze.json"),
+  source_freeze_byte_sha256: hash(bytes(path.join(root, "source-freeze.json"))),
+  draft_path: draft,
+  draft_byte_sha256: hash(bytes(draft)),
+  draft_canonical_sha256: canonicalDigest(draft),
+  pureview_path: path.join(root, "repaired-view.json"),
+  pureview_byte_sha256: hash(bytes(path.join(root, "repaired-view.json"))),
+  pureview_canonical_sha256: canonicalDigest(path.join(root, "repaired-view.json")),
+  question_count: repaired.questions.length,
+  option_count: repaired.questions.reduce((n, q) => n + q.view.options.length, 0),
+  affected_question_ids: ["n51-975", "n51-976b"],
+  unchanged_question_count: 50,
+  source987_existing_blocker_unchanged: true,
+  exact_delta_path: path.join(root, "exact-delta.json"),
+  wrong_program_evidence_path: path.join(root, "wrong-program-evidence.json"),
+  delta_check_path: path.join(root, "delta-check-result.json"),
+  structural_result_path: path.join(root, "structural-validation-result.json"),
+  structural_execution_count: 1,
+  structural_exit_code: result.status,
+  canonical_review_execution_count: 0,
+  browser_render_execution_count: 0,
+  in_flight_operations: [],
+  model: null,
+  usage: null
+});
+console.log(JSON.stringify({
+  delta_check: "pass",
+  structural_exit_code: result.status,
+  structural_stdout: result.stdout?.trim(),
+  structural_stderr: result.stderr?.trim(),
+  questions: repaired.questions.length,
+  options: repaired.questions.reduce((n, q) => n + q.view.options.length, 0),
+  draft_canonical_sha256: canonicalDigest(draft),
+  view_byte_sha256: hash(bytes(path.join(root, "repaired-view.json"))),
+  ready_path: path.join(root, "ready.json")
+}, null, 2));

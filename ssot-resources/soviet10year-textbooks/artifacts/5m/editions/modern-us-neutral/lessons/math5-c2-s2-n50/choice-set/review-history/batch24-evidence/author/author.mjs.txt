@@ -1,0 +1,293 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+import { fileURLToPath } from 'node:url'
+
+const dir = path.dirname(fileURLToPath(import.meta.url))
+const frozenBytes = fs.readFileSync(path.join(dir, 'source-solutions.json'))
+assert(frozenBytes.equals(fs.readFileSync(path.join(dir, 'source-first-frozen/source-solutions.json'))))
+const frozen = JSON.parse(frozenBytes)
+const c = (text, derivation) => ({ text, derivation, misconception: null })
+const w = (text, derivation, misconception) => ({ text, derivation, misconception })
+const questions = []
+const independent = 'This complete expression has independent operands and a full result; it is not an intermediate arithmetic blank or a dependency on an earlier answer.'
+const model = 'The full quantity/model with units is one dependent mathematical response, retaining every requested relationship.'
+function q(number, suffix, stem, choices, unit, concepts = [], figures = []) {
+  const s = frozen.solutions.find(s => s.source_number === number)
+  questions.push({
+    id: `n50-${number}${suffix}`, source_numbers: [number],
+    view: {
+      mode: 'single', stem, figure_ids: figures,
+      options: choices.map((o, i) => ({ id: String.fromCharCode(65 + i), text: o.text, figure_ids: [] }))
+    },
+    intent: {
+      task: s.task, source_solution: s.solution, unit_reason: unit,
+      concept_blocks: concepts, limitations: [...s.losses],
+      figure_observations: figures.map(id => frozen.figure_observations.find(f => f.figure_id === id))
+    },
+    key: {
+      correct: choices.flatMap((o, i) => o.misconception === null ? [String.fromCharCode(65 + i)] : []),
+      rationales: choices.map((o, i) => ({
+        option_id: String.fromCharCode(65 + i), truth: o.misconception === null ? 'correct' : 'incorrect',
+        derivation: o.derivation, misconception: o.misconception
+      }))
+    }
+  })
+}
+
+q('944','a','依次把 $215^3,863^6,(3/4)^2$ 写成积。哪份完整记录正确？',[
+  c('$215\\cdot215\\cdot215$；$863\\cdot863\\cdot863\\cdot863\\cdot863\\cdot863$；$\\frac34\\cdot\\frac34$。','The products contain respectively3,6,2 copies of the whole original base.'),
+  w('$3\\cdot215$；$6\\cdot863$；$2\\cdot\\frac34$。','Replace each repeated-factor power b^n with n*b.','Confuse exponentiation with multiplication by the exponent.'),
+  w('$215\\cdot215$；$863\\cdot863\\cdot863\\cdot863\\cdot863$；$\\frac34$。','Use one fewer factor than each exponent:2,5,1 instead of3,6,2.','Count the exponent as the number of multiplication signs instead of factors.')
+],'A complete positive-base rewrite segment preserves all three requested products, including the fraction base.',[3])
+q('944','b','依次把 $(-75)^5,(-0.6)^7,(-1/2)^3$ 写成积。哪份完整记录正确？',[
+  c('$(-75)\\cdot(-75)\\cdot(-75)\\cdot(-75)\\cdot(-75)$；$(-0.6)\\cdot(-0.6)\\cdot(-0.6)\\cdot(-0.6)\\cdot(-0.6)\\cdot(-0.6)\\cdot(-0.6)$；$(-\\frac12)\\cdot(-\\frac12)\\cdot(-\\frac12)$。','Five,seven,three copies of each entire negative base reproduce its positive-integer power.'),
+  w('$75\\cdot75\\cdot75\\cdot75\\cdot75$；$0.6\\cdot0.6\\cdot0.6\\cdot0.6\\cdot0.6\\cdot0.6\\cdot0.6$；$\\frac12\\cdot\\frac12\\cdot\\frac12$。','Retain the factor counts but replace every negative base by its magnitude;all three odd powers change sign.','Drop the signs of the repeated negative factors.'),
+  w('$5\\cdot(-75)$；$7\\cdot(-0.6)$；$3\\cdot(-\\frac12)$。','Use n*b rather than the n-factor product for each negative base.','Interpret a power as scalar multiplication by its exponent.')
+],'The signed-base rewrite segment tests the whole negative factor rather than an isolated sign click.',[3])
+q('944','c','把 $a^{10},m^8,(a/b)^4$ 依次写成积，并保留原式的定义条件。哪份完整记录正确？',[
+  c('$a\\cdot a\\cdot a\\cdot a\\cdot a\\cdot a\\cdot a\\cdot a\\cdot a\\cdot a$；$m\\cdot m\\cdot m\\cdot m\\cdot m\\cdot m\\cdot m\\cdot m$；$\\frac ab\\cdot\\frac ab\\cdot\\frac ab\\cdot\\frac ab$。$a,m$ 为实数，$b\\ne0$。','Ten a factors,eight m factors,four full a/b factors. The quotient excludes b0;zero a or m remains allowed.'),
+  w('$10a$；$8m$；$4\\cdot\\frac ab$。$a,m$ 为实数，$b\\ne0$。','Replace each power by its exponent times its base;the denominator condition alone does not fix the algebra.','Use repeated addition instead of repeated multiplication for symbolic powers.'),
+  w('$a\\cdot a\\cdot a\\cdot a\\cdot a\\cdot a\\cdot a\\cdot a\\cdot a\\cdot a$；$m\\cdot m\\cdot m\\cdot m\\cdot m\\cdot m\\cdot m\\cdot m$；$\\frac ab\\cdot\\frac ab\\cdot\\frac ab\\cdot\\frac ab$。适用于所有实数 $a,m,b$。','The products are correctly written but the stated domain includes b0,where both original quotient power and product are undefined.','Erase the nonzero denominator restriction in a symbolic rewrite.')
+],'A complete symbolic product-and-domain unit retains all three sources and the original fraction restriction.',[3])
+
+q('945','a','把下面四个积依次写成幂：8 个因数 $6$ 的积；4 个因数 $(-4)$ 的积；5 个因数 $1.3$ 的积；4 个因数 $2/3$ 的积。',[
+  c('$6^8$；$(-4)^4$；$(1.3)^5$；$(\\frac23)^4$。','The exponents count8,4,5,4 identical factors;parentheses preserve negative/fractional bases.'),
+  w('$6^7$；$(-4)^3$；$(1.3)^4$；$(\\frac23)^3$。','Use the number of multiplication signs:one fewer than each factor count.','Count operation signs rather than repeated factors.'),
+  w('$6^9$；$(-4)^5$；$(1.3)^6$；$(\\frac23)^5$。','Add one extra factor to each actual count.','Count the base notation itself as an additional factor.')
+],'One complete numeric compression record compares all original repeated-factor types.',[3])
+q('945','b','把 $y\\cdot y\\cdot y\\cdot y\\cdot y\\cdot y\\cdot y\\cdot y\\cdot y\\cdot y\\cdot y$ 和 $(-a)\\cdot(-a)\\cdot(-a)\\cdot(-a)\\cdot(-a)$ 依次写成幂。',[
+  c('$y^{11}$；$(-a)^5$。','There are11 y factors and5 factors(-a);variables remain unrestricted real values.'),
+  w('$y^{10}$；$(-a)^4$。','Use10 and4 multiplication signs as exponents,one short of the factors.','Miscount exponent by counting joining signs.'),
+  w('$y^{12}$；$(-a)^6$。','Overcount each repeated-factor list by one,also turning the negative-base odd power into an even one.','Add an extra symbolic factor during compression.')
+],'The full symbolic/sign record distinguishes exponent counts and parentheses.',[3])
+
+q('946','a','依次求 $1^9,8^2,2^3,3^2,0^7$ 的值。',[
+  c('$1,64,8,9,0$。','Repeated multiplication gives the stated five values;positive powers of1/0 remain1/0.'),
+  w('$9,16,6,6,0$。','Multiply each base by its exponent:1*9,8*2,2*3,3*2,0*7.','Replace every power by base-times-exponent.'),
+  w('$10,10,5,5,7$。','Add base and exponent:1+9,8+2,2+3,3+2,0+7.','Treat superscript notation as an addition instruction.')
+],'A complete positive-base segment preserves unity,zero and the distinction between squares and cubes.',[3,6,7])
+q('946','b','依次求 $(-8)^2,(-2)^3,(-3)^2$ 的值。',[
+  c('$64,-8,9$。','Even two-factor products are positive;the three-factor negative product remains negative.'),
+  w('$-64,-8,-9$。','Compute magnitudes but retain a leading negative for both even powers.','Ignore negative-sign cancellation in even powers.'),
+  w('$64,8,9$。','Compute all magnitudes and delete the odd power negative sign too.','Assume every parenthesized negative base becomes positive under a power.')
+],'The complete signed-power segment tests even/odd parity rather than three yes/no sign clicks.',[6,7])
+q('946','c','依次求 $(0.3)^2,(-0.9)^2,(2/3)^3,(-1/2)^4$ 的值。',[
+  c('$0.09,0.81,\\frac8{27},\\frac1{16}$。','Square decimals with place values and raise numerator/denominator to the specified powers;the even negative power is positive.'),
+  w('$0.09,0.81,\\frac83,\\frac12$。','Decimal calculations are retained;cube/square only fraction numerators and leave original denominators3 and2 unpowered.','Apply a fraction power to its numerator only.'),
+  w('$0.6,-1.8,2,-2$。','Use2*.3,2*(-.9),3*(2/3),4*(-1/2) instead of powers.','Replace rational-base powers by scalar multiplication.')
+],'One complete rational-base result segment retains all decimal/fraction operands and powers.',[6,7])
+
+q('947','a','计算 $2^4\\cdot3^2$。',[
+  c('$144$','2^4=16,3^2=9;16*9=144.'),
+  w('$48$','Use(2*4)*(3*2)=8*6=48.','Use exponent as a multiplier for each base.'),
+  w('$16$','Evaluate2^4=16 and return it without multiplying by3^2.','Omit the second power factor.')
+],independent,[8])
+q('947','b','计算 $32:2^3$。',[
+  c('$4$','32/8=4.'),
+  w('$16/3$','Replace2^3 by2*3=6,then32/6=16/3.','Use base-times-exponent for the divisor.'),
+  w('$4096$','Group as(32/2)^3=16^3=4096.','Move the exponent from the divisor to the entire quotient.')
+],independent,[8])
+q('947','c','计算 $(1/3)^2+8/9$。',[
+  c('$1$','1/9+8/9=1.'),
+  w('$14/9$','Replace(1/3)^2 by2/3,then2/3+8/9=14/9.','Use doubling instead of squaring the fractional base.'),
+  w('$121/81$','Group(1/3+8/9)^2=(11/9)^2=121/81.','Extend the square across the added outside term.')
+],independent,[8])
+q('947','d','计算 $10-(3/2)^3$。',[
+  c('$53/8$','10-27/8=53/8.'),
+  w('$11/2$','Use10-3*(3/2)=10-9/2=11/2.','Treat the cube as three times its base.'),
+  w('$4913/8$','Group(10-3/2)^3=(17/2)^3=4913/8.','Apply the exponent to the entire difference rather than the indicated base.')
+],independent,[8])
+
+q('948','a','求 $(5x)^2$：当 $x$ 依次为 $2,-2,1/5$ 时，哪份完整对应记录正确？',[
+  c('$100,100,1$。','Bases10,-10,1 square to100,100,1.'),
+  w('$20,20,1/5$。','Use5*x^2 instead of(5x)^2;5*4,5*4,5*(1/25).','Square x but not the coefficient inside the parentheses.'),
+  w('$20,-20,2$。','Replace the square by2*(5x)=10x at each input.','Multiply the parenthesized base by2 rather than squaring it.')
+],'One entire formula/input correspondence preserves both signs and the fractional boundary input.',[6,8])
+q('948','b','求 $a^3+1.2$：当 $a$ 依次为 $4,0.1$ 时，哪份完整记录正确？',[
+  c('$65.2,1.201$。','4^3+1.2=65.2;.1^3+1.2=1.201.'),
+  w('$13.2,1.5$。','Use3a+1.2 at4,.1, giving13.2,1.5.','Replace cubing by tripling.'),
+  w('$65.728,1.729$。','Cube the outside1.2 as well:64+1.728=65.728;.001+1.728=1.729.','Extend the cube to the added constant outside the base.')
+],'A full two-input correspondence retains the same formula and decimal place-value distinction.',[7,8])
+q('948','c','求 $(y+1)^2$：当 $y$ 依次为 $1.5,3.5$ 时，哪份完整记录正确？',[
+  c('$6.25,20.25$。','(2.5)^2=6.25;(4.5)^2=20.25.'),
+  w('$3.25,13.25$。','Usey^2+1:2.25+1,12.25+1.','Distribute squaring over an addition and omit its cross term.'),
+  w('$5,9$。','Use2*(y+1) instead of the square.','Double the sum instead of multiplying it by itself.')
+],'The full formula/table unit assesses the parentheses for both inputs.',[6,8])
+q('949','','按图中的 $x=0,1,\\ldots,9$ 填完 $x^2$ 列和相邻两行的变化量，并作出结论。哪份完整记录正确？',[
+  c('$x^2$ 依次为 $0,1,4,9,16,25,36,49,64,81$；变化量依次为 $1,3,5,7,9,11,13,15,17$。每次变化量比前一次多 $2$。','Compute every square and successive difference. Algebra(n+1)^2-n^2=2n+1 confirms the displayed odd-number increments.'),
+  w('$x^2$ 依次为 $0,1,4,7,10,13,16,19,22,25$；变化量依次为 $1,3,3,3,3,3,3,3,3$。从 $x=1$ 以后变化量恒为 $3$。','Keep all supplied entries,then repeatedly add the last observed change3 to fill remaining squares.','Extrapolate a constant final observed change rather than compute squares.'),
+  w('$x^2$ 依次为 $0,1,4,8,16,32,64,128,256,512$；变化量依次为 $1,3,4,8,16,32,64,128,256$。从 $x=2$ 以后变化量每次翻倍。','Keep supplied0,1,4,then double the preceding value for every missing row and subtract adjacent values.','Replace squaring the row input by a doubling recurrence after the supplied rows.')
+],'One complete table and change-conclusion task preserves every original row and all missing changes without isolated cell questions.',[6],['tbl-p0223-01'])
+q('950','','把 $4,8,16,32$ 依次写成底数为 $2$ 的幂。',[
+  c('$2^2,2^3,2^4,2^5$。','The numbers require2,3,4,5 factors2.'),
+  w('$2^4,2^8,2^{16},2^{32}$。','Use each target number itself as its exponent.','Confuse the value of a power with its exponent.'),
+  w('$2^1,2^2,2^3,2^4$。','Use one fewer factor than the required counts.','Count multiplication signs rather than factors2.')
+],'One ordered powers-of-two representation record retains all four requested targets.',[3])
+q('951','','边长分别为 $2.5$ 厘米、$0.3$ 分米的两个正方形，面积依次是多少？',[
+  c('$6.25$ 平方厘米；$0.09$ 平方分米。','Square each edge in its own original unit:2.5^2,.3^2.'),
+  w('$5$ 平方厘米；$0.6$ 平方分米。','Use2a instead ofa^2,then label those linear doubles as areas.','Double the edge rather than multiply it by itself.'),
+  w('$6.25$ 平方厘米；$0.09$ 平方厘米。','Numerical squares are right but relabel the second source dm^2 value ascm^2 without multiplying by100.','Treat the two original linear units as identical.')
+],'The complete pair retains both squares and their distinct squared units.',[6])
+q('952','','棱长分别为 $0.3$ 厘米、$12$ 米的两个立方体，体积依次是多少？',[
+  c('$0.027$ 立方厘米；$1728$ 立方米。','Cube each positive edge:.3^3=.027,12^3=1728.'),
+  w('$0.09$ 立方厘米；$144$ 立方米。','Use squared edges rather than cubes and label as volumes.','Use a face-area formula for cube volume.'),
+  w('$0.9$ 立方厘米；$36$ 立方米。','Use3a instead ofa^3.','Interpret the cube exponent as scalar multiplication.')
+],'One full two-volume record preserves both measurements and cubic dimensions.',[7])
+
+q('953','a','地图上 $6$ 厘米表示地面 $3$ 公里。地面 $10$ 公里在同一地图上长 $x$ 厘米。哪份比例及解正确？',[
+  c('$x/6=10/3$；$x=20$ 厘米。','Corresponding map-length ratio equals ground-distance ratio;6*10/3=20.'),
+  w('$x/6=3/10$；$x=1.8$ 厘米。','Reverse only the ground-distance correspondence;6*3/10=1.8.','Use inverse proportionality for same-scale map lengths.'),
+  w('$x/10=3/6$；$x=5$ 厘米。','Place unlike corresponding quantities asx/10=3/6,then solve x5.','Exchange reference map and ground values on only one side of the proportion.')
+],model)
+q('953','b','红甜菜汤按质量用 $5$ 份肉、$3$ 份甜菜。用 $600$ 克肉时需 $z$ 克甜菜。哪份比例及解正确？',[
+  c('$z/600=3/5$；$z=360$ 克。','Beet/meat ratio3/5 scales the600g meat mass to360g beet.'),
+  w('$z/600=5/3$；$z=1000$ 克。','Use meat/beet ratio5/3 to scale meat into beet.','Reverse the requested ingredient correspondence.'),
+  w('$z/600=3/8$；$z=225$ 克。','Treat600g meat as the8-part total rather than5-part meat.','Use the beet fraction of total ingredients on a meat-only base.')
+],model)
+q('954','','三个数平均数是 $8.2$；第一个比第二个小 $0.7$，第三个比第二个大 $0.7$。依次是哪三个数？',[
+  c('$7.5,8.2,8.9$。','The second value is the mean of the symmetric triple;subtract/add.7.'),
+  w('$8.2,8.9,9.6$。','Set the first value equal to the mean and add.7 twice.','Confuse the first member with the mean/middle member.'),
+  w('$6.8,8.2,9.6$。','Use1.4, the full first-to-third gap, on each side of the middle.','Double each specified neighboring difference.')
+],model)
+q('955','a','第一盒有 $8\\frac1{10}$ 公斤油灰；第二盒是第一盒的 $2\\frac29$ 倍，又是第三盒的 $1\\frac18$ 倍。第二、第三盒依次有多少？',[
+  c('$18$ 公斤、$16$ 公斤。','(81/10)*(20/9)=18;third18/(9/8)=16.'),
+  w('$18$ 公斤、$20.25$ 公斤。','Compute second18,then multiply18*(9/8)=20.25 for third.','Reverse the inverse scaling needed to recover the third box.'),
+  w('$3.645$ 公斤、$3.24$ 公斤。','Use second(81/10)/(20/9)=729/200=3.645;third3.645/(9/8)=3.24.','Divide rather than multiply when the second box is a multiple of the first.')
+],model)
+q('955','b','第一袋有 $4\\frac9{10}$ 公斤白粉，是第二袋的 $1\\frac25$ 倍；第三袋是第二袋的 $2\\frac27$ 倍。第二、第三袋依次有多少？',[
+  c('$3.5$ 公斤、$8$ 公斤。','Second(49/10)/(7/5)=7/2;third(7/2)*(16/7)=8.'),
+  w('$6.86$ 公斤、$15.68$ 公斤。','Second(49/10)*(7/5)=343/50=6.86;third(343/50)*(16/7)=15.68.','Multiply by the first-to-second ratio instead of dividing to recover the second.'),
+  w('$3.5$ 公斤、$49/32$ 公斤。','Second7/2 correct;third(7/2)/(16/7)=49/32.','Use inverse scaling when the third is a stated multiple of the second.')
+],model)
+
+q('956','a','解方程 $2\\frac13k=4\\frac12\\cdot1\\frac19$。',[
+  c('$k=15/7$','RHS(9/2)*(10/9)=5;divide5 by7/3.'),
+  w('$k=35/3$','RHS5 multiplied by7/3 gives35/3.','Multiply by the coefficient instead of its reciprocal.'),
+  w('$k=7/15$','Use coefficient/RHS=(7/3)/5=7/15.','Reverse the quotient when isolating the variable.')
+],independent)
+q('956','b','解方程 $8\\frac12m=3\\frac23\\cdot1\\frac1{11}$。',[
+  c('$m=8/17$','RHS4;divide by17/2 to obtain8/17.'),
+  w('$m=34$','Multiply RHS4 by17/2 instead of divide.','Apply forward scaling when undoing a coefficient.'),
+  w('$m=17/8$','Use coefficient divided byRHS:(17/2)/4=17/8.','Report the reciprocal of the solved variable.')
+],independent)
+q('956','c','解方程 $y:\\frac45=3\\frac18:1\\frac14$。',[
+  c('$y=2$','Right ratio(25/8)/(5/4)=5/2; y=(4/5)*(5/2)=2.'),
+  w('$y=25/8$','Divide the right ratio5/2 by4/5, giving25/8.','Treat unknown dividend isolation as division by the known divisor.'),
+  w('$y=8/25$','Invert the right ratio to2/5 and multiply by4/5=8/25.','Reverse the right-side mixed-number quotient.')
+],independent)
+q('956','d','解方程 $x:\\frac3{14}=3\\frac19:\\frac49$。',[
+  c('$x=3/2$','Right ratio(28/9)/(4/9)=7;x=(3/14)*7=3/2.'),
+  w('$x=98/3$','Divide the right ratio7 by3/14=98/3.','Divide instead of multiply to recover an unknown dividend.'),
+  w('$x=8/27$','Use right-side product(28/9)*(4/9),then multiply by3/14=8/27.','Replace division by4/9 with multiplication.')
+],independent)
+q('957','a','依次求 $11^2,(-13)^3,(5/9)^2$ 的值。',[
+  c('$121,-2197,25/81$。','Squares11 and5/9 and odd negative cube produce the stated complete results.'),
+  w('$22,-39,10/9$。','Use exponent times base:2*11,3*(-13),2*(5/9).','Replace powers by scalar multiplication.'),
+  w('$121,2197,25/81$。','Compute magnitudes correctly but remove the negative sign of the odd cube.','Make an odd power of a negative base positive.')
+],'A complete integer/sign/fraction segment retains all three original power computations.',[6,7])
+q('957','b','依次求 $(2.5)^3,(-0.84)^2,(1\\frac23)^3$ 的值。',[
+  c('$15.625,0.7056,125/27$。','2.5 cubed15.625;.84 squared.7056;(5/3)^3=125/27.'),
+  w('$7.5,-1.68,5$。','Use3*2.5,2*(-.84),3*(5/3).','Interpret powers as exponent-times-base.'),
+  w('$15.625,-0.7056,35/27$。','Keep negative sign on the even decimal square;cube mixed-number parts separately1^3+(2/3)^3=35/27.','Combine failure of even sign cancellation with distributing a cube over mixed-number addition.')
+],'A complete decimal/mixed segment preserves sign parity and conversion of the entire mixed base.',[6,7])
+
+q('958','a','计算 $(0.3+1.2)^2$。',[
+  c('$2.25$','Sum1.5 then square to2.25.'),
+  w('$1.53$','Square terms separately:.3^2+1.2^2=.09+1.44=1.53.','Distribute a square across addition without the cross term.'),
+  w('$3$','Compute2*(.3+1.2)=3.','Double the parenthesized sum rather than square it.')
+],independent,[8])
+q('958','b','计算 $(7.2-10.1)^2$。',[
+  c('$8.41$','The base-2.9 squared gives8.41.'),
+  w('$-8.41$','Square the magnitude2.9 but keep its initial negative sign.','Fail to cancel two negative factors.'),
+  w('$-50.17$','Use7.2^2-10.1^2=51.84-102.01=-50.17.','Distribute the square over subtraction.')
+],independent,[8])
+q('958','c','计算 $4.1\\cdot(0.2)^3$。',[
+  c('$0.0328$','4.1*.008=.0328.'),
+  w('$2.46$','Replace.2^3 by3*.2=.6;4.1*.6=2.46.','Triple the base instead of cubing it.'),
+  w('$0.551368$','Cube the entire product(4.1*.2)^3=.82^3=.551368.','Move the outside factor4.1 under the cube.')
+],independent,[8])
+q('958','d','计算 $(0.5)^4:\\frac1{32}$。',[
+  c('$2$','1/16 divided by1/32 equals2.'),
+  w('$1/512$','Multiply(1/16)*(1/32)=1/512.','Use the divisor rather than its reciprocal.'),
+  w('$64$','Use.5*4=2 as the power value,then divide by1/32=64.','Replace the fourth power by four times the base.')
+],independent,[8])
+q('959','a','当 $x$ 依次为 $-3,-2,-0.1,0,3,4$ 时，$x^2$ 的值依次是多少？',[
+  c('$9,4,0.01,0,9,16$。','Square every complete input;negative and positive equal magnitudes have equal squares.'),
+  w('$-9,-4,-0.01,0,9,16$。','Retain a negative sign on squares of negative inputs while other rows are squared correctly.','Treat an even power as preserving the negative input sign.'),
+  w('$-6,-4,-0.2,0,6,8$。','Use2x for each row.','Double rather than square the input.')
+],'One complete square correspondence retains all six inputs,including negative decimal andzero.',[6])
+q('959','b','当 $x$ 依次为 $-0.2,0.5,7,8,10$ 时，$x^3$ 的值依次是多少？',[
+  c('$-0.008,0.125,343,512,1000$。','Cube all five inputs;the sole negative base has a negative odd power.'),
+  w('$0.008,0.125,343,512,1000$。','Compute magnitudes and discard the negative sign in the first row.','Use the even-power sign rule for an odd cube.'),
+  w('$-0.6,1.5,21,24,30$。','Use3x for each listed input.','Replace cubing by tripling.')
+],'The full cube table tests its own input correspondence,not independent arithmetic blanks.',[7])
+q('960','','买 $3\\frac15$ 公斤麦糁用 $1\\frac35$ 美元。同样单价下，$2\\frac12$ 公斤多少钱？',[
+  c('$1.25$ 美元','Unit price(8/5)/(16/5)=1/2;cost(5/2)*(1/2)=5/4.'),
+  w('$5$ 美元','Use kilograms/dollar=(16/5)/(8/5)=2 as dollars/kg;2.5*2=5.','Reverse the unit-price quotient.'),
+  w('$2.048$ 美元','Use reference cost1.6*(3.2/2.5)=2.048.','Reverse target-to-reference quantity scaling at constant price.')
+],model)
+q('961','','骑车用 $4$ 小时走 $46$ 公里。同样速度下，$6$ 小时走多少公里？',[
+  c('$69$ 公里','46/4=11.5km/h;11.5*6=69.'),
+  w('$92/3$ 公里','46*(4/6)=92/3.','Use inverse rather than direct distance/time scaling.'),
+  w('$1104$ 公里','46*4*6=1104.','Multiply by the reference time rather than dividing to obtain speed.')
+],model)
+q('962','a','要作三角形 $ABC$，使 $AB=5.3$ 厘米、$\\angle A=33^\\circ,\\angle B=62^\\circ$。哪份完整作法与结果正确？',[
+  c('作 $AB=5.3$ 厘米；在 $A$ 对 $AB$ 作 $33^\\circ$ 射线，在 $B$ 对 $BA$ 作 $62^\\circ$ 射线，两射线指向 $AB$ 同侧，交点为 $C$。$\\angle C=85^\\circ$。','The same-half-plane ASA rays meet uniquely up to reflection;third angle180-33-62=85.'),
+  w('作 $AB=5.3$ 厘米；在 $A$ 对 $AB$ 作 $62^\\circ$ 射线，在 $B$ 对 $BA$ 作 $33^\\circ$ 射线，两射线指向 $AB$ 同侧，交点为 $C$。$\\angle C=85^\\circ$。','Swap the endpoint angle assignments while keeping the correct missing-angle sum.','Exchange the two given angle-to-vertex correspondences.'),
+  w('作 $AB=5.3$ 厘米；在 $A$ 对 $AB$ 作 $33^\\circ$ 射线，在 $B$ 对 $BA$ 作 $85^\\circ$ 射线，两射线指向 $AB$ 同侧，交点为 $C$。$\\angle C=62^\\circ$。','Put the computed85-degree missing angle atB instead ofC;remainingC becomes62.','Assign the missing angle to the already specified vertex.')
+],'One complete ASA construction retains side,vertex correspondence,orientation and third angle.')
+q('962','b','要作三角形 $ABC$，使 $AC=4.8$ 厘米、$BC=2.7$ 厘米、$\\angle C=103^\\circ$。哪份完整作法正确？',[
+  c('在 $C$ 作 $103^\\circ$ 角；在它的一边取 $A$，使 $CA=4.8$ 厘米，在另一边取 $B$，使 $CB=2.7$ 厘米；连接 $AB$。','The angle is included between the two measured sides fromC,so SAS determines the requested nondegenerate triangle.'),
+  w('在 $A$ 作 $103^\\circ$ 角；在它的一边取 $B$，使 $AB=4.8$ 厘米，在另一边取 $C$，使 $AC=2.7$ 厘米；连接 $BC$。','Move the specified angle and both measured sides toA,changing their vertex/side correspondence.','Treat the supplied SAS labels as interchangeable.'),
+  w('在 $C$ 作 $103^\\circ$ 角；在它的一边取 $A$，使 $CA=4.8$ 厘米，在另一边取 $B$，使 $CB=4.8$ 厘米；连接 $AB$。','Copy the first side length4.8 to the second and ignore the source2.7.','Assume the two included sides must be equal.')
+],'The independent SAS construction has different defining data and deserves its own complete record.')
+
+const planFile = path.join(dir, 'option-position-plan.json')
+let plan
+if (fs.existsSync(planFile)) plan = JSON.parse(fs.readFileSync(planFile, 'utf8'))
+else {
+  plan = {
+    selection: 'One independent Fisher-Yates permutation per manually authored candidate list using crypto.randomInt. No truth-directed placement, quotas, resampling or periodic schedule; persist and reuse the finite draw.',
+    questions: questions.map(q => {
+      const order = q.view.options.map(o => o.id)
+      for (let i = order.length - 1; i > 0; i--) {
+        const j = crypto.randomInt(i + 1)
+        ;[order[i], order[j]] = [order[j], order[i]]
+      }
+      return { id: q.id, new_order_original_ids: order }
+    })
+  }
+  fs.writeFileSync(planFile, JSON.stringify(plan, null, 2) + '\n', { flag: 'wx' })
+}
+assert.deepEqual(plan.questions.map(p => p.id), questions.map(q => q.id))
+questions.forEach((q, i) => {
+  const old = new Map(q.view.options.map(o => [o.id, o]))
+  const reasons = new Map(q.key.rationales.map(r => [r.option_id, r]))
+  const order = plan.questions[i].new_order_original_ids
+  assert.deepEqual([...order].sort(), [...old.keys()].sort())
+  const labels = new Map(order.map((id, j) => [id, String.fromCharCode(65 + j)]))
+  q.view.options = order.map(id => ({ ...old.get(id), id: labels.get(id) }))
+  q.key.correct = q.key.correct.map(id => labels.get(id))
+  q.key.rationales = order.map(id => ({ ...reasons.get(id), option_id: labels.get(id) }))
+})
+const draft = {
+  schema: 's10y-choice-draft-v1', seed_sha256: frozen.seed_sha256, new_figures: [], questions,
+  coverage: frozen.solutions.map(s => ({
+    source_number: s.source_number,
+    question_ids: questions.filter(q => q.source_numbers.includes(s.source_number)).map(q => q.id),
+    omitted_tasks: [...s.losses],
+    reason: 'All original operands,domains and requested results are retained as complete mathematical recognition. Independent written/drawing production and the supplied table entries remain explicitly untested; coverage is not semantic approval.'
+  }))
+}
+const view = { questions: questions.map(q => ({ id: q.id, ...q.view })) }
+for (const [name, value] of [['draft.json', draft], ['view.json', view]]) {
+  fs.writeFileSync(path.join(dir, name), JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+}
+fs.writeFileSync(path.join(dir, 'authoring-order.json'), JSON.stringify({
+  source_solutions_byte_sha256: crypto.createHash('sha256').update(frozenBytes).digest('hex'),
+  exact_source_only_freeze_preceded_author_file_and_options: true,
+  semantic_status: 'Author draft only; independent review pending.'
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ questions: questions.length, options: view.questions.reduce((n, q) => n + q.options.length, 0) }))

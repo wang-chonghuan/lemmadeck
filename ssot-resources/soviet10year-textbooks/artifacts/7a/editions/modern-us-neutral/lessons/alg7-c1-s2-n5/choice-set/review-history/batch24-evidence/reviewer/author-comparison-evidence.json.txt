@@ -1,0 +1,259 @@
+{
+  "role": "independent reviewer; source/view evidence frozen before author internals",
+  "outcome": "revise",
+  "independent_complete_keys_agree": true,
+  "findings": [
+    {
+      "id": "n5-76a-A-reverse-result-wording",
+      "verdict": "revise",
+      "question_id": "n5-76a",
+      "option_id": "A",
+      "field": "key.rationales[A].misconception",
+      "observed": "Use90 as the triangle angle sum instead of180; both displayed subtractions then produce C=0.",
+      "evidence": "将内角和误作90°确实可生成该错误候选，但两方向结果不同：A+B=90时C=0；C=0时A+B=90。第二次并不求出C=0。当前“both ... produce C=0”把反向目标和输出写错；可见选项和独立假值无需改。",
+      "minimum_repair": "只改misconception尾句为：误用三角形内角和90°；由A+B=90得到C=0，由C=0得到A+B=90。保留题面、候选、键和其他字段。"
+    },
+    {
+      "id": "n5-76b-C-unsupported-rounding",
+      "verdict": "revise",
+      "question_id": "n5-76b",
+      "option_id": "C",
+      "field": "key.rationales[C].misconception",
+      "observed": "Round50 to60 when checking the sum, thereby obtaining180 and accepting an invalid witness.",
+      "evidence": "源/候选给精确50°与120°，无近似精度或舍入规则；通常舍入不会把精确50改成60。该程序先任意改题给数再使170变180，不能以未说明的舍入操作作为实际生成路径。C仍是假候选：50+120=170，前件不满足。无需改数值或真集。",
+      "minimum_repair": "只改misconception为：只检查两个角顶点不同、不是邻补角，忽略反例还须满足角和180°；因此接受50°与120°这组无效反例。该错误选择程序保留全部原值并确实产生C。"
+    }
+  ],
+  "question_program_checks": [
+    {
+      "question_id": "n5-67",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "正确证明使用题面河岸全在地区的包含条件，不依靠真实地理记忆。"},
+        "B": {"verdict": "pass", "evidence": "120>90直接判钝角，与独立角分类一致。"},
+        "C": {"verdict": "pass", "evidence": "对同一动物应用哺乳类包含于脊椎动物，方向正确。"},
+        "D": {"verdict": "pass", "evidence": "错误先由180-50=130平分余角为65,65，再把这个锐角例当成唯一情形，从而误推出必锐角；真实50,100,30反驳。"}
+      }
+    },
+    {
+      "question_id": "n5-68",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "两对角线同为sqrt(u²+v²)，正确支持等长。"},
+        "B": {"verdict": "pass", "evidence": "菱形对角线互相平分；半对角线组成的等距三角形在交点给直角，与冻结向量点积0证明相容。"},
+        "C": {"verdict": "pass", "evidence": "直接逆置“对顶角⇒全等角”生成候选“全等⇒对顶”，不同顶点60°反例使它实际假。"},
+        "D": {"verdict": "pass", "evidence": "使用非退化欧氏三角形内角和180°，正确。"}
+      }
+    },
+    {
+      "question_id": "n5-69",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "正方形定义四边等长，支持该后件。"},
+        "B": {"verdict": "pass", "evidence": "正方形是菱形/平行四边形，故对角线垂直且互相平分。"},
+        "C": {"verdict": "pass", "evidence": "正方形是矩形，故对角线等长。"},
+        "D": {"verdict": "pass", "evidence": "正方形四内角直角，正确。"},
+        "E": {"verdict": "pass", "evidence": "错误以非正方的菱形替换题给正方形，再搬用该模型的对角线不等长；这个对象类别替换产生不等长断言，但真实正方形两条均s√2。"}
+      }
+    },
+    {
+      "question_id": "n5-70a",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "-3属于整数而不属于任一通常N，真反例。"},
+        "B": {"verdict": "pass", "evidence": "仅检查正整数5满足前件而误当反例，生成选5的错误接受；实际5也满足后件。"},
+        "C": {"verdict": "pass", "evidence": "仅找整数1而不核自然数后件，生成选1；实际两谓词都真，非反例。"}
+      }
+    },
+    {
+      "question_id": "n5-70b",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "把整数值倒数1是否称分数的分类问题混作有无定义，因而错选y=1；1/1=1实际有定义。"},
+        "B": {"verdict": "pass", "evidence": "错误禁止负分母，生成以-1作无定义见证；负分母-1并非0，实际值-1有定义。"},
+        "C": {"verdict": "pass", "evidence": "y=0满足原整数域，1/0无定义；未宣称这是一个有定义但分数谓词为假的数。"}
+      }
+    },
+    {
+      "question_id": "n5-70c",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "直接把右侧16复制为b，确生成16但16²=256不满足前件，故选16不是反例。"},
+        "B": {"verdict": "pass", "evidence": "只取正平方根4并把确认例当反例，生成该错误接受；b=4前后件都真。"},
+        "C": {"verdict": "pass", "evidence": "(-4)²=16且-4≠4，真反例。"}
+      }
+    },
+    {
+      "question_id": "n5-70d",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "竖直/水平对角线确垂直，但两组边长√5、√2不等，完整坐标反例。"},
+        "B": {"verdict": "pass", "evidence": "用4、2不等的对角线错拒菱形，把矩形对角线相等条件错搬到菱形；四边实际均√5，故不能反驳。"},
+        "C": {"verdict": "pass", "evidence": "只验垂直却不验菱形结论为假，导致误接受该正方形；四边均√2。"}
+      }
+    },
+    {
+      "question_id": "n5-71",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "零积只取第一因子零并忽略x=7，直接生成错误全称箭头。"},
+        "B": {"verdict": "pass", "evidence": "3x-1=0使对应乘积为0，根1/3保留，正确。"},
+        "C": {"verdict": "pass", "evidence": "对x-1=5两边平方得到25，原x=6解仍在平方方程真集中。"},
+        "D": {"verdict": "pass", "evidence": "仅取36主平方根6，删-6，确生成错误x²=36⇒x=6。"}
+      }
+    },
+    {
+      "question_id": "n5-72abc",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "把阈值8<14的顺序直接当弱条件⇒强条件，生成反箭头；10反驳。"},
+        "B": {"verdict": "pass", "evidence": "5.2下界强于1.3，包含方向和箭头正确。"},
+        "C": {"verdict": "pass", "evidence": "12上界强于16，较小左半轴推出较大左半轴。"},
+        "D": {"verdict": "pass", "evidence": "只比较1.3<5.2而忽略真集包含，生成弱下界⇒强下界；2反驳。"},
+        "E": {"verdict": "pass", "evidence": "把更大的下界更强规则误搬到上界，生成a<16⇒a<12；14反驳。"},
+        "F": {"verdict": "pass", "evidence": "14下界强于8，正确。"}
+      }
+    },
+    {
+      "question_id": "n5-72def",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "(-∞,-7)包含于(-∞,-3)，方向正确。"},
+        "B": {"verdict": "pass", "evidence": "忽略左右不等号方向，把较小书写阈值1.7误当弱下界，生成P⇒Q；x=3反驳。"},
+        "C": {"verdict": "pass", "evidence": "按阈值绝对值3到10而非负数顺序错误强化小于条件，生成m<-3⇒m<-10；-5反驳。"},
+        "D": {"verdict": "pass", "evidence": "把一个失败箭头反过来就视作有效，忽略两个非空真集不相交，生成x<1.7⇒x>2.6；1反驳。"},
+        "E": {"verdict": "pass", "evidence": "按|−3|<|−7|逆置真实负数阈值次序，生成错误c<-3⇒c<-7；-5反驳。"},
+        "F": {"verdict": "pass", "evidence": "m<-10的真集是m<-3真集的子集，正确。"}
+      }
+    },
+    {
+      "question_id": "n5-73",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "选最大下界11、0.34和最小上界2、-4.6，四个最强条件正确。"},
+        "B": {"verdict": "pass", "evidence": "程序明确把1/3近似错记为0.34并把该近似等值当精确并列最大，因此改选1/3；其他三组保留正确。真实差0.34-1/3=1/150，.335反驳“同最强”。这是所写误近似步骤，不接受近似作为正确比较。"},
+        "C": {"verdict": "pass", "evidence": "统一选择最大真集即最弱条件，确生成1、12、2/7、-4.3四项。"}
+      }
+    },
+    {
+      "question_id": "n5-74a",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "作者的错误奇偶交替规则把乘2当可翻转奇偶，从而误拒偶输入的正向；该错误规则亦允许奇输入乘2变偶，使反向也被拒，生成两方向皆否的候选。真实n=2k推4k；不得把这条错误规则当真证明。"},
+        "B": {"verdict": "pass", "evidence": "n=2k给2n=4k；n=1拒逆向，正确完整方向。"},
+        "C": {"verdict": "pass", "evidence": "误把偶数除2的商仍须偶，生成Q⇒P；n=1反驳，正向保留真。"}
+      }
+    },
+    {
+      "question_id": "n5-74b",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "只要求结论假、不核前件，给非自然-1作正向反例，又给非正-1作正N逆反例；含0分支选0。这正生成三个记录，前两见证无效。"},
+        "B": {"verdict": "pass", "evidence": "正向1/2见证正确；仅在正整数上验逆向后直接泛化到新增0的N，确生成第二逆向也真的错误判断。"},
+        "C": {"verdict": "pass", "evidence": "1/2反驳正向；正N逆向全称真；含0N由0反驳。三项和独立两分支完全吻合。"}
+      }
+    },
+    {
+      "question_id": "n5-74cd",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "非负数立方非负，逆否支持负立方⇒负底数。"},
+        "B": {"verdict": "pass", "evidence": "三个负因子乘积负，正向正确。"},
+        "C": {"verdict": "pass", "evidence": "正实数加1仍正，正确。"},
+        "D": {"verdict": "pass", "evidence": "把正数减1无条件当仍正，生成a+1>0⇒a>0；a=-1/2反驳。"}
+      }
+    },
+    {
+      "question_id": "n5-74ef",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "两偶数和为2(r+s)，证明正确且不依赖N0。"},
+        "B": {"verdict": "pass", "evidence": "和奇要求一奇一偶，积偶，证明正确。"},
+        "C": {"verdict": "pass", "evidence": "由积偶误推恰一偶因子，删去两偶情形，生成积偶⇒和奇；(2,2)反驳。"},
+        "D": {"verdict": "pass", "evidence": "和偶只列偶+偶、漏奇+奇，生成两输入皆偶；(1,1)反驳。"}
+      }
+    },
+    {
+      "question_id": "n5-75",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "正确把两条双箭头各读成两方向，整数奇偶及-a正⇔a负成立。"},
+        "B": {"verdict": "pass", "evidence": "翻译-a>0时去掉负号而保持正谓词，生成a正；-1反驳。"},
+        "C": {"verdict": "pass", "evidence": "把第一双箭头读成单箭头且否认逆向，确生成候选；n+1=2k+1⇒n=2k支持真正逆向。"}
+      }
+    },
+    {
+      "question_id": "n5-76a",
+      "options": {
+        "A": {"verdict": "revise", "evidence": "错误内角和90可以生成可见选项，但作者misconception说两次相减都得C=0；反向实际输出A+B=90，目标变量写错。只修该尾句，独立假值/键不变。"},
+        "B": {"verdict": "pass", "evidence": "正向相减正确，逆向忘记减C而保180，正好生成该完整错误证明。"},
+        "C": {"verdict": "pass", "evidence": "两方向均由180-90=90，完整正确证明。"}
+      }
+    },
+    {
+      "question_id": "n5-76b",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "45+135=180且不同顶点，前真后假，正确反例。"},
+        "B": {"verdict": "pass", "evidence": "60+120=180且不同顶点，正确反例。"},
+        "C": {"verdict": "revise", "evidence": "50+120=170；作者无规则把精确50舍入60后接受候选，不是有精度约定的可执行舍入。建议只检查不同顶点而漏验角和的错误选择程序，保持原值与独立假值。"},
+        "D": {"verdict": "pass", "evidence": "只看60/120不相等而错认为不邻补，导致接受这个前后件都真的配置；邻补并不要求角相等。"}
+      }
+    },
+    {
+      "question_id": "n5-77",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "由8=2·4得到8倍数⇒偶数再错误倒置，生成等价；2拒逆。"},
+        "B": {"verdict": "pass", "evidence": "3²末位9的正向被错误提升为双向，生成等价；7²=49拒逆。"},
+        "C": {"verdict": "pass", "evidence": "19非零，除以19及代回支持两方向，当前实数域引用正确。"},
+        "D": {"verdict": "pass", "evidence": "两位数只保小于100而删下界10，生成等价；5拒逆。"}
+      }
+    },
+    {
+      "question_id": "n5-78",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "仅对展开式把-2x错配成(x+1)²，解x=-1±10得{-11,9}；显式(x-1)²正常得{-9,11}；比较错误两集不等并称不等价，恰生成候选A。"},
+        "B": {"verdict": "pass", "evidence": "按后一方程-5去掉第一方程+5分支，令第一对都{-5}并称等价；第二对保持真，恰生成B。"},
+        "C": {"verdict": "pass", "evidence": "第一对差+5，第二对恒等、根1±10，证明完整。"}
+      }
+    },
+    {
+      "question_id": "n5-79",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "0、±1构造点和整条向上y轴对称抛物线吻合冻结y=x²；两值25/4、49/4、双根±3√2/2和开区间(-3,3)全正确。"},
+        "B": {"verdict": "pass", "evidence": "统一把整个原R域限制x>=0，保正输入值，画半支并报告正逆根和[0,3)，同时不再y轴对称，完整错模型正好生成B。"},
+        "C": {"verdict": "pass", "evidence": "统一去掉指数2成y=x，生成直线点0、(-1,-1)、(1,1)，值2.5/3.5、逆像4.5、x<9左射线；一致错误函数生成全部候选内容。"}
+      }
+    },
+    {
+      "question_id": "n5-80",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "只去掉系数负号成+x²/2，生成向上图、81/8和49/8正值、-3空逆像和>=-8全R；错误程序与候选逐成分一致。"},
+        "B": {"verdict": "pass", "evidence": "两值乘-1/2正确；level根平方6；乘-2不等号反向得x²<=16含±4。"},
+        "C": {"verdict": "pass", "evidence": "乘-2不反向，得x²>=16，正生成两条闭外射线，其他值和根保持正确。"}
+      }
+    },
+    {
+      "question_id": "n5-81",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "非零x平方正，负a使y负，两符号x在第三/第四象限。"},
+        "B": {"verdict": "pass", "evidence": "x²偶对称且a≠0使唯一顶点原点，正确。"},
+        "C": {"verdict": "pass", "evidence": "忽略a大小而只保正号，错误把所有正系数图当同一图；a=1和a=2在x=1分别给值1和2。"},
+        "D": {"verdict": "pass", "evidence": "正a与平方非负，0处最小0，证明正确。"},
+        "E": {"verdict": "pass", "evidence": "将平方函数最小0不经反向直接传到负倍数，生成最小0；实际负a函数无下界，0是最大。"},
+        "F": {"verdict": "pass", "evidence": "正a使非零x处y正，x两符号给第一/第二象限。"}
+      }
+    },
+    {
+      "question_id": "n5-82",
+      "options": {
+        "A": {"verdict": "pass", "evidence": "当分母没有零点时改去禁分子零点，第一禁7、第四禁{-1,0,1}；另外两分母有零点就保持正确，明确条件错误规则生成全部四域。"},
+        "B": {"verdict": "pass", "evidence": "解|x|=5和x²=1只保非负根，分别禁{5}、{0,1}，无零分母的第一/第四保R，正生成B。"},
+        "C": {"verdict": "pass", "evidence": "依四个原分母：永正、±5、-1/0/1、非零6，完整正确。"}
+      }
+    }
+  ],
+  "source_coverage_checks": [
+    {"source_number": "67", "verdict": "pass", "evidence": "四个原方向完整；假想地区条件可见。独立解释/角度反例生产明确未评。"},
+    {"source_number": "68", "verdict": "pass", "evidence": "四个几何推出及假逆向均在候选，证明/位置反例生产损失明确。"},
+    {"source_number": "69", "verdict": "pass", "evidence": "开放生成一个正方形后件改为识别多个有效后件；不是源无唯一答案blocker，生产损失已列。"},
+    {"source_number": "70", "verdict": "pass", "evidence": "四小问完整：整数非自然、原整数域倒数定义障碍、负平方根、坐标反例。非零域下分数词义未判及反例生产损失如实列，不把1/0作为一个假分数数值。原词义notice保留。"},
+    {"source_number": "71", "verdict": "pass", "evidence": "四个第一⇒第二原方向完整，写箭头生产损失已列，不以反方向代替。"},
+    {"source_number": "72", "verdict": "pass", "evidence": "六对双方向、反向真情形和双向皆假情形齐全，两个native multiple组有数学理由；写箭头损失已列。"},
+    {"source_number": "73", "verdict": "pass", "evidence": "四组最强界完整，分数/小数比较保留，独立选界和证明生产损失已列。"},
+    {"source_number": "74", "verdict": "pass", "evidence": "六原predicate对的双方向全覆盖，b含完整N两分支而未选全书约定；原条件notice仍在独立源，不把条件化完备答案列为数学遗漏。"},
+    {"source_number": "75", "verdict": "pass", "evidence": "两个双条件各两方向完整读取，独立说/写读法未评明确。"},
+    {"source_number": "76", "verdict": "pass", "evidence": "a双向证明和b位置反例识别均完整；独立生产两方向证明与几何反例未评明确。两处内部理由缺陷单列在question review，覆盖不漏源任务。"},
+    {"source_number": "77", "verdict": "pass", "evidence": "四对等价关系保留真实失败方向及明确19a实域，写箭头/反例损失已列。"},
+    {"source_number": "78", "verdict": "pass", "evidence": "两对完整真集/等价判断都变化，独立书写双箭头生产未评。"},
+    {"source_number": "79", "verdict": "pass", "evidence": "完整图形构造方案、两原值、全逆像、严格区间覆盖；独立描图与在自己的图上作近似读数均具体列为损失，未假称实际图读。"},
+    {"source_number": "80", "verdict": "pass", "evidence": "向下图及全部值/双根/闭区间覆盖，原画图和图读近似方法能力损失明确。"},
+    {"source_number": "81", "verdict": "pass", "evidence": "两类a符号的整体草图性质保留，不假补固定a值，亲自画两草图生产损失明确。"},
+    {"source_number": "82", "verdict": "pass", "evidence": "四原式自然实域完整，每个目标变化；独立写全部域未评明确，原分母禁值不恢复。"}
+  ],
+  "model": null,
+  "usage": null
+}

@@ -1,0 +1,316 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import assert from "node:assert/strict";
+
+const root = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const tmp = path.join(root, ".intentfold/tickets/STEMROBIN-182/tmp");
+const own = path.join(tmp, "reviewer-5m-n51");
+const sha = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const read = (file) => {
+  const bytes = fs.readFileSync(file);
+  return { path: file, bytes, json: JSON.parse(bytes), sha256: sha(bytes) };
+};
+const rel = (file) => path.relative(root, file);
+const view = read(path.join(tmp, "5m-n51-sartre-repair/repaired-view.json"));
+const prior = read(path.join(own, "view-checks.json"));
+const source = read(path.join(own, "source-solutions.json"));
+const priorEvidence = read(path.join(own, "view-evidence.json"));
+const expectedViewSha = "0dea5ce9471f37958b2c922bec2617f3a7ab07cbf1caaa8b3f62e0cc91abb484";
+assert.equal(view.sha256, expectedViewSha);
+assert.equal(source.sha256, prior.json.binding.frozen_source_record_byte_sha256);
+assert.equal(priorEvidence.sha256, prior.json.binding.independent_option_evidence_byte_sha256);
+assert.deepEqual(Object.keys(view.json), ["questions"]);
+assert.equal(view.json.questions.length, 52);
+const output = path.join(own, "changed-view-checks.json");
+assert(!fs.existsSync(output), "Preserve any existing changed-view freeze.");
+
+const changedEvidence = {
+  "n51-975": {
+    source_number: "975",
+    source_fidelity: "Restores the missing straight-sector overlap/reflex-union task. The given angular intervals form two180-degree filled closed sectors with56-degree overlap. The learner must distinguish intersection from union and compute both full direction intervals and measures. The original independent drawing/choice of sectors is now supplied and remains a production loss, not falsely claimed as performed.",
+    independent_solution: "For every nonvertex point, membership is determined by its direction in S1=[0,180] or S2=[124,304]. The intersection is[max(0,124),min(180,304)]=[124,180], measure180-124=56 degrees. Since the intervals overlap, their union is[0,304], measure304 degrees. Both boundary rays and O belong; the union is a reflex filled sector. Each original sector is180 degrees because180-0=304-124=180. Inclusion/exclusion also gives180+180-56=304.",
+    options: [
+      {
+        id: "A", truth: false,
+        evidence: "Both rows are swapped. Direction90 belongs to the proposed intersection[0,304] but not to S2; direction200 belongs to the actual union but not the proposed union[124,180]. The actual intersection is56 degrees and cannot have304 degrees when each parent sector has180."
+      },
+      {
+        id: "B", truth: false,
+        evidence: "Proposed intersection[0,124] is not common membership: direction90 is outside S2, while direction150 is common but omitted. Proposed union[0,236] omits direction270, which belongs to S2. Although its own interval lengths124 and236 are internally consistent, both intervals and both measures differ from the required[124,180]/56 and[0,304]/304."
+      },
+      {
+        id: "C", truth: true,
+        evidence: "Both complete intervals, both closed endpoint inclusions and both measures agree with the independently derived max/min intersection and overlapping union. This includes the full reflex union, not only its56-degree complement."
+      }
+    ],
+    production_losses: [
+      "Independent placement/drawing of two original straight-angle regions with56-degree intersection is replaced by the supplied complete angular construction.",
+      "Independent production of the overlap/union region drawing and written inclusion/exclusion derivation is replaced by full-record recognition."
+    ],
+    redundancy: "All three options are distinct complete intersection/union tables. A swaps the two relationships; B proposes genuinely different direction sets, not merely a duplicated notation of C.",
+    prose_leakage: "The stem supplies the two original region definitions, not which table is the intersection/union answer. Endpoints may be copied into a candidate only after deciding max/min membership and union; the56-degree overlap still requires a difference. No other question states this complete record."
+  },
+  "n51-976b": {
+    source_number: "976",
+    source_fidelity: "The revised unit affirmatively requires both complete intersection sets and all their boundaries, so source976(1) is no longer only a triangle-shaped false option of a segment task. Different vertices A,B, acute45-degree sectors, infinite boundary rays and closed inclusion are explicit and preserved.",
+    independent_solution: "A's ray vectors(4,0),(1,1) form a45-degree acute closed wedge W_A={y>=0,y<=x}. For constructionI, B's vectors(-4,0),(-1,1) give W_BI={y>=0,y<=4-x}, also45 degrees. IntersectionI is0<=y<=min(x,4-x), which forces0<=x<=4. Its three boundaries y=0,y=x,y=4-x meet at(0,0),(4,0),(2,2), giving the entire filled closed triangle. For constructionII, B's vectors(-4,0),(-1,-1) give W_BII={y<=0,y>=x-4}, again45 degrees. Intersection with W_A forcesy=0 and0<=x<=4, precisely the closed finite segment AB including both endpoints. Infinite supporting rays do not make the intersection an infinite ray.",
+    options: [
+      {
+        id: "A", truth: false,
+        evidence: "The two complete intersection sets are exchanged. Point(2,1) belongs to constructionI's two upper wedges but is omitted by the proposed segment; the same point is included by the proposed constructionII triangle but violates B's lower wedge y<=0. Thus neither row describes its named construction."
+      },
+      {
+        id: "B", truth: false,
+        evidence: "For constructionI, the proposed unbounded rightward wedge includes(5,0.5), but actual B requiresy<=4-x=-1, so that point is impossible. It also excludes A=(0,0), an actual common boundary point. For constructionII, proposed ray includes(5,0), which violatesy>=x-4=1 at B, and excludes the actual endpoint A. Actual intersections are the bounded triangle and the finite closed segment."
+      },
+      {
+        id: "C", truth: true,
+        evidence: "ConstructionI records every common point0<=y<=min(x,4-x), all three vertices and all edges/interior; constructionII records every point y=0,0<=x<=4 with both endpoints. These coincide exactly with all four closed-wedge constraints, not merely an example point or a supporting-ray symmetry."
+      }
+    ],
+    production_losses: [
+      "Independent placement/drawing of the two acute-angle pairs is replaced by the two supplied coordinate/ray constructions.",
+      "Independent geometric construction and written proof of the complete triangle/segment boundaries is replaced by choosing a supplied full paired record."
+    ],
+    redundancy: "The paired tables are not separate micro-clicks: each response requires both whole sets. A exchanges triangle/segment; B substitutes unbounded rightward regions; C gives both bounded intersections.",
+    prose_leakage: "The stem gives ray-defining points, side orientation and closed-domain rules but neither final inequality system nor final shape. Verifying the actual common points remains necessary. The975 same-vertex reflex-sector measures do not give the different-vertex coordinate intersections."
+  }
+};
+
+const priorById = new Map(prior.json.question_checks.map((q) => [q.id, q]));
+const visibleFromFrozen = (q) => ({
+  id: q.id, mode: q.mode, stem: q.stem, figure_ids: q.figure_ids,
+  options: q.options.map(({ id, text, figure_ids }) => ({ id, text, figure_ids }))
+});
+const contentHash = (option) => sha(JSON.stringify({ text: option.text, figure_ids: option.figure_ids }));
+const unchanged = [];
+const allQuestions = view.json.questions.map((visible, index) => {
+  assert.deepEqual(Object.keys(visible).sort(), ["figure_ids", "id", "mode", "options", "stem"]);
+  assert.equal(visible.mode, "single");
+  assert.equal(visible.options.length, 3);
+  for (const option of visible.options) {
+    assert.deepEqual(Object.keys(option).sort(), ["figure_ids", "id", "text"]);
+  }
+  assert.deepEqual(visible.options.map((o) => o.id), ["A", "B", "C"]);
+  const changed = changedEvidence[visible.id];
+  if (!changed) {
+    const before = priorById.get(visible.id);
+    assert(before, `Unexpected added unit${visible.id}`);
+    assert.equal(JSON.stringify(visible), JSON.stringify(visibleFromFrozen(before)));
+    assert.equal(sha(JSON.stringify(visible)), before.question_visible_sha256);
+    unchanged.push({
+      id: visible.id, current_ordinal: index + 1, original_ordinal: before.ordinal,
+      entire_visible_json_equal: true, original_visible_sha256: before.question_visible_sha256,
+      reviewer_true_set_reused_by_content: before.reviewer_true_set,
+      all_three_option_evidence_reused: true
+    });
+    return {
+      ...before, ordinal: index + 1,
+      review_method: "Exact whole-question equality to the original frozen pureview; all three truths and derivations reused without source/math re-solving."
+    };
+  }
+  const original = source.json.source_reviews.find((s) => s.source_number === changed.source_number);
+  assert(original);
+  assert.equal(visible.figure_ids.length, 0);
+  assert(visible.options.every((o) => o.figure_ids.length === 0));
+  const options = visible.options.map((option) => {
+    const independent = changed.options.find((item) => item.id === option.id);
+    assert(independent);
+    return {
+      ...option, visible_content_sha256: contentHash(option),
+      truth: independent.truth, independent_evidence: independent.evidence,
+      expected_complete_result_and_derivation: changed.independent_solution
+    };
+  });
+  const trueSet = options.filter((o) => o.truth).map((o) => o.id);
+  assert.deepEqual(trueSet, ["C"]);
+  return {
+    ordinal: index + 1, id: visible.id, mode: visible.mode,
+    stem: visible.stem, figure_ids: visible.figure_ids,
+    question_visible_sha256: sha(JSON.stringify(visible)),
+    source_number_inferred_from_visible_id: changed.source_number,
+    frozen_original_domain: original.domain, original_source_status: original.status,
+    reviewer_true_set: trueSet, correct_set_verdict: "pass",
+    independent_derivation: changed.independent_solution,
+    task_fidelity: { verdict: "pass", evidence: changed.source_fidelity },
+    redundancy: { verdict: "pass", evidence: changed.redundancy },
+    prose_answer_leakage: { verdict: "pass", evidence: changed.prose_leakage },
+    production_losses_pending_internal_disclosure: changed.production_losses,
+    options,
+    review_method: "Fresh independent changed-unit visible judgment from the previously frozen original source only. No repaired draft/rationales/key/wrong programs read."
+  };
+});
+assert.equal(unchanged.length, 50);
+assert.equal(new Set(view.json.questions.map((q) => q.id)).size, 52);
+assert.deepEqual(view.json.questions.filter((q) => q.id !== "n51-975").map((q) => q.id),
+  prior.json.question_checks.map((q) => q.id));
+assert.equal(allQuestions.reduce((n, q) => n + q.options.length, 0), 156);
+const old976 = priorById.get("n51-976b");
+const new976 = allQuestions.find((q) => q.id === "n51-976b");
+const source987 = allQuestions.find((q) => q.id === "n51-987");
+assert(unchanged.some((q) => q.id === "n51-987"));
+assert.deepEqual(source987.reviewer_true_set, ["B"]);
+
+function positionRecord(questions) {
+  const labels = questions.map((q) => q.reviewer_true_set[0]);
+  const runs = [];
+  for (let i = 0; i < labels.length;) {
+    let end = i + 1;
+    while (end < labels.length && labels[end] === labels[i]) end++;
+    if (end - i >= 3) runs.push({
+      start_ordinal: i + 1, end_ordinal: end, label: labels[i], length: end - i,
+      question_ids: questions.slice(i, end).map((q) => q.id)
+    });
+    i = end;
+  }
+  const blocks = [];
+  for (let period = 2; period <= Math.floor(labels.length / 3); period++) {
+    for (let start = 0; start + period * 3 <= labels.length; start++) {
+      const pattern = labels.slice(start, start + period);
+      if (new Set(pattern).size < 2) continue;
+      let primitive = true;
+      for (let smaller = 1; smaller < period; smaller++) {
+        if (period % smaller === 0 && pattern.every((v, i) => v === pattern[i % smaller])) primitive = false;
+      }
+      if (!primitive) continue;
+      let end = start + period;
+      while (end < labels.length && labels[end] === labels[start + (end - start) % period]) end++;
+      if (end - start >= period * 3 &&
+          (start === 0 || labels[start - 1] !== labels[start - 1 + period])) {
+        blocks.push({
+          start_ordinal: start + 1, end_ordinal: end, period, pattern: pattern.join(""),
+          repetitions: Math.floor((end - start) / period),
+          question_ids: questions.slice(start, end).map((q) => q.id)
+        });
+      }
+    }
+  }
+  return {
+    current_sequence: labels.join(""),
+    label_counts: Object.fromEntries(["A","B","C"].map((id) => [id, labels.filter((v) => v === id).length])),
+    longest_identical_run: Math.max(...runs.map((r) => r.length)),
+    runs_at_least_three: runs,
+    adjacent_primitive_period_blocks_with_three_full_repetitions: blocks,
+    verdict: blocks.length === 0 ? "pass" : "revise",
+    evidence: "Only the insertion/replacement effect on the full sequence is assessed. No three-full-repeat adjacent primitive period is present. New975C extends the prior974a/974b/976b C triple into a fourfold run; maximum run stays4, as in the original frozen n51 verdict. Ordinary fourfold clusters are explicitly recorded and are not by themselves a deterministic position rule."
+  };
+}
+const positions = positionRecord(allQuestions);
+assert.equal(positions.verdict, "pass");
+assert.equal(positions.longest_identical_run, 4);
+const sourceCoverage = prior.json.source_coverage.map((entry) => {
+  if (entry.source_number === "975") {
+    return {
+      ...entry, visible_question_ids: ["n51-975"], verdict: "pass",
+      evidence: changedEvidence["n51-975"].source_fidelity,
+      recorded_production_losses: changedEvidence["n51-975"].production_losses
+    };
+  }
+  if (entry.source_number === "976") {
+    return {
+      ...entry, visible_question_ids: ["n51-976b"], verdict: "pass",
+      evidence: changedEvidence["n51-976b"].source_fidelity,
+      recorded_production_losses: changedEvidence["n51-976b"].production_losses
+    };
+  }
+  return entry;
+});
+const history = path.join(own, "history/before-sartre-changed-view");
+fs.mkdirSync(history, { recursive: true });
+const preservation = [[prior, "view-checks.json"], [priorEvidence, "view-evidence.json"]].map(([original, name]) => {
+  const destination = path.join(history, name);
+  fs.copyFileSync(original.path, destination, fs.constants.COPYFILE_EXCL);
+  assert.equal(sha(fs.readFileSync(destination)), original.sha256);
+  return { original_path: rel(original.path), history_path: rel(destination), sha256: original.sha256, exact_bytes: true };
+});
+const record = {
+  schema: "independent-changed-pure-view-checks-v1",
+  stage: "sartre-repaired-pure-view-truths-frozen",
+  reviewer: {
+    kind: "independent_agent",
+    identity: "Tesla (01a1e240-9cc2-73e0-80bb-02ba30596454), frozen source -> original pureview -> changed pureview; no repaired internals"
+  },
+  changed_view_gate_verdict: "pass",
+  visible_package_verdict: "pass",
+  mathematical_option_verdict: "pass",
+  outcome: "blocked",
+  aggregate_outcome_reason: "Only the unchanged original source987 geometric-existence blocker remains. It does not make the honest conditional visible optionB indeterminate. Both prior author-visible revision findings are resolved.",
+  binding: {
+    repaired_view_path: rel(view.path), repaired_view_byte_sha256: view.sha256,
+    expected_authorized_view_byte_sha256: expectedViewSha,
+    original_frozen_view_record_path: rel(prior.path), original_frozen_view_record_byte_sha256: prior.sha256,
+    original_view_byte_sha256: prior.json.binding.view_byte_sha256,
+    frozen_source_record_path: rel(source.path), frozen_source_record_byte_sha256: source.sha256,
+    frozen_original_seed_byte_sha256: source.json.seed_byte_sha256,
+    frozen_source_image_record: prior.json.binding.frozen_image_record_path,
+    frozen_source_image_record_byte_sha256: prior.json.binding.frozen_image_record_byte_sha256
+  },
+  authority: {
+    only_author_artifact_read: rel(view.path),
+    no_repaired_draft_replacement_wrong_program_key_author_solution_reads: true,
+    no_n50_rereview_or_n48_n49_work: true,
+    unchanged_source_math_and_images_not_repeated: true,
+    browser_validator_canonical_structure_renderer_git_service_operations: "none",
+    write_scope: "only existing reviewer-5m-n51 directory"
+  },
+  counts: {
+    questions: 52, options: 156,
+    new_questions: 1, modified_questions: 1, unchanged_questions: unchanged.length,
+    reused_complete_option_truths: 150,
+    newly_reviewed_option_truths: 6,
+    independently_true_options: allQuestions.reduce((n, q) => n + q.options.filter((o) => o.truth).length, 0),
+    independently_false_options: allQuestions.reduce((n, q) => n + q.options.filter((o) => !o.truth).length, 0),
+    empty_true_sets: 0, multi_true_single_questions: 0,
+    source_image_reopens: 0, new_figures: 0, repaired_internal_reads: 0
+  },
+  original_records_preservation: preservation,
+  unchanged50_content_identity_evidence: unchanged,
+  question_order_evidence: "Removing only the newly inserted975 from current IDs reproduces the entire original51-question order. All other50 whole visible objects equal their original hash-bound frozen objects byte-for-byte in JSON string values and order. Only976b's requested paired construction record changed.",
+  changed_units: {
+    "n51-975": {
+      change_type: "new",
+      original_source: source.json.source_reviews.find((s) => s.source_number === "975"),
+      current_question: allQuestions.find((q) => q.id === "n51-975")
+    },
+    "n51-976b": {
+      change_type: "modified",
+      original_source: source.json.source_reviews.find((s) => s.source_number === "976"),
+      original_visible_question_sha256: old976.question_visible_sha256,
+      repaired_visible_question_sha256: new976.question_visible_sha256,
+      current_question: new976
+    }
+  },
+  full156_option_truth_evidence: allQuestions,
+  whole_package_relationships: {
+    unchanged_prose_dependencies_reused: true,
+    changed_unit_dependency_verdict: "pass",
+    evidence: "975 uses one shared vertex and angular membership/measure of two straight sectors;976 uses two different vertices and simultaneous inequalities of four acute closed wedges. Neither prints the other's full answer or depends on it. The change preserves977/978 actual-figure scale/bearing tasks unchanged, and987's original inconsistency remains explicitly conditional. No source-number mapping instructions were added to learner-facing stems.",
+    position_checks: positions,
+    visible_source_coverage: sourceCoverage,
+    production_losses: "Both new/changed units supply constructions rather than require the learner to draw/place them independently. The losses above must be compared with author intent/coverage only on later internal authorization; no disclosure pass is asserted from unseen internals."
+  },
+  resolved_visible_findings: prior.json.findings.filter((f) => f.verdict === "revise").map((finding) => ({
+    ...finding, old_verdict: finding.verdict, current_verdict: "pass",
+    resolution_evidence: finding.source_number === "975"
+      ? changedEvidence["n51-975"].source_fidelity
+      : changedEvidence["n51-976b"].source_fidelity
+  })),
+  retained_source_blockers: prior.json.findings.filter((f) => f.verdict === "blocked"),
+  remaining_visible_revision_requests: [],
+  next_gate: "Changed pureview gate passes with all156 truths frozen; stop awaiting separate repaired-internal authorization. Source987 remains honestly blocked."
+};
+assert.equal(sha(fs.readFileSync(view.path)), view.sha256);
+assert.equal(sha(fs.readFileSync(prior.path)), prior.sha256);
+assert.equal(sha(fs.readFileSync(source.path)), source.sha256);
+assert.equal(sha(fs.readFileSync(priorEvidence.path)), priorEvidence.sha256);
+const bytes = `${JSON.stringify(record, null, 2)}\n`;
+fs.writeFileSync(output, bytes, { flag: "wx" });
+console.log(JSON.stringify({
+  path: output, sha256: sha(bytes), changed_view_gate_verdict: record.changed_view_gate_verdict,
+  outcome: record.outcome, repaired_view_byte_sha256: view.sha256,
+  counts: record.counts,
+  prior_visible_revisions_resolved: record.resolved_visible_findings.length,
+  remaining_source_blocker: "987", position_longest_run: positions.longest_identical_run,
+  adjacent_three_repeat_blocks: positions.adjacent_primitive_period_blocks_with_three_full_repetitions.length
+}));

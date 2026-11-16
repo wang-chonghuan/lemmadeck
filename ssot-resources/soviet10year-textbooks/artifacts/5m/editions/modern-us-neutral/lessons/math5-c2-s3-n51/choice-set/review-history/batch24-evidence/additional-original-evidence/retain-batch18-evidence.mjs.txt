@@ -1,0 +1,110 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+const [authorName, reviewerName, observerName, reportName, observationsName,
+  batch = 'batch18', seedName = 'seed.json', reviewName = 'review.json'] = process.argv.slice(2)
+assert(authorName && reviewerName && observerName && reportName && observationsName)
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
+assert(/^batch[0-9]+$/.test(batch))
+const seed = read(`${scratch}/${authorName}/${seedName}`)
+const base = `ssot-resources/soviet10year-textbooks/artifacts/${seed.source.book}/editions/modern-us-neutral/lessons/${seed.source.lesson}/choice-set`
+const root = `${base}/review-history/${batch}-evidence`
+assert(!fs.existsSync(root))
+const review = read(`${scratch}/${reviewerName}/${reviewName}`)
+assert(['pass', 'blocked'].includes(review.outcome))
+const snapshot = review.outcome === 'pass' ? base : `${base}/review-history/unresolved-source`
+for (const [name, source] of [['seed.json', `${scratch}/${authorName}/${seedName}`],
+  ['draft.json', `${scratch}/${authorName}/draft.json`],
+  ['review.json', `${scratch}/${reviewerName}/${reviewName}`]]) {
+  assert(fs.readFileSync(`${snapshot}/${name}`).equals(fs.readFileSync(source)), name)
+}
+const reportFile = `${scratch}/offline-evidence/${seed.source.book}/${reportName}`
+const report = read(reportFile)
+assert.equal(report.status, 'pass')
+assert.equal(report.checks.length, 6)
+assert(report.checks.every(row => row.lesson === seed.source.lesson))
+const observerRoot = `${scratch}/${observerName}`
+const observationsFile = `${observerRoot}/${observationsName}`
+const observations = read(observationsFile)
+assert.equal(observations.status ?? observations.outcome, 'pass')
+const walk = dir => fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+  const filename = path.join(dir, entry.name)
+  return entry.isDirectory() ? walk(filename) : [filename]
+})
+const files = new Map()
+const remember = (source, relative) => {
+  if (files.has(source)) return
+  assert(fs.existsSync(source) && fs.statSync(source).isFile(), source)
+  const originalOnly = /\.(json|mjs|cjs|js|py|md|log|html)$/.test(source)
+  files.set(source, `${root}/${relative}${originalOnly ? '.txt' : ''}`)
+}
+for (const [name, category] of [[authorName, 'author'], [reviewerName, 'reviewer'],
+  [observerName, 'display/observer']]) {
+  for (const source of walk(`${scratch}/${name}`)) {
+    remember(source, `${category}/${path.relative(`${scratch}/${name}`, source)}`)
+  }
+}
+const screenshotsRoot = `${scratch}/offline-evidence/${seed.source.book}`
+for (const source of walk(screenshotsRoot).filter(file =>
+  path.basename(file).startsWith(seed.source.lesson + '-') || file === reportFile)) {
+  remember(source, `display/captures/${path.relative(screenshotsRoot, source)}`)
+}
+for (const source of walk(`${scratch}/${batch}-render`).filter(file =>
+  path.basename(file).startsWith(`${seed.source.book}-${seed.source.lesson}-`))) {
+  remember(source, `verification/${path.basename(source)}`)
+}
+function referencedFiles(value) {
+  if (Array.isArray(value)) return value.forEach(referencedFiles)
+  if (value && typeof value === 'object') return Object.values(value).forEach(referencedFiles)
+  if (typeof value !== 'string') return
+  const normalized = value.startsWith(process.cwd() + '/') ? value.slice(process.cwd().length + 1) : value
+  if ((normalized.startsWith(scratch + '/') || normalized.startsWith('.tmp/')) && fs.existsSync(normalized)
+      && fs.statSync(normalized).isFile()) {
+    const relative = normalized.startsWith('.tmp/')
+      ? `rendered-originals/${path.relative('.tmp', normalized)}`
+      : path.relative(scratch, normalized)
+    remember(normalized, `display/referenced/${relative}`)
+  }
+}
+referencedFiles(observations)
+const pending = []
+const retained = {}
+for (const [source, target] of files) {
+  const bytes = fs.readFileSync(source)
+  pending.push([target, bytes])
+  retained[path.relative(root, target)] = { original_bytes_sha256: hash(bytes),
+    retained_bytes_sha256: hash(bytes), inactive_history: target.endsWith('.txt') }
+}
+function rebind(value) {
+  if (Array.isArray(value)) return value.map(rebind)
+  if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value)
+    .map(([key, child]) => [key, rebind(child)]))
+  if (typeof value !== 'string') return value
+  const normalized = value.startsWith(process.cwd() + '/') ? value.slice(process.cwd().length + 1) : value
+  if (files.has(normalized)) return files.get(normalized)
+  if (normalized.startsWith(scratch + '/') || normalized.startsWith('.tmp/')) {
+    return `Historical execution location, not retained dependency: ${normalized.slice(normalized.indexOf('/') + 1)}`
+  }
+  return value
+}
+pending.push([`${root}/actual-observations.json`,
+  Buffer.from(JSON.stringify(rebind(observations), null, 2) + '\n')])
+pending.push([`${root}/retention.json`, Buffer.from(JSON.stringify({
+  status: 'pass', lesson: seed.source.lesson, final_seed_draft_review_byte_identical: true,
+  semantic_outcome: review.outcome, snapshot_root: snapshot,
+  canonical_or_semantic_reruns: 0, render_reruns: 0,
+  original_json_txt_are_inactive_history_not_live_dependencies: true,
+  actual_observations: `${root}/actual-observations.json`,
+  command_report: files.get(reportFile), retained,
+}, null, 2) + '\n')])
+for (const [filename] of pending) assert(!fs.existsSync(filename), filename)
+for (const [filename, bytes] of pending) {
+  fs.mkdirSync(path.dirname(filename), { recursive: true })
+  fs.writeFileSync(filename, bytes, { flag: 'wx' })
+}
+console.log(JSON.stringify({ lesson: seed.source.lesson, retained_files: pending.length,
+  final_core_byte_identical: true, semantic_outcome: review.outcome, outcome: 'pass' }))

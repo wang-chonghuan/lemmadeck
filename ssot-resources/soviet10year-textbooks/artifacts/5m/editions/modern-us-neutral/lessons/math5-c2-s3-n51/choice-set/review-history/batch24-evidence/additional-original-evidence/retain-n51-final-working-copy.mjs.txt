@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+
+const T = '.intentfold/tickets/STEMROBIN-182/tmp'
+const destination = `${T}/5m-n51-final`
+assert(!fs.existsSync(destination))
+fs.mkdirSync(destination)
+const records = []
+for (const [source, name] of [
+  [`${T}/5m-n51/source.json`, 'source.json'],
+  [`${T}/5m-n51-sartre-repair/repaired-draft.json`, 'draft.json'],
+]) {
+  fs.copyFileSync(source, `${destination}/${name}`, fs.constants.COPYFILE_EXCL)
+  assert(fs.readFileSync(source).equals(fs.readFileSync(`${destination}/${name}`)))
+  records.push({ source, destination: `${destination}/${name}`,
+    sha256: crypto.createHash('sha256').update(fs.readFileSync(source)).digest('hex') })
+}
+fs.writeFileSync(`${destination}/final-copy-receipt.json`, JSON.stringify({
+  purpose: 'Byte-identical final working copy for existing canonical/retention/display helpers. Original author, rejected draft and repair snapshots remain unchanged.',
+  review: `${T}/reviewer-5m-n51/review.json`, records,
+  semantic_reruns: 0, structural_reruns: 0, source987_blocker_retained: true,
+  author_repair_evidence: `${T}/5m-n51-sartre-repair`,
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ destination, records }))

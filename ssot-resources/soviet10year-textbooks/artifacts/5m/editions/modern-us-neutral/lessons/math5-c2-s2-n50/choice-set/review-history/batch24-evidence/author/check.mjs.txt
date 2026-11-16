@@ -1,0 +1,30 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+import { fileURLToPath } from 'node:url'
+import { spawnSync } from 'node:child_process'
+const dir = path.dirname(fileURLToPath(import.meta.url))
+const relative = path.relative(process.cwd(), dir)
+const read = name => JSON.parse(fs.readFileSync(path.join(dir, name), 'utf8'))
+const draft = read('draft.json'), view = read('view.json'), frozen = read('source-solutions.json')
+assert.deepEqual(view.questions, draft.questions.map(q => ({ id: q.id, ...q.view })))
+for (const f of ['source.json', 'source-solutions.json']) assert(fs.readFileSync(path.join(dir, f)).equals(fs.readFileSync(path.join(dir, 'source-first-frozen', f))))
+assert(view.questions.every(q => Object.keys(q).sort().join() === ['id','mode','stem','figure_ids','options'].sort().join() && q.options.every(o => Object.keys(o).sort().join() === ['id','text','figure_ids'].sort().join())))
+const sequence = draft.questions.filter(q => q.view.mode === 'single').map(q => q.key.correct[0])
+const periods = []
+for (let p = 1; p <= Math.min(8, Math.floor(sequence.length / 2)); p++) if(sequence.every((v, i) => i < p || v === sequence[i-p])) periods.push(p)
+const args = ['.agents/skills/ld-s10y-choice/scripts/validate.py','--repo','.','--seed',`${relative}/source.json`,'--draft',`${relative}/draft.json`]
+const check = spawnSync('python3', args, { encoding: 'utf8' })
+const receipt = {
+  command: `python3 ${args.join(' ')}`, stdout: check.stdout, stderr: check.stderr, exit_code: check.status,
+  pure_view_counts: { questions: view.questions.length, options: view.questions.reduce((n,q) => n+q.options.length,0), modes: view.questions.reduce((m,q) => ({...m,[q.mode]:(m[q.mode]??0)+1}),{}) },
+  option_positions: { single_sequence: sequence, counts: sequence.reduce((m,v) => ({...m,[v]:(m[v]??0)+1}),{}), whole_sequence_periods_1_to_8: periods, exact_quotas_or_resampling: false },
+  byte_sha256: Object.fromEntries(['source.json','source-solutions.json','draft.json','view.json','author.mjs','option-position-plan.json'].map(f => [f,crypto.createHash('sha256').update(fs.readFileSync(path.join(dir,f))).digest('hex')])),
+  source_first_freeze_unchanged: true, pure_view_shape: true,
+  blockers: frozen.blockers, semantic_status: 'Structural once only; no independent_agent self-approval, semantic review, canonical, render, retention or promotion.'
+}
+fs.writeFileSync(path.join(dir,'structural-check.json'),JSON.stringify(receipt,null,2)+'\n',{flag:'wx'})
+fs.writeFileSync(path.join(dir,'ready.json'),JSON.stringify({source:`${dir}/source.json`,solutions:`${dir}/source-solutions.json`,draft:`${dir}/draft.json`,view:`${dir}/view.json`,evidence:`${dir}/structural-check.json`,...receipt},null,2)+'\n',{flag:'wx'})
+console.log(JSON.stringify(receipt,null,2))
+process.exitCode = check.status ?? 1

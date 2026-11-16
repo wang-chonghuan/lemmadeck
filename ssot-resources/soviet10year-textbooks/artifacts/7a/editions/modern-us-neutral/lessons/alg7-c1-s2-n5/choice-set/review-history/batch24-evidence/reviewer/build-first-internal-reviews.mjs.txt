@@ -1,0 +1,378 @@
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+
+const repo = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const tmp = path.join(repo, ".intentfold/tickets/STEMROBIN-182/tmp");
+const hash = value => createHash("sha256").update(value).digest("hex");
+const load = filename => JSON.parse(fs.readFileSync(filename));
+const canonicalDigest = value => {
+  const result = spawnSync("python3", ["-B", "-c",
+    "import sys,json;sys.path.insert(0,sys.argv[1]);from prepare import digest;print(digest(json.load(sys.stdin)))",
+    path.join(repo, ".agents/skills/ld-s10y-choice/scripts")],
+  { input: JSON.stringify(value), encoding: "utf8" });
+  assert.equal(result.status, 0, result.stderr);
+  return result.stdout.trim();
+};
+const snapshots = {
+  5: {
+    draft_byte: "4c5a89031ea1c77bce2cdbdc575e77f197c755934fef2df4e7242d5791e84565",
+    draft_canonical: "71d913654e6d061d2f5d24d251876ca30824f2d16c12121637490b5a89aa4120",
+    source_byte: "599338f0bbcb171972aa31f81b957b6d349871a1bc6c2f8710d1ef912b826f19",
+    first_view_review_byte: "f149288e28999f3901d3d2c218f7499c2a1812017af992005b6c7f45ff085bf3"
+  },
+  6: {
+    draft_byte: "dc8e231c603519033a8a0642f3283734846c7f9fbaf718bc1ec13ebc2c37852b",
+    draft_canonical: "9c2259b88e1a07215dd9809b63e7c89be5419e902ff9d1d1d1b3fc0b8bc7b690",
+    source_byte: "994739bab7ac27186b3a29e8419c998a083f322554dc194039d2cc271cc9bc83",
+    first_view_review_byte: "06e512b38855ce3c40e6a00a2f3859abb1e018b11f786609dcf9a3267fbdebe0"
+  }
+};
+const selected = process.argv.slice(2).map(Number);
+const lessons = selected.length ? selected : [5, 6];
+assert.ok(lessons.every(n => [5, 6].includes(n)));
+for (const n of lessons) {
+  const root = path.join(tmp, `reviewer-7a-n${n}`);
+  const draftPath = path.join(tmp, `7a-n${n}/draft.json`);
+  const draftBytes = fs.readFileSync(draftPath);
+  const draft = JSON.parse(draftBytes);
+  const evidencePath = path.join(root, "author-comparison-evidence.json");
+  const evidenceBytes = fs.readFileSync(evidencePath);
+  const originalEvidence = JSON.parse(evidenceBytes);
+  const evidence = structuredClone(originalEvidence);
+  let repairRecord = null;
+  const currentDraftByte = hash(draftBytes);
+  const currentDraftCanonical = canonicalDigest(draft);
+  if (n === 5) {
+    assert.equal(originalEvidence.outcome, "revise");
+    assert.equal(originalEvidence.findings.length, 2);
+    assert.equal(currentDraftCanonical,
+      "3de5c80cd30698f2f93f616783d7567c514aceed0639c5c4dfc09f8728ca7d60");
+    const inverse = structuredClone(draft);
+    const repairs = [
+      {
+        question_id: "n5-76a", option_id: "A",
+        expected: "Use90 as the triangle angle sum instead of180: from A+B=90 infer C=0; from C=0 infer A+B=90.",
+        evidence: "仅复核新误区说明：错误采用A+B+C=90；正向以A+B=90代入输出C=0，反向以C=0代入输出A+B=90。两方向目标和候选均吻合，不再将反向目标写成C。该错误总和仍与冻结的非退化三角形源条件冲突；独立假值不变。"
+      },
+      {
+        question_id: "n5-76b", option_id: "C",
+        expected: "Check only that the two angles have different vertices and are not a linear pair; omit the requirement that their sum be180, thereby accepting the unchanged50-degree and120-degree pair as a counterexample.",
+        evidence: "仅复核新误区说明：错误反例筛选只查顶点不同/不是邻补角，漏掉角和180的前件检验，于是接受原样50°/120°配置。它无需舍入或改数，实际生成C的错误选择；冻结证据50+120=170说明候选仍非有效反例。"
+      }
+    ];
+    for (const repair of repairs) {
+      const qi = draft.questions.findIndex(q => q.id === repair.question_id);
+      assert.ok(qi >= 0);
+      const ri = draft.questions[qi].key.rationales.findIndex(r => r.option_id === repair.option_id);
+      assert.ok(ri >= 0);
+      const finding = originalEvidence.findings.find(f =>
+        f.question_id === repair.question_id && f.option_id === repair.option_id);
+      assert.ok(finding);
+      const current = draft.questions[qi].key.rationales[ri];
+      assert.equal(current.misconception, repair.expected);
+      assert.equal(current.truth, "incorrect");
+      inverse.questions[qi].key.rationales[ri].misconception = finding.observed;
+      const program = evidence.question_program_checks.find(q => q.question_id === repair.question_id);
+      assert.equal(program.options[repair.option_id].verdict, "revise");
+      program.options[repair.option_id] = { verdict: "pass", evidence: repair.evidence };
+      repair.json_pointer = `/questions/${qi}/key/rationales/${ri}/misconception`;
+      repair.before = finding.observed;
+      repair.after = current.misconception;
+      repair.verdict = "pass";
+      delete repair.expected;
+    }
+    assert.equal(canonicalDigest(inverse), snapshots[n].draft_canonical);
+    const differences = [];
+    const compare = (before, after, pointer = "") => {
+      if (before === after) return;
+      if (before !== null && after !== null &&
+          typeof before === "object" && typeof after === "object") {
+        assert.deepEqual(Object.keys(before), Object.keys(after));
+        for (const key of Object.keys(before)) compare(before[key], after[key], `${pointer}/${key}`);
+      } else differences.push({ pointer, before, after });
+    };
+    compare(inverse, draft);
+    assert.deepEqual(differences, repairs.map(r =>
+      ({ pointer: r.json_pointer, before: r.before, after: r.after })));
+    evidence.findings = [];
+    evidence.outcome = "pass";
+    repairRecord = {
+      stage: "changed-internal-only-misconception-repair",
+      stage_complete: true,
+      outcome: "pass",
+      original_revise_evidence_path: evidencePath,
+      original_revise_evidence_byte_sha256: hash(evidenceBytes),
+      original_revise_record_not_modified: true,
+      old_compared_draft_byte_sha256: snapshots[n].draft_byte,
+      old_compared_draft_canonical_sha256: snapshots[n].draft_canonical,
+      current_draft_path: draftPath,
+      current_draft_byte_sha256: currentDraftByte,
+      current_draft_canonical_sha256: currentDraftCanonical,
+      inverse_restoration: {
+        verdict: "pass",
+        basis: "只使用自己已冻首次比较findings.observed恢复两个旧字符串；逆向整JSON的prepare.digest等于旧已比较canonical digest。未读作者旧draft或history兄弟文件。",
+        restored_canonical_sha256: snapshots[n].draft_canonical,
+        exact_changed_field_count: differences.length,
+        all_other_fields_unchanged: true,
+        views_keys_truths_source_mapping_intent_coverage_order_unchanged: true
+      },
+      changed_fields: repairs,
+      reused_evidence: {
+        sources: 16, questions: 24, options: 90,
+        unchanged_option_programs: 88, coverage_rows: 16,
+        source_view_mathematics_recomputed: false,
+        unchanged_author_internals_re_reviewed: false
+      },
+      original_findings_retained: originalEvidence.findings,
+      validation_runs: 0, browser_render_runs: 0,
+      author_or_durable_writes: 0, model: null, usage: null
+    };
+  } else {
+    assert.equal(currentDraftByte, snapshots[n].draft_byte);
+    assert.equal(currentDraftCanonical, snapshots[n].draft_canonical);
+  }
+  const sourcePath = path.join(root, "source-solutions.json");
+  const sourceBytes = fs.readFileSync(sourcePath);
+  assert.equal(hash(sourceBytes), snapshots[n].source_byte);
+  const source = JSON.parse(sourceBytes);
+  assert.equal(hash(fs.readFileSync(path.join(root, "view-checks.json"))),
+    snapshots[n].first_view_review_byte);
+  const rebound = load(path.join(root, "revised-view-checks-rebound.json"));
+  assert.equal(rebound.outcome, "pass");
+  assert.equal(rebound.exact_content_comparison.verdict, "pass");
+  const frozenView = load(path.join(root, "revised-pureview-snapshot.json"));
+  assert.deepEqual({ questions: draft.questions.map(q => ({ id: q.id, ...q.view })) }, frozenView);
+  assert.equal(draft.seed_sha256, source.seed.canonical_sha256);
+  assert.deepEqual(draft.new_figures, []);
+  const programByQuestion = new Map(evidence.question_program_checks.map(q => [q.question_id, q]));
+  const sourceCoverage = new Map(evidence.source_coverage_checks.map(r => [r.source_number, r]));
+  let keyChecks = 0, correctOptions = 0, falseOptions = 0;
+  const questionReviews = draft.questions.map(question => {
+    const independent = rebound.question_reviews.find(q => q.question_id === question.id);
+    assert.ok(independent);
+    assert.deepEqual(question.source_numbers, independent.source_numbers);
+    assert.deepEqual([...question.key.correct].sort(), [...independent.mathematics.correct].sort());
+    const program = programByQuestion.get(question.id);
+    assert.ok(program);
+    assert.equal(Object.keys(program.options).length, question.view.options.length);
+    let programVerdict = "pass";
+    const optionChecks = independent.mathematics.option_checks.map(option => {
+      const internal = question.key.rationales.find(r => r.option_id === option.option_id);
+      const check = program.options[option.option_id];
+      assert.ok(internal && check);
+      assert.equal(internal.truth, option.truth);
+      if (option.truth === "correct") {
+        assert.equal(internal.misconception, null);
+        correctOptions += 1;
+      } else {
+        assert.equal(typeof internal.misconception, "string");
+        falseOptions += 1;
+      }
+      keyChecks += 1;
+      if (check.verdict !== "pass") programVerdict = check.verdict;
+      return {
+        option_id: option.option_id,
+        truth: option.truth,
+        evidence: `${option.evidence} ${repairRecord?.changed_fields.some(r =>
+          r.question_id === question.id && r.option_id === option.option_id)
+          ? "仅修订误区字段复核" : "复用首次作者内部比较"}[${check.verdict}]：${check.evidence}`
+      };
+    });
+    return {
+      question_id: question.id,
+      task_fidelity: independent.task_fidelity,
+      redundancy: independent.redundancy,
+      answer_leakage: independent.answer_leakage,
+      mathematics: {
+        verdict: programVerdict,
+        independent_solution: independent.mathematics.independent_solution +
+          (programVerdict === "pass"
+            ? (repairRecord
+              ? " 复用首次内部比较的完整键/truth及程序证据；仅76a-A/76b-C两误区说明变化已另核，整稿逆向canonical相等证明其余字段不变。未重新求解或按作者键归一化。"
+              : " 首次内部比较：完整作者键和每项truth与此前独立真集一致；正确证明/错误程序逐项另核，未用作者键重新求解。")
+            : " 完整作者键和独立真集一致，但所列错误程序有具体表述缺陷；保留独立真值，不向作者归一化，不改作者候选。"),
+        correct: [...independent.mathematics.correct],
+        option_checks: optionChecks
+      }
+    };
+  });
+  const sourceReviews = source.source_solutions.map(row => {
+    const check = sourceCoverage.get(row.source_number);
+    assert.ok(check);
+    const authored = draft.coverage.find(r => r.source_number === row.source_number);
+    assert.ok(authored);
+    assert.deepEqual([...authored.question_ids].sort(),
+      draft.questions.filter(q => q.source_numbers.includes(row.source_number)).map(q => q.id).sort());
+    return {
+      source_number: row.source_number,
+      independent_solution: `${row.original_tasks} 独立源冻结解：${row.independent_solution} 原域：${row.domain}`,
+      coverage: { verdict: check.verdict, evidence: check.evidence }
+    };
+  });
+  const usedFigures = [...new Set(draft.questions.flatMap(q =>
+    [...q.view.figure_ids, ...q.view.options.flatMap(o => o.figure_ids)]))];
+  const imageRecordPath = path.join(root, "image-observations.json");
+  const images = load(imageRecordPath);
+  const figureChecks = [];
+  if (n === 5) assert.deepEqual(usedFigures, []);
+  else {
+    assert.deepEqual(usedFigures, ["fig-02"]);
+    assert.ok(images.actual_images_opened.length === 1 && images.actual_images_opened[0].native_full_rectangle);
+    figureChecks.push({
+      figure_id: "fig-02",
+      asset_path: path.relative(repo, images.seed_svg.path).split(path.sep).join("/"),
+      asset_sha256: images.seed_svg.sha256,
+      observation: images.actual_images_opened[0].observation +
+        ` 复用此前实际原生480×480完整图观察，实际PNG SHA=${images.actual_images_opened[0].sha256}；原SVG SHA已在源阶段核与seed一致。图2实际用于n6-85，所以列入使用图集合；其概念来源不使它成为额外concept-only图。此次不重开图、不渲染、不据作者“已看图”声明作证；生成过程限制保留于独立image-observations。`
+    });
+  }
+  const allVerdicts = [
+    ...sourceReviews.map(r => r.coverage.verdict),
+    ...questionReviews.flatMap(q =>
+      [q.task_fidelity.verdict, q.redundancy.verdict, q.answer_leakage.verdict, q.mathematics.verdict])
+  ];
+  const outcome = allVerdicts.includes("blocked") ? "blocked" :
+    allVerdicts.includes("revise") ? "revise" : "pass";
+  assert.equal(outcome, evidence.outcome);
+  const review = {
+    schema: "s10y-choice-review-v1",
+    seed_sha256: source.seed.canonical_sha256,
+    draft_sha256: currentDraftCanonical,
+    reviewer: {
+      kind: "independent_agent",
+      identity: "Sartre / STEMROBIN-182 / 会话A / independent source-before-view reviewer; not the 7a choice author"
+    },
+    source_reviews: sourceReviews,
+    figure_checks: figureChecks,
+    new_figure_reviews: [],
+    question_reviews: questionReviews,
+    outcome
+  };
+  const writeJSON = (name, value) => {
+    const target = path.join(root, name);
+    assert.equal(path.dirname(target), root);
+    fs.writeFileSync(target, JSON.stringify(value, null, 2) + "\n", { flag: "wx" });
+  };
+  const draftSnapshotName = repairRecord
+    ? "draft-compared-misconception-repaired-snapshot.json"
+    : "draft-compared-first-internal-snapshot.json";
+  if (repairRecord) writeJSON("changed-internal-review.json", repairRecord);
+  fs.writeFileSync(path.join(root, draftSnapshotName), draftBytes, { flag: "wx" });
+  writeJSON("review.json", review);
+  writeJSON("final-comparison-result.json", {
+    stage: repairRecord ? "changed-internal-only-final-comparison" : "first-author-internals-comparison",
+    stage_complete: true,
+    outcome,
+    independent_reviewer: review.reviewer,
+    original_binding_blocker: {
+      status: "resolved before any author draft read",
+      blocked_history_path: path.join(root, "revised-view-checks.json"),
+      rebound_path: path.join(root, "revised-view-checks-rebound.json"),
+      rebind_result_path: path.join(root, "pureview-rebind-result.json"),
+      original_view_path_overwritten_fact_retained: true,
+      original_blocked_record_not_modified: true
+    },
+    snapshots: {
+      seed_path: source.seed.path,
+      seed_canonical_sha256: source.seed.canonical_sha256,
+      seed_binding_basis: "原独立source记录保存的canonical seed digest；当前draft.seed_sha256完全相同。本次未重读作者另行解答、未refresh seed或验证rawsource。",
+      draft_path: draftPath,
+      draft_byte_sha256: currentDraftByte,
+      draft_canonical_sha256: currentDraftCanonical,
+      draft_compared_snapshot: path.join(root, draftSnapshotName),
+      revised_view: rebound.view_snapshot,
+      source_solution_path: sourcePath,
+      source_solution_byte_sha256: snapshots[n].source_byte,
+      review_path: path.join(root, "review.json"),
+      review_byte_sha256: hash(fs.readFileSync(path.join(root, "review.json")))
+    },
+    counts: {
+      sources: sourceReviews.length,
+      questions: questionReviews.length,
+      options_compared: keyChecks,
+      correct_options: correctOptions,
+      incorrect_options: falseOptions,
+      independent_key_or_truth_disagreements: 0,
+      correct_proofs_compared: correctOptions,
+      incorrect_programs_compared: falseOptions,
+      program_findings: evidence.findings.length,
+      coverage_rows_checked: draft.coverage.length,
+      used_figures_in_canonical_review: figureChecks.length,
+      new_figures: 0
+    },
+    changed_internal_review: repairRecord ? {
+      path: path.join(root, "changed-internal-review.json"),
+      changed_fields_checked: 2,
+      unchanged_program_evidence_reused: 88,
+      full_inverse_binding: "pass",
+      original_revise_evidence_preserved: true
+    } : null,
+    minimum_findings: evidence.findings,
+    option_level_internal_comparison_path: path.join(root, "author-comparison-evidence.json"),
+    author_coverage_records: draft.coverage,
+    author_intent_and_source_solution_comparison: draft.questions.map(q => ({
+      question_id: q.id,
+      verdict: "pass",
+      evidence: "复用首次已读取该题task/source_solution/unit_reason/limitations/figure_observations的比较，与独立冻结源、完整真集及选择响应能力边界对照。若共享source_solution提到未选全书N约定，只解释无条件约定未选，不当作完整条件分支缺失；具体源域/方法损失见source_coverage_checks。此次未重审不变字段。",
+      author_limitations: q.intent.limitations
+    })),
+    source_notices_preserved: source.source_notices,
+    source_notice_interpretation: n === 5
+      ? "原70b分数词义与原域定义障碍、74b全书N零约定未选均保留。74b两完整条件分支已先独立求解且现全覆盖，不把选某全书约定发明成必须任务；70b只判断原域definedness，非零域分类未猜。没有新增本批源blocker。"
+      : "83c全书N零约定未选、83b位数扩展scope、85仅a/b/d、87f原分母域notice均保留。九/十一对完整条件枚举覆盖原可解数学，不把未知全书约定等同缺物理条件。",
+    figure_scope: {
+      actual_used_figure_ids: usedFigures,
+      concept_only_observations_not_in_canonical_figure_checks: [],
+      separate_original_image_observations_path: imageRecordPath,
+      evidence_reused_not_reopened: true,
+      new_browser_or_figure_operations: 0
+    },
+    read_boundary: {
+      newly_authorized_author_files: [draftPath],
+      disclosed_history_files_read: [
+        path.join(tmp, `7a-n${n}/history-before-first-pureview-repair/view.json`)
+      ],
+      no_history_siblings_read: true,
+      no_author_ready_serializer_other_source_solutions_or_other_reviewers_read: true,
+      no_author_old_draft_read_for_two_field_inverse: true,
+      old_truths_not_recomputed_or_normalized_to_key: true,
+      current_draft_view_exactly_equals_frozen_revised_pureview: true,
+      n51_repair_author_context_not_used_for_7a_review: true
+    },
+    operations: {
+      source_review_reruns: 0,
+      pureview_mathematics_reruns: 0,
+      canonical_validation_runs: 0,
+      structural_validation_runs: 0,
+      browser_render_runs: 0,
+      promotion_or_author_writes: 0,
+      in_flight_operations: []
+    },
+    validation: {
+      command: null,
+      exit_code: null,
+      execution_count: 0,
+      evidence: "按授权只冻结规范review；未运行validate.py、canonical验证、render或晋升。父方持有后续canonical gate。"
+    },
+    next_stage: outcome === "pass"
+      ? "父方首次canonical授权/执行；本代理停止，无自动晋升。"
+      : "父方处理minimum_findings；本代理未改作者稿，保留此次拒绝快照和独立真集，变化-only复核需另授权。",
+    model: null,
+    usage: null
+  });
+  assert.equal(hash(fs.readFileSync(draftPath)), currentDraftByte);
+  assert.equal(hash(fs.readFileSync(evidencePath)), hash(evidenceBytes));
+  assert.equal(hash(fs.readFileSync(sourcePath)), snapshots[n].source_byte);
+  assert.equal(hash(fs.readFileSync(path.join(root, "view-checks.json"))),
+    snapshots[n].first_view_review_byte);
+  console.log(JSON.stringify({
+    lesson: n, outcome, sources: sourceReviews.length, questions: questionReviews.length,
+    options: keyChecks, findings: evidence.findings.length,
+    independent_truth_disagreements: 0, figures: figureChecks.length,
+    review_path: path.join(root, "review.json"),
+    final_comparison_result_path: path.join(root, "final-comparison-result.json")
+  }));
+}

@@ -1,0 +1,75 @@
+import hashlib
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+
+REPO = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+T = Path(__file__).resolve().parent.parent
+name = sys.argv[1]
+assert name in ("7a-n5", "7a-n6")
+own = T / name
+report_path = own / "structural-check.json"
+assert not report_path.exists(), "The one authorized structural run is already recorded."
+
+
+def binding(path):
+    return {"path": str(path.relative_to(REPO)), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+
+
+inputs = {filename: binding(own / filename) for filename in ("seed.json", "draft.json", "view.json", "source-solutions.json")}
+command = [
+    "python3", ".agents/skills/ld-s10y-choice/scripts/validate.py",
+    "--repo", ".", "--seed", inputs["seed.json"]["path"],
+    "--draft", inputs["draft.json"]["path"],
+]
+result = subprocess.run(command, cwd=REPO, capture_output=True, text=True)
+unchanged = all(binding(own / filename) == row for filename, row in inputs.items())
+record = {
+    "command": command, "cwd": str(REPO), "run_count": 1,
+    "exit_code": result.returncode, "stdout": result.stdout, "stderr": result.stderr,
+    "input_bindings": inputs, "inputs_byte_unchanged": unchanged,
+    "status": "pass" if result.returncode == 0 and unchanged else "fail",
+    "semantic_review": "pending separate SOURCE-first independent agent",
+    "canonical_render_publish_db_services_run": False,
+}
+with report_path.open("x", encoding="utf-8") as output:
+    json.dump(record, output, ensure_ascii=True, indent=2)
+    output.write("\n")
+if result.returncode or not unchanged:
+    print(json.dumps(record))
+    sys.exit(result.returncode or 2)
+draft = json.loads((own / "draft.json").read_bytes())
+view = json.loads((own / "view.json").read_bytes())
+assert view == {"questions": [{"id": q["id"], **q["view"]} for q in draft["questions"]]}
+assert all(set(q) == {"id", "mode", "stem", "figure_ids", "options"} for q in view["questions"])
+source = json.loads((own / "source-solutions.json").read_bytes())
+ready = {
+    "lesson": source["lesson"], "status": "ready_for_independent_source_then_pureview_review",
+    "seed": inputs["seed.json"], "pureview": inputs["view.json"], "draft": inputs["draft.json"],
+    "source_reasoning": inputs["source-solutions.json"],
+    "structural_check": binding(report_path), "structural_exit_code": 0,
+    "structural_run_count": 1, "question_count": len(draft["questions"]),
+    "option_count": sum(len(q["view"]["options"]) for q in draft["questions"]),
+    "source_numbers": [row["source_number"] for row in draft["coverage"]],
+    "new_figures": [], "source_gaps_preserved": source["source_gaps_preserved"],
+    "production_losses": "See each source's production_requirements, every question's limitations and complete coverage rows. Recognizing proof, graph/model properties and sets is not evidence of independent proof/drawing/plotting.",
+    "original_graph_reading_replaced_by_exact_result_recognition": name == "7a-n5",
+    "position_receipt": binding(own / "initial-layout-receipt.json"),
+    "initial_position_history_retained": True,
+    "pureview_has_no_keys_rationales_source_solutions_or_source_mapping": True,
+    "independent_semantic_review_required": True,
+    "semantic_pass_or_figure_approval_claimed": False,
+    "no_canonical_render_durable_app_db_services_commit_or_push": True,
+}
+if name == "7a-n6":
+    ready["actually_opened_source_figure_evidence"] = binding(own / "source-assets" / "actual-observations.json")
+with (own / "ready.json").open("x", encoding="utf-8") as output:
+    json.dump(ready, output, ensure_ascii=True, indent=2)
+    output.write("\n")
+print(json.dumps({
+    "lesson": source["lesson"], "structural_exit_code": 0, "structural_run_count": 1,
+    "questions": ready["question_count"], "options": ready["option_count"],
+    "ready": str(own / "ready.json"), "semantic_review": "pending",
+}))

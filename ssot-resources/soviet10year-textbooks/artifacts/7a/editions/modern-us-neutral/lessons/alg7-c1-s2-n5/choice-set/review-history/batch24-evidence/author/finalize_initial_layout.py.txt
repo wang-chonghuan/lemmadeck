@@ -1,0 +1,123 @@
+import hashlib
+import json
+from collections import Counter
+from pathlib import Path
+
+
+T = Path(__file__).resolve().parent.parent
+
+
+def digest(value):
+    return hashlib.sha256(json.dumps(
+        value, sort_keys=True, ensure_ascii=True, separators=(",", ":")
+    ).encode()).hexdigest()
+
+
+def pattern_findings(sequence):
+    findings = []
+    for index in range(len(sequence) - 2):
+        if len(set(sequence[index:index + 3])) == 1:
+            findings.append({"kind": "same_position_run", "start": index, "length": 3})
+    for length in range(2, 6):
+        for index in range(len(sequence) - 2 * length + 1):
+            if sequence[index:index + length] == sequence[index + length:index + 2 * length]:
+                findings.append({"kind": "adjacent_repeated_block", "start": index, "period": length})
+    return findings
+
+
+def snapshot_by_content(draft):
+    result = {}
+    for question in draft["questions"]:
+        truths = {r["option_id"]: r for r in question["key"]["rationales"]}
+        result[question["id"]] = {
+            "source_numbers": question["source_numbers"], "intent": question["intent"],
+            "stem": question["view"]["stem"], "mode": question["view"]["mode"],
+            "figure_ids": question["view"]["figure_ids"],
+            "options": {
+                digest({"text": row["text"], "figure_ids": row["figure_ids"]}): {
+                    "text": row["text"], "figure_ids": row["figure_ids"],
+                    "truth": truths[row["id"]]["truth"],
+                    "derivation": truths[row["id"]]["derivation"],
+                    "misconception": truths[row["id"]]["misconception"],
+                } for row in question["view"]["options"]
+            },
+        }
+    return result
+
+
+for name in ("7a-n5", "7a-n6"):
+    own = T / name
+    draft_path, view_path = own / "draft.json", own / "view.json"
+    old_bytes = draft_path.read_bytes()
+    old = json.loads(old_bytes)
+    old_view_bytes = view_path.read_bytes()
+    before = snapshot_by_content(old)
+    original_sequence = [q["key"]["correct"][0] for q in old["questions"] if q["view"]["mode"] == "single"]
+    history = own / "history-before-initial-layout-finalization"
+    history.mkdir()
+    for filename in ("draft.json", "view.json", "author.py"):
+        raw = (own / filename).read_bytes()
+        (history / filename).write_bytes(raw)
+        assert (history / filename).read_bytes() == raw
+    # Only a label/order permutation is performed. No candidate, truth or reason is generated.
+    for salt in range(1, 257):
+        revised = json.loads(old_bytes)
+        mapping = []
+        for question in revised["questions"]:
+            key = question["key"]
+            by_id = {r["option_id"]: r for r in key["rationales"]}
+            old_correct = set(key["correct"])
+            ordered = sorted(question["view"]["options"], key=lambda row: hashlib.sha256(
+                f"initial-layout-final-v1:{salt}:{question['id']}:{row['text']}".encode()
+            ).hexdigest())
+            rationales, correct = [], []
+            for index, row in enumerate(ordered):
+                old_id, new_id = row["id"], chr(65 + index)
+                row["id"] = new_id
+                rationale = by_id[old_id]
+                rationale["option_id"] = new_id
+                rationales.append(rationale)
+                if old_id in old_correct:
+                    correct.append(new_id)
+                mapping.append({
+                    "question_id": question["id"], "old_id": old_id, "new_id": new_id,
+                    "content_sha256": digest({"text": row["text"], "figure_ids": row["figure_ids"]}),
+                })
+            question["view"]["options"] = ordered
+            question["key"] = {"correct": correct, "rationales": rationales}
+        sequence = [q["key"]["correct"][0] for q in revised["questions"] if q["view"]["mode"] == "single"]
+        if not pattern_findings(sequence):
+            break
+    else:
+        raise AssertionError("No unpatterned initial layout found; content left preserved.")
+    assert snapshot_by_content(revised) == before
+    assert revised["coverage"] == old["coverage"]
+    assert revised["seed_sha256"] == old["seed_sha256"]
+    view = {"questions": [{"id": q["id"], **q["view"]} for q in revised["questions"]]}
+    draft_path.write_text(json.dumps(revised, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
+    view_path.write_text(json.dumps(view, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
+    assert snapshot_by_content(json.loads(draft_path.read_bytes())) == before
+    seed_lesson = json.loads((own / "seed.json").read_bytes())["source"]["lesson"]
+    receipt = {
+        "lesson": seed_lesson,
+        "scope": "Initial author packaging only, before the first structural run; exact content/truth/source/intent/coverage unchanged.",
+        "before_draft_byte_sha256": hashlib.sha256(old_bytes).hexdigest(),
+        "before_view_byte_sha256": hashlib.sha256(old_view_bytes).hexdigest(),
+        "after_draft_byte_sha256": hashlib.sha256(draft_path.read_bytes()).hexdigest(),
+        "after_view_byte_sha256": hashlib.sha256(view_path.read_bytes()).hexdigest(),
+        "history_path": str(history), "history_original_bytes_verified": True,
+        "salt": salt, "mapping": mapping,
+        "all_option_content_truth_derivation_misconception_exactly_preserved": True,
+        "all_source_intent_coverage_and_stems_exactly_preserved": True,
+        "original_single_position_sequence": original_sequence,
+        "original_pattern_findings": pattern_findings(original_sequence),
+        "current_single_position_sequence": sequence,
+        "current_single_position_counts": dict(Counter(sequence)),
+        "current_pattern_findings": pattern_findings(sequence),
+        "pattern_check_scope": "Single-question order, no runs of3 identical positions or adjacent equal blocks of periods2 through5. Imbalance alone is not labeled a predictable pattern.",
+        "semantic_review_not_claimed": True,
+    }
+    with (own / "initial-layout-receipt.json").open("x", encoding="utf-8") as output:
+        json.dump(receipt, output, ensure_ascii=True, indent=2)
+        output.write("\n")
+    print(json.dumps({"lesson": seed_lesson, "salt": salt, "single_sequence": sequence, "content_rebinding": "exact"}))

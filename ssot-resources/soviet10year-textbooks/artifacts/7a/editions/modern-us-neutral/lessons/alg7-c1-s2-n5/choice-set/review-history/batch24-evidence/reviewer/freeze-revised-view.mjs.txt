@@ -1,0 +1,201 @@
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+
+const repo = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const tmp = path.join(repo, ".intentfold/tickets/STEMROBIN-182/tmp");
+const hash = value => createHash("sha256").update(value).digest("hex");
+const inputHashes = {
+  5: {
+    original_review: "f149288e28999f3901d3d2c218f7499c2a1812017af992005b6c7f45ff085bf3",
+    source: "599338f0bbcb171972aa31f81b957b6d349871a1bc6c2f8710d1ef912b826f19",
+    revised_byte: "35b2090bf8f67d52c356b09a8b5e27c08ed0fdc217c39129d78ab62ac4579f0f",
+    revised_canonical: "cc76ec3ba1d4e8ba9bd6243d8aa7d1d3477f72ca325654da7b6066713043d56c"
+  },
+  6: {
+    original_review: "06e512b38855ce3c40e6a00a2f3859abb1e018b11f786609dcf9a3267fbdebe0",
+    source: "994739bab7ac27186b3a29e8419c998a083f322554dc194039d2cc271cc9bc83",
+    revised_byte: "1abb707cdfccc74eafc8c5b8cbb1d33928a56bd489e0d1571f9ae797dafb1d2c",
+    revised_canonical: "5586a919eebd4ce0e34d285c4fda00dba39e34eb49e9aca49f47e3c345d3a8c8"
+  }
+};
+for (const n of [5, 6]) {
+  const root = path.join(tmp, `reviewer-7a-n${n}`);
+  const sourcePath = path.join(root, "source-solutions.json");
+  const originalPath = path.join(root, "view-checks.json");
+  const originalBytes = fs.readFileSync(originalPath);
+  assert.equal(hash(originalBytes), inputHashes[n].original_review);
+  assert.equal(hash(fs.readFileSync(sourcePath)), inputHashes[n].source);
+  const original = JSON.parse(originalBytes);
+  const revisedPath = path.join(tmp, `7a-n${n}/revised-pureview.json`);
+  const revisedBytes = fs.readFileSync(revisedPath);
+  assert.equal(hash(revisedBytes), inputHashes[n].revised_byte);
+  const revised = JSON.parse(revisedBytes);
+  const assessment = JSON.parse(fs.readFileSync(path.join(root, "revised-unit-assessments.json")));
+  assert.deepEqual(revised.questions.map(q => q.id),
+    original.question_reviews.map(q => q.question_id));
+  for (const question of revised.questions) {
+    assert.deepEqual(Object.keys(question).sort(), ["figure_ids", "id", "mode", "options", "stem"]);
+    for (const option of question.options) {
+      assert.deepEqual(Object.keys(option).sort(), ["figure_ids", "id", "text"]);
+    }
+  }
+  const affected = new Map(assessment.question_updates.map(row => [row.question_id, row]));
+  const questionReviews = original.question_reviews.map(old => {
+    const update = affected.get(old.question_id);
+    const view = revised.questions.find(q => q.id === old.question_id);
+    assert.deepEqual(view.options.map(o => o.id), old.mathematics.option_checks.map(o => o.option_id));
+    if (!update) {
+      return {
+        ...structuredClone(old),
+        current_snapshot_binding: {
+          verdict: "blocked",
+          evidence: "原完整view字节未保存在reviewer目录；原路径现已换成修订内容，旧SHA/canonical SHA都不相同。原数学证据保留，但不冒称已对该题完成exact-unchanged内容比较。待披露哈希匹配的旧pureview副本，仅补绑定，不重算。"
+        }
+      };
+    }
+    const changed = new Map(update.mathematics_update.changed_option_checks.map(row => [row.option_id, row]));
+    return {
+      question_id: old.question_id,
+      source_numbers: structuredClone(old.source_numbers),
+      task_fidelity: update.task_fidelity,
+      redundancy: update.redundancy,
+      answer_leakage: update.answer_leakage,
+      mathematics: {
+        verdict: "pass",
+        independent_solution: update.mathematics_update.independent_solution,
+        correct: update.mathematics_update.correct,
+        option_checks: old.mathematics.option_checks.map(row => changed.get(row.option_id) ?? {
+          ...structuredClone(row),
+          evidence: `${row.evidence} 原冻结证明/反例复用；已读本次受影响单位全文，该未重算部分仍为同一数学命题。`
+        })
+      },
+      current_snapshot_binding: {
+        verdict: "pass",
+        evidence: "本次受影响单位已实际阅读全文；新增/变化逻辑由独立冻结源求解，未改数学部分复用既有证明。整个单位的原始字节diff仍待旧pureview副本，不把作者声称变化字段数当证据。"
+      },
+      capacity_loss: update.capacity_loss
+    };
+  });
+  const sourceUpdates = new Map(assessment.affected_source_coverage_updates.map(row => [row.source_number, row]));
+  const coverage = original.source_coverage.map(row => {
+    const update = sourceUpdates.get(row.source_number);
+    return update ? { ...row, verdict: update.verdict, evidence: update.evidence } : structuredClone(row);
+  });
+  const trueSets = questionReviews.map(row => ({
+    question_id: row.question_id,
+    correct: row.mathematics.correct,
+    binding: affected.has(row.question_id) ? "reviewed affected unit" : "original frozen truth, exact rebind pending"
+  }));
+  const singles = revised.questions.filter(q => q.mode === "single");
+  assert.deepEqual(singles.map(q => q.id), original.package_checks.position_patterns.single_question_ids);
+  const sequence = singles.map(q => questionReviews.find(r => r.question_id === q.id).mathematics.correct[0]);
+  assert.deepEqual(sequence, original.package_checks.position_patterns.independent_true_positions);
+  const result = {
+    stage: "revised-pureview-changes-only",
+    stage_complete: false,
+    reviewer: { kind: "independent_agent", identity: "STEMROBIN-182 / 会话A / Sartre" },
+    lesson: original.lesson,
+    outcome: "blocked",
+    blocker_scope: "Exact unchanged-view snapshot evidence only; no new source or changed-option mathematical blocker.",
+    affected_units_outcome: "pass",
+    view_snapshot: {
+      path: revisedPath,
+      byte_sha256: inputHashes[n].revised_byte,
+      canonical_sha256: inputHashes[n].revised_canonical,
+      preserved_copy: path.join(root, "revised-pureview-snapshot.json")
+    },
+    original_evidence: {
+      review_path: originalPath,
+      review_byte_sha256: inputHashes[n].original_review,
+      source_path: sourcePath,
+      source_byte_sha256: inputHashes[n].source,
+      original_view_snapshot: original.view_snapshot,
+      original_review_unchanged: true,
+      original_source_unchanged: true
+    },
+    exact_content_comparison: {
+      verdict: "blocked",
+      evidence: "原view路径当前字节及canonical SHA已等于本次修订快照，不等于原审查记录中的冻结SHA。自己的原记录只有哈希、完整真值和实质证明，无原stem/options完整副本。未读取作者history/diff/内部；请披露匹配原冻结SHA的纯view副本路径后只核字面delta。",
+      observed_current_original_path_byte_sha256: inputHashes[n].revised_byte,
+      observed_current_original_path_canonical_sha256: inputHashes[n].revised_canonical,
+      previous_baseline_probe: "Byte SHA failed; canonical SHA also differed, so this is not a formatting-only change.",
+      exact_unchanged_claim_made: false
+    },
+    counts: {
+      questions: revised.questions.length,
+      options: revised.questions.reduce((count, q) => count + q.options.length, 0),
+      affected_questions_reviewed: affected.size,
+      original_units_waiting_exact_rebind: revised.questions.length - affected.size,
+      options_reassessed_in_changed_records: assessment.question_updates.reduce((count, row) =>
+        count + row.mathematics_update.changed_option_checks.length, 0),
+      original_source_recomputations: 0
+    },
+    package_checks: {
+      task_fidelity: {
+        verdict: "pass",
+        evidence: n === 5
+          ? "九处中的n5六单位已消除缺反向分支、引用错位、等价/图像/数值/域目标全共享问题。其他18单位的原通过证据保留，但整包新快照的exact绑定另列blocked。"
+          : "n6三单位已消除83c公共E预给、85b固定标签、86a固定箭头。其他14单位原通过证据保留，但整包新快照exact绑定另列blocked。"
+      },
+      redundancy: {
+        verdict: "pass",
+        evidence: "受影响完整候选没有新同义选项或恒固定原独立目标；已实际读整份修订view。一般定理/定义复用不是错误泄漏；不能把候选完整记录中的合理消元本身判为不忠实。"
+      },
+      answer_leakage: {
+        verdict: "pass",
+        evidence: n === 5
+          ? "74b两N定义仅是判断前提；78第二等价、79图像和两值、80整个图像、82第一/第三域现在有不同候选。79/80/81共享抛物线概念未提供另题完整数值/逆像答案。"
+          : "83c仅给N两种定义，不给计算端点；85的A⊂B是实际图基础，标签须判断；86第一组方向已变化。83c与n5-74b共享N定义但没有共享待求的完整答案。"
+      },
+      position_patterns: {
+        verdict: "pass",
+        independent_true_positions: sequence,
+        evidence: "模式、单选题序列与原独立序列一致；最长同位置连续段2，无长ABC/ABCD周期。不把作者键作为位置判断依据。"
+      },
+      cross_question_dependence: {
+        verdict: "pass",
+        evidence: n === 5
+          ? "67/68/69/76使用几何基本事实；74/75/77共享逻辑术语；79/80/81共享通用ax²性质。修后没有另一题给出79/80两数值、全逆像、阈值区间的完整答案。一般概念可支持推理，不是直接抄选项键。"
+          : "84/86/87共有真值集、端点、等价概念但数值/方向不同。83c不直接给74b的推论标签；87d空前提仍按源定义成立，87f和89分别保各自原分母域。"
+      },
+      source_conventions_and_losses: {
+        verdict: "pass",
+        evidence: "保留70b定义性与分数术语区别、N两约定条件解、85仅a/b/d、原函数/集合/数轴作图及图上读值的生产方法损失。没有读作者coverage，不提前批准内部遗漏列表。"
+      }
+    },
+    question_reviews: questionReviews,
+    complete_true_sets: trueSets,
+    source_coverage: coverage,
+    image_evidence_reused: assessment.image_evidence_reused ?? original.source_evidence_reused,
+    read_boundary: {
+      revised_pureview_only: [revisedPath],
+      own_frozen_evidence_used: [originalPath, sourcePath, path.join(root, "image-observations.json")],
+      old_view_path_probe: "只按自己冻结记录的路径读取字节并核SHA/canonical SHA；不匹配，未将其当旧数学输入。",
+      author_draft_key_ready_repair_delta_wrong_programs_read: false,
+      author_source_solutions_read: false,
+      author_history_read: false,
+      n51_author_role_frozen_and_not_used_for_7a_review: true
+    },
+    operations: {
+      source_math_reruns: 0,
+      canonical_or_structure_validator_runs: 0,
+      browser_render_or_image_open_runs: 0,
+      original_author_or_durable_writes: 0,
+      in_flight_operations: []
+    },
+    next_stage: "请父方披露旧pureview副本以完成exact-delta绑定；本阶段不读首次internals，仍待明确授权。",
+    model: null,
+    usage: null
+  };
+  fs.writeFileSync(path.join(root, "revised-pureview-snapshot.json"), revisedBytes, { flag: "wx" });
+  fs.writeFileSync(path.join(root, "revised-view-checks.json"), JSON.stringify(result, null, 2) + "\n", { flag: "wx" });
+  assert.equal(hash(fs.readFileSync(originalPath)), inputHashes[n].original_review);
+  assert.equal(hash(fs.readFileSync(sourcePath)), inputHashes[n].source);
+  console.log(JSON.stringify({
+    lesson: n, affected_units: affected.size, affected_units_outcome: "pass",
+    exact_rebind: "blocked: old pureview bytes need explicit disclosure",
+    result_path: path.join(root, "revised-view-checks.json")
+  }));
+}

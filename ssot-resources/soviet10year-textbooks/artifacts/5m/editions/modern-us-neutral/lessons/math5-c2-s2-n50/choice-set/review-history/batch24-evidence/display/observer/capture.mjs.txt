@@ -1,0 +1,172 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { createRequire } from "node:module";
+import { fileURLToPath, pathToFileURL } from "node:url";
+
+delete process.env.PWDEBUG;
+process.env.PLAYWRIGHT_HTML_OPEN = "never";
+const root = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const own = path.dirname(fileURLToPath(import.meta.url));
+const require = createRequire(path.join(root, "app/package.json"));
+const { chromium } = require("playwright");
+const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const manifest = JSON.parse(fs.readFileSync(path.join(root, ".intentfold/tickets/STEMROBIN-182/tmp/batch24-render/5m-math5-c2-s2-n50-capture-manifest.json")));
+const probe = process.argv[2] === "probe";
+const destination = path.join(own, probe ? "small-flow.json" : "supplement-inventory.json");
+if (fs.existsSync(destination)) throw new Error("Never overwrite a completed run");
+const rows = [];
+const screenshots = [];
+const browser = await chromium.launch({ channel: "chrome", headless: true });
+let closed = false;
+try {
+  for (const check of probe ? manifest.checks.filter((item) => item.surface === "text" && item.viewport.width === 390) : manifest.checks) {
+    const { surface, viewport } = check;
+    const input = manifest.rendered.find((item) => item.path.endsWith(`/${surface}.html`));
+    const renderedPath = path.join(root, input.path);
+    if (hash(fs.readFileSync(renderedPath)) !== input.sha256) throw new Error("Existing HTML hash mismatch");
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1, serviceWorkers: "block" });
+    try {
+      await context.route("**/*", (route) => /^(file:|data:|about:)/.test(route.request().url()) ? route.continue() : route.abort());
+      const page = await context.newPage();
+      await page.goto(pathToFileURL(renderedPath).href, { waitUntil: "load" });
+      await page.evaluate(() => document.fonts.ready);
+      const selector = surface === "text" ? "p.para" : surface === "exercises" ? "li.ex" : "section.choice";
+      const geometry = await page.evaluate((selector) => {
+        const rect = (element) => {
+          const r = element.getBoundingClientRect();
+          return { x: r.x + scrollX, y: r.y + scrollY, width: r.width, height: r.height };
+        };
+        const units = [...document.querySelectorAll(selector)];
+        const media = [...document.querySelectorAll("svg,img")];
+        const overflows = [...document.querySelectorAll("body *")].filter((element) => {
+          const c = getComputedStyle(element);
+          return ["auto", "scroll"].includes(c.overflowX) && element.scrollWidth > element.clientWidth + 1;
+        });
+        return {
+          document_height: document.documentElement.scrollHeight,
+          document_width: document.documentElement.scrollWidth,
+          units: units.map((element, index) => ({
+            index: index + 1, label: element.querySelector(".no,.choice-heading")?.textContent.trim() || `paragraph-${index + 1}`,
+            rect: rect(element),
+            options: [...element.querySelectorAll(".choice-options>li")].map((option) => ({
+              label: option.querySelector(".option-id")?.textContent.trim(), rect: rect(option),
+            })),
+          })),
+          media: media.map((element, index) => ({
+            index: index + 1, tag: element.tagName, is_katex_fragment: !!element.closest(".katex"),
+            rect: rect(element), unit_index: units.indexOf(element.closest(selector)) + 1,
+          })),
+          overflow: overflows.map((element, index) => ({
+            index, tag: element.tagName, class: element.className, rect: rect(element),
+            client_width: element.clientWidth, scroll_width: element.scrollWidth,
+            unit_index: units.indexOf(element.closest(selector)) + 1,
+            media_indices: media.flatMap((image, i) => element.contains(image) ? [i + 1] : []),
+          })),
+        };
+      }, selector);
+      const items = page.locator(selector);
+      for (let i = 0; i < await items.count(); i += 1) await items.nth(i).scrollIntoViewIfNeeded();
+      const media = page.locator("svg,img");
+      for (let i = 0; i < await media.count(); i += 1) await media.nth(i).scrollIntoViewIfNeeded();
+      const primaryRanges = [];
+      for (const position of ["first", "last"]) {
+        await (position === "first" ? items.first() : items.last()).scrollIntoViewIfNeeded();
+        primaryRanges.push({
+          filename: `math5-c2-s2-n50-${surface}-${viewport.width}-${position}.png`,
+          y: await page.evaluate(() => scrollY), height: viewport.height,
+          position_reconstructed_from_existing_capture_helper: true,
+        });
+      }
+      const row = { surface, viewport, rendered_path: renderedPath, rendered_sha256: input.sha256,
+        ...geometry, primary_ranges: primaryRanges, vertical_supplements: [], horizontal_supplements: [] };
+      if (!probe) {
+        const settle = async () => {
+          await page.evaluate(() => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+          await page.waitForTimeout(100);
+        };
+        const capture = async (suffix, rect, reason, horizontal = []) => {
+          const filename = `math5-c2-s2-n50-${surface}-${viewport.width}-${suffix}.png`;
+          const output = path.join(own, filename);
+          if (fs.existsSync(output)) throw new Error("Never overwrite a screenshot");
+          await page.evaluate((y) => window.scrollTo(0, y), rect.y);
+          await settle();
+          const scrollY = await page.evaluate(() => window.scrollY);
+          await page.screenshot({ path: output, scale: "css",
+            clip: { x: rect.x, y: rect.y - scrollY, width: rect.width, height: rect.height } });
+          const item = { path: output, filename, sha256: hash(fs.readFileSync(output)), surface, viewport,
+            document_rect: rect, scroll_y: scrollY, reason, horizontal_offsets: horizontal, native_scale: 1,
+            unit_indices_intersecting: geometry.units.filter((unit) => unit.rect.y < rect.y + rect.height && unit.rect.y + unit.rect.height > rect.y).map((unit) => unit.index) };
+          screenshots.push(item);
+          return item;
+        };
+        const intervals = primaryRanges.map((item) => [item.y, Math.min(geometry.document_height, item.y + item.height)]).sort((a, b) => a[0] - b[0]);
+        const gaps = [];
+        let cursor = 0;
+        for (const [start, end] of intervals) {
+          if (start > cursor) gaps.push([cursor, start]);
+          cursor = Math.max(cursor, end);
+        }
+        if (cursor < geometry.document_height) gaps.push([cursor, geometry.document_height]);
+        let gapIndex = 0;
+        for (const [start, end] of gaps) {
+          for (let y = start; y < end; y += viewport.height) {
+            const height = Math.min(viewport.height, end - y);
+            const item = await capture(`missing-window-${String(++gapIndex).padStart(2, "0")}`,
+              { x: 0, y, width: viewport.width, height },
+              "Only document pixels outside reconstructed original first/last viewport ranges; all overflow elements at their initial left state.");
+            row.vertical_supplements.push(item.filename);
+          }
+        }
+        for (const overflow of geometry.overflow) {
+          const hasPrimaryEnd = overflow.media_indices.some((index) =>
+            manifest.screenshots.some((item) => item.path.endsWith(`${surface}-${viewport.width}-figure-${index}-end.png`)));
+          const positions = [];
+          if (overflow.scroll_width > 2 * overflow.client_width) positions.push("middle");
+          if (!hasPrimaryEnd) positions.push("end");
+          for (const position of positions) {
+            const offsets = await page.evaluate(({ index, position }) => {
+              const nodes = [...document.querySelectorAll("body *")].filter((element) => {
+                const c = getComputedStyle(element);
+                return ["auto", "scroll"].includes(c.overflowX) && element.scrollWidth > element.clientWidth + 1;
+              });
+              const element = nodes[index];
+              const maximum = element.scrollWidth - element.clientWidth;
+              element.scrollLeft = position === "middle" ? Math.floor(maximum / 2) : maximum;
+              return [{ overflow_index: index, position, scroll_left: element.scrollLeft, max: maximum,
+                client_width: element.clientWidth, scroll_width: element.scrollWidth }];
+            }, { index: overflow.index, position });
+            const rect = { x: Math.max(0, Math.floor(overflow.rect.x)), y: Math.floor(overflow.rect.y),
+              width: Math.min(viewport.width - Math.max(0, Math.floor(overflow.rect.x)), Math.ceil(overflow.rect.width)),
+              height: Math.ceil(overflow.rect.height) };
+            if (rect.height > viewport.height) throw new Error("Narrow horizontal region needs bounded vertical slicing");
+            const item = await capture(`overflow-${overflow.index + 1}-${position}`, rect,
+              hasPrimaryEnd ? "Only horizontal middle pixels absent from the existing left/right figure regions." : "Previously unobserved horizontal formula/figure right end.",
+              offsets);
+            row.horizontal_supplements.push(item.filename);
+            await page.evaluate((index) => {
+              const nodes = [...document.querySelectorAll("body *")].filter((element) => {
+                const c = getComputedStyle(element);
+                return ["auto", "scroll"].includes(c.overflowX) && element.scrollWidth > element.clientWidth + 1;
+              });
+              nodes[index].scrollLeft = 0;
+            }, overflow.index);
+          }
+        }
+      }
+      rows.push(row);
+    } finally { await context.close(); }
+    if (hash(fs.readFileSync(renderedPath)) !== input.sha256) throw new Error("Existing HTML changed during capture");
+  }
+} finally { await browser.close(); closed = true; }
+fs.writeFileSync(destination, JSON.stringify({
+  lesson: "math5-c2-s2-n50", status: probe ? "small_flow_complete_no_pixel_approval" : "pixels_pending_actual_open",
+  rows, screenshots, additional_unique_combinations: 0, browser_closed_in_finally: closed,
+  isolated_headless: true, pwdebug_cleared: true, reporter_open: "never", network_blocked: true,
+  html_unchanged: true, semantic_validator_renderer_runs: 0,
+}, null, 2) + "\n", { flag: "wx" });
+console.log(JSON.stringify({ path: destination, browser_closed: closed, screenshot_count: screenshots.length,
+  rows: rows.map((row) => ({ surface: row.surface, viewport: row.viewport, document_height: row.document_height,
+    units: row.units.length, options: row.units.reduce((sum, unit) => sum + unit.options.length, 0),
+    primary_ranges: row.primary_ranges, overflow: row.overflow, vertical: row.vertical_supplements.length,
+    horizontal: row.horizontal_supplements.length })) }, null, 2));

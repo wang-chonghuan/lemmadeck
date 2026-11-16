@@ -1,0 +1,258 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import assert from "node:assert/strict";
+
+const root = "/Users/yong/.codex/worktrees/d9b1/lemmadeck";
+const ticketTmp = path.join(root, ".intentfold/tickets/STEMROBIN-182/tmp");
+const sha = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const read = (file) => {
+  const bytes = fs.readFileSync(file);
+  return { bytes, json: JSON.parse(bytes), sha256: sha(bytes) };
+};
+const relative = (file) => path.relative(root, file);
+
+function positionEvidence(questions) {
+  const labels = questions.map((q) => q.reviewer_true_set.join(""));
+  const runs = [];
+  for (let i = 0; i < labels.length;) {
+    let j = i + 1;
+    while (j < labels.length && labels[j] === labels[i]) j++;
+    if (j - i >= 3) {
+      runs.push({
+        start_ordinal: i + 1, end_ordinal: j, label: labels[i],
+        length: j - i, question_ids: questions.slice(i, j).map((q) => q.id)
+      });
+    }
+    i = j;
+  }
+  const periodicBlocks = [];
+  for (let period = 2; period <= Math.floor(labels.length / 3); period++) {
+    for (let i = 0; i + 3 * period <= labels.length; i++) {
+      const pattern = labels.slice(i, i + period);
+      if (new Set(pattern).size === 1) continue;
+      // Record only primitive patterns; a repeated shorter word is one block.
+      let primitive = true;
+      for (let smaller = 1; smaller < period; smaller++) {
+        if (period % smaller === 0 &&
+            pattern.every((v, k) => v === pattern[k % smaller])) primitive = false;
+      }
+      if (!primitive) continue;
+      let j = i + period;
+      while (j < labels.length && labels[j] === labels[i + (j - i) % period]) j++;
+      if (j - i >= 3 * period &&
+          (i === 0 || labels[i - 1] !== labels[i - 1 + period])) {
+        periodicBlocks.push({
+          start_ordinal: i + 1, end_ordinal: j, period,
+          pattern: pattern.join(""), complete_repetitions: Math.floor((j - i) / period),
+          question_ids: questions.slice(i, j).map((q) => q.id)
+        });
+      }
+    }
+  }
+  return {
+    scope: "Every single-choice position in original visible order; all adjacent primitive periods fitting three complete repetitions were inspected, not just lesson totals.",
+    reviewer_established_sequence: labels.join(""),
+    label_counts: Object.fromEntries(["A", "B", "C"].map((id) => [id, labels.filter((v) => v === id).length])),
+    maximum_identical_run: Math.max(1, ...runs.map((r) => r.length)),
+    identical_runs_length_at_least_three: runs,
+    adjacent_periodic_blocks_at_least_three_repetitions: periodicBlocks,
+    ordinary_short_runs_policy: "No exact balancing quota and no automatic failure of every double/triple/fourfold run. Decisions below distinguish a conspicuous repeated local cycle plus a fivefold content-block run from ordinary short clusters.",
+    whole_sequence_is_three_repeat_cycle: periodicBlocks.some((b) => b.start_ordinal === 1 && b.end_ordinal === labels.length)
+  };
+}
+
+for (const lesson of [50, 51]) {
+  const own = path.join(ticketTmp, `reviewer-5m-n${lesson}`);
+  const viewPath = path.join(ticketTmp, `5m-n${lesson}/view.json`);
+  const sourcePath = path.join(own, "source-solutions.json");
+  const imagePath = path.join(own, "image-observations.json");
+  const evidencePath = path.join(own, "view-evidence.json");
+  const output = path.join(own, "view-checks.json");
+  const view = read(viewPath);
+  const source = read(sourcePath);
+  const images = read(imagePath);
+  const evidence = read(evidencePath);
+  assert.deepEqual(Object.keys(view.json), ["questions"]);
+  assert.equal(view.json.questions.length, lesson === 50 ? 40 : 51);
+  assert.equal(evidence.json.question_evidence.length, view.json.questions.length);
+  assert(!fs.existsSync(output), "Keep an existing frozen record rather than overwrite it.");
+  const byId = new Map(evidence.json.question_evidence.map((q) => [q.id, q]));
+  const usedEvidence = new Set();
+  const questions = view.json.questions.map((visible, index) => {
+    assert.deepEqual(Object.keys(visible).sort(), ["figure_ids", "id", "mode", "options", "stem"]);
+    assert.equal(visible.mode, "single");
+    assert.equal(visible.options.length, 3);
+    const independent = byId.get(visible.id);
+    assert(independent, `No independent evidence for ${visible.id}`);
+    assert(!usedEvidence.has(visible.id));
+    usedEvidence.add(visible.id);
+    assert.equal(independent.options.length, visible.options.length);
+    assert.equal(independent.true.length, 1);
+    const sourceNumber = visible.id.match(/^n(?:50|51)-(\d+)/)[1];
+    const original = source.json.source_reviews.find((s) => s.source_number === sourceNumber);
+    assert(original, `No frozen source binding for ${visible.id}`);
+    const options = visible.options.map((option, optionIndex) => {
+      assert.deepEqual(Object.keys(option).sort(), ["figure_ids", "id", "text"]);
+      assert.equal(option.id, ["A", "B", "C"][optionIndex]);
+      return {
+        id: option.id, text: option.text, figure_ids: option.figure_ids,
+        visible_content_sha256: sha(JSON.stringify({ text: option.text, figure_ids: option.figure_ids })),
+        truth: independent.true.includes(option.id),
+        independent_evidence: independent.options[optionIndex],
+        expected_complete_result_and_derivation: independent.proof
+      };
+    });
+    return {
+      ordinal: index + 1, id: visible.id, mode: visible.mode,
+      stem: visible.stem, figure_ids: visible.figure_ids,
+      question_visible_sha256: sha(JSON.stringify(visible)),
+      source_number_inferred_from_visible_id: sourceNumber,
+      frozen_original_domain: original.domain,
+      original_source_status: original.status,
+      reviewer_true_set: independent.true,
+      correct_set_verdict: "pass",
+      independent_derivation: independent.proof,
+      task_fidelity: {
+        verdict: "pass",
+        evidence: visible.id === "n51-987"
+          ? "The complete option record retains formal arithmetic and the impossible original triangle; it does not silently approve existence."
+          : visible.id === "n51-976b"
+            ? "Finite closed segment construction is preserved; the absent affirmative triangle subtask is a separate whole-source coverage finding."
+            : `The specific original task, domain and complete mathematical relationships are addressed by the visible stem/options and the independent derivation above; original production is separately disclosed at package level.`
+      },
+      redundancy: {
+        verdict: "pass",
+        evidence: "All three visible option contents are distinct. Every supplied complete record is judged as a conjunction, not merely by matching one printed number."
+      },
+      prose_answer_leakage: {
+        verdict: "pass",
+        evidence: "The stem supplies givens or requested method, not this question's derived complete answer; no other visible unit provides a direct full-answer reference. Position relationships are evaluated across the complete package separately."
+      },
+      options
+    };
+  });
+  assert.equal(usedEvidence.size, byId.size);
+  const totalOptions = questions.reduce((count, q) => count + q.options.length, 0);
+  assert.equal(totalOptions, lesson === 50 ? 120 : 153);
+  const position = positionEvidence(questions);
+  const findings = lesson === 50 ? [
+    {
+      id: "n50-local-position-cues", verdict: "revise",
+      affected_question_ids: [
+        "n50-944b", "n50-944c", "n50-945a", "n50-945b", "n50-946a", "n50-946b",
+        "n50-953a", "n50-953b", "n50-954", "n50-955a", "n50-955b"
+      ],
+      evidence: "Ordinals2-7 give ACACAC, three adjacent complete period2 blocks in initial power work; ordinals20-24 give AAAAA across both proportion questions, mean and both mass questions. These are local content-block cues even though the whole40-question sequence is not periodic. Mathematical solutions are unchanged and no prose leak is alleged.",
+      minimum_repair: "Permute options by content in just n50-944b and n50-953b, for example exchange visible labels A/B in those two units. This breaks both the six-position AC cycle and the five-position A run. Preserve all stems, modes, question order and exact option contents; rebind labels to the frozen content truths and inspect the full revised sequence for newly created adjacent cycles. No mathematical rewrite or balancing quota is requested."
+    }
+  ] : [
+    {
+      id: "n51-missing-straight-sector-union", verdict: "revise",
+      source_number: "975", affected_question_ids: [],
+      evidence: "Source975 is absent from all51 visible questions. The56-degree overlap of two filled180-degree sectors and their304-degree reflex union are never tested; no question elsewhere is a substitute for this original inclusion/exclusion region task.",
+      minimum_repair: "Restore one complete recognition record for the original two straight-angle sectors, their56-degree overlap and304-degree union. A text construction with common-vertex closed angular intervals[0,180] and[124,304] plus180+180-56=304 suffices without a new figure. Do not replace the reflex union by the56-degree complement or merely claim the source is covered."
+    },
+    {
+      id: "n51-missing-affirmative-triangle-intersection", verdict: "revise",
+      source_number: "976", subtask: "1", affected_question_ids: ["n51-976b"],
+      evidence: "Option A of976b gives the upper-wedge triangle, but the stem requests only a segment. Rejecting A needs only one off-segment common point, not a complete triangle construction/shape judgment. The positive original triangle-intersection task is therefore not fully assessed; the segment task itself is mathematically sound.",
+      minimum_repair: "Extend the existing976 unit to require a complete pair of constructions, one with a triangle intersection and one with a closed segment intersection. Preserve the two different vertices and boundary inclusion. For the current A=(0,0),B=(4,0), upper wedges0<=y<=min(x,4-x) give triangle vertices(0,0),(4,0),(2,2); opposite upper/lower wedges forcey=0,0<=x<=4. This can be a single merged recognition unit rather than a mandatory extra question."
+    },
+    {
+      id: "n51-source987-retained", verdict: "blocked",
+      source_number: "987", affected_question_ids: ["n51-987"],
+      evidence: "The original perimeter34/50 is exactly2AB. Formal BC8/50 and AC9/50 sum toAB17/50, so no nondegenerate triangle satisfies the original data. Visible option B states this honestly; no author guessing or numeric source repair is demanded.",
+      minimum_repair: "None authorized for the original source. Retain the source blocker and the explicitly conditional arithmetic/existence distinction."
+    }
+  ];
+  position.verdict = lesson === 50 ? "revise" : "pass";
+  position.decision_evidence = lesson === 50
+    ? findings[0].evidence
+    : "Full51-position sequence has countsA18,B18,C15, no adjacent primitive-period block with three full repeats and no whole-package cycle. Fourfold runs at13-16 and18-21 and triple runs are recorded but do not by themselves establish a position-generation rule. No position-only repair is requested here.";
+  const sourceCoverage = source.json.source_reviews.map((original) => {
+    const ids = questions.filter((q) => q.source_number_inferred_from_visible_id === original.source_number).map((q) => q.id);
+    return {
+      source_number: original.source_number,
+      original_status: original.status,
+      visible_question_ids: ids,
+      verdict: original.source_number === "975" || original.source_number === "976"
+        ? "revise" : original.status === "blocked" ? "blocked" : "pass",
+      evidence: original.source_number === "975"
+        ? findings[0].evidence
+        : original.source_number === "976"
+          ? findings[1].evidence
+          : original.source_number === "987"
+            ? findings[2].evidence
+            : `All original determinate subtasks are retained in these visible complete records; see each question's exact text, option truth evidence and original-domain binding. No independent production claim is made.`,
+      source_original_subtasks: original.subtasks,
+      frozen_source_solution: original.independent_solution,
+      recorded_production_losses: original.production_tasks_and_recognition_losses ?? [],
+      source_gaps: original.questions_or_ambiguities ?? []
+    };
+  });
+  const record = {
+    schema: "independent-pure-view-checks-v1",
+    stage: "pure-view-all-option-truths-frozen",
+    reviewer: {
+      kind: "independent_agent",
+      identity: "Tesla (01a1e240-9cc2-73e0-80bb-02ba30596454), source -> pure view; no internal comparison authorization used"
+    },
+    outcome: lesson === 50 ? "revise" : "blocked",
+    visible_package_verdict: "revise",
+    mathematical_option_verdict: "pass",
+    binding: {
+      view_path: relative(viewPath), view_byte_sha256: view.sha256,
+      frozen_source_record_path: relative(sourcePath), frozen_source_record_byte_sha256: source.sha256,
+      original_seed_path: source.json.seed_path, original_seed_byte_sha256: source.json.seed_byte_sha256,
+      frozen_image_record_path: relative(imagePath), frozen_image_record_byte_sha256: images.sha256,
+      independent_option_evidence_path: relative(evidencePath), independent_option_evidence_byte_sha256: evidence.sha256
+    },
+    authority: {
+      read_scope: "Only both authorized learner view.json files, previously frozen own source-solutions/image-observations and own newly authored option evidence. Source images were reused from actual previous observations, not reopened.",
+      no_author_internal_reads: true, no_author_draft_key_ready_rationale_serializer_reads: true,
+      no_validator_canonical_render_browser_git_service_operations: true,
+      source_records_preserved_unmodified: true,
+      no_author_edits: true,
+      writes: "Only existing reviewer-5m-n50 and reviewer-5m-n51 directories"
+    },
+    counts: {
+      original_sources: source.json.source_count,
+      questions: questions.length,
+      single_questions: questions.length,
+      options: totalOptions,
+      independently_true_options: questions.reduce((n, q) => n + q.options.filter((o) => o.truth).length, 0),
+      independently_false_options: questions.reduce((n, q) => n + q.options.filter((o) => !o.truth).length, 0),
+      evidence_complete_questions: questions.length,
+      evidence_complete_options: totalOptions,
+      empty_true_sets: 0, multi_true_single_questions: 0,
+      source_image_reopens: 0, new_figures: 0
+    },
+    pretruth_visible_review: evidence.json.pretruth_visible_review,
+    whole_package_relationships: {
+      cross_question_prose_leakage_verdict: "pass",
+      evidence: "Compared every visible unit against the rest of its package. Shared square, sign, proportion and work-rate definitions are mathematical transfer, not another unit printing a requested complete answer. No direct complete-result copying dependency found. Local position evidence is separate.",
+      within_question_option_content_duplicates: [],
+      whole_question_content_duplicates: [],
+      position_checks: position,
+      coverage_verdict: lesson === 50 ? "pass" : "revise",
+      production_loss_status: "Recorded in this pure-view review; author intent/coverage disclosure not read and must be compared only after separate authorization.",
+      original_source_blockers: lesson === 50 ? [] : [{ source_number: "987", retained: true, evidence: findings[2].evidence }]
+    },
+    source_coverage: sourceCoverage,
+    question_checks: questions,
+    findings,
+    next_gate: "Visible truths are frozen. Await parent direction on narrow revised-view repairs and separate explicit internal comparison authorization; do not read author internals."
+  };
+  // Freeze only after every content/label and evidence row is accounted for.
+  assert.equal(sha(fs.readFileSync(viewPath)), view.sha256);
+  assert.equal(sha(fs.readFileSync(sourcePath)), source.sha256);
+  assert.equal(sha(fs.readFileSync(imagePath)), images.sha256);
+  const bytes = `${JSON.stringify(record, null, 2)}\n`;
+  fs.writeFileSync(output, bytes, { flag: "wx" });
+  console.log(JSON.stringify({
+    lesson, path: output, sha256: sha(bytes), view_byte_sha256: view.sha256,
+    outcome: record.outcome, visible_package_verdict: record.visible_package_verdict,
+    counts: record.counts, source_records_preserved_unmodified: true
+  }));
+}

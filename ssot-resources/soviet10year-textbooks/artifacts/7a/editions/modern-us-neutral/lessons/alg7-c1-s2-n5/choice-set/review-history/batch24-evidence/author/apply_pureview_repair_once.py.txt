@@ -1,0 +1,606 @@
+"""Apply nine reasoned author repairs, execute their wrong programs, check once."""
+
+from copy import deepcopy
+from decimal import Decimal
+from fractions import Fraction as F
+from hashlib import sha256
+from math import isqrt
+from pathlib import Path
+import json
+import subprocess
+
+
+REPO = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+OWN = Path(__file__).resolve().parent
+T = OWN.parent
+PLAN_PATH = OWN / "pureview-repair-plan.json"
+PLAN = json.loads(PLAN_PATH.read_bytes())
+EXPECTED = {
+    "7a-n5": {
+        "draft.json": "603c938c4aea5864a650af219958936fc434710e5eb3293ed7be70b33df0350b",
+        "view.json": "40ecf42a0f5723fc0f47240dd1fd630ece2fdf9cdb6a9d8ce69dbf0d2b50156e",
+        "source-solutions.json": "5549e986007cf0bcff5cf4d39c8e54dfbc28b7b66824c8f6af99da6ffc6ffc56",
+    },
+    "7a-n6": {
+        "draft.json": "4272936decaf9ec22ca89264f9851d05bf0f1a415e81c3997b5cdb0e84258a32",
+        "view.json": "200e463c4873e8203a596b26c5a56d3fc7eb0d90ff322e29f49c8730e87b4b1f",
+        "source-solutions.json": "7961c9a70be76ed2d53018fb3564b5a603205b1c97169a590e5876fa95e7727d",
+    },
+}
+ALLOWED_IDS = {
+    "7a-n5": {"n5-77", "n5-74b", "n5-78", "n5-79", "n5-80", "n5-82"},
+    "7a-n6": {"n6-83c", "n6-85", "n6-86ab"},
+}
+
+
+def bind(path):
+    return {"path": str(path.relative_to(REPO)), "sha256": sha256(path.read_bytes()).hexdigest()}
+
+
+def encode(value):
+    return (json.dumps(value, ensure_ascii=True, indent=2) + "\n").encode()
+
+
+def canonical_digest(value):
+    return sha256(
+        json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":")).encode()
+    ).hexdigest()
+
+
+def save_new(path, value):
+    with path.open("xb") as out:
+        out.write(encode(value))
+
+
+def differences(before, after, pointer=""):
+    if type(before) is not type(after):
+        return [{"path": pointer or "/", "before": before, "after": after}]
+    if isinstance(before, dict):
+        result = []
+        for key in sorted(before.keys() | after.keys()):
+            child = pointer + "/" + key.replace("~", "~0").replace("/", "~1")
+            if key not in before or key not in after:
+                result.append({
+                    "path": child,
+                    "before": before.get(key),
+                    "after": after.get(key),
+                    "before_present": key in before,
+                    "after_present": key in after,
+                })
+            else:
+                result.extend(differences(before[key], after[key], child))
+        return result
+    if isinstance(before, list):
+        if len(before) != len(after):
+            return [{"path": pointer or "/", "before": before, "after": after}]
+        return [
+            row for i, (left, right) in enumerate(zip(before, after))
+            for row in differences(left, right, pointer + "/" + str(i))
+        ]
+    return [] if before == after else [{"path": pointer or "/", "before": before, "after": after}]
+
+
+originals = {}
+revised = {}
+for name, lesson_plan in PLAN["lessons"].items():
+    own = T / name
+    assert set(lesson_plan["questions"]) == ALLOWED_IDS[name]
+    assert not (own / "history-before-first-pureview-repair").exists()
+    for filename, expected in EXPECTED[name].items():
+        assert sha256((own / filename).read_bytes()).hexdigest() == expected, (name, filename, "input changed")
+    raw = {
+        filename: (own / filename).read_bytes()
+        for filename in ("draft.json", "view.json", "ready.json", "structural-check.json")
+    }
+    originals[name] = {
+        "bytes": raw,
+        "immutable": {
+            filename: bind(own / filename)
+            for filename in ("seed.json", "source-solutions.json", "author.py", "initial-layout-receipt.json")
+        },
+    }
+    draft = json.loads(raw["draft.json"])
+    old_view = json.loads(raw["view.json"])
+    assert old_view == {"questions": [{"id": q["id"], **q["view"]} for q in draft["questions"]]}
+    updated = deepcopy(draft)
+    for question in updated["questions"]:
+        patch = lesson_plan["questions"].get(question["id"])
+        if patch is None:
+            continue
+        assert set(patch) <= {"stem", "options", "intent", "rationales"}
+        if "stem" in patch:
+            question["view"]["stem"] = patch["stem"]
+        for option in question["view"]["options"]:
+            if option["id"] in patch.get("options", {}):
+                option["text"] = patch["options"][option["id"]]
+        for field, value in patch.get("intent", {}).items():
+            assert field in question["intent"]
+            question["intent"][field] = value
+        for rationale in question["key"]["rationales"]:
+            for field, value in patch.get("rationales", {}).get(rationale["option_id"], {}).items():
+                assert field in {"derivation", "misconception"}
+                rationale[field] = value
+    for coverage in updated["coverage"]:
+        for field, value in lesson_plan["coverage"].get(coverage["source_number"], {}).items():
+            assert field in {"omitted_tasks", "reason"}
+            coverage[field] = value
+    old_questions = {q["id"]: q for q in draft["questions"]}
+    for q in updated["questions"]:
+        old = old_questions[q["id"]]
+        if q["id"] not in ALLOWED_IDS[name]:
+            assert q == old, ("unauthorized question change", q["id"])
+        assert q["id"] == old["id"]
+        assert q["source_numbers"] == old["source_numbers"]
+        assert q["view"]["mode"] == old["view"]["mode"]
+        assert q["view"]["figure_ids"] == old["view"]["figure_ids"]
+        assert q["intent"]["concept_blocks"] == old["intent"]["concept_blocks"]
+        assert q["intent"]["figure_observations"] == old["intent"]["figure_observations"]
+        assert q["key"]["correct"] == old["key"]["correct"], "No truth-key-only repair"
+        assert [o["id"] for o in q["view"]["options"]] == [o["id"] for o in old["view"]["options"]]
+        assert [o["figure_ids"] for o in q["view"]["options"]] == [o["figure_ids"] for o in old["view"]["options"]]
+        assert [(r["option_id"], r["truth"]) for r in q["key"]["rationales"]] == [
+            (r["option_id"], r["truth"]) for r in old["key"]["rationales"]
+        ]
+    for field in ("schema", "seed_sha256", "new_figures"):
+        assert updated[field] == draft[field]
+    assert [q["id"] for q in updated["questions"]] == [q["id"] for q in draft["questions"]]
+    assert [(r["source_number"], r["question_ids"]) for r in updated["coverage"]] == [
+        (r["source_number"], r["question_ids"]) for r in draft["coverage"]
+    ]
+    revised[name] = {
+        "draft": updated,
+        "view": {"questions": [{"id": q["id"], **q["view"]} for q in updated["questions"]]},
+        "diff": differences(draft, updated),
+        "old_draft": draft,
+        "old_view": old_view,
+    }
+
+
+def qget(qid):
+    name = "7a-n5" if qid.startswith("n5-") else "7a-n6"
+    return next(q for q in revised[name]["draft"]["questions"] if q["id"] == qid)
+
+
+def text(qid, oid):
+    return next(o["text"] for o in qget(qid)["view"]["options"] if o["id"] == oid)
+
+
+def decimal(value):
+    value = F(value)
+    return format(Decimal(value.numerator) / Decimal(value.denominator), "f").rstrip("0").rstrip(".") if value.denominator != 1 else str(value.numerator)
+
+
+def integers(values):
+    return r"\{" + ",".join(str(x) for x in sorted(values)) + r"\}"
+
+
+def pairs(values):
+    return r"\{" + ",".join(f"({x},{y})" for x, y in values) + r"\}"
+
+
+def quadratic_integer_roots(b, c):
+    discriminant = b * b - 4 * c
+    root = isqrt(discriminant)
+    assert root * root == discriminant
+    answers = {F(-b - root, 2), F(-b + root, 2)}
+    assert all(x.denominator == 1 for x in answers)
+    return {int(x) for x in answers}
+
+
+PROGRAMS = []
+
+
+def record(qid, oid, procedure, inputs, results, actual_text, false_evidence):
+    assert actual_text == text(qid, oid), ("wrong program does not reproduce option", qid, oid, actual_text)
+    assert oid not in qget(qid)["key"]["correct"]
+    PROGRAMS.append({
+        "question_id": qid,
+        "option_id": oid,
+        "procedure_executed": procedure,
+        "inputs": inputs,
+        "actual_result": results,
+        "actual_output_text": actual_text,
+        "actual_output_equals_current_option_text": True,
+        "false_under_original_source": True,
+        "false_evidence": false_evidence,
+    })
+
+
+# Counterexample selection that ignores antecedents really emits these wrong witnesses.
+positive = lambda x: x > 0
+natural_positive = lambda x: F(x).denominator == 1 and x >= 1
+natural_zero = lambda x: F(x).denominator == 1 and x >= 0
+forward_bad = -1
+reverse_bad = -1
+reverse_zero = 0
+assert not natural_positive(forward_bad) and not positive(reverse_bad) and not positive(reverse_zero)
+a74 = (
+    f"$P\\Longrightarrow Q$ 的反例为 $x={forward_bad}$；若 $\\mathbb N=\\{{1,2,\\ldots\\}}$，"
+    f"$Q\\Longrightarrow P$ 不成立，反例为 $x={reverse_bad}$；若 $\\mathbb N=\\{{0,1,2,\\ldots\\}}$，"
+    f"$Q\\Longrightarrow P$ 不成立，反例为 $x={reverse_zero}$。"
+)
+record("n5-74b", "A", "For each alleged refutation, test only whether the conclusion is false; omit the premise test.", {}, {
+    "forward_witness": forward_bad,
+    "forward_P": positive(forward_bad),
+    "forward_Q": natural_positive(forward_bad),
+    "positive_N_reverse_witness": reverse_bad,
+    "positive_N_reverse_Q": natural_positive(reverse_bad),
+    "positive_N_reverse_P": positive(reverse_bad),
+    "zero_N_reverse_witness": reverse_zero,
+    "zero_N_reverse_Q": natural_zero(reverse_zero),
+    "zero_N_reverse_P": positive(reverse_zero),
+}, a74, "The first two alleged counterexamples both fail their antecedents; -1 belongs to neither positive numbers nor positive N.")
+bad_transfer = all(positive(x) for x in range(1, 11))
+assert bad_transfer
+b74 = (
+    "$P\\Longrightarrow Q$ 的反例为 $x=\\frac12$；若 $\\mathbb N=\\{1,2,\\ldots\\}$，"
+    "$Q\\Longrightarrow P$ 成立；若 $\\mathbb N=\\{0,1,2,\\ldots\\}$，$Q\\Longrightarrow P$ 也成立。"
+)
+record("n5-74b", "B", "Check the positive natural branch, then transfer its true converse to the zero-allowed branch without evaluating0.", {}, {
+    "forward_witness": "1/2",
+    "positive_N_reverse": True,
+    "mistaken_zero_N_reverse": bad_transfer,
+    "omitted_element0_natural": natural_zero(0),
+    "omitted_element0_positive": positive(0),
+}, b74, "0 belongs to zero-allowed N but is not positive.")
+assert positive(F(1, 2)) and not natural_positive(F(1, 2)) and not natural_zero(F(1, 2))
+
+wrong_expanded = quadratic_integer_roots(2, -99)
+right_explicit = quadratic_integer_roots(-2, -99)
+a78 = (
+    "① 解集合为 $\\{-5,5\\}$ 与 $\\{-5\\}$，不等价；② 解集合分别为 $"
+    + integers(wrong_expanded) + "$ 与 $" + integers(right_explicit) + "$，不等价。"
+)
+record("n5-78", "A", "Replace -2x by +2x only while completing the expanded equation; leave the explicitly squared equation intact.", {
+    "wrong_expanded_polynomial": [1, 2, -99],
+    "explicit_polynomial": [1, -2, -99],
+}, {
+    "wrong_first_roots": sorted(wrong_expanded),
+    "second_roots": sorted(right_explicit),
+    "wrong_equivalent": wrong_expanded == right_explicit,
+}, a78, "Actual x^2-2x+1=(x-1)^2 identically; both original root sets are{-9,11}.")
+
+forward_values = [decimal(x * x) for x in (F(5, 2), F(7, 2))]
+positive_samples = [(x, x * x) for x in range(3)]
+b79 = (
+    "沿 $" + ",".join(f"({x},{y})" for x, y in positive_samples)
+    + "$ 只作 $x\\geqslant0$ 的向上抛物线半支，无负 $x$ 部分，也不关于 $y$ 轴对称；"
+    + f"函数值依次为 ${','.join(forward_values)}$；$y=4.5$ 时 $x\\in\\{{\\frac{{3\\sqrt2}}{{2}}\\}}$；"
+    + "$y<9$ 时 $x\\in[0,3)$。"
+)
+record("n5-79", "B", "Restrict the entire original function to x>=0, then construct/evaluate/solve on that restricted domain.", {
+    "wrong_domain": "x>=0",
+    "forward_inputs": ["5/2", "7/2"],
+    "level": "9/2",
+    "strict_threshold": 9,
+}, {
+    "sample_points": positive_samples,
+    "graph": "upward nonnegative-x half only, not y-axis symmetric",
+    "forward_values": forward_values,
+    "level_radicand": "9/2",
+    "level_signs": ["+"],
+    "strict_region": "[0,3)",
+}, b79, "Negative x are in the original real domain: (-1,1), the negative level root and x=-2 cannot be discarded.")
+linear_samples = [(x, x) for x in (0, -1, 1)]
+linear_values = [decimal(x) for x in (F(5, 2), F(7, 2))]
+c79 = (
+    "沿 $" + ",".join(f"({x},{y})" for x, y in linear_samples)
+    + "$ 作直线，不关于 $y$ 轴对称；"
+    + f"函数值依次为 ${','.join(linear_values)}$；$y=4.5$ 时 $x\\in\\{{{decimal(F(9, 2))}\\}}$；"
+    + "$y<9$ 时 $x\\in(-\\infty,9)$。"
+)
+record("n5-79", "C", "Drop the exponent2 and evaluate/construct/solve y=x throughout.", {
+    "wrong_function": "y=x",
+    "forward_inputs": ["5/2", "7/2"],
+    "level": "9/2",
+    "threshold": 9,
+}, {
+    "sample_points": linear_samples,
+    "forward_values": linear_values,
+    "level_preimage": decimal(F(9, 2)),
+    "strict_region": "(-infinity,9)",
+}, c79, "(-1,-1) violates y=x^2; both forward values, level set and strict region differ from the original quadratic.")
+
+bad_coefficient = F(1, 2)
+up_values = [decimal(bad_coefficient * x * x) for x in (F(-9, 2), F(7, 2))]
+assert bad_coefficient > 0
+a80 = (
+    "开口向上，顶点 $(0,0)$，关于 $y$ 轴对称；"
+    + f"函数值依次为 ${','.join(up_values)}$；"
+    + "$y=-3$ 时对应的 $x$ 集合为 $\\varnothing$；$y\\geqslant-8$ 时 $x\\in\\mathbb R$。"
+)
+record("n5-80", "A", "Discard the minus sign only, keeping the magnitude1/2, then solve the wrong nonnegative function.", {
+    "wrong_coefficient": "1/2",
+    "inputs": ["-9/2", "7/2"],
+    "level": -3,
+    "threshold": -8,
+}, {
+    "orientation": "upward",
+    "values": up_values,
+    "negative_level_set": [],
+    "above_negative_threshold_region": "R",
+}, a80, "The true coefficient is -1/2: the graph opens down, both values are negative, level-3 has two roots and the region is[-4,4].")
+
+first_bad_forbidden = {7}
+cubic_zeros = {x for x in range(-3, 4) if x * x * x - x == 0}
+assert cubic_zeros == {-1, 0, 1}
+a82 = (
+    "$\\mathbb R\\setminus" + integers(first_bad_forbidden)
+    + "$；$\\mathbb R\\setminus\\{-5,5\\}$；$\\mathbb R\\setminus"
+    + integers(cubic_zeros) + "$；$\\mathbb R\\setminus" + integers(cubic_zeros) + "$。"
+)
+record("n5-82", "A", "When a denominator has no zero, forbid its numerator zeros instead; otherwise use the actual denominator roots.", {}, {
+    "wrong_first_forbidden": sorted(first_bad_forbidden),
+    "second_forbidden": [-5, 5],
+    "third_forbidden": sorted(cubic_zeros),
+    "wrong_fourth_forbidden": sorted(cubic_zeros),
+}, a82, "At7 the first expression is0/14; at-1,0,1 the fourth is0/6. Zero numerators are allowed.")
+principal_five = isqrt(25)
+principal_one = isqrt(1)
+third_bad_forbidden = {0, principal_one}
+b82 = (
+    "$\\mathbb R$；$\\mathbb R\\setminus" + integers({principal_five})
+    + "$；$\\mathbb R\\setminus" + integers(third_bad_forbidden) + "$；$\\mathbb R$。"
+)
+record("n5-82", "B", "Keep only the principal nonnegative branch of |x|=5 and x^2=1 after correctly isolating x=0.", {}, {
+    "second_forbidden": [principal_five],
+    "third_forbidden": sorted(third_bad_forbidden),
+    "first_domain": "R",
+    "fourth_domain": "R",
+}, b82, "The actual denominators also vanish at-5 and-1 respectively.")
+
+
+def sum_pairs(total, zero_allowed, ordered_filter=False):
+    low = 0 if zero_allowed else 1
+    high = total if zero_allowed else total - 1
+    return [(x, total - x) for x in range(low, high + 1) if not ordered_filter or x <= total - x]
+
+
+def branches(positive_set, zero_set):
+    return (
+        "若 $\\mathbb N=\\{1,2,\\ldots\\}$，集合为 $" + pairs(positive_set)
+        + "$；若 $\\mathbb N=\\{0,1,2,\\ldots\\}$，集合为 $" + pairs(zero_set) + "$。"
+    )
+
+
+bad_pos = sum_pairs(9, False)
+bad_zero = sum_pairs(9, True)
+record("n6-83c", "A", "Use y=9-x after subtracting an extra1, then enumerate each natural convention fully.", {
+    "wrong_total": 9,
+}, {
+    "positive_branch": bad_pos,
+    "zero_branch": bad_zero,
+    "zero_endpoints": [bad_zero[0], bad_zero[-1]],
+}, branches(bad_pos, bad_zero), "All pairs, including endpoints(0,9),(9,0), sum9 rather than10.")
+filtered_pos = sum_pairs(10, False, True)
+filtered_zero = sum_pairs(10, True, True)
+record("n6-83c", "C", "Correctly use y=10-x, but apply the unsupported unordered-pair filter x<=y in both conventions.", {
+    "total": 10,
+    "wrong_filter": "x<=y",
+}, {
+    "positive_branch": filtered_pos,
+    "zero_branch": filtered_zero,
+    "positive_missing": [p for p in sum_pairs(10, False) if p not in filtered_pos],
+    "zero_missing": [p for p in sum_pairs(10, True) if p not in filtered_zero],
+}, branches(filtered_pos, filtered_zero), "Four reversed positive pairs and the second zero endpoint(10,0) are missing.")
+assert branches(sum_pairs(10, False), sum_pairs(10, True)) == text("n6-83c", "B")
+
+named_predicates = [("大于 $2$ 的质数", "奇数"), ("正方形", "矩形"), ("整数", "自然数")]
+reversed_rows = [(second, first) for first, second in named_predicates]
+a85 = "| 命题组 | 内部集合 $A$ | 外部集合 $B$ |\n|---|---|---|\n" + "\n".join(
+    f"| {label} | {inner} | {outer} |"
+    for label, (inner, outer) in zip(("数的性质", "四边形", "数的范围"), reversed_rows)
+)
+record("n6-85", "A", "Place the second original named predicate in inner A and the first in outer B for all original a,b,d, without subset testing.", {}, {
+    "rows": reversed_rows,
+    "odd_composite_witness": {"value": 9, "odd": 9 % 2 == 1, "prime": all(9 % k for k in range(2, 4))},
+    "rectangle_witness": {"sides": [2, 3], "rectangle": True, "square": 2 == 3},
+}, a85, "9 is odd but not prime; a2-by3 rectangle is not square. Both reversed first/second rows fail.")
+
+first_smaller = "P" if 3 < 6 else "Q"
+second_smaller = "Q" if 16 > 10 else "P"
+first_larger = "Q" if first_smaller == "P" else "P"
+second_larger = "P" if second_smaller == "Q" else "Q"
+c86 = (
+    f"① $P=(-\\infty,3)$，$Q=(-\\infty,6)$，仅 ${first_larger}\\Longrightarrow {first_smaller}$；"
+    f"② $P=(10,+\\infty)$，$Q=(16,+\\infty)$，仅 ${second_larger}\\Longrightarrow {second_smaller}$。"
+)
+record("n6-86ab", "C", "Compute both open-ray containments, then reverse the subset-to-implication rule and assert larger=>smaller.", {
+    "first_left_ray_bounds": [3, 6],
+    "second_right_ray_bounds": [10, 16],
+}, {
+    "first_smaller": first_smaller,
+    "first_wrong_implication": f"{first_larger}=>{first_smaller}",
+    "second_smaller": second_smaller,
+    "second_wrong_implication": f"{second_larger}=>{second_smaller}",
+    "first_counterexample": {"x": 4, "Q": 4 < 6, "P": 4 < 3},
+    "second_counterexample": {"x": 12, "P": 12 > 10, "Q": 12 > 16},
+}, c86, "x=4 rejects first Q=>P; x=12 rejects second P=>Q. All endpoints remain open.")
+assert len(PROGRAMS) == 12
+
+
+# Save every original byte before the first mutation in either lesson.
+for name, old in originals.items():
+    history = T / name / "history-before-first-pureview-repair"
+    history.mkdir()
+    for filename, contents in old["bytes"].items():
+        with (history / filename).open("xb") as out:
+            out.write(contents)
+        assert (history / filename).read_bytes() == contents
+    save_new(history / "snapshot-bytehash-receipt.json", {
+        "stage": "Exact original-byte preservation before any first pureview repair",
+        "files": [{
+            "original": str((T / name / filename).relative_to(REPO)),
+            "history": str((history / filename).relative_to(REPO)),
+            "sha256": sha256(contents).hexdigest(),
+            "original_byte_count": len(contents),
+            "history_byte_equal": True,
+        } for filename, contents in old["bytes"].items()],
+        "immutable_author_source_and_serializer_not_reexecuted": old["immutable"],
+    })
+    save_new(history / "proposed-exact-json-diff-before-mutation.json", {
+        "stage": "Exact planned differences saved before any original file is changed",
+        "draft_changes": revised[name]["diff"],
+        "view_changes": differences(revised[name]["old_view"], revised[name]["view"]),
+        "authorized_question_ids": sorted(ALLOWED_IDS[name]),
+        "old_draft_sha256": sha256(old["bytes"]["draft.json"]).hexdigest(),
+        "planned_draft_sha256": sha256(encode(revised[name]["draft"])).hexdigest(),
+        "planned_view_sha256": sha256(encode(revised[name]["view"])).hexdigest(),
+    })
+
+for name, data in revised.items():
+    own = T / name
+    assert (own / "draft.json").read_bytes() == originals[name]["bytes"]["draft.json"]
+    assert (own / "view.json").read_bytes() == originals[name]["bytes"]["view.json"]
+    # This is the mechanical serialization of the reviewed manual repair plan.
+    (own / "draft.json").write_bytes(encode(data["draft"]))
+    (own / "view.json").write_bytes(encode(data["view"]))
+    with (own / "revised-pureview.json").open("xb") as out:
+        out.write((own / "view.json").read_bytes())
+    save_new(own / "pureview-repair-json-diff.json", {
+        "stage": "Exact JSON change list from immutable pre-repair snapshot",
+        "authorized_question_ids": sorted(ALLOWED_IDS[name]),
+        "draft_changes": data["diff"],
+        "view_changes": differences(data["old_view"], data["view"]),
+        "question_count_unchanged": True,
+        "option_count_unchanged": True,
+        "question_and_option_order_unchanged": True,
+        "keys_and_truth_labels_unchanged": True,
+        "source_question_mappings_unchanged": True,
+        "unrelated_questions_byte_content_equivalent": True,
+        "seed_author_source_and_serializer_unchanged": True,
+        "no_key_only_repair": True,
+    })
+    programs = [p for p in PROGRAMS if p["question_id"] in ALLOWED_IDS[name]]
+    save_new(own / "wrong-program-results-after-pureview-repair.json", {
+        "stage": "Author execution evidence; not independent semantic review",
+        "draft": bind(own / "draft.json"),
+        "pureview": bind(own / "view.json"),
+        "program_count": len(programs),
+        "every_changed_incorrect_rationale_program_executed": True,
+        "unchanged_incorrect_rationales_reused_from_exact_original_snapshot": True,
+        "results": programs,
+    })
+
+
+# Exactly one structural invocation per repaired draft. Never rerun old serializers.
+for name, data in revised.items():
+    own = T / name
+    report_path = own / "structural-check-after-pureview-repair.json"
+    assert not report_path.exists()
+    inputs = {
+        filename: bind(own / filename)
+        for filename in ("seed.json", "draft.json", "view.json", "source-solutions.json")
+    }
+    command = [
+        "python3", ".agents/skills/ld-s10y-choice/scripts/validate.py",
+        "--repo", ".", "--seed", inputs["seed.json"]["path"],
+        "--draft", inputs["draft.json"]["path"],
+    ]
+    result = subprocess.run(command, cwd=REPO, capture_output=True, text=True)
+    unchanged = all(bind(own / filename) == binding for filename, binding in inputs.items())
+    save_new(report_path, {
+        "command": command,
+        "cwd": str(REPO),
+        "repair_structural_run_count": 1,
+        "initial_structural_report_retained": str((own / "structural-check.json").relative_to(REPO)),
+        "total_author_structural_run_count": 2,
+        "exit_code": result.returncode,
+        "stdout": result.stdout,
+        "stderr": result.stderr,
+        "input_bindings": inputs,
+        "inputs_byte_unchanged": unchanged,
+        "status": "pass" if result.returncode == 0 and unchanged else "fail",
+        "no_review_flag": True,
+        "canonical_render_semantic_approval_promotion_git_db_services_run": False,
+    })
+    ready = deepcopy(json.loads(originals[name]["bytes"]["ready.json"]))
+    ready.update({
+        "status": "ready_for_independent_changed_pureview_review" if result.returncode == 0 and unchanged else "author_repair_structural_failed",
+        "seed": inputs["seed.json"],
+        "draft": inputs["draft.json"],
+        "pureview": inputs["view.json"],
+        "revised_pureview": bind(own / "revised-pureview.json"),
+        "source_reasoning": inputs["source-solutions.json"],
+        "structural_check": bind(report_path),
+        "structural_exit_code": result.returncode,
+        "structural_run_count": 1,
+        "structural_run_scope": "This current repaired snapshot only; the original once-run report is retained unchanged.",
+        "total_author_structural_run_count": 2,
+        "changed_question_ids": sorted(ALLOWED_IDS[name]),
+        "independent_reviewer_for_changed_view": "Sartre; parent authorizes and coordinates disclosure",
+        "original_review_and_author_snapshots_retained": True,
+        "old_author_serializer_and_source_freeze_not_reexecuted": True,
+        "wrong_program_execution": bind(own / "wrong-program-results-after-pureview-repair.json"),
+        "repair_diff": bind(own / "pureview-repair-json-diff.json"),
+        "repair_plan": bind(PLAN_PATH),
+        "question_count": len(data["draft"]["questions"]),
+        "option_count": sum(len(q["view"]["options"]) for q in data["draft"]["questions"]),
+        "source_gaps_preserved": (
+            [
+                "The global zero-in-N convention remains unspecified, but revised74b assesses both complete converse branches; conditional mathematical coverage is no longer deferred.",
+                "70b fractional-number classification after a newly imposed nonzero restriction remains unavailable; the original definedness task is unchanged.",
+            ] if name == "7a-n5" else [
+                "The global zero-in-N convention remains unspecified; revised83c assesses both exhaustive sets and both endpoint assignments without choosing the global convention.",
+                "85 has only original a,b,d; no c is invented.",
+            ]
+        ),
+        "production_losses": "All original independent proof, graph construction, containment/number-line construction and graph-read-off losses remain explicit in affected intents and coverage. Recognizing graphical properties/plans and verifying exact algebra is not actual graph reading.",
+        "independent_semantic_review_required": True,
+        "semantic_pass_or_figure_approval_claimed": False,
+        "no_canonical_render_durable_app_db_services_commit_or_push": True,
+    })
+    assert (own / "ready.json").read_bytes() == originals[name]["bytes"]["ready.json"]
+    (own / "ready.json").write_bytes(encode(ready))
+    for filename, old_binding in originals[name]["immutable"].items():
+        assert bind(own / filename) == old_binding, ("immutable changed", name, filename)
+    for filename, old_bytes in originals[name]["bytes"].items():
+        assert (own / "history-before-first-pureview-repair" / filename).read_bytes() == old_bytes
+    assert (own / "structural-check.json").read_bytes() == originals[name]["bytes"]["structural-check.json"]
+    save_new(own / "pureview-repair-bytehash-receipt.json", {
+        "stage": "Current repaired author handoff, hash-bound; independent review pending",
+        "old": [{
+            "path": str((own / "history-before-first-pureview-repair" / filename).relative_to(REPO)),
+            "sha256": sha256(contents).hexdigest(),
+            "byte_count": len(contents),
+        } for filename, contents in originals[name]["bytes"].items()],
+        "current": {
+            filename: bind(own / filename) for filename in (
+                "draft.json", "view.json", "ready.json", "revised-pureview.json",
+                "structural-check-after-pureview-repair.json",
+                "wrong-program-results-after-pureview-repair.json",
+                "pureview-repair-json-diff.json",
+            )
+        },
+        "current_canonical_content_digests_only_not_validator": {
+            "draft": canonical_digest(data["draft"]),
+            "pureview": canonical_digest(data["view"]),
+        },
+        "immutable": originals[name]["immutable"],
+        "actual_changed_question_ids": [
+            q["id"] for q in data["draft"]["questions"]
+            if q != next(old for old in data["old_draft"]["questions"] if old["id"] == q["id"])
+        ],
+        "option_keys_orders_and_mappings_unchanged": True,
+        "new_question_count": ready["question_count"],
+        "new_option_count": ready["option_count"],
+        "repair_structural_invocations": 1,
+        "initial_structural_report_not_overwritten": True,
+        "actual_wrong_program_count": len([p for p in PROGRAMS if p["question_id"] in ALLOWED_IDS[name]]),
+        "old_source_author_scripts_and_independent_review_records_unchanged": True,
+        "six_a_author_internals_accessed": False,
+        "no_canonical_render_promotion_git_answers_db_paid_calls": True,
+    })
+    print(json.dumps({
+        "lesson": ready["lesson"],
+        "status": ready["status"],
+        "changed_questions": ready["changed_question_ids"],
+        "question_count": ready["question_count"],
+        "option_count": ready["option_count"],
+        "repair_structure_exit": result.returncode,
+        "repair_structure_run_count": 1,
+        "wrong_program_count": len([p for p in PROGRAMS if p["question_id"] in ALLOWED_IDS[name]]),
+        "ready": str(own / "ready.json"),
+        "revised_pureview": str(own / "revised-pureview.json"),
+    }, ensure_ascii=False))
+    assert result.returncode == 0 and unchanged, "Stop: first repaired structural check failed; do not rerun"

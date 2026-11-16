@@ -1,0 +1,31 @@
+import hashlib
+import json
+import subprocess
+from pathlib import Path
+
+
+OWN = Path(__file__).resolve().parent
+REPO = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+seed = json.loads((OWN / "seed.json").read_bytes())
+asset = seed["figures"][0]["assets"][0]
+source = REPO / asset["path"]
+assert hashlib.sha256(source.read_bytes()).hexdigest() == asset["sha256"]
+target = OWN / "source-assets" / "fig-02.svg.png"
+target.parent.mkdir(exist_ok=True)
+assert not target.exists()
+subprocess.run(
+    ["/usr/bin/qlmanage", "-t", "-s", "480", "-o", str(target.parent), str(source)],
+    check=True,
+)
+assert target.exists()
+record = {
+    "figure_id": "fig-02", "asset": asset,
+    "full_raster": str(target.relative_to(REPO)),
+    "raster_sha256": hashlib.sha256(target.read_bytes()).hexdigest(),
+    "method": "System Quick Look full480px rasterization of exact durable480px SVG, no new figure geometry render or browser.",
+    "actually_opened": False,
+}
+with (OWN / "source-assets" / "raster-binding.json").open("x") as output:
+    json.dump(record, output, indent=2)
+    output.write("\n")
+print(json.dumps(record))

@@ -1,0 +1,274 @@
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image, ImageChops
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+OWN = Path(__file__).resolve().parent
+PREFIX = "math5-c2-s2-n50-"
+OBSERVER = "independent_agent_n50_actual_display"
+
+
+def digest(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+
+
+def load(name):
+    return json.loads((OWN / name).read_text())
+
+
+primary = load("primary-montage-index.json")
+supplement = load("supplement-montage-index.json")
+capture = load("supplement-inventory.json")
+primary_evidence = {
+    "choices-1440-figure-1": "Full three-column image table: x, x-squared, Change in x-squared; row labels 0 through 9, initial 0/1/4 and changes 1/3, complete outer border and bottom. Lower value areas visibly blank; no values authored or semantically approved.",
+    "choices-1440-first": "Title and question 1 through question 3 option C visible. A/B/C labels, repeated-factor expressions, stacked fractions and raised exponents paint clearly. Remaining questions require the opened middle windows.",
+    "choices-1440-last": "Question 38 stem/options and questions 39/40 construction prose with all A/B/C entries visible. Degree marks, AB/AC/BC letters and line wrapping have no collision.",
+    "choices-390-figure-1-end": "Native right window of the image table includes the Change in x-squared heading, changes 1 and 3, bottom and right border. Left column is outside this scroll window, not a paint failure.",
+    "choices-390-figure-1": "Native image screenshot includes painted x and part of x-squared columns, rows 0 through 9 and bottom border. Pixels outside the ancestor's initial 358px scroll viewport are white; not standalone whole-table evidence.",
+    "choices-390-first": "Mobile title and questions 1/2 with A/B/C labels visible. Most product tuples wrap cleanly; the long negative-decimal factor span in question 2 B has a horizontal continuation, inspected separately.",
+    "choices-390-last": "Tail of question 39 and full question 40 stem and A/B/C construction entries readable. Angle and segment notation are not covered by surrounding Chinese text.",
+    "exercises-1440-figure-1-end": "Native right table window includes x-squared/change columns, row 9 bottom and full right edge. This supplies the 13px overflow absent from the initial desktop figure viewport.",
+    "exercises-1440-figure-1": "Table image clearly paints all row labels and column headings. A narrow ancestor clips the far-right edge; the separate opened right window completes it.",
+    "exercises-1440-figure-2": "Tiny native KaTeX angle-hat fragment, 11x6 pixels, paints as a cap. It is not a source figure or a whole formula; complete A-hat context is visible in the exercises last endpoint.",
+    "exercises-1440-figure-3": "Tiny 14x6 KaTeX angle-hat fragment paints as a cap; complete B-hat context is visible in the exercises last endpoint. No source-figure claim.",
+    "exercises-1440-figure-4": "Tiny 14x5 KaTeX angle-hat fragment paints as a cap; complete C-hat context is visible in the exercises last endpoint. No source-figure claim.",
+    "exercises-1440-first": "Exercises title, item 944 all nine subparts, item 945 all six product subparts and the start of 946 paint legibly. Exponents and fractions are separate from numbering.",
+    "exercises-1440-last": "Item 957 through 962 visible, including mixed-number powers, substituted x lists, word problems and both triangle-construction conditions. A/B/C hats and degree superscripts complete in context; return link visible.",
+    "exercises-390-figure-1-end": "Right native table window shows Change in x-squared, 1/3 change entries, bottom and right border. Middle x-squared pixels need the separately opened middle supplement.",
+    "exercises-390-figure-1": "Mobile initial table image shows x column, rows 0 through 9 and a clipped sliver of x-squared. Remaining white area in the full image-element screenshot is ancestor clipping, not complete-table approval.",
+    "exercises-390-figure-2": "10x6 native A-angle cap fragment paints; full formula context is readable in the mobile last endpoint.",
+    "exercises-390-figure-3": "14x6 native B-angle cap fragment paints; full formula context is readable in the mobile last endpoint.",
+    "exercises-390-figure-4": "13x6 native C-angle cap fragment paints; full formula context is readable in the mobile last endpoint.",
+    "exercises-390-first": "Item 944 all nine subparts, item 945 all six product subparts and the beginning of 946 visible. Stacked fractions, parentheses and exponent numerals fit their line heights.",
+    "exercises-390-last": "Item 958 through 962 visible, including both triangle conditions with A/B/C hats, degree marks and wrapped length constraints. Return link unobstructed.",
+    "text-1440-figure-1": "Complete product expression tree: top 2 dot 5-cubed box, intermediate 2 and 5-cubed boxes, three bottom 5 boxes, all connectors and multiplication dots. No cropped box or hidden arrow.",
+    "text-1440-figure-2": "Complete addition expression tree: top 2 plus 5-cubed box, intermediate 2 and 5-cubed boxes, three bottom 5 boxes and all arrows/dots. Plus sign remains distinct.",
+    "text-1440-first": "Lesson heading, metre-conversion introduction, exponent definition, power examples, square/cube terminology and operation-order paragraph paint fully with visible raised indices.",
+    "text-1440-last": "Tail of the first tree, complete second tree, figure captions, example 2 and final factorizations paint. Top crop is a viewport boundary; full trees separately opened.",
+    "text-390-figure-1": "Complete mobile product tree fits the figure image: every box, 5-cubed superscript, connector, arrowhead and bottom multiplication dot visible.",
+    "text-390-figure-2": "Complete mobile addition tree fits the image with plus sign and all bottom 5 boxes/connectors; no text/arrow overlap.",
+    "text-390-first": "Heading and introductory conversion/power-definition paragraphs, raised indices and a-to-power-one example readable; continuation inspected in the opened middle window.",
+    "text-390-last": "Complete second tree, captions, example 2, 504 factorization and beginning of final 10000 factorization visible. Last formula has supported horizontal continuation; opened right-end strip supplies its final factor.",
+}
+supplement_evidence = {
+    "text-1440-missing-window-01": "Example 1 prose and product formula readable, followed by the upper product tree. Completes prose gap between the original text endpoints; full tree already independently opened.",
+    "exercises-1440-missing-window-01": "Remaining 946 subparts, all 947/948 formulas and 949 prompt/table top readable; fractions and variable-value lists are unobstructed.",
+    "exercises-1440-missing-window-02": "Table lower rows and bottom, items 950-952, review heading, both 953 word-problem parts, 954 prose and 955 heading paint. No lost text beside the image.",
+    "exercises-1440-missing-window-03": "Both 955 word-problem parts, four 956 equations and homework heading readable. Mixed-number numerator/denominator and equation punctuation paint fully across adjacent windows.",
+    "choices-1440-missing-window-01": "Questions 4-6 full stems/options and question 7 through option B paint; product/exponent expressions, signs and A/B/C labels separate cleanly.",
+    "choices-1440-missing-window-02": "Question 7 C, full questions 8-10 and question 11 through B paint; fraction denominators and number tuples readable.",
+    "choices-1440-missing-window-03": "Question 11 C, full questions 12-14 and question 15 top paint; substitution tuples and raised powers unobstructed.",
+    "choices-1440-missing-window-04": "Question 15 remainder, question 16 prompt, complete table image and first option start paint. Table row 9 and bottom border visible; no image/option collision.",
+    "choices-1440-missing-window-05": "Question 16 option continuation and B/C tuples/conclusions, full questions 17-19 readable. All units and exponent numerals paint.",
+    "choices-1440-missing-window-06": "Questions 20-22 complete proportions/word-problem entries and question 23 start/options paint. Mixed-number stem does not collide with option labels.",
+    "choices-1440-missing-window-07": "Question 23 C continuation, full questions 24-26 and question 27 start paint. Variable equations and answer tuples remain within content width.",
+    "choices-1440-missing-window-08": "Question 27 remainder, full questions 28-30 and question 31 A paint; mixed-number powers and signed decimal tuples readable.",
+    "choices-1440-missing-window-09": "Question 31 B/C, full questions 32-34 and question 35 start/A paint. Fractions, decimal signs and unit numbering remain separated.",
+    "choices-1440-missing-window-10": "Question 35 B/C, full questions 36/37 and question 38 heading paint. The next original last endpoint supplies 38 stem/options; no missing vertical gap.",
+    "text-390-missing-window-01": "Square/cube explanation, operation-order prose and example 1 fully readable with wrapped text. Product tree upper portion visible; complete tree already opened as primary region.",
+    "text-390-overflow-1-end": "Final 10000 factorization right end paints through 2-to-the-fourth times 5-to-the-fourth and terminating punctuation. Superscript 4 is complete, not cut or hidden.",
+    "exercises-390-missing-window-01": "Remaining 946 subparts, complete 947/948 formulas and 949 prompt/table top paint; negative parentheses and fractions complete.",
+    "exercises-390-missing-window-02": "949 left table column through row 9/bottom and items 950/951 plus start of 952 readable. Other table columns independently opened in primary right and supplemental middle regions.",
+    "exercises-390-missing-window-03": "952 prose tail, review heading, both 953 tasks, 954 prose, both 955 tasks and beginning of 956 equations paint with coherent wrapping.",
+    "exercises-390-missing-window-04": "Remaining 956 equations, homework heading, full 957 six powers and 958 boundary paint. Complete 958 onward supplied by the original last endpoint.",
+    "exercises-390-overflow-1-middle": "Native middle table window clearly shows the complete x-squared heading, 0/1/4 entries, blank lower value region, vertical rules and bottom border; joins previously opened left/right windows without a horizontal pixel gap.",
+    "choices-390-missing-window-01": "Question 3 all options, question 4 all options and question 5 stem/start paint with wrapped repeated-factor rows and intact denominators.",
+    "choices-390-missing-window-02": "Question 5 option continuation, full questions 6/7 and question 8 through B paint; raised indices and fraction denominators readable.",
+    "choices-390-missing-window-03": "Question 8 C, full questions 9-11 and question 12 heading paint; no overlapping numbering or labels.",
+    "choices-390-missing-window-04": "Question 12 stem/options, full questions 13/14 and question 15 stem paint. Wrapped substitution prompts and all visible tuples complete.",
+    "choices-390-missing-window-05": "Question 15 A/B/C, question 16 stem and upper table through row 6 paint. Native left table clipping is expected; full/right primary table observations complete its width.",
+    "choices-390-missing-window-06": "Question 16 lower table/bottom and all three long option tuples/conclusion prose, then question 17 complete paint. Natural wraps remain inside option bodies.",
+    "choices-390-missing-window-07": "Questions 18-20 full stems and A/B/C entries readable; square/cube units and proportion expressions are not truncated.",
+    "choices-390-missing-window-08": "Questions 21-23 complete stems and all A/B/C entries readable. Mixed fractions, kilograms and punctuation paint without collisions.",
+    "choices-390-missing-window-09": "Questions 24-26 complete and question 27 stem paint, with mixed-number equations and all visible variable options intact.",
+    "choices-390-missing-window-10": "Question 27 A/B/C, full questions 28/29 and question 30 through B paint; negative signs and mixed-number exponent fit line height.",
+    "choices-390-missing-window-11": "Question 30 C, full questions 31-33 and question 34 heading paint; decimal results and superscripts remain legible.",
+    "choices-390-missing-window-12": "Question 34 stem/options, full questions 35/36 and question 37 stem paint; signed lists wrap without loss.",
+    "choices-390-missing-window-13": "Question 37 A/B/C, full question 38 and question 39 stem/start A paint; original last endpoint continues question 39 and all of 40.",
+    "choices-390-overflow-1-end": "Question 2 B negative-decimal repeated-factor span reaches the final closing parenthesis at the native right end. Left/right scroll intervals overlap, so every factor is actually covered; subsequent negative-half row visible in primary first context.",
+}
+
+montages = []
+member_to_montage = {}
+for index in (primary, supplement):
+    for montage in index["montages"]:
+        if digest(montage["path"]) != montage["sha256"]:
+            raise RuntimeError("Opened montage hash changed")
+        with Image.open(montage["path"]) as canvas:
+            canvas = canvas.convert("RGB")
+            for member in montage["members"]:
+                if digest(member["path"]) != member["sha256"]:
+                    raise RuntimeError("Observed source screenshot hash changed")
+                x, y, width, height = member["montage_rect"]
+                with Image.open(member["path"]) as original:
+                    if ImageChops.difference(original.convert("RGB"), canvas.crop((x, y, x + width, y + height))).getbbox():
+                        raise RuntimeError("Native pixel proof no longer holds")
+                member_to_montage[member["path"]] = montage["path"]
+        montages.append({**montage, "actually_opened": True, "observer": OBSERVER,
+                         "open_method": "functions.view_image detail=original; every native-copy member inspected"})
+
+observations = []
+for kind, items, evidence_map in (("primary", primary["items"], primary_evidence),
+                                  ("supplement", supplement["items"], supplement_evidence)):
+    for item in items:
+        short = item["filename"].removeprefix(PREFIX).removesuffix(".png")
+        evidence = evidence_map[short]
+        observations.append({
+            **item, "kind": kind, "actually_opened": True, "observer": OBSERVER,
+            "opened_via_montage": member_to_montage[item["path"]],
+            "display_window_status": "pass", "evidence": evidence,
+            "standalone_full_object_claim": False,
+        })
+
+
+def covered(start, end, ranges):
+    cursor = start
+    for a, b in sorted(ranges):
+        if b <= cursor:
+            continue
+        if a > cursor + 0.01:
+            return False
+        cursor = max(cursor, b)
+        if cursor >= end - 0.01:
+            return True
+    return cursor >= end - 0.01
+
+
+combinations = []
+for row in capture["rows"]:
+    if digest(row["rendered_path"]) != row["rendered_sha256"]:
+        raise RuntimeError("Rendered input changed")
+    windows = []
+    for item in row["primary_ranges"]:
+        observation = next(item2 for item2 in observations if item2["filename"] == item["filename"])
+        windows.append({**item, "path": observation["path"], "sha256": observation["sha256"],
+                        "actually_opened": True, "kind": "primary", "horizontal_state": "initial_left"})
+    for item in capture["screenshots"]:
+        if item["surface"] == row["surface"] and item["viewport"] == row["viewport"] and not item["horizontal_offsets"]:
+            rect = item["document_rect"]
+            windows.append({"path": item["path"], "filename": item["filename"], "sha256": item["sha256"],
+                            "y": rect["y"], "height": rect["height"], "actually_opened": True,
+                            "kind": "supplement", "horizontal_state": "initial_left"})
+    ranges = [(item["y"], min(row["document_height"], item["y"] + item["height"])) for item in windows]
+    if not covered(0, row["document_height"], ranges):
+        raise RuntimeError("Unobserved document interval")
+    units = []
+    for unit in row["units"]:
+        top, bottom = unit["rect"]["y"], unit["rect"]["y"] + unit["rect"]["height"]
+        if not covered(top, bottom, ranges):
+            raise RuntimeError("Unobserved task-unit pixels")
+        options = []
+        for option in unit["options"]:
+            a, b = option["rect"]["y"], option["rect"]["y"] + option["rect"]["height"]
+            if not covered(a, b, ranges):
+                raise RuntimeError("Unobserved option extent")
+            options.append({**option, "actual_vertical_pixels_covered": True,
+                            "window_filenames": [item["filename"] for item in windows if item["y"] < b and item["y"] + item["height"] > a]})
+        units.append({**unit, "options": options, "actual_vertical_pixels_covered": True,
+                      "window_filenames": [item["filename"] for item in windows if item["y"] < bottom and item["y"] + item["height"] > top]})
+    overflow_checks = []
+    for overflow in row["overflow"]:
+        horizontal_ranges = [(0, overflow["client_width"])]
+        files = []
+        for media_index in overflow["media_indices"]:
+            end_name = f"{PREFIX}{row['surface']}-{row['viewport']['width']}-figure-{media_index}-end.png"
+            match = next((item for item in observations if item["filename"] == end_name), None)
+            if match:
+                horizontal_ranges.append((overflow["scroll_width"] - overflow["client_width"], overflow["scroll_width"]))
+                files.append(end_name)
+        for item in capture["screenshots"]:
+            if item["surface"] != row["surface"] or item["viewport"] != row["viewport"]:
+                continue
+            for offset in item["horizontal_offsets"]:
+                if offset["overflow_index"] == overflow["index"]:
+                    horizontal_ranges.append((offset["scroll_left"], offset["scroll_left"] + offset["client_width"]))
+                    files.append(item["filename"])
+        complete = covered(0, overflow["scroll_width"], horizontal_ranges)
+        if not complete:
+            raise RuntimeError("Unobserved horizontal pixels")
+        overflow_checks.append({**overflow, "observed_scroll_intervals": horizontal_ranges,
+                                "additional_window_filenames": files, "actual_horizontal_pixels_covered": complete})
+    combinations.append({
+        "surface": row["surface"], "viewport": row["viewport"], "rendered_path": row["rendered_path"],
+        "rendered_sha256": row["rendered_sha256"], "document_height": row["document_height"],
+        "document_width": row["document_width"], "windows": windows, "objects": units,
+        "media": row["media"], "overflow_regions": overflow_checks,
+        "complete_document_vertical_coverage": True,
+        "actual_observation_status": "pass",
+        "object_count": len(units), "option_count": sum(len(unit["options"]) for unit in units),
+        "dom_table_count": 0, "new_unique_combinations_from_supplements": 0,
+    })
+
+result = {
+    "lesson": "math5-c2-s2-n50",
+    "status": "pass",
+    "scope": "independent actual pixels only; not semantic, canonical, core, source-figure or authoring approval",
+    "observer": OBSERVER,
+    "observations": observations,
+    "unique_surface_viewport_combinations": 6,
+    "combinations": combinations,
+    "primary_png_count": len(primary["items"]),
+    "supplement_png_count": len(supplement["items"]),
+    "supplement_vertical_window_count": sum(not item["horizontal_offsets"] for item in capture["screenshots"]),
+    "supplement_horizontal_region_count": sum(bool(item["horizontal_offsets"]) for item in capture["screenshots"]),
+    "actual_png_count": len(observations),
+    "unique_observed_png_path_count": len({item["path"] for item in observations}),
+    "unique_observed_png_sha256_count": len({item["sha256"] for item in observations}),
+    "native_montage_open_count": len(montages),
+    "montages": montages,
+    "complete_choice_questions_per_viewport": 40,
+    "complete_choice_options_per_viewport": 120,
+    "complete_written_exercise_items_per_viewport": 19,
+    "written_item_range": "944-962",
+    "complete_text_paragraphs_per_viewport": 14,
+    "actual_figure_observation": {
+        "text": "Both full product/addition expression-tree images inspected at both widths with all boxes, connectors, dots/plus and raised indices visible.",
+        "exercises": "Image table and complete surrounding prompt inspected at both widths. Mobile full horizontal content joins left, middle and right native windows; desktop far-right 13px supplied by existing end capture.",
+        "choices": "Question 16 image table, all three candidate records and surrounding stem inspected at both widths. Mobile left/right native windows overlap.",
+        "katex_svg_fragments": "Three angle-hat SVG fragments on exercises are formula parts, not source figures; full A/B/C hat and degree-mark contexts inspected in original last screenshots.",
+        "new_figure_approval_claim": False,
+    },
+    "rejected_original_screenshots": [],
+    "partial_paint_failures_observed": [],
+    "expected_window_clipping_preserved": [
+        "Mobile table image-element left captures contain white pixels beyond the narrow ancestor viewport; accepted only as left-window observations, not whole-table images.",
+        "Desktop exercises table ancestor has 13px horizontal overflow; existing original right-end region supplies its final border.",
+        "First/last and exact missing-window screenshot edges may bisect a line or figure; adjacent opened windows cover all document pixels. This is viewport clipping, not partial paint.",
+        "Mobile text final factorization and question 2 B long negative-decimal product require supported inline horizontal scrolling; newly opened right-end strips cover their full ends.",
+    ],
+    "capture_failure_vs_render_defect": "No blank/corrupt/partial-painted capture observed in the 64 opened files. No rendering defect found within the inspected six combinations; no rejected capture silently replaced.",
+    "evidence_bindings": [
+        {"path": str(ROOT / ".intentfold/tickets/STEMROBIN-182/tmp/batch24-render/5m-math5-c2-s2-n50-capture-manifest.json"),
+         "sha256": primary["manifest_sha256"]},
+        {"path": str(ROOT / ".intentfold/tickets/STEMROBIN-182/tmp/offline-evidence/5m/math5-c2-s2-n50-batch24-report.json"),
+         "sha256": digest(ROOT / ".intentfold/tickets/STEMROBIN-182/tmp/offline-evidence/5m/math5-c2-s2-n50-batch24-report.json")},
+        {"path": str(OWN / "supplement-inventory.json"), "sha256": digest(OWN / "supplement-inventory.json")},
+        {"path": str(OWN / "small-flow.json"), "sha256": digest(OWN / "small-flow.json")},
+    ],
+    "original_screenshot_hashes_unchanged": True,
+    "existing_html_hashes_unchanged": True,
+    "isolated_headless": True,
+    "pwdebug_cleared": True,
+    "reporter_open": "never",
+    "contexts_and_browser_closed_in_finally": capture["browser_closed_in_finally"],
+    "additional_unique_combinations": 0,
+    "renderer_runs": 0,
+    "validator_runs": 0,
+    "semantic_review_runs": 0,
+    "draft_or_key_read": False,
+    "writes_only_owned_reviewer_directory": True,
+    "status_basis": "Every source PNG actually inspected via 18 exact native-copy montages; geometric coverage accounting follows that inspection and is not a substitute for it.",
+}
+destination = OWN / "actual-observations.json"
+if destination.exists():
+    raise RuntimeError("Never overwrite a frozen observation record")
+destination.write_text(json.dumps(result, indent=2) + "\n")
+print(json.dumps({"path": str(destination), "sha256": digest(destination), "status": result["status"],
+                  "primary_png_count": result["primary_png_count"], "supplement_png_count": result["supplement_png_count"],
+                  "actual_png_count": result["actual_png_count"], "native_montage_open_count": len(montages),
+                  "unique_surface_viewport_combinations": 6,
+                  "combinations": [{"surface": item["surface"], "viewport": item["viewport"],
+                                    "objects": item["object_count"], "options": item["option_count"]} for item in combinations]}, indent=2))
