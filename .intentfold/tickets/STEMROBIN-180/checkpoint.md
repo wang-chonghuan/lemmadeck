@@ -1,5 +1,90 @@
 # 生产检查点
 
+## 第十七批验证完成待提交
+
+本批仅新增完整s12：7正文块/9实际段、5书写题、5derived/ungraded最终
+答案、5选择题21项（single2/multiple3），零owned图不伪造200图块。
+既有TEXT/五源解/200图PASS复用；最终五键FIRST main PASS43绑定，
+官方retain/finalize各一次0。作者sole1/1仅错误API调用修复，
+答案字节不改；原127解释器失败保留，复用共享venv，不安装。
+
+choice原FIRST REVISE仅F-S12-C4-1，Bacon sole1/1只加整体平动/
+不考虑转动限定；main affected-only PASS13冻结绑定，全部21选项/
+键/intent/coverage/源解与其他四题PASS复用。原REVISE不覆盖，
+带review官方validate、retain各一次0。完整真集合B/C/ACE/AD/BD。
+官方render一次、既有隔离headless六桌面手机页面一次PASS，
+main实际打开全部六整页至末端，无整页溢出或键泄漏，浏览器已关闭。
+
+预备191192/195196/198199/200均FIRST独审PASS并各晋升一次0；
+198作者1/1不重置，其余成功图不rerender或重门禁。
+197 FIRST Sagan FAIL后Bacon sole1/1虽render/native通过，但print306
+范围外一像素183到184原因未定，作者BLOCKED；不放宽/第三修/重审/
+晋升，s10不计完整。201202 wrapper机械失败各1/1耗尽，
+203两次机械失败1/1耗尽，均BLOCKED；s13/t1不计完整。
+204作者已冻待FIRST Bacon独审；205206只允许已在途者原样收尾。
+
+s10四/s13六/s13-t1两完整source-only FIRST main PASS31/45/14绑定，
+s10/s13/t1完整TEXT独审复用。Sagan重复t1源解已取消，原样保留但
+不审/不计/不暂存。私有main源解冻结也不进入持久提交。
+
+7p215219主95绑定47copy与220224主117绑定51copy晋升已一次0，
+两次带TOC assemble各一次0，现10有效页、5源项、16原题、7原图，
+81–84闭合，85 p0224#7尾“但却”open；不是现代课完成数。
+220原子能/222跨行强调及热的sole1/1受影响FIRST Feynman PASS，
+原FAIL及215/219sole1/1保留，冻结/成功晋升不重跑。
+81 TEXT已冻、82作者/81 FIRST审在途；83首次作者、225229首次源作者
+新授权隔离继续，230+未授权；未完成现代7p产物排除当前批。
+
+累计确认图服务31，本批新增0；tokens/费用未知，不虚构。
+历史batch16实际已提交10dad600且push成功，usage前置记录现纠正。
+部分本批早期命令仅有已观察工具结果而无独立stdout文件，如实保留，
+不补跑制造证据。108/env/app/依赖/私有冻结/未批准图源全部排除。
+无DB/发布/合并/部署/关闭工单/正式handoff，不重全项目checks。
+选择性暂存一次PASS153限定文件、63JSON、46现代索引项，仅新增s12，
+10批准7p源页/7原图及已批准预备图/相应报告保留；工作索引原样。
+同分支freshfetch exit0、HEAD/origin0/0，不pull/rebase，不重跑成功门禁。
+尚未执行本批commit/push，不冒称已提交。
+
+## 第十七批进行中
+
+主图200 FIRST独审PASS：原图已有source-first观察复用，完整35对象15断言、
+完整s10/s12与九题上下文、全SVG、六已有306/640 neutral/accent/print
+native样本实际打开。官方record/promote各一次exit0，未rerender/重跑作者
+门禁；现代几何与输出字节不改，来源/provenance仅重绑定持久路径。
+
+s12既有TEXT/五完整源解PASS复用，冻结模板精准copy/retain各一次0；
+原书零owned图结构不改，正文200共享引用依赖已批准。官方adapt-finalize
+exit0（7块/5题），最终answer prepare首次0，Volta最终键在途，Bacon
+choice在途。首次main调用repo内不存在venv退出127，未进入内容命令或
+修改作者模板；复用既有共享venv路径后成功，失败如实保留、不算成功门禁。
+
+s10四完整source-only main FIRST比较PASS31绑定，所有fullAnswer/method/
+conditions/notes与主先冻源解一致，repair0/1。s13六题FIRST比较PASS45绑定，
+全部24子回应与实际制作/观察任务完整、竖直弹簧合成势能及共同参照条件
+正确；源解repair0/1。这不是未来final键或待批图批准。
+s13/t1 FIRST TEXT审批Wegener复用，t1真实作者Ramanujan，未自审。
+
+7p215219 FIRST与219 affected-only PASS union复用，主95绑定47精准copy
+晋升exit0，官方带TOC assemble首次0：5页、3源项、8原题、3编号图。
+81/82源已闭合，83末尾p0219#9仍open，220224待FIRST独审未晋升。
+原219 FAIL、215/219各sole1/1及未变图/其他页保留，不重审全页。
+
+191192 Feynman FIRST审、197 Sagan FIRST审、198199 Wegener FIRST审、
+201202 Ramanujan作者在途；198作者sole1/1已用，不能第三修或重置。
+195196先前Ramanujan FIRST PASS及晋升直接复用，误派196已取消。
+累计确认图服务31未新增，token/费用未知；108/私有冻结/env/app/依赖
+排除；尚未完成本批显示与commit/push，不冒称本批完整。
+无DB/发布/PR/合并/部署或正式handoff，全项目checks仍留handoff。
+
+## 第十六批已提交推送
+
+实际提交`10dad600dd06624923c2f0b7673bf60fdc14a2bd`，
+2026-11-16T05:10:25Z，同一origin分支。恢复时HEAD与远端跟踪均此SHA，
+工作区没有暂存改动；38限定文件、14JSON、45现代索引项已进入该提交。
+下文“待提交”为提交前历史状态，不再次提交或重跑已成功门禁。
+继续第十七批：s10主首次完整TEXT审，s13/s13-t1原作者冻结后首次独审，
+191192/195及7p215219原FIRST审继续。未完成课程仍不计完整。
+
 ## 第十六批验证完成待提交
 
 选择性暂存FIRST PASS38限定文件、14JSON、45现代索引项，工作索引原样保留；
