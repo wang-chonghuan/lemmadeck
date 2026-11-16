@@ -1,0 +1,131 @@
+                "ink_sha256": hashlib.sha256(owned_ink[f["id"]].tobytes()).hexdigest(),
+            }
+        foreign = layout.figure_crop_exclusion(ink, owned_ink[f["id"]], f["box"])
+        if foreign is not None:
+            exclude = foreign if exclude is None else exclude | foreign
+            f["ownership"] = {
+                "method": "snapped-components",
+                "neighbours": neighbours[f["id"]],
+                "ink_pixels": int(owned_ink[f["id"]].sum()),
+                "ink_sha256": hashlib.sha256(owned_ink[f["id"]].tobytes()).hexdigest(),
+            }
+        layout.crop(render_path, f["box"], work / "figures" / f"{f['id']}.png",
+                    exclude=exclude)
+    keep = {f"{f['id']}.png" for f in figs}
+    for stale in (work / "figures").glob("*.png"):
+        if stale.name not in keep:
+            stale.unlink()
+
+    # 2) 行数对账：挖掉插图后的印刷行数 == 块体行数。页级唯一的完整性硬证据。
+    masked = ink.copy()
+    for f in figs:
+        x, y, w, h = f["box"]
+        masked[max(0, y):y + h, max(0, x):x + w] = False
+    exclusions = meta.get("count_exclusions", [])
+    try:
+        masked = layout.counting_ink(masked, exclusions)
+    except ValueError as error:
+        errors.append(str(error))
+    cols = ink.any(axis=0).nonzero()[0]
+    content_w = int(cols[-1] - cols[0] + 1) if cols.size else img.width
+    want = len(layout.line_bands(masked, content_w))
+    got = B.printed_lines(blks)
+    if want != got:
+        errors.append(f"行数对不上：印刷 {want} 行，块体 {got} 行"
+                      "（块体一行 = 印刷一行；公式跨行用 ↵ 标断点）")
+
+    # 3) 规范化 + 字符 + 公式 + 小问标号
+    applied = []
+    for b in blks:
+        for i, ln in enumerate(b["lines"]):
+            new, ch = nz.normalize_text(ln, profile)
+            if new != ln:
+                b["lines"][i] = new
+                applied.append({"kind": b["kind"], "rules": sorted({c["rule"] for c in ch})})
+
+    unknown, texts = [], []
+    for n, b in enumerate(blks):
+        t = B.text_of(b, join="")
+        if not t and b["kind"] in B.KINDS_TEXT:
+            errors.append(f"块 #{n+1} ({b['kind']}) 是空的")
+        texts.append({"id": f"{b['kind']}#{n+1}", "text": t})
+        for bad in nz.check_charset(t, profile):
+            unknown.append({**bad, "block": f"{b['kind']}#{n+1}"})
+    if unknown:
+        errors.append("白名单外字符 %d 处: %s" % (
+            len(unknown), ", ".join(f"{u['char']}({u['codepoint']})" for u in unknown[:8])))
+
+    m_err, m_warn = mathcheck.collect_and_check(texts, lambda x: [("text", x["text"])])
+    # 跨页残片的公式配不平是必然的，校验义务推给 assemble（那时才有完整公式）
+    open_ids = {f"{b['kind']}#{i+1}" for i, b in enumerate(blks) if b["open"] or b["cont"]}
+    for e in m_err:
+        if e.split(".")[0] in open_ids and "花括号" in e or e.split(".")[0] in open_ids and "配对" in e:
+            continue
+        errors.append(e)
+
+    for i, b in enumerate(blks):
+        if profile.get("enum_marker_script") != "cyrillic":
+            break
+        for key in ENUM_LINE.findall(B.text_of(b, join="\n")):
+            if nz.enum_key_script(key) not in ("cyrillic", "numeric"):
+                errors.append(f"{b['kind']}#{i+1}: 小问标号 {key!r} 不是西里尔")
+
+    errors += _validate_page_errata(meta, blks, a.page)
+
+    if meta.get("printed_page") is None:
+        errors.append("printed_page 未填（页码承载溯源，不能空）")
+
+    pdf = _find_pdf(a)
+    meta |= {
+        "schema": "ld-s10y-lesson/page@3", "book": a.book, "page": a.page,
+        "source": {"pdf": pdf.name, "pdf_sha256": layout.sha256_file(pdf),
+                   "pdf_page": a.page},
+        "render": {"dpi": meta.get("render", {}).get("dpi", 300),
+                   "w": img.width, "h": img.height,
+                   "sha256": render_sha256},
+        "profile": {"id": profile["id"], "sha256": layout.sha256_file(DEFAULT_PROFILE)},
+        "printed_lines": got, "figures": [{"id": f["id"], "label": f["label"],
+                                           "box": f["box"]} for f in figs],
+        "provenance": {"cap": "1", "normalized": True},
+    }
+    md_path.write_text(B.dump(meta, blks, a.page), encoding="utf-8")
+    _dump(pdir / "page.json", {"meta": meta, "blocks": blks})
+    _dump(pdir / "audit.json", {"page": a.page, "lines_printed": want, "lines_md": got,
+                                "figures": figs, "normalizations": applied,
+                                "unknown_chars": unknown, "katex_warnings": m_warn,
+                                "errata": len(meta.get("errata", [])),
+                                "count_exclusions": exclusions,
+                                "errors": errors})
+
+    print(f"[finalize] {a.book} p{a.page:04d}: {len(blks)} 块 / {got} 行"
+          f"（印刷 {want}）, 插图 {len(figs)} 张, 规范化 {len(applied)} 处")
+    for f in figs:
+        print(f"    {f['id']}({f['label']}) → {f['box']}")
+    if errors:
+        print(f"  ✗ 失败 {len(errors)} 项:")
+        for e in errors:
+            print(f"    - {e}")
+        return 1
+    print("  ✓ 通过 行数对账 + 白名单 + 公式")
+    return 0
+
+
+# ---------------------------------------------------------------- cap2 装订
+def cmd_assemble(a) -> int:
+    import assemble
+    catalog = _catalog_config(a)
+    return assemble.run(_book_dir(a), Path(a.toc) if a.toc else None,
+                        DEFAULT_PROFILE, strict=not a.lenient,
+                        work=Path(a.work) / a.book,
+                        exercise_numbering=catalog.get("exerciseNumbering", "book"))
+
+
+# ---------------------------------------------------------------- cap3 矢量化
+def cmd_vectorize(a) -> int:
+    import vectorize as V
+    work = Path(a.work) / a.book
+    pngs = sorted(work.glob("pages/*/figures/*.png"))
+    if a.page:
+        pngs = [p for p in pngs if f"/{a.page:04d}/" in str(p)]
+    ok = fail = 0
+    for png in pngs:

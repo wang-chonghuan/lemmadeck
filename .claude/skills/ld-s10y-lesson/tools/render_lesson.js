@@ -235,7 +235,7 @@ for (const lid of lessonDirs) {
     if (e.group !== group) {
       if (out) out += "</ol>";
       group = e.group;
-      out += `<div class="exgroup">${esc(group || "练习")}</div><ol class="ex">`;
+      out += `<div class="exgroup">${proseInline(group || "练习")}</div><ol class="ex">`;
     }
     const figs = (e.figures || [])
       .map((f) => figure(contentRoot, f.id, f.label, !!editionName)).join("");

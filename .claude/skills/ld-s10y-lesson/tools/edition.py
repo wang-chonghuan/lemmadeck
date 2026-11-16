@@ -31,6 +31,16 @@ BOOK_SCHEMA = "ld-s10y-lesson/edition-book@1"
 MATH = re.compile(r"\$\$(.+?)\$\$|\$([^$]+?)\$", re.S)
 MATH_TEXT_LITERAL = re.compile(r"\\text\{([^{}]*)\}")
 MATH_BOUNDARY_PUNCTUATION = re.compile(r"[、，；。？！：]+")
+MATH_SENTENCE_BOUNDARY = re.compile(
+    r"(?P<punctuation>[,.])"
+    r"(?P<suffix>(?:\s*\\end\{(?:aligned|cases)\})*"
+    r"(?:\s*\\qquad\s*\(\d+(?:\\text\{[A-Za-z\u0400-\u04ff]\})?\)"
+    r"|\s*\\tag\{\d+\})?\s*)$"
+)
+MATH_BOUNDARY_TOKEN = re.compile(
+    r"\\(?P<environment>begin|end)\{(?P<name>[A-Za-z*]+)\}"
+    r"|\\[A-Za-z]+|\\.|[{}()[\],]"
+)
 NUMBER = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])")
 PART_MARKER = re.compile(
     r"(?<![A-Za-z0-9_\u0400-\u04ff])(?<!\d\.)"
@@ -416,6 +426,80 @@ def cmd_prepare(args: argparse.Namespace) -> int:
     return 0
 
 
+def normalize_math_sentence_boundary(expression: str) -> str:
+    """Remove one prose mark at a closed formula's end, not math separators."""
+    boundary = MATH_SENTENCE_BOUNDARY.search(expression)
+    if not boundary:
+        return expression
+    prefix = expression[:boundary.start()].rstrip()
+    if not prefix or prefix[-1] in "+-=*/^_,.({":
+        return expression
+    escapes = re.search(r"\\+$", prefix)
+    if escapes and len(escapes.group()) % 2:
+        return expression
+    if boundary["punctuation"] == "." and prefix[-1].isdigit():
+        # A bare integer followed by "." may be a decimal literal. A second
+        # decimal dot or a dot after a single-token script is unambiguous here.
+        if not (
+            re.search(r"[\^_]\s*\d$", prefix)
+            or re.search(r"(?:\d+\.\d+|\.\d+)$", prefix)
+        ):
+            return expression
+
+    groups: list[tuple[str, bool]] = []
+    environments: list[str] = []
+    for token in MATH_BOUNDARY_TOKEN.finditer(prefix):
+        environment = token["environment"]
+        if environment == "begin":
+            environments.append(token["name"])
+            continue
+        if environment == "end":
+            if not environments or environments.pop() != token["name"]:
+                return expression
+            continue
+        value = token.group()
+        if value == ",":
+            if groups:
+                groups[-1] = (groups[-1][0], True)
+            continue
+        if (
+            value == "["
+            and token.end() == len(prefix)
+            and groups
+            and groups[-1][0] in ("[", "]")
+            and groups[-1][1]
+        ):
+            # The book also writes half-open intervals as [a,b[ or ]a,b[.
+            groups.pop()
+            continue
+        if value in ("(", "[", "{", r"\{"):
+            groups.append((value, False))
+            continue
+        if value == "]" and not groups:
+            groups.append(("]", False))
+            continue
+        if value in (")", "]", "}", r"\}"):
+            if not groups:
+                return expression
+            opener, has_comma = groups.pop()
+            paired = {")": "(", "]": "[", "}": "{", r"\}": r"\{"}
+            interval_end = (
+                value in (")", "]")
+                and opener in ("(", "[", "]")
+                and has_comma
+            )
+            if opener != paired[value] and not interval_end:
+                return expression
+    if groups:
+        return expression
+    suffix_environments = re.findall(
+        r"\\end\{(aligned|cases)\}", boundary["suffix"],
+    )
+    if environments != list(reversed(suffix_environments)):
+        return expression
+    return expression[:boundary.start()] + expression[boundary.start() + 1:]
+
+
 def math_signature(text: str) -> list[str]:
     def normalize_text_literals(expression: str) -> str:
         return MATH_TEXT_LITERAL.sub(
@@ -427,7 +511,10 @@ def math_signature(text: str) -> list[str]:
 
     signature = []
     for match in MATH.finditer(text):
-        expression = normalize_text_literals(match.group(1) or match.group(2))
+        expression = normalize_math_sentence_boundary(
+            match.group(1) or match.group(2),
+        )
+        expression = normalize_text_literals(expression)
         signature.extend(
             part.strip()
             for part in MATH_BOUNDARY_PUNCTUATION.split(expression)

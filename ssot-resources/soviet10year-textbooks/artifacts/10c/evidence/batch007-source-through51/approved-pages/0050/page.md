@@ -1,0 +1,98 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10c",
+  "page": 50,
+  "printed_page": 44,
+  "source": {
+    "pdf": "10c 苏联十年制学校数学教材 代数和分析初步 十年级.pdf",
+    "pdf_sha256": "47b0358c5781f509ce35e0e22de13c6bb539b246099ade66e8856c9288954e40",
+    "pdf_page": 50
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1695,
+    "h": 2580,
+    "sha256": "a1641681cac4abcb06975ee95901a56b5095ffd80ecd5eff41823a9a53a9d8cc"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "首段cont续49页性质9并闭合；性质10至12各按三条印刷行保留，编号仍为正文性质而非习题。",
+    "习题证明要求适用于119至125；119/120、123/124实际同排，后项标samerow。",
+    "单位圆点集合两行共用要求作为新exhead保留，点字母印P带下标t；126/127/128实际三题同排，127及128标samerow；本页没有圆图，不补造fig。",
+    "所有习题题面忠实保留，不求解、不改数学；无计行排除或源errata。"
+  ],
+  "errata": [],
+  "printed_lines": 22,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+$\left[-\frac{\pi}{2}+2\pi n,\frac{\pi}{2}+2\pi n\right]$　$(n\in Z)$
+上，由$-1$上升到$1$.
+
+<!-- p -->
+10. 正弦函数在区间
+$\left[\frac{\pi}{2}+2\pi n,\frac{3}{2}\pi+2\pi n\right]$　$(n\in Z)$
+上，由$1$下降到$-1$.
+
+<!-- p -->
+11. 在点
+$x=\frac{3}{2}\pi+2\pi n$　$(n\in Z)$，
+正弦函数具有等于$-1$的极小值.
+
+<!-- p -->
+12. 对于所有的
+$x=\frac{\pi}{2}+2\pi n$　$(n\in Z)$，
+正弦函数具有等于$1$的极大值.
+
+<!-- exhead -->
+习题
+
+<!-- exhead -->
+证明：
+
+<!-- ex 119 -->
+119. $\sin2.3\pi=\sin0.3\pi$.
+
+<!-- ex 120 samerow -->
+120. $\sin(-330^\circ)=-\sin330^\circ$.
+
+<!-- ex 121 -->
+121. $\sin3.7\pi=-\sin0.3\pi$.
+
+<!-- ex 122 -->
+122. $\sin15^\circ<\sin75^\circ<\sin86^\circ$.
+
+<!-- ex 123 -->
+123. $\sin2.16>0$.
+
+<!-- ex 124 samerow -->
+124. $\sin4.5<0$.
+
+<!-- ex 125 -->
+125. $\sin95^\circ>\sin105^\circ>\sin175^\circ$.
+
+<!-- exhead -->
+设单位圆上的点$P_t$对应的正弦值满足下列不等式或方
+程，画出点$P_t$的集合：
+
+<!-- ex 126 -->
+126. $\sin t<\frac{1}{2}$.
+
+<!-- ex 127 samerow -->
+127. $\sin t<0$.
+
+<!-- ex 128 samerow -->
+128. $\sin t=\frac{\sqrt{2}}{2}$.
+
+<!-- foot -->
+· 44 ·

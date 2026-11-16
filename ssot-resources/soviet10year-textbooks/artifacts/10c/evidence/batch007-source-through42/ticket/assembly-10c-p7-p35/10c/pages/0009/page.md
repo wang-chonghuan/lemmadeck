@@ -1,0 +1,96 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10c",
+  "page": 9,
+  "printed_page": 3,
+  "notes": [
+    "实际原图确认物理9页为印刷3页，仍属第75单元；首个三行公式用p cont接上页差商极限。嵌套高分式各占一行，不把分子分母拆开。",
+    "“例”下的1、2是已解正文例子，不是习题题号。习题从印刷1开始到10；题1与2同排，题3与4同排，分别用ex samerow保留。",
+    "本页无插图；第9题大写M、3.6系数与sin的五次方，第10题的自变量u及最后一个乘点均照印刷保留。首次19/18失败保留；独立源审查确认底边扫描线，仅登记现有底部5%范围的计数排除，不改源文或像素。"
+  ],
+  "errata": [],
+  "count_exclusions": [
+    {
+      "kind": "scan-artifact",
+      "box": [
+        0,
+        2451,
+        1695,
+        129
+      ],
+      "reason": "Independent source review confirms only fragmented bottom scan boundary in the existing bottom5% strip. The actual folio ends at y2281 and exercise10 is above it; no body, formula or figure pixels are excluded. Original pixels remain unchanged."
+    }
+  ],
+  "source": {
+    "pdf": "10c 苏联十年制学校数学教材 代数和分析初步 十年级.pdf",
+    "pdf_sha256": "47b0358c5781f509ce35e0e22de13c6bb539b246099ade66e8856c9288954e40",
+    "pdf_page": 9
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1695,
+    "h": 2580,
+    "sha256": "d599c190c459ed486bc74feda49302ec1e3ce2670ced98d58a6defd07d3e94d9"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 18,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+$=\lim_{\Delta x\to0}\frac{2\cos\left(x+\frac{\Delta x}{2}\right)\cdot\sin\frac{\Delta x}{2}}{\Delta x}↵=\lim_{\Delta x\to0}\cos\left(x+\frac{\Delta x}{2}\right)\cdot\lim_{\Delta x\to0}\frac{\sin\frac{\Delta x}{2}}{\frac{\Delta x}{2}}↵=\cos x\cdot1=\cos x$.
+
+<!-- p -->
+例 利用复合函数微分法，得出：
+
+<!-- p -->
+1. $[\sin(ax+b)]'=\cos(ax+b)\cdot(ax+b)'↵=a\cos(ax+b)$.
+
+<!-- p -->
+2. $\left(\sin\frac{1}{x}\right)'=-\frac{1}{x^2}\cos\frac{1}{x}$.
+
+<!-- exhead -->
+习题
+求下列函数的导函数：
+
+<!-- ex 1 -->
+1. $f(x)=\sin3x$.
+
+<!-- ex 2 samerow -->
+2. $g(x)=\sin\left(\frac{1}{2}x+\pi\right)$.
+
+<!-- ex 3 -->
+3. $h(x)=\sin\left(\frac{\pi}{2}-x\right)$.
+
+<!-- ex 4 samerow -->
+4. $M(x)=3\sin^2(2x-1)$.
+
+<!-- ex 5 -->
+5. $f(t)=\sin2t\cos t-\sin t\cos2t$.
+
+<!-- ex 6 -->
+6. $f(x)=\sin(-x)+\sin x$.
+
+<!-- ex 7 -->
+7. $g(x)=\sin2x-2\sin x\cos x+5$.
+
+<!-- ex 8 -->
+8. $h(x)=\sin(2x-3.5)+\sin2x$.
+
+<!-- ex 9 -->
+9. $M(x)=2x+3.6\sin^5(\pi-x)$.
+
+<!-- ex 10 -->
+10. $f(u)=\cos2u\cos\frac{\pi}{2}-\sin2u\cdot\sin\frac{\pi}{2}$.
+
+<!-- foot -->
+· 3 ·

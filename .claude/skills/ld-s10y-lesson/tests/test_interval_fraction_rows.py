@@ -1,0 +1,146 @@
+"""Physical-row fixtures, independent of textbook page coordinates or counts."""
+import sys
+import unittest
+from pathlib import Path
+
+import numpy as np
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
+from layout import _single_fraction_row, line_bands
+
+
+UNIT = 32
+WIDTH = 800
+ANCHOR_ROWS = (40, 110, 180, 250, 320)
+
+
+def glyph(ink, x, y, height=UNIT, width=26):
+    ink[y:y + height, x:x + 3] = True
+    ink[y:y + height, x + width - 3:x + width] = True
+    ink[y:y + 3, x:x + width] = True
+    ink[y + height - 3:y + height, x:x + width] = True
+    ink[y + height // 2:y + height // 2 + 3, x:x + width] = True
+
+
+def text(ink, y, start=40, stop=740, height=UNIT, skew=0):
+    for x in range(start, stop, 42):
+        offset = round(skew * (x - start) / max(1, stop - start))
+        glyph(ink, x, y + offset, height)
+
+
+def fraction(ink, x, y):
+    glyph(ink, x + 12, y, 26, 20)
+    ink[y + 39:y + 43, x:x + 48] = True
+    glyph(ink, x + 12, y + 56, 28, 20)
+
+
+def bracket(ink, x, y, height, facing=1):
+    edge = x if facing == 1 else x + 12
+    ink[y:y + height, edge:edge + 3] = True
+    ink[y:y + 4, x:x + 15] = True
+    ink[y + height - 4:y + height, x:x + 15] = True
+
+
+def page():
+    ink = np.zeros((1000, WIDTH), dtype=bool)
+    for y in ANCHOR_ROWS:
+        text(ink, y)
+    return ink
+
+
+def interval_row(ink, y, skew=0):
+    text(ink, y + 20, 40, 280, height=45, skew=skew // 3)
+    text(ink, y + 30, 540, 740, height=45, skew=skew)
+    fraction(ink, 350, y + 16)
+    fraction(ink, 430, y + 16)
+    bracket(ink, 310, y, 112)
+    bracket(ink, 500, y, 112, -1)
+
+
+def brace(ink, x, y, height):
+    """One connected brace spans separate equations, not a text baseline."""
+    mid = y + height // 2
+    ink[y:mid, x + 12:x + 15] = True
+    ink[mid:y + height, x + 12:x + 15] = True
+    ink[y:y + 4, x + 12:x + 28] = True
+    ink[y + height - 4:y + height, x + 12:x + 28] = True
+    ink[mid - 2:mid + 2, x:x + 15] = True
+
+
+class IntervalFractionRowsTest(unittest.TestCase):
+    def assert_rows(self, ink, target_rows):
+        for scale in (1, 2):
+            with self.subTest(scale=scale):
+                scaled = np.repeat(np.repeat(ink, scale, axis=0), scale, axis=1)
+                before = scaled.copy()
+                self.assertEqual(
+                    len(line_bands(scaled, scaled.shape[1])),
+                    len(ANCHOR_ROWS) + target_rows,
+                )
+                np.testing.assert_array_equal(scaled, before)
+
+    def test_single_interval_row_with_skewed_prose_and_fraction(self):
+        ink = page()
+        interval_row(ink, 450, skew=15)
+        self.assert_rows(ink, 1)
+
+    def test_single_fraction_row_without_delimiters(self):
+        ink = page()
+        text(ink, 480, 40, 280, height=45, skew=8)
+        text(ink, 490, 540, 740, height=45, skew=12)
+        fraction(ink, 360, 455)
+        self.assert_rows(ink, 1)
+
+    def test_disconnected_bracket_stem_is_not_another_glyph_row(self):
+        ink = page()
+        interval_row(ink, 450)
+        ink[485:489, 512:515] = False
+        self.assert_rows(ink, 1)
+
+    def test_two_interval_rows_remain_two(self):
+        ink = page()
+        interval_row(ink, 450)
+        interval_row(ink, 595)
+        self.assert_rows(ink, 2)
+
+    def test_two_braced_equations_with_inline_fraction_remain_two(self):
+        ink = page()
+        text(ink, 470, 80, 300)
+        text(ink, 540, 80, 300)
+        fraction(ink, 350, 448)
+        brace(ink, 40, 453, 125)
+        self.assertFalse(_single_fraction_row(ink, 448, 578, UNIT))
+        self.assert_rows(ink, 2)
+
+    def test_three_braced_equations_with_inline_fraction_remain_three(self):
+        ink = page()
+        for y in (450, 520, 590):
+            text(ink, y, 80, 300)
+        fraction(ink, 350, 498)
+        brace(ink, 40, 445, 181)
+        self.assertFalse(_single_fraction_row(ink, 445, 626, UNIT))
+        self.assert_rows(ink, 3)
+
+    def test_radical_bar_does_not_turn_two_text_rows_into_one_fraction(self):
+        ink = page()
+        text(ink, 470, 100, 360)
+        text(ink, 540, 100, 360)
+        ink[455:458, 90:380] = True
+        ink[455:500, 90:94] = True
+        ink[496:500, 80:94] = True
+        ink[485:499, 77:81] = True
+        self.assertFalse(_single_fraction_row(ink, 455, 571, UNIT))
+        self.assert_rows(ink, 2)
+
+    def test_staggered_genuine_rows_do_not_share_a_central_row(self):
+        ink = page()
+        text(ink, 450, 40, 280)
+        text(ink, 520, 540, 740)
+        fraction(ink, 360, 455)
+        brace(ink, 310, 450, 105)
+        self.assertFalse(_single_fraction_row(ink, 450, 554, UNIT))
+        self.assert_rows(ink, 2)
+
+
+if __name__ == "__main__":
+    unittest.main()

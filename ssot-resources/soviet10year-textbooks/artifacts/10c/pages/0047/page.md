@@ -1,0 +1,75 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10c",
+  "page": 47,
+  "printed_page": 41,
+  "source": {
+    "pdf": "10c 苏联十年制学校数学教材 代数和分析初步 十年级.pdf",
+    "pdf_sha256": "47b0358c5781f509ce35e0e22de13c6bb539b246099ade66e8856c9288954e40",
+    "pdf_page": 47
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1695,
+    "h": 2580,
+    "sha256": "4fe40a7bf118f2961b57f33b4cbc2617e59b4dea95bd7e2b9d9beccbcf20b218"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "首段承接物理46页以arcsin a，结束的open推导；本页末注以句点结束，不虚设末尾open。",
+    "式(2)原印加项顺序π2m，忠实保留，不换序；公式编号(2)(3)(4)与各公式同排。",
+    "注是本页正文说明，不当作习题或底部教学脚注；本页无图表、小问、exhead。",
+    "页边墨点及扫描边线原样保留，不添加计行排除或数学更正。"
+  ],
+  "errata": [],
+  "printed_lines": 23,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+为了求出在闭区间$\left[\frac{\pi}{2},\frac{3}{2}\pi\right]$上方程(1)的解，利用公式
+$\sin x=\sin(\pi-x)$.
+如果$x\in\left[\frac{\pi}{2},\frac{3}{2}\pi\right]$，那么$\pi-x\in\left[-\frac{\pi}{2},\frac{\pi}{2}\right]$（说明为什么）.
+方程
+$\sin x=a$
+和方程
+$\sin(\pi-x)=a$
+同解. 又因为$\pi-x\in\left[-\frac{\pi}{2},\frac{\pi}{2}\right]$，那么
+$\pi-x=\arcsin a$，
+就是说，
+$x=\pi-\arcsin a$.
+
+<!-- p -->
+现在，为了写出方程(1)所有的解，必须利用正弦的周期
+性，就是把所得两个解中的每一个解加上数$2\pi m$，$m\in Z$. 得
+到的解集合是由两个无穷子集构成的：
+
+<!-- p -->
+$x=\arcsin a+\pi2m$，　　　　　　　　　(2)
+$x=-\arcsin a+\pi(2m+1)$.　　　　　　　(3)
+
+<!-- p -->
+我们看出，可以把式(2)和(3)合并成一个式子：
+
+<!-- p -->
+$x=(-1)^k\arcsin a+\pi k$，$k\in Z$.　　　(4)
+
+<!-- p -->
+实际上，当$k$是偶数时，由(4)式得到(2)式；当$k$是奇数时，由
+(4)式得到(3)式（把$k=2m$和$k=2m+1$代入(4)式进行
+检验）.
+
+<!-- p -->
+注　当$a=1$和$a=-1$时，由式(2)和(3)确定的解集合相同.
+
+<!-- foot -->
+· 41 ·

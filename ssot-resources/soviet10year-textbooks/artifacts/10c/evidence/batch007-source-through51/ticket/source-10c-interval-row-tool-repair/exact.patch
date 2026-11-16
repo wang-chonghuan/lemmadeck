@@ -1,0 +1,244 @@
+--- a/.claude/skills/ld-s10y-lesson/tools/layout.py
++++ b/.claude/skills/ld-s10y-lesson/tools/layout.py
+@@ -202,18 +202,46 @@
+             region[components[bounds] == component_id] = False
+     counts = band.sum(axis=1)
+     remaining = np.flatnonzero(counts > max(8, 0.25 * counts.max()))
++    glyph_components, _ = ndimage.label(band)
++    glyph_bounds = []
++    for component_id, bounds in enumerate(ndimage.find_objects(glyph_components), 1):
++        if bounds is None:
++            continue
++        rows, columns = bounds
++        height = rows.stop - rows.start
++        if not (
++            0.6 * line_h <= height <= 1.8 * line_h
++            and columns.stop - columns.start >= 0.2 * line_h
++        ):
++            continue
++        central = glyph_components[
++            rows.start + height // 4:rows.stop - height // 4, columns
++        ] == component_id
++        # A detached delimiter end is wide only at its tip, not through its body.
++        if np.ptp(np.flatnonzero(central.any(axis=0))) + 1 >= 0.25 * height:
++            glyph_bounds.append((rows, columns))
+     glyph_rows = [
+-        row
+-        for bounds in ndimage.find_objects(ndimage.label(band)[0])
+-        if bounds is not None
+-        for rows, columns in [bounds]
+-        if 0.6 * line_h <= rows.stop - rows.start <= 1.8 * line_h
+-        and columns.stop - columns.start >= 0.2 * line_h
+-        for row in (rows.start, rows.stop - 1)
++        row for rows, _ in glyph_bounds for row in (rows.start, rows.stop - 1)
+     ]
+     if glyph_rows:
+         remaining = np.union1d(remaining, glyph_rows)
+-    return not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h
++    if not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h:
++        return True
++    # Skew widens a row's envelope. Neighboring full glyphs must still overlap
++    # through their central half, unlike independently supported text rows.
++    full_glyphs = sorted(
++        [(rows, columns) for rows, columns in glyph_bounds
++         if rows.stop - rows.start >= line_h],
++        key=lambda bounds: bounds[1].start,
++    )
++    cores = [
++        (rows.start + 0.25 * (rows.stop - rows.start),
++         rows.stop - 0.25 * (rows.stop - rows.start))
++        for rows, _ in full_glyphs
++    ]
++    return len(cores) >= 3 and all(
++        max(a, c) <= min(b, d) for (a, b), (c, d) in zip(cores, cores[1:])
++    )
+ 
+ 
+ def _subscript_continues(
+@@ -413,8 +441,13 @@
+         rows, columns = bounds
+         height, width = rows.stop - rows.start, columns.stop - columns.start
+         if height > 1.8 * line_h and width < 0.5 * line_h and width < 0.2 * height:
++            stroke = components[bounds] == component_id
++            row_widths = stroke.sum(axis=1)
++            # Delimiter ends/hooks widen across the stem; a plain streak does not.
++            if row_widths.max() > 2 * np.median(row_widths):
++                continue
+             region = ink[bounds]
+-            region[components[bounds] == component_id] = False
++            region[stroke] = False
+     raw = _row_fragments(ink, content_w)
+     if not raw:
+         return []
+@@ -489,6 +522,14 @@
+             subscript_continues = (
+                 a - prev_b <= 0.75 * min(line_h, glyph_h)
+                 and _subscript_continues(ink, prev_a, a, b, glyph_h)
++            )
++            # A delimiter can bridge a sparse projection gap around a fraction.
++            shared_strokes = np.intersect1d(
++                np.unique(components[prev_a:prev_b + 1][ink[prev_a:prev_b + 1]]),
++                np.unique(components[a:b + 1][ink[a:b + 1]]),
++            )
++            connected_fraction = shared_strokes.size > 0 and _single_fraction_row(
++                ink, prev_a, b, min(line_h, glyph_h)
+             )
+             if (
+                 a - prev_b <= (
+@@ -501,6 +542,7 @@
+                     or fraction_spill
+                 )
+                 or subscript_continues
++                or connected_fraction
+             ):
+                 joined[-1] = (prev_a, b)
+                 if fraction_spill:
+--- /dev/null
++++ b/.claude/skills/ld-s10y-lesson/tests/test_interval_fraction_rows.py
+@@ -0,0 +1,146 @@
++"""Physical-row fixtures, independent of textbook page coordinates or counts."""
++import sys
++import unittest
++from pathlib import Path
++
++import numpy as np
++
++sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
++from layout import _single_fraction_row, line_bands
++
++
++UNIT = 32
++WIDTH = 800
++ANCHOR_ROWS = (40, 110, 180, 250, 320)
++
++
++def glyph(ink, x, y, height=UNIT, width=26):
++    ink[y:y + height, x:x + 3] = True
++    ink[y:y + height, x + width - 3:x + width] = True
++    ink[y:y + 3, x:x + width] = True
++    ink[y + height - 3:y + height, x:x + width] = True
++    ink[y + height // 2:y + height // 2 + 3, x:x + width] = True
++
++
++def text(ink, y, start=40, stop=740, height=UNIT, skew=0):
++    for x in range(start, stop, 42):
++        offset = round(skew * (x - start) / max(1, stop - start))
++        glyph(ink, x, y + offset, height)
++
++
++def fraction(ink, x, y):
++    glyph(ink, x + 12, y, 26, 20)
++    ink[y + 39:y + 43, x:x + 48] = True
++    glyph(ink, x + 12, y + 56, 28, 20)
++
++
++def bracket(ink, x, y, height, facing=1):
++    edge = x if facing == 1 else x + 12
++    ink[y:y + height, edge:edge + 3] = True
++    ink[y:y + 4, x:x + 15] = True
++    ink[y + height - 4:y + height, x:x + 15] = True
++
++
++def page():
++    ink = np.zeros((1000, WIDTH), dtype=bool)
++    for y in ANCHOR_ROWS:
++        text(ink, y)
++    return ink
++
++
++def interval_row(ink, y, skew=0):
++    text(ink, y + 20, 40, 280, height=45, skew=skew // 3)
++    text(ink, y + 30, 540, 740, height=45, skew=skew)
++    fraction(ink, 350, y + 16)
++    fraction(ink, 430, y + 16)
++    bracket(ink, 310, y, 112)
++    bracket(ink, 500, y, 112, -1)
++
++
++def brace(ink, x, y, height):
++    """One connected brace spans separate equations, not a text baseline."""
++    mid = y + height // 2
++    ink[y:mid, x + 12:x + 15] = True
++    ink[mid:y + height, x + 12:x + 15] = True
++    ink[y:y + 4, x + 12:x + 28] = True
++    ink[y + height - 4:y + height, x + 12:x + 28] = True
++    ink[mid - 2:mid + 2, x:x + 15] = True
++
++
++class IntervalFractionRowsTest(unittest.TestCase):
++    def assert_rows(self, ink, target_rows):
++        for scale in (1, 2):
++            with self.subTest(scale=scale):
++                scaled = np.repeat(np.repeat(ink, scale, axis=0), scale, axis=1)
++                before = scaled.copy()
++                self.assertEqual(
++                    len(line_bands(scaled, scaled.shape[1])),
++                    len(ANCHOR_ROWS) + target_rows,
++                )
++                np.testing.assert_array_equal(scaled, before)
++
++    def test_single_interval_row_with_skewed_prose_and_fraction(self):
++        ink = page()
++        interval_row(ink, 450, skew=15)
++        self.assert_rows(ink, 1)
++
++    def test_single_fraction_row_without_delimiters(self):
++        ink = page()
++        text(ink, 480, 40, 280, height=45, skew=8)
++        text(ink, 490, 540, 740, height=45, skew=12)
++        fraction(ink, 360, 455)
++        self.assert_rows(ink, 1)
++
++    def test_disconnected_bracket_stem_is_not_another_glyph_row(self):
++        ink = page()
++        interval_row(ink, 450)
++        ink[485:489, 512:515] = False
++        self.assert_rows(ink, 1)
++
++    def test_two_interval_rows_remain_two(self):
++        ink = page()
++        interval_row(ink, 450)
++        interval_row(ink, 595)
++        self.assert_rows(ink, 2)
++
++    def test_two_braced_equations_with_inline_fraction_remain_two(self):
++        ink = page()
++        text(ink, 470, 80, 300)
++        text(ink, 540, 80, 300)
++        fraction(ink, 350, 448)
++        brace(ink, 40, 453, 125)
++        self.assertFalse(_single_fraction_row(ink, 448, 578, UNIT))
++        self.assert_rows(ink, 2)
++
++    def test_three_braced_equations_with_inline_fraction_remain_three(self):
++        ink = page()
++        for y in (450, 520, 590):
++            text(ink, y, 80, 300)
++        fraction(ink, 350, 498)
++        brace(ink, 40, 445, 181)
++        self.assertFalse(_single_fraction_row(ink, 445, 626, UNIT))
++        self.assert_rows(ink, 3)
++
++    def test_radical_bar_does_not_turn_two_text_rows_into_one_fraction(self):
++        ink = page()
++        text(ink, 470, 100, 360)
++        text(ink, 540, 100, 360)
++        ink[455:458, 90:380] = True
++        ink[455:500, 90:94] = True
++        ink[496:500, 80:94] = True
++        ink[485:499, 77:81] = True
++        self.assertFalse(_single_fraction_row(ink, 455, 571, UNIT))
++        self.assert_rows(ink, 2)
++
++    def test_staggered_genuine_rows_do_not_share_a_central_row(self):
++        ink = page()
++        text(ink, 450, 40, 280)
++        text(ink, 520, 540, 740)
++        fraction(ink, 360, 455)
++        brace(ink, 310, 450, 105)
++        self.assertFalse(_single_fraction_row(ink, 450, 554, UNIT))
++        self.assert_rows(ink, 2)
++
++
++if __name__ == "__main__":
++    unittest.main()

@@ -1,0 +1,93 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10c",
+  "page": 26,
+  "printed_page": 20,
+  "source": {
+    "pdf": "10c 苏联十年制学校数学教材 代数和分析初步 十年级.pdf",
+    "pdf_sha256": "47b0358c5781f509ce35e0e22de13c6bb539b246099ade66e8856c9288954e40",
+    "pdf_page": 26
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1695,
+    "h": 2580,
+    "sha256": "bf022335af80cf286a6b933ef4dc1dfc505726d130d92f9ee009bc6ffa83c55e"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "物理26页页脚20，无图；正文/公式21横排，教学脚注1横排，页脚1横排，共23。",
+    "页首方程组(10)承接25页末“由（8）和（9）得到：”；(10)及(10а)各有两条方程、两横排和左大括号，完整cases以真实换排标记记录。",
+    "方程编号10а的字母按soviet-cn西里尔枚举约定用а，不宣称扫描像素能区分Latin a/Cyrillic а。",
+    "源字形疑点：式(10а)首行A上方邻近有小墨点，本稿不据此增写点导数。向量记号按可读箭头r写vec{r}，保留源PNG供独立复核。",
+    "源内部符号疑点：式(10а)第二行明确有负号，但向量说明及其坐标括号两处均按可读像素写正v_0/omega；不凭数学常识添负号，待独立审查确认。",
+    "教学脚注完整记录向量/平移记号，短分隔线不作文字行；右缘墨点及底边细横迹保留原PNG，不作计数排除。",
+    "本页末段初始条件公式以句点结束，无open文本块；未见新小节标题，不能将本页界冒称80小节闭合。"
+  ],
+  "errata": [
+    {
+      "id": "p0026-phase-coordinate-sign",
+      "block": "p0026#4",
+      "original": "$\\frac{v_0}{\\omega}$",
+      "reason": "忠实原像素确印正坐标，不恢复负号字形。父方与独立推导由 x0=A cos(phi)、v0=-A omega sin(phi) 确认，相位 phi 对应的有向向量第二坐标应为 -v0/omega；正坐标向量的幅角为 -phi。现代只修本说明的第二坐标，并与同块完整向量的对应勘误一起应用；A=0 时相位仍任意，式(11)的平方项不改。"
+    },
+    {
+      "id": "p0026-phase-vector-sign",
+      "block": "p0026#4",
+      "original": "$\\vec{r}\\left(x_0,\\frac{v_0}{\\omega}\\right)^{*}$",
+      "reason": "忠实完整向量保留原印正坐标。父方与独立数学核验确认，以余弦形式定义的相位 phi 是向量 (x0,-v0/omega) 的有向幅角；例如 omega=1、x0=0、v0=1 的相位为3pi/2，而原正坐标向量给pi/2。现代须与同块单独坐标勘误同时改第二坐标，不改振幅、其他方程、源像素或未决A微点。"
+    }
+  ],
+  "printed_lines": 23,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+$\begin{cases}x_0=A\cos\varphi,\\↵v_0=-A\omega\sin\varphi.\end{cases}\qquad(10)$
+
+<!-- p -->
+把方程组（10）写成
+$\begin{cases}x_0=A\cos\varphi,\\↵-\frac{v_0}{\omega}=A\sin\varphi.\end{cases}\qquad(10\text{а})$
+
+<!-- p -->
+我们看到，
+$A=\sqrt{x_0^2+\left(\frac{v_0}{\omega}\right)^2}.\qquad(11)$
+
+<!-- p -->
+常数 $A$ 和 $\varphi$ 实质上不是别的，而是具有坐标 $x_0$ 和 $\frac{v_0}{\omega}$ 的向
+量 $\vec{r}\left(x_0,\frac{v_0}{\omega}\right)^{*}$ 的长度和它同横坐标轴所成的角度.
+
+<!-- p -->
+便于求 $\varphi$ 的公式
+$\operatorname{tg}\frac{\varphi}{2}=-\frac{v_0}{\omega(x_0+A)}\qquad(12)$
+将在第90小节里论证（参看第259题）.
+
+<!-- p -->
+在小球的问题里，我们得到了普遍结果. $\blacktriangleleft$
+
+<!-- p -->
+为了从谐振动方程（1）无穷多个解的集合中挑选出一个
+唯一解，可以给出初始条件：
+$f(0)=f_0,\quad f'(0)=f'_0.$
+
+<!-- p -->
+在 $c>0$，$f_0$ 和 $f'_0$ 这些数据下，方程
+$f''(t)=-cf(t)$
+有一个且仅有一个解. 在任何其他的点 $t_0$，也可以给出“初
+始条件”
+$f(t_0)=f_0,\quad f'(t_0)=f'_0.$
+
+<!-- foot note -->
+*　具有坐标 $x$ 和 $y$ 的向量（也就是平移）记作 $\vec{r}(x,y)$.
+
+<!-- foot -->
+· 20 ·

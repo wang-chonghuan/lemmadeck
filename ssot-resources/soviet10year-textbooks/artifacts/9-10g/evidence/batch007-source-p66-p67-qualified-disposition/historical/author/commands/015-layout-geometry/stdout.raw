@@ -1,0 +1,159 @@
+390:def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+391-    """Count printed rows after masking model-identified figures."""
+392-    # Work on a counting-only copy; extraction pixels are never changed.
+393-    ink = ink.copy()
+394-    edge = max(1, int(ink.shape[1] * 0.01))
+395-    ink[:, :edge] = False
+396-    ink[:, -edge:] = False
+397-    raw = _row_fragments(ink, content_w)
+398-    if not raw:
+399-        return []
+400-    line_h = int(np.median([b - a + 1 for a, b in raw]))
+401-    components, _ = ndimage.label(ink)
+402-    bounds_list = ndimage.find_objects(components)
+403-    glyph_heights = [
+404-        rows.stop - rows.start
+405-        for bounds in bounds_list if bounds is not None
+406-        for rows, columns in [bounds]
+407-        if 0.25 * line_h <= rows.stop - rows.start <= 1.3 * line_h
+408-        and 0.2 * line_h <= columns.stop - columns.start <= 1.3 * line_h
+409-    ]
+410-    glyph_h = (
+411-        float(np.percentile(glyph_heights, 75)) if len(glyph_heights) >= 3 else line_h
+412-    )
+413-    # Dense, joined shallow blemishes are not glyphs or thin fraction rules.
+414-    # Remove them only when they occupy an otherwise isolated projection row.
+415-    for component_id, bounds in enumerate(bounds_list, 1):
+416-        if bounds is None:
+417-            continue
+418-        rows, columns = bounds
+419-        height, width = rows.stop - rows.start, columns.stop - columns.start
+420-        area = np.count_nonzero(components[bounds] == component_id)
+421-        if (
+422-            0.35 * glyph_h <= height <= 0.65 * glyph_h
+423-            and width >= 1.5 * glyph_h
+424-            and area >= 0.35 * width * height
+425-            and any(
+426-                a - 0.15 * glyph_h <= rows.start
+427-                and rows.stop - 1 <= b + 0.15 * glyph_h
+428-                and b - a + 1 <= 0.65 * glyph_h
+429-                and np.count_nonzero(ink[a:b + 1]) <= area * 1.1
+430-                for a, b in raw
+431-            )
+432-        ):
+433-            region = ink[bounds]
+434-            region[components[bounds] == component_id] = False
+435-    for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
+436-        if bounds is None:
+437-            continue
+438-        rows, columns = bounds
+439-        height, width = rows.stop - rows.start, columns.stop - columns.start
+440-        if height > 1.8 * line_h and width < 0.5 * line_h and width < 0.2 * height:
+441-            stroke = components[bounds] == component_id
+442-            row_widths = stroke.sum(axis=1)
+443-            # Delimiter ends/hooks widen across the stem; a plain streak does not.
+444-            if row_widths.max() > 2 * np.median(row_widths):
+445-                continue
+446-            region = ink[bounds]
+447-            region[stroke] = False
+448-    raw = _row_fragments(ink, content_w)
+449-    if not raw:
+450-        return []
+451-    line_h = int(np.median([b - a + 1 for a, b in raw]))
+452-    # Projection thresholds can miss a narrow standalone quotient such as 1 or 7.
+453-    for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
+454-        if bounds is None:
+455-            continue
+456-        rows, columns = bounds
+457-        height, width = rows.stop - rows.start, columns.stop - columns.start
+458-        if (
+459-            0.6 * line_h <= height <= 1.3 * line_h
+460-            and 0.3 * line_h <= width <= line_h
+461-            and np.count_nonzero(components[bounds] == component_id) >= 0.12 * line_h ** 2
+462-            and not any(a <= rows.start and rows.stop - 1 <= b for a, b in raw)
+463-        ):
+464-            raw.append((rows.start, rows.stop - 1))
+465-    raw.sort()
+466-    merged = []
+467-    merge_gap = max(2.0, GLYPH_GAP_FACTOR * min(line_h, glyph_h))
+468-    for a, b in _merge_close(raw, 0):
+469-        if merged:
+470-            prev_a, prev_b = merged[-1]
+471-            if _decorated_folio(ink, a, b, glyph_h):
+472-                # A sparse digit neck can split one folio's row projection.
+473-                if _folio_fragment_continues(ink, prev_a, prev_b, a, b, glyph_h):
+474-                    merged[-1] = (prev_a, b)
+475-                else:
+476-                    merged.append((a, b))
+477-                continue
+478-            separate_tall_rows = (
+479-                min(prev_b - prev_a + 1, b - a + 1) >= 1.8 * glyph_h
+480-                and not _single_fraction_row(ink, prev_a, b, glyph_h)
+481-            )
+482-            if a - prev_b <= merge_gap and not separate_tall_rows:
+--
+757:def figure_ink(ink: np.ndarray, box: list[int]) -> np.ndarray:
+758-    """Use the same component ownership as snapping, not the rectangular envelope."""
+759-    labels, selected, _ = _figure_components(ink, box)
+760-    return np.isin(labels, selected)
+761-
+762-
+763-def figure_crop_exclusion(
+764-    ink: np.ndarray, owned: np.ndarray, box: list[int]
+765-) -> np.ndarray | None:
+766-    """Remove foreign component edges captured by a snapped figure envelope."""
+767-    x, y, w, h = box
+768-    foreign = ink & ~owned
+769-    if not foreign[max(0, y):y + h, max(0, x):x + w].any():
+770-        return None
+771-    return ndimage.binary_dilation(foreign, iterations=2) & ~owned
+772-
+773-
+774:def snap(ink: np.ndarray, box: list[int]) -> tuple[list[int], dict]:
+775-    """把粗框吸附到它覆盖的连通域上，按落在框内的比例认领墨迹。"""
+776-    x, y, w, h = box
+777-    H, W = ink.shape
+778-    x0, y0 = max(0, x), max(0, y)
+779-    x1, y1 = min(W - 1, x + w - 1), min(H - 1, y + h - 1)
+780-    _, selected, boxes = _figure_components(ink, box)
+781-    nx0, ny0, nx1, ny1 = x1, y1, x0, y0
+782-    for lab in selected:
+783-        sy, sx = boxes[lab - 1]
+784-        nx0, ny0 = min(nx0, sx.start), min(ny0, sy.start)
+785-        nx1, ny1 = max(nx1, sx.stop - 1), max(ny1, sy.stop - 1)
+786-    if not selected:
+787-        return [x0, y0, x1 - x0 + 1, y1 - y0 + 1], {"components": 0}
+788-    return [int(nx0), int(ny0), int(nx1 - nx0 + 1), int(ny1 - ny0 + 1)],  {
+789-        "components": len(selected), "from": box}
+790-
+791-
+792:def crop(png: Path, box: list[int], out: Path, pad: int = 12,
+793-         exclude: np.ndarray | None = None) -> None:
+794-    with Image.open(png) as source:
+795-        img = source.copy()
+796-    if exclude is not None:
+797-        if exclude.shape != (img.height, img.width) or exclude.dtype != bool:
+798-            raise ValueError("crop exclusion must be a page-sized boolean mask")
+799-        img = img.copy()
+800-        white = 255 if img.mode == "L" else tuple(255 for _ in img.getbands())
+801-        img.paste(white, mask=Image.fromarray(exclude.astype(np.uint8) * 255))
+802-    x, y, w, h = box
+803-    out.parent.mkdir(parents=True, exist_ok=True)
+804-    left, top = max(0, x - pad), max(0, y - pad)
+805-    right, bottom = min(img.width, x + w + pad), min(img.height, y + h + pad)
+806-    white = 255 if img.mode == "L" else tuple(255 for _ in img.getbands())
+807-    padded = Image.new(img.mode, (right - left, bottom - top), white)
+808-    padded.paste(img.crop((x, y, x + w, y + h)), (x - left, y - top))
+809-    padded.save(out)
+810-
+811-
+812-def ink_coverage(ink: np.ndarray, boxes: list[list[int]]) -> dict:
+813-    """墨迹里有多少落在给定框之外。用于「文字行数」以外的第二重体检。"""
+814-    H, W = ink.shape
+815-    cov = np.zeros_like(ink)
+816-    for x, y, w, h in boxes:
+817-        cov[max(0, y):min(H, y + h), max(0, x):min(W, x + w)] = True
+818-    resid = ink & ~cov
+819-    total = int(ink.sum())
+820-    return {"ink_px": total, "outside_px": int(resid.sum()),
+821-            "outside_ratio": round(int(resid.sum()) / max(total, 1), 5)}

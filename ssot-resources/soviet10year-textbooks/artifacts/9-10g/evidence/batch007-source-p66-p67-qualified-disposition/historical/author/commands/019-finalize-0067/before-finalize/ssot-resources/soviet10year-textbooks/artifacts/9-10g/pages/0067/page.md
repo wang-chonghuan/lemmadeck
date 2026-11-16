@@ -1,0 +1,68 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9-10g",
+  "page": 67,
+  "printed_page": 60,
+  "source": {
+    "pdf": "9-10g 苏联十年制学校数学教材 几何 9-10年级.pdf",
+    "pdf_sha256": "1900be5207d00404f64e5a40ab855fbfb8495bd2a06c5ce295ae0e145444578a",
+    "pdf_page": 67
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1506,
+    "h": 2126,
+    "sha256": "8ce5663f309c7c576c8aa7564b07e79e0be0be1be78e95e2daba4c38edd0202e"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "首段承接物理66页定理9证明；下段末源页黑方块为证明结束标志。",
+    "射线记号[M_1N_1)之后实际换行再印双上箭头；使用↵保留公式断点，不改为线段或普通平行号。",
+    "图72为同一编号的三幅子图，标签依原书记为西里尔а)、б)、в)；归§18正文，不归练习。",
+    "最后正文段在“映射成”后由图72隔断，本页无后续正文；标open，不能推断下一页内容。",
+    "图72上方子图A附近有孤立粗墨笔，来源含义UNKNOWN；原像素保留，不认作新点、箭头或数学给定。",
+    "未使用计行排除、人工行数覆盖或数学勘误。"
+  ],
+  "errata": [],
+  "source_emphasis": [
+    {"block": "p0067#3", "span": "向量 $\\vec a$ 与 $\\vec b$ 的和", "style": "bold", "basis": "本页源像素中的定义名"},
+    {"blocks": ["p0067#1", "p0067#2", "p0067#4", "p0067#5", "p0067#7", "p0067#8"], "span": "UNKNOWN", "style": "UNKNOWN"}
+  ]
+}
+---
+
+<!-- p cont -->
+合成 $\vec b\cdot\vec a$ 将点 $M$ 和 $N$ 分别映射成 $M_2$ 和 $N_2$. 为了证明
+定理，只需断定 $\overrightarrow{MM_2}=\overrightarrow{NN_2}$ 就是够了. 向量是位移（§17，
+性质 1）. 因此 $|MN|=|M_1N_1|$，$|M_1N_1|=|M_2N_2|$. 因此，
+$|MN|=|M_2N_2|$（1）. 向量将每一条射线映射成和它同方向
+的射线（§17，性质 2），这时 $[MN)\uparrow\uparrow[M_1N_1)$，$[M_1N_1)↵\uparrow\uparrow[M_2N_2)$. 由此得出（§16）$[MN)\uparrow\uparrow[M_2N_2)$. （2）
+
+<!-- p -->
+如果射线 $MN$ 和 $M_2N_2$ 不在一条直线上，那么由（2）和
+（1）推得 $MNN_2M_2$ 是平行四边形，于是 $\overrightarrow{MM_2}=\overrightarrow{NN_2}$. 如果
+$[MN)$ 和 $[M_2N_2)$ 在同一条直线上，这个等式同样成立. $\blacksquare$
+
+<!-- p -->
+向量 $\vec a$ 和 $\vec b$ 的合成通常叫做向量 $\vec a$ 与 $\vec b$ 的和. 这时，记
+法 $\vec b\cdot\vec a=\vec c$ 可以写成 $\vec a+\vec b=\vec c$.
+
+<!-- p -->
+研究任意的点 $A$，$B$，$C$（图 72，а）. 从关于两个向量的合
+成的定理推出等式：
+$\overrightarrow{AB}+\overrightarrow{BC}=\overrightarrow{AC}$ （3）
+
+<!-- p open -->
+实际上，向量 $\overrightarrow{AB}$ 将 $A$ 映射成 $B$，向量 $\overrightarrow{BC}$ 将 $B$ 映射成
+
+<!-- fig 图 72 box 170,1270,1050,570 -->
+
+<!-- cap 图 72 -->
+图 72
+
+<!-- foot -->
+$\bullet$ 60 $\bullet$

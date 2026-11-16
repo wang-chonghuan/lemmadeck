@@ -202,18 +202,48 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
             region[components[bounds] == component_id] = False
     counts = band.sum(axis=1)
     remaining = np.flatnonzero(counts > max(8, 0.25 * counts.max()))
+    glyph_components, _ = ndimage.label(band)
+    glyph_bounds = []
+    for component_id, bounds in enumerate(ndimage.find_objects(glyph_components), 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        height = rows.stop - rows.start
+        if not (
+            0.6 * line_h <= height <= 1.8 * line_h
+            and columns.stop - columns.start >= 0.2 * line_h
+        ):
+            continue
+        central = glyph_components[
+            rows.start + height // 4:rows.stop - height // 4, columns
+        ] == component_id
+        # A detached delimiter end is wide only at its tip, not through its body.
+        if np.ptp(np.flatnonzero(central.any(axis=0))) + 1 >= 0.25 * height:
+            glyph_bounds.append((rows, columns))
     glyph_rows = [
-        row
-        for bounds in ndimage.find_objects(ndimage.label(band)[0])
-        if bounds is not None
-        for rows, columns in [bounds]
-        if 0.6 * line_h <= rows.stop - rows.start <= 1.8 * line_h
-        and columns.stop - columns.start >= 0.2 * line_h
-        for row in (rows.start, rows.stop - 1)
+        row for rows, _ in glyph_bounds for row in (rows.start, rows.stop - 1)
     ]
     if glyph_rows:
         remaining = np.union1d(remaining, glyph_rows)
-    return not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h
+    # Skew widens a row's envelope. Neighboring full glyphs must still overlap
+    # through their central half, unlike independently supported text rows.
+    # A complete adjacent row may be slightly shorter than the page median.
+    full_glyphs = sorted(glyph_bounds, key=lambda bounds: bounds[1].start)
+    cores = [
+        (rows.start + 0.25 * (rows.stop - rows.start),
+         rows.stop - 0.25 * (rows.stop - rows.start))
+        for rows, _ in full_glyphs
+    ]
+    overlapping = all(
+        max(a, c) <= min(b, d) for (a, b), (c, d) in zip(cores, cores[1:])
+    )
+    if not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h:
+        # Compact side captions may be staggered but still share glyph rows.
+        return all(
+            max(first.start, second.start) < min(first.stop, second.stop)
+            for (first, _), (second, _) in zip(full_glyphs, full_glyphs[1:])
+        )
+    return len(cores) >= 3 and overlapping
 
 
 def _subscript_continues(
@@ -413,8 +443,13 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         rows, columns = bounds
         height, width = rows.stop - rows.start, columns.stop - columns.start
         if height > 1.8 * line_h and width < 0.5 * line_h and width < 0.2 * height:
+            stroke = components[bounds] == component_id
+            row_widths = stroke.sum(axis=1)
+            # Delimiter ends/hooks widen across the stem; a plain streak does not.
+            if row_widths.max() > 2 * np.median(row_widths):
+                continue
             region = ink[bounds]
-            region[components[bounds] == component_id] = False
+            region[stroke] = False
     raw = _row_fragments(ink, content_w)
     if not raw:
         return []
@@ -490,6 +525,14 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
                 a - prev_b <= 0.75 * min(line_h, glyph_h)
                 and _subscript_continues(ink, prev_a, a, b, glyph_h)
             )
+            # A delimiter can bridge a sparse projection gap around a fraction.
+            shared_strokes = np.intersect1d(
+                np.unique(components[prev_a:prev_b + 1][ink[prev_a:prev_b + 1]]),
+                np.unique(components[a:b + 1][ink[a:b + 1]]),
+            )
+            connected_fraction = shared_strokes.size > 0 and _single_fraction_row(
+                ink, prev_a, b, min(line_h, glyph_h)
+            )
             if (
                 a - prev_b <= (
                     0.6 if min(heights) < 0.4 * line_h else 0.5
@@ -501,6 +544,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
                     or fraction_spill
                 )
                 or subscript_continues
+                or connected_fraction
             ):
                 joined[-1] = (prev_a, b)
                 if fraction_spill:
