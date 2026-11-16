@@ -1,5 +1,161 @@
 # 生产检查点
 
+## 第二十六批限定暂存已通过
+
+同分支fetch一次exit0，HEAD/origin差异0/0。限定暂存一次PASS：
+41文件/16JSON，只含批准SOURCE7p278279/完整原书n109/8p13至16、
+原图237与8p图1及完成报告。源EOL/冻结报告EOF和精确字节保留，
+未完成现代层、错书6p、受阻页、private/tmp/env/duplicate全部排除。
+新增完整现代课0，没有重复审查、render或全项目检查。
+仅更新并重暂存本检查点和usage增量，随后本批commit/push各一次；
+当前在途n109文审与282283/8p1920作者不计为本批完成。
+
+## 第二十六批准备层收口，新增两个书册缺口
+
+2026-11-16。8p15/16 Dalton唯一文义PASS复用；Main现有修后稿的
+affected-finalize各一次0（21/21、25/25、规范化0），无新patch。
+Main39绑定/16精确copies晋升一次0，MD与独审修后字节相同、机器重建
+JSON全部值相同、图1原PNG字节相同。FIRST审计/失败及作者各1/1不重置。
+13/14此前Main183绑定/14copies晋升一次0；8p共4批准源页、0条目、
+0完整现代课，编号范围UNSET仍不装订，不把n1开放残片称完整。
+
+7p280281 Lovelace唯一FIRST REVISE：只缺页脚269/270数字斜体。
+Main FIRST repair-prepare在缺失path-binding断言exit1，copy/源patch
+之前停止；完整命令流及21623字节失败helper一次归档。修机械绑定及
+源页脚需要两处不同纠正，超出每页唯一总修复，不尝试任何纠正或重跑。
+实际author/Main源patch均0，不能冒称已施修；单一额度不扩展、不重置。
+280281 BLOCKED并排除装订，全部作者FIRST/独审/源字节保持。
+
+8p17/18 Peirce FIRST行数22/20、22/21 exit1，98冻结bindings一次通过。
+作者报告failure-capacity各1/1已用、实际repair-edits0，两个事实分别保留，
+Main不把失败冒称修复，也不重置已报告处分/再修/审/晋升。两页BLOCKED。
+仅18结构元数据已供Mendel19/20新作者使用，无正文/图/candidate/审批。
+Harvey7p282/283作者仅收到新280281排除边界，未分享受阻正文或失败稿。
+
+n109 TEXT Meitner preflight PASS、预算1/1（startup捕获限制保留），
+Dirac唯一freshFIRST文审在途。三私有SOURCE解已先行冻结，不分享/暂存。
+7p54页/21条目/85原题保持，本批完整现代课仍0。只准备提交有效
+SOURCE278279/完整RAW109/8p13至16和完成报告，未来现代稿/modernindex、
+错书6p、private/tmp/env/duplicate及受阻源页全部排除。
+
+无DB/发布/合并/部署/关闭/正式handoff或全项目检查；图片服务累计
+46/retry0、新调用0、tokens费用未知，小时巡检暂停，无其他chat消息。
+
+## 第二十六批SOURCE109闭合，8p首对源页获批
+
+2026-11-16。Mill唯一FIRST SOURCE278279两页PASS，五实际图片/
+parent0/reopen0。278页脚两侧点被独审判为非本质装饰差异，事实及
+非完美影印限制保留，不做可选修复。Main150绑定/16精确copies晋升
+一次0；仅批准278279连续cohort15copies、TOCassemble各一次0。
+完整原书phy7-c1-s3-n109保留：9正文块、3闭合原题、0图。
+开放n110及其图237不计完整现代课；图237仅独立原图SOURCE批准。
+7p源索引54批准页/21条目/85原题，旧条目不变，无跨永久缺口。
+n109 adapt-prepare一次0，Meitner现代TEXT独占作者在途，预算0/1。
+
+Hypatia8p13/14唯一freshFIRST两页PASS，无本质缺陷/必需修复，
+8实际图/parent0/reopen0；reviewer自身初始hashhelper路径失败如实
+保留，不当作作者修复。作者13预算0/1、14解析FIRST和唯一修复1/1
+保持。只批准页级字节，编号范围UNSET，无引言/装订或现代完整课批准。
+
+Confucius8p15/16 FIRST各一次0后各唯一页脚斜体修复1/1，尚未
+修后finalize，原FIRST审计不能证明当前稿。Main89author绑定一次0，
+已提取16结构元数据，原包不必要尾行/图片路径/candidate不转交。
+Dalton freshSOURCE FIRST在途；Peirce17/18作者已接收仅结构元数据，
+已备料不重prepare。8p19/20与7p282/283prepare各一次0，未派作者。
+Lagrange280281 FIRST各一次0、预算0/1已冻，Lovelace唯一源审在途。
+
+本批完整现代课仍0。n103/n104/n105阻塞不修、不重置；累计图片服务
+46/retry0，新请求0，tokens/费用未知。无DB/发布/合并/部署/关闭/
+正式handoff或全项目检查，小时巡检暂停，不发其他chat消息。
+
+## 第二十六批在途源审与8p边界交接
+
+2026-11-16。278279 Chandrasekhar作者FIRST各一次0、各预算0/1，
+Mill唯一freshSOURCE FIRST在途；278页脚两侧点是否本质缺陷由独审判断，
+不提前批准或修复。Lagrange280281独占SOURCE作者在途，Mainprepare
+各一次0，只共享279页尾元数据；不跨271至277永久缺口。
+
+8p13/14 Locke作者已冻结：实际印刷1/2、19/19与27/27行，零图。
+13 FIRST一次0、预算0/1；14 FIRST frontmatter解析失败完整流保留，
+唯一notes分隔符机械修复一次0、预算1/1耗尽。Hypatia新上下文唯一
+SOURCE FIRST在途；Main不开图片，不把机械成功当源批准。
+冻结14末正文p0014#8 open=true、闭合页脚及脚注元数据已由Main
+转交Confucius15/16，仅metadata，无正文/图片/candidate/审批。
+8p17/18已prepare各一次0，未派作者，等冻结16边界，不重新备料。
+
+权威计数仍7p52批准页/20源条目/82原题；8p批准页/条目/完整现代课
+全部0。本批完整现代课0，原n103显示/n104错书/n105权限阻塞与耗尽
+预算不重置。新图片服务0、累计46/retry0，tokens及费用未知。
+四在途代理独占各scope，不发其他chat消息；无DB/发布/合并/部署/
+关闭/正式handoff或全项目检查，每小时巡检继续暂停。
+
+## 第二十六批接续：SOURCE276277亦阻塞
+
+2026-11-16。Socrates唯一freshSOURCE276277 FIRST两页REVISE/BLOCKED：
+276 p0276#11/#12原书三处氨写成氮；277 p0277#10练习52(1)原书
+对氨的凝结热写成对氮的凝结热。作者各1/1机械修复已耗尽，批准subset[]，
+不修复、晋升、重审或跨271272273274275276277装订。六实际图片/
+一次batch/parent0/reopen0；图236没有发现本次SOURCE裁图缺陷，
+不因此授予现代FIG或受阻源页批准。原FIRST和sole修复完整流保持。
+SOURCE272至277六页均永久阻塞；7p索引仍52批准页/20条目/82原题。
+
+278279作者继续，已通知仅新排除边界，不提供失败页正文或答案。
+8p13/14 Locke作者在途；15/16 Mainprepare各一次0，Confucius新上下文
+独占SOURCE作者在途，起始预算0/1。TOC提示n1印刷3页，实际物理/印刷
+映射及原题编号范围均由各自原图确认；前批14边界元数据待冻结后共享。
+8p未晋升/装订，批准页/条目/现代完整课均0。所有在途稿不暂存。
+
+当前活跃代理是278279作者及8p两个独立作者；SOURCE274275/276277
+已完成独审并关闭。原所有成功门禁、先行私有解、独审和batch25commit/
+push不重复。每小时巡检仍暂停，无其他chat消息，没有DB/发布/合并/
+部署/关闭/正式handoff或全项目检查，图片服务46/retry0、费用未知。
+
+## 第二十六批最新：新增源阻塞与8p首次备料
+
+2026-11-16。Aristotle唯一freshSOURCE274275 FIRST两页均REVISE/
+BLOCKED，批准subset[]；274 p0274#5两处液体、275 p0275#1汽化热/
+物质遗漏粗体内嵌斜体。作者机械修复预算各1/1已耗尽，不能再修/晋升/
+跨271272273274275装订。原FIRST失败transcript-only caveat不改。
+独审7/8图片、7/24上下文、parent/reopen0，官方成功finalize不重跑。
+Socrates276277 FIRST仍在途，源索引52/20/82保持，不提前计批准。
+
+8p已首次备料，不再是尚未开始：Main扫描/TOC入口一次PASS，
+独立PDF309物理页、0嵌入字体、0非空白文字，rawSHA吻合manifest；
+TOC引言phy8-c1-s1-t1印刷1页。Main物理13/14prepare各一次0，
+Locke新上下文独占SOURCE作者在途，预算起始0/1，实际印刷页映射仍
+由原图确认。8p catalog未声明exerciseNumbering，未假定7p编号范围；
+未获原题编号证据前不装订/修改catalog或宣称完整课。当前8p批准页/
+装订条目/完整现代课仍全部0，只存在隔离scratch准备。
+
+Chandrasekhar278279独占SOURCE作者继续，未独审/晋升；全部未完成
+现代层、错书6p、tmp/private/env/duplicate排除。恢复后的renderer
+与HEAD精确同字节（SHA60468433...8696），失败patch/test/HTML证据完整
+归档，n103display预算不重置。图片服务仍46/retry0，tokens/实收费
+未知；无DB/发布/合并/部署/关闭/正式handoff或全项目检查。
+
+## 第二十五批已提交推送，第二十六批接续
+
+2026-11-16。实际commit/push各一次exit0：
+`4dee31f40fd2dad42e95f9af2e3e5f9132f79598`，push完成
+2026-11-16T13:51:30.756Z，44限定文件/9JSON。新增完整现代课0；
+批准SOURCE270/原书105/持久FIG232和报告已推送，同分支不合并。
+下方待提交和未验证工具留工作区措辞属于历史，不重复成功命令。
+
+为防未验证修复影响后续课程，n103失败renderer和新test原字节一次
+复制归档到tmp/n103-display-FIRST/，有独立hash清单。随后只撤下
+Main本次新增的未提交patch及test，恢复已提交renderer；原有改动/
+所有SOURCE/现代稿/失败HTML和报告未改。此为撤下未验证变更，不是
+n103第二修复，不产生审批，不重跑测试或显示，全部预算仍耗尽。
+n103 display、n104 CHOICEintegration、n105 permission BLOCKED保持。
+
+276277唯一标签startup修复后officialfinalize各一次0（25/25、26/26），
+实际预算各1/1、原FIRST与实际失败流保持；Descartes关闭，Socrates
+唯一freshSOURCE FIRST在途。Aristotle274275唯一freshSOURCE FIRST
+在途。278279 Mainprepare各一次0，Chandrasekhar独占SOURCE作者，
+预算起始0/1，只共用277closed练习52/g1/q5/foot266边界元数据。
+不跨271272273，后续未晋升/装订/暂存或计完整。8p未开始。
+仍无DB/发布/合并/部署/关闭/正式handoff或全项目检查。
+
 ## 第二十五批限定暂存通过，待提交推送
 
 2026-11-16。同分支fetch一次exit0，HEAD/origin差异0/0。
