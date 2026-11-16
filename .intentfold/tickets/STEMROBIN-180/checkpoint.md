@@ -1,5 +1,88 @@
 # 生产检查点
 
+## 第十三批验证完成待提交
+
+选择性暂存边界一次PASS：142限定文件、55JSON、42现代索引项，
+仅完整新增c5-s6；源页191205/装订204/177阻塞证据/UTF8窄修复保留。
+未批准现代图、s9候选、206210作者报告、108/env/app/依赖均排除，
+无scratch资源依赖。fresh同分支fetch已exit0；尚未执行commit/push。
+
+完整新增仅c5-s6：3正文块/5实际段落、0题/0答案/0图。
+主FIRST全文TEXT PASS及40绑定exit0；精确bindingcopy、retain、
+官方adapt-finalize各一次exit0。官方空答案prepare/copy/finalize各一次，
+render一次及既有隔离headless四桌面手机页面一次PASS；主实际打开
+全部课文至末端和手机零题页，未重render/检查，浏览器关闭。
+
+c5-s3 FIRST全文TEXT PASS90绑定复用；s4 FIRST全文26块7题PASS24绑定，
+s5 FIRST全文11块8题PASS56绑定，source.data/数字/身份完整，
+两textcircled非致命提示保留。s3/s4作者完整源解首次比较PASS41绑定：
+10题概念/完整实验，无虚构测量；main私有源解先冻不改。
+s5八题main私有源解已先冻11绑定，压力表压/绝对压歧义与图量比例明确；
+185g后续pre-key独立补充为可升桥板而非吊重吊杆，前freeze不覆盖，
+未读取s5作者解。最终键/选择题等批准图与最终modern绑定。
+
+201205 FeynmanFIRST完整独审PASS，approved manifest
+`12d4751a15e7f94f6e4dfd09fa113a1fb25dbacecce74957448a283113003a21`，
+reviewhandoff `02d816da5ff7efce4ef8644dc084f61ba75db52a6fefaaa1d1e7d1d7915177cb`。
+202repair-01/其他四页原root，68块115行13新题3图；首FAIL和sole边界修复
+保留。main167绑定/47精确复制一次exit0。205引用未批199，
+故filtered204 prepare/官方assemble/promote各一次exit0：
+193有效页84源项409题记录196编号图，仅旧107open；108排除。
+205完整批准源页及197198原图保留，但不混入尚未闭合能量现代课。
+
+177作者BLOCKED sole1/1，原四缺陷修复后F177-5工人脚/台阶支承仍失真；
+main93冻结绑定一次PASS，只保留作者拒绝，不冒称独立语义PASS。
+handoff `bb23b74f1f7366e44fed5bc343e996ce84abea643ef0a58d789540224529b01b`。
+两实际Azure调用/0自动重试，<=5美元规划不等于收费。s3排除完整课，
+178179未开始的新图请求已叫停；176仍用于s4，制作继续，已确认一调用。
+累计已确认图调用29（前26+176一+177二），其他未来调用不预填。
+
+下一批c5-s9官方prepare一次exit0，17块4题0图；main先冻完整四题源解
+四绑定，Volta完成s5源解后优先s9TEXT再185，Ramanujan转s9source-only。
+Sagan176后186、Wegener180181后首次206210源审、Feynman187188、
+Bacon206210作者freeze后182183184各隔离继续。206210尚未批准晋升。
+不重复已完成门禁/全项目checks，无DB/发布/合并/部署/正式handoff。
+
+## 第十三批进行中
+
+191195sole受影响源审PASS复用，主精确晋升192unique绑定/55文件exit0。
+为不等待195引用185，先filtered194 prepare/官方assemble/promote各一次exit0：
+183页79源项383题182编号图，old107及194#13open；s3/s4完整闭合，
+官方adapt-prepare一次两课exit0，Sagan/Wegener分别独立TEXT作者在途。
+主先完整源解冻结s3三题/s4七题，实际打开176至181相关原PNG，
+8/7输入与解绑定；未读作者源解、最终键或选择题。
+
+随后Feynman196200首次完整源独审PASS，批准manifest
+`02604ba2b1b68016b512dab15fba61acf3da32fc4cfa91df32409e96344181bb`，
+reviewhandoff`6042befe950454b54278d8b3bc9559b9414914c77018253d81e411265f05c407`。
+仅196repair-01/197200原root union；61块85行10新题对象11图，
+196sole①编码首FAIL及两textcircled警告保留。主194unique绑定/79精确复制
+晋升exit0，filtered200 prepare/官方assemble/promote各一次exit0：
+189有效页82源项396题记录195编号图，只有old107open；108排除。
+s3/s4已有主freeze的15绑定字节不变，不重复源解/TEXT门禁。
+s5八题、s6零题、s7五题完整；s8只是前缀，不计完整现代课。
+
+through200旧184两unknownSymbol乱码警告只在stdin分块解码产生，
+原页/课JSON与through194字节相同且无U+FFFD。katex_check.js只增加
+stdin.setEncoding utf8，四focused测试一次PASS及旧184单公式affected
+检查一次PASS/no warnings。through200原日志保留，不重装订；
+196两真实非致命警告未修。`tooling-katex-stdin-repair.md`说明。
+作者已通知工具epoch变化，不为历史hash一致重跑已完成门禁。
+
+Volta s3完整三题source-onlyfreeze已返回待比较，Ramanujan s4七题source-only
+在途；现代图、finalanswers、choices都等完整现代TEXT独审后授权。
+Bacon201205源作者仍隔离，Feynman待该冻结后首次源审；206+未委托。
+没有batch13完整课件/显示或提交，没有写库、发布、合并、部署或正式handoff。
+
+## 第十二批已提交推送
+
+提交`505b7a85357888458a90f6593c2d00c3708808af`，99限定文件、
+39JSON、41现代索引项；仅新增c5-s1完整课，through190源及批准预备图保留。
+同分支freshfetch exit0、HEAD/origin0/0，没有pull/rebase；
+实际commit/push各exit0，已到`origin/codex/STEMROBIN-180-textbooks`。
+六页面及新补公式端点PASS证据复用，不是正式handoff。
+继续下一小批，已耗尽的172/174/功率表不再修复，173不新调用服务。
+
 ## 第十二批验证完成待提交
 
 2026-11-16，最终仅`phy6-c5-s1`完整：25正文块、12书写题、

@@ -11,6 +11,7 @@
 const katex = require("katex");
 
 let raw = "";
+process.stdin.setEncoding("utf8");
 process.stdin.on("data", (c) => (raw += c));
 process.stdin.on("end", () => {
   let items;
