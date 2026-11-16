@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import crypto from 'node:crypto';
+
+const folder = 'ssot-resources/soviet10year-textbooks/artifacts/9p/editions/modern-us-neutral/lessons/phy9-c1-s5-t6';
+const file = `${folder}/exercises.json`;
+const bytes = await fs.readFile(file);
+const exercises = JSON.parse(bytes).exercises;
+const solutions = {
+  '1': 'Open examples require several genuine surface-tension effects absent from the chapter, with an explanation, not a unique named example. Compare proposed examples against the chapter before approval; do not invent observations.',
+  '2': 'This is an actual controlled experiment, not a completed observation. At matched temperature and stated composition/concentration, compare measured tension rather than drop counts alone without density corrections. Soap generally reduces water tension; sugar requires a concentration-specific result and cannot be universalized. Preserve prediction versus measurement, adult guidance and incomplete-status reporting.',
+  '3': 'Under the stated wetting facts, copper, silver and brass satisfy the necessary wetting condition. Stainless steel, aluminium and chromium do not. Wetting is necessary here, not sufficient evidence that every practical joint will succeed.',
+  '4': 'A wetting film can form liquid bridges with a pressure difference and interfacial adhesion; pulling apart may enlarge liquid interface and require work. Contact and friction may contribute. This does not apply to every wet glove or follow merely from weight of water.',
+  '5': 'Surface flow is toward greater surface tension. Introducing low-tension clean solvent at the centre while higher-tension oily solution lies outward produces outward interfacial flow. Introducing clean solvent at the edge reverses that tendency toward the oily centre. This is a conditional connected-film Marangoni model, not gasoline instructions or a universal porous-cloth cleaning law.',
+  '6': 'Loosening the surface can interrupt continuous fine capillary pathways and reduce upward supply to an evaporating surface. It need not reduce evaporation or retain water in every soil; the stated connected-pore conditions matter.',
+  '7': 'Density matching cancels the differential gravitational body force, and a fixed-volume immiscible isolated drop with uniform positive interfacial tension minimizes area as a sphere. Neutral buoyancy alone does not eliminate interfacial tension or allow an arbitrary equilibrium shape.',
+  '8': 'At fixed total volume, combining separate small drops reduces total area. In the stated isolated equilibrated model, loss of surface energy becomes thermal energy; temperature rises. For n equal spheres, area changes from n*4*pi*r^2 to 4*pi*r^2*n^(2/3). Environmental heat loss or other storage would invalidate the full thermal conversion.',
+  '9': 'A spherical soap film has two interfaces: internal excess pressure is 4*sigma/R. The smaller bubble has higher pressure, sends gas to the larger, shrinks further and raises its excess pressure. The two distinct radii do not converge to equal sizes in this constant-tension idealization; flow continues until the small bubble disappears or the model/connection ceases to apply. Actual experiment must be recorded separately, not claimed as performed.',
+  '10': 'Jurin balance for identical radius and complete wetting is rho*g*h=2*sigma/r. Taking the ratio gives rho_alcohol=rho_water*(sigma_alcohol/sigma_water)*(146/55). Heights alone determine no unique density; matching temperature, alcohol composition and physical-property data are missing. Do not infer a measured density or adopt a book number unconditionally.',
+  '11': 'Static balance gives m*g=pi*r^2*(p_liquid_bottom-p_liquid_top) for a uniform column, with capillary jumps set by both actual menisci and any trapped-gas pressure. Radius 0.8 mm alone is insufficient. A two-open-end idealization with limiting opposite signed meniscus jumps of magnitude 2*sigma/r gives a maximum support 4*pi*r*sigma/g, not a universal residual mass; closure, pinning and contact angles can change the result.',
+};
+assert.deepEqual(Object.keys(solutions), exercises.map(x => x.number));
+const hash = data => crypto.createHash('sha256').update(data).digest('hex');
+await fs.writeFile('.intentfold/tickets/STEMROBIN-181/tmp/9p-t6-independent-source-solutions.json', JSON.stringify({
+  ticket: 'STEMROBIN-181', lesson: 'phy9-c1-s5-t6', reviewer: 'Main, independent of Huygens answers and Zeno choices',
+  order: 'Read all actual modern written tasks and choice seed; independently solved before opening either author answer template or choice key.',
+  source: { path: file, sha256: hash(bytes) }, solutions,
+  figures: [], scope: 'Initial independent source reasoning, not approval of unseen author answers/options.',
+}, null, 2) + '\n', { flag: 'wx' });
+console.log('Recorded all11 independent source solutions before author comparison.');
