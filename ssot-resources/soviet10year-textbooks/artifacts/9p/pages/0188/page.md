@@ -1,0 +1,112 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 188,
+  "printed_page": 179,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 188
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "f1f93a654ea3567905cc431ee640feb56cfc4587d74b459422bd9d3bd70f0413"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "Author-only faithful source transcription. Initial 位制中的能量为 completes187's open tail 利用公式(8-29)，在 epsilon=1 的情况下，可以得到在静电单. Only187 tail text was read, not earlier pixels.",
+    "Heading76 is h3. Figure140 preserves four rightward field arrows, vector E, points1/2 and the rightward displacement arrow. Its caption shares the row 根据(8-27)式，这个功可以用点1和2.",
+    "Original claims about the r dependence of attraction work and positive field magnitude are transcribed without modern correction or scientific approval.",
+    "The bottom paragraph ends 电 and continues on189. Small border fragments and lower-right shadow are scan artifacts; no counting override is assumed."
+  ],
+  "counting": {
+    "edge_margin_px": 100,
+    "reason": "Independent original-grid review confirms the outer100px contain no printed body, caption or footer; the extra y2157-2186 band is lower-right scan shadow and sparse non-text specks. Counting-only edge exclusion gives23 rows and preserves the printed footer y2019-2043."
+  },
+  "figure_crops": {
+    "fig-140": {
+      "padding_px": 10,
+      "reason": "Independent source/candidate inspection confirms12px padding admits preceding prose fragments at y1055-1056. Padding10 begins y1057, below that row, retains the complete field arrows/vector labels/points/displacement inside the unchanged snapped box, and has no ink in its retained margins."
+    }
+  },
+  "errata": [],
+  "printed_lines": 23,
+  "figures": [
+    {
+      "id": "fig-140",
+      "label": "图140",
+      "box": [
+        971,
+        1067,
+        336,
+        279
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+位制中的能量为
+
+<!-- p -->
+$E_P=q_1U_{q_2}=\frac{q_1q_2}{r}$.
+
+<!-- p -->
+如果 $q_1$ 和 $q_2$ 具有相同的符号，则它们相互作用的电势
+能是正的. 电荷间的距离越小，它们相互作用的电势能的数
+值越大，因为电荷相互排斥时库仑力所做的功越大. 如果两
+个电荷的符号相反，则电势能是负的，并且当 $r\to\infty$ 时，达到
+电势能的最大值等于零. 因为 $r$ 越大，当电荷彼此靠近时吸
+引力做的功越大.
+
+<!-- h3 -->
+76. 电场强度和电势差之间的关系 等势面
+
+<!-- p -->
+电场强度和电势差之间存在着一定的联系. 设电荷 $q$ 沿
+着匀强电场 $\vec{E}$ 的方向从点1移到点2，
+点2到点1的距离为$\Delta d$(图140). 电场
+**做功**
+
+<!-- fig 图140 box 971,1067,336,279 -->
+![图140](figures/fig-140.png)
+
+<!-- p -->
+$A=qE\Delta d$.
+
+<!-- p open -->
+根据(8-27)式，这个功可以用点1和2
+
+<!-- cap 图140 samerow -->
+图140
+
+<!-- p cont -->
+的电势差表示：
+
+<!-- p -->
+$A=q(U_1-U_2)=qV$.
+
+<!-- p -->
+两个功的表示式相等，因此求得电场强度矢量的大小：
+
+<!-- p -->
+$E=\frac{V}{\Delta d}$. (8-31)
+
+<!-- p open -->
+在这个公式中，$V$ 是点1和2之间的电势差，两个点用位
+移矢量 $\Delta\vec{d}$ 来联系，位移矢量的方向与电场强度 $\vec{E}$ 的方向一
+致(图140). 因为电场强度的大小是正的，所以，$U_1>U_2$. 电
+
+<!-- foot -->
+· 179 ·

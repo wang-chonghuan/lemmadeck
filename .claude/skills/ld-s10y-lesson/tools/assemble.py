@@ -78,6 +78,10 @@ def merge_across_pages(stream: list[dict]) -> tuple[list[dict], list[str]]:
                     b["kind"] == "ex" and prev.get("label") not in (None, b.get("label"))):
                 warn.append(f"{b['ref']}: cont 接不上——上块是 {prev['kind']}"
                             f"{prev.get('label') or ''}，本块是 {b['kind']}{b.get('label') or ''}")
+            elif not 0 <= b["page"] - int(
+                    BLOCKREF.match((prev.get("spans") or [prev["ref"]])[-1]).group(1)
+            ) <= 1:
+                warn.append(f"{b['ref']}: cont 接不上——与上块末页不相邻")
             else:
                 prev["lines"] += b["lines"]
                 prev["open"] = b.get("open", False)

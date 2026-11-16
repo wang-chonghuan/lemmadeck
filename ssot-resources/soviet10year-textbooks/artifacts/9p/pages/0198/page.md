@@ -1,0 +1,86 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 198,
+  "printed_page": 189,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 198
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "ac39c32f0b3ef71583e8f65a9f2d618df32a95635ccd2055c441fb1dfb1b36ec"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "Author-only transcription from original page.png.24 visible text/formula/footer rows. No figures or footnotes; reference149б points to197 figure149.",
+    "Initial paragraph continues197.78 ends before79 heading. Last79 prose row ends 其 and is open to199.",
+    "Unit-word fractions retain every printed numeral and unit by separating numeric LaTeX fractions from plain-text unit ratios; Chinese units remain outside math. First tall nested fraction is one actual printed formula row; the final equality is a second printed row.",
+    "Lower-right scan shadow is not a text row. No counting override or mathematical correction."
+  ],
+  "errata": [],
+  "counting": {
+    "edge_margin_px": 120,
+    "reason": "Independent original-page inspection: the 120px left/right strips contain scan-edge traces and the lower-right shadow, not printed words, the two conversion rows or footer. Remove the non-text band y2156-2180 from the counting copy only."
+  },
+  "printed_lines": 24,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+竖直方向，金属球的电势减小了. 就是说，根据公式(8-33)，
+电容增大了. 把一个不带电的电介质靠近静电计杆上的圆板
+时(参阅§71)，也可以看到这个效应.
+
+<!-- p -->
+为什么会这样呢? 原来，导体的电势不只是由它表面上
+的电荷来确定. 根据叠加原理(8-30)，场中某一点的电势等
+于所有带电体产生的电势的总和. **不带电的物体也影响导体
+的电势**，因为在金属球电场的作用下，在导体表面上出现了符
+号相反的自由电荷(由于静电感应)，而在电介质表面上出现
+了束缚电荷(由于极化).
+
+<!-- p -->
+利用静电计还可以发现导体电容与它的**大小的关系.
+把一个半径很小的球固定在静电计的杆上. 现在，如果给它
+带上跟第一次实验相同的电量 $q$，则杆的电势大了**(图149б).
+**这就是说电容随着球的减小而减小.**
+
+<!-- h3 -->
+79. 电容的单位
+
+<!-- p -->
+用公式(8-33)可以引入电容的单位.
+
+<!-- p -->
+**给导体1库仑电量，其电势增大1伏特，把这种导体的电
+容作为国际单位制中电容的单位. 这个单位叫做法拉.**
+
+<!-- p -->
+根据(8-35)式，把真空中半径为1厘米的球的电容作为
+**静电单位制**中电容的单位. 这个单位叫做厘米.
+
+<!-- p -->
+不难看出，
+
+<!-- p -->
+1法拉 $=\frac{1}{1}$ 库仑/伏特 $=\frac{3\times10^9}{\frac{1}{300}}$ 静电制电量单位/静电制电势单位
+$=9\times10^{11}$ 厘米.
+
+<!-- p open -->
+1法拉的电容是很大的. 电容为1法拉的孤立的球，其
+
+<!-- foot -->
+· 189 ·
