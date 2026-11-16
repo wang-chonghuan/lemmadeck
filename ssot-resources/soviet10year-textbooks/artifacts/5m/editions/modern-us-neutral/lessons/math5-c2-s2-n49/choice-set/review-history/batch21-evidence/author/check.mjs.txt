@@ -1,0 +1,19 @@
+import fs from "node:fs";
+import { spawnSync } from "node:child_process";
+const root = ".intentfold/tickets/STEMROBIN-182/tmp/5m-n49";
+const args = [".agents/skills/ld-s10y-choice/scripts/validate.py", "--repo", ".", "--seed", `${root}/source.json`, "--draft", `${root}/draft.json`];
+const result = spawnSync("python3", args, { encoding: "utf8" });
+const view = JSON.parse(fs.readFileSync(`${root}/view.json`, "utf8"));
+const record = {
+  command: `python3 ${args.join(" ")}`, stdout: result.stdout, stderr: result.stderr, exit_code: result.status,
+  pure_view_shape: {
+    questions: view.questions.length,
+    options: view.questions.reduce((n, q) => n + q.options.length, 0),
+    modes: view.questions.reduce((m, q) => ({ ...m, [q.mode]: (m[q.mode] ?? 0) + 1 }), {})
+  },
+  semantic_status: "Structural only; no independent_agent self-approval or semantic review.",
+  blockers: JSON.parse(fs.readFileSync(`${root}/source-solutions.json`, "utf8")).blockers
+};
+fs.writeFileSync(`${root}/structural-check.json`, JSON.stringify(record, null, 2) + "\n", { flag: "wx" });
+console.log(JSON.stringify(record, null, 2));
+process.exitCode = result.status;

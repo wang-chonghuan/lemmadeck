@@ -208,8 +208,8 @@ li.ex .body .fig[data-figure-layout="scroll"] .figure-media{
 function page(title, crumb, bodyHtml) {
   return `<!DOCTYPE html><meta charset="utf-8"><title>${esc(title)}</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<style>${CSS}</style><div class="sheet"><h1>${esc(title)}</h1>
-<div class="crumb">${esc(crumb)}</div>${bodyHtml}</div>`;
+<style>${CSS}</style><div class="sheet"><h1>${inline(title)}</h1>
+<div class="crumb">${inline(crumb)}</div>${bodyHtml}</div>`;
 }
 
 const book = path.resolve(bookDir);
@@ -253,8 +253,15 @@ for (const lid of lessonDirs) {
       .map((f) => figure(contentRoot, f.id, f.label, !!editionName)).join("");
     const printedNumber = sourceNumberForArtifact(e);
     const sourceNumber = printedNumber == null ? "" : `${esc(String(printedNumber))}.`;
+    const prefix = printedNumber == null ? "" : String(printedNumber);
+    const suffix = e.text.slice(prefix.length);
+    const hasPrintedPrefix = prefix && e.text.startsWith(prefix)
+      && (/^\.\s/.test(suffix) || /^\uFF0E(?![0-9\uFF10-\uFF19])/.test(suffix));
+    const displayText = hasPrintedPrefix
+      ? e.text.slice(prefix.length + 1).trimStart()
+      : e.text;
     out += `<li class="ex" id="ex-${esc(e.number)}"><div class="no">${sourceNumber}</div>`
-      + `<div class="body">${inline(e.text)}${figs}</div></li>`;
+      + `<div class="body">${inline(displayText)}${figs}</div></li>`;
   }
   if (out) out += "</ol>";
   out += `<a class="jump" href="text.html">← 回课文</a>`;

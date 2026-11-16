@@ -1,0 +1,99 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { spawnSync } from 'node:child_process'
+
+const root = '.intentfold/tickets/STEMROBIN-182/tmp/6a-n39'
+const history = path.join(root, 'history/before-option-position-repair')
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
+const save = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2) + '\n', { flag: 'wx' })
+const json = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const files = ['seed.json', 'draft.json', 'view.json', 'source-solutions.json',
+  'ready.json', 'structure-validation.json', 'finish-authoring.cjs']
+const phase = process.argv[2]
+assert(['preserve', 'record'].includes(phase))
+
+if (phase === 'preserve') {
+  assert(!fs.existsSync(history))
+  fs.mkdirSync(history, { recursive: true })
+  const hashes = {}
+  for (const name of files) {
+    const source = path.join(root, name)
+    fs.copyFileSync(source, path.join(history, name), fs.constants.COPYFILE_EXCL)
+    hashes[name] = sha(fs.readFileSync(source))
+  }
+  save(path.join(history, 'snapshot-byte-hashes.json'), hashes)
+  console.log(JSON.stringify({ status: 'preserved', files: files.length, history }))
+} else {
+  const old = json(path.join(history, 'draft.json'))
+  const current = json(path.join(root, 'draft.json'))
+  const target = 'square-side-and-area-scaling'
+  const changed = current.questions.find(q => q.id === target)
+  const before = old.questions.find(q => q.id === target)
+  const inverse = structuredClone(current)
+  const restored = inverse.questions.find(q => q.id === target)
+  const swap = id => id === 'C' ? 'D' : id === 'D' ? 'C' : id
+  const reorder = (items, field) => [items[0], items[1], items[3], items[2]]
+    .map(item => ({ ...item, [field]: swap(item[field]) }))
+  restored.view.options = reorder(restored.view.options, 'id')
+  restored.key.correct = restored.key.correct.map(swap)
+  restored.key.rationales = reorder(restored.key.rationales, 'option_id')
+  assert.deepEqual(inverse, old, 'Only the single C/D content-position swap may change')
+  assert.deepEqual(before.key.correct, ['C'])
+  assert.deepEqual(changed.key.correct, ['D'])
+  const view = json(path.join(history, 'view.json'))
+  assert.deepEqual(view.questions, old.questions.map(({ id, source_numbers, view }) => ({ id, source_numbers, view })))
+  view.questions = current.questions.map(({ id, source_numbers, view }) => ({ id, source_numbers, view }))
+  fs.writeFileSync(path.join(root, 'view.json'), JSON.stringify(view, null, 2) + '\n')
+  fs.copyFileSync(path.join(root, 'view.json'), path.join(root, 'revised-option-position-view.json'),
+    fs.constants.COPYFILE_EXCL)
+  const diff = []
+  function compare(a, b, at = '') {
+    if (JSON.stringify(a) === JSON.stringify(b)) return
+    if (a && b && typeof a === 'object' && typeof b === 'object') {
+      assert.deepEqual(Object.keys(a), Object.keys(b))
+      for (const k of Object.keys(a)) compare(a[k], b[k], `${at}/${k}`)
+    } else diff.push({ path: at, before: a, after: b })
+  }
+  compare(old, current)
+  save(path.join(root, 'option-position-json-diff.json'), diff)
+  save(path.join(root, 'option-position-content-mapping.json'), {
+    question_id: target, old_to_new: { A: 'A', B: 'B', C: 'D', D: 'C' },
+    old_correct: before.key.correct, new_correct: changed.key.correct,
+    unchanged_option_and_rationale_content: true
+  })
+  const hashes = json(path.join(history, 'snapshot-byte-hashes.json'))
+  for (const name of files.filter(n => !['draft.json', 'view.json'].includes(n))) {
+    assert.equal(sha(fs.readFileSync(path.join(root, name))), hashes[name])
+  }
+  const args = ['.agents/skills/ld-s10y-choice/scripts/validate.py', '--repo', '.',
+    '--seed', path.join(root, 'seed.json'), '--draft', path.join(root, 'draft.json')]
+  const check = spawnSync('python3', args, { encoding: 'utf8' })
+  save(path.join(root, 'structural-check-option-position-repair.json'), {
+    command: ['python3', ...args], exit_code: check.status, stdout: check.stdout,
+    stderr: check.stderr, semantic_review_run: false
+  })
+  save(path.join(root, 'option-position-repair-receipt.json'), {
+    history, draft_before_byte_sha256: hashes['draft.json'],
+    draft_after_byte_sha256: sha(fs.readFileSync(path.join(root, 'draft.json'))),
+    revised_view_byte_sha256: sha(fs.readFileSync(path.join(root, 'revised-option-position-view.json'))),
+    exact_json_inverse_restored: true,
+    original_byte_snapshot_retained: true,
+    unchanged: ['all other questions', 'all mathematical option/rationale content',
+      'stems', 'question order', 'intent', 'coverage', 'seed', 'source solutions',
+      'source assets', 'serializer'],
+    stale_ready_preserved_as_original_handoff_not_current_binding: true,
+    serializer_reads_current_draft_and_was_not_executed: true,
+    counts: { questions: current.questions.length,
+      options: current.questions.reduce((n, q) => n + q.view.options.length, 0) },
+    single_positions: {
+      before: old.questions.filter(q => q.view.mode === 'single').map(q => q.key.correct[0]),
+      after: current.questions.filter(q => q.view.mode === 'single').map(q => q.key.correct[0])
+    },
+    structural_exit_code: check.status
+  })
+  console.log(JSON.stringify({ status: 'recorded', structural_exit_code: check.status,
+    changed_question: target, diff_leaves: diff.length }))
+  process.exitCode = check.status ?? 2
+}

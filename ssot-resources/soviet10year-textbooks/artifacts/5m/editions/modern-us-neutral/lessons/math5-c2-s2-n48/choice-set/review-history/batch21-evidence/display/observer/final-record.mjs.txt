@@ -1,0 +1,304 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import crypto from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const ticketTmp = path.join(root, '.intentfold/tickets/STEMROBIN-182/tmp');
+const own = path.join(ticketTmp, 'reviewer-5m-n48-actual-display');
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const readJSON = async name => JSON.parse(await fs.readFile(path.join(own, name), 'utf8'));
+const capture = await readJSON('capture-index.json');
+const primary = await readJSON('primary-montage-index.json');
+const supplemental = await readJSON('supplemental-montage-index.json');
+const manifestPath = path.join(ticketTmp, 'batch21-render/5m-math5-c2-s2-n48-capture-manifest.json');
+const reportPath = path.join(ticketTmp, 'offline-evidence/5m/math5-c2-s2-n48-batch21-report.json');
+const reportBytes = await fs.readFile(reportPath);
+const report = JSON.parse(reportBytes);
+
+// These observations were made by opening the fifteen native-scale sheets.
+// Geometry below indexes the evidence, but does not supply a visual verdict.
+const primaryNotes = [
+  'Desktop fig153: all six O/A/B/C/D/K labels, both edge endpoints and the intersecting arcs are visible. Isolated figure evidence, not whole-body proof.',
+  'Desktop choice header and choice 1 stem, complete diagram and A-D option bodies are readable; choice 2 begins at the lower edge.',
+  'Desktop final choice range shows choice 23 option bodies and complete choices 24-25, including their last C rows and bottom padding.',
+  'Mobile fig153 right-scroll crop shows A, B, C, D, K and complete right-side arc endpoints; alone it excludes O and is not whole-figure proof.',
+  'Mobile fig153 nominal 640px crop contains only the left 358px visible region and blank remainder; O/C/D are readable, but A/B/K are absent. Rejected as complete figure evidence.',
+  'Mobile choice 1 begins without the page header. Its left figure region and A/B bodies are readable; C/D and the right figure objects require other contexts.',
+  'Mobile final choice viewport shows the last choice 23 options and complete choices 24-25, with final C row and lower edge clear.',
+  'Desktop written header, sources 896-900 and all nine lines of 901 are readable. Review-group heading and its surrounding gap are clear.',
+  'Desktop written ending shows 904-910 and homework-group heading, final formulas and complete return link; the top cuts the preceding source 903.',
+  'Mobile written header and sources 896-900 are readable. Review heading is clear; only the start of 901 is present.',
+  'Mobile written ending shows tail of 906, complete 907-910 and the return link. The default first formula of 906 has its final digit clipped horizontally.',
+  'Desktop fig152 includes O/A/B/C, 80-degree and 40-degree labels, protractor ticks and the entire bottom base edge. Figure-only context.',
+  'Desktop fig153 includes all O/A/B/C/D/K objects, the two right ray endpoints and arc extents. Figure-only context.',
+  'Desktop text header, complete prose objects 1-2, fig152 and its caption are readable. Fig153 is cut at the bottom.',
+  'The desktop text file named last is pixel-identical to first and repeats the header/prose/fig152. Rejected as text-ending evidence; preserved.',
+  'Mobile fig152 end crop reveals C, B, both degree labels and the right base endpoint; the left side is excluded, so it is union evidence only.',
+  'Mobile fig152 nominal 640px crop retains only its left viewport portion with blank remainder. It shows O/A and 80-degree label, not complete fig152.',
+  'Mobile fig153 end crop reveals A/B/C/D/K and the right arc extents; O is outside this crop. Preserved as limited union evidence.',
+  'Mobile text fig153 nominal 640px crop has the same clipped-left content as the choice figure crop. It does not prove the complete diagram.',
+  'Mobile text header and entire first prose object are readable; the left fig152 region and caption are shown, followed by the start of prose 2.',
+  'Mobile text file named last starts at the tail of prose 1, shows fig152 and prose 2, but does not reach fig153 or footer. Rejected as ending evidence; preserved.',
+];
+const supplementaryNotes = [
+  'Desktop text ending supplies complete prose 2, all fig153 labels and arc/ray extents, caption and entire exercise-navigation link with lower padding.',
+  'Desktop written middle supplies sources 902-906 and all their formula lines, plus homework heading and complete 907-909; overlaps the 901 tail and 910 start.',
+  'Desktop choices 2-3 and all A-C option bodies are readable; choice 4 heading/stem and A begin at the lower edge.',
+  'Desktop continuation supplies remaining choice 4 options, complete choices 5-6 and start of 7; the option labels remain aligned with wrapping bodies.',
+  'Desktop choice 7 tail and all options of 8-10 are readable; mixed fractions, brackets and terminal punctuation are not vertically cut.',
+  'Desktop choices 11-13 are complete, with three options each; choice 14 heading and mixed-fraction stem enter at the bottom.',
+  'Desktop choice 14 completion, complete 15-16 and start of 17 have readable stems, option rows and separators.',
+  'Desktop choice 17 continuation and complete 18-19 plus choice 20 start are readable; negative signs and decimal terminal digits are clear.',
+  'Desktop choices 21-22 are complete; choice 23 heading, stem and first two option bodies connect to the original ending capture.',
+  'Mobile complete prose 2 joins its preceding fig152 caption to the fig153 left region and caption; every wrapped prose line is readable.',
+  'Mobile ending shows prose 2 tail, full-height fig153 left region/caption, exercise-navigation link and actual bottom padding.',
+  'Mobile fig152 middle-scroll viewport retains its caption and neighboring prose, exposes the center/base and both degree labels without vertical cuts.',
+  'Mobile fig152 end-scroll viewport exposes C/B and the rightmost base edge with caption and prose below. Together with the start/middle it covers the complete image.',
+  'Mobile fig153 begin-context repeats the clamped ending baseline S11; preserved as a duplicate filename, not extra coverage or a new combination.',
+  'Mobile fig153 middle-scroll context shows central C/D/K, intersection arcs and both right ray points, with fig153 caption and navigation intact.',
+  'Mobile fig153 end-scroll context makes A/B/C/D/K and bottom B label fully readable, with full arc extents, caption, neighboring prose and footer.',
+  'Mobile written middle supplies the 901 tail and complete 902-905 prose/formulas, linking continuously to the 906 heading.',
+  'Mobile written continuation shows complete 906-910 vertical bodies and homework heading; first 906 formula remains clipped at its default horizontal end.',
+  'Mobile 906 middle-scroll viewport retains source number, both subparts and neighboring 905/907-910. The terminal 8.76 is visible; no isolated glyph crop is used.',
+  'Mobile 906 end-scroll viewport makes the terminal 8.76 unambiguous with source/subpart labels and surrounding material; start/middle/end union retains the complete first formula.',
+  'Mobile choice page header is fully visible, followed by choice 1 heading/stem, left diagram and first option rows. This supplies the missing header context.',
+  'Mobile choice 1 remaining A-D bodies and choice 2 stem/A/B/start-C are readable; long text wraps within the option-body column.',
+  'Mobile choice 2 continuation, complete choice 3 A-C and choice 4 heading/stem are readable; final right coordinate in choice 4 needs its scroll context.',
+  'Mobile choice 4 option bodies A-C and choice 5 heading/stem/A/B/start-C are readable; coordinates and option letters do not overlap.',
+  'Mobile choice 5 continuation, complete 6-7 and beginning of 8 are readable; fraction numerators/denominators and final punctuation are distinct.',
+  'Mobile choice 8 ending and complete 9-10 plus start of 11 are readable, with no lost last option rows.',
+  'Mobile choice 11 tail and complete 12-13 plus beginning of 14 are readable; all displayed fraction/bracket extents fit vertically.',
+  'Mobile choice 14 tail, complete 15-16 and start of 17 show readable units, mixed fractions and aligned A-C rows.',
+  'Mobile choices 17-18 and choice 19 start have readable price/unit text and complete A-C bodies for 17-18.',
+  'Mobile choices 19-20 and beginning of 21 show readable complete decimal formula stems and A-C option rows, continuing to the next viewport.',
+  'Mobile choice 21 tail, complete choice 22 and choice 23 heading/stem/A begin are readable; bottom and right line endings are retained through overlaps.',
+  'Mobile choice 23 A-D bodies, choice 24 and start of 25 are readable; long decimal rows wrap without touching option labels or separators.',
+  'Mobile choice fig153 middle context shows C/D/K and arc extents with the same surrounding choice stem/options. Right A/B labels are supplied by the end context.',
+  'Mobile choice fig153 end context includes A/B/C/D/K, all right arc extents and bottom B label, plus surrounding stem and A-C option bodies.',
+  'Mobile choice 4 middle-scroll context retains the complete question heading, stem, A-C bodies and neighboring question boundaries; the final coordinate is exposed further.',
+  'Mobile choice 4 end-scroll context reveals complete D=(0,h) and its closing bracket, alongside the full A-C bodies; the earlier begin viewport supplies the left A=(0,0) prefix.',
+];
+if (primaryNotes.length !== 21 || supplementaryNotes.length !== 36) throw new Error('Observation count mismatch');
+const primaryFiles = [];
+const supplementalFiles = [];
+const nativeMontages = [];
+for (const [kind, index] of [['primary', primary], ['supplementary', supplemental]]) {
+  for (const montage of index.montages) {
+    if (hash(await fs.readFile(montage.path)) !== montage.sha256) throw new Error('Montage changed');
+    montage.opened = true;
+    montage.open_method = 'functions.view_image detail=original';
+    nativeMontages.push({
+      path: montage.path, sha256: montage.sha256, dimensions: montage.dimensions,
+      opened: true, native_scale: 1, resampled: false, cropped: false,
+      source_files: montage.members.map(member => member.source_path),
+      counted_as_additional_actual_PNG_input: false,
+    });
+    for (const member of montage.members) {
+      const number = Number(member.label.match(/^[PS](\d+)/)[1]);
+      const sourceBytes = await fs.readFile(member.source_path);
+      if (hash(sourceBytes) !== member.sha256) throw new Error('Actual screenshot changed');
+      if (hash(await fs.readFile(member.absolute_path)) !== member.sha256) throw new Error('Opened copy changed');
+      const item = {
+        id: `${kind === 'primary' ? 'P' : 'S'}${String(number).padStart(2, '0')}`,
+        path: member.source_path, sha256: member.sha256,
+        opened: true, opened_via: montage.path, native_montage_rect: member.montage_rect,
+        all_source_pixels_included: true, native_scale: 1,
+        observation: (kind === 'primary' ? primaryNotes : supplementaryNotes)[number - 1],
+      };
+      if (kind === 'primary') {
+        item.opened_copy_path = member.absolute_path;
+        item.copy_hash_verified = member.copy_hash_verified;
+        primaryFiles.push(item);
+      } else {
+        const shot = capture.screenshots.find(source => source.path === member.source_path);
+        Object.assign(item, {
+          surface: shot.surface, viewport: shot.viewport,
+          exact_render_sha256: shot.exact_render_sha256,
+          page_scroll: shot.actual, full_viewport_context: true,
+        });
+        supplementalFiles.push(item);
+      }
+    }
+  }
+  await fs.writeFile(path.join(own, `${kind === 'primary' ? 'primary' : 'supplemental'}-montage-index.json`),
+    JSON.stringify(index, null, 2) + '\n');
+}
+primaryFiles.sort((a, b) => a.id.localeCompare(b.id));
+supplementalFiles.sort((a, b) => a.id.localeCompare(b.id));
+if (new Set(primaryFiles.map(item => item.path)).size !== 21) throw new Error('Primary filenames mismatch');
+if (new Set(supplementalFiles.map(item => item.path)).size !== 36) throw new Error('Supplemental filenames mismatch');
+for (const binding of capture.exact_render_bindings) {
+  if (hash(await fs.readFile(binding.path)) !== binding.sha256) throw new Error('Exact render binding changed');
+}
+
+const writtenDesktop = [
+  ['P08'], ['P08'], ['P08'], ['P08'], ['P08'], ['P08', 'S02'],
+  ['S02'], ['S02', 'P09'], ['S02', 'P09'], ['S02', 'P09'],
+  ['S02', 'P09'], ['S02', 'P09'], ['S02', 'P09'], ['S02', 'P09'], ['P09'],
+];
+const writtenMobile = [
+  ['P10'], ['P10'], ['P10'], ['P10'], ['P10'], ['P10', 'S17'],
+  ['S17'], ['S17'], ['S17'], ['S17'],
+  ['S18', 'S19', 'S20', 'P11'], ['S18', 'P11'], ['S18', 'P11'],
+  ['S18', 'P11'], ['S18', 'P11'],
+];
+const choiceDesktop = [
+  ['P02'], ['S03'], ['S03'], ['S03', 'S04'], ['S04'], ['S04'], ['S04', 'S05'],
+  ['S05'], ['S05'], ['S05'], ['S06'], ['S06'], ['S06'], ['S06', 'S07'],
+  ['S07'], ['S07'], ['S07', 'S08'], ['S08'], ['S08'], ['S08', 'S09'],
+  ['S09'], ['S09'], ['S09', 'P03'], ['P03'], ['P03'],
+];
+const choiceMobile = [
+  ['S21', 'P06', 'S22', 'S33', 'S34'], ['S22', 'S23'], ['S23'],
+  ['S23', 'S24', 'S35', 'S36'], ['S24', 'S25'], ['S25'], ['S25'],
+  ['S25', 'S26'], ['S26'], ['S26'], ['S26', 'S27'], ['S27'], ['S27'],
+  ['S27', 'S28'], ['S28'], ['S28'], ['S29'], ['S29'], ['S29', 'S30'],
+  ['S30'], ['S30', 'S31'], ['S31'], ['S31', 'S32', 'P07'], ['S32', 'P07'], ['P07'],
+];
+const historyPath = path.join(own, 'history/path-resolution-before/observations.json');
+const historySha = hash(await fs.readFile(historyPath));
+if (historySha !== '42cffe0fcb277880ac3c89f9b37614fdfe02c2e1936ce8abf06abee8b2ef0622') {
+  throw new Error('Path-error history bytes changed');
+}
+const record = {
+  schema: 's10y-actual-display-observations-v1',
+  ticket: 'STEMROBIN-182', batch: 21, book: '5m', lesson: 'math5-c2-s2-n48',
+  reviewer: { kind: 'independent_agent', identity: 'n48-actual-display-observer', owned_directory: own },
+  status: 'pass',
+  verdict_scope: 'Actual pixels of the same offline HTML only; this is not a mathematical, semantic, source, canonical, structural or interactive-product approval.',
+  primary_PNGs: primaryFiles.length,
+  supplementary_PNGs: supplementalFiles.length,
+  actual_PNG_files: primaryFiles.length + supplementalFiles.length,
+  native_montages: nativeMontages.length,
+  unique_combos: 6,
+  new_combos: 0,
+  counting_rule: 'Distinct actual screenshot filenames: 21 primary plus 36 supplementary. Equal hashes do not reduce counts. Byte-identical primary copies and the 15 derived montage sheets are not additional screenshot inputs.',
+  path_resolution_history: {
+    cause: 'Observer incorrectly resolved the prompt shorthand tmp/ at repository root. It meant the active ticket tmp directory; there was no actual missing-data condition.',
+    preserved_record_path: historyPath, sha256: historySha,
+    preserved_byte_for_byte: true, initial_false_missing_verdict_superseded: true,
+    corrected_tmp_root: ticketTmp,
+    removed_only_empty_wrong_directories: [
+      path.join(root, 'tmp/reviewer-5m-n48-actual-display'),
+      path.join(root, 'tmp'),
+    ],
+  },
+  source_manifest: { path: manifestPath, sha256: hash(await fs.readFile(manifestPath)) },
+  parent_report: {
+    path: reportPath, sha256: hash(reportBytes),
+    use: 'Display inventory only; its DOM pass was not used to establish this verdict.',
+    prose_object_count_derived_from_report: report.checks.find(item => item.surface === 'text').count,
+    written_source_count_derived_from_report: report.checks.find(item => item.surface === 'exercises').count,
+    choice_count_derived_from_report: report.checks.find(item => item.surface === 'choices').count,
+  },
+  exact_render_sha256: Object.fromEntries(capture.exact_render_bindings.map(item => [path.basename(item.path, '.html'), item.sha256])),
+  exact_render_bindings: capture.exact_render_bindings,
+  observed_combinations: report.checks.map(item => ({
+    surface: item.surface, viewport: item.viewport,
+    actual_pixel_coverage_complete: true,
+  })),
+  actual_coverage: {
+    prose_objects: [
+      { object: 1, desktop_evidence: ['P14', 'P15'], mobile_evidence: ['P20'], observation: 'All first-prose lines, inline OC/AOB/AOC/COB and terminal symmetry-axis line are readable; text begins flush with its paragraph edge.' },
+      { object: 2, desktop_evidence: ['P14', 'S01'], mobile_evidence: ['S10', 'S11'], observation: 'The complete second-prose object remains readable from its folding/protractor/compass opening through the final OK/AOB sentence; wrapped lines and inline labels are neither occluded nor vertically clipped.' },
+    ],
+    written_sources: writtenDesktop.map((evidence, index) => ({
+      number: 896 + index, desktop_evidence: evidence, mobile_evidence: writtenMobile[index],
+      status: 'observed_complete',
+      observation: index === 5 ? 'All nine separately numbered formula lines are readable across the overlapping mobile contexts and in the desktop first viewport.'
+        : index === 10 ? 'Both numbered decimal-formula lines are readable; first-line mobile tail 8.76 is supplied by full-context middle/end scrolls, with the beginning retained in the default view.'
+          : index === 14 ? 'Both final equation lines, their subpart labels and terminal punctuation are readable at both widths.'
+            : 'Source number, complete prose/formula body and following row boundary are visible through the cited native contexts, without overlapping adjacent material.',
+    })),
+    choices: choiceDesktop.map((evidence, index) => ({
+      number: index + 1,
+      options: [1, 23].includes(index + 1) ? ['A', 'B', 'C', 'D'] : ['A', 'B', 'C'],
+      desktop_evidence: evidence, mobile_evidence: choiceMobile[index],
+      status: 'observed_complete',
+      observation: index === 0 ? 'Heading/stem, diagram and all A-D bodies are readable across the complete viewport union; diagram right-side labels are supported by contextual end-scroll pixels.'
+        : index === 3 ? 'Heading/stem and all A-C coordinate option bodies are readable. Default plus middle/end full-context scrolls preserve the coordinate sequence from A=(0,0) to complete D=(0,h).'
+          : index === 22 ? 'Heading/stem and all four long decimal option bodies are readable through overlapping contexts; the final D row is not inferred from a count.'
+            : index === 24 ? 'Final question heading, equation and A-C bodies are readable, including the last C row and lower page edge.'
+              : 'Question heading, entire stem and every listed option label/body were read across these native overlapping viewports; wrapping, formula height and row separators remain legible.',
+    })),
+    totals_per_viewport: { prose_objects: 2, written_sources: 15, choices: 25, options: 77 },
+    figures: [
+      {
+        display_asset: 'fig152 in text',
+        desktop_evidence: ['P12', 'P14'],
+        mobile_begin_evidence: ['P20', 'P21', 'P17'],
+        mobile_middle_evidence: ['S12'],
+        mobile_end_evidence: ['S13', 'P16'],
+        observation: 'Native union includes A/O/C/B, both 80-degree and 40-degree labels, full protractor ticks and bottom rectangular base. End context explicitly reveals rightmost B/base endpoint with caption and adjacent prose; no image-only crop is treated as whole-body proof.',
+      },
+      {
+        display_asset: 'fig153 in text',
+        desktop_evidence: ['P13', 'S01'],
+        mobile_begin_evidence: ['S11', 'S14'],
+        mobile_middle_evidence: ['S15'],
+        mobile_end_evidence: ['S16', 'P18'],
+        observation: 'Complete start/middle/end union shows O/A/B/C/D/K, both sloping ray endpoints, inner ticks and intersecting arc extents. End context explicitly includes rightmost objects and bottom B label, with caption, neighboring prose and footer.',
+      },
+      {
+        display_asset: 'fig153 in choice 1',
+        desktop_evidence: ['P01', 'P02'],
+        mobile_begin_evidence: ['P06', 'S21', 'P05'],
+        mobile_middle_evidence: ['S33'],
+        mobile_end_evidence: ['S34', 'P04'],
+        observation: 'The contextual viewport union supplies every O/A/B/C/D/K label, ray endpoint and arc extent. Rightmost/bottommost A/B/K and bottom B are visibly present in S34; surrounding choice stem and option bodies remain readable.',
+      },
+    ],
+    headers_edges_gaps: {
+      evidence: ['P14', 'P08', 'P02', 'P20', 'P10', 'S21', 'S01', 'S11', 'P09', 'P11', 'P03', 'P07', 'S02', 'S18'],
+      observation: 'All three surface headers fit at both widths. Text/exercise breadcrumb edges, exercise-group headings and their surrounding gaps, choice separators, both navigation links and final option rows are readable. Adjacent viewport ranges overlap; no vertical body gap is inferred from DOM status. Figure/formula horizontal movement stays inside its local region, with surrounding page text fixed.',
+    },
+    full_formula_scroll_contexts: [
+      { surface: 'exercises', source: 906, viewport: { width: 390, height: 844 }, begin: ['S18', 'P11'], middle: ['S19'], end: ['S20'], observation: 'First decimal expression is covered from its opening bracket through final 8.76 and punctuation with its source/subpart labels and neighboring material; second expression ending 3.82 is also visible.' },
+      { surface: 'choices', choice: 4, viewport: { width: 390, height: 844 }, begin: ['S23', 'S24'], middle: ['S35'], end: ['S36'], observation: 'The coordinate line is covered from A=(0,0) through D=(0,h), with complete A-C options and neighboring question boundaries. No isolated mathematical glyph screenshot is used.' },
+    ],
+  },
+  rejected_or_limited_original_evidence: [
+    { ids: ['P15'], reason: 'Identical to desktop first; not text-bottom proof.', replacement_or_completion: ['S01'] },
+    { ids: ['P21'], reason: 'Middle text region, not fig153/footer ending.', replacement_or_completion: ['S10', 'S11', 'S15', 'S16'] },
+    { ids: ['P05', 'P17', 'P19'], reason: 'Nominal wide element crops contain clipped left viewport content plus blank remainder; not complete figure proof.', replacement_or_completion: ['P20', 'S12', 'S13', 'S11', 'S15', 'S16', 'P06', 'S33', 'S34'] },
+    { ids: ['P04', 'P16', 'P18'], reason: 'Right-side crops alone omit left objects; retained only as limited union evidence.', replacement_or_completion: ['S12', 'S13', 'S15', 'S16', 'S33', 'S34'] },
+    { ids: ['P06', 'P08', 'P09', 'P10', 'P11', 'P02', 'P03'], reason: 'First/last body views are valid partial contexts, but do not independently cover all middle bodies or scroll tails.', replacement_or_completion: supplementalFiles.map(item => item.id) },
+  ],
+  duplicate_supplementary_baseline: {
+    ids: ['S11', 'S14'],
+    observation: 'The requested fig153 begin context clamped to the same bottom y as the missing-ending context. Both filenames are preserved and opened; identical pixels are not counted as extra coverage or as a new combination.',
+  },
+  primary_files: primaryFiles,
+  supplementary_files: supplementalFiles,
+  opened_native_montages: nativeMontages,
+  browser: capture.browser,
+  findings: [],
+  minimum_layout_fix: null,
+  observation_summary: 'After full actual-pixel coverage, no correctable clipping, collision, unreadable object or missing terminal display object was found. Horizontal figure/formula clipping in a default position is resolved by the explicitly observed local middle/end contexts.',
+  boundaries: {
+    shared_renderer_html_draft_core_or_durable_files_edited: false,
+    HTML_rerendered: false,
+    parent_acceptance_or_DOM_gate_rerun: false,
+    geometry_used_only_for_supplemental_capture_planning: true,
+    author_internal_keys_answers_previous_choices_or_source_math_read: false,
+    n49_read_or_captured: false,
+    services_dependencies_database_backend_setup_freshness_or_commit_actions: false,
+    original_evidence_deleted_or_replaced: false,
+  },
+  limitations: [
+    'Offline self-contained HTML only; no running-service, interactive answer flow, database or production verification was performed.',
+    'Isolated headless browser only, as explicitly requested; no user profile or headed/OS interaction was used.',
+    'The verdict concerns display legibility and complete pixel coverage, not mathematical truth, source fidelity, semantic quality or structural validity.',
+    'Long bodies and intentionally scrollable figures/formulas are supported by overlapping native viewport unions, not by a downscaled full-page image.',
+    'Supplemental capture geometry metadata locates contexts; only the separately opened actual PNG pixels support the visual verdict.',
+    'The original path-resolution error remains preserved without byte changes and is explicitly superseded, not erased.',
+  ],
+};
+const destination = path.join(own, 'observations.json');
+await fs.writeFile(destination, JSON.stringify(record, null, 2) + '\n');
+console.log(JSON.stringify({
+  path: destination, sha256: hash(await fs.readFile(destination)),
+  status: record.status, primary_PNGs: record.primary_PNGs,
+  supplementary_PNGs: record.supplementary_PNGs, actual_PNG_files: record.actual_PNG_files,
+  native_montages: record.native_montages, unique_combos: 6, new_combos: 0,
+}, null, 2));

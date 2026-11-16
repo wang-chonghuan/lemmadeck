@@ -1,0 +1,153 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
+const { spawnSync } = require('node:child_process');
+
+const lessonNumber = process.argv[2];
+if (!['39', '40'].includes(lessonNumber)) {
+  throw new Error('Select only the authorized lesson 39 or 40.');
+}
+
+const repo = process.cwd();
+const directory = `.intentfold/tickets/STEMROBIN-182/tmp/6a-n${lessonNumber}`;
+const target = (name) => path.join(directory, name);
+const readJson = (name) => JSON.parse(fs.readFileSync(target(name), 'utf8'));
+const fileSha256 = (name) => crypto.createHash('sha256')
+  .update(fs.readFileSync(target(name))).digest('hex');
+const writeJson = (name, value) => fs.writeFileSync(
+  target(name), `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' },
+);
+
+for (const name of ['structure-validation.json', 'structure.stdout.txt',
+  'structure.stderr.txt', 'view.json', 'ready.json']) {
+  if (fs.existsSync(target(name))) {
+    throw new Error(`Refusing to repeat a structural handoff or overwrite ${target(name)}`);
+  }
+}
+
+const seed = readJson('seed.json');
+const draft = readJson('draft.json');
+const source = readJson('source-solutions.json');
+if (!source.source_freeze_complete
+  || source.phase !== 'complete-source-and-actual-images-frozen-before-options') {
+  throw new Error('The source-first record is not frozen.');
+}
+
+const canonicalDigest = (filename) => {
+  const result = spawnSync('python3', [
+    '.agents/skills/ld-s10y-choice/scripts/prepare.py', 'digest', target(filename),
+  ], { cwd: repo, encoding: 'utf8' });
+  if (result.error || result.status !== 0) {
+    throw new Error(`Digest failed: ${result.error || result.stderr}`);
+  }
+  const digest = result.stdout.trim();
+  if (!/^[0-9a-f]{64}$/.test(digest)) {
+    throw new Error(`Unexpected digest output for ${filename}`);
+  }
+  return digest;
+};
+
+const seedSha256 = canonicalDigest('seed.json');
+const draftSha256 = canonicalDigest('draft.json');
+if (draft.seed_sha256 !== seedSha256 || source.seed_sha256 !== seedSha256) {
+  throw new Error('Draft/source records do not bind the current seed.');
+}
+
+const args = [
+  '.agents/skills/ld-s10y-choice/scripts/validate.py', '--repo', '.',
+  '--seed', target('seed.json'), '--draft', target('draft.json'),
+];
+const command = ['python3', ...args].join(' ');
+const started = new Date().toISOString();
+const result = spawnSync('python3', args, { cwd: repo, encoding: 'utf8' });
+const completed = new Date().toISOString();
+fs.writeFileSync(target('structure.stdout.txt'), result.stdout || '', { flag: 'wx' });
+fs.writeFileSync(target('structure.stderr.txt'), result.stderr || '', { flag: 'wx' });
+writeJson('structure-validation.json', {
+  command,
+  argv: ['python3', ...args],
+  cwd: repo,
+  started_at: started,
+  completed_at: completed,
+  exit_code: result.status,
+  signal: result.signal,
+  execution_error: result.error ? String(result.error) : null,
+  stdout_path: target('structure.stdout.txt'),
+  stderr_path: target('structure.stderr.txt'),
+  stdout: result.stdout || '',
+  stderr: result.stderr || '',
+  kind: 'author-structural-only',
+  review_argument_used: false,
+  semantic_review_pending: true,
+});
+
+const projection = {
+  questions: draft.questions.map(({ id, source_numbers, view }) => ({
+    id, source_numbers, view,
+  })),
+};
+writeJson('view.json', projection);
+const counts = {
+  sources: seed.exercises.length,
+  questions: draft.questions.length,
+  options: draft.questions.reduce((sum, q) => sum + q.view.options.length, 0),
+  modes: draft.questions.reduce((counts, q) => {
+    counts[q.view.mode] = (counts[q.view.mode] || 0) + 1;
+    return counts;
+  }, {}),
+  source_figures: seed.figures.length,
+  source_assets: seed.figures.reduce((sum, figure) => sum + figure.assets.length, 0),
+  new_figures: draft.new_figures.length,
+};
+writeJson('ready.json', {
+  schema: 'offline-author-ready-v1',
+  role: 'author',
+  book: seed.source.book,
+  lesson: seed.source.lesson,
+  phase: result.status === 0
+    ? 'frozen-for-independent-source-view-internals-review'
+    : 'frozen-structural-error-not-approved',
+  seed_filename: 'seed.json',
+  seed_path: target('seed.json'),
+  seed_sha256: seedSha256,
+  draft_path: target('draft.json'),
+  draft_sha256: draftSha256,
+  view_path: target('view.json'),
+  view_file_sha256: fileSha256('view.json'),
+  source_solutions_path: target('source-solutions.json'),
+  source_solutions_file_sha256: fileSha256('source-solutions.json'),
+  source_freeze_precedes_options: true,
+  actual_figure_observations_reused: source.figure_observations,
+  actual_capture_manifest: target('actual-figure-captures.json'),
+  selected_concept_blocks: seed.concepts.map(({ block }) => block),
+  counts,
+  source_blockers: source.source_blockers,
+  production_losses: draft.coverage.map(({ source_number, omitted_tasks, reason }) => ({
+    source_number, omitted_tasks, reason,
+  })),
+  structural_validation_path: target('structure-validation.json'),
+  structural_command: command,
+  structural_exit_code: result.status,
+  structural_runs_for_this_handoff: 1,
+  independent_review: 'pending; author has not claimed independent approval',
+  canonical_validation_run: false,
+  browser_closed: source.browser_closed,
+  active_browser_or_execution_session: false,
+  model_usage: null,
+  durable_modified: false,
+  authoring_frozen: true,
+});
+
+console.log(JSON.stringify({
+  lesson: seed.source.lesson,
+  counts,
+  structural_exit_code: result.status,
+  seed_path: target('seed.json'),
+  source_path: target('source-solutions.json'),
+  draft_path: target('draft.json'),
+  pure_view_path: target('view.json'),
+  ready_path: target('ready.json'),
+  source_blockers: source.source_blockers,
+  frozen: true,
+}, null, 2));
+process.exitCode = result.status === 0 ? 0 : 1;

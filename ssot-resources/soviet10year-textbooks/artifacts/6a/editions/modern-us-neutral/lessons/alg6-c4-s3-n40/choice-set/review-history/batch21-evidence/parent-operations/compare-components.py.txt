@@ -1,0 +1,131 @@
+import hashlib
+import json
+import re
+from html.parser import HTMLParser
+from pathlib import Path
+
+OUT = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/reviewer-6a-n40-display-repair")
+execution = json.loads((OUT / "final-execution.json").read_text())
+
+
+def digest(text):
+    return hashlib.sha256(text.encode()).hexdigest()
+
+
+class Components(HTMLParser):
+    def __init__(self, source):
+        super().__init__(convert_charrefs=False)
+        self.source = source
+        self.lines = [0]
+        self.lines.extend(match.end() for match in re.finditer("\n", source))
+        self.stack = []
+        self.components = {}
+        self.feed(source)
+
+    def position_offset(self):
+        line, column = self.getpos()
+        return self.lines[line - 1] + column
+
+    def handle_starttag(self, tag, attrs):
+        if tag in {"area", "base", "br", "col", "embed", "hr", "img", "input",
+                   "link", "meta", "param", "source", "track", "wbr"}:
+            return
+        attributes = dict(attrs)
+        key = None
+        if tag in {"h1", "title", "style"}:
+            key = tag
+        elif tag == "div" and attributes.get("class") == "crumb":
+            key = "crumb"
+        elif tag == "div" and attributes.get("class") in {"body", "no"}:
+            parent = next(item for item in reversed(self.stack) if item["tag"] == "li")
+            key = f'{parent["attrs"]["id"]}:{attributes["class"]}'
+        start = self.position_offset()
+        self.stack.append({"tag": tag, "attrs": attributes, "key": key,
+                           "start": start, "inner_start": start + len(self.get_starttag_text())})
+
+    def handle_startendtag(self, tag, attrs):
+        pass
+
+    def handle_endtag(self, tag):
+        index = next((i for i in range(len(self.stack) - 1, -1, -1)
+                      if self.stack[i]["tag"] == tag), None)
+        if index is None:
+            return
+        item = self.stack[index]
+        del self.stack[index:]
+        if item["key"] is not None:
+            end = self.position_offset()
+            self.components[item["key"]] = {
+                **item, "inner_end": end, "end": self.source.index(">", end) + 1,
+                "inner": self.source[item["inner_start"]:end],
+            }
+
+
+pages = []
+for lesson in execution["lessons"]:
+    for new_file in lesson["HTML"]:
+        old_path = OUT / "before" / lesson["lesson"] / f'{new_file["surface"]}.html'
+        old = old_path.read_text()
+        new = Path(new_file["path"]).read_text()
+        old_parts = Components(old).components
+        new_parts = Components(new).components
+        patches = []
+        headers = []
+        for key in ["h1", "crumb"]:
+            a, b = old_parts[key], new_parts[key]
+            headers.append({"component": key, "old_sha256": digest(a["inner"]),
+                            "new_sha256": digest(b["inner"]), "changed": a["inner"] != b["inner"]})
+            patches.append((a["inner_start"], a["inner_end"], b["inner"]))
+        for key in ["title", "style"]:
+            assert old_parts[key]["inner"] == new_parts[key]["inner"], key
+        units = []
+        if new_file["surface"] == "exercises":
+            for exercise in lesson["exercises"]:
+                key = f'ex-{exercise["number"]}:body'
+                a, b = old_parts[key], new_parts[key]
+                text, printed = exercise["text"], exercise["printed_number"]
+                prefix = "" if printed is None else str(printed)
+                suffix = text[len(prefix):]
+                matches = prefix and text.startswith(prefix) and (
+                    re.match(r"^\.\s", suffix)
+                    or re.match(r"^\uFF0E(?![0-9\uFF10-\uFF19])", suffix)
+                )
+                remainder = text[len(prefix) + 1:].lstrip() if matches else text
+                removed = text[:len(text) - len(remainder)] if matches else ""
+                removed_html = re.sub(r"\r?\n", "<br>", removed.replace("&", "&amp;")
+                                      .replace("<", "&lt;").replace(">", "&gt;"))
+                assert a["inner"].startswith(removed_html), exercise["number"]
+                assert a["inner"][len(removed_html):] == b["inner"], exercise["number"]
+                assert old_parts[key.replace(":body", ":no")]["inner"] == new_parts[key.replace(":body", ":no")]["inner"]
+                patches.append((a["inner_start"], a["inner_end"], b["inner"]))
+                units.append({
+                    "number": exercise["number"], "printed_number": printed,
+                    "removed_source_prefix": removed, "removed_HTML_prefix": removed_html,
+                    "old_body_sha256": digest(a["inner"]), "new_body_sha256": digest(b["inner"]),
+                    "old_body_after_only_prefix_removal_sha256": digest(a["inner"][len(removed_html):]),
+                    "body_content_after_prefix_removal_exactly_equal": True,
+                    "gutter_exactly_unchanged": True,
+                    "formula_and_figure_HTML_bytes_unchanged": True,
+                })
+        transformed = old
+        for start, end, replacement in sorted(patches, reverse=True):
+            transformed = transformed[:start] + replacement + transformed[end:]
+        assert transformed == new, f'Unexpected HTML change: {lesson["lesson"]}/{new_file["surface"]}'
+        pages.append({
+            "lesson": lesson["lesson"], "surface": new_file["surface"],
+            "old_path": str(old_path), "old_sha256": digest(old),
+            "new_path": new_file["path"], "new_sha256": digest(new),
+            "headers": headers, "written_units": units,
+            "allowed_component_replacement_reproduces_new_HTML_byte_for_byte": True,
+            "all_other_HTML_bytes_unchanged": True, "document_title_unchanged": True, "CSS_unchanged": True,
+            "body_content_vs_layout": "HTML suffix content is byte-identical. New line wrapping and vertical positions are separately captured at actual viewport widths.",
+        })
+record = {"scope": "Exact component-difference evidence only; not a structural/semantic/validator rerun",
+          "pages": pages, "page_count": len(pages),
+          "written_unit_count": sum(len(page["written_units"]) for page in pages),
+          "all_HTML_differences_limited_to": ["h1 contents", "crumb contents", "exact redundant own-number body prefixes"],
+          "result": "expected-differences-only"}
+assert record["page_count"] == 6 and record["written_unit_count"] == 23
+(OUT / "component-differences.json").write_text(json.dumps(record, ensure_ascii=True, indent=2) + "\n")
+print(json.dumps({"result": record["result"], "pages": len(pages),
+                  "written_units": record["written_unit_count"]}))

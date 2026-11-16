@@ -1,0 +1,147 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const file = '.intentfold/tickets/STEMROBIN-182/usage.json'
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const usage = read(file)
+const [phase, commit, advance] = process.argv.slice(2)
+assert(['before', 'after'].includes(phase))
+if (phase === 'before') {
+  assert.equal(usage.current_batch.status, 'committed-pushed-d79d8993')
+  assert.equal(usage.outputs.approved_choice_questions, 638)
+  const references = read(`${scratch}/batch21-retained-reference-check.json`)
+  assert.equal(references.status, 'pass')
+  const display = {}
+  for (const [author, book, lesson] of [
+    ['6a-n39', '6a', 'alg6-c4-s3-n39'],
+    ['6a-n40', '6a', 'alg6-c4-s3-n40'],
+    ['5m-n48', '5m', 'math5-c2-s2-n48'],
+    ['5m-n49', '5m', 'math5-c2-s2-n49'],
+  ]) {
+    const root = `ssot-resources/soviet10year-textbooks/artifacts/${book}/editions/modern-us-neutral/lessons/${lesson}/choice-set/review-history/batch21-evidence`
+    const retention = read(`${root}/retention.json`)
+    const observations = read(`${root}/actual-observations.json`)
+    assert.equal(retention.status, 'pass')
+    assert.equal(observations.status, 'pass')
+    assert.equal(retention.parent_operations_retained, true)
+    const counts = observations.counts ?? observations
+    const actual = counts.actual_PNG_files
+    assert(Number.isInteger(actual) && actual > 0)
+    display[author] = {
+      actual_observations: `${root}/actual-observations.json`,
+      actual_PNG_files: actual,
+      primary_PNGs: counts.primary_PNGs ?? null,
+      supplementary_PNGs: counts.supplementary_PNGs ?? null,
+      old_actual_PNG_files: counts.old_actual_PNG_files ?? null,
+      new_actual_PNG_files: counts.new_actual_PNG_files ?? null,
+      native_montages: counts.native_montages ?? observations.native_montages ?? null,
+      unique_surface_viewport_combinations: 6,
+      scoped_component_composite: Boolean(observations.scoped_pass),
+      retained_history_files: Object.keys(retention.retained).length,
+      semantic_outcome: retention.semantic_outcome,
+    }
+  }
+  assert.equal(display['6a-n39'].semantic_outcome, 'pass')
+  assert.equal(display['5m-n48'].semantic_outcome, 'pass')
+  assert.equal(display['6a-n40'].semantic_outcome, 'blocked')
+  assert.equal(display['5m-n49'].semantic_outcome, 'blocked')
+  usage.current_batch = {
+    batch: 21, lessons: ['6a n39', '6a n40', '5m n48', '5m n49'],
+    status: 'verified-retained-awaiting-commit-push',
+    batch_questions: 102, batch_options: 335,
+    approved_questions: 41, approved_options: 142,
+    retained_blocked_questions: 61, retained_blocked_options: 193,
+    unique_surface_viewport_checks: 24,
+    actual_opened_image_filenames: Object.values(display).reduce((sum, row) => sum + row.actual_PNG_files, 0),
+    display,
+    counting_scope: 'Distinct actual screenshot inputs, including original rejected records. Montage sheets and copied original PNGs are not extra inputs or combinations.',
+    retained_reference_check: {
+      status: references.status,
+      checked_json_files: references.checked_json_files,
+      retained_hash_checks: references.retained_hash_checks,
+    },
+    source_blocks: ['6a n40 source646', '5m n49 source934(4)'],
+    renderer_repair: {
+      scope: 'Offline h1/breadcrumb inline rendering and exact own printed-number prefix only.',
+      focused_tests_passed: 21, existing_renderer_tests_passed: 2,
+      final_private_render_invocations_per_6a_lesson: 1,
+      tracked_inputs_unchanged: 103,
+      new_changed_region_PNGs: 58,
+      new_changed_region_native_montages: 6,
+      old_full_body_PNGs: 388,
+      evidence: 'Exact component comparison and scoped composite; old defect statuses and bindings unchanged. No new whole graph/formula union claimed.',
+      retained_limits: ['mobile631 initial inline window', 'mobile graph current windows'],
+    },
+    n48_n49_internal_loss_disclosures: {
+      changed_leaves: 10, sources: ['899', '908', '928', '929', '933'],
+      view_options_keys_and_all_other_JSON_values_unchanged: true,
+      prior_independent_comparison_reused: { key_sets: 76, option_truths: 230,
+        correct_proofs: 80, executed_false_programs: 150 },
+      changed_field_independent_comparison_completed: true,
+    },
+    final_canonical_exit_codes: { '6a-n39': 0, '6a-n40': 3, '5m-n48': 0, '5m-n49': 3 },
+    initial_failures_preserved: [
+      'n48/n49 reviewer string serialization; normalized reviewer object, not mathematics.',
+      'n48 extra concept-only figure checks; active membership narrowed to used fig153, source observations retained.',
+      'n48 observer shorthand path-resolution error; corrected absolute paths, original record preserved.',
+      'Initial display clipping/gaps and n49 supplemental-capture failure are preserved in inactive history.',
+    ],
+    in_progress: [
+      'Next four choice groups5m n50/n51 and7a n5/n6:132q417options authored, independent pureview underway, not counted completed.',
+      '6a chapter3 supplement76q253options:60originals source-frozen, pureview-only review underway.',
+      '8a modern n3/n4 source-first figures/candidates being reviewed; fig01 tick-label overlap still revise.',
+      '3m six row/column/pair parser fixes separate; toys/envelope/cm scale and4m n2 hybrid unresolved.',
+      'Six books incomplete. No handoff/merge/closure/deploy/DB operations or dependency changes.',
+    ],
+    next_batch: {
+      batch: 24, lessons: ['5m n50', '5m n51', '7a n5', '7a n6'],
+      known_authored_questions: 132, known_authored_options: 417,
+      incomplete_next_batch_not_in_completed_counts: true,
+    },
+    model_service_calls: 0, image_service_calls: 0,
+  }
+  usage.outputs.approved_choice_lessons = 46
+  usage.outputs.approved_choice_questions = 679
+  usage.outputs.approved_choice_options = 2710
+  usage.outputs.blocked_choice_lessons = 37
+  usage.outputs.blocked_choice_questions = 920
+  usage.outputs.blocked_choice_options = 3450
+  usage.outputs.offline_surface_viewport_checks_passed = 480
+  usage.outputs.pending_choice_count_note =
+    'Batch21 now retained; batch22 written-only added zero choices. Next four known132q417options and chapter3 supplement76q253options are authored, not completed. Existing6a chapter2 15groups266q1066options excluded.'
+} else {
+  assert(commit && advance)
+  assert.equal(usage.current_batch.status, 'verified-retained-awaiting-commit-push')
+  assert.equal(read(`${scratch}/batch21-push-command.json`).exit_code, 0)
+  const scope = read(`${scratch}/batch21-staged-scope.json`)
+  const secrets = read(`${scratch}/batch21-staged-secret-check.json`)
+  const whitespace = read(`${scratch}/batch21-diff-check-exceptions.json`)
+  assert.equal(secrets.status, 'pass')
+  assert.equal(whitespace.exit_code, 0)
+  usage.completed_batches.push({
+    batch: 21, commit, branch: 'codex/STEMROBIN-182-textbooks', push: 'success',
+    remote_advance: advance, staged_files: scope.staged_files,
+    batch_lessons: usage.current_batch.lessons,
+    newly_approved_questions: 41, newly_approved_options: 142,
+    retained_blocked_questions: 61, retained_blocked_options: 193,
+    unique_surface_viewport_checks: 24,
+    actual_opened_image_filenames: usage.current_batch.actual_opened_image_filenames,
+    display: usage.current_batch.display,
+    retained_reference_check: usage.current_batch.retained_reference_check,
+    staged_scope_and_secret_patterns: 'pass; next choice groups,8a candidates,3m parser,app/env/chapter2 excluded',
+    diff_check_exceptions: whitespace.excluded_original_bytes.map(row => row.path),
+    observable_usage: null,
+  })
+  usage.current_batch.status = `committed-pushed-${commit}`
+}
+usage.recorded_at = new Date().toISOString()
+usage.elapsed_seconds_to_record = Math.floor((Date.parse(usage.recorded_at) - Date.parse(usage.started_at)) / 1000)
+usage.active_wall_seconds_to_record = usage.elapsed_seconds_to_record - usage.known_pause_seconds
+usage.current_observable_usage = null
+usage.current_usage_note = 'No new reliable host usage/billed price snapshot; historical usage retained unchanged, not summed.'
+fs.writeFileSync(file, JSON.stringify(usage, null, 2) + '\n')
+console.log(JSON.stringify({ phase, status: usage.current_batch.status,
+  approved_questions: usage.outputs.approved_choice_questions,
+  blocked_questions: usage.outputs.blocked_choice_questions,
+  actual_PNG_files: usage.current_batch.actual_opened_image_filenames }))

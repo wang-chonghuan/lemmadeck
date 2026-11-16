@@ -1,0 +1,19 @@
+--- author.mjs.before
++++ author.mjs.after
+@@ -1,6 +1,7 @@
+ import fs from "node:fs";
+ import crypto from "node:crypto";
+ import { spawnSync } from "node:child_process";
++import { applyPositionPlan } from "./position-binding.mjs";
+ 
+ const root = ".intentfold/tickets/STEMROBIN-182/tmp/5m-n49";
+ const frozenBytes = fs.readFileSync(`${root}/source-solutions.json`);
+@@ -366,6 +367,8 @@
+     ["$184.5$", "Returns96+88.5=184.5 after computing the second quotient.", "Omits the first division by7.5."]
+   ]);
+ 
++applyPositionPlan(questions, JSON.parse(fs.readFileSync(`${root}/position-repair-plan.json`, "utf8")));
++
+ const draft = {
+   schema: "s10y-choice-draft-v1", seed_sha256: seedDigest, new_figures: [], questions,
+   coverage: frozen.source_solutions.map(s => ({

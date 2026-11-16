@@ -1,0 +1,121 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const out = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp/reviewer-6a-n40-display-repair');
+const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const save = (name, value) => fs.writeFileSync(path.join(out, name), JSON.stringify(value, null, 2) + '\n');
+if (fs.existsSync(path.join(out, 'final-execution.json'))) throw new Error('Final invocation already recorded');
+const book = path.join(repo, 'ssot-resources/soviet10year-textbooks/artifacts/6a');
+const edition = path.join(book, 'editions/modern-us-neutral');
+const renderer = path.join(repo, '.claude/skills/ld-s10y-lesson/tools/render_lesson.js');
+const execution = { started_at: new Date().toISOString(), renderer: { path: renderer, sha256: sha(renderer) },
+  preserved_records: ['repair-observations.json', 'before/render_lesson.js', 'before/n40-original-observations.json']
+    .map((name) => ({ path: path.join(out, name), sha256: sha(path.join(out, name)) })),
+  tests: [], inputs: [], lessons: [], status: 'running' };
+save('final-execution.json', execution);
+const tracked = new Set();
+function track(file, role) {
+  if (tracked.has(file)) return;
+  tracked.add(file);
+  execution.inputs.push({ path: file, role, sha256_before: sha(file) });
+}
+function run(command, args, kind) {
+  const result = spawnSync(command, args, { cwd: repo, encoding: 'utf8' });
+  const record = { command, args, exit_code: result.status, stdout: result.stdout, stderr: result.stderr };
+  if (kind === 'test') execution.tests.push(record);
+  save('final-execution.json', execution);
+  if (result.status !== 0) throw new Error(`${kind} failed: ${result.stderr}`);
+  return record;
+}
+try {
+  run(process.execPath, ['--test', '.claude/skills/ld-s10y-lesson/tests/render_lesson_display.test.cjs'], 'test');
+  run(path.join(repo, '.claude/skills/ld-s10y-lesson/.venv/bin/python'),
+    ['-m', 'unittest', 'discover', '-s', '.claude/skills/ld-s10y-lesson/tests', '-p', 'test_render_lesson.py', '-v'], 'test');
+  track(path.join(book, 'book.json'), 'book-source-identity');
+  for (const number of [39, 40]) {
+    const id = `alg6-c4-s3-n${number}`;
+    const manifestPath = path.join(repo, `.intentfold/tickets/STEMROBIN-182/tmp/batch21-render/6a-${id}-capture-manifest.json`);
+    const manifest = JSON.parse(fs.readFileSync(manifestPath));
+    track(manifestPath, 'preserved-parent-capture-manifest');
+    for (const input of manifest.inputs) {
+      const file = path.join(repo, input.path);
+      if (sha(file) !== input.sha256) throw new Error('Durable core differs from original binding');
+      track(file, 'final-durable-core');
+    }
+    for (const file of manifest.rendered) {
+      const original = path.join(repo, file.path);
+      const backup = path.join(out, 'before', id, path.basename(original));
+      if (sha(original) !== file.sha256 || sha(backup) !== file.sha256) throw new Error('Old HTML changed');
+      track(original, 'preserved-original-HTML');
+      track(backup, 'preserved-old-HTML-copy');
+    }
+    for (const name of ['lesson.json', 'exercises.json']) track(path.join(book, 'lessons', id, name), 'raw-source-lesson');
+    const figureManifest = JSON.parse(fs.readFileSync(path.join(edition, 'lessons', id, 'figures.json')));
+    const assets = new Set();
+    for (const figure of figureManifest.figures) {
+      for (const value of Object.values(figure)) {
+        if (typeof value === 'string' && value.startsWith('figures/')) assets.add(path.join(edition, value));
+      }
+    }
+    for (const asset of assets) track(asset, 'referenced-final-figure-asset-or-evidence');
+    const renderRoot = path.join(out, `render-n${number}`);
+    if (fs.existsSync(renderRoot)) throw new Error('Private output already exists');
+    let renderBook = book;
+    const shadowCopies = [];
+    if (number === 40) {
+      renderBook = path.join(out, 'shadow/6a');
+      const shadowEdition = path.join(renderBook, 'editions/modern-us-neutral');
+      function copy(source, destination) {
+        fs.mkdirSync(path.dirname(destination), { recursive: true });
+        fs.copyFileSync(source, destination, fs.constants.COPYFILE_EXCL);
+        if (sha(source) !== sha(destination)) throw new Error('Shadow not an exact byte copy');
+        shadowCopies.push({ source, destination, sha256: sha(source) });
+      }
+      copy(path.join(book, 'book.json'), path.join(renderBook, 'book.json'));
+      for (const asset of assets) copy(asset, path.join(shadowEdition, path.relative(edition, asset)));
+      for (const name of ['lesson.json', 'exercises.json', 'figures.json']) {
+        copy(path.join(edition, 'lessons', id, name), path.join(shadowEdition, 'lessons', id, name));
+      }
+      for (const name of ['seed.json', 'draft.json', 'review.json']) {
+        copy(path.join(edition, 'lessons', id, 'choice-set/review-history/unresolved-source', name),
+          path.join(shadowEdition, 'lessons', id, 'choice-set', name));
+      }
+    }
+    const args = [renderer, renderBook, '--out', renderRoot, '--edition', 'modern-us-neutral', '--lesson', id];
+    const record = { lesson: id, semantic_outcome_retained: number === 40 ? 'blocked' : 'pass',
+      render_book: renderBook, shadow_copies: shadowCopies, render_invocations: 1,
+      output_directory: path.join(renderRoot, id), command: [process.execPath, ...args] };
+    execution.lessons.push(record);
+    save('final-execution.json', execution);
+    Object.assign(record, run(process.execPath, args, 'render'));
+    record.HTML = ['text', 'exercises', 'choices'].map((surface) => {
+      const file = path.join(record.output_directory, `${surface}.html`);
+      return { surface, path: file, sha256: sha(file) };
+    });
+    record.exercises = JSON.parse(fs.readFileSync(path.join(edition, 'lessons', id, 'exercises.json')))
+      .exercises.map((exercise) => ({ number: exercise.number,
+        printed_number: Object.hasOwn(exercise, 'source_number') ? exercise.source_number : exercise.number,
+        text: exercise.text }));
+  }
+  for (const input of execution.inputs) {
+    input.sha256_after = sha(input.path);
+    input.unchanged = input.sha256_before === input.sha256_after;
+    if (!input.unchanged) throw new Error('Tracked durable/source/old evidence bytes changed');
+  }
+  execution.status = 'tests-and-once-per-lesson-private-render-complete';
+} catch (error) {
+  execution.status = 'failed';
+  execution.error = error.message;
+  process.exitCode = 1;
+} finally {
+  execution.completed_at = new Date().toISOString();
+  save('final-execution.json', execution);
+}
+console.log(JSON.stringify({ status: execution.status, tests: execution.tests.map((test) =>
+  ({ exit_code: test.exit_code, stdout: test.stdout, stderr: test.stderr })),
+  lessons: execution.lessons.map((lesson) => ({ lesson: lesson.lesson, render_invocations: lesson.render_invocations,
+    output: lesson.output_directory, exit_code: lesson.exit_code })),
+  tracked_input_count: execution.inputs.length, error: execution.error }, null, 2));

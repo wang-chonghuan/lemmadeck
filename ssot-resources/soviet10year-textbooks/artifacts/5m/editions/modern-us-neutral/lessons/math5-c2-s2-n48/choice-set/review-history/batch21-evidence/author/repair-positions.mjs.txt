@@ -1,0 +1,271 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+
+const own = path.dirname(fileURLToPath(import.meta.url))
+const parent = path.dirname(own)
+const number = Number(process.argv[3])
+assert([48, 49].includes(number))
+const dir = path.join(parent, `5m-n${number}`)
+const history = path.join(dir, 'history/before-nonperiodic-position-repair')
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
+const bytes = (root, name) => fs.readFileSync(path.join(root, name))
+const json = (root, name) => JSON.parse(bytes(root, name))
+const save = (name, value) => fs.writeFileSync(path.join(dir, name),
+  JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+const content = (option, rationale) => ({
+  option: { text: option.text, figure_ids: option.figure_ids },
+  rationale: { truth: rationale.truth, derivation: rationale.derivation, misconception: rationale.misconception }
+})
+const contentHash = (option, rationale) => sha(JSON.stringify(content(option, rationale)))
+const files = (root, relative = '') => fs.readdirSync(path.join(root, relative), { withFileTypes: true })
+  .sort((a, b) => a.name.localeCompare(b.name)).flatMap(entry => {
+    const name = path.join(relative, entry.name)
+    if (root === dir && (name === 'history/before-nonperiodic-position-repair')) return []
+    assert(!entry.isSymbolicLink(), `Unexpected symlink: ${name}`)
+    return entry.isDirectory() ? files(root, name) : [name]
+  })
+const referencedAssets = () => {
+  const seed = json(dir, 'source.json'), draft = json(dir, 'draft.json')
+  const paths = [...seed.figures.flatMap(f => f.assets.map(a => a.path)),
+    ...draft.new_figures.map(f => f.path)]
+  return Object.fromEntries([...new Set(paths)].sort().map(p => [p, sha(fs.readFileSync(p))]))
+}
+const repeatedBlocks = sequence => {
+  const findings = []
+  for (let size = 2; size <= 6; size++) {
+    for (let start = 0; start + size * 2 <= sequence.length; start++) {
+      if (sequence.slice(start, start + size).join('') ===
+          sequence.slice(start + size, start + size * 2).join('')) {
+        findings.push({ start, size })
+      }
+    }
+  }
+  return findings
+}
+const acceptablePrefix = sequence =>
+  !(sequence.length >= 3 && sequence.slice(-3).every(v => v === sequence.at(-1))) &&
+  repeatedBlocks(sequence).length === 0
+const shuffle = values => {
+  const result = [...values]
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = crypto.randomInt(i + 1)
+    ;[result[i], result[j]] = [result[j], result[i]]
+  }
+  return result
+}
+function transform(draft, plan) {
+  const result = structuredClone(draft)
+  assert.deepEqual(plan.questions.map(p => p.id), result.questions.map(q => q.id))
+  result.questions.forEach((q, i) => {
+    const entry = plan.questions[i]
+    const options = new Map(q.view.options.map(o => [o.id, o]))
+    const rationales = new Map(q.key.rationales.map(r => [r.option_id, r]))
+    assert.deepEqual([...entry.new_order_original_ids].sort(), [...options.keys()].sort())
+    for (const m of entry.mapping) assert.equal(
+      contentHash(options.get(m.old_id), rationales.get(m.old_id)), m.content_sha256)
+    const labels = new Map(entry.mapping.map(m => [m.old_id, m.new_id]))
+    q.view.options = entry.new_order_original_ids.map(id => ({ ...options.get(id), id: labels.get(id) }))
+    q.key.correct = q.key.correct.map(id => labels.get(id))
+    q.key.rationales = entry.new_order_original_ids.map(id => ({ ...rationales.get(id), option_id: labels.get(id) }))
+  })
+  return result
+}
+function inverse(draft, plan) {
+  const result = structuredClone(draft)
+  result.questions.forEach((q, i) => {
+    const entry = plan.questions[i]
+    const options = new Map(q.view.options.map(o => [o.id, o]))
+    const rationales = new Map(q.key.rationales.map(r => [r.option_id, r]))
+    const forward = new Map(entry.mapping.map(m => [m.old_id, m.new_id]))
+    const backward = new Map(entry.mapping.map(m => [m.new_id, m.old_id]))
+    q.view.options = entry.original_order_ids.map(id => ({ ...options.get(forward.get(id)), id }))
+    q.key.correct = q.key.correct.map(id => backward.get(id))
+    q.key.rationales = entry.original_rationale_order_ids.map(id =>
+      ({ ...rationales.get(forward.get(id)), option_id: id }))
+  })
+  return result
+}
+function leafDiff(before, after, prefix = '') {
+  if (JSON.stringify(before) === JSON.stringify(after)) return []
+  if (before !== null && after !== null && typeof before === 'object' && typeof after === 'object') {
+    assert.deepEqual(Object.keys(before).sort(), Object.keys(after).sort())
+    return Object.keys(before).flatMap(k => leafDiff(before[k], after[k],
+      `${prefix}/${k.replaceAll('~', '~0').replaceAll('/', '~1')}`))
+  }
+  return [{ path: prefix, before, after }]
+}
+const pure = draft => ({ questions: draft.questions.map(q => ({ id: q.id, ...q.view })) })
+
+if (process.argv[2] === 'before') {
+  assert(!fs.existsSync(history))
+  const originals = files(dir)
+  fs.mkdirSync(history, { recursive: true })
+  const records = originals.map(name => {
+    const target = path.join(history, name)
+    fs.mkdirSync(path.dirname(target), { recursive: true })
+    fs.copyFileSync(path.join(dir, name), target, fs.constants.COPYFILE_EXCL)
+    assert(bytes(dir, name).equals(bytes(history, name)))
+    return { path: name, sha256: sha(bytes(history, name)), bytes: bytes(history, name).length }
+  })
+  fs.writeFileSync(path.join(history, 'snapshot-manifest.json'), JSON.stringify({
+    originals: records, referenced_assets: referencedAssets(),
+    original_files_copied_exactly_before_author_draft_view_edits: true
+  }, null, 2) + '\n', { flag: 'wx' })
+  console.log(JSON.stringify({ lesson: number, history, original_files: records.length }))
+} else if (process.argv[2] === 'plan') {
+  const before = json(history, 'draft.json')
+  assert(bytes(dir, 'draft.json').equals(bytes(history, 'draft.json')))
+  const singles = before.questions.filter(q => q.view.mode === 'single')
+  let positions, attempts = 0
+  do {
+    assert(++attempts < 10000, 'No acceptable finite plan; no drafts changed')
+    positions = []
+    for (const q of singles) {
+      const allowed = q.view.options.map(o => o.id).filter(id => acceptablePrefix([...positions, id]))
+      if (!allowed.length) break
+      positions.push(allowed[crypto.randomInt(allowed.length)])
+    }
+    const counts = ['A', 'B', 'C'].map(id => positions.filter(v => v === id).length)
+    if (positions.length === singles.length && Math.max(...counts) - Math.min(...counts) <= 4) break
+  } while (true)
+  let singleIndex = 0
+  const plan = {
+    method: 'Finite random position selection with no three-identical run, no adjacent repeated blocks of lengths2..6, and ABC count spread at most4. This is a broad balance bound,not exact quotas or a cyclic schedule. Wrong-option order is independently Fisher-Yates shuffled;multiple units are unchanged.',
+    attempts, questions: before.questions.map(q => {
+      const options = new Map(q.view.options.map(o => [o.id, o]))
+      const rationales = new Map(q.key.rationales.map(r => [r.option_id, r]))
+      const oldOrder = q.view.options.map(o => o.id)
+      let order = oldOrder
+      if (q.view.mode === 'single') {
+        assert.equal(q.key.correct.length, 1)
+        const correct = q.key.correct[0], target = positions[singleIndex++]
+        const others = shuffle(oldOrder.filter(id => id !== correct))
+        order = oldOrder.map(id => id === target ? correct : others.shift())
+      }
+      return {
+        id: q.id, mode: q.view.mode, original_order_ids: oldOrder,
+        original_rationale_order_ids: q.key.rationales.map(r => r.option_id),
+        new_order_original_ids: order,
+        mapping: oldOrder.map((old_id, old_index) => ({
+          old_id, new_id: String.fromCharCode(65 + order.indexOf(old_id)),
+          old_position: old_index + 1, new_position: order.indexOf(old_id) + 1,
+          option_text_sha256: sha(options.get(old_id).text),
+          rationale_content_sha256: sha(JSON.stringify(content(options.get(old_id), rationales.get(old_id)).rationale)),
+          content_sha256: contentHash(options.get(old_id), rationales.get(old_id))
+        }))
+      }
+    })
+  }
+  const after = transform(before, plan)
+  assert.deepEqual(inverse(after, plan), before)
+  const metrics = {
+    single_positions: positions,
+    position_counts: Object.fromEntries([...new Set(positions)].sort().map(id =>
+      [id, positions.filter(v => v === id).length])),
+    adjacent_repeated_blocks_lengths_2_to_6: repeatedBlocks(positions),
+    whole_sequence_periods_1_to_8: Array.from({ length: 8 }, (_, i) => i + 1)
+      .filter(p => positions.every((v, i) => i < p || v === positions[i - p])),
+    multiple_units_unchanged: before.questions.filter(q => q.view.mode === 'multiple').map(q => q.id),
+    changed_questions: plan.questions.filter(p =>
+      p.new_order_original_ids.join() !== p.original_order_ids.join()).map(p => p.id)
+  }
+  assert.equal(metrics.adjacent_repeated_blocks_lengths_2_to_6.length, 0)
+  assert.equal(metrics.whole_sequence_periods_1_to_8.length, 0)
+  assert(plan.questions.some(p => p.original_order_ids.length === 3 &&
+    ![0, 1, 2].some(offset => p.new_order_original_ids.every((id, i) => id === p.original_order_ids[(i + offset) % 3]))))
+  save('position-repair-plan.json', plan)
+  save('position-repair-plan-metrics.json', metrics)
+  console.log(JSON.stringify({ lesson: number, attempts, ...metrics }, null, 2))
+} else if (process.argv[2] === 'apply') {
+  const manifest = json(history, 'snapshot-manifest.json')
+  const before = json(history, 'draft.json'), plan = json(dir, 'position-repair-plan.json')
+  assert(bytes(dir, 'draft.json').equals(bytes(history, 'draft.json')))
+  assert(bytes(dir, 'view.json').equals(bytes(history, 'view.json')))
+  assert.deepEqual(json(history, 'view.json'), pure(before))
+  const after = transform(before, plan), restored = inverse(after, plan)
+  assert.deepEqual(restored, before)
+  const restoredBytes = Buffer.from(JSON.stringify(restored, null, 2) + '\n')
+  assert(restoredBytes.equals(bytes(history, 'draft.json')), 'Exact inverse byte proof failed')
+  const differences = leafDiff(before, after)
+  assert(differences.every(d => /^\/questions\/\d+\/(?:view\/options\/\d+\/(?:id|text|figure_ids(?:\/\d+)?)|key\/(?:correct\/\d+|rationales\/\d+\/(?:option_id|truth|derivation|misconception)))$/.test(d.path)))
+  before.questions.forEach((q, i) => {
+    if (q.view.mode === 'multiple') assert.deepEqual(after.questions[i], q)
+    const original = plan.questions[i]
+    const newReasons = new Map(after.questions[i].key.rationales.map(r => [r.option_id, r]))
+    for (const m of original.mapping) {
+      const option = after.questions[i].view.options.find(o => o.id === m.new_id)
+      assert.equal(contentHash(option, newReasons.get(m.new_id)), m.content_sha256)
+    }
+  })
+  const view = pure(after)
+  save('position-repair-content-mapping.json', { questions: plan.questions })
+  save('position-repair-json-leaf-diff.json', { leaf_count: differences.length, changes: differences })
+  save('position-repair-json-patch.json', differences.map(d => ({ op: 'replace', path: d.path, value: d.after })))
+  save('position-repair-inverse-json-patch.json', differences.map(d => ({ op: 'replace', path: d.path, value: d.before })))
+  for (const [name, value] of [['draft.json', after], ['view.json', view]]) {
+    fs.writeFileSync(path.join(dir, name), JSON.stringify(value, null, 2) + '\n')
+  }
+  save('revised-position-view.json', view)
+  for (const name of ['draft.json', 'view.json', 'author.mjs']) {
+    const diff = spawnSync('diff', ['-u', '--label', `${name}.before`, '--label', `${name}.after`,
+      path.join(history, name), path.join(dir, name)], { encoding: 'utf8' })
+    assert.equal(diff.status, 1)
+    assert.equal(diff.stderr, '')
+    fs.writeFileSync(path.join(dir, `position-repair-${name}.patch`), diff.stdout, { flag: 'wx' })
+  }
+  const allowed = new Set(['draft.json', 'view.json', 'author.mjs'])
+  const originalFiles = manifest.originals.map(record => {
+    const current = bytes(dir, record.path)
+    if (!allowed.has(record.path)) assert(current.equals(bytes(history, record.path)))
+    return { ...record, after_sha256: sha(current), after_bytes: current.length,
+      byte_unchanged: current.equals(bytes(history, record.path)) }
+  })
+  assert.deepEqual(referencedAssets(), manifest.referenced_assets)
+  assert(bytes(dir, 'view.json').equals(bytes(dir, 'revised-position-view.json')))
+  const relative = path.relative(process.cwd(), dir)
+  const args = ['.agents/skills/ld-s10y-choice/scripts/validate.py', '--repo', '.',
+    '--seed', `${relative}/source.json`, '--draft', `${relative}/draft.json`]
+  const check = spawnSync('python3', args, { encoding: 'utf8' })
+  const structural = {
+    command: `python3 ${args.join(' ')}`, stdout: check.stdout, stderr: check.stderr,
+    exit_code: check.status, structural_runs_for_changed_snapshot: 1,
+    draft_byte_sha256: sha(bytes(dir, 'draft.json')),
+    semantic_status: 'Position repair only; parent authorization for revised-view review pending.'
+  }
+  save('structural-check-after-position-repair.json', structural)
+  const digestArgs = ['.agents/skills/ld-s10y-choice/scripts/prepare.py', 'digest',
+    path.join(dir, 'draft.json')]
+  const digest = spawnSync('python3', digestArgs, { encoding: 'utf8' })
+  assert.equal(digest.status, 0)
+  const ready = {
+    source: path.join(dir, 'source.json'), draft: path.join(dir, 'draft.json'),
+    view: path.join(dir, 'revised-position-view.json'), history,
+    content_mapping: path.join(dir, 'position-repair-content-mapping.json'),
+    leaf_diff: path.join(dir, 'position-repair-json-leaf-diff.json'),
+    structural_report: path.join(dir, 'structural-check-after-position-repair.json'),
+    original_files: originalFiles, referenced_assets_unchanged: manifest.referenced_assets,
+    inverse_proof: { exact_original_draft_bytes_restored: true,
+      restored_byte_sha256: sha(restoredBytes), every_bound_content_hash_unchanged: true },
+    source_order_question_order_stems_modes_intent_coverage_unchanged: true,
+    blocked934_4_unchanged: true,
+    serializer_executed: false, no_math_or_reviewer_internals_read_for_this_transform: true,
+    byte_sha256: Object.fromEntries(['source.json', 'source-solutions.json', 'draft.json', 'view.json',
+      'revised-position-view.json', 'author.mjs', 'position-repair-plan.json']
+      .map(name => [name, sha(bytes(dir, name))])),
+    draft_canonical_sha256: digest.stdout.trim(),
+    pure_view_counts: { questions: view.questions.length,
+      options: view.questions.reduce((n, q) => n + q.options.length, 0) },
+    position_metrics: json(dir, 'position-repair-plan-metrics.json'), structural
+  }
+  save('position-repair-ready.json', ready)
+  console.log(JSON.stringify({ lesson: number, ready: path.join(dir, 'position-repair-ready.json'),
+    counts: ready.pure_view_counts, byte_sha256: ready.byte_sha256,
+    draft_canonical_sha256: ready.draft_canonical_sha256, structural }, null, 2))
+  process.exitCode = check.status ?? 1
+} else {
+  throw new Error('Use before, plan or apply for lesson48 or49.')
+}

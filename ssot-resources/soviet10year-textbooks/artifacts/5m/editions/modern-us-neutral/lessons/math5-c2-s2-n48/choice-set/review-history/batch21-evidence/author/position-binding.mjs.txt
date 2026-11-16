@@ -1,0 +1,25 @@
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+
+export function applyPositionPlan(questions, plan) {
+  assert.deepEqual(questions.map(q => q.id), plan.questions.map(p => p.id))
+  questions.forEach((q, i) => {
+    const entry = plan.questions[i]
+    const options = new Map(q.view.options.map(o => [o.id, o]))
+    const rationales = new Map(q.key.rationales.map(r => [r.option_id, r]))
+    assert.deepEqual([...entry.new_order_original_ids].sort(), [...options.keys()].sort())
+    for (const m of entry.mapping) {
+      const o = options.get(m.old_id), r = rationales.get(m.old_id)
+      const content = {
+        option: { text: o.text, figure_ids: o.figure_ids },
+        rationale: { truth: r.truth, derivation: r.derivation, misconception: r.misconception }
+      }
+      assert.equal(crypto.createHash('sha256').update(JSON.stringify(content)).digest('hex'), m.content_sha256)
+    }
+    const labels = new Map(entry.mapping.map(m => [m.old_id, m.new_id]))
+    q.view.options = entry.new_order_original_ids.map(id => ({ ...options.get(id), id: labels.get(id) }))
+    q.key.correct = q.key.correct.map(id => labels.get(id))
+    q.key.rationales = entry.new_order_original_ids.map(id =>
+      ({ ...rationales.get(id), option_id: labels.get(id) }))
+  })
+}

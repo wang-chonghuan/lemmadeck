@@ -1,0 +1,208 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { fileURLToPath } from 'node:url'
+
+const directory = path.dirname(fileURLToPath(import.meta.url))
+const ticket = path.dirname(directory)
+const oldPath = path.join(directory, 'view-checks.json')
+const revisedPath = path.join(ticket, '6a-n39/revised-option-position-view.json')
+const output = path.join(directory, 'view-checks-option-position-revised.json')
+const load = (file) => JSON.parse(fs.readFileSync(file, 'utf8'))
+const fileSHA = (file) => crypto.createHash('sha256')
+  .update(fs.readFileSync(file)).digest('hex')
+const sorted = (value) => {
+  if (Array.isArray(value)) return value.map(sorted)
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, sorted(value[key])]))
+  }
+  return value
+}
+const canonical = (value) => JSON.stringify(sorted(value))
+  .replace(/[\u007f-\uffff]/g, (char) =>
+    `\\u${char.charCodeAt(0).toString(16).padStart(4, '0')}`)
+const digest = (value) => crypto.createHash('sha256').update(canonical(value)).digest('hex')
+const originalRecordSHA = fileSHA(oldPath)
+if (originalRecordSHA !== '72546eacc4db3909d4129588ab6f3cdf70b8df8d9087a7158609161c1dd6e966') {
+  throw new Error('Own frozen rejected view record changed')
+}
+const old = load(oldPath)
+const revised = load(revisedPath)
+const changedID = 'square-side-and-area-scaling'
+const reconstructedOriginal = structuredClone(revised)
+const targetIndex = reconstructedOriginal.questions.findIndex((item) => item.id === changedID)
+if (targetIndex !== 5) throw new Error('Changed task order/identity')
+const options = reconstructedOriginal.questions[targetIndex].view.options
+const cIndex = options.findIndex((item) => item.id === 'C')
+const dIndex = options.findIndex((item) => item.id === 'D')
+if (cIndex !== 2 || dIndex !== 3) throw new Error('Unexpected candidate IDs/order')
+const correctContent = '$9,\\ 1/100,\\ 2,\\ 1/4$。'
+const reciprocalContent = '$1/9,\\ 100,\\ 1/2,\\ 4$。'
+if (options[cIndex].text !== reciprocalContent || options[dIndex].text !== correctContent) {
+  throw new Error('Revised visible candidates not the expected unchanged mathematical content')
+}
+const cContent = { text: options[cIndex].text, figure_ids: options[cIndex].figure_ids }
+const dContent = { text: options[dIndex].text, figure_ids: options[dIndex].figure_ids }
+Object.assign(options[cIndex], dContent)
+Object.assign(options[dIndex], cContent)
+if (digest(reconstructedOriginal) !== old.bindings.view_canonical_sha256) {
+  throw new Error('Inverse swap does not restore entire independently frozen original projection')
+}
+const deltas = []
+function diff(before, after, pointer = '') {
+  if (canonical(before) === canonical(after)) return
+  if (before && after && typeof before === 'object' && typeof after === 'object'
+    && Array.isArray(before) === Array.isArray(after)) {
+    const keys = [...new Set([...Object.keys(before), ...Object.keys(after)])]
+    for (const key of keys) diff(before[key], after[key], `${pointer}/${key}`)
+  } else {
+    deltas.push({ path: pointer, before, after })
+  }
+}
+diff(reconstructedOriginal, revised)
+if (deltas.length !== 2 || deltas.some((item) => ![
+  '/questions/5/view/options/2/text',
+  '/questions/5/view/options/3/text',
+].includes(item.path))) {
+  throw new Error('Not exactly the two visible candidate text-position fields')
+}
+const snapshot = structuredClone(old)
+snapshot.outcome = 'pass'
+snapshot.stage = 'pure-view-option-position-revised'
+snapshot.bindings.view_path = revisedPath
+snapshot.bindings.view_file_sha256 = fileSHA(revisedPath)
+snapshot.bindings.view_canonical_sha256 = digest(revised)
+snapshot.bindings.original_rejected_record_path = oldPath
+snapshot.bindings.original_rejected_record_file_sha256 = originalRecordSHA
+snapshot.boundary.allowed_input = 'Only revised n39 pure-view projection and own frozen original view record. Whole old projection reconstructed in memory and verified against own original canonical digest; no author mapping/diff/key input.'
+snapshot.boundary.verdict_scope = 'Changed candidate-position binding and whole-package visible position relationships; original verified math/figures/domains/coverage observations reused unchanged.'
+snapshot.review_order = 'Confirm complete visible content equivalence first; rebind own prior truths by candidate content, then independently check entire revised single-position sequence. No author key.'
+const recordByID = new Map(snapshot.question_checks.map((item) => [item.id, item]))
+const reuse = []
+for (const visible of revised.questions) {
+  const record = recordByID.get(visible.id)
+  if (!record || canonical(record.source_numbers) !== canonical(visible.source_numbers)
+    || record.mode !== visible.view.mode) throw new Error('Original source/mode identity changed')
+  const oldChecks = new Map(record.option_checks.map((item) => [item.id, item]))
+  const rebindings = visible.view.options.map((option) => {
+    const previousID = visible.id === changedID
+      ? ({ C: 'D', D: 'C' }[option.id] ?? option.id) : option.id
+    const previous = oldChecks.get(previousID)
+    if (!previous) throw new Error('Missing independent original candidate truth')
+    return {
+      id: option.id,
+      truth: previous.truth,
+      evidence: previous.evidence,
+      ...(visible.id === changedID ? {
+        original_option_id: previousID,
+        equivalence_evidence: 'Exact text/figure content verified through inverse-swap restoration of whole original projection digest.',
+      } : {}),
+    }
+  })
+  record.option_checks = rebindings
+  record.correct = rebindings.filter((item) => item.truth).map((item) => item.id)
+  reuse.push({
+    question_id: visible.id,
+    options: rebindings.length,
+    correct: record.correct,
+    unchanged_mathematical_contents: true,
+    candidate_text_figure_identity_verified: true,
+    result: visible.id === changedID
+      ? 'Four prior content truths rebound: A->A false,B->B false,oldD->newC false,oldC->newD true.'
+      : 'Entire visible question unchanged, original independent fidelity/truth/evidence reused.',
+  })
+}
+const affected = recordByID.get(changedID)
+affected.independent_solution = 'Unchanged positive-square area scaling:3^2=9,(1/10)^2=1/100,sqrt4=2,sqrt(1/16)=1/4. The exact prior correct content now carries optionD; reciprocal wrong content now carriesC.'
+affected.answer_leakage = {
+  status: 'pass',
+  evidence: 'No math/target altered; every independent factor still varies across false contents. Swapping oldC/D within this single unit breaks the old first-eight-single CADBCADB cycle; complete revised sequence checked separately.',
+}
+const singleSequence = snapshot.question_checks.filter((item) => item.mode === 'single')
+  .map((item) => ({
+    display_question: revised.questions.findIndex((question) => question.id === item.id) + 1,
+    question_id: item.id,
+    correct_position: item.correct[0],
+  }))
+const positions = singleSequence.map((item) => item.correct_position)
+const repeatedBlocks = []
+for (let period = 2; period * 2 <= positions.length; period++) {
+  for (let start = 0; start + period * 2 <= positions.length; start++) {
+    const first = positions.slice(start, start + period).join('')
+    const second = positions.slice(start + period, start + period * 2).join('')
+    if (first === second) repeatedBlocks.push({
+      start_single_index: start + 1,
+      period,
+      consecutive_repetitions: 2,
+      block: first,
+    })
+  }
+}
+let sameRun = 0
+let longestSameRun = 0
+for (let i = 0; i < positions.length; i++) {
+  sameRun = i && positions[i] === positions[i - 1] ? sameRun + 1 : 1
+  longestSameRun = Math.max(longestSameRun, sameRun)
+}
+if (positions.join('') !== 'CADBDADBACDBC' || repeatedBlocks.length
+  || longestSameRun !== 1) throw new Error('New long/repeated position pattern requires review')
+snapshot.package_checks.answer_leakage = {
+  status: 'pass',
+  evidence: 'Original first eight singles CADBCADB now CADBDADB. Entire13-single sequence CADBDADBACDBC examined: no two adjacent identical full blocks for any period2..6, and no consecutive identical answer positions. Hence prior period4 twice-cycle is broken without a replacement adjacent cycle; no textual/relationship premise changed.',
+  all_single_correct_positions_in_display_order: positions,
+  single_sequence: singleSequence,
+  position_scan: {
+    enumerated_periods: [2, 3, 4, 5, 6],
+    all_contiguous_starts_checked: true,
+    minimum_adjacent_full_block_repetitions: 2,
+    adjacent_repeated_blocks: repeatedBlocks,
+    longest_same_position_run: longestSameRun,
+    limitation: 'Absence of these explicit exact cycles is not a claim of statistically uniform randomness in13questions.',
+  },
+}
+snapshot.minimum_findings = []
+snapshot.repaired_original_findings = [{
+  prior_status: 'revise',
+  original_finding: old.minimum_findings[0],
+  current_status: 'pass',
+  evidence: 'Only635 oldC/D candidate-position exchange changes fifth single answerC->D; first-eight cycle broken and complete13-single sequence contains no adjacent repeated full blocks.',
+}]
+snapshot.content_equivalence_check = {
+  method: 'Read only revised view; reverse observedC/D content exchange in memory and canonical-hash whole reconstructed projection to own frozen oldviewdigest.',
+  reconstructed_original_view_canonical_sha256: digest(reconstructedOriginal),
+  frozen_original_view_canonical_sha256: old.bindings.view_canonical_sha256,
+  canonical_digests_equal: true,
+  all_question_ids_order_sources_modes_stems_figure_refs_unchanged: true,
+  all_candidate_text_figure_content_sets_unchanged: true,
+  multiple_questions_and_all15_other_questions_unchanged: true,
+  changed_question_id: changedID,
+  exact_visible_field_delta_count: deltas.length,
+  exact_visible_deltas: deltas,
+  own_candidate_rebinding_map: { A: 'A', B: 'B', C: 'D', D: 'C' },
+  map_direction: 'old candidate ID -> revised candidate ID; derived from observed content, not author mapping.',
+  unchanged_option_bindings_reused: 63,
+  moved_option_bindings_reused: 2,
+  all_truth_bindings_reused: 65,
+  independent_rebinding_results: reuse,
+  original_review_bytes_preserved: true,
+  original_source_bytes_preserved: true,
+  source643_notice_unchanged: true,
+  graph_method_production_losses_unchanged: true,
+  author_intent_key_coverage_equivalence_not_claimed_or_read: true,
+}
+snapshot.stop_boundary = 'Revised pureview position gate pass, all16/65 independent truths frozen. Await separate n39 internal authorization. No canonical/structural/browser/render command or author/durable edits.'
+if (fileSHA(oldPath) !== originalRecordSHA || fs.existsSync(output)) {
+  throw new Error('Frozen rejection changed or destination already exists')
+}
+fs.writeFileSync(output, JSON.stringify(snapshot, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({
+  outcome: snapshot.outcome,
+  question_count: snapshot.question_checks.length,
+  option_count: snapshot.question_checks.reduce((sum, item) => sum + item.option_checks.length, 0),
+  correct_positions_single: positions.join(''),
+  visible_deltas: deltas,
+  inverse_swap_matches_frozen_digest: true,
+  original_record_sha256: fileSHA(oldPath),
+  output,
+  output_sha256: fileSHA(output),
+}, null, 2))

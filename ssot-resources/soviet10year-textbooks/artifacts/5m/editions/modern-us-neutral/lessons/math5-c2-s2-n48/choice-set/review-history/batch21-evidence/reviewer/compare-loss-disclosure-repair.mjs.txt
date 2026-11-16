@@ -1,0 +1,337 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { fileURLToPath } from "node:url";
+
+const tmp = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const encode = (value) => JSON.stringify(value, null, 2) + "\n";
+const read = (file) => {
+  const bytes = fs.readFileSync(file);
+  return { bytes, value: JSON.parse(bytes.toString("utf8")), sha256: hash(bytes) };
+};
+const sorted = (value) => Array.isArray(value)
+  ? value.map(sorted)
+  : value && typeof value === "object"
+    ? Object.fromEntries(Object.keys(value).sort().map((key) => [key, sorted(value[key])]))
+    : value;
+const snapshotDigest = (value) => hash(JSON.stringify(sorted(value))
+  .replace(/[^\x00-\x7f]/g, (character) => "\\u" + character.charCodeAt(0).toString(16).padStart(4, "0")));
+const same = (left, right) => JSON.stringify(left) === JSON.stringify(right);
+const assert = (condition, message) => {
+  if (!condition) throw new Error(message);
+};
+const pointerEscape = (key) => String(key).replaceAll("~", "~0").replaceAll("/", "~1");
+const at = (value, pointer) => pointer.split("/").slice(1).reduce((current, key) =>
+  current[key.replaceAll("~1", "/").replaceAll("~0", "~")], value);
+
+// Only byte/JSON identity and the authorized appended disclosure strings are
+// inspected; unchanged mathematical/source/view evidence is not re-reviewed.
+function leafDiff(before, after, pointer = "") {
+  if (same(before, after)) return [];
+  if (Array.isArray(before) && Array.isArray(after)) {
+    const changes = [];
+    for (let index = 0; index < Math.max(before.length, after.length); index += 1) {
+      const child = `${pointer}/${index}`;
+      if (index >= before.length) changes.push({ operation: "add", path: child, value: after[index] });
+      else if (index >= after.length) changes.push({ operation: "remove", path: child, before: before[index] });
+      else changes.push(...leafDiff(before[index], after[index], child));
+    }
+    return changes;
+  }
+  if (before && after && typeof before === "object" && typeof after === "object" &&
+      !Array.isArray(before) && !Array.isArray(after)) {
+    return [...new Set([...Object.keys(before), ...Object.keys(after)])].flatMap((key) => {
+      const child = `${pointer}/${pointerEscape(key)}`;
+      if (Object.hasOwn(before, key) && Object.hasOwn(after, key)) return leafDiff(before[key], after[key], child);
+      if (Object.hasOwn(after, key)) return [{ operation: "add", path: child, value: after[key] }];
+      return [{ operation: "remove", path: child, before: before[key] }];
+    });
+  }
+  return [{ operation: "replace", path: pointer, before, after }];
+}
+
+const bindings = {
+  n48: {
+    beforeDraftByte: "78fe44d1a1e7487bf06e57f0b207ad783ded5ec31e94a05da1108373015cd07f",
+    currentDraftByte: "963b980b9f9affd05958c4b98077817eef2375e126148ed0819c84500be05a11",
+    beforeDraftSnapshot: "8a110cd9ee6f67cdb74110b9885ed9db7113c8f8d76504ae0eae1ce88a2dbf23",
+    beforeReviewByte: "6038a95dae6c323c1674df2faebae3d89c8d680b91cba21fbcdf38db6b887611",
+    beforeFinalByte: "b3e4d5644f2c081059f99dbc727c083d649b646949fbaa59d67d864e76b20aea",
+    expectedAppendCount: 4,
+    outcome: "pass",
+    decisions: {
+      "899": "The added sentence explicitly states that the corner coordinates/model are supplied and that selecting the direction record does not demonstrate independent geometric/coordinate-model generation. Together with the unchanged original drawing loss, this resolves exactly the previous899 disclosure finding without asserting full production coverage.",
+      "908": "The added sentence explicitly names independent writing of the half-angle-sum proof as untested by selecting the universal90-degree conclusion. Both drawing/bisector production and proof-writing losses are now disclosed; the frozen angle reasoning itself has not been revisited.",
+    },
+  },
+  n49: {
+    beforeDraftByte: "22b9dd35d767cb47b92e7b9883b61ff2d8b53b478f36426a7bea032850a43567",
+    currentDraftByte: "5d2135f182476cf128cf123527ed08538a1ecb60e85348d7670fdd5da9b89fe6",
+    beforeDraftSnapshot: "b80a47f1329dbf253631ba9adaf7c2b943a62a0dcdaf804755cad3564c9df66a",
+    beforeReviewByte: "6c770f0a1fa7aeff7df26ef5a86281df9afaa6ca780793bb0bf094eaae568a8b",
+    beforeFinalByte: "f6c9b740c6cc96fc7043f03c0e91c6d64bcff10034e8ebab34e99007bb2fc6cf",
+    expectedAppendCount: 6,
+    outcome: "blocked",
+    decisions: {
+      "928": "The addition separately names independent line-equation generation and reading requested coordinates from one's own plotted line as untested. It supplements, rather than replaces, the original free-point selection/plotting/drawing losses. This resolves the previously missing model/own-plot disclosure.",
+      "929": "The addition explicitly states that the affine equation/coordinate model is supplied for recognition rather than independently derived from the two original points. It supplements the existing drawing/point-location loss and resolves the exact supplied-model generation finding.",
+      "933": "The addition explicitly states that common time/position axes and graph-encoding format are supplied, and that choosing axes, generating piecewise laws and deriving meeting/rest/arrival breakpoints are not demonstrated. Together with unchanged graph construction/drawing/visual-reading losses, the complete model/graph-production disclosure gap is resolved.",
+    },
+  },
+};
+
+const pending = [];
+const retainedInputs = [];
+for (const [lesson, binding] of Object.entries(bindings)) {
+  const own = path.join(tmp, `reviewer-5m-${lesson}`);
+  const beforeDraftPath = path.join(tmp, `5m-${lesson}`, "draft-before-loss-disclosure.json");
+  const currentDraftPath = path.join(tmp, `5m-${lesson}`, "draft.json");
+  const reviewPath = path.join(own, "review.json");
+  const priorFinalPath = path.join(own, "final-comparison.json");
+  const historyDirectory = path.join(own, "before-loss-disclosure");
+  const historyReviewPath = path.join(historyDirectory, "review.json");
+  const historyFinalPath = path.join(historyDirectory, "final-comparison.json");
+  const outputPath = path.join(own, "loss-disclosure-repaired-comparison.json");
+  assert(!fs.existsSync(outputPath) && !fs.existsSync(historyReviewPath) &&
+    !fs.existsSync(historyFinalPath), `${lesson}: do not replace any retained repair history`);
+
+  const before = read(beforeDraftPath);
+  const current = read(currentDraftPath);
+  const priorReview = read(reviewPath);
+  const priorFinal = read(priorFinalPath);
+  for (const [file, data, expected] of [
+    [beforeDraftPath, before, binding.beforeDraftByte],
+    [currentDraftPath, current, binding.currentDraftByte],
+    [reviewPath, priorReview, binding.beforeReviewByte],
+    [priorFinalPath, priorFinal, binding.beforeFinalByte],
+  ]) {
+    assert(data.sha256 === expected, `${lesson}: authorized prior/current binding differs: ${file}`);
+    retainedInputs.push({ path: file, sha256: data.sha256 });
+  }
+  assert(snapshotDigest(before.value) === binding.beforeDraftSnapshot &&
+    priorReview.value.draft_sha256 === binding.beforeDraftSnapshot &&
+    priorFinal.value.draft_sha256 === binding.beforeDraftSnapshot &&
+    priorFinal.value.draft_byte_sha256 === before.sha256, `${lesson}: before snapshot does not match prior comparison`);
+  const requests = priorFinal.value.minimum_diff_requests;
+  assert(requests.length * 2 === binding.expectedAppendCount &&
+    requests.every((request) => Object.hasOwn(binding.decisions, request.source_number)),
+  `${lesson}: prior narrow repair requests differ`);
+
+  const actualDiff = leafDiff(before.value, current.value);
+  const expectedDiff = [];
+  const inverse = structuredClone(current.value);
+  const disclosureDecisions = [];
+  for (const request of requests) {
+    const fieldDecisions = [];
+    for (const leaf of request.minimum_json_leaf_diff_requests) {
+      assert(leaf.operation === "append" && leaf.path.endsWith("/-"), "Only the original append requests are authorized");
+      const arrayPointer = leaf.path.slice(0, -2);
+      const oldArray = at(before.value, arrayPointer);
+      const currentArray = at(current.value, arrayPointer);
+      assert(Array.isArray(oldArray) && Array.isArray(currentArray) &&
+        currentArray.length === oldArray.length + 1 &&
+        same(currentArray.slice(0, oldArray.length), oldArray) &&
+        currentArray[oldArray.length] === leaf.value,
+      `${lesson}: exact append/prefix comparison failed at${arrayPointer}`);
+      const actualPath = `${arrayPointer}/${oldArray.length}`;
+      expectedDiff.push({ operation: "add", path: actualPath, value: leaf.value });
+      at(inverse, arrayPointer).pop();
+      fieldDecisions.push({
+        path: actualPath,
+        before_array_length: oldArray.length,
+        after_array_length: currentArray.length,
+        prior_elements_exactly_preserved: true,
+        appended_value: leaf.value,
+        exact_match_to_previous_requested_text: true,
+        verdict: "pass",
+      });
+    }
+    disclosureDecisions.push({
+      source_number: request.source_number,
+      question_id: request.question_id,
+      verdict: "pass",
+      previous_finding: request.evidence,
+      substantive_decision: binding.decisions[request.source_number],
+      changed_fields: fieldDecisions,
+      full_independent_production_claim_approved: false,
+      mathematical_or_visible_repair_required: false,
+    });
+  }
+  const byPath = (left, right) => left.path.localeCompare(right.path);
+  assert(actualDiff.length === binding.expectedAppendCount &&
+    same([...actualDiff].sort(byPath), [...expectedDiff].sort(byPath)),
+  `${lesson}: an unrequested JSON leaf changed`);
+  assert(same(inverse, before.value), `${lesson}: other JSON differs after removing requested additions`);
+  const inverseByteSha = hash(encode(inverse));
+  assert(inverseByteSha === before.sha256, `${lesson}: reconstructed prior raw bytes do not match`);
+  const currentSnapshot = snapshotDigest(current.value);
+
+  const review = structuredClone(priorReview.value);
+  review.draft_sha256 = currentSnapshot;
+  review.outcome = binding.outcome;
+  for (const decision of disclosureDecisions) {
+    const sourceReview = review.source_reviews.find((entry) => entry.source_number === decision.source_number);
+    const questionReview = review.question_reviews.find((entry) => entry.question_id === decision.question_id);
+    assert(sourceReview.coverage.verdict === "revise", `${lesson}: only a prior narrow coverage revise may be resolved`);
+    const currentCoverage = current.value.coverage.find((entry) => entry.source_number === decision.source_number);
+    sourceReview.coverage = {
+      verdict: "pass",
+      evidence: `The previous independently frozen source solution, complete unit mapping and mathematics remain unchanged. ${decision.substantive_decision} Current disclosed omissions: ${currentCoverage.omitted_tasks.join(" | ")}. The two new sentences are exact authorized array-tail appends; all original omissions and all other draft JSON are preserved.`,
+    };
+    questionReview.task_fidelity.evidence = questionReview.task_fidelity.evidence.replace(
+      "A separate source-coverage revise records the narrow internal production-loss disclosure gap; this pass does not certify full production coverage.",
+      "The narrow source-coverage disclosure gap is now resolved by the exact loss sentence in both intent.limitations and coverage.omitted_tasks. This pass still does not certify full independent production coverage.",
+    );
+  }
+  assert(same(review.question_reviews.map((entry) => entry.mathematics),
+    priorReview.value.question_reviews.map((entry) => entry.mathematics)), `${lesson}: mathematics review changed`);
+  assert(same(review.source_reviews.map((entry) => entry.independent_solution),
+    priorReview.value.source_reviews.map((entry) => entry.independent_solution)), `${lesson}: frozen source solution changed`);
+  assert(same(review.figure_checks, priorReview.value.figure_checks) &&
+    same(review.new_figure_reviews, priorReview.value.new_figure_reviews), `${lesson}: figure evidence changed`);
+  const blockedSources = review.source_reviews
+    .filter((entry) => entry.coverage.verdict === "blocked")
+    .map((entry) => entry.source_number);
+  assert(same(blockedSources, lesson === "n49" ? ["934"] : []) &&
+    review.source_reviews.every((entry) => entry.coverage.verdict !== "revise"),
+  `${lesson}: remaining source verdicts differ from the narrow repair result`);
+  if (lesson === "n49") {
+    assert(same(review.source_reviews.find((entry) => entry.source_number === "934"),
+      priorReview.value.source_reviews.find((entry) => entry.source_number === "934")),
+    "Source934 blocker/evidence must be retained exactly");
+  }
+
+  const output = {
+    schema: "independent-changed-field-loss-disclosure-comparison-v1",
+    stage: "Changed disclosure fields only; prior full source/view/internal mathematics freezes reused without a repeated pass.",
+    reviewer: structuredClone(priorReview.value.reviewer),
+    authority: "Only current draft.json, authorized exact before-loss-disclosure snapshot, own prior review/final comparison and the ten previously requested append strings. No source seed/solution, learner view, author separate solutions/serializer/answers or optional repair records were re-read for mathematical review. No validator, canonical workflow, render, browser, service or durable operation.",
+    before_draft_path: beforeDraftPath,
+    before_draft_byte_sha256: before.sha256,
+    before_draft_sha256: binding.beforeDraftSnapshot,
+    current_draft_path: currentDraftPath,
+    current_draft_byte_sha256: current.sha256,
+    draft_sha256: currentSnapshot,
+    seed_sha256_reused_from_previous_review: priorReview.value.seed_sha256,
+    revised_view_byte_sha256_reused_from_previous_comparison: priorFinal.value.revised_view_byte_sha256,
+    original_source_view_and_truth_records_untouched: true,
+    source_view_or_mathematics_rechecks: 0,
+    new_option_truth_evaluations: 0,
+    counts_reused_without_new_solving: {
+      sources: priorFinal.value.counts.sources,
+      questions: priorFinal.value.counts.questions,
+      options: priorFinal.value.counts.options,
+      complete_key_sets_compared: priorFinal.value.counts.complete_key_sets_compared,
+      individually_compared_truths: priorFinal.value.counts.individually_compared_truths,
+      correct_proofs_compared: priorFinal.value.counts.correct_proofs_compared,
+      false_programs_independently_executed: priorFinal.value.counts.false_programs_independently_executed,
+      per_option_derivations_and_misconceptions_compared: priorFinal.value.counts.per_option_derivations_and_misconceptions_compared,
+      mathematics_pass_questions: priorFinal.value.counts.mathematics_pass_questions,
+      count_scope: "Prior completed full comparison; zero new mathematical evaluations in this changed-field gate.",
+    },
+    changed_field_counts: {
+      authorized_appended_leaves: binding.expectedAppendCount,
+      actual_appended_leaves: actualDiff.length,
+      replaced_leaves: actualDiff.filter((entry) => entry.operation === "replace").length,
+      removed_leaves: actualDiff.filter((entry) => entry.operation === "remove").length,
+      resolved_loss_disclosure_units: disclosureDecisions.length,
+      remaining_loss_disclosure_revises: 0,
+      remaining_blocked_source_numbers: blockedSources,
+    },
+    exact_json_leaf_diff: actualDiff,
+    all_other_json_equal_proof: {
+      verdict: "pass",
+      method: "Recursively compare the entire before/current JSON for add/remove/replace leaves. Each allowed leaf is the old array length, its prior array prefix is exactly equal, and its new tail equals the previous requested sentence. Remove only those authorized tails from a cloned current JSON and compare the entire reconstructed value with before. Its normal pretty serialization additionally hashes to the exact authorized prior raw-byte SHA256.",
+      diff_equals_exact_prior_requests: true,
+      all_old_array_elements_preserved: true,
+      inverse_json_exactly_equal_to_before: true,
+      inverse_reconstructed_before_byte_sha256: inverseByteSha,
+      inverse_reconstructed_before_raw_byte_sha256_matches: true,
+      unchanged_remainder: [
+        "All question IDs/order/source_numbers.",
+        "Every mode, complete stem, figure reference and option text/ID/order.",
+        "All correct key sets, rationales, derivations and false misconceptions.",
+        "All intent tasks/source solutions/unit reasons/concept blocks/figure observations.",
+        "All original limitation entries and all original omitted_tasks entries.",
+        "All coverage source numbers/question IDs/reasons.",
+        "Schema, seed binding, new_figures and every other JSON value.",
+      ],
+      unchanged_math_evidence_in_updated_review: true,
+      unchanged_source_solutions_in_updated_review: true,
+      unchanged_figure_evidence_in_updated_review: true,
+    },
+    disclosure_decisions: disclosureDecisions,
+    history_preservation: {
+      before_review_path: historyReviewPath,
+      before_review_byte_sha256: priorReview.sha256,
+      before_final_comparison_path: historyFinalPath,
+      before_final_comparison_byte_sha256: priorFinal.sha256,
+      preservation_method: "Copy exact original bytes with exclusive creation before updating the active review.",
+      exact_byte_copies_confirmed: true,
+      prior_final_comparison_also_left_unchanged_at_original_path: priorFinalPath,
+    },
+    active_review_path: reviewPath,
+    active_review_byte_sha256: hash(encode(review)),
+    active_review_draft_sha256: currentSnapshot,
+    active_review_source_verdict_counts: {
+      pass: review.source_reviews.filter((entry) => entry.coverage.verdict === "pass").length,
+      revise: review.source_reviews.filter((entry) => entry.coverage.verdict === "revise").length,
+      blocked: blockedSources.length,
+    },
+    production_loss_disclosure_outcome: "pass",
+    all_nonblocked_checks_outcome: "pass",
+    outcome: binding.outcome,
+    remaining_findings: lesson === "n49" ? [{
+      verdict: "blocked",
+      source_number: "934",
+      subtask: "4",
+      evidence: "The prior exact blocked source review remains unchanged. The conditional explanation is retained; the unique original fourth numerical result still lacks a confirmed divisor. None of these disclosure-only additions resolves or guesses it.",
+      further_author_repair_requested: false,
+    }] : [],
+    no_author_edits_performed: true,
+    validator_canonical_workflow_render_browser_service_runs: 0,
+    next_step: "Current hash-bound standard-format review is ready for the parent's separately controlled final gate. No further semantic repair or unchanged-view/math rerun is requested.",
+  };
+  pending.push({
+    reviewPath,
+    outputPath,
+    historyDirectory,
+    historyReviewPath,
+    historyFinalPath,
+    priorReview,
+    priorFinal,
+    review,
+    output,
+  });
+}
+
+for (const retained of retainedInputs) {
+  assert(read(retained.path).sha256 === retained.sha256, `Input changed during changed-field comparison: ${retained.path}`);
+}
+for (const item of pending) {
+  fs.mkdirSync(item.historyDirectory, { recursive: true });
+  fs.writeFileSync(item.historyReviewPath, item.priorReview.bytes, { flag: "wx" });
+  fs.writeFileSync(item.historyFinalPath, item.priorFinal.bytes, { flag: "wx" });
+  assert(hash(fs.readFileSync(item.historyReviewPath)) === item.priorReview.sha256 &&
+    hash(fs.readFileSync(item.historyFinalPath)) === item.priorFinal.sha256,
+  "Exact history byte preservation failed; active review not replaced");
+}
+for (const item of pending) {
+  assert(read(item.reviewPath).sha256 === item.priorReview.sha256, "Active review changed externally after preservation");
+  fs.writeFileSync(item.reviewPath, encode(item.review));
+  assert(hash(fs.readFileSync(item.reviewPath)) === item.output.active_review_byte_sha256,
+    "Updated review byte binding differs");
+  fs.writeFileSync(item.outputPath, encode(item.output), { flag: "wx" });
+  console.log(JSON.stringify({
+    current_draft_byte_sha256: item.output.current_draft_byte_sha256,
+    current_draft_snapshot_sha256: item.output.draft_sha256,
+    outcome: item.output.outcome,
+    active_review_path: item.reviewPath,
+    active_review_byte_sha256: item.output.active_review_byte_sha256,
+    comparison_path: item.outputPath,
+    comparison_byte_sha256: hash(fs.readFileSync(item.outputPath)),
+    changed_field_counts: item.output.changed_field_counts,
+    history_preserved_exact: true,
+  }));
+}

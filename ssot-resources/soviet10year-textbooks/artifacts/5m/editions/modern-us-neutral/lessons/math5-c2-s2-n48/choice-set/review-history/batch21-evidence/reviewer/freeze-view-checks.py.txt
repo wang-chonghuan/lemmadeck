@@ -1,0 +1,629 @@
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+TMP = Path(__file__).resolve().parent.parent
+
+
+def load(path):
+    return json.loads(path.read_text())
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+F48 = {
+    "896": ("Universal obtuse-angle construction, including equal radial lengths, intersecting equal arcs and interior direction. Fig-153 is explicitly a point-name illustration, not a substituted acute numerical angle.", ["Independent creation of a chosen obtuse angle and physically executing compass/folding construction are replaced by identifying complete valid procedures."]),
+    "897": ("Both reflected points, radial distances, order and AB distance are judged for all choices, including a possible vertex point fixed by reflection. The axis is the complete MP line.", ["Creating the acute angle, its bisector and the two reflected points on paper is replaced by recognizing a complete location record."]),
+    "898": ("All three interior angle bisectors for every nondegenerate triangle, with actual method and interior concurrency. The competitors are medians/altitudes, not only differently worded copies.", ["Drawing an arbitrary triangle and independently carrying out three compass constructions is replaced by recognizing the construction record and concurrency."]),
+    "899": ("The w,h>0 rectangle model covers square and nonsquare rectangles. The requested directions are universally valid interior rays from all four vertices; no universal concurrency or inside central-square claim is inserted.", ["Choosing/drawing the rectangle and physically constructing all four bisectors is replaced by a supplied coordinate model and direction recognition.", "Generating a geometric model is not tested: corner coordinates are given and the learner identifies directions."]),
+    "900": ("Both original cases are retained explicitly as two complete intersecting lines, not finite segments or rays. Complete records identify counts and axes.", []),
+    "901": ("Each of the nine original expressions is present unchanged as its own computational response unit; equal operation precedence and every mixed number/divisor are retained.", []),
+    "902": ("Area/width inference and perimeter target remain; no area/perimeter substitution.", ["The learner selects a perimeter value rather than writing the length inference and perimeter derivation."]),
+    "903": ("Equal rectangle areas, correct second length and width target preserved.", ["Writing the area-equality model and second-width derivation is replaced by numerical-answer recognition."]),
+    "904": ("Total-expenditure ratio 14:1 and unequal lengths retained; requested twill/wool price order is explicit.", ["Independent expenditure-variable/equation generation and written unit-price solution are not produced."]),
+    "905": ("Total-price ratio and unequal lengths retained; complete unit-price pairs and dearer-cloth judgment prevent a bare total-price comparison.", ["The total-expenditure model and written unit-price comparison are recognized, not independently written."]),
+    "906": ("Both signed-decimal expressions are preserved separately, with original parentheses and fixed divisors.", []),
+    "907": ("Complete right-angle bisection method and half-angle outcomes are compared; arbitrary initial direction is retained.", ["Making the right angle and physically executing its bisection are replaced by method/result recognition."]),
+    "908": ("Both adjacent supplementary interior bisectors and their universal included-angle relation remain. Options do not spell out compass steps; the learner recognizes the outcome, not independently produces the two constructions.", ["Drawing the adjacent supplementary pair and constructing both bisectors are not physically elicited.", "Writing the half-angle sum proof is replaced by choosing a universal included-angle record."]),
+    "909": ("All three initial decimal conversions, three daily masses, two-day base for Wednesday, and total appear together in every complete alternative.", ["Independent written decimal conversion and staged daily model/derivation are replaced by whole-record recognition."]),
+    "910": ("Both original linear equations are preserved separately, including the mixed-number coefficient.", []),
+}
+
+F49 = {
+    "911": ("Both original rational proportions are each a proposition in native multiple mode. Two true propositions are still two mathematical judgments, not an automatic defect from lack of a false option.", []),
+    "912": ("All four original ratio equations are retained separately. The variable divisor a's nonzero condition is explicit.", []),
+    "913": ("Same-material density, both volumes and requested mass retained.", ["Independent density/proportion-model generation and written derivation are replaced by mass recognition."]),
+    "914": ("Same-yield assumption is made explicit without changing the original cottonseed data.", ["Independent ratio/proportion model and written solution are not elicited."]),
+    "915": ("Retained 15% rather than lost 85% and the original 120 kg are retained.", ["Writing the percentage model is replaced by value recognition."]),
+    "916": ("Germinated/total base and percent output retained.", ["The learner does not independently write the germination-rate ratio or percentage conversion."]),
+    "917": ("57 is the survived 95% of an unknown original count; reverse-percentage task remains.", ["Writing an equation for the original tree count is replaced by numerical recognition."]),
+    "918": ("Iron and impurity share the ore-mass base; both 70% and 30% and the recovered-iron datum retained.", ["Independent ore-mass model and two-stage written mass derivation are not elicited."]),
+    "919": ("Map/ground units and constant scale retained; target is ground km.", ["Independent scale model and written unit/proportion derivation are replaced by recognition."]),
+    "920": ("Both original scale denominators and 3145 km retained, with explicit requested cm and original order.", ["Independent unit conversion and scale model are not written; the complete two-length record is selected."]),
+    "921": ("The selected straight-angle half-plane and interior bisector direction are explicit; complete construction and right-angle classification remain.", ["Making the straight angle and physically constructing its bisector are replaced by procedure/result recognition."]),
+    "922": ("All four original rational expressions appear as distinct unchanged units with left-to-right product/division.", []),
+    "923": ("All six expressions remain; first four ask for every original domain restriction. Domain-bearing alternatives are genuinely different even where simplified values match.", []),
+    "924": ("Both residual-stock problems retain original quantities/rates/multipliers. Positive residual/continuous-use stage is explicit, and each alternative contains time and both stocks.", ["Independent variable/equation or proportion-model generation is replaced by checking supplied time/residual triples.", "No written derivation of physical time limits is elicited."]),
+    "925": ("Constant-speed travel ratio, 3/5 h, 7 1/2 km and requested 2 1/2 h retained.", ["Independent speed/distance model and written derivation are not produced."]),
+    "926": ("Distinct pedestrian rate data and 2 1/2 h retained; it is not the same cyclist problem despite similar form.", ["Independent speed/distance model and written derivation are not produced."]),
+    "927": ("All four original fractions and their ordered lowest-term outputs are present in every alternative.", ["Writing each gcd/cancellation derivation is replaced by complete-row recognition."]),
+    "928": ("Five distinct freely chosen points, full line and both queried ordinates retained; multiple mode correctly allows more than one valid five-point set.", ["Independently choosing/plotting the five points and drawing the full line are replaced by recognizing supplied records.", "Generating the relation y=x+1 and reading queried coordinates from one's own plot are not independently produced."]),
+    "929": ("Full line through the two given points, not segment AB, and all four queried ordinates retained in complete line/point records.", ["Drawing the line, independently deriving its equation and constructing the four points are replaced by supplied model/coordinate recognition."]),
+    "930": ("Both horizontal closed segments retain fixed y and inclusive endpoint ranges; no whole-line quantifier.", ["Physically plotting endpoints and drawing each segment are replaced by set/range recognition."]),
+    "931": ("Both vertical closed segments retain fixed x and inclusive ordinate ranges; coordinate direction is distinguished.", ["Physically plotting endpoints and drawing each segment are replaced by set/range recognition."]),
+    "932": ("Actual fig-154, baseline 1200 m, correct A/C angles and 1:20,000 preserved. View makes approximate output precise by rounding actual AB to nearest 10 m; this is a stated output convention, not a claim the supplied schematic is a scale drawing.", ["Independently drawing the 6 cm baseline and 45/65-degree rays and physically measuring one's own AB are replaced by recognizing a construction/distance record.", "Actual ruler/protractor precision is not assessed. Nearest-10-m benchmark recognition does not prove an independently measured 5.7868 cm plan."]),
+    "933": ("Both whole piecewise graphs retain 2 h delay, common meeting, 1 h rest, original directions/speeds and finite arrival endpoints. The view explicitly fixes common t and distance-from-A axes and includes predeparture waiting.", ["Selecting graph vertices does not require drawing axes, scales or the actual joined segments.", "Common-axis model generation, breakpoint derivation and production of both complete motion graphs are replaced by complete-record recognition."]),
+    "934": ("First three unchanged decimal computations plus an explicit parameter-only fourth notice are present. The notice tests conditional algebra/nonuniqueness without guessing the unresolved divisor; fourth numerical recovery remains blocked.", []),
+    "935": ("Both original decimal proportions are individually judged in multiple mode; distinct from rational pair 911 despite same outcome.", []),
+    "936": ("Both original mixed-number proportion equations retained, including first variable-divisor restriction.", []),
+    "937": ("Same apple-to-jam yield and original masses retained.", ["Independent yield/proportion model and written solution are not elicited."]),
+    "938": ("Same unit price and money-to-weight direction retained.", ["Independent price/proportion model and written derivation are not elicited."]),
+    "939": ("Required fat mass and 4.5% fish base retain reverse-percent direction.", ["Independent reverse-percentage model and written solution are not elicited."]),
+    "940": ("Direct 5.8% of original 15 kg fish target retained.", ["Independent percentage model and written calculation are not elicited."]),
+    "941": ("Fat/total rather than complement or reversed base retained, with requested percent output.", ["Independent composition-rate ratio and percent conversion are not written."]),
+    "942": ("Both original signed-decimal linear equations retained separately.", []),
+    "943": ("Both original parenthesized-denominator decimal expressions retained separately.", []),
+}
+
+
+def source_of(q):
+    return q["id"].split("-")[1]
+
+
+def freeze_fidelity(lesson, data):
+    view_path = TMP / f"5m-{lesson}/view.json"
+    source_path = TMP / f"reviewer-5m-{lesson}/source-solutions.json"
+    view = load(view_path)
+    source = load(source_path)
+    records = []
+    for q in view["questions"]:
+        source_number = source_of(q)
+        evidence, losses = data[source_number]
+        records.append({
+            "question_id": q["id"],
+            "source_number_inferred_from_visible_id_and_original_content": source_number,
+            "task_fidelity": {"verdict": "pass", "evidence": evidence},
+            "redundancy": {
+                "verdict": "pass",
+                "evidence": (
+                    f"{q['id']} represents its stated original mathematical subtask. "
+                    "Other package units use distinct inputs, geometric domains or source subparts; "
+                    "shared methods and complete-row recognition alone do not make this redundant. "
+                    + ("A/B are different valid five-point choices, so their shared line/conclusions do not erase the original freedom of point selection." if source_number == "928" else "")
+                ),
+            },
+            "answer_leakage_before_mathematics": {
+                "verdict": "pass",
+                "evidence": (
+                    "No source selector, correct/incorrect marker, rationale, answer declaration or "
+                    "grading cue appears in the learner stem/options. Candidate procedures and complete "
+                    "models are alternatives, not facts predeclared true. Cross-unit numerical copying "
+                    "does not supply this unit's answer."
+                ),
+                "qualification": "Position-pattern judgment will use only independently established true sets in the next phase, never an author key.",
+            },
+            "production_losses": losses,
+        })
+    coverage = []
+    for s in source["source_reviews"]:
+        number = s["source_number"]
+        ids = [q["id"] for q in view["questions"] if source_of(q) == number]
+        evidence, losses = data[number]
+        coverage.append({
+            "source_number": number,
+            "visible_question_ids": ids,
+            "verdict": "blocked" if lesson == "n49" and number == "934" else "pass",
+            "evidence": evidence,
+            "production_losses": losses,
+            "omitted_or_unresolved_tasks": [
+                "934(4) unique numerical value cannot be recovered from the unconfirmed divisor; the conditional/nonuniqueness task is covered, not the missing numerical result."
+            ] if lesson == "n49" and number == "934" else [],
+            "internal_loss_disclosure_assessment": "Not authorized/read in pure-view phase. These exact losses must survive later intent/coverage comparison; recognition coverage is not full production coverage.",
+        })
+    result = {
+        "schema": "independent-pure-view-fidelity-first-v1",
+        "stage": "fidelity/redundancy/leakage/coverage recorded before option-truth file",
+        "view_path": str(view_path),
+        "view_byte_sha256": sha(view_path),
+        "source_freeze_path": str(source_path),
+        "source_freeze_byte_sha256": sha(source_path),
+        "source_images": "Reused hash-bound actual observations from own image-observations.json; no reopening or authored-image approval.",
+        "read_boundary": "Pure view plus original seed and own frozen source evidence only; no draft, ready, author solutions, serializer, rationales, keys, history choices, validators, canonical or render.",
+        "question_count": len(view["questions"]),
+        "option_count": sum(len(q["options"]) for q in view["questions"]),
+        "question_reviews": records,
+        "source_coverage": coverage,
+        "whole_package_dependencies": [
+            "n48 geometry construction methods recur in 896/898/907 by source design; recognize correctness for each domain rather than infer a key from a copied declaration.",
+            "Same numerical results on distinct n48-901 expressions do not eliminate those computational tasks.",
+            "n49-925 has 11.25 as a competitor while n49-926 has its own distinct valid rate; neither question declares the other's result.",
+            "n49-928 and 929 specify different full lines; 930/931 are closed segments and must not inherit a whole-line domain.",
+            "n49-933 uses explicitly fixed common axes; no other question precomputes its meeting/rest/arrival tuple.",
+            "Ratio/percentage source parallels are practice of distinct inputs, not duplicated answer slots.",
+        ],
+        "pending": "Independent complete option truth sets and position-cycle assessment.",
+    }
+    target = TMP / f"reviewer-5m-{lesson}/view-fidelity-first.json"
+    if target.exists():
+        raise RuntimeError(f"Do not overwrite frozen first-pass fidelity: {target}")
+    target.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+    print(json.dumps({"lesson": lesson, "fidelity_file_sha256": sha(target),
+                      "questions": result["question_count"], "options": result["option_count"]}))
+
+
+if __name__ == "__main__" and sys.argv[1:] == ["fidelity"]:
+    freeze_fidelity("n48", F48)
+    freeze_fidelity("n49", F49)
+
+
+def R(correct, solution, *evidence):
+    return {"correct": list(correct), "independent_solution": solution,
+            "option_evidence": dict(zip("ABCD", evidence))}
+
+
+M48 = {
+    "896": R("AB",
+        "For every 90<theta<180, equal OC,OD and equal CK,DK plus shared OK yield SSS equal half angles; a folding line that superposes the rays is their interior bisector support.",
+        "OC=OD>0 places O on the perpendicular bisector of CD. Equal arcs with R>CD/2 have an interior nonvertex intersection on that support. Interior OK halves theta, so the stated construction is universally valid.",
+        "Superposing the two bounding rays by folding fixes their common vertex; the fold line is the interior angle-bisector support. Taking its ray into the angle supplies the required direction.",
+        "Not universally valid with unequal radial lengths. Counterexample: O=(0,0), C=(1,sqrt(3)), D=(1/2,-sqrt(3)/2), so the angle is 120 degrees and OC=2OD. K=(3/2,sqrt(3)/6) is inside the angle and CK^2=DK^2=7/3, but OK is not the horizontal interior bisector. Thus a permitted equal-arc choice fails.",
+        "A ray at theta/3 leaves 2theta/3 on the other side; theta>0 makes those unequal."),
+    "897": R("A",
+        "Reflection in the full interior-bisector line sends each bounding ray to the other and fixes M; every radial distance, order and pairwise distance is preserved, including a vertex point.",
+        "Each point goes to the other ray at its own original radial distance; reflection is an isometry and preserves radial order. If a point is M, it remains M.",
+        "For MA=1, MB=2 this swaps the required distances and original/image identities. Reflection must give MA'=1, MB'=2, not the reverse; it preserves, not reverses, radial order.",
+        "A nonvertex point of a bounding ray is not on the interior bisector line of a nondegenerate acute angle, so it cannot remain fixed on the original ray."),
+    "898": R("A",
+        "The equal-distance/equal-arc construction at each vertex yields all three interior bisectors; these meet at the incenter inside every nondegenerate triangle.",
+        "SSS at each vertex establishes equal half angles. Equidistance from the three side supports proves concurrence at the interior incenter.",
+        "These are medians. For A=(0,0),B=(4,0),C=(0,3), A's median has direction (2,1.5), not the 45-degree bisector direction of its right angle. Interior centroid concurrence does not make medians angle bisectors.",
+        "These are altitudes. In the same right triangle the A-altitude has slope 4/3, not 1, and the orthocenter is the boundary vertex A, not always an interior point."),
+    "899": R("A",
+        "Under the universal arbitrary-rectangle quantifier, all four right-angle interior bisector directions are respectively (1,1),(-1,1),(-1,-1),(1,-1).",
+        "Each listed direction points inward from its corner and makes equal 45-degree angles with the horizontal/vertical sides for every w,h>0.",
+        "These are diagonal directions; for w=2,h=1, A's direction (2,1) makes atan(1/2), not 45 degrees, with AB. This option happens to be valid in the allowed square case w=h but is not valid for every rectangle, as the stem requires.",
+        "At A the direction (1,-1) goes outside the interior quadrant; at the other corners the listed directions similarly select exterior half-angle directions."),
+    "900": R("A",
+        "Any reflection axis of the union fixes its unique intersection. For nonperpendicular supports only the two angle-bisector supports interchange the lines; for perpendicular supports the two originals also preserve the union.",
+        "Exactly 2 axes in the nonperpendicular case and 4 in the perpendicular case, with precisely the described axes.",
+        "The original nonperpendicular lines are not axes. At a 60-degree crossing reflection in one sends the other's 60-degree support to 120 degrees, a support absent from the union.",
+        "In the perpendicular case reflection in either original support preserves both lines. Omitting these two axes leaves an incomplete count."),
+    "901-1": R("A", "(12/3)*(6/7)/(4/7)=4*(6/7)*(7/4)=6.",
+        "6 is the exact quotient/product result.",
+        "96/49=4*(6/7)*(4/7) multiplies by the divisor rather than its reciprocal and is not 6.",
+        "3/8=(6/7)/4/(4/7) divides by the first factor instead of multiplying; it is not 6."),
+    "901-2": R("B", "(11/12)*(24/7)*(21/22)=3; multiplication/division are left associative.",
+        "49/192=(11/12)*(7/24)*(21/22) is the all-multiplication value, not 3.",
+        "3 follows cancellation 11/22,24/12 and21/7.",
+        "484/147=(11/12)/((7/24)*(21/22)) wrongly groups both later factors into the divisor."),
+    "901-3": R("C", "(16/7+8/7)*(7/6)=4.",
+        "1/2 differs from the exact value 4; the original mixed-number sum is 24/7 and multiplier 7/6.",
+        "24/7 is only the sum before multiplication by 7/6.",
+        "4 is the complete sum-then-product result."),
+    "901-4": R("A", "(51/8-33/8)/(5/2)=(9/4)*(2/5)=9/10.",
+        "9/10 uses the mixed-number difference and reciprocal of5/2.",
+        "45/8=(9/4)*(5/2) multiplies where the source divides.",
+        "4/5=(6-4)/(5/2) drops the fractional parts of the minuend/subtrahend."),
+    "901-5": R("B", "(15/16)*(8/3)*(3/4)=15/8.",
+        "135/512=(15/16)*(3/8)*(3/4) replaces division with multiplication.",
+        "15/8 is the left-to-right exact result.",
+        "10/3=(15/16)/((3/8)*(3/4)) incorrectly places the final multiplication inside the divisor."),
+    "901-6": R("C", "(13/14)*(7/25)*(25/13)=1/2.",
+        "169/1250=(13/14)*(7/25)*(13/25) uses the divisor without reciprocating it.",
+        "98/169 is unequal to1/2: cross products196 and169 differ.",
+        "1/2 follows canceling13,25 and7/14."),
+    "901-7": R("A", "(23/5-7/5)*(15/8)=(16/5)*(15/8)=6.",
+        "6 is the full mixed-number result.",
+        "14/5=(16/5)*(7/8) omits the integer1 in the final mixed multiplier.",
+        "45/8=(4-1)*(15/8) drops the fractional parts in the initial difference."),
+    "901-8": R("B", "(37/12+17/12)/(3/2)=(9/2)*(2/3)=3.",
+        "27/4=(9/2)*(3/2) multiplies instead of divides.",
+        "3 is the exact sum-then-division result.",
+        "9/2 is the sum before the final division."),
+    "901-9": R("C", "(63/8-27/8)/(9/2)=(9/2)/(9/2)=1.",
+        "81/4=(9/2)*(9/2) replaces division with multiplication.",
+        "8/9=(7-3)/(9/2) drops the fractional parts in the difference.",
+        "1 is the exact quotient of equal9/2 quantities."),
+    "902": R("A", "Length=(15/64)/(3/8)=5/8 m; perimeter=2*(5/8+3/8)=2 m.",
+        "2 m is the complete perimeter.",
+        "1 m is only length+width, missing the factor2.",
+        "237/256 m=2*((15/64)*(3/8)+3/8) treats area times width as length."),
+    "903": R("B", "First area=(28/5)*(19/8)=133/10 m^2; second width=(133/10)/(16/5)=133/32 m.",
+        "191/40=28/5+19/8-16/5 preserves semiperimeter, not the prescribed equal area.",
+        "133/32 m satisfies second area (16/5)*(133/32)=133/10.",
+        "32/133 m is the reciprocal of the required width; it cannot give the prescribed area."),
+    "904": R("C", "Twill expenditure225/15=15 dollars, wool210 dollars; unit prices are15/(15/2)=2 and210/(35/4)=24 dollars/m.",
+        "24,2 reverses the requested twill-then-wool answer order.",
+        "The pair45/26,315/13 makes wool unit price14 times twill unit price. Its expenditure ratio is49/3, not14, even though total expenditure remains225.",
+        "2 dollars/m twill and24 dollars/m wool give totals15 and210, with210=14*15."),
+    "905": R("A", "Oilcloth total24 dollars, printed total16; prices1/2 and3/2 dollars/m, so oilcloth is dearer.",
+        "Both unit prices give original totals16,24 and the required2/3 ratio.",
+        "The given prices yield totals160/7 and120/7, whose ratio is4/3 rather than2/3.",
+        "These prices yield printed total64 and oilcloth total32/3, not total40, and the dearer-cloth conclusion is reversed."),
+    "906-1": R("B", "(-0.9)*(-179.58)/8.76=161.622/8.76=18.45.",
+        "Two negative factors give a positive quotient; -18.45 has the wrong sign.",
+        "18.45 is the exact decimal value.",
+        "161.622 is only the product before dividing by8.76."),
+    "906-2": R("C", "(-8.1)*7.64/3.82=(-8.1)*2=-16.2.",
+        "61.884 is the unsigned product magnitude before the required division and also has the wrong sign.",
+        "16.2 has the wrong sign for a negative factor times positive factor divided by positive.",
+        "-16.2 uses7.64/3.82=2 correctly."),
+    "907": R("A", "Equal radial points and equal interior intersecting arcs produce the interior right-angle bisector, giving45 and45.",
+        "OC=OD,CK=DK and commonOK give equal half angles; their sum90 makes each45.",
+        "The lineCD through nonvertex points of the two perpendicular rays does not pass throughO, so cannot be an angle-bisector ray fromO.",
+        "A30-degree ray leaves60 degrees on the other side; the claim of two30-degree halves is false."),
+    "908": R("B", "The interior-bisector angle is alpha/2+(180-alpha)/2=90 degrees for0<alpha<180.",
+        "alpha/2 is strictly less than90 throughout the allowed nondegenerate domain; it is just one half-angle.",
+        "90 degrees is the universal included angle of the two interior bisectors.",
+        "180-alpha equals90 only whenalpha=90; e.g.alpha=60 gives this option120, while the actual bisector angle remains90."),
+    "909": R("C", "Conversions212.5,2.4,0.4; Tuesday510, Wednesday(212.5+510)*0.4=289; total1011.5 t.",
+        "212 1/2 is212.5, not212.05. Although the later numbers are consistent with212.05, the initial conversion violates the source.",
+        "2 2/5=2.4, not2.04, and2/5=.4, not.04; the record's433.5 and25.84 therefore use altered data.",
+        "All conversions, daily masses and total match the original two-day Wednesday base.",
+        "Wednesday204=510*.4 uses Tuesday alone; the prescribed base is722.5 and yields289. The total926.5 is consequently wrong."),
+    "910-1": R("A", "(x-8)*(2/5)=2 givesx-8=5, x=13.",
+        "x=13 substitutes to5*(2/5)=2.",
+        "x=44/5 gives(x-8)*(2/5)=8/25, not2.",
+        "x=25 gives17*(2/5)=34/5, not2."),
+    "910-2": R("B", "(7/3)x-7/3=7/3 givesx-1=1, x=2.",
+        "x=1 makes the left side0, not7/3.",
+        "x=2 makes the left side14/3-7/3=7/3.",
+        "x=0 makes the left side-7/3, not7/3."),
+}
+
+M49 = {
+    "911": R("AB", "Both ordered positive-rational proportions are true: their quotients are respectively4/5 and3/2.",
+        "(2/3)/(5/6)=4/5=(4/3)/(5/3); outer and inner products are both10/9.",
+        "(4/3)/(8/9)=3/2=(12/5)/(8/5); outer and inner products are both32/15."),
+    "912-1": R("A", "y=51.6*(11.2/34.4)=51.6*(14/43)=16.8.",
+        "16.8/51.6=14/43, as required.",
+        "112/15=11.2*34.4/51.6 uses the wrong placement of51.6; it differs from84/5.",
+        "5547/35=51.6*34.4/11.2 inverts the right-hand ratio; it differs from84/5."),
+    "912-2": R("B", "(4/7)/(20/21)=3/5; m=(25/6)*(3/5)=5/2.",
+        "(125/18)/(25/6)=5/3, the reciprocal of the required3/5.",
+        "(5/2)/(25/6)=3/5.",
+        "1000/441=(25/6)*(4/7)*(20/21) multiplies the right ratio's terms instead of dividing."),
+    "912-3": R("C", "7.62/6.35=6/5. Since a is a nonzero divisor, a=67.8*(5/6)=56.5.",
+        "a=2034/25=81.36 gives67.8/a=5/6 instead of6/5.",
+        "16129/22600=(6.35*7.62)/67.8 is not113/2; the original proportion's unique nonzero solution is113/2.",
+        "a=56.5 is nonzero and67.8/56.5=1.2=7.62/6.35."),
+    "912-4": R("A", "(3/14)/(22/7)=3/44; k=(11/3)*(3/44)=1/4.",
+        "(1/4)/(11/3)=3/44.",
+        "(121/49)/(11/3)=33/49, not3/44.",
+        "(9/484)/(11/3)=27/5324, not3/44."),
+    "913": R("B", "Density46.8/6=7.8 g/cm^3, so2.5 cm^3 weighs19.5 g.",
+        "112.32=46.8*(6/2.5) reverses direct volume/mass scaling.",
+        "19.5/2.5=7.8, the original density.",
+        "702=46.8*6*2.5 multiplies by the original volume rather than dividing to get density."),
+    "914": R("C", "7/21=1/3, so oil yield5.1/3=1.7 kg.",
+        "15.3=5.1*3 increases yield for a threefold smaller seed mass.",
+        "5.3/7 is not the original oil/seed ratio5.1/21; proportional scaling requires1.7.",
+        "1.7*3=5.1 matches the threefold source seed mass."),
+    "915": R("A", "Retained dried mass=120*.15=18 kg.",
+        "18 kg is15% of120 kg.",
+        "102 kg is85%, the complementary loss, not dried yield.",
+        "1800=120*15 fails the percent-to-fraction conversion."),
+    "916": R("B", "170/200=.85=85%.",
+        "15% is the nongermination rate30/200, not170/200.",
+        "85% equals the germinated/total share.",
+        "0.85% means0.0085 of the total, not0.85."),
+    "917": R("C", ".95N=57 givesN=60.",
+        "57 original trees would have54.15 survivors at95%, not the given57.",
+        "1140=57/.05 uses the complementary5% rather than survival95%.",
+        "60*.95=57 survivors."),
+    "918": R("A", "Ore mass73.5/.7=105 t; impurity105*.3=31.5 t.",
+        "31.5=(30/70)*73.5 uses the common ore base correctly.",
+        "22.05=.3*73.5 incorrectly uses the recovered iron as the ore base.",
+        "245=73.5/.3 incorrectly treats iron as a30% share and is not impurity mass."),
+    "919": R("B", "72/3.6=20 km/cm;12.6*20=252 km.",
+        "144/7=72*(3.6/12.6) uses inverse map-length scaling.",
+        "252/12.6=20 km/cm, the original scale.",
+        ".63=12.6/20 reverses the multiplication by ground km per map cm."),
+    "920": R("C", "3145 km=314500000 cm; divide by1000000 and200000 to get314.5 and1572.5 cm.",
+        "1572.5,314.5 swaps the prescribed scale order.",
+        "3.145,15.725 are the correct lengths in meters, not the options' centimeters; each stated cm length is100 times too small.",
+        "314.5 cm and1572.5 cm convert back to3145 km at their corresponding scales."),
+    "921": R("A", "Equal-distance points on opposite rays have perpendicular bisector through the vertex; its ray into the selected half-plane makes90 degrees with both rays.",
+        "Equal arcs meeting in the chosen half-plane locate a point of that perpendicular bisector. The resulting ray is the required interior straight-angle bisector.",
+        "An original bounding ray makes0 degrees with itself and180 with its opposite, not90 with each.",
+        "A45-degree ray in the chosen half-plane leaves135 degrees to the other side, not another45."),
+    "922-1": R("B", "(7/3)/(8/3)*(8/5)=7/5.",
+        "448/45=(7/3)*(8/3)*(8/5) replaces the first division by multiplication.",
+        "7/5 follows reciprocal multiplication left to right.",
+        "35/64=(7/3)/((8/3)*(8/5)) incorrectly groups the last product in the divisor."),
+    "922-2": R("C", "(9/4)*(12/13)/(27/8)=8/13.",
+        "729/104=(27/13)*(27/8) multiplies where the source divides.",
+        "13/18 differs from8/13 because13*13=169 while8*18=144.",
+        "8/13 is the complete exact value."),
+    "922-3": R("A", "(10/9)*(11/5)/(22/3)=(22/9)*(3/22)=1/3.",
+        "1/3 follows complete cancellation.",
+        "484/27=(22/9)*(22/3) replaces division by multiplication.",
+        "25/363 is not1/3 since75!=363."),
+    "922-4": R("B", "(11/3)/(22/3)*(2/5)=1/5.",
+        "484/45=(11/3)*(22/3)*(2/5) replaces division by multiplication.",
+        "1/5 is the left-associative value.",
+        "5/4=(11/3)/((22/3)*(2/5)) wrongly treats the later product as one divisor."),
+    "923-1": R("C", "5a/(7a)=5/7 only on the original domain a!=0.",
+        "The value5/7 is correct for nonzero a, but 'all real a' wrongly includes a=0 where the original expression is0/0.",
+        "For any nonzero a the quotient is5/7, not5/6; e.g.a=1 gives5/7.",
+        "5/7 with a!=0 preserves both value and original domain."),
+    "923-2": R("A", "6k/(-k)=-6 for k!=0.",
+        "-6 with k!=0 is exactly the original simplification/domain.",
+        "The denominator is-k, so the constant is negative; at k=1 the value is-6, not6.",
+        "At k=0 the original expression is0/0; 'all real k' adds an invalid input."),
+    "923-3": R("B", "3c/(9c)=1/3 only for c!=0.",
+        "2/9 omits the first c in the numerator; at c=1 the source value is3/9=1/3.",
+        "1/3 with c!=0 preserves the original domain and value.",
+        "At c=0 the source is0/0, so all-real-c wording is false."),
+    "923-4": R("C", "(6-9k)/(9+15k)=(2-3k)/(3+5k), original domain k!=-3/5.",
+        "The denominator was not fully divided by3: at k=1 this gives-1/18, whereas the source is-1/8. It also introduces an extra singularity k=-1/5.",
+        "Although the expression matches, k!=0 wrongly excludes valid0 and admits forbidden-3/5; thus it does not preserve all original restrictions.",
+        "Dividing numerator and denominator by3 retains the exact exclusion k=-3/5."),
+    "923-5": R("A", "(20+44)/(56-12)=64/44=16/11.",
+        "16/11 is the exact simplified fraction.",
+        "16/17=64/(56+12) changes denominator subtraction to addition.",
+        "4/11=16/44 loses the numerator factor4 and is one quarter of the correct value."),
+    "923-6": R("B", "(120-70)/(30+60)=50/90=5/9.",
+        "19/9=(120+70)/90 changes numerator subtraction to addition.",
+        "5/9 is the exact simplified fraction.",
+        "5/3=50/30 omits the denominator term60."),
+    "924-1": R("A", "104-3t=(5/2)*(72-5t) gives t=8, stocks80 and32 L, with0<=t<14.4.",
+        "At t=8 stocks are80,32, positive and in the stated stage;80/32=2.5.",
+        "The two stated stocks agree with t=76/7 but their ratio is(500/7)/(124/7)=125/31, not2.5.",
+        "The stocks agree with t=152/31 but ratio2768/1472=173/92, not5/2."),
+    "924-2": R("B", "135-5d=(7/2)*(150-7d) givesd=20, stocks35 and10 t, within0<=d<150/7.",
+        "At780/59 days the stated stocks are correct, but4065/3390=271/226, not3.5.",
+        "20 days gives35 and10 t; both positive and35/10=3.5.",
+        "215/7 days exceeds150/7 and produces negative stocks-130/7,-65, outside the explicit stage; even their ratio is2/7 rather than3.5."),
+    "925": R("C", "Speed=(15/2)/(3/5)=25/2 km/h; for5/2 h distance125/4=31.25 km.",
+        "11.25=(15/2)*(3/5)*(5/2) multiplies original time rather than dividing to find speed.",
+        "1.8=(15/2)*(3/5)/(5/2) reverses both time roles; it is not125/4.",
+        "31.25 km follows the same25/2 km/h speed."),
+    "926": R("A", "Speed=(3/2)/(1/3)=9/2 km/h; distance(9/2)*(5/2)=45/4=11.25 km.",
+        "11.25 uses the same9/2 km/h speed.",
+        "1.25=(3/2)*(1/3)*(5/2) uses distance times original time instead of dividing.",
+        ".2=(3/2)*(1/3)/(5/2) uses reversed time factors; it is not45/4."),
+    "927": R("B", "Gcds120,500,270,850 produce ordered reduced fractions3/4,5/7,2/3,2/3.",
+        "Already the first value2/3 differs from360/480=3/4; the other proposed values also differ from their source fractions.",
+        "All four values are exact and in lowest terms.",
+        "4/3,7/5,3/2,3/2 are reciprocals, not reductions of the original fractions."),
+    "928": R("AB", "Every requested point satisfies y-x=1, so the full line is y=x+1; at3.5,-2.25 the ordinates are4.5,-1.25. Five-point choice is not unique.",
+        "Each of the five distinct points has y-x=1; both queried points satisfy the same line, so the full record is valid.",
+        "This different five-point set also has y-x=1 for all five distinct points; line and both queried coordinates are correct. It is a genuinely permitted second choice, not a false duplicate.",
+        "These points and queried answers obey y=x-1, violating 'ordinate greater by1'; e.g.(-2,-3) has y-x=-1.",
+        "These obey y=1-x, not y=x+1; e.g.(-2,3) has y-x=5 and the queried ordinates also fail the required relation."),
+    "929": R("C", "Full line through(2.5,0),(0,-2.5) has y=x-2.5; requested x values4,-2.5,6.5,9.",
+        "y=x+2.5 fails both given points; at x=2.5 it predicts y=5 rather than0.",
+        "y=-x+2.5 fits A but fails B=(0,-2.5), predicting2.5; the listed points are on the wrong line.",
+        "y=x-2.5 fits A,B and all four ordered point records; points beyond segment AB remain valid on the full line."),
+    "930": R("A", "Closed horizontal segments are{(x,3):-5<=x<=2} and{(x,5):-4<=x<=2}.",
+        "Correct fixed ordinates and inclusive endpoint bounds describe every point of each segment.",
+        "Strict inequalities exclude the actual endpoints and are not the complete segments.",
+        "The exterior-ray unions omit valid interior x=0 and include invalid x=3; they are not the segments."),
+    "931": R("B", "Closed vertical segments are{(-1,y):-3<=y<=5} and{(-2,y):-4<=y<=2}.",
+        "Strict inequalities exclude both pairs of original endpoints.",
+        "Fixed x and inclusive y bounds exactly describe both segments.",
+        "This swaps x/y roles into horizontal segments. E.g. original(-1,-3) does not satisfy first y=-1."),
+    "932": R("C", "AC=120000 cm/20000=6 cm; angle B=70. AB=1200*sin65/sin70=1157.367122... m, which rounds to1160 m.",
+        "The A/C angles are swapped. That different triangle has AB=1200*sin45/sin70≈902.985 m, rounding900, but violates the original45-degree angle at A and65 at C.",
+        ".06 cm corresponds to only12 m ground baseline at1:20000, not1200 m. Its resulting~11.574 m AB would round10 only for this wrong100-times-smaller model.",
+        "6 cm baseline and original A/C angles construct the required triangle;1157.367... lies in[1155,1165), so nearest10 m is1160."),
+    "933": R("A", "On common distance-from-A axes, meeting5t=75-10t gives(5,25), rest ends t=6; original slopes+5,-10 then give arrivals(12,55),(8.5,0).",
+        "Pedestrian segment slopes are+5,0,+5; cyclist slopes0,-10,0,-10. Waiting0-2, common meeting5, rest5-6 and finite correct destinations are all retained.",
+        "Both records skip the horizontal rest interval and arrive1 h too early, at11 and7.5. Otherwise travel slopes do not repair the missing rest.",
+        "These encode simultaneous departure: cyclist immediately leaves(0,55), meeting(11/3,55/3), instead of waiting2 h and meeting(5,25).",
+        "After rest the pedestrian goes back to A with slope-5 and cyclist returns to B with slope+10, contrary to the required continued original directions."),
+    "934-1": R("B", "29.58/3.48=8.5;4.06*8.5=34.51;8.112/.78=10.4;40.1-34.51+10.4=15.99.",
+        "85.01=40.1+34.51+10.4 changes the subtraction sign.",
+        "15.99 is the exact complete expression value.",
+        "-4.81=40.1-34.51-10.4 changes the final addition sign."),
+    "934-2": R("C", "45.22/4.76=9.5;3.04*9.5=28.88;9.202/.86=10.7;50.2-28.88+10.7=32.02.",
+        "89.78=50.2+28.88+10.7 changes the subtraction sign.",
+        "10.62=50.2-28.88-10.7 changes final addition to subtraction.",
+        "32.02 is the exact complete expression value."),
+    "934-3": R("A", "70.4*51.6-3541.84=90.8;603.48/56.4=10.7;90.8*10.7-889.75=81.81.",
+        "81.81 is the exact complete expression value.",
+        "1861.31=971.56+889.75 changes the final subtraction sign.",
+        "-377181/428=90.8/10.7-889.75 divides by the second parenthesis instead of multiplying."),
+    "934-4-notice": R("B", "With d!=0 unresolved, the first factor is80.9; f(d)=80.9*(657.14/d)-799.65=53162.626/d-799.65. Its nonzero coefficient makes it nonconstant, so actual numerical recovery remains blocked.",
+        "The nonuniqueness sentence is true, but the formula multiplies by d instead of dividing. At d=2 it differs from the correct formula, so the compound record is false.",
+        "The conditional formula and explanation are both valid for nonzero d. This true conditional record does not establish the actual missing divisor or a fourth numerical answer.",
+        "-718.75=80.9-799.65 occurs only if657.14/d=1. For instance d=1 gives52362.976, so the claimed constant and unique-value conclusion are false."),
+    "935": R("AB", "Both decimal proportions are true: quotient values3.4 and.4.",
+        "2.04/.6=3.4=2.72/.8; both cross products1.632.",
+        ".112/.28=.4=.204/.51; both cross products.05712."),
+    "936-1": R("C", "(28/5)/(7/2)=8/5; (21/4)/x=8/5 givesx=105/32!=0.",
+        "At x=42/5 the right quotient is5/8 rather than8/5.",
+        "56/15 differs from105/32; its right quotient is315/224, not8/5.",
+        "At x=105/32, (21/4)/x=8/5, and the original nonzero-divisor restriction holds."),
+    "936-2": R("A", "(9/2)/(9/4)=2; y/(16/5)=2 givesy=32/5.",
+        "y=32/5 gives left quotient2.",
+        "y=8/5 gives left quotient1/2, the reciprocal of the required2.",
+        "y=162/5=(16/5)*(9/2)*(9/4) replaces the right-hand division with multiplication; left quotient81/8 is not2."),
+    "937": R("B", "Jam/apples yield16/20=4/5;45*(4/5)=36 kg.",
+        "56.25=45*(20/16) reverses the yield ratio.",
+        "36/45=.8=16/20.",
+        "9=45*(4/20) applies the20% complementary loss instead of the80% retained jam."),
+    "938": R("C", "Unit price4.5/2.5=1.8 dollars/kg;6.3/1.8=3.5 kg.",
+        "11.34=6.3*1.8 multiplies by price instead of dividing money by price.",
+        "1.8 is the unit price, not the weight obtainable for6.3 dollars.",
+        "3.5 kg costs3.5*1.8=6.3 dollars."),
+    "939": R("A", ".045M=1.8 givesM=40 kg.",
+        "40*.045=1.8 kg fat.",
+        ".081=1.8*.045 uses direct multiplication instead of recovering total fish mass.",
+        ".4=1.8/4.5 treats4.5% as4.5 rather than.045."),
+    "940": R("B", "15*.058=.87 kg fat.",
+        "87=15*5.8 omits division by100 in the percentage.",
+        ".87/15=.058=5.8%.",
+        "14.13=15-.87 is nonfat mass, not fat mass."),
+    "941": R("C", "11.4/75=.152; as a percentage this is15.2%.",
+        ".152% means.00152, not the actual fat fraction.152.",
+        "84.8% is the complement of fat fraction, not the requested fat content.",
+        "15.2%=.152=11.4/75."),
+    "942-1": R("A", "37.57-4.3y=78.05+6.7y gives11y=-40.48, y=-3.68.",
+        "y=-3.68 substitutes to53.394 on both sides.",
+        "+3.68 has the wrong sign and fails11y=-40.48.",
+        "-253/15=-40.48/2.4 uses6.7-4.3 instead of their sum11 when collecting y."),
+    "942-2": R("B", "1.76-3.2x=-8.12-5.1x gives1.9x=-9.88, x=-5.2.",
+        "x=5.2 gives1.9x=+9.88 rather than-9.88.",
+        "x=-5.2 substitutes to18.4 on both sides.",
+        "494/415 is positive and equals9.88/8.3, not the required-9.88/1.9."),
+    "943-1": R("C", "141-136.42=4.58;203.81/4.58=44.5;38.4/.75=51.2;sum95.7.",
+        "82.9=44.5+38.4 omits the second division.",
+        "6.7=51.2-44.5 replaces the required sum by a difference.",
+        "95.7 is the exact sum of both quotients."),
+    "943-2": R("A", "80-76.74=3.26;96/7.5=12.8;288.51/3.26=88.5;sum101.3.",
+        "101.3 is the exact sum of both quotients.",
+        "-75.7=12.8-88.5 changes addition to subtraction.",
+        "184.5=96+88.5 omits the first division."),
+}
+
+
+def freeze_truths(lesson, mathematics):
+    reviewer_dir = TMP / f"reviewer-5m-{lesson}"
+    view_path = TMP / f"5m-{lesson}/view.json"
+    view = load(view_path)
+    fidelity_path = reviewer_dir / "view-fidelity-first.json"
+    fidelity = load(fidelity_path)
+    result = {
+        "schema": "independent-pure-view-checks-v1",
+        "stage": "pure-view-all-truths-frozen-before-internals",
+        "reviewer": "Independent staged choice reviewer, shared invocation",
+        "view_path": str(view_path),
+        "view_byte_sha256": sha(view_path),
+        "source_freeze_path": fidelity["source_freeze_path"],
+        "source_freeze_byte_sha256": fidelity["source_freeze_byte_sha256"],
+        "fidelity_first_file": str(fidelity_path),
+        "fidelity_first_byte_sha256": sha(fidelity_path),
+        "review_order": ["Original source/actual-image independent freeze", "Pure-view fidelity, redundancy, prose leakage and whole-source coverage freeze", "Independently solve every visible option and complete true set", "Assess position leakage using only these independent true sets", "Stop before internals"],
+        "read_boundary": fidelity["read_boundary"],
+        "source_image_observations": {
+            "path": str(reviewer_dir / "image-observations.json"),
+            "sha256": sha(reviewer_dir / "image-observations.json"),
+            "reopened": False,
+            "new_figure_approval": "No new figure or extra figure approval; existing source observations reused.",
+        },
+        "question_reviews": [],
+        "source_coverage": fidelity["source_coverage"],
+        "whole_package_dependencies": fidelity["whole_package_dependencies"],
+        "findings": [],
+    }
+    for index, q in enumerate(view["questions"]):
+        suffix = q["id"].removeprefix(f"{lesson}-")
+        m = mathematics[suffix]
+        f = fidelity["question_reviews"][index]
+        record = {
+            **f,
+            "visible_question_ordinal": index + 1,
+            "answer_leakage": f["answer_leakage_before_mathematics"],
+            "mathematics": {
+                "verdict": "pass",
+                "independent_solution": m["independent_solution"],
+                "correct": m["correct"],
+                "option_checks": [{
+                    "option_id": o["id"],
+                    "truth": "correct" if o["id"] in m["correct"] else "incorrect",
+                    "evidence": m["option_evidence"][o["id"]],
+                } for o in q["options"]],
+                "author_key_or_rationale_compared": False,
+            },
+        }
+        record.pop("answer_leakage_before_mathematics")
+        result["question_reviews"].append(record)
+    if lesson == "n48":
+        runs = [result["question_reviews"][5:25]]
+        bias = {"question_ids": [r["question_id"] for r in result["question_reviews"][1:5]],
+                "independent_true_sets": [["A"]] * 4,
+                "evidence": "The four initial single-choice geometry questions all use A; this is additional concentration, but the decisive defect is the later strict 20-unit periodic run."}
+    else:
+        runs = [
+            result["question_reviews"][1:24],
+            [r for r in result["question_reviews"][24:] if len(r["mathematics"]["correct"]) == 1],
+        ]
+        bias = None
+    cycle_records = []
+    affected = set()
+    for run in runs:
+        sequence = [r["mathematics"]["correct"][0] for r in run]
+        cycle_records.append({
+            "question_ids": [r["question_id"] for r in run],
+            "single_question_count": len(run),
+            "independent_correct_label_sequence": sequence,
+            "independent_correct_display_position_sequence": [
+                next(i + 1 for i, o in enumerate(view["questions"][r["visible_question_ordinal"] - 1]["options"])
+                     if o["id"] == r["mathematics"]["correct"][0]) for r in run],
+            "observed_pattern": "Strict repeated A,B,C / first,second,third with final prefix retained.",
+            "evidence": "Every independent true singleton in this run follows A,B,C cyclically. Once a learner infers this repeated arrangement, later labels/positions can be chosen without resolving their distinct mathematical tasks. This is a package-level design cue, not an author key read.",
+        })
+        affected.update(r["question_id"] for r in run)
+    for r in result["question_reviews"]:
+        if r["question_id"] in affected:
+            r["answer_leakage"] = {
+                "verdict": "revise",
+                "evidence": f"{r['question_id']} participates in the independently established long strict A/B/C correct-position cycle recorded below. Its prose alone has no declaration of truth, but whole-package position prediction supplies a nonmathematical answer cue.",
+            }
+    repair = {
+        "severity": "revise",
+        "scope": "Only displayed option content positions and corresponding displayed letter assignments of the affected units; preserve mathematical wording, stems, source domains, modes, figures and source relationships.",
+        "affected_question_ids": [r["question_id"] for r in result["question_reviews"] if r["question_id"] in affected],
+        "request": "Rearrange the same option contents into a nonperiodic whole-package order and relabel A/B/C (and D when present) by actual display position. Merely moving stable-letter objects while leaving all correct letters in the same A/B/C cycle does not remove the cue. No new distractor or semantic rewrite is required. Provide the revised pure view for a new frozen visible-set/order check before internals.",
+        "must_not_change": "Source numbers/data, original domains/quantifiers, complete alternative mathematical contents, native modes, figures, and the honest 934(4) blocker.",
+    }
+    result["position_cycle_review"] = {
+        "verdict": "revise", "runs": cycle_records,
+        "initial_geometry_position_bias": bias,
+        "multiple_units_not_in_cycle": [r["question_id"] for r in result["question_reviews"] if len(r["mathematics"]["correct"]) > 1],
+        "minimal_repair": repair,
+    }
+    result["findings"].append({
+        "verdict": "revise",
+        "topic": "Whole-visible-package correct-position periodicity",
+        "evidence": f"Independent true singleton sequences have strict A/B/C runs of lengths {[len(run) for run in runs]}; details and all affected IDs recorded in position_cycle_review.",
+        "minimal_repair": repair,
+    })
+    if lesson == "n49":
+        result["findings"].append({
+            "verdict": "blocked",
+            "topic": "Original source934(4) unique numerical recovery",
+            "evidence": "The unresolved divisor is not supplied by any visible unit. n49-934-4-notice has determinate conditional true set B, but neither it nor 32 other valid sources resolves the missing original number.",
+            "minimal_repair": "None from current input. Retain the honest blocked numerical task and conditional explanation; do not ask the author to guess.",
+        })
+    result["production_loss_review"] = {
+        "verdict": "pass",
+        "scope": "Recognition translation remains mathematically meaningful, but this is not full production coverage.",
+        "by_source": [{"source_number": c["source_number"], "losses": c["production_losses"]}
+                      for c in result["source_coverage"] if c["production_losses"]],
+        "later_internal_requirement": "When separately authorized, compare these explicit construction, model-generation, endpoint-plotting, proof-writing and actual scale-measurement losses against intent/coverage. Their disclosure cannot be certified from a pure view and is not presumed to exist.",
+    }
+    options = [o for q in result["question_reviews"] for o in q["mathematics"]["option_checks"]]
+    result["counts"] = {
+        "questions": len(result["question_reviews"]),
+        "options": len(options),
+        "independently_checked_options": len(options),
+        "correct_options": sum(o["truth"] == "correct" for o in options),
+        "incorrect_options": sum(o["truth"] == "incorrect" for o in options),
+        "complete_true_sets": len(result["question_reviews"]),
+        "source_records": len(result["source_coverage"]),
+        "mathematics_pass_questions": len(result["question_reviews"]),
+        "author_key_reads": 0,
+        "author_rationale_reads": 0,
+    }
+    result["all_visible_truths_frozen"] = True
+    result["mathematics_outcome"] = "pass"
+    result["view_design_outcome"] = "revise"
+    result["outcome"] = "blocked" if lesson == "n49" else "revise"
+    result["next_authorization"] = "Revised pure-view order repair only; no internals are authorized or read."
+    target = reviewer_dir / "view-checks.json"
+    if target.exists():
+        raise RuntimeError(f"Frozen pure-view result already exists: {target}")
+    target.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+    print(json.dumps({"lesson": lesson, "sha256": sha(target), "counts": result["counts"],
+                      "outcome": result["outcome"], "cycle_lengths": [len(run) for run in runs]}))
+
+
+if __name__ == "__main__" and sys.argv[1:] == ["truths"]:
+    freeze_truths("n48", M48)
+    freeze_truths("n49", M49)

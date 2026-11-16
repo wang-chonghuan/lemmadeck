@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+const [root, ...sources] = process.argv.slice(2)
+assert(root?.startsWith('ssot-resources/') && sources.length)
+const retention = `${root}/retention.json`
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
+const original = fs.readFileSync(retention)
+const value = JSON.parse(original)
+assert(value.retained && !value.parent_operations_retained)
+const directory = `${root}/parent-operations`
+assert(!fs.existsSync(directory))
+const rows = [
+  { source: retention, target: `${directory}/retention-before-parent-operations.json.txt`, bytes: original },
+  ...sources.map(source => ({
+    source, target: `${directory}/${path.basename(source)}.txt`, bytes: fs.readFileSync(source),
+  })),
+]
+assert.equal(new Set(rows.map(row => row.target)).size, rows.length)
+rows.forEach(row => {
+  value.retained[path.relative(root, row.target)] = {
+    original_bytes_sha256: hash(row.bytes), retained_bytes_sha256: hash(row.bytes),
+    inactive_history: true,
+  }
+})
+value.parent_operations_retained = true
+fs.mkdirSync(directory)
+rows.forEach(row => fs.writeFileSync(row.target, row.bytes, { flag: 'wx' }))
+fs.writeFileSync(retention, JSON.stringify(value, null, 2) + '\n')
+console.log(JSON.stringify({ status: 'pass', retained_parent_history_files: rows.length,
+  root, core_or_semantic_or_canonical_or_render_changes: 0 }))

@@ -1,0 +1,354 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { fileURLToPath } from 'node:url'
+
+const directory = path.dirname(fileURLToPath(import.meta.url))
+const ticket = path.dirname(directory)
+const root = path.resolve(ticket, '../../../..')
+const author = path.join(ticket, '6a-n40')
+const files = {
+  seed: path.join(author, 'seed.json'),
+  draft: path.join(author, 'draft.json'),
+  view: path.join(author, 'view.json'),
+  source: path.join(directory, 'source-solutions.json'),
+  frozenView: path.join(directory, 'view-checks.json'),
+}
+const load = (file) => JSON.parse(fs.readFileSync(file, 'utf8'))
+const fileSHA = (file) => crypto.createHash('sha256')
+  .update(fs.readFileSync(file)).digest('hex')
+const sort = (value) => {
+  if (Array.isArray(value)) return value.map(sort)
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, sort(value[key])]))
+  }
+  return value
+}
+const canonical = (value) => JSON.stringify(sort(value))
+  .replace(/[\u007f-\uffff]/g, (character) =>
+    `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`)
+const digest = (value) => crypto.createHash('sha256')
+  .update(canonical(value)).digest('hex')
+const bind = (file) => ({ path: file, file_sha256: fileSHA(file) })
+const seed = load(files.seed)
+const draft = load(files.draft)
+const view = load(files.view)
+const source = load(files.source)
+const frozen = load(files.frozenView)
+const expectedSeed = '9d30457defb7b769e299c0f17524410c48679cb3b00f3e42a9748132a926f8a3'
+const expectedDraft = '8ff4f048359433665aec6f645a1352d76363d5fda681a4077f46509011d40b25'
+if (digest(seed) !== expectedSeed || digest(draft) !== expectedDraft
+  || draft.seed_sha256 !== expectedSeed) {
+  throw new Error('Disclosed seed/draft snapshot changed')
+}
+if (fileSHA(files.source) !== 'f400f44749fce485dad532df69014e3c46364a2b8b6dbde561aa2bd04d9df53a'
+  || fileSHA(files.frozenView) !== 'c5077ce18cec8c301218f00f6ff4143fee1e42c8569b9ca3c4d34d1e97f5e0ca') {
+  throw new Error('Independent frozen records changed')
+}
+const projection = {
+  questions: draft.questions.map(({ id, source_numbers, view: visible }) =>
+    ({ id, source_numbers, view: visible })),
+}
+if (canonical(projection) !== canonical(view)) {
+  throw new Error('Author view does not match frozen pure projection')
+}
+
+// These are manual internal-program judgments, separate from the frozen truths.
+const programs = {
+  'signed-cubic-readings-and-inverses': {
+    A: 'Author actually substitutes x^2 for x^3: squares are0.64,0.64,1.44,1.44; square level3 has +/-sqrt3, negative level-3 empty. One coherent wrong function generates the entire false record.',
+    B: 'Exact signed cubes0.512,-0.512,1.728,-1.728 and strictly increasing cubic inverse singleton signs generate the complete independently true record.',
+    C: 'Author substitutes |x|^3: outputs are positive magnitudes, inverse3 has both signs and inverse-3 is empty. Coherent evenization, not unexplained missing roots.',
+    D: 'Author reads exponent3 as multiplication: y=3x gives2.4,-2.4,3.6,-3.6 and inverse3/3=1,-3/3=-1. All displayed components follow.',
+  },
+  'cubic-complete-check-and-window-limits': {
+    A: 'Wrong function x^2 gives1.69,1.96,3.24. Its numeric comparisons are1<1.44,1.96>1.44,1>0,0<1; for arbitrary ordered reals squares need not be ordered. Square inverses at8 are +/-2sqrt2 and at-5 empty. Thus every component follows the stated quadratic substitution.',
+    B: 'Correct cube values/inverses followed by reversing every compared operand produces>,<,>,>,>. Reversal alone generates all five wrong relations; no accidental compensating error.',
+    C: 'Wrong y=3x gives3.9,4.2,5.4 and inverses8/3,-5/3. It is increasing, so all five comparisons coincide with the correct cubic comparisons. This coincidence is explicit in the rationale and does not make the full wrong value/inverse record true.',
+    D: 'Cubes13^3/1000,14^3/1000,18^3/1000 give2.197,2.744,5.832; monotonicity gives<,>,<,<,<; roots2,-cuberoot5. Mathematical record correct. No graphical read-off of unavailable targets is asserted.',
+  },
+  'cube-edge-and-volume-scaling': {
+    A: 'Positive cube law gives8,1/1000 and inverse positive cube-root factors3,1/5; all independently true.',
+    B: 'Linear volume=edge rule yields2,1/10 forward and27,1/125 reverse. A single wrong exponent1 generates all four.',
+    C: 'Area exponent2 yields4,1/100 and inverse sqrt27,1/sqrt125. Consistent wrong square law, not a mixture of arbitrary distractor numbers.',
+    D: 'Inverse cube relation v=k^-3 gives2^-3=1/8,(1/10)^-3=1000; solving27=k^-3 givesk=1/3,1/125=k^-3 givesk=5. Coherent inverse model generates complete record.',
+  },
+  'negative-cubic-full-construction-and-values': {
+    A: 'Dropping leading minus gives full increasing/origin-symmetric y=x^3 and0.343,-0.343,2.197,-2.197. Wrong graph properties and all values follow.',
+    B: 'Retaining minus but changing exponent3 to2 gives y=-x^2, y-axis symmetry and increase/decrease on negative/positive half axes; values-0.49,-0.49,-1.69,-1.69. Fully generated.',
+    C: 'Negate each cubic ordinate with x fixed; whole graph y=-x^3 is decreasing/origin-symmetric and all four values match frozen solution. Complete specification, not finite samples.',
+    D: 'Computing four correct samples but stopping after those points yields exactly the displayed four-point set. It falsely omits origin and infinitely many points, e.g(1,-1). Correct sample values do not compensate for incomplete full graph.',
+  },
+  'negative-cubic-levels-and-sign-preimages': {
+    A: 'Invert -x^3=y using x=-cuberooty, yielding the two correct singleton inverse sets in order.',
+    B: 'Cube keeps x sign, leading minus reverses it, zero only at0. Correct three full preimage sets with strict endpoints.',
+    C: 'Ignore coefficient-1 at inverse stage: x=cuberooty gives the inverse sets of positive cubic instead. Actual requested level signs are reversed.',
+    D: 'Change strict output inequalities to <= and >=. Inverting negative cubic gives x>=0 and x<=0, exactly the two wrong closed sets. Zero endpoint wrongly included.',
+    E: 'Impose spurious x!=0 domain, removing the unique root of -x^3=0. Empty set follows this explicit wrong restriction; source polynomial domain is all R.',
+  },
+  'sphere-graph-forward-and-inverse-checks': {
+    A: 'With stated pi=3.14, wrong V=pi*r^3 gives76.58146,232.63632; inverse cube roots(V/pi) give4.3586088864,4.9245574301. Rounded to76.6,232.6cm^3 and4.36,4.92cm: all four displayed numbers generated by dropping4/3.',
+    B: 'Actual author wrong program is V=4*pi*r^2, not (4/3)*pi*r^2. It gives105.6296,221.5584; inverse sqrt(V/(4*pi)) gives4.5497952638,5.4641273684. Rounded105.6,221.6cm^3 and4.55,5.46cm exactly matches. Single surface-area substitution generates entire false record.',
+    C: 'Wrong linear V=(4*pi/3)*r gives12.1413333333,17.584 and inverses3V/(4*pi)=62.1019108280,89.5700636943. Rounded12.1,17.6cm^3,62.10,89.57cm exactly matches all displayed values.',
+    D: 'Correct cubic volumes at stated pi3.14 are102.1086133333,310.18176; positive inverse roots3.9600589818,4.4742573584. Declared precision gives102.1,310.2cm^3 and3.96,4.47cm. No graph-pixel exactness asserted.',
+  },
+  'sphere-double-volume-additional-radius': {
+    A: 'Linear radius doubling yieldsnew7.4 and increment7.4-3.7=3.70cm. Correct subtraction of a wrong new radius generates candidate.',
+    B: 'Correct newradius3.7*cuberoot2=4.6617078846; subtract3.7 gives0.9617078846 rounded0.96cm. Coefficient/pi cancel; correct added rather than total length.',
+    C: 'Correct newradius rounded4.66cm is reported without subtracting old3.7. This exact omitted-subtraction program produces displayed false added length.',
+    D: 'Wrong square-root scale for volume gives3.7*(sqrt2-1)=1.5325901808 rounded1.53cm. Program genuinely generates option, not an unexplained approximation.',
+  },
+  'twenty-five-cube-point-membership': {
+    A: 'Author cubes1.2 correctly to1.728, then shifts the product25*1.728 one extra decimal place: true43.2 becomes4.32. Falsely accepting given A point follows this explicit factor10 loss.',
+    B: '25*(-2)^3=-200 verifies independently true original B point; odd sign retained.',
+    C: '25*(0.4)^3=25*0.064=1.6 verifies independently true original C point.',
+  },
+  'one-face-tile-paint-scaling': {
+    A: 'Same paint mass per unit area and one face imply20*1.5^2=45g. Explicit view model makes this correct; arbitrary different coatings not asserted.',
+    B: 'Wrong linear edge rule20*1.5=30g exactly generates candidate.',
+    C: 'Wrong volume rule20*1.5^3=67.5g exactly generates candidate.',
+    D: 'Author counts one painted face in both cases, ignores its area change and keeps20g. Face-count-only error generates value; not equivalent to actual same g/unit-area model.',
+  },
+  'same-pump-doubled-edge-fill-time': {
+    A: 'Within ordinary empty-pool/capacity-fill model, wrong length scaling45*2=90min then /60=1.5h gives both displayed numbers.',
+    B: 'Wrong square rather than cube factor45*4=180min=3h gives displayed pair. It is false under the intended capacity-fill model, not universally false for arbitrary initial water.',
+    C: 'Keeping time unchanged because pump is unchanged gives45min=0.75h. This is precisely the stated spurious invariant-duration program.',
+    D: 'For the ordinary empty-pool/capacity-fill model, equal effective rate makes time follow8-fold volume,45*8=360min=6h. Correct only in this stated mathematical modeling interpretation, not a universal claim about arbitrary initial contents.',
+  },
+}
+
+const intentNotes = {
+  'signed-cubic-readings-and-inverses': 'All645 targets retained; exact-check recognition/graph estimation losses explicit. Figure observation correctly identifies both signs of level3 within actual window.',
+  'cubic-complete-check-and-window-limits': 'Intent/source_solution/limitation and coverage all explicitly preserve three unavailable original graph targets. Approximate curve exit+/-4.25 versus frame boundabout+/-4.5 are compatible different quantities, not mathematical discrepancy. Mention of drawing an extended graph is a possible remedy/production boundary, not an additional original exercise. Only genuine646 method blocker.',
+  'cube-edge-and-volume-scaling': 'All four positive forward/inverse scale cases and length/volume relation retained; independent modeling loss explicit.',
+  'negative-cubic-full-construction-and-values': 'All648a values and full curve reflection/direction/symmetry retained; own smooth-graph production unavailable, actualfig116 only baseline, no new negative-cubic picture or figure approval falsely claimed.',
+  'negative-cubic-levels-and-sign-preimages': 'All648b/c level/zero/strict sets retained in multiple mode; written set production and horizontal reading lines losses explicit. Together two units cover whole648.',
+  'sphere-graph-forward-and-inverse-checks': 'All649a/b targets/units retained, checking convention pi3.14 anddecimal precision visibly introduced and internally recorded. Does not claim source graph measured exact decimals; independent graph-estimate/inverse calculation loss explicit.',
+  'sphere-double-volume-additional-radius': '649c original asks increase, not new radius. Ratio cancellation, positive roots and difference preserved; stated two-decimal convention and graph/model-production loss recorded.',
+  'twenty-five-cube-point-membership': 'All three650 points retained with native multiple; decimal/sign substitutions loss explicit. No omitted original coordinate.',
+  'one-face-tile-paint-scaling': '651 uniform paint/unit-area assumption explicitly supplied in view and recorded inlimitations. Own source same-coating notice preserved; no unconditional invariant paint mass claimed for arbitrarythickness.',
+  'same-pump-doubled-edge-fill-time': '652 equal-average-rate interpretation visible and limitations avoiduniversal pump claim. Retain own source initial-content notice: same flow alone does not guarantee360 for arbitraryW1,W2. The ordinary fill-capacity/empty-pool model yieldscorrect360 and noedge-size data gap. Treat as modelnotice, not a secondessential blocker.',
+}
+
+const sourceCoverage = {
+  '645': 'Author coverage cites its exact unit and records independent graph estimates/exact cubic-check production loss. Allfour signedforward valuesandtwo unique inverselevels retained; actualfig116 covers these targets. Pass.',
+  '646': 'Coverage explicitly says Sourceblocked graphical component forx1.8 andy8/-5; intent likewise gives exact unavailablepoints. All exact values/fiverelations/twoinverses retained. Actualfig116 window cannot performthreeoriginaldirectreadings; algebra doesnotresolve this source-method gap. Blocked. Extended drawing mentioned onlyas possible alternativeproduction,not invented omitted source subtask.',
+  '647': 'Author coverage retains bothforward andbothinverse positive cube-scale factors andrecognition-modeling loss. All originalfour tasks mapped exactlytooneunit. Pass.',
+  '648': 'Coverage maps bothunits andretains fullreal graph,reflection/direction/symmetry,fourforward values,two inverselevels andzero/two strictsignsets. Smoothgraph/unaidedreading/written sets losses explicit; full-spec recognition doesnotclaim learner drewcurve. Pass with recorded production losses.',
+  '649': 'Coverage maps bothunits retainingtwo volumes,two radii andrequestedadditional radius. Units,totalversusincrease,pi approximation/rounding introduced-check convention allrecorded. Coarse sourcegraphreading notmisrepresented as precise decimalmeasurement. All targetsfit actualfig119. Pass with recorded method/production losses.',
+  '650': 'Coverage retains allthree actualpoints in nativemultiple,includingdecimalerrorA andsignedB. Independent substitution-writing loss explicit. Pass.',
+  '651': 'Coverage records uniformpaint-use-per-unit-area modelingnotice explicitlyinview andnotuniversalcoatingclaim. Sourceoneface,20g,1.5edge preserved; all four distractor rules generate differentvalues. Pass with modelnotice/productionloss.',
+  '652': 'Coverage retains sourceedge doubling,samepump,45min andfullcube-volume time/h conversion; equalaverage delivery isvisibleconditionalmodel. Preserve own source standardempty-pool/capacity-fill assumption and arbitraryinitialwater alternatives. Authordoesnotclaimuniversal operatingcondition proof. No missingnumericaledge value; ordinarymodelcomplete360min. Pass with modelnotice/productionloss,notanother sourceblocker.',
+}
+
+const frozenQuestions = new Map(frozen.question_checks.map((question) => [question.id, question]))
+const comparisons = []
+const questionReviews = []
+for (const question of draft.questions) {
+  const old = frozenQuestions.get(question.id)
+  if (!old || canonical(question.source_numbers) !== canonical(old.source_numbers)
+    || canonical(question.key.correct) !== canonical(old.correct)) {
+    throw new Error(`Question or key mismatch: ${question.id}`)
+  }
+  const rationaleMap = new Map(question.key.rationales.map((item) => [item.option_id, item]))
+  const truthMap = new Map(old.option_checks.map((item) => [item.id, item]))
+  const optionChecks = question.view.options.map((option) => {
+    const independent = truthMap.get(option.id)
+    const rationale = rationaleMap.get(option.id)
+    const program = programs[question.id]?.[option.id]
+    if (!independent || !rationale || !program
+      || rationale.truth !== (independent.truth ? 'correct' : 'incorrect')
+      || (independent.truth ? rationale.misconception !== null
+        : typeof rationale.misconception !== 'string')) {
+      throw new Error(`Incomplete or inconsistent manual comparison: ${question.id}/${option.id}`)
+    }
+    let visibleEvidence = independent.evidence
+    if (question.id === 'sphere-graph-forward-and-inverse-checks' && option.id === 'B') {
+      visibleEvidence = 'False: actual correctsphere values102.1,310.2cm^3 and3.96,4.47cm differ from105.6,221.6 and4.55,5.46. All source inputs/units retained.'
+    }
+    comparisons.push({
+      question_id: question.id,
+      option_id: option.id,
+      frozen_independent_truth: independent.truth,
+      author_truth: rationale.truth,
+      author_key_agrees: true,
+      derivation_misconception_verdict: 'pass',
+      evidence: program,
+      compensating_error_or_synonym_defect: false,
+    })
+    return {
+      option_id: option.id,
+      truth: independent.truth ? 'correct' : 'incorrect',
+      evidence: `${visibleEvidence} Internal program comparison: ${program}`,
+    }
+  })
+  questionReviews.push({
+    question_id: question.id,
+    task_fidelity: {
+      verdict: old.task_fidelity.status,
+      evidence: `${old.task_fidelity.evidence} Final intent/limitations comparison: ${intentNotes[question.id]}`,
+    },
+    redundancy: { verdict: old.redundancy.status, evidence: old.redundancy.evidence },
+    answer_leakage: { verdict: old.answer_leakage.status, evidence: old.answer_leakage.evidence },
+    mathematics: {
+      verdict: 'pass',
+      independent_solution: old.independent_solution,
+      correct: old.correct,
+      option_checks: optionChecks,
+    },
+  })
+}
+if (comparisons.length !== 40 || questionReviews.length !== 10) {
+  throw new Error('Expected complete10/40 comparison')
+}
+const sourceMap = new Map(source.source_solutions.map((item) => [item.source_number, item]))
+const sourceReviews = seed.exercises.map(({ number }) => {
+  const old = sourceMap.get(number)
+  const coverage = draft.coverage.find((item) => item.source_number === number)
+  if (!old || !coverage || !sourceCoverage[number]) throw new Error(`Missing source${number}`)
+  const refs = draft.questions.filter((question) => question.source_numbers.includes(number))
+    .map((question) => question.id).sort()
+  if (canonical(refs) !== canonical([...coverage.question_ids].sort())) {
+    throw new Error(`Coverage mapping mismatch${number}`)
+  }
+  return {
+    source_number: number,
+    independent_solution: JSON.stringify(old.independent_solution),
+    coverage: {
+      verdict: number === '646' ? 'blocked' : 'pass',
+      evidence: sourceCoverage[number],
+    },
+  }
+})
+const figureChecks = seed.figures.flatMap((figure) => {
+  const observation = source.figure_observations.find((item) => item.figure_id === figure.id)
+  if (!observation) throw new Error(`Missing own actual figure evidence${figure.id}`)
+  return figure.assets.map((asset) => {
+    const image = path.join(root, asset.path)
+    if (fileSHA(image) !== asset.sha256) throw new Error(`Figure bytes changed${figure.id}`)
+    if (fileSHA(observation.actual_opened_png.path) !== observation.actual_opened_png.sha256) {
+      throw new Error(`Actual PNG bytes changed${figure.id}`)
+    }
+    return {
+      figure_id: figure.id,
+      asset_path: asset.path,
+      asset_sha256: asset.sha256,
+      observation: `${observation.independent_visual_observation} Reuse actual fully opened PNG ${observation.actual_opened_png.path}, SHA256=${observation.actual_opened_png.sha256}, native ${observation.actual_opened_png.width}x${observation.actual_opened_png.height}. No new rendering or image reopening. ${observation.render_binding_limit}`,
+    }
+  })
+})
+const review = {
+  schema: 's10y-choice-review-v1',
+  seed_sha256: expectedSeed,
+  draft_sha256: expectedDraft,
+  reviewer: { kind: 'independent_agent', identity: 'STEMROBIN-182/session-A' },
+  source_reviews: sourceReviews,
+  figure_checks: figureChecks,
+  new_figure_reviews: [],
+  question_reviews: questionReviews,
+  outcome: 'blocked',
+}
+const reviewPath = path.join(directory, 'review.json')
+const resultPath = path.join(directory, 'final-comparison-result.json')
+if (fs.existsSync(reviewPath) || fs.existsSync(resultPath)) {
+  throw new Error('Preserve existing snapshot; no overwrite')
+}
+fs.writeFileSync(reviewPath, JSON.stringify(review, null, 2) + '\n', { flag: 'wx' })
+const result = {
+  schema: 's10y-independent-final-comparison-result-v1',
+  stage_complete: true,
+  lesson_id: seed.source.lesson,
+  outcome: 'blocked',
+  reviewer: review.reviewer,
+  model: null,
+  usage: null,
+  input_records: Object.fromEntries(Object.entries(files).map(([name, file]) =>
+    [name, bind(file)])),
+  seed_canonical_sha256: expectedSeed,
+  draft_canonical_sha256: expectedDraft,
+  review: { ...bind(reviewPath), canonical_sha256: digest(review) },
+  counts: {
+    sources: sourceReviews.length,
+    questions: questionReviews.length,
+    options: comparisons.length,
+    true_options: comparisons.filter((item) => item.frozen_independent_truth).length,
+    false_options: comparisons.filter((item) => !item.frozen_independent_truth).length,
+    keys_compared: 10,
+    correct_sets_agree: 10,
+    rationales_and_misconceptions_compared: 40,
+    false_programs_generate_candidates: 28,
+    source_coverage_records_compared: 8,
+    source_figures_reused: 2,
+    new_figures: 0,
+  },
+  frozen_pure_view_equals_current_draft_projection: true,
+  mathematical_true_sets_unchanged: true,
+  question_correct_sets: questionReviews.map((question) => ({
+    question_id: question.question_id,
+    correct: question.mathematics.correct,
+    author_set_agrees: true,
+  })),
+  option_program_comparisons: comparisons,
+  intent_and_loss_comparisons: draft.questions.map((question) => ({
+    question_id: question.id,
+    verdict: question.id === 'cubic-complete-check-and-window-limits' ? 'blocked' : 'pass',
+    evidence: intentNotes[question.id],
+  })),
+  source_coverage_comparisons: sourceReviews.map(({ source_number, coverage }) =>
+    ({ source_number, ...coverage })),
+  own_frozen_evidence_corrections: [
+    {
+      source_record: files.frozenView,
+      question_id: 'sphere-graph-forward-and-inverse-checks',
+      option_id: 'B',
+      prior_explanation: 'Own pureview explanatory coefficient text incorrectly named (4/3)*pi*r^2 as generating105.6/221.6.',
+      final_corrected_evidence: 'Actual coherent wrong function is4*pi*r^2, as in author rationale. Numeric execution gives105.6296,221.5584 and inverse4.5497952638,5.4641273684, producing105.6,221.6,4.55,5.46. Frozen false truth/complete set unchanged; original evidence preserved.',
+      author_defect: false,
+      original_record_modified: false,
+    },
+  ],
+  notices: [
+    {
+      source_number: '651',
+      evidence: 'Same mass per paintedarea is explicit in view andintent/coverage; own same-coatingmodelnotice preserved.45g correctunderthiscondition;not arbitrarycoatinguniqueness.',
+    },
+    {
+      source_number: '652',
+      evidence: 'Same averageeffectiveflow explicit;360min requiresordinaryfull-capacityfill/empty-pool interpretation. InitialwaterW1,W2 notexplicitlyfixedbysource/view. Preserve general45*(8V-W2)/(V-W1)min andnotice;donotassertunique360forallinitialconditions orinventnewsourceblocker beyondtheordinarymodel.',
+    },
+  ],
+  findings: [
+    {
+      verdict: 'blocked',
+      source_number: '646',
+      question_id: 'cubic-complete-check-and-window-limits',
+      evidence: 'Actual fig116 finite ordinatewindow cannot provideoriginalreadings at(1.8,5.832),y8and y-5. Intent/limitations/coverage explicitly preserve gap. Exactcubes/inversesallresolved;correctkeyD doesnotresolvegraphicalmethod.',
+      minimum_action: 'Retain unresolved original646 graph-readingcomponent;noauthornumericrepairrequired. Anyexpandeddiagrammustbelaterexplicitlyauthorized andindependentlyreviewed;notcreatednow.',
+      author_revise_fields: [],
+    },
+  ],
+  author_revise_findings: [],
+  unrelated_n39_internals_read: false,
+  author_ready_or_separate_source_solution_needed_or_read: false,
+  author_files_modified: false,
+  frozen_source_view_records_modified: false,
+  operations: {
+    prepare_digest_only: true,
+    canonical_validator_executions: 0,
+    structural_validator_executions: 0,
+    render_executions: 0,
+    browser_executions: 0,
+    actual_figure_reopens: 0,
+    service_DB_dependency_operations: 0,
+    durable_promotions: 0,
+  },
+  stop_boundary: 'Contract-shapedreview and finalcomparison frozen; parentowns anysinglecanonicalexecution. Only646blocked, noauthorrevise. Do not readn39internals before separateauthorization.',
+}
+fs.writeFileSync(resultPath, JSON.stringify(result, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({
+  outcome: result.outcome,
+  counts: result.counts,
+  review: result.review,
+  final_comparison: bind(resultPath),
+  canonical_validator_executions: 0,
+}, null, 2))

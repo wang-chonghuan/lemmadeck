@@ -1,0 +1,215 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { createRequire } from "node:module";
+import { fileURLToPath, pathToFileURL } from "node:url";
+
+delete process.env.PWDEBUG;
+process.env.PLAYWRIGHT_HTML_OPEN = "never";
+const require = createRequire("/Users/yong/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/package.json");
+const { chromium } = require("playwright");
+const sharp = require("sharp");
+const own = path.dirname(fileURLToPath(import.meta.url));
+const inventory = JSON.parse(fs.readFileSync(path.join(own, "primary-inventory.json")));
+const displayMap = JSON.parse(fs.readFileSync(path.join(own, "dom-display-map.json")));
+const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const encode = (value) => JSON.stringify(value, null, 2) + "\n";
+const output = path.join(own, "supplement-inventory.json");
+if (fs.existsSync(output)) throw new Error("Do not recapture a completed supplement run");
+const supplements = [];
+const surfaces = [];
+const browser = await chromium.launch({ channel: "chrome", headless: true });
+let closed = false;
+try {
+  for (const row of displayMap.rows) {
+    const { surface, viewport, rendered_path, rendered_sha256 } = row;
+    if (hash(fs.readFileSync(rendered_path)) !== rendered_sha256) throw new Error("Existing HTML changed");
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1, serviceWorkers: "block" });
+    try {
+      await context.route("**/*", (route) => /^(file:|data:|about:)/.test(route.request().url()) ? route.continue() : route.abort());
+      const page = await context.newPage();
+      await page.goto(pathToFileURL(rendered_path).href, { waitUntil: "load" });
+      await page.evaluate(() => document.fonts.ready);
+      const geometry = await page.evaluate(() => {
+        const rect = (element) => {
+          const r = element.getBoundingClientRect();
+          return { x: r.x + scrollX, y: r.y + scrollY, width: r.width, height: r.height };
+        };
+        const elements = [...document.querySelectorAll("p.para,li.ex,section.choice")];
+        const units = elements.map((element, index) => ({
+          display_index: index + 1,
+          display_label: element.querySelector(".no,.choice-heading")?.textContent.trim() || `paragraph-${index + 1}`,
+          rect: rect(element),
+          options: [...element.querySelectorAll(".choice-options > li")].map((option) => ({
+            label: option.querySelector(".option-id").textContent.trim(), rect: rect(option),
+          })),
+        }));
+        const overflowing = [...document.querySelectorAll("body *")].filter((element) => {
+          const c = getComputedStyle(element);
+          return ["auto", "scroll"].includes(c.overflowX) && element.scrollWidth > element.clientWidth + 1;
+        });
+        const overflow = overflowing.map((element, index) => ({
+          overflow_index: index,
+          tag: element.tagName, class: element.className,
+          rect: rect(element),
+          client_width: element.clientWidth, scroll_width: element.scrollWidth,
+          unit_index: elements.indexOf(element.closest("li.ex,section.choice")) + 1,
+        }));
+        return { document_height: document.documentElement.scrollHeight, document_width: document.documentElement.scrollWidth, units, overflow };
+      });
+      if (geometry.document_height !== row.documentHeight || geometry.document_width !== viewport.width) throw new Error("Read-only display geometry changed");
+      const capture = async (name, y, height, reason, horizontalOffsets = []) => {
+        const filename = `${surface}-${viewport.width}-${name}.png`;
+        const absolute_path = path.join(own, filename);
+        if (fs.existsSync(absolute_path)) throw new Error("Never overwrite or recapture a supplement");
+        await page.evaluate((position) => window.scrollTo(0, position), y);
+        const scrollY = await page.evaluate(() => window.scrollY);
+        const clipY = y - scrollY;
+        if (clipY < 0 || clipY + height > viewport.height) throw new Error("Missing rectangle is outside current viewport");
+        await page.screenshot({
+          path: absolute_path, scale: "css",
+          clip: { x: 0, y: clipY, width: viewport.width, height },
+        });
+        const bytes = fs.readFileSync(absolute_path);
+        const metadata = await sharp(bytes).metadata();
+        if (metadata.width !== viewport.width || metadata.height !== height) throw new Error("Supplement is not native viewport scale");
+        const item = {
+          filename, absolute_path, sha256: hash(bytes), surface, viewport,
+          document_rect: { x: 0, y, width: viewport.width, height },
+          reason, horizontal_offsets: horizontalOffsets,
+          unit_indices_intersecting: geometry.units.filter((unit) =>
+            unit.rect.y < y + height && unit.rect.y + unit.rect.height > y).map((unit) => unit.display_index),
+          scale: 1,
+        };
+        supplements.push(item);
+      };
+      const firstEnd = viewport.height;
+      const lastStart = Math.max(0, geometry.document_height - viewport.height);
+      const gap = lastStart - firstEnd;
+      const verticalRanges = [];
+      if (gap > 0) {
+        const count = Math.ceil(gap / viewport.height);
+        for (let index = 0; index < count; index += 1) {
+          const y = firstEnd + Math.floor(index * gap / count);
+          const end = firstEnd + Math.floor((index + 1) * gap / count);
+          await capture(`gap-${String(index + 1).padStart(2, "0")}`, y, end - y,
+            "Previously unobserved exact vertical gap between existing first/last primary viewports; no already observed vertical region recaptured.");
+          verticalRanges.push({ y, height: end - y, filename: supplements.at(-1).filename });
+        }
+      }
+      const horizontalGroups = viewport.width === 390
+        ? [...new Set(geometry.overflow.map((item) => item.unit_index))].map((unitIndex) => ({
+          unit: geometry.units[unitIndex - 1],
+          elements: geometry.overflow.filter((item) => item.unit_index === unitIndex),
+        }))
+        : [];
+      for (const group of horizontalGroups) {
+        const requiresMiddle = group.elements.some((item) => item.scroll_width > item.client_width * 2);
+        for (const position of requiresMiddle ? ["middle", "end"] : ["end"]) {
+          const offsets = await page.evaluate(({ indices, position }) => {
+            const overflowing = [...document.querySelectorAll("body *")].filter((element) => {
+              const c = getComputedStyle(element);
+              return ["auto", "scroll"].includes(c.overflowX) && element.scrollWidth > element.clientWidth + 1;
+            });
+            return indices.map((index) => {
+              const element = overflowing[index];
+              const maximum = element.scrollWidth - element.clientWidth;
+              element.scrollLeft = position === "middle" ? Math.floor(maximum / 2) : maximum;
+              return { overflow_index: index, scroll_left: element.scrollLeft, client_width: element.clientWidth, scroll_width: element.scrollWidth };
+            });
+          }, { indices: group.elements.map((item) => item.overflow_index), position });
+          const y = Math.max(0, Math.floor(group.unit.rect.y) - 8);
+          const height = Math.min(viewport.height, Math.ceil(group.unit.rect.height) + 16, geometry.document_height - y);
+          await capture(`context-${group.unit.display_label.replace(/[^0-9]/g, "")}-${position}`, y, height,
+            "Only missing horizontal formula/graph pixels, with the same unit's original surrounding context; vertical left-state coverage already exists.",
+            offsets);
+          await page.evaluate((indices) => {
+            const overflowing = [...document.querySelectorAll("body *")].filter((element) => {
+              const c = getComputedStyle(element);
+              return ["auto", "scroll"].includes(c.overflowX) && element.scrollWidth > element.clientWidth + 1;
+            });
+            for (const index of indices) overflowing[index].scrollLeft = 0;
+          }, group.elements.map((item) => item.overflow_index));
+        }
+      }
+      surfaces.push({
+        surface, viewport, rendered_path, rendered_sha256, ...geometry,
+        primary_full_viewport_ranges: [
+          { y: 0, height: viewport.height, suffix: `${surface}-${viewport.width}-first` },
+          { y: lastStart, height: viewport.height, suffix: `${surface}-${viewport.width}-last` },
+        ],
+        supplemented_vertical_ranges: verticalRanges,
+        unique_existing_combination: true,
+      });
+    } finally { await context.close(); }
+  }
+} finally { await browser.close(); closed = true; }
+for (const rendered of inventory.rendered) {
+  if (hash(fs.readFileSync(rendered.absolute_path)) !== rendered.sha256) throw new Error("HTML changed during supplemental observation");
+}
+
+const montages = [];
+for (const width of [1440, 390]) {
+  const images = supplements.filter((item) => item.viewport.width === width);
+  const batchSize = width === 1440 ? 3 : 6;
+  for (let start = 0; start < images.length; start += batchSize) {
+    const batch = images.slice(start, start + batchSize);
+    const columns = 3;
+    const tileWidth = width === 1440 ? 720 : 390;
+    const placements = [];
+    const composites = [];
+    let y = 0;
+    for (let line = 0; line < Math.ceil(batch.length / columns); line += 1) {
+      let rowHeight = 0;
+      for (let column = 0; column < columns; column += 1) {
+        const item = batch[line * columns + column];
+        if (!item) continue;
+        const left = column * (tileWidth + 12);
+        const height = item.document_rect.height;
+        let input = fs.readFileSync(item.absolute_path);
+        if (width === 1440) {
+          const raw = await sharp(input).removeAlpha().raw().toBuffer();
+          for (let py = 0; py < height; py += 1) {
+            for (let px = 0; px < width; px += 1) {
+              if (px >= 360 && px < 1080) continue;
+              const offset = (py * width + px) * 3;
+              if (raw[offset] !== 255 || raw[offset + 1] !== 255 || raw[offset + 2] !== 255) {
+                throw new Error("Cannot remove nonblank desktop gutters");
+              }
+            }
+          }
+          input = await sharp(input).extract({ left: 360, top: 0, width: 720, height }).png().toBuffer();
+        }
+        composites.push({ input, left, top: y });
+        placements.push({
+          filename: item.filename, sha256: item.sha256, x: left, y, width: tileWidth, height, scale: 1,
+          crop_only_proven_blank_desktop_gutters: width === 1440,
+          original_pixel_crop: { x: width === 1440 ? 360 : 0, y: 0, width: tileWidth, height },
+        });
+        rowHeight = Math.max(rowHeight, height);
+      }
+      y += rowHeight + 12;
+    }
+    const montagePath = path.join(own, `supplement-native-${String(montages.length + 1).padStart(2, "0")}.png`);
+    const montageWidth = Math.min(columns, batch.length) * (tileWidth + 12) - 12;
+    await sharp({ create: { width: montageWidth, height: y - 12, channels: 3, background: "#dedede" } })
+      .composite(composites).png().toFile(montagePath);
+    montages.push({ path: montagePath, sha256: hash(fs.readFileSync(montagePath)), width: montageWidth, height: y - 12, scale: 1, placements });
+  }
+}
+fs.writeFileSync(output, encode({
+  status: "Actual observation pending; these native images are not approved by DOM alone.",
+  surfaces, supplement_png_count: supplements.length, supplement_pngs: supplements,
+  native_montage_count: montages.length, native_montages: montages,
+  additional_unique_combinations: 0, same_existing_html_only: true, rendered_inputs_unchanged: true,
+  isolated_headless: true, network_blocked: true, device_scale_factor: 1,
+  pwdebug_cleared: true, reports_open: "never", browser_closed_in_finally: closed,
+  renderer_canonical_semantic_runs: 0,
+}), { flag: "wx" });
+console.log(encode({
+  supplement_png_count: supplements.length,
+  vertical_gap_pngs: supplements.filter((item) => !item.horizontal_offsets.length).length,
+  horizontal_context_pngs: supplements.filter((item) => item.horizontal_offsets.length).length,
+  native_montages: montages.map(({ path, width, height, placements }) => ({ path, width, height, files: placements.map((item) => item.filename) })),
+  browser_closed: closed, additional_unique_combinations: 0,
+}));

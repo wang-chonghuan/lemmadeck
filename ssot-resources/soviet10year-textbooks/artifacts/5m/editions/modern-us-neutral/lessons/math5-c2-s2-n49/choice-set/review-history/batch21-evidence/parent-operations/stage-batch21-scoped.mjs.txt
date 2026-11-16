@@ -1,0 +1,53 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+import { execFileSync } from 'node:child_process'
+
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const resultFile = `${scratch}/batch21-staged-scope.json`
+assert(!fs.existsSync(resultFile))
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const walk = dir => fs.readdirSync(dir, { withFileTypes: true }).flatMap(entry => {
+  const file = path.join(dir, entry.name)
+  return entry.isDirectory() ? walk(file) : [file]
+})
+assert.equal(execFileSync('git', ['branch', '--show-current'], { encoding: 'utf8' }).trim(),
+  'codex/STEMROBIN-182-textbooks')
+assert.equal(execFileSync('git', ['diff', '--cached', '--name-only'], { encoding: 'utf8' }).trim(), '')
+assert.equal(read(`${scratch}/batch21-retained-reference-check.json`).status, 'pass')
+const usage = read('.intentfold/tickets/STEMROBIN-182/usage.json')
+assert.equal(usage.current_batch.batch, 21)
+assert.equal(usage.current_batch.status, 'verified-retained-awaiting-commit-push')
+assert.equal(usage.current_batch.batch_questions, 102)
+assert.equal(usage.current_batch.batch_options, 335)
+const files = new Set([
+  '.claude/skills/ld-s10y-lesson/tools/render_lesson.js',
+  '.claude/skills/ld-s10y-lesson/tests/render_lesson_display.test.cjs',
+  '.intentfold/tickets/STEMROBIN-182/progress.md',
+  '.intentfold/tickets/STEMROBIN-182/usage.json',
+])
+for (const author of ['6a-n39', '6a-n40', '5m-n48', '5m-n49']) {
+  const directory = `${scratch}/${author}`
+  const seed = read(`${directory}/${fs.existsSync(`${directory}/seed.json`) ? 'seed.json' : 'source.json'}`)
+  const { book, lesson } = seed.source
+  const root = `ssot-resources/soviet10year-textbooks/artifacts/${book}/editions/modern-us-neutral/lessons/${lesson}/choice-set`
+  assert(fs.existsSync(`${root}/review-history/batch21-evidence/retention.json`))
+  walk(root).forEach(file => files.add(file))
+}
+const selected = [...files].sort()
+assert(selected.every(file => fs.existsSync(file) && fs.statSync(file).isFile()))
+assert(selected.every(file => !file.includes('/alg6-c2-')
+  && !file.startsWith('app/') && !/(^|\/)\.env($|\.)/.test(file)))
+execFileSync('git', ['add', '--', ...selected])
+const staged = execFileSync('git', ['diff', '--cached', '--name-only', '-z'])
+  .toString('utf8').split('\0').filter(Boolean)
+assert(staged.length > 0 && staged.every(file => files.has(file)), 'Unexpected staged file')
+fs.writeFileSync(resultFile, JSON.stringify({
+  status: 'pass',
+  stage_scope: 'Batch21 four choice roots, shared offline renderer repair/test and ticket records only.',
+  selected_files: selected.length,
+  staged_files: staged.length,
+  staged,
+  chapter2_env_app_and_other_batches_excluded: true,
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ status: 'pass', staged_files: staged.length }))

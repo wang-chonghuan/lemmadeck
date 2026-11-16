@@ -1,0 +1,347 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { fileURLToPath } from "node:url";
+
+const tmp = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const encode = (value) => JSON.stringify(value, null, 2) + "\n";
+const read = (file) => {
+  const bytes = fs.readFileSync(file);
+  return { value: JSON.parse(bytes.toString("utf8")), sha256: hash(bytes), bytes };
+};
+
+// These content correspondences were established from every revised alternative
+// and the original independent option evidence, not from an author key/receipt.
+const inputs = {
+  n48: {
+    revisedSha: "2a96642b492a25ab35de9db3f590c46e56ee0ffa56737b381e0c14b0b09f7e9c",
+    originalSha: "022e5364a9d2cbb82801bd013285aac9f8910329b3285f0c8d73d3e21abcdc3c",
+    reviewSha: "fe7761621be7581ab878f7ab931c671bd84a44e4d09386703dd554a082394c72",
+    sourceSha: "2551709b769cab711343e448411ab3701bf75c29e5b400299ee661e30b07dce5",
+    expected: { questions: 25, options: 77, correct: 26, incorrect: 51 },
+    originalLabelsInCurrentOrder:
+      "ABCD ACB CAB BCA CBA BAC CAB CBA BAC BAC CAB CBA BAC BCA BAC BAC ABC BCA BCA BAC CAB CAB DACB ACB BCA".split(" "),
+  },
+  n49: {
+    revisedSha: "c8443fa5210a8c17330b0981347928453c3a3a4e7f77b0467b7e768e5656bdc1",
+    originalSha: "15d838ac5eddcc0f0942afeabb7d19a973e80b51416003cb13466bee4da1a5ac",
+    reviewSha: "4f0f0bddea7efc8028c234dce69b6af41e87c1f864c580d4d42b12605920339a",
+    sourceSha: "3a7c62a75bd8cf48e466d9b816fef6d0830499bf072a035dd56a590e83377c66",
+    expected: { questions: 51, options: 153, correct: 54, incorrect: 99 },
+    originalLabelsInCurrentOrder:
+      "AB CAB ACB CAB BCA ABC BCA ABC BAC BCA CAB CAB ABC CAB CAB CAB BCA CBA BCA ABC ABC BCA BCA ACB CAB BAC BAC ACB BCA ABCD BCA ACB ACB ABC BCDA BCA BCA BAC CAB AB BAC ABC BAC BAC BCA BAC BCA ABC CAB BAC CAB".split(" "),
+  },
+};
+
+function periodicObservation(units) {
+  const sequence = units.map((unit) => unit.correct[0]);
+  const blocks = [];
+  const periods = [];
+  let comparedStartingWindows = 0;
+  for (let period = 1; period <= Math.floor(sequence.length / 2); period += 1) {
+    periods.push(period);
+    for (let start = 0; start + 2 * period <= sequence.length; start += 1) {
+      comparedStartingWindows += 1;
+      if (start > 0 && sequence[start - 1] === sequence[start + period - 1]) continue;
+      let end = start + period;
+      while (end < sequence.length && sequence[end] === sequence[end - period]) end += 1;
+      if (end - start < 2 * period) continue;
+      const seed = sequence.slice(start, start + period);
+      let primitive = true;
+      for (let shorter = 1; shorter < period; shorter += 1) {
+        if (period % shorter === 0 && seed.every((item, index) => item === seed[index % shorter])) {
+          primitive = false;
+        }
+      }
+      if (!primitive) continue;
+      blocks.push({
+        period,
+        seed: seed.join(""),
+        first_single_ordinal: start + 1,
+        last_single_ordinal: end,
+        length: end - start,
+        full_copies: Math.floor((end - start) / period),
+        sequence: sequence.slice(start, end).join(""),
+        question_ids: units.slice(start, end).map((unit) => unit.id),
+      });
+    }
+  }
+  return {
+    question_ids: units.map((unit) => unit.id),
+    independent_correct_label_sequence: sequence,
+    independent_correct_display_position_sequence: units.map((unit) => unit.positions[0]),
+    sequence_text: sequence.join(""),
+    position_counts: sequence.reduce((counts, label) => {
+      counts[label] = (counts[label] ?? 0) + 1;
+      return counts;
+    }, {}),
+    periods_examined: periods,
+    possible_two_copy_starting_windows_examined: comparedStartingWindows,
+    maximal_primitive_adjacent_periodic_blocks: blocks,
+    nonconstant_two_copy_blocks: blocks.filter((block) => block.period > 1),
+    longest_constant_run: Math.max(1, ...blocks.filter((block) => block.period === 1).map((block) => block.length)),
+  };
+}
+
+const pending = [];
+for (const [lesson, input] of Object.entries(inputs)) {
+  const own = path.join(tmp, `reviewer-5m-${lesson}`);
+  const viewPath = path.join(tmp, `5m-${lesson}`, "revised-position-view.json");
+  const originalReviewPath = path.join(own, "view-checks.json");
+  const sourcePath = path.join(own, "source-solutions.json");
+  const outputPath = path.join(own, "view-checks-position-revised.json");
+  if (fs.existsSync(outputPath)) throw new Error(`Preserve existing review: ${outputPath}`);
+  const view = read(viewPath);
+  const original = read(originalReviewPath);
+  const source = read(sourcePath);
+  if (view.sha256 !== input.revisedSha || original.sha256 !== input.reviewSha || source.sha256 !== input.sourceSha) {
+    throw new Error(`${lesson}: authorized/frozen byte binding differs`);
+  }
+  if (view.value.questions.length !== input.expected.questions ||
+      input.originalLabelsInCurrentOrder.length !== input.expected.questions ||
+      original.value.view_byte_sha256 !== input.originalSha ||
+      view.bytes.toString("utf8") !== encode(view.value)) {
+    throw new Error(`${lesson}: independent byte comparison precondition differs`);
+  }
+
+  const reconstructedOriginal = structuredClone(view.value);
+  const reviewedQuestions = [];
+  const positionUnits = [];
+  let correctCount = 0;
+  let incorrectCount = 0;
+  let movedContentCount = 0;
+  let changedQuestions = 0;
+
+  for (let index = 0; index < view.value.questions.length; index += 1) {
+    const current = view.value.questions[index];
+    const frozen = original.value.question_reviews[index];
+    const correspondence = input.originalLabelsInCurrentOrder[index];
+    if (current.id !== frozen.question_id ||
+        correspondence.length !== current.options.length ||
+        frozen.mathematics.option_checks.length !== current.options.length) {
+      throw new Error(`${lesson}: question/content count mismatch at ${current.id}`);
+    }
+    const oldChecks = new Map(frozen.mathematics.option_checks.map((check) => [check.option_id, check]));
+    const bindings = current.options.map((option, optionIndex) => {
+      const oldLabel = correspondence[optionIndex];
+      const check = oldChecks.get(oldLabel);
+      if (!check || option.id !== "ABCD"[optionIndex] || new Set(correspondence).size !== correspondence.length) {
+        throw new Error(`${current.id}: non-bijective displayed-content binding`);
+      }
+      if (check.truth === "correct") correctCount += 1;
+      else if (check.truth === "incorrect") incorrectCount += 1;
+      else throw new Error(`${current.id}: unresolved frozen option truth`);
+      if (oldLabel !== option.id) movedContentCount += 1;
+      return {
+        option_id: option.id,
+        current_display_position: optionIndex + 1,
+        original_option_id: oldLabel,
+        original_display_position: "ABCD".indexOf(oldLabel) + 1,
+        text: option.text,
+        text_utf8_sha256: hash(Buffer.from(option.text, "utf8")),
+        figure_ids: option.figure_ids,
+        truth: check.truth,
+        evidence: check.evidence,
+        content_binding_evidence: "Current complete text and figure references were matched to this original independent evidence. The independent inverse reconstructed whole original view matches its frozen byte SHA256; therefore this complete alternative, not only its numerical answer, is unchanged.",
+      };
+    });
+    if (bindings.some((binding) => binding.original_option_id !== binding.option_id)) changedQuestions += 1;
+    reconstructedOriginal.questions[index].options = current.options
+      .map((option, optionIndex) => ({ ...option, id: correspondence[optionIndex] }))
+      .sort((left, right) => left.id.localeCompare(right.id));
+
+    const review = structuredClone(frozen);
+    const correct = bindings.filter((binding) => binding.truth === "correct").map((binding) => binding.option_id);
+    if (current.mode === "single" && correct.length !== 1) throw new Error(`${current.id}: true set differs`);
+    review.visible_question_ordinal = index + 1;
+    review.visible_question = structuredClone(current);
+    review.original_labels_in_current_content_order = correspondence.split("");
+    review.content_equivalence = {
+      verdict: "pass",
+      question_id_and_order_unchanged: true,
+      mode_unchanged: true,
+      stem_byte_content_unchanged: true,
+      question_figure_ids_unchanged: true,
+      option_complete_content_multiset_unchanged: true,
+      original_and_current_option_counts: current.options.length,
+      evidence: "Only complete alternative positions and their displayed IDs are inverted. The entire reconstructed original view, including this question's full stem/mode/figures/order and every option, hashes to the original independently frozen view SHA256.",
+    };
+    review.answer_leakage = {
+      verdict: "pass",
+      evidence: frozen.answer_leakage.evidence,
+      position_evidence: "The label attached to each truth is rebound by unchanged complete alternative content. The whole singleton sequence and all contiguous blocks, including across multiple-mode boundaries after filtering, were examined independently below. No author key was read.",
+    };
+    review.mathematics = {
+      verdict: "pass",
+      independent_solution: frozen.mathematics.independent_solution,
+      correct,
+      option_checks: bindings,
+      author_key_or_rationale_compared: false,
+      reuse_basis: "Original independently solved option evidence is reused only after exact whole-view byte identity under the individually established content permutation; no blind old-label reuse.",
+    };
+    reviewedQuestions.push(review);
+    positionUnits.push({
+      id: current.id,
+      full_question_ordinal: index + 1,
+      mode: current.mode,
+      correct,
+      positions: bindings.filter((binding) => binding.truth === "correct").map((binding) => binding.current_display_position),
+    });
+  }
+
+  const reconstructedSha = hash(Buffer.from(encode(reconstructedOriginal), "utf8"));
+  if (reconstructedSha !== input.originalSha) throw new Error(`${lesson}: independently reconstructed original bytes differ`);
+  if (correctCount !== input.expected.correct || incorrectCount !== input.expected.incorrect) {
+    throw new Error(`${lesson}: complete option truth counts differ`);
+  }
+  const singles = positionUnits.filter((unit) => unit.mode === "single");
+  const whole = periodicObservation(singles);
+  const contiguous = [];
+  let segment = [];
+  for (const unit of positionUnits) {
+    if (unit.mode === "single") segment.push(unit);
+    else if (segment.length) {
+      contiguous.push(periodicObservation(segment));
+      segment = [];
+    }
+  }
+  if (segment.length) contiguous.push(periodicObservation(segment));
+  if (whole.nonconstant_two_copy_blocks.length || whole.longest_constant_run > 2) {
+    throw new Error(`${lesson}: observed periodicity requires a new substantive verdict`);
+  }
+  const originalRuns = original.value.position_cycle_review.runs.map((run) => {
+    const ids = new Set(run.question_ids);
+    const currentUnits = singles.filter((unit) => ids.has(unit.id));
+    return {
+      question_ids: run.question_ids,
+      original_independently_frozen_sequence: run.independent_correct_label_sequence.join(""),
+      revised_independent_sequence: currentUnits.map((unit) => unit.correct[0]).join(""),
+      evidence: "Original long strict ABC repetition is absent in the independently rebound revised sequence.",
+    };
+  });
+  const initialGeometry = lesson === "n48" ? {
+    question_ids: ["n48-897", "n48-898", "n48-899", "n48-900"],
+    original_sequence: "AAAA",
+    revised_sequence: singles.slice(0, 4).map((unit) => unit.correct[0]).join(""),
+    verdict: "pass",
+    evidence: "The four initial single geometry tasks now occupy A,B,C,C. No all-A concentration remains; the two-C adjacency does not establish a continuing answer rule. The preceding multiple task still has two valid constructions rather than a singleton label.",
+  } : null;
+  const isBlocked = lesson === "n49";
+  const findings = isBlocked ? [{
+    verdict: "blocked",
+    topic: "Original source934(4) unique numerical recovery",
+    evidence: "The unchanged n49-934-4-notice has the determinate conditional formula 53162.626/d-799.65 for d!=0 (now visible C). Its source's unresolved divisor still prevents a unique numerical answer. None of the other 32 valid sources or current option positions supplies the missing number.",
+    minimal_repair: "No guessing or author semantic repair is requested. Preserve the conditional evidence and the honest source934(4) numerical blocker.",
+  }] : [];
+
+  const result = {
+    schema: "independent-pure-view-position-revised-v1",
+    stage: "Revised PURE VIEW only: fidelity/dependencies retained before content-based truth rebinding, then independent whole-package position judgment.",
+    reviewer: structuredClone(original.value.reviewer),
+    read_boundary: "Read only the two authorized revised-position pure views, own original frozen source/image/fidelity/option evidence and own review-generation script. No author draft, key, rationale, ready, source-solutions, serializer, receipt, history diff, canonical/structural command, render, browser, service or durable writes.",
+    view_path: viewPath,
+    view_byte_sha256: view.sha256,
+    original_view_byte_sha256: input.originalSha,
+    original_view_path_currently_replaced: true,
+    original_frozen_view_checks_path: originalReviewPath,
+    original_frozen_view_checks_byte_sha256: original.sha256,
+    original_frozen_records_preserved: true,
+    source_freeze_path: sourcePath,
+    source_freeze_byte_sha256: source.sha256,
+    source_image_observations: structuredClone(original.value.source_image_observations),
+    source_images_reopened: 0,
+    author_internal_reads: 0,
+    independent_visible_comparison: {
+      verdict: "pass",
+      method: "Manually match every current complete alternative to original independent per-option evidence by content, never by its current letter. Independently inverse-permute/relabel the current pure view in memory; standard pretty JSON serialization also matches current raw bytes exactly. The reconstructed entire original bytes hash to the separately frozen original view SHA256. No author transformation proof/diff/receipt was consulted.",
+      current_raw_bytes_equal_observed_pretty_json_encoding: true,
+      independent_inverse_reconstructed_original_byte_sha256: reconstructedSha,
+      reconstructed_original_matches_frozen_byte_sha256: true,
+      all_question_ids_order_modes_full_stems_and_figures_unchanged: true,
+      all_complete_option_contents_and_option_figure_references_unchanged: true,
+      all_source_order_and_visible_relationships_unchanged: true,
+      content_bijection_count: correctCount + incorrectCount,
+      changed_position_question_count: changedQuestions,
+      changed_display_label_content_count: movedContentCount,
+      original_byte_snapshot_written: false,
+      scope_qualification: "Source order here means exact displayed question order/content and source relationships inferred from the frozen original prose. Author source_numbers/coverage internals remain unread and unapproved.",
+    },
+    review_order: [
+      "Reuse independently frozen source solutions and full actual image observations.",
+      "Read every revised stem and option; retain fidelity/redundancy/content leakage/coverage evidence before truth relabeling.",
+      "Match all unchanged complete contents to all original option evidence and independently hash-prove whole original view byte identity under that mapping.",
+      "Rebind all exact true sets to current display labels/positions; do not read any author key.",
+      "Judge the full singleton sequence and every possible adjacent periodic block, both within contiguous single runs and across intervening multiple questions.",
+      "Freeze this separate revised pure-view record; preserve the original revise history and source934(4) blocker.",
+    ],
+    counts: {
+      ...structuredClone(original.value.counts),
+      content_compared_options: correctCount + incorrectCount,
+      content_rebound_options: correctCount + incorrectCount,
+      current_single_questions: singles.length,
+      current_multiple_questions: positionUnits.length - singles.length,
+      unchanged_math_contents: correctCount + incorrectCount,
+      new_option_truth_solving_required: 0,
+    },
+    question_reviews: reviewedQuestions,
+    source_coverage: structuredClone(original.value.source_coverage),
+    production_loss_review: structuredClone(original.value.production_loss_review),
+    whole_package_dependencies: {
+      verdict: "pass",
+      retained_original_evidence: structuredClone(original.value.whole_package_dependencies),
+      evidence: "Full stems, alternative contents, figures and question order are independently proven unchanged. Shared arithmetic/ratio methods still require their own inputs, distinct coordinate lines/closed-segment domains remain distinct, and no revised label is presented as a mathematical premise in another unit.",
+      specific_checks: lesson === "n48" ? [
+        "n48-897 preserves vertex fixation, radial order, reflected point identities and full-axis domain.",
+        "n48-899 still asks for directions valid for every w,h>0 rectangle: the diagonal record is false generally, even though true for squares.",
+        "n48-896/898/907 shared bisection ideas do not turn the competing full procedures into declared facts.",
+        "n48-900 retains union of full intersecting lines, with exactly two axes unless perpendicular, then four.",
+      ] : [
+        "n49-923 retains a,k,c!=0 and k!=-3/5 restrictions rather than relying on equal simplified values.",
+        "n49-925's distractor11.25 is not justified by n49-926's distinct pedestrian rate.",
+        "n49-928/929 full-line domains and n49-930/931 inclusive endpoint segments remain distinct.",
+        "n49-932 actual scale-construction/measurement loss and n49-933 common-axis model/graph-production loss remain explicit.",
+        "n49-933 retains waiting0-2, meeting(5,25), rest5-6 and finite arrivals12/8.5, now in visible alternativeD.",
+        "n49-934-4-notice still states unresolved divisor and d!=0; a determinate conditional option is not numerical source recovery.",
+      ],
+      author_internal_coverage_disclosure_assessed: false,
+    },
+    position_cycle_review: {
+      verdict: "pass",
+      whole_single_sequence_including_across_multiple_boundaries: whole,
+      contiguous_single_question_runs: contiguous,
+      former_periodic_runs_compared: originalRuns,
+      initial_geometry: initialGeometry,
+      multiple_units: positionUnits.filter((unit) => unit.mode === "multiple"),
+      evidence: "All remaining maximal adjacent periodic blocks are constant pairs of length2. There is no constant run of length3 and no adjacent repeated primitive nonconstant block even twice for any possible period1..floor(single_count/2). The full sequence is not cyclic and the former strict ABC runs are removed. A short equal-label pair alone supplies no established continuation rule and is not grounds for manufacturing another position repair.",
+      distribution_qualification: "Position frequencies are reported, not treated as proof of fidelity or as a requirement for artificially equal counts. The independent content mathematics controls each true set.",
+      displayed_labels_follow_actual_positions: true,
+      no_new_narrow_position_repair_requested: true,
+    },
+    findings,
+    original_revise_findings_preserved_at: originalReviewPath,
+    all_visible_truths_frozen: true,
+    view_design_outcome: "pass",
+    mathematics_outcome: "pass",
+    source_coverage_outcome: isBlocked ? "blocked" : "pass",
+    outcome: isBlocked ? "blocked" : "pass",
+    next_authorization: "Await separate author internal comparison authorization. No current key/rationale/intent/coverage agreement has been asserted.",
+  };
+  pending.push({ outputPath, result, originalReviewPath, originalSha: original.sha256, viewPath, viewSha: view.sha256 });
+}
+
+for (const item of pending) {
+  if (read(item.originalReviewPath).sha256 !== item.originalSha || read(item.viewPath).sha256 !== item.viewSha) {
+    throw new Error("Input changed while freezing; no new record written");
+  }
+}
+for (const item of pending) {
+  fs.writeFileSync(item.outputPath, encode(item.result), { flag: "wx" });
+  console.log(JSON.stringify({
+    path: item.outputPath,
+    sha256: hash(fs.readFileSync(item.outputPath)),
+    outcome: item.result.outcome,
+    view_design_outcome: item.result.view_design_outcome,
+    counts: item.result.counts,
+  }));
+}

@@ -1,0 +1,141 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { createRequire } from 'node:module';
+import { pathToFileURL } from 'node:url';
+
+delete process.env.PWDEBUG;
+process.env.PLAYWRIGHT_HTML_OPEN = 'never';
+const repo = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const out = path.join(repo, '.intentfold/tickets/STEMROBIN-182/tmp/reviewer-6a-n40-display-repair');
+const execution = JSON.parse(fs.readFileSync(path.join(out, 'final-execution.json')));
+const require = createRequire(path.join(repo, 'app/package.json'));
+const { chromium } = require('@playwright/test');
+const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+if (fs.existsSync(path.join(out, 'changed-region-manifest.json'))) throw new Error('Already captured');
+fs.mkdirSync(path.join(out, 'captures'), { recursive: true });
+const captures = [];
+const surfaces = [];
+function png(file, details) {
+  const bytes = fs.readFileSync(file);
+  return { path: file, sha256: sha(file), width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20),
+    native_scale: 1, ...details };
+}
+async function geometry(page, surface) {
+  return page.evaluate((surface) => {
+    const selectors = { text: 'p.para', exercises: 'li.ex', choices: 'section.choice' };
+    const box = (node) => {
+      const rect = node.getBoundingClientRect();
+      return { x: rect.x, y: rect.y + scrollY, width: rect.width, height: rect.height,
+        client_width: node.clientWidth, scroll_width: node.scrollWidth };
+    };
+    return { headers: { h1: box(document.querySelector('h1')), crumb: box(document.querySelector('.crumb')) },
+      document: { viewport_width: innerWidth, client_width: document.documentElement.clientWidth,
+        scroll_width: document.documentElement.scrollWidth },
+      objects: [...document.querySelectorAll(selectors[surface])].map((node, index) => ({
+        index: index + 1, id: node.id || `${surface}-${index + 1}`, ...box(node),
+        body: node.querySelector('.body') ? box(node.querySelector('.body')) : null,
+        formulae: [...node.querySelectorAll('.katex-html')].map((formula) => box(formula)),
+        figures: [...node.querySelectorAll('.fig')].map((figure) => ({ id: figure.id, ...box(figure),
+          media: box(figure.querySelector('.figure-media')) })),
+      })) };
+  }, surface);
+}
+const browser = await chromium.launch({ headless: true });
+let closed = false;
+try {
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1 });
+    await context.route('**/*', (route) => /^(file:|data:|about:)/.test(route.request().url())
+      ? route.continue() : route.abort());
+    try {
+      const page = await context.newPage();
+      for (const lesson of execution.lessons) {
+        for (const html of lesson.HTML) {
+          const old = path.join(out, 'before', lesson.lesson, `${html.surface}.html`);
+          await page.goto(pathToFileURL(old).href);
+          await page.evaluate(() => document.fonts.ready);
+          const previous = await geometry(page, html.surface);
+          if (sha(html.path) !== html.sha256) throw new Error('New HTML changed');
+          await page.goto(pathToFileURL(html.path).href);
+          await page.evaluate(() => document.fonts.ready);
+          const current = await geometry(page, html.surface);
+          const region = await page.evaluate((surface) => {
+            const sheet = document.querySelector('.sheet').getBoundingClientRect();
+            const h1 = document.querySelector('h1').getBoundingClientRect();
+            const crumb = document.querySelector('.crumb').getBoundingClientRect();
+            let bottom = Math.max(h1.bottom, crumb.bottom);
+            if (surface === 'text') {
+              bottom = Math.max(bottom, document.querySelector('p.para').getBoundingClientRect().bottom);
+            } else if (surface === 'choices') {
+              const stem = document.querySelector('.choice-stem');
+              const figure = stem.querySelector('.fig');
+              const range = document.createRange();
+              range.selectNodeContents(stem);
+              if (figure) range.setEndBefore(figure);
+              bottom = Math.max(bottom, range.getBoundingClientRect().bottom);
+            } else {
+              bottom = Math.max(bottom, document.querySelector('li.ex .no').getBoundingClientRect().bottom);
+            }
+            return { x: Math.max(0, sheet.x), y: 0, width: Math.min(innerWidth, sheet.width),
+              height: Math.ceil(bottom + 16) };
+          }, html.surface);
+          const headerFile = path.join(out, 'captures', `${lesson.lesson}-${html.surface}-${viewport.width}-header.png`);
+          await page.screenshot({ path: headerFile, clip: region });
+          captures.push(png(headerFile, { kind: 'full-heading-and-breadcrumb-context',
+            lesson: lesson.lesson, surface: html.surface, viewport,
+            HTML: html, region, contains: html.surface === 'text' ? 'full h1/crumb and first complete paragraph'
+              : html.surface === 'choices' ? 'full h1/empty crumb and first complete prompt'
+                : 'full h1/crumb and first gutter line; full written units are separate captures' }));
+          const unitFiles = [];
+          if (html.surface === 'exercises') {
+            const units = page.locator('li.ex');
+            if (await units.count() !== lesson.exercises.length) throw new Error('Wrong written scope');
+            for (let index = 0; index < await units.count(); index++) {
+              const unit = units.nth(index);
+              const id = await unit.getAttribute('id');
+              const file = path.join(out, 'captures', `${lesson.lesson}-${viewport.width}-${id}-full-unit.png`);
+              const expected = await unit.boundingBox();
+              await unit.screenshot({ path: file });
+              const entry = png(file, { kind: 'full-written-unit-reflow',
+                lesson: lesson.lesson, surface: html.surface, viewport,
+                id, printed_number: lesson.exercises[index].printed_number, HTML: html,
+                entire_unit_bounding_box_before_capture: expected,
+                capture_scope: 'Entire unit at actual column width, including full vertical text/formula content and current figure window, not just the gutter. Unchanged figure scroll ends retain old evidence.',
+                previous_geometry: previous.objects[index], current_geometry: current.objects[index] });
+              if (entry.height < Math.floor(expected.height) || entry.width < Math.floor(expected.width)) {
+                throw new Error(`Unit screenshot clipped: ${id}`);
+              }
+              captures.push(entry);
+              unitFiles.push(file);
+            }
+          }
+          surfaces.push({ lesson: lesson.lesson, surface: html.surface, viewport,
+            old_HTML: { path: old, sha256: sha(old) }, new_HTML: html,
+            previous_geometry: previous, current_geometry: current,
+            header_capture: headerFile, full_written_unit_captures: unitFiles,
+            actual_pixel_status: 'pending-native-montage-inspection' });
+        }
+      }
+    } finally {
+      await context.close();
+    }
+  }
+} finally {
+  await browser.close();
+  closed = true;
+}
+for (const input of execution.inputs) if (sha(input.path) !== input.sha256_before) throw new Error('Original input changed');
+for (const record of execution.preserved_records) if (sha(record.path) !== record.sha256) throw new Error('Prior repair record changed');
+const record = { scope: 'Changed headers and complete written-unit reflow only; no full semantic or canonical rerun',
+  launch: { headless: true, PWDEBUG_absent: !('PWDEBUG' in process.env), PLAYWRIGHT_HTML_OPEN: process.env.PLAYWRIGHT_HTML_OPEN,
+    network_blocked: true, browser_closed: closed, device_scale_factor: 1, persistent_profile: false },
+  actual_capture_PNG_count: captures.length, header_PNG_count: captures.filter((file) =>
+    file.kind === 'full-heading-and-breadcrumb-context').length,
+  full_written_unit_PNG_count: captures.filter((file) => file.kind === 'full-written-unit-reflow').length,
+  unique_surface_viewport_combinations: surfaces.length, captures, surfaces };
+fs.writeFileSync(path.join(out, 'changed-region-manifest.json'), JSON.stringify(record, null, 2) + '\n', { flag: 'wx' });
+console.log(JSON.stringify({ captures: captures.length, headers: record.header_PNG_count,
+  written_units: record.full_written_unit_PNG_count, surfaces: surfaces.length, browser_closed: closed,
+  unit_dimensions: captures.filter((file) => file.kind === 'full-written-unit-reflow')
+    .map((file) => ({ id: file.id, viewport: file.viewport.width, width: file.width, height: file.height })) }, null, 2));

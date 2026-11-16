@@ -1,0 +1,45 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+
+const parent = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
+const n = Number(process.argv[2])
+assert([48, 49].includes(n))
+const dir = path.join(parent, `5m-n${n}`)
+const history = path.join(dir, 'history/before-nonperiodic-position-repair')
+const read = (root, name) => fs.readFileSync(path.join(root, name))
+const hash = value => crypto.createHash('sha256').update(value).digest('hex')
+const before = JSON.parse(read(history, 'draft.json'))
+const current = JSON.parse(read(dir, 'draft.json'))
+const plan = JSON.parse(read(dir, 'position-repair-plan.json'))
+const { applyPositionPlan } = await import(pathToFileURL(path.join(dir, 'position-binding.mjs')).href)
+const restoredGeneratorQuestions = structuredClone(before.questions)
+applyPositionPlan(restoredGeneratorQuestions, plan)
+assert.deepEqual(restoredGeneratorQuestions, current.questions)
+const oldAuthor = read(history, 'author.mjs').toString('utf8')
+const expectedAuthor = oldAuthor
+  .replace('import { spawnSync } from "node:child_process";',
+    'import { spawnSync } from "node:child_process";\nimport { applyPositionPlan } from "./position-binding.mjs";')
+  .replace('const draft = {',
+    'applyPositionPlan(questions, JSON.parse(fs.readFileSync(`${root}/position-repair-plan.json`, "utf8")));\n\nconst draft = {')
+assert.equal(read(dir, 'author.mjs').toString('utf8'), expectedAuthor)
+const ready = JSON.parse(read(dir, 'position-repair-ready.json'))
+for (const [name, digest] of Object.entries(ready.byte_sha256)) assert.equal(hash(read(dir, name)), digest)
+const receipt = {
+  only_author_edits: ['Import mechanical binding helper', 'Apply frozen finite position plan before serialization'],
+  every_other_author_byte_unchanged: true,
+  isolated_mechanical_binding_on_preserved_questions_matches_changed_draft: true,
+  author_serializer_or_math_generator_executed: false,
+  structural_checker_rerun: false,
+  position_binding_sha256: hash(read(dir, 'position-binding.mjs')),
+  author_before_sha256: hash(read(history, 'author.mjs')),
+  author_after_sha256: hash(read(dir, 'author.mjs')),
+  draft_after_sha256: hash(read(dir, 'draft.json')),
+  revised_position_view_sha256: hash(read(dir, 'revised-position-view.json')),
+  changed_snapshot_matches_ready_receipt: true
+}
+const output = path.join(dir, 'serializer-position-binding-verification.json')
+fs.writeFileSync(output, JSON.stringify(receipt, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ lesson: n, output, ...receipt }, null, 2))

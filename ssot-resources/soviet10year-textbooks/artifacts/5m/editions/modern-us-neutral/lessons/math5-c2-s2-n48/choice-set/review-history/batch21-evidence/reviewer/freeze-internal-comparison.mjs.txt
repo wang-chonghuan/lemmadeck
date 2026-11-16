@@ -1,0 +1,420 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { fileURLToPath } from "node:url";
+import { wrongPrograms, sourceIntentEvidence, lossRepairs } from "./internal-comparison-evidence.mjs";
+
+const tmp = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const encode = (value) => JSON.stringify(value, null, 2) + "\n";
+const read = (file) => {
+  const bytes = fs.readFileSync(file);
+  return { bytes, value: JSON.parse(bytes.toString("utf8")), sha256: hash(bytes) };
+};
+const ordered = (value) => Array.isArray(value)
+  ? value.map(ordered)
+  : value && typeof value === "object"
+    ? Object.fromEntries(Object.keys(value).sort().map((key) => [key, ordered(value[key])]))
+    : value;
+const snapshotDigest = (value) => hash(JSON.stringify(ordered(value))
+  .replace(/[^\x00-\x7f]/g, (character) => "\\u" + character.charCodeAt(0).toString(16).padStart(4, "0")));
+const same = (left, right) => JSON.stringify(left) === JSON.stringify(right);
+const sameSet = (left, right) => same([...left].sort(), [...right].sort());
+const assertComparison = (condition, evidence) => {
+  if (!condition) throw new Error(evidence);
+};
+const inputBindings = {
+  n48: {
+    draftByte: "78fe44d1a1e7487bf06e57f0b207ad783ded5ec31e94a05da1108373015cd07f",
+    draftSnapshot: "8a110cd9ee6f67cdb74110b9885ed9db7113c8f8d76504ae0eae1ce88a2dbf23",
+    seedByte: "30b5fe224c2d4ed0d92dabe0fc76fe89e52ec0996d19d1687b23c8833f3a421b",
+    sourceFreezeByte: "2551709b769cab711343e448411ab3701bf75c29e5b400299ee661e30b07dce5",
+    originalViewChecksByte: "fe7761621be7581ab878f7ab931c671bd84a44e4d09386703dd554a082394c72",
+    revisedViewChecksByte: "f2c35835e27ec0f125d6705d364de84f1f0d815b6e68ba286a6d29d0278c209e",
+    revisedViewByte: "2a96642b492a25ab35de9db3f590c46e56ee0ffa56737b381e0c14b0b09f7e9c",
+    counts: { sources: 15, questions: 25, options: 77, correct: 26, incorrect: 51 },
+  },
+  n49: {
+    draftByte: "22b9dd35d767cb47b92e7b9883b61ff2d8b53b478f36426a7bea032850a43567",
+    draftSnapshot: "b80a47f1329dbf253631ba9adaf7c2b943a62a0dcdaf804755cad3564c9df66a",
+    seedByte: "6d971029c727a2222ba0975405a9746154cc2a40d461b733585ce074e31ce71a",
+    sourceFreezeByte: "3a7c62a75bd8cf48e466d9b816fef6d0830499bf072a035dd56a590e83377c66",
+    originalViewChecksByte: "4f0f0bddea7efc8028c234dce69b6af41e87c1f864c580d4d42b12605920339a",
+    revisedViewChecksByte: "a6900a17a4c331130f02f90085201e9a446304ddb34cfb021778ab26704544d1",
+    revisedViewByte: "c8443fa5210a8c17330b0981347928453c3a3a4e7f77b0467b7e768e5656bdc1",
+    counts: { sources: 33, questions: 51, options: 153, correct: 54, incorrect: 99 },
+  },
+};
+
+const pending = [];
+const preservedReads = [];
+for (const [lesson, binding] of Object.entries(inputBindings)) {
+  const own = path.join(tmp, `reviewer-5m-${lesson}`);
+  const draftPath = path.join(tmp, `5m-${lesson}`, "draft.json");
+  const seedPath = path.join(tmp, `5m-${lesson}`, "source.json");
+  const sourcePath = path.join(own, "source-solutions.json");
+  const imagePath = path.join(own, "image-observations.json");
+  const originalPath = path.join(own, "view-checks.json");
+  const revisedPath = path.join(own, "view-checks-position-revised.json");
+  const reviewPath = path.join(own, "review.json");
+  const finalPath = path.join(own, "final-comparison.json");
+  assertComparison(!fs.existsSync(reviewPath) && !fs.existsSync(finalPath), `${lesson}: preserve any existing final history`);
+  const draft = read(draftPath);
+  const seed = read(seedPath);
+  const source = read(sourcePath);
+  const images = read(imagePath);
+  const original = read(originalPath);
+  const revised = read(revisedPath);
+  for (const [file, data, expected] of [
+    [draftPath, draft, binding.draftByte],
+    [seedPath, seed, binding.seedByte],
+    [sourcePath, source, binding.sourceFreezeByte],
+    [originalPath, original, binding.originalViewChecksByte],
+    [revisedPath, revised, binding.revisedViewChecksByte],
+  ]) {
+    assertComparison(data.sha256 === expected, `${lesson}: authorized/frozen binding differs: ${file}`);
+    preservedReads.push({ path: file, sha256: data.sha256 });
+  }
+  preservedReads.push({ path: imagePath, sha256: images.sha256 });
+  const draftSnapshot = snapshotDigest(draft.value);
+  const seedSnapshot = snapshotDigest(seed.value);
+  assertComparison(draftSnapshot === binding.draftSnapshot, `${lesson}: contract snapshot differs`);
+  assertComparison(draft.value.seed_sha256 === seedSnapshot, `${lesson}: seed snapshot binding differs`);
+  const projection = { questions: draft.value.questions.map((question) => ({ id: question.id, ...question.view })) };
+  assertComparison(hash(encode(projection)) === binding.revisedViewByte, `${lesson}: current draft is not the frozen revised pure view`);
+  assertComparison(draft.value.new_figures.length === 0, `${lesson}: unreviewed authored images`);
+  assertComparison(draft.value.questions.length === binding.counts.questions &&
+    source.value.source_reviews.length === binding.counts.sources, `${lesson}: source/question counts differ`);
+
+  const sourceNumbers = new Set(seed.value.exercises.map((exercise) => exercise.number));
+  const questions = [];
+  const detailedQuestions = [];
+  const readWrongPrograms = new Set();
+  const repairMap = new Map(lossRepairs[lesson].map((repair) => [repair.source, repair]));
+  let correctCount = 0;
+  let wrongCount = 0;
+
+  for (let index = 0; index < draft.value.questions.length; index += 1) {
+    const authored = draft.value.questions[index];
+    const frozen = revised.value.question_reviews[index];
+    const visibleSource = frozen.source_number_inferred_from_visible_id_and_original_content;
+    const unitSuffix = authored.id.slice(`n${lesson.slice(1)}-`.length);
+    const allOriginalSource = source.value.source_reviews.find((entry) => entry.source_number === visibleSource);
+    assertComparison(authored.id === frozen.question_id &&
+      same(authored.source_numbers, [visibleSource]) && sourceNumbers.has(visibleSource), `${authored.id}: source relationship differs`);
+    assertComparison(sameSet(authored.key.correct, frozen.mathematics.correct), `${authored.id}: complete author key differs`);
+    assertComparison(authored.key.rationales.length === authored.view.options.length, `${authored.id}: per-option rationale count differs`);
+    const evidenceById = new Map(frozen.mathematics.option_checks.map((check) => [check.option_id, check]));
+    const canonicalChecks = [];
+    const detailedChecks = [];
+    for (const alternative of authored.view.options) {
+      const independent = evidenceById.get(alternative.id);
+      const rationale = authored.key.rationales.find((entry) => entry.option_id === alternative.id);
+      assertComparison(independent && rationale && independent.truth === rationale.truth &&
+        independent.text === alternative.text &&
+        same(independent.figure_ids, alternative.figure_ids), `${authored.id}/${alternative.id}: option binding/truth differs`);
+      const isCorrect = independent.truth === "correct";
+      assertComparison(isCorrect ? rationale.misconception === null : typeof rationale.misconception === "string",
+        `${authored.id}/${alternative.id}: misconception truth role differs`);
+      let program = null;
+      if (isCorrect) correctCount += 1;
+      else {
+        wrongCount += 1;
+        program = wrongPrograms[lesson][unitSuffix]?.[alternative.id];
+        assertComparison(typeof program === "string" && program.length > 0,
+          `${authored.id}/${alternative.id}: missing independent concrete wrong generation`);
+        readWrongPrograms.add(`${unitSuffix}/${alternative.id}`);
+      }
+      const internalEvidence = isCorrect
+        ? `The current correct rationale was compared against the frozen independent proof/calculation: ${independent.evidence} Its stated operations and domain agree, and no misconception is attached.`
+        : `Independent execution of the stated wrong procedure: ${program} The current author derivation/misconception describes this procedure; it generates the entire unchanged alternative, not merely a nearby answer. Frozen independent falsehood evidence: ${independent.evidence}`;
+      canonicalChecks.push({
+        option_id: alternative.id,
+        truth: independent.truth,
+        evidence: internalEvidence,
+      });
+      detailedChecks.push({
+        option_id: alternative.id,
+        current_display_position: independent.current_display_position,
+        original_option_id_before_position_repair: independent.original_option_id,
+        visible_text: alternative.text,
+        visible_text_utf8_sha256: independent.text_utf8_sha256,
+        figure_ids: alternative.figure_ids,
+        independently_frozen_truth: independent.truth,
+        author_truth: rationale.truth,
+        truth_comparison: { verdict: "pass", evidence: independent.evidence },
+        author_derivation: rationale.derivation,
+        author_misconception: rationale.misconception,
+        derivation_comparison: { verdict: "pass", evidence: internalEvidence },
+        concrete_wrong_program: program,
+        wrong_program_generation: isCorrect ? null : {
+          verdict: "pass",
+          evidence: program,
+          generated_alternative_matches_current_complete_content: true,
+          genuinely_false_here: true,
+          domain_or_compound_record_falsehood: independent.evidence,
+          misconception_plausibility: "A specific operand, sign, reciprocal, unit/base, equation rearrangement, coordinate-domain, correspondence or construction step is mistaken. The generation is recorded concretely rather than declaring the option incorrect by its key.",
+        },
+        correct_proof_comparison: isCorrect ? { verdict: "pass", evidence: independent.evidence } : null,
+      });
+    }
+    const sourceIntent = sourceIntentEvidence[lesson][visibleSource];
+    assertComparison(typeof sourceIntent === "string", `${authored.id}: missing independent source/intent evidence`);
+    const repair = repairMap.get(visibleSource);
+    const production = {
+      verdict: repair ? "revise" : "pass",
+      evidence: sourceIntent + (repair ? " " + repair.evidence : ""),
+      current_intent_limitations: authored.intent.limitations,
+      frozen_observed_production_losses: frozen.production_losses,
+      repair_required: repair?.loss ?? null,
+      approval_scope: "Recognition mathematics is not independent drawing/writing/model production. This loss-disclosure judgment is separate from the already-passing pure learner view.",
+    };
+    const canonicalQuestion = {
+      question_id: authored.id,
+      task_fidelity: {
+        verdict: "pass",
+        evidence: frozen.task_fidelity.evidence + " Current task/source solution/unit reason retain this mathematical task. " +
+          (repair ? "A separate source-coverage revise records the narrow internal production-loss disclosure gap; this pass does not certify full production coverage." : "Concrete production losses are disclosed and no full production claim is approved."),
+      },
+      redundancy: structuredClone(frozen.redundancy),
+      answer_leakage: {
+        verdict: "pass",
+        evidence: frozen.answer_leakage.evidence +
+          " Current draft view is exactly the position-revised frozen projection. The independently reviewed nonperiodic singleton sequence remains unchanged; no internal field is part of the learner view.",
+      },
+      mathematics: {
+        verdict: "pass",
+        independent_solution: frozen.mathematics.independent_solution,
+        correct: [...frozen.mathematics.correct],
+        option_checks: canonicalChecks,
+      },
+    };
+    questions.push(canonicalQuestion);
+    detailedQuestions.push({
+      question_id: authored.id,
+      question_ordinal: index + 1,
+      source_numbers: [...authored.source_numbers],
+      source_task_relation: {
+        verdict: "pass",
+        evidence: sourceIntent,
+        original_source_text: seed.value.exercises.find((exercise) => exercise.number === visibleSource).text,
+        frozen_source_domain: allOriginalSource.domain,
+        frozen_source_subtasks: allOriginalSource.subtasks,
+      },
+      author_intent: structuredClone(authored.intent),
+      source_solution_comparison: { verdict: "pass", evidence: sourceIntent },
+      unit_reason_comparison: {
+        verdict: "pass",
+        evidence: "This current unit matches the full task/subtask represented in the original and revised frozen view; combined complete records retain mathematically dependent steps, while split independent calculations use their own original operands. " + frozen.task_fidelity.evidence,
+      },
+      complete_true_set_comparison: {
+        verdict: "pass",
+        independently_frozen_correct: frozen.mathematics.correct,
+        author_correct: authored.key.correct,
+        evidence: "Exact complete sets agree after content-based current-label rebinding; every alternative is also individually compared below.",
+      },
+      production_loss_disclosure: production,
+      option_comparisons: detailedChecks,
+      canonical_question_review: canonicalQuestion,
+    });
+  }
+  assertComparison(correctCount === binding.counts.correct && wrongCount === binding.counts.incorrect,
+    `${lesson}: complete truth counts differ`);
+  const authoredProgramKeys = Object.entries(wrongPrograms[lesson]).flatMap(([unit, entries]) =>
+    Object.keys(entries).map((option) => `${unit}/${option}`));
+  assertComparison(sameSet(authoredProgramKeys, [...readWrongPrograms]), `${lesson}: extra/missing concrete generation evidence`);
+
+  const sources = [];
+  const detailedSources = [];
+  const repairs = [];
+  for (const frozenSource of source.value.source_reviews) {
+    const number = frozenSource.source_number;
+    const coverageIndex = draft.value.coverage.findIndex((entry) => entry.source_number === number);
+    assertComparison(coverageIndex >= 0, `${lesson}: missing source coverage${number}`);
+    const authoredCoverage = draft.value.coverage[coverageIndex];
+    const inferred = revised.value.source_coverage.find((entry) => entry.source_number === number);
+    const actualIds = draft.value.questions.filter((question) => question.source_numbers.includes(number)).map((question) => question.id);
+    assertComparison(same(authoredCoverage.question_ids, actualIds) &&
+      same(inferred.visible_question_ids, actualIds), `${lesson}: coverage relationships differ${number}`);
+    const repair = repairMap.get(number);
+    const blocked = lesson === "n49" && number === "934";
+    const verdict = blocked ? "blocked" : repair ? "revise" : "pass";
+    const solution = `Original domain: ${frozenSource.domain} Independent source solution: ${frozenSource.independent_solution}`;
+    const evidence = `${sourceIntentEvidence[lesson][number]} ` +
+      `All source response units are exactly ${actualIds.join(", ")}. ` +
+      `Current omissions: ${authoredCoverage.omitted_tasks.join(" | ")}. ` +
+      (repair ? `Narrow disclosure revise: ${repair.evidence} Required explicit additional loss: ${repair.loss}` :
+        blocked ? "This is three determinate computations plus a conditional explanation, not complete four-number numerical coverage. The unresolved divisor remains blocked." :
+          "The actual recognition/drawing/writing omissions are disclosed rather than treated as full production coverage.");
+    sources.push({ source_number: number, independent_solution: solution, coverage: { verdict, evidence } });
+    detailedSources.push({
+      source_number: number,
+      verdict,
+      source_domain: frozenSource.domain,
+      original_subtasks: frozenSource.subtasks,
+      independent_solution: frozenSource.independent_solution,
+      author_coverage: authoredCoverage,
+      original_visible_coverage: original.value.source_coverage.find((entry) => entry.source_number === number),
+      revised_visible_coverage: inferred,
+      mathematical_result_and_unit_mapping_comparison: { verdict: "pass", evidence: sourceIntentEvidence[lesson][number] },
+      internal_omission_disclosure_comparison: { verdict, evidence },
+      full_production_coverage_claim_approved: false,
+    });
+    if (repair) {
+      const questionIndex = draft.value.questions.findIndex((question) => question.id === repair.question);
+      const question = draft.value.questions[questionIndex];
+      assertComparison(questionIndex >= 0, `Missing narrow repair question${repair.question}`);
+      repairs.push({
+        verdict: "revise",
+        topic: "Concrete internal production-loss disclosure",
+        source_number: number,
+        question_id: repair.question,
+        evidence: repair.evidence,
+        current_intent_limitations: question.intent.limitations,
+        current_coverage_omitted_tasks: authoredCoverage.omitted_tasks,
+        minimum_json_leaf_diff_requests: [
+          {
+            operation: "append",
+            path: `/questions/${questionIndex}/intent/limitations/-`,
+            value: repair.loss,
+          },
+          {
+            operation: "append",
+            path: `/coverage/${coverageIndex}/omitted_tasks/-`,
+            value: repair.loss,
+          },
+        ],
+        minimum_field_count: 2,
+        must_preserve: "All learner view bytes, option content/IDs/order, complete keys, all rationales, source_numbers/source bytes, mathematical intent/source_solution, and all other existing fields.",
+        not_requested: "No view or semantic repair, new question, new image, guessed source input, author key change, validator or render.",
+      });
+    }
+  }
+  assertComparison(draft.value.coverage.length === binding.counts.sources, `${lesson}: extra source coverage records`);
+  const figureChecks = images.value.figures.map((figure) => ({
+    figure_id: figure.figure_id,
+    asset_path: figure.asset_path,
+    asset_sha256: figure.actual_asset_sha256,
+    observation: figure.observation + " Mathematical observation: " + figure.mathematical_use +
+      (figure.artwork ? " Actual contextual artwork was also previously opened: " + figure.artwork.observation : "") +
+      " Reused hash-bound source-image observation; no new figure approval or pixel-display approval is asserted here.",
+  }));
+  const blockedFindings = lesson === "n49" ? [{
+    verdict: "blocked",
+    topic: "Original source934(4) unique numerical result",
+    evidence: "The current conditional optionC and its rationale correctly retain d!=0 and53162.626/d-799.65. Intent/coverage honestly state that no confirmed fourth divisor/unique numerical result is available. The full paired review of76 questions and230 options does not recover that divisor.",
+    minimum_diff_request: null,
+    requested_handling: "Keep the numerical blocker and conditional explanation unchanged. Do not ask the author to guess, normalize63\\ 8 or silently drop the task.",
+  }] : [];
+  const outcome = lesson === "n49" ? "blocked" : "revise";
+  const review = {
+    schema: "s10y-choice-review-v1",
+    seed_sha256: seedSnapshot,
+    draft_sha256: draftSnapshot,
+    reviewer: structuredClone(revised.value.reviewer),
+    source_reviews: sources,
+    figure_checks: figureChecks,
+    new_figure_reviews: [],
+    question_reviews: questions,
+    outcome,
+  };
+  const counts = {
+    sources: binding.counts.sources,
+    questions: questions.length,
+    options: correctCount + wrongCount,
+    complete_key_sets_compared: questions.length,
+    individually_compared_truths: correctCount + wrongCount,
+    correct_proofs_compared: correctCount,
+    false_programs_independently_executed: wrongCount,
+    per_option_derivations_and_misconceptions_compared: correctCount + wrongCount,
+    author_intents_compared: questions.length,
+    source_coverage_records_compared: sources.length,
+    mathematics_pass_questions: questions.length,
+    source_coverage_pass: detailedSources.filter((entry) => entry.verdict === "pass").length,
+    source_coverage_revise: repairs.length,
+    source_coverage_blocked: blockedFindings.length,
+    narrow_loss_disclosure_units: repairs.length,
+    minimum_internal_field_changes_requested: 2 * repairs.length,
+    author_separate_solution_or_serializer_reads: 0,
+    optional_author_repair_record_reads: 0,
+    source_images_reopened: 0,
+    validator_canonical_workflow_or_render_runs: 0,
+  };
+  const final = {
+    schema: "independent-internal-final-comparison-v1",
+    stage: "First authorized INTERNAL comparison after original source and both original/revised pure-view truth freezes.",
+    reviewer: structuredClone(revised.value.reviewer),
+    authority: "Only current n48/n49 draft.json internals and own original/frozen source/image/view evidence. Optional author repair records were unnecessary and not opened. No separate author source-solutions, serializer/history/answers, validator, canonical workflow, browser, render or service.",
+    draft_path: draftPath,
+    draft_byte_sha256: draft.sha256,
+    draft_sha256: draftSnapshot,
+    seed_path: seedPath,
+    seed_byte_sha256: seed.sha256,
+    seed_sha256: seedSnapshot,
+    source_freeze_path: sourcePath,
+    source_freeze_byte_sha256: source.sha256,
+    original_view_checks_path: originalPath,
+    original_view_checks_byte_sha256: original.sha256,
+    original_view_byte_sha256: original.value.view_byte_sha256,
+    revised_view_checks_path: revisedPath,
+    revised_view_checks_byte_sha256: revised.sha256,
+    revised_view_byte_sha256: binding.revisedViewByte,
+    current_draft_visible_projection_equals_revised_frozen_view: true,
+    original_option_truths_rebound_by_complete_content: true,
+    inverse_original_view_byte_identity_evidence: revised.value.independent_visible_comparison,
+    snapshot_digest_note: "Ordinary in-memory contract JSON snapshot hashing only; no author canonical/structural command or workflow was run.",
+    counts,
+    all_230_truths_across_pair_stay_frozen: true,
+    mathematical_key_derivation_wrong_program_outcome: "pass",
+    learner_view_fidelity_redundancy_leakage_outcome: "pass",
+    whole_position_gate: structuredClone(revised.value.position_cycle_review),
+    internal_production_loss_disclosure_outcome: "revise",
+    source_numerical_blockers: blockedFindings,
+    outcome,
+    findings: [...repairs, ...blockedFindings],
+    minimum_diff_requests: repairs,
+    no_author_edits_performed: true,
+    original_frozen_records_unmodified: true,
+    source_comparisons: detailedSources,
+    question_comparisons: detailedQuestions,
+    actual_source_image_evidence_reused: {
+      path: imagePath,
+      byte_sha256: images.sha256,
+      figures: images.value.figures,
+      new_figure_reviews_required: false,
+      display_approval_claimed: false,
+    },
+    whole_package_coverage_and_dependencies: {
+      mathematical_recognition_verdict: "pass",
+      internal_loss_disclosure_verdict: "revise",
+      source935_or_other_valid_units_do_not_resolve934_blocker: lesson === "n49",
+      evidence: revised.value.whole_package_dependencies,
+      source_mapping_all_exact: true,
+      no_silent_source_omissions: true,
+      full_independent_production_coverage_approved: false,
+      new_semantic_options_or_new_solving_required_for_requested_repair: false,
+    },
+    canonical_format_review_path: reviewPath,
+    canonical_format_review_byte_sha256: hash(encode(review)),
+    next_step: "Await a narrowly authorized internal loss-disclosure repair comparison. Do not rerun the unchanged pure-view mathematics or re-open source figures; preserve original/revised review history and source934(4)'s blocker.",
+  };
+  pending.push({ reviewPath, finalPath, review, final });
+}
+
+for (const retained of preservedReads) {
+  assertComparison(read(retained.path).sha256 === retained.sha256, `Input changed during comparison: ${retained.path}`);
+}
+for (const item of pending) {
+  fs.writeFileSync(item.reviewPath, encode(item.review), { flag: "wx" });
+  fs.writeFileSync(item.finalPath, encode(item.final), { flag: "wx" });
+  console.log(JSON.stringify({
+    draft_snapshot_sha256: item.final.draft_sha256,
+    review_path: item.reviewPath,
+    review_byte_sha256: hash(fs.readFileSync(item.reviewPath)),
+    final_path: item.finalPath,
+    final_byte_sha256: hash(fs.readFileSync(item.finalPath)),
+    outcome: item.final.outcome,
+    mathematics: item.final.mathematical_key_derivation_wrong_program_outcome,
+    counts: item.final.counts,
+  }));
+}

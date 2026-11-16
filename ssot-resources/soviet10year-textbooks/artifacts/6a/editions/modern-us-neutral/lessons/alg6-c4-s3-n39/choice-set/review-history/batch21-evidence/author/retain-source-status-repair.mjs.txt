@@ -1,0 +1,66 @@
+import assert from 'node:assert/strict'
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+
+const root = '.intentfold/tickets/STEMROBIN-182/tmp/6a-n39'
+const reviewer = '.intentfold/tickets/STEMROBIN-182/tmp/reviewer-6a-n39'
+const history = `${root}/history/before-source-status-repair`
+const files = ['seed.json', 'draft.json', 'view.json', 'source-solutions.json',
+  'ready.json', 'finish-authoring.cjs', 'revised-option-position-view.json']
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const save = (file, value) => fs.writeFileSync(file, JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+const phase = process.argv[2]
+assert(['preserve', 'record'].includes(phase))
+if (phase === 'preserve') {
+  assert(!fs.existsSync(history))
+  fs.mkdirSync(history, { recursive: true })
+  const hashes = {}
+  for (const name of files) {
+    const bytes = fs.readFileSync(`${root}/${name}`)
+    fs.writeFileSync(`${history}/${name}`, bytes, { flag: 'wx' })
+    hashes[name] = sha(bytes)
+  }
+  for (const name of ['review.json', 'final-comparison-result.json']) {
+    fs.copyFileSync(`${reviewer}/${name}`, `${history}/reviewer-${name}`, fs.constants.COPYFILE_EXCL)
+  }
+  save(`${history}/byte-hashes.json`, hashes)
+  console.log(JSON.stringify({ status: 'preserved', history, files: files.length + 3 }))
+} else {
+  const before = read(`${history}/draft.json`)
+  const after = read(`${root}/draft.json`)
+  const paths = ['/questions/14/intent/source_solution', '/questions/14/intent/limitations/0',
+    '/coverage/13/omitted_tasks']
+  const resolve = (value, pointer) => {
+    const parts = pointer.slice(1).split('/')
+    const key = parts.pop()
+    return { parent: parts.reduce((current, part) => current[part], value), key }
+  }
+  const inverse = structuredClone(after)
+  const diff = paths.map(pointer => {
+    const a = resolve(before, pointer), b = resolve(after, pointer), restored = resolve(inverse, pointer)
+    assert.notDeepEqual(a.parent[a.key], b.parent[b.key])
+    restored.parent[restored.key] = structuredClone(a.parent[a.key])
+    return { path: pointer, before: a.parent[a.key], after: b.parent[b.key] }
+  })
+  assert.deepEqual(inverse, before)
+  assert.deepEqual(after.coverage[13].omitted_tasks, [before.coverage[13].omitted_tasks[1]])
+  const hashes = read(`${history}/byte-hashes.json`)
+  for (const name of files.filter(name => name !== 'draft.json')) {
+    assert.equal(sha(fs.readFileSync(`${root}/${name}`)), hashes[name], name)
+  }
+  save(`${root}/source-status-json-diff.json`, diff)
+  save(`${root}/source-status-repair-receipt.json`, {
+    status: 'pass', history, changed_question: 'prime-power-divisor-convention-branches',
+    before_draft_byte_sha256: hashes['draft.json'],
+    after_draft_byte_sha256: sha(fs.readFileSync(`${root}/draft.json`)),
+    exact_json_inverse_restored: true, original_bytes_retained: true,
+    unchanged: files.filter(name => name !== 'draft.json'),
+    unchanged_semantics: ['all visible questions', 'keys', 'rationales', 'calculations',
+      'figures', 'question order', 'all other intent and coverage fields'],
+    structural_canonical_semantic_render_reruns: 0,
+    serializer_reads_current_draft_not_executed: true
+  })
+  console.log(JSON.stringify({ status: 'pass', changed_status_fields: 3, core_view_key_changes: 0 }))
+}

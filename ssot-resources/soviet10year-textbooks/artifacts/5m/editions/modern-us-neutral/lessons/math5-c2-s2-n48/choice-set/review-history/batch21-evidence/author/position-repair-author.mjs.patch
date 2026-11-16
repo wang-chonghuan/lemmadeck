@@ -1,0 +1,19 @@
+--- author.mjs.before
++++ author.mjs.after
+@@ -1,6 +1,7 @@
+ import fs from "node:fs";
+ import crypto from "node:crypto";
+ import { spawnSync } from "node:child_process";
++import { applyPositionPlan } from "./position-binding.mjs";
+ 
+ const root = ".intentfold/tickets/STEMROBIN-182/tmp/5m-n48";
+ const frozenBytes = fs.readFileSync(`${root}/source-solutions.json`);
+@@ -219,6 +220,8 @@
+   ["$x=0$", "Moves the left-side-7/3 as another subtraction on the right:(7/3)x=7/3-7/3=0.", "Changes sides without reversing the subtraction sign."]
+ ]);
+ 
++applyPositionPlan(questions, JSON.parse(fs.readFileSync(`${root}/position-repair-plan.json`, "utf8")));
++
+ const draft = {
+   schema: "s10y-choice-draft-v1", seed_sha256: seedDigest, new_figures: [], questions,
+   coverage: frozen.source_solutions.map(s => ({

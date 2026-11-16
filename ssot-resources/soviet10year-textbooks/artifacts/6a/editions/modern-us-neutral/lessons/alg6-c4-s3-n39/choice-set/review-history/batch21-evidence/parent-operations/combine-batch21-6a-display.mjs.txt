@@ -1,0 +1,67 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const repairPath = `${scratch}/reviewer-6a-n40-display-repair/final-repair-observations.json`
+const repair = read(repairPath)
+assert.equal(repair.scoped_pass, true)
+assert.equal(repair.actual_pixel_method.all_58_source_tiles_inspected, true)
+assert.equal(repair.actual_pixel_method.unopened_files.length, 0)
+assert.equal(repair.file_and_input_integrity.all_tracked_inputs_unchanged, true)
+const proofPath = repair.unchanged_component_proof.record.path
+const proof = read(proofPath)
+
+for (const [unit, originalCount, sourceCount] of [[39, 270, 15], [40, 118, 8]]) {
+  const lesson = `alg6-c4-s3-n${unit}`
+  const oldPath = `${scratch}/reviewer-6a-n${unit}-actual-display/observations.json`
+  const old = read(oldPath)
+  const files = repair.per_file_observations_and_hashes.filter(row => row.lesson === lesson)
+  assert.equal(files.length, 6 + sourceCount * 2)
+  assert(files.every(row => row.actual_native_pixels_opened && sha(row.path) === row.sha256))
+  const pages = proof.pages.filter(row => row.lesson === lesson)
+  assert.equal(pages.length, 3)
+  assert(pages.every(row => row.allowed_component_replacement_reproduces_new_HTML_byte_for_byte
+    && row.all_other_HTML_bytes_unchanged))
+  const surfaces = repair.surfaces.filter(row => row.lesson === lesson)
+  assert.equal(surfaces.length, 6)
+  const output = `${scratch}/reviewer-6a-n${unit}-combined-display/observations.json`
+  assert(!fs.existsSync(output))
+  fs.mkdirSync(`${scratch}/reviewer-6a-n${unit}-combined-display`, { recursive: true })
+  const record = {
+    schema: 'batch21-component-bound-display-evidence-v1',
+    status: 'pass',
+    scoped_pass: true,
+    lesson,
+    semantic_outcome: unit === 39 ? 'pass' : 'blocked',
+    scope: 'Composite evidence: complete old body observations plus independently observed changed headers and written-unit reflow, connected by exact HTML component proof. Not a new full-body or semantic review.',
+    old_observation_unchanged: { path: oldPath, sha256: sha(oldPath), original_status: old.status ?? old.outcome },
+    old_body_observations_under_original_binding: old,
+    new_independent_repair_record: { path: repairPath, sha256: sha(repairPath) },
+    original_failed_repair_record: repair.old_and_new_bindings.initial_blocked_repair_record_preserved,
+    unchanged_component_proof: { record: { path: proofPath, sha256: sha(proofPath) }, pages },
+    new_changed_region_observations: files,
+    new_surface_bindings: surfaces,
+    no_blanket_rebinding_of_old_pixels_to_new_HTML: true,
+    old_defect_statuses_not_modified_or_silently_weakened: true,
+    retained_limits: repair.retained_limits,
+    no_new_complete_graph_or_formula_scroll_union_claim: true,
+    retained_source_block646: unit === 40 ? repair.retained_source_block646 : null,
+    counts: {
+      unique_surface_viewport_combinations: 6,
+      old_actual_PNG_files: originalCount,
+      new_actual_PNG_files: files.length,
+      actual_PNG_files: originalCount + files.length,
+      new_combinations_from_changed_region_capture: 0,
+      montage_files_not_counted_as_additional_observations: true,
+      written_sources: sourceCount,
+      new_written_source_viewport_instances: sourceCount * 2,
+    },
+    combining_agent_did_not_reopen_images_or_claim_new_independent_review: true,
+    semantic_canonical_or_render_reruns_here: 0,
+  }
+  fs.writeFileSync(output, JSON.stringify(record, null, 2) + '\n', { flag: 'wx' })
+  console.log(JSON.stringify({ lesson, output, scoped_pass: true, actual_PNG_files: record.counts.actual_PNG_files }))
+}

@@ -1,0 +1,96 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
+
+const own = path.dirname(fileURLToPath(import.meta.url));
+const root = path.resolve(own, "../../../../..");
+const require = createRequire("/Users/yong/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/package.json");
+const sharp = require("sharp");
+const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const manifestPath = path.join(root, ".intentfold/tickets/STEMROBIN-182/tmp/batch21-render/5m-math5-c2-s2-n49-capture-manifest.json");
+const manifestBytes = fs.readFileSync(manifestPath);
+const manifest = JSON.parse(manifestBytes);
+const reportPath = path.join(root, manifest.report);
+const screenshots = [];
+for (const row of manifest.screenshots) {
+  const absolute = path.join(root, row.path);
+  const bytes = fs.readFileSync(absolute);
+  if (hash(bytes) !== row.sha256) throw new Error(`Primary binding changed: ${absolute}`);
+  const metadata = await sharp(bytes).metadata();
+  screenshots.push({ ...row, absolute_path: absolute, filename: path.basename(absolute), width: metadata.width, height: metadata.height });
+}
+const directory = path.dirname(screenshots[0].absolute_path);
+const actualNames = fs.readdirSync(directory).filter((name) => name.startsWith("math5-c2-s2-n49-") && name.endsWith(".png")).sort();
+if (JSON.stringify(actualNames) !== JSON.stringify(screenshots.map((row) => row.filename).sort())) {
+  throw new Error("Actual primary filenames differ from manifest inventory");
+}
+const rendered = manifest.rendered.map((row) => {
+  const absolute_path = path.join(root, row.path);
+  if (hash(fs.readFileSync(absolute_path)) !== row.sha256) throw new Error("Render binding changed");
+  return { ...row, absolute_path };
+});
+const get = (suffix) => {
+  const row = screenshots.find((item) => item.filename === `math5-c2-s2-n49-${suffix}.png`);
+  if (!row) throw new Error(`No primary ${suffix}`);
+  return row;
+};
+const plans = [
+  [["text-1440-first"], ["text-1440-last"]],
+  [["exercises-1440-first"], ["exercises-1440-last"]],
+  [["choices-1440-first"], ["choices-1440-last"]],
+  [["text-390-first", "exercises-390-first", "choices-390-first"],
+    ["text-390-last", "exercises-390-last", "choices-390-last"]],
+  [["choices-1440-figure-1", "choices-1440-figure-2"],
+    ["choices-390-figure-1", "choices-390-figure-2"],
+    ["choices-390-figure-1-end", "choices-390-figure-2-end"]],
+  [["exercises-1440-figure-3", "exercises-1440-figure-4"],
+    ["exercises-1440-figure-3-end", "exercises-1440-figure-4-end"]],
+  [["exercises-390-figure-3", "exercises-390-figure-4"],
+    ["exercises-390-figure-3-end", "exercises-390-figure-4-end"],
+    ["exercises-1440-figure-1", "exercises-1440-figure-2", "exercises-390-figure-1", "exercises-390-figure-2"]],
+];
+const montages = [];
+for (const [index, plan] of plans.entries()) {
+  let y = 0;
+  let width = 1;
+  const placements = [];
+  for (const line of plan) {
+    let x = 0;
+    let height = 0;
+    for (const suffix of line) {
+      const image = get(suffix);
+      placements.push({ filename: image.filename, original_path: image.absolute_path, sha256: image.sha256, x, y, width: image.width, height: image.height });
+      x += image.width + 12;
+      height = Math.max(height, image.height);
+    }
+    width = Math.max(width, x - 12);
+    y += height + 12;
+  }
+  const output = path.join(own, `primary-native-${String(index + 1).padStart(2, "0")}.png`);
+  if (fs.existsSync(output)) throw new Error("Do not overwrite primary montage");
+  await sharp({ create: { width, height: y - 12, channels: 3, background: "#dedede" } })
+    .composite(placements.map((item) => ({ input: item.original_path, left: item.x, top: item.y })))
+    .png().toFile(output);
+  montages.push({ path: output, sha256: hash(fs.readFileSync(output)), width, height: y - 12, scale: 1, placements });
+}
+const assigned = montages.flatMap((item) => item.placements.map((placement) => placement.filename)).sort();
+if (JSON.stringify(assigned) !== JSON.stringify(actualNames)) throw new Error("Every filename must appear exactly once in native primary montage plan");
+const inventory = {
+  manifest_path: manifestPath,
+  manifest_sha256: hash(manifestBytes),
+  report_path: reportPath,
+  report_sha256: hash(fs.readFileSync(reportPath)),
+  rendered,
+  actual_primary_filename_count: actualNames.length,
+  actual_primary_filenames: actualNames,
+  primary_pngs: screenshots,
+  native_montages: montages,
+  native_montage_count: montages.length,
+  montage_pngs_not_counted_as_primary_observations: true,
+  all_original_pixels_preserved_at_scale_one: true,
+  status: "Prepared only; actual pixel observations not yet approved.",
+};
+fs.writeFileSync(path.join(own, "primary-inventory.json"), JSON.stringify(inventory, null, 2) + "\n", { flag: "wx" });
+console.log(JSON.stringify({ primary_count: actualNames.length, native_montages: montages.map(({ path, width, height }) => ({ path, width, height })) }, null, 2));

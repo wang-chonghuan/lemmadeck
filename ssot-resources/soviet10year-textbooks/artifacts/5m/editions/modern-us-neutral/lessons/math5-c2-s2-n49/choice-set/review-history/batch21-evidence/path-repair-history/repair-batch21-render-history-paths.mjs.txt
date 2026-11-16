@@ -1,0 +1,96 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const failureFile = `${scratch}/batch21-retained-reference-check.json`
+const initial = JSON.parse(fs.readFileSync(failureFile))
+assert.equal(initial.status, 'fail')
+assert.equal(initial.failures.length, 32)
+assert(initial.failures.every(row => row.scratch_dependency?.includes('/.tmp/')))
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
+const summaries = []
+for (const choice of initial.roots) {
+  const root = `${choice}/review-history/batch21-evidence`
+  const retentionFile = `${root}/retention.json`
+  const observationsFile = `${root}/actual-observations.json`
+  const originalRetention = fs.readFileSync(retentionFile)
+  const originalObservations = fs.readFileSync(observationsFile)
+  const retention = JSON.parse(originalRetention)
+  const observations = JSON.parse(originalObservations)
+  assert(!retention.render_history_paths_repaired)
+  const badKeys = Object.keys(retention.retained).filter(key => key.includes('/.tmp/'))
+  assert.equal(badKeys.length, 3)
+  const mappings = new Map()
+  const plan = badKeys.map(key => {
+    const suffix = key.slice(key.indexOf('.tmp/') + '.tmp/'.length)
+    assert(suffix.startsWith('ld-s10y-lesson/render/') && !suffix.includes('..'))
+    const source = path.normalize(path.join(root, key))
+    assert(source.startsWith(`${choice}/.tmp/`))
+    const target = `${root}/display/rendered-originals/${suffix}`
+    assert(!fs.existsSync(target))
+    const record = retention.retained[key]
+    assert.equal(hash(fs.readFileSync(source)), record.retained_bytes_sha256)
+    mappings.set(source, target)
+    return { key, source, target, record }
+  })
+  let changedReferences = 0
+  function rebind(value) {
+    if (Array.isArray(value)) return value.map(rebind)
+    if (value && typeof value === 'object') {
+      return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, rebind(child)]))
+    }
+    if (typeof value !== 'string' || !value.startsWith('ssot-resources/')) return value
+    const target = mappings.get(path.normalize(value))
+    if (!target) return value
+    changedReferences++
+    return target
+  }
+  const repaired = rebind(observations)
+  assert(changedReferences >= 3)
+  const repairDir = `${root}/path-repair-history`
+  assert(!fs.existsSync(repairDir))
+  fs.mkdirSync(repairDir)
+  const keep = (name, bytes) => {
+    const target = `${repairDir}/${name}`
+    fs.writeFileSync(target, bytes, { flag: 'wx' })
+    retention.retained[path.relative(root, target)] = {
+      original_bytes_sha256: hash(bytes), retained_bytes_sha256: hash(bytes), inactive_history: true,
+    }
+  }
+  keep('retention-before-path-repair.json.txt', originalRetention)
+  keep('actual-observations-before-path-repair.json.txt', originalObservations)
+  keep('initial-retained-reference-failure.json.txt', fs.readFileSync(failureFile))
+  keep('repair-batch21-render-history-paths.mjs.txt', fs.readFileSync(import.meta.filename))
+  keep('retain-batch18-evidence-path-repaired.mjs.txt', fs.readFileSync(`${scratch}/retain-batch18-evidence.mjs`))
+  for (const row of plan) {
+    fs.mkdirSync(path.dirname(row.target), { recursive: true })
+    fs.renameSync(row.source, row.target)
+    assert.equal(hash(fs.readFileSync(row.target)), row.record.retained_bytes_sha256)
+    delete retention.retained[row.key]
+    retention.retained[path.relative(root, row.target)] = row.record
+    let empty = path.dirname(row.source)
+    while (empty.startsWith(`${choice}/.tmp`) && fs.existsSync(empty) && fs.readdirSync(empty).length === 0) {
+      fs.rmdirSync(empty)
+      empty = path.dirname(empty)
+    }
+  }
+  retention.render_history_paths_repaired = {
+    original_failure_preserved: `${repairDir}/initial-retained-reference-failure.json.txt`,
+    original_live_observations_preserved: `${repairDir}/actual-observations-before-path-repair.json.txt`,
+    moved_HTML_files: plan.length,
+    changed_path_references: changedReferences,
+    HTML_bytes_core_values_observation_verdicts_and_hashes_unchanged: true,
+    semantic_canonical_display_or_render_reruns: 0,
+  }
+  fs.writeFileSync(observationsFile, JSON.stringify(repaired, null, 2) + '\n')
+  fs.writeFileSync(retentionFile, JSON.stringify(retention, null, 2) + '\n')
+  summaries.push({ root, relocated_HTML_files: plan.length, changed_path_references: changedReferences,
+    source_or_HTML_bytes_or_verdict_changes: 0 })
+}
+fs.writeFileSync(`${scratch}/batch21-render-history-path-repair.json`, JSON.stringify({
+  status: 'path-only-repair-complete-awaiting-same-reference-check',
+  initial_failures_preserved: true, roots: summaries,
+}, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify(summaries))

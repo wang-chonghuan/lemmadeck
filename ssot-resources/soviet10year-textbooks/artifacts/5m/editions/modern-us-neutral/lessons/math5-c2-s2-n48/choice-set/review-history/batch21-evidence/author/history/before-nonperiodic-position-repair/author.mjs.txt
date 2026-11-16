@@ -1,0 +1,239 @@
+import fs from "node:fs";
+import crypto from "node:crypto";
+import { spawnSync } from "node:child_process";
+
+const root = ".intentfold/tickets/STEMROBIN-182/tmp/5m-n48";
+const frozenBytes = fs.readFileSync(`${root}/source-solutions.json`);
+const frozen = JSON.parse(frozenBytes);
+const sources = new Map(frozen.source_solutions.map(s => [s.source_number, s]));
+const seedDigest = spawnSync("python3", [".agents/skills/ld-s10y-choice/scripts/prepare.py", "digest", `${root}/source.json`], { encoding: "utf8" }).stdout.trim();
+if (seedDigest !== frozen.seed_sha256) throw new Error("Frozen seed mismatch");
+const questions = [];
+function q(number, suffix, mode, stem, reason, options, figures = [], concepts = [], extraLosses = []) {
+  const s = sources.get(number);
+  const id = `n48-${number}${suffix ? `-${suffix}` : ""}`;
+  const records = options.map(([text, derivation, misconception], i) => ({
+    id: String.fromCharCode(65 + i), text, derivation, misconception
+  }));
+  questions.push({
+    id, source_numbers: [number],
+    view: {
+      mode, stem, figure_ids: figures,
+      options: records.map(o => ({ id: o.id, text: o.text, figure_ids: [] }))
+    },
+    intent: {
+      task: s.task, source_solution: s.solution, unit_reason: reason,
+      concept_blocks: concepts,
+      limitations: [...s.production_losses, ...extraLosses],
+      figure_observations: figures.map(id => frozen.figure_observations.find(f => f.figure_id === id))
+    },
+    key: {
+      correct: records.filter(o => o.misconception === null).map(o => o.id),
+      rationales: records.map(o => ({ option_id: o.id, truth: o.misconception === null ? "correct" : "incorrect", derivation: o.derivation, misconception: o.misconception }))
+    }
+  });
+}
+
+q("896", "", "multiple",
+  "要作任意钝角 $AOB$ 的内部平分线，$90^\\circ<\\angle AOB<180^\\circ$。附图说明圆规作法中的点名。选出所有对任意这样的钝角都有效的完整作法。",
+  "Each option is a complete general construction, not an isolated degree value or a fixed acute example.",
+  [
+    ["在两边取 $OC=OD>0$；以 $C,D$ 为圆心作同半径的弧，半径大于 $CD/2$。取角内部的交点 $K$，作射线 $OK$。",
+      "OC=OD, CK=DK, OK common give SSS and equal internal half angles. The specified radius and internal intersection exclude degeneracy.", null],
+    ["把角的两边折到相互重合，沿经过顶点的折痕作指向角内部的射线。",
+      "Folding is reflection exchanging the two boundary rays. Its internal fixed ray bisects their angle.", null],
+    ["在一条边上取点 $C$，在另一条边上取点 $D$，使 $OC=2OD>0$。以 $C,D$ 为圆心作等半径弧，取角内部交点 $K$，作 $OK$。",
+      "Equal arcs put K on the perpendicular bisector of CD, but unequal OC and OD mean O is not on that perpendicular bisector; OK generally is not the angular bisector.", "Uses equal arc radii while omitting the essential equality of the two vertex distances."],
+    ["从顶点在角内部作一条射线，使它与一条边的夹角等于原角的三分之一。",
+      "The two pieces are theta/3 and2theta/3, unequal for every positive obtuse theta.", "Replaces halving the angle by dividing it into a one-third and two-thirds split."]
+  ], ["fig-153"], [0, 3]);
+
+q("897", "", "single",
+  "作锐角 $M$ 及其内部平分线 $MP$。在角的一条边上任取 $A,B$ 两点，关于直线 $MP$ 作对称点 $A',B'$。哪一份完整定位记录适用于所有这些选择？",
+  "Both reflected points and their correspondence must be judged together, preserving arbitrary point order and the vertex case.",
+  [
+    ["$A',B'$ 在角的另一条边上，且 $MA'=MA,\ MB'=MB$；沿边从 $M$ 出发的先后次序保持，$A'B'=AB$。",
+      "Reflection fixes M and maps the first boundary ray to the second isometrically. Equal radial distances determine each image, including distance zero.", null],
+    ["$A',B'$ 在角的另一条边上，且 $MA'=MB,\ MB'=MA$；沿边从 $M$ 出发的先后次序倒换，$A'B'=AB$。",
+      "The program reflects each point to the other point's radial distance. If MA differs from MB, it interchanges identities rather than reflecting A and B individually.", "Swaps the labels of the two reflected point correspondences."],
+    ["$A',B'$ 仍在原来那条边上，且 $MA'=MA,\ MB'=MB$；各点位置不变，$A'B'=AB$。",
+      "Equal radial distances on the original ray force A'=A,B'=B. Except for vertex points this is not reflection across the internal bisector of a positive acute angle.", "Treats the bisector reflection as fixing both boundary rays pointwise."]
+  ], [], [0, 3]);
+
+q("898", "", "single",
+  "对任意非退化三角形 $ABC$，要作出三个内部角平分线。哪份完整作法及结果对所有三角形成立？",
+  "One coherent all-vertex construction distinguishes angle bisectors from medians and altitudes; no triangle subclass is imposed.",
+  [
+    ["在每个顶点的两条角边上截取等长线段，再作以两端点为圆心的等半径弧，取相应角内部交点并与顶点连成射线。三条射线在三角形内部共点，各自平分所在顶角。",
+      "At each vertex SSS proves equality of the two half angles. Internal bisectors concur at the incenter of any nondegenerate triangle.", null],
+    ["把每个顶点与对边的中点连接并延长成射线。三条射线在三角形内部共点，各自平分所在顶角。",
+      "The program constructs medians, which concur at the centroid but need not bisect angles. A scalene triangle is a counterexample.", "Infers angular bisection from the equal lengths of two pieces of the opposite side."],
+    ["从每个顶点向对边所在直线作垂线，并取指向垂足的射线。三条射线在三角形内部共点，各自平分所在顶角。",
+      "The program constructs altitudes. They do not generally bisect angles and in an obtuse triangle the orthocenter lies outside.", "Confuses perpendicularity to the opposite side with halving the vertex angle."]
+  ], [], [3]);
+
+q("899", "", "single",
+  "作任意长方形 $ABCD$。用坐标 $A=(0,0),B=(w,0),C=(w,h),D=(0,h)$ 描述它，$w,h>0$。四个内部角平分线应沿哪组从各顶点出发的方向？",
+  "A complete four-ray description retains nonsquare as well as square rectangles, rather than substituting their diagonal special case.",
+  [
+    ["从 $A,B,C,D$ 依次沿 $(1,1),(-1,1),(-1,-1),(1,-1)$ 作射线。",
+      "Each direction points inward and has equal absolute horizontal and vertical components, hence45 degrees to both incident sides for all w,h>0.", null],
+    ["从 $A,B,C,D$ 依次沿 $(w,h),(-w,h),(-w,-h),(w,-h)$ 作射线。",
+      "These are diagonal directions. Their horizontal and vertical components are equal in magnitude only when w=h, so the method fails for a nonsquare rectangle.", "Assumes every rectangle diagonal bisects its corner angle."],
+    ["从 $A,B,C,D$ 依次沿 $(1,-1),(1,1),(-1,1),(-1,-1)$ 作射线。",
+      "These rays point outside the respective corner interiors; they follow opposite choices among45-degree lines rather than internal bisectors.", "Ignores the inward-ray condition when selecting45-degree supporting lines."]
+  ], [], [0, 3]);
+
+q("900", "", "single",
+  "把两条完整相交直线看作一个图形。分别考虑它们不互相垂直、互相垂直的情形。哪份对称轴记录完整且正确？",
+  "The count and identity of axes for the two related line-unions form one classification task.",
+  [
+    ["不垂直时：2 条，均为夹角的两条平分线所在直线。垂直时：4 条，即原来的两条直线及两条角平分线所在直线。",
+      "A symmetry fixes the unique intersection. For nonperpendicular lines only the two bisectors exchange lines; for perpendicular lines each original line additionally fixes the union.", null],
+    ["不垂直时：4 条，即原来的两条直线及两条角平分线所在直线。垂直时：4 条，也是这四条直线。",
+      "Reflecting one nonperpendicular line in the other generally sends it to a third line, so the two original lines are not axes in the first case.", "Extends the special perpendicular-line symmetries to a general intersecting pair."],
+    ["不垂直时：2 条，为两条角平分线所在直线。垂直时：2 条，也只有两条角平分线所在直线。",
+      "The perpendicular pair is also fixed by reflection in either original line, so the latter count omits two axes.", "Counts only symmetries exchanging the lines and misses symmetries fixing each line as a set."]
+  ], [], [0]);
+
+const arithmeticUnit = "This expression is an independent evaluation with its own operands; the full value, not an intermediate cancellation, is the response unit.";
+q("901", "1", "single", "计算 $\\dfrac{12}{3}\\cdot\\dfrac67:\\dfrac47$。", arithmeticUnit, [
+  ["$6$", "(12/3)*(6/7)*(7/4)=6.", null],
+  ["$96/49$", "(12/3)*(6/7)*(4/7)=96/49.", "Multiplies by the divisor4/7 rather than its reciprocal."],
+  ["$3/8$", "(3/12)*(6/7)*(7/4)=3/8.", "Inverts the initial fraction12/3 although it is a multiplicative operand."]
+]);
+q("901", "2", "single", "计算 $\\dfrac{11}{12}:\\dfrac7{24}\\cdot\\dfrac{21}{22}$。", arithmeticUnit, [
+  ["$49/192$", "(11/12)*(7/24)*(21/22)=49/192.", "Replaces the division by7/24 with multiplication."],
+  ["$3$", "(11/12)*(24/7)*(21/22)=3.", null],
+  ["$484/147$", "(11/12)/((7/24)*(21/22))=484/147.", "Makes the final multiplication part of a grouped divisor instead of proceeding left to right."]
+]);
+q("901", "3", "single", "计算 $\\left(2\\dfrac27+1\\dfrac17\\right)\\cdot1\\dfrac16$。", arithmeticUnit, [
+  ["$1/2$", "(2/7+1/7)*(7/6)=1/2.", "Discards the integer parts of the two mixed-number addends."],
+  ["$24/7$", "(16/7+8/7)*1=24/7.", "Discards the fractional part1/6 of the mixed-number multiplier."],
+  ["$4$", "(16/7+8/7)*(7/6)=4.", null]
+]);
+q("901", "4", "single", "计算 $\\left(6\\dfrac38-4\\dfrac18\\right):2\\dfrac12$。", arithmeticUnit, [
+  ["$9/10$", "(51/8-33/8)*(2/5)=9/10.", null],
+  ["$45/8$", "(51/8-33/8)*(5/2)=45/8.", "Multiplies by the mixed-number divisor instead of its reciprocal."],
+  ["$4/5$", "(6-4)/(5/2)=4/5.", "Uses only the integer portions in the mixed-number subtraction."]
+]);
+q("901", "5", "single", "计算 $\\dfrac{15}{16}:\\dfrac38\\cdot\\dfrac34$。", arithmeticUnit, [
+  ["$135/512$", "(15/16)*(3/8)*(3/4)=135/512.", "Multiplies by3/8 where division is required."],
+  ["$15/8$", "(15/16)*(8/3)*(3/4)=15/8.", null],
+  ["$10/3$", "(15/16)/((3/8)*(3/4))=10/3.", "Groups the final multiplicative operand into the divisor."]
+]);
+q("901", "6", "single", "计算 $\\dfrac{13}{14}\\cdot\\dfrac7{25}:\\dfrac{13}{25}$。", arithmeticUnit, [
+  ["$169/1250$", "(13/14)*(7/25)*(13/25)=169/1250.", "Replaces division by13/25 with multiplication."],
+  ["$98/169$", "(14/13)*(7/25)*(25/13)=98/169.", "Inverts the first operand13/14 instead of leaving it unchanged."],
+  ["$1/2$", "(13/14)*(7/25)*(25/13)=1/2.", null]
+]);
+q("901", "7", "single", "计算 $\\left(4\\dfrac35-1\\dfrac25\\right)\\cdot1\\dfrac78$。", arithmeticUnit, [
+  ["$6$", "(23/5-7/5)*(15/8)=6.", null],
+  ["$14/5$", "(23/5-7/5)*(7/8)=14/5.", "Drops the integer part of the multiplier1 7/8."],
+  ["$45/8$", "(4-1)*(15/8)=45/8.", "Drops both fractional portions in the subtraction."]
+]);
+q("901", "8", "single", "计算 $\\left(3\\dfrac1{12}+1\\dfrac5{12}\\right):1\\dfrac12$。", arithmeticUnit, [
+  ["$27/4$", "(37/12+17/12)*(3/2)=27/4.", "Multiplies by3/2 instead of dividing by it."],
+  ["$3$", "(37/12+17/12)*(2/3)=3.", null],
+  ["$9/2$", "(37/12+17/12)/1=9/2.", "Drops the fractional part of the divisor1 1/2."]
+]);
+q("901", "9", "single", "计算 $\\left(7\\dfrac78-3\\dfrac38\\right):4\\dfrac12$。", arithmeticUnit, [
+  ["$81/4$", "(63/8-27/8)*(9/2)=81/4.", "Multiplies by the divisor9/2 rather than its reciprocal."],
+  ["$8/9$", "(7-3)/(9/2)=8/9.", "Drops the fractions in the mixed-number subtraction."],
+  ["$1$", "(63/8-27/8)/(9/2)=1.", null]
+]);
+
+q("902", "", "single", "长方形面积为 $15/64$ 平方米，宽为 $3/8$ 米。它的周长是多少？",
+  "Area-to-length conversion and the complete perimeter are one dependent geometric calculation.", [
+    ["$2$ 米", "Length=(15/64)/(3/8)=5/8; perimeter2*(5/8+3/8)=2m.", null],
+    ["$1$ 米", "Length5/8 plus width3/8 gives1m, returned without multiplying by2.", "Returns the semiperimeter as the perimeter."],
+    ["$237/256$ 米", "Uses length=(15/64)*(3/8)=45/512;2*(45/512+3/8)=237/256.", "Multiplies area by width instead of dividing to obtain length."]
+  ]);
+q("903", "", "single", "第一个长方形长 $5\\dfrac35$ 米、宽 $2\\dfrac38$ 米。第二个长方形面积与它相等，长为 $3\\dfrac15$ 米。第二个的宽是多少？",
+  "The complete new width is determined by the equal-area model, not by independent intermediate clicks.", [
+    ["$191/40$ 米", "Uses equal semiperimeters instead:28/5+19/8-16/5=191/40.", "Replaces equal area by equal perimeter."],
+    ["$133/32$ 米", "Area=(28/5)*(19/8)=133/10; width=(133/10)/(16/5)=133/32.", null],
+    ["$32/133$ 米", "Reverses the quotient:(16/5)/(133/10)=32/133.", "Divides the new length by the common area rather than area by length."]
+  ]);
+q("904", "", "single", "买 $8\\dfrac34$ 米呢绒和 $7\\dfrac12$ 米绫纹布共用 225 美元；呢绒的总价是绫纹布总价的 14 倍。1 米绫纹布、1 米呢绒的价格依次是多少？",
+  "The ordered pair requires allocation of both total expenditures and conversion by their unequal lengths.", [
+    ["$24$ 美元、$2$ 美元", "Correct calculations produce twill2 and wool24, but the record returns them in the opposite requested order.", "Reverses the correspondence between the two cloth names and their unit prices."],
+    ["$45/26$ 美元、$315/13$ 美元", "Imposes wool unit price14p for twill p; (35/4)*14p+(15/2)*p=225 gives p45/26 and14p315/13.", "Uses the14-fold total-cost ratio as a ratio of unit prices."],
+    ["$2$ 美元、$24$ 美元", "Twill total225/15=15,wool total210; divide by15/2 and35/4 respectively to get2 and24.", null]
+  ]);
+q("905", "", "single", "32 米印花布和 16 米油布共付 40 美元；印花布总价是油布总价的 $2/3$。哪份每米价格及比较正确？",
+  "A complete price comparison must distinguish total-cost and per-metre ratios.", [
+    ["印花布 $1/2$ 美元/米，油布 $3/2$ 美元/米；油布每米较贵。", "Totals16 and24 dollars divided by32 and16 metres yield1/2 and3/2.", null],
+    ["印花布 $5/7$ 美元/米，油布 $15/14$ 美元/米；油布每米较贵。", "Set printed unit price(2/3)p and oilcloth p;32*(2/3)p+16p=40 gives oilcloth15/14,printed5/7.", "Applies the ratio of total prices directly to unit prices."],
+    ["印花布 $2$ 美元/米，油布 $2/3$ 美元/米；印花布每米较贵。", "After finding totals16 and24, divides metres by dollars:32/16=2 and16/24=2/3, then labels those reciprocals prices.", "Reverses the dollars-per-metre conversion."]
+  ]);
+q("906", "1", "single", "计算 $(11.6-12.5)\\cdot(-83.9-95.68):8.76$。", arithmeticUnit, [
+  ["$-18.45$", "Uses11.6-12.5=+0.9, then0.9*(-179.58)/8.76=-18.45.", "Makes the first negative difference positive."],
+  ["$18.45$", "(-0.9)*(-179.58)/8.76=161.622/8.76=18.45.", null],
+  ["$161.622$", "Computes(-0.9)*(-179.58)=161.622 and stops.", "Omits the final division by8.76."]
+]);
+q("906", "2", "single", "计算 $(-3.83-4.27)\\cdot(23-15.36):3.82$。", arithmeticUnit, [
+  ["$61.884$", "Treats-3.83-4.27 as+8.1 and omits division;8.1*7.64=61.884.", "Combines loss of the negative sign with omission of the final division."],
+  ["$16.2$", "Treats-3.83-4.27 as+8.1;8.1*7.64/3.82=16.2.", "Adds the magnitudes but incorrectly assigns a positive sign."],
+  ["$-16.2$", "(-8.1)*7.64/3.82=-16.2.", null]
+]);
+q("907", "", "single", "要作任意方向的直角 $AOB$ 的内部平分线。哪份作法和所得两个角的记录正确？",
+  "One complete right-angle construction tests the interior-ray condition and resulting angle measures.", [
+    ["在两边截取 $OC=OD>0$，以 $C,D$ 为圆心作能在角内部相交的等半径弧，交点为 $K$。作 $OK$，所得两个角均为 $45^\\circ$。",
+      "SSS gives equal internal angles and90/2=45 degrees.", null],
+    ["在两边截取 $OC=OD>0$，连接 $CD$ 并延长为直线，把它作为过 $O$ 的平分线，所得两个角均为 $45^\\circ$。",
+      "For a nondegenerate right angle C,D are nonvertex boundary points, and line CD does not pass through O; it is not the required ray.", "Uses the chord joining equal-distance points itself rather than its perpendicular bisector through the vertex."],
+    ["从 $O$ 在角内部作射线，使它与 $OA$ 成 $30^\\circ$，把它作为平分线，所得两个角均为 $30^\\circ$。",
+      "The other piece is90-30=60, not30, so this ray trisects one portion rather than bisecting.", "Replaces90/2 by90/3 and assumes both pieces have that measure."]
+  ], [], [0, 3]);
+q("908", "", "single", "画两个邻补角，分别作它们的内部平分线。哪份完整作法和两条平分线的夹角记录，对任意邻补角成立？",
+  "Both adjacent angles and their bisector separation are one dependent geometric construction and inference.", [
+    ["在每个角中作内部平分线。若第一个角为 $\\alpha$，两条平分线的夹角为 $\\alpha/2$。",
+      "The program counts only the first half angle and omits the second half(180-alpha)/2; the true total is90.", "Measures from one boundary to its bisector rather than between the two bisectors."],
+    ["在每个角中作内部平分线。两条平分线的夹角恒为 $90^\\circ$。",
+      "The two half angles sum toalpha/2+(180-alpha)/2=90.", null],
+    ["在每个角中作内部平分线。若第一个角为 $\\alpha$，两条平分线的夹角为 $180^\\circ-\\alpha$。",
+      "This returns the full second angle instead of adding the two adjacent half angles; it is not constant90 except the specialalpha90 case.", "Substitutes the supplementary angle for the angle between the bisectors."]
+  ], [], [0, 3]);
+q("909", "", "single",
+  "星期一运进 $212\\dfrac12$ 吨甜菜，星期二为星期一的 $2\\dfrac25$ 倍，星期三为前两天总量的 $2/5$。先把三个给定数写成小数，再计算。哪份完整记录正确？",
+  "Conversions, both dependent daily quantities and the total are inseparable parts of the same source task.",
+  [
+    ["给定数的小数：$212.05,2.4,0.4$；星期一、二、三：$212.05,508.92,288.388$ 吨；合计 $1009.358$ 吨。",
+      "Uses1/2=0.05, then212.05*2.4=508.92,(212.05+508.92)*0.4=288.388,total1009.358.", "Converts the mixed-number half to five hundredths instead of five tenths."],
+    ["给定数的小数：$212.5,2.04,0.04$；星期一、二、三：$212.5,433.5,25.84$ 吨；合计 $671.84$ 吨。",
+      "Uses2/5=.04 and2 2/5=2.04, then212.5*2.04=433.5,(212.5+433.5)*.04=25.84,total671.84.", "Moves the decimal point an extra place when converting fifths."],
+    ["给定数的小数：$212.5,2.4,0.4$；星期一、二、三：$212.5,510,289$ 吨；合计 $1011.5$ 吨。",
+      "Conversions are exact;212.5*2.4=510,722.5*.4=289,total1011.5.", null],
+    ["给定数的小数：$212.5,2.4,0.4$；星期一、二、三：$212.5,510,204$ 吨；合计 $926.5$ 吨。",
+      "Computes Wednesday as.4*Tuesday=.4*510=204,then total926.5.", "Uses only Tuesday rather than Monday plus Tuesday as Wednesday's base."]
+  ]);
+q("910", "1", "single", "解方程 $(x-8)\\cdot\\dfrac25=2$。", "This equation is independently solvable; its complete solution is the unit.", [
+  ["$x=13$", "Divide by2/5 to obtainx-8=5, thenx13.", null],
+  ["$x=44/5$", "Multiplies2 by2/5 to obtainx-8=4/5,thenx44/5.", "Uses multiplication instead of the inverse division when isolatingx-8."],
+  ["$x=25$", "Expands as(2/5)x-8=2, giving(2/5)x10 andx25.", "Fails to distribute the factor2/5 to the subtracted8."]
+]);
+q("910", "2", "single", "解方程 $2\\dfrac13x-2\\dfrac13=2\\dfrac13$。", "This second equation has no mathematical dependency on the first; its complete solution is the unit.", [
+  ["$x=1$", "Drops the subtracted7/3 to write(7/3)x=7/3,thenx1.", "Omits the constant subtracted from the left side."],
+  ["$x=2$", "(7/3)x=7/3+7/3=14/3 givesx2.", null],
+  ["$x=0$", "Moves the left-side-7/3 as another subtraction on the right:(7/3)x=7/3-7/3=0.", "Changes sides without reversing the subtraction sign."]
+]);
+
+const draft = {
+  schema: "s10y-choice-draft-v1", seed_sha256: seedDigest, new_figures: [], questions,
+  coverage: frozen.source_solutions.map(s => ({
+    source_number: s.source_number,
+    question_ids: questions.filter(q => q.source_numbers.includes(s.source_number)).map(q => q.id),
+    omitted_tasks: [...s.production_losses],
+    reason: "Original domains and complete source results are represented by general construction, correspondence, classification or complete numerical recognition. Independent written/drawing production is not demonstrated; the stated losses remain omissions, not semantic approval."
+  }))
+};
+for (const [name, value] of [["draft.json", draft], ["view.json", { questions: questions.map(q => ({ id: q.id, ...q.view })) }]]) {
+  fs.writeFileSync(`${root}/${name}`, JSON.stringify(value, null, 2) + "\n", { flag: "wx" });
+}
+fs.writeFileSync(`${root}/authoring-order.json`, JSON.stringify({
+  frozen_source_solutions_byte_sha256: crypto.createHash("sha256").update(frozenBytes).digest("hex"),
+  source_solutions_existed_before_serializer: true,
+  semantic_status: "Author draft only; independent review pending."
+}, null, 2) + "\n", { flag: "wx" });
+console.log(JSON.stringify({ questions: questions.length, options: questions.reduce((n, q) => n + q.view.options.length, 0) }));

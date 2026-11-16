@@ -1,0 +1,275 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { fileURLToPath } from 'node:url'
+
+const directory = path.dirname(fileURLToPath(import.meta.url))
+const author = path.join(path.dirname(directory), '6a-n39')
+const files = {
+  firstReview: path.join(directory, 'review.json'),
+  firstComparison: path.join(directory, 'final-comparison-result.json'),
+  seed: path.join(author, 'seed.json'),
+  currentDraft: path.join(author, 'draft.json'),
+  revisedView: path.join(author, 'revised-option-position-view.json'),
+  frozenSource: path.join(directory, 'source-solutions.json'),
+  frozenRevisedView: path.join(directory, 'view-checks-option-position-revised.json'),
+  originalRejectedView: path.join(directory, 'view-checks.json'),
+  statusDiff: path.join(author, 'source-status-json-diff.json'),
+  statusReceipt: path.join(author, 'source-status-repair-receipt.json'),
+}
+const load = (file) => JSON.parse(fs.readFileSync(file, 'utf8'))
+const fileSHA = (file) => crypto.createHash('sha256')
+  .update(fs.readFileSync(file)).digest('hex')
+const sorted = (value) => {
+  if (Array.isArray(value)) return value.map(sorted)
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.keys(value).sort().map((key) => [key, sorted(value[key])]))
+  }
+  return value
+}
+const canonical = (value) => JSON.stringify(sorted(value))
+  .replace(/[\u007f-\uffff]/g, (character) =>
+    `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`)
+const digest = (value) => crypto.createHash('sha256')
+  .update(canonical(value)).digest('hex')
+const same = (left, right) => canonical(left) === canonical(right)
+const bind = (file) => ({ path: file, file_sha256: fileSHA(file) })
+const requireEvidence = (condition, message) => {
+  if (!condition) throw new Error(message)
+}
+requireEvidence(fileSHA(files.firstReview)
+  === '91341c36c248e4d9ac9f3e8d10f3020cf039059412926f0b7ba59cfe5fcaa404',
+  'First rejected review changed')
+requireEvidence(fileSHA(files.firstComparison)
+  === '9e0098c33cd6eb0784c6a66fc9865b14576a7a61d49e7f18f24a4772a0646e79',
+  'First rejected final comparison changed')
+const firstReview = load(files.firstReview)
+const first = load(files.firstComparison)
+const seed = load(files.seed)
+const current = load(files.currentDraft)
+const revisedView = load(files.revisedView)
+const frozenView = load(files.frozenRevisedView)
+const differences = load(files.statusDiff)
+const receipt = load(files.statusReceipt)
+requireEvidence(digest(firstReview) === first.review.canonical_sha256
+  && digest(seed) === firstReview.seed_sha256 && current.seed_sha256 === firstReview.seed_sha256,
+  'Canonical algorithm or current seed binding differs from frozen comparison')
+for (const [now, before] of [
+  ['seed', 'seed'],
+  ['revisedView', 'revisedView'],
+  ['frozenSource', 'source'],
+  ['frozenRevisedView', 'frozenRevisedView'],
+  ['originalRejectedView', 'originalRejectedView'],
+]) {
+  requireEvidence(fileSHA(files[now]) === first.input_records[before].file_sha256,
+    `Frozen input byte change ${now}`)
+}
+const expectedPaths = [
+  '/questions/14/intent/source_solution',
+  '/questions/14/intent/limitations/0',
+  '/coverage/13/omitted_tasks',
+]
+requireEvidence(same(differences.map((item) => item.path), expectedPaths),
+  'Status repair is not the three authorized fields')
+const resolvePointer = (value, pointer) => {
+  const segments = pointer.slice(1).split('/').map((segment) =>
+    segment.replace(/~1/g, '/').replace(/~0/g, '~'))
+  let parent = value
+  for (const segment of segments.slice(0, -1)) parent = parent[segment]
+  return { parent, key: segments.at(-1) }
+}
+const inverse = structuredClone(current)
+for (const item of differences) {
+  const after = resolvePointer(current, item.path)
+  requireEvidence(same(after.parent[after.key], item.after), `Current after mismatch ${item.path}`)
+  const before = resolvePointer(inverse, item.path)
+  before.parent[before.key] = item.before
+}
+requireEvidence(digest(inverse) === firstReview.draft_sha256
+  && digest(inverse) === first.draft_canonical_sha256,
+  'Whole inverse JSON does not match independently reviewed pre-repair snapshot')
+requireEvidence(receipt.before_draft_byte_sha256 === first.input_records.draft.file_sha256
+  && receipt.after_draft_byte_sha256 === fileSHA(files.currentDraft),
+  'Receipt pre/current byte bindings disagree with actual independent records')
+requireEvidence(current.questions[14].id === 'prime-power-divisor-convention-branches'
+  && current.coverage[13].source_number === '643',
+  'Repaired fields are attached to wrong source or question')
+const numericPrefix = 'Positive divisors ofp^k arep^j,j=0..k, giving8 and11. Including their negative partners doubles to16 and22. '
+requireEvidence(differences[0].before.startsWith(numericPrefix)
+  && differences[0].after === numericPrefix
+    + 'The original divisor-sign convention is unstated; both integer-count cases are complete, and no single original convention is selected.',
+  'Count mathematics or notice scope changed')
+requireEvidence(differences[1].after
+  === 'Divisor-sign convention notice: a single fixed-count response requires an expressly stated positive-versus-signed counting domain; both integer cases are covered here.',
+  'Limitation does not preserve conditional scope')
+requireEvidence(differences[2].before.length === 2 && differences[2].after.length === 1
+  && differences[2].before[0] === first.minimum_findings[0].minimum_fields[2].affected_fragment
+  && differences[2].after[0] === differences[2].before[1],
+  'Omission repair removed or altered more than the unsupported blocker')
+const project = (draft) => ({
+  questions: draft.questions.map(({ id, source_numbers, view }) => ({ id, source_numbers, view })),
+})
+requireEvidence(same(project(current), revisedView)
+  && digest(revisedView) === frozenView.bindings.view_canonical_sha256,
+  'Current draft projection is not independently approved revised view')
+requireEvidence(same(current.questions.map((question) => question.key),
+  inverse.questions.map((question) => question.key))
+  && same(current.questions.map((question) => question.view),
+    inverse.questions.map((question) => question.view))
+  && same(current.questions.map((question) => question.source_numbers),
+    inverse.questions.map((question) => question.source_numbers))
+  && same(current.new_figures, inverse.new_figures),
+  'Unchanged visible/key/source/figure arrays differ')
+requireEvidence(first.counts.keys_compared === 16 && first.counts.options === 65
+  && first.option_program_comparisons.length === 65,
+  'Missing frozen complete comparison')
+
+const review = structuredClone(firstReview)
+review.draft_sha256 = digest(current)
+review.outcome = 'pass'
+const coverageEvidence = 'Status-only repair resolved: both original prime-power counts are complete under the two explicitly retained integer conventions, positive8/11 and signed16/22. No single original divisor-sign convention is selected or recovered. The prior unsupported essential omission has been removed; retained divisor-list generation wording is only optional counting-derivation/recognition production loss, since source643 asks counts rather than mandatory exhaustive lists. All source mathematics, visible targets, key B and programs are unchanged and reused. Coverage pass with convention notice, not sourceblocked.'
+review.source_reviews[13].coverage = { verdict: 'pass', evidence: coverageEvidence }
+const intentEvidence = 'Status-only final comparison pass: source_solution preserves every count and now explicitly says the original divisor-sign convention is unstated, both integer cases are complete and no single convention is selected. limitations[0] correctly records a counting-domain notice for any fixed-count response. The only sourceblocked omission was deleted; remaining listing language is optional derivation/production loss, not an additional original task. Frozen visible fidelity, mathematical truths, all keys/programs and actual-figure evidence reused unchanged.'
+review.question_reviews[14].task_fidelity.evidence
+  = frozenView.question_checks[14].task_fidelity.evidence + ' Internal comparison: ' + intentEvidence
+
+// Only digest, aggregate outcome and the affected status evidence may change.
+const reviewInverse = structuredClone(review)
+reviewInverse.draft_sha256 = firstReview.draft_sha256
+reviewInverse.outcome = firstReview.outcome
+reviewInverse.source_reviews[13].coverage = structuredClone(firstReview.source_reviews[13].coverage)
+reviewInverse.question_reviews[14].task_fidelity.evidence
+  = firstReview.question_reviews[14].task_fidelity.evidence
+requireEvidence(same(reviewInverse, firstReview), 'Unrelated review evidence altered')
+const reviewPath = path.join(directory, 'status-repaired-review.json')
+const resultPath = path.join(directory, 'status-repaired-final-comparison.json')
+requireEvidence(!fs.existsSync(reviewPath) && !fs.existsSync(resultPath),
+  'Status-repaired outputs already exist; refuse overwrite')
+fs.writeFileSync(reviewPath, JSON.stringify(review, null, 2) + '\n', { flag: 'wx' })
+const fieldChecks = differences.map((item, index) => ({
+  path: item.path,
+  before: item.before,
+  after: item.after,
+  verdict: 'pass',
+  evidence: [
+    'Count formula and both complete numerical branches unchanged. Only the false essential-block status sentence becomes an explicit no-single-convention notice.',
+    'Limitation now names a convention notice, explicitly requires a defined counting domain for any fixed answer, and confirms both integer cases are covered.',
+    'Exactly the unsupported first essential omission is removed. Original second entry remains byte-content equal; it is only optional independent derivation production loss, not an invented original list task.',
+  ][index],
+}))
+const intents = structuredClone(first.intent_and_loss_comparisons)
+intents[14] = { question_id: current.questions[14].id, verdict: 'pass', evidence: intentEvidence }
+const coverageComparisons = structuredClone(first.source_coverage_comparisons)
+coverageComparisons[13] = { source_number: '643', verdict: 'pass', evidence: coverageEvidence }
+const result = {
+  schema: 's10y-independent-final-comparison-result-v1',
+  stage: 'source-status-repaired-only',
+  stage_complete: true,
+  lesson_id: seed.source.lesson,
+  outcome: 'pass',
+  reviewer: review.reviewer,
+  model: null,
+  usage: null,
+  input_records: Object.fromEntries(Object.entries(files).map(([name, file]) => [name, bind(file)])),
+  seed_canonical_sha256: digest(seed),
+  draft_canonical_sha256: digest(current),
+  review: { ...bind(reviewPath), canonical_sha256: digest(review) },
+  counts: {
+    sources: 15,
+    questions: 16,
+    options: 65,
+    true_options: 20,
+    false_options: 45,
+    keys_reused: 16,
+    option_program_comparisons_reused: 65,
+    false_programs_generate_candidates_reused: 45,
+    source_coverage_records_reused: 15,
+    source_coverage_status_repaired: 1,
+    changed_draft_fields: 3,
+    changed_draft_strings: 2,
+    removed_unsupported_omission_entries: 1,
+    source_figures_reused: 2,
+    new_figures: 0,
+    new_source_solutions_or_option_math_checks: 0,
+    genuine_source_blockers: 0,
+    unresolved_author_findings: 0,
+  },
+  status_field_checks: fieldChecks,
+  whole_json_inverse_comparison: {
+    verdict: 'pass',
+    exact_reconstructed_pre_repair_canonical_sha256: digest(inverse),
+    independently_reviewed_pre_repair_canonical_sha256: firstReview.draft_sha256,
+    equality: true,
+    current_three_after_fields_match_disclosed_diff: true,
+    all_other_draft_content_unchanged_by_whole_inverse_digest: true,
+    current_byte_sha256_independently_verified: fileSHA(files.currentDraft),
+    historic_byte_sha256_matches_own_first_comparison: first.input_records.draft.file_sha256,
+    historic_author_bytes_reopened: false,
+    evidence_boundary: 'Reverse only the three disclosed fields in current JSON and compare the digest of the entire reconstructed value with the whole pre-repair draft digest frozen by this reviewer. This proves full canonical-content equivalence outside those fields, not equality of historical formatting bytes. Current byte hash is independently checked; original byte hash is already recorded in the first independent comparison. No author history/source-solutions/serializer/ready files reopened.',
+  },
+  frozen_pure_view_equals_current_draft_projection: true,
+  mathematical_true_sets_unchanged: true,
+  all_keys_and_65_rationales_unchanged_from_reviewed_snapshot: true,
+  question_correct_sets: first.question_correct_sets,
+  option_program_comparisons: first.option_program_comparisons,
+  intent_and_loss_comparisons: intents,
+  source_coverage_comparisons: coverageComparisons,
+  figure_evidence_reused_verbatim_from_first_review: true,
+  position_repair_evidence_reused_from: {
+    ...bind(files.firstComparison),
+    subtree: 'position_repair_comparison',
+    note: 'Frozen C/D mapping, full visible equivalence and package position checks remain unchanged. Earlier current-draft byte/digest in that historical subtree refers to the pre-status snapshot, not the new draft binding.',
+  },
+  notice: {
+    source_number: '643',
+    positive_integer_counts: [8, 11],
+    all_signed_integer_counts: [16, 22],
+    original_sign_convention_selected: false,
+    essential_source_blocker: false,
+    evidence: 'This is status-evidence rebinding, not new source interpretation. Frozen independent source and visible two-branch record already resolve the mathematics completely.',
+  },
+  resolved_findings: [
+    {
+      first_record: bind(files.firstComparison),
+      finding_index: 0,
+      verdict: 'pass',
+      evidence: 'All three required status annotations repaired exactly; no view/key/math change needed or observed. Original rejected finding remains unchanged in its own record.',
+    },
+  ],
+  findings: [],
+  author_revise_findings: [],
+  first_review_and_first_final_comparison_preserved: true,
+  frozen_source_and_view_records_preserved: true,
+  no_unrelated_review_evidence_changed: true,
+  author_files_modified: false,
+  author_unrelated_source_solution_serializer_ready_history_read: false,
+  operations: {
+    canonical_validator_executions: 0,
+    structural_validator_executions: 0,
+    prepare_or_digest_CLI_executions: 0,
+    render_executions: 0,
+    browser_executions: 0,
+    actual_figure_reopens: 0,
+    source_math_repeats: 0,
+    service_DB_dependency_operations: 0,
+    durable_promotions: 0,
+    in_flight_operations: 0,
+  },
+  stop_boundary: 'Status-repaired final review passes on the current draft. Parent owns the first canonical validator and any byte-identical retention. No validator/render/browser or author edits performed; old rejected evidence remains untouched.',
+}
+fs.writeFileSync(resultPath, JSON.stringify(result, null, 2) + '\n', { flag: 'wx' })
+requireEvidence(fileSHA(files.firstReview)
+  === '91341c36c248e4d9ac9f3e8d10f3020cf039059412926f0b7ba59cfe5fcaa404',
+  'First review bytes were altered')
+requireEvidence(fileSHA(files.firstComparison)
+  === '9e0098c33cd6eb0784c6a66fc9865b14576a7a61d49e7f18f24a4772a0646e79',
+  'First comparison bytes were altered')
+console.log(JSON.stringify({
+  outcome: result.outcome,
+  counts: result.counts,
+  draft_canonical_sha256: result.draft_canonical_sha256,
+  review: result.review,
+  final_comparison: bind(resultPath),
+  canonical_validator_executions: 0,
+  old_rejected_files_preserved: true,
+}, null, 2))

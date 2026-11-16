@@ -1,0 +1,147 @@
+import argparse
+import hashlib
+import json
+import shutil
+from pathlib import Path
+
+from PIL import Image, ImageChops, ImageDraw
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/d9b1/lemmadeck")
+OWN = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp/reviewer-5m-n48-actual-display"
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def compose(name, sources, columns, directory):
+    images = [Image.open(item["absolute_path"]).convert("RGB") for item in sources]
+    rows = (len(images) + columns - 1) // columns
+    column_widths = [
+        max(image.width for image in images[col::columns])
+        for col in range(columns)
+    ]
+    row_heights = [
+        max(image.height for image in images[row * columns:(row + 1) * columns])
+        for row in range(rows)
+    ]
+    gap, label_height = 8, 22
+    canvas = Image.new(
+        "RGB",
+        (sum(column_widths) + gap * (columns - 1),
+         sum(row_heights) + rows * label_height + gap * (rows - 1)),
+        "#d8d8d8",
+    )
+    draw = ImageDraw.Draw(canvas)
+    members = []
+    for i, (source, image) in enumerate(zip(sources, images)):
+        row, col = divmod(i, columns)
+        x = sum(column_widths[:col]) + gap * col
+        y = sum(row_heights[:row]) + (label_height + gap) * row
+        draw.text((x + 3, y + 4), source["label"], fill="black")
+        pixel_y = y + label_height
+        canvas.paste(image, (x, pixel_y))
+        region = canvas.crop((x, pixel_y, x + image.width, pixel_y + image.height))
+        if ImageChops.difference(image, region).getbbox():
+            raise RuntimeError("Montage pixels changed: " + source["absolute_path"])
+        members.append({
+            **source,
+            "montage_rect": [x, pixel_y, image.width, image.height],
+            "native_scale": 1,
+            "all_source_pixels_included": True,
+            "pixel_copy_verified": True,
+        })
+    destination = directory / name
+    canvas.save(destination)
+    return {
+        "path": str(destination),
+        "sha256": digest(destination),
+        "dimensions": list(canvas.size),
+        "members": members,
+        "opened": False,
+        "resampled": False,
+        "cropped": False,
+    }
+
+
+def primary():
+    manifest_path = ROOT / ".intentfold/tickets/STEMROBIN-182/tmp/batch21-render/5m-math5-c2-s2-n48-capture-manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    directory = OWN / "primary"
+    directory.mkdir(exist_ok=True)
+    items = []
+    for index, source in enumerate(manifest["screenshots"], 1):
+        original = ROOT / source["path"]
+        copy = directory / original.name
+        if digest(original) != source["sha256"]:
+            raise RuntimeError("Primary source hash mismatch")
+        shutil.copyfile(original, copy)
+        if digest(copy) != source["sha256"]:
+            raise RuntimeError("Primary copy hash mismatch")
+        items.append({
+            "source_path": str(original),
+            "absolute_path": str(copy),
+            "sha256": source["sha256"],
+            "copy_hash_verified": True,
+            "label": f"P{index:02d} " + original.name.replace("math5-c2-s2-n48-", ""),
+        })
+    montages = []
+    for surface in ("text", "exercises", "choices"):
+        selected = [
+            item for item in items
+            if f"-{surface}-1440-" in item["absolute_path"]
+            and "-figure-" not in item["absolute_path"]
+        ]
+        montages.append(compose(f"primary-{surface}-desktop.png", selected, 1, directory))
+    mobile = [
+        item for item in items
+        if "-390-" in item["absolute_path"] and "-figure-" not in item["absolute_path"]
+    ]
+    montages.append(compose("primary-mobile-edges.png", mobile, 3, directory))
+    figures = [item for item in items if "-figure-" in item["absolute_path"]]
+    montages.append(compose("primary-figures.png", figures, 3, directory))
+    return {
+        "source_manifest_path": str(manifest_path),
+        "source_manifest_sha256": digest(manifest_path),
+        "source_count": len(items),
+        "unique_png_hash_count": len({item["sha256"] for item in items}),
+        "montages": montages,
+    }
+
+
+def supplemental():
+    capture = json.loads((OWN / "capture-index.json").read_text())
+    directory = OWN / "supplemental"
+    directory.mkdir(exist_ok=True)
+    groups = []
+    for width, columns, maximum in ((1440, 1, 2), (390, 3, 6)):
+        items = [item for item in capture["screenshots"] if item["viewport"]["width"] == width]
+        for offset in range(0, len(items), maximum):
+            selected = []
+            for item in items[offset:offset + maximum]:
+                path = Path(item["path"])
+                if digest(path) != item["sha256"]:
+                    raise RuntimeError("Supplemental hash mismatch")
+                selected.append({
+                    "source_path": str(path),
+                    "absolute_path": str(path),
+                    "sha256": item["sha256"],
+                    "label": item["id"],
+                })
+            groups.append(compose(f"supplemental-{width}-{offset // maximum + 1:02d}.png",
+                                  selected, min(columns, len(selected)), directory))
+    return {"source_count": len(capture["screenshots"]), "montages": groups}
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("mode", choices=["primary", "supplemental"])
+args = parser.parse_args()
+result = primary() if args.mode == "primary" else supplemental()
+destination = OWN / f"{args.mode}-montage-index.json"
+destination.write_text(json.dumps(result, indent=2) + "\n")
+print(json.dumps({
+    "index": str(destination),
+    "source_count": result["source_count"],
+    "montages": [{key: item[key] for key in ("path", "dimensions")} for item in result["montages"]],
+}, indent=2))

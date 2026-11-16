@@ -1,0 +1,220 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { pathToFileURL } from 'node:url';
+import { createRequire } from 'node:module';
+
+delete process.env.PWDEBUG;
+process.env.PLAYWRIGHT_HTML_OPEN = 'never';
+const root = '/Users/yong/.codex/worktrees/d9b1/lemmadeck';
+const own = path.join(root, '.intentfold/tickets/STEMROBIN-182/tmp/reviewer-5m-n48-actual-display');
+const require = createRequire(path.join(root, 'app/package.json'));
+const { chromium } = require('playwright');
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const manifestPath = path.join(root, '.intentfold/tickets/STEMROBIN-182/tmp/batch21-render/5m-math5-c2-s2-n48-capture-manifest.json');
+const manifestBytes = await fs.readFile(manifestPath);
+const manifest = JSON.parse(manifestBytes);
+const output = {
+  scope: 'Supplemental screenshots of missing regions only; geometry is capture planning, not a repeated acceptance gate.',
+  manifest: { path: manifestPath, sha256: hash(manifestBytes) },
+  exact_render_bindings: [],
+  browser: {
+    headless: true, isolated_contexts: true, user_profile: false,
+    PWDEBUG_cleared: true, PLAYWRIGHT_HTML_OPEN: 'never',
+    network_blocked: true, network_attempts: [], closed_in_finally: false,
+  },
+  new_combos: 0,
+  planning: [],
+  screenshots: [],
+};
+await fs.mkdir(path.join(own, 'captures'), { recursive: true });
+for (const render of manifest.rendered) {
+  const absolute = path.join(root, render.path);
+  const bytes = await fs.readFile(absolute);
+  if (hash(bytes) !== render.sha256) throw new Error('Exact render hash mismatch: ' + absolute);
+  output.exact_render_bindings.push({ path: absolute, sha256: render.sha256 });
+}
+const browser = await chromium.launch({ headless: true });
+let sequence = 0;
+try {
+  for (const width of [1440, 390]) {
+    const height = width === 1440 ? 960 : 844;
+    for (const surface of ['text', 'exercises', 'choices']) {
+      const binding = output.exact_render_bindings.find(item => path.basename(item.path) === `${surface}.html`);
+      const context = await browser.newContext({
+        viewport: { width, height }, deviceScaleFactor: 1,
+        serviceWorkers: 'block',
+      });
+      try {
+        await context.route('**/*', route => {
+          const url = route.request().url();
+          if (url.startsWith('file:') || url.startsWith('data:')) return route.continue();
+          output.browser.network_attempts.push(url);
+          return route.abort('blockedbyclient');
+        });
+        const page = await context.newPage();
+        await page.goto(pathToFileURL(binding.path).href, { waitUntil: 'load' });
+        await page.evaluate(() => document.fonts.ready);
+        const layout = await page.evaluate(() => {
+          const rect = element => {
+            const r = element.getBoundingClientRect();
+            return { x: r.x, y: r.y + scrollY, width: r.width, height: r.height, bottom: r.bottom + scrollY };
+          };
+          const objects = [];
+          const add = (selector, id) => document.querySelectorAll(selector).forEach((element, index) => {
+            objects.push({ id: id(element, index), selector, index, ...rect(element) });
+          });
+          add('h1', () => 'header');
+          add('.crumb', () => 'breadcrumb');
+          add('p.para', (_, i) => `prose-${i + 1}`);
+          add('li.ex', element => 'written-' + element.querySelector('.no').textContent.trim().replace('.', ''));
+          add('section.choice', (_, i) => `choice-${i + 1}`);
+          add('.choice-options > li', element => {
+            const question = Array.from(document.querySelectorAll('section.choice')).indexOf(element.closest('section.choice')) + 1;
+            return `choice-${question}-option-${element.querySelector('.option-id').textContent.trim()}`;
+          });
+          add('.fig', (_, i) => `figure-${i + 1}`);
+          add('.figcap', (_, i) => `figure-caption-${i + 1}`);
+          add('.exgroup', (_, i) => `exercise-group-${i + 1}`);
+          add('.jump', () => 'footer-navigation');
+          const figures = Array.from(document.querySelectorAll('.fig')).map((element, index) => ({
+            index, ...rect(element), clientWidth: element.clientWidth,
+            scrollWidth: element.scrollWidth, maximumX: element.scrollWidth - element.clientWidth,
+          }));
+          const scrolls = Array.from(document.querySelectorAll('.nb,.sr-nb,li.ex .body,.choice-stem,.choice-option-body'))
+            .map((element, index) => {
+              const written = element.closest('li.ex');
+              const choice = element.closest('section.choice');
+              const owner = written ? 'written-' + written.querySelector('.no').textContent.trim().replace('.', '')
+                : choice ? 'choice-' + (Array.from(document.querySelectorAll('section.choice')).indexOf(choice) + 1)
+                : 'prose';
+              return {
+                index, owner, className: element.className, ...rect(element),
+                clientWidth: element.clientWidth, scrollWidth: element.scrollWidth,
+                maximumX: element.scrollWidth - element.clientWidth,
+                overflowX: getComputedStyle(element).overflowX,
+              };
+            }).filter(item => item.maximumX > 1 && ['auto', 'scroll'].includes(item.overflowX));
+          return {
+            documentHeight: document.documentElement.scrollHeight,
+            maximumY: document.documentElement.scrollHeight - innerHeight,
+            objects, figures, scrolls,
+          };
+        });
+        output.planning.push({ surface, viewport: { width, height }, render: binding, layout });
+        console.log(JSON.stringify({
+          surface, width, height, maximumY: layout.maximumY,
+          figures: layout.figures, scrolls: layout.scrolls,
+          objects: layout.objects.filter(item => !item.id.includes('-option-')).map(item => ({
+            id: item.id, y: item.y, bottom: item.bottom,
+          })),
+        }));
+        const capture = async (reason, targetY, horizontal = []) => {
+          const requestedY = Math.max(0, Math.min(layout.maximumY, targetY));
+          const actual = await page.evaluate(({ requestedY, horizontal }) => {
+            for (const change of horizontal) {
+              const elements = document.querySelectorAll(change.selector);
+              const element = elements[change.index];
+              element.scrollTo({ left: change.x, behavior: 'instant' });
+            }
+            scrollTo({ top: requestedY, left: 0, behavior: 'instant' });
+            return new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => {
+              resolve({
+                x: scrollX, y: scrollY,
+                horizontal: horizontal.map(change => {
+                  const element = document.querySelectorAll(change.selector)[change.index];
+                  const r = element.getBoundingClientRect();
+                  return {
+                    ...change, actualX: element.scrollLeft,
+                    clientWidth: element.clientWidth, scrollWidth: element.scrollWidth,
+                    viewportRect: { x: r.x, y: r.y, width: r.width, height: r.height },
+                  };
+                }),
+              });
+            })));
+          }, { requestedY, horizontal });
+          const id = `S${String(++sequence).padStart(2, '0')}-${surface}-${width}-${reason}`;
+          const absolute = path.join(own, 'captures', id + '.png');
+          const bytes = await page.screenshot({ path: absolute, fullPage: false, scale: 'css' });
+          output.screenshots.push({
+            id, path: absolute, sha256: hash(bytes),
+            surface, viewport: { width, height }, exact_render_sha256: binding.sha256,
+            reason, requestedY, actual,
+            intersecting_objects: layout.objects.filter(item => item.bottom > actual.y && item.y < actual.y + height)
+              .map(item => ({
+                id: item.id, visibleY: [Math.max(item.y, actual.y), Math.min(item.bottom, actual.y + height)],
+                complete_vertical_object: item.y >= actual.y && item.bottom <= actual.y + height,
+              })),
+            screenshot_is_full_viewport: true, native_scale: 1,
+          });
+        };
+
+        // The primary first/last captures already cover the outer body ranges,
+        // except text's false last and the mobile choice header.
+        if (surface === 'text') {
+          if (width === 1440) {
+            await capture('missing-fig153-footer', layout.maximumY);
+          } else {
+            for (let y = 740; y < layout.maximumY; y += height - 104) {
+              await capture('missing-body-' + y, y);
+            }
+            await capture('missing-fig153-footer', layout.maximumY);
+          }
+        } else {
+          if (surface === 'choices' && width === 390) {
+            await capture('missing-header', 0);
+          }
+          for (let y = height - 104; y < layout.maximumY; y += height - 104) {
+            await capture('missing-middle-body-' + y, y);
+          }
+        }
+
+        if (width === 390) {
+          for (const figure of layout.figures.filter(item => item.maximumX > 1)) {
+            const y = figure.y - 112;
+            const phases = surface === 'text' && figure.index === 1
+              ? [['begin', 0], ['middle', figure.maximumX / 2], ['end', figure.maximumX]]
+              : [['middle', figure.maximumX / 2], ['end', figure.maximumX]];
+            for (const [phase, x] of phases) {
+              await capture(`figure-${figure.index + 1}-union-${phase}`, y,
+                [{ selector: '.fig', index: figure.index, x }]);
+            }
+            await page.locator('.fig').nth(figure.index).evaluate(element => element.scrollTo({ left: 0, behavior: 'instant' }));
+          }
+          const owners = [...new Set(layout.scrolls.map(item => item.owner))];
+          for (const owner of owners) {
+            const owned = layout.scrolls.filter(item => item.owner === owner);
+            const bounds = layout.objects.find(item => item.id === owner);
+            const y = (bounds?.y ?? owned[0].y) - 96;
+            for (const [phase, factor] of [['middle', 0.5], ['end', 1]]) {
+              await capture(`${owner}-full-formula-${phase}`, y,
+                owned.map(item => ({
+                  selector: '.nb,.sr-nb,li.ex .body,.choice-stem,.choice-option-body',
+                  index: item.index, x: item.maximumX * factor,
+                })));
+            }
+            await page.evaluate(indices => {
+              const elements = document.querySelectorAll('.nb,.sr-nb,li.ex .body,.choice-stem,.choice-option-body');
+              for (const index of indices) elements[index].scrollTo({ left: 0, behavior: 'instant' });
+            }, owned.map(item => item.index));
+          }
+        }
+        if (hash(await fs.readFile(binding.path)) !== binding.sha256) {
+          throw new Error('Render changed during supplemental capture');
+        }
+      } finally {
+        await context.close();
+      }
+    }
+  }
+} finally {
+  await browser.close();
+  output.browser.closed_in_finally = true;
+  await fs.writeFile(path.join(own, 'capture-index.json'), JSON.stringify(output, null, 2) + '\n');
+}
+console.log(JSON.stringify({
+  screenshot_count: output.screenshots.length,
+  new_combos: output.new_combos,
+  browser_closed: output.browser.closed_in_finally,
+  network_attempt_count: output.browser.network_attempts.length,
+}));

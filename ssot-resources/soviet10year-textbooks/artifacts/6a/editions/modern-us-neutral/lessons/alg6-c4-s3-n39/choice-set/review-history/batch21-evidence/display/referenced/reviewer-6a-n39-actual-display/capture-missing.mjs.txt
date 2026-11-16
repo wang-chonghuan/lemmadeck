@@ -1,0 +1,261 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { createRequire } from 'node:module'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+
+delete process.env.PWDEBUG
+process.env.PLAYWRIGHT_HTML_OPEN = 'never'
+const script = fileURLToPath(import.meta.url)
+const output = path.dirname(script)
+const root = path.resolve(output, '../../../../..')
+const appRequire = createRequire(path.join(root, 'app/package.json'))
+const runtimeRequire = createRequire(
+  '/Users/yong/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/package.json')
+const { chromium } = appRequire('@playwright/test')
+const sharp = runtimeRequire('sharp')
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
+const manifestPath = path.join(root, '.intentfold/tickets/STEMROBIN-182/tmp/batch21-render/6a-alg6-c4-s3-n39-capture-manifest.json')
+const manifest = JSON.parse(fs.readFileSync(manifestPath))
+const logPath = path.join(output, 'supplemental-capture-log.json')
+if (fs.existsSync(logPath)) throw new Error('No rerun or overwrite')
+function frozenHashes() {
+  for (const item of [...manifest.rendered, ...manifest.screenshots]) {
+    if (sha(fs.readFileSync(path.join(root, item.path))) !== item.sha256) {
+      throw new Error(`Frozen input changed: ${item.path}`)
+    }
+  }
+}
+frozenHashes()
+fs.mkdirSync(path.join(output, 'supplements'), { recursive: true })
+const log = {
+  lesson: manifest.lesson,
+  command: [process.execPath, script],
+  cwd: root,
+  started: new Date().toISOString(),
+  execution_count: 1,
+  gap_plan: path.join(output, 'primary-pixel-gap-plan.json'),
+  manifest: { path: manifestPath, sha256: sha(fs.readFileSync(manifestPath)) },
+  html: manifest.rendered,
+  launch_options: { headless: true },
+  executable: chromium.executablePath(),
+  custom_launcher: false,
+  PWDEBUG_cleared: !Object.hasOwn(process.env, 'PWDEBUG'),
+  PLAYWRIGHT_HTML_OPEN: process.env.PLAYWRIGHT_HTML_OPEN,
+  isolated_contexts: true,
+  deviceScaleFactor: 1,
+  persistent_profile_or_CDP: false,
+  network_policy: 'Only local file/data/about requests',
+  primary_render_or_capture_reruns: 0,
+  new_unique_combinations: 0,
+  captures: [],
+  measurements: [],
+  page_errors: [],
+  browser_closed: false,
+  status: 'pending'
+}
+const browser = await chromium.launch(log.launch_options)
+let failure
+async function settle(page) {
+  await page.evaluate(() => document.fonts.ready)
+  await page.evaluate(() => new Promise(resolve =>
+    requestAnimationFrame(() => requestAnimationFrame(resolve))))
+  await page.waitForTimeout(180)
+}
+async function bounds(locator) {
+  return locator.evaluate(node => {
+    const r = node.getBoundingClientRect()
+    return { x: r.x + scrollX, y: r.y + scrollY, width: r.width, height: r.height }
+  })
+}
+async function region(page, surface, viewport, label, rectangle, reason) {
+  const tileHeight = viewport.height - 32
+  const count = Math.ceil(rectangle.height / tileHeight)
+  for (let i = 0; i < count; i++) {
+    const offset = i * tileHeight
+    const height = Math.min(tileHeight, rectangle.height - offset)
+    await page.evaluate(top => scrollTo({ top, left: 0, behavior: 'instant' }),
+      Math.max(0, rectangle.y + offset - 16))
+    await settle(page)
+    const scroll = await page.evaluate(() => ({ x: scrollX, y: scrollY }))
+    const left = Math.max(0, Math.floor(rectangle.x - scroll.x))
+    const top = Math.max(0, Math.floor(rectangle.y + offset - scroll.y))
+    const width = Math.min(Math.ceil(rectangle.width), viewport.width - left)
+    const cropHeight = Math.min(Math.ceil(height), viewport.height - top)
+    if (width < 1 || cropHeight < height - 2) throw new Error(`Invisible target ${label}`)
+    const pixels = await sharp(await page.screenshot({ animations: 'disabled' }))
+      .extract({ left, top, width, height: cropHeight }).png().toBuffer()
+    const stats = await sharp(pixels).stats()
+    if (stats.channels.slice(0, 3).every(c => c.min > 245)) {
+      throw new Error(`Blank target ${label}`)
+    }
+    const file = path.join(output, 'supplements',
+      `${surface}-${viewport.width}-${label}${count > 1 ? `-tile-${i + 1}` : ''}.png`)
+    fs.writeFileSync(file, pixels, { flag: 'wx' })
+    log.captures.push({
+      path: file, sha256: sha(pixels), width, height: cropHeight,
+      group: `${surface}-${viewport.width}`, surface, viewport,
+      target: label, missing_coverage_reason: reason,
+      document_bounds: rectangle, scroll,
+      native_viewport_crop: { left, top, width, height: cropHeight },
+      tile_index: i + 1, tile_count: count, resized: false
+    })
+  }
+}
+async function capture(page, surface, viewport, label, locator, reason) {
+  await locator.scrollIntoViewIfNeeded()
+  await settle(page)
+  await region(page, surface, viewport, label, await bounds(locator), reason)
+}
+async function range(page, surface, viewport, label, first, last, reason) {
+  await first.scrollIntoViewIfNeeded()
+  await settle(page)
+  const a = await bounds(first)
+  const b = await bounds(last)
+  await region(page, surface, viewport, label,
+    { x: a.x, y: a.y, width: Math.max(a.width, b.width), height: b.y + b.height - a.y }, reason)
+}
+async function horizontalEnds(page, surface, viewport, label, locator) {
+  const handles = await locator.evaluateHandle(node => {
+    const elements = [node, ...node.querySelectorAll('*')]
+    return elements.filter(el => el.scrollWidth > el.clientWidth + 2
+      && ['auto', 'scroll'].includes(getComputedStyle(el).overflowX))
+      .filter(el => !elements.some(parent => parent !== el
+        && parent.contains(el) && parent.scrollWidth > parent.clientWidth + 2
+        && ['auto', 'scroll'].includes(getComputedStyle(parent).overflowX)))
+  })
+  const properties = await handles.getProperties()
+  let index = 0
+  for (const handle of properties.values()) {
+    const element = handle.asElement()
+    if (!element) { await handle.dispose(); continue }
+    index++
+    const metrics = await element.evaluate(el => ({
+      clientWidth: el.clientWidth, scrollWidth: el.scrollWidth, tag: el.tagName, class: el.className
+    }))
+    log.measurements.push({ label, viewport, ...metrics })
+    const maximum = metrics.scrollWidth - metrics.clientWidth
+    const positions = []
+    for (let p = metrics.clientWidth; p < maximum; p += metrics.clientWidth) positions.push(p)
+    positions.push(maximum)
+    for (let i = 0; i < positions.length; i++) {
+      await element.evaluate((el, p) => { el.scrollLeft = p }, positions[i])
+      await settle(page)
+      await capture(page, surface, viewport, `${label}-horizontal-${index}-${i + 1}`,
+        element, 'Unseen horizontal end of newly supplemented missing text/options, native scroll reachability.')
+    }
+    await element.evaluate(el => { el.scrollLeft = 0 })
+    await handle.dispose()
+  }
+  await handles.dispose()
+}
+try {
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1 })
+    try {
+      const page = await context.newPage()
+      page.on('pageerror', e => log.page_errors.push(String(e)))
+      await page.route('**/*', route => ['file:', 'data:', 'about:']
+        .includes(new URL(route.request().url()).protocol) ? route.continue() : route.abort())
+      const goto = async surface => {
+        const entry = manifest.rendered.find(e => e.path.endsWith(`/${surface}.html`))
+        await page.goto(pathToFileURL(path.join(root, entry.path)).href)
+        await settle(page)
+      }
+      await goto('choices')
+      const questions = page.locator('.choice')
+      if (await questions.count() !== 16) throw new Error('Frozen question count differs')
+      const stem = async number => {
+        const q = questions.nth(number - 1)
+        await range(page, 'choices', viewport, `q${number}-heading-stem`,
+          q.locator('.choice-heading'), q.locator('.choice-stem'),
+          'Heading/stem absent or cut in primary endpoint capture; existing graph excluded.')
+        await horizontalEnds(page, 'choices', viewport, `q${number}-stem`, q.locator('.choice-stem'))
+      }
+      await stem(1)
+      for (const number of (viewport.width === 390 ? [3, 4] : [4])) {
+        const option = questions.nth(0).locator('.choice-options>li').nth(number - 1)
+        await capture(page, 'choices', viewport, `q1-option-${number}`, option,
+          'Original q1 viewport omitted this candidate or its ending.')
+        await horizontalEnds(page, 'choices', viewport, `q1-option-${number}`, option)
+      }
+      for (let number = 2; number <= 13; number++) {
+        await stem(number)
+        const options = questions.nth(number - 1).locator('.choice-options')
+        await capture(page, 'choices', viewport, `q${number}-all-options`, options,
+          'All candidate texts missing from primary endpoints; graph clips/radical pieces are not full options.')
+        await horizontalEnds(page, 'choices', viewport, `q${number}-all-options`, options)
+      }
+      await stem(14)
+      if (viewport.width === 390) {
+        await capture(page, 'choices', viewport, 'q14-all-options',
+          questions.nth(13).locator('.choice-options'), 'Primary mobile q14 missing.')
+        await capture(page, 'choices', viewport, 'q15-heading',
+          questions.nth(14).locator('.choice-heading'), 'Mobile q15 body complete but heading absent.')
+      }
+      await goto('exercises')
+      for (let number = 631; number <= 640; number++) {
+        const ex = page.locator(`#ex-${number}`)
+        await capture(page, 'exercises', viewport, `source-${number}`, ex,
+          'Middle written task missing from primary endpoint capture.')
+        await horizontalEnds(page, 'exercises', viewport, `source-${number}`, ex)
+      }
+      const ex641 = page.locator('#ex-641')
+      const a = await bounds(ex641)
+      const b = await bounds(ex641.locator('figure').first())
+      await region(page, 'exercises', viewport, 'source-641-stem',
+        { x: a.x, y: a.y, width: a.width, height: b.y - a.y },
+        'Written source641 stem absent; already observed graph excluded.')
+      if (viewport.width === 390) {
+        for (const number of [630, 641]) {
+          const container = page.locator(`#ex-${number} figure`)
+          const image = container.locator('.figure-media')
+          const metrics = await container.evaluate(node => ({
+            clientWidth: node.clientWidth, scrollWidth: node.scrollWidth, class: node.className
+          }))
+          log.measurements.push({ target: `source-${number}-graph-center`, ...metrics })
+          const original = await bounds(image)
+          const visible = metrics.clientWidth
+          const gapStart = visible
+          const gapEnd = original.width - visible
+          if (gapEnd <= gapStart) throw new Error('Expected only documented middle graph gap')
+          await container.evaluate((node, position) => { node.scrollLeft = position },
+            gapStart - 2)
+          await image.scrollIntoViewIfNeeded()
+          await settle(page)
+          const moved = await bounds(image)
+          await region(page, 'exercises', viewport, `source-${number}-graph-center-gap`,
+            { x: moved.x + gapStart - 2, y: moved.y, width: gapEnd - gapStart + 4, height: moved.height },
+            'Only approximately19px middle region between already observed311px left/right painted spans;2px overlap each side.')
+          await container.evaluate(node => { node.scrollLeft = 0 })
+        }
+      }
+      await goto('text')
+      const paragraphs = page.locator('p.para')
+      if (await paragraphs.count() !== 26) throw new Error('Frozen paragraph count differs')
+      for (let number = viewport.width === 390 ? 7 : 9; number <= 23; number++) {
+        const para = paragraphs.nth(number - 1)
+        await capture(page, 'text', viewport, `paragraph-${number}`, para,
+          'Middle prose paragraph missing or cut in primary endpoints; already observed figures/tables excluded.')
+        await horizontalEnds(page, 'text', viewport, `paragraph-${number}`, para)
+      }
+    } finally {
+      await context.close()
+    }
+  }
+  frozenHashes()
+  log.frozen_html_and_149_primaries_unchanged = true
+  log.status = 'captured-awaiting-own-pixel-observation'
+} catch (error) {
+  failure = error
+  log.status = 'failed-preserved'
+  log.failure = String(error.stack || error)
+} finally {
+  await browser.close()
+  log.browser_closed = true
+  log.finished = new Date().toISOString()
+  fs.writeFileSync(logPath, JSON.stringify(log, null, 2) + '\n', { flag: 'wx' })
+}
+console.log(JSON.stringify({ status: log.status, captures: log.captures.length,
+  browser_closed: log.browser_closed, log: logPath }))
+if (failure) throw failure

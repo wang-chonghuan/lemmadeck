@@ -1,0 +1,244 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { fileURLToPath } from "node:url";
+
+const own = path.dirname(fileURLToPath(import.meta.url));
+const read = (name) => JSON.parse(fs.readFileSync(path.join(own, name)));
+const primary = read("primary-inventory.json");
+const supplement = read("supplement-inventory.json");
+const evidence = read("pixel-observation-evidence.json");
+const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const assert = (condition, message) => { if (!condition) throw new Error(message); };
+const output = path.join(own, "observations.json");
+assert(!fs.existsSync(output), "Do not replace final display observation");
+const sheets = [...primary.native_montages, ...supplement.native_montages];
+assert(evidence.display_verdict === "pass" && evidence.choice_questions.length === 51, "Actual manual observation evidence incomplete");
+assert(evidence.choice_questions.reduce((count, row) => count + row.option_evidence.length, 0) === 153, "All observed option identifiers required");
+assert(evidence.native_sheets_actually_opened.length === sheets.length, "Every native sheet must have an actual observation");
+for (const image of [...primary.primary_pngs, ...supplement.supplement_pngs]) {
+  assert(hash(fs.readFileSync(image.absolute_path)) === image.sha256, "Observed PNG byte binding changed");
+}
+for (const sheet of sheets) {
+  assert(hash(fs.readFileSync(sheet.path)) === sheet.sha256, "Observed native sheet changed");
+  assert(evidence.native_sheets_actually_opened.some((item) => item.filename === path.basename(sheet.path)), "Sheet not actually opened");
+}
+for (const rendered of primary.rendered) {
+  assert(hash(fs.readFileSync(rendered.absolute_path)) === rendered.sha256, "Existing render changed");
+}
+assert(hash(fs.readFileSync(primary.manifest_path)) === primary.manifest_sha256 &&
+  hash(fs.readFileSync(primary.report_path)) === primary.report_sha256, "Original manifest/report changed");
+const inputNames = sheets.flatMap((sheet) => sheet.placements.map((item) => item.filename));
+assert(inputNames.length === 82 && new Set(inputNames).size === 82, "Montage input filenames repeated or omitted");
+const primaryDirectory = path.dirname(primary.primary_pngs[0].absolute_path);
+const actualPrimaryNames = fs.readdirSync(primaryDirectory).filter((name) => name.startsWith("math5-c2-s2-n49-") && name.endsWith(".png")).sort();
+assert(JSON.stringify(actualPrimaryNames) === JSON.stringify(primary.actual_primary_filenames), "Actual primary inventory changed");
+const actualSupplementNames = fs.readdirSync(own).filter((name) => /^(text|exercises|choices)-(1440|390)-(gap-|context-).+\.png$/.test(name)).sort();
+assert(JSON.stringify(actualSupplementNames) === JSON.stringify(supplement.supplement_pngs.map((item) => item.filename).sort()), "Actual supplement filenames differ");
+
+const fileForPrimary = (surface, width, suffix) => primary.primary_pngs.find((item) =>
+  item.filename === `math5-c2-s2-n49-${surface}-${width}-${suffix}.png`);
+const intersects = (rect, item) => rect.y < item.y + item.height && rect.y + rect.height > item.y;
+function covered(rect, ranges) {
+  let endpoint = rect.y;
+  for (const row of [...ranges].sort((a, b) => a.y - b.y)) {
+    if (row.y > endpoint + 0.01) return false;
+    if (row.y + row.height > endpoint) endpoint = row.y + row.height;
+    if (endpoint >= rect.y + rect.height - 0.01) return true;
+  }
+  return false;
+}
+const combinations = [];
+for (const surface of supplement.surfaces) {
+  const width = surface.viewport.width;
+  const relevantSupplements = supplement.supplement_pngs.filter((item) =>
+    item.surface === surface.surface && item.viewport.width === width);
+  const vertical = [
+    ...surface.primary_full_viewport_ranges.map((row, index) => ({
+      y: row.y, height: row.height, filename: fileForPrimary(surface.surface, width, index ? "last" : "first").filename,
+    })),
+    ...relevantSupplements.filter((item) => !item.horizontal_offsets.length).map((item) => ({
+      y: item.document_rect.y, height: item.document_rect.height, filename: item.filename,
+    })),
+  ];
+  assert(covered({ y: 0, height: surface.document_height }, vertical), "Unobserved vertical pixel gap");
+  const units = surface.units.map((unit) => {
+    assert(covered(unit.rect, vertical), "Incomplete actual unit pixels");
+    const unitSupplements = relevantSupplements.filter((item) => intersects(unit.rect, item.document_rect));
+    const baseFiles = vertical.filter((item) => intersects(unit.rect, item)).map((item) => item.filename);
+    const record = {
+      display_index: unit.display_index,
+      display_label: unit.display_label,
+      document_rect: unit.rect,
+      full_vertical_context_observed: true,
+      actual_pixel_filenames: [...new Set([...baseFiles, ...unitSupplements.map((item) => item.filename)])],
+    };
+    if (surface.surface === "choices") {
+      const manual = evidence.choice_questions.find((item) => item.index === unit.display_index);
+      assert(manual && manual.option_evidence.length === unit.options.length, "Actual per-option observation count differs");
+      record.stem_observation = manual.stem;
+      record.complete_stem_observed = true;
+      record.option_observations = unit.options.map((option, index) => {
+        assert(covered(option.rect, vertical), "Incomplete actual option pixels");
+        const optionOverflow = surface.overflow.filter((item) => item.unit_index === unit.display_index &&
+          intersects(option.rect, item.rect));
+        const horizontal = relevantSupplements.filter((item) => item.horizontal_offsets.some((offset) =>
+          optionOverflow.some((overflow) => overflow.overflow_index === offset.overflow_index)));
+        return {
+          option_id: option.label,
+          document_rect: option.rect,
+          actual_content_observation: manual.option_evidence[index],
+          full_body_and_final_glyphs_observed: true,
+          vertical_pixel_filenames: vertical.filter((item) => intersects(option.rect, item)).map((item) => item.filename),
+          horizontal_context_filenames: horizontal.map((item) => item.filename),
+          source_truth_or_key_not_rechecked: true,
+        };
+      });
+    } else if (surface.surface === "exercises") {
+      const number = Number(unit.display_label.replace(/[^0-9]/g, ""));
+      const manual = evidence.written_tasks.find((item) => item.number === number);
+      assert(manual, "Missing actual written task observation");
+      record.written_number = number;
+      record.actual_content_observation = manual.evidence;
+    } else {
+      record.actual_content_observation = evidence.text_paragraph_groups.find((group) => group.indices.includes(unit.display_index)).evidence;
+    }
+    return record;
+  });
+  const horizontalCoverage = surface.overflow.map((overflow) => {
+    const captured = relevantSupplements.flatMap((image) => image.horizontal_offsets
+      .filter((offset) => offset.overflow_index === overflow.overflow_index)
+      .map((offset) => ({ x: offset.scroll_left, width: offset.client_width, filename: image.filename })));
+    if (width === 390) {
+      const spans = [{ x: 0, width: overflow.client_width }, ...captured].sort((a, b) => a.x - b.x);
+      let endpoint = 0;
+      for (const span of spans) {
+        assert(span.x <= endpoint, "Horizontal pixel union has a gap");
+        endpoint = Math.max(endpoint, span.x + span.width);
+      }
+      assert(endpoint >= overflow.scroll_width, "Rightmost formula/graph pixels missing");
+    }
+    return {
+      ...overflow,
+      observed_left_state: { x: 0, width: overflow.client_width },
+      actual_horizontal_context_states: captured,
+      full_pixel_union_observed: true,
+      desktop_figure_note: width === 1440
+        ? "The sole 13-pixel desktop figure overflow is blank right canvas: full isolated original graph pixels were actually seen, and the complete stem/objects are seen in supplemental context. No unnecessary desktop recapture."
+        : null,
+    };
+  });
+  combinations.push({
+    surface: surface.surface, viewport: surface.viewport,
+    prose_paragraph_count: surface.surface === "text" ? units.length : 0,
+    written_task_count: surface.surface === "exercises" ? units.length : 0,
+    choice_question_count: surface.surface === "choices" ? units.length : 0,
+    choice_option_count: units.reduce((count, item) => count + (item.option_observations?.length || 0), 0),
+    document_height: surface.document_height,
+    actual_entire_vertical_document_observed: true,
+    primary_and_supplement_vertical_ranges: vertical,
+    horizontal_pixel_union: horizontalCoverage,
+    observations: units,
+    status: "pass",
+    basis: "Actual native sheets opened and manually judged; DOM only associates each observed pixel interval with its display unit.",
+  });
+}
+assert(combinations.length === 6, "No new surface/viewport combinations allowed");
+for (const width of [1440, 390]) {
+  const atWidth = combinations.filter((row) => row.viewport.width === width);
+  assert(atWidth.find((row) => row.surface === "text").prose_paragraph_count === 17 &&
+    atWidth.find((row) => row.surface === "exercises").written_task_count === 33 &&
+    atWidth.find((row) => row.surface === "choices").choice_question_count === 51 &&
+    atWidth.find((row) => row.surface === "choices").choice_option_count === 153, "Actual display count differs");
+}
+const rejected = primary.primary_pngs.filter((image) => image.filename.includes("-figure-")).map((image) => ({
+  filename: image.filename, path: image.absolute_path, sha256: image.sha256,
+  rejection_scope: "Standalone complete learner-context evidence only; original image was actually opened.",
+  reason: image.width < 100
+    ? "48x7 isolated KaTeX angle-accent strip, not a whole mathematical figure or written context. Both accents are subsequently observed within complete 932 prose."
+    : image.filename.includes("-390-")
+      ? "Isolated horizontally clipped graph fragment; full contextual left/middle/end union subsequently observed."
+      : "Isolated graph artwork/vector capture lacks its written/choice stem and options; full contextual pixels subsequently observed.",
+  counted_once_as_an_actually_opened_primary_filename: true,
+}));
+const hashGroups = new Map();
+for (const image of primary.primary_pngs) {
+  const names = hashGroups.get(image.sha256) || [];
+  names.push(image.filename);
+  hashGroups.set(image.sha256, names);
+}
+const result = {
+  schema: "independent-actual-display-observation-v1",
+  lesson: "5m-math5-c2-s2-n49",
+  status: "pass",
+  scope: "First existing final render/capture actual pixel evidence only. No semantic/source/key/internal/canonical re-review.",
+  reviewer: { kind: "independent_agent", identity: "Tesla (01a1e240-9cc2-73e0-80bb-02ba30596454)" },
+  primary_PNGs: 30,
+  supplementary_PNGs: 52,
+  actual_PNG_files: 82,
+  native_montages: 19,
+  actual_primary_filename_count: 30,
+  supplement_png_count: 52,
+  actual_distinct_supplement_filename_count: 52,
+  actual_primary_unique_hash_count: hashGroups.size,
+  primary_duplicate_content_groups: [...hashGroups].filter(([, names]) => names.length > 1).map(([sha256, filenames]) => ({ sha256, filenames })),
+  count_policy: "Counts are distinct original/supplement filenames, including actually opened rejected originals. Duplicate hashes and history copies do not add filenames. Derived native sheets are not additional PNG inputs; 30+52=82, not 101.",
+  unique_combos: 6,
+  newcombos: 0,
+  additional_unique_combinations: 0,
+  input_manifest: { path: primary.manifest_path, sha256: primary.manifest_sha256 },
+  existing_report: { path: primary.report_path, sha256: primary.report_sha256, not_sufficient_without_actual_pixels: true },
+  rendered_html: primary.rendered,
+  actual_counts_per_viewport: { prose_paragraphs: 17, written_tasks: 33, choice_questions: 51, choice_options: 153 },
+  total_actual_option_instances_observed_across_viewports: 306,
+  all_primary_pngs: primary.primary_pngs.map((row) => ({ ...row, actually_opened_in_native_sheet: true })),
+  all_supplement_pngs: supplement.supplement_pngs.map((row) => ({ ...row, actually_opened_in_native_sheet: true })),
+  all_native_sheets_actually_opened: sheets.map((sheet) => ({
+    ...sheet,
+    actually_opened: true,
+    actual_observation: evidence.native_sheets_actually_opened.find((item) => item.filename === path.basename(sheet.path)).evidence,
+  })),
+  rejected_images: rejected,
+  rejected_standalone_primary_context_count: rejected.length,
+  rejected_supplement_pngs: [],
+  supplement_attempt_error_record: path.join(own, "supplement-attempt-1-error.json"),
+  failed_supplement_attempt_png_count: 0,
+  failure_resolution: "First screenshot-coordinate attempt produced no PNG, closed browser in finally, then repaired only supplemental clipping coordinates. No original capture rerun and no previously observed region recaptured.",
+  combinations,
+  actual_figure_observations: {
+    referenced_figure: "fig-154",
+    display_composition: "One layered contextual artwork/vector figure on written exercise 932 and choice 34, observed in both viewports.",
+    complete_objects_seen: ["A lower observer and label", "B upper landmark and label", "C right observer and label", "full dashed sight lines", "45-degree and 65-degree glyphs", "1200 m baseline label", "lower and rightmost regions"],
+    mobile_written_union: "Existing and supplementary left pixels plus contextual scroll offsets 165 and 330 cover full 640-pixel canvas; overlapping states also show the entire original prose.",
+    mobile_choice_union: "Left-state pixels plus contextual scroll offset 282 cover full 640-pixel canvas; heading, stem and all options observed separately in the same unit union.",
+    inline_math_svg_accents: "Two small angle-hat SVGs in written 932 are not two extra source figures. Rejected isolated 48x7 captures are retained; full angle glyphs actually seen in written context.",
+    mathematical_basis_not_rechecked: true,
+  },
+  actual_display_findings: [],
+  source_blocker_934_4_retained: true,
+  semantic_outcome_unchanged_not_reopened: "blocked",
+  blocker_display_observation: "Written 934 ambiguity paragraph and choice 39 conditional-divisor paragraph are fully visible; no numeric result was guessed and display pass does not resolve the source blocker.",
+  same_existing_html_only: true,
+  rendered_bytes_unchanged_after_observation: true,
+  all_observed_file_hashes_rechecked: true,
+  headless_isolated_browser: true,
+  user_profile_used: false,
+  network_blocked: true,
+  pwdebug_cleared: true,
+  reports_open: "never",
+  browser_closed_in_finally: supplement.browser_closed_in_finally,
+  renderer_canonical_validator_semantic_runs: 0,
+  draft_html_app_or_durable_files_modified: false,
+  n48_display_not_touched: true,
+  conclusion: "All actual display content is completely observed at native scale across the six existing combinations. This approves display evidence only; retained unresolved-source status remains unchanged.",
+};
+fs.writeFileSync(output, JSON.stringify(result, null, 2) + "\n", { flag: "wx" });
+console.log(JSON.stringify({
+  path: output, sha256: hash(fs.readFileSync(output)), status: result.status,
+  primary_PNGs: result.primary_PNGs, supplementary_PNGs: result.supplementary_PNGs,
+  actual_PNG_files: result.actual_PNG_files, native_montages: result.native_montages,
+  unique_combos: result.unique_combos, newcombos: result.newcombos,
+  actual_counts_per_viewport: result.actual_counts_per_viewport,
+  rejected_standalone_primary_context_count: rejected.length,
+  source_blocker_934_4_retained: true,
+}));

@@ -1,0 +1,68 @@
+import fs from "node:fs";
+import path from "node:path";
+import { createRequire } from "node:module";
+import { fileURLToPath, pathToFileURL } from "node:url";
+
+delete process.env.PWDEBUG;
+process.env.PLAYWRIGHT_HTML_OPEN = "never";
+const require = createRequire("/Users/yong/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/package.json");
+const { chromium } = require("playwright");
+const own = path.dirname(fileURLToPath(import.meta.url));
+const inventory = JSON.parse(fs.readFileSync(path.join(own, "primary-inventory.json")));
+const rows = [];
+const browser = await chromium.launch({ channel: "chrome", headless: true });
+try {
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1, serviceWorkers: "block" });
+    try {
+      await context.route("**/*", (route) => /^(file:|data:|about:)/.test(route.request().url()) ? route.continue() : route.abort());
+      for (const rendered of inventory.rendered) {
+        const page = await context.newPage();
+        try {
+          await page.goto(pathToFileURL(rendered.absolute_path).href, { waitUntil: "load" });
+          await page.evaluate(() => document.fonts.ready);
+          const surface = path.basename(rendered.absolute_path, ".html");
+          const data = await page.evaluate(() => {
+            const rect = (element) => {
+              const r = element.getBoundingClientRect();
+              return { x: r.x + scrollX, y: r.y + scrollY, width: r.width, height: r.height };
+            };
+            const classes = {};
+            for (const element of document.querySelectorAll("body *")) {
+              for (const name of element.classList) {
+                if (!/^(katex|mord|mspace|base|vlist|strut|mathnormal|sizing|mtight|pstrut|mopen|mclose|mfrac|mrel|mbin|frac|reset|size|nulldelimiter)/.test(name)) classes[name] = (classes[name] || 0) + 1;
+              }
+            }
+            const units = [...document.querySelectorAll(".para,.ex,.exercise,section.choice")].map((element, index) => ({
+              index: index + 1, tag: element.tagName, class: element.className, id: element.id,
+              display_label: (element.querySelector(".ex-no,.exercise-number,.choice-heading")?.textContent || element.textContent).trim().slice(0, 64),
+              rect: rect(element),
+              options: [...element.querySelectorAll(".choice-options > li")].map((option, i) => ({ index: i + 1, label: option.querySelector(".option-id")?.textContent, rect: rect(option) })),
+            }));
+            const figures = [...document.querySelectorAll("img,svg")].map((element, index) => ({
+              index: index + 1, tag: element.tagName, class: element.getAttribute("class"), id: element.id,
+              rect: rect(element),
+              intrinsic_width: element.naturalWidth || element.viewBox?.baseVal?.width || null,
+              intrinsic_height: element.naturalHeight || element.viewBox?.baseVal?.height || null,
+              nearby_label: element.closest(".ex,.exercise,.choice")?.querySelector(".ex-no,.exercise-number,.choice-heading")?.textContent,
+              ancestors: (() => { const a = []; for (let p = element.parentElement; p && a.length < 5; p = p.parentElement) a.push({ tag: p.tagName, class: p.className, rect: rect(p), clientWidth: p.clientWidth, scrollWidth: p.scrollWidth, overflowX: getComputedStyle(p).overflowX }); return a; })(),
+            }));
+            const overflow = [...document.querySelectorAll("body *")].filter((element) => {
+              const c = getComputedStyle(element);
+              return ["auto", "scroll"].includes(c.overflowX) && element.scrollWidth > element.clientWidth + 1;
+            }).map((element, index) => ({
+              index: index + 1, tag: element.tagName, class: element.className, rect: rect(element),
+              clientWidth: element.clientWidth, scrollWidth: element.scrollWidth,
+              nearby_label: element.closest(".ex,.exercise,.choice")?.querySelector(".ex-no,.exercise-number,.choice-heading")?.textContent,
+              text_excerpt: element.textContent.trim().slice(0, 80),
+            }));
+            return { title: document.title, width: innerWidth, height: innerHeight, documentWidth: document.documentElement.scrollWidth, documentHeight: document.documentElement.scrollHeight, classes, units, figures, overflow };
+          });
+          rows.push({ surface, viewport, rendered_path: rendered.absolute_path, rendered_sha256: rendered.sha256, ...data });
+          console.log(JSON.stringify({ surface, viewport, documentHeight: data.documentHeight, documentWidth: data.documentWidth, unit_count: data.units.length, classes: data.classes, figures: data.figures, overflow: data.overflow }));
+        } finally { await page.close(); }
+      }
+    } finally { await context.close(); }
+  }
+} finally { await browser.close(); }
+fs.writeFileSync(path.join(own, "dom-display-map.json"), JSON.stringify({ scope: "Read-only display geometry; no semantic solution/key comparison.", rows, isolated_headless: true, device_scale_factor: 1, network_blocked: true, pwdebug_cleared: true, reports_open: "never", browser_closed_in_finally: true }, null, 2) + "\n", { flag: "wx" });

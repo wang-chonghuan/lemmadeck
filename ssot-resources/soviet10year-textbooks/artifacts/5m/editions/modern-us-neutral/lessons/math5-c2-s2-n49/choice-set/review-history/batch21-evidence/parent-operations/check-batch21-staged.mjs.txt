@@ -1,0 +1,78 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import { spawnSync } from 'node:child_process'
+
+const scratch = '.intentfold/tickets/STEMROBIN-182/tmp'
+const write = (name, value) => fs.writeFileSync(`${scratch}/${name}`,
+  JSON.stringify(value, null, 2) + '\n', { flag: 'wx' })
+const run = args => spawnSync('git', args, {
+  encoding: 'utf8', maxBuffer: 32 * 1024 * 1024,
+})
+const scope = JSON.parse(fs.readFileSync(`${scratch}/batch21-staged-scope.json`))
+assert.equal(scope.status, 'pass')
+const listing = run(['diff', '--cached', '--name-only', '-z'])
+assert.equal(listing.status, 0)
+const staged = listing.stdout.split('\0').filter(Boolean)
+assert.deepEqual(staged, scope.staged)
+const patterns = [
+  ['credential', /(?:sk-[A-Za-z0-9]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,})/],
+  ['connection', /(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?):\/\/[^/\s:@]+:[^@\s]+@/],
+  ['private-key', /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/],
+  ['secret-assignment', /(?:api[_-]?key|access[_-]?token|client[_-]?secret|password)\s*[:=]\s*["'][A-Za-z0-9+/_=-]{24,}["']/i],
+]
+const failures = []
+for (const file of staged) {
+  if (/(^|\/)\.env($|\.)/.test(file)) failures.push({ file, pattern: 'env-file' })
+  if (file.includes('/alg6-c2-') || file.startsWith('app/')) {
+    failures.push({ file, pattern: 'outside-batch-scope' })
+  }
+  const result = spawnSync('git', ['show', `:${file}`], {
+    maxBuffer: 32 * 1024 * 1024,
+  })
+  assert.equal(result.status, 0)
+  if (result.stdout.includes(0)) continue
+  const text = result.stdout.toString('utf8')
+  for (const [name, pattern] of patterns) {
+    if (pattern.test(text)) failures.push({ file, pattern: name })
+  }
+}
+write('batch21-staged-secret-check.json', {
+  status: failures.length ? 'fail' : 'pass',
+  staged_files: staged.length, staged_env_files: staged.filter(file => /(^|\/)\.env($|\.)/.test(file)),
+  credential_connection_private_key_patterns_checked: patterns.length, failures,
+})
+assert.equal(failures.length, 0)
+const full = run(['diff', '--cached', '--check'])
+write('batch21-full-diff-check.json', {
+  command: ['git', 'diff', '--cached', '--check'], exit_code: full.status,
+  stdout: full.stdout, stderr: full.stderr,
+})
+assert([0, 2].includes(full.status))
+const excluded = []
+if (full.status !== 0) {
+  const files = [...new Set(full.stdout.split('\n').map(line => /^(.*?):[0-9]+:/.exec(line)?.[1]).filter(Boolean))]
+  assert(files.length, 'Could not identify whitespace findings')
+  for (const file of files) {
+    assert(file.includes('/review-history/batch21-evidence/'))
+    assert(file.endsWith('.patch.txt') || file.endsWith('.diff.txt'),
+      `Non-historical whitespace finding: ${file}`)
+    const bytes = spawnSync('git', ['show', `:${file}`]).stdout
+    excluded.push({ path: file,
+      sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+      reason: 'Exact inactive historical patch bytes retained; not production code.' })
+  }
+}
+const args = ['diff', '--cached', '--check', '--', '.',
+  ...excluded.map(row => `:(exclude)${row.path}`)]
+const rest = excluded.length ? run(args) : full
+write('batch21-diff-check-exceptions.json', {
+  status: rest.status === 0 ? 'pass-with-original-history-preserved' : 'fail',
+  original_full_check_exit: full.status, excluded_original_bytes: excluded,
+  remaining_staged_command: ['git', ...args],
+  exit_code: rest.status, stdout: rest.stdout, stderr: rest.stderr,
+  source_or_evidence_changes: 0,
+})
+assert.equal(rest.status, 0)
+console.log(JSON.stringify({ status: 'pass', staged_files: staged.length,
+  original_whitespace_exceptions: excluded.length }))
