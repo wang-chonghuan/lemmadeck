@@ -1,5 +1,157 @@
 # 生产检查点
 
+## 第二十五批限定暂存通过，待提交推送
+
+2026-11-16。同分支fetch一次exit0，HEAD/origin差异0/0。
+限定暂存一次PASS：44文件/9JSON，新增完整现代课0。仅批准SOURCE270、
+原书完整105、持久FIG232和相关报告；原字节、source EOL/冻结report EOF
+保持，凭据/私有文件/未完成现代层/错书6p/未验证工具修复全部排除。
+不重复审批、render、浏览器或成功暂存；只将本记录及usage增量重暂存，
+然后本批commit/push各一次。下一批SOURCE独审在途，不计本批完成。
+
+## 第二十五批准备层提交范围，新增完整课零
+
+2026-11-16。Parfit n103唯一blindFIRST PASS（两题10项，single1/
+multiple1），officialreview validator一次0。Main FIRST递归绑定
+错误地把book_lesson_hash投影当全文件SHA，exit1且未copy；原失败保持。
+唯一机械修复调用现有投影helper核验，33当前绑定/六精确copy一次0，
+7p正确retain一次0；CHOICE总预算现1/1耗尽，作者历史0/1不改。
+原稿/审查/源字节未动，不重review或validator。
+
+n103 officialrender一次0（21flow对象，5原题，2choice）；一次isolated
+headless检查在桌面caption邻接断言exit1，图232与同页唯一caption间
+有两段正文。FIRST三HTML/命令/当前canonical一次冻结，未生成截图。
+Main为非相邻同页唯一caption显示unit花唯一修复1/1，只改离线renderer，
+既有相邻caption和title预算不重置。新增三个定向测试实际exit1：
+两个error一个failure，断言不识别renderer原有ASCII math字体span。
+不再修测试/重跑，修复未证，renderer及新test不暂存；无修复后render/
+浏览器/独立截图审查。n103 DISPLAY BLOCKED，不计完整现代课。
+
+本批当前新增完整现代课零：n103 display、n104 CHOICEintegration、
+n105 permission均明确BLOCKED。只提交SOURCE270/完整原书105、
+独立批准持久FIG232及相关审批/失败/进度报告，不把未完成现代课、
+modern索引、错书6p n104、未验证工具修复或后续作者产物暂存。
+源索引52批准页/20完整条目/82原题不变；不跨239242246257271272273。
+
+Erdos274275作者已冻，officialfinalize各一次0，实际各预算1/1，
+FIRST recorder失败原流缺失仅转录caveat保持。Aristotle唯一fresh
+SOURCE FIRST在途，尚未晋升。276277 Mainprepare各一次0，
+Descartes独占SOURCE作者在途，各起始0/1；仅275closed末块/foot264
+边界元数据共享，无正文/图/审批传递。后续不计本批完成。
+8p未开始；图片服务46/retry0，tokens/实收费未知，无DB/发布/合并/
+部署/关闭/正式handoff或全项目检查，没有其他chat消息。
+
+## 第二十五批最新审批与阻塞
+
+2026-11-16。n103 FINAL Gibbs五完整答案0/1，Main完整JSON/Markdown及
+全部method/conditions/precision/notes/coverage与先行私有解唯一比較
+PASS；27当前绑定/retain/officialfinalize各一次0。不重读、不再派审。
+n104 FINAL既有四答案PASS/12绑定复用，FINAL1/1耗尽不重置。
+
+Plato n104唯一freshblind FIRST CHOICE四题16项single3/multiple1 PASS，
+officialreview validator一次0；Main32当前绑定/四精确copy一次0。
+其后Main retain命令遗漏S10Y_BOOK=7p，helper默认6p；实际exit0但产物
+落错书，7p choice-set不存在。FIRST命令与错书输出保留且排除暂存。
+CHOICE总预算已1/1耗尽，不纠正路径、不移动、不删、不重跑；n104
+CHOICE integration BLOCKED，不计完整课，不进本批显示。TEXT/FINAL
+审批仍有效。Parfit n103唯一blindFIRST正在冻结，尚未retain或显示。
+
+n105 Hilbert唯一FIRST TEXT语义PASS，Main13绑定/三精确copy/retain
+各一次0；Hilbert越界只读git status如实披露，不冒称pristineprocess。
+officialadapt-finalize唯一exit1 PermissionError，复制模板只读属性导致
+canonical lesson.json不可写。TEXT1/1已耗尽，不能chmod或重跑。失败
+产物保留且排除暂存，不产生现代FINAL/CHOICE或完整n105。
+SOURCE不受影响：Epicurus九完整SOURCE答案预算1/1仅receipt元数据
+修正，FIRST错误保持；18实际命令全exit0。Main在checkpoint前完整
+JSON/Markdown及54全部章节/各字段唯一独审PASS；本接续仅写正式报告
+和20当前绑定一次0，不重读或重审，不把SOURCE当现代FINAL。
+
+Kepler唯一freshSOURCE272273 FIRST两页均REVISE：272粗体范围与
+嵌套斜体，273水变深被写水变浑。两页作者机械修复各1/1已耗尽，
+故永久BLOCKED，无批准subset/修复/晋升，Main17绑定一次0。
+FIRST失败流不完整caveat保留；不跨271272273装订。实际8/8图、
+8/24上下文、parent0、reopen0。Erdos274275独占作者继续在途；
+不提前装订、晋升或计完成。源索引仍52批准页/20完整条目/82原题。
+
+第二十五批尚无新增完整现代课；下一显示仅能选择真正全部批准且保留
+的n103。错书6p/phy7-n104、n105失败现代稿、private/tmp/env、
+6p108/duplicate及其余未完成稿不暂存。8p未开始，完整范围未完成。
+累计图片服务46/retry0，tokens/实收费未知；无DB/发布/合并/部署/
+关闭/正式handoff、全项目检查或其他chat消息。每小时巡检继续暂停。
+
+## 第二十五批核心收口进展
+
+2026-11-16。Mencius图232唯一freshFIRST PASS，原PNG与六native预览
+实际各一次共7图，parent0。Main137当前绑定/独审报告精确copy一次0；
+Main官方record一次0（reviewer调用0，官方记录自身必要校验包含在该次中），
+持久晋升一次0，source/geometry/SVG字节不变，仅source/spec/render/review
+路径重绑定。KantFIRST失败与sole修复1/1耗尽不变。n103 TEXT retain、
+officialadapt-finalize、answerprepare各一次0；Main五现代解先行冻结，
+Gibbs FINAL作者0/1与Jason CHOICE作者0/1在途，不计完整课。
+
+Herschel n104四完整FIRST答案已冻；Main完整JSON/Markdown及每个
+displayAnswer/method/conditions/precision/notes/coverage唯一独立比较
+PASS，Main12绑定/retain/officialfinalize各一次0，derived4/ungraded4/
+parts[]。FINAL1/1耗尽不重置，不另派第二审查者。
+Dirac CHOICE四题16项（single3/multiple1）已冻；实际作者预算1/1
+为inspect后调整预配置concept选择器的唯一startup修复，并非重置FINAL。
+Plato新上下文soleblindFIRST在途：先源解，后纯view逐项/包关系冻结，
+最后才读draft.FIRST.json作者键；尚未批准或retain。
+
+Aquinas n105六正文/九题/两栏目/零图候选已冻结，normalize/proseFlow/
+TEXTpreflight各一次0；唯一机械seal修复1/1耗尽，未改candidate、未重
+validator，未报告失败命令。Hilbert唯一freshTEXT FIRST在途。
+Main另先行冻结九SOURCE私有解，Epicurus SOURCE答案作者0/1在途；
+不是现代FINAL审批。下一批272273prepare各一次0，Pascal隔离SOURCE
+作者0/1在途；271永久阻塞和不跨它装订不变。
+
+上述新在途现代稿、272273、private/tmp/env/6p108/duplicate不暂存。
+第二十五批仍无新增完整现代课；源索引52批准页/20条目/82原题不变。
+累计确认图片服务46/retry0，本轮新请求0；tokens/实收费未知。
+无DB/发布/合并/部署/关闭/正式handoff或全项目检查，没有其他chat消息。
+
+## 第二十五批接续状态
+
+2026-11-16。n104唯一FIRST TEXT PASS已复用，Main12绑定/三模板精确copy、
+canonical retain/officialadapt-finalize各一次0。7源块、4原题、0图。
+FIRST answer-prepare因不存在的answer-skill解释器ENOENT，Python/CLI未启动；
+失败回执保留，仅一次改为现存lesson解释器成功。FINAL预算因此1/1耗尽，
+TEXT既有1/1不变，CHOICE仍0/1。Main四道现代题的独立私有解已先行冻结，
+未分享、未暂存；Herschel FINAL作者与Dirac CHOICE作者在途。
+
+Kant图232确定性作者冻结，FIRST失败和sole修复1/1保留；六最终native
+预览已生成，作者只观察其中一张，不能据此冒称全视觉PASS。Mencius新
+上下文唯一FIRST图审在途，须实际读原PNG加六张native，主不开图片。
+批准n103 TEXT三模板保留在scratch，现代图尚未批准，不计完整n103。
+九SOURCE答案唯一完整独审PASS及Main19绑定继续复用，不复读、不重复审批；
+SOURCE答案不等于现代FINAL。
+
+270唯一SOURCE PASS子集已Main17绑定/7精确copy晋升一次0；
+233属于已拒271而明确排除。批准连续269270 cohort已一次装订，
+仅完整n105保留：6正文块、9原题、0图。承前104残片和未闭合冰箱补充
+phy7-c1-s2-t12（openp0270#14）不保留，不误称n106。源索引现在
+52批准页、20完整条目、82原题，旧条目不变，没有跨239/242/246/257/271。
+n105 adapt-prepare一次0，Aquinas独占scratch TEXT作者在途，预算0/1。
+
+第二十五批尚无新增完整现代课；8p未开始，完整三册范围未完成。
+图片服务累计46/retry0，本批新请求0，tokens/实收费未知。
+无DB/发布/合并/部署/关闭/正式handoff或全项目检查；每小时巡检暂停，
+无其他chat消息，private/tmp/env/6p108/duplicate和未完成现代稿不暂存。
+
+## 第二十四批已提交推送，接续第二十五批
+
+实际commit/push各一次exit0：`b6766bce247ba83c74886b49ad819047ef80f48f`，
+推送完成2026-11-16T13:12:48.322Z，49文件/24JSON。仅n99是新增完整
+离线现代课，其他为批准SOURCE及准备层、最小工具修复。下方待提交措辞
+属于提交前历史，不重复成功暂存、审查、测试、render或commit/push。
+
+Fermat n104唯一独立FIRST TEXT PASS，作者1/1耗尽、FIRST失败不变；
+下一步当前绑定/精确copy/retain/officialadapt-finalize，然后私有现代解
+先行冻结，再交独立FINAL/CHOICE作者。Kant图232在独占scratch生产，
+n103仍不计完整。批准270与BLOCKED271下一批处理，不跨271缺口。
+原独立九SOURCE答案完整PASS复用，不重复读取/比较。8p未开始，全组三册
+范围未完成；没有DB/发布/合并/部署/关闭/正式handoff或全项目检查。
+
 ## 第二十四批已验，限定提交待执行
 
 限定暂存已实际一次PASS：49文件/24JSON，审批与精确字节、原必需EOL、
