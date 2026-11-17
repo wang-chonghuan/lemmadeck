@@ -1,5 +1,29 @@
 # 当前开发状态
 
+### batch292有限回执留存，294/295互斥接续
+
+- `e5b49f2e3a04bbe9dd2d14eaec1cf94d70b11b81`已真实push同182分支，
+  仅n34/n37/n40/n46的96题354项与八有限PASS窗口；82包1394题5659项648
+  不增加，原n23/n30手机FAIL和未见/APP/全课/HOLD仍保留。
+- 292 actual observer `01a1ebe2-b7dc-7f82-b22f-f739e992ef08`已真实
+  turn.completed/process exit0；final rawSHA
+  0401fdd5936ed8250cf9f05693304be7ebb1b42354a8f3c7f610be9178c09aea
+  匹配。八初始窗口有限PASS，所有原图和后续题未新审。四包
+  n47/n49/n51/n53的181题546项与原报告/HTML/PNG同字节留存，
+  bounded_visible_observation_pending:false，但broader/display_pending:true、
+  current_retained_approval:false，原数学/图审/署名不变。
+- 293两actual ephemeral进程均completed且exit0，四final review rawSHA
+  已匹配，75源84题276项只selection-impact PASS；每包两个函数各1次，
+  两位各有一前置wrapper失败，未调用门槛时的失败原日志保留。
+  最终identity-only回执不假称重检。294首次render四次/八DOM组合exit0；
+  actual `01a1ebe4-f342-7931-9f89-526c662d8599`，session94344，仅八PNG在途。
+- 295尾包仅复用同qualifier首次准备，排1172/1173/1194/1198，
+  49源52题157项、图0，request SHA
+  8d45c25d20f5757b7152a381c31cd8e133e0949d37ee6c112079d4fb221ba737。
+  fresh actual `01a1ebe4-f3d2-70e1-9969-3720aac70e45`，session68875，
+  仅selection-impact零图review在途；不新题/新解/SOURCE/旧check。
+  父0新图/累计24，旧FAIL和全课/881未批准。
+
 ### batch290 有限显示留存，292首次显示接续
 
 - 290 ephemeral观察者实际thread `01a1ebdb-bc40-7960-abe0-4d99ffe8a358`
