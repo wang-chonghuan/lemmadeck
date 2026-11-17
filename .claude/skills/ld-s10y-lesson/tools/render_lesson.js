@@ -163,6 +163,7 @@ h1{font-size:1.6em;margin:0 0 .2em;letter-spacing:.02em}
 .crumb{color:var(--sub);font-size:.82em;margin:0 0 2em;
   font-family:ui-monospace,Menlo,monospace}
 p.para{margin:0 0 1em;text-indent:0;line-height:1.95;font-size:1.06em}
+p.para strong{font-family:"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif;font-weight:700}
 p.para .katex,.prose-math{font-size:1.1em}
 .prose-math{font-family:KaTeX_Main,serif}
 p.para.section{border-top:1px solid var(--rule);margin-top:1.5em;padding-top:1.35em}
