@@ -1,5 +1,223 @@
 # 当前开发状态
 
+### batch279 接续四份现成5m选定包，仅增量入口冻结
+
+- 实际读取当前live182与278检查点，同d9b1/182分支继续开发；
+  n12/n14/n16/n17四个4m作者队列尚有必需图HOLD，未绕过
+  finalize、未把无绑定作者稿当批准。旧SOURCE/图FAIL原样。
+- 5m n4/n7/n8/n9只排除各原真实blocked整源：54/56/57、
+  99、112、136/137/146。当前分别15源22题90项、
+  10源11题46项、20源24题96项、20源25题104项；
+  65保留源82题336项及所有其余字段完整等值，可逆恢复原
+  seed/draft，原独审对象/身份/hash留存，不重数学或看图。
+- 四个当前seed/draft/selection/request已实际写入冻结；
+  已交监督按真实空槽以fresh零图两位各两课接续，不把交接
+  当派工完成或PASS。各包只一次current direct，不重首结构、
+  SOURCE/trace/render；所有排除源和继承生产损失仍HOLD。
+- 上轮七份3m有限图与两5m首窗口证据可窄提交留存；
+  p14任务语境、p10/p21及其余局部HOLD原样，两5m总体
+  approval:false/display_pending:true保持。父0新图/累计24，
+  当前82包1394题5659项648组合不增，其他用户改动不纳入。
+
+### batch278 p16修后有限PASS与必要路径绑定完成
+
+- 一次compact wait确认James276真实completed/idle，随后正式
+  监督回执确认completed/closed；
+  p16 FRAME REPAIR ONLY PASS rawSHA
+  2f732c35de609264305cf00bea5e8bdea3d646bca04e66bc6ecabdccc0609fcf，
+  record一次exit0，唯一640预览只一次。粗外细内完整，原22
+  给定/8空/内线非缺陷事实继承，原Linnaeus FIRST FAIL保持。
+- 仅留存当前同语义spec/SVG/actual640/context与原身份证据，
+  278单gate零图PATH绑定已由监督独立completed，record一次
+  exit0，spec raw/完整JSON全同、render仅两path变化，
+  source/SVG/actual640/context同字节。持久gate rawSHA
+  63cfcc0bc1c8a71f5c9ec63a653a67303eb7acc11001b4d4ad22a4d8e397239c，
+  未追加源/math/视觉/render，不当最终课显示或整课批准。
+- 5m两包整体display_pending:true/approval:false保持，所有
+  原FAIL/源码语境/书写构造/APP/全课/881不变。父0新图/累计24，
+  82包1394题5659项648组合不增，没有新commit/push。
+  本轮所有有限助手均已关闭，无pending helper，不复活或重派。
+
+### batch277 两5m包首窗口证据留存，整体display HOLD保持
+
+- Curie274实际completed并由监督关闭，六PNG各一次，唯一
+  rawSHA603beac6ff6c1365a23ef36f7dc89aa2d87375e683e7fbfca1a1a576b61f23bb
+  仅visible_static_only PASS；broader_display HOLD及原
+  display_pending:true原字节保留。右端手机左轮廓/未见题项/
+  fig04/07/08全貌、真实手势与APP不由桌面/DOM代替观察。
+- 两包seed/draft/review及既有图原样；仅首窗口HTML/PNG和原
+  DOM/观察者报告持久留存，不再开图/运行浏览器/math检查。
+  retention仍current_retained_approval:false/display_pending:true，
+  仅bounded_visible_observation_pending:false；未增加批准数量。
+- James276真实ID01a1eb71-cfc8-7211-a50e-3fcbaad6a08f只接p16
+  唯一修后预览，不扩Curie。p21库存拒绝的唯一attempt与所有旧
+  FAIL/SOURCE/书写构造/APP/全课/881保留。
+  父0新图/累计24，82包1394题5659项648组合不变；没有新commit/push。
+
+### batch273–276 有限图证据与5m首次choices显示
+
+- p14唯一273持久PATH绑定completed，原/新spec raw及JSON全同，
+  render仅两path变化，source/SVG/actual640/context同字节；
+  Parfit图形PASS直接继承，22.任务上下文HOLD不解除。
+- Epicurus272真实completed/closed，一张当前640预览一次；
+  内网格遮挡/三边/外格/ABC限域PASS，record一次exit0。
+  p15只一次遮挡修复完成，不再render；原Parfit FAIL留存。
+- Linnaeus270实际completed/closed，四gate各一次exit0，
+  ordered FAIL/FAIL/PASS/PASS。p25/p29与p15只准备275三项
+  纯路径绑定，不重图/规范/math；275已正式completed，
+  三标准gate各一次exit0，p15 raw同字节、p25/p29仅序列化；
+  源/SVG/actual640/context同字节，不新增数学或显示批准。
+- p16仅追加两同边界粗外框和两库存映射，一次render exit0、
+  一次actual640预览已冻结，只此一图补框线层次；原FAIL保留。
+  p21仅六visible:false，一次attempt exit1在库存校验前失败：
+  validator要求六锚点可见，没有SVG/report/preview。
+  原FIRST FAIL与该失败字节保留，局部HOLD，不改工具或再修。
+- 5m n1/n2的269真实PASS seed/draft/review原字节持久留存；
+  n1增加原containment.spec同字节ID读取别名，显示合同/几何/
+  原spec/render/SVG不改。两choices首次render各exit0、首次
+  1440/390四DOM组合exit0；六冻结首窗口截图由fresh Curie
+  01a1eb6d-1051-7953-a68c-167124a50c36限域观察，未预批显示。
+  36题148项数学不重审；source5/27及未见/手势/APP/全课/881
+  保持HOLD。父0新图/累计24，82包1394题5659项648组合未增加。
+
+### batch272 接续正式回执与p15一次遮挡修复
+
+- 271两持久PATH绑定已completed，标准gate各一次exit0；
+  p12 raw同字节、p13-02仅JSON序列化差异，source/SVG/actual640/
+  context同字节，原Averroes身份/限域继承，无重复门槛。
+- Parfit267 part2已completed/closed，p14有限图形PASS但冻结
+  context只有22.的任务HOLD保持；p15真实遮挡FAIL原字节保留。
+  p15仅追加同ABC三角形不透明前景与BC粗边补绘及两库存映射，
+  9原对象/10断言/ABCA3pxBC5px/外10x7格全部不变；
+  一次render exit0与一次actual640派生已完成，唯一新图增量
+  入口已冻结交监督，未把render成功当图PASS，不再循环修复。
+- Tesla269真实completed/closed，两selection-only PASS各direct
+  check_draft=1/check_review=1 exit0；36题148项数学与图审证据
+  精确继承，排source5/27不解除其SOURCE HOLD。缺失首次显示
+  待补，当前批准数量仍不增加。
+- 270四原四现8图由fresh Linnaeus实际ID
+  01a1eb62-e329-7d12-af0a-f246fc4b84eb处理，在途不批准/不重派。
+  父0新图/累计24，82包1394题5659项648组合不变，无新push；
+  p10不再坐标/renderer循环，其他FAIL/全课/APP/881保持。
+
+### batch271 3m首批真实图审收口与两PASS路径留存
+
+- Averroes267 part1真实completed/closed，三标准gate各一次exit0，
+  实际状态FAIL/PASS/PASS。p10 Tens贴近原无标签中框，丢失原
+  左算盘三标签同列归属；一次修后图审仍失败，局部HOLD保留，
+  不再改坐标或循环renderer，300珠/30杆不抵消视觉FAIL。
+- p12两层跨列位值头、p13-02六列七条无横线数字基线及给定零/
+  前导空FIRST限域PASS，原review/preview/SVG/context同字节留存。
+  仅两持久source图准备271零图PATH绑定，当前标准gate仍pending，
+  没有数学/最终显示/全题/整课批准，也未执行任何旧留存配置。
+- part2已在前批真实关闭后由fresh Parfit接两原两现4图，270另
+  fresh8图继续排队；Tesla269只零图两选定包，不扩或重复派。
+  所有原FAIL/p13-01/p14语境/p17/p28/APP/881保留，父0新图/24。
+
+### batch268–270 后四图首次cap2与现成5m选定包
+
+- Raman263正式completed/closed回执已消费，六draft原SHA核对；
+  ordered exits为0/2/0/0/2/0，不重cap1。仅p16/p21/p25/p29
+  四确定性草稿首次render，各一次exit0；p17玩具素材、p28信封
+  artwork/笔画/邮编映射真实HOLD保留，无生成或替代。
+- 四份现有SVG各派生一次实际640媒体预览，native PNG不覆盖；
+  270入口仅四原四现共8图，回执前未批准图、全题或最终显示。
+  267 part1已由fresh Averroes接六图，part2仍等前批完成关闭后
+  另fresh四图，未合并或扩审，不消费部分落盘。
+- 5m n1/n2旧独审分别只有source5/27 coverage blocked，其余
+  source/question/figure证据已有PASS。269仅冻结selection-only：
+  n1整源排5及两题后18源18题73项，n2排27后18源18题75项；
+  可逆恢复原seed/draft，其余view/intent/key/coverage及实图全不变。
+  独审已由fresh零图Tesla接原两写域，正式结果仍pending；
+  未预批、不重36题148项数学或任何旧图。
+- 留存scratch helper仅将source图目录/模板路由由写死4m改按book；
+  syntax check exit0，旧留存配置未执行。3m留存等真实图PASS。
+  父本次0图/累计24；82选定包1394题5659项648组合不增加，
+  无新commit/push，所有原FAIL/SOURCE/书写构造/APP/全课/881保留。
+
+### batch265–267 3m五图首次cap2与六标签局部修复
+
+- 五份draft exit0首次cap2各一次，p10/p12/p13-02/p14/p15退出为
+  2/2/0/2/0。失败仅Tens/Ones、两个thousands、两个Addend碰撞；
+  原spec与first SVG/PNG/report完整保留，不读p13-01或猜bend-k。
+- 一次局部修复只六字段：p10两个x锚点、p12两个y锚点、p14两
+  Addend常规字重400。实际SVG字框89.328px加8px留白超过96px格宽，
+  保留字号24/媒体16px，只改字重，不压字/削留白/改格线或renderer。
+  数字/文字、300珠、几何/源库存/全部断言和字号原样；三图修后
+  render各一次exit0，p13-02/p15原pass输出直接复用。
+- 从五现有SVG只派生实际640预览，native PNG不覆盖，首独审入口
+  按三图/两图拆为6/4图片，各fresh有界上下文，仅五标准gate。
+  回执前不提升图/完整题/最终显示/整课/APP/881，p14的22.语境
+  SOURCE HOLD与p13-01坐标HOLD保留。父方本次0图/累计24。
+- Raman263已在Arendt真正完成关闭后fresh接后六cap1，只其原域；
+  尚在途不消费部分稿，不重复派工；本阶段题量信用0，无新窄包push。
+
+### batch265入口 3m首批cap1正式完成
+
+- Arendt259已真实completed并由监督关闭，六spec原字节SHA已核对；
+  ordered draft exits为0/0/2/0/0/0，不重复draft gate或源图。
+  p13-01的bend-k纵向格内位置不可判读，保留空值与SOURCE HOLD，
+  不猜半格、不render。p14冻结context只有22.，其lesson-context
+  HOLD不因draft exit0解除，也不新增源解释或整题数学批准。
+- 按原计划仅五份exit0草稿进入首次cap2；三算盘300珠、数位表、
+  无横线数字行、两个加减表及网格三角形以实际spec库存为准。
+  263后六图按已授权fresh队列接续，不复活或扩Arendt。
+  父方本次开图0/累计24，所有图/显示/整课/APP/881批准边界不变。
+
+### batch264 n12三项持久路径绑定完成
+
+- 监督261三个现有record_review各一次exit0已正式收到；
+  完整spec语义相同、raw仅序列化，render仅三依赖字段改变，
+  source/SVG/640preview/context同字节。真实Mendel署名与首审
+  限域完整继承，不另验数学/源/图，不把路径绑定当最终显示。
+- n12三图可按原范围复用，59/60二轮collision FAIL及全题/整课/
+  APP/881继续HOLD。3m前六cap1仍等真实完成，后六只排队，
+  父方开图0/累计24、题量与组合计数不变，尚无新的窄包提交。
+
+### batch261–263 n12三图真实首审与3m有界接续
+
+- Mendel257已真实completed/closed，三原三现共六图各一次；
+  57七格阴影、58十刻度五标签/黑板人物关系、表格两组3列各3记录
+  及cm/原序/现代stacked布局真实首图PASS。三个标准gate各一次
+  exit0，非全题数学或最终显示批准，59/60二轮FAIL保持。
+- 仅留存三已过图及同字节640预览/context，261零图路径绑定入口
+  已交监督，等真实标准gate回执；父不复看或重SOURCE/规范/render。
+- Arendt259只前六原图cap1在途；263只投影同模板后六context，
+  六draft仍空，按前批真实完成/关闭空槽后fresh接续，未重复派工。
+  本阶段新增题量0、父开图0/累计24，所有全课/APP/881边界不提升。
+
+### batch259–260 持久绑定回执与下一批3m cap1
+
+- 监督256两个标准gate已真实写入，record_review各一次exit0；
+  完整旧新spec语义相同但序列化raw hash不同，render仅spec引用/hash
+  与SVG路径变化，源/SVG/preview/context同字节。继承Popper原图PASS，
+  不重数学/图/门槛，最终显示及全题/全课/APP/881仍未批准。
+- 259从现有3m模板12图顺序只准备前六context；六源各一次的fresh
+  cap1请求已交监督，只六draft及各一次draft检查，无render/批准。
+  原现代文字219受影响检查复用，未读后六图或开启父方图片。
+- Mendel257仅n12三原三现六图首次独审在途，正式回执前不提升；
+  59/60二轮标签FAIL不再试改，72/73/74/75/76各原限制不变。
+  同一分支继续实际缺失阶段，新增题量0、累计计数不变。
+
+### batch254–258 n12首次cap2与已完成回执接续
+
+- `ad69f33d2`已真实窄commit/push，44文件仅n13选定包及必要fig61；
+  82组选定包1394题5659项648组合不重计，本阶段新增题量0。
+- Kepler246五源cap1真实completed/closed，各draft一次exit0；
+  仅草稿，未批准图或课。n12首次cap2五图各一次，57/58/表格pass，
+  59六标签、60四标签collision fail。一次仅这十处gap=30修复后
+  仍fail，59剩B/C/S/Y、60仍A/B/C/D；原稿及两轮输出保留，
+  不继续循环、不改renderer，源坐标/关系/网格/断言均未改。
+- 57/58/表格从现有SVG派生真正640px媒体预览，原native PNG
+  不覆盖、不算新的几何render；257首审入口仅三原三现共六图，
+  等fresh有限回执，不将renderer pass当图审或数学批准。
+- Popper251两原两现FIRST图审已真实completed/closed，72/73 PASS
+  标准gate各一次exit0。只准备256两个持久零图PATH绑定；
+  74/75二轮collision FAIL、76源墨迹HOLD不变，不复看旧图。
+- 256绑定与257首图审正式回执前approval/display_pending不提升；
+  独立测量构造、未见/交互/APP/整课/881及其他原HOLD均保持。
+  父方本次开图0、累计24，不重复旧math/SOURCE/trace/规范/图审。
+
 ### batch253 n13有限显示窄收口
 
 - Halley两PNG首次可见观察真实completed/PASS，原HTML/PNG/回执
