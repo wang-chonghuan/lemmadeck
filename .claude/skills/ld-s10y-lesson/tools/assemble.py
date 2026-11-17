@@ -28,7 +28,7 @@ import normalize as nz
 
 FIGREF = re.compile(r"图\s*\$?\s*(\d+)(?!\d)")
 SEC_NUM = re.compile(
-    r"^\s*(?:§\s*)?(?=\$?(\d+))(?:\d+(?:\*|\$\^\{\*\}\$)?|\$\d+\^\{\+\}\$)"
+    r"^\s*(?:§\s*)?(?=\$?(\d+))(?:\d+(?:\*|\$\^\{\*\}\$)?|\$\d+(?:\^\{[+*]\})?\$)"
     r"\s*(?:\$\\blacktriangledown\$\s*)?(?:[.．、]\s*|\s+)(\S.*)$"
 )
 BLOCKREF = re.compile(r"^p(\d+)#(\d+)$")

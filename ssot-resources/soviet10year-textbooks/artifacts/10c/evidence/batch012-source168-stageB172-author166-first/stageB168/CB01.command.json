@@ -1,0 +1,12 @@
+{
+  "tool": "functions.exec_command",
+  "cmd": "node -e 'const fs=require(\"node:fs\"),crypto=require(\"node:crypto\"),path=require(\"node:path\");const root=path.resolve(\".intentfold/tickets/STEMROBIN-184/tmp/production-source10c168-171-review\");const sha=b=>crypto.createHash(\"sha256\").update(b).digest(\"hex\");const bpath=path.join(root,\"input-outputbindings.json\"),b=fs.readFileSync(bpath),binding=JSON.parse(b);const expectedBinding=\"ea37384e87d6f8aedd841e78a5c4e0323d6ef8f390a2875685d3ff6ed6588a88\";if(sha(b)!==expectedBinding)throw Error(\"Frozen StageA binding differs\");for(const o of binding.outputs){if(sha(fs.readFileSync(o.path))!==o.sha256)throw Error(\"Frozen StageA output differs: \"+o.path)}const pairs=[[\"0168\",\"4ad9cef52d6ce9bc90eb60349b15fd2af9a76c97ed966d1795274216a23d7e36\"],[\"0169\",\"ca67e8335de4eed69cd1c35ca5cbeaf37fc0eeab1b88e3ef3969e28042d1f1c7\"],[\"0170\",\"d7b658ff0c222adcfe4f1853baac4dabde36a6d136dc455e36b60becf640e19c\"],[\"0171\",\"cc5c595c812f745511f9c239fa22155bf5957a6a7a4cdd190e3600e13d178686\"]];const authors=pairs.map(([page,expected])=>{const p=path.resolve(\"ssot-resources/soviet10year-textbooks/artifacts/10c/pages/\"+page+\"/page.md\"),bytes=fs.readFileSync(p),actual=sha(bytes);if(actual!==expected)throw Error(\"Author hash differs: \"+page);return {page,path:p,bytes:bytes.length,expectedSha256:expected,actualSha256:actual,match:true}});console.log(JSON.stringify({stageBRootExists:fs.existsSync(path.join(root,\"stageB\")),stageABindingPath:bpath,stageABindingSha256:sha(b),stageAFrozenOutputsUnchanged:true,authorVerificationOnly:true,authors},null,2));'",
+  "cwd": "/Users/yong/.codex/worktrees/a07e/lemmadeck",
+  "observedToolChunkId": "cb4e98",
+  "reportedExitCode": 0,
+  "observedOutputProjection": "CB01.stdout.tool-projection.txt",
+  "projectionLabel": "Reconstructed exact returned tool text; TOOL-OUTPUT PROJECTION, NOT CONTEMPORANEOUS TEE",
+  "separateOriginalStderr": null,
+  "stderrQualification": "Not separately captured by the original tool. No empty stderr stream is invented.",
+  "childProcesses": 0
+}

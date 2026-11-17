@@ -3771,3 +3771,1753 @@ exit0，所有非trace题面/键/理由/语义记录严格不变，非新数学�
 准备精确stage名单：两课、120–124已通过源页、对应工具与已消费证据、
 两索引和book-trace依赖；不stage未完成107或新144–155源对象，不触T。
 本提交只为授权批次交付；非正式handoff/merge/deploy/DB或全书通过。
+
+batch011实际commit/push成功2d002f414f514803279ff7a62c5749904bb896a8；
+两课/4答案/4选择/18选项，累计29/251/227/976，四册尚未完整。
+精确stage2003files26730753bytes，secret scan prohibited0/matches0；
+全cached-whitespace仅19条冻结patch/stdout/ledger空白警告exit2，
+不改历史原字节、不冒称全量PASS。index已空。原107对象及HOLD、
+新144–155源对象未提交；交付集成171files3641502bytes已原字节留存。
+接着156–159首次prepare全exit0，raw25/24/27/22仅元数据；
+fresh Herschel作者01a1e823-535a-7d63-ab42-176c26cb0d2a与Linnaeus
+独立StageA01a1e823-53dd-7b31-93db-894ee0b93236正在四NEW页，
+未读取作者给独立reviewer，未重新开源或重跑prepare。
+
+152–155独立StageA19338byte/05e3d215、ledger4526byte/3b7727c2、
+manifest5851byte/d51dc43e全消费，10内容/产物绑定一次匹配。152
+24正文+3脚注，15323正文，15422正文+2脚注，15524正文+同排caption；
+四图一次，4/24。图71origin0/O、箭头与右端接触UNKNOWN，110
+右界仍未观察；不按rawbands构造目标行数或排除。
+
+144–147唯一StageB a5d3a5c8/ledger961d26d8/6输出freeze全消费；
+每一行/34题/全部图角色覆盖，四NEWnativecrop耗尽本批8/8永久8/24。
+仅确认144分号误作逗号和“几个性质”“连续的”强调遗漏；
+531tiny标记、69tinyticks、147M省略号高度/其它强调范围UNKNOWN。
+148–151唯一StageB17955byte/81b6c2b7、ledger1585byte/34354e3f及
+21绑定项全消费一次相符；60题15星全部MATCH，2NEWnativecrop确认
+580上标4、623geqslant，永久6/24，同批6/8；110仍OPEN。
+147最后句已闭合、148首句独立，由父联合两套相邻source-first证据
+仅将148首pcont改为p，不改词句；109归属由真实146/151标题界定，
+不是reviewer亲见前页。先留存原8MD/作者/StageA/B再做已支持改动，
+不增加第二全量审批；所有旧HOLD/UNKNOWN冻结保持。
+
+同一cap3继续，batch011远端SHA已实际确认2d002f414f514803279ff7a62c5749904bb896a8。
+144–151首次finalize两次helper均已完成，七FAIL分别26/25、23/22、
+24/22、22/21、25/24、20/19、21/20；149唯一PASS20/20不重跑。
+全部command/audit及pageJSON语义字段已消费（大输出截断后147/148
+完整另读），零normalizations，69/70首次吸附框分别959,1037,418,593
+和812,998,580,632。新Einstein仅零图计算诊断七FAIL，不能修改源/
+排除/工具/目标、重跑149或旧HOLD。两个144–151reviewer已关闭，
+永久8/24及6/24不重置。
+
+Pauli152–155四MD/完整inventory/handoff及实际preload/crop/freeze/seal
+streams全消费，50绑定一次匹配，seal2d460239，作者6/24。
+entry streams由读取文本重建而非直接tee，冻结声明原样保留并资格
+区分。仅在独立StageA全消费后，精确四MD哈希披露Popper唯一StageB，
+最多4NEW必要native crops，从4/8与永久4/24继续；71原点/箭头/
+右端接触UNKNOWN不被作者自述替代，152/154分隔横线未批准排除。
+156–159独立复核原BLOCKED为文件名误配而非缺源，实际page.png与
+prepare-####.json已传输原代理继续；原零图BLOCKED冻结不回写。
+首次收口/152作者留存及160–163首次prepare helper已备，未预写成功。
+
+首次收口及152作者唯一留存实际exit0，99files670262bytes零排除，
+10c/evidence/batch012-source144-151-first-and152-155-author；Pauli消费/
+留存后关闭，永久6/24不重置。160–163首次prepare全部exit0，
+raw23/24/24/21仅元数据；fresh Kant作者01a1e82c-60b7-71f0-911c-5c9f53d0c882
+与Boyle独立StageA01a1e82c-6145-7c40-96f6-8b4e90590142各4NEW页，
+本批8/永久24、fork_contextfalse。159尾仅父传输provisional作者TEXT，
+不算独立source或humanpixel批准；未披露160作者给StageA。
+
+156–159作者完整4MD/4inventory/reportc539f7c6/ledger51480694/
+commandreceipts/sourcehash/manifest9b77e9f3/terminala0790f8b全消费；
+12产物及12源输入一次匹配。4original0crop，永久4/24。
+110右界在157题634之后真实出现，111左界在157且159末OPEN；
+source158底部2486–2489与图72/73精确无标值UNKNOWN，不按rawtarget
+排除。作者命令原始outputs只有结构化回执，不冒称逐字stream。
+父仅备作者原字节留存helper，未预写成功；独立StageA继续。
+
+156作者唯一原字节留存实际exit0，23files438725bytes零排除，
+10c/evidence/batch012-source156-159-author-before-review-edits；作者
+消费留存后关闭，永久4/24不重置。164–167首次prepare全exit0，
+raw21/25/20/24仅元数据；fresh Aristotle作者01a1e82f-e17c-7112-8b2e-898b45932147
+仅4NEW页，fork_contextfalse、8本批/24永久，164左归属provisional113，
+未读163像素或作者稿。独立reviewer待槽位，尚无StageB披露。
+156–159StageA当前前三页草稿仅部分消费，状态IN_PROGRESS未冻结，
+不能声称全消费或批准；630作者1500与独立草稿1550差异待唯一StageB
+NEWnativecrop判定，不先改正文、用题意猜数或重开原页。
+
+同一cap3检查点接续：Einstein原部分诊断完整report6a9ab4b3/freeze
+d81a0ada/实际004exit3及70绑定已消费；其把零模型图误解为禁止
+PNG数值解码，原记录不改。明确续做NEWarray-trace仅七FAIL的PIL/
+numpy计数副本、冻结精确框、原ink content_w及一次诊断line_bands；
+不是验收/finalize，不算模型开图，不重算149或旧HOLD，返回待消费。
+156–159冻结完整StageA27984byte/a294fe5d/ledger9bca4c2b/inputd6d1bb5e/
+output50a4c30d全消费，15源/产物/原BLOCKED绑定一次匹配；独立主行
+24/23/18/21与四页脚分列，原图4/24。精确四作者MD哈希披露唯一
+StageB最多4NEWnativecrop，6301500/1550须像素判定，159两正文行加↵
+是否重复计行须源行对应判定，不先改。correctedPathsAuthorizedByUser
+仅父代理传输而非新human证据，冻结字段不改；111右界159OPEN/
+72–73UNKNOWN保留。原部分诊断与新StageA唯一留存helper已备，未预写成功。
+
+原部分诊断/156–159StageA唯一留存实际exit0，81files547167bytes，
+10c/evidence/batch012-counter-partial-and156-159-stageA，零排除/门禁/
+模型开图。160–163全部作者4MD/inventoryd07eaad3/ledger a4801d47/
+commands3c0c6320/seal55c439d9及独立完整StageA133f9720/四inventory/
+COMMANDSa9063049/LEDGER41ad2d17/FREEZEc6911d54全消费，44绑定一次
+匹配；初始指令streams按完整命令/哈希投影消费，是重建非直接捕获。
+作者6/24、独立4/24；精确四MD哈希披露唯一StageB最多4NEWnative，
+161数变量/改变量差异须像素判定，不先改；112在161/163真实界定，
+113尾上有OPEN。152唯一StageB完整b244d60f/ledger350491aa/全部103
+对照行/10实际命令streams/外部seal1a9553f2已消费；确认152常数后
+逗号、四footer圆点遗漏及152/154separator精确146,2015,482,10/
+161,2103,482,8。71原点UNKNOWN不改，箭头/有限右端无接触由新crop
+局部确认；whole110由父另合156/157证据，不改旧报告。新一次性
+152StageB/160作者StageA原字节留存helper已备，未预写执行成功。
+
+152StageB/160作者StageA唯一留存实际exit0：75files845661bytes，
+10c/evidence/batch012-source152-stageB-and160-163-before-edits，零排除/
+门禁/模型开图；152StageB25新文件+seal绑定一次匹配。Kant消费留存后
+关闭永久6/24。fresh Russell01a1e838-e43d-7b70-a5ab-b13c3c2ac81c只
+164–167独立StageA，4NEW原图/8本批24永久、不披露作者。
+152–155只已支持修改：152常数后逗号、四footer圆点、152/154两条
+精确separator计数副本排除、追加2/1/2/2说明，旧notes/数学/行/框
+不改。Popper仅新affectedTEXT差异核对，零新图，永久8/24不重置；
+尚未firstfinalize。下一168–171首次preparehelper已备，未预写成功。
+
+同一cap3接续：168–171首次prepare原回执全消费，实际exit0，
+raw23/22/22/23仅元数据。164作者完整产物原已消费，本轮42冻结
+绑定一次MATCH，唯一原字节留存exit0：36files418887bytes，
+10c/evidence/batch012-source164-167-author-before-review-edits。
+Aristotle留存后关闭永久7/24不重置；fresh Anscombe
+01a1e841-3c31-7ac0-ae34-badb50ccc0b8只168–171作者，4NEW原图/
+最多4必要NEWnative，本批8/永久24，fork_contextfalse。Russell的
+路由114标题原误传后已更正“自然对数作为具有可变积分上限的积分”，
+印刷162/物理168；只属parent TEXT路由，实际像素决定，不改冻结
+记录或猜前后页。164独立StageA尚未返回，不披露作者。
+
+152affected终封存final10f9a03c/manifest088f2c2b/seal3f73b7cb及
+首次freeze失败/修后脚本/实际命令stream全消费，16绑定一次相符，
+原pending字段与首次exit1不改。首次finalizer唯一helper实际完成：
+152PASS28/28、153PASS24/24、154PASS25/25；155行数25/25但白名单
+拒绝正文p7右向实心三角U+25B6。四页0normalizations，原PNG/layout
+不变；71首次框1014,808,447,473。全部命令/audit/pageJSON语义全
+消费，三PASS不重跑；155首次失败保留，不扩白名单。
+
+156唯一StageB23775bytef42ad446/ledger48217ac9/inpute5e4812c/
+commandsad0e9fc6/全部行对照/三脚本/实际B07–B23参数及terminal
+a6ab50ef全消费，48绑定一次MATCH；重复作者streams按已消费作者
+绑定和完整命令/哈希投影，不冒称新源观察。630NEWnative确认1550
+非作者1500；159证明两MD行加↵重复表示同一断点，数学相符，未
+计算下游count；尾句NEWnative确认“对数。特别是”句号作者正确，
+StageA原逗号只附加纠正。永久6/24，72/73O/0/contactUNKNOWN保留。
+160唯一StageB24517byte8ef3c1b5/ledger44d2c88c/命令stream/
+三脚本/120523byte HASHMANIFEST完整无截断结构化投影（16重复
+绑定集严格相等）/seal8eadeb53全消费，41绑定一次MATCH。161
+NEWnative确认“改变量”非“数变量”；652/653斜横笔TeX相符，
+74originUNKNOWN/113上有OPEN保留，永久6/24。冻结Human措辞只
+属parent-agenttransport under priorhuman，不是新humanpixel授权。
+
+三组新证据唯一原字节留存exit0：108files542125bytes，
+10c/evidence/batch012-source152-first156160-stageB-before-edits。
+其后只155右三角TeX同符号+1note；156恢复1550/左三角TeX+2notes；
+158仅1UNKNOWN资格note；159仅移除↵后重复MDnewline+1note；
+161仅数->改+1note。原清单/旧notes/其它数学/行/框不改，不改
+历史失败；157/160/162/163原字节不变。三原reviewer仅NEW零图
+affectedTEXT差异核对，永久8/24、6/24、6/24不重置；155未retry，
+156–163未firstfinalize。Einstein新numeric全诊断封存待消费，
+原149和旧HOLD不重算。无stage/commit/push或新完整课声明。
+
+同一cap3接续：164StageA唯一留存38d8a6实际exit0，11files77780bytes；
+counter144–151全numeric诊断163files407937573bytes唯一留存9c7b4c；
+Boyleaffected13files55500bytes唯一留存aa7687，消费后关闭永久6/24。
+三者原字节、失败和UNKNOWN保持，不重跑留存或门禁。164StageB、
+七处底部nativeTYPE以及168独立StageA仍待完整冻结消费。
+
+155 corrected affected完整20绑定、156affected完整25绑定已一次MATCH
+522e23；155原错误BEFORE哈希属parenttransport，不是源稿改错，
+原exit1和诊断exit2保留，正确3330byteBEFORE为a830ad93。两套affected
+和160–163首次操作唯一留存106506exit0，68files186996bytes，
+10c/evidence/batch012-source155156-affected-and160-first；随后关闭
+Popper永久8/24与Linnaeus永久6/24，不重置。160首次23/22FAIL、
+16118/18PASS、16224/23FAIL、16321/21PASS全部实际记录已消费，
+74首次吸附551,1136,616,432；两PASS不重跑。
+
+155唯一同符号TeX受影响retry9c2492实际exit0，25/25；156–159首次
+helper271787已全完成：15625/25PASS、15724/24PASS、15820/19FAIL、
+15922/22PASS。全部command/audit/pageJSON语义字段完整消费0cb488；
+零规范化/字符/公式失败，PNG和冻结layout不变。155helper误用type
+筛图而比较空数组；原脚本不改，9899e2正确kind投影一次MATCH
+实际一图，auditfigures原不变断言有效，没有重跑操作。158两首次框
+261,1685,433,504及819,1701,508,496保持，底部UNKNOWN不遮蔽。
+freshParfit01a1e850-e2c4-71a2-946a-c13c38dd718d仅三NEWFAIL158/160/162
+零模型图数值因果诊断，各一次诊断line_bands非验收/重试/收口，
+源图数值解码可用；独立目标19/22/23冻结，不改源/排除/工具/测试。
+
+168–171作者full4MD270de6a0/handoff7b3fc016/四清单/ledger0be666b1/
+脚本及实际001–007streams已消费；大输出截断处005–007完整另读
+12ed72。manifest7a9a6bd2的63绑定一次MATCH7c2f9d，28471byte
+document完整字段/行归属投影而非重复逐字流。作者4original+3NEWnative
+永久7/24无重开；115实际171标题及末确OPEN。独立LaplaceStageA
+尚未冻结全消费，未披露作者、未firstfinalize或计新完整课。
+
+同一cap3接续：168作者/155retry/156first唯一留存24e381实际exit0，
+102files568502bytes，10c/evidence/batch012-source168-author155-retry156-first；
+Anscombe消费留存后关闭永久7/24。155helper旧type空数组比较披露和
+9899e2正确kind一图MATCH保持，原脚本和失败未改，不重跑。
+
+144–151nativeTYPE完整14837byte报告/脚本/10实际命令向量与rawstream
+结构化投影全消费202823/27a3a1/86854e，截断ledger/finalbindings完整
+另读081a7d，76绑定一次MATCH2dfd0c。七NEWnativecrop均UNKNOWN，
+145optional未用，broken3/7bar只因果诊断不修。168–171独立StageA
+完整报告/四inventory/ledger/freeze/实际命令及重建指令投影消费
+3eb7e4/6ca8d1/16039d，18绑定一次MATCH16039d。两根唯一原字节
+留存c2357b实际exit0，79files305106bytes，10c/evidence/
+batch012-native144-151-and168-171-stageA，零排除/开图/门禁重跑。
+Einstein随后关闭永久7/24；Laplace永久4/24保留，只在全消费留存后
+精确四作者MD哈希披露唯一StageB，最多4必要NEWnativecrop，
+原页不重开。171两exp_a下标和115末可以确OPEN保留，不代数修式。
+parent-agenttransport不是新humanpixel批准，冻结旧字段不改。
+
+172–175首次prepare唯一524cf9实际exit0，四回执全消费79c62d，
+raw25/24/24/21仅元数据不是目标。freshAverroes作者
+01a1e854-244a-74c1-9827-47cd47089640和Dewey独立StageA
+01a1e854-248f-7c53-9bcf-89f3d543e96d各只4NEW页，
+fork_contextfalse、本批8/永久24不重置。前171尾仅父boundedTEXT，
+未披露作者给独立reviewer；未firstfinalize/装订/计新完整课。
+
+164唯一StageB完整8380byte59ceefa1/四全行对照/三NEWnativeaddendum/
+ledger/input/S01–S06实际向量与诚实重建资格/fullS07–S09封套14dc6ba7/
+manifest eeb2b1c0全消费787693/8bfdbd/2b2fbb/5232f5/9665ee/7b666a/
+d48bb4/90627a/b743a1/01af30/8807e0/8ad53e。唯一留存c9de81实际exit0，
+16files104099bytes28绑定一次MATCH，10c/evidence/
+batch012-source164-167-stageB-before-edits。human措辞仅父代理传输，
+不是新humanpixel，冻结旧字段未改。75origin仍UNKNOWN；664新crop
+0.7纠正旧StageA0.1；701/702新crop2/3及703x³纠正旧StageAx²，
+作者原文相符不改。其后只164/165各移除一个↵后重复LF，保留数学和
+一个物理断点；164追加1note、165追加2notes，166/167原字节不变。
+Russell永久7/24仅NEW零图affectedTEXT差异核对，不增加全量复核，
+尚未firstfinalize/装订/计新完整课。
+
+158/160/162数值诊断完整report648ca51e/五脚本/六实际命令和rawstreams/
+SEAL/SUPPORT全消费0fbc5a/d0e4f0/8ace5a/867f0e/5b2df5/4bd0eb/
+a74b39/adb924/2fd154；全部64source-row与首次JSON对应投影11b65f。
+cf38c9过大初读截断，不冒称全逐字消费；arrays/trace只哈希绑定数据，
+不冒称模型逐像素观察。唯一留存374a39实际exit0，118files136651416bytes，
+35input和115sealedoutput绑定一次MATCH，10c/evidence/
+batch012-counter158160162-diagnosis。三+1底部2486–2489/2486–2488/
+2487–2489TYPEUNKNOWN不遮蔽；精确support各阶段不变，宽条4/52/0
+edge像素差异资格保留。Parfit消费留存后关闭永久0/24，不重跑任何
+诊断/旧PASS/旧HOLD，冻结layout保持。
+
+176–179首次prepare唯一7a93a4/4ef6eb实际exit0，四完整回执全消费
+7bdfda，raw20/21/21/18仅元数据。freshHubble作者
+01a1e85d-0042-7fc2-a7a2-de7a4abea7a7和Locke独立StageA
+01a1e85d-0110-7b70-aa75-5fd4525a48c2，各只4NEW页，
+fork_contextfalse、本批8/永久24不重置；175末定理1OPEN仅父传输
+独立inventory TEXT，无作者披露、源重开或新完整课。
+
+同一cap3接续：172独立StageA完整消费/13绑定一次MATCH的唯一留存
+d8ee18现入账，10files53103bytes，batch012-source172-175-stageA。
+168唯一StageB全部报告/全行对照/新增像素addendum及ledger继承完整消费，
+四脚本e2da49/CB01–CB05实际向量与stream6e9d42/终封套3e8b31全消费。
+CB02重复作者文字按完整命令及哈希投影，不冒称新像素。172四作者MD/
+inventory继承完整消费，初读c0228f/e0a33f截断不冒称全流，缺项004–006/
+ledger/projections/seal以353437/d714e8/b3f3b3完整补读；manifest全字段
+投影f7659c，52绑定一次MATCH。166/167首次f34b02已20/20、24/24PASS，
+e3a09a全部语义消费继承，不重跑。三根唯一留存f686d2实际exit0：
+82files346100bytes，40StageB绑定MATCH，batch012-source168-stageB172-
+author166-first。Laplace消费留存后关闭永久6/24、Averroes永久6/24；
+精确四172作者MD哈希此后才披露Dewey唯一StageB，最多4必要NEWnative，
+不重开原图，不重置4/24。
+
+164/165新affected完整报告929e5205/freeze58896b14/manifest830adae4/
+全部实际命令stream/三脚本/回执/C01/资格/ledger全消费。旧T01–T06
+只是传输摘要，不伪造历史流；166/167时序仅父传输，无当前哈希失败
+被该review观察。唯一留存9f395f实际exit0：65files159283bytes、22绑定
+MATCH，batch012-source164-affected168-first114-assembly。Russell随后
+关闭永久7/24。168–171首次2d65fd实际全exit0，23/23、22/22、22/22、
+23/23，全部command/audit/pageJSON语义52a3c2完整消费；0规范化/
+排除/字符/公式失败、源PNG及layout不变，四PASS永不重跑。
+
+114真实右界在171的§23/115之前，首次窄装订7154f1实际exit0但标题
+$114^{*}$未被parser认成TOC编号，留下x1临时ID，首次根保留不覆盖。
+115仍OPEN不提升。Kepler仅assemble.py通用可选标题解析及NEW独立
+定点测试，零图、禁止sourcefinalize/旧PASS重跑。Lorentz仅114末尾
+双下标exp_a自引用式独立数学勘误调查，scratch候选不是源修改或批准。
+164/165首次helper已备、尚未执行；此前一个组合patch因尾context失败，
+已确认零文件变化后用真实context修正，不属于内容门禁失败。
+
+同一cap3接续：164/165首次5f1c59实际已执行，overall1；16421/21PASS
+永不重跑、16525/24FAIL保持，无字符/公式/规范化失败。完整命令/
+audit/pageJSON语义1b4fb1继承消费；75首次框1001,573,451,463和
+原点UNKNOWN保留，尚未165诊断或retry。176作者缺失177/178/179全页
+3bec9f/691517/614bc6及三preload77fe18/5ef4d1/7d5eed、9实际向量
+060fbf已补读；旧ceada3/0408af截断不冒称全消费。全部作者25input/
+40output和review4input/15output/16SHA256SUMS一次MATCH。唯一
+留存b4edd8实际exit0：99files712763bytes，10c/evidence/
+batch012-source176-author-stageA164-first-parser。Hubble消费留存后
+关闭永久6/24。Locke冻结账本entry4+4NEW原图异常保守8/24、8/8，
+不重置；只留存后精确四MD哈希披露唯一ZEROIMAGEStageB。727作者
+UNKNOWN/独立3^x、纳白尔/纳比尔分歧保留，不数学猜写或增图。
+作者layout_hashes比较tool layout.py与各页layout.json为不同对象，
+只追加资格，不改冻结旧UNKNOWN措辞。
+
+Kepler通用SEC_NUM单处patch完整五程序/diff/实际命令/全不同用例
+stream投影已消费，19files一次MATCH随b4edd8留存。首次reproduction1
+与focused1不改；后一失败属最后一条synthetic负例错误，55已PASS
+不重跑，只2NEW边界case0。源页/TOC/layout/旧装订未改，TOC唯一
+ana10-c8-s2-n114认领仅定点解析证据，非课或全书PASS。Kepler随后
+关闭永久0/24；Lorentz勘误仍仅scratch，171双exp_a原式不改。
+本接续仍无stage/commit/push、backend刷新、DB/app或新完整课声明。
+
+同一cap3接续：Lorentz完整勘误报告和实际程序/stream已消费，唯一
+留存fa5d68exit0：30files79056bytes21outputs3inputs4commands一次MATCH；
+随后关闭永久0/24。171只登记p0171-exp-base-definition/p0171#5，
+原body双exp_a下标保持；injectivity及a=e^2反例确认勘误。唯一
+c7e73e metadata-only sync exit0，所有blocks/body/nonerrata metadata
+不变，audit仅errata0->1，pageJSONe663915b；无页收口/计数/数学重跑。
+新heading-fixed窄装订c1ab7fexit0正确114ID28prose0ex0fig；旧fallback
+不改，115OPEN及TOC117印刷163警告不掩盖。114现代首次prepare
+dc086c/快照276746/flowf90bd5/authorfreezeeaeab1全部成功；只18–21
+标号和引用a/b/c/d、27登记修式及2个精确flowanchor，源快照/数字/
+refs不变。Hilbert零图首次TEXT独立审查仍待结果，未finalize/render。
+
+165诊断fullreport/三程序已消费，analyze缺尾e0dc0b补齐；
+完整diagnosis和全部25band/24MD对应3bc68d、实际commands/streams
+81acaf缺项以8f4a25完整投影补齐、22expansiondecisions054a85消费。
+9ecc0f过大输出和9b2458截断不冒称全逐字消费；175arrays及389trace
+events只哈希绑定数值数据，不是模型像素观察。顶部275–422包络
+148px，以(148+33)/72=2.5138889展开3对独立2；strong1不触发3->2，
+下方component378早于fragment380支持失败TYPEUNKNOWN。唯一1次
+诊断line_bands，无修理/排除/retry，原16525/24FAIL保持待留存。
+
+172StageB完整既有报告/四对照/新像素/ledger/三程序/B01全继承；
+13416byte完整manifest b41795补齐原partial9b1451；B02–B13完整
+实际vectors/raw新streams9584fb消费，B01/B02重复作者文本仅完整
+命令/哈希绑定，不冒称新像素。无确认作者缺陷，713-e及175两
+leqslant和最大值逗号支持原稿；原StageA不改，172predecessor/
+origins/suffix712pi/fig76/77exactcoverageUNKNOWN保留。只备唯一
+留存172/176StageB和165诊断，以及172–175首次收口helper；未执行。
+
+唯一留存3c126c实际exit0：165files27152050bytes188unique绑定一次
+MATCH，batch012-source172176-stageB165-diagnosis；176完整report/
+provenance/ledger172b59、四对照6575aa缺178由ddf985补齐、全部
+程序bb149e/483f3e/input-freeze-historyd6e105/实际14vectors50af02/
+seal向量raw0a6464/fullmanifest1ae6c2消费。重复原作者/StageA流
+仅绑定，不冒称新pixel；parent39b031投影误把string当array报错，
+无文件或门禁变化。三个delegate消费留存后关闭8/24、8/24、0/24
+永久不重置；176–179全部HOLD_UNRESOLVED，未收口或改源。
+
+172首次helperfe2091实际只执行172：finalizeexit1、20/19FAIL，
+完整command/audit/stream e5baf6、diff e9f715消费。两图首次
+76[131,1727,790,409]、77[967,1747,434,397]；0规范化/字符/公式/
+排除，源PNG和layout不变。工具按设计写入元数据/吸附图框/链接，
+wrapper不应断言整个MD字节不变，实际因此中止，原helper和FAIL
+均保持。只新备剩余173–175首次helper，不重跑172，不预写结果。
+
+同一cap3接续：剩余唯一首次helper28613a/eae9a7已执行173–175，
+overall1；17324/24PASS、17425/24FAIL、17521/21PASS。完整command/
+audit/rawstreams/pageJSON语义19d170全消费，0规范化/字符/公式/
+排除，PNG/layout不变。172原FAIL和wrapper中止保持不重跑；174
+未诊断/修理/retry，173/175PASS永久不重跑。Hilbert首次零图TEXT
+PASS28段，无新缺陷；完整manifest35b844、三程序5b2017/e76111、
+实际向量/inspect首部与freeze新stream e64361、全28段语义95c9de
+缺3–13以9b3af6补齐。初909319/95c9de截断不冒称全流；重复
+inspection逐字流仅哈希绑定，非新复核。只备114TEXT/author及
+172–175首次结果唯一留存helper，未modernfinalize/render/promotion。
+
+唯一留存090b60实际exit0，79files616940bytes62unique绑定一次MATCH，
+batch012-114-text172-first，零排除；Hilbert全消费留存后关闭永久0/24。
+114唯一首次modernfinalize68e0df实际exit0，28prose/9changed/2anchors/
+1erratum/0ex/0fig，完整command/stream2ed7dc、audit7d25e0消费。
+首次rendera45d76实际exit0，完整command/rawresult/hash25e910消费。
+freshNoether仅114首次离线browser/visual，fork_contextfalse自有scratch，
+最多8NEW图/永久24不重置，parent24/24不开图；不跑app/server。
+114真实零习题，只备official空答案prepare/draft/finalize helper，尚未
+执行；未canonical提升、115放行、DB/Git或新完整课声明。
+
+114官方首次answerpreparef44770实际exit0，全command/template/
+rawstream44e9bc消费；exact空稿acd78e，两SHA均37e23b12。官方
+首次finalize0a6ed1实际exit0，全command/audit/streamc7cc04消费，
+ready count0、auto0/ungraded0，未编造任何题/答案/选项，也不宣称
+空集合运行了数学或输入链。同102只记NoWrittenSeeds。首现代/
+空答案唯一留存helper已备，visual仍待Noether。747537/c2b453
+读路径ENOENT和61f281标题无匹配仅导航失败，无文件/门禁变化。
+
+唯一b4d63e留存实际exit0，35files951217bytes零排除，batch012-
+114-first-modern-empty-answer完整首modernfinalizer/render/HTML/
+零答案/NoWrittenSeeds。只备114canonical提升helper，须等待实际
+visual结果全消费留存后的批准记录；现有两book条目和source audit/
+partial资格不动，115/FAIL/PASS/UNKNOWN不提升或重跑。
+
+Noether首次check在Chromium启动前parse FAIL：try内重复const require，
+line199；六输入freeze0，0browser/0screenshots/0图，原脚本及UNKNOWN
+冻结不改。完整findings/manifest a7eb95、supplement11a1ad、五程序
+391417/fea8fa、实际向量/rawstreams/ledger/coverage3a7080、input
+freeze7148c1全消费；1fe92d/6090d6只是错误文件名导航。父读生产
+htmlfrag1a91f6/renderCSS49b68f，KaTeX SVG不是lesson figure，nb原有
+横向公式滚动合同不能被未执行测试误判。只备首次失败唯一留存，
+之后允许NEW窄harness修正作首次实际browser观察，非旧PASS重跑；
+不改课程/HTML，不清除旧失败或重置图预算，114未提升。
+
+唯一dc344f实际exit0，30files998690bytes42unique绑定一次MATCH，
+batch012-114-offline-first-harness-failure，零排除。原完整FAILED包
+字节保持；同Noether只授权NEW独立scratch的一次harness修正/执行
+作首次实际browser，复用六frozen输入，不重跑freeze或任何旧PASS。
+合法目标修正只区分KaTeX SVG与教材图、验证已有nb横向公式滚动
+wrapperfit和exactend可达；原repeat require移除。任何actual断言
+FAIL即止，无进一步修/重跑；图预算仍0/8本批、0/24永久不重置，
+parent24/24。114提升仍待实际browser/visual，完整课增量未改。
+
+## 114 离线收口
+
+2026-11-17，同一 cap3 / Session B 接续。Noether 最终 PASS_OFFLINE_ONLY：
+唯一修正 harness、首次实际 headless browser、四个 surface 和十个公式滚动端点，
+六张 native 视觉图实际独立观察。完整 findings/acceptance d4fafb、
+all-field manifest 5a6513、supplement 和实际 seal 向量/rawstream 63bb5b、
+seal 程序 2f3f9c/launcher fab908 全消费；补齐 56 段 geometry、
+192 wrappers（两 text 各95及两个习题标题）、52 proseMath 和十个
+start/end/reset 向量 29d1ec/f99578/9812e5。原49926d/c94191及
+eb0282截断不冒称全流，数值哈希绑定不冒称父像素判断。父45eac0
+只读投影误读缺少的scrollChecks而TypeError，未改文件或重跑门禁。
+
+唯一751eff留存exit0：81files3912466bytes119uniqueMATCH_ONCE，
+零排除，10c/evidence/batch012-114-offline-harness-correction。
+原FAILED包和UNKNOWN原字节保留，冻结授权措辞只追加为父代理传输，
+不冒称新的直接人类pixel授权；copy-bindings中的browser-check旧SHA
+是BEFORE-patch历史，当前输出由最终manifest绑定。Noether全消费
+留存后关闭，永久6/24、本批6/8、零reopen；父永久24/24，零开图。
+
+父仅APPROVED_OFFLINE_ONLY，绑定已留存visual manifest64787b5e。
+唯一f3ac88晋升exit0：仅114忠实层和现代层10文件原字节复制，
+28prose、0题/答案/选择题/选项/图；两个book追加114，原条目、
+source audit及partial资格不动。114忠实双exp_a保持、现代仅登记勘误；
+115 OPEN未提升，TOC117印刷163警告保留。实际command/全receipt/
+rawstream 944abd和完整留存manifest572166已消费；11files42221bytes、
+零排除，batch012-114-canonical-promotion留存before/after book及批准。
+
+本地完整增量仅1课、0答案/选择题/选项：已推送29课加本地未提交114
+为30课，251答案、227选择题、976选项不变。最后推送仍2d002f414f；
+空题集不宣称数学或输入链验收。16525/24、17220/19、17425/24失败和
+176–179 HOLD_UNRESOLVED及其他历史UNKNOWN全保留；无诊断/repair/retry，
+无旧PASS重跑。没有stage/commit/push、backend读取或refresh/setup、
+DB/publisher/app/server、依赖/schema/Charter、全项目测试、handoff/
+关闭/部署。全部shell操作结束，代理和浏览器已关闭；四册仍未完成。
+
+## 114 后继续生产
+
+40分钟监督明确继续同一会话、工作树和分支的实际开发；上段无commit/push
+是已发生的操作事实，不是新的暂停。114复用全部有效证据，随下一组完整课程
+形成约4课小批后commit/push，立即接下一批；不因本地晋升或批次汇报而结束。
+局部FAIL/HOLD/UNKNOWN保持，不变成全局停止，也不扩展报告或审查体系。
+
+下一源组选择10c物理180–187，跨第八章补充题后进入119/120；176–179
+HOLD不解锁，未闭合补充题不发布。180–183唯一首次prepare8ffa66/b81ee0
+全exit0，四完整command/rawstream8c569f消费。Herschel仅首次新页作者，
+Halley仅首次独立StageA，两者fork_contextfalse、本批最多8图、永久24，
+不重开旧图；父永久24/24零图。184–187首次备料helper已写未执行。
+
+184–187首次13453b/1e942c全exit0、完整四receipt b964dc消费；
+Wegener新页作者和Newton独立StageA已开始，永久预算不重置。
+125历史知识的220–221两起止页首次178ea9/32fb26全exit0，完整
+receipt130030消费；Hume作者、Hegel独立StageA只处理这两个新页。
+候选批次114/119/120/125须逐课真实闭合，目录候选不冒称批准。
+
+180–183完整StageA全报告/四清单/ledger/实际命令ba72cd/6688f1/
+051fc3/d47b01消费，唯一99eb72先留存7files35278bytes零排除，
+之后才向Halley披露四作者MD哈希，授权唯一StageB最多4NEWnative；
+永久4/24和本批4/8不重置。完整作者四MD/四inventory/ledger/handoff/
+实际commands/nativecrop程序/hash全消费，唯一2ea633留存22files
+55443bytes41uniqueMATCH_ONCE零排除，作者随后关闭永久7/24。
+831作者e^5对独立首轮e^x差异、图78原点0/O及其他UNKNOWN保留待
+独立实际裁图裁定；未修源、未首次finalize。188–191首次备料helper
+已写未执行；114仍唯一新完整未提交课，不改变既有推送总数。
+
+188–191首次备料已实际完成4f50a2/d59a74，全exit0，四完整command/
+rawreceipt debb01已消费；27/27/26/27仅计数器原始元数据，不冒称独立
+行数。接续读取03eaf6为已有receipt定位，不重跑prepare。220–221作者
+完整freeze/ledger/handoff b8a265、两MDacf76b、两inventory及全部实际
+结构化回执a66279消费；904原21保持，125源起止仅边界事实，不先宣称
+PASS。Hegel既有StageA2923ca/70ed3b不重复视觉审查。只备两包唯一留存，
+留存完成前不披露作者；父永久24/24零图。
+
+唯一8061c2实际exit0留存StageA7files30943bytes、author10files49863bytes，
+零排除，之后才向Hegel披露精确两MD哈希并授权唯一StageB<=4NEWnative，
+原2/24和2/6不重置；Hume关闭永久4/24。Newton完整StageA报告/清单/
+ledger/实际命令/manifest/程序666dd3/7bcec3/97963a/fa2b3a消费，唯一
+ead546exit0留存10files48114bytes零排除，仍未作者披露。新Popper作者/
+Aquinas独立StageA仅已备188–191，fork_contextfalse零继承图，永久24/
+批8不重置。为闭合120，按TOC下一121印刷188边界仅备192–195首次helper；
+未提前宣称任何源页或新课程PASS。919fba/0f7868是错误helper文件名
+导航ENOENT，未执行门禁或修改产物。
+
+184–187完整作者四MD/清单/manifest/ledger/程序/实际命令与crop raw
+96f565/362ecb/99ef32/1f6282/f6ea36/aa98db/3e02f3消费；绑定重复流仅
+留存哈希，不冒称新pixel。唯一338e85exit0留存35files141373bytes、
+57unique绑定、零排除，Wegener关闭永久7/24。随后才向Newton披露
+精确四MD，唯一StageB原4/24及4/8不重置；184将/把及原点0/UNKNOWN
+保留待实际裁定。192–195唯一首次f0ef6f/324fec全exit0，完整receipt
+207d7d消费；25/24/25/24是机器metadata，不是独立观察。新Helmholtz
+仅四页首次作者，尚未派独立StageA。220–221首次finalizer helper
+已备但不执行至实际StageB支持的decision；未新完成课程或重跑PASS。
+
+Halley唯一StageB完整4fce9f/184a8a/65b42b/2d88c3消费，唯一777361
+exit0留存17files85332bytes零排除；冻结human授权措辞仅追加qualified
+parent transport，不改原文。831新native明确5，作者正确、StageA初读
+错误；799/824π、图78reference/caption确认；原点O/0、上游及外部边界
+UNKNOWN保持。Halley关闭永久8/24本批8/8。唯一94316f/a44361首次
+finalize180–183全exit0 PASS18/18、12/12、21/21、26/26，完整command/
+audit/meta/全部blocks bb90e9消费，零规范化/字符/数学/排除、源和layout
+不变。78首次snap[1054,616,400,437]仅原始裁图，不是现代图通过。
+唯一a29199exit0留存首次32files62450bytes零排除。新Bernoulli独立
+首轮只192–195，原批8/永久24不重置；没有新完整课或Git/DB动作。
+
+## 125 边界修正与新页组
+
+同一 cap3 / Session B 接续。220–221 唯一 StageB 已消费并留存6b9e36，
+10files48939bytes；Hegel关闭永久4/24。首次91dde2/2efa48为220
+24/24PASS、22125/23FAIL，完整8c7ef8/c4ae17消费，失败先留存8ae83b
+17files31422bytes。只删906/907两个重复LF、追加1note；Ampere零图
+受影响TEXT PASS全文dbba24消费，4f88b8先留存3files11053bytes后仅
+221重试23/23PASS。原FAIL保留，220及其他PASS不重跑，layout冻结不变。
+
+125首次隔离装订e83cf3退出0但归属FAIL：把补充题906/907和公共题干
+混入125，97e8e4实际输出已消费。TOC6d6b75明确补充题是独立ana10-c9-ex。
+cf647d先留存26files48204bytes，随后仅221的p0221#6由exhead改h3及
+1note；230f0a元数据同步退出0，全部文本/数学/行断点及23/23audit不变，
+没有再次页收口。Huygens仅新零图分类差异复核，尚未新装订或批准125。
+
+188–191作者bd3ae8/d48a09/4d4420/d291b5完整消费；首轮Aquinas
+9d0e3d/b5573e/0246e9继承，9f5ed7补读seal。ad478f唯一留存StageA
+8files44466bytes及作者21files109783bytes36绑定，之后才披露四MD给
+唯一StageB；Popper关闭永久7/24。188首次自动缩放HOLD保持，不能
+冒称原生全页检查；Aquinas原4/24、批4/8不重置。
+
+184–187唯一StageB add3d9/3b3f23/20eba3全文及实际向量/原生裁图
+归属消费；初d15cda截断不冒称全流，重复历史文字/哈希流只绑定。
+ad478f先留存46files180576bytes62绑定，原human措辞追加资格为父传输。
+Newton永久6/24，注释五基线布局问题和原点UNKNOWN保留；将支持作者，
+旧StageA把不改。Mencius零图作者调查94365e报告现有格式不能诚实
+保留交错基线，184整页未改，仍局部HOLD，没有源页首次收口。
+
+192–195首轮5dd5ae/1ffad5及作者668d1f/049fd5/82524f/2b25ce全部消费。
+dfce4c唯一先留存StageA5files35641bytes8绑定、作者16files91304bytes
+35绑定含四首次MD副本；之后才披露给Bernoulli唯一StageB。Helmholtz
+关闭永久6/24；Bernoulli原4/24、批4/8不重置。195分隔字形/小数逗号、
+并排多行和194→195段落边界待实际支持，不先放行120/121。
+本地新完整仍仅114；无stage/commit/push、后台读取或refresh/setup、
+DB/app/依赖/schema/Charter/全项目测试/handoff/关闭/部署。
+
+## 125 修正装配与 185–195 局部收口
+
+同一 cap3 / Session B 接续。221受影响全文38acfc及实际finalseal
+e90dce已消费；原semantic后哈希路径exit1和hash-only recoveryexit0
+保留，不冒称整次exit0。唯一fc351b留存5files17522bytes零排除，
+Huygens关闭0图。新隔离125装配2f5d54实际exit0，完整b6f0e0消费：
+历史知识5正文0题0图，公共题干及906/907仅独立补充题。旧归属FAIL、
+124未知归属和补充题未完整保持。
+
+125首次现代备料aea633/58ed78暴露真正n!阶乘分段错误；唯一57e628
+先留存27files119033bytes完整首次输出和edition.py旧字节。仅删
+math-ending句末判据中的ASCII!，不改任何公式或冻结layout.py；
+唯一62681a实际窄检查通过真实125、三阶乘和公式外标点，数学/
+数字签名不变，不重跑旧PASS。作者只句点/完整句排版及历史实体
+声明，flow408a1b真实相邻锚点；49a543首作者freeze完成，Nietzsche
+仅首次TEXT复核0图，尚未现代finalize/render/答案或晋升。
+
+184剩余HASHES/三实际回执6abe93消费，唯一9cce08留存10files
+29156bytes，Mencius关闭0图；184整页未动、HOLD。185186唯一受
+影响全文ceedca/c82994/180d20消费，073723留存34files102750bytes，
+Newton关闭永久6/24批6/8。首次710125/34430b全exit1：
+18527/25、18630/29、18726/25；完整三个command/audit/meta/blocks
+4883f2消费，3d8c51留存22files34340bytes。零规范化/未知字符/
+排除，PNG和layout不变；184完全略过，无诊断/retry或119提升。
+
+188191唯一StageB全文28c256/cb50d7消费，d18f5a留存9files
+162882bytes。Gauss零图作者全文22cd84/11cce7/182131消费，190191
+截断以d9af9a补齐，全部实际diff/argvd618ed消费；f73275先留存
+37files128199bytes后才向Aquinas披露。1884LF/1894LF/1906LF
+实际在既有↵之后，初父“之前”措辞不冒充字节事实；188逗号及
+各一note，全部式子和↵不变。191现合同无可证忠实编码，整页未
+改、HOLD。Gauss关闭0图，Aquinas唯一新零图差异复核，永久8/24
+批8/8不重置；188分辨率/folioNULL及189190folio/R字形未知保持。
+
+192195全文058f4e/83dbe0消费，1b1995先留存6files33955bytes。
+837减号支持作者、StageA误读；图80坐标comma及82小数comma仅
+本StageB记录，不改旧证据。194只856第二式一个减号改加号和
+1note，6f8e20哈希绑定；Bernoulli唯一新零图差异复核，永久8/24
+批8/8不重置。多行/并排/段落/标点HOLD、195“所有”OPEN保持。
+未运行188195收口；196199首次新备料helper已备，未提前放行。
+
+本地完整仍30课，其中114为唯一未提交完整课；已推送仍
+2d002f414f及29课/251答案/227选择题/976选项。继续实际生产，
+凑约4完整课后窄commit/push并立即下一批；不因局部失败结束。
+parent永久24/24零开图。无后台重读/refresh/setup、DB/app/依赖/
+schema/Charter/全项目测试/handoff/关闭/部署；T和其他脏改动保留。
+
+## 125 首次现代收口与离线观察
+
+同一 cap3 / Session B 接续。125首次TEXT报告92b05c/ac956f及完整
+语义/实际回执3e5646消费；五对象十一句FIRST_TEXT_REVIEW_PASS_SOURCE_
+FIDELITY_ONLY，不是历史事实或像素复核。“本世纪”原书视角保持，
+孤立展示歧义明确披露，不猜绝对日期。188190完整字节差异/回执/
+hashbindings c672f0、194856完整回执/manifest e8e234消费，仅具体
+已支持修改，所有原HOLD/UNKNOWN不解除。唯一7d5c87留存12590files
+684319bytes88payloadbindings、1881904files26531bytes、1948563files
+22565bytes，零排除；三代理随后关闭，父永久24/24零图。
+
+196199首次274baf/518bdb全exit0和四完整回执1d81e0继承，不重跑；
+26/26/26/24仅metadata。Chandrasekhar首次作者、Nash独立StageA仅
+新四页，fork_contextfalse、批8/永久24不重置；尚未完成消费/留存，
+不披露作者，195“所有”外边界仍provisional/UNKNOWN。
+
+125首次d6990f现代finalize实际exit0，88f8d6全部command/audit/
+JSON消费：5正文、5layout、1相邻锚点、0勘误/题/图。首次d4223d
+render实际exit0及d8aecf全回执/流消费，6短段落。官方空答案
+prepare6295ed/full d8aecf、exactdraft3d1067（模板/稿SHA50ed5dce）、
+首次finalize4982d3/full9da3e8均消费；ready0、auto0/ungraded0。
+NoWrittenSeeds不编造题/选择项，不冒称空集合数学或输入链验收。
+
+新Lagrange只首次125离线浏览器/原生视觉观察，六exact输入绑定，
+批最多8图/永久24不重置、TEXT/PATH/HASH返回。只读114正确harness
+模式，不执行/复核任何旧PASS。125视觉未完成、未canonical晋升；
+114仍唯一新完整未提交课，本地30课，最后推送29课/251答案/
+227选择题/976选项不变。继续实际生产，约4完整课后commit/push。
+
+唯一bb9452留存125首次现代/空答案35files777981bytes零排除，含
+两自包含HTML和NoWrittenSeeds。晋升helper仅准备，必须等真实离线
+结果完整消费/留存和APPROVED_OFFLINE_ONLY，未执行或计完整课。
+
+200203首次8f5308/a1404f全exit0，319b9e四完整回执消费；
+23/25/25/19仅rawmetadata。新Dirac作者/Pascal独立StageA分开启动，
+批8/永久24不重置、作者未披露。204207首次387e73/cfff57全exit0，
+f9c946四完整回执消费，22/24/25/24仅metadata；新Maxwell作者已启动，
+独立StageA等空闲名额。83e366目录123印刷201/物理207只做路由，
+不是源页观察或122/123批准。未重跑任何历史FAIL/PASS或修改layout。
+
+## 125 晋升与 196–207 接续
+
+同一 cap3 / Session B。125首次离线完整报告/ledger/manifest0075d2、
+程序bceafa、全部实际向量/流/input/native379d97、plan/freeze/sealb51fb2
+继承已消费，不重跑；大投影711f4d/dbfbc5截断不冒称完整，最终016a1a
+完整四surface/十二paragraph行/十四wrapper/十二number和separator字体
+事实已消费。唯一bb6dfa先留存31files2752117bytes29bindings零排除；
+Lagrange随后关闭永久4/24、本批4/8，原生四图各一次，父永久24/24零图。
+真实无overflow，endpoint检查N/A，不冒称空集PASS或产品/DB/quiz验收。
+
+APPROVED_OFFLINE_ONLY后唯一992cb2晋升实际exit0，完整d788f9消费：
+125仅10files，5源正文/6展示段/1separator，0题/答案/选项/现代图；
+两book仅append125，既有entries/audit/partial资格保持，页数69→71。
+prior124、独立补充题仍排除，“本世纪”原书视角和孤立展示歧义保留。
+唯一ad58ee留存晋升12files47285bytes零排除。本地完整31课，新增
+未提交114+125两课；最后推送仍2d002f414f的29/251/227/976。
+约四真实完整课再窄commit/push并立即继续，未stage/commit/push。
+
+196199作者剩余session8f9fcb/ledgerf4291f/actualcommandsa2c4a3、
+两recorder8e26e8/2b0256和四全文3a9b83/b4e12a/fd50c1/a15834
+消费；first197漏footer独占快照不变。StageA65f723截断不冒称全流，
+198尾及199开头已由b3ac16+4e6ce0/a92c0f完整补齐。唯一ad58ee
+留存作者51files1056004bytes46bindings、StageA36files1000754bytes
+34bindings零排除后，才向Nash披露四当前MD哈希授权唯一StageB。
+Chandrasekhar关闭永久7/24；Nash原7/24及7/8不重置，只余至多
+1必要NEWnative裁图，原图/裁图不重开，未运行196199收口。
+作者错误“layout匹配”比较原样保留，父追加e96aae说明该prepare
+字段绑定共享tools/layout.py899ea25c而非逐页layout.json；不同对象
+哈希不等不是prepareFAIL，不伪造审查结论。所有source/profile/HOLD保留。
+
+新Carver01a1e903-a18f-7873-a9b3-6ccdf245dfbb只204207首次StageA，
+fork_contextfalse，0entry/8batch24永久不重置；Maxwell作者不披露。
+200203 Dirac/Pascal分开继续，父处理留存/晋升和新源工作，不重复旧PASS。
+无后台重读/refresh/setup、DB/app/依赖/schema/Charter/新chat/branch/
+全项目测试/handoff/merge/关闭/部署；T和其他脏改动保留。
+
+200203首次StageA全文ff85c3+62ed8f、报告28a5cc/ledger2cc4d9/
+nativeprovenanced1a48e、两程序029fff/f4bcda+5c1eb4、实际回执9cf6f4/
+af8276/sourcebindings8efc2a已消费。作者四全文9c58ab/da1668/21c28e/
+32c9a7、完整inventory5a9cdf和notes/package/ledger/manifest/first消费；
+大7b99f7截断不冒称全流，缺002/输入投影2a13c5与006metadata691054
+补齐，重复prepare/layout/rule流仅哈希绑定，不重审。唯一e0d0a0
+留存作者92files934204bytes88bindings、StageA40files598741bytes39bindings
+零排除后才披露四当前MD给Pascal唯一StageB。Dirac关闭永久7/24；
+Pascal原5/24及5/8不重置，最多3必要NEWnative，不重开原图或旧crop。
+图91精细几何/强调、201小点、199及204外边界UNKNOWN仍保留，未收口。
+
+208211唯一首次2a4ee3/959347实际exit0、四完整回执2fd724消费，
+23/23/27/23仅rawmetadata。新Fermat作者和Franklin独立StageA，
+fork_contextfalse，只四新页，8batch/24永久不重置，作者不披露。
+TOC124f1b4ea仅路由“关于线性规划的概念”印刷208/物理214，
+不是源页或124验收。212215首次helper已备未执行，继续实际生产。
+
+## 204–207 首包留存与 212–215 作者接续
+
+同一 cap3 / Session B。204作者继承四全文2bcd6b/eaceb3/e3a2ae/
+50328d、notes/inventoryd1ddf4、ledger/patchfe439d、native程序dc2fcc/
+provenance35eb94、freeze3617ca+3337db已消费；b98a60/c91f2e截断
+不冒称完整。缺command6–9实际向量42e3f0与7–9全文c44c7a已补齐，
+重复rule6只绑定不重审。完整manifest7238ca消费；初写与提交快照、
+全部14HOLD和作者native delivered-scale UNKNOWN原样保留。
+
+Carver首次独立StageA完整report/ledgercff7ff、四inventory94cd37/
+376257、程序57ddbe、实际向量e3fa05/native完整流和回执200de7、
+manifest7238ca消费；23/25/24/21是视觉库存，不是人工计数覆盖。
+初目录不存在exit1仅证明不存在，不冒称prepareFAIL。原metadata
+HOLD原样保留；2d583f确认prepare.layoutSha256绑定共享layout.py
+而非各page-layout.json，不同对象不等不证明管线失败。
+
+唯一09ccd5实际exit0留存作者69files1022094bytes73bindings和StageA
+60files1047538bytes88bindings，零排除；自排除control也完整留存。
+之后Maxwell关闭永久8/24批8/8，再才向Carver披露四当前MD哈希，
+授权唯一StageB。Carver永久6/24及本批6/8不重置，最多2必要NEW
+native；不重开任何原图/旧crop，872底数/870含义/外203及208和
+所有编码、跨页、并排HOLD保持。未204207收口或计完整课。
+
+212215唯一首次92309a/fce15b实际exit0、四完整回执f84637继承消费，
+10:27:20–24UTC，24/27/26/22仅metadata，绝不再prepare。
+新Hooke01a1e910-6c86-7161-9c26-1b0570192141只首次四页作者，
+fork_contextfalse，8batch/24永久不重置；独立StageA等空闲名额，
+作者未披露。216219首次helper拟备；还未执行、未源验收。
+本地仍31完整课、未提交114+125两课；最后推送仍29课/251答案/
+227选择/976选项SHA2d002f414f。无新stage/commit/push/后台重读/
+refresh/setup/DB/app/依赖/schema/Charter/全项目检查/handoff/
+merge/工单关闭/部署；父永久24/24零图，T和其他脏改动不动。
+
+216219唯一首次4b1064/df04ae实际全exit0，四完整实际回执140184消费，
+10:33:04–08UTC，22/26/21/26仅metadata。还未作者/独立审查，
+不将124右界、125前页或任何课程提前计完成。
+196199唯一StageB完整report0bdd85+29db8d及全部command/ledger/
+beforeROI/seal/hashlistef30b1消费；Nash永久8/24批8/8，唯一NEW
+1300x165ROI确认星号两侧两墨点，不解读成确定标点。197首快照
+唯一追加191footer，196两种情形dot/colon未知，198并排/和/标签/
+图界和199中文或/排版/外200仍HOLD。不运行收口、不改源文字。
+command记录长stdout仅索引实际toolreceipt，不冒称不存在的rawlog；
+beforeROI的Human parent措辞是父代理运输授权，不伪造直接人类新授权。
+
+## 2026-11-17 检查点补记
+
+本次仅整理同一 cap3 / Session B 已发生的事实；不执行生产、留存、
+收口、诊断、重试或新派工，不重新消费既有审查，不打开图片。
+以下代理状态来自交接，不冒称本次重新查询到的实时状态。
+
+196199 StageB在完整消费后唯一2d243b实际exit0，2026-11-17
+10:34:27.328UTC留存44files265023bytes44bindings，零排除，
+位于10c/evidence/batch012-source196199-stageB。Nash随后关闭，
+永久8/24、批8/8不重置；所有196标点、198并排/和/标签和199
+中文或/星号墨点/排版/外200 HOLD保留，不将留存等同整页PASS。
+
+只有197在上述留存及窄父决策后首次5cf07d收口，实际exit1：
+printed12/Markdown11，normalizations0、unknownchars0、errata0、
+exclusions0。完整audit/pageJSONb3929f、生成MD差异97a2b3和
+figurepaths6ab5fb已消费；正文/公式/sourcePNG不变，仅图框吸附/
+生成metadata变化，table框[248,247,1217,1108]。唯一8df3c7
+实际exit0于10:39:27.605UTC留存19files240010bytes零排除，
+位于batch012-source197-first-finalize-failure。prepared197存在
+tbl-p0197-01.png，但canonical图未晋升；失败输出不是批准图。
+196198199未收口；197未诊断/重试/补行/改layout，首次FAIL保持。
+
+208211作者完整四MDaa5f5a+884113、inventory/ledger3fba3b、
+三程序4c2006、实际命令/裁图/外回执7fc9cf、manifest/25实际
+向量249079和首物化/23–25完整流d86d40已消费。唯一b8f313
+实际exit0于10:35:55.545UTC留存52files670612bytes62bindings，
+零排除，位于batch012-source208211-first-author。Fermat随后
+关闭永久6/24批6/8；first/current相同、零修正，不编造裁图
+pixel-equality认证。作者manifest9643dec6a597fa7a212c11e86a14664a
+35744252cf8ae9377cb63cf49cc67129保持，尚未向审查者披露。
+
+Franklin208211 StageA完整report/inventory e1669b+e4bdca、
+ledger/programs/初失败e01b4e及seal/实际回执27765b已消费。
+原寻找firstprepare-####.json的路径HOLD/preflightFAIL冻结保留，
+不改旧报告。已请求零图加法receipt-path-supplement，只读既有
+prepare-0208.json至prepare-0211.json，不重跑prepare。交接时
+补充尚未消费，StageA及补充尚未留存，208211 StageB未授权；
+Franklin永久4/24批4/8不重置，图95点标记分歧/100细墨/外207/
+未见101–103仍HOLD。
+
+Carver204207唯一StageB完整384行报告f01463、ledger/provenance/
+完整helper c401f5及全部向量/input/manifest投影3efa32已消费；
+重复canonical流仅字节绑定。报告SHA
+8dfdbb3dc45b630e4ce38638b19eb7969577f96c79d770858b9ef898ac51af15，
+manifestSHA
+f8828b5a7b39b3b1fc866c2e9d85edbf650dd6748df4fb14eaea568189dab5f0。
+93库存行均映射，不等于人工批准或无条件PASS；872暂读3仍未证实，
+870上标3含义/205关系编码/粗体Z/外203208/交付尺度UNKNOWN保留。
+Carver交接时完成但未关闭，永久6/24批6/8，StageB零新图；
+StageB尚未留存，204207未收口。
+
+212215在Hooke作者之外已派Kuhn独立首次StageA
+01a1e912-e547-74e1-b04a-e069d97a6fbf，独占
+production-source10c212-215-review，作者未披露。216219既有首次
+prepare之后已派Copernicus作者01a1e914-41e4-7cd3-9093-2b9b3a9b55fa，
+独占production-source10c216-219-author；独立StageA尚未派。
+交接六名额为Pascal200203 StageB、Carver完成未关、Franklin
+补充、Hooke作者、Kuhn StageA、Copernicus作者；本次不轮询或
+新派工，不提前消费交接后可能到达的输出。
+
+后续顺序仍为204207 StageB完整留存后才关闭Carver并派216219
+独立StageA；208211补充完整消费、连同首次StageA留存后才披露
+四作者哈希并授权唯一StageB。其余新结果完整消费/留存后才做
+窄编辑或首次收口，不重跑125或历史PASS，不解除旧FAIL/HOLD。
+
+本地完整31课，未提交完整114+125两课；最后推送仍
+2d002f414f514803279ff7a62c5749904bb896a8，29课/251答案/
+227选择题/976选项。本次未stage/commit/push，无后台重读/
+refresh/setup/DB/app/依赖/schema/Charter/handoff/merge/工单关闭/
+部署。父永久24/24零图；冻结layout.py899ea25c不改，T及无关
+脏改动保留。本次仅读留存manifest元数据，不重复任何复制校验。
+
+## 2026-11-17 恢复生产补记
+
+延续同一cap3/SessionB既有恢复授权，不重开计划、后台或setup；
+以下追加实际新工作，不覆盖旧检查点，不将留存等同PASS。
+
+201–203首次终结结果完整消费后唯一820217 exit0封存30files/
+334367bytes/13bindings；201为25/25、203为19/19，202首次FAIL
+printed25/MD24保持。212–215作者/首次StageA完整消费后唯一03a3c5
+exit0分别封存103files/7942308bytes/192bindings和77files/
+957001bytes/87bindings，之后才授权Kuhn唯一StageB，继承5/24同批5/8。
+
+216–219缺失清单、实际向量和全raw流已补齐，重复长流逐字节或
+全结构绑定，不冒称截断内容完整。唯一911a34 exit0封存作者
+145files/1721396bytes/169bindings及StageA80files/1358248bytes/
+96bindings；之后才授权Planck唯一StageB，继承7/24同批7/8，仅余
+1必要NEWROI。219中/括号、218219段落分歧、217原点0/O、218正文/
+页脚合带、219末专未闭、native delivery和外215220仍UNKNOWN。
+
+200句点唯一changed-only TEXT复核完整消费后95aaf3 exit0封存
+37files/172219bytes/37bindings，零图，旧H01–H09不解。之后首次
+8cf079终结200实际exit1：印刷23/块体21。只生成metadata及图91框
+[998,1378,364,325]/PNG引用；正文文字、公式及旧注释不变。PNG仅在
+prepared工作目录，canonical图不存在，不晋升/批准图。首次留存
+4d6114误用canonical路径ENOENT、复制前失败，原helper不改；另一个
+唯一24e3ef exit0封存失败现场与工作PNG16files/184660bytes/
+6bindings。不重跑终结器、不改计数或layout。Pascal另获全新零图
+静态200202计行诊断授权，8/24同批8/8，冻结库存/首次输出，只提案。
+
+208–211唯一StageB全报告/四比较/7程序/实际回执/raw流/清单/封印
+已消费或完整绑定，唯一de3af6 exit0封存99files/695805bytes/
+115bindings。强调边界ROI偏向MD；图95点墨/100细墨/native/编码/
+排版/图界/来源/外207和未见101–103仍UNKNOWN，不改源、不提前收口。
+Franklin7/24同批7/8，3NEWROI、零重开。上述所有留存均零排除。
+
+本次只读投影失败7ad642/0e03e8/fabc9a和进度补记初patch拒绝均
+保持实际失败，不覆盖成PASS。历史FAIL/HOLD/UNKNOWN继续保留。
+仍31完整课、未提交114+125两课；最后推送2d002f414f514803279ff7a
+62c5749904bb896a8，29课/251答案/227选择/976选项。无stage/commit/
+push、125重跑、全项目检查、pull/rebase、DB/app/依赖/schema/
+Charter编辑、handoff/merge/工单关闭/部署。父永久24/24零图/
+payload；layout.py899ea25c冻结；T和无关脏改动不动。
+
+## 2026-11-17 限定复核留存与 9c 接续
+
+同一cap3/SessionB恢复实际生产，沿用现有票、工作树与分支，不重开
+后台/setup/freshness。以下追加已发生事实，不覆盖历史检查点。
+继承已完成且不重跑的82d640/6a077b分别留存212215及216219StageB；
+279cef留存176179/208214首次收口全现场，800bca留存200202静态诊断
+及215限定动词复核。原始失败3b7bfb/209216及原helper仍保留。
+
+215已按确证方向仅四处“运送→运达”（原L53/54/57/58）修正，L56
+运送不变，800bca已限定复核并留存，不再次修字。217原点注释改为
+0/O未定，219仅插中/右括号及纠正错误缺括号注释；完整限定复核、
+七原文本绑定、命令流/六helper和全部HOLD消费后，唯一8fce4a exit0
+留存54files318141bytes68bindings，零排除，随后才首次收口。
+
+唯一首次215219收口8ce63f+bac337实际helper exit1：215印刷21/MD22
+FAIL、21621/21、21717/17、21820/21 FAIL、21926/26。规范化和排除
+均0；正文/公式/非空标记不变，只生成metadata、图框/引用和块空行
+序列化。唯一2a6bdd exit0留存全现场56files758757bytes16bindings。
+工作PNG未晋升或批准；工具通过不解除0/O、旋转末字、native、图/
+表几何、218219段落和外215220 HOLD，不计完整课。
+
+Franklin首次214零图编码诊断完整消费后，唯一c86389 exit0留存
+89files511364bytes126bindings，零排除。仅证实完整cases内已有↵后
+另换Markdown行形成重复表示的部分D1提案；既有ex samerow不能完整
+表示并排全部rank，未建立完整MD修复。提案未应用、不重跑214，
+26/58 FAIL和所有旧HOLD保留。200202静态诊断未证明缺行/缺标记，
+没有MD提案，20023/21、20225/24、19712/11及H01-H09不变。
+
+9c33–36作者与独立StageA完整源库存/四首稿/十一行表值、七/五
+helper、实命令流、ledger和manifest消费/绑定后，唯一2ddad0 exit0
+分别留存104files998134bytes141bindings和56files809106bytes99bindings，
+零排除。初15123b因把A06-A07汇总误当单回执，在复制前exit1；
+原helper不改，单独qualifiedhelper完成留存，未重跑任何源审查。
+作者对返回尺寸的数字声明仍只是其记录，父未独立认证native。
+
+随后才披露四当前MD哈希并授权Kuhn唯一9c33–36StageB。Pascal和
+Kuhn永久各14/24，本物理批各6/8不重置，Kuhn最多2必要NEWROI，
+不重开原图/旧crop。题64源C_6^5=2^6不凭恒等式修字，图表/字形/
+native/边界及9c23/24旧计数STOP不解除。
+
+新37–40唯一首次备料f77e77+f05b80全exit0，于14:53:43–46UTC；
+原生1695x2381，28/27/28/25仅metadata非计数目标。Pascal新批源作者
+继承14/24、distincthard8；Franklin独立StageA继承7/24，四原图加
+最多2新ROI并预留2给后续StageB。只共享0036末正文和已闭合表的
+TEXT，不重读旧页。Planck接全新零图FIRST215编码诊断，8/24不重置；
+查已有↵后的重复Markdown换行，只允许确证窄提案，不定期望计数。
+
+仍31完整课，只有114+125两完整未提交课；125不重跑，最后推送仍
+2d002f414f514803279ff7a62c5749904bb896a8，29课/251答案/227选择/
+976选项。本补记时无stage/commit/push。局部HOLD不使其他课停工，
+继续凑约四真实完整课后窄commit/push并立即下一批。父永久24/24，
+零图片打开/payload；layout.py899ea25c不动；无DB/发布器/app/依赖/
+schema/Charter/pull/rebase/main合并/工单关闭/部署，T和无关脏改动保留。
+
+## 2026-11-17 检查点接续与原始流留存
+
+沿用同一cap3/SessionB及继承的开始授权。补记此前未写入的实际工作，
+不重放后台/freshness/setup，也不把留存或工具对账当整课完成。
+
+继承f87d41已完成留存9c3336StageB99files626155bytes197bindings、
+215首次编码诊断83files278984bytes116bindings、222225首次路径
+失败4files15970bytes3bindings，均零排除；原ENOENT和全部旧HOLD
+保留。继承7b27af已留存9c3740作者137files1080126bytes170bindings
+及StageA41files792998bytes57bindings，随后才授权唯一StageB。
+222225的首次备料27/23/24/23仅metadata，不是人工目标；作者和
+独立StageA已经完成。继承5fd572工具检查不重放，本段不重建
+未列出的命令细节或把它扩大成源文/显示批准。
+
+继承53f115留存215限定编码复核22files69495bytes29bindings：
+只删已有↵后的一个LF，四处运达和原L56运送均不变。继承deccc4
+留存9c33限定等号/句点复核44files122406bytes75bindings，原L65
+有不变。唯一215修后收口1314fe实际exit0为21/21；图框/PNG哈希
+0fc76f7d8361bc040dcc0e344ae0fd8f10467cee5f25d24c3aa16626c11f850a
+不变，仅生成printed_lines22→21。首次21/22 FAIL仍保留。
+9c3336首次1782f7总exit1，依次25/24 FAIL、24/24工具通过、
+25/24 FAIL、15/13 FAIL；36生成表框[223,1486,1228,651]及工作
+PNG引用，不晋升图片。继承8be027零排除留存两组43files474578bytes
+16bindings及17files224943bytes6bindings。原17e740留存helper因
+误要求36图声明不变在复制前失败，原helper保留，不是终结器重跑。
+
+本次4bf6c1实际exit0完整留存222225作者124files1143507bytes
+298bindings及StageA67files473952bytes106bindings，零排除。
+剩余全命令流以完整字节/结构绑定：metadata与contracts的全部
+sed输入、物化与输入清单、closing/terminal全尾流，以及StageA
+native-evidence和retention全流。原作者gitstatus截断不可恢复，
+父2a3a95截断不冒称完整；父2826a2只读投影把多JSON尾流误当
+单JSON而exit1，原流未改，本次按真实结构绑定，不重放执行。
+留存后才披露四作者哈希，授权Plato唯一StageB，永久6/24同批
+6/8，仅余2必要NEWROI，不重开旧图。222题913的正负号及错排
+方程组、225例8有横线/无横线与9990、224225例7及外226仍HOLD。
+
+Franklin9c3740唯一StageB已完成，完整报告/提案79ce4e、全矩阵
+5410e4、四helper8dbe63、freezehelper9bd20a、ledger5d2b72、
+输入及closing/terminal4a3a51、真实freeze全流129d3e及全部seal
+entries729b88已消费。6fdf8f实际exit0零排除留存58files432215bytes
+102bindings；全重复MD/编号流按原helper输出完整绑定，不重审。
+其永久15/24、同批8/8，只有2NEWROI，无旧图重开，native仍UNKNOWN。
+留存后只删除39-R13多写的一个左括号，补40-R07漏逗号，并各追加
+一条来源说明；原C02双括号声明保留为相冲突的历史判断，U+FF0C
+为转录选择而非像素编码认证。当前39/40SHA分别为
+1ba3a0a13aa2461032d5f842357cac30effc19c78bbf7facf0ffea7706d0d217、
+39e24e6342cbfcbc40386bd019f1e4a239d78431c9067f395796218aaec25864。
+已授权Franklin全新零图changed-onlyTEXT复核，尚未消费/留存，
+未首次收口37–40。Kuhn新33静态计行诊断仍待返回；33阻塞n6装订。
+
+完整课仍31，完整但未提交仅114+125两课，125不重跑。最后推送
+仍2d002f414f514803279ff7a62c5749904bb896a8，29课/251答案/
+227选择/976选项。本次无stage/commit/push、paid请求、图晋升、
+全项目检查、后台/setup/DB/发布器/app/依赖/schema/Charter改动、
+pull/rebase/main合并/handoff/关闭/部署。父24/24零图/payload，
+layout.py899ea25c冻结；T及无关脏改动保留。所有旧FAIL/HOLD/
+UNKNOWN包括9c23/24 STOP、9c35题64源C_6^5均不解除。
+
+## 2026-11-17 首次 37–40 失败与 913 窄修正
+
+同一cap3/SessionB接续，不重放后台/freshness/setup，不覆盖旧记录。
+继承de889a已完整留存9c33首次零图静态诊断88files423991bytes/
+202bindings，零排除；UNKNOWN且无提案，印刷25/MD24首次FAIL
+与n6装订阻塞保留。原edcba5错误假设input-bindings.json路径和
+72d504截断投影保持失败，cab12b已恢复完整closing/七向量；
+本段不重做诊断或计行。
+
+继承282bc6+f7549d已首次准备10c226–229，于15:28:02.252UTC
+完成，原生1695×2580；25/26/26/25仅metadata，非计数目标。
+Euclid新批作者继承8/24，最多四原图加四必要NEWROI，永久上限16/24；
+Planck新批独立盲StageA继承8/24，最多四原图加两NEWROI，预留两
+给后续唯一StageB。两者只得225尾TEXT，不读旧页像素；本段时仍未
+收到完成包，不冒称其实际图耗/结果，作者未披露，StageB未授权。
+
+Franklin39/40限定TEXT复核完整报告/逐字节比较/ledger已于继承
+bf3deb消费，两helperddd246和freezehelper67149e完整消费。剩余
+inputbindingsdaa175、commandledger402153、controls183907、全部
+seal/outerreturn987d5f、真实receipt/freeze/terminal2aed14已完整
+消费；重复retain/verify全流按原helper输出逐字节绑定。唯一fbbcb7
+实际exit0留存45files253383bytes128bindings，零排除，位于
+9c/evidence/batch012-source39340-affected-text。仅两正文变化和
+两追加note，其余字节不变；旧C02双括号声明仍保留为冲突历史，
+U+FF0C只是有条件转录选择。永久15/24、同批8/8、NEW0，无图。
+
+上述留存后唯一71684a+08abfc首次收口37–40，实际helper exit1，
+依次印刷28/MD26、27/26、28/26、25/24，全部首次FAIL。完整
+四audit/pageJSON938782+21f306已消费；规范化/unknownchars/
+katexwarnings/errata/exclusions均0，无图，完整正文/公式/标记/
+空白体不变，只增加生成metadata。唯一6a2de1实际exit0留存
+41files483527bytes16bindings，零排除，位于
+9c/evidence/batch012-source3740-first-finalize-failures。不诊断/
+重试/补行/改layout/装订，不将失败或留存转为PASS。
+
+Plato222–225唯一StageB已完整消费：继承9d2e3e完整report/matrix，
+六helper/全部discrepanciesb0de48、完整ledger/index/bindings/
+ROI/terminal734827、七实际vector/receipt/fullterminal702811及
+全部69/63memberseal931b5f。重复notes/MD/map/controls/authorledger
+完整raw逐字节/结构绑定。唯一b152bc实际exit0留存97files/
+705098bytes217bindings，零排除，位于
+10c/evidence/batch012-source222225-stageB。永久8/24、同批8/8，
+仅2NEWROI，无旧图重开，numeric native delivery仍UNKNOWN。
+顶部并排系统rank仍HOLD，底部922.1/923.1/922.2/923.2/922.3顺序
+仅被佐证，非计数PASS；223有限数字串/标点/排版仍UNKNOWN，
+225例8有横线题干/无横线等式和9990忠实不修。
+
+留存后af0112证实canonical222与冻结首稿完全同字节，随后只把
+题913第一式12(x-y)^2+x=2.5-y中的一个减号改为加号，并追加一条
+来源note；第二式6(x-y)^2+x=0.125+y、所有其他系数/小数/符号/
+括号/WRAP/samerow/旧note均不变，不登记求解勘误。当前SHA
+46c08310ef39736bc73583b790a2a669f977ebec5515814dd6534c2b9b097ea7。
+已授权Plato全新零图affected222-913-text限定复核，非第二StageB；
+本段时尚未返回或留存，222–225首次finalizer尚未运行。
+
+完整课仍31，完整未提交仅114+125两课；125不重跑，最后推送仍
+2d002f414f514803279ff7a62c5749904bb896a8，29课/251答案/227选择/
+976选项。无stage/commit/push、paid请求、图晋升、全项目检查、
+后台/setup/DB/发布器/app/依赖/schema/Charter/pull/rebase/
+main合并/handoff/关闭/部署；T和无关脏改动保留。父永久24/24
+零图/payload，layout.py899ea25c冻结，所有旧FAIL/HOLD/UNKNOWN
+包括9c23/24 STOP、33/35/36与37–40首次FAIL全部保留。
+
+### 新 230–233 独立源批次
+
+9c33诊断全留存de889a后关闭Kuhn，实际previousstatus完成，无提案，
+永久16/24同批8/8不重置；39/40限定复核全留存fbbcb7后关闭Franklin，
+实际previousstatus完成，永久15/24同批8/8不重置。关闭只释放并发位，
+不解除任何源HOLD或失败，也不回收图预算。
+
+根据TOC物理230(印刷224)进入“函数”，首次f41385+28f2b5全exit0
+准备230–233，于15:41:41.543UTC完成，原生1695×2580，25/27/25/24
+只是metadata，不是目标。路径production-source10c230-233及
+production-source10c230-233-prepare-receipts；未重准备旧页。
+
+新空历史Turing01a1ea2c-65ca-78d0-abe0-70108ee00cc8独立首次盲StageA，
+独占production-source10c230-233-review；新空历史Kierkegaard
+01a1ea2c-db0d-78c1-ad4f-efe2bccea755首次源作者，独占
+production-source10c230-233-author与guardedcanonical0230–0233MD。
+两者新上下文图耗从0计，但不影响父及已关闭代理的永久用量；
+作者本新物理批四原图加最多四必要NEWROI，StageA四原图加最多两
+NEWROI并预留两给唯一后续StageB。原稿未披露；229尾TEXT尚未就绪，
+只许把外接缝保持UNKNOWN，不看229canonical/旧像素，不因TOC
+暗示章头就编造章头。无source/page/unit/count/display PASS。
+
+本段时226–229作者/盲StageA及222题913限定TEXT复核均仍待完成包；
+不重复wait所得空结果为完成，不消费未封存稿。父仍零图/payload，
+无running父exec/browser/server；其余界限及所有历史FAIL/HOLD不变。
+
+### 913 留存及 FIRST222–225 实际继续
+
+压缩后检查点不构成人类暂停；沿2026-11-17“开始吧”继续同一SessionB。
+913限定TEXT完整报告/五helper/controls继承已消费，完整retain-text/
+compare-bytes raw按helper逐字节绑定；唯一c8cbea exit0留存34files/
+144604bytes67bindings，零排除。仅一正文减号改加号及489byte新note，
+旧notes与其余字节岛不变。ledger中Human supplies b152bc限定为父代理
+传输，不冒充新增直接人类证据，不改冻结ledger。
+
+随后仅首次d259b2+5d7649运行222–225，helper实际exit1：
+222印刷27/MD41 FAIL；22323/23、22424/24、22523/23工具通过。
+完整四command/audit/pageJSON dbf6b9已消费，唯一7da2be exit0
+留存35files425386bytes8bindings，零排除。正文无变化，规范化/
+未知字符/KaTeX警告/计数排除/errata/figures皆零。222失败原样保留，
+无诊断/重试/装订；其他三页工具通过不降级source/rank/digit/native/
+typography/outer/page/unit/display HOLD。
+
+226–229作者与盲StageA全包消费后唯一a4d045 exit0留存：
+作者136files1460585bytes237bindings，StageA112files1180964bytes
+171bindings，两者零排除。所有递归closing exclusions完整留存；
+765a20/8735f9截断读出不冒充完整消费，22a473完整vector及ab20bd
+完整93-member替代读取声明，原始stream不重跑。作者永久16/24同批8/8，
+Planck永久14/24同批6/8；冻结StageA0555/0444不改。
+
+两包留存后仅披露四首稿MD哈希，submission
+01a1ea39-51ab-72d1-a03e-c08a838e0998授权Planck唯一StageB，
+新独占production-source10c226-229-stageb，最多2必要NEWROI，
+永久最多16/24同批最多8/8，预算不重置。sqrt2有限数字、alpha/beta
+等号join、figure114M标记/O0及所有旧HOLD不按数学惯例推断。
+StageB只提案不应用，所有实际raw/helper/terminal完整封存后返回TEXT。
+
+230–233盲StageA Turing已返回4原图0ROI，作者Kierkegaard已返回
+4原图3NEWROI，两包本段时待完整消费/留存，未披露作者、未授权StageB。
+229尾TEXT在已留存作者包可用，尚未传输；原UNKNOWN历史不改。
+父仍永久24/24零图payload，125绝不重跑；完整课31，完整未提交114+125，
+最后push仍2d002f414f514803279ff7a62c5749904bb896a8。按最新授权完整
+批次commit/push后继续下批，不以检查点或汇报结束生产；不合main、
+不handoff/关闭/部署，不触DB/publisher/paid/app/dependency/schema/Charter。
+
+### 230–233 完整留存与 234–237 首次生产
+
+继续同一SessionB，不重放后台/freshness/setup或已完成检查。继承cded77
+已完整消费230–233作者summary和盲StageA report；本次完整消费作者
+inventory/map/notes6bca1c、四盲inventories939f0f、四FIRSTMD99df4b、
+所有helpersa42356/d79879、controls747d76/19cbae、inputs4f38ca/1721b4、
+全author39/29/4成员sealbd2d05、盲38/19seal9e9acc及八作者/三盲
+实际vectors、closing35/19成员和rawc3dcaa/b02096/328d0b。完整重复
+raw按原helper输出逐字节/结构绑定，不重执行。19cbae的inputs投影
+截断不冒称完整，1721b4只替代读取声明。7ab781将commands/.keep当
+目录而ENOTDIR，原失败保留；c3dcaa按真实目录条目读取，原stream不改。
+
+唯一04ed6d留存作者85files1048196bytes159bindings，角色exit0；
+同helper总exit1因盲包的相对path被误要求绝对path，在复制盲包之前失败。
+原helper/作者留存保持不变，作者绝不重留存。新的仅盲包helper将path
+解析于原review根，唯一712ae8实际exit0留存60files663633bytes/
+172bindings，零排除。两根为10c/evidence/batch012-source230233-
+first-author和batch012-source230233-stageA。控制记录中user/human
+supplied是父代理transport，不是新增直接人类证据，冻结ledger不改。
+
+两包全留存后才披露四FIRST作者哈希，submission
+01a1ea3e-b074-7160-be0a-2a0cc471e138授权Turing唯一StageB，新独占
+production-source10c230-233-stageb。永久4/24同批4/8不重置，最多
+2必要NEW native/unscaled ROI，本次上限6/24及6/8，不重开原图或
+旧/作者crop。只提案不canonical/finalize/solver；230 f句点/逗号、
+232因此后逗号、figure115分隔符/O0、Gamma脚本、118黑遮挡及所有
+native/typography/external/count/page/unit/displayHOLD保持条件。
+9349ca和submission01a1ea3f-c626-7170-a091-908fcd843b4d只运送
+已留存FIRST229完整尾p TEXT，不新增229像素或source批准；旧incoming
+UNKNOWN历史保留，外234也不凭TOC推断。此时StageB尚在途。
+
+Plato经已完整留存913限定复核后接新唯一FIRST222零图静态TEXT诊断，
+submission01a1ea3f-6b08-74e3-ab03-38fd3ec04274，独占
+production-source222-first-static-diagnosis。只读FIRST27/41原始
+审计/稿件及已有源rank/实现，禁止parser/counter/finalizer/test
+再执行、canonical/目标计数/图框/exclusion改动或数学修复。非第二
+StageB，此时尚未返回；原27/41FAIL和其他HOLD不降级。
+
+全留存a4d045后关闭Euclid，实际previousstatus完成，永久16/24同批8/8；
+全留存04ed6d-author后关闭Kierkegaard，实际previousstatus完成，
+永久7/24同批7/8。关闭只释放并发位，不重置预算或源状态。
+
+根据TOC TEXT，physical236(printed230)进入偶函数奇函数，physical238
+进入周期函数，仅定位不编标题。唯一699d5f实际exit0于16:04:11.169UTC
+首次准备234–237，原生1695x2580，20/23/25/20仅metadata非目标；
+旧页不重prepare。新空history Kant01a1ea41-4dc4-75a0-8eea-45aa48a4cd7b
+首次作者独占production-source10c234-237-author及guardedcanonical
+0234–0237MD；新空history Lovelace01a1ea41-4e2e-7be3-98bc-c1d6d113a00b
+首次盲StageA独占production-source10c234-237-review。各自从新上下文0
+计图，作者至多四原图加四必要NEWROI，StageA至多四原图加两必要NEWROI
+并预留两给唯一StageB；不影响旧代理/父永久预算。只共享233末段和
+图题/foot的TEXT，非源批准；外233/238保持条件，作者未披露，StageB
+未授权，本段不冒称实际完成或实际图耗。
+
+完整课仍31，完整未提交114+125两课，125绝不重跑；最后push仍
+2d002f414f514803279ff7a62c5749904bb896a8，29课/251答案/227选择/
+976选项。父永久24/24零视觉/payload/decode，layout.py899ea25c冻结。
+所有历史FAIL/HOLD/UNKNOWN、T及无关脏改动保留；无stage/commit/push、
+DB/publisher/paid/app/dependency/schema/Charter/pull/rebase/handoff/
+main合并/工单关闭/部署。检查点不暂停生产，继续处理在途226–229
+和230–233唯一StageB及新234–237源批次。
+
+### 234–237 盲稿留存与 FIRST226–233
+
+继续同一cap3/SessionB，沿人类2026-11-17“开始吧”授权；检查点不暂停。
+继承226–229唯一StageB留存886b89及234–237作者留存dc1fc8已完成，
+均未重跑。234–237盲StageA剩余inputs/guard/audit/metadata/terminal
+c0415b、d7227f、5e614c、b4449f、06d9f1完整消费后，唯一568f13
+exit0零排除留存45files548419bytes72bindings及4完整capturedstreams，
+位于batch012-source234237-stageA。外terminal-return精确response缺失
+仍UNKNOWN；human/user wording只限定为父代理transport，不冒充新增
+直接人类证据。随后才披露四FIRST作者哈希并授权Lovelace唯一StageB，
+submission01a1ea51-b93a-7a83-b14c-b8fd18b3f424，独占
+production-source10c234-237-stageb；entry永久4/24同批4/8，
+最多2必要NEW nativeROI，不重开旧图，此时仍在途，未消费完成包。
+
+229限定notesTEXT完整报告/matrix/helpers/controls65a27f、close/
+policy/index741756、全部31/35member和4实际receipt0f203d及完整JSON
+0fb10c已消费。Planck1a3383 exit0仅P01/P02说明替换、其余字节不变，
+非第二StageB；唯一2b8642 exit0零排除留存47files207991bytes/
+119bindings，位于batch012-source229-notes-affected-text。
+
+230–233唯一StageB完整helpers/control/ROIc01bca、全部61inputbindings/
+4作者9ec775、6实际vectors0baff5、101terminal/98snapshot71e474及
+proposalsfa8ce8已消费。唯一53b7a2 exit0零排除留存170files2074638bytes/
+414bindings，位于batch012-source230233-stageB。新ROI佐证FIRST f.
+及“因此，图”，没有正文patch；可选230来源note因证据已完整保存而未加。
+O/0、Gamma脚本、115分隔符、118黑遮挡继续UNKNOWN。d168b0/9ec469
+截断读取保留，只以9ec775/71e474替代读取声明；d90253错误不存在路径
+exit1保留，实际finalize222225-first-once仅2c2edd读取，未执行。
+全留存后关闭Planck16/24同批8/8、Turing6/24同批6/8、Kant4/24同批4/8，
+实际previousstatus均completed，关闭不重置图耗或源HOLD。
+
+唯一9b3b36首次执行226–233定稿helper实际exit1，全部8children已完成，
+不重跑。完整8f9ac9/8c3930 command/audit/pageJSON及本轮a2ea77完整
+raw/records已消费：226印刷25/MD24 FAIL，另有移除既有WRAP后
+出现的KaTeX undefined cdotsb；22726/26、22826/26、22925/25工具exit0；
+23026/25 FAIL、23127/27工具exit0、23215/14 FAIL、23320/20工具exit0。
+失败记录不诊断/修复/重试，工具零exit不替代source/page/unit/display批准。
+
+004276完整审计/正文差异及e2b19f全部work成员已消费。最初留存helper
+43a641因错误要求canonical0229/figures/fig-114.png而ENOENT exit1，
+在任何复制之前失败；5309c0确认两个输出根均不存在、canonical各仅
+MD/JSON/audit，生成PNG只在work。原失败helper保留、不改不重执行。
+新work-only唯一2b8203 exit0零排除分别留存226–22962files1016655bytes/
+21bindings、230–23371files1076149bytes/21bindings，位于两组
+batch012-source<range>-first-finalize。全部源PNG/网格/template/layout/
+生成figPNG、canonical及真实raw/oldhelper完整保存。严格字节比较证明
+只有metadata、audit记录的图框吸附及图片引用插入；其余正文/公式/LF/
+WRAP/flags/caption/notes完全不变。图114–124未晋升为现代图或批准图。
+
+### 222 静态诊断留存与新 238–245
+
+Plato222唯一零图静态诊断继承report97897d、trace/proposals/bootstrap
+b2839a及6helpers05129b已消费。本轮完整19实际vectors27f788、
+13inputbindingsc9e099、87payload/88seal6ee5c6及83closingmembers
+a0a459已消费。e96678综合command-index和14eaf8综合closing投影截断
+保留，不冒充完整读取；上述完整读出替代其读取声明。重复cat/nl/sed/
+rg/transport raw按原输入和helper完整逐字节/结构绑定，无原命令重执行。
+唯一0d2d11 exit0零排除留存103files644106bytes376bindings，位于
+batch012-source222-first-static-diagnosis。结论UNKNOWN，无安全编码提案；
+samerow只扣一行，未发现LF+WRAP双编码，不为凑27扣整组方程。
+FIRST27/41 FAIL及bootstrap不支持help exit1/缺精确raw或时间UNKNOWN
+全部保留。完整留存后关闭Plato，actualpreviousstatuscompleted，永久
+8/24同批8/8，不重置；未修222、重试或装订。
+
+继承0510b6 exit0于16:26:57.595UTC首次准备238–241，原生1695x2580，
+21/22/26/25仅metadata非目标。Galileo零历史FIRST作者独占
+production-source10c238-241-author；Beauvoir零历史独立FIRST盲StageA
+独占production-source10c238-241-review。两者均仍在途，未消费完成包。
+仅传237尾TEXT bf7710，不传旧页像素或source批准；尾公式完整内容
+UNKNOWN，须从238像素续接。作者未披露、StageB/首次finalizer未授权。
+
+唯一新f82205+6435b2 exit0于16:35:18.326UTC首次prepare242–245，
+原生1695x2580，20/24/26/21仅metadata非目标，不重准备旧页。
+新空history Sartre01a1ea5d-c63e-7c01-80ee-d7dc6bd1f654 FIRST作者
+独占production-source10c242-245-author及guardedcanonical0242–0245MD，
+entry0，四原图加最多4必要NEWROI，硬上限8；只收TEXT/PATH/HASH。
+241尾TEXT尚未可用，外接缝保持UNKNOWN，不读241canonical或旧像素；
+TOC“正比例”仅定位，不据其编造标题。242–245盲StageA尚未派发，
+作者未披露，无review/finalizer/装订/现代图/答案/显示验收。
+
+完整课仍31，完整未提交仅114+125，125绝不重跑。最后push仍
+2d002f414f514803279ff7a62c5749904bb896a8，29课/251答案/227选择/
+976选项。本轮无新完整课、stage/commit/push、paid请求、DB/publisher/
+app/dependency/schema/Charter改动、pull/rebase/handoff/main合并/工单
+关闭/部署。父永久24/24零视觉/payload/pixeldecode，layout.py899ea25c冻结，
+T及无关脏改动和全部历史FAIL/HOLD/UNKNOWN保留。父备料exec71369
+已正常结束，无父exec/browser/server在途；生产代理继续，不构成人类暂停。
+
+### 238–241 双包留存与唯一 StageB
+
+沿同一人类2026-11-17“开始吧”继续cap3/SessionB，不重放任何已完成
+后台/freshness/setup、审查、finalizer或留存，125绝不重跑。
+238–241作者Galileo完整report039850、四FIRSTMDa98d3e、
+inventories9a0853、helpers654d4b、inputs/ROI/comparison96d9cf、
+68seal/8closing8267eb、七实际vectors/raw9fb188及patchesaffd18已消费；
+唯一dbfec6 exit0零排除留存104files1409757bytes144bindings，
+位于batch012-source238241-first-author。四canonical/FIRST/snapshot
+字节相等；作者永久5/24同批5/8，四原图加一NEWROI。完整留存后才
+关闭Galileo，actualpreviousstatuscompleted，预算不重置。
+
+盲StageA继承report6fbe18、四inventory2011cd/6c8afd、
+helpers644bc3、ledgersa85457、17inputs/45catalogue42bc96、
+49payload/5seal62cfde完整消费。本轮剩余helpers1dd61b/7983c7、
+八实际vectorsb375d5、完整历史owninspection561f75、
+ROI及close1/2/3原raw0a1d1b、catalogue完整ledgerdf8a7e消费完毕。
+所有重复inputs/catalogue/closing原raw逐字节或结构绑定，原命令不重执行。
+唯一1b1e6f exit0零排除留存78files844058bytes157bindings，
+位于batch012-source238241-stageA；payload20c465d4、
+sealb21e173e和外close2/完整close3companion均保留。
+未匹配的原manualpatch/reporthunk失败及其owninspection继续留存，
+不是图像失败或重开；缺历史精确raw/时间/native交付仍UNKNOWN。
+
+两包完整留存后才披露四作者FIRSTMD哈希，submission
+01a1ea67-81ea-7521-b756-edb52a95b3f2授权Beauvoir唯一StageB，
+新独占production-source10c238-241-stageb。entry永久6/24同批6/8，
+只允许最多两必要NEW单一连续native/unscaledROI，最高8/24及8/8，
+不重开原图、旧ROI或作者ROI；只比较和提案，不应用canonical或定稿。
+figure144 unsigned5/9pi不得按函数规律补负号；所有O0/native/
+坐标/outer237242/页数/单元/显示及旧FAIL/HOLD/UNKNOWN不降级。
+
+242–245独立盲FIRSTStageA Arendt已派发，独占
+production-source10c242-245-review，新空history四原图加最多两
+NEWROI，预留两给未来唯一StageB；此时仍在途，无完成结果消费。
+593b7d只读取已留存FIRST241末尾p open两行TEXT，通过submission
+01a1ea63-c3ed-7a20-8b64-7584efc00394和
+01a1ea63-c465-7a60-8043-62cb2f6d5046给Sartre/Arendt作上下文；
+不提供241像素或source批准，旧外接UNKNOWN不改。234–237唯一
+StageB仍在途，未冒称完成或执行第二次。
+
+完整课仍31，完整未提交仅114+125；最后push仍2d002f414f514803279ff7a62c5749904bb896a8，
+29课/251答案/227选择/976选项。本段无新完整课、commit/push、
+DB/publisher/paid/app/dependency/schema/Charter/pull/rebase/handoff/
+main合并/关闭/部署。父永久24/24零视觉/payload/pixeldecode，
+layout.py899ea25c冻结；无父exec/browser/server在途。继续生产。
+
+### 242–245 双包留存与新 246–249
+
+沿同一人类2026-11-17“开始吧”继续cap3/SessionB；检查点不暂停。
+继承238–241双包留存/唯一StageB派发已完成，不重跑。242–245作者
+report2247ab、四FIRSTMD197592、inventory/map/notes a33923、
+四helper4af2f2、control/ROI/terminal d2015b、全部terminal aae661、
+42inputs ac0def、九实际vectors297aa5、完整patch/raw529be2已消费；
+唯一427051 exit0零排除留存153files17253236bytes241bindings，位于
+batch012-source242245-first-author。早期70f182截断保留，仅以aae661
+替代完整读取声明。完整留存后关闭Sartre，actualpreviousstatuscompleted，
+永久5/24同批5/8不重置。印刷244LO、245k=1/3无π保持原样，map中
+zero-width关系及标点条件已披露，不自动修。
+
+234–237唯一StageB完整comparison/proposals/addendum/terminal2974db、
+九helper b0f1c0、control/protocol/input/latevectors52fbb9、完整vector/
+index/failure/ledger/opaqueROI ba4ff6及五frozenvector/invalid235TEXT
+94bba5已消费。cf00c2父ESM require读取失败保留，94bba5只改读取，
+不重执行原helper。唯一2da185 exit0零排除留存47files481587bytes
+50bindings，位于batch012-source234237-stageB-failure；原audit exit1、
+invalid235TEXT、invalid236编码ROI、invalidmanualskill和ca8f4c外
+receipt完整保留。父未解码或显示ROI；缺120-file response及历史
+截断仍UNKNOWN，不重建/重试。零提案/零patch，canonical不变，非
+source通过。全留存后关闭Lovelace，actualpreviousstatuscompleted，
+永久5/24同批5/8不重置；没有第二StageB或首次finalizer。
+
+242–245盲FIRSTStageA report3e19b3、四inventory6868aa、
+四helper6777a3、全部11entry/companion/visualledger/ROI5458c6、
+全部87seal/38inputs4f9ae4及actualarchive/closingvector/fullraw733d87
+完整消费。预先写定的新唯一retainer本轮首次执行c28d8e实际exit0，
+127files2107056bytes182bindings零排除，位于batch012-source242245-stageA。
+E01–04/E09–10是明确标记source-byte reproductions，E08规则slice/
+E11serialization非历史capturedstream；E07exit1保留，outerraw/
+timestamps UNKNOWN不重构。两包全留存后才披露四FIRST作者哈希，
+submission01a1ea71-c219-7a20-8a72-67c645091d4a授权Arendt唯一StageB，
+新独占production-source10c242-245-stageb；entry永久5/24同批5/8，
+至多两必要NEW native单一连续ROI，最高7/24同批7/8，原图/旧ROI/
+作者ROI不重开。只比较/提案，不应用canonical或finalize；242首标点、
+243“不等于零”后、244标点及proof open/cont由独立证据裁定，未预修。
+
+唯一6263ec/7ec5f5首次prepare246–249四页均exit0，于
+16:51:42.286UTC结束，原生1695x2580，24/19/23/17仅metadata非目标。
+新空history Heisenberg01a1ea6c-e20c-70e3-9d49-00ea7345c3c2 FIRST
+作者独占production-source10c246-249-author及guardedcanonical0246–0249；
+新空history Confucius01a1ea6d-6092-7d81-96a5-0125ac57a7a6 FIRST
+盲StageA独占production-source10c246-249-review。作者四原图加至多
+四必要NEWROI，盲审四原图加至多两必要NEWROI并预留StageB两槽；
+此时仍在途。只共享已全留存245尾TEXT，非源批准；
+01a1ea6d-7654-75a2-a42d-1422a8477f69澄清作者转义transport，
+不重开245像素，外245250仍UNKNOWN，未披露作者或授权StageB。
+
+238–241唯一StageB仍在途，未消费完成包或首次定稿。完整课仍31，
+完整未提交仅114+125，125绝不重跑；最后push仍
+2d002f414f514803279ff7a62c5749904bb896a8，29课/251答案/227选择/
+976选项。本段无新完整课、commit/push、paid/DB/publisher/app/
+dependency/schema/Charter/pull/rebase/handoff/main合并/关闭/部署；
+父永久24/24零视觉/payload/pixeldecode，layout.py899ea25c冻结。
+父prepareexec66620已正常结束，无父exec/browser/server在途。
+T、无关脏改动及全部FAIL/HOLD/UNKNOWN保留，继续生产。
+
+### 238–241 最小元数据纠偏与实际收口
+
+唯一StageB完整report13ec50、四comparison/proposals7c582f、
+五helper/objectdefinitions f628db、剩余helper/submission/ledger/seal
+87d3b9、metadata6bec42、member/index/ancestry/payload1c4408、
+actualvectors8963b7/903a46完整消费。f97764综合投影截断保留，
+后两完整读取只替代缺失读取声明；全部重复raw/origin逐字节绑定，
+无原命令重执行。唯一471a89 exit0零排除留存322files2178473bytes
+888bindings，位于batch012-source238241-stageB。全留存后关闭Beauvoir，
+actualpreviousstatuscompleted，永久7/24同批7/8，StageB一NEWROI，
+零重开/重置。父只应用240同式跨行LF改单WRAP、241下降句末点改冒号，
+唯一8470a8 exit0留存12files32060bytes，位于
+batch012-source238241-applied-text；其余全部正文/数学/flags/notes等字节相等。
+
+首次591ff4四child实际exit1，仅因YAML元数据容器与现有JSON解析器
+不兼容，未进入计数/裁图/生成pageJSON/audit。唯一f6390d exit0零排除
+留存45files900703bytes，位于batch012-source238241-first-finalize-failure；
+四原稿和四完整失败输出永久保留，不能冒称行数失败。
+随后codex_delegation source01a136ae-5ddc-7cd0-a644-fbe42a3f5a8a
+明确一次最小纠偏：只把元数据表示改成现有接口要求JSON，正文原字节、
+原notes值和真实源审证据不改，补此前未到达的实际计数/收口。
+父通过apply_patch仅换容器，不改解析器/应用/架构，零新源图读取/
+数学求解/已有独审重放/新验证系统。56d666/b1e46f四child已结束，
+238印刷19/正文18 FAIL，23921/21工具exit0，24018/18工具exit0，
+24121/20 FAIL；完整command/audit/pageJSON bad799已消费。
+唯一0f396c exit0零排除留存71files941535bytes，位于
+batch012-source238241-metadata-completion。正文除audit记录的图框吸附
+及图片引用插入外全部字节相同，notes值/公式/LF/WRAP/flags/caption不变；
+规范化/未知字符/KaTeX warning/exclusion/errata均零。包装故障已纠正，
+239/240工具结果复用，238/241真实局部计数FAIL不拟合或再试。
+图137–144只留源产物，不晋升现代图、单元或显示通过。
+
+246–249盲稿全report/四inventory6b2727及完整247/commandindex/ledger
+ecf82c、七helper/17inputs2c1e06/b08e20、五actualvectors/fullraw d008a2、
+全部payload/envelope/closing5642bf已消费。6b2727综合读取截断保留，
+ecf82c仅补完整247读取，未重审。唯一b1e78f exit0零排除留存
+73files745232bytes160bindings，位于batch012-source246249-stageA。
+Confucius永久6/24同批6/8、四原图加两NEWROI、零失败重开，预留两
+给未来唯一StageB。其FIRST读取prepare回执时暴露机器行数的过程
+FAIL完整保留，像素/作者盲观察不冒称完全计数盲证书；不重做FIRST。
+Heisenberg完成回报，report/index514b75已消费，其余包仍待消费留存；
+一直使用正确JSON、无格式修正。父notice01a1ea78-469f-7453-8cea-e5c1b9a1ffe6
+只防止未封存FIRST传播包装错误，不授权重读旧页/图或重置图耗。
+两包齐备前不披露作者或授权StageB。
+
+242–245唯一StageB comparison/proposals bec1df已消费，但完成包/
+留存/应用尚未完成；四标点候选与两条件grouping不预修。
+234–237真实失败仍封存、无第二StageB/首次finalizer。完整课仍31，
+完整未提交114+125，125绝不重跑，最后push仍2d002f414f514803279ff7a62c5749904bb896a8。
+父39331已正常结束，无父exec/browser/server在途；永久24/24零视觉/
+payload/pixeldecode、layout.py899ea25c冻结，T及无关脏改动保留，
+无新完整课/commit/push/paid/DB/publisher/app/dependency/schema/
+Charter/pull/rebase/handoff/main合并/关闭/部署，同一SessionB继续。
+
+### 242–245 首次收口与 250–253 接续
+
+同一 2026-11-17 cap3/SessionB 接续，不重启能力或重置图片预算。
+压缩前已完成的两项留存直接复用：246–249 FIRST 作者包
+batch012-source246249-first-author（220 files / 2084807 bytes，exit0）；
+242–245 唯一 StageB 包 batch012-source242245-stageB
+（632 files / 39582272 bytes，exit0）。246–249 的唯一 StageB
+仍由现有 Confucius 执行；未重派、未当作已完成。
+
+242–245 四处来源支持的标点在压缩前已应用：
+242“变号。因此”改“变号，因此”；243“不等于零，下列”改
+“不等于零。下列”；244 补“正数 $y$，而负数”的逗号，
+“在图 $148$ 中，画出”改“在图 $148$ 中；画出”。
+245 无修改；两个 conditional grouping 不应用。原数学、行序、
+open/cont、notes 和未知项保持。留存
+batch012-source242245-applied-punctuation：16 files / 51759 bytes，exit0。
+
+55ef84/2a0188 首次运行既有防重复 finalizer，四 child 全结束：
+242 印刷19/块体23，exit1；24317/17、24426/26、24516/16，exit0。
+02619f 读取完整 command/audit；未重跑任何 finalizer。
+8842a8 留存脚本在复制前误以完整 metadata equality 拒绝工具新增的
+figures/printed_lines/provenance，原失败与初版 helper 保留；
+仅修留存核对，原 metadata 值与其余 body 字节仍严格绑定。
+a4a10f 实际 exit0 留存 batch012-source242245-first-finalize：
+68 files / 937465 bytes，零排除。仅工具图框吸附、引用插入和上述
+生成元数据变化；规范化、未知字符、KaTeX warning、排除与 errata 均零。
+242 真正计行 FAIL 留存，不拟合或再试；243–245 工具通过直接复用，
+不晋升为 source/unit/display 通过。
+
+250–253 实际早已于 17:18:41.558–17:18:45.391 UTC 首次 prepare
+四页 exit0，现有回执与 helper 完整复用。68bc71 冗余尝试被首个
+work-exists 断言挡住，未调用任何 prepare child；尝试 helper 单独保存，
+原 helper 依执行时快照恢复，原回执未动。未重建目录或图。
+NEW FIRST 作者 Jason 01a1ea8a-3bd4-75f3-9471-91955645e801，
+独立盲审 Poincare 01a1ea8a-3c08-7312-a1c0-191f47982c3c；
+各独占 production-source10c250-253-author/review，真实新空图片 history。
+作者四原图加至多四必要 NEW native ROI；盲审四原图加至多两必要 ROI，
+预留两槽给未来唯一 StageB；父不接收图载荷。只共享已留存249闭合尾 TEXT，
+未披露新作者稿，未授权250–253 StageB。盲审不得读 prepare计行/模板。
+
+完整课仍31，完整未提交仍114+125；125不重跑。最后push仍
+2d002f414f514803279ff7a62c5749904bb896a8；本段无新完整课、commit/push、
+付费调用、DB/publisher、app/dependency/schema/Charter、合并/关闭/部署。
+父 permanent24/24、零视觉/payload/pixeldecode；layout899ea25c冻结；
+16653 已 exit1 结束，无父 exec/browser/server 在途。T及无关脏改动保留。
+
+### 246–249 唯一 StageB 封存及首次收口
+
+完整 report/candidates cc8762、四页 comparison19cea1/1babaa、
+command index/封存 helpers cac56a、最终实际结果和全部结构化索引
+5be205、visual ledger/最终 seal receipt74a04d 已读取。
+唯一 StageB 封存 child 于 17:30:55.110–17:30:55.203 UTC exit0；
+report008e9ea3、closing0235db03，零 canonical 修改候选。
+两个 NEW native ROI 仅支持作者248原句号、249原逗号，旧审稿未改；
+印刷246等式、247异常原句、248重复字/法式区间等照留。
+5ae038 实际 exit0 留存 batch012-source246249-stageB：
+372 files / 4036275 bytes / 1420 bindings，零排除。
+全部 raw/helper/已有输入字节完整保留，不冒称另作逐字语义复审，
+不重执行旧命令，不再复制第二套 original-bindings。
+留存后关闭 Confucius，工具实际 previous_status completed；
+永久8/24、同批8/8，两 NEW ROI，无重开或重置。
+
+ff74db/f97d5d 四页首次 finalizer 全部结束：24623/23 exit0；
+247印刷12/块体11 exit1；24818/18、24915/15 exit0。
+原图哈希与冻结 layout899ea25c 未变，零源正文修改/重读/第二独审。
+5023ec 实际 exit0 留存 batch012-source246249-first-finalize：
+68 files / 1009043 bytes，零排除。仅审计中的图框吸附、引用插入、
+生成 figures/printed_lines/provenance 元数据；原 metadata 值、
+notes 与其余正文数学/LF/WRAP/flags 字节相等。规范化、未知字符、
+KaTeX warning、计数排除和 errata 均零。247 局部计行 FAIL 留存，
+不凑行或再试；通过页复用，不等同 source/unit/display 批准。
+
+250–253 FIRST 作者及独立盲审仍在进行，未消费完成包、未披露作者
+哈希或授权 StageB。完整课31、未提交114+125及最后push保持不变；
+无新课/commit/push、付费/DB/publisher、app/依赖/schema/Charter/
+合并/关闭工单/部署；父80961 exit1结束，无父exec/browser/server在途。
+所有旧 FAIL/HOLD/UNKNOWN 与 T/无关脏改动保留，同一 SessionB 接续。
+
+### 250–253 双包留存与唯一 StageB 在途
+
+沿用压缩前实际结果，不重执行 FIRST 或留存脚本。作者包
+batch012-source250253-first-author 已于 17:41:33.847 UTC exit0 留存：
+113 files / 651925 bytes / 119 bindings；copy-manifest SHA256
+403e0781868d9024489fbbae7d1d444cdbbba6b955908eb39f1748b25c0814f1。
+盲审包 batch012-source250253-stageA 已于 17:39:06.634 UTC exit0 留存：
+113 files / 680332 bytes / 112 bindings；copy-manifest SHA256
+972554dcec21712ed95d31e9431c010680d0b2720ead27dd9ebdf8d7cbe2c934。
+两包均零排除；原 ENOENT、明确披露的 archival reproductions 和未知项照留。
+
+双包留存后已经向现有 Poincare
+01a1ea8a-3c08-7312-a1c0-191f47982c3c 派发唯一 StageB，
+独占 production-source10c250-253-stageb；本次恢复没有重复派发。
+即时状态仍在输入核对，尚未新增图像读取，永久6/24、同批6/8；
+至多使用原已预留两槽，不重开旧图或重置预算。图175前导笔画、
+图172标签/几何张力、外176/249254均未先行修正。
+尚无完成包、canonical 修改或首次 finalizer，不能记 source/unit/display 通过。
+
+工单此前已于 17:43:40.653811 UTC 写入进度评论
+dc7b53b8-d51a-4a7c-8c04-cdd5bbd7d32f，本次只补本地旧状态，不重复评论。
+完整课31、完整未提交114+125、最后push2d002f414f514803279ff7a62c5749904bb896a8
+保持；125不重跑，父永久24/24零视觉/payload/pixeldecode，layout899ea25c冻结。
+本次恢复无新完整课、commit/push、付费/DB/publisher/app/依赖/schema/Charter/
+合并/关闭/部署，T及全部旧FAIL/HOLD/UNKNOWN原样保留。
+
+### 250–253 唯一 StageB 与首次收口完成
+
+唯一 StageB 完整 summary/proposals/final-fields0103d3及总comparison/
+四页comparisonc5aece已消费，ledger/ROI观察7f7c65、helperb62d87
+和最终结果已消费。StageB.index SHA256
+b9833e7de3f054462311717f0653f463a0fcecd9fff73daba44d12d499003e05，
+seal6190dd1c；2286e3实际exit0留存batch012-source250253-stageB：
+89files288510bytes111bindings零排除。新包所有raw/command字节
+原样留存及哈希绑定，不冒称另作语义复审；旧双包只保留持久直接引用，
+不递归展开或重复复制。图175短横笔表观支持作者已有限定，归属UNKNOWN；
+168重复标签、171点位归属、172标签/几何张力及外176/249254照留。
+edits=[]，未修改canonical或StageA。全留存后关闭Poincare，
+实际previous_status completed，永久7/24、同批7/8，一NEWnativeROI，
+零重开/重置；父永久24/24零视觉/payload/pixeldecode。
+
+fedb7d/73b1b5四页首次finalizer均已结束，
+17:57:25.894–17:57:29.387 UTC；25013/13、25120/20 exit0，
+252印刷14/块体13、253印刷20/块体19 exit1。完整command/audit56f356
+已读；143025实际exit0留存batch012-source250253-first-finalize：
+74files1062790bytes零排除。仅audit中的图框吸附、图片引用插入
+及生成figures/printed_lines/provenance元数据；原metadata值、notes、
+公式/LF/WRAP/flags和其余正文全部字节相等。规范化、未知字符、
+KaTeX warning、计数排除和errata均零。两个真实计行FAIL不凑行或再试；
+通过页复用，不等同source/unit/display批准，不晋升现代图或完整课。
+
+父94451已exit1结束，无父exec/browser/server在途，layout899ea25c冻结。
+完整课仍31、完整未提交仅114+125，125不重跑；最后push仍2d002f414f514803279ff7a62c5749904bb896a8。
+本段无新完整课、commit/push、付费/DB/publisher/app/依赖/schema/Charter/
+合并/关闭/部署，T和所有旧FAIL/HOLD/UNKNOWN保留，同一SessionB继续。
+
+### 254–257 首次源批接续
+
+9243ad/6ba2d0/0312f8首次prepare四child均exit0，
+17:59:36.979–17:59:57.312 UTC，父64843已exit0结束。
+1695x2580为文件元数据，23/25/26/27为机器计行metadata，不作为目标，
+未重跑prepare或读取旧页图片。TOC只作路由：9*印刷247、
+10*印刷252，不据此造标题。上一250–253批完整留存后才启动新视觉批。
+
+FIRST作者Carson the 3rd 01a1eaf7-d177-7a02-9a16-442061b4e4b3
+独占production-source10c254-257-author及guarded0254..0257/page.md；
+盲审Euler the 3rd 01a1eaf7-d1d8-7f20-910c-4386e4663ba9
+独占production-source10c254-257-review，禁止prepare计行/layout/template
+及作者产物。二者fork_contextfalse，真实新空图片history；
+作者四原图加至多四必要NEWROI，StageA四原图加至多两必要NEWROI
+并预留两StageB槽，批8/永久24不重置，父零payload。
+两包全留存前不披露作者或授权StageB。
+
+只共享已留存253最后p的TEXT，来源FIRST全文SHA256
+e214459c81ed79b8bd683e4dd32513eb7f91042152eccd7626895a60976a5535；
+01a1eaf8-5bc8-7e21-a8f5-c02282423347及01a1eaf8-5d27-7763-8495-e3cca895e61c
+澄清inline escapedLF/spacing只是语义转述，不是精确字节，允许仅取
+retained最后p原文，禁止header/其余body/notes/253pixels/canonical。
+局部闭合不等于253计行或外254/图176批准，外258UNKNOWN。
+
+此前新结果已于17:59:12.987896 UTC通过2238a692-73f8-454a-8de4-c18c6e24eece
+评论同步现有工单，未改状态或评论其他旧单。完整31、
+未提交114+125及最后push保持，125不重跑；本段无新课/commit/push/
+付费/DB/publisher/app/依赖/schema/Charter/合并/关闭/部署。
+T、layout899ea25c及全部FAIL/HOLD/UNKNOWN保留，无父exec/browser/server在途。
+
+254–257 Euler FIRST StageA已完成。完整report/inventory310336、
+seal/ledger/provenance4483cd已读；8315f8实际exit0一次留存
+batch012-source254257-stageA：16files483781bytes15bindings零排除，
+seal SHA256e29344ec691b7564ad9d78d38a29eb6c2e23fa9f1745ccb1fea14ed84c9261fb。
+四原图文件和规则输入原字节保留，已有253持久尾段只作直接引用，
+不重复旧图或旧图谱。工具可见输出转录、规则slice及格式记录纠偏
+如实限定，不冒称独立channel-captured raw；实际进程argv、精确UTC、
+数字delivery仍UNKNOWN，不重跑旧命令补证据。永久4/24、同批4/8，
+零ROI/重开/重置，预留两StageB槽；没有作者比较或源/单元/显示批准。
+Carson正在257 FIRST清单/原稿，完整作者包尚未消费留存，
+不披露作者或授权StageB；父仍永久24/24零视觉/payload/pixeldecode。
+
+254–257 Carson FIRST已完整消费：summary7b4649、四inventories331b6c、
+四FIRST1a5d69、sessionnotes/ledger/inputTSV/sealtrace5293d5。
+7b4649中notes.md缺失仅导航失败，真实session-notes.md已读，不重执行
+任何生产命令。1f8a4e实际exit0一次留存batch012-source254257-first-author：
+71files545097bytes71bindings零排除；50-entry平面seal及其terminal
+trace/fullraw外锚完整保留，seal SHA256e857d05731be38c028656231ee51b11e4df5e8028d9685dc4f7b4681f3bf4f2e。
+作者最后seal实际19:41:50 UTC exit0；早期未留存raw/未暴露timing仍UNKNOWN，
+后续真实child traces/mergedfullraw全字节绑定，不重构或重放。
+四canonical与FIRST哈希一致，源公式/花括号/比例及图内字形不确定性照留。
+完整留存后关闭Carson，工具实际previous_status completed，
+永久4/24、同批4/8，四原图、零ROI/重开/重置。
+
+双包留存后01a1eb0a-41b2-7762-a20c-2553f3d5f3bc向现有Euler派发
+唯一StageB，独占production-source10c254-257-stageb。
+披露四FIRST哈希9783e393/efd72423/87ea965c/8c42a129及持久路径；
+永久4/24、同批4/8沿用，至多两必要NEWnative单一ROI，最高6/24和6/8，
+不得用unusedStageA allowance扩图或重开原图。比较全部正文/公式/行序/
+WRAP/图题及图176–186，并仅核对255“中”差异、257图185端点分组、
+178/179字形限定等具体疑点，未预修。StageA不改、无第二盲审，
+source/unit/display不冒称通过；完成包待消费留存，未运行firstfinalizer。
+旧252253countFAIL、外253254/176及258UNKNOWN保持，父永久24/24零payload。
+完整31、完整未提交114+125、最后push2d002f414f及所有禁止项保持。
+
+### 254–257 唯一 StageB 留存与单字应用
+
+沿用已完整消费comparison/proposals47ea15与findings/ledger eedead，
+本次仅消费Euler完成返回、剩余provenance/terminal2bc5b2；
+provenance截断由c9f1c0补齐，不作第二语义复审。
+唯一seal.tsv SHA256a7ed758706280df00f45f6ae7746b9ed3679f398611f71f47b0f32ab24c694fc，
+seal child实际19:54:13 UTC exit0，index-write UTC仍UNKNOWN。
+ba0a1e实际exit0留存batch012-source254257-stageB：
+21files140263bytes39bindings零排除，所有NEWraw/helper/ROI原字节保留；
+旧FIRST/StageA仅持久直接引用，不重复旧图谱。全留存后关闭Euler，
+工具实际previous_status completed；永久6/24、同批6/8，
+两个NEWnativeROI，intakeCLOSED，零重开/重置。
+
+仅0255首个p cont“在图 178”增加空格和“中”，一次apply_patch。
+341925实际exit0留存batch012-source254257-applied-text：
+9files24226bytes零排除；新0255hash
+ebcba698012f65739df9d96bb43cd48731c79bb801b2b2bcabd9868f9f4f0783。
+0254/0256/0257及其余body/math/LF/WRAP/flags/boxes/captions/
+metadata/notes严格等于FIRST。257图185支持作者3左或在线/4右，
+reviewer旧StageA分组错误仅在新StageB报告澄清，旧StageA不改。
+其余254/256/257标点、178字形、179小数、外253254/176及258
+仍限定，所有FAIL/HOLD/UNKNOWN保持；不冒称source/page/count/unit/displayPASS。
+firstfinalizer尚未执行，下一步每页仅首次一次，不拟合计行或重试。
+
+a3973a/63f756四页首次finalizer均结束，19:57:20.622–19:57:23.003 UTC：
+254印刷11/块体10 exit1，25518/18 exit0，25624/23 exit1，
+25714/12 exit1。完整command/audit c1882b/141069已读。
+da67a1实际exit0留存batch012-source254257-first-finalize：
+69files910295bytes零排除；仅audit图框吸附、引用插入、生成
+figures/printed_lines/provenance元数据。原metadata值、notes及
+其余body/math/LF/WRAP/flags字节严格相等；规范化/未知字符/
+KaTeX warning/计数排除/errata均零，原图与layout899ea25c不变。
+255工具通过复用；254/256/257真实计行FAIL不拟合或重试。
+不晋升source/unit/display通过，不追加完整课。
+完整31、完整未提交114+125、最后push2d002f414f保持，125不重跑；
+父26371已exit1，无父exec/browser/server在途，父永久24/24零payload。
+T及所有旧FAIL/HOLD/UNKNOWN保留；无新commit/push/付费/DB/publisher/
+app/依赖/schema/Charter/合并/工单关闭/部署，同一SessionB接续。
+
+49bfe4读取现有工单HTTP200，状态started且未关闭；2dcf46一次HTTP201
+追加254–257真实进度，评论7dc74173-afcf-42d0-9f08-255aef05bbdb，
+19:58:43.781076 UTC。未重复旧2238a692评论或改工单状态。
+下一NEW源批258–261；369页为pdfinfo文件元数据，不解码图片。
+TOC打印252起10*、260起11*仅作路由，不能据此制造源标题。
+
+### 258–261 NEW FIRST 在途
+
+382a03/faf7f0首次prepare四child均exit0，19:59:22.631–19:59:25.304 UTC，
+父3006已exit0结束。16/21/21/20仅机器计行metadata，不作目标；
+文件1695x2580不是数字delivery证明，父无图像解码。
+NEW作者Ptolemy the 3rd01a1eb18-882d-70a3-9b74-990e029a89c4、
+NEW盲审Mill the 3rd01a1eb18-8865-7fa1-8ef4-dd2dec2e0a2c，
+fork_contextfalse，真空图片history，写域独立。
+作者四原图+至多四必要NEWnativeROI，批8/永久24；
+盲审四原图+至多两必要NEWnativeROI，StageA最多6，预留两soleStageB槽；
+均禁重开/重置，父永久24/24零payload。每页original-onlyFIRST清单先冻结，
+作者之后才取preparedJSONheader；盲审永禁template/layout/prepare计行及作者稿。
+尚无完成包/留存，不披露作者或授权StageB。
+
+共享的257仅retainedLASTp TEXT，局部CLOSED；传输escapedLF
+明确不是exactbytes，必要时只取该retained最后p。b4f9b3父retainedTEXT
+导航只为新批上下文，不冒称第二源语义复审。外257258/262及
+254/256/257真实countFAIL和全部旧FAIL/HOLD/UNKNOWN不晋升。
+完整31、完整未提交114+125、125不重跑、最后push2d002f414f保持；
+无新课/commit/push/付费/DB/publisher/app/依赖/schema/Charter/rebase/
+合并/工单关闭/部署，T及无关脏改动保留，同一SessionB继续。
+
+258–261 Mill StageA完整report/四FIRST5cf9bb、seal/ledger/provenance/
+terminalf7c5d9已读。f50197实际exit0一次留存batch012-source258261-stageA：
+23files432657bytes21bindings零排除，sealbb4b221d，
+封存UTC20:07:26.472Z；原图/rules与NEWraw/helper完整绑定。
+旧incoming257未打开，直接语义上下文不晋升；早期raw/时间和封存
+outerexit未在包内捕获仍限定，不重播补证据。永久4/24、同批4/8，
+四原图零ROI，预留两soleStageB槽；无作者曝光或计行曝光。
+
+Ptolemy四清单052e4e、四FIRST9c8761、notes/ledger/terminal/
+seal5b516a已完整消费。5b516a末导航terminal-records.raw.txt
+ENOENT保留，真实notes明确finalseal raw仅在历史chat暴露，未重跑。
+fa69d7实际exit0留存batch012-source258261-first-author：
+47files454006bytes46bindings零排除，seal71c83c34；
+四canonical与FIRST精确相等，metadata原值来自清单冻结后header。
+唯一NEWnativeROI识别259积后=0，旧FIRST UNKNOWN不改。
+永久5/24、同批5/8，四原图一ROI，intakeCLOSED。
+只请求已有terminalTEXT，01a1eb20-89a1-7de2-95f9-e7f2c2a6af85
+返回旧605eedexit0、scriptUTC20:07:42Z；其文本独立留存
+batch012-source258261-author-terminal-text.md，不冒称channelraw或新执行，
+不改旧seal。两FIRST包现全留存，尚未派发StageB或firstfinalizer。
+
+完整留存后关闭Ptolemy，工具actualpreviousstatuscompleted。
+01a1eb22-1412-7e52-bdcb-738da84c19c5向现有Mill派发唯一StageB，
+只写NEWproduction-source10c258-261-stageb。披露四持久FIRST哈希
+9ff39046/ec8ee3ef/d66532a1/b33d794d，不接触canonical或StageA修改。
+沿用永久4/24、同批4/8，仅原已预留两必要NEWnativeROI，
+最高6/24及6/8；不得借用未花StageA allowance或重开原图/作者ROI。
+全源一次比较，重点259=0与258参数逗号；ASCII标点、187guide/origin
+限定不能凭数学或Unicode期待修正。源/unit/display不冒称通过。
+完成包待消费留存，firstfinalizer0。所有旧状态、完整31、
+未提交114+125和最后push仍保持，无父exec/browser/server在途。
+
+### 258–261 唯一 StageB 与首次收口完成
+
+dd03de已完整消费comparison/findings/proposals/ledger，96ebde完整
+provenance及两次helper rootguard失败记录；这两次在任何rg/retained
+read前失败，后续实际首次子命令留存，不重播旧证据。
+314a11仅消费剩余seal/terminal与完成返回，不重读上述语义报告。
+两个NEWnativeROI分别支持259=0及258参数分隔，proposals为空；
+四canonical不改，旧StageA UNKNOWN不回填，187guide/origin/
+roughbox、ASCII标点/prime/glyph/外257258/262均限定。
+唯一seal01518534，actualterminalexit0、20:16:50.203 UTC。
+96f340实际exit0留存batch012-source258261-stageB：
+26files166995bytes45bindings零排除，所有NEWraw/helper/ROI保留，
+旧包仅直接引用、不重复图谱。全留存后关闭Mill，
+actualpreviousstatuscompleted；永久6/24、同批6/8，intakeCLOSED。
+
+bf87eb/db900b四页首次finalizer均结束，20:17:54.442–20:17:56.462 UTC：
+25814/14 exit0，259印刷21/块体20 exit1，26021/21、26120/20 exit0。
+完整command/audit7e16f0已读；e31885实际exit0留存
+batch012-source258261-first-finalize：59files702698bytes零排除。
+仅audit记录的187粗框吸附/引用插入和生成figures/printed_lines/
+provenance元数据；原metadata值、notes和其余body/math/LF/WRAP
+全部字节相等。规范化/未知字符/KaTeXwarning/计数排除/errata均零；
+原图和layout899ea25c冻结不变。259实际countFAIL不拟合或再试；
+其余仅机械通过，不冒称source/unit/display批准或追加完整课。
+
+完整课仍31、完整未提交114+125、125不重跑、最后push2d002f414f保持。
+本段无新commit/push/付费/DB/publisher/app/依赖/schema/Charter/
+rebase/合并/工单关闭/部署。父75994exit1结束、两新代理已全留存后关闭，
+无父exec/browser/server在途。T及全部旧FAIL/HOLD/UNKNOWN原样保留。
+下一未处理源批为10c物理262–265，尚未prepare/派发/读图；
+这是同一SessionB接续记录，不是完成四册或正式handoff。
+
+ca23bd现有工单HTTP200仍started/未关闭；0f0a0b一次HTTP201追加
+258–261真实进度评论af97af6d-4f45-4a87-a3c2-fe4873e9cd35，
+20:19:59.055654 UTC，不重复旧评论或改工单状态。
+24a5a3观察HEAD和origin/codex/STEMROBIN-184-textbooks均为
+2d002f414f514803279ff7a62c5749904bb896a8；无新commit/push。
+fd0e09进度JSON解析成功，两批首次finalizer均4、完整31、productionwrites0。
+
+### 262–265 接续及 114/125 窄交付
+
+同一184会话沿现有接续授权继续，不新调用IntentFold能力或重放既有门禁。
+262–265首次prepare已于20:32:45.953–20:32:49.057 UTC结束，四child
+exit0；本次复用原备料，19/22/14/24仅机器metadata，不作转录目标。
+James the 3rd（01a1eb37-c56e-7971-85d9-295d26df4a29）负责四NEW
+原页作者；Archimedes the 3rd（01a1eb37-c5d9-7c80-a3ca-c7122499baee）
+独立StageA。两临时上下文fork_context false，原图各仅一次，批≤8、
+永久上下文≤24不重置；独审预留两soleStageB槽。父永久24/24零图，
+仅接收文字路径/哈希，261仅闭合尾段文字，外266 UNKNOWN。
+完整双包消费留存之前不披露作者，不运行首次finalizer。
+
+114与125现有APPROVED_OFFLINE_ONLY批准及源/现代/空答案/桌面手机
+有效证据直接复用，不重跑125，也不重试254/256/257/259计行失败页。
+选择两课作已就绪窄交付，不凑4课；原书两课零习题，不补造选择题或答案。
+暂存范围仅两课、源168–171/220–221、两处已核验工具修正、相关持久证据
+与现有进度记录。相邻草稿只留证据，active索引不提升115/124/补充题集。
+本次只检查提交字节与已有批准的绑定及秘密边界，不新增全量语义或显示复核；
+全项目测试/构建仍留正式handoff一次。commit/push结果待实际执行登记，
+四册仍未完成，生产写库/应用/依赖/schema/Charter/合并/关闭/部署均未授权。
+
+114/125首次暂存7a8141已成功，随后路径保护把持久证据中的
+inputs/workspace/.intentfold/charter/engineering.md误判为live Charter，
+exit1留存；未重跑暂存。只读新scan f5ecab/13834实际exit0：
+1037paths、14803344bytes，index与工作树精确相等、prohibited/secretMatches均空。
+git diff --cached --check返回2，仅既有封存stdout/stream/diff里的原生空白；
+不删改这些证据字节，不冒称该命令通过。没有运行课程门禁或全项目测试。

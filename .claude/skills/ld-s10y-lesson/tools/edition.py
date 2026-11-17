@@ -576,7 +576,8 @@ def normalize_prose_layout(text: str) -> str:
         tex = (match.group(1) or match.group(2)).rstrip()
         if (
             depths[match.start()] == 0
-            and tex.endswith((".", "。", "．", "!", "！", "?", "？"))
+            # An ASCII exclamation mark inside math is a factorial, not prose punctuation.
+            and tex.endswith((".", "。", "．", "！", "?", "？"))
             and text[match.end():].strip()
         ):
             boundaries.add(match.end())

@@ -1,0 +1,129 @@
+--- /Users/yong/.codex/worktrees/a07e/lemmadeck/.intentfold/tickets/STEMROBIN-184/tmp/production-modern10c114-first-offline-review/browser-check.mjs	2026-11-17 07:59:46
++++ /Users/yong/.codex/worktrees/a07e/lemmadeck/.intentfold/tickets/STEMROBIN-184/tmp/production-modern10c114-offline-harness-correction/browser-check.mjs	2026-11-17 08:13:29
+@@ -10,10 +10,12 @@
+   status: 'INCOMPLETE_OFFLINE', visualStatus: 'NOT_YET_INSPECTED', lessonId,
+   scope: 'First independent OFFLINE rendering only; no product UI/auth/quiz/DB/full-book acceptance.',
+   startedAt, argv: process.argv, cwd: process.cwd(), browser: 'installed app Playwright isolated HEADLESS Chromium',
+-  authorization: 'Explicit bounded delegated offline task; same continuous IntentFold cap3, no capability/setup/refresh/backend gates.',
+-  imagePlan: { lifetimeBefore: 0, batchLimit: 8, lifetimeLimit: 24, maximumNativeWidth: 1440,
+-    maximumNativeHeight: 4096, perViewport: '3 nonoverlapping native text clips + 1 native exercise capture',
+-    fullPageEvidence: 'Unopened, not included in model image ledger', resizing: false },
++  authorization: 'One authorized harness correction and subsequent first ACTUAL browser observation; same continuous cap3, no new freeze/content PASS or retry loops.',
++  inheritedHistoricalAttempt: 'Original package remains FAIL/UNKNOWN with lifetime0/24, untouched.',
++  imagePlan: { lifetimeBefore: 0, batchLimit: 8, lifetimeLimit: 24, maximumNativeWidth: 2048,
++    maximumNativeHeight: 4096,
++    allocation: 'Capture native full text/empty exercises and all overflowing formula start/end elements. Before image loads, partition text by actual height and pack native exercise/endpoints into contact sheets; return UNKNOWN if eight usable loads cannot cover everything.',
++    fullPageEvidence: 'Initially unopened; only chosen native projections count as model image loads', resizing: false },
+   results: [], plannedImageLedger: [], browserClosed: false, contextsClosed: [],
+ }
+ let browser
+@@ -99,7 +101,10 @@
+               text: element.textContent, rect: rect(element), style: style(element),
+             })),
+             exercises: document.querySelectorAll('li.ex').length,
+-            figures: document.querySelectorAll('figure,.figure-media,img,svg').length,
++            figures: [...document.querySelectorAll('figure,.figure-media,img,svg')]
++              .filter((element) => !element.closest('.katex')).length,
++            intrinsicKaTeXSvg: [...document.querySelectorAll('svg')]
++              .filter((element) => element.closest('.katex')).length,
+             controls: [...document.querySelectorAll('input,textarea,select,button,[role="radio"],[role="checkbox"],[contenteditable="true"]')]
+               .map((e) => ({ tag: e.tagName, type: e.getAttribute('type'), text: e.textContent })),
+             errors: document.querySelectorAll('.err,.katex-error,.sr-tex-err').length,
+@@ -117,36 +122,6 @@
+         await page.screenshot({ path: fullFile, fullPage: true, scale: 'css' })
+         activeSurface.fullPageUnopened = fileReceipt(fullFile)
+         const height = activeSurface.geometry.docHeight
+-        if (kind === 'text') {
+-          if (Math.ceil(height / 3) > report.imagePlan.maximumNativeHeight) {
+-            const error = new Error('Whole-document native visual coverage requires more than the authorized three usable clips')
+-            error.name = 'VisualCoverageUnknown'
+-            throw error
+-          }
+-          for (let index = 0; index < 3; index++) {
+-            const y = Math.floor(height * index / 3)
+-            const nextY = Math.floor(height * (index + 1) / 3)
+-            const clip = { x: 0, y, width: viewport.width, height: nextY - y }
+-            const screenshot = path.join(root, 'screenshots', `text-${viewport.width}-segment-${index + 1}.png`)
+-            await page.screenshot({ path: screenshot, clip, scale: 'css', captureBeyondViewport: true })
+-            const entry = { loadNumber: report.plannedImageLedger.length + 1, kind, viewport, clip,
+-              coverage: `[${y},${nextY})`, native: true, resized: false, modelLoads: 0, ...fileReceipt(screenshot) }
+-            activeSurface.screenshots.push(entry)
+-            report.plannedImageLedger.push(entry)
+-          }
+-        } else {
+-          if (height > report.imagePlan.maximumNativeHeight) {
+-            const error = new Error('Exercise surface exceeds a single native usable image')
+-            error.name = 'VisualCoverageUnknown'
+-            throw error
+-          }
+-          const entry = { loadNumber: report.plannedImageLedger.length + 1, kind, viewport,
+-            clip: { x: 0, y: 0, width: viewport.width, height }, coverage: `[0,${height})`,
+-            native: true, resized: false, modelLoads: 0, ...activeSurface.fullPageUnopened }
+-          activeSurface.screenshots.push(entry)
+-          report.plannedImageLedger.push(entry)
+-          delete activeSurface.fullPageUnopened
+-        }
+         const g = activeSurface.geometry
+         assert.equal(g.viewport.width, viewport.width)
+         assert(g.docWidth <= viewport.width + 1, 'Whole page horizontally overflows')
+@@ -168,11 +143,48 @@
+             && row.rect.height > 0 && row.style.textIndent === '0px'), 'Paragraph geometry/indent')
+           assert(g.paragraphs.slice(1).every((row, index) => row.rect.y >= g.paragraphs[index].rect.bottom - 1),
+             'Paragraphs overlap or are out of vertical order')
+-          assert(g.formulaWrappers.every((row) => row.scrollWidth <= row.clientWidth + 1),
+-            'Formula horizontally clipped/scrolling at native viewport')
++          assert(g.formulaWrappers.every((row) => row.rect.x >= -1
++            && row.rect.right <= viewport.width + 1 && row.rect.width > 0 && row.rect.height > 0
++            && row.clientWidth > 0 && row.scrollWidth > 0), 'Formula containing wrapper clips/leaves page or is blank')
+           assert(g.paragraphs.flatMap((row) => row.formulas).every((formula) =>
+-            formula.htmlRect.x >= -1 && formula.htmlRect.right <= viewport.width + 1
+-            && formula.htmlRect.width > 0 && formula.htmlRect.height > 0), 'Formula visible geometry')
++            formula.htmlRect.width > 0 && formula.htmlRect.height > 0), 'Formula content geometry is blank')
++          activeSurface.scrollChecks = []
++          for (const row of g.formulaWrappers.filter((row) => row.scrollWidth > row.clientWidth + 1)) {
++            const wrapper = page.locator('.nb').nth(row.index)
++            const start = await wrapper.evaluate((element) => {
++              element.scrollLeft = 0
++              return { actualScrollLeft: element.scrollLeft, clientWidth: element.clientWidth,
++                scrollWidth: element.scrollWidth, pageWidth: document.documentElement.scrollWidth }
++            })
++            const startFile = path.join(root, 'screenshots', `formula-${viewport.width}-${row.index}-start.png`)
++            await wrapper.screenshot({ path: startFile, scale: 'css' })
++            const end = await wrapper.evaluate((element) => {
++              element.scrollLeft = element.scrollWidth
++              const actualScrollLeft = element.scrollLeft
++              element.scrollLeft = element.scrollWidth + 1
++              return { actualScrollLeft, saturatedEnd: element.scrollLeft,
++                clientWidth: element.clientWidth, scrollWidth: element.scrollWidth,
++                maxScrollLeft: element.scrollWidth - element.clientWidth,
++                pageWidth: document.documentElement.scrollWidth }
++            })
++            const endFile = path.join(root, 'screenshots', `formula-${viewport.width}-${row.index}-end.png`)
++            await wrapper.screenshot({ path: endFile, scale: 'css' })
++            const reset = await wrapper.evaluate((element) => {
++              element.scrollLeft = 0
++              return { actualScrollLeft: element.scrollLeft, pageWidth: document.documentElement.scrollWidth }
++            })
++            activeSurface.scrollChecks.push({ wrapperIndex: row.index, tex: row.tex, wrapper: row.rect,
++              start, end, reset, startScreenshot: fileReceipt(startFile), endScreenshot: fileReceipt(endFile),
++              visibleEndpointStatus: 'NOT_YET_INSPECTED' })
++            assert.equal(start.actualScrollLeft, 0, 'Formula scroll start unreachable')
++            assert.equal(end.actualScrollLeft, end.saturatedEnd, 'Formula exact native saturated end unreachable')
++            assert(Math.abs(end.actualScrollLeft - end.maxScrollLeft) <= 1,
++              'Formula scroll end differs from measured native max by more than rounding')
++            assert.equal(reset.actualScrollLeft, 0, 'Formula scroll reset unreachable')
++            assert([start, end, reset].every((position) => position.pageWidth <= viewport.width + 1),
++              'Formula scroll causes whole-page overflow')
++          }
++          await page.evaluate(() => window.scrollTo(0, 0))
+           assert(g.loadedKaTeXMain, 'KaTeX Main font not loaded')
+           assert(g.proseMath.every((row) => row.style.fontFamily.includes('KaTeX_Main')
+             && Number.parseFloat(row.style.fontSize) >= Number.parseFloat(g.paragraphs[0].style.fontSize)),
+@@ -196,7 +208,6 @@
+     }
+   }
+   report.status = 'PASS_OFFLINE_BROWSER_PENDING_VISUAL'
+-  const require = createRequire(path.join(repo, 'app/package.json'))
+   report.loadedCommonJsFiles = Object.keys(require.cache).filter((file) => fs.statSync(file).isFile()).map(fileReceipt)
+ } catch (error) {
+   report.status = error.name === 'VisualCoverageUnknown' ? 'UNKNOWN_OFFLINE_VISUAL_COVERAGE' : 'FAIL_OFFLINE_FIRST_BROWSER'

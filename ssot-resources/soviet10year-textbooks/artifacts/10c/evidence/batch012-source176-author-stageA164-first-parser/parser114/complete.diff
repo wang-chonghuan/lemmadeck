@@ -1,0 +1,514 @@
+--- before/.claude/skills/ld-s10y-lesson/tools/assemble.py
++++ after/.claude/skills/ld-s10y-lesson/tools/assemble.py
+@@ -28,7 +28,7 @@
+ 
+ FIGREF = re.compile(r"图\s*\$?\s*(\d+)(?!\d)")
+ SEC_NUM = re.compile(
+-    r"^\s*(?:§\s*)?(?=\$?(\d+))(?:\d+(?:\*|\$\^\{\*\}\$)?|\$\d+\^\{\+\}\$)"
++    r"^\s*(?:§\s*)?(?=\$?(\d+))(?:\d+(?:\*|\$\^\{\*\}\$)?|\$\d+(?:\^\{[+*]\})?\$)"
+     r"\s*(?:\$\\blacktriangledown\$\s*)?(?:[.．、]\s*|\s+)(\S.*)$"
+ )
+ BLOCKREF = re.compile(r"^p(\d+)#(\d+)$")
+--- /dev/null
++++ .intentfold/tickets/STEMROBIN-184/tmp/production-114-heading-parser/check_heading.py
+@@ -0,0 +1,152 @@
++"""Independent heading-only checks; never import or execute the assembler."""
++import argparse
++import ast
++import json
++import re
++from pathlib import Path
++
++HERE = Path(__file__).resolve().parent
++ROOT = HERE.parents[4]
++PRODUCTION = ROOT / ".claude/skills/ld-s10y-lesson/tools/assemble.py"
++TOC = ROOT / "ssot-resources/soviet10year-textbooks/toc/10c/zh.json"
++SOURCE_TITLE = (
++    "\u81ea\u7136\u5bf9\u6570\u4f5c\u4e3a\u5177\u6709"
++    "\u53ef\u53d8\u79ef\u5206\u4e0a\u9650\u7684\u79ef\u5206"
++)
++REPRODUCTION = ("reported-header", "$114^{*}$. " + SOURCE_TITLE, ("114", SOURCE_TITLE))
++
++
++def load_pattern():
++    module = ast.parse(PRODUCTION.read_text(encoding="utf-8"), filename=str(PRODUCTION))
++    nodes = [
++        node for node in module.body
++        if isinstance(node, ast.Assign)
++        and any(isinstance(target, ast.Name) and target.id == "SEC_NUM"
++                for target in node.targets)
++    ]
++    assert len(nodes) == 1, "SEC_NUM assignment must be unique"
++    namespace = {"re": re}
++    exec(compile(ast.Module(body=nodes, type_ignores=[]), str(PRODUCTION), "exec"), namespace)
++    pattern = namespace["SEC_NUM"]
++    assert pattern.groups == 2, "number/title capture interface changed"
++    assert pattern.groupindex == {}, "named-group interface changed"
++    return pattern
++
++
++def walk(value):
++    if isinstance(value, dict):
++        yield value
++        for child in value.values():
++            yield from walk(child)
++    elif isinstance(value, list):
++        for child in value:
++            yield from walk(child)
++
++
++def focused_cases():
++    cases = [REPRODUCTION]
++    for number in ("6", "37", "208"):
++        for suffix in ("", "^{*}", "^{+}"):
++            cases.append((
++                f"inline-{number}-{suffix or 'plain'}",
++                f"${number}{suffix}$. Independent title",
++                (number, "Independent title"),
++            ))
++    cases += [
++        ("inline-section-star", "\u00a7 $52^{*}$. Section title", ("52", "Section title")),
++        ("inline-triangle", r"$83^{*}$ $\blacktriangledown$. Triangle title",
++         ("83", "Triangle title")),
++        ("inline-fullwidth-dot", "$91^{*}$\uff0e Title", ("91", "Title")),
++        ("inline-enumeration-comma", "$72^{*}$\u3001Title", ("72", "Title")),
++        ("inline-space-separator", "$64^{*}$ Title", ("64", "Title")),
++        ("inline-leading-whitespace", " \t$46^{*}$. Title", ("46", "Title")),
++        ("title-math-preserved", r"$29^{*}$. Integral $\int_1^x dt/t$",
++         ("29", r"Integral $\int_1^x dt/t$")),
++    ]
++    compatibility = [
++        ("plain-dot", "9. Title", ("9", "Title")),
++        ("plain-fullwidth-dot", "19\uff0eTitle", ("19", "Title")),
++        ("plain-enumeration-comma", "28\u3001 Title", ("28", "Title")),
++        ("plain-space", "38 Title", ("38", "Title")),
++        ("plain-star", "48*. Title", ("48", "Title")),
++        ("plain-star-space", "58* Title", ("58", "Title")),
++        ("separate-math-star", r"68$^{*}$. Title", ("68", "Title")),
++        ("plain-triangle", r"78$\blacktriangledown$. Title", ("78", "Title")),
++        ("plain-star-triangle", r"88* $\blacktriangledown$. Title", ("88", "Title")),
++        ("separate-star-triangle", r"98$^{*}$ $\blacktriangledown$. Title", ("98", "Title")),
++        ("inline-plus", r"$108^{+}$. Title", ("108", "Title")),
++        ("section-plain", "\u00a7 118. Title", ("118", "Title")),
++        ("section-plain-star", "\t\u00a7 128*. Title", ("128", "Title")),
++        ("plain-chinese-title", "138. \u51fd\u6570\u6027\u8d28", ("138", "\u51fd\u6570\u6027\u8d28")),
++        ("plain-title-retains-star", "148. Title * note", ("148", "Title * note")),
++    ]
++    cases += [("compatibility-" + name, text, expected)
++              for name, text, expected in compatibility]
++    negatives = [
++        ("empty", ""),
++        ("unnumbered-title", "Independent title"),
++        ("prose-prefix", "See $23^{*}$. Title"),
++        ("symbolic-base", "$x^{*}$. Title"),
++        ("mixed-base", "$23x^{*}$. Title"),
++        ("negative-base", "$-23^{*}$. Title"),
++        ("fractional-base", "$2.3^{*}$. Title"),
++        ("different-superscript", "$23^{2}$. Title"),
++        ("symbolic-superscript", "$23^{x}$. Title"),
++        ("multiple-stars", "$23^{**}$. Title"),
++        ("empty-superscript", "$23^{}$. Title"),
++        ("missing-brace", "$23^{*$. Title"),
++        ("missing-dollar", "$23^{*}. Title"),
++        ("missing-opening-dollar", "23^{*}$. Title"),
++        ("display-math", "$$23^{*}$$. Title"),
++        ("bare-inline-star", "$23*$. Title"),
++        ("double-superscript", "$23^{*}^{+}$. Title"),
++        ("math-expression", "$23+1$. Title"),
++        ("no-separator", "$23^{*}$Title"),
++        ("inline-no-title", "$23^{*}$."),
++        ("inline-whitespace-title", "$23^{*}$. \t"),
++        ("plain-no-title", "23."),
++        ("plain-whitespace-title", "23. \t"),
++        ("wrong-triangle", r"$23^{*}$ $\blacktriangle$. Title"),
++    ]
++    cases += [("negative-" + name, text, None) for name, text in negatives]
++    return cases
++
++
++def main():
++    parser = argparse.ArgumentParser()
++    parser.add_argument("--phase", choices=("reproduce", "focused"), required=True)
++    args = parser.parse_args()
++    pattern = load_pattern()
++    cases = [REPRODUCTION] if args.phase == "reproduce" else focused_cases()
++    for name, text, expected in cases:
++        for method in ("match", "fullmatch"):
++            match = getattr(pattern, method)(text)
++            observed = match.groups() if match else None
++            print(json.dumps({
++                "case": name, "input": text, "method": method,
++                "expected": expected, "observed": observed,
++            }, ensure_ascii=True), flush=True)
++            assert observed == expected, f"{name}/{method}: {observed!r} != {expected!r}"
++    if args.phase == "focused":
++        toc = json.loads(TOC.read_text(encoding="utf-8"))
++        matches = [
++            item for item in walk(toc)
++            if item.get("title") == SOURCE_TITLE
++            and str(item.get("printedNumber")) == REPRODUCTION[2][0]
++        ]
++        assert len(matches) == 1, "TOC number/title must identify exactly one entry"
++        card = matches[0]
++        print(json.dumps({
++            "toc_entry": {
++                "id": card["id"], "printedNumber": card["printedNumber"],
++                "title": card["title"], "page": card["page"],
++            },
++            "derivation": "unique literal title and printedNumber, never slug",
++            "scope": "regex only; no TOC claiming or assembly executed",
++        }, ensure_ascii=True))
++    print(json.dumps({"phase": args.phase, "cases": len(cases),
++                      "asserted_matches": len(cases) * 2}))
++
++
++if __name__ == "__main__":
++    main()
+--- /dev/null
++++ .intentfold/tickets/STEMROBIN-184/tmp/production-114-heading-parser/evidence.py
+@@ -0,0 +1,153 @@
++"""Capture bounded command evidence and byte hashes inside this new scratch only."""
++import argparse
++import ast
++import difflib
++import hashlib
++import json
++import subprocess
++import sys
++from datetime import datetime, timezone
++from pathlib import Path
++
++HERE = Path(__file__).resolve().parent
++ROOT = HERE.parents[4]
++PRODUCTION = ROOT / ".claude/skills/ld-s10y-lesson/tools/assemble.py"
++LAYOUT = ROOT / ".claude/skills/ld-s10y-lesson/tools/layout.py"
++TOC = ROOT / "ssot-resources/soviet10year-textbooks/toc/10c/zh.json"
++BOOK = ROOT / "ssot-resources/soviet10year-textbooks/artifacts/10c"
++INITIAL = BOOK / "evidence/batch012-source164-affected168-first114-assembly/assembly114-initial"
++FROZEN_LAYOUT = "899ea25c2ede96a1f8c60eec3b5565e22f967e2c345d34d8255a11dc21d88a73"
++ENTRY_PRODUCTION = "c07b159fa5e9ddb07a79763e66de6cf454922aab509501f7b70b66f2a83eb0dd"
++
++
++def sha(path):
++    return hashlib.sha256(path.read_bytes()).hexdigest()
++
++
++def save_json(name, value):
++    path = HERE / name
++    assert not path.exists(), f"refuse to overwrite evidence: {path}"
++    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="ascii")
++
++
++def protected_hashes():
++    paths = [LAYOUT, TOC]
++    for page in range(168, 172):
++        directory = BOOK / f"pages/{page:04d}"
++        assert directory.is_dir(), f"missing immutable page: {directory}"
++        page_files = [path for path in directory.rglob("*") if path.is_file()]
++        assert page_files, f"empty immutable page: {directory}"
++        paths.extend(page_files)
++    assert INITIAL.is_dir(), "retained initial assembly missing"
++    paths.extend(path for path in INITIAL.rglob("*") if path.is_file())
++    hashes = {str(path.relative_to(ROOT)): sha(path) for path in sorted(paths)}
++    assert hashes[str(LAYOUT.relative_to(ROOT))] == FROZEN_LAYOUT, "layout freeze mismatch"
++    return hashes
++
++
++def capture(phase, expected_exit):
++    command = [sys.executable, "-B", str(HERE / "check_heading.py"), "--phase", phase]
++    started = datetime.now(timezone.utc).isoformat()
++    result = subprocess.run(command, cwd=ROOT, capture_output=True, check=False)
++    for stream, content in (("stdout", result.stdout), ("stderr", result.stderr)):
++        path = HERE / f"{phase}.{stream}.txt"
++        assert not path.exists(), f"refuse to overwrite command stream: {path}"
++        path.write_bytes(content)
++    save_json(f"{phase}.command.json", {
++        "argv": command, "cwd": str(ROOT), "started_utc": started,
++        "finished_utc": datetime.now(timezone.utc).isoformat(),
++        "exit": result.returncode, "expected_exit": expected_exit,
++        "stdout_path": str(HERE / f"{phase}.stdout.txt"),
++        "stderr_path": str(HERE / f"{phase}.stderr.txt"),
++        "production_sha256": sha(PRODUCTION),
++        "script_sha256": sha(HERE / "check_heading.py"),
++    })
++    print(f"{phase}: actual command exit={result.returncode}; expected={expected_exit}")
++    assert result.returncode == expected_exit, f"unexpected {phase} exit"
++    if phase == "reproduce":
++        assert b"AssertionError: reported-header/match:" in result.stderr
++
++
++def without_pattern(text):
++    module = ast.parse(text)
++    module.body = [
++        node for node in module.body
++        if not (isinstance(node, ast.Assign)
++                and any(isinstance(target, ast.Name) and target.id == "SEC_NUM"
++                        for target in node.targets))
++    ]
++    return ast.dump(module, include_attributes=False)
++
++
++def main():
++    parser = argparse.ArgumentParser()
++    parser.add_argument("phase", choices=("baseline", "reproduce", "finish"))
++    args = parser.parse_args()
++    if args.phase == "baseline":
++        assert sha(PRODUCTION) == ENTRY_PRODUCTION, "production changed since inspection"
++        snapshot = HERE / "assemble.before.py.txt"
++        assert not snapshot.exists()
++        snapshot.write_bytes(PRODUCTION.read_bytes())
++        save_json("baseline.json", {
++            "time_utc": datetime.now(timezone.utc).isoformat(),
++            "production_sha256": sha(PRODUCTION),
++            "protected_sha256": protected_hashes(),
++            "invocation": {"argv": [sys.executable, "-B", str(Path(__file__).resolve()), "baseline"],
++                           "cwd": str(ROOT)},
++        })
++        print(f"baseline: parser={sha(PRODUCTION)}; protected files frozen")
++        return
++    baseline = json.loads((HERE / "baseline.json").read_text(encoding="ascii"))
++    assert protected_hashes() == baseline["protected_sha256"], "immutable file drift"
++    if args.phase == "reproduce":
++        assert sha(PRODUCTION) == baseline["production_sha256"]
++        capture("reproduce", 1)
++        return
++    before = (HERE / "assemble.before.py.txt").read_text(encoding="utf-8")
++    after = PRODUCTION.read_text(encoding="utf-8")
++    assert before != after, "parser patch absent"
++    assert without_pattern(before) == without_pattern(after), "non-parser code changed"
++    diff = "".join(difflib.unified_diff(
++        before.splitlines(keepends=True), after.splitlines(keepends=True),
++        fromfile="before/.claude/skills/ld-s10y-lesson/tools/assemble.py",
++        tofile="after/.claude/skills/ld-s10y-lesson/tools/assemble.py",
++    ))
++    assert not (HERE / "assemble.diff").exists()
++    (HERE / "assemble.diff").write_text(diff, encoding="utf-8")
++    capture("focused", 0)
++    assert protected_hashes() == baseline["protected_sha256"], "immutable file drift"
++    save_json("result.json", {
++        "scope": "bounded heading parser only; not lesson or full-book acceptance",
++        "production_before_sha256": baseline["production_sha256"],
++        "production_after_sha256": sha(PRODUCTION),
++        "layout_sha256": sha(LAYOUT),
++        "protected_sha256": baseline["protected_sha256"],
++        "protected_files_unchanged": True,
++        "non_SEC_NUM_AST_unchanged": True,
++        "test_surface": "AST-isolated SEC_NUM; match/fullmatch capture tuples",
++        "old_tests_run": False,
++        "assembly_or_source_operations_run": False,
++        "model_images": 0,
++        "invocation": {"argv": [sys.executable, "-B", str(Path(__file__).resolve()), "finish"],
++                       "cwd": str(ROOT)},
++    })
++    complete = diff
++    for name in ("check_heading.py", "evidence.py", "README.md"):
++        text = (HERE / name).read_text(encoding="utf-8")
++        complete += "".join(difflib.unified_diff(
++            [], text.splitlines(keepends=True), fromfile="/dev/null",
++            tofile=str((HERE / name).relative_to(ROOT)),
++        ))
++    assert not (HERE / "complete.diff").exists()
++    (HERE / "complete.diff").write_text(complete, encoding="utf-8")
++    hashes = {
++        str(path.relative_to(HERE)): sha(path)
++        for path in sorted(HERE.rglob("*")) if path.is_file()
++    }
++    save_json("freeze.json", {"algorithm": "sha256", "files": hashes,
++                              "excluded_self": "freeze.json"})
++    print(f"finished: parser={sha(PRODUCTION)}; freeze.json={sha(HERE / 'freeze.json')}")
++
++
++if __name__ == "__main__":
++    main()
+--- /dev/null
++++ .intentfold/tickets/STEMROBIN-184/tmp/production-114-heading-parser/check_boundary.py
+@@ -0,0 +1,26 @@
++"""Changed-only checks for title/separator boundaries, independent of old suites."""
++import json
++
++from check_heading import load_pattern
++
++
++def main():
++    pattern = load_pattern()
++    cases = [
++        ("whitespace-makes-math-title", r"$23^{*}$ $\blacktriangle$. Title",
++         ("23", r"$\blacktriangle$. Title")),
++        ("unsupported-adjacent-decoration", r"$23^{*}$$\blacktriangle$. Title", None),
++    ]
++    for name, text, expected in cases:
++        for method in ("match", "fullmatch"):
++            match = getattr(pattern, method)(text)
++            observed = match.groups() if match else None
++            print(json.dumps({"case": name, "input": text, "method": method,
++                              "expected": expected, "observed": observed}), flush=True)
++            assert observed == expected, f"{name}/{method}: {observed!r} != {expected!r}"
++    print(json.dumps({"cases": len(cases), "asserted_matches": len(cases) * 2,
++                      "scope": "changed-only title boundary; previous successful cases not rerun"}))
++
++
++if __name__ == "__main__":
++    main()
+--- /dev/null
++++ .intentfold/tickets/STEMROBIN-184/tmp/production-114-heading-parser/finish_evidence.py
+@@ -0,0 +1,96 @@
++"""Finish from retained focused streams plus new boundary-only checks."""
++import json
++import subprocess
++import sys
++from datetime import datetime, timezone
++
++import evidence as E
++from check_heading import REPRODUCTION, SOURCE_TITLE, TOC, walk
++
++
++def main():
++    baseline = json.loads((E.HERE / "baseline.json").read_text(encoding="ascii"))
++    first_command = json.loads((E.HERE / "focused.command.json").read_text(encoding="ascii"))
++    assert first_command["exit"] == 1
++    assert first_command["script_sha256"] == E.sha(E.HERE / "check_heading.py")
++    assert first_command["production_sha256"] == E.sha(E.PRODUCTION)
++    assert "AssertionError: negative-wrong-triangle/match:" in (
++        E.HERE / "focused.stderr.txt").read_text(encoding="ascii")
++    rows = [
++        json.loads(line)
++        for line in (E.HERE / "focused.stdout.txt").read_text(encoding="ascii").splitlines()
++    ]
++    completed, failed = rows[:-1], rows[-1]
++    assert len(completed) == 110
++    assert all(row["expected"] == row["observed"] for row in completed)
++    assert len({row["case"] for row in completed}) == 55
++    assert failed["case"] == "negative-wrong-triangle" and failed["expected"] is None
++    assert failed["observed"] == ["23", r"$\blacktriangle$. Title"]
++    assert E.protected_hashes() == baseline["protected_sha256"], "immutable file drift"
++    before = (E.HERE / "assemble.before.py.txt").read_text(encoding="utf-8")
++    after = E.PRODUCTION.read_text(encoding="utf-8")
++    assert E.without_pattern(before) == E.without_pattern(after), "non-parser code changed"
++    command = [sys.executable, "-B", str(E.HERE / "check_boundary.py")]
++    started = datetime.now(timezone.utc).isoformat()
++    run = subprocess.run(command, cwd=E.ROOT, capture_output=True, check=False)
++    for stream, content in (("stdout", run.stdout), ("stderr", run.stderr)):
++        path = E.HERE / f"boundary.{stream}.txt"
++        assert not path.exists()
++        path.write_bytes(content)
++    E.save_json("boundary.command.json", {
++        "argv": command, "cwd": str(E.ROOT), "started_utc": started,
++        "finished_utc": datetime.now(timezone.utc).isoformat(), "exit": run.returncode,
++        "expected_exit": 0, "script_sha256": E.sha(E.HERE / "check_boundary.py"),
++        "production_sha256": E.sha(E.PRODUCTION),
++    })
++    print(f"boundary: actual command exit={run.returncode}; expected=0")
++    assert run.returncode == 0
++    toc_matches = [
++        item for item in walk(json.loads(TOC.read_text(encoding="utf-8")))
++        if item.get("title") == SOURCE_TITLE
++        and str(item.get("printedNumber")) == REPRODUCTION[2][0]
++    ]
++    assert len(toc_matches) == 1
++    card = toc_matches[0]
++    assert E.protected_hashes() == baseline["protected_sha256"], "immutable file drift"
++    E.save_json("result.json", {
++        "scope": "bounded regex recognition only; not lesson/full-book acceptance",
++        "production_before_sha256": baseline["production_sha256"],
++        "production_after_sha256": E.sha(E.PRODUCTION),
++        "layout_sha256": E.sha(E.LAYOUT),
++        "protected_sha256": baseline["protected_sha256"],
++        "protected_files_unchanged": True, "non_SEC_NUM_AST_unchanged": True,
++        "retained_successful_cases": 55, "retained_successful_match_assertions": 110,
++        "new_boundary_cases": 2, "new_boundary_match_assertions": 4,
++        "first_focused_exit": 1, "boundary_exit": run.returncode,
++        "corrected_test_expectation": (
++            "The first final negative wrongly rejected math in title after a valid "
++            "whitespace separator. Production keeps this title unchanged; only the "
++            "new expectation is corrected. The 55 successful cases were not rerun."
++        ),
++        "toc_entry": {key: card[key] for key in ("id", "title", "printedNumber", "page")},
++        "toc_derivation": "unique supplied literal title + printedNumber, not slug",
++        "old_tests_run": False, "source_or_assembly_operations_run": False,
++        "model_images": 0,
++        "invocation": {"argv": [sys.executable, "-B", str(E.HERE / "finish_evidence.py")],
++                       "cwd": str(E.ROOT)},
++    })
++    complete = (E.HERE / "assemble.diff").read_text(encoding="utf-8")
++    for name in ("check_heading.py", "evidence.py", "check_boundary.py",
++                 "finish_evidence.py", "README.md"):
++        text = (E.HERE / name).read_text(encoding="utf-8")
++        complete += "".join(E.difflib.unified_diff(
++            [], text.splitlines(keepends=True), fromfile="/dev/null",
++            tofile=str((E.HERE / name).relative_to(E.ROOT)),
++        ))
++    assert not (E.HERE / "complete.diff").exists()
++    (E.HERE / "complete.diff").write_text(complete, encoding="utf-8")
++    hashes = {str(path.relative_to(E.HERE)): E.sha(path)
++              for path in sorted(E.HERE.rglob("*")) if path.is_file()}
++    E.save_json("freeze.json", {"algorithm": "sha256", "files": hashes,
++                              "excluded_self": "freeze.json"})
++    print(f"finished: parser={E.sha(E.PRODUCTION)}; freeze.json={E.sha(E.HERE / 'freeze.json')}")
++
++
++if __name__ == "__main__":
++    main()
+--- /dev/null
++++ .intentfold/tickets/STEMROBIN-184/tmp/production-114-heading-parser/README.md
+@@ -0,0 +1,61 @@
++# Bounded Heading Parser Evidence
++
++Same authorized STEMROBIN-184 SessionB cap3 continuation. The only production
++edit is SEC_NUM in .claude/skills/ld-s10y-lesson/tools/assemble.py. The baseline
++snapshot includes the actual existing dirty file; no Git operation is used.
++
++The supplied source heading is represented independently as a synthetic string,
++not loaded from any source paragraph. Expected number/title tuples are authored
++from the requested heading contract. No existing unit tests are consulted.
++The harness executes only the AST-isolated production regex assignment, never
++imports the assembler or calls its assembly/TOC-claiming functions.
++
++The intended recognition adds inline-math numbers with an optional braced TeX
++star superscript. Existing inline plus, plain numbers, literal star, separate
++math star and blacktriangledown decoration stay compatible. It does not add
++display math, general mathematical expressions or arbitrary superscripts.
++Both match and fullmatch must retain exactly the number/title capture groups.
++
++Actual commands, both output streams, command exits, script hashes and parser
++hashes are recorded by evidence.py. The new reproduction is run once before
++the patch and must fail with exit 1. Only newly authored focused cases run after
++the patch; none are an old PASS suite or a source-content acceptance check.
++
++The relevant TOC entry is derived independently from the literal reported
++title and printedNumber, never from a slug or an invented chapter/section ID.
++Its exact fields are in focused.stdout.txt. This does not claim that any
++retained lesson has been reassembled or its fallback directory corrected.
++
++Read-only baseline/finish hashes cover layout.py, the Chinese 10c TOC, every
++file under source pages 168-171 and the retained initial assembly. Comparing
++those hashes is not a repeated source gate, finalize or assembly operation.
++assemble.diff is the full production delta against the entry snapshot;
++complete.diff also includes every newly authored scratch script and this note.
++freeze.json hashes all remaining scratch files, excluding only itself.
++
++The first focused command exited 1 at its final case: a synthetic negative
++incorrectly rejected arbitrary math in a title after a valid whitespace
++separator. Its exact original script, 55 successful cases (110 match/fullmatch
++assertions), failed assertion and both streams are retained unchanged.
++No successful cases are rerun. check_boundary.py independently asserts title
++preservation after whitespace and rejection of an unsupported adjacent
++decoration without a separator. finish_evidence.py captures only those two
++new boundary cases, derives the TOC entry and freezes the complete evidence.
++No second production patch is made to satisfy the incorrect expectation.
++
++Commands in chronological order, from the repository root:
++
++```sh
++python3 -B .intentfold/tickets/STEMROBIN-184/tmp/production-114-heading-parser/evidence.py baseline
++python3 -B .intentfold/tickets/STEMROBIN-184/tmp/production-114-heading-parser/evidence.py reproduce
++# Apply the bounded SEC_NUM patch with apply_patch.
++python3 -B .intentfold/tickets/STEMROBIN-184/tmp/production-114-heading-parser/evidence.py finish
++# First focused command exited 1 at the invalid final synthetic expectation.
++# Add only the new boundary checks and finish script with apply_patch.
++python3 -B .intentfold/tickets/STEMROBIN-184/tmp/production-114-heading-parser/finish_evidence.py
++```
++
++No model images, browser, backend/DB, source gate, prepare, finalize, assembly,
++app, dependency, schema, setup, refresh or Charter edits are part of this task.
++Parent work on pages 164/165 is neither observed as acceptance nor modified.
++This result is only parser-focused command evidence, not lesson/full-book PASS.

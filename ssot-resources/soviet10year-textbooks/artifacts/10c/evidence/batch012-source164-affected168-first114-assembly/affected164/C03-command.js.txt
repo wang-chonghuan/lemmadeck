@@ -1,0 +1,57 @@
+const fs = require('node:fs');
+const crypto = require('node:crypto');
+const path = require('node:path');
+const root = process.cwd();
+const relative = '.intentfold/tickets/STEMROBIN-184/tmp/production-source10c164-167-review/affected-text';
+const directory = path.join(root, relative);
+const bind = name => {
+  const absolute = path.join(directory, name);
+  const bytes = fs.readFileSync(absolute);
+  return { path: absolute, bytes: bytes.length, sha256: crypto.createHash('sha256').update(bytes).digest('hex') };
+};
+const manifestBinding = bind('input-output-hash-manifest.json');
+const manifest = JSON.parse(fs.readFileSync(manifestBinding.path, 'utf8'));
+for (const declared of manifest.outputs) {
+  if (path.dirname(declared.path) !== directory) throw new Error('manifest output outside affected-text');
+  const actual = bind(path.basename(declared.path));
+  if (actual.bytes !== declared.bytes || actual.sha256 !== declared.sha256) throw new Error('new evidence binding mismatch');
+}
+console.log(JSON.stringify({
+  scope: 'STEMROBIN-184 NEW zero-image affected-text-only freeze, physical 164/165',
+  disposition: 'EXACT_AUTHORIZED_MANUAL_TEXT_DELTA_MATCH / DOWNSTREAM_UNVERIFIED / FIGURE_UNKNOWN / WAIT',
+  frozenInputsBasis: 'C01 actual input bindings transported by bound manifest; no inputs reread by C02/C03',
+  inputOutputManifest: manifestBinding,
+  payloadBindingObservation: 'MATCH_ONCE for NEW affected-text evidence only; not old StageA/StageB full binding verification',
+  supplementalOutputs: [bind('C02-receipt.md'), bind('C03-command.js.txt')],
+  actualProofCommands: [
+    { id: 'P07', chunk: '776ba5', exitCode: 1, meaning: '164 differences found', retainedIn: 'actual-command-streams.md' },
+    { id: 'P08', chunk: '70295d', exitCode: 1, meaning: '165 differences found', retainedIn: 'actual-command-streams.md' },
+    { id: 'C01', chunk: '64aab9', exitCode: 0, stdin: 'C01-command.js.txt', output: 'C01.stdout.json' },
+    { id: 'C02', chunk: 'd1c56e', exitCode: 0, stdin: 'C02-command.js.txt', output: 'input-output-hash-manifest.json', receipt: 'C02-receipt.md' }
+  ],
+  envelopeCommand: {
+    id: 'C03',
+    command: 'node < .intentfold/tickets/STEMROBIN-184/tmp/production-source10c164-167-review/affected-text/C03-command.js.txt',
+    completeStdinBoundAbove: true,
+    actualToolOutputRetainedAs: path.join(directory, 'freeze.json'),
+    actualExitAndChunkDisclosedInTerminalText: true,
+    selfHashExcluded: true,
+    finalEnvelopeSha256ReturnedSeparately: true
+  },
+  authorityQualification: 'Earlier frozen human wording is parent-agent transport under prior human authorization, not fresh direct human pixel proof/grant; frozen StageA/B unchanged',
+  timing166167Qualification: 'Parent first-finalize transport only. Prior raw identities address prefinalize BEFOREs, not current serialization. No 166/167 MD, helper or first JSON read/review/run/hash-check',
+  noCurrent166167HashFailureObservedHere: true,
+  residualFigure75Origin: 'O/0 UNKNOWN under frozen N01; author note is not independent proof',
+  preparePredecessorRoutingOpaqueOldStatesQualifiedIn: 'authority-timing-qualification.md',
+  newModelImages: 0,
+  permanentImageUsage: '7/24',
+  batchImageUsage: '7/8',
+  neverReset: true,
+  pngBytesRead: false,
+  sourceAuthorOrFrozenStageWrites: false,
+  pipelineParserCountAuditFinalizeAssembleRenderToolTestRun: false,
+  onlyNewEvidenceWrittenWithApplyPatch: true,
+  historicalAndAncillaryStreamLimitationsDisclosedIn: 'actual-command-streams.md',
+  openOwnedExecSessions: 0,
+  stop: 'WAIT; no new source/author fullpass, downstream PASS, image or follow-on authority'
+}, null, 2));

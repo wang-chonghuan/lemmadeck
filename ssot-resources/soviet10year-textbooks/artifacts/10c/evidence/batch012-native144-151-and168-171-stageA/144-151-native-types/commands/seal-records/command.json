@@ -1,0 +1,32 @@
+{
+  "executable": "/Users/yong/.local/opt/node-v24.16.0/bin/node",
+  "args": [
+    "-e",
+    "const fs=require(\"fs\");\nconst path=require(\"path\");\nconst out=process.argv[1];\nconst ledger=JSON.parse(fs.readFileSync(path.join(out,\"ledger.json\")));\nconst bindings=JSON.parse(fs.readFileSync(path.join(out,\"final-bindings.json\")));\nif(ledger.successful_single_image_view_count!==7||ledger.reopens!==0) throw Error(\"Incomplete native record\");\nif(!bindings.originals.every(x=>x.unchanged_since_frozen_first)||!bindings.crops.every(x=>x.unchanged_since_creation)) throw Error(\"Unmatched binding\");\nconsole.log(JSON.stringify({status:\"NATIVE_RECORDS_READY_FOR_ONE_TIME_FREEZE\",modelimages:ledger.lifetime_model_images_after,views:7,originals:bindings.originals.length,crops:bindings.crops.length,types:ledger.verdict_counts,image_decodes_or_views_in_sealing:0,numeric_reruns:0},null,2));",
+    "/Users/yong/.codex/worktrees/a07e/lemmadeck/.intentfold/tickets/STEMROBIN-184/tmp/production-counter144-151-native-types"
+  ],
+  "cwd": "/Users/yong/.codex/worktrees/a07e/lemmadeck",
+  "started": "2026-11-17T07:02:47.250Z",
+  "finished": "2026-11-17T07:02:47.282Z",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "launcher": {
+    "executable": "/Users/yong/.local/opt/node-v24.16.0/bin/node",
+    "args": [
+      "/Users/yong/.codex/worktrees/a07e/lemmadeck/.intentfold/tickets/STEMROBIN-184/tmp/production-counter144-151-native-types/seal.mjs"
+    ],
+    "scriptSha256AfterChild": "b6a9a252985cbe3d6afa43d7d7b458103fc66d8f8aa1b77cef508376768b5749"
+  },
+  "stdout": {
+    "path": "/Users/yong/.codex/worktrees/a07e/lemmadeck/.intentfold/tickets/STEMROBIN-184/tmp/production-counter144-151-native-types/commands/seal-records/stdout.raw",
+    "bytes": 313,
+    "sha256": "9a93a0dda8909ff8d36cfba8a8472ff4aaad03080d02d641424fbf9542f314f9"
+  },
+  "stderr": {
+    "path": "/Users/yong/.codex/worktrees/a07e/lemmadeck/.intentfold/tickets/STEMROBIN-184/tmp/production-counter144-151-native-types/commands/seal-records/stderr.raw",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "capture": "Exact child stream descriptors opened before spawn; no reconstructed streams or tee claims"
+}

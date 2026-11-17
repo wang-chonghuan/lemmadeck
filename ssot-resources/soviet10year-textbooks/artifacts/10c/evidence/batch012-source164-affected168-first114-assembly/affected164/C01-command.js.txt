@@ -1,0 +1,118 @@
+const fs = require('node:fs');
+const crypto = require('node:crypto');
+const path = require('node:path');
+const root = process.cwd();
+const artifact = 'ssot-resources/soviet10year-textbooks/artifacts/10c';
+const review = '.intentfold/tickets/STEMROBIN-184/tmp/production-source10c164-167-review';
+const manifestRelative = `${artifact}/evidence/batch012-source164-167-author-before-review-edits/copy-manifest.json`;
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const input = relative => {
+  const absolute = path.join(root, relative);
+  const bytes = fs.readFileSync(absolute);
+  return { relative, absolute, bytes, binding: { path: absolute, bytes: bytes.length, sha256: sha(bytes) } };
+};
+const manifestInput = input(manifestRelative);
+if (manifestInput.binding.sha256 !== 'a6ac7b308fc436edc8707a26b7f011303817d36f76c216713c25e926765e636b') throw new Error('copy manifest identity changed');
+const copied = JSON.parse(manifestInput.bytes).copied;
+const plans = [
+  {
+    page: '0164',
+    beforeSha: '0bf08838d63fa45a3e87bc6fbe5ddccade7cc515acdaecf870b3346784b54098',
+    currentSha: 'ba98d98c480cb58f62c6e886a4340736377672b34ea5145ae82a3403c64d938b',
+    firstRow: '0164-r15',
+    secondRow: '0164-r16',
+    affectedBefore: "$f'(x)=(\\sqrt{x}\\ln x)'=\\sqrt{x}'\\ln x+\\sqrt{x}(\\ln x)'↵\n=\\frac{\\ln x}{2\\sqrt{x}}+\\frac{\\sqrt{x}}{x}=\\frac{\\ln x+2}{2\\sqrt{x}}$．",
+    oldNote: 'AUTHOR ONLY：顶部承接上页正文；单元 113 归属暂定，须由父会话结合另行观察的物理页 0163 文字确认。本页未见单元标题，末句续下页。',
+    appendedNotes: [
+      '唯一 StageB 对照确认导函数推导占两印刷行；仅移除已有 ↵ 后重复表达同一断点的 Markdown 换行，保留全部等式、符号及一个 ↵。不声明下游行数已通过。'
+    ]
+  },
+  {
+    page: '0165',
+    beforeSha: '6866cee65de15cb4a8ab0d36f96cbf307073b943352bd0c7d42a41d37d8d4908',
+    currentSha: '7ef6666efc6bb2b6c208f190a1e640b5ebb8968d22c2fbb220e2a0ed44c6bbeb',
+    firstRow: '0165-r19',
+    secondRow: '0165-r20',
+    affectedBefore: '2．对数函数值的集合是整个数轴 $]-\\infty,\\infty[$：$E(\\log_a)↵\n=R$．',
+    oldNote: 'AUTHOR ONLY：图 75 粗框只含图形，图题另列并与“设”同排。页首续物理页 0164，页尾第 4 条性质及括号续下页；性质编号不是习题编号。',
+    appendedNotes: [
+      '唯一 StageB 对照确认性质 2 占两印刷行；仅移除已有 ↵ 后重复表达同一断点的 Markdown 换行，保留全部文字、公式及一个 ↵。不声明下游行数已通过。',
+      '独立 NEW native crop 后图 75 原点字形仍为 O/0 UNKNOWN；不得由作者自述或坐标惯例替代像素判定。'
+    ]
+  }
+];
+const replaceUnique = (text, needle, replacement) => {
+  const start = text.indexOf(needle);
+  if (start < 0 || text.indexOf(needle, start + needle.length) >= 0) throw new Error('literal replacement is not unique');
+  return text.slice(0, start) + replacement + text.slice(start + needle.length);
+};
+const inputs = [manifestInput.binding];
+const pages = [];
+for (const plan of plans) {
+  const currentRelative = `${artifact}/pages/${plan.page}/page.md`;
+  const mapping = copied.find(entry => entry.source === currentRelative);
+  const retainedExpected = `${artifact}/evidence/batch012-source164-167-author-before-review-edits/before-pages/${plan.page}/page.md`;
+  if (!mapping || mapping.retained !== retainedExpected || mapping.sha256 !== plan.beforeSha) throw new Error('retained before mapping changed');
+  const before = input(mapping.retained);
+  const current = input(mapping.source);
+  inputs.push(before.binding, current.binding);
+  if (before.binding.sha256 !== plan.beforeSha || before.binding.bytes !== mapping.bytes || current.binding.sha256 !== plan.currentSha) throw new Error('author input identity changed');
+  const beforeText = before.bytes.toString('utf8');
+  const currentText = current.bytes.toString('utf8');
+  const affectedAfter = replaceUnique(plan.affectedBefore, '↵\n', '↵');
+  const oldNoteLiteral = `    ${JSON.stringify(plan.oldNote)}\n`;
+  const newNoteLiteral = `    ${[plan.oldNote, ...plan.appendedNotes].map(note => JSON.stringify(note)).join(',\n    ')}\n`;
+  const expectedText = replaceUnique(replaceUnique(beforeText, plan.affectedBefore, affectedAfter), oldNoteLiteral, newNoteLiteral);
+  if (!Buffer.from(expectedText, 'utf8').equals(current.bytes)) throw new Error('unauthorized byte delta');
+  const marker = '\n<!-- p';
+  const beforeBody = beforeText.indexOf(marker);
+  const currentBody = currentText.indexOf(marker);
+  if (beforeBody < 0 || currentBody < 0) throw new Error('body marker absent');
+  const unchangedBodyExceptAffectedLF = replaceUnique(beforeText.slice(beforeBody), plan.affectedBefore, affectedAfter) === currentText.slice(currentBody);
+  const unchangedMetadataExceptAppendedNotes = replaceUnique(beforeText.slice(0, beforeBody), oldNoteLiteral, newNoteLiteral) === currentText.slice(0, currentBody);
+  if (!unchangedBodyExceptAffectedLF || !unchangedMetadataExceptAppendedNotes) throw new Error('body or metadata changed outside scope');
+  pages.push({
+    page: plan.page,
+    mapping: { source: mapping.source, retained: mapping.retained },
+    before: before.binding,
+    current: current.binding,
+    correspondence: [plan.firstRow, plan.secondRow],
+    affectedBefore: plan.affectedBefore,
+    affectedAfter,
+    oldNoteUnchanged: plan.oldNote,
+    appendedNotes: plan.appendedNotes,
+    fullAllowedByteReconstructionEqualsCurrent: true,
+    unchangedBodyExceptAffectedLF,
+    unchangedMetadataExceptAppendedNotes,
+    oneExistingPhysicalBreakTokenRetainedAtAffectedBoundary: true,
+    physicalBreakMeaningBasis: 'Frozen StageA/StageB correspondence; no fresh pixels or downstream execution.'
+  });
+}
+const frozenTextPaths = [
+  `${review}/inventory-0164.md`,
+  `${review}/inventory-0165.md`,
+  `${review}/stageB/comparison-0164.md`,
+  `${review}/stageB/comparison-0165.md`,
+  `${review}/stageB/StageB-report.md`,
+  `${review}/stageB/freeze.json`
+];
+for (const relative of frozenTextPaths) inputs.push(input(relative).binding);
+const stageBFreeze = inputs[inputs.length - 1];
+if (stageBFreeze.sha256 !== '14dc6ba7f7fc2f10ab93cc21b39d5b698d8d7d20376753fa8a83861329829c15') throw new Error('StageB freeze identity changed');
+console.log(JSON.stringify({
+  operation: 'C01 narrow affected-text literal byte-delta verification',
+  cwd: root,
+  inputs,
+  pages,
+  result: 'EXACT_AUTHORIZED_TEXT_DELTA_MATCH; NOT_PAGE_COUNT_FIGURE_OR_UNIT_PASS',
+  newModelImages: 0,
+  permanentImageUsage: '7/24',
+  batchImageUsage: '7/8',
+  pngBytesRead: false,
+  pages0166And0167Read: false,
+  pipelineParserCountAuditFinalizeAssembleRenderToolTestRun: false,
+  sourceOrAuthorWrites: false,
+  frozenStageAWrites: false,
+  frozenStageBWrites: false,
+  parentHumanWording: 'Parent-agent transport under prior human authorization, not fresh direct human pixel proof/grant.'
+}, null, 2));
