@@ -1,0 +1,13 @@
+{
+  "command": [
+    "python3",
+    "-B",
+    "-c",
+    "import sys,json\nfrom pathlib import Path\nsys.path.insert(0,str(Path(\".agents/skills/ld-s10y-choice/scripts\").resolve()))\nimport validate\nseed=json.load(open(\".intentfold/tickets/STEMROBIN-182/tmp/batch235-n13-existing-choice/seed.json\"))\ndraft=json.load(open(\".intentfold/tickets/STEMROBIN-182/tmp/batch235-n13-existing-choice/draft.json\"))\nexercises={item[\"number\"]:item for item in seed[\"exercises\"]}\nfigures={item[\"id\"]:item for item in seed[\"figures\"]}\nblocks={item[\"block\"]:item for item in seed[\"concepts\"]}\nresult=validate.check_draft(seed,draft,Path(\".\").resolve(),exercises,figures,blocks.keys())\nprint(json.dumps({\"questions\":len(result[0]),\"figures\":len(result[1]),\"review\":None}))"
+  ],
+  "exit_code": 0,
+  "stdout": "{\"questions\": 11, \"figures\": 0, \"review\": null}\n",
+  "stderr": "",
+  "source_or_trace_freshness_repeated": false,
+  "independent_approval": false
+}

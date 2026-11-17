@@ -1,5 +1,54 @@
 # 当前开发状态
 
+### batch253 n13有限显示窄收口
+
+- Halley两PNG首次可见观察真实completed/PASS，原HTML/PNG/回执
+  同字节留存；mobile第三题B底截/C未见、desktop第四题选项未见，
+  不据有限PASS声称全11题逐题显示、交互、APP或整课通过。
+- Euler185/190 loss/coverage当前PASS及Kierkegaard原八源11题34项
+  数学证据直接复用；Nietzsche四个课文/书写窗口亦不重跑。
+  选定包只新增11题34项、六个唯一组合；当前82组选定包
+  1394题5659项648组合，不是82完整课，187/192及所有原HOLD保留。
+- 250监督fig66持久标准gate纯路径绑定一次exit0已收，Lorentz真实
+  增量及Descartes原非缺陷事实/FAIL继承，不重render或读图。
+- Popper251仅72/73四图首独审在途；74/75一次修复仍FAIL和76源HOLD
+  保持。Kepler246仍五图cap1原范围，部分稿不当完成。
+- 本批窄提交仅n13及必要fig61依赖、普通progress/usage与n13索引；
+  其他未提交候选、监督ticket与layout改动均保留；push后立即接续。
+
+### batch248–251 首次cap2与局部HOLD
+
+- n13仅缺的choices-only渲染与1440/390首次DOM各exit0，两PNG冻结
+  等fresh有限观察；Euler真实ID已补留存，不重课文/书写/34项数学。
+- Einstein五份n17 cap1真实完成关闭，72–75 draft exit0，76 exit2；
+  76除法双点下方钩状墨迹不可判读且映射缺失，保持真实SOURCE HOLD。
+- 72/73首次cap2 exit0；74加号与75 B/X首次碰撞exit2。
+  各一次标签局部留白后仍exit2（74加号、75 X），旧稿及输出保留，
+  不继续试改、不改renderer，72/73原pass可交四图最小首独审。
+- Lorentz66两竖折线增量真实PASS，标准gate一次exit0/current PNG一次，
+  继承Descartes其余源事实。原FAIL/SVG/preview同字节另留持久历史；
+  当前SVG/context已首次留存，只交250零图PATH-BINDING，不自审批准。
+- 246 Kepler仅n12五源cap1在途；父新图0/累计24，81组选定包
+  1383题5625项642组合不重计，局部HOLD不当整组停止或完成。
+
+### batch242–247 n13真实增量与n14折线局部修复
+
+- `2350d94f0`已实际窄commit/push，64文件仅n18选定包及必要两表；
+  当前81组选定包1383题5625项642组合不重计，不是81完整课。
+- Kierkegaard原235 revise/exit3保留，Euler243 loss/coverage增量
+  真实PASS、唯一direct exit0；八源11题34项数学与原身份证据完整继承，
+  新数学0/图0。当前三快照同字节留存，仅补缺失首次choices显示；
+  187/192、独立书写、未见/交互/整课及881保持HOLD，不先计题量。
+- Descartes63/64首次图PASS复用，监督245两持久gate纯路径绑定
+  各一次exit0；原SVG/preview/context和几何不变，没有重复图审。
+- 66首图FAIL因两竖折线与反向网格虚线相位互补而显示为实线；
+  仅对齐两个fold及connects端点顺序共八字段，37对象/坐标/布局、
+  12外边及三横折线不变。一次affected render exit0，当前一图独审
+  在途，旧FAIL与239/244全部字节保留，不把render PASS当批准。
+- 242 n17与246 n12各五图fresh cap1在途，不将部分草稿当完成，
+  不重复原context准备或读图；62/65/67及其他SOURCE HOLD保持。
+  父本次新图0/累计24；同一分支继续无依赖阶段，不作整组收口。
+
 ### batch237–241 n18有限显示收口与n14首次cap2
 
 - `cae0e94e9`已实际窄commit/push，50文件仅n15及其必要图依赖；
