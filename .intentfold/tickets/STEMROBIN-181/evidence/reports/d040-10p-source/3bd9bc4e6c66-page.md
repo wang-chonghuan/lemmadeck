@@ -1,0 +1,43 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 88,
+  "printed_page": 78,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 88
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2320,
+    "sha256": "4aec0f1ea4ef392a7d51d2dfaf640153c886397721b40a3d9022eef49c04fe06"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "New SOURCE candidate; actual original page opened once. Exercise11 is complete on this page: four printed rows and footer78. No figures or next-card content.",
+    "Source capacitance and resonant-frequency values retained exactly; no answer consulted or source-math correction."
+  ],
+  "errata": [],
+  "printed_lines": 5,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 11 -->
+11. 具有电容为 $C_1=10^{-6}$ 法拉的电容器的振荡回路，在振荡频率
+$\nu_1=400$ 赫兹时发生共振. 当在电容器 $C_1$ 上并联一个电容为 $C_2$ 的电
+容器时，共振的频率 $\nu_2=100$ 赫兹. 求电容 $C_2$. 回路的纯电阻可以忽
+略不计.
+
+<!-- foot -->
+• 78 •

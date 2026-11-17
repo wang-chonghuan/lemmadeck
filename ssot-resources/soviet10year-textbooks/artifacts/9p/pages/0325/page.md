@@ -1,0 +1,76 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 325,
+  "printed_page": 316,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 325
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "9e36d1ef71f5e1083ea1e835b67e9b0c0d4ae12332fb42e7c19d93c928c28352"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "SOURCE AUTHOR candidate only. Actual opens3-4: frozen original325 then grid325, once each. Footer316 read from pixels.",
+    "Actual 第十三章 物质的磁性 is the structural h2; actual132 heading opens TOC phy9-c2-s7-n132 and supplies the right boundary of 练习16. No duplicate invented heading or exercise rubric.",
+    "Twenty observed printed text rows including the displayed equation, four footnote rows and footer. There is no source figure, table or exercise on this page.",
+    "Equation(13-1) retains both vector marks and the printed comma. Footnote① uniquely attaches to the 磁导率① row and stays p footnote; separator is not a source figure.",
+    "Footnote literally says 磁感应强度不等于(13-1). Preserve that printing and all shape/orientation conditions without physics-based correction or errata.",
+    "All main paragraphs end with printed punctuation here; n132 is not yet a complete card, but no unfinished sentence is fabricated to force p open. No normalization, counting override or SOURCE selfapproval."
+  ],
+  "errata": [],
+  "counting": {
+    "edge_margin_px": 100,
+    "reason": "Independent SOURCE review identified the extra post-footer band as lower-corner scan dirt, with no omitted printed text; counting-only edge mask preserves all source pixels and rows."
+  },
+  "printed_lines": 20,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- h2 -->
+第十三章　物质的磁性
+
+<!-- h3 -->
+132. 安培假说
+
+<!-- p -->
+我们知道，电流在物质中产生的磁感应强度 $\vec{B}$，不同于在
+真空中的情况. 如果在真空中电流产生的磁感应强度为 $\vec{B}_0$，
+则在均匀磁介质中，磁感应强度为
+$\vec{B}=\mu\vec{B}_0$，　　　　　　　　　(13-1)
+
+<!-- p -->
+式中 $\mu$——介质的磁导率①.
+
+<!-- p -->
+**安培**第一个找到了物质具有磁性的原因. 最初，安培在
+观察奥斯特实验中，通电导体能使附近的小磁针发生旋转从
+而得到直接的启示，提出了假设：地磁是地球内部的电流引起
+的. 迈出了重要的一步：物质的磁性可以用物质内部的环形
+电流来解释. 其后，安培作出了一般的结论：**任何物体的磁性
+都是由它内部的闭合电流决定的**. 这是从利用电流解释物体
+**磁性**的可能性，到磁相互作用就是电流的相互作用这一论断
+的关键性的一步.
+
+<!-- p footnote -->
+① 公式(13-1)只适用于充满整个空间的均匀介质，或特别对称的一块物
+质，例如螺线管内部的均匀铁芯. 如果一块物质具有任意的形状，则当把它放在
+磁感应强度为 $\vec{B}_0$ 的磁场中时，物质内部的磁感应强度不等于(13-1). $\vec{B}$ 和 $\vec{B}_0$ 之
+间的关系十分复杂，它决定于物质的形状及其相对于 $\vec{B}_0$ 的取向.
+
+<!-- foot -->
+• 316 •

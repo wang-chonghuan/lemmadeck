@@ -1,0 +1,69 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 89,
+  "printed_page": 79,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 89
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "1f7e5aa28d0ba9b8cb0f9222c0219cbb0c481938b806478400dd48b12a94f0e7"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "New SOURCE candidate; actual grid page opened once. Two printed chapter-title rows and one n31 heading; no figures or independent tasks.",
+    "Last main paragraph continues onto90. Explanatory footnote is p footnote, not footer, and is transparent to that continuation. No source image edits or typography inferred from irregular ink."
+  ],
+  "errata": [],
+  "printed_lines": 21,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- h2 -->
+第三章　电能的生产、
+输送和利用
+
+<!-- h3 -->
+31. 电能的产生
+
+<!-- p -->
+较之所有其它形式的能，电能具有无可争辩的优越性.
+它可以沿导线输送到很远的距离而损耗较小，在用户之间分
+配方便. 并且主要的是，用极其简单的设备就可以很容易地
+把电能转化为任何其它形式的能：机械能，内(热)能，光能
+等等.
+
+<!-- p -->
+交流电较之直流电具有的优越性是电压和电流强度可以
+在很大范围内升降变化而几乎没有能量损失. 这样的变化在
+很多电的和无线电技术设备中都是必需的. 然而，在远距离
+传送电能时变压和变流的必要性就更大.
+
+<!-- p open -->
+电流是在发电设备中产生的. 这些发电设备能把各种形
+式的能转化为电能. 伽伐尼电池，静电起电机，温差电堆①，宇
+宙飞船上用的太阳能电池等都属于发电设备. 正在研究制造
+新型的发电机的可能性. 例如，制造一种所谓燃料电池.
+在这种电池中由于氢和氧反应所放出的能量直接转化为电
+能. 在建造磁流体发电机方面也进行了有成效的工作；在这
+
+<!-- p footnote -->
+① 在温差电堆里，利用的是不同材料的两个接点由于两端的温度差而产
+生电动势的性质.
+
+<!-- foot -->
+• 79 •

@@ -1,0 +1,76 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 103,
+  "printed_page": 93,
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "4156a714962835aa6cfc878726f6904db40ad41349cf66b199b18be19b38581b"
+  },
+  "notes": [
+    "SOURCE candidate from one individual opening of page.grid.png and one focused source crop at [200,880,1390,1000]. Crop confirms the literal 布拉特斯基 in exercise 7; no historical-name modernization.",
+    "Literal 练习3 is a separate unnumbered card heading, followed by nine complete printed exercises. Exercise 8 refers back to 图63 on PDF100, owned by n35; no figure is printed on this page and no duplicate fig block is created.",
+    "Exercise 9's U1=11000 formula crosses the physical first/second printed rows; it is retained as a complete formula with a real wrap marker. The final 千伏. 求变压器的效率. is the third printed row.",
+    "No outgoing open object or next chapter heading occurs on this page. PDF104 and later are not observed. Lower-page speckles and margin marks are scan noise, not added text."
+  ],
+  "errata": [],
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 103
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "printed_lines": 19,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- h3 -->
+练习 3
+
+<!-- ex 1 -->
+1. 为了减小涡电流，感应发电机转子铁芯彼此绝缘的钢片应如何
+放置？
+
+<!-- ex 2 -->
+2. 矩形线框在匀强磁场中旋转时，在什么情况下线框里产生的电
+动势最大：是当线框平面与磁力线垂直时，还是与磁力线平行时？
+
+<!-- ex 3 -->
+3. 变压器的绕组是由不同粗细的导线做的，这两种绕组哪一种匝
+数多？
+
+<!-- ex 4 -->
+4. 不拆开线圈，想出一个确定变压器绕组匝数的方法.
+
+<!-- ex 5 -->
+5. 如果偶然地把变压器和直流电源接通，可能发生什么情况？
+
+<!-- ex 6 -->
+6. 如果变压器的绕组里有一匝短路，变压器就损坏而不能工作，
+为什么？
+
+<!-- ex 7 -->
+7. 已知转子的旋转频率为 $125$ 转/分，求布拉特斯基水电站发电
+机转子的磁极有多少对？
+
+<!-- ex 8 -->
+8. 计算图 $63$ 所示的各个变压器的变压系数（能量的损失忽略不
+计）.
+
+<!-- ex 9 -->
+9. 变压器的初级绕组的电流强度 $I_1=15000$ 安培，它的端电压 $U_1↵=11000$ 伏，次级绕组的电流强度 $I_2=1440$ 安培，它的端电压 $U_2=110$
+千伏. 求变压器的效率.
+
+<!-- foot -->
+• 93 •
