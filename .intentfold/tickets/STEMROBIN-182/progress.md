@@ -1,5 +1,65 @@
 # 当前开发状态
 
+### batch184 真实显示收口与最小增量
+
+- n45/n49复用Hooke真实增量PASS及已完成规范，n47复用
+  Beauvoir真实首独审PASS/exit0；37题167项的三份choice-set
+  已完成必要首次静态显示并持久留存HTML、截图和原报告。
+  没有重解源、重审数学、重跑旧规范或重开图片。
+- Carson原四图可见PASS、手机B式右端FAIL和未见/交互HOLD
+  原字节保留。实际B式归属q765，不改原q766截图标签。
+  Ohm只看现成左右端点各一次，左端及右端完整-4真实PASS；
+  仅补既有横滑状态证据，不声称整式一屏、用户手势或APP认证。
+  原报告SHA369f40adee84ab2cd95ac193ebbc3e5e5b560ad288bcdeba9b53d151931d2d6e。
+- Harvey仅看n47现成1440/390两图各一次，可见静态PASS；
+  原报告SHAa74f28f3268382fdfdb734b4fcaec309d91efdd525dd247aea116a1c9749d067。
+  未见内容/交互HOLD及桌面标题末字换行的轻微事项保留，
+  不加全题截图或返工。实际身份为监督派出的临时子代理，
+  原自述不转成人类审批；Harvey/Ohm均已由监督关闭。
+- 当前66批准选定源组1084题4283项、显示604组合；三课
+  覆盖各自完整书写源，不把66组选定包称为66完整现代课。
+  两端补图不另计视口组合。窄提交仅三份6a choice-set及
+  现有progress/usage，其他4m/raw、ticket.json和布局补丁不入本批。
+- n19的Zeno选定包PASS/exit0已真实消费，20源22题88项
+  已留存，264整源排除与原Gauss blocked保留。未重render，
+  choices首次隔离headless 1440/390两组合exit0，当前两张
+  PNG待fresh限定观察；尚未计该组或批准整课，也不发布缺依赖包。
+- n42仅修732/733恒等关系并全排740，当前12源11题53项；
+  n43仅全排749，4源5题26项的全部题面/key不变；
+  8a n3仅13F及19/20九项和七处生产损失登记，10题49项。
+  三个最小增量入口已生成并冻结，Boole/Bacon现实际接入。
+  原Noether/Beauvoir拒绝证据、740/749 SOURCE HOLD及额外
+  21源/1图未选边界保持，不把派工记批准。
+- Goodall/Hilbert原四稿仍在收口，不消费active的中间文件。
+  父方本段开图0、累计24不变，881真实审批等待不动；
+  收口push后继续原范围，finish仍review，整组尚未交付。
+
+### batch183 当前真实收口
+
+- 73573059c2d556653a63395da9582186151f3677 已实际推送，
+  n44/n46的已审16题65项及原四组合显示不重复检查。
+- Hooke两处增量正式PASS已消费，各一次当前with-review退出0：
+  n49/q818报告SHA3fe89a66401904369a8dd4863cc7720412a332087bdb7ace6d99009ddec6af0b，
+  n45/q766报告SHAa4cd16f114f910eb85877115f459fc7b0bef8284ab9ecfc0930ddbe851d41e0d。
+  本次新审2源7项，另17题75项直接复用真实首独审；当前
+  n45为12题46项、n49为7题36项。三份批准快照与原revise
+  均已持久保留，父方没有再跑最终规范。Hooke已由监督关闭。
+- 只生成这两课choices页，首次1440/390四组合实际退出0，
+  聚焦q766/q818的四张截图与receipt在tmp/batch183-qualified-display。
+  Carson只观察这四图各一次，尚未消费目视回执，不增设
+  全题截图或交互门禁。父方新增0图、累计24不变。
+- Gauss的n19首独审真实blocked/exit3已消费，原包完整保留。
+  只补262的intent.limitations与coverage.omitted_tasks两项
+  完整根集/零因子分支生产损失登记，题面和key零变；
+  当前选定包完全排除264，20源22题88项在
+  tmp/batch183-n19-qualified，整课未完成。Zeno只审两登记
+  及排除264后的scope/package影响，其他真实旧数学和3图
+  精确diff后复用；不猜264数域，不批准kg或881。
+- Noether/Beauvoir原n42/n43/n47/8a-n3四稿仍冻结，正式
+  完成回执到达才消费，不把中间报告或派工记为批准。
+  本批尚未新增commit/push；继续其他真实缺口，不改应用、
+  技能、依赖、生产库或分支，finish仍review。
+
 ### batch182 已审课程收口与两处局部修补
 
 - Nash/Helmholtz真实首独审及各一次带review规范已消费：n44
