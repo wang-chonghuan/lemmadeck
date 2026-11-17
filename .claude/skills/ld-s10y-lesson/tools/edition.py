@@ -440,7 +440,8 @@ def math_signature(text: str) -> list[str]:
 
 def number_signature(text: str) -> list[str]:
     without_math = MATH.sub("", text)
-    return NUMBER.findall(without_math)
+    # Chinese units and printed line breaks must not change numeric tokens.
+    return ERRATA_NUMBER.findall(without_math)
 
 
 def masked_math(text: str) -> str:
@@ -758,7 +759,7 @@ def validate_text(
         errors.append(f"{label} 应在 changes 中包含 math-correction")
     if not math_corrections and "math-correction" in changes:
         errors.append(f"{label} 声明 math-correction 但没有已绑定勘误")
-    source_numbers = number_signature(canonical_source)
+    source_numbers = number_signature(expected_math_source)
     modern_numbers = number_signature(canonical_modern)
     if not isinstance(numeric_changes, list):
         errors.append(f"{label}.numeric_changes 必须是数组")
