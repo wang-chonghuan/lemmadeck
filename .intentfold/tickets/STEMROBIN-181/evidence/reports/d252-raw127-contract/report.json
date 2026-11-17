@@ -1,0 +1,231 @@
+{
+  "schema": "zero-image-raw127-existing-contract-consumption@1",
+  "ticket": "STEMROBIN-181",
+  "consumptionId": "d249-raw127-existing-contract-consumption",
+  "status": "PASS-within-existing-contract",
+  "statusScope": "Existing original RAW127/SVG127 cap3 acceptance threshold only, using saved native evidence and this same agent's d243 first visual observations.",
+  "sameAgentContext": true,
+  "zeroImageEvidenceConsumptionCount": 1,
+  "inputBindings": {
+    "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d249-raw127-existing-contract-consumption/input-bindings.json",
+    "sha256": "9d6335e40c0f172eb6438b4ffa60cd879ebf1c90c040d317192170c366fcf403"
+  },
+  "actualOpens": {
+    "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d249-raw127-existing-contract-consumption/actual-opens.json",
+    "sha256": "df1c6a718c583da8395a5b3f1648d1cd5ff72161a9228c4d419e6a7cc9ee8a04"
+  },
+  "applicableContract": {
+    "skillScope": "ld-s10y-lesson cap3, SKILL.md lines 305-322",
+    "implementationScope": "vectorize.py constants, _dilate, _render_svg, and lines 112-149",
+    "clauses": [
+      {
+        "id": "C1-original-trace-not-redraw",
+        "requirement": "Deterministic original bitmap contour tracing, not model recreation or semantic object/label addition, deletion or movement.",
+        "evidence": "Historical page166-only native vectorize receipt binds the same RAW/SVG pair. d243 observed correspondence of main contours, channels and line groups, with no labels, neighboring text or new semantic objects in either crop.",
+        "conclusion": "PASS within the previously observed crop scope; no new semantic review performed."
+      },
+      {
+        "id": "C2-native-render-and-dimensions",
+        "requirement": "Render generated SVG using resvg; rendering failure or a returned raster shape unequal to source shape fails.",
+        "implementation": "vectorize.py lines 115-125 calls _render_svg then checks got.shape == src.shape. _render_svg dispatches svg_raster.js; its matching frozen code uses @resvg/resvg-js with white background and no width argument on this path.",
+        "evidence": "Saved native receipt exit0 and actual stdout report one figure passed. Current vectorize.py and svg_raster.js hashes match the historical author's initial/current code bindings. Native receipt after-snapshot SVG and PNG hashes match the inputs consumed by d243.",
+        "conclusion": "PASS by read-only consumption of historical native command evidence, not by a new resvg execution.",
+        "historicalCheckRasterRetainedOrOpenedHere": false
+      },
+      {
+        "id": "C3-binary-ink",
+        "requirement": "Source and rendered ink are grayscale <128 (INK_THRESHOLD=128).",
+        "evidence": "vectorize.py _ink uses this threshold; d243 saved pixel-comparison uses the same binary-ink definition.",
+        "conclusion": "Applicable threshold confirmed; no new image thresholding performed."
+      },
+      {
+        "id": "C4-one-pixel-tolerance",
+        "requirement": "EDGE_TOLERANCE=1; use the full 3x3 Chebyshev neighborhood around ink, not exact-pixel equality.",
+        "implementation": "missing = count(src & ~dilate(got,1)); extra = count(got & ~dilate(src,1)).",
+        "evidence": "d243 recorded missing=7 and extra=0 under a radius1 Chebyshev neighborhood. Its native ink bounds have at least 12px margin; the implementation's np.roll wraparound versus clipped neighborhoods cannot change these counts at radius1.",
+        "conclusion": "Applicable tolerance confirmed; supplemental saved counts are comparable to this formula, but are not resvg counts."
+      },
+      {
+        "id": "C5-source-ink-denominator",
+        "requirement": "(missing+extra)/sourceInk <= MISMATCH_LIMIT=0.02; compare the unrounded ratio. sourceInk=0 is separately treated as ratio0 by the code.",
+        "evidence": "d243 sourceInk=33399, so 7/33399=0.00020958711338662833, or 0.020958711338662832%, below 2%. Saved historical native output separately reports 0.015% and exit0.",
+        "conclusion": "PASS within the existing threshold. Whole-image pixel count is not the contractual denominator."
+      },
+      {
+        "id": "C6-polarity-holes-and-fill",
+        "requirement": "Invert bitmap polarity for potrace and merge contours in one even-odd path so meaningful holes do not collapse into a solid flood.",
+        "evidence": "Matching vectorize.py build_svg implements these requirements. d243 observed the roof's major white channels and separate line groups corresponding, with no black raster flood.",
+        "conclusion": "No previously observed substantive collapse. This does not establish preservation of every small scanned white pit."
+      }
+    ],
+    "exactPixelEqualityRequired": false,
+    "everyScanPitIndividuallyRequired": false,
+    "noSubstantiveContourLossWaiver": "The numeric allowance does not excuse a real missing main stroke, label, channel or semantic object; d243 did not observe one.",
+    "contractChangedOrRelaxed": false
+  },
+  "d243FirsthandObservationScope": {
+    "sourceReportStatusUnchanged": "FAIL",
+    "originalObservationContextOrdinals": [12, 13],
+    "originalRawAndExistingSvgPreviewDimensions": [378, 341],
+    "originalRawSha256": "082eae84a079e8c1ced01bbd1680d1e8c0c9819e9ee09d4d3b4f0c477727080d",
+    "originalSvgSha256": "2ebe4bc0cded0ab963dfe68d13fb43cf8d8a759e9daf7cb70cfa2709727682a3",
+    "previewSha256": "012581574bd3cec06b033b6aae850c0ce87fed165496174ebd518f24bbf2cd5a",
+    "observationsInheritedWithoutReopening": [
+      {
+        "scope": "Top crossbar/support",
+        "status": "PASS",
+        "observation": "Main strokes and junctions correspond."
+      },
+      {
+        "scope": "Striped roof main outline and white channels",
+        "status": "PASS",
+        "observation": "Main outline, alternating channels and end positions correspond."
+      },
+      {
+        "scope": "Eaves, dropping and jogged lines",
+        "status": "PASS",
+        "observation": "Main strokes and separations correspond."
+      },
+      {
+        "scope": "Three lower line groups",
+        "status": "PASS",
+        "observation": "Frames, bars and abbreviated right-hand group layout correspond."
+      },
+      {
+        "scope": "Labels, neighboring characters and new semantic objects",
+        "status": "PASS",
+        "observation": "None observed in either image; no absent source label is invented as a requirement."
+      },
+      {
+        "scope": "Small scanned white pits, roughness and tiny ink features",
+        "status": "FAIL",
+        "observation": "Some original scan pits are filled and some tiny ink/roughness features are smoothed.",
+        "findingId": "D243-RAW127-F01",
+        "preserved": true
+      }
+    ],
+    "previouslyObservedSubstantiveDefectBeyondApprovedTolerance": false,
+    "basisForThatStatement": "d243 explicitly records no wholesale missing main stroke, semantic defect or black raster flood; its differences were limited to scan holes/roughness and small stroke edges.",
+    "limits": "Only the original RAW127 crop and its existing SVG's saved sharp raster were visually observed in d243. No full source page, question ownership, science, modern figure, Chinese/English text, answer or whole card is approved here.",
+    "newVisualOrSemanticReviewPerformed": false
+  },
+  "savedNativeResvgEvidence": {
+    "provenance": "d129-source166-167-author/receipts/vectorize-0166-initial; verified from actual receipt/stdout, after-snapshot byte hashes and frozen code bindings, not merely from the user's locator message.",
+    "physicalPageFilter": [166],
+    "figure": "fig-127",
+    "commandStage": "p2c.py vectorize --book 10p --page 166, isolated d129 source/work",
+    "startedUtc": "2026-11-17T17:32:53.571Z",
+    "finishedUtc": "2026-11-17T17:32:55.275Z",
+    "exitCode": 0,
+    "stdoutDecodedLines": [
+      "  \u2713 0166/fig-127  \u4e0d\u5339\u914d 0.015%  21KB",
+      "[vectorize] 1 \u5f20\u901a\u8fc7, 0 \u5f20\u4e0d\u5339\u914d\u8d85\u9650"
+    ],
+    "nativeReportedMismatchPercent": 0.015,
+    "exactUnprintedNativeRatio": null,
+    "nativeMissingExtraCountsNotInvented": true,
+    "authorFreezeReruns": 0,
+    "receiptAfterSvgHashEqualsCurrentSvgHash": true,
+    "receiptAfterRawHashEqualsD243RawHash": true,
+    "matchingFrozenContractAndRendererCodeHashes": true,
+    "engineAttributionBasis": "Saved successful vectorize receipt plus its author's matching frozen vectorize.py and svg_raster.js code. This is historical native evidence, not a fresh engine invocation or a visually inspected historical check raster.",
+    "independentApprovalInAuthorReceipt": false,
+    "nativeCommandsExecutedThisConsumption": 0
+  },
+  "savedSharpMetricsContractArithmetic": {
+    "provenance": "d243 saved pixel-comparison.json; existing SVG raster was historically generated with sharp, then presented on white with Pillow.",
+    "resvgMetrics": false,
+    "imagePixelsRecomputedThisConsumption": false,
+    "arithmeticOnly": true,
+    "missing": 7,
+    "extra": 0,
+    "sourceInk": 33399,
+    "exactFraction": "7/33399",
+    "ratio": 0.00020958711338662833,
+    "percent": 0.020958711338662832,
+    "implementationRoundedRatio": 0.00021,
+    "contractLimitRatio": 0.02,
+    "contractLimitPercent": 2,
+    "comparison": "0.00020958711338662833 <= 0.02",
+    "withinNumericLimit": true,
+    "notTheGateDenominator": {
+      "totalPixels": 128898,
+      "priorWholeImageUnmatchedPercent": 0.005430650591940914,
+      "explanation": "This previous percentage uses total pixels and is not substituted for sourceInk."
+    },
+    "otherPreservedMetricsNotUsedAsThisGate": {
+      "exactBinaryMismatchPixels": 1679,
+      "exactBinaryMismatchPercentOfWholeImage": 1.3025803348383993,
+      "rawWhiteWithoutPreviewWhiteWithinOnePixel": 40,
+      "previewWhiteWithoutRawWhiteWithinOnePixel": 0,
+      "meaning": "These retain the fine-detail discrepancy and explicitly disprove exact binary equality. They are not the implemented ink-denominator gate."
+    },
+    "roleInDecision": "Supplemental numerical consistency only. Saved native resvg evidence supplies the required engine-path threshold result."
+  },
+  "findings": [
+    {
+      "id": "D249-CONTRACT-SCOPE-01",
+      "status": "PASS-within-existing-contract",
+      "scope": "Original SVG127 cap3 acceptance only",
+      "reason": "The bound native output passes the actual 1px/2%-of-source-ink gate, d243's supplemental 7+0 counts also fit that formula, and d243's actual main-structure observations disclose no substantive missing contour, label, channel or semantic object beyond the approved tolerance.",
+      "notAnExactPixelPass": true
+    },
+    {
+      "id": "D243-RAW127-F01",
+      "status": "FAIL",
+      "scope": "Historical scan-hole/roughness fine-detail finding",
+      "reason": "Retained verbatim in the unchanged d243 report: small scan pits/voids and tiny roughness are not all preserved. This remains a genuine fine-detail discrepancy, but is not itself a failure of the implemented cap3 gate.",
+      "historicalReportBytesChanged": false,
+      "hiddenOrDeleted": false
+    }
+  ],
+  "conclusion": {
+    "status": "PASS-within-existing-contract",
+    "independentContractJudgment": "The saved evidence is sufficient for the existing bounded cap3 threshold. No substantiated outside-threshold main-structure/label/semantic defect was observed in d243; retaining its stricter fine-detail FAIL is compatible with this separately scoped decision.",
+    "exactPixelPASS": false,
+    "unqualifiedAllDetailFidelityPASS": false,
+    "wholeCardPASS": false,
+    "originalD243FAILOverwritten": false,
+    "repairRequiredByThisExistingContractEvidence": false,
+    "repairPerformed": false
+  },
+  "source177AuthorCompletionInherited": {
+    "status": "AUTHORED-NATIVE-PASS-INDEPENDENT-REVIEW-PENDING",
+    "authorFreezeSha256": "fc9d6c490808b9a65cf032d9a84af87e0baa04134d3ea5f0ccc9a773cc7cb4e4",
+    "finalizeExitCode": 0,
+    "vectorizeExitCode": 0,
+    "sourceIndependentStatus": "HOLD-NOT-REVIEWED",
+    "raw135IndependentStatus": "HOLD-NOT-REVIEWED",
+    "rightBoundaryStatus": "HOLD-UNOBSERVED",
+    "noSource177ReviewInThisConsumption": true
+  },
+  "imageBudget": {
+    "inheritedImages": 15,
+    "newImages": 0,
+    "cumulativeSameAgentContextImages": 15,
+    "contextLimit": 24,
+    "reset": false,
+    "check": "15 + 0 = 15 <= 24"
+  },
+  "preservation": {
+    "writesOnlyNewD249Directory": true,
+    "all18InputBindingsVerified": true,
+    "all8D243FilesVerifiedAgainstPrewriteHashes": true,
+    "all16Source177FrozenArtifactsVerified": true,
+    "source177FreezeMode": "0444",
+    "originalD243Status": "FAIL",
+    "d243BytesEdited": false,
+    "source177FreezeOrAuthorArtifactsEdited": false,
+    "originalSvgRawOrPreviewEdited": false,
+    "oldReportsOrPassedOutputsEdited": false,
+    "renderVectorizeRepairPrepareExecuted": false,
+    "newWorkersPaidModelsWorktreesBranchesBrowserDatabaseAppGit": false,
+    "canonicalSharedMeterIndexOrStableSkillEdited": false,
+    "imagesReturned": false
+  },
+  "outputs": {
+    "inputBindingsSha256": "9d6335e40c0f172eb6438b4ffa60cd879ebf1c90c040d317192170c366fcf403",
+    "actualOpensSha256": "df1c6a718c583da8395a5b3f1648d1cd5ff72161a9228c4d419e6a7cc9ee8a04",
+    "reportSha256Location": "Computed after writing and returned as pure text; not self-embedded."
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "schema": "s10y-choice-review-v1",
+  "seed_sha256": "3bd6b416fbadae9dea683462525abaeb35a0090901697e49bab578f6df55b5d7",
+  "draft_sha256": "33176c7176e26a2cbe472a5f5adee15b0402d12e644a0c44301b2ca177f8239d",
+  "reviewer": {"kind": "independent_agent", "identity": "d196 fresh Codex reviewer, not d191/d192 author; independent-solution.json saved before author disclosure and pre-key-choice-receipt.json saved after view-only judgment"},
+  "source_reviews": [
+    {
+      "source_number": "3",
+      "independent_solution": "先只读 seed 与实际图，再落盘独立解。理想 LC 满足 Lq''+q/C=0，故 f0=1/(2*pi*sqrt(LC))，lambda=c/f0=2*pi*c*sqrt(LC)。12 pF=1.2e-11 F，450 pF=4.5e-10 F，L=2e-4 H，c=3e8 m/s，独立算得 92.34358777165421 m 与 565.4866776461628 m。H*F=s^2，最终单位为米。lambda 随正 C 严格递增，12 pF 对应最短、450 pF 对应最长；C 连续变化且包含端点，所以得到完整闭区间，其一位小数约值为 92.3 至 565.5 m。右侧检波固定电容不是调谐 C。本解不是由作者标准或正确集反推。",
+      "coverage": {
+        "verdict": "pass",
+        "evidence": "仅一份 seed 第3题对应一题完整范围判断，保留 L、C 区间、pF/H 单位、LC 模型、波长而非频率以及端点方向。新增显式理想化、波速、连续可调/端点可取与舍入说明符合原任务。intent.limitations 与 coverage.omitted_tasks 如实记录不能证明无选项辅助的公式/换算/运算书写和单调性/谐振解释能力；识别和合理排除降低生成要求，但不删除完整范围及方向判断。未读取或声称复审1/2/5或全卡。"
+      }
+    }
+  ],
+  "figure_checks": [
+    {
+      "figure_id": "fig-120",
+      "asset_path": "ssot-resources/soviet10year-textbooks/artifacts/10p/editions/modern-us-neutral/figures/fig-120.svg",
+      "asset_sha256": "4f96fbe7ced0f00ff3651b240860b159141b018683297f806f9dc62886878529",
+      "observation": "实际读取本语隔离 repo 的 SVG 字节，其 SHA 与指定现代 preview 对应作者 SVG 及另一语 seed SVG 相同。实际各打开原 PNG 与完整640x400现代 PNG一次，opens.json 留存路径与 SHA。现代图可读 L 和带调节箭头的 C，右側检波固定电容可区分；最右两耳机、底部回线、接地及 Headphones 文字完整可见。图上只有元件识别标记，没有公式、波长数值或正确字母。本记录仅满足选择题解释/泄漏的实际开图证据，既有 source/math fidelity PASS 不重审、不重新签发。"
+    }
+  ],
+  "new_figure_reviews": [],
+  "question_reviews": [
+    {
+      "question_id": "t16-q3-lc-range",
+      "task_fidelity": {
+        "verdict": "pass",
+        "evidence": "先看 view 判断：题干仍要求接收的完整波长范围，并要求两端对应的电容；没有变成一个电容处的单波长或只求频率。明确忽略寄生/检波负载、取c=3e8和一位小数，使理想课本任务可判定而不伪称实测。12..450 pF、2e-4 H和端点可取均保留。选项结果并非题干数据的直接复制，必须区分2*pi、sqrt(C)与波长端点方向。"
+      },
+      "redundancy": {
+        "verdict": "pass",
+        "evidence": "只有一道 joint single，没有拆端点机械点击或跨题答案依赖。B与D的范围数字相同但电容对应相反，二者命题不等价；A的缺因子范围、C的线性缩放上限亦不等价，没有重复真选项。"
+      },
+      "answer_leakage": {
+        "verdict": "pass",
+        "evidence": "题干不给 LC 波长公式、结果、正确字母、源题号或mapping指示；图上只标元件。四项语法、单位、约值标记与长度结构一致，A/C/D均重复正确端点方向，因此不能凭某项独有措辞认D。多数选项共享92.3且B/D共享正确数字允许部分排除，但至少要独立判断lambda随C的方向；这是已记录的识别容量损失，不构成答案泄漏。"
+      },
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "看 view 后、看 key 前独立逐项求真，见 pre-key-choice-receipt.json。正确 lambda=2*pi*c*sqrt(LC) 的两端为92.34358777、565.48667765 m，一位小数92.3、565.5；lambda严格随C增大。A独立重算漏2*pi得14.69693846、90.0；C从正确下端错乘450/12得3462.88454144。B范围对而两端电容反，D范围与对应均对，完整真集恰为[D]，然后才核对作者key和各误解推导。",
+        "correct": ["D"],
+        "option_checks": [
+          {"option_id": "A", "truth": "incorrect", "evidence": "c*sqrt(LC)在12/450 pF得14.696938456699069和90.00000000000001 m，吻合选项14.7..90.0但漏2*pi；对应方向正确不能救错波长。作者所述把omega当f确实产生该假结果。"},
+          {"option_id": "B", "truth": "incorrect", "evidence": "92.3..565.5 m是独立正确范围，但lambda正比sqrt(C)，不是f随C递减的方向；最短给450 pF、最长给12 pF均错。作者所述计算后错配频率方向解释该假命题。"},
+          {"option_id": "C", "truth": "incorrect", "evidence": "92.34358777165421*(450/12)=3462.884541437033 m舍入3462.9，确由错当lambda正比C产生；实际比应sqrt(37.5)=6.123724356957945，上端565.5而非3462.9 m。"},
+          {"option_id": "D", "truth": "correct", "evidence": "正确理想公式及pF换算给92.34358777165421、565.4866776461628 m，一位小数92.3..565.5 m；12 pF最短、450 pF最长，连续含端点。无第二真选项，single成立。"}
+        ]
+      }
+    }
+  ],
+  "outcome": "pass"
+}

@@ -1,0 +1,111 @@
+{
+  "schema": "d192-t16-q3-bilingual-author-mapping-v1",
+  "ticket": "STEMROBIN-181",
+  "assignment": "D032 t16 source 3 only",
+  "source_number": "3",
+  "question_id": "t16-q3-lc-range",
+  "response_unit": "One complete tuning-wavelength range with both capacitance-endpoint correspondences",
+  "mode": "single",
+  "language_files": {
+    "zh": {
+      "draft": "zh.draft.json",
+      "draft_byte_sha256": "713e6a117f2205a0fd53fcacd586952f199f932ff7428ade28e57f4597388870",
+      "draft_canonical_sha256": "33176c7176e26a2cbe472a5f5adee15b0402d12e644a0c44301b2ca177f8239d",
+      "seed": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d190-t16-q3-inputs/zh-choice-repo/.tmp/seed.json",
+      "seed_byte_sha256": "bc0822de8cfa27a71e368ca7194a338f8990b2457dca7f121e5cd8f8ea4eb971",
+      "seed_canonical_sha256": "3bd6b416fbadae9dea683462525abaeb35a0090901697e49bab578f6df55b5d7"
+    },
+    "en": {
+      "draft": "en.draft.json",
+      "draft_byte_sha256": "9800f95fa02d6d8f743fc0f385c1dbbdc6d135e9e3363d7c56ff1a3475215ae9",
+      "draft_canonical_sha256": "4478803156cef43c7419b715d285c633b5cdf9a06bda0a7ebde7edf52a8a936e",
+      "seed": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d190-t16-q3-inputs/en-choice-repo/.tmp/seed.json",
+      "seed_byte_sha256": "f386e8f3ba8e69e0a0a84eda718437d51a7702437e58beee42bab75ebf21413d",
+      "seed_canonical_sha256": "66d6585e6e64d695d323b3218a068ea0d3f4ae43b70e458db66ddffbaf0c4e1c"
+    }
+  },
+  "options": [
+    {
+      "zh_id": "A",
+      "en_id": "A",
+      "author_truth": "incorrect",
+      "wavelength_range_m_rounded": [14.7, 90.0],
+      "capacitance_at_shortest_pF": 12,
+      "capacitance_at_longest_pF": 450,
+      "construction": "Use angular frequency as ordinary frequency, omitting 2 pi from wavelength."
+    },
+    {
+      "zh_id": "B",
+      "en_id": "B",
+      "author_truth": "incorrect",
+      "wavelength_range_m_rounded": [92.3, 565.5],
+      "capacitance_at_shortest_pF": 450,
+      "capacitance_at_longest_pF": 12,
+      "construction": "Keep correctly calculated wavelength numbers, but apply the decreasing frequency trend to their capacitance-endpoint labels."
+    },
+    {
+      "zh_id": "C",
+      "en_id": "C",
+      "author_truth": "incorrect",
+      "wavelength_range_m_rounded": [92.3, 3462.9],
+      "capacitance_at_shortest_pF": 12,
+      "capacitance_at_longest_pF": 450,
+      "construction": "Compute the lower endpoint correctly, then scale it by 450/12 rather than sqrt(450/12)."
+    },
+    {
+      "zh_id": "D",
+      "en_id": "D",
+      "author_truth": "correct",
+      "wavelength_range_m_rounded": [92.3, 565.5],
+      "capacitance_at_shortest_pF": 12,
+      "capacitance_at_longest_pF": 450,
+      "construction": "Use lambda=2 pi c sqrt(LC), convert pF to F, and use increasing dependence on C."
+    }
+  ],
+  "author_correct_sets": {
+    "zh": ["D"],
+    "en": ["D"]
+  },
+  "source_model": {
+    "L_H": 0.0002,
+    "C_min_pF": 12,
+    "C_max_pF": 450,
+    "c_m_per_s": 300000000,
+    "capacitance_interval_closed": true,
+    "model": "Ideal LC resonant tuning; no parasitic capacitance or detector loading",
+    "formula_internal_only": "lambda=2 pi c sqrt(LC)",
+    "exact_wavelength_interval_m": "[12 pi sqrt(6), 180 pi]",
+    "endpoint_rounding": "One decimal place; displayed rounded numbers are not exact physical cutoffs"
+  },
+  "coverage": {
+    "retained": [
+      "Original inductance, capacitance interval and SI/pF units",
+      "LC resonance-model application and both numerical wavelength endpoints",
+      "Complete continuous attainable range and capacitance-endpoint direction"
+    ],
+    "production_losses": [
+      "Unaided written production of the LC formula, SI conversion and numerical working",
+      "Unaided written monotonicity and resonance explanation"
+    ],
+    "added_visible_conditions": [
+      "Ideal LC model with negligible parasitic capacitance and detector loading",
+      "Wave speed c=3.0e8 m/s",
+      "Continuous capacitance variation with both endpoints attainable",
+      "One-decimal-place wavelength rounding"
+    ]
+  },
+  "pairing_check_receipt": {
+    "tool": "functions.exec_command",
+    "execution_output_id": "261bc8",
+    "exit_code": 0,
+    "checked": [
+      "Exactly one question per language and four options per question",
+      "Matching question/source/option IDs, native mode and figure references",
+      "Identical mathematical Markdown tokens in paired stems and each paired option",
+      "Identical author-declared correct sets and per-option truth lists"
+    ],
+    "stdout_conclusion": "matching identifiers, mode, source, figures, mathematical tokens and author-declared truth sets",
+    "semantic_approval": false
+  },
+  "semantic_review": "Pending; this mapping records author intent and correspondence, not an independent approval."
+}
