@@ -1,0 +1,270 @@
+31:def sha256_file(path: Path) -> str:
+39:def render_page(pdf: Path, page: int, out_png: Path, dpi: int = 300) -> Path:
+56:def ink_mask(img: Image.Image) -> np.ndarray:
+60:def _runs(live: np.ndarray) -> list[tuple[int, int]]:
+73:def _merge_close(spans, gap: float):
+85:def grid_overlay(png: Path, out: Path, step: int = GRID) -> Path:
+99:def _row_fragments(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+100:    counts = ink.sum(axis=1)
+102:    for a, b in _runs(counts > 8):
+106:        if counts[a:b + 1].max() <= ROW_INK_MIN_RATIO * content_w and (
+115:def _arrow_headed_rule(mask: np.ndarray, line_h: float) -> bool:
+117:    xs = np.flatnonzero(mask.any(axis=0))
+120:    counts = mask.sum(axis=0)[xs]
+121:    centers = (mask * np.arange(mask.shape[0])[:, None]).sum(axis=0)[xs] / counts
+129:        ys = np.flatnonzero(mask[:, x])
+149:def _straight_fraction_rule(mask: np.ndarray, line_h: float) -> bool:
+150:    if _arrow_headed_rule(mask, line_h):
+152:    counts = mask.sum(axis=0)
+153:    x = np.flatnonzero(counts)
+157:        (mask * np.arange(mask.shape[0])[:, None]).sum(axis=0)[x] / counts[x]
+163:def _bar_local_fraction_support(
+164:    components: np.ndarray, original_bounds, original_ids, rows, columns,
+167:    """Require detached, aligned fraction glyphs around a short body-connected bar."""
+171:    for component_id, bounds in enumerate(original_bounds, 1):
+172:        if bounds is None or component_id in original_ids:
+191:    for component_id in original_ids:
+192:        if not component_id:
+194:        bounds = original_bounds[component_id - 1]
+204:        shaft = components[body_rows, columns] == component_id
+221:def _original_arrow_decoration(mask: np.ndarray, line_h: float) -> bool:
+223:    if not _arrow_headed_rule(mask, line_h):
+225:    xs = np.flatnonzero(mask.any(axis=0))
+229:        for ys in [np.flatnonzero(mask[:, x])]
+234:        mask, structure=np.ones((1, max(2, int(0.7 * line_h))), dtype=bool)
+237:    body = mask.copy()
+239:    for component_id, bounds in enumerate(ndimage.find_objects(shafts), 1):
+242:        if _straight_fraction_rule(shafts[bounds] == component_id, line_h):
+243:            region = body[bounds]
+244:            region[shafts[bounds] == component_id] = False
+257:def _fraction_limit_ownership(components: np.ndarray, rules, line_h: float) -> np.ndarray:
+258:    """Identify fractional evaluation limits beside an established fraction bar."""
+259:    bounds = ndimage.find_objects(components)
+261:    for component_id, box in enumerate(bounds, 1):
+267:            glyphs.append((component_id, rows, columns))
+269:            if _straight_fraction_rule(components[box] == component_id, line_h):
+270:                bars.append((component_id, rows, columns))
+272:            delimiters.append((component_id, rows, columns))
+303:            # An intervening aligned bar instead belongs to a fractional limit.
+350:    return np.isin(components, list(owned))
+353:def _bounded_carrier_limit_ownership(components: np.ndarray, line_h: float) -> np.ndarray:
+354:    """Own paired endpoint groups, retaining complete original source components."""
+355:    bounds = ndimage.find_objects(components)
+357:        (component_id, rows, columns)
+358:        for component_id, box in enumerate(bounds, 1) if box is not None
+371:                (component_id, rows, columns)
+372:                for component_id, box in enumerate(bounds, 1)
+373:                if box is not None and component_id != carrier_id
+406:    return np.isin(components, list(owned))
+409:def _bounded_fraction_rules(components: np.ndarray, rules, line_h: float):
+411:    bounds = ndimage.find_objects(components)
+413:    for component_id, box in enumerate(bounds, 1):
+419:            if _straight_fraction_rule(components[box] == component_id, line_h):
+449:        context_labels = components[max(0, top - margin):bottom + margin, left:right]
+451:            component_id for component_id, box in enumerate(bounds, 1)
+494:def _single_fraction_row(
+496:    source_components: np.ndarray | None = None,
+498:    """Distinguish tall inline fractions from two full text rows."""
+503:    components, _ = ndimage.label(band)
+504:    original_components = components
+505:    for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
+513:            and _straight_fraction_rule(components[bounds] == component_id, line_h)
+516:            accepted_carriers.add(component_id)
+520:    rule_components, _ = ndimage.label(horizontal)
+521:    original_bounds = ndimage.find_objects(components)
+522:    for bounds in ndimage.find_objects(rule_components):
+526:        original_ids = np.unique(components[bounds][horizontal[bounds]])
+527:        whole_component_arrow = any(
+529:                components[original_bounds[component_id - 1]] == component_id, line_h
+531:            for component_id in original_ids if component_id
+534:            original_bounds[component_id - 1] is not None
+537:                original_bounds[component_id - 1][0].stop
+538:                - original_bounds[component_id - 1][0].start
+540:            for component_id in original_ids if component_id
+542:        local_fraction = (
+543:            (whole_component_arrow or glyph_stroke)
+544:            and _bar_local_fraction_support(
+545:                components, original_bounds, original_ids, rows, columns, line_h
+549:            (not whole_component_arrow or local_fraction)
+550:            and (not glyph_stroke or local_fraction)
+552:                _straight_fraction_rule(
+555:                    if original_bounds[component_id - 1][0].stop
+556:                    - original_bounds[component_id - 1][0].start > 0.5 * line_h
+557:                    else components[original_bounds[component_id - 1]] == component_id,
+560:                for component_id in original_ids if component_id
+573:            accepted_carriers.update(int(component_id) for component_id in original_ids if component_id)
+576:    limit_context = original_components if source_components is None else source_components[a:b + 1]
+579:        rules = _bounded_fraction_rules(original_components, rules, line_h)
+580:    full_fraction_levels = []
+606:            full_fraction_levels.append(((rows.start + rows.stop) / 2, width))
+607:    # Whole-column ownership must not swallow two complete, body-scale fractions.
+611:        for index, (first_y, first_w) in enumerate(full_fraction_levels)
+612:        for second_y, second_w in full_fraction_levels[index + 1:]
+616:    # original components when counting cleanup has already removed the stem.
+617:    band[_fraction_limit_ownership(limit_context, rules, line_h) | bounded_limits] = False
+621:    components, _ = ndimage.label(band)
+622:    for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
+630:            region = band[bounds]
+631:            region[components[bounds] == component_id] = False
+632:    counts = band.sum(axis=1)
+633:    glyph_components, _ = ndimage.label(band)
+634:    residual_bounds = ndimage.find_objects(glyph_components)
+636:        component_id for component_id, bounds in enumerate(original_bounds, 1)
+638:        and component_id not in accepted_carriers
+639:        and _original_arrow_decoration(original_components[bounds] == component_id, line_h)
+642:    for component_id, bounds in enumerate(residual_bounds, 1):
+653:            original_components[bounds][glyph_components[bounds] == component_id]
+659:        central = glyph_components[
+661:        ] == component_id
+666:    # Keep connected source context and aligned peers; adjust only the projection.
+671:    for component_id, bounds in enumerate(residual_bounds, 1):
+686:            limit_context[bounds][glyph_components[bounds] == component_id]
+697:            other_id != component_id
+707:        counts[rows] -= (glyph_components[bounds] == component_id).sum(axis=1)
+708:    remaining = np.flatnonzero(counts > max(8, 0.25 * counts.max()))
+752:def _subscript_continues(
+805:def _fraction_tail_split(
+807:    source_components: np.ndarray | None = None,
+809:    """Separate an ordinary preceding row from a tall, independently valid fraction."""
+810:    if b - a + 1 <= 3 * glyph_h or _single_fraction_row(ink, a, b, glyph_h, source_components):
+829:            and _single_fraction_row(ink, cut, b, glyph_h)
+835:def _supported_glyph_rows(
+838:    """Require full body components, not an arrow fragment's projection envelope."""
+839:    components, _ = ndimage.label(ink)
+840:    bounds = ndimage.find_objects(components)
+847:            and not _arrow_headed_rule(components[item] == component_id, glyph_h)
+848:            for component_id, item in enumerate(bounds, 1)
+854:def _small_text_rows(ink: np.ndarray, fragments, glyph_h: float) -> bool:
+876:def _decorated_folio(ink: np.ndarray, a: int, b: int, glyph_h: float) -> bool:
+901:def _folio_fragment_continues(
+906:    components, _ = ndimage.label(ink[prev_a:b + 1])
+908:        np.unique(components[:prev_b - prev_a + 1]),
+909:        np.unique(components[a - prev_a:]),
+911:    bounds = ndimage.find_objects(components)
+915:        for component_id in shared if component_id
+916:        for rows, columns in [bounds[component_id - 1]]
+920:def _overhead_arrow_continues(
+921:    ink: np.ndarray, components: np.ndarray, bounds_list,
+927:    original_ids = np.unique(components[prev_a:prev_b + 1][ink[prev_a:prev_b + 1]])
+930:    for component_id in original_ids:
+931:        bounds = bounds_list[component_id - 1]
+936:            or not _original_arrow_decoration(components[bounds] == component_id, glyph_h)
+942:    body_ids = np.unique(components[a:b + 1][ink[a:b + 1]])
+944:        columns for component_id in body_ids
+945:        for rows, columns in [bounds_list[component_id - 1]]
+950:            components[bounds_list[component_id - 1]] == component_id, glyph_h
+955:        for component_id in original_ids
+956:        for _, columns in [bounds_list[component_id - 1]]
+960:def _fragmented_body_scale(components, bounds_list, line_h: float) -> int:
+961:    """Recover coherent full glyphs when projection retained only their strokes."""
+963:    for component_id, bounds in enumerate(bounds_list, 1):
+971:            and np.count_nonzero(components[bounds] == component_id) >= 0.12 * height ** 2
+972:            and not _arrow_headed_rule(components[bounds] == component_id, height)
+980:def _body_supported_heights(components, bounds_list, spans, arrow_components):
+986:        for component_id, bounds in enumerate(bounds_list, 1):
+987:            if bounds is None or component_id in arrow_components:
+995:                and np.count_nonzero(components[bounds] == component_id) >= 0.12 * height ** 2
+1003:def _single_carrier_row(components, bounds_list, a: int, b: int, glyph_h: float) -> bool:
+1058:def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+1059:    """Count printed rows after masking model-identified figures."""
+1060:    # Work on a counting-only copy; extraction pixels are never changed.
+1069:    components, _ = ndimage.label(ink)
+1070:    bounds_list = ndimage.find_objects(components)
+1071:    arrow_components = {
+1072:        component_id for component_id, bounds in enumerate(bounds_list, 1)
+1074:        and _arrow_headed_rule(components[bounds] == component_id, line_h)
+1079:        if not set(np.unique(components[a:b + 1][ink[a:b + 1]])).issubset(arrow_components)
+1081:    supported_heights = _body_supported_heights(components, bounds_list, raw, arrow_components)
+1087:        for component_id, bounds in enumerate(bounds_list, 1) if bounds is not None
+1091:        and component_id not in arrow_components
+1093:    component_scale = (
+1094:        _fragmented_body_scale(components, bounds_list, line_h)
+1097:    if component_scale:
+1098:        line_h = component_scale
+1102:    # Dense, joined shallow blemishes are not glyphs or thin fraction rules.
+1103:    # Remove them only when they occupy an otherwise isolated projection row.
+1104:    for component_id, bounds in enumerate(bounds_list, 1):
+1109:        area = np.count_nonzero(components[bounds] == component_id)
+1118:                and np.count_nonzero(ink[a:b + 1]) <= area * 1.1
+1122:            region = ink[bounds]
+1123:            region[components[bounds] == component_id] = False
+1124:    for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
+1130:            stroke = components[bounds] == component_id
+1135:            region = ink[bounds]
+1136:            region[stroke] = False
+1142:        if not set(np.unique(components[a:b + 1][ink[a:b + 1]])).issubset(arrow_components)
+1144:    supported_heights = _body_supported_heights(components, bounds_list, raw, arrow_components)
+1148:    line_h = max(component_scale, int(np.median(body_heights))) if body_heights else line_h
+1150:    for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
+1158:            and np.count_nonzero(components[bounds] == component_id) >= 0.12 * line_h ** 2
+1169:                # A sparse digit neck can split one folio's row projection.
+1177:                and not _single_fraction_row(ink, prev_a, b, glyph_h)
+1192:    fraction_starts = set()
+1203:                ink, components, bounds_list, prev_a, prev_b, a, b, glyph_h, content_w
+1214:            fraction_spill = (
+1216:                    4.8 if prev_a in fraction_starts else 3.2
+1233:            # A delimiter can bridge a sparse projection gap around a fraction.
+1235:                np.unique(components[prev_a:prev_b + 1][ink[prev_a:prev_b + 1]]),
+1236:                np.unique(components[a:b + 1][ink[a:b + 1]]),
+1238:            connected_fraction = shared_strokes.size > 0 and _single_fraction_row(
+1241:            detached_fraction = (
+1245:                and _single_fraction_row(ink, prev_a, b, min(line_h, glyph_h))
+1248:                components, bounds_list, prev_a, b, min(line_h, glyph_h)
+1257:                    and _single_fraction_row(ink, prev_a, b, min(line_h, glyph_h))
+1258:                    or fraction_spill
+1261:                or connected_fraction
+1262:                or detached_fraction
+1266:                if fraction_spill:
+1267:                    fraction_starts.add(prev_a)
+1274:        cut = _fraction_tail_split(ink, a, b, content_w, glyph_h, components)
+1282:                cut = _fraction_tail_split(ink, a, next_b, content_w, glyph_h, components)
+1292:    # Dense glyphs or staggered side-by-side text can keep the row projection
+1293:    # continuously live across two or more printed rows. Recover the row count
+1295:    # one unusually tall projection band as one line.
+1304:    counts = ink.sum(axis=1)
+1308:        count = 1
+1322:                        ink, components, bounds_list, a + x, a + y,
+1333:        carrier_row = _single_carrier_row(components, bounds_list, a, b, glyph_h)
+1335:            a not in fraction_starts
+1344:            # Brace-connected rows are often shorter than an integral pitch
+1346:            count = max(2, int(round((band_h + typical_gap) / pitch)))
+1347:            core = counts[a:b + 1]
+1355:            count = max(count, min(len(strong_rows), len(glyph_rows)))
+1358:                count = len(glyph_rows)
+1359:            if count == 3 and len(strong_rows) == 2 and len(glyph_rows) < 3:
+1360:                count = 2
+1362:                count == 2 and _single_fraction_row(ink, a, b, typical_h, components)
+1363:                or _single_fraction_row(ink, a, b, min(typical_h, glyph_h), components)
+1365:                count = 1
+1366:        if count == 1:
+1369:        step = band_h / count
+1375:            for index in range(count)
+1432:def counting_ink(ink: np.ndarray, exclusions: list[dict]) -> np.ndarray:
+1433:    """Exclude explicitly inspected non-text objects from counting, not extraction."""
+1435:        raise ValueError("count_exclusions 必须是数组")
+1436:    masked = ink.copy()
+1440:            raise ValueError("count_exclusions 每项必须有 kind、box、reason")
+1446:            raise ValueError("count_exclusions.box 必须是四个整数")
+1449:            raise ValueError("count_exclusions.box 超出原图")
+1451:            raise ValueError("count_exclusions.reason 不能为空")
+1458:        elif entry["kind"] == "separator-rule":
+1460:                raise ValueError("separator-rule 必须是薄分隔横线")
+1462:            raise ValueError("count_exclusions.kind 只允许 scan-artifact / separator-rule")
+1463:        masked[y:y + h, x:x + w] = False
+1464:    return masked
+1467:def _figure_components(ink: np.ndarray, box: list[int]):
+1475:    sizes = np.bincount(labels.ravel())
+1476:    inside = np.bincount(labels[y0:y1 + 1, x0:x1 + 1].ravel(), minlength=len(sizes))
+1489:def figure_ink(ink: np.ndarray, box: list[int]) -> np.ndarray:
+1490:    """Use the same component ownership as snapping, not the rectangular envelope."""
+1491:    labels, selected, _ = _figure_components(ink, box)
+1495:def figure_crop_exclusion(
+1498:    """Remove foreign component edges captured by a snapped figure envelope."""
+1506:def snap(ink: np.ndarray, box: list[int]) -> tuple[list[int], dict]:
+1512:    _, selected, boxes = _figure_components(ink, box)
+1519:        return [x0, y0, x1 - x0 + 1, y1 - y0 + 1], {"components": 0}
+1521:        "components": len(selected), "from": box}
+1524:def crop(png: Path, box: list[int], out: Path, pad: int = 12,
+1530:            raise ValueError("crop exclusion must be a page-sized boolean mask")
+1533:        img.paste(white, mask=Image.fromarray(exclude.astype(np.uint8) * 255))
+1544:def ink_coverage(ink: np.ndarray, boxes: list[list[int]]) -> dict:

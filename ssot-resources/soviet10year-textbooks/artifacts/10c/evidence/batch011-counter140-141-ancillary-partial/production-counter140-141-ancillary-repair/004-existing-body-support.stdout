@@ -1,0 +1,23 @@
+def _body_supported_heights(components, bounds_list, spans, arrow_components):
+    """Keep repeated body glyphs, not singleton limits, as row-scale evidence."""
+    heights = []
+    for a, b in spans:
+        height = b - a + 1
+        supported = 0
+        for component_id, bounds in enumerate(bounds_list, 1):
+            if bounds is None or component_id in arrow_components:
+                continue
+            rows, columns = bounds
+            if (
+                a - 0.15 * height <= rows.start
+                and rows.stop - 1 <= b + 0.15 * height
+                and 0.6 * height <= rows.stop - rows.start <= 1.3 * height
+                and 0.2 * height <= columns.stop - columns.start <= 1.3 * height
+                and np.count_nonzero(components[bounds] == component_id) >= 0.12 * height ** 2
+            ):
+                supported += 1
+        if supported >= 3:
+            heights.append(height)
+    return heights
+
+

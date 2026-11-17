@@ -1,0 +1,46 @@
+def _bounded_cleanup_prefix(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+    """Count printed rows after masking model-identified figures."""
+    ink = ink.copy()
+    edge = max(1, int(ink.shape[1] * 0.01))
+    ink[:, :edge] = False
+    ink[:, -edge:] = False
+    raw = _row_fragments(ink, content_w)
+    if not raw:
+        return []
+    line_h = int(np.median([b - a + 1 for a, b in raw]))
+    components, _ = ndimage.label(ink)
+    bounds_list = ndimage.find_objects(components)
+    arrow_components = {component_id for component_id, bounds in enumerate(bounds_list, 1) if bounds is not None and _arrow_headed_rule(components[bounds] == component_id, line_h)}
+    body_heights = [b - a + 1 for a, b in raw if not set(np.unique(components[a:b + 1][ink[a:b + 1]])).issubset(arrow_components)]
+    supported_heights = _body_supported_heights(components, bounds_list, raw, arrow_components)
+    if len(supported_heights) >= 3:
+        body_heights = supported_heights
+    line_h = int(np.median(body_heights)) if body_heights else line_h
+    glyph_heights = [rows.stop - rows.start for component_id, bounds in enumerate(bounds_list, 1) if bounds is not None for rows, columns in [bounds] if 0.25 * line_h <= rows.stop - rows.start <= 1.3 * line_h and 0.2 * line_h <= columns.stop - columns.start <= 1.3 * line_h and (component_id not in arrow_components)]
+    component_scale = _fragmented_body_scale(components, bounds_list, line_h) if len(glyph_heights) < 3 else 0
+    if component_scale:
+        line_h = component_scale
+    glyph_h = float(np.percentile(glyph_heights, 75)) if len(glyph_heights) >= 3 else line_h
+    for component_id, bounds in enumerate(bounds_list, 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        height, width = (rows.stop - rows.start, columns.stop - columns.start)
+        area = np.count_nonzero(components[bounds] == component_id)
+        if 0.35 * glyph_h <= height <= 0.65 * glyph_h and width >= 1.5 * glyph_h and (area >= 0.35 * width * height) and any((a - 0.15 * glyph_h <= rows.start and rows.stop - 1 <= b + 0.15 * glyph_h and (b - a + 1 <= 0.65 * glyph_h) and (np.count_nonzero(ink[a:b + 1]) <= area * 1.1) for a, b in raw)):
+            region = ink[bounds]
+            region[components[bounds] == component_id] = False
+    for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        height, width = (rows.stop - rows.start, columns.stop - columns.start)
+        if height > 1.8 * line_h and width < 0.5 * line_h and (width < 0.2 * height):
+            stroke = components[bounds] == component_id
+            row_widths = stroke.sum(axis=1)
+            if row_widths.max() > 2 * np.median(row_widths):
+                continue
+            region = ink[bounds]
+            region[stroke] = False
+    raw = _row_fragments(ink, content_w)
+    return (ink, components, line_h, glyph_h)

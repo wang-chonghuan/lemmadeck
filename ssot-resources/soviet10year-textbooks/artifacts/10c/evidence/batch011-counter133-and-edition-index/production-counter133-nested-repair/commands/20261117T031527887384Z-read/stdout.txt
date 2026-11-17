@@ -1,0 +1,74 @@
+    for a, b in merged:
+        band_h = b - a + 1
+        count = 1
+        fragments = _row_fragments(ink[a:b + 1], content_w)
+        glyph_rows = _supported_glyph_rows(ink[a:b + 1], fragments, glyph_h)
+        if _small_text_rows(ink[a:b + 1], fragments, glyph_h):
+            glyph_rows = fragments
+        compact_text_rows = (
+            len(glyph_rows) >= 2
+            and all(y - x + 1 <= 1.5 * glyph_h for x, y in glyph_rows)
+            or len(glyph_rows) == 1 and len(fragments) > 1
+            and all(
+                y < glyph_rows[0][0] and glyph_rows[0][0] - y <= 0.75 * glyph_h
+                and (
+                    _arrow_headed_rule(ink[a + x:a + y + 1], glyph_h)
+                    or _overhead_arrow_continues(
+                        ink, components, bounds_list, a + x, a + y,
+                        a + glyph_rows[0][0], a + glyph_rows[0][1], glyph_h, content_w,
+                    )
+                )
+                for x, y in fragments if (x, y) != glyph_rows[0]
+            )
+        )
+        subscript_row = any(
+            _subscript_continues(ink, a, a + x, b, glyph_h)
+            for x, _ in fragments[1:]
+        )
+        carrier_row = _single_carrier_row(components, bounds_list, a, b, glyph_h)
+        if (
+            a not in fraction_starts
+            and not subscript_row
+            and not carrier_row
+            and (
+                band_h > 2.0 * min(typical_h, glyph_h)
+                or compact_text_rows
+            )
+            and pitch > 0
+        ):
+            # Brace-connected rows are often shorter than an integral pitch
+            # multiple. Count the nearest number of row centres, not a floor.
+            count = max(2, int(round((band_h + typical_gap) / pitch)))
+            core = counts[a:b + 1]
+            strong_rows = _merge_close(
+                [(a + x, a + y) for x, y in _runs(core > 0.12 * core.max())],
+                max(2, 0.25 * typical_h),
+            )
+            strong_rows = [
+                (x, y) for x, y in strong_rows if y - x + 1 >= 0.3 * typical_h
+            ]
+            count = max(count, min(len(strong_rows), len(glyph_rows)))
+            if compact_text_rows:
+                # Compact text rows need not share the body's line pitch.
+                count = len(glyph_rows)
+            if count == 3 and len(strong_rows) == 2 and len(glyph_rows) < 3:
+                count = 2
+            if (
+                count == 2 and _single_fraction_row(ink, a, b, typical_h)
+                or _single_fraction_row(ink, a, b, min(typical_h, glyph_h))
+            ):
+                count = 1
+        if count == 1:
+            expanded.append((a, b))
+            continue
+        step = band_h / count
+        expanded.extend(
+            (
+                int(round(a + index * step)),
+                int(round(a + (index + 1) * step)) - 1,
+            )
+            for index in range(count)
+        )
+    merged = expanded
+
+    # 扫描页常有页顶黑边、章标题横线和孤立墨点。它们能通过最小宽高阈值，却不是

@@ -1,0 +1,242 @@
+READ_PATH=/Users/yong/.codex/worktrees/a07e/lemmadeck/.intentfold/tickets/STEMROBIN-184/tmp/production-counter134-diagnosis/residual-integrals/evidence.py
+SHA256=07650970247e0a8d816feacff8235a768eac343a174e85e33da6579136e30a50
+"""Additive zero-model-image diagnosis of four native integral row failures."""
+from __future__ import annotations
+
+import argparse
+import ast
+from datetime import datetime, timezone
+import hashlib
+import inspect
+import json
+import os
+from pathlib import Path
+import shlex
+import shutil
+import subprocess
+import sys
+import time
+
+sys.dont_write_bytecode = True
+ROOT = Path("/Users/yong/.codex/worktrees/a07e/lemmadeck")
+TOOLS = ROOT / ".claude/skills/ld-s10y-lesson/tools"
+PRIOR = ROOT / ".intentfold/tickets/STEMROBIN-184/tmp/production-counter134-diagnosis"
+OUT = PRIOR / "residual-integrals"
+SOURCE = ROOT / ".intentfold/tickets/STEMROBIN-184/tmp/production-source10c134-135/10c/pages/0134/page.png"
+LAYOUT = TOOLS / "layout.py"
+TEST = TOOLS / "test_layout_integral_limit_rows.py"
+REGIONS = ((430, 591), (1293, 1466), (1696, 1806), (2027, 2211))
+SOURCE_SHA = "8ce5d75d5d960c6f5d20ece32818cc4a1348890a8dc94d7d1d22f8d75e13424c"
+LAYOUT_SHA = "c0d8e7b1b216c76bede416450e23eedba08698e991cbbfa8958fc2bb96e6125e"
+
+
+def sha(path):
+    with Path(path).open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def stamp():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def dump(path, value):
+    path = Path(path)
+    assert path.is_relative_to(OUT)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(value, indent=2, ensure_ascii=True) + "\n")
+
+
+def append(path, value):
+    assert Path(path).is_relative_to(OUT)
+    with Path(path).open("a") as stream:
+        stream.write(json.dumps(value, ensure_ascii=True) + "\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+
+
+def plain(value):
+    import numpy as np
+    if isinstance(value, np.ndarray):
+        return value.tolist() if value.size < 250 else {
+            "shape": list(value.shape), "dtype": str(value.dtype),
+            "sha256": hashlib.sha256(value.tobytes()).hexdigest(),
+        }
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, slice):
+        return [value.start, value.stop]
+    if isinstance(value, (tuple, list, set)):
+        return [plain(item) for item in value]
+    if isinstance(value, dict):
+        return {str(key): plain(item) for key, item in value.items()}
+    return value
+
+
+def run(argv, cwd, label):
+    folder = OUT / "commands" / (
+        datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ") + "-" + label
+    )
+    folder.mkdir(parents=True)
+    started = stamp()
+    clock = time.monotonic()
+    process = subprocess.run(
+        argv, cwd=cwd, capture_output=True, env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1")
+    )
+    elapsed = time.monotonic() - clock
+    (folder / "stdout.txt").write_bytes(process.stdout)
+    (folder / "stderr.txt").write_bytes(process.stderr)
+    record = {
+        "argv": argv, "launcher_argv": sys.orig_argv, "cwd": str(cwd),
+        "shell_command": shlex.join(argv), "started": started, "finished": stamp(),
+        "elapsed_seconds": elapsed, "exit_code": process.returncode,
+        "status": "pass" if process.returncode == 0 else "fail",
+        "stdout_path": str(folder / "stdout.txt"), "stdout_sha256": sha(folder / "stdout.txt"),
+        "stderr_path": str(folder / "stderr.txt"), "stderr_sha256": sha(folder / "stderr.txt"),
+        "layout_sha256": sha(LAYOUT), "source_sha256": sha(SOURCE),
+        "test_sha256": sha(TEST) if TEST.exists() else None,
+        "harness_sha256": sha(Path(__file__)),
+        "environment_delta": {"PYTHONDONTWRITEBYTECODE": "1"},
+    }
+    dump(folder / "command.json", record)
+    append(OUT / "commands.jsonl", record)
+    sys.stdout.buffer.write(process.stdout)
+    sys.stderr.buffer.write(process.stderr)
+    print(f"\nCOMMAND_RECORD={folder / 'command.json'}", flush=True)
+    return record
+
+
+def snapshot():
+    assert not (OUT / "baseline.json").exists()
+    assert sha(SOURCE) == SOURCE_SHA and sha(LAYOUT) == LAYOUT_SHA
+    assert not TEST.exists()
+    facts = {}
+    for name, path in {
+        "layout.py": LAYOUT, "page.png": SOURCE,
+        "prior-before-regions.json": PRIOR / "before-regions.json",
+        "prior-rejecting-guards.json": PRIOR / "rejecting-guards.json",
+        "prior-affected-count.json": PRIOR / "affected-count.json",
+        "prior-report.md": PRIOR / "report.md",
+        "prior-test-evidence.json": PRIOR / "test-evidence.json",
+        "prior-final-hashes.json": PRIOR / "final-hashes.json",
+        "prior-freeze.json": PRIOR / "handoff-freeze.json",
+    }.items():
+        before = sha(path)
+        target = OUT / "original" / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(path, target)
+        assert sha(target) == before == sha(path)
+        facts[name] = {"path": str(path), "snapshot": str(target), "sha256": before}
+    existing_tests = {
+        str(TOOLS / name): sha(TOOLS / name) for name in (
+            "test_layout_nested_fraction_rows.py", "test_layout_page134_rows.py",
+        )
+    }
+    dump(OUT / "baseline.json", {
+        "timestamp": stamp(), "inputs": facts, "existing_tests_hash_only": existing_tests,
+        "new_model_images": 0, "permanent_model_images": 6,
+        "diagnostic_fullpage_count_calls": 0, "native_regions": plain(REGIONS),
+    })
+    print(json.dumps({"inputs": facts, "existing_tests_hash_only": existing_tests}, indent=2))
+
+
+def cleanup_prefix(layout, ink, width):
+    function = ast.parse(inspect.getsource(layout.line_bands)).body[0]
+    prefix, assigned = [], 0
+    for node in function.body:
+        prefix.append(node)
+        if isinstance(node, ast.Assign) and any(
+            isinstance(target, ast.Name) and target.id == "raw" for target in node.targets
+        ):
+            assigned += 1
+            if assigned == 2:
+                break
+    assert assigned == 2
+    function.name = "_production_cleanup_only"
+    function.body = prefix + [ast.Return(value=ast.Tuple(elts=[
+        ast.Name(id=name, ctx=ast.Load()) for name in ("ink", "components", "bounds_list", "line_h", "glyph_h")
+    ], ctx=ast.Load()))]
+    module = ast.fix_missing_locations(ast.Module(body=[function], type_ignores=[]))
+    namespace = dict(vars(layout))
+    exec(compile(module, "<production-cleanup-only>", "exec"), namespace)
+    return namespace[function.name](ink, width), ast.unparse(module)
+
+
+def arrays():
+    import numpy as np
+    from PIL import Image
+    sys.path.insert(0, str(TOOLS))
+    import layout
+    assert sha(SOURCE) == SOURCE_SHA
+    with Image.open(SOURCE) as image:
+        ink = layout.ink_mask(image)
+    width = int(np.ptp(np.flatnonzero(ink.any(axis=0))) + 1)
+    result, source = cleanup_prefix(layout, ink, width)
+    return layout, result, source
+
+
+def native_trace():
+    import numpy as np
+    from scipy import ndimage
+    assert not (OUT / "native-role-trace.json").exists()
+    layout, (ink, components, bounds_list, line_h, glyph_h), source = arrays()
+    (OUT / "executed-cleanup-prefix.py.txt").write_text(source + "\n")
+    result = []
+    for a, b in REGIONS:
+        local = components[a:b + 1]
+        geometry = []
+        for ident, box in enumerate(ndimage.find_objects(local), 1):
+            if box is None:
+                continue
+            rows, cols = box
+            area = int((local[box] == ident).sum())
+            if area < 12:
+                continue
+            geometry.append({
+                "id": ident, "xywh": [cols.start, a + rows.start, cols.stop - cols.start, rows.stop - rows.start],
+                "pixels": area, "surviving_pixels": int((ink[a:b + 1][box] & (local[box] == ident)).sum()),
+            })
+        result.append({"y": [a, b], "components": geometry})
+        print(f"REGION={[a, b]}")
+        print(json.dumps(geometry, indent=2))
+    dump(OUT / "native-role-trace.json", {
+        "timestamp": stamp(), "layout_sha256": sha(LAYOUT), "source_sha256": sha(SOURCE),
+        "scales": {"line_h": float(line_h), "glyph_h": float(glyph_h)},
+        "regions": result, "diagnostic_fullpage_count_calls": 0, "new_model_images": 0,
+    })
+
+
+def read(path, start, end):
+    path = Path(path)
+    assert (path in (LAYOUT, TEST) or path.is_relative_to(OUT)) and path.suffix != ".png"
+    print(f"READ_PATH={path}\nSHA256={sha(path)}")
+    print("".join(path.read_text().splitlines(keepends=True)[start - 1:end]), end="")
+
+
+def main(arguments):
+    parser = argparse.ArgumentParser()
+    actions = parser.add_subparsers(dest="action", required=True)
+    actions.add_parser("snapshot")
+    actions.add_parser("native-trace")
+    reader = actions.add_parser("read")
+    reader.add_argument("path")
+    reader.add_argument("--start", type=int, default=1)
+    reader.add_argument("--end", type=int, default=1000000)
+    args = parser.parse_args(arguments)
+    if args.action == "snapshot":
+        snapshot()
+    elif args.action == "native-trace":
+        native_trace()
+    elif args.action == "read":
+        read(args.path, args.start, args.end)
+    return 0
+
+
+if __name__ == "__main__":
+    if sys.argv[1:2] == ["_execute"]:
+        sys.exit(main(sys.argv[2:]))
+    OUT.mkdir(parents=True, exist_ok=True)
+    record = run(
+        [sys.executable, "-B", str(Path(__file__).resolve()), "_execute", *sys.argv[1:]],
+        ROOT, sys.argv[1],
+    )
+    sys.exit(record["exit_code"])

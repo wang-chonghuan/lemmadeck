@@ -1,0 +1,166 @@
+--- /Users/yong/.codex/worktrees/a07e/lemmadeck/.intentfold/tickets/STEMROBIN-184/tmp/production-counter133-nested-repair/original/layout.py
++++ /Users/yong/.codex/worktrees/a07e/lemmadeck/.claude/skills/ld-s10y-lesson/tools/layout.py
+@@ -254,7 +254,73 @@
+     )
+ 
+ 
+-def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool:
++def _fraction_limit_ownership(components: np.ndarray, rules, line_h: float) -> np.ndarray:
++    """Identify fractional evaluation limits beside an established fraction bar."""
++    bounds = ndimage.find_objects(components)
++    glyphs, bars, delimiters = [], [], []
++    for component_id, box in enumerate(bounds, 1):
++        if box is None:
++            continue
++        rows, columns = box
++        height, width = rows.stop - rows.start, columns.stop - columns.start
++        if 0.35 * line_h <= height <= 0.9 * line_h and 0.15 * line_h <= width <= line_h:
++            glyphs.append((component_id, rows, columns))
++        if height <= 0.2 * line_h and width >= 0.35 * line_h:
++            if _straight_fraction_rule(components[box] == component_id, line_h):
++                bars.append((component_id, rows, columns))
++        if height >= 2 * line_h and width <= 0.25 * line_h:
++            delimiters.append((component_id, rows, columns))
++    owned = set()
++    for _, stem_rows, stem_columns in delimiters:
++        parents = [
++            (rows, columns) for _, rows, columns in bars
++            if columns.stop - columns.start >= 0.7 * line_h
++            and 0 <= stem_columns.start - columns.stop <= 0.75 * line_h
++            and stem_rows.start + 0.25 * (stem_rows.stop - stem_rows.start)
++            <= (rows.start + rows.stop) / 2
++            <= stem_rows.start + 0.75 * (stem_rows.stop - stem_rows.start)
++            and any(left <= columns.start and columns.stop - 1 <= right for left, right in rules)
++        ]
++        for parent_rows, _ in parents:
++            for bar_id, rows, columns in bars:
++                if not (
++                    columns.stop - columns.start <= 1.1 * line_h
++                    and 0 <= columns.start - stem_columns.stop <= 0.75 * line_h
++                    and 0.35 * line_h <= rows.start - parent_rows.stop <= 1.75 * line_h
++                ):
++                    continue
++                aligned = [
++                    item for item in glyphs
++                    if columns.start <= item[2].start and item[2].stop <= columns.stop
++                ]
++                upper_limits = [
++                    item for item in aligned
++                    if stem_rows.start <= item[1].start
++                    and item[1].stop <= parent_rows.start - 0.2 * line_h
++                ]
++                numerators = [
++                    item for item in aligned
++                    if parent_rows.stop <= item[1].start
++                    and 0 <= rows.start - item[1].stop <= 0.75 * line_h
++                ]
++                denominators = [
++                    item for item in aligned
++                    if 0 <= item[1].start - rows.stop <= 0.75 * line_h
++                    and item[1].stop <= stem_rows.stop + 0.25 * line_h
++                ]
++                if upper_limits and any(
++                    max(first[2].start, second[2].start) < min(first[2].stop, second[2].stop)
++                    for first in numerators for second in denominators
++                ):
++                    owned.add(bar_id)
++                    owned.update(item[0] for item in upper_limits + numerators + denominators)
++    return np.isin(components, list(owned))
++
++
++def _single_fraction_row(
++    ink: np.ndarray, a: int, b: int, line_h: float,
++    source_components: np.ndarray | None = None,
++) -> bool:
+     """Distinguish tall inline fractions from two full text rows."""
+     band = ink[a:b + 1].copy()
+     height = band.shape[0]
+@@ -333,6 +399,45 @@
+             accepted_carriers.update(int(component_id) for component_id in original_ids if component_id)
+     if not rules:
+         return False
++    full_fraction_levels = []
++    full_glyph_bounds = [
++        box for box in original_bounds if box is not None
++        and 0.6 * line_h <= box[0].stop - box[0].start <= 1.8 * line_h
++        and box[1].stop - box[1].start >= 0.2 * line_h
++    ]
++    for box in original_bounds:
++        if box is None:
++            continue
++        rows, columns = box
++        width = columns.stop - columns.start
++        if not (
++            rows.stop - rows.start <= 0.2 * line_h and width >= 0.7 * line_h
++            and any(left <= columns.start and columns.stop - 1 <= right for left, right in rules)
++        ):
++            continue
++        aligned = [
++            (glyph_rows, glyph_columns) for glyph_rows, glyph_columns in full_glyph_bounds
++            if columns.start <= glyph_columns.start and glyph_columns.stop <= columns.stop
++        ]
++        if any(
++            0 <= rows.start - upper.stop <= 0.75 * line_h
++            and 0 <= lower.start - rows.stop <= 0.75 * line_h
++            and max(first.start, second.start) < min(first.stop, second.stop)
++            for upper, first in aligned for lower, second in aligned
++        ):
++            full_fraction_levels.append(((rows.start + rows.stop) / 2, width))
++    # Whole-column ownership must not swallow two complete, body-scale fractions.
++    if any(
++        abs(first_y - second_y) > 1.5 * line_h
++        and min(first_w, second_w) >= 0.7 * max(first_w, second_w)
++        for index, (first_y, first_w) in enumerate(full_fraction_levels)
++        for second_y, second_w in full_fraction_levels[index + 1:]
++    ):
++        return False
++    # Limits belong to their delimiter, not to another full body row. Use the
++    # original components when counting cleanup has already removed the stem.
++    limit_context = original_components if source_components is None else source_components[a:b + 1]
++    band[_fraction_limit_ownership(limit_context, rules, line_h)] = False
+     for left, right in rules:
+         margin = int(0.5 * line_h)
+         band[:, max(0, left - margin):min(band.shape[1], right + margin + 1)] = False
+@@ -477,10 +582,11 @@
+ 
+ 
+ def _fraction_tail_split(
+-    ink: np.ndarray, a: int, b: int, content_w: int, glyph_h: float
++    ink: np.ndarray, a: int, b: int, content_w: int, glyph_h: float,
++    source_components: np.ndarray | None = None,
+ ) -> int | None:
+     """Separate an ordinary preceding row from a tall, independently valid fraction."""
+-    if b - a + 1 <= 3 * glyph_h or _single_fraction_row(ink, a, b, glyph_h):
++    if b - a + 1 <= 3 * glyph_h or _single_fraction_row(ink, a, b, glyph_h, source_components):
+         return None
+     fragments = _row_fragments(ink[a:b + 1], content_w)
+     for (_, prev_b), (next_a, _) in zip(fragments, fragments[1:]):
+@@ -944,7 +1050,7 @@
+     index = 0
+     while index < len(joined):
+         a, b = joined[index]
+-        cut = _fraction_tail_split(ink, a, b, content_w, glyph_h)
++        cut = _fraction_tail_split(ink, a, b, content_w, glyph_h, components)
+         if cut is None and index + 1 < len(joined):
+             next_a, next_b = joined[index + 1]
+             if (
+@@ -952,7 +1058,7 @@
+                 and next_a - b <= 0.75 * glyph_h
+                 and next_b - a + 1 <= 6 * glyph_h
+             ):
+-                cut = _fraction_tail_split(ink, a, next_b, content_w, glyph_h)
++                cut = _fraction_tail_split(ink, a, next_b, content_w, glyph_h, components)
+                 if cut is not None:
+                     b = next_b
+                     index += 1
+@@ -1032,8 +1138,8 @@
+             if count == 3 and len(strong_rows) == 2 and len(glyph_rows) < 3:
+                 count = 2
+             if (
+-                count == 2 and _single_fraction_row(ink, a, b, typical_h)
+-                or _single_fraction_row(ink, a, b, min(typical_h, glyph_h))
++                count == 2 and _single_fraction_row(ink, a, b, typical_h, components)
++                or _single_fraction_row(ink, a, b, min(typical_h, glyph_h), components)
+             ):
+                 count = 1
+         if count == 1:

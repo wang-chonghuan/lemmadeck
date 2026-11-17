@@ -1,0 +1,309 @@
+"""Additive, zero-model-image residual-expression trace and repair evidence."""
+from __future__ import annotations
+
+import argparse
+import ast
+from datetime import datetime, timezone
+import hashlib
+import inspect
+import json
+import os
+from pathlib import Path
+import shlex
+import shutil
+import subprocess
+import sys
+import time
+
+sys.dont_write_bytecode = True
+ROOT = Path("/Users/yong/.codex/worktrees/a07e/lemmadeck")
+TOOLS = ROOT / ".claude/skills/ld-s10y-lesson/tools"
+PRIOR = ROOT / ".intentfold/tickets/STEMROBIN-184/tmp/production-counter133-nested-repair"
+OUT = PRIOR / "residual-followup"
+DIAG = ROOT / ".intentfold/tickets/STEMROBIN-184/tmp/production-source125-133-count-diagnosis"
+SOURCE = ROOT / ".intentfold/tickets/STEMROBIN-184/tmp/production-source10c130-133/10c/pages/0133/page.png"
+PAGE = ROOT / "ssot-resources/soviet10year-textbooks/artifacts/10c/pages/0133"
+LAYOUT = TOOLS / "layout.py"
+TEST = TOOLS / "test_layout_nested_fraction_rows.py"
+BASE_LAYOUT_SHA = "ebe5c9c61aced17ec39269048ac54ee26ca134db01288226a3ebf80d9a8c43dc"
+BASE_TEST_SHA = "dbef9063d266eff0df2e84185bb94748df3a83834a669c298dae520062cedfc7"
+
+
+def stamp():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def sha(path):
+    with Path(path).open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
+
+
+def dump(path, data):
+    path = Path(path)
+    assert path.is_relative_to(OUT)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(data, indent=2, ensure_ascii=True) + "\n")
+
+
+def append(path, data):
+    with Path(path).open("a") as stream:
+        stream.write(json.dumps(data, ensure_ascii=True) + "\n")
+        stream.flush()
+        os.fsync(stream.fileno())
+
+
+def plain(value):
+    import numpy as np
+    if isinstance(value, np.ndarray):
+        return value.tolist() if value.size < 300 else {
+            "shape": list(value.shape), "dtype": str(value.dtype),
+            "sha256": hashlib.sha256(value.tobytes()).hexdigest(),
+        }
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, slice):
+        return [value.start, value.stop]
+    if isinstance(value, (tuple, list, set)):
+        return [plain(item) for item in value]
+    if isinstance(value, dict):
+        return {str(key): plain(item) for key, item in value.items()}
+    return value
+
+
+def run(argv, cwd, label):
+    logdir = OUT / "commands" / (
+        datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%fZ") + "-" + label
+    )
+    logdir.mkdir(parents=True)
+    started = stamp()
+    clock = time.monotonic()
+    process = subprocess.run(
+        argv, cwd=cwd, capture_output=True, env=dict(os.environ, PYTHONDONTWRITEBYTECODE="1")
+    )
+    elapsed = time.monotonic() - clock
+    (logdir / "stdout.txt").write_bytes(process.stdout)
+    (logdir / "stderr.txt").write_bytes(process.stderr)
+    record = {
+        "argv": argv, "shell_command": shlex.join(argv), "cwd": str(cwd),
+        "started": started, "finished": stamp(), "elapsed_seconds": elapsed,
+        "exit_code": process.returncode, "signal": -process.returncode if process.returncode < 0 else None,
+        "status": "pass" if process.returncode == 0 else "fail",
+        "stdout_path": str(logdir / "stdout.txt"), "stdout_sha256": sha(logdir / "stdout.txt"),
+        "stderr_path": str(logdir / "stderr.txt"), "stderr_sha256": sha(logdir / "stderr.txt"),
+        "layout_sha256": sha(LAYOUT), "test_sha256": sha(TEST),
+        "environment_delta": {"PYTHONDONTWRITEBYTECODE": "1"},
+    }
+    dump(logdir / "command.json", record)
+    append(OUT / "commands.jsonl", record)
+    sys.stdout.buffer.write(process.stdout)
+    sys.stderr.buffer.write(process.stderr)
+    print(f"\nCOMMAND_RECORD={logdir / 'command.json'}", flush=True)
+    return record
+
+
+def snapshot():
+    assert not (OUT / "baseline.json").exists()
+    assert sha(LAYOUT) == BASE_LAYOUT_SHA
+    assert sha(TEST) == BASE_TEST_SHA
+    inputs = {
+        "layout.py": LAYOUT, "test_layout_nested_fraction_rows.py": TEST,
+        "page.png": SOURCE, "page-audit.json": PAGE / "audit.json",
+        "page.json": PAGE / "page.json", "page.md": PAGE / "page.md",
+        "original-layout.py": PRIOR / "original/layout.py",
+        "original-layout-trace.json": PRIOR / "original/original-layout-trace.json",
+        "original-inventory.json": PRIOR / "original/original-inventory.json",
+        "prior-affected-count.json": PRIOR / "affected-count.json",
+        "prior-report.md": PRIOR / "report.md",
+        "prior-test-evidence.json": PRIOR / "test-evidence.json",
+        "prior-final-hashes.json": PRIOR / "final-hashes.json",
+    }
+    facts = {}
+    for name, path in inputs.items():
+        before = sha(path)
+        target = OUT / "original" / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(path, target)
+        assert before == sha(path) == sha(target)
+        facts[name] = {"path": str(path), "snapshot": str(target), "sha256": before}
+    dump(OUT / "baseline.json", {
+        "timestamp": stamp(), "inputs": facts, "new_model_images": 0,
+        "permanent_model_image_consumption": 6, "diagnostic_fullpage_counts": 0,
+    })
+    print(json.dumps(facts, indent=2))
+
+
+def read(path, start, end):
+    path = Path(path)
+    assert path in (
+        LAYOUT, TEST, PRIOR / "original/original-layout-trace.json",
+        PRIOR / "original/original-inventory.json", OUT / "followup-report.md",
+    )
+    sys.stdout.write("".join(path.read_text().splitlines(keepends=True)[start - 1:end]))
+
+
+def cleanup_prefix(layout, ink, content_w):
+    """Execute actual cleanup/scale production statements, stopping before row joining."""
+    module = ast.parse(inspect.getsource(layout.line_bands))
+    function = module.body[0]
+    body = []
+    raw_assignments = 0
+    for statement in function.body:
+        body.append(statement)
+        if isinstance(statement, ast.Assign) and any(
+            isinstance(target, ast.Name) and target.id == "raw" for target in statement.targets
+        ):
+            raw_assignments += 1
+            if raw_assignments == 2:
+                break
+    assert raw_assignments == 2
+    function.name = "_bounded_cleanup_prefix"
+    function.body = body + [ast.Return(value=ast.Tuple(
+        elts=[ast.Name(id=name, ctx=ast.Load())
+              for name in ("ink", "components", "line_h", "glyph_h")], ctx=ast.Load(),
+    ))]
+    module = ast.fix_missing_locations(module)
+    namespace = dict(vars(layout))
+    exec(compile(module, "<bounded-production-cleanup-prefix>", "exec"), namespace)
+    return namespace["_bounded_cleanup_prefix"](ink, content_w), ast.unparse(module)
+
+
+def expression_trace():
+    import numpy as np
+    from scipy import ndimage
+    from PIL import Image
+    sys.path.insert(0, str(TOOLS))
+    import layout
+    baseline = json.loads((OUT / "baseline.json").read_text())
+    assert sha(SOURCE) == baseline["inputs"]["page.png"]["sha256"]
+    assert not (OUT / "expression-role-trace.json").exists(), "Do not overwrite trace evidence"
+    with Image.open(SOURCE) as image:
+        ink = layout.ink_mask(image)
+    columns = np.flatnonzero(ink.any(axis=0))
+    width = int(columns[-1] - columns[0] + 1)
+    (cleaned, original_components, line_h, glyph_h), prefix = cleanup_prefix(layout, ink, width)
+    (OUT / "executed-cleanup-prefix.py.txt").write_text(prefix + "\n")
+    a, b = 701, 855
+    context = original_components[a:b + 1]
+    bounds = ndimage.find_objects(context)
+    components = []
+    for ident, box in enumerate(bounds, 1):
+        if box is None:
+            continue
+        rows, cols = box
+        area = int((context[box] == ident).sum())
+        if area < 8:
+            continue
+        height, span = rows.stop - rows.start, cols.stop - cols.start
+        components.append({
+            "id": ident, "box_xywh": [cols.start, a + rows.start, span, height], "ink_pixels": area,
+            "surviving_cleanup_ink": int((cleaned[a:b + 1][box] & (context[box] == ident)).sum()),
+            "delimiter_height_guard": height >= 2 * glyph_h,
+            "delimiter_width_guard": span <= 0.25 * glyph_h,
+            "role_glyph_guard": 0.35 * glyph_h <= height <= 0.9 * glyph_h and 0.15 * glyph_h <= span <= glyph_h,
+            "role_bar_size_guard": height <= 0.2 * glyph_h and span >= 0.35 * glyph_h,
+        })
+    events = []
+    selected = (
+        "a", "b", "line_h", "height", "rules", "full_fraction_levels", "full_glyph_bounds",
+        "glyphs", "bars", "delimiters", "owned", "parents", "upper_limits", "numerators",
+        "denominators", "stem_rows", "stem_columns", "parent_rows", "rows", "columns",
+        "remaining", "glyph_rows", "cores", "overlapping", "source_components",
+    )
+
+    def observe(frame, event, value):
+        if Path(frame.f_code.co_filename) != LAYOUT:
+            return observe
+        if frame.f_code.co_name in ("_single_fraction_row", "_fraction_limit_ownership") and event == "return":
+            state = frame.f_locals
+            events.append({
+                "function": frame.f_code.co_name, "return_line": frame.f_lineno,
+                "return": plain(value),
+                "locals": {key: plain(state[key]) for key in selected if key in state},
+            })
+        return observe
+
+    decisions = {}
+    sys.settrace(observe)
+    try:
+        for scale in dict.fromkeys((float(line_h), float(glyph_h))):
+            decisions[str(scale)] = bool(layout._single_fraction_row(
+                cleaned, a, b, scale, original_components
+            ))
+    finally:
+        sys.settrace(None)
+    result = {
+        "timestamp": stamp(), "source_sha256": sha(SOURCE), "layout_sha256": sha(LAYOUT),
+        "expression_y_inclusive": [a, b], "content_width": width,
+        "production_cleanup_scales": {"line_h": float(line_h), "glyph_h": float(glyph_h)},
+        "original_context_ink_pixels": int((context > 0).sum()),
+        "cleaned_expression_ink_pixels": int(cleaned[a:b + 1].sum()),
+        "original_component_geometry": components, "helper_decisions": decisions, "events": events,
+        "diagnostic_fullpage_count_calls": 0, "model_image_opens": 0,
+        "method": "Native computational array only; actual production cleanup prefix stops before joining/counting; trace only the existing failed expression and private role helper. No image files/output/payload.",
+    }
+    dump(OUT / "expression-role-trace.json", result)
+    print(json.dumps({
+        key: value for key, value in result.items() if key not in ("events", "original_component_geometry")
+    }, indent=2))
+    print("COMPONENTS PASSING DELIMITER HEIGHT OR CONTAINING LOWER-LIMIT INK:")
+    print(json.dumps([item for item in components
+                      if item["delimiter_height_guard"] or
+                      item["box_xywh"][1] >= 778 and item["box_xywh"][0] > 500], indent=2))
+    for event in events:
+        if event["function"] == "_fraction_limit_ownership":
+            print(json.dumps(event, indent=2))
+        else:
+            print(json.dumps({
+                "function": event["function"], "return_line": event["return_line"],
+                "return": event["return"], "remaining": event["locals"].get("remaining"),
+                "glyph_rows": event["locals"].get("glyph_rows"), "cores": event["locals"].get("cores"),
+                "overlapping": event["locals"].get("overlapping"),
+            }, indent=2))
+
+
+def test_case(name):
+    design = json.loads((OUT / "new-test-design.json").read_text())
+    assert name in {case["case"] for case in design["cases"]}
+    ledger = OUT / "test-cases.jsonl"
+    prior = [json.loads(line) for line in ledger.read_text().splitlines()] if ledger.exists() else []
+    assert not any(item["case"] == name and item["exit_code"] == 0 for item in prior), "PASS rerun forbidden"
+    record = run(
+        [sys.executable, "-B", "-m", "unittest", "-v", "test_layout_nested_fraction_rows." + name],
+        TOOLS, name,
+    )
+    append(ledger, {"case": name, **record})
+    return record["exit_code"]
+
+
+def main(arguments):
+    parser = argparse.ArgumentParser()
+    actions = parser.add_subparsers(dest="action", required=True)
+    actions.add_parser("snapshot")
+    reader = actions.add_parser("read")
+    reader.add_argument("path")
+    reader.add_argument("--start", type=int, default=1)
+    reader.add_argument("--end", type=int, default=1000000)
+    actions.add_parser("expression-trace")
+    tester = actions.add_parser("test-case")
+    tester.add_argument("name")
+    args = parser.parse_args(arguments)
+    if args.action == "snapshot":
+        snapshot()
+    elif args.action == "read":
+        read(args.path, args.start, args.end)
+    elif args.action == "expression-trace":
+        expression_trace()
+    elif args.action == "test-case":
+        return test_case(args.name)
+    return 0
+
+
+if __name__ == "__main__":
+    if sys.argv[1:2] == ["_execute"]:
+        sys.exit(main(sys.argv[2:]))
+    OUT.mkdir(parents=True, exist_ok=True)
+    record = run(
+        [sys.executable, "-B", str(Path(__file__).resolve()), "_execute", *sys.argv[1:]],
+        ROOT, sys.argv[1],
+    )
+    sys.exit(record["exit_code"])

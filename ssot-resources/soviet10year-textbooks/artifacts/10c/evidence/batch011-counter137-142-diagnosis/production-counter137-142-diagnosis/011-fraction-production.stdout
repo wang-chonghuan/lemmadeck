@@ -1,0 +1,495 @@
+def _fraction_limit_ownership(components: np.ndarray, rules, line_h: float) -> np.ndarray:
+    """Identify fractional evaluation limits beside an established fraction bar."""
+    bounds = ndimage.find_objects(components)
+    glyphs, bars, delimiters = [], [], []
+    for component_id, box in enumerate(bounds, 1):
+        if box is None:
+            continue
+        rows, columns = box
+        height, width = rows.stop - rows.start, columns.stop - columns.start
+        if 0.35 * line_h <= height <= 0.9 * line_h and 0.15 * line_h <= width <= line_h:
+            glyphs.append((component_id, rows, columns))
+        if height <= 0.2 * line_h and width >= 0.35 * line_h:
+            if _straight_fraction_rule(components[box] == component_id, line_h):
+                bars.append((component_id, rows, columns))
+        if height >= 2 * line_h and width <= 0.25 * line_h:
+            delimiters.append((component_id, rows, columns))
+    owned = set()
+    for _, stem_rows, stem_columns in delimiters:
+        parents = [
+            (rows, columns) for _, rows, columns in bars
+            if columns.stop - columns.start >= 0.7 * line_h
+            and 0 <= stem_columns.start - columns.stop <= 0.75 * line_h
+            and stem_rows.start + 0.25 * (stem_rows.stop - stem_rows.start)
+            <= (rows.start + rows.stop) / 2
+            <= stem_rows.start + 0.75 * (stem_rows.stop - stem_rows.start)
+            and any(left <= columns.start and columns.stop - 1 <= right for left, right in rules)
+        ]
+        for parent_rows, _ in parents:
+            side_glyphs = [
+                item for item in glyphs
+                if stem_columns.stop <= item[2].start
+                and item[2].stop <= stem_columns.stop + line_h
+            ]
+            upper_integers = [
+                item for item in side_glyphs
+                if stem_rows.start - 0.5 * line_h <= item[1].start
+                and item[1].stop <= stem_rows.start + 0.75 * line_h
+                and item[1].stop <= parent_rows.start - 0.2 * line_h
+            ]
+            lower_integers = [
+                item for item in side_glyphs
+                if stem_rows.stop - 0.75 * line_h <= item[1].start
+                and item[1].stop <= stem_rows.stop + 0.75 * line_h
+                and item[1].start >= parent_rows.stop + 0.2 * line_h
+            ]
+            # Detached integer limits need both ends of the same delimiter.
+            # An intervening aligned bar instead belongs to a fractional limit.
+            for upper in upper_integers:
+                for lower in lower_integers:
+                    if (
+                        max(upper[2].start, lower[2].start)
+                        >= min(upper[2].stop, lower[2].stop)
+                        or any(
+                            parent_rows.stop <= rows.start < lower[1].start
+                            and max(columns.start, lower[2].start)
+                            < min(columns.stop, lower[2].stop)
+                            for _, rows, columns in bars
+                        )
+                    ):
+                        continue
+                    owned.update((upper[0], lower[0]))
+            for bar_id, rows, columns in bars:
+                if not (
+                    columns.stop - columns.start <= 1.1 * line_h
+                    and 0 <= columns.start - stem_columns.stop <= 0.75 * line_h
+                    and 0.35 * line_h <= rows.start - parent_rows.stop <= 1.75 * line_h
+                ):
+                    continue
+                aligned = [
+                    item for item in glyphs
+                    if columns.start <= item[2].start and item[2].stop <= columns.stop
+                ]
+                upper_limits = [
+                    item for item in aligned
+                    if stem_rows.start <= item[1].start
+                    and item[1].stop <= parent_rows.start - 0.2 * line_h
+                ]
+                numerators = [
+                    item for item in aligned
+                    if parent_rows.stop <= item[1].start
+                    and 0 <= rows.start - item[1].stop <= 0.75 * line_h
+                ]
+                denominators = [
+                    item for item in aligned
+                    if 0 <= item[1].start - rows.stop <= 0.75 * line_h
+                    and item[1].stop <= stem_rows.stop + 0.25 * line_h
+                ]
+                if upper_limits and any(
+                    max(first[2].start, second[2].start) < min(first[2].stop, second[2].stop)
+                    for first in numerators for second in denominators
+                ):
+                    owned.add(bar_id)
+                    owned.update(item[0] for item in upper_limits + numerators + denominators)
+    return np.isin(components, list(owned))
+
+
+def _bounded_carrier_limit_ownership(components: np.ndarray, line_h: float) -> np.ndarray:
+    """Own paired endpoint groups, retaining complete original source components."""
+    bounds = ndimage.find_objects(components)
+    carriers = [
+        (component_id, rows, columns)
+        for component_id, box in enumerate(bounds, 1) if box is not None
+        for rows, columns in [box]
+        if 2 * line_h <= rows.stop - rows.start <= 4.5 * line_h
+        and columns.stop - columns.start <= 0.65 * line_h
+        and columns.stop - columns.start < 0.3 * (rows.stop - rows.start)
+    ]
+    owned = set()
+    for carrier_id, stem_rows, stem_columns in carriers:
+        center = (stem_rows.start + stem_rows.stop) / 2
+        sides = []
+        for upper in (True, False):
+            endpoint = stem_rows.start if upper else stem_rows.stop
+            candidates = [
+                (component_id, rows, columns)
+                for component_id, box in enumerate(bounds, 1)
+                if box is not None and component_id != carrier_id
+                for rows, columns in [box]
+                if 0.1 * line_h <= rows.stop - rows.start <= 0.9 * line_h
+                and 0.15 * line_h <= columns.stop - columns.start <= line_h
+                and stem_columns.stop <= columns.start
+                and columns.stop <= stem_columns.stop + 1.75 * line_h
+                and endpoint - 0.75 * line_h <= rows.start
+                and rows.stop <= endpoint + 0.75 * line_h
+                and (rows.stop < center - 0.5 * line_h if upper
+                     else rows.start > center + 0.5 * line_h)
+            ]
+            groups = []
+            for item in sorted(candidates, key=lambda item: item[2].start):
+                if (
+                    not groups
+                    or item[2].start - max(peer[2].stop for peer in groups[-1]) > 0.4 * line_h
+                ):
+                    groups.append([])
+                groups[-1].append(item)
+            sides.append([
+                group for group in groups
+                if min(item[2].start for item in group) - stem_columns.stop <= 0.75 * line_h
+                and any(item[1].stop - item[1].start >= 0.35 * line_h for item in group)
+                and max(item[1].start for item in group) < min(item[1].stop for item in group)
+            ])
+        for upper in sides[0]:
+            for lower in sides[1]:
+                if max(
+                    min(item[2].start for item in upper), min(item[2].start for item in lower)
+                ) < min(
+                    max(item[2].stop for item in upper), max(item[2].stop for item in lower)
+                ):
+                    owned.update(item[0] for item in upper + lower)
+    return np.isin(components, list(owned))
+
+
+def _bounded_fraction_rules(components: np.ndarray, rules, line_h: float):
+    """Complete short or broken rules only with detached two-sided glyph support."""
+    bounds = ndimage.find_objects(components)
+    bars, glyphs = [], []
+    for component_id, box in enumerate(bounds, 1):
+        if box is None:
+            continue
+        rows, columns = box
+        height, width = rows.stop - rows.start, columns.stop - columns.start
+        if height <= 0.2 * line_h and width >= 0.35 * line_h:
+            if _straight_fraction_rule(components[box] == component_id, line_h):
+                bars.append((rows, columns))
+        if 0.1 * line_h <= height <= 1.8 * line_h and width >= 0.15 * line_h:
+            glyphs.append((rows, columns))
+    groups = []
+    for item in sorted(bars, key=lambda item: item[1].start):
+        for group in groups:
+            if (
+                0 <= item[1].start - max(peer[1].stop for peer in group) <= 0.2 * line_h
+                and max(item[0].start, max(peer[0].start for peer in group))
+                < min(item[0].stop, min(peer[0].stop for peer in group))
+            ):
+                group.append(item)
+                break
+        else:
+            groups.append([item])
+    completed = list(rules)
+    for group in groups:
+        left, right = min(item[1].start for item in group), max(item[1].stop for item in group)
+        top, bottom = min(item[0].start for item in group), max(item[0].stop for item in group)
+        if (
+            bottom - top > 0.25 * line_h
+            or any(x <= left and right - 1 <= y for x, y in rules)
+        ):
+            continue
+        seeded = any(left <= x <= y < right for x, y in rules)
+        if not seeded and right - left >= 0.7 * line_h:
+            continue
+        # Detached diagonal heads must remain in the rule's source context.
+        margin = max(2, int(0.25 * line_h))
+        context_labels = components[max(0, top - margin):bottom + margin, left:right]
+        full_glyph_ids = [
+            component_id for component_id, box in enumerate(bounds, 1)
+            if box is not None and box[0].stop - box[0].start >= 0.35 * line_h
+        ]
+        # A clipped full numerator is not a detached short head fragment.
+        context = (context_labels > 0) & ~np.isin(context_labels, full_glyph_ids)
+        headed = _arrow_headed_rule(context, line_h)
+        for direction in (context, context[:, ::-1]):
+            spans = np.array([
+                np.ptp(ys) + 1 if ys.size else 0
+                for x in range(direction.shape[1])
+                for ys in [np.flatnonzero(direction[:, x])]
+            ])
+            headed |= any(
+                _arrow_headed_rule(direction[:, :tip + 1], line_h)
+                for tip in np.flatnonzero(np.diff(spans) < 0) + 1
+            )
+        if headed:
+            continue
+        sides = []
+        for upper in (True, False):
+            local = [
+                (rows, columns) for rows, columns in glyphs
+                if left - 0.25 * line_h <= columns.start
+                and columns.stop <= right + 0.25 * line_h
+                and (0 <= top - rows.stop <= 0.75 * line_h if upper
+                     else 0 <= rows.start - bottom <= 0.75 * line_h)
+            ]
+            supported = []
+            for rows, _ in local:
+                if rows.stop - rows.start < 0.35 * line_h:
+                    continue
+                peers = [
+                    columns for peer_rows, columns in local
+                    if max(rows.start, peer_rows.start) < min(rows.stop, peer_rows.stop)
+                ]
+                supported.append((min(columns.start for columns in peers),
+                                  max(columns.stop for columns in peers)))
+            sides.append(supported)
+        if any(max(x, u) < min(y, v) for x, y in sides[0] for u, v in sides[1]):
+            completed.append((left, right - 1))
+    return completed
+
+
+def _single_fraction_row(
+    ink: np.ndarray, a: int, b: int, line_h: float,
+    source_components: np.ndarray | None = None,
+) -> bool:
+    """Distinguish tall inline fractions from two full text rows."""
+    band = ink[a:b + 1].copy()
+    height = band.shape[0]
+    rules = []
+    accepted_carriers = set()
+    components, _ = ndimage.label(band)
+    original_components = components
+    for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        if (
+            columns.stop - columns.start >= 0.7 * line_h
+            and rows.stop - rows.start <= 0.2 * line_h
+            and 0.3 * height <= (rows.start + rows.stop) / 2 <= 0.7 * height
+            and _straight_fraction_rule(components[bounds] == component_id, line_h)
+        ):
+            rules.append((columns.start, columns.stop - 1))
+            accepted_carriers.add(component_id)
+    horizontal = ndimage.binary_opening(
+        band, structure=np.ones((1, max(2, int(0.7 * line_h))), dtype=bool)
+    )
+    rule_components, _ = ndimage.label(horizontal)
+    original_bounds = ndimage.find_objects(components)
+    for bounds in ndimage.find_objects(rule_components):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        original_ids = np.unique(components[bounds][horizontal[bounds]])
+        whole_component_arrow = any(
+            _arrow_headed_rule(
+                components[original_bounds[component_id - 1]] == component_id, line_h
+            )
+            for component_id in original_ids if component_id
+        )
+        glyph_stroke = any(
+            original_bounds[component_id - 1] is not None
+            and columns.stop - columns.start < 2 * line_h
+            and 0.6 * line_h <= (
+                original_bounds[component_id - 1][0].stop
+                - original_bounds[component_id - 1][0].start
+            ) <= 1.8 * line_h
+            for component_id in original_ids if component_id
+        )
+        local_fraction = (
+            (whole_component_arrow or glyph_stroke)
+            and _bar_local_fraction_support(
+                components, original_bounds, original_ids, rows, columns, line_h
+            )
+        )
+        if (
+            (not whole_component_arrow or local_fraction)
+            and (not glyph_stroke or local_fraction)
+            and all(
+                _straight_fraction_rule(
+                    # Connected numerators need only their horizontal bar checked.
+                    horizontal[bounds]
+                    if original_bounds[component_id - 1][0].stop
+                    - original_bounds[component_id - 1][0].start > 0.5 * line_h
+                    else components[original_bounds[component_id - 1]] == component_id,
+                    line_h,
+                )
+                for component_id in original_ids if component_id
+            )
+            and
+            rows.stop - rows.start <= 0.25 * line_h
+            and (
+                0.3 * height <= (rows.start + rows.stop) / 2 <= 0.7 * height
+                # A nested denominator moves its long outer rule above centre.
+                or height > 3 * line_h
+                and columns.stop - columns.start >= 2 * line_h
+                and 0.2 * height <= (rows.start + rows.stop) / 2 <= 0.8 * height
+            )
+        ):
+            rules.append((columns.start, columns.stop - 1))
+            accepted_carriers.update(int(component_id) for component_id in original_ids if component_id)
+    if not rules:
+        return False
+    limit_context = original_components if source_components is None else source_components[a:b + 1]
+    bounded_limits = _bounded_carrier_limit_ownership(limit_context, line_h)
+    if bounded_limits.any():
+        rules = _bounded_fraction_rules(original_components, rules, line_h)
+    full_fraction_levels = []
+    full_glyph_bounds = [
+        box for box in original_bounds if box is not None
+        and 0.6 * line_h <= box[0].stop - box[0].start <= 1.8 * line_h
+        and box[1].stop - box[1].start >= 0.2 * line_h
+    ]
+    for box in original_bounds:
+        if box is None:
+            continue
+        rows, columns = box
+        width = columns.stop - columns.start
+        if not (
+            rows.stop - rows.start <= 0.2 * line_h and width >= 0.7 * line_h
+            and any(left <= columns.start and columns.stop - 1 <= right for left, right in rules)
+        ):
+            continue
+        aligned = [
+            (glyph_rows, glyph_columns) for glyph_rows, glyph_columns in full_glyph_bounds
+            if columns.start <= glyph_columns.start and glyph_columns.stop <= columns.stop
+        ]
+        if any(
+            0 <= rows.start - upper.stop <= 0.75 * line_h
+            and 0 <= lower.start - rows.stop <= 0.75 * line_h
+            and max(first.start, second.start) < min(first.stop, second.stop)
+            for upper, first in aligned for lower, second in aligned
+        ):
+            full_fraction_levels.append(((rows.start + rows.stop) / 2, width))
+    # Whole-column ownership must not swallow two complete, body-scale fractions.
+    if any(
+        abs(first_y - second_y) > 1.5 * line_h
+        and min(first_w, second_w) >= 0.7 * max(first_w, second_w)
+        for index, (first_y, first_w) in enumerate(full_fraction_levels)
+        for second_y, second_w in full_fraction_levels[index + 1:]
+    ):
+        return False
+    # Limits belong to their delimiter, not to another full body row. Use the
+    # original components when counting cleanup has already removed the stem.
+    band[_fraction_limit_ownership(limit_context, rules, line_h) | bounded_limits] = False
+    for left, right in rules:
+        margin = int(0.5 * line_h)
+        band[:, max(0, left - margin):min(band.shape[1], right + margin + 1)] = False
+    components, _ = ndimage.label(band)
+    for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        if (
+            rows.stop - rows.start > 1.8 * line_h
+            and columns.stop - columns.start < 0.6 * line_h
+        ):
+            region = band[bounds]
+            region[components[bounds] == component_id] = False
+    counts = band.sum(axis=1)
+    glyph_components, _ = ndimage.label(band)
+    residual_bounds = ndimage.find_objects(glyph_components)
+    original_decorations = {
+        component_id for component_id, bounds in enumerate(original_bounds, 1)
+        if bounds is not None
+        and component_id not in accepted_carriers
+        and _original_arrow_decoration(original_components[bounds] == component_id, line_h)
+    }
+    glyph_bounds = []
+    for component_id, bounds in enumerate(residual_bounds, 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        height = rows.stop - rows.start
+        if not (
+            0.6 * line_h <= height <= 1.8 * line_h
+            and columns.stop - columns.start >= 0.2 * line_h
+        ):
+            continue
+        original_ids = np.unique(
+            original_components[bounds][glyph_components[bounds] == component_id]
+        )
+        if original_ids.size and all(
+            original_id in original_decorations for original_id in original_ids
+        ):
+            continue
+        central = glyph_components[
+            rows.start + height // 4:rows.stop - height // 4, columns
+        ] == component_id
+        # A detached delimiter end is wide only at its tip, not through its body.
+        if np.ptp(np.flatnonzero(central.any(axis=0))) + 1 >= 0.25 * height:
+            glyph_bounds.append((rows, columns))
+    # A remote short singleton is not evidence of a second formula body row.
+    # Keep connected source context and aligned peers; adjust only the projection.
+    support_spans = rules + [
+        (columns.start, columns.stop - 1) for _, columns in glyph_bounds
+    ]
+    context_bounds = ndimage.find_objects(limit_context)
+    for component_id, bounds in enumerate(residual_bounds, 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        if (
+            rows.stop - rows.start >= 0.6 * line_h
+            or columns.stop - columns.start >= 0.6 * line_h
+            or any(
+                columns.start <= right + 2 * line_h
+                and columns.stop - 1 >= left - 2 * line_h
+                for left, right in support_spans
+            )
+        ):
+            continue
+        original_ids = np.unique(
+            limit_context[bounds][glyph_components[bounds] == component_id]
+        )
+        if any(
+            box is not None
+            and (box[0].stop - box[0].start >= 0.6 * line_h
+                 or box[1].stop - box[1].start >= 0.6 * line_h)
+            for original_id in original_ids if original_id
+            for box in [context_bounds[original_id - 1]]
+        ):
+            continue
+        if any(
+            other_id != component_id
+            and 0.2 * line_h <= other_rows.stop - other_rows.start
+            and other_columns.stop - other_columns.start >= 0.15 * line_h
+            and columns.start <= other_columns.stop + 2 * line_h
+            and columns.stop >= other_columns.start - 2 * line_h
+            and max(rows.start, other_rows.start) < min(rows.stop, other_rows.stop)
+            for other_id, box in enumerate(residual_bounds, 1) if box is not None
+            for other_rows, other_columns in [box]
+        ):
+            continue
+        counts[rows] -= (glyph_components[bounds] == component_id).sum(axis=1)
+    remaining = np.flatnonzero(counts > max(8, 0.25 * counts.max()))
+    glyph_rows = [
+        row for rows, _ in glyph_bounds for row in (rows.start, rows.stop - 1)
+    ]
+    if glyph_rows:
+        remaining = np.union1d(remaining, glyph_rows)
+    # Skew widens a row's envelope. Neighboring full glyphs must still overlap
+    # through their central half, unlike independently supported text rows.
+    # A complete adjacent row may be slightly shorter than the page median.
+    full_glyphs = sorted(glyph_bounds, key=lambda bounds: bounds[1].start)
+    if not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h:
+        # Compact side captions may be staggered but still share glyph rows.
+        return all(
+            max(first.start, second.start) < min(first.stop, second.stop)
+            for (first, _), (second, _) in zip(full_glyphs, full_glyphs[1:])
+        )
+    # Fraction bars connect the formula's horizontal support. A distant singleton
+    # cannot establish another body row, but repeated glyph groups still can.
+    support_groups = _merge_close(
+        sorted(rules + [
+            (columns.start, columns.stop - 1) for _, columns in glyph_bounds
+        ]),
+        2 * line_h,
+    )
+    supported_glyphs = []
+    for left, right in support_groups:
+        group = [
+            bounds for bounds in glyph_bounds
+            if left <= bounds[1].start and bounds[1].stop - 1 <= right
+        ]
+        if len(group) >= 2 or any(left <= x <= y <= right for x, y in rules):
+            supported_glyphs.extend(group)
+    full_glyphs = sorted(supported_glyphs, key=lambda bounds: bounds[1].start)
+    cores = [
+        (rows.start + 0.25 * (rows.stop - rows.start),
+         rows.stop - 0.25 * (rows.stop - rows.start))
+        for rows, _ in full_glyphs
+    ]
+    overlapping = all(
+        max(a, c) <= min(b, d) for (a, b), (c, d) in zip(cores, cores[1:])
+    )
+    return len(cores) >= 3 and overlapping
+
+

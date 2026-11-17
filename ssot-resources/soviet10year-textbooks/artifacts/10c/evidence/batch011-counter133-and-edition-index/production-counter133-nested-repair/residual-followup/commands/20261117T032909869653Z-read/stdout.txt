@@ -1,0 +1,229 @@
+    # Limits belong to their delimiter, not to another full body row. Use the
+    # original components when counting cleanup has already removed the stem.
+    limit_context = original_components if source_components is None else source_components[a:b + 1]
+    band[_fraction_limit_ownership(limit_context, rules, line_h)] = False
+    for left, right in rules:
+        margin = int(0.5 * line_h)
+        band[:, max(0, left - margin):min(band.shape[1], right + margin + 1)] = False
+    components, _ = ndimage.label(band)
+    for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        if (
+            rows.stop - rows.start > 1.8 * line_h
+            and columns.stop - columns.start < 0.6 * line_h
+        ):
+            region = band[bounds]
+            region[components[bounds] == component_id] = False
+    counts = band.sum(axis=1)
+    remaining = np.flatnonzero(counts > max(8, 0.25 * counts.max()))
+    glyph_components, _ = ndimage.label(band)
+    original_decorations = {
+        component_id for component_id, bounds in enumerate(original_bounds, 1)
+        if bounds is not None
+        and component_id not in accepted_carriers
+        and _original_arrow_decoration(original_components[bounds] == component_id, line_h)
+    }
+    glyph_bounds = []
+    for component_id, bounds in enumerate(ndimage.find_objects(glyph_components), 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        height = rows.stop - rows.start
+        if not (
+            0.6 * line_h <= height <= 1.8 * line_h
+            and columns.stop - columns.start >= 0.2 * line_h
+        ):
+            continue
+        original_ids = np.unique(
+            original_components[bounds][glyph_components[bounds] == component_id]
+        )
+        if original_ids.size and all(
+            original_id in original_decorations for original_id in original_ids
+        ):
+            continue
+        central = glyph_components[
+            rows.start + height // 4:rows.stop - height // 4, columns
+        ] == component_id
+        # A detached delimiter end is wide only at its tip, not through its body.
+        if np.ptp(np.flatnonzero(central.any(axis=0))) + 1 >= 0.25 * height:
+            glyph_bounds.append((rows, columns))
+    glyph_rows = [
+        row for rows, _ in glyph_bounds for row in (rows.start, rows.stop - 1)
+    ]
+    if glyph_rows:
+        remaining = np.union1d(remaining, glyph_rows)
+    # Skew widens a row's envelope. Neighboring full glyphs must still overlap
+    # through their central half, unlike independently supported text rows.
+    # A complete adjacent row may be slightly shorter than the page median.
+    full_glyphs = sorted(glyph_bounds, key=lambda bounds: bounds[1].start)
+    if not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h:
+        # Compact side captions may be staggered but still share glyph rows.
+        return all(
+            max(first.start, second.start) < min(first.stop, second.stop)
+            for (first, _), (second, _) in zip(full_glyphs, full_glyphs[1:])
+        )
+    # Fraction bars connect the formula's horizontal support. A distant singleton
+    # cannot establish another body row, but repeated glyph groups still can.
+    support_groups = _merge_close(
+        sorted(rules + [
+            (columns.start, columns.stop - 1) for _, columns in glyph_bounds
+        ]),
+        2 * line_h,
+    )
+    supported_glyphs = []
+    for left, right in support_groups:
+        group = [
+            bounds for bounds in glyph_bounds
+            if left <= bounds[1].start and bounds[1].stop - 1 <= right
+        ]
+        if len(group) >= 2 or any(left <= x <= y <= right for x, y in rules):
+            supported_glyphs.extend(group)
+    full_glyphs = sorted(supported_glyphs, key=lambda bounds: bounds[1].start)
+    cores = [
+        (rows.start + 0.25 * (rows.stop - rows.start),
+         rows.stop - 0.25 * (rows.stop - rows.start))
+        for rows, _ in full_glyphs
+    ]
+    overlapping = all(
+        max(a, c) <= min(b, d) for (a, b), (c, d) in zip(cores, cores[1:])
+    )
+    return len(cores) >= 3 and overlapping
+
+
+def _subscript_continues(
+    ink: np.ndarray, a: int, split: int, b: int, glyph_h: float
+) -> bool:
+    """Require small lower glyphs to belong to a matching local upper group."""
+    if (
+        split <= a or split > b
+        or b - a + 1 > 2.8 * glyph_h
+        or b - split + 1 > 1.4 * glyph_h
+    ):
+        return False
+    bounds = [
+        bounds for bounds in ndimage.find_objects(ndimage.label(ink[a:b + 1])[0])
+        if bounds is not None
+    ]
+    upper, lower = [], []
+    for rows, columns in bounds:
+        height, width = rows.stop - rows.start, columns.stop - columns.start
+        if rows.stop <= split - a and height >= 0.2 * glyph_h:
+            upper.append((columns.start, columns.stop - 1, height))
+        elif rows.start >= split - a - 0.2 * glyph_h:
+            if height >= 0.6 * glyph_h and width >= 0.2 * glyph_h:
+                return False
+            if height >= 0.1 * glyph_h and width >= 2:
+                lower.append((columns.start, columns.stop - 1, height))
+        elif height >= 0.6 * glyph_h:
+            return False
+    supported = False
+    for left, right in _merge_close(
+        sorted((x, y) for x, y, _ in lower), max(2, 0.4 * glyph_h)
+    ):
+        # Isolated punctuation/scan specks do not establish a lower text group.
+        members = [(x, y, h) for x, y, h in lower if left <= x <= y <= right]
+        if len(members) < 3:
+            continue
+        width = right - left + 1
+        local_upper = [
+            (x, y, h) for x, y, h in upper
+            if left - 0.25 * glyph_h <= x <= right + 0.25 * glyph_h
+        ]
+        if not local_upper or not any(h >= 0.6 * glyph_h for _, _, h in local_upper):
+            return False
+        x = min(x for x, _, _ in local_upper)
+        y = max(y for _, y, _ in local_upper)
+        if not (
+            0.7 * glyph_h <= y - x + 1 <= 2.5 * glyph_h
+            and 0.55 <= width / (y - x + 1) <= 1.6
+            and abs((left + right) - (x + y)) <= 0.8 * glyph_h
+        ):
+            return False
+        supported = True
+    return supported
+
+
+def _fraction_tail_split(
+    ink: np.ndarray, a: int, b: int, content_w: int, glyph_h: float,
+    source_components: np.ndarray | None = None,
+) -> int | None:
+    """Separate an ordinary preceding row from a tall, independently valid fraction."""
+    if b - a + 1 <= 3 * glyph_h or _single_fraction_row(ink, a, b, glyph_h, source_components):
+        return None
+    fragments = _row_fragments(ink[a:b + 1], content_w)
+    for (_, prev_b), (next_a, _) in zip(fragments, fragments[1:]):
+        cut = a + (prev_b + next_a + 1) // 2
+        if not 0.6 * glyph_h <= cut - a <= 1.5 * glyph_h:
+            continue
+        if b - cut + 1 < 2 * glyph_h:
+            continue
+        horizontal = ndimage.binary_opening(
+            ink[cut:b + 1],
+            structure=np.ones((1, max(2, int(2 * glyph_h))), dtype=bool),
+        )
+        rules = ndimage.find_objects(ndimage.label(horizontal)[0])
+        if (
+            any(
+                rows.stop - rows.start <= 0.25 * glyph_h
+                for bounds in rules if bounds is not None for rows, _ in [bounds]
+            )
+            and _single_fraction_row(ink, cut, b, glyph_h)
+        ):
+            return cut
+    return None
+
+
+def _supported_glyph_rows(
+    ink: np.ndarray, fragments, glyph_h: float
+) -> list[tuple[int, int]]:
+    """Require full body components, not an arrow fragment's projection envelope."""
+    components, _ = ndimage.label(ink)
+    bounds = ndimage.find_objects(components)
+    return [
+        (a, b) for a, b in fragments
+        if any(
+            a <= rows.start and rows.stop - 1 <= b
+            and 0.6 * glyph_h <= rows.stop - rows.start <= 1.8 * glyph_h
+            and columns.stop - columns.start >= 0.2 * glyph_h
+            and not _arrow_headed_rule(components[item] == component_id, glyph_h)
+            for component_id, item in enumerate(bounds, 1)
+            if item is not None for rows, columns in [item]
+        )
+    ]
+
+
+def _small_text_rows(ink: np.ndarray, fragments, glyph_h: float) -> bool:
+    """Retain repeated, independently supported rows in a smaller local font."""
+    if _supported_glyph_rows(ink, fragments, glyph_h):
+        return False
+    if len(fragments) < 2:
+        return False
+    bounds = ndimage.find_objects(ndimage.label(ink)[0])
+    heights = []
+    for a, b in fragments:
+        local = [
+            rows.stop - rows.start
+            for item in bounds if item is not None for rows, columns in [item]
+            if a <= rows.start and rows.stop - 1 <= b
+            and 0.35 * glyph_h <= rows.stop - rows.start < 0.6 * glyph_h
+            and columns.stop - columns.start >= 0.2 * glyph_h
+        ]
+        if len(local) < 2:
+            return False
+        heights.append(float(np.median(local)))
+    return max(heights) <= 1.25 * min(heights)
+
+
+def _decorated_folio(ink: np.ndarray, a: int, b: int, glyph_h: float) -> bool:
+    if a < 0.9 * ink.shape[0] or b - a + 1 > glyph_h:
+        return False
+    band = ink[a:b + 1]
+    groups = _merge_close(
+        [
+            (x, y) for x, y in _runs(band.any(axis=0))
+            if y - x + 1 >= max(2, 0.1 * glyph_h)
+        ],
+        max(2, 0.45 * glyph_h),
+    )

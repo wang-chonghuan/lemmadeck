@@ -1,0 +1,171 @@
+--- /Users/yong/.codex/worktrees/a07e/lemmadeck/.intentfold/tickets/STEMROBIN-184/tmp/production-counter134-diagnosis/residual-integrals/original/layout.py
++++ /Users/yong/.codex/worktrees/a07e/lemmadeck/.claude/skills/ld-s10y-lesson/tools/layout.py
+@@ -350,6 +350,147 @@
+     return np.isin(components, list(owned))
+ 
+ 
++def _bounded_carrier_limit_ownership(components: np.ndarray, line_h: float) -> np.ndarray:
++    """Own paired endpoint groups, retaining complete original source components."""
++    bounds = ndimage.find_objects(components)
++    carriers = [
++        (component_id, rows, columns)
++        for component_id, box in enumerate(bounds, 1) if box is not None
++        for rows, columns in [box]
++        if 2 * line_h <= rows.stop - rows.start <= 4.5 * line_h
++        and columns.stop - columns.start <= 0.65 * line_h
++        and columns.stop - columns.start < 0.3 * (rows.stop - rows.start)
++    ]
++    owned = set()
++    for carrier_id, stem_rows, stem_columns in carriers:
++        center = (stem_rows.start + stem_rows.stop) / 2
++        sides = []
++        for upper in (True, False):
++            endpoint = stem_rows.start if upper else stem_rows.stop
++            candidates = [
++                (component_id, rows, columns)
++                for component_id, box in enumerate(bounds, 1)
++                if box is not None and component_id != carrier_id
++                for rows, columns in [box]
++                if 0.1 * line_h <= rows.stop - rows.start <= 0.9 * line_h
++                and 0.15 * line_h <= columns.stop - columns.start <= line_h
++                and stem_columns.stop <= columns.start
++                and columns.stop <= stem_columns.stop + 1.75 * line_h
++                and endpoint - 0.75 * line_h <= rows.start
++                and rows.stop <= endpoint + 0.75 * line_h
++                and (rows.stop < center - 0.5 * line_h if upper
++                     else rows.start > center + 0.5 * line_h)
++            ]
++            groups = []
++            for item in sorted(candidates, key=lambda item: item[2].start):
++                if (
++                    not groups
++                    or item[2].start - max(peer[2].stop for peer in groups[-1]) > 0.4 * line_h
++                ):
++                    groups.append([])
++                groups[-1].append(item)
++            sides.append([
++                group for group in groups
++                if min(item[2].start for item in group) - stem_columns.stop <= 0.75 * line_h
++                and any(item[1].stop - item[1].start >= 0.35 * line_h for item in group)
++                and max(item[1].start for item in group) < min(item[1].stop for item in group)
++            ])
++        for upper in sides[0]:
++            for lower in sides[1]:
++                if max(
++                    min(item[2].start for item in upper), min(item[2].start for item in lower)
++                ) < min(
++                    max(item[2].stop for item in upper), max(item[2].stop for item in lower)
++                ):
++                    owned.update(item[0] for item in upper + lower)
++    return np.isin(components, list(owned))
++
++
++def _bounded_fraction_rules(components: np.ndarray, rules, line_h: float):
++    """Complete short or broken rules only with detached two-sided glyph support."""
++    bounds = ndimage.find_objects(components)
++    bars, glyphs = [], []
++    for component_id, box in enumerate(bounds, 1):
++        if box is None:
++            continue
++        rows, columns = box
++        height, width = rows.stop - rows.start, columns.stop - columns.start
++        if height <= 0.2 * line_h and width >= 0.35 * line_h:
++            if _straight_fraction_rule(components[box] == component_id, line_h):
++                bars.append((rows, columns))
++        if 0.1 * line_h <= height <= 1.8 * line_h and width >= 0.15 * line_h:
++            glyphs.append((rows, columns))
++    groups = []
++    for item in sorted(bars, key=lambda item: item[1].start):
++        for group in groups:
++            if (
++                0 <= item[1].start - max(peer[1].stop for peer in group) <= 0.2 * line_h
++                and max(item[0].start, max(peer[0].start for peer in group))
++                < min(item[0].stop, min(peer[0].stop for peer in group))
++            ):
++                group.append(item)
++                break
++        else:
++            groups.append([item])
++    completed = list(rules)
++    for group in groups:
++        left, right = min(item[1].start for item in group), max(item[1].stop for item in group)
++        top, bottom = min(item[0].start for item in group), max(item[0].stop for item in group)
++        if (
++            bottom - top > 0.25 * line_h
++            or any(x <= left and right - 1 <= y for x, y in rules)
++        ):
++            continue
++        seeded = any(left <= x <= y < right for x, y in rules)
++        if not seeded and right - left >= 0.7 * line_h:
++            continue
++        # Detached diagonal heads must remain in the rule's source context.
++        margin = max(2, int(0.25 * line_h))
++        context_labels = components[max(0, top - margin):bottom + margin, left:right]
++        full_glyph_ids = [
++            component_id for component_id, box in enumerate(bounds, 1)
++            if box is not None and box[0].stop - box[0].start >= 0.35 * line_h
++        ]
++        # A clipped full numerator is not a detached short head fragment.
++        context = (context_labels > 0) & ~np.isin(context_labels, full_glyph_ids)
++        headed = _arrow_headed_rule(context, line_h)
++        for direction in (context, context[:, ::-1]):
++            spans = np.array([
++                np.ptp(ys) + 1 if ys.size else 0
++                for x in range(direction.shape[1])
++                for ys in [np.flatnonzero(direction[:, x])]
++            ])
++            headed |= any(
++                _arrow_headed_rule(direction[:, :tip + 1], line_h)
++                for tip in np.flatnonzero(np.diff(spans) < 0) + 1
++            )
++        if headed:
++            continue
++        sides = []
++        for upper in (True, False):
++            local = [
++                (rows, columns) for rows, columns in glyphs
++                if left - 0.25 * line_h <= columns.start
++                and columns.stop <= right + 0.25 * line_h
++                and (0 <= top - rows.stop <= 0.75 * line_h if upper
++                     else 0 <= rows.start - bottom <= 0.75 * line_h)
++            ]
++            supported = []
++            for rows, _ in local:
++                if rows.stop - rows.start < 0.35 * line_h:
++                    continue
++                peers = [
++                    columns for peer_rows, columns in local
++                    if max(rows.start, peer_rows.start) < min(rows.stop, peer_rows.stop)
++                ]
++                supported.append((min(columns.start for columns in peers),
++                                  max(columns.stop for columns in peers)))
++            sides.append(supported)
++        if any(max(x, u) < min(y, v) for x, y in sides[0] for u, v in sides[1]):
++            completed.append((left, right - 1))
++    return completed
++
++
+ def _single_fraction_row(
+     ink: np.ndarray, a: int, b: int, line_h: float,
+     source_components: np.ndarray | None = None,
+@@ -432,6 +573,10 @@
+             accepted_carriers.update(int(component_id) for component_id in original_ids if component_id)
+     if not rules:
+         return False
++    limit_context = original_components if source_components is None else source_components[a:b + 1]
++    bounded_limits = _bounded_carrier_limit_ownership(limit_context, line_h)
++    if bounded_limits.any():
++        rules = _bounded_fraction_rules(original_components, rules, line_h)
+     full_fraction_levels = []
+     full_glyph_bounds = [
+         box for box in original_bounds if box is not None
+@@ -469,8 +614,7 @@
+         return False
+     # Limits belong to their delimiter, not to another full body row. Use the
+     # original components when counting cleanup has already removed the stem.
+-    limit_context = original_components if source_components is None else source_components[a:b + 1]
+-    band[_fraction_limit_ownership(limit_context, rules, line_h)] = False
++    band[_fraction_limit_ownership(limit_context, rules, line_h) | bounded_limits] = False
+     for left, right in rules:
+         margin = int(0.5 * line_h)
+         band[:, max(0, left - margin):min(band.shape[1], right + margin + 1)] = False

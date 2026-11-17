@@ -1,0 +1,534 @@
+.claude/skills/ld-s10y-lesson/tools/layout.py-84-
+.claude/skills/ld-s10y-lesson/tools/layout.py-85-def grid_overlay(png: Path, out: Path, step: int = GRID) -> Path:
+.claude/skills/ld-s10y-lesson/tools/layout.py-86-    """在整页图上画坐标网格。读图时照着网格报框，能把误差压到半格以内。"""
+.claude/skills/ld-s10y-lesson/tools/layout.py-87-    img = Image.open(png).convert("RGB")
+.claude/skills/ld-s10y-lesson/tools/layout.py-88-    d = ImageDraw.Draw(img)
+.claude/skills/ld-s10y-lesson/tools/layout.py-89-    for x in range(0, img.width, step):
+.claude/skills/ld-s10y-lesson/tools/layout.py-90-        d.line([(x, 0), (x, img.height)], fill=(255, 120, 120), width=1)
+.claude/skills/ld-s10y-lesson/tools/layout.py-91-        d.text((x + 3, 3), str(x), fill=(200, 0, 0))
+.claude/skills/ld-s10y-lesson/tools/layout.py-92-    for y in range(0, img.height, step):
+.claude/skills/ld-s10y-lesson/tools/layout.py-93-        d.line([(0, y), (img.width, y)], fill=(120, 160, 255), width=1)
+.claude/skills/ld-s10y-lesson/tools/layout.py-94-        d.text((3, y + 3), str(y), fill=(0, 0, 200))
+.claude/skills/ld-s10y-lesson/tools/layout.py-95-    img.save(out)
+.claude/skills/ld-s10y-lesson/tools/layout.py-96-    return out
+.claude/skills/ld-s10y-lesson/tools/layout.py-97-
+.claude/skills/ld-s10y-lesson/tools/layout.py-98-
+.claude/skills/ld-s10y-lesson/tools/layout.py:99:def _row_fragments(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+.claude/skills/ld-s10y-lesson/tools/layout.py-100-    counts = ink.sum(axis=1)
+.claude/skills/ld-s10y-lesson/tools/layout.py-101-    raw = []
+.claude/skills/ld-s10y-lesson/tools/layout.py-102-    for a, b in _runs(counts > 8):
+.claude/skills/ld-s10y-lesson/tools/layout.py-103-        if b - a + 1 < MIN_BAND_HEIGHT:
+.claude/skills/ld-s10y-lesson/tools/layout.py-104-            continue
+.claude/skills/ld-s10y-lesson/tools/layout.py-105-        xs = np.flatnonzero(ink[a:b + 1].any(axis=0))
+.claude/skills/ld-s10y-lesson/tools/layout.py:106:        if counts[a:b + 1].max() <= ROW_INK_MIN_RATIO * content_w and (
+.claude/skills/ld-s10y-lesson/tools/layout.py:107:            not xs.size or xs[-1] - xs[0] + 1 > 0.08 * content_w
+.claude/skills/ld-s10y-lesson/tools/layout.py-108-        ):
+.claude/skills/ld-s10y-lesson/tools/layout.py-109-            continue
+.claude/skills/ld-s10y-lesson/tools/layout.py-110-        if xs.size and xs[-1] - xs[0] + 1 >= MIN_BAND_WIDTH:
+.claude/skills/ld-s10y-lesson/tools/layout.py-111-            raw.append((a, b))
+.claude/skills/ld-s10y-lesson/tools/layout.py-112-    return raw
+.claude/skills/ld-s10y-lesson/tools/layout.py-113-
+.claude/skills/ld-s10y-lesson/tools/layout.py-114-
+.claude/skills/ld-s10y-lesson/tools/layout.py-115-def _arrow_headed_rule(mask: np.ndarray, line_h: float) -> bool:
+.claude/skills/ld-s10y-lesson/tools/layout.py-116-    """Detect two-sided terminal expansion on the original, un-opened shaft."""
+.claude/skills/ld-s10y-lesson/tools/layout.py-117-    xs = np.flatnonzero(mask.any(axis=0))
+.claude/skills/ld-s10y-lesson/tools/layout.py-118-    if xs.size < max(4, 0.5 * line_h):
+.claude/skills/ld-s10y-lesson/tools/layout.py-119-        return False
+.claude/skills/ld-s10y-lesson/tools/layout.py-120-    counts = mask.sum(axis=0)[xs]
+.claude/skills/ld-s10y-lesson/tools/layout.py-121-    centers = (mask * np.arange(mask.shape[0])[:, None]).sum(axis=0)[xs] / counts
+.claude/skills/ld-s10y-lesson/tools/layout.py-122-    trim = max(1, xs.size // 5)
+.claude/skills/ld-s10y-lesson/tools/layout.py-123-    shaft_x = xs[trim:-trim]
+.claude/skills/ld-s10y-lesson/tools/layout.py-124-    fit = np.polyfit(shaft_x, centers[trim:-trim], 1)
+.claude/skills/ld-s10y-lesson/tools/layout.py-125-    shaft = np.polyval(fit, xs)
+.claude/skills/ld-s10y-lesson/tools/layout.py-126-    spans = []
+.claude/skills/ld-s10y-lesson/tools/layout.py-127-    above, below = [], []
+.claude/skills/ld-s10y-lesson/tools/layout.py-128-    for x, center in zip(xs, shaft):
+.claude/skills/ld-s10y-lesson/tools/layout.py-129-        ys = np.flatnonzero(mask[:, x])
+.claude/skills/ld-s10y-lesson/tools/layout.py-130-        spans.append(ys[-1] - ys[0] + 1)
+.claude/skills/ld-s10y-lesson/tools/layout.py-131-        above.append(center - ys[0])
+.claude/skills/ld-s10y-lesson/tools/layout.py-132-        below.append(ys[-1] - center)
+.claude/skills/ld-s10y-lesson/tools/layout.py-133-    middle = float(np.median(spans[trim:-trim]))
+.claude/skills/ld-s10y-lesson/tools/layout.py-134-    head_min = max(2 * middle, 0.2 * line_h)
+.claude/skills/ld-s10y-lesson/tools/layout.py-135-    extension = max(2, 0.08 * line_h)
+--
+.claude/skills/ld-s10y-lesson/tools/layout.py-791-        if not local_upper or not any(h >= 0.6 * glyph_h for _, _, h in local_upper):
+.claude/skills/ld-s10y-lesson/tools/layout.py-792-            return False
+.claude/skills/ld-s10y-lesson/tools/layout.py-793-        x = min(x for x, _, _ in local_upper)
+.claude/skills/ld-s10y-lesson/tools/layout.py-794-        y = max(y for _, y, _ in local_upper)
+.claude/skills/ld-s10y-lesson/tools/layout.py-795-        if not (
+.claude/skills/ld-s10y-lesson/tools/layout.py-796-            0.7 * glyph_h <= y - x + 1 <= 2.5 * glyph_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-797-            and 0.55 <= width / (y - x + 1) <= 1.6
+.claude/skills/ld-s10y-lesson/tools/layout.py-798-            and abs((left + right) - (x + y)) <= 0.8 * glyph_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-799-        ):
+.claude/skills/ld-s10y-lesson/tools/layout.py-800-            return False
+.claude/skills/ld-s10y-lesson/tools/layout.py-801-        supported = True
+.claude/skills/ld-s10y-lesson/tools/layout.py-802-    return supported
+.claude/skills/ld-s10y-lesson/tools/layout.py-803-
+.claude/skills/ld-s10y-lesson/tools/layout.py-804-
+.claude/skills/ld-s10y-lesson/tools/layout.py-805-def _fraction_tail_split(
+.claude/skills/ld-s10y-lesson/tools/layout.py:806:    ink: np.ndarray, a: int, b: int, content_w: int, glyph_h: float,
+.claude/skills/ld-s10y-lesson/tools/layout.py-807-    source_components: np.ndarray | None = None,
+.claude/skills/ld-s10y-lesson/tools/layout.py-808-) -> int | None:
+.claude/skills/ld-s10y-lesson/tools/layout.py-809-    """Separate an ordinary preceding row from a tall, independently valid fraction."""
+.claude/skills/ld-s10y-lesson/tools/layout.py-810-    if b - a + 1 <= 3 * glyph_h or _single_fraction_row(ink, a, b, glyph_h, source_components):
+.claude/skills/ld-s10y-lesson/tools/layout.py-811-        return None
+.claude/skills/ld-s10y-lesson/tools/layout.py:812:    fragments = _row_fragments(ink[a:b + 1], content_w)
+.claude/skills/ld-s10y-lesson/tools/layout.py-813-    for (_, prev_b), (next_a, _) in zip(fragments, fragments[1:]):
+.claude/skills/ld-s10y-lesson/tools/layout.py-814-        cut = a + (prev_b + next_a + 1) // 2
+.claude/skills/ld-s10y-lesson/tools/layout.py-815-        if not 0.6 * glyph_h <= cut - a <= 1.5 * glyph_h:
+.claude/skills/ld-s10y-lesson/tools/layout.py-816-            continue
+.claude/skills/ld-s10y-lesson/tools/layout.py-817-        if b - cut + 1 < 2 * glyph_h:
+.claude/skills/ld-s10y-lesson/tools/layout.py-818-            continue
+.claude/skills/ld-s10y-lesson/tools/layout.py-819-        horizontal = ndimage.binary_opening(
+.claude/skills/ld-s10y-lesson/tools/layout.py-820-            ink[cut:b + 1],
+.claude/skills/ld-s10y-lesson/tools/layout.py-821-            structure=np.ones((1, max(2, int(2 * glyph_h))), dtype=bool),
+.claude/skills/ld-s10y-lesson/tools/layout.py-822-        )
+.claude/skills/ld-s10y-lesson/tools/layout.py-823-        rules = ndimage.find_objects(ndimage.label(horizontal)[0])
+.claude/skills/ld-s10y-lesson/tools/layout.py-824-        if (
+.claude/skills/ld-s10y-lesson/tools/layout.py-825-            any(
+.claude/skills/ld-s10y-lesson/tools/layout.py-826-                rows.stop - rows.start <= 0.25 * glyph_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-827-                for bounds in rules if bounds is not None for rows, _ in [bounds]
+.claude/skills/ld-s10y-lesson/tools/layout.py-828-            )
+.claude/skills/ld-s10y-lesson/tools/layout.py-829-            and _single_fraction_row(ink, cut, b, glyph_h)
+.claude/skills/ld-s10y-lesson/tools/layout.py-830-        ):
+.claude/skills/ld-s10y-lesson/tools/layout.py-831-            return cut
+.claude/skills/ld-s10y-lesson/tools/layout.py-832-    return None
+.claude/skills/ld-s10y-lesson/tools/layout.py-833-
+.claude/skills/ld-s10y-lesson/tools/layout.py-834-
+.claude/skills/ld-s10y-lesson/tools/layout.py-835-def _supported_glyph_rows(
+.claude/skills/ld-s10y-lesson/tools/layout.py-836-    ink: np.ndarray, fragments, glyph_h: float
+.claude/skills/ld-s10y-lesson/tools/layout.py-837-) -> list[tuple[int, int]]:
+.claude/skills/ld-s10y-lesson/tools/layout.py-838-    """Require full body components, not an arrow fragment's projection envelope."""
+.claude/skills/ld-s10y-lesson/tools/layout.py-839-    components, _ = ndimage.label(ink)
+.claude/skills/ld-s10y-lesson/tools/layout.py-840-    bounds = ndimage.find_objects(components)
+--
+.claude/skills/ld-s10y-lesson/tools/layout.py-907-    shared = np.intersect1d(
+.claude/skills/ld-s10y-lesson/tools/layout.py-908-        np.unique(components[:prev_b - prev_a + 1]),
+.claude/skills/ld-s10y-lesson/tools/layout.py-909-        np.unique(components[a - prev_a:]),
+.claude/skills/ld-s10y-lesson/tools/layout.py-910-    )
+.claude/skills/ld-s10y-lesson/tools/layout.py-911-    bounds = ndimage.find_objects(components)
+.claude/skills/ld-s10y-lesson/tools/layout.py-912-    return any(
+.claude/skills/ld-s10y-lesson/tools/layout.py-913-        rows.stop - rows.start >= 0.4 * glyph_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-914-        and columns.stop - columns.start >= max(2, 0.1 * glyph_h)
+.claude/skills/ld-s10y-lesson/tools/layout.py-915-        for component_id in shared if component_id
+.claude/skills/ld-s10y-lesson/tools/layout.py-916-        for rows, columns in [bounds[component_id - 1]]
+.claude/skills/ld-s10y-lesson/tools/layout.py-917-    )
+.claude/skills/ld-s10y-lesson/tools/layout.py-918-
+.claude/skills/ld-s10y-lesson/tools/layout.py-919-
+.claude/skills/ld-s10y-lesson/tools/layout.py-920-def _overhead_arrow_continues(
+.claude/skills/ld-s10y-lesson/tools/layout.py-921-    ink: np.ndarray, components: np.ndarray, bounds_list,
+.claude/skills/ld-s10y-lesson/tools/layout.py:922:    prev_a: int, prev_b: int, a: int, b: int, glyph_h: float, content_w: int,
+.claude/skills/ld-s10y-lesson/tools/layout.py-923-) -> bool:
+.claude/skills/ld-s10y-lesson/tools/layout.py-924-    """Attribute a head-clipped shaft to its complete, horizontally related body."""
+.claude/skills/ld-s10y-lesson/tools/layout.py-925-    if not 0 < a - prev_b <= 0.75 * glyph_h:
+.claude/skills/ld-s10y-lesson/tools/layout.py-926-        return False
+.claude/skills/ld-s10y-lesson/tools/layout.py-927-    original_ids = np.unique(components[prev_a:prev_b + 1][ink[prev_a:prev_b + 1]])
+.claude/skills/ld-s10y-lesson/tools/layout.py-928-    if not original_ids.size:
+.claude/skills/ld-s10y-lesson/tools/layout.py-929-        return False
+.claude/skills/ld-s10y-lesson/tools/layout.py-930-    for component_id in original_ids:
+.claude/skills/ld-s10y-lesson/tools/layout.py-931-        bounds = bounds_list[component_id - 1]
+.claude/skills/ld-s10y-lesson/tools/layout.py-932-        rows, _ = bounds
+.claude/skills/ld-s10y-lesson/tools/layout.py-933-        if (
+.claude/skills/ld-s10y-lesson/tools/layout.py-934-            rows.stop > a
+.claude/skills/ld-s10y-lesson/tools/layout.py-935-            or prev_a <= rows.start and rows.stop - 1 <= prev_b
+.claude/skills/ld-s10y-lesson/tools/layout.py-936-            or not _original_arrow_decoration(components[bounds] == component_id, glyph_h)
+.claude/skills/ld-s10y-lesson/tools/layout.py-937-        ):
+.claude/skills/ld-s10y-lesson/tools/layout.py-938-            return False
+.claude/skills/ld-s10y-lesson/tools/layout.py:939:    fragments = _row_fragments(ink[a:b + 1], content_w)
+.claude/skills/ld-s10y-lesson/tools/layout.py-940-    if len(fragments) != 1 or not _supported_glyph_rows(ink[a:b + 1], fragments, glyph_h):
+.claude/skills/ld-s10y-lesson/tools/layout.py-941-        return False
+.claude/skills/ld-s10y-lesson/tools/layout.py-942-    body_ids = np.unique(components[a:b + 1][ink[a:b + 1]])
+.claude/skills/ld-s10y-lesson/tools/layout.py-943-    bodies = [
+.claude/skills/ld-s10y-lesson/tools/layout.py-944-        columns for component_id in body_ids
+.claude/skills/ld-s10y-lesson/tools/layout.py-945-        for rows, columns in [bounds_list[component_id - 1]]
+.claude/skills/ld-s10y-lesson/tools/layout.py-946-        if a <= rows.start and rows.stop - 1 <= b
+.claude/skills/ld-s10y-lesson/tools/layout.py-947-        and 0.6 * glyph_h <= rows.stop - rows.start <= 1.8 * glyph_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-948-        and columns.stop - columns.start >= 0.2 * glyph_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-949-        and not _arrow_headed_rule(
+.claude/skills/ld-s10y-lesson/tools/layout.py-950-            components[bounds_list[component_id - 1]] == component_id, glyph_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-951-        )
+.claude/skills/ld-s10y-lesson/tools/layout.py-952-    ]
+.claude/skills/ld-s10y-lesson/tools/layout.py-953-    return all(
+.claude/skills/ld-s10y-lesson/tools/layout.py-954-        any(max(columns.start, body.start) < min(columns.stop, body.stop) for body in bodies)
+.claude/skills/ld-s10y-lesson/tools/layout.py-955-        for component_id in original_ids
+.claude/skills/ld-s10y-lesson/tools/layout.py-956-        for _, columns in [bounds_list[component_id - 1]]
+.claude/skills/ld-s10y-lesson/tools/layout.py-957-    )
+.claude/skills/ld-s10y-lesson/tools/layout.py-958-
+.claude/skills/ld-s10y-lesson/tools/layout.py-959-
+.claude/skills/ld-s10y-lesson/tools/layout.py-960-def _fragmented_body_scale(components, bounds_list, line_h: float) -> int:
+.claude/skills/ld-s10y-lesson/tools/layout.py-961-    """Recover coherent full glyphs when projection retained only their strokes."""
+.claude/skills/ld-s10y-lesson/tools/layout.py-962-    heights = []
+.claude/skills/ld-s10y-lesson/tools/layout.py-963-    for component_id, bounds in enumerate(bounds_list, 1):
+.claude/skills/ld-s10y-lesson/tools/layout.py-964-        if bounds is None:
+.claude/skills/ld-s10y-lesson/tools/layout.py-965-            continue
+.claude/skills/ld-s10y-lesson/tools/layout.py-966-        rows, columns = bounds
+.claude/skills/ld-s10y-lesson/tools/layout.py-967-        height, width = rows.stop - rows.start, columns.stop - columns.start
+--
+.claude/skills/ld-s10y-lesson/tools/layout.py-1043-            return False
+.claude/skills/ld-s10y-lesson/tools/layout.py-1044-        nearest = [
+.claude/skills/ld-s10y-lesson/tools/layout.py-1045-            index for index, (_, carrier_columns) in enumerate(carriers)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1046-            if carrier_columns.start - 0.5 * glyph_h <= columns.start
+.claude/skills/ld-s10y-lesson/tools/layout.py-1047-            and columns.stop <= carrier_columns.stop + glyph_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1048-        ]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1049-        if not nearest:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1050-            return False
+.claude/skills/ld-s10y-lesson/tools/layout.py-1051-        key = (nearest[0], rows.stop < top)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1052-        limits[key] = limits.get(key, 0) + 1
+.claude/skills/ld-s10y-lesson/tools/layout.py-1053-        if limits[key] > 2:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1054-            return False
+.claude/skills/ld-s10y-lesson/tools/layout.py-1055-    return True
+.claude/skills/ld-s10y-lesson/tools/layout.py-1056-
+.claude/skills/ld-s10y-lesson/tools/layout.py-1057-
+.claude/skills/ld-s10y-lesson/tools/layout.py:1058:def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1059-    """Count printed rows after masking model-identified figures."""
+.claude/skills/ld-s10y-lesson/tools/layout.py-1060-    # Work on a counting-only copy; extraction pixels are never changed.
+.claude/skills/ld-s10y-lesson/tools/layout.py-1061-    ink = ink.copy()
+.claude/skills/ld-s10y-lesson/tools/layout.py-1062-    edge = max(1, int(ink.shape[1] * 0.01))
+.claude/skills/ld-s10y-lesson/tools/layout.py-1063-    ink[:, :edge] = False
+.claude/skills/ld-s10y-lesson/tools/layout.py-1064-    ink[:, -edge:] = False
+.claude/skills/ld-s10y-lesson/tools/layout.py:1065:    raw = _row_fragments(ink, content_w)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1066-    if not raw:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1067-        return []
+.claude/skills/ld-s10y-lesson/tools/layout.py-1068-    line_h = int(np.median([b - a + 1 for a, b in raw]))
+.claude/skills/ld-s10y-lesson/tools/layout.py-1069-    components, _ = ndimage.label(ink)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1070-    bounds_list = ndimage.find_objects(components)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1071-    arrow_components = {
+.claude/skills/ld-s10y-lesson/tools/layout.py-1072-        component_id for component_id, bounds in enumerate(bounds_list, 1)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1073-        if bounds is not None
+.claude/skills/ld-s10y-lesson/tools/layout.py-1074-        and _arrow_headed_rule(components[bounds] == component_id, line_h)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1075-    }
+.claude/skills/ld-s10y-lesson/tools/layout.py-1076-    # Decoration cannot set the body scale that then rejects complete text glyphs.
+.claude/skills/ld-s10y-lesson/tools/layout.py-1077-    body_heights = [
+.claude/skills/ld-s10y-lesson/tools/layout.py-1078-        b - a + 1 for a, b in raw
+.claude/skills/ld-s10y-lesson/tools/layout.py-1079-        if not set(np.unique(components[a:b + 1][ink[a:b + 1]])).issubset(arrow_components)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1080-    ]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1081-    supported_heights = _body_supported_heights(components, bounds_list, raw, arrow_components)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1082-    if len(supported_heights) >= 3:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1083-        body_heights = supported_heights
+.claude/skills/ld-s10y-lesson/tools/layout.py-1084-    line_h = int(np.median(body_heights)) if body_heights else line_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1085-    glyph_heights = [
+.claude/skills/ld-s10y-lesson/tools/layout.py-1086-        rows.stop - rows.start
+.claude/skills/ld-s10y-lesson/tools/layout.py-1087-        for component_id, bounds in enumerate(bounds_list, 1) if bounds is not None
+.claude/skills/ld-s10y-lesson/tools/layout.py-1088-        for rows, columns in [bounds]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1089-        if 0.25 * line_h <= rows.stop - rows.start <= 1.3 * line_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1090-        and 0.2 * line_h <= columns.stop - columns.start <= 1.3 * line_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1091-        and component_id not in arrow_components
+.claude/skills/ld-s10y-lesson/tools/layout.py-1092-    ]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1093-    component_scale = (
+--
+.claude/skills/ld-s10y-lesson/tools/layout.py-1122-            region = ink[bounds]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1123-            region[components[bounds] == component_id] = False
+.claude/skills/ld-s10y-lesson/tools/layout.py-1124-    for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
+.claude/skills/ld-s10y-lesson/tools/layout.py-1125-        if bounds is None:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1126-            continue
+.claude/skills/ld-s10y-lesson/tools/layout.py-1127-        rows, columns = bounds
+.claude/skills/ld-s10y-lesson/tools/layout.py-1128-        height, width = rows.stop - rows.start, columns.stop - columns.start
+.claude/skills/ld-s10y-lesson/tools/layout.py-1129-        if height > 1.8 * line_h and width < 0.5 * line_h and width < 0.2 * height:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1130-            stroke = components[bounds] == component_id
+.claude/skills/ld-s10y-lesson/tools/layout.py-1131-            row_widths = stroke.sum(axis=1)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1132-            # Delimiter ends/hooks widen across the stem; a plain streak does not.
+.claude/skills/ld-s10y-lesson/tools/layout.py-1133-            if row_widths.max() > 2 * np.median(row_widths):
+.claude/skills/ld-s10y-lesson/tools/layout.py-1134-                continue
+.claude/skills/ld-s10y-lesson/tools/layout.py-1135-            region = ink[bounds]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1136-            region[stroke] = False
+.claude/skills/ld-s10y-lesson/tools/layout.py:1137:    raw = _row_fragments(ink, content_w)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1138-    if not raw:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1139-        return []
+.claude/skills/ld-s10y-lesson/tools/layout.py-1140-    body_heights = [
+.claude/skills/ld-s10y-lesson/tools/layout.py-1141-        b - a + 1 for a, b in raw
+.claude/skills/ld-s10y-lesson/tools/layout.py-1142-        if not set(np.unique(components[a:b + 1][ink[a:b + 1]])).issubset(arrow_components)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1143-    ]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1144-    supported_heights = _body_supported_heights(components, bounds_list, raw, arrow_components)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1145-    if len(supported_heights) >= 3:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1146-        body_heights = supported_heights
+.claude/skills/ld-s10y-lesson/tools/layout.py-1147-    # Projection refresh must not discard the recovered full-glyph scale.
+.claude/skills/ld-s10y-lesson/tools/layout.py-1148-    line_h = max(component_scale, int(np.median(body_heights))) if body_heights else line_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1149-    # Projection thresholds can miss a narrow standalone quotient such as 1 or 7.
+.claude/skills/ld-s10y-lesson/tools/layout.py-1150-    for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
+.claude/skills/ld-s10y-lesson/tools/layout.py-1151-        if bounds is None:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1152-            continue
+.claude/skills/ld-s10y-lesson/tools/layout.py-1153-        rows, columns = bounds
+.claude/skills/ld-s10y-lesson/tools/layout.py-1154-        height, width = rows.stop - rows.start, columns.stop - columns.start
+.claude/skills/ld-s10y-lesson/tools/layout.py-1155-        if (
+.claude/skills/ld-s10y-lesson/tools/layout.py-1156-            0.6 * line_h <= height <= 1.3 * line_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1157-            and 0.3 * line_h <= width <= line_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1158-            and np.count_nonzero(components[bounds] == component_id) >= 0.12 * line_h ** 2
+.claude/skills/ld-s10y-lesson/tools/layout.py-1159-            and not any(a <= rows.start and rows.stop - 1 <= b for a, b in raw)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1160-        ):
+.claude/skills/ld-s10y-lesson/tools/layout.py-1161-            raw.append((rows.start, rows.stop - 1))
+.claude/skills/ld-s10y-lesson/tools/layout.py-1162-    raw.sort()
+.claude/skills/ld-s10y-lesson/tools/layout.py-1163-    merged = []
+.claude/skills/ld-s10y-lesson/tools/layout.py-1164-    merge_gap = max(2.0, GLYPH_GAP_FACTOR * min(line_h, glyph_h))
+.claude/skills/ld-s10y-lesson/tools/layout.py-1165-    for a, b in _merge_close(raw, 0):
+--
+.claude/skills/ld-s10y-lesson/tools/layout.py-1188-                merged[-1] = (prev_a, b)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1189-                continue
+.claude/skills/ld-s10y-lesson/tools/layout.py-1190-        merged.append((a, b))
+.claude/skills/ld-s10y-lesson/tools/layout.py-1191-    joined = []
+.claude/skills/ld-s10y-lesson/tools/layout.py-1192-    fraction_starts = set()
+.claude/skills/ld-s10y-lesson/tools/layout.py-1193-    for a, b in merged:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1194-        if joined:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1195-            prev_a, prev_b = joined[-1]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1196-            if _decorated_folio(ink, a, b, glyph_h):
+.claude/skills/ld-s10y-lesson/tools/layout.py-1197-                if _folio_fragment_continues(ink, prev_a, prev_b, a, b, glyph_h):
+.claude/skills/ld-s10y-lesson/tools/layout.py-1198-                    joined[-1] = (prev_a, b)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1199-                else:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1200-                    joined.append((a, b))
+.claude/skills/ld-s10y-lesson/tools/layout.py-1201-                continue
+.claude/skills/ld-s10y-lesson/tools/layout.py-1202-            if _overhead_arrow_continues(
+.claude/skills/ld-s10y-lesson/tools/layout.py:1203:                ink, components, bounds_list, prev_a, prev_b, a, b, glyph_h, content_w
+.claude/skills/ld-s10y-lesson/tools/layout.py-1204-            ):
+.claude/skills/ld-s10y-lesson/tools/layout.py-1205-                joined[-1] = (prev_a, b)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1206-                continue
+.claude/skills/ld-s10y-lesson/tools/layout.py-1207-            prev_x = np.flatnonzero(ink[prev_a:prev_b + 1].any(axis=0))
+.claude/skills/ld-s10y-lesson/tools/layout.py-1208-            next_x = np.flatnonzero(ink[a:b + 1].any(axis=0))
+.claude/skills/ld-s10y-lesson/tools/layout.py-1209-            widths = (prev_x[-1] - prev_x[0] + 1, next_x[-1] - next_x[0] + 1)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1210-            compact_fragment = min(prev_b - prev_a + 1, b - a + 1) < 0.75 * line_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1211-            aligned = abs((prev_x[0] + prev_x[-1]) - (next_x[0] + next_x[-1])) < line_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1212-            heights = (prev_b - prev_a + 1, b - a + 1)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1213-            small, large = (prev_x, next_x) if widths[0] < widths[1] else (next_x, prev_x)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1214-            fraction_spill = (
+.claude/skills/ld-s10y-lesson/tools/layout.py-1215-                b - prev_a + 1 <= (
+.claude/skills/ld-s10y-lesson/tools/layout.py-1216-                    4.8 if prev_a in fraction_starts else 3.2
+.claude/skills/ld-s10y-lesson/tools/layout.py-1217-                ) * max(line_h, glyph_h)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1218-                and min(heights) <= 1.2 * line_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1219-                and (
+.claude/skills/ld-s10y-lesson/tools/layout.py-1220-                    max(heights) >= 1.8 * line_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1221-                    or min(heights) < 0.4 * line_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1222-                    and max(heights) >= 1.35 * line_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1223-                )
+.claude/skills/ld-s10y-lesson/tools/layout.py-1224-                and min(widths) <= (
+.claude/skills/ld-s10y-lesson/tools/layout.py-1225-                    0.4 if min(heights) < 0.4 * line_h else 0.3
+.claude/skills/ld-s10y-lesson/tools/layout.py-1226-                ) * max(widths)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1227-                and large[0] <= small[0] <= small[-1] <= large[-1]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1228-            )
+.claude/skills/ld-s10y-lesson/tools/layout.py-1229-            subscript_continues = (
+.claude/skills/ld-s10y-lesson/tools/layout.py-1230-                a - prev_b <= 0.75 * min(line_h, glyph_h)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1231-                and _subscript_continues(ink, prev_a, a, b, glyph_h)
+--
+.claude/skills/ld-s10y-lesson/tools/layout.py-1259-                )
+.claude/skills/ld-s10y-lesson/tools/layout.py-1260-                or subscript_continues
+.claude/skills/ld-s10y-lesson/tools/layout.py-1261-                or connected_fraction
+.claude/skills/ld-s10y-lesson/tools/layout.py-1262-                or detached_fraction
+.claude/skills/ld-s10y-lesson/tools/layout.py-1263-                or carrier_row
+.claude/skills/ld-s10y-lesson/tools/layout.py-1264-            ):
+.claude/skills/ld-s10y-lesson/tools/layout.py-1265-                joined[-1] = (prev_a, b)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1266-                if fraction_spill:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1267-                    fraction_starts.add(prev_a)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1268-                continue
+.claude/skills/ld-s10y-lesson/tools/layout.py-1269-        joined.append((a, b))
+.claude/skills/ld-s10y-lesson/tools/layout.py-1270-    merged = []
+.claude/skills/ld-s10y-lesson/tools/layout.py-1271-    index = 0
+.claude/skills/ld-s10y-lesson/tools/layout.py-1272-    while index < len(joined):
+.claude/skills/ld-s10y-lesson/tools/layout.py-1273-        a, b = joined[index]
+.claude/skills/ld-s10y-lesson/tools/layout.py:1274:        cut = _fraction_tail_split(ink, a, b, content_w, glyph_h, components)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1275-        if cut is None and index + 1 < len(joined):
+.claude/skills/ld-s10y-lesson/tools/layout.py-1276-            next_a, next_b = joined[index + 1]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1277-            if (
+.claude/skills/ld-s10y-lesson/tools/layout.py-1278-                b - a + 1 >= 1.8 * glyph_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1279-                and next_a - b <= 0.75 * glyph_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1280-                and next_b - a + 1 <= 6 * glyph_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1281-            ):
+.claude/skills/ld-s10y-lesson/tools/layout.py:1282:                cut = _fraction_tail_split(ink, a, next_b, content_w, glyph_h, components)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1283-                if cut is not None:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1284-                    b = next_b
+.claude/skills/ld-s10y-lesson/tools/layout.py-1285-                    index += 1
+.claude/skills/ld-s10y-lesson/tools/layout.py-1286-        if cut is not None:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1287-            merged.extend(((a, cut - 1), (cut, b)))
+.claude/skills/ld-s10y-lesson/tools/layout.py-1288-        else:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1289-            merged.append((a, b))
+.claude/skills/ld-s10y-lesson/tools/layout.py-1290-        index += 1
+.claude/skills/ld-s10y-lesson/tools/layout.py-1291-
+.claude/skills/ld-s10y-lesson/tools/layout.py-1292-    # Dense glyphs or staggered side-by-side text can keep the row projection
+.claude/skills/ld-s10y-lesson/tools/layout.py-1293-    # continuously live across two or more printed rows. Recover the row count
+.claude/skills/ld-s10y-lesson/tools/layout.py-1294-    # from the page's normal band height and inter-line gap instead of treating
+.claude/skills/ld-s10y-lesson/tools/layout.py-1295-    # one unusually tall projection band as one line.
+.claude/skills/ld-s10y-lesson/tools/layout.py-1296-    typical_h = float(line_h)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1297-    nearby_gaps = [
+.claude/skills/ld-s10y-lesson/tools/layout.py-1298-        next_a - prev_b - 1
+.claude/skills/ld-s10y-lesson/tools/layout.py-1299-        for (_, prev_b), (next_a, _) in zip(merged, merged[1:])
+.claude/skills/ld-s10y-lesson/tools/layout.py-1300-        if 0 < next_a - prev_b - 1 <= 1.5 * typical_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1301-    ]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1302-    typical_gap = float(np.median(nearby_gaps)) if nearby_gaps else typical_h * 0.75
+.claude/skills/ld-s10y-lesson/tools/layout.py-1303-    pitch = typical_h + typical_gap
+.claude/skills/ld-s10y-lesson/tools/layout.py-1304-    counts = ink.sum(axis=1)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1305-    expanded = []
+.claude/skills/ld-s10y-lesson/tools/layout.py-1306-    for a, b in merged:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1307-        band_h = b - a + 1
+.claude/skills/ld-s10y-lesson/tools/layout.py-1308-        count = 1
+.claude/skills/ld-s10y-lesson/tools/layout.py:1309:        fragments = _row_fragments(ink[a:b + 1], content_w)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1310-        glyph_rows = _supported_glyph_rows(ink[a:b + 1], fragments, glyph_h)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1311-        if _small_text_rows(ink[a:b + 1], fragments, glyph_h):
+.claude/skills/ld-s10y-lesson/tools/layout.py-1312-            glyph_rows = fragments
+.claude/skills/ld-s10y-lesson/tools/layout.py-1313-        compact_text_rows = (
+.claude/skills/ld-s10y-lesson/tools/layout.py-1314-            len(glyph_rows) >= 2
+.claude/skills/ld-s10y-lesson/tools/layout.py-1315-            and all(y - x + 1 <= 1.5 * glyph_h for x, y in glyph_rows)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1316-            or len(glyph_rows) == 1 and len(fragments) > 1
+.claude/skills/ld-s10y-lesson/tools/layout.py-1317-            and all(
+.claude/skills/ld-s10y-lesson/tools/layout.py-1318-                y < glyph_rows[0][0] and glyph_rows[0][0] - y <= 0.75 * glyph_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1319-                and (
+.claude/skills/ld-s10y-lesson/tools/layout.py-1320-                    _arrow_headed_rule(ink[a + x:a + y + 1], glyph_h)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1321-                    or _overhead_arrow_continues(
+.claude/skills/ld-s10y-lesson/tools/layout.py-1322-                        ink, components, bounds_list, a + x, a + y,
+.claude/skills/ld-s10y-lesson/tools/layout.py:1323:                        a + glyph_rows[0][0], a + glyph_rows[0][1], glyph_h, content_w,
+.claude/skills/ld-s10y-lesson/tools/layout.py-1324-                    )
+.claude/skills/ld-s10y-lesson/tools/layout.py-1325-                )
+.claude/skills/ld-s10y-lesson/tools/layout.py-1326-                for x, y in fragments if (x, y) != glyph_rows[0]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1327-            )
+.claude/skills/ld-s10y-lesson/tools/layout.py-1328-        )
+.claude/skills/ld-s10y-lesson/tools/layout.py-1329-        subscript_row = any(
+.claude/skills/ld-s10y-lesson/tools/layout.py-1330-            _subscript_continues(ink, a, a + x, b, glyph_h)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1331-            for x, _ in fragments[1:]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1332-        )
+.claude/skills/ld-s10y-lesson/tools/layout.py-1333-        carrier_row = _single_carrier_row(components, bounds_list, a, b, glyph_h)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1334-        if (
+.claude/skills/ld-s10y-lesson/tools/layout.py-1335-            a not in fraction_starts
+.claude/skills/ld-s10y-lesson/tools/layout.py-1336-            and not subscript_row
+.claude/skills/ld-s10y-lesson/tools/layout.py-1337-            and not carrier_row
+.claude/skills/ld-s10y-lesson/tools/layout.py-1338-            and (
+.claude/skills/ld-s10y-lesson/tools/layout.py-1339-                band_h > 2.0 * min(typical_h, glyph_h)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1340-                or compact_text_rows
+.claude/skills/ld-s10y-lesson/tools/layout.py-1341-            )
+.claude/skills/ld-s10y-lesson/tools/layout.py-1342-            and pitch > 0
+.claude/skills/ld-s10y-lesson/tools/layout.py-1343-        ):
+.claude/skills/ld-s10y-lesson/tools/layout.py-1344-            # Brace-connected rows are often shorter than an integral pitch
+.claude/skills/ld-s10y-lesson/tools/layout.py-1345-            # multiple. Count the nearest number of row centres, not a floor.
+.claude/skills/ld-s10y-lesson/tools/layout.py-1346-            count = max(2, int(round((band_h + typical_gap) / pitch)))
+.claude/skills/ld-s10y-lesson/tools/layout.py-1347-            core = counts[a:b + 1]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1348-            strong_rows = _merge_close(
+.claude/skills/ld-s10y-lesson/tools/layout.py-1349-                [(a + x, a + y) for x, y in _runs(core > 0.12 * core.max())],
+.claude/skills/ld-s10y-lesson/tools/layout.py-1350-                max(2, 0.25 * typical_h),
+.claude/skills/ld-s10y-lesson/tools/layout.py-1351-            )
+--
+.claude/skills/ld-s10y-lesson/tools/layout.py-1374-            )
+.claude/skills/ld-s10y-lesson/tools/layout.py-1375-            for index in range(count)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1376-        )
+.claude/skills/ld-s10y-lesson/tools/layout.py-1377-    merged = expanded
+.claude/skills/ld-s10y-lesson/tools/layout.py-1378-
+.claude/skills/ld-s10y-lesson/tools/layout.py-1379-    # 扫描页常有页顶黑边、章标题横线和孤立墨点。它们能通过最小宽高阈值，却不是
+.claude/skills/ld-s10y-lesson/tools/layout.py-1380-    # 印刷文字行；只过滤明显偏薄且过宽/过窄的孤立带，页底的页码装饰则保留。
+.claude/skills/ld-s10y-lesson/tools/layout.py-1381-    out = []
+.claude/skills/ld-s10y-lesson/tools/layout.py-1382-    page_h = ink.shape[0]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1383-    for a, b in merged:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1384-        xs = np.flatnonzero(ink[a:b + 1].any(axis=0))
+.claude/skills/ld-s10y-lesson/tools/layout.py-1385-        band_h = b - a + 1
+.claude/skills/ld-s10y-lesson/tools/layout.py-1386-        band_w = int(xs[-1] - xs[0] + 1)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1387-        thin = band_h < 0.4 * typical_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1388-        edge_border = a < 0.02 * page_h and (
+.claude/skills/ld-s10y-lesson/tools/layout.py:1389:            thin or band_w > 0.7 * content_w
+.claude/skills/ld-s10y-lesson/tools/layout.py-1390-        )
+.claude/skills/ld-s10y-lesson/tools/layout.py-1391-        short_text = False
+.claude/skills/ld-s10y-lesson/tools/layout.py:1392:        if thin and not edge_border and band_w < 0.05 * content_w:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1393-            labels, _ = ndimage.label(ink[a:b + 1])
+.claude/skills/ld-s10y-lesson/tools/layout.py-1394-            glyphs = [
+.claude/skills/ld-s10y-lesson/tools/layout.py-1395-                bounds for bounds in ndimage.find_objects(labels)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1396-                if bounds is not None
+.claude/skills/ld-s10y-lesson/tools/layout.py-1397-                and bounds[0].stop - bounds[0].start >= 0.25 * typical_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1398-                and bounds[1].stop - bounds[1].start >= 0.2 * typical_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1399-                and bounds[0].stop - bounds[0].start >= (
+.claude/skills/ld-s10y-lesson/tools/layout.py-1400-                    0.35 * (bounds[1].stop - bounds[1].start)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1401-                )
+.claude/skills/ld-s10y-lesson/tools/layout.py-1402-            ]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1403-            # A short final number can be lower than the Chinese body glyphs.
+.claude/skills/ld-s10y-lesson/tools/layout.py-1404-            short_text = bool(glyphs) and band_w >= 0.8 * typical_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1405-        folio = False
+.claude/skills/ld-s10y-lesson/tools/layout.py-1406-        if thin and a >= 0.9 * page_h:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1407-            # A narrow folio digit can extend beyond its projected dot row.
+.claude/skills/ld-s10y-lesson/tools/layout.py-1408-            folio_rows = [
+.claude/skills/ld-s10y-lesson/tools/layout.py-1409-                rows for bounds in bounds_list if bounds is not None
+.claude/skills/ld-s10y-lesson/tools/layout.py-1410-                for rows, columns in [bounds]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1411-                if rows.start <= b and a < rows.stop
+.claude/skills/ld-s10y-lesson/tools/layout.py-1412-                and columns.stop - columns.start >= max(2, 0.1 * glyph_h)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1413-            ]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1414-            if folio_rows:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1415-                folio = _decorated_folio(
+.claude/skills/ld-s10y-lesson/tools/layout.py-1416-                    ink,
+.claude/skills/ld-s10y-lesson/tools/layout.py-1417-                    min(rows.start for rows in folio_rows),
+.claude/skills/ld-s10y-lesson/tools/layout.py-1418-                    max(rows.stop - 1 for rows in folio_rows),
+.claude/skills/ld-s10y-lesson/tools/layout.py-1419-                    glyph_h,
+.claude/skills/ld-s10y-lesson/tools/layout.py-1420-                )
+.claude/skills/ld-s10y-lesson/tools/layout.py-1421-        decoration = edge_border or (
+.claude/skills/ld-s10y-lesson/tools/layout.py-1422-            thin
+.claude/skills/ld-s10y-lesson/tools/layout.py:1423:            and (band_w > 0.3 * content_w or band_w < 0.05 * content_w)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1424-            and not short_text
+.claude/skills/ld-s10y-lesson/tools/layout.py-1425-            and not folio
+.claude/skills/ld-s10y-lesson/tools/layout.py-1426-        )
+.claude/skills/ld-s10y-lesson/tools/layout.py-1427-        if not decoration:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1428-            out.append((a, b))
+.claude/skills/ld-s10y-lesson/tools/layout.py-1429-    return out
+.claude/skills/ld-s10y-lesson/tools/layout.py-1430-
+.claude/skills/ld-s10y-lesson/tools/layout.py-1431-
+.claude/skills/ld-s10y-lesson/tools/layout.py:1432:def counting_ink(ink: np.ndarray, exclusions: list[dict]) -> np.ndarray:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1433-    """Exclude explicitly inspected non-text objects from counting, not extraction."""
+.claude/skills/ld-s10y-lesson/tools/layout.py-1434-    if not isinstance(exclusions, list):
+.claude/skills/ld-s10y-lesson/tools/layout.py-1435-        raise ValueError("count_exclusions 必须是数组")
+.claude/skills/ld-s10y-lesson/tools/layout.py-1436-    masked = ink.copy()
+.claude/skills/ld-s10y-lesson/tools/layout.py-1437-    height, width = ink.shape
+.claude/skills/ld-s10y-lesson/tools/layout.py-1438-    for entry in exclusions:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1439-        if not isinstance(entry, dict) or set(entry) != {"kind", "box", "reason"}:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1440-            raise ValueError("count_exclusions 每项必须有 kind、box、reason")
+.claude/skills/ld-s10y-lesson/tools/layout.py-1441-        box = entry["box"]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1442-        if (
+.claude/skills/ld-s10y-lesson/tools/layout.py-1443-            not isinstance(box, list) or len(box) != 4
+.claude/skills/ld-s10y-lesson/tools/layout.py-1444-            or any(type(value) is not int for value in box)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1445-        ):
+.claude/skills/ld-s10y-lesson/tools/layout.py-1446-            raise ValueError("count_exclusions.box 必须是四个整数")
+.claude/skills/ld-s10y-lesson/tools/layout.py-1447-        x, y, w, h = box
+.claude/skills/ld-s10y-lesson/tools/layout.py-1448-        if x < 0 or y < 0 or w <= 0 or h <= 0 or x + w > width or y + h > height:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1449-            raise ValueError("count_exclusions.box 超出原图")
+.claude/skills/ld-s10y-lesson/tools/layout.py-1450-        if not isinstance(entry["reason"], str) or not entry["reason"].strip():
+.claude/skills/ld-s10y-lesson/tools/layout.py-1451-            raise ValueError("count_exclusions.reason 不能为空")
+.claude/skills/ld-s10y-lesson/tools/layout.py-1452-        if entry["kind"] == "scan-artifact":
+.claude/skills/ld-s10y-lesson/tools/layout.py-1453-            if not (
+.claude/skills/ld-s10y-lesson/tools/layout.py-1454-                x + w <= 0.05 * width or x >= 0.90 * width
+.claude/skills/ld-s10y-lesson/tools/layout.py-1455-                or y + h <= 0.05 * height or y >= 0.95 * height
+.claude/skills/ld-s10y-lesson/tools/layout.py-1456-            ):
+.claude/skills/ld-s10y-lesson/tools/layout.py-1457-                raise ValueError("scan-artifact 必须位于页边无正文区域")
+.claude/skills/ld-s10y-lesson/tools/layout.py-1458-        elif entry["kind"] == "separator-rule":
+.claude/skills/ld-s10y-lesson/tools/layout.py-1459-            if h > 0.015 * height or w < 0.20 * width:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1460-                raise ValueError("separator-rule 必须是薄分隔横线")
+--
+.claude/skills/ld-s10y-lesson/tools/layout.py-1474-        return labels, [], []
+.claude/skills/ld-s10y-lesson/tools/layout.py-1475-    sizes = np.bincount(labels.ravel())
+.claude/skills/ld-s10y-lesson/tools/layout.py-1476-    inside = np.bincount(labels[y0:y1 + 1, x0:x1 + 1].ravel(), minlength=len(sizes))
+.claude/skills/ld-s10y-lesson/tools/layout.py-1477-    boxes = ndimage.find_objects(labels)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1478-    selected = []
+.claude/skills/ld-s10y-lesson/tools/layout.py-1479-    for lab in np.flatnonzero(inside[1:]) + 1:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1480-        if inside[lab] < SNAP_OVERLAP * sizes[lab]:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1481-            continue
+.claude/skills/ld-s10y-lesson/tools/layout.py-1482-        sy, sx = boxes[lab - 1]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1483-        if (sy.stop - sy.start) > 0.9 * H or (sx.stop - sx.start) > 0.9 * W:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1484-            continue
+.claude/skills/ld-s10y-lesson/tools/layout.py-1485-        selected.append(int(lab))
+.claude/skills/ld-s10y-lesson/tools/layout.py-1486-    return labels, selected, boxes
+.claude/skills/ld-s10y-lesson/tools/layout.py-1487-
+.claude/skills/ld-s10y-lesson/tools/layout.py-1488-
+.claude/skills/ld-s10y-lesson/tools/layout.py:1489:def figure_ink(ink: np.ndarray, box: list[int]) -> np.ndarray:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1490-    """Use the same component ownership as snapping, not the rectangular envelope."""
+.claude/skills/ld-s10y-lesson/tools/layout.py-1491-    labels, selected, _ = _figure_components(ink, box)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1492-    return np.isin(labels, selected)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1493-
+.claude/skills/ld-s10y-lesson/tools/layout.py-1494-
+.claude/skills/ld-s10y-lesson/tools/layout.py-1495-def figure_crop_exclusion(
+.claude/skills/ld-s10y-lesson/tools/layout.py-1496-    ink: np.ndarray, owned: np.ndarray, box: list[int]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1497-) -> np.ndarray | None:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1498-    """Remove foreign component edges captured by a snapped figure envelope."""
+.claude/skills/ld-s10y-lesson/tools/layout.py-1499-    x, y, w, h = box
+.claude/skills/ld-s10y-lesson/tools/layout.py-1500-    foreign = ink & ~owned
+.claude/skills/ld-s10y-lesson/tools/layout.py-1501-    if not foreign[max(0, y):y + h, max(0, x):x + w].any():
+.claude/skills/ld-s10y-lesson/tools/layout.py-1502-        return None
+.claude/skills/ld-s10y-lesson/tools/layout.py-1503-    return ndimage.binary_dilation(foreign, iterations=2) & ~owned
+.claude/skills/ld-s10y-lesson/tools/layout.py-1504-
+.claude/skills/ld-s10y-lesson/tools/layout.py-1505-
+.claude/skills/ld-s10y-lesson/tools/layout.py-1506-def snap(ink: np.ndarray, box: list[int]) -> tuple[list[int], dict]:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1507-    """把粗框吸附到它覆盖的连通域上，按落在框内的比例认领墨迹。"""
+.claude/skills/ld-s10y-lesson/tools/layout.py-1508-    x, y, w, h = box
+.claude/skills/ld-s10y-lesson/tools/layout.py-1509-    H, W = ink.shape
+.claude/skills/ld-s10y-lesson/tools/layout.py-1510-    x0, y0 = max(0, x), max(0, y)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1511-    x1, y1 = min(W - 1, x + w - 1), min(H - 1, y + h - 1)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1512-    _, selected, boxes = _figure_components(ink, box)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1513-    nx0, ny0, nx1, ny1 = x1, y1, x0, y0
+.claude/skills/ld-s10y-lesson/tools/layout.py-1514-    for lab in selected:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1515-        sy, sx = boxes[lab - 1]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1516-        nx0, ny0 = min(nx0, sx.start), min(ny0, sy.start)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1517-        nx1, ny1 = max(nx1, sx.stop - 1), max(ny1, sy.stop - 1)

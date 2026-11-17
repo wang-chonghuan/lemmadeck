@@ -1994,7 +1994,7 @@ def cmd_finalize(args: argparse.Namespace) -> int:
             f"题改写 {changed_exercises}/{len(exercises['exercises'])}, "
             f"新图 {len(figures['figures'])}"
         )
-    if not failed:
+    if index_rows:
         update_book_index(book, edition, profile_path, index_rows)
     return 2 if failed else 0
 

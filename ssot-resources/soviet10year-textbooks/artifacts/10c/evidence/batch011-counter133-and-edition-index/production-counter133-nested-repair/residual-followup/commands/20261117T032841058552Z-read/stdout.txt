@@ -1,0 +1,440 @@
+"""ld-s10y-lesson 版面几何（确定性，只做模型做不好的事）。
+
+分工：**哪里是图由模型看图决定，框到哪里由这里算。**
+
+放弃了纯机械的图/文判据——长横线、连通域高度、尺寸下限那一套，每换一种版面就
+要加一条规则，补了五轮仍在漏（图题被裁进图、坐标轴被行带切断、页码被切成三截）。
+模型一眼就能看出哪块是插图、哪块是半张表，但**给不准像素坐标**。所以模型只负责
+指认，这里负责把粗框吸附到真实墨迹上。
+"""
+from __future__ import annotations
+
+import hashlib
+import subprocess
+from pathlib import Path
+
+import numpy as np
+from PIL import Image, ImageDraw
+from scipy import ndimage
+
+INK_THRESHOLD = 128          # 灰度低于此值视为墨迹
+ROW_INK_MIN_RATIO = 0.008    # 行墨迹占版心宽比例低于此值视为空白（抑制扫描噪点）
+MIN_BAND_HEIGHT = 3          # 保留拆成上下笔画的短标号（如表格前单独一行的 а)）
+MIN_BAND_WIDTH = 14          # Retain a single printed quotient digit.
+# 只用来把同一行里断开的笔画（分式、上下标、页码的点）接回去。不能取大：取 0.6
+# 会把行距紧的相邻几行并成一行，数出来的行数就少了。
+GLYPH_GAP_FACTOR = 0.4       # Keep captions separate from the following printed row.
+SNAP_OVERLAP = 0.45          # 连通域与粗框的重叠比例超过此值才吸附进来
+GRID = 100                   # 坐标网格间距（px），画在 page.grid.png 上供读图取坐标
+
+
+def sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def render_page(pdf: Path, page: int, out_png: Path, dpi: int = 300) -> Path:
+    out_png.parent.mkdir(parents=True, exist_ok=True)
+    prefix = out_png.parent / "__render"
+    subprocess.run(
+        ["pdftoppm", "-png", "-r", str(dpi), "-f", str(page), "-l", str(page),
+         str(pdf), str(prefix)],
+        check=True, capture_output=True,
+    )
+    produced = sorted(out_png.parent.glob("__render-*.png"))
+    if not produced:
+        raise RuntimeError(f"pdftoppm 未产出页 {page}")
+    produced[0].replace(out_png)
+    for leftover in out_png.parent.glob("__render-*.png"):
+        leftover.unlink()
+    return out_png
+
+
+def ink_mask(img: Image.Image) -> np.ndarray:
+    return np.asarray(img.convert("L")) < INK_THRESHOLD
+
+
+def _runs(live: np.ndarray) -> list[tuple[int, int]]:
+    out, start = [], None
+    for i, on in enumerate(live):
+        if on and start is None:
+            start = i
+        elif not on and start is not None:
+            out.append((start, i - 1))
+            start = None
+    if start is not None:
+        out.append((start, len(live) - 1))
+    return out
+
+
+def _merge_close(spans, gap: float):
+    if not spans:
+        return []
+    out = [list(spans[0])]
+    for a, b in spans[1:]:
+        if a - out[-1][1] <= gap:
+            out[-1][1] = max(out[-1][1], b)
+        else:
+            out.append([a, b])
+    return [(a, b) for a, b in out]
+
+
+def grid_overlay(png: Path, out: Path, step: int = GRID) -> Path:
+    """在整页图上画坐标网格。读图时照着网格报框，能把误差压到半格以内。"""
+    img = Image.open(png).convert("RGB")
+    d = ImageDraw.Draw(img)
+    for x in range(0, img.width, step):
+        d.line([(x, 0), (x, img.height)], fill=(255, 120, 120), width=1)
+        d.text((x + 3, 3), str(x), fill=(200, 0, 0))
+    for y in range(0, img.height, step):
+        d.line([(0, y), (img.width, y)], fill=(120, 160, 255), width=1)
+        d.text((3, y + 3), str(y), fill=(0, 0, 200))
+    img.save(out)
+    return out
+
+
+def _row_fragments(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+    counts = ink.sum(axis=1)
+    raw = []
+    for a, b in _runs(counts > 8):
+        if b - a + 1 < MIN_BAND_HEIGHT:
+            continue
+        xs = np.flatnonzero(ink[a:b + 1].any(axis=0))
+        if counts[a:b + 1].max() <= ROW_INK_MIN_RATIO * content_w and (
+            not xs.size or xs[-1] - xs[0] + 1 > 0.08 * content_w
+        ):
+            continue
+        if xs.size and xs[-1] - xs[0] + 1 >= MIN_BAND_WIDTH:
+            raw.append((a, b))
+    return raw
+
+
+def _arrow_headed_rule(mask: np.ndarray, line_h: float) -> bool:
+    """Detect two-sided terminal expansion on the original, un-opened shaft."""
+    xs = np.flatnonzero(mask.any(axis=0))
+    if xs.size < max(4, 0.5 * line_h):
+        return False
+    counts = mask.sum(axis=0)[xs]
+    centers = (mask * np.arange(mask.shape[0])[:, None]).sum(axis=0)[xs] / counts
+    trim = max(1, xs.size // 5)
+    shaft_x = xs[trim:-trim]
+    fit = np.polyfit(shaft_x, centers[trim:-trim], 1)
+    shaft = np.polyval(fit, xs)
+    spans = []
+    above, below = [], []
+    for x, center in zip(xs, shaft):
+        ys = np.flatnonzero(mask[:, x])
+        spans.append(ys[-1] - ys[0] + 1)
+        above.append(center - ys[0])
+        below.append(ys[-1] - center)
+    middle = float(np.median(spans[trim:-trim]))
+    head_min = max(2 * middle, 0.2 * line_h)
+    extension = max(2, 0.08 * line_h)
+    return any(
+        max(spans[part]) > head_min
+        and max(above[part]) > middle / 2 + extension
+        and max(below[part]) > middle / 2 + extension
+        # A diagonal head tapers; a full-height terminal wall has no such span.
+        and any(
+            middle + extension / 2 < span < max(spans[part]) - extension / 2
+            for span in spans[part]
+        )
+        for part in (slice(0, trim), slice(-trim, None))
+    )
+
+
+def _straight_fraction_rule(mask: np.ndarray, line_h: float) -> bool:
+    if _arrow_headed_rule(mask, line_h):
+        return False
+    counts = mask.sum(axis=0)
+    x = np.flatnonzero(counts)
+    if len(x) < 2:
+        return False
+    centers = (
+        (mask * np.arange(mask.shape[0])[:, None]).sum(axis=0)[x] / counts[x]
+    )
+    residual = centers - np.polyval(np.polyfit(x, centers, 1), x)
+    return np.percentile(np.abs(residual), 90) <= max(1.0, 0.03 * line_h)
+
+
+def _bar_local_fraction_support(
+    components: np.ndarray, original_bounds, original_ids, rows, columns,
+    line_h: float,
+) -> bool:
+    """Require detached, aligned fraction glyphs around a short body-connected bar."""
+    if columns.stop - columns.start >= 2 * line_h:
+        return False
+    upper, lower = [], []
+    for component_id, bounds in enumerate(original_bounds, 1):
+        if bounds is None or component_id in original_ids:
+            continue
+        glyph_rows, glyph_columns = bounds
+        height = glyph_rows.stop - glyph_rows.start
+        if not (
+            0.6 * line_h <= height <= 1.8 * line_h
+            and glyph_columns.stop - glyph_columns.start >= 0.2 * line_h
+            and columns.start <= glyph_columns.start < glyph_columns.stop <= columns.stop
+        ):
+            continue
+        if 0 <= rows.start - glyph_rows.stop <= 0.75 * line_h:
+            upper.append(glyph_columns)
+        if 0 <= glyph_rows.start - rows.stop <= 0.75 * line_h:
+            lower.append(glyph_columns)
+    if not any(
+        max(first.start, second.start) < min(first.stop, second.stop)
+        for first in upper for second in lower
+    ):
+        return False
+    for component_id in original_ids:
+        if not component_id:
+            continue
+        bounds = original_bounds[component_id - 1]
+        body_rows, body_columns = bounds
+        outside = max(
+            columns.start - body_columns.start, body_columns.stop - columns.stop
+        )
+        if not (
+            outside >= 0.2 * line_h
+            and 0.6 * line_h <= body_rows.stop - body_rows.start <= 1.8 * line_h
+        ):
+            return False
+        shaft = components[body_rows, columns] == component_id
+        # A head ends at a narrow tip before any attached body. Do not mistake
+        # a body's expansion beyond the candidate bar for that terminal head.
+        for direction in (shaft, shaft[:, ::-1]):
+            spans = np.array([
+                np.ptp(ys) + 1 if ys.size else 0
+                for x in range(direction.shape[1])
+                for ys in [np.flatnonzero(direction[:, x])]
+            ])
+            if spans[0] > 0.2 * line_h:
+                continue
+            for tip in np.flatnonzero(np.diff(spans) < 0) + 1:
+                if _arrow_headed_rule(direction[:, :tip + 1], line_h):
+                    return False
+    return True
+
+
+def _original_arrow_decoration(mask: np.ndarray, line_h: float) -> bool:
+    """Recognize a headed shaft without discarding an attached full body glyph."""
+    if not _arrow_headed_rule(mask, line_h):
+        return False
+    xs = np.flatnonzero(mask.any(axis=0))
+    trim = max(1, xs.size // 5)
+    spans = [
+        np.ptp(ys) + 1 for x in xs[trim:-trim]
+        for ys in [np.flatnonzero(mask[:, x])]
+    ]
+    if np.median(spans) > 0.2 * line_h:
+        return False
+    horizontal = ndimage.binary_opening(
+        mask, structure=np.ones((1, max(2, int(0.7 * line_h))), dtype=bool)
+    )
+    shafts, _ = ndimage.label(horizontal)
+    body = mask.copy()
+    found = False
+    for component_id, bounds in enumerate(ndimage.find_objects(shafts), 1):
+        if bounds is None or bounds[0].stop - bounds[0].start > 0.2 * line_h:
+            continue
+        if _straight_fraction_rule(shafts[bounds] == component_id, line_h):
+            region = body[bounds]
+            region[shafts[bounds] == component_id] = False
+            found = True
+    if not found:
+        return False
+    # Head halves are short. A surviving full body means this is not decoration.
+    return not any(
+        rows.stop - rows.start >= 0.6 * line_h
+        and columns.stop - columns.start >= 0.2 * line_h
+        for bounds in ndimage.find_objects(ndimage.label(body)[0]) if bounds is not None
+        for rows, columns in [bounds]
+    )
+
+
+def _fraction_limit_ownership(components: np.ndarray, rules, line_h: float) -> np.ndarray:
+    """Identify fractional evaluation limits beside an established fraction bar."""
+    bounds = ndimage.find_objects(components)
+    glyphs, bars, delimiters = [], [], []
+    for component_id, box in enumerate(bounds, 1):
+        if box is None:
+            continue
+        rows, columns = box
+        height, width = rows.stop - rows.start, columns.stop - columns.start
+        if 0.35 * line_h <= height <= 0.9 * line_h and 0.15 * line_h <= width <= line_h:
+            glyphs.append((component_id, rows, columns))
+        if height <= 0.2 * line_h and width >= 0.35 * line_h:
+            if _straight_fraction_rule(components[box] == component_id, line_h):
+                bars.append((component_id, rows, columns))
+        if height >= 2 * line_h and width <= 0.25 * line_h:
+            delimiters.append((component_id, rows, columns))
+    owned = set()
+    for _, stem_rows, stem_columns in delimiters:
+        parents = [
+            (rows, columns) for _, rows, columns in bars
+            if columns.stop - columns.start >= 0.7 * line_h
+            and 0 <= stem_columns.start - columns.stop <= 0.75 * line_h
+            and stem_rows.start + 0.25 * (stem_rows.stop - stem_rows.start)
+            <= (rows.start + rows.stop) / 2
+            <= stem_rows.start + 0.75 * (stem_rows.stop - stem_rows.start)
+            and any(left <= columns.start and columns.stop - 1 <= right for left, right in rules)
+        ]
+        for parent_rows, _ in parents:
+            for bar_id, rows, columns in bars:
+                if not (
+                    columns.stop - columns.start <= 1.1 * line_h
+                    and 0 <= columns.start - stem_columns.stop <= 0.75 * line_h
+                    and 0.35 * line_h <= rows.start - parent_rows.stop <= 1.75 * line_h
+                ):
+                    continue
+                aligned = [
+                    item for item in glyphs
+                    if columns.start <= item[2].start and item[2].stop <= columns.stop
+                ]
+                upper_limits = [
+                    item for item in aligned
+                    if stem_rows.start <= item[1].start
+                    and item[1].stop <= parent_rows.start - 0.2 * line_h
+                ]
+                numerators = [
+                    item for item in aligned
+                    if parent_rows.stop <= item[1].start
+                    and 0 <= rows.start - item[1].stop <= 0.75 * line_h
+                ]
+                denominators = [
+                    item for item in aligned
+                    if 0 <= item[1].start - rows.stop <= 0.75 * line_h
+                    and item[1].stop <= stem_rows.stop + 0.25 * line_h
+                ]
+                if upper_limits and any(
+                    max(first[2].start, second[2].start) < min(first[2].stop, second[2].stop)
+                    for first in numerators for second in denominators
+                ):
+                    owned.add(bar_id)
+                    owned.update(item[0] for item in upper_limits + numerators + denominators)
+    return np.isin(components, list(owned))
+
+
+def _single_fraction_row(
+    ink: np.ndarray, a: int, b: int, line_h: float,
+    source_components: np.ndarray | None = None,
+) -> bool:
+    """Distinguish tall inline fractions from two full text rows."""
+    band = ink[a:b + 1].copy()
+    height = band.shape[0]
+    rules = []
+    accepted_carriers = set()
+    components, _ = ndimage.label(band)
+    original_components = components
+    for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        if (
+            columns.stop - columns.start >= 0.7 * line_h
+            and rows.stop - rows.start <= 0.2 * line_h
+            and 0.3 * height <= (rows.start + rows.stop) / 2 <= 0.7 * height
+            and _straight_fraction_rule(components[bounds] == component_id, line_h)
+        ):
+            rules.append((columns.start, columns.stop - 1))
+            accepted_carriers.add(component_id)
+    horizontal = ndimage.binary_opening(
+        band, structure=np.ones((1, max(2, int(0.7 * line_h))), dtype=bool)
+    )
+    rule_components, _ = ndimage.label(horizontal)
+    original_bounds = ndimage.find_objects(components)
+    for bounds in ndimage.find_objects(rule_components):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        original_ids = np.unique(components[bounds][horizontal[bounds]])
+        whole_component_arrow = any(
+            _arrow_headed_rule(
+                components[original_bounds[component_id - 1]] == component_id, line_h
+            )
+            for component_id in original_ids if component_id
+        )
+        glyph_stroke = any(
+            original_bounds[component_id - 1] is not None
+            and columns.stop - columns.start < 2 * line_h
+            and 0.6 * line_h <= (
+                original_bounds[component_id - 1][0].stop
+                - original_bounds[component_id - 1][0].start
+            ) <= 1.8 * line_h
+            for component_id in original_ids if component_id
+        )
+        local_fraction = (
+            (whole_component_arrow or glyph_stroke)
+            and _bar_local_fraction_support(
+                components, original_bounds, original_ids, rows, columns, line_h
+            )
+        )
+        if (
+            (not whole_component_arrow or local_fraction)
+            and (not glyph_stroke or local_fraction)
+            and all(
+                _straight_fraction_rule(
+                    # Connected numerators need only their horizontal bar checked.
+                    horizontal[bounds]
+                    if original_bounds[component_id - 1][0].stop
+                    - original_bounds[component_id - 1][0].start > 0.5 * line_h
+                    else components[original_bounds[component_id - 1]] == component_id,
+                    line_h,
+                )
+                for component_id in original_ids if component_id
+            )
+            and
+            rows.stop - rows.start <= 0.25 * line_h
+            and (
+                0.3 * height <= (rows.start + rows.stop) / 2 <= 0.7 * height
+                # A nested denominator moves its long outer rule above centre.
+                or height > 3 * line_h
+                and columns.stop - columns.start >= 2 * line_h
+                and 0.2 * height <= (rows.start + rows.stop) / 2 <= 0.8 * height
+            )
+        ):
+            rules.append((columns.start, columns.stop - 1))
+            accepted_carriers.update(int(component_id) for component_id in original_ids if component_id)
+    if not rules:
+        return False
+    full_fraction_levels = []
+    full_glyph_bounds = [
+        box for box in original_bounds if box is not None
+        and 0.6 * line_h <= box[0].stop - box[0].start <= 1.8 * line_h
+        and box[1].stop - box[1].start >= 0.2 * line_h
+    ]
+    for box in original_bounds:
+        if box is None:
+            continue
+        rows, columns = box
+        width = columns.stop - columns.start
+        if not (
+            rows.stop - rows.start <= 0.2 * line_h and width >= 0.7 * line_h
+            and any(left <= columns.start and columns.stop - 1 <= right for left, right in rules)
+        ):
+            continue
+        aligned = [
+            (glyph_rows, glyph_columns) for glyph_rows, glyph_columns in full_glyph_bounds
+            if columns.start <= glyph_columns.start and glyph_columns.stop <= columns.stop
+        ]
+        if any(
+            0 <= rows.start - upper.stop <= 0.75 * line_h
+            and 0 <= lower.start - rows.stop <= 0.75 * line_h
+            and max(first.start, second.start) < min(first.stop, second.stop)
+            for upper, first in aligned for lower, second in aligned
+        ):
+            full_fraction_levels.append(((rows.start + rows.stop) / 2, width))
+    # Whole-column ownership must not swallow two complete, body-scale fractions.
+    if any(
+        abs(first_y - second_y) > 1.5 * line_h
+        and min(first_w, second_w) >= 0.7 * max(first_w, second_w)
+        for index, (first_y, first_w) in enumerate(full_fraction_levels)
+        for second_y, second_w in full_fraction_levels[index + 1:]
+    ):
+        return False
+    # Limits belong to their delimiter, not to another full body row. Use the
+    # original components when counting cleanup has already removed the stem.
+    limit_context = original_components if source_components is None else source_components[a:b + 1]
+    band[_fraction_limit_ownership(limit_context, rules, line_h)] = False

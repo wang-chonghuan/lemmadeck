@@ -1,0 +1,122 @@
+def counting_ink(ink: np.ndarray, exclusions: list[dict]) -> np.ndarray:
+    """Exclude explicitly inspected non-text objects from counting, not extraction."""
+    if not isinstance(exclusions, list):
+        raise ValueError("count_exclusions 必须是数组")
+    masked = ink.copy()
+    height, width = ink.shape
+    for entry in exclusions:
+        if not isinstance(entry, dict) or set(entry) != {"kind", "box", "reason"}:
+            raise ValueError("count_exclusions 每项必须有 kind、box、reason")
+        box = entry["box"]
+        if (
+            not isinstance(box, list) or len(box) != 4
+            or any(type(value) is not int for value in box)
+        ):
+            raise ValueError("count_exclusions.box 必须是四个整数")
+        x, y, w, h = box
+        if x < 0 or y < 0 or w <= 0 or h <= 0 or x + w > width or y + h > height:
+            raise ValueError("count_exclusions.box 超出原图")
+        if not isinstance(entry["reason"], str) or not entry["reason"].strip():
+            raise ValueError("count_exclusions.reason 不能为空")
+        if entry["kind"] == "scan-artifact":
+            if not (
+                x + w <= 0.05 * width or x >= 0.90 * width
+                or y + h <= 0.05 * height or y >= 0.95 * height
+            ):
+                raise ValueError("scan-artifact 必须位于页边无正文区域")
+        elif entry["kind"] == "separator-rule":
+            if h > 0.015 * height or w < 0.20 * width:
+                raise ValueError("separator-rule 必须是薄分隔横线")
+        else:
+            raise ValueError("count_exclusions.kind 只允许 scan-artifact / separator-rule")
+        masked[y:y + h, x:x + w] = False
+    return masked
+
+
+def _figure_components(ink: np.ndarray, box: list[int]):
+    x, y, w, h = box
+    H, W = ink.shape
+    x0, y0 = max(0, x), max(0, y)
+    x1, y1 = min(W - 1, x + w - 1), min(H - 1, y + h - 1)
+    labels, n = ndimage.label(ink)
+    if n == 0:
+        return labels, [], []
+    sizes = np.bincount(labels.ravel())
+    inside = np.bincount(labels[y0:y1 + 1, x0:x1 + 1].ravel(), minlength=len(sizes))
+    boxes = ndimage.find_objects(labels)
+    selected = []
+    for lab in np.flatnonzero(inside[1:]) + 1:
+        if inside[lab] < SNAP_OVERLAP * sizes[lab]:
+            continue
+        sy, sx = boxes[lab - 1]
+        if (sy.stop - sy.start) > 0.9 * H or (sx.stop - sx.start) > 0.9 * W:
+            continue
+        selected.append(int(lab))
+    return labels, selected, boxes
+
+
+def figure_ink(ink: np.ndarray, box: list[int]) -> np.ndarray:
+    """Use the same component ownership as snapping, not the rectangular envelope."""
+    labels, selected, _ = _figure_components(ink, box)
+    return np.isin(labels, selected)
+
+
+def figure_crop_exclusion(
+    ink: np.ndarray, owned: np.ndarray, box: list[int]
+) -> np.ndarray | None:
+    """Remove foreign component edges captured by a snapped figure envelope."""
+    x, y, w, h = box
+    foreign = ink & ~owned
+    if not foreign[max(0, y):y + h, max(0, x):x + w].any():
+        return None
+    return ndimage.binary_dilation(foreign, iterations=2) & ~owned
+
+
+def snap(ink: np.ndarray, box: list[int]) -> tuple[list[int], dict]:
+    """把粗框吸附到它覆盖的连通域上，按落在框内的比例认领墨迹。"""
+    x, y, w, h = box
+    H, W = ink.shape
+    x0, y0 = max(0, x), max(0, y)
+    x1, y1 = min(W - 1, x + w - 1), min(H - 1, y + h - 1)
+    _, selected, boxes = _figure_components(ink, box)
+    nx0, ny0, nx1, ny1 = x1, y1, x0, y0
+    for lab in selected:
+        sy, sx = boxes[lab - 1]
+        nx0, ny0 = min(nx0, sx.start), min(ny0, sy.start)
+        nx1, ny1 = max(nx1, sx.stop - 1), max(ny1, sy.stop - 1)
+    if not selected:
+        return [x0, y0, x1 - x0 + 1, y1 - y0 + 1], {"components": 0}
+    return [int(nx0), int(ny0), int(nx1 - nx0 + 1), int(ny1 - ny0 + 1)],  {
+        "components": len(selected), "from": box}
+
+
+def crop(png: Path, box: list[int], out: Path, pad: int = 12,
+         exclude: np.ndarray | None = None) -> None:
+    with Image.open(png) as source:
+        img = source.copy()
+    if exclude is not None:
+        if exclude.shape != (img.height, img.width) or exclude.dtype != bool:
+            raise ValueError("crop exclusion must be a page-sized boolean mask")
+        img = img.copy()
+        white = 255 if img.mode == "L" else tuple(255 for _ in img.getbands())
+        img.paste(white, mask=Image.fromarray(exclude.astype(np.uint8) * 255))
+    x, y, w, h = box
+    out.parent.mkdir(parents=True, exist_ok=True)
+    left, top = max(0, x - pad), max(0, y - pad)
+    right, bottom = min(img.width, x + w + pad), min(img.height, y + h + pad)
+    white = 255 if img.mode == "L" else tuple(255 for _ in img.getbands())
+    padded = Image.new(img.mode, (right - left, bottom - top), white)
+    padded.paste(img.crop((x, y, x + w, y + h)), (x - left, y - top))
+    padded.save(out)
+
+
+def ink_coverage(ink: np.ndarray, boxes: list[list[int]]) -> dict:
+    """墨迹里有多少落在给定框之外。用于「文字行数」以外的第二重体检。"""
+    H, W = ink.shape
+    cov = np.zeros_like(ink)
+    for x, y, w, h in boxes:
+        cov[max(0, y):min(H, y + h), max(0, x):min(W, x + w)] = True
+    resid = ink & ~cov
+    total = int(ink.sum())
+    return {"ink_px": total, "outside_px": int(resid.sum()),
+            "outside_ratio": round(int(resid.sum()) / max(total, 1), 5)}

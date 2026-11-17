@@ -1,0 +1,78 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10c",
+  "page": 128,
+  "printed_page": 122,
+  "source": {
+    "pdf": "10c 苏联十年制学校数学教材 代数和分析初步 十年级.pdf",
+    "pdf_sha256": "47b0358c5781f509ce35e0e22de13c6bb539b246099ade66e8856c9288954e40",
+    "pdf_page": 128
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1695,
+    "h": 2580,
+    "sha256": "f74699e0b56c9b10fdaa77797ab4ba44850d09af75073a238f65116b68008a00"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "首块承接第127物理页的完整证明对象和末句“在整个区间[a,b]上力”，在“于是推出(1)式”处结束；不得从这个已提供证明拆取未解题。",
+    "第二小段区间的左端点经原尺寸局部裁剪确认为x_1；原印区间跨行，完整公式以一个↵保留断点，没有同时加字面换行。",
+    "近似功的等式印为两行，完整等式以一个↵保留唯一印刷断点；分式上下结构不另记为印刷行。",
+    "例1是带完整解答的弹簧做功例题；本页保留题干、虎克定律、F=kx、3=k·0.05、k=60和F=60x的书中演算，合为同一open正文对象。页末在“根据(1)式，功”后未结束，待第129页承接。不能把例题题干或任何解答行当作实际未解习题。",
+    "本页只有对图61的文字引用，没有印刷插图或图题；图61应在后续页随例1完整保存。",
+    "页边孤立污点及右侧黑色扫描标记不是正文；本批未添加count_exclusions，也未作像素计行或收口。"
+  ],
+  "count_exclusions": [
+    {
+      "kind": "scan-artifact",
+      "box": [
+        1594,
+        1550,
+        11,
+        12
+      ],
+      "reason": "Native p0128 crop independently identifies a small irregular blot on blank right-margin paper, separated from the Chinese text. The full measured 11x12 ink object is not a glyph, folio, formula, or separator; exclude only the complete blot from counting."
+    }
+  ],
+  "errata": [],
+  "printed_lines": 24,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+所作的功等于这个力在所得各小段上所作的功的和．因为$f$
+是$x$的连续函数，所以在小段$[a,x_1]$相当小的情况下，力在这
+个小段上所作的功近似地等于$f(a)(x_1-a)$，在这里，我们忽
+略了$f$在这个小段上的变化．类似地，力在第二个小段$[x_1,↵x_2]$上所作的功近似地等于$f(x_1)(x_2-x_1)$，等等．力在第$n$个小
+段上所作的功近似地等于$f(x_{n-1})(b-x_{n-1})$．于是，近似地
+得出力在整个区间$[a,b]$上所作的功：
+$A\approx A_n=f(a)\Delta x+f(x_1)\Delta x+\cdots+f(x_{n-1})\Delta x↵=\frac{b-a}{n}[f(a)+f(x_1)+\cdots+f(x_{n-1})],$
+并且把区间$[a,b]$分成的小段越短，近似等式的精确度越大．
+当然，如果当$n$趋向无限大时取极限，这个近似等式就变成精
+确等式：
+$A=\lim_{n\to\infty}A_n=\lim_{n\to\infty}\left\{\frac{b-a}{n}[f(a)+f(x_1)+\cdots+f(x_{n-1})]\right\}.$
+因为当$n\to\infty$时，和$A_n$的极限等于所讨论的函数由$a$到$b$的
+定积分（参看第104小节），于是推出（1）式．
+
+<!-- p open -->
+例1 拉长$5\mathrm{cm}$的弹簧的弹性力等于$3$牛顿．为了使
+弹簧伸长$5\mathrm{cm}$，应当作多少功？
+根据虎克定律，使弹簧伸长$x$所需的力，可由公式
+$F=kx$
+算出，其中$k$是固定的比例系数（图61），$O$点对应于弹簧的
+自由状态．由题设条件得出，
+$3=k\cdot0.05.$
+于是，$k=60$，力$F=60x$，根据（1）式，功
+
+<!-- foot -->
+122

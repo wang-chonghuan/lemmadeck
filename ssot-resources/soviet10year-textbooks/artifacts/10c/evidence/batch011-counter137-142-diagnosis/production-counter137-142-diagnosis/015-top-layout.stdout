@@ -1,0 +1,115 @@
+"""ld-s10y-lesson 版面几何（确定性，只做模型做不好的事）。
+
+分工：**哪里是图由模型看图决定，框到哪里由这里算。**
+
+放弃了纯机械的图/文判据——长横线、连通域高度、尺寸下限那一套，每换一种版面就
+要加一条规则，补了五轮仍在漏（图题被裁进图、坐标轴被行带切断、页码被切成三截）。
+模型一眼就能看出哪块是插图、哪块是半张表，但**给不准像素坐标**。所以模型只负责
+指认，这里负责把粗框吸附到真实墨迹上。
+"""
+from __future__ import annotations
+
+import hashlib
+import subprocess
+from pathlib import Path
+
+import numpy as np
+from PIL import Image, ImageDraw
+from scipy import ndimage
+
+INK_THRESHOLD = 128          # 灰度低于此值视为墨迹
+ROW_INK_MIN_RATIO = 0.008    # 行墨迹占版心宽比例低于此值视为空白（抑制扫描噪点）
+MIN_BAND_HEIGHT = 3          # 保留拆成上下笔画的短标号（如表格前单独一行的 а)）
+MIN_BAND_WIDTH = 14          # Retain a single printed quotient digit.
+# 只用来把同一行里断开的笔画（分式、上下标、页码的点）接回去。不能取大：取 0.6
+# 会把行距紧的相邻几行并成一行，数出来的行数就少了。
+GLYPH_GAP_FACTOR = 0.4       # Keep captions separate from the following printed row.
+SNAP_OVERLAP = 0.45          # 连通域与粗框的重叠比例超过此值才吸附进来
+GRID = 100                   # 坐标网格间距（px），画在 page.grid.png 上供读图取坐标
+
+
+def sha256_file(path: Path) -> str:
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def render_page(pdf: Path, page: int, out_png: Path, dpi: int = 300) -> Path:
+    out_png.parent.mkdir(parents=True, exist_ok=True)
+    prefix = out_png.parent / "__render"
+    subprocess.run(
+        ["pdftoppm", "-png", "-r", str(dpi), "-f", str(page), "-l", str(page),
+         str(pdf), str(prefix)],
+        check=True, capture_output=True,
+    )
+    produced = sorted(out_png.parent.glob("__render-*.png"))
+    if not produced:
+        raise RuntimeError(f"pdftoppm 未产出页 {page}")
+    produced[0].replace(out_png)
+    for leftover in out_png.parent.glob("__render-*.png"):
+        leftover.unlink()
+    return out_png
+
+
+def ink_mask(img: Image.Image) -> np.ndarray:
+    return np.asarray(img.convert("L")) < INK_THRESHOLD
+
+
+def _runs(live: np.ndarray) -> list[tuple[int, int]]:
+    out, start = [], None
+    for i, on in enumerate(live):
+        if on and start is None:
+            start = i
+        elif not on and start is not None:
+            out.append((start, i - 1))
+            start = None
+    if start is not None:
+        out.append((start, len(live) - 1))
+    return out
+
+
+def _merge_close(spans, gap: float):
+    if not spans:
+        return []
+    out = [list(spans[0])]
+    for a, b in spans[1:]:
+        if a - out[-1][1] <= gap:
+            out[-1][1] = max(out[-1][1], b)
+        else:
+            out.append([a, b])
+    return [(a, b) for a, b in out]
+
+
+def grid_overlay(png: Path, out: Path, step: int = GRID) -> Path:
+    """在整页图上画坐标网格。读图时照着网格报框，能把误差压到半格以内。"""
+    img = Image.open(png).convert("RGB")
+    d = ImageDraw.Draw(img)
+    for x in range(0, img.width, step):
+        d.line([(x, 0), (x, img.height)], fill=(255, 120, 120), width=1)
+        d.text((x + 3, 3), str(x), fill=(200, 0, 0))
+    for y in range(0, img.height, step):
+        d.line([(0, y), (img.width, y)], fill=(120, 160, 255), width=1)
+        d.text((3, y + 3), str(y), fill=(0, 0, 200))
+    img.save(out)
+    return out
+
+
+def _row_fragments(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+    counts = ink.sum(axis=1)
+    raw = []
+    for a, b in _runs(counts > 8):
+        if b - a + 1 < MIN_BAND_HEIGHT:
+            continue
+        xs = np.flatnonzero(ink[a:b + 1].any(axis=0))
+        if counts[a:b + 1].max() <= ROW_INK_MIN_RATIO * content_w and (
+            not xs.size or xs[-1] - xs[0] + 1 > 0.08 * content_w
+        ):
+            continue
+        if xs.size and xs[-1] - xs[0] + 1 >= MIN_BAND_WIDTH:
+            raw.append((a, b))
+    return raw
+
+
+def _arrow_headed_rule(mask: np.ndarray, line_h: float) -> bool:

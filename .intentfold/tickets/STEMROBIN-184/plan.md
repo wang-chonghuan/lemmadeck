@@ -3075,3 +3075,699 @@ n96确实0书写题，答案空集、不造choice。所有已通过旧门禁复�
 choice-set目录都不存在，实际仅有已写好的No Written Seeds README。
 暂存仍0，未生成stage清单。失败helper先原字节复制；只改该前置断言
 为禁止seed/draft/review JSON，不删README、不造题、不重跑内容门禁。
+
+第十批实际staging恢复exit0：570件10231337bytes，4工具/测试、
+2工单记录、102内容资源、462持久证据。暂存专属高置信密钥扫描
+570路径禁止0/命中0。全量git diff --cached --check exit2仅为
+忠实源Markdown及保留patch的原有行尾/空context字节；不清洗冻结证据。
+工具/工单/现代产物限定whitespace检查一次exit0；不冒称全量PASS。
+
+第十批实际commit/push完成：
+25ff77177181fe522ce308ed87cb4cd4327ae261，
+父提交1e58e15e1701278b95ae24673ce7503d487f9373；
+2026-11-17T01:17:43Z，同一codex/STEMROBIN-184-textbooks远端
+1e58e15e..25ff7717。ls-remote确认同SHA，commit文件集合与精确570
+清单一致，暂存0，当前pages107/108和root T/未进入commit。
+新增3课/25答案/24选择/97选项；累计27/247/223/958，四册未完成。
+
+本实际操作后记录随下批提交，不amend、不造单独记录commit。父方
+24/24零新图，三现行代理已在完整消费后关闭，无父方exec/browser/
+server会话运行。没有DB/publish、其它chat消息、合并/关闭/部署、
+新自动化、正式handoff或全项目tests/build；已有全部HOLD及107/108
+限制不释放，本turn未启动后续源作者，10c聚合漂移待最终集成。
+
+第十一批接续实际生产：复用第十批已push成果，不重跑完成课门禁。既有
+9-10g92–95唯一附加StageB及四裁图文字观察完整消费，三个受支持的现稿
+差异尚未修改；255/global233/细图关系UNKNOWN仍保留，不把局部文字支持
+当作完整课批准。10c107/108 HOLD不动，从物理110起推进后续完整课。
+
+110–117各prepare首次exit0，原生1695x2580/300dpi；23/19/22/23/
+24/28/23/27只是原始行带，不是独立印刷行数。两个各四页有界作者及
+两个隔离StageA审查者已实际启动，fork_context:false；每人8/24永久
+图预算，父方24/24零新图。114页传入113 owner尚未观察，显式UNKNOWN，
+不从TOC或相邻题推断闭合。118–125仅新helper待执行；未finalize/
+装订/提升现代产物、未stage/commit/push，已有全部HOLD保持。
+
+本次父方进度patch首次因末行context不匹配未写入，已按实际末行修正；
+不是源内容门禁失败，不修改任何冻结证据。
+
+118–125各首次prepare实际exit0；行带32/22/19/22/22/23/23/25不
+冒充印刷计数。118–121第三对有界作者/独立StageA已启动，122–125
+仅备料，传入117 owner仍UNKNOWN。first-finalize helper只做一次语法
+检查exit0，未在独立源对照前执行内容门禁。
+
+9-10g93/95原稿各一次原字节复制，唯一限定修补为245第四比例式右端
+OC改OC_1候选、253比例式及254充分性式两末尾逗号改句点，并各加一条
+证据限定notes。完整diff确认仅三处正文和两notes，diff exit1仅表示
+存在差异。细下标编码仍限定，不依代数更改后续公式；255/global233/
+图关系UNKNOWN及全部旧HOLD不动。未新语义批准或finalize，原证据不改。
+
+110–113作者4页/完整handoff及ledger已消费、关闭，永久4/8。独立
+冻结StageA b1f27856/25f63cee完整消费后，唯一StageB披露6份原稿；
+此前只读过在途110部分报告如实保留。实际22/19/15/16行、99的十题
+409–418及实际112标题闭合，三定理全证明和五例整体排除。111小上标/
+113关系符仍待新原生裁图，不靠作者一致升级；99装订helper未执行。
+
+114–117独立StageA9c2f5330/9c4db0f9及作者全部4稿/两记录已完整
+消费，作者关闭6/8；两个裁图仍未解116嵌套指数3/2。唯一StageB
+已披露原稿和有界113极尾，初始UNKNOWN不回写，极|限只作传入文字
+链；116共用面积指令当前误为p及标点/标题差异待唯一比较。118–121
+全部StageAeeeb8a7c/78d3f99d、作者4稿/两记录也已完整消费，作者
+关闭7/8。15未解425–439及3已解例整体识别；119原书求值下标-1与
+积分-2冲突已登记忠实erratum，未现代修正。唯一StageB已披露并仅余
+1新裁图，117传入只作父方文字证据，不误称直接human像素。
+
+122–125作者/独立StageA已启动，互不披露候选；另新有界0图文字审查
+只核9g三受支持改动与两notes一致性，不是新整体源/数学批准。尚无
+首次finalize/现代新课/答案/选择题、stage或本批commit，旧HOLD不动。
+
+第十一批接续：110–121三个唯一StageB及完整ledger全部消费；18份原稿/
+作者记录在修补前原字节复制。111仅首个解释上标4改为可见1并登记
+原意/缺笔不确定、定理2末逗号改句点；116合并原习题/面积指令为一个
+exhead及标题兹改茨；117恢复被积函数后句点；119恢复末句点并保留
+open/cont及C/O小下标不确定。三份受影响文字复核全部消费后关闭，
+永久8/8且父方24/24零新图；n99/n100现代整课仍HOLD，不改冻结记录。
+
+110–121逐页首次finalize全部实际运行，规范化0；112/113/115/116/120
+通过15/16/22/23/19行。110为23/22、114为24/23、117为27/25、
+118为32/18、121为22/20失败；不凑行或设置期望覆盖。111首次因
+U+2013白名单失败；119首次因erratum原式含布局↵而不匹配text_of失败。
+两修补前现稿另存，111仅正文范围连接符改ASCII-、119仅metadata
+original删一个↵（原式数学/正文↵不变）；精确差异断言及唯一重试
+分别19/19、17/17 PASS，首失败不改。已过页不重跑；五计行失败交
+新有界工具worker诊断，尚无修补或重试结论。
+
+122–125全部六作者文本及最终独立StageA515581d4/完整ledger7b08172d
+消费，作者已关闭；独立8/8永久预算。唯一StageB只披露精确六原稿
+及121末q公式/122实际标题的有界传入文字，初始UNKNOWN保留。
+123加减号、125末标点/局部闭合差异待比较，不以代数或作者一致放行。
+126–129首次备料既有exit0直接复用，两个新隔离作者/源审查实际启动；
+125传入只声明104候选来源和末式，右界UNKNOWN不抢先关闭。
+
+9g三受支持文字修补的完整affected-text-review已消费，明确包括_1、
+两个行尾空格及两notes的真实字节差异；原薄字形、255/global233、
+图关系及全部旧HOLD未释放。live184只读HTTP200，范围/同一分支/
+小批交付/E集成不变。当前完整新课0，未stage/commit/push/正式
+handoff/全项目tests/build/DB/publish/合并/关闭/部署，用量费用未知。
+
+第十一批继续沿现有调用推进：新独立原生裁图解析器完整reportc07f9d01/
+ledgercd06413b消费，3/4永久载图、父方零图。123坐标积分a(z-t_0)减号
+已明确，作者加号及p0123-math-1来自误读，待唯一StageB处置后修正。
+125末定义式明确句点、完整参数右括号和(2)标签，仅局部显示闭合，
+不替代104整体讨论边界。以上归因文字已发原122–125及126–129
+审查者，冻结StageA不改、不重开旧图。
+
+126–129四稿/两作者记录及StageA0dec26ac/ledger5db77df8在上次接续
+已全部消费，作者关闭；精确六文件披露后的唯一StageB dbffc62a/
+de17fa12全部消费。19/16/24/18行及全证明/全例题/图归属一致，仅
+129引字、126/128两标点未解；原审查者5/8再获恰三处新最小原生裁图
+限定，不重开旧图或全量再核，并需附加限定human字样为父代理转述。
+447全题右界UNKNOWN，104实际由127的105标题闭合，不是125句点。
+
+130–133复用既有四prepare成功记录，新隔离作者和独立StageA各8/24
+永久图限启动。审查者首次把简写/tmp当作文件系统绝对路径，零图失败
+report0819d370/ledger1e286ca7全部消费并不改；已补四个真实绝对路径，
+同一次独立StageA续做附加记录，未重跑prepare。传入129只属父方
+有界文字，不冒称直接human/代理像素。
+
+首次finalize helper原字节复制后只把上界125扩为133，四页范围和
+禁止覆盖原操作记录不变，node语法一次exit0；未执行新内容门禁。
+五计数失败仍等工具worker完整证据，当前新完整课0，无stage/commit/
+push/DB/正式handoff/全项目checks，旧HOLD全部保持。本次首个组合
+进度patch因plan尾部context错位未改文件，按真实尾部恢复，不是内容失败。
+
+122–125唯一StageB完整564行b56af776/131行8686f409消费。修前12份
+122–129作者原输入原字节留存。123仅积分一加号改减号、撤销假勘误、
+一note更正；125仅一逗号改句点、两notes及#5popen/#6pcontopen，
+原block编号和全部印刷行保留，接126余下情形。完整affected-text
+报告/ledger消费无额外问题，human误归因附加纠正为父代理转述。
+122冒号/句点未解仍不改；图56远左圆字形不假定已解。
+
+126–129三处新局部glyph reportd3782471/ledger854e99f7全部消费，
+永久8/8：129引字确实缺失，仅补一字及一note；126/128作者逗号正确，
+原StageA句点是观察错误，附加更正不回写。129受影响文字复核仍待回报。
+未finalize或现代提升，不把已解例题、全证明当未解种子。
+
+五计数诊断完整report44bc7c88/manifest及八裁图ledger消费，worker
+关闭8/8；90行通用body/carrier修补仅计23/24/26/18/21，四页仍HOLD，
+118计18等于独立18。18新focused测试17PASS1FAIL，裸分式8非7，
+旧基线同失败，不冒称全绿。父方仅补已有分式几何证明约束的7行断开
+拼接；原失败裸分式及新缩放/后续独立行3PASS，新偏置横线仍8非9FAIL，
+首记录保留。新零图工具代理只收该失败及新guard，不重跑旧PASS。
+新隔离原生解析器只核110/114底边、117分隔线、121左墨点及122标点，
+未加计数覆盖或排除区，父方仍零开图。
+
+130–133作者452行handoff03f6b473/144行ledger74512b1a及路径澄清
+记录ad6999f7全部消费，四MD与已读嵌入稿原字节相同，作者关闭6/8。
+独立450行StageA4d4a3023/222行ledger38fe0fb9全消费7/8，
+26/23/21/16行；448–457全题、454接续闭合、131实际106标题确认105
+右界。447 incomingб右界实际在448前闭合，前半及身份仍归因父方
+129有界文字，初始UNKNOWN不回写；106及例2整段右界、图63无名细笔
+意义仍UNKNOWN。精确七作者文件及129а传入文字披露唯一StageB。
+两份原路径失败不改；当前新完整课仍0，无stage/commit/push/DB/
+publisher/正式handoff/全项目tests/build，全部继承HOLD保留。
+
+本次接续完整消费Darwin129 affected-text报告48505b8e/ledger6592983d，
+已关闭8/8。Banach143行report787c35f8/131行ledger62b3b9bc确认四处
+非文字；110/114/117/121仅登记精确count_exclusions及限定notes。
+计数副本不改原像素/正文/脚注/公式。Feynman153行reporte9e3ec47/
+231行indexf41a71de及实际最终stdout/stderr全消费，原偏置横线失败+
+9新防护一次10PASS，所有输入墨迹不变；关闭，旧PASS不重跑。
+
+五失败页唯一重试实际PASS：11022/22、11423/23、11725/25、
+11818/18、12120/20。逐页结构化正文/metadata差异断言及源/裁图哈希、
+既有图几何断言PASS，规范化0。首次helper在任何finalize前因误把
+110/121末note替换当追加而exit1；原helper/失败输出留存，只修该前置
+断言，未改源内容/计数期望。其它七个已过源页不重跑。
+
+Mencius完整report711b7a4c/ledgeraf9c698e消费，2/4后关闭。
+122确实冒号、现稿不改；125独立远左闭圆字形存在/位置明确，但字符
+及语义UNKNOWN，不能删掉或当坐标。Hume限定additive disposition
+8f25d7ed全消费，旧StageA句点观察附加撤销，不回写；关闭8/8。
+
+130–133唯一StageB309行8ee661f4/205行ledger1ddb7a88全消费，闭合/
+字词/数学/行列一致，132作者句点由最后一新裁图确认。133例2仅
+局部行完整，WHOLE右界和106整体右界仍UNKNOWN；human误归因明确
+为父代理传输，图63细笔语义UNKNOWN，旧记录不改；审查者关闭8/8。
+
+122–133各一次首次finalize实际执行：12222/22、12323/23、
+12423/23、12619/19、12716/16、13221/21PASS；12520/19、
+12825/24、12919/18、13027/26、13124/23、13317/16FAIL，首记录保留。
+122/123/133规范化4/2/2，其它0；不篡改独立行数或凑正文。
+新代理Boole01a1e76b-a609-74d3-a663-6baa85e7df6a只诊断上述六失败页，
+最多8新原生载图/24永久，无生产修改/finalize/重跑旧PASS。
+本地先按已收口120–124装订102/103，无题102不造题，104仅边界前置。
+
+120–124首次严格装订exit0：1029正文/0题、1038正文/4题440–443，
+传入101容器15题不认领，104末open不提升。完整两课已原字节提升，
+既有lesson索引条目不变；whole-book旧聚合漂移仍留待集成，不宣称对账。
+两课adapt-prepare一次exit0，Euclid01a1e76f-6ca6-7300-b9a6-4eda26f02788
+只写六现代模板，无图、答案或选择键披露。
+
+下一完整批次优先102/103及无图106；104/105图稿仍需后续完成，不算
+本批。为实际闭合106及识别题集，134/135各首次prepare exit0，
+原生1695x2580/300dpi；21/23原始行带不作为独立印刷行数。
+Wegener01a1e771-6950-7e71-9a3a-6cf7346964dc作者与
+Goodall01a1e771-699c-73a0-af0c-0aded5230fc1独立StageA各只读这两页，
+fork_context:false、永久8/24预算。传入133例2只归因父代理有界文本，
+WHOLE右界初始UNKNOWN不回写，无新HOLD释放、完整课计数仍0。
+
+本次接续补齐Boole245行诊断report30b9e6ee及原生载图/裁图ledger、
+结构化133trace关键决策、proposals和历史命令。仅125/128/129/131
+四处原生确认非文字scan-artifact排除框写入metadata，原MD/JSON/audit
+先原字节留存，正文/notes/图框不改。四失败页唯一重试PASS19/19、
+24/24、18/18、23/23，规范化0；完整block/metadelta/源裁图哈希/
+既有图几何断言PASS。130仍UNKNOWN且不改、不重跑；133单数学行
+误拆委托同Boole零图通用修复及新正反例，旧PASS不重跑。
+
+110–121已完成计数/失败/原生解析/定点重试证据原字节留存到
+10c/evidence/batch011-counter110-121，共204文件4065882字节。
+首次留存前置拒绝__pycache__尚未复制；原helper/失败不改，仅明确
+枚举并跳过缓存、不删除它，环境和symlink防护保留；不是门禁重跑。
+
+现代102/103六作者模板与完整报告已消费。首adapt-finalize102PASS、
+103FAIL边界after找不到；仅103四个既有公式标签从句点后移到句点前，
+第一section after相应按index4更新。唯一affected103finalizePASS，
+102不重跑。完整模板字段深相等及另两模板字节断言PASS；差异helper
+首个只读断言误以为第一边界指向index0，exit1未改内容或audit，原helper
+保留后仅改index4断言和描述。两课首次validate_publish/render/
+桌面1440与手机390课文及只读书写题检查全部PASS，无图、无输入框；
+Euclid接续只观察已生成八截图，不重跑浏览器或内容审查。
+
+134–135作者两MD/118行handoff0bfdca40/101行ledgere436443d/
+79行手工inventory6dc5ad36全消费，作者关闭3/8。独立StageA337行
+69089fde/116行ledger6af1479b全消费冻结4/8后，精确五作者文件披露
+给Goodall唯一StageB。134实际新已解对象3关闭前例2，习题列458–467；
+135补468–471，实际107标题关闭106。106共14未解题无图，107及其
+末段完全确仍WHOLE右界UNKNOWN；图64原点0/O分歧尚待StageB，图题
+独立行不标samerow，所有边界传输严格归因父代理TEXT。
+
+102/103首次answers-preparePASS；102合法空答案草稿及首finalize
+auto0/ungraded0PASS，不造选择题。103四题标准答案候选本地写入scratch，
+独立答案StageA Parfit01a1e77d-1b7a-7220-95c6-636b966a5082先只读
+现代课题面、尚未披露候选。上抛初高度和参数速度符号缺失保留完整
+条件答案，不静默默认。103选择白名单inspect/prepare各一次PASS，
+全部四原题440–443和定义0/1/4/5，解完例题index7不作种子；隔离
+Curie作者01a1e77c-c378-7850-bda6-d005dd6c8e65与Bernoulli独立
+Stage1 01a1e77c-ed4e-7801-8452-56c7026e18ad仅收seed，零图零答案
+键披露。当前完整新课仍0，无stage/commit/push/DB/publisher/
+正式handoff/全项目tests/build/merge/close/deploy，旧HOLD全部保持。
+
+第十一批本次恢复继续同一cap3调用，未refresh/setup或重拉基线。live184
+只读HTTP200，updated_at仍2026-11-15T15:00:31.538081Z，范围/小批
+push/E集成约定未变。125–133计数诊断及四metadata重试原字节留存
+202文件1543264字节；130仍UNKNOWN/HOLD，133零图通用修补在途。
+
+102/103三个原公式手机起始截图极尾不见的发现保留。仅受影响本地
+滚动末端首次检查PASS，HTML未变；Euclid完整observationec146884/
+ledger9652caaa消费，三个终点及标点实际可见、无目标重叠，永久11/24。
+这不证明整式同时容纳390宽度，不修改renderer或正文、不重跑旧PASS。
+随后恰两张既有103选择题全页截图首次观察获授权，累计最多13/24。
+
+103选择作者全部求解/稿/view/首次结构exit0已消费并关闭；4题18选项，
+seed02950a8c/drafta7149030/view70c9db90，定义0/1/4/5，已解例7排除。
+Bernoulli冻结Stage1完整消费后仅披露view，唯一Stage2待完整回报；
+未提前披露内部键。首次桌面1440及手机390选择布局exit0保留。
+
+Parfit完整StageB报告97f38c06/ledger40139409已消费：4/4答案、11/11
+待求量实质PASS，包括442完整变号情形；原冻结StageA不改。精确候选
+0df3c827原字节提升，103首finalize实际PASS auto2/ungraded2；无exact
+键，未制造原题缺失的单位、初高度或系数符号限制。102空答案旧PASS
+不重跑，不造选择题。
+
+Goodall134–135完整唯一StageB8f301662/ledger01b6f613已消费：十四题、
+全部字词/13及22行/实际106闭合一致；468显式乘点、135两斜不等号及
+134逗号字形差异获恰三新原生最小裁图限定，永久4/24最多7/24。
+首Sigma/sum编码差异附加登记，图64原点0/O仍UNKNOWN，不凭作者
+确定语气升级；图/历史107不属于本批106，完全确及whole右界仍OPEN/
+UNKNOWN。源页首次finalize和106装订尚未执行，当前完整新课0，
+未stage/commit/push/DB/publisher/正式handoff或全项目checks。
+
+134–135恰三新原生裁图及affected-metadata完整报告54e39fa0/
+ledger729f142f已消费：468乘点、两leqslant确认，逗号TYPE确认而
+独占Unicode编码UNKNOWN；仅134一note及135两notes，全部正文/数学/
+其它metadata深相等。Goodall永久7/24，不追加开图，107原点0/O仍
+UNKNOWN且不属于106。source110–133已完成六组作者/审查/首次finalize
+及110–121修前快照原字节留存413文件6046830字节，零排除；
+130HOLD及133在途followup原记录保留、不纳入已完成声明。
+
+103唯一Stage3完整d08e34a4/ledger143dde54/reviewcc16389c及首
+WITH-review exit3已消费：结构PASS、语义REVISE，仅q01/q02各分量
+出现频率泄漏；18选项的数学/键/源覆盖均PASS，无blocked。原失败稿/
+view/审查/两截图不改。隔离Russell01a1e794-2f6b-7613-aae3-e1b555afcc1f
+仅收现seed及唯一拒稿，零图零标准答案披露，授权一次q01/q02最小
+干扰项修订，q03/q04、stems、coverage、keys深相等，等待changed-view
+先冻结再披露内部的新受影响审查。新完整批仍0，无stage/commit/push。
+
+133零图residual完整报告c9a8f92c/八新测试十attempt/42command ledger/
+freeze49f999b9已消费，工具b3030551冻结后唯一受影响finalize实际
+PASS16/16，0规范化，MD/JSON/原生PNG全字节相同。其它旧PASS不重跑，
+130仍UNKNOWN。134/135首次finalize真实结果为134FAIL21像素/15块体、
+135PASS22/22；134独立作者与StageA/B均13含页码。失败全保留。
+134例3公式3MD行同时带2↵重复计5行；父仅删2个↵后的换行，不改
+公式字符/断点/其它字节，Goodall零图affected-format复核在途。
+Boole复用仅诊断真实134FAIL，零新图、禁止计数覆盖/排除区/旧PASS
+重跑，只允许有证明的最小通用修复、新正反例和ready后一原生134计数。
+未装订106、未提升未闭107或130；完整新批仍0。
+
+134首通用修补完整report52b1000f/九新正反例/32command records已消费。
+仅既有fraction-limit ownership支持配对整数上下限，实际primitive621–854
+并成1行；唯一ready后原生全计数仍FAIL19/13，不重复。其余四积分区域
+误拆及孤立边印未解，原首21/15保留。Boole仅获新零图residual积分修复/
+独立新正反例/ready后一计数授权，未知边印保持不遮；Goodall仅获最后
+一新原生130x120最小边印裁图，分类起始UNKNOWN，不以计数期待判噪点。
+
+103唯一修稿完整作者report1e5fdf1e消费，12字符串叶子含4可见选项；
+q03/q04、stems、keys及coverage深相等。首结构exit0；父机械投影view
+一次，完整受影响view报告ef9186ed/ledgerf46e9f48冻结后才披露内部。
+八选项二十分量检查PASS，内部comparison及WITH-new-review待完成。
+受影响q01/q02各首次1440/390渲染PASS，四新截图唯一观察完整
+023557ee/ledger21ce8392已消费，尾式/标点可见无观测裁切或重叠；
+q01手机长分式在选项内换行，不宣称单行同时容纳。Euclid永久17/24，
+父仍24/24零新图。原拒稿及旧PASS不动；新完整课0，无stage/commit/push。
+
+103受影响内部完整30989c22/ledger771ace90/newreview7d234b8c及唯一
+WITH-review命令4788e479/实际exit0全消费：四改动rationale/misconception
+配对PASS，四source reviews及q03/q04记录深相等复用，原REVISE不改。
+旧human误归因附加更正为父代理传输，不冒称新human批准。批准seed/
+修稿/review原字节提升choice-set；44证据文件550693bytes原字节留存，
+无semantic/display重跑。102空题声明补齐，不造choices。当前ready两课
+4标准答案/4选择题/18选项，不冒称完整三课批次，未stage/commit/push。
+
+134最后一原生边印报告dcf6acf5/ledgerc3d05a15已完整消费。130x120
+裁图只见孤立近实心不规则墨印，不能排除过墨印字/实心delimiter，
+semantic identity保持UNKNOWN；不登记排除、不finalize134、不装订106。
+Goodall关闭本批8/8、永久8/24、crop6/6；父仍24/24。Boole仍在获准
+零图积分residual工作，已转述UNKNOWN限制，不新增count或source授权。
+
+为继续忠实源转写，136–139各首次prepare exit0，300dpi1695x2580，
+raw24/22/22/21并非独立印刷行数。首次两fresh worker dispatch被并发
+上限拒绝，未产生代理；已消费并留存的Russell/Bernoulli关闭后，fresh
+Arendt01a1e7ad-1c5a-7822-9400-e7b4f08e455e作者及Rawls
+01a1e7ad-1cc9-7c71-b20d-bea5c556e912独立StageA各4原生页/8图批次、
+0/24永久开始。作者稿不披露；135尾“完全确”只归因父代理TEXT，
+107WHOLE右界及图64原点0/O仍UNKNOWN。旧HOLD不重开；不改批次完成计数。
+
+134/135作者、源审查、原资格修正、首次finalize失败/成功及首counter134
+完整证据原字节留存190文件1719540bytes到
+10c/evidence/batch011-source134-135-first-and-mark。明确仅排除仍活跃的
+residual-integrals目录，后续freeze消费后再留存；无runtime/cache排除，
+不复制在途输出、不重跑门禁、不把134旧audit15或UNKNOWN改为PASS。
+
+本次接续同一cap3调用，live184只读HTTP200，updated_at仍
+2026-11-15T15:00:31.538081Z；范围及小批交付约定未变。counter134
+residual完整reporta36197a3、20新case/22attempt全部实际stdout/stderr、
+61command records及freeze10cd7f24消费；19首PASS不重跑，箭头guard
+首FAIL及第一次retryFAIL保留，第二retryPASS。四积分区域各1行，
+唯一ready原生count仍FAIL14/13，未知[1060,1101]不遮、不排除。
+工具5a40298c冻结，所有权释放；134/106仍HOLD，不再finalize或装订。
+冻结residual原字节留存helper已准备，尚未执行，不冒称已复制。
+
+136–139作者四MD、完整handoff260eb288、ledger4340c3e8及手工inventory
+376617df已消费，作者WAIT4/8且永久4/24。Rawls完整370行StageA566d6553/
+147行ledger8b3df268及freeze全消费后，精确八作者文件披露唯一StageB。
+独立行26/20/22/21，实际107右界在138补充题标题前；图65原点O/0
+UNKNOWN。139的504只有完整可见givens，无局部显式请求，whole右界仍
+UNKNOWN/HOLD；原作者局部闭合说法保留，待附加资格纠正。未ready/finalize。
+
+140–143各首次prepare exit0，raw22/25/23/26不是独立印刷行数。
+fresh Bacon01a1e7b5-30c9-7152-a742-d8b86662b7a7作者和Raman
+01a1e7b5-3196-75a0-b779-807e042b0537独立StageA在途，各四原生页/
+最多8图且24永久预算。两方均收到504请求/right初始UNKNOWN资格，
+尚未披露作者稿或消费完成报告。Goodall/Parfit已关闭；父24/24零图。
+新ready仍2课/4答案/4选择/18选项，完整三课批次未成，无stage/commit/push。
+
+counter134冻结residual留存helper唯一执行exit0：237文件2030798bytes，
+237源inventory条目、61命令流哈希及所有owned文件冻结绑定相符，
+零排除，逐文件原字节同一。20新case/22实际attempt证据完整，未重跑
+tests/counts；原134FAIL14/13和UNKNOWN不变。保存到
+10c/evidence/batch011-counter134-residual-integrals，不认作源通过或整批交付。
+
+本次上下文接续仍同一cap3调用；live184只读HTTP200，updated_at仍
+2026-11-15T15:00:31.538081Z，范围/批次/E集成不变，未refresh/setup。
+140–143独立StageA完整source-first b7d04339/ledger a1aa2d0d全部消费，
+冻结SHA相符；四原生页各一次，4/8且永久4/24，零裁图/重开。
+独立18/23/21/26行，504请求在140续接并于505前闭合；529后由142
+实际第八章标题确认补充题右界，前界仍归因父代理文本传输。
+504原式分母6、中项无系数照印保留；513首右积分微分字形UNKNOWN；
+图67网格精确行列/横轴箭头UNKNOWN，143例子/108整体右界OPEN。
+作者完整handoff尚未返回，不提前披露稿；136–139唯一StageB仍在途。
+父仍24/24零图；134/106及全部旧HOLD不释放，新ready仍两课。
+
+140–143完整作者四MD及handoff188df1ea、ledger72b5e401、手工inventory
+2cb92705、cropmetadata f3ea4b59全消费，四MD及证据SHA绑定相符。
+作者6/8且永久6/24，两原生小裁图；513微分为作者已读dx，但独立
+StageA仍UNKNOWN，待唯一StageB裁决。八精确作者文本文件仅在完整
+独立StageA消费后披露；reviewer仍4/8，可最多四个新最小争议裁图，
+禁止旧图重开或生产改稿。140作者与137独立记录的human字样只代表
+父代理传输，要求在新StageB附加纠正，不回写冻结记录。
+504无系数原式及143末例OPEN不变；作者原字节保存helper已准备，
+尚未执行，不宣称保存或检查通过。
+
+140–143作者原字节唯一保存exit0，10文件60122bytes，不运行tests/counts。
+136–139完整298行唯一StageB f0a43d52/ledger5211f0c3/freeze3988c5e3
+全部消费，89行及所有公式/条件/图归属比较完整。唯一新姓名裁图确认贝，
+reviewer永久8/24且批次8/8，无旧图重开。八原作者输入原字节保存
+41531bytes后，只恢复137正文/对应note的贝、138附加传输资格、
+139附加504已知条件不等于请求闭合资格及ex504 open；旧作者记录不改。
+496首小问末comma/period仍冲突，fresh单裁图resolver Nietzsche
+01a1e7c1-7816-7610-aa4d-f86486cc7519只获该最小争议跨度1/8、1/24。
+未增加对134/106的授权。136–139原未执行finalizer先保存，再只扩展
+参数允许首136或140的四页，继续要求parent-ready消费及源MD/tool哈希；
+未执行finalize，已过页不重跑。Boole/Bacon完整成果消费后关闭。
+
+496限定新原生裁图完整report666c2bd6/ledger19389774/registration/
+9971字节证据脚本/freeze40b65791全消费；“=2”后有下行尾的逗号TYPE，
+独占Unicode编码UNKNOWN，父仍零图。只496首小问末。改，及附加资格note，
+所有公式/其它字节不动；原争议保留。resolver1/24后关闭。
+136–139原reviewer仅获三页已改正文/note/504open的零图affected-TEXT
+复核，不重跑全源审查，未ready/finalize。
+
+140–143唯一StageB完整source-comparison2f7a78da/ledgerc529e317、
+全部88行/对象/公式/四新原生裁图元数据及两证据脚本全消费。
+513完整dx独立确认，520“情况下，我们”的逗号遗漏由新裁图确认，
+143末右下标仍UNKNOWN，108/末例OPEN；504原无系数式不修。
+独立reviewer8/8且永久8/24，不重开旧图。原十作者文件已保存；
+仅140一个dx资格note、141正文逗号及一个note、143一个末字形资格note，
+142全部字节不变；同reviewer只获一次零图受影响TEXT复核。
+两组原HOLD不转成通过，504右界由140新像素确认但前界须接139；
+源页首次finalize仍未执行，完整ready批次仍两课，无stage/commit/push。
+
+两组唯一零图affected-TEXT复核已完整消费：136–139报告fc145f4d/
+ledgerbca26a2f/freeze1ca59ef8（文件名affected-text-freeze.sha256），
+140–143报告774041c2/ledgercf30b4e3。精确允许的正文/note/504open
+改动之外，全部公式、换行、框及其它字段不变；136及142原字节不变，
+StageA/B冻结记录不回写。Rawls对504的HOLD仅限其未读140；父联合
+Raman已消费的140实际请求/结束观察，明确分开前后页证据，不冒称
+Rawls看过140。143末下标UNKNOWN、例子/108右界OPEN、134/106HOLD不变。
+两组当前MD哈希及layout5a40298c绑定到新parent-ready，仅授权首次
+四页finalize并保留实际流；不是预先声明机械通过。未执行装订或交付。
+
+两组首次finalizer各唯一执行，实际8stdout/stderr及8command.json/
+8page.json/8audit全部消费。136PASS26/26、137FAIL21/20、
+138PASS22/22、139PASS21/21；140FAIL22/18、141FAIL25/23、
+142FAIL23/21、143PASS26/26。规范化全部0，源PNG哈希不变，
+无字符/公式错误；独立20/18/23/21不改。137阻止107首次装订，
+未执行已备装订helper。新Singer01a1e7ce-3910-79d2-a879-ff4f8bd2df0e
+只获四失败页零图数值归属诊断、scratch写权，不能改工具/文字/预期/
+排除或运行全页计数；父并行留存已消费的两组原稿/复核/首次操作。
+全部旧PASS和134/106HOLD不重跑或释放，无stage/commit/push。
+
+两组源/复核/首次操作唯一留存helper exit0：196文件2264956bytes，
+零排除、原字节相等，位于10c/evidence/batch011-source136-143-first；
+原作者/初次失败/新标点resolver均保留，活跃计算诊断不在集合内。
+137即时路径由父接管，仅据已消费Rawls原生分隔线观察约
+[240,2074,487,9]及原行带2075-2080，登记计数副本薄线框
+[236,2073,500,11]和一个附加note，不改正文/图/预期。Singer不再
+处理137，继续140–142数值诊断；新137重试helper保留首次失败并
+严格比较全部正文/其它元数据，不宣称尚未执行的重试通过。
+
+137唯一受影响重试exit0，实际20/20及完整command/audit/streams已消费，
+sourcePNG/fig66PNG/全部正文/JSONblocks/auditfigures严格不变，
+normalizations0。Rawls仅获新零图metadata-delta复核，不重跑全源审查。
+135–138唯一vectorize/严格assemble均exit0，全流/command/book/107
+lesson及exercises已消费：三原图不匹配0.005%/0.024%/0.015%，
+107为18prose/0ex/3fig；真实末界在138补充题前。输入承上4题、
+部分补充15题不可提升，不据scratch零warnings冒称两者完整。
+只备107忠实提升/modern prepare helper，尚未执行；图64/65原点
+UNKNOWN照留，modern整课与完整三课批次都未完成。首次组合patch
+尾context误用繁体导致整体无写入，已改正实际context，不是内容门禁失败。
+
+107忠实提升及首次adapt-prepare均唯一exit0，promotion/command/
+figures模板已消费。仅107三源文件及三图PNG/SVG原字节复制；
+旧sourcebooklesson条目和旧aggregate严格不变，bookSHA2c75ee02，
+aggregate/inheritedchoice书索引绑定仍留给相应集成，不冒称全书通过。
+Arendt只获107三modern模板零图编辑；freshTesla
+01a1e7d4-6a2e-7711-86e7-e7a9efa2943c仅首次三原图source.inventory，
+最多3原图+2新原点小裁图，不准spec/render/modern编辑或预先获批。
+父24/24零图；107没有未解习题，不造answers/choices。
+Rawls137完整metadata报告0165eb03/ledgerf5c26b1c/freezec30df4c1
+已消费：仅薄线count-copy框和一note，正文/其它元数据/20预期不变；
+先前原生粗定位是TEXT复用，带2075-2080及retry结果属父实际执行
+证据经文本传输，不冒称Rawls重读图或运行counter。旧HOLD报告冻结；
+107现在右界由父联合已消费135–138证据及首次装订证明，不归因
+本轮metadata reviewer观察。新现代完整批次仍未成，无stage/commit/push。
+
+137受影响复核/唯一retry/107首vectorize/首assemble/忠实promotion
+原字节唯一留存exit0：65文件393533bytes，零排除、零门禁重跑，
+10c/evidence/batch011-source107-assembly-and137-separator。Rawls全消费/
+留存后关闭，永久8/24未重置。当前活跃只包括140–142计算诊断、
+107modern文字与三图初始sourceinventory；父无exec/browser/server
+会话，尚未现代图spec或finalize，未形成完整三课批次。
+
+Singer零图诊断report2f70699c/manifest e84ab98c完整消费：40命令
+参数/exit/hash及六脚本，035/036/034细项已读；大矩阵按全部13
+suspect/control乘六尺度的结构化投影消费，不冒称全部重复原流逐字读。
+140四个及141两个高积分行被remote star/comma拒绝，原绝对值
+定界及518 UNKNOWN不得抹除；142底部两个细碎墨迹精确框待独立
+原生TYPE判定。冻结诊断所有失败014/019/020/021及bootstrap重建
+资格保留；新唯一留存helper待执行，不运行旧PASS。
+Singer另获layout.py及NEW ancillary测试的窄写权，先写独立正反例，
+每例唯一执行，仅失败可修；准备/冻结后140/141各唯一native count，
+18/23预期不变，不能finalize。Sartre仅获142两个NEW原生细框裁图，
+不能计数/排除/改源；两任务结果待完整消费，父不越过ownership。
+
+Arendt107零图作者完整report dfb20496/ledger a836cc49/hash文件
+6665d30c及三当前模板已消费，SHA相符：lesson c35050a2，
+exercises637ceffc、figures451b48b2原字节不变；18块/21公式
+保持全部source_refs/source_text及历史身份，15历史声明与两个
+工具文本anchor，不增加习题/勘误。作者永久4/24不重置，WAIT。
+只准备隔离accepted-draft context-root原字节副本供三图上下文工具；
+这不是持久modern提升或finalize。三图仍占位，64/65 O/0 UNKNOWN；
+父24/24零图，未形成完整三课批次，无stage/commit/push。
+
+冻结计算诊断唯一留存exit0：130文件1505621bytes，零排除/门禁
+重跑，10c/evidence/batch011-counter137-142-diagnosis。layout新repair
+不在集合内，未释放ownership。107隔离原字节draftroot及三次首次
+build_context实际exit0，完整input/command/context消费；只scratch，
+sourceImage复制哈希一致，不是modern提升。sourceinventory完整
+9f47df79/ledger b7bb2b92/inventory635894c7/freeze25d1c736/
+metadata脚本/inputs012368b2消费：9/12/18锚点、64/65 O/0
+UNKNOWN、65左带连续性UNKNOWN、66五carrier及phi变体UNKNOWN。
+源文本对应Phi身份可以用于新现代排印，不冒称像素字符变体已识别。
+原human/premisesFromHuman只属父传输，后续新report附加纠正，
+冻结旧记录不回写。Tesla仅继续原允许两个NEW原点最小native裁图，
+永久3/24起最多5/24；不画64/65。Euclid永久17/24另获唯一66
+draft/首render任务，最多四NEW图，不独立审批或提升。
+
+142唯一native resolver完整report bdd317e3/ledger62ebcb46/
+脚本bd860b2b/metadata48188296/freeze bf322a97全消费：两极小
+原生裁图每张一次detailoriginal，RGB原字节严格相同，永久2/24，
+授权2/2用尽。两处仅可见细碎点/短横，不能排除fragmentaryprinting
+或delimiter，均UNKNOWN；不据计数目标改判scanartifact。
+当前142无排除/新重试，原23/21FAIL保留；67图细节UNKNOWN、
+141518未知未遮、134/106HOLD及143tail/108OPEN均不变。
+
+初始modern107/sourceinventory/142UNKNOWN唯一留存exit0，40文件
+208381bytes，零排除/门禁重跑，10c/evidence/batch011-modern107-
+initial-and142-unknown。三context实际stdout路径及空stderr均消费。
+Arendt与Sartre全部消费/留存后关闭，永久4/24及2/24不重置。
+
+Singer新repair完整report59ba0f4d/manifest6edfa96a、五脚本、
+NEW测试e147ae55、九行局部patch、全部21命令参数/exit/hash、
+全部14实际case streams、proof gate cb87955d及native140
+attempt/result全消费。14独立synthetic正反例均唯一PASS、不重跑；
+layout899ea25c只新增body-owned短mark空间归属，不抹墨迹。
+唯一native140 FAIL19/18，509两行及515合成单band，但505/506
+752–857仍被拆；原22/18finalizer记录不改。禁止额外140count/
+finalize/patch。141因agent首失败STOP尚未计数，不冒称已通过。
+请求Singer只释放ownership并WAIT；父另备NEW141唯一native
+helper，重用原已冻结script/gate/input的原字节副本，仅补原未执行
+授权141，不重跑14PASS或140，不解冻/回写旧seal的NOT_RUN。
+
+partialrepair唯一留存exit0，81文件287815bytes，零排除/门禁
+重跑，10c/evidence/batch011-counter140-141-ancillary-partial。
+Singer全部消费后明确释放ownership，随后关闭，永久零图不重置。
+父NEW141唯一native实际exit0 23/23，完整result/command/
+copyconsumption记录/空stderr消费；源数组57cca281不变、PNG
+51796ced不变、无fig/exclusion，518不赋义/不遮。同layout899ea25c
+下只备141原失败finalizer一次affectedretry，要求全部MD/JSONblocks
+原字节不变；尚未执行，不把nativePASS预写成finalizerPASS。
+
+本次接续仍为同一cap3调用，不refresh/setup或另读backend。141唯一
+affectedfinalizer已实际执行exit0，23/23及完整command/audit/invariants/
+stdout/stderr已消费；全部MD/JSONblocks/sourcePNG/auditfigures不变，
+normalizations0。原25/23失败及Singer原seal的141NOT_RUN保留。
+134最后授权FAIL14/13、140唯一nativeFAIL19/18及142原FAIL23/21
+保持HOLD，不因141成功额外计数、排除、finalize或装订106。
+
+Tesla两个NEW原点native裁图完整report5f6ff650/ledgerea238ea7/
+observations04a55c2a/freezee68f3d4e已消费；64框28,343,23,36、
+65框21,370,27,38，saved/sourceROI原生RGB完全相同且零差异，
+两字形仍UNKNOWN0/O，不删原点或按数学约定猜字。原记录human/
+premisesFromHuman仅属父代理传输的附加资格保留。永久5/24、同批5/8、
+任务5/5用尽；无新图授权。新141/native/retry及origin冻结证据仅备
+原字节留存helper，尚未执行；66首轮报告待完整接收，107仍不完整。
+
+141/native/retry及origin冻结证据唯一留存helper实际exit0，31文件
+88491bytes，零排除/门禁重跑/父新图，原字节保存到
+10c/evidence/batch011-141-pass-and107-origins-unknown。Tesla全消费/
+留存后关闭，永久5/24不重置。旧失败/UNKNOWN及全部HOLD不变，
+66首轮包仍待完整消费；新complete仍2课/4答案/4选择/18选项，
+无stage/commit/push或现代107finalize。
+
+Euclid66首轮完整reporte07176ec/ledger3e230137/freeze1eb23e47/
+四脚本/完整spec58a35a21/18contactmap/analytic证据0a7118cd及全部
+construction/validation/render/freeze实际命令/exit/streams已消费。
+draftvalidation唯一PASS，首render唯一FAILexit2：两个Phi标签
+各score152.383056640625；七宽字号门禁16.1–28px均PASS但不算视觉通过。
+仅原图一次，作者永久18/24，失败预览零开。五sharedcarrier/
+三内层/基底/退化顶点共18contact；现代Bezier正则化与原像素事实
+分开，整高度截线宽度差多项式[0,0,0]，不冒称nativevalidator能证明
+curve membership或全高度恒等。source全部TEXT及0ex保留，未独立审批。
+先备原字节首FAIL留存helper；仅此失败允许一次标签位置修复到NEW
+66-label-repair目录，一次render及其内部draftvalidation，不能改字号/
+canvas/geometry/assertions/avoidRegions或工具。先从保存SVG作零图
+bbox诊断；如原因非标签位置则STOP。原human/user传输资格须附加纠正。
+64/65/134/140/142及其它HOLD不释放；尚未执行修复，不提前写PASS。
+
+66首FAIL唯一留存helper实际exit0，37文件159864bytes，零排除/
+门禁重跑/父新图，10c/evidence/batch011-figure66-first-failure原字节
+保存。Euclid只获上述一次标签位置修复，永久18/24最多再开一张
+NEW修后原生预览；首FAIL预览及原图不重开。freshMendel
+01a1e7e9-c3be-7082-9cce-10cd74c58ef9仅图66独立source-first
+StageA，0/24永久/最多4图同批，先原图一次，作者稿不披露；
+完整StageA消费后才可能披露修后PASS候选做唯一StageB。
+Raman既有140–143完整成果早已消费/留存，现关闭，永久8/24不重置。
+实际读取sourcebook仍含旧aggregate、choice trace仍待相应集成；
+不据107局部装订0warnings宣称全书通过，不重跑旧审批。无新完整批次。
+
+Mendel66独立StageA完整report66a52e6f/ledgeraa28882d/input15d82378/
+freeze4276ab7c已全消费，三产物/三输入SHA及字节数一次相符。
+原图一次，永久1/24/同批1/4，无作者稿披露。独立确认两不同shape/
+五sharedrule/三内部截线/基底共线/无pointmarks；原精确主字形、
+曲线方程及subpixel顶点仍UNKNOWN，整高度等长由edition要求而非像素
+测量证明。冻结StageA不回写；human accepted-draft wording后续只作
+父代理传输附加资格纠正。仍WAIT修后包，未授权StageB或额外图。
+
+66唯一修后完整reporteee96adc/ledgerb621c7d8/freeze3b350994/
+六脚本/geometrybridge d73a8e6e/四坐标equality9b74a27d全部消费。
+全部实际diagnosis/repair/validation/render/preload/freeze命令及streams
+消费；diagnosis大stdout按全部四labelscore/31geometrybbox结构化投影
+消费，不冒称重复原矩阵逐字读。原Phi paddedbbox侵入avoid区域
+2.328125px，score152.383056640625；只四text的at[1]减8，保持全部
+11geometry/71assertions/sourceTEXT/inventory/canvas/字体/display/
+avoidRegions/minGap不变。唯一render实际exit0、collision[]及七宽
+16.1–28px门禁PASS；只修后native图一次，作者永久19/24。
+继承map/analytic证据保留旧spec引用，用新equality桥接，不重写原记录。
+
+66修后/source-first唯一留存实际exit0，51文件332076bytes，零排除/
+门禁重跑/父新图，10c/evidence/batch011-figure66-label-repair-and-
+source-first原字节保存。Euclid全消费/留存后关闭19/24永久不重置。
+StageA全消费后仅当前spec9967d874/SVGfc43a5b4/render50efb618及
+继承map/analytic/bridge/equality披露Mendel唯一StageB，最多三NEW
+视图native960、276neutral、346print，原图不重开、不跑render/
+validator或record_review。数学/视觉独立结论待返回，尚不审批提升。
+107及三课批次仍不完整；全部HOLD/UNKNOWN不变，无stage/commit/push。
+
+Mendel唯一StageB完整report840d3514/ledgerd56b7c55/input741d5a3b/
+freezedef5dad6/四脚本/三实际命令参数exit及streams/mathacc443fd
+已消费。大129982byte screenshotJSON先组合投影截断，随后两套
+完整surface/all70node结构化投影无截断全消费，不冒称重复原JSON
+逐字读。inputstdout同inputfreeze、completionstdout同integrityJSON，
+三stderr为空。18contact/整高度width288t及共Y48+232t/当前SVG
+transform独立数学PASS，文化PASS；276neutral与346print视觉FAIL：
+右curve始终5px，左triangle仅1.4375/1.801953125px，上部内区被
+粗边视觉压闭，干扰截线比较。永久4/24、同批4/4、StageB3/3，
+零open sessions。报告17非空块与冻结math/current15不符，仅附加
+资格纠正：18总块/15非空；不改冻结报告/StageA/source/spec。
+唯一修复已耗尽，STOP66，不追加render/repair/validator/record_review/
+promotion。新一次性原字节留存helper已备尚未执行；107/完整批次
+仍不成立，全部HOLD/UNKNOWN不变，无stage/commit/push。
+
+66独立FAIL唯一留存helper实际exit0：25copiedfiles285655bytes，
+包含全部22冻结payloads266118bytes、10031bytefreeze及新receipt/
+helper；零排除/检查重跑/父新图，原字节保存在10c/evidence/
+batch011-figure66-independent-stageB-failure。copy-manifest自身不计入
+copiedtotal，记录明确。Mendel全消费/留存后关闭，永久4/24不重置，
+零open sessions。首FAIL/修后renderPASS/StageA原冻结记录不改；
+视觉FAIL不被数学PASS替代，唯一修复耗尽，STOP66不再render/repair/
+review_record/promotion/finalize。107与三课完整批次继续不成立；
+新complete仍2课/4答案/4选择/18选项，全部HOLD/UNKNOWN不变，
+无stage/commit/push或其它门禁重跑。
+
+2026-11-17T05:53监督接续纠偏：局部66视觉FAIL不作为四册停工理由，
+同会话/分支继续其它课；原失败与唯一修复额度不改，107不冒称完成。
+保留已完成102/103，完整课可窄范围提交；默认约4课，批后立刻下一批，
+不merge/deploy/DB。原来本地“无stage/commit/push”是该检查点事实，
+不是撤销持续批次交付授权。
+
+下一组10c物理144–151首次prepare全部实际exit0，1695x2580/300dpi，
+rawbands26/23/24/22/26/20/20/21不当独立行数。两组各4页：
+Fermat作者01a1e813-f718-76f0-9136-10ffcdb11fa0与Dewey独立StageA
+01a1e814-3463-7630-8150-c5270d0dc5da负责144–147；Schrodinger作者
+01a1e814-77f2-7740-9ec9-2e7ca4341333与Anscombe独立StageA
+01a1e814-aaaa-7151-b6ad-5d8cad529ae3负责148–151。全部fork_contextfalse，
+每代理本批8图/永久24图，父永久24/24零图；独立原图先消费再披露作者，
+此时均不finalize或装订，源143尾UNKNOWN不靠相邻文猜字。
+父并行整理102/103已有交付，不重跑有效检查；读102不存在review.json的
+ENOENT仅路径假设错误，102实际0书写题与合法NoWrittenSeedsREADME保留。
+
+同一cap3接续：152–155首次prepare全exit0，raw29/24/26/25仅元数据。
+fresh Pauli作者01a1e81b-d38f-7180-9a0c-77aba9feda84和Popper独立
+StageA01a1e81b-d44b-7000-a5f9-8420abd67d4d只负责四NEW页，
+每批8/永久24图；无重复prepare/backend/refresh/setup。
+148–151独立StageA15308byte/c48947df、ledger1197byte/d6b53dca及
+freeze2438byte/a385f8b0全消费，10绑定项一次相符；23/19/18/19
+正文、60题15星、图70及110真实标题，580小上标/623字形UNKNOWN，
+148左归属需父合并前页TEXT。原4图一次，永久4/24，不重置。
+两作者完整4MD/report/ledger/脚本/实际命令及freeze已消费，所有冻结
+项一次匹配；144–147作者5/24，148–151作者7/24。仅在StageA完整
+消费后分别披露精确4MD哈希，授权各唯一StageB及最多4NEW必要
+native crops；不重开原图、不改冻结报告、不finalize或装订。
+所有“用户提供”前页声明只属parent-agent TEXT，不是新human/pixel
+审批，StageB附加资格纠正。143 UNKNOWN及原全部HOLD不释放。
+
+按监督明确授权准备102/103两完整课窄交付：先原字节保存当前源索引，
+交付索引不含107，107忠实对象和全部失败保留；只派生已提交目录的
+209题/1–443/原图1–28及65支持页，原门禁记录复用且明确非全书PASS。
+10个已有选择集仅book trace及依赖哈希一次重绑定，非trace内容必须
+严格相等，不重做语义/显示审批。helper已备，未预写执行成功或push。
+
+102/103窄交付集成helper唯一实际exit0，源book72c88cba，209题/1–443、
+65支持页，107索引旧字节2c75ee02保留而未交付；107对象/图/FAIL不动。
+10选择集仅指定字符串标量重绑定，每个受影响绑定机械validator一次
+exit0，所有非trace题面/键/理由/语义记录严格不变，非新数学审批。
+准备精确stage名单：两课、120–124已通过源页、对应工具与已消费证据、
+两索引和book-trace依赖；不stage未完成107或新144–155源对象，不触T。
+本提交只为授权批次交付；非正式handoff/merge/deploy/DB或全书通过。

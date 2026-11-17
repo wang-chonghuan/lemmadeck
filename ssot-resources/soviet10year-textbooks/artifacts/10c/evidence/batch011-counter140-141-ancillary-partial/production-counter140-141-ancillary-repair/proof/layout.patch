@@ -1,0 +1,18 @@
+--- /Users/yong/.codex/worktrees/a07e/lemmadeck/.intentfold/tickets/STEMROBIN-184/tmp/production-counter140-141-ancillary-repair/before/layout.py
++++ /Users/yong/.codex/worktrees/a07e/lemmadeck/.claude/skills/ld-s10y-lesson/tools/layout.py
+@@ -1041,6 +1041,15 @@
+             continue
+         if height >= 0.6 * glyph_h:
+             return False
++        # Short body-owned marks can miss the common core on a skewed row.
++        if any(
++            max(0, columns.start - body_columns.stop, body_columns.start - columns.stop)
++            <= 0.75 * glyph_h
++            and body_rows.start - 0.35 * glyph_h <= rows.start
++            and rows.stop <= body_rows.stop + 0.35 * glyph_h
++            for body_rows, body_columns in bodies
++        ):
++            continue
+         nearest = [
+             index for index, (_, carrier_columns) in enumerate(carriers)
+             if carrier_columns.start - 0.5 * glyph_h <= columns.start

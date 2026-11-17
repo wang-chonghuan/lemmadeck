@@ -1,0 +1,139 @@
+diff --git a/.claude/skills/ld-s10y-lesson/tools/layout.py b/.claude/skills/ld-s10y-lesson/tools/layout.py
+index 74aa15b4..d9263a44 100644
+--- a/.claude/skills/ld-s10y-lesson/tools/layout.py
++++ b/.claude/skills/ld-s10y-lesson/tools/layout.py
+@@ -650,6 +650,84 @@ def _fragmented_body_scale(components, bounds_list, line_h: float) -> int:
+     return int(np.median(heights))
+ 
+ 
++def _body_supported_heights(components, bounds_list, spans, arrow_components):
++    """Keep repeated body glyphs, not singleton limits, as row-scale evidence."""
++    heights = []
++    for a, b in spans:
++        height = b - a + 1
++        supported = 0
++        for component_id, bounds in enumerate(bounds_list, 1):
++            if bounds is None or component_id in arrow_components:
++                continue
++            rows, columns = bounds
++            if (
++                a - 0.15 * height <= rows.start
++                and rows.stop - 1 <= b + 0.15 * height
++                and 0.6 * height <= rows.stop - rows.start <= 1.3 * height
++                and 0.2 * height <= columns.stop - columns.start <= 1.3 * height
++                and np.count_nonzero(components[bounds] == component_id) >= 0.12 * height ** 2
++            ):
++                supported += 1
++        if supported >= 3:
++            heights.append(height)
++    return heights
++
++
++def _single_carrier_row(components, bounds_list, a: int, b: int, glyph_h: float) -> bool:
++    """A tall narrow carrier may extend one body row, but cannot hide another."""
++    if b - a + 1 > 3.2 * glyph_h:
++        return False
++    local = [
++        bounds for bounds in bounds_list if bounds is not None
++        and a - 0.25 * glyph_h <= bounds[0].start
++        and bounds[0].stop - 1 <= b + 0.25 * glyph_h
++    ]
++    carriers = [
++        bounds for bounds in local for rows, columns in [bounds]
++        if 1.5 * glyph_h < rows.stop - rows.start <= 3.2 * glyph_h
++        and columns.stop - columns.start < 0.6 * glyph_h
++        and columns.stop - columns.start < 0.3 * (rows.stop - rows.start)
++    ]
++    if not carriers:
++        return False
++    bodies = [
++        bounds for bounds in local for rows, columns in [bounds]
++        if bounds not in carriers
++        and 0.6 * glyph_h <= rows.stop - rows.start <= 1.8 * glyph_h
++        and columns.stop - columns.start >= 0.2 * glyph_h
++    ]
++    if len(bodies) < 3:
++        return False
++    top = max(rows.start + 0.25 * (rows.stop - rows.start) for rows, _ in bodies)
++    bottom = min(rows.stop - 0.25 * (rows.stop - rows.start) for rows, _ in bodies)
++    if top > bottom:
++        return False
++    limits = {}
++    for rows, columns in local:
++        height = rows.stop - rows.start
++        width = columns.stop - columns.start
++        if height < 0.3 * glyph_h or width < 0.15 * glyph_h:
++            continue
++        if (rows, columns) in carriers or (rows, columns) in bodies:
++            continue
++        if rows.start <= bottom and rows.stop >= top:
++            continue
++        if height >= 0.6 * glyph_h:
++            return False
++        nearest = [
++            index for index, (_, carrier_columns) in enumerate(carriers)
++            if carrier_columns.start - 0.5 * glyph_h <= columns.start
++            and columns.stop <= carrier_columns.stop + glyph_h
++        ]
++        if not nearest:
++            return False
++        key = (nearest[0], rows.stop < top)
++        limits[key] = limits.get(key, 0) + 1
++        if limits[key] > 2:
++            return False
++    return True
++
++
+ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+     """Count printed rows after masking model-identified figures."""
+     # Work on a counting-only copy; extraction pixels are never changed.
+@@ -673,6 +751,9 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+         b - a + 1 for a, b in raw
+         if not set(np.unique(components[a:b + 1][ink[a:b + 1]])).issubset(arrow_components)
+     ]
++    supported_heights = _body_supported_heights(components, bounds_list, raw, arrow_components)
++    if len(supported_heights) >= 3:
++        body_heights = supported_heights
+     line_h = int(np.median(body_heights)) if body_heights else line_h
+     glyph_heights = [
+         rows.stop - rows.start
+@@ -733,6 +814,9 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+         b - a + 1 for a, b in raw
+         if not set(np.unique(components[a:b + 1][ink[a:b + 1]])).issubset(arrow_components)
+     ]
++    supported_heights = _body_supported_heights(components, bounds_list, raw, arrow_components)
++    if len(supported_heights) >= 3:
++        body_heights = supported_heights
+     # Projection refresh must not discard the recovered full-glyph scale.
+     line_h = max(component_scale, int(np.median(body_heights))) if body_heights else line_h
+     # Projection thresholds can miss a narrow standalone quotient such as 1 or 7.
+@@ -819,6 +903,9 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+             connected_fraction = shared_strokes.size > 0 and _single_fraction_row(
+                 ink, prev_a, b, min(line_h, glyph_h)
+             )
++            carrier_row = _single_carrier_row(
++                components, bounds_list, prev_a, b, min(line_h, glyph_h)
++            )
+             if (
+                 a - prev_b <= (
+                     0.6 if min(heights) < 0.4 * line_h else 0.5
+@@ -831,6 +918,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+                 )
+                 or subscript_continues
+                 or connected_fraction
++                or carrier_row
+             ):
+                 joined[-1] = (prev_a, b)
+                 if fraction_spill:
+@@ -900,9 +988,11 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+             _subscript_continues(ink, a, a + x, b, glyph_h)
+             for x, _ in fragments[1:]
+         )
++        carrier_row = _single_carrier_row(components, bounds_list, a, b, glyph_h)
+         if (
+             a not in fraction_starts
+             and not subscript_row
++            and not carrier_row
+             and (
+                 band_h > 2.0 * min(typical_h, glyph_h)
+                 or compact_text_rows

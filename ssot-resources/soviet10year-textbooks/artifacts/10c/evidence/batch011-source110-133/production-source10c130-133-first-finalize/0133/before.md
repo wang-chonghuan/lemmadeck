@@ -1,0 +1,59 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10c",
+  "page": 133,
+  "printed_page": 127,
+  "source": {
+    "pdf": "10c 苏联十年制学校数学教材 代数和分析初步 十年级.pdf",
+    "pdf_sha256": "47b0358c5781f509ce35e0e22de13c6bb539b246099ade66e8856c9288954e40",
+    "pdf_page": 133
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1695,
+    "h": 2580,
+    "sha256": "5e95f8447938b6b0d6781ea937124a1b4cac643181dec76445735237a2093816"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "First row closes proofIII from physical132. No actual heading, source exercise, figure, or caption.",
+    "Numbered 1 and 2 are complete solved examples introduced explicitly as examples; keep their whole calculations as prose, not exercises.",
+    "The tall evaluation row of example1 is one printed row. Example2 preserves the printed reversed integral limits and the full explanation of transformed bounds.",
+    "Unit106's global right boundary and next heading beyond physical133 are UNKNOWN. The final paragraph is complete; no dangling source exercise or equation.",
+    "Manual distinct printed rows including footer: 16; raw prepare bands are not authoritative."
+  ],
+  "errata": []
+}
+---
+
+<!-- p cont -->
+法则 III 得证。
+
+<!-- p -->
+现在举出几个利用上面所证明的法则计算积分的例子。
+
+<!-- p -->
+1. $\int_{0.25}^{4}\left(x^2-\frac{3}{x^4}+\frac{5}{x\sqrt{x}}\right)dx$
+$=\int_{0.25}^{4}x^2dx-3\int_{0.25}^{4}x^{-4}dx+5\int_{0.25}^{4}x^{-\frac{3}{2}}dx$
+$=\frac{x^3}{3}\big|_{\frac{1}{4}}^4-3\frac{x^{-3}}{-3}\big|_{\frac{1}{4}}^4+5\frac{x^{-\frac{1}{2}}}{-\frac{1}{2}}\big|_{\frac{1}{4}}^4$
+$=\frac{4^3}{3}-\frac{1}{3\cdot4^3}+4^{-3}-\left(\frac{1}{4}\right)^{-3}-10\left(4^{-\frac{1}{2}}\right)+10\left(\frac{1}{4}^{-\frac{1}{2}}\right)$
+$=-\frac{2}{3}\cdot4^3+\frac{2}{3\cdot4^3}+15=-27\frac{21}{32}$。
+
+<!-- p -->
+2. 在下面列出的积分中，我们根据公式 $t=\frac{\pi}{6}+\frac{x}{3}$ 作变
+量替换：
+$\int_{-\pi}^{-2\pi}\frac{dx}{\sin^2\left(\frac{\pi}{6}+\frac{x}{3}\right)}=3\int_{-\frac{\pi}{6}}^{-\frac{\pi}{2}}\frac{dt}{\sin^2t}=3(-\operatorname{ctg}t)\big|_{-\frac{\pi}{6}}^{-\frac{\pi}{2}}$
+$=0+3\operatorname{ctg}\left(-\frac{\pi}{6}\right)=-3\sqrt{3}$。
+
+<!-- p -->
+这里，新的积分限是由同一个变量替换公式 $t=\frac{\pi}{6}+\frac{x}{3}$ 得
+出的。把 $x=-2\pi$（给定的积分上限）代入替换公式，得到 $t$
+$=\frac{\pi}{6}-\frac{2\pi}{3}=-\frac{\pi}{2}$，它是替换变量以后的积分上限。类似地，我
+们求出积分下限等于 $-\frac{\pi}{6}$。
+
+<!-- foot -->
+• $127$ •

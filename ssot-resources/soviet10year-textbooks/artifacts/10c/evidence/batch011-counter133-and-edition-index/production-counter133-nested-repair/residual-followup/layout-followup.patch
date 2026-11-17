@@ -1,0 +1,72 @@
+--- /Users/yong/.codex/worktrees/a07e/lemmadeck/.intentfold/tickets/STEMROBIN-184/tmp/production-counter133-nested-repair/residual-followup/original/layout.py
++++ /Users/yong/.codex/worktrees/a07e/lemmadeck/.claude/skills/ld-s10y-lesson/tools/layout.py
+@@ -453,8 +453,8 @@
+             region = band[bounds]
+             region[components[bounds] == component_id] = False
+     counts = band.sum(axis=1)
+-    remaining = np.flatnonzero(counts > max(8, 0.25 * counts.max()))
+     glyph_components, _ = ndimage.label(band)
++    residual_bounds = ndimage.find_objects(glyph_components)
+     original_decorations = {
+         component_id for component_id, bounds in enumerate(original_bounds, 1)
+         if bounds is not None
+@@ -462,7 +462,7 @@
+         and _original_arrow_decoration(original_components[bounds] == component_id, line_h)
+     }
+     glyph_bounds = []
+-    for component_id, bounds in enumerate(ndimage.find_objects(glyph_components), 1):
++    for component_id, bounds in enumerate(residual_bounds, 1):
+         if bounds is None:
+             continue
+         rows, columns = bounds
+@@ -485,6 +485,50 @@
+         # A detached delimiter end is wide only at its tip, not through its body.
+         if np.ptp(np.flatnonzero(central.any(axis=0))) + 1 >= 0.25 * height:
+             glyph_bounds.append((rows, columns))
++    # A remote short singleton is not evidence of a second formula body row.
++    # Keep connected source context and aligned peers; adjust only the projection.
++    support_spans = rules + [
++        (columns.start, columns.stop - 1) for _, columns in glyph_bounds
++    ]
++    context_bounds = ndimage.find_objects(limit_context)
++    for component_id, bounds in enumerate(residual_bounds, 1):
++        if bounds is None:
++            continue
++        rows, columns = bounds
++        if (
++            rows.stop - rows.start >= 0.6 * line_h
++            or columns.stop - columns.start >= 0.6 * line_h
++            or any(
++                columns.start <= right + 2 * line_h
++                and columns.stop - 1 >= left - 2 * line_h
++                for left, right in support_spans
++            )
++        ):
++            continue
++        original_ids = np.unique(
++            limit_context[bounds][glyph_components[bounds] == component_id]
++        )
++        if any(
++            box is not None
++            and (box[0].stop - box[0].start >= 0.6 * line_h
++                 or box[1].stop - box[1].start >= 0.6 * line_h)
++            for original_id in original_ids if original_id
++            for box in [context_bounds[original_id - 1]]
++        ):
++            continue
++        if any(
++            other_id != component_id
++            and 0.2 * line_h <= other_rows.stop - other_rows.start
++            and other_columns.stop - other_columns.start >= 0.15 * line_h
++            and columns.start <= other_columns.stop + 2 * line_h
++            and columns.stop >= other_columns.start - 2 * line_h
++            and max(rows.start, other_rows.start) < min(rows.stop, other_rows.stop)
++            for other_id, box in enumerate(residual_bounds, 1) if box is not None
++            for other_rows, other_columns in [box]
++        ):
++            continue
++        counts[rows] -= (glyph_components[bounds] == component_id).sum(axis=1)
++    remaining = np.flatnonzero(counts > max(8, 0.25 * counts.max()))
+     glyph_rows = [
+         row for rows, _ in glyph_bounds for row in (rows.start, rows.stop - 1)
+     ]

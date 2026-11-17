@@ -1,0 +1,40 @@
+--- /Users/yong/.codex/worktrees/a07e/lemmadeck/.intentfold/tickets/STEMROBIN-184/tmp/production-counter110-121/layout.after.py	2026-11-17 02:27:17
++++ /Users/yong/.codex/worktrees/a07e/lemmadeck/.claude/skills/ld-s10y-lesson/tools/layout.py	2026-11-17 02:43:10
+@@ -849,7 +849,15 @@
+                 min(prev_b - prev_a + 1, b - a + 1) >= 1.8 * glyph_h
+                 and not _single_fraction_row(ink, prev_a, b, glyph_h)
+             )
+-            if a - prev_b <= merge_gap and not separate_tall_rows:
++            # A nearby thin rule needs shared columns before a gap-only join.
++            disjoint_thin_fragment = (
++                min(prev_b - prev_a + 1, b - a + 1) <= 0.25 * min(line_h, glyph_h)
++                and not np.any(
++                    ink[prev_a:prev_b + 1].any(axis=0)
++                    & ink[a:b + 1].any(axis=0)
++                )
++            )
++            if a - prev_b <= merge_gap and not separate_tall_rows and not disjoint_thin_fragment:
+                 merged[-1] = (prev_a, b)
+                 continue
+         merged.append((a, b))
+@@ -902,6 +910,12 @@
+             )
+             connected_fraction = shared_strokes.size > 0 and _single_fraction_row(
+                 ink, prev_a, b, min(line_h, glyph_h)
++            )
++            detached_fraction = (
++                shared_strokes.size == 0
++                and a - prev_b <= 0.75 * min(line_h, glyph_h)
++                and b - prev_a + 1 <= 3.2 * min(line_h, glyph_h)
++                and _single_fraction_row(ink, prev_a, b, min(line_h, glyph_h))
+             )
+             carrier_row = _single_carrier_row(
+                 components, bounds_list, prev_a, b, min(line_h, glyph_h)
+@@ -918,6 +932,7 @@
+                 )
+                 or subscript_continues
+                 or connected_fraction
++                or detached_fraction
+                 or carrier_row
+             ):
+                 joined[-1] = (prev_a, b)

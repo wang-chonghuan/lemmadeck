@@ -1,0 +1,75 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10c",
+  "page": 117,
+  "printed_page": 111,
+  "source": {
+    "pdf": "10c 苏联十年制学校数学教材 代数和分析初步 十年级.pdf",
+    "pdf_sha256": "47b0358c5781f509ce35e0e22de13c6bb539b246099ade66e8856c9288954e40",
+    "pdf_page": 117
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1695,
+    "h": 2580,
+    "sha256": "0cb266fa62ecab5b0d5587233b13ee77e817179dea55d252181ef3b97c4b20bb"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "AUTHOR ONLY; physical 117, printed 111; original opened once at detail original. No finalization or independent review.",
+    "Leading p cont closes the introduction started on physical 116 at 如|下. All subsequent visible prose belongs to observed unit 101 under §20.",
+    "The two-row definition has a printed wavy underline. It is typographic emphasis, not a separate figure. The tall integral symbols and their limits remain within their actual text rows.",
+    "The last p open ends 于是，根据积分的定义*，如果 F'=f，那么. Its formula/result on physical 118 is unseen and UNKNOWN; unit 101 is not declared complete.",
+    "The four-row starred teaching footnote is fully visible and closed here; it is foot note, not a page footer and not a continuation of the unfinished main-text formula.",
+    "No figures or exercises appear on this page. No source mathematical correction or erratum is asserted."
+  ],
+  "errata": []
+}
+---
+
+<!-- p cont -->
+下：写出已知函数的原函数并计算原函数的改变量．以后你们
+将看到，其他许多问题的解答也会归结为这种计算．因为函
+数的原函数有无穷多个，那么很自然地出现一个问题，这种计
+算结果是否与原函数的选取有关呢？实际上是没有关系的．
+
+<!-- p -->
+事实上，设$F$和$\Phi$是函数$f$在区间$I$上的两个原函数，那么，
+由于原函数的基本性质，就有一个常数$C$，使得对于所有的
+$x\in I$，$\Phi(x)=F(x)+C$．于是，如果数$a$和$b$属于区间$I$，那么
+$\Phi(b)-\Phi(a)=F(b)+C-F(a)-C=F(b)-F(a)$，就是说，
+这两个原函数的改变量相等．
+
+<!-- p -->
+因此，原函数的改变量只决定于已知函数$f$与数$a$和$b$．
+
+<!-- p -->
+因为许多问题的解答归结为计算原函数的改变量，因此
+这种改变量具有专门的名称和符号．
+
+<!-- p -->
+定义　函数$f$的原函数的改变量$F(b)-F(a)$叫做函数
+$f$由$a$到$b$的积分．
+
+<!-- p -->
+函数$f$由$a$到$b$的积分记作$\int_a^b f(x)\,dx$．数$a$和$b$叫做积
+分限，$a$叫做下限，$b$叫做上限．符号$\int$叫做积分号．函数$f$叫
+做被积函数，而变量$x$叫做积分变量．端点为$a$和$b$的闭区
+间叫做积分区间．应当着重指出，积分上限$b$不一定大于积
+分下限$a$，既可能$a>b$，也可能$a=b$．
+
+<!-- p open -->
+于是，根据积分的定义*，如果$F'=f$，那么
+
+<!-- foot note -->
+*　在许多教材里，把具有给定积分限$a$和$b$的积分叫做“定积分”．因为
+在这些教材里，原函数或原函数的普遍形式$F(x)+C$叫做“不定积分”．于是，
+为了区别于“不定积分”，必须给予在我们通常意义下的积分以特殊的名称，也
+就是“定积分”．我们将不采用这个专门名词．
+
+<!-- foot -->
+• 111 •

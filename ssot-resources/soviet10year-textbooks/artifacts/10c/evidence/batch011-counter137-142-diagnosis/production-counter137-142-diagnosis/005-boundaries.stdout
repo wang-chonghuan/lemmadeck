@@ -1,0 +1,62 @@
+.intentfold/charter/engineering.md:208:## Redlines
+.intentfold/charter/engineering.md-209-
+.intentfold/charter/engineering.md-210-1. **Committing credentials, tokens, connection strings, or hidden account data** — forbidden
+.intentfold/charter/engineering.md-211-   outright, in source, mocks, ticket artifacts, and commits alike. Concretely: `.env` and `app/.env`
+.intentfold/charter/engineering.md-212-   never appear in `git status`'s staged set.
+.intentfold/charter/engineering.md-213-2. **Discarding a change already present in a dirty worktree** — forbidden outright. It is the
+.intentfold/charter/engineering.md-214-   human's work until they say otherwise.
+.intentfold/charter/engineering.md-215-3. **Sending an answer key to the client** — forbidden outright. The quiz question fetchers
+.intentfold/charter/engineering.md-216-   (`getLessonQuestions` / `getStoryQuestions` in `app/src/lib/quiz.ts`) must never include
+.intentfold/charter/engineering.md-217-   `correct_index`, `answer`, or `accept` in what they return; correctness is judged server-side in
+.intentfold/charter/engineering.md-218-   the `record*` server functions.
+.intentfold/charter/engineering.md-219-4. **Opening a database connection anywhere under `app/` other than `app/src/lib/db.ts`** —
+.intentfold/charter/engineering.md-220-   forbidden outright. A second `postgres` client, or a connection string reaching any file under
+.intentfold/charter/engineering.md-221-   `app/src/routes/` or any `.tsx`, is the crossing this names. Content scripts under
+.intentfold/charter/engineering.md-222-   `.agents/skills/` are node CLIs governed by entry 9.
+.intentfold/charter/engineering.md-223-5. **Adding, removing, or changing a dependency** — not without the human's explicit approval, and
+.intentfold/charter/engineering.md-224-   only when a ticket carries that decision.
+.intentfold/charter/engineering.md-225-6. **Hand-editing a generated file** — forbidden outright: `app/src/routeTree.gen.ts`, anything under
+.intentfold/charter/engineering.md-226-   `app/.output/`.
+.intentfold/charter/engineering.md-227-7. **Changing the DB schema anywhere other than `ssot-schemas/db-schemas/lemmadeck.sql`** —
+.intentfold/charter/engineering.md-228-   forbidden outright. Ad hoc `ALTER`/`CREATE` against the shared server is drift.
+.intentfold/charter/engineering.md-229-8. **Using a database connection other than `LEMMADECK_DATABASE_URL` for application or content
+.intentfold/charter/engineering.md-230-   access** — forbidden outright. `DATABASE_URL` and `EASYAPP_DATABASE_URL` are not aliases;
+.intentfold/charter/engineering.md-231-   same-named schemas on other servers are not the product database.
+.intentfold/charter/engineering.md-232-9. **A content script under `.agents/skills/` calling `postgres(` directly** — forbidden outright.
+.intentfold/charter/engineering.md-233-   Every content script connects through `.agents/skills/lib/content-db.mjs`.
+.intentfold/charter/engineering.md-234-10. **Adding a repo-root `package.json`, or a second application** — not without the human's explicit
+.intentfold/charter/engineering.md-235-    approval. The standalone-`app/` layout is what the root `Dockerfile` builds.
+.intentfold/charter/engineering.md-236-11. **Committing a product resource outside `ssot-resources/`, or making durable content depend on
+.intentfold/charter/engineering.md-237-    `.tmp/`** — forbidden outright. Code-owned schemas, profiles, dependency files and test fixtures
+.intentfold/charter/engineering.md-238-    remain beside code. `python3 ssot-resources/audit.py` is the mechanical boundary.
+--
+.intentfold/charter/operations.md:274:## Redlines
+.intentfold/charter/operations.md-275-
+.intentfold/charter/operations.md-276-1. **Recording a criterion as passed when its check did not run** — forbidden outright. An
+.intentfold/charter/operations.md-277-   environment or external limit that stopped the run is recorded exactly as it happened.
+.intentfold/charter/operations.md-278-2. **Writing to the real learner's data from a test** — forbidden outright. Tests use
+.intentfold/charter/operations.md-279-   `sr_users.id = 2`, never `sr_users.id = 1`.
+.intentfold/charter/operations.md-280-3. **Driving `https://lemmadeck.com` during acceptance** — forbidden outright. Signing in, clicking,
+.intentfold/charter/operations.md-281-   submitting, or any other write-capable interaction is prohibited; acceptance runs against
+.intentfold/charter/operations.md-282-   localhost. A read-only GET required by the post-deploy check is allowed.
+.intentfold/charter/operations.md-283-4. **Writing a real password, session secret, or DB connection string into a check script, ticket
+.intentfold/charter/operations.md-284-   artifact, or Charter file** — forbidden outright.
+.intentfold/charter/operations.md-285-5. **Running a destructive statement against `$LEMMADECK_DATABASE_URL`** — `DROP`, `TRUNCATE`, or an
+.intentfold/charter/operations.md-286-   unfiltered `DELETE`/`UPDATE` on any `sr_*` table — not without the human's explicit approval.
+.intentfold/charter/operations.md-287-6. **Creating or deleting cloud resources** — not without the human's explicit approval. Routine
+.intentfold/charter/operations.md-288-   Render releases update only the existing approved service.
+.intentfold/charter/operations.md-289-7. **Deploying for the first time** — not without the human's explicit approval.
+.intentfold/charter/operations.md-290-8. **A deploy that changes more than the image's application code** — not without the human's
+.intentfold/charter/operations.md-291-   explicit approval. This includes a schema statement run against the live database; a root
+.intentfold/charter/operations.md-292-   `Dockerfile` or `infra/` change; a required environment key the container does not already have;
+.intentfold/charter/operations.md-293-   or an ingress or scaling configuration change. Editing the descriptive DDL file without applying
+.intentfold/charter/operations.md-294-   a schema statement is not itself a runtime change.
+.intentfold/charter/operations.md-295-9. **Moving the root `Dockerfile`, or changing its build context away from the repo root** —
+.intentfold/charter/operations.md-296-   forbidden outright.
+.intentfold/charter/operations.md-297-10. **Allowing the production web service to scale to zero or sleep when idle** — forbidden
+.intentfold/charter/operations.md-298-    outright; retain the always-on single-instance baseline.
+.intentfold/charter/operations.md-299-11. **Pointing a production domain at anything new, or changing the `lemmadeck.com` Cloudflare
+.intentfold/charter/operations.md-300-    records or proxy state** — not without the human's explicit approval.
+.intentfold/charter/operations.md-301-12. **Reporting a deploy as done without running the post-deploy check** — forbidden outright.
+.intentfold/charter/operations.md-302-13. **Any action incurring new recurring cost, or a one-off cost above $5** — not without the
+.intentfold/charter/operations.md-303-    human's explicit approval.

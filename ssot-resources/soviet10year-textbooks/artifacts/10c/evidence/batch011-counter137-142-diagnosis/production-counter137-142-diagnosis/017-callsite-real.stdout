@@ -1,0 +1,141 @@
+.claude/skills/ld-s10y-lesson/tools/layout.py-1046-            if carrier_columns.start - 0.5 * glyph_h <= columns.start
+.claude/skills/ld-s10y-lesson/tools/layout.py-1047-            and columns.stop <= carrier_columns.stop + glyph_h
+.claude/skills/ld-s10y-lesson/tools/layout.py-1048-        ]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1049-        if not nearest:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1050-            return False
+.claude/skills/ld-s10y-lesson/tools/layout.py-1051-        key = (nearest[0], rows.stop < top)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1052-        limits[key] = limits.get(key, 0) + 1
+.claude/skills/ld-s10y-lesson/tools/layout.py-1053-        if limits[key] > 2:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1054-            return False
+.claude/skills/ld-s10y-lesson/tools/layout.py-1055-    return True
+.claude/skills/ld-s10y-lesson/tools/layout.py-1056-
+.claude/skills/ld-s10y-lesson/tools/layout.py-1057-
+.claude/skills/ld-s10y-lesson/tools/layout.py:1058:def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1059-    """Count printed rows after masking model-identified figures."""
+.claude/skills/ld-s10y-lesson/tools/layout.py-1060-    # Work on a counting-only copy; extraction pixels are never changed.
+.claude/skills/ld-s10y-lesson/tools/layout.py-1061-    ink = ink.copy()
+.claude/skills/ld-s10y-lesson/tools/layout.py-1062-    edge = max(1, int(ink.shape[1] * 0.01))
+.claude/skills/ld-s10y-lesson/tools/layout.py-1063-    ink[:, :edge] = False
+.claude/skills/ld-s10y-lesson/tools/layout.py-1064-    ink[:, -edge:] = False
+.claude/skills/ld-s10y-lesson/tools/layout.py-1065-    raw = _row_fragments(ink, content_w)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1066-    if not raw:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1067-        return []
+.claude/skills/ld-s10y-lesson/tools/layout.py-1068-    line_h = int(np.median([b - a + 1 for a, b in raw]))
+.claude/skills/ld-s10y-lesson/tools/layout.py-1069-    components, _ = ndimage.label(ink)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1070-    bounds_list = ndimage.find_objects(components)
+--
+.claude/skills/ld-s10y-lesson/tools/layout.py-1477-    boxes = ndimage.find_objects(labels)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1478-    selected = []
+.claude/skills/ld-s10y-lesson/tools/layout.py-1479-    for lab in np.flatnonzero(inside[1:]) + 1:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1480-        if inside[lab] < SNAP_OVERLAP * sizes[lab]:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1481-            continue
+.claude/skills/ld-s10y-lesson/tools/layout.py-1482-        sy, sx = boxes[lab - 1]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1483-        if (sy.stop - sy.start) > 0.9 * H or (sx.stop - sx.start) > 0.9 * W:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1484-            continue
+.claude/skills/ld-s10y-lesson/tools/layout.py-1485-        selected.append(int(lab))
+.claude/skills/ld-s10y-lesson/tools/layout.py-1486-    return labels, selected, boxes
+.claude/skills/ld-s10y-lesson/tools/layout.py-1487-
+.claude/skills/ld-s10y-lesson/tools/layout.py-1488-
+.claude/skills/ld-s10y-lesson/tools/layout.py:1489:def figure_ink(ink: np.ndarray, box: list[int]) -> np.ndarray:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1490-    """Use the same component ownership as snapping, not the rectangular envelope."""
+.claude/skills/ld-s10y-lesson/tools/layout.py-1491-    labels, selected, _ = _figure_components(ink, box)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1492-    return np.isin(labels, selected)
+.claude/skills/ld-s10y-lesson/tools/layout.py-1493-
+.claude/skills/ld-s10y-lesson/tools/layout.py-1494-
+.claude/skills/ld-s10y-lesson/tools/layout.py-1495-def figure_crop_exclusion(
+.claude/skills/ld-s10y-lesson/tools/layout.py-1496-    ink: np.ndarray, owned: np.ndarray, box: list[int]
+.claude/skills/ld-s10y-lesson/tools/layout.py-1497-) -> np.ndarray | None:
+.claude/skills/ld-s10y-lesson/tools/layout.py-1498-    """Remove foreign component edges captured by a snapped figure envelope."""
+.claude/skills/ld-s10y-lesson/tools/layout.py-1499-    x, y, w, h = box
+.claude/skills/ld-s10y-lesson/tools/layout.py-1500-    foreign = ink & ~owned
+.claude/skills/ld-s10y-lesson/tools/layout.py-1501-    if not foreign[max(0, y):y + h, max(0, x):x + w].any():
+--
+.claude/skills/ld-s10y-lesson/tools/p2c.py-225-
+.claude/skills/ld-s10y-lesson/tools/p2c.py-226-# ---------------------------------------------------------------- cap1 备料
+.claude/skills/ld-s10y-lesson/tools/p2c.py-227-def cmd_prepare(a) -> int:
+.claude/skills/ld-s10y-lesson/tools/p2c.py-228-    pdf = _find_pdf(a)
+.claude/skills/ld-s10y-lesson/tools/p2c.py-229-    pdir = _work_page_dir(a, a.page)
+.claude/skills/ld-s10y-lesson/tools/p2c.py-230-    pdir.mkdir(parents=True, exist_ok=True)
+.claude/skills/ld-s10y-lesson/tools/p2c.py-231-
+.claude/skills/ld-s10y-lesson/tools/p2c.py-232-    png = layout.render_page(pdf, a.page, pdir / "page.png", dpi=a.dpi)
+.claude/skills/ld-s10y-lesson/tools/p2c.py-233-    layout.grid_overlay(png, pdir / "page.grid.png")
+.claude/skills/ld-s10y-lesson/tools/p2c.py-234-    img = Image.open(png)
+.claude/skills/ld-s10y-lesson/tools/p2c.py-235-    ink = layout.ink_mask(img)
+.claude/skills/ld-s10y-lesson/tools/p2c.py-236-    cols = ink.any(axis=0).nonzero()[0]
+.claude/skills/ld-s10y-lesson/tools/p2c.py:237:    content_w = int(cols[-1] - cols[0] + 1) if cols.size else img.width
+.claude/skills/ld-s10y-lesson/tools/p2c.py:238:    bands = layout.line_bands(ink, content_w)
+.claude/skills/ld-s10y-lesson/tools/p2c.py-239-
+.claude/skills/ld-s10y-lesson/tools/p2c.py-240-    profile = json.loads(DEFAULT_PROFILE.read_text(encoding="utf-8"))
+.claude/skills/ld-s10y-lesson/tools/p2c.py-241-    meta = {
+.claude/skills/ld-s10y-lesson/tools/p2c.py-242-        "schema": "ld-s10y-lesson/page@3", "book": a.book, "page": a.page,
+.claude/skills/ld-s10y-lesson/tools/p2c.py-243-        "printed_page": None,
+.claude/skills/ld-s10y-lesson/tools/p2c.py-244-        "source": {"pdf": pdf.name, "pdf_sha256": layout.sha256_file(pdf),
+.claude/skills/ld-s10y-lesson/tools/p2c.py-245-                   "pdf_page": a.page},
+.claude/skills/ld-s10y-lesson/tools/p2c.py-246-        "render": {"dpi": a.dpi, "w": img.width, "h": img.height,
+.claude/skills/ld-s10y-lesson/tools/p2c.py-247-                   "sha256": layout.sha256_file(png)},
+.claude/skills/ld-s10y-lesson/tools/p2c.py-248-        "profile": {"id": profile["id"], "sha256": layout.sha256_file(DEFAULT_PROFILE)},
+.claude/skills/ld-s10y-lesson/tools/p2c.py-249-        "notes": [],
+.claude/skills/ld-s10y-lesson/tools/p2c.py-250-        "errata": [],
+--
+.claude/skills/ld-s10y-lesson/tools/p2c.py-307-        b["box"] = box
+.claude/skills/ld-s10y-lesson/tools/p2c.py-308-        figs.append({"id": b["id"], "label": b.get("label"), "box": box, **info})
+.claude/skills/ld-s10y-lesson/tools/p2c.py-309-        if info.get("components", 0) == 0:
+.claude/skills/ld-s10y-lesson/tools/p2c.py-310-            errors.append(f"{b['id']}: 粗框里没有完整连通域，框可能给错了")
+.claude/skills/ld-s10y-lesson/tools/p2c.py-311-    neighbours = {f["id"]: [] for f in figs}
+.claude/skills/ld-s10y-lesson/tools/p2c.py-312-    owned_ink = {}
+.claude/skills/ld-s10y-lesson/tools/p2c.py-313-    for i in range(len(figs)):
+.claude/skills/ld-s10y-lesson/tools/p2c.py-314-        for j in range(i + 1, len(figs)):
+.claude/skills/ld-s10y-lesson/tools/p2c.py-315-            (x1, y1, w1, h1), (x2, y2, w2, h2) = figs[i]["box"], figs[j]["box"]
+.claude/skills/ld-s10y-lesson/tools/p2c.py-316-            if x1 < x2 + w2 and x2 < x1 + w1 and y1 < y2 + h2 and y2 < y1 + h1:
+.claude/skills/ld-s10y-lesson/tools/p2c.py-317-                for f in (figs[i], figs[j]):
+.claude/skills/ld-s10y-lesson/tools/p2c.py-318-                    if f["id"] not in owned_ink:
+.claude/skills/ld-s10y-lesson/tools/p2c.py:319:                        owned_ink[f["id"]] = layout.figure_ink(ink, f.get("from", f["box"]))
+.claude/skills/ld-s10y-lesson/tools/p2c.py-320-                if (owned_ink[figs[i]["id"]] & owned_ink[figs[j]["id"]]).any():
+.claude/skills/ld-s10y-lesson/tools/p2c.py-321-                    errors.append(f"{figs[i]['id']} 与 {figs[j]['id']} 认领同一连通域，"
+.claude/skills/ld-s10y-lesson/tools/p2c.py-322-                                  "同一块墨迹会被裁两次")
+.claude/skills/ld-s10y-lesson/tools/p2c.py-323-                else:
+.claude/skills/ld-s10y-lesson/tools/p2c.py-324-                    neighbours[figs[i]["id"]].append(figs[j]["id"])
+.claude/skills/ld-s10y-lesson/tools/p2c.py-325-                    neighbours[figs[j]["id"]].append(figs[i]["id"])
+.claude/skills/ld-s10y-lesson/tools/p2c.py-326-    for f in figs:
+.claude/skills/ld-s10y-lesson/tools/p2c.py-327-        exclude = None
+.claude/skills/ld-s10y-lesson/tools/p2c.py-328-        if f["id"] not in owned_ink:
+.claude/skills/ld-s10y-lesson/tools/p2c.py:329:            owned_ink[f["id"]] = layout.figure_ink(ink, f.get("from", f["box"]))
+.claude/skills/ld-s10y-lesson/tools/p2c.py-330-        if neighbours[f["id"]]:
+.claude/skills/ld-s10y-lesson/tools/p2c.py-331-            exclude = owned_ink[neighbours[f["id"]][0]].copy()
+.claude/skills/ld-s10y-lesson/tools/p2c.py-332-            for neighbour in neighbours[f["id"]][1:]:
+.claude/skills/ld-s10y-lesson/tools/p2c.py-333-                exclude |= owned_ink[neighbour]
+.claude/skills/ld-s10y-lesson/tools/p2c.py-334-            # Remove neighbour antialiasing without changing any owned ink pixel.
+.claude/skills/ld-s10y-lesson/tools/p2c.py-335-            exclude = ndimage.binary_dilation(exclude, iterations=2) & ~owned_ink[f["id"]]
+.claude/skills/ld-s10y-lesson/tools/p2c.py-336-            f["ownership"] = {
+.claude/skills/ld-s10y-lesson/tools/p2c.py-337-                "method": "snapped-components",
+.claude/skills/ld-s10y-lesson/tools/p2c.py-338-                "neighbours": neighbours[f["id"]],
+.claude/skills/ld-s10y-lesson/tools/p2c.py-339-                "ink_pixels": int(owned_ink[f["id"]].sum()),
+.claude/skills/ld-s10y-lesson/tools/p2c.py-340-                "ink_sha256": hashlib.sha256(owned_ink[f["id"]].tobytes()).hexdigest(),
+.claude/skills/ld-s10y-lesson/tools/p2c.py-341-            }
+--
+.claude/skills/ld-s10y-lesson/tools/p2c.py-357-
+.claude/skills/ld-s10y-lesson/tools/p2c.py-358-    # 2) 行数对账：挖掉插图后的印刷行数 == 块体行数。页级唯一的完整性硬证据。
+.claude/skills/ld-s10y-lesson/tools/p2c.py-359-    masked = ink.copy()
+.claude/skills/ld-s10y-lesson/tools/p2c.py-360-    for f in figs:
+.claude/skills/ld-s10y-lesson/tools/p2c.py-361-        x, y, w, h = f["box"]
+.claude/skills/ld-s10y-lesson/tools/p2c.py-362-        masked[max(0, y):y + h, max(0, x):x + w] = False
+.claude/skills/ld-s10y-lesson/tools/p2c.py-363-    exclusions = meta.get("count_exclusions", [])
+.claude/skills/ld-s10y-lesson/tools/p2c.py-364-    try:
+.claude/skills/ld-s10y-lesson/tools/p2c.py-365-        masked = layout.counting_ink(masked, exclusions)
+.claude/skills/ld-s10y-lesson/tools/p2c.py-366-    except ValueError as error:
+.claude/skills/ld-s10y-lesson/tools/p2c.py-367-        errors.append(str(error))
+.claude/skills/ld-s10y-lesson/tools/p2c.py-368-    cols = ink.any(axis=0).nonzero()[0]
+.claude/skills/ld-s10y-lesson/tools/p2c.py:369:    content_w = int(cols[-1] - cols[0] + 1) if cols.size else img.width
+.claude/skills/ld-s10y-lesson/tools/p2c.py:370:    want = len(layout.line_bands(masked, content_w))
+.claude/skills/ld-s10y-lesson/tools/p2c.py-371-    got = B.printed_lines(blks)
+.claude/skills/ld-s10y-lesson/tools/p2c.py-372-    if want != got:
+.claude/skills/ld-s10y-lesson/tools/p2c.py-373-        errors.append(f"行数对不上：印刷 {want} 行，块体 {got} 行"
+.claude/skills/ld-s10y-lesson/tools/p2c.py-374-                      "（块体一行 = 印刷一行；公式跨行用 ↵ 标断点）")
+.claude/skills/ld-s10y-lesson/tools/p2c.py-375-
+.claude/skills/ld-s10y-lesson/tools/p2c.py-376-    # 3) 规范化 + 字符 + 公式 + 小问标号
+.claude/skills/ld-s10y-lesson/tools/p2c.py-377-    applied = []
+.claude/skills/ld-s10y-lesson/tools/p2c.py-378-    for b in blks:
+.claude/skills/ld-s10y-lesson/tools/p2c.py-379-        for i, ln in enumerate(b["lines"]):
+.claude/skills/ld-s10y-lesson/tools/p2c.py-380-            new, ch = nz.normalize_text(ln, profile)
+.claude/skills/ld-s10y-lesson/tools/p2c.py-381-            if new != ln:
+.claude/skills/ld-s10y-lesson/tools/p2c.py-382-                b["lines"][i] = new
