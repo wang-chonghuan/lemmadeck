@@ -582,6 +582,25 @@ def normalize_prose_layout(text: str) -> str:
         if trailing and text[match.end() + trailing.end():].strip():
             boundaries.add(match.end() + trailing.end())
 
+    # Keep closing emphasis with its sentence, including nested closing runs.
+    emphasis = []
+    closing_ends = {}
+    for match in re.finditer(r"(?<![\\*])\*+", masked):
+        remaining = len(match.group())
+        if (
+            match.start() and not text[match.start() - 1].isspace()
+            and (
+                remaining <= sum(emphasis)
+                or text[match.start() - 1] in "。！？；;"
+            )
+        ):
+            while emphasis and remaining >= emphasis[-1]:
+                remaining -= emphasis.pop()
+        closing_ends[match.start()] = match.end() - remaining
+        if remaining:
+            emphasis.append(remaining)
+    boundaries = {closing_ends.get(end, end) for end in boundaries}
+
     lines = []
     start = 0
     for end in sorted(boundaries):
