@@ -23,16 +23,63 @@ const escProseText = (text) => {
   return (out + esc(text.slice(last))).replace(/\r?\n/g, "<br>")
 }
 // 还原转写中的黑体和强调标记，不改变正文。
-const strong = (h) => h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-  .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, "<em>$1</em>")
+const strong = (h) => h.replace(
+  /(?<![\\*])(\*{1,3})(?!\*)([\s\S]+?)(?<![\\*])\1(?!\*)/g,
+  (_, marker, body) => {
+    const content = strong(body)
+    if (marker === "***") return `<em><strong>${content}</strong></em>`
+    return marker === "**" ? `<strong>${content}</strong>` : `<em>${content}</em>`
+  },
+)
 const MATH = /\$\$(.+?)\$\$|\$([^$]+?)\$/gs
+const SOURCE_TAG = /<\/?[A-Za-z](?:[^<>"']|"[^"]*"|'[^']*')*>/g
+const INLINE_TOKEN = new RegExp(`${MATH.source}|${SOURCE_TAG.source}`, "gs")
+const SOURCE_DOTS = /^<span\s+style=(["'])\s*(text-emphasis-style\s*:\s*dot|text-emphasis\s*:\s*filled\s+dot)\s*;\s*text-emphasis-position\s*:\s*under\s*;\s*\1\s*>$/
+function sourceTagHtml(tag) {
+  if (/^<\/?(?:strong|em)>$/.test(tag) || tag === "</span>") return tag
+  const dots = tag.match(SOURCE_DOTS)
+  if (!dots) return null
+  const style = dots[2].startsWith("text-emphasis-style")
+    ? "text-emphasis-style: dot" : "text-emphasis: filled dot"
+  return `<span style="${style}; text-emphasis-position: under;">`
+}
 // 公式后面紧跟的标点要与公式绑在一起，否则 `$…$;` 的分号会被甩到下一行
 const TRAIL = /^[;,.、，。：:！!？?)）\]]+/
 
 function renderInline(text, renderText) {
+  const tokens = [...text.matchAll(INLINE_TOKEN)]
+  const allowedTags = new Map(), stack = []
+  for (const token of tokens) {
+    if (!token[0].startsWith("<")) continue
+    const name = token[0].match(/^<(\/?)(span|strong|em)\b/i)
+    if (!name) continue
+    const html = sourceTagHtml(token[0])
+    if (!name[1]) {
+      stack.push({ name: name[2].toLowerCase(), token, html })
+    } else if (stack.at(-1)?.name === name[2].toLowerCase()) {
+      const opening = stack.pop()
+      if (opening.html && html) {
+        allowedTags.set(opening.token.index, opening.html)
+        allowedTags.set(token.index, html)
+      }
+    }
+  }
+  // Keep source tags and rendered KaTeX opaque to Markdown and Latin-token processing.
+  let marker = "\0"
+  while (text.includes(marker)) marker += "\0"
+  const fragments = []
+  const protect = (html) => {
+    fragments.push(html)
+    return `${marker}${fragments.length - 1}${marker}`
+  }
   let out = "", last = 0
-  for (const m of text.matchAll(MATH)) {
+  for (const m of tokens) {
     out += renderText(text.slice(last, m.index))
+    if (m[0].startsWith("<")) {
+      out += protect(allowedTags.get(m.index) ?? escText(m[0]))
+      last = m.index + m[0].length
+      continue
+    }
     const tex = m[1] ?? m[2]
     let html
     try {
@@ -43,9 +90,12 @@ function renderInline(text, renderText) {
     last = m.index + m[0].length
     const t = (text.slice(last).match(TRAIL) || [""])[0]
     last += t.length
-    out += `<span class="sr-nb">${html}${esc(t)}</span>`
+    out += protect(`<span class="sr-nb">${html}${esc(t)}</span>`)
   }
-  return strong(out + renderText(text.slice(last)))
+  return strong(out + renderText(text.slice(last))).replace(
+    new RegExp(`${marker}(\\d+)${marker}`, "g"),
+    (_, index) => fragments[Number(index)],
+  )
 }
 
 const inline = (text) => renderInline(text, escText)

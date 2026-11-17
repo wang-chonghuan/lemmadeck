@@ -493,11 +493,59 @@ def normalize_prose_layout(text: str) -> str:
     """Create short paragraphs while keeping complete sentences and formulas legible."""
     if not isinstance(text, str):
         return text
-    text = re.sub(r"[\t \u3000]+", " ", text.replace("\r\n", "\n")).strip()
+    tag = re.compile(r"""</?[A-Za-z](?:[^<>"']|"[^"]*"|'[^']*')*>""")
+    protected = re.compile(MATH.pattern + "|" + tag.pattern, re.S)
+
+    def layout_space(value: str, flatten: bool = False) -> str:
+        parts = []
+        start = 0
+        for match in protected.finditer(value):
+            plain = value[start:match.start()].replace("\r\n", "\n")
+            plain = re.sub(r"[\t \u3000]+", " ", plain)
+            parts.append(re.sub(r"\s*\n\s*", " ", plain) if flatten else plain)
+            parts.append(match.group())
+            start = match.end()
+        plain = value[start:].replace("\r\n", "\n")
+        plain = re.sub(r"[\t \u3000]+", " ", plain)
+        parts.append(re.sub(r"\s*\n\s*", " ", plain) if flatten else plain)
+        return "".join(parts).strip()
+
+    def mask(value: str) -> str:
+        return tag.sub(
+            lambda match: " " * len(match.group()), masked_math(value),
+        )
+
+    def paragraph_parts(value: str) -> list[str]:
+        parts = []
+        start = 0
+        for match in re.finditer(r"\n *\n(?: *\n)*", mask(value)):
+            parts.append(value[start:match.start()].strip())
+            start = match.end()
+        parts.append(value[start:].strip())
+        return [part for part in parts if part]
+
+    text = layout_space(text)
     if not text:
         return text
 
-    masked = masked_math(text)
+    masked = mask(text)
+    # Only lift a whole-block wrapper, not separate or nested inline emphasis.
+    wrapper = re.fullmatch(r"(\*{1,3})(?!\*)([\s\S]+?)(?<![\\*])\1", masked)
+    if wrapper:
+        marker = wrapper.group(1)
+        inner_markers = re.findall(r"(?<![\\*])\*+", wrapper.group(2))
+        if not inner_markers or (
+            marker in {"*", "**"}
+            and all(run == ("**" if marker == "*" else "*") for run in inner_markers)
+            and len(inner_markers) % 2 == 0
+        ):
+            body = normalize_prose_layout(text[len(marker):-len(marker)])
+            return "\n\n".join(marker + part + marker for part in paragraph_parts(body))
+
+    parts = paragraph_parts(text)
+    if len(parts) > 1:
+        return "\n\n".join(normalize_prose_layout(part) for part in parts)
+
     depths = nesting_depths(masked)
     boundaries = set()
     for index, char in enumerate(masked):
@@ -537,11 +585,11 @@ def normalize_prose_layout(text: str) -> str:
     lines = []
     start = 0
     for end in sorted(boundaries):
-        line = re.sub(r"\s*\n\s*", " ", text[start:end]).strip()
+        line = layout_space(text[start:end], flatten=True)
         if line:
             lines.append(line)
         start = end
-    tail = re.sub(r"\s*\n\s*", " ", text[start:]).strip()
+    tail = layout_space(text[start:], flatten=True)
     if tail:
         lines.append(tail)
 
@@ -549,6 +597,7 @@ def normalize_prose_layout(text: str) -> str:
     current = []
     current_chars = 0
     for line in lines:
+        line_chars = len(tag.sub("", line))
         bare = line.rstrip("，,；;。.!！?？")
         standalone_formula = bool(MATH.fullmatch(bare))
         attaches_to_previous = bool(
@@ -559,13 +608,13 @@ def normalize_prose_layout(text: str) -> str:
             )
         )
         if current and not attaches_to_previous and (
-            len(current) >= 3 or current_chars + len(line) > 180
+            len(current) >= 3 or current_chars + line_chars > 180
         ):
             paragraphs.append(current)
             current = []
             current_chars = 0
         current.append(line)
-        current_chars += len(line)
+        current_chars += line_chars
     if current:
         paragraphs.append(current)
     return "\n\n".join("\n".join(paragraph) for paragraph in paragraphs)

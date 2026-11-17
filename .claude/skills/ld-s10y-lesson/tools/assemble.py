@@ -659,6 +659,9 @@ def check_toc(lessons: list[dict], toc_path: Path, book_id: str,
         card for card in valid_cards if _card_printed_number(card) is None
     ]
     for l in lessons:
+        # A boundary fragment has no printed title to claim a TOC card.
+        if l["printed_title"] is None and l["title"] == "（承上页）":
+            continue
         if l["number"]:
             by_num = [
                 card

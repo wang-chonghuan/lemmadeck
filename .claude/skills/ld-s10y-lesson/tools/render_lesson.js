@@ -15,7 +15,7 @@ const fs = require("fs");
 const path = require("path");
 const katex = require("katex");
 const { spawnSync } = require("node:child_process");
-const { proseFlow } = require("./htmlfrag.js");
+const { proseFlow, proseInline: sharedProseInline } = require("./htmlfrag.js");
 const { sourceNumberForArtifact } = require("./publish_merge.js");
 const { choiceHtml } = require("./choice_html.mjs");
 
@@ -55,16 +55,6 @@ function katexCss() {
 
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const escText = (s) => esc(s).replace(/\r?\n/g, "<br>");
-const PROSE_MATH = /[A-Za-z0-9]+(?:\.[0-9]+)*/g;
-const escProseText = (text) => {
-  let out = "", last = 0;
-  for (const match of text.matchAll(PROSE_MATH)) {
-    out += esc(text.slice(last, match.index));
-    out += `<span class="prose-math">${esc(match[0])}</span>`;
-    last = match.index + match[0].length;
-  }
-  return (out + esc(text.slice(last))).replace(/\r?\n/g, "<br>");
-};
 // 还原转写中的黑体和强调标记，不改变正文。
 const strong = (h) => h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
   .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, "<em>$1</em>");
@@ -90,7 +80,10 @@ function renderInline(text, renderText) {
 }
 
 const inline = (text) => renderInline(text, escText);
-const proseInline = (text) => renderInline(text, escProseText);
+const proseInline = (text) => sharedProseInline(text)
+  .replace(/class="sr-prose-math"/g, 'class="prose-math"')
+  .replace(/class="sr-nb"/g, 'class="nb"')
+  .replace(/class="sr-tex-err"/g, 'class="err"');
 
 function figureContract(contentRoot, id, strictEdition, manifest) {
   const fallback = {

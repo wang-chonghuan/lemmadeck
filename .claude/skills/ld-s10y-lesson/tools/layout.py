@@ -341,11 +341,20 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         area = np.count_nonzero(ink[bounds])
         clearance = int(2 * glyph_h)
         margin_blot = (
-            (columns.stop <= 0.04 * ink.shape[1]
-             or columns.start >= 0.96 * ink.shape[1])
+            (columns.stop <= 0.05 * ink.shape[1]
+             or columns.start >= 0.95 * ink.shape[1])
             and 0.45 * glyph_h <= height <= 1.3 * glyph_h
             and 0.8 * height <= width <= 1.4 * height
-            and area >= 0.6 * width * height
+            and (
+                area >= 0.6 * width * height
+                or (
+                    area >= 0.35 * width * height
+                    and not np.any(
+                        ndimage.binary_fill_holes(margin_clusters[bounds] > 0)
+                        & (margin_clusters[bounds] == 0)
+                    )
+                )
+            )
             and np.count_nonzero(ink[
                 max(0, rows.start - clearance):rows.stop + clearance,
                 max(0, columns.start - clearance):columns.stop + clearance,
