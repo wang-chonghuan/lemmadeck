@@ -66,8 +66,13 @@ const TRAIL = /^[;,.、，。：:！!？?)）\]]+/;
 function renderInline(text, renderText) {
   let out = "", last = 0;
   for (const m of text.matchAll(MATH)) {
-    out += renderText(text.slice(last, m.index));
     const tex = m[1] ?? m[2];
+    const preceding = text.slice(last, m.index);
+    // Keep a metric unit attached to a following superscript, including products.
+    const unit = !m[1] && /^\^(?:\d|\{\d+\})/.test(tex)
+      ? (preceding.match(/(?:千米|分米|厘米|毫米|微米|纳米|米)$/) || [""])[0]
+      : "";
+    out += renderText(preceding.slice(0, preceding.length - unit.length));
     let html;
     try {
       html = katex.renderToString(tex, { displayMode: !!m[1], throwOnError: false });
@@ -75,7 +80,7 @@ function renderInline(text, renderText) {
     last = m.index + m[0].length;
     const t = (text.slice(last).match(TRAIL) || [""])[0];
     last += t.length;
-    out += `<span class="nb">${html}${esc(t)}</span>`;
+    out += `<span class="nb">${renderText(unit)}${html}${esc(t)}</span>`;
   }
   return strong(out + renderText(text.slice(last)));
 }
@@ -196,7 +201,7 @@ li.ex .body .fig[data-figure-layout="scroll"] .figure-media{
 function page(title, crumb, bodyHtml) {
   return `<!DOCTYPE html><meta charset="utf-8"><title>${esc(title)}</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<style>${CSS}</style><div class="sheet"><h1>${esc(title)}</h1>
+<style>${CSS}</style><div class="sheet"><h1>${inline(title)}</h1>
 <div class="crumb">${esc(crumb)}</div>${bodyHtml}</div>`;
 }
 
