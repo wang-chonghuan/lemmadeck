@@ -1,5 +1,121 @@
 # 当前开发状态
 
+### batch196 n4有限显示收口
+
+- Hume当前持久绑定及唯一direct exit0直接复用，未重数学或三图审。
+  Turing已见桌面/手机绘图区/右边界PASS与Newton当前顶部Q/y
+  有限PASS合并留存；原exit1、旧取景FAIL和全部PNG原字节保留。
+- 原实际DOM三图640px、最小字18px、1440/390右端可达exit0不重跑。
+  仅解除当前选定包display_pending，不批准手机左侧/底部、
+  另两图静态全貌、全题/交互、独立绘图、APP或整课。
+  n4九源九题38项计一次，73组选定包1183题4728项618组合。
+- c3-ex当前Huygens真实有限PASS已留存，Russell仍仅零图持久绑定；
+  51源60题200项暂不计新批准。所有旧FAIL/revise/exit2保留。
+- n51 Faraday原包装器set容器错误exit2保留，随后仅更正容器
+  补已缺direct check_draft/check_review：结构通过、semantic revise
+  实际exit3；10题56项数学复用，852零覆盖仍局部HOLD。
+  父0新图/累计24，source32、九排除源及881审批均不解除。
+
+### batch194 n4首次显示受影响修复
+
+- Hume真实completed：四份当前持久标准绑定已完成，
+  choice review SHA
+  `6294a98f901d121dac3cc22aa9943d6ff264b2eaba6a68a695159090145bca0e`，
+  三gate各一次exit0，唯一direct with-review exit0。
+  原Rawls/Pascal/Hilbert证据继承，数学/三图不重复验审。
+- n4首次choices-only render通过，但首次1440/390显示
+  实际exit1：new_figures缺display包装，三个640图缩为
+  480/358px，最小字13.5/10.06875px。原失败HTML、
+  两PNG与受影响媒体receipt原字节保留，不用DOM掩盖失败。
+- 按明确授权仅修现有render_lesson.js的new_figures
+  实际spec.display读取，复用figureContract/figureOpen
+  及原scroll CSS；缺失/无效display真实失败，原realpath
+  持久路径防护保留。没有新PASS/哈希审批器，不改app、
+  CSS、spec、SVG、数学、view、key、依赖或Charter。
+- 只重生成受影响n4 choices到display-repair，媒体DOM
+  两视口实际exit0：三图均640px、最小字18px、横滚右端可达。
+  当前两PNG只待fresh有界静态观察，父0开图/累计24。
+  当前display_pending仍true，不加全题图、重数学或旧图审。
+- Huygens仅514单图/审查抄录，Faraday仅n51零图首独审；
+  在途稿冻结。独立绘图、未见/交互、source32、九源HOLD、
+  881真正审批和整课/整组未批准边界均保持。
+
+### batch193 c3-ex L2单标签与审查抄录
+
+- Mill实际completed，513标准gate真实PASS，514的L1/比例修复
+  通过但L2仍穿字，标准gate真实FAIL。原choice review
+  `290d0d15c4821b6fa0ab98611ad5d3819135322a476de086208ac1c32fe5cec1`
+  的唯一with-review exit2：继承q494正确项a误录为b，
+  是审查抄录错误，不是作者数学失败，原报告完整保留。
+- 只改514的L2-label锚点与placement，其他全部spec字段、
+  题面、key、coverage和basis不变；一次当前render PASS，
+  从当前SVG生成一张640预览，没有重render或复看513/旧FAIL图。
+  新候选与现有513有效gate冻结，51源60题200项尚未批准。
+- Huygens实际接入最小1图独审及q494记录继承核对，
+  入口SHA
+  `5388515c72b64c662938f5d998e0b8b2c9f94bd4abf162a72f4502f49a43f357`。
+  未变数学取Bernoulli/Hilbert真实记录精确diff继承，
+  不把Mill exit2的错误抄录当批准，不重解14项或56题186项。
+- Erdos83新草稿唯一draft exit0，物种/无艺术/显示HOLD保留；
+  87唯一draft exit2，闭合轮廓与精确曲线缺失原样保留，
+  不猜半圆/半径/面积，不再扩派或渲染。两新spec不是图审PASS。
+  九源HOLD、881真实审批及父0新图/累计24边界保持。
+
+### batch192 n4真实PASS持久留存
+
+- Rawls实际completed，九misconception及选定包影响限定PASS，
+  原review SHA
+  `3e2847098ad9a5ec53da94e147ed83a0d83a9d8e52c649f5fb5194a19142a0e6`，
+  唯一直接with-review exit0；其余Pascal/Hilbert证据精确diff继承。
+  父方没有重数学、规范、SOURCE、trace或三图审查。
+- 当前9源9题38项及三图已留存到n4持久choice-set，
+  seed/spec/SVG/preview原字节不变，旧拒绝快照全部保留。
+  仅draft的三图路径和render的spec/output路径迁移；
+  当前独立路径绑定和首次choices显示仍pending，不代写批准。
+- 最小零图路径绑定入口已交监督，原SHA
+  `3edcf315c26bfe660463471d6885ca3a92c76139f85c47e6d840f81017e26e3c`。
+  32整源HOLD、独立绘图/未见内容/整课边界不解除，
+  父方0新图、累计24，72组选定包1174题4690项不重复加量。
+- 后续现成n51零图首独审入口为batch33-6a-n51，11选定源、
+  10题56项；只排入真实空槽队列，不新增作者稿或大组首审。
+  Mill两图和Erdos83/87仍在原冻结范围，881审批不触碰。
+
+### batch190 c3-ex两图局部修复
+
+- Bernoulli真实completed并由监督关闭：原choice review
+  `de560a380c67be621592379a419bbc61d59c8239c174cfdfcce6f974958cfa1c`
+  为revise/唯一current exit3；14新项数学PASS全部复用，
+  513 L3、514 L1实际标签相交的两FAIL原字节保留。
+- 只移动两标签锚点/placement，并把inventory的错误等比例
+  声明改为实际x/y单位40/23.333333333333332px及60/42px。
+  全部线/轴/网格/点/交点坐标、assertions、source basis和
+  所有question/view/key/coverage不变；不是metadata冒充PASS。
+  两受影响候选各一次当前render PASS，父方不开预览。
+- 新候选冻结在batch190-c3-ex-figure-repair，Mill仅2张
+  当前preview各一次复核标签/邻接/真实比例；原14项和
+  56题186项精确diff复用，不重数学、SOURCE或renderer。
+  当前尚未批准，nine排除源HOLD、绘图/最终显示边界不改。
+- Rawls仅batch189九个misconception零图增量，旧Pascal
+  三图PASS及其余真实证据不重审；两任务写域互斥。
+  准备现有持久路径留存方式，只有真实PASS后才执行；
+  父不写批准gate，不复活旧上下文，不触碰881。
+
+### batch189 n4九处内部错因最小修复
+
+- `7945410d` 已实际push：n19选定包及原seed绑定的忠实4m
+  依赖已保存，原hash/已通过规范和显示直接复用，无新计量。
+- Pascal实际completed：原review
+  `27f3fc1202cac9a0208866a7b3c4fdbc0f09d824410790a36e5744b649432116`
+  为revise/唯一当前exit3；16新项真值和五处loss-only均通过，
+  28/29/30三图标准gate各PASS/一次exit0，不重开三PNG。
+- 只补28 A/C/D、29 A/B/C、30 A/C/D九个内部misconception：
+  各自说明具体交换、漏反射、错读符号或混同轴/曲线程序。
+  原seed、view、正确集合、推导、coverage和所有图字节不变，
+  旧revise原字节保留，当前候选未批准，需fresh零图最小增量。
+- Bernoulli继续原冻结c3-ex范围，正式回执未到不提前改两图。
+  32整源、264全域、80单位、881审批和其他HOLD均不解除；
+  父0新图/累计24，72组选定包1174题4690项非整组完成。
+
 ### batch188 n19既有依赖收口
 
 - `89bc5e4b` 已实际push，只含n54/hard两选定包42题191项及

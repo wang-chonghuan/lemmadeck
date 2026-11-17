@@ -108,17 +108,21 @@ function figureContract(contentRoot, id, strictEdition) {
   };
 }
 
+function figureOpen(id, label, contract) {
+  const mediaStyle = contract.maxWidthPx
+    ? ` style="width:${contract.maxWidthPx}px;max-width:100%"`
+    : "";
+  return `<figure class="fig" id="${id}" aria-label="${esc(label || id)}"`
+    + ` data-figure-layout="${contract.layout}"`
+    + ` data-figure-purpose="${contract.purpose}"><div class="figure-media"`
+    + ` data-figure-mode="${contract.mode}" data-figure-theme="neutral"${mediaStyle}>`;
+}
+
 function figure(contentRoot, id, label, strictEdition) {
   const svg = path.join(contentRoot, "figures", `${id}.svg`);
   const png = path.join(contentRoot, "figures", `${id}.png`);
   const contract = figureContract(contentRoot, id, strictEdition);
-  const mediaStyle = contract.maxWidthPx
-    ? ` style="width:${contract.maxWidthPx}px;max-width:100%"`
-    : "";
-  const open = `<figure class="fig" id="${id}" aria-label="${esc(label || id)}"`
-    + ` data-figure-layout="${contract.layout}"`
-    + ` data-figure-purpose="${contract.purpose}"><div class="figure-media"`
-    + ` data-figure-mode="${contract.mode}" data-figure-theme="neutral"${mediaStyle}>`;
+  const open = figureOpen(id, label, contract);
   const close = "</div></figure>";
   if (strictEdition && contract.mode === "hybrid") {
     const artwork = path.join(contentRoot, "figures", `${id}.artwork.png`);
@@ -297,9 +301,20 @@ async function renderChoicePages() {
       if (sourceFigures.has(id)) return figure(contentRoot, id, null, !!editionName);
       const entries = assets.get(id);
       if (!entries?.length) throw new Error(`${record.lesson}: 缺少选择题图片 ${id}`);
+      const specPath = path.join(choiceDir, "figures", `${id}.spec.json`);
+      const retainedRoot = fs.realpathSync(book);
+      if (!fs.existsSync(specPath)
+        || !fs.realpathSync(specPath).startsWith(`${retainedRoot}${path.sep}`)) {
+        throw new Error(`${record.lesson}: 缺少持久选择题图片显示规范 ${id}`);
+      }
+      const spec = JSON.parse(fs.readFileSync(specPath, "utf8"));
+      if (spec.id !== id || !["inline", "scroll"].includes(spec.display?.layout)
+        || !["instructional", "decorative"].includes(spec.display?.purpose)) {
+        throw new Error(`${record.lesson}: 选择题图片显示规范无效 ${id}`);
+      }
+      const contract = figureContract(choiceDir, id, true);
       const media = entries.map((entry) => {
         const assetPath = path.resolve(repo, entry.path);
-        const retainedRoot = fs.realpathSync(book);
         if (!fs.realpathSync(assetPath).startsWith(`${retainedRoot}${path.sep}`)) {
           throw new Error(`${record.lesson}: 选择题图片不在本书持久目录内`);
         }
@@ -311,7 +326,7 @@ async function renderChoicePages() {
         const type = ext === "jpg" ? "jpeg" : ext;
         return `<img alt="${esc(id)}" src="data:image/${type};base64,${bytes.toString("base64")}">`;
       }).join("");
-      return `<figure class="fig"><div class="figure-media">${media}</div></figure>`;
+      return figureOpen(id, null, contract) + media + "</div></figure>";
     }).join("");
     let body = "";
     for (const [index, question] of draft.questions.entries()) {
