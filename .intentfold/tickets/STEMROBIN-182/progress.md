@@ -1,5 +1,40 @@
 # 当前开发状态
 
+### batch214 c5选定union有限显示收口
+
+- Pauli真实union-only PASS与唯一direct exit0直接复用：四组件完整
+  有序不相交等值合并为96源96题531项，没有重解数学或重跑SOURCE。
+  part2原批准、两屏证据和历史失败按原字节保留，不重做、不重计。
+- Godel六屏原FAIL/HOLD、桌面可见PASS和Copernicus五右端有限
+  观察均完整留存。13个命名容器的实际DOM绑定/可达横滚继承父方
+  原测量，不改HTML/CSS/math/key，不重渲染或复看整批。
+- 只解除当前选定包有界display_pending；982两定义末端可读，
+  P/Q纯截图关联仍HOLD，仅继承原左端标签观察与命名DOM绑定。
+  不声称整式一屏、未见中左端、全题、用户手势、APP或整课通过。
+- 新计71题400项及六个唯一视口组合，当前79组选定源包、
+  1349题5515项630组合；不是79完整课。926/938/978/988d、
+  83/87/253及881真正审批和旧revise/blocked/FAIL均保持。
+- 窄提交仅c5 choice-set与既有progress/usage。下一现成入口为
+  batch213的n18两表context，交fresh有界cap1各读原PNG一次；
+  父0新图、累计24，不重adapt-prepare、不把草稿或HOLD当批准。
+
+### batch208–210 真实回执与窄收口
+
+- `e69d0bd90`已实际push part2的25源25题131项及Dirac两屏有限证据，
+  不重做或重计。当前仍76组选定包1278题5115项624组合，不是整课完成。
+- Pasteur当前part1选定包、part4受影响修复及Carver当前part3均真实PASS，
+  各包direct各一次exit0；原数学及已过源解/规范不重跑。
+  938目的HOLD、978/988整源SOURCE HOLD及926未选实图继续保留。
+- 仅新增part1/3/4首次choices-only render和1440/390显示DOM均exit0；
+  六PNG候选冻结交Godel各一次，父0新图/累计24，尚不解除display_pending。
+  part2没有重渲染、重检查或再读图。
+- 四份完整真实PASS快照按原字节保留在review-history；当前root仅为
+  96源96题531项有序不相交union候选，Pauli独立检查新包关系与绑定，
+  尚无父方代写review。新增71题400项与六组合尚不计量。
+- Archimedes当前3m9/85两640预览有限PASS、标准gate各一次exit0，
+  原spec/render/SVG字节未变；不算整题/课/其他宽度或交互批准。
+  881真正审批和所有旧FAIL/revise/blocked原字节保持，继续未阻塞收口。
+
 ### batch204–207 c5-ex有界成果与受影响修复
 
 - part2仅25源25题131项按Aquinas原seed/draft/review字节留存；
