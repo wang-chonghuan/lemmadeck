@@ -1,15 +1,107 @@
 from __future__ import annotations
 
+import os
 import sys
 import unittest
 from pathlib import Path
 
 import numpy as np
+from PIL import Image
 
 TOOLS = Path(__file__).resolve().parents[1] / "tools"
 sys.path.insert(0, str(TOOLS))
 
 import layout
+
+
+class IsolatedMarginBlotTest(unittest.TestCase):
+    @staticmethod
+    def page_with_two_prose_rows() -> np.ndarray:
+        ink = np.zeros((500, 1600), dtype=bool)
+        for top in (40, 360):
+            for left in range(200, 1400, 45):
+                ink[top:top + 40, left:left + 36] = True
+        return ink
+
+    def test_dense_isolated_blots_on_either_margin_are_not_rows(self) -> None:
+        for left in (21, 1549):
+            with self.subTest(left=left):
+                ink = self.page_with_two_prose_rows()
+                ink[220:250, left:left + 30] = True
+                original = ink.copy()
+                self.assertEqual(layout.line_bands(ink, 1600), [(40, 79), (360, 399)])
+                self.assertTrue(np.array_equal(ink, original))
+
+    def test_narrow_standalone_margin_numerals_remain_rows(self) -> None:
+        for left in (21, 1549):
+            for digit in ("1", "7"):
+                with self.subTest(left=left, digit=digit):
+                    ink = self.page_with_two_prose_rows()
+                    if digit == "1":
+                        ink[220:250, left:left + 14] = True
+                    else:
+                        ink[220:225, left:left + 22] = True
+                        ink[225:250, left + 8:left + 22] = True
+                    bands = layout.line_bands(ink, 1600)
+                    self.assertEqual(len(bands), 3)
+                    self.assertIn((220, 249), bands)
+
+    def test_hollow_edge_glyph_remains_a_row(self) -> None:
+        ink = self.page_with_two_prose_rows()
+        ink[220:250, 21:51] = True
+        ink[225:245, 26:46] = False
+        bands = layout.line_bands(ink, 1600)
+        self.assertEqual(len(bands), 3)
+        self.assertIn((220, 249), bands)
+
+    def test_dense_edge_glyph_with_neighbor_remains_a_row(self) -> None:
+        ink = self.page_with_two_prose_rows()
+        ink[220:250, 21:51] = True
+        ink[220:250, 60:90] = True
+        bands = layout.line_bands(ink, 1600)
+        self.assertEqual(len(bands), 3)
+        self.assertIn((220, 249), bands)
+
+    def test_vertically_offset_neighbor_vetoes_margin_removal(self) -> None:
+        ink = self.page_with_two_prose_rows()
+        ink[220:250, 21:51] = True
+        ink[265:295, 65:95] = True
+        bands = layout.line_bands(ink, 1600)
+        self.assertEqual(len(bands), 4)
+        self.assertIn((220, 249), bands)
+        self.assertIn((265, 294), bands)
+
+    def test_dense_interior_component_remains_a_row(self) -> None:
+        ink = self.page_with_two_prose_rows()
+        ink[220:250, 700:730] = True
+        bands = layout.line_bands(ink, 1600)
+        self.assertEqual(len(bands), 3)
+        self.assertIn((220, 249), bands)
+
+    def test_edge_figure_label_with_nearby_stroke_is_retained(self) -> None:
+        ink = self.page_with_two_prose_rows()
+        ink[220:250, 21:51] = True
+        ink[242:246, 80:180] = True
+        bands = layout.line_bands(ink, 1600)
+        self.assertEqual(len(bands), 3)
+        self.assertIn((220, 249), bands)
+
+    @unittest.skipUnless(os.environ.get("B53_SOURCE107_PAGE"), "requires original107 fixture")
+    def test_original107_counts_twenty_rows_without_pixel_changes(self) -> None:
+        ink = layout.ink_mask(Image.open(os.environ["B53_SOURCE107_PAGE"]))
+        ink[1732:2189, 338:1446] = False
+        original = ink.copy()
+        self.assertEqual(len(layout.line_bands(ink, 1534)), 20)
+        self.assertTrue(np.array_equal(ink, original))
+
+    @unittest.skipUnless(os.environ.get("B53_SOURCE107_PAGE"), "requires original107 fixture")
+    def test_original107_without_margin_blot_still_counts_twenty_rows(self) -> None:
+        ink = layout.ink_mask(Image.open(os.environ["B53_SOURCE107_PAGE"]))
+        ink[1732:2189, 338:1446] = False
+        ink[1887:1917, 21:52] = False
+        original = ink.copy()
+        self.assertEqual(len(layout.line_bands(ink, 1534)), 20)
+        self.assertTrue(np.array_equal(ink, original))
 
 
 class LineBandsTest(unittest.TestCase):

@@ -24,6 +24,43 @@ def dump(path: Path, value: object) -> None:
 
 
 class EditionTest(unittest.TestCase):
+    def test_number_signature_cjk_spacing(self) -> None:
+        for compact, spaced, expected in (
+            ("6小时", "6 小时", ["6"]),
+            ("功率100瓦特", "功率 100 瓦特", ["100"]),
+            ("温度-0.6度", "温度 -0.6 度", ["-0.6"]),
+            ("共30天", "共 30 天", ["30"]),
+        ):
+            with self.subTest(compact=compact):
+                self.assertEqual(edition.number_signature(compact), expected)
+                self.assertEqual(edition.number_signature(spaced), expected)
+
+    def test_number_signature_excludes_math_and_ascii_identifiers(self) -> None:
+        self.assertEqual(
+            edition.number_signature("x6 code_30 1.2.3 $6$ $$30$$"),
+            [],
+        )
+        self.assertEqual(edition.number_signature("0.6 1.5 -30"), ["0.6", "1.5", "-30"])
+
+    def test_cjk_quantity_spacing_is_layout_not_numeric_change(self) -> None:
+        self.assertEqual(
+            edition.validate_text("每天点燃6小时", "每天点燃 6 小时", ["layout"], [], "p", []),
+            [],
+        )
+        self.assertTrue(
+            edition.validate_text("每天点燃6小时", "每天点燃 7 小时", ["layout"], [], "p", []),
+        )
+
+    def test_math_text_literal_cjk_quantity_spacing(self) -> None:
+        self.assertEqual(
+            edition.math_signature(r"$\text{6小时}$"),
+            edition.math_signature(r"$\text{6 小时}$"),
+        )
+        self.assertNotEqual(
+            edition.math_signature(r"$\text{6小时}$"),
+            edition.math_signature(r"$\text{7 小时}$"),
+        )
+
     def test_modern_exercises_preserve_source_and_group_identity(self) -> None:
         source = {
             "exercises": [{
