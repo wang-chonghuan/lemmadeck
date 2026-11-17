@@ -1,5 +1,79 @@
 # 当前开发状态
 
+### batch234–236 n15有限显示收口与n13首次规范
+
+- n15的Avicenna四张首次choices截图真实completed，可见区域限定PASS；
+  原PNG/HTML/回执同字节留存。只解除当前选定包display_pending，
+  手机左侧、215下部/后续选项未见、交互、210与881仍HOLD。
+- 结合已留存Herschel四个课文/书写窗口和原Meitner数学PASS，
+  n15窄包计10源13题40项、六个唯一视口组合，不重复门槛。
+  当前80组选定包1362题5555项636组合；不是80完整课。
+- 229两项与233四项持久标准gate均真实各一次exit0，几何/图审继承，
+  tbl58为JSON数据等值、raw5af→b626不同，未说成同字节spec。
+- n13首次adapt-finalize/render/四DOM组合各exit0，四PNG待fresh观察；
+  既有11题34项view/key未改，只绑定八选定源、概念0与当前合同。
+  零图首独审入口已交，187/192未选、不计课程或题目完成。
+- Bohr仅n18两币种单位增量，Boyle仅原六源cap1继续；父0新图/24。
+  下一动作窄commit/push n15及必要依赖，排除其他待审课和监督ticket。
+
+### batch233 已通过图的同字节留存
+
+- Gibbs三个既有authored图174/202/241的首次独审均真实completed/PASS，
+  标准gate各一次exit0；640预览限定范围和未测构造/整题边界保留。
+- fig70八个尺寸箭头的增量审者真实completed/PASS，当前一图一次1/24；
+  继承Wegener原非缺陷事实，旧FAIL与原14对象/12断言完整保留。
+- 四项SVG/preview/spec证据首次留存，只迁移已列context/render路径，
+  零图PATH-BINDING入口已交，当前持久gate仍待独立回执；不重render。
+- n15四图首次choices显示、n18两币种单位增量及229两项绑定继续原冻结
+  队列，尚不新增交付计数。当前批次旧c5的71题计量标志已归零，
+  已交付79组1349题5515项630组合不减不重计；881审批不动。
+
+### batch224–232 真实回执与最小受影响修复
+
+- Herschel八屏真实有限PASS已同字节留存到n15/n18既有
+  lesson/evidence，仅关闭首次课文/书写可见区域；手机左侧、
+  全题/交互/整课不批准，222浏览器/PNG不重跑或复看。
+- Meitner完成n15的10源13题40项首次独审，真实PASS/唯一
+  direct exit0；seed/draft/review同字节留存，首次choices-only
+  render与两1440/390组合DOM exit0。四限定PNG待fresh观察，
+  当前display_pending保持，尚不新增交付计数。
+- Lagrange完成n18真实revise/唯一direct exit3，数学21真集/
+  70项均一致。仅q246/q255b及246/255 coverage共15字符串
+  恢复现代seed美分/美元及相关单位说明；p/72、数值/键、
+  其余19题、new_figures和seed完整不变。旧稿/reject保留，
+  零图增量入口已交，只复核这两个单位及包影响。
+- Wegener完成61/58表PASS和70箭头缺失FAIL，三个标准gate
+  各一次exit0，不冒称三图全PASS。70只追加8arrow/8connect
+  及其inventory映射，原14对象/12断言/尺寸/阴影/标签不变；
+  唯一affected render exit0，当前一图增量待独审，原FAIL不改。
+- 五个Archimedes/Banach已PASS authored图的225持久绑定
+  已独立完成，纯render引用/path/hash迁移，无新图或数学批准。
+  61/58表两项229持久绑定待独立完成，70不混入PASS绑定。
+- Boyle仅224六原PNG与六cap1草稿；Gibbs仅226三既有完整
+  authored预览首图审，均保持限定写域。源69/71只局部HOLD，
+  210/253、未测构造/量测及881真实审批保持；父0新图/累计24，
+  当前79组选定包1349题5515项630组合不变，整组尚未交付。
+
+### batch221–223 首次收口与有界独审在途
+
+- 220五份当前持久图gate已由监督独立PATH-BINDING-ONLY完成，
+  仅路径/dependency哈希迁移，原Euclid/Banach图审身份、范围和
+  同字节SVG/预览/context继承；不重render、数学或已过图审。
+- n15/n18首次adapt-finalize与课文/书写render各一次exit0；
+  首次1440/390共八表面组合DOM检查exit0，八PNG已冻结交
+  Herschel，仅静态观察，父0新图/累计24。尚无显示回执。
+- 既有n15/n18作者稿view/key完整不变，只绑定当前合同；
+  分别10源13题40项、15源21题70项，首prepare/结构各一次
+  通过，Meitner/Lagrange分别首次source→view→key独审在途。
+  210/253整源HOLD保留，34题110项尚不批准或计量。
+- Volta五份cap1已实际完成关闭：61/58表/70可继续，69岸线/
+  河名与71缺边界真实SOURCE HOLD，不渲染或批准猜测。
+  三可用候选首cap2中58表/70通过；61原标签碰撞exit2保留，
+  仅B/M/A标签纵向偏移-12→-22一次修复后render通过。
+- 三张首次640预览已生成，Wegener只审3原PNG+3预览及
+  三个当前标准gate，候选冻结；render PASS不当图审批准。
+  当前79组选定包1349题5515项630组合不变，881审批不动。
+
 ### batch219–220 文本局部修复与真实图审绑定
 
 - 3m首次124源文本检查的原exit1保留。仅第25/54/55题复查exit0；
