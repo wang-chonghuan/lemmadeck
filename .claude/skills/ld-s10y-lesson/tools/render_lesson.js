@@ -23,6 +23,7 @@ const args = process.argv.slice(2);
 const bookDir = args.find((arg) => !arg.startsWith("--"));
 const editionName = args.includes("--edition") ? args[args.indexOf("--edition") + 1] : null;
 const outRoot = args.includes("--out") ? args[args.indexOf("--out") + 1] : null;
+const choicesOnly = args.includes("--choices-only");
 const onlyLessons = new Set(args.flatMap((arg, index) =>
   arg === "--lesson" && args[index + 1] ? [args[index + 1]] : []));
 if (!bookDir || !outRoot) {
@@ -226,6 +227,11 @@ for (const lid of lessonDirs) {
   const X = JSON.parse(fs.readFileSync(path.join(dir, "exercises.json"), "utf8"));
   const crumb = [L.chapter, L.section, `印刷页 ${L.start_printed ?? "?"}`]
     .filter(Boolean).join(" · ");
+
+  if (choicesOnly) {
+    done.push({ lesson: lid, output: outDir, sourcePagesSkipped: true });
+    continue;
+  }
 
   // ---- 课文页
   let body = "";
