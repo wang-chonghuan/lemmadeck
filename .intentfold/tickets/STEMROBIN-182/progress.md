@@ -1,5 +1,66 @@
 # 当前开发状态
 
+### batch285 正式静态回执已完成，窄留存不解除FAIL
+
+- Fermat `01a1eb9e-231c-7f02-95a0-d305edc24199`真实completed，
+  监督已关闭；最终report rawSHA
+  e93e6956195dbf1b8c76d6647c6b32b4dafc0610e94fac9c508a8adfe56e5795
+  已本地匹配。八PNG各一次，四HTML仅hash，像素归fresh审者、
+  原DOM归父方，不重八窗口或任何数学/图审/validator。
+- 七窗口仅有限可见PASS；n23手机第二题第四数对右端真实FAIL。
+  n17下部弹簧、n20手机表右列、n27手机第三题及其余未见保持HOLD。
+  本轮只扩展既有283留存helper接实际285字段，首次语法检查exit0，
+  单次留存执行exit0。四包HTML/PNG/原报告同字节持久保存，
+  逐窗口范围/身份及n23未解决FAIL留存，不补图/改架构或用DOM覆盖FAIL。
+- 四包仍approval:false/display_pending:true，原排294/355/416/418/508、
+  条件/生产/手势/APP/全课/881不批准；82包1394题5659项648不增。
+  父0新图/累计24，287原n28/n30任务不扩；监督已在285关闭后fresh派
+  `01a1eba3-60de-78a1-9dd4-74fedcf65388`仅n29/n32，结果仍在途。
+  原分支fetch后HEAD/远端无分歧；下一窄提交只四包与进度/用量，
+  不含layout/其测试、supervisor ticket或剩余4m资产。
+
+### batch287 首槽已实际接续，285八图观察不扩
+
+- 285八PNG一次显示观察已fresh派Fermat
+  `01a1eb9e-231c-7f02-95a0-d305edc24199`，只同目录唯一report；
+  未复活或扩大281/282历史，回执前仍pending/approval:false。
+- 287四入口真实冻结，整源排527/532/538、552/553、562/567、
+  594/596；分别20源21题88项、13源14题49项、12源13题56项、
+  24源26题104项，原条件/SOURCE/生产HOLD保留，不重解题项。
+- 原实际空槽只先派`01a1eb9f-2822-7bf0-8993-3e54d7440571`
+  负责n28/n30，零图selection-only各一次direct；n29/n32仍prepared，
+  等285实际completed/closed后另fresh接续，不假派工或消费部分报告。
+  69保留源74题297项只是原有效内容待选择关系复核，不加批准计数。
+
+### batch285 第三批四5m包留存与首次显示生成
+
+- 284四selection-only审者均真实completed/closed，当前四review最终
+  rawSHA全部与回执匹配，各direct一次exit0，源294/355/416/418/508
+  与原blocked/exit3不解除。101源106题391项只继承原有效独审对象，
+  整源508排除连同其可定教育预算子任务的损失明确保留。
+- 四包seed/draft/review原字节已持久留存；首次choices render各exit0，
+  首次1440/390八DOM组合exit0，八初始左端首窗口PNG冻结。285入口
+  rawSHA 87c4f475cade1ceba472df925db9af9775b3721eaf206b3595da1e7c76714962，
+  已交监督fresh有界一次静态观察，回执前display_pending/approval不提升。
+- 原281/282两批有限报告与整体HOLD留存，不重图/DOM/SOURCE/trace/math；
+  父本次0图/累计24，82包1394题5659项648计数不增。下一四个现成
+  blocked包只准备原整源HOLD排除入口，不新作者、不重独解或扩大图审。
+
+### batch284 前两真实回执已消费，后两仍在途
+
+- 283窄留存commit `ff6ef1552d7c9e75a313774f3c90864387cb6a7e`
+  已真实push，远端ac6651b05→ff6ef1552；仅八5m包与有限显示证据和
+  原ledger，未纳入layout/其测试、supervisor ticket或剩余4m资产。
+  各整体display HOLD和82包1394题5659项648计数未提升。
+- Plato实际completed/closed，n17/n23 selection-impact PASS，
+  rawSHA分别62920217ac72e0217cbc46b66221dc5a0f524ea59a1b1e5fa143b4a496b5bbec、
+  b2ebd765735e7f1e5dc452ae31f4a71efcd6ac8b89351adbfdfded279fa992cb，
+  已本地匹配；13题52项/44题136项真实原数学与图审对象精确继承。
+  各direct真实一次exit0，仅后续身份回执注记，不重跑。
+- n20/n27仍原Sagan在途，不把部分报告当completed；既有scratch
+  留存与首次显示helper仅增加284→285参数，尚未执行285，
+  不重前两批HTML/PNG或来源/数学/图；294/416/418及所有HOLD保留。
+
 ### batch283 八5m包有限显示证据留存，整体HOLD不提升
 
 - Confucius/Aristotle两位均真实completed并由监督关闭，各八PNG仅一次；
