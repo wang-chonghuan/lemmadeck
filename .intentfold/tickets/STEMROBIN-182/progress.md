@@ -1,5 +1,30 @@
 # 当前开发状态
 
+### batch237–241 n18有限显示收口与n14首次cap2
+
+- `cae0e94e9`已实际窄commit/push，50文件仅n15及其必要图依赖；
+  n13/n18索引变动和监督ticket未混入，原80包统计不重计。
+- Bohr两币种单位PASS与原Lagrange全部70条数学事实精确复用，
+  n18当前seed/draft/review同字节留存，最初revise/exit3保留。
+  首次choices DOM错误地要求未在view的tbl65，原exit1保留；
+  仅按view修正检查目标，HTML/render/数学不变，1440/390检查exit0。
+- Poincare四张choices窗口有限PASS原字节留存，结合Herschel已过
+  课文/书写可见窗口，n18计15源21题70项、六个唯一组合。
+  当前81组选定包1383题5625项642组合，不是81完整课；
+  mobile圆图左部/G/部分图例、长图下方/其余未见窗口、
+  独立作图/交互/APP/253/881及原SOURCE HOLD仍不批准。
+- Nietzsche的n13四屏首次课文/书写有限PASS已同字节留存；
+  桌面A/B/C/M与手机右端A/C可见，手机B/M/左部仍HOLD。
+  八源11题34项数学首独审仍在原队列，choices首次显示尚未做，
+  不因课文显示PASS计n13题量，也不批准未选187/192。
+- Boyle六份cap1真实完成关闭，65的K不定exit2与67未生成木纹/
+  artwork、62语义细节HOLD保留。63/64/66首次cap2分别exit2/2/0，
+  只修63八标签gap=30、64的12 cm标签位置各一次，affected exit0/0；
+  棱/尺寸/inventory/断言不变，66不重render，239原FAIL/PNG保留。
+  当前六图first独审入口已交，仅3原PNG+3预览，父0新图/24。
+- 下一动作窄commit/push n18及必要两表/254依赖，排除尚待题审的
+  n13与n14候选；随后继续原授权范围，不以本次批次当整组交付。
+
 ### batch234–236 n15有限显示收口与n13首次规范
 
 - n15的Avicenna四张首次choices截图真实completed，可见区域限定PASS；
