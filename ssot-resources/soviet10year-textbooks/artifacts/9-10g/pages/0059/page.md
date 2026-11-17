@@ -16,7 +16,14 @@
     "160在图题所在印刷横排的“映射成自身的映射1) 是空”后置ex open，fig/cap透明，再ex 160 cont接“间变换吗？2) 是位移吗？”。cap 图61 samerow只表示实际同排，不新增文字行。",
     "原文线段F(A)F(B)在F与(B)之间真实跨行，以↵保留；传递性中的Phi_2合同Phi_1在合同符号之后真实跨行，以↵保留。合同符号转为LaTeX \\cong，不改作相等、相似或约等。性质范围标号按原西里尔а)至в)，保留原印长横连接符。159上标圆圈保留。空白/页边零散墨点身份UNKNOWN，不并正文，不设置count_exclusions。未登记errata；不求解160或161。"
   ],
-  "errata": [],
+  "errata": [
+    {
+      "id": "p0059-reflexivity",
+      "block": "p0059#5",
+      "original": "反身性（$\\Phi\\cong\\Phi_1$）",
+      "reason": "Bound original pixels visibly print a subscript1 on the right Phi; faithful text is unchanged. Reflexivity requires each figure to be congruent to itself via the identity motion, not an arbitrary second figure. The existing independent mathematical derivation and the new bounded author/independent source observations establish this printing defect."
+    }
+  ],
   "source": {
     "pdf": "9-10g 苏联十年制学校数学教材 几何 9-10年级.pdf",
     "pdf_sha256": "1900be5207d00404f64e5a40ab855fbfb8495bd2a06c5ce295ae0e145444578a",

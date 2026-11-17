@@ -107,7 +107,7 @@ function figureContract(contentRoot, id, strictEdition) {
   };
 }
 
-function figure(contentRoot, id, label, strictEdition) {
+function figure(contentRoot, id, label, strictEdition, captionHtml = "") {
   const svg = path.join(contentRoot, "figures", `${id}.svg`);
   const png = path.join(contentRoot, "figures", `${id}.png`);
   const contract = figureContract(contentRoot, id, strictEdition);
@@ -118,7 +118,7 @@ function figure(contentRoot, id, label, strictEdition) {
     + ` data-figure-layout="${contract.layout}"`
     + ` data-figure-purpose="${contract.purpose}"><div class="figure-media"`
     + ` data-figure-mode="${contract.mode}" data-figure-theme="neutral"${mediaStyle}>`;
-  const close = "</div></figure>";
+  const close = `</div>${captionHtml}</figure>`;
   if (strictEdition && contract.mode === "hybrid") {
     const artwork = path.join(contentRoot, "figures", `${id}.artwork.png`);
     if (!fs.existsSync(artwork) || !fs.existsSync(svg)) {
@@ -218,9 +218,24 @@ for (const lid of lessonDirs) {
   // ---- 课文页
   let body = "";
   const prose = proseFlow(L.prose, L.section_breaks);
+  const figureCaptions = new Map();
+  const boundCaptions = new Set();
+  for (const block of prose.filter((item) => item.kind === "fig" && item.label)) {
+    const figures = prose.filter((item) => item.kind === "fig" && item.label === block.label);
+    const captions = prose.filter((item) => item.kind === "cap" && item.label === block.label);
+    if (figures.length === 1 && captions.length === 1) {
+      figureCaptions.set(block, captions[0]);
+      boundCaptions.add(captions[0]);
+    }
+  }
   for (const b of prose) {
-    if (b.kind === "fig") body += figure(contentRoot, b.id, b.label, !!editionName);
-    else if (b.kind === "cap") body += `<div class="figcap">${proseInline(b.text)}</div>`;
+    if (b.kind === "fig") {
+      const caption = figureCaptions.get(b);
+      body += figure(contentRoot, b.id, b.label, !!editionName,
+        caption ? `<figcaption class="figcap">${proseInline(caption.text)}</figcaption>` : "");
+    } else if (b.kind === "cap") {
+      if (!boundCaptions.has(b)) body += `<div class="figcap">${proseInline(b.text)}</div>`;
+    }
     else {
       body += `<p class="para${b.sectionBreak ? " section" : ""}">${proseInline(b.text)}</p>`;
     }
@@ -248,10 +263,14 @@ for (const lid of lessonDirs) {
       : (e.text.match(/^\s*\$(\d+)\^\{(\\circ|\\bullet|\*)\}\$(\*)?[.．。]\s*/)
         || e.text.match(/^\s*(\d+)\$\^\{(\\circ|\\bullet|\*)\}\$(\*)?[.．。]\s*/));
     const hasAnnotatedPrefix = annotatedPrefix && annotatedPrefix[1] === String(printedNumber);
+    const circlePrefix = printedNumber == null ? null : e.text.match(/^\s*(\d+)°[.．。]?\s*/);
+    const hasCirclePrefix = circlePrefix && circlePrefix[1] === String(printedNumber);
     const numberLabel = hasAnnotatedPrefix
       ? inline(`$${annotatedPrefix[1]}^{${annotatedPrefix[2]}}$${annotatedPrefix[3] || ""}.`)
+      : hasCirclePrefix ? inline(`$${circlePrefix[1]}^{\\circ}$.`)
       : `${sourceNumber}${marker}`;
     const text = hasAnnotatedPrefix ? e.text.slice(annotatedPrefix[0].length)
+      : hasCirclePrefix ? e.text.slice(circlePrefix[0].length)
       : hasPrintedPrefix ? e.text.slice(prefix[0].length) : e.text;
     out += `<li class="ex" id="ex-${esc(e.number)}"><div class="no">${numberLabel}</div>`
       + `<div class="body">${inline(text)}${figs}</div></li>`;

@@ -1,0 +1,100 @@
+--- baseline/layout.py (eb6fca6d)
++++ candidate/layout.py
+@@ -160,6 +160,64 @@
+     return np.percentile(np.abs(residual), 90) <= max(1.0, 0.03 * line_h)
+ 
+ 
++def _bar_local_fraction_support(
++    components: np.ndarray, original_bounds, original_ids, rows, columns,
++    line_h: float,
++) -> bool:
++    """Require detached, aligned fraction glyphs around a short body-connected bar."""
++    if columns.stop - columns.start >= 2 * line_h:
++        return False
++    upper, lower = [], []
++    for component_id, bounds in enumerate(original_bounds, 1):
++        if bounds is None or component_id in original_ids:
++            continue
++        glyph_rows, glyph_columns = bounds
++        height = glyph_rows.stop - glyph_rows.start
++        if not (
++            0.6 * line_h <= height <= 1.8 * line_h
++            and glyph_columns.stop - glyph_columns.start >= 0.2 * line_h
++            and columns.start <= glyph_columns.start < glyph_columns.stop <= columns.stop
++        ):
++            continue
++        if 0 <= rows.start - glyph_rows.stop <= 0.75 * line_h:
++            upper.append(glyph_columns)
++        if 0 <= glyph_rows.start - rows.stop <= 0.75 * line_h:
++            lower.append(glyph_columns)
++    if not any(
++        max(first.start, second.start) < min(first.stop, second.stop)
++        for first in upper for second in lower
++    ):
++        return False
++    for component_id in original_ids:
++        if not component_id:
++            continue
++        bounds = original_bounds[component_id - 1]
++        body_rows, body_columns = bounds
++        outside = max(
++            columns.start - body_columns.start, body_columns.stop - columns.stop
++        )
++        if not (
++            outside >= 0.2 * line_h
++            and 0.6 * line_h <= body_rows.stop - body_rows.start <= 1.8 * line_h
++        ):
++            return False
++        shaft = components[body_rows, columns] == component_id
++        # A head ends at a narrow tip before any attached body. Do not mistake
++        # a body's expansion beyond the candidate bar for that terminal head.
++        for direction in (shaft, shaft[:, ::-1]):
++            spans = np.array([
++                np.ptp(ys) + 1 if ys.size else 0
++                for x in range(direction.shape[1])
++                for ys in [np.flatnonzero(direction[:, x])]
++            ])
++            if spans[0] > 0.2 * line_h:
++                continue
++            for tip in np.flatnonzero(np.diff(spans) < 0) + 1:
++                if _arrow_headed_rule(direction[:, :tip + 1], line_h):
++                    return False
++    return True
++
++
+ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool:
+     """Distinguish tall inline fractions from two full text rows."""
+     band = ink[a:b + 1].copy()
+@@ -187,13 +245,12 @@
+             continue
+         rows, columns = bounds
+         original_ids = np.unique(components[bounds][horizontal[bounds]])
+-        if any(
++        whole_component_arrow = any(
+             _arrow_headed_rule(
+                 components[original_bounds[component_id - 1]] == component_id, line_h
+             )
+             for component_id in original_ids if component_id
+-        ):
+-            continue
++        )
+         glyph_stroke = any(
+             original_bounds[component_id - 1] is not None
+             and columns.stop - columns.start < 2 * line_h
+@@ -203,8 +260,15 @@
+             ) <= 1.8 * line_h
+             for component_id in original_ids if component_id
+         )
++        local_fraction = (
++            (whole_component_arrow or glyph_stroke)
++            and _bar_local_fraction_support(
++                components, original_bounds, original_ids, rows, columns, line_h
++            )
++        )
+         if (
+-            not glyph_stroke
++            (not whole_component_arrow or local_fraction)
++            and (not glyph_stroke or local_fraction)
+             and all(
+                 _straight_fraction_rule(
+                     # Connected numerators need only their horizontal bar checked.

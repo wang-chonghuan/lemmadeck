@@ -112,7 +112,43 @@ def _row_fragments(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     return raw
 
 
+def _arrow_headed_rule(mask: np.ndarray, line_h: float) -> bool:
+    """Detect two-sided terminal expansion on the original, un-opened shaft."""
+    xs = np.flatnonzero(mask.any(axis=0))
+    if xs.size < max(4, 0.5 * line_h):
+        return False
+    counts = mask.sum(axis=0)[xs]
+    centers = (mask * np.arange(mask.shape[0])[:, None]).sum(axis=0)[xs] / counts
+    trim = max(1, xs.size // 5)
+    shaft_x = xs[trim:-trim]
+    fit = np.polyfit(shaft_x, centers[trim:-trim], 1)
+    shaft = np.polyval(fit, xs)
+    spans = []
+    above, below = [], []
+    for x, center in zip(xs, shaft):
+        ys = np.flatnonzero(mask[:, x])
+        spans.append(ys[-1] - ys[0] + 1)
+        above.append(center - ys[0])
+        below.append(ys[-1] - center)
+    middle = float(np.median(spans[trim:-trim]))
+    head_min = max(2 * middle, 0.2 * line_h)
+    extension = max(2, 0.08 * line_h)
+    return any(
+        max(spans[part]) > head_min
+        and max(above[part]) > middle / 2 + extension
+        and max(below[part]) > middle / 2 + extension
+        # A diagonal head tapers; a full-height terminal wall has no such span.
+        and any(
+            middle + extension / 2 < span < max(spans[part]) - extension / 2
+            for span in spans[part]
+        )
+        for part in (slice(0, trim), slice(-trim, None))
+    )
+
+
 def _straight_fraction_rule(mask: np.ndarray, line_h: float) -> bool:
+    if _arrow_headed_rule(mask, line_h):
+        return False
     counts = mask.sum(axis=0)
     x = np.flatnonzero(counts)
     if len(x) < 2:
@@ -124,12 +160,108 @@ def _straight_fraction_rule(mask: np.ndarray, line_h: float) -> bool:
     return np.percentile(np.abs(residual), 90) <= max(1.0, 0.03 * line_h)
 
 
+def _bar_local_fraction_support(
+    components: np.ndarray, original_bounds, original_ids, rows, columns,
+    line_h: float,
+) -> bool:
+    """Require detached, aligned fraction glyphs around a short body-connected bar."""
+    if columns.stop - columns.start >= 2 * line_h:
+        return False
+    upper, lower = [], []
+    for component_id, bounds in enumerate(original_bounds, 1):
+        if bounds is None or component_id in original_ids:
+            continue
+        glyph_rows, glyph_columns = bounds
+        height = glyph_rows.stop - glyph_rows.start
+        if not (
+            0.6 * line_h <= height <= 1.8 * line_h
+            and glyph_columns.stop - glyph_columns.start >= 0.2 * line_h
+            and columns.start <= glyph_columns.start < glyph_columns.stop <= columns.stop
+        ):
+            continue
+        if 0 <= rows.start - glyph_rows.stop <= 0.75 * line_h:
+            upper.append(glyph_columns)
+        if 0 <= glyph_rows.start - rows.stop <= 0.75 * line_h:
+            lower.append(glyph_columns)
+    if not any(
+        max(first.start, second.start) < min(first.stop, second.stop)
+        for first in upper for second in lower
+    ):
+        return False
+    for component_id in original_ids:
+        if not component_id:
+            continue
+        bounds = original_bounds[component_id - 1]
+        body_rows, body_columns = bounds
+        outside = max(
+            columns.start - body_columns.start, body_columns.stop - columns.stop
+        )
+        if not (
+            outside >= 0.2 * line_h
+            and 0.6 * line_h <= body_rows.stop - body_rows.start <= 1.8 * line_h
+        ):
+            return False
+        shaft = components[body_rows, columns] == component_id
+        # A head ends at a narrow tip before any attached body. Do not mistake
+        # a body's expansion beyond the candidate bar for that terminal head.
+        for direction in (shaft, shaft[:, ::-1]):
+            spans = np.array([
+                np.ptp(ys) + 1 if ys.size else 0
+                for x in range(direction.shape[1])
+                for ys in [np.flatnonzero(direction[:, x])]
+            ])
+            if spans[0] > 0.2 * line_h:
+                continue
+            for tip in np.flatnonzero(np.diff(spans) < 0) + 1:
+                if _arrow_headed_rule(direction[:, :tip + 1], line_h):
+                    return False
+    return True
+
+
+def _original_arrow_decoration(mask: np.ndarray, line_h: float) -> bool:
+    """Recognize a headed shaft without discarding an attached full body glyph."""
+    if not _arrow_headed_rule(mask, line_h):
+        return False
+    xs = np.flatnonzero(mask.any(axis=0))
+    trim = max(1, xs.size // 5)
+    spans = [
+        np.ptp(ys) + 1 for x in xs[trim:-trim]
+        for ys in [np.flatnonzero(mask[:, x])]
+    ]
+    if np.median(spans) > 0.2 * line_h:
+        return False
+    horizontal = ndimage.binary_opening(
+        mask, structure=np.ones((1, max(2, int(0.7 * line_h))), dtype=bool)
+    )
+    shafts, _ = ndimage.label(horizontal)
+    body = mask.copy()
+    found = False
+    for component_id, bounds in enumerate(ndimage.find_objects(shafts), 1):
+        if bounds is None or bounds[0].stop - bounds[0].start > 0.2 * line_h:
+            continue
+        if _straight_fraction_rule(shafts[bounds] == component_id, line_h):
+            region = body[bounds]
+            region[shafts[bounds] == component_id] = False
+            found = True
+    if not found:
+        return False
+    # Head halves are short. A surviving full body means this is not decoration.
+    return not any(
+        rows.stop - rows.start >= 0.6 * line_h
+        and columns.stop - columns.start >= 0.2 * line_h
+        for bounds in ndimage.find_objects(ndimage.label(body)[0]) if bounds is not None
+        for rows, columns in [bounds]
+    )
+
+
 def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool:
     """Distinguish tall inline fractions from two full text rows."""
     band = ink[a:b + 1].copy()
     height = band.shape[0]
     rules = []
+    accepted_carriers = set()
     components, _ = ndimage.label(band)
+    original_components = components
     for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
         if bounds is None:
             continue
@@ -141,6 +273,7 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
             and _straight_fraction_rule(components[bounds] == component_id, line_h)
         ):
             rules.append((columns.start, columns.stop - 1))
+            accepted_carriers.add(component_id)
     horizontal = ndimage.binary_opening(
         band, structure=np.ones((1, max(2, int(0.7 * line_h))), dtype=bool)
     )
@@ -151,6 +284,12 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
             continue
         rows, columns = bounds
         original_ids = np.unique(components[bounds][horizontal[bounds]])
+        whole_component_arrow = any(
+            _arrow_headed_rule(
+                components[original_bounds[component_id - 1]] == component_id, line_h
+            )
+            for component_id in original_ids if component_id
+        )
         glyph_stroke = any(
             original_bounds[component_id - 1] is not None
             and columns.stop - columns.start < 2 * line_h
@@ -160,8 +299,15 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
             ) <= 1.8 * line_h
             for component_id in original_ids if component_id
         )
+        local_fraction = (
+            (whole_component_arrow or glyph_stroke)
+            and _bar_local_fraction_support(
+                components, original_bounds, original_ids, rows, columns, line_h
+            )
+        )
         if (
-            not glyph_stroke
+            (not whole_component_arrow or local_fraction)
+            and (not glyph_stroke or local_fraction)
             and all(
                 _straight_fraction_rule(
                     # Connected numerators need only their horizontal bar checked.
@@ -184,6 +330,7 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
             )
         ):
             rules.append((columns.start, columns.stop - 1))
+            accepted_carriers.update(int(component_id) for component_id in original_ids if component_id)
     if not rules:
         return False
     for left, right in rules:
@@ -203,6 +350,12 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
     counts = band.sum(axis=1)
     remaining = np.flatnonzero(counts > max(8, 0.25 * counts.max()))
     glyph_components, _ = ndimage.label(band)
+    original_decorations = {
+        component_id for component_id, bounds in enumerate(original_bounds, 1)
+        if bounds is not None
+        and component_id not in accepted_carriers
+        and _original_arrow_decoration(original_components[bounds] == component_id, line_h)
+    }
     glyph_bounds = []
     for component_id, bounds in enumerate(ndimage.find_objects(glyph_components), 1):
         if bounds is None:
@@ -212,6 +365,13 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
         if not (
             0.6 * line_h <= height <= 1.8 * line_h
             and columns.stop - columns.start >= 0.2 * line_h
+        ):
+            continue
+        original_ids = np.unique(
+            original_components[bounds][glyph_components[bounds] == component_id]
+        )
+        if original_ids.size and all(
+            original_id in original_decorations for original_id in original_ids
         ):
             continue
         central = glyph_components[
@@ -328,8 +488,29 @@ def _fraction_tail_split(
     return None
 
 
+def _supported_glyph_rows(
+    ink: np.ndarray, fragments, glyph_h: float
+) -> list[tuple[int, int]]:
+    """Require full body components, not an arrow fragment's projection envelope."""
+    components, _ = ndimage.label(ink)
+    bounds = ndimage.find_objects(components)
+    return [
+        (a, b) for a, b in fragments
+        if any(
+            a <= rows.start and rows.stop - 1 <= b
+            and 0.6 * glyph_h <= rows.stop - rows.start <= 1.8 * glyph_h
+            and columns.stop - columns.start >= 0.2 * glyph_h
+            and not _arrow_headed_rule(components[item] == component_id, glyph_h)
+            for component_id, item in enumerate(bounds, 1)
+            if item is not None for rows, columns in [item]
+        )
+    ]
+
+
 def _small_text_rows(ink: np.ndarray, fragments, glyph_h: float) -> bool:
     """Retain repeated, independently supported rows in a smaller local font."""
+    if _supported_glyph_rows(ink, fragments, glyph_h):
+        return False
     if len(fragments) < 2:
         return False
     bounds = ndimage.find_objects(ndimage.label(ink)[0])
@@ -392,6 +573,46 @@ def _folio_fragment_continues(
     )
 
 
+def _overhead_arrow_continues(
+    ink: np.ndarray, components: np.ndarray, bounds_list,
+    prev_a: int, prev_b: int, a: int, b: int, glyph_h: float, content_w: int,
+) -> bool:
+    """Attribute a head-clipped shaft to its complete, horizontally related body."""
+    if not 0 < a - prev_b <= 0.75 * glyph_h:
+        return False
+    original_ids = np.unique(components[prev_a:prev_b + 1][ink[prev_a:prev_b + 1]])
+    if not original_ids.size:
+        return False
+    for component_id in original_ids:
+        bounds = bounds_list[component_id - 1]
+        rows, _ = bounds
+        if (
+            rows.stop > a
+            or prev_a <= rows.start and rows.stop - 1 <= prev_b
+            or not _original_arrow_decoration(components[bounds] == component_id, glyph_h)
+        ):
+            return False
+    fragments = _row_fragments(ink[a:b + 1], content_w)
+    if len(fragments) != 1 or not _supported_glyph_rows(ink[a:b + 1], fragments, glyph_h):
+        return False
+    body_ids = np.unique(components[a:b + 1][ink[a:b + 1]])
+    bodies = [
+        columns for component_id in body_ids
+        for rows, columns in [bounds_list[component_id - 1]]
+        if a <= rows.start and rows.stop - 1 <= b
+        and 0.6 * glyph_h <= rows.stop - rows.start <= 1.8 * glyph_h
+        and columns.stop - columns.start >= 0.2 * glyph_h
+        and not _arrow_headed_rule(
+            components[bounds_list[component_id - 1]] == component_id, glyph_h
+        )
+    ]
+    return all(
+        any(max(columns.start, body.start) < min(columns.stop, body.stop) for body in bodies)
+        for component_id in original_ids
+        for _, columns in [bounds_list[component_id - 1]]
+    )
+
+
 def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     """Count printed rows after masking model-identified figures."""
     # Work on a counting-only copy; extraction pixels are never changed.
@@ -405,12 +626,24 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     line_h = int(np.median([b - a + 1 for a, b in raw]))
     components, _ = ndimage.label(ink)
     bounds_list = ndimage.find_objects(components)
+    arrow_components = {
+        component_id for component_id, bounds in enumerate(bounds_list, 1)
+        if bounds is not None
+        and _arrow_headed_rule(components[bounds] == component_id, line_h)
+    }
+    # Decoration cannot set the body scale that then rejects complete text glyphs.
+    body_heights = [
+        b - a + 1 for a, b in raw
+        if not set(np.unique(components[a:b + 1][ink[a:b + 1]])).issubset(arrow_components)
+    ]
+    line_h = int(np.median(body_heights)) if body_heights else line_h
     glyph_heights = [
         rows.stop - rows.start
-        for bounds in bounds_list if bounds is not None
+        for component_id, bounds in enumerate(bounds_list, 1) if bounds is not None
         for rows, columns in [bounds]
         if 0.25 * line_h <= rows.stop - rows.start <= 1.3 * line_h
         and 0.2 * line_h <= columns.stop - columns.start <= 1.3 * line_h
+        and component_id not in arrow_components
     ]
     glyph_h = (
         float(np.percentile(glyph_heights, 75)) if len(glyph_heights) >= 3 else line_h
@@ -453,7 +686,11 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     raw = _row_fragments(ink, content_w)
     if not raw:
         return []
-    line_h = int(np.median([b - a + 1 for a, b in raw]))
+    body_heights = [
+        b - a + 1 for a, b in raw
+        if not set(np.unique(components[a:b + 1][ink[a:b + 1]])).issubset(arrow_components)
+    ]
+    line_h = int(np.median(body_heights)) if body_heights else line_h
     # Projection thresholds can miss a narrow standalone quotient such as 1 or 7.
     for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
         if bounds is None:
@@ -498,6 +735,11 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
                     joined[-1] = (prev_a, b)
                 else:
                     joined.append((a, b))
+                continue
+            if _overhead_arrow_continues(
+                ink, components, bounds_list, prev_a, prev_b, a, b, glyph_h, content_w
+            ):
+                joined[-1] = (prev_a, b)
                 continue
             prev_x = np.flatnonzero(ink[prev_a:prev_b + 1].any(axis=0))
             next_x = np.flatnonzero(ink[a:b + 1].any(axis=0))
@@ -591,15 +833,24 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         band_h = b - a + 1
         count = 1
         fragments = _row_fragments(ink[a:b + 1], content_w)
-        glyph_rows = [
-            (x, y)
-            for x, y in fragments
-            if y - x + 1 >= 0.6 * glyph_h
-        ]
+        glyph_rows = _supported_glyph_rows(ink[a:b + 1], fragments, glyph_h)
         if _small_text_rows(ink[a:b + 1], fragments, glyph_h):
             glyph_rows = fragments
-        compact_text_rows = len(glyph_rows) >= 2 and all(
-            y - x + 1 <= 1.5 * glyph_h for x, y in glyph_rows
+        compact_text_rows = (
+            len(glyph_rows) >= 2
+            and all(y - x + 1 <= 1.5 * glyph_h for x, y in glyph_rows)
+            or len(glyph_rows) == 1 and len(fragments) > 1
+            and all(
+                y < glyph_rows[0][0] and glyph_rows[0][0] - y <= 0.75 * glyph_h
+                and (
+                    _arrow_headed_rule(ink[a + x:a + y + 1], glyph_h)
+                    or _overhead_arrow_continues(
+                        ink, components, bounds_list, a + x, a + y,
+                        a + glyph_rows[0][0], a + glyph_rows[0][1], glyph_h, content_w,
+                    )
+                )
+                for x, y in fragments if (x, y) != glyph_rows[0]
+            )
         )
         subscript_row = any(
             _subscript_continues(ink, a, a + x, b, glyph_h)
@@ -628,7 +879,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             count = max(count, min(len(strong_rows), len(glyph_rows)))
             if compact_text_rows:
                 # Compact text rows need not share the body's line pitch.
-                count = max(count, len(glyph_rows))
+                count = len(glyph_rows)
             if count == 3 and len(strong_rows) == 2 and len(glyph_rows) < 3:
                 count = 2
             if (

@@ -1,0 +1,84 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9-10g",
+  "page": 74,
+  "printed_page": 67,
+  "source": {
+    "pdf": "9-10g 苏联十年制学校数学教材 几何 9-10年级.pdf",
+    "pdf_sha256": "1900be5207d00404f64e5a40ab855fbfb8495bd2a06c5ce295ae0e145444578a",
+    "pdf_page": 74
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1506,
+    "h": 2126,
+    "sha256": "e9a85356de692ccf3dd1def60e06a0de7030fb09f40b0655f12612a27b323f29"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [],
+  "errata": [],
+  "printed_lines": 20,
+  "figures": [
+    {
+      "id": "fig-80",
+      "label": "图 80",
+      "box": [
+        460,
+        1366,
+        525,
+        298
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 195 -->
+195°. 需要用怎样的数乘非零向量$\vec{a}$, 使所得的向量$\vec{m}$
+满足以下条件? 1) $\vec{m}\uparrow\uparrow\vec{a}$和$|\vec{m}|=1$; 2) $\vec{m}\uparrow\downarrow\vec{a}$和$|\vec{m}|=5$; 3) 
+$\vec{m}\uparrow\downarrow\vec{a}$和$|\vec{m}|=b$; 4) $\vec{m}=\vec{0}$. 
+
+<!-- ex 196 -->
+196°. 在三角形$ABC$中, 中线$AA_1$, $BB_1$, $CC_1$交于点$M$. 
+求乘数$k$, 如果: 1) $\overrightarrow{A_1C}=k\overrightarrow{BC}$; 2) $\overrightarrow{C_1B}=k\overrightarrow{C_1A}$; 3) $\overrightarrow{AM}↵=k\overrightarrow{MA_1}$; 4) $\overrightarrow{CC_1}=k\overrightarrow{C_1M}$; 5) $\overrightarrow{MB_1}=k\overrightarrow{B_1B}$; 6) $\overrightarrow{MA}=k\overrightarrow{AA_1}$. 
+
+<!-- ex 197 -->
+197. 已知$\vec{a}$和$\vec{b}$共线, $|\vec{a}|>|\vec{b}|$. 向量$\vec{a}+\vec{b}$的方向怎
+样? 求这个向量的长度. 
+
+<!-- h3 -->
+§21. 共面的向量
+
+<!-- p -->
+求两个不共线的向量的和, 有时候利用在平面几何中学
+过的平行四边形法则较为方便. 我们来复习这个法则. 
+
+<!-- p open -->
+假如要求出不共线的向量$\vec{a}$和$\vec{b}$的和. 从任意点$O$作向
+量$\overrightarrow{OA}=\vec{a}$和$\overrightarrow{OB}=\vec{b}$(图80), 作平行四边形$AOBC$, 其中$[OC]$
+是平行四边形的对角线, 向量$\overrightarrow{OC}$是所求的和. 实际上, 根据
+三角形法则有
+
+<!-- fig 图 80 box 460,1366,525,298 -->
+![图 80](figures/fig-80.png)
+
+<!-- cap 图 80 -->
+图 80
+
+<!-- p cont -->
+$\overrightarrow{OA}+\overrightarrow{OB}=\overrightarrow{OA}+\overrightarrow{AC}=\overrightarrow{OC}$. 
+
+<!-- p -->
+**定义. 三个非零向量, 如果给出它们的方向的射线所在
+的直线平行于某个平面(图81), 这三个向量叫做共面向量.**
+
+<!-- foot -->
+67

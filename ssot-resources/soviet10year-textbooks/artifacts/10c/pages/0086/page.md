@@ -1,0 +1,101 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10c",
+  "page": 86,
+  "printed_page": 80,
+  "source": {
+    "pdf": "10c 苏联十年制学校数学教材 代数和分析初步 十年级.pdf",
+    "pdf_sha256": "47b0358c5781f509ce35e0e22de13c6bb539b246099ade66e8856c9288954e40",
+    "pdf_page": 86
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1695,
+    "h": 2580,
+    "sha256": "8679c62f708b2090bf2ffafbb24fb865026c7d6743fa2a939c628634ab7fb2e3"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "SOURCE DRAFT ONLY；未经独立 source-first 审查，未运行 finalize，不是 sourcePASS。",
+    "页脚直接辨认为 80；物理页 86 = 印刷页 80 + 6。",
+    "页首“公式：”及公式 (6) 使用 p cont，承接 0085#8 p open 的“得出”，归属 92 三角函数的积化为三角函数的和。配对依据为已独立源审的 0085 文本及独立 StageB；审查者未新增读取 85 图像。原作者未读上游时的 UNKNOWN 记录保留在源交接报告。",
+    "例 2 末句初稿为“二角函数”，作者原二/三 UNKNOWN 与独立 StageA 的“三”分歧保留在首次报告及原字节。新有界源图澄清在已读原页及局部观察到三条分离横笔，与同页栏目“三角函数”的三作对照；现忠实修为“三角函数”，不据数学语义择字。",
+    "习题栏标题与“把下列各式写成三角函数的和的形式：”共同保留在 exhead，后者是本栏印刷组前言，不是新题。",
+    "266/267、268/269 分别同排印刷；按自然题号顺序保存，以 samerow 保留实际共享行。无插图、表格或教学脚注。"
+  ],
+  "errata": [],
+  "count_exclusions": [
+    {
+      "kind": "scan-artifact",
+      "box": [
+        0,
+        2470,
+        1695,
+        40
+      ],
+      "reason": "独立原图局部观察确认此页脚下方矩形仅含分散点及窄断续外围墨迹，无正文、公式、图或页码；物理成因 UNKNOWN，仅用于计数排除，原像素不改。"
+    }
+  ],
+  "printed_lines": 19,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+公式：
+$\cos\alpha\cos\beta=\frac{1}{2}[\cos(\alpha+\beta)+\cos(\alpha-\beta)]$.　(6)
+
+<!-- p -->
+由等式 (5) 两边分别减去等式 (4) 的两边，得到：
+$\sin\alpha\sin\beta=\frac{1}{2}[\cos(\alpha-\beta)-\cos(\alpha+\beta)]$.　(7)
+
+<!-- p -->
+例 2　把 $\cos^2 x\cos3x$ 写成三角函数的和的形式。
+
+<!-- p -->
+首先用 $\frac{1+\cos2x}{2}$ 代替 $\cos^2 x$，于是得到：
+$\frac{1}{2}(1+\cos2x)\cos3x=\frac{1}{2}\cos3x+\frac{1}{2}\cos2x\cos3x$.
+
+<!-- p -->
+现在利用 (6) 式：
+$\frac{1}{2}\cos3x+\frac{1}{2}\cos2x\cos3x=\frac{1}{2}\cos3x+\frac{1}{4}(\cos x+\cos5x)$.
+
+<!-- p -->
+于是，
+$\cos^2 x\cos3x=\frac{1}{2}\cos3x+\frac{1}{4}\cos x+\frac{1}{4}\cos5x$.
+
+<!-- p -->
+结果得到的式子中，三角函数都是一次的。
+
+<!-- exhead -->
+习题
+把下列各式写成三角函数的和的形式：
+
+<!-- ex 266 -->
+266. $\cos40^\circ\cos50^\circ$.
+
+<!-- ex 267 samerow -->
+267. $\cos\frac{\pi}{12}\cos\frac{5\pi}{12}$.
+
+<!-- ex 268 -->
+268. $\sin\frac{5\pi}{24}\sin\frac{\pi}{24}$.
+
+<!-- ex 269 samerow -->
+269. $\sin110^\circ\sin50^\circ$.
+
+<!-- ex 270 -->
+270. $\sin\left(x+\frac{\pi}{4}\right)\sin\left(x-\frac{\pi}{4}\right)$.
+
+<!-- ex 271 -->
+271. $\sin\left(\alpha+\frac{\pi}{3}\right)\sin\left(\alpha-\frac{\pi}{6}\right)$.
+
+<!-- foot -->
+80

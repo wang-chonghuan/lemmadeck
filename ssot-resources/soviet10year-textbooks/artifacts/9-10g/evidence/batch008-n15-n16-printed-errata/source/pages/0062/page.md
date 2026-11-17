@@ -1,0 +1,110 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9-10g",
+  "page": 62,
+  "printed_page": 55,
+  "source": {
+    "pdf": "9-10g 苏联十年制学校数学教材 几何 9-10年级.pdf",
+    "pdf_sha256": "1900be5207d00404f64e5a40ab855fbfb8495bd2a06c5ce295ae0e145444578a",
+    "pdf_page": 62
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1506,
+    "h": 2126,
+    "sha256": "e98e4a08d20a66492f951ce08d7f402e68a90055fbe7a38543917334c30799d9"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "SOURCE AUTHOR ONLY：物理62，印刷55；§16的方向性质、定义和习题164—167实际在本页结束，随后实际印刷§17. 向量。",
+    "无章标题；§17印刷标题按单元起始语义以h3记录，未另造标题。§17首段只印一行，末字“一”，保持open，不能因页界认作完整单元。",
+    "图65保留左h₃、中h₂、右h₁及各始点、平面轮廓和相连实线；不添加原图未印的点名或平面名。",
+    "图65图题与正文“它同方向的射线的全体的集”同排，cap标samerow；正文跨图以open/cont保存。",
+    "第165题射线列表中的C₁D及第166题1°)照印刷保留；不按数学推断补下标或删度号。",
+    "未授权答案、勘误、计数排除；无此类增补。"
+  ],
+  "errata": [
+    {
+      "id": "p0062-direction-ray",
+      "block": "p0062#2",
+      "original": "同一条直线",
+      "reason": "Bound original pixels visibly print 直线, retained faithfully. An unoriented line contains two opposite ray directions and cannot select one same-direction equivalence class. The preceding definitions and the next paragraph select a direction by one ray; the modern correction uses 射线. No claim about the printer's intended wording or unmeasured figure geometry is made."
+    }
+  ],
+  "printed_lines": 24,
+  "figures": [
+    {
+      "id": "fig-65",
+      "label": "图 65",
+      "box": [
+        768,
+        299,
+        498,
+        432
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+在空间里，如同平面上一样，射线的方向相同具有反身
+性：$h\uparrow\uparrow h$；对称性：如果$h_1\uparrow\uparrow h_2$，那么$h_2\uparrow\uparrow h_1$；传递性：如果
+$h_1\uparrow\uparrow h_2$和$h_2\uparrow\uparrow h_3$，那么$h_1\uparrow\uparrow h_3$
+（图65）.
+
+<!-- p -->
+所有与同一条直线方向相
+同的射线的集合，叫做在空间
+的方向.
+
+<!-- p open -->
+任何一条射线完全确定与
+它同方向的射线的全体的集
+
+<!-- fig 图 65 box 768,299,498,432 -->
+![图 65](figures/fig-65.png)
+
+<!-- cap 图 65 samerow -->
+图 65
+
+<!-- p cont -->
+合. 因此，以后空间的方向将利用一条射线来给出.
+
+<!-- exhead -->
+习　题
+
+<!-- ex 164 -->
+164°. 已知四面体$ABCD$. 在射线$AB$、$AC$、$AD$、$CD$中有
+没有1) 同方向的？2) 反方向的？
+
+<!-- ex 165 -->
+165°. 已知平行六面体$ABCDA_1B_1C_1D_1$. 在射线$AB$、$AD$、
+$AA_1$、$BC$、$C_1D$、$BB_1$、$C_1C$、$A_1D_1$中说出：1) 同方向的；2) 反方
+向的.
+
+<!-- ex 166 -->
+166. 1°) 射线的方向相反这一性质具有传递性吗？
+2) 证明，两条射线如果都和第三条射线方向相反，那么
+它们方向相同.
+
+<!-- ex 167 -->
+167. 已知：$[AB)\uparrow\uparrow[MN)$，$[CD)\uparrow\downarrow[MN)$. 射线$AB$和
+$CD$的相关位置如何？
+
+<!-- h3 -->
+§17. 向量
+
+<!-- p open -->
+在立体几何里，引入向量概念的方法，同平面几何里一
+
+<!-- foot -->
+· 55 ·

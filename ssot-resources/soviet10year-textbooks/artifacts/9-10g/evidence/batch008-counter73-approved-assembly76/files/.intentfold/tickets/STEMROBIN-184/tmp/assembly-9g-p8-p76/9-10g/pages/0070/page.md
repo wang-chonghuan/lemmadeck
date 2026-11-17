@@ -1,0 +1,98 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9-10g",
+  "page": 70,
+  "printed_page": 63,
+  "source": {
+    "pdf": "9-10g 苏联十年制学校数学教材 几何 9-10年级.pdf",
+    "pdf_sha256": "1900be5207d00404f64e5a40ab855fbfb8495bd2a06c5ce295ae0e145444578a",
+    "pdf_page": 70
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1506,
+    "h": 2126,
+    "sha256": "a47218869b530a8fa99032cebfbb9371d91af8013283692213236c7139160db0"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [],
+  "errata": [],
+  "printed_lines": 26,
+  "figures": [
+    {
+      "id": "fig-75",
+      "label": "图 75",
+      "box": [
+        842,
+        678,
+        421,
+        257
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- h3 -->
+§19. 相反的向量. 向量的减法
+
+<!-- p -->
+1. 使用三角形法则，我们来求向量 $\overrightarrow{AB}$ 和 $\overrightarrow{BA}$ 的和：
+$\overrightarrow{AB}+\overrightarrow{BA}=\overrightarrow{AA}=\vec 0$.
+
+<!-- p -->
+如果两个向量的和等于零向量，这两个向量叫做**相反的
+向量**. 向量 $\vec a$ 的相反的向量用 $-\vec a$ 表示. 根据定义有：
+$\vec a+(-\vec a)=\vec 0$.
+
+<!-- p -->
+显然，非零的相反的向量（图 75）长度相等，方向相反. 我
+们还注意到：$\overrightarrow{BA}=-\overrightarrow{AB}$.
+
+<!-- fig 图 75 box 842,678,421,257 -->
+![图 75](figures/fig-75.png)
+
+<!-- p -->
+2. 证明：如果 $\vec c=\vec a+(-\vec b)$，
+那么 $\vec c+\vec b=\vec a$. （这里使用了向量
+的加法的哪些法则？）
+
+<!-- p open -->
+**如果**
+
+<!-- cap 图 75 samerow -->
+图 75
+
+<!-- p cont -->
+$\vec c+\vec b=\vec a$，
+**向量 $\vec c$ 叫做向量 $\vec a$ 和 $\vec b$ 的差**.
+
+<!-- p -->
+向量 $\vec a$ 和 $\vec b$ 的差 $\vec c$ 用 $\vec a-\vec b$ 表示. 根据第 2 点开头所作
+的讨论得出：
+$\vec a-\vec b=\vec a+(-\vec b)$.
+
+<!-- p -->
+这样一来，向量的减法可以转化成加法：为了求向量 $\vec a$ 和
+$\vec b$ 的差，只要求向量 $\vec a$ 与向量 $\vec b$ 的相反的向量的和.
+
+<!-- p -->
+3. 对于空间任意的三个点 $A$，$B$，$O$，有以下的重要的**向
+量减法公式**：
+$\overrightarrow{OB}-\overrightarrow{OA}=\overrightarrow{AB}$.
+
+<!-- p -->
+实际上，根据三角形法则（图 76）$\overrightarrow{OA}+\overrightarrow{AB}=\overrightarrow{OB}$，因此，
+根据向量差的定义，有
+$\overrightarrow{AB}=\overrightarrow{OB}-\overrightarrow{OA}$.
+
+<!-- foot -->
+$\bullet$ 63 $\bullet$

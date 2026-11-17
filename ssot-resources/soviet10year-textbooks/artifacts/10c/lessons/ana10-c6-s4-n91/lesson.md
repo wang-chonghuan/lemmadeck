@@ -1,0 +1,21 @@
+# 91. 用半角的正切表示三角函数
+
+在第89小节里已经证明，怎样由一个三角函数的已知值计算同角的其他三角函数的值。但是，所得结果通常不是唯一的。同时，在解三角方程、证明不等式等等情况下，常常希望将$\sin x$，$\cos x$，$\operatorname{tg}x$和$\operatorname{ctg}x$所有这四个函数都能用某一个函数$f(x)$的有理式表示出来。
+
+在这一小节里将要说明，怎样用函数$f(x)=\operatorname{tg}\frac{x}{2}$来表示所有三角函数的值。这时，我们要利用倍角的三角函数。因为$\sin x=2\sin\frac{x}{2}\cos\frac{x}{2}$，$\cos x=\cos^2\frac{x}{2}-\sin^2\frac{x}{2}$，所以为了得到只含有$\operatorname{tg}\frac{x}{2}$的式子，只要用$\sin^2\frac{x}{2}+\cos^2\frac{x}{2}=1$除上列两式的右边就行了。于是得到：$\sin x=\frac{2\sin\frac{x}{2}\cos\frac{x}{2}}{\sin^2\frac{x}{2}+\cos^2\frac{x}{2}}$，$\cos x=\frac{\cos^2\frac{x}{2}-\sin^2\frac{x}{2}}{\sin^2\frac{x}{2}+\cos^2\frac{x}{2}}$。现在我们用$\cos^2\frac{x}{2}$来除分子和分母，得到：$\sin x=\frac{2\operatorname{tg}\frac{x}{2}}{1+\operatorname{tg}^2\frac{x}{2}}$， (1)$\cos x=\frac{1-\operatorname{tg}^2\frac{x}{2}}{1+\operatorname{tg}^2\frac{x}{2}}$。 (2)
+
+这时应当考虑所讨论的函数和分式的定义域。在这种情况下，$x\ne(2k+1)\pi$，$k\in Z$。
+
+如果利用倍角的正切公式，就可以用$\operatorname{tg}\frac{x}{2}$表示其他三角函数：$\operatorname{tg}x=\frac{2\operatorname{tg}\frac{x}{2}}{1-\operatorname{tg}^2\frac{x}{2}}$， (3)$\operatorname{ctg}x=\frac{1-\operatorname{tg}^2\frac{x}{2}}{2\operatorname{tg}\frac{x}{2}}$。 (4)
+
+同时应当考虑所讨论的函数和分式的定义域。当$x=\frac{\pi}{2}+\pi k\ (k\in Z)$和$x=\pi+2\pi l\ (l\in Z)$时，(3)式失去意义，而当$x=\pi k\ (k\in Z)$时，(4)式失去意义。
+
+例 解方程$3\cos x+4\sin x=5$。
+
+我们用带有半角正切的式子代替正弦和余弦，得到（当$x\ne(2k+1)\pi$，$k\in Z$时）：$\frac{3\left(1-\operatorname{tg}^2\frac{x}{2}\right)}{1+\operatorname{tg}^2\frac{x}{2}}+\frac{4\left(2\operatorname{tg}\frac{x}{2}\right)}{1+\operatorname{tg}^2\frac{x}{2}}=5$。
+
+用$y$表示$\operatorname{tg}\frac{x}{2}$并化简方程后，得到：$4y^2-4y+1=0$，$y=\frac{1}{2}$，$\operatorname{tg}\frac{x}{2}=\frac{1}{2}$，$\frac{x}{2}=\operatorname{arctg}0.5+\pi n$，$n\in Z$，$x=2\operatorname{arctg}0.5+2\pi n$，$n\in Z$，$x\approx2\cdot0.464+2\pi n$，$n\in Z$，$x\approx0.928+2\pi n$，$n\in Z$。
+
+在解中除去了$(2k+1)\pi$（其中$k\in Z$）这种形式的数。对于这样的$x$，得$\cos x=-1$，$\sin x=0$，而$3\cos x+4\sin x=-3\ne5$。因此，在解题过程中使用(1)式和(2)式，没有失掉根。
+
+答：$x\approx0.928+2\pi n$，$n\in Z$。

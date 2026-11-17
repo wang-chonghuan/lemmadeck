@@ -1,0 +1,79 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10c",
+  "page": 82,
+  "printed_page": 76,
+  "source": {
+    "pdf": "10c 苏联十年制学校数学教材 代数和分析初步 十年级.pdf",
+    "pdf_sha256": "47b0358c5781f509ce35e0e22de13c6bb539b246099ade66e8856c9288954e40",
+    "pdf_page": 82
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1695,
+    "h": 2580,
+    "sha256": "2d0d812237b5cefc7702ba6af5116c8b9c63aab053b114e959bd2a4b17c15037"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "源稿，未 finalize，未经独立源审查；页脚直接确认印刷页 76。",
+    "页首 260.* 属第 91 单元标题之前的材料；证明：引出的是待证明结论，不是已印出的证明。",
+    "第 91 单元末段及两条分式公式后仍续到物理页 83，保留 p open；无图表。",
+    "未把扫描字重解释为逐词字体审查结论。"
+  ],
+  "errata": [],
+  "count_exclusions": [
+    {
+      "kind": "scan-artifact",
+      "box": [
+        0,
+        2470,
+        1695,
+        40
+      ],
+      "reason": "独立原图局部观察确认此页脚下方矩形仅含零散点及不规则短边缘墨迹，无正文、公式、图或页码；物理成因 UNKNOWN，仅用于计数排除，原像素不改。"
+    }
+  ],
+  "printed_lines": 21,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 260 -->
+260. *设谐振动
+$f_1(t)=A_1\cos(\omega t+\varphi_1)$，$f_2(t)=A_2\cos(\omega t+\varphi_2)$的和可
+以写成
+$f_1(t)+f_2(t)=A\cos(\omega t+\varphi)$。
+证明：
+$A=\sqrt{A_1^2+A_2^2+2A_1A_2\cos(\varphi_2-\varphi_1)}$，
+$\operatorname{tg}\frac{\varphi}{2}=\frac{A_1\sin\varphi_1+A_2\sin\varphi_2}{A+A_1\cos\varphi_1+A_2\cos\varphi_2}$。
+
+<!-- h3 -->
+91. 用半角的正切表示三角函数
+
+<!-- p -->
+在第89小节里已经证明，怎样由一个三角函数的已知值
+计算同角的其他三角函数的值。但是，所得结果通常不是唯
+一的。同时，在解三角方程、证明不等式等等情况下，常常希
+望将
+$\sin x$，$\cos x$，$\operatorname{tg}x$和$\operatorname{ctg}x$
+所有这四个函数都能用某一个函数$f(x)$的有理式表示出来。
+
+<!-- p open -->
+在这一小节里将要说明，怎样用函数$f(x)=\operatorname{tg}\frac{x}{2}$来表示
+所有三角函数的值。这时，我们要利用倍角的三角函数。因
+为$\sin x=2\sin\frac{x}{2}\cos\frac{x}{2}$，$\cos x=\cos^2\frac{x}{2}-\sin^2\frac{x}{2}$，所以为了得
+到只含有$\operatorname{tg}\frac{x}{2}$的式子，只要用$\sin^2\frac{x}{2}+\cos^2\frac{x}{2}=1$除上列两
+式的右边就行了。于是得到：
+$\sin x=\frac{2\sin\frac{x}{2}\cos\frac{x}{2}}{\sin^2\frac{x}{2}+\cos^2\frac{x}{2}}$，$\cos x=\frac{\cos^2\frac{x}{2}-\sin^2\frac{x}{2}}{\sin^2\frac{x}{2}+\cos^2\frac{x}{2}}$。
+
+<!-- foot -->
+76

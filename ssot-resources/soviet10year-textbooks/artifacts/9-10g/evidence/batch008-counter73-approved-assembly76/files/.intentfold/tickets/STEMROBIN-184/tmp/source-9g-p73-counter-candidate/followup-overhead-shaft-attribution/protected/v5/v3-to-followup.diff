@@ -1,0 +1,96 @@
+--- v3/layout.py
++++ followup/candidate/layout.py
+@@ -218,12 +218,50 @@
+     return True
+ 
+ 
++def _original_arrow_decoration(mask: np.ndarray, line_h: float) -> bool:
++    """Recognize a headed shaft without discarding an attached full body glyph."""
++    if not _arrow_headed_rule(mask, line_h):
++        return False
++    xs = np.flatnonzero(mask.any(axis=0))
++    trim = max(1, xs.size // 5)
++    spans = [
++        np.ptp(ys) + 1 for x in xs[trim:-trim]
++        for ys in [np.flatnonzero(mask[:, x])]
++    ]
++    if np.median(spans) > 0.2 * line_h:
++        return False
++    horizontal = ndimage.binary_opening(
++        mask, structure=np.ones((1, max(2, int(0.7 * line_h))), dtype=bool)
++    )
++    shafts, _ = ndimage.label(horizontal)
++    body = mask.copy()
++    found = False
++    for component_id, bounds in enumerate(ndimage.find_objects(shafts), 1):
++        if bounds is None or bounds[0].stop - bounds[0].start > 0.2 * line_h:
++            continue
++        if _straight_fraction_rule(shafts[bounds] == component_id, line_h):
++            region = body[bounds]
++            region[shafts[bounds] == component_id] = False
++            found = True
++    if not found:
++        return False
++    # Head halves are short. A surviving full body means this is not decoration.
++    return not any(
++        rows.stop - rows.start >= 0.6 * line_h
++        and columns.stop - columns.start >= 0.2 * line_h
++        for bounds in ndimage.find_objects(ndimage.label(body)[0]) if bounds is not None
++        for rows, columns in [bounds]
++    )
++
++
+ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool:
+     """Distinguish tall inline fractions from two full text rows."""
+     band = ink[a:b + 1].copy()
+     height = band.shape[0]
+     rules = []
++    accepted_carriers = set()
+     components, _ = ndimage.label(band)
++    original_components = components
+     for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
+         if bounds is None:
+             continue
+@@ -235,6 +273,7 @@
+             and _straight_fraction_rule(components[bounds] == component_id, line_h)
+         ):
+             rules.append((columns.start, columns.stop - 1))
++            accepted_carriers.add(component_id)
+     horizontal = ndimage.binary_opening(
+         band, structure=np.ones((1, max(2, int(0.7 * line_h))), dtype=bool)
+     )
+@@ -291,6 +330,7 @@
+             )
+         ):
+             rules.append((columns.start, columns.stop - 1))
++            accepted_carriers.update(int(component_id) for component_id in original_ids if component_id)
+     if not rules:
+         return False
+     for left, right in rules:
+@@ -310,6 +350,12 @@
+     counts = band.sum(axis=1)
+     remaining = np.flatnonzero(counts > max(8, 0.25 * counts.max()))
+     glyph_components, _ = ndimage.label(band)
++    original_decorations = {
++        component_id for component_id, bounds in enumerate(original_bounds, 1)
++        if bounds is not None
++        and component_id not in accepted_carriers
++        and _original_arrow_decoration(original_components[bounds] == component_id, line_h)
++    }
+     glyph_bounds = []
+     for component_id, bounds in enumerate(ndimage.find_objects(glyph_components), 1):
+         if bounds is None:
+@@ -319,6 +365,13 @@
+         if not (
+             0.6 * line_h <= height <= 1.8 * line_h
+             and columns.stop - columns.start >= 0.2 * line_h
++        ):
++            continue
++        original_ids = np.unique(
++            original_components[bounds][glyph_components[bounds] == component_id]
++        )
++        if original_ids.size and all(
++            original_id in original_decorations for original_id in original_ids
+         ):
+             continue
+         central = glyph_components[
