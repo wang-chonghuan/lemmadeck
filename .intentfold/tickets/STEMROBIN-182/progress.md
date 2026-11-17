@@ -1,5 +1,25 @@
 # 当前开发状态
 
+### batch294有限FAIL留存，n61选定尾包真实PASS
+
+- `8ac4c409df0474833c94bbf6cf8588eae23c0edc`已真实push，仅291/292
+  四包181题546项及八有限PASS窗口；未增82包1394题5659项648。
+- 294 actual observer已completed/process exit0；final report rawSHA
+  1af1435560852c30c4f0e6e1253a2f4d2d0533e3c7e593eed66cd9b92849b2a0
+  已匹配。六窗口有限PASS，两手机FAIL原样留存：n57第二题a/b
+  科学记数法右端未见；n60图右部B/C及关联未见。八PNG/原报告不改，
+  原DOM的reachableRegions/endReachable:true只归属本次真实测量，
+  不盖过视觉FAIL，也不据此断言不可达/改renderer或应用。
+  四包84题276项仅选定数学/选择PASS，n57/n60保持
+  unresolved_visible_failure:true，全部broader/display_pending:true、approval:false。
+- 295零图actual `01a1ebe4-f3d2-70e1-9969-3720aac70e45`
+  已completed/process exit0；n61选定49源52题157项selection-impact PASS，
+  final rawSHA b60faf6a5cfb117603ebd47c2927c7a12a10179f385c994757fd94c51b5db370。
+  各current函数一次exit0，原pre-call reader失败保留；
+  最后仅identity回执补录，不重检最终bytes。1172/1173/1194/1198、
+  原blocked/exit3/生产/未见/APP/全课/881不解除，下一只补首次choices显示。
+  父0新图/累计24；layout/测试/supervisor ticket/其余4m资源不纳入本批。
+
 ### batch292有限回执留存，294/295互斥接续
 
 - `e5b49f2e3a04bbe9dd2d14eaec1cf94d70b11b81`已真实push同182分支，
