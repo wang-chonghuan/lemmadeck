@@ -1,5 +1,42 @@
 # 当前开发状态
 
+### batch202 c3-ex/n51有限显示收口
+
+- Russell/Dalton真实当前规范与数学证据直接复用，不重验。
+  Maxwell桌面可见PASS、Ramanujan手机题干上缘/右端L2有限PASS
+  和Socrates n51两首屏有限PASS按原字节留存；原手机HOLD及失败
+  原样保留。仅解除两选定包现有display_pending，不补全题截图。
+- c3-ex为51源60题200项、n51为10源10题56项；新增70题256项
+  及四个唯一视口组合，当前75组选定包1253题4984项622组合，
+  不是75完整课。九排除源、852完整闭条带表示、未见/交互/绘图、
+  APP/整课及881真正审批均不解除，父0新图/累计24不变。
+- part2原dict blocks调用exit1保留，只消费已执行的keys视图纠偏
+  exit0；历史check_draft共两次、check_review一次，不冒称原失败通过。
+  25源25题131项独审不重做，原review/作者稿不改，尚不计交付。
+- part1真实revise及唯一direct exit3保留；只修q929-C不可能的
+  有理数错因和q938四固定子结果的实质覆盖，不重解其他23题。
+  Laplace part3/Mencius part4继续原冻结零图首审，派工不等于批准。
+  本批窄commit/push后继续原队列，不把局部HOLD或汇报当停工点。
+
+### batch199 c3-ex首次choices显示
+
+- n4选定包和必要display包装窄修复已push `e723fa05`；
+  九题38项只计一次，不当整课/整组完成。
+- Russell已真实完成并关闭，当前choice review
+  `4889c526675389cdc2b75e0423f76d3749204ba3b18358b426d8feeeb2626245`，
+  两gate各一次exit0，唯一direct check_draft/check_review exit0；
+  全部数学、513原PASS、514真实增量与q494[a]直接继承。
+  父仅消费真实回执，不重解、重图审或重复机械检查。
+- c3-ex首次choices-only render exit0及1440/390实际display exit0：
+  两图均640×600、最小字18px。仅两张q514首次静态截图待fresh观察，
+  current display_pending仍true；51源60题200项尚不加量。
+- Dalton已接n51零图选定包影响增量：整源852排除且HOLD保留，
+  其余10题56项精确继承Faraday；候选冻结，不复活旧审者。
+- c5-ex现成99源98题538项冻结稿仅按完整source拆四有界首审入口，
+  无新作者内容、无原首结构/SOURCE/trace重跑。part1/2已派fresh
+  各一份首审，part3/4只排队；978/988d/未选926边界均不解除。
+  父0新图/累计24，九排除源/881/独立作图和全课未批准。
+
 ### batch196 n4有限显示收口
 
 - Hume当前持久绑定及唯一direct exit0直接复用，未重数学或三图审。
