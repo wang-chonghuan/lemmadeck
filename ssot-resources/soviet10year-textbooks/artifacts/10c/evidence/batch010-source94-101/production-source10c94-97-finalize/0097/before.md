@@ -1,0 +1,72 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10c",
+  "page": 97,
+  "printed_page": 91,
+  "source": {
+    "pdf": "10c 苏联十年制学校数学教材 代数和分析初步 十年级.pdf",
+    "pdf_sha256": "47b0358c5781f509ce35e0e22de13c6bb539b246099ade66e8856c9288954e40",
+    "pdf_page": 97
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1695,
+    "h": 2580,
+    "sha256": "2d7a13f8b70a212f765ff374cb90f76a778b78c6bf53bdb7e97a6fc74e65f134"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "源作者草稿，未 finalize、装订或矢量化。首段承接物理96页恒等式(3)的定义域说明，本页实际写完该段。",
+    "定向裁图确认327之后的题号印作323，按原字保留为 ex 323，未为了连续编号改成328；公式为 cosα/(1+sinα)=tg(π/4-α/2)。",
+    "定向裁图确认330的分母是 cosα+cos3α，保留细小的竖笔，不误写成减号。325与326同排，326用 samerow。",
+    "334原书用度数630°与90°，未换成弧度或改单位。331至334各为一条高分式印刷行，分子分母不拆成额外文字行。",
+    "无插图、表格或图题。页码两侧圆点照录；91右侧圆点前可见短横细痕，323等号后可见细点状墨迹，性质不确定，记于此并保留源像素，不擅自并为数学符号或删除。"
+  ],
+  "errata": []
+}
+---
+
+<!-- p cont -->
+恒等式(3)在除去 $\alpha=\pm\frac{\pi}{4}+\pi n\ (n\in\mathbb{Z})$ 这种形式的点以外的
+实数集上成立。
+
+<!-- exhead -->
+习题
+证明恒等式：
+
+<!-- ex 325 -->
+325. $\frac{\sin\alpha}{1+\cos\alpha}=\frac{1-\cos\alpha}{\sin\alpha}$。
+
+<!-- ex 326 samerow -->
+326. $\frac{\sin\alpha+\operatorname{tg}\alpha}{1+\cos\alpha}=\operatorname{tg}\alpha$。
+
+<!-- ex 327 -->
+327. $\frac{\cos\alpha+\sin\alpha}{\cos\alpha-\sin\alpha}=\operatorname{tg}\left(\alpha+\frac{\pi}{4}\right)$。
+
+<!-- ex 323 -->
+323. $\frac{\cos\alpha}{1+\sin\alpha}=\operatorname{tg}\left(\frac{\pi}{4}-\frac{\alpha}{2}\right)$。
+
+<!-- ex 329 -->
+329. $\operatorname{tg}\left(\frac{\pi}{4}+\frac{x}{2}\right)-\operatorname{tg}\left(\frac{\pi}{4}-\frac{x}{2}\right)=2\operatorname{tg}x$。
+
+<!-- ex 330 -->
+330. $\frac{\sin\alpha+\sin3\alpha}{\cos\alpha+\cos3\alpha}=\operatorname{tg}2\alpha$。
+
+<!-- ex 331 -->
+331. $\frac{\sin(x-\pi)\operatorname{tg}\left(x-\frac{\pi}{2}\right)}{\cos\left(\frac{3\pi}{2}+x\right)\operatorname{ctg}(\pi-x)}=-1$。
+
+<!-- ex 332 -->
+332. $\cos x\operatorname{tg}(\pi+x)\operatorname{tg}\left(\frac{3\pi}{2}-x\right)\frac{1}{\sin\left(\frac{\pi}{2}-x\right)}=1$。
+
+<!-- ex 333 -->
+333. $\frac{\cos^2\left(\alpha-\frac{3\pi}{2}\right)}{\sin(\alpha-\pi)}=\cos\left(\frac{\pi}{2}+\alpha\right)$。
+
+<!-- ex 334 -->
+334. $\frac{\sin^2(\alpha-630^\circ)}{1+\sin(-\alpha)}=1+\cos(\alpha-90^\circ)$。
+
+<!-- foot -->
+• 91 •

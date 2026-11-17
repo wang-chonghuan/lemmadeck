@@ -1,0 +1,124 @@
+--- a/.claude/skills/ld-s10y-lesson/tools/test_layout_tall_nested_fraction.py
++++ b/.claude/skills/ld-s10y-lesson/tools/test_layout_tall_nested_fraction.py
+@@ -6,6 +6,7 @@
+ from __future__ import annotations
+ 
+ import argparse
++import hashlib
+ import importlib.util
+ import json
+ from pathlib import Path
+@@ -90,8 +91,8 @@
+     original = ink.copy()
+     cols = np.flatnonzero(ink.any(axis=0))
+     bands = layout.line_bands(ink, int(cols[-1] - cols[0] + 1))
+-    # Independent reviewed row count. The other 14 coordinates come from the
+-    # preserved preparation layout, whose rows the human explicitly confirmed.
++    # Parent-supplied independently reviewed count. The other 14 coordinates
++    # are prepared machine bands protected as unchanged, not human pixel review.
+     prepared = json.loads(page.with_name("layout.json").read_text(encoding="utf-8"))
+     expected_bands = (prepared["line_bands"][:5] + [[820, 1032]]
+                       + prepared["line_bands"][8:])
+@@ -110,37 +111,76 @@
+     return case, current_hashes
+ 
+ 
+-def run(code, report_path, page=None, baseline_path=None):
++def scale_invariants(layout):
++    normal = np.zeros((450, 1300), dtype=bool)
++    text_row(normal, 100, 30)
++    rules = np.zeros_like(normal)
++    for y in (30, 90, 150):
++        rules[y:y + 4, 260:470] = True
++    results = []
++    for name, ink, projection_h in (
++        ("correct_body_scale_needs_no_fallback", normal, 40),
++        ("thin_rules_cannot_establish_body_scale", rules, 4),
++    ):
++        components, _ = layout.ndimage.label(ink)
++        value = layout._fragmented_body_scale(
++            components, layout.ndimage.find_objects(components), projection_h
++        )
++        results.append({
++            "name": name, "expected_fallback": 0, "actual_fallback": value,
++            "pass": value == 0,
++        })
++    return results
++
++
++def run(code, report_path, page=None, baseline_path=None, selected_cases=None,
++        integration_only=False, check_scale_invariants=False):
+     spec = importlib.util.spec_from_file_location("layout_target", code)
+     layout = importlib.util.module_from_spec(spec)
+     spec.loader.exec_module(layout)
+     cases = []
+-    for name, ink, expected_count, expected_fraction in fixtures():
++    available = {name: (ink, count, fraction_row)
++                 for name, ink, count, fraction_row in fixtures()}
++    if selected_cases and set(selected_cases) - available.keys():
++        raise ValueError(f"Unknown cases: {sorted(set(selected_cases) - available.keys())}")
++    for name in selected_cases or available:
++        ink, expected_count, expected_fraction = available[name]
+         original = ink.copy()
+-        ys = np.flatnonzero(ink.any(axis=1))
+-        is_fraction = layout._single_fraction_row(ink, int(ys[0]), int(ys[-1]), 40.0)
++        is_fraction = None
++        if not integration_only:
++            ys = np.flatnonzero(ink.any(axis=1))
++            is_fraction = layout._single_fraction_row(ink, int(ys[0]), int(ys[-1]), 40.0)
+         bands = layout.line_bands(ink, ink.shape[1])
+         cases.append({
+             "name": name, "expected_count": expected_count, "actual_count": len(bands),
++            "fixture_sha256": hashlib.sha256(ink.tobytes()).hexdigest(),
++            "recognizer_checked": not integration_only,
+             "expected_single_fraction": expected_fraction,
+-            "actual_single_fraction": bool(is_fraction), "bands": bands,
++            "actual_single_fraction": bool(is_fraction) if is_fraction is not None else None,
++            "bands": bands,
+             "array_unchanged": bool(np.array_equal(ink, original)),
+-            "pass": len(bands) == expected_count and is_fraction == expected_fraction
++            "pass": len(bands) == expected_count
++            and (integration_only or is_fraction == expected_fraction)
+             and np.array_equal(ink, original),
+         })
++    invariants = scale_invariants(layout) if check_scale_invariants else []
+     current_hashes = {}
+     if page is not None:
+         physical, current_hashes = physical_case(layout, page, baseline_path)
+         cases.append(physical)
+     report = {
+-        "status": "pass" if all(case["pass"] for case in cases) else "fail",
+-        "requirement_basis": "User-supplied independent 15-row review for 10c102; synthetic row geometry is authored before the patch and has explicit 1/2/3-row expectations.",
++        "status": "pass" if all(case["pass"] for case in cases + invariants) else "fail",
++        "requirement_basis": "Parent-supplied independently reviewed 15-row count for 10c102; coordinates are prepared machine bands protected as unchanged, not direct-human pixel confirmation. Synthetic row geometry has unchanged authored 1/2/3-row expectations.",
+         "code_path": str(code.relative_to(ROOT)), "code_sha256": layout.sha256_file(code),
+         "test_path": str(Path(__file__).resolve().relative_to(ROOT)),
+         "test_sha256": layout.sha256_file(Path(__file__)),
+         "baseline_path": str(baseline_path.relative_to(ROOT)) if baseline_path else None,
+         "baseline_sha256": layout.sha256_file(baseline_path) if baseline_path else None,
+         "protected_sha256": current_hashes,
++        "selected_cases": selected_cases,
++        "integration_only": integration_only,
++        "physical_checked": page is not None,
++        "scale_invariants": invariants,
+         "cases": cases,
+         "image_ledger": {"model_opens": 0, "crops": 0, "generated_images": 0},
+         "limitations": "Algorithm-only targeted proof, not finalize/assembly, semantic review, full-project tests, build, database, or publication.",
+@@ -157,6 +197,9 @@
+     parser.add_argument("--report", type=Path)
+     parser.add_argument("--page", type=Path)
+     parser.add_argument("--baseline", type=Path)
++    parser.add_argument("--case", action="append", dest="selected_cases")
++    parser.add_argument("--integration-only", action="store_true")
++    parser.add_argument("--scale-invariants", action="store_true")
+     args = parser.parse_args()
+     if (args.page is None) != (args.baseline is None):
+         parser.error("--page and --baseline must be provided together")
+@@ -165,4 +208,7 @@
+         args.report.resolve() if args.report else None,
+         args.page.resolve() if args.page else None,
+         args.baseline.resolve() if args.baseline else None,
++        args.selected_cases,
++        args.integration_only,
++        args.scale_invariants,
+     ))

@@ -1,0 +1,52 @@
+--- a/.claude/skills/ld-s10y-lesson/tools/layout.py
++++ b/.claude/skills/ld-s10y-lesson/tools/layout.py
+@@ -630,6 +630,26 @@
+     )
+ 
+ 
++def _fragmented_body_scale(components, bounds_list, line_h: float) -> int:
++    """Recover coherent full glyphs when projection retained only their strokes."""
++    heights = []
++    for component_id, bounds in enumerate(bounds_list, 1):
++        if bounds is None:
++            continue
++        rows, columns = bounds
++        height, width = rows.stop - rows.start, columns.stop - columns.start
++        if (
++            height >= max(MIN_BAND_HEIGHT, 1.8 * line_h)
++            and max(MIN_BAND_WIDTH, 0.2 * height) <= width <= 1.3 * height
++            and np.count_nonzero(components[bounds] == component_id) >= 0.12 * height ** 2
++            and not _arrow_headed_rule(components[bounds] == component_id, height)
++        ):
++            heights.append(height)
++    if len(heights) < 3 or np.percentile(heights, 75) > 1.25 * np.percentile(heights, 25):
++        return 0
++    return int(np.median(heights))
++
++
+ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+     """Count printed rows after masking model-identified figures."""
+     # Work on a counting-only copy; extraction pixels are never changed.
+@@ -662,6 +682,12 @@
+         and 0.2 * line_h <= columns.stop - columns.start <= 1.3 * line_h
+         and component_id not in arrow_components
+     ]
++    component_scale = (
++        _fragmented_body_scale(components, bounds_list, line_h)
++        if len(glyph_heights) < 3 else 0
++    )
++    if component_scale:
++        line_h = component_scale
+     glyph_h = (
+         float(np.percentile(glyph_heights, 75)) if len(glyph_heights) >= 3 else line_h
+     )
+@@ -707,7 +733,8 @@
+         b - a + 1 for a, b in raw
+         if not set(np.unique(components[a:b + 1][ink[a:b + 1]])).issubset(arrow_components)
+     ]
+-    line_h = int(np.median(body_heights)) if body_heights else line_h
++    # Projection refresh must not discard the recovered full-glyph scale.
++    line_h = max(component_scale, int(np.median(body_heights))) if body_heights else line_h
+     # Projection thresholds can miss a narrow standalone quotient such as 1 or 7.
+     for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
+         if bounds is None:

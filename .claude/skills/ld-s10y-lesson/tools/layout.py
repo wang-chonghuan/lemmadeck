@@ -389,6 +389,29 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
     # through their central half, unlike independently supported text rows.
     # A complete adjacent row may be slightly shorter than the page median.
     full_glyphs = sorted(glyph_bounds, key=lambda bounds: bounds[1].start)
+    if not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h:
+        # Compact side captions may be staggered but still share glyph rows.
+        return all(
+            max(first.start, second.start) < min(first.stop, second.stop)
+            for (first, _), (second, _) in zip(full_glyphs, full_glyphs[1:])
+        )
+    # Fraction bars connect the formula's horizontal support. A distant singleton
+    # cannot establish another body row, but repeated glyph groups still can.
+    support_groups = _merge_close(
+        sorted(rules + [
+            (columns.start, columns.stop - 1) for _, columns in glyph_bounds
+        ]),
+        2 * line_h,
+    )
+    supported_glyphs = []
+    for left, right in support_groups:
+        group = [
+            bounds for bounds in glyph_bounds
+            if left <= bounds[1].start and bounds[1].stop - 1 <= right
+        ]
+        if len(group) >= 2 or any(left <= x <= y <= right for x, y in rules):
+            supported_glyphs.extend(group)
+    full_glyphs = sorted(supported_glyphs, key=lambda bounds: bounds[1].start)
     cores = [
         (rows.start + 0.25 * (rows.stop - rows.start),
          rows.stop - 0.25 * (rows.stop - rows.start))
@@ -397,12 +420,6 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
     overlapping = all(
         max(a, c) <= min(b, d) for (a, b), (c, d) in zip(cores, cores[1:])
     )
-    if not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h:
-        # Compact side captions may be staggered but still share glyph rows.
-        return all(
-            max(first.start, second.start) < min(first.stop, second.stop)
-            for (first, _), (second, _) in zip(full_glyphs, full_glyphs[1:])
-        )
     return len(cores) >= 3 and overlapping
 
 
@@ -613,6 +630,26 @@ def _overhead_arrow_continues(
     )
 
 
+def _fragmented_body_scale(components, bounds_list, line_h: float) -> int:
+    """Recover coherent full glyphs when projection retained only their strokes."""
+    heights = []
+    for component_id, bounds in enumerate(bounds_list, 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        height, width = rows.stop - rows.start, columns.stop - columns.start
+        if (
+            height >= max(MIN_BAND_HEIGHT, 1.8 * line_h)
+            and max(MIN_BAND_WIDTH, 0.2 * height) <= width <= 1.3 * height
+            and np.count_nonzero(components[bounds] == component_id) >= 0.12 * height ** 2
+            and not _arrow_headed_rule(components[bounds] == component_id, height)
+        ):
+            heights.append(height)
+    if len(heights) < 3 or np.percentile(heights, 75) > 1.25 * np.percentile(heights, 25):
+        return 0
+    return int(np.median(heights))
+
+
 def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     """Count printed rows after masking model-identified figures."""
     # Work on a counting-only copy; extraction pixels are never changed.
@@ -645,6 +682,12 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         and 0.2 * line_h <= columns.stop - columns.start <= 1.3 * line_h
         and component_id not in arrow_components
     ]
+    component_scale = (
+        _fragmented_body_scale(components, bounds_list, line_h)
+        if len(glyph_heights) < 3 else 0
+    )
+    if component_scale:
+        line_h = component_scale
     glyph_h = (
         float(np.percentile(glyph_heights, 75)) if len(glyph_heights) >= 3 else line_h
     )
@@ -690,7 +733,8 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         b - a + 1 for a, b in raw
         if not set(np.unique(components[a:b + 1][ink[a:b + 1]])).issubset(arrow_components)
     ]
-    line_h = int(np.median(body_heights)) if body_heights else line_h
+    # Projection refresh must not discard the recovered full-glyph scale.
+    line_h = max(component_scale, int(np.median(body_heights))) if body_heights else line_h
     # Projection thresholds can miss a narrow standalone quotient such as 1 or 7.
     for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
         if bounds is None:

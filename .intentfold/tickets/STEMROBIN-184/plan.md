@@ -2916,3 +2916,162 @@ pathspec强制补暂存，不扩scope，不解除真实scratch/runtime/symlink�
 错误而非内容门禁失败。新102–105资料和batch010仍不进入第九批。
 精确清单恢复staging exit0，1724件/43030689bytes；范围与暂存专属
 高置信密钥扫描通过，禁止路径0/命中0。未重跑语义/显示门禁。
+
+第九批实际commit/push完成：1e58e15e1701278b95ae24673ce7503d487f9373，
+同一codex/STEMROBIN-184-textbooks远端4eb66d92..1e58e15e。
+新增4课/43答案/34选择题/159选项；累计24/222/199/861，四册未完成。
+本事实记录在操作后写入，随下批提交，不amend或单独记录提交。
+立即继续102–105限定修补与首次收口，旧门禁和全部HOLD不重跑/不释放。
+
+第十批：102–105首次finalize逐页实际结果为102 exit1（印刷17/忠实15），
+103 PASS15/15，104 PASS20/20，105 PASS20/20，均规范化0；首次文件
+完整保留。独立受影响text确认53ea5c94完整消费：102正文全字节不变，
+105仅定义后ASCII句点删除，两条notes限定正确，工具新增metadata另列，
+不以printed_lines15宣称102已通过。Chandrasekhar消费后关闭，永久4/8。
+计行修补只交新工具worker，不改题面/行数/排除区。
+
+n94复用先前成功装订提升25正文/15题310–324，保留p94 cont警告：
+p93句子已完整，p94两解族另成正文块但仍同一完整例4 owner；不虚加open。
+承上页298–309不覆盖既有260容器，partial n95未提升。
+n96首次98–99装订exit0但普通96*.标题未认领。源头原字保留；通用标题
+解析新增plain-star，与已有superscript-star并存，3定向测试一次PASS。
+受影响装订一次PASS、0warnings，提升5正文/0题；半补充题未提升。
+n94/n96现代模板各prepare一次，正文整理中。n95首次95–98装订exit1：
+重复323/缺328及传入n94缺左端公式残片三错误如实留存；不改原题号放行。
+
+106–109各prepare一次通过，两个新有界作者/独立StageA开始，传入392
+只声明两个可见完整小问和整题右界未知，不把尚未观察的106边界写为已证。
+父方24/24零新图；新代理各自8/24永久预算。无DB/真实发布/app/合并/
+关闭/部署/正式handoff/全项目tests或build；下一批仍未完整交付。
+
+第十批接续：n94/n96现代作者全部文字消费后关闭，adapt-finalize各一次
+PASS；validate_publish首次误用--book-dir在argparse阶段exit2，正确
+位置参数实际一次PASS2，不把CLI笔误算作内容门禁失败。render各一次
+PASS，最终正文28/11段、书写题15/0。text/written桌面1440x960及
+手机390x844只读检查各一次PASS，零远程资源、公式错误或横向溢出；
+截图保存但父方24/24未打开。n96无题原样保留，不造答案或选择题。
+
+n94独立答案StageA全部15题解族/定义域/代入及完整ledger已消费、
+冻结68be65e0/b758e837；作者候选尚未披露。选择题白名单一次inspect，
+明确选310–324且no-concepts/no-figures，排除全部例题/已给方法owner；
+seed一次prepare598d5321。新隔离作者及独立Stage1并行，不读答案。
+106–109全部六作者文本、完整StageA及ledger已消费，作者关闭后才
+披露唯一StageB四页及handoff/ledger。实际106的393关闭392、98标题
+关闭n97；394а区间括号分歧尚未解决，不借微积分猜原字。
+
+计数worker附加两失败集成诊断与修补报告完整消费：原/before-repair
+同为22/3，非首修回归；唯一全字高恢复修补使两用例1/1，两新scale
+guard PASS。未重跑已通过recognizer/六负例或physical102。首次失败
+及原措辞不回写，human-supplied限定为parent独立证据转述。worker在
+证据消费后关闭，父方只重试102收口；103–105既有PASS不重跑。
+
+102唯一重试exit0，13块/15比15，零规范化/排除/错误；完整page.md与
+重试前相同。106–109唯一StageB及附加ledger完整消费49块，394а新
+310×95原生裁图确认]；四原稿在一字修补前复制，受影响确认dacf6387
+完整消费后关闭审查者，永久5/8、5/24。首次finalize10619/19 PASS、
+10726/27 FAIL、10815/15机械PASS、10918/18 PASS。108仍与独立14行
+矛盾，不称源完成；107/108换行及↵双存问题保留HOLD，首次记录不改。
+仅用104–106一次装订n97 PASS15正文/10题，partial n98不提升。n97
+现代模板一次prepare，现代作者与独立10题答案StageA并行。
+
+n94答案唯一StageB15/15、n960/0 PASS报告/ledger完整消费，审查者关闭；
+父方finalize一次exit0（auto0/ungraded15、auto0/ungraded0）。
+n96无书写题，不虚造choice seed/draft/review，空任务声明已写。
+n94选择作者15题57项一次结构PASS，全部文字/内部键/coverage已消费，
+read-only Git status越界如实另列。独立Stage1全部冻结消费；先披露
+visible-only再披露两截图，尚未键披露。桌面/手机render各一次PASS。
+书册索引变更只重绑n94 seed booktrace，旧598d5321保留、新c684fe38，
+数学/定义/图和另三trace不变，不重跑已通过源求解/显示或结构门禁。
+
+第十批接续：n94绑定报告79f50a46全部消费，draft仅seed_sha256改变，
+完整题面/选项/键/coverage/源解及旧handoff不变；作者关闭。独立Stage2
+443c88fa/ledger7b65bfd2全部57选项与两图观察完整消费：数学每题唯一
+真项，但q02/q03完整答案集合重复、存在跨题转移，待修；先披露唯一
+Stage3内部比较，不抹掉失败。审查者2/8批次2/24上下文，长图显示
+缩放比例未获工具确认，记录此限制；父方24/24仍零图。
+
+n97现代作者报告b9f462bc及完整模板消费后关闭。51公式字符串不变，
+15源owner/18最终段落；definition仅10/11/12，全部已解owner0-6、
+13、14整对象排除。父方首次adapt-finalize PASS，位置参数重验PASS1、
+render PASS18/10，桌面1440x960/手机390x844正文/书写各一次PASS；
+36件715675bytes现有证据原字节留存，未打开截图。答案一次prepare，
+独立StageA cac5206b/96eaef41全部10题16单位与完整source消费；
+作者候选61d75541及报告91e38c4d全部消费后关闭，10derived/ungraded、
+parts[]，无expected/bookRaw。唯一StageB已披露，尚未批准/finalize。
+
+n97选择白名单一次inspect、一次prepare仅392-401和完整定义10/11/12，
+seed54cb3765，无图。新隔离作者处理中；独立Stage1 d56409b0/
+78384113全部10题16任务消费冻结，候选尚未披露。旧7组10c n75-79/
+n91/n92用既有helper各一次索引追踪重绑234a8ec5→027d9034；
+新绑定机械校验exit0，旧数学/显示/语义记录原样复用、不重跑。
+48件993799bytes新追踪证据原字节留存。live工单只读HTTP200，
+范围/小批交付/同一分支/最终E集成不变。当前仍仅n96完整未提交，
+无stage/commit/push/DB/正式handoff/全项目tests或build。107/108
+及全部旧UNKNOWN/HOLD不变；父方读取路径笔误仅是读取错误，
+不是内容门禁失败。
+
+第十批接续：n97答案唯一StageB acdcc796/ledger5166bb99全部10题16单位
+完整消费，PASS；审查者“human authorized”误归因仅以附加声明4010a586
+限定为父方转述，原文件不改，审查者消费后关闭。父方finalize一次PASS
+auto0/ungraded10，13件92385bytes原字节留存，不重跑。
+
+n94原唯一Stage3 comparison cfef8f2f及review d5d5442d全部消费：
+15题57项数学PASS，仅V1导致q02/q03及311/312 coverage REVISE。
+唯一局部修补将两题合为q02，要求两不同多项式根集及两完整三角解集；
+删q03，14题55项，13个其余题/13个coverage完整对象精确不变。
+原draft/views/review原字节保留。修后无review结构验证一次PASS；
+新draft字节bb93883f/views7c5307c4。仅q02桌面1440/手机390各一次
+渲染PASS；原全量图不重跑，父方24/24未开图。先披露修后可见面及两
+新图给原审查者，修后内部键尚未披露；其它13份审查复用。
+n97选择作者尚未返回，独立Stage1已冻结；仍未stage/commit/push。
+
+n97选择作者完整draft/solutions/handoff/首次结构记录全部消费后关闭：
+10题（4单选6多选）42项、17真25假，16源任务全部识别覆盖；规范draft
+d59a9210、字节c9ca9ee2。结构一次PASS，不代替语义批准。全量choices
+1440x960/390x844各一次render PASS；父方零开图。独立Stage2报告
+6a976747及ledger3f859877全部消费：10份能力/冗余/泄漏判断、42项计算、
+16源映射及两图观察完整。手机长图工具实际缩到335x6000，桌面比例
+未获工具确认；不宣称原生细节完全认证。审查者2/8批次、2/24上下文。
+唯一Stage3内部分别披露后待比较，不重跑source-first/visible数学。
+
+n94局部Stage2 8f9d6dce/ledgerde81f427完整消费：新q02四项独立检查、
+其余13份逐对象复用，V1可见重复已消除，来源311/312均保留。
+两新图各开一次，审查者4/8、4/24；比例不虚报。修后唯一Stage3
+内部比较已披露，仍待最终review。父方prepared promotion/staging
+helpers仅语法检查PASS；远端同分支fetch后HEAD...origin为0/0，
+无rebase/合并/关闭/全项目检查/DB；staging仍空。
+
+n94修后唯一Stage3 e42f2d27及完整review af53b366全部消费，最终PASS。
+15独立源解字符串、13未改题审查（51项）及13未改source审查原对象
+精确复用；q03在冻结源解中的旧出处措辞明确为历史，不是现行mapping。
+新q02四项及311/312能力/覆盖记录一致，原失败review保持d5d5442d。
+审查者消费后关闭，永久4/8、4/24；父方with-review一次exit0：
+mechanical checks passed; declared semantic review: pass (not automatically
+proved)。批准seed/修draft/review原字节提升，14题55项。
+choice94原字节证据35件1518179bytes留存；当前完整未提交为n94/n96
+两课15答案14选择55选项，n97唯一Stage3仍待回报，未stage/commit/push。
+
+n97唯一Stage3 1315318a及完整review fda19ea0全部消费，最终PASS：
+42项（17真25假）全部rationale/错法、16源任务/定义10–12与明确能力
+损失一致，原Stage1/2不改；审查者消费后关闭，永久2/8、2/24。
+父方with-review一次exit0，声明semantic PASS不等于自动数学证明；
+批准seed/draft/review原字节提升，10题42项。19件1326400bytes证据
+原字节留存，无新图/重渲染/重解/新修补。
+
+第十批完整ready：n94/n96/n97三课、25标准答案、24选择题、97选项。
+n96确实0书写题，答案空集、不造choice。所有已通过旧门禁复用。
+本批只暂存上述三课、92–106已收口源支持、七组旧10c追踪重绑、
+四个已定向检查的工具/测试文件、现有batch010证据及本记录；
+107/108当前pages、root T/、其它历史未跟踪文件和runtime不暂存。
+即将同一分支commit/push，不是正式handoff或四册完成。
+
+集成待办（只记录，不改冻结追踪）：忠实10c/book.json的n97提升脚本
+仅加lesson/pages，audit.exercise_count=195和exercise_range=[1,324]
+沿用n94；当前lesson列表实际含额外n97十题392–401。本批25答案等
+数量由逐课最终产物计得，不采用此旧聚合。whole-book聚合/完整性检查
+未宣称通过，留待最终集成收口；不为此再改booktrace或重跑已过门禁。
+
+第十批首次staging helper在git add之前exit1：父方错误假定n96连
+choice-set目录都不存在，实际仅有已写好的No Written Seeds README。
+暂存仍0，未生成stage清单。失败helper先原字节复制；只改该前置断言
+为禁止seed/draft/review JSON，不删README、不造题、不重跑内容门禁。
