@@ -1,5 +1,609 @@
 # 生产检查点
 
+## 第五十六批四篇导言完整通过，准备提交
+
+2026-11-17，按用户“开始吧”恢复暂停点，只接续未过门禁。
+phy8-c2-s2-t1、phy8-c2-s3-t1、phy8-c3-s1-t1、phy8-c4-s1-t1
+独立全文TEXT全部PASS，19来源块、25短段落；现代收口各一次PASS。
+本次恢复没有重跑源审、TEXT或已过的现代收口。四份空答案集由既有
+answer技能prepare/finalize各一次PASS，未强编练习、选择题或交互。
+本批一次离线render及一次隔离headless DISPLAY PASS：四课共16个
+桌面/手机页面，无全页横向溢出、错误块或脚本依赖；八张正文截图已看，
+公式与强调、完整页尾正常。DISPLAY证据
+`tmp/offline-evidence-phy8-c2-s2-t1-phy8-c2-s3-t1-phy8-c3-s1-t1-phy8-c4-s1-t1/report.json`。
+本批完整课4，七源页独审及35文件原字节保留，源图148不是导言现代图。
+新增题/图服务请求/交互均0，累计图服务请求63、重试0；
+token/账单未知。计行修正测试9PASS/2缺fixture skip直接复用。
+当前准备同分支作用域commit/push，随后第5–8章四篇提要继续；
+旧HOLD不重开，无共享DB写入、发布、合并、部署或全项目检查。
+
+## 第五十六批继续实际生产：八年级四篇导言
+
+2026-11-17，继续同一已恢复生产调用，不是新setup或暂停。选择
+phy8-c2-s2-t1、phy8-c2-s3-t1、phy8-c3-s1-t1、phy8-c4-s1-t1，
+物理页143/144/172/212/213/231/232均已备料并忠实收口。
+8p偏移12已由批准源核定；144作者一次finalize PASS25/25，无图、
+失败/修订0，143与172未重跑，作者已关闭。七页独立SOURCE审查在途。
+213原图148矢量化一次PASS，不匹配0.007%，属于后续55而非导言；
+下一节32/43/55/60仅保留源页，不计完整课程或现代交付。
+
+8p的exerciseNumbering=lesson-group由已批准原页中练习8/16/18/4
+各自从1重新编号核定，不从6p推断，不解除旧HOLD。143/212真实页边
+紧凑污点误计行已最小修正计数副本；原失败保留，修正后22/22与18/18。
+聚类碎片、带小孔污点回归及既有保护共9 PASS、2缺fixture skip。
+原像素及转写未为计数器凑行。当前四导言未装订、现代化或提交；
+本批服务请求0，累计63、重试0，tokens/实际费用未知。
+全部Batch55及更早HOLD原样保持，无共享DB写入、发布、合并、部署或
+全项目测试/构建；后续完成本批即在同一分支commit/push并继续下一批。
+
+## 第五十五批在途已收齐，157仍HOLD
+
+2026-11-17，334唯一artwork修订仍未对齐冻结磁铁envelope，内容修订
+1/remaining0，FIRST及第二张失败保留，n157 HOLD。正文完整TEXT批准
+及十题SOURCE解答仍有效，不启动modern finalize、FINAL、CHOICE或DISPLAY。
+修订delivery manifest
+`2b8380934c9112c694df963cc451502ea860a963e8ecc0f4488df41d9da6632d`。
+
+333独立实质PASS、official review一次PASS；交付封存辅助把源码读取误计
+为第二次official执行，FIRST exit1。blocked approval manifest
+`92a55db9207e0f3154c32cec60381191920fa171bfa6f2e93fbe1d94e7a6f649`，
+official review SHA
+`5df374a04714108e65b18766189d30bdfcd54167482b26f240a28c6a311e9641`。
+runtime失败1、未修订，图8/8，代理已关闭；不追加封存恢复或称已晋升。
+
+336已有独立实质/official PASS，唯一封存计数恢复一次PASS，原判决及
+所有作者门禁未重跑、图7/8不增加；approved manifest
+`2f50e30955877c8cb472d1dc99230aea9b87156230408e8a9e7f845ce165f464`，
+runtime1/remaining0。仅保留批准，不解除n157 HOLD或晋升整课。
+
+335首次validator及一次服务生成成功，候选冻结、未独立审查，不新开图审。
+delivery manifest
+`d16cd75d24fe88a02ff5caac0ba02b9bf93d57d9655ea90cafb45d8868b10132`。
+runtime1/remaining0、内容0/remaining1未使用、图6/8，作者已关闭。
+334实际2请求、335实际1请求，本批3、累计63；helper重试0，
+规划额度不是实际账单，tokens/实际费用未知，parent图0。
+
+339唯一标签修订完成，只有N/S的两个横坐标200→178、504→526变化，
+磁铁几何、极性、来源inventory、完整TEXT和337/338原字节不变。
+作者修订门禁一次PASS，无新失败；runtime1/remaining0、内容1/remaining0、
+图8/8，代理已关闭，仍为未独立批准候选。affected manifest
+`bff3cfdf153abfe18ece3430039469c6fca2b4c2c6586eb1e642385c7a9462e7`。
+337 FIRST独立实质及official FAIL：四处外部磁力线交叉，新增N/S标签
+错误声明为原图像素事实。不修订；official review SHA
+`8805889be7339709e2bbf816a95928d6339e944aa57aab81c4f2c9bed3f4f2bc`。
+338 FIRST独立实质及official PASS：a=N/N、b=N/S对应及实际331/352
+字号/主题均通过，仅批准图件，official review SHA
+`6469690ef7f01b1070048cf9ecc9dcbc4aa4572af3c2fe6489543d145b05bc65`。
+两图各一次official recorder、作者门禁不重跑；图6/8、26成功命令、
+执行失败/修订/重试0，closure manifest
+`41e33ecd9c68f606cf8f7a55ebdcc180113f5827d96bacbfdc36977c17ecb8c8`。
+最后代理已关闭，全部在途收齐，不追加图审或恢复额度，不晋升图件或整课。
+此前417/418独审REVISE保留，不修补、晋升或解除n164 HOLD；
+n163依赖HOLD及全部旧耗尽HOLD不重开。raw7p69/26/119，
+批准源7p105/8p25、本批完整课0、commit/push0、全项目检查0。
+端口52180无监听，本会话无在途生成或审查；工单仍In Progress，
+工作树及分支原样保留。本记录不是用户暂停、handoff或全组三册完成；
+没有运行DISPLAY、全项目测试/构建，也没有DB、发布、合并或部署。
+
+## 第五十五批163依赖HOLD与164证据额度耗尽，继续157图链
+
+Faraday412同审者affected PASS，新增图0/累计8，原411 PASS/
+412 REVISE保留；父411原三文件+412修订七文件精确晋升一次0，
+批准7p105/8p25。批准manifest
+`4ce9c4884c7147b972a3ff2c5ef0dfa1e70f9c0733d6b8871271a3179ccfcbd5`；
+原作者runtime1/remaining0与父隔离辅助runtime1/remaining0分别不改。
+Faraday已关闭。
+
+父仅批准412–416共27文件及TOC冻结后official assemble FIRST一次exit1：
+唯一失败p0412#11显式owner-lesson n162没有唯一已装订课程。原合法归属
+不改、不补虚构标题或桥接失败162；54文件FIRST失败冻结manifest
+`c2ad8ce92a1b452ff3c713ce3cbe2d30a93276cf039b65b10e55042334176798`。
+163 dependency HOLD，raw retention/modern prepare/纠正均0；其孤立
+23正文/9题/4图不能称完整现代课，原索引不晋升，不重跑装订。
+
+Tesla419420 sole collector recovery误把只读p2c.py引用当实际执行，
+缺--root检查再次失败；原源码八文件、22 owned receipts及2 inherited
+prepares冻结，不称校正计数验证PASS。原80total/60external历史计数保持，
+无有效校正manifest。stopped manifest
+`782ad559297fd909f8e70aea66da9500ec5f78f6502e18c5bece6f15b198904b`。
+runtime1/remaining0、内容0/1、图4/8，作者关闭。164 HOLD，不新开419420
+审者恢复额度；417418独审继续，只能局部批准源页，不解除164 HOLD。
+
+Dalton333候选FIRST validator/render/native PASS；334首张生成腕部裁切/
+冻结envelope错位FIRSTFAIL，图5/8、服务1，原失败与首张保留；
+仅334 artwork repair1/remaining0另根授权在途，333字节/门禁不变，
+最多三新图片且一次生成、无额外修订。Jason独立333 FIG审在途。
+Kant336候选FIRST validator/render/native PASS，331/352实际文字
+16.93/18px，图4/8、服务0；335 FIRST pricing lookup空返回停在调用前。
+父CloakBrowser一次读取Microsoft Azure现价与OpenAI官方价格各exit0，
+无图片/服务生成；只使用Azure匹配model价作规划，未改模型、虚构账单。
+仅335 pricing runtime recovery1/remaining0及符合既有5USD上限的首次
+单次图请求授权在途。Boole336独立FIG审在途。Locke337–339恢复继续。
+
+当前实际图服务总61/本批1，重试0，父图0，账单/tokens未知；
+执行的两public pricing读已结束。额外父只读误猜334 failure文件sed exit1、
+不存在8p raw book索引rg exit2均保留，不伪造门禁回执。
+8p source manifest未声明exerciseNumbering，仍无装订索引，不擅加全书
+编号声明绕过既有UNSET。raw7p69/26/119、本批完整0、commit/push0，
+全项目检查0，所有原耗尽HOLD不重开。
+
+## 第五十五批157 TEXT获批，412/414单字修订收口
+
+Pauli同审者Q4 affected PASS，三完整TEXT模板批准manifest
+`19a9923b27f4bf15c369d37d66527378480d3f28bf29dbad15ebf0739eaae19a`。
+父三模板精确保留一次0到text-retain-n157-b55；原全文REVISE、唯一内容
+修订1/remaining0及十题SOURCE解答不变。Pauli已关闭。
+Dalton333/334、Kant335/336、Locke337–339新鲜FIG作者在途，各最多8图、
+父0。Locke首条b55-entry-read被recorder已有标签拒，child未读、图0、
+稿/门禁0，无新回执；仅同代理隔离runtime-recovery1标签修正1/remaining0，
+FIG内容0/remaining1不变，原失败保留。
+
+Lorentz413 FIRST PASS、414 FIRST REVISE：“内壁”应为“内膛”，图件PASS。
+父仅九可写精确副本改MD一字，FIRST先冻结，affected finalize一次0：
+7块/21行/图356、规范化0。JSON仅blocks[1].lines[3]变，其余七文件、
+audit和PNG/SVG及原字节不变、vector不重跑，内容1/remaining0。
+同Lorentz受影响PASS、新增图0/累计8，批准五文件manifest
+`d3feab56a6f7dd14705ac1c2c9fd476b084cf34707a514896063398c1d3c2523`。
+父413原五文件+414修订五文件精确晋升一次0，批准7p103/8p25。
+原414 REVISE/413 PASS不改，Lorentz已关闭。
+
+Faraday411 FIRST PASS、412 FIRST REVISE：p0412#7第二行漏“吗”，两图件PASS；
+图8/8，原作者runtime1/remaining0不变。父独立输入隔离辅助FIRST exit1：
+嵌套冻结路径误入筛选16!=11，复制0/内容改0；原辅助/实际回执先冻结
+`2efbc9a09b8c1379c138f40ea7b7fffc245f7eaf4232e93d2f8a18fc66965001`。
+仅父隔离辅助路径前缀修正1/remaining0，原作者额度不重置；隔离11文件
+一次0后SOURCE唯一添加“吗”1/remaining0，FIRST冻结
+`9767a4d2d03bed2b4d2304514366987c9c46651b002839f3ee9edb4be31b9ea5`，
+affected finalize一次0：14块/27行/两图、规范化0；JSON仅
+blocks[6].lines[1]变，audit/PNG/SVG及其余九文件/原字节不变。
+交付manifest
+`b1592e21bcd23dcabbc7691590a3d5e5aca6c4a723f0f875e5dc68765894cca2`，
+同Faraday零新图affected review在途，411/412暂未晋升。
+163页首显式owner-lesson n162尚需权威装订核定，不越过162 HOLD。
+
+Franklin417/418 FIRST完成：11/8块、26/26行、无图、图2/8、
+各finalize/vector一次0、失败修正0。最终manifest
+`d88578851e850edbf07bf0f77b87205f61775a24bdc7fcdc9cb17738ccb8a010`，
+作者关闭，McClintock FIRST独审在途。Tesla419/420 FIRST完成各收口/
+vector一次0、9/12块、12/16行、一实验表格SVG不匹配0.036%、图4/8；
+真实lab起点420，尾open不补写。证据collector误纳其他代理回执，
+FIRST evidence failure1，原111文件manifest
+`59cf6681dc5678325f62d66f660cb60b68a9e235bec304e8a93a8e2de67bbeba`
+保留；仅独立collector归属修正1/remaining0授权在途，源码内容0/1，
+不重放已PASS门禁/完整性检查。
+
+父另两次只读误猜辅助/回执文件sed exit1及一次无匹配rg exit1保留，
+不是生产或门禁失败，不伪造回执。raw7p69/26/119，本批完整课0、
+commit/push0，图服务总60/本批0，parent0；所有旧耗尽HOLD保持，
+无DB/发布/合并/部署/全项目检查/报告单独提交。
+
+## 第五十五批157唯一Q4修订，415/416精确晋升
+
+同一生产续接，不是新setup或暂停。n157 Pauli独立全文TEXT FIRST REVISE
+仅Q4：新增“结合原子中的电子运动”提供原题所需解释线索；原判决冻结不改。
+十题SOURCE-only独立解答已另行冻结，manifest
+`72e3b8dcda779d0460122c3bbc397f6aa0f9fc35d18596a9ff12d974ed7e1588`，
+不再求解SOURCE，不读FINAL或现代答案。
+父复制三冻结模板到独立可写text-repair-n157-b55，只恢复Q4原题/lines、
+清空不适用changes并准确保留安培身份说明；其余九题及lesson/figures
+模板字节不变。修订1/remaining0，FIRST先冻结
+`84309590eac1b2f1694d32d1730c8ba1d9b63067bfd57e7054713058d738f505`，
+再既有edition受影响TEXT合同一次0；normalize/prose_flow及全文门禁不重跑。
+交付manifest
+`6c0521a28d389a5c312c9e37c4db74be9a4ed48ddbff3394a6d1a010d15fa005`，
+同Pauli受影响复核在途，尚未整体TEXT批准或制作333–339现代图。
+
+415/416 James FIRST局部SOURCE PASS，10/15块、15/24行、2/0图、
+0/9题；图片4/8、八命令各一次0、失败修订重试0。精确批准十文件manifest
+`d9be2cb79b362dcd9dcc3f61de3d19f7d945fdd0e97d2f79ecd4fcde4a9e4400`，
+父晋升一次0，批准7p101/8p25；不称完整163/164，原416尾open保持。
+James已关闭。411/412 Faraday及413/414 Lorentz FIRST独审仍在途。
+
+417/418、419/420已备料各prepare FIRST一次0，本续接不重放；新鲜
+Franklin/Tesla仅负责各两页SOURCE，每代理最多8图片、父0。边界164
+physical416/printed405、lab physical420/printed409，历史/前序未知身份
+只由原像素核定，不桥接162 HOLD。
+
+409/410 Lovelace唯一运行时恢复后误写recorder路径STEMBIN-180，
+第二次exit1在recorder启动前，无该失败回执；第一wrong pageblocks.py
+exit2及72文件FIRST冻结均保留，runtime1/remaining0，n162 HOLD不重开。
+409 finalize25行/11块/一图一次0，410仅草稿13行/9块/两图，未收口、
+未vector/最终裁图检查。全部其他耗尽HOLD保持。
+
+本续接父只读rg因未匹配shell glob被zsh拒、exit1，未运行生产或门禁、
+不伪造recorder证据；发现后读取明确存在的工具文件。raw7p69页/26项/
+119题不变，本批完整课0、commit/push0，图服务总60/本批0、retry0、
+父图片0、token/账单未知；无全项目检查/DB/发布/合并/部署/报告单独提交。
+
+## 第五十五批157原始层保留，转独立162–164
+
+400 FIRST源审REVISE：p0400#1“捕获器”后应为句点而非逗号；内容1/
+remaining0保持，不续修。158/159不能越过400，当前HOLD。
+Darwin最终交付manifest误写input SHA，FIRST verifier exit1原样保留；
+仅该字段唯一隔离runtime correction1/remaining0，原verifier续接一次0，
+401本页PASS交付闭合，图8/8、新图0；源400判决不变。
+Mill406/407恢复后apply_patch上下文匹配失败，第二次执行失败，原图2/
+裁图0；406只有FIRST笔记、407未存笔记，未完成源比较及交付。额度耗尽，
+160 HOLD，不重开。错误失败报告中的额外stack行/授权来源登记不作事实。
+
+Volta402受影响PASS、Leibniz404受影响PASS，原402/404 REVISE及405 PASS
+不改。父将401/402/404/405共24精确文件晋升一次0，批准7p99/8p25，
+400与406/407未晋升。原页SOURCE批准不是完整课；以上完成审者已关闭。
+
+只用批准394–398建157隔离35文件，一次TOC assemble0：32正文/10题/
+七图333–339；孤立156及未完158不保留。原始retention FIRST把fig对象当
+字符串，TypeError exit1，已复制3课程文件、图0、索引未写；失败/旧索引/
+3文件先冻结，唯一对象id修正1/remaining0续接一次0，复用3+新增14图文件。
+raw7p69页/26项/119题，原索引旧行及告警保留，未重装订。现代prepare首次
+一次0，157 TEXT Hegel在途，完整课仍0。
+
+新鲜409–416各official prepare FIRST一次0，不传失败前序正文/图像。
+目标逐步转157及独立162/163/164。Lovelace409410读父提供的错误
+pageblocks.py路径exit2、图1；父核定实际blocks.py，唯一隔离runtime
+恢复1/remaining0已授权，内容0/1。Aquinas411412 TOC遍历无lessons分支
+TypeError exit1、图2；仅该结构读取唯一隔离runtime恢复1/remaining0，
+内容0/1。Newton413414及Goodall415416新鲜作者在途，初始额度各0/1。
+所有旧/新耗尽HOLD保留；Batch55 commit/push0，图服务60/本批0，父图0，
+token/账单未知，无全项目检查/DB/部署/合并/报告单独提交。
+
+## 第五十五批394–399源修复收口，批准7p95
+
+同一恢复生产流程继续，不是暂停。398此前七文件已晋升一次，批准89；
+本续接不重放。Zeno原394/395运行时stream定位唯一恢复PASS，73绑定/
+12交付一致，原394本页PASS、395原REVISE保留；随后395受影响PASS。
+Kuhn396/397受影响PASS，Kierkegaard399受影响PASS，均新图0，原拒绝不改。
+395嵌套斜体、396结论句点、397两图号分隔符、399跨行粗体各修正1/
+remaining0；只重收口受影响页一次0，所有图件/原审计保持、vector不重跑。
+父按各审者的精确子集晋升394/395/396/397/399/403共36文件一次0，
+批准7p95/8p25。156前缀仍未获完整单元批准，不进入现代装订。
+
+400/401作者媒体收口完成：23/19行、六题、图342/343，两final裁图已查，
+图片7/8。400四圈号白名单修正1/remaining0，运行时1/remaining0；
+401首次finalize/vector与400受影响finalize/首次vector均0，不重放。
+最终manifest `261012fdc83bc2be29dbbc6bc0ba2674fee4e2dffaa567a9ed7c5f0d5ae2f10f`。
+Darwin新鲜FIRST源审在途。
+
+Lagrange402 FIRST REVISE：p0402#6第二行“钢质”误作“软质”，403本页PASS。
+八图片/运行时1/remaining0，原定位失败与FIRST判决保留。父另建九精确
+可写副本，仅改该单字，先冻结FIRST再affected finalize一次0，23行/
+14块/图344，audit及所有PNG/SVG、原九文件字节不变；内容1/remaining0。
+manifest `572cd73d7baff2d746db0079ac9226268a1d4ce7687d8ab5d5f055949205fc4d`。
+父过早关闭原审者，send_input返回not found，无法同审者复用；
+明确替换为Volta仅受影响源像素/单字/字节复核，不称同审者重审。
+402未晋升。404/405 Leibniz FIRST源审在途。
+
+406/407作者唯一运行时恢复完成：16/21行、25块、三图，图片5/8，
+各finalize/vector首次一次0，内容0/1；final TSV manifest
+`c37c683a7cacb1eb79388c34abcc8a7db6f95300850afa06df6de835de33df32`。
+Mill新鲜源审首个`record-step.mjs --help`无合法label/command，exit1，
+原输出及图0/未审判决保留；仅授权隔离runtime-recovery1，修正1/
+remaining0，不重放help/prepare/作者门禁；恢复在途。
+
+续接父只读误猜不存在的398辅助文件cat exit1、无匹配rg exit1，均未
+运行生产动作、没有门禁回执；代理首个spawn参数组合被拒、未创建代理，
+随后按返回的合法参数创建，不计源码修正或图服务重试。原失败保留。
+本批完整课0、commit/push0，raw7p64页/25项/109题不变，父图0，
+图服务总60/本批0、retry0、token/账单未知。所有历史耗尽HOLD不重开。
+当前只推进157–160完整链；全项目检查留正式handoff，不做报告单独提交。
+
+## 第五十五批394–405作者冻结，独立源审在途
+
+394/395 Cicero唯一runtime恢复完成：19/19与21/21行、图332–334，
+各finalize/vector一次0，7图片、内容0/1、运行时1/remaining0；
+manifest `4ed159c46ab23dc6607784cb75fd99329c92972cca4f5061ac7ecd4b6d70af2a`。
+156前缀不批准，395物体嵌套强调范围未定；Zeno FIRST独审在途。
+作者已关闭，原失败与恢复记录不改。
+
+396/397 Harvey FIRST各finalize/vector一次0：18/18与19/19行、五图335–339，
+7图片、修正0；manifest
+`6a938f5fa6e7d828a1be4c9060edc2a75d814a96b3317d4bedd5ddae0e5fea25`。
+Kuhn FIRST独审在途；397纯结构一次复制给398/399审者，
+SHA `e40d63d833aec3503d1c01b08a0173d0ba441fe7924b133d3a26033955ff611a`，
+不传播前页正文/图像，不猜lesson身份或完整归属。
+
+398/399 Dirac FIRST各finalize/vector一次0：19/19与26/26行、图340/341，
+5图片、修正0；manifest
+`1e9bae92f9213d00c22067d37456c51b8fc4d31d7cdda10e8c5ea061f4803d19`，
+实际object.entries数组。Kierkegaard FIRST独审在途。
+402/403 Ramanujan FIRST各finalize/vector一次0：23/23与16/16行、图344/345，
+4图片、修正0；delivery manifest
+`b12715be1da5c90616bd4d0bb9c5157723c810c6d502d4d0e75d767680533d8f`。
+Lagrange FIRST工具定位误读不存在tools目录、exit2且图0；
+原失败保留，唯一隔离runtime-recovery1已授权，修正1/remaining0，
+尚非SOURCE缺陷判决或批准。
+
+404/405 Dewey FIRST各finalize/vector一次0：20/20与20/20行、图346–348，
+5图片、修正0；FINAL manifest
+`9718fcfcdc0ac141360f126d8a09607c018ccf28430bc22c511201a537f1bdbb`，
+尚未独审。以上完成作者均已关闭，不重跑门禁；所有新源尚未晋升。
+400/401 Anscombe恢复仍在途。406/407 Sagan首次指令rg无匹配exit1，
+图/候选/收口0；保留首次记录，仅授权隔离runtime-recovery1，
+修正1/remaining0、内容0/1，不重跑prepare或失败rg；恢复在途。
+父图0、图请求60/本批0、完整课0、commit/push0，批准及raw索引不变。
+
+## 第五十五批继续生产：新鲜394–401源段
+
+2026-11-17，按主管最新恢复指令继续同一批次；下文“操作封存”只描述
+此前耗尽单元，不是用户暂停。目标转向独立157–160，不重开156前缀、
+155、154及其他耗尽HOLD，不把已交Batch52或c5-s1/c5-s6重做。
+Brownian17、s22外部61、s29图83、t16图227等既有HOLD也保持。
+
+394–401各official prepare首次一次exit0，四个独立两页SOURCE作者在途，
+所有输入/候选仅scratch，未晋升或装订，父图片0。394/395作者启动时误读
+未创建的输出报告，sed exit1，原失败完整保留且图片/收口0；仅授权隔离
+runtime-recovery1，运行时1/remaining0，内容0/1，不重跑prepare或失败读取。
+其余三对新作者初始运行时/内容各0/1。后续只有批准且实际闭合的独立单元
+才能进入现代层；source页数不是完整课程数。完整课0、commit/push0，
+批准7p88/8p25及raw7p64页/25项/109题、图服务调用60保持不变。
+
+402–407各prepare首次一次exit0；402/403与404/405作者在途，
+406/407只备料未转写。400/401作者查不存在的tools/lib，rg exit2，
+已看原400一图但稿/收口0；保留首次failure1，实际correction此前0。
+仅授权runtime-recovery1，修正1/remaining0，内容0/1，图片累计仍计原400，
+不重跑prepare或失败rg，不改原FIRST记录。
+父一次只读发现误读不存在的retain-approved-text.mjs，sed exit1；
+未运行生产动作，无源/作者修正或门禁重跑，不伪造recorder回执。
+
+## 第五十五批392/393复核运行时额度耗尽，当前操作封存
+
+Epicurus定位恢复后开两原页，FIRST笔记已先冻结；聚焦裁图辅助程序
+使用不存在的本worktree Python路径，spawn ENOENT，子exit null/
+wrapper exit1，候选图0；仅封存后续exit0，不换Python或续修。
+新的manifest SHA
+`40404bffe540b3b078483e2d48beb8851d1ee8f1341f180f9b3d505f642d12e4`；
+notebook SHA
+`a335469b2befbb26d178dda8b81a8584a489cfb5aad76dc810ba62c4a26341a0`。
+runtime1/remaining0，源码内容0/remaining1每页仍未使用；
+不是SOURCE缺陷判决。0392/0393为复核不完整BLOCK、字节预检/
+全文对比/裁图独审/纯结构边界均未达到，0/O、小标记及156身份未定。
+155未装订、原始retention/现代prepare/答案/CHOICE/DISPLAY均0。
+代理已关闭；154与392/393当前耗尽流程HOLD不重开。
+
+本轮所有代理已收集关闭，无main exec在途。批准7p88/8p25，
+raw7p64页/25项/109题不变；图请求60/本批0、父图0，
+token/账单仍未知；Batch55完整课0，无新commit/push。
+Batch54已推送 `fae59f501a187affc1a50b9ea4dfedda59519af0` 不变。
+本检查点不单独提交，不称完整课程交付或正式handoff。
+后续只能选择不依赖这些HOLD的新鲜下游完整课程；旧批准检查不重跑，
+不恢复失败单元额度，不做DB/发布/合并/部署/全项目检查。
+
+## 第五十五批392/393首审定位失败，唯一独立运行时定位恢复
+
+Epicurus首次将work相对路径猜成ssot-resources下的目录，rg exit2，
+原像素0、作者稿/字节预检/门禁0；不是SOURCE内容缺陷判决，原失败封存。
+失败manifest SHA
+`25c06f200f2d1399d9965a0ab1031b482f744029f13d0cbcfd7c4bb0d1906994`。
+父仅观测真实目录，唯一绝对路径预检一次0，14实际路径/字节哈希冻结于
+`.tmp/ld-s10y-lesson/source-review-7p392393-runtime-repair1-b55/parent-path-preflight.json`。
+只授权该独立根下定位恢复：runtime1/remaining0，原审失败不覆写，
+源码内容使用0、作者finalize/vector不重跑，0/O等未决保持。
+同Epicurus原页FIRST独审继续，仍无392/393批准、155装订或现代准备。
+154归属HOLD及全部其他耗尽HOLD不重开；本批完整课0、commit/push0。
+
+## 第五十五批154归属独审辅助读取失败HOLD，转155
+
+Russell仅归属原像素核定PASS：323及图题确属154，2新图/累计8/父0。
+候选11字节绑定匹配，但辅助读取器把candidate-FIRST.md当JSON解析，
+FIRST exit1，字段比较未执行；仅失败封存后续一次0，不补解析或重审。
+独审BLOCK，manifest SHA
+`ad981ff5eb25e63a72dce3446f3d779277060bf87def0092387bd592bbb331a3`。
+source388 metadata修补1/remaining0及原图归属合同exit1保持，
+不晋升替换388、不重装订/原始retention/现代prepare；n154不计完整课，
+代理已关闭，不重开。下一候选为独立155，不跨该HOLD。
+
+Turing392/393 FIRST已冻结：8/12块、22/24行、一图331；
+每页finalize/vector各一次0，331不匹配0.018%，3图片/父0、修补0。
+作者初始日志缺口/嵌套执行与临时栅格未单独捕获/默认临时写越ownroot
+明确保留，不称完整严格执行证据。0/O及393小标记未定，156结构ID null
+未硬猜；393#11 open，394未读。冻结manifest SHA
+`847158bd6bbe28b31434dcc7487a34ae726eaaefc0967d7f5ee59637d9add4d3`，
+PURE outgoing SHA
+`25a555e9559b3926622240384b9eab2a58a9f6bb4e375a3bbfa5728ce6e07ee2`。
+作者已关闭；Epicurus FIRST源392/393独审
+`01a1e873-12e0-71e3-a9e7-c5c9017fe1ce`在途，不重跑作者门禁。
+批准7p88/8p25、raw64/25/109、图请求60/本批0、完整课0保持，
+无main exec在途，无commit/push/全局检查/DB操作。
+
+## 第五十五批390/391晋升，154首次漏323归属待唯一修补复核
+
+Russell FIRST390/391本页PASS，6图片/父0，22精确文件晋升一次0，
+批准7p88；review manifest SHA
+`f9cfa30863390189ad49d0564c276784608bc5666b674eb49eba77ee9677d9cd`。
+仅批准388-391共46精确文件隔离一次0，official assemble一次0：
+154有17正文块/11题/6图；孤立153题及未完155未保留。
+FIRST源派生图归属合同exit1：正文需323-326、练习需327-329，
+产物清单与正文漏323。原装订和失败不覆写，不称完整课。
+
+另建388的11精确可写副本，只用已有owner-lesson路线给p0388#3图323
+与p0388#5图题添加154归属，唯一apply_patch后FIRST先冻结；
+finalize一次0，11块/16行/两图/0规范化，post-check一次0：
+仅两owner字段变，原11不变、审计及其余9候选文件/全部PNG/SVG精确。
+source388 metadata修补1/remaining0，无vector重跑，manifest SHA
+`fec0cab7a46d51726fda6f04eb34e7c84f6d214606b5fdf12ba1ae6994f7acc6`。
+Russell仅新缺陷归属独审在途，可新增2图/累计8上限、父0；
+不重审已批准390/391，不替换源388、不执行新装订，现代准备0。
+392/393 Turing FIRST作者仍在途；raw64/25/109保持，
+本批完整课0，无commit/push/全局检查/DB操作。
+
+## 第五十五批389受影响PASS晋升，392/393作者在途
+
+Rawls SAME389受影响PASS，三粗体/13修复文件/原13不变/其余11候选
+字节保持，仅复用未影响SOURCE及图审；0新图片，FIRST BLOCK不覆写。
+affected manifest SHA
+`996c524a046ff4421365e34c55450f91d038f0fd15099585d84c416853bb7ab0`。
+389共13精确复制晋升一次0，批准7p86；修补1/remaining0，代理已关闭。
+390/391 Russell FIRST独审仍在途；154尚未装订或现代准备。
+
+392/393 official prepare每页一次0；PUREincoming复制一次0，
+SHA `95f25cba26864eaf4ac4663b8d93e6826488661f76fe9c5155d65b3e507ebcc1`，
+实际字典320/数组索引43，计数只记录、不作猜值门禁。
+Turing独占FIRST作者 `01a1e866-1011-7ce0-a19f-0a47afd58b88`在途，
+不重复备料或读取失败前序载荷。批准8p25及raw64/25/109不变，
+父图片0、图调用60/本批0、完整课0，无本批commit/push。
+
+## 第五十五批388晋升，389三粗体唯一修补待复核
+
+Rawls FIRST388本页PASS、389BLOCK p0389#13三处粗体缺失，
+8图片/父0；FIRST manifest SHA
+`1e5cbef392a998ed8a600e27304b354d83a9d198c747eb1875e748f4635a140a`。
+388仅11精确复制晋升一次0，批准7p85。389另建13精确可写输入，
+先验证新副本可写，未改任何既有文件权限；唯一apply_patch只加
+电磁分离器、小铁屑、谷粒三粗体。FIRST候选先冻结后finalize一次0，
+14块/18行/三图/0规范化；delivery比对一次0确认原13字节保持、
+审计及其余11候选文件保持，所有PNG/SVG不变，无vector重跑。
+修补1/remaining0，manifest SHA
+`180be3b48f48fc8b25ba74551efdf68a0f632316b6b72a8b87a43e18e8fadeff`；
+Rawls SAME affected-only复核在途，0新图；尚不晋升389或装订154。
+390/391 Russell FIRST源独审在途；批准8p25、raw64/25/109、
+图请求60/本批0、Batch55完整课0，无commit/push。
+
+## 第五十五批390/391作者冻结，新鲜源独审在途
+
+Avicenna FIRST两页31块/40行/四图，finalize与vectorize每页各一次0，
+四裁图实际打开；7图片/父0、内容修复0、重跑0，76文件冻结。
+作者manifest SHA
+`9b12b56e654045471c29321e12a85268eb1f5b0789142784794344a2e6362be9`；
+PURE outgoing SHA
+`95f25cba26864eaf4ac4663b8d93e6826488661f76fe9c5155d65b3e507ebcc1`。
+实际p0391#6的155标题关闭154局部题组边界；155正文仍open，
+不称装订批准。作者已关闭；Russell新鲜FIRST源390/391独审
+`01a1e85f-eea5-7bf2-b59a-d3951f527b77`在途，先原页后冻结稿，
+不重跑门禁、不接上游HOLD。Rawls388/389 FIRST独审仍在途。
+暂无新晋升/装订/现代课；批准7p84/8p25及raw64/25/109保持。
+
+## 第五十五批386唯一内容修补失败，转向154边界
+
+Schrodinger原像素独立核定粗体为“磁针的北极相象”，并确认应移除
+notes[1]中该短语的错误下加点登记；3图片/父0。11精确副本保留0444，
+唯一apply_patch首次写入失败，实际改动0、finalize0、内容attempt1/remaining0。
+不chmod、不换写入器、不续修；原作者runtime1/remaining0不重置。
+结果manifest SHA
+`435aa429323cf27999d45a7c7015e1f4fbd78deffeba73ae10987f24f6ca81a5`，
+修补报告已冻结，代理已关闭。386/387未批准，n153不能跨该HOLD装订。
+Beauvoir五失败命令及四未授权纠正续作已冻结入process addendum，
+不得称干净FIRST-stop；原BLOCK及像素笔记保持。
+
+388/389 Rawls FIRST独审、390/391 Avicenna FIRST作者仍在途；
+下一候选改为独立154，只有实际闭合并批准的页才可装订。
+批准7p84/8p25、raw7p64/25/109、图请求60/本批0、父图0保持。
+Batch54已推送fae59f5；Batch55完整课0，无commit/push。
+下文在途陈述均为此前阶段记录，不授权重开耗尽HOLD。
+
+## 第五十五批386强调首拒，388/389收口待审
+
+Beauvoir FIRST源BLOCK p0386#3强调分类/粗体缺失，387尚未完成审查；
+7图片/父0。报告披露binding-helper失败后自行修正，FIRST-stop流程偏差
+不得抹去，accounting-only补录在途；原SOURCE稿及门禁不改。
+Schrodinger独占386原像素核定及唯一SOURCE内容修补在途，
+仅允许p0386#3强调与对应notes；这是首次SOURCE内容额度1，
+作者此前runtime1/remaining0保持，不重置。实际内容使用待冻结结果。
+
+Hilbert388/389 FIRST finalize16/16和18/18、每页vector一次0，
+5裁图实查、8图片。作者见p0388#6的154标题关闭153局部边界，
+154仍open，fig326局部字形不确定留原PNG，不猜字。
+Rawls新鲜FIRST源独审在途，尚无晋升/装订/现代课。
+390/391各prepare一次0已复用，PUREincoming复制一次0，
+198字典键/28数组索引，Avicenna独占FIRST作者在途。
+批准7p84/8p25、raw7p64/25/109；图请求60、父图0；
+当前没有本批完整课或commit/push，全局检查及DB操作0。
+
+Carver121FIRST诊断冻结：原页/稿均15语义行，没有找到漏写3行；
+两裁图视觉未见缺失，4图片/父0。辅助padding比较首次失败STOP，
+完整+3计数带归因及像素等价仍未证实；121HOLD及122未读不变，
+无修补/重跑，原失败不可改称通过。manifest
+`4c3eb17aa674ab0a5d881c3775eed16a525d813c2ca7075fc54bf9826fb0e7c1`。
+
+后续390/391各official prepare一次0，目录
+`.tmp/ld-s10y-lesson/source-author-7p-390391-b55/`；
+尚无incoming复制、作者、审查或批准，不重跑备料。388/389作者在途。
+
+## 第五十五批n150图件耗尽HOLD，转向后续完整课
+
+Einstein新鲜FIRST FIG BLOCK：overhead-test-wire缺必须connects端点断言；
+视觉/来源/331px字号PASS不替代断言。7图片、父0；原稿及一次width修复不改。
+官方record_review一次0、status fail，只有内置rendered validator一次。
+FIG repair1/remaining0，不补第二个断言，不晋升/modern-finalize，
+父仍未为FINAL读取四SOURCE解，未prepare答案/CHOICE/DISPLAY。
+n150不计完整课；本批0完整课、不做状态报告单独commit/push。
+
+386/387唯一runtime恢复页级完成，22/22及20/20，四vector各页一次0；
+作者8图片、内容修复0、runtime1/remaining0。Beauvoir新鲜FIRST源独审在途。
+388/389 official prepare各一次0，PUREincoming复制一次0，
+255字典键/30数组索引分别记录、无硬猜计数；Hilbert独占FIRST作者在途。
+n153源边界仍未齐，不提前算完整课或装订。批准7p84/8p25、raw64/25/109。
+
+## 第五十五批385本页晋升，384未解，121新HOLD
+
+385同审者affected-onlyPASS，11原文件精确及4SVG绑定，0新图片；
+15精确复制晋升一次0，批准7p84/8p25；raw7p64/25/109不变。
+384新鲜限定像素检查2图片仍UNRESOLVED，未修补/晋升，不再重复查字。
+Gibbs唯一runtime副本preflight一次0，121FIRST finalize一次exit1，
+18/15；原17文件不改，runtime1/remaining0，新内容修补/重跑/vector0。
+122未读，后续边界未到达；Carver仅121FIRST独立诊断在途，不授权修补。
+Einstein图309FIRST独审仍在途，modern-finalize/FINAL/CHOICE未开始。
+
+## 第五十五批119独审精确保留，120保持计行HOLD
+
+Hypatia FIRST119本页PASS，45/45作者冻结绑定一次匹配，6图片、父0。
+119的3正式页文件及4原输入共7精确复制晋升一次0，批准8p25。
+120正文及稿26真实行无转写缺陷，official24首次exit1保留：
+两个墨迹带分别合并题5/6及题7第二/第三行。没有删忠实稿行、
+改计数器、重跑或vector；不晋升120、不跨失败页装订。
+
+## 第五十五批309宽度唯一修复及385证据恢复
+
+Socrates FIRST图309 draft validator exit2，缺331px声明；原作者render/native0。
+原44冻结文件及报告不改，独立副本仅widths追加331，79对象/8标签不变；
+repair1/remaining0，corrected draft及FIRST render各一次0。
+现有native helper副本首次运行一次0，三宽度/三主题九样本PASS，
+331最小16.55px，screen可见host、sr-print-lesson仅print，父图片0。
+Einstein新鲜FIRST FIG独审在途；没有批准、record、promotion或modern-finalize。
+实际图片生成0已观测，总调用60不变，token及账单仍未知。
+
+Huygens FIRST384标点不确定BLOCK，385正文/四裁图readinessPASS但缺vector；
+辅助拼图fig317超出880px画布1px，不是源裁图错误。385独立11精确复制
+证据恢复1/remaining0，复用独审个体裁图、不重跑finalize；
+FIRST vector一次0，四图不匹配0.016/0.038/0.005/0.012%，同审者affected在途。
+Feynman仅384未批准标点原像素盲读，不重复全页门禁或替不确定字造修补。
+
+Hubble386/387首manifest字段查询exit5（books不存在），稿/门禁0；
+原失败冻结，父观测catalogs实际映射，只授权独立runtime-repair1续作。
+Gibbs121/122首preflight把JS含数组索引211与字典键175作相等断言exit1，
+incoming哈希一致；唯一独立helper修正字典键175，所有纯度及哈希约束不变。
+两恢复均runtime1/remaining0、原稿内容修复0，未算批准或完整课。
+
+## 第五十五批独审及后续原稿在途
+
+复用第五十四批live-ticket receipt及同一IntentFold invocation，不重做setup或门禁。
+Huygens新鲜FIRST独审384/385，Hypatia新鲜FIRST独审119/120；
+原页先读后比冻结稿，父图片0，385缺vector及120首次26/24失败保持。
+386/387与121/122各official prepare一次0；纯结构复制各一次0，
+递归311/211键不含标题/正文/标签/结论/报告/失败载荷。
+Hubble/Gibbs分别独占FIRST作者，仅页级产物；不跨HOLD装订。
+Socrates原图309 FIRST作者继续，无追加请求授权；实际请求尚未观测，
+不得用未观测0称完成用量。批准页7p83/8p24、raw7p64/25/109不变，
+n150尚未modern-finalize/FINAL/CHOICE/DISPLAY，不计完整课程。
+
+## 第五十四批已推送，继续第五十五批n150
+
+176文件提交`fae59f501a187affc1a50b9ea4dfedda59519af0`，
+commit/push各一次0，push结束2026-11-17T06:24:34.700Z。
+HEAD+已生成n147行投影已提交，其他现代脏索引及未完草稿原样保留。
+下文“尚未commit/push”仅提交前记录；本次更新不单独提交。
+
+n150 FIRST完整TEXT独审PASS并先冻结，四SOURCE独立解随后完整冻结；
+三批准模板实际嵌套路径预检后一次精确保留0，父未读SOURCE解用于FINAL。
+Socrates新鲜独占图309 FIRST作者在途；未做modern-finalize/FINAL/CHOICE。
+已批准原稿7p83/8p24，raw7p64页/25项/109题不变。
+
+384页FIRST finalize20/20/vector两图0；385页FIRST finalize17/17后
+inspection-evidence assertion首次失败STOP，四裁图未检查、vector未执行，
+修复0，不把作者“完稿”称批准或抹去失败。119页25/25/vector0图0；
+120页FIRST26/24 finalize exit1，0修复/重跑/vector，独审尚未开始。
+源页作者均已冻结关闭；不跨失败页装订、不读取祖先标题或失败正文。
+n149接入HOLD及全部旧耗尽HOLD不重开。父图片0，图请求仍60、
+第五十五批实际请求尚未观测，token/账单未知；无main exec在途。
+
 ## 第五十四批n147完整课离线显示PASS，窄提交准备
 
 n147唯一CHOICE修补获同审者affected-only PASS，9受影响选项和source2覆盖

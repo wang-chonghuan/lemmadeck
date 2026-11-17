@@ -32,6 +32,26 @@ class IsolatedMarginBlotTest(unittest.TestCase):
                 self.assertEqual(layout.line_bands(ink, 1600), [(40, 79), (360, 399)])
                 self.assertTrue(np.array_equal(ink, original))
 
+    def test_fragmented_compact_margin_blots_are_not_rows(self) -> None:
+        for left in (21, 1549):
+            with self.subTest(left=left):
+                ink = self.page_with_two_prose_rows()
+                ink[220:246, left:left + 12] = True
+                ink[220:246, left + 13:left + 35] = True
+                original = ink.copy()
+                self.assertEqual(layout.line_bands(ink, 1600), [(40, 79), (360, 399)])
+                self.assertTrue(np.array_equal(ink, original))
+
+    def test_shorter_margin_blots_with_small_voids_are_not_rows(self) -> None:
+        for left in (21, 1549):
+            with self.subTest(left=left):
+                ink = self.page_with_two_prose_rows()
+                ink[220:246, left:left + 30] = True
+                ink[227:239, left + 3:left + 27] = False
+                original = ink.copy()
+                self.assertEqual(layout.line_bands(ink, 1600), [(40, 79), (360, 399)])
+                self.assertTrue(np.array_equal(ink, original))
+
     def test_narrow_standalone_margin_numerals_remain_rows(self) -> None:
         for left in (21, 1549):
             for digit in ("1", "7"):

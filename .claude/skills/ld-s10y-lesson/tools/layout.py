@@ -329,7 +329,32 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         for component_id, bounds in dots:
             region = ink[bounds]
             region[components[bounds] == component_id] = False
-    # Dense margin blots require compact shape and clearance from nearby glyphs.
+    # Small gaps can split a compact margin blot into separate ink fragments.
+    margin_clusters, _ = ndimage.label(ndimage.binary_closing(
+        ink, structure=np.ones((3, 3), dtype=bool)
+    ))
+    for bounds in ndimage.find_objects(margin_clusters):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        height, width = rows.stop - rows.start, columns.stop - columns.start
+        area = np.count_nonzero(ink[bounds])
+        clearance = int(2 * glyph_h)
+        margin_blot = (
+            (columns.stop <= 0.04 * ink.shape[1]
+             or columns.start >= 0.96 * ink.shape[1])
+            and 0.45 * glyph_h <= height <= 1.3 * glyph_h
+            and 0.8 * height <= width <= 1.4 * height
+            and area >= 0.6 * width * height
+            and np.count_nonzero(ink[
+                max(0, rows.start - clearance):rows.stop + clearance,
+                max(0, columns.start - clearance):columns.stop + clearance,
+            ]) <= area * 1.1
+        )
+        if margin_blot:
+            ink[bounds] = False
+            # Standalone numeral recovery must not resurrect removed ink.
+            components[bounds] = 0
     # Shallow blemishes must occupy an otherwise isolated projection row.
     for component_id, bounds in enumerate(bounds_list, 1):
         if bounds is None:
@@ -337,19 +362,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         rows, columns = bounds
         height, width = rows.stop - rows.start, columns.stop - columns.start
         area = np.count_nonzero(components[bounds] == component_id)
-        clearance = int(2 * glyph_h)
-        margin_blot = (
-            (columns.stop <= 0.04 * ink.shape[1]
-             or columns.start >= 0.96 * ink.shape[1])
-            and 0.6 * glyph_h <= height <= 1.3 * glyph_h
-            and 0.8 * height <= width <= 1.25 * height
-            and area >= 0.65 * width * height
-            and np.count_nonzero(ink[
-                max(0, rows.start - clearance):rows.stop + clearance,
-                max(0, columns.start - clearance):columns.stop + clearance,
-            ]) <= area * 1.1
-        )
-        if margin_blot or (
+        if (
             0.35 * glyph_h <= height <= 0.65 * glyph_h
             and width >= 1.5 * glyph_h
             and area >= 0.35 * width * height
@@ -363,9 +376,6 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         ):
             region = ink[bounds]
             region[components[bounds] == component_id] = False
-            if margin_blot:
-                # Standalone numeral recovery must not resurrect removed ink.
-                components[bounds][components[bounds] == component_id] = 0
     for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
         if bounds is None:
             continue
