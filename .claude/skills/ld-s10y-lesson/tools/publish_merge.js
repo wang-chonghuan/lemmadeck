@@ -25,6 +25,13 @@ function sourceNumberForArtifact(exercise) {
     : exercise.number
 }
 
+function displayNumberForArtifact(exercise) {
+  const number = sourceNumberForArtifact(exercise)
+  if (number == null) return ''
+  const prefix = /^\s*(\d+)\.(?=\s|$)/.exec(exercise.text || '')
+  return prefix && prefix[1] === String(number) ? '' : `${number}.`
+}
+
 function preserveChoiceMetadata(deck, existingDeck) {
   if (!existingDeck?.choiceSet || deck.edition !== existingDeck.edition) return deck
   const sourceProjection = (items) => items.map(({ answerKey, interaction, ...exercise }) => exercise)
@@ -33,4 +40,4 @@ function preserveChoiceMetadata(deck, existingDeck) {
   return { ...deck, choiceSet: existingDeck.choiceSet }
 }
 
-module.exports = { preserveExerciseMetadata, preserveChoiceMetadata, sourceNumberForArtifact }
+module.exports = { preserveExerciseMetadata, preserveChoiceMetadata, sourceNumberForArtifact, displayNumberForArtifact }

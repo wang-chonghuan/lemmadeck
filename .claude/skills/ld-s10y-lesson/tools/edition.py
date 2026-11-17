@@ -32,6 +32,8 @@ MATH = re.compile(r"\$\$(.+?)\$\$|\$([^$]+?)\$", re.S)
 MATH_TEXT_LITERAL = re.compile(r"\\text\{([^{}]*)\}")
 MATH_BOUNDARY_PUNCTUATION = re.compile(r"[、，；。？！：]+")
 NUMBER = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])")
+FIGURE_REFERENCE = re.compile(r"(?:图\s*|Figures?\s+)(\d+)(?!\d)", re.I)
+SECTION_REFERENCE = re.compile(r"(?:第\s*(\d+)\s*节|Sections?\s+(\d+)(?!\d))", re.I)
 PART_MARKER = re.compile(
     r"(?<![A-Za-z0-9_\u0400-\u04ff])(?<!\d\.)"
     r"(?P<open>[(（]?)(?P<label>\d{1,2}|[a-z]|[\u0430-\u044f\u0451])(?P<close>[)）])"
@@ -444,6 +446,16 @@ def number_signature(text: str) -> list[str]:
     return NUMBER.findall(without_math)
 
 
+def prose_number_signature(text: str) -> tuple[list[str], dict[str, set[str]]]:
+    without_math = MATH.sub("", text)
+    references = {
+        "图号": {match.group(1) for match in FIGURE_REFERENCE.finditer(without_math)},
+        "节号": {match.group(1) or match.group(2) for match in SECTION_REFERENCE.finditer(without_math)},
+    }
+    quantities = SECTION_REFERENCE.sub("", FIGURE_REFERENCE.sub("", without_math))
+    return NUMBER.findall(quantities), references
+
+
 def masked_math(text: str) -> str:
     masked = list(text)
     for match in MATH.finditer(text):
@@ -774,8 +786,12 @@ def validate_text(
         errors.append(f"{label} 应在 changes 中包含 math-correction")
     if not math_corrections and "math-correction" in changes:
         errors.append(f"{label} 声明 math-correction 但没有已绑定勘误")
-    source_numbers = number_signature(canonical_source)
-    modern_numbers = number_signature(canonical_modern)
+    # Numbered references retain their identities across localization.
+    source_numbers, source_references = prose_number_signature(canonical_source)
+    modern_numbers, modern_references = prose_number_signature(canonical_modern)
+    for kind, references in source_references.items():
+        if modern_references[kind] != references:
+            errors.append(f"{label} 的非公式{kind}引用发生变化")
     if not isinstance(numeric_changes, list):
         errors.append(f"{label}.numeric_changes 必须是数组")
         numeric_changes = []

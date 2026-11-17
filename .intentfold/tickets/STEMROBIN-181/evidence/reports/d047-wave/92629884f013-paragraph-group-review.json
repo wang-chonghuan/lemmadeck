@@ -1,0 +1,62 @@
+{
+  "method": "Human full-sentence review of exact native proseOutline output, compared with the captured normalization input and output; not a line-count or source-validity assumption",
+  "nativeEvidence": "native-flow-inspection.json",
+  "contract": {
+    "path": ".claude/skills/ld-s10y-lesson/SKILL.md",
+    "lines": [77, 359],
+    "requirement": "Consecutive 2-3 complete statements form independently displayable short paragraphs; separately introduced equations stay legible."
+  },
+  "zh": {
+    "paragraphCount": 13,
+    "multiSentenceExplanations": [
+      {"blockIndex": 0, "paragraphIndices": [0, 1], "sentences": [3, 3], "sourceRefs": ["p0110#4"], "status": "PASS"},
+      {"blockIndex": 1, "paragraphIndices": [2], "sentences": [2], "sourceRefs": ["p0110#5"], "status": "PASS"},
+      {"blockIndex": 2, "paragraphIndices": [3], "sentences": [2], "sourceRefs": ["p0110#6", "p0111#1"], "status": "PASS"},
+      {"blockIndex": 6, "paragraphIndices": [9], "sentences": [2], "sourceRefs": ["p0111#5"], "status": "PASS"},
+      {"blockIndex": 7, "paragraphIndices": [10], "sentences": [3], "sourceRefs": ["p0111#6"], "status": "PASS"}
+    ],
+    "formulaIntroducer": {
+      "blockIndex": 3,
+      "paragraphIndices": [5, 6],
+      "sourceRefs": ["p0111#2"],
+      "status": "NEEDS-REPAIR",
+      "finding": "The paragraph ending in '所以' is incomplete without the next paragraph, which contains only the numbered v=lambda*nu equation."
+    }
+  },
+  "en": {
+    "paragraphCount": 20,
+    "multiSentenceExplanations": [
+      {"blockIndex": 0, "paragraphIndices": [0, 1, 2, 3, 4], "sentences": [1, 1, 1, 2, 1], "sourceRefs": ["p0110#4"], "status": "NEEDS-REPAIR"},
+      {"blockIndex": 1, "paragraphIndices": [5, 6], "sentences": [1, 1], "sourceRefs": ["p0110#5"], "status": "NEEDS-REPAIR"},
+      {"blockIndex": 2, "paragraphIndices": [7, 8], "sentences": [1, 1], "sourceRefs": ["p0110#6", "p0111#1"], "status": "NEEDS-REPAIR"},
+      {"blockIndex": 6, "paragraphIndices": [14, 15], "sentences": [1, 1], "sourceRefs": ["p0111#5"], "status": "NEEDS-REPAIR"},
+      {"blockIndex": 7, "paragraphIndices": [16, 17], "sentences": [2, 1], "sourceRefs": ["p0111#6"], "status": "NEEDS-REPAIR"}
+    ],
+    "formulaIntroducer": {
+      "blockIndex": 3,
+      "paragraphIndices": [10, 11],
+      "sourceRefs": ["p0111#2"],
+      "status": "NEEDS-REPAIR",
+      "finding": "The paragraph ending in 'it follows that' is incomplete without the next paragraph, which contains only the numbered v=lambda*nu equation."
+    }
+  },
+  "normalizationCause": {
+    "path": ".claude/skills/ld-s10y-lesson/tools/edition.py",
+    "function": "normalize_prose_layout",
+    "lines": [466, 538, 545],
+    "inspectionTimeToolSha256": "fb78af1f22e64b960bd8735e4c1363e69d6fb9a875652c2c19c35c4ac5251dde",
+    "lineNumbersReferToInspectionTimeVersion": true,
+    "finding": "The shared 180-character threshold splits the long EN sentence lines into singleton paragraphs. Numbered equations are not full matches for the standalone-formula attachment rule, so equation (4.2) can be detached after a three-line introducer.",
+    "alreadyNativeNormalized": true,
+    "normalizerChanged": false
+  },
+  "exceptionsNotManufacturedIntoDefects": [
+    "Source-bound short conclusion blocks p0111#3 and p0112#2 are naturally single sentences.",
+    "The short introduction p0111#4 is a natural single sentence.",
+    "The complete time-shift sentence p0111#9+p0112#1 remains grammatically joined around its separately introduced equation.",
+    "No additional scientific facts or artificial padding are demanded merely to increase a sentence count."
+  ],
+  "status": "NEEDS-REPAIR-native-readable-grouping",
+  "ImageOpens": 0,
+  "renderRun": false
+}
