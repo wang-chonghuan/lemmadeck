@@ -1,0 +1,13 @@
+{
+  "command": [
+    ".claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import sys,json\nfrom pathlib import Path\nsys.path.insert(0,'.claude/skills/ld-s10y-lesson/tools')\nimport edition\npayload=json.load(sys.stdin)\nsource=payload['lesson']['source']['data']\nforbidden=payload['profile']['forbidden_terms']+payload['profile']['forbidden_person_names']\nerrors=edition.validate_source(Path(payload['book']),payload['lesson']['source'],Path(payload['book'])/payload['lesson']['source']['path'],'lesson')\nfor doc in [payload['lesson'],payload['english']]:\n    errors+=edition.validate_identity_fields(source,doc,edition.IDENTITY_FIELDS,'lesson')\n    assert len(source['prose'])==len(doc['prose'])==7\n    for raw,modern in zip(source['prose'],doc['prose']):\n        assert raw['source_refs']==modern['source_refs']\n        errors+=edition.validate_text(raw['text'],modern['text'],modern['changes'],modern['numeric_changes'],','.join(modern['source_refs']),forbidden,modern['historical_entities'])\nprint(json.dumps({'errors':errors,'sourceObjects':7,'sourceTasks':0,'figures':0},ensure_ascii=False))\nsys.exit(1 if errors else 0)"
+  ],
+  "exitCode": 0,
+  "stdout": "{\"errors\": [], \"sourceObjects\": 7, \"sourceTasks\": 0, \"figures\": 0}\n",
+  "stderr": "",
+  "signal": null,
+  "error": null
+}

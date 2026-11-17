@@ -1,0 +1,11 @@
+{
+  "command": [
+    ".claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import sys,json\nsys.path.insert(0,'.claude/skills/ld-s10y-lesson/tools')\nimport edition\ndoc=json.load(sys.stdin)\nmodern=doc['prose'][2]; raw=doc['source']['data']['prose'][2]\nassert modern['text']==edition.normalize_prose_layout(modern['text'])\nerrors=edition.validate_text(raw['text'],modern['text'],modern['changes'],modern['numeric_changes'],'p0312#5',[],modern['historical_entities'])\nprint(json.dumps({'errors':errors,'language':'zh','onlyAffectedProseIndex':2,'englishRechecked':False}))\nsys.exit(1 if errors else 0)"
+  ],
+  "exitCode": 0,
+  "stdout": "{\"errors\": [], \"language\": \"zh\", \"onlyAffectedProseIndex\": 2, \"englishRechecked\": false}\n",
+  "stderr": ""
+}
