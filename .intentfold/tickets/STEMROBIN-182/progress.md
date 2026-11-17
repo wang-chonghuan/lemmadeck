@@ -1,5 +1,93 @@
 # 当前开发状态
 
+### batch283 八5m包有限显示证据留存，整体HOLD不提升
+
+- Confucius/Aristotle两位均真实completed并由监督关闭，各八PNG仅一次；
+  281报告rawSHA bf92468c94bfb46167b65fdeaab5cc1c8eec21625943c88d1df45adfa789f68c，
+  282报告rawSHA 9fb9c950ad7e314b797cfded15c07da18cd8f1b94d22f21e9352a5315ed8ddb9，
+  本地与正式回执匹配。282顶层rawSHA是receipt哈希，非报告自身哈希。
+- 281仅桌面四窗口与手机n7有限PASS，手机n4/n8/n9为裁片覆盖HOLD；
+  282仅n10/n11/n15两宽度有限PASS，n14两宽度数对列表右端未见HOLD。
+  11有限PASS/5覆盖HOLD不称完整153题623项显示通过；
+  DOM归父方实际测量，像素归各实际临时观察者，不冒充人类/父方图审。
+- 八包原seed/draft/review与HTML/PNG同字节留存；每课两PNG、绑定DOM、
+  实际观察范围与原两报告历史副本已持久保存，未复看或重跑机械/数学。
+  新JSON只保留持久媒体绑定，不重复scratch窗口路径；原报告字节保留。
+  各bounded_visible_observation_pending:false，但broader_display_pending:true、
+  current_retained_approval:false、display_pending:true及SOURCE/生产/APP/
+  全课/881/原FAIL保持。82包1394题5659项648计数不增，父0新图/累计24。
+- 下一284仅整源排294/355/416/418/508，冻结101源106题391项；
+  原保留题项均真实旧审PASS，完整对象可逆且无跨删合并，未新数学/SOURCE审。
+  两显示观察者实际关闭后才派fresh
+  Plato `01a1eb95-fdf1-72c0-96d6-69cc6efffc99`仅n17/n23、
+  Sagan `01a1eb96-8fb3-7201-b413-c7dceca12f72`仅n20/n27；
+  当前active不当完成，只每包一次selection-impact direct，原HOLD不猜补。
+
+### batch282 后四5m选定包原字节留存与首次显示生成
+
+- 280四包均真实completed/closed，各selection-impact PASS与最终
+  rawSHA已本地匹配，不重跑各一次exit0的direct；Lovelace辅助raw
+  重序列化断言exit1保留，完整对象/canonical恢复不冒称raw恢复PASS。
+- 66保留源71题287项seed/draft/review原字节已留存持久choice-set；
+  仅首次choices render四次各exit0，首次1440/390八DOM组合exit0，
+  八PNG初始左端可见窗口冻结。282入口rawSHA
+  40f01396fd5d17753bb08198fe1e18c68f226f63b7746156d077c85a60148d47。
+- 已交监督用另一fresh有界观察者独占本八PNG/唯一review，不扩281
+  Confucius `01a1eb8f-a6bb-7ae0-922a-98ca591cfe88`原八图任务；
+  真实回执前两批display_pending:true/current_approval:false不提升。
+- 排152/165/231/232/249/253不解除原SOURCE/整包blocked/exit3；
+  原数学/图审、条件约定、生产损失与所有FAIL同字节保留。父0新图/
+  累计24，82包1394题5659项648计数不增，不把八包留存作全课完成。
+
+### batch280 前两选定包真实完成，后两仍待回执
+
+- Kant `01a1eb8a-ce7d-7490-82b4-8d65f7a1379c`实际completed，
+  监督compact确认已关闭；n10/n11当前selection-impact PASS，
+  rawSHA分别1d4ffac1ab6dbf3fdebbd399e9239e58c078716538298341e37ba63e4a29e7f0、
+  da92e183a15f41926d5273ff397a5f81c24066a6ef1e47aabf5eb796c8ba5cd4，
+  父方本地匹配，未复跑各一次exit0的direct检查。
+- 保留10源10题42项、18源19题76项和原数学/图审身份；
+  排152/165不解除原SOURCE HOLD，未增加数学审查、显示或批准数量。
+  Lovelace原n14/n15任务仍active，不消费其部分文件作完成。
+- 既有281 scratch helpers仅增加280→282有界参数，默认281行为不变，
+  两script首次语法检查exit0；未再运行281或执行282。现有四包
+  HTML/PNG/seed/draft/review不改，首次静态观察由监督安排。
+
+### batch281 四5m选定包原字节留存，首次显示观察待回执
+
+- Hypatia/Jason两位279均真实completed并由监督关闭，n4/n7/n8/n9
+  四份selection-impact PASS/最终rawSHA已本地匹配；各direct
+  check_draft/check_review真实一次exit0，只继承原数学/图审，不重跑。
+- 65保留源82题336项seed/draft/review原字节已写持久choice-set；
+  retention保留实际原/新审查身份、原blocked/exit3与所有排除源HOLD。
+  四包choices首次render各exit0，首次1440/390八DOM组合exit0，
+  八张初始左端首窗口PNG已冻结，父方未开图。
+- 281唯一first-display-check原SHA
+  1bd303d8bbc9f93ea0b3b4f8d7c43007361716e4e8a9b5d30a7ae314464d91a8，
+  已交监督fresh有界静态观察，只八图各一次；尚未收到真实显示回执，
+  不把DOM、render或数学PASS算成静态/全题/全课显示通过。
+- 280原冻结四包已在279两位实际关闭后派fresh
+  Kant `01a1eb8a-ce7d-7490-82b4-8d65f7a1379c`仅n10/n11、
+  Lovelace `01a1eb8a-cebb-72b3-bcbb-606c7c81c73a`仅n14/n15；
+  零图selection-only，原首审和当前冻结输入不重生成或扩审。
+- 当前四包approval:false/display_pending:true，82包1394题5659项
+  648计数不增；父本次0图/累计24，未见/生产/APP/全课/881保留。
+
+### batch279 两份真实完成回执已消费，另两份仍待收口
+
+- fresh Jason `01a1eb82-06a4-7d81-82f3-769f4473bf42`
+  已由监督确认completed/closed；n8/n9 selection-impact PASS，
+  最终rawSHA分别63ff31c0135837a4868b8ea7f14882085e23827abf34daf07c7bb266e968d370、
+  64eaad6b849bb498c1cd304fb815f79c7596fb6007f952b98cc49313ed8b14d5，
+  父方实际哈希匹配，只读JSON/文字，不复跑已完成direct。
+- 各check_draft/check_review真实一次exit0；20源24题96项、
+  20源25题104项数学和图审完整继承，原blocked/exit3与
+  112、136/137/146 SOURCE HOLD保留，不提升全课或APP。
+- n4/n7原fresh `01a1eb82-0649-71c0-b464-6246d800d207`
+  compact快照仍active，部分结果不当completed；281脚本尚未运行，
+  280原冻结队列不重生成或重复派。父0新图/累计24，
+  approval:false/display_pending:true，82包1394题5659项648组合不增。
+
 ### batch279 接续四份现成5m选定包，仅增量入口冻结
 
 - 实际读取当前live182与278检查点，同d9b1/182分支继续开发；
