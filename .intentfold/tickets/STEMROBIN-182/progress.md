@@ -1,5 +1,41 @@
 # 当前开发状态
 
+### batch290 有限显示留存，292首次显示接续
+
+- 290 ephemeral观察者实际thread `01a1ebdb-bc40-7960-abe0-4d99ffe8a358`
+  已真实turn.completed且进程退出0。最终report rawSHA
+  f92ccb0da6cb59dc4b0396a51f419e7ae14a86b8a8274ac2cbe487944c9d6b65
+  已与本地匹配；八初始窗口有限PASS，未见/图/交互/整课仍HOLD。
+  四包n34/n37/n40/n46共96题354项原seed/draft/review/HTML/PNG/
+  观察与DOM回执同字节留存，283 helper仅适配实际报告字段、一次执行exit0。
+- 291两零图ephemeral进程实际完成退出0，四标准review最终SHA沿用
+  已核对正式回执：116源181题546项仅selection-impact PASS，
+  原数学/图审/身份逐字段继承；各包两current函数各一次exit0。
+  882/934/987/1030及原blocked/exit3不解除，不重复validator或数学。
+  四包已同字节持久留存，292首次choices render四次exit0。
+- 首次DOM scratch helper仅按renderer原合同增加new_figures本地spec
+  查找和realpath书目录防护，未改renderer/app/图稿或新增审批器。
+  只对292首次1440/390执行；原290/288/285图片不再打开。
+- 293原四冻结入口未重生成，两个fresh实际thread
+  `01a1ebdd-7a6f-7091-91b1-ec8cce13077e`（85474，n54/n60）、
+  `01a1ebdd-7a6f-7370-b2be-f5e6a102a7ca`（52378，n57/n59）
+  已按真实在途记录；部分产物不当completed。父0新图/累计24，
+  82包1394题5659项648计数不增，其他未提交资源/工具改动不纳入本批。
+
+### batch288 窄push完成，290首次显示实际开始
+
+- `ad1844bd5c43eb870c711d30ec9763e14c770046`已真实commit/push，
+  远端eb19e8343→ad1844bd5；仅n28/n29/n30/n32四包74题297项、
+  有限静态原报告/HTML/PNG与进度/用量。未纳入layout/其测试、
+  supervisor ticket、其他4m资源；n30 FAIL/底裁HOLD/全课边界原样。
+- 289四标准review原字节留存后，290首次choices render四次各exit0；
+  本批首次1440/390 DOM/截图已开始，不重复任何旧批次或源/math/
+  图审/validator。291两个fresh零图进程继续原范围，无额外派审。
+- 下一293只用既有qualifier准备n54/n57/n59/n60的原整源排除入口，
+  不新解题/源刷新或猜约定；source1054/1106/1131/1135/1137/1144
+  与原blocked历史及有效数学均保留。准备和push不是全组完成，
+  父0新图/累计24，82包1394题5659项648不增。
+
 ### batch289 四零图回执实际完成，291第二槽已接续
 
 - 两个289 ephemeral进程均真实完成退出0，四包selection-impact PASS；
