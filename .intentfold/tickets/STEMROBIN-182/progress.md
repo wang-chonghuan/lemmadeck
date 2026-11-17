@@ -1,5 +1,121 @@
 # 当前开发状态
 
+### batch289 四零图回执实际完成，291第二槽已接续
+
+- 两个289 ephemeral进程均真实完成退出0，四包selection-impact PASS；
+  各check_draft/check_review一次、wrapper exit0，随后仅身份结果注记
+  不二次检查。四最终rawSHA已父方匹配，84源96题354项原数学/图审
+  对象与身份/hash精确继承，SOURCE636/657/659/721/856及旧blocked/exit3
+  和生产/未见/显示/APP/全课/881不解除，不加批准计数。
+- n34/n40最终rawSHA
+  7cdcc2d33be4cc6f88f0dbae6c492481328ca3de3af0048d3602d63face9f86b、
+  5770a7424f23a158139eb526570bfce12d10394e9bdc793e1525fa63226024e2；
+  n37/n46最终rawSHA
+  784bdbcf6bf076562c20797a0d1d9e9a3f52f319b3f5dff1e94423f778f2b49e、
+  3367b51c2b9f5f337e9b7271d226c1f9b795657d0dd0c6d4d5c22274f88a2509。
+- 289第一位实际退出后，291第二对n51/n53以fresh ephemeral
+  `01a1ebd7-71e9-72f0-b41c-e0f9374cbae7`、session60340接续；
+  n47/n49原session64763不扩，两个新写域互斥/零图，只选定包影响。
+  下一步只做已完成289四包原字节留存与290首次choices显示，
+  不复看288或重源/math/validator；288四包有限证据先窄push。
+
+### batch288 有限静态正式回执完成，291仅首槽在途
+
+- 288 ephemeral观察者真实完成，process exit0，最终report rawSHA
+  7dc26a091561d68fb7c5f6556a96bfd3a46cf4d09455353b736f8bbf7f356d70
+  与其正式文字/本地一致。八PNG各一次，五有限PASS/一FAIL/两HOLD；
+  n30手机A-D数列右端不可见真实FAIL，n29桌面/n32手机底部裁片HOLD，
+  未断言原因/可达性，不以原DOM覆盖。父0开图，未复审数学/原图。
+- 现只扩展原283留存helper接288实际schema；原报告/输入字节保持。
+  report辅助CODEX_SESSION_ID是继承环境，不当实际观察身份；
+  真actor取thread.started及CODEX_THREAD_ID，既有SOURCE/显示/
+  生产/全课/APP/881 HOLD和零新增批准不变。
+- 288留存helper首次语法检查exit0、单次执行exit0；四包74题297项
+  原seed/draft/review与HTML/PNG/observer/DOM历史副本已持久留存。
+  n30 unresolved_visible_failure:true，两底裁HOLD及所有broader
+  display_pending:true/current_retained_approval:false保持，
+  无新截图/原因推断/DOM重跑或数学/图复审，准备本四包窄commit/push。
+- 291四冻结入口已单次准备exit0，116源181题546项仅待选择影响独审。
+  288实际完成退出释放一槽后，仅首对n47/n49以新的ephemeral CLI
+  接续，真实thread `01a1ebd5-23a4-7410-8d77-d9cab1226126`、
+  exec session64763；n51/n53仍未派，289两位原任务不扩。
+  两现有首次显示script仅增加289→290参数、首次语法检查各exit0，
+  尚未运行290，不重生成冻结289或任何旧render/DOM。
+
+### batch288/289 接续实际有限独审，无永久工人
+
+- 同d9b1/182分支从已冻结入口接续，无重生成/旧审/旧显示。当前宿主
+  没有临时子代理接口；使用已安装CLI的`codex exec --ephemeral`，
+  默认配置模型，无历史继承/永久会话文件/新worktree或分支。
+- 288实际新thread `01a1ebd1-31a3-7fe3-b600-766d48f11fb9`，
+  exec session43039，仅八已有PNG各一次、四HTML hash-only、
+  唯一first-display-review.json。289 n34+n40实际thread
+  `01a1ebd1-31a3-7eb0-b709-7991746b0a18`、session82871；
+  n37+n46实际thread `01a1ebd1-31a3-7111-b39e-30e443763a90`、
+  session2743。两位只各两review、165/189项选择影响、零图，
+  原数学/图审精确继承，各包一次current direct，不预设PASS。
+- 三ID取自实际CLI thread.started事件；不当作宿主可持续worker，
+  不用旧helper/图片历史。父方仅过滤读取文字/状态/路径/hash，
+  CLI事件原字节留在同ticket scratch，不接图片载荷，不消费部分report。
+  当前均在途，所有approval/display/排源/原FAIL/全课/881 HOLD保持，
+  父0新图/累计24、82包1394题5659项648计数不增。
+
+### batch288 首次显示生成完毕，像素观察未派
+
+- 287四包69源74题297项seed/draft/review已同字节持久留存；
+  首次choices render四次各exit0，首次1440/390八DOM组合exit0。
+  八初始窗口PNG与四HTML冻结，receipt rawSHA
+  697773900415c2aab601bc7468d90fda7fd348b10e8af84a49f54e22c84adb54。
+- 只生成本批缺失阶段，未复看285或重复数学/图审/SOURCE/trace/旧direct。
+  八PNG仍需fresh一次有界静态观察，尚未派出/未有report；
+  current_approval:false/display_pending:true及原HOLD保持，
+  父0新图/累计24，82包1394题5659项648不增。
+- 下一289仅选择排除636、657/659、721、856，现成原独审的其余
+  17/35/23/9源、19/35/27/15题、57/141/108/48项均无未解决题审缺陷。
+  既有qualifier仅增加289配置，首次语法检查exit0、单次准备执行exit0，
+  四冻结入口现已写入，各prepared-not-dispatched；不新命题/解题、
+  SOURCE刷新或重复首检查，原独审身份/整源blocked/exit3和生产损失保留。
+- 289四request rawSHA依次为
+  n34 efb88f4a0429045dc31ec4b4bad8b9c7e2ebb6ef0ee593a0263b60ef43bb23e3；
+  n37 ca723aa8dc76ca4dd0439474ebb23f148b1632771db9791c21d9dee98b4fdc90；
+  n40 bf9024b85cc8fd3c9676db750fbe14ec95ca2881fdbc7335f925952acb0055c1；
+  n46 66829bbf558ad11289f91b281fcbbb504b40a09e4cdd77e58914e19e4d2a758c。
+  总84保留源96题354项仅待选择影响独审，非新增批准；按选项量可分
+  n34+n40的165项及n37+n46的189项，两fresh写集互不重叠。
+
+### batch287 四真实回执齐备，288只开始缺失首次显示
+
+- n29/n32原fresh `01a1eba3-60de-78a1-9dd4-74fedcf65388`
+  已实际completed/closed，最终rawSHA分别
+  499d04d717eb7de624b56decfd83ea32435c067951824434a4a2d6aae851830c、
+  5c72cd7bb32b650db19b9985221f6842c8a901531da43c6dfe08b41d1ad1901f
+  本地匹配。各current direct两函数各一次exit0，身份注记后不重检；
+  当前69源74题297项只继承真实旧数学/图审和新的selection-impact PASS。
+- 本轮285/287三位均正式完成关闭，不复活；原所有排源与blocked/exit3、
+  条件/生产/显示/全课/APP/881保持，285真实手机FAIL不改判。
+  两现有script只增加287→288参数，首次语法检查各exit0；
+  现在只执行四包原字节留存/首次choices render，随后本批首次1440/390
+  DOM与冻结窗口，未重复任何旧语义、图审或显示。父0新图/累计24，
+  82包1394题5659项648不增。
+
+### batch286 窄push与287前两份正式完成
+
+- 四个284选定包及285有限显示证据已提交
+  `eb19e8343fd678f2e45b598dfc57f06f540f99c1`，真实push
+  ff6ef1552→eb19e8343；106题391项只保留数学/选择PASS和有限窗口证据，
+  n23手机真实FAIL与所有broader_display_pending/approval:false保持，
+  未纳入layout/其测试、supervisor ticket或剩余4m资产。
+- 287 n28/n30原fresh `01a1eb9f-2822-7bf0-8993-3e54d7440571`
+  已实际completed/closed，最终rawSHA分别
+  4e8ff979dc0653fc8f66d5a22de15dcacec5cb85fe6cd5081f13e30fdce42eb2、
+  e86f2cf7e784f2b8e8b525eb6cbe05b168f0675305f3da54b95eeddc83a87106
+  与本地一致。20/12源、21/13题、88/56项原完整独审对象继承，
+  各current direct两函数各一次exit0，随后仅身份注记不重检。
+- 527/532/538/562/567等SOURCE及原blocked/exit3不解除。n29/n32
+  原fresh仍在途，不以部分回执作四包完成；既有首次显示helper
+  仅增加287→288参数，未运行留存/render/DOM。父0新图/累计24，
+  82包1394题5659项648不增。
+
 ### batch285 正式静态回执已完成，窄留存不解除FAIL
 
 - Fermat `01a1eb9e-231c-7f02-95a0-d305edc24199`真实completed，
