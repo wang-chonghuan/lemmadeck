@@ -1,5 +1,59 @@
 # 当前开发状态
 
+### batch312/313真实回执已消费，n11限定包闭合
+
+- 312实际01a1ec70-e68f-74d3-9d33-13f7620bfb6f已completed/process exit0；
+  两原PNG各一次，fig03/04原draft检查各一次exit0，rawSHA分别
+  4aa34d8a6bec3e6944032f571c768ca2c226f21771b8e1b1fba30269a0799baf、
+  2d05696513666983f1d02d0fadb3125241cc4308aa9bf7e1d11f79f96e33f481。
+  这仅cap1；源裁边/虚线终点/采样曲线忠实性HOLD保留，不改字面近似式。
+- 313实际01a1ec76-46d8-74b3-bfa3-705691b05403已completed/process exit0；
+  report rawSHA5e94d1330f7364dc2f2857779b694161334480add1eb4d1e3ac7fcac80daac1d，
+  四PNG各一次，四真实可见窗口PASS；1440书写135–137完整、138仅题干，
+  390书写135–136完整/137a–f，手机正文仅至(3)，标题末字换行非阻断。
+  未见/完整16题/148作图/独立证明生产/真实手势/APP/全课/881仍HOLD。
+- 313原HTML/四PNG/三回执/文字结论共10文件同字节持久留存，
+  n11 evidence/first-text-written-display/display-check.json rawSHA
+  09fccc1fc9d22bd8eabac1d17523fbc378e4f990ec661afcdf0c5c98ab15c6e9。
+  仅first_text_written_visible_display_pending:false，broader/display_pending:true
+  和current_approval:false保留，原309数学/311两choices不重跑或复看。
+- n11仅15选定源14题84项及六个有界首显组合首次计一个选定包；
+  当前83包1408题5743项654组合，不是83完整课程。旧82包基线及此前push
+  的零增量记录不改；148未选与所有SOURCE/FAIL/独立生产/全课边界不提升。
+- 314 fig03/04首次cap2各一次真实exit2，640px最低16px均通过，但
+  fig03 tick2/原点0、fig04 B/原点0标签碰撞FAIL。原spec/render/SVG/PNG保留；
+  仅复制候选并改四/五个标签叶字段，各一次局部修复render真实exit2/0。
+  fig03 tick2仍碰撞，达到一次修复上限，保留真实FAIL/HOLD，不第三轮。
+  fig04仅render PASS，尚非图PASS；315 fresh实际
+  01a1ec84-71f4-75c2-b970-3d04a7036e7a/session64670仅它的原PNG/当前640预览，
+  唯一标准figure.review，首独审仍在途，父不看图、不扩fig03或整题数学。
+  不改renderer/geometry/grid/断言/源数学，不把机械通过或草稿计图批准。
+- 父0新图/累计24，两旧有限上下文均真实退出、不复活；同一182分支继续
+  未完成阶段，不触layout/测试/监督ticket/4m/Charter/依赖/DB或正式handoff。
+- n11此次窄暂存14文件，仅10份原字节显示产物/当前绑定说明、选定包retention
+  与现有progress/usage。远端已同步21d198fa9，暂存允许路径/环境项检查exit0、
+  本次暂存空白检查exit0；没有SOURCE/trace/数学/显示旧门槛或全项目重跑。
+
+### 21d198fa9窄push已确认，312/313仅补缺失阶段
+
+- 21d198fa9fde49bad90cf50059818a4e7c656ab7真实commit/push，远端ls-remote同SHA。
+  从2a97d9b755推进，108文件仅7a source/现代n11选定包及既有记录；
+  48页源尾空格原字节/默认检查exit2保留，layout/测试/监督ticket/4m未纳入。
+  这是部分开发交付，不作handoff或整组完成；本次push批准计数不增。
+- n10首次adapt-prepare一次exit0，9正文块/10源题/2图，未写现代index或改原始层。
+  312仅复用既有模板context投影，各绑定fig03/04实际PNG；
+  receipt rawSHA3a1e0a75a074691b4f3d7b177a2b90af60d4104bbb1510e3757725cfaa744762。
+  fresh cap1实际01a1ec70-e68f-74d3-9d33-13f7620bfb6f/session28899仅两原PNG各一次、
+  两允许spec和各一次首draft检查；仍在途，不render/finalize或批准SOURCE/整题。
+- n11尚缺课文/书写首次显示：313同字节复制四个既有finalized文件到scratch，
+  renderer仅首次生成text/exercises两HTML，choices不重生成；首render一次exit0，
+  四1440/390 DOM组合一次exit0，receipt rawSHA
+  7d9adb609a49fd13c110b223f8b6fa7307049bb3e6382239a79bd183ff3dc3a9。
+  fresh观察者01a1ec76-46d8-74b3-bfa3-705691b05403/session78861仅四新PNG各一次、
+  两HTML hash-only，仍在途。309数学/311两可见choices PASS不重审/复看。
+- 真实回执前不提升上述pending，82包1394题5659项648不增；父0新图/累计24。
+  H1、60/61计行、148作图、旧4m/SOURCE/FAIL及未见/生产/交互/APP/全课/881保留。
+
 ### batch311有限显示完成，7a窄交付准备
 
 - fresh观察者01a1ec65-ec03-7620-88a7-074646a03342真实completed/process exit0，
