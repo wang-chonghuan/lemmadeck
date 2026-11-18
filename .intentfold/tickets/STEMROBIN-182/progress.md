@@ -1,5 +1,46 @@
 # 当前开发状态
 
+### batch302有限观察完成，第三个窄批次准备交付
+
+- 302 fresh实际observer 01a1ec10-c30b-7f43-9366-7e10e6001cf2已真实
+  completed/process exit0后关闭，final report rawSHA
+  e4c84efe6579a16c54c047ca577c79c890d82f94019c087e1621247a49e56fe4。
+  八PNG各一次，7有限PASS、6a n40手机图内部右端1真实FAIL；原报告、
+  HTML/PNG及旧审原字节持久留存，不以640px/可达DOM覆盖像素FAIL。
+- 本批四选定包5m n45、6a c1-ex/n40、7a n4共135源173题613项，
+  仅选择影响PASS；原数学、图审、身份及835、122/123/129/177、646、
+  62与blocked/exit3/FAIL全部继承。每包两个current函数各1次exit0，
+  final review bytes等于checked bytes，不重验或重解。
+- 从37c80e2f2以来三批共12选定包286题1053项，24首次DOM组合实际
+  exit0，有限像素19PASS/3FAIL/2HOLD；前两批已push，第三批尚未提交。
+  全部current approval:false、broader/display_pending:true、计数未增加；
+  82包1394题5659项648仍原值，未见/生产/交互/APP/全课/881 HOLD保持。
+- 父0新图/累计24，九个fresh临时进程均实际完成退出，不复活；不改app/
+  renderer/CSS/validator/Charter/依赖/生产库，不重SOURCE/trace/数学/图gate
+  或运行最终handoff全项目检查。窄暂存仅本四choice-set与progress/usage，
+  layout/其测试、监督ticket及其余4m资源留原工作树，不纳入本批。
+
+### batch301真实限定PASS，302首次八窗口观察在途
+
+- 第二次窄push已确认065dfbdaf9bd3587d7c894cf8bd3bfa83a720c40，
+  仅四6a选定包50题162项及八有限PASS，不增82包1394题5659项648。
+  前两次合计8选定包113题440项、16首屏窗口12PASS/2FAIL/2HOLD；
+  未见与全部原SOURCE/生产/APP/全课/881 HOLD保持。
+- 301两fresh actor均真实completed/process exit0后关闭，四final rawSHA
+  与正式回执匹配；每包两个current函数各1次exit0，final bytes等于checked。
+  5m n45/6a c1-ex/n40/7a n4的135源173题613项仅selection-impact PASS；
+  全部原数学/图审/身份逐字段继承，无新解题/源刷新/作者稿改动。
+  原835、122/123/129/177、646、62及blocked/exit3/FAIL均未解除。
+- 四当前seed/draft/review同字节持久留存；302只首次choices render四次、
+  1440/390八DOM组合exit0，八PNG/四HTML冻结，receipt rawSHA
+  23a7d3f2846150b3ffa627c3033f3ce35e5ea37ba2085c36769a1d7e6554255b。
+  fresh实际observer 01a1ec10-c30b-7f43-9366-7e10e6001cf2（89093）
+  仅八PNG一次/HTML hash-only在途；无正式回执前不提升显示或批准。
+- 父0新图/累计24，原3m PASS绑定不重做，4m缺图/源歧义/碰撞/艺术HOLD
+  及原手机FAIL不改。无SOURCE/trace/数学/图审/旧检查重跑，未修改app/
+  renderer/CSS/validator/Charter/依赖/生产库；未跑最终handoff全项目检查。
+  layout/其测试、监督ticket和其余4m资源仍原样留工作树。
+
 ### batch300八有限PASS留存，301四现成包仅选择影响在途
 
 - 298已实际窄push，HEAD/远端为39a0e85add29ffce721bf6d50a3c30fd2a8d67be；
