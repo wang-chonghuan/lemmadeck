@@ -1,0 +1,176 @@
+#!/usr/bin/env python
+"""Small offline helpers for existing S10Y tools; no content approval decisions."""
+from __future__ import annotations
+
+import argparse
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+
+TOOL = Path(".claude/skills/ld-s10y-lesson/tools/p2c.py")
+SOURCES = Path("ssot-resources/soviet10year-textbooks/sources")
+ARTIFACTS = Path("ssot-resources/soviet10year-textbooks/artifacts")
+PREPARED_FILES = ("page.png", "page.grid.png", "layout.json", "page.template.md")
+
+
+def validate_workspace(repo: str | Path) -> Path:
+    repo = Path(repo).expanduser().resolve(strict=True)
+    if Path.cwd().resolve() != repo:
+        raise ValueError(f"invocation cwd must equal --repo: {repo}")
+    markers = (Path(".intentfold/readme.md"), Path(".intentfold/project.json"), TOOL)
+    if not all((repo / marker).is_file() for marker in markers):
+        raise ValueError(f"not a project checkout: {repo}")
+    project = json.loads((repo / ".intentfold/project.json").read_text(encoding="utf-8"))
+    if not isinstance(project, dict) or project.get("project") != "lemmadeck":
+        raise ValueError(f"not the lemmadeck project: {repo}")
+    result = subprocess.run(
+        ["git", "-C", str(repo), "rev-parse", "--show-toplevel"],
+        capture_output=True, text=True, check=False,
+    )
+    if result.returncode or not result.stdout.strip() or Path(result.stdout.strip()).resolve() != repo:
+        raise ValueError(f"--repo must be the exact git checkout root: {repo}")
+    return repo
+
+
+def validate_book(repo: str | Path, book: str) -> None:
+    manifest = json.loads(
+        (Path(repo) / SOURCES / "manifest.json").read_text(encoding="utf-8")
+    )
+    catalogs = manifest.get("catalogs", []) if isinstance(manifest, dict) else []
+    if (
+        not book or Path(book).name != book or book in {".", ".."}
+        or not isinstance(catalogs, list)
+        or not any(isinstance(item, dict) and item.get("book") == book for item in catalogs)
+    ):
+        raise ValueError(f"book {book!r} is not in manifest.catalogs")
+
+
+def validate_output_owner(repo: Path, path: Path) -> None:
+    declared = path.absolute()
+    if not declared.is_relative_to(repo) or declared.resolve() != declared:
+        raise ValueError(f"output is outside this checkout or redirects its owner: {path}")
+
+
+def validate_lesson_owner(book: Path, lesson: str) -> None:
+    if not lesson or Path(lesson).name != lesson or lesson in {".", ".."}:
+        raise ValueError(f"invalid lesson identity: {lesson!r}")
+    index = json.loads((book / "book.json").read_text(encoding="utf-8"))
+    if not any((row.get("card_id") or row.get("id")) == lesson
+               for row in index.get("lessons", [])):
+        raise ValueError(f"lesson {lesson!r} is absent from source book {book.name}")
+
+
+def read_json_documents(text: str) -> list:
+    """Decode top-level JSON objects/arrays, skipping prose and listing lines."""
+    decoder = json.JSONDecoder()
+    documents = []
+    position = 0
+    while position < len(text):
+        if text[position].isspace():
+            position += 1
+            continue
+        newline = text.find("\n", position)
+        next_line = len(text) if newline < 0 else newline + 1
+        if text[position] not in "{[":
+            position = next_line
+            continue
+        try:
+            document, end = decoder.raw_decode(text, position)
+        except json.JSONDecodeError as error:
+            # Bracketed log labels are not incomplete JSON arrays.
+            line = text[position:next_line]
+            label, closing, _ = line[1:].partition("]")
+            if line.startswith("[") and closing and label and all(
+                c.isalnum() or c in "-_ .:" for c in label
+            ):
+                position = next_line
+                continue
+            raise ValueError(f"incomplete or malformed JSON at offset {position}: {error}") from error
+        documents.append(document)
+        position = end
+    if not documents:
+        raise ValueError("no complete JSON documents found")
+    return documents
+
+
+def prepare_range(repo: str | Path, book: str, first: int, last: int, work: str | Path) -> dict:
+    repo = validate_workspace(repo)
+    validate_book(repo, book)
+    if first < 1 or last < first or last - first + 1 > 4:
+        raise ValueError("range must contain 1 to 4 positive page numbers")
+    work = Path(work).expanduser().resolve()
+    if not work.is_relative_to(repo):
+        raise ValueError(f"work must be inside the validated repository: {repo}")
+    result = {"ok": True, "book": book, "pages": []}
+    for page in range(first, last + 1):
+        page_dir = work / book / "pages" / f"{page:04d}"
+        validate_output_owner(repo, page_dir)
+        entry = {"page": page, "work": str(page_dir)}
+        if all((page_dir / name).is_file() and (page_dir / name).stat().st_size
+               for name in PREPARED_FILES):
+            entry["status"] = "reused"
+            result["pages"].append(entry)
+            print(f"[prepare-range] {book} p{page:04d}: reused", file=sys.stderr)
+            continue
+        page_dir.mkdir(parents=True, exist_ok=True)
+        attempt = 1
+        while any((page_dir / f"prepare.{attempt:04d}.{stream}").exists()
+                  for stream in ("stdout", "stderr")):
+            attempt += 1
+        stdout = page_dir / f"prepare.{attempt:04d}.stdout"
+        stderr = page_dir / f"prepare.{attempt:04d}.stderr"
+        command = [
+            sys.executable, str(repo / TOOL), "prepare",
+            "--book", book, "--page", str(page),
+            "--root", str(repo / ARTIFACTS), "--books", str(repo / SOURCES),
+            "--work", str(work),
+        ]
+        entry.update(command=command, stdout=str(stdout), stderr=str(stderr))
+        with stdout.open("xb") as output, stderr.open("xb") as errors:
+            try:
+                completed = subprocess.run(
+                    command, cwd=repo, stdout=output, stderr=errors, check=False,
+                )
+                entry["returncode"] = completed.returncode
+            except OSError as error:
+                entry.update(returncode=None, error=str(error))
+                errors.write((str(error) + "\n").encode("utf-8"))
+        entry["status"] = "prepared" if entry["returncode"] == 0 else "failed"
+        result["pages"].append(entry)
+        print(f"[prepare-range] {book} p{page:04d}: {entry['status']} ({stderr})",
+              file=sys.stderr)
+        if entry["status"] == "failed":
+            result["ok"] = False
+            break
+    return result
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    commands = parser.add_subparsers(dest="command", required=True)
+    prepare = commands.add_parser("prepare-range")
+    prepare.add_argument("--repo", required=True)
+    prepare.add_argument("--book", required=True)
+    prepare.add_argument("--first", type=int, required=True)
+    prepare.add_argument("--last", type=int, required=True)
+    prepare.add_argument("--work", required=True)
+    read = commands.add_parser("read-json")
+    read.add_argument("--input", type=Path, required=True)
+    args = parser.parse_args(argv)
+    try:
+        if args.command == "read-json":
+            result = {"docs": read_json_documents(args.input.read_text(encoding="utf-8"))}
+        else:
+            result = prepare_range(args.repo, args.book, args.first, args.last, args.work)
+    except (OSError, ValueError) as error:
+        print(f"ERROR: {error}", file=sys.stderr)
+        print(json.dumps({"ok": False, "error": str(error)}))
+        return 1
+    print(json.dumps(result, ensure_ascii=False))
+    return 0 if result.get("ok", True) else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

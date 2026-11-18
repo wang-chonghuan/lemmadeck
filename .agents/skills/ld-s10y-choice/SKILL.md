@@ -12,6 +12,10 @@ Before opening seed images, candidate figures or review screenshots, follow the
 shared [image batch rules](../ld-s10y-image/SKILL.md#image-batches).
 They also apply to delegated authors and reviewers.
 
+For batch continuation or a directory, permission or output-reading failure, use
+the lesson pipeline's [technical recovery contract](../../../.claude/skills/ld-s10y-lesson/references/production-resume.md).
+Do not redo a passed content review to repair execution; offline authoring stays offline.
+
 ## Boundary
 
 - Work offline. Do not read `.env`, connect to a database, install dependencies,
