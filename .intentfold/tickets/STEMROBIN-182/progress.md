@@ -1,5 +1,58 @@
 # 当前开发状态
 
+### batch392/393五字符转录与零图绑定有限收口
+
+- 仅按389实际像素结论修172首式0.0004、展开式两处10^6及174题599两处严格大于；
+  紧接的紧凑式10^5、物理行、open/cont、其他字句和errata空数组保持，不推断勘误。
+  三处notes只更新对应误读并明确继承389身份证据，父0新图/累计24。
+- 两个新快照各finalize一次：172仍26/25行exit1，174为16/16行exit0；
+  两audit原字节不变，图36裁图字节及box/components/from全相同，未批准裁图/矢量/显示。
+  168/171原行数失败、167前界及174末尾“和”/175未观察边界继续HOLD，不第三次收口。
+- 393 fresh零图绑定审者01a1eea1-99b1-7280-9ae5-9e224b059cef真正completed/process0，
+  入口rawSHA0d271aa06922ea64b19569231d41d5a63f4f34d5d3e62531ba69788d448e1ce7。
+  仅完整旧/新MD/JSON/audit差异及未变字节，继承389真实像素，不新解数学/重开七图。
+  report rawSHA9c1226ac893b12fb8aab203449e66c3d55d2b8c1892d05040e83b92ae85a2da2，
+  仅affected binding PASS，整体source/release HOLD；15未变文件和47原留存hash全匹配。
+- 新16份当前源快照/真实finalize与独审证据已同字节留存，retention
+  rawSHA70b6d185061c56ebe850a625290fd6dd16f1eaee155e461f41d35bf09562a43a；
+  原47文件及REVISE/BLOCKED/失败notes不覆写。所有有限进程真正结束，准备本批源阶段窄提交，
+  不增加现代/数学/显示或整课批准；仍87包1506题6184项/666组合。
+
+### batch388/389 FIRST源阶段已完成，原REVISE/BLOCKED留存
+
+- 作者01a1ee8f-f5c3-7672-972a-c875b88247df真正completed/process0，
+  receipt rawSHA78c76fff36871f24cdb553a44a2f5c9e660df8b0216767f80835bf138e24b759；
+  七源网格各一次，FIRST finalize各一次：168/171/172 exit1，169/170/173/174 exit0。
+  实际MD/印刷行数分别23/22、28/27、26/25，三项原失败不重跑，不修计数器或凑行。
+- 389独审01a1ee96-d577-7020-82f8-af80c47d8ba7真正completed/process0，
+  原report rawSHAd64642b2a8067220ec32315899ca3f89a8f08c11624eac01babba8f373e0e95f；
+  aggregate REVISE：169/170/173局部转录PASS，172/174转录REVISE，168/171 BLOCKED。
+  七源网格各一次、零gate/数学；实际像素确认五字符差异，不解除计行和前后源边界HOLD。
+- 390已同字节留存47份原页事实/真实作者及独审报告，retention
+  rawSHAebc5eabe5fee77cd04336d42ef9687363d45f97ecd6e22f24129959fa38a5564。
+  原全部失败与作者误读notes在immutable旧稿保留；不重跑prepare/FIRST finalize或图审。
+  父0新图/累计24，仍87选定包1506题6184项/666关联组合。
+
+### batch388下一七页FIRST源转写在途
+
+- 物理168–174此前无prepare/持久页，七次FIRST prepare已实际exit0；
+  frozen入口rawSHAb0b73e213c67c71094f583beee0ed160aec0bc36caf74f0cdb2b58e4c42456fc。
+  fresh作者01a1ee8f-f5c3-7672-972a-c875b88247df真实启动，仅七源网格各一次7/8、fresh7/24。
+- 仅n25后续/n26/n27开头的源页事实，不借TOC猜标题或完整性；旧167只提供署名尾部文字，
+  146/147、155/156/161等SOURCE/count/图21原FAIL保持。独立源审/数学/现代/显示均未新增。
+  只各页FIRST finalize一次，原失败保留不补行/改计数器；父0新图/累计24。
+- 当前仍87选定包1506题6184项/666关联组合；新作者在途不算完成，不阻断保留已交付成果。
+
+### 0939dc79 n22选定包窄push完成
+
+- 实际59文件commit/push 0939dc79e0cdf1ab3544852144f930e0a88b79e8，
+  远端完整SHA独立核对，c0ed49df→0939dc79；只该选定包/显示证据/现代索引/既有记录。
+- 当前87选定包1506题6184项、666关联HTML/视口组合；541教学目的和547作图整源HOLD、
+  原blocked/revise/所有SOURCE/count/旧图FAIL/未见/手势/独立生产/APP/全课/881不解除。
+  父0新图/累计24，所有本轮有限进程真正结束，无重复源/数学/旧图或已过显示。
+- push回执仅补本地，随下一实际内容批次提交，不另做文档commit；layout/测试/
+  监督ticket/其他4m和旧7a原改动保留。正式Charter防线仍留handoff一次。
+
 ### batch386/387 n22选定包和两个首窗口窄收口
 
 - 当前n22仅七选定源七题43项，385选定关系PASS和完整380/382原证据已同字节留存；
