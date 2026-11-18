@@ -287,9 +287,24 @@ for (const lid of lessonDirs) {
   // ---- 课文页
   let body = "";
   const prose = proseFlow(L.prose, L.section_breaks);
+  const captionFor = new Map();
+  for (const block of prose.filter((item) => item.kind === "fig")) {
+    const figures = prose.filter((item) => item.kind === "fig" && item.label === block.label);
+    const captions = prose.filter((item) => item.kind === "cap" && item.label === block.label);
+    if (block.label && figures.length === 1 && captions.length === 1) {
+      captionFor.set(block, captions[0]);
+    }
+  }
+  const attachedCaptions = new Set(captionFor.values());
+  const renderCaption = (block) => `<div class="figcap">${proseInline(block.text)}</div>`;
   for (const b of prose) {
-    if (b.kind === "fig") body += renderFigure(b.id, b.label);
-    else if (b.kind === "cap") body += `<div class="figcap">${proseInline(b.text)}</div>`;
+    if (b.kind === "fig") {
+      body += renderFigure(b.id, b.label);
+      if (captionFor.has(b)) body += renderCaption(captionFor.get(b));
+    }
+    else if (b.kind === "cap") {
+      if (!attachedCaptions.has(b)) body += renderCaption(b);
+    }
     else {
       body += `<p class="para${b.sectionBreak ? " section" : ""}">${proseInline(b.text)}</p>`;
     }
