@@ -1,7 +1,38 @@
 # 当前开发状态
 
+### resume182-6 修订源证据收齐，继续下一源批次
+
+- 已消费作者189–195真实FIRST回传恢复，MD/JSON rawSHA分别
+  252604b19c50c60d4de956cc979156fa7d466c80fc0bc2478f62c0ec5e7067ce、
+  30c45291928b04a98d58e5d2a395e129efa12484202c939e102d5e0894412f61。
+  原七次exit为0/0/0/0/0/1/0；194原16/15失败未改写。
+  恢复仅报告，没有重读七图、重写源稿或重跑FIRST。
+- Sartre零图affected review rawSHA
+  4bbd8c01f14963d8097da54d5a92ad67ea72e2af39e2bca7795f65f870916ebb：
+  188–195列明变更及24当前文件绑定有限PASS，图39独立图题行接受；
+  658错误open局部解除。195粗体观察、整页/补充习题/现代图/整课/APP
+  不从该增量审查获批准。31份必要原稿、真实收据及审查证据同字节保留。
+- 完整RAW n28的41正文块、611–631共21原题及原fig37准备窄提交；
+  原索引仅新增该卡与派生统计，audit.figure_numbers补37的前后证据保留。
+  原装订/首次modern prepare不重复。Dirac仅fig37 CAP1在途，
+  624要求实际测量，不能凭任意缩放或虚构标定生成现代图。
+- Descartes196–202首次作者完成并关闭：21文件、七网格各一次，
+  FIRST exits1/0/0/0/0/0/0；19619/18 HOLD未重试。
+  每次start/stdout/stderr/final收据在磁盘保存。新fresh Hegel
+  01a1f088-37f2-72a2-b820-7966f647549a只做七图独立源审，不重跑工具。
+  202的715实际open尾保留至sqrt0.16；n30尚未闭合。
+- 203–206首次prepare exit0、四页各exit0，207–209继续首次备料。
+  原wrapper误把read-json的docs对象当数组而exit1；保存实际producer收据，
+  只修读取结构，四页prepare和成功read-json不重复，没有source HOLD。
+  父续接新增图片0，既有当前上下文194一图及前上下文三图记录保留。
+  仍87选定包/1506题/6184项/666原选择题视口组合；无DB/publisher/
+  APP/deploy/closure/E启动或其他组merge，正式机械防线留最终handoff。
+
 ### resume182-5 七页修订源阶段已保留，下一批回传恢复
 
+- 七页修订源阶段实际51文件commit/push
+  00c12067b90d603a8d08a0f5c0209cf9b3664413，远端完整SHA独立核对一致；
+  staged白名单/JSON/secret路径/diff --check通过，既有dirty未纳入。
 - 182–188 FIRST独立源审2 PASS、5 REVISE，八处缺陷仅四处标点与四处卡片/习题栏类型。
   原21文件先冻结，只修F1–F8及184一条误述类型的notes。
   182/184/186/187/188各一次affected finalize均exit0；183/185不重跑。
@@ -20,6 +51,21 @@
   184–194是alg7-c3-ex，195是n29开头。下一阶段仅装订n28，
   不借194计行失败扩大为其阻塞，也不提前装订补充习题。
   196–202仅FIRST备料完成，尚未作者派工；无APP/DB/publisher/deploy/closure。
+- 后续实际已执行：n28隔离装订FIRST exit0，完整611–631共21原题、
+  41正文块、1原图；只提升RAW n28和原fig37，部分alg7-c3-ex不提升。
+  原book索引只追加该卡及派生统计，原课行未改，首次modern prepare exit0；
+  五份阶段证据及manifest保留。现代图37、数学/选择/显示尚未启动或批准。
+- Sartre FIRST189–195独立源审为六REVISE、一BLOCKED194，原rawSHA
+  9348f082854dd35df0b0ff9759c5e4b29a0aac303dcdd4ced0f9498da6add864。
+  只修五栏标题、八标点、685г实际可见等号、687错误open及对应notes；
+  按两位既有源审的188末句号/189从659开始解除658的错误open。
+  父只开194网格一次，确认图题另占一行，只去samerow，不改计数器/补字；
+  188–195各一次新的affected finalize均exit0，194现在16/16，
+  原FIRST16/15失败与全部原稿保留。增量独审在途，不以机械绿代替源批准。
+  当前父实际上下文新图1，前上下文3图不重置；本批作者FIRST报告仅恢复中。
+- 196–202已按195独立源审确认尾句派给fresh Descartes
+  01a1f076-cc74-7ff3-9b22-372e30cfd34f，七图各一次上限，FIRST转写在途；
+  不重复prepare、旧图或旧数学，不计n29/n30或整册完成。
 
 ### resume182-4 答案与源阶段有限收口，后续生产继续
 

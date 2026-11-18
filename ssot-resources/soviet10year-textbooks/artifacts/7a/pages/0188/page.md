@@ -59,7 +59,7 @@ $29\mathrm{mm}<|AB|<31\mathrm{mm}$，$39\mathrm{mm}<|BC|<41\mathrm{mm}$. 距离 
 能不能等于：
 а) $30\mathrm{mm}$；　б) $60\mathrm{mm}$？
 
-<!-- ex 658 open -->
+<!-- ex 658 -->
 求下列各式的值的界：
 а) $m+n-k$，如果 $3.7<m<3.8$，$2.6<n<2.7$，
 $1.2<k<1.3$；
