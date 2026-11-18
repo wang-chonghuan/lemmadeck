@@ -1,0 +1,76 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 138,
+  "printed_page": 132,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 138
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "84efc679c41f2a39e8a53f43bdf370528ea489b75d324c4ebacc09cc1eca7611"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "FIRST transcription only; independent_source_review_pending:true. Printed footer 132 read from this grid.",
+    "Leading continuation closes exercise 489. Exercise 493 ends with the visible period after г); no trailing cut object is visible, but the surrounding course is not approved.",
+    "Exercises 492 and 493 have one printed left brace per system. Each brace is recorded with the first equation, and every subsequent equation remains on its actual printed horizontal row.",
+    "Exercise 492 в) and г) systems are vertically staggered: their first equations occupy the first horizontal band, the second в) equation the next band, and the second г) equation the third band. No padding or equation omission.",
+    "No mathematical solving, assembly, adaptation, course approval or chapter-boundary promotion."
+  ],
+  "errata": [],
+  "printed_lines": 25,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 489 cont -->
+速度为 12 公里/小时. 一人骑摩托车同时从农村出发经
+由农场沿同一条路去车站. 如果骑摩托车的人想在到
+达车站前赶上骑自行车的人，他的速度应该是多少？
+
+<!-- ex 490 -->
+490. $A$、$B$ 两地的距离为 28 公里. 旅行者甲从 $A$ 地前往 $B$
+地，速度为 4 公里/小时. 30 分钟后，旅行者乙从 $B$ 地
+动身前往 $A$ 地. 乙的速度是多少，才能使两人相遇地点
+到 $A$ 地比到 $B$ 地的距离近？
+
+<!-- ex 491 -->
+491. 在相距 62 公里的 $A$、$B$ 两个市镇之间，有一个车站 $C$，$C$
+离 $A$ 有 30 公里. 一人骑自行车由 $A$ 往 $C$，速度为 12
+公里/小时. 30 分钟后，一人骑摩托车由 $B$ 往 $C$. 骑摩
+托车的速度应该是多少，才能使他比骑自行车的人早到
+$C$ 站？
+
+<!-- exhead -->
+第 18 小节
+
+<!-- ex 492 -->
+492. 解下列不等式组：
+а) $\Biggl\{x>8$， б) $\Biggl\{y<5$，
+$x>2$； $y<3$；
+в) $\Biggl\{x>6.5$， г) $\Biggl\{y<5\frac{1}{3}$，
+$x>6.05$；
+$y<5\frac{1}{4}$.
+
+<!-- ex 493 -->
+493. 求下列不等式组的解集合：
+а) $\Biggl\{x>6$， б) $\Biggl\{x<-1.7$，
+$x<9.3$； $x>-2.8$；
+в) $\Biggl\{x<-5.7$， г) $\Biggl\{x>-2.1$，
+$x>4$； $x<-2.01$.
+
+<!-- foot -->
+132

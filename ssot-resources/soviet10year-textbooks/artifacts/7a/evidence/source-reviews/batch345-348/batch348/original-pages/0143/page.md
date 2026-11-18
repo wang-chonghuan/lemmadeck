@@ -1,0 +1,72 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 143,
+  "printed_page": 137,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 143
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "aef65a201909eaccdbd73c9101e04f9a32f6db0a2b6259295c63e1590fbeec9a"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "FIRST transcription only; independent source review pending. Printed footer 137 read from this grid.",
+    "Leading в), г) complete exercise 514 from physical 142. Trailing exercise 520 contains only 已知： here and remains open.",
+    "第 20 小节 is an exercise-group heading, not the TOC course n20 start (printed 118). Slanted double-stroke non-strict inequality glyphs transcribed as \\leq and \\geq without solving."
+  ],
+  "errata": [],
+  "printed_lines": 19,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 514 cont -->
+в) $\frac{3x-8}{5x-1}\leq0;$ г) $\frac{12-5x}{6x}>0.$
+
+<!-- ex 515 -->
+515. 解不等式：
+а) $\frac{x-2}{x}>2;$ б) $\frac{1}{x}<1;$
+в) $\frac{6}{x}>5;$ г) $\frac{x-2}{x+1}<1;$
+д) $\frac{2x-4}{x}>2;$ е) $\frac{5x-2}{x+1}<5.$
+
+<!-- ex 516 -->
+516. 当 $a$ 取什么值时：
+а) 方程 $2ax=5x+1$ 有正根？
+б) 方程 $3ax=x-6$ 有负根？
+
+<!-- ex 517 -->
+517. 下列不等式是不是同解不等式？
+а) $(x-1)(x+2)>0$ 和 $\frac{x-1}{x+2}>0;$
+б) $(x-3)(x+4)\geq0$ 和 $\frac{x-3}{x+4}\geq0.$
+
+<!-- ex 518 -->
+518. 当变量 $a$ 取什么值时，下列不等式是真不等式？
+а) $\frac{(a-3)^2}{a-5}\geq0;$ б) $\frac{(a-1)^2}{a-2}\leq0.$
+
+<!-- ex 519 -->
+519. 解不等式：
+а) $\frac{(x-2)(x+3)^2}{x^2+1}<0;$
+б) $\frac{(x^2+4)(x-4)}{8x^2}<0.$
+
+<!-- exhead -->
+第 20 小节
+
+<!-- ex 520 open -->
+520. 已知：
+
+<!-- foot -->
+137

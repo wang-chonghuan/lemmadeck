@@ -1,0 +1,78 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 127,
+  "printed_page": 121,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 127
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "abf13dd77c7b700d609d9a331e5de7f3accab5316b4bc51a949f01d12ad935b0"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "FIRST transcription only; independent source review pending.",
+    "Leading p cont closes Example 2 from physical 126.",
+    "Exercise 425 continues after visible subpart в); marked open. No unseen subpart is supplied."
+  ],
+  "errata": [],
+  "printed_lines": 25,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+$]2,+\infty[$ 的并集。
+
+<!-- p -->
+答：$]-\infty,-8[\cup]2,+\infty[$。
+
+<!-- ex 420 -->
+420. 利用数轴求两点间的距离：
+а) $A(3)$ 和 $B(5)$； б) $C(-2)$ 和 $D(-5)$；
+в) $K(-3)$ 和 $L(4)$； г) $P(8)$ 和 $Q(-1)$；
+д) $E(0)$ 和 $F(-7)$； е) $L(4)$ 和 $E(0)$。
+
+<!-- ex 421 -->
+421. 写出点 $M(x)$ 和下列各点之间的距离：
+а) $K(5)$； б) $L(-3)$； в) $A(0)$； г) $B(y)$。
+
+<!-- ex 422 -->
+422. а) 说明坐标分别为 $\frac{1}{4}$ 和 $\frac{1}{3}$ 的两点间的距离不超过
+$0.1$。
+б) 说明坐标分别为 $\frac{2}{9}$ 和 $0.22$ 的两点间的距离不超过
+$0.01$。
+
+<!-- ex 423 -->
+423. 已知线段 $AB$ 的两个端点 $a$ 和 $b$ 的坐标，求线段 $AB$ 的
+中点坐标：
+а) $a=2$，$b=6$； б) $a=-5$，$b=-1$；
+в) $a=7$，$b=0$； г) $a=-3$，$b=5$；
+д) $a=n$，$b=5n$； е) $a=m+n$，$b=m-n$。
+
+<!-- ex 424 -->
+424. 设 $x$ 是某线段的中点坐标，而 $x_1$ 和 $x_2$ 是这个线段的两
+个端点的坐标。根据下列已知条件求 $x_2$：
+а) $x=2$，$x_1=-1$； б) $x=1.2$，$x_1=5$；
+в) $x=a$，$x_1=a-b$； г) $x=b$，$x_1=b+5$。
+
+<!-- ex 425 open -->
+425. 在数轴上表明满足下述条件的点的集合，这些点和点 $C$
+$(1)$ 之间的距离：
+а) 等于 $3$； б) 小于 $3$； в) 大于 $3$；
+
+<!-- foot -->
+121

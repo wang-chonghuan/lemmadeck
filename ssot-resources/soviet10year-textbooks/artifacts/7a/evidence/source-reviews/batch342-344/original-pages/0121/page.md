@@ -1,0 +1,73 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 121,
+  "printed_page": 115,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 121
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "dab9f553e9aad9d73cc522beac6ee475b16852eaba3abd37ec3b9a8ee5a70c7c"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "FIRST transcription only; independent source review pending.",
+    "Exercise 399 visibly prints the product followed by 的解集合, without a comparison or right-hand side; none is supplied.",
+    "Exercise 404 visibly prints the fraction followed by 的解集合, without a comparison or right-hand side; none is supplied.",
+    "Exercise 404 is marked open at the page boundary; any adjoining prompt must be transcribed only from the next permitted grid.",
+    "The mixed-number numerator in exercise 403 б is transcribed as printed, not evaluated."
+  ],
+  "errata": [],
+  "printed_lines": 20,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 398 -->
+398. 求下列不等式的解集合：
+$(0.5x-1)(x-5)<0$.
+指出属于这个集合的两个 $x$ 值. 对于这两个 $x$ 值，计算
+积 $(0.5x-1)(x-5)$ 的值，并与零比较大小.
+
+<!-- ex 399 -->
+399. 求不等式 $(5y+3)(2y-7)$ 的解集合.
+下列各数是否属于这个解集合：$-3$，$-0.8$，$-0.6$，$0.4$，
+$100$？
+
+<!-- ex 400 -->
+400. 解不等式：
+а) $x(10x-3)>0$； б) $(2x-1)(x+1)>0$；
+в) $(10x-1)(5x-2)<0$； г) $(0.6+x)x<0$；
+д) $(4x-3)(2-3x)\geqslant0$； е) $(5-7x)(4x+1)\leqslant0$.
+
+<!-- ex 401 -->
+401. 当变量 $x$ 取什么值时，积 $(x+1)(x-3)$ 的值为负，等
+于零，为正？
+
+<!-- ex 402 -->
+402. а) 变量 $a$ 取什么值时，分式 $\frac{8}{3a+18}$ 的值为正？
+б) 变量 $b$ 取什么值时，分式 $\frac{2.5}{15-5b}$ 的值为负？
+
+<!-- ex 403 -->
+403. 解不等式：
+а) $\frac{12}{x-7.2}>0$； б) $\frac{-7\frac{1}{3}}{5-a}<0$；
+в) $\frac{1.75}{3x-0.75}<0$； г) $\frac{-0.027}{12-5x}>0$.
+
+<!-- ex 404 open -->
+404. 求不等式 $\frac{9-3x}{5x-12}$ 的解集合.
+
+<!-- foot -->
+115

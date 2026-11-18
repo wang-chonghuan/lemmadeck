@@ -1,0 +1,83 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 116,
+  "printed_page": 110,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 116
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "baa27854b74ebd1cd2f20ff6387e5359d0675ba2f6c444d97d69ea44e5a9fd33"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "FIRST transcription only; independent source review pending. Opening б)-г) continues exercise 387 from physical 115.",
+    "Exercise 388 wraps to the right of figure 20 and then below it. Its last right-column line 利用函数图象检 shares the print row with the figure caption; cap samerow records that. Graph axes, ticks, numeric labels and the two function labels stay inside the figure.",
+    "Frozen layout has a single large band [1031,1851]; it is not treated as an instruction to collapse the visible text rows. No count-tool changes or line padding.",
+    "Exercise 389 is trailing open after subpart а). Printed footer 110 read from pixels."
+  ],
+  "errata": [],
+  "printed_lines": 21,
+  "figures": [
+    {
+      "id": "fig-20",
+      "label": "图 20",
+      "box": [
+        153,
+        1152,
+        565,
+        564
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 387 cont -->
+б) $\left\{\begin{aligned}\frac{a-1}{2}+\frac{a+1}{3}&<1,\\↵2-\frac{1-a}{4}&>0;\end{aligned}\right.$
+в) $\left\{\begin{aligned}\frac{x-1}{2}-\frac{x-4}{3}&>2x-1,\\↵2x-\frac{x-5}{3}&>x-3;\end{aligned}\right.$
+г) $\left\{\begin{aligned}3a-\frac{1+5a}{4}&<a,\\↵\frac{a-1}{5}-a-1&<0.\end{aligned}\right.$
+
+<!-- ex 388 open -->
+388. а) 在图20上作出了函数$y=x+3$和$y=0.5x-1$的图
+
+<!-- fig 图 20 box 153,1152,565,564 owner-ex 388 -->
+![图 20](figures/fig-20.png)
+
+<!-- ex 388 cont open -->
+象。利用图象求出使这两
+个函数都取正值的变量$x$
+值的集合。然后，列出不等
+式组并用解析法求解，检
+验图象解法答案的正确
+性。
+б) 列出不等式组并求出
+当变量$x$取什么值时，函数
+$y=-x+6$和$y=3x-9$都
+取正值。利用函数图象检
+
+<!-- cap 图 20 samerow -->
+图 20
+
+<!-- ex 388 cont -->
+验答案的正确性。
+
+<!-- ex 389 open -->
+389. 解下列二重不等式：
+а) $-3<2x-1<3$；
+
+<!-- foot -->
+110

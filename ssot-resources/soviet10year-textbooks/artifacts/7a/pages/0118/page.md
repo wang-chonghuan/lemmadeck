@@ -1,0 +1,74 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 118,
+  "printed_page": 112,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 118
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "b32fcde9b21b846e492c3df204abc92985602f0ec2a072ae0f4426b1b19fbe28"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "FIRST transcription only; independent source review pending.",
+    "Leading exercise 394 cont is now bound to the author-attributed physical117 tail supplied in the FIRST independent review; its number and stem were not pixel-reviewed on physical117 by that reviewer.",
+    "The final displayed systems continue the explanation of example 1 onto physical page 119; the explanatory object is marked open.",
+    "Physical page navigation offset is not footer evidence; printed footer 112 was read from this grid."
+  ],
+  "errata": [],
+  "printed_lines": 21,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 394 cont -->
+а) $\frac{|x|-1}{x^3+1}$； б) $\frac{5-|x|}{x^4+1}$.
+
+<!-- ex 395 -->
+395. 如果：
+а) $x>5$； б) $x<-5$，
+那么两个等式 $|x-2|=x-2$ 或 $|x-2|=2-x$ 中，哪个等
+式是真等式？
+
+<!-- ex 396 -->
+396. а) 已知 $s=\frac{1}{2}ah$，用 $s$ 和 $a$ 表示变量 $h$；
+б) 已知 $\frac{s}{p}=0.5m$，用 $s$ 和 $m$ 表示变量 $p$.
+
+<!-- ex 397 -->
+397. 当 $n$ 取哪些自然数值时，公式 $\frac{9n^2+12n+12}{n}$ 的值是自
+然数？
+
+<!-- h3 -->
+19. 较复杂的不等式解法举例
+
+<!-- p -->
+我们现在来研究怎样解不等式 $(ax+b)(cx+d)>0$，
+$(ax+b)(cx+d)<0$，$\frac{ax+b}{cx+d}>0$，$\frac{ax+b}{cx+d}<0$；其中 $a$、$b$、$c$、$d$
+是四个数.
+
+<!-- p -->
+例1 解不等式 $(0.5x-1)(4-x)>0$.
+
+<!-- p open -->
+两个因式的积的值为正，当且仅当这两个因式的值同号，
+即两个因式的值同时为正或同时为负. 这就是说，原不等式
+是真不等式，必须并且只须变量 $x$ 所取的值满足下列不等式
+组之一：
+$\left\{\begin{array}{l}0.5x-1>0,\\↵4-x>0\end{array}\right.$ 或 $\left\{\begin{array}{l}0.5x-1<0,\\4-x<0.\end{array}\right.$
+
+<!-- foot -->
+112

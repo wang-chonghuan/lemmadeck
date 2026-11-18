@@ -1,0 +1,59 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 115,
+  "printed_page": 109,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 115
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "edebb182adfcd03ea0cb455a3a93cab7040d8eae31c18ef9c8ab19c5c8fa6a0e"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "FIRST transcription only; independent source review pending. Leading subparts а)-е) continue exercise 384 headed on physical 114; no number or heading invented.",
+    "Exercise 387 is trailing open: only subpart а) appears here. Both fraction-bearing inequalities occupy two actual system rows, not separate numerator/denominator rows.",
+    "Printed footer 109 read from pixels. Strict and non-strict signs, x^2, decimals, and Cyrillic subpart labels transcribed without solving."
+  ],
+  "errata": [],
+  "printed_lines": 24,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 384 cont -->
+$\begin{array}{ll}\text{а)}\ \left\{\begin{aligned}5(x-2)-x&>2,\\↵1-3(x-1)&<-2;\end{aligned}\right.&\text{б)}\ \left\{\begin{aligned}2x-(x-4)&<6,\\x&>3(2x-1)+18;\end{aligned}\right.\end{array}$
+в) $\left\{\begin{aligned}7x+3&\geqslant5x-19,\\↵4x+1&\leqslant22-3x;\end{aligned}\right.$
+г) $\left\{\begin{aligned}3(2-3x)-2(3-2x)&>x,\\↵6&<x^2-x(x-8);\end{aligned}\right.$
+д) $\left\{\begin{aligned}17x-5(x+0.6)&<3x,\\↵2(3.5-x)+5(2x-2.4)&>x-26;\end{aligned}\right.$
+е) $\left\{\begin{aligned}x&<39+3.6(5x-1)-2(2x-1.8),\\↵6x(2.5x-1)-3x&>x(15x+2)-11.\end{aligned}\right.$
+
+<!-- ex 385 -->
+385. 求下列不等式组的整数解：
+$\begin{array}{ll}\text{а)}\ \left\{\begin{aligned}y&\geqslant0,\\↵7.2-y&\geqslant4;\end{aligned}\right.&\text{б)}\ \left\{\begin{aligned}12a-37&>0,\\6a&\leqslant42;\end{aligned}\right.\end{array}$
+$\begin{array}{ll}\text{в)}\ \left\{\begin{aligned}6-4b&>0,\\↵3b-1&>0;\end{aligned}\right.&\text{г)}\ \left\{\begin{aligned}3-18x&<0,\\0.2-0.1x&>0.\end{aligned}\right.\end{array}$
+
+<!-- ex 386 -->
+386. 求满足下列不等式组的变量$a$值的集合：
+а) $\left\{\begin{aligned}2.5a-0.5(8-a)&<a+1.6,\\↵1.5(2a-1)-2a&<a+2.9;\end{aligned}\right.$
+б) $\left\{\begin{aligned}0.7(5a+1)-0.5(1+a)&<3a,\\↵2a-(a-1.7)&>6.7.\end{aligned}\right.$
+
+<!-- ex 387 open -->
+387. 求不等式组的整数解：
+а) $\left\{\begin{aligned}2x-\frac{x-1}{3}&>x,\\↵x-1&<3-\frac{x+1}{2};\end{aligned}\right.$
+
+<!-- foot -->
+109

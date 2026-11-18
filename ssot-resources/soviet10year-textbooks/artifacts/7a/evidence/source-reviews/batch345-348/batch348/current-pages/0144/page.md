@@ -1,0 +1,73 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 144,
+  "printed_page": 138,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 144
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "71c2fb384f76c90b24640dc0568214cc049e7f8a9d5b0e818d6d04a5689178c8"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "FIRST transcription only; independent source review pending. Printed footer 138 read from this grid.",
+    "Leading а) through г) and the following distance request complete exercise 520 begun on physical 143. Exercise 526 is visibly complete here.",
+    "Exercise 523 implication chain spans two actual printed rows; one ↵ records that split. Slanted double-stroke non-strict inequality glyphs transcribed as \\leq; no solving."
+  ],
+  "errata": [],
+  "printed_lines": 23,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 520 cont -->
+а) $x_1=5m,\ x_2=3m;$
+б) $x_1=n+2,\ x_2=n+5;$
+в) $x_1=8+b,\ x_2=8-b;$
+г) $x_1=a+b,\ x_2=a-b,$
+求两点 $A(x_1)$ 和 $B(x_2)$ 之间的距离。
+
+<!-- ex 521 -->
+521. 设 $A(5)$ 和 $C(9)$ 是数轴上的两点。已知：
+а) $|AC|+|CB|=7;$ б) $|AB|-|AC|=1,$
+求 $B$ 点的坐标。
+
+<!-- ex 522 -->
+522. 解不等式：
+а) $|x-48|\leqslant12;$ б) $|y+105|\leqslant6;$
+в) $|a-5|<0.01;$ г) $|b+3|<\frac{1}{8}.$
+
+<!-- ex 523 -->
+523. 证明：
+$\left(|x-2|\leqslant\frac{1}{4}\right)\Longrightarrow\left(|x-2|\leqslant\frac{1}{2}\right) ↵ \Longrightarrow\left(|x-2|\leqslant1\right).$
+
+<!-- ex 524 -->
+524. 解方程：
+а) $\frac{4}{|x-2|}=5;$ б) $\frac{25}{|x+3|}=4.$
+
+<!-- ex 525 -->
+525. 解不等式：
+а) $4\leqslant|x|\leqslant7;$ б) $2<|x-1|<3.$
+
+<!-- ex 526 -->
+526. 已知数轴上的两点 $A(n)$ 和 $B(n+8)$。求满足下列条件
+的 $C$ 点的坐标 $x$：
+а) $\frac{|AC|}{|AB|}=\frac{1}{2};$ б) $\frac{|AC|}{|AB|}=\frac{1}{4};$
+в) $\frac{|AC|}{|CB|}=\frac{3}{5};$ г) $\frac{|AC|}{|CB|}=3.$
+
+<!-- foot -->
+138

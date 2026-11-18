@@ -1,0 +1,96 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 124,
+  "printed_page": 118,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 124
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "922194001dfe5bd30f7664e4f7eea57c1ee3d8f2cfc1d573653bbf1c51a1cd2c"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "FIRST transcription only; independent source review pending.",
+    "Leading sentence continues exercise 418 from physical page 123; figure 21 and its separate printed caption belong to that exercise.",
+    "Figure 21 is preserved as one complete graph with its printed axes, grid, numerical labels and line labels y=x+1 and y=0.5x+2; these are figure pixels, not extra prose lines.",
+    "Figure 22 is preserved as one complete number line with printed A, a, B, b and arrow; its separate caption is text.",
+    "The final paragraph of unit 20 is cut after 那么, interrupted by figure 22, and remains open beyond the permitted batch. No adjoining formula or prose is invented.",
+    "Units 18 and 20 are boundary-only partial courses; unit 19 receives no whole-course or mathematical approval. The chapter exercise and chapter 3 boundaries are outside this batch."
+  ],
+  "errata": [],
+  "printed_lines": 13,
+  "figures": [
+    {
+      "id": "fig-21",
+      "label": "图 21",
+      "box": [
+        181,
+        358,
+        1104,
+        686
+      ]
+    },
+    {
+      "id": "fig-22",
+      "label": "图 22",
+      "box": [
+        291,
+        1876,
+        902,
+        84
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 418 cont -->
+再用解析法解这个不等式来检验答案的正确性.
+
+<!-- fig 图 21 box 181,358,1104,686 owner-ex 418 -->
+![图 21](figures/fig-21.png)
+
+<!-- cap 图 21 -->
+图21
+
+<!-- ex 419 -->
+419. 当 $a$ 取什么值时，下列等式为真等式？
+а) $|a|=a$； б) $|a|=-a$；
+в) $|a-2|=a-2$； г) $|a+5|=-a-5$.
+
+<!-- h3 -->
+20. 绝对值号内含有变量的不等式
+
+<!-- p -->
+设 $A(a)$ 和 $B(b)$ 是数轴上的两点. 我们现在来求这两点
+间的距离.
+
+<!-- p -->
+我们知道，为了求出数轴上某线段的长度，应当从线段
+右端点的坐标减去左端点的坐标.
+
+<!-- p open -->
+如果点 $A(a)$ 在数轴上位于点 $B(b)$ 的左边（图22），那么
+
+<!-- fig 图 22 box 291,1876,902,84 -->
+![图 22](figures/fig-22.png)
+
+<!-- cap 图 22 -->
+图22
+
+<!-- foot -->
+118

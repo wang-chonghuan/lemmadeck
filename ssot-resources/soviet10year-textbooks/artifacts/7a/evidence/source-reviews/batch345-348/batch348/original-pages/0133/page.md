@@ -1,0 +1,75 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 133,
+  "printed_page": 127,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 133
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "203eba8c9736ca042ef1c7116669207cb2ec8621169dc94cc524c11c4c6f6eb5"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "FIRST transcription only; independent_source_review_pending:true. Printed footer 127 read from this grid.",
+    "Leading continuation closes exercise 458 from physical 132. Exercise 464 remains open after subpart б).",
+    "Exercise 459 ж) non-strict sign is transcribed as leqslant from the visible angled strokes; independent pixel review remains pending.",
+    "Exercises 460, 461 and 462 contain actual printed formula line breaks marked with the source-flow break symbol; no missing adjoining text supplied."
+  ],
+  "errata": [],
+  "printed_lines": 27,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 458 cont -->
+那么关系“$a$ 大于 $b$”，“$a$ 小于 $b$”，“$a$ 等于 $b$”中什么关系
+成立？
+
+<!-- ex 459 -->
+459. 当 $a$ 和 $b$ 取什么值时，下列不等式是真不等式？
+а) $ab>0$； б) $ab<0$； в) $\frac{a}{b}>0$；
+г) $\frac{a}{b}<0$； д) $a^2b>0$； е) $ab^2<0$；
+ж) $\frac{a^2}{b}\leqslant0$； з) $\frac{a}{b^2}>0$； и) $\frac{a^4}{b}<0$.
+
+<!-- ex 460 -->
+460. $a$ 取什么值时，从不等式 $17>14$ 能推出不等式 $17a>↵
+14a$？从不等式 $4<10$ 能推出不等式 $4a>10a$？
+
+<!-- ex 461 -->
+461. а) $a$ 取什么值时，从不等式 $x>a$ 能推出不等式 $x>↵
+12$？
+б) $b$ 取什么值时，从不等式 $x<b$ 能推出不等式 $x<9$？
+
+<!-- ex 462 -->
+462. а) 从语句 $x>3$ 能不能推出语句 $x(x^2+1)>3(x^2+↵
+1)$？
+б) 从语句 $y<5$ 能不能推出语句 $y(-y^2-2)>5(-y^2↵
+-2)$？
+
+<!-- ex 463 -->
+463. $a$ 取什么值时：
+а) 从不等式 $ax>3$ 能推出不等式 $x>\frac{3}{a}$？
+б) 从不等式 $ax<2$ 能推出不等式 $x>\frac{2}{a}$？
+
+<!-- ex 464 open -->
+464. 指出“小于”和“大于”关系的有关性质，根据这些性质可
+以确定：
+а) $(a>12)\Longrightarrow(-2a<-20)$；
+б) $(a<-5)\Longrightarrow(-100a>450)$，
+
+<!-- foot -->
+127

@@ -1,5 +1,99 @@
 # 当前开发状态
 
+### batch346持久绑定完成，347/348正式回执已接，349首次三图生成
+
+- 346当前fresh零图审者01a1ed8e-b258-7e60-82aa-7615db5ce9a0真实
+  completed/process0，十包各check_draft/check_review一次exit0；direct回执
+  rawSHA8b9cb86a4c178b0e2483be04536a621e61e0b877fdbf6d1b0140ebabfd97d822。
+  十个seed/draft/review同字节迁入原durable目录，旧30文件完整留存；
+  retention rawSHA97cebdc301aa6b8ee36da148d6a2f805d58af08395221d9c52fe9d09ec1a5352。
+  新增数学/图/显示/稳定门槛重跑均0，原逐项证据和HOLD全部继承。
+- 原346助手误读331入口，wrapper exit2且两checker调用0；错误字节SHA
+  f97f5b458c8777bccd09125b863e748e1213bee8dc3e010eeaaafc39d5a0a6ca保留，
+  原331 scratch回执从持久原件恢复SHA77ac2c39e85f2d7714a692d22c9400abdc19023b1027fcf71172004a363bc3b6，
+  未重跑331。当前任务使用精确绝对入口，真实失败不删。
+- 347六图cap1已真实completed/process0，各draft一次exit依次2/0/0/2/0/2。
+  图25空心5与闭区间文本冲突、图26右端SOURCE继续HOLD。
+  图21当前合同要求可见点对象，但原库存明确没有点盘；不造点或删除要求凑PASS。
+  初始发现读了无关旧332请求，原偏离记录保留，额外开图0。
+- 348受影响源语法独审01a1ed8e-b258-7ce3-b26e-624bdb51ef7e真实
+  completed/process0，七处限定PASS、release blocked；rawSHA
+  31e6dd608ab486d3be5ba3495426b3557c7b1aaaa5cd06299871cac9af89536e。
+  五个原印刷换行标记不删；132/133/140/142/143/144/146 current finalize
+  依次0/0/1/0/0/0/0，140仍21/26失败。无新像素/数学/独审gate。
+- 349图22/23/24各首次cap2一次机械PASS；24仅关系字段改为a/b/c。
+  实际point renderer只消费fill/stroke，原草稿fillColor未生效；
+  首输出原样保留，下一步仅三图点样式字段修正及首次独立图审。
+  父0新图/累计24，85选定包1448题5943项658关联组合不增；
+  无DB/APP/架构/依赖/Charter/881或整课批准，局部HOLD不阻其他生产。
+- 350仅这三图的point填充/描边字段改用现有fill/stroke，每图受影响render一次exit0，
+  geometry/inventory/source不变。351真实fresh有限审者
+  01a1ed97-f691-7990-a62e-999b016de5c7接三原/三现640预览、上限6图，
+  只写三标准gate；当前在途不当批准，父不看图。
+- 352首次装订/prepare及七处语法修复的72份回执/快照同字节持久留存，
+  retention rawSHAf44392f62f3d3e60352716756b233c15a8e08bfc7746bab67cb884bc3f59f7b7。
+  不重SOURCE/trace/math/render/gate；原六源blocked/revise及所有SOURCE保留。
+
+### batch344限定修复已PASS，345首次n19/n20源装订与现代prepare完成
+
+- 六名batch342作者和六名batch343 FIRST源独审均已真实completed/process0，
+  不再记作在途。按111–117/118–124/125–131/132–138/139–145/146顺序，
+  首独审结果为blocked/revise/revise/blocked/blocked/revise；仅源转写证据，
+  不作数学、整课或图批准。六次原finalize计行失败原样保留。
+- 344 fresh零图受影响审者01a1ed81-eb7b-75f0-9db0-963168863a5f真实
+  completed/process0，限定PASS回执rawSHA
+  cfe03deacdc3e813c6c9b2983043b837f61cfef9f93f36e95dd3109654d48b51。
+  完整旧/新比较仅118 continuation与归属note、120末点、122的409末点、
+  129 supplementary h3四处修正；31绑定均匹配。四current finalize各一次exit0，
+  无新图片/数学或重复FIRST门槛。原revise/blocked/SOURCE与图26HOLD保持。
+- 345缺失首次vectorize三页各exit0、FIRST隔离assemble一次exit0、
+  FIRST modern prepare一次exit0。只保留n19/n20 RAW，22+14=36源题、
+  图21–26共6图；n19起印112、n20起印118，实际398–433连续。
+  原六review和36页旧三文件同字节留存，旧lesson索引行不变，
+  部分n18/c2-ex及146 n21边界不推广。
+- 346仅准备已有7a选择包零图book-trace绑定，347仅准备六图首次cap1入口；
+  尚未取得其实际完成回执，不预设PASS。父0新图/累计24，仍85选定包、
+  1448题5943项658关联组合；无新DB/APP/架构/技能/依赖/Charter或commit/push。
+
+### batch342/343新四课源页FIRST准备完成，作者与源独审接续
+
+- 三个原在途prepare会话真实exit0；物理111–146共36页仅各FIRST prepare一次，
+  分为111–117、118–124、125–131、132–138、139–145、146六个冻结小批。
+  原103–110源证据、n14选择包及其显示没有重复生成或验审。
+- 四名fresh default-model有限作者实际ID为
+  01a1ed68-4cac-79e1-a6fe-921227af02e1（111–117）、
+  01a1ed68-4cac-7e73-b65f-94fc2d9b614d（118–124）、
+  01a1ed68-4cac-7a61-a35e-4781c258c0c8（125–131）、
+  01a1ed6a-0893-7063-97d2-0960005906c7（146）。
+  四者现已真实completed/process0，author-receipt原SHA依次为
+  8c32dd5405d88546d1173e79e20e17c0dca667a97f150f97ffe52d512855f076、
+  ee01f6feed0b1a379d64a6ff04a6b2def1092074ec438e47644abbbcffb6dff6、
+  75d11ae34f6eb0f088ea3d4f5735b5a2c5de7da266ec03b3f71f6db8e2c8f22c、
+  57afd307e145a3819fe04b26a76ee21cd19698f6ecc4995dbcc84ab09e84b5df。
+  22次FIRST finalize仅115为真实26/24行exit1，其余21次exit0；不重跑原失败。
+- 后两作者actualID为01a1ed6e-692a-7492-85cd-4b7d6d43618c（132–138）
+  与01a1ed70-d279-75e3-bd85-cabe7ac2a592（139–145），仍按冻结七图/写域在途。
+  FIRST源独审111–117与125–131已交fresh
+  01a1ed70-ed5b-7852-ad29-84f832c28dc3、
+  01a1ed70-edcb-7f42-a85a-a3c5aa36014b，各七图一次且只写source-review；
+  此记录时没有源独审completed回执，118–124与146独审继续等待真实空槽。
+- 目标队列为7a n18/n19/n20/c2-ex。110尾段仅按既有作者文字续接，
+  146的n21边界不作为本批完整课推广；印刷footer以实际像素为准。
+  源作者报告128的复习题431始于印刷122，129另有第二章补充习题标题；
+  独审需区分exhead栏目与h3独立卡片，尚未按这一归属推算或批准课程。
+- 只新增scratch冻结源独审入口脚本，沿用已有流程；父方0新图/累计24，
+  当前85选定包1448题5943项658关联组合不增。08/100/376/321/881及原HOLD保留，
+  没有新DB/APP/技能/依赖/分支/部署/合并或正式handoff。
+
+### 837608ff n14选定选择包窄push已确认
+
+- 32文件真实commit/push为837608ff524c69642dbd252b64cba37968821b37，
+  ls-remote同完整SHA；仅n14选择包/原失败与独审历史/首次可见显示及progress/usage。
+- 当前85选定包1448题5943项658关联viewport组合，不算完整课/全题显示；
+  两有限CLI助手及所有命令均已退出，父方0新图/累计24。
+- 无layout/其测试/监督ticket/无关4m混入，无新分支/DB/APP/技能/部署/合并/
+  正式handoff。推送回执仅补现有记录，随下个真实内容批次提交，不单作文档commit。
+
 ### batch340/341 n14选定包与首次可见显示窄收口
 
 - 339 fresh01a1ed36-ed74-7050-b45c-89794fe0e07f已真实completed/process0；
@@ -35,7 +129,7 @@
   current_approval:false及全课/APP/交互/书写绘图限制保持，不重复任何旧阶段。
 - 321两有效题及原blocked留在历史，未批准其约定/全课/APP/绘图/证明/881。
   父0新图/累计24，仅新增本选定包22题96项/2组合；当前85选定包1448题5943项
-  658关联viewport组合，不是85完整课或全部题目显示认证。仅准备本内容窄commit/push，
+  658关联viewport组合，不是85完整课或全部题目显示认证。本内容窄commit/push已完成，
   layout/其测试/监督ticket/无关4m不混入，正式handoff机械防线不在本批重跑。
 - 本批暂存32文件，路径/环境守卫通过；完整diff空白检查exit2只命中339/340
   两份原CLI Markdown回执各一处双空格硬换行。原字节必须保留，不改回执或规则；
