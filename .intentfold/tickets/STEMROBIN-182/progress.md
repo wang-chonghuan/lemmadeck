@@ -1,5 +1,73 @@
 # 当前开发状态
 
+### batch340/341 n14选定包与首次可见显示窄收口
+
+- 339 fresh01a1ed36-ed74-7050-b45c-89794fe0e07f已真实completed/process0；
+  17源24题100项独解真集全部与key一致。review rawSHA
+  f1e0494813a85567691357830347801a97dff29269e89b290065a69619c50225，
+  唯一direct check_draft/check_review各一次，语义blocked/exit3。
+  308/310结论匹配泄漏、320缺完整关系、321(b,d)约定SOURCE HOLD；
+  不是100项数学失败，原review/稿/失败不覆盖或重跑。
+- 340新副本仅中性化308/310题干及310两项等价指代、320新增等长七有序对
+  G/H及相关loss/coverage，整源321排除。16源22题96项，19题80项完整字段
+  未变、另14原选项数学精确继承；新增数学仅G/H两项，不重解原17源100项。
+- 首准备wrapper错估未变项78，实际80，assert exit1；发生在request输出
+  和任何check调用前，旧wrapper/失败保留。按已生成snapshot只续接回执，
+  seed选择/digest/稿不重复生成，续接exit0；没有作者数学或validator修改。
+- fresh零图增量01a1ed44-e822-7122-8c28-350c43dd1a67已completed/process0，
+  review rawSHAf3f05a0a72d7ddf1ad87751e91181ff3c028414beced5ecf66d569bf535e9d5d；
+  完整320关系独解→三个受影响view→最后diff/原真实review/intent/key，
+  原94数学只继承、仅G/H新增数学。唯一当前direct各一次，真实pass/exit0，
+  308/310泄漏解除、320完整关系/相关loss及排源依赖真实通过，不重审原100项。
+- 341仅将当前seed/draft/review和338/339/本次失败历史同字节留存到n14
+  choice-set；FIRST choices render唯一一次exit0。首次1440/390 DOM各一次通过，
+  receipt rawSHA816687aa6396e6ec0d21ca30ecfbbc5eaaca9e68283ce1c086aa39498f77176e，
+  22题96项/页面不横溢/横滚端点可达，只父方实际测量，不当像素批准。
+- fresh静态观察01a1ed4c-82e0-7d11-89f5-3959201eb499已completed/process0；
+  唯一first-display-review rawSHA
+  6beb49b4bcc0eed5af4b4f8ba6cefc45159cf521108f2e6d0b2030044212809c。
+  两新PNG各一次2/8fresh2/24，零重browser/DOM/render/math；
+  桌面前三题12项/手机前两题8项及第三题题干有限PASS。手机标题末字换行
+  不当新增返工，第三题选项/后续题/未见横滚仍未批准。
+- 首次显示原receipt/HTML/两PNG/观察回执同字节持久留存，display-check rawSHA
+  867fa10a22f7ddf182a0baa30ad0bb61281ac44a9ce94bcd1162450b15dc4b47；
+  仅first_choice_visible_display_pending:false，broader/display_pending:true、
+  current_approval:false及全课/APP/交互/书写绘图限制保持，不重复任何旧阶段。
+- 321两有效题及原blocked留在历史，未批准其约定/全课/APP/绘图/证明/881。
+  父0新图/累计24，仅新增本选定包22题96项/2组合；当前85选定包1448题5943项
+  658关联viewport组合，不是85完整课或全部题目显示认证。仅准备本内容窄commit/push，
+  layout/其测试/监督ticket/无关4m不混入，正式handoff机械防线不在本批重跑。
+- 本批暂存32文件，路径/环境守卫通过；完整diff空白检查exit2只命中339/340
+  两份原CLI Markdown回执各一处双空格硬换行。原字节必须保留，不改回执或规则；
+  排除这两份原始文本的其余暂存空白检查exit0，不写成完整检查无告警。
+
+### batch338/339原结构失败与FIRST数学范围
+
+- 338作者01a1ed29-4ba1-7ff1-903a-d5549fffb2f3实际completed/process exit0；
+  17源24题100项、0图。原draft rawSHA
+  5ea1a2405da7f84352ca4ab946cba209b5dd7fa672858a044b411efe13360a99；
+  唯一首check_draft exit2，option.text中的跨公式数学<R…>/<M…>
+  被已有HTML正则命中。不是新数学失败；原稿/失败不覆盖或重跑。
+- 339新副本仅两条D选项的$L<R$/$E<M$写成等价\lt，完整反向diff证明其余
+  24题/100项/key/intent/coverage和seed不变。唯一当前direct check_draft
+  exit0、24题0图，不调用check_seed/CLI main，不改validator或数学。
+- FIRST独审fresh01a1ed36-ed74-7050-b45c-89794fe0e07f已完成17源/24题100项；
+  seed独解→纯view逐项→最后intent/key/coverage，各一次current direct dict/
+  blocks.keys()。数学全部PASS但覆盖/泄漏blocked，正式结果见上条；
+  作者321约定HOLD、319/320构造/证明书写损失保留，不算完整课。
+- 父0新图/累计24，所有旧图/源/trace/稳定检查不重跑，已有窄push继续有效。
+
+### 01b57e3b图资料/n14首显示窄push已确认
+
+- 104文件真实commit/push为01b57e3b24057ecc4a4730e16bf514956ad266d4，
+  ls-remote同SHA；仅四当前图及08原FAIL、n14现代层/有限首显示、
+  图阶段原字节证据及既有progress/usage。暂存路径/环境项/空白检查通过。
+- 无layout/其测试/监督ticket/无关4m或未审选择题混入；不新增DB/部署/合并/
+  分支/正式handoff。84现存选定包统计不增，另记n14四FIRST显示组合。
+- 338首作者原17源范围继续，已报告独立推导与321约定HOLD，
+  仍未收到成稿/首结构/真实completed回执，不视为数学独审或选择包批准。
+  本push回执随下个真实内容批次保存，不另作doc-only提交。
+
 ### batch334–337真实四图绑定与n14首显示收口，338首作者在途
 
 - 334两名fresh首独审均实际completed/process exit0，实际ID分别
