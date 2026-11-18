@@ -1,5 +1,80 @@
 # 当前开发状态
 
+### batch378–381源阶段与十包绑定窄收口
+
+- 374真实completed/process0；十旧包各一次check_draft/check_review exit0，
+  原214题900项与每份原审身份/逐项对象/HOLD完整继承，新增数学/图/显示0。
+  原只读preflight exit1且checker0调用已保留，正式receipt SHA0685e8ae...；
+  378三十旧文件及当前seed/draft/review同字节留存，retention SHA14a6bec5...。
+- 376观察者真实completed/process0，四首窗口有限静态PASS rawSHA93f0e708...，
+  原FIRST-modern失败/未见定理证明和后续题/交互/独立生产/APP/全课/881仍HOLD。
+  379仅留存十二原显示文件，retention SHA63118b87...；当前首窗口pending解除，
+  broader/choice pending保持，不再次看图或重跑DOM/renderer。
+- 381准备仅RAW n22、147–167新页及原/当前失败证据、现代n22和十旧包trace绑定的
+  同分支窄提交；远端已fetch核对，监督ticket/layout/测试/其他4m与旧未提交7a不纳入。
+  实际暂存323文件；diff --check exit2只一份原154–160 author-final的Markdown硬换行，
+  原字节/hash不改，其余322文件定向检查exit0。staging receipt SHAef868aad...。
+  375作者仍真实在途，FIRST choice独审未启动，不把作者稿/派工当批准。
+  选定包统计仍86/1499题/6141项；另四FIRST text/written组合已实际有限通过，
+  与原660合计664关联组合，非全文/全部题/完整课或APP认证。父0新图/累计24。
+
+### batch371–377限定源编码与n22首次现代阶段
+
+- 三批FIRST源独审均真正completed/process0；147–153限定PASS，154–160与161–167
+  原BLOCKED完整保留。三个原review rawSHA为35943646...、aa787d13...、a38a22e4...；
+  370已同字节留存123份原页事实/命令/独审回执，retention SHA812bb4c7...。
+- 371 fresh零图审者01a1ee5c-52ff-72b1-86a9-832fca4ec1fe真实completed/process0，
+  review rawSHA81a095148c226e2435a14ae5899f774309ac6a5aa5919680e938c8e536c52d0d；
+  五处物理行/LaTeX/双系统大括号编码限定PASS，整体SOURCE/release仍HOLD。
+  当前154/160 finalize exit0；155/157/158分别22/21、25/26、21/22仍exit1。
+  不第三次finalize，不改计数器或文字凑数；原155/551/161/147/146 SOURCE保持。
+- 372只从150–153的已独审对象首次隔离装订RAW n22，539–547九原题、21正文、
+  0图；原RAW索引仅追加n22和派生统计，旧课对象不动。首次prepare exit0。
+  373只修六正文粗体断口，首次adapt-finalize exit2如实保留：六题西里尔标号；
+  一次受影响Latin标号修复后exit0，没有改source_text/词义/公式/条件。
+  377追加同字节45份原失败/当前编码/RAW及现代阶段证据，retention SHA371c8aa6...。
+- 374十旧包214题900项仅book-trace绑定，fresh零图审者
+  01a1ee61-5139-72b3-bab7-4eac4cf1f518仍在途；原数学/图/显示对象不重审。
+  375九源与六段真实定理/推论FIRST seed完成，fresh零图作者
+  01a1ee64-34c5-7f02-940a-a56d650b0896在途；未派数学独审/未批准。
+  376课文/书写题FIRST render与1440/390 DOM各一次exit0，4真实关联组合；
+  fresh观察者01a1ee64-a60c-7070-bafe-0ae6392d0ae4仅四首窗口在途，
+  父0新图/累计24，DOM不当像素或全题/交互批准。
+- 新批准选定包仍0，原86包1499题6141项660已交付关联组合不增加；
+  新四组合待真实像素回执。图21两FAIL/其他原HOLD/未见/独立生产/APP/全课/881不动。
+  layout/测试/监督ticket/其他4m与旧7a未混入，未commit/push；正式Charter防线仍留handoff。
+
+### batch368首次连续源页接续，不重做5m已完证据
+
+- 同一d9b1/182分支从b1c459f1e继续；顶层元数据确认5m只余三个无书写题阅读卡
+  与全部实作任务仍blocked的c3-s3，不新增重复作者/数学审或用选项充数。
+- 7a n21–24下一队列仅新增物理147–167页，三批各7页FIRST prepare各一次exit0；
+  旧146尾部只作已归属文字边界，不复看/复审其墨迹或解除SOURCE HOLD。
+  三fresh有限作者真实ID为01a1ee49-22ee-7e23-9afa-00b8e3f4f0a3、
+  01a1ee49-22ee-7bc2-afaa-9c725bf4ce8b、01a1ee49-22ee-7de1-8ba1-673840e8d262。
+  三者已真正completed/process0，每人7源图各一次；FIRST finalize共21次，
+  16页exit0，154/155/157/158/160五页exit1，原错误字节保持不重跑。
+  前后两批fresh独审真实ID为01a1ee4f-c36d-7091-a3a0-e6ae4c7ffb65、
+  01a1ee4f-c36d-75c1-96c4-03b075b37423，中间批亦已独立派出，当前均在途。
+  147字面x<3、156等号/墨迹及167子题标号等SOURCE和外界未观察HOLD不提升；
+  独审先比较像素/两份正文再返回真实结果，不把作者收口当独立批准。
+- 父0新图/累计24；每作者最多7/8及fresh7/24，回执仅文字/路径/hash。
+  新源独审/现代/数学/显示批准均未增加；86选定包1499题6141项660关联组合不变。
+  图21两FAIL、其他SOURCE/独立生产/APP/全课/881及所有脏文件边界保持。
+
+### b1c459f1选定5m ex4窄push完成
+
+- 实际138文件commit/push b1c459f1e27009e5cf15433fbab8a8ebee348c0a，
+  远端完整SHA已独立核对，推进5fdf38f78→b1c459f1e。只含该choice-set/
+  原证据及进度记录；layout/测试/监督ticket/其他4m与7a未混入。
+- 51选定源51题198项和八首窗口限定PASS已留存，当前86选定包1499题6141项
+  660关联组合；41排除整源、所有旧失败/blocked/revise、未见内容/完整两图/
+  独立书写证明构造测量/真实手势/APP/整课/881等原边界不批准。
+- 所有本轮有限进程与命令真实结束，父0新图/累计24；无重复SOURCE/trace/
+  稳定数学/图gate或课文书写显示。3处不可变Markdown硬换行仍原字节保留，
+  其余135文件定向diff检查通过。正式Charter防线留handoff一次。
+  本push回执仅补本地，留下一实际内容批次提交，不另做文档commit。
+
 ### batch367选定包有限收口，准备同分支窄交付
 
 - math5-c3-ex4仅51选定源/51题/198项已持久留存；365真实零图关系绑定PASS，

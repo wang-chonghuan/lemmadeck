@@ -1,0 +1,72 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 156,
+  "printed_page": 150,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 156
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "ee4b0da7e71737b8563282c93b316daa520d747e6697e8db0f95f8583053a4a9"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "Leading 即 formula is cont of physical page 155's open quotient calculation. Footer 150 is read from pixels; no heading or exercise-column title is printed.",
+    "HOLD: Printed formula is preserved as 2.6/1.4=13/7=1.8 followed by a comma; unlike the neighboring 1.6 there is no clearly visible ellipsis after 1.8. No mathematical correction or errata assertion is made.",
+    "HOLD: Exercise 551 upper-bound glyph after d is not securely legible on the one permitted grid opening; ? in the transcription records that unresolved glyph, not a value inferred from the requested proof.",
+    "The printed term 界限法 has a wavy underline."
+  ],
+  "errata": [],
+  "printed_lines": 20,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+即 $\frac{2.5}{1.5}<\frac{x}{y}<\frac{2.6}{1.4}$。
+
+<!-- p -->
+我们把商 $\frac{x}{y}$ 的下界和上界化成小数并取到小数点后一
+位，这时，下界的值必须取不足近似值，上界的值必须取过剩
+近似值。因为
+$\frac{2.5}{1.5}=\frac{5}{3}=1.6\cdots$，$\frac{2.6}{1.4}=\frac{13}{7}=1.8$，
+所以
+$1.6<\frac{x}{y}<1.9$。
+
+<!-- p -->
+为了估计某式的值，我们所应用的方法是两次求出这个
+式子的近似值：一次得到了明显小于未知结果的数，另一次
+得到了明显大于未知结果的数。这种方法叫做界限法。
+
+<!-- ex 548 -->
+548. 设 $3<a<4$，$4<b<5$。求下列各式的值的界：
+а) $a+b$； б) $a-b$； в) $ab$； г) $\frac{a}{b}$。
+
+<!-- ex 549 -->
+549. 设 $6\leqslant x\leqslant7$，$10\leqslant y\leqslant12$。估计下列各式的值：
+а) $x+y$； б) $x-y$； в) $y-x$； г) $xy$；
+д) $\frac{x}{y}$； е) $\frac{y}{x}$。
+
+<!-- ex 550 -->
+550. 设 $5<m<6$，$1<n<2$。求证：
+а) $11<2m+n<14$； б) $1<m-2n<4$。
+
+<!-- ex 551 -->
+551. 设 $6\leqslant c\leqslant7$，$2\leqslant d\leqslant?$。求证：
+а) $24\leqslant c(d+2)\leqslant35$； б) $0\leqslant\frac{c}{d}-2\leqslant1.5$。
+
+<!-- foot -->
+150

@@ -1,0 +1,100 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 160,
+  "printed_page": 154,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 160
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "da8619d654ed0d558dc678db328caf94283eb7e401df60e2858ec14c87690e0b"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "Leading 出近似值 fragment continues the open paragraph beside figure 33 on physical page 159. Footer 154 is read from pixels; no heading is printed.",
+    "Figure 34 consists of all three printed number lines, Cyrillic labels а, б, в, point labels m, endpoints 4 and 5, and intermediate labels 4.2 and 4.5; one rough box retains the complete object and excludes its caption.",
+    "The caption 图34 shares the first row of the paragraph beginning 如果作为质量, so that paragraph is open across the transparent caption and its following text is cont.",
+    "HOLD: The final sentence ends at the printed fragment 作为质量的近 and is open to an unviewed subsequent page. No following text is supplied or inferred.",
+    "The inequality |m-4.2|<=0.8 wraps at its comparison sign and retains the actual print break with ↵."
+  ],
+  "errata": [],
+  "printed_lines": 27,
+  "figures": [
+    {
+      "id": "fig-34",
+      "label": "图 34",
+      "box": [
+        223,
+        1088,
+        540,
+        349
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+出近似值的绝对误差，必须知道量的准确值。而在准确值是
+未知的情形下应该怎么办呢？
+
+<!-- p -->
+我们来看一个例子。设已知金属箔的质量 $m$ 的界（以克
+为单位）：$4\leqslant m\leqslant5$。
+
+<!-- p -->
+质量的近似值（以克为单位）可以是 $4$ 或者 $5$，也可以是
+这两个数之间的任何其他的数，例如 $4.1$，$4.3$，$4.5$，$4.65$，
+$4.89$，$4.9$。
+
+<!-- p -->
+我们取 $4$ 作为质量的近似值。在不知道质量 $m$ 的准确
+值时，我们还不能确定这个近似值的绝对误差。但是很明显，
+绝对误差不超过 $1$。实际上，无论 $m$ 是什么数，$m\in[4,5]$，坐
+标为 $4$ 的点和坐标为 $m$ 的点之间的距离不能大于 $1$（图34，
+а）。这就是说，$|m-4|\leqslant1$。
+
+<!-- fig 图 34 box 223,1088,540,349 -->
+![图 34](figures/fig-34.png)
+
+<!-- p -->
+显然，$|m-5|$ 的值也不
+大于 $1$。这就是说，选择 $5$ 作
+为质量的近似值时，可以确
+信，这个近似值的绝对误差
+不超过 $1$。
+
+<!-- p open -->
+如果作为质量（以克为
+
+<!-- cap 图 34 samerow -->
+图34
+
+<!-- p cont -->
+单位）的近似值，选择区间 $[4,5]$ 内任何一个另外的数，那么容
+易知道，绝对误差也不超过 $1$，即不超过上界与下界的差。
+但是，在这种情形下，绝对误差还可以用更小的数来估计。
+
+<!-- p -->
+例如，如果取 $4.2$ 作为质量的近似值，那么 $|m-4.2|\leqslant↵
+0.8$。实际上，无论 $m$ 是什么数，$m\in[4,5]$，坐标为 $4.2$ 的点
+与坐标为 $m$ 的点之间的距离不能大于 $0.8$（图34.б）。
+
+<!-- p open -->
+我们取上界与下界的算术平均数（即 $4.5$）作为质量的近
+
+<!-- foot -->
+154

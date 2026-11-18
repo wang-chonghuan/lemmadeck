@@ -1,0 +1,79 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 154,
+  "printed_page": 148,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 154
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "1e7160ba24e26812f5e435bca31ec735dd3373e3894d869a7c9fd3e3bccc4126"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "HOLD: Leading unindented 类似地 paragraph is preserved as cont. Frozen request states adjacent author text unavailable; its preceding object is not independently closed or identified.",
+    "No heading is printed on this page. Footer 148 is read from pixels, not derived from the navigation offset.",
+    "The two stacked inequality additions retain their printed horizontal rules through array hline; each source row remains one Markdown body line."
+  ],
+  "errata": [],
+  "printed_lines": 30,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+类似地，把关于不等式两边分别相加的定理应用于不等式
+$x<2.6$ 与 $y<1.5$，得：
+$x+y<4.1$。
+
+<!-- p -->
+这样，我们就求出了两个数 $x$ 与 $y$ 之和的界：
+$3.9<x+y<4.1$。
+
+<!-- p -->
+注意，把这个问题的解法写成二重不等式是很方便的：
+$\begin{array}{c}2.5<x<2.6\\↵
+1.4<y<1.5\\\hline↵
+3.9<x+y<4.1.\end{array}$
+
+<!-- p -->
+根据关于不等式两边分别相加的定理，同样可以求出两
+个数 $x$ 与 $y$ 之差的不足近似值和过剩近似值。
+
+<!-- p -->
+因为 $x-y=x+(-y)$，所以为了求出差 $x-y$ 的界，先要
+估计式 $-y$ 的大小，然后再应用不等式两边分别相加的定理估
+计和 $x+(-y)$ 的大小。
+
+<!-- p -->
+已知，$1.4<y<1.5$。这就意味着，$-1.4>-y>-1.5$。
+用 $<$ 号把后一个关系写出来：
+$-1.5<-y<-1.4$。
+
+<!-- p -->
+把关于不等式两边分别相加的定理应用于二重不等式
+$2.5<x<2.6$ 与 $-1.5<-y<-1.4$，
+得：
+$\begin{array}{c}2.5<x<2.6\\↵
+-1.5<-y<-1.4\\\hline↵
+2.5+(-1.5)<x+(-y)<2.6+(-1.4).\end{array}$
+
+<!-- p -->
+因此，
+$1<x-y<1.2$。
+
+<!-- foot -->
+148

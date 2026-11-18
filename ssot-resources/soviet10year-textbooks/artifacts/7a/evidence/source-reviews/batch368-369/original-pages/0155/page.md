@@ -1,0 +1,66 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 155,
+  "printed_page": 149,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 155
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "9b5b667ba458a3d0902f449e3b040d38641266c3910f9842e14486df10b34872"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "No heading is printed on this page. Footer 149 is read from pixels.",
+    "Trailing quotient-calculation paragraph ends with a printed comma and is open to physical page 156.",
+    "Printed multiplication signs distinguish the centered dot in xy products from the cross beside reciprocal fractions; stacked rules are retained with array hline."
+  ],
+  "errata": [],
+  "printed_lines": 25,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+为了求出积 $xy$ 的界，我们应用关于两个不等式（各不等
+式的两边都是正数）两边分别相乘的定理：
+$\begin{array}{c}2.5<x<2.6\\↵
+1.4<y<1.5\\\hline↵
+2.5\cdot1.4<xy<2.6\cdot1.5\end{array}$
+即 $3.5<xy<3.9$。
+
+<!-- p -->
+为了求两个数 $x$ 与 $y$ 的商的界，我们把分式 $\frac{x}{y}$ 写成积的
+形式：
+$\frac{x}{y}=x\cdot\frac{1}{y}$。
+
+<!-- p -->
+首先求式 $\frac{1}{y}$ 的界。因为
+$1.4<y<1.5$，所以 $\frac{1}{1.4}>\frac{1}{y}>\frac{1}{1.5}$，
+或者换一种写法：
+$\frac{1}{1.5}<\frac{1}{y}<\frac{1}{1.4}$。
+
+<!-- p open -->
+现在可以把关于不等式两边分别相乘的定理应用于不等
+式
+$2.5<x<2.6$ 与 $\frac{1}{1.5}<\frac{1}{y}<\frac{1}{1.4}$，
+得：
+$\begin{array}{c}2.5<x<2.6\\↵
+\frac{1}{1.5}<\frac{1}{y}<\frac{1}{1.4}\\\hline↵
+2.5\times\frac{1}{1.5}<x\cdot\frac{1}{y}<2.6\times\frac{1}{1.4},\end{array}$
+
+<!-- foot -->
+149
