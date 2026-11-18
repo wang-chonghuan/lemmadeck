@@ -74,7 +74,15 @@ def check_seed(seed, repo):
     source = seed["source"]
     refreshed = prepare_seed(repo, source["book"], source["lesson"], list(exercises),
                              blocks, source["concept_figure_ids"])
-    require(seed == refreshed, "seed projection/source/asset changed; prepare again")
+    require(isinstance(seed["trace"], list) and len(seed["trace"]) == len(refreshed["trace"]),
+            "seed trace is incomplete")
+    # The index is only used to establish membership, not as question content.
+    # Preserve the reviewed seed's trace when an unrelated lesson changes it.
+    comparable = {**seed, "trace": [
+        {**seed["trace"][0], "sha256": refreshed["trace"][0]["sha256"]},
+        *seed["trace"][1:],
+    ]}
+    require(comparable == refreshed, "seed projection/source/asset changed; prepare again")
     return exercises, {figure["id"]: figure for figure in seed["figures"]}, set(blocks)
 
 

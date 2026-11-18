@@ -8,6 +8,10 @@ description: Load when the user asks to extract Soviet ten-year-school textbook 
 从 Soviet 10 Years 教材扫描件中忠实抄录书后答案，并按教材声明的 exercise 编号作用域
 生成一本书一份的结构化答案文件。
 
+批量接续或目录、权限、输出读取故障按课文流程的
+[技术恢复约定](../ld-s10y-lesson/references/production-resume.md)处理；
+复用已通过答案与审查，不把执行失败当内容失败，也不扩大调用方的发布授权。
+
 ## 术语
 
 - **lesson**：目录中的可发布课程卡片。
