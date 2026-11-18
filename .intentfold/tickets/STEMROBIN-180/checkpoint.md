@@ -1,6 +1,100 @@
 # 生产检查点
 
-## 第八十三批已验证，准备提交
+## 第八十四批四课完整，准备提交
+
+同一180-3调用、0f12工作树与原分支，继续finish=review，不是暂停。
+本批n73、phy8-c2-s3-t14、phy8-c3-s1-t7、phy8-c4-s1-t5四课的
+现代正文、四书写题与四derived/ungraded答案已完整保留；三summary
+原书零题，空答案各自收口。所有原公式、数值和源快照不反向修改。
+
+n73选择题三题十一项，独立源解冻结后再冻结纯view判断，最后比对
+作者键，完整PASS；validate与retain各一次0。第四题酸反应/约束条件
+未定，只延期选择转换，完整书写题和定性答案仍保留。三个summary
+准确恢复九FIRST模板；t14/t5修订各一轮，t7两轮。原t7无限定力矩
+REVISE及冻结候选保留，只有prose3/4再限定同平面力、垂直转轴，
+受影响独审PASS；已PASS条目没有重新审查。
+
+三summary独立adapt-finalize为t14/t5一次0、t7一次0，标准索引
+helper一次0追加三行；四课answer-finalize一个调用全部PASS。
+一次render、一次headless桌面1440x960/手机390x844检查十八页面PASS，
+六个零选择surface按合同不存在。Gauss实际打开八张既有截图，
+零裁剪/重开，四课desktop/mobile DISPLAY PASS；报告
+display-review-b84.md SHA0eac8134994e145968e5388f556c3dc314af95e18a58318754260dcc6b607d4c。
+父图像上下文仍3，付费累计68/重试0，token与账单UNKNOWN。
+
+共享源恢复独立工作也已收取：SVG186新阶段vectorize一次0，
+0.004%，Halley两图WHOLE SVG PASS后原字节保留；未消除索引UNKNOWN。
+258分隔线计行两次新finalize真实FAIL→PASS25/25，原25/26失败不覆盖，
+只读计行260仍匹配既有20行。258工具针对性十二方法有分阶段PASS
+证据，不谎称一次干净全跑；一图及误执行只读git status均照实记录。
+255/258/259源候选已受影响SOURCE PASS，canonical保留仍待接续；
+SVG182旧批准字节缺失，技术HOLD与紧凑箭头UNKNOWN均不变。
+
+Dalton n67一次strict assemble与一次全对象RAW比对PASS，21正文对象/
+十一整题，边界止于p0264#7，不混n66/n68。三个raw文件已精确保留
+canonical，下一批adapt-prepare一次0并冻结FIRST；现代作者在途，
+不属于本批四完整课。它和计行工具、其他旧脏改不暂存本批。
+暂存六十文件、四十JSON解析PASS；首次普通diff --cached --check
+exit2只报告十二个已批准原页/历史引用行尾空格，字节保留。
+仅忽略blank-at-eol的同一暂存检查一次0，无内容或审批重跑。
+本次提交只含四完整课、n73必需281..284源页和审查，raw索引仅加
+n73，modern索引加四课，已有summary raw行不重复加入。
+全项目机械防线留正式handoff前一次，274项AC仍不全；无DB、发布、
+PR、合并、部署、关闭或E工作。
+
+## 第八十四批：n73现代收口，260计行已修
+
+Avicenna完整21对象科学/保真PASS，首轮公式次数HOLD原报告保留。
+父只将prose7多出的第三个$1$换为“百分之百”，一轮作者后加一次
+局部修订；同一独审只接该段，最终模板SHA4c9d2512...PASS，零图。
+isolated adapt-finalize一次0，四现代文件精确保留canonical。
+standard modern-index首次调用缺两个参数exit1，实际失败receipt保留；
+只据真实helper签名续索引一次0，无finalize/审查重跑。
+answer-prepare一次0，父已写四derived/ungraded完整说明答案；
+choice inspect/prepare各一次0，四seed/定义2、5、8，Cicero独立作者在途。
+答案/choice独审、answer-finalize、批次DISPLAY尚未执行。
+
+Curie实际计行修复收取关闭：只加layout全页孤立偏心扫描环诊断，
+不改输入像素/printed_lines/crop；260 affected finalize一次0为20/20，
+原两次20/21FAIL均保留。12focused tests首轮7方法PASS、5方法fixture
+失败保留；只修独立fixture并续5方法PASS，未重7已PASS或全项目检查。
+工具SHA730faf1b...，PNG186原哈希不变，实际图0。SOURCE文字独审
+2+8PASS复用，260/262三文件已按实测SHA精确保留canonical，
+PNG186旧WHOLEPASS原字节一并保留。SVG186是此前尚未执行的新阶段，
+现一次vectorize在途，不能先称SVG PASS/新whole图审批。
+本批完整课尚未批次交付，三summary恢复、255/258/259恢复仍在途。
+
+## 第八十四批接续：n73初稿与260/262受影响SOURCE
+
+同一180-3调用与0f12工作树，B83提交后继续，不是暂停或handoff。
+n73恢复raw已guarded-retain；standard canonical/isolated reindex各一次0，
+isolated adapt-prepare一次0。三模板先冻结只读；17正文/4题/0图已一轮
+现代改写，registered p0284-math-1填写约1.6×10^6，与原数据乘积一致。
+Avicenna完整TEXT独审在途。没有答案/选择/finalize或批次DISPLAY声明。
+
+Noether260/262恢复结果已收取关闭，FIRST六原页文件及旧期望精确恢复。
+每页最小订正一轮、affected finalize各一次：260仍20/21FAIL，
+262为22/22PASS。260额外行已定位右页边黑环，并未造行或覆盖失败。
+Meitner零图受影响独审2+8行全部PASS，报告
+source-review-8p260262-affected-b84.md。数学粗体/quoted-minus UNKNOWN
+不改，PNG186旧WHOLEPASS哈希复用，SVG未执行。Curie只修实际260
+计行缺陷；Bacon只恢复255/258/259旧源阶段，互不改工具/索引。
+
+一次只读TOC/留存库存（不是机械验收或完整度批准）见当前命令输出：
+6p/7p/8p分别88/90/96项，当前留存adaptation/answer双PASS分别49/17/13。
+这79项不是完整新审批或全274交付。六个无图零题raw缺现代收口；
+Archimedes仅恢复并最小订正旧B57三summary TEXT HOLD
+phy8-c2-s3-t14、phy8-c3-s1-t7、phy8-c4-s1-t5，之后仅受影响独审。
+不强编题、不重已PASS、不买新图。父实际3图不增，服务累计68/
+重试0，token/账单UNKNOWN。全部新调用/修订/图片次数随后据实际收取
+记录；全项目检查留正式handoff前一次，无DB/发布/合并/部署/关闭。
+
+## 第八十三批已提交并推送
+
+实际提交c63ddcb47f782c7303596298b00e5c61866e884e，push退出0，
+origin/HEAD双向0/0。提交130文件，68 staged JSON均解析成功；
+未暂存秘密或其他脏改，四book仅投影三个新增课行。以下“准备提交”
+措辞为提交前历史，不改其FIRST/检查事实；无report-only补记提交。
 
 三完整课n144/n65/n75的11答案、7选择题29项全部独立PASS。
 本批离线16页DISPLAY机械PASS：复用首轮八desktop、接续八mobile，
