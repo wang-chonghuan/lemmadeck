@@ -1,5 +1,70 @@
 # 当前开发状态
 
+### resume182-3 四课标准答案阶段收口，准备窄提交
+
+- 同一 d9b1 工作树、`codex/STEMROBIN-182-textbooks` 分支接续生产。
+  SkillHost freshness、live ticket、四份 Charter 和当前源证据已读取；
+  仅本分支同步已合并的 main `fdadfcbfc1a07a90b47fc077836fd761270969f5`，
+  同步提交 `9cc843b708751e372aa9842ee0e3cb7565c999ba`，未合其他组或部署。
+- 新增 7a n5/n6/n7/n8 的 16/7/6/13 条只读标准答案，共 42 条。
+  继承已有完整原题独立解法；Averroes `01a1ef62-7c19-7d70-9868-9dd2cdd40c16`
+  首次新文本比对为 39 PASS、80/102/104 REVISE，原报告完整保留。
+  仅修图读理由、原分母禁值和数域措辞后，三条 affected-only PASS；
+  其余对象完全未变，没有重解旧数学。两报告 rawSHA 为
+  `8b2bf44bd490b5bf3e8e3facd232aaef0953d1273c098dc9e8debba974ed1200`、
+  `ffc64517f7fc43705b7aa00d0ec759e10e40235fbf93bc66a97aaa4c349925d4`。
+- 四课 answer finalize 合批运行一次、exit0，auto=0、ungraded=42；
+  当前 exact/numeric/expression 候选均为 0，不生成键盘交互或判分认证。
+  复用当前 render_lesson 的 page/inline/CSS 构建本批 scratch 答案预览；
+  headed/offline 1440×960、390×844 八组合 DOM 一次 PASS，
+  无网络请求、KaTeX 错误、文档或答案容器横溢出；独立像素实际发现三手机
+  长公式右端截断，DOM 没有捕捉内部 `.nb` 横滚，此初始 FAIL 完整保留。
+  仅追加 mobile CSS 显示已有横滚条；三个受影响手机视口及九个公式滚动区
+  左/最大右端实际检查通过，六张新左右状态图的独立增量观察尚待回执。
+  其余五视口、答案文本、renderer 与 finalize 不重跑，不声称触摸手势认证。
+  Hypatia 的六图左右联合观察确认八处末项可见，但滚动条可见性及额外 70
+  记录定位仍 FAIL，第二报告完整保留；薄滚动条方案不作当前显示批准。
+  当前只在七条答案中增加 gathered/换行，保留原数学 token 和语义；
+  新内部公式检查捕获 83(c) 的 304/295px 超宽，只对此再加分行。
+  原有效 n5 两图、n8 桌面图复用，n6 桌面/手机及未运行 n8 手机三检查
+  已完成，当前六受影响视口待新独立像素回执；n7 两视口继续继承。
+  Popper `01a1ef78-d3da-7cd2-bc34-3fc7a5f8ab8a` 实际六图各一次，
+  对上述受影响公式的可辨认右端、末括号、符号与行距 LIMITED_PASS_DISPLAY，
+  无需横滚恢复；report rawSHA
+  `ad04277260fc1f88f8fe35864a98fcf30dfd083a37e7e9be4e150f9b6b07d66b`。
+  全 42 条实质文本审和两次 lossless 排版绑定 PASS；只对三变更课追加一次
+  finalize exit0，n7 不重跑。有限静态观察不认证所有字符、完整能力或 APP。
+- n17 仅 fig74/75 两个标签修复候选各一次 render PASS、独立原/现四图 PASS；
+  不推广整课。Raman `01a1ef5d-ca43-7190-aa63-39c5a5bfffae` 只读 fig76
+  原 PNG 一次，除号下孤立钩状墨迹仍 INDETERMINATE，保持局部 SOURCE HOLD。
+  父当前真实上下文新图 3；Hume 图审 4、答案观察 8，共 12/24；
+  新 Hypatia 增量观察仅六图，不重开原八图或数学。
+- 当前仍 87 选定包/1506 题/6184 项/666 原关联组合，不称完整课程或六册完成。
+  新八答案显示组合单独计量；原 6a 第二章、5m n30/n32、ex4 私有证据缺口、
+  全部既有 SOURCE/FAIL/HOLD、独立书写/APP/881 边界保持。
+  未写 DB/publisher、未启动 E、未关闭工单，Finish review；正式机械防线仅留最终 handoff 一次。
+  旧 layout/测试及其他 4m、7a 草稿原样保留，未知 token、耗时和费用不推估。
+  独立并行下一内容阶段：4m n1 的 13 条答案已由 Rawls 新建、待独立文本审；
+  7a 175–181 新源页均首次 prepare exit0，Banach 七图 FIRST 转写在途。
+  七页 prepare-range 首调用超出既有四页合同、写入 0，原失败保留后
+  只以 175–178/179–181 两个不相交合法范围继续，没有 source/数学失败或重prepare。
+  下一阶段实际更新：4m n1 文本 13/13 PASS、一次 finalize exit0；
+  预览仅在等号后增加零宽换行，两个 DOM 视口 PASS，仍等独立像素回执。
+  7a 175–181 作者已完成，六页 exit0、177 为 26/25 行 exit1；
+  原 21 份页事实和真实审计保留，fresh 源审在途，不计新完整课。
+
+### e26b5a2a源阶段窄push完成
+
+- 实际88文件commit/push e26b5a2a2da1fdb143f3756b0147d7e267ef268d，
+  远端完整SHA独立核对，0939dc79→e26b5a2a；仅168–174源事实及原/当前独审修复证据与现有记录。
+  staging receipt rawSHAba35447414c92aff9f4e0d5cfdcec8e01ae534acca94bb6e534875f3dd3c9b33，
+  全staged diff检查exit0，无追加SOURCE/数学/图片或既有gate复跑。
+- 原47份及新16份实际证据同字节保留，五字符受影响绑定PASS不解除整体source/release HOLD。
+  168/171/172计行失败、167前界/174后界、图36未审及全部原SOURCE/图21/881边界保持。
+  当前仍87选定包1506题6184项/666组合；父0新图/累计24，所有有限进程及命令真正结束。
+- 他方layout/测试/监督ticket、其他4m和旧7a改动未纳入或覆写，无DB/publish/deploy/merge；
+  正式Charter防线仍留handoff一次。仅本push回执补本地，随下一实际内容批次提交。
+
 ### batch392/393五字符转录与零图绑定有限收口
 
 - 仅按389实际像素结论修172首式0.0004、展开式两处10^6及174题599两处严格大于；
