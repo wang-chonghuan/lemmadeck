@@ -33,7 +33,7 @@ class RecoveryTests(unittest.TestCase):
 
     def test_retention_resumes_exact_partial_output_without_overwrite(self):
         with tempfile.TemporaryDirectory() as temporary:
-            repo = Path(temporary)
+            repo = Path(temporary).resolve()
             source = repo / "approved"
             source.mkdir()
             target = repo / prepare.ARTIFACTS / "7p/editions/modern-us-neutral/lessons/sample/choice-set"
