@@ -218,7 +218,7 @@ function page(title, crumb, bodyHtml) {
   return `<!DOCTYPE html><meta charset="utf-8"><title>${esc(tabTitle)}</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>${CSS}</style><div class="sheet"><h1>${inline(title)}</h1>
-<div class="crumb">${esc(crumb)}</div>${bodyHtml}</div>`;
+<div class="crumb">${inline(crumb)}</div>${bodyHtml}</div>`;
 }
 
 const book = path.resolve(bookDir);
@@ -237,6 +237,8 @@ for (const lid of lessonDirs) {
     ? JSON.parse(fs.readFileSync(path.join(dir, "figures.json"), "utf8")).figures : [];
   const renderFigure = (id, label) => figure(contentRoot, id, label, !!editionName, manifest);
   const choiceDir = path.join(dir, "choice-set");
+  const crumb = [L.chapter, L.section, `印刷页 ${L.start_printed ?? "?"}`]
+    .filter(Boolean).join(" · ");
   if (groupsOnly) {
     const counts = new Map();
     let previous = null;
@@ -272,18 +274,28 @@ for (const lid of lessonDirs) {
       const file = path.join(outDir, `${surface}.html`);
       const html = fs.readFileSync(file, "utf8");
       const oldHeading = `<h1>${esc(heading)}</h1>`;
-      if (html.split(oldHeading).length !== 2 || (html.match(/<h1>/g) || []).length !== 1) {
-        throw new Error(`${lid}/${surface}: existing plain heading does not match approved title`);
+      const newHeading = `<h1>${inline(heading)}</h1>`;
+      const oldCrumb = `<div class="crumb">${esc(crumb)}</div>`;
+      const newCrumb = `<div class="crumb">${inline(crumb)}</div>`;
+      const hasHeading = html.includes(oldHeading) || html.includes(newHeading);
+      const hasCrumb = html.includes(oldCrumb) || html.includes(newCrumb);
+      if (!hasHeading || !hasCrumb || (html.match(/<h1>/g) || []).length !== 1
+        || (html.match(/<div class="crumb">/g) || []).length !== 1) {
+        throw new Error(`${lid}/${surface}: existing headings do not match approved labels`);
       }
-      return { file, html: html.replace(oldHeading, () => `<h1>${inline(heading)}</h1>`) };
+      return {
+        file,
+        before: html,
+        html: html.replace(oldHeading, () => newHeading).replace(oldCrumb, () => newCrumb),
+      };
     });
+    if (replacements.every((item) => item.before === item.html)) {
+      throw new Error(`${lid}: no unrendered headings`);
+    }
     for (const replacement of replacements) fs.writeFileSync(replacement.file, replacement.html);
     done.push({ lesson: lid, surface: "titles", pages: replacements.length, output: outDir });
     continue;
   }
-  const crumb = [L.chapter, L.section, `印刷页 ${L.start_printed ?? "?"}`]
-    .filter(Boolean).join(" · ");
-
   // ---- 课文页
   let body = "";
   const prose = proseFlow(L.prose, L.section_breaks);

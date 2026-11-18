@@ -1,5 +1,293 @@
 # 生产检查点
 
+## 第八十三批已验证，准备提交
+
+三完整课n144/n65/n75的11答案、7选择题29项全部独立PASS。
+本批离线16页DISPLAY机械PASS：复用首轮八desktop、接续八mobile，
+n75两个零选择surface按合同缺失，不重跑已PASS。首次目标错误和原
+脚本保留；完成数组别名导致ledger一度将reuse写16，已据FIRST八页
+仅订正计量字段，无浏览器重跑。
+
+Galileo实际八既有截图独审发现唯一P3 DISPLAY-B83-01：n144章节
+副标题字面星号。只修既有render_lesson.js的crumb使用inline，并让
+既有titles-only保持正文/图/题/选项/CSS逐字不变；只重写三个n144
+HTML的这一副标题。一次六标题区desktop/mobile专项断言PASS，
+Carson四新标题区截图受影响DISPLAYPASS已收取关闭，报告SHA
+b8f5543767396046873dee52cad7463869a26d06d36e02b9ee7b4588dda482cd。
+必要工具回归九项一次全部PASS，不是全项目机械检查或整批复看。
+
+提交范围只含这三完整课、必需源页与图表、本批465..470已SOURCEPASS
+原页及审查、两处真实渲染器代码/测试修改和原失败/HOLD记录。原n149
+部分FIGPASS仍留工作区，不声称已完整交付；其他技能/旧课程/index脏改
+保持。四book索引仅HEAD投影本批n144/n65/n75新增行，不全add工作索引。
+父3图不增，付费累计68/重试0、token/账单UNKNOWN。未写库、合并、
+部署、关闭或formal handoff。
+
+Leibniz n73准确恢复20原文件、SOURCE281..284全批准链与B70raw，
+已收取关闭；真实assemble.py纯读比较续一次PASS17正文/4题/0图，
+零SOURCE重审/装订/prepare/图片/付费。旧失败lookup.call原字节仍UNKNOWN，
+原事件/exit2/stderr均保留，不妨碍实际原课程字节恢复。Noether共享
+260/262源失败阶段恢复在途；当前三课提交后立即接B84现代生产。
+
+## 第八十三批三课完整：DISPLAY受影响技术接续
+
+2026-11-18，同一180-3调用、0f12工作树和原分支。Turing n75受影响
+TEXT PASS已收取关闭，原B58三FIRST模板精确恢复，只有prose1/5/6
+text/changes六指针订正；raw8/0/0、来源/数学/数字不动，prepare不重跑。
+隔离adapt-finalize一次exit0，四现代文件guarded-copy保留canonical，
+标准索引helper追加n75，空答案prepare/finalize各一次0，无选择题。
+一次render输出12正文段/0题/0选择。
+
+Euclid n65合并独审PASS已收取关闭，九答案、八seed→五整题21选项、
+4单选/1多选，先源解冻结→纯view全项冻结→作者键比较，零图。
+数值题6两阶段解释、题7负功/大小、题8继承常数与近似、题9向心力/
+任意圆弧零功均完整；题8缺本地轨道数据，不造选择题。标准answer-finalize
+与choice-retain各一次0，auto1/ungraded8；一次render37正文/9题/5选择。
+
+Arendt 305续修已收取关闭，历史修订1→3、render2→4，新增两render
+均0，实际八图、付费0/重试0。标签缺陷已修，真实artwork HOLD只剩
+未支持的painted stubs与必需工具/火花接触区域重叠；简单遮盖不能诚实
+移除，下端身份/隐藏终止仍未知。306/307/308全部FIGPASS且原SVG已
+metadata-only保留，不重审。n149不计完整课，不继续购买或finalize。
+
+本批完整课程n144/n65/n75三课，11书写/11答案、7选择题29选项。
+批次DISPLAY首次实际在n75不存在的choices.html ERR_FILE_NOT_FOUND
+停止，前八desktop页面PASS已保留，脚本FIRST另存；这是零题渲染合同
+的目标错误，不是课程失败。只改空选择页应不存在并跳过已PASS页面，
+接续手机八页，尚未最终DISPLAY PASS/提交/推送。
+下一批Leibniz仅恢复n73 SOURCE批准绑定和B70raw技术失败阶段在途，
+不重成功装订、不把目录存在当SOURCEPASS。父3图不增，服务累计68/
+重试0、token账单UNKNOWN。无全项目机械检查、写库/合并/部署或handoff。
+
+## 第八十三批续修：n144内容完成，n65已现代收口
+
+最新监督直接转达用户要求：内部one repair/FIRST/third attempt不作为
+普通可逆故障的人类审批门；历史次数照实保留，最小修明确缺陷后只续
+失败阶段，不重已PASS。此要求覆盖下方早先“修订用完故停止”的解释。
+真正源歧义/费用仍局部保留，不虚构或重复购买。
+
+n144 Mill一次两答案/两选择题独审PASS已收取关闭；两份冻结盲解保留，
+书写生产转识别的能力损失已声明。标准answer-finalize/choice-retain各
+exit0，auto0/ungraded2。一次offline render生成19正文段/2书写/2选择；
+尚未批次浏览器DISPLAY，未提交。n65 Einstein图181独审PASS已收取
+关闭，实际5图、record_review一次，报告现保留durable；只迁移元数据
+保留SVG，隔离adapt-finalize一次exit0，28正文/9题/1图。四现代文件
+guarded-copy canonical并standard helper追加索引，answer-prepare一次0。
+父已写九答案draft，含卫星题继承p0192的R/g0与近似、刹车负功/大小、
+圆周力三项完整解释，独审未做。Nash选择作者冻解后误判book.json工具
+metadata读取为审批；已一次澄清续同一作者，不重冻解/重开阶段。
+
+n149 Faraday图306独审PASS已收取关闭，实际4图、record_review一次；
+306–308都已保留canonical并接回working manifest，TEXT不重做。
+Arendt仅修305失败阶段，零新增服务请求，旧候选/调用/修订数不覆盖，
+能否在现成素材上诚实去掉未支持细节尚待结果，不称整课完成。
+Harvey只接n75旧TEXT两项F1/F2的原稿恢复与受影响最小订正；
+raw8正文/0题/0图和完整289..291来源审批复用，不重raw装订/图审。
+Ohm下一批只读筛选已收取关闭；n69实际完整题集还含270题4..10，
+旧3题packet不是整课，n73来源审批缺口没有被目录存在冒充PASS。
+
+本批完整内容课程1（n144），n65答案/选择及n75/305续修在途。
+父3图不增，服务实际累计68/重试0；尚无批次DISPLAY/commit/push、
+全项目机械检查或formal handoff，无共享DB/合并/部署。
+
+## 第八十三批：n149图305内容HOLD，继续其他有源课
+
+Carver已收取关闭。305一次gpt-image-2调用于
+2026-11-18T21:53:10.001124+00:00，输出SHA
+5ce77b86167020ad5c595c58a6c3e0bf8adb15a9b5473094ee0af2a3eec7e449。
+一次内容修订已用完；当前生成下端子构造无原图支持，两个标签clearance
+仍失败，这是实际内容/渲染HOLD，不按技术故障偷偷追加修订或服务重试。
+完整结果保留modern-figure-author-n149-305306-b83.json，原FIRST不覆盖。
+306首次render/宽度PASS22px，Faraday独审在途，未计FIGPASS。
+
+307/308 Bohr独审PASS已收取关闭，各标准record_review一次，
+实际四图，modern-figure-review-n149-307308-b83.md保留；
+两图元数据迁移canonical，原SVG不变，无重渲染/重审。
+n149仍不能finalize或计完整课；已批准TEXT及六SOURCE解不重做。
+n65 Godel全文TEXT PASS已收取关闭，无修订/零图。
+fig181作者收取关闭，实际六图、一次修订、640/354/320宽度PASS；
+Einstein独审在途，未FIGPASS。n144两题选择稿机械PASS，
+Mill一次答案/选择合并独审在途。Ohm只读筛选8p n66..75下一组候选，
+不重源审、不把旧FIRST或缺文件当永久技术否决。
+
+服务实际累计68、重试0，本批新增1；父实际3图不增，账单/token未知。
+完整批次DISPLAY/提交/推送及formal handoff仍未执行。
+
+## 第八十三批接续：n144已收口，n65完整raw已保留
+
+2026-11-18，同一180-3/0f12工作树，HEAD8636f7a93未变。
+n144表独立PASS已收取关闭；原SVG5a8967cf不变，metadata-only迁移
+receipt为tmp/b83-n144-relocation.json，保留原spec/render/review字节。
+canonical首次adapt-finalize exit2被无关p0412#11未闭合owner阻断，
+FIRST失败audit另存；改用已有隔离完整源root续同一阶段exit0，
+17正文/2题/1表PASS，四现代文件精确保留canonical，standard索引
+helper追加n144。没有重审/重画表或TEXT。两derived/ungraded答案
+已写draft待独审；Poincare只创作两书写题的离线选择题，不读答案。
+
+n65的254已从原保存输出恢复且全部B68哈希吻合，不重源审/收口。
+Lagrange已收取关闭：一次严格装订/完整raw比较/prepare均exit0，
+28正文/9题，raw-review-n65-complete-b83.md PASS，原局部失败保留。
+三raw文件已guarded-copy canonical，standard reindex8p一次exit0。
+Godel独立全文TEXT在途，零图；Schrodinger仅新现代fig181作者在途。
+仅已登记p0253-math-1分母现代订正，raw不改；图182仍属n66。
+
+n149批准三模板从保存输出精确恢复，recovery-n149-b83.md保留证明；
+原B54 TEXT/六题SOURCE解复用，现代fig305/306的Carver、
+307/308的Chandrasekhar在途，各有界8图，无共享manifest写入。
+471/472原始答案116片段/115条已独审并受影响PASS，205分号及213
+原印“千瓦/小时”忠实保留，135跨页一条；phy7-review anchor已证实，
+groupId/exerciseId未闭合，不写canonical answers.json或finalize。
+
+完整现代课0，尚无批次DISPLAY、提交/推送、全项目测试或正式handoff。
+父本上下文实际3图不增；服务累计67、重试0，新增调用待作者实收据，
+token/账单UNKNOWN。监督最新21:20文字已只读，无其他聊天消息。
+以下历史在途项已由上方结果替代，但原失败与旧额度事实不删除。
+
+## 第八十三批：六源页已保留，n144文字与答案页证据在途
+
+接续事实：n144完整TEXT首审仅近似值说明REVISE；父保存FIRST，
+只在p0367#6公式前加入审者建议的一句近似说明并声明clarification，
+未改公式/数值/题/来源。Hume零图受影响PASS_TEXT_ONLY已收取关闭，
+报告modern-text-review-n144-affected-b83.md SHA
+bcd57f8e444329d4f9cd7d64ac1cc6db4cebb1908b3c4f6c83899f86df3d5045，
+候选lesson SHA4cea18e99522aa7afdc44acfac575266619658e73706234a90d3c6e861fa7843。
+两批准TEXT候选精确复制到已有adapt路径，原prepare模板另存不覆盖；
+Huygens新表作者在途，未finalize整课。
+
+Raman471/472两个原图各一次完成完整scratch答案捕获，已收取关闭；
+答案135为跨页“不一样.”。TOC anchor phy7-review已证实，
+完整groupId/exerciseId未闭合故不finalize。James零候选先读原图
+的两图独审在途，不重备料、不把书后答案变成学生题面。
+
+重要边界纠正：原bounded selector与本批最初n65说明把253例题局部
+闭合误当整课闭合；已查阅既有source-review-8p254-joint-b68.md，
+physical254在n66标题前还有n65的练习42九题。Tesla缺失raw任务
+已立即接收纠偏，不准250至253输出冒称整课PASS/零题。
+254已有独立SOURCE PASS但原scratch/保留缺口待精确恢复；
+255的图182属于n66，不因此把其旧SVG阻塞嫁给n65。
+历史selector及原说明不覆盖，新增证据纠正当前依赖集合。
+
+2026-11-18接续，同一工作树/分支/调用，HEAD8636f7a93不变。
+Hypatia467/468受影响零图PASS，报告SHA
+f86280efa801f722e22d2cae92af8b5313bc352d89731723364ea6dfcc439f71；
+Mendel469受影响零图PASS，报告SHA
+1a055a0cfbd0fd3719a2345c27e129e83f3822fa3f32f228069cb8bed8b1d41a。
+两审者已收取关闭；九文件按批准SHA guarded-copy保留canonical，
+故465至470六页源文字PASS，不计完整现代课。397至400图像
+仍复用既有PNG/SVG审批，不重渲染；页级图别名待后续对象认领。
+
+Pascal181 SOURCE SVG独审PASS已收取关闭，实际2图，
+native helper一次exit0；报告source-svg-review-8p181-b83.md SHA
+6fad70e75abaf2aed75e98ef699bbba7cd08a560ccb9f9d0717fb97b58fdfd59。
+n65源250至253及图181已有批准输入，可接缺失装订中间产物，
+不称从未执行过。253原印2千米/200米不一致已有erratum；
+现代订正只走已登记来源合同，不改raw。
+
+父实际另读471原图一次：印刷460为复习题答案，不是新习题，
+本上下文父实际3图；尚无471作者/finalize。Raman
+01a1f08b-60e1-7ce1-b840-c9421be61e5b有界两原图471/472答案证据
+抄录在途；复用备料、稳定lesson-group身份无证据则保持未绑定scratch，
+不猜ID、不finalize或写canonical answers.json，不混入学生课文/题面。
+n144 Kant现代TEXT作者仍在途；完整现代课0、DISPLAY0、提交推送0。
+新增服务图片0、累计67、重试0；宿主token/账单未知。
+
+以下保留此前阶段事实，已由上方接续结果解决的在途描述不再代表当前状态。
+
+2026-11-18，同一180-3/0f12/原分支继续，HEAD8636f7a93。
+两次子代理系统断流已收取关闭，不是人类暂停/内容否决，不重启应用、
+工作树、分支或旧工人；此前成功备料/作者/全文源审均复用。
+
+465/466：Banach全文31+29行首审REVISE只列10+12实心句点；
+原四候选文件保存在tmp/b83-source-review/first-*。父一次仅改22个
+句点、受影响finalize各exit0。Banach受影响续接断流；fresh Pauli
+01a1f077-17f4-7b61-9c29-3fac6c7755f6只比差异、零图PASS，
+报告source-review-7p465466-affected-b83.md SHA
+712e1a733234d5e8a47fb5a8ef494d7c025ec190ba5187cf355b034eb79e61ef，
+已收取关闭；六文件按当前报告哈希guarded-copy保留canonical。
+Latin完整序列源PASS，不发明西里尔替换；原首审/作者字节不覆盖。
+
+467/468：Erdos作者收取关闭，23/23、22/22行，各两图；
+首次finalize/vectorize各页一次通过，实际6图，稿前191句点识读修正1。
+原独审Lorentz断流，图片/token UNKNOWN；fresh Hypatia
+01a1f06f-9bf0-7e00-b436-c56ff2bf0c80一次完整源审实际6图、
+四wholePNG coverage PASS，首审REVISE仅9+8句点及194字母a粗斜体。
+报告source-review-7p467468-b83.md SHA
+e229bcba772bed115a4fdeb2ce45e886c5e22d9afd6a58b9af92878a1bb2aefb。
+父保存四FIRST文件后只改上述17点/一格式，受影响finalize各exit0；
+同审者零新图限定续接在途，未保留这两页。
+fresh Mencius四SOURCE SVG全PASS、四native-helper各exit0、
+实际8图，已收取关闭；报告source-svg-review-7p397400-b83.md SHA
+aa30fc53b44169c9e82298f86d1983bc96655e1f0312dca1f5fd30b06365d9b8。
+399数字/400负号仍UNKNOWN，保真不冒称现代语义或整课完成。
+
+父469/470原图先读冻结再写，实际2图、无重开/裁图；首次finalize
+31/31与24/24、15/12块、零图。fresh Mendel一次55行全文源审
+470 PASS；469 REVISE仅缺积字及206两标点，首报告SHA
+3076ef6f5bcf9a2fe516fe413e1491029b110dd7a91af872f8fddccf1700a09c。
+父保存469 FIRST两文件后一次限定修正/受影响finalize exit0，
+Mendel01a1f071-eec8-7861-9fd7-946b18689c5b零图限定续接在途。
+470三文件按原审哈希保留canonical；未重finalize/审470。
+471/472仍仅备料，尚未作者；不改473+旧源阶段。
+
+Peirce有界候选选择收取关闭，报告tmp/b83-next-candidates.md：
+n144/n65已有批准源可接，不以目录缺文件判FIRST/科学HOLD，
+无全局耗尽结论。n144复用366/367完整批准源与TOC，
+缺失装订中间产物在隔离b83-n144-source一次生成exit0，
+17正文/2题/1表，旧装订历史UNKNOWN不伪称未执行。父先冻source
+对象预期再逐项比较全部raw JSON/MD/题/refs，raw-review-n144-b83.md
+PASS。首绑定调用exit1只因隔离work缺表别名，原partial哈希留
+output-before-alias.sha256；只guarded-copy原已批PNG/SVG，不重装订。
+五新raw/全书表别名文件保留canonical，working source reindex一次0；
+提交时仍只投影本批新增row，不全add旧dirty索引。
+adapt-prepare隔离root一次0；fresh Kant
+01a1f081-3ada-7463-91b1-64363320d5f1仅两TEXT模板作者、零图在途。
+另fresh Pascal01a1f083-db1a-79d3-9d51-181ec0293b63只补8p181
+尚缺SOURCE SVG审、最多2图，n65未装订/现代生产。
+
+本批完整现代课0，父当前2/24图，服务图片新增0/累计67/重试0，
+宿主token/账单未知；所有原HOLD/真实修订及断流保留。
+无DISPLAY、全项目测试、提交推送、写库/发布/合并/部署或正式handoff。
+监督每30分钟主动读，本聊天只留进展，不向监督或其他工人发消息。
+
+## 第八十三批源页作者与独审在途
+
+2026-11-18，同一180-3调用继续。Boole465/466已收取关闭，
+报告SHA260c91ea90ff595f7561c960f30d44fe741fb1f47c81e3dbb1dc41c5c6d83a9d。
+FIRST finalize各exit0、31/31与29/29行、15/14块、零图；
+实际4图，未vectorize。Latin/Cyrillic小问序列待一次独立源审，
+目录检查exit1及稿前标号修正如实保留，不算科学否决或重置额度。
+fresh Banach01a1ef8b-05ba-7fe3-a220-742f5d9082fb负责先原图冻结、
+再全部候选逐行独审；父不重复作者或开图。
+
+新467/468和469至472的prepare-range各一次成功，
+保留每页prepare.0001.stdout/stderr，不重备料或补造旧recorder收据。
+root分别.tmp/ld-s10y-lesson/b83-source-next及b83-source-tail。
+fresh Erdos01a1ef8c-6c19-7721-a2e9-d2caa09af76e独占467/468作者，
+469至472尚仅备料。先前466末ex180闭合仅作者观察，
+图256归属和完整复习课owner仍未知，不推断跨课完成。
+fresh只读Peirce01a1ef8d-d9eb-7482-a3cc-dd07357ccc3a有界筛选下批
+可运行课程，零图、不重审、不按缺文件推断FIRST或全局耗尽。
+
+本批完整课0，父图片0，新增服务图片0、累计67、重试0，
+宿主用量/账单未知；无DISPLAY、全项目测试、提交推送、
+写库/合并/发布/部署或formal handoff。第82批已提交推送继续有效。
+
+## 第八十二批已提交推送，接第八十三批
+
+2026-11-18，同一180调用、原0f12工作树与分支继续。
+已核对26个暂存文件、JSON解析与秘密模式，diff-check通过。
+现代7p索引只提交HEAD加n103一行，工作文件其余旧修改未纳入。
+sole commit8636f7a9369329bdf1365d11e7ae0386877b3235，
+原分支push成功a663a16c8..8636f7a93。三完整课、18答案、
+11选择题47选项，原审查与DISPLAY均复用，不重测。
+本更新随后续完整批提交，不另作报告专用commit。
+
+第83批7p物理465/466已prepare成功，fresh Boole
+01a1ef85-7604-7140-84c2-83b610cb214d继续独占scratch作者；
+父未重复作者或读图，等待纯文字结果后派一次独立源审。
+当前未现代装订、未计完整课，无图片服务新增、无全项目测试、
+无写库/合并/发布/部署或formal handoff。旧科学/来源/图片HOLD不变。
+
 ## 180-3 恢复后的第八十二批
 
 2026-11-18。原工作树与分支已恢复并锁定，HEAD仍c3ac2b67。

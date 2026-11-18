@@ -1,0 +1,114 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7p",
+  "page": 467,
+  "printed_page": 456,
+  "render": {
+    "dpi": 300,
+    "w": 1472,
+    "h": 2161,
+    "sha256": "01132a8516471adb656b0a9e46a3706dc5adfdf6142b8d805c23607f4a6db7e9"
+  },
+  "notes": [
+    "FIRST original transcription frozen in 0467-source-frozen.md before template/layout. No incoming cont: supplied preceding ex180 ends complete.",
+    "183.- retains the source extra hyphen. 电流强度、电压和电阻 is an exercise subsection, not a lesson h3.",
+    "图397: battery, rectangular instrument with circular face mark, lamp, switch and wires; source polarity marks retained. 图398: battery, ammeter marked 0/2/4, lamp, switch and wires. Preserve all source labels and contours.",
+    "图397 and 图398 have independent same-row captions. 图252 is a reference only, not a figure present on this page.",
+    "ex189 opens at the bottom and is completed by physical468 电量是多少？. Complete observed (a)(b)(c), also corroborated by physical468 full (a)(b)(c)(d), is encoded Latin without mechanical Cyrillic replacement."
+  ],
+  "errata": [],
+  "source": {
+    "pdf": "6-7p 苏联中学课本 物理 六-七年级.pdf",
+    "pdf_sha256": "46e2b2e4a92b7c00fab9adfc6a8a9b5340a9519fa90f1b82e79bc1e1432fcbb0",
+    "pdf_page": 467
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "ae373713f7b09f810d6de1e4a12b5916710e5673e4827148c875674f847f1e81"
+  },
+  "printed_lines": 23,
+  "figures": [
+    {
+      "id": "fig-397",
+      "label": "图 397",
+      "box": [
+        337,
+        1051,
+        269,
+        387
+      ]
+    },
+    {
+      "id": "fig-398",
+      "label": "图 398",
+      "box": [
+        876,
+        1051,
+        318,
+        386
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 181 -->
+$181$. 氧原子的原子核中包含有 $8$ 个质子和 $8$ 个中子. 那么氧原
+子中有多少个电子？在什么情况下氧原子变为负离子？
+
+<!-- ex 182 -->
+$182$. 在接触带电的过程中不是有一部分电子从一个物体上转移
+到另一个物体上去了吗？那么为什么在这种情况下两个带电体的质量
+变化都很小呢？
+
+<!-- ex 183 -->
+$183$.- 把两个验电器用中间装有绝缘柄的金属杆连接起来(图 
+$252$). 若手边有一根带电棒，怎样才能使这两个验电器带上异号电荷？
+并说明在验电器充电的过程中，电子是怎样运动的.
+
+<!-- ex 184 -->
+$184$. 在非带电体中有没有电荷？带电体与非带电体的区别是什
+么？
+
+<!-- exhead -->
+电流强度、电压和电阻
+
+<!-- ex 185 -->
+$185$. 两块锌板置于酸或盐的溶液中，能成为原电池吗？
+
+<!-- ex 186 -->
+$186$. 图 $397$ 所示为一电路. 试用规定的符号画出它的线路图来.
+在这个电路中，电子朝哪个方向运动？
+
+<!-- fig 图 397 box 337,1051,269,387 -->
+![图 397](figures/fig-397.png)
+
+<!-- fig 图 398 box 876,1051,318,386 -->
+![图 398](figures/fig-398.png)
+
+<!-- cap 图 397 -->
+图 $397$
+
+<!-- cap 图 398 samerow -->
+图 $398$
+
+<!-- ex 187 -->
+$187$. 画出由电池组及两盏电灯组成的电路的线路图，要求每一盏
+灯都可以单独开关而不影响另一盏灯.
+
+<!-- ex 188 -->
+$188$. 在医院的护士值班室里都有一个电铃. 试画出一个电铃的
+线路图，使躺在三间不同病房中的病人都能将电铃按响.
+
+<!-- ex 189 open -->
+$189$. 研究一下图 $398$ 所示的电路. 回答以下问题：($a$) 电路中的
+电流向哪个方向流？电子向哪个方向运动？($b$) 安培计每一个分度的
+值是多少？电路中的电流强度是多大？($c$) 在两分钟内通过安培计的
+
+<!-- foot -->
+• $456$ •

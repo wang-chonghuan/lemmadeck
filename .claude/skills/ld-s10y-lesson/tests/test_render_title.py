@@ -10,10 +10,13 @@ TOOL = Path(__file__).resolve().parents[1] / "tools" / "render_lesson.js"
 
 
 class RenderTitleTests(unittest.TestCase):
-    def fixture(self, root, title, choices=False):
+    def fixture(self, root, title, choices=False, section=None):
         lesson = root / "book" / "editions" / "modern-us-neutral" / "lessons" / "unit"
         lesson.mkdir(parents=True)
-        (lesson / "lesson.json").write_text(json.dumps({"title": title}), encoding="utf-8")
+        data = {"title": title}
+        if section is not None:
+            data["section"] = section
+        (lesson / "lesson.json").write_text(json.dumps(data), encoding="utf-8")
         (lesson / "exercises.json").write_text('{"count":0,"exercises":[]}', encoding="utf-8")
         (lesson / "figures.json").write_text('{"figures":[]}', encoding="utf-8")
         if choices:
@@ -24,8 +27,15 @@ class RenderTitleTests(unittest.TestCase):
         if choices:
             surfaces.append(("choices", title + " \u00b7 \u9009\u62e9\u9898"))
         originals = {}
+        crumb = "\u5370\u5237\u9875 ?"
+        if section:
+            crumb = section + " \u00b7 " + crumb
         for surface, heading in surfaces:
-            content = "<h1>" + html.escape(heading, quote=False) + "</h1><p>unchanged body</p>"
+            content = (
+                "<h1>" + html.escape(heading, quote=False)
+                + '</h1><div class="crumb">' + html.escape(crumb, quote=False)
+                + "</div><p>unchanged body</p>"
+            )
             (output / (surface + ".html")).write_text(content, encoding="utf-8")
             originals[surface] = content
         return output, originals
@@ -56,7 +66,32 @@ class RenderTitleTests(unittest.TestCase):
             (output / "exercises.html").write_text("<h1>different title</h1>", encoding="utf-8")
             result = self.render(root)
             self.assertNotEqual(result.returncode, 0)
-            self.assertIn("does not match approved title", result.stderr)
+            self.assertIn("do not match approved labels", result.stderr)
+            self.assertEqual((output / "text.html").read_text(), originals["text"])
+
+    def test_subtitle_only_repair_preserves_heading_and_body(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output, originals = self.fixture(
+                root, "Electrical work", choices=True, section="**Work** & <script>"
+            )
+            result = self.render(root)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            before = '<div class="crumb">**Work** &amp; &lt;script&gt;'
+            after = '<div class="crumb"><strong>Work</strong> &amp; &lt;script&gt;'
+            for surface, original in originals.items():
+                actual = (output / (surface + ".html")).read_text(encoding="utf-8")
+                self.assertEqual(actual, original.replace(before, after))
+
+    def test_subtitle_mismatch_does_not_partially_write(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            output, originals = self.fixture(root, "Work", section="**Power**")
+            target = output / "exercises.html"
+            target.write_text(originals["exercises"].replace("**Power**", "stale section"))
+            result = self.render(root)
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn("do not match approved labels", result.stderr)
             self.assertEqual((output / "text.html").read_text(), originals["text"])
 
     def test_repeated_partial_repair_is_rejected(self):
