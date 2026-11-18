@@ -1,0 +1,76 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 94,
+  "printed_page": 88,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 94
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "2e2a7492aba1f3e5e299984586f9fef77b8c2b1a9fb373ccc23cabe23c485e1c"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "One grid open only. Printed footer 88 read from pixels. Leading 加以说明。 closes exercise 315 from physical page 93.",
+    "Exercise 317 small superscripts are low-confidence single-view readings: а numerator first power read 10^9; б denominator power read 10^6. Independent pixel review required; no calculation used.",
+    "Exercise 318 has four subparts on each actual print row; exercise 319 has both subparts on one actual print row.",
+    "Exercise 321 continues beyond this page after б) 平面上直线之间的平行关系；."
+  ],
+  "errata": [],
+  "printed_lines": 22,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 315 cont -->
+加以说明。
+
+<!-- exhead -->
+复习题
+
+<!-- ex 316 -->
+316. 计算：
+а) $\left(\frac{1}{2}\right)^{-10}\cdot\left(\frac{1}{8}\right)^4+\left(\frac{3}{7}\right)^0:\left(\frac{1}{2}\right)^{-1}$；
+б) $\left(\frac{1}{9}\right)^{-5}\cdot\left(\frac{1}{27}\right)^4-\left(\frac{1}{3}\right)^{10}\cdot\left(\frac{1}{81}\right)^{-3}$。
+
+<!-- ex 317 -->
+317. 求值（答案写成标准形式）：
+а) $\frac{6.2\cdot 10^9\cdot 3.6\cdot 10^{-2}}{7.2\cdot 10^3}$；
+б) $7.5\cdot 10^2\cdot\frac{4.6}{2.5\cdot 10^6}$。
+
+<!-- ex 318 -->
+318. 已知 $c\in Q$（$Q$ 是有理数集合）。当 $c$ 取任意值时，比较
+下列各式的值与零的大小：
+а) $|c|$；б) $-c^2$；в) $c^2$；г) $(-c)^2$；
+д) $-(-c)^2$；е) $c^2+1$；ж) $4+|c|$；з) $-5-c^2$。
+
+<!-- ex 319 -->
+319. 作出由下列各式给出的函数图象：
+а) $y=x+7$ 和 $y=\frac{x^2-49}{x-7}$；б) $y=x^2$ 和 $y=\frac{x^3}{x}$。
+
+<!-- ex 320 -->
+320. 在集合 $X=\{3,\ 6,\ 7,\ 24\}$ 的各元素之间，关系由语
+句“$x$ 是 $y$ 的因数”（$x\in X,\ y\in X$）给出。用箭头表示这种
+关系，并说明这种关系是不是：а) 自反的；б) 对称的；
+в) 传递的。
+
+<!-- ex 321 open -->
+321. 下列关系有什么性质（自反性，对称性，传递性）？
+а) 平面上直线之间的垂直关系；
+б) 平面上直线之间的平行关系；
+
+<!-- foot -->
+88

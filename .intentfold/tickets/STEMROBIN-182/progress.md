@@ -1,5 +1,57 @@
 # 当前开发状态
 
+### batch330/331真实源与当前绑定留存，332 cap1仍在途
+
+- 329零图增量已实际completed/process exit0，source-review rawSHA
+  f09e742407940f8e15cf50616532a8f0b88f215a4dd0ce483fad274025edbfc2；
+  五页13处许可修正限定PASS，100页22/21和376上标6/8原HOLD不变。
+- 330原四次FIRST vectorize与FIRST scratch assemble均exit0，随后包装器
+  把n15题量猜为10而非实际14，assert退出1；发生在持久课/index/modern prepare
+  写入前，原脚本与失败事实留存。续接只消费已有成功产物，不重跑上述阶段。
+  n14/n15实际17+14=31源305–335；332–335在物理98的n16标题之前。
+  两raw课/五原图留存、index仅追加目标行和实际对账，FIRST modern prepare exit0。
+- 331实际fresh零图绑定助手01a1ed15-43d7-7c41-955f-08450707e66d，
+  仅九个现存7a包192题804项的book trace；八包仍绑定更早2aabad索引，
+  n11绑定a1a237索引。完整旧Git索引/原三件和当前seed/draft已冻结，
+  只允许摘要及绑定归属变化，数学/图/显示不重审。已实际completed/process exit0；
+  check_draft/check_review各9次、各包一次返回原pass，新增数学0/图0。
+  旧27文件同字节留存后当前三件迁入持久目录，retention rawSHA
+  b714be02959ba782bc20cbe18c6563edc8bdd4a671b5dd6ad37bdf3ec3ec704f。
+  助手一次过宽旧n9行预检exit1时gate调用0，原失败保留；限定本九包后实际完成。
+- 332实际fresh cap1助手01a1ed15-43d7-7a02-862c-e4f673b7f822，
+  仅五原PNG各一次、五draft spec/各一次首draft gate。五context首次exit0；
+  模板只改Latin小问/分行、321中性阅读及327六站名一致映射，
+  未改source_text/公式/数字/31题范围；不预设图PASS或整课批准。
+- 331准备包装器首次摘要encoding不符exit1，实际gate调用0、助手未派；
+  原脚本留存后直接复用现有prepare.digest，完成冻结再派出，不改validator。
+  本轮父0新图/累计24；84选定包1426题5847项656组合不增。
+- 源/当前绑定窄暂存235文件，未混layout/其测试/监督ticket/4m/环境项。
+  空白检查仅旧104–110审者final.txt两处Markdown硬换行空格exit2；
+  为保持原回执字节不修剪，明确排除此一历史文本的其余暂存空白检查exit0。
+  Charter全局机械防线仍留到正式handoff，不将本检查当全课批准。
+
+### cb67f3554窄尾批已push，接续新源受影响修正
+
+- n53选定包19文件真实commit/push为
+  cb67f3554a7cbee2277ce431016ff838b0186c0d，ls-remote已确认同SHA；
+  仅n53 choice-set/旧revise历史/限定首屏证据及既有progress/usage，
+  无layout/其测试/监督ticket/4m或未完成新源混入。暂存路径与空白检查通过。
+  84选定包1426题5847项656组合不称完整课或整组，881及全部原HOLD不提升。
+- 328三次FIRST源审均实际completed/process exit0，原review rawSHA依次为
+  ab8c83f714c5aba8ff5331c38e549ab01d41d6884fe53f635b0c34909e50bff8、
+  ef4e565c218383781029c2d12c7011e7427501c81d847594127aa3c7a154229d、
+  8269b0cebbac2fa57c99f3bafa6f912df29bc5b1e6721dbd42f97a508f3d10b4。
+  实际revise/blocked/blocked：11处不等号字形、326树高句反序、353e多分号可修；
+  100页22/21行门槛与376上标6/8未定保留，不当数学失败或全组停工。
+- 329先同字节留存63原页文件和三原审查/身份/回执，再仅修改13处许可内容。
+  91/92/93/96/106五页修正后finalize各一次exit0，其他页/源图/旧gate不重跑，
+  p100和p109原字节不动。fresh零图增量审者实际
+  01a1ed09-e705-7a10-989d-29dd07363973，仅完整diff与旧视觉事实继承，
+  本条当时仍在途；实际完成回执见上方329限定PASS，不扩大原范围。
+- 下一真实候选n14/n15实际闭合31原题；先前27题为边界猜测，
+  已由330实际装订纠正，n16/n17局部门槛保留。
+  本条实际push与后续进度随下一真实内容批次保存，不另作doc-only提交。
+
 ### batch326/327 n53选定包窄收口，7a首源审继续
 
 - 326实际01a1ecfa-842f-7513-a818-ccbc745c9077已completed/process exit0，

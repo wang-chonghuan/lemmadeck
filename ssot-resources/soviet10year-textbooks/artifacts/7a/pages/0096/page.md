@@ -1,0 +1,79 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 96,
+  "printed_page": 90,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 96
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "d28530f5e96407e5223da204b5c5b68994e5d46372f5e898e332b041a406243b"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "One grid open only. Printed footer 90 read from pixels. Leading ordered numbers continue the example paragraph on physical page 95.",
+    "Exercise 325 subparts а/б and в/г each occupy one actual print row.",
+    "Exercise 327 place-name readings from this single grid: 列奥诺沃, 马列沃, 波罗维奇, 索斯诺夫卡, 舒伊斯克耶, 维谢尔基. Small/partly overlaid name glyphs require independent source review.",
+    "Exercise 327 ends visibly with a full stop and is not marked open. This segment does not establish completion of unit 15; unit 16's TOC start at printed 92 lies outside the viewed pages.",
+    "No prior or next page pixels inspected; no missing boundary text or answers supplied."
+  ],
+  "errata": [],
+  "printed_lines": 26,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+$17,\ 25,\ 36,\ 49,\ 82$；
+而这个集合各元素之间的“大于”关系，确定了把各个数排列
+成递减的顺序：
+$82,\ 49,\ 36,\ 25,\ 17$。
+
+<!-- ex 322 -->
+322. 已知 $a<b,\ b<e,\ c<d,\ e<c$，画出数轴并在数轴上
+标出坐标为 $a,\ b,\ c,\ d$ 和 $e$ 的点。
+
+<!-- ex 323 -->
+323. 设 $m,\ n,\ p$ 和 $q$ 是四个数，并且 $m>p,\ n>m,\ n<q$。
+分别比较 $p$ 和 $n$、$p$ 和 $q$、$q$ 和 $m$ 的大小。
+
+<!-- ex 324 -->
+324. 用箭头表示集合 $C$ 各元素之间的“大于”关系，其中
+$C=\{-8,\ -5,\ 0,\ 7,\ 12\}$。在图上怎样表现出“大
+于”关系的传递性？
+
+<!-- ex 325 -->
+325. 已知两个数 $a$ 和 $b$ 并且 $a<b$。如果可能，比较下列各数
+的大小：
+а) $a$ 和 $b+1$；б) $a-3$ 和 $b$；
+в) $a-5$ 和 $b+8$；г) $a+4$ 和 $b-2$。
+
+<!-- ex 326 -->
+326. 在林中草地上长着四棵树：桦树，云杉，椴树和白杨。
+白杨比桦树高，桦树比云杉高，桦树比椴树高。用箭头表
+示所列举的树木之间“比……高”的关系。把这些树木按
+照高度的顺序排列出来。
+
+<!-- ex 327 -->
+327. 公共汽车在居民点列奥诺沃和马列沃之间来往行驶。中
+间共有四站：波罗维奇，索斯诺夫卡，舒伊斯克耶，维谢
+尔基（这些站名不是按照公共汽车到站的先后顺序排列
+的）。对于居民点列奥诺沃来说，波罗维奇比舒伊斯克
+耶近，维谢尔基比索斯诺夫卡近，索斯诺夫卡比波罗维
+奇近。画出公共汽车的行车路线图，并在图上标出站名。
+
+<!-- foot -->
+90

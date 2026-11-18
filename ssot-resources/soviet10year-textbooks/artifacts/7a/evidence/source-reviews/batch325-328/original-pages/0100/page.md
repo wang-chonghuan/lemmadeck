@@ -1,0 +1,69 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 100,
+  "printed_page": 94,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 100
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "957cc35872e7b9941018d650a6c005a903356e81a9a36cdb55819de6238419a8"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "Footer visually reads 94. Leading prose starts a new paragraph. The comparison 1/a > 1/b is physically split after >, recorded with ↵; the separated numerator and denominator of 1/b are one fraction, not extra authored print lines. Exercise 337 continues beyond this page after subpart б)."
+  ],
+  "errata": [],
+  "printed_lines": 21,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+当然，除法可以用乘以除数的倒数来代替。因此有：
+
+<!-- p -->
+推论　真不等式两边除以同一个正数，结果仍是真不等
+式；真不等式两边除以同一个负数并把不等号变向，结果也是
+真不等式。
+
+<!-- p -->
+定理 3　如果数 $a$ 和 $b$ 同号，并且 $a<b$，那么 $\frac{1}{a}>\frac{1}{b}$。
+
+<!-- p -->
+为了证明这个定理，我们把差 $\frac{1}{a}-\frac{1}{b}$ 变形。得到：
+$\frac{1}{a}-\frac{1}{b}=\frac{b-a}{ab}$。
+
+<!-- p -->
+因为 $b>a$，所以 $b-a$ 是正数。因为数 $a$ 和 $b$ 同号，所以
+积 $ab$ 是正数。这就是说，分式 $\frac{b-a}{ab}>0$，于是，$\frac{1}{a}>↵\frac{1}{b}$。
+
+<!-- ex 336 -->
+336. 写出所得到的真不等式，如果：
+а) 真不等式 $18>-7$ 的两边同加上 $-5$，$2.7$，$-7$，
+$-18$；
+б) 真不等式 $5>-3$ 的两边同减去 $2$，$12$，$-5$，$-3$；
+в) 真不等式 $-9<21$ 的两边同乘以 $2$，$-1$，$-\frac{1}{3}$，$10$；
+г) 真不等式 $15>-6$ 的两边同除以 $3$，$-3$，$4$，$-1$。
+
+<!-- ex 337 open -->
+337. 已知 $a<b$ 是真不等式。写出按下列步骤所得到的不等
+式：
+а) 这个不等式的两边同乘以 $8$；
+б) 这个不等式的两边同加上 $4$；
+
+<!-- foot -->
+94

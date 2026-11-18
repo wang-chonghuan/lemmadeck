@@ -1,0 +1,81 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 93,
+  "printed_page": 87,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 93
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "1bff1ba0e93f5de86148cdb83f3ba2624c201c716981f6250e52af6bd5361fab"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "One grid open only. Printed footer 87 read from pixels. Leading 成立？ closes exercise 307 from physical page 92.",
+    "Exercises 308 and 309 each have a product split across two actual print rows; each intra-page formula break is recorded with ↵.",
+    "Exercise 312 subparts а/б and в/г are each printed on one shared row.",
+    "Exercise 315 continues beyond this page after 例子, with no final punctuation visible."
+  ],
+  "errata": [],
+  "printed_lines": 27,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 307 cont -->
+成立？
+
+<!-- ex 308 -->
+308. 当 $a=-5,\ 0,\ 40$ 时，分别比较式 $3a(a+6)$ 和 $(3a+6)↵\times(a+4)$ 的值的大小。证明：对于任何 $a$，第一个式子的
+值小于第二个式子的值。
+
+<!-- ex 309 -->
+309. 当 $b=-3,\ -2,\ 10$ 时，分别比较式 $4b(b+1)$ 和 $(2b+7)↵\times(2b-8)$ 的值的大小。对于任何 $b$，第一个式子的值
+是不是都大于第二个式子的值？
+
+<!-- ex 310 -->
+310. 证明：变量取任何值时，下列不等式成立：
+а) $3(a+1)+a<4(2+a)$；
+б) $(7p-1)(7p+1)<49p^2$；
+в) $(a-2)^2>a(a-4)$；
+г) $(2a+3)(2a+1)>4a(a+2)$。
+
+<!-- ex 311 -->
+311. $x$ 取任何值时，下列不等式是不是成立？
+а) $4x(x+0.25)>(2x+3)(2x-3)$；
+б) $(5x-1)(5x+1)<25x^2+2$；
+в) $(3x+8)^2>3x(x+16)$；
+г) $(7+2x)(7-2x)<49-x(4x+1)$。
+
+<!-- ex 312 -->
+312. 证明：变量取任何值时，下列不等式成立：
+а) $a(a+b)\geq ab$；б) $m^2-mn+n^2\geq mn$；
+в) $2bc\leq b^2+c^2$；г) $a(a-b)\geq b(a-b)$。
+
+<!-- ex 313 -->
+313. 比较两个不相等的数 $a$ 与 $b$ 的平方和与它们的积的二
+倍的大小。
+
+<!-- ex 314 -->
+314. 把 $0,\ 1,\ 2,\ 3$ 各数都加上同一个数 $k$。然后比较所
+得数列首尾两项的积与中间两项的积的大小。
+
+<!-- ex 315 open -->
+315. 证明：当 $c>0$ 时，不等式 $c+\frac{1}{c}\geq 2$ 成立。说出两个
+互为倒数的正数之和的性质，并举出一些具体数的例子
+
+<!-- foot -->
+87

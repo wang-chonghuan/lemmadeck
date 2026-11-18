@@ -1,0 +1,69 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 101,
+  "printed_page": 95,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 101
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "20c2a161d6bc6678d300812ec5b136ac6a1dc7e65d9b80c890be477286d88f21"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "Footer visually reads 95. Leading subparts в) and г) close exercise 337 from physical page 100. Exercise 342 has only its question on this page; its comparisons continue onto physical page 102."
+  ],
+  "errata": [],
+  "printed_lines": 22,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 337 cont -->
+в) 这个不等式的两边同乘以 $-4.8$；
+г) 这个不等式的两边同除以 $-1$。
+
+<!-- ex 338 -->
+338. 已知 $a<b$ 是真不等式。用符号 $<$ 或 $>$ 代替 $\ast$ 号，使得
+结果是真不等式：
+а) $-12.7a\ast-12.7b$；　б) $\frac{a}{3}\ast\frac{b}{3}$；
+в) $0.07a\ast 0.07b$；　г) $-\frac{a}{2}\ast-\frac{b}{2}$。
+
+<!-- ex 339 -->
+339. 已知下列不等式成立，比较数 $a$ 与零的大小：
+а) $5a<2a$；　б) $7a>3a$；　в) $-3a<3a$；
+г) $-12a>-2a$。
+
+<!-- ex 340 -->
+340. 已知 $a>b$。说明根据“小于”和“大于”关系的什么性质
+可以断定下列不等式为真不等式：
+а) $-7a<-7b$；　б) $\frac{a}{3}>\frac{b}{3}$；
+в) $2a+11>2b+11$；　г) $0.01a-0.7>0.01b-0.7$；
+д) $1-a<1-b$；　е) $2-\frac{a}{2}<2-\frac{b}{2}$。
+
+<!-- ex 341 -->
+341. 指出“小于”和“大于”关系的有关性质，根据这些性质可
+以断定：
+а) $(-7x<-28)\Longrightarrow(x>4)$；
+б) $\left(\frac{x}{3}<10\right)\Longrightarrow(x<30)$；
+в) $(5x-1>0)\Longrightarrow(5x>1)$；
+г) $\left(\frac{4x-3}{2}>6\right)\Longrightarrow(4x-3>12)$。
+
+<!-- ex 342 open -->
+342. 下列不等式是不是同解不等式？
+
+<!-- foot -->
+95
