@@ -1,5 +1,36 @@
 # 当前开发状态
 
+### e789ff19源与绑定窄push完成，351有限FAIL保留，353只补零图差异
+
+- 353后续真实completed/process0，实际审者01a1ed9e-3e4c-79b2-b86b-f6f54fcce09d。
+  三当前持久gate各一次exit0/PASS，完整旧/新JSON仅许可点样式字段及24的a/b/c转换；
+  raw格式不同与数学数据相同准确区分，SVG/preview同字节，render仅引用路径/hash变化。
+  当前gate SHA：22=80860aee0ca9719c6c71ff317da8714284229ecfaf6985e9e1efe66b808a3bdc，
+  23=f82d53c6d5ad504e65306280e0569a75f90de9aee6a9522b38e21a95667f1966，
+  24=562d5e159f5321796deae248ab3944db8c0fe144949679c35aac1a3ecc64ea4d。
+  只继承351原审者真实640视觉部分PASS，原三FAIL不删不改，新图/math/视觉审查均0。
+  n19/n20现代finalize、显示/选择题与图21/25/26、其他SOURCE/APP/881边界保持pending/HOLD；
+  未因三图PASS增加课/包统计。
+- 三图及其原稿/首输出/原FAIL/差异回执封存为44文件窄资源批次，retention SHA
+  295fbc47c5a7dce877801652576ca635d833ccdacc3c84aad17b11e2d9907a11。
+  当前diff check exit2，仅不可变审者原文六行Markdown硬换行空格；其余43文件无报告问题。
+  保留原字节/hash不改，未重跑SOURCE/math/视觉/renderer或正式Charter防线。
+
+- 357文件commit/push e789ff19091b0e7862c921f413a9190adbfe808c，远端完整SHA已核；
+  原837608ff推进到本提交。仅RAW n19/n20与来源阶段证据、十旧选择包trace绑定，
+  当前staged diff check exit0。无layout/其测试/监督ticket/无关4m混入。
+  此次不新增完整现代课/选择包批准，仍85选定包1448题5943项658关联组合。
+- 351 fresh审者真实completed/process0，三标准gate各一次exit0但status均fail；
+  rawSHA依次6c9583968ab33c2978ea04f522274b2892901b93942644ad36dff6a5c667cbc3、
+  333e5c1f2857289e4ae22ea733fee80fdedd711df73797b7a2d808483dc40c29、
+  657a64e4fa4b92c7926d3ff1b869eeb5d1e0be5337357128a0e6d5a4488eb1a9。
+  三原/三现各看一次6/8fresh6/24，实际视觉均PASS；整体FAIL唯一原因是我给的入口
+  未显式绑定旧cap1 spec，完整历史diff无法批准，不是观察到几何/视觉缺陷。
+- 353精确入口SHAe6abbadf4906b99f6eabb011026b122f3552cae9fcf9babc951f7f18a3299e2f，
+  补齐旧/新spec原字节及持久render依赖，只做此前未完成的全量diff与PATH绑定；
+  新图/数学/视觉审查0，真实回执前不提升三持久候选。351原FAIL与真实视觉部分分别继承，
+  不重看六图、不重复render或首规范；图21/25/26、最终显示/整课/APP/881仍HOLD。
+
 ### batch346持久绑定完成，347/348正式回执已接，349首次三图生成
 
 - 346当前fresh零图审者01a1ed8e-b258-7e60-82aa-7615db5ce9a0真实
