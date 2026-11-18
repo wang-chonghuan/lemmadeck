@@ -1,5 +1,30 @@
 # 当前开发状态
 
+### batch300八有限PASS留存，301四现成包仅选择影响在途
+
+- 298已实际窄push，HEAD/远端为39a0e85add29ffce721bf6d50a3c30fd2a8d67be；
+  仅四选定包63题278项与4PASS/2FAIL/2HOLD原显示证据，不增批准计数。
+- 299两actor均completed/process exit0后关闭，四final rawSHA已匹配；
+  n29/n30/n32/n38的48源50题162项仅selection-impact PASS，原数学/身份
+  全部继承，每包两个current函数各1次exit0，final bytes等于checked bytes。
+  n29/n32的两次前置wrapper失败、n30/n38的原raw-format失败均保留；
+  失败时函数0调用，未重跑实际函数，不作作者数学失败。
+- 300首次choices render四次/八1440-390 DOM组合exit0；fresh actual
+  01a1ec05-dcf1-7e03-ba92-bb60bf305dd0（45969）completed/process exit0。
+  八PNG各1次，8有限PASS；final report rawSHA
+  e4a3b5db03757b0485505c6dec99dacaa10e7663e66fac8ef83638a9d12b3b57。
+  同字节留存原HTML/PNG/报告，未见/生产/交互/APP/全课/881仍HOLD；
+  current_retained_approval:false、broader/display_pending:true、计数不增。
+- 301现有qualifier单次准备exit0，四原题组排整源835、122/123/129/177、
+  646、62，135源173题613项旧PASS题项不变。两fresh actual
+  01a1ec08-8999-7401-b095-6fd7486d8957（76515，5m n45/6a n40）及
+  01a1ec08-89c2-7a83-8bee-061c4677afc9（61943，6a c1-ex/7a n4）
+  仅零图选择影响在途；不同于原审者，不预设PASS，不扩300已关闭上下文。
+  三现有scratch helper只增加逐包book路由/持久目录防护，三语法检查exit0；
+  无app/renderer/CSS/validator/Charter/依赖/生产库修改或SOURCE/数学重审。
+- 父0新图/累计24，82包1394题5659项648和全部原FAIL/HOLD保持。
+  当前只窄提交第二个四包；layout/测试/监督ticket/其余4m资源不纳入。
+
 ### batch298有限显示已留存，299仍按原小范围接续
 
 - actual observer 01a1ebfe-6ca8-7640-bdac-827447717a21已turn.completed/
