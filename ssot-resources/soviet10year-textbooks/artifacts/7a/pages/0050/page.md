@@ -1,0 +1,91 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 50,
+  "printed_page": 44,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 50
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "22389557200475362a77592f94d397c140dc870fec1b8dbe050769ae14fcaf4b"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "The independent source reviewer verified the supplied page0049 final paragraph is closed (open:false). This page starts a separate paragraph (cont:false); the original author's missing-predecessor receipt remains historical.",
+    "One page.grid.png inspection only. Observed 13 physical text rows including one shared caption row and footer44, plus two complete figures 图3 and 图4. Prepared layout reports one band; no counter was changed.",
+    "图3 and 图4 are prose-owned coordinate graphs. Their printed internal labels and curves remain in the figure frames; captions are separate text.",
+    "The paragraph beginning 用图解法 continues across the two figures. Printed formulas y=x+2 and 12/x=x+2 break after x; the physical breaks are marked ↵."
+  ],
+  "errata": [],
+  "printed_lines": 13,
+  "figures": [
+    {
+      "id": "fig-03",
+      "label": "图 3",
+      "box": [
+        158,
+        763,
+        556,
+        556
+      ]
+    },
+    {
+      "id": "fig-04",
+      "label": "图 4",
+      "box": [
+        739,
+        757,
+        550,
+        558
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+这里解方程 $\frac{8}{x}=x^2$ 所使用的方法叫做图解法。注意，用
+图解法解一元方程时，只须找出图象交点的横坐标。
+
+<!-- p open -->
+用图解法求得方程的根，通常都是根的近似值。例如，
+解方程 $\frac{12}{x}=x+2$。在同一坐标系里作出函数 $y=\frac{12}{x}$ 和 $y=x ↵ +2$ 的图象（图4）。双曲线和直线相交于两点 $B$ 和 $C$。读出
+
+<!-- fig 图 3 box 158,763,556,556 -->
+![图 3](figures/fig-03.png)
+
+<!-- fig 图 4 box 739,757,550,558 -->
+![图 4](figures/fig-04.png)
+
+<!-- cap 图 3 -->
+图 3
+
+<!-- cap 图 4 samerow -->
+图 4
+
+<!-- p cont -->
+它们的横坐标是 $-4.6$ 和 $2.6$。$-4.6$ 和 $2.6$ 就是方程 $\frac{12}{x}=x ↵ +2$ 的根的近似值。
+
+<!-- p -->
+实际上，当 $x=-4.6$ 时，有
+$\frac{12}{x}=\frac{12}{-4.6}\approx-2.6$， $x+2=-4.6+2=-2.6$。
+
+<!-- p -->
+当 $x=2.6$ 时，有
+$\frac{12}{x}=\frac{12}{2.6}=4.6$， $x+2=2.6+2=4.6$。
+
+<!-- foot -->
+44

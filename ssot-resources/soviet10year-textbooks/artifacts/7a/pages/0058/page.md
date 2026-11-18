@@ -1,0 +1,80 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 58,
+  "printed_page": 52,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 58
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "45d922eff9a8221861ac31593c3da5db28bb7f8920aa47e1f8beb91dbd484706"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "The power-of-a-power rule has a printed wavy underline.",
+    "Source ambiguity, exercise 154 б: the m in the first parenthesis appears on the baseline in (5m)^2. This reading is retained, but superscript placement cannot be certified from this one allowed image open; (5^m)^2 is an unresolved alternative, not a correction.",
+    "Exercise 155 is open after subparts а, б, в and continues with г through з on page0059."
+  ],
+  "errata": [],
+  "printed_lines": 25,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+我们要记得，在研究自然数指数幂的性质时，我们仅仅对
+于被除式的幂指数不小于除式的幂指数的情况，验证了同底
+数的幂的商可以表示成这个底数的幂。当引进负整数指数幂
+的概念后，这个限制就取消了：被除式和除式的幂指数可以
+是任何整数。
+
+<!-- p -->
+例3 证明：$(a^5)^{-6}=a^{5\cdot(-6)}$，其中 $a\ne0$。
+
+<!-- p -->
+$(a^5)^{-6}=\frac{1}{(a^5)^6}=\frac{1}{a^{5\cdot6}}=a^{-(5\cdot6)}=a^{5\cdot(-6)}$。
+
+<!-- p -->
+幂作乘方运算时，底数不变，指数相乘。
+
+<!-- ex 151 -->
+151. 用两种方法求下列各式的值：先用负整数指数幂的定
+义，然后再用整数指数幂的性质：
+а) $8^3\cdot8^{-2}$； б) $2^3:2^{-5}$； в) $(2^{-3})^2$； г) $(3^{-1})^{-2}$。
+
+<!-- ex 152 -->
+152. 求下列各式的值：
+а) $3^{-4}\cdot3^6$； б) $2^4\cdot2^{-3}$； в) $10^8\cdot10^{-5}\cdot10^{-6}$；
+г) $2^{10}:2^{12}$； д) $5^{-3}:5^{-5}$； е) $3^{-4}:3^2\cdot3^6$；
+ж) $(2^{-4})^{-1}$； з) $(5^2)^{-2}\cdot5^3$； и) $3^{-4}\cdot(3^{-2})^{-4}$。
+
+<!-- ex 153 -->
+153. 把下列各式写成以 $3$ 为底的幂并求出它们的值：
+а) $27\cdot3^{-4}$； б) $(3^{-1})^5\cdot81^2$；
+в) $9^{-2}:3^{-6}$； г) $81^3:(9^{-2})^{-3}$。
+
+<!-- ex 154 -->
+154. 把下列各式写成以 $5$ 为底的幂：
+а) $5^m\cdot5^{m+1}\cdot5^{1-m}$，其中 $m\in Z$；
+б) $(5m)^2\cdot(5^{-3})^m$，其中 $m\in Z$；
+в) $625^m:5^{4m-2}$，其中 $m\in Z$。
+
+<!-- ex 155 open -->
+155. 计算：
+а) $8^{-2}\cdot4^3$； б) $9^{-6}\cdot27^5$； в) $10^0:10^{-3}$；
+
+<!-- foot -->
+52

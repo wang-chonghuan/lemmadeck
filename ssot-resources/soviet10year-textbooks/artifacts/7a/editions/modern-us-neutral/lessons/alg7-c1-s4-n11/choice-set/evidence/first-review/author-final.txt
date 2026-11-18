@@ -1,0 +1,50 @@
+CODEX_THREAD_ID: 01a1ec54-9cf1-7be2-a1d0-f400b6944bf6
+Draft: /Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/batch309-7a-n11-selected-choice/draft.json
+rawSHA256: 47df3c1a2b753f65035ea6480939d5cde08c3320cdca9e5cdd55f69de5321017
+Canonical digest: 6990fdb650ded65922dcb0c3b7dd5806d54bfcf6d59576419ea997149c345fab
+Questions/options: 14/84
+
+Executed once:
+```python
+python3 -B - <<'PY'
+import hashlib
+import importlib.util
+import json
+import os
+import sys
+from pathlib import Path
+repo = Path('/Users/yong/.codex/worktrees/d9b1/lemmadeck')
+folder = repo / '.intentfold/tickets/STEMROBIN-182/tmp/batch309-7a-n11-selected-choice'
+seed = json.loads((folder / 'seed.json').read_bytes())
+raw = (folder / 'draft.json').read_bytes()
+draft = json.loads(raw)
+print('CODEX_THREAD_ID=' + os.environ['CODEX_THREAD_ID'], flush=True)
+print('draft_path=' + str(folder / 'draft.json'), flush=True)
+print('rawSHA256=' + hashlib.sha256(raw).hexdigest(), flush=True)
+print('canonical_digest=' + hashlib.sha256(json.dumps(draft, sort_keys=True, ensure_ascii=True, separators=(',', ':')).encode('utf-8')).hexdigest(), flush=True)
+print('questions=' + str(len(draft['questions'])) + ' options=' + str(sum(len(q['view']['options']) for q in draft['questions'])), flush=True)
+spec = importlib.util.spec_from_file_location('choice_validate', repo / '.agents/skills/ld-s10y-choice/scripts/validate.py')
+V = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = V
+spec.loader.exec_module(V)
+exercises = {e['number']: e for e in seed['exercises']}
+source_figures = {f['id']: f for f in seed['figures']}
+blocks = {c['block']: c for c in seed['concepts']}
+questions, figures = V.check_draft(seed, draft, repo, exercises, source_figures, blocks.keys())
+print('FIRST structural check: succeeded; questions=' + str(len(questions)) + ' figures=' + str(len(figures)), flush=True)
+PY
+```
+
+Actual result: exit 1 during import; `check_draft` was not reached. No retry.
+```text
+Traceback (most recent call last):
+  File "<stdin>", line 20, in <module>
+  File "<frozen importlib._bootstrap_external>", line 1023, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.agents/skills/ld-s10y-choice/scripts/validate.py", line 10, in <module>
+    from prepare import (ARTIFACTS, ContractError, digest, file_hash, inside, load_json,
+                         prepare_seed, require, scratch_path, text, unique)
+ModuleNotFoundError: No module named 'prepare'
+```
+
+Boundaries: zero images; no self-review or semantic approval. Structural validation remains unresolved. Independent proof-writing is not certified; source 148 remains pending. No whole-lesson, drawing, application or publishing approval.

@@ -1,0 +1,83 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 61,
+  "printed_page": 55,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 61
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "93d398bdbc3c7321459b7e64ca839d65e24eb9f741d17db59a0e52109972edf5"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "Exercise 165 continues from page0060 and closes after subpart б. Exercises 166 and 167 precede the real unit 13 boundary.",
+    "Figure 5 is one numbered figure containing two side-by-side coordinate grids, owned by exercise 166. Its frame excludes the preceding exercise prose and the separately printed caption. Embedded graph labels are retained in the figure pixels.",
+    "The input layout lists one band [694,1225], which conflates text, both graph grids and the caption and omits other visible text. No counter edit or repair is authorized.",
+    "Unit 13 begins with the printed title 数的标准形式. Only its visible opening is transcribed; it is incomplete and must not be promoted.",
+    "The last displayed standard-form example ends with a printed full stop. No unseen next-page prose or open paragraph is inferred; the successor unit boundary remains pending.",
+    "The less-than-or-equal glyph in 1 leqslant a < 10 is transcribed as leqslant; fine glyph shape remains subject to independent source review."
+  ],
+  "errata": [],
+  "printed_lines": 15,
+  "figures": [
+    {
+      "id": "fig-05",
+      "label": "图 5",
+      "box": [
+        213,
+        782,
+        1118,
+        382
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 165 cont -->
+а) 使式 $\frac{2a-5}{a-1}$ 的值等于 $2$；
+б) 使式 $\frac{5a+7}{3a-11}$ 的值等于 $2$。
+
+<!-- ex 166 -->
+166. 式 $f(x)=x+2$ 和 $g(x)=\frac{x^2-4}{x-2}$ 给出了两个函数。找
+出函数 $f$ 和 $g$ 的定义域。
+这两个函数的图象有什么不同（图5.а和图5.б）？
+
+<!-- fig 图 5 box 213,782,1118,382 owner-ex 166 -->
+![图 5](figures/fig-05.png)
+
+<!-- cap 图 5 -->
+图 5
+
+<!-- ex 167 -->
+167. 分别作出函数 $\varphi(x)=x-1$ 和 $t(x)=\frac{x^2-1}{x+1}$ 的图象。
+
+<!-- h3 -->
+13. 数的标准形式
+
+<!-- p -->
+在科学和技术中，有时会遇到很大的和很小的（正）数。例
+如，太阳直径为 $1390600000$ 米，水分子的直径为 $0.00000003$
+厘米。
+
+<!-- p -->
+我们知道，很大的数通常要写成标准形式，即形式如
+$a\cdot10^n$ 的数，其中 $1\leqslant a<10$。例如，
+$1390600000$ 米 $=1.3906\cdot10^9$ 米。
+
+<!-- foot -->
+55

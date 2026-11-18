@@ -1,5 +1,101 @@
 # 当前开发状态
 
+### batch311有限显示完成，7a窄交付准备
+
+- fresh观察者01a1ec65-ec03-7620-88a7-074646a03342真实completed/process exit0，
+  report rawSHA4cd2e288ba95c656ff230c44ac4b75df22565f44666cf645ea457872014f27d0。
+  两PNG各一次2/8fresh2/24，桌面Q1 A–D/Q2 A–H、手机Q1 A–D/Q2 A–E
+  可见范围PASS，无可见右截；手机Q2 F下缘及G–H/后题未见，真实HOLD保留，
+  初始viewport下截不是已证实renderer缺陷，不新增截图/手势或重跑机械检查。
+- 原HTML/两PNG/DOM及观察报告同字节持久留存，当前display-check rawSHA
+  572794c81cdeea41d085d5eaee42008f168d33565f0c47942db271e7536c9d37。
+  仅first_choice_visible_display_pending:false；broader/display_pending:true、
+  current_approval:false，课文/书写首次显示、148作图、独立生产/APP/全课/881
+  不提升。15源14题84项限定独审PASS直接复用，不重源/数学/图/旧检查。
+- 本批仅7a raw n9/n10/n11、18个忠实页及两图raw描摹、n11现代/选定包和
+  现有progress/usage准备窄commit/push。60/61失败审计及H1、n10缺现代图、
+  n12/n13与既有4m/APP/HOLD原样保留，未将raw/draft/PASS/push计整课。
+  82包1394题5659项648不增；所有本轮有限进程实际结束，父0新图/累计24。
+- 窄暂存108文件允许路径/环境项检查exit0。默认git diff --cached --check
+  真实exit2，仅物理48页page.md第39/40行各一个已绑定源尾空格；保留忠实页
+  原字节，不改源/重finalize/重源审，也不声称该检查或最终handoff防线通过。
+
+### batch309独审完成，311仅补首次choices可见窗口
+
+- 独立FIRST审者01a1ec5a-d4a6-7cf0-8ef3-7aae64ffd8ba真实completed/process exit0：
+  15源14题84项限定PASS，review rawSHA
+  d175dba7d4784368f79b8914a4c4149f343c55cad035cd4415d79ebfc5d12cac。
+  实际seed独解→冻结view逐项→最后key/intent，当前两个函数各一次exit0；
+  checked raw等于最终raw，没有SOURCE/trace/首结构重跑或自批。
+- seed/draft/review同字节留存到n11持久choice-set，不需要路径/数学/图重绑。
+  311首次choices-only render一次exit0，两1440/390 DOM组合一次exit0，
+  两PNG/一HTML冻结，receipt rawSHA
+  cfa3e172aa43942786aad539d18ddf4a0f9221911c068e83cd6100af6a8b2137。
+- fresh观察者01a1ec65-ec03-7620-88a7-074646a03342/session81314仅两PNG各一次、
+  HTML hash-only；尚在途，不把DOM当像素PASS或假手势认证。
+  源148未选、独立证明/书写/作图、课文/书写首次显示、未见及APP/全课/881
+  仍不批准。父0新图/累计24、82包1394题5659项648保持；旧FAIL/HOLD不动。
+
+### batch308–309源留存与n11首次命题
+
+- 305局部F1–F4绑定已真实PASS，review rawSHA
+  7cde3cb0a8c280b0d06eec15fd6ddaafd46b99afcfd8814aeb42c91fe3129d7e；
+  页46 H1“答”标点与实印=0的SOURCE边界不提升。306仅修50两式双重换行、
+  页49前界说明和53 underbrace；受影响finalize各一次exit0/0，
+  当前零图绑定PASS rawSHAcb743a44c554fc8a03f0194096c22c8023e7041db429dc15adf578e3376032ad。
+- 307 FIRST源审rawSHA2e5f2f19fb5afe0cc8533b2c54f8fbef805d06e22281ff54a103a321fc4a398c：
+  源文/框/边界忠实性PASS，但60/61页首finalize计行21vs20、16vs15仍BLOCKED；
+  不加文字凑行、不重跑旧门槛。上述有限进程均真实完成，原失败保持。
+- 308首次vectorize仅物理50页两图exit0，不匹配0.012%/0.010%；首次scratch
+  assemble55页13单元167源题exit0，仅保留raw n9/n10/n11与fig03/04。
+  原n1–n8的24个raw文件字节未变；持久索引11单元150题，不纳入n12/n13。
+  raw装订不是现代图审或整课批准；n9 H1、n10缺现代图、n12计行、n13未完保留。
+- n11首次adapt-prepare后仅将150“少先队员们”中性化为“学生们”；
+  首adapt-finalize因西里尔标号exit2，失败模板/audit保留。只改现代分题标号和
+  144对应引用后受影响adapt-finalize一次exit0，源快照/公式/数值不变。
+- 309真实FIRST作者01a1ec54-9cf1-7be2-a1d0-f400b6944bf6已completed/process exit0，
+  冻结15源135–147/149/150、定义block6、0图，产出14题84项，
+  draft rawSHA47df3c1a2b753f65035ea6480939d5cde08c3320cdca9e5cdd55f69de5321017。
+  首包装器import缺prepare路径exit1、check_draft实调用0；父方只纠正sys.path，
+  补尚未执行的首次check_draft一次exit0，不调用check_seed/main/check_review。
+- 独立FIRST审者01a1ec5a-d4a6-7cf0-8ef3-7aae64ffd8ba/session10861已先独解seed，
+  后接冻结view（rawSHAdfd32f570f2c67f50c40ef17e075ddafbc1349ea0996dd7b11a8f98a9519f085），
+  仍在途，最后才比较key/intent。当前不当语义PASS；源148未选/独立生产/
+  显示/APP/全课/881不批准。17个已完成源审/收口/原失败文件同字节持久留存。
+  父0新图/累计24；批准82包1394题5659项648不增，不改layout/监督ticket/4m、
+  app/Charter/依赖/DB，不作最终handoff或整组完成。
+
+### batch305–307接续7a真实源边界，尚非完成课程
+
+- d9b1原182分支/HEAD2a97d9b7559786f9ba8bbeafb3386535ecdf5b34接续，
+  live182已读取；首次列表的jq容器误用退出5，HTTP200，不是认证失败，
+  按实际results容器纠正读取后退出0，没有后台写入或新IntentFold阶段。
+- 当前7a只有37个忠实页，n9在物理43/印刷37页保留未接p0043#6；
+  实际TOC n10/n11/n12/n13起于印刷43/46/50/55。新物理44–61
+  共18页各首次prepare一次exit0；50与61计行各1，不据此认空页或改工具。
+- 三个fresh默认模型ephemeral CLI已实际启动、无继承图历史：
+  305实际01a1ec40-2f24-7062-9ea1-bfefd5cf0f19仅44–49；
+  306实际01a1ec41-8be2-7f41-8b34-9122c8ac4c3f仅50–55；
+  307实际01a1ec41-a0d8-7373-b618-b75c655b6774仅56–61。
+  每上下文限6张新grid各一次，仅自己的页稿/首finalize/文字回执；
+  未把在途稿当完成，独立核源与后续现代/图/题/显示仍pending。
+- 旧数学/SOURCE/trace/图PASS/FAIL/显示/生产/交互/APP/全课/881全部保留；
+  父0新图/累计24，批准82包1394题5659项648不增。既有4m资源、
+  layout/测试及监督ticket不改；不新建永久worker/分支/工作树/流程，
+  不重跑前批验收或进行生产/最终handoff。
+
+### batch304 n42尾包窄push已确认
+
+- 2a97d9b7559786f9ba8bbeafb3386535ecdf5b34已真实commit/push，远端同SHA；
+  15文件仅n42选定17题53项及现有progress/usage，从7761942b0推进。
+  暂存空白/允许路径/环境文件检查通过，历史文件变更0；layout/其测试、
+  监督ticket及其余4m未完成资源不纳入。实际回执补记在现有记录，
+  不追加文档专用commit；继续developing，不作handoff或整组完成。
+- 从37c80e2f2以来四次窄push13选定包303题1106项，26有限首屏
+  20PASS/4FAIL/2HOLD；全部approval:false和broader/display_pending:true，
+  批准82包1394题5659项648不增。旧SOURCE/泄漏/图FAIL/生产/未见/
+  交互/APP/全课/881保留；父0新图/累计24，全部有限进程已真实退出。
+
 ### batch304 n42有限FAIL同字节留存，尾包准备窄交付
 
 - fresh实际01a1ec27-242f-7c70-a526-3b77564a452f已completed/process exit0，

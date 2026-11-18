@@ -1,0 +1,76 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 53,
+  "printed_page": 47,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 53
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "c1e3ca8623e3647405667d4fb0aef8084f2115029a5ec342b974af3f2fefc3c8"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "One page.grid.png inspection only. Observed 21 physical text rows including the decimal annotation row and footer47; no standalone figures.",
+    "The first displayed sequence completes the prose object opened on physical52. Exercises135 through137 are complete. Exercise138 ends with its introductory colon and remains open.",
+    "The decimal is printed with omitted middle zeros as 0.00···01674. Its underbrace carries the separate printed row 小数点后27位. This annotation is transcribed as seen; no zeros or arithmetic correction are reconstructed."
+  ],
+  "errata": [],
+  "printed_lines": 21,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+$\ldots,\ 10^{-2},\ 10^{-1},\ 10^0,\ 10^1,\ 10^2,\ 10^3,\ \ldots$。 （4）
+
+<!-- p -->
+比较数列（3）和（4），很自然地取 $10^{-1}$ 等于 $\frac{1}{10}$，$10^{-2}$ 等于
+$\frac{1}{100}$，等等。在数学中，这样的规定不仅适用于10的幂，而且
+也适用于不为零的任何数的幂。
+
+<!-- p -->
+定义 $a^n=\frac{1}{a^{-n}}$，其中 $a\ne0$，$n\in Z$，且 $n<0$。
+
+<!-- p -->
+例如，$10^{-4}=\frac{1}{10^4}$，$3^{-8}=\frac{1}{3^8}$，$\left(-\frac{1}{2}\right)^{-3}=\frac{1}{\left(-\frac{1}{2}\right)^3}$。
+象 $0^{-3}$ 这样的写法（一般地，零的负数幂）没有意义。
+
+<!-- p -->
+我们回到本小节开头所举的例子。现在已经很清楚，表
+示氢原子质量的写法 $1.674\cdot10^{-24}$（以克为单位）就是：
+$1.674\cdot\frac{1}{10^{24}}=\frac{1.674}{10^{24}}=0.\underbrace{00\cdots01674}$。
+小数点后27位
+
+<!-- ex 135 -->
+135. 把下列负整数指数幂变成分式：
+а) $10^{-8}$； б) $5^{-2}$； в) $a^{-1}$； г) $x^{-20}$。
+
+<!-- ex 136 -->
+136. 把下列分式变成负整数指数幂：
+а) $\frac{1}{10^2}$； б) $\frac{1}{5^6}$； в) $\frac{1}{x^7}$； г) $\frac{1}{y^{10}}$； д) $\frac{1}{1000}$； е) $\frac{1}{81}$。
+
+<!-- ex 137 -->
+137. 把下列各式表示成分式：
+а) $3x^{-6}$； б) $x^{-4}y$； в) $5ab^{-7}$；
+г) $5(ab)^{-7}$； д) $x^{-1}c^{-3}$； е) $-9yz^{-8}$；
+ж) $2(x+y)^{-4}$； з) $10x^{-1}(x-y)^{-3}$。
+
+<!-- ex 138 open -->
+138. 利用负指数，把下列分式写成积的形式：
+
+<!-- foot -->
+47
