@@ -1,5 +1,142 @@
 # 当前开发状态
 
+### batch367选定包有限收口，准备同分支窄交付
+
+- math5-c3-ex4仅51选定源/51题/198项已持久留存；365真实零图关系绑定PASS，
+  数学与两实图理解全继承原独审，没有再次解题/复图。41整源及所有旧blocked/
+  revise、失败媒介和未过修复候选保持原字节，不批准整课或独立生产能力。
+- 366 FIRST choices render与1440/390 DOM各一次exit0，真正2个HTML/视口组合；
+  fresh观察者8 PNG各一次，正式有限PASS rawSHA
+  f17c816df59bd36935a7f0acb505266f6303cac4db48f62544b3daf0b4d4c370。
+  只收四段首题可见窗口，不认证其余题/完整图像/中右滚动/真实手势/APP。
+  367留存16份原显示证据，总134份同字节历史文件；retention rawSHA
+  6b6f04d761b839d68332acdbc07db69ca82df7a580ba3fba50f8b5d7e0e4fc20。
+  仅current首窗口display_pending解除，broader_display_pending/current_approval保持。
+- 当前86选定包1499题6141项660关联组合，不是86完整课。
+  本轮所有有限进程真实completed/process0，父0新图/累计24；原图21两FAIL/
+  83/87/76/80单位与其他SOURCE/881及正式Charter防线边界不变。
+  远端FETCH_HEAD与HEAD均5fdf38f780719beb55b528250f40dcbb0131f2e1，
+  接下来仅stage该5m choice-set及本记录，不混入layout/测试/监督ticket/无关4m或7a。
+- 实际staged共138文件，越界/凭据文件0。全staged diff --check exit2仅三份
+  不可变原回执的Markdown硬换行空格：part2/part3 author-final第3行、
+  part3 reviewer-final第7行。按原字节/hash保留；排除这三份旧回执的其余
+  135文件定向diff --check exit0，不伪称全检查exit0，不重跑正式Charter防线。
+
+### batch365仅51源51题198项选定union待真实关系绑定
+
+- 365现真实completed/process0，限定选择依赖/union PASS，review rawSHA
+  89e9cce3e3356e518685568ec99dfd7f961f438d55e0b88b31988775932b901e。
+  当前direct各一次exit0；198数学/两实图证据明确继承，新增数学/图0。
+  366同字节留存118份原证据，selection仅持久路径重绑；
+  FIRST choices render一次exit0，1440/390 DOM一次exit0、2实际HTML/视口组合，
+  8个分段首窗口PNG；receipt rawSHA
+  d38d52e6da3c72a624ea48b087c1c1732274bd7fc962d46d200ce0e3cd4af63d。
+  fresh静态观察者01a1ee15-a82f-7a62-83f9-8ccf786863e1只看这8图一次，
+  仍在途/display_pending，不把DOM当像素/交互或全题/全课批准。
+- 360 part1/4均真实completed/process0，原FIRST review rawSHA为
+  d33ceec04fb404bee570f1c430cc52e58a55afa7bdcd2d9c7da4cdf4d8e1fa07、
+  d779cac75caa34909467d2638edd60abb6768a6428a6d608f2fd90ed102beb69。
+  所有90/87项真值与key一致；各current direct一次/语义exit3。
+  1215/1218/1220等抄结果、1227–1230证明缺口和原约定HOLD、
+  1292联合约束缺口均保留，不凭数学PASS批准目的或全源。
+- 363两稿真实completed/process0：part2 loss/selection限定PASS，
+  rawSHA71d50c23f0faf82358f8e9a31f526e66f28b1047327f1e54140ad4c0b24ff09a，
+  15源15题55项全数学继承/新增0，当前direct一次exit0。
+  part3真实blocked，rawSHAb9f5dce1d5b877dd7fd851eb4e0255f7642e7708fadfaf9b9281fe8524c71193，
+  1268频率/固定比例和1275格式捷径仍未通过，且先读full diff破坏盲序；
+  当前direct一次exit3/0图。保留失败入口与候选，不追加新数学复审或改稿。
+- 365选定四段依次7/15/14/15源、7/15/14/15题、28/55/54/61项，
+  共51源51题198项；41个整源不批准，旧完整独审/失败/损失均保留。
+  仅源/题/coverage排除及seed哈希变化，全部当前数学0重解。
+  fresh 01a1ee0f-9c22-7443-93db-62acc5b13c18只接选定依赖与完整有序union，
+  入口rawSHA84d7f6d9f8d9458325c2195316b8cb17709d3eb69e40487b535a74ee2744fc15。
+  仍active，不将派工或部分落盘算批准；366只准备必要持久留存/首次批显示。
+  父0新图/累计24，85选定包1448题5943项658组合不增；未commit/push。
+
+### batch360真实两blocked已接，part1/4首次独审接续
+
+- part4 FIRST独审现真实completed/process0，review rawSHA
+  d779cac75caa34909467d2638edd60abb6768a6428a6d608f2fd90ed102beb69；
+  23源21题87项全独审，数学真集一致，direct各一次/语义exit3/1图一次。
+  q1292联合约束可被第三线索绕过需修订；1285/1291/1293/1297/1298/1303/1305
+  真实HOLD保留。原图/数学不重审，按有效记录只准备排除后的选定子包。
+- 原三个运行进程均真实process0/completed，不重启；357作者稿part1
+  23源23题90项、part4 23源21题87项，各FIRST结构一次exit0，图8/1各一次。
+  原稿rawSHA为157d9705049e87c9fb3d72dab5bd9dc4306a53de8f2c8123a0709297c43b2116、
+  7023ca8ad3d9bee9e7a8a5f3ac9087a678bedc4ef6c46e869f6953d5d5430ef6；
+  作者HOLD不升级，part1/4由fresh 01a1edff-fb35-7692-a729-26ae9a078e08、
+  01a1edff-fb35-71c3-bbad-a3ac37351054分别接FIRST独审，8/1图原范围。
+- 360 part2真实blocked，review rawSHA
+  00558e512ed101eabd698a7858e6b77fe958bd3ba94fa838a96bb7d1a986478f；
+  part3真实blocked，review rawSHA
+  464c54e55c5805c9931d0de4699cd42c5bcc8fddc0a6e92e9c75474be93e8668。
+  各current direct check_draft/check_review一次，语义exit3；进程0不等于批准。
+  part2 1255固定最大值/重复分量损失与八源HOLD、part3 1268六价格/
+  1275切块分组缺口/1271题干泄漏与七条件HOLD保留，其他数学不重解。
+- 361仅修1268完整价格表、1275最少切块及两种分组；1271只去已给代数，
+  完整修复候选仍未批准。362仅1255 task/limitations/coverage诚实补损失，
+  view/key/其余数学不变；随后子包排除原条件HOLD，须真实增量回执方可收口。
+  父0新图/累计24，85选定包1448题5943项658关联组合不增，未commit/push。
+
+### batch354/355图21有限修复仍HOLD，转入无依赖5m首次选择题
+
+- 356 part2/part3作者现真实completed/process0，各FIRST direct check_draft
+  一次exit0；原稿rawSHA依次1ac75ab5259edcd29aa979631bed8d44158588b298327911aa2b75aecb2db405、
+  57846e0fe71d5b39e9343237665783f2426fe8439b32e03c2bf7903dd4198349。
+  23源20题72项与23源22题85项，仅结构成功；作者回执图数2/0。
+  1252/1258/1259及1277整源未出题，1242和六项partial条件边界保留，
+  不是数学/全源/整课批准，不把结构exit0作语义PASS。
+- 360两fresh FIRST审者01a1edc4-d7c0-70f1-be0f-f8a9626ac86a、
+  01a1edc4-d8ac-7711-9239-943829936de1已实际启动，分别2图/0图；
+  严格先全seed独解再纯view逐项，最后才读intent/key/coverage。
+  每人只写自己的标准review、一次current direct；不重原作者结构/SOURCE/图gate。
+  原fig200失败媒介不抹除，当前真实SVG媒介也不当新源/旧作者可见性批准。
+  part1/part4作者仍原范围在途，真实回执前全部current_approval:false/display_pending:true。
+- 354图21 FIRST cap2实际一次exit2/FAIL，两个x轴标签碰撞；receipt rawSHA
+  7c905424b3165a8214dee15048a8382d02ec89f09090be1cb91c99912ba2a9b8。
+  五坐标关系仅转成现有a/b/c三元断言；库存可见点标记要求的分类改写
+  尚未独立批准，不能据此声称源保真或合同问题已解除。
+- 355只补两个标签的labelPlacement，受影响render一次exit2/FAIL；
+  -2标签仍碰撞，receipt rawSHA
+  745080996f1d861bc13ca3155033c66e07c64f22e522cdee28a14c44570156a0。
+  两次640字高均18.5260625px，仅该机械测量PASS；原稿/输出/FAIL原字节保留，
+  不第三次渲染、不派图审或父方开图，不批准n19现代课/选择包。
+- 5m math5-c3-ex4已有现代课，仅缺首次选择题；拟按原序四个23源分段。
+  当前先准备part2=1237–1259两既有图、part3=1260–1282零图，
+  不选历史介绍作数学定义。尚无作者/独审完成证据，不增加批准统计。
+  测量/构造损失及未知约定据实际seed局部保留，不编造数值或全课批准。
+- 356两seed FIRST prepare各一次exit0；仅两既有SVG用现成svg_raster.js
+  栅格化为完整640展示媒介，没有spec renderer或原图gate重跑。
+  fresh作者实际ID依次01a1edb6-7782-73a2-8def-2a7a883e725c、
+  01a1edb6-7782-79d1-8dfa-654cbf741530，现仍在途；
+  每人只写自己的draft/各一次FIRST direct结构检查，不自批。
+  记录本入口时part1/4尚未派；后续357接两个真实空槽，见下。
+- 357剩余part1=1214–1236八图、part4=1283–1305一图的FIRST seed各一次exit0。
+  fresh作者实际ID为01a1edc0-25b1-7530-a958-fb3ec8dea8be、
+  01a1edc0-25b1-74c1-aa1a-e7b2772fa96a；四分段各独占23源，现均未获独审批准。
+- 原resvg媒介中fig200网格不可判读是作者真实反馈，不能当作原教材图缺失。
+  358仅用现有Chrome读实际未变SVG生成完整媒介，一张受影响fig200及九张未派时
+  part1/4媒介，receipt rawSHAb55c19aacf6988a15869498a179b6234ba215060ec570ed7d35f34302570e9c9。
+  原PNG/请求/seed全保留，无spec renderer、图gate、SOURCE或显示验收重跑；
+  字节/DOM不当独立图像理解，实际可读性仍待fresh各自回执。
+- 359仅将fig21原cap1、两失败输出和两命令原字节保留为14份持久历史资源，
+  retention rawSHA9a4e09cd5dfe6632c06526c43483ffb12f22c5807ac37a8ae8c3f16e92e6a09f；
+  无当前PASS gate、第三render、图片或数学审查。该历史留存不算新完成课/包。
+- 父0新图/累计24，85选定包1448题5943项658关联组合保持。
+  同一分支接续；不混入layout/其测试/监督ticket/无关4m，
+  无DB/APP/依赖/Charter/881或正式handoff提升。
+
+### 5fdf38f7三图窄资源push完成
+
+- 44文件实际commit/push 5fdf38f780719beb55b528250f40dcbb0131f2e1，远端完整SHA已核。
+  仅图22/23/24当前spec/render/SVG/标准gate及同字节原稿/首输出/原FAIL/增量回执，
+  不算n19/n20完成，不新增课/选择包；85包1448题5943项658关联组合保持。
+- 所有本轮有限助手与命令真实退出；父0新图/累计24。
+  原351三FAIL、347图21合同/25与26 SOURCE、页面计行及全部旧HOLD保留，
+  现代finalize/课级显示/选择题/APP/881不提升，正式Charter防线仍留正式handoff一次。
+  六处不可变报告Markdown硬换行空格如实保留，未改原回执字节/hash。
+  无layout/其测试/监督ticket/无关4m混入；后续push回执补记只留本地，不另做文档commit。
+
 ### e789ff19源与绑定窄push完成，351有限FAIL保留，353只补零图差异
 
 - 353后续真实completed/process0，实际审者01a1ed9e-3e4c-79b2-b86b-f6f54fcce09d。

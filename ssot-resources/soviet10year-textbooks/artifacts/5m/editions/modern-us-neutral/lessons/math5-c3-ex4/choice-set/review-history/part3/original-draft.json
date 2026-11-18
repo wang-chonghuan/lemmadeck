@@ -1,0 +1,845 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "e8b66df44fb065ac699b800d2ce9efb5f56435f2078f7371af6ea5e69ae6b914",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "q1260",
+      "source_numbers": ["1260"],
+      "view": {
+        "mode": "multiple",
+        "stem": "One box contains 10 pairs of brown socks and 10 pairs of black socks. Another contains 10 pairs of brown gloves and 10 pairs of black gloves. All socks have the same size, and all gloves have the same size. Items are taken without looking. The aim is to obtain a same-color pair of socks and a same-color pair of gloves. Which claims about guaranteed pairs and possible draws are true?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "Taking 3 socks guarantees a same-color sock pair.", "figure_ids": []},
+          {"id": "b", "text": "Taking 3 gloves guarantees a same-color glove pair.", "figure_ids": []},
+          {"id": "c", "text": "Taking 20 gloves can produce only left-hand gloves.", "figure_ids": []},
+          {"id": "d", "text": "Taking 2 socks guarantees a same-color sock pair.", "figure_ids": []},
+          {"id": "e", "text": "Taking 21 gloves guarantees a same-color glove pair.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Find sharp worst-case draw counts, distinguishing interchangeable socks from left/right gloves.",
+        "source_solution": "There are two sock colors. Two socks can be one of each color, whereas three force a repeated color, so the minimum sock draw is 3. A glove pair requires one left and one right of the same color. Each color has 10 left and 10 right gloves. A pair-free selection contains at most one handedness of each color, hence at most 10+10=20 gloves. That maximum is attained by all 20 left-hand gloves. Therefore 21 gloves suffice and 20 do not. The minima are independently 3 socks and 21 gloves. The prose requires matching color within each pair, not one shared color across the sock and glove pairs. No figure is present or opened.",
+        "unit_reason": "One native multiple task assesses the different pigeonhole models and the glove lower-bound witness, rather than encoding two numerical answers as a combination code.",
+        "concept_blocks": [],
+        "limitations": ["Selecting guarantees and a witness does not certify independently writing the sharpness proofs or physically sorting the items."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a", "c", "e"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "Distributing 3 socks between 2 colors leaves a color with at least 2 socks; two differently colored socks show the lower count is insufficient.", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Three brown left-hand gloves are an allowed draw and contain no wearable pair.", "misconception": "Apply the sock calculation ceil(3/2)=2 to gloves, then incorrectly identify two same-color gloves with a left/right pair."},
+          {"option_id": "c", "truth": "correct", "derivation": "The inventory contains 10 brown left-hand and 10 black left-hand gloves, giving an allowed 20-glove draw with no right-hand glove.", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "A draw of one brown sock and one black sock has no repeated color.", "misconception": "Use the number of colors, 2, as the guaranteed draw count instead of adding one beyond the pair-free maximum."},
+          {"option_id": "e", "truth": "correct", "derivation": "Among 21 gloves one color occurs at least 11 times; only 10 of a given color have the same handedness, so both hands occur.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q1261",
+      "source_numbers": ["1261"],
+      "view": {
+        "mode": "single",
+        "stem": "A cyclist travels between two cities at 10 km/h. At 12 km/h the cyclist would arrive 4 hours earlier. What is the distance between the cities?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "48 km", "figure_ids": []},
+          {"id": "b", "text": "8 km", "figure_ids": []},
+          {"id": "c", "text": "240 km", "figure_ids": []},
+          {"id": "d", "text": "40 km", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Recover one fixed distance from a difference of travel times at different speeds.",
+        "source_solution": "For distance D, D/10-D/12=4. Since 1/10-1/12=1/60, D=240 km. The travel times are 24 hours and 20 hours, whose difference is 4 hours. No figure is present or opened.",
+        "unit_reason": "The fixed-distance time comparison is one inference, not two independent speed multiplications.",
+        "concept_blocks": [],
+        "limitations": ["Recognition of the distance does not demonstrate independently forming and solving the time equation."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "At D=48 the time difference is 48/60=4/5 hour, not 4 hours.", "misconception": "Treat the 4-hour saving as the entire faster journey: D=12*4=48."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "At D=8 the time difference is 8/60=2/15 hour.", "misconception": "Multiply the speed difference by the time saving: D=(12-10)*4=8, confusing gained distance over a common time with a fixed-route time comparison."},
+          {"option_id": "c", "truth": "correct", "derivation": "D*(1/10-1/12)=4 gives D/60=4 and D=240 km.", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "At D=40 the time difference is 40/60=2/3 hour.", "misconception": "Treat the 4-hour saving as the entire slower journey: D=10*4=40."}
+        ]
+      }
+    },
+    {
+      "id": "q1262",
+      "source_numbers": ["1262"],
+      "view": {
+        "mode": "single",
+        "stem": "Stations A and B are 46 km apart. A group leaves A toward B at 5 km/h. Two hours later another group leaves B toward A at 4 km/h. How long after the second group departs do they meet?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "46/9 hours", "figure_ids": []},
+          {"id": "b", "text": "4 hours", "figure_ids": []},
+          {"id": "c", "text": "36 hours", "figure_ids": []},
+          {"id": "d", "text": "6 hours", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Combine a head start with opposite-direction closing speed and the requested time origin.",
+        "source_solution": "The first group covers 5*2=10 km before the second starts. The gap then is 46-10=36 km. Both now close that gap at 5+4=9 km/h, so the second group's travel time is 36/9=4 hours. The first group's total time is 6 hours; their meeting point is 30 km from A and 16 km from B. No figure is present or opened.",
+        "unit_reason": "Head-start reduction, relative speed, and time origin are coupled parts of one meeting calculation.",
+        "concept_blocks": [],
+        "limitations": ["Selecting the elapsed time does not certify a written distance-time model."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "The moving gap at the second departure is 36 km, not 46 km.", "misconception": "Ignore the first group's head start and calculate 46/(5+4)=46/9."},
+          {"option_id": "b", "truth": "correct", "derivation": "(46-5*2)/(5+4)=36/9=4 hours after the second departure.", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "Opposite-direction motion closes 36 km at 9 km/h, not 1 km/h.", "misconception": "Subtract speeds as in same-direction pursuit: (46-10)/(5-4)=36."},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Six hours is measured from the first departure, two hours earlier than the requested origin.", "misconception": "Solve 5t+4(t-2)=46 to get t=6, then report t without subtracting the 2-hour delay."}
+        ]
+      }
+    },
+    {
+      "id": "q1263",
+      "source_numbers": ["1263"],
+      "view": {
+        "mode": "multiple",
+        "stem": "A tram passenger notices a friend walking along the tram route in the opposite direction. After 10 seconds the passenger gets off and pursues the friend. The passenger walks twice as fast as the friend; the tram travels five times as fast as the passenger walks. The original task asks how many seconds the pursuit takes. Let the friend's speed be u. Which relative-speed claims follow from the supplied speed ratios?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "While the passenger is aboard, the tram and friend have relative speed 10u.", "figure_ids": []},
+          {"id": "b", "text": "During pursuit, the passenger closes a positive gap at speed u.", "figure_ids": []},
+          {"id": "c", "text": "During pursuit, the passenger closes a positive gap at speed 3u.", "figure_ids": []},
+          {"id": "d", "text": "While the passenger is aboard, the tram and friend have relative speed 11u.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Distinguish opposite-direction relative speed from same-direction pursuit without inventing the initial relative position.",
+        "source_solution": "The friend's speed is u>0, the passenger's walking speed is 2u, and the tram's speed is 10u. Before alighting, opposite-direction relative speed is 10u+u=11u. After alighting, same-direction closing speed is 2u-u=u. With the tram direction positive, let g be the signed initial tram position minus friend position. After 10 seconds that signed difference is g+110u. If the passenger is then behind the friend in the friend's direction of travel, the pursuit time is (g+110u)/u=110+g/u seconds. The source does not say they were abreast when the friend was noticed, so g is not determined. The familiar 110-second result requires the extra condition g=0; it is not asserted as a source answer. The relative-speed conclusions are independent of g. No figure is present or opened.",
+        "unit_reason": "The two stages require genuinely different relative-motion operations. Their invariant speed model remains substantial even though a unique pursuit duration is unavailable.",
+        "concept_blocks": [],
+        "limitations": ["Local HOLD: the unique pursuit duration lacks an initial relative position; noticing someone does not establish being abreast.", "Selecting the two relative-speed rules does not certify an independent full chase proof."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b", "d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "The friend's opposite-direction speed contributes u, making the relative speed 11u.", "misconception": "Use only the tram speed 5*(2u)=10u, treating the friend as stationary during the delay."},
+          {"option_id": "b", "truth": "correct", "derivation": "Both walkers now move in the friend's direction, so the closing speed is 2u-u=u.", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "The pursuit is same-direction rather than head-on, so addition is inapplicable.", "misconception": "Continue using the opposite-direction rule after alighting: 2u+u=3u."},
+          {"option_id": "d", "truth": "correct", "derivation": "The tram speed is 5*2u=10u; opposite directions give 10u+u=11u.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q1264",
+      "source_numbers": ["1264"],
+      "view": {
+        "mode": "multiple",
+        "stem": "A motorcyclist travels from city A to city B. At 35 km/h the arrival would be 2 hours late; at 50 km/h it would be 1 hour early. Which conclusions about the distance and the travel time needed for an on-time arrival are true?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "The travel time needed for an on-time arrival is 12 hours.", "figure_ids": []},
+          {"id": "b", "text": "The distance between the cities is 350 km.", "figure_ids": []},
+          {"id": "c", "text": "The travel time needed for an on-time arrival is 8 hours.", "figure_ids": []},
+          {"id": "d", "text": "The distance between the cities is 350/3 km.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Recover a fixed distance and scheduled duration from early/late deviations.",
+        "source_solution": "Let D be the distance in km and T the scheduled duration in hours. D/35=T+2 and D/50=T-1. Subtraction gives D*(1/35-1/50)=3, so D*(3/350)=3 and D=350 km. Then T=350/35-2=8 hours, also 350/50+1=8. The two actual travel times are 10 and 7 hours. No figure is present or opened.",
+        "unit_reason": "A single native multiple task evaluates the two coupled results of the same scheduling model without a pair-combination option code.",
+        "concept_blocks": [],
+        "limitations": ["Result recognition does not certify independently setting up the simultaneous conditions or writing their solution."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b", "c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "At distance 350 km the slower journey lasts 10 hours; the scheduled duration must be 2 hours less, namely 8.", "misconception": "Find D=350 correctly but reverse the lateness adjustment: T=350/35+2=12."},
+          {"option_id": "b", "truth": "correct", "derivation": "The slower and faster durations differ by 2+1=3 hours, so D=3/(1/35-1/50)=350 km.", "misconception": null},
+          {"option_id": "c", "truth": "correct", "derivation": "T=D/35-2=10-2=8 hours; the faster condition gives 7+1=8 as well.", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Distance 350/3 produces a duration difference of only 1 hour, rather than the required 3.", "misconception": "Subtract the early and late deviations instead of adding them: D=(2-1)/(1/35-1/50)=350/3."}
+        ]
+      }
+    },
+    {
+      "id": "q1265",
+      "source_numbers": ["1265"],
+      "view": {
+        "mode": "single",
+        "stem": "A train takes 45 seconds to pass a 450 m bridge and 15 seconds to pass a signal cabin. The original task asks for the train's length and speed. Let its length be L metres and its constant speed be v metres per second. Which equation models the complete passage of the train over the bridge?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "45v = L", "figure_ids": []},
+          {"id": "b", "text": "45v = 450", "figure_ids": []},
+          {"id": "c", "text": "45v = L + 450", "figure_ids": []},
+          {"id": "d", "text": "45v = L - 450", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Model the distance travelled from the train's front entering the bridge to its rear clearing the bridge.",
+        "source_solution": "Under the constant-speed model, complete bridge passage requires the front to travel L+450 metres, giving 45v=L+450. To turn the cabin time into L=15v one must interpret passing the cabin as passing a fixed observation point, rather than traversing its unspecified extent. With that additional point convention, 30v=450, v=15 m/s=54 km/h and L=225 m. If the 15 seconds instead describe passing a cabin of routewise extent h, then 15v=L+h, 30v=450-h, v=15-h/30 and L=225-3h/2; for 0<=h<150 these are positive and not unique. The frozen prose does not specify that extent or the point-passage convention, and does not explicitly state uniform speed. Thus numeric length/speed certification is held; the question explicitly conditions only its invariant bridge model on constant speed and does not assign a cabin measurement. No figure is present or opened.",
+        "unit_reason": "The whole-train clearance distance is the essential geometric modelling inference and survives independently of the missing cabin interpretation.",
+        "concept_blocks": [],
+        "limitations": ["Local HOLD: unique numerical train length and speed require a fixed-point cabin interpretation and uniform-speed model not explicitly settled by the prose.", "The assessed equation is conditional on visibly stated constant speed; it does not certify the unavailable complete numerical task."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "The front must cover the bridge length in addition to the train length.", "misconception": "Treat the bridge as a single point, transferring the point-passage formula vt=L to the 450 m bridge."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "When the front has travelled only 450 m, the rear has not yet cleared the bridge for L>0.", "misconception": "Time only the front's traversal and write vt=450, omitting the train length."},
+          {"option_id": "c", "truth": "correct", "derivation": "Between front entry and rear exit the front advances by the bridge length plus the distance from front to rear: 45v=450+L.", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Complete clearance adds the two lengths; it cannot be represented by their difference.", "misconception": "Subtract the bridge length from the train length when measuring rear clearance, obtaining vt=L-450."}
+        ]
+      }
+    },
+    {
+      "id": "q1266",
+      "source_numbers": ["1266"],
+      "view": {
+        "mode": "single",
+        "stem": "A train needs 10 hours to travel from station A to station B. If its speed were 10 km/h faster, it could cover the route within 8 hours. The original task asks for its speed and the distance. Let the original speed be v>0 km/h. Which inequality is an equivalent model of the faster journey's stated 'within 8 hours' requirement?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "10v/(v + 10) >= 8", "figure_ids": []},
+          {"id": "b", "text": "10v/(v - 10) <= 8", "figure_ids": []},
+          {"id": "c", "text": "8v/(v + 10) <= 10", "figure_ids": []},
+          {"id": "d", "text": "10v/(v + 10) <= 8", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Preserve an upper time bound when modelling the faster journey.",
+        "source_solution": "The original route length is D=10v km. The faster time is D/(v+10)=10v/(v+10) hours. Reading the frozen 'within 8 hours' as an upper bound gives 10v/(v+10)<=8, hence 10v<=8v+80, so 0<v<=40 and D=10v with 0<D<=400. These conditions do not determine a unique v or D: v=20,D=200 gives a faster time of 20/3 hours, and v=40,D=400 gives 8 hours. If exactly 8 hours were supplied, equality would give v=40 km/h and D=400 km, but that equality is not silently added. No figure is present or opened.",
+        "unit_reason": "The decisive distinction is an inequality versus an invented exact arrival time. It supports a substantive source model while leaving the requested unique numerical result on HOLD.",
+        "concept_blocks": [],
+        "limitations": ["Local HOLD: the literal upper bound admits a range of speeds and distances; exact values 40 km/h and 400 km are not certified.", "Selecting the inequality does not certify independently deriving the full admissible range."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Within 8 hours means the faster duration is at most 8, not at least 8.", "misconception": "Translate the deadline in the reversed direction, writing t>=8 rather than t<=8."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "A speed increase of 10 changes the denominator to v+10; v-10 can even be nonpositive for allowed v.", "misconception": "Keep D=10v but subtract the speed increase, giving t=10v/(v-10), then compare it with 8."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "This inequality holds for every v>0, since 8v<=10v+100, and therefore is not equivalent to the actual deadline restriction v<=40. The original route is 10v and the new deadline is 8.", "misconception": "Swap the original duration and the faster deadline, setting D=8v and comparing D/(v+10) with 10."},
+          {"option_id": "d", "truth": "correct", "derivation": "Distance D=10v divided by increased speed v+10 is the faster duration, which the source bounds above by 8.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q1267",
+      "source_numbers": ["1267"],
+      "view": {
+        "mode": "multiple",
+        "stem": "A skier calculates that travelling at 10 km/h would give an arrival at 1 p.m., while travelling at 15 km/h would give an arrival at 11 a.m. The skier wants to arrive at noon. Which conclusions about this journey are true?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "The route is 30 km long.", "figure_ids": []},
+          {"id": "b", "text": "The required speed for a noon arrival is 12 km/h.", "figure_ids": []},
+          {"id": "c", "text": "The common departure time is 7 a.m.", "figure_ids": []},
+          {"id": "d", "text": "The required speed for a noon arrival is 12.5 km/h.", "figure_ids": []},
+          {"id": "e", "text": "The route is 60 km long.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Determine the shared distance, establish the common departure time, and infer the speed for the intermediate clock-time arrival.",
+        "source_solution": "The arrival times differ by 2 hours, so D/10-D/15=2. Their reciprocal-speed difference is 1/30, giving D=60 km. At 10 km/h the journey takes 6 hours and ends at 13:00, so departure is 07:00. At 15 km/h it takes 4 hours and ends at 11:00, confirming that departure. Noon is 5 hours after 07:00, requiring speed 60/5=12 km/h. Averaging the two speeds would give 12.5, but travel duration, not speed, is halfway between the two durations. No figure is present or opened.",
+        "unit_reason": "One journey model has a distance inference and an intermediate-time speed inference linked through the common departure. Native multiple claims also assess the essential time-origin step.",
+        "concept_blocks": [],
+        "limitations": ["Recognizing distance, departure, and speed does not demonstrate an independently written time comparison."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b", "c", "e"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "For 30 km the two durations are 3 and 2 hours, differing by only 1 hour.", "misconception": "Use the 1-hour separation from noon to one arrival instead of the full 2-hour separation between the given arrivals: D=1/(1/10-1/15)=30."},
+          {"option_id": "b", "truth": "correct", "derivation": "D=60 and departure 07:00 leave 5 hours until noon, so v=60/5=12 km/h.", "misconception": null},
+          {"option_id": "c", "truth": "correct", "derivation": "At 10 km/h, 60 km takes 6 hours; 13:00 minus 6 hours is 07:00. The 15 km/h journey independently gives 11:00 minus 4 hours.", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Speed 12.5 over 60 km gives 4.8 hours, arriving at 11:48 rather than noon.", "misconception": "Take the arithmetic mean of speeds, (10+15)/2=12.5, because noon is the midpoint of the arrival clock times."},
+          {"option_id": "e", "truth": "correct", "derivation": "D*(1/10-1/15)=2 implies D/30=2, hence D=60 km.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q1268",
+      "source_numbers": ["1268"],
+      "view": {
+        "mode": "single",
+        "stem": "Alex and Lena each receive a coat, shoes, and a hat, costing $75 altogether. Each of Alex's items costs 1.5 times the corresponding item for Lena. Alex's coat costs 10 times Alex's hat and 3 times the price of Lena's shoes and hat. The original task asks for all six prices. What is the price of Lena's hat?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$3", "figure_ids": []},
+          {"id": "b", "text": "$2", "figure_ids": []},
+          {"id": "c", "text": "$15/8", "figure_ids": []},
+          {"id": "d", "text": "$5", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Resolve the linked price ratios through one pivotal unknown rather than assess six copied price slots.",
+        "source_solution": "Let Lena's hat cost h dollars and her shoes s dollars. Alex's hat costs 3h/2, Alex's coat costs 15h, and Lena's coat costs 10h. The coat condition using Lena's shoes and hat together gives 15h=3(s+h), hence s=4h. Lena's total is 10h+4h+h=15h; Alex's is 45h/2. Thus (75/2)h=75 and h=2. All six prices in dollars are: Lena coat 20, shoes 8, hat 2; Alex coat 30, shoes 12, hat 3. Totals are 30 and 45, adding to 75. The combined-cost reading of 'shoes and hat' is the coherent one: demanding Alex's coat be three times each separate price would force 15h=3h, then h=0 and all prices zero, contradicting the $75 total. No currency or names have been replaced. No figure is present or opened.",
+        "unit_reason": "Finding h requires the entire coupled system and determines all prices; it is a substantial response unit, not a randomly selected answer slot. The other five results remain explicit internal solutions, not individually certified responses.",
+        "concept_blocks": [],
+        "limitations": ["The five other prices are not individually elicited or certified, even though the keyed pivotal value determines them.", "Selecting one price does not demonstrate independently producing the six-price table or the system solution."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Three dollars is Alex's hat price, not Lena's.", "misconception": "Solve h=2 correctly but report the corresponding Alex price (3/2)*2=3 without reversing the person mapping."},
+          {"option_id": "b", "truth": "correct", "derivation": "Lena's total is 75/(1+1.5)=30. The ratio conditions give her coat, shoes, hat as 10h,4h,h, so 15h=30 and h=2 dollars.", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "The source relates Alex's coat to both Lena's shoes and hat, not only her shoes.", "misconception": "Drop the hat from 15h=3(s+h), obtaining s=5h. Lena's total then becomes 16h=30, so h=30/16=15/8."},
+          {"option_id": "d", "truth": "incorrect", "derivation": "The $75 total belongs to both people, while Lena's part is $30.", "misconception": "Use the correct Lena ratio total 15h but set it equal to the combined $75: h=75/15=5."}
+        ]
+      }
+    },
+    {
+      "id": "q1269",
+      "source_numbers": ["1269"],
+      "view": {
+        "mode": "single",
+        "stem": "On the first day a mowing team cuts half a meadow plus 2 hectares. On the second day it cuts 25% of the remaining area and the final 6 hectares. What is the meadow's area?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "16 hectares", "figure_ids": []},
+          {"id": "b", "text": "52 hectares", "figure_ids": []},
+          {"id": "c", "text": "12 hectares", "figure_ids": []},
+          {"id": "d", "text": "20 hectares", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Track the remaining area and distinguish a percentage of the remainder from a percentage of the original area.",
+        "source_solution": "Let A be the whole meadow and R the remainder after day one, in hectares. R=A/2-2. On day two R=R/4+6, so 3R/4=6 and R=8. Therefore A/2-2=8 and A=20 hectares. Day one cuts 12 and day two cuts 2+6=8, totalling 20. No figure is present or opened.",
+        "unit_reason": "The two remainder relations form one backwards percentage inference.",
+        "concept_blocks": [],
+        "limitations": ["Area recognition does not certify independently writing the successive remainder equations."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "An area of 16 gives only 6 hectares remaining after the actual first day, whereas the second-day condition requires 8.", "misconception": "Find R=8 but omit the extra 2 hectares on day one, solving A/2=8 to get A=16."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "The final 6 hectares are 75% of the day-two remainder, not 25%.", "misconception": "Set R/4=6, giving R=24; then A/2-2=24 gives A=52."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "Day one's extra 2 hectares reduce the remainder; they do not increase it.", "misconception": "Find R=8 but write the remainder as A/2+2, giving A/2+2=8 and A=12."},
+          {"option_id": "d", "truth": "correct", "derivation": "R=6/(1-1/4)=8 and A=2(R+2)=20 hectares.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q1270",
+      "source_numbers": ["1270"],
+      "view": {
+        "mode": "single",
+        "stem": "A harvest of mushrooms weighs 100 kg and is 99% water. After some drying, the water proportion is 98%. What is the weight after drying?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "50 kg", "figure_ids": []},
+          {"id": "b", "text": "99 kg", "figure_ids": []},
+          {"id": "c", "text": "98 kg", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Use conserved non-water mass while the denominator of the percentage changes.",
+        "source_solution": "Initially non-water material weighs 100*(1-0.99)=1 kg. Drying removes water, leaving that 1 kg of non-water material. At 98% water it is 2% of the new weight M, so 0.02M=1 and M=50 kg. Water mass then is 49 kg; the removed water weighs 50 kg. No figure is present or opened.",
+        "unit_reason": "One conservation argument determines the complete new mass; individual water and dry-mass answer slots are not separate questions.",
+        "concept_blocks": [],
+        "limitations": ["Selecting the weight does not demonstrate independently explaining the changing percentage base."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "The fixed 1 kg of non-water material is 2% of the final mass, yielding 1/(2/100)=50 kg.", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "At 99 kg and 98% water the non-water mass would be 1.98 kg, violating conservation.", "misconception": "Treat the change from 99% to 98% as a loss of 1% of the original 100 kg: 100-1=99."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "At 98 kg and 98% water the non-water mass would be 1.96 kg, not 1 kg.", "misconception": "Apply the final water percentage directly to the original total and call that the total weight: 100*(98/100)=98."}
+        ]
+      }
+    },
+    {
+      "id": "q1271",
+      "source_numbers": ["1271"],
+      "view": {
+        "mode": "multiple",
+        "stem": "A bus traveller first sees a two-digit number on a mileage marker. One hour later the marker number has three digits: its hundreds digit is the earlier units digit, its tens digit is zero, and its units digit is the earlier tens digit. Two hours after that three-digit observation, only its zero digit has changed to another digit. The original task asks for the bus speed. Write the successive readings as 10a+b, 100b+a, and 100b+10c+a, where a, b, c are digits from 1 to 9. Which changes in the marker numbers follow from these digit conditions?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "The first one-hour change is 99b - 9a.", "figure_ids": []},
+          {"id": "b", "text": "The subsequent two-hour change is 100c.", "figure_ids": []},
+          {"id": "c", "text": "The first one-hour change is 90b - 9a.", "figure_ids": []},
+          {"id": "d", "text": "The subsequent two-hour change is 10c.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Translate the complete digit and elapsed-time observations into place-value increments without assuming constant speed.",
+        "source_solution": "The first marker is 10a+b with a>=1. The next is 100b+a, so b>=1. Changing its zero tens digit gives 100b+10c+a with 1<=c<=9. The first increment is (100b+a)-(10a+b)=99b-9a, and the later increment over the stated two-hour interval is 10c. The reference to a zero two hours earlier identifies that later interval's starting observation as the three-digit reading, since neither digit of the first reading is zero. If a constant marker-distance rate V were additionally given, then 10c=2V and V=99b-9a, hence 5c=9(11b-a). Thus c=9, 11b-a=5, b=1, a=6; the readings would be 61,106,196 and V=45 marker-distance units per hour. The raw prose does not state constant speed, so equal distance rates over the two intervals are not forced. For example a=1,b=1,c=1 yields readings 11,101,111 with respective average rates 90 and 5 marker units per hour; the digit observations themselves remain satisfied. The unique speed and the interpretation of marker units as kilometres are held rather than supplied as extra transport rules. No figure is present or opened.",
+        "unit_reason": "The two place-value transformations are the indispensable mathematical core of the digit puzzle and are invariant under the unavailable speed assumption.",
+        "concept_blocks": [],
+        "limitations": ["Local HOLD: unique physical bus speed requires constant speed and an explicit distance-unit interpretation for marker numbers.", "The source's digit observations are assessed, but solving a constant-speed digit equation is not certified as a consequence of the raw conditions."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a", "d"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "Subtract 10a+b from 100b+a: 100b-b+a-10a=99b-9a.", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "The changed zero is in the tens position, whose contribution is 10c.", "misconception": "Assign the replacement digit to the hundreds place and calculate an increment of 100c."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "The original b occupies the units position, so its subtracted contribution is b rather than 10b.", "misconception": "Miswrite the first number as 10a+10b; subtracting it from 100b+a gives 90b-9a."},
+          {"option_id": "d", "truth": "correct", "derivation": "Subtract 100b+a from 100b+10c+a; the unchanged hundreds and units cancel, leaving 10c.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q1272",
+      "source_numbers": ["1272"],
+      "view": {
+        "mode": "single",
+        "stem": "A traveller must cross an 80 km desert, walks 20 km per day, and can carry at most three days' food and water. The traveller must establish a station on the route to store provisions. The original task asks how many days the crossing takes. Let the station be x kilometres from the starting end. On the final departure from that station toward the far end, no further provisions are obtained. Which inequality is equivalent to applying the three-day carrying limit to that entire final leg?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "x >= 60", "figure_ids": []},
+          {"id": "b", "text": "x <= 20", "figure_ids": []},
+          {"id": "c", "text": "x >= 20", "figure_ids": []},
+          {"id": "d", "text": "x <= 60", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Derive the indispensable cache-location lower bound from the final unsupported leg, without inventing a provisioning protocol.",
+        "source_solution": "A direct 80 km walk requires 80/20=4 days, exceeding the stated 3-day carrying limit. From the final departure from the sole route station, the remaining unsupported distance is 80-x. A three-day load supports at most 3*20=60 km, so 80-x<=60 and x>=20 km. This necessary bound uses only the stated endurance and route rate. A conditional familiar six-day plan uses a cache at 20 km: take a three-day load out for one day, leave one day's provisions, and return for one day using the retained one-day load; obtain a new three-day load at the start, walk to the cache in one day, collect the stored one-day load, and complete the final three days. Under free initial-end replenishment, lossless storage, divisible daily consumption, and allowed return trips, this totals 6 days and is minimal: a usable last cache lies at least 20 km from the start, at least one stocking return adds at least 40 km, and 120/20=6. Those logistical assumptions and replenishment resources are not supplied in the frozen seed; the unique completion time is therefore on local HOLD. No station construction or numerical provisioning model is asserted as source-authorized. No figure is present or opened.",
+        "unit_reason": "The remaining-leg inequality is a substantial necessary part of the depot optimization, unlike merely asking for the four-day direct walk. It is not represented as a complete crossing plan.",
+        "concept_blocks": [],
+        "limitations": ["Local HOLD: the unique crossing duration depends on an unspecified replenishment and cache-use protocol, initial-end resources, storage survival, and consumption divisibility.", "The lower bound does not certify an executable provisioning schedule or physically establishing the station."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Sixty kilometres bounds the final unsupported distance 80-x, not the station's distance from the start.", "misconception": "Convert three days to 60 km correctly, then place that threshold on x as a minimum instead of on 80-x as a maximum."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Solving 80-x<=60 reverses the inequality when negating: x>=20.", "misconception": "From -x<=-20 negate both sides without reversing the sign, yielding x<=20."},
+          {"option_id": "c", "truth": "correct", "derivation": "The final leg satisfies (80-x)/20<=3, so 80-x<=60 and x>=20.", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "The final leg restriction is 80-x<=60, equivalent to x>=20; x<=60 describes a different starting-end leg and is not equivalent to that final-leg restriction.", "misconception": "Apply the three-day limit to the starting-end-to-cache leg, writing x/20<=3 and x<=60, instead of the requested final unsupported leg."}
+        ]
+      }
+    },
+    {
+      "id": "q1273",
+      "source_numbers": ["1273"],
+      "view": {
+        "mode": "single",
+        "stem": "A city's residents consist of people who speak only English, people who speak only Spanish, and people who speak both. Spanish speakers are 85% of the residents and English speakers are 75%. What percentage speak both languages?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "10%", "figure_ids": []},
+          {"id": "b", "text": "60%", "figure_ids": []},
+          {"id": "c", "text": "40%", "figure_ids": []},
+          {"id": "d", "text": "75%", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Recover the intersection of two exhaustive overlapping populations.",
+        "source_solution": "The prose partitions all residents into English-only, Spanish-only, and bilingual groups, so the union is 100%. Inclusion-exclusion gives bilingual proportion 85%+75%-100%=60%. English-only is 100%-85%=15%, Spanish-only is 100%-75%=25%, and 15+25+60=100. No neither-language population is introduced. No figure is present or opened.",
+        "unit_reason": "One overlap inference determines the requested bilingual proportion; the monolingual values are supporting checks, not separate response slots.",
+        "concept_blocks": [],
+        "limitations": ["Selecting the percentage does not certify an independently written inclusion-exclusion argument."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "The difference of speaker proportions is the difference of monolingual groups, not their intersection.", "misconception": "Subtract the totals, 85-75=10, and call that the bilingual percentage."},
+          {"option_id": "b", "truth": "correct", "derivation": "Both-language proportion is 85+75-100=60 percent.", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "Forty percent is the sum of the two monolingual groups, 15+25.", "misconception": "Calculate the non-English 25% and non-Spanish 15%, then add 25+15=40 and label that sum bilingual."},
+          {"option_id": "d", "truth": "incorrect", "derivation": "The exhaustive union condition forces 60%, not merely the smaller language total.", "misconception": "Assume every English speaker also speaks Spanish and identify the intersection with min(85,75)=75."}
+        ]
+      }
+    },
+    {
+      "id": "q1274",
+      "source_numbers": ["1274"],
+      "view": {
+        "mode": "single",
+        "stem": "Share 7 apples equally among 12 people. No apple may be cut into five or more pieces. Which plan meets both the equal-share and per-apple cutting conditions?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "Cut 6 apples into halves and 1 into twelfths; give each person one half and one twelfth.", "figure_ids": []},
+          {"id": "b", "text": "Cut 3 apples into thirds and 4 into quarters; give each person one third and one quarter.", "figure_ids": []},
+          {"id": "c", "text": "Cut 3 apples into quarters and 4 into thirds; give each person one quarter and one third.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Recognize a feasible equal partition while simultaneously checking piece supplies and the maximum cuts per apple.",
+        "source_solution": "Each person needs 7/12 of an apple. The decomposition 7/12=1/4+1/3 suggests twelve quarters and twelve thirds. Three apples cut into four equal pieces supply exactly twelve quarters, and four apples cut into three equal pieces supply exactly twelve thirds. Giving one of each to each person uses all seven apples and no apple has more than four pieces. This is one valid construction, not a uniqueness claim. The frozen prohibition on five or more pieces is preserved as at most four. No figure is present or opened.",
+        "unit_reason": "A complete cutting-and-distribution plan must satisfy both fractional equality and global inventory; those checks cannot be reduced to counting printed subparts.",
+        "concept_blocks": [],
+        "limitations": ["Recognition does not certify independently inventing the decomposition, drawing a cutting plan, or physically cutting and distributing equal pieces."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "The proposed portions do total 1/2+1/12=7/12 and the supplies are sufficient, but the last apple has 12 pieces, violating the maximum of 4.", "misconception": "Use 7/12=1/2+1/12 and satisfy the twelve-recipient counts with 6*2 and 1*12 pieces, without checking the per-apple piece cap."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "The portion size is right, but three apples supply only 9 thirds, fewer than the required 12; four apples supply 16 quarters rather than 12.", "misconception": "Find 7/12=1/3+1/4 but assign 3 apples to thirds and 4 to quarters by matching the apple counts to the denominators, overlooking the supplies 3*3=9 and 4*4=16."},
+          {"option_id": "c", "truth": "correct", "derivation": "Three quartered apples yield 12 quarters and four thirded apples yield 12 thirds. Each portion is 1/4+1/3=7/12, with at most four pieces per apple.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q1275",
+      "source_numbers": ["1275"],
+      "view": {
+        "mode": "single",
+        "stem": "Cut a 600 g cake into pieces so that the same cut pieces can be shared equally among 3 people or, alternatively, among 4 people. Pieces need not all have equal weights, and the sharing uses whole cut pieces without cutting them again. What is the minimum number of pieces?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "12 pieces", "figure_ids": []},
+          {"id": "b", "text": "4 pieces", "figure_ids": []},
+          {"id": "c", "text": "5 pieces", "figure_ids": []},
+          {"id": "d", "text": "6 pieces", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Find a nonuniform common partition and prove a lower bound on its piece count.",
+        "source_solution": "Six pieces with weights 150,150,100,100,50,50 g sum to 600. For three people, group them as (150+50),(150+50),(100+100), each 200 g. For four people, use 150,150,(100+50),(100+50), each 150 g. Fewer than four positive pieces cannot supply four recipients. With four or five pieces partitioned into four positive 150 g shares, at least three shares must consist of a single 150 g piece. In any three-person 200 g partition, two such pieces cannot belong to the same share. Each of those three single 150 g pieces therefore needs additional 50 g, requiring at least three other pieces; four or five total pieces cannot provide them. Thus at least six are needed, and the exhibited six-piece plan attains the bound. Uniform 50 g pieces give twelve pieces but are not required. This proves the minimum and supplies one construction without claiming a unique cutting geometry. No figure is present or opened.",
+        "unit_reason": "Minimum piece count combines existence and impossibility; it is one optimization task, not two separate recipient-count problems.",
+        "concept_blocks": [],
+        "limitations": ["The response does not certify independently producing the six weights, either grouping, the lower-bound proof, or a physical cutting layout.", "The visible whole-piece interpretation makes the common fixed partition explicit; it is not a statement that all pieces must be equal."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Twelve equal 50 g pieces work, but the six-piece nonuniform construction proves they are not minimal.", "misconception": "Impose equal weights on all pieces and take lcm(3,4)=12 as a minimum for a problem that permits unequal pieces."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Four pieces serving four people must each weigh 150 g, and whole multiples of 150 cannot form 200 g shares.", "misconception": "Cut 600/4=150 g pieces, count four recipients, and overlook the alternative three-person partition."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "The lower-bound argument excludes every five-piece plan. A tempting list 200,150,100,100,50 totals 600 and makes three 200 g shares, but its 200 g piece cannot belong to any 150 g share.", "misconception": "Construct the five weights 200,150,100,100,50; verify 200,(150+50),(100+100) for three people; then declare five sufficient without checking the four-person partition."},
+          {"option_id": "d", "truth": "correct", "derivation": "The weights 150,150,100,100,50,50 achieve both partitions, while any four- or five-piece four-way partition needs three 150 g singleton pieces that cannot be completed into three 200 g groups with only the remaining pieces.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q1276",
+      "source_numbers": ["1276"],
+      "view": {
+        "mode": "single",
+        "stem": "Starting with a full cup of coffee, I drink 1/6 of a cup and refill it with milk. I then drink 1/3 of a cup and refill with milk, drink half a cup and refill with milk, and finally drink the entire cup. Which comparison of the total amounts consumed is correct?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "More milk than coffee was consumed.", "figure_ids": []},
+          {"id": "b", "text": "More coffee than milk was consumed.", "figure_ids": []},
+          {"id": "c", "text": "Equal amounts of coffee and milk were consumed.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Use conservation over repeated refills rather than assume each later drink is pure milk.",
+        "source_solution": "The original coffee volume is one cup and no coffee is subsequently added. The cup is empty at the end, so all one cup of coffee is consumed. Milk added is exactly the vacancy after each drink: 1/6+1/3+1/2=1 cup. All that milk is also eventually consumed. Thus coffee and milk are equal, one cup each; the total liquid consumed is 1/6+1/3+1/2+1=2 cups. This does not require a mixing convention, because only total material balance matters. No figure is present or opened.",
+        "unit_reason": "The aggregate material balance is the decisive inference; assessing successive mixture concentrations would add an unnecessary model.",
+        "concept_blocks": [],
+        "limitations": ["Comparison recognition does not certify independently writing the conservation argument or carrying out the physical refill sequence."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "The cup retains some coffee after the first drink, and eventually all the original coffee is drunk; later liquid cannot all be assigned to milk.", "misconception": "Count only the initial 1/6 cup as coffee and label every later drink milk: milk=1/3+1/2+1=11/6 cups, falsely exceeding coffee=1/6."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Milk includes all three additions, not just the last refill.", "misconception": "Correctly count the original one cup of coffee but count only the last half-cup milk addition: 1>1/2, yielding the wrong comparison."},
+          {"option_id": "c", "truth": "correct", "derivation": "All original coffee is consumed: 1 cup. All added milk is consumed: 1/6+1/3+1/2=1 cup. The amounts are equal.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q1278",
+      "source_numbers": ["1278"],
+      "view": {
+        "mode": "multiple",
+        "stem": "The fraction m/n is in lowest terms. The original task asks whether m/(n+m), m/(n+mn), and n/(2*n+3n) can be reduced. Judge the following claims only where the displayed fraction has a nonzero denominator; no extra restriction on m or n is supplied. Which claims are true?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "Where its denominator is nonzero, m/(n+m) is necessarily in lowest terms.", "figure_ids": []},
+          {"id": "b", "text": "Where its denominator is nonzero, n/(2*n+3n) necessarily admits a nontrivial reduction.", "figure_ids": []},
+          {"id": "c", "text": "Where its denominator is nonzero, m/(n+mn) is necessarily in lowest terms.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Prove preservation of coprimality and distinguish equality after cancellation from an actual nontrivial reduction.",
+        "source_solution": "Writing an integer fraction in lowest terms gives n!=0 and gcd(|m|,|n|)=1. Where n+m!=0, gcd(m,n+m)=gcd(m,n)=1, so the first fraction is irreducible. Its denominator can vanish if m=-n; coprimality allows examples m=-1,n=1 or m=1,n=-1. The second denominator is n(1+m), which vanishes for m=-1. Where it is nonzero, gcd(m,n)=1 and gcd(m,m+1)=1 imply gcd(m,n(m+1))=1, so that fraction is also irreducible. The third fraction is n/(5n)=1/5 because n!=0, and gcd(|n|,|5n|)=|n|. It admits a nontrivial reduction exactly when |n|>1; for n=1 or n=-1 it is already in lowest terms. Even under a positive-integer reading, n=1 is not excluded. Therefore an unconditional three-entry yes/no answer cannot silently assume n>1 or that the first two new denominators are nonzero. The invariant conditional first-two conclusions and the failure of universal third reducibility are assessed. No figure is present or opened.",
+        "unit_reason": "One native multiple task requires independent coprimality arguments and a boundary counterexample, not a three-letter combination code.",
+        "concept_blocks": [],
+        "limitations": ["Local HOLD: the source's unqualified reducibility table lacks a supplied domain excluding zero new denominators or n=1.", "Recognition does not certify independently writing either coprimality proof or producing the boundary counterexample."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a", "c"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "Any common divisor of m and n+m also divides (n+m)-m=n, so it must be 1 by the original coprimality.", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "For m=1,n=1 the source fraction is reduced and the third fraction is 1/5, with gcd(1,5)=1; no nontrivial reduction is possible.", "misconception": "Factor the denominator as 5n and cancel n, then assume cancellation always removes a factor greater than 1, overlooking n=1."},
+          {"option_id": "c", "truth": "correct", "derivation": "No prime dividing m can divide n by coprimality or m+1 by consecutive-integer coprimality; therefore no prime divides both m and n(m+1).", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q1279",
+      "source_numbers": ["1279"],
+      "view": {
+        "mode": "single",
+        "stem": "Ben eats one third of all the apples plus 2 apples. Jamie eats one quarter of all the apples plus 1 apple. Cole eats half of what remains. The final remainder is one sixth of the original total. How many apples were there originally?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "12 apples", "figure_ids": []},
+          {"id": "b", "text": "72 apples", "figure_ids": []},
+          {"id": "c", "text": "36 apples", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Track fractions of the original total separately from a later fraction of the remainder.",
+        "source_solution": "Let N be the initial apple count. After Ben and Jamie the remainder is N-(N/3+2)-(N/4+1)=5N/12-3. Cole leaves half of that, so 5N/24-3/2=N/6. Thus N/24=3/2 and N=36. Ben eats 14, Jamie eats 10, leaving 12; Cole eats 6 and leaves 6, which is 36/6. All actual counts are whole apples. No figure is present or opened.",
+        "unit_reason": "The distinction between original-total fractions and a remainder fraction is one complete backwards inventory inference.",
+        "concept_blocks": [],
+        "limitations": ["Selecting the initial count does not certify independently forming the remainder equation or listing and checking all eaten amounts."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "With 12 initial apples, Ben eats 6 and Jamie 4, leaving 2 before Cole and only 1 after Cole; the required final sixth is 2.", "misconception": "Omit Cole's halving and equate 5N/12-3=N/6, yielding N/4=3 and N=12."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "The entire expression 5N/12-3 must be halved; the subtraction 3 also becomes 3/2.", "misconception": "Halve only the fractional term and write 5N/24-3=N/6, giving N/24=3 and N=72."},
+          {"option_id": "c", "truth": "correct", "derivation": "(5N/12-3)/2=N/6 gives N/24=3/2 and N=36, with final remainder 6 apples.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q1280",
+      "source_numbers": ["1280"],
+      "view": {
+        "mode": "multiple",
+        "stem": "Reduce the fractions 37,373,737/81,818,181 and 609,609,609/205,205,205 to lowest terms. Which proposed results are correct?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "37,373,737/81,818,181 reduces to 37/81.", "figure_ids": []},
+          {"id": "b", "text": "609,609,609/205,205,205 reduces to 203/205.", "figure_ids": []},
+          {"id": "c", "text": "37,373,737/81,818,181 reduces to 37/27.", "figure_ids": []},
+          {"id": "d", "text": "609,609,609/205,205,205 reduces to 609/205.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Factor repeated decimal blocks and verify that subsequent cancellation uses common factors on both sides.",
+        "source_solution": "The first numerator is 37*(1+100+10000+1000000)=37*1010101 and its denominator is 81*1010101. Cancelling gives 37/81, which is reduced since 37 is prime and does not divide 81. The second numerator is 609*(1+1000+1000000)=609*1001001 and its denominator is 205*1001001. Cancelling gives 609/205. Euclid gives 609=2*205+199, 205=199+6, 199=33*6+1, so gcd(609,205)=1. Both fractions are completely reduced. The two repeating-block widths differ but the common geometric-factor principle is coherent. No figure is present or opened.",
+        "unit_reason": "One native multiple task assesses the common repeating-block principle at two block widths and the legitimacy of further cancellation, without turning each written fraction into a separate click.",
+        "concept_blocks": [],
+        "limitations": ["Recognizing reduced forms does not certify independently factoring the decimal patterns or writing a gcd proof for either result."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a", "d"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "Cancel the common factor 1010101 from 37*1010101 and 81*1010101; gcd(37,81)=1.", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "After common block cancellation the result is 609/205; 3 divides 609 but not 205.", "misconception": "Cancel the common block factor correctly, then divide only the numerator by 3 because 6+0+9=15 is divisible by 3: (609/3)/205=203/205."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "After common block cancellation the result is 37/81; 3 divides 81 but not 37.", "misconception": "Cancel the common block factor correctly, then divide only the denominator by 3 because 8+1=9 is divisible by 3: 37/(81/3)=37/27."},
+          {"option_id": "d", "truth": "correct", "derivation": "Cancel 1001001 to obtain 609/205. The Euclidean remainder chain 199,6,1 proves the reduced numerator and denominator are coprime.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q1281",
+      "source_numbers": ["1281"],
+      "view": {
+        "mode": "single",
+        "stem": "Consider the fraction (382 + 498*381)/(382*498 - 116). Which comparison of its numerator and denominator determines its value?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "The numerator is 116 less than the denominator.", "figure_ids": []},
+          {"id": "b", "text": "The numerator and denominator are equal.", "figure_ids": []},
+          {"id": "c", "text": "The numerator is 498 greater than the denominator.", "figure_ids": []},
+          {"id": "d", "text": "The numerator is 382 less than the denominator.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Recognize an exact identity that avoids large products while determining the entire fraction.",
+        "source_solution": "Use 381=382-1. Then 382+498*381=382+498*(382-1)=382*498+382-498=382*498-116, exactly the denominator. The common value is 382*498-116=190120, which is nonzero, so the fraction equals 1. Direct multiplication also gives 498*381=189738 and 189738+382=190120. No figure is present or opened.",
+        "unit_reason": "Equality of the full numerator and denominator is the decisive complete inference determining value 1, not a minor intermediate arithmetic slot.",
+        "concept_blocks": [],
+        "limitations": ["Recognizing equality does not certify independently deriving the identity or writing the value 1 as a free response."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "The actual difference is 382-498+116=0, not -116.", "misconception": "Drop the denominator's -116 term and compare with 382*498, obtaining difference 382-498=-116."},
+          {"option_id": "b", "truth": "correct", "derivation": "Replace 381 by 382-1; the numerator becomes 382*498+(382-498)=382*498-116, equal to the denominator.", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "The factor in the numerator is 381, not 382, and that one-factor difference contributes -498.", "misconception": "Replace 381 by 382 without the compensating -1; compare 382+498*382 with 382*498-116 to get the erroneous excess 382+116=498."},
+          {"option_id": "d", "truth": "incorrect", "derivation": "The source numerator includes the initial +382 term.", "misconception": "Omit that +382, comparing 498*381 with 498*382-116; the difference is -498+116=-382."}
+        ]
+      }
+    },
+    {
+      "id": "q1282",
+      "source_numbers": ["1282"],
+      "view": {
+        "mode": "single",
+        "stem": "Find the value of 1/(1*2) + 1/(2*3) + 1/(3*4) + ... + 1/(19*20).",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "18/19", "figure_ids": []},
+          {"id": "b", "text": "20/21", "figure_ids": []},
+          {"id": "c", "text": "1/20", "figure_ids": []},
+          {"id": "d", "text": "19/20", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Evaluate a telescoping sum with the exact first and last terms preserved.",
+        "source_solution": "For k=1,...,19, 1/[k(k+1)]=1/k-1/(k+1). Adding gives (1-1/2)+(1/2-1/3)+...+(1/19-1/20). All intermediate terms cancel, leaving 1-1/20=19/20. The range includes 19 terms and its final denominator endpoint is 20. No figure is present or opened.",
+        "unit_reason": "The full telescoping result depends on decomposition, cancellation, and both endpoints; there is no reason to split term evaluations.",
+        "concept_blocks": [],
+        "limitations": ["Selecting the fraction does not certify independently writing the decomposition and cancellation proof."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "The stated sum includes 1/(19*20), which adds 1/380 to 18/19 and produces 19/20.", "misconception": "Stop one term early at k=18 and telescope to 1-1/19=18/19."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "The source ends at k=19, not k=20.", "misconception": "Treat the final endpoint 20 as another summation index, add 1/(20*21), and telescope to 1-1/21=20/21."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "Cancellation leaves both the initial +1 and final -1/20, not just the magnitude of the final reciprocal.", "misconception": "After cancelling intermediate reciprocals, discard the initial +1 and report the magnitude 1/20 of the remaining negative endpoint."},
+          {"option_id": "d", "truth": "correct", "derivation": "The difference decomposition cancels all internal endpoints and leaves 1-1/20=19/20.", "misconception": null}
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {
+      "source_number": "1260",
+      "question_ids": ["q1260"],
+      "omitted_tasks": ["Independent written upper- and lower-bound proofs and physical selection are not certified."],
+      "reason": "Both sharp minima and the glove worst-case witness are assessed as mathematical judgments; the within-pair color condition and handedness distinction are retained."
+    },
+    {
+      "source_number": "1261",
+      "question_ids": ["q1261"],
+      "omitted_tasks": ["Independent production of the fixed-distance time equation and its solution is not certified."],
+      "reason": "The complete requested distance is assessed; both speeds and the four-hour difference remain visible."
+    },
+    {
+      "source_number": "1262",
+      "question_ids": ["q1262"],
+      "omitted_tasks": ["Independent production of the head-start and relative-motion calculation is not certified."],
+      "reason": "The requested elapsed time from the second departure is assessed with all starting distances, speeds, and delay preserved."
+    },
+    {
+      "source_number": "1263",
+      "question_ids": ["q1263"],
+      "omitted_tasks": ["HOLD: a unique numerical pursuit duration cannot be inferred without an initial relative position.", "A full chase model and independent written solution are not certified."],
+      "reason": "The substantial two-stage relative-speed distinction is assessed. The complete source solution in intent gives duration 110+g/u when the signed initial offset permits pursuit; 110 seconds is only conditional on an unprovided abreast position."
+    },
+    {
+      "source_number": "1264",
+      "question_ids": ["q1264"],
+      "omitted_tasks": ["Independent writing of the simultaneous scheduling equations and derivation is not certified."],
+      "reason": "The distance and scheduled duration are both assessed as native independent judgments within the same coupled model."
+    },
+    {
+      "source_number": "1265",
+      "question_ids": ["q1265"],
+      "omitted_tasks": ["HOLD: numerical train length and speed depend on the unresolved point-versus-extent cabin interpretation and uniform-speed model.", "Independent construction of a complete train-passage solution is not certified."],
+      "reason": "The whole-train bridge-clearance equation is assessed under an explicit visible constant-speed condition. No cabin measurement is invented. Intent records both the conditional point answer, 225 m and 15 m/s, and the unresolved extent family."
+    },
+    {
+      "source_number": "1266",
+      "question_ids": ["q1266"],
+      "omitted_tasks": ["HOLD: unique speed and distance are not determined by a literal 'within 8 hours' upper bound.", "Independent derivation of the entire feasible speed-distance range is not certified."],
+      "reason": "The decisive inequality model is assessed while retaining the original deadline. Intent establishes 0<v<=40 and D=10v; the boundary pair 40 km/h,400 km is not presented as uniquely implied."
+    },
+    {
+      "source_number": "1267",
+      "question_ids": ["q1267"],
+      "omitted_tasks": ["Independent production of the distance, common departure, and noon-speed derivation is not certified."],
+      "reason": "Both requested results and their essential common-time origin are assessed without replacing clock times by an average-speed rule."
+    },
+    {
+      "source_number": "1268",
+      "question_ids": ["q1268"],
+      "omitted_tasks": ["The other five individual prices are not explicitly assessed.", "Independent construction of the full six-price table and ratio-equation solution is not certified."],
+      "reason": "Lena's hat is the pivotal unknown of the full linked system, not an isolated arithmetic slot. Intent solves all six prices exactly, retaining Alex, Lena, dollars, and all source ratios; the unelicited five-price production is recorded honestly."
+    },
+    {
+      "source_number": "1269",
+      "question_ids": ["q1269"],
+      "omitted_tasks": ["Independent production of successive remainder equations is not certified."],
+      "reason": "The whole meadow area is assessed with the extra 2 hectares and the percentage of the remaining area preserved."
+    },
+    {
+      "source_number": "1270",
+      "question_ids": ["q1270"],
+      "omitted_tasks": ["Independent written conservation and changing-percentage-base reasoning are not certified."],
+      "reason": "The complete dried weight is assessed; both measured proportions and the original 100 kg remain unchanged."
+    },
+    {
+      "source_number": "1271",
+      "question_ids": ["q1271"],
+      "omitted_tasks": ["HOLD: a unique numerical bus speed requires an unstated constant-speed rule and a marker-distance unit interpretation.", "Independent solution of the conditional digit equation is not certified."],
+      "reason": "Both exact marker increments are assessed with every digit condition and elapsed interval visible. Intent independently obtains the conditional readings 61,106,196 and rate 45, and demonstrates that raw digit observations alone allow unequal interval rates."
+    },
+    {
+      "source_number": "1272",
+      "question_ids": ["q1272"],
+      "omitted_tasks": ["HOLD: the completion duration lacks an authorized replenishment, storage, return-trip, and divisible-consumption protocol.", "An executable provisioning schedule and physical depot construction are not certified."],
+      "reason": "The necessary last-cache location x>=20 km is a substantial invariant optimization subtask. Intent gives the full conditional six-day plan and lower bound only with its additional logistical premises named, not silently imported."
+    },
+    {
+      "source_number": "1273",
+      "question_ids": ["q1273"],
+      "omitted_tasks": ["Independent written inclusion-exclusion reasoning is not certified."],
+      "reason": "The complete bilingual percentage is assessed under the source's exhaustive three-group population, with English and Spanish retained."
+    },
+    {
+      "source_number": "1274",
+      "question_ids": ["q1274"],
+      "omitted_tasks": ["Independent invention or drawing of a valid partition and physical cutting/distribution are not certified."],
+      "reason": "A complete seven-apple plan is assessed for both inventories and equal portions, while retaining the prohibition on five or more pieces per apple. No unique construction is claimed."
+    },
+    {
+      "source_number": "1275",
+      "question_ids": ["q1275"],
+      "omitted_tasks": ["Independent production of the six piece weights, both grouping constructions, and the minimum proof is not certified.", "Physical cutting or a drawing of a cake layout is not assessed."],
+      "reason": "The genuine minimum-count optimization is assessed; intent provides a complete six-piece construction and a lower-bound proof, rather than imposing equal pieces or an unsupported unique geometry."
+    },
+    {
+      "source_number": "1276",
+      "question_ids": ["q1276"],
+      "omitted_tasks": ["Independent conservation proof and physical execution of the refill sequence are not certified."],
+      "reason": "The full comparison is assessed using all four drinks and three refills. Aggregate balance makes an unspecified mixing model unnecessary."
+    },
+    {
+      "source_number": "1277",
+      "question_ids": [],
+      "omitted_tasks": ["HOLD: the 25-cent reimbursement split is underdetermined without equal packet quantities and a common value per quantity.", "HOLD: a unique price for one packet is not determined without packet comparability and a pricing rule.", "Independent fair-share accounting is deferred; no option set is manufactured."],
+      "reason": "Full independent source analysis: Jamie buys 3 packets, Alex 2, and Casey shares the peanuts equally and pays 25 cents. Packet masses and comparable prices are not stated. Under the additional equal-packet/common-price model, each consumes 5/3 packets. Jamie supplies 3-5/3=4/3 packets to Casey and Alex supplies 2-5/3=1/3, giving a 4:1 reimbursement split, Jamie 20 cents and Alex 5 cents; unit packet price is 25/(5/3)=15 cents. That conditional result is not source-certified. To expose the free variable algebraically without inventing measured packet sizes, let Jamie's total quantity be J and Alex's be A. Each consumes (J+A)/3. Their net transfers are (2J-A)/3 and (2A-J)/3, so even assuming a common per-quantity price the reimbursement ratio is (2J-A):(2A-J), which depends on J/A. Counts of packets alone do not determine J/A. No substantial numerical reimbursement or packet-price task survives without adding those premises, so no question is authored. The held full-source solution is recorded here because the contract supplies no intent object for a source with zero questions. No figure is present or opened."
+    },
+    {
+      "source_number": "1278",
+      "question_ids": ["q1278"],
+      "omitted_tasks": ["HOLD: an unconditional three-fraction reducibility table needs unresolved domain and denominator conventions.", "Independent production of the two coprimality proofs and the n=1 counterexample is not certified."],
+      "reason": "The invariant conditional judgments are assessed without a natural-number convention or n>1 assumption. Intent resolves all three expressions, including vanishing new denominators and the precise condition |n|>1 for nontrivial reduction of the third."
+    },
+    {
+      "source_number": "1279",
+      "question_ids": ["q1279"],
+      "omitted_tasks": ["Independent production of the full apple-count equation and numerical inventory check is not certified."],
+      "reason": "The requested initial total is assessed; Jamie's quarter remains a fraction of all original apples, while Cole's half remains a fraction of the then-current remainder."
+    },
+    {
+      "source_number": "1280",
+      "question_ids": ["q1280"],
+      "omitted_tasks": ["Independent production of both repeated-block factorizations and gcd justifications is not certified."],
+      "reason": "Both complete lowest-term results are assessed in one coherent task; incorrect alternatives arise from actual one-sided cancellations, not arbitrary nearby fractions."
+    },
+    {
+      "source_number": "1281",
+      "question_ids": ["q1281"],
+      "omitted_tasks": ["Independent production of the identity and a freely written final value are not certified."],
+      "reason": "The exact equality of the whole numerator and denominator is assessed and completely determines value 1; intent also verifies the nonzero denominator."
+    },
+    {
+      "source_number": "1282",
+      "question_ids": ["q1282"],
+      "omitted_tasks": ["Independent production of the difference decomposition and complete telescoping proof is not certified."],
+      "reason": "The full sum is assessed with k=1 through 19 and the right endpoint 20 unchanged; wrong values arise from explicit endpoint or cancellation errors."
+    }
+  ]
+}

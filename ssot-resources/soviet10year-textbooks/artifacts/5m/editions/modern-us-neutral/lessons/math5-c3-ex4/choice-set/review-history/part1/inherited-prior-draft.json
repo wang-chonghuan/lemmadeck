@@ -1,0 +1,789 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "f9da49a92461dfb13ed7df8b9d0fab1447a9b5d79e7afab8efd2f7e36187157b",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "q-terminal-arithmetic",
+      "source_numbers": ["1214"],
+      "view": {
+        "mode": "multiple",
+        "stem": "Consider the sum 26*27*28*29 + 51*52*53*54, the difference 41*43*45*47 - 37*39*41*42, the product of every natural number from 7 through 81 inclusive, and the sum of all three-digit numbers. Select every true assertion about their last digits.",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "The first sum has last digit 8.", "figure_ids": []},
+          {"id": "B", "text": "The difference has last digit 1.", "figure_ids": []},
+          {"id": "C", "text": "The product from 7 through 81 has last digit 0.", "figure_ids": []},
+          {"id": "D", "text": "The sum of all three-digit numbers has last digit 0.", "figure_ids": []},
+          {"id": "E", "text": "The difference has last digit 9.", "figure_ids": []},
+          {"id": "F", "text": "The product from 7 through 81 has last digit 5.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Determine all four terminal digits using modular arithmetic, zero factors and the inclusive arithmetic-series boundaries.",
+        "source_solution": "Solved all four expressions before alternatives. Modulo 10, the first product is 6*7*8*9 = 3024, hence 4; the second is 1*2*3*4 = 24, hence 4, so their sum ends in 8. In the difference the residues are 1*3*5*7 = 105 and 7*9*1*2 = 126: 5-6 = -1, whose nonnegative residue is 9. The actual difference is positive, since 41*43*45*47 = 3728745 and 37*39*41*42 = 2484846; it is 1243899. The inclusive product 7 through 81 contains 10, so ends in 0 irrespective of whether a natural-number convention includes 0 outside this specified interval. There are 999-100+1 = 900 three-digit numbers. Their sum is (100+999)*900/2 = 494550, ending in 0.",
+        "unit_reason": "One modular-arithmetic comparison covers the four related computations without an encoded four-digit answer or one click per multiplication.",
+        "concept_blocks": [],
+        "limitations": ["Selecting assertions does not demonstrate independently writing all four calculations or choosing the reduction strategy."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "C", "D", "E"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "Reduce the two products modulo 10 to 4 and 4; their sum is 8 modulo 10.", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "The correct residues are 5 and 6, with positive full difference 1243899, so its last digit is 9, not 1.", "misconception": "Compute the two product residues as 5 and 6, replace the ordered subtraction 5-6 by the absolute difference |5-6|, and report 1."},
+          {"option_id": "C", "truth": "correct", "derivation": "The inclusive factor list contains 10. Multiplication by that factor supplies a terminal zero.", "misconception": null},
+          {"option_id": "D", "truth": "correct", "derivation": "Pair the 900 terms into 450 pairs, each summing to 1099. The sum 450*1099 = 494550 ends in 0.", "misconception": null},
+          {"option_id": "E", "truth": "correct", "derivation": "The product residues give 5-6 = -1, congruent to 9 modulo 10. The positive full difference is 1243899.", "misconception": null},
+          {"option_id": "F", "truth": "incorrect", "derivation": "Factors 10 and 20 already force a last digit of 0; the complete product cannot end in 5.", "misconception": "Retain the factor 15 and only the odd factors: a product of 5 and odd numbers ends in 5. Discard the even factors, including 10, and transfer that reduced product's terminal digit to the original product."}
+        ]
+      }
+    },
+    {
+      "id": "q-overlapping-strip",
+      "source_numbers": ["1215"],
+      "view": {
+        "mode": "single",
+        "stem": "Fill the shown strip so that every three adjacent cells have sum 15. Which complete left-to-right row satisfies every overlapping condition and both given entries?",
+        "figure_ids": ["fig-197"],
+        "options": [
+          {"id": "A", "text": "6, 3, 4, 6, 3, 4, 6, 3, 4, 6, 3", "figure_ids": []},
+          {"id": "B", "text": "6, 5, 4, 6, 5, 4, 6, 5, 4, 6, 5", "figure_ids": []},
+          {"id": "C", "text": "6, 7, 4, 6, 7, 4, 6, 7, 4, 6, 7", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Solve the entire overlapping-window filling problem, including the incomplete final period.",
+        "source_solution": "The actual complete image has eleven cells, with 6 in cell 1 and 4 in cell 9. Write entries x1,...,x11. Subtract x_i+x_(i+1)+x_(i+2)=15 from the next such equation to get x_(i+3)=x_i for i=1,...,8. Cell 9 belongs to the third periodic class, so x3=4; x1=6 gives x2=15-6-4=5. Thus the unique row is 6,5,4,6,5,4,6,5,4,6,5. This fills all nine blanks and checks all nine overlapping triples, not just the three disjoint triples.",
+        "unit_reason": "A complete periodic row is the response unit because the overlap rule determines the whole strip together, including cells 10 and 11.",
+        "concept_blocks": [],
+        "limitations": ["Recognition of a completed row does not show independent filling, derivation of period three, or writing the overlap proof."],
+        "figure_observations": [
+          {"figure_id": "fig-197", "observation": "Opened the listed complete PNG exactly once at original detail. I see one horizontal row of 11 equal cells; only the first contains 6 and the ninth contains 4. The last two cells are empty. Both the rightmost vertical border and the entire bottom border are visible with surrounding white margin; no cell is cropped and the numerals are readable."}
+        ]
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "Its repeating triple is 6+3+4=13, not 15, although both given cells and period three are preserved.", "misconception": "Use period three correctly but, when finding the middle entry, subtract the given 6 twice: 15-6-6=3. Keep the independently obtained third entry 4 and repeat (6,3,4)."},
+          {"option_id": "B", "truth": "correct", "derivation": "Adjacent triple equations force period three. The first and ninth cells force the repeating triple (6,5,4), whose sum is 15; all 11 displayed entries follow.", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "Its repeating triple has sum 6+7+4=17, so every required triple fails.", "misconception": "Use period three correctly but subtract the given 4 twice when solving the middle entry: 15-4-4=7. Retain 6 in the first class and repeat (6,7,4)."}
+        ]
+      }
+    },
+    {
+      "id": "q-two-direction-grid",
+      "source_numbers": ["1216"],
+      "view": {
+        "mode": "single",
+        "stem": "Fill the shown grid so that every horizontal or vertical run of three adjacent cells has sum 12. Which complete grid, with rows written from top to bottom, satisfies all the conditions?",
+        "figure_ids": ["fig-198"],
+        "options": [
+          {"id": "A", "text": "2 5 5 2 5 5 2 5\n5 6 1 5 6 1 5 6\n6 1 5 6 1 5 6 1\n2 5 5 2 5 5 2 5", "figure_ids": []},
+          {"id": "B", "text": "2 5 5 2 5 5 2 5\n6 5 1 6 5 1 6 5\n6 2 4 6 2 4 6 2\n2 5 5 2 5 5 2 5", "figure_ids": []},
+          {"id": "C", "text": "2 5 5 2 5 5 2 5\n4 7 1 4 7 1 4 7\n6 0 6 6 0 6 6 0\n2 5 5 2 5 5 2 5", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Determine all 32 entries from overlapping horizontal and vertical equations and the four actual given cells.",
+        "source_solution": "The image is a 4-row, 8-column grid, with entries (row,column): (1,2)=5, (2,6)=1, (3,1)=6 and (4,4)=2. Overlapping triples imply period three in both directions. In the leading 3-by-3 tile, (4,4)=2 forces a11=2, so the first row is (2,5,5). The given (2,6)=1 forces a23=1. The first column gives 2+a21+6=12, hence a21=4. Row 2 then gives a22=7; column 2 gives a32=0; row 3 gives a33=6. Column 3 also sums 5+1+6=12. The tile is (2,5,5)/(4,7,1)/(6,0,6). Repeat it to 4 rows and 8 columns, including the two-column remainder. This is the unique numerical completion. The prose does not impose positivity, so the forced zero is not discarded or replaced.",
+        "unit_reason": "The two-direction periodic tile and its full extension form one coupled task; separate cell questions would lose the horizontal-versus-vertical distinction.",
+        "concept_blocks": [],
+        "limitations": ["No independent grid construction, handwriting of 28 missing entries, or independent production of the period-three proof is demonstrated.", "No new candidate drawings are authorized; alternatives are complete textual grids rather than rendered candidate grids."],
+        "figure_observations": [
+          {"figure_id": "fig-198", "observation": "Opened the complete PNG once at original detail. The visible grid has 4 rows and 8 columns. I see 5 at row 1 column 2, 1 at row 2 column 6, 6 at row 3 column 1, and 2 at row 4 column 4. All other cells are blank. The rightmost eighth-column edge and bottom fourth-row edge are fully visible, with white margin; every given numeral is legible."}
+        ]
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "Every row triple sums to 12 and all given entries are preserved, but the first-column triple is 2+5+6=13; the third-column triple is 5+1+5=11.", "misconception": "After fixing row 1, use its adjacent 5 in place of the bottom first-column 6: a21=12-2-5=5. Set a22=12-5-1=6, a32=12-5-6=1, and a33=12-6-1=5; repeat this tile without rechecking columns 1 and 3."},
+          {"option_id": "B", "truth": "incorrect", "derivation": "The first-column triple is 2+6+6=14 and the third is 5+1+4=10, despite valid row sums and preserved givens.", "misconception": "Omit the top 2 from the first-column equation and set a21=12-6=6. Then a22=12-6-1=5, a32=12-5-5=2, a33=12-6-2=4. Extend the resulting row-valid tile without checking the two failed columns."},
+          {"option_id": "C", "truth": "correct", "derivation": "The tile (2,5,5)/(4,7,1)/(6,0,6) has every row and column sum 12. Period-three repetition makes every overlapping run sum 12 and agrees with all four actual givens.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q-letter-division",
+      "source_numbers": ["1217"],
+      "view": {
+        "mode": "multiple",
+        "stem": "In the shown division, each letter stands for one digit and a repeated letter keeps the same value. Select every assertion consistent with the complete long division, including all intermediate rows.",
+        "figure_ids": ["tbl-p0292-03"],
+        "options": [
+          {"id": "A", "text": "The final multiplication gives (a-1)(10x+a)=100, and hence a=5 and x=2.", "figure_ids": []},
+          {"id": "B", "text": "The first quotient digit may be y=2 while its first subtraction product is still the two-digit number xa.", "figure_ids": []},
+          {"id": "C", "text": "The completed division is 3125 / 25 = 125, with m=3, y=1, x=2, a=5, k=6 and p=0.", "figure_ids": []},
+          {"id": "D", "text": "The middle subtraction product is 62, so a=6 and p=2; its preceding partial dividend is 50.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Recover the entire letter assignment and validate the quotient, brought-down digits, subtraction products and zero remainder.",
+        "source_solution": "The display is myxa divided by xa with quotient yxa; the successive subtraction products are xa, ap, yxa, and the middle partial dividend is kx. Let D=10x+a, a nonzero two-digit divisor. The first product is yD=D, so y=1. The last product is aD=100+10x+a=100+D, hence (a-1)D=100. For digit a and a two-digit D ending in a, possible positive divisors a-1 of 100 in 1,...,8 are 1,2,4,5. They give a=2,D=100 (too long); a=3,D=50 (wrong units); a=5,D=25 (valid); a=6,D=20 (wrong units). Thus a=5,x=2. The middle product xD=50 gives p=0. Before the final brought-down 5, the remainder must be 12, so kx=50+12=62 and k=6. The first partial dividend my must be 25+6=31, giving m=3. All rows are 31-25=6, bring 2 to get 62; 62-50=12, bring 5 to get 125; 125-125=0. Therefore 3125/25=125, with m=3,y=1,x=2,a=5,k=6,p=0. No different-letter injectivity was assumed; the solution happens to have distinct digits.",
+        "unit_reason": "One multiple assertion comparison tests the coupled final-product equation, complete assignment and distinction between incoming partial dividend and subtraction product.",
+        "concept_blocks": [],
+        "limitations": ["Recognition does not demonstrate independently producing the six-letter solution or writing the entire long division.", "No source-image fidelity or independent figure approval is inferred from the readable bound rendition."],
+        "figure_observations": [
+          {"figure_id": "tbl-p0292-03", "observation": "Opened the listed PNG once at original detail. I see dividend m y x a on the left, divisor x a above the right division bar, quotient y x a below it; the left rows are subtraction x a, incoming k x, subtraction a p, incoming y x a, subtraction y x a, and final 0. Alignment places the first subtraction beneath m y, and the final two three-digit rows beneath y x a. The entire right division bar and bottom 0 are visible within margins; letters and subtraction bars are readable."}
+        ]
+      },
+      "key": {
+        "correct": ["A", "C"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "The last quotient digit a multiplies D=10x+a to the three-digit row 100+D, since y=1. Solving (a-1)D=100 with D ending in a leaves only a=5,D=25,x=2.", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "The displayed first subtraction is exactly D. If y=2 its product would be 2D, which cannot equal D for a nonzero two-digit divisor.", "misconception": "Choose y=2 by treating the first quotient digit as unconstrained, then copy the divisor D into the subtraction row without multiplying it by that chosen quotient digit. This produces the false claim 2D=D."},
+          {"option_id": "C", "truth": "correct", "derivation": "With the stated digits, 31-25=6, 62-50=12 and 125-125=0. They reconstruct dividend 3125, divisor 25 and quotient 125 with every letter occurrence consistent.", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "The actual incoming row is kx=62 and the product row is ap=50, not the reverse. In particular a=5 and p=0.", "misconception": "Interchange the incoming kx row and the subtraction ap row when reading the layout: label 62 as ap to obtain a=6,p=2, and label 50 as the preceding partial dividend. This reverses subtraction roles and yields exactly the stated false rows."}
+        ]
+      }
+    },
+    {
+      "id": "q-star-multiplication-first",
+      "source_numbers": ["1218"],
+      "view": {
+        "mode": "single",
+        "stem": "For multiplication 1) in the shown pair, replace every star by a digit. Which complete multiplication matches every printed digit, row length and place-value shift? The three partial products below are listed before their positional shifts.",
+        "figure_ids": ["tbl-p0292-04"],
+        "options": [
+          {"id": "A", "text": "415 * 392 = 162680; partial products 830, 3735, 1245.", "figure_ids": []},
+          {"id": "B", "text": "415 * 382 = 158530; partial products 830, 3320, 1245.", "figure_ids": []},
+          {"id": "C", "text": "415 * 372 = 154380; partial products 830, 2905, 1245.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Complete the first starred multiplication while accounting independently for all three operations selected in this source.",
+        "source_solution": "Solved all three source operations before alternatives. In 1), write T=100h+10+u and multiplier 300+10b+2. The result ends in 0, so 2u ends in 0; the third partial product ends in 5, forcing u=5. Then 2T has three digits and pattern *3*, so h<=4; 3T has four digits and pattern *2*5, so h>=4. Thus T=415. The middle product 415b has pattern 3*2*, allowing b=8 (3320), not b=9 (3735). The completed multiplication is 415*382=158530, with partial products 830,3320,1245. In 2), the tens partial product 13*0 forces an even tens multiplier. The final 4*77* and the other partial rows reduce the possibilities to T=325,335,345 with tens digit 4; the ones digit is 7 except that 325 also permits 9 before the final row is checked. Products are 325*147=47775, 325*149=48425, 335*147=49245 and 345*147=50715. Only 325*147 survives, with partial products 2275,1300,325. In 3), the divisor is 325 and the quotient begins 1. The second subtraction is a four-digit multiple with hundreds digit 9: 1950 for quotient digit 6, or 2925 for digit 9. The latter cannot leave a remainder whose brought-down last digit gives a three-digit exact multiple of 325 with the preceding row ending in the fixed 5. With digit 6 the relevant second partial dividends are 2005,2015,2025,2035,2045; only 2015 leaves 65, which brings down 0 to make 650. Therefore dividend 52650 and quotient 162: 526-325=201, bring 5 to 2015; 2015-1950=65, bring 0 to 650; 650-650=0.",
+        "unit_reason": "The first multiplication is independent of the second multiplication and division, but its rows must be solved as one place-value system, not per star.",
+        "concept_blocks": [],
+        "limitations": ["Selecting completed arithmetic does not demonstrate independently filling every star or laying out shifted partial products.", "The other two operations are covered by separate mathematical units, not omitted.", "No new candidate diagrams are authorized; complete arithmetic is stated in text."],
+        "figure_observations": [
+          {"figure_id": "tbl-p0292-04", "observation": "Opened the complete PNG once at original detail. It contains two side-by-side multiplications. Left: *1* times 3*2; successive unshifted partial rows *3*, 3*2*, *2*5, and total 1*8*30. Right: **5 times 1**; partial rows 2**5, 13*0, ***, and total 4*77*. The visible offsets shift the second and third products left by one and two places. The rightmost stars, both final totals and both bottom rules are fully visible; all printed digits and stars are readable."},
+          {"figure_id": "tbl-p0293-01", "observation": "Opened the complete PNG once at original detail. Operation 3) is a division with dividend *2*5*, divisor 325, quotient 1**. The left rows show subtraction ***, incoming *0**, subtraction *9**, incoming ***, subtraction ***, then 0. The second incoming row ends in the brought-down printed 5. The full right division bar, all rightmost digit positions, lowest subtraction rule and final 0 are visible with margin and are legible."}
+        ]
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "All listed arithmetic is numerically correct, but the middle product 3735 has tens digit 3 instead of the required 2, and the total 162680 fails 1*8*30.", "misconception": "Recover T=415 and the fixed hundreds and units multiplier digits correctly. For 415b in the interval 3000 through 3999, allow b=8 or 9, then retain the larger b=9 without checking the printed tens digit 2. Compute 830+37350+124500=162680."},
+          {"option_id": "B", "truth": "correct", "derivation": "415*2=830, 415*8=3320 and 415*3=1245. Their shifted sum 830+33200+124500=158530 has pattern 1*8*30 and all partial rows match.", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "415*7=2905 is below 3000 and has neither the leading 3 nor the required tens 2. The shifted sum is 154380, not the displayed pattern.", "misconception": "Replace the pattern 3*2* by its truncated lower bound 3000 and choose b=floor(3000/415)=7. Retain the other multiplier digits 3 and 2, and compute 415*372=154380 without checking the full middle row."}
+        ]
+      }
+    },
+    {
+      "id": "q-star-multiplication-second",
+      "source_numbers": ["1218"],
+      "view": {
+        "mode": "single",
+        "stem": "For multiplication 2) in the shown pair, which complete calculation replaces all stars consistently, including the final row 4*77*? Partial products are stated before positional shifts.",
+        "figure_ids": ["tbl-p0292-04"],
+        "options": [
+          {"id": "A", "text": "335 * 147 = 49245; partial products 2345, 1340, 335.", "figure_ids": []},
+          {"id": "B", "text": "345 * 147 = 50715; partial products 2415, 1380, 345.", "figure_ids": []},
+          {"id": "C", "text": "325 * 147 = 47775; partial products 2275, 1300, 325.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Solve the second multiplication using the final row as well as all partial-product constraints.",
+        "source_solution": "The full source has three independently solved operations: 1) 415*382=158530 with partials 830,3320,1245; 2) 325*147=47775 with partials 2275,1300,325; 3) 52650/325=162, using 526-325=201, 2015-1950=65, and 650-650=0. For operation 2), write T ending in 5, multiplier 100+10b+c. The partial Tb lies between 1300 and 1399 and ends in 0, so b is even. The partial Tc lies between 2000 and 2999 and ends in 5. Since the final total is between 40000 and 49999, 100T=(total)-10Tb-Tc lies between 23011 and 34999, so T ending in 5 is between 235 and 345. Even b satisfying 1300<=Tb<=1399 in that range leaves b=4,T=325,335,345; b=6 requires T=225, outside the bound, and the other even b fail. The ones candidates are c=7 or 9 for 325, and c=7 for 335 and 345. Totals 47775,48425,49245,50715 leave only 47775 with pattern 4*77*. This proves the unique second completion. The first completion follows from 2T's three-digit length and 3T's four-digit *2*5 pattern forcing T=415, then 415b=3*2* forcing b=8. The third follows from its *0** incoming row and *9** subtraction: the 1950 branch leaves 65 only at incoming 2015; the 2925 branch cannot supply a final three-digit multiple with the fixed brought-down 5.",
+        "unit_reason": "One full multiplication retains the interaction between its partial products and total; the other operations are mathematically independent and have their own units.",
+        "concept_blocks": [],
+        "limitations": ["No independent production of all hidden digits or column alignment is demonstrated.", "No new candidate figures are authorized; row constraints are compared through complete textual calculations."],
+        "figure_observations": [
+          {"figure_id": "tbl-p0292-04", "observation": "Opened once at original detail. I see left multiplication *1* by 3*2 with rows *3*, 3*2*, *2*5 and total 1*8*30; right multiplication **5 by 1** with rows 2**5, 13*0, *** and total 4*77*. One- and two-place shifts are visible. The rightmost digits/stars and complete bottom rules and totals are inside the PNG; the complete pair is readable."},
+          {"figure_id": "tbl-p0293-01", "observation": "Opened once at original detail. I see the complete division *2*5* by 325 with quotient 1**, then subtraction ***, incoming *0**, subtraction *9**, incoming ***, subtraction ***, and terminal 0. The fixed 5 is in the fourth dividend position. The right division bar and bottom remainder are fully visible, as are all rightmost character positions; nothing is cropped."}
+        ]
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "The partials match their printed patterns, but 2345+13400+33500=49245, whose middle digits are not the required 77.", "misconception": "Solve the partial-product inequalities but ignore the total. Among T=325,335,345 with b=4,c=7, choose the middle survivor T=335 as if partial-product feasibility settled the task; compute its shifted sum 49245."},
+          {"option_id": "B", "truth": "incorrect", "derivation": "The partials fit 2**5,13*0,***, but their shifted sum is 2415+13800+34500=50715, not even in the required leading-4 interval.", "misconception": "Stop after matching partial rows and choose the largest surviving T=345, treating completion as maximizing the starred multiplicand. Multiply by 147 to obtain 50715 without checking 4*77*."},
+          {"option_id": "C", "truth": "correct", "derivation": "325*7=2275, 325*4=1300 and 325*1=325. The shifted sum is 2275+13000+32500=47775, matching every printed digit and length.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q-star-division",
+      "source_numbers": ["1218"],
+      "view": {
+        "mode": "single",
+        "stem": "In division 3), replace the stars while preserving dividend *2*5*, divisor 325, quotient 1**, every intermediate row, and remainder 0. Which completed division fits? The incoming partial dividends and subtraction products are both stated.",
+        "figure_ids": ["tbl-p0293-01"],
+        "options": [
+          {"id": "A", "text": "52325 / 325 = 161; incoming rows 523, 1982, 325; subtractions 325, 1950, 325.", "figure_ids": []},
+          {"id": "B", "text": "52650 / 325 = 162; incoming rows 526, 2015, 650; subtractions 325, 1950, 650.", "figure_ids": []},
+          {"id": "C", "text": "52975 / 325 = 163; incoming rows 529, 2047, 975; subtractions 325, 1950, 975.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Recover the whole exact division, preserving the fixed fourth dividend digit and every partial-row pattern.",
+        "source_solution": "All three source operations were independently solved before alternatives: 415*382=158530 (830,3320,1245); 325*147=47775 (2275,1300,325); and 52650/325=162. In the division, let the first three dividend digits be 100h+20+u. Subtract 325 and bring down the printed 5 to obtain P=10(100h+20+u-325)+5. The quotient's first digit 1 gives 325<=100h+20+u<650. The four-digit pattern *0** restricts P to 1005,...,1045, 2005,...,2045, or 3005,...,3045, stepping by 10. A four-digit subtraction *9** that is a multiple of 325 must be 1950 or 2925. The 1000 branch would use the three-digit 975 and is excluded by row length. For the 2000 branch subtract 1950, leaving 55,65,75,85,95. Bringing down a last digit can give a three-digit multiple of 325 only from 65, giving 650, last digit 0 and final quotient digit 2. Thus P=2015, first prefix 526 and dividend 52650. In the 3000 branch subtraction 2925 leaves 80,90,100,110,120; none can bring down one digit to 325,650 or975, so it fails. All division rows and remainder 0 follow. The first multiplication's unit and row-length constraints force 415 and then middle multiplier 8; the second multiplication's even tens digit, 13*0 row and final 4*77* force 325*147. These two are covered separately.",
+        "unit_reason": "A complete long division is the coherent unit, because brought-down digits connect the dividend, quotient and intermediate remainders.",
+        "concept_blocks": [],
+        "limitations": ["Choice recognition does not show independent replacement of all stars or construction of the long-division layout.", "No new candidate drawings are authorized; complete row values are provided textually."],
+        "figure_observations": [
+          {"figure_id": "tbl-p0292-04", "observation": "Opened once at original detail. The full pair shows *1* times 3*2 with partial patterns *3*,3*2*,*2*5 and total 1*8*30, and **5 times 1** with partial patterns 2**5,13*0,*** and total 4*77*. Both multiplication shifts, rightmost characters, final totals and bottom lines are fully visible and readable."},
+          {"figure_id": "tbl-p0293-01", "observation": "Opened once at original detail. The full long division has dividend *2*5*, divisor 325 and quotient 1**. I see the aligned rows ***, *0**, *9**, ***, ***, and final 0, with subtraction signs on the product rows. The printed 5 is the fourth dividend digit. The right division rule and lowest remainder 0, as well as all rightmost digits, are visible with margin; no part is cropped."}
+        ]
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "The stated division is exact, but its fourth dividend digit is 2 instead of 5 and its second incoming row 1982 is not *0**.", "misconception": "Fix the first quotient digits 16 from the leading quotient and middle product 1950, then pick final quotient digit 1 because 325*1 is a three-digit final subtraction. Form 325*161=52325 and its rows, without enforcing the fixed fourth digit or second incoming pattern."},
+          {"option_id": "B", "truth": "correct", "derivation": "526-325=201; bringing 5 gives 2015, and 2015-1950=65; bringing 0 gives 650, then 650-650=0. All row lengths, fixed digits and quotient 162 agree.", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "Its arithmetic is exact and 2047 has hundreds digit 0, but the fourth dividend digit and the last digit of that incoming row are 7, not the required brought-down 5.", "misconception": "Keep quotient prefix 16 and choose final digit 3 since 325*3=975 is a permitted three-digit final product. Compute 325*163=52975, retaining the second incoming row's hundreds 0 but neglecting its connection to the printed fourth dividend digit 5."}
+        ]
+      }
+    },
+    {
+      "id": "q-letter-addition",
+      "source_numbers": ["1219"],
+      "view": {
+        "mode": "multiple",
+        "stem": "For addition 1), BLCE + BDCE = ADCBE, equal letters represent equal digits. Select every complete replacement that satisfies the addition and every repeated letter. Leading digits of the displayed numbers must be nonzero.",
+        "figure_ids": ["tbl-p0293-02"],
+        "options": [
+          {"id": "A", "text": "6135 + 6235 = 12365.", "figure_ids": []},
+          {"id": "B", "text": "6580 + 6280 = 12860.", "figure_ids": []},
+          {"id": "C", "text": "8740 + 8740 = 17480.", "figure_ids": []},
+          {"id": "D", "text": "8240 + 8640 = 16480.", "figure_ids": []},
+          {"id": "E", "text": "6130 + 6230 = 12360.", "figure_ids": []},
+          {"id": "F", "text": "8290 + 8690 = 16980.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Find all additions permitted by repeated-letter equality, without importing an unstated different-letter injectivity condition.",
+        "source_solution": "Independently solved both displayed operations. For BLCE+BDCE=ADCBE, units give 2E=E+10c0, hence E=0,c0=0. Tens give 2C=B+10t, t=0 or1. Hundreds give L+D+t=C+10h, h=0 or1. Thousands give 2B+h=D+10A; A=1 and B is 6 or8, since B is a nonzero even digit. For B=6: C=3,t=0 gives h=0,D=2,L=1; C=8,t=1 gives h=0,D=2,L=5; h=1 would require L=10 or14 and fails. For B=8: C=4,t=0 gives h=1,D=7,L=7; C=9,t=1 gives h=0,D=6,L=2; the other h values give negative or two-digit L. Therefore exactly four additions survive: 6130+6230=12360, 6580+6280=12860, 8740+8740=17480, 8290+8690=16980. The assignments A=L in the first and D=L in the third are allowed by the actual equality-only prose. For CDEBC-ABCD=ACAC, the five-digit dividend equals a sum of two four-digit numbers, so C=1. The units column forces D=0. Expanding the equality gives 9890C+999D+100E-90B-2010A=0, hence 989+10E=9B+201A. Bounds force A=5; then 10E=16+9B, so B=6,E=7. The unique subtraction is 10761-5610=5151. The two operations have separate letter assignments; no cross-operation equality is asserted.",
+        "unit_reason": "One multiple selection recovers the full four-solution family of the addition. Separate true/false questions for each digit would hide carries and the absence of injectivity.",
+        "concept_blocks": [],
+        "limitations": ["The authoring seed does not state that different letters must have different digits; no extra injectivity convention is guessed.", "Selecting all complete additions does not demonstrate independently discovering the four solutions or writing their carry analysis.", "The subtraction is covered separately; this item does not conflate letter assignments between operations."],
+        "figure_observations": [
+          {"figure_id": "tbl-p0293-02", "observation": "Opened the complete PNG exactly once at original detail. Left operation 1) is B L C E plus B D C E, with result A D C B E. Right operation 2) is C D E B C minus A B C D, with result A C A C. The right addend/subtrahend alignment and complete result rows are visible. Both rightmost final letters and bottom rules are inside the canvas, with margin; all Latin letters are legible."}
+        ]
+      },
+      "key": {
+        "correct": ["B", "C", "E", "F"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "The repeated-letter assignment is syntactically consistent but the actual sum is 12370, not 12365; 5+5 cannot leave last digit E=5.", "misconception": "Use the valid 6130+6230 assignment for other letters, set E=5, and mistakenly copy one E into the result rather than adding both E's. With no units carry, compute tens 3+3=6, hundreds 1+2=3 and thousands 6+6=12, producing exactly 12365."},
+          {"option_id": "B", "truth": "correct", "derivation": "A=1,B=6,L=5,C=8,D=2,E=0 gives 6580+6280=12860. Tens 8+8=16 carries 1; hundreds 5+2+1=8; thousands 6+6=12.", "misconception": null},
+          {"option_id": "C", "truth": "correct", "derivation": "A=1,B=8,L=7,C=4,D=7,E=0 gives 8740+8740=17480. Hundreds 7+7=14 carries 1; thousands 8+8+1=17. Equality D=L=7 is not forbidden by the prose.", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "The actual addition is 16880. The claimed hundreds digit 4 is wrong; the two hundreds digits are 2 and 6, whose sum is 8.", "misconception": "Assign A=1,B=8,L=2,C=4,D=6,E=0. Compute units 0 and tens 4+4=8 correctly, but average the hundreds digits: (2+6)/2=4, instead of adding them. Keep thousands 8+8=16, yielding exactly 16480."},
+          {"option_id": "E", "truth": "correct", "derivation": "A=1,B=6,L=1,C=3,D=2,E=0 gives 6130+6230=12360. No lower-column carry occurs; equality A=L=1 is allowed.", "misconception": null},
+          {"option_id": "F", "truth": "correct", "derivation": "A=1,B=8,L=2,C=9,D=6,E=0 gives 8290+8690=16980. Tens 9+9=18 carries 1; hundreds 2+6+1=9; thousands 8+8=16.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q-letter-subtraction",
+      "source_numbers": ["1219"],
+      "view": {
+        "mode": "multiple",
+        "stem": "For subtraction 2), CDEBC - ABCD = ACAC, repeated letters keep the same digit and displayed leading digits are nonzero. Select every true assertion about the complete subtraction and its borrowing.",
+        "figure_ids": ["tbl-p0293-02"],
+        "options": [
+          {"id": "A", "text": "C=1 and D=0: the dividend is a sum of two four-digit numbers, and the units column subtracts D from C to leave C.", "figure_ids": []},
+          {"id": "B", "text": "The remaining equation is 989+10E=9B+201A; its unique digit solution is A=5, B=6, E=7, giving 10761-5610=5151.", "figure_ids": []},
+          {"id": "C", "text": "The thousands column may be used without borrowing as D-A=A; it forces A=0 and still produces a four-digit result ACAC.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Determine the unique subtraction assignment and distinguish the necessary thousands borrow from a columnwise no-borrow calculation.",
+        "source_solution": "Both source operations were solved first. The addition has exactly four equality-only assignments: 6130+6230=12360, 6580+6280=12860, 8740+8740=17480 and 8290+8690=16980. Its carry equations are E=0,2C=B+10t,L+D+t=C+10h,2B+h=D+10A; enumeration gives A=1,B=6 or8 and the four cases just listed, without assuming different letters distinct. For the subtraction, a five-digit dividend equals two four-digit numbers' sum, so its first digit C=1. Units C-D must leave C; D=0 is the only digit solution, with no units borrow. Expansion gives 9890C+999D+100E=90B+2010A, or 989+10E=9B+201A. The left side is in [989,1079]. If A<=4, the right side is at most 885; if A>=6 it is at least 1206. Thus A=5 and 10E=16+9B. Reducing modulo10 gives B=6 and E=7. Hence 10761-5610=5151. In column order, units 1-0=1, tens 6-1=5, hundreds 7-6=1, thousands 10-5=5 after borrowing from the leading 1. The original leading 1 is consumed by that borrow. Assignments are local to their own operations.",
+        "unit_reason": "The leading-digit bound, full assignment and borrowing test are substantive comparisons within one subtraction, rather than isolated digit clicks.",
+        "concept_blocks": [],
+        "limitations": ["Recognizing the bounds and complete solution does not demonstrate independently solving or writing the subtraction.", "No cross-operation letter identity or different-letter injectivity condition is introduced."],
+        "figure_observations": [
+          {"figure_id": "tbl-p0293-02", "observation": "Opened once at original detail. The full PNG shows addition BLCE+BDCE=ADCBE on the left and subtraction CDEBC-ABCD=ACAC on the right. The four-digit subtrahend is aligned to the right of the five-digit dividend. Every final result letter, rightmost C and bottom rule is visible with margin, and all letters and signs are readable."}
+        ]
+      },
+      "key": {
+        "correct": ["A", "B"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "ABCD and ACAC are each at most 9999, so their sum is at most19998 and a five-digit dividend must begin C=1. The units congruence C-D=C mod10 implies D=0.", "misconception": null},
+          {"option_id": "B", "truth": "correct", "derivation": "The expanded equality reduces to the displayed equation. Bounds force A=5; 10E=16+9B forces B=6,E=7. Direct subtraction gives 5151.", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "With D=0, the no-borrow equation would give -A=A, hence A=0, contrary to the nonzero leading digit. The actual thousands calculation borrows and is 10-5=5.", "misconception": "Treat each column independently, ignore the leading C available for borrowing, and write 0-A=A. Solve this as A=0 but retain the printed four-digit result as though a leading zero were permitted. This yields exactly the false no-borrow assertion."}
+        ]
+      }
+    },
+    {
+      "id": "q-star-product-ending",
+      "source_numbers": ["1220"],
+      "view": {
+        "mode": "single",
+        "stem": "Complete multiplication 1), preserving all printed digits, both partial-product rows and the total 1**98. Which calculation fits? Partial products are stated before the tens shift.",
+        "figure_ids": ["tbl-p0293-03"],
+        "options": [
+          {"id": "A", "text": "397 * 36 = 14292; partial products 2382 and 1191.", "figure_ids": []},
+          {"id": "B", "text": "397 * 34 = 13498; partial products 1588 and 1191.", "figure_ids": []},
+          {"id": "C", "text": "397 * 38 = 15086; partial products 3176 and 1191.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Solve the first multiplication using the fixed tens partial product and the two-digit terminal constraint; retain the independently solved second operation's nonuniqueness.",
+        "source_solution": "Solved both source multiplications independently. For 1), the top 39* is multiplied by 3*. The fixed tens partial product 1191 implies T=1191/3=397. Let the units multiplier be u. The total is 11910+397u and ends in98, so modulo100: 10+97u=98, hence -3u=88 or 3u=12 modulo100. Among digits 0,...,9 only u=4 works. The units partial is1588, matching **8*, and the total is13498. For 2), T ends in5, multiplier4u, units partial3** is a number between300 and399, and 4T has four digits with hundreds digit2, pattern *2**. Thus T>=300; u must be1 to keep Tu in[300,399], and T itself is in[300,399]. Then 4T in[1200,1299] gives T=305 or315 (325 would give1300). Both survive the five-digit total1****: 305*41=12505 with partials305,1220;315*41=12915 with partials315,1260. These are exactly two full completions; no uniqueness is fabricated.",
+        "unit_reason": "The first multiplication is one coherent terminal-congruence task. The second has a different constraint system and two solutions, so it receives a separate multiple unit.",
+        "concept_blocks": [],
+        "limitations": ["No independent digit filling or long-multiplication production is demonstrated.", "The source's second operation genuinely has two completions; selecting only one would lose a mathematical distinction.", "No new candidate figures are authorized; alternatives are complete textual arithmetic."],
+        "figure_observations": [
+          {"figure_id": "tbl-p0293-03", "observation": "Opened the complete PNG once at original detail. Left operation1) is39* times3*, with units partial **8*, tens partial1191 shifted left, and total1**98. Right operation2) is**5 times4*, with units partial3**, tens partial*2** shifted left, and total1****. Both product rows, shifts, rightmost characters and complete lowest rules are visible with margin; the fixed1191 and terminal98 are readable."}
+        ]
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "397*6=2382 fits the units partial's tens digit8, but 11910+2382=14292 does not end in98.", "misconception": "Solve T=397 correctly, then choose u=6 because 397*6=2382 has the printed tens digit8 and four-digit length. Stop before enforcing the total's final98, yielding14292."},
+          {"option_id": "B", "truth": "correct", "derivation": "397*4=1588 and397*3=1191. The shifted sum1588+11910=13498 satisfies39*,3*,**8*,1191 and1**98 simultaneously.", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "397*8=3176 has tens digit7 rather than8, and397*38=15086 ends in86.", "misconception": "Recover397 from1191/3, then copy the final printed digit8 directly into the unknown units multiplier, setting u=8. Compute3176+11910=15086 instead of solving7u modulo10 and checking both partial and total."}
+        ]
+      }
+    },
+    {
+      "id": "q-two-star-completions",
+      "source_numbers": ["1220"],
+      "view": {
+        "mode": "multiple",
+        "stem": "For multiplication2), replace every star while preserving **5 times4*, units partial3**, shifted tens partial*2**, and five-digit total1****. Select every complete calculation that fits all the displayed constraints. Partial products are stated before the tens shift.",
+        "figure_ids": ["tbl-p0293-03"],
+        "options": [
+          {"id": "A", "text": "325 * 41 = 13325; partial products325 and1300.", "figure_ids": []},
+          {"id": "B", "text": "305 * 41 = 12505; partial products305 and1220.", "figure_ids": []},
+          {"id": "C", "text": "305 * 42 = 12810; partial products610 and1220.", "figure_ids": []},
+          {"id": "D", "text": "315 * 41 = 12915; partial products315 and1260.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Recover every full completion of the second multiplication instead of imposing uniqueness on a pattern with two solutions.",
+        "source_solution": "For the complete source, 1) has the unique397*34=13498:1191/3=397 and11910+397u congruent98 modulo100 forces u=4; partials1588,1191. For 2), the four-digit partial4T=*2** forces T>=300. The units productTu=3** is300 through399, so u=1 and300<=T<=399; u=0 gives0 and u>=2 gives at least600. Consequently4T must be1200 through1299, giving300<=T<=324. With T ending in5, only305 and315 survive. Their complete results are12505 and12915, both five-digit leading1. The partial rows are305 and1220, or315 and1260. No condition in the actual prose or image selects one of these two. This is a solved nonunique task, not an image HOLD.",
+        "unit_reason": "One multiple selection represents the complete two-solution set and requires comparison of row lengths, fixed hundreds digit and positional shifts.",
+        "concept_blocks": [],
+        "limitations": ["Selecting the two completions is not evidence of independently filling or discovering both.", "No new candidate drawings are authorized; numerical rows replace candidate layouts.", "An assumed unique starred answer would remove a real source distinction and is explicitly not used."],
+        "figure_observations": [
+          {"figure_id": "tbl-p0293-03", "observation": "Opened once at original detail. The complete pair shows left39* times3*, partial**8*, shifted1191 and total1**98; right**5 times4*, partial3**, shifted*2** and total1****. The hundreds2 is visibly in the four-digit tens partial, not in the total. All rightmost stars/digits, both bottom rules and full result rows are visible and legible, without cropping."}
+        ]
+      },
+      "key": {
+        "correct": ["B", "D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "The arithmetic is correct but1300 has hundreds digit3, whereas the displayed partial requires hundreds digit2.", "misconception": "Correctly set the units multiplier to1 and reduce4T to the1200 block, but use the erroneous inclusive upper bound4T<=1300 instead of4T<=1299. The last multiplicand ending in5 then allowed is325; compute325*41=13325 and neglect the failed hundreds digit."},
+          {"option_id": "B", "truth": "correct", "derivation": "305*1=305 matches3**;305*4=1220 matches*2**;305+12200=12505 matches1****.", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "The units product305*2=610 fails3** even though the tens product1220 and total12810 match their other patterns.", "misconception": "Start from T=305, then take the printed2 in the tens partial as the unknown multiplier units digit. Set u=2 and compute610+12200=12810 without checking that the units row must begin3."},
+          {"option_id": "D", "truth": "correct", "derivation": "315*1=315 matches3**;315*4=1260 matches*2**;315+12600=12915 matches1****. It is distinct from the305 completion.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q-equal-quotient-remainder",
+      "source_numbers": ["1221"],
+      "view": {
+        "mode": "multiple",
+        "stem": "A number divided by7 has equal quotient and remainder. Find all such numbers by selecting every true assertion. Write the quotient as q and the remainder as r, with the division-with-remainder condition0<=r<7. The original statement does not say whether0 is to be included in its number domain.",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "Every eligible number has n=8r, where r is an integer with0<=r<=6.", "figure_ids": []},
+          {"id": "B", "text": "The positive eligible numbers are exactly8,16,24,32,40,48.", "figure_ids": []},
+          {"id": "C", "text": "56 is eligible, with quotient and remainder both7.", "figure_ids": []},
+          {"id": "D", "text": "Every eligible number is divisible by7.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Derive the complete quotient-remainder relation and all positive solutions without guessing whether zero belongs to the source's unstated number domain.",
+        "source_solution": "Euclidean division gives n=7q+r and integer0<=r<7. With q=r, n=8r and r=0,1,2,3,4,5,6. The formal nonnegative solution set is0,8,16,24,32,40,48. Its positive part is8,16,24,32,40,48. No negative integer can satisfy q=r because the remainder and therefore q are nonnegative. If the source's eligible numbers include0, then0/7 has q=r=0 and0 is included; if it uses positive numbers only,0 is excluded. No selected definition resolves that domain convention. The relation and all six positive solutions are invariant. HOLD only the original unqualified full-list membership decision for0; do not present the invariant item as settling that choice.",
+        "unit_reason": "The quotient-remainder family and its positive members form one mathematical unit, not six independent numerical examples.",
+        "concept_blocks": [],
+        "limitations": ["Concrete local HOLD: whether0 appears in the original 'all such numbers' list is not determined by the seed's number-domain convention.", "Selecting the relation and positive set does not demonstrate independently writing the complete list or justifying the remainder bound."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "B"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "Substitute q=r into n=7q+r to obtain n=8r, and use the integer remainder bound to restrict r to0 through6. This assertion does not decide whether the source admits n=0.", "misconception": null},
+          {"option_id": "B", "truth": "correct", "derivation": "For a positive n, r=q cannot be0. Multiplying r=1,...,6 by8 gives exactly the six stated positive numbers.", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "56=7*8+0, so q=8,r=0. The proposed remainder7 is also forbidden by r<7.", "misconception": "Misread the bound as r<=7, take q=r=7, and calculate n=7*7+7=56. This gives a nonnormalized quotient-remainder pair and exactly the claimed false number."},
+          {"option_id": "D", "truth": "incorrect", "derivation": "For example8=7*1+1 satisfies equal quotient and remainder but is not divisible by7.", "misconception": "After setting q=r, drop the remainder term in n=7q+r and retain n=7q. That mistaken relation makes every proposed number a multiple of7."}
+        ]
+      }
+    },
+    {
+      "id": "q-digit-sum-proof",
+      "source_numbers": ["1222"],
+      "view": {
+        "mode": "multiple",
+        "stem": "Prove that a decimal whole number whose digit sum is divisible by9 is itself divisible by9. Let N=sum(d_i*10^i) and S=sum(d_i), with the units digit indexed i=0. Select every true identity or conclusion that supports the proof.",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "N and S have the same remainder on division by9.", "figure_ids": []},
+          {"id": "B", "text": "N=9S for every decimal whole number.", "figure_ids": []},
+          {"id": "C", "text": "N-S=sum(d_i*(10^i-1)), and each10^i-1 is divisible by9.", "figure_ids": []},
+          {"id": "D", "text": "N-S=9*sum(i*d_i) for every decimal whole number.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Establish the divisibility implication from an exact positional-value identity, while rejecting overstrong equalities.",
+        "source_solution": "For a finite decimal expansion N=sum d_i10^i, subtract S=sum d_i to get N-S=sum d_i(10^i-1). For i>=1,10^i-1=9(1+10+...+10^(i-1)); for i=0 the difference is0. Thus N=S+9K for the integer K=sum_(i>=1) d_i(1+10+...+10^(i-1)). If S=9h, then N=9(h+K), proving the requested implication. This also proves equal remainders, not the false exact identity N=9S. The argument includes zero digits and any finite number of places without a natural-number-zero convention.",
+        "unit_reason": "A proof-identity comparison preserves the central place-value argument and its implication, rather than testing one example of the divisibility rule.",
+        "concept_blocks": [],
+        "limitations": ["Recognition of a valid proof identity is not evidence of independently writing or discovering the proof.", "No selected concept paragraphs are available; all proof content is derived from the written task and decimal notation."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "C"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "Since10 is congruent1 modulo9, every10^i is congruent1 and N is congruentS. In particular S divisible9 implies N divisible9.", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "Take N=18,S=9:9S=81, not18. The correct conclusion is N=S+9K for an integer K.", "misconception": "From 'N differs from S by a multiple of9', replace the unspecified difference9K by the entire number9S. This invalid promotion of divisibility to exact equality yields N=9S."},
+          {"option_id": "C", "truth": "correct", "derivation": "Subtract the two sums term by term. The geometric-series identity10^i-1=9(1+10+...+10^(i-1)) for i>=1, and0 for i=0, makes the difference divisible9.", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "For N=100 the actual difference N-S is99; the proposed expression is9*(2*1)=18.", "misconception": "Treat powers as linear growth and substitute10^i-1=i*(10-1)=9i. Insert this incorrect formula into the valid difference sum to obtain exactly9*sum(i*d_i)."}
+        ]
+      }
+    },
+    {
+      "id": "q-seventy-digit-sum",
+      "source_numbers": ["1223"],
+      "view": {
+        "mode": "single",
+        "stem": "A decimal number consists of seven digits8, nine digits1 and one digit5, in any order. Which divisibility conclusion is correct for every arrangement?",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "It is not divisible by9; every arrangement has remainder2.", "figure_ids": []},
+          {"id": "B", "text": "It is divisible by9; every arrangement has remainder0.", "figure_ids": []},
+          {"id": "C", "text": "It is not divisible by9; every arrangement has remainder7.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Determine divisibility independent of digit order, retaining all three given multiplicities.",
+        "source_solution": "The full digit sum is7*8+9*1+1*5=56+9+5=70. Since70=9*7+7, the number has remainder7 on division by9 and is not divisible by9. Reordering changes decimal place weights but every10^i is congruent1 modulo9, so this conclusion holds for every arrangement. All17 digits are accounted for; no ordering needs to be guessed.",
+        "unit_reason": "One order-invariant remainder and divisibility conclusion is the complete mathematical unit, not a quota based on three digit groups.",
+        "concept_blocks": [],
+        "limitations": ["Selection does not show independent computation or writing of the order-invariance argument."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "Including the single5 changes65 to70 and the residue from2 to7.", "misconception": "Sum only seven8s and nine1s:56+9=65=9*7+2. Omit the final digit5 and report remainder2 for the full number."},
+          {"option_id": "B", "truth": "incorrect", "derivation": "Seven8s can pair with seven1s to make63, but two1s and the5 remain, adding7. The full sum70 is not divisible9.", "misconception": "Pair each8 with a1, compute seven pairs of sum9 to obtain63, and discard the unpaired two1s and5. Conclude remainder0 from63 as if every digit had been paired."},
+          {"option_id": "C", "truth": "correct", "derivation": "The full digit sum70 has residue7 modulo9; decimal positional weights preserve this residue under every permutation.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q-large-power-nine",
+      "source_numbers": ["1224"],
+      "view": {
+        "mode": "single",
+        "stem": "Let N=10^33+8. Which assertion, including its mathematical justification, is true?",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "N is divisible by9: N=9*((10^33-1)/9+1), with an integer expression inside the parentheses.", "figure_ids": []},
+          {"id": "B", "text": "N is divisible by9: N=9*10^32, combining the decimal digits1 and8 at place10^32.", "figure_ids": []},
+          {"id": "C", "text": "N is not divisible by9:10^33 has remainder0, so adding8 leaves remainder8.", "figure_ids": []},
+          {"id": "D", "text": "N is not divisible by9:10^33 has the residue of33, so33+8 leaves remainder5.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Determine divisibility of the exact power-plus-constant and compare positional-value or modular justifications.",
+        "source_solution": "Because10 is congruent1 modulo9,10^33 is congruent1 and N is congruent1+8=9, hence0. Equivalently N is the decimal1 followed by32 zeros and8, with digit sum9. The exact factorization is N=9((10^33-1)/9+1); (10^33-1)/9 is the33-digit repunit and is an integer. The expression is not9*10^32. Both the exponent33 and units8 are retained without approximation.",
+        "unit_reason": "A single divisibility-and-justification claim tests the decisive inference and exact equality together.",
+        "concept_blocks": [],
+        "limitations": ["Recognizing a proof does not demonstrate independent proof writing; the item does not ask for or claim production of the34-digit decimal expansion."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "10^33-1 is divisible9 by a geometric series, so the parenthesized quotient plus1 is integral. Multiplying it by9 gives10^33-1+9=10^33+8.", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "9*10^32 is a33-digit number, whereas10^33+8 has34 digits; their difference is10^32+8.", "misconception": "Compute the digit sum1+8=9, then mistakenly put both digits in the same10^32 place. Replace the number by(1+8)*10^32, yielding the exact false equality9*10^32."},
+          {"option_id": "C", "truth": "incorrect", "derivation": "10^33 has remainder1 rather than0; the sum has remainder0.", "misconception": "Assume any power of10 is divisible by9, confusing its divisibility by10 with divisibility by9. Set its residue to0 and add8 to obtain residue8."},
+          {"option_id": "D", "truth": "incorrect", "derivation": "Exponentiation of residue1 still gives1, not33; the actual remainder is0.", "misconception": "Replace the power10^33 by a sum of33 copies of the residue1. Its supposed residue is33 modulo9, and33+8=41 has remainder5."}
+        ]
+      }
+    },
+    {
+      "id": "q-eighty-one-ones",
+      "source_numbers": ["1225"],
+      "view": {
+        "mode": "multiple",
+        "stem": "Let R81 be the decimal number written with exactly81 digits1, and R9 the number written with exactly9 digits1. Select every true assertion relevant to whether R81 is divisible by81.",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "R81 is divisible by81.", "figure_ids": []},
+          {"id": "B", "text": "R9 is already divisible by81.", "figure_ids": []},
+          {"id": "C", "text": "R81=R9*sum(10^(9j), j=0,...,8), and that sum is divisible by9.", "figure_ids": []},
+          {"id": "D", "text": "Every decimal number whose digit sum is divisible by9 is divisible by81.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Prove the additional factor of9 needed for divisibility by81, rather than inferring it solely from digit sum81.",
+        "source_solution": "Split the81 ones into nine9-digit blocks: R81=R9*T, T=sum_(j=0)^8 10^(9j). R9=111111111=9*12345679. Modulo9 each term of T is1, so T is congruent9 and is divisible9. Therefore R81 is divisible9*9=81. The assertion is about81, not only9. R9 itself is not divisible81: R9/9=12345679 has digit sum37, not divisible9. One may also check10^9-1=999999999=81*12345679, giving10^9 congruent1 modulo81; then R81 is congruent9R9=999999999 congruent0 modulo81.",
+        "unit_reason": "One multiple comparison keeps the block factorization, final divisibility and distinction between a9-divisibility test and an81-divisibility proof.",
+        "concept_blocks": [],
+        "limitations": ["Choice recognition does not demonstrate independently finding the two-factor proof or writing the81-digit integer."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "C"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "R81=R9*T, with9 dividing R9 and9 dividing T, so81 divides their product.", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "R9/9=12345679 has digit sum37 and is not divisible9, so R9 lacks the second factor9.", "misconception": "Calculate the nine1s' digit sum as9, apply divisibility by9 correctly, then identify that divisor9 with9^2=81 without testing for a second factor9."},
+          {"option_id": "C", "truth": "correct", "derivation": "Multiplying R9 by powers10^(9j) places nine adjacent9-digit blocks without overlap. Each of the nine powers is1 modulo9, hence their sum is0 modulo9.", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "18 has digit sum9 and is not divisible81, providing a counterexample to the universal assertion.", "misconception": "From the valid rule S divisible9 implies N divisible9, replace the conclusion's divisor by81. Applied to18, this mistaken rule asserts81 divides18."}
+        ]
+      }
+    },
+    {
+      "id": "q-five-odd-entries",
+      "source_numbers": ["1226"],
+      "view": {
+        "mode": "single",
+        "stem": "Can five numbers be selected from the shown table so that their sum is20? Which conclusion together with its justification is valid?",
+        "figure_ids": ["tbl-p0294-01"],
+        "options": [
+          {"id": "A", "text": "No: the smallest possible sum of five selected entries is25, which is greater than20.", "figure_ids": []},
+          {"id": "B", "text": "Yes: two odd entries have even sum, so a selection of five entries can have even sum20.", "figure_ids": []},
+          {"id": "C", "text": "No: five odd entries always have odd sum, whereas20 is even.", "figure_ids": []},
+          {"id": "D", "text": "No: every sum of five selected entries is at most7, which is less than20.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Prove impossibility for any selection of five actual entries, retaining the multiplicities but avoiding brute-force choice or table-frequency copying.",
+        "source_solution": "The actual table has4 rows and3 columns: three1s, three3s, three5s, three7s. Every entry is odd. A sum of five selected entries is congruent5=1 modulo2, so cannot equal the even number20. This obstruction remains valid whether selection is interpreted as five different cells or permits reusing a value; the unavailable selection convention does not change the answer. With distinct cells the minimum is1+1+1+3+3=9 and maximum7+7+7+5+5=31, so neither a false lower bound25 nor upper bound7 explains the impossibility. No measured quantities or missing labels are involved.",
+        "unit_reason": "One parity-based existence judgment is the complete task; selecting labels or counting columns would not establish the required impossibility.",
+        "concept_blocks": [],
+        "limitations": ["Recognition does not demonstrate independently writing the parity proof or independently attempting a selection.", "The source does not clarify cell reuse, but impossibility is invariant; no selection convention is guessed."],
+        "figure_observations": [
+          {"figure_id": "tbl-p0294-01", "observation": "Opened the listed complete PNG exactly once at original detail. I see a4-row,3-column table: the first row is1,1,1; second3,3,3; third5,5,5; fourth7,7,7. All12 numerals are visible and legible. The full right border, bottom border below the7s, and corner intersections are visible with white margin; nothing is cropped."}
+        ]
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "Five distinct cells1,1,1,3,3 already give9, disproving the asserted minimum25. The actual reason for impossibility is parity.", "misconception": "Treat the middle value5 as though it were the table minimum, ignore rows1 and3, and compute five times that false minimum:5*5=25."},
+          {"option_id": "B", "truth": "incorrect", "derivation": "After one even-sum odd pair, three odd entries remain, whose sum is odd. The total is odd, not20.", "misconception": "Group the first two odd entries and correctly obtain an even subtotal; discard the parity contribution of the other three entries and transfer the pair's evenness to the complete five-entry sum."},
+          {"option_id": "C", "truth": "correct", "derivation": "Each selected entry is1 modulo2. Their sum is5 modulo2, hence odd, while20 is0 modulo2. Therefore no selection succeeds.", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "For example7+7+7+5+5=31 using actual cells, so7 is not an upper bound for a five-entry sum.", "misconception": "Read7 as the maximum individual entry, then substitute that element maximum for the maximum of a five-term sum without adding the other four terms. This yields the exact false upper bound7."}
+        ]
+      }
+    },
+    {
+      "id": "q-decimal-repetition-factors",
+      "source_numbers": ["1227", "1228", "1229", "1230"],
+      "view": {
+        "mode": "multiple",
+        "stem": "Compare these four decimal constructions: three copies of one nonzero digit d; a three-digit number n written twice consecutively (for example548548); a two-digit number m written three times consecutively (for example737373); and six copies of one nonzero digit d. Select every correct equality and factorization. Writing a block consecutively means concatenation, not ordinary addition.",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "The three-equal-digit number is111d=3*37*d.", "figure_ids": []},
+          {"id": "B", "text": "The three-digit block written twice is101n=101*n.", "figure_ids": []},
+          {"id": "C", "text": "The three-digit block written twice is1001n=7*11*13*n.", "figure_ids": []},
+          {"id": "D", "text": "The three-equal-digit number is21d=3*7*d.", "figure_ids": []},
+          {"id": "E", "text": "The two-digit block written three times is111m=3*37*m.", "figure_ids": []},
+          {"id": "F", "text": "The two-digit block written three times is10101m=3*7*13*37*m.", "figure_ids": []},
+          {"id": "G", "text": "The six-equal-digit number is10101d=3*7*13*37*d.", "figure_ids": []},
+          {"id": "H", "text": "The six-equal-digit number is111111d=3*7*11*13*37*d.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Prove all four source divisibility statements through exact place-value coefficients, preserving the distinctions between one-, two- and three-digit blocks.",
+        "source_solution": "All four full source proofs were independently established before alternatives. For source1227, a three-digit number with equal nonzero digit d is100d+10d+d=111d=3*37*d, proving divisibility by3 and37 for every d=1,...,9. For1228,100<=n<=999 and concatenation is1000n+n=1001n;1001=7*11*13. Thus each of7,11,13 divides the result, including548548=1001*548. For1229,10<=m<=99 and concatenation is10000m+100m+m=10101m;10101=111*91=(3*37)*(7*13). Thus3,7,13,37 all divide it, including737373=10101*73. For1230, six equal digits give111111d. Split into two three-digit blocks:111111=111*1001=(3*37)*(7*11*13). Therefore3,7,11,13,37 all divide the number. Decimal nonzero leading digits are inherent in the stated three-, two-, and six-digit numbers, not a guessed natural-number convention. No converse claim that these are the only divisors is made.",
+        "unit_reason": "These four sources are a coherent comparison of decimal-block length and coefficient factorization. Combining them exposes the shared proof mechanism and the meaningful difference of the factor11, rather than enforcing a printed-subpart count.",
+        "concept_blocks": [],
+        "limitations": ["Recognizing factorization claims does not demonstrate independently writing any of the four requested proofs.", "Concatenation and divisibility are represented algebraically; no independently constructed digit layout is demonstrated.", "Selecting an equality is not a certification of independent proof production."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "C", "F", "H"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "The three places contribute(100+10+1)d=111d, and111=3*37. Both required divisors divide the result.", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "A three-digit second block requires shifting the first block by three places, giving1000n+n=1001n, not101n.", "misconception": "Shift the first three-digit block by only two decimal places as if it were a two-digit block, then add n:100n+n=101n."},
+          {"option_id": "C", "truth": "correct", "derivation": "A three-place shift gives1001n;7*11*13=1001. The result is divisible by all three required factors.", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "The hundreds contribution is100d, not10d, so the coefficient must be111 rather than21.", "misconception": "Use10 instead of100 for the hundreds place, then add the correct tens and units contributions:10d+10d+d=21d=3*7*d."},
+          {"option_id": "E", "truth": "incorrect", "derivation": "Two-digit blocks require shifts of four and two places, yielding10000m+100m+m=10101m.", "misconception": "Treat the two-digit block as a single digit and shift the three copies by two and one places:100m+10m+m=111m=3*37*m."},
+          {"option_id": "F", "truth": "correct", "derivation": "The coefficient10000+100+1=10101=111*91=3*37*7*13 proves all four required divisibilities.", "misconception": null},
+          {"option_id": "G", "truth": "incorrect", "derivation": "10101d occupies only alternating places and lacks three of the six digits. The actual coefficient is111111 and includes an additional factor11.", "misconception": "Keep only the units, hundreds and ten-thousands copies of d, omitting the intervening tens, thousands and hundred-thousands copies. This leaves(1+100+10000)d=10101d and factorization3*7*13*37*d."},
+          {"option_id": "H", "truth": "correct", "derivation": "111111=111*1001=3*37*7*11*13. Multiplication by any nonzero digit d preserves divisibility by all five listed integers.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q-four-remainder-classes",
+      "source_numbers": ["1231"],
+      "view": {
+        "mode": "single",
+        "stem": "Write general forms for numbers that leave remainder1,2,3 respectively when divided by4. Let q denote the integer quotient in the division; retain whatever number domain is intended rather than assigning a convention to a symbol for natural numbers. Which ordered set of formulas is valid?",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "Remainder1:4q; remainder2:4q+1; remainder3:4q+2.", "figure_ids": []},
+          {"id": "B", "text": "Remainder1:4q+1; remainder2:4q+2; remainder3:4q+3.", "figure_ids": []},
+          {"id": "C", "text": "Remainder1:4q+3; remainder2:4q+2; remainder3:4q+1.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Give all three general residue forms and explicitly bind their parameter to the actual quotient instead of silently choosing a natural-number origin.",
+        "source_solution": "For every integer with Euclidean division by4, n=4q+r,0<=r<4. Fixing r=1,2,3 gives respectively4q+1,4q+2,4q+3. If the intended numbers are all integers, q ranges over the integers; if they are nonnegative or positive numbers in these nonzero-remainder classes, q ranges over the nonnegative integers. The source specifies no parameter domain, but using the actual quotient makes each formula valid under every restriction of that domain. No endpoint or whether-zero-is-natural convention is guessed. The unrestricted class enumeration is conditional on the original number domain; the three formulas themselves are invariant.",
+        "unit_reason": "The ordered family of three residue classes is one correspondence task. It preserves all remainders without three redundant arithmetic clicks.",
+        "concept_blocks": [],
+        "limitations": ["No independent production of the formulas is demonstrated.", "The seed does not determine an unrestricted parameter domain; only the quotient-bound formulas are asserted, not an invented natural-number convention."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "These expressions actually leave remainders0,1,2, respectively, not1,2,3.", "misconception": "Number the requested classes starting with offset0 rather than offset1, and write4q+(j-1) for the jth printed remainder j. This shifts every requested remainder down by1."},
+          {"option_id": "B", "truth": "correct", "derivation": "The division identity n=4q+r directly gives the three forms; their added constants are all less than4 and are exactly the requested remainders.", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "The first formula leaves3 and the last leaves1, so those two classes are interchanged.", "misconception": "Replace the remainder r by its complement4-r when adding it to4q. For r=1,2,3 this produces offsets3,2,1 in that order."}
+        ]
+      }
+    },
+    {
+      "id": "q-three-examples-multiples",
+      "source_numbers": ["1232"],
+      "view": {
+        "mode": "single",
+        "stem": "Choose three multiples of5 among numbers of the form3n+1. Which proposal gives three such numbers together with valid parameter values? No endpoint convention for n is specified in the original task.",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "n=5,10,15 gives16,31,46; all three are multiples of5.", "figure_ids": []},
+          {"id": "B", "text": "n=2,7,12 gives7,22,37; all three are multiples of5.", "figure_ids": []},
+          {"id": "C", "text": "n=3,8,13 gives10,25,40; all three are multiples of5.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Produce three valid parameter-result examples satisfying both the given form and divisibility by5.",
+        "source_solution": "Directly choose n=3,8,13 and calculate3n+1=10,25,40; these are5*2,5*5,5*8. All chosen parameters are positive integers, so the examples remain valid whether a customary nonnegative parameter range begins at0 or1, and also under wider integer or real domains. If n is integral, solving3n+1 congruent0 modulo5 gives3n congruent4, multiply by the inverse2 to get n congruent3 modulo5; thus n=5t+3 and values15t+10, restricted to whichever domain the original permits. That conditional complete family is not imposed as an unstated domain. The actual requested task is three examples, which is fully resolved without deciding the parameter's endpoint convention.",
+        "unit_reason": "A three-example proposal is a meaningful complete response to the source's existence request, retaining parameter-to-number correspondence rather than testing one cell at a time.",
+        "concept_blocks": [],
+        "limitations": ["Selection does not demonstrate independently choosing three examples or independently solving the congruence.", "No unstated natural-number or parameter-endpoint convention is introduced; the optional full congruence family is explicitly conditional on integrality.", "Because the original task only asks for three examples, other valid triples are not claimed to be excluded."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "The substitutions are correct, but16,31,46 all have remainder1 modulo5.", "misconception": "Assume that n being a multiple of5 makes3n+1 a multiple of5. Choose n=5,10,15, compute the stated results, and ignore the added1's residue."},
+          {"option_id": "B", "truth": "incorrect", "derivation": "The substitutions are correct, but7,22,37 all have remainder2 modulo5.", "misconception": "Move the1 across the congruence without changing its sign: from3n+1 congruent0 incorrectly obtain3n congruent1. Multiply by2 to get n congruent2 and choose2,7,12, producing7,22,37."},
+          {"option_id": "C", "truth": "correct", "derivation": "3*3+1=10,3*8+1=25,3*13+1=40; each result is divisible5 and every parameter satisfies the given form.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q-compatible-remainders",
+      "source_numbers": ["1233"],
+      "view": {
+        "mode": "single",
+        "stem": "A number leaves remainder1 when divided by2 and remainder2 when divided by3. What remainder does it leave when divided by6?",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "2", "figure_ids": []},
+          {"id": "B", "text": "3", "figure_ids": []},
+          {"id": "C", "text": "1", "figure_ids": []},
+          {"id": "D", "text": "5", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Find the unique residue modulo6 satisfying both smaller-modulus conditions.",
+        "source_solution": "Let n=6q+r with0<=r<6. The parity condition restricts r to1,3,5; the modulo3 condition restricts it to2,5. Their only intersection is5. Conversely6q+5 leaves1 modulo2 and2 modulo3. This proves both necessity and sufficiency, independently of whether the underlying integers are positive or include0.",
+        "unit_reason": "One joint residue is the mathematical response unit; separate questions for the two given remainders would only repeat supplied data.",
+        "concept_blocks": [],
+        "limitations": ["Selecting the residue does not demonstrate independently writing the compatibility proof or the general form6q+5."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "A residue2 modulo6 is even, contrary to remainder1 on division by2.", "misconception": "Keep only the remainder2 modulo3 and copy that remainder unchanged to division by6, ignoring parity."},
+          {"option_id": "B", "truth": "incorrect", "derivation": "A residue3 modulo6 is divisible3 and does not leave remainder2 there.", "misconception": "Add the given remainders1+2=3 as if combining division conditions meant adding their residues, and report3 modulo6."},
+          {"option_id": "C", "truth": "incorrect", "derivation": "A residue1 modulo6 also leaves1 modulo3, not2.", "misconception": "Use only the oddness condition, choose its smallest positive residue1, and copy it as the remainder modulo6 without enforcing the modulo3 condition."},
+          {"option_id": "D", "truth": "correct", "derivation": "The eligible residue lists{1,3,5} and{2,5} intersect only at5;6q+5 verifies both source conditions.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q-rotate-final-two",
+      "source_numbers": ["1234"],
+      "view": {
+        "mode": "multiple",
+        "stem": "A decimal number ends in2. Moving that final2 to the first position doubles the number: the rotated number equals2N. Find the number or numbers by selecting every true assertion. No shortest-length restriction is imposed.",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "The least solution is105263157894736842; its rotation is210526315789473684.", "figure_ids": []},
+          {"id": "B", "text": "All solutions are N=2*(10^(18t)-1)/19 for positive integers t; their digit counts are18t.", "figure_ids": []},
+          {"id": "C", "text": "222222222222222222 is a solution; moving its last2 to the front leaves it unchanged.", "figure_ids": []},
+          {"id": "D", "text": "2*(10^9-1)/19 is a nine-digit solution because10^9 is congruent1 modulo19.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Solve the decimal rotation equation completely, including its length condition, least solution and genuine infinite family.",
+        "source_solution": "Write a positive L-digit number N=10a+2. Its rotation is2*10^(L-1)+a, so2*10^(L-1)+(N-2)/10=2N. Multiplication by10 gives19N=2*(10^L-1); hence N=2*(10^L-1)/19. Integrality requires10^L congruent1 modulo19. The successive residues of10^k for k=1,...,18 are10,5,12,6,3,11,15,17,18,9,14,7,13,16,8,4,2,1. None before18 is1, so the order is18 and L must be18t with t>=1. The formula indeed has L digits since its value is between10^(L-1) and10^L; from19N ending in8, N ends in2, and the derived rotation equation is then valid. Equivalently the prefix-length equation19a=2*10^(L-1)-4 gives10^(L-1) congruent2 modulo19, also L=18t. For t=1,N=105263157894736842, and2N=210526315789473684, exactly its rotation. Larger t give repeated copies of the same18-digit block; there are infinitely many solutions. The source asks for the number without stipulating least length, so the full family is retained rather than inventing uniqueness. The phrase 'doubles' is represented by the explicit2N condition, not a threefold increase.",
+        "unit_reason": "One multiple comparison covers the actual infinite family and least example, with the essential digit-length congruence and counterexamples to weaker rotation claims.",
+        "concept_blocks": [],
+        "limitations": ["Recognizing the family is not evidence of independently discovering the number, writing the modular-order proof, or carrying out the rotation construction.", "The original has no least-length condition, so the least solution alone would be incomplete; all lengths18t are retained.", "No candidate drawings or measured diagrams are involved."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "B"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "The order calculation forces the least length18. The formula at L=18 evaluates to105263157894736842; doubling gives210526315789473684, matching the rotation.", "misconception": null},
+          {"option_id": "B", "truth": "correct", "derivation": "The exact rotation equation gives19N=2*(10^L-1). Since10 has order18 modulo19, integrality holds exactly when L=18t. These values have the stated length, end in2 and satisfy the rotation equation.", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "Its rotation equals N, not2N. Since N is nonzero, an unchanged number cannot satisfy doubling.", "misconception": "From20N-N=2*10^L-2, compute20-1 as9 rather than19. This gives N=2*(10^L-1)/9; taking L=18 produces18 digits2. Check only the final digit and rotational invariance, neglecting that the required relation is rotation=2N."},
+          {"option_id": "D", "truth": "incorrect", "derivation": "10^9 is congruent18=-1 modulo19, not1. Thus19 does not divide2*(10^9-1), and the proposed value is not even an integer.", "misconception": "At exponent9 reach residue-1, discard its minus sign and record1. Conclude the period is9, substitute L=9 into the otherwise correct formula2*(10^L-1)/19, and falsely label it a nine-digit integer solution."}
+        ]
+      }
+    },
+    {
+      "id": "q-prime-power-divisors",
+      "source_numbers": ["1235"],
+      "view": {
+        "mode": "multiple",
+        "stem": "How many factors does3^6*5^4 have? Select every true assertion, distinguishing positive integer factors from integer factors when negative factors are also counted; do not merge those two counting domains.",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "There are35 positive integer factors.", "figure_ids": []},
+          {"id": "B", "text": "There are24 positive integer factors.", "figure_ids": []},
+          {"id": "C", "text": "There are70 integer factors if negative factors are counted too.", "figure_ids": []},
+          {"id": "D", "text": "There are10 positive integer factors.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Count all factors from independent prime-exponent choices, explicitly distinguishing the otherwise unstated sign domain.",
+        "source_solution": "Every positive integer divisor is uniquely3^a*5^b with integers0<=a<=6 and0<=b<=4. There are7 choices for a and5 for b, giving35. The exponents0 include1 and pure-prime factors; the upper endpoints include the entire number. There are no other positive divisors by unique prime factorization. If integer divisors of either sign are intended, each positive divisor yields its distinct negative and the count is70;0 is not a divisor. The seed's unqualified word 'factors' does not supply a sign convention in any selected concept paragraph. The item explicitly states both domains, so no unqualified sign-domain answer is guessed. HOLD only any demand for a single domain-unspecified count from the original phrasing.",
+        "unit_reason": "One multiple comparison preserves the product of exponent-choice counts and distinguishes a conditional signed count from the positive count.",
+        "concept_blocks": [],
+        "limitations": ["Selecting counts does not demonstrate independently listing or deriving all factors.", "Concrete local HOLD: the original unqualified factor-count sign domain is not defined by the seed;35 and70 are asserted only for their explicit domains."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A", "C"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "Independent exponents a=0,...,6 and b=0,...,4 give(6+1)*(4+1)=35 unique positive divisors.", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "The count24=6*4 omits every divisor having a zero exponent, including1; the full count is35.", "misconception": "Restrict a to1,...,6 and b to1,...,4, incorrectly demanding both primes in every factor. Multiply the remaining6 and4 choices to obtain24."},
+          {"option_id": "C", "truth": "correct", "derivation": "Each of the35 positive divisors gives one distinct negative divisor. These70 nonzero integers are all signed divisors.", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "Adding the prime exponents gives10, but factor choices combine by multiplication and include zero exponents.", "misconception": "Count6 possible positive powers of3 and4 possible positive powers of5 as disjoint lists, add6+4=10, and omit both mixed-prime factors and the divisor1."}
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {"source_number": "1214", "question_ids": ["q-terminal-arithmetic"], "omitted_tasks": ["Independent written computation of all four last digits is not demonstrated by selection."], "reason": "All four full tasks are solved, including inclusive7-through81 bounds and all900 three-digit summands. One modular-arithmetic unit preserves every requested terminal digit."},
+    {"source_number": "1215", "question_ids": ["q-overlapping-strip"], "omitted_tasks": ["Independent filling of the nine blank cells and writing the overlap proof."], "reason": "The complete actual11-cell strip is covered, including cells10 and11 and all overlapping triples. No new drawing or construction certification is claimed."},
+    {"source_number": "1216", "question_ids": ["q-two-direction-grid"], "omitted_tasks": ["Independent construction and filling of all28 blank grid cells.", "Independent production of the two-direction periodicity proof and a drawn candidate grid."], "reason": "All32 cells, four given positions and every horizontal/vertical triple are covered by the complete tile extension. The forced zero is retained because positivity is not a source condition. Candidate drawings were not authorized."},
+    {"source_number": "1217", "question_ids": ["q-letter-division"], "omitted_tasks": ["Independent discovery of the six digit assignments and written long-division construction."], "reason": "The full dividend, divisor, quotient, middle product, both brought-down digits and final zero are solved. The actual complete PNG was read, not inferred from a hash or a figure spec; different-letter injectivity was not assumed."},
+    {"source_number": "1218", "question_ids": ["q-star-multiplication-first", "q-star-multiplication-second", "q-star-division"], "omitted_tasks": ["Independent filling of every star in all three operations.", "Independent layout of shifted multiplication rows and the long division."], "reason": "All three independent operations are covered with full results and every partial row:415*382=158530;325*147=47775;52650/325=162. The two actual media were opened once each. Separate units are justified by independent operand systems, not their printed labels."},
+    {"source_number": "1219", "question_ids": ["q-letter-addition", "q-letter-subtraction"], "omitted_tasks": ["Independent discovery and written carry proof for all four addition assignments.", "Independent production of the subtraction and its borrow."], "reason": "Equality-only prose permits exactly four additions, including A=L and D=L cases; all four are retained. The subtraction has unique10761-5610=5151. No unstated different-letter or cross-operation identity convention is introduced."},
+    {"source_number": "1220", "question_ids": ["q-star-product-ending", "q-two-star-completions"], "omitted_tasks": ["Independent star filling and column-layout production for both multiplications."], "reason": "The first complete multiplication is397*34=13498. The second genuinely permits305*41=12505 and315*41=12915; a native multiple unit retains both instead of inventing uniqueness. All actual image row patterns are accounted for."},
+    {"source_number": "1221", "question_ids": ["q-equal-quotient-remainder"], "omitted_tasks": ["HOLD: whether0 is included in the original unqualified all-such-numbers list is not resolved by the supplied number domain.", "Independent written derivation and enumeration."], "reason": "The complete formal relation n=8r with r=0,...,6 and the six positive solutions are solved. Under a zero-admitting domain include0; under a positive domain exclude it. The visible original condition and invariant unit do not pretend to decide the missing convention."},
+    {"source_number": "1222", "question_ids": ["q-digit-sum-proof"], "omitted_tasks": ["Independent proof writing and discovery of the positional-value argument."], "reason": "The full implication is proved with N-S=sum d_i(10^i-1)=9K, including the units place and zero digits. The proof-recognition item honestly records loss of proof production."},
+    {"source_number": "1223", "question_ids": ["q-seventy-digit-sum"], "omitted_tasks": ["Independent computation and writing of the arrangement-invariance argument."], "reason": "All seventeen digits are included:7*8+9*1+5=70. Nondivisibility and residue7 are established for every ordering, without choosing a fabricated arrangement."},
+    {"source_number": "1224", "question_ids": ["q-large-power-nine"], "omitted_tasks": ["Independent proof writing or decimal expansion production."], "reason": "The exact10^33+8 is shown divisible9 through an integral factorization and residue0; incorrect place-value and exponent procedures are compared substantively."},
+    {"source_number": "1225", "question_ids": ["q-eighty-one-ones"], "omitted_tasks": ["Independent production of the two-factor proof or writing81 consecutive ones."], "reason": "Divisibility by81, not merely9, is proved by nine9-digit blocks. R9's failure of81-divisibility and the invalid universal9-to81 promotion are preserved as mathematical distinctions."},
+    {"source_number": "1226", "question_ids": ["q-five-odd-entries"], "omitted_tasks": ["Independent selection attempts and written impossibility proof."], "reason": "The actual12-entry table is fully observed. Five odd summands cannot total20. The result is invariant to cell-reuse ambiguity; no selection convention or fabricated five-entry solution is assumed."},
+    {"source_number": "1227", "question_ids": ["q-decimal-repetition-factors"], "omitted_tasks": ["Independent written proof for the three-equal-digit construction."], "reason": "For every nonzero digit d,111d=3*37*d proves both required divisibilities. The shared unit compares block widths across four related proofs without replacing this proof by a supplied-data copy."},
+    {"source_number": "1228", "question_ids": ["q-decimal-repetition-factors"], "omitted_tasks": ["Independent proof writing or construction of the repeated three-digit block."], "reason": "For every100<=n<=999, concatenation1000n+n=1001n=7*11*13*n proves all three divisibilities. The original548548 example is preserved."},
+    {"source_number": "1229", "question_ids": ["q-decimal-repetition-factors"], "omitted_tasks": ["Independent proof writing or construction of three repeated two-digit blocks."], "reason": "For every10<=m<=99,10000m+100m+m=10101m=3*7*13*37*m proves all four divisibilities. The original737373 example is preserved and the two-place shift is distinguished from one-place shifts."},
+    {"source_number": "1230", "question_ids": ["q-decimal-repetition-factors"], "omitted_tasks": ["Independent written proof or construction of six equal digits."], "reason": "For every nonzero digit d,111111d=111*1001*d=3*7*11*13*37*d proves every requested divisor. The extra factor11 distinguishes this construction from three repeated two-digit blocks."},
+    {"source_number": "1231", "question_ids": ["q-four-remainder-classes"], "omitted_tasks": ["Independent production of all three general formulas.", "An unrestricted parameter-domain enumeration cannot be asserted without a supplied number-domain convention."], "reason": "All three formulas4q+1,4q+2,4q+3 are proved using q as the actual integer quotient. This preserves the invariant mathematical task without silently assuming that a natural-number parameter begins at0 or1."},
+    {"source_number": "1232", "question_ids": ["q-three-examples-multiples"], "omitted_tasks": ["Independent selection of three examples or written congruence solution."], "reason": "The requested three examples10,25,40 are fully solved with positive integer parameters3,8,13. Their validity is independent of a zero endpoint convention. An exhaustive family is stated only conditionally on integral n, not imposed as a source condition."},
+    {"source_number": "1233", "question_ids": ["q-compatible-remainders"], "omitted_tasks": ["Independent written necessity-and-sufficiency proof."], "reason": "Both remainder conditions are used; the only compatible residue modulo6 is5. No underlying sign or natural-number-zero convention changes this result."},
+    {"source_number": "1234", "question_ids": ["q-rotate-final-two"], "omitted_tasks": ["Independent discovery and construction of the rotating number.", "Independent writing of the modular-order proof."], "reason": "The source lacks a shortest-length restriction, so the complete infinite family2*(10^(18t)-1)/19,t>=1 is retained along with the least18-digit solution. Rotation is exactly2N; neither uniqueness nor a threefold pricing-style interpretation is guessed."},
+    {"source_number": "1235", "question_ids": ["q-prime-power-divisors"], "omitted_tasks": ["HOLD: an unqualified single factor count cannot be assigned until the original sign domain is specified.", "Independent enumeration or written divisor-count proof."], "reason": "The whole positive-divisor task is solved by a=0,...,6,b=0,...,4 giving35. If negatives are included the full signed count is70. Both explicit domains are visible, so no sign convention is fabricated."},
+    {"source_number": "1236", "question_ids": [], "omitted_tasks": ["HOLD: the full find-the-three-digit-number task is deferred because the seed does not say whether a digit may be reused when forming a two-digit number.", "Independent generation of all distinct two-digit numbers and construction of the requested three-digit number are unavailable.", "No conditional answer198 is presented as the unconditional original answer."], "reason": "Independently solved the competing readings before alternatives; no question is fabricated. If the distinct available digit values may each be reused, three distinct nonzero digits a,b,c produce all nine two-digit values with sum33(a+b+c); the condition N=(sum)/3 gives100a+10b+c=11(a+b+c), hence89a=b+10c. Since b+10c<=99, a=1; then b+10c=89 forces b=9,c=8, so N=198. Its nine numbers11,18,19,81,88,89,91,98,99 sum594=3*198. Exhaust other digit sets under this reuse reading: one nonzero value gives a sum11d and N<=33; two distinct nonzero values give sum22S and N<=125, forcing leading1 and S<=10, hence N<=74, a contradiction. With zero and three distinct values, the valid two-digit sum is32S, so N<182 forces leading1; then S<=10 gives N<=106, forcing N=100+d with digits{1,0,d}, but3(100+d)=32(1+d) gives d=268/29, not a digit. Zero with only one nonzero value gives sum21d and N<=63. Thus198 is unique only under reusable-digit-value semantics. If forming a two-digit number may use each occurrence in the original three-digit numeral at most once, three distinct nonzero digits instead yield six values summing22(a+b+c); the equation3N=22S gives278a+8b=19c, impossible since the left is at least278 and the right at most171. Three distinct digits including zero give sum21S, N=7S; N<=119 forces leading1 and S<=10, hence N<=70, impossible. A multiset with two identical nonzero digits p and one distinct nonzero q allows pp,pq,qp only, whose sum11(2p+q)<=297 gives N<=99. Three identical digits allow only pp and N<=33. Two p digits and one zero allow pp,p0 only, sum21p and N<=63; two zeros and one p allow only p0, N<=30. Therefore there is no solution under no-reuse-of-occurrences semantics. The missing reuse rule changes existence, not just a harmless endpoint. This task has no invariant find-the-number response unit, so full coverage is deferred locally. No answers, prior choices, source additions, candidate drawings, measurement assumptions or specs were consulted."}
+  ]
+}

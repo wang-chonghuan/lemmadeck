@@ -1,0 +1,658 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "1cc5d0269e44fdf307e4c8492d93dcfb703040121cc84de1ac3cf16ae5e41f54",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "consecutive-odd-proof",
+      "source_numbers": ["1237"],
+      "view": {
+        "mode": "single",
+        "stem": "Prove that the sum of any two consecutive odd numbers is divisible by 4. Write the numbers as 2k+1 and 2k+3, with integer k. Which identity gives a valid proof for every k?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "(2k+1)+(2k+3) = 4k+2 = 2(2k+1).", "figure_ids": []},
+          {"id": "b", "text": "(2k+1)+(2k+3) = 4k+3 = 4k+3.", "figure_ids": []},
+          {"id": "c", "text": "(2k+1)+(2k+3) = 4k+4 = 4(k+1).", "figure_ids": []},
+          {"id": "d", "text": "(2k+1)+(2k+3) = 2k+4 = 2(k+2).", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Establish a universal divisibility statement for consecutive odd numbers, not just verify examples.",
+        "source_solution": "Independently, an odd integer is 2k+1 and the next odd integer is 2k+3. Their sum is 4k+4=4(k+1), an integer multiple of 4. This covers positive consecutive odd numbers and also remains valid if odd integers of either sign are allowed. Equivalently, their even midpoint is 2k+2 and the sum is twice that midpoint.",
+        "unit_reason": "One complete algebraic identity is the decisive universal inference. Splitting the two numbers or the addition into separate response slots would not assess that inference.",
+        "concept_blocks": [],
+        "limitations": ["The parametrization is supplied rather than independently invented.", "Selecting an identity does not certify writing a universal proof."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "The proposed result is twice 2k+1, whereas the actual second addend exceeds the first by 2. For k=0 it gives 2 instead of 1+3=4.", "misconception": "Replace the next odd number 2k+3 with another copy of 2k+1; doubling produces 4k+2."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "The constants are 1+3=4, not 3. At k=0 the asserted sum is 3 although the addends sum to 4.", "misconception": "Add the variable terms but carry forward only the second constant: 2k+2k+3=4k+3."},
+          {"option_id": "c", "truth": "correct", "derivation": "Combine 2k+2k=4k and 1+3=4, then factor out 4. Since k+1 is an integer, 4 divides the sum.", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "The two variable terms sum to 4k, not 2k. For k=1 the real sum is 3+5=8 but this identity gives 6.", "misconception": "Collapse 2k+2k to a single 2k while correctly adding the constants, producing 2k+4."}
+        ]
+      }
+    },
+    {
+      "id": "insert-middle-zero",
+      "source_numbers": ["1238"],
+      "view": {
+        "mode": "single",
+        "stem": "Inserting a 0 between the two digits of a two-digit number produces a three-digit number equal to nine times the original. What is the original two-digit number?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "54", "figure_ids": []},
+          {"id": "b", "text": "45", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Use positional notation and digit restrictions to determine the number uniquely.",
+        "source_solution": "Let a be the tens digit, 1<=a<=9, and b the units digit, 0<=b<=9. The condition is 100a+b=9(10a+b), hence 10a=8b and 5a=4b. Coprimality of 4 and 5 gives a=4t and b=5t. Digit bounds force t=1, so the original number is 45 and the inserted number is 405=9*45.",
+        "unit_reason": "The number and the place-value equation are one coherent determination. The two alternatives distinguish solving the digit ratio from reversing its assignment to places.",
+        "concept_blocks": [],
+        "limitations": ["The learner does not independently write the place-value equation or the digit-bound argument."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "The ratio calculation yields digit values 4 and 5, but assigning 5 to the tens place gives 54. Its insertion gives 504, while 9*54=486.", "misconception": "Solve 5a=4b for a=4 and b=5, then reverse the tens and units positions when assembling the number, producing 54."},
+          {"option_id": "b", "truth": "correct", "derivation": "100a+b=9(10a+b) reduces to 5a=4b; the only permitted digit pair is (4,5). Thus 45 produces 405, exactly nine times 45.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "reverse-three-digits",
+      "source_numbers": ["1239"],
+      "view": {
+        "mode": "single",
+        "stem": "Reverse the digits of a three-digit number, then subtract the smaller value from the larger. Let the original digits be a,b,c, with 1<=a<=9 and 0<=b,c<=9. A leading zero in the reversed writing does not change its numerical value. Which identity proves that the difference is divisible by 9?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "|(100a+10b+c)-(100c+10b+a)| = 9|a-c|.", "figure_ids": []},
+          {"id": "b", "text": "|(100a+10b+c)-(100c+10b+a)| = 99|a+c|.", "figure_ids": []},
+          {"id": "c", "text": "|(100a+10b+c)-(100c+10b+a)| = 100|a-c|.", "figure_ids": []},
+          {"id": "d", "text": "|(100a+10b+c)-(100c+10b+a)| = 99|a-c|.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Prove divisibility of the nonnegative difference, including equal outer digits and a zero final digit.",
+        "source_solution": "The two values are 100a+10b+c and 100c+10b+a. Their signed difference is 100(a-c)+(c-a)=99(a-c). Subtracting the smaller from the larger gives 99|a-c|=9*11|a-c|. If a=c the difference is 0, which is still divisible by 9. If c=0, reversal gives the value 10b+a; the same calculation remains valid.",
+        "unit_reason": "Cancellation of the middle digit and the difference of the outer place values form one proof. The complete difference identity retains both ordering and the zero case.",
+        "concept_blocks": [],
+        "limitations": ["The digit notation and candidate identities replace independently setting up and writing the proof."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "For 123 and 321 the difference is 198, not 9*2=18. The hundreds-to-units place-value difference is 100-1=99.", "misconception": "Replace the hundreds coefficient 100 by 10 and compute the outer-place difference as 10-1=9, producing 9|a-c|."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "For 121 the difference is 0, whereas 99|1+1|=198. Cancellation requires a-c, not a+c.", "misconception": "After obtaining 99a-99c, treat the subtraction as addition when removing the absolute-value sign, producing 99|a+c|."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "Subtracting the units contributes c-a=-(a-c). Omitting it gives 100|a-c|, which is 200 instead of 198 for 123.", "misconception": "Cancel the tens but drop both units terms, leaving only the difference of the hundreds terms."},
+          {"option_id": "d", "truth": "correct", "derivation": "The tens cancel and 100(a-c)+(c-a)=99(a-c). Taking absolute values yields 99|a-c|, an integer multiple of 9 including when it is zero.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "surround-ten",
+      "source_numbers": ["1240"],
+      "view": {
+        "mode": "single",
+        "stem": "Append one digit on each side of the writing 10 so that the resulting number is a multiple of 72. Which result satisfies the condition?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "5104", "figure_ids": []},
+          {"id": "b", "text": "4104", "figure_ids": []},
+          {"id": "c", "text": "8100", "figure_ids": []},
+          {"id": "d", "text": "1104", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Apply the simultaneous divisibility conditions for 8 and 9 to a positional digit construction.",
+        "source_solution": "Write the value as 1000a+100+b. Divisibility by 8 requires 100+b to be divisible by 8; among digits b this forces b=4. Divisibility by 9 then requires a+1+0+4=a+5 to be divisible by 9, forcing a=4. The unique result is 4104=72*57. Even if a leading zero were admitted, a=0 would give 104, not a multiple of 72, so that convention would introduce no additional solution.",
+        "unit_reason": "The two coprime divisor constraints jointly determine a complete number. Separate digit responses would obscure their interaction.",
+        "concept_blocks": [],
+        "limitations": ["Selecting the completed number does not certify independently constructing the divisibility argument."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Its last three digits are 104, so it passes divisibility by 8, but its digit sum is 10 and it fails divisibility by 9.", "misconception": "Find b=4 correctly, then omit the fixed digit 1 from the digit sum. Solving a+4=9 gives a=5 and thus 5104."},
+          {"option_id": "b", "truth": "correct", "derivation": "104=8*13 and the digit sum 4+1+0+4=9. Since 8 and 9 are coprime, the number is divisible by 72; its quotient is 57.", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "The digit sum is 9, but its last three digits are 100, not divisible by 8; 8100/72=112.5.", "misconception": "Use only the last two digits for divisibility by 8, choose b=0 because 00 passes that incorrect test, then solve a+1=9 to obtain a=8."},
+          {"option_id": "d", "truth": "incorrect", "derivation": "104 is divisible by 8 but the digit sum 1+1+0+4=6 is not divisible by 9.", "misconception": "Use only the divisibility-by-8 condition to obtain b=4, then choose the smallest nonzero leading digit without imposing divisibility by 9, producing 1104."}
+        ]
+      }
+    },
+    {
+      "id": "surround-forty-three",
+      "source_numbers": ["1241"],
+      "view": {
+        "mode": "multiple",
+        "stem": "Append one digit on each side of the writing 43 so that the resulting number is a multiple of 45. Select all proposed results that satisfy the condition.",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "2430", "figure_ids": []},
+          {"id": "b", "text": "2435", "figure_ids": []},
+          {"id": "c", "text": "6430", "figure_ids": []},
+          {"id": "d", "text": "6435", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Find every digit construction satisfying both divisibility by 5 and divisibility by 9.",
+        "source_solution": "The value is 1000a+430+b. Divisibility by 5 forces b=0 or b=5. With b=0 the digit sum a+7 must be a multiple of 9, so a=2 and the number is 2430=45*54. With b=5 the digit sum a+12 must be a multiple of 9, so a=6 and the number is 6435=45*143. These exhaust the digit bounds. A leading zero would satisfy neither branch.",
+        "unit_reason": "The two last-digit branches are independent judgments within one complete solution set, naturally assessed by native multiple selection rather than a code for a pair.",
+        "concept_blocks": [],
+        "limitations": ["The alternatives do not certify independently deriving the two branches or proving exhaustion."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a", "d"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "It ends in 0 and has digit sum 2+4+3+0=9, so both 5 and 9 divide it. Directly, 2430=45*54.", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "It ends in 5 but has digit sum 2+4+3+5=14, so it is not divisible by 9.", "misconception": "Derive a=2 in the b=0 branch, then replace b with the other permissible terminal digit 5 without recalculating a, producing 2435."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "It ends in 0 but has digit sum 6+4+3+0=13, so it is not divisible by 9.", "misconception": "Derive a=6 in the b=5 branch, then substitute b=0 while keeping that leading digit, producing 6430."},
+          {"option_id": "d", "truth": "correct", "derivation": "It ends in 5 and has digit sum 6+4+3+5=18. Thus it is divisible by 45, with quotient 143.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "adjacent-common-divisor",
+      "source_numbers": ["1242"],
+      "view": {
+        "mode": "single",
+        "stem": "The task is to prove that the least common multiple of two adjacent natural numbers n and n+1 equals their product. Consider the common-divisor step of that proof, without deciding whether natural numbers include zero. If a positive integer d divides both n and n+1, which argument establishes d=1?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "d divides (n+1)-n=1, so the positive divisor d must be 1.", "figure_ids": []},
+          {"id": "b", "text": "d divides n+(n+1)=2n+1, so the positive divisor d must be 1.", "figure_ids": []},
+          {"id": "c", "text": "One number is even and the other odd, so their positive common divisor d cannot exceed 1.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Assess the convention-independent coprimality lemma that is essential to the requested least-common-multiple proof.",
+        "source_solution": "For every n>=0, a positive common divisor d divides the difference (n+1)-n=1, hence d=1. For positive n, let M be a positive common multiple and write M=nt. Since n+1 divides nt and gcd(n,n+1)=1, it divides t, so n(n+1) divides every common multiple. The product itself is a common multiple and is therefore the least positive one. LOCAL HOLD at n=0: the frozen seed has no natural-number or zero-lcm definition. If natural numbers start at 1 the positive proof completes the source; if they include 0 and lcm is the least positive common multiple, the pair 0,1 has none; with the extended convention lcm(0,1)=0 the product equality holds. No convention is selected. The common-divisor lemma is valid under all those interpretations.",
+        "unit_reason": "Coprimality is a substantial invariant inference, not a minor arithmetic fragment. The original lcm goal remains visible, while the question asks only for the common-divisor proof that does not depend on the unresolved zero convention.",
+        "concept_blocks": [],
+        "limitations": ["LOCAL HOLD: the original universal lcm assertion at zero is not resolved without the missing conventions.", "The selected lemma does not certify completing or writing the least-common-multiple proof."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "Divisibility is closed under subtraction. A positive integer dividing 1 can only be 1, including for the adjacent pair 0,1.", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "The sum is indeed divisible by d, but dividing an odd number does not force d=1. For example, 5 divides 2*2+1=5; it is the difference condition, not the sum condition, that rules such divisors out.", "misconception": "Add the two divisible expressions, then replace 'd divides an odd integer' with 'd=1', discarding all possible odd divisors greater than 1."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "Opposite parity rules out an even common divisor, not an odd one. Numbers 6 and 9 have opposite parity and common divisor 3; adjacency must still be used through their difference. The actual adjacent numbers are coprime, but this purported parity argument alone does not establish it.", "misconception": "Exclude divisor 2 using parity, then incorrectly treat that exclusion as excluding every divisor greater than 1."}
+        ]
+      }
+    },
+    {
+      "id": "four-consecutive-prime",
+      "source_numbers": ["1243"],
+      "view": {
+        "mode": "single",
+        "stem": "Can the sum of four consecutive natural numbers be prime? Use n,n+1,n+2,n+3, with n>=0; the conclusion must also apply if natural numbers start at 1. Which argument is valid?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "No: the sum is even, and every even integer is composite.", "figure_ids": []},
+          {"id": "b", "text": "No: the sum is 2(2n+3), with 2n+3>=3, so it is composite.", "figure_ids": []},
+          {"id": "c", "text": "Yes: starting with n=0 gives a sum of 2, which is prime.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Decide primality using both factorization and the lower bound, avoiding the even-prime exception.",
+        "source_solution": "The sum is n+(n+1)+(n+2)+(n+3)=4n+6=2(2n+3). For n>=0, both factors are at least 2 and 3 respectively, so the sum is at least 6 and composite. If the natural numbers start at 1, the sum is at least 10 and the same conclusion holds. Thus no unresolved zero convention affects this source.",
+        "unit_reason": "The yes/no conclusion and the factor bound are one mathematical decision. The alternatives distinguish a valid composite-number proof from parity alone and a misconstructed boundary case.",
+        "concept_blocks": [],
+        "limitations": ["Recognizing the complete argument does not certify writing it or independently choosing the boundary case."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "The source sum is even, but the assertion that every even integer is composite is false because 2 is prime. A valid proof must exclude 2, as the factor bound does.", "misconception": "Apply the divisibility-by-2 test and forget that a prime may equal its divisor 2, declaring every even number composite."},
+          {"option_id": "b", "truth": "correct", "derivation": "Adding all four offsets gives 6, so the sum is 4n+6=2(2n+3). For either natural-number convention, 2n+3>=3 and the product is composite.", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "The four consecutive numbers starting at zero are 0,1,2,3, whose sum is 6, not 2.", "misconception": "Replace the four consecutive numbers by two copies of each of the first two, 0+0+1+1, obtaining 2 and falsely using it as a source counterexample."}
+        ]
+      }
+    },
+    {
+      "id": "even-prime-intersection",
+      "source_numbers": ["1244"],
+      "view": {
+        "mode": "single",
+        "stem": "What is the intersection of the set of even numbers and the set of prime numbers?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "The empty set.", "figure_ids": []},
+          {"id": "b", "text": "{2,4,8,16,...}, the positive powers of 2.", "figure_ids": []},
+          {"id": "c", "text": "{2}.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Use the definition of primality while accounting for the exceptional even prime.",
+        "source_solution": "The number 2 is even and prime. Every positive even integer greater than 2 is 2m with m>1, so it has a proper divisor 2 and is composite. Zero and negative even numbers, if present in the even-number domain, are not primes. Hence the intersection is exactly {2}, independently of whether zero is a natural number.",
+        "unit_reason": "One complete intersection captures the exceptional element and exclusion of every other even number.",
+        "concept_blocks": [],
+        "limitations": ["Selecting the set does not certify independently writing the exclusion proof."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "The divisor 2 is a proper divisor of larger even numbers, but it equals the whole number when the candidate is 2. Thus 2 cannot be excluded as composite.", "misconception": "Treat divisibility by 2 as sufficient for compositeness even when the number itself is 2, eliminating every even candidate."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Each 2^k with k>=2 has proper divisor 2. For example, 4=2*2 is composite. Checking only odd divisors misses exactly the positive powers of 2 among even positive integers.", "misconception": "Run a prime test using only odd divisors, forget the divisor 2, and thereby accept all even numbers with no odd prime factor, namely 2,4,8,16,... ."},
+          {"option_id": "c", "truth": "correct", "derivation": "2 has only positive divisors 1 and 2. Every other positive even number has proper divisor 2, so only 2 lies in both sets.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "cuboid-prime-area",
+      "source_numbers": ["1245"],
+      "view": {
+        "mode": "single",
+        "stem": "Can a rectangular cuboid with natural-number edge lengths have prime surface area? Let its three edge lengths be a,b,c. Which argument correctly resolves the question?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "No: S=2(ab+bc+ca), and ab+bc+ca>=3, so S is composite.", "figure_ids": []},
+          {"id": "b", "text": "Yes: S=ab+bc+ca, and a=b=c=1 gives the prime area 3.", "figure_ids": []},
+          {"id": "c", "text": "No: S=2(a+b+c), and a+b+c>=3, so S is composite.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Decide whether prime surface area is possible using the paired faces and nondegenerate cuboid geometry.",
+        "source_solution": "An actual rectangular cuboid has positive edge lengths; zero-length degeneracies are not cuboids even if a natural-number convention includes zero. Thus a,b,c>=1. Its six faces occur in three equal-area pairs, giving S=2(ab+bc+ca). Since each product is at least 1, S>=6 and is an even composite integer. Therefore no such cuboid exists. No artificial numerical length or area unit is needed.",
+        "unit_reason": "The surface-area formula and its lower bound together provide the complete existence decision; choosing a formula alone would not rule out the even prime 2.",
+        "concept_blocks": [],
+        "limitations": ["Selecting the argument does not certify independently deriving the face-area formula or writing the existence proof."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "The opposite faces have equal areas ab,bc,ca. Summing both copies gives S=2(ab+bc+ca)>=6, so S has a proper factor 2 and is not prime.", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "For the unit cube there are six unit faces, so S=6, not 3. Counting only one face from each opposite pair gives the stated 3.", "misconception": "Count just the three distinct face shapes ab,bc,ca once each, omitting their opposite faces, and call that sum the surface area."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "The proposed formula is not a surface-area identity. For a=1,b=2,c=3 it gives 12, whereas the actual area is 2(2+6+3)=22. Its no-existence conclusion happens to agree, but the argument does not establish it.", "misconception": "Add three edge lengths rather than the three face areas, then double that sum as though paired edges were paired faces, obtaining S=2(a+b+c)."}
+        ]
+      }
+    },
+    {
+      "id": "triangle-side-fillings",
+      "source_numbers": ["1246"],
+      "view": {
+        "mode": "multiple",
+        "stem": "Fill the nine circles with 1 through 9, each used once, so that every side sums to 20; then rearrange them so that every side sums to 17. In a proposed filling below, read its nine entries starting at the top, going down the left side, across the bottom from left to right, and up the right side without repeating the top circle. Select all fillings that have their stated sum on every side.",
+        "figure_ids": ["fig-199"],
+        "options": [
+          {"id": "a", "text": "Side sum 20: (4,1,9,5,2,8,6,7,3).", "figure_ids": []},
+          {"id": "b", "text": "Side sum 17: (1,5,9,2,4,8,3,7,6).", "figure_ids": []},
+          {"id": "c", "text": "Side sum 20: (4,2,9,5,1,8,6,7,3).", "figure_ids": []},
+          {"id": "d", "text": "Side sum 17: (1,5,6,2,4,8,3,7,9).", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Construct balanced fillings of the same nine-point triangular boundary for both side totals, respecting shared corner contributions.",
+        "source_solution": "Actual-image position order is T,LU,LL,BL,B1,B2,BR,RL,RU. Each side contains four circles: indices (1,2,3,4), (4,5,6,7), and (7,8,9,1). The digits sum to 45, and summing all three sides counts each corner twice, so for side total S the corner sum must be 3S-45. For S=20 choose corners T=4,BL=5,BR=6, summing to 15. The two inner left entries must sum to 11, the two right entries to 10, and the two bottom entries to 9. Choose left 2,9; right 3,7; bottom 1,8. This gives (4,2,9,5,1,8,6,7,3), with side sums 20,20,20. For S=17 the corner sum is 6, which forces corner digits 1,2,3. Choose T=1,BL=2,BR=3, requiring inner sums 14,13,12. Left 5,9; right 6,7; bottom 4,8 give (1,5,9,2,4,8,3,7,6), with side sums 17,17,17. Each filling uses all nine digits exactly once. These are constructions, not claims that the layout is unique.",
+        "unit_reason": "Each complete filling is an independent three-edge judgment, and the two target sums share the same corner-count invariant. One multiple item assesses both targets without one response for each circle or encoded combinations.",
+        "concept_blocks": [],
+        "limitations": ["Recognition of two complete fillings does not certify independently finding them or writing numbers into the circles.", "The corner-sum invariant and existence are explained internally, not independently produced by the learner.", "Other valid permutations and rotations are not enumerated; the source does not request uniqueness."],
+        "figure_observations": [
+          {"figure_id": "fig-199", "observation": "Opened the complete bound PNG exactly once at detail=original. It visibly contains nine separate solid black circular disks on a white 640 by 520 canvas, in rows of 1,2,2,4. The top disk is near (320,64); left-side inner disks near (235,192),(149,320), ending at (64,448); right-side inner disks near (405,192),(490,320), ending at (576,448); the bottom inner disks are near (235,448),(405,448). There are no readable number labels or connecting strokes. The three collinear boundary groups each contain four disks, with corners shared. The rightmost disk at about (576,448) and all four bottommost disks at about y=448 are fully visible, with white margins beyond their edges. These approximate display locations identify objects only; they are not manufactured mathematical measurements."}
+        ]
+      },
+      "key": {
+        "correct": ["b", "c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "The left side is 4+1+9+5=19, the bottom is 5+2+8+6=21, and the right is 6+7+3+4=20. All digits are still present once, but equal side totals have been lost.", "misconception": "From the valid sum-20 filling, exchange the left inner 2 with the bottom inner 1 and assume that preserving the overall digit sum and corner sum preserves every side sum. The exchange produces exactly this tuple."},
+          {"option_id": "b", "truth": "correct", "derivation": "Left 1+5+9+2=17, bottom 2+4+8+3=17, right 3+7+6+1=17. The tuple contains each digit from 1 to 9 exactly once.", "misconception": null},
+          {"option_id": "c", "truth": "correct", "derivation": "Left 4+2+9+5=20, bottom 5+1+8+6=20, right 6+7+3+4=20. The tuple contains each digit from 1 to 9 exactly once.", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "Left 1+5+6+2=14, bottom 2+4+8+3=17, right 3+7+9+1=20. The corner sum is still 6, but the necessary corner condition is insufficient.", "misconception": "From the valid sum-17 filling, exchange the left inner 9 with the right inner 6 while relying only on the unchanged corner sum and use of every digit. The left loses 3 and the right gains 3, yielding the stated tuple."}
+        ]
+      }
+    },
+    {
+      "id": "ten-points-five-segments",
+      "source_numbers": ["1247"],
+      "view": {
+        "mode": "single",
+        "stem": "Arrange 10 distinct points on 5 line segments, with exactly 4 marked points on each segment. Which proposed construction meets both requirements? A regular pentagon is used in each proposal.",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "Mark its five vertices and five side midpoints; use its five sides as the segments.", "figure_ids": []},
+          {"id": "b", "text": "Mark its five vertices and five interior diagonal crossings; use its five diagonals as the segments.", "figure_ids": []},
+          {"id": "c", "text": "Mark its five vertices and five diagonal midpoints; use its five diagonals as the segments.", "figure_ids": []},
+          {"id": "d", "text": "Mark its five vertices, center, and four radius midpoints; use the five center-to-vertex radii as the segments.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Construct an incidence arrangement in which distinct segments share marked points, rather than allocating four separate points to each segment.",
+        "source_solution": "Independently draw the five diagonals of a regular pentagon, forming a pentagram. Mark its five outer vertices and all five interior crossings. These are ten distinct points. Each diagonal contains its two endpoint vertices and its two distinct interior crossings, so each of the five segments has exactly four marked points. Each outer vertex belongs to two diagonals and each crossing belongs to two diagonals, accounting for all 5*4=20 incidences. The regular nondegenerate pentagon guarantees distinct crossings; no metric measurement is needed.",
+        "unit_reason": "A completed incidence construction is the mathematical response unit. Its point total and per-segment total must be checked together, rather than treating five segment counts as separate slots.",
+        "concept_blocks": [],
+        "limitations": ["No new diagram is authorized; the proposed constructions are described in words only.", "Recognizing the pentagram construction does not certify independently drawing five segments and marking ten points.", "The independent invention and physical or graphical production of the arrangement are not assessed."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "There are 5+5=10 distinct points, but each boundary side contains two vertices and its own midpoint, only 3 points.", "misconception": "Choose a five-sided boundary, put one extra point on each side, and mistakenly count its two endpoints plus one midpoint as satisfying four points per segment."},
+          {"option_id": "b", "truth": "correct", "derivation": "The five diagonals have five distinct interior crossings. Each diagonal has two endpoint vertices and crosses two other diagonals in its interior, giving four marked points; 5 vertices plus 5 crossings gives ten distinct points.", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "There are ten distinct marked points. In a regular pentagon, neither interior diagonal crossing is the midpoint of its diagonal: the crossings divide it into unequal golden-ratio portions. Each diagonal therefore has only its own midpoint and two endpoints, or 3 marked points.", "misconception": "Replace each required interior crossing with just one midpoint on that diagonal, and conflate the missing second crossing with the single midpoint. The resulting ten-point arrangement has three, not four, on each segment."},
+          {"option_id": "d", "truth": "incorrect", "derivation": "The point total is 5+1+4=10. Four radii contain center, midpoint, vertex, giving 3 points each; the fifth contains center and vertex, giving 2.", "misconception": "Use one shared center plus five endpoints, distribute the remaining four points over four radii, then treat sharing the center as supplying an additional distinct point on every radius."}
+        ]
+      }
+    },
+    {
+      "id": "six-points-four-segments",
+      "source_numbers": ["1248"],
+      "view": {
+        "mode": "single",
+        "stem": "Arrange 6 distinct points on 4 line segments so that each segment has exactly 3 marked points. Which proposed construction meets the conditions?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "Use a rectangle's four sides; mark the four vertices and the midpoints of two opposite sides.", "figure_ids": []},
+          {"id": "b", "text": "Use four segments through one common center; mark that center and two further distinct points on each segment.", "figure_ids": []},
+          {"id": "c", "text": "Use four lines with no parallel pair and no three concurrent; mark all pairwise intersections and take a segment on each line spanning its three intersections.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Construct a six-point arrangement using pairwise intersections of four segments, with no collapsed triple intersection.",
+        "source_solution": "Four pairwise intersecting lines with no three concurrent have C(4,2)=6 distinct intersections, and each line meets the other three in three different points. A segment spanning those three points on each line solves the task. An exact construction independently confirms existence: lines x=0, y=0, x+y=2, y=2x+1. Their intersections are (0,0),(0,2),(0,1),(2,0),(-1/2,0),(1/3,5/3). Choose segments (0,0) to (0,2); (-1/2,0) to (2,0); (0,2) to (2,0); and (-1/2,0) to (1/3,5/3). Their marked point sets are respectively {(0,0),(0,1),(0,2)}, {(-1/2,0),(0,0),(2,0)}, {(0,2),(1/3,5/3),(2,0)}, {(-1/2,0),(0,1),(1/3,5/3)}. Thus there are exactly six distinct points, three on each of four segments.",
+        "unit_reason": "Distinctness of all intersections and coverage on all four segments form one incidence construction. Parallelism and concurrence are genuine failure modes rather than printed subparts.",
+        "concept_blocks": [],
+        "limitations": ["No new diagram is authorized; construction recognition is textual.", "The learner does not independently draw, choose coordinates, or mark the six points."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Four vertices plus two midpoints give six distinct points. The two midpoint-bearing sides have three points each, but the other two sides have only their two endpoints.", "misconception": "Allocate the two extra points to two opposite sides and check only those sides, overlooking the two unaugmented sides."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Each segment has center plus two extra points, hence three points, but there are 1+4*2=9 distinct points rather than six.", "misconception": "Count the shared center correctly on each segment but fail to aggregate the eight distinct noncentral points when checking the required global point total."},
+          {"option_id": "c", "truth": "correct", "derivation": "Every unordered pair of lines contributes one intersection and no triple concurrence identifies two such intersections. There are six points in total and three on each line; taking the outermost two intersections as segment endpoints includes all three.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "adjacent-volume-moves",
+      "source_numbers": ["1249"],
+      "view": {
+        "mode": "multiple",
+        "stem": "Ten encyclopedia volumes start in order 1,2,6,10,3,8,4,7,9,5. A move removes two currently adjacent volumes, keeps their internal order, and inserts them together at the front, at the back, or between two remaining volumes. Consider these successive moves, with 'before' referring to the current order: (3,8) before 6; (4,7) before 8; (9,5) before 7; (5,7) before 9; (6,10) before 7; (7,9) before 10; (10,8) before 9; (8,9) before 10. Select all true statements.",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "Every listed move is legal, and the final order is 1,2,3,4,5,6,7,8,9,10.", "figure_ids": []},
+          {"id": "b", "text": "The starting order has 12 inversions, and the target order has 0 inversions.", "figure_ids": []},
+          {"id": "c", "text": "Every legal move preserves the parity of the number of inversions.", "figure_ids": []},
+          {"id": "d", "text": "Legal moves can change the sorted order into 2,1,3,4,5,6,7,8,9,10.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Construct a legal sorting sequence for the exact starting order and understand the restriction imposed by moving ordered adjacent pairs.",
+        "source_solution": "Independently, a working sequence has these states: initial [1,2,6,10,3,8,4,7,9,5]; move (3,8) before 6 -> [1,2,3,8,6,10,4,7,9,5]; (4,7) before 8 -> [1,2,3,4,7,8,6,10,9,5]; (9,5) before 7 -> [1,2,3,4,9,5,7,8,6,10]; (5,7) before 9 -> [1,2,3,4,5,7,9,8,6,10]; (6,10) before 7 -> [1,2,3,4,5,6,10,7,9,8]; (7,9) before 10 -> [1,2,3,4,5,6,7,9,10,8]; (10,8) before 9 -> [1,2,3,4,5,6,7,10,8,9]; (8,9) before 10 -> [1,2,3,4,5,6,7,8,9,10]. Every selected pair is adjacent at the moment of removal and is reinserted without reversal. Initial inversions by leading entry are 0,0,3,6,0,3,0,1,1,0, totaling 14. Moving a two-entry block across k other entries performs 2k adjacent crossings, preserving inversion parity. The initial even parity is consistent with the construction; even parity alone is not used as a proof of reachability.",
+        "unit_reason": "Verifying a complete legal sorting construction and judging its parity invariant are meaningful independent mathematical assertions within the same constrained-move task. The item does not use a code selecting a move combination or one response for each intermediate shelf position.",
+        "concept_blocks": [],
+        "limitations": ["The full successful sequence is supplied for verification rather than independently invented.", "Recognition does not certify physically rearranging the books, generating the algorithm, or writing all intermediate orders.", "The parity judgments extend the analysis of the given move rule, not a claim that every even permutation is reachable."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a", "c"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "The eight explicitly recorded intermediate states show that all removed pairs are adjacent, their order is preserved, and the final state is increasing from 1 to 10.", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "6 contributes three inversions, 10 six, 8 three, 7 one and 9 one, totaling 14; the increasing target contributes zero.", "misconception": "Count 3+6+3=12 from the larger early entries but stop scanning after 8, missing the later pairs (7,5) and (9,5)."},
+          {"option_id": "c", "truth": "correct", "derivation": "The ordered pair crossing k remaining volumes makes 2k single adjacent crossings. Each single crossing changes inversion parity, so an even number preserves it.", "misconception": null},
+          {"option_id": "d", "truth": "incorrect", "derivation": "The increasing order has even inversion parity, while the proposed endpoint has one inversion (2,1). Every permitted move preserves parity, so no sequence of them reaches that endpoint.", "misconception": "Treat an adjacent pair as though its two members could be reversed during removal and reinsertion; reversing (1,2) would give the proposed order but violates preservation of internal order."}
+        ]
+      }
+    },
+    {
+      "id": "one-pan-binary-weights",
+      "source_numbers": ["1250"],
+      "view": {
+        "mode": "multiple",
+        "stem": "There is one small weight of each mass 1,2,4,8,16 g. Weights may be placed only on one pan of a balance, with the object on the other pan. The task is to prove that every integer mass from 1 through 31 g can be weighed. Select all true statements about these five weights.",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "There are 31 different subsets of the weights when the empty subset is included.", "figure_ids": []},
+          {"id": "b", "text": "Every attainable integer mass is represented by exactly one subset of the weights.", "figure_ids": []},
+          {"id": "c", "text": "The four lighter weights, used together, can balance an object of mass 16 g.", "figure_ids": []},
+          {"id": "d", "text": "The attainable positive integer masses are exactly 1 through 31 g.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Prove complete integer-mass coverage with weights on only one pan, not using subtraction across two weight-bearing pans.",
+        "source_solution": "Independently, the subsets of {1} give all integers 0..1. If weights 1,2,...,2^(k-1) give all integers 0..2^k-1, then omitting the next weight 2^k gives that interval and including it gives 2^k..2^(k+1)-1. Induction through 16 gives all integers 0..31. Remove the empty subset for positive masses 1..31. The total 1+2+4+8+16=31 prevents larger masses. For uniqueness, if two subsets differ, take the largest weight 2^k on which they differ. All smaller weights together total 2^k-1, too little to offset that difference, so the subset sums cannot be equal. There are 2^5=32 subsets including the empty one and 31 nonempty subsets. The four weights smaller than 16 sum to 15, so 16 itself is needed for mass 16.",
+        "unit_reason": "Full attainable range, uniqueness, subset counting and the boundary failure of the lighter weights are independently judgeable claims about the same complete representation proof. They are not five arithmetic weight slots or a combination-coded response.",
+        "concept_blocks": [],
+        "limitations": ["Selecting these claims does not certify independently writing the inductive coverage proof or assembling the weights for every mass.", "Physical balance use and independently producing binary decompositions are unassessed."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b", "d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Each of five distinct weights has two subset choices, giving 2^5=32 including empty. The value 31 counts only nonempty subsets.", "misconception": "Count one subset for each positive attainable mass 1..31 and call that the total including empty, forgetting to add the empty subset corresponding to zero."},
+          {"option_id": "b", "truth": "correct", "derivation": "The largest weight differing between two subsets exceeds the sum of every smaller weight. Consequently two different subsets cannot balance the same integer mass.", "misconception": null},
+          {"option_id": "c", "truth": "incorrect", "derivation": "1+2+4+8=15 g, one gram short of 16 g. No subset of those four weights can reach 16.", "misconception": "Confuse the interval endpoint 2^4-1=15 with the next weight 2^4=16, treating the sum of all smaller powers as 16."},
+          {"option_id": "d", "truth": "correct", "derivation": "Successive inclusion or omission of each doubled weight extends the covered integer interval to 0..31 without gaps. Nonempty subsets give 1..31, and the total mass rules out anything greater.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "birth-year-digit-sum",
+      "source_numbers": ["1251"],
+      "view": {
+        "mode": "single",
+        "stem": "In 1964, my age was exactly the sum of the four digits of my birth year. In which year was I born, and how old was I in 1964?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "1936; 28 years old.", "figure_ids": []},
+          {"id": "b", "text": "1950; 14 years old.", "figure_ids": []},
+          {"id": "c", "text": "1945; 19 years old.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Solve the birth-year digit equation together with the age relation in the stated historical year.",
+        "source_solution": "The sum of four digits is at most 36, so a four-digit birth year Y at or before 1964 satisfying the age condition must be at least 1927 even if age is measured before the birthday, and at least 1928 for age 1964-Y. Therefore write Y=1900+10t+u, with digit bounds 0<=t,u<=9 and Y<=1964. Its digit sum is 10+t+u. If the birthday has occurred, 64-10t-u=10+t+u gives 11t+2u=54. Enumerating permitted t gives only t=4,u=5: t must be even, t=2 would require u=16, t=6 would require u=-6, and other values are outside bounds. Hence Y=1945 and age 19, verified by 1+9+4+5=19 and 1964-1945=19. If the date in 1964 is before the birthday, age=1963-Y and the equation becomes 11t+2u=53. Then t must be odd; t=3 requires u=10 and t=5 requires u=-1, with all other permitted t also invalid. Thus this reading adds no alternative solution: the equality requires the person's birthday to have occurred in 1964. The exact birthday is not determined or requested.",
+        "unit_reason": "Birth year and age are linked by one equation and must be selected as a coherent pair. They are not independent answer slots.",
+        "concept_blocks": [],
+        "limitations": ["Selection does not certify independently bounding the year, writing the digit equation, or exhausting the digit cases.", "The exact date of birth is not inferred."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "1964-1936=28 but the actual digit sum is 1+9+3+6=19, so the equality fails.", "misconception": "Treat the initial two digits 19 as the number 19 rather than the digit sum 1+9=10. The mistaken equation 64-10t-u=19+t+u gives 11t+2u=45, whose digit solution t=3,u=6 yields 1936 and age 28."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "1964-1950=14 but 1+9+5+0=15, not 14.", "misconception": "Omit the thousands digit 1 from the digit sum. The equation 64-10t-u=9+t+u gives 11t+2u=55; t=5,u=0 then produces 1950 and age 14."},
+          {"option_id": "c", "truth": "correct", "derivation": "The digit equation gives 11t+2u=54 and the unique allowed pair is t=4,u=5. Both the year difference and the digit sum equal 19.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "milk-jug-continuation",
+      "source_numbers": ["1253"],
+      "view": {
+        "mode": "single",
+        "stem": "A 10 L bucket is full of milk; a 3 L bucket and a 7 L bucket are empty. The task is to obtain exactly 5 L in the 7 L bucket using the 3 L bucket. Consider pours that stop when the source is empty or the receiving bucket is full. First do 10->3, 3->7, 10->3, 3->7, 10->3, 3->7, where numbers identify bucket capacities. Which four-pour continuation achieves the task?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "3->10; 7->3; 3->10; 10->7.", "figure_ids": []},
+          {"id": "b", "text": "7->10; 10->3; 3->7; 10->3.", "figure_ids": []},
+          {"id": "c", "text": "7->10; 3->10; 10->3; 3->7.", "figure_ids": []},
+          {"id": "d", "text": "7->10; 3->7; 10->3; 3->7.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Construct an exact transfer procedure with capacities 10,3,7 L, retaining the 2 L remainder formed when the 7 L bucket becomes full.",
+        "source_solution": "Record states as (10 L bucket,3 L bucket,7 L bucket). Independent complete procedure: (10,0,0); 10->3 gives (7,3,0); 3->7 gives (7,0,3); 10->3 gives (4,3,3); 3->7 gives (4,0,6); 10->3 gives (1,3,6); 3->7 transfers only 1 L before the 7 L bucket fills, leaving (1,2,7); 7->10 gives (8,2,0); 3->7 gives (8,0,2); 10->3 gives (5,3,2); 3->7 gives (5,0,5). Every transfer ends at an actual capacity or an empty source. No bucket graduation, estimated partial pour, discarded milk, or manufactured volume measurement is used. The 7->10 return frees the receiving bucket without losing the measured 2 L remainder; the final transfer into the 7 L bucket is through the 3 L bucket as requested.",
+        "unit_reason": "Preserving the measured remainder and then combining it with a full 3 L transfer is the substantive construction distinction. A complete continuation is selected, not each intermediate volume. The original capacities and initial contents remain visible.",
+        "concept_blocks": [],
+        "limitations": ["The first six pours are supplied and their independent invention is not assessed.", "Selecting the final four pours does not certify independently generating the whole procedure or physically carrying it out.", "The explicit full-or-empty pouring restriction describes this exact method; it is not claimed to exhaust all procedures allowed by the source."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "Starting from (1,2,7), its pours yield (3,0,7), (3,3,4), (6,0,4), (3,0,7). The 7 L bucket ends full, not with 5 L.", "misconception": "Discard the useful 2 L remainder back into the 10 L bucket, move one full 3 L portion out of the 7 L bucket and back into the source, then refill the 7 L bucket; the mistaken loop returns the receiver to 7 L."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "The states are (8,2,0), (7,3,0), (7,0,3), (4,3,3). The 7 L bucket ends with 3 L.", "misconception": "Return the full 7 L bucket correctly but fill the partly full 3 L bucket before transferring its 2 L remainder, destroying that remainder as a separate measured amount."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "The states are (8,2,0), (10,0,0), (7,3,0), (7,0,3). The final receiver content is 3 L.", "misconception": "After emptying the 7 L bucket, also empty the retained 2 L into the original bucket, reset to the initial state, and use only one full 3 L transfer."},
+          {"option_id": "d", "truth": "correct", "derivation": "From (1,2,7), return the 7 L to obtain (8,2,0), transfer the retained 2 L to obtain (8,0,2), fill the 3 L bucket to obtain (5,3,2), then transfer it to obtain (5,0,5).", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "remaining-goods-box",
+      "source_numbers": ["1254"],
+      "view": {
+        "mode": "single",
+        "stem": "Six boxes hold 15,16,18,19,20,31 kg of goods. Two customers buy five whole boxes, and one customer's goods have twice the mass of the other's. What mass of goods remains in the unsold box?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "19 kg", "figure_ids": []},
+          {"id": "b", "text": "20 kg", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Find the unsold box using a ratio-based divisibility condition and verify an actual whole-box allocation.",
+        "source_solution": "The total mass is 15+16+18+19+20+31=119 kg. If r is left, the sold mass is x+2x=3x, so 119-r is divisible by 3 and r has remainder 2 modulo 3. Among the six given masses only 20 has that remainder. Feasibility is essential: one buyer receives 15+18=33 kg, the other 16+19+31=66 kg, leaving the 20 kg box. Thus the divisibility candidate is realized and the remaining mass is uniquely 20 kg.",
+        "unit_reason": "The residue condition and an actual partition must resolve one coherent whole-box problem. A necessary congruence alone is not treated as a sufficient construction.",
+        "concept_blocks": [],
+        "limitations": ["Selecting the remaining mass does not certify independently deriving the congruence or producing the 33 kg and 66 kg partition."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "With the actual seed masses, leaving 19 kg sells 100 kg, not divisible by 3. The prospective partition 15+18=33 and 16+20+31=67 fails the doubling condition.", "misconception": "Misread 31 as 30 when totaling and partitioning: the mistaken total is 118, leaving 19 sells 99, and the mistaken partition is 15+18=33 versus 16+20+30=66. Restoring the actual 31 kg invalidates that result."},
+          {"option_id": "b", "truth": "correct", "derivation": "119-20=99=3*33; the available whole boxes form 33 kg as 15+18 and 66 kg as 16+19+31. Every other candidate fails the necessary remainder test.", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "cup-saucer-prices",
+      "source_numbers": ["1255"],
+      "view": {
+        "mode": "multiple",
+        "stem": "Cup prices are 75,70,60,50,40 cents; saucer prices are 58,42,32 cents. Each set contains one cup and one saucer. Determine the different total prices, the cheapest and most expensive sets, and whether distinct sets can cost the same. Select all true statements.",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "There are 15 cup-saucer pairings and 12 distinct total prices.", "figure_ids": []},
+          {"id": "b", "text": "The cheapest and most expensive totals are 82 and 133 cents, respectively.", "figure_ids": []},
+          {"id": "c", "text": "There are 15 distinct total prices, and each occurs for only one pairing.", "figure_ids": []},
+          {"id": "d", "text": "The cheapest and most expensive totals are 72 and 133 cents, respectively.", "figure_ids": []},
+          {"id": "e", "text": "Exactly 82,92,102 cents occur for two different pairings each.", "figure_ids": []},
+          {"id": "f", "text": "Exactly 72,82,92 cents occur for two different pairings each.", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Distinguish pairings from distinct prices, assess the minimum and judge the displayed collision list, with constant maximum and collision components explicitly unassessed.",
+        "source_solution": "Independently add each cup price to all three saucer prices. The rows, in the given cup order, are [133,117,107], [128,112,102], [118,102,92], [108,92,82], [98,82,72] cents. There are 5*3=15 pairings. The distinct totals in increasing order are 72,82,92,98,102,107,108,112,117,118,128,133: 12 prices. The collisions are 82=50+32=40+42, 92=60+32=50+42, and 102=70+32=60+42, each with exactly two pairings; all other totals occur once. The cheapest is the 40-cent cup with the 32-cent saucer, 72 cents. The most expensive is the 75-cent cup with the 58-cent saucer, 133 cents. All given prices remain in cents; no pricing rule beyond adding the two item prices is introduced.",
+        "unit_reason": "Pairing count, price collisions and extrema are distinct mathematical judgments about one finite price map. Native multiple selection preserves each judgment without a complete-result column-frequency table or separate arithmetic cells.",
+        "concept_blocks": [],
+        "limitations": ["The learner does not independently write the full 15-sum table, enumerate the complete sorted price list, or identify both item prices in an open response.", "The maximum 133 is identical in both extrema alternatives; accepting the correct alternative can rely only on the minimum and does not independently assess maximum-price recognition.", "The duplicated totals 82 and 92 are fixed in both collision alternatives; only the differing 102 versus 72 component distinguishes those alternatives, so recognizing 82 and 92 as repeated prices is not independently assessed.", "Judging the displayed complete collision list does not certify producing the combinatorial argument. These fixed-component losses leave the full written maximum/collision task unapproved."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a", "d", "e"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "Five cup choices times three saucer choices give 15 pairings. The three distinct two-pair collisions each remove one repeated occurrence, yielding 15-3=12 distinct prices.", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "133 cents is the true maximum, but 40+32=72 cents is cheaper than 82. The 82-cent result uses 50+32 and overlooks the last cup price.", "misconception": "Compute extrema using only the first four cup prices 75,70,60,50, omitting the last row 40. That restricted calculation gives minimum 50+32=82 and maximum 75+58=133."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "5*3 counts pairings, not distinct sums; for example 70+32 and 60+42 both equal 102. Three such collisions reduce the distinct-price count to 12.", "misconception": "Assume that adding prices maps each different pairing to a different total, and report the Cartesian-product count 15 as the number of distinct prices."},
+          {"option_id": "d", "truth": "correct", "derivation": "The smallest sum combines both smallest prices, 40+32=72; the largest combines both largest prices, 75+58=133. These are the cheapest and most expensive sets.", "misconception": null},
+          {"option_id": "e", "truth": "correct", "derivation": "The full sum rows show exactly three collisions: 50+32=40+42=82, 60+32=50+42=92, and 70+32=60+42=102. Each has two pairings and no other total repeats.", "misconception": null},
+          {"option_id": "f", "truth": "incorrect", "derivation": "72 comes only from 40+32, while 102 has two pairings and is omitted here. The proposed repeated-price list is each true collision price minus 10 cents.", "misconception": "Identify the equal-sum pairs from a 10-cent cup decrease and a 10-cent saucer increase, but compute each shared total using both cheaper components instead of one cross-pair: 40+32=72, 50+32=82, 60+32=92. Those are not the shared totals of the identified pairs."}
+        ]
+      }
+    },
+    {
+      "id": "home-away-match-count",
+      "source_numbers": ["1256"],
+      "view": {
+        "mode": "single",
+        "stem": "17 teams take part in a football championship. Every team plays every other team twice, once on its own ground and once on the other team's ground. How many matches are played altogether?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "272 matches", "figure_ids": []},
+          {"id": "b", "text": "544 matches", "figure_ids": []},
+          {"id": "c", "text": "136 matches", "figure_ids": []},
+          {"id": "d", "text": "289 matches", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Count distinct home-away matches without counting a team's participation as an additional match.",
+        "source_solution": "Independently, there are C(17,2)=17*16/2=136 unordered pairs of different teams and each pair plays two matches, giving 272. Equivalently, every match has a unique home team and away team, giving 17*16=272 ordered pairs. Counting each team's 32 appearances gives 17*32=544 appearances, which must be divided by two because each match involves two teams.",
+        "unit_reason": "One total match count tests the distinction between unordered opponent pairs, directed home-away matches and team appearances.",
+        "concept_blocks": [],
+        "limitations": ["Selecting the total does not certify independently constructing the double-counting argument or a schedule.", "No scheduling construction is requested by the source."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["a"],
+        "rationales": [
+          {"option_id": "a", "truth": "correct", "derivation": "Each unordered pair contributes two matches, so (17*16/2)*2=272. The home-team ordered-pair count independently agrees.", "misconception": null},
+          {"option_id": "b", "truth": "incorrect", "derivation": "17*16*2=544 counts each actual match once for each participant. Dividing those team appearances by two gives 272.", "misconception": "Count 16 opponents times two matches for every one of the 17 teams, but do not divide by the two teams participating in each match."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "17*16/2=136 is the number of unordered team pairs, and each pair must play twice.", "misconception": "Count each opponent pair once and omit the required second, away-ground meeting."},
+          {"option_id": "d", "truth": "incorrect", "derivation": "17*17=289 includes 17 fictitious home-away pairings in which a team plays itself. Removing them gives 272.", "misconception": "Use 17 possible away teams for each home team rather than the 16 other teams, producing 17^2."}
+        ]
+      }
+    },
+    {
+      "id": "same-digit-dates",
+      "source_numbers": ["1257"],
+      "view": {
+        "mode": "single",
+        "stem": "Write a date as day, month, and the last two digits of its year, without leading zeros on the day or month: for example 9,5,45 means May 9, 1945. In the twentieth century, how many valid dates can be written using only one repeated digit, as in 5,5,55 for May 5, 1955?",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "9 dates", "figure_ids": []},
+          {"id": "b", "text": "11 dates", "figure_ids": []},
+          {"id": "c", "text": "12 dates", "figure_ids": []},
+          {"id": "d", "text": "13 dates", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Count all valid repeated-digit dates, including multi-digit days and month 11, under the source's unpadded notation.",
+        "source_solution": "Independently, digit 0 cannot give a positive day or month. For digit d=1..9 the last two year digits are dd, giving 1911,1922,...,1999. A month can be d for all those digits, and can additionally be 11 only for digit 1. A day can be d, and additionally 11 for digit 1 or 22 for digit 2; 33 and higher are invalid days. In 1911 the four dates are 1,1,11; 11,1,11; 1,11,11; 11,11,11. In 1922 the two dates are 2,2,22 and 22,2,22; February 22 is valid regardless of leap-year concerns. For each of digits 3..9 there is one date d,d,dd, giving seven more. Total 4+2+7=13. Whether the century boundary is described as 1900..1999 or 1901..2000 makes no difference because year suffix 00 has no valid all-zero day and month. The source examples use unpadded day and month, and the question makes that source notation explicit rather than imposing a zero-padded alternative.",
+        "unit_reason": "One complete count requires a valid-date case split by digit, not a response for every date field. The exceptional month and day choices are mathematical boundary cases.",
+        "concept_blocks": [],
+        "limitations": ["Selecting the total does not certify independently listing all thirteen dates or proving exhaustion.", "No date beyond the source's twentieth-century setting is inferred."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {"option_id": "a", "truth": "incorrect", "derivation": "The nine dates d,d,dd are valid but omit January 11, November 1, November 11 in 1911 and February 22 in 1922.", "misconception": "Allow only one-digit day and month even though the source allows unpadded multi-digit fields, counting just one date for each nonzero digit."},
+          {"option_id": "b", "truth": "incorrect", "derivation": "Using only months 1..9 gives two dates for digit 1, two for digit 2, and seven for digits 3..9: 11. Month 11 adds two more valid dates.", "misconception": "Allow days 11 and 22 but restrict the month to a single digit, omitting both November dates in 1911 and obtaining 2+2+7=11."},
+          {"option_id": "c", "truth": "incorrect", "derivation": "Nine basic dates plus January 11, November 1 and February 22 give 12, but November 11 in 1911 combines both allowed two-digit choices and must also be counted.", "misconception": "Add the extra day choice and extra month choice separately to the nine basic dates, but do not take their joint combination, yielding 9+1+1+1=12."},
+          {"option_id": "d", "truth": "correct", "derivation": "Digit 1 permits two days and two months, giving four dates; digit 2 permits two days and one month, giving two; digits 3..9 give seven more. Thus 4+2+7=13.", "misconception": null}
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {"source_number": "1237", "question_ids": ["consecutive-odd-proof"], "omitted_tasks": ["Independent parametrization and written production of the universal divisibility proof."], "reason": "The complete universal factorization is assessed as one proof identity; selecting it is not certification of independently writing a proof."},
+    {"source_number": "1238", "question_ids": ["insert-middle-zero"], "omitted_tasks": ["Independent writing of the place-value equation and the digit-bound exhaustion proof."], "reason": "The unique complete numerical determination is assessed. Full independent source solution is recorded in intent."},
+    {"source_number": "1239", "question_ids": ["reverse-three-digits"], "omitted_tasks": ["Independent construction and writing of the digit-reversal proof."], "reason": "The difference identity assesses the essential cancellation, ordering and zero-difference cases, but not written proof production."},
+    {"source_number": "1240", "question_ids": ["surround-ten"], "omitted_tasks": ["Independently generating the digits and writing the simultaneous divisibility proof."], "reason": "The unique result satisfies the original insertion pattern and both coprime divisibility conditions; no construction uniqueness is assumed without the digit argument."},
+    {"source_number": "1241", "question_ids": ["surround-forty-three"], "omitted_tasks": ["Independent discovery and written exhaustion of the two terminal-digit branches."], "reason": "Native multiple selection assesses all complete solutions independently, without a pair-combination code."},
+    {"source_number": "1242", "question_ids": ["adjacent-common-divisor"], "omitted_tasks": ["LOCAL HOLD: lcm at the pair 0,1 if zero is included among natural numbers; neither the natural-number convention nor the zero-lcm definition is supplied.", "Independent writing and completion of the source's universal least-common-multiple proof."], "reason": "The original lcm task remains visible. Its substantial common-divisor lemma is assessed because d divides (n+1)-n=1 under every unresolved convention. The positive-n full proof and the conditional zero outcomes are recorded in intent; partial invariant coverage is not presented as resolution of the held source boundary."},
+    {"source_number": "1243", "question_ids": ["four-consecutive-prime"], "omitted_tasks": ["Independent production of the factorization and lower-bound proof."], "reason": "The complete no-prime conclusion is invariant under both natural-number conventions and is assessed together with the necessary exclusion of the even prime 2."},
+    {"source_number": "1244", "question_ids": ["even-prime-intersection"], "omitted_tasks": ["Independent set construction and written proof excluding every other even number."], "reason": "The exact intersection is assessed as one complete set. Zero-domain ambiguity does not change that intersection."},
+    {"source_number": "1245", "question_ids": ["cuboid-prime-area"], "omitted_tasks": ["Independent derivation of paired face areas and written nonexistence proof."], "reason": "The complete existence decision is assessed through the actual surface-area formula and lower bound; zero-length degeneracies are not treated as cuboids."},
+    {"source_number": "1246", "question_ids": ["triangle-side-fillings"], "omitted_tasks": ["Independently finding and writing both balanced fillings in the circles.", "Independently discovering or proving the corner-count invariant."], "reason": "Both side-sum targets 20 and 17 have complete valid constructions, each independently checked against all three actual-image boundary groups. Choice recognition cannot certify drawing or producing the fillings; no new diagram is created."},
+    {"source_number": "1247", "question_ids": ["ten-points-five-segments"], "omitted_tasks": ["Independently inventing, drawing and marking the ten-point pentagram arrangement.", "Physical or graphical production of the five segments."], "reason": "A full incidence construction is recognized through text and independently solved in intent. No drawing authorization is inferred from the source task and no diagram is fabricated."},
+    {"source_number": "1248", "question_ids": ["six-points-four-segments"], "omitted_tasks": ["Independently inventing, drawing and marking the six-point four-segment arrangement.", "Independent choice of exact coordinates or physical construction."], "reason": "The complete intersection construction is assessed as a text-based recognition task. Exact independent coordinates establish existence internally, not a claim of learner-produced drawing."},
+    {"source_number": "1249", "question_ids": ["adjacent-volume-moves"], "omitted_tasks": ["Independent invention of a legal sorting sequence for the given starting shelf order.", "Physically performing the rearrangement or independently writing all intermediate orders."], "reason": "The complete eight-move solution is assessed by legality and endpoint verification, with separate parity judgments. Supplying the sequence changes production into certification of a candidate sequence and does not certify independent algorithm generation."},
+    {"source_number": "1250", "question_ids": ["one-pan-binary-weights"], "omitted_tasks": ["Independent written production of the universal coverage proof.", "Physically balancing objects and independently producing the subsets for each mass."], "reason": "The whole integer range is retained, with one-pan addition rather than two-pan subtraction. Range and representation properties are judged natively; recognizing them is not evidence of proof-writing or physical measurement."},
+    {"source_number": "1251", "question_ids": ["birth-year-digit-sum"], "omitted_tasks": ["Independent writing of the year bound, digit equation and exhaustive digit-case argument."], "reason": "Birth year and age are assessed together for the stated year 1964. The completed-year birthday alternative is analyzed internally and introduces no second solution; an exact birthday is neither inferred nor requested."},
+    {"source_number": "1252", "question_ids": [], "omitted_tasks": ["LOCAL HOLD: determine the actual board lattice, alternating colors and removed diagonal-corner cells from fig-200; the complete bound rendition is visually insufficient.", "The requested cut into connected two-cell rectangles and its independent impossibility proof or construction remain deferred."], "reason": "LOCAL HOLD, no question. The complete fig-200 PNG was opened exactly once at detail=original. Actual observation: a large solid black rectangular area occupies approximately x=28..412,y=38..422 on the white 640 by 480 canvas. A small black block near its upper-left overlaps the area with a thin white boundary; another near x=364..414,y=374..426 overlaps the lower-right with a thin white boundary. A detached horizontal solid black rectangle near x=490..586,y=232..280 is fully visible at the far right. The rightmost detached object and the bottommost overlapping block are fully within the canvas, but there is no readable cell lattice or alternating square coloring anywhere in the large area. Thus neither 8 by 8 dimensions nor two specific removed squares can be confirmed from the actual pixels. Independent mathematical analysis before options: a connected two-square rectangle on a genuinely alternating board contains one square of each color. For an even-by-even rectangular board opposite corners have the same color, so deleting them leaves a two-square color imbalance and precludes such a partition; on a hypothetical 8 by 8 board the counts would be 30 versus 32. Those dimensions are NOT asserted for this image. An odd-by-odd board would instead have an odd number of remaining cells, also impossible; a mixed-parity rectangle can have opposite-color corner removals and can admit a partition, for example a 2 by 3 rectangle after deletion of opposite corners leaves two horizontal pairs. Consequently the words 'opposite corners' alone do not supply a unique verdict without the visual board facts. No SVG inspection, specification, source PNG, receipt content, standard-board assumption or new diagram substitutes for the unreadable actual board. With no question, the contract's coverage reason retains this full deferred analysis and image observation instead of inventing an intent on a nonexistent question."},
+    {"source_number": "1253", "question_ids": ["milk-jug-continuation"], "omitted_tasks": ["Independent invention of the first six pours, which are supplied in the stem.", "Independent generation of the entire ten-pour procedure and physical execution with the buckets."], "reason": "The substantial remainder-preservation continuation is assessed with all original capacities and initial contents visible. Full independent source solution is in intent. The method uses only actual capacity endpoints; no graduations, guessed 5 L pour or loss of milk is introduced."},
+    {"source_number": "1254", "question_ids": ["remaining-goods-box"], "omitted_tasks": ["Independent derivation of the residue constraint and production of the whole-box buyer allocation."], "reason": "The unique remaining mass is assessed; internal proof verifies both the necessary divisibility condition and the realizable 33 kg versus 66 kg allocation using all five purchased boxes."},
+    {"source_number": "1255", "question_ids": ["cup-saucer-prices"], "omitted_tasks": ["Independent production of the full 15-entry sum table and sorted twelve-price set.", "Open-response identification of both cup and saucer for the extreme sets and written enumeration of the collision pairings.", "Independent maximum-price recognition is unassessed because 133 is constant in both extrema alternatives; the minimum alone can distinguish them.", "Independent recognition of the two duplicated totals 82 and 92 is unassessed because both are fixed in the collision alternatives; only the 102-versus-72 component discriminates."], "reason": "The selected response retains meaningful pairing-versus-price counting, minimum identification and the discriminating collision component. It no longer claims full extrema/collision subtask coverage: the unchanged 133 maximum and fixed 82/92 components, open table and item-pair production remain explicit losses. Original reviewer mathematical truths are inherited without new option solving."},
+    {"source_number": "1256", "question_ids": ["home-away-match-count"], "omitted_tasks": ["Independent construction and writing of the double-counting argument."], "reason": "The complete match total is assessed with both home and away fixtures preserved and self-matches excluded."},
+    {"source_number": "1257", "question_ids": ["same-digit-dates"], "omitted_tasks": ["Independent enumeration of all thirteen valid dates and written proof of exhaustion."], "reason": "The complete twentieth-century count retains the source's unpadded day/month examples. Single-digit and multi-digit fields, month 11, day 22 and invalid digit 0 are all handled in the independent solution."},
+    {"source_number": "1258", "question_ids": [], "omitted_tasks": ["LOCAL HOLD: the requested count of different ticket prices cannot be determined without the railway's fare rule.", "The relation between the twelve fare sections, permissible journeys, travel direction and equality of fares is unspecified; no ticket-type count is assessed."], "reason": "LOCAL HOLD, no question. Independent full source analysis: the only numerical datum is that the suburban railway is divided into 12 sections for fares. A count of distinct prices requires a specified map from permitted journeys to prices and a criterion identifying equal-price journeys. Neither that map nor the journey domain is stated. Twelve sections alone supplies neither the number of prices nor which journeys share a price. Counting sections, section intervals, origin-destination pairs or travel directions would answer different questions and would require assumptions not present in the seed. No pricing or transport rule is coined to obtain 12,78 or any other proposed answer. No substantial invariant price-count subtask survives, so the entire requested determination remains deferred. As no question exists, this coverage reason is the contract-permitted location for the independent unresolved-source analysis."},
+    {"source_number": "1259", "question_ids": [], "omitted_tasks": ["LOCAL HOLD: the inventory of the 28 dominoes and the referenced arrangement rules are not declared in the frozen seed.", "The requested endpoint determination and an independently written parity proof are deferred rather than keyed from an assumed standard set."], "reason": "LOCAL HOLD, no question. Independent full source analysis: an endpoint parity argument needs the count of occurrences of each pip value across the actual tile inventory and a rule that internal joins pair equal values while every tile is used once. The source gives 28 tiles, says 'according to the rules', and gives one exposed endpoint as five, but does not declare tile types, multiplicities or the connecting rule. Conditional analysis only, not an adopted source fact: for the complete double-six inventory containing one unordered tile (i,j) for every 0<=i<=j<=6, there are 7*8/2=28 tiles and each pip value appears eight times, with its double contributing twice. Under equal-pip joins all internal occurrences cancel in pairs, so the two exposed ends must carry the same value; a five end would force the other to be five. Merely having 28 unspecified tiles does not establish those eight-occurrence parities, so this conditional result is not an unconditional solution of the frozen prose. No inventory, convention or rule is supplied to repair it and no question is generated. With no question, coverage retains this complete conditional analysis rather than fabricating a question intent."}
+  ]
+}

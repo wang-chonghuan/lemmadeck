@@ -1,0 +1,607 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "2f516c60f60bbbcef1dd7aea3c1605a154fb35477821709c731b1fad461920c5",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "q-terminal-arithmetic",
+      "source_numbers": [
+        "1214"
+      ],
+      "view": {
+        "mode": "multiple",
+        "stem": "Consider the sum 26*27*28*29 + 51*52*53*54, the difference 41*43*45*47 - 37*39*41*42, the product of every natural number from 7 through 81 inclusive, and the sum of all three-digit numbers. Select every true assertion about their last digits.",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "A",
+            "text": "The first sum has last digit 8.",
+            "figure_ids": []
+          },
+          {
+            "id": "B",
+            "text": "The difference has last digit 1.",
+            "figure_ids": []
+          },
+          {
+            "id": "C",
+            "text": "The product from 7 through 81 has last digit 0.",
+            "figure_ids": []
+          },
+          {
+            "id": "D",
+            "text": "The sum of all three-digit numbers has last digit 0.",
+            "figure_ids": []
+          },
+          {
+            "id": "E",
+            "text": "The difference has last digit 9.",
+            "figure_ids": []
+          },
+          {
+            "id": "F",
+            "text": "The product from 7 through 81 has last digit 5.",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Determine all four terminal digits using modular arithmetic, zero factors and the inclusive arithmetic-series boundaries.",
+        "source_solution": "Solved all four expressions before alternatives. Modulo 10, the first product is 6*7*8*9 = 3024, hence 4; the second is 1*2*3*4 = 24, hence 4, so their sum ends in 8. In the difference the residues are 1*3*5*7 = 105 and 7*9*1*2 = 126: 5-6 = -1, whose nonnegative residue is 9. The actual difference is positive, since 41*43*45*47 = 3728745 and 37*39*41*42 = 2484846; it is 1243899. The inclusive product 7 through 81 contains 10, so ends in 0 irrespective of whether a natural-number convention includes 0 outside this specified interval. There are 999-100+1 = 900 three-digit numbers. Their sum is (100+999)*900/2 = 494550, ending in 0.",
+        "unit_reason": "One modular-arithmetic comparison covers the four related computations without an encoded four-digit answer or one click per multiplication.",
+        "concept_blocks": [],
+        "limitations": [
+          "Selecting assertions does not demonstrate independently writing all four calculations or choosing the reduction strategy."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "A",
+          "C",
+          "D",
+          "E"
+        ],
+        "rationales": [
+          {
+            "option_id": "A",
+            "truth": "correct",
+            "derivation": "Reduce the two products modulo 10 to 4 and 4; their sum is 8 modulo 10.",
+            "misconception": null
+          },
+          {
+            "option_id": "B",
+            "truth": "incorrect",
+            "derivation": "The correct residues are 5 and 6, with positive full difference 1243899, so its last digit is 9, not 1.",
+            "misconception": "Compute the two product residues as 5 and 6, replace the ordered subtraction 5-6 by the absolute difference |5-6|, and report 1."
+          },
+          {
+            "option_id": "C",
+            "truth": "correct",
+            "derivation": "The inclusive factor list contains 10. Multiplication by that factor supplies a terminal zero.",
+            "misconception": null
+          },
+          {
+            "option_id": "D",
+            "truth": "correct",
+            "derivation": "Pair the 900 terms into 450 pairs, each summing to 1099. The sum 450*1099 = 494550 ends in 0.",
+            "misconception": null
+          },
+          {
+            "option_id": "E",
+            "truth": "correct",
+            "derivation": "The product residues give 5-6 = -1, congruent to 9 modulo 10. The positive full difference is 1243899.",
+            "misconception": null
+          },
+          {
+            "option_id": "F",
+            "truth": "incorrect",
+            "derivation": "Factors 10 and 20 already force a last digit of 0; the complete product cannot end in 5.",
+            "misconception": "Retain the factor 15 and only the odd factors: a product of 5 and odd numbers ends in 5. Discard the even factors, including 10, and transfer that reduced product's terminal digit to the original product."
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-seventy-digit-sum",
+      "source_numbers": [
+        "1223"
+      ],
+      "view": {
+        "mode": "single",
+        "stem": "A decimal number consists of seven digits8, nine digits1 and one digit5, in any order. Which divisibility conclusion is correct for every arrangement?",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "A",
+            "text": "It is not divisible by9; every arrangement has remainder2.",
+            "figure_ids": []
+          },
+          {
+            "id": "B",
+            "text": "It is divisible by9; every arrangement has remainder0.",
+            "figure_ids": []
+          },
+          {
+            "id": "C",
+            "text": "It is not divisible by9; every arrangement has remainder7.",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Determine divisibility independent of digit order, retaining all three given multiplicities.",
+        "source_solution": "The full digit sum is7*8+9*1+1*5=56+9+5=70. Since70=9*7+7, the number has remainder7 on division by9 and is not divisible by9. Reordering changes decimal place weights but every10^i is congruent1 modulo9, so this conclusion holds for every arrangement. All17 digits are accounted for; no ordering needs to be guessed.",
+        "unit_reason": "One order-invariant remainder and divisibility conclusion is the complete mathematical unit, not a quota based on three digit groups.",
+        "concept_blocks": [],
+        "limitations": [
+          "Selection does not show independent computation or writing of the order-invariance argument."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "C"
+        ],
+        "rationales": [
+          {
+            "option_id": "A",
+            "truth": "incorrect",
+            "derivation": "Including the single5 changes65 to70 and the residue from2 to7.",
+            "misconception": "Sum only seven8s and nine1s:56+9=65=9*7+2. Omit the final digit5 and report remainder2 for the full number."
+          },
+          {
+            "option_id": "B",
+            "truth": "incorrect",
+            "derivation": "Seven8s can pair with seven1s to make63, but two1s and the5 remain, adding7. The full sum70 is not divisible9.",
+            "misconception": "Pair each8 with a1, compute seven pairs of sum9 to obtain63, and discard the unpaired two1s and5. Conclude remainder0 from63 as if every digit had been paired."
+          },
+          {
+            "option_id": "C",
+            "truth": "correct",
+            "derivation": "The full digit sum70 has residue7 modulo9; decimal positional weights preserve this residue under every permutation.",
+            "misconception": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-large-power-nine",
+      "source_numbers": [
+        "1224"
+      ],
+      "view": {
+        "mode": "single",
+        "stem": "Let N=10^33+8. Which assertion, including its mathematical justification, is true?",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "A",
+            "text": "N is divisible by9: N=9*((10^33-1)/9+1), with an integer expression inside the parentheses.",
+            "figure_ids": []
+          },
+          {
+            "id": "B",
+            "text": "N is divisible by9: N=9*10^32, combining the decimal digits1 and8 at place10^32.",
+            "figure_ids": []
+          },
+          {
+            "id": "C",
+            "text": "N is not divisible by9:10^33 has remainder0, so adding8 leaves remainder8.",
+            "figure_ids": []
+          },
+          {
+            "id": "D",
+            "text": "N is not divisible by9:10^33 has the residue of33, so33+8 leaves remainder5.",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Determine divisibility of the exact power-plus-constant and compare positional-value or modular justifications.",
+        "source_solution": "Because10 is congruent1 modulo9,10^33 is congruent1 and N is congruent1+8=9, hence0. Equivalently N is the decimal1 followed by32 zeros and8, with digit sum9. The exact factorization is N=9((10^33-1)/9+1); (10^33-1)/9 is the33-digit repunit and is an integer. The expression is not9*10^32. Both the exponent33 and units8 are retained without approximation.",
+        "unit_reason": "A single divisibility-and-justification claim tests the decisive inference and exact equality together.",
+        "concept_blocks": [],
+        "limitations": [
+          "Recognizing a proof does not demonstrate independent proof writing; the item does not ask for or claim production of the34-digit decimal expansion."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "A"
+        ],
+        "rationales": [
+          {
+            "option_id": "A",
+            "truth": "correct",
+            "derivation": "10^33-1 is divisible9 by a geometric series, so the parenthesized quotient plus1 is integral. Multiplying it by9 gives10^33-1+9=10^33+8.",
+            "misconception": null
+          },
+          {
+            "option_id": "B",
+            "truth": "incorrect",
+            "derivation": "9*10^32 is a33-digit number, whereas10^33+8 has34 digits; their difference is10^32+8.",
+            "misconception": "Compute the digit sum1+8=9, then mistakenly put both digits in the same10^32 place. Replace the number by(1+8)*10^32, yielding the exact false equality9*10^32."
+          },
+          {
+            "option_id": "C",
+            "truth": "incorrect",
+            "derivation": "10^33 has remainder1 rather than0; the sum has remainder0.",
+            "misconception": "Assume any power of10 is divisible by9, confusing its divisibility by10 with divisibility by9. Set its residue to0 and add8 to obtain residue8."
+          },
+          {
+            "option_id": "D",
+            "truth": "incorrect",
+            "derivation": "Exponentiation of residue1 still gives1, not33; the actual remainder is0.",
+            "misconception": "Replace the power10^33 by a sum of33 copies of the residue1. Its supposed residue is33 modulo9, and33+8=41 has remainder5."
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-eighty-one-ones",
+      "source_numbers": [
+        "1225"
+      ],
+      "view": {
+        "mode": "multiple",
+        "stem": "Let R81 be the decimal number written with exactly81 digits1, and R9 the number written with exactly9 digits1. Select every true assertion relevant to whether R81 is divisible by81.",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "A",
+            "text": "R81 is divisible by81.",
+            "figure_ids": []
+          },
+          {
+            "id": "B",
+            "text": "R9 is already divisible by81.",
+            "figure_ids": []
+          },
+          {
+            "id": "C",
+            "text": "R81=R9*sum(10^(9j), j=0,...,8), and that sum is divisible by9.",
+            "figure_ids": []
+          },
+          {
+            "id": "D",
+            "text": "Every decimal number whose digit sum is divisible by9 is divisible by81.",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Prove the additional factor of9 needed for divisibility by81, rather than inferring it solely from digit sum81.",
+        "source_solution": "Split the81 ones into nine9-digit blocks: R81=R9*T, T=sum_(j=0)^8 10^(9j). R9=111111111=9*12345679. Modulo9 each term of T is1, so T is congruent9 and is divisible9. Therefore R81 is divisible9*9=81. The assertion is about81, not only9. R9 itself is not divisible81: R9/9=12345679 has digit sum37, not divisible9. One may also check10^9-1=999999999=81*12345679, giving10^9 congruent1 modulo81; then R81 is congruent9R9=999999999 congruent0 modulo81.",
+        "unit_reason": "One multiple comparison keeps the block factorization, final divisibility and distinction between a9-divisibility test and an81-divisibility proof.",
+        "concept_blocks": [],
+        "limitations": [
+          "Choice recognition does not demonstrate independently finding the two-factor proof or writing the81-digit integer."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "A",
+          "C"
+        ],
+        "rationales": [
+          {
+            "option_id": "A",
+            "truth": "correct",
+            "derivation": "R81=R9*T, with9 dividing R9 and9 dividing T, so81 divides their product.",
+            "misconception": null
+          },
+          {
+            "option_id": "B",
+            "truth": "incorrect",
+            "derivation": "R9/9=12345679 has digit sum37 and is not divisible9, so R9 lacks the second factor9.",
+            "misconception": "Calculate the nine1s' digit sum as9, apply divisibility by9 correctly, then identify that divisor9 with9^2=81 without testing for a second factor9."
+          },
+          {
+            "option_id": "C",
+            "truth": "correct",
+            "derivation": "Multiplying R9 by powers10^(9j) places nine adjacent9-digit blocks without overlap. Each of the nine powers is1 modulo9, hence their sum is0 modulo9.",
+            "misconception": null
+          },
+          {
+            "option_id": "D",
+            "truth": "incorrect",
+            "derivation": "18 has digit sum9 and is not divisible81, providing a counterexample to the universal assertion.",
+            "misconception": "From the valid rule S divisible9 implies N divisible9, replace the conclusion's divisor by81. Applied to18, this mistaken rule asserts81 divides18."
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-three-examples-multiples",
+      "source_numbers": [
+        "1232"
+      ],
+      "view": {
+        "mode": "single",
+        "stem": "Choose three multiples of5 among numbers of the form3n+1. Which proposal gives three such numbers together with valid parameter values? No endpoint convention for n is specified in the original task.",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "A",
+            "text": "n=5,10,15 gives16,31,46; all three are multiples of5.",
+            "figure_ids": []
+          },
+          {
+            "id": "B",
+            "text": "n=2,7,12 gives7,22,37; all three are multiples of5.",
+            "figure_ids": []
+          },
+          {
+            "id": "C",
+            "text": "n=3,8,13 gives10,25,40; all three are multiples of5.",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Produce three valid parameter-result examples satisfying both the given form and divisibility by5.",
+        "source_solution": "Directly choose n=3,8,13 and calculate3n+1=10,25,40; these are5*2,5*5,5*8. All chosen parameters are positive integers, so the examples remain valid whether a customary nonnegative parameter range begins at0 or1, and also under wider integer or real domains. If n is integral, solving3n+1 congruent0 modulo5 gives3n congruent4, multiply by the inverse2 to get n congruent3 modulo5; thus n=5t+3 and values15t+10, restricted to whichever domain the original permits. That conditional complete family is not imposed as an unstated domain. The actual requested task is three examples, which is fully resolved without deciding the parameter's endpoint convention.",
+        "unit_reason": "A three-example proposal is a meaningful complete response to the source's existence request, retaining parameter-to-number correspondence rather than testing one cell at a time.",
+        "concept_blocks": [],
+        "limitations": [
+          "Selection does not demonstrate independently choosing three examples or independently solving the congruence.",
+          "No unstated natural-number or parameter-endpoint convention is introduced; the optional full congruence family is explicitly conditional on integrality.",
+          "Because the original task only asks for three examples, other valid triples are not claimed to be excluded."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "C"
+        ],
+        "rationales": [
+          {
+            "option_id": "A",
+            "truth": "incorrect",
+            "derivation": "The substitutions are correct, but16,31,46 all have remainder1 modulo5.",
+            "misconception": "Assume that n being a multiple of5 makes3n+1 a multiple of5. Choose n=5,10,15, compute the stated results, and ignore the added1's residue."
+          },
+          {
+            "option_id": "B",
+            "truth": "incorrect",
+            "derivation": "The substitutions are correct, but7,22,37 all have remainder2 modulo5.",
+            "misconception": "Move the1 across the congruence without changing its sign: from3n+1 congruent0 incorrectly obtain3n congruent1. Multiply by2 to get n congruent2 and choose2,7,12, producing7,22,37."
+          },
+          {
+            "option_id": "C",
+            "truth": "correct",
+            "derivation": "3*3+1=10,3*8+1=25,3*13+1=40; each result is divisible5 and every parameter satisfies the given form.",
+            "misconception": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-compatible-remainders",
+      "source_numbers": [
+        "1233"
+      ],
+      "view": {
+        "mode": "single",
+        "stem": "A number leaves remainder1 when divided by2 and remainder2 when divided by3. What remainder does it leave when divided by6?",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "A",
+            "text": "2",
+            "figure_ids": []
+          },
+          {
+            "id": "B",
+            "text": "3",
+            "figure_ids": []
+          },
+          {
+            "id": "C",
+            "text": "1",
+            "figure_ids": []
+          },
+          {
+            "id": "D",
+            "text": "5",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Find the unique residue modulo6 satisfying both smaller-modulus conditions.",
+        "source_solution": "Let n=6q+r with0<=r<6. The parity condition restricts r to1,3,5; the modulo3 condition restricts it to2,5. Their only intersection is5. Conversely6q+5 leaves1 modulo2 and2 modulo3. This proves both necessity and sufficiency, independently of whether the underlying integers are positive or include0.",
+        "unit_reason": "One joint residue is the mathematical response unit; separate questions for the two given remainders would only repeat supplied data.",
+        "concept_blocks": [],
+        "limitations": [
+          "Selecting the residue does not demonstrate independently writing the compatibility proof or the general form6q+5."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "D"
+        ],
+        "rationales": [
+          {
+            "option_id": "A",
+            "truth": "incorrect",
+            "derivation": "A residue2 modulo6 is even, contrary to remainder1 on division by2.",
+            "misconception": "Keep only the remainder2 modulo3 and copy that remainder unchanged to division by6, ignoring parity."
+          },
+          {
+            "option_id": "B",
+            "truth": "incorrect",
+            "derivation": "A residue3 modulo6 is divisible3 and does not leave remainder2 there.",
+            "misconception": "Add the given remainders1+2=3 as if combining division conditions meant adding their residues, and report3 modulo6."
+          },
+          {
+            "option_id": "C",
+            "truth": "incorrect",
+            "derivation": "A residue1 modulo6 also leaves1 modulo3, not2.",
+            "misconception": "Use only the oddness condition, choose its smallest positive residue1, and copy it as the remainder modulo6 without enforcing the modulo3 condition."
+          },
+          {
+            "option_id": "D",
+            "truth": "correct",
+            "derivation": "The eligible residue lists{1,3,5} and{2,5} intersect only at5;6q+5 verifies both source conditions.",
+            "misconception": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-rotate-final-two",
+      "source_numbers": [
+        "1234"
+      ],
+      "view": {
+        "mode": "multiple",
+        "stem": "A decimal number ends in2. Moving that final2 to the first position doubles the number: the rotated number equals2N. Find the number or numbers by selecting every true assertion. No shortest-length restriction is imposed.",
+        "figure_ids": [],
+        "options": [
+          {
+            "id": "A",
+            "text": "The least solution is105263157894736842; its rotation is210526315789473684.",
+            "figure_ids": []
+          },
+          {
+            "id": "B",
+            "text": "All solutions are N=2*(10^(18t)-1)/19 for positive integers t; their digit counts are18t.",
+            "figure_ids": []
+          },
+          {
+            "id": "C",
+            "text": "222222222222222222 is a solution; moving its last2 to the front leaves it unchanged.",
+            "figure_ids": []
+          },
+          {
+            "id": "D",
+            "text": "2*(10^9-1)/19 is a nine-digit solution because10^9 is congruent1 modulo19.",
+            "figure_ids": []
+          }
+        ]
+      },
+      "intent": {
+        "task": "Solve the decimal rotation equation completely, including its length condition, least solution and genuine infinite family.",
+        "source_solution": "Write a positive L-digit number N=10a+2. Its rotation is2*10^(L-1)+a, so2*10^(L-1)+(N-2)/10=2N. Multiplication by10 gives19N=2*(10^L-1); hence N=2*(10^L-1)/19. Integrality requires10^L congruent1 modulo19. The successive residues of10^k for k=1,...,18 are10,5,12,6,3,11,15,17,18,9,14,7,13,16,8,4,2,1. None before18 is1, so the order is18 and L must be18t with t>=1. The formula indeed has L digits since its value is between10^(L-1) and10^L; from19N ending in8, N ends in2, and the derived rotation equation is then valid. Equivalently the prefix-length equation19a=2*10^(L-1)-4 gives10^(L-1) congruent2 modulo19, also L=18t. For t=1,N=105263157894736842, and2N=210526315789473684, exactly its rotation. Larger t give repeated copies of the same18-digit block; there are infinitely many solutions. The source asks for the number without stipulating least length, so the full family is retained rather than inventing uniqueness. The phrase 'doubles' is represented by the explicit2N condition, not a threefold increase.",
+        "unit_reason": "One multiple comparison covers the actual infinite family and least example, with the essential digit-length congruence and counterexamples to weaker rotation claims.",
+        "concept_blocks": [],
+        "limitations": [
+          "Recognizing the family is not evidence of independently discovering the number, writing the modular-order proof, or carrying out the rotation construction.",
+          "The original has no least-length condition, so the least solution alone would be incomplete; all lengths18t are retained.",
+          "No candidate drawings or measured diagrams are involved."
+        ],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": [
+          "A",
+          "B"
+        ],
+        "rationales": [
+          {
+            "option_id": "A",
+            "truth": "correct",
+            "derivation": "The order calculation forces the least length18. The formula at L=18 evaluates to105263157894736842; doubling gives210526315789473684, matching the rotation.",
+            "misconception": null
+          },
+          {
+            "option_id": "B",
+            "truth": "correct",
+            "derivation": "The exact rotation equation gives19N=2*(10^L-1). Since10 has order18 modulo19, integrality holds exactly when L=18t. These values have the stated length, end in2 and satisfy the rotation equation.",
+            "misconception": null
+          },
+          {
+            "option_id": "C",
+            "truth": "incorrect",
+            "derivation": "Its rotation equals N, not2N. Since N is nonzero, an unchanged number cannot satisfy doubling.",
+            "misconception": "From20N-N=2*10^L-2, compute20-1 as9 rather than19. This gives N=2*(10^L-1)/9; taking L=18 produces18 digits2. Check only the final digit and rotational invariance, neglecting that the required relation is rotation=2N."
+          },
+          {
+            "option_id": "D",
+            "truth": "incorrect",
+            "derivation": "10^9 is congruent18=-1 modulo19, not1. Thus19 does not divide2*(10^9-1), and the proposed value is not even an integer.",
+            "misconception": "At exponent9 reach residue-1, discard its minus sign and record1. Conclude the period is9, substitute L=9 into the otherwise correct formula2*(10^L-1)/19, and falsely label it a nine-digit integer solution."
+          }
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {
+      "source_number": "1214",
+      "question_ids": [
+        "q-terminal-arithmetic"
+      ],
+      "omitted_tasks": [
+        "Independent written computation of all four last digits is not demonstrated by selection."
+      ],
+      "reason": "All four full tasks are solved, including inclusive7-through81 bounds and all900 three-digit summands. One modular-arithmetic unit preserves every requested terminal digit."
+    },
+    {
+      "source_number": "1223",
+      "question_ids": [
+        "q-seventy-digit-sum"
+      ],
+      "omitted_tasks": [
+        "Independent computation and writing of the arrangement-invariance argument."
+      ],
+      "reason": "All seventeen digits are included:7*8+9*1+5=70. Nondivisibility and residue7 are established for every ordering, without choosing a fabricated arrangement."
+    },
+    {
+      "source_number": "1224",
+      "question_ids": [
+        "q-large-power-nine"
+      ],
+      "omitted_tasks": [
+        "Independent proof writing or decimal expansion production."
+      ],
+      "reason": "The exact10^33+8 is shown divisible9 through an integral factorization and residue0; incorrect place-value and exponent procedures are compared substantively."
+    },
+    {
+      "source_number": "1225",
+      "question_ids": [
+        "q-eighty-one-ones"
+      ],
+      "omitted_tasks": [
+        "Independent production of the two-factor proof or writing81 consecutive ones."
+      ],
+      "reason": "Divisibility by81, not merely9, is proved by nine9-digit blocks. R9's failure of81-divisibility and the invalid universal9-to81 promotion are preserved as mathematical distinctions."
+    },
+    {
+      "source_number": "1232",
+      "question_ids": [
+        "q-three-examples-multiples"
+      ],
+      "omitted_tasks": [
+        "Independent selection of three examples or written congruence solution."
+      ],
+      "reason": "The requested three examples10,25,40 are fully solved with positive integer parameters3,8,13. Their validity is independent of a zero endpoint convention. An exhaustive family is stated only conditionally on integral n, not imposed as a source condition."
+    },
+    {
+      "source_number": "1233",
+      "question_ids": [
+        "q-compatible-remainders"
+      ],
+      "omitted_tasks": [
+        "Independent written necessity-and-sufficiency proof."
+      ],
+      "reason": "Both remainder conditions are used; the only compatible residue modulo6 is5. No underlying sign or natural-number-zero convention changes this result."
+    },
+    {
+      "source_number": "1234",
+      "question_ids": [
+        "q-rotate-final-two"
+      ],
+      "omitted_tasks": [
+        "Independent discovery and construction of the rotating number.",
+        "Independent writing of the modular-order proof."
+      ],
+      "reason": "The source lacks a shortest-length restriction, so the complete infinite family2*(10^(18t)-1)/19,t>=1 is retained along with the least18-digit solution. Rotation is exactly2N; neither uniqueness nor a threefold pricing-style interpretation is guessed."
+    }
+  ]
+}
