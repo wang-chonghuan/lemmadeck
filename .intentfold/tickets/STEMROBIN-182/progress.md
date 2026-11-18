@@ -1,5 +1,67 @@
 # 当前开发状态
 
+### batch298有限显示已留存，299仍按原小范围接续
+
+- actual observer 01a1ebfe-6ca8-7640-bdac-827447717a21已turn.completed/
+  process exit0后关闭；final report rawSHA
+  4cb31818a271b44134e72ed9f0807aa1bfa0d9a8c882128a36d769266ed075ed
+  已匹配。八PNG各1次，4桌面PASS、手机n6/n22右边界FAIL、n2/n23底边HOLD。
+  未读HTML/重DOM/render/math；首屏裁切不证明不可达，也不被DOM exit0覆盖。
+- 原测量显示n6 fig19和n22表媒体宽640且endReachable:true，仅归属父方
+  实际DOM记录。没有新不可达证据，不改应用或renderer，不复看/重拍整批。
+  四包63题278项与原报告/HTML/PNG同字节持久留存；n6/n22的
+  unresolved_visible_failure:true，全部broader/display_pending:true、
+  current_retained_approval:false及原自然数/河流/SOURCE/全课/881 HOLD保持。
+- 299 n29/n32实际actor已completed/process exit0后关闭，两限定selection PASS；
+  每包两个current函数各1次exit0，final bytes等于checked bytes。
+  两个前置wrapper失败均exit1且函数0调用，原事件保留，不作作者数学失败。
+  n30/n38另一actor仍在途，不消费部分文件为完成；不复解原数学或扩大上下文。
+- 仅准备n2/n6/n22/n23四包和本进度/用量的窄commit/push。82包1394题5659项
+  648不增，父0新图/累计24；layout/其测试/监督ticket/其余4m资源不纳入。
+
+### batch297真实限定PASS，298首次choices显示在途
+
+- 两297临时进程均turn.completed/实际exit0后关闭；四final review rawSHA
+  与正式回执匹配，每包check_draft/check_review各1次exit0，final bytes等于
+  checked bytes。n2/n6/n22/n23共58源63题278项仅selection-impact PASS；
+  数学/原图/原身份与SOURCE28/92/423/436、blocked/exit3/FAIL原字节不变。
+- 原seed/draft/review同字节持久留存，298首次choices render四次exit0，
+  1440/390八DOM组合exit0；八PNG与四HTML冻结，receipt rawSHA
+  c78ce00acf4f525fccb054ee75c021985cc025039d7de4428f57176603e4b517。
+  实际fresh observer 01a1ebfe-6ca8-7640-bdac-827447717a21
+  （session91288）仅八PNG一次、HTML hash-only在途；无像素回执前不升显示。
+- 299现有qualifier单次准备exit0，n29/n30/n32/n38排整源
+  483/550/560/564/588/626，共48源50题162项未变已审数学；
+  fresh 01a1ebfc-e3fd-7f52-b588-e4ee7b39410d（45635，n29/n32）、
+  01a1ebfd-b453-7293-a10f-9fc1c17dacb2（31461，n30/n38）
+  仅零图选择影响在途，不复用或扩大297已完成上下文。
+- 82包1394题5659项648及父0新图/累计24保持。既有手机FAIL、所有未见/
+  生产/真实交互/APP/全课/881、4m缺图与源HOLD未解除；无app/renderer/
+  validator/Charter/依赖/生产库修改，不将窄包或push计全课。
+
+### batch297 四个6a选定包入口已冻结
+
+- 从实际已推送37c80e2f2接续，同d9b1/182分支；旧3m PASS绑定已完成，
+  4m n12/n14/n16/n17的缺图、碰撞、源歧义及原FAIL继续保留，不重复阶段。
+- 仅排整源28/92/423/436，四包n2/n6/n22/n23共58源63题278项；
+  完整未变source/question/coverage及原图、概念、trace、键值零改。
+  现有qualifier单次准备exit0，可逆重建原seed/draft；不是新数学审查。
+- 两fresh ephemeral实际thread为01a1ebf8-923b-7df1-8aa2-98de7d156c16
+  （session26462，n2/n23）及01a1ebf8-923b-7c71-97ef-26261b544df3
+  （session23923，n6/n22）；写域互斥，仅零图选择影响及各包一次current direct。
+  尚在途，不把部分文件或派工当completed/PASS，approval:false/display_pending:true。
+- 298现有首次choices/display/留存helper仅增加6a路由，三次语法检查exit0；
+  尚未运行render/DOM/像素观察。原数学/图审/署名、自然数含零与河流资料HOLD、
+  生产/全课/APP/881均不解除；82包1394题5659项648及父0新图/累计24不变。
+  layout/其测试、监督ticket及其余4m资源留原工作树，不纳入本批。
+
+### batch296窄push已确认
+
+- `37c80e2f2f73c595274680d17e96b0cc970159f0`已真实commit/push，同182分支
+  从6f0402ea7更新至37c80e2f2；仅n61尾包52题157项、两有限首屏PASS及
+  既有进度/用量。最终push回执在此补记，不额外重复检验或制造文档专用push。
+  本轮四次窄交付共13选定包413题1333项；不是全课或整组完成。
+
 ### batch296尾包有限显示完成，全部本轮临时进程已退出
 
 - `6f0402ea77185814967cc97db4f32962fcf606b0`已真实push第三个窄批次，
