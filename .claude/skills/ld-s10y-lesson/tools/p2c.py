@@ -309,14 +309,29 @@ def cmd_finalize(a) -> int:
         if info.get("components", 0) == 0:
             errors.append(f"{b['id']}: 粗框里没有完整连通域，框可能给错了")
     neighbours = {f["id"]: [] for f in figs}
-    owned_ink = {}
+    component_ownership = meta.get("figure_component_ownership")
+    try:
+        owned_ink = layout.figure_component_ownership(
+            ink, figs, component_ownership, render_sha256
+        )
+    except ValueError as error:
+        print(f"ERROR: {error}", file=sys.stderr)
+        return 2
+    if component_ownership is not None:
+        for f in figs:
+            transfers = [
+                entry for entry in component_ownership["transfers"]
+                if f["id"] in (entry["from"], entry["to"])
+            ]
+            if transfers:
+                f["components"] = int(ndimage.label(owned_ink[f["id"]])[1])
+                f["component_ownership"] = {
+                    "render_sha256": render_sha256, "transfers": transfers,
+                }
     for i in range(len(figs)):
         for j in range(i + 1, len(figs)):
             (x1, y1, w1, h1), (x2, y2, w2, h2) = figs[i]["box"], figs[j]["box"]
             if x1 < x2 + w2 and x2 < x1 + w1 and y1 < y2 + h2 and y2 < y1 + h1:
-                for f in (figs[i], figs[j]):
-                    if f["id"] not in owned_ink:
-                        owned_ink[f["id"]] = layout.figure_ink(ink, f.get("from", f["box"]))
                 if (owned_ink[figs[i]["id"]] & owned_ink[figs[j]["id"]]).any():
                     errors.append(f"{figs[i]['id']} 与 {figs[j]['id']} 认领同一连通域，"
                                   "同一块墨迹会被裁两次")
@@ -325,8 +340,6 @@ def cmd_finalize(a) -> int:
                     neighbours[figs[j]["id"]].append(figs[i]["id"])
     for f in figs:
         exclude = None
-        if f["id"] not in owned_ink:
-            owned_ink[f["id"]] = layout.figure_ink(ink, f.get("from", f["box"]))
         if neighbours[f["id"]]:
             exclude = owned_ink[neighbours[f["id"]][0]].copy()
             for neighbour in neighbours[f["id"]][1:]:

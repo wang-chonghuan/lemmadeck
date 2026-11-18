@@ -491,6 +491,19 @@ def _bounded_fraction_rules(components: np.ndarray, rules, line_h: float):
     return completed
 
 
+def _fraction_rule_has_sides(ink: np.ndarray, rows, columns, line_h: float) -> bool:
+    """A fraction bar needs local numerator and denominator ink in its columns."""
+    reach = max(1, int(0.75 * line_h))
+    return all(
+        occupied.size and occupied[-1] - occupied[0] + 1 >= 0.2 * line_h
+        for side in (
+            ink[max(0, rows.start - reach):rows.start, columns],
+            ink[rows.stop:rows.stop + reach, columns],
+        )
+        for occupied in [np.flatnonzero(side.any(axis=1))]
+    )
+
+
 def _single_fraction_row(
     ink: np.ndarray, a: int, b: int, line_h: float,
     source_components: np.ndarray | None = None,
@@ -511,6 +524,7 @@ def _single_fraction_row(
             and rows.stop - rows.start <= 0.2 * line_h
             and 0.3 * height <= (rows.start + rows.stop) / 2 <= 0.7 * height
             and _straight_fraction_rule(components[bounds] == component_id, line_h)
+            and _fraction_rule_has_sides(band, rows, columns, line_h)
         ):
             rules.append((columns.start, columns.stop - 1))
             accepted_carriers.add(component_id)
@@ -561,6 +575,7 @@ def _single_fraction_row(
             )
             and
             rows.stop - rows.start <= 0.25 * line_h
+            and _fraction_rule_has_sides(band, rows, columns, line_h)
             and (
                 0.3 * height <= (rows.start + rows.stop) / 2 <= 0.7 * height
                 # A nested denominator moves its long outer rule above centre.
@@ -917,11 +932,43 @@ def _folio_fragment_continues(
     )
 
 
+def _overhead_angle_mark(mask: np.ndarray, glyph_h: float) -> bool:
+    """Recognize a shallow two-arm angle accent, not a complete body glyph."""
+    ys = np.flatnonzero(mask.any(axis=1))
+    xs = np.flatnonzero(mask.any(axis=0))
+    if not ys.size or not xs.size:
+        return False
+    height, width = ys[-1] - ys[0] + 1, xs[-1] - xs[0] + 1
+    if not (0.2 * glyph_h <= height <= 0.6 * glyph_h and width >= max(glyph_h, 2 * height)):
+        return False
+    counts = mask.sum(axis=0)[xs]
+    centers = (mask * np.arange(mask.shape[0])[:, None]).sum(axis=0)[xs] / counts
+    apex = int(np.argmin(centers))
+    if not 0.25 * len(xs) <= apex <= 0.75 * len(xs):
+        return False
+    spans = [
+        occupied[-1] - occupied[0] + 1
+        for x in xs for occupied in [np.flatnonzero(mask[:, x])]
+    ]
+    if np.median(spans) > 0.2 * glyph_h:
+        return False
+    for arm, direction in ((slice(None, apex + 1), -1), (slice(apex, None), 1)):
+        fit = np.polyfit(xs[arm], centers[arm], 1)
+        residual = centers[arm] - np.polyval(fit, xs[arm])
+        if (
+            direction * fit[0] <= 0
+            or np.ptp(centers[arm]) < 0.2 * glyph_h
+            or np.percentile(np.abs(residual), 90) > max(1, 0.06 * glyph_h)
+        ):
+            return False
+    return True
+
+
 def _overhead_arrow_continues(
     ink: np.ndarray, components: np.ndarray, bounds_list,
     prev_a: int, prev_b: int, a: int, b: int, glyph_h: float, content_w: int,
 ) -> bool:
-    """Attribute a head-clipped shaft to its complete, horizontally related body."""
+    """Attribute a clipped shaft or angle accent to its horizontally related body."""
     if not 0 < a - prev_b <= 0.75 * glyph_h:
         return False
     original_ids = np.unique(components[prev_a:prev_b + 1][ink[prev_a:prev_b + 1]])
@@ -930,10 +977,12 @@ def _overhead_arrow_continues(
     for component_id in original_ids:
         bounds = bounds_list[component_id - 1]
         rows, _ = bounds
+        angle_mark = _overhead_angle_mark(components[bounds] == component_id, glyph_h)
         if (
             rows.stop > a
-            or prev_a <= rows.start and rows.stop - 1 <= prev_b
-            or not _original_arrow_decoration(components[bounds] == component_id, glyph_h)
+            or prev_a <= rows.start and rows.stop - 1 <= prev_b and not angle_mark
+            or not angle_mark
+            and not _original_arrow_decoration(components[bounds] == component_id, glyph_h)
         ):
             return False
     fragments = _row_fragments(ink[a:b + 1], content_w)
@@ -944,7 +993,7 @@ def _overhead_arrow_continues(
         columns for component_id in body_ids
         for rows, columns in [bounds_list[component_id - 1]]
         if a <= rows.start and rows.stop - 1 <= b
-        and 0.6 * glyph_h <= rows.stop - rows.start <= 1.8 * glyph_h
+        and 0.45 * glyph_h <= rows.stop - rows.start <= 1.8 * glyph_h
         and columns.stop - columns.start >= 0.2 * glyph_h
         and not _arrow_headed_rule(
             components[bounds_list[component_id - 1]] == component_id, glyph_h
@@ -1499,6 +1548,91 @@ def figure_ink(ink: np.ndarray, box: list[int]) -> np.ndarray:
     """Use the same component ownership as snapping, not the rectangular envelope."""
     labels, selected, _ = _figure_components(ink, box)
     return np.isin(labels, selected)
+
+
+def figure_component_ownership(
+    ink: np.ndarray, figures: list[dict], specification: dict | None,
+    render_sha256: str,
+) -> dict[str, np.ndarray]:
+    """Apply explicit, source-bound whole-component transfers, never pixel cuts."""
+    owned = {
+        figure["id"]: figure_ink(ink, figure.get("from", figure["box"]))
+        for figure in figures
+    }
+    if specification is None:
+        return owned
+    if len(owned) != len(figures):
+        raise ValueError("figure_component_ownership: duplicate figure identity")
+    if (
+        not isinstance(specification, dict)
+        or set(specification) != {"render_sha256", "transfers"}
+        or specification["render_sha256"] != render_sha256
+        or not isinstance(specification["transfers"], list)
+        or not specification["transfers"]
+    ):
+        raise ValueError("figure_component_ownership: invalid or stale source binding")
+    labels, _ = ndimage.label(ink)
+    bounds = ndimage.find_objects(labels)
+    by_id = {figure["id"]: figure for figure in figures}
+    transfers, seen = [], set()
+    for entry in specification["transfers"]:
+        if not isinstance(entry, dict) or set(entry) != {
+            "from", "to", "box", "pixels", "ink_sha256", "reason",
+        }:
+            raise ValueError("figure_component_ownership: invalid transfer")
+        donor, receiver = entry["from"], entry["to"]
+        if (
+            not isinstance(donor, str) or not isinstance(receiver, str)
+            or donor not in owned or receiver not in owned or donor == receiver
+            or not isinstance(entry["reason"], str) or not entry["reason"].strip()
+        ):
+            raise ValueError("figure_component_ownership: invalid explicit owner")
+        box = entry["box"]
+        if (
+            not isinstance(box, list) or len(box) != 4
+            or any(type(value) is not int for value in box)
+        ):
+            raise ValueError("figure_component_ownership: invalid component box")
+        x, y, w, h = box
+        if x < 0 or y < 0 or w <= 0 or h <= 0 or x + w > ink.shape[1] or y + h > ink.shape[0]:
+            raise ValueError("figure_component_ownership: component outside source")
+        ids = np.unique(labels[y:y + h, x:x + w])
+        ids = ids[ids != 0]
+        if len(ids) != 1:
+            raise ValueError("figure_component_ownership: must select one whole component")
+        component = int(ids[0])
+        rows, cols = bounds[component - 1]
+        actual = [cols.start, rows.start, cols.stop - cols.start, rows.stop - rows.start]
+        local = labels[rows, cols] == component
+        if (
+            actual != box or type(entry["pixels"]) is not int
+            or entry["pixels"] != int(local.sum())
+            or entry["ink_sha256"] != hashlib.sha256(local.tobytes()).hexdigest()
+        ):
+            raise ValueError("figure_component_ownership: partial or changed component")
+        if component in seen:
+            raise ValueError("figure_component_ownership: component assigned twice")
+        mask = labels == component
+        if not (owned[donor] & mask).any() or not (owned[receiver] & mask).any():
+            raise ValueError("figure_component_ownership: cannot transfer foreign or own-only ink")
+        # A connected stroke extending out of the receiver's original selection
+        # cannot be split or silently transferred as a neighbour glyph.
+        rx, ry, rw, rh = by_id[receiver].get("from", by_id[receiver]["box"])
+        if x < rx or y < ry or x + w > rx + rw or y + h > ry + rh:
+            raise ValueError("figure_component_ownership: shared/partial receiver stroke")
+        cx, cy, cw, ch = by_id[receiver]["box"]
+        if x < cx or y < cy or x + w > cx + cw or y + h > cy + ch:
+            raise ValueError("figure_component_ownership: receiver crop cuts component")
+        transfers.append((donor, receiver, mask))
+        seen.add(component)
+    original = np.logical_or.reduce(list(owned.values()))
+    for donor, receiver, mask in transfers:
+        owned[donor] &= ~mask
+        if not owned[donor].any() or not owned[receiver][mask].all():
+            raise ValueError("figure_component_ownership: receiver lost transferred ink")
+    if not np.array_equal(original, np.logical_or.reduce(list(owned.values()))):
+        raise ValueError("figure_component_ownership: source ink lost")
+    return owned
 
 
 def figure_crop_exclusion(

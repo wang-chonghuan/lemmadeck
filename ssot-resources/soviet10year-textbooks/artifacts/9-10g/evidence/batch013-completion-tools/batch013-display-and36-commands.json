@@ -1,0 +1,17 @@
+{
+  "schema": "s10y-command-receipt@1",
+  "ticket": "STEMROBIN-184",
+  "workdir": "/Users/yong/.codex/worktrees/a07e/lemmadeck",
+  "commands": [
+    {"stage": "affected32/34 render first parser failure", "suffix": "p2c.py render --book 9-10g --edition modern-us-neutral --lesson geo910-c1-s3-n32 --lesson geo910-c1-s3-n34 --self-contained", "exit_code": 2, "effect": "Unknown flag rejected before writes; original failure retained in command history."},
+    {"stage": "affected32/34 render recovery", "suffix": "p2c.py render --book 9-10g --edition modern-us-neutral --lesson geo910-c1-s3-n32 --lesson geo910-c1-s3-n34", "exit_code": 0, "effect": "Existing self-contained renderer regenerated only affected lessons."},
+    {"stage": "focused renderer tests", "command": "node --test .claude/skills/ld-s10y-lesson/tools/render_lesson.test.cjs", "exit_code": 0, "passed": 2},
+    {"stage": "focused renderer tests", "command": ".claude/skills/ld-s10y-lesson/.venv/bin/python -m unittest discover -s .claude/skills/ld-s10y-lesson/tests -p test_render_lesson.py", "exit_code": 0, "passed": 1},
+    {"stage": "36 adaptation", "suffix": "p2c.py adapt-finalize --book 9-10g --edition modern-us-neutral --lesson geo910-c1-s3-n36", "exit_code": 0, "result": "PASS"},
+    {"stage": "36 render", "suffix": "p2c.py render --book 9-10g --edition modern-us-neutral --lesson geo910-c1-s3-n36", "exit_code": 0, "result": "PASS"},
+    {"stage": "36 read-only publication gate", "suffix": "validate_publish.py ssot-resources/soviet10year-textbooks/artifacts/9-10g --edition modern-us-neutral --lesson geo910-c1-s3-n36", "exit_code": 0, "result": "PASS: 1 lessons revalidated for publication"},
+    {"stage": "36 answer preparation", "command": "python3 .claude/skills/ld-s10y-answer/tools/lesson_answers.py prepare --book 9-10g --edition modern-us-neutral --lesson geo910-c1-s3-n36", "exit_code": 0, "exercises": 11}
+  ],
+  "suffix_command_basis": ".claude/skills/ld-s10y-lesson/.venv/bin/python .claude/skills/ld-s10y-lesson/tools/",
+  "boundary": "No database access, publication, paid calls or full mechanical-defence replay. Other failed discovery/path lookups remain in tool history and are not relabeled as passes."
+}

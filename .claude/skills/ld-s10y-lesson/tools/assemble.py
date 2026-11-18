@@ -726,8 +726,10 @@ def run(
     strict: bool = True,
     work: Path | None = None,
     exercise_numbering: str = "book",
+    stream: list[dict] | None = None,
 ) -> int:
-    stream = load_stream(book)
+    if stream is None:
+        stream = load_stream(book)
     if not stream:
         print(f"ERROR: {book}/pages 下没有 page.json", file=sys.stderr)
         return 2

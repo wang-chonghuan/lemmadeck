@@ -13,6 +13,50 @@ import layout
 
 
 class LineBandsTest(unittest.TestCase):
+    def test_nested_angle_and_vector_accents_use_one_lowercase_body_row(self) -> None:
+        ink = np.zeros((600, 1000), dtype=bool)
+        for center in (340, 730):
+            for offset in range(-26, 27):
+                top = 170 + int(0.65 * abs(offset))
+                ink[top:top + 3, center + offset] = True
+            for left in (center - 45, center + 15):
+                ink[201:204, left:left + 40] = True
+                for offset in range(9):
+                    ink[201 - offset:204 + offset, left + 39 - offset] = True
+                ink[226:247, left + 4:left + 30] = True
+        for top in (215, 300, 370, 440, 510):
+            for left in (100, 150, 500, 550, 900):
+                ink[top:top + 40, left:left + 35] = True
+        self.assertEqual(len(layout.line_bands(ink, content_w=1000)), 5)
+
+    def test_wide_body_glyph_is_not_an_angle_accent(self) -> None:
+        ink = np.zeros((25, 60), dtype=bool)
+        ink[2:22, 5:8] = True
+        ink[2:22, 49:52] = True
+        ink[10:14, 5:52] = True
+        self.assertFalse(layout._overhead_angle_mark(ink, 40))
+
+    def test_head_clipped_overhead_arrow_does_not_hide_short_previous_row(self) -> None:
+        ink = np.zeros((600, 1000), dtype=bool)
+        for left in (100, 145, 190):
+            ink[40:80, left:left + 35] = True
+        ink[96:101, 800:866] = True
+        for left in range(100, 900, 45):
+            ink[110:150, left:left + 35] = True
+        for top in (180, 250, 320, 390):
+            for left in range(100, 900, 45):
+                ink[top:top + 40, left:left + 35] = True
+
+        self.assertFalse(layout._single_fraction_row(ink, 40, 149, 40))
+        self.assertEqual(len(layout.line_bands(ink, content_w=1000)), 6)
+
+    def test_fraction_bar_with_local_single_glyph_on_both_sides(self) -> None:
+        ink = np.zeros((160, 400), dtype=bool)
+        ink[20:45, 180:200] = True
+        ink[60:65, 160:220] = True
+        ink[80:105, 180:200] = True
+        self.assertTrue(layout._single_fraction_row(ink, 20, 104, 40))
+
     def test_sparse_enumerator_on_a_wide_page(self) -> None:
         ink = np.zeros((500, 1473), dtype=bool)
         for top in (40, 110, 180, 250):

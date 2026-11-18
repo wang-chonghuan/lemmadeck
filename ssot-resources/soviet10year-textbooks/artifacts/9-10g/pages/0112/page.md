@@ -1,0 +1,88 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9-10g",
+  "page": 112,
+  "printed_page": 105,
+  "source": {
+    "pdf": "9-10g 苏联十年制学校数学教材 几何 9-10年级.pdf",
+    "pdf_sha256": "1900be5207d00404f64e5a40ab855fbfb8495bd2a06c5ce295ae0e145444578a",
+    "pdf_page": 112
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1506,
+    "h": 2126,
+    "sha256": "a95f68afced24c9df61097992c3e0ff6d980a3a9381e0486574a7fb0367e6a90"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "19d56195a3a63cf4be93a7a159e1513d37b9b17d1b92235d8ae3d4e826cc45d0"
+  },
+  "notes": [
+    "FIRST transcription: physical112/printed105; one full page.grid.png image call. Incoming111 definition is closed; page starts a new paragraph in section32. No source review or approval.",
+    "UNKNOWN literal glyph: the relation between Phi_1/Phi and between A_1B_1C_1D_1/ABCD has a curved upper stroke and lower horizontal strokes; LaTeX con g (cong) is the retained candidate, not an approved identification. Do not infer its glyph from mathematical meaning.",
+    "Proof retains printed 他们, section references §30定理16 and 定理17(§31), and the solid proof-end square on its last visual line.",
+    "Figure122 source-owned by section32 prose: one whole rough box, two tetrahedra Phi/Phi_1, central plane alpha, labels A/B/C/D, A_0/B_0/C_0/D_0 and A_1/B_1/C_1/D_1, solid/dashed connecting and hidden edges, printed direction arrows. Caption outside box. No exercise ownership, length values, table or footnote.",
+    "Last paragraph is closed on this page. No count exclusions or errata claimed."
+  ],
+  "errata": [],
+  "printed_lines": 19,
+  "figures": [
+    {
+      "id": "fig-122",
+      "label": "图 122",
+      "box": [
+        156,
+        1044,
+        1116,
+        490
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+关于平面$\alpha$对称用$S_\alpha$表示. 如果对称$S_\alpha$将点$M$(图形
+$\Phi$)映射成点$M_1$(图形$\Phi_1$)，那么写成：
+
+<!-- p -->
+$S_\alpha(M)=M_1$，$S_\alpha(\Phi)=\Phi_1$.
+
+<!-- p -->
+**定理18. 关于平面的对称是位移.**
+
+<!-- p -->
+证明. 设$S_\alpha(M)=M_1$，$S_\alpha(N)=N_1$，其中$M\notin\alpha$，$N\notin\alpha$
+(图121). 我们来证明$|MN|=|M_1N_1|$. 垂直于$\alpha$的直线
+$MM_1$和$NN_1$平行(§30 定理16). 因此他们属于某个平面
+$\beta$. 记$\alpha\cap\beta=l$. 关于直线$l$的对称将线段$MN$映射成线段
+$M_1N_1$，并且根据定理17(§31)$|MN|=|M_1N_1|$. 当点$M$和
+$N$中的一个或两个属于平面$\alpha$时，这个等式仍然成立. $\blacksquare$
+
+<!-- p -->
+从这个定理得到，如果$S_\alpha(\Phi)=\Phi_1$，那么$\Phi_1\cong\Phi$(图
+122).
+
+<!-- fig 图 122 box 156,1044,1116,490 -->
+![图 122](figures/fig-122.png)
+
+<!-- cap 图 122 -->
+图 122
+
+<!-- p -->
+关于平面对称的图形可以利用平面镜作演示
+
+<!-- p -->
+我们指出，关于平面对称的非平面图形的有趣的特性. 设
+已知四面体$ABCD$任一顶点处的平面角都不合同. 我们研
+究关于平面$\alpha$和已知的四面体对称的四面体$A_1B_1C_1D_1$，这时
+$A_1B_1C_1D_1\cong ABCD$.
+
+<!-- foot -->
+• 105 •

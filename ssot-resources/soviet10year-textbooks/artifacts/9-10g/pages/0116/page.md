@@ -1,0 +1,91 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9-10g",
+  "page": 116,
+  "printed_page": 109,
+  "source": {
+    "pdf": "9-10g 苏联十年制学校数学教材 几何 9-10年级.pdf",
+    "pdf_sha256": "1900be5207d00404f64e5a40ab855fbfb8495bd2a06c5ce295ae0e145444578a",
+    "pdf_page": 116
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1506,
+    "h": 2126,
+    "sha256": "9299d5a4ebcb6435e9d9a2aeb0f9152bb0660316114304ec177a46116e076b84"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "19d56195a3a63cf4be93a7a159e1513d37b9b17d1b92235d8ae3d4e826cc45d0"
+  },
+  "notes": [
+    "Physical116/printed109; one full prepared page.grid.png view. Section34 began on115; its incoming proof paragraph is complete. This page starts a separate paragraph for A belonging to alpha, with the printed proof-end square; no incoming exercise fragment.",
+    "Exercises310-312 complete. Exercise313 includes the printed solution and remains open at 要求计算. Figure127 belongs to exercise313: M above triangle ABC, projected point K, all printed solid/dashed segments and labels retained as one source figure. Caption shares the row 射影K和已知三角形的顶.",
+    "The printed formula |AA|=0 spans two rows and is represented with one wrap marker. No count exclusions, manual counts, inferred errata or source corrections."
+  ],
+  "errata": [],
+  "printed_lines": 25,
+  "figures": [
+    {
+      "id": "fig-127",
+      "label": "图 127",
+      "box": [
+        748,
+        1243,
+        481,
+        441
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+如果点$A$属于$\alpha$，那么它的射影是点$A$自身. 在这种情
+况下，定理是正确的，因为从$A$到$\alpha$的距离等于零，即$|AA|↵=0$. $\blacksquare$
+
+<!-- exhead -->
+习题
+
+<!-- ex 310 -->
+310°. 直线$a$在平面$\alpha$内，点$M$不属于这个平面. 比较
+$M$到$\alpha$的距离和$M$到$a$的距离. 在什么情况下两个距离相等.
+
+<!-- ex 311 -->
+311. 已知：1) 正方体一个面的对角线等于$m$；2) 正方
+体的对角线等于$d$. 求从正方体的顶点到它相对的面的
+距离.
+
+<!-- ex 312 -->
+312. 证明：1) 如果线段和平面不相交，从线段中点到
+平面的距离，等于从线段两端点到平面的距离之和的一半；
+2) 如果线段和平面相交，从线段中点到平面的距离，等于线
+段两端点到平面的距离的差的一半的绝对值.
+
+<!-- ex 313 open -->
+313. 正三角形的边长等于6cm，点$M$和各个顶点的距离
+都是4cm. 求$M$到三角形所
+在的平面的距离.
+解. 设已知正三角形
+$ABC$和点$M$，并且$|MA|↵=|MB|=|MC|$(图127).
+连结点$M$在平面$ABC$上的
+射影$K$和已知三角形的顶
+
+<!-- fig 图 127 box 748,1243,481,441 -->
+![图 127](figures/fig-127.png)
+
+<!-- cap 图 127 samerow -->
+图 127
+
+<!-- ex 313 cont open -->
+点. 直角三角形$MKA$，$MKB$，$MKC$两两合同(根据斜边和一
+条直角边相等). 因此，$|KA|=|KB|=|KC|$. 于是，$K$是三
+角形$ABC$的外接圆心，$|KA|$是这个圆的半径. 要求计算
+
+<!-- foot -->
+• 109 •

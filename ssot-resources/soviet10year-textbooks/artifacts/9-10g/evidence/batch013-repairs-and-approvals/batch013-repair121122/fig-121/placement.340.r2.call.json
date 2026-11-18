@@ -1,0 +1,49 @@
+{
+  "schema": "ld-s10y-image/targeted-placement-surface@1",
+  "figure": "fig-121",
+  "workdir": "/Users/yong/.codex/worktrees/a07e/lemmadeck",
+  "command": [
+    "/Users/yong/.local/opt/node-v24.16.0/bin/node",
+    "-e",
+    "const fs=require(\"fs\"),path=require(\"path\"),crypto=require(\"crypto\"),{chromium}=require(\"./.agents/skills/node_modules/playwright-core\");(async()=>{const root=\".tmp/s10y-image/batch013-repair121122\",startedAt=new Date().toISOString(),browser=await chromium.launch({headless:true,executablePath:chromium.executablePath()});try{for(const [id,revision,width] of [[121,\"r2\",340],[122,\"r3\",640]]){const d=`${root}/fig-${id}`,spec=JSON.parse(fs.readFileSync(`${d}/spec.${revision}.json`)),svgPath=`${d}/fig-${id}.${revision}.svg`,svg=fs.readFileSync(svgPath,\"utf8\"),height=Math.ceil(spec.canvas.height*width/spec.canvas.width),page=await browser.newPage({viewport:{width,height},deviceScaleFactor:1});await page.setContent(`<style>html,body{margin:0;padding:0;background:white;}svg{display:block;width:${width}px;height:auto;}</style>${svg}`);const observations=await page.evaluate(({id,width})=>{const texts=[...document.querySelectorAll(\"text\")].map(n=>{const m=n.getScreenCTM(),b=n.getBoundingClientRect();return{id:n.getAttribute(\"data-label-id\"),text:n.textContent,renderedFontPx:Number(n.getAttribute(\"font-size\"))*Math.hypot(m.a,m.b),rect:{x:b.x,y:b.y,width:b.width,height:b.height}};});return{width,allLabelCount:texts.length,measuredMinTextPx:Math.min(...texts.map(n=>n.renderedFontPx)),affectedLabels:id===122?texts.filter(n=>[\"B0-label\",\"C0-label\",\"C1-label\"].includes(n.id)):[],affectedEdges:id===121?[...document.querySelectorAll(\"line,path\")].filter(n=>(n.id||\"\").includes(\"alpha-back\")).map(n=>({id:n.id,dash:n.getAttribute(\"stroke-dasharray\"),x1:n.getAttribute(\"x1\"),y1:n.getAttribute(\"y1\"),x2:n.getAttribute(\"x2\"),y2:n.getAttribute(\"y2\"),d:n.getAttribute(\"d\")})):[],nonblank:document.querySelectorAll(\"line,path,text\").length>0};},{id,width});if(observations.measuredMinTextPx<16||!observations.nonblank)throw new Error(\"Affected output product-size check failed\");const png=`${d}/preview.${width}.${revision}.png`;await page.screenshot({path:png,type:\"png\",animations:\"disabled\"});const receipt={schema:\"ld-s10y-image/targeted-placement-surface@1\",figure:`fig-${id}`,workdir:\"/Users/yong/.codex/worktrees/a07e/lemmadeck\",command:[process.execPath,...process.execArgv],startedAt,finishedAt:new Date().toISOString(),input:{path:path.resolve(svgPath),sha256:crypto.createHash(\"sha256\").update(fs.readFileSync(svgPath)).digest(\"hex\")},output:{path:path.resolve(png),sha256:crypto.createHash(\"sha256\").update(fs.readFileSync(png)).digest(\"hex\")},observations,scope:\"New full-figure output at declared product width only; not a crop or contact sheet; no prior preview reopened.\",paidCalls:0};fs.writeFileSync(`${d}/placement.${width}.${revision}.call.json`,JSON.stringify(receipt,null,2)+\"\\n\",{flag:\"wx\"});console.log(JSON.stringify({figure:receipt.figure,output:receipt.output,observations},null,2));await page.close();}}finally{await browser.close();}})().catch(e=>{console.error(e);process.exit(1);});"
+  ],
+  "startedAt": "2026-11-18T22:08:03.566Z",
+  "finishedAt": "2026-11-18T22:08:04.131Z",
+  "input": {
+    "path": "/Users/yong/.codex/worktrees/a07e/lemmadeck/.tmp/s10y-image/batch013-repair121122/fig-121/fig-121.r2.svg",
+    "sha256": "1ec275721db87f5da58d319d20708db413e6dba2be949f3e210b1b89a11c521e"
+  },
+  "output": {
+    "path": "/Users/yong/.codex/worktrees/a07e/lemmadeck/.tmp/s10y-image/batch013-repair121122/fig-121/preview.340.r2.png",
+    "sha256": "115b84dc6d3b9bd5fed1385b1679f8277fc3b41250267bcff3dde036a475bb56"
+  },
+  "observations": {
+    "width": 340,
+    "allLabelCount": 9,
+    "measuredMinTextPx": 17,
+    "affectedLabels": [],
+    "affectedEdges": [
+      {
+        "id": "ld-fig-121_ld-alpha-back",
+        "dash": "5,5",
+        "x1": "140",
+        "y1": "185",
+        "x2": "530",
+        "y2": "185",
+        "d": null
+      },
+      {
+        "id": "ld-fig-121_ld-alpha-back-exposed",
+        "dash": null,
+        "x1": "530",
+        "y1": "185",
+        "x2": "600",
+        "y2": "185",
+        "d": null
+      }
+    ],
+    "nonblank": true
+  },
+  "scope": "New full-figure output at declared product width only; not a crop or contact sheet; no prior preview reopened.",
+  "paidCalls": 0
+}

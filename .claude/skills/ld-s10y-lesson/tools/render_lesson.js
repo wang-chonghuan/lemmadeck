@@ -180,6 +180,7 @@ li.ex{display:grid;grid-template-columns:3.2em 1fr;gap:.2em .4em;
   padding:.85em 0;border-top:1px solid var(--rule)}
 li.ex .no{font-family:ui-monospace,Menlo,monospace;color:var(--accent);
   font-weight:700;padding-top:.15em}
+li.ex .no .nb{max-width:none;overflow-x:visible}
 li.ex .body{min-width:0;overflow-x:auto;line-height:1.9;font-size:1.04em}
 li.ex .body .fig{margin:.7em 0 0;text-align:left}
 li.ex .body .figure-media{margin:0;max-width:min(100%,22em)}

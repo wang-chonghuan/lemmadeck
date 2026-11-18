@@ -1,0 +1,101 @@
+{
+  "schema": "ld-s10y-image/targeted-repair-diagnostic@1",
+  "workdir": "/Users/yong/.codex/worktrees/a07e/lemmadeck",
+  "command": [
+    "/Users/yong/.local/opt/node-v24.16.0/bin/node",
+    "-e",
+    "const fs=require(\"fs\"),path=require(\"path\"),{chromium}=require(\"./.agents/skills/node_modules/playwright-core\"); (async()=>{const d=\".tmp/s10y-image/batch013-repair121122/fig-122\",startedAt=new Date().toISOString(),browser=await chromium.launch({headless:true,executablePath:chromium.executablePath()});try{const page=await browser.newPage({viewport:{width:1280,height:620}});await page.setContent(fs.readFileSync(`${d}/fig-122.r2.svg`,\"utf8\"));const spec=JSON.parse(fs.readFileSync(`${d}/spec.r2.json`));const observations=await page.evaluate(spec=>{const pad=r=>({x:r.x-4,y:r.y-4,width:r.width+8,height:r.height+8}),overlap=(a,b)=>Math.max(0,Math.min(a.x+a.width,b.x+b.width)-Math.max(a.x,b.x))*Math.max(0,Math.min(a.y+a.height,b.y+b.height)-Math.max(a.y,b.y)),texts=[...document.querySelectorAll(\"text\")].map(n=>({id:n.getAttribute(\"data-label-id\"),at:[n.getAttribute(\"x\"),n.getAttribute(\"y\")],rect:{x:n.getBBox().x,y:n.getBBox().y,width:n.getBBox().width,height:n.getBBox().height}})),b=texts.find(n=>n.id===\"B0-label\"),i=texts.indexOf(b),points=spec.objects.filter(o=>o.type===\"point\"&&o.visible!==false).map(o=>({id:o.id,rect:{x:o.at[0]-8,y:620-o.at[1]-8,width:16,height:16}})),hits=[...texts.slice(0,i).map(t=>({id:t.id,rect:pad(t.rect)})),...points].map(t=>({id:t.id,rect:t.rect,area:overlap(pad(b.rect),t.rect)})).filter(t=>t.area>0);return{offendingLabel:b,paddedLabel:pad(b.rect),hits,affectedLabels:texts.filter(t=>[\"B0-label\",\"C0-label\",\"C1-label\",\"A0-label\"].includes(t.id))};},spec);const receipt={schema:\"ld-s10y-image/targeted-repair-diagnostic@1\",workdir:\"/Users/yong/.codex/worktrees/a07e/lemmadeck\",command:[process.execPath,...process.execArgv],startedAt,finishedAt:new Date().toISOString(),input:path.resolve(`${d}/fig-122.r2.svg`),scope:\"B0 remaining actual footprint failure only; no preview screenshot loaded\",observations,paidCalls:0};fs.writeFileSync(`${d}/diagnose.r2.call.json`,JSON.stringify(receipt,null,2)+\"\\n\",{flag:\"wx\"});console.log(JSON.stringify(observations,null,2));}finally{await browser.close();}})().catch(e=>{console.error(e);process.exit(1);});"
+  ],
+  "startedAt": "2026-11-18T22:06:32.331Z",
+  "finishedAt": "2026-11-18T22:06:32.804Z",
+  "input": "/Users/yong/.codex/worktrees/a07e/lemmadeck/.tmp/s10y-image/batch013-repair121122/fig-122/fig-122.r2.svg",
+  "scope": "B0 remaining actual footprint failure only; no preview screenshot loaded",
+  "observations": {
+    "offendingLabel": {
+      "id": "B0-label",
+      "at": [
+        "649",
+        "435.6"
+      ],
+      "rect": {
+        "x": 649,
+        "y": 413.4125061035156,
+        "width": 32.140625,
+        "height": 42.9365234375
+      }
+    },
+    "paddedLabel": {
+      "x": 645,
+      "y": 409.4125061035156,
+      "width": 40.140625,
+      "height": 50.9365234375
+    },
+    "hits": [
+      {
+        "id": "A0",
+        "rect": {
+          "x": 682,
+          "y": 453.6,
+          "width": 16,
+          "height": 16
+        },
+        "area": 21.196170902252128
+      }
+    ],
+    "affectedLabels": [
+      {
+        "id": "A0-label",
+        "at": [
+          "658",
+          "493.6"
+        ],
+        "rect": {
+          "x": 625.8095703125,
+          "y": 471.4125061035156,
+          "width": 32.1904296875,
+          "height": 42.936492919921875
+        }
+      },
+      {
+        "id": "B0-label",
+        "at": [
+          "649",
+          "435.6"
+        ],
+        "rect": {
+          "x": 649,
+          "y": 413.4125061035156,
+          "width": 32.140625,
+          "height": 42.9365234375
+        }
+      },
+      {
+        "id": "C0-label",
+        "at": [
+          "612",
+          "315.82"
+        ],
+        "rect": {
+          "x": 594.984375,
+          "y": 293.63250732421875,
+          "width": 34.03125,
+          "height": 42.9365234375
+        }
+      },
+      {
+        "id": "C1-label",
+        "at": [
+          "799",
+          "273.64"
+        ],
+        "rect": {
+          "x": 781.984375,
+          "y": 251.4525146484375,
+          "width": 34.03125,
+          "height": 42.62109375
+        }
+      }
+    ]
+  },
+  "paidCalls": 0
+}
