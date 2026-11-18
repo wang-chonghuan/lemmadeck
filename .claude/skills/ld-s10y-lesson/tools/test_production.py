@@ -10,12 +10,16 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+import p2c
 import production
 
 
 FAKE_PREPARE = """
+import hashlib
+import json
 import sys
 from pathlib import Path
+from PIL import Image
 args = sys.argv[1:]
 assert args[0] == "prepare"
 page = int(args[args.index("--page") + 1])
@@ -29,8 +33,25 @@ if page == 2 and not (work / "allow-second").exists():
     sys.exit(7)
 output = work / book / "pages" / f"{page:04d}"
 output.mkdir(parents=True, exist_ok=True)
-for name in ("page.png", "page.grid.png", "layout.json", "page.template.md"):
-    (output / name).write_text(f"prepared {page}: {name}")
+for name in ("page.png", "page.grid.png"):
+    Image.new("RGB", (16, 16), (page, 0, 0)).save(output / name)
+meta = {
+    "schema": "ld-s10y-lesson/page@3", "book": book, "page": page,
+    "source": {
+        "pdf": "source.pdf", "pdf_page": page,
+        "pdf_sha256": hashlib.sha256(
+            (Path(args[args.index("--books") + 1]) / "source.pdf").read_bytes()
+        ).hexdigest(),
+    },
+    "render": {
+        "dpi": 300, "w": 16, "h": 16,
+        "sha256": hashlib.sha256((output / "page.png").read_bytes()).hexdigest(),
+    },
+}
+(output / "layout.json").write_text(json.dumps({
+    "w": 16, "h": 16, "content_width": 16, "line_bands": [],
+}))
+(output / "page.template.md").write_text("---\\n" + json.dumps(meta) + "\\n---\\n")
 """
 
 
@@ -53,7 +74,12 @@ class ProductionTests(unittest.TestCase):
             ".intentfold/project.json": '{"project": "lemmadeck"}',
             ".claude/skills/ld-s10y-lesson/tools/p2c.py": FAKE_PREPARE,
             "ssot-resources/soviet10year-textbooks/sources/manifest.json":
-                '{"catalogs": [{"book": "6p"}], "pdfs": [{"book": "6-7p"}]}',
+                json.dumps({
+                    "pdfRoot": str(root / production.SOURCES),
+                    "catalogs": [{"book": "6p", "sourcePdf": "6-7p"}],
+                    "pdfs": [{"book": "6-7p", "file": "source.pdf"}],
+                }),
+            "ssot-resources/soviet10year-textbooks/sources/source.pdf": "test source bytes",
         }
         for name, content in files.items():
             path = root / name
@@ -186,18 +212,84 @@ class ProductionTests(unittest.TestCase):
 
     def test_complete_outputs_reused_without_running_prepare(self):
         page = self.work / "6p/pages/0001"
-        page.mkdir(parents=True)
-        names = ("page.png", "page.grid.png", "layout.json", "page.template.md")
-        for name in names:
-            (page / name).write_bytes(b"existing bytes")
+        code, _, _ = self.prepare(last=1)
+        self.assertEqual(code, 0)
+        original = {name: (page / name).read_bytes() for name in production.PREPARED_FILES}
+        failure = page / "prepare.0000.stderr"
+        failure.write_bytes(b"historical execution failure")
         (self.repo / ".claude/skills/ld-s10y-lesson/tools/p2c.py").write_text(
             'raise RuntimeError("must not rerun")'
         )
+        template = json.loads(original["page.template.md"].decode().split("---")[1])
+        for field, value in (
+            (("book",), "7p"), (("page",), 2),
+            (("source", "pdf_page"), 2), (("source", "pdf_sha256"), "wrong"),
+            (("render", "sha256"), "wrong"), (("render", "dpi"), 0),
+        ):
+            changed = json.loads(json.dumps(template))
+            target = changed if len(field) == 1 else changed[field[0]]
+            target[field[-1]] = value
+            with self.subTest(field=field):
+                (page / "page.template.md").write_text(
+                    "---\n" + json.dumps(changed) + "\n---\n"
+                )
+                code, result, _ = self.prepare(last=1)
+                self.assertEqual(code, 1)
+                self.assertFalse(result["ok"])
+                (page / "page.template.md").write_bytes(original["page.template.md"])
+        for name, broken in (
+            ("page.png", b"not a PNG"), ("page.grid.png", original["page.grid.png"][:20]),
+            ("page.template.md", b"---\n{broken}\n---"),
+            ("layout.json", b'{"w":16,"h":16}'),
+            ("layout.json", b'{"w":8,"h":16,"content_width":8,"line_bands":[]}'),
+        ):
+            with self.subTest(name=name, broken=broken):
+                (page / name).write_bytes(broken)
+                code, result, _ = self.prepare(last=1)
+                self.assertEqual(code, 1)
+                self.assertFalse(result["ok"])
+                (page / name).write_bytes(original[name])
         code, result, _ = self.prepare(last=1)
         self.assertEqual(code, 0)
         self.assertEqual(result["pages"][0]["status"], "reused")
-        self.assertEqual(sorted(p.name for p in page.iterdir()), sorted(names))
-        self.assertTrue(all(p.read_bytes() == b"existing bytes" for p in page.iterdir()))
+        self.assertEqual(original, {name: (page / name).read_bytes() for name in original})
+        self.assertEqual(failure.read_bytes(), b"historical execution failure")
+
+        for name in production.PREPARED_FILES:
+            (page / name).unlink()
+        (self.repo / production.TOOL).write_text(
+            FAKE_PREPARE + '\n(output / "page.grid.png").write_bytes(b"broken")\n'
+        )
+        code, result, _ = self.prepare(last=1)
+        self.assertEqual(code, 1)
+        self.assertEqual(result["pages"][0]["returncode"], 0)
+        self.assertEqual(result["pages"][0]["status"], "failed")
+
+    def test_p2c_redirected_page_directories_rejected_before_any_write(self):
+        with tempfile.TemporaryDirectory(dir=self.repo.parent) as directory:
+            outside = Path(directory).resolve()
+            for command in ("prepare", "finalize"):
+                for root in (self.repo / production.ARTIFACTS, self.work):
+                    with self.subTest(command=command, root=root):
+                        book = root / "6p"
+                        book.mkdir(parents=True, exist_ok=True)
+                        link = book / "pages"
+                        link.symlink_to(outside, target_is_directory=True)
+                        args = [
+                            "p2c.py", command, "--book", "6p", "--page", "1",
+                            "--root", str(self.repo / production.ARTIFACTS),
+                            "--books", str(self.repo / production.SOURCES),
+                            "--work", str(self.work),
+                        ]
+                        with self.cwd(self.repo), patch.object(sys, "argv", args), patch.object(
+                            p2c, "REPO", self.repo
+                        ), patch.object(
+                            p2c, "_find_pdf", side_effect=AssertionError("must reject first")
+                        ), self.assertRaisesRegex(ValueError, "redirects its owner"):
+                            p2c.main()
+                        self.assertEqual(list(outside.iterdir()), [])
+                        self.assertFalse((book / "pages/0001").exists())
+                        link.unlink()
 
     def test_partial_outputs_are_not_reused(self):
         page = self.work / "6p/pages/0001"
@@ -267,6 +359,18 @@ class ProductionTests(unittest.TestCase):
         ):
             with self.subTest(text=text), self.assertRaises(ValueError):
                 production.read_json_documents(text)
+
+    def test_malformed_arrays_are_not_swallowed_as_log_labels(self):
+        for malformed in ("[1 2]", "[true false]", "[null null]", "[. 2]", "[- 2]"):
+            with self.subTest(malformed=malformed), self.assertRaisesRegex(ValueError, "malformed JSON"):
+                production.read_json_documents('{"ok":true}\n' + malformed + "\n")
+        self.assertEqual(
+            production.read_json_documents(
+                '[prepare-range] 6p p0001: reused\n[p2c] reading\n'
+                '{"page":1}\n[prepare] done\n[1, 2]\n'
+            ),
+            [{"page": 1}, [1, 2]],
+        )
 
     def test_read_saved_stdout_without_rerunning_command(self):
         saved = self.repo / "saved.stdout"

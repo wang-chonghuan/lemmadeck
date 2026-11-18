@@ -82,17 +82,49 @@ def read_json_documents(text: str) -> list:
             # Bracketed log labels are not incomplete JSON arrays.
             line = text[position:next_line]
             label, closing, _ = line[1:].partition("]")
-            if line.startswith("[") and closing and label and all(
+            if line.startswith("[") and closing and label.lstrip() and label.lstrip()[0].isalpha() and all(
                 c.isalnum() or c in "-_ .:" for c in label
             ):
-                position = next_line
-                continue
+                try:
+                    decoder.raw_decode(label.lstrip())
+                except json.JSONDecodeError:
+                    position = next_line
+                    continue
             raise ValueError(f"incomplete or malformed JSON at offset {position}: {error}") from error
         documents.append(document)
         position = end
     if not documents:
         raise ValueError("no complete JSON documents found")
     return documents
+
+
+def validate_prepared_page(page_dir: Path, book: str, page: int, source: dict) -> None:
+    import blocks as B
+    from layout import sha256_file
+    from PIL import Image
+
+    meta, _ = B.parse((page_dir / "page.template.md").read_text(encoding="utf-8"))
+    if not isinstance(meta, dict) or (
+        meta.get("schema") != "ld-s10y-lesson/page@3"
+        or meta.get("book") != book or meta.get("page") != page
+        or meta.get("source") != {**source, "pdf_page": page}
+    ):
+        raise ValueError(f"prepared page identity or source mismatch: {page_dir}")
+    render = meta.get("render")
+    dimensions = json.loads((page_dir / "layout.json").read_text(encoding="utf-8"))
+    if not isinstance(render, dict) or not isinstance(dimensions, dict) or (
+        not isinstance(render.get("dpi"), int) or render["dpi"] <= 0
+        or (dimensions.get("w"), dimensions.get("h")) != (render.get("w"), render.get("h"))
+        or not isinstance(dimensions.get("line_bands"), list)
+        or not isinstance(dimensions.get("content_width"), int)
+        or render.get("sha256") != sha256_file(page_dir / "page.png")
+    ):
+        raise ValueError(f"prepared page render or layout mismatch: {page_dir}")
+    for name in ("page.png", "page.grid.png"):
+        with Image.open(page_dir / name) as image:
+            if image.format != "PNG" or image.size != (render["w"], render["h"]):
+                raise ValueError(f"prepared image dimensions mismatch: {page_dir / name}")
+            image.verify()
 
 
 def prepare_range(repo: str | Path, book: str, first: int, last: int, work: str | Path) -> dict:
@@ -103,6 +135,10 @@ def prepare_range(repo: str | Path, book: str, first: int, last: int, work: str 
     work = Path(work).expanduser().resolve()
     if not work.is_relative_to(repo):
         raise ValueError(f"work must be inside the validated repository: {repo}")
+    from layout import sha256_file
+    from p2c import _find_pdf
+    pdf = _find_pdf(argparse.Namespace(book=book, books=repo / SOURCES))
+    source = {"pdf": pdf.name, "pdf_sha256": sha256_file(pdf)}
     result = {"ok": True, "book": book, "pages": []}
     for page in range(first, last + 1):
         page_dir = work / book / "pages" / f"{page:04d}"
@@ -110,6 +146,7 @@ def prepare_range(repo: str | Path, book: str, first: int, last: int, work: str 
         entry = {"page": page, "work": str(page_dir)}
         if all((page_dir / name).is_file() and (page_dir / name).stat().st_size
                for name in PREPARED_FILES):
+            validate_prepared_page(page_dir, book, page, source)
             entry["status"] = "reused"
             result["pages"].append(entry)
             print(f"[prepare-range] {book} p{page:04d}: reused", file=sys.stderr)
@@ -138,6 +175,11 @@ def prepare_range(repo: str | Path, book: str, first: int, last: int, work: str 
                 entry.update(returncode=None, error=str(error))
                 errors.write((str(error) + "\n").encode("utf-8"))
         entry["status"] = "prepared" if entry["returncode"] == 0 else "failed"
+        if entry["status"] == "prepared":
+            try:
+                validate_prepared_page(page_dir, book, page, source)
+            except (OSError, ValueError) as error:
+                entry.update(status="failed", error=str(error))
         result["pages"].append(entry)
         print(f"[prepare-range] {book} p{page:04d}: {entry['status']} ({stderr})",
               file=sys.stderr)

@@ -596,6 +596,9 @@ def main() -> int:
     validate_book(REPO, a.book)
     for root in (Path(a.root) / a.book, Path(a.work) / a.book):
         validate_output_owner(REPO, root)
+    if getattr(a, "page", None) is not None:
+        for page_dir in (_page_dir(a, a.page), _work_page_dir(a, a.page)):
+            validate_output_owner(REPO, page_dir)
     for lesson in getattr(a, "lesson", None) or []:
         validate_lesson_owner(_book_dir(a), lesson)
     return a.fn(a)
