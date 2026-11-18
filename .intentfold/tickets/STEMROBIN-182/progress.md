@@ -1,5 +1,71 @@
 # 当前开发状态
 
+### batch304 n42有限FAIL同字节留存，尾包准备窄交付
+
+- fresh实际01a1ec27-242f-7c70-a526-3b77564a452f已completed/process exit0，
+  report rawSHA2892a0e6292b2ccae80e371af0034636b135ad92a1436a0019f97c8bf742ab8d
+  匹配。两PNG各一次2/8fresh2/24，桌面可见PASS、手机Q1-B与Q2-A/B/C
+  右端裁切FAIL；原DOM归父方，不覆盖真实像素FAIL或证明用户手势可达。
+- 原HTML/两PNG/显示报告同字节持久留存，当前17题53项只有未变数学及
+  selection-impact PASS；unresolved_visible_failure:true、current approval:false、
+  broader/display_pending:true和全部原759/760/770/772/旧blocked/revise/exit3/
+  生产/未见/交互/APP/全课/881 HOLD保持，不修稳定renderer或重看图。
+- 自37c80e2f2以来留存13选定包303题1106项，26首次DOM组合实际exit0，
+  有限像素20PASS/4FAIL/2HOLD；前三批已真实push，当前尾包尚未提交。
+  批准82包1394题5659项648不增，11个有限助手均实际完成退出；
+  父0新图/累计24，无SOURCE/trace/数学/图审/旧check重跑或全项目handoff。
+- 窄提交仅n42 choice-set与现有progress/usage，未完成4m、layout/测试及
+  监督ticket保留工作树；不是整组完成或正式handoff。
+
+### batch304 n42两首屏冻结，有限像素观察在途
+
+- 303当前seed/draft/review同字节持久留存，n42仅首次choices render一次
+  exit0；1440/390首DOM两组合实际exit0，两个PNG/一个HTML冻结。
+  receipt rawSHAe584b1fb8fad1d004af8df5feb3ce3de8e903436e13bdc702eeca969bdbabab7。
+- fresh实际observer01a1ec27-242f-7c70-a526-3b77564a452f/session49519
+  仅两PNG各一次、HTML hash-only，唯一当前first-display-review；
+  正式回执前不提升显示或批准，不用DOM替代像素/手势证据。
+- 16源17题53项仅原数学与新选择依赖PASS；759/760/770的四泄漏修订、
+  772源码参照和旧blocked/exit3/生产/未见/APP/全课/881保留。
+  父0新图/累计24，82包1394题5659项648不增，不复看前24窗口。
+
+### batch303 n42限定选择PASS，304只补首次choices显示
+
+- fresh实际01a1ec1e-88d8-7150-acce-eb866f3a5a95已completed/process exit0；
+  final review rawSHA7784ed1665c9f86fe88752d778031f4fa258c3a350ef61e65c85ec5a2311a5f7
+  与正式回执匹配。check_draft/check_review各真实一次exit0，
+  dict/dict/dict_keys按实际签名；final bytes等于checked bytes，不重跑。
+- 16源17题53项只selection-impact PASS，33个source/question对象、
+  53项原数学和0个原图审对象完整继承；当前审者与旧审身份分别记录。
+  移除759/760/770四泄漏修订及772参照SOURCE HOLD未解决；原20源22题
+  68项blocked/revise/exit3和未测生产/APP/全课/881全部原样保留。
+- 接续只留存同字节选定seed/draft/review及首次choices render/两首屏，
+  真实显示回执前approval:false/display_pending:true。父0新图/累计24，
+  批准82包1394题5659项648不增，不扩大任何既有显示或数学批准范围。
+
+### batch303 n42未变尾包的选择影响在途
+
+- 在第三批真实push后，仅全排759/760/770的四泄漏单元及772参照HOLD，
+  当前16源17题53项与原真实PASS对象完整等值；可逆重建20源22题68项
+  旧seed/draft，旧blocked/revise/exit3及五个移除题原字节保留。
+- 当前入口rawSHA66b275edbed27e8dff5e7b58f183f3e27d7f0d8db0d6dbcd1c89cb029dccf6d8，
+  fresh ephemeral实际ID01a1ec1e-88d8-7150-acce-eb866f3a5a95/session43703
+  仅零图完整diff与新选择依赖审查，唯一标准review；尚在途不当PASS。
+  原数学/图审/身份仅精确继承，不重解或修改旧稿，不解除任何原任务HOLD。
+- 现有三个留存/首显helper仅增加303/304尾包参数，语法检查各一次exit0；
+  尚未运行304 render/DOM/像素观察。父0新图/累计24、approval:false、
+  display_pending:true及82包1394题5659项648组合保持。
+
+### batch302第三个窄push已确认
+
+- 7761942b00ceea26e08e09bd9ee5c1bf9d39bc32已真实commit/push，远端同SHA；
+  54文件仅四选定包173题613项及现有progress/usage，从065dfbdaf推进。
+  暂存空白/允许路径/环境文件检查通过，未纳入layout、测试、监督ticket
+  或其余4m资源。实际push回执在此补记，不制造文档专用追加commit。
+- 三次窄push共12选定包286题1053项及原24窗口19PASS/3FAIL/2HOLD，
+  不是12完整课程。批准82包1394题5659项648不增，旧SOURCE/显示/
+  书写构造/交互/APP/全课/881边界保留；继续缺失阶段，不作最终handoff。
+
 ### batch302有限观察完成，第三个窄批次准备交付
 
 - 302 fresh实际observer 01a1ec10-c30b-7f43-9366-7e10e6001cf2已真实
