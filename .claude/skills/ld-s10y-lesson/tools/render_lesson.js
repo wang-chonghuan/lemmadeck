@@ -214,7 +214,8 @@ li.ex .body .fig[data-figure-layout="scroll"] .figure-media{
 `;
 
 function page(title, crumb, bodyHtml) {
-  return `<!DOCTYPE html><meta charset="utf-8"><title>${esc(title)}</title>
+  const tabTitle = title.replace(/\*\*([^*]+)\*\*/g, "$1");
+  return `<!DOCTYPE html><meta charset="utf-8"><title>${esc(tabTitle)}</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>${CSS}</style><div class="sheet"><h1>${inline(title)}</h1>
 <div class="crumb">${esc(crumb)}</div>${bodyHtml}</div>`;
