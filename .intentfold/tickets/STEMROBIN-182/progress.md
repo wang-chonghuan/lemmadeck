@@ -1,7 +1,32 @@
 # 当前开发状态
 
+### resume182-5 七页修订源阶段已保留，下一批回传恢复
+
+- 182–188 FIRST独立源审2 PASS、5 REVISE，八处缺陷仅四处标点与四处卡片/习题栏类型。
+  原21文件先冻结，只修F1–F8及184一条误述类型的notes。
+  182/184/186/187/188各一次affected finalize均exit0；183/185不重跑。
+  Einstein零图增量绑定PASS，原报告rawSHA54b2e4b...，
+  affected报告rawSHA740e34d4e11f0eec63b54f72d14d1c3c425021df3d678b9baf2d832a75be2e08。
+  当前可见源文/归属有限PASS，188题658右界仍HOLD；原数学字符、印刷错误、
+  七audit、errata=[]与fig37几何不改。27份原/新证据及manifest同字节保留，
+  fig37原工具裁图仅存证据，不是主动图稿或现代图批准。
+- 189–195作者已产出21份页文件，但stream在正式回传前断开。
+  同一作者只恢复报告，不再看图/写源/prepare/finalize。
+  原21候选在恢复期冻结；194当前audit16/15计行FAIL保留，
+  其他audit无errors，未以audit推断缺失的真实command exit。
+  fresh源审Sartre对189–195在途，只七grid各一次，不重开188。
+  独立源审未返回前不计完成课，不解除补充习题整体HOLD。
+- n28只包含179起至184“第三章补充习题”标题前已闭合对象；
+  184–194是alg7-c3-ex，195是n29开头。下一阶段仅装订n28，
+  不借194计行失败扩大为其阻塞，也不提前装订补充习题。
+  196–202仅FIRST备料完成，尚未作者派工；无APP/DB/publisher/deploy/closure。
+
 ### resume182-4 答案与源阶段有限收口，后续生产继续
 
+- 实际69文件窄提交推送eceb3cc08e0ab026e23f0b88a2d21eb963ce0ed8，
+  远端完整SHA独立核对一致；staged白名单、JSON、secret路径及diff --check exit0。
+  原layout/测试、其他4m和旧7a草稿未暂存。此push回执仅补本地，
+  随下一个实际内容批次提交，不做文档专用commit。
 - 4m n1 新增13条只读标准答案，独立文本13/13 PASS；一次 finalize exit0，
   auto=0、ungraded=13、parts=[]。原稿到ready仅status/count改变。
   原桌面等式链横溢出失败保留；预览仅增加等号后的零宽wbr，移除wbr与原HTML同字节。
@@ -18,6 +43,12 @@
 - 182–188 作者七网格各一次，FIRST finalize七次exit0、169/169行；
   作者证据已消费，但仍待fresh独立源审，不算新完整课。
   189–195已备料，独立作者继续FIRST转写；195为n29边界，不是n29完成。
+- 完整TOC澄清：n28在printed173/physical179开始；下一卡不是n29，
+  而是alg7-c3-ex“第三章补充习题”printed178/physical184。
+  184–194属于补充习题卡，195才开始n29。此前接续摘要把179–194全归n28的判断撤回；
+  当前184/186/187栏标题的h3/exhead归属待一次源审处理，不提前装订。
+  后续196–202首次prepare以196–199、200–202两合法范围各一次exit0完成，
+  七页备料均exit0，不冒充转写或完整课。
 - 继续只在d9b1/182分支；无DB/publisher/deploy/其他组merge/E启动或closure。
   正式机械防线留最终handoff一次；仍87选定包/1506题/6184项/666原关联组合。
   父本真实上下文0新图，前上下文3图记录不重置，未知token/费用/活跃耗时不估算。
