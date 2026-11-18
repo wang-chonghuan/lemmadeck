@@ -8,6 +8,10 @@ description: Load when creating, repairing, reviewing, or migrating figures for 
 Create modern textbook figures without asking an image model to preserve exact
 mathematics.
 
+For batch continuation and execution faults, follow the lesson pipeline's
+[technical recovery contract](../../../.claude/skills/ld-s10y-lesson/references/production-resume.md).
+A tool retry does not reset paid/image usage or approve a failed figure.
+
 ## Ownership
 
 This skill owns the complete modern-edition figure workflow:

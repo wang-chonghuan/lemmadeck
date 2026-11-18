@@ -10,6 +10,7 @@ import json
 import re
 import subprocess
 import sys
+import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -72,10 +73,17 @@ def load(path: Path) -> dict:
 
 def dump(path: Path, value: object) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(value, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
+    # Replace a working output; never unlock or mutate a retained 0444 snapshot.
+    with tempfile.NamedTemporaryFile(
+        mode="w", encoding="utf-8", dir=path.parent, delete=False,
+    ) as handle:
+        handle.write(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+        temporary = Path(handle.name)
+    try:
+        temporary.chmod(0o644)
+        temporary.replace(path)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def sha256(path: Path) -> str:
@@ -2026,6 +2034,17 @@ def main() -> int:
     common(finalize)
     finalize.set_defaults(handler=cmd_finalize)
     args = parser.parse_args()
+    from production import validate_book, validate_lesson_owner, validate_output_owner, validate_workspace
+    repo = Path(__file__).resolve().parents[4]
+    validate_workspace(repo)
+    validate_book(repo, args.book)
+    if Path(args.edition).name != args.edition or args.edition in {".", ".."}:
+        parser.error("edition must be one directory name")
+    for root in (edition_dir(args), work_edition_dir(args)):
+        validate_output_owner(repo, root)
+        for lesson in selected_lessons(args):
+            validate_lesson_owner(source_dir(args), lesson)
+            validate_output_owner(repo, root / "lessons" / lesson)
     return args.handler(args)
 
 
