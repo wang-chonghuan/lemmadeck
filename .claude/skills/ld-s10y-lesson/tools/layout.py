@@ -185,7 +185,7 @@ def _fraction_across_split(
     for rows, columns in boxes:
         centre = a + (rows.start + rows.stop) / 2
         if not (
-            rows.stop - rows.start <= 0.2 * glyph_h
+            rows.stop - rows.start <= 0.25 * glyph_h
             and columns.stop - columns.start >= 2 * glyph_h
             and abs(centre - split) <= 0.5 * glyph_h
         ):
@@ -215,6 +215,39 @@ def _fraction_across_split(
         ):
             return False
     return _single_fraction_row(ink, a, b, glyph_h)
+
+
+def _offset_system_label_band(
+    ink: np.ndarray, a: int, b: int, glyph_h: float, bounds_list: list
+) -> bool:
+    braces = [
+        (rows, columns)
+        for bounds in bounds_list if bounds is not None
+        for rows, columns in [bounds]
+        if rows.start < a <= b < rows.stop
+        and rows.stop - rows.start > 2 * glyph_h
+        and columns.stop - columns.start < 0.6 * glyph_h
+    ]
+    if not braces:
+        return False
+    band = ink[a:b + 1].copy()
+    for _, columns in braces:
+        band[:, columns] = False
+    labels, _ = ndimage.label(band)
+    glyphs = [
+        bounds
+        for bounds in ndimage.find_objects(labels) if bounds is not None
+        if bounds[0].stop - bounds[0].start >= 0.6 * glyph_h
+        and bounds[1].stop - bounds[1].start >= 0.2 * glyph_h
+    ]
+    return bool(glyphs) and all(
+        any(
+            brace_columns.start - 2 * glyph_h <= columns.start
+            and columns.stop <= brace_columns.start
+            for _, brace_columns in braces
+        )
+        for _, columns in glyphs
+    )
 
 
 def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
@@ -551,6 +584,8 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     out = []
     page_h = ink.shape[0]
     for a, b in merged:
+        if _offset_system_label_band(ink, a, b, glyph_h, bounds_list):
+            continue
         xs = np.flatnonzero(ink[a:b + 1].any(axis=0))
         band_h = b - a + 1
         band_w = int(xs[-1] - xs[0] + 1)

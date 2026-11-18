@@ -1,0 +1,23 @@
+{
+  "cwd": "/Users/yong/.codex/worktrees/d9b1/lemmadeck",
+  "command": [
+    "node",
+    "-e",
+    "const fs=require(\"node:fs\"),c=require(\"node:crypto\"),a=require(\"node:assert/strict\"); const b=\".intentfold/tickets/STEMROBIN-182/tmp/resume182-8\",s=b+\"/n31-choice\",r=\"ssot-resources/soviet10year-textbooks/artifacts/7a\",m=r+\"/editions/modern-us-neutral/lessons/alg7-c4-s1-n31\",raw=r+\"/lessons/alg7-c4-s1-n31\",h=p=>c.createHash(\"sha256\").update(fs.readFileSync(p)).digest(\"hex\"),j=p=>JSON.parse(fs.readFileSync(p,\"utf8\")); const seed=j(s+\"/seed.json\"),draft=j(s+\"/draft.json\"),keys=j(m+\"/answer-keys.json\"); for(const row of j(b+\"/n31-source-stage/source-stage-receipt.json\").outputs)a.equal(h(row.path),row.sha256); for(const row of seed.trace.filter(x=>x.path.startsWith(m+\"/\")))a.equal(h(row.path),row.sha256); a.equal(draft.questions.length,9); a.equal(keys.answers.length,7); a.deepEqual(keys.answers.map(x=>x.exercise),seed.exercises.map(x=>x.number)); a.equal(seed.figures.length,0); a.equal(draft.new_figures.length,0); for(const p of [m+\"/answer-keys.json\",m+\"/answer-keys.audit.json\"])a.equal(fs.statSync(p).mode&0o777,0o444); const files=[s+\"/seed.json\",s+\"/draft.json\",s+\"/source-solutions.md\",m+\"/lesson.json\",m+\"/exercises.json\",m+\"/figures.json\",m+\"/audit.json\",m+\"/answer-keys.json\",m+\"/answer-keys.audit.json\",raw+\"/lesson.json\",raw+\"/lesson.md\",raw+\"/exercises.json\"]; const labels=[\"n31-prose-flow-FIRST\",\"n31-modern-finalize-FIRST\",\"n31-choice-inspect-FIRST\",\"n31-choice-prepare-FIRST\",\"n31-choice-structural-FIRST\",\"n31-answer-prepare-FIRST\",\"n31-answer-finalize-FIRST\",\"n31-answer-readonly-FIRST\"]; const stages=labels.map(label=>{const p=b+\"/stages/\"+label+\".receipt.json\",receipt=j(p); a.equal(receipt.exit,0); for(const x of receipt.streams)a.equal(h(x.path),x.sha256); return {label,path:p,sha256:h(p),exit:receipt.exit}}); console.log(JSON.stringify({files:files.map(path=>({path,sha256:h(path)})),stages,rawUnchanged:true,modernInputsUnchangedSinceSeed:true,answersReadonly:true,answerCount:7,auto:keys.answers.filter(x=>x.grading===\"auto\").length,ungraded:keys.answers.filter(x=>x.grading===\"ungraded\").length,questionCount:9,figureCount:0},null,2));"
+  ],
+  "startedAt": "2026-11-18T22:36:15.604Z",
+  "finishedAt": "2026-11-18T22:36:15.659Z",
+  "exit": 1,
+  "signal": null,
+  "error": null,
+  "streams": [
+    {
+      "path": ".intentfold/tickets/STEMROBIN-182/tmp/resume182-8/stages/n31-author-bindings-FIRST.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": ".intentfold/tickets/STEMROBIN-182/tmp/resume182-8/stages/n31-author-bindings-FIRST.stderr",
+      "sha256": "f10fec9e4ca709fe3c07a329c996bf42ad3a149f5002b705fa7353f58f1c63c2"
+    }
+  ]
+}
