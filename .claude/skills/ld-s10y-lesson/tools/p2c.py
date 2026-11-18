@@ -539,6 +539,43 @@ def cmd_assemble(a) -> int:
                         exercise_numbering=catalog.get("exerciseNumbering", "book"))
 
 
+def cmd_reindex(a) -> int:
+    """Index retained source lessons without rebuilding their approved bytes."""
+    book = _book_dir(a)
+    rows = []
+    for directory in sorted((book / "lessons").iterdir()):
+        if not directory.is_dir():
+            continue
+        lesson = json.loads((directory / "lesson.json").read_text(encoding="utf-8"))
+        exercises = json.loads((directory / "exercises.json").read_text(encoding="utf-8"))
+        if lesson["id"] != directory.name or exercises["lesson"] != directory.name:
+            raise SystemExit(f"ERROR: retained lesson identity mismatch: {directory}")
+        rows.append({
+            "id": lesson["id"], "card_id": lesson.get("card_id"),
+            "title": lesson["title"], "number": lesson["number"],
+            "start_printed": lesson["start_printed"],
+            "prose_blocks": len(lesson["prose"]),
+            "exercises": len(exercises["exercises"]),
+            "figures": len(lesson["figures"]),
+        })
+    if not rows:
+        raise SystemExit("ERROR: no retained source lessons to index")
+    toc = json.loads(Path(a.toc).read_text(encoding="utf-8"))
+    import assemble
+    order = {card["id"]: index for index, card in enumerate(assemble._toc_cards(toc))}
+    if any(row["id"] not in order for row in rows):
+        raise SystemExit("ERROR: retained lesson is absent from TOC")
+    rows.sort(key=lambda row: order[row["id"]])
+    _dump(book / "book.json", {
+        "book": a.book, "pages": len(list((book / "pages").glob("*/page.json"))),
+        "exercise_numbering": _catalog_config(a).get("exerciseNumbering", "book"),
+        "lessons": rows,
+        "audit": {"warnings": ["Index rebuilt from retained source snapshots; no new source approval."]},
+    })
+    print(f"[reindex] {a.book}: {len(rows)} retained lessons")
+    return 0
+
+
 # ---------------------------------------------------------------- cap3 矢量化
 def cmd_vectorize(a) -> int:
     import vectorize as V
@@ -641,6 +678,11 @@ def main() -> int:
     p.add_argument("--lenient", action="store_true", help="对账不通过也写出产物")
     p.set_defaults(fn=cmd_assemble)
 
+    p = sub.add_parser("reindex", help="从已保留原课重建索引，不重写课件")
+    common(p, page=False)
+    p.add_argument("--toc", required=True)
+    p.set_defaults(fn=cmd_reindex)
+
     p = sub.add_parser("vectorize", help="插图 PNG → SVG（描摹 + 保真自检）")
     common(p, page=False); p.add_argument("--page", type=int, default=None)
     p.add_argument("--turdsize", type=int, default=2); p.set_defaults(fn=cmd_vectorize)
@@ -672,6 +714,16 @@ def main() -> int:
     p.set_defaults(fn=cmd_publish)
 
     a = ap.parse_args()
+    from production import validate_book, validate_lesson_owner, validate_output_owner, validate_workspace
+    validate_workspace(REPO)
+    validate_book(REPO, a.book)
+    for root in (Path(a.root) / a.book, Path(a.work) / a.book):
+        validate_output_owner(REPO, root)
+    if getattr(a, "page", None) is not None:
+        for page_dir in (_page_dir(a, a.page), _work_page_dir(a, a.page)):
+            validate_output_owner(REPO, page_dir)
+    for lesson in getattr(a, "lesson", None) or []:
+        validate_lesson_owner(_book_dir(a), lesson)
     return a.fn(a)
 
 

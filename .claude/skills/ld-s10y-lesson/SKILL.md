@@ -14,6 +14,10 @@ description: 按书名、章、节、连续编号单元、无编号补充习题�
 [图片批次规则](../../../.agents/skills/ld-s10y-image/SKILL.md#image-batches)；
 本流程及其子代理共用该规则，完成一批并返回文字结果后再处理新批次。
 
+批量生产、接续检查点或处理执行故障时，先读
+[小批次与技术恢复](references/production-resume.md)。
+调用方的暂停及离线授权优先于下文的默认发布流程。
+
 ## 用户入口与术语
 
 - **卡片**是最小可发布内容项：有编号 `topics[]` 时父节只作结构；`topics[]` 全部无编号时，
@@ -38,6 +42,7 @@ description: 按书名、章、节、连续编号单元、无编号补充习题�
 直到产品中实际可见，不要停在中间：
 
 ```bash
+set -e
 P=.claude/skills/ld-s10y-lesson/.venv/bin/python
 S=.claude/skills/ld-s10y-lesson/tools/p2c.py
 
@@ -389,7 +394,7 @@ p2c.py adapt-finalize --book 5m --edition modern-us-neutral \
    历史人物须保持可识别身份，但生成肖像必须明确是现代教材插画，不能冒充史料照片。
 7. 先按 [现代图生成流程](references/figure-generation.md) 完成 FigureSpec、数学断言、
    渲染碰撞与产品宽度字号检测，并写独立、哈希绑定的 `review@1` 目视验收证据；
-   任一不符时最多针对缺陷修复一次。
+   内容不符时最多针对缺陷修复一次；目录、权限等执行故障按技术恢复处理，不算内容批准。
 8. `adapt-finalize` 校验原始快照、数学、FigureSpec、渲染或生成元数据；失败不能发布。
 
 原始层 cap3 的 potrace 只用于保存教材抽取事实；现代 edition 的图必须重新创作，两者用途不同。
@@ -466,8 +471,9 @@ SHA；完整原始快照不入库。重发同一 edition 的课文或图片时�
 
 ### 已审查选择题接入
 
-`ld-s10y-choice` 保持离线。将其已通过结构与语义审查的种子、题稿、审查报告分别保存为
-目标现代课程 `choice-set/{seed,draft,review}.json` 后，使用本发布入口：
+`ld-s10y-choice` 保持离线。使用 `tools/retain_choices.py`，显式指定仓库、书册、课程
+及已批准目录，将种子、题稿、审查报告保留到目标现代课程
+`choice-set/{seed,draft,review}.json` 后，在调用方授权发布时使用本发布入口：
 
 ```bash
 node .claude/skills/ld-s10y-lesson/tools/publish.mjs \
