@@ -1,5 +1,144 @@
 # 当前开发状态
 
+### batch322首次cap1真实FAIL留存，全部有限进程已结束
+
+- 322实际01a1eccf-ca8a-7160-9131-c6e5fc2fdfab真实completed/process exit0；
+  原fig13 PNG一次1/8fresh1/24，唯一FIRST draft检查exit2，12条真实缺失/
+  不可见映射错误。原spec rawSHA
+  46d68b44692525540208fb044edd6ed9df0bfaae5e01af024deb2d134049b028。
+  18×12格、两V形/位移的已有像素事实留存，上方字形/轴端箭头及两辅助标记
+  真实SOURCE HOLD；hidden anchors/inventory可见性冲突未被假标点绕过。
+- 四个spec/context/request/文字回执同字节留存到fig13/evidence/cap1-HOLD，
+  不render、不重复draft或读图，不新写现代课/index，不信用整题/课程完成。
+  本轮319/321/322/323所有有限CLI进程均实际退出，不复活旧图上下文。
+- 当前六图范围仅n5既有首图PASS与n6新增实际640静态PASS，路径绑定不扩大
+  源精度/数学/最终显示。所有原FAIL/源边界、320绑定门槛、全课/APP/881仍保留。
+  83包1408题5743项654组合保持，父0新图/累计24。
+
+### batch323三项持久绑定完成，324图资料窄留存
+
+- 323实际01a1ecd1-97bd-7d00-8c94-23958c5a6d55真实completed/process exit0，
+  完整旧新JSON只有description context与render三依赖path/hash不同，
+  36复制对同字节；三标准gate各一次exit0，当前fig09/11/12 review rawSHA分别
+  cdf227836f3e40b0f18eedcfa7de495ec69ce58c270bf3a107d297b463ff6a33、
+  3112f0c459f4b464a2c78988c1550fee17abdd6213795c9483fd925f7de90a31、
+  1de08848358d61657796197da8c82c8e715fb08a80e94c474a2479aa04061650。
+  零图/零新数学/零重render，321实际640与318 source/native真实ID/hash/
+  全notes继承，旧三FAIL/曲线限制和display_pending:true保持。
+- 324仅38个原字节留存复制：六项绑定文字/请求、fig14/16真实FAIL全部候选、
+  fig06/07/10/15 cap1 HOLD原稿/context/回执；原FAIL不覆盖或当新批准图。
+  receipt rawSHAd1b38e6b2762f3f1465434ea02681377dd0331d96e429992343a666ccf971d3f。
+  图库六个当前产物没有新增lesson引用/finalize/选择题完成信用；
+  322 fig13原定首次cap1真实FAIL回执及四个原文件留存如上，未批准或render。
+- 原分支远端fetch同步仍04985887a，窄提交只限8a这些图资料与既有progress/usage，
+  不纳入layout/其测试/监督ticket/4m或任何APP/技能/Charter/DB修改。
+  父0新图/累计24；83包1408题5743项654组合保持，非整课/整组完成。
+
+### batch321三项实际640有限PASS与零图接续记录
+
+- 321实际01a1eccc-a33e-7e43-abfb-6e1da8ed242f真实completed/process exit0；
+  三新增整640PNG各一次3/8fresh3/24，三标准gate各一次exit0/实际PASS。
+  fig09/11/12当前gate rawSHA分别
+  eea6d84469a74fa9bf3086a1b29e13a1f9d5609c01de0dfbaa52759918ba6cc1、
+  3e7ee74b14907faa8908ccfc47787d649dde30abf9e892d1e1005c862dbbf6ce、
+  89d04504412f19da5086d2f92c9fd8dac12a95b4f5e6c177fcdf641c0ec87e79。
+  仅正常宽度静态可读性/关联/边界，318真实source/native事实按ID/hash继承；
+  曲线faceting与精确中心线/终点/亚像素相切未认证，旧三FAIL原字节保留。
+- 首补拍字段错误exit1时HTML/PNG写入0；仅纠正实际context.sha256字段，
+  三首次640截图成功640×1087/640×1183/640×465，原spec/render/SVG/
+  nativePNG/context完全不变，cap2/首规范/SOURCE/数学/旧图重跑0。
+- 323实际fresh01a1ecd1-97bd-7d00-8c94-23958c5a6d55/session58674仅零图
+  完整字节/路径绑定与三指定持久标准gate；真实完成回执如上，原两级身份/
+  范围/FAIL保留，不把过程中的部分review当completed。
+- 322实际fresh01a1eccf-ca8a-7160-9131-c6e5fc2fdfab/session76568仅尚缺fig13
+  原PNG一次与一个draft/首次draft gate。三现成章末模板同字节context投影，
+  首context exit0，未重SOURCE/trace/作者数学/prepare，不预设render或PASS。
+- fig14文档要求source-screen路径但现renderer再次scale32；不改renderer、
+  不把补偿坐标伪装成合同修复，原图FAIL及尚未使用的单次修复保留。
+  fig16一次修复已用尽不第三render；320现成题绑定仍不绕过真实finalize门槛。
+- 83包1408题5743项654组合不增，父0新图/累计24，未见/独立作图/
+  真实交互/APP/全课/881及全部原SOURCE边界不升批准。
+
+### batch318已收口，319三项持久绑定通过
+
+- 319实际01a1ecc3-be86-7313-9c0c-b0c67ff8968b真实completed/process exit0，
+  三标准record_review各一次exit0，当前表27/表28/fig08持久gate rawSHA分别
+  a2d796f704412bb794e71320c3448b75a0b4e7ec6d81de2e44e1065fde76ec6c、
+  baf27385de232bc24c2b1b29ef7b32a911ba4754f542ff1fe03a6fa4c2d78ae6、
+  af2244ca22c96ed9655b47c334b6be59eead1eccec8d1856ac5c56238c5006e2。
+  完整spec仅description context路径，render仅spec.path/hash/output.svg.path；
+  source/context/SVG/preview及16旧产物同字节，继承真实318 n5身份/范围。
+  原只读字段处理exit1与更正后exit0保留，0新图/0重数学/渲染/图审。
+- 318三个有限首审均真实completed/process exit0，八标准gate各一次exit0，
+  实际3PASS/5FAIL；写FAIL的exit0不等于批准。n5三PASS直接复用；
+  n6三FAIL仅缺真实640可见证据，原source/native观察与中心线/终点限制保留。
+  fig14椭圆缺失/隐形锚点显示/标签遮挡，fig16锚点显示/标签遮挡是真实FAIL，
+  fig16一次修复已用完，不第三render，不改renderer制造通过。
+- render_spec的PNG是原canvas：n6旧预览实际516×876、472×872、1845×1340，
+  n7/n8为1280×520、1280×960；文件名不证明640宽。旧PNG/FAIL不覆盖。
+  321只从三不变SVG补首次实际640预览，其实际有限回执已见上条；首脚本因context哈希字段
+  raw_sha256/sha256误用exit1，HTML/PNG写入0、gate/render调用0，原失败保留，
+  仅纠正读取后继续缺失阶段，不重复原图/source/数学/旧gate。
+- 父0新图/累计24；83包1408题5743项654组合不变。所有源歧义、fig06/07/10/15、
+  n10、全题/全课/APP/独立生产/881边界保持，不运行被缺图门槛挡住的320绑定。
+
+### batch317/318八render通过与首次图审记录
+
+- 316三个fresh进程真实completed/exit0，12原图分别5/4/3各一次，
+  各spec首次draft一次：9 pass、3 fail；fig06字面四次式/曲线、fig07
+  y=5墨线/终点、fig10斜y轴原点关系不猜；fig15投影线虚实仍HOLD。
+  不对这四图render/批准，不以draft PASS消除源歧义。
+- 八可做图首次cap2各一次，表27/表28/fig09/11/14 exit0；
+  fig08/12/16只因标签碰撞exit2，原spec/render/SVG/PNG保持。
+  各一次标签修复完整diff仅5/7/1叶字段，第二次render均exit0，
+  640最低字分别18/18.0375/16px，无碰撞；不改任何其他几何/库存/
+  断言/源数学、canvas/display、renderer或应用。
+- 318三fresh独立视觉首审均已实际完成，候选保持原字节：
+  n5实际01a1ecbe-2880-73f0-a552-888deaae3ca1/session3248仅六图；
+  n6实际01a1ecbe-28d1-78d3-b64c-f9aa5f33c1f6/session30404仅六图；
+  n7/n8实际01a1ecbc-e90b-7c11-8641-8e8f0e182491/session55689仅四图。
+  各指定原PNG/当前native预览各一次，仅八个指定标准gate；
+  原“完整640预览”描述已按实际尺寸纠正，不把native图当640证据。
+- CLI临时ID不在desktop wait_threads可读索引，一次三目标查询无匹配，
+  不据此猜completed/恢复上下文；以真实CLI event/process退出收口。
+  83包1408题5743项654组合不变，父0新图/累计24；本轮没有
+  SOURCE/trace/原数学/旧门禁重跑、DB/部署/handoff或新完成课。
+
+### batch316接续8a n5–n8缺失图阶段
+
+- 原分支HEAD/远端仍04985887a；只执行已保存的freeze-contexts一次，
+  12个当前模板context构建各exit0，12模板与12原PNG仅同字节scratch复制，
+  原文件/源事实/枚举/文字均未改。receipt rawSHA
+  c984e44af1eb08324c918ccb2b2f52282de07824644440c1e57b640c766cb538。
+- 三个fresh ephemeral默认模型cap1已实际完成，写域各自plans/spec互斥：
+  n5五图01a1ecaf-e684-7220-8210-f2a7e9167ee2/session36181，
+  n6四图01a1ecaf-e684-70b2-a7fe-813b2c672a03/session13364，
+  n7/n8三图01a1ecaf-e684-7913-8853-d5d244e4cbf1/session27864。
+  仅各原PNG一次、库存/规范draft与各一次FIRST draft gate；真实completed/exit0，
+  未计图PASS、finalize、显示或完成量，不扩大历史图审或来源约定。
+- n7 batch56与n8 batch59现成作者响应的输入hash和当前模板完全相符；
+  没有重复作者/数学/源检查。n5/n6当前目录仅模板，未虚构现成choice稿。
+  p0027-math-1字面四次式/空白勘误与n10两图FAIL/HOLD继续保留。
+- 父0新图/累计24，83包1408题5743项654组合不变；不触原layout/测试、
+  监督ticket、4m未提交资产、Charter、DB、部署或handoff。局部HOLD不阻
+  下一实际可做阶段，候选保持冻结直到各真实回执。
+
+### 04985887a窄push已确认，n10两图局部HOLD保留
+
+- 04985887a114fc4bd4f9e6a9589b54dd8af086bd真实commit/push，
+  远端ls-remote同SHA；14文件仅n11有限课文/书写证据、选定包留存说明与
+  原progress/usage。83包1408题5743项654组合仅选定包口径，不作整课或handoff。
+- 315 fresh实际01a1ec84-71f4-75c2-b970-3d04a7036e7a已completed/process exit0，
+  唯一figure.review rawSHA6aa4f076e6077a23ab41e32617dfd77d5709be7d2e330350f282ccaddd142641；
+  record_review仅一次exit0但status fail。B/0/C间距及当前640网格/轴/两支曲线
+  可读性通过，完整源实虚线辅助线归属/终点、精确裁边及采样忠实性仍未确证。
+  当前方程化规整仅现代添加，不升SOURCE/数学整题/模板finalize或图完整保真。
+- fig03第二次render仍FAIL，fig04标准图审FAIL/HOLD，原首次FAIL和两修复
+  候选原字节保持；不再渲染或复看，n10不finalize/推广/计完成。
+  新回执只补现有记录，未制造文档专用commit；无依赖n11窄交付已先推进。
+- 本轮所有有限进程均真实退出，父0新图/累计24、监督0；未见/148作图/
+  独立生产/真实手势/APP/全课/881和既有SOURCE/HOLD不提升，工单继续developing。
+
 ### batch312/313真实回执已消费，n11限定包闭合
 
 - 312实际01a1ec70-e68f-74d3-9d33-13f7620bfb6f已completed/process exit0；
