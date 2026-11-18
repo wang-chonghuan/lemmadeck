@@ -1,6 +1,59 @@
 # 当前开发状态
 
-### batch330/331真实源与当前绑定留存，332 cap1仍在途
+### batch334–337真实四图绑定与n14首显示收口，338首作者在途
+
+- 334两名fresh首独审均实际completed/process exit0，实际ID分别
+  01a1ed22-4622-76e3-8ac9-2a9d28fbf18f与
+  01a1ed22-ce92-7e31-a5c5-c60029b8a671；4/6图各一次，父0新图/累计24。
+  06、表91、07、09真实640图审PASS；08真实FAIL，C渲染为实心而源为环形，
+  A无源填充依据继续SOURCE HOLD。五standard gate各一次exit0，不等于全PASS。
+  不修renderer、不重看旧图，08候选/FAIL原字节留存且不推广，n15不finalize。
+- 335完整byte/JSON独立比对只render引用path/hash变化；四个持久standard
+  record_review各一次exit0，spec/SVG/context/preview同字节。06/table91
+  当前gate rawSHA分别9ac6d95c0e79767066b41b04a1ba86979aa8a2edc6ce82308d1851ccaea66c0a、
+  6772becf5f3771e91818555ee97929a87673223d5e68ba15631cb2e2a52dd45a；
+  07/09分别60fc4adf699916b54b42a53f57849d60aa86ae37d8f131455862d9eed9e29ced、
+  c62aaa61646f2640d5a8f3e25698d8b1ef7495d1dd1f745af37785e4b80818e0。
+  原独审ID/hash/scope及全部原FAIL/HOLD保留，0新math/visual/SOURCE。
+- 336仅n14 FIRST modern finalize一次exit0，19正文块/17书写题/2图；
+  edition index仅追加n14行，其他现存行相等。不是17题数学或整课批准。
+- 337 FIRST text/written renderer一次exit0、1440/390四DOM组合一次exit0；
+  fresh静态观察者01a1ed27-3ba7-76a2-99ee-72c4942809a1实际completed/process
+  exit0，四PNG各一次4/8fresh4/24，report rawSHA
+  78ca38f7ee675f6806cc359d401998d4169218b752de866570586990d7ad39aa。
+  四可见窗口PASS：桌面fig06/305–309、手机fig06右端/305–307；
+  表91/手机左部/后续题/独立书写/真实手势/APP/全课/881保持未批准。
+  仅first_text_written_visible_display_pending解除，broader_display_pending保持。
+- 25份图阶段/首次显示原证据同字节留存；既有84包1426题5847项656组合不增，
+  另记录n14首次text/written四组合，未信用新选择包或完整课程。
+- 338 fresh零图首作者01a1ed29-4ba1-7ff1-903a-d5549fffb2f3仍在途，
+  只17源305–321、定义块8–11，seed已首次准备，无旧答案/图/预批。
+  先独解后成稿、只一次FIRST结构检查；独审/choices首显示仍未完成。
+
+### batch332/333首次图稿完成，334独立首图审在途
+
+- 332实际fresh助手01a1ed15-43d7-7a02-862c-e4f673b7f822已completed/process
+  exit0；五原PNG各一次5/8fresh5/24。五draft真实exit依次2/0/0/2/0，
+  仅cap1草稿，原06 pointOnLine及08 collinear键名失败保留。
+  08源A填充不明为真实SOURCE HOLD，不据结构修正或render PASS解除。
+- 333只在新副本机械更正06的from/to→a/b与08的points→a/b/c；
+  完整反向映射证明其他JSON不变，未重跑首draft。五次FIRST cap2各一次，
+  06/表91/07/08 exit0，09真实五标签碰撞exit2。09仅一次针对这五label.at
+  的修复render exit0，其他geometry/inventory/assertions/source不变，
+  原FAIL/spec/SVG/preview及回执原字节保留，无renderer/技能改动。
+- 334 n14 fresh首独审实际01a1ed22-4622-76e3-8ac9-2a9d28fbf18f，
+  两原图+两实际640预览4/8fresh4/24；n15另fresh仅三原图+三当前640
+  预览6/8fresh6/24，已派出等待真实完成。只标准图review，不重源码解/
+  数学/源审/首规范/render/最终显示，不把派出或render PASS当批准。
+- 父方本轮0新图/累计24，84选定包1426题5847项656组合不增。
+  持久路径绑定、首次modern finalize/显示及新n14/n15选择题尚未完成；
+  08填充、100页22/21及376上标6/8、全课/APP/881边界不提升。
+- 前序235文件窄提交/push已实际完成：
+  5ce009f912e4f41bd3238c1847328b1aa95950e1，远端同SHA。
+  本轮继续同分支，不混已有layout/其测试/监督ticket及无关4m资源，
+  不新增数据库、部署、分支、工人或流程。
+
+### batch330/331真实源与当前绑定留存
 
 - 329零图增量已实际completed/process exit0，source-review rawSHA
   f09e742407940f8e15cf50616532a8f0b88f215a4dd0ce483fad274025edbfc2；
