@@ -1,5 +1,38 @@
 # 当前开发状态
 
+### resume182-6 新内容批次已推送，第三章补充习题RAW闭合
+
+- 69文件窄commit/push为1ea92963d07b9fe9b29ed8ab8603f047285c79ea，
+  独立ls-remote核对完整SHA一致。只含189–195修订源、188边界两文件、
+  完整RAW n28、必要前后证据及既有记录；白名单/JSON/secret路径/diff --check PASS。
+  原dirty layout/测试、其他4m和旧7a、196后新稿均未纳入。
+- 第三章补充习题alg7-c3-ex首次隔离装订exit0：632–698共67原题，
+  零正文、fig38/39。相邻179–183仅提供真实左界；装订n28三文件与既有
+  RAW同字节、不写回；195仅下一章边界，部分n29不提升。
+  首次modern prepare exit0，15份真实命令收据/索引/输入及边界裁图证据保留。
+  原索引只追加本卡及派生统计，现代图/数学/选择/显示未批准。
+- Hegel FIRST196–202源审rawSHA
+  d23e2825c855969059b1dd5dbdb17b1673b357cbdbaa3315535bfc4ed1413c8b：
+  197/198/199/201 PASS，200/202各一处ge字形需geqslant；
+  196文字18行完整PASS，但原计数器把脚注分隔横线算为第19行，计行HOLD不解除。
+  只冻结将变更的200/202六文件，其余15当前FIRST原字节复用。
+  仅两处字形手修；200/202各一次affected finalize exit0，audit/图框不变，
+  同一独审只做零图增量绑定，未修196文字或计数器。
+  新affected报告rawSHA6830354257be5700805d3004988b55d04a0dbc3f108edcf643e862d9c7e5b8c3，
+  两处完整diff/21当前hash PASS；独审已完成并关闭。
+  50份原/当前命令证据保留；保留脚本FIRST绝对路径与affected相对路径
+  比较失配exit1仅作结构化路径解析恢复，已复制六原稿同字节复用，不重跑管线。
+- Dirac fig37 CAP1完成并关闭，实际一原图、30 shell、零paid/render。
+  未知几何/度量标定保持null，不做可渲染spec；624/fig37仍局部测量HOLD，
+  不阻塞后续源页或第三章补充习题。草稿不是最终edition权威。
+  四份原报告/草稿/清单/verification与manifest共五文件同字节保留。
+- 203–209两合法范围FIRST prepare全部exit0；203–206成功收据复用，
+  wrapper docs对象读取故障仅技术恢复，没有重跑四页或成功read-json。
+  fresh Kepler 01a1f08b-f18b-7852-bbb3-26465691e9c2七图FIRST作者在途；
+  202题715尾已由独审确认，不重开202，n30不从该尾句获完整课批准。
+  父续接新增图0；原上下文图片记录、87/1506/6184/666及所有其他HOLD保留。
+  不运行APP/DB/publisher/deploy/E或其他组merge；正式机械防线留最终handoff。
+
 ### resume182-6 修订源证据收齐，继续下一源批次
 
 - 已消费作者189–195真实FIRST回传恢复，MD/JSON rawSHA分别
