@@ -76,7 +76,7 @@ def _merge_close(spans, gap: float):
     out = [list(spans[0])]
     for a, b in spans[1:]:
         if a - out[-1][1] <= gap:
-            out[-1][1] = b
+            out[-1][1] = max(out[-1][1], b)
         else:
             out.append([a, b])
     return [(a, b) for a, b in out]
@@ -196,50 +196,53 @@ def _small_prose_continuation(
 ) -> bool:
     """Keep a short, left-aligned small-font continuation out of glyph merging."""
     if (
-        bottom_top - top_bottom <= 0.15 * glyph_h
-        or not all(
+        not all(
             0.5 * glyph_h <= b - a + 1 <= 1.3 * glyph_h
             for a, b in ((top, top_bottom), (bottom_top, bottom))
         )
     ):
         return False
     rows = []
-    thin_rules = []
+    lower_glyphs = []
     for a, b in ((top, top_bottom), (bottom_top, bottom)):
         labels, _ = ndimage.label(ink[a:b + 1])
         bounds_list = [
             bounds for bounds in ndimage.find_objects(labels) if bounds is not None
         ]
-        thin_rules.extend(
-            c.stop - c.start for r, c in bounds_list
-            if r.stop - r.start <= 0.2 * glyph_h
-        )
         glyphs = [
-            (r.stop - r.start, c.start, c.stop)
+            (r, c)
             for r, c in bounds_list
             if 0.6 * glyph_h <= r.stop - r.start <= 1.1 * glyph_h
             and 0.5 * (r.stop - r.start) <= c.stop - c.start
             <= 1.4 * (r.stop - r.start)
         ]
-        if len(glyphs) < 3:
+        if len(glyphs) < (3 if a == top else 2):
             return False
         rows.append((
-            float(np.median([h for h, _, _ in glyphs])),
-            min(left for _, left, _ in glyphs),
-            max(right for _, _, right in glyphs),
+            float(np.median([r.stop - r.start for r, _ in glyphs])),
+            min(c.start for _, c in glyphs),
+            max(c.stop for _, c in glyphs),
         ))
+        if a == bottom_top:
+            lower_glyphs = [
+                (slice(a + r.start, a + r.stop), c) for r, c in glyphs
+            ]
     (top_h, top_left, top_right), (bottom_h, bottom_left, bottom_right) = rows
     local_h = min(top_h, bottom_h)
     if (
-        max(top_h, bottom_h) > 0.9 * glyph_h
+        bottom_top - top_bottom <= 0.1 * local_h
+        or max(top_h, bottom_h) > 0.9 * glyph_h
         or abs(top_h - bottom_h) > 0.25 * local_h
         or abs(top_left - bottom_left) > 2.5 * local_h
         or bottom_right - bottom_left > 0.35 * (top_right - top_left)
     ):
         return False
+    components, _ = ndimage.label(ink)
+    bounds_list = ndimage.find_objects(components)
+    # A horizontal stroke within a Chinese glyph is not a covering fraction rule.
     return not any(
-        width >= max(0.7 * local_h, 0.8 * (bottom_right - bottom_left))
-        for width in thin_rules
+        _fraction_denominator(ink, r, c, bounds_list, local_h)
+        for r, c in lower_glyphs
     )
 
 

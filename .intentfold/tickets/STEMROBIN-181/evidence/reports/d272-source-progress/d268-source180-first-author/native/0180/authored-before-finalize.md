@@ -1,0 +1,273 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 180,
+  "printed_page": 170,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 180
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "923ed47a84d99a18153ed0e422b7a7aeb1ffd9fc9574b9b1a39d521f8bbd8fb5"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    {
+      "type": "source-boundary",
+      "block": "p0180#1",
+      "previous_source_ref": "p0179#13",
+      "basis": "179#13题3末尾为“因为几”，180页第一印刷行直接接“扇百叶窗都关着.”，故标ex 3 cont；本页不重印题号3，不增设引号或新题号。"
+    },
+    {
+      "type": "source-quotation",
+      "block": "p0180#1",
+      "basis": "忠实保留引文中的伊凡·伊凡诺维奇、伊凡·尼基弗罗维奇、Н. В. 果戈里和原题名双尖引号«…»；没有在源层进行现代人名或文化替换。"
+    },
+    {
+      "type": "bold",
+      "block": "p0180#6",
+      "line_range": [
+        1,
+        1
+      ],
+      "text": "69. 光的反射定律 平面镜成像",
+      "basis": "新编号标题整行粗体大字；两个标题词组同属这一实际标题，不拆成两个新单元。",
+      "character_range_1based_inclusive": [
+        1,
+        16
+      ]
+    },
+    {
+      "type": "bold",
+      "block": "p0180#7",
+      "line_range": [
+        4,
+        4
+      ],
+      "text": "光的反射",
+      "basis": "定义末尾这四字相对本行常规正文清楚加粗，不将整段扩大为粗体。",
+      "character_range_1based_inclusive": [
+        13,
+        16
+      ]
+    },
+    {
+      "type": "bold",
+      "block": "p0180#8",
+      "line_range": [
+        1,
+        1
+      ],
+      "text": "光的反射定律.",
+      "basis": "段首术语及其句点清楚为粗体，与紧接的常规“光的反射定律决定……”字重不同。",
+      "character_range_1based_inclusive": [
+        1,
+        7
+      ]
+    },
+    {
+      "type": "italic",
+      "block": "p0180#9",
+      "line_range": [
+        1,
+        1
+      ],
+      "text": "47",
+      "basis": "正文所引第47节的两个数字为右倾字形；仍是原节号，不改为现代编号。",
+      "character_range_1based_inclusive": [
+        4,
+        5
+      ]
+    },
+    {
+      "type": "italic",
+      "block": "p0180#10",
+      "line_range": [
+        1,
+        1
+      ],
+      "text": "170",
+      "basis": "页脚三位数字明显右倾；两边装饰点仅在foot中保存。",
+      "character_range_1based_inclusive": [
+        3,
+        5
+      ]
+    },
+    {
+      "type": "math-typography",
+      "blocks": [
+        "p0180#4",
+        "p0180#5",
+        "p0180#8"
+      ],
+      "basis": "I_1、I_2、l、h、I及射线AB、BD、BC依原数学字形用LaTeX斜体变量；下标1、2实际在基线下。等号、给定数值不更改。本页无独立引出的分式或多行方程。",
+      "ranges": [
+        {
+          "block": "p0180#4",
+          "line": 1,
+          "text": "I_1=80",
+          "character_range_1based_inclusive": [
+            21,
+            26
+          ],
+          "encoding": "LaTeX inline math; variables italic, subscripts preserved, numerals/operators not bolded"
+        },
+        {
+          "block": "p0180#4",
+          "line": 1,
+          "text": "I_2=125",
+          "character_range_1based_inclusive": [
+            34,
+            40
+          ],
+          "encoding": "LaTeX inline math; variables italic, subscripts preserved, numerals/operators not bolded"
+        },
+        {
+          "block": "p0180#4",
+          "line": 2,
+          "text": "l=3.6",
+          "character_range_1based_inclusive": [
+            9,
+            13
+          ],
+          "encoding": "LaTeX inline math; variables italic, subscripts preserved, numerals/operators not bolded"
+        },
+        {
+          "block": "p0180#5",
+          "line": 1,
+          "text": "h=3",
+          "character_range_1based_inclusive": [
+            14,
+            16
+          ],
+          "encoding": "LaTeX inline math; variables italic, subscripts preserved, numerals/operators not bolded"
+        },
+        {
+          "block": "p0180#5",
+          "line": 1,
+          "text": "l=4",
+          "character_range_1based_inclusive": [
+            27,
+            29
+          ],
+          "encoding": "LaTeX inline math; variables italic, subscripts preserved, numerals/operators not bolded"
+        },
+        {
+          "block": "p0180#5",
+          "line": 2,
+          "text": "I=200",
+          "character_range_1based_inclusive": [
+            16,
+            20
+          ],
+          "encoding": "LaTeX inline math; variables italic, subscripts preserved, numerals/operators not bolded"
+        },
+        {
+          "block": "p0180#8",
+          "line": 1,
+          "text": "AB",
+          "character_range_1based_inclusive": [
+            22,
+            23
+          ],
+          "encoding": "LaTeX inline math; variables italic, subscripts preserved, numerals/operators not bolded"
+        },
+        {
+          "block": "p0180#8",
+          "line": 2,
+          "text": "BD",
+          "character_range_1based_inclusive": [
+            2,
+            3
+          ],
+          "encoding": "LaTeX inline math; variables italic, subscripts preserved, numerals/operators not bolded"
+        },
+        {
+          "block": "p0180#8",
+          "line": 2,
+          "text": "BC",
+          "character_range_1based_inclusive": [
+            20,
+            21
+          ],
+          "encoding": "LaTeX inline math; variables italic, subscripts preserved, numerals/operators not bolded"
+        }
+      ]
+    },
+    {
+      "type": "source-values-not-repaired",
+      "block": "p0180#3",
+      "basis": "题5印刷照度单位“流明”及1.1、50、50、10逐字保留，不作科学预修；没有改动179原稿的150/30及原单位。"
+    },
+    {
+      "type": "source-figure-observation",
+      "block": "p0180#8",
+      "basis": "本页实际只有（图137a）文字引用，没有图137图形、图题或裁框；不虚构fig块，不以本页空vectorize宣RAW137通过。"
+    },
+    {
+      "type": "source-right-boundary",
+      "block": "p0180#9",
+      "basis": "本页末行止于“这个定律对于任何性质的波都是”，实际语句未完，标p open；未观察181，不猜其续文或69单元完整性。"
+    },
+    {
+      "type": "source-observation",
+      "basis": "本页无可确认的字下强调点、脚注标记或解释性脚注；原印刷正文“当光线没有到达……”照录，没有科学改写。仅两个已登记原页/网格实际观察，之后零图。"
+    }
+  ],
+  "errata": []
+}
+---
+<!-- ex 3 cont -->
+扇百叶窗都关着. 一缕日光从百叶窗的缝隙射入，并以一种虹的色彩
+射到对面的墙上，在那上边形成一幅以屋顶、树木和晾在院子里的衣服
+组成的彩色风景画，不过全部是倒影.”（Н. В. 果戈里 «伊凡·伊凡
+诺维奇和伊凡·尼基弗罗维奇争吵的故事»）. 阐明这种现象的起因.
+
+<!-- ex 4 -->
+4. 为什么街灯照在地上，脚的影子很清楚，而头的影子大都是模
+糊一片？
+
+<!-- ex 5 -->
+5. 挂在车床上高 1.1 米处的灯，在操作处产生的照度为 50 流明，
+按规定照度应在 50 流明左右，变化不能大于 10 流明，问灯可以挂在车
+床上多高的范围内？
+
+<!-- ex 6 -->
+6. 有两个点光源，它们的发光强度是 $I_1=80$ 坎德拉，$I_2=125$ 坎德
+拉，彼此相距 $l=3.6$ 米. 为了使一个不大的平面屏的两边的照度相等，
+应当把它放在连结两光源的线段的何处？ 如果屏不垂直于连接两光源
+的直线，上述答案变化吗？
+
+<!-- ex 7 -->
+7. 房间被两盏离地板 $h=3$ 米，彼此相距 $l=4$ 米的灯照亮. 设灯
+为点光源，每盏灯的发光强度 $I=200$ 坎德拉. 求每灯正下方地板上的
+照度和两灯连线的中点下方地板上的照度，从天花板和墙上反射的光
+对照度的影响可以忽略不计.
+
+<!-- h3 -->
+69. 光的反射定律 平面镜成像
+
+<!-- p -->
+当光线没有到达一种媒质和另一媒质的交界面时，在同
+一种媒质里光线是直线传播的. 在两种媒质的交界面上光就
+改变自己的方向. 一部分光（在很多情况下是全部的光）返回
+第一种媒质，这种现象叫做光的反射.
+
+<!-- p -->
+光的反射定律. 光的反射定律决定入射线 $AB$、反射线
+$BD$ 和在入射点与界面垂直的线 $BC$ 的相互位置（图 137a）.
+
+<!-- p open -->
+在第 47 节已经研究过机械波的反射，我们看到，当波反
+射时，反射角等于入射角. 这个定律对于任何性质的波都是
+
+<!-- foot -->
+• 170 •

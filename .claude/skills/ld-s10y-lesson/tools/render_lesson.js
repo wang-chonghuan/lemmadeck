@@ -199,9 +199,9 @@ li.ex .body .fig[data-figure-layout="scroll"] .figure-media{
 @media (max-width:640px){.sheet{padding:1.4em 1em 4em}li.ex{grid-template-columns:2.6em 1fr}}
 `;
 
-function page(title, crumb, bodyHtml) {
+function page(title, crumb, bodyHtml, english = false) {
   const tabTitle = title.replace(/\*\*([^*]+)\*\*/g, "$1");
-  return `<!DOCTYPE html><meta charset="utf-8"><title>${esc(tabTitle)}</title>
+  return `<!DOCTYPE html><html lang="${english ? "en" : "zh-CN"}"><meta charset="utf-8"><title>${esc(tabTitle)}</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>${CSS}</style><div class="sheet"><h1>${inline(title)}</h1>
 <div class="crumb">${esc(crumb)}</div>${bodyHtml}</div>`;
@@ -219,7 +219,9 @@ for (const lid of lessonDirs) {
   fs.mkdirSync(outDir, { recursive: true });
   const L = JSON.parse(fs.readFileSync(path.join(dir, "lesson.json"), "utf8"));
   const X = JSON.parse(fs.readFileSync(path.join(dir, "exercises.json"), "utf8"));
-  const crumb = [L.chapter, L.section, `印刷页 ${L.start_printed ?? "?"}`]
+  const english = L.locale === "en";
+  const title = english ? L.title : (L.printed_title || L.title);
+  const crumb = [L.chapter, L.section, `${english ? "Printed page" : "印刷页"} ${L.start_printed ?? "?"}`]
     .filter(Boolean).join(" · ");
 
   // ---- 课文页
@@ -232,9 +234,9 @@ for (const lid of lessonDirs) {
       body += `<p class="para${b.sectionBreak ? " section" : ""}">${proseInline(b.text)}</p>`;
     }
   }
-  body += `<a class="jump" href="exercises.html">去做题 · ${X.count} 道 →</a>`;
+  body += `<a class="jump" href="exercises.html">${english ? `Exercises · ${X.count} →` : `去做题 · ${X.count} 道 →`}</a>`;
   fs.writeFileSync(path.join(outDir, "text.html"),
-    page(L.printed_title || L.title, crumb, body));
+    page(title, crumb, body, english));
 
   // ---- 习题页：每题独立编号，带自己的图
   let group = null, out = "";
@@ -242,7 +244,7 @@ for (const lid of lessonDirs) {
     if (e.group !== group) {
       if (out) out += "</ol>";
       group = e.group;
-      out += `<div class="exgroup">${inline(group || "练习")}</div><ol class="ex">`;
+      out += `<div class="exgroup">${inline(group || (english ? "Exercises" : "练习"))}</div><ol class="ex">`;
     }
     const figs = (e.figures || [])
       .map((f) => figure(contentRoot, f.id, f.label, !!editionName)).join("");
@@ -251,9 +253,9 @@ for (const lid of lessonDirs) {
       + `<div class="body">${inline(e.text)}${figs}</div></li>`;
   }
   if (out) out += "</ol>";
-  out += `<a class="jump" href="text.html">← 回课文</a>`;
+  out += `<a class="jump" href="text.html">${english ? "← Back to text" : "← 回课文"}</a>`;
   fs.writeFileSync(path.join(outDir, "exercises.html"),
-    page(`${L.printed_title || L.title} · 习题`, crumb, out));
+    page(`${title} · ${english ? "Exercises" : "习题"}`, crumb, out, english));
   done.push({ lesson: lid, exercises: X.count, prose: prose.length, output: outDir });
 }
 

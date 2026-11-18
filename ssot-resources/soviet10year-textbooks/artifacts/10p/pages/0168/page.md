@@ -1,0 +1,106 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 168,
+  "printed_page": 158,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 168
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "dbfdecab45696ff15e5adff20311726210f29799f3ea369116fa0b9a77eb0b34"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "Verified source typography, superseding only the uncertainty of historical AUTHOR HOLD p0168-typography-1 below: p0168#9, printed line2, exact text 波的通量, plain-text characters5-8 inclusive / 0-based half-open[4,8), has four under-dot emphasis marks, one under each character. The preceding 的 at character4 and following sentence-stop dot at character9 are excluded. Preserve this exact range as under-dot emphasis, not bold or literal punctuation. Independent recognition evidence: d180-source168-first-review/report.json SHA2564aa8d530630e54617e78b2ac69d9e04d8f6e564313e2cd94e8f06187ee0ba280, typography-lower.png SHA256132a3cb236cf07019e6e8af9190c37271e856c8d865d3319098ab754fd122930. This notes-only record changes no source word, print line, block, figure or open boundary; all historical observations below and their original files remain intact.",
+    "AUTHOR only. Physical168 / printed158 original page.png was actually opened once at original detail; cumulative image count23->24. No grid, crop, RAW PNG, SVG or preview is opened in this batch.",
+    "Two separate original drawings and printed captions 图128 and 图129 are actually visible at the top. The captions share one printed row. The figure coarse boxes are estimated from the one original full-page view, not invented calibration or engineering measurements.",
+    "The first prose block cont closes frozen p0167#7 after its final 沿着; the intervening figures/captions are transparent to this prose continuation. The old167 bytes and open marker remain unchanged.",
+    "Six prose blocks contain16 printed rows. The shared caption row and the footer make18 observed printed text rows. Prepared drawing bands are not additional text. Native finalized counting is recorded independently without adjusting prose to meet it.",
+    "光的微粒说和波动说 is a visibly bold inline prose lead-in, not a new h1/h2/h3 or numbered lesson heading. The later phrase 光的微粒说 is also visibly bold. No additional bold range is inferred from uneven scan weight.",
+    "AUTHOR HOLD p0168-typography-1: small marks are visible beneath the row containing 波的通量. This one full-page view does not support a complete character-by-character under-dot emphasis inventory. The words 波的通量 are transcribed as readable; no literal dots or guessed bold range are added. Other fine emphasis beyond the two positively observed bold phrases remains unclosed.",
+    "No new chapter, section, numbered unit, exercise, explanatory footnote or mathematical formula is visible. This is the ongoing 光学 / 引言 context established on167, pending independent SOURCE review.",
+    "The final paragraph is open at 当时从实验中得出的光传播的规律用这两种学. No next-page completion, heading or introduction right boundary is invented. No further source page is prepared.",
+    "Original native failures and all earlier SOURCE/owner/typography HOLD artifacts are preserved. Native receipts and AUTHOR observations do not confer independent SOURCE/RAW PASS or whole-card approval."
+  ],
+  "errata": [],
+  "printed_lines": 18,
+  "figures": [
+    {
+      "id": "fig-128",
+      "label": "图 128",
+      "box": [
+        223,
+        270,
+        391,
+        503
+      ]
+    },
+    {
+      "id": "fig-129",
+      "label": "图 129",
+      "box": [
+        701,
+        248,
+        564,
+        518
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- fig 图 128 box 223,270,391,503 -->
+![图 128](figures/fig-128.png)
+
+<!-- fig 图 129 box 701,248,564,518 -->
+![图 129](figures/fig-129.png)
+
+<!-- cap 图 128 -->
+图 128
+
+<!-- cap 图 129 samerow -->
+图 129
+
+<!-- p cont -->
+绳子传播的是波，也就是绳子的状态（外貌）发生了变化. 因
+此，从一个物体向另一个物体传递作用可以用波的方法来实
+现.
+
+<!-- p -->
+**光的微粒说和波动说** 根据从光源向接收者传递作用的
+两种可能的方法，对光的本性出现并发展了两种完全不同的
+理论，这两种理论在十七世纪几乎是同时出现的.
+
+<!-- p -->
+其中一个理论与牛顿的名字相连，而另一个理论和惠更
+斯的名字相连.
+
+<!-- p -->
+牛顿信奉所谓的**光的微粒说**. 根据这个学说，光是从光
+源向所有方向前进的微粒流（即光是物质的迁移）.
+
+<!-- p -->
+根据惠更斯的概念，光是在假想的特殊的媒质——以太
+中传播的波的通量. 所有的空间都被以太填满，而且以太透
+入所有的物质的内部.
+
+<!-- p open -->
+两种学说长期平行地存在，无论哪一派学说都不能取得
+决定性的胜利. 只是因为牛顿的威望，才使大多数学者偏重
+于微粒理论. 当时从实验中得出的光传播的规律用这两种学
+
+<!-- foot -->
+· *158* ·

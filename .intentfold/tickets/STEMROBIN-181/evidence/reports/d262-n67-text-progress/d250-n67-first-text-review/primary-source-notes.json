@@ -1,0 +1,106 @@
+{
+  "schema": "stemrobin/necessary-primary-text-observations@1",
+  "access": "Necessary primary-source text located by search and confirmed with direct HTTP plus a standard HTML text parser. No browser, page image, screenshot or visual retrieval.",
+  "bindingScope": "This file binds short excerpts and review observations. primary-text-bindings.json records the actually received response-byte hashes and necessary-window hashes; it does not claim unseen full-page visual review.",
+  "sources": [
+    {
+      "id": "NIST-CANDELA",
+      "url": "https://www.nist.gov/pml/sensor-science/optical-radiation/realization-candela",
+      "organization": "NIST",
+      "title": "Realization of the candela",
+      "shortExcerpts": ["spectral responsivity of the human visual system", "normalized to unity at its peak, 555 nm"],
+      "observations": [
+        "The CIE visual-response function is a defined spectral response, not an individual observer's informal brightness estimate.",
+        "The retrieved equation relates photometric values to spectral radiometric values using a weighted wavelength integral and a luminous efficacy factor.",
+        "The photopic function has its peak at 555 nm; a qualified statement that green light is relatively well detected under photopic conditions is consistent with this.",
+        "The source distinguishes the calibration frequency and luminous efficacy from arbitrary emitter selection."
+      ],
+      "usedForBlocks": [1, 2, 3, 4, 5, 16, 17]
+    },
+    {
+      "id": "CIE-POINT-SOURCE",
+      "url": "https://cie.co.at/eilvterm/17-21-033",
+      "organization": "CIE",
+      "title": "Point source, CIE S 017:2020 e-ILV",
+      "shortExcerpts": ["A point source that emits uniformly in all directions"],
+      "observations": [
+        "A source can be treated as point-like when its dimensions are negligible compared with its distance from the receiving surface.",
+        "Uniform or isotropic point source is a further property, not a necessary consequence of negligible source size."
+      ],
+      "usedForBlocks": [7, 14, 15, 19]
+    },
+    {
+      "id": "CIE-INTENSITY",
+      "url": "https://cie.co.at/eilv/739",
+      "organization": "CIE",
+      "title": "Luminous intensity of a source in a given direction",
+      "shortExcerpts": ["quotient of the luminous flux", "element of solid angle"],
+      "observations": [
+        "The directional intensity definition is differential: luminous flux in a directional solid-angle element divided by that element.",
+        "Its stated unit is cd = lm per sr.",
+        "The finite-region average and constant-emission conditions below are reviewer derivations from this definition, not quotations from the candidate."
+      ],
+      "usedForBlocks": [6, 14, 15, 19]
+    },
+    {
+      "id": "CIE-STERADIAN",
+      "url": "https://cie.co.at/eilv/1266",
+      "organization": "CIE",
+      "title": "Steradian",
+      "shortExcerpts": ["cuts off an area of the surface of the sphere"],
+      "observations": [
+        "The unit is defined using a sphere centered at the angle's vertex and a surface area equal to a square whose side is the sphere radius.",
+        "Therefore the area in S/R² must be the intercepted spherical area, not an arbitrary flat target area."
+      ],
+      "usedForBlocks": [8, 9, 12, 13]
+    },
+    {
+      "id": "BIPM-SOLID-ANGLE",
+      "url": "https://www.bipm.org/en/committees/ci/cipm/69-1980/resolution-1",
+      "organization": "BIPM",
+      "title": "Recommendation 1 of the 69th CIPM, 1980",
+      "shortExcerpts": [],
+      "observations": [
+        "The recommendation explicitly describes solid angle as an area divided by a squared length and interprets steradian as a dimensionless derived unit.",
+        "Used only for the dimensional interpretation, not as a claim that the historical supplementary-unit classification remains current."
+      ],
+      "usedForBlocks": [9, 12, 13]
+    },
+    {
+      "id": "CIE-LUMEN",
+      "url": "https://cie.co.at/eilvterm/17-21-084",
+      "organization": "CIE",
+      "title": "Lumen",
+      "shortExcerpts": ["SI unit of luminous flux"],
+      "observations": [
+        "Luminous flux uses lumen, not watt; the CIE entry ties the lumen to a specified monochromatic radiant flux.",
+        "Together with the CIE intensity unit relation, this supports 1 lm = 1 cd sr for constant intensity over the selected solid angle."
+      ],
+      "usedForBlocks": [4, 5, 17, 19]
+    }
+  ],
+  "independentDerivations": [
+    {
+      "id": "RADIOMETRY-PHOTOMETRY",
+      "basis": ["NIST-CANDELA", "CIE-LUMEN"],
+      "reasoning": "Photopic luminous flux is obtained by weighting spectral radiant flux by the defined visual response and the luminous-efficacy factor. Bare radiant power in watts is not thereby identical to luminous flux in lumens. The lesson's evaluated-power wording is interpreted with its explicit visual weighting and lumen unit, not as a numerical equality of W and lm."
+    },
+    {
+      "id": "DIRECTIONAL-AVERAGE",
+      "basis": ["CIE-INTENSITY"],
+      "reasoning": "Integrating the directional definition gives Φ_A = integral_A I(ω)dΩ. Thus Φ_A/Ω_A is the angular average for Ω_A > 0, and equals the directional intensity throughout A only if intensity is constant on that region."
+    },
+    {
+      "id": "FULL-SPHERE-ISOTROPY",
+      "basis": ["CIE-INTENSITY", "CIE-POINT-SOURCE", "CIE-STERADIAN"],
+      "reasoning": "All directions cover 4π sr. With direction-independent intensity, integrating yields Φ_total = 4π I; without this assumption Φ_total/(4π) is only a full-sphere angular mean. Point-like geometry alone does not justify uniform emission."
+    },
+    {
+      "id": "ARBITRARY-CONE-AREA",
+      "basis": ["CIE-STERADIAN", "BIPM-SOLID-ANGLE"],
+      "reasoning": "For a fixed ray region and a sphere of positive radius centered at the vertex, dilation scales the intercepted area by R². Hence S/R² is radius-independent; the boundary need not be circular. For the entire sphere, S = 4πR²."
+    }
+  ],
+  "historyScope": "Block18 is audited as a description of the actual Chinese source footnote and its owner, not as a universal equivalence of every historical candle standard with the modern candela.",
+  "imagesOpened": 0
+}

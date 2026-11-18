@@ -1,0 +1,84 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 214,
+  "printed_page": 204,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 214
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "6313c612adeb42010ed6e2c268a504bed45487035b529ecb6da66eefdf275a79"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "Display fractions each form one native row, not a wrap; fig188/189 captions share one printed horizontal row. No prose/math tokens removed or counting override.",
+    "Literal phi2 in substitution prose retained despite surrounding phi. No modern correction approved."
+  ],
+  "errata": [],
+  "printed_lines": 20,
+  "figures": [
+    {
+      "id": "fig-190",
+      "label": "图 190",
+      "box": [
+        228,
+        1300,
+        1068,
+        265
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+$\Gamma=\frac{\varphi_1}{\varphi}$ （6.21）
+
+<!-- p -->
+为此我们把对于 $\varphi_1$ 和 $\varphi_2$ 的等式代入上式：
+$\Gamma=\frac{h/F}{h/d_0}=\frac{d_0}{F}$ （6.22）
+
+<!-- p -->
+移动物体使之比焦平面更近，这时的放大率比物体位于
+焦平面上时增加不大，但这样眼睛就紧张了.
+
+<!-- p -->
+**显微镜**　放大镜的放大率是有限的，因为直径小的透镜
+才有很小的焦距，而用这种透镜是很困难的. 大的放大率需
+要再用一个透镜来获得. 这个透镜叫做**物镜**. 物镜给出物体
+的放大实像，然后再用叫做**目镜**的放大镜来观察这个实像，这
+样组合的光学仪器叫做**显微镜**.
+
+<!-- p open -->
+为了获得物体放大的实像，把物体放在物镜焦点和两倍
+焦距的点之间，用目镜观察时，需把目镜这样安置，使物镜所
+成的像在目镜的焦平面上. 这样从目镜中观察时眼睛就不紧
+
+<!-- fig 图 190 box 228,1300,1068,265 -->
+![图 190](figures/fig-190.png)
+
+<!-- cap 图 190 -->
+图 190
+
+<!-- p cont -->
+张了. 在显微镜里，光路如图 190 所示. 图中所画的两条光线
+是从物体上点 $A$ 发出的，并且形成中间实像 $A_1$. 光线入射到
+目镜后，由其折射，并以平行光束射入眼睛，在视网膜上造成
+像 $A_2$. 显微镜使区分物体的各细小局部成为可能. 在用肉眼
+观察时，这些细小局部是重叠在一起的.
+
+<!-- foot -->
+· 204 ·

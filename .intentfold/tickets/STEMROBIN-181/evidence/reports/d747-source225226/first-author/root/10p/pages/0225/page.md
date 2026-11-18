@@ -1,0 +1,96 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 225,
+  "printed_page": 215,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 225
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "2fcf448bd42c29d4f583396bea2fa359a5476ebce8ab4dcb0e231b26b55d4b04"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "Physical page225 / printed215: source83 questions1-3 precede the actual source84 heading; heading and boundary read from pixels, not TOC.",
+    "Source84 paragraph about waves1/2 is split around figure198 and remains open at page end; caption shares the printed row with the preceding prose.",
+    "Historical wording and quotation are retained literally; no modernization, answers, assembly or content approval."
+  ],
+  "errata": [],
+  "printed_lines": 24,
+  "figures": [
+    {
+      "id": "fig-198",
+      "label": "图 198",
+      "box": [
+        991,
+        1466,
+        331,
+        294
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- exhead -->
+问题
+
+<!-- ex 1 -->
+1. 光的折射率的物理含义是什么？
+
+<!-- ex 2 -->
+2. 在练习本上用红铅笔写上“优”，在它的左边用绿铅笔
+写上“良”. 现有两块玻璃——绿色的和红色的，为了看清评
+语“优”，应该通过哪块玻璃来看？
+
+<!-- ex 3 -->
+3. 为什么只有很窄的光束通过棱镜以后才能形成光谱，
+而宽光束只在边缘才呈现彩色？
+
+<!-- h3 -->
+84. 光的干涉
+
+<!-- p -->
+我们现在来研究一些证明光是波的现象. 如前所述，干
+涉和衍射现象是任何波动所固有的，对光的干涉和衍射现象
+的观察可以使人确信光在传播时表现出**波的特性**.
+
+<!-- p -->
+很久以前就有人观察到光的干涉，但仅仅是无意识的. 小
+时候你们吹肥皂泡玩，或是观察水面上的煤油或石油薄膜的
+虹彩时，你们也多次看到干涉图样. “漂荡在空气中的肥皂
+泡，……闪烁着周围物体固有的绚烂的色彩. 大概肥皂泡是
+自然界最美妙、最精致的奇迹”（马克·吐温）. 正是光的干
+涉，使肥皂泡值得如此赞美.
+
+<!-- p open -->
+英国学者托马斯·杨第一个得到
+了天才的结论，认为可以用波 $1$ 和波
+$2$ 的迭加来解释薄油膜的色彩. 波 $1$
+是由油膜外表面反射的，而波 $2$ 是由
+其内表面反射的（图 198）. 在这种情
+
+<!-- fig 图 198 box 991,1466,331,294 -->
+![图 198](figures/fig-198.png)
+
+<!-- cap 图 198 samerow -->
+图 198
+
+<!-- p cont open -->
+况下就产生了**光波的干涉——两列波的迭加，因此可以观察**
+
+<!-- foot -->
+· 215 ·

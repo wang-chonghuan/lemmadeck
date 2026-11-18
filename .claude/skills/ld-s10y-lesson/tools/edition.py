@@ -33,7 +33,8 @@ MATH = re.compile(r"\$\$(.+?)\$\$|\$([^$]+?)\$", re.S)
 MATH_TEXT_LITERAL = re.compile(r"\\text\{([^{}]*)\}")
 MATH_BOUNDARY_PUNCTUATION = re.compile(r"[、，；。？！：]+")
 NUMBER = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])")
-FIGURE_REFERENCE = re.compile(r"(?:图\s*|Figures?\s+)(\d+)(?!\d)", re.I)
+PROSE_NUMBER = re.compile(NUMBER.pattern, re.ASCII)
+FIGURE_REFERENCE = re.compile(r"(?:图\s*\.?\s*|Figures?\s+)(\d+)(?!\d)", re.I)
 SECTION_REFERENCE = re.compile(r"(?:第\s*(\d+)\s*节|Sections?\s+(\d+)(?!\d))", re.I)
 PART_MARKER = re.compile(
     r"(?<![A-Za-z0-9_\u0400-\u04ff])(?<!\d\.)"
@@ -461,7 +462,7 @@ def prose_number_signature(text: str) -> tuple[list[str], dict[str, set[str]]]:
         "节号": {match.group(1) or match.group(2) for match in SECTION_REFERENCE.finditer(without_math)},
     }
     quantities = SECTION_REFERENCE.sub("", FIGURE_REFERENCE.sub("", without_math))
-    return NUMBER.findall(quantities), references
+    return PROSE_NUMBER.findall(quantities), references
 
 
 def masked_math(text: str) -> str:
@@ -563,7 +564,7 @@ def normalize_prose_layout(text: str) -> str:
             )
         )
         if current and not attaches_to_previous and (
-            len(current) >= 3 or current_chars + len(line) > 180
+            len(current) >= 3 or (len(current) >= 2 and current_chars + len(line) > 180)
         ):
             paragraphs.append(current)
             current = []
@@ -572,6 +573,13 @@ def normalize_prose_layout(text: str) -> str:
         current_chars += len(line)
     if current:
         paragraphs.append(current)
+    if len(paragraphs) > 1 and len(paragraphs[-1]) == 1:
+        last = paragraphs[-1][0]
+        if not MATH.fullmatch(last.rstrip("，,；;。.!！?？")):
+            if len(paragraphs[-2]) == 3:
+                paragraphs[-1].insert(0, paragraphs[-2].pop())
+            elif len(paragraphs[-2]) == 2:
+                paragraphs[-2].extend(paragraphs.pop())
     return "\n\n".join("\n".join(paragraph) for paragraph in paragraphs)
 
 
@@ -730,6 +738,35 @@ def validate_identity_fields(
         if (field in modern) != (field in source) or modern.get(field) != source.get(field):
             errors.append(f"{label}.{field} 不得改变")
     return errors
+
+
+def validate_lesson_identity(source: dict, modern: dict) -> list[str]:
+    locale = modern.get("locale")
+    fields = tuple(
+        field for field in IDENTITY_FIELDS
+        if not (locale == "en" and field == "title")
+    )
+    errors = validate_identity_fields(source, modern, fields, "lesson")
+    if locale not in (None, "zh", "en"):
+        errors.append("lesson.locale 必须是 zh 或 en")
+    if locale == "en":
+        title = modern.get("title")
+        if (
+            not isinstance(title, str)
+            or not title.strip()
+            or NON_ENGLISH_FIGURE_SCRIPT.search(title)
+        ):
+            errors.append("lesson.title 必须是非空英文现代标题")
+    return errors
+
+
+def same_figure_label(source: object, modern: object, locale: object) -> bool:
+    if source == modern:
+        return True
+    if locale != "en" or not isinstance(source, str):
+        return False
+    number = re.fullmatch(r"图\s+(\d+)", source)
+    return bool(number and modern == f"Figure {number.group(1)}")
 
 
 def validate_text(
@@ -1593,9 +1630,7 @@ def validate_lesson(
     )
     errors += errata_errors
 
-    for field in IDENTITY_FIELDS:
-        if lesson.get(field) != raw_lesson.get(field):
-            errors.append(f"lesson.{field} 不得改变")
+    errors += validate_lesson_identity(raw_lesson, lesson)
     raw_prose = raw_lesson.get("prose", [])
     lesson_source = lesson.get("source")
     lesson_source_data = lesson_source.get("data") if isinstance(lesson_source, dict) else {}
@@ -1618,6 +1653,14 @@ def validate_lesson(
         if modern_block.get("source_text") != source_block.get("text", ""):
             errors.append(f"{label}.source_text 与原书不一致")
         for field in ("kind", "id", "label", "printed_page", "source_refs"):
+            if (
+                field == "label"
+                and source_block.get("kind") in ("fig", "cap")
+                and same_figure_label(
+                    source_block.get(field), modern_block.get(field), lesson.get("locale")
+                )
+            ):
+                continue
             if (
                 field == "source_refs"
                 and field not in modern_block

@@ -1,0 +1,103 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 203,
+  "printed_page": 193,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 203
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "d42c5de941ab9b479506a6fb9c07bfd352edbdc06384d5330067e8506c3faf63"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "SOURCE203 first author only. SOURCE202 accepted textual carry-in ends in 使 and its final paragraph is open; SOURCE202 independent boundary remains pending and is not signed here.",
+    "No heading on this source page. Final paragraph closes at 虚像.; n76 right boundary and full card completion remain unapproved.",
+    "图 179 caption shares printed body row 7; 图 180 caption shares printed body row 20. Footer is page number, not footnote. Native refs are one-based; JSON pointers zero-based.",
+    "Original Latin labels and subscripts retained as inline mathematics; no modern generation or source correction."
+  ],
+  "errata": [],
+  "printed_lines": 24,
+  "figures": [
+    {
+      "id": "fig-179",
+      "label": "图 179",
+      "box": [
+        843,
+        154,
+        502,
+        411
+      ]
+    },
+    {
+      "id": "fig-180",
+      "label": "图 180",
+      "box": [
+        825,
+        1173,
+        522,
+        308
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont open -->
+另一条光线$AD$通过焦点，折
+射后，它平行于主光轴. 这两条
+折射线的交点就是点$A$的像
+$A_1$. 同样可以做出所有其余点
+的像. 不应当认为图像只是由
+两条或三条光线组成的：它是
+由从点$A$发出的，会聚在点$A_1$
+
+<!-- fig 图 179 box 843,154,502,411 -->
+![图 179](figures/fig-179.png)
+
+<!-- cap 图 179 samerow -->
+图 179
+
+<!-- p cont -->
+的无数光线形成的. 其中穿过透镜的光心$O$的光线$AOA_1$射
+至$A_1$点. 这样一来，为了作出各点的像可以利用三条“特殊”
+光线中的任意两条. 这三条光线通过透镜的光路是知道的：
+1) 穿过光心的光线；2) 平行于主光轴入射到透镜的光线；
+3) 穿过焦点的光线.
+
+<!-- p open -->
+我们再研究一种情况：即需要作出位于主光轴上点的像.
+这时困难在于所有这三条方便的光线都合并成一条与主光轴
+重合的光线. 所以需要确定射
+至透镜上的任一点$B$的光线$SB$
+的光路(图 180). 为作出折射线
+我们作平行于光线$SB$的副光
+轴$PQ$，然后作焦平面$F$，求出
+焦平面与副光轴的交点$C$. 折
+
+<!-- fig 图 180 box 825,1173,522,308 -->
+![图 180](figures/fig-180.png)
+
+<!-- cap 图 180 samerow -->
+图 180
+
+<!-- p cont -->
+射线$BC$就通过$C$点. 这样一来，就作出了$S$点发出的两条
+光线的光路. 经透镜折射后，这两条光线发散. 因为光源位
+于焦点和透镜之间，所以点$S$的像$S_1$是虚像.
+
+<!-- foot -->
+• 193 •

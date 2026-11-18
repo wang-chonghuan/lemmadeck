@@ -1,0 +1,107 @@
+{
+  "schema": "STEMROBIN-181/scoped-new-text-task-pre-author-baseline@1",
+  "ticket": "STEMROBIN-181",
+  "batch": "D033",
+  "card": "phy9-c2-s4-t18",
+  "reviewer": "parent Codex, distinct from existing Galileo and Locke authors",
+  "scope": "First independent solution baseline for new written answers and choices from source tasks13,14,15,16 only.",
+  "authorCandidatesOrKeysReadBeforeBaseline": false,
+  "oldAnswersOrChoicesUsed": false,
+  "sourceBindings": [
+    {
+      "path": ".intentfold/tickets/STEMROBIN-181/tmp/d032-t18-text-repair/frozen/exercises.template.json",
+      "sha256": "fb4ca6d2d5d7d060c51e2ae8d0e3c8310cc4c67aa72b3d9cbe1e2ac494f392f0"
+    },
+    {
+      "path": ".intentfold/tickets/STEMROBIN-181/tmp/d032-t18-text-repair/frozen/english.exercises.template.json",
+      "sha256": "fbc806dcc4c5108bfe3bd9bec17931d5bd65df6dd21b745c7474e980b1219f02"
+    }
+  ],
+  "tasks": [
+    {
+      "source_number": "13",
+      "sourceRefs": ["p0279#12"],
+      "independent_solution": "An electronic recombination event fills the missing valence-electron state represented by the hole. One mobile electron-hole pair is removed from the carrier population in that event; charge is conserved, not annihilated. Energy can transfer to lattice vibrations or radiation according to the material and mechanism. A photon is not produced in every possible recombination event.",
+      "requiredBoundaries": [
+        "Distinguish carrier recombination from electron-positron annihilation.",
+        "Do not universally guarantee visible light or a particular emitted photon energy.",
+        "No supplied lifetime, rate, temperature or band gap may be invented."
+      ]
+    },
+    {
+      "source_number": "14",
+      "sourceRefs": ["p0279#13"],
+      "independent_solution": "Small unintended impurity concentrations can strongly change semiconductor carrier populations, carrier lifetimes and electronic behavior. Device manufacture therefore starts from sufficiently pure material so that uncontrolled impurities do not dominate and any intended dopants can be deliberately introduced at controlled type and concentration. The source purity requirement does not mean all semiconductor devices must be absolutely dopant-free.",
+      "requiredBoundaries": [
+        "Separate unwanted contamination from intentional controlled doping.",
+        "Do not say every impurity improves conductivity or always changes it in the same direction.",
+        "No universal numerical purity threshold can be inferred from this prompt."
+      ]
+    },
+    {
+      "source_number": "15",
+      "sourceRefs": ["p0279#14"],
+      "given": {
+        "currentA": 25,
+        "timeHours": 2,
+        "electrochemicalEquivalentKgPerC": 3e-7,
+        "densityKgPerM3": 8900,
+        "areaM2": 0.2
+      },
+      "independent_solution": "Use the ordinary complete-deposition and uniform-coating model. t=7200s, Q=It=180000C, m=kQ=0.054kg. The layer volume is m/rho and thickness h=m/(rho A)=0.054/(8900*0.2)m=3.0337078651685392e-5m, approximately0.0303mm or30.3micrometres. This is an average/equivalent uniform thickness over the stated total area, not a promise of equal thickness at every point on a real part.",
+      "requiredBoundaries": [
+        "Convert2hours to7200seconds, not2seconds or120seconds.",
+        "Use the given electrochemical equivalent as supplied rather than replacing it with a modern nickel constant.",
+        "Preserve stated total coated area; do not silently double it.",
+        "Explicitly name ideal current efficiency/uniform or average thickness as appropriate.",
+        "Do not replace the original experimental parameter values."
+      ]
+    },
+    {
+      "source_number": "16",
+      "sourceRefs": ["p0279#15"],
+      "given": {
+        "acceleratingVoltagesV": [500, 5000]
+      },
+      "independent_solution": "For a collisionless electron accelerated from negligible initial speed through voltage magnitude U in the classical nonrelativistic approximation, eU=m_e v^2/2 and v=sqrt(2eU/m_e). Declare the rounded conventional constants e approximately1.6e-19C and m_e approximately9.1e-31kg, not prompt-supplied numerical data. This gives v(500V) approximately1.326e7m/s and v(5000V) approximately4.193e7m/s; v2/v1=sqrt(10), not10. If initial speed is not negligible the energy relation instead gives v^2=v0^2+2eU/m_e. These classical values are approximate, not exact relativistic values.",
+      "requiredBoundaries": [
+        "Preserve both500V and5000V and their ordering.",
+        "State negligible initial speed and nonrelativistic idealization rather than claiming they were explicitly printed.",
+        "Use voltage magnitude as electron kinetic-energy gain; do not infer a negative speed from its negative charge.",
+        "Do not silently treat energy gain eU as speed or scale speed linearly with voltage.",
+        "Do not present rounded constants or approximate velocities as exact modern measurements."
+      ]
+    }
+  ],
+  "newCalculation": {
+    "kind": "One first scoped arithmetic evaluation, not a source/transcription or old-answer review",
+    "command": "node -e 'const e=1.6e-19,m=9.1e-31;const Q=25*2*3600,deposit=3e-7*Q,h=deposit/(8.9e3*0.2);console.log(JSON.stringify({task15:{Q,depositKg:deposit,thicknessM:h,thicknessMm:h*1e3},task16:{model:\"nonrelativistic,negligible-initial-speed; declared rounded constants\",e,m,voltages:[500,5000],speeds:[500,5000].map(U=>Math.sqrt(2*e*U/m))}},null,2))'",
+    "exitCode": 0,
+    "output": {
+      "task15": {
+        "Q": 180000,
+        "depositKg": 0.054,
+        "thicknessM": 0.000030337078651685392,
+        "thicknessMm": 0.030337078651685393
+      },
+      "task16": {
+        "e": 1.6e-19,
+        "m": 9.1e-31,
+        "voltages": [500, 5000],
+        "speeds": [13259870.882635918, 41931393.468876734]
+      }
+    }
+  },
+  "imagesOpened": 0,
+  "parentCumulativeImages": 24,
+  "compactionReset": false,
+  "newWorkersWorktreesBranches": 0,
+  "wholeCardApproved": false,
+  "writtenAnswersOrChoicesApproved": false,
+  "sourceTask8And10Disposition": "Not included here; no blanket HOLD or approval.",
+  "originalHolds": ["exercise1-fig189", "exercise9-discharge-type"],
+  "sourceReviewRepeated": false,
+  "fullGate2PASS": false,
+  "DISPLAY": false,
+  "DBMergeDeployCommitPush": false
+}

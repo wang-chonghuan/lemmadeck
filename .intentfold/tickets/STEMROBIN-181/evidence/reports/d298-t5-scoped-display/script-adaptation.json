@@ -1,0 +1,107 @@
+{
+  "original": {
+    "path": ".intentfold/tickets/STEMROBIN-181/tmp/d060-n52-display/check.mjs",
+    "sha256": "2c3a883eb625925b9bb9ffede87fe5d020f841734083caa298f9af70a6f5dc49"
+  },
+  "current": {
+    "path": ".intentfold/tickets/STEMROBIN-181/tmp/d297-t5-scoped-display/check.mjs",
+    "sha256": "3bcaabbfcafdd98a9638080c440ba30d55fc44d2967959a4798cd7aa3ddd58de"
+  },
+  "adaptations": [
+    {
+      "reason": "Source-bound exercises-only card, with no invented prose.",
+      "before": "    assert.ok(outline.length, 'Native text surface cannot be empty');",
+      "after": "    assert.ok(outline.length || (lesson.source.data.prose.length === 0\n      && exercises.count > 0), 'Empty prose is allowed only for a source-bound exercises-only card');"
+    },
+    {
+      "reason": "Restrict target to the one unobserved card.",
+      "before": "  assert.ok(cards.every(card => /^phy10-c1-s6-n(?:52|57|58)$/.test(card)));",
+      "after": "  assert.deepEqual(cards, ['phy10-c2-s2-t5'], 'This first scoped display run is t5 only');"
+    },
+    {
+      "reason": "Consume reviewed partial candidates without manufacturing a finalized complete answer key.",
+      "before": "    assert.equal(keys.status, 'ready');",
+      "after": "    assert.equal(keys.status, 'draft', 'Partial answer candidate must not be promoted to ready');\n    assert.equal(keys.coverage.completeAnswerCoverage, false);\n    assert.deepEqual(keys.coverage.held.map(String), entry.heldExerciseIds);\n    assert.equal(entry.completeCardClaim, false);"
+    },
+    {
+      "reason": "Answer count derives from reviewed subset, not all seven source tasks.",
+      "before": "    assert.equal(keys.answers.length, target.exercises.count);",
+      "after": "    assert.equal(keys.answers.length, entry.approvedExerciseIds.length);"
+    },
+    {
+      "reason": "Bind selected exercises by stable source ID and account for every omitted task.",
+      "before": "    const originalNumbers = target.exercises.exercises.map(e => String(nativeHelpers.sourceNumberForArtifact(e)));\n    const originalIds = target.exercises.exercises.map(e => String(e.number));",
+      "after": "    const selectedExercises = target.exercises.exercises.filter(e =>\n      entry.approvedExerciseIds.includes(String(e.number)));\n    const originalNumbers = selectedExercises.map(e => String(nativeHelpers.sourceNumberForArtifact(e)));\n    const originalIds = selectedExercises.map(e => String(e.number));\n    assert.deepEqual(originalIds, entry.approvedExerciseIds);\n    assert.deepEqual(target.exercises.exercises.filter(e =>\n      !entry.approvedExerciseIds.includes(String(e.number))).map(e => String(e.number)),\n      entry.heldExerciseIds, 'All omitted source tasks must remain explicitly held');"
+    },
+    {
+      "reason": "Do not describe partial coverage as complete coverage.",
+      "before": "'Answer keys must correspond to all original exercises in order'",
+      "after": "'Candidate answers must correspond to the approved original exercises in order'"
+    },
+    {
+      "reason": "Choice coverage inherits the independent selected-task receipt.",
+      "before": "'Reviewed choice views must collectively cover all six original problems; combined-source questions are allowed'",
+      "after": "'Reviewed choice views must exactly cover the six approved source tasks; held exercise5 is not keyed'"
+    },
+    {
+      "reason": "Noncontiguous answer IDs must not use ordinal lookup into all seven exercises.",
+      "before": "      assert.equal(String(answer.exercise), String(target.exercises.exercises[i].number),",
+      "after": "      assert.equal(String(answer.exercise), String(selectedExercises[i].number),"
+    },
+    {
+      "reason": "Carry source-ID-selected native prompts into rendering and assertions.",
+      "before": "    target.supplement = { entry, draft, keys, draftBinding, answerBinding, review: reviewBinding,",
+      "after": "    target.supplement = { entry, draft, keys, selectedExercises, draftBinding, answerBinding, review: reviewBinding,"
+    },
+    {
+      "reason": "Expose the seven-versus-six boundary in the actual execution receipt.",
+      "before": "      language: entry.language, writtenExercises: target.exercises.count, standardAnswers: keys.answers.length,",
+      "after": "      language: entry.language, writtenExercises: target.exercises.count, standardAnswers: keys.answers.length,\n      approvedExerciseIds: originalIds, heldExerciseIds: entry.heldExerciseIds, completeCardClaim: false,"
+    },
+    {
+      "reason": "Render source-bound answer prompts without shifting exercises6 and7.",
+      "before": "    const exercise = data.exercises.exercises[index];",
+      "after": "    const exercise = data.supplement.selectedExercises[index];"
+    },
+    {
+      "reason": "Use native displayed source numbering, including suppression of duplicate body prefixes.",
+      "before": "    return `<li class=\"ex\" id=\"ex-${escape(exercise.number)}\"><div class=\"no\">${index + 1}.</div><div class=\"body\">${prompt}${(exercise.figures ?? []).map(figure => figureHtml(figure.id)).join('')}<details open><summary>${escape(titles.summary)}</summary>${body}</details></div></li>`;",
+      "after": "    return `<li class=\"ex\" id=\"ex-${escape(exercise.number)}\"><div class=\"no\">${escape(nativeHelpers.displayNumberForArtifact(exercise))}</div><div class=\"body\">${prompt}${(exercise.figures ?? []).map(figure => figureHtml(figure.id)).join('')}<details open><summary>${escape(titles.summary)}</summary>${body}</details></div></li>`;"
+    },
+    {
+      "reason": "Expected prompts/formulas derive from the unchanged native selected source, not observed UI.",
+      "before": "  return {\n    texts: data.exercises.exercises.flatMap((e, i) => kind === 'answers' ? [e.text, data.supplement.keys.answers[i].displayAnswer] : [e.text]),\n    refs: data.exercises.exercises.flatMap(e => (e.figures ?? []).map(f => f.id)),\n  };",
+      "after": "  const exercises = kind === 'answers' ? data.supplement.selectedExercises : data.exercises.exercises;\n  return {\n    texts: exercises.flatMap((e, i) => kind === 'answers' ? [e.text, data.supplement.keys.answers[i].displayAnswer] : [e.text]),\n    refs: exercises.flatMap(e => (e.figures ?? []).map(f => f.id)),\n  };"
+    },
+    {
+      "reason": "Keep original written count7 and reviewed answer/choice count6 distinct.",
+      "before": "    const expectedCount = surface.kind === 'choices' ? data.supplement.draft.questions.length : data.exercises.count;",
+      "after": "    const expectedCount = surface.kind === 'choices' ? data.supplement.draft.questions.length\n      : surface.kind === 'answers' ? data.supplement.keys.answers.length : data.exercises.count;"
+    },
+    {
+      "reason": "Reuse d218 native numbering contract instead of replaying its known faulty column-only assertion.",
+      "before": "      check(surface, isDeepStrictEqual(observed.exercises.map(e => e.number), data.exercises.exercises.map(e => {\n        const n = nativeHelpers.sourceNumberForArtifact(e);\n        return n == null ? '' : `${n}.`;\n      })), 'Original printed exercise numbers');",
+      "after": "      check(surface, isDeepStrictEqual(observed.exercises.map(e => e.number),\n        data.exercises.exercises.map(e => nativeHelpers.displayNumberForArtifact(e))),\n      'Native displayed source numbers without duplicate body prefixes');\n      check(surface, observed.exercises.every((e, i) => {\n        const source = data.exercises.exercises[i];\n        const n = nativeHelpers.sourceNumberForArtifact(source);\n        return e.number === `${n}.` || (e.number === ''\n          && new RegExp(`^\\\\s*${n}\\\\.(?=\\\\s|$)`).test(e.text));\n      }), 'Every original source number visible in column or unchanged native body prefix');"
+    },
+    {
+      "reason": "Selected answer fragments account for twelve prompt/answer texts.",
+      "before": "observed.expectedVisibleFragments.length === data.exercises.count * 2",
+      "after": "observed.expectedVisibleFragments.length === data.supplement.keys.answers.length * 2"
+    },
+    {
+      "reason": "Explicitly prove noncontiguous answer binding and omission of held exercise5.",
+      "before": "      'All six corresponding original prompts and complete reviewed standard answers open', observed.exercises);",
+      "after": "      'All six corresponding original prompts and complete reviewed standard answers open', observed.exercises);\n      check(surface, isDeepStrictEqual(observed.exercises.map(e => e.id),\n        data.supplement.selectedExercises.map(e => `ex-${e.number}`)),\n      'Approved source answer IDs/order; no fabricated exercise5 answer');\n      check(surface, isDeepStrictEqual(observed.exercises.map(e => e.number),\n        data.supplement.selectedExercises.map(e => nativeHelpers.displayNumberForArtifact(e))),\n      'Selected answer source numbering retains6 and7');"
+    },
+    {
+      "reason": "Mechanical-only partial evidence cannot close the card or its visual review.",
+      "before": "      : 'PASS-mechanical-independent-display-review-pending';",
+      "after": "      : 'PASS-mechanical-scoped-content-and-independent-display-review-pending';"
+    }
+  ],
+  "stableScriptChanged": false,
+  "substantiveReviewRepeated": false,
+  "originalFAILPreserved": true,
+  "heldExercise5Unchanged": true,
+  "allOtherLayoutFormulaFontCutoffCaptureAndPixelChecksRetained": true
+}

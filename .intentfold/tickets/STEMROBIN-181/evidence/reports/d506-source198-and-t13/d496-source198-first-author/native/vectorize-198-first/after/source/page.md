@@ -1,0 +1,95 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 198,
+  "printed_page": 188,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 198
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "bfb409c988f367effd26d20ce5039baf5b7b21f2579b93eef3dc1672228b4bc2"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "First author observation used only one original full-page image. Complete SOURCE198 fidelity is HOLD; possible slanted emphasis of 物体 and fig167 fine interior marks remain unresolved.",
+    "No RAW or SVG preview opened. Native extraction receipts are not independent fidelity proof. Right body tail remains open after 沿副."
+  ],
+  "errata": [],
+  "printed_lines": 26,
+  "figures": [
+    {
+      "id": "fig-167",
+      "label": "图167",
+      "box": [
+        866,
+        252,
+        393,
+        256
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+的厚度。这就使得光线在空气中向
+远离主光轴方向偏折，就是使光线
+“发散”。
+
+<!-- fig 图167 box 866,252,393,256 -->
+![图167](figures/fig-167.png)
+
+<!-- p open -->
+**薄透镜** 我们来研究最简单的
+情况，即当透镜的厚度$l=|AB|$
+
+<!-- cap 图167 samerow -->
+图167
+
+<!-- p cont -->
+（图164）跟球面的曲率半径$R_1$和$R_2$及物体到透镜的距离相
+比小到可以忽略时的情况。这样的透镜叫做**薄透镜**。以下
+我们凡提到透镜就是指薄透镜。
+
+<!-- p -->
+球面的顶点$A$和$B$在薄透镜中的位置很接近，以至可以
+把它们看作是一个点，这个点叫做**透镜的光心**，用字母$O$
+表示。
+
+<!-- p -->
+薄透镜的主光轴穿过光心。通过光心的其它任何一条直
+线叫做**副光轴**。
+
+<!-- p -->
+**透镜成像** 如平面镜和球面镜一样，透镜可以形成光源
+的像。这就是说物体（光源）的任何一点发出的光线经透镜折
+射之后，能重新会聚到一点（像），而与光线是穿过透镜的哪一
+部分无关。如果光线通过透镜后又相遇了，就形成实像。在
+穿过透镜的光线是发散的情况下，相交于一点的不是这些光
+线本身，而是它们的延长线。那时，像是虚像，它可以用光学
+仪器或者用肉眼直接观察到①。
+
+<!-- p open -->
+**会聚透镜** 会聚透镜中光线的折射可以用实验观察：把
+透镜水平地放置在圆盘的中心，首先让光线沿主光轴竖直入
+射，可以证实光线通过透镜而不折射（图168）；再让光线沿副
+
+<!-- p footnote -->
+① 当光线和主光轴间的夹角很小时，光线（或光线的延长线）实际上将相
+交于一点。
+
+<!-- foot -->
+188

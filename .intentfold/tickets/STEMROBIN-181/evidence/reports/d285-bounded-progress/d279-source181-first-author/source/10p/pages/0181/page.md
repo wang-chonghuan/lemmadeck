@@ -1,0 +1,255 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 181,
+  "printed_page": 171,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 181
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "8e382a4d5886dcb9508e832f99c87fa284cb24b267f96a9ba164de62a2c3283f"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    {
+      "type": "bold",
+      "block": "p0181#3",
+      "ranges": [
+        {
+          "line": 1,
+          "text": "入射线、反射线与在入射点作的两种",
+          "character_range_1based_inclusive": [
+            13,
+            28
+          ]
+        },
+        {
+          "line": 2,
+          "text": "媒质界面的垂线位于同一平面内，反射角 $\\gamma$ 等于入射角 $\\alpha$.",
+          "character_range_1based_inclusive": [
+            1,
+            43
+          ]
+        }
+      ],
+      "basis": "S181-O1/O2实际两行粗体定律；第一行的正确的. 可简述如下：为常规字。范围按本候选印刷行的UTF-8解码字符计，不按像素宽度猜范围。"
+    },
+    {
+      "type": "bold",
+      "block": "p0181#9",
+      "ranges": [
+        {
+          "line": 1,
+          "text": "平面镜成像",
+          "character_range_1based_inclusive": [
+            1,
+            5
+          ]
+        }
+      ],
+      "basis": "实际五字行内标题粗体，后接常规正文；不是新的单元h3。"
+    },
+    {
+      "type": "italic",
+      "block": "p0181#10",
+      "line_range": [
+        1,
+        1
+      ],
+      "text": "171",
+      "character_range_1based_inclusive": [
+        3,
+        5
+      ],
+      "basis": "页脚三位数字明确右倾，两旁实印装饰点不作为字下强调点。"
+    },
+    {
+      "type": "math-typography",
+      "block": "p0181#3",
+      "ranges": [
+        {
+          "line": 2,
+          "text": "$\\gamma$",
+          "character_range_1based_inclusive": [
+            20,
+            27
+          ],
+          "source_glyph": "γ",
+          "style": "bold-italic"
+        },
+        {
+          "line": 2,
+          "text": "$\\alpha$",
+          "character_range_1based_inclusive": [
+            35,
+            42
+          ],
+          "source_glyph": "α",
+          "style": "bold-italic"
+        }
+      ],
+      "basis": "两处希腊数学变量为粗体定律中的斜体；以完整TeX片段绑定字符范围，未把公式语法当作原书字面字符。"
+    },
+    {
+      "type": "math-typography",
+      "block": "p0181#5",
+      "ranges": [
+        {
+          "line": 8,
+          "text": "$0^\\circ$",
+          "character_range_1based_inclusive": [
+            10,
+            18
+          ],
+          "source_glyph": "0°",
+          "style": "upright-number-with-degree-superscript"
+        },
+        {
+          "line": 8,
+          "text": "$90^\\circ$",
+          "character_range_1based_inclusive": [
+            24,
+            33
+          ],
+          "source_glyph": "90°",
+          "style": "upright-number-with-degree-superscript"
+        }
+      ],
+      "basis": "实际0与90及右上度符号照抄；未增添单位词、公式或答案。"
+    },
+    {
+      "type": "math-typography",
+      "block": "p0181#9",
+      "ranges": [
+        {
+          "line": 3,
+          "text": "$S$",
+          "character_range_1based_inclusive": [
+            17,
+            19
+          ],
+          "source_glyph": "S",
+          "style": "italic"
+        },
+        {
+          "line": 4,
+          "text": "$S_1$",
+          "character_range_1based_inclusive": [
+            31,
+            35
+          ],
+          "source_glyph": "S₁",
+          "style": "italic-S-with-upright-subscript-1"
+        }
+      ],
+      "basis": "两处S数学斜体，末行1为下标；页尾残句不补动词或句号。"
+    },
+    {
+      "type": "source-boundary",
+      "block": "p0181#3",
+      "basis": "p cont承已提供的p0180#9 open尾文这个定律对于任何性质的波都是；前置图137及图题透明。未重开180像素。"
+    },
+    {
+      "type": "source-layout",
+      "block": "p0181#7",
+      "basis": "图138题注与p0181#5第8行同一物理横排，cap samerow；p0181#5 open经图/题注透明接p0181#8 cont。"
+    },
+    {
+      "type": "source-boundary",
+      "block": "p0181#9",
+      "basis": "本页最后正文行止于从点S下标1，保留p open；182未观察，图139仅文字引用，n69未完整不放行。"
+    },
+    {
+      "type": "source-observation",
+      "basis": "实际两图137/138，均含全部可见图形粗框；无练习编号、解释性脚注、新69标题或可确认的字下强调点。常规段落不因墨色不匀猜粗体。普通文词媒质、由可以、平面即平面镜等按像素保留，不按常识或语法改原文。"
+    },
+    {
+      "type": "source-figure-hold",
+      "block": "p0181#6",
+      "finding": "R138-AUTH-H001",
+      "basis": "图138中央两处细小标注与密集线纹相叠，其确切字形未能在两张许可图中可靠确定。保留原像素，不猜alpha/gamma或隐含数值；后续图对象/标签独审HOLD。当前不再开图。"
+    }
+  ],
+  "errata": [],
+  "printed_lines": 21,
+  "figures": [
+    {
+      "id": "fig-137",
+      "label": "图 137",
+      "box": [
+        211,
+        156,
+        1128,
+        322
+      ]
+    },
+    {
+      "id": "fig-138",
+      "label": "图 138",
+      "box": [
+        960,
+        902,
+        366,
+        422
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- fig 图 137 box 211,156,1128,322 -->
+![图 137](figures/fig-137.png)
+
+<!-- cap 图 137 -->
+图 137
+
+<!-- p cont -->
+正确的. 可简述如下： 入射线、反射线与在入射点作的两种
+媒质界面的垂线位于同一平面内，反射角 $\gamma$ 等于入射角 $\alpha$.
+
+<!-- p -->
+显然，如果光的传播沿相反的方向进行（图 137б），也遵
+守这个定律. 光路的可逆性，是光线的重要特性.
+
+<!-- p open -->
+可以用实验来证明光的反射定律
+的正确性. 为此，在圆盘中心（图 138）
+固定一块平面镜或者一块平面玻璃，
+使它们的反射面与圆盘的直径重合.
+由可以沿圆周转动的专门的发光器发
+出一窄束光入射到反射面上. 入射线
+和反射线在圆盘的白色表面上留下光
+路. 把入射角从 $0^\circ$ 增加到 $90^\circ$ 时，可
+
+<!-- fig 图 138 box 960,902,366,422 -->
+![图 138](figures/fig-138.png)
+
+<!-- cap 图 138 samerow -->
+图 138
+
+<!-- p cont -->
+以观察到反射角的变化. 在这种情况下，圆盘的竖直直径就
+是在入射点垂直于镜平面的垂线. 观察证明了光的反射定律
+和反射时光路的可逆性.
+
+<!-- p open -->
+平面镜成像 让发光点位于反射光的平面即平面镜的前
+面. 试问： 如果我们往镜子里看，能在哪儿看到这个点的像？
+为了回答这个问题，我们来作从点 $S$ 发出的和反射后射入观
+察者眼睛的几条光线（图 139）. 人们觉得光线似乎是从点 $S_1$
+
+<!-- foot -->
+• 171 •

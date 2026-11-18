@@ -1,0 +1,110 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 184,
+  "printed_page": 174,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 184
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "cd77037ff2fa3fec30fbd413e118a3c978bfa685a6c51af3303289fd31c7d9e5"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "SOURCE184 first author only. First source inventory was independently observed and frozen before page.md authoring; no independent SOURCE or RAW pass is claimed.",
+    "Small dark 143 and 144 numeric ink within the original illustrations is retained in the figure crops, separately from the printed 图 143 and 图 144 captions.",
+    "The first paragraph is a new paragraph, not a continuation of source183. It is split internally around figure 144; that caption shares body row 4.",
+    "The final body paragraph visibly ends at 反射线将是 and remains open. The two-row footnote is complete and independent of that paragraph.",
+    "The supplied source183 tail is only a text continuity hint with independent review pending. Neither source183 nor source185 pixels were opened."
+  ],
+  "errata": [],
+  "figure_crops": {
+    "fig-143": {
+      "padding_px": 4,
+      "reason": "Original page and grid show the small numeric 143 ink ending near y556 with the separate 图 143 caption starting near y571. Reduced outer padding excludes the caption while keeping every figure element and the small number."
+    }
+  },
+  "printed_lines": 21,
+  "figures": [
+    {
+      "id": "fig-143",
+      "label": "图 143",
+      "box": [
+        269,
+        247,
+        476,
+        311
+      ]
+    },
+    {
+      "id": "fig-144",
+      "label": "图 144",
+      "box": [
+        852,
+        271,
+        444,
+        526
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- fig 图 143 box 269,247,476,311 -->
+![图 143](figures/fig-143.png)
+
+<!-- cap 图 143 -->
+图 143
+
+<!-- p open -->
+如果光线束平行于副轴
+入射(图 144)，那么反射以后，
+光线会聚在另外的一点，此点
+与镜子的距离也等于主焦点与
+
+<!-- fig 图 144 box 852,271,444,526 -->
+![图 144](figures/fig-144.png)
+
+<!-- cap 图 144 samerow -->
+图 144
+
+<!-- p cont -->
+镜子的距离. 所有类似点的总和组成一个确定的面. 当研究
+的副光轴和主光轴间的角度很小时，可以近似地认为这个面
+是垂直于主轴的平面，称为镜子的**焦平面**.
+
+<!-- p -->
+现在我们把发光器两侧的光线集中使其会聚于主焦点.
+光线通过主焦点后，以发散光束入射到镜子. 光线发散的点
+就起着发光点的作用. 不难证实，光线从镜子反射之后平行
+于主光轴射出，在这里我们又一次观察到光路的可逆性.
+
+<!-- p -->
+现在我们把起着光源作用的光线的交点移得离镜子远一
+些，这时反射光线是会聚的，它们相交于一点，也就是产生了
+实像. 反之，如果把光源移近镜子，反射光线就变为发散的，
+它们的延长线相交于一点，形成虚像①.
+
+<!-- p open -->
+**凸面镜**：上面的实验也可用于凸面镜. 把凸面镜固定在
+圆盘中心，让平行于主光轴的光线射向凸面镜. 反射线将是
+
+<!-- p footnote -->
+① 事实上，如果光线以与主光轴夹角很小的角度入射到镜子上，才可以认
+为反射线或者它们的延长线相交于一点.
+
+<!-- foot -->
+• 174 •
