@@ -1,5 +1,63 @@
 # 当前开发状态
 
+### batch326/327 n53选定包窄收口，7a首源审继续
+
+- 326实际01a1ecfa-842f-7513-a818-ccbc745c9077已completed/process exit0，
+  当前review rawSHA6851bae9974603c63572f72741467293b2b3efe9c3302903949dd436db44f367；
+  仅18源18题104项选择范围/依赖PASS，check_draft/check_review各实际一次，
+  direct exit0。原18题数学/逐项真值与原独审身份/hash明确继承，新增数学0/图0；
+  整源881未批准，原19源revise与旧候选不改、不重审或重render。
+- 327首次choices render exit0、1440/390 DOM各一次通过；
+  fresh观察者01a1ed02-4c30-78b3-b094-a3f754b3c792真实completed/process exit0，
+  两PNG各一次有限PASS，report rawSHA
+  ada920464837b8e47a7e680f9eb0f0c5bb0361f8b487551b6720a37005bf7277。
+  桌面q1九项/q2 a–e、手机q1九项/q2 a–b可见；底部碎片/后续18题全量、
+  其他横滚位置/独立图形生产/真实手势/APP/全课/881不批准。
+- 当前seed/draft/review和原19源失败历史同字节留存到n53 choice-set；
+  首屏display_pending限定解除，broader_display_pending及current_approval:false保持。
+  原83包基础上仅加本选定包18题104项/2组合，当前84选定包1426题5847项656组合，
+  不是84完整课程。无数学/SOURCE/trace/旧gate重跑，父0新图/累计24。
+- 325三个源作者均实际completed/process exit0，21新页已完整转写；
+  90–96和104–110共14页首finalize exit0，97–103有6页exit0、100页exit1。
+  原22/21行差异及376上标疑义保留，尚无新增完整现代课程信用。
+  328三个fresh FIRST源审实际ID
+  01a1ed01-b710-79e2-a22f-e252d2a1c478、
+  01a1ed01-b710-7cc2-b21d-457ad09712d4、
+  01a1ed01-b710-7a82-946a-8907bf84bccd，各原7grid一次，原范围在途不当完成。
+  n53尾批与新7a源阶段无互相依赖，不等待全部局部HOLD清空。
+
+### batch325/326接续真实缺失阶段，在途不计批准
+
+- 7a第二章n14–n17及n18边界首次备料为物理90–110，共21新页；
+  分三个各7页fresh短时作者，实际ID分别
+  01a1ecfb-2d8f-7c41-ae07-5544e3557768、
+  01a1ecfb-2d90-7f03-8816-22bf18e68295、
+  01a1ecfb-2d9d-7f13-aef1-18864d0e6671。每人仅7原grid各一次，
+  页级首次finalize和原目录回执；原60/61失败及其他旧源不重跑。
+- 三个包装器首次exit1误读独立render.json，发生在各首prepare exit0之后，
+  尚无作者派出或page.md写入。真实metadata在模板frontmatter；
+  原失败保存，已备料三页复用不重prepare，其余18页各首次prepare一次。
+- 6a n53仅排除881的18源18题104项选择范围；原四trace实际hash仍一致，
+  当前seed与原seed仅删除exercise881，draft仅seed摘要和coverage881删除。
+  fresh零图增量审者实际01a1ecfa-842f-7513-a818-ccbc745c9077，
+  不重解18题/104项，不读取或批准881候选，原revise/HOLD保留。
+- 当前仅记录真实执行入口，不消费部分文件为completed或PASS；
+  后续独立源审/首显示仍pending。父0新图/累计24，原83选定包、
+  1408题5743项654组合暂不增加，无DB/部署/合并或新分支。
+
+### 138ffd2d1图资料窄push已确认，非整课完成
+
+- 138ffd2d1d4000c08e617b9de09cfebc896595d8真实commit/push，远端ls-remote同SHA；
+  从04985887a推进，123文件仅六项范围内8a图资产/当前绑定、原FAIL/HOLD
+  及既有progress/usage。暂存路径/环境项/空白检查通过，无doc-only提交。
+- n6三新增实际640有限PASS及三持久PATH gate已闭合；n5三原PASS路径绑定
+  同样留存。fig13首draft真实exit2、fig14/16真实FAIL和6/7/10/15源HOLD
+  全部保留，不重render/数学/SOURCE/旧图，不绕过320的真实finalize门槛。
+- 本轮全部有限CLI进程已退出，父0新图/累计24。83选定包1408题5743项654
+  组合不增，完整课/独立生产/未见/真实交互/APP/881不批准。
+  layout/其测试/监督ticket/未完成4m仍原样不纳入；无DB/部署/合并/handoff。
+- 此处仅补实际push回执，随下一真实内容批次提交，不另造文档专用commit。
+
 ### batch322首次cap1真实FAIL留存，全部有限进程已结束
 
 - 322实际01a1eccf-ca8a-7160-9131-c6e5fc2fdfab真实completed/process exit0；

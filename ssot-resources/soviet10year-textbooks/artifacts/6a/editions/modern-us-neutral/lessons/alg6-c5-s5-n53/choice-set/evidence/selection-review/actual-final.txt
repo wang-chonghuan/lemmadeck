@@ -1,0 +1,30 @@
+Selection-only `pass`. Original 881 revise/HOLD preserved. Zero images; approval remains false and display pending.
+
+[review.json](/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/batch326-n53-qualified/review.json)
+
+rawSHA256: `6851bae9974603c63572f72741467293b2b3efe9c3302903949dd436db44f367`
+
+CODEX_THREAD_ID: `01a1ecfa-842f-7513-a818-ccbc745c9077`
+
+Actual validation command, exit `0`; each checker called exactly once:
+```bash
+PYTHONDONTWRITEBYTECODE=1 python3 -B - <<'PY'
+import json, sys
+from pathlib import Path
+sys.path.insert(0, '.agents/skills/ld-s10y-choice/scripts')
+from validate import check_draft, check_review
+repo = Path('/Users/yong/.codex/worktrees/d9b1/lemmadeck')
+base = repo / '.intentfold/tickets/STEMROBIN-182/tmp/batch326-n53-qualified'
+seed, draft, review = [json.loads((base / name).read_text()) for name in ('seed.json', 'draft.json', 'review.json')]
+exercises = {row['number']: row for row in seed['exercises']}
+source_figures = {row['id']: row for row in seed['figures']}
+blocks = {row['block']: row for row in seed['concepts']}
+questions, figures = check_draft(seed, draft, repo, exercises, source_figures, blocks.keys())
+print('check_draft: calls=1, exit=0, questions=' + str(len(questions)) + ', figures=' + str(len(figures)))
+outcome = check_review(seed, draft, review, exercises, figures, questions)
+exit_code = 0 if outcome == 'pass' else 3
+print('check_review: calls=1, outcome=' + outcome + ', exit=' + str(exit_code))
+print('check_seed=0; prepare=0; main=0; first-check=0; no post-check writes')
+raise SystemExit(exit_code)
+PY
+```
