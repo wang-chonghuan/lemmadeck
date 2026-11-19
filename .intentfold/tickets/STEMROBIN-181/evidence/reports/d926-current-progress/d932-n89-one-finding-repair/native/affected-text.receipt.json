@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "\nimport copy,json,re,sys\nfrom pathlib import Path\nsys.path.insert(0,sys.argv[1])\nimport edition as e\nimport mathcheck\np=json.load(sys.stdin)\nprofile=e.load(Path(p[\"profile\"]))\nforbidden=profile[\"forbidden_terms\"]+profile[\"forbidden_person_names\"]\nresults={}\nfor locale,d in p[\"candidates\"].items():\n    n=copy.deepcopy(d)\n    e.normalize_lesson_layout(n)\n    assert n==d\n    b=d[\"prose\"][0]\n    errors=e.validate_text(b[\"source_text\"],b[\"text\"],b[\"changes\"],b[\"numeric_changes\"],\n        f\"{locale}.prose[0]\",forbidden,b[\"historical_entities\"],None,b.get(\"notation_changes\"))\n    errors+=mathcheck.check_delimiters(b[\"text\"])\n    spans=lambda s:[m.group(0) for m in e.MATH.finditer(s)]\n    numbers=lambda s:re.findall(r\"\\d+(?:\\.\\d+)?\",e.MATH.sub(\"\",s))\n    assert spans(b[\"source_text\"])==spans(b[\"text\"])\n    assert numbers(b[\"source_text\"])==numbers(b[\"text\"])\n    assert not errors and b[\"numeric_changes\"]==[],errors\n    results[locale]={\"status\":\"pass\",\"sourceRefs\":b[\"source_refs\"],\"errors\":errors}\nprint(json.dumps({\"status\":\"pass\",\"affected\":results}))\n",
+    "/Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/tools"
+  ],
+  "cwd": "/Users/yong/.codex/worktrees/00b1/lemmadeck",
+  "exit": 0,
+  "stdout": "{\"status\": \"pass\", \"affected\": {\"zh\": {\"status\": \"pass\", \"sourceRefs\": [\"p0236#8\", \"p0237#5\"], \"errors\": []}, \"en\": {\"status\": \"pass\", \"sourceRefs\": [\"p0236#8\", \"p0237#5\"], \"errors\": []}}}\n",
+  "stderr": "",
+  "error": null,
+  "affectedOnly": true
+}

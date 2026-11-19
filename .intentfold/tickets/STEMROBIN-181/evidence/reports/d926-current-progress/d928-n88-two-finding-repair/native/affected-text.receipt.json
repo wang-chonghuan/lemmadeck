@@ -1,0 +1,18 @@
+{
+  "command": [
+    "/Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "\nimport json, re, sys\nfrom pathlib import Path\nsys.path.insert(0, sys.argv[1])\nimport edition as e\nimport mathcheck\np = json.load(sys.stdin)\nprofile = e.load(Path(p[\"profile\"]))\nforbidden = profile[\"forbidden_terms\"] + profile[\"forbidden_person_names\"]\nresults = []\nassert len(p[\"affected\"]) == 3\nfor item in p[\"affected\"]:\n    b, old = item[\"current\"], item[\"previous\"]\n    label = f'{item[\"locale\"]}.prose[{item[\"index\"]}]'\n    errors = e.validate_text(b[\"source_text\"], b[\"text\"], b[\"changes\"], b[\"numeric_changes\"],\n        label, forbidden, b[\"historical_entities\"], None, b.get(\"notation_changes\"))\n    delimiter_errors = mathcheck.check_delimiters(b[\"text\"])\n    math = lambda s: [m.group(0) for m in e.MATH.finditer(s)]\n    numbers = lambda s: re.findall(r\"\\d+(?:\\.\\d+)?\", e.MATH.sub(\"\", s))\n    assert math(b[\"source_text\"]) == math(old[\"text\"]) == math(b[\"text\"])\n    assert numbers(b[\"source_text\"]) == numbers(old[\"text\"]) == numbers(b[\"text\"])\n    assert b[\"numeric_changes\"] == []\n    assert not errors and not delimiter_errors, errors + delimiter_errors\n    results.append({\"locale\":item[\"locale\"],\"index\":item[\"index\"],\"sourceRefs\":b[\"source_refs\"],\n        \"orderedMathTokens\":math(b[\"text\"]),\"orderedNumericTokens\":numbers(b[\"text\"]),\n        \"validateTextErrors\":errors,\"delimiterErrors\":delimiter_errors,\"status\":\"PASS\"})\nprint(json.dumps({\"status\":\"PASS\",\"affectedFields\":results,\"validateTextCalls\":3,\n    \"delimiterCalls\":3,\"orderedMathComparisons\":3,\"orderedNumericComparisons\":3}))\n",
+    "/Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/tools"
+  ],
+  "cwd": "/Users/yong/.codex/worktrees/00b1/lemmadeck",
+  "startedAt": "2026-11-19T01:32:45.059Z",
+  "finishedAt": "2026-11-19T01:32:45.118Z",
+  "exit": 0,
+  "signal": null,
+  "stdout": "{\"status\": \"PASS\", \"affectedFields\": [{\"locale\": \"zh\", \"index\": 2, \"sourceRefs\": [\"p0233#7\", \"p0234#1\"], \"orderedMathTokens\": [\"$B$\", \"$C$\", \"$A$\", \"$A$\", \"$B$\", \"$C$\", \"$B$\", \"$C$\"], \"orderedNumericTokens\": [\"1802\", \"203\"], \"validateTextErrors\": [], \"delimiterErrors\": [], \"status\": \"PASS\"}, {\"locale\": \"en\", \"index\": 2, \"sourceRefs\": [\"p0233#7\", \"p0234#1\"], \"orderedMathTokens\": [\"$B$\", \"$C$\", \"$A$\", \"$A$\", \"$B$\", \"$C$\", \"$B$\", \"$C$\"], \"orderedNumericTokens\": [\"1802\", \"203\"], \"validateTextErrors\": [], \"delimiterErrors\": [], \"status\": \"PASS\"}, {\"locale\": \"en\", \"index\": 17, \"sourceRefs\": [\"p0235#7\", \"p0236#1\"], \"orderedMathTokens\": [], \"orderedNumericTokens\": [], \"validateTextErrors\": [], \"delimiterErrors\": [], \"status\": \"PASS\"}], \"validateTextCalls\": 3, \"delimiterCalls\": 3, \"orderedMathComparisons\": 3, \"orderedNumericComparisons\": 3}\n",
+  "stderr": "",
+  "error": null,
+  "affectedOnly": true
+}

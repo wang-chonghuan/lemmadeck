@@ -87,6 +87,10 @@ function renderInline(text, renderText) {
 
 const inline = (text) => renderInline(text, escText);
 const proseInline = (text) => renderInline(text, escProseText);
+const englishExerciseGroups = new Map([
+  ["问题", "Questions"],
+  ["**问题**", "**Questions**"],
+]);
 
 function figureContract(contentRoot, id, strictEdition) {
   const fallback = {
@@ -177,7 +181,7 @@ p.para.section{border-top:1px solid var(--rule);margin-top:1.5em;padding-top:1.3
 .figure-layered{display:grid}
 .figure-layered>.figure-artwork,.figure-layered>.figure-vector{grid-area:1/1}
 .figure-vector{display:block;width:100%;max-width:100%;height:auto}
-.nb{display:inline-block;max-width:100%;overflow-x:auto;vertical-align:middle;white-space:nowrap}
+.nb{display:inline-block;max-width:100%;overflow-x:auto;overflow-y:hidden;padding-block:.15em;vertical-align:middle;white-space:nowrap}
 .err{color:#a3341f;background:#fdeeea;padding:1px 5px;border-radius:3px}
 .exgroup{margin:2.2em 0 .8em;font-weight:700;font-size:1.05em;
   border-left:3px solid var(--accent);padding-left:.6em}
@@ -244,7 +248,8 @@ for (const lid of lessonDirs) {
     if (e.group !== group) {
       if (out) out += "</ol>";
       group = e.group;
-      out += `<div class="exgroup">${inline(group || (english ? "Exercises" : "练习"))}</div><ol class="ex">`;
+      const groupLabel = (english && englishExerciseGroups.get(group)) || group;
+      out += `<div class="exgroup">${inline(groupLabel || (english ? "Exercises" : "练习"))}</div><ol class="ex">`;
     }
     const figs = (e.figures || [])
       .map((f) => figure(contentRoot, f.id, f.label, !!editionName)).join("");

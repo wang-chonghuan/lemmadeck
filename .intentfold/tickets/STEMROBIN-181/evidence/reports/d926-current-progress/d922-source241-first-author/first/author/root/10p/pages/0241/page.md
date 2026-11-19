@@ -1,0 +1,73 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 241,
+  "printed_page": 231,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 241
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "dc5fe53a57aa961fc29ae206f85d0e29e294e76da4b908274026299d5d2a6067"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "SOURCE241 FIRST author only. SOURCE240 pixels/full text and SOURCE242 were not read.",
+    "Incoming open=true with human-supplied tail: 第一个假设是对光本身来说的. 光是横波. 但是由一般",
+    "First prose is cont; final prose ends at 投影. and is closed.",
+    "The visible captions 图 210 and 图 211 share one printed row.",
+    "Source term 自然波 is retained, not scientifically corrected; bold spans follow the source.",
+    "The visible footer is · 231 ·. No footnote or heading is visible."
+  ],
+  "errata": []
+}
+---
+
+<!-- p cont -->
+**光源发射出的光波具有振动方向和波的传播方向垂直的所有**
+**可能的振动**(图 210).
+
+<!-- p -->
+根据这个假设, 光波具有对称轴; 同时它是横波. 例如,
+在水面上, 波就没有这样的对称轴, 因为水的微粒振动仅仅发
+生在竖直平面内.
+
+<!-- p -->
+具有与传播方向相垂直的所有各方向振动的光波叫做**自
+然波**, 因为在通常条件下, 光源产生的就是这种波, 所以这个
+名称是正确的. 这个假设解释了第一个实验的结果. 因为入
+射波具有对称轴(尽管它是横波), 所以旋转电气石晶体不改
+变所通过的光的强度.
+
+<!-- fig 图 210 box 280,850,510,280 -->
+
+<!-- cap 图 210 -->
+图 210
+
+<!-- fig 图 211 box 850,850,500,280 -->
+
+<!-- cap 图 211 samerow -->
+图 211
+
+<!-- p -->
+必须作关于晶体的第二个假设. **电气石晶体具有只让处
+于某个平面(图 211 上的平面 $p$)上的振动穿过去的特性**. 这
+样的光叫做**偏振光**, 或者更准确地说, 叫做**平面偏振光**. 它与
+自然光不同, 因而也可以把自然光称为**非偏振光**. 这个假设
+圆满地解释了第二个实验的结果. 由第一个晶体发射出平面
+偏振光. 在两晶体正交时(它们的轴之间的夹角为 $90^\circ$)平面
+偏振光不能穿过第二个晶体. 如果它们的轴之间的夹角为不
+等于 $90^\circ$ 的某一角度时, 那么可以产生振动, 这振动的振幅等
+于穿过第一个晶体的波的振幅在第二个晶体的轴方向上的
+投影.
+
+<!-- foot -->
+· 231 ·

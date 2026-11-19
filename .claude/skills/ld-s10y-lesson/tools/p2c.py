@@ -223,6 +223,58 @@ def _figure_crop_exclusions(meta: dict, figure: dict, figures: list[dict]) -> li
     return exclusions
 
 
+def _figure_crop_text_exclusions(meta: dict, figure: dict, blocks: list[dict], ink) -> list[dict]:
+    regions = meta.get("figure_crops", {}).get(figure["id"], {}).get("exclude_text_regions", [])
+    if not isinstance(regions, list):
+        raise ValueError("exclude_text_regions must be a list")
+    if not regions:
+        return []
+    pad = _figure_crop_padding(meta, figure["id"])
+    x, y, w, h = figure["box"]
+    height, width = ink.shape
+    left, top = max(0, x - pad), max(0, y - pad)
+    right, bottom = min(width, x + w + pad), min(height, y + h + pad)
+    excluded = ink[top:bottom, left:right].copy()
+    excluded[:] = False
+    result = []
+    for region in regions:
+        if not isinstance(region, dict) or set(region) != {"block", "line", "text", "box", "reason"}:
+            raise ValueError("text exclusion requires block, line, exact text, box and reason")
+        block, line = region["block"], region["line"]
+        if type(block) is not int or not 1 <= block <= len(blocks):
+            raise ValueError("text exclusion references an unknown source block")
+        source = blocks[block - 1]
+        if source["kind"] not in B.KINDS_TEXT or type(line) is not int or not 1 <= line <= len(source["lines"]):
+            raise ValueError("text exclusion must reference an existing printed text line")
+        if region["text"] != source["lines"][line - 1]:
+            raise ValueError("text exclusion source line changed")
+        if not isinstance(region["reason"], str) or not region["reason"].strip():
+            raise ValueError("text exclusion requires a source inspection reason")
+        box = region["box"]
+        if not isinstance(box, list) or len(box) != 4 or any(type(v) is not int for v in box):
+            raise ValueError("text exclusion box must contain four integers")
+        ex, ey, ew, eh = box
+        if ew <= 0 or eh <= 0 or ex < left or ey < top or ex + ew > right or ey + eh > bottom:
+            raise ValueError("text exclusion box escapes the figure crop")
+        if ex != left and ey != top and ex + ew != right and ey + eh != bottom:
+            raise ValueError("text exclusion must touch a crop edge, not mask interior geometry")
+        region_mask = excluded[ey - top:ey + eh - top, ex - left:ex + ew - left]
+        if region_mask.any():
+            raise ValueError("text exclusion boxes overlap")
+        region_mask[:] = True
+        result.append(dict(region))
+    # Do not sever a retained stroke; semantic ownership still requires source review.
+    crop_ink = ink[top:bottom, left:right]
+    labels, _ = layout.ndimage.label(crop_ink)
+    removed = set(labels[crop_ink & excluded].tolist())
+    retained = set(labels[crop_ink & ~excluded].tolist())
+    if not removed:
+        raise ValueError("text exclusion contains no source ink")
+    if removed & retained:
+        raise ValueError("text exclusion cuts a connected source stroke")
+    return result
+
+
 def _figure_overlap_error(ink, first: dict, second: dict) -> str | None:
     (ax, ay, aw, ah), (bx, by, bw, bh) = first["box"], second["box"]
     x0, y0 = max(ax, bx), max(ay, by)
@@ -413,19 +465,23 @@ def cmd_finalize(a) -> int:
         errors.append(f"figure_crops contains unknown or invalid figures: {sorted(unknown_crops)}")
     for figure in figs:
         figure.pop("crop_excluded_figures", None)
+        figure.pop("crop_excluded_text_regions", None)
         try:
             exclusions = _figure_crop_exclusions(meta, figure, figs)
+            text_exclusions = _figure_crop_text_exclusions(meta, figure, blks, ink)
             padding = _figure_crop_padding(meta, figure["id"])
         except ValueError as error:
             errors.append(str(error))
             continue
         if exclusions:
             figure["crop_excluded_figures"] = exclusions
+        if text_exclusions:
+            figure["crop_excluded_text_regions"] = text_exclusions
         layout.crop(
             render_path, figure["box"], work / "figures" / f"{figure['id']}.png",
-            pad=padding, exclude_boxes=[entry["box"] for entry in exclusions],
+            pad=padding, exclude_boxes=[entry["box"] for entry in exclusions + text_exclusions],
         )
-        if exclusions and not layout.ink_mask(Image.open(work / "figures" / f"{figure['id']}.png")).any():
+        if (exclusions or text_exclusions) and not layout.ink_mask(Image.open(work / "figures" / f"{figure['id']}.png")).any():
             errors.append(f"{figure['id']}: 排除相邻图后没有保留本图墨迹")
     for i in range(len(figs)):
         for j in range(i + 1, len(figs)):

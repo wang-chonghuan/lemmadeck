@@ -879,15 +879,21 @@ def validate_text(
                     continue
                 term = declaration.get("term")
                 reason = declaration.get("reason")
+                source_term = declaration.get("source_term", term)
                 if not isinstance(term, str) or not term.strip():
                     errors.append(f"{declaration_label}.term 不能为空")
                     continue
                 if not isinstance(reason, str) or not reason.strip():
                     errors.append(f"{declaration_label}.reason 不能为空")
-                if term not in source:
-                    errors.append(f"{declaration_label}.term={term!r} 不在原文中")
+                if not isinstance(source_term, str) or not source_term.strip():
+                    errors.append(f"{declaration_label}.source_term 不能为空")
+                    continue
+                if source_term not in source:
+                    errors.append(f"{declaration_label}.source_term={source_term!r} 不在原文中")
                 if term not in modern:
                     errors.append(f"{declaration_label}.term={term!r} 不在现代版文本中")
+                if source_term != term and "translation" not in changes:
+                    errors.append(f"{declaration_label} 本地化名称必须声明 translation")
                 allowed_historical.add(term)
     hits = [
         term

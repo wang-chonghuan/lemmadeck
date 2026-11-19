@@ -1,0 +1,71 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 237,
+  "printed_page": 227,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 237
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "fd21b246b954eec077e2dc1233b68fc1208a2f2cb2e60bda3905ebf0e00fd569"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "SOURCE237 FIRST author only; incoming SOURCE236 suffix is author-bound only, not a full SOURCE236 PASS.",
+    "The opening prose continues the supplied suffix: 好的光栅是利用专门的刻划机.",
+    "The right boundary is the printed colon after 由下列条件求出:; the condition is not present on SOURCE237. SOURCE238 was not read.",
+    "Source punctuation is retained as ASCII periods, commas, parentheses and colon. The two printed page-number ornaments are retained as bullets.",
+    "No Cyrillic exercise enumerators occur on this page. Latin mathematical a, b, d, A, B, C and Greek lambda/varphi are not enumerators."
+  ],
+  "errata": []
+}
+---
+
+<!-- fig 图 206 box 230,125,435,470 -->
+
+<!-- fig 图 207 box 790,115,515,480 -->
+
+<!-- cap 图 206 -->
+图 206
+
+<!-- cap 图 207 samerow -->
+图 207
+
+<!-- p cont -->
+在玻璃平板上画出平行的细线制成的. 细线的数目每 1 毫米
+可达几千条. 细线总数超过 100000 条. 制作夹在两块玻璃
+平板之间的白明胶光栅印痕是很简单的. 所谓的**反射光栅**,
+具有最好的质量. 反射光栅的细缝交替地反射光和散射光. 
+散射光的条纹是用雕刻刀在磨光的金属平板上刻划出来的.
+
+<!-- p -->
+如果透明狭缝(或者反射光条纹)的宽度为 $a$, 而不透明
+间隔(或者散射光条纹)的宽度为 $b$, 则量 $d=a+b$, 叫做**光栅
+常数**. 我们来研究衍射光栅基本理论的主要因素, 让波长为
+$\lambda$ 的平行单色波射入光栅(图 207).
+
+<!-- p -->
+狭缝上的次级光源造成向各个方向传播的光波. 我们来
+求由狭缝发出的波彼此加强的条件. 为此我们来研究由角 $\varphi$ 
+方向上传播的波. 在两个相邻狭缝的边缘处发出的波间的程
+差等于线段 $AC$ 的长度. 如果线段 $AC$ 的长是波长的整数
+倍, 那么由所有狭缝发出的波迭加后将彼此加强. 由三角形
+$ABC$ 中可以求出直角边 $AC$ 的长:
+
+<!-- p -->
+$|AC|=|AB|\sin\varphi=d\sin\varphi$.
+
+<!-- p open -->
+当角度为 $\varphi$ 时出现各最大值. 角 $\varphi$ 由下列条件求出:
+
+<!-- foot -->
+• 227 •

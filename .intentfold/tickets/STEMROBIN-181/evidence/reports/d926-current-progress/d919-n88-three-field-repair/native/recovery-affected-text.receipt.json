@@ -1,0 +1,15 @@
+{
+  "command": [
+    "/Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "\nimport copy, json, re, sys\nfrom pathlib import Path\nsys.path.insert(0, sys.argv[1])\nimport edition as e\nimport mathcheck\np = json.load(sys.stdin)\nprofile = e.load(Path(p[\"profile\"]))\nforbidden = profile[\"forbidden_terms\"] + profile[\"forbidden_person_names\"]\nresults = {}\nfor locale, d in p[\"candidates\"].items():\n    normalized = copy.deepcopy(d)\n    e.normalize_lesson_layout(normalized)\n    assert normalized == d, \"Changed candidate must remain normalized\"\n    results[locale] = []\n    for i in ([8] if locale == \"zh\" else [8,12]):\n        b = d[\"prose\"][i]\n        errors = e.validate_text(b[\"source_text\"], b[\"text\"], b[\"changes\"], b[\"numeric_changes\"],\n            f\"{locale}.prose[{i}]\", forbidden, b[\"historical_entities\"], None, b.get(\"notation_changes\"))\n        errors += mathcheck.check_delimiters(b[\"text\"])\n        source_math = [m.group(0) for m in e.MATH.finditer(b[\"source_text\"])]\n        candidate_math = [m.group(0) for m in e.MATH.finditer(b[\"text\"])]\n        assert source_math == candidate_math\n        if i == 8:\n            assert candidate_math == [\"$B$\",\"$R$\",\"$B$\",\"$ab$\",\"$B$\",\"$SB$\"]\n        numbers = lambda s: re.findall(r\"\\d+(?:\\.\\d+)?\", e.MATH.sub(\"\", s))\n        assert numbers(b[\"source_text\"]) == numbers(b[\"text\"])\n        assert b[\"numeric_changes\"] == [] and not errors, errors\n        results[locale].append({\"index\":i,\"sourceRefs\":b[\"source_refs\"],\"mathTokens\":candidate_math,\n            \"numericTokens\":numbers(b[\"text\"]),\"errors\":errors,\"status\":\"pass\"})\nprint(json.dumps({\"status\":\"pass\",\"affected\":results}))\n",
+    "/Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/tools"
+  ],
+  "cwd": "/Users/yong/.codex/worktrees/00b1/lemmadeck",
+  "exit": 0,
+  "stdout": "{\"status\": \"pass\", \"affected\": {\"zh\": [{\"index\": 8, \"sourceRefs\": [\"p0234#5\", \"p0234#8\"], \"mathTokens\": [\"$B$\", \"$R$\", \"$B$\", \"$ab$\", \"$B$\", \"$SB$\"], \"numericTokens\": [\"204\"], \"errors\": [], \"status\": \"pass\"}], \"en\": [{\"index\": 8, \"sourceRefs\": [\"p0234#5\", \"p0234#8\"], \"mathTokens\": [\"$B$\", \"$R$\", \"$B$\", \"$ab$\", \"$B$\", \"$SB$\"], \"numericTokens\": [\"204\"], \"errors\": [], \"status\": \"pass\"}, {\"index\": 12, \"sourceRefs\": [\"p0235#2\"], \"mathTokens\": [], \"numericTokens\": [\"1818\"], \"errors\": [], \"status\": \"pass\"}]}}\n",
+  "stderr": "",
+  "error": null,
+  "affectedOnly": true
+}

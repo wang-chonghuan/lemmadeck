@@ -194,7 +194,7 @@ def _small_prose_continuation(
     ink: np.ndarray, top: int, top_bottom: int, bottom_top: int, bottom: int,
     glyph_h: float,
 ) -> bool:
-    """Keep a short, left-aligned small-font continuation out of glyph merging."""
+    """Keep left-aligned small-font prose rows out of glyph merging."""
     if (
         not all(
             0.5 * glyph_h <= b - a + 1 <= 1.3 * glyph_h
@@ -216,7 +216,7 @@ def _small_prose_continuation(
             and 0.5 * (r.stop - r.start) <= c.stop - c.start
             <= 1.4 * (r.stop - r.start)
         ]
-        if len(glyphs) < (3 if a == top else 2):
+        if len(glyphs) < (3 if a == top else 1):
             return False
         rows.append((
             float(np.median([r.stop - r.start for r, _ in glyphs])),
@@ -227,14 +227,13 @@ def _small_prose_continuation(
             lower_glyphs = [
                 (slice(a + r.start, a + r.stop), c) for r, c in glyphs
             ]
-    (top_h, top_left, top_right), (bottom_h, bottom_left, bottom_right) = rows
+    (top_h, top_left, _), (bottom_h, bottom_left, _) = rows
     local_h = min(top_h, bottom_h)
     if (
         bottom_top - top_bottom <= 0.1 * local_h
         or max(top_h, bottom_h) > 0.9 * glyph_h
         or abs(top_h - bottom_h) > 0.25 * local_h
         or abs(top_left - bottom_left) > 2.5 * local_h
-        or bottom_right - bottom_left > 0.35 * (top_right - top_left)
     ):
         return False
     components, _ = ndimage.label(ink)
@@ -487,6 +486,9 @@ def line_bands(
                     compact_fragment and aligned
                     and min(widths) / max(widths) >= 0.65
                     or fraction_spill
+                )
+                and not _small_prose_continuation(
+                    ink, prev_a, prev_b, a, b, glyph_h
                 )
             ):
                 joined[-1] = (prev_a, b)

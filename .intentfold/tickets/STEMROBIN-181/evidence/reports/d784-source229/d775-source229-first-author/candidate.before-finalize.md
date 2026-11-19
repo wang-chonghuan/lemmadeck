@@ -1,0 +1,74 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 229,
+  "printed_page": 219,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 229
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "4525f1795c8daddca72e11897b264e91c3b114d5614c68132f204c8e8a08faf4"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "Physical229 was observed through its actual grid and ungridded original, with printed footer · 219 ·; the expected offset was not used as page-number proof.",
+    "Seven visibly indented prose objects occupy 25 physical content rows. The first begins a new paragraph, not p cont. The final three-row paragraph ends with a printed comma and remains p open.",
+    "No heading, exercise, figure, caption or footnote is visible. 彩图 V is an external color-plate reference, not an on-page figure. No next-unit heading is visible; unit86 right boundary remains unconfirmed.",
+    "Formula (7.7) and its equation label share a single printed row. Literal values, formulas, reference (7.6), long dashes and all line splits are retained; no invented wrap markers or counting overrides.",
+    "HOLD p0229-chinese-descriptor-subscript-format: the observed Chinese lowered descriptors 红 and 紫 are retained with LaTeX text-mode subscripts. Independent review must resolve their formatting against the skill's LaTeX-subscript and CJK-in-math guidance; no Latin replacement or silent correction.",
+    "Author execution is not SOURCE PASS. SOURCE independent pending, RAW independent pending, modern pending; no complete-card claim, assembly or publication."
+  ],
+  "errata": []
+}
+---
+
+<!-- p -->
+把 $h_k$ 的表达式 (7.6) 代入此式，可求出与 $\lambda$ 和 $R$ 有关的半径 $r_k$：
+$r_k=\sqrt{k\lambda R}$　(7.7)
+
+<!-- p -->
+测定诸环中某个环的半径，并已知此环的顺序号和透镜
+的曲率半径，就可以求出波长.
+
+<!-- p -->
+对于红光的测量，得到 $\lambda_{\text{红}}=8\times10^{-5}$ 厘米，而对于紫光
+$\lambda_{\text{紫}}=4\times10^{-5}$ 厘米. 相应于光谱中其它颜色的波长，取其间的
+各数值（见彩图 V）. 任何颜色的光的波长都是非常短的. 设
+想，如果象海波那样平均波长为几公尺的波增大到使波能从
+美洲海岸到欧洲海岸横跨整个大西洋，而光波的波长也照这
+样增大的话，其长度也只有少许超过本书书页的宽度.
+
+<!-- p -->
+这样，干涉的研究不仅证明了光的波动性，而且也使测量
+波长成为可能. 同时还说明了象用频率来确定音调一样，用
+波长或者振动频率可以决定光的颜色（回想一下波长、频率和
+速度之间存在的关系 $\lambda\nu=c$）.
+
+<!-- p -->
+在我们之外的自然界，没有任何颜色，只有各种波长. 眼
+睛——复杂的物理仪器，能在光的波长中区分微不足道（约
+$10^{-6}$ 厘米）的差别. 有趣的是，大多数动物不能区别颜色，它
+们看到的永远是黑——白景象.
+
+<!-- p -->
+光从一种媒质传入另一种媒质时波长有所改变，可以这
+样来观察到这一点，我们用水或者折射率为 $n$ 的另一种透明
+液体充满透镜和平板之间的空气薄层，干涉环的半径就会
+减小.
+
+<!-- p open -->
+为什么会发生这个现象呢？我们知道，光从真空传入任
+何一种媒质时，光速减小 $n$ 倍. 因为 $v=\lambda\nu$，所以在这时不是
+频率，而是波长应该减小到 $\frac{1}{n}$. 但是环的半径与波长有关，
+
+<!-- foot -->
+· 219 ·

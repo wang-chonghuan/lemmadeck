@@ -1,0 +1,16 @@
+{
+  "id": "zh-q12-current-source-prepare-FIRST",
+  "cwd": "/Users/yong/.codex/worktrees/00b1/lemmadeck",
+  "command": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+  "args": [
+    "-B",
+    "-c",
+    "import sys,json,copy\nfrom pathlib import Path\nsys.path.insert(0,\".agents/skills/ld-s10y-choice/scripts\")\nfrom prepare import prepare_seed,load_json,digest\nrepo,oldroot,out=map(Path,sys.argv[1:])\noldseed=load_json(oldroot/\"seed.json\")\nseed=prepare_seed(repo,\"10p\",\"phy10-c2-s2-n71\",[x[\"number\"] for x in oldseed[\"exercises\"]],[x[\"block\"] for x in oldseed[\"concepts\"]],oldseed[\"source\"][\"concept_figure_ids\"])\nassert seed[\"source\"]==oldseed[\"source\"] and seed[\"exercises\"]==oldseed[\"exercises\"] and seed[\"figures\"]==oldseed[\"figures\"]\nassert [x[\"block\"] for x in seed[\"concepts\"]]==[x[\"block\"] for x in oldseed[\"concepts\"]]\nassert all(a[\"block\"] in (6,12) or \"\".join(a[\"text\"].split())==\"\".join(b[\"text\"].split()) for a,b in zip(seed[\"concepts\"],oldseed[\"concepts\"]))\ndraft=load_json(oldroot/\"draft.json\"); review=load_json(oldroot/\"review.json\")\noriginal_draft=copy.deepcopy(draft); original_review=copy.deepcopy(review)\ndraft[\"seed_sha256\"]=digest(seed); review[\"seed_sha256\"]=digest(seed); review[\"draft_sha256\"]=digest(draft)\ncheck=copy.deepcopy(draft); check[\"seed_sha256\"]=original_draft[\"seed_sha256\"]; assert check==original_draft\ncheck=copy.deepcopy(review); check[\"seed_sha256\"]=original_review[\"seed_sha256\"]; check[\"draft_sha256\"]=original_review[\"draft_sha256\"]; assert check==original_review\nout.mkdir(parents=True,exist_ok=True)\nfor name,document in ((\"seed.json\",seed),(\"draft.json\",draft),(\"review.json\",review)):\n with (out/name).open(\"x\") as f: json.dump(document,f,ensure_ascii=True,indent=2); f.write(\"\\n\")\nprint(\"PASS original questions/options/keys/verdicts unchanged; current trace and concept projection recorded; affected q3 semantic approval remains pending\")",
+    "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d846-n71-native-recovery/zh/current-choice-source",
+    "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d846-n71-native-recovery/zh/original-choice-set/q12",
+    "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d846-n71-native-recovery/zh/current-choice-set/q12"
+  ],
+  "exit": 0,
+  "stdout": "PASS original questions/options/keys/verdicts unchanged; current trace and concept projection recorded; affected q3 semantic approval remains pending\n",
+  "stderr": ""
+}
