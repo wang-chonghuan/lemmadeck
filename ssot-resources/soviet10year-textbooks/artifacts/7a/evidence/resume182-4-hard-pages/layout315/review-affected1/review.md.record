@@ -1,0 +1,136 @@
+# STEMROBIN-182 / chat182-4 Static Review Affected1
+
+Verdict: **REVISE**. Date: 2026-11-19.
+
+Scope: independent static review of the page315 counter candidate only, against
+the current real layout and preserved FIRST/affected1 evidence. This is not a
+source review, test execution, integration, finalize approval or ticket acceptance.
+All relative paths resolve against
+`/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck`.
+
+## Blocking Finding
+
+**[P2] The same-baseline PASS does not exercise observable supported retention.**
+Location: `.tmp/resume182-4-layout315/probe-affected1.py:39-56`, with the
+support predicate at `layout-candidate.py:639-648`.
+
+Static reasoning from the saved fixture, not a new execution:
+
+- The full glyphs are 40 pixels high, establishing `glyph_h=40`. The connected
+  sloped component spans rows `[100,116)` and columns `[250,383)`: height16,
+  width133, area266, density0.125. It satisfies the new predicate at its exact
+  inclusive upper-height boundary.
+- The added same-baseline glyph starts at x450. Its horizontal separation from
+  the component's exclusive stop383 is **67**, exceeding the allowed
+  `1.5 * glyph_h = 60`. The glyph at x490 is still farther away. Neither can
+  supply the required support, despite sharing the component's centre y108.
+- The upper glyphs occupy rows `[40,80)`, centre60. Their centre difference48
+  exceeds the same-baseline tolerance30 (the code compares doubled centres
+  against60). Their vertical proximity is precisely the borrowing the new
+  class disallows. The other body glyphs are too distant vertically.
+- The added glyphs keep the projection live across rows88..127; this is a
+  full-height row, not an eligible short-row exception. Consequently the new
+  first component-filter loop removes the sparse component in this case.
+  Nevertheless, both saved final results are `[[40,127],[180,219],[340,379]]`.
+  Surviving full glyphs already cover the component's y extent, so final band
+  equality conceals the counting-copy component removal.
+
+Concrete risk: a regression that also rejects genuinely supported sparse
+components could still pass all three present contrasts. The only purported
+positive support control supplies no in-range horizontal support and cannot
+observe retention. This is an evidence defect, not a claim that the current
+predicate fails when a qualifying same-baseline glyph is actually present.
+
+Required revision scope: provide a positive support contrast whose glyph
+actually satisfies both geometric support conditions and whose assertion can
+distinguish retained versus removed counting-copy ink, or an equivalent
+component-sensitive decision trace. Keep the existing receipts and assertions
+as historical facts. No code change is demanded by this finding. This review
+does not authorize executing that contrast or rerunning any stage.
+
+## Existing Evidence
+
+The original probe receipt has actual exit1 at 2026-11-19T13:56:54.402Z, with
+an assertion failure at FIRST probe line53. Its stdout is empty and its failed
+candidate snapshot is preserved. The corrected candidate differs from that
+snapshot **only** by changing the upper-height comparison from `<` to `<=`.
+The affected1 probe changes only the record description and output filename;
+the three fixture constructions and assertions remain unchanged.
+
+The affected1 receipt has actual exit0 at 2026-11-19T13:57:48.714Z, empty stderr,
+and a saved PASS record agreeing with its stdout. **That PASS remains PASS.**
+The integration verdict is independently REVISE for the boundary-proof gap;
+neither receipt is relabeled.
+
+The source-FIRST review independently records 25 actual text rows on315 and
+classifies y380..393 as a decorative underline, not prose or a fraction bar.
+Its current page315 manuscript hash still matches that review. The numerical
+diagnosis preserves the original26 bands, the baseline layout hash and source
+identity. The affected1 probe asserts exact equality with those original bands
+after removing only `[380,393]`, plus input-array equality. Its record reports
+25 rows and all other bands unchanged. These are reused parent execution
+receipts, not newly executed observations by this reviewer.
+
+The ornament control legitimately exercises inclusive height16/40 and
+vertical-only support rejection: the upper glyphs overlap horizontally, but
+their centre distance48 exceeds30. It records4->3 bands.
+
+The fraction control also legitimately passes unchanged. Its bar has height3
+and density1, so it is **outside** the new sparse class. It is a useful
+unchanged thin-rule control, not evidence of supported retention for the new
+class or of general fraction-row correctness. Its saved result is five
+unchanged bands; no stronger claim is inferred.
+
+## Code Safety
+
+The real-to-candidate diff is confined to the existing first component filter
+inside `line_bands`: the new scalar predicate, its inclusion in
+`isolated_fragment`, and the vertical-support guard. There are no page-specific
+coordinates or changes to input preparation, extraction, glyph estimation,
+fraction helpers, later merging or unrelated functions.
+
+Operator grouping is correct: support is
+`(same_centre OR ((NOT sparse) AND vertical_eligibility AND vertical_gap))
+AND horizontal_gap`, under the existing `not any(...)` removal condition.
+The guard cannot bypass horizontal proximity or disable the centre branch.
+The doubled-centre comparison allows actual centre distance0.75 glyph.
+The pre-existing short-row exemption is unchanged.
+
+The new predicate is exactly inclusive0.3..0.4 glyph height, width at least3
+glyphs, and strictly below0.2 bounding-box ink density. For components outside
+that class, the original removal/support expression is unchanged.
+
+Input immutability remains structural: `line_bands` starts with `ink.copy()`,
+retains a separate read-only support copy, and deletes only matching labels
+through a region of the counting copy. Saved real/synthetic assertions
+corroborate this; the review executes none of them.
+
+## Bindings And Preservation
+
+Primary SHA-256 bindings:
+
+| Text file | SHA-256 |
+|---|---|
+| Real `tools/layout.py` | `9416b0d2319c9efad203f732558b3376d5c1f668d0a3e6ecb993f0177b0716c5` |
+| `layout-candidate.py` | `8d6ae2380524f1e1d275fb08eac7a897a991b5eb6fecdfcc250da8f4e19067aa` |
+| `layout-candidate-FIRST.failed.py.record` | `badc2bdb8956cc2768ba08aa9b2b01d85a2775902b00293e75ccf49ea28e484f` |
+| `diagnose-FIRST.record` | `01becd81aec6f694bcdee9aa8348d2a3a452b78ff3c96939083eb845a70943b6` |
+| `probe-affected1.py` | `1c92bff74b86d2a99da03a42761027552d42c7285a7e2b507749aa7231291711` |
+| `probe-affected1.record` | `09605d0b3007223cae3ea3b02055a8f783827e2a12e892f45192e7194080baa5` |
+| Source-FIRST `review.json` | `cd93773f0b3110766fb1d8c34a7b2861e0f5cb7dbbe5691e41c986568e6c3321` |
+
+The companion JSON binds the remaining reviewed scripts, text receipts,
+production-resume contract and source-FIRST review text. Native-page hash
+`25d87a1645d3917acefd4a11ad4794303b556b677bd950067486665c9b3c368f`
+is matching **attested provenance** from diagnosis and source-FIRST, not a
+fresh image hash or pixel observation. The affected1 probe copies its baseline
+identity from diagnosis and does not hash the native input during that run;
+receipts are traceable records, not independent cryptographic run attestations.
+
+Real/candidate bytes match the supplied bindings, and their narrow diff
+preserves every other current real-layout byte. No Git inspection or operation
+was performed; no claim is made about index or whole-worktree cleanliness.
+No existing file was edited. Only this review's `review.md` and `review.json`
+were written. No source/counter/test reruns, old test reads, pixels, new images,
+browser, DB, dependency changes, paid calls, old chats, agents or project checks.
+REVISE does not change source-FIRST approval or authorize any integration.

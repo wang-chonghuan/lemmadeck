@@ -1,0 +1,443 @@
+#!/usr/bin/env python3
+"""Bounded draft authoring receipts; no publishing or independent review."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import re
+import shutil
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+WORK = ROOT / ".tmp/resume182-4-supplement-figures-b"
+TEMPLATE = ROOT / (
+    ".tmp/resume182-4-supplement-modern/adapt/7a/modern-us-neutral/"
+    "lessons/alg7-c4-ex/exercises.template.json"
+)
+TARGETS = {"fig-65": "942", "fig-66": "1037", "tbl-p0312-01": "1051"}
+HELPER = ROOT / ".agents/skills/ld-s10y-image/scripts/build_context.py"
+module_spec = importlib.util.spec_from_file_location("figure_context_helpers", HELPER)
+helpers = importlib.util.module_from_spec(module_spec)
+module_spec.loader.exec_module(helpers)
+
+
+def save_new(path: Path, value: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("x", encoding="utf-8") as handle:
+        json.dump(value, handle, indent=2, ensure_ascii=False)
+        handle.write("\n")
+
+
+def capture() -> None:
+    before = helpers.sha256(TEMPLATE)
+    template = helpers.load(TEMPLATE)
+    contexts = {}
+    for figure, question in TARGETS.items():
+        relevant = helpers.exercise_context(template.get("exercises", []), figure)
+        if len(relevant) != 1 or relevant[0]["exercise"] != question:
+            raise RuntimeError(f"unexpected relevant text for {figure}: {relevant}")
+        source = ROOT / (
+            f"ssot-resources/soviet10year-textbooks/artifacts/7a/figures/{figure}.png"
+        )
+        width, height = helpers.png_size(source)
+        contexts[figure] = {
+            "schema": "ld-s10y-image/context@1",
+            "book": "7a",
+            "edition": "modern-us-neutral",
+            "figure": figure,
+            "sourceImage": {
+                "path": source.relative_to(ROOT).as_posix(),
+                "sha256": helpers.sha256(source),
+                "width": width,
+                "height": height,
+            },
+            "lessons": [{
+                "lesson": "alg7-c4-ex",
+                "prose": [],
+                "exercises": relevant,
+            }],
+            "authoritativeRule": (
+                "Current draft template text is authoritative for this batch; "
+                "original durable PNG supplies structure. No answers used."
+            ),
+            "textBinding": {
+                "path": TEMPLATE.relative_to(ROOT).as_posix(),
+                "sha256": before,
+                "statusAtCapture": template.get("status"),
+                "independentTextReview": "in progress; not claimed complete",
+                "relevantTextLanguageAtCapture": "Chinese draft",
+            },
+            "displayEvidence": {
+                "layout": "scroll",
+                "widths": [736, 640],
+                "minTextPx": 16,
+                "basis": "Inherited existing product evidence supplied by the user",
+                "newProductWidthMeasurement": False,
+                "newProductBrowserTest": False,
+            },
+        }
+    if helpers.sha256(TEMPLATE) != before:
+        raise RuntimeError("template changed during capture; no bindings written")
+    for figure, context in contexts.items():
+        save_new(WORK / figure / "context.json", context)
+    save_new(WORK / "binding.json", {
+        "ticket": "STEMROBIN-182",
+        "batch": "current182-4 bounded modern FIGURE AUTHOR",
+        "scope": list(TARGETS),
+        "template": {"path": str(TEMPLATE), "sha256": before},
+        "contextHelper": {"path": str(HELPER), "sha256": helpers.sha256(HELPER)},
+        "status": "draft authoring only; not finalized",
+    })
+    print(json.dumps({"capture": "saved", "templateSha256": before}))
+
+
+def summarize() -> None:
+    binding = helpers.load(WORK / "binding.json")
+    observations = helpers.load(WORK / "author-observations.json")
+    captured_hash = binding["template"]["sha256"]
+    current_hash = helpers.sha256(TEMPLATE)
+    entries = []
+    for figure, question in TARGETS.items():
+        directory = WORK / figure
+        context = helpers.load(directory / "context.json")
+        candidate = helpers.load(directory / "spec.json")
+        render = helpers.load(directory / f"{figure}.render.json")
+        source_path = ROOT / context["sourceImage"]["path"]
+        outputs = {}
+        for key, filename in {
+            "context": "context.json", "spec": "spec.json",
+            "svg": f"{figure}.svg", "render": f"{figure}.render.json",
+            "preview640": f"{figure}.preview-640.png",
+        }.items():
+            path = directory / filename
+            outputs[key] = {"path": str(path), "sha256": helpers.sha256(path)}
+        final_validation = directory / (
+            "validate-REPAIR.receipt.json" if figure == "fig-65"
+            else "validate-FIRST.receipt.json"
+        )
+        validation = helpers.load(final_validation)
+        full_text = [
+            {"lesson": lesson["lesson"], "exercise": item["exercise"], "text": item["text"]}
+            for lesson in context["lessons"]
+            for item in lesson["exercises"]
+        ]
+        entries.append({
+            "id": figure,
+            "exercise": question,
+            "status": (
+                "blocked draft: second render failure and broken diagnostic raster"
+                if figure == "fig-65"
+                else "authored rendered draft: awaiting independent text/figure review"
+            ),
+            "draftOnly": True,
+            "formalReview": None,
+            "promotable": False,
+            "candidateManifestEntry": {
+                "id": figure,
+                "label": "Table" if figure.startswith("tbl-") else f"Figure {figure[4:]}",
+                "mode": "deterministic",
+                "svg": outputs["svg"]["path"],
+                "render": outputs["render"]["path"],
+                "spec": outputs["spec"]["path"],
+            },
+            "outputs": outputs,
+            "sourceBinding": {
+                "path": str(source_path),
+                "sha256": context["sourceImage"]["sha256"],
+                "currentSha256": helpers.sha256(source_path),
+                "matchesCurrentDurableOriginal": (
+                    helpers.sha256(source_path) == context["sourceImage"]["sha256"]
+                    and candidate["source"]["image"] == {
+                        "path": context["sourceImage"]["path"],
+                        "sha256": context["sourceImage"]["sha256"],
+                    }
+                ),
+            },
+            "authoritativeText": full_text,
+            "textBinding": {
+                **context["textBinding"],
+                "currentTemplateSha256AtBatchClose": current_hash,
+                "wholeTemplateChangedSinceCapture": current_hash != captured_hash,
+                "candidateFullTextMatchesCapturedContext": (
+                    candidate["source"]["authoritativeText"] == full_text
+                ),
+            },
+            "draftValidation": {
+                "status": validation["status"],
+                "receipt": str(final_validation),
+                "sha256": helpers.sha256(final_validation),
+            },
+            "renderStatus": render["status"],
+            "remainingCollisions": render["collisions"],
+            "displayChecks": render["displayChecks"],
+            "renderSpecHashMatches": (
+                render["spec"]["sha256"] == outputs["spec"]["sha256"]
+            ),
+            "renderSvgHashMatches": (
+                render["output"]["svg"]["sha256"] == outputs["svg"]["sha256"]
+            ),
+            "previewUse": (
+                "broken stopped-candidate diagnostic only" if figure == "fig-65"
+                else "640 px resvg from preview-only semantic fallback resolution"
+            ),
+            "authorObservation": observations[figure],
+        })
+    manifest = {
+        "schema": "bounded-figure-author-candidate-manifest@1",
+        "ticket": "STEMROBIN-182",
+        "batch": "current182-4 figures-b",
+        "root": str(ROOT),
+        "status": "draft-only batch stopped; not production finalization",
+        "lesson": "alg7-c4-ex",
+        "book": "7a",
+        "edition": "modern-us-neutral",
+        "capturedTemplateSha256": captured_hash,
+        "currentTemplateSha256AtBatchClose": current_hash,
+        "displayEvidence": {
+            "widths": [736, 640], "layout": "scroll", "minTextPx": 16,
+            "basis": "inherited product evidence; no new product measurement/browser check",
+        },
+        "candidates": entries,
+        "warning": (
+            "All entries reference scratch drafts, lack independent review, and must not "
+            "be copied into a durable or finalized lesson. fig-65 is blocked."
+        ),
+    }
+    save_new(WORK / "candidate-manifest.json", manifest)
+    hashes = {}
+    for path in sorted(WORK.rglob("*")):
+        if path.is_file() and path.name not in {"batch-report.json", "hashes.json"}:
+            hashes[str(path)] = helpers.sha256(path)
+    save_new(WORK / "hashes.json", {
+        "algorithm": "sha256",
+        "files": hashes,
+        "excludes": ["hashes.json", "batch-report.json"],
+    })
+    report = {
+        "schema": "bounded-figure-author-report@1",
+        "ticket": "STEMROBIN-182",
+        "batch": "current182-4 figures-b",
+        "status": "stopped at bounded batch endpoint; draft work only",
+        "candidateManifest": {
+            "path": str(WORK / "candidate-manifest.json"),
+            "sha256": helpers.sha256(WORK / "candidate-manifest.json"),
+        },
+        "hashInventory": {
+            "path": str(WORK / "hashes.json"),
+            "sha256": helpers.sha256(WORK / "hashes.json"),
+        },
+        "capturedTemplate": binding["template"],
+        "currentTemplateSha256AtBatchClose": current_hash,
+        "templateDrift": current_hash != captured_hash,
+        "summary": {
+            "draftValidationPass": ["fig-65", "fig-66", "tbl-p0312-01"],
+            "renderPass": ["fig-66", "tbl-p0312-01"],
+            "blocked": ["fig-65"],
+            "promotedOrFinalized": [],
+        },
+        "observations": observations,
+        "writeBoundary": str(WORK),
+        "scopeEnded": True,
+    }
+    save_new(WORK / "batch-report.json", report)
+    print(json.dumps({
+        "report": {"path": str(WORK / "batch-report.json"),
+                   "sha256": helpers.sha256(WORK / "batch-report.json")},
+        "manifest": report["candidateManifest"],
+        "hashes": report["hashInventory"],
+        "capturedTemplateSha256": captured_hash,
+        "currentTemplateSha256": current_hash,
+        "candidates": [{
+            "id": entry["id"], "status": entry["status"], "outputs": entry["outputs"],
+            "sourceBinding": entry["sourceBinding"],
+            "displayChecks": entry["displayChecks"],
+        } for entry in entries],
+        "counters": observations["counters"],
+    }, indent=2))
+
+
+def stage(figure: str, action: str, attempt: str) -> None:
+    directory = WORK / figure
+    spec_path = directory / "spec.json"
+    if action == "validate":
+        command = [
+            sys.executable,
+            str(ROOT / ".agents/skills/ld-s10y-image/scripts/validate_spec.py"),
+            str(spec_path), "--stage", "draft", "--json",
+        ]
+    elif action == "render":
+        command = [
+            "node", str(ROOT / ".agents/skills/ld-s10y-image/scripts/render_spec.mjs"),
+            "--spec", str(spec_path),
+            "--svg", str(directory / f"{figure}.svg"),
+            "--report", str(directory / f"{figure}.render.json"),
+        ]
+    elif action in {"preview", "preview-colors"}:
+        raster_input = (
+            directory / f"{figure}.preview-color-resolved.svg"
+            if action == "preview-colors" else directory / f"{figure}.svg"
+        )
+        command = [
+            "node", str(ROOT / ".claude/skills/ld-s10y-lesson/tools/svg_raster.js"),
+            str(raster_input),
+            str(directory / f"{figure}.preview-640.png"), "640",
+        ]
+    else:
+        raise ValueError(action)
+    receipt = directory / f"{action}-{attempt}.receipt.json"
+    if receipt.exists():
+        raise RuntimeError(f"immutable receipt already exists: {receipt}")
+    candidate_hash = helpers.sha256(spec_path)
+    candidate = helpers.load(spec_path)
+    context = helpers.load(directory / "context.json")
+    expected_text = [
+        {"lesson": lesson["lesson"], "exercise": item["exercise"], "text": item["text"]}
+        for lesson in context["lessons"]
+        for item in lesson["exercises"]
+    ]
+    binding_matches = (
+        candidate["source"]["authoritativeText"] == expected_text
+        and candidate["source"]["image"] == {
+            "path": context["sourceImage"]["path"],
+            "sha256": context["sourceImage"]["sha256"],
+        }
+    )
+    if action == "validate":
+        save_new(directory / f"spec-{attempt}.snapshot.json", helpers.load(spec_path))
+    started = {
+        "figure": figure,
+        "stage": action,
+        "attempt": attempt,
+        "cwd": str(ROOT),
+        "command": command,
+        "specSha256": candidate_hash,
+        "fullTextAndDurableSourceBindingMatch": binding_matches,
+        "status": "started",
+    }
+    save_new(directory / f"{action}-{attempt}.started.json", started)
+    raster_preparation = None
+    if action == "preview-colors":
+        source_svg = directory / f"{figure}.svg"
+        preview_png = directory / f"{figure}.preview-640.png"
+        preserved_png = directory / f"{figure}.preview-FIRST.uninspected.png"
+        if preserved_png.exists() or raster_input.exists():
+            raise RuntimeError("color-resolved raster preparation already exists")
+        if helpers.load(directory / f"{figure}.render.json")["status"] != "pass":
+            raise RuntimeError("color-only recovery is scoped to passed draft renders")
+        shutil.copyfile(preview_png, preserved_png)
+        tree = ET.parse(source_svg)
+        fallback = re.compile(
+            r"var\(--ld-figure-[a-z-]+,\s*(#[a-fA-F0-9]{6})\)"
+        )
+        geometric_keys = {
+            "id", "d", "points", "x", "y", "x1", "y1", "x2", "y2",
+            "cx", "cy", "rx", "ry", "r", "width", "height", "viewBox",
+            "transform", "stroke-width", "font-size", "data-label-id",
+        }
+
+        def geometry_fingerprint() -> str:
+            data = [
+                [element.tag, element.text, {
+                    key: value for key, value in element.attrib.items()
+                    if key in geometric_keys
+                }]
+                for element in tree.iter()
+            ]
+            return hashlib.sha256(
+                json.dumps(data, sort_keys=True).encode("utf-8")
+            ).hexdigest()
+
+        before_geometry = geometry_fingerprint()
+        replacements = 0
+        for element in tree.iter():
+            for key, value in list(element.attrib.items()):
+                replaced, count = fallback.subn(r"\1", value)
+                if count:
+                    element.set(key, replaced)
+                    replacements += count
+        if before_geometry != geometry_fingerprint():
+            raise RuntimeError("color preparation changed geometry or text")
+        ET.register_namespace("", "http://www.w3.org/2000/svg")
+        with raster_input.open("xb") as handle:
+            tree.write(handle, encoding="utf-8", xml_declaration=True)
+        raster_preparation = {
+            "classification": "technical raster-only recovery, not a FigureSpec repair",
+            "candidateSvg": {"path": str(source_svg), "sha256": helpers.sha256(source_svg)},
+            "preservedFirstUninspectedPng": {
+                "path": str(preserved_png), "sha256": helpers.sha256(preserved_png),
+            },
+            "rasterInput": {"path": str(raster_input), "sha256": helpers.sha256(raster_input)},
+            "semanticFallbackReplacements": replacements,
+            "geometryAndTextFingerprint": before_geometry,
+            "candidateSvgEdited": False,
+            "candidateSpecEdited": False,
+            "firstRasterImageLoaded": False,
+        }
+    environment = {**os.environ, "PYTHONDONTWRITEBYTECODE": "1"}
+    if binding_matches:
+        result = subprocess.run(
+            command, cwd=ROOT, env=environment, capture_output=True, text=True,
+        )
+    else:
+        result = subprocess.CompletedProcess(
+            command, 2, "", "Full text/source binding does not match captured context."
+        )
+    payload = {
+        **started,
+        "status": "pass" if result.returncode == 0 else "fail",
+        "exitCode": result.returncode,
+        "stdout": result.stdout,
+        "stderr": result.stderr,
+        "classification": (
+            "not a promotion/review verdict" if result.returncode == 0
+            else "actual stage failure; retain before any targeted repair"
+        ),
+    }
+    outputs = {}
+    for suffix in (f"{figure}.svg", f"{figure}.render.json", f"{figure}.preview-640.png"):
+        path = directory / suffix
+        if path.is_file():
+            outputs[suffix] = {"path": str(path), "sha256": helpers.sha256(path)}
+    payload["existingOutputs"] = outputs
+    if raster_preparation:
+        payload["rasterPreparation"] = raster_preparation
+    save_new(receipt, payload)
+    print(json.dumps({
+        "figure": figure, "stage": action, "attempt": attempt,
+        "exitCode": result.returncode, "receipt": str(receipt),
+        "stdout": result.stdout, "stderr": result.stderr,
+    }))
+    raise SystemExit(result.returncode)
+
+
+def main() -> None:
+    if Path.cwd() != ROOT:
+        raise RuntimeError(f"wrong cwd: {Path.cwd()}")
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "action",
+        choices=["capture", "summarize", "validate", "render", "preview", "preview-colors"]
+    )
+    parser.add_argument("--figure", choices=list(TARGETS))
+    parser.add_argument("--attempt", choices=["FIRST", "REPAIR"], default="FIRST")
+    args = parser.parse_args()
+    if args.action == "capture":
+        capture()
+    elif args.action == "summarize":
+        summarize()
+    else:
+        if not args.figure:
+            parser.error("--figure required for stage")
+        stage(args.figure, args.action, args.attempt)
+
+
+if __name__ == "__main__":
+    main()

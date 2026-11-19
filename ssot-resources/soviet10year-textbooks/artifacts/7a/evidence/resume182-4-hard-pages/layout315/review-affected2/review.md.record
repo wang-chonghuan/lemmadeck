@@ -1,0 +1,103 @@
+# STEMROBIN-182 / chat182-4 Static Review Affected2
+
+Verdict: **APPROVE_INTEGRATION**. Date: 2026-11-19.
+
+Exact scope: the unchanged page315 counter candidate with SHA-256
+`8d6ae2380524f1e1d275fb08eac7a897a991b5eb6fecdfcc250da8f4e19067aa`,
+relative to real-layout baseline
+`9416b0d2319c9efad203f732558b3376d5c1f668d0a3e6ecb993f0177b0716c5`.
+This is a static affected-only review of the new support evidence and the
+previous finding, not an integration action, source approval, finalize approval
+or full-project acceptance. All relative paths resolve against
+`/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck`.
+
+## Finding Disposition
+
+No new blocking finding. Affected1 finding **F1 is settled by the new evidence**:
+it now supplies both genuinely in-range same-baseline support and an observable
+component-retention assertion. The earlier review files retain their original
+**REVISE**, unchanged and bound below. Their verdict was correct for the
+evidence then available; this approval does not relabel that historical verdict
+or the earlier execution receipts.
+
+## Static Instrumentation Review
+
+`support-affected2.py:13-25` loads the frozen candidate into a separate module,
+retains the original `_row_fragments`, and wraps it with a recording function.
+The wrapper saves `ink.copy()` before delegating to the original function,
+returning its unchanged result. It does not mutate the counting array, invent
+projection results or modify a file. The original `_row_fragments` is read-only.
+The in-memory wrapper exists only in the saved probe process.
+
+The frozen candidate's first `_row_fragments` call is at line577, before the
+component filter; its second is at line653, immediately after that filter.
+There are no intervening calls to that function. Thus `snapshots[1]` is exactly
+the counting-copy boundary claimed by the probe, not the caller's untouched
+input, the separate support copy or a later merged representation.
+`snapshots.clear()` at probe line43 prevents cross-case snapshot contamination.
+Probe lines47-49 assert component-sensitive retained area and input equality.
+
+## Support Boundary
+
+Both synthetic cases have 40-pixel full glyphs and the same connected sparse
+component: rows `[100,116)`, columns `[250,383)`, area266, density0.125.
+Its height16 is the candidate's inclusive0.4-glyph upper bound, and width133
+exceeds the required120. Full-glyph geometry fixes `glyph_h=40`; the component
+does not enter the glyph-height estimator or qualify as its own support.
+The full-height projection prevents the pre-existing short-row exemption.
+
+| Saved case | Glyph left | Centre difference | Horizontal gap / limit | Component after first filter |
+|---|---:|---:|---:|---:|
+| supported |430|0|47 /60|266 of266|
+| too-far |450|0|67 /60|0 of266|
+
+The glyph at430 satisfies both support conditions. The glyph at450 fails
+horizontal support, although both cases have matching centre y108. Upper-row
+glyphs have centre60, outside the allowed centre distance30, and cannot
+provide vertical-only support for this sparse class. The static geometry
+therefore agrees with the saved positive-retention and negative-removal results.
+
+Both final band lists remain `[[40,127],[180,219],[340,379]]`, as asserted at
+probe line58. This equality is explicitly **not** used to establish retention.
+The component-mask intersection with the captured counting copy establishes
+the distinction that affected1's final-band-only control could not observe.
+A regression removing all sparse components would now fail the positive266
+assertion; ignoring horizontal distance would fail the negative0 assertion.
+No mutation experiment was executed by this reviewer.
+
+## Receipts And Limits
+
+The saved receipt records the exact probe command and requested cwd, started
+2026-11-19T14:03:14.075Z and finished2026-11-19T14:03:14.422Z with actual exit0,
+no signal or runner error, and empty stderr. Saved stdout agrees with the
+PASS record, including the frozen candidate hash, both retention results and
+unchanged input masks. This is one supplied execution, not a reviewer rerun.
+
+The evidence observes the first component-filter boundary only. It does not
+claim an exhaustive threshold matrix, exact gap60/61 testing, general
+fraction-row correctness or later-stage component survival. Those claims are
+not needed to settle F1. The prior static code grouping and input-copy analysis,
+and the prior page31526->25 receipt removing only380..393, remain evidence
+referenced through the frozen affected1 review; they were not rerun.
+
+The script hashes candidate bytes when writing its record; the receipt does
+not independently attest the imported module's bytes at execution time.
+Current candidate and baseline hashes exactly match the previous review and
+supplied bindings. These limits are retained, not upgraded into broader proof.
+
+## Binding And Preservation
+
+| Text file | SHA-256 |
+|---|---|
+| `support-affected2.py` | `f597a26ccc00b0ce3eb8b44ca5a443cc06e3eb08754b45e5b45cdf891cddc668` |
+| `support-affected2.record` | `55f9989701c90085aad0a0ecd4c6e7d6cc8112d5fbb0daaef9c690f42424baca` |
+| `receipts/support-affected2/receipt.record` | `756633364801a0826983a396a62ab1e9a5437a3f4ed5258e7d7a29de5c97bff0` |
+| Affected1 `review.md` | `8c8fe6fbe095003cb8dea03ca3c83ea5c9759f43c5caf38795a1cfe24c9138c8` |
+| Affected1 `review.json` | `a269d0c9f23da2a96b28a02be3366c71b8ce202654e3456c9d29d5845d6c8a0d` |
+
+The companion JSON binds all new receipt text plus the real/candidate files.
+No existing file was edited; only affected2 `review.md` and `review.json` were
+written. No real-page, source, counter or test reruns; no images or pixel reads;
+no code edits, integration, Git, DB, dependencies, browser, paid calls, old chats,
+new agents or full-project checks. Approval binds this candidate and this
+baseline only; any subsequent code change falls outside it.

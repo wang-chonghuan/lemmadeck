@@ -1,0 +1,70 @@
+import hashlib
+import importlib.util
+import json
+import sys
+from pathlib import Path
+
+import numpy as np
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+assert Path.cwd() == REPO
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+ROOT = Path(".tmp/resume182-4-layout315")
+spec = importlib.util.spec_from_file_location("support_candidate", ROOT / "layout-candidate.py")
+candidate = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(candidate)
+original_fragments = candidate._row_fragments
+snapshots = []
+
+
+def record_fragments(ink, width):
+    snapshots.append(ink.copy())
+    return original_fragments(ink, width)
+
+
+candidate._row_fragments = record_fragments
+cases = []
+for name, left, expected in (("supported", 430, 266), ("too-far", 450, 0)):
+    mask = np.zeros((480, 720), dtype=bool)
+    for top, positions in (
+        (40, [260, 300]),
+        (88, [left, left + 40]),
+        (180, [80, 130, 180, 230, 280, 330, 380, 430]),
+        (340, [80, 130, 180, 230, 280, 330, 380, 430]),
+    ):
+        for position in positions:
+            mask[top:top + 40, position:position + 22] = True
+    component = np.zeros_like(mask)
+    for column in range(250, 383):
+        top = 100 + round(14 * (column - 250) / 132)
+        component[top:top + 2, column] = True
+    mask |= component
+    before = mask.copy()
+    snapshots.clear()
+    bands = candidate.line_bands(mask, 720)
+    # The second projection sees the counting copy after the component filter.
+    assert len(snapshots) >= 2
+    retained = int(np.count_nonzero(snapshots[1] & component))
+    assert retained == expected, (name, retained, expected)
+    assert np.array_equal(mask, before)
+    cases.append({
+        "case": name, "glyph_height": 40, "glyph_left": left,
+        "horizontal_gap": left - 383, "allowed_horizontal_gap": 60,
+        "glyph_centre": 108, "component_centre": 108,
+        "component_ink_before": 266, "component_ink_after_first_filter": retained,
+        "bands": bands, "input_unchanged": True,
+    })
+
+assert cases[0]["bands"] == cases[1]["bands"]
+record = {
+    "status": "PASS",
+    "scope": "Two new component-sensitive support contrasts only; no real-page or earlier probe rerun.",
+    "candidate_sha256": hashlib.sha256((ROOT / "layout-candidate.py").read_bytes()).hexdigest(),
+    "candidate_changed": False,
+    "cases": cases,
+    "limitation": "Instrumentation observes the counting copy at the first component-filter boundary.",
+}
+with (ROOT / "support-affected2.record").open("x") as handle:
+    json.dump(record, handle, indent=2)
+    handle.write("\n")
+print(json.dumps(record))

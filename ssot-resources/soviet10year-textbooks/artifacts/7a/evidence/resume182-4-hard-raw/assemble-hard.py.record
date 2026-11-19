@@ -1,0 +1,82 @@
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+assert Path.cwd() == REPO
+TOOLS = REPO / ".claude/skills/ld-s10y-lesson/tools"
+sys.path.insert(0, str(TOOLS))
+import assemble
+import blocks
+
+BOOK = Path("ssot-resources/soviet10year-textbooks/artifacts/7a")
+TOC = Path("ssot-resources/soviet10year-textbooks/toc/7a/zh.json")
+PROFILE = TOOLS.parent / "profiles/soviet-cn.json"
+OUTPUT = Path(".tmp/resume182-4-hard-raw/artifacts/7a")
+CARD = "alg7-hard"
+
+
+def dump(filename, document):
+    filename.parent.mkdir(parents=True, exist_ok=True)
+    with filename.open("x", encoding="utf-8") as handle:
+        json.dump(document, handle, ensure_ascii=False, indent=2)
+        handle.write("\n")
+
+
+bindings = []
+for page in range(315, 322):
+    directory = BOOK / "pages" / f"{page:04d}"
+    assert json.loads((directory / "audit.json").read_text())["errors"] == []
+    bindings.append({
+        "physical_page": page,
+        "files": [
+            {"path": str(directory / name),
+             "sha256": hashlib.sha256((directory / name).read_bytes()).hexdigest()}
+            for name in ("page.md", "page.json", "audit.json")
+        ],
+    })
+selected = [item for item in assemble.load_stream(BOOK) if 315 <= item["page"] <= 321]
+assert selected[0]["kind"] == "h3" and blocks.text_of(selected[0]) == "难题"
+merged, merge_warnings = assemble.merge_across_pages(selected)
+lessons = assemble.cut_lessons(merged)
+assert len(lessons) == 1
+lesson = lessons[0]
+lesson["prose"], lesson["exercises"] = assemble.split_lesson(lesson, "book")
+figure_errors, figure_warnings = assemble.claim_figures(lessons, merged)
+report = assemble.audit(lessons, merged, PROFILE, "book")
+report["errors"] = figure_errors + report["errors"]
+report["warnings"] = merge_warnings + figure_warnings + report["warnings"]
+report["warnings"] += assemble.check_toc(
+    lessons, TOC, "7a", {item["printed_page"] for item in selected}
+)
+dump(OUTPUT / "assembly-FIRST.record", {
+    "scope": "Only raw alg7-hard, physical315-321; held answer boundary322 excluded.",
+    "source_bindings": bindings, "report": report,
+    "exercise_numbers": [item["number"] for item in lesson["exercises"]],
+})
+print(json.dumps(report, ensure_ascii=False))
+if report["errors"] or report["warnings"]:
+    sys.exit(1)
+assert lesson["card_id"] == CARD
+assert lesson["title"] == lesson["printed_title"] == "难题"
+assert lesson["number"] is None
+assert report["exercise_range"] == [1062, 1105]
+assert report["exercise_count"] == 44
+assert report["figure_numbers"] == [67]
+assert [int(item["number"]) for item in lesson["exercises"]] == list(range(1062, 1106))
+assert len(lesson["figures"]) == 1
+assert lesson["prose"] == []
+directory = OUTPUT / "lessons" / CARD
+dump(directory / "exercises.json", {
+    "lesson": CARD, "count": 44, "exercises": lesson["exercises"],
+})
+dump(directory / "lesson.json", {
+    "id": CARD, "card_id": CARD, "chapter": lesson["chapter"], "section": lesson["section"],
+    "number": None, "title": lesson["title"], "printed_title": lesson["printed_title"],
+    "start_page": lesson["start_page"], "start_printed": lesson["start_printed"],
+    "figures": lesson["figures"], "exercise_count": 44, "prose": [],
+})
+with (directory / "lesson.md").open("x", encoding="utf-8") as handle:
+    handle.write("# 难题\n\n")
+print(json.dumps({"status": "PASS", "card": CARD, "exercises": 44, "figures": 1}))

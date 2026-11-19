@@ -1,0 +1,104 @@
+import hashlib
+import json
+import re
+import string
+import sys
+from pathlib import Path
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+assert Path.cwd() == REPO
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+import edition
+
+ROOT = Path(".tmp/resume182-4-supplement-modern")
+TARGET = ROOT / "adapt/7a/modern-us-neutral/lessons/alg7-c4-ex"
+SOURCE = Path("ssot-resources/soviet10year-textbooks/artifacts/7a/lessons/alg7-c4-ex")
+REPLACEMENTS = {
+    "1016": [("少先队夏令营", "社区夏令营")],
+    "1027": [("劳动竞赛小组", "生产小组")],
+    "1030": [("集体农庄小队", "农场小队")],
+    "1031": [("集体农庄小队", "农场小队")],
+    "1032": [("卢布", "美元")],
+}
+ALPHABET = dict(zip(edition.CYRILLIC_PARTS, string.ascii_lowercase))
+MARKER = re.compile("([" + "".join(ALPHABET) + "])(?=[)）])")
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+document = json.loads((TARGET / "exercises.template.json").read_text())
+raw = json.loads((SOURCE / "exercises.json").read_text())
+profile = json.loads(Path(".claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json").read_text())
+history = ROOT / "history/adapt-prepare-FIRST"
+history.mkdir(parents=True, exist_ok=False)
+for name in ("lesson.template.json", "exercises.template.json", "figures.template.json"):
+    with (history / name).open("xb") as handle:
+        handle.write((TARGET / name).read_bytes())
+items = []
+for original, candidate in zip(raw["exercises"], document["exercises"], strict=True):
+    number = candidate["number"]
+    before = candidate["text"]
+    masked = edition.masked_math(before)
+    markers = list(MARKER.finditer(masked))
+    text = before
+    for marker in reversed(markers):
+        text = text[:marker.start()] + ALPHABET[marker.group()] + text[marker.end():]
+    applied = []
+    for old, new in REPLACEMENTS.get(number, []):
+        assert old in text, (number, old)
+        occurrences = text.count(old)
+        text = text.replace(old, new)
+        applied.append({"from": old, "to": new, "occurrences": occurrences})
+    text = edition.normalize_numbered_subparts(text)
+    candidate["text"] = text
+    candidate["lines"] = text.splitlines()
+    candidate["changes"] = []
+    if text != original["text"]:
+        candidate["changes"].append("layout")
+        if markers:
+            candidate["changes"].append("enumeration")
+        if applied:
+            candidate["changes"].append("context")
+    errors = edition.validate_text(
+        original["text"], text, candidate["changes"], candidate["numeric_changes"],
+        number, profile["forbidden_terms"] + profile["forbidden_person_names"],
+        candidate["historical_entities"], source_lines=original["lines"],
+    )
+    assert not errors, (number, errors)
+    assert not edition.validate_numbered_subpart_layout(text), number
+    for key in ("number", "source_number", "group", "group_id", "pages",
+                "figure_refs", "figures", "numbering_erratum"):
+        assert candidate.get(key) == original.get(key), (number, key)
+    items.append({"number": number, "sublabels_converted": len(markers),
+                  "context_changes": applied, "text_changed": text != original["text"]})
+with (TARGET / "exercises.template.json").open("w", encoding="utf-8") as handle:
+    json.dump(document, handle, ensure_ascii=False, indent=2)
+    handle.write("\n")
+report = {
+    "scope": "Modern supplement text author FIRST only; no independent review or figures/finalize.",
+    "source": {"path": str(SOURCE / "exercises.json"), "sha256": sha(SOURCE / "exercises.json")},
+    "template": {"path": str(TARGET / "exercises.template.json"),
+                 "sha256": sha(TARGET / "exercises.template.json")},
+    "exercise_count": len(items),
+    "text_contract_check": {"calls": 1, "status": "PASS"},
+    "items": items,
+    "retained_source_anomalies": {
+        "956": "Printed 936 remains in source_text/body; logical number is 956 with the bound erratum.",
+        "1028": "Literal original cross-page join remains; no silent source wording correction.",
+        "1031": "Original word 结果 remains; only the farm institutional context changes.",
+        "1056": "Part b has no invented square exponent.",
+        "1061": "Formula b versus prose k remains; unresolved-source must be examined during source solving.",
+    },
+    "image_observations": 0,
+    "independent_approval": False,
+    "durable_modern_changes": 0,
+}
+with (ROOT / "author-FIRST.record").open("x", encoding="utf-8") as handle:
+    json.dump(report, handle, ensure_ascii=False, indent=2)
+    handle.write("\n")
+print(json.dumps({"status": "PASS", "stage": "text-author-FIRST", "exercises": len(items),
+                  "context_changed_exercises": len(REPLACEMENTS),
+                  "sublabels_converted": sum(item["sublabels_converted"] for item in items),
+                  "sha256": report["template"]["sha256"]}))

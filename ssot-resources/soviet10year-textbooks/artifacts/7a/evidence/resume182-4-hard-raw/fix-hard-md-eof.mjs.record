@@ -1,0 +1,32 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), repo);
+const book = 'ssot-resources/soviet10year-textbooks/artifacts/7a';
+const evidence = `${book}/evidence/resume182-4-hard-raw`;
+const scratch = '.tmp/resume182-4-hard-raw/artifacts/7a/lessons/alg7-hard/lesson.md';
+const durable = `${book}/lessons/alg7-hard/lesson.md`;
+const first = fs.readFileSync(scratch, 'utf8');
+assert.equal(first, '# 难题\n\n');
+assert.equal(fs.readFileSync(durable, 'utf8'), first);
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const history = `${evidence}/history/lesson-FIRST.md.record`;
+fs.writeFileSync(history, first, { flag: 'wx' });
+const current = first.trimEnd() + '\n';
+for (const file of [scratch, durable]) fs.writeFileSync(file, current);
+const record = {
+  scope: 'Raw Markdown EOF formatting only, matching existing assemble.run writer contract.',
+  observed_first_git_diff_check: {
+    exit_code: 2, diagnostic: 'lesson.md:2: new blank line at EOF.',
+    provenance: 'Actual command tool receipt; not a reconstructed captured stdout file.',
+  },
+  history: { path: history, sha256: sha(first) },
+  current: { path: durable, sha256: sha(current) },
+  supersedes: 'Only lesson.md current hash in promotion.record; original assembly and retention remain historical.',
+  source_math_json_assembly_or_review_reruns: 0,
+};
+fs.writeFileSync(`${evidence}/md-eof-affected1.record`,
+  `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(record));

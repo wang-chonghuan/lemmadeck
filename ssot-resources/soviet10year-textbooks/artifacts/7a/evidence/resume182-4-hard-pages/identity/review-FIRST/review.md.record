@@ -1,0 +1,93 @@
+# STEMROBIN-182 / chat182-4 Static Numbering Review FIRST
+
+Date: 2026-11-19.
+Every relative path below resolves from
+`/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck`.
+
+## Verdict
+
+**APPROVE_PROMOTION**, strictly for the numbering-only change to book 7a,
+physical page 0318 / printed page 312 at the exact current hashes below.
+No actionable finding. This is a review decision, not an executed promotion,
+a new source approval, or approval of the whole lesson.
+
+## Exact Bindings
+
+Candidate: `.tmp/resume182-4-hard-identity/artifacts/7a/pages/0318/`.
+
+| File | Current SHA-256 |
+| --- | --- |
+| page.md | `b33ded4e098f8447e9677f3d7a209cf8fd081007c4a2d1c46608b78df1c06fdf` |
+| page.json | `627a12ec2dc817fe4f21ff88a35751514095ad3aa55ef1c507ab67ee319f8006` |
+| audit.json | `7c525846918658916ddc234db6e289596c320b20294e14d091050b9da584de17` |
+
+Baseline: `.tmp/resume182-4-hard-identity/history/source-approved/0318/`.
+Its MD/JSON/audit hashes match the user-supplied approved hashes and the
+corresponding `.tmp/resume182-4-source315-318/artifacts/7a/pages/0318/` files:
+
+- MD: `eab66451621f2be92335a1f467ad7d5caf56e716908db470463e88b17020da5b`
+- JSON: `c58698221ac61c5279388c5895b41e372603a504f2e02879e720a55360b671f8`
+- Audit: `7c525846918658916ddc234db6e289596c320b20294e14d091050b9da584de17`
+
+## Independent Static Findings
+
+The old/current unified diffs change only `notes[1]` and add
+`exercise_numbering_errata`; MD frontmatter equals JSON metadata.
+The MD body is byte-identical, JSON blocks are structurally identical, and
+audit bytes are identical. Every other metadata field and note is unchanged.
+All math, flags, source/render/profile identities and saved audit evidence
+therefore remain at the approved baseline; no new validation is claimed.
+
+There is exactly one numbering record:
+`p0318-numbering-1030-to-1090`, block `p0318#11`, printed `"1030"`,
+corrected `"1090"`, with a nonempty reason. The one-based reference resolves
+to the non-continuation `ex` block whose label and literal body prefix are
+still `1030`. Its immediate exercise neighbors are 1089 and 1091.
+No other start block on the reviewed page already uses 1090; the effective
+identities are 1081 through 1092 without a duplicate. These are identity
+inspections, not new source-row counting or a whole-book audit.
+
+The frozen source `review-FIRST` independently confirms the original
+printed 1030 between 1089 and 1091. Frozen `review-affected1` approves the
+baseline formula lowercase p / final uppercase P; that entire block is
+unchanged. Neither source images nor the native crop were reopened.
+
+## Actual Contract Consumption
+
+Read, without executing, the current repository contracts:
+
+- `tools/blocks.py:86`: `exercise_numbering_errata` validates unique IDs,
+  block refs and corrected values, a same-page existing non-continuation
+  exercise, and matching raw label/body printed number. This record satisfies
+  those predicates; it binds a block, not every occurrence of printed 1030.
+- `tools/assemble.py:39` and `:129`: `load_stream` attaches the record only
+  to its exact ref; `split_lesson` uses corrected 1090 as `number`, retains
+  1030 as `source_number`, leaves text/lines intact, and retains the record.
+- `tools/assemble.py:388` and `:411`: sequence/answer-reference consumption
+  checks the corrected identity against the printed identity, first block
+  ref and exact current authoritative-page ledger. A previous exercise
+  merely sharing printed 1030 is not the binding.
+- `tools/p2c.py:414`: assembly receives catalog `exerciseNumbering` with
+  `"book"` as its default. Book-continuous numbering is supplied scope;
+  no alternative numbering policy was introduced or executed here.
+
+These tool paths are relative to `.claude/skills/ld-s10y-lesson/`.
+The relevant TOC entry is still `alg7-hard`, exercises, number null,
+title "难题", printed start 309. No TOC or lesson identity change is needed.
+The user-supplied fact that the earlier original 1030 is retained is
+inherited, not a new source reading of that exercise or a global audit.
+The exact-block contract prevents this ledger from renumbering it.
+
+## Saved Execution and Limits
+
+Read-only `receipts/sync-FIRST/receipt.record` records the existing single
+parser synchronization, 2026-11-19T14:04:30.022Z to 14:04:30.058Z, returncode 0.
+Its stdout and `sync-FIRST.record` bind the current candidate hashes.
+No parser synchronization, finalize, assembly, tests, source/image/count
+probe, mathematical validation, browser, paid service, DB or Git operation
+was run by this reviewer. Contract inspection is not an assembly execution.
+
+Only these two review files were written. Candidate/content/code, frozen
+reviews, history, receipts and other workers' changes were left untouched.
+Existing holds, including the incomplete 1092 boundary and page315 technical
+hold, remain outside this approval; no modern figure or whole lesson is approved.

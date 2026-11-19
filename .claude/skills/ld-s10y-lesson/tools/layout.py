@@ -394,10 +394,15 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             continue
         rows, columns = bounds
         height, width = rows.stop - rows.start, columns.stop - columns.start
+        sparse_shallow_rule = (
+            0.3 * glyph_h <= height <= 0.4 * glyph_h
+            and width >= 3 * glyph_h
+            and sizes[component_id] < 0.2 * width * height
+        )
         isolated_fragment = height < 0.3 * glyph_h or (
             height < 0.65 * glyph_h and width >= 0.5 * glyph_h
             and sizes[component_id] >= 0.35 * width * height
-        )
+        ) or sparse_shallow_rule
         thin_rule = height <= 0.2 * glyph_h and width >= 0.7 * glyph_h
         if isolated_fragment and not (
             height < 0.65 * glyph_h

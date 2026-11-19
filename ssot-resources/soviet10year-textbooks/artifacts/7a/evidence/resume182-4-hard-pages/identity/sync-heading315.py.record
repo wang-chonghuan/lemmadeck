@@ -1,0 +1,40 @@
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+assert Path.cwd() == REPO
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+import blocks
+
+ROOT = Path(".tmp/resume182-4-hard-identity")
+directory = ROOT / "artifacts/7a/pages/0315"
+baseline = ROOT / "history/source-approved/0315"
+old = json.loads((baseline / "page.json").read_text())
+metadata, items = blocks.parse((directory / "page.md").read_text())
+expected = json.loads(json.dumps(old["blocks"]))
+assert expected[0]["kind"] == "h1"
+assert expected[0]["lines"] == ["难题"]
+expected[0]["kind"] = "h3"
+assert items == expected
+assert metadata == old["meta"]
+assert (directory / "audit.json").read_bytes() == (baseline / "audit.json").read_bytes()
+(directory / "page.json").write_text(
+    json.dumps({"meta": metadata, "blocks": items}, ensure_ascii=False, indent=2) + "\n",
+    encoding="utf-8",
+)
+record = {
+    "scope": "315 heading kind only: h1 to h3 for the existing lesson cutter; title and all printed content unchanged.",
+    "source_count_image_math_reexecutions": 0,
+    "metadata_body_lines_flags_and_audit_unchanged": True,
+    "files": [
+        {"path": str(directory / name),
+         "sha256": hashlib.sha256((directory / name).read_bytes()).hexdigest()}
+        for name in ("page.md", "page.json", "audit.json")
+    ],
+}
+with (ROOT / "sync-heading315-FIRST.record").open("x") as handle:
+    json.dump(record, handle, indent=2)
+    handle.write("\n")
+print(json.dumps(record))

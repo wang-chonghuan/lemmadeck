@@ -1,0 +1,47 @@
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+import numpy as np
+from PIL import Image
+from scipy import ndimage
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+assert Path.cwd() == REPO
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+import layout
+
+source = Path(".tmp/ld-s10y-lesson/7a/pages/0315/page.png")
+ink = layout.ink_mask(Image.open(source))
+before = ink.copy()
+labels, _ = ndimage.label(ink)
+sizes = np.bincount(labels.ravel())
+components = []
+for index, bounds in enumerate(ndimage.find_objects(labels), 1):
+    if bounds is None:
+        continue
+    rows, columns = bounds
+    if rows.start <= 400 and rows.stop >= 370:
+        height, width = rows.stop - rows.start, columns.stop - columns.start
+        components.append({
+            "rows": [rows.start, rows.stop],
+            "columns": [columns.start, columns.stop],
+            "height": height, "width": width, "area": int(sizes[index]),
+            "density": float(sizes[index] / (width * height)),
+        })
+bands = layout.line_bands(ink, 1474)
+assert np.array_equal(ink, before)
+record = {
+    "scope": "Affected page315 numerical diagnosis only; no new visual observation.",
+    "source": str(source),
+    "sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+    "layout_sha256": hashlib.sha256(Path(layout.__file__).read_bytes()).hexdigest(),
+    "bands": bands, "count": len(bands),
+    "components_intersecting_heading_rule": components,
+    "input_unchanged": True,
+}
+with Path(".tmp/resume182-4-layout315/diagnose-FIRST.record").open("x") as handle:
+    json.dump(record, handle, indent=2)
+    handle.write("\n")
+print(json.dumps(record))

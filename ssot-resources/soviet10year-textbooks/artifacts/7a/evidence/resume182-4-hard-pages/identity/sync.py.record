@@ -1,0 +1,46 @@
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+assert Path.cwd() == REPO
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+import blocks
+
+ROOT = Path(".tmp/resume182-4-hard-identity")
+directory = ROOT / "artifacts/7a/pages/0318"
+old_directory = ROOT / "history/source-approved/0318"
+old = json.loads((old_directory / "page.json").read_text())
+metadata, items = blocks.parse((directory / "page.md").read_text())
+assert items == old["blocks"]
+assert items[10]["kind"] == "ex" and items[10]["label"] == "1030"
+assert items[9]["label"] == "1089" and items[11]["label"] == "1091"
+for key, value in old["meta"].items():
+    if key != "notes":
+        assert metadata[key] == value, key
+for index, note in enumerate(old["meta"]["notes"]):
+    if index != 1:
+        assert metadata["notes"][index] == note
+numbering = blocks.exercise_numbering_errata(metadata, items, 318)
+assert numbering["p0318#11"]["printed"] == "1030"
+assert numbering["p0318#11"]["corrected"] == "1090"
+assert (directory / "audit.json").read_bytes() == (old_directory / "audit.json").read_bytes()
+(directory / "page.json").write_text(
+    json.dumps({"meta": metadata, "blocks": items}, ensure_ascii=False, indent=2) + "\n",
+    encoding="utf-8",
+)
+record = {
+    "scope": "318 numbering metadata only, existing blocks parser synchronization.",
+    "body_math_flags_source_render_profile_and_audit_unchanged": True,
+    "source_count_image_math_reexecutions": 0,
+    "files": [
+        {"path": str(directory / name),
+         "sha256": hashlib.sha256((directory / name).read_bytes()).hexdigest()}
+        for name in ("page.md", "page.json", "audit.json")
+    ],
+}
+with (ROOT / "sync-FIRST.record").open("x") as handle:
+    json.dump(record, handle, indent=2)
+    handle.write("\n")
+print(json.dumps(record))

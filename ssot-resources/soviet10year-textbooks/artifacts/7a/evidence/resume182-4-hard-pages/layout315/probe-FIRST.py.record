@@ -1,0 +1,74 @@
+import hashlib
+import importlib.util
+import json
+import sys
+from pathlib import Path
+
+import numpy as np
+from PIL import Image
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+assert Path.cwd() == REPO
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+import layout
+
+ROOT = Path(".tmp/resume182-4-layout315")
+spec = importlib.util.spec_from_file_location("layout315_candidate", ROOT / "layout-candidate.py")
+candidate = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(candidate)
+ink = layout.ink_mask(Image.open(".tmp/ld-s10y-lesson/7a/pages/0315/page.png"))
+before = ink.copy()
+old = json.loads((ROOT / "diagnose-FIRST.record").read_text())
+new = candidate.line_bands(ink, 1474)
+assert np.array_equal(ink, before)
+expected = [band for band in old["bands"] if band != [380, 393]]
+assert [list(band) for band in new] == expected
+
+
+def glyphs(mask, top, positions):
+    for left in positions:
+        mask[top:top + 40, left:left + 22] = True
+
+
+cases = []
+for kind in ("ornament", "same-baseline", "fraction"):
+    mask = np.zeros((480, 720), dtype=bool)
+    glyphs(mask, 40, [260, 300])
+    glyphs(mask, 180, [80, 130, 180, 230, 280, 330, 380, 430])
+    glyphs(mask, 340, [80, 130, 180, 230, 280, 330, 380, 430])
+    if kind in ("ornament", "same-baseline"):
+        for left in range(250, 383):
+            top = 100 + round(14 * (left - 250) / 132)
+            mask[top:top + 2, left] = True
+        if kind == "same-baseline":
+            glyphs(mask, 88, [450, 490])
+    else:
+        mask[104:107, 250:383] = True
+        glyphs(mask, 124, [260, 300])
+    original = mask.copy()
+    old_bands = layout.line_bands(mask, 720)
+    new_bands = candidate.line_bands(mask, 720)
+    assert np.array_equal(mask, original)
+    if kind == "ornament":
+        assert len(new_bands) == 3
+        assert len(old_bands) == 4
+    else:
+        assert new_bands == old_bands
+    cases.append({"case": kind, "old": old_bands, "new": new_bands,
+                  "input_unchanged": True})
+
+record = {
+    "scope": "Affected315 numerical candidate and three new fixed contrasts; no source re-review.",
+    "candidate_sha256": hashlib.sha256((ROOT / "layout-candidate.py").read_bytes()).hexdigest(),
+    "baseline_sha256": old["layout_sha256"],
+    "source_count": {"old": 26, "new": len(new), "removed_only": [380, 393],
+                     "other_bands_preserved": True, "input_unchanged": True},
+    "cases": cases,
+    "status": "PASS",
+    "independent_review": False,
+    "real_layout_modified": False,
+};
+with (ROOT / "probe-FIRST.record").open("x") as handle:
+    json.dump(record, handle, indent=2)
+    handle.write("\n")
+print(json.dumps(record))
