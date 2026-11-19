@@ -1,0 +1,95 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 279,
+  "printed_page": 269,
+  "notes": [
+    "FIRST source candidate only; independent SOURCE and RAW review pending. Verify color-plate reference typography and the emphasis weight of the sentence following the bold continuous-spectrum claim."
+  ],
+  "errata": [],
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 279
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "6c25de8179496e192a7d24300eb762288a62acd0bd9f22ddcbb64970fa622f89"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "printed_lines": 25,
+  "figures": [
+    {
+      "id": "fig-232",
+      "label": "图 232",
+      "box": [
+        801,
+        903,
+        541,
+        262
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- h3 -->
+105. 辐射光谱的类型
+
+<!-- p -->
+各种不同物质辐射光谱的组成是极其多种多样的. 虽然
+如此，所有的光谱，如实验所示，还是可以分成彼此极不相似
+的三种类型.
+
+<!-- p -->
+**连续光谱** 太阳光谱或是弧光灯光谱是**连续光谱**. 这就
+是说，在光谱中含有所有波长的波. 光谱中没有间断，在摄谱
+仪的屏上可以看到连续的各色条纹(彩图$V$，1).
+
+<!-- p open -->
+能量按频率(或按波长)的分布，对不同的物体来说是不
+同的. 例如，表面极黑的物体能发射所有频率的电磁波，但是
+其能量和频率的关系曲线在一定频率$\nu_m$上具有最大值(图
+
+<!-- fig 图 232 box 801,903,541,262 -->
+![图 232](figures/fig-232.png)
+
+<!-- p cont -->
+232)，而频率很小($\nu\to0$)和频
+率很大($\nu\to\infty$)时，辐射能量
+则是微乎其微的. 当温度升高
+时，辐射能量最大值向波长短
+的方向移动.
+
+<!-- cap 图 232 samerow -->
+图 232
+
+<!-- p -->
+**实验表明，连续光谱是由处于固态或液态的物体发射的.**
+为了获得连续光谱，需要把物体加热到高温.
+
+<!-- p -->
+连续光谱的特征以及它的存在不仅是由各个辐射原子的
+性质决定的，而且在很大程度上取决于原子相互间的作用. 气
+体不能发射连续光谱. 液体和固体与气体的主要区别在于它
+们原子间的相互作用是非常强的.
+
+<!-- p -->
+高温等离子体也辐射连续光谱. 等离子体在电子和离子
+碰撞时辐射电磁波.
+
+<!-- p open -->
+**明线光谱** 如果把一小块石棉在普通食盐溶液中浸湿，
+
+<!-- foot -->
+269
