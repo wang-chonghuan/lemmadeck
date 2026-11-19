@@ -1,0 +1,94 @@
+{
+  "cwd": "/Users/yong/.codex/worktrees/00b1/lemmadeck",
+  "argv": [
+    ".claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import copy\nimport json\nimport subprocess\nimport sys\nfrom pathlib import Path\n\nrepo = Path.cwd()\ntools = repo / \".claude/skills/ld-s10y-lesson/tools\"\nsys.path.insert(0, str(tools))\nimport edition\nimport mathcheck\n\nowned = repo / \".intentfold/tickets/STEMROBIN-181/tmp/d1136-n95-first-bilingual-text-author\"\nfreeze = edition.load(owned / \"FIRST-candidate-freeze.json\")\ncard = \"phy10-c2-s4-n95\"\nbook = repo / \".intentfold/tickets/STEMROBIN-181/tmp/d1133-source256-consume-n95-prepare/root/10p\"\nraw_path = book / \"lessons\" / card\nraw_lesson = edition.load(raw_path / \"lesson.json\")\nraw_exercises = edition.load(raw_path / \"exercises.json\")\nrequirements = edition.load(repo / \".intentfold/tickets/STEMROBIN-181/tmp/d1133-source256-consume-n95-prepare/source-requirements.json\")\nprofile = edition.load(tools.parent / \"profiles/modern-us-neutral.json\")\nforbidden = profile[\"forbidden_terms\"] + profile[\"forbidden_person_names\"]\nerrors = []\nfor binding in freeze[\"inputs\"]:\n    if edition.sha256(Path(binding[\"path\"])) != binding[\"sha256\"]:\n        errors.append(f\"Frozen input changed: {binding['path']}\")\nfor candidate in freeze[\"candidates\"]:\n    for version in (\"current\", \"FIRST\"):\n        binding = candidate[version]\n        if edition.sha256(Path(binding[\"path\"])) != binding[\"sha256\"]:\n            errors.append(f\"Frozen candidate changed: {binding['path']}\")\n    if candidate[\"current\"][\"sha256\"] != candidate[\"FIRST\"][\"sha256\"]:\n        errors.append(f\"FIRST/current mismatch: {candidate['locale']}/{candidate['kind']}\")\n\nrequired_refs = [block[\"ref\"] for block in requirements[\"blocks\"] if block[\"kind\"] != \"h3\"]\nraw_refs = [ref for block in raw_lesson[\"prose\"] for ref in block[\"source_refs\"]]\nif len(raw_refs) != len(required_refs) or set(raw_refs) != set(required_refs):\n    errors.append(\"Closed source requirements do not match the complete raw prose reference set\")\nif \"p0256#5\" in raw_refs:\n    errors.append(\"Excluded n96 heading entered n95\")\nif raw_lesson[\"exercise_count\"] != 0 or raw_exercises != {\"lesson\": card, \"count\": 0, \"exercises\": []}:\n    errors.append(\"Raw zero-exercise contract changed\")\nif [item[\"id\"] for item in raw_lesson[\"figures\"]] != requirements[\"sourceFigureIds\"]:\n    errors.append(\"Required figure identities changed\")\n\nresults = []\nmath_items = []\nnested_commands = []\nfor locale in (\"zh\", \"en\"):\n    local_errors = []\n    lesson = edition.load(owned / locale / \"lesson.template.json\")\n    exercises = edition.load(owned / locale / \"exercises.template.json\")\n    local_errors += edition.validate_source(book, lesson[\"source\"], raw_path / \"lesson.json\", \"lesson\")\n    local_errors += edition.validate_source(book, exercises[\"source\"], raw_path / \"exercises.json\", \"exercises\")\n    local_errors += edition.validate_lesson_identity(raw_lesson, lesson)\n    corrections, errata_errors = edition.validate_errata(book, raw_lesson, raw_exercises, lesson, exercises)\n    local_errors += errata_errors\n    if lesson[\"schema\"] != edition.LESSON_SCHEMA or exercises[\"schema\"] != edition.EXERCISES_SCHEMA:\n        local_errors.append(\"Native lesson/exercise schema mismatch\")\n    if lesson[\"edition\"] != \"modern-us-neutral\" or exercises[\"edition\"] != \"modern-us-neutral\":\n        local_errors.append(\"Edition mismatch\")\n    if lesson[\"locale\"] != locale or exercises[\"locale\"] != locale:\n        local_errors.append(\"Locale mismatch\")\n    if lesson[\"figures\"] != raw_lesson[\"figures\"]:\n        local_errors.append(\"Source figure list changed\")\n    if len(lesson[\"prose\"]) != len(raw_lesson[\"prose\"]):\n        local_errors.append(\"Prose count changed\")\n    if exercises[\"lesson\"] != card or exercises[\"count\"] != 0 or exercises[\"exercises\"] != []:\n        local_errors.append(\"Empty exercise template changed\")\n    if {key: value for key, value in exercises.items() if key != \"locale\"} != edition.load(\n        repo / \".intentfold/tickets/STEMROBIN-181/tmp/d1133-source256-consume-n95-prepare/work/adapt/10p/modern-us-neutral/lessons/phy10-c2-s4-n95/exercises.template.json\"\n    ):\n        local_errors.append(\"Exercise template differs from preparation beyond locale\")\n    normalized = copy.deepcopy(lesson)\n    edition.normalize_lesson_layout(normalized)\n    if normalized != lesson:\n        local_errors.append(\"Candidate not already in deterministic native prose layout\")\n    flow, flow_errors = edition.prose_flow_contract(lesson[\"prose\"], lesson[\"section_breaks\"])\n    local_errors += flow_errors\n    nested_commands.append({\n        \"cwd\": str(repo), \"argv\": [\"node\", str(tools / \"prose_flow.mjs\"), \"--stdin\"],\n        \"input\": f\"{locale} candidate prose and section_breaks, bound by FIRST freeze\",\n    })\n    signatures = []\n    for index, (source, modern) in enumerate(zip(raw_lesson[\"prose\"], lesson[\"prose\"])):\n        label = f\"{locale}.lesson.prose[{index}]\"\n        local_errors += edition.validate_identity_fields(\n            source, modern, (\"kind\", \"id\", \"label\", \"printed_page\", \"source_refs\"), label\n        )\n        if modern[\"source_text\"] != source[\"text\"]:\n            local_errors.append(f\"{label}.source_text changed\")\n        local_errors += edition.validate_text(\n            source[\"text\"], modern[\"text\"], modern[\"changes\"], modern[\"numeric_changes\"],\n            label, forbidden, modern[\"historical_entities\"], corrections.get(f\"lesson.prose[{index}]\"),\n            modern.get(\"notation_changes\"),\n        )\n        source_tokens = [match.group(0) for match in edition.MATH.finditer(source[\"text\"])]\n        modern_tokens = [match.group(0) for match in edition.MATH.finditer(modern[\"text\"])]\n        if source_tokens != modern_tokens:\n            local_errors.append(f\"{label}: exact math token/order changed\")\n        for error in mathcheck.check_delimiters(modern[\"text\"]):\n            local_errors.append(f\"{label}: {error}\")\n        for tex, display in mathcheck.find_math_spans(modern[\"text\"]):\n            math_items.append({\"id\": label, \"field\": \"text\", \"tex\": tex, \"display\": display})\n        signatures.append({\n            \"source_refs\": source[\"source_refs\"],\n            \"mathTokens\": modern_tokens,\n            \"numbersAndReferences\": edition.prose_number_signature(modern[\"text\"]),\n            \"historicalEntities\": modern[\"historical_entities\"],\n        })\n    results.append({\n        \"locale\": locale,\n        \"status\": \"pass\" if not local_errors else \"fail\",\n        \"proseBlocks\": len(lesson[\"prose\"]),\n        \"textBlocks\": sum(block[\"kind\"] == \"p\" for block in lesson[\"prose\"]),\n        \"footnotes\": sum(block[\"label\"] == \"footnote\" for block in lesson[\"prose\"]),\n        \"exercises\": len(exercises[\"exercises\"]),\n        \"figures\": [item[\"id\"] for item in lesson[\"figures\"]],\n        \"mathTokenCount\": sum(len(item[\"mathTokens\"]) for item in signatures),\n        \"flow\": flow,\n        \"signatures\": signatures,\n        \"errors\": local_errors,\n    })\n    errors += local_errors\n\nargv = [\"node\", str(tools / \"katex_check.js\")]\nresult = subprocess.run(argv, input=json.dumps(math_items), capture_output=True, text=True, cwd=repo)\nnested_commands.append({\"cwd\": str(repo), \"argv\": argv, \"mathItems\": len(math_items), \"exitCode\": result.returncode})\nif result.returncode:\n    errors.append(f\"Native KaTeX command failed: {result.stderr}\")\n    katex_results = []\nelse:\n    katex_results = json.loads(result.stdout)\n    for item in katex_results:\n        if item.get(\"fatal\") or not item.get(\"ok\"):\n            errors.append(f\"Native KaTeX failed: {item}\")\n\ndef serializable(value):\n    if isinstance(value, set):\n        return sorted(value)\n    raise TypeError(type(value).__name__)\n\nreport = {\n    \"schema\": \"stemrobin/scoped-native-text-check@1\",\n    \"ticket\": \"STEMROBIN-181\", \"batch\": \"D036\", \"card\": card,\n    \"status\": \"pass\" if not errors else \"fail\",\n    \"scope\": \"current FIRST bilingual templates: source snapshots, identities, refs, text, numeric and exact math preservation, registered errata, native proseFlow, KaTeX\",\n    \"nativeAPIs\": [\n        \"edition.validate_source\", \"edition.validate_lesson_identity\", \"edition.validate_identity_fields\",\n        \"edition.validate_errata\", \"edition.validate_text\", \"edition.normalize_lesson_layout (in-memory stability only)\",\n        \"edition.prose_flow_contract\", \"mathcheck.check_delimiters\", \"mathcheck.find_math_spans\", \"katex_check.js\",\n    ],\n    \"freezeSHA256\": edition.sha256(owned / \"FIRST-candidate-freeze.json\"),\n    \"sourceCounts\": freeze[\"sourceCounts\"],\n    \"locales\": results, \"nestedCommands\": nested_commands, \"katex\": katex_results,\n    \"katexWarnings\": [warning for item in katex_results for warning in item.get(\"warnings\", [])],\n    \"errors\": errors,\n    \"semanticReview\": \"pending\", \"completeCard\": False,\n    \"notChecked\": [\"figure pixels/spec/render/review\", \"full native lesson finalization\", \"independent semantic review\", \"product/browser/publication\"],\n}\nprint(json.dumps(report, ensure_ascii=False, indent=2, default=serializable))\nsys.exit(0 if not errors else 1)\n"
+  ],
+  "startedAt": "2026-11-19T05:43:00.472Z",
+  "origin": {
+    "helper": {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1090-n94-first-bilingual-text-author/text-check.py",
+      "sha256": "ea3a8379d0c5e7719528a6983ce302003501e3063457cb93000898bc94722bcb",
+      "bytes": 8924
+    },
+    "substitutions": [
+      [
+        ".intentfold/tickets/STEMROBIN-181/tmp/d1090-n94-first-bilingual-text-author",
+        ".intentfold/tickets/STEMROBIN-181/tmp/d1136-n95-first-bilingual-text-author"
+      ],
+      [
+        ".intentfold/tickets/STEMROBIN-181/tmp/d1086-source253-consume-n94-prepare",
+        ".intentfold/tickets/STEMROBIN-181/tmp/d1133-source256-consume-n95-prepare"
+      ],
+      [
+        ".intentfold/tickets/STEMROBIN-181/tmp/d1089-n94-heading-check-recovery",
+        ".intentfold/tickets/STEMROBIN-181/tmp/d1133-source256-consume-n95-prepare"
+      ],
+      [
+        "phy10-c2-s4-n94",
+        "phy10-c2-s4-n95"
+      ],
+      [
+        "p0253#10",
+        "p0256#5"
+      ],
+      [
+        "Excluded n95 heading entered n94",
+        "Excluded n96 heading entered n95"
+      ]
+    ],
+    "newTestOrDependency": false,
+    "method": "Existing n94 mechanical checker, unchanged native APIs and assertions; only n95 owner/source/boundary specialization."
+  },
+  "candidates": [
+    {
+      "locale": "zh",
+      "kind": "lesson",
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1136-n95-first-bilingual-text-author/zh/lesson.template.json",
+      "sha256": "3df8d02239de6ffb064f5bffa98728e7f143abafe04a0fb2593a653d19174832",
+      "bytes": 24693
+    },
+    {
+      "locale": "zh",
+      "kind": "exercises",
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1136-n95-first-bilingual-text-author/zh/exercises.template.json",
+      "sha256": "dddfc0c1a42edb1d51b421a945657bbee3deeb14798dc31019a27f8c4050d37b",
+      "bytes": 440
+    },
+    {
+      "locale": "en",
+      "kind": "lesson",
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1136-n95-first-bilingual-text-author/en/lesson.template.json",
+      "sha256": "0fb3aff49107e0e0cef19f01df85dac23b85a6265d6cbe3816972153f8f1ed95",
+      "bytes": 26205
+    },
+    {
+      "locale": "en",
+      "kind": "exercises",
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1136-n95-first-bilingual-text-author/en/exercises.template.json",
+      "sha256": "d3aaf4062cee88e4214065cd866ac412f8f5c3c0313c4d52ea17699b3cf8edbc",
+      "bytes": 440
+    }
+  ],
+  "freeze": {
+    "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1136-n95-first-bilingual-text-author/FIRST-candidate-freeze.json",
+    "sha256": "4ef92e1635a20ba9556ab30eca718db83dfc5450fc1ae7265d5240ca0e07be44",
+    "bytes": 15091
+  },
+  "finishedAt": "2026-11-19T05:43:00.686Z",
+  "exitCode": 0,
+  "signal": null,
+  "executionError": null,
+  "stdout": {
+    "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1136-n95-first-bilingual-text-author/native/text-contract-FIRST.stdout.txt",
+    "sha256": "7b9685fd15ac1915220dcd801bac4512714bd2eb76ec450296033e92f3dd7f68",
+    "bytes": 43962
+  },
+  "stderr": {
+    "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1136-n95-first-bilingual-text-author/native/text-contract-FIRST.stderr.txt",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  }
+}

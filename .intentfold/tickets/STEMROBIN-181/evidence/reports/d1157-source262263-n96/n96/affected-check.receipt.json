@@ -1,0 +1,19 @@
+{
+  "stage": "N96-FAILED-TEXT-CONTRACT-ASSERTIONS-ONLY",
+  "repair": {
+    "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1155-n96-text-contract-repair/report.json",
+    "sha256": "d298be43881dbe2d2738beca0458aaae052ae21a6b90bb67a8afd12c53584427"
+  },
+  "command": [
+    ".claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "\nimport json, sys\nfrom pathlib import Path\nsys.path.insert(0, \".claude/skills/ld-s10y-lesson/tools\")\nimport edition\nown = Path(sys.argv[1])\nprofile = edition.load(Path(\".claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json\"))\nforbidden = profile[\"forbidden_terms\"] + profile[\"forbidden_person_names\"]\nerrors, checked = [], []\nfor locale, index in [(\"zh\", 0), (\"en\", 0), (\"en\", 9)]:\n    block = edition.load(own / locale / \"lesson.template.json\")[\"prose\"][index]\n    local = edition.validate_text(block[\"source_text\"], block[\"text\"],\n        block[\"changes\"], block[\"numeric_changes\"], locale + \".prose[\" + str(index) + \"]\",\n        forbidden, block.get(\"historical_entities\"))\n    errors.extend(local)\n    checked.append({\"locale\":locale, \"index\":index,\n        \"source_math\":edition.math_signature(block[\"source_text\"]),\n        \"current_math\":edition.math_signature(block[\"text\"]),\n        \"source_numbers\":edition.prose_number_signature(block[\"source_text\"])[0],\n        \"current_numbers\":edition.prose_number_signature(block[\"text\"])[0],\n        \"errors\":local})\nprint(json.dumps({\"status\":\"PASS\" if not errors else \"HOLD\",\n    \"checked\":checked, \"errors\":errors}, ensure_ascii=False, indent=2))\nsys.exit(0 if not errors else 1)\n",
+    "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1155-n96-text-contract-repair"
+  ],
+  "exitCode": 0,
+  "stdout": "{\n  \"status\": \"PASS\",\n  \"checked\": [\n    {\n      \"locale\": \"zh\",\n      \"index\": 0,\n      \"source_math\": [\n        \"K\",\n        \"K_1\",\n        \"\\\\tau_0\",\n        \"K_1\",\n        \"K\",\n        \"K\",\n        \"\\\\tau\",\n        \"\\\\tau\",\n        \"\\\\tau_0\"\n      ],\n      \"current_math\": [\n        \"K\",\n        \"K_1\",\n        \"\\\\tau_0\",\n        \"K_1\",\n        \"K\",\n        \"K\",\n        \"\\\\tau\",\n        \"\\\\tau\",\n        \"\\\\tau_0\"\n      ],\n      \"source_numbers\": [],\n      \"current_numbers\": [],\n      \"errors\": []\n    },\n    {\n      \"locale\": \"en\",\n      \"index\": 0,\n      \"source_math\": [\n        \"K\",\n        \"K_1\",\n        \"\\\\tau_0\",\n        \"K_1\",\n        \"K\",\n        \"K\",\n        \"\\\\tau\",\n        \"\\\\tau\",\n        \"\\\\tau_0\"\n      ],\n      \"current_math\": [\n        \"K\",\n        \"K_1\",\n        \"\\\\tau_0\",\n        \"K_1\",\n        \"K\",\n        \"K\",\n        \"\\\\tau\",\n        \"\\\\tau\",\n        \"\\\\tau_0\"\n      ],\n      \"source_numbers\": [],\n      \"current_numbers\": [],\n      \"errors\": []\n    },\n    {\n      \"locale\": \"en\",\n      \"index\": 9,\n      \"source_math\": [\n        \"\\\\pi\",\n        \"\\\\tau_0=2.6\\\\times10^{-8}\",\n        \"v\",\n        \"v\",\n        \"c\",\n        \"\\\\frac{1}{\\\\sqrt{1-\\\\frac{v^2}{c^2}}}\",\n        \"\\\\tau_0c=7.8\"\n      ],\n      \"current_math\": [\n        \"\\\\pi\",\n        \"\\\\tau_0=2.6\\\\times10^{-8}\",\n        \"v\",\n        \"v\",\n        \"c\",\n        \"\\\\frac{1}{\\\\sqrt{1-\\\\frac{v^2}{c^2}}}\",\n        \"\\\\tau_0c=7.8\"\n      ],\n      \"source_numbers\": [\n        \"8.1\",\n        \"8.1\",\n        \"10\",\n        \"10\"\n      ],\n      \"current_numbers\": [\n        \"8.1\",\n        \"8.1\",\n        \"10\",\n        \"10\"\n      ],\n      \"errors\": []\n    }\n  ],\n  \"errors\": []\n}\n",
+  "stderr": "",
+  "error": null,
+  "fullPassedTextCheckReplays": 0
+}
