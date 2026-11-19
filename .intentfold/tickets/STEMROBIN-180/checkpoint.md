@@ -1,6 +1,68 @@
 # 生产检查点
 
-## 第八十六批三课完整，准备提交
+## 第八十六批已提交推送，第八十七批接续
+
+B87选择暂存一次0，72文件/38JSON解析PASS，三索引只投影本批
+课程、其余working字节不动。普通whitespace一次2只报五个已批准
+源页尾空格，FIRST及原文保持；排除blank-at-eol检查一次0。
+自己远端分支fetch一次0，提交前HEAD/origin双向0/0；
+env/app/依赖/scratch及未交付t16、其他课程均未暂存。
+下面“准备”是暂存前历史，实际commit/push尚未执行。
+
+B87三课完整，准备选择性提交：s29/n38/n51，零书写题/零答案/
+零选择题，空答案合同各收口PASS，不造填充题。83与136独立FIG
+PASS，recorder各一次0、metadata-only晋升各一次0，SVG原字节不动。
+三课adapt-finalize/modern-retain各一次0，现代索引按书各一次0。
+n38空答案保留FIRST1因调用方错哈希、写入0；按真实输出哈希
+续存一次0，不重prepare。原报告/FAIL/缺字节和两作者工作树根原件
+均保留，t16仍局部UNKNOWN并排除交付。
+
+按6p/8p各render一次0，headless桌面/手机一次检查十二页面PASS，
+六零选择surface按合同不存在。两fresh DISPLAY上下文各六原图，
+12PASS/0REVISE，crops/reopens/parent0，已收取关闭；
+根display-review-b87.md完成。尚未stage/commit/push，
+正式handoff及全项目防线留最终；无DB/合并/部署/关闭或E工作。
+
+B87接续：Hubble n51受影响F1-F4四项/两锚点PASS，报告
+SHAcb5c276d...，已收取关闭。Boyle恢复六模板22文件117081字节，
+报告recovery-s29-t16-b87.md已收取关闭；t16图227原artwork缺字节，
+不换确定性植物、不加付费，留局部缺口并改选n38作为替补。
+n38三模板历史哈希精确恢复，只修P3及声明两值，一轮科学修订，
+candidate2 SHA101b98ab...；原数字/三公式/零题图/源快照不动。
+恢复wrapper多两LF的FIRST1及规范化断言FIRST1均保存、没有抹除；
+实际normalize2/proseFlow1，新Kepler只审F1受影响处、图0。
+
+Herschel图83修订2作者PASS，标签y32→16及canvas下扩24，
+几何/24assertions/权威正文不动；作者2图、新render1，
+原两FAIL及缺FIRSTspec/SVG UNKNOWN保持，新Newton FIG审在途。
+Russell图136作者PASS，40对象37断言10英文标签，最小16.3625px，
+作者3图、render2、technical1/layout1；正文已绑定Hubble批准，
+新Planck只做独立FIG审。两个作者误写工作树根报告，逐字复制
+到ticket根，原件保留；仅更正136报告parent-relay出处，不冒充human。
+
+父隔离输入28份一次0。两次索引命令误用--books而写canonical
+索引，实际0但不是隔离证据；FIRST错误索引保存，只恢复自己
+造成的变化：6p原clean完整HEAD字节、8p保留原dirty30行及141页、
+只还原exercise_numbering。改--root后的两隔离reindex各一次0，
+各一课。无源审/备料/装订重跑，B87完整计数仍0、父图3、
+付费68/服务重试0、billing/tokens UNKNOWN。继续实物收口；
+全项目防线/formal handoff尚未执行，不作report-only提交。
+
+n51三旧模板从原审者未截断保存输出逐字恢复一次0，FIRST lesson
+SHA59657de4...；source快照及原报告481c4b48...匹配，两个旧主参考
+文本同步恢复，无重新fetch/prepare/assemble/源审。父只修F1至F4
+涉及五正文，12字段之外字节完全相同；规范化/proseFlow各一次0，
+十一段、实验边界相邻7/8，候选SHAefe1abe0...。新Hubble只受影响
+科学/声明/两锚点独审；新Russell只创作fig136确定性实验图，预算3，
+文本暂provisional、不晋升。Boyle继续s29/t16旧字节恢复；B87计数0。
+
+实际B86 commit/push各一次exit0，HEAD/origin同为
+14bd9ae994f2e235c0cd7ea5624444ec13c1a2fd；88文件三完整课。
+提交后事实留当前dirty检查点供下一实物批次一起提交，不作report-only
+提交。B87暂定s29/t16/n51三零书写题课，完整计数0；Boyle仅找回
+s29/t16旧模板及83/227失败原字节，父仅恢复n51模板，不重旧PASS。
+后续有源普通修复按最新授权继续；无新付费、DB、合并部署或E工作。
+下面“准备提交”叙述是原提交前历史，不能当尚未交付状态。
 
 选择暂存一次0，88文件/44JSON解析PASS；三个暂存索引只投影本批
 课程，working索引其余字节不动。普通whitespace一次exit2只报
