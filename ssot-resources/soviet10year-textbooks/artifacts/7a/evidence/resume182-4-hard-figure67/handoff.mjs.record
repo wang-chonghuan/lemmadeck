@@ -1,0 +1,41 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+const cwd = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck'
+assert.equal(process.cwd(), cwd)
+const own = path.join(cwd, '.tmp/resume182-4-hard-figure67')
+const hash = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex')
+const files = []
+const collect = directory => {
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    if (entry.name === 'runtime-tmp' || entry.name === 'manifest.json') continue
+    const p = path.join(directory, entry.name)
+    if (entry.isDirectory()) collect(p)
+    else if (entry.isFile()) files.push({ path: p, sha256: hash(p), bytes: fs.statSync(p).size })
+  }
+}
+collect(own)
+const context = JSON.parse(fs.readFileSync(path.join(own, 'context.json'), 'utf8'))
+const currentInputs = [context.sourceImage, ...context.authoritativeInputs].map(input => {
+  const p = path.isAbsolute(input.path) ? input.path : path.join(cwd, input.path)
+  return { path: p, sha256: hash(p), boundSha256: input.sha256, unchanged: hash(p) === input.sha256 }
+})
+const evidence = JSON.parse(fs.readFileSync(path.join(own, 'preview-recovery-evidence.json'), 'utf8'))
+const manifest = {
+  schema: 'stemrobin-182/fig67-author-handoff@1', status: 'candidate-draft-stop',
+  scope: 'STEMROBIN-182/chat182-4 FIGURE67 AUTHOR only', cwd,
+  outputs: ['context.json', 'source-inventory.json', 'spec.json', 'fig-67.svg', 'render.json', 'preview.html', 'preview-evidence.json', 'preview-recovery-evidence.json', 'candidate.md'].map(name => files.find(file => file.path === path.join(own, name))),
+  currentInputs,
+  stages: { author: 1, explicitDraftValidator: 1, renderer: 1, rendererMandatoryInternalValidator: 1, previewFirst: 1, failedPreviewFirst: 1, technicalPreviewRecovery: 1, specContentRepairs: 0, repeatedPassedStages: 0, formalIndependentReviews: 0 },
+  inventory: { groups: 6, numberLines: 6, rightArrowheads: 6, points: 18, pointLabels: 18, englishSubfigureLabels: 6, orderedDisplacements: 12, threePointCollinearities: 6, ownLineMemberships: 18, arrowConnections: 6, assertions: 42, objectCountAssertions: 0 },
+  imageUsage: { sourceObservations: 1, screenshotObservations: 6, observationsThisFreshContext: 7, freshContextLimit: 8, observationsNewInThisAssignment: 7, parentPriorUsage: 'not present in this fresh author context; parent must add its actual prior usage to check the overall cap 24', sourceCrops: 0, sourceReopensAfterInitialObservation: 0, screenshotsCreated: evidence.screenshotsCreated, paidCalls: 0, generatedArtwork: 0 },
+  observedImages: [currentInputs[0].path, ...evidence.screenshots.map(s => s.path)].map(p => ({ path: p, sha256: hash(p), observations: 1 })),
+  visualAuthorNotes: { fullResolutionAnd640: 'All source row orders, labels, three-point collinearity and right arrows retained; no extra scale/origin/unit markers.', accent: 'Uniform accent point markers; ink lines and labels remain readable.', print: 'Returns accent points to neutral ink, readable.', mobile: 'Intentional scroll crop at each end; all right arrowheads reachable at scrollLeft 298, panel width 342, media width 640.', independentReview: false },
+  toolFaults: { absentPathDiscoveryExit2: 2, previewCssTransitionTimingFailure: 1, recoveredOnlyFailedTechnicalStage: true },
+  files: files.sort((a, b) => a.path.localeCompare(b.path))
+}
+const output = path.join(own, 'manifest.json')
+fs.writeFileSync(output, JSON.stringify(manifest, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({ status: manifest.status, manifest: { path: output, sha256: hash(output) }, outputs: manifest.outputs, inputsUnchanged: currentInputs.every(i => i.unchanged), imageObservations: 7, stageCounts: manifest.stages }, null, 2))

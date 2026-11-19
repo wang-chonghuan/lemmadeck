@@ -1,0 +1,144 @@
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const assert = require("node:assert/strict");
+
+const cwd = "/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck";
+assert.equal(process.cwd(), cwd);
+const owner = path.join(cwd, ".tmp/resume182-4-supplement-layout-display");
+const root = path.join(owner, "capture-recovery2");
+const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const fact = (file) => {
+  const bytes = fs.readFileSync(file);
+  return { path: file, bytes: bytes.length, sha256: hash(bytes) };
+};
+const receiptPath = path.join(root, "capture-receipt.json");
+const receipt = JSON.parse(fs.readFileSync(receiptPath));
+const observationsPath = path.join(root, "image-observations.json");
+const observations = JSON.parse(fs.readFileSync(observationsPath));
+const original = JSON.parse(fs.readFileSync(receipt.previousVerdict.path));
+assert.equal(receipt.status, "PASS_FRAMING_AWAITING_TWO_IMAGE_OBSERVATIONS");
+assert.equal(receipt.browserClosed, true);
+assert.equal(receipt.originalsUnchanged, true);
+assert.equal(receipt.newCounters.browserLaunches, 1);
+assert.equal(receipt.newCounters.screenshots, 2);
+assert.equal(receipt.newCounters.fullDOMMathChecks, 0);
+assert.equal(observations.new_image_observations, 2);
+assert.equal(observations.image_observations_cumulative, 5);
+assert.equal(receipt.cumulativeCounters.screenshots, 6);
+assert.equal(receipt.cumulativeCounters.failedScreenshotsPreserved, 1);
+assert.equal(receipt.cumulativeCounters.targetViewportChecks, 8);
+const preserved = receipt.originalFiles.map((before) => ({
+  ...before, unchanged: fact(before.path).sha256 === before.sha256,
+}));
+assert.ok(preserved.every((file) => file.unchanged));
+const htmlNow = fact(receipt.frozenHTML.path);
+assert.equal(htmlNow.sha256, "479513eb0c935314c2a014693e502518b87375c7835e78b0a26b054946919031");
+assert.equal(fact(receipt.previousVerdict.path).sha256, receipt.previousVerdict.sha256);
+const result = {
+  schema: "stemrobin-182/capture-recovery2-result@1",
+  ticket: "STEMROBIN-182", context: "chat182-4", date: "2026-11-19", cwd,
+  status: "PASS_AFFECTED_DISPLAY_ONLY",
+  displayWatch: "CLOSED_FOR_THE_FOUR_TEXT_LAYOUT_TARGETS_ONLY",
+  scope: "913/1060 mobile right-edge capture recovery only; inherited 941/1008 PASS unchanged.",
+  originalVerdict: receipt.previousVerdict,
+  originalVerdictStatus: original.status,
+  originalVerdictUnchanged: true,
+  frozenHTML: htmlNow,
+  outcomes: original.outcomes.map((outcome) => ({
+    number: outcome.number,
+    previousStatus: outcome.verdict,
+    status: "PASS_AFFECTED_DISPLAY_ONLY",
+    recovery2Action: ["913", "1060"].includes(outcome.number)
+      ? "Upgrade mobile capture completeness from actual new full-width pixels; existing desktop/content/math/LF results reused."
+      : "Inherited PASS unchanged; no new accepted view, screenshot, DOM or math review.",
+    basis: ["913", "1060"].includes(outcome.number)
+      ? observations.observations.find((item) => item.number === outcome.number)
+      : { path: receipt.previousVerdict.path, sha256: receipt.previousVerdict.sha256 },
+  })),
+  cumulativeCounters: {
+    ...receipt.cumulativeCounters,
+    imagesLoadedIntoFreshContext: observations.image_observations_cumulative,
+    captureRecovery2BrowserExecutions: 1,
+    newAffectedPixelUpgrades: 2,
+  },
+  newCounters: {
+    ...receipt.newCounters,
+    imageObservations: observations.new_image_observations,
+  },
+  screenshots: receipt.screenshots.map((image) => ({
+    ...image, observedOnce: true,
+    observation: observations.observations.find((item) => item.number === image.number),
+  })),
+  framing: receipt.frames,
+  offlineRequests: receipt.requests,
+  errors: receipt.errors,
+  originalFilesPreserved: preserved,
+  evidence: [
+    fact(path.join(root, "input-FIRST.json")),
+    fact(path.join(root, "capture.cjs")),
+    fact(receiptPath),
+    fact(observationsPath),
+    fact(__filename),
+  ],
+  actualCommands: [
+    receipt.command,
+    "node .tmp/resume182-4-supplement-layout-display/capture-recovery2/record-result.cjs",
+  ],
+  limits: {
+    parentLocalAllocation: "4+2=6 captures; 3+2=5 observations, not reset",
+    historicalFailedCapturesPreserved: 1,
+    originalRendererInvocations: 1,
+    newRendererInvocations: 0,
+    newFixtureProjectionRuns: 0,
+    newFullEightDOMMathCheckRuns: 0,
+    newSourceMathStaticReviews: 0,
+    newFinalizationDBGitPaidChatAgentOperations: 0,
+    noCSSZoomFontStyleOrContentMutations: true,
+    figure62ReadDrawingApproval: false,
+    humanSourceApproval: false,
+    mathematicalCorrectnessApproval: false,
+    blockedSupplementFinalization: false,
+    fullModernLessonOrAppAcceptance: false,
+  },
+  browserClosed: true,
+  stop: true,
+};
+const resultPath = path.join(root, "result.json");
+fs.writeFileSync(resultPath, `${JSON.stringify(result, null, 2)}\n`, { flag: "wx" });
+const markdownPath = path.join(root, "result.md");
+fs.writeFileSync(markdownPath, [
+  "# STEMROBIN-182 chat182-4: capture recovery2",
+  "",
+  "PASS_AFFECTED_DISPLAY_ONLY. Four-target text-layout display watch closed; STOP.",
+  "",
+  "- 913: recovered complete mobile pixels at native 390x374; approved stem/a/b/c/shared request all readable, no clipped right edge.",
+  "- 1060: recovered complete mobile pixels at native 390x247; equation/a/b/full shared requirement including final question all readable.",
+  "- 941/1008: original affected-display PASS inherited unchanged; no new view or content/math checks.",
+  "",
+  "Cumulative captures 4+2=6; same-context observations 3+2=5; historical failed capture count 1 preserved.",
+  "One new headed 390x844 Chromium browser, two framing checks, no new renderer/projection/source/math/static/full-eight checks. Browser closed.",
+  "Original verdict/FIRST/recovery1/all four original captures and other original files remain byte-identical.",
+  `Frozen HTML SHA-256: ${htmlNow.sha256}`,
+  "",
+  ...result.screenshots.map((image) =>
+    `- ${image.path}: ${image.pixels.width}x${image.pixels.height}, dark=${image.pixels.dark}, sha256=${image.sha256}`),
+  "",
+  ...result.actualCommands.map((command) => `- \`${command}\``),
+  `All command cwd: ${cwd}`,
+  "",
+  "No content/CSS/style/zoom/font mutation, figure62 read/drawing, finalizer, DB/git/paid/chat/agents.",
+  "Not human-source/math correctness/figure approval, blocked supplement finalization, or full modern lesson/app acceptance.",
+  "",
+].join("\n"), { flag: "wx" });
+const manifest = { outputs: [fact(resultPath), fact(markdownPath)], stop: true };
+fs.writeFileSync(path.join(root, "result-hashes.json"), `${JSON.stringify(manifest, null, 2)}\n`, { flag: "wx" });
+console.log(JSON.stringify({
+  status: result.status,
+  outcomes: result.outcomes.map(({ number, status, recovery2Action }) => ({ number, status, recovery2Action })),
+  newCounters: result.newCounters, cumulativeCounters: result.cumulativeCounters,
+  screenshots: result.screenshots.map((image) => ({
+    path: image.path, sha256: image.sha256, pixels: image.pixels,
+  })),
+  outputs: manifest.outputs, browserClosed: true,
+}, null, 2));

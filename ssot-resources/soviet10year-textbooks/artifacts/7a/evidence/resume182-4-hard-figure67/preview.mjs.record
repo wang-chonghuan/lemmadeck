@@ -1,0 +1,277 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import http from 'node:http'
+import path from 'node:path'
+import { createRequire } from 'node:module'
+
+const cwd = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck'
+assert.equal(process.cwd(), cwd)
+const own = path.join(cwd, '.tmp/resume182-4-hard-figure67')
+const recovery = process.argv.includes('--recover-accent-transition')
+const requireApp = createRequire(path.join(cwd, 'app/package.json'))
+const { chromium } = requireApp('@playwright/test')
+const katex = requireApp('katex')
+const katexRoot = path.dirname(requireApp.resolve('katex/package.json'))
+const read = p => fs.readFileSync(p, 'utf8')
+const hash = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex')
+const spec = JSON.parse(read(path.join(own, 'spec.json')))
+const context = JSON.parse(read(path.join(own, 'context.json')))
+assert.equal(JSON.parse(read(path.join(own, 'render.json'))).status, 'pass')
+const cssPath = path.join(cwd, 'app/src/styles/app.css')
+const css = read(cssPath).replace(/^@import[^\n]*\n/gm, '')
+const escape = text => text.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;')
+const task = context.lessons[0].exercises[0].text
+const taskHtml = task.split(/(\$[^$]+\$)/g).map(part => part.startsWith('$') && part.endsWith('$')
+  ? katex.renderToString(part.slice(1, -1), { throwOnError: true, output: 'html' })
+  : escape(part)).join('')
+const html = `<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Figure 67 candidate</title><link rel="stylesheet" href="/katex.min.css">
+<style>${css}
+html,body { height:auto; overflow:auto; }
+body { background:var(--sr-white); color:var(--sr-ink); font-family:var(--sr-body); font-size:16px; }
+.standalone { width:640px; max-width:calc(100vw - 48px); margin:24px auto; }
+.standalone p { margin:0; }
+</style></head><body><main class="standalone"><section id="surface">
+<div class="sr-ex-body"><p id="task">${taskHtml}</p>
+<figure class="sr-ex-fig" data-testid="figure67" data-figure-layout="scroll">
+<div class="sr-figure-media" data-figure-theme="neutral">${read(path.join(own, 'fig-67.svg'))}</div>
+</figure></div></section></main></body></html>`
+if (recovery) {
+  assert.equal(read(path.join(own, 'preview.html')), html)
+} else {
+  fs.writeFileSync(path.join(own, 'preview.html'), html, { flag: 'wx' })
+}
+const screenshots = path.join(own, 'screenshots')
+fs.mkdirSync(screenshots, { recursive: true })
+const evidencePath = path.join(own, recovery ? 'preview-recovery-evidence.json' : 'preview-evidence.json')
+const evidence = {
+  schema: 'stemrobin-182/fig67-preview@1', status: 'running-author-preview-only',
+  cwd, headed: true, standalone: true, fullLearnerAppAcceptance: false,
+  package: requireApp.resolve('@playwright/test'), browserVersion: null,
+  inputHashes: [
+    path.join(own, 'context.json'), path.join(own, 'source-inventory.json'),
+    path.join(own, 'spec.json'), path.join(own, 'fig-67.svg'),
+    path.join(own, 'render.json'), cssPath, path.join(own, 'preview.mjs'),
+    ...context.authoritativeInputs.map(item => item.path)
+  ].map(p => ({ path: p, sha256: hash(p) })),
+  fixture: { path: path.join(own, 'preview.html'), sha256: hash(path.join(own, 'preview.html')), cssTransformation: 'Remove imports only to avoid external fonts/build-tool imports; retain current app figure, exercise, tokens and print CSS.' },
+  screenshots: [], measurements: [], errors: [], externalRequests: [],
+  sourceImageObservations: 1, screenshotObservationsByScript: 0,
+  screenshotsCreated: 0, screenshotsPlannedForHostObservation: 6,
+  noReviewOrPromotion: true
+}
+if (recovery) {
+  const firstPath = path.join(own, 'receipts/preview-FIRST/preview-evidence.json')
+  const first = JSON.parse(read(firstPath))
+  assert.match(first.failure.message, /accent.points.every/)
+  assert.equal(first.screenshots.length, 2)
+  for (const screenshot of first.screenshots) assert.equal(hash(screenshot.path), screenshot.sha256)
+  evidence.screenshots = first.screenshots
+  evidence.screenshotsCreated = first.screenshotsCreated
+  evidence.measurements = first.measurements.filter(m => m.view === 'desktop-neutral-actual640-full-resolution')
+  evidence.recovery = {
+    firstEvidence: { path: firstPath, sha256: hash(firstPath) },
+    firstFailure: first.failure,
+    repair: 'Wait for the SVG point fill transitions to resolve after changing the theme. Reuse both successful neutral captures and their measurements; do not repeat passed author/validator/renderer/neutral views.',
+    reusedScreenshots: first.screenshots.length,
+    newScreenshots: 0
+  }
+}
+const save = () => fs.writeFileSync(evidencePath, JSON.stringify(evidence, null, 2) + '\n')
+save()
+const server = http.createServer((req, res) => {
+  const pathname = new URL(req.url, 'http://127.0.0.1').pathname
+  let file
+  let mime
+  if (pathname === '/' || pathname === '/preview.html') {
+    file = path.join(own, 'preview.html'); mime = 'text/html; charset=utf-8'
+  } else if (pathname === '/katex.min.css') {
+    file = path.join(katexRoot, 'dist/katex.min.css'); mime = 'text/css'
+  } else if (/^\/fonts\/[A-Za-z0-9_-]+\.(woff2?|ttf)$/.test(pathname)) {
+    file = path.join(katexRoot, 'dist', pathname); mime = 'application/octet-stream'
+  } else if (pathname === '/favicon.ico') {
+    res.writeHead(204); res.end(); return
+  } else {
+    res.writeHead(404); res.end(); return
+  }
+  res.writeHead(200, { 'Content-Type': mime })
+  res.end(fs.readFileSync(file))
+})
+let browser
+try {
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve))
+  const url = `http://127.0.0.1:${server.address().port}/preview.html`
+  evidence.urlDuringCheck = url
+  browser = await chromium.launch({ headless: false })
+  evidence.browserVersion = browser.version()
+  const page = await browser.newPage({ viewport: { width: 1440, height: 960 }, deviceScaleFactor: 1 })
+  page.on('pageerror', error => { evidence.errors.push(error.message); save() })
+  page.on('console', message => {
+    if (message.type() === 'error') { evidence.errors.push(message.text()); save() }
+  })
+  page.on('request', request => {
+    if (!request.url().startsWith(`http://127.0.0.1:${server.address().port}/`) && !request.url().startsWith('data:')) {
+      evidence.externalRequests.push(request.url()); save()
+    }
+  })
+  const response = await page.goto(url)
+  assert.equal(response.status(), 200)
+  await page.waitForFunction(() => document.fonts.status === 'loaded' && document.querySelectorAll('svg [data-label-id]').length === 24)
+  const media = page.locator('.sr-figure-media')
+  const figure = page.getByTestId('figure67')
+  const geometry = () => page.evaluate(expected => {
+    const svg = document.querySelector('.sr-figure-media svg')
+    const box = svg.getBoundingClientRect()
+    const labels = [...svg.querySelectorAll('text')].map(node => {
+      const r = node.getBoundingClientRect()
+      const ctm = node.getScreenCTM()
+      return { id: node.dataset.labelId, text: node.textContent, fontPx: Number(node.getAttribute('font-size')) * Math.hypot(ctm.a, ctm.b), rect: { x: r.x - box.x, y: r.y - box.y, width: r.width, height: r.height } }
+    })
+    const points = expected.filter(o => o.type === 'point').map(o => {
+      const node = svg.querySelector(`[id$="_ld-${o.id}"]`)
+      if (!node) throw new Error(`Missing point ${o.id}`)
+      const r = node.getBoundingClientRect()
+      return { id: o.id, x: r.x + r.width / 2 - box.x, y: r.y + r.height / 2 - box.y, expected: [o.at[0], 400 - o.at[1]], fill: getComputedStyle(node).fill }
+    })
+    const arrows = [...svg.querySelectorAll('[data-arrowhead-for]')].map(n => ({ id: n.getAttribute('data-arrowhead-for'), transform: n.getAttribute('transform') }))
+    const panel = document.querySelector('[data-testid="figure67"]')
+    return { mediaWidth: document.querySelector('.sr-figure-media').getBoundingClientRect().width, svgWidth: box.width, svgHeight: box.height, labels, points, arrows, panelWidth: panel.clientWidth, scrollWidth: panel.scrollWidth, scrollLeft: panel.scrollLeft }
+  }, spec.objects)
+  const checkGeometry = (g, name) => {
+    assert(Math.abs(g.mediaWidth - 640) < 0.1, `${name}: actual media width`)
+    assert(Math.abs(g.svgWidth - 640) < 0.1)
+    assert(Math.abs(g.svgHeight - 400) < 0.1)
+    assert.equal(g.labels.length, 24)
+    assert.equal(g.points.length, 18)
+    assert.equal(g.arrows.length, 6)
+    const expectedLabels = spec.objects.filter(o => o.label || o.text).map(o => o.label || o.text).sort()
+    assert.deepEqual(g.labels.map(l => l.text).sort(), expectedLabels)
+    for (const label of g.labels) {
+      assert(label.fontPx >= 16)
+      assert(label.rect.x >= 0 && label.rect.y >= 0)
+      assert(label.rect.x + label.rect.width <= 640.1 && label.rect.y + label.rect.height <= 400.1)
+    }
+    for (const point of g.points) {
+      assert(Math.abs(point.x - point.expected[0]) < 0.2, `${name}: ${point.id} x`)
+      assert(Math.abs(point.y - point.expected[1]) < 0.2, `${name}: ${point.id} collinearity`)
+    }
+    for (const arrow of g.arrows) assert.match(arrow.transform, /rotate\(0\)/)
+    evidence.measurements.push({ view: name, ...g })
+    save()
+  }
+  const pixelChecks = async (buffer, regions) => page.evaluate(async ({ base64, regions }) => {
+    const image = new Image()
+    image.src = `data:image/png;base64,${base64}`
+    await image.decode()
+    const canvas = document.createElement('canvas')
+    canvas.width = image.width; canvas.height = image.height
+    const ctx = canvas.getContext('2d', { willReadFrequently: true })
+    ctx.drawImage(image, 0, 0)
+    const data = ctx.getImageData(0, 0, image.width, image.height).data
+    const darkAt = (x, y) => {
+      const i = (y * image.width + x) * 4
+      return data[i] + data[i + 1] + data[i + 2] < 650 && data[i + 3] > 0
+    }
+    let dark = 0, pureBlack = 0, nonWhite = 0
+    for (let i = 0; i < data.length; i += 4) {
+      if (data[i] + data[i + 1] + data[i + 2] < 650) dark++
+      if (data[i] === 0 && data[i + 1] === 0 && data[i + 2] === 0) pureBlack++
+      if (data[i] < 250 || data[i + 1] < 250 || data[i + 2] < 250) nonWhite++
+    }
+    const checks = regions.map(region => {
+      let darkPixels = 0
+      for (let y = Math.max(0, Math.floor(region.y)); y < Math.min(image.height, Math.ceil(region.y + region.height)); y++)
+        for (let x = Math.max(0, Math.floor(region.x)); x < Math.min(image.width, Math.ceil(region.x + region.width)); x++)
+          if (darkAt(x, y)) darkPixels++
+      return { ...region, darkPixels }
+    })
+    return { width: image.width, height: image.height, darkPixels: dark, nonWhitePixels: nonWhite, pureBlackFraction: pureBlack / (image.width * image.height), regions: checks }
+  }, { base64: buffer.toString('base64'), regions })
+  const capture = async (name, locator, g = null) => {
+    const p = path.join(screenshots, `${name}.png`)
+    assert(!fs.existsSync(p))
+    const buffer = locator
+      ? await locator.screenshot({ path: p, animations: 'disabled' })
+      : await page.screenshot({ path: p, fullPage: true, animations: 'disabled' })
+    evidence.screenshotsCreated++
+    if (recovery) evidence.recovery.newScreenshots++
+    const regions = !g ? [] : [
+      ...g.points.map(point => ({ id: point.id, x: point.x - 5, y: point.y - 5, width: 10, height: 10, minimumDark: 25 })),
+      ...g.labels.map(label => ({ id: label.id, ...label.rect, minimumDark: 20 })),
+      ...Array.from({ length: 6 }, (_, index) => ({ id: `row-${index + 1}-line`, x: 61, y: 24 + index * 64, width: 542, height: 12, minimumDark: 500 })),
+      ...Array.from({ length: 6 }, (_, index) => ({ id: `row-${index + 1}-arrow`, x: 590, y: 22 + index * 64, width: 16, height: 16, minimumDark: 15 }))
+    ]
+    const pixels = await pixelChecks(buffer, regions)
+    evidence.screenshots.push({ path: p, sha256: hash(p), view: name, viewport: page.viewportSize(), pixels })
+    save()
+    assert(pixels.darkPixels > 500, `${name}: nonblank`)
+    assert(pixels.pureBlackFraction < 0.1, `${name}: not black raster`)
+    for (const r of pixels.regions) assert(r.darkPixels >= r.minimumDark, `${name}: missing pixels in ${r.id}`)
+  }
+  const neutral = recovery ? evidence.measurements[0] : await geometry()
+  if (!recovery) {
+    checkGeometry(neutral, 'desktop-neutral-actual640-full-resolution')
+    await capture('desktop-neutral', null)
+    await capture('full640-neutral', media, neutral)
+  }
+  await media.evaluate(node => { node.dataset.figureTheme = 'accent' })
+  const accentColor = await page.evaluate(() => {
+    const probe = document.createElement('span')
+    probe.style.color = 'var(--sr-blue)'
+    document.body.appendChild(probe)
+    const color = getComputedStyle(probe).color
+    probe.remove()
+    return color
+  })
+  await page.waitForFunction(({ points, color }) => points.every(point => {
+    const node = document.querySelector(`svg [id$="_ld-${point.id}"]`)
+    return getComputedStyle(node).fill === color
+  }), { points: neutral.points, color: accentColor })
+  const accent = await geometry()
+  checkGeometry(accent, 'accent640')
+  assert(accent.points.every((p, i) => p.fill !== neutral.points[i].fill))
+  await capture('accent640', media, accent)
+  await page.locator('#surface').evaluate(node => node.classList.add('sr-print-lesson'))
+  await page.emulateMedia({ media: 'print' })
+  await page.waitForFunction(points => points.every(point => {
+    const node = document.querySelector(`svg [id$="_ld-${point.id}"]`)
+    return getComputedStyle(node).fill === point.fill
+  }), neutral.points)
+  const print = await geometry()
+  checkGeometry(print, 'print640')
+  assert(print.points.every((p, i) => p.fill === neutral.points[i].fill))
+  await capture('print640', media, print)
+  await page.locator('#surface').evaluate(node => node.classList.remove('sr-print-lesson'))
+  await page.emulateMedia({ media: 'screen' })
+  await media.evaluate(node => { node.dataset.figureTheme = 'neutral' })
+  await page.setViewportSize({ width: 390, height: 844 })
+  const mobileStart = await geometry()
+  checkGeometry(mobileStart, 'mobile-scroll-start')
+  assert(mobileStart.panelWidth < 640)
+  assert(mobileStart.scrollWidth >= 640)
+  await capture('mobile-scroll-start', null)
+  await figure.evaluate(node => { node.scrollLeft = node.scrollWidth })
+  await page.waitForFunction(() => {
+    const node = document.querySelector('[data-testid="figure67"]')
+    return Math.abs(node.scrollLeft - (node.scrollWidth - node.clientWidth)) <= 1
+  })
+  const mobileEnd = await geometry()
+  checkGeometry(mobileEnd, 'mobile-scroll-end')
+  assert(mobileEnd.scrollLeft > 0)
+  await capture('mobile-scroll-end', null)
+  assert.equal(evidence.screenshotsCreated, 6)
+  assert.equal(evidence.errors.length, 0)
+  assert.equal(evidence.externalRequests.length, 0)
+  evidence.status = 'pass-author-preview-not-independent-review'
+  console.log(JSON.stringify({ status: evidence.status, headed: true, screenshots: 6, actualMediaWidth: neutral.mediaWidth, mobilePanelWidth: mobileEnd.panelWidth, mobileScrollEnd: mobileEnd.scrollLeft, minFontPx: Math.min(...neutral.labels.map(l => l.fontPx)), evidence: evidencePath }))
+} catch (error) {
+  evidence.status = 'fail-technical-or-visual-preview'
+  evidence.failure = { message: error.message, stack: error.stack }
+  throw error
+} finally {
+  save()
+  if (browser) await browser.close()
+  await new Promise(resolve => server.close(resolve))
+}

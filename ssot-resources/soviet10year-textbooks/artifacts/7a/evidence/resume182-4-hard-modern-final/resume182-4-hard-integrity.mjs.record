@@ -1,0 +1,47 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), repo);
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/7a';
+const edition = `${root}/editions/modern-us-neutral`;
+const work = '.tmp/resume182-4-hard-modern';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const before = JSON.parse(fs.readFileSync(`${work}/before-existing-modern-files.record`));
+const changed = before.filter(entry =>
+  sha(fs.readFileSync(entry.path)) !== entry.sha256);
+assert.deepEqual(changed.map(entry => entry.path), [`${edition}/book.json`]);
+assert.equal(sha(fs.readFileSync(`${root}/lessons/alg7-hard/exercises.json`)),
+  '438408c2e3ff7cf3cea2ca2867e44d1db0fdd8e5b2197bf9f96d33214f5cef8d');
+const auditPath = `${edition}/lessons/alg7-hard/adaptation.audit.json`;
+const audit = JSON.parse(fs.readFileSync(auditPath));
+assert.equal(audit.status, 'pass');
+assert.equal(audit.exercises, 44);
+assert.equal(audit.proseBlocks, 0);
+assert.equal(audit.figures, 1);
+assert.equal(audit.changedExercises, 4);
+const untouched6a = execFileSync('git', ['status', '--porcelain', '--',
+  'ssot-resources/soviet10year-textbooks/artifacts/6a'], { cwd: repo, encoding: 'utf8' });
+assert.equal(untouched6a, '');
+const record = {
+  schema: 'stemrobin-182/hard-modern-affected-integrity@1',
+  status: 'PASS',
+  original_modern_files: before.length,
+  unchanged_existing_files: before.length - changed.length,
+  changed_existing_files: changed.map(entry => ({
+    ...entry, current_sha256: sha(fs.readFileSync(entry.path)),
+  })),
+  raw_hard_exercises_unchanged: true,
+  six_a_worktree_changes: untouched6a,
+  six_a_valid_choices_revalidated: false,
+  existing_pass_stages_rerun: 0,
+  full_charter_or_browser_acceptance: false,
+  adaptation_audit: { path: auditPath, sha256: sha(fs.readFileSync(auditPath)), audit },
+};
+fs.writeFileSync(`${work}/affected-integrity-FIRST.record`,
+  `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: record.status, original: before.length,
+  unchanged: record.unchanged_existing_files, changes: changed.map(entry => entry.path),
+  raw_hard_unchanged: true, six_a_changed: false }));

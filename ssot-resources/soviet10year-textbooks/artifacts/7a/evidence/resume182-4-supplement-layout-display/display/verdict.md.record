@@ -1,0 +1,33 @@
+# STEMROBIN-182 chat182-4: affected-only display watch
+
+Verdict: OPEN_CAPTURE_EVIDENCE_INCOMPLETE. STOP.
+
+- 913: desktop PASS; mobile LF/text/math geometry PASS, but complete visual text is OPEN due right-edge capture.
+- 941: PASS affected display only at both viewports. Four premises, six claims; approved shared prompt is line 6 before claims.
+- 1008: PASS affected display only at both viewports. Equation, both premises, separate final shared request.
+- 1060: desktop PASS; mobile equation/a/b PASS, but complete shared requirement visual evidence is OPEN due right-edge capture.
+
+Template SHA-256: d93723680e47259218d6038cfab7f9e6d852244b4e97bf3cb7c07a6fb09ce4e5 (unchanged).
+Exactly four parser-selected objects and zero prose. Scratch-only figure payload omitted for 913; no source image or figure acceptance.
+Headed Chromium, installed app @playwright/test, 1440x960 and 390x844; all requests except exact local HTML blocked, browser offline.
+Eight target-viewport DOM checks PASS: 22 complete TeX expressions and 21 approved LF boundaries per viewport; zero KaTeX/errors/inputs/answer UI/page horizontal overflow.
+One renderer invocation; two browser executions, three contexts, four total captures, three image-context observations.
+First screenshot failure preserved: desktop second clip was 685x20 rather than 685x425, with zero dark pixels. Capture-only recovery used fullPage:true; no reset or rerender.
+Capture budget is exhausted. Desktop passing work reused; mobile 913/1060 not promoted from geometry alone.
+
+Commands and complete hashes/pixels/measurements: verdict.json. All command cwd: /Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck
+- `node .tmp/resume182-4-supplement-layout-display/project-fixtures.cjs`
+- `node .tmp/resume182-4-supplement-layout-display/render-once.cjs`
+- `node .claude/skills/ld-s10y-lesson/tools/render_lesson.js .tmp/resume182-4-supplement-layout-display/fixtures/7a --out .tmp/resume182-4-supplement-layout-display/render --edition modern-us-neutral --lesson alg7-c4-ex`
+- `node .tmp/resume182-4-supplement-layout-display/display-check.cjs`
+- `cp -n .tmp/resume182-4-supplement-layout-display/display-check.cjs .tmp/resume182-4-supplement-layout-display/display-check-FIRST.cjs`
+- `node .tmp/resume182-4-supplement-layout-display/display-check.cjs`
+- `node .tmp/resume182-4-supplement-layout-display/record-verdict.cjs`
+
+- display-1440-913-941.png: 685x696; dark=13288; sha256=8b0be839f5b6615bc2c93f50ad72b3ed3a77b3dc98ed7435513d22121cbf0c36; PASS_FOCUSED_DESKTOP
+- display-1440-1008-1060.png: 685x20; dark=0; sha256=4f607dacf7e3ef79616a8d39255ea3b590f9c816c2737dff3c5e70481f08b38d; FAILED_CAPTURE_PRESERVED
+- display-1440-1008-1060-RECOVERY1.png: 685x425; dark=5367; sha256=1c3fae3b15cb297417760a7bc8ae7dd7791c53399d84f8bfc0ac5435830e532b; PASS_FOCUSED_DESKTOP
+- display-390-913-941-1008-1060-RECOVERY1.png: 343x1387; dark=18829; sha256=b5880fffc7d76da00b9bdd9df3532ec0b0bbd4aa61c382f286f0282c76534623; PARTIAL_MOBILE_CAPTURE
+
+No static review rerun, other-item review, graph repair, finalization, DB/publisher/git/dependency/skill/token/UI/chat/agent change.
+Not full modern lesson or app acceptance. All browser processes launched by this watch closed. STOP.

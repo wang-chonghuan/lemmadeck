@@ -1,0 +1,51 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), repo);
+const root = '.tmp/resume182-4-supplement-layout-affected1';
+const file = '.tmp/resume182-4-supplement-modern/adapt/7a/modern-us-neutral/lessons/alg7-c4-ex/exercises.template.json';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const bytes = fs.readFileSync(file);
+assert.equal(sha(bytes), '5991dd79d140b2a3d8f746edea2dcbfabed19d86f593aaad72d3ec8a0e931fa6');
+const document = JSON.parse(bytes);
+const changes = {
+  '913': ['a) 图形', 'b) 图形', 'c) 图形', '对于a)、b)和c)'],
+  '941': ['1) 函数', '2) $f$', '3) $g$', '4) $a', '说明下列命题', 'a) $', 'b) $', 'c) $', 'd) $', 'e) $', 'f) $'],
+  '1008': ['求这个方程'],
+  '1060': ['求 $k$'],
+};
+fs.mkdirSync(`${root}/history`, { recursive: true });
+fs.writeFileSync(`${root}/history/exercises-FIRST.record`, bytes, { flag: 'wx' });
+const items = [];
+for (const item of document.exercises) {
+  if (!Object.hasOwn(changes, item.number)) continue;
+  const before = item.text;
+  for (const anchor of changes[item.number]) {
+    assert.equal(item.text.split(anchor).length, 2, [item.number, anchor]);
+    item.text = item.text.replace(anchor, `\n${anchor}`);
+  }
+  assert.equal(item.text.replaceAll('\n', ''), before.replaceAll('\n', ''), item.number);
+  item.lines = item.text.split('\n');
+  assert.ok(item.changes.includes('layout'), item.number);
+  items.push({ number: item.number, before, after: item.text,
+    changes: 'Newlines only; shared tasks separated from subparts.' });
+}
+assert.equal(items.length, 4);
+const updated = Buffer.from(`${JSON.stringify(document, null, 2)}\n`);
+fs.writeFileSync(file, updated);
+const report = {
+  schema: 'stemrobin-182/shared-task-layout-candidate@1',
+  scope: ['913', '941', '1008', '1060'],
+  status: 'CANDIDATE_NOT_REVIEWED',
+  before_sha256: sha(bytes),
+  after_sha256: sha(updated),
+  changes: items,
+  mathematical_characters_and_order_unchanged: true,
+  source_solves_or_new_images: 0,
+  finalization: false,
+};
+fs.writeFileSync(`${root}/candidate.record`, `${JSON.stringify(report, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: report.status, items: items.length,
+  sha256: report.after_sha256, text_changes: 'Newlines only' }));

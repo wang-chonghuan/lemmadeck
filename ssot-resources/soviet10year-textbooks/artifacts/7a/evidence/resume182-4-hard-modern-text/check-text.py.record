@@ -1,0 +1,74 @@
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+assert Path.cwd() == REPO
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+import edition
+
+WORK = Path(".tmp/resume182-4-hard-modern")
+TARGET = WORK / "adapt/7a/modern-us-neutral/lessons/alg7-hard"
+RAW = Path("ssot-resources/soviet10year-textbooks/artifacts/7a/lessons/alg7-hard")
+PROFILE = Path(".claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json")
+
+
+def read(path):
+    return json.loads(path.read_text())
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+raw = read(RAW / "exercises.json")
+modern = read(TARGET / "exercises.template.json")
+raw_lesson = read(RAW / "lesson.json")
+lesson = read(TARGET / "lesson.template.json")
+profile = read(PROFILE)
+errors = []
+assert len(raw["exercises"]) == len(modern["exercises"]) == 44
+assert [item["number"] for item in modern["exercises"]] == [
+    str(number) for number in range(1062, 1106)
+]
+assert raw_lesson["prose"] == lesson["prose"] == []
+assert lesson["source"]["data"] == raw_lesson
+assert lesson["source"]["sha256"] == sha(RAW / "lesson.json")
+assert lesson["errata"] == []
+for original, candidate in zip(raw["exercises"], modern["exercises"], strict=True):
+    number = candidate["number"]
+    for key in ("number", "source_number", "group", "group_id", "pages",
+                "figure_refs", "figures", "numbering_erratum"):
+        assert candidate.get(key) == original.get(key), (number, key)
+    assert candidate["source_text"] == original["text"], number
+    assert candidate["lines"] == candidate["text"].splitlines(), number
+    errors.extend(edition.validate_text(
+        original["text"], candidate["text"], candidate["changes"],
+        candidate["numeric_changes"], number,
+        profile["forbidden_terms"] + profile["forbidden_person_names"],
+        candidate["historical_entities"], source_lines=original["lines"],
+    ))
+    errors.extend(f"{number}: {error}" for error in
+                  edition.validate_numbered_subpart_layout(candidate["text"]))
+assert not errors, errors
+report = {
+    "schema": "stemrobin-182/hard-text-contract@1",
+    "status": "PASS",
+    "calls": 1,
+    "scope": "44 exercise texts and zero prose only",
+    "original": {"path": str(RAW / "exercises.json"),
+                 "sha256": sha(RAW / "exercises.json")},
+    "template": {"path": str(TARGET / "exercises.template.json"),
+                 "sha256": sha(TARGET / "exercises.template.json")},
+    "lesson_template_sha256": sha(TARGET / "lesson.template.json"),
+    "exercise_count": 44,
+    "preserved_source_risks": ["1084 undefined Q", "1087 formula p versus prose P"],
+    "figure_approval_or_modern_finalize": False,
+    "new_images_or_independent_reviews": 0,
+}
+destination = WORK / "text-contract-FIRST.record"
+with destination.open("x") as handle:
+    json.dump(report, handle, ensure_ascii=False, indent=2)
+    handle.write("\n")
+print(json.dumps(report, ensure_ascii=False))

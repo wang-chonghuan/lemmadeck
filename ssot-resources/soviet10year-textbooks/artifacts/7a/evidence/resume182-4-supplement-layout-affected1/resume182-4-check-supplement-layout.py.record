@@ -1,0 +1,51 @@
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+assert Path.cwd() == REPO
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+import edition
+
+ROOT = Path(".tmp/resume182-4-supplement-layout-affected1")
+FILE = Path(".tmp/resume182-4-supplement-modern/adapt/7a/modern-us-neutral/lessons/alg7-c4-ex/exercises.template.json")
+RAW = Path("ssot-resources/soviet10year-textbooks/artifacts/7a/lessons/alg7-c4-ex/exercises.json")
+PROFILE = Path(".claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json")
+old = json.loads((ROOT / "history/exercises-FIRST.record").read_text())
+new = json.loads(FILE.read_text())
+raw = json.loads(RAW.read_text())
+profile = json.loads(PROFILE.read_text())
+targets = {"913", "941", "1008", "1060"}
+checked = []
+for original, before, after in zip(raw["exercises"], old["exercises"], new["exercises"], strict=True):
+    if after["number"] not in targets:
+        assert before == after
+        continue
+    assert before["text"].replace("\n", "") == after["text"].replace("\n", "")
+    assert before.keys() == after.keys()
+    for key in before:
+        if key not in ("text", "lines"):
+            assert before[key] == after[key], (after["number"], key)
+    errors = edition.validate_text(
+        original["text"], after["text"], after["changes"], after["numeric_changes"],
+        after["number"], profile["forbidden_terms"] + profile["forbidden_person_names"],
+        after["historical_entities"], source_lines=original["lines"],
+    )
+    assert not errors, errors
+    assert after["text"].splitlines() == after["lines"]
+    checked.append(after["number"])
+assert set(checked) == targets
+report = {
+    "status": "PASS_AFFECTED_TEXT_ONLY",
+    "targets": checked,
+    "calls": 1,
+    "unaffected_149_exercises_identical": True,
+    "new_source_solves_images_or_full_contract_checks": 0,
+    "template_sha256": hashlib.sha256(FILE.read_bytes()).hexdigest(),
+    "independent_review_or_offline_display": False,
+}
+with (ROOT / "contract-FIRST.record").open("x") as handle:
+    json.dump(report, handle, indent=2)
+    handle.write("\n")
+print(json.dumps(report))

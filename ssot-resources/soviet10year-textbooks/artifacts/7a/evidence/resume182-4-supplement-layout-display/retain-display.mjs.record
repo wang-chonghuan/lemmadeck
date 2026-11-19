@@ -1,0 +1,88 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [mode, finalReport, finalHash, status] = process.argv.slice(2);
+assert.ok(['hard', 'supplement'].includes(mode));
+assert.ok(/^[a-f0-9]{64}$/.test(finalHash));
+assert.ok(status && !status.includes('/'));
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/7a';
+const work = mode === 'hard'
+  ? '.tmp/resume182-4-hard-display' : '.tmp/resume182-4-supplement-layout-display';
+assert.ok(finalReport.startsWith(`${work}/`));
+const target = `${root}/evidence/resume182-4-${mode === 'hard' ? 'hard-modern-final' : 'supplement-layout-display'}`;
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+assert.equal(sha(fs.readFileSync(finalReport)), finalHash);
+const entries = [];
+const blobs = new Map();
+let newFiles = 0;
+function retain(source, destination) {
+  const bytes = fs.readFileSync(source);
+  const hash = sha(bytes);
+  let actual = blobs.get(hash);
+  if (!actual) {
+    actual = destination;
+    fs.mkdirSync(path.dirname(actual), { recursive: true });
+    if (fs.existsSync(actual)) assert.equal(sha(fs.readFileSync(actual)), hash);
+    else fs.writeFileSync(actual, bytes, { flag: 'wx' });
+    blobs.set(hash, actual);
+    newFiles++;
+  }
+  entries.push({ historical_path: source, path: actual, sha256: hash, bytes: bytes.length });
+}
+function archive(source, destination) {
+  for (const item of fs.readdirSync(source, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+    const filename = path.join(source, item.name);
+    if (item.isDirectory()) archive(filename, path.join(destination, item.name));
+    else {
+      assert.ok(item.isFile(), filename);
+      retain(filename, path.join(destination, item.name.endsWith('.record') ? item.name : `${item.name}.record`));
+    }
+  }
+}
+archive(work, `${target}/display`);
+if (mode === 'hard') {
+  const modern = '.tmp/resume182-4-hard-modern';
+  for (const name of [
+    'adapt-finalize-FIRST', 'lesson-render-FIRST', 'affected-integrity-FIRST',
+    'index-path-only-FIRST', 'retain-figure67-FIRST',
+  ]) archive(`${modern}/receipts/${name}`, `${target}/commands/${name}`);
+  for (const name of [
+    'before-existing-modern-files.record', 'affected-integrity-FIRST.record',
+    'book-finalize-FIRST.record', 'index-path-only-FIRST.record',
+  ]) retain(`${modern}/${name}`, `${target}/${name}`);
+  retain(`${modern}/adapt/7a/modern-us-neutral/lessons/alg7-hard/figures.template.json`,
+    `${target}/figures.template.json.record`);
+  archive(`${modern}/render/7a/modern-us-neutral/alg7-hard`, `${target}/render`);
+  for (const name of ['hard-integrity', 'hard-index-path', 'promote-figure67']) {
+    retain(`.tmp/resume182-4-${name}.mjs`, `${target}/resume182-4-${name}.mjs.record`);
+  }
+}
+retain(fileURLToPath(import.meta.url), `${target}/retain-display.mjs.record`);
+const record = {
+  schema: 'stemrobin-182/offline-display-retention@1',
+  date: '2026-11-19',
+  book: '7a',
+  lesson: mode === 'hard' ? 'alg7-hard' : 'alg7-c4-ex',
+  status,
+  scope: mode === 'hard' ? { exercises: 44, prose: 0, figure: 'fig-67' }
+    : { exercise_numbers: ['913', '941', '1008', '1060'], other_exercises_reviewed: 0, figures_assessed: false },
+  collected_final_report: { historical_path: finalReport, sha256: finalHash },
+  first_capture_failures_and_usage_preserved: true,
+  actual_counts_and_provenance: 'Read original and affected reports together; no counter reset, no overwritten FIRST, no reconstructed receipts.',
+  repeated_source_solves_reviews_validators_renders_or_browser_checks_for_retention: 0,
+  new_parent_image_observations: 0,
+  full_learner_app_ticket_answer_or_choice_approval: false,
+  duplicate_blob_bytes_reused: true,
+  new_files: newFiles,
+  paths: 'Scratch references are historical only; entries bind them to durable bytes below.',
+  entries,
+};
+const bytes = Buffer.from(`${JSON.stringify(record, null, 2)}\n`);
+fs.writeFileSync(`${target}/retention.record`, bytes, { flag: 'wx' });
+console.log(JSON.stringify({ path: `${target}/retention.record`, sha256: sha(bytes),
+  files: newFiles, references: entries.length, status }));

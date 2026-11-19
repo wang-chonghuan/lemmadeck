@@ -1,0 +1,16 @@
+{
+  "stage": "source-metadata",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck",
+  "actual_tool_chunk_id": "f48035",
+  "actual_exit_code": 0,
+  "command": "node -e 'const fs=require(\"node:fs\"),crypto=require(\"node:crypto\");const sha=x=>crypto.createHash(\"sha256\").update(x).digest(\"hex\");const rawPath=\"ssot-resources/soviet10year-textbooks/artifacts/7a/lessons/alg7-c4-ex/exercises.json\",currentPath=\".tmp/resume182-4-supplement-modern/adapt/7a/modern-us-neutral/lessons/alg7-c4-ex/exercises.template.json\";const rawBytes=fs.readFileSync(rawPath),currentBytes=fs.readFileSync(currentPath),raw=JSON.parse(rawBytes),current=JSON.parse(currentBytes);const select=j=>j.exercises.filter(e=>Number(e.number)>=987&&Number(e.number)<=994);const r=select(raw),c=select(current);console.log(JSON.stringify({cwd:process.cwd(),scope:{book:\"7a\",lesson:\"alg7-c4-ex\",first:987,last:994},raw:{path:rawPath,sha256:sha(rawBytes),lesson:raw.lesson},current:{path:currentPath,sha256:sha(currentBytes),lesson:current.lesson,source:current.source},selected_count:{raw:r.length,current:c.length},selected:r.map(e=>{const m=c.find(x=>x.number===e.number);return{number:e.number,raw_object_sha256:sha(JSON.stringify(e)),current_object_sha256:sha(JSON.stringify(m)),raw_text_sha256:sha(e.text),current_text_sha256:sha(m.text),pages:e.pages,figure_count:e.figures.length,figure_ref_count:e.figure_refs.length};}),target_exists:fs.existsSync(\".tmp/resume182-4-supplement-solutions-author/0987-0994.json\")},null,2));'",
+  "actual_stderr": "",
+  "actual_stdout_retention": "Not copied: the command emitted the unfiltered 153-exercise current.source.data even though its top-level selections were bounded. The tool reported 3026 output lines and a truncated output of 37305 original tokens. This record describes the actual incident, not a complete stdout capture; replaying or saving the other 145 exercises would repeat the scope breach.",
+  "cause": "Serialized current.source wholesale instead of explicitly projecting only current.source.path and current.source.sha256.",
+  "recovery": "One read-only bounded metadata command projected only source_path/source_sha256 and the eight selected exercise hashes; its actual stdout, empty stderr, exit code and one-execution counter are retained beside this record.",
+  "counter": {
+    "scope_emission_incidents": 1,
+    "executable_math_checks": 0
+  },
+  "content_authority": "Only 987-994 from the designated raw/current statements are used in the author JSON. No old solutions, answers, choices, reviews, or images were read."
+}

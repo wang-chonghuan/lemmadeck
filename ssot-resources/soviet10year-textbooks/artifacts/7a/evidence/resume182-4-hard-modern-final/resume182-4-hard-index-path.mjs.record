@@ -1,0 +1,54 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), repo);
+const work = '.tmp/resume182-4-hard-modern';
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/7a';
+const edition = `${root}/editions/modern-us-neutral`;
+const filename = `${edition}/book.json`;
+const profile = '.claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json';
+const beforeBytes = fs.readFileSync(filename);
+const before = JSON.parse(beforeBytes);
+assert.equal(before.profile.path, `${repo}/${profile}`);
+fs.writeFileSync(`${work}/book-finalize-FIRST.record`, beforeBytes, { flag: 'wx' });
+const code = `import sys
+from pathlib import Path
+sys.path.insert(0, ".claude/skills/ld-s10y-lesson/tools")
+from edition import update_book_index
+update_book_index(Path("${root}"), Path("${edition}"), Path("${profile}"), [])
+`;
+const result = spawnSync('.claude/skills/ld-s10y-lesson/.venv/bin/python', ['-c', code], {
+  cwd: repo, encoding: 'utf8', env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+});
+process.stdout.write(result.stdout ?? '');
+process.stderr.write(result.stderr ?? '');
+assert.equal(result.status, 0);
+const afterBytes = fs.readFileSync(filename);
+const after = JSON.parse(afterBytes);
+const expected = structuredClone(before);
+expected.profile.path = profile;
+assert.deepEqual(after, expected);
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const record = {
+  schema: 'stemrobin-182/hard-index-profile-path-only@1',
+  status: 'PASS',
+  helper: '.claude/skills/ld-s10y-lesson/tools/edition.py:update_book_index',
+  helper_calls: 1,
+  command: ['.claude/skills/ld-s10y-lesson/.venv/bin/python', '-c', code],
+  cwd: repo,
+  returncode: result.status,
+  stdout: result.stdout,
+  stderr: result.stderr,
+  only_changed_field: 'profile.path',
+  before_sha256: sha(beforeBytes),
+  after_sha256: sha(afterBytes),
+  lessons_order_content_and_profile_hash_unchanged: true,
+  modern_finalizer_render_validator_or_browser_reruns: 0,
+};
+fs.writeFileSync(`${work}/index-path-only-FIRST.record`,
+  `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: record.status, only_changed_field: record.only_changed_field,
+  sha256: record.after_sha256, helper_calls: 1 }));

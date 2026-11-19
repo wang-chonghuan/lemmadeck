@@ -1,0 +1,53 @@
+from decimal import Decimal, ROUND_HALF_UP, localcontext
+import json
+
+
+def four_significant_digits(value):
+    quantum = Decimal(1).scaleb(value.adjusted() - 3)
+    return value.quantize(quantum, rounding=ROUND_HALF_UP)
+
+
+with localcontext() as context:
+    context.prec = 60
+    denominator = Decimal(19) - Decimal(11) * Decimal(3).sqrt()
+    direct_a = Decimal(2) / denominator
+    stable_a = -(Decimal(19) + Decimal(11) * Decimal(3).sqrt())
+    value_b = Decimal(4) * Decimal(11).sqrt() - Decimal(7) * Decimal(5).sqrt()
+    rounded_a = four_significant_digits(stable_a)
+    rounded_b = four_significant_digits(value_b)
+    residual = abs(direct_a - stable_a)
+    tolerance = Decimal("1e-53")
+    checks = [
+        {"id": "985a-original-denominator-nonzero", "pass": denominator != 0},
+        {"id": "985a-direct-equals-rationalized", "pass": residual < tolerance},
+        {"id": "985a-four-significant-digits", "pass": rounded_a == Decimal("-38.05")},
+        {"id": "985b-four-significant-digits", "pass": rounded_b == Decimal("-2.386")},
+    ]
+    passed = all(check["pass"] for check in checks)
+    receipt = {
+        "role": "AUTHOR",
+        "purpose": "Focused arithmetic only; not review or answer-key approval.",
+        "cwd": "/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck",
+        "command": "python3 .tmp/resume182-4-supplement-solutions-author/0979-0986-author/arithmetic-985.py",
+        "execution_count": 1,
+        "precision_decimal_digits": 60,
+        "rounding": "ROUND_HALF_UP, four significant digits",
+        "exercises": ["985"],
+        "parts_evaluated": 2,
+        "values": {
+            "a_denominator": str(denominator),
+            "a_direct": str(direct_a),
+            "a_rationalized": str(stable_a),
+            "a_identity_absolute_residual": str(residual),
+            "a_identity_tolerance": str(tolerance),
+            "a_rounded": str(rounded_a),
+            "b": str(value_b),
+            "b_rounded": str(rounded_b),
+        },
+        "checks": checks,
+        "check_count": len(checks),
+        "status": "PASS" if passed else "FAIL",
+    }
+    print(json.dumps(receipt, indent=2))
+    if not passed:
+        raise SystemExit(1)

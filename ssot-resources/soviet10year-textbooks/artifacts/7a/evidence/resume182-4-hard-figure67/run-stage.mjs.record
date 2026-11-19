@@ -1,0 +1,45 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { spawnSync } from 'node:child_process'
+
+const cwd = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck'
+assert.equal(process.cwd(), cwd)
+const root = path.join(cwd, '.tmp/resume182-4-hard-figure67')
+const [stage, command, ...args] = process.argv.slice(2)
+assert.match(stage, /^(author|draft-validator|renderer|preview)-FIRST$|^preview-recovery1$/)
+const receiptDir = path.join(root, 'receipts', stage)
+assert(!fs.existsSync(receiptDir), `Stage already attempted: ${stage}; never repeat PASS.`)
+fs.mkdirSync(receiptDir, { recursive: true })
+fs.mkdirSync(path.join(root, 'runtime-tmp'), { recursive: true })
+const hash = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex')
+const spec = path.join(root, 'spec.json')
+if (fs.existsSync(spec)) fs.copyFileSync(spec, path.join(receiptDir, 'spec-input.json'))
+const started = new Date().toISOString()
+const result = spawnSync(command, args, {
+  cwd, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024,
+  env: { ...process.env, TMPDIR: path.join(root, 'runtime-tmp'), PYTHONDONTWRITEBYTECODE: '1' }
+})
+fs.writeFileSync(path.join(receiptDir, 'stdout.txt'), result.stdout || '', { flag: 'wx' })
+fs.writeFileSync(path.join(receiptDir, 'stderr.txt'), result.stderr || '', { flag: 'wx' })
+const receipt = {
+  command: [command, ...args], cwd, started, finished: new Date().toISOString(),
+  exit: result.status, signal: result.signal, error: result.error?.message || null,
+  spec: fs.existsSync(spec) ? { path: spec, sha256: hash(spec) } : null,
+  stdoutSha256: hash(path.join(receiptDir, 'stdout.txt')),
+  stderrSha256: hash(path.join(receiptDir, 'stderr.txt')),
+  outputSnapshots: []
+}
+const outputs = stage === 'renderer-FIRST' ? ['fig-67.svg', 'render.json'] : stage === 'preview-FIRST' ? ['preview-evidence.json', 'preview.html'] : stage === 'preview-recovery1' ? ['preview-recovery-evidence.json', 'preview.html'] : stage === 'author-FIRST' ? ['context.json', 'spec.json'] : []
+for (const name of outputs) {
+  const p = path.join(root, name)
+  if (!fs.existsSync(p)) continue
+  fs.copyFileSync(p, path.join(receiptDir, name))
+  receipt.outputSnapshots.push({ path: p, sha256: hash(p) })
+}
+fs.writeFileSync(path.join(receiptDir, 'receipt.json'), JSON.stringify(receipt, null, 2) + '\n', { flag: 'wx' })
+console.log(result.stdout || '')
+if (result.stderr) console.error(result.stderr)
+console.log(JSON.stringify(receipt))
+process.exitCode = result.status ?? 1

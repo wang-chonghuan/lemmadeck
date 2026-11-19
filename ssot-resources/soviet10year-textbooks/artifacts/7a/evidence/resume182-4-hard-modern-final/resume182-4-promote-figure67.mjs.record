@@ -1,0 +1,95 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), repo);
+const work = '.tmp/resume182-4-hard-figure67';
+const modernWork = '.tmp/resume182-4-hard-modern';
+const edition = 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral';
+const source = 'ssot-resources/soviet10year-textbooks/artifacts/7a/figures/fig-67.png';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const read = file => JSON.parse(fs.readFileSync(file));
+const bytes = {
+  spec: fs.readFileSync(`${work}/spec.json`),
+  svg: fs.readFileSync(`${work}/fig-67.svg`),
+  render: fs.readFileSync(`${work}/render.json`),
+};
+assert.equal(sha(bytes.spec), 'c18c81b7a289609675a8d06c13f3530c42c3d0105c7e10bfaa4ac8dee9f2024c');
+assert.equal(sha(bytes.svg), '27b5b3caba51bbee3aaa2293e309b6b1b00f8bc896b062c6f72e2b40ab6b1082');
+assert.equal(sha(bytes.render), '1d62b0c763f2bc8795a95bd57103b58a9dc19f3f2f0905e3cb29b38359d02fd3');
+assert.equal(sha(fs.readFileSync(source)), '159b9642643dfffe65d7441c432a2e3538ddb0bbdedcf58b9006c25af18fdbf4');
+const reviewPath = `${work}/fig-67.review.json`;
+const review = read(reviewPath);
+assert.equal(review.schema, 'ld-s10y-image/review@1');
+assert.equal(review.figure, 'fig-67');
+assert.equal(review.status, 'pass');
+assert.equal(review.spec.sha256, sha(bytes.spec));
+assert.equal(review.render.sha256, sha(bytes.render));
+assert.equal(review.outputs.svg.sha256, sha(bytes.svg));
+const existing = [];
+function snapshot(directory) {
+  for (const item of fs.readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+    const filename = path.join(directory, item.name);
+    if (item.isDirectory()) snapshot(filename);
+    else {
+      assert.ok(item.isFile(), filename);
+      existing.push({ path: filename, sha256: sha(fs.readFileSync(filename)) });
+    }
+  }
+}
+snapshot(edition);
+fs.writeFileSync(`${modernWork}/before-existing-modern-files.record`,
+  `${JSON.stringify(existing, null, 2)}\n`, { flag: 'wx' });
+const targets = {
+  spec: `${edition}/figures/fig-67.spec.json`,
+  svg: `${edition}/figures/fig-67.svg`,
+  render: `${edition}/figures/fig-67.render.json`,
+  review: `${edition}/figures/fig-67.review.json`,
+};
+const render = JSON.parse(bytes.render);
+const originalRender = structuredClone(render);
+render.spec.path = targets.spec;
+render.output.svg.path = targets.svg;
+const compareRender = structuredClone(render);
+compareRender.spec.path = originalRender.spec.path;
+compareRender.output.svg.path = originalRender.output.svg.path;
+assert.deepEqual(compareRender, originalRender);
+bytes.render = Buffer.from(`${JSON.stringify(render, null, 2)}\n`);
+const entries = [];
+for (const key of ['spec', 'svg', 'render']) {
+  const target = targets[key];
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  if (fs.existsSync(target)) assert.equal(sha(fs.readFileSync(target)), sha(bytes[key]), target);
+  else fs.writeFileSync(target, bytes[key], { flag: 'wx' });
+  entries.push({ path: target, sha256: sha(bytes[key]) });
+}
+const templatePath = `${modernWork}/adapt/7a/modern-us-neutral/lessons/alg7-hard/figures.template.json`;
+const templateBytes = fs.readFileSync(templatePath);
+assert.equal(sha(templateBytes), 'bcb87846f30e4e9886aa5a5bd7b6173591482d20bebd57cd922d6d945d106cab');
+const template = JSON.parse(templateBytes);
+assert.equal(template.figures.length, 1);
+assert.equal(template.figures[0].id, 'fig-67');
+template.figures[0].svg = 'figures/fig-67.svg';
+template.figures[0].render = 'figures/fig-67.render.json';
+template.figures[0].review = 'figures/fig-67.review.json';
+assert.ok(!template.figures[0].png && !template.figures[0].artwork && !template.figures[0].generation);
+fs.writeFileSync(templatePath, `${JSON.stringify(template, null, 2)}\n`);
+const record = {
+  schema: 'stemrobin-182/figure67-approved-path-migration@1',
+  status: 'SOURCE_VISUAL_APPROVED_FINAL_REVIEW_BINDING_PENDING',
+  source_review: { historical_path: reviewPath, sha256: sha(fs.readFileSync(reviewPath)) },
+  unchanged_spec_and_svg: true,
+  render_changes: ['spec.path', 'output.svg.path'],
+  original_render_sha256: sha(fs.readFileSync(`${work}/render.json`)),
+  final_render_sha256: sha(bytes.render),
+  existing_modern_files_snapshotted: existing.length,
+  independent_visual_checks_or_renders_repeated: 0,
+  final_review_required: targets.review,
+  modern_finalize_or_display_pass: false,
+  entries,
+};
+fs.writeFileSync(`${work}/promotion-paths.record`,
+  `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(record, null, 2));

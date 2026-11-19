@@ -1,0 +1,111 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+const cwd = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck'
+assert.equal(process.cwd(), cwd)
+const own = path.join(cwd, '.tmp/resume182-4-hard-figure67')
+const read = p => JSON.parse(fs.readFileSync(p, 'utf8'))
+const hash = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex')
+const write = (name, data) => fs.writeFileSync(path.join(own, name), JSON.stringify(data, null, 2) + '\n', { flag: 'wx' })
+const inventoryPath = path.join(own, 'source-inventory.json')
+const inventory = read(inventoryPath)
+const lessonPath = path.join(cwd, '.tmp/resume182-4-hard-modern/adapt/7a/modern-us-neutral/lessons/alg7-hard/lesson.template.json')
+const exercisesPath = path.join(path.dirname(lessonPath), 'exercises.template.json')
+const lesson = read(lessonPath)
+const exercises = read(exercisesPath)
+const relevant = exercises.exercises.filter(e => e.figure_refs.includes('fig-67'))
+assert.equal(lesson.prose.length, 0)
+assert.equal(exercises.exercises.length, 44)
+assert.equal(relevant.length, 1)
+assert.equal(relevant[0].number, '1079')
+assert.equal(hash(path.join(cwd, inventory.source.path)), inventory.source.sha256)
+assert.equal(hash(lessonPath), '95786707a0c63190a610e6c603117189df182f38d0b05e31dce2c3ab32bc8877')
+assert.equal(hash(exercisesPath), 'a59dd8b9a538507a893ca44eb2b95d0175d7d1ff0107647930d569fb9a982301')
+const text = relevant[0].text
+const context = {
+  schema: 'ld-s10y-image/context@1',
+  book: '7a', edition: 'modern-us-neutral', figure: 'fig-67',
+  status: 'candidate-draft-author-only',
+  authoritativeRule: 'Current modern text supplies the complete task; original pixels supply visual structure. Do not solve possible orders or mark origin/minus-one/plus-one.',
+  sourceImage: inventory.source,
+  authoritativeInputs: [lessonPath, exercisesPath].map(p => ({ path: p, sha256: hash(p) })),
+  upstreamTextContract: {
+    path: path.join(cwd, '.tmp/resume182-4-hard-modern/receipts/text-contract-FIRST/stdout.txt'),
+    sha256: hash(path.join(cwd, '.tmp/resume182-4-hard-modern/receipts/text-contract-FIRST/stdout.txt')),
+    status: 'PASS', callsAlreadyRun: 1, rerunHere: false,
+    independentTextReview: 'Parallel work outside this author scope; not observed or approved here.'
+  },
+  lessons: [{ lesson: 'alg7-hard', prose: [], exercises: [{ exercise: '1079', text }] }],
+  inventory: { path: inventoryPath, sha256: hash(inventoryPath), observations: 1 },
+  routing: { mode: 'deterministic', purpose: 'instructional', renderer: 'existing JSXGraph' },
+  displayContract: { css: path.join(cwd, 'app/src/styles/app.css'), sha256: hash(path.join(cwd, 'app/src/styles/app.css')), rule: 'scroll .sr-figure-media width 40em; .sr-ex-body font-size 16px', actualMediaWidthPx: 640, canvas: [640, 400], minTextPx: 16, fontSizePx: 20 },
+  additions: inventory.modernRegularization,
+  fidelityDoubts: inventory.fidelityDoubts
+}
+const spec = {
+  schema: 'ld-s10y-image/figure-spec@2', id: 'fig-67', mode: 'deterministic',
+  description: 'Six separate number-line arrangements of A(x), B(x squared), C(x cubed) from exercise 1079. Preserve approximate source order and spacing only. The student judges possibilities and supplies the requested origin and unit points; the figure supplies none of those answers.',
+  source: {
+    image: inventory.source && { path: inventory.source.path, sha256: inventory.source.sha256 },
+    authoritativeText: [{ lesson: 'alg7-hard', exercise: '1079', text }],
+    inventory: []
+  },
+  canvas: { width: 640, height: 400, boundingBox: [0, 400, 640, 0], background: 'paper', keepAspectRatio: true },
+  display: { layout: 'scroll', purpose: 'instructional', minTextPx: 16, widths: [640] },
+  objects: [], assertions: [], layout: { minLabelGap: 4 }
+}
+const round = n => Number(n.toFixed(2))
+for (const [index, row] of inventory.rows.entries()) {
+  assert.deepEqual(row.points.map(p => p.name), row.leftToRight)
+  assert.deepEqual([...row.leftToRight].sort(), ['A', 'B', 'C'])
+  const y = 400 - (30 + index * 64)
+  const from = [round(row.sourceLineEndsX[0] * 0.68), y]
+  const to = [round(row.sourceLineEndsX[1] * 0.68), y]
+  const lineId = `${row.id}-number-line`
+  const subId = `${row.id}-subfigure`
+  spec.objects.push({ id: lineId, type: 'arrow', from, to, stroke: 'ink', strokeWidth: 2.5 })
+  spec.objects.push({ id: subId, type: 'text', at: [20, y], text: row.englishLabel, fontSize: 20, fontWeight: 600, labelColor: 'ink', labelPlacement: { position: 'CENTER' } })
+  for (const point of row.points) {
+    spec.objects.push({
+      id: `${row.id}-${point.name}`, type: 'point',
+      at: [round(point.sourcePixel[0] * 0.68), y],
+      label: point.label, size: 4, strokeWidth: 1.5,
+      stroke: 'accent', fill: 'accent', labelColor: 'ink',
+      fontSize: 20, fontWeight: 600,
+      labelPlacement: { position: 'S', gap: 26 }
+    })
+  }
+  const mapped = []
+  for (let pair = 0; pair < 2; pair++) {
+    const first = row.points[pair]
+    const second = row.points[pair + 1]
+    const id = `${row.id}-order-${first.name}-${second.name}`
+    spec.assertions.push({
+      id, type: 'displacement', from: `${row.id}-${first.name}`, to: `${row.id}-${second.name}`,
+      dx: round((second.sourcePixel[0] - first.sourcePixel[0]) * 0.68), dy: 0, tolerance: 0.000001
+    })
+    mapped.push(id)
+  }
+  const collinear = `${row.id}-all-three-collinear`
+  spec.assertions.push({ id: collinear, type: 'collinear', a: `${row.id}-A`, b: `${row.id}-B`, c: `${row.id}-C`, tolerance: 0.000001 })
+  mapped.push(collinear)
+  for (const point of row.points) {
+    const id = `${row.id}-${point.name}-on-own-line`
+    spec.assertions.push({ id, type: 'pointOnLine', point: `${row.id}-${point.name}`, a: from, b: to, tolerance: 0.000001 })
+    mapped.push(id)
+  }
+  const connects = `${row.id}-line-right-directed`
+  spec.assertions.push({ id: connects, type: 'connects', arrow: lineId, from, to })
+  mapped.push(connects)
+  spec.source.inventory.push({
+    id: `source-row-${row.id}`,
+    description: `Source row ${index + 1}, letter ${row.sourceLetter} translated to ${row.englishLabel}. Separate solid horizontal number line, blunt left end and right arrow. Three distinct collinear points in source left-to-right order ${row.leftToRight.join(', ')}; each label below its own point: ${row.points.map(p => p.label).join(', ')}. Approximate source x centers ${row.points.map(p => p.sourcePixel[0]).join(', ')}; uniform x factor 0.68 preserves these approximate gaps. Baseline straightening, even row spacing, typesetting, and uniform filled markers are disclosed modern regularization, not extra source data.`,
+    objects: [lineId, subId, ...row.points.map(p => `${row.id}-${p.name}`)],
+    assertions: mapped, requires: ['pointRelationships']
+  })
+}
+write('context.json', context)
+write('spec.json', spec)
+console.log(JSON.stringify({ status: 'candidate-authored', context: path.join(own, 'context.json'), spec: path.join(own, 'spec.json'), groups: spec.source.inventory.length, points: 18, pointLabels: 18, subfigureLabels: 6, assertions: spec.assertions.length }))

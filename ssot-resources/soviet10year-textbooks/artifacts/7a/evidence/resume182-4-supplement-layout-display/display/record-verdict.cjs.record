@@ -1,0 +1,158 @@
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const assert = require("node:assert/strict");
+
+const cwd = "/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck";
+assert.equal(process.cwd(), cwd);
+const root = path.join(cwd, ".tmp/resume182-4-supplement-layout-display");
+const load = (name) => JSON.parse(fs.readFileSync(path.join(root, name)));
+const sha = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const fileFact = (file) => {
+  const bytes = fs.readFileSync(file);
+  return { path: file, bytes: bytes.length, sha256: sha(bytes) };
+};
+const projection = load("projection-FIRST.json");
+const render = load("render-result-FIRST.json");
+const browser = load("display-RECOVERY1.json");
+const observations = load("image-observations.json");
+assert.equal(render.rendererInvocations, 1);
+assert.equal(browser.counters.screenshots, 4);
+assert.equal(observations.images_observed, 3);
+assert.equal(browser.counters.targetViewportChecks, 8);
+assert.equal(sha(fs.readFileSync(projection.source.path)), projection.source.sha256);
+
+const outcomes = browser.views[0].objects.map((item) => {
+  const number = item.number;
+  const views = browser.views.map((view) => {
+    const object = view.objects.find((target) => target.number === number);
+    return {
+      viewport: view.viewport, status: object.status,
+      approvedLines: object.expectedLines.length, displayedBRs: object.brCount,
+      mathExpressions: object.math.length, textAndTeXSequenceEqual: true,
+      bodyWidthPx: object.bodyRect.width,
+      bodyClientWidthPx: object.bodyClientWidth,
+      bodyScrollWidthPx: object.bodyScrollWidth,
+      minLFTopSeparationPx: Math.min(...object.lines.slice(1).map((line, index) =>
+        line.firstTop - object.lines[index].lastTop)),
+      imageCompleteness: view.viewport.width === 390 && ["913", "1060"].includes(number)
+        ? "OPEN_RIGHT_EDGE_CAPTURE" : "PASS",
+    };
+  });
+  return { number, verdict: observations.target_verdicts[number], views };
+});
+const evidence = [
+  "execution-first.json", "project-fixtures.cjs", "projection-FIRST.json",
+  "approved-targets-FIRST.json", "render-once.cjs", "render-FIRST.json",
+  "render-FIRST.stdout", "render-FIRST.stderr", "render-result-FIRST.json",
+  "display-check-FIRST.cjs", "display-FIRST.json", "display-failure-FIRST.json",
+  "display-check.cjs", "display-RECOVERY1.json", "image-observations.json",
+].map((name) => fileFact(path.join(root, name)));
+const summary = {
+  schema: "stemrobin-182/bounded-affected-display-verdict@1",
+  ticket: "STEMROBIN-182", context: "chat182-4", date: "2026-11-19", cwd,
+  status: observations.watch_verdict,
+  outcomes,
+  approvedTemplate: projection.source,
+  unchangedAtEnd: true,
+  scratchProjection: {
+    count: 4, prose: 0, omittedFigurePayloads: projection.omittedFigurePayloads,
+    textMathLFAlterations: 0, unchangedSourceObjectsRetained: true,
+  },
+  pageEvidence: browser.views.map((view) => ({
+    viewport: view.viewport, ...view.page,
+    pageXOverflowPx: Math.max(0, view.page.scrollWidth - view.page.clientWidth),
+  })),
+  offline: {
+    mode: "offline:true, serviceWorkers:block, route permits only the exact local HTML navigation",
+    documentNavigations: browser.requests.length,
+    externalRequests: browser.requests.filter((request) => /^https?:/.test(request.url)).length,
+    blockedRequests: browser.requests.filter((request) => !request.allowed).length,
+    requests: browser.requests,
+  },
+  counters: {
+    ...browser.counters,
+    fixtureProjectionRuns: 1,
+    displayScriptExecutions: 2,
+    successfulTargetViewportChecks: 8,
+    mathExpressionsPerViewport: 22,
+    displayedLFBoundariesPerViewport: 21,
+    screenshotsPixelDecoded: 4,
+    imagesLoadedIntoFreshContext: 3,
+    failedScreenshotsPreserved: 1,
+    unaffectedExercisesReviewed: 0,
+    fullSourceStaticReviews: 0,
+    productCodeChanges: 0,
+    durableResourceWrites: 0,
+    dependencySkillTokenUIChanges: 0,
+    gitOperations: 0,
+    publishers: 0,
+    chatOperations: 0,
+  },
+  commands: [
+    "node .tmp/resume182-4-supplement-layout-display/project-fixtures.cjs",
+    "node .tmp/resume182-4-supplement-layout-display/render-once.cjs",
+    render.command.join(" "),
+    "node .tmp/resume182-4-supplement-layout-display/display-check.cjs",
+    "cp -n .tmp/resume182-4-supplement-layout-display/display-check.cjs .tmp/resume182-4-supplement-layout-display/display-check-FIRST.cjs",
+    "node .tmp/resume182-4-supplement-layout-display/display-check.cjs",
+    "node .tmp/resume182-4-supplement-layout-display/record-verdict.cjs",
+  ],
+  commandNotes: "Renderer command is the one child invocation of render-once, not a second render. First and recovery browser executions used preserved, separately hashed inputs. All shell commands ran in the stated cwd. Initial setup/source-lookup diagnostics are preserved in execution-first.json and display-RECOVERY1.json.",
+  rendererSource: render.rendererSource,
+  renderOutputs: render.outputs,
+  fixtureOutputs: projection.outputs,
+  screenshots: browser.screenshots.map((image) => ({
+    ...image,
+    observation: observations.observations.find((entry) => entry.file === path.basename(image.path)),
+  })),
+  evidence,
+  firstFailure: browser.firstFailure,
+  stopReason: "Four-screenshot ceiling reached. Mobile 913 and 1060 completeness remains OPEN because capture pixels are cut at the right edge; no further dependent capture or content work authorized.",
+  acceptanceLimits: {
+    affectedTextDisplayOnly: true,
+    fullModernLesson: false, app: false, figures: false, mathCorrectness: false,
+    sourceFaithfulness: false, answersChoices: false, finalization: false,
+  },
+  browserClosed: browser.browserClosed,
+  stop: true,
+};
+const jsonPath = path.join(root, "verdict.json");
+const jsonBytes = Buffer.from(`${JSON.stringify(summary, null, 2)}\n`);
+fs.writeFileSync(jsonPath, jsonBytes, { flag: "wx" });
+const text = [
+  "# STEMROBIN-182 chat182-4: affected-only display watch",
+  "",
+  "Verdict: OPEN_CAPTURE_EVIDENCE_INCOMPLETE. STOP.",
+  "",
+  "- 913: desktop PASS; mobile LF/text/math geometry PASS, but complete visual text is OPEN due right-edge capture.",
+  "- 941: PASS affected display only at both viewports. Four premises, six claims; approved shared prompt is line 6 before claims.",
+  "- 1008: PASS affected display only at both viewports. Equation, both premises, separate final shared request.",
+  "- 1060: desktop PASS; mobile equation/a/b PASS, but complete shared requirement visual evidence is OPEN due right-edge capture.",
+  "",
+  "Template SHA-256: d93723680e47259218d6038cfab7f9e6d852244b4e97bf3cb7c07a6fb09ce4e5 (unchanged).",
+  "Exactly four parser-selected objects and zero prose. Scratch-only figure payload omitted for 913; no source image or figure acceptance.",
+  "Headed Chromium, installed app @playwright/test, 1440x960 and 390x844; all requests except exact local HTML blocked, browser offline.",
+  "Eight target-viewport DOM checks PASS: 22 complete TeX expressions and 21 approved LF boundaries per viewport; zero KaTeX/errors/inputs/answer UI/page horizontal overflow.",
+  "One renderer invocation; two browser executions, three contexts, four total captures, three image-context observations.",
+  "First screenshot failure preserved: desktop second clip was 685x20 rather than 685x425, with zero dark pixels. Capture-only recovery used fullPage:true; no reset or rerender.",
+  "Capture budget is exhausted. Desktop passing work reused; mobile 913/1060 not promoted from geometry alone.",
+  "",
+  "Commands and complete hashes/pixels/measurements: verdict.json. All command cwd: " + cwd,
+  ...summary.commands.map((command) => "- `" + command + "`"),
+  "",
+  ...summary.screenshots.map((image) =>
+    `- ${path.basename(image.path)}: ${image.pixels.width}x${image.pixels.height}; dark=${image.pixels.dark}; sha256=${image.sha256}; ${image.observation.status}`),
+  "",
+  "No static review rerun, other-item review, graph repair, finalization, DB/publisher/git/dependency/skill/token/UI/chat/agent change.",
+  "Not full modern lesson or app acceptance. All browser processes launched by this watch closed. STOP.",
+  "",
+].join("\n");
+const markdownPath = path.join(root, "verdict.md");
+fs.writeFileSync(markdownPath, text, { flag: "wx" });
+const manifest = { outputs: [fileFact(jsonPath), fileFact(markdownPath)], generatedBy: fileFact(__filename), stop: true };
+fs.writeFileSync(path.join(root, "verdict-hashes.json"), `${JSON.stringify(manifest, null, 2)}\n`, { flag: "wx" });
+console.log(JSON.stringify({
+  status: summary.status, outcomes: outcomes.map(({ number, verdict }) => ({ number, verdict })),
+  counters: summary.counters, outputs: manifest.outputs,
+}, null, 2));

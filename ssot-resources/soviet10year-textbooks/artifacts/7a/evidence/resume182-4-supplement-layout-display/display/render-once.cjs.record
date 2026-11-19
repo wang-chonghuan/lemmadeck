@@ -1,0 +1,44 @@
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const assert = require("node:assert/strict");
+const { spawnSync } = require("node:child_process");
+
+const cwd = "/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck";
+assert.equal(process.cwd(), cwd);
+const root = path.join(cwd, ".tmp/resume182-4-supplement-layout-display");
+const receiptPath = path.join(root, "render-FIRST.json");
+assert.ok(!fs.existsSync(receiptPath), "The renderer is authorized exactly once.");
+const args = [
+  ".claude/skills/ld-s10y-lesson/tools/render_lesson.js",
+  ".tmp/resume182-4-supplement-layout-display/fixtures/7a",
+  "--out", ".tmp/resume182-4-supplement-layout-display/render",
+  "--edition", "modern-us-neutral",
+  "--lesson", "alg7-c4-ex",
+];
+fs.writeFileSync(receiptPath, `${JSON.stringify({
+  cwd, command: ["node", ...args], rendererInvocations: 1, state: "STARTED",
+}, null, 2)}\n`, { flag: "wx" });
+const result = spawnSync(process.execPath, args, { cwd, encoding: "utf8" });
+fs.writeFileSync(path.join(root, "render-FIRST.stdout"), result.stdout || "", { flag: "wx" });
+fs.writeFileSync(path.join(root, "render-FIRST.stderr"), result.stderr || "", { flag: "wx" });
+const sha = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const outputs = result.status === 0 ? ["text.html", "exercises.html"].map((name) => {
+  const file = path.join(root, "render/alg7-c4-ex", name);
+  const bytes = fs.readFileSync(file);
+  return { path: file, bytes: bytes.length, sha256: sha(bytes) };
+}) : [];
+const receipt = {
+  cwd, command: ["node", ...args], rendererInvocations: 1,
+  exitCode: result.status, signal: result.signal,
+  state: result.status === 0 ? "PASS_RENDER_EXECUTION_ONLY" : "STOP_RENDER_FAILURE",
+  stdout: path.join(root, "render-FIRST.stdout"),
+  stderr: path.join(root, "render-FIRST.stderr"),
+  rendererSource: {
+    path: path.join(cwd, args[0]), sha256: sha(fs.readFileSync(path.join(cwd, args[0]))),
+  },
+  outputs,
+};
+fs.writeFileSync(path.join(root, "render-result-FIRST.json"), `${JSON.stringify(receipt, null, 2)}\n`, { flag: "wx" });
+console.log(JSON.stringify(receipt, null, 2));
+if (result.status !== 0) process.exitCode = 1;

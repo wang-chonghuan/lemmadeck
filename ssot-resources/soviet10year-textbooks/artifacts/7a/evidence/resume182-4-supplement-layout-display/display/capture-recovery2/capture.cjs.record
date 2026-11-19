@@ -1,0 +1,268 @@
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const assert = require("node:assert/strict");
+const { pathToFileURL } = require("node:url");
+
+const cwd = "/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck";
+assert.equal(process.cwd(), cwd);
+const owner = path.join(cwd, ".tmp/resume182-4-supplement-layout-display");
+const root = path.join(owner, "capture-recovery2");
+const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const fact = (file) => {
+  const bytes = fs.readFileSync(file);
+  return { path: file, bytes: bytes.length, sha256: hash(bytes) };
+};
+const previousPath = path.join(owner, "verdict.json");
+const previous = JSON.parse(fs.readFileSync(previousPath));
+assert.equal(previous.status, "OPEN_CAPTURE_EVIDENCE_INCOMPLETE");
+assert.equal(previous.counters.screenshots, 4);
+assert.equal(previous.counters.imagesLoadedIntoFreshContext, 3);
+assert.equal(previous.counters.failedScreenshotsPreserved, 1);
+const htmlPath = path.join(owner, "render/alg7-c4-ex/exercises.html");
+const htmlHash = "479513eb0c935314c2a014693e502518b87375c7835e78b0a26b054946919031";
+assert.equal(fact(htmlPath).sha256, htmlHash);
+
+function originalFacts(directory) {
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const file = path.join(directory, entry.name);
+    if (file === root) return [];
+    if (entry.isDirectory()) return originalFacts(file);
+    assert.ok(entry.isFile(), "No unrecognized original filesystem entry.");
+    return [fact(file)];
+  });
+}
+
+const originalFiles = originalFacts(owner);
+const { chromium } = require(path.join(cwd, "app/node_modules/@playwright/test"));
+const viewport = { width: 390, height: 844 };
+const htmlURL = pathToFileURL(htmlPath).href;
+const reportPath = path.join(root, "capture-receipt.json");
+assert.ok(!fs.existsSync(reportPath), "Never replace a completed or failed recovery receipt.");
+const report = {
+  schema: "stemrobin-182/capture-recovery2@1",
+  ticket: "STEMROBIN-182", context: "chat182-4", cwd,
+  command: "node .tmp/resume182-4-supplement-layout-display/capture-recovery2/capture.cjs",
+  previousVerdict: fact(previousPath),
+  frozenHTML: fact(htmlPath),
+  originalFiles,
+  input: fact(__filename),
+  targets: ["913", "1060"],
+  viewport,
+  scope: "Right-edge mobile capture/framing only. No content/math/static review or rendering repeated; 941/1008 inherited unchanged.",
+  authorization: {
+    newCapturesMax: 2, cumulativeCapturesMax: 6,
+    newImageObservationsMax: 2, cumulativeImageObservationsMax: 5,
+    newBrowserLaunchesMax: 1,
+  },
+  newCounters: {
+    browserLaunches: 0, browserContexts: 0, viewportRuns: 0,
+    framingChecks: 0, screenshots: 0, imageObservations: 0,
+    rendererInvocations: 0, fixtureProjectionRuns: 0,
+    fullDOMMathChecks: 0, staticReviewReruns: 0, sourceImages: 0,
+    finalization: 0, DBOperations: 0, gitOperations: 0,
+    paidCalls: 0, chatOperations: 0, agents: 0,
+    contentCSSStyleZoomFontMutations: 0,
+  },
+  cumulativeCounters: {
+    ...previous.counters,
+    framingOnlyChecks: 0,
+  },
+  frames: [], screenshots: [], requests: [], errors: [],
+  status: "STARTED_FRAMING_ONLY",
+  browserClosed: false,
+};
+fs.writeFileSync(path.join(root, "input-FIRST.json"), `${JSON.stringify({
+  input: report.input, previousVerdict: report.previousVerdict,
+  frozenHTML: report.frozenHTML, originalFiles, authorization: report.authorization,
+  initialCounters: report.cumulativeCounters,
+}, null, 2)}\n`, { flag: "wx" });
+fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`, { flag: "wx" });
+const save = () => fs.writeFileSync(reportPath, `${JSON.stringify(report, null, 2)}\n`);
+
+async function main() {
+  let browser;
+  try {
+    report.newCounters.browserLaunches += 1;
+    report.cumulativeCounters.browserLaunches += 1;
+    save();
+    browser = await chromium.launch({ headless: false });
+    report.chromiumVersion = browser.version();
+    report.playwrightPackage = fact(path.join(cwd, "app/node_modules/@playwright/test/package.json"));
+    report.newCounters.browserContexts += 1;
+    report.cumulativeCounters.browserContexts += 1;
+    save();
+    const context = await browser.newContext({
+      viewport, deviceScaleFactor: 1, offline: true, serviceWorkers: "block",
+    });
+    await context.route("**/*", async (route) => {
+      const request = route.request();
+      const allowed = request.url() === htmlURL && request.isNavigationRequest();
+      report.requests.push({ url: request.url(), resourceType: request.resourceType(), allowed });
+      if (allowed) await route.continue();
+      else await route.abort("blockedbyclient");
+    });
+    const page = await context.newPage();
+    page.on("pageerror", (error) => report.errors.push({ type: "pageerror", message: error.message }));
+    page.on("console", (message) => {
+      if (message.type() === "error") report.errors.push({ type: "console", message: message.text() });
+    });
+    await page.goto(htmlURL, { waitUntil: "load" });
+    await page.evaluate(async () => { await document.fonts.ready; });
+    report.newCounters.viewportRuns += 1;
+    report.cumulativeCounters.viewportRuns += 1;
+    save();
+
+    for (const number of report.targets) {
+      const target = page.locator(`#ex-${number}`);
+      await target.evaluate((element) => {
+        element.scrollIntoView({ block: "center", inline: "nearest", behavior: "instant" });
+      });
+      const frame = await target.evaluate((element) => {
+        const body = element.querySelector(".body");
+        const rect = (item) => {
+          const box = item.getBoundingClientRect();
+          return { x: box.x, y: box.y, right: box.right, bottom: box.bottom, width: box.width, height: box.height };
+        };
+        const lines = [{ rects: [] }];
+        for (const node of body.childNodes) {
+          if (node.nodeType === Node.ELEMENT_NODE && node.tagName === "BR") {
+            lines.push({ rects: [] });
+          } else if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+            const range = document.createRange();
+            range.selectNodeContents(node);
+            lines.at(-1).rects.push(...Array.from(range.getClientRects(), (box) => ({
+              x: box.x, y: box.y, right: box.right, bottom: box.bottom,
+              width: box.width, height: box.height,
+            })).filter((box) => box.width > 0 && box.height > 0));
+          } else if (node.nodeType === Node.ELEMENT_NODE) {
+            lines.at(-1).rects.push(rect(node));
+          }
+        }
+        return {
+          number: element.id.slice(3), element: rect(element), body: rect(body),
+          lines: lines.map((line, index) => ({
+            approvedLineIndex: index + 1, rects: line.rects,
+            minX: Math.min(...line.rects.map((box) => box.x)),
+            maxRight: Math.max(...line.rects.map((box) => box.right)),
+            minY: Math.min(...line.rects.map((box) => box.y)),
+            maxBottom: Math.max(...line.rects.map((box) => box.bottom)),
+          })),
+          innerWidth, innerHeight, scrollX, scrollY, devicePixelRatio,
+          clientWidth: document.documentElement.clientWidth,
+          pageScrollWidth: document.documentElement.scrollWidth,
+          bodyClientWidth: body.clientWidth, bodyScrollWidth: body.scrollWidth,
+        };
+      });
+      report.frames.push(frame);
+      report.newCounters.framingChecks += 1;
+      report.cumulativeCounters.framingOnlyChecks += 1;
+      save();
+      assert.equal(frame.innerWidth, viewport.width);
+      assert.equal(frame.innerHeight, viewport.height);
+      assert.equal(frame.devicePixelRatio, 1);
+      assert.equal(frame.scrollX, 0);
+      assert.ok(frame.pageScrollWidth <= frame.clientWidth, "TRUE_LAYOUT_CLIPPING: page horizontal overflow.");
+      assert.ok(frame.bodyScrollWidth <= frame.bodyClientWidth + 1, "TRUE_LAYOUT_CLIPPING: affected body horizontal overflow.");
+      for (const line of frame.lines) {
+        assert.ok(line.rects.length > 0, "FRAMING_FAILURE: an approved line has no measured visual bounds.");
+        assert.ok(line.minX >= frame.body.x - 1 && line.maxRight <= frame.body.x + frame.bodyClientWidth + 1,
+          "TRUE_LAYOUT_CLIPPING: affected glyphs extend beyond visible body width.");
+      }
+      const y = Math.max(0, Math.floor(frame.element.y) - 12);
+      const bottom = Math.min(frame.innerHeight, Math.ceil(frame.element.bottom) + 12);
+      const clip = { x: 0, y, width: frame.innerWidth, height: bottom - y };
+      frame.clip = clip;
+      assert.ok(frame.element.y >= clip.y && frame.element.bottom <= clip.y + clip.height,
+        "FRAMING_FAILURE: full target does not fit within the viewport crop.");
+      assert.ok(frame.lines.every((line) =>
+        line.minX > 0 && line.maxRight < clip.width &&
+        line.minY >= clip.y && line.maxBottom <= clip.y + clip.height),
+      "FRAMING_FAILURE: crop cannot contain all affected glyph bounds.");
+      assert.equal(report.errors.length, 0);
+      assert.ok(report.newCounters.screenshots < 2 && report.cumulativeCounters.screenshots < 6);
+      const imagePath = path.join(root, `mobile-${number}-390.png`);
+      assert.ok(!fs.existsSync(imagePath));
+      report.newCounters.screenshots += 1;
+      report.cumulativeCounters.screenshots += 1;
+      save();
+      const bytes = await page.screenshot({
+        path: imagePath, clip, fullPage: false, scale: "css",
+      });
+      const pixels = await page.evaluate(async (base64) => {
+        const raw = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
+        const bitmap = await createImageBitmap(new Blob([raw], { type: "image/png" }));
+        const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(bitmap, 0, 0);
+        const data = ctx.getImageData(0, 0, bitmap.width, bitmap.height).data;
+        let nonWhite = 0, dark = 0, minX = bitmap.width, minY = bitmap.height, maxX = -1, maxY = -1;
+        for (let index = 0; index < data.length; index += 4) {
+          if (data[index] < 245 || data[index + 1] < 245 || data[index + 2] < 245) nonWhite += 1;
+          if (data[index] < 128 && data[index + 1] < 128 && data[index + 2] < 128) {
+            dark += 1;
+            const pixel = index / 4, x = pixel % bitmap.width, y = Math.floor(pixel / bitmap.width);
+            minX = Math.min(minX, x); minY = Math.min(minY, y);
+            maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
+          }
+        }
+        return { width: bitmap.width, height: bitmap.height, total: bitmap.width * bitmap.height,
+          nonWhite, dark, darkBounds: { minX, minY, maxX, maxY } };
+      }, bytes.toString("base64"));
+      const image = {
+        number, ...fact(imagePath), clip, viewport, fullPage: false, pixels,
+        priorContentMathResultReused: true, observed: false,
+      };
+      report.screenshots.push(image);
+      report.cumulativeCounters.screenshotsPixelDecoded += 1;
+      save();
+      assert.equal(pixels.width, 390);
+      assert.equal(pixels.height, clip.height);
+      assert.ok(pixels.dark > 1000, "FRAMING_FAILURE: blank or incomplete capture.");
+      const after = await target.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        return { x: box.x, y: box.y, width: box.width, height: box.height, innerWidth, scrollX, scrollY };
+      });
+      frame.afterScreenshot = after;
+      assert.equal(after.innerWidth, frame.innerWidth);
+      assert.equal(after.x, frame.element.x);
+      assert.equal(after.y, frame.element.y);
+      assert.equal(after.width, frame.element.width);
+      assert.equal(after.height, frame.element.height);
+      frame.status = "PASS_VIEWPORT_FRAMING_AWAITING_PIXELS";
+      save();
+    }
+    report.status = "PASS_FRAMING_AWAITING_TWO_IMAGE_OBSERVATIONS";
+    await context.close();
+  } catch (error) {
+    report.status = error.message.includes("TRUE_LAYOUT_CLIPPING")
+      ? "STOP_TRUE_LAYOUT_CLIPPING" : "STOP_RECOVERY2_EXECUTION_FAILURE";
+    report.failure = { message: error.message, stack: error.stack };
+    report.cumulativeCounters.failedScreenshotsPreserved += 1;
+    fs.writeFileSync(path.join(root, "failure-FIRST.json"), `${JSON.stringify({
+      status: report.status, failure: report.failure, counters: report.cumulativeCounters,
+      dependentPhases: "STOPPED; no content/style repair or additional capture",
+    }, null, 2)}\n`, { flag: "wx" });
+    process.exitCode = 1;
+  } finally {
+    if (browser) await browser.close();
+    report.browserClosed = true;
+    const originalsAfter = originalFacts(owner);
+    report.originalsUnchanged = JSON.stringify(originalsAfter) === JSON.stringify(originalFiles);
+    if (!report.originalsUnchanged) {
+      report.status = "STOP_ORIGINAL_EVIDENCE_CHANGED";
+      process.exitCode = 1;
+    }
+    save();
+    console.log(JSON.stringify({
+      status: report.status, newCounters: report.newCounters,
+      cumulativeCounters: report.cumulativeCounters,
+      screenshots: report.screenshots.map((image) => ({
+        number: image.number, path: image.path, sha256: image.sha256, pixels: image.pixels,
+      })),
+      failure: report.failure, browserClosed: report.browserClosed,
+      originalsUnchanged: report.originalsUnchanged, reportPath,
+    }, null, 2));
+  }
+}
+main();

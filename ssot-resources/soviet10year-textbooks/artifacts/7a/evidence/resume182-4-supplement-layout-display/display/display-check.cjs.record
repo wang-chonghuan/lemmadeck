@@ -1,0 +1,262 @@
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const assert = require("node:assert/strict");
+const { pathToFileURL } = require("node:url");
+
+const cwd = "/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck";
+assert.equal(process.cwd(), cwd);
+const root = path.join(cwd, ".tmp/resume182-4-supplement-layout-display");
+const { chromium } = require(path.join(cwd, "app/node_modules/@playwright/test"));
+const approved = JSON.parse(fs.readFileSync(path.join(root, "approved-targets-FIRST.json")));
+const renderReceipt = JSON.parse(fs.readFileSync(path.join(root, "render-result-FIRST.json")));
+assert.equal(renderReceipt.exitCode, 0, "A renderer failure stops browser phases.");
+const htmlPath = path.join(root, "render/alg7-c4-ex/exercises.html");
+const htmlURL = pathToFileURL(htmlPath).href;
+const firstReceiptPath = path.join(root, "display-FIRST.json");
+const receiptPath = path.join(root, "display-RECOVERY1.json");
+assert.ok(!fs.existsSync(receiptPath), "Preserve recovery receipts and cumulative usage.");
+const sha = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const report = JSON.parse(fs.readFileSync(firstReceiptPath));
+assert.equal(report.status, "STOP_FIRST_DISPLAY_FAILURE");
+assert.equal(report.counters.screenshots, 2);
+assert.equal(report.counters.targetViewportChecks, 4);
+assert.equal(report.html.sha256, sha(fs.readFileSync(htmlPath)));
+report.firstFailure = report.failure;
+delete report.failure;
+report.status = "STARTED_CAPTURE_ONLY_RECOVERY_AND_UNSTARTED_MOBILE";
+report.recovery = {
+  firstReceiptPath,
+  firstInputPath: path.join(root, "display-check-FIRST.cjs"),
+  firstInputSha256: sha(fs.readFileSync(path.join(root, "display-check-FIRST.cjs"))),
+  recoveryInputSha256: sha(fs.readFileSync(__filename)),
+  cause: "Without fullPage, Playwright trims clip to viewport; second desktop clip began at y=940 in a 960px viewport, yielding 20px instead of 425px.",
+  repair: "fullPage:true retains focused document-coordinate clip; reuse desktop target checks; one corrected desktop pair and one mobile four-target screenshot; cumulative screenshot budget remains four.",
+  diagnosticFailures: [
+    { command: "rg -n -A 110 -B 18 '_screenshotPage|fullPage|captureBeyondViewport|documentRect' app/node_modules/playwright-core/lib/server/screenshotter.js", exitCode: 2, classification: "Version uses coreBundle.js, not separate screenshotter.js; source lookup only." },
+    { command: "rg --files app/node_modules/playwright-core/lib | rg 'screenshot|Screenshot'", exitCode: 1, classification: "No matching filenames; no display phase run." },
+    { command: "rg --files -L app/node_modules/playwright-core/lib | rg 'screenshot|Screenshot|serverBundle'", exitCode: 1, classification: "No matching filenames; no display phase run." },
+  ],
+};
+const save = () => fs.writeFileSync(receiptPath, `${JSON.stringify(report, null, 2)}\n`);
+fs.writeFileSync(receiptPath, `${JSON.stringify(report, null, 2)}\n`, { flag: "wx" });
+
+function displayLines(exercise) {
+  const prefix = `${exercise.source_number}.`;
+  const text = exercise.text.startsWith(`${prefix} `)
+    ? exercise.text.slice(prefix.length).trimStart()
+    : exercise.text;
+  return text.split("\n");
+}
+
+async function main() {
+  let browser;
+  try {
+    report.counters.browserLaunches += 1;
+    save();
+    browser = await chromium.launch({ headless: false });
+    report.playwright.chromiumVersion = browser.version();
+    for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+      report.counters.browserContexts += 1;
+      save();
+      const context = await browser.newContext({
+        viewport, deviceScaleFactor: 1, offline: true, serviceWorkers: "block",
+      });
+      await context.route("**/*", async (route) => {
+        const request = route.request();
+        const allowed = request.url() === htmlURL && request.isNavigationRequest();
+        report.requests.push({ url: request.url(), resourceType: request.resourceType(), allowed });
+        if (allowed) await route.continue();
+        else await route.abort("blockedbyclient");
+      });
+      const page = await context.newPage();
+      page.on("pageerror", (error) => report.errors.push({ type: "pageerror", message: error.message }));
+      page.on("console", (message) => {
+        if (message.type() === "error") report.errors.push({ type: "console", message: message.text() });
+      });
+      await page.goto(htmlURL, { waitUntil: "load" });
+      await page.evaluate(async () => { await document.fonts.ready; });
+      const reuseDesktop = viewport.width === 1440;
+      const view = reuseDesktop ? report.views[0] : { viewport, objects: [] };
+      if (!reuseDesktop) report.views.push(view);
+      report.counters.viewportRuns += 1;
+      const pageMeasures = await page.evaluate(() => ({
+        innerWidth, clientWidth: document.documentElement.clientWidth,
+        scrollWidth: document.documentElement.scrollWidth,
+        bodyScrollWidth: document.body.scrollWidth,
+        ids: Array.from(document.querySelectorAll("li.ex"), (item) => item.id),
+        katexErrors: document.querySelectorAll(".katex-error,.err").length,
+        inputs: document.querySelectorAll("input,textarea,select,button,[contenteditable=true]").length,
+        answerUI: document.querySelectorAll(".choice,.choice-options,[data-answer],[data-correct],[class*=answer],[id*=answer]").length,
+        prose: document.querySelectorAll(".para").length,
+        figures: document.querySelectorAll("figure,img").length,
+        fontsStatus: document.fonts.status,
+      }));
+      view.page = pageMeasures;
+      save();
+      assert.deepEqual(pageMeasures.ids, approved.exercises.map((item) => `ex-${item.number}`));
+      assert.equal(pageMeasures.katexErrors, 0);
+      assert.equal(pageMeasures.inputs, 0);
+      assert.equal(pageMeasures.answerUI, 0);
+      assert.equal(pageMeasures.prose, 0);
+      assert.equal(pageMeasures.figures, 0);
+      assert.ok(pageMeasures.scrollWidth <= viewport.width);
+      assert.ok(pageMeasures.bodyScrollWidth <= viewport.width);
+
+      for (const exercise of reuseDesktop ? [] : approved.exercises) {
+        const object = await page.locator(`#ex-${exercise.number}`).evaluate((element) => {
+          const body = element.querySelector(".body");
+          const rect = (item) => {
+            const box = item.getBoundingClientRect();
+            return { x: box.x, y: box.y + scrollY, width: box.width, height: box.height, right: box.right, bottom: box.bottom + scrollY };
+          };
+          const lines = [{ canonical: "", rects: [] }];
+          for (const node of body.childNodes) {
+            if (node.nodeType === Node.ELEMENT_NODE && node.tagName === "BR") {
+              lines.push({ canonical: "", rects: [] });
+              continue;
+            }
+            const line = lines.at(-1);
+            if (node.nodeType === Node.TEXT_NODE) {
+              line.canonical += node.textContent;
+              if (node.textContent.trim()) {
+                const range = document.createRange();
+                range.selectNodeContents(node);
+                line.rects.push(...Array.from(range.getClientRects(), (box) => ({
+                  x: box.x, y: box.y + scrollY, width: box.width, height: box.height,
+                  right: box.right, bottom: box.bottom + scrollY,
+                })).filter((box) => box.width > 0 && box.height > 0));
+              }
+            } else {
+              const annotation = node.querySelector('annotation[encoding="application/x-tex"]');
+              if (annotation) {
+                const katex = node.querySelector(".katex");
+                const clone = node.cloneNode(true);
+                clone.querySelector(".katex").remove();
+                line.canonical += `$${annotation.textContent}$${clone.textContent}`;
+                line.rects.push(rect(katex));
+              } else {
+                line.canonical += node.textContent;
+                line.rects.push(rect(node));
+              }
+            }
+          }
+          const math = Array.from(body.querySelectorAll(".nb"), (item) => ({
+            tex: item.querySelector('annotation[encoding="application/x-tex"]').textContent,
+            rect: rect(item), htmlRect: rect(item.querySelector(".katex-html")),
+            scrollWidth: item.scrollWidth, clientWidth: item.clientWidth,
+            scrollHeight: item.scrollHeight, clientHeight: item.clientHeight,
+          }));
+          return {
+            number: element.id.slice(3), gutter: element.querySelector(".no").textContent,
+            rect: rect(element), bodyRect: rect(body),
+            bodyScrollWidth: body.scrollWidth, bodyClientWidth: body.clientWidth,
+            lineHeight: Number.parseFloat(getComputedStyle(body).lineHeight),
+            fontSize: Number.parseFloat(getComputedStyle(body).fontSize),
+            brCount: body.querySelectorAll(":scope > br").length,
+            lines, math,
+          };
+        });
+        object.expectedLines = displayLines(exercise);
+        object.expectedMath = Array.from(exercise.text.matchAll(/\$([^$]+)\$/g), (match) => match[1]);
+        object.status = "CHECKING";
+        view.objects.push(object);
+        save();
+        assert.equal(object.gutter, `${exercise.source_number}.`);
+        assert.deepEqual(object.lines.map((line) => line.canonical), object.expectedLines);
+        assert.equal(object.brCount, object.expectedLines.length - 1);
+        assert.deepEqual(object.math.map((item) => item.tex), object.expectedMath);
+        assert.ok(object.bodyScrollWidth <= object.bodyClientWidth + 1);
+        for (const [index, line] of object.lines.entries()) {
+          assert.ok(line.rects.length > 0, `${exercise.number} line ${index + 1} is not displayed.`);
+          line.firstTop = Math.min(...line.rects.map((box) => box.y));
+          line.lastTop = Math.max(...line.rects.map((box) => box.y));
+          line.lastBottom = Math.max(...line.rects.map((box) => box.bottom));
+          for (const box of line.rects) {
+            assert.ok(box.x >= object.bodyRect.x - 1);
+            assert.ok(box.right <= object.bodyRect.right + 1, `${exercise.number} clipped line ${index + 1}`);
+          }
+          if (index) {
+            assert.ok(line.firstTop > object.lines[index - 1].lastTop + 2,
+              `${exercise.number} LF ${index} did not create a separate displayed line.`);
+          }
+        }
+        for (const math of object.math) {
+          assert.ok(math.scrollWidth <= math.clientWidth + 1, `${exercise.number} horizontally clipped math`);
+          assert.ok(math.htmlRect.width > 0 && math.htmlRect.height > 0);
+          assert.ok(math.htmlRect.x >= math.rect.x - 1);
+          assert.ok(math.htmlRect.right <= math.rect.right + 1);
+          assert.ok(math.htmlRect.y >= math.rect.y - 1);
+          assert.ok(math.htmlRect.bottom <= math.rect.bottom + 1);
+        }
+        object.status = "PASS_LF_TEXT_MATH_GEOMETRY";
+        report.counters.targetViewportChecks += 1;
+        save();
+      }
+      assert.equal(report.errors.length, 0);
+      const screenshotPairs = reuseDesktop ? [["1008", "1060"]] : [["913", "941", "1008", "1060"]];
+      for (const numbers of screenshotPairs) {
+        assert.ok(report.counters.screenshots < 4, "Cumulative screenshot budget exhausted.");
+        const objects = view.objects.filter((item) => numbers.includes(item.number));
+        const x = Math.floor(Math.min(...objects.map((item) => item.rect.x)));
+        const y = Math.floor(Math.min(...objects.map((item) => item.rect.y)));
+        const right = Math.ceil(Math.max(...objects.map((item) => item.rect.right)));
+        const bottom = Math.ceil(Math.max(...objects.map((item) => item.rect.bottom)));
+        const clip = { x, y, width: right - x, height: bottom - y };
+        const imagePath = path.join(root, `display-${viewport.width}-${numbers.join("-")}-RECOVERY1.png`);
+        assert.ok(!fs.existsSync(imagePath));
+        report.counters.screenshots += 1;
+        save();
+        const bytes = await page.screenshot({ path: imagePath, fullPage: true, clip, animations: "disabled" });
+        const pixels = await page.evaluate(async (base64) => {
+          const raw = Uint8Array.from(atob(base64), (character) => character.charCodeAt(0));
+          const bitmap = await createImageBitmap(new Blob([raw], { type: "image/png" }));
+          const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+          const ctx = canvas.getContext("2d");
+          ctx.drawImage(bitmap, 0, 0);
+          const data = ctx.getImageData(0, 0, bitmap.width, bitmap.height).data;
+          let nonWhite = 0, dark = 0, minX = bitmap.width, minY = bitmap.height, maxX = -1, maxY = -1;
+          for (let index = 0; index < data.length; index += 4) {
+            if (data[index] < 245 || data[index + 1] < 245 || data[index + 2] < 245) nonWhite += 1;
+            if (data[index] < 128 && data[index + 1] < 128 && data[index + 2] < 128) {
+              dark += 1;
+              const pixel = index / 4, x = pixel % bitmap.width, y = Math.floor(pixel / bitmap.width);
+              minX = Math.min(minX, x); minY = Math.min(minY, y);
+              maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
+            }
+          }
+          return { width: bitmap.width, height: bitmap.height, total: bitmap.width * bitmap.height,
+            nonWhite, dark, darkBounds: { minX, minY, maxX, maxY } };
+        }, bytes.toString("base64"));
+        report.screenshots.push({
+          path: imagePath, sha256: sha(bytes), bytes: bytes.length, viewport, fullPage: true,
+          objects: numbers, clip, pixels, observed: false,
+        });
+        save();
+        assert.equal(pixels.width, clip.width);
+        assert.equal(pixels.height, clip.height);
+        assert.ok(pixels.dark > 1000 && pixels.nonWhite > 2000, "Blank or incomplete screenshot.");
+      }
+      await context.close();
+    }
+    report.status = "PASS_MACHINE_DISPLAY_AWAITING_VALID_IMAGE_OBSERVATIONS";
+  } catch (error) {
+    report.status = "STOP_FIRST_DISPLAY_FAILURE";
+    report.failure = { message: error.message, stack: error.stack };
+    fs.writeFileSync(path.join(root, "display-failure-RECOVERY1.json"), `${JSON.stringify({
+      failure: report.failure, counters: report.counters, dependentPhases: "STOPPED",
+    }, null, 2)}\n`, { flag: "wx" });
+    process.exitCode = 1;
+  } finally {
+    if (browser) await browser.close();
+    report.browserClosed = true;
+    save();
+    console.log(JSON.stringify({
+      status: report.status, counters: report.counters, failure: report.failure,
+      screenshots: report.screenshots.map((image) => ({
+        path: image.path, sha256: image.sha256, pixels: image.pixels,
+      })), receiptPath,
+    }, null, 2));
+  }
+}
+main();

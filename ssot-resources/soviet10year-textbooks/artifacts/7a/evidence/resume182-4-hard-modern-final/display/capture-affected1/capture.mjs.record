@@ -1,0 +1,254 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { createServer } from 'node:http';
+import { createRequire } from 'node:module';
+import { readFile, writeFile, appendFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+const RUN = path.join(ROOT, '.tmp/resume182-4-hard-display/capture-affected1');
+const HTML = path.join(ROOT,
+  '.tmp/resume182-4-hard-modern/render/7a/modern-us-neutral/alg7-hard/exercises.html');
+const EXPECTED_HTML = 'bdb62f0a53f64f72bdb4f1f70296fa83b26b4f64d3cad68ef28fcf0cbc93fd30';
+const hash = (value) => createHash('sha256').update(value).digest('hex');
+assert.equal(process.cwd(), ROOT);
+assert.equal(path.dirname(fileURLToPath(import.meta.url)), RUN);
+assert.deepEqual(process.argv.slice(2), ['--authorized-mobile-1077-only']);
+
+const report = {
+  schema: 'mobile-1077-affected-capture-v1',
+  scope: 'STEMROBIN-182 chat182-4 ONLY alg7-hard mobile ex-1077 capture recovery',
+  started: new Date().toISOString(),
+  cwd: ROOT,
+  command: 'node .tmp/resume182-4-hard-display/capture-affected1/capture.mjs --authorized-mobile-1077-only',
+  authorization: 'Current user message explicitly authorizes this affected-only technical capture.',
+  provenanceCorrection: {
+    originalLocation: '.tmp/resume182-4-hard-display/FIRST/receipt.record',
+    originalWordingPreserved: 'READY received directly from the user; parent finalize and render exit 0',
+    clarification: 'The earlier READY was a parent-agent send_input, not a separate direct human instruction. FIRST wording and bytes remain untouched.',
+    historicalExecutionNotReexecuted: true,
+  },
+  firstArtifacts: 'Never opened or written by this recovery script.',
+  cumulativeUsage: {
+    capturesBefore: 6, capturesThisStage: 0, capturesTotal: 6, authorizedCaptureTotal: 7,
+    observationsBefore: 6, observationsThisStage: 0, observationsTotal: 6, observationMaximum: 8,
+    browserLaunchesBefore: 1, browserLaunchesThisStage: 0,
+    freshContextsBefore: 2, freshContextsThisStage: 0,
+    countersNeverReset: true,
+  },
+  sourceHashChecks: 0,
+  all44Checks: 0,
+  originalImagesReopened: 0,
+  renders: 0,
+  finalizers: 0,
+  cssMutations: 0,
+  zoomChanges: 0,
+  checks: [],
+  externalAttempts: [],
+  pageerrors: [],
+  cleanup: { browserClosed: false, serverClosed: false },
+};
+await writeFile(path.join(RUN, 'start.record'), JSON.stringify(report, null, 2), { flag: 'wx' });
+async function event(value) {
+  await appendFile(path.join(RUN, 'events.ndjson'),
+    JSON.stringify({ time: new Date().toISOString(), ...value }) + '\n');
+}
+async function check(name, ok, facts = {}) {
+  const result = { name, status: ok ? 'PASS' : 'FAIL', ...facts };
+  report.checks.push(result);
+  await event({ check: result });
+  assert.ok(ok, name);
+}
+
+let browser;
+let context;
+let server;
+let origin;
+try {
+  const html = await readFile(HTML);
+  report.html = { path: HTML, sha256: hash(html), bytes: html.length };
+  await check('Reuse only the pinned unchanged generated exercises HTML',
+    report.html.sha256 === EXPECTED_HTML, { sha256: report.html.sha256 });
+  report.script = { path: fileURLToPath(import.meta.url), sha256: hash(await readFile(fileURLToPath(import.meta.url))) };
+  const appRequire = createRequire(path.join(ROOT, 'app/package.json'));
+  const { chromium, expect } = appRequire('@playwright/test');
+  const coreRoot = path.dirname(appRequire.resolve('playwright-core/package.json'));
+  const { PNG } = appRequire(path.join(coreRoot, 'lib/utilsBundle.js'));
+  server = createServer((request, response) => {
+    if (request.method === 'GET' && request.url === '/exercises.html') {
+      response.writeHead(200, {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-store',
+        'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data:; connect-src 'none';",
+      }).end(html);
+    } else if (request.method === 'GET' && request.url === '/favicon.ico') {
+      response.writeHead(204).end();
+    } else {
+      response.writeHead(404).end();
+    }
+  });
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', resolve);
+  });
+  origin = `http://127.0.0.1:${server.address().port}`;
+  report.server = { origin, servedPage: '/exercises.html' };
+  browser = await chromium.launch({
+    headless: false,
+    args: ['--disable-background-networking', '--disable-component-update', '--disable-sync',
+      '--no-default-browser-check', '--disable-default-apps'],
+  });
+  report.cumulativeUsage.browserLaunchesThisStage = 1;
+  report.browser = { headed: true, version: browser.version() };
+  context = await browser.newContext({
+    viewport: { width: 390, height: 844 }, deviceScaleFactor: 1,
+    serviceWorkers: 'block', acceptDownloads: false,
+  });
+  report.cumulativeUsage.freshContextsThisStage = 1;
+  await context.route('**/*', async (route) => {
+    const url = new URL(route.request().url());
+    if (url.origin === origin && ['/exercises.html', '/favicon.ico'].includes(url.pathname)) {
+      await route.continue();
+    } else {
+      report.externalAttempts.push({ origin: url.origin, kind: route.request().resourceType() });
+      await route.abort('blockedbyclient');
+    }
+  });
+  await context.routeWebSocket(/.*/, async (socket) => {
+    report.externalAttempts.push({ kind: 'websocket' });
+    await socket.close();
+  });
+  const page = await context.newPage();
+  page.on('pageerror', (error) => report.pageerrors.push(error.message));
+  await page.goto(`${origin}/exercises.html#ex-1077`, { waitUntil: 'load' });
+  const exercise = page.locator('#ex-1077');
+  await expect(exercise).toHaveCount(1);
+  await expect(exercise).toBeVisible();
+  await exercise.scrollIntoViewIfNeeded();
+  const geometry = await exercise.evaluate((element) => {
+    const body = element.querySelector('.body');
+    const lines = [''];
+    const lineBoxes = [[]];
+    function walk(node) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        lines[lines.length - 1] += node.data;
+        if (node.data.trim()) {
+          const range = document.createRange();
+          range.selectNodeContents(node);
+          for (const rect of range.getClientRects()) {
+            if (rect.width && rect.height) lineBoxes.at(-1).push({
+              x: rect.x, right: rect.right, top: rect.top, bottom: rect.bottom,
+            });
+          }
+        }
+      } else if (node.nodeType === Node.ELEMENT_NODE) {
+        if (node.tagName === 'BR') {
+          lines.push('');
+          lineBoxes.push([]);
+        } else {
+          for (const child of node.childNodes) walk(child);
+        }
+      }
+    }
+    walk(body);
+    const rect = element.getBoundingClientRect();
+    const b = body.getBoundingClientRect();
+    const box = { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+    const normalizedLines = lines.map((line) => line.normalize('NFC').replace(/\s+/gu, ' ').trim());
+    const glyphRects = lineBoxes.flat();
+    return {
+      box,
+      printedNumber: element.querySelector('.no').innerText.trim(),
+      normalizedLines,
+      lineGeometry: lineBoxes.map((items) => ({
+        top: Math.min(...items.map((r) => r.top)),
+        bottom: Math.max(...items.map((r) => r.bottom)),
+        nativeWrappedLines: items.length,
+      })),
+      viewport: {
+        innerWidth, innerHeight, clientWidth: document.documentElement.clientWidth,
+        devicePixelRatio, visualScale: visualViewport.scale,
+      },
+      bodyFontPx: parseFloat(getComputedStyle(body).fontSize),
+      numberFontPx: parseFloat(getComputedStyle(element.querySelector('.no')).fontSize),
+      bodyScrollWidth: body.scrollWidth, bodyClientWidth: body.clientWidth,
+      fullElementInViewport: rect.x >= 0 && rect.right <= innerWidth
+        && rect.y >= 0 && rect.bottom <= innerHeight,
+      textWithinBody: glyphRects.every((r) => r.x >= b.x - 1 && r.right <= b.right + 1
+        && r.top >= b.top - 1 && r.bottom <= b.bottom + 1),
+    };
+  });
+  const lines = geometry.normalizedLines;
+  const leaves = lines.length === 3 && /^a\)\s*1\)/u.test(lines[0])
+    && /^2\)/u.test(lines[1]) && /^b\)/u.test(lines[2]);
+  const orderedLF = geometry.lineGeometry.every((line, index, list) =>
+    index === 0 || line.top > list[index - 1].top + 0.5);
+  report.framing = { ...geometry, normalizedLines: undefined,
+    normalizedLinesSha256: hash(JSON.stringify(lines)) };
+  await check('Only 1077: all a)1), 2), b) leaves follow visible literal LF',
+    geometry.printedNumber === '1077.' && leaves && orderedLF,
+    { leaves: 3, literalLines: lines.length, lineGeometry: geometry.lineGeometry });
+  await check('Only 1077: full native element and text framing, legible without zoom',
+    geometry.fullElementInViewport && geometry.textWithinBody
+    && geometry.bodyScrollWidth <= geometry.bodyClientWidth + 1
+    && geometry.bodyFontPx >= 16 && geometry.numberFontPx >= 16
+    && geometry.viewport.innerWidth === 390 && geometry.viewport.innerHeight === 844
+    && geometry.viewport.devicePixelRatio === 1 && geometry.viewport.visualScale === 1,
+    report.framing);
+  assert.equal(report.cumulativeUsage.capturesTotal, 6);
+  const imagePath = path.join(RUN, 'mobile-1077-native.png');
+  const bytes = await exercise.screenshot({
+    path: imagePath, type: 'png', caret: 'initial', animations: 'allow', scale: 'device',
+  });
+  report.cumulativeUsage.capturesThisStage = 1;
+  report.cumulativeUsage.capturesTotal = 7;
+  const png = PNG.sync.read(bytes);
+  let dark = 0;
+  let nonwhite = 0;
+  for (let i = 0; i < png.data.length; i += 4) {
+    if (png.data[i + 3] && Math.min(png.data[i], png.data[i + 1], png.data[i + 2]) < 245) nonwhite += 1;
+    if (png.data[i + 3] && Math.max(png.data[i], png.data[i + 1], png.data[i + 2]) < 160) dark += 1;
+  }
+  report.image = {
+    path: imagePath, sha256: hash(bytes), bytes: bytes.length,
+    width: png.width, height: png.height, nonwhite, dark,
+    observation: 'PENDING one new image observation; prior six images not reopened',
+  };
+  const after = await exercise.boundingBox();
+  report.postCaptureBox = after;
+  await check('Single native element capture: nonblank and exact full element dimensions',
+    dark > 200 && nonwhite > 500 && after
+    && Math.abs(png.width - after.width) <= 2 && Math.abs(png.height - after.height) <= 2,
+    report.image);
+  await check('Affected browser execution has no pageerrors or external requests',
+    report.pageerrors.length === 0 && report.externalAttempts.length === 0,
+    { pageerrors: report.pageerrors, externalRequests: report.externalAttempts.length });
+} catch (error) {
+  report.failure = { type: error.name, message: error.message, stack: error.stack };
+  await event({ failure: report.failure, recovery: 'STOP; no retry or recapture' });
+  console.error(JSON.stringify(report.failure));
+} finally {
+  if (context) await context.close();
+  if (browser) await browser.close();
+  report.cleanup.browserClosed = true;
+  if (server?.listening) await new Promise((resolve, reject) => {
+    server.close((error) => error ? reject(error) : resolve());
+  });
+  report.cleanup.serverClosed = true;
+  report.finished = new Date().toISOString();
+  report.status = report.failure ? 'FAIL' : 'PASS';
+  report.passCount = report.checks.filter((c) => c.status === 'PASS').length;
+  report.failCount = report.checks.filter((c) => c.status === 'FAIL').length;
+  const receipt = JSON.stringify(report, null, 2) + '\n';
+  const receiptPath = path.join(RUN, 'receipt.record');
+  await writeFile(receiptPath, receipt, { flag: 'wx' });
+  console.log(JSON.stringify({
+    status: report.status, scope: 'mobile 1077 capture only',
+    receipt: receiptPath, receiptSha256: hash(receipt),
+    image: report.image, cleanup: report.cleanup,
+    cumulativeUsage: report.cumulativeUsage,
+    failure: report.failure?.message ?? null,
+  }, null, 2));
+  if (report.failure) process.exitCode = 1;
+}

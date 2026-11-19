@@ -1,0 +1,80 @@
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const assert = require("node:assert/strict");
+
+const cwd = "/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck";
+assert.equal(process.cwd(), cwd);
+const root = path.join(cwd, ".tmp/resume182-4-supplement-layout-display");
+const sourceDir = path.join(cwd, ".tmp/resume182-4-supplement-modern/adapt/7a/modern-us-neutral/lessons/alg7-c4-ex");
+const templatePath = path.join(sourceDir, "exercises.template.json");
+const lessonPath = path.join(sourceDir, "lesson.template.json");
+const sha = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const templateBytes = fs.readFileSync(templatePath);
+const templateHash = sha(templateBytes);
+assert.equal(templateHash, "d93723680e47259218d6038cfab7f9e6d852244b4e97bf3cb7c07a6fb09ce4e5");
+const template = JSON.parse(templateBytes);
+const ids = ["913", "941", "1008", "1060"];
+const selected = template.exercises.filter((exercise) => ids.includes(String(exercise.number)));
+assert.deepEqual(selected.map((exercise) => String(exercise.number)), ids);
+const lessonBytes = fs.readFileSync(lessonPath);
+const lessonTemplate = JSON.parse(lessonBytes);
+const fixtureDir = path.join(root, "fixtures/7a/editions/modern-us-neutral/lessons/alg7-c4-ex");
+const receiptPath = path.join(root, "projection-FIRST.json");
+assert.ok(!fs.existsSync(receiptPath), "Never replace a first projection receipt.");
+fs.mkdirSync(fixtureDir, { recursive: true });
+
+function writeNew(file, value) {
+  const bytes = Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
+  fs.writeFileSync(file, bytes, { flag: "wx" });
+  return { path: file, sha256: sha(bytes), bytes: bytes.length };
+}
+
+const selectedFile = writeNew(path.join(root, "approved-targets-FIRST.json"), {
+  lesson: template.lesson,
+  edition: template.edition,
+  count: selected.length,
+  exercises: selected,
+});
+const projected = selected.map((exercise) => ({ ...exercise, figures: [] }));
+const exercisesFile = writeNew(path.join(fixtureDir, "exercises.json"), {
+  lesson: template.lesson,
+  count: projected.length,
+  schema: template.schema,
+  edition: template.edition,
+  status: template.status,
+  exercises: projected,
+});
+const lesson = Object.fromEntries([
+  "id", "card_id", "chapter", "section", "number", "title", "printed_title",
+  "start_page", "start_printed", "schema", "edition", "status",
+].filter((key) => Object.hasOwn(lessonTemplate, key)).map((key) => [key, lessonTemplate[key]]));
+lesson.prose = [];
+lesson.section_breaks = [];
+lesson.figures = [];
+lesson.exercise_count = selected.length;
+const lessonFile = writeNew(path.join(fixtureDir, "lesson.json"), lesson);
+const receipt = {
+  schema: "stemrobin-182/affected-display-projection@1",
+  ticket: "STEMROBIN-182",
+  context: "chat182-4",
+  cwd,
+  source: { path: templatePath, sha256: templateHash, bytes: templateBytes.length },
+  lessonMetadataSource: { path: lessonPath, sha256: sha(lessonBytes), bytes: lessonBytes.length },
+  targets: ids,
+  selectedCount: selected.length,
+  proseCount: 0,
+  policy: "Structured selection; exact approved target objects retained once. Only disposable count and figure payload projection differ; text, math and LF sequences are unchanged. Figures excluded from text-only display and not accepted.",
+  omittedFigurePayloads: selected.flatMap((exercise) =>
+    (exercise.figures || []).map((figure) => ({ number: exercise.number, ...figure }))),
+  approvedLF: selected.map((exercise) => ({
+    number: exercise.number,
+    lines: exercise.text.split("\n"),
+    lf: exercise.text.split("\n").length - 1,
+    textSha256: sha(Buffer.from(exercise.text)),
+  })),
+  outputs: [selectedFile, lessonFile, exercisesFile],
+  counters: { fixtureProjectionRuns: 1, staticReviewReruns: 0, originalSourceObjectsVisuallyRead: 4, sourceImagesRead: 0, paidCalls: 0 },
+};
+writeNew(receiptPath, receipt);
+console.log(JSON.stringify(receipt, null, 2));
