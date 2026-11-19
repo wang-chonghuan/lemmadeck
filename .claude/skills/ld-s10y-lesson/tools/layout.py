@@ -384,9 +384,10 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     short_rows = [
         (a, b) for a, b in _merge_close(raw, 0.4 * glyph_h)
         if 0.3 * glyph_h <= b - a + 1 < 0.65 * glyph_h
-        and 0.5 * glyph_h <= np.ptp(
-            np.flatnonzero(ink[a:b + 1].any(axis=0))
-        ) + 1 <= 2 * glyph_h
+        and (supported_columns := np.flatnonzero(
+            ink[a:b + 1].sum(axis=0) >= MIN_BAND_HEIGHT
+        )).size
+        and 0.5 * glyph_h <= np.ptp(supported_columns) + 1 <= 2 * glyph_h
     ]
     for component_id, bounds in enumerate(bounds_list, 1):
         if bounds is None:
@@ -399,7 +400,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
         )
         thin_rule = height <= 0.2 * glyph_h and width >= 0.7 * glyph_h
         if isolated_fragment and not (
-            height < 0.3 * glyph_h
+            height < 0.65 * glyph_h
             and any(a <= rows.start and rows.stop - 1 <= b for a, b in short_rows)
         ) and not any(
             (

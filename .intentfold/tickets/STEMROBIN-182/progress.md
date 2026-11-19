@@ -2,6 +2,87 @@
 
 ### 182-4 合法独立工作树续作 2026-11-19
 
+- 本次接续先收已有独审，不重复已PASS阶段。303–306新源恢复四页109行
+  FIRST独审通过；3041021仅把作者“赶并”改为独审原字“对开”，同审者
+  affected1通过，а6公里/б离A16公里及其余页源事实不改。四页已提升，
+  61文件持久保留，promotion SHA256
+  `89b9872fe1073d932df76a0c7c842bf68e6595f7ebb40e01926a0c3544f35aa3`。
+  这是有界新源重建，不声称恢复遗失ignored旧稿；306→307原字面接续不润色。
+- 311–314受影响独审及计行空列守卫静态审查PASS已收。真实layout仅集成
+  支持列以MIN_BAND_HEIGHT筛选并先判非空、短组件保护高度0.3→0.65两处；
+  与独审候选SHA256
+  `9416b0d2319c9efad203f732558b3376d5c1f668d0a3e6ecb993f0177b0716c5`相等。
+  正常311 finalize一次0、20/20行、零规范化；旧19/20失败和缺原stdout事实保留。
+  四页58行、1051表6×6及所有FIRST/affected记录共76文件已持久迁入，
+  promotion SHA256
+  `f45a3e1b8c2848abad4d70a7238aeeb2905c5a63ff6359d3e91944d79d39526e`。
+  3121053а完整跨行、3131060 open同步、3141061原式b/后文k均按批准源保留。
+  新test_short_terminal_rows仅保存已执行聚焦空列反例的长期fixture，未重复运行；
+  用户其余layout/helper/guard/test未暂存、未撤销。
+- alg7-c4-ex首次装配实际退出1：重复936/缺956、287首无号续块不接937，
+  154对象；原assembly-FIRST.record已持久保留。287/290仅身份元数据候选
+  经现有parser sync一次0和同审者静态affected1 PASS；正文/公式/图框及
+  20/27行audit字节不改，不重跑源/图/计数。287续块仅绑定937；290原印936
+  和题面保留，只为p0290#7登记逻辑956的exercise_numbering_errata。
+  四变化文件按批准哈希提升，15原历史/候选/复核文件持久保留；
+  promotion SHA256
+  `99e4505fe5df6fc34fbea0a1484fe8766348149f1c337953bac91cd3b5df1536`。
+- 仅失败装配阶段RECOVERY1实际一次0：909–1061连续153题、图62–66及1051表
+  共6对象、零errors/warnings/KaTeX warnings。原937来源链为
+  p0286#10→p0287#1；逻辑956仍source_number936/来源p0290#7。
+  新原始课三个文件已按装配字节保存。保存脚本FIRST错误使用source_refs字段、
+  在任何持久写入前退出1；保留原脚本及实际观察失败，改为现有pages字段后
+  只恢复保存步骤，不重跑装配。现有reindex一次0得36原始课，旧book.json
+  HOLD/失败审计先归档；105个既有原始课文件和1899个现代文件逐字节不变。
+  原始补充课/索引/装配及保存故障证据已保留，promotion SHA256
+  `d2150ab3705cd966e0d71d74d77cf67fc9320099154f6378f62bc184c68ca129`。
+  不把重建索引的最小warning称为全书audit通过；现代补充课/图/答案/选择未完成。
+- 以上新记录解除下方对应“待收/未集成/未提升”历史状态，不删除其原失败事实。
+  准备窄暂存33忠实页282–314、6原PNG、5证据根、新原始补充课/索引、
+  两处计行hunk及本次fixture/progress。315–318“难题”仅四页备料0，尚未转写。
+  父图观察仍8，压缩不清零图/失败/费用；费用、host tokens、active time未知。
+  finish=review，继续有界生产，无DB/合并/部署/关闭/新分支/新全量生产chat/
+  旧chat联系，全Charter机械防线留真正最终handoff。
+- n46/n47小批已commit/push
+  `ced37bca0a16021a0414c850d67f5f930297dbf7`，83文件；
+  本次fetch同一原分支仍返回该HEAD，无同步差异。它不是正式handoff或A组完成。
+  用户layout/helper/guard/test及4m恢复图稿继续保留，未整体暂存。
+- 307–310 FIRST独审冻结：308/309/310 PASS；307的1030а漏“当”属REVISE，
+  不是缺源。父仅补一字并保留原三文件；同审者affected1零新图确认新307
+  PASS，MD/JSON仅一字变化、audit逐字节同。308原字“结果”及图66源审复用。
+  四页12文件、图66及FIRST/affected1/原缺字稿按实际哈希迁入持久目录，
+  32种文件零覆盖不同字节，promotion.record SHA256
+  `03f8479b4b13924728f2f2bf0f2fd945550590c0f7de63d4200a45069b67ace8`。
+  原报告路径作为历史保留，manifest映射到持久文件，不新增scratch依赖；
+  新迁移不重跑source/图/显示。108行只计忠实页，不计完整补充课。
+- 311–314 FIRST独审已冻结58行与1051表6×6数据/12空格：311源文本20行PASS，
+  原audit19/20技术失败保留；1056б括号后确无可见平方，不猜补上标。
+  314的1061原式印b、后文仍问k，属作者转写REVISE，不擅自统一变量；
+  312的1053а只需完整跨行公式↵；313 MD的1060 open正确但JSON未同步。
+  父保留四页FIRST全部12文件，只修上述字母/表示/结构及事实note；
+  正常affected1 finalize312/313/314各一次0，13/20/5行、零规范化，
+  表框仍[174,226,1140,851]。受影响文本/绑定复核待收，不另开图。
+- 311计行隔离候选FIRST只改高度仍失败；随后支持列筛选候选及
+  probe-FIRST误写下端461都保留。前上下文修正probe的真实exit0复用：
+  old19/new20、唯一新增[443,464]、旧行带保留、no-c与tiny-residue对照PASS、
+  原像素未改；该次原stdout未单独保存，不伪造原命令回执。
+  独审指出支持列为空时ptp会抛错，父只在该判据加非空守卫，未动真实layout。
+  新空列反例FIRST实际exit0：unsafe抛zero-size归约错误，guarded和无噪点
+  对照都仅[40,79]/[140,179]/[340,379]三行、输入像素未改；
+  新结果在`.tmp/resume182-4-layout311/empty-columns-FIRST.result.record`。
+  原311/source与旧fixture不重跑；候选待affected独审批准后才窄集成、
+  正常收口受影响311一次。
+- 303–306原ignored工作稿缺失仍是历史事实。仅这一缺口启动有界新源恢复：
+  prepare四次0，四新grid作者各一次观察、零crop/reopen，忠实新稿
+  25/28/28/28行、109行、零图；正常source-recovery-FIRST finalize四次0、
+  零规范化，before/命令/stdout/stderr/exit实存各页receipts。
+  1021新作者像素观察а6公里/б离A16公里及“时间起算”“和它赶并”，
+  尚待新的四页FIRST独立源审，不计批准，不声称恢复旧稿字节或重写旧PASS。
+  306→307的原字面“但仍甲比乙队”两端保持，未据语义偷删甲。
+  父实际上下文图仍累计8；307–310审者5、311–314审者5、恢复作者4，
+  新恢复审者批次独立计数，图/失败/费用不因压缩清零；
+  本次费用、host tokens、active time仍未知。无DB/app/deps/新付费图/
+  合并部署关闭、旧聊天联系或新全量生产聊天；Charter全检留真正最终handoff。
 - 正式 create_worktree 完成并附着
   `/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck`，registrationError=null；
   detached HEAD 为 `11e7b4fc7400bc1471dbd333d93edea508077b2a`，app/package.json 可读。

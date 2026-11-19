@@ -1,0 +1,43 @@
+from pathlib import Path
+import hashlib
+import importlib.util
+import json
+import numpy as np
+from PIL import Image
+
+
+def load(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+base = load("base", ".claude/skills/ld-s10y-lesson/tools/layout.py")
+candidate = load("candidate", ".tmp/resume182-4-layout311/layout.py")
+page = Path(".tmp/ld-s10y-lesson/7a/pages/0311/page.png")
+pixels = base.ink_mask(Image.open(page))
+old = base.line_bands(pixels, 1487)
+new = candidate.line_bands(pixels, 1487)
+assert len(old) == 19 and len(new) == 20
+assert [band for band in new if band not in old] == [(443, 464)]
+assert all(band in new for band in old)
+
+# The source's separated lowercase c survives; tiny scan residue does not.
+without_c = pixels.copy()
+without_c[425:480, 300:355] = False
+speck = without_c.copy()
+speck[440:445, 315:335] = True
+assert len(base.line_bands(without_c, 1487)) == 19
+assert candidate.line_bands(without_c, 1487) == base.line_bands(without_c, 1487)
+assert candidate.line_bands(speck, 1487) == base.line_bands(speck, 1487)
+assert np.array_equal(pixels, base.ink_mask(Image.open(page)))
+print(json.dumps({
+    "source_sha256": hashlib.sha256(page.read_bytes()).hexdigest(),
+    "old_rows": len(old),
+    "new_rows": len(new),
+    "only_added_band": [443, 464],
+    "no_c_control": "pass",
+    "tiny_residue_control": "pass",
+    "source_pixels_unchanged": True,
+}))

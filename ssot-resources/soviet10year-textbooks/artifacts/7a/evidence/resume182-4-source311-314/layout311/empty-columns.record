@@ -1,0 +1,49 @@
+import importlib.util
+import json
+from pathlib import Path
+
+import numpy as np
+
+
+def load(name, filename):
+    spec = importlib.util.spec_from_file_location(name, filename)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+old = load("unsafe", ".tmp/resume182-4-layout311/history/unsafe-width-FIRST/layout.py")
+new = load("guarded", ".tmp/resume182-4-layout311/layout.py")
+pixels = np.zeros((500, 1504), dtype=bool)
+for y in (40, 140, 340):
+    for x in (200, 250, 300, 350):
+        pixels[y:y + 40, x:x + 20] = True
+for offset in range(12):
+    x = 650 + 9 * offset
+    pixels[250 + offset, x:x + 9] = True
+original = pixels.copy()
+try:
+    old.line_bands(pixels, 1487)
+except ValueError as error:
+    old_error = str(error)
+else:
+    raise AssertionError("The frozen unsafe candidate must reproduce the empty reduction.")
+actual = new.line_bands(pixels, 1487)
+without_noise = pixels.copy()
+without_noise[250:262, 650:758] = False
+expected = new.line_bands(without_noise, 1487)
+assert actual == expected == [(40, 79), (140, 179), (340, 379)]
+assert np.array_equal(pixels, original)
+result = {
+    "scope": "New empty-supported-column defect only; no source311 or earlier fixtures rerun.",
+    "unsafe_error": old_error,
+    "guarded_bands": actual,
+    "noise_free_control_bands": expected,
+    "counting_input_unchanged": True,
+    "status": "PASS",
+}
+output = Path(".tmp/resume182-4-layout311/empty-columns-FIRST.result.record")
+with output.open("x") as handle:
+    json.dump(result, handle, indent=2)
+    handle.write("\n")
+print(json.dumps(result))

@@ -1,0 +1,116 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), repo);
+const book = 'ssot-resources/soviet10year-textbooks/artifacts/7a';
+const source = '.tmp/resume182-4-supplement-raw/artifacts/7a';
+const card = 'alg7-c4-ex';
+const evidence = `${book}/evidence/resume182-4-supplement-raw`;
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const retained = [];
+function retain(origin, destination) {
+  const bytes = fs.readFileSync(origin);
+  const target = `${evidence}/${destination}`;
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, bytes, { flag: 'wx' });
+  retained.push({ historical_path: origin, path: target, sha256: sha(bytes) });
+}
+function snapshot(root) {
+  const result = {};
+  if (!fs.existsSync(root)) return result;
+  for (const item of fs.readdirSync(root, { withFileTypes: true })) {
+    const filename = `${root}/${item.name}`;
+    if (item.isDirectory()) Object.assign(result, snapshot(filename));
+    else if (item.isFile()) result[filename] = sha(fs.readFileSync(filename));
+  }
+  return result;
+}
+const otherRaw = snapshot(`${book}/lessons`);
+const modern = snapshot(`${book}/editions`);
+assert.ok(!fs.existsSync(`${book}/lessons/${card}`));
+const result = JSON.parse(fs.readFileSync(`${source}/assembly-RECOVERY1.record`));
+assert.deepEqual(result.report.errors, []);
+assert.deepEqual(result.report.warnings, []);
+assert.equal(result.report.exercise_count, 153);
+assert.deepEqual(result.exercise_numbers.map(Number),
+  Array.from({ length: 153 }, (_, index) => index + 909));
+for (const binding of result.source_bindings) {
+  for (const file of binding.files) {
+    assert.equal(sha(fs.readFileSync(file.path)), file.sha256, file.path);
+  }
+}
+const exercises = JSON.parse(fs.readFileSync(`${source}/lessons/${card}/exercises.json`));
+const corrected = exercises.exercises.find(item => item.number === '956');
+assert.equal(corrected.source_number, '936');
+assert.equal(corrected.source_refs[0], 'p0290#7');
+const continued = exercises.exercises.find(item => item.number === '937');
+assert.deepEqual(continued.source_refs, ['p0286#10', 'p0287#1']);
+retain(`${source}/assembly-RECOVERY1.record`, 'assembly-RECOVERY1.record');
+retain('.tmp/resume182-4-assemble-supplement.py', 'assemble-supplement.py.record');
+retain(`${book}/book.json`, 'history/book-FIRST.json.record');
+const promoted = [];
+for (const name of ['lesson.json', 'lesson.md', 'exercises.json']) {
+  const original = `${source}/lessons/${card}/${name}`;
+  const target = `${book}/lessons/${card}/${name}`;
+  const bytes = fs.readFileSync(original);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, bytes, { flag: 'wx' });
+  promoted.push({ path: target, sha256: sha(bytes) });
+}
+const beforeReindex = snapshot(`${book}/lessons`);
+const command = [
+  '.claude/skills/ld-s10y-lesson/.venv/bin/python',
+  '.claude/skills/ld-s10y-lesson/tools/p2c.py',
+  'reindex', '--book', '7a', '--toc',
+  'ssot-resources/soviet10year-textbooks/toc/7a/zh.json',
+];
+const execution = spawnSync(command[0], command.slice(1), {
+  cwd: repo, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024,
+});
+const receipt = { command, cwd: repo, exit_code: execution.status,
+  stdout: execution.stdout, stderr: execution.stderr,
+  error: execution.error ? String(execution.error) : null };
+fs.writeFileSync(`${evidence}/reindex-FIRST.receipt.record`,
+  `${JSON.stringify(receipt, null, 2)}\n`, { flag: 'wx' });
+process.stdout.write(execution.stdout || '');
+process.stderr.write(execution.stderr || '');
+assert.equal(execution.status, 0);
+assert.deepEqual(snapshot(`${book}/lessons`), beforeReindex);
+assert.deepEqual(snapshot(`${book}/editions`), modern);
+for (const [filename, hash] of Object.entries(otherRaw)) {
+  assert.equal(sha(fs.readFileSync(filename)), hash, filename);
+}
+retain(`${book}/book.json`, 'book-RECOVERY1.json.record');
+const index = JSON.parse(fs.readFileSync(`${book}/book.json`));
+assert.equal(index.lessons.find(item => item.id === card).exercises, 153);
+const record = {
+  scope: 'Only one newly assembled raw supplement and the retained-source index.',
+  source_assembly: { path: `${evidence}/assembly-RECOVERY1.record`,
+    sha256: sha(fs.readFileSync(`${evidence}/assembly-RECOVERY1.record`)),
+    calls: 1, exit_code: 0, exercises: 153, figures: 6 },
+  original_failed_assembly: {
+    path: `${book}/evidence/resume182-4-boundary-identity/assembly-FIRST.record`,
+    sha256: '37e6ea70ef7be660943372619571862c0ab8ff5f3058c5d85cb2d21dc26efa04',
+    calls: 1, exit_code: 1, preserved: true,
+  },
+  reindex: { path: `${evidence}/reindex-FIRST.receipt.record`,
+    calls: 1, exit_code: execution.status, new_source_approval: false },
+  retained, promoted,
+  current_index_sha256: sha(fs.readFileSync(`${book}/book.json`)),
+  other_raw_files_preserved: Object.keys(otherRaw).length,
+  modern_files_preserved: Object.keys(modern).length,
+  previous_index_audit_retained: true,
+  global_book_audit_pass_claimed: false,
+  modern_answers_choices_or_product_completion_claimed: false,
+  historical_scratch_references: 'Historical records only; durable mappings above.',
+};
+fs.writeFileSync(`${evidence}/promotion.record`,
+  `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: 'PASS', card, raw_exercises: 153,
+  figures: 6, other_raw_files_preserved: Object.keys(otherRaw).length,
+  modern_files_preserved: Object.keys(modern).length,
+  promotion_sha256: sha(fs.readFileSync(`${evidence}/promotion.record`)) }));

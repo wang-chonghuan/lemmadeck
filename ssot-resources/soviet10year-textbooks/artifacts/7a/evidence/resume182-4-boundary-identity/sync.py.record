@@ -1,0 +1,55 @@
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+assert Path.cwd() == REPO
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+import blocks
+
+ROOT = Path(".tmp/resume182-4-boundary-identity")
+results = []
+for page in (287, 290):
+    directory = ROOT / "artifacts/7a/pages" / f"{page:04d}"
+    old_directory = ROOT / "history/source-FIRST" / f"{page:04d}"
+    old = json.loads((old_directory / "page.json").read_text())
+    metadata, items = blocks.parse((directory / "page.md").read_text())
+    sequence = 0
+    for item in items:
+        if item["kind"] == "fig":
+            sequence += 1
+            item["id"] = blocks.fig_id(item.get("label"), page, sequence)
+    expected_items = json.loads(json.dumps(old["blocks"]))
+    if page == 287:
+        expected_items[0]["label"] = "937"
+    assert items == expected_items
+    audit = json.loads((old_directory / "audit.json").read_text())
+    assert blocks.printed_lines(items) == audit["lines_md"] == audit["lines_printed"]
+    assert audit["errors"] == []
+    for key in ("source", "render", "profile", "printed_lines", "figures", "errata"):
+        assert metadata[key] == old["meta"][key]
+    numbering = blocks.exercise_numbering_errata(metadata, items, page)
+    if page == 290:
+        assert numbering["p0290#7"]["printed"] == "936"
+        assert numbering["p0290#7"]["corrected"] == "956"
+    document = {"meta": metadata, "blocks": items}
+    (directory / "page.json").write_text(
+        json.dumps(document, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    assert (directory / "audit.json").read_bytes() == (old_directory / "audit.json").read_bytes()
+    results.append({
+        "physical_page": page, "unchanged_body_lines_figures_source_pixels": True,
+        "retained_printed_lines": audit["lines_md"], "audit_bytes_unchanged": True,
+        "current_files": [
+            {"path": str(directory / name),
+             "sha256": hashlib.sha256((directory / name).read_bytes()).hexdigest()}
+            for name in ("page.md", "page.json", "audit.json")
+        ],
+    })
+with (ROOT / "sync-FIRST.record").open("x", encoding="utf-8") as handle:
+    json.dump({
+        "scope": "Metadata-only identity synchronization through the existing blocks parser.",
+        "source_count_image_math_reexecutions": 0, "results": results,
+    }, handle, ensure_ascii=False, indent=2)
+    handle.write("\n")
+print(json.dumps({"status": "PASS", "results": results}, ensure_ascii=False))
