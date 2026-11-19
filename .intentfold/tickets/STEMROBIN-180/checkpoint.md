@@ -1,5 +1,90 @@
 # 生产检查点
 
+## 第八十五批三课完整，准备提交
+
+实际交付选择t12/t13/n146三课，原四课计划保留。n67正文与两图
+已通过，但题8的A精确纵坐标、题10刻度校准和题11过程条件仍是
+局部UNKNOWN，不计无歧义完整课程。它的十一题条件解及八源题
+选择作者仍继续，不删除书写题，不补无条件数值键。
+
+三课共六书写题、六答案、六选择题二十四选项；两个summary原书
+零题，空答案真实收口。n146独立先源解冻结、纯view冻结、最后
+作者键比对，FINAL6/6与CHOICE6/6PASS；validate、answer-finalize、
+retain各一次0，auto2/ungraded4。家庭调查选择转换仍明确延期。
+本批按7p/8p各render一次0，一次headless1440x960/390x844检查
+十四页面PASS、四零选择surface应不存在；八截图独立DISPLAYPASS，
+报告SHAbe9125c18210e7ecef984bc7d68421ce388232b7e73b6ca2666bbdfd1f27b157。
+远端fetch一次0，实际HEAD仍04f5c19596056f30c81227755a5ecbad71befaea。
+尚未暂存/提交本批，也没有正式handoff或全项目机械防线。
+
+n67收口真实FIRST2→repair2=0，原失败audit另存；只补回prose1/5
+三处图186引用，修订累计2，同独审受影响PASS后四现代文件精确
+保留。批准图迁移只改路径metadata，SVG字节及语义spec不动。
+answer-prepare一次0，原十一源解冻结，SOURCE作者开原图187一次，
+现代作者开现代图一次，两阶段作者合计2图；十一答案初稿
+auto2/ungraded9。独立选择作者六题二十四项，源2+3、4+9合并，
+八源任务均保留trace，三条件不足题延期。inspect真实2→0、
+prepare0、作者validate0；新FINAL/CHOICE合并独审在途，尚未保留
+答案或选择到canonical。父图片数3、付费累计68、服务重试0均不增。
+
+n66修复实际装订接续一次0、受影响独审一次0，第二题合并、
+九题身份正确，正文38对象/Markdown与FIRST相同；旧assemble0/
+fullcompare1及新增索引非输入预检1→0均保留。仍selected0，SVG182、
+254源元数据和183..185 SVG未审局部HOLD未伪造放行。
+n69下一批侧车找回raw3和源文本15，旧模板尚未找回；仅相关
+本地会话精确路径恢复继续，不重跑prepare/装订/源审。
+
+## 第八十四批已提交推送，接续第八十五批
+
+B85 t12/t13完成现代与空答案收口，仍待整批DISPLAY，不计完整批。
+t12受影响九段PASS后adapt-finalize一次0；t13先保留两向量斜体
+REVISE，只改prose3/5排版、累计修订1→2，同独审受影响PASS。
+两课精确模板迁入标准隔离路径，隔离reindex一次0，t13
+adapt-finalize一次0；两课各四现代文件guarded-retain，标准现代
+索引helper一次0追加两行。空答案prepare各一次0、合并finalize
+一次0，均auto0/ungraded0，不造习题/选择题。n38仍excluded HOLD。
+
+n67全TEXT首审REVISE保留；父只改prose9“位移”→“位移大小”
+及physics-clarification声明，修订0→1，Kuhn受影响PASS后已关闭。
+FIG作者已收取关闭：render实际FAIL/PASS/PASS三次、修订一次、
+四图、无付费；Rawls新FIG四图预算在途。原图187的A未标力值，
+task10刻度校准与task11过程条件的局部UNKNOWN均不抹除。
+Maxwell只做十一原题源解，不写canonical答案。
+
+n66一次strict assemble0但全对象比对1、实际10题而应9，失败
+原字节与期望保留、selected0；Hegel已收取关闭。Ptolemy仅修
+现有装订器“有号open题→无号cont题”判断并做针对性测试，不重
+源审/原页/装订，不处理SVG182和源元数据UNKNOWN。共享已有
+assemble.py脏改必须保留；没有全项目机械防线或formal handoff。
+
+B85第四候选补入已有modern PASS的7p n146，不重正文/prepare。
+它旧final拒绝实际只是q1漏“戈比”，父已保留FIRST并仅改这一个
+短语为上一题假定费率，原修订1→2。六题/二十四选项的seed/
+source-solve/draft已从原保存输出及Add File补丁按三个原字节哈希
+精确恢复；没有新prepare/编题/作者validate。独立FINAL+CHOICE
+复核与finalize/retain仍未执行。家庭调查的完整定性标准保留，
+缺实测数据不造家庭费率/读数，选择转换延期仍明示。
+
+实际HEAD 04f5c19596056f30c81227755a5ecbad71befaea；
+B84 commit/push各一次exit0，origin/HEAD双向0/0。
+六十提交文件、四十JSON解析及十八离线页面PASS，八图独立DISPLAY
+PASS；以上四课完成已推送，不是formal handoff。以下“准备提交”
+记录保持为提交前历史；不为本次实际提交补一个report-only提交。
+
+B85 n67原始全对象RAW PASS后已精确保留三个文件；adapt-prepare
+一次0，三FIRST模板冻结，作者一轮只改十八正文文本与五题文本，
+公式串、source_text、source快照及所有非text/changes字段相同。
+完整二十一正文对象、十一题、两图；新TEXT独审Kuhn和确定性
+图186/187作者Ramanujan在途，未finalize/答案/choice/渲染或计完整。
+Ampere只恢复另外三无图零题课程，Hegel只推进n66完整RAW装订，
+不重新源审、不写canonical/index、不改其他工人文件。
+
+255/258/259九源文件与PNG182已十文件guarded-retain；
+SOURCE历史/受影响PASS及25/25计行收口复用，实际receipt在
+tmp/b85-source255258259-retain.json。无源审/收口/裁图重跑，
+SVG182旧字节缺失技术HOLD及紧凑箭头UNKNOWN保持。父图像3不增，
+付费累计68/重试0；没有运行全项目检查、DB/publisher或E工作。
+
 ## 第八十四批四课完整，准备提交
 
 同一180-3调用、0f12工作树与原分支，继续finish=review，不是暂停。
