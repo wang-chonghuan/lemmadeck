@@ -1,0 +1,229 @@
+#!/usr/bin/env python3
+"""Hash-bound draft handback, not independent review or promotion metadata."""
+
+import hashlib
+import importlib.util
+import json
+import xml.etree.ElementTree as ET
+from datetime import datetime
+from pathlib import Path
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+WORK = ROOT / ".tmp/resume182-4-supplement-figures-a"
+TEMPLATE = ROOT / ".tmp/resume182-4-supplement-modern/adapt/7a/modern-us-neutral/lessons/alg7-c4-ex/exercises.template.json"
+HELPER = ROOT / ".agents/skills/ld-s10y-image/scripts/build_context.py"
+module_spec = importlib.util.spec_from_file_location("build_context", HELPER)
+helpers = importlib.util.module_from_spec(module_spec)
+module_spec.loader.exec_module(helpers)
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def binding(path):
+    return {"path": str(path.relative_to(ROOT)), "absolutePath": str(path), "sha256": digest(path)}
+
+
+current_template = helpers.load(TEMPLATE)
+current_hash = digest(TEMPLATE)
+figures = []
+candidates = []
+for figure in ["fig-62", "fig-63", "fig-64"]:
+    directory = WORK / figure
+    context = helpers.load(directory / "context.json")
+    spec = helpers.load(directory / "spec.json")
+    render = helpers.load(directory / f"{figure}.render.json")
+    source = ROOT / context["sourceImage"]["path"]
+    assert digest(source) == context["sourceImage"]["sha256"] == spec["source"]["image"]["sha256"]
+    assert render["spec"]["sha256"] == digest(directory / "spec.json")
+    assert render["output"]["svg"]["sha256"] == digest(directory / f"{figure}.svg")
+    assert render["status"] == "pass"
+    assert spec["source"]["authoritativeText"] == context["authoritativeText"]
+    current_text = helpers.exercise_context(current_template["exercises"], figure)
+    assert current_text == context["lessons"][0]["exercises"], "Relevant live text changed; report must HOLD."
+    width, height = helpers.png_size(directory / "preview-640.png")
+    assert (width, height) == (640, 480)
+    assert all(item["status"] == "pass" for item in render["displayChecks"])
+    assert not any(item["type"] == "point" for item in spec["objects"])
+    svg_root = ET.parse(directory / f"{figure}.svg").getroot()
+    variable_strokes = [
+        node.attrib["stroke"]
+        for node in svg_root.iter()
+        if node.attrib.get("stroke", "").startswith("var(")
+    ]
+    candidate = {
+        "id": figure,
+        "mode": "deterministic",
+        "svg": str((directory / f"{figure}.svg").relative_to(ROOT)),
+        "render": str((directory / f"{figure}.render.json").relative_to(ROOT)),
+        "spec": str((directory / "spec.json").relative_to(ROOT)),
+    }
+    candidates.append(candidate)
+    observations = (
+        "Author inspected the 640 px resvg preview once: only Z/P labels visible; both outlines and hatching absent."
+        if figure == "fig-62" else
+        "Author inspected the 640 px resvg preview once: axis values/names and arrowheads visible; grid, axes and curve strokes absent."
+    )
+    extra = {}
+    if figure == "fig-62":
+        horizontal = [item for item in spec["objects"] if item["id"].startswith("z-hatch-")]
+        vertical = [item for item in spec["objects"] if item["id"].startswith("p-hatch-")]
+        horizontal_rows = sorted({item["from"][1] for item in horizontal})
+        vertical_columns = sorted({item["from"][0] for item in vertical})
+        assert len(horizontal_rows) == 13
+        assert len(vertical_columns) == 14
+        assert all(item["from"][1] == item["to"][1] for item in horizontal)
+        assert all(item["from"][0] == item["to"][0] for item in vertical)
+        extra["hatchCountEvidence"] = {
+            "logicalHorizontalRows": len(horizontal_rows), "logicalVerticalColumns": len(vertical_columns),
+            "horizontalRenderedSegments": len(horizontal), "verticalRenderedSegments": len(vertical),
+            "explanation": "Two stripes per direction are split to preserve the printed-name blank areas. Source row/column counts are derived independently of total objectCount.",
+        }
+    else:
+        pixel_binding = helpers.load(directory / "pixel-binding.json")
+        grid = next(item for item in spec["objects"] if item["type"] == "grid")
+        assert grid["xStep"] == grid["yStep"] == 0.5
+        assert round((grid["bounds"][2] - grid["bounds"][0]) / 0.5) == 18
+        assert round((grid["bounds"][1] - grid["bounds"][3]) / 0.5) == 12
+        spans = [item for item in spec["objects"] if item["id"].startswith("source-curve-span-")]
+        assert spans[0]["from"] == pixel_binding["endpointGridIntersections"][0]
+        assert spans[-1]["to"] == pixel_binding["endpointGridIntersections"][1]
+        assert all(a["to"] == b["from"] for a, b in zip(spans, spans[1:]))
+        extra["pixelBinding"] = binding(directory / "pixel-binding.json")
+    figures.append({
+        "figure": figure,
+        "exercise": context["authoritativeText"][0]["exercise"],
+        "source": binding(source),
+        "context": binding(directory / "context.json"),
+        "authoritativeText": spec["source"]["authoritativeText"],
+        "authoritativeTextSha256": hashlib.sha256(
+            json.dumps(spec["source"]["authoritativeText"], ensure_ascii=False, sort_keys=True).encode("utf-8")
+        ).hexdigest(),
+        "spec": binding(directory / "spec.json"),
+        "svg": binding(directory / f"{figure}.svg"),
+        "render": binding(directory / f"{figure}.render.json"),
+        "preview640": binding(directory / "preview-640.png"),
+        "objects": len(spec["objects"]),
+        "assertions": len(spec["assertions"]),
+        "inventory": spec["source"]["inventory"],
+        "displayChecks": render["displayChecks"],
+        "state": "draft-render-pass-author-preview-blocked",
+        "authorPreviewObservation": observations,
+        "rasterDiagnostic": {
+            "semanticVariableStrokeCount": len(variable_strokes),
+            "uniqueStrokeAttributes": sorted(set(variable_strokes)),
+            "diagnosis": "Observed missing strokes are consistent with existing resvg SVG raster helper not resolving semantic CSS variable stroke attributes. This is an inference, not a changed renderer contract or product-browser observation.",
+        },
+        "independentReview": "not performed; no review file; no pass/fail formal review claim",
+        **extra,
+    })
+
+receipts = []
+for path in sorted((WORK / "commands").glob("*/receipt.json")):
+    receipt = helpers.load(path)
+    receipts.append({
+        **binding(path),
+        "name": path.parent.name,
+        "argv": receipt["argv"], "cwd": receipt["cwd"], "exit": receipt["exit"],
+        "elapsedSeconds": round(
+            (datetime.fromisoformat(receipt["finishedUtc"]) - datetime.fromisoformat(receipt["startedUtc"])).total_seconds(), 6
+        ),
+        "stdout": binding(path.parent / "stdout.txt"),
+        "stderr": binding(path.parent / "stderr.txt"),
+    })
+
+payload = {
+    "schema": "current182-4/figure-author-draft-report@1",
+    "ticket": "STEMROBIN-182",
+    "scope": {"book": "7a", "lesson": "alg7-c4-ex", "figures": ["fig-62", "fig-63", "fig-64"]},
+    "cwd": str(ROOT),
+    "assignedWrites": str(WORK),
+    "state": "draft-only; resvg author-preview defect HOLD; not promotable",
+    "authoritativeTemplate": {
+        "path": str(TEMPLATE.relative_to(ROOT)),
+        "boundSha256": helpers.load(WORK / "fig-62/context.json")["authoritativeTemplate"]["sha256"],
+        "currentSha256AtHandback": current_hash,
+        "relevantTextsUnchanged": True,
+        "independentTextReview": "underway per assignment, not verified by this author",
+    },
+    "widthEvidence": {
+        "widths": [736, 640], "purpose": "instructional", "layout": "scroll", "minTextPx": 16,
+        "provenance": "Inherited direct assignment: documented fixed 640 px mobile scroll media and prior 736 px desktop media observation; fixed 640 contract also read in current image skill.",
+        "newProductBrowserMeasurement": False,
+    },
+    "figures": figures,
+    "manifestCandidates": candidates,
+    "candidateContract": {
+        "completeFinalManifest": False,
+        "missingField": "review",
+        "instruction": "Candidates only, do not install into a lesson template or manifest. Review is deliberately absent because independent review and promotion were outside authorization.",
+    },
+    "FIRST": {
+        "authorInvocations": 1,
+        "explicitDraftValidationInvocations": 3,
+        "renderInvocations": 3,
+        "results": {"fig-62": "pass", "fig-63": "real collision failure, exit 2", "fig-64": "pass"},
+        "fig63FirstFailure": {
+            name: binding(WORK / "fig-63/first-failure" / name)
+            for name in ["spec.json", "fig-63.svg", "fig-63.render.json"]
+        },
+    },
+    "repair": {
+        "targetedSpecRepairCount": 1, "figure": "fig-63",
+        "reason": "source-x-value-minus-1-label collided with the source curve",
+        "change": "Only x=-1 label moves from y=-0.48 to y=0.45; inventory documents this modern side change.",
+        "explicitDraftValidationInvocations": 1, "renderInvocations": 1, "result": "pass",
+        "sourceOrCurveOrScaleOrTextChanged": False,
+        "furtherSpecRepairsAllowed": 0,
+    },
+    "costsAndCounters": {
+        "sourceImageContextLoads": 3,
+        "previewImageContextLoads": 3,
+        "cropImageContextLoads": 0,
+        "batchImageContextLoads": 6,
+        "currentContextImageLoads": 6,
+        "limits": {"batch": 8, "context": 24},
+        "counterResetAfterCompression": False,
+        "rawPixelReadsWithoutContextImagePayload": 3,
+        "paidGenerationCalls": 0,
+        "paidGenerationCost": 0,
+        "modelTokenAndMoneyCost": "not exposed to this author; not estimated",
+        "authorInvocations": 1,
+        "explicitValidatorInvocations": 4,
+        "rendererInternalDraftValidatorInvocations": 4,
+        "rendererInvocations": 4,
+        "resvgInvocations": 3,
+        "resvgExitCodeRetries": 0,
+        "resvgAuthorPreviewDefects": 3,
+        "targetedSpecRepairCount": 1,
+        "startupPathDiscoveryExit1Count": 1,
+        "sourceReopenCount": 0,
+        "formalIndependentReviewInvocations": 0,
+    },
+    "doubtsAndRisks": [
+        "Normal-width resvg previews omit all variable-colored strokes despite successful exit codes and SVG render reports. This blocks author visual comparison of modern geometry, not just independent review.",
+        "Semantic CSS variables are retained in original generated SVGs; no literal colors, SVG hand edits, new raster engine or dependency were introduced to hide the preview defect.",
+        "Curve coordinates between cells are pixel traces, with scan thickness and deskew uncertainty around 0.1 unit. No exact function formula or unprinted exact query intersection is asserted; independent source fidelity review is still required.",
+        "The graph grid was rectified and made continuous behind labels; original irregular gaps are treated as scanning/typographic interruptions, not altered grid dimensions.",
+        "Source circle outlines and hatch spacing were regularized; source hatching directions and logical counts are retained, not interpreted as numeric mathematical scales.",
+        "Raw preliminary read-only command streams were not saved locally before the logging harness was established. Tool receipts held their output; this package does not claim complete retention of every startup read. All context/author/validate/render/raster/report commands are logged once.",
+        "Draft assets and candidate manifest entries remain temporary and deliberately have no independent review field. No durable lesson may depend on these temporary paths.",
+    ],
+    "commandsBeforeThisReport": receipts,
+    "reportCommandReceipt": str((WORK / "commands/handback-report/receipt.json").relative_to(ROOT)),
+    "stoppedAfter": "Outputs and this text-only report. No review, promotion, finalization, browser, DB, Git, paid generation, contacts, old chats or agents.",
+}
+(WORK / "author-report.json").write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+(WORK / "manifest-candidates.json").write_text(json.dumps(candidates, indent=2) + "\n", encoding="utf-8")
+print(json.dumps({
+    "report": binding(WORK / "author-report.json"),
+    "manifestCandidates": binding(WORK / "manifest-candidates.json"),
+    "authoritativeTemplate": payload["authoritativeTemplate"],
+    "figures": [{
+        "figure": item["figure"], "source": item["source"], "spec": item["spec"],
+        "svg": item["svg"], "render": item["render"], "preview640": item["preview640"],
+        "state": item["state"], "displayChecks": item["displayChecks"],
+    } for item in figures],
+    "costsAndCounters": payload["costsAndCounters"],
+}, ensure_ascii=False, indent=2))

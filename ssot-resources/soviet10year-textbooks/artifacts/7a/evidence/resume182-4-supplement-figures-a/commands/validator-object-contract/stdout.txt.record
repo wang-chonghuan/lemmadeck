@@ -1,0 +1,201 @@
+def completeness_errors(
+    spec: dict,
+    objects: list[dict],
+    points: dict[str, tuple[float, float]],
+    assertions: list[dict],
+    current: bool,
+) -> list[str]:
+    errors = []
+    inventory = spec.get("source", {}).get("inventory")
+    by_id = {item.get("id"): item for item in objects if isinstance(item, dict)}
+    assertions_by_id = {
+        item.get("id"): item
+        for item in assertions
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    if inventory is not None:
+        if not isinstance(inventory, list) or not inventory:
+            errors.append("source.inventory must be a nonempty array")
+        else:
+            inventory_ids = []
+            for index, group in enumerate(inventory):
+                label = f"source.inventory[{index}]"
+                if not isinstance(group, dict) or not group.get("description"):
+                    errors.append(f"{label} needs a source-based description")
+                    continue
+                if current:
+                    inventory_id = group.get("id")
+                    if not isinstance(inventory_id, str) or not inventory_id:
+                        errors.append(f"{label}.id must be nonempty")
+                    else:
+                        inventory_ids.append(inventory_id)
+                required_objects = group.get("objects")
+                required_assertions = group.get("assertions", [])
+                if not isinstance(required_objects, list):
+                    errors.append(f"{label}.objects must be an array")
+                    required_objects = []
+                if current and not isinstance(required_assertions, list):
+                    errors.append(f"{label}.assertions must be an array")
+                    required_assertions = []
+                if (
+                    current
+                    and spec.get("mode") != "generated"
+                    and not required_objects
+                    and not required_assertions
+                ):
+                    errors.append(
+                        f"{label} must map at least one object or assertion"
+                    )
+                if not current and not required_objects:
+                    errors.append(f"{label}.objects must be nonempty")
+                for object_id in required_objects:
+                    obj = by_id.get(object_id) if isinstance(object_id, str) else None
+                    if obj is None or obj.get("visible") is False:
+                        errors.append(f"{label}: missing visible object {object_id!r}")
+                for assertion_id in required_assertions:
+                    if assertion_id not in assertions_by_id:
+                        errors.append(
+                            f"{label}: missing assertion {assertion_id!r}"
+                        )
+                mapped_assertions = [
+                    assertions_by_id[assertion_id]
+                    for assertion_id in required_assertions
+                    if assertion_id in assertions_by_id
+                ]
+                mapped_objects = [
+                    by_id[object_id]
+                    for object_id in required_objects
+                    if object_id in by_id
+                ]
+                requirements = group.get("requires", [])
+                if (
+                    not isinstance(requirements, list)
+                    or any(
+                        requirement not in {
+                            "gridDimensions", "pointRelationships"
+                        }
+                        for requirement in requirements
+                    )
+                    or len(requirements) != len(set(requirements))
+                ):
+                    errors.append(
+                        f"{label}.requires must contain unique supported requirements"
+                    )
+                    requirements = []
+                mapped_grids = [
+                    item["id"]
+                    for item in mapped_objects
+                    if item.get("type") == "grid"
+                ]
+                if "gridDimensions" in requirements:
+                    if not mapped_grids:
+                        errors.append(
+                            f"{label}: gridDimensions requirement needs a mapped grid"
+                        )
+                    for grid_id in mapped_grids:
+                        if not any(
+                            item.get("type") == "gridDimensions"
+                            and item.get("grid") == grid_id
+                            for item in mapped_assertions
+                        ):
+                            errors.append(
+                                f"{label}: grid {grid_id!r} requires a mapped "
+                                "gridDimensions assertion; objectCount is insufficient"
+                            )
+                mapped_points = [
+                    item["id"]
+                    for item in mapped_objects
+                    if item.get("type") == "point"
+                ]
+                if "pointRelationships" in requirements:
+                    if len(mapped_points) < 2:
+                        errors.append(
+                            f"{label}: pointRelationships requirement needs "
+                            "at least two mapped points"
+                        )
+                    else:
+                        mapped_point_ids = set(mapped_points)
+                        relationship_coverages = []
+                        for item in mapped_assertions:
+                            references = assertion_point_ids(
+                                item, set(points)
+                            )
+                            if (
+                                len(references) >= 2
+                                and references <= mapped_point_ids
+                            ):
+                                relationship_coverages.append(references)
+                        if not relationship_coverages:
+                            errors.append(
+                                f"{label}: multiple source points require a "
+                                "mapped relationship assertion wholly within "
+                                "the inventory group; objectCount or unrelated "
+                                "relationships are insufficient"
+                            )
+                        else:
+                            covered_points = set().union(
+                                *relationship_coverages
+                            )
+                            missing_points = sorted(
+                                mapped_point_ids - covered_points
+                            )
+                            if missing_points:
+                                errors.append(
+                                    f"{label}: pointRelationships missing "
+                                    "mapped relation coverage for "
+                                    + ", ".join(repr(item) for item in missing_points)
+                                )
+            if current and len(inventory_ids) != len(set(inventory_ids)):
+                errors.append("source.inventory ids must be unique")
+
+    box = spec.get("canvas", {}).get("boundingBox")
+    if not isinstance(box, list) or len(box) != 4 or not all(map(finite_number, box)):
+        return errors
+    xmin, ymax, xmax, ymin = box
+    for obj in objects:
+        if not isinstance(obj, dict) or obj.get("visible") is False:
+            continue
+        kind = obj.get("type")
+        # Infinite lines and viewport grids are intentionally bounded by the viewport.
+        if kind in {"line", "svgPath", "image"}:
+            continue
+        coordinates = []
+        if kind == "grid":
+            bounds = obj.get("bounds")
+            if isinstance(bounds, list) and len(bounds) == 4:
+                coordinates = [
+                    [bounds[0], bounds[1]],
+                    [bounds[2], bounds[3]],
+                ]
+            else:
+                continue
+        elif kind in {"point", "text"}:
+            coordinates = [obj.get("at")]
+        elif kind in {"segment", "arrow", "measure", "axis"}:
+            coordinates = [obj.get("from"), obj.get("to")]
+        elif kind == "polygon":
+            coordinates = obj.get("points", [])
+        elif kind == "circle" and finite_number(obj.get("radius")):
+            center = obj.get("center")
+            center = points.get(center) if isinstance(center, str) else center
+            if center is not None and len(center) == 2:
+                radius = obj["radius"]
+                coordinates = [
+                    [center[0] - radius, center[1] - radius],
+                    [center[0] + radius, center[1] + radius],
+                ]
+        elif kind == "arc":
+            coordinates = [obj.get("start"), obj.get("end")]
+        for value in coordinates:
+            value = points.get(value) if isinstance(value, str) else value
+            if not isinstance(value, (list, tuple)) or len(value) != 2:
+                continue
+            if not all(map(finite_number, value)):
+                continue
+            if not (xmin <= value[0] <= xmax and ymin <= value[1] <= ymax):
+                errors.append(f"{obj.get('id')}: geometry outside canvas at {value}")
+                break
+    return errors
+
+
+def assertion_errors(

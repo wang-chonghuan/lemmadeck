@@ -1,0 +1,19 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+
+const cwd = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), cwd);
+const root = path.join(cwd, '.tmp/resume182-4-supplement-figures-a/review-FIRST');
+const stage = process.argv[2];
+assert(['after-preview', 'final'].includes(stage));
+const before = JSON.parse(fs.readFileSync(path.join(root, 'hashes-before.json'), 'utf8'));
+const records = before.records.map(record => ({
+  ...record,
+  currentSha256: crypto.createHash('sha256').update(fs.readFileSync(record.path)).digest('hex'),
+}));
+const payload = { cwd, at: new Date().toISOString(), stage, unchanged: records.every(r => r.sha256 === r.currentSha256), records };
+fs.writeFileSync(path.join(root, `hashes-${stage}.json`), JSON.stringify(payload, null, 2) + '\n', { flag: 'wx' });
+console.log(JSON.stringify(payload, null, 2));
+assert(payload.unchanged, 'Protected source/spec/render/SVG/template inputs changed; review must not approve stale drafts');

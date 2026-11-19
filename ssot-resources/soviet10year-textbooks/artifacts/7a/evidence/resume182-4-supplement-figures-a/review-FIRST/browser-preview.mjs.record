@@ -1,0 +1,210 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+
+const cwd = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), cwd);
+const root = path.join(cwd, '.tmp/resume182-4-supplement-figures-a/review-FIRST');
+const require = createRequire(path.join(cwd, 'app/package.json'));
+const { chromium } = require('@playwright/test');
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const inputs = JSON.parse(fs.readFileSync(path.join(root, 'inputs-inspection.json'), 'utf8'));
+const appCSS = fs.readFileSync(path.join(cwd, 'app/src/styles/app.css'), 'utf8');
+const tokens = [...appCSS.matchAll(/:root\s*\{([^}]+)\}/g)].find(m => m[1].includes('--sr-white:'))?.[1];
+const neutral = appCSS.match(/\.sr-figure-media\s*\{([^}]+)\}/)?.[1];
+const accent = appCSS.match(/\.sr-figure-media\[data-figure-theme="accent"\]\s*\{([^}]+)\}/)?.[1];
+const print = appCSS.match(/\.sr-print-lesson \.sr-figure-media\s*\{([^}]+)\}/)?.[1];
+assert(tokens && neutral && accent && print, 'Actual app theme mappings must resolve');
+const variables = block => [...block.matchAll(/--[\w-]+\s*:[^;]+;/g)].map(m => m[0]).join('\n');
+const themeCSS = `:root {${variables(tokens)}}\n.sr-figure-media {${variables(neutral)}}\n.sr-figure-media[data-figure-theme="accent"] {${variables(accent)}}\n@media print {.sr-figure-media {${variables(print)}}}`;
+const report = {
+  cwd, schema: 'current182-4/browser-preview-recovery@1',
+  appCSS: { path: path.join(cwd, 'app/src/styles/app.css'), sha256: hash(appCSS) },
+  themeCSS,
+  runtime: inputs.runtime, requestedHeaded: true, headedAvailable: null, launchFailure: null,
+  localOnly: true, routesAborted: [], console: [], pageErrors: [], figures: [],
+  viewing: 'Screenshots generated numerically; only three neutral 640 screenshots will be visually observed separately.',
+};
+fs.writeFileSync(path.join(root, 'theme-provenance.css'), themeCSS + '\n', { flag: 'wx' });
+let browser;
+try {
+  browser = await chromium.launch({
+    headless: false,
+    args: ['--disable-background-networking', '--disable-component-update', '--no-first-run'],
+  });
+  report.headedAvailable = true;
+} catch (error) {
+  report.headedAvailable = false;
+  report.launchFailure = error.stack;
+  fs.writeFileSync(path.join(root, 'browser-preview.json'), JSON.stringify(report, null, 2) + '\n', { flag: 'wx' });
+  console.error(error.stack);
+  process.exitCode = 1;
+}
+if (browser) {
+  try {
+    report.browserVersion = browser.version();
+    const context = await browser.newContext({ viewport: { width: 1440, height: 960 }, deviceScaleFactor: 1 });
+    await context.route('**/*', route => {
+      report.routesAborted.push(route.request().url());
+      return route.abort();
+    });
+    const page = await context.newPage();
+    page.on('console', message => report.console.push({ type: message.type(), text: message.text() }));
+    page.on('pageerror', error => report.pageErrors.push(error.stack));
+    for (const input of inputs.figures) {
+      const svg = fs.readFileSync(path.join(cwd, input.svgPath), 'utf8');
+      const html = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:; script-src 'none'"><style>${themeCSS}
+html,body {margin:0;background:white;} #viewport {width:640px;overflow:auto;} #media {width:640px;max-width:none;} #media > svg {width:100%;height:auto;display:block;}
+</style></head><body><div id="viewport"><div id="media" class="sr-figure-media">${svg}</div></div></body></html>`;
+      const htmlPath = path.join(root, `${input.id}.preview.html`);
+      fs.writeFileSync(htmlPath, html, { flag: 'wx' });
+      await page.setContent(html, { waitUntil: 'load' });
+      await page.evaluate(() => document.fonts.ready);
+      const result = { id: input.id, actualSvgSha256: hash(svg), html: { path: htmlPath, sha256: hash(html) }, themes: [] };
+      for (const theme of ['neutral', 'accent', 'print']) {
+        await page.emulateMedia({ media: theme === 'print' ? 'print' : 'screen' });
+        await page.locator('#media').evaluate((element, value) => {
+          element.setAttribute('data-figure-theme', value === 'accent' ? 'accent' : 'neutral');
+        }, theme);
+        const dom = await page.locator('svg').evaluate(svgElement => {
+          const origin = svgElement.getBoundingClientRect();
+          const box = element => {
+            const r = element.getBoundingClientRect();
+            return { x: r.x - origin.x, y: r.y - origin.y, width: r.width, height: r.height };
+          };
+          const labels = [...svgElement.querySelectorAll('text')].map(element => {
+            const css = getComputedStyle(element), ctm = element.getScreenCTM();
+            return { id: element.id, text: element.textContent, box: box(element),
+              fontPx: parseFloat(css.fontSize) * Math.hypot(ctm.a, ctm.b), fill: css.fill };
+          });
+          const geometry = [...svgElement.querySelectorAll('path,line,circle,ellipse,polygon,polyline')].filter(element =>
+            !element.closest('defs') && getComputedStyle(element).display !== 'none' &&
+            getComputedStyle(element).visibility !== 'hidden' && element.getAttribute('stroke')?.startsWith('var(--ld-figure-')
+          ).map(element => {
+            const css = getComputedStyle(element), ctm = element.getScreenCTM();
+            const samples = [];
+            if (typeof element.getTotalLength === 'function') {
+              const length = element.getTotalLength();
+              const n = Math.max(12, Math.min(160, Math.ceil(length / 10)));
+              for (let i = 0; i <= n; i++) {
+                const p = element.getPointAtLength(length * i / n);
+                const q = new DOMPoint(p.x, p.y).matrixTransform(ctm);
+                samples.push([q.x - origin.x, q.y - origin.y]);
+              }
+            }
+            return { id: element.id, tag: element.tagName, semanticStroke: element.getAttribute('stroke'),
+              computedStroke: css.stroke, computedStrokeWidth: css.strokeWidth,
+              computedDash: css.strokeDasharray, box: box(element), samples };
+          });
+          return { width: origin.width, height: origin.height, labels, geometry,
+            paper: getComputedStyle(svgElement).backgroundColor,
+            semanticRoles: Object.fromEntries(['ink','muted','accent','accent-soft','grid','paper'].map(role =>
+              [role, getComputedStyle(svgElement).getPropertyValue(`--ld-figure-${role}`).trim()])),
+          };
+        });
+        assert.equal(dom.width, 640);
+        assert.equal(dom.height, 480);
+        assert(dom.labels.length > 0);
+        assert(Math.min(...dom.labels.map(label => label.fontPx)) >= 16, 'Minimum screen text size');
+        assert(dom.geometry.length > 10, 'Nontext geometry exists');
+        const pngPath = path.join(root, `${input.id}.${theme}.640.png`);
+        const png = await page.locator('svg').screenshot({ path: pngPath, animations: 'disabled' });
+        const pixels = await page.evaluate(async ({ data, dom }) => {
+          const image = new Image();
+          image.src = `data:image/png;base64,${data}`;
+          await image.decode();
+          const canvas = document.createElement('canvas');
+          canvas.width = image.width; canvas.height = image.height;
+          const ctx = canvas.getContext('2d', { willReadFrequently: true });
+          ctx.drawImage(image, 0, 0);
+          const rgba = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+          const color = value => {
+            ctx.fillStyle = value; ctx.fillRect(0, 0, 1, 1);
+            return [...ctx.getImageData(0, 0, 1, 1).data].slice(0, 3);
+          };
+          const paper = color(dom.paper);
+          const at = (x, y) => {
+            x = Math.round(x); y = Math.round(y);
+            if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) return null;
+            const offset = (y * canvas.width + x) * 4;
+            return [rgba[offset], rgba[offset + 1], rgba[offset + 2]];
+          };
+          const delta = (a, b) => Math.max(...a.map((n, i) => Math.abs(n - b[i])));
+          const withinText = (x, y) => dom.labels.some(label =>
+            x >= label.box.x - 2 && x <= label.box.x + label.box.width + 2 &&
+            y >= label.box.y - 2 && y <= label.box.y + label.box.height + 2);
+          let nonPaper = 0, nonText = 0, darkNonText = 0;
+          for (let y = 0; y < canvas.height; y++) for (let x = 0; x < canvas.width; x++) {
+            const rgb = at(x, y);
+            if (delta(rgb, paper) > 4) {
+              nonPaper++;
+              if (!withinText(x, y)) { nonText++; if (delta(rgb, paper) > 80) darkNonText++; }
+            }
+          }
+          const probes = dom.geometry.map(geometry => {
+            const rgb = color(geometry.computedStroke);
+            let eligible = 0, hits = 0;
+            for (const [x, y] of geometry.samples) {
+              if (withinText(x, y)) continue;
+              eligible++;
+              let found = false;
+              for (let dx = -2; dx <= 2; dx++) for (let dy = -2; dy <= 2; dy++) {
+                const p = at(x + dx, y + dy);
+                if (p && delta(p, paper) > 4 && delta(p, rgb) < 75) found = true;
+              }
+              if (found) hits++;
+            }
+            return { id: geometry.id, role: geometry.semanticStroke, samples: geometry.samples.length,
+              eligible, hits, fraction: eligible ? hits / eligible : null };
+          });
+          return { width: canvas.width, height: canvas.height, totalPixels: canvas.width * canvas.height,
+            nonPaper, nonText, darkNonText, probes,
+            assertions: {
+              nonblank: nonPaper > 5000,
+              notTextOnly: nonText > 5000 && darkNonText > 1500,
+              everySemanticGeometryVisible: probes.every(p => p.eligible > 0 && p.fraction >= 0.75),
+            } };
+        }, { data: png.toString('base64'), dom });
+        const record = { theme, dom, screenshot: { path: pngPath, sha256: hash(png) }, pixels };
+        result.themes.push(record);
+        console.log(JSON.stringify({ figure: input.id, theme, labels: dom.labels.length,
+          minimumTextPx: Math.min(...dom.labels.map(label => label.fontPx)),
+          geometryCount: dom.geometry.length, pixels: { ...pixels, probes: pixels.probes.map(p => ({ id: p.id, fraction: p.fraction })) } }));
+        assert(pixels.assertions.nonblank && pixels.assertions.notTextOnly, `${input.id} ${theme}: nontext pixel gate`);
+        assert(pixels.assertions.everySemanticGeometryVisible, `${input.id} ${theme}: missing semantic geometry`);
+      }
+      await page.emulateMedia({ media: 'screen' });
+      await page.locator('#media').evaluate(element => { element.style.width = '736px'; });
+      result.canvasWidthLabels = await page.locator('svg').evaluate(svgElement =>
+        [...svgElement.querySelectorAll('text')].map(element => ({
+          text: element.textContent,
+          fontPx: parseFloat(getComputedStyle(element).fontSize) * Math.hypot(element.getScreenCTM().a, element.getScreenCTM().b),
+        })));
+      assert(Math.min(...result.canvasWidthLabels.map(label => label.fontPx)) >= 16);
+      await page.locator('#media').evaluate(element => { element.style.width = '640px'; });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.locator('#viewport').evaluate(element => { element.style.width = '390px'; });
+      result.localMobileScroll = await page.locator('#viewport').evaluate(element => {
+        element.scrollLeft = element.scrollWidth;
+        return { clientWidth: element.clientWidth, scrollWidth: element.scrollWidth, scrollLeft: element.scrollLeft };
+      });
+      assert.equal(result.localMobileScroll.scrollWidth, 640);
+      assert.equal(result.localMobileScroll.scrollLeft, 250);
+      await page.setViewportSize({ width: 1440, height: 960 });
+      report.figures.push(result);
+    }
+    assert.equal(report.pageErrors.length, 0);
+    report.status = 'pass';
+  } catch (error) {
+    report.status = 'fail';
+    report.failure = error.stack;
+    console.error(error.stack);
+    process.exitCode = 1;
+  } finally {
+    await browser.close();
+    report.browserClosed = true;
+    fs.writeFileSync(path.join(root, 'browser-preview.json'), JSON.stringify(report, null, 2) + '\n', { flag: 'wx' });
+  }
+}

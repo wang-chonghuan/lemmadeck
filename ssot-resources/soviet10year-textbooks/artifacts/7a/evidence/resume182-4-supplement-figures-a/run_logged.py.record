@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+"""Run one bounded command and retain its streams and exit status once."""
+
+import hashlib
+import json
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+WORK = ROOT / ".tmp/resume182-4-supplement-figures-a"
+
+
+def run(name, argv):
+    directory = WORK / "commands" / name
+    directory.mkdir(parents=True, exist_ok=False)
+    started = datetime.now(timezone.utc).isoformat()
+    result = subprocess.run(argv, cwd=ROOT, capture_output=True)
+    (directory / "stdout.txt").write_bytes(result.stdout)
+    (directory / "stderr.txt").write_bytes(result.stderr)
+    receipt = {
+        "cwd": str(ROOT),
+        "argv": argv,
+        "startedUtc": started,
+        "finishedUtc": datetime.now(timezone.utc).isoformat(),
+        "exit": result.returncode,
+        "stdoutSha256": hashlib.sha256(result.stdout).hexdigest(),
+        "stderrSha256": hashlib.sha256(result.stderr).hexdigest(),
+    }
+    (directory / "receipt.json").write_text(
+        json.dumps(receipt, indent=2) + "\n", encoding="utf-8"
+    )
+    sys.stdout.buffer.write(result.stdout)
+    sys.stderr.buffer.write(result.stderr)
+    print(json.dumps({"receipt": str(directory / "receipt.json"), "exit": result.returncode}))
+    return result.returncode
+
+
+if __name__ == "__main__":
+    raise SystemExit(run(sys.argv[1], sys.argv[2:]))

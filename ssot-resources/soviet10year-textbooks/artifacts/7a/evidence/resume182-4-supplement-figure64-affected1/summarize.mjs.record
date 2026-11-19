@@ -1,0 +1,52 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { cwd, root, file, save } from './logged.mjs';
+
+assert.equal(process.cwd(), cwd);
+const read = name => JSON.parse(fs.readFileSync(path.join(root, name), 'utf8'));
+const preservation = read('preservation.json');
+const pipeline = read('pipeline.json');
+const render = read('fig-64.render.json');
+const implicit = read('commands/render-implicit-validator/receipt.json');
+const protectedFiles = preservation.records.map(record => ({
+  ...record, currentSha256: file(record.path).sha256,
+  unchanged: file(record.path).sha256 === record.sha256,
+  historySha256: record.history ? file(record.history).sha256 : undefined,
+}));
+const names = [
+  'spec.json', 'fig-64.svg', 'fig-64.render.json', 'candidate-binding.json',
+  'preservation.json', 'pipeline.json',
+  'commands/preserve/receipt.json', 'commands/pipeline-driver/receipt.json',
+  'commands/validate/receipt.json', 'commands/render/receipt.json',
+  'commands/render-implicit-validator/receipt.json',
+];
+const report = {
+  cwd, status: 'BLOCKED-CANDIDATE-DRAFT-NOT-INDEPENDENT-PASS',
+  failure: { stage: 'render', exit: pipeline.render.exit, status: render.status, collisions: render.collisions },
+  counts: {
+    previousFig64Repairs: 0, thisFig64Repair: 1, totalFig64Repairs: 1, remainingFig64Repairs: 0,
+    explicitValidatorRuns: 1, implicitValidatorRuns: 1, totalValidatorRuns: 2, renderRuns: 1,
+    headedPreviewRuns: 0, screenshots: 0, originalImageViews: 1, cropViews: 0, previewViews: 0,
+    actualImageViewsThisBatch: 1, actualImageViewsThisContext: 1, batchLimit: 8, contextLimit: 24,
+    historyCopyStages: 1, frozenFilesCopied: 5, preservationAttempts: 2, prewriteQuotingFailures: 1,
+    formalReviews: 0, promotion: 0, durableWrites: 0, appEdits: 0, answerWork: 0,
+    DB: 0, Git: 0, dependencies: 0, paid: 0, oldChats: 0, newAgents: 0, fullChecks: 0,
+  },
+  validatorResults: { explicitExit: pipeline.validation.exit, implicitExit: implicit.exit },
+  authoritativeText: preservation.authoritativeText,
+  templateSha256: preservation.templateSha256,
+  hashes: names.map(name => file(path.join(root, name))),
+  protectedFiles, protectedInputsUnchanged: protectedFiles.every(record => record.unchanged),
+  stoppedDependentStages: ['headed Chromium preview', 'screenshot pixel checks', 'preview observation'],
+  doubts: [
+    'Renderer reports a collision for the west-placed origin zero; candidate repair did not pass the pipeline.',
+    'No headed browser origin bbox versus axis measurement or dashed-guide screenshot visibility proof exists.',
+    'A passing draft validator does not prove source fidelity, browser clearance, or independent approval.',
+    'The guide is encoded and endpoint-mapped in the candidate; its visible browser result was not checked.',
+    preservation.bootstrapLimitation,
+  ],
+  untouchedScope: 'fig63 remains previously BLOCKED with its one repair already used; fig63 and fig65 were not edited or run.',
+};
+save('result.json', report);
+console.log(JSON.stringify(report, null, 2));

@@ -1,0 +1,294 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap");
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: var(--font-sans);
+    --font-sans: var(--sr-font);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+}
+
+:root {
+    /* shadcn neutral base, primary recolored to LemmaDeck teal-blue */
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.205 0.01 220);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.205 0.01 220);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.205 0.01 220);
+    --primary: oklch(0.56 0.09 226);
+    --primary-foreground: oklch(0.99 0 0);
+    --secondary: oklch(0.97 0.01 200);
+    --secondary-foreground: oklch(0.3 0.02 220);
+    --muted: oklch(0.97 0.01 200);
+    --muted-foreground: oklch(0.55 0.02 215);
+    --accent: oklch(0.96 0.03 175);
+    --accent-foreground: oklch(0.3 0.05 165);
+    --destructive: oklch(0.577 0.245 27.325);
+    --border: oklch(0.925 0.008 200);
+    --input: oklch(0.925 0.008 200);
+    --ring: oklch(0.56 0.09 226);
+    --radius: 0.55rem;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+/* ====================================================================== */
+/*  LemmaDeck design tokens — source of truth for the app shell.          */
+/*  Three colors: teal-blue, green, pure white. Compact, dense, school.   */
+/* ====================================================================== */
+:root {
+  --sr-white: #FFFFFF;          /* pure white background, the only surface */
+  --sr-panel: #F5F9F9;          /* faint cool wash for sidebar/headers */
+  --sr-card: #FFFFFF;
+
+  --sr-blue: #0E7C9B;           /* primary — teal-blue */
+  --sr-blue-deep: #0A5E76;      /* primary hover/active */
+  --sr-blue-tint: #E1F1F5;      /* selected / chip background */
+
+  --sr-green: #15A06A;          /* accent — green (mastery / correct) */
+  --sr-green-deep: #0F7D52;
+  --sr-green-tint: #E4F6EE;
+
+  --sr-ink: #15201F;            /* primary text */
+  --sr-ink-soft: #4C5A58;       /* secondary text */
+  --sr-ink-dim: #8A9795;        /* metadata */
+  --sr-line: #E3EAE9;           /* borders */
+  --sr-line-soft: #EEF3F2;
+
+  --sr-radius: 10px;
+  --sr-radius-sm: 8px;
+  --sr-font: "Inter", system-ui, sans-serif;
+  --sr-display: var(--sr-font);
+  --sr-body: var(--sr-font);
+  --sr-mono: var(--sr-font);
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.sr-page,
+.sr-page * {
+  box-sizing: border-box;
+}
+
+.sr-app {
+  width: 100vw;
+  height: 100dvh;
+  min-height: 100svh;
+  display: flex;
+  position: relative;
+  overflow: hidden;
+  background: var(--sr-white);
+  color: var(--sr-ink);
+  font-family: var(--sr-body);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+.sr-app button,
+.sr-app input,
+.sr-app select {
+  font-family: inherit;
+}
+
+.sr-num {
+  font-family: var(--sr-mono);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* ---- catalog (left nav) ---- */
+.sr-catalog {
+  /* Draggable on desktop (see .sr-rail-grip): 236px is both the default and the
+     floor — the outline runs four levels deep and stops being readable narrower
+     than this — and 30vw is the ceiling. */
+  width: var(--sr-rail-w, 236px);
+  min-width: 236px;
+  max-width: 30vw;
+  flex: none;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--sr-panel);
+  border-right: 1px solid var(--sr-line);
+}
+
+/* The drag handle sits over the right border, wider than it looks so it is
+   catchable. Pointer-only: keyboard users get the same reach by the rail's own
+   scrolling, and there is nothing here that resizing is required to see. */
+.sr-rail-grip {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: -3px;
+  width: 7px;
+  z-index: 5;
+  cursor: col-resize;
+  touch-action: none;
+}
+.sr-rail-grip:hover,
+.sr-rail-grip.dragging {
+  background: var(--sr-blue-tint);
+}
+@media (max-width: 1199px) {
+  .sr-rail-grip {
+    display: none;
+  }
+}
+
+.sr-cat-head {
+  display: flex;
+  margin: 20px auto;
+}
+.sr-compact-figure {
+  flex: none;
+  max-width: 100%;
+  margin: 0;
+  text-align: center;
+}
+.sr-compact-caption {
+  margin: 6px 0 0;
+  color: var(--sr-ink-dim);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.sr-figure-media {
+  --ld-figure-ink: var(--sr-ink);
+  --ld-figure-muted: var(--sr-ink-soft);
+  --ld-figure-accent: var(--sr-ink);
+  --ld-figure-accent-soft: var(--sr-ink-dim);
+  --ld-figure-grid: var(--sr-line);
+  --ld-figure-paper: var(--sr-white);
+  position: relative;
+  display: block;
+  margin: 0 auto;
+  width: fit-content;
+  max-width: min(100%, 30em);
+}
+.sr-figure-media[data-figure-theme="accent"] {
+  --ld-figure-accent: var(--sr-blue);
+  --ld-figure-accent-soft: var(--sr-green);
+  --ld-figure-grid: var(--sr-blue-tint);
+}
+.sr-figure-layered {
+  display: grid;
+}
+.sr-figure-layered > .sr-figure-artwork,
+.sr-figure-layered > .sr-figure-vector {
+  grid-area: 1 / 1;
+}
+.sr-figure-media svg,
+.sr-figure-media img,
+
+  .sr-print-trail {
+    margin: 0 0 4mm;
+    color: var(--sr-ink-dim);
+    font-size: 8.5pt;
+    font-weight: 600;
+  }
+
+  .sr-print-title {
+    margin: 0;
+    color: var(--sr-ink);
+    font-family: var(--sr-display);
+    font-size: 20pt;
+    line-height: 1.25;
+  }
+
+  .sr-print-title .sr-num {
+    color: var(--sr-blue);
+  }
+
+  .sr-print-section {
+    margin-top: 8mm;
+  }
+
+  .sr-print-section-title {
+    margin: 0 0 4mm;
+    padding-bottom: 2mm;
+    border-bottom: 1px solid var(--sr-line);
+    color: var(--sr-ink);
+    font-family: var(--sr-display);
+    font-size: 14pt;
+    line-height: 1.3;
+  }
+
+  .sr-print-lesson .sr-read,
+  .sr-print-lesson .sr-ex-list {
+    margin-top: 0;
+  }
+
+  .sr-print-lesson .sr-read-fig,
+  .sr-print-lesson .sr-compact-figure,
+  .sr-print-lesson .sr-ex,
+  .sr-print-lesson .sr-ex-fig {
+    break-inside: avoid;
+  }
+
+  .sr-print-lesson .sr-read-fig img,
+  .sr-print-lesson .sr-read-fig svg,
+  .sr-print-lesson .sr-ex-fig img,
+  .sr-print-lesson .sr-ex-fig svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  .sr-print-lesson .sr-ex-body > div:first-child,
+  .sr-print-lesson .sr-read-fig[data-figure-layout="scroll"],
+  .sr-print-lesson .sr-ex-fig[data-figure-layout="scroll"] {
+    overflow: visible;
+  }
+
+  .sr-print-lesson .sr-figure-media {
+    --ld-figure-ink: var(--sr-ink);
+    --ld-figure-muted: var(--sr-ink-soft);
+    --ld-figure-accent: var(--sr-ink);
+    --ld-figure-accent-soft: var(--sr-ink-dim);
+    --ld-figure-grid: var(--sr-line);
+  }
+
+  .sr-print-lesson [data-figure-layout="scroll"] .sr-figure-media {
+    width: 100%;
+    max-width: 100%;
+  }
+}

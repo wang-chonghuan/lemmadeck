@@ -1,0 +1,58 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { cwd, root, run, save, file } from './logged.mjs';
+
+assert.equal(process.cwd(), cwd);
+const original = JSON.parse(fs.readFileSync(path.join(root, 'history/spec.json'), 'utf8'));
+const candidate = JSON.parse(fs.readFileSync(path.join(root, 'spec.json'), 'utf8'));
+const oldObjects = new Map(original.objects.map(o => [o.id, o]));
+for (const object of candidate.objects) {
+  if (object.id === 'source-domain-endpoint-guide') continue;
+  const expected = structuredClone(oldObjects.get(object.id));
+  if (object.id === 'source-x-value-0') expected.labelPlacement.position = 'W';
+  assert.deepEqual(object, expected, `Out-of-scope object change: ${object.id}`);
+}
+assert.equal(candidate.objects.length, original.objects.length + 1);
+assert.deepEqual(candidate.source.authoritativeText, original.source.authoritativeText);
+assert.deepEqual(candidate.canvas, original.canvas);
+assert.deepEqual(candidate.display, original.display);
+assert.deepEqual(candidate.layout, original.layout);
+for (const assertion of original.assertions) {
+  if (assertion.id === 'source-curve-span-total') continue;
+  assert.deepEqual(candidate.assertions.find(a => a.id === assertion.id), assertion);
+}
+const preservation = JSON.parse(fs.readFileSync(path.join(root, 'preservation.json'), 'utf8'));
+for (const record of preservation.records) assert.equal(file(record.path).sha256, record.sha256);
+save('candidate-binding.json', {
+  cwd, status: 'candidate-draft-not-independent-pass',
+  repair: { previous: 0, used: 1, remaining: 0 },
+  candidate: file(path.join(root, 'spec.json')),
+  authoritativeText: candidate.source.authoritativeText,
+  templateSha256: preservation.templateSha256,
+  unchanged: ['canvas', 'grid', 'axes', 'curve', 'domain', 'label texts and anchors', '939 full text'],
+  changes: ['source dashed guide with mapped connects/displacement assertions', 'sole zero CENTER to W', 'segment count 16 curve + 1 guide'],
+});
+const python = path.join(cwd, '.claude/skills/ld-s10y-lesson/.venv/bin/python');
+const validation = run('validate', python, [
+  '.agents/skills/ld-s10y-image/scripts/validate_spec.py',
+  '.tmp/resume182-4-supplement-figure64-affected1/spec.json', '--stage', 'draft', '--json',
+]);
+if (validation.exit !== 0) {
+  save('pipeline.json', { status: 'blocked', failedStage: 'validate', validation, renderRuns: 0 });
+  process.exitCode = 1;
+} else {
+  fs.chmodSync(path.join(root, 'python-receipt.mjs'), 0o755);
+  const render = run('render', process.execPath, [
+    '.agents/skills/ld-s10y-image/scripts/render_spec.mjs',
+    '--spec', '.tmp/resume182-4-supplement-figure64-affected1/spec.json',
+    '--svg', '.tmp/resume182-4-supplement-figure64-affected1/fig-64.svg',
+    '--report', '.tmp/resume182-4-supplement-figure64-affected1/fig-64.render.json',
+  ], { PYTHON: path.join(root, 'python-receipt.mjs') });
+  save('pipeline.json', {
+    status: render.exit === 0 ? 'technical-pass-not-independent-pass' : 'blocked',
+    validation, render, explicitValidatorRuns: 1, implicitValidatorRuns: 1,
+    totalValidatorRuns: 2, renderRuns: 1, contentRepairs: 1, contentRepairsRemaining: 0,
+  });
+  process.exitCode = render.exit ?? 1;
+}

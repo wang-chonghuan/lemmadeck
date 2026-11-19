@@ -1,0 +1,271 @@
+
+    canvas = spec.get("canvas")
+    if not isinstance(canvas, dict):
+        errors.append("canvas must be an object")
+        canvas = {}
+    for key in ("width", "height"):
+        value = canvas.get(key)
+        if not isinstance(value, int) or not 320 <= value <= 4096:
+            errors.append(f"canvas.{key} must be an integer from 320 to 4096")
+    bounding_box = canvas.get("boundingBox")
+    if (
+        not isinstance(bounding_box, list)
+        or len(bounding_box) != 4
+        or not all(finite_number(item) for item in bounding_box)
+    ):
+        errors.append("canvas.boundingBox must contain four finite numbers")
+    elif not (
+        bounding_box[0] < bounding_box[2]
+        and bounding_box[3] < bounding_box[1]
+    ):
+        errors.append("canvas.boundingBox must be [xMin, yMax, xMax, yMin]")
+    if current and canvas.get("background", "paper") not in {
+        "paper", "transparent"
+    }:
+        errors.append("canvas.background must be paper or transparent")
+
+    display = spec.get("display")
+    if current:
+        if not isinstance(display, dict):
+            errors.append("current FigureSpec requires display")
+            display = {}
+        layout = display.get("layout")
+        if layout not in {"inline", "scroll"}:
+            errors.append("display.layout must be inline or scroll")
+        purpose = display.get("purpose", "instructional")
+        if purpose not in {"instructional", "decorative"}:
+            errors.append(
+                "display.purpose must be instructional or decorative"
+            )
+        max_width = display.get("maxWidthPx")
+        min_text = display.get("minTextPx")
+        if not finite_number(min_text) or min_text < 16:
+            errors.append("display.minTextPx must be at least 16")
+        widths = display.get("widths")
+        if (
+            not isinstance(widths, list)
+            or not widths
+            or any(
+                not isinstance(width, int) or not 128 <= width <= 1600
+                for width in widths
+            )
+        ):
+            errors.append(
+                "display.widths must be a nonempty array of widths from 128 to 1600"
+            )
+        elif layout == "inline" and min(widths) > 352:
+            errors.append("inline display must include a width of 352px or less")
+        if "maxWidthPx" in display:
+            if (
+                not isinstance(max_width, int)
+                or isinstance(max_width, bool)
+                or not 128 <= max_width <= 960
+            ):
+                errors.append(
+                    "display.maxWidthPx must be an integer from 128 to 960"
+                )
+            else:
+                if layout != "inline":
+                    errors.append(
+                        "display with maxWidthPx must use inline layout"
+                    )
+                if isinstance(widths, list) and any(
+                    isinstance(width, int) and width > max_width
+                    for width in widths
+                ):
+                    errors.append(
+                        "display widths must not exceed display.maxWidthPx"
+                    )
+                if (
+                    max_width > 331
+                    and isinstance(widths, list)
+                    and widths
+                    and min(widths) > 331
+                ):
+                    errors.append(
+                        "display with maxWidthPx above 331 must include "
+                        "the 331px mobile product width"
+                    )
+        if purpose == "decorative":
+            if layout != "inline":
+                errors.append("decorative display must use inline layout")
+            if (
+                not isinstance(max_width, int)
+                or isinstance(max_width, bool)
+                or not 128 <= max_width <= 240
+            ):
+                errors.append(
+                    "decorative display.maxWidthPx must be an integer from 128 to 240"
+                )
+        elif (
+            "maxWidthPx" in display
+            and isinstance(max_width, int)
+            and not isinstance(max_width, bool)
+            and not 240 <= max_width <= 960
+        ):
+            errors.append(
+                "instructional display.maxWidthPx must be an integer from 240 to 960"
+            )
+        if "palette" in spec:
+            errors.append(
+                "current FigureSpec uses semantic color roles; remove palette"
+            )
+        if "review" in spec:
+            errors.append(
+                "current FigureSpec review evidence belongs in a separate review file"
+            )
+
+    objects = spec.get("objects")
+    if not isinstance(objects, list):
+        errors.append("objects must be an array")
+        objects = []
+    ids = [item.get("id") for item in objects if isinstance(item, dict)]
+    if any(not isinstance(value, str) or not value for value in ids):
+        errors.append("every object needs a nonempty id")
+    if len(ids) != len(set(ids)):
+        errors.append("object ids must be unique")
+    assets = spec.get("assets", [])
+    if not isinstance(assets, list):
+        errors.append("assets must be an array")
+        assets = []
+    asset_ids = {
+        item.get("id")
+        for item in assets
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    if len(asset_ids) != len(assets):
+        errors.append("asset ids must be present and unique")
+
+    points = point_map(objects)
+    labels = []
+    image_count = 0
+    for index, item in enumerate(objects):
+        label = f"objects[{index}]"
+        if not isinstance(item, dict):
+            errors.append(f"{label} must be an object")
+            continue
+        kind = item.get("type")
+        if kind not in SUPPORTED_TYPES:
+            errors.append(f"{label}: unsupported type {kind!r}")
+            continue
+        placements = [(label, item.get("labelPlacement"))]
+        if kind == "axis":
+            placements.extend(
+                (f"{label}.ticks[{tick_index}]", tick.get("labelPlacement"))
+                for tick_index, tick in enumerate(item.get("ticks", []))
+                if isinstance(tick, dict)
+            )
+        for owner, placement in placements:
+            if placement is None:
+                continue
+            if not isinstance(placement, dict):
+                errors.append(f"{owner}.labelPlacement must be an object")
+                continue
+            position = placement.get("position")
+            if position is not None and position not in {
+                "CENTER", "NE", "NW", "SE", "SW", "E", "W", "N", "S"
+            }:
+                errors.append(f"{owner}.labelPlacement.position is unsupported: {position!r}")
+        if current:
+            for field in ("stroke", "fill", "labelColor"):
+                role = item.get(field)
+                if role is not None and role not in COLOR_ROLES:
+                    errors.append(
+                        f"{label}.{field} must use a semantic color role"
+                    )
+        for field in ("label", "text"):
+            text = item.get(field)
+            if isinstance(text, str) and text:
+                labels.append((label, text))
+        if kind == "point" and not coordinate(item.get("at")):
+            errors.append(f"{label}.at must be [x, y]")
+        elif kind in {"segment", "line", "arrow", "axis", "measure"}:
+            resolve_point(item.get("from"), points, f"{label}.from", errors)
+            resolve_point(item.get("to"), points, f"{label}.to", errors)
+        elif kind == "circle":
+            resolve_point(item.get("center"), points, f"{label}.center", errors)
+            if not finite_number(item.get("radius")) or item["radius"] <= 0:
+                errors.append(f"{label}.radius must be positive")
+        elif kind == "polygon":
+            values = item.get("points")
+            if not isinstance(values, list) or len(values) < 3:
+                errors.append(f"{label}.points needs at least three points")
+            else:
+                for point_index, value in enumerate(values):
+                    resolve_point(
+                        value, points, f"{label}.points[{point_index}]", errors
+                    )
+        elif kind == "arc":
+            for field in ("center", "start", "end"):
+                resolve_point(item.get(field), points, f"{label}.{field}", errors)
+        elif kind == "grid":
+            for field in ("xStep", "yStep"):
+                if not finite_number(item.get(field)) or item[field] <= 0:
+                    errors.append(f"{label}.{field} must be positive")
+            for field in ("xOffset", "yOffset"):
+                if field in item and not finite_number(item.get(field)):
+                    errors.append(f"{label}.{field} must be finite")
+            bounds = item.get("bounds")
+            if bounds is not None:
+                if (
+                    not isinstance(bounds, list)
+                    or len(bounds) != 4
+                    or not all(map(finite_number, bounds))
+                ):
+                    errors.append(
+                        f"{label}.bounds must be [xMin, yMax, xMax, yMin]"
+                    )
+                elif not (bounds[0] < bounds[2] and bounds[3] < bounds[1]):
+                    errors.append(
+                        f"{label}.bounds must be [xMin, yMax, xMax, yMin]"
+                    )
+        elif kind == "text":
+            resolve_point(item.get("at"), points, f"{label}.at", errors)
+            if not isinstance(item.get("text"), str) or not item["text"].strip():
+                errors.append(f"{label}.text must be nonempty")
+        elif kind == "image":
+            image_count += 1
+            if item.get("asset") not in asset_ids:
+                errors.append(f"{label}.asset does not resolve")
+            if not coordinate(item.get("at")) or not coordinate(item.get("size")):
+                errors.append(f"{label}.at and size must be [x, y]")
+            elif item["size"][0] <= 0 or item["size"][1] <= 0:
+                errors.append(f"{label}.size values must be positive")
+            rotation = item.get("rotation")
+            if rotation is not None:
+                if not isinstance(rotation, dict):
+                    errors.append(f"{label}.rotation must be an object")
+                else:
+                    if not finite_number(rotation.get("angleDegrees")):
+                        errors.append(
+                            f"{label}.rotation.angleDegrees must be finite"
+                        )
+                    if not coordinate(rotation.get("center")):
+                        errors.append(
+                            f"{label}.rotation.center must be [x, y]"
+                        )
+        elif kind == "svgPath":
+            if not isinstance(item.get("d"), str) or not item["d"].strip():
+                errors.append(f"{label}.d must be nonempty")
+    for label, text in labels:
+        if NON_ENGLISH.search(text):
+            errors.append(f"{label}: visible text must be English: {text!r}")
+
+    if mode == "generated" and objects:
+        errors.append("generated mode must not contain deterministic objects")
+    if mode == "hybrid" and image_count == 0:
+        errors.append("hybrid mode requires an image object")
+    if mode == "hybrid":
+        first_geometry = next(
+            (
+                index
+                for index, item in enumerate(objects)
+                if isinstance(item, dict) and item.get("type") != "image"
+            ),
+            len(objects),
+        )
+        if any(
+            isinstance(item, dict) and item.get("type") == "image"
+            for item in objects[first_geometry:]
+        ):
+            errors.append("hybrid image objects must precede overlay objects")

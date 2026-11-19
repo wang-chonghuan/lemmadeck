@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+"""Retain raw pixel runs; this does not solve exercises or define a function."""
+
+import json
+from pathlib import Path
+
+from PIL import Image
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+WORK = ROOT / ".tmp/resume182-4-supplement-figures-a"
+
+
+def runs(values):
+    result = []
+    for value in values:
+        if not result or value > result[-1][-1] + 1:
+            result.append([value])
+        else:
+            result[-1].append(value)
+    return [[row[0], row[-1]] for row in result]
+
+
+output = {}
+for figure in ["fig-62", "fig-63", "fig-64"]:
+    image = Image.open(ROOT / f"ssot-resources/soviet10year-textbooks/artifacts/7a/figures/{figure}.png").convert("L")
+    pixels = image.load()
+    if figure == "fig-62":
+        output[figure] = {
+            "horizontalHatchSample": {
+                str(x): runs([y for y in range(20, 236) if pixels[x, y] < 100])
+                for x in [55, 120]
+            },
+            "verticalHatchSample": {
+                str(y): runs([x for x in range(148, 371) if pixels[x, y] < 100])
+                for y in [65, 175]
+            },
+        }
+    else:
+        output[figure] = {
+            "verticalGridRunSample": {
+                str(y): runs([x for x in range(12, 563) if pixels[x, y] < 100])
+                for y in [40, 350]
+            },
+            "horizontalGridRunSample": {
+                str(x): runs([y for y in range(12, 392) if pixels[x, y] < 100])
+                for x in [20, 540]
+            },
+            "curveRunSample": {
+                str(x): runs([y for y in range(30, 336) if pixels[x, y] < 100])
+                for x in (
+                    [60, 95, 125, 155, 185, 215, 245, 275, 305, 335, 365, 395, 425, 455]
+                    if figure == "fig-63"
+                    else [50, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, 360, 390, 420, 450, 463]
+                )
+            },
+        }
+(WORK / "source-pixel-runs.json").write_text(json.dumps(output, indent=2) + "\n", encoding="utf-8")
+print(json.dumps(output, indent=2))

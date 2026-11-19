@@ -1,0 +1,70 @@
+"""Independent numerical reads and two bounded crops from durable source PNGs."""
+
+import hashlib
+import json
+from pathlib import Path
+from PIL import Image
+
+CWD = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+assert Path.cwd() == CWD
+ROOT = CWD / ".tmp/resume182-4-supplement-figures-a/review-FIRST"
+SOURCE = CWD / "ssot-resources/soviet10year-textbooks/artifacts/7a/figures"
+
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def runs(values):
+    result = []
+    for i, value in enumerate(values):
+        if value and (i == 0 or not values[i - 1]):
+            result.append([i, i])
+        elif value:
+            result[-1][1] = i
+    return result
+
+
+report = {"cwd": str(CWD), "sourceReadsAreNumericalNotContextImageReopens": True, "figures": []}
+for number in [62, 63, 64]:
+    source = SOURCE / f"fig-{number}.png"
+    image = Image.open(source).convert("L")
+    record = {"id": f"fig-{number}", "source": str(source), "sha256": digest(source), "size": list(image.size)}
+    if number == 62:
+        record["independentHatchCrossSections"] = {
+            "horizontalRowsAtX120": runs([image.getpixel((120, y)) < 160 for y in range(image.height)]),
+            "verticalColumnsAtY175": runs([image.getpixel((x, 175)) < 160 for x in range(image.width)]),
+        }
+    else:
+        # Candidate grid centers picked independently from the already observed source pixels.
+        columns = [round(20 + (535 * i / 18)) for i in range(19)] if number == 63 else [round(15 + (539 * i / 18)) for i in range(19)]
+        origin_y = 265 if number == 63 else 258
+        record["gridColumnProbeCentersAtAxis"] = columns
+        record["verticalBlackFractionsY90To250"] = []
+        for center in columns:
+            hit_rows = []
+            for y in range(90, 250):
+                # Account for visible subpixel source shear along these short vertical probes.
+                hit_rows.append(any(image.getpixel((x, y)) < 160 for x in range(max(0, center - 6), min(image.width, center + 7))))
+            record["verticalBlackFractionsY90To250"].append({
+                "centerX": center, "fraction": sum(hit_rows) / len(hit_rows),
+                "darkRunsY": [[90 + a, 90 + b] for a, b in runs(hit_rows)],
+            })
+        record["originApproxPixelFromIndependentObservation"] = [111, origin_y] if number == 63 else [165, origin_y]
+    report["figures"].append(record)
+
+for number, bounds in [(63, (427, 64, 486, 271)), (64, (29, 62, 76, 267))]:
+    source = SOURCE / f"fig-{number}.png"
+    target = ROOT / f"fig-{number}.source-domain-line-crop.png"
+    assert not target.exists()
+    Image.open(source).crop(bounds).save(target)
+    report.setdefault("indispensableCrops", []).append({
+        "figure": f"fig-{number}", "source": str(source), "sourceSha256": digest(source),
+        "sourcePixelBounds": list(bounds), "path": str(target), "sha256": digest(target),
+        "purpose": "Distinguish patterned domain-boundary dashes from isolated scan damage; no whole source reopen.",
+    })
+
+target = ROOT / "source-pixels.json"
+assert not target.exists()
+target.write_text(json.dumps(report, indent=2) + "\n")
+print(json.dumps(report, indent=2))

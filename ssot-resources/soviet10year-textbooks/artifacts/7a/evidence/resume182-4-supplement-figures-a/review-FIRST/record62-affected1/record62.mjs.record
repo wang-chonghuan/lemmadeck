@@ -1,0 +1,200 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+
+const cwd = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), cwd);
+const reviewRoot = path.join(cwd, '.tmp/resume182-4-supplement-figures-a/review-FIRST');
+const root = path.join(reviewRoot, 'record62-affected1');
+const output = path.join(reviewRoot, 'fig-62.review.json');
+const recorder = path.join(cwd, '.agents/skills/ld-s10y-image/scripts/record_review.py');
+const hash = value => crypto.createHash('sha256').update(value).digest('hex');
+const fileRecord = p => ({ path: p, sha256: hash(fs.readFileSync(p)) });
+const readJSON = p => JSON.parse(fs.readFileSync(p, 'utf8'));
+const writeNew = (p, value) => {
+  const absolute = path.join(root, p);
+  fs.mkdirSync(path.dirname(absolute), { recursive: true });
+  fs.writeFileSync(absolute, typeof value === 'string' ? value : JSON.stringify(value, null, 2) + '\n', { flag: 'wx' });
+};
+let stdout = '', stderr = '', exit = 0;
+const print = value => { stdout += value + '\n'; process.stdout.write(value + '\n'); };
+const started = new Date().toISOString();
+
+function frozenFiles(directory) {
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
+    const p = path.join(directory, entry.name);
+    if (p === root || p === output) return [];
+    if (entry.isDirectory()) return frozenFiles(p);
+    assert(entry.isFile(), `Unexpected non-file frozen artifact: ${p}`);
+    return [fileRecord(p)];
+  });
+}
+
+try {
+  assert(!fs.existsSync(output), 'Formal record already exists; do not invoke twice');
+  assert(!fs.existsSync(path.join(root, 'commands/record-review/receipt.json')), 'Command already attempted');
+  const oldMarkdown = fileRecord(path.join(reviewRoot, 'review.md'));
+  const oldJSON = fileRecord(path.join(reviewRoot, 'review.json'));
+  assert.equal(oldMarkdown.sha256, '86973f25ceff9f8a794b4a67c28ad0632ebc9e33f933459314d504e2685a564c');
+  assert.equal(oldJSON.sha256, '1a2c724f86d5f5430df5bf9de237a879aacec34d58d2f3638db88fe0fe5e93be');
+  const originalReview = readJSON(oldJSON.path);
+  assert.equal(originalReview.status, 'REVISE');
+  const approved = originalReview.figures.find(f => f.id === 'fig-62');
+  assert.equal(approved.status, 'PASS');
+  assert.equal(approved.findings.length, 0);
+  assert(originalReview.figures.filter(f => f.id !== 'fig-62').every(f => f.status === 'REVISE'));
+  const boundEvidence = [
+    approved.source, approved.spec, approved.render, approved.svg,
+    approved.browserChecks.find(t => t.theme === 'neutral').screenshot,
+    originalReview.authoritativeTemplate, originalReview.reusedTextReview,
+    originalReview.technicalRecovery.browserEvidence,
+    ...originalReview.evidence.filter(e => ['source-pixels.json', 'trace-pixels.json'].includes(path.basename(e.path))),
+  ];
+  for (const evidence of boundEvidence) assert.equal(fileRecord(evidence.path).sha256, evidence.sha256, `Stale frozen fig-62 evidence: ${evidence.path}`);
+  const frozenBefore = frozenFiles(reviewRoot);
+  const codeBefore = [
+    fileRecord(recorder),
+    fileRecord(path.join(cwd, '.agents/skills/ld-s10y-image/scripts/validate_spec.py')),
+  ];
+  writeNew('hashes-before.json', { cwd, frozenReviewFiles: frozenBefore, boundEvidence, codeBefore });
+
+  // Retain the initial read-only command, whose complete output is this unchanged file.
+  const initialReadStdout = fs.readFileSync(recorder, 'utf8').split('\n').slice(0, 180).join('\n');
+  writeNew('commands/initial-recorder-read/stdout.txt', initialReadStdout);
+  writeNew('commands/initial-recorder-read/stderr.txt', '');
+  writeNew('commands/initial-recorder-read/receipt.json', {
+    cwd, argv: ['sed', '-n', '1,180p', '.agents/skills/ld-s10y-image/scripts/record_review.py'],
+    exit: 0, originalToolReceipt: '257e6e',
+    stdout: { path: path.join(root, 'commands/initial-recorder-read/stdout.txt'), sha256: hash(initialReadStdout) },
+    stderr: { path: path.join(root, 'commands/initial-recorder-read/stderr.txt'), sha256: hash('') },
+    provenance: 'Initial read preceded local receipt setup. Complete stdout retained from the unchanged recorder bytes; original tool receipt confirms the read and exit. No recorder execution was repeated.',
+  });
+
+  const neutral = approved.browserChecks.find(t => t.theme === 'neutral').screenshot;
+  const notes = [
+    'DRAFT ONLY: formal fig-62 record of the genuine independent PASS already frozen in review-FIRST; no new source or image observation.',
+    `Frozen overall review remains REVISE: ${oldJSON.path} sha256=${oldJSON.sha256}; ${oldMarkdown.path} sha256=${oldMarkdown.sha256}.`,
+    `Reuse source/spec/render/current SVG hash-bound evidence and already observed normal 640 neutral preview ${neutral.path} sha256=${neutral.sha256}.`,
+    `Headed browser evidence ${originalReview.technicalRecovery.browserEvidence.path} sha256=${originalReview.technicalRecovery.browserEvidence.sha256}.`,
+    `Current approved exercise 913 text template ${originalReview.authoritativeTemplate.path} sha256=${originalReview.authoritativeTemplate.sha256}.`,
+    'Shared frame, two crossing circles, 13 horizontal/14 vertical logical hatches, both directions in the lens, Z/P placement and no answer annotations were already reviewed.',
+    'No promotion, durable review, whole-batch PASS, fig-63 repair, or fig-64 repair is authorized by this file.',
+    'This invocation only executes the recorder integrity guard; separate receipt counts that internal validator call. Parent new images=0.',
+  ].join(' ');
+  const command = path.join(cwd, '.claude/skills/ld-s10y-lesson/.venv/bin/python');
+  const args = [
+    path.join(root, 'run-record.py'),
+    '--spec', approved.spec.path,
+    '--render', approved.render.path,
+    '--output', output,
+    '--status', 'pass',
+    '--notes', notes,
+  ];
+  const commandStart = new Date().toISOString();
+  const child = spawnSync(command, args, {
+    cwd, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024,
+    env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+  });
+  const childStdout = child.stdout ?? '';
+  const childStderr = (child.stderr ?? '') + (child.error ? child.error.stack + '\n' : '');
+  writeNew('commands/record-review/stdout.txt', childStdout);
+  writeNew('commands/record-review/stderr.txt', childStderr);
+  writeNew('commands/record-review/receipt.json', {
+    cwd, argv: [command, ...args], start: commandStart, end: new Date().toISOString(),
+    exit: child.status, signal: child.signal,
+    stdout: { path: path.join(root, 'commands/record-review/stdout.txt'), sha256: hash(childStdout) },
+    stderr: { path: path.join(root, 'commands/record-review/stderr.txt'), sha256: hash(childStderr) },
+    execution: 'Unchanged existing record_review.py executed once through runpy; call profiling only.',
+  });
+  print(childStdout.trimEnd());
+  assert.equal(child.status, 0, childStderr);
+  const count = readJSON(path.join(root, 'internal-validator-count.json'));
+  assert.equal(count.recorderEntryInvocations, 1);
+  assert.equal(count.internalIntegrityValidatorCalls, 1);
+  assert.equal(path.resolve(count.calls[0].caller), recorder);
+  assert.equal(count.standaloneValidatorInvocations, 0);
+
+  const formal = readJSON(output);
+  assert.equal(formal.schema, 'ld-s10y-image/review@1');
+  assert.equal(formal.figure, 'fig-62');
+  assert.equal(formal.status, 'pass');
+  for (const field of ['source', 'spec', 'render']) {
+    assert.equal(formal[field].sha256, approved[field].sha256);
+    assert.equal(path.resolve(cwd, formal[field].path), approved[field].path);
+  }
+  assert.equal(formal.outputs.svg.sha256, approved.svg.sha256);
+  assert.equal(path.resolve(cwd, formal.outputs.svg.path), approved.svg.path);
+  const frozenAfter = frozenFiles(reviewRoot);
+  assert.deepEqual(frozenAfter, frozenBefore, 'Frozen review-FIRST files changed');
+  for (const evidence of [...boundEvidence, ...codeBefore]) assert.equal(fileRecord(evidence.path).sha256, evidence.sha256);
+  writeNew('hashes-after.json', {
+    cwd, frozenReviewFiles: frozenAfter, allFrozenReviewFilesUnchanged: true,
+    allBoundFig62EvidenceUnchanged: true, recorderAndValidatorUnchanged: true,
+  });
+  const counters = {
+    recordReviewEntryInvocations: 1, internalIntegrityValidatorCalls: 1,
+    standaloneValidatorInvocations: 0, sourceObservations: 0, newImages: 0,
+    parentNewImages: 0, priorFrozenImageObservations: 8,
+    browserInvocations: 0, rendererInvocations: 0, rasterInvocations: 0,
+    specOrSvgEdits: 0, authorEdits: 0, fig63Repairs: 0, fig64Repairs: 0,
+    promotion: 0, durableReviewWrites: 0, wholeBatchPassChanges: 0,
+  };
+  const report = {
+    schema: 'current182-4/formal-draft-record62-affected1@1', ticket: 'STEMROBIN-182',
+    cwd, status: 'PASS: fig-62 formal draft record only', formal: fileRecord(output),
+    overallReviewStatus: 'REVISE', originalReview: oldJSON, originalMarkdown: oldMarkdown,
+    frozenReviewFileCount: frozenBefore.length, allFrozenReviewFilesUnchanged: true,
+    boundEvidence, internalValidatorCount: fileRecord(path.join(root, 'internal-validator-count.json')),
+    recorderReceipt: fileRecord(path.join(root, 'commands/record-review/receipt.json')),
+    before: fileRecord(path.join(root, 'hashes-before.json')), after: fileRecord(path.join(root, 'hashes-after.json')),
+    counters,
+    blockedFigures: {
+      'fig-63': 'Frozen source-fidelity REVISE remains blocked; prior author single content repair already used. No repair attempted.',
+      'fig-64': 'Frozen REVISE remains unchanged; a separate author owns its first permitted repair. No repair attempted here.',
+    },
+    boundaries: {
+      allowedFormalFile: output, allowedReceiptReportFolder: root,
+      rawSourceReads: 'Hash/integrity bytes only for existing fig-62 provenance; no pixels decoded or images observed.',
+      noNewReviewOrPerceptualApproval: true,
+    },
+  };
+  writeNew('report.json', report);
+  writeNew('report.md', [
+    '# fig-62 Formal Draft Record, Affected1',
+    '',
+    'Existing genuine independent fig-62 PASS is formally hash-bound as a draft only.',
+    'Frozen overall review stays REVISE; every pre-existing review-FIRST file is byte-identical.',
+    `Formal file: ${output}`,
+    `SHA-256: ${report.formal.sha256}`,
+    '',
+    'Counters: recorder 1; measured internal integrity validator 1; standalone validator 0;',
+    'new source observations 0; new images 0; parent new images 0; browsers/renderers/rasters 0;',
+    'spec/SVG/author edits 0; fig-63/64 repairs 0; promotion/durable review/whole-batch PASS changes 0.',
+    '',
+    'Reused frozen source, neutral 640 screenshot, spec, current SVG, render, browser and approved text evidence.',
+    'The recorder and validator were not edited. Profiling only counted the existing internal guard.',
+    'fig-63 remains blocked after its already used single content repair; fig-64 remains for its separate author.',
+    '',
+  ].join('\n'));
+  print(JSON.stringify({
+    formal: fileRecord(output), report: fileRecord(path.join(root, 'report.json')),
+    internalValidatorCount: fileRecord(path.join(root, 'internal-validator-count.json')),
+    recorderReceipt: fileRecord(path.join(root, 'commands/record-review/receipt.json')),
+    counters,
+  }, null, 2));
+} catch (error) {
+  exit = 1;
+  stderr += error.stack + '\n';
+  process.stderr.write(error.stack + '\n');
+} finally {
+  writeNew('commands/driver/stdout.txt', stdout);
+  writeNew('commands/driver/stderr.txt', stderr);
+  writeNew('commands/driver/receipt.json', {
+    cwd, argv: ['node', path.join(root, 'record62.mjs')], start: started, end: new Date().toISOString(), exit,
+    stdout: { path: path.join(root, 'commands/driver/stdout.txt'), sha256: hash(stdout) },
+    stderr: { path: path.join(root, 'commands/driver/stderr.txt'), sha256: hash(stderr) },
+  });
+  process.exitCode = exit;
+}

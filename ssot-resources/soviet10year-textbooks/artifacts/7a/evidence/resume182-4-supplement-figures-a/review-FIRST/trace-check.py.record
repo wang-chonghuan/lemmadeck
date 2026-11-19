@@ -1,0 +1,89 @@
+"""Pixel trace comparison only; no query intersections, answers, or source solving."""
+
+import hashlib
+import json
+import math
+from pathlib import Path
+from PIL import Image
+
+CWD = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+assert Path.cwd() == CWD
+BASE = CWD / ".tmp/resume182-4-supplement-figures-a"
+ROOT = BASE / "review-FIRST"
+
+
+def black_runs(values):
+    result = []
+    for i, value in enumerate(values):
+        if value and (i == 0 or not values[i - 1]):
+            result.append([i, i])
+        elif value:
+            result[-1][1] = i
+    return result
+
+
+report = {"cwd": str(CWD), "scope": "Independent grid-registered source trace sampling; no function formula or exercise solution.", "figures": []}
+for number, origin, x_unit, y_unit, domain in [
+    (63, (113, 267), (59.4, -1.0), (-0.75, -60.5), (-1, 6)),
+    (64, (165, 257), (59.8, -0.4), (-0.25, -59.65), (-2, 5)),
+]:
+    spec = json.loads((BASE / f"fig-{number}/spec.json").read_text())
+    source = CWD / spec["source"]["image"]["path"]
+    image = Image.open(source).convert("L")
+    curve = [o for o in spec["objects"] if o["id"].startswith("source-curve-span-")]
+    vertices = [curve[0]["from"]] + [o["to"] for o in curve]
+
+    def interpolate(x):
+        for a, b in zip(vertices, vertices[1:]):
+            if a[0] <= x <= b[0]:
+                return a[1] + (b[1] - a[1]) * (x - a[0]) / (b[0] - a[0])
+        raise ValueError(x)
+
+    samples = []
+    for index in range(14):
+        x = domain[0] + .25 + .5 * index
+        y = interpolate(x)
+        predicted = [origin[i] + x * x_unit[i] + y * y_unit[i] for i in range(2)]
+        px = round(predicted[0])
+        hits = [
+            sum(image.getpixel((column, row)) < 160 for column in range(px - 1, px + 2)) >= 2
+            for row in range(image.height)
+        ]
+        candidates = [
+            [a, b] for a, b in black_runs(hits)
+            if b - a + 1 >= 4 and abs((a + b) / 2 - predicted[1]) <= 18
+        ]
+        nearest = min(candidates, key=lambda r: abs(sum(r) / 2 - predicted[1])) if candidates else None
+        discrepancy = abs(sum(nearest) / 2 - predicted[1]) / abs(y_unit[1]) if nearest else None
+        samples.append({
+            "x": x, "candidateTraceY": round(y, 6), "independentGridPredictedPixel": predicted,
+            "nativeColumnPx": px, "sourceDarkRunCandidates": candidates, "nearestSourceRun": nearest,
+            "verticalDiscrepancyUnits": discrepancy,
+            "withinScanTolerance0_12": discrepancy is not None and discrepancy <= .12,
+        })
+    endpoints = []
+    for point in [vertices[0], vertices[-1]]:
+        px, py = [origin[i] + point[0] * x_unit[i] + point[1] * y_unit[i] for i in range(2)]
+        black = sum(
+            image.getpixel((round(px) + dx, round(py) + dy)) < 160
+            for dx in range(-4, 5) for dy in range(-4, 5)
+        )
+        endpoints.append({"coordinate": point, "gridRegisteredSourcePx": [px, py], "blackPixelsIn9x9": black})
+    report["figures"].append({
+        "id": f"fig-{number}", "source": str(source), "sourceSha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+        "gridRegistration": {
+            "originPx": origin, "oneXUnitPx": x_unit, "oneYUnitPx": y_unit,
+            "provenance": "Approximate independent landmarks picked from the already viewed original grid and axes, not the author's pixel-binding data.",
+            "limitation": "Native raster skew/stroke thickness yields approximate ~0.1-unit comparisons; this is not exact source-function recovery.",
+        },
+        "samples": samples, "endpoints": endpoints,
+        "curveIsConnectedInDraft": all(a["to"] == b["from"] for a, b in zip(curve, curve[1:])),
+        "boundedXDomainPreserved": vertices[0][0] == domain[0] and vertices[-1][0] == domain[1],
+        "allSampleChecksPass": all(s["withinScanTolerance0_12"] for s in samples),
+    })
+
+target = ROOT / "trace-pixels.json"
+assert not target.exists()
+target.write_text(json.dumps(report, indent=2) + "\n")
+for figure in report["figures"]:
+    print(json.dumps(figure, indent=2))

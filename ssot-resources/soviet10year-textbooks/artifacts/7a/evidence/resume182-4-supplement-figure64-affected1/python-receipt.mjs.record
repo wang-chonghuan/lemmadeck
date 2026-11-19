@@ -1,0 +1,15 @@
+#!/usr/bin/env node
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { cwd, root, run } from './logged.mjs';
+
+const args = process.argv.slice(2);
+assert.equal(args[0], path.join(cwd, '.agents/skills/ld-s10y-image/scripts/validate_spec.py'));
+assert.equal(path.resolve(args[1]), path.join(root, 'spec.json'));
+assert.deepEqual(args.slice(2), ['--stage', 'draft', '--json']);
+const receipt = run(
+  'render-implicit-validator',
+  path.join(cwd, '.claude/skills/ld-s10y-lesson/.venv/bin/python'),
+  args,
+);
+process.exitCode = receipt.exit ?? 1;

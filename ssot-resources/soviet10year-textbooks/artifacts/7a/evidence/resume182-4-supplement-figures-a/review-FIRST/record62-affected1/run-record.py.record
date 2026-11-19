@@ -1,0 +1,46 @@
+"""Run the unchanged formal recorder once and count its internal integrity guard."""
+
+import json
+import runpy
+import sys
+from pathlib import Path
+
+CWD = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+assert Path.cwd() == CWD
+ROOT = CWD / ".tmp/resume182-4-supplement-figures-a/review-FIRST/record62-affected1"
+SCRIPTS = CWD / ".agents/skills/ld-s10y-image/scripts"
+RECORDER = SCRIPTS / "record_review.py"
+VALIDATOR = SCRIPTS / "validate_spec.py"
+calls = []
+
+
+def profile(frame, event, arg):
+    if event == "call" and frame.f_code.co_name == "validate":
+        if Path(frame.f_code.co_filename).resolve() == VALIDATOR.resolve():
+            parent = frame.f_back
+            calls.append({
+                "function": "validate_spec.validate",
+                "stage": frame.f_locals.get("stage"),
+                "caller": parent.f_code.co_filename,
+                "callerLine": parent.f_lineno,
+            })
+
+
+sys.path.insert(0, str(SCRIPTS))
+sys.argv = [str(RECORDER), *sys.argv[1:]]
+sys.setprofile(profile)
+try:
+    runpy.run_path(str(RECORDER), run_name="__main__")
+finally:
+    sys.setprofile(None)
+    target = ROOT / "internal-validator-count.json"
+    assert not target.exists()
+    target.write_text(json.dumps({
+        "cwd": str(CWD),
+        "recorder": str(RECORDER),
+        "recorderEntryInvocations": 1,
+        "internalIntegrityValidatorCalls": len(calls),
+        "calls": calls,
+        "standaloneValidatorInvocations": 0,
+        "instrumentation": "Python call profiling only; recorder and validator are unchanged.",
+    }, indent=2) + "\n")

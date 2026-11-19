@@ -1,0 +1,73 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { createRequire } from 'node:module';
+
+const cwd = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+if (process.cwd() !== cwd) throw new Error('Wrong cwd');
+const base = '.tmp/resume182-4-supplement-figures-a';
+const root = path.join(cwd, base, 'review-FIRST');
+const hash = p => crypto.createHash('sha256').update(fs.readFileSync(path.resolve(cwd, p))).digest('hex');
+const read = p => JSON.parse(fs.readFileSync(path.resolve(cwd, p), 'utf8'));
+const template = '.tmp/resume182-4-supplement-modern/adapt/7a/modern-us-neutral/lessons/alg7-c4-ex/exercises.template.json';
+const protectedPaths = [template, `${base}/author-report.json`, `${base}/manifest-candidates.json`];
+const figures = [];
+for (const n of [62, 63, 64]) {
+  const id = `fig-${n}`;
+  const specPath = `${base}/${id}/spec.json`;
+  const renderPath = `${base}/${id}/${id}.render.json`;
+  const svgPath = `${base}/${id}/${id}.svg`;
+  const spec = read(specPath);
+  const render = read(renderPath);
+  const svg = fs.readFileSync(path.resolve(cwd, svgPath), 'utf8');
+  protectedPaths.push(spec.source.image.path, specPath, renderPath, svgPath, `${base}/${id}/context.json`);
+  if (hash(specPath) !== render.spec.sha256 || render.status !== 'pass') throw new Error(`${id}: stale/nonpass render`);
+  if (hash(spec.source.image.path) !== spec.source.image.sha256) throw new Error(`${id}: stale source`);
+  for (const output of Object.values(render.output)) {
+    if (hash(output.path) !== output.sha256) throw new Error(`${id}: stale output`);
+  }
+  figures.push({
+    id, specPath, renderPath, svgPath, source: spec.source.image,
+    text: spec.source.authoritativeText, canvas: spec.canvas, display: spec.display,
+    objectCounts: Object.fromEntries([...new Set(spec.objects.map(o => o.type))].map(t => [t, spec.objects.filter(o => o.type === t).length])),
+    objects: spec.objects,
+    inventory: spec.source.inventory,
+    assertions: spec.assertions,
+    renderKeys: Object.keys(render),
+    renderOutput: render.output, renderDisplayChecks: render.displayChecks,
+    svgBeginning: svg.slice(0, 1400),
+    semanticStrokeAttributes: [...new Set([...svg.matchAll(/stroke="([^"]+)"/g)].map(m => m[1]))],
+  });
+}
+const records = protectedPaths.map(p => ({ path: path.resolve(cwd, p), sha256: hash(p), bytes: fs.statSync(path.resolve(cwd, p)).size }));
+const reviewPath = '.tmp/resume182-4-supplement-modern/review-text-FIRST/review.json';
+const textReview = read(reviewPath);
+const templateData = read(template);
+const matches = [];
+function walk(value, at = '$') {
+  if (!value || typeof value !== 'object') return;
+  if (String(value.number ?? value.exercise ?? value.id ?? '').match(/^(913|938|939)$/)) matches.push({ at, value });
+  for (const [key, val] of Object.entries(value)) if (val && typeof val === 'object') walk(val, `${at}.${key}`);
+}
+walk(templateData);
+const require = createRequire(path.join(cwd, 'app/package.json'));
+const playwright = require('@playwright/test');
+const runtime = {
+  node: process.version,
+  playwrightPath: require.resolve('@playwright/test'),
+  playwrightVersion: require('@playwright/test/package.json').version,
+  chromiumExecutable: playwright.chromium.executablePath(),
+  chromiumExists: fs.existsSync(playwright.chromium.executablePath()),
+};
+fs.writeFileSync(path.join(root, 'hashes-before.json'), JSON.stringify({ cwd, at: new Date().toISOString(), records }, null, 2) + '\n', { flag: 'wx' });
+fs.writeFileSync(path.join(root, 'inputs-inspection.json'), JSON.stringify({
+  figures, template: { path: template, sha256: hash(template), matches },
+  textReview: { path: reviewPath, sha256: hash(reviewPath), content: textReview },
+  runtime,
+}, null, 2) + '\n', { flag: 'wx' });
+for (const f of figures) console.log(JSON.stringify({
+  id: f.id, source: f.source, canvas: f.canvas, display: f.display,
+  text: f.text, objectCounts: f.objectCounts, renderKeys: f.renderKeys,
+  renderOutput: f.renderOutput, svgBeginning: f.svgBeginning, semanticStrokeAttributes: f.semanticStrokeAttributes,
+}));
+console.log(JSON.stringify({ runtime, templateSha256: hash(template), templateMatches: matches, textReview }, null, 2));

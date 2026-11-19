@@ -1,0 +1,354 @@
+#!/usr/bin/env python3
+"""Author this three-figure draft using only existing FigureSpec primitives."""
+
+import hashlib
+import json
+import math
+from pathlib import Path
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+WORK = ROOT / ".tmp/resume182-4-supplement-figures-a"
+
+
+def write(path, data):
+    assert path.is_relative_to(WORK)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def base(figure, description, box):
+    context = json.loads((WORK / figure / "context.json").read_text(encoding="utf-8"))
+    return {
+        "schema": "ld-s10y-image/figure-spec@2",
+        "id": figure,
+        "mode": "deterministic",
+        "description": description,
+        "source": {
+            "image": {key: context["sourceImage"][key] for key in ["path", "sha256"]},
+            "authoritativeText": context["authoritativeText"],
+            "inventory": [],
+        },
+        "canvas": {
+            "width": 736, "height": 552, "boundingBox": box,
+            "background": "paper", "keepAspectRatio": True,
+        },
+        "display": {"purpose": "instructional", "layout": "scroll", "widths": [736, 640], "minTextPx": 16},
+        "objects": [],
+        "assertions": [],
+        "layout": {"minLabelGap": 4},
+    }
+
+
+def count(identifier, kind, value):
+    return {"id": identifier, "type": "objectCount", "objectType": kind, "count": value}
+
+
+spec = base(
+    "fig-62",
+    "Identify regions of the overlapping integer set Z and positive-number set P without naming or supplying the requested regions or example elements.",
+    [-1, 4.4, 10.5, -4.225],
+)
+objects, assertions = spec["objects"], spec["assertions"]
+centers = {"z": [3, 0], "p": [6.7, 0]}
+radius = 3
+for key, center in centers.items():
+    objects.append({
+        "id": f"{key}-boundary", "type": "circle", "center": center,
+        "radius": radius, "stroke": "ink", "strokeWidth": 3.2,
+        "fillOpacity": 0,
+    })
+assertions.extend([
+    count("two-set-boundaries", "circle", 2),
+    {"id": "overlapping-center-spacing", "type": "distance", "a": centers["z"], "b": centers["p"], "value": 3.7},
+])
+intersection_height = math.sqrt(radius * radius - 1.85 * 1.85)
+for sign in [-1, 1]:
+    intersection = [4.85, sign * intersection_height]
+    for key, center in centers.items():
+        assertions.append({
+            "id": f"{key}-intersection-{'upper' if sign == 1 else 'lower'}",
+            "type": "pointOnCircle", "point": intersection, "center": center, "radius": radius,
+        })
+hatch_ids = {"z": [], "p": []}
+for index in range(13):
+    y = round(2.5 - index * 5 / 12, 8)
+    extent = math.sqrt(radius * radius - y * y)
+    endpoints = [[3 - extent, y], [3 + extent, y]]
+    parts = [endpoints]
+    if -0.15 <= y <= 0.55:
+        parts = [[endpoints[0], [1.5, y]], [[2.2, y], endpoints[1]]]
+    for part_index, (start, end) in enumerate(parts):
+        identifier = f"z-hatch-{index:02d}-{part_index}"
+        objects.append({
+            "id": identifier, "type": "segment", "from": start, "to": end,
+            "stroke": "muted", "strokeWidth": 1.7,
+        })
+        hatch_ids["z"].append(identifier)
+        assertions.extend([
+            {"id": f"{identifier}-connects", "type": "connects", "arrow": identifier, "from": start, "to": end},
+            {"id": f"{identifier}-horizontal", "type": "displacement", "from": start, "to": end, "dx": end[0] - start[0], "dy": 0},
+        ])
+    for side, point in zip(["left", "right"], endpoints):
+        assertions.append({
+            "id": f"z-hatch-{index:02d}-{side}-boundary", "type": "pointOnCircle",
+            "point": point, "center": centers["z"], "radius": radius,
+        })
+for index in range(14):
+    x = round(6.7 - 2.6 + index * 0.4, 8)
+    extent = math.sqrt(radius * radius - (x - 6.7) ** 2)
+    endpoints = [[x, -extent], [x, extent]]
+    parts = [endpoints]
+    if 7.7 <= x <= 8.4:
+        parts = [[endpoints[0], [x, -0.1]], [[x, 0.7], endpoints[1]]]
+    for part_index, (start, end) in enumerate(parts):
+        identifier = f"p-hatch-{index:02d}-{part_index}"
+        objects.append({
+            "id": identifier, "type": "segment", "from": start, "to": end,
+            "stroke": "muted", "strokeWidth": 1.7,
+        })
+        hatch_ids["p"].append(identifier)
+        assertions.extend([
+            {"id": f"{identifier}-connects", "type": "connects", "arrow": identifier, "from": start, "to": end},
+            {"id": f"{identifier}-vertical", "type": "displacement", "from": start, "to": end, "dx": 0, "dy": end[1] - start[1]},
+        ])
+    for side, point in zip(["bottom", "top"], endpoints):
+        assertions.append({
+            "id": f"p-hatch-{index:02d}-{side}-boundary", "type": "pointOnCircle",
+            "point": point, "center": centers["p"], "radius": radius,
+        })
+for identifier, at, text in [("z-name", [1.85, 0.2], "Z"), ("p-name", [8.05, 0.3], "P")]:
+    objects.append({
+        "id": identifier, "type": "text", "at": at, "text": text, "fontSize": 32,
+        "labelColor": "ink", "labelPlacement": {"position": "CENTER"},
+    })
+assertions.extend([
+    count("hatch-segment-total", "segment", sum(map(len, hatch_ids.values()))),
+    count("two-set-names", "text", 2),
+    count("no-source-point-markers", "point", 0),
+    count("no-source-grid", "grid", 0),
+    count("no-source-axes", "axis", 0),
+])
+spec["source"]["inventory"] = [
+    {
+        "id": "overlapping-boundaries",
+        "description": "One shared two-set diagram, not two subfigures: near-circular left Z and right P outlines cross twice. Neither contains the other. The outer complement is blank and has no universal-set frame. Circle regularization and equal radii are modern, not measured source values.",
+        "objects": ["z-boundary", "p-boundary"],
+        "assertions": ["two-set-boundaries", "overlapping-center-spacing", "z-intersection-upper", "p-intersection-upper", "z-intersection-lower", "p-intersection-lower"],
+    },
+    {
+        "id": "horizontal-z-hatching",
+        "description": "Pixels at x=120 show 13 interior horizontal hatch rows, approximately y=37,54,70,85,99,115,130,145,160,175,188,203,219; y=20..25 and 231..234 are outline, not hatch. Lines continue through the shared intersection, with a small blank clearance around the Z label. Exact regular spacing is a modern addition; direction and 13 logical rows are source facts.",
+        "objects": hatch_ids["z"],
+        "assertions": [item["id"] for item in assertions if item["id"].startswith("z-hatch-")] + ["hatch-segment-total"],
+    },
+    {
+        "id": "vertical-p-hatching",
+        "description": "Pixels at y=175 distinguish 14 vertical interior stripes near x=164,179,193,208,223,235,250,266,279,294,309,323,337,354; the left outline at x=148..154 is separate. Stripes cross Z's horizontal hatching in the lens and are interrupted only for the P label. Equal modern stripe spacing is not an original mathematical scale.",
+        "objects": hatch_ids["p"],
+        "assertions": [item["id"] for item in assertions if item["id"].startswith("p-hatch-")] + ["hatch-segment-total"],
+    },
+    {
+        "id": "names-and-absence",
+        "description": "Only Z and P are printed inside their respective non-overlap lobes. No elements, point dots, numbers, axes, ticks, mathematical grid, region names, answer cells, or extra caption are present. Label clearances and outside space remain blank. Z and P retain the authoritative mathematical names and are English-compatible.",
+        "objects": ["z-name", "p-name"],
+        "assertions": ["two-set-names", "no-source-point-markers", "no-source-grid", "no-source-axes"],
+    },
+]
+write(WORK / "fig-62" / "spec.json", spec)
+
+
+def graph(figure, function, bounds, raw_samples, frame, endpoints, x_labels):
+    spec = base(
+        figure,
+        f"Read the source-plotted function {function} on its stated bounded domain; retain half-unit cells, solid curve and axis values without adding a query line, a formula or answer annotation.",
+        [bounds[0] - 1, 5, bounds[2] + 1.5, -3.625],
+    )
+    objects, assertions = spec["objects"], spec["assertions"]
+    objects.append({
+        "id": "source-half-unit-grid", "type": "grid", "bounds": bounds,
+        "xStep": 0.5, "yStep": 0.5, "xOffset": 0, "yOffset": 0,
+        "stroke": "grid", "strokeWidth": 1.3,
+    })
+    assertions.append({"id": "source-grid-18-by-12", "type": "gridDimensions", "grid": "source-half-unit-grid", "columns": 18, "rows": 12})
+    x_start, x_end = [bounds[0], 0], [bounds[2] - 0.2, 0]
+    y_start, y_end = [0, bounds[3]], [0, bounds[1] - 0.2]
+    objects.extend([
+        {"id": "source-x-axis", "type": "axis", "from": x_start, "to": x_end, "stroke": "ink", "strokeWidth": 2.4},
+        {"id": "source-y-axis", "type": "axis", "from": y_start, "to": y_end, "stroke": "ink", "strokeWidth": 2.4},
+        {"id": "source-x-direction", "type": "arrow", "from": [bounds[2] - 0.7, 0], "to": x_end, "stroke": "ink", "strokeWidth": 2.4},
+        {"id": "source-y-direction", "type": "arrow", "from": [0, bounds[1] - 0.7], "to": y_end, "stroke": "ink", "strokeWidth": 2.4},
+    ])
+    assertions.extend([
+        {"id": "source-perpendicular-axes", "type": "perpendicular", "a": x_start, "b": x_end, "c": y_start, "d": y_end},
+        {"id": "source-horizontal-axis-span", "type": "displacement", "from": x_start, "to": x_end, "dx": x_end[0] - x_start[0], "dy": 0},
+        {"id": "source-vertical-axis-span", "type": "displacement", "from": y_start, "to": y_end, "dx": 0, "dy": y_end[1] - y_start[1]},
+        {"id": "source-x-arrow-end", "type": "connects", "arrow": "source-x-direction", "from": [bounds[2] - 0.7, 0], "to": x_end},
+        {"id": "source-y-arrow-end", "type": "connects", "arrow": "source-y-direction", "from": [0, bounds[1] - 0.7], "to": y_end},
+    ])
+    label_ids = []
+    for value in x_labels:
+        identifier = f"source-x-value-{'minus-' + str(-value) if value < 0 else value}"
+        objects.append({
+            "id": identifier, "type": "text",
+            "at": [
+                value,
+                0.45 if (function == "g" and value >= 0) or (function == "f" and value == -1) else -0.48,
+            ],
+            "text": str(value),
+            "fontSize": 22, "labelColor": "ink", "labelPlacement": {"position": "CENTER"},
+        })
+        label_ids.append(identifier)
+    for value in [-1, 1, 2, 3]:
+        identifier = f"source-y-value-{'minus-1' if value < 0 else value}"
+        objects.append({
+            "id": identifier, "type": "text", "at": [-0.5, value], "text": str(value),
+            "fontSize": 22, "labelColor": "ink", "labelPlacement": {"position": "CENTER"},
+        })
+        label_ids.append(identifier)
+    for identifier, at, text in [
+        ("source-x-name", [bounds[2] - 0.2, -0.48], "x"),
+        ("source-y-name", [-0.4, bounds[1] - 0.25], "y"),
+    ]:
+        objects.append({
+            "id": identifier, "type": "text", "at": at, "text": text,
+            "fontSize": 22, "labelColor": "ink", "labelPlacement": {"position": "CENTER"},
+        })
+        label_ids.append(identifier)
+    assertions.append(count("source-axis-label-total", "text", len(label_ids)))
+    # This affine deskew is calibrated only from the observed source grid corners.
+    # The measured samples, rather than an invented equation, determine the curve.
+    left, top, pixel_width, pixel_height, bottom_shift, top_rise = frame
+    samples = [
+        [
+            round(bounds[0] + 9 * (px - left - bottom_shift * (py - top) / pixel_height) / pixel_width, 6),
+            round(4 - 6 * (py - top + top_rise * (px - left) / pixel_width) / pixel_height, 6),
+        ]
+        for px, py in raw_samples
+    ]
+    samples = [endpoints[0]] + samples + [endpoints[1]]
+    segment_ids = []
+    relation_ids = []
+    for index, (start, end) in enumerate(zip(samples, samples[1:])):
+        identifier = f"source-curve-span-{index:02d}"
+        objects.append({
+            "id": identifier, "type": "segment", "from": start, "to": end,
+            "stroke": "accent", "strokeWidth": 4.6,
+        })
+        segment_ids.append(identifier)
+        for relation in [
+            {"id": f"{identifier}-connects", "type": "connects", "arrow": identifier, "from": start, "to": end},
+            {"id": f"{identifier}-pixel-displacement", "type": "displacement", "from": start, "to": end, "dx": end[0] - start[0], "dy": end[1] - start[1]},
+        ]:
+            assertions.append(relation)
+            relation_ids.append(relation["id"])
+    assertions.extend([
+        count("source-curve-span-total", "segment", len(segment_ids)),
+        count("no-source-point-markers", "point", 0),
+        count("two-source-axes", "axis", 2),
+        count("two-source-positive-arrows", "arrow", 2),
+        {"id": "source-curve-domain-and-endpoint-span", "type": "displacement", "from": endpoints[0], "to": endpoints[1], "dx": endpoints[1][0] - endpoints[0][0], "dy": endpoints[1][1] - endpoints[0][1]},
+    ])
+    assert all(start[0] < end[0] for start, end in zip(samples, samples[1:]))
+    assert all(
+        (end[1] > start[1] if function == "f" else end[1] < start[1])
+        for start, end in zip(samples, samples[1:])
+    )
+    curve_description = (
+        "One solid rising, flattening curve from the visible lower-left endpoint to the upper-right endpoint, with no interior reversal or separate plotted point markers. "
+        if function == "f" else
+        "One solid descending, flattening curve from the visible upper-left endpoint to the lower-right endpoint, with no interior reversal or separate plotted point markers; it passes through the drawn axis crossing. "
+    )
+    curve_description += (
+        "The bounded endpoints are retained at their observed grid intersections. Short connected source-pixel spans are a modern tracing regularization, not an exact function formula. "
+        "The queried half-unit level is read against the source lattice before tracing; it is not drawn as a new guide or annotated answer. Raster thickness/skew leaves roughly 0.1 unit uncertainty between cells; no unprinted interior value is silently snapped to an integer or half-integer."
+    )
+    spec["source"]["inventory"] = [
+        {
+            "id": "single-source-grid",
+            "description": f"One shared rectangular lattice with 19 vertical lines and 13 horizontal lines: 18 columns by 12 rows, step 0.5 on both axes, zero phase; x runs {bounds[0]}..{bounds[2]}, y runs -2..4. Grid line gaps around printed axis values and small scan breaks are typography/damage, not missing cells. Rectification of scanning skew is modern.",
+            "objects": ["source-half-unit-grid"],
+            "assertions": ["source-grid-18-by-12"],
+            "requires": ["gridDimensions"],
+        },
+        {
+            "id": "source-axes-and-labels",
+            "description": (
+                f"Horizontal x and vertical y cross at the sole printed origin 0 and point in the positive directions. Printed x values: {x_labels}; printed y values: -1, 1, 2, 3. There are no printed half-unit values, curve-name labels, point letters or units. Modern labels are offset to keep clear of strokes. "
+                "The x=-1 label moves above its unchanged tick position after the first renderer reported a curve collision. This side change is modern, not a source label-placement fact."
+                if function == "f" else
+                f"Horizontal x and vertical y cross at the sole printed origin 0 and point in the positive directions. Printed x values: {x_labels}; printed y values: -1, 1, 2, 3. There are no printed half-unit values, curve-name labels, point letters or units. Modern labels are offset to keep clear of strokes; for g, nonnegative x values move above their unchanged tick positions so the descending curve cannot obscure them. This side change is modern, not a source label-placement fact."
+            ),
+            "objects": ["source-x-axis", "source-y-axis", "source-x-direction", "source-y-direction"] + label_ids,
+            "assertions": ["source-perpendicular-axes", "source-horizontal-axis-span", "source-vertical-axis-span", "source-x-arrow-end", "source-y-arrow-end", "source-axis-label-total", "two-source-axes", "two-source-positive-arrows"],
+        },
+        {
+            "id": "source-solid-curve",
+            "description": curve_description,
+            "objects": segment_ids,
+            "assertions": relation_ids + ["source-curve-span-total", "source-curve-domain-and-endpoint-span"],
+        },
+        {
+            "id": "source-blank-regions",
+            "description": "Grid remains visible on both sides and below the curve, including unused columns beyond its bounded endpoints. No extra subfigure, separate curve, filled region, dashed mathematical curve, query horizontal line, projected answer coordinates, open/closed endpoint dots, or answer cells. Discontinuous grid pixels and isolated crop-edge marks are source scan artifacts, not new instructional strokes.",
+            "objects": ["source-half-unit-grid"],
+            "assertions": ["source-grid-18-by-12", "no-source-point-markers", "source-curve-span-total"],
+        },
+    ]
+    write(WORK / figure / "spec.json", spec)
+    write(WORK / figure / "pixel-binding.json", {
+        "sourceImage": spec["source"]["image"],
+        "calibration": {
+            "basis": "actual full-source pixels, inspected once; no reused figure profile",
+            "frame": frame, "finiteGridBounds": bounds, "step": [0.5, 0.5], "columns": 18, "rows": 12,
+            "sourceCornersApproxPx": (
+                [[17, 25], [552, 16], [27, 387], [560, 378]]
+                if figure == "fig-63" else [[14, 20], [556, 17], [18, 379], [557, 374]]
+            ),
+        },
+        "rawCurveSamplesPx": raw_samples,
+        "normalizedCurveSamples": samples,
+        "endpointGridIntersections": endpoints,
+        "sourceExtrema": "Only the bounded curve endpoints; no interior reversal in the pixels.",
+        "queriedLevelInspection": {
+            "level": 2.5 if function == "f" else -0.5,
+            "basis": "The half-unit source grid fixes this level. Raw curve rows near this grid row are retained in the full pixel-run receipt, without solving or drawing an intersection guide.",
+            "unresolved": "No exact analytic rule or unprinted exact crossing coordinate can be justified from the raster; inter-cell sampling is approximate.",
+        },
+        "assertionBinding": relation_ids,
+        "modernAdditions": ["affine deskew", "continuous regular half-unit grid behind axis labels", "short connected vector tracing spans", "English-compatible axis glyphs", "semantic roles", "readability margins"],
+    })
+
+
+graph(
+    "fig-63", "f", [-1.5, 4, 7.5, -2],
+    [
+        [60, 319], [67, 300], [78, 280], [94, 261.5], [112, 240.5],
+        [125, 232], [155, 205], [185, 184], [215, 165.5], [245, 149.5],
+        [275, 138], [305, 124.5], [335, 116], [345, 111],
+        [365, 103.5], [395, 94.5], [425, 86],
+    ],
+    [17, 25, 535, 362, 10, 9], [[-1, -1], [6, 3]],
+    [-1, 0, 1, 2, 3, 4, 5, 6],
+)
+graph(
+    "fig-64", "g", [-2.5, 4, 6.5, -2],
+    [
+        [50, 104], [60, 138], [90, 193], [120, 226], [150, 248],
+        [180, 265], [210, 276], [240, 286.5], [270, 294.5],
+        [300, 300.5], [330, 305.5], [360, 310], [390, 312],
+        [420, 313], [450, 313.5],
+    ],
+    [14, 20, 542, 359, 4, 3], [[-2, 3], [5, -1]],
+    [-2, -1, 0, 1, 2, 3, 4, 5],
+)
+
+summary = []
+for figure in ["fig-62", "fig-63", "fig-64"]:
+    path = WORK / figure / "spec.json"
+    spec = json.loads(path.read_text(encoding="utf-8"))
+    summary.append({
+        "figure": figure, "path": str(path.relative_to(ROOT)),
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+        "objects": len(spec["objects"]), "assertions": len(spec["assertions"]),
+        "inventoryGroups": len(spec["source"]["inventory"]),
+    })
+print(json.dumps(summary, indent=2))

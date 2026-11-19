@@ -1,0 +1,229 @@
+{
+  "project": "lemmadeck",
+  "main_branch": "main",
+  "deploy": {
+    "where": "Render web service lemmadeck (srv-dapsio9srm7s73an5p60), Frankfurt, one 0.5c-512mb instance; live at https://lemmadeck.com",
+    "how": "See charter/operations.md for the sole Render release, verification and rollback flow. infra/README.md tracks the remaining guarded Azure retirement."
+  },
+  "tickets": {
+    "system": "plane",
+    "project_url": "https://app.plane.so/intentmill/projects/556c9df8-f5ac-435a-8abd-53bc522dd8a7/issues/",
+    "project": "lemmadeck"
+  },
+  "ports": {
+    "web": {
+      "main": 3200,
+      "ticket_prefix": 52
+    }
+  }
+}
+# Product
+
+Human-authored. The machine reads this as binding intent and never edits it.
+Section shape is fixed by `.intentfold/readme.md`.
+
+> Migrated 2026-08-05 from `.prodfarm/charter/goal.md`. The source carried a
+> `DRAFT — AWAITING HUMAN CONFIRMATION` banner while its body marked two pillars as human-confirmed
+> (2026-07-14, 2026-07-20). The confirmed parts are stated below as fact; the parts the source left
+> open are marked `TODO(human)` rather than invented.
+>
+> Revised 2026-09-12 by explicit human direction: English learning is no longer part of this
+> application.
+
+## Contract
+
+**What this product is**
+
+一个面向**一名 8 岁、理解力强的孩子**的初中数学/物理自学课程产品(web 应用)。
+
+内容按初中标准(2022 版义务教育课标),解释按儿童认知,训练按严肃教材
+——不阉割概念,只重排入口与坡度。三层材料:教师版知识骨架、学生版讲义(课文页)、练习题系统
+(识别/表示/基础操作/反向推理/易错辨析五类题)。
+
+课文页采用**卡片式精读**:课文不变、按语义打散成带编号的卡片,一次读一张,读完当场以轻量"读没读"题
+(read-check)卡关,防止跳读/假读;走完全部卡片才算读完课文,之后进入练习题系统。
+
+**多语言**(人确认 2026-07-14):产品面向多语言学习者,目标 7–8 种语言,首个为英文。数学内容以中文为
+源语言,学习者可切换界面与数学内容语言;数学公式统一用标准数学记法、跨语言共享。多语言是数学/
+物理课程的呈现能力,不是英语学习课程。
+
+**Who it is for**
+
+主用户是一名 8 岁、理解力强的自学者。他要做的事是**独立走完一课**:读懂课文、通过 read-check、
+做完练习并知道自己错在哪,不需要成人在旁翻译概念。
+
+**What good looks like**
+
+TODO(human) — 源文件写的是 `达成度判定标准: (awaiting human)`,并给了一个示例:
+"数学 stage-N 全部课文与练习可用且孩子可独立完成一课"。这一条决定每个工单最终被什么标准评判,
+需要定下来。
+
+**What this product is not**
+
+- 不提供英语学习课程、英语课文、英语背诵或英语词汇训练。历史英语数据与生成工具可以保留,
+  但不是产品界面或学习路径的一部分。
+- TODO(human) — 是否做多用户/班级、是否做家长端、是否做游戏化激励、是否做初中以外的学段。
+
+## Tools
+
+## Guidance
+
+## Redlines
+
+1. **Editing this file** — forbidden outright. Product intent is the human's exclusively.
+# UI Requirements
+
+Binding on every UI change. **UI work follows this file strictly** — the agent does not invent
+alternatives to what is written here. Section shape is fixed by `.intentfold/readme.md`.
+
+Anything this file does not cover is still a design decision: it is settled at the **grill**, by the
+human, before implementation. Never invented while coding.
+
+> `.prodfarm/charter/` had no UI file — the design system lives in
+> `ssot-resources/reference/DESIGN.md`
+> and has since before this harness. This file **points at it** rather than restating it, per
+> `.intentfold/readme.md` ("a restated value is a stale value waiting to happen"). Filled in
+> 2026-08-05; the
+> parts marked *observed* describe how the repo is today, not a decision the human has recorded.
+
+## Contract
+
+**Styling stack — Tailwind**
+
+This project runs **Tailwind CSS 4** (+ tw-animate-css) with shadcn components. The intentfold
+default (Astryx + StyleX) does **not** apply here: the two stacks are exclusive, and this project
+chose Tailwind. Astryx and StyleX are not used at all.
+
+**Design source of truth**
+
+`ssot-resources/reference/DESIGN.md` is the design system of record — palette, radii, layout metrics,
+typography, per-component specs, and lesson-section labelling. **Read
+`ssot-resources/reference/DESIGN.guide.md` first**; `DESIGN.md` itself says so, and it explains how the
+document is meant to be read and written.
+
+Where a value in `DESIGN.md` and the code disagree, **`app/src/styles/app.css` is the source of truth
+for the value** — that is where the tokens actually live — and the disagreement is drift to report.
+
+**Tokens**
+
+Every style value is a token. The registries, by path:
+
+- `app/src/styles/app.css` — the `--sr-*` CSS variables. The implementation SSOT.
+- `ssot-resources/reference/DESIGN.md` — the documented vocabulary the variables realize.
+
+The palette is closed: **exactly three colors carry the identity — teal-blue, green, and pure
+white — over a neutral ink scale. No additional hues.** The full list of names and values is in
+`DESIGN.md`; do not copy it here and do not approximate a colour that is not in it. `--sr-font` is
+the single global font token (Inter, system sans fallback); display, body and numeric roles reference
+it rather than defining their own family. The shadcn `--primary` token is mapped to the teal-blue so
+default `Button` components match.
+
+**Layout and responsive**
+
+App-shell layout, fixed 236px catalog, 860px mobile breakpoint, 100dvh shell, compact spacing scale —
+all specified in `DESIGN.md`. Every UI change is checked at both viewports named in `operations.md`.
+
+**Component structure** — *observed*: components are flat under `app/src/components/` (e.g.
+`catalog.tsx`, `card-reader.tsx`, `quiz-drawer.tsx`), with shadcn primitives alongside. The
+intentfold template's atoms/molecules/organisms layout is **not** in use.
+TODO(human) — decide whether to keep the flat layout or move to atomic design. Until then, a new
+component goes next to its peers in `app/src/components/` and this file is not evidence for a
+restructure.
+
+## Tools
+
+There is no UI-specific static check today. The mechanical defence is the project-wide one in
+`engineering.md`.
+
+TODO(human) — a check that fails on a raw hex colour or an off-palette hue in `app/src/` would be
+worth more than any of the prose above. Until it exists, the palette rule is Guidance enforced by the
+author.
+
+Design reference: `ssot-resources/reference/DESIGN.guide.md`, then
+`ssot-resources/reference/DESIGN.md`.
+shadcn/ui docs: https://ui.shadcn.com
+
+## Guidance
+
+Binding. Followed while writing, judged by the author — nothing reviews a diff against this section.
+
+**Choosing components.** Reach for a custom component only when shadcn genuinely has nothing that
+fits — not because the official one needs configuring, and not because writing one looks faster.
+"There is no equivalent" is a claim to check against the docs, not to assume.
+
+**Choosing a token.** Use the `--sr-*` variable, never a raw hex value and never a Tailwind palette
+colour that happens to look close. A missing token is a **stop**, not a reason to compose one out of
+primitives.
+
+**The look this product is going for.** Compact, clean, school-serious: a pure white workspace, dense
+practical hierarchy, quiet focus. No mascots, no marketing layout, no decorative gradients beyond the
+single brand mark, no hero sections, no nested cards. Density over whitespace — but prose stays
+readable (line-height ~1.5–1.6). `DESIGN.md` has the specifics.
+
+**Interaction states.** Loading, empty, error, disabled and focus are part of the change, not a
+follow-up. `DESIGN.md` specifies the empty state (centred icon tile, short display heading, one dim
+sentence).
+
+**Content and tone.** The reader is an 8-year-old working alone. Labels are plain and short; the four
+lesson-section labels are fixed per subject in `DESIGN.md` and are not reworded.
+
+## Redlines
+
+1. **Changing a governed token registry** — adding, renaming, removing or retuning a value — not
+   without the human's explicit approval. The registries, by path, so this can be matched against a
+   diff without judgement: `app/src/styles/app.css`, `ssot-resources/reference/DESIGN.md`.
+2. **Introducing a colour outside the three-colour palette plus the ink scale** — forbidden outright.
+   Detectable as a raw hex or an `rgb(`/`hsl(` literal added under `app/src/` outside those two files.
+3. **Recreating the brand mark** — forbidden outright. It is
+   `ssot-resources/public/logo-mark.png` (derived from
+   `ssot-resources/brand/lemmadeck-logo.png`); never substitute a Lucide glyph or a CSS shape, and
+   never restretch or re-crop it.
+4. **Introducing a second styling mechanism** — StyleX, Astryx, CSS-in-JS, or a new global stylesheet —
+   forbidden outright. Tailwind plus `app/src/styles/app.css` is the whole of it.
+{
+  "name": "lemmadeck",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "start": "node .output/server/index.mjs",
+    "test": "vitest run",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "@cortex-js/compute-engine": "0.58.0",
+    "@tailwindcss/vite": "^4.3.1",
+    "@tanstack/react-router": "latest",
+    "@tanstack/react-start": "latest",
+    "@vitejs/plugin-react": "latest",
+    "katex": "^0.18.1",
+    "lucide-react": "^1.21.0",
+    "marked": "^18.0.5",
+    "mathlive": "^0.110.0",
+    "postgres": "^3.4.9",
+    "react": "latest",
+    "react-dom": "latest",
+    "tailwindcss": "^4.3.1",
+    "three": "^0.185.1",
+    "tw-animate-css": "^1.4.0",
+    "vite": "latest",
+    "zustand": "^5.0.14"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^26.0.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@types/three": "^0.185.1",
+    "nitro": "^3.0.260610-beta",
+    "playwright-core": "^1.61.1",
+    "shadcn": "^4.11.0",
+    "typescript": "latest",
+    "vitest": "^2.1.9"
+  },
+  "allowScripts": {
+    "esbuild@0.28.1": true,
+    "esbuild@0.21.5": true
+  }
+}

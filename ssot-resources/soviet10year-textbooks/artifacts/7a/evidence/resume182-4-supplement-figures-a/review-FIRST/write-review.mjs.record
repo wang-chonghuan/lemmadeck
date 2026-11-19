@@ -1,0 +1,196 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+
+const cwd = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), cwd);
+const root = path.join(cwd, '.tmp/resume182-4-supplement-figures-a/review-FIRST');
+const load = p => JSON.parse(fs.readFileSync(path.join(root, p), 'utf8'));
+const record = p => {
+  const absolute = path.isAbsolute(p) ? p : path.join(root, p);
+  return { path: absolute, sha256: crypto.createHash('sha256').update(fs.readFileSync(absolute)).digest('hex') };
+};
+const before = load('hashes-before.json');
+const after = load('hashes-after-preview.json');
+const browser = load('browser-preview.json');
+const inputs = load('inputs-inspection.json');
+const native = load('source-pixels.json');
+const traces = load('trace-pixels.json');
+assert(after.unchanged);
+assert.equal(browser.status, 'pass');
+assert(browser.headedAvailable && browser.browserClosed);
+assert(traces.figures.every(f => f.allSampleChecksPass));
+
+const observations = [
+  { ordinal: 1, type: 'original', figure: 'fig-62', ...record(inputs.figures[0].source.path.startsWith('/') ? inputs.figures[0].source.path : path.join(cwd, inputs.figures[0].source.path)) },
+  { ordinal: 2, type: 'new-neutral-640', figure: 'fig-62', ...record('fig-62.neutral.640.png') },
+  { ordinal: 3, type: 'original', figure: 'fig-63', ...record(path.join(cwd, inputs.figures[1].source.path)) },
+  { ordinal: 4, type: 'new-neutral-640', figure: 'fig-63', ...record('fig-63.neutral.640.png') },
+  { ordinal: 5, type: 'original', figure: 'fig-64', ...record(path.join(cwd, inputs.figures[2].source.path)) },
+  { ordinal: 6, type: 'new-neutral-640', figure: 'fig-64', ...record('fig-64.neutral.640.png') },
+  { ordinal: 7, type: 'indispensable-crop', figure: 'fig-63', ...record('fig-63.source-domain-line-crop.png') },
+  { ordinal: 8, type: 'indispensable-crop', figure: 'fig-64', ...record('fig-64.source-domain-line-crop.png') },
+];
+
+const findings = [
+  {
+    id: 'fig-63-missing-dashed-guide', figure: 'fig-63', status: 'REVISE',
+    mathematicalGeometry: { from: [6, 3], to: [6, 0], style: 'source dashed / draft continuous' },
+    nativeSourceRegion: { x: [464, 471], y: [80, 260] },
+    crop: record('fig-63.source-domain-line-crop.png'), cropNativeBounds: [427, 64, 486, 271],
+    preview640Region: { x: 473.043478, y: [111.304348, 278.26087] },
+    missingInventoryCoverage: true,
+    basis: 'Whole source and bounded crop observed once; repeated native dash gaps numerically recorded, adjacent columns nearly continuous. No source mathematical dashed guide is mapped; current geometry computes strokeDasharray none.',
+  },
+  {
+    id: 'fig-63-zero-axis-overlap', figure: 'fig-63', status: 'REVISE',
+    object: 'source-x-value-0', anchor: [0, -.48], axis: 'source-y-axis',
+    preview640TextBox: { x: 133.8101348876953, y: 292.43487548828125, width: 10.640625, height: 21.5 },
+    preview640Axis: { x: 139.13043212890625, y: [66.78260803222656, 389.56520080566406] },
+    basis: 'Observed neutral actual browser pixels and retained browser label/axis rectangles; vertical ink crosses the origin glyph, unlike the separated source label.',
+  },
+  {
+    id: 'fig-64-missing-dashed-guide', figure: 'fig-64', status: 'REVISE',
+    mathematicalGeometry: { from: [-2, 3], to: [-2, 0], style: 'source dashed / draft continuous' },
+    nativeSourceRegion: { x: [42, 51], y: [79, 255] },
+    crop: record('fig-64.source-domain-line-crop.png'), cropNativeBounds: [29, 62, 76, 267],
+    preview640Region: { x: 83.478261, y: [111.304348, 278.26087] },
+    missingInventoryCoverage: true,
+    basis: 'Whole source and bounded crop observed once; repeated native dash gaps numerically recorded. Current inventory treats all breaks as scan artifacts and maps no dashed guide.',
+  },
+  {
+    id: 'fig-64-zero-axis-overlap', figure: 'fig-64', status: 'REVISE',
+    object: 'source-x-value-0', anchor: [0, .45], axis: 'source-y-axis',
+    preview640TextBox: { x: 189.46231079101562, y: 240.6783447265625, width: 10.640625, height: 21.5 },
+    preview640Axis: { x: 194.78260803222656, y: [66.78260803222656, 389.56520080566406] },
+    basis: 'Observed neutral actual browser pixels and retained browser label/axis rectangles; vertical ink crosses the origin glyph.',
+  },
+];
+
+function contrast(a, b) {
+  const rgb = color => color.match(/[\d.]+/g).slice(0, 3).map(Number);
+  const lum = color => rgb(color).map(n => {
+    const v = n / 255;
+    return v <= .04045 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4;
+  }).reduce((sum, n, i) => sum + n * [.2126, .7152, .0722][i], 0);
+  const l1 = lum(a), l2 = lum(b);
+  return (Math.max(l1, l2) + .05) / (Math.min(l1, l2) + .05);
+}
+
+const figures = inputs.figures.map(input => {
+  const actual = browser.figures.find(f => f.id === input.id);
+  const spec = JSON.parse(fs.readFileSync(path.join(cwd, input.specPath), 'utf8'));
+  const objectIds = new Set(spec.objects.map(o => o.id));
+  const assertionIds = new Set(spec.assertions.map(a => a.id));
+  const inventory = spec.source.inventory.map(group => ({
+    id: group.id, objects: group.objects, assertions: group.assertions, requires: group.requires ?? [],
+    objectIdsResolve: group.objects.every(id => objectIds.has(id)),
+    assertionIdsResolve: group.assertions.every(id => assertionIds.has(id)),
+    renderedObjectPresence: group.objects.map(id => {
+      const object = spec.objects.find(o => o.id === id);
+      const dom = actual.themes[0].dom;
+      const present = object.type === 'text'
+        ? dom.labels.some(l => l.text === object.text)
+        : dom.geometry.some(g => g.id === `ld-${input.id}_ld-${id}` || g.id.startsWith(`ld-${input.id}_ld-${id}-`));
+      return { id, present };
+    }),
+  }));
+  assert(inventory.every(g => g.objectIdsResolve && g.assertionIdsResolve && g.renderedObjectPresence.every(o => o.present)));
+  const expectedText = inputs.template.matches.find(m => String(m.value.number) === input.text[0].exercise).value.text;
+  assert.equal(expectedText, input.text[0].text);
+  return {
+    id: input.id, status: input.id === 'fig-62' ? 'PASS' : 'REVISE',
+    source: record(path.join(cwd, input.source.path)),
+    spec: record(path.join(cwd, input.specPath)), render: record(path.join(cwd, input.renderPath)), svg: record(path.join(cwd, input.svgPath)),
+    retainedRenderStatus: 'pass', renderOrValidateReruns: 0,
+    authoritativeText: input.text, currentFullTextExactlyMatchesDraft: true,
+    inventoryCoverage: inventory,
+    sourceCompleteness: input.id === 'fig-62' ? 'pass' : 'fail: omitted source dashed endpoint guide',
+    sourceChecks: input.id === 'fig-62' ? {
+      sharedFrame: true, circles: 2, crossings: 2, mutualNonContainment: true,
+      logicalHorizontalHatches: 13, logicalVerticalHatches: 14,
+      horizontalSegments: 15, verticalSegments: 16,
+      hatchingContinuesAcrossIntersection: true, namesOnly: ['Z', 'P'],
+      namesInsideOwnNonOverlapLobes: true, noPhysicalUnitsOrMathematicalScale: true,
+      modernRegularizations: ['circle rectification/equal radii', 'regular hatch spacing', 'font/label clearance'],
+      noElementsAnswersOrExtraFrame: true,
+    } : {
+      gridColumns: 18, gridRows: 12, verticalLines: 19, horizontalLines: 13,
+      xStep: .5, yStep: .5, sourceBounds: spec.objects.find(o => o.type === 'grid').bounds,
+      axes: 2, positiveArrows: 2, printedZeroCount: 1,
+      labelTexts: actual.themes[0].dom.labels.map(l => l.text),
+      noPhysicalUnits: true, noAddedPrintedHalfUnitLabels: true,
+      noPointDotsOrQueryAnswerAnnotations: true,
+      trace: traces.figures.find(f => f.id === input.id),
+    },
+    browserChecks: actual.themes.map(theme => ({
+      theme: theme.theme, humanViewed: theme.theme === 'neutral',
+      claim: theme.theme === 'neutral' ? 'observed actual 640 preview; numeric checks' : 'numeric screenshot pixel visibility only, not perceptual/print acceptance',
+      screenshot: theme.screenshot, mediaSize: [theme.dom.width, theme.dom.height],
+      minimumTextPx: Math.min(...theme.dom.labels.map(l => l.fontPx)),
+      labelVsPaperMinContrast: Math.min(...theme.dom.labels.map(l => contrast(l.fill, theme.dom.paper))),
+      geometryCounts: theme.dom.geometry.length,
+      minGeometryProbeHitFraction: Math.min(...theme.pixels.probes.map(p => p.fraction)),
+      pixels: {
+        nonPaper: theme.pixels.nonPaper, nonText: theme.pixels.nonText,
+        darkNonText: theme.pixels.darkNonText, assertions: theme.pixels.assertions,
+      },
+      computedVisibleStrokes: [...new Set(theme.dom.geometry.map(g => g.computedStroke))],
+      computedVisibleDashes: [...new Set(theme.dom.geometry.map(g => g.computedDash))],
+    })),
+    canvas736MinimumTextPx: Math.min(...actual.canvasWidthLabels.map(l => l.fontPx)),
+    localWrapperScroll: actual.localMobileScroll,
+    findings: findings.filter(f => f.figure === input.id),
+  };
+});
+
+const commandReceipts = fs.readdirSync(path.join(root, 'commands')).flatMap(name => {
+  const p = path.join(root, 'commands', name, 'receipt.json');
+  return fs.existsSync(p) ? [{ ...record(p), ...JSON.parse(fs.readFileSync(p, 'utf8')) }] : [];
+});
+const payload = {
+  schema: 'current182-4/independent-figure-draft-review@1',
+  ticket: 'STEMROBIN-182', pass: 'FIRST', cwd, reviewedAt: new Date().toISOString(),
+  status: 'REVISE', figures,
+  technicalRecovery: {
+    status: 'PASS', browserEvidence: record('browser-preview.json'), headedAvailable: true,
+    actualUnchangedSvg: true, cssInheritedFromActualLocalApp: true, geometryEmulationOrSvgColorEdits: false,
+    legacyRasterDiagnosis: 'Successful exact-SVG browser strokes demonstrate legacy preview-tool limitation consistent with unresolved CSS-var stroke diagnosis.',
+    oldFailedPreviewReopens: 0, legacyRasterReruns: 0,
+  },
+  authoritativeTemplate: record(path.join(cwd, inputs.template.path)),
+  reusedTextReview: { ...record(path.join(cwd, inputs.textReview.path)), status: 'PASS', scopeItems: 153, reruns: 0, figureApprovalGranted: false },
+  allProtectedInputs: before.records, protectedInputsUnchangedAfterPreview: true,
+  finalHashEvidence: { path: path.join(root, 'hashes-final.json'), expected: 'Final read-only equality audit immediately after this report generation.' },
+  imageCounter: {
+    batch: 8, batchMaximum: 8, currentContextImagePayloads: 8, contextMaximum: 24,
+    originals: 3, neutralPreviews: 3, indispensableCrops: 2, oldFailedPreviews: 0,
+    wholeSourceReopens: 0, additionalThemeImagesHumanViewed: 0,
+    generatedBrowserScreenshots: 9,
+    upstreamAuthorImageObservations: '6 reported in text-only author handback; no upstream image payloads opened here.',
+    observations,
+  },
+  evidence: ['review.md','inputs-inspection.json','hashes-before.json','hashes-after-preview.json','browser-preview.json','source-pixels.json','trace-pixels.json','bootstrap-note.json','theme-provenance.css'].map(record),
+  commandReceipts, activeReportCommand: 'commands/write-review/receipt.json (retained by logger when this child completes)',
+  limitations: [
+    'Overall REVISE: no formal record_review.py pass files are emitted, even for locally passed fig-62; no formal guard validation rerun.',
+    'Only neutral previews human-viewed; accent/print evidence is numeric actual screenshot visibility and text contrast, not perceptual or physical-print approval.',
+    'No product/offline lesson run or new product width measurement; local HTML 640 media and 390 scroll wrapper only.',
+    'Curve pixel registration is approximate native scan comparison; no exact-function or query-solution inference.',
+    'Initial nine read-only commands preceded logger; exact read-only command replays retain local stdout/stderr/exit, not original timestamps/discovery state.',
+  ],
+  boundaries: {
+    writesOnly: root, authorFilesModified: 0, durableSourceModified: 0, specSvgModified: 0,
+    renderSpecReruns: 0, validateSpecReruns: 0, recordReviewRuns: 0,
+    externalWeb: 0, productServerRuns: 0, DB: 0, Git: 0, dependencyChanges: 0,
+    answers: 0, choices: 0, paid: 0, contacts: 0, chats: 0, agents: 0, finalize: 0, promote: 0,
+  },
+};
+fs.writeFileSync(path.join(root, 'review.json'), JSON.stringify(payload, null, 2) + '\n', { flag: 'wx' });
+console.log(JSON.stringify({
+  status: payload.status, figures: figures.map(f => ({ id: f.id, status: f.status, findings: f.findings.map(x => x.id) })),
+  reviewJSON: record('review.json'), reviewMarkdown: record('review.md'),
+  imageCounter: payload.imageCounter.batch,
+  formalReviewFiles: 0,
+}, null, 2));

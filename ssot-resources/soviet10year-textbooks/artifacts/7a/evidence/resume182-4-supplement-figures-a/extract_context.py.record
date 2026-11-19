@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+"""Use the existing figure context helpers against the authorized live draft."""
+
+import importlib.util
+import json
+from pathlib import Path
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+WORK = ROOT / ".tmp/resume182-4-supplement-figures-a"
+TEMPLATE = ROOT / ".tmp/resume182-4-supplement-modern/adapt/7a/modern-us-neutral/lessons/alg7-c4-ex/exercises.template.json"
+HELPER = ROOT / ".agents/skills/ld-s10y-image/scripts/build_context.py"
+
+module_spec = importlib.util.spec_from_file_location("build_context", HELPER)
+helpers = importlib.util.module_from_spec(module_spec)
+module_spec.loader.exec_module(helpers)
+before = helpers.sha256(TEMPLATE)
+template = helpers.load(TEMPLATE)
+assert template["lesson"] == "alg7-c4-ex"
+bindings = []
+for figure, exercise in [("fig-62", "913"), ("fig-63", "938"), ("fig-64", "939")]:
+    relevant = helpers.exercise_context(template["exercises"], figure)
+    assert [item["exercise"] for item in relevant] == [exercise], relevant
+    image = ROOT / f"ssot-resources/soviet10year-textbooks/artifacts/7a/figures/{figure}.png"
+    width, height = helpers.png_size(image)
+    payload = {
+        "schema": "ld-s10y-image/context@1",
+        "book": "7a",
+        "edition": "modern-us-neutral",
+        "figure": figure,
+        "authoritativeRule": "Current authorized draft text is authoritative; source pixels supply visual structure. No answers or derived answer annotations.",
+        "authoritativeTemplate": {
+            "path": str(TEMPLATE.relative_to(ROOT)),
+            "sha256": before,
+            "status": "source-bound independent text review underway",
+        },
+        "sourceImage": {
+            "path": str(image.relative_to(ROOT)),
+            "sha256": helpers.sha256(image),
+            "width": width,
+            "height": height,
+        },
+        "lessons": [{"lesson": "alg7-c4-ex", "prose": [], "exercises": relevant}],
+        "authoritativeText": [
+            {"lesson": "alg7-c4-ex", "exercise": item["exercise"], "text": item["text"]}
+            for item in relevant
+        ],
+    }
+    destination = WORK / figure / "context.json"
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    bindings.append(payload)
+assert helpers.sha256(TEMPLATE) == before, "Template changed during context extraction."
+print(json.dumps(bindings, ensure_ascii=False, indent=2))

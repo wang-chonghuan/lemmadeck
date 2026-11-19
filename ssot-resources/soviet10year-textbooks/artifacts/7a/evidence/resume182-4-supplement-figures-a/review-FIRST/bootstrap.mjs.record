@@ -1,0 +1,34 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const cwd = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+if (process.cwd() !== cwd) throw new Error('Wrong cwd');
+const root = path.join(cwd, '.tmp/resume182-4-supplement-figures-a/review-FIRST');
+const commands = [
+  ['pwd', ['pwd']],
+  ['image-skill', ['sed', '-n', '1,240p', '.agents/skills/ld-s10y-image/SKILL.md']],
+  ['session-router', ['sed', '-n', '1,220p', '.intentfold/readme.md']],
+  ['operations', ['sed', '-n', '1,260p', '.intentfold/charter/operations.md']],
+  ['discovery', ['rg', '--files', '.tmp/resume182-4-supplement-figures-a', '.agents/skills/ld-s10y-image', '.claude/skills/ld-s10y-image', '.intentfold/charter']],
+  ['quality-gate', ['sed', '-n', '1,280p', '.agents/skills/ld-s10y-image/references/quality-gate.md']],
+  ['figure-spec', ['sed', '-n', '1,300p', '.agents/skills/ld-s10y-image/references/figure-spec.md']],
+  ['engineering', ['sed', '-n', '1,240p', '.intentfold/charter/engineering.md']],
+  ['author-handback', ['cat', '.tmp/resume182-4-supplement-figures-a/author-report.json', '.tmp/resume182-4-supplement-figures-a/manifest-candidates.json', '.tmp/resume182-4-supplement-figures-a/session.md']],
+];
+for (const [name, argv] of commands) {
+  const result = spawnSync('node', [path.join(root, 'logged.mjs'), `bootstrap-${name}`, ...argv], {
+    cwd, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024,
+  });
+  console.log(`${name}: exit=${result.status}; captured stdout/stderr under commands/bootstrap-${name}/`);
+  if (![0, 2].includes(result.status)) throw new Error(`Unexpected bootstrap exit ${result.status}`);
+}
+fs.writeFileSync(path.join(root, 'bootstrap-note.json'), JSON.stringify({
+  cwd,
+  initialToolCommands: 9,
+  originalToolReceipts: [
+    ['302710', 0], ['0ed931', 0], ['acd22b', 0], ['8a7a38', 0], ['207111', 2],
+    ['15cb0e', 0], ['16053b', 0], ['032e13', 0], ['95d049', 0],
+  ],
+  limitation: 'Initial 9 read-only commands preceded the local logger. The same commands were replayed read-only to retain complete stdout/stderr/exit locally; replay timestamps and discovery output are not the original invocation. Original tool receipts remain in this current chat. No figure rendering, validation, or image reopen is involved.',
+}, null, 2) + '\n', { flag: 'wx' });
