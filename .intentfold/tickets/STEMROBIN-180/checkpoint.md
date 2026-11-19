@@ -1,5 +1,143 @@
 # 生产检查点
 
+## 第八十六批三课完整，准备提交
+
+选择暂存一次0，88文件/44JSON解析PASS；三个暂存索引只投影本批
+课程，working索引其余字节不动。普通whitespace一次exit2只报
+已批准源页/旧引用及Markdown硬换行空格，FIRST保存、原字节保持；
+仅排除blank-at-eol的暂存检查一次0。未暂存env/app/依赖/scratch、
+重复n68或条件n67；尚未commit/push。
+
+Parfit新1图右端DISPLAYPASS，原手机REVISE保留；既有15PASS不重审，
+三fresh上下文实际8+8+1图、裁剪0/重开0、父0图。根报告
+display-review-b86.md SHA3938ad4e...收齐桌面/手机和受影响证据，
+十六离线页面最终PASS。n69/s18-t1/s22三完整课可交付，
+五书写题/五derived-ungraded答案/五选择题十九项；n68旧B58不重交、
+n67条件UNKNOWN不计本批。尚未stage/commit/push，正式handoff及
+全项目防线留最终阶段；无DB/publisher/合并/部署/关闭或E工作。
+
+Franklin手机8图实审7PASS/1REVISE：s18-t1原整页截图只显fig61
+左端，右端缺截图，不是内容或滚动故障。已收取关闭、FIRST保留。
+仅补一张右端截图一次0，scrollLeft282/scrollWidth640/client358，
+html原字节不动，不重render或15PASS；新Parfit只审该1图在途。
+完整课程计数仍0，父图3、付费68/重试0不变。
+
+Darwin桌面八surface独立DISPLAYPASS，8原图/0重开/0裁剪，
+已收取关闭；新Franklin只审手机八图在途，父图片仍3。
+live工单只读list/comments各一次0，首个未quote查询被zsh glob
+拦住exit1、request0；没有后台写入或消息。最新22:05:44授权
+明确普通有源修复不再因FIRST1/1等内计数永久禁止，但不增付费
+请求、不造来源、不写DB、不合并部署。后续候选按这个边界接续。
+
+B86按8p/6p各render一次0，headless离线桌面1440x960/手机
+390x844一次检查16页面PASS、两个零选择surface按合同不存在。
+没有DB或正式产品验收。新Darwin只审既有桌面八截图，手机下一
+fresh上下文再审；父不接收图片、图片上下文仍3，完整计数仍0。
+
+s22最终独审PASS2/8与FINAL2，report SHA9e1060fa...，原冻结
+及guard历史不动；reviewer如实independent_agent，已收取关闭。
+reviewed validate、choice retain、FINAL retain、answer-finalize
+各一次0，retain内置校验另一次，auto0/ungraded2/expected0。
+B86显示候选明确n69/s18-t1/s22三课，五书写题五答案、五选择题
+十九选项；s18零题空答案收口复用，不造选择题。完整计数仍0。
+
+接续收取n69独立Hooke先SOURCE3、再BLIND3/11、最后作者披露
+与FINAL3比对全部PASS，冻结原件不重审。报告误标self_review及
+human-attested，父仅修两份JSON的reviewer.kind/identity；
+FIRST原JSON、原scratch报告和盲审冻结都保留，出处更正附根报告。
+reviewed validate、choice retain、FINAL retain、answer-finalize
+各一次0；retain内置校验另一次，auto0/ungraded3/expected0。
+s22作者两单选八项已收取关闭，SOURCE2/BLIND2八项冻结PASS，
+SHA4c54aa45.../f09c3403...；原byte/canonical guard错误写入0
+留存，作者披露与FINAL2比对在途，不重prepare或盲审。
+完整课程计数仍0，整批DISPLAY尚未执行。
+
+n69两锚点独审PASS，但第一次保存多296字节无关数组空白，
+真实REVISE保留；只换FIRST两个字符串token，字节续审PASS，
+SHA6c64107d...。受影响adapt-finalize一次0、四现代文件保留0、
+现代索引helper0；首个finalize exit2审计已另存FIRST不覆盖。
+首次answer-prepare0，FINAL三份derived/ungraded初稿完成，
+候选e390a81f...；独立SOURCE先冻结在途，CHOICE首次作者在途。
+Q3用当地g公式与明确另外假定的例值，不造无条件数值键。
+
+6p受影响首审七正文PASS、两正文REVISE、四锚点REVISE保留。
+只修s18p3现代模型与原图意图区分、s22p0静止充分而非必要，
+累计各修订2；四锚点据真实规范输出修正，两s18输出复用，
+新s22邻域proseFlow一次0。字节续存首个marker误匹配exit1
+且写入0，改root行锚后一次0；candidate4原件保留，
+candidate5 s18 c72dc797.../s22 d58f9f20...仅六token变化，
+七PASS正文/九PASS声明不重审，affected2在途。
+
+fig61 repair2 renderer0、作者1图，独立标签/几何1图PASS；
+根据新s18p3只更新一条authority、必要render一次0，
+SVG4444b981...完全不动；新spec94621e95...绑定续审在途，
+尚无canonical晋升。fig62 canonical原件不动。
+父图片数3、付费累计68/重试0不变，新完整课程计数仍0。
+
+最新收集：n69一轮修订的十finding/十三正文/两题受影响独审PASS；
+fig188新独立FIG两图PASS、record-review一次0，已收取关闭。
+两份PASS绑定同一candidate3 SHA57aa7195...；FIG报告“TEXT待审”
+为报告时状态，不是新缺失审批。图件metadata-only晋升一次0、
+隔离图输入与scaffold更新一次0；SVG原字节不动，无新图片请求。
+n69 adapt-finalize FIRST实际exit2：排版规范化后boundary2匹配0，
+失败留存。只改boundary2 before/boundary3 after两锚点，
+所有正文/题目/公式及candidate3不动；受影响规范邻域proseFlow
+一次0、结构独审在途，不重全文审查或已PASS阶段。
+
+6p科学诊断已收集九正文FIRST REVISE；两课各一轮修订完成，
+candidate3 s18 SHAfb3c9900...、s22 SHA3033cac1...，
+四个受影响边界侧和九正文独审在途，旧保真PASS复用。
+fig61静态恢复完整旧spec SHA f9c754ea...精确命中，
+authoritativeText十二条齐全；只解除缺字节技术依赖，旧render
+FAIL和旧SVG未恢复保持。repair2最小标签定位作者在途，
+未把新候选宣称PASS；fig62旧PASS原件不动。
+
+接续核对发现n68已在B58提交a663a16c8完成，旧TEXT及科学PASS、
+空答案PASS与受影响DISPLAYPASS齐全。此前摘要遗漏该历史，本次
+侧车重复strict assemble/RAW比对各1、adapt-prepare1，并做新全文
+审查/私有finalize各1；所有真实输出保留，不谎报零重复。新保留
+guard实际exit1因canonical已是不同的旧PASS文件，未改canonical。
+随后读旧科学审查确认其范围，停止不必要替换；n68不计新完整课、
+不加入B86新交付，不重旧答案/空题surface/已PASS图。旧n68源、
+现代六文件与历史审批原字节保持。原四课计划保留，真正待完成
+的是n69、s18-t1和s22；B86新完整计数仍0。
+
+实际B85提交d752050b24e86a5cde05582da992605f33665581，commit/push
+各一次exit0，origin/HEAD双向0/0；选择暂存46文件、33JSON解析、
+普通行尾检查一次0。只交付t12/t13/n146三完整课，原四课计划及n67
+局部UNKNOWN保留。以下“准备提交”是提交前历史，不作report-only提交。
+
+B86暂定n68/n69/phy6-c3-s18-t1/phy6-c3-s22，完整计数0。
+n68一次strict assemble0、一次完整RAW比对0，10正文对象/23原行/
+零题零图，侧车已PASS，SOURCE/科学结论不新增批准。n69三旧模板
+原字节哈希精确恢复，只解技术缺失，不重装订、prepare或源审。
+两恢复代理已收取关闭。fig61恢复已收取关闭，找到旧FAIL render，
+完整spec和authoritativeText仍缺字节；没有标签改动/新render/新图，
+新增修订0、累计仍1，repair2未消费。fig62旧PASS复用。
+
+n67合并独审已收取关闭：CHOICE八源/六题/二十四项PASS，
+FINAL十一题10PASS/1REVISE，auto2/ungraded9；只修Q11“仅缓慢加载”
+的必要条件误述，受影响独审PASS；新候选SHA4da8a17a...，
+只有/answers/10/displayAnswer变化，其他十题及源条件不动。
+CHOICE reviewed validate、retain各一次0（retain内置校验另一次）；
+答案候选保留一次0、answer-finalize一次0，auto2/ungraded9。
+条件不足题8/10/11仍是局部UNKNOWN，
+不计三完整课或无条件数值AC。独审实际两图，无裁剪/重开。
+父图片上下文3、付费累计68/重试0、token及账单UNKNOWN不变。
+无全项目机械防线、formal handoff、DB/publisher/合并/部署/关闭或E工作。
+
+s18-t1旧final lesson由已批准初稿和保存的三对boundary静态恢复，
+清空boundary哈希及完整final哈希都精确命中38b5179a...；
+无proseFlow/作者/源审重跑。6p恢复旧失败仍保留，s22三个旧模板
+精确恢复；两课科学边界新诊断在途，不重复保真PASS。
+n69完整RAW新PASS、全文保真PASS但科学10findingREVISE，
+只修13正文/两题的一轮作者在途；原三源题解已先冻结，
+SHA769a1d3ef201fd8fb8f41445178631e51032c7916132b03756623ee9936c149e。
+fig188作者render两次0，首稿机器PASS但漏l真实缺陷保留，修订1，
+作者两图；新稿仍旧文本provisional，图标签不可辨UNKNOWN不造来源，
+待现代修订后更新必要绑定并独审。作者误写root tmp证据26文件已
+逐字复制到ticket tmp，旧路径/原报告不覆盖；父图3、付费68不增。
+
 ## 第八十五批三课完整，准备提交
 
 实际交付选择t12/t13/n146三课，原四课计划保留。n67正文与两图
