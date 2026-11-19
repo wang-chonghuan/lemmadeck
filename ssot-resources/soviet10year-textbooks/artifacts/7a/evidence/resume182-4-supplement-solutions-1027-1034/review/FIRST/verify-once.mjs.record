@@ -1,0 +1,332 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+
+const cwd = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+const root = path.join(cwd, '.tmp/resume182-4-supplement-source-review-1027-1034/FIRST');
+const rawPath = path.join(cwd, 'ssot-resources/soviet10year-textbooks/artifacts/7a/lessons/alg7-c4-ex/exercises.json');
+const modernPath = path.join(cwd, '.tmp/resume182-4-supplement-modern/adapt/7a/modern-us-neutral/lessons/alg7-c4-ex/exercises.template.json');
+const startedAt = new Date().toISOString();
+const generated = ['math-receipt.json', 'exec-receipt.json', 'freeze.json'];
+assert.equal(process.cwd(), cwd);
+assert(generated.every(name => !fs.existsSync(path.join(root, name))), 'Receipt exists: do not repeat this bounded run.');
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const load = name => JSON.parse(fs.readFileSync(path.join(root, name), 'utf8'));
+const writeReceipt = (name, value) => fs.writeFileSync(path.join(root, name), `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+const history = load('exec-history.json');
+const receipts = [];
+let equalityCount = 0;
+let predicateCount = 0;
+const eq = (actual, expected) => { equalityCount++; assert.equal(actual, expected); };
+const yes = condition => { predicateCount++; assert(condition); };
+const rational = value => {
+  const parts = String(value).split('/').map(Number);
+  assert(parts.length <= 2 && parts.every(Number.isSafeInteger));
+  return [parts[0], parts[1] ?? 1];
+};
+const record = (id, check) => {
+  const e = equalityCount;
+  const p = predicateCount;
+  check();
+  receipts.push({ task: id, status: 'passed', integer_equalities: equalityCount - e, domain_predicates: predicateCount - p });
+};
+
+try {
+  const rawBytes = fs.readFileSync(rawPath);
+  const modernSha = sha(fs.readFileSync(modernPath));
+  const rawSha = sha(rawBytes);
+  eq(rawSha, '4f068c310fc527d6bc8189dec87a645251dae4dfcfbee57a00880635badc26a0');
+  eq(modernSha, 'd93723680e47259218d6038cfab7f9e6d852244b4e97bf3cb7c07a6fb09ce4e5');
+  const selected = JSON.parse(rawBytes).exercises.filter(e => Number(e.source_number) >= 1027 && Number(e.source_number) <= 1034);
+  eq(selected.length, 8);
+  const projected = selected.map(e => ({ number: e.number, source_number: e.source_number, text: e.text, pages: e.pages }));
+  const actual = load('actual-source.json');
+  assert.deepEqual(actual.exercises, projected);
+  eq(actual.source_sha256, rawSha);
+  const solutions = load('solutions.json');
+  const expectedIds = selected.flatMap(e => {
+    const parts = Array.from(e.text.matchAll(/([\u0430\u0431])\)/g), m => m[1] === '\u0430' ? 'a' : 'b');
+    return parts.length ? parts.map(part => `${e.number}${part}`) : [e.number];
+  });
+  eq(expectedIds.length, 15);
+  assert.deepEqual(solutions.tasks.map(t => t.id), expectedIds);
+  eq(solutions.exercise_count, selected.length);
+  eq(solutions.task_count, expectedIds.length);
+  eq(solutions.source_sha256, rawSha);
+  eq(solutions.modern_identity_sha256, modernSha);
+  const byId = Object.fromEntries(solutions.tasks.map(t => [t.id, t]));
+  const md = fs.readFileSync(path.join(root, 'solutions.md'), 'utf8');
+  assert.deepEqual(Array.from(md.matchAll(/^## (10\d{2}[ab]?)$/gm), m => m[1]), expectedIds);
+  const sourceText = Object.fromEntries(selected.map(e => [e.number, e.text]));
+  for (const task of solutions.tasks) {
+    if (task.literal_risk_quote) {
+      yes(sourceText[task.exercise].includes(task.literal_risk_quote));
+      yes(md.includes(task.literal_risk_quote));
+    }
+  }
+
+  // Verify all manually derived roots exactly after clearing rational denominators.
+  for (const task of solutions.tasks) {
+    record(`${task.id}:polynomial-and-domain`, () => {
+      const [a, b, c] = task.model.polynomial.coefficients;
+      const domain = {
+        '1027a': x => x > 2, '1027b': x => x > 3,
+        '1028a': x => x > 0, '1028b': x => x > 12,
+        '1029a': x => x > 4, '1029b': x => x > 0,
+        '1030a': x => x > 1, '1030b': x => x > 3,
+        '1031a': x => x > 0 && 270 / x > 4,
+        '1031b': x => x > 0 && 540 / x > 1,
+        '1032a': x => x >= 5, '1032b': x => x > 11,
+        '1033': x => x > 0, '1034a': x => x > 1,
+        '1034b': x => x > 0
+      }[task.id];
+      const roots = [...task.admissible_roots.map(value => ({ value, valid: true })),
+        ...task.rejected_roots.map(r => ({ value: r.value, valid: false }))];
+      eq(roots.length, 2);
+      for (const root of roots) {
+        const [n, d] = rational(root.value);
+        eq(a * n * n + b * n * d + c * d * d, 0);
+        eq(domain(n / d), root.valid);
+      }
+      const [n1, d1] = rational(roots[0].value);
+      const [n2, d2] = rational(roots[1].value);
+      eq(a * (n1 * d2 + n2 * d1), -b * d1 * d2);
+      eq(a * n1 * n2, c * d1 * d2);
+    });
+  }
+
+  record('1027a', () => {
+    const b = byId['1027a'].branches[0];
+    eq(b.a_rate_machines_per_day - b.b_rate_machines_per_day, 10);
+    eq(b.a_actual_days, b.planned_days - 2);
+    eq(b.b_actual_days, b.planned_days - 1);
+    eq(b.a_rate_machines_per_day * b.a_actual_days, 720);
+    eq(b.b_rate_machines_per_day * b.b_actual_days, 660 + 22);
+    eq(b.a_actual_output, 720); eq(b.b_actual_output, 682);
+  });
+  record('1027b', () => {
+    const b = byId['1027b'].branches[0];
+    eq(b.a_actual_days, b.planned_days - 3);
+    eq(b.b_actual_days, b.a_actual_days + 1);
+    eq(b.a_rate_parts_per_day * b.a_actual_days, 240);
+    eq(b.b_rate_parts_per_day * b.b_actual_days, 240);
+    eq(b.a_rate_parts_per_day - b.b_rate_parts_per_day, 8);
+    for (const example of byId['1027b'].ambiguity.examples) {
+      const [pn, pd] = rational(example.p), [qn, qd] = rational(example.q);
+      eq(pd, qd); eq(pn - qn, 8 * pd);
+      eq(pn * (example.T - 3) + qn * (example.T - 2), 240 * pd);
+      yes(example.T > 3 && example.T < 33 && qn > 0);
+    }
+  });
+  record('1028a', () => {
+    eq(324 * 100, 240 * 135);
+    eq(byId['1028a'].branches.length, 2);
+    for (const b of byId['1028a'].branches) {
+      yes(b.a_rate_ha_per_day > 0 && b.b_rate_ha_per_day > 0);
+      eq(b.b_rate_ha_per_day - b.a_rate_ha_per_day, 3);
+      eq(b.a_rate_ha_per_day * b.a_days, 240);
+      eq(b.b_rate_ha_per_day * b.b_days, 324);
+      eq(b.b_days - b.a_days, 2);
+    }
+  });
+  record('1028b', () => {
+    eq(byId['1028b'].branches.length, 2);
+    for (const b of byId['1028b'].branches) {
+      yes(b.second_area_ha > 0 && b.second_yield_source_quintals_per_ha > 0);
+      eq(b.first_area_ha - b.second_area_ha, 12);
+      eq(b.first_area_ha * b.first_yield_source_quintals_per_ha, 1440);
+      eq(b.second_area_ha * b.second_yield_source_quintals_per_ha, 1080);
+      eq(b.first_yield_source_quintals_per_ha - b.second_yield_source_quintals_per_ha, 2);
+    }
+  });
+  record('1029a', () => {
+    const b = byId['1029a'].branches[0];
+    eq(b.planned_rate_m3_per_day * b.planned_days, 4500);
+    eq(b.actual_rate_m3_per_day - b.planned_rate_m3_per_day, 45);
+    eq(b.actual_days_to_milestone, b.planned_days - 4);
+    eq(b.actual_rate_m3_per_day * b.actual_days_to_milestone, 4320);
+    eq(b.actual_milestone_m3 * 100, 4500 * 96);
+  });
+  record('1029b', () => {
+    eq(4320 * 100, 7200 * 60); eq(4320 + 2880, 7200);
+    eq(byId['1029b'].branches.length, 2);
+    for (const b of byId['1029b'].branches) {
+      yes(b.second_hours > 0 && b.second_rate_m2_per_hour > 0);
+      eq(b.first_hours - b.second_hours, 1);
+      eq(b.first_rate_m2_per_hour - b.second_rate_m2_per_hour, 120);
+      eq(b.first_rate_m2_per_hour * b.first_hours, 4320);
+      eq(b.second_rate_m2_per_hour * b.second_hours, 2880);
+    }
+  });
+  record('1030a', () => {
+    const b = byId['1030a'].branches[0];
+    eq(b.planned_rate_parts_per_day * b.planned_days, 360);
+    eq(b.actual_rate_parts_per_day - b.planned_rate_parts_per_day, 9);
+    eq(b.early_actual_days, b.planned_days - 1);
+    eq(b.early_actual_output, b.actual_rate_parts_per_day * b.early_actual_days);
+    eq(b.early_actual_output * 100, 360 * 105);
+    eq(b.deadline_output, b.actual_rate_parts_per_day * b.planned_days);
+    eq(b.deadline_output, b.early_actual_output + b.actual_rate_parts_per_day);
+    eq(b.deadline_output, 432);
+  });
+  record('1030b', () => {
+    const b = byId['1030b'].branches[0];
+    eq(b.milestone_ha * 100, b.planned_area_ha * 98);
+    eq(b.planned_rate_ha_per_day * b.planned_days, b.planned_area_ha);
+    eq(b.actual_rate_ha_per_day - b.planned_rate_ha_per_day, 2);
+    eq(b.actual_start, 2); eq(b.milestone_time, b.planned_days - 1);
+    eq(b.actual_work_days, b.milestone_time - b.actual_start);
+    eq(b.actual_rate_ha_per_day * b.actual_work_days, 49);
+  });
+  record('1031a', () => {
+    const b = byId['1031a'].branches[0];
+    eq(b.assigned_quota_parts_per_day * b.planned_days, 270);
+    eq(b.actual_rate_parts_per_day - b.assigned_quota_parts_per_day, 6);
+    eq(b.actual_days, b.planned_days - 4);
+    eq(b.actual_rate_parts_per_day * b.actual_days, 264);
+    eq(b.actual_output, 264); eq(b.planned_output, 270);
+    yes(b.actual_output < b.planned_output);
+  });
+  record('1031b', () => {
+    const b = byId['1031b'].branches[0];
+    eq(b.first_stage_ha * 100, 540 * 30);
+    eq(b.first_stage_ha + b.later_stage_ha, 540);
+    eq(b.planned_rate_ha_per_day * b.planned_days, 540);
+    eq(b.later_rate_ha_per_day - b.planned_rate_ha_per_day, 9);
+    eq(b.planned_rate_ha_per_day * b.first_stage_days, 162);
+    eq(b.later_rate_ha_per_day * b.later_stage_days, 378);
+    eq(b.actual_total_days, b.first_stage_days + b.later_stage_days);
+    eq(b.actual_total_days, b.planned_days - 1);
+  });
+  record('1032a', () => {
+    const b = byId['1032a'].branches[0];
+    eq(b.planned_daily_spending * b.planned_days, 72);
+    eq(b.actual_days, b.planned_days + 1);
+    eq(b.first_stage_days, 5); eq(b.later_stage_days, b.actual_days - 5);
+    eq(b.later_daily_spending - b.planned_daily_spending, 1);
+    eq(b.first_stage_days * b.planned_daily_spending + b.later_stage_days * b.later_daily_spending, 95);
+    eq(b.actual_cost, 95); eq(b.planned_budget, 72);
+    eq(b.actual_cost - b.planned_budget, b.excess_cost); eq(b.excess_cost, 23);
+    yes(b.later_stage_days > 0);
+    yes(3 + 1 < 5);
+  });
+  record('1032b', () => {
+    const b = byId['1032b'].branches[0];
+    eq(b.planned_daily_quota * b.planned_days, 272);
+    eq(b.later_daily_rate - b.planned_daily_quota, 4);
+    eq(b.first_stage_days, 10);
+    eq(b.early_later_stage_days, b.planned_days - 11);
+    eq(b.deadline_later_stage_days, b.planned_days - 10);
+    eq(10 * b.planned_daily_quota + b.early_later_stage_days * b.later_daily_rate, 280);
+    eq(10 * b.planned_daily_quota + b.deadline_later_stage_days * b.later_daily_rate, 300);
+    eq(b.early_actual_output, 280); eq(b.deadline_output, 300);
+    eq(b.deadline_output, b.early_actual_output + b.later_daily_rate);
+  });
+  record('1033', () => {
+    const b = byId['1033'].branches[0];
+    eq(b.first_solo_hours - b.second_solo_hours, 5);
+    eq(b.initial_solo_hours, 2); eq(b.joint_hours, 8);
+    eq(b.first_total_work_hours, b.initial_solo_hours + b.joint_hours);
+    eq(b.second_total_work_hours, b.joint_hours);
+    eq(b.total_elapsed_hours, 10);
+    eq(5 * (b.first_total_work_hours * b.second_solo_hours + b.second_total_work_hours * b.first_solo_hours), 4 * b.first_solo_hours * b.second_solo_hours);
+    const [initialN, initialD] = rational(b.initial_share);
+    eq(initialN * b.first_solo_hours, b.initial_solo_hours * initialD);
+    const [jointN, jointD] = rational(b.joint_stage_share);
+    eq(jointN * b.first_solo_hours * b.second_solo_hours, b.joint_hours * (b.first_solo_hours + b.second_solo_hours) * jointD);
+    eq(b.cumulative_share, '4/5');
+  });
+  record('1034a', () => {
+    const b = byId['1034a'].branches[0];
+    eq(b.first_solo_days - b.planned_days, 3);
+    eq(b.second_solo_days - b.planned_days, 8);
+    eq(b.planned_days - b.joint_days, 1);
+    eq((b.first_solo_days + b.second_solo_days) * b.joint_days, b.first_solo_days * b.second_solo_days);
+    yes(b.joint_days > 0 && b.first_solo_days > 0 && b.second_solo_days > 0);
+  });
+  record('1034b', () => {
+    const b = byId['1034b'].branches[0];
+    eq(b.first_solo_hours - b.joint_hours, 18);
+    eq(b.second_solo_hours - b.joint_hours, 32);
+    eq((b.first_solo_hours + b.second_solo_hours) * b.joint_hours, b.first_solo_hours * b.second_solo_hours);
+    yes(b.joint_hours > 0 && b.first_solo_hours > 0 && b.second_solo_hours > 0);
+  });
+
+  eq(history.commands.length, 23);
+  eq(history.commands.filter(c => c.exit_code !== 0).length, 9);
+  const completedAt = new Date().toISOString();
+  writeReceipt('math-receipt.json', {
+    status: 'passed', started_at: startedAt, completed_at: completedAt,
+    run_count: 1, independent_derivation_passes: 1,
+    scope: '8 exercises, 15 tasks; one substitution verification, no second solve or comparison',
+    method: 'Existing Node runtime; built-in modules only; exact integer products with rational denominators cleared',
+    root_coverage: 'Both roots of all fifteen quadratics verified by substitution and Vieta; rejected roots checked against domains',
+    integer_equalities: equalityCount, predicate_count: predicateCount,
+    math_failures: 0, task_receipts: receipts
+  });
+  writeReceipt('exec-receipt.json', {
+    command: 'node .tmp/resume182-4-supplement-source-review-1027-1034/FIRST/verify-once.mjs',
+    cwd, started_at: startedAt, completed_at: completedAt,
+    status: 'completed_checks_and_receipts', exit_code_on_normal_completion: 0,
+    inputs: { raw_sha256: rawSha, modern_identity_sha256: modernSha },
+    coverage: { exercises: selected.length, tasks: expectedIds.length },
+    usage: {
+      shell_commands_total: history.commands.length + 1,
+      shell_nonzero_exits_before_this_run: 9,
+      verification_runs: 1, math_verification_runs: 1, math_retries: 0,
+      independent_derivation_passes: 1, manual_apply_patch_calls: 2,
+      raw_json_structural_or_filtered_parses: 3,
+      raw_prose_display_passes: 1,
+      modern_hash_reads: 2, modern_content_parses_or_displays: 0,
+      paid_calls: 0, external_dependencies: 0, library_installs: 0,
+      comparison_runs: 0, publisher_or_finalize_runs: 0,
+      git_commands: 0, database_calls: 0,
+      browser_pdf_image_actions: 0, skill_loads: 0, agent_invocations: 0,
+      app_or_chat_actions: 0,
+      model_token_usage: null,
+      model_token_usage_note: 'Unavailable from authoritative telemetry in this run.'
+    },
+    preserved_failures: history.failures,
+    write_scope: root,
+    comparison: 'Not authorized and not performed.'
+  });
+  const names = ['solutions.md', 'solutions.json', 'actual-source.json', 'exec-history.json', 'verify-once.mjs', 'math-receipt.json', 'exec-receipt.json'];
+  const files = names.map(name => {
+    const bytes = fs.readFileSync(path.join(root, name));
+    return { path: path.join(root, name), bytes: bytes.length, sha256: sha(bytes) };
+  });
+  const freeze = {
+    stage: 'FIRST', status: 'frozen', frozen_at: new Date().toISOString(),
+    ticket: 'STEMROBIN-182', chat_label: '182-4:7a', lesson: 'alg7-c4-ex',
+    root, exercises: 8, tasks: 15,
+    source_sha256: rawSha, modern_identity_sha256: modernSha,
+    files,
+    self_hash: 'Excluded to avoid a recursive digest; contents emitted by the actual run.',
+    comparison: 'STOP. Separate human authorization required.',
+    limitation: 'Requested lessonproduction-resume guidance could not be located; no read claimed.'
+  };
+  writeReceipt('freeze.json', freeze);
+  console.log(JSON.stringify({
+    status: 'FIRST_FROZEN', exercises: 8, tasks: 15,
+    integer_equalities: equalityCount, predicates: predicateCount,
+    file_hashes: files,
+    freeze_path: path.join(root, 'freeze.json'),
+    freeze_sha256: sha(fs.readFileSync(path.join(root, 'freeze.json'))),
+    shell_commands_total: 24, nonzero_preflight_commands: 9,
+    math_runs: 1, math_failures: 0, paid_calls: 0,
+    comparison: 'NOT_PERFORMED; STOP'
+  }, null, 2));
+} catch (error) {
+  const name = fs.existsSync(path.join(root, 'exec-receipt.json')) ? 'exec-failure.json' : 'exec-receipt.json';
+  writeReceipt(name, {
+    command: 'node .tmp/resume182-4-supplement-source-review-1027-1034/FIRST/verify-once.mjs',
+    cwd, started_at: startedAt, failed_at: new Date().toISOString(),
+    status: 'failed', exit_code: 1, verification_runs: 1, retries: 0,
+    error: String(error), completed_task_receipts: receipts,
+    preserved_preflight_failures: history.failures,
+    frozen: false, comparison: 'Not performed.'
+  });
+  console.error(error);
+  process.exitCode = 1;
+}

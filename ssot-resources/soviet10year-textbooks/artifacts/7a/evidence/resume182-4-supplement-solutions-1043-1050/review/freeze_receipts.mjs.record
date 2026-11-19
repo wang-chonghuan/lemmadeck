@@ -1,0 +1,225 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+
+const root = "/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck";
+const own = path.join(root, ".tmp/resume182-4-supplement-source-review-1043-1050");
+const first = path.join(own, "FIRST");
+const sha = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const digest = (file) => sha(fs.readFileSync(file));
+const fail = (message) => { throw new Error(message); };
+const writeNew = (file, value) => fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { flag: "wx" });
+if (process.cwd() !== root) fail("Wrong cwd");
+if (fs.existsSync(path.join(own, "freeze-receipt.json"))) fail("Already frozen; refusing reuse or overwrite");
+const math = JSON.parse(fs.readFileSync(path.join(first, "math-receipt.json"), "utf8"));
+if (math.status !== "PASS" || math.exact_math_runs !== 1 || math.faults.length !== 0) fail("Math did not pass exactly once");
+const source = JSON.parse(fs.readFileSync(path.join(first, "source-receipt.json"), "utf8"));
+if (digest(source.raw_path) !== source.raw_sha256) fail("Raw changed before freeze");
+if (digest(source.modern_path) !== source.modern_sha256) fail("Modern changed before freeze");
+
+const governancePaths = [
+  ".intentfold/readme.md",
+  ".intentfold/charter/engineering.md",
+  ".claude/skills/ld-s10y-lesson/references/production-resume.md",
+];
+const governance = governancePaths.map((relative) => ({
+  path: path.join(root, relative),
+  sha256_at_freeze: digest(path.join(root, relative)),
+  access: "required_instruction_text_read",
+}));
+const scripts = ["exact_check.py", "freeze_receipts.mjs"].map((name) => ({
+  path: path.join(own, name),
+  sha256: digest(path.join(own, name)),
+}));
+
+writeNew(path.join(first, "execution-receipt.json"), {
+  ticket: "STEMROBIN-182",
+  continuation: "chat182-4",
+  role: "bounded independent source-only BLIND FIRST reviewer",
+  finish: "review",
+  cwd: root,
+  write_boundary: own,
+  governance_reads: governance,
+  source_receipt: "source-receipt.json",
+  math_receipt: "math-receipt.json",
+  observed_commands: [
+    { command: "sed -n '1,240p' .intentfold/readme.md", tool_chunk: "c08faa", exit_code: 0 },
+    { command: "sed -n '1,260p' .intentfold/charter/engineering.md", tool_chunk: "deca50", exit_code: 0 },
+    { command: "sed -n '1,280p' .claude/skills/ld-s10y-lesson/references/production-resume.md", tool_chunk: "2a64c0", exit_code: 0 },
+    {
+      command: "node -e <hash raw and modern; filter 1043-1050 before projecting number/source_number/text/figure_refs; test own path existence>",
+      tool_chunk: "0b4050",
+      exit_code: 0,
+      actual_output: {
+        raw_sha256: source.raw_sha256,
+        modern_sha256: source.modern_sha256,
+        modern_access: "hash_only",
+        filtered_exercise_count: 8,
+        own_directory_existed_before_first_write: false,
+        first_existed_before_first_write: false,
+      },
+    },
+    {
+      command: math.command,
+      exit_code: 0,
+      actual_output: {
+        status: math.status,
+        check_count: math.check_count,
+        exact_math_runs: math.exact_math_runs,
+        wall_elapsed_ns: math.wall_elapsed_ns,
+        cpu_elapsed_ns: math.cpu_elapsed_ns,
+        faults: math.faults,
+      },
+    },
+    {
+      command: "node .tmp/resume182-4-supplement-source-review-1043-1050/freeze_receipts.mjs",
+      stage_at_receipt: "this command: hashes, seals and permissions are verified before final stdout",
+      process_exit_evidence: "returned exec tool output; not guessed before process exit",
+    },
+  ],
+  edits: {
+    manual_edit_tool: "apply_patch",
+    manual_edit_calls: 2,
+    prewrite_commentary_updates: true,
+    existing_edits_discarded: false,
+    first_output_directory_preexisted: false,
+  },
+  counts: { exercises: 8, tasks: 17, independent_solve_passes: 1, exact_math_runs: 1, exact_checks: math.check_count },
+  faults: { tool_execution: [], source_hash_or_coverage: [], mathematical: [], unresolved: [] },
+  usage: {
+    exec_commands: 6,
+    parallel_wrapper_calls: 1,
+    apply_patch_calls: 2,
+    exact_math_runs: 1,
+    exact_math_wall_elapsed_ns: math.wall_elapsed_ns,
+    exact_math_cpu_elapsed_ns: math.cpu_elapsed_ns,
+    external_api_calls: 0,
+    paid_external_model_calls: 0,
+    image_calls: 0,
+    browser_calls: 0,
+    database_calls: 0,
+    git_calls: 0,
+    chat_or_agent_calls: 0,
+    publisher_calls: 0,
+    token_count: null,
+    token_count_status: "unknown; current reviewer model tokens are not exposed by available tools",
+    cost: null,
+    cost_status: "unknown; current reviewer model billing is not exposed; no paid external calls were made",
+    total_session_wall_time: null,
+    total_session_wall_time_status: "unknown; first tool start was not instrumented",
+  },
+  blindness: {
+    original_source_data_accessed: false,
+    author_solutions_history_answer_keys_choices_reviews_read: false,
+    modern_text_read: false,
+    pdf_image_browser_used: false,
+    comparison_authorized: false,
+    comparison_performed: false,
+    final_interaction_keys_produced: false,
+  },
+  stop: "FIRST is returned frozen before any parent-author disclosure; no comparison or further production is authorized.",
+});
+
+const payloadNames = [
+  "solutions.json",
+  "solutions.md",
+  "source-receipt.json",
+  "math-receipt.json",
+  "execution-receipt.json",
+];
+const payloads = payloadNames.map((name) => {
+  const file = path.join(first, name);
+  return { file: name, sha256: digest(file), bytes: fs.statSync(file).size, readonly_mode: "0444" };
+});
+writeNew(path.join(first, "freeze-manifest.json"), {
+  phase: "FIRST",
+  frozen_at_utc: new Date().toISOString(),
+  directory: first,
+  exercise_count: 8,
+  task_count: 17,
+  exact_math_runs: 1,
+  status: "PASS",
+  author_disclosure_seen: false,
+  comparison_authorized: false,
+  directory_readonly_mode: "0555",
+  payloads,
+  supporting_scripts: scripts,
+  hash_scheme: "SHA-256; payload manifest hashed in SHA256SUMS; SHA256SUMS hash recorded in outside freeze receipt",
+});
+const checksumNames = [...payloadNames, "freeze-manifest.json"];
+const checksumText = checksumNames.map((name) => `${digest(path.join(first, name))}  ${name}\n`).join("");
+fs.writeFileSync(path.join(first, "SHA256SUMS"), checksumText, { flag: "wx" });
+const allNames = [...checksumNames, "SHA256SUMS"];
+for (const name of allNames) fs.chmodSync(path.join(first, name), 0o444);
+fs.chmodSync(first, 0o555);
+const observed = allNames.map((name) => {
+  const file = path.join(first, name);
+  const mode = fs.statSync(file).mode & 0o777;
+  if (mode !== 0o444) fail(`File not read-only: ${name}`);
+  const checksum = digest(file);
+  const entry = payloads.find((item) => item.file === name);
+  if (entry && entry.sha256 !== checksum) fail(`Frozen payload changed: ${name}`);
+  return { file: name, sha256: checksum, bytes: fs.statSync(file).size, observed_mode: "0444" };
+});
+if ((fs.statSync(first).mode & 0o777) !== 0o555) fail("FIRST directory not read-only");
+for (const line of checksumText.trim().split("\n")) {
+  const [checksum, name] = line.split("  ");
+  if (digest(path.join(first, name)) !== checksum) fail(`Checksum verification failed: ${name}`);
+}
+for (const script of scripts) {
+  if (digest(script.path) !== script.sha256) fail("Supporting script changed");
+  fs.chmodSync(script.path, 0o444);
+}
+const receiptPath = path.join(own, "freeze-receipt.json");
+writeNew(receiptPath, {
+  status: "FROZEN_PASS",
+  frozen_and_verified_at_utc: new Date().toISOString(),
+  cwd: root,
+  first_directory: first,
+  observed_directory_mode: "0555",
+  exercise_count: 8,
+  task_count: 17,
+  independent_solve_passes: 1,
+  exact_math_runs: 1,
+  exact_check_count: math.check_count,
+  first_files: observed,
+  supporting_scripts: scripts,
+  faults: [],
+  author_disclosure_seen: false,
+  comparison_authorized: false,
+  usage: {
+    exec_commands: 6,
+    apply_patch_calls: 2,
+    exact_math_runs: 1,
+    exact_math_wall_elapsed_ns: math.wall_elapsed_ns,
+    exact_math_cpu_elapsed_ns: math.cpu_elapsed_ns,
+    paid_external_calls: 0,
+    tokens: null,
+    tokens_status: "unknown",
+    cost: null,
+    cost_status: "unknown",
+  },
+});
+fs.chmodSync(receiptPath, 0o444);
+console.log(JSON.stringify({
+  status: "FROZEN_PASS",
+  first_directory: first,
+  counts: { exercises: 8, tasks: 17, exact_math_runs: 1, exact_checks: math.check_count },
+  first_files: observed,
+  freeze_receipt_path: receiptPath,
+  freeze_receipt_sha256: digest(receiptPath),
+  supporting_scripts: scripts,
+  faults: [],
+  usage: {
+    exec_commands: 6,
+    apply_patch_calls: 2,
+    exact_math_runs: 1,
+    wall_elapsed_ns: math.wall_elapsed_ns,
+    cpu_elapsed_ns: math.cpu_elapsed_ns,
+    paid_external_calls: 0,
+    tokens: "unknown",
+    cost: "unknown",
+  },
+  permissions: { first_directory: "0555", first_files: "0444", supporting_files: "0444" },
+  comparison: "not authorized; not performed",
+}, null, 2));

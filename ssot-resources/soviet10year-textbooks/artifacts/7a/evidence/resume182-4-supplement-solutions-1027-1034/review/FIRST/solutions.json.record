@@ -1,0 +1,380 @@
+{
+  "artifact_kind": "blind-independent-source-solve-internal-ledger",
+  "stage": "FIRST",
+  "ticket": "STEMROBIN-182",
+  "chat_label": "182-4:7a",
+  "lesson": "alg7-c4-ex",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck",
+  "owned_root": ".tmp/resume182-4-supplement-source-review-1027-1034/FIRST",
+  "exercise_count": 8,
+  "task_count": 15,
+  "source_sha256": "4f068c310fc527d6bc8189dec87a645251dae4dfcfbee57a00880635badc26a0",
+  "modern_identity_sha256": "d93723680e47259218d6038cfab7f9e6d852244b4e97bf3cb7c07a6fb09ce4e5",
+  "blind_boundary": {
+    "source_filtered_before_display": true,
+    "source_filter": "1027 <= Number(source_number) <= 1034",
+    "modern_contents_displayed_or_used": false,
+    "whole_embedded_source_data_displayed": false,
+    "author_or_old_answers_or_keys_or_choices_or_reviews_read": false,
+    "independent_derivation_passes": 1,
+    "comparison_authorized": false,
+    "publisher_schema_or_final_key": false
+  },
+  "guidance": {
+    "read": [
+      ".intentfold/readme.md",
+      ".intentfold/charter/engineering.md",
+      ".intentfold/project.json",
+      ".intentfold/charter/operations.md (lines 1-220)",
+      ".intentfold/tickets/STEMROBIN-182/ticket.json"
+    ],
+    "requested_but_unlocated": ["lessonproduction-resume"],
+    "limitation": "Local filename and targeted configuration lookups did not locate this requested guidance; no read is claimed."
+  },
+  "tasks": [
+    {
+      "id": "1027a",
+      "exercise": 1027,
+      "part": "a",
+      "model": {
+        "variables": "T=planned days; p=A daily machines; q=B daily machines",
+        "domain": "T>2; p>0; q>0",
+        "equations": ["p=q+10", "p*(T-2)=720", "q*(T-1)=660+22=682"],
+        "polynomial": {"variable": "T", "coefficients": [5, -34, -312]}
+      },
+      "admissible_roots": [12],
+      "rejected_roots": [{"value": "-26/5", "reason": "Negative deadline and work durations."}],
+      "branches": [
+        {"planned_days": 12, "a_rate_machines_per_day": 72, "b_rate_machines_per_day": 62, "a_actual_days": 10, "b_actual_days": 11, "a_actual_output": 720, "b_actual_output": 682}
+      ],
+      "requested": "A: 72 machine tools/day; B: 62 machine tools/day.",
+      "checks": ["72*10=720", "62*11=682=660+22", "72-62=10"],
+      "status": "unique_under_stated_model"
+    },
+    {
+      "id": "1027b",
+      "exercise": 1027,
+      "part": "b",
+      "model": {
+        "variables": "T=planned days",
+        "domain": "T>3",
+        "assignment_scope": "Each group has a 240-part assignment; explicitly conditional because source does not say each.",
+        "equations": ["a_days=T-3", "b_days=T-2", "240/(T-3)-240/(T-2)=8"],
+        "polynomial": {"variable": "T", "coefficients": [1, -5, -24]}
+      },
+      "admissible_roots": [8],
+      "rejected_roots": [{"value": "-3", "reason": "Negative deadline and work durations."}],
+      "branches": [
+        {"planned_days": 8, "a_actual_days": 5, "b_actual_days": 6, "a_rate_parts_per_day": 48, "b_rate_parts_per_day": 40}
+      ],
+      "literal_quote": "两个劳动竞赛小组应当在某一期限内生产$240$个零件。",
+      "ambiguity": {
+        "alternative": "240 may denote the combined total rather than each assignment.",
+        "equations": ["p=q+8", "p*(T-3)+q*(T-2)=240", "q=(264-8*T)/(2*T-5)"],
+        "positive_domain": "3<T<33",
+        "consequence": "Continuum of positive solutions; deadline not determined.",
+        "examples": [
+          {"T": 8, "p": "288/11", "q": "200/11"},
+          {"T": 9, "p": "296/13", "q": "192/13"}
+        ]
+      },
+      "requested": "8 days under the each-240 reading; not uniquely determined under the combined-240 reading.",
+      "checks": ["48*5=240", "40*6=240", "48-40=8"],
+      "status": "assignment_scope_ambiguity"
+    },
+    {
+      "id": "1028a",
+      "exercise": 1028,
+      "part": "a",
+      "literal_risk_quote": "甲队比乙队每天少耕地$3$公顷，但仍甲比乙队提前 $2$ 天完成生产任务。",
+      "literal_risk_handling": "Retain 但仍甲 unchanged. Model only the explicit A-finishes-two-days-before-B timing relation; no proposed repair or erratum.",
+      "model": {
+        "variables": "x=A hectares/day; B rate=x+3",
+        "domain": "x>0",
+        "percent_base": "B area = A area * (1+35/100) = 240*1.35 = 324 hectares.",
+        "equations": ["b_days-a_days=2", "324/(x+3)-240/x=2"],
+        "polynomial": {"variable": "x", "coefficients": [1, -39, 360]}
+      },
+      "admissible_roots": [15, 24],
+      "rejected_roots": [],
+      "branches": [
+        {"a_rate_ha_per_day": 15, "b_rate_ha_per_day": 18, "a_days": 16, "b_days": 18},
+        {"a_rate_ha_per_day": 24, "b_rate_ha_per_day": 27, "a_days": 10, "b_days": 12}
+      ],
+      "requested": "(A,B)=(15,18) or (24,27) hectares/day.",
+      "checks": ["15*16=240; 18*18=324; 18-16=2", "24*10=240; 27*12=324; 12-10=2"],
+      "status": "two_admissible_branches_with_literal_risk",
+      "no_real_physical_result": false
+    },
+    {
+      "id": "1028b",
+      "exercise": 1028,
+      "part": "b",
+      "model": {
+        "variables": "x=first field hectares; second=x-12",
+        "domain": "x>12; both yields positive",
+        "equations": ["1440/x-1080/(x-12)=2"],
+        "polynomial": {"variable": "x", "coefficients": [1, -192, 8640]}
+      },
+      "admissible_roots": [72, 120],
+      "rejected_roots": [],
+      "branches": [
+        {"first_area_ha": 72, "second_area_ha": 60, "first_yield_source_quintals_per_ha": 20, "second_yield_source_quintals_per_ha": 18},
+        {"first_area_ha": 120, "second_area_ha": 108, "first_yield_source_quintals_per_ha": 12, "second_yield_source_quintals_per_ha": 10}
+      ],
+      "requested": "(first,second)=(72,60) or (120,108) hectares.",
+      "checks": ["72*20=1440; 60*18=1080; 20-18=2", "120*12=1440; 108*10=1080; 12-10=2"],
+      "status": "two_admissible_branches"
+    },
+    {
+      "id": "1029a",
+      "exercise": 1029,
+      "part": "a",
+      "model": {
+        "variables": "T=planned days",
+        "domain": "T>4",
+        "percent_base": "96% of planned 4500 m^3 = 4320 m^3.",
+        "equations": ["planned_rate=4500/T", "actual_rate=4500/T+45", "(4500/T+45)*(T-4)=4320"],
+        "polynomial": {"variable": "T", "coefficients": [1, 0, -400]}
+      },
+      "admissible_roots": [20],
+      "rejected_roots": [{"value": "-20", "reason": "Negative planned and actual durations."}],
+      "branches": [
+        {"planned_days": 20, "planned_rate_m3_per_day": 225, "actual_rate_m3_per_day": 270, "actual_days_to_milestone": 16, "actual_milestone_m3": 4320}
+      ],
+      "requested": "Planned construction period: 20 days.",
+      "checks": ["225*20=4500", "270-225=45", "270*16=4320"],
+      "status": "unique_under_stated_model"
+    },
+    {
+      "id": "1029b",
+      "exercise": 1029,
+      "part": "b",
+      "model": {
+        "variables": "t=second crew hours; first crew=t+1",
+        "domain": "t>0",
+        "percent_base": "First covers 60% of entire 7200 m^2 = 4320; second covers remaining 2880.",
+        "equations": ["4320/(t+1)-2880/t=120"],
+        "polynomial": {"variable": "t", "coefficients": [1, -11, 24]}
+      },
+      "admissible_roots": [3, 8],
+      "rejected_roots": [],
+      "branches": [
+        {"first_hours": 4, "second_hours": 3, "first_rate_m2_per_hour": 1080, "second_rate_m2_per_hour": 960},
+        {"first_hours": 9, "second_hours": 8, "first_rate_m2_per_hour": 480, "second_rate_m2_per_hour": 360}
+      ],
+      "requested": "(first,second)=(4,3) or (9,8) hours.",
+      "checks": ["1080*4=4320; 960*3=2880; 1080-960=120", "480*9=4320; 360*8=2880; 480-360=120"],
+      "status": "two_admissible_branches"
+    },
+    {
+      "id": "1030a",
+      "exercise": 1030,
+      "part": "a",
+      "model": {
+        "variables": "T=planned days",
+        "domain": "T>1",
+        "percent_base": "Early output = 105% of planned 360 = 378 parts.",
+        "equations": ["planned_rate=360/T", "actual_rate=360/T+9", "(360/T+9)*(T-1)=378", "deadline_output=(360/T+9)*T"],
+        "polynomial": {"variable": "T", "coefficients": [1, -3, -40]}
+      },
+      "admissible_roots": [8],
+      "rejected_roots": [{"value": "-5", "reason": "Negative deadline and work duration."}],
+      "branches": [
+        {"planned_days": 8, "planned_rate_parts_per_day": 45, "actual_rate_parts_per_day": 54, "early_actual_days": 7, "early_actual_output": 378, "deadline_output": 432}
+      ],
+      "requested": "432 parts at the original deadline.",
+      "checks": ["45*8=360", "54*7=378", "54*8=432"],
+      "status": "unique_under_stated_model"
+    },
+    {
+      "id": "1030b",
+      "exercise": 1030,
+      "part": "b",
+      "model": {
+        "variables": "T=assigned duration from planned start",
+        "domain": "T>3",
+        "percent_base": "49 ha is 98% of planned total; planned total=50 ha.",
+        "timeline": "Planned start 0; actual start 2; early milestone T-1; actual work duration T-3.",
+        "equations": ["planned_rate=50/T", "actual_rate=50/T+2", "(50/T+2)*(T-3)=49"],
+        "polynomial": {"variable": "T", "coefficients": [2, -5, -150]}
+      },
+      "admissible_roots": [10],
+      "rejected_roots": [{"value": "-15/2", "reason": "Negative assigned and actual durations."}],
+      "branches": [
+        {"planned_days": 10, "planned_area_ha": 50, "planned_rate_ha_per_day": 5, "actual_rate_ha_per_day": 7, "actual_start": 2, "milestone_time": 9, "actual_work_days": 7, "milestone_ha": 49}
+      ],
+      "requested": "Assigned completion period: 10 days.",
+      "checks": ["5*10=50", "7*(9-2)=49", "49*100=50*98"],
+      "status": "unique_under_stated_model"
+    },
+    {
+      "id": "1031a",
+      "exercise": 1031,
+      "part": "a",
+      "model": {
+        "variables": "q=assigned daily quota; T=270/q",
+        "domain": "q>0; 270/q>4",
+        "equations": ["actual_rate=q+6", "(q+6)*(270/q-4)=264"],
+        "polynomial": {"variable": "q", "coefficients": [2, 9, -810]}
+      },
+      "admissible_roots": [18],
+      "rejected_roots": [{"value": "-45/2", "reason": "Negative daily quota and planned duration."}],
+      "branches": [
+        {"assigned_quota_parts_per_day": 18, "planned_days": 15, "actual_rate_parts_per_day": 24, "actual_days": 11, "actual_output": 264, "planned_output": 270}
+      ],
+      "literal_quote": "由于超额完成任务",
+      "semantic_limit": "The literal phrase cannot make 264 exceed the planned total 270. The numerical model uses daily-rate overperformance; a separate demand that 264>270 has no solution.",
+      "requested": "Assigned daily quota: 18 parts; planned period: 15 days.",
+      "checks": ["18*15=270", "24*11=264", "24-18=6", "15-11=4"],
+      "status": "unique_numerical_model_with_semantic_tension"
+    },
+    {
+      "id": "1031b",
+      "exercise": 1031,
+      "part": "b",
+      "literal_risk_quote": "并按期限提前 $1$ 天结果收割任务。",
+      "literal_risk_handling": "Retain 结果收割任务 unchanged. No corrected wording or erratum supplied.",
+      "model": {
+        "variables": "q=planned original ha/day; T=540/q",
+        "domain": "q>0; T>1",
+        "assumptions": "Before the extra harvester arrives the planned original rate applies; the unusual ending sentence is interpreted as completion of all 540 ha one day early.",
+        "percent_base": "First 30% of planned 540 = 162 ha; remaining 70% = 378 ha.",
+        "equations": ["162/q+378/(q+9)=540/q-1", "q*(q+9)=3402"],
+        "polynomial": {"variable": "q", "coefficients": [1, 9, -3402]}
+      },
+      "admissible_roots": [54],
+      "rejected_roots": [{"value": "-63", "reason": "Negative original and increased rates, with negative stage durations."}],
+      "branches": [
+        {"planned_rate_ha_per_day": 54, "later_rate_ha_per_day": 63, "planned_days": 10, "first_stage_ha": 162, "later_stage_ha": 378, "first_stage_days": 3, "later_stage_days": 6, "actual_total_days": 9}
+      ],
+      "requested": "Actual harvest duration: 9 days, conditional on the completion interpretation.",
+      "checks": ["54*3=162", "63*6=378", "162+378=540", "3+6=10-1"],
+      "ambiguity": "Without interpreting the literal ending as completion, the final harvested area is unspecified and duration is not determined.",
+      "status": "conditional_completion_model_with_literal_risk",
+      "no_real_physical_result": false
+    },
+    {
+      "id": "1032a",
+      "exercise": 1032,
+      "part": "a",
+      "model": {
+        "variables": "T=planned days; p=72/T source rubles/day; actual days=T+1",
+        "domain": "T>4 for actual five-day stage plus later days; T>=5 for planned coverage of first five days",
+        "timeline": "5 days at p; T-4 days at p+1; actual total=T+1.",
+        "equations": ["5*(72/T)+(T-4)*(72/T+1)=72+23=95", "T+72/T=27"],
+        "polynomial": {"variable": "T", "coefficients": [1, -27, 72]}
+      },
+      "admissible_roots": [24],
+      "rejected_roots": [{"value": "3", "reason": "Actual trip would last 4 days, shorter than the stated first 5 days; later-stage duration would be -1 day."}],
+      "branches": [
+        {"planned_days": 24, "actual_days": 25, "planned_daily_spending": 3, "later_daily_spending": 4, "first_stage_days": 5, "later_stage_days": 20, "planned_budget": 72, "actual_cost": 95, "excess_cost": 23}
+      ],
+      "currency_boundary": "Source rubles. Currency wording alone is not conversion; numerals 72,5,1,1,23 remain fixed. No modern contents used or changed.",
+      "requested": "Actual trip: 25 days.",
+      "checks": ["3*24=72", "5*3+20*4=95", "95-72=23", "5+20=24+1"],
+      "status": "unique_after_timeline_domain_check"
+    },
+    {
+      "id": "1032b",
+      "exercise": 1032,
+      "part": "b",
+      "model": {
+        "variables": "T=planned days; q=272/T parts/day",
+        "domain": "T>11",
+        "timeline": "First 10 days at q; T-11 days at q+4 reach 280 at T-1; one more day at q+4 reaches deadline.",
+        "equations": ["10*q+(T-11)*(q+4)=280", "T^2-13*T-68=0", "deadline_output=280+(q+4)"],
+        "polynomial": {"variable": "T", "coefficients": [1, -13, -68]}
+      },
+      "admissible_roots": [17],
+      "rejected_roots": [{"value": "-4", "reason": "Negative deadline, daily quota, and later-stage duration."}],
+      "branches": [
+        {"planned_days": 17, "planned_daily_quota": 16, "later_daily_rate": 20, "first_stage_days": 10, "early_later_stage_days": 6, "deadline_later_stage_days": 7, "planned_output": 272, "early_actual_output": 280, "deadline_output": 300}
+      ],
+      "requested": "300 parts within the original period.",
+      "checks": ["16*17=272", "10*16+6*20=280", "10*16+7*20=300"],
+      "status": "unique_under_stated_model"
+    },
+    {
+      "id": "1033",
+      "exercise": 1033,
+      "part": null,
+      "model": {
+        "variables": "x=second machine solo hours; first=x+5",
+        "domain": "x>0",
+        "percent_base": "80% is cumulative harvested share of the whole field after the initial solo and subsequent joint stages.",
+        "timeline": "First alone 2 h, then joint 8 h; first total 10 h, second total 8 h.",
+        "equations": ["2/(x+5)+8*(1/(x+5)+1/x)=4/5", "10/(x+5)+8/x=4/5"],
+        "polynomial": {"variable": "x", "coefficients": [2, -35, -100]}
+      },
+      "admissible_roots": [20],
+      "rejected_roots": [{"value": "-5/2", "reason": "Second solo time is negative, so its rate is not physical."}],
+      "branches": [
+        {"first_solo_hours": 25, "second_solo_hours": 20, "initial_solo_hours": 2, "joint_hours": 8, "total_elapsed_hours": 10, "first_total_work_hours": 10, "second_total_work_hours": 8, "initial_share": "2/25", "joint_stage_share": "18/25", "cumulative_share": "4/5"}
+      ],
+      "requested": "First machine: 25 hours alone; second machine: 20 hours alone.",
+      "checks": ["25-20=5", "2/25+8*(1/25+1/20)=4/5"],
+      "status": "unique_under_stated_model"
+    },
+    {
+      "id": "1034a",
+      "exercise": 1034,
+      "part": "a",
+      "model": {
+        "variables": "T=deadline days; first=T+3; second=T+8; joint=T-1",
+        "domain": "T>1",
+        "equations": ["1/(T+3)+1/(T+8)=1/(T-1)", "(2*T+11)*(T-1)=(T+3)*(T+8)"],
+        "polynomial": {"variable": "T", "coefficients": [1, -2, -35]}
+      },
+      "admissible_roots": [7],
+      "rejected_roots": [{"value": "-5", "reason": "Negative deadline; first solo and joint durations would be negative."}],
+      "branches": [
+        {"planned_days": 7, "first_solo_days": 10, "second_solo_days": 15, "joint_days": 6}
+      ],
+      "requested": "First group: 10 days alone; second group: 15 days alone.",
+      "checks": ["1/10+1/15=1/6", "10-7=3", "15-7=8", "7-6=1"],
+      "status": "unique_under_stated_model"
+    },
+    {
+      "id": "1034b",
+      "exercise": 1034,
+      "part": "b",
+      "model": {
+        "variables": "t=joint hours; first=t+18; second=t+32",
+        "domain": "t>0",
+        "equations": ["1/(t+18)+1/(t+32)=1/t", "t*(2*t+50)=(t+18)*(t+32)"],
+        "polynomial": {"variable": "t", "coefficients": [1, 0, -576]}
+      },
+      "admissible_roots": [24],
+      "rejected_roots": [{"value": "-24", "reason": "Negative joint duration and negative first solo duration."}],
+      "branches": [
+        {"first_solo_hours": 42, "second_solo_hours": 56, "joint_hours": 24}
+      ],
+      "requested": "First tractor: 42 hours alone; second tractor: 56 hours alone.",
+      "checks": ["1/42+1/56=1/24", "42-24=18", "56-24=32"],
+      "status": "unique_under_stated_model"
+    }
+  ],
+  "summary": {
+    "two_numerical_branch_tasks": ["1028a", "1028b", "1029b"],
+    "literal_risk_tasks": ["1028a", "1031b"],
+    "additional_semantic_limit_tasks": ["1027b", "1031a"],
+    "empty_physical_solution_sets_in_declared_models": [],
+    "comparison": "Not performed; stop after FIRST freeze."
+  },
+  "verification": {
+    "status": "incomplete_due_to_harness_failure",
+    "actual_run_count": 1,
+    "retries": 0,
+    "source_projection_and_input_hashes_passed": true,
+    "actual_source_derived_exercise_count": 8,
+    "actual_source_derived_task_count": 15,
+    "completed_polynomial_and_domain_receipts": ["1027a", "1027b", "1028a", "1028b"],
+    "failed_at": "1029a Vieta root-sum check",
+    "failure": "Node strict equality rejects actual 0 versus expected -0.",
+    "full_task_output_substitution_receipts_completed": 0,
+    "later_checks": "Not reached; no passing claim.",
+    "freeze_scope": "Independent derivations, source snapshot, and actual failed verification evidence.",
+    "failure_receipt": "exec-receipt.json"
+  }
+}

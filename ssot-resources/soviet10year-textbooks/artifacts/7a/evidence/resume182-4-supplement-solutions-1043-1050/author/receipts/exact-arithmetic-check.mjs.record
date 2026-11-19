@@ -1,0 +1,355 @@
+import fs from "node:fs";
+import crypto from "node:crypto";
+import assert from "node:assert/strict";
+import { performance } from "node:perf_hooks";
+
+const root = "/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck";
+const draftPath = `${root}/.tmp/resume182-4-supplement-solutions-author/1043-1050.json`;
+const receiptPath = `${root}/.tmp/resume182-4-supplement-solutions-author/1043-1050-author/exact-arithmetic-receipt.json`;
+const startedAt = new Date().toISOString();
+const started = performance.now();
+const cpuStart = process.cpuUsage();
+const sha = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+assert.equal(process.cwd(), root, "Explicit authorized checkout required");
+assert.equal(fs.existsSync(receiptPath), false, "Never overwrite or rerun a receipted check");
+
+const draftBytes = fs.readFileSync(draftPath);
+const draft = JSON.parse(draftBytes);
+const sourceBytes = fs.readFileSync(`${root}/${draft.provenance.raw_path}`);
+const templateHash = sha(fs.readFileSync(`${root}/${draft.provenance.modern_template_path}`));
+assert.equal(sha(sourceBytes), draft.provenance.raw_sha256);
+assert.equal(templateHash, draft.provenance.modern_template_sha256);
+const sourceDocument = JSON.parse(sourceBytes);
+const allSource = Array.isArray(sourceDocument) ? sourceDocument : sourceDocument.exercises;
+assert.ok(Array.isArray(allSource));
+const source = allSource.filter((item) => Number(item.number) >= 1043 && Number(item.number) <= 1050);
+assert.equal(source.length, 8);
+const sourceText = new Map(source.map((item) => [Number(item.number), item.text]));
+const tasks = draft.exercises.flatMap((exercise) => exercise.tasks);
+assert.equal(draft.exercises.length, 8);
+assert.equal(tasks.length, 17);
+assert.equal(new Set(tasks.map((task) => task.id)).size, 17);
+assert.deepEqual(draft.exercises.map((exercise) => exercise.number), draft.scope.exercise_numbers);
+for (const exercise of draft.exercises) {
+  for (const task of exercise.tasks) {
+    for (const excerpt of Object.values(task.source_excerpt)) {
+      assert.ok(sourceText.get(exercise.number).includes(excerpt), `Nonverbatim source excerpt: ${task.id}`);
+    }
+    assert.ok(task.domain && task.reasoning.length && task.branches.length && task.caveats.length);
+  }
+}
+const byId = new Map(tasks.map((task) => [task.id, task]));
+
+function gcd(a, b) {
+  a = a < 0n ? -a : a;
+  b = b < 0n ? -b : b;
+  while (b) [a, b] = [b, a % b];
+  return a;
+}
+
+function q(value, denominator = 1n) {
+  if (value && typeof value === "object" && "n" in value) return value;
+  let n;
+  let d;
+  if (typeof value === "string" && value.includes("/")) {
+    const pieces = value.split("/");
+    assert.equal(pieces.length, 2);
+    [n, d] = pieces.map(BigInt);
+  } else {
+    n = BigInt(value);
+    d = BigInt(denominator);
+  }
+  assert.notEqual(d, 0n);
+  if (d < 0n) [n, d] = [-n, -d];
+  const divisor = gcd(n, d);
+  return { n: n / divisor, d: d / divisor };
+}
+
+const add = (a, b) => {
+  a = q(a);
+  b = q(b);
+  return q(a.n * b.d + b.n * a.d, a.d * b.d);
+};
+const neg = (a) => { a = q(a); return q(-a.n, a.d); };
+const sub = (a, b) => add(a, neg(b));
+const mul = (a, b) => { a = q(a); b = q(b); return q(a.n * b.n, a.d * b.d); };
+const div = (a, b) => { a = q(a); b = q(b); assert.notEqual(b.n, 0n); return q(a.n * b.d, a.d * b.n); };
+const sq = (a) => mul(a, a);
+const text = (a) => { a = q(a); return a.d === 1n ? `${a.n}` : `${a.n}/${a.d}`; };
+const equal = (a, b) => assert.deepEqual(q(a), q(b));
+const polynomial = (a, b, c, x) => add(add(mul(a, sq(x)), mul(b, x)), c);
+const discriminant = (a, b, c) => sub(sq(b), mul(mul(4, a), c));
+
+const receipts = [];
+const record = (id, details) => receipts.push({ task_id: id, status: "PASS", exact: details });
+function checkRoots(a, b, c, roots) {
+  equal(add(...roots), div(neg(b), a));
+  equal(mul(...roots), div(c, a));
+  roots.forEach((x) => equal(polynomial(a, b, c, x), 0));
+  return {
+    coefficients: [a, b, c].map(text),
+    roots: roots.map(text),
+    sum: text(add(...roots)),
+    product: text(mul(...roots)),
+    substitution_residuals: roots.map((x) => text(polynomial(a, b, c, x))),
+    discriminant: text(discriminant(a, b, c))
+  };
+}
+
+// Symbolic certificates avoid treating a finite sample of parameters as a proof.
+equal(discriminant(7, 0, -23), 644);
+equal(byId.get("1043").requested_values.root_product, div(-23, 7));
+assert.equal(byId.get("1043").requested_values.discriminant, "b^2+644");
+assert.equal(byId.get("1043").requested_values.positive_root, "(-b+sqrt(b^2+644))/14");
+assert.equal(byId.get("1043").requested_values.negative_root, "(-b-sqrt(b^2+644))/14");
+record("1043", {
+  symbolic_discriminant: { b_squared_coefficient: "1", constant: "644" },
+  product: "-23/7",
+  sign_certificate: "For real b, b^2+644>b^2>=0, so sqrt(b^2+644)>|b|; denominator 14>0.",
+  implication: "Both root formulas are real and have opposite strict signs."
+});
+
+const threshold = div(sub(sq(70), 48), 48);
+equal(threshold, byId.get("1044").requested_values.real_root_threshold_for_a_squared);
+equal(div(-70, 24), byId.get("1044").requested_values.repeated_root);
+equal(sub(sq(70), 48), 4852);
+equal(div(4852, 4), 1213);
+equal(div(48, 4), 12);
+record("1044", {
+  symbolic_discriminant: { a_squared_coefficient: "-48", constant: "4852" },
+  real_root_threshold_a_squared: text(threshold),
+  repeated_root: "-35/12",
+  symbolic_nonnegative_x_certificate: "12*x^2>=0, 70*x>=0, a^2+1>0 for real a and x>=0; therefore polynomial>0.",
+  root_sum: "-35/6",
+  real_root_product: "(a^2+1)/12>0",
+  branch_certificate: "D>0: two negative real roots; D=0: repeated negative root; D<0: two nonreal conjugates, no real roots."
+});
+
+const branches1045 = byId.get("1045").branches;
+assert.deepEqual(byId.get("1045").requested_values.b_values, ["-5", "5"]);
+assert.deepEqual(branches1045.map((branch) => branch.b), ["-5", "5"]);
+equal(add(sq("1/6"), mul(4, "1/6")), "25/36");
+record("1045", {
+  b_squared: text(mul(36, add(sq("1/6"), mul(4, "1/6")))),
+  branches: branches1045.map((branch) => {
+    const roots = [branch.larger_root, branch.smaller_root];
+    equal(sub(...roots), "1/6");
+    assert.ok(q(roots[0]).n * q(roots[1]).d > q(roots[1]).n * q(roots[0]).d);
+    return { ...checkRoots(6, branch.b, 1, roots), larger_minus_smaller: text(sub(...roots)) };
+  })
+});
+
+const values1046a = byId.get("1046a").requested_values;
+equal(values1046a.c, 5);
+equal(values1046a.difference, "4/5");
+equal(sub(values1046a.larger_root, values1046a.smaller_root), values1046a.difference);
+record("1046a", {
+  ...checkRoots(25, -30, values1046a.c, [values1046a.larger_root, values1046a.smaller_root]),
+  difference: text(sub(values1046a.larger_root, values1046a.smaller_root))
+});
+
+const branches1046b = byId.get("1046b").branches;
+assert.deepEqual(byId.get("1046b").requested_values.b_values, ["-50", "50"]);
+assert.deepEqual(branches1046b.map((branch) => branch.b), ["-50", "50"]);
+equal(div("25/24", "3/2"), "25/36");
+record("1046b", {
+  denominator_root_squared: "25/36",
+  branches: branches1046b.map((branch) => {
+    const roots = [branch.ratio_numerator_root, branch.ratio_denominator_root];
+    equal(div(...roots), "3/2");
+    return { ...checkRoots(24, branch.b, 25, roots), ratio: text(div(...roots)) };
+  })
+});
+
+const values1047 = byId.get("1047").requested_values;
+equal(values1047.c, 6);
+equal(values1047.squared_difference, "7/4");
+const roots1047 = [values1047.root_with_larger_square, values1047.root_with_smaller_square];
+equal(sub(sq(roots1047[0]), sq(roots1047[1])), "7/4");
+equal(sub(...roots1047), "-1/2");
+record("1047", {
+  ...checkRoots(2, 7, values1047.c, roots1047),
+  signed_root_difference_in_square_order: text(sub(...roots1047)),
+  square_difference_in_square_order: text(sub(sq(roots1047[0]), sq(roots1047[1]))),
+  square_difference_in_larger_numeric_root_order: text(sub(sq(roots1047[1]), sq(roots1047[0]))),
+  c_derivation: text(mul(2, div(sub(sq("-7/2"), sq("-1/2")), 4)))
+});
+
+const values1048 = byId.get("1048").requested_values;
+equal(values1048.b, -1);
+equal(values1048.c, -4);
+equal(values1048.specified_root, "4/3");
+equal(values1048.root_equal_to_second_coefficient, values1048.b);
+record("1048", {
+  ...checkRoots(3, values1048.b, values1048.c, [values1048.specified_root, values1048.root_equal_to_second_coefficient]),
+  second_root_equals_b: true
+});
+
+const values1049 = byId.get("1049").requested_values;
+equal(values1049.a, 1);
+equal(values1049.c, 4);
+assert.ok(q(values1049.a).n > 0n);
+assert.notEqual(q(values1049.c).n, 0n);
+equal(mul(sq(values1049.a), values1049.c), values1049.c);
+assert.deepEqual(values1049.roots, ["1", "4"]);
+const excluded1049 = byId.get("1049").branches.find((branch) => branch.admissible === false);
+assert.equal(excluded1049.a, "-1");
+assert.equal(excluded1049.c, "-4");
+const excludedCertificate = checkRoots(-1, -5, -4, ["-1", "-4"]);
+record("1049", {
+  ...checkRoots(values1049.a, -5, values1049.c, values1049.roots),
+  restrictions_met: { a_positive: true, c_nonzero: true },
+  excluded_negative_a_branch: { ...excludedCertificate, admissible: false, reason: "a<0" },
+  completeness_certificate: "ac=c/a and a!=0,c!=0 imply a^2=1; a>0 selects a=1 uniquely, then a+c=5/a selects c=4."
+});
+
+// Quadratic field values use exact rational pairs u+v*sqrt(d).
+const field = (u, v = 0) => [q(u), q(v)];
+const fieldAdd = (x, y) => [add(x[0], y[0]), add(x[1], y[1])];
+const fieldMul = (x, y, d) => [
+  add(mul(x[0], y[0]), mul(mul(x[1], y[1]), d)),
+  add(mul(x[0], y[1]), mul(x[1], y[0]))
+];
+const fieldScale = (x, scalar) => x.map((part) => mul(part, scalar));
+const fieldText = (x, d) => ({ rational: text(x[0]), radical_coefficient: text(x[1]), radicand: `${d}` });
+function parseRoot(expression, d) {
+  const compact = expression.replaceAll(" ", "");
+  if (!compact.includes("sqrt(")) return field(compact);
+  const simple = compact.match(/^(-?)sqrt\((\d+)\)$/);
+  if (simple) {
+    assert.equal(Number(simple[2]), d);
+    return field(0, simple[1] ? -1 : 1);
+  }
+  const unwrapped = compact.match(/^\((.+)\)\/(\d+)$/);
+  const numerator = unwrapped ? unwrapped[1] : compact;
+  const denominator = unwrapped ? unwrapped[2] : "1";
+  const compound = numerator.match(/^(-?\d+)([+-])(?:(\d+)\*)?sqrt\((\d+)\)$/);
+  assert.ok(compound, `Unsupported exact radical expression: ${expression}`);
+  assert.equal(Number(compound[4]), d);
+  return field(
+    div(compound[1], denominator),
+    div(`${compound[2] === "-" ? "-" : ""}${compound[3] || "1"}`, denominator)
+  );
+}
+
+const expected1050 = [
+  ["1050a", 0, ["10", "12"], ["1", "-22", "120"]],
+  ["1050b", 0, ["-3", "8"], ["1", "-5", "-24"]],
+  ["1050c", 0, ["-7", "0"], ["1", "7", "0"]],
+  ["1050d", 0, ["1/3", "3"], ["3", "-10", "3"]],
+  ["1050e", 0, ["-2/5", "-1/10"], ["50", "25", "2"]],
+  ["1050f", 5, ["-sqrt(5)", "sqrt(5)"], ["1", "0", "-5"]],
+  ["1050g", 3, ["2-sqrt(3)", "2+sqrt(3)"], ["1", "-4", "1"]],
+  ["1050h", 30, ["(11-2*sqrt(30))/5", "(11+2*sqrt(30))/5"], ["25", "-110", "1"]],
+  ["1050i", 2, ["(-10-7*sqrt(2))/3", "(-10+7*sqrt(2))/3"], ["9", "60", "2"]]
+];
+for (const [id, d, expectedRootText, expectedCoefficients] of expected1050) {
+  const values = byId.get(id).requested_values;
+  assert.deepEqual(values.roots, expectedRootText);
+  assert.deepEqual(values.canonical_coefficients, expectedCoefficients);
+  const [a, b, c] = values.canonical_coefficients;
+  assert.notEqual(q(a).n, 0n);
+  const roots = values.roots.map((expression) => parseRoot(expression, d));
+  const sum = fieldAdd(...roots);
+  const product = fieldMul(...roots, d);
+  equal(sum[0], values.root_sum);
+  equal(sum[1], 0);
+  equal(product[0], values.root_product);
+  equal(product[1], 0);
+  equal(sum[0], div(neg(b), a));
+  equal(product[0], div(c, a));
+  const residuals = roots.map((x) => fieldAdd(
+    fieldAdd(fieldScale(fieldMul(x, x, d), a), fieldScale(x, b)),
+    field(c)
+  ));
+  residuals.forEach((residual) => { equal(residual[0], 0); equal(residual[1], 0); });
+  const D = discriminant(a, b, c);
+  assert.ok(D.n > 0n, "All prescribed root pairs must be distinct and real");
+  record(id, {
+    source_root_expressions: expectedRootText,
+    exact_roots: roots.map((x) => fieldText(x, d)),
+    sum: text(sum[0]),
+    product: text(product[0]),
+    canonical_coefficients: [a, b, c],
+    exact_substitution_residuals: residuals.map((x) => fieldText(x, d)),
+    discriminant: text(D),
+    scalar_certificate: "For nonzero lambda, lambda*P(y)=0 iff P(y)=0; lambda=0 is not quadratic."
+  });
+}
+
+assert.deepEqual(receipts.map((receipt) => receipt.task_id), tasks.map((task) => task.id));
+assert.equal(receipts.length, 17);
+const finishedAt = new Date().toISOString();
+const elapsedMs = performance.now() - started;
+const cpu = process.cpuUsage(cpuStart);
+const receipt = {
+  purpose: "Single exact-arithmetic author check, not independent content review.",
+  status: "PASS",
+  exercise_count: 8,
+  task_count: 17,
+  source_excerpt_checks: "All 17 task excerpts match the authorized filtered source verbatim; 1050 shared request and local subpart checked separately.",
+  inputs: {
+    draft_path: draftPath,
+    draft_sha256: sha(draftBytes),
+    raw_sha256: sha(sourceBytes),
+    modern_template_sha256_hash_only: templateHash,
+    checker_path: new URL(import.meta.url).pathname,
+    checker_sha256: sha(fs.readFileSync(new URL(import.meta.url)))
+  },
+  execution: {
+    started_at_utc: startedAt,
+    finished_at_utc: finishedAt,
+    elapsed_ms: elapsedMs,
+    cpu_user_microseconds: cpu.user,
+    cpu_system_microseconds: cpu.system,
+    node_version: process.version,
+    command: "node .tmp/resume182-4-supplement-solutions-author/1043-1050-author/exact-arithmetic-check.mjs",
+    cwd: process.cwd(),
+    arithmetic: "BigInt rational arithmetic and exact quadratic-field pairs; no floating-point root evaluations, external dependencies, model calls, browser calls, or DB access.",
+    exact_arithmetic_run_count: 1
+  },
+  incremental_usage: {
+    authored_exercises: 8,
+    authored_tasks: 17,
+    author_passes: 1,
+    exact_arithmetic_runs: 1,
+    content_revision_passes: 0,
+    independent_reviews: 0,
+    external_model_calls: 0,
+    image_calls: 0,
+    browser_calls: 0,
+    database_calls: 0,
+    publication_calls: 0,
+    agent_dispatches: 0,
+    token_usage: null,
+    token_usage_note: "Actual incremental chat input, output, reasoning, and cache token counters are unavailable to this bounded author.",
+    cost: null,
+    cost_note: "Actual incremental cost is unavailable; do not infer zero cost from zero external model calls.",
+    total_author_elapsed_time: null,
+    total_author_elapsed_time_note: "No complete turn-level start/stop telemetry is available; exact-check elapsed time is measured above."
+  },
+  faults: [],
+  caveats: [
+    "1044 establishes absence of positive real roots, not universal existence of negative roots.",
+    "1045 and 1046b retain both coefficient-sign branches.",
+    "1047 retains the difference-of-squares ordering ambiguity without source repair.",
+    "1049 retains a>0 and c!=0, excluding the negative-a algebraic branch.",
+    "1050 canonical equations are representatives; nonzero scalar multiples are acceptable.",
+    "This check verifies the authored exact arithmetic and structural scope only; it does not perform a second author pass, independent review, publisher-schema check, or publication."
+  ],
+  tasks: receipts
+};
+fs.writeFileSync(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`, { flag: "wx" });
+console.log(JSON.stringify({
+  status: receipt.status,
+  exercise_count: receipt.exercise_count,
+  task_count: receipt.task_count,
+  receipt_path: receiptPath,
+  receipt_sha256: sha(fs.readFileSync(receiptPath)),
+  draft_sha256: receipt.inputs.draft_sha256,
+  checker_sha256: receipt.inputs.checker_sha256,
+  execution: receipt.execution,
+  incremental_usage: receipt.incremental_usage,
+  faults: receipt.faults,
+  task_receipts: receipts
+}, null, 2));

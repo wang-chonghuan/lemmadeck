@@ -1,0 +1,401 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { performance } from "node:perf_hooks";
+
+const cwd = "/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck";
+const out = path.join(cwd, ".tmp/resume182-4-supplement-source-review-1035-1042");
+const rawPath = path.join(cwd, "ssot-resources/soviet10year-textbooks/artifacts/7a/lessons/alg7-c4-ex/exercises.json");
+const modernPath = path.join(cwd, ".tmp/resume182-4-supplement-modern/adapt/7a/modern-us-neutral/lessons/alg7-c4-ex/exercises.template.json");
+const startedAt = new Date().toISOString();
+const timer = performance.now();
+const checks = [];
+const faults = [];
+const covered = new Set();
+const writeJson = (name, value) => fs.writeFileSync(path.join(out, name), `${JSON.stringify(value, null, 2)}\n`, { flag: "wx" });
+const hashBytes = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+
+// Exclusive creation makes a second math invocation stop before any assertions.
+if (process.cwd() !== cwd) throw new Error("Explicit authorized cwd mismatch");
+writeJson("run-start.json", { stage: "FIRST", started_at: startedAt, pid: process.pid, invocation: 1, maximum_math_invocations: 1 });
+
+const abs = (n) => n < 0n ? -n : n;
+const gcd = (a, b) => {
+  a = abs(a);
+  b = abs(b);
+  while (b !== 0n) [a, b] = [b, a % b];
+  return a;
+};
+
+class Q {
+  constructor(n, d = 1n) {
+    n = BigInt(n);
+    d = BigInt(d);
+    if (d === 0n) throw new Error("Zero rational denominator");
+    if (d < 0n) [n, d] = [-n, -d];
+    const g = gcd(n, d);
+    this.n = n / g;
+    this.d = d / g;
+  }
+  static from(value) {
+    if (value instanceof Q) return value;
+    const [n, d = "1"] = String(value).split("/");
+    return new Q(n, d);
+  }
+  add(v) { v = Q.from(v); return new Q(this.n * v.d + v.n * this.d, this.d * v.d); }
+  neg() { return new Q(-this.n, this.d); }
+  sub(v) { return this.add(Q.from(v).neg()); }
+  mul(v) { v = Q.from(v); return new Q(this.n * v.n, this.d * v.d); }
+  div(v) { v = Q.from(v); return new Q(this.n * v.d, this.d * v.n); }
+  sign() { return this.n < 0n ? -1 : this.n > 0n ? 1 : 0; }
+  eq(v) { v = Q.from(v); return this.n === v.n && this.d === v.d; }
+  toString() { return this.d === 1n ? String(this.n) : `${this.n}/${this.d}`; }
+}
+
+class E {
+  constructor(a, b = "0", d = 0) {
+    this.a = Q.from(a);
+    this.b = Q.from(b);
+    this.d = this.b.sign() === 0 ? 0n : BigInt(d);
+    if (this.d < 0n || (this.b.sign() !== 0 && this.d === 0n)) throw new Error("Invalid real radical");
+  }
+  static from(value) {
+    if (value instanceof E) return value;
+    return Array.isArray(value) ? new E(...value) : new E(value);
+  }
+  compatible(v) {
+    v = E.from(v);
+    if (this.d !== 0n && v.d !== 0n && this.d !== v.d) throw new Error("Mixed radical fields");
+    return [v, this.d || v.d];
+  }
+  add(v) { const [w, d] = this.compatible(v); return new E(this.a.add(w.a), this.b.add(w.b), d); }
+  neg() { return new E(this.a.neg(), this.b.neg(), this.d); }
+  sub(v) { return this.add(E.from(v).neg()); }
+  mul(v) {
+    const [w, d] = this.compatible(v);
+    return new E(this.a.mul(w.a).add(this.b.mul(w.b).mul(d)), this.a.mul(w.b).add(this.b.mul(w.a)), d);
+  }
+  divRational(v) {
+    v = E.from(v);
+    if (v.b.sign() !== 0) throw new Error("Division requires rational denominator");
+    return new E(this.a.div(v.a), this.b.div(v.a), this.d);
+  }
+  eq(v) {
+    const [w] = this.compatible(v);
+    return this.a.eq(w.a) && this.b.eq(w.b);
+  }
+  sign() {
+    const a = this.a.sign();
+    const b = this.b.sign();
+    if (b === 0) return a;
+    if (a === 0 || a === b) return b;
+    const cmp = this.a.mul(this.a).sub(this.b.mul(this.b).mul(this.d)).sign();
+    return cmp === 0 ? 0 : cmp > 0 ? a : b;
+  }
+  toString() {
+    return this.b.sign() === 0 ? this.a.toString() : `(${this.a})+(${this.b})*sqrt(${this.d})`;
+  }
+}
+
+const e = E.from;
+const check = (id, satisfied, details = {}) => {
+  checks.push({ id, satisfied: Boolean(satisfied), ...details });
+};
+const equal = (id, actual, expected) => {
+  actual = e(actual);
+  expected = e(expected);
+  check(id, actual.eq(expected), { actual: actual.toString(), expected: expected.toString() });
+};
+const greater = (a, b) => e(a).sub(b).sign() > 0;
+const polynomial = (coefficients, x) => {
+  const [a, b, c] = coefficients.map(e);
+  return a.mul(x).mul(x).add(b.mul(x)).add(c);
+};
+const rootSet = (id, coefficients, roots) => {
+  const [a, b, c] = coefficients.map(e);
+  check(`${id}.nonzero-leading-coefficient`, a.sign() !== 0);
+  check(`${id}.two-roots-counting-multiplicity`, roots.length === 2);
+  roots.forEach((root, i) => equal(`${id}.root-${i + 1}-substitution`, polynomial(coefficients, root), "0"));
+  equal(`${id}.root-sum`, e(roots[0]).add(roots[1]), b.neg().divRational(a));
+  equal(`${id}.root-product`, e(roots[0]).mul(roots[1]), c.divRational(a));
+};
+const inspectTask = (id, fn) => {
+  covered.add(id);
+  try { fn(); }
+  catch (error) {
+    faults.push({ kind: "MATH_EXECUTION_EXCEPTION", task: id, message: error.message, stack: error.stack });
+    check(`${id}.execution`, false, { error: error.message });
+  }
+};
+
+let solution;
+let sourceReceipt;
+try {
+  solution = JSON.parse(fs.readFileSync(path.join(out, "solutions.json"), "utf8"));
+  const rawBytes = fs.readFileSync(rawPath);
+  // Modern bytes are passed to SHA-256 only: no decoding, parsing or wording access.
+  const modernSha = hashBytes(fs.readFileSync(modernPath));
+  const rawSha = hashBytes(rawBytes);
+  if (rawSha !== solution.source_sha256 || modernSha !== solution.modern_sha256_hash_only) throw new Error("Source hash mismatch; dependent mathematical checks stopped");
+  const raw = JSON.parse(rawBytes.toString("utf8"));
+  const items = Array.isArray(raw) ? raw : raw.exercises;
+  if (!Array.isArray(items)) throw new Error("Raw exercise array not located; do not broaden blind input");
+  const projection = items
+    .filter((item) => {
+      const number = Number(item.source_number ?? item.number);
+      return Number.isInteger(number) && number >= 1035 && number <= 1042;
+    })
+    .map(({ number, source_number, text, figure_refs }) => ({ number, source_number, text, figure_refs }));
+  const projectedNumbers = projection.map((item) => Number(item.source_number ?? item.number));
+  const sourceTaskCount = projection.reduce((count, item) => count + Math.max(1, (item.text.match(/[\u0430\u0431\u0432\u0433]\)/g) ?? []).length), 0);
+  check("source.eight-exercises", projection.length === 8, { actual: projection.length, expected: 8 });
+  check("source.exact-range", JSON.stringify([...projectedNumbers].sort((a, b) => a - b)) === JSON.stringify([1035, 1036, 1037, 1038, 1039, 1040, 1041, 1042]));
+  check("source.seventeen-tasks", sourceTaskCount === 17, { actual: sourceTaskCount, expected: 17 });
+  const projectionText = `${JSON.stringify(projection, null, 2)}\n`;
+  fs.writeFileSync(path.join(out, "source-projection.json"), projectionText, { flag: "wx" });
+  sourceReceipt = {
+    stage: "FIRST",
+    actual_read_at: new Date().toISOString(),
+    raw: { path: rawPath, sha256: rawSha, hash_matches_authorized: true, filtered_before_projection: true, selected_fields: ["number", "source_number", "text", "figure_refs"], exercise_count: projection.length, task_count: sourceTaskCount },
+    modern: { path: modernPath, sha256: modernSha, hash_matches_authorized: true, access: "bytes-to-SHA256-only", parsed: false, decoded: false, source_data_read: false },
+    frozen_projection: { path: path.join(out, "source-projection.json"), sha256: hashBytes(Buffer.from(projectionText)) },
+    instruction_reads: [
+      { path: path.join(cwd, ".intentfold/readme.md"), actual_exec_chunk: "595216", actual_exit_code: 0 },
+      { path: path.join(cwd, ".intentfold/charter/engineering.md"), actual_exec_chunk: "41ed5b", actual_exit_code: 0 },
+      { path: path.join(cwd, ".claude/skills/ld-s10y-lesson/references/production-resume.md"), actual_exec_chunk: "097064", actual_exit_code: 0 }
+    ],
+    initial_hash_command: { actual_exec_chunk: "919500", actual_exit_code: 0 },
+    first_filtered_display_command: { actual_exec_chunk: "1ec3b5", actual_exit_code: 0, fields: ["number", "source_number", "text", "figure_refs"], filtering_preceded_display: true },
+    destination_absent_check: { actual_exec_chunk: "824d19", actual_exit_code: 0 },
+    figures_opened: [],
+    prohibited_inputs_read: [],
+    disclosure_or_comparison: false
+  };
+  writeJson("source-receipt.json", sourceReceipt);
+
+  const tasks = new Map(solution.tasks.map((task) => [task.id, task]));
+  inspectTask("1035a", () => {
+    const task = tasks.get("1035a");
+    rootSet("1035a", ["1", "-130", "2625"], task.candidates.map((c) => c.t));
+    task.candidates.forEach((c, i) => {
+      equal(`1035a.${i}.length`, e("150").sub(e(c.t).mul("2")), c.length);
+      equal(`1035a.${i}.width`, e("110").sub(e(c.t).mul("2")), c.width);
+      equal(`1035a.${i}.area`, e(c.length).mul(c.width), "6000");
+      check(`1035a.${i}.domain`, c.admissible === (greater(c.t, "0") && greater("55", c.t)));
+    });
+  });
+  inspectTask("1035b", () => {
+    const task = tasks.get("1035b");
+    rootSet("1035b", ["1", "-66", "800"], task.candidates.map((c) => c.length));
+    task.candidates.forEach((c, i) => {
+      equal(`1035b.${i}.original-area`, e(c.length).mul(c.width), "1200");
+      equal(`1035b.${i}.expanded-area`, e(c.length).add("4").mul(e(c.width).add("6")), "1620");
+      check(`1035b.${i}.positive`, c.admissible === (greater(c.length, "0") && greater(c.width, "0")));
+    });
+    check("1035b.longer-side-only-first", greater(task.candidates[0].length, task.candidates[0].width) && !greater(task.candidates[1].length, task.candidates[1].width));
+  });
+  inspectTask("1036a", () => {
+    const task = tasks.get("1036a");
+    rootSet("1036a", ["1", "-5", "-1050"], task.candidates.map((c) => c.length));
+    task.candidates.forEach((c, i) => {
+      equal(`1036a.${i}.original-area`, e(c.length).mul(c.width), "840");
+      equal(`1036a.${i}.changed-area`, e(c.length).sub("5").mul(e(c.width).add("4")), "840");
+      check(`1036a.${i}.domain`, c.admissible === (greater(c.length, "5") && greater(c.width, "0")));
+    });
+  });
+  inspectTask("1036b", () => {
+    const c = tasks.get("1036b").candidates[0];
+    rootSet("1036b", ["1", "-80", "1600"], [c.length, c.length]);
+    equal("1036b.original-area", e(c.length).mul(c.width), "1200");
+    equal("1036b.changed-area", e(c.length).add("8").mul(e(c.width).add("6")), "1728");
+    check("1036b.positive-double-root", greater(c.length, "0") && greater(c.width, "0") && c.multiplicity === 2);
+  });
+  inspectTask("1037a", () => {
+    const task = tasks.get("1037a");
+    rootSet("1037a", ["1", "-40", "-176"], task.candidates.map((c) => c.side));
+    task.candidates.forEach((c, i) => {
+      equal(`1037a.${i}.base`, e(c.side).mul(c.side), c.base_area);
+      equal(`1037a.${i}.lateral`, e(c.side).mul("40"), c.lateral_area);
+      equal(`1037a.${i}.difference`, e(c.base_area).sub(c.lateral_area), "176");
+      check(`1037a.${i}.domain`, c.admissible === greater(c.side, "0"));
+    });
+  });
+  inspectTask("1037b", () => {
+    const task = tasks.get("1037b");
+    rootSet("1037b", ["1", "-26", "120"], task.candidates.map((c) => c.cut));
+    task.candidates.forEach((c, i) => {
+      const width = e("30").sub(e(c.cut).mul("2"));
+      const length = e("48").sub(e(c.cut).mul("2"));
+      equal(`1037b.${i}.width`, width, c.width);
+      equal(`1037b.${i}.length`, length, c.length);
+      equal(`1037b.${i}.base`, width.mul(length), c.base_area);
+      equal(`1037b.${i}.lateral`, width.add(length).mul(c.cut).mul("2"), c.lateral_area);
+      equal(`1037b.${i}.areas-equal`, c.base_area, c.lateral_area);
+      check(`1037b.${i}.domain`, c.admissible === (greater(c.cut, "0") && greater("15", c.cut)));
+    });
+  });
+  inspectTask("1038", () => {
+    const task = tasks.get("1038");
+    const rotated = task.branches.find((b) => b.id === "parallel-6-rotated");
+    rootSet("1038.rotated-short", ["1", "-37", "36"], rotated.candidates.map((c) => c.u));
+    rotated.candidates.forEach((c, i) => {
+      equal(`1038.${i}.total-width`, e(c.u).add(c.other), "37");
+      equal(`1038.${i}.rotated-similarity`, e(c.u).mul(c.other), "36");
+      equal(`1038.${i}.first-area`, e(c.u).mul("6"), c.areas[0]);
+      equal(`1038.${i}.second-area`, e(c.other).mul("6"), c.areas[1]);
+      check(`1038.${i}.unequal-positive`, greater(c.u, "0") && greater(c.other, "0") && !e(c.u).eq(c.other));
+    });
+    const sameShort = task.branches.find((b) => b.id === "parallel-6-unrotated").candidates[0];
+    equal("1038.direct-short-congruent", sameShort.u, sameShort.other);
+    equal("1038.direct-short-width", e(sameShort.u).add(sameShort.other), "37");
+    const sameLong = task.branches.find((b) => b.id === "parallel-37-unrotated").candidates[0];
+    equal("1038.direct-long-congruent", sameLong.v, sameLong.other);
+    equal("1038.direct-long-height", e(sameLong.v).add(sameLong.other), "6");
+    // 9-v(6-v)=(v-3)^2 >= 0, excluding the required product 1369.
+    check("1038.long-rotated-impossible-bound", greater("1369", "9"));
+    check("1038.original-similar-short-widths-do-not-fill", !e("36/37").mul("2").eq("37"));
+    check("1038.original-similar-long-height-too-large", greater("1369/6", "6"));
+    check("1038.direct-pieces-rejected", sameShort.admissible === false && sameLong.admissible === false);
+  });
+  inspectTask("1039", () => {
+    const task = tasks.get("1039");
+    const near = task.branches.find((b) => b.id === "near-strip-is-similar");
+    rootSet("1039.near", ["1", "9", "-792"], near.candidates.map((c) => c.a));
+    for (const branch of task.branches.filter((b) => b.candidates)) {
+      branch.candidates.forEach((c, i) => {
+        const label = `1039.${branch.id}.${i}`;
+        equal(`${label}.semiperimeter`, e(c.a).add(c.b), "88");
+        equal(`${label}.near-area`, e(c.a).mul("9"), c.near_area);
+        equal(`${label}.far-area`, e(c.a).mul(e(c.b).sub("9")), c.far_area);
+        const product = branch.id === "near-strip-is-similar" ? e(c.b).mul("9") : e(c.b).mul(e(c.b).sub("9"));
+        equal(`${label}.similarity`, e(c.a).mul(c.a), product);
+        check(`${label}.domain`, c.admissible === (greater(c.a, "0") && greater(c.b, "9")));
+      });
+    }
+    const far = task.branches.find((b) => b.id === "far-complement-is-similar").candidates[0];
+    equal("1039.far-linear-elimination", e(far.b).mul("167"), "7744");
+    equal("1039.far-height", e(far.b).sub("9"), far.far_height);
+    check("1039.far-unique-linear-coefficient", greater("167", "0"));
+    check("1039.unrotated-impossible-near", !greater("9", "9"));
+    check("1039.unrotated-impossible-far", !e(far.b).sub("9").eq(far.b));
+  });
+  inspectTask("1040", () => {
+    const task = tasks.get("1040");
+    const branch = (id) => task.branches.find((b) => b.id === id);
+    rootSet("1040.standard", ["1", "-49", "600"], branch("BE15-DF40").candidates.map((c) => c.x));
+    rootSet("1040.mixed-y", ["1", "-64", "600"], branch("BE15-AF40").candidates.map((c) => c.y));
+    rootSet("1040.mixed-x", ["1", "-89", "600"], branch("AE15-DF40").candidates.map((c) => c.x));
+    task.branches.forEach((b) => b.candidates.forEach((c, i) => {
+      const label = `1040.${b.id}.${i}`;
+      equal(`${label}.semiperimeter`, e(c.x).add(c.y), "49");
+      equal(`${label}.line-through-C`, e(c.x).mul(c.v).add(e(c.y).mul(c.u)), e(c.u).mul(c.v));
+      equal(`${label}.first-extension`, b.id.startsWith("BE") ? e(c.u).sub(c.x) : c.u, "15");
+      equal(`${label}.second-extension`, b.id.endsWith("DF40") ? e(c.v).sub(c.y) : c.v, "40");
+      if (c.area !== undefined) equal(`${label}.area`, e(c.x).mul(c.y), c.area);
+      const valid = greater(c.x, "0") && greater(c.y, "0") && greater(c.u, c.x) && greater(c.v, c.y);
+      check(`${label}.external-positive-domain`, c.admissible === valid);
+    }));
+    equal("1040.full-intercept-x-unique", e("-27/5").mul("25"), "-135");
+    check("1040.full-intercepts-positive-triangle-bound", greater("49", "40"));
+  });
+  for (const id of ["1041a", "1041b", "1041c", "1041d"]) inspectTask(id, () => {
+    const task = tasks.get(id);
+    rootSet(id, task.coefficients, task.roots);
+    equal(`${id}.stated-vieta-sum`, e(task.roots[0]).add(task.roots[1]), task.vieta.sum);
+    equal(`${id}.stated-vieta-product`, e(task.roots[0]).mul(task.roots[1]), task.vieta.product);
+    const [a, b, c] = task.coefficients.map(e);
+    const discriminant = b.mul(b).sub(a.mul(c).mul("4"));
+    equal(`${id}.discriminant`, discriminant, { "1041a": "2", "1041b": "300", "1041c": "8", "1041d": "72" }[id]);
+    check(`${id}.two-distinct-real-roots`, greater(discriminant, "0") && !e(task.roots[0]).eq(task.roots[1]));
+  });
+  const parameterCoefficients = {
+    "1042a": (b) => ["2", b, "-10"],
+    "1042b": (b) => ["3", b, "24"],
+    "1042c": (b) => [e(b).sub("1"), e(b).add("1"), "-72"],
+    "1042d": (b) => [e(b).sub("5"), e(b).add("2").neg(), b]
+  };
+  for (const id of ["1042a", "1042b", "1042c", "1042d"]) inspectTask(id, () => {
+    const task = tasks.get(id);
+    const coefficients = parameterCoefficients[id](task.b);
+    coefficients.forEach((c, i) => equal(`${id}.coefficient-${i}`, c, task.coefficients[i]));
+    equal(`${id}.given-root`, polynomial(coefficients, task.given_root), "0");
+    const atZero = polynomial(parameterCoefficients[id]("0"), task.given_root);
+    const slope = polynomial(parameterCoefficients[id]("1"), task.given_root).sub(atZero);
+    check(`${id}.unique-parameter-nonzero-slope`, slope.sign() !== 0, { actual: slope.toString() });
+    equal(`${id}.parameter-substitution-linear`, slope.mul(task.b).add(atZero), "0");
+    equal(`${id}.parameter-value`, atZero.neg().divRational(slope), task.b);
+    rootSet(id, task.coefficients, task.roots);
+    if (task.degenerate) {
+      const d = task.degenerate;
+      const dc = parameterCoefficients[id](d.b);
+      dc.forEach((c, i) => equal(`${id}.degenerate-coefficient-${i}`, c, d.coefficients[i]));
+      equal(`${id}.degenerate-leading`, dc[0], "0");
+      check(`${id}.degenerate-truly-linear`, e(dc[1]).sign() !== 0);
+      equal(`${id}.degenerate-root`, polynomial(dc, d.roots[0]), "0");
+      equal(`${id}.degenerate-unique-root`, e(dc[2]).neg().divRational(dc[1]), d.roots[0]);
+      check(`${id}.degenerate-rejects-given-root`, polynomial(dc, task.given_root).sign() !== 0 && d.satisfies_given_root === false);
+    }
+  });
+  const expected = ["1035a", "1035b", "1036a", "1036b", "1037a", "1037b", "1038", "1039", "1040", "1041a", "1041b", "1041c", "1041d", "1042a", "1042b", "1042c", "1042d"];
+  check("coverage.exact-seventeen-tasks", tasks.size === 17 && JSON.stringify([...covered].sort()) === JSON.stringify([...expected].sort()));
+  check("coverage.eight-exercises", new Set([...covered].map((id) => id.slice(0, 4))).size === 8);
+} catch (error) {
+  faults.push({ kind: "SOURCE_OR_EXECUTION_FAILURE", message: error.message, stack: error.stack });
+}
+
+const failedChecks = checks.filter((entry) => !entry.satisfied);
+const exitCode = faults.length || failedChecks.length ? 1 : 0;
+const completedAt = new Date().toISOString();
+const elapsedMs = Math.round((performance.now() - timer) * 1000) / 1000;
+writeJson("math-receipt.json", {
+  stage: "FIRST",
+  method: "One offline exact BigInt rational/quadratic-surd arithmetic run; no floating-point verdicts or external engine.",
+  invocation: 1,
+  reruns: 0,
+  exercises_covered: new Set([...covered].map((id) => id.slice(0, 4))).size,
+  tasks_covered: covered.size,
+  check_count: checks.length,
+  satisfied_check_count: checks.length - failedChecks.length,
+  failed_check_count: failedChecks.length,
+  all_checks_satisfied: exitCode === 0,
+  assertions: checks,
+  execution_faults: faults,
+  failed_checks: failedChecks,
+  source_interpretation_faults: solution?.source_faults ?? [],
+  source_ambiguities_resolved_by_author: false,
+  visual_approval: false
+});
+writeJson("execution-receipt.json", {
+  stage: "FIRST",
+  command: "node .tmp/resume182-4-supplement-source-review-1035-1042/review-once.mjs",
+  cwd: process.cwd(),
+  started_at: startedAt,
+  completed_at: completedAt,
+  elapsed_ms: elapsedMs,
+  pid: process.pid,
+  runtime: { executable: process.execPath, version: process.version, platform: process.platform, architecture: process.arch },
+  actual_math_invocations: 1,
+  reruns: 0,
+  process_exit_code_set: exitCode,
+  one_shot_guard: "Exclusive run-start.json prevents a second mathematical run.",
+  failure_receipts_preserved: true,
+  outcome: exitCode === 0 ? "CHECKS_SATISFIED_WITH_SOURCE_QUALIFICATIONS" : "FAILURE_PRESERVED_NO_RERUN",
+  usage: { solve_passes: 1, math_runs: 1, paid_calls: 0, images: 0, pdfs: 0, browser: 0, database: 0, publisher: 0, dependencies_installed: 0, author_disclosures: 0, comparisons: 0, model_tokens: null, model_cost: null, unknown_reason: "No current-chat token/cost meter exposed" }
+});
+process.exitCode = exitCode;
+console.log(JSON.stringify({
+  stage: "FIRST",
+  outcome: exitCode === 0 ? "CHECKS_SATISFIED_WITH_SOURCE_QUALIFICATIONS" : "FAILURE_PRESERVED_NO_RERUN",
+  exercise_count: new Set([...covered].map((id) => id.slice(0, 4))).size,
+  task_count: covered.size,
+  check_count: checks.length,
+  failed_check_count: failedChecks.length,
+  execution_fault_count: faults.length,
+  math_runs: 1,
+  elapsed_ms: elapsedMs,
+  intended_exit_code: exitCode,
+  output: out,
+  solutions_sha256: hashBytes(fs.readFileSync(path.join(out, "solutions.json"))),
+  source_receipt_written: Boolean(sourceReceipt),
+  frozen: false
+}, null, 2));

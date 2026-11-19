@@ -1,0 +1,413 @@
+import fs from "node:fs";
+import crypto from "node:crypto";
+import path from "node:path";
+
+const cwd = "/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck";
+if (process.cwd() !== cwd) throw new Error("Explicit authorized cwd required");
+const root = path.join(cwd, ".tmp/resume182-4-supplement-solutions-author");
+const candidatePath = path.join(root, "1035-1042.json");
+const receiptPath = path.join(root, "1035-1042-author/math-receipt.json");
+if (fs.existsSync(receiptPath)) {
+  throw new Error("One-run receipt already exists; rerun prohibited");
+}
+const startedAt = new Date().toISOString();
+const candidateBytes = fs.readFileSync(candidatePath);
+const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const checks = [];
+const faults = [];
+const touchedTasks = new Set();
+let data;
+const record = (task, name, fn) => {
+  touchedTasks.add(task);
+  try {
+    const evidence = fn();
+    checks.push({ task, name, status: "CHECKED", evidence });
+  } catch (error) {
+    const fault = { task, name, error: String(error.message || error) };
+    faults.push(fault);
+    checks.push({ ...fault, status: "FAULT" });
+  }
+};
+const insist = (condition, message) => {
+  if (!condition) throw new Error(message);
+};
+const rational = (value) => Array.isArray(value) ? value[0] / value[1] : value;
+const near = (actual, expected, label) => {
+  insist(Number.isFinite(actual) && Number.isFinite(expected), `${label}: nonfinite number`);
+  const error = Math.abs(actual - expected);
+  const tolerance = 1e-10 * Math.max(1, Math.abs(actual), Math.abs(expected));
+  insist(error <= tolerance, `${label}: ${actual} != ${expected}`);
+  return { actual, expected, absolute_error: error, tolerance };
+};
+const task = (id) => {
+  const found = data.tasks.find((item) => item.task_id === id);
+  insist(found, `Missing task ${id}`);
+  return found;
+};
+const qvalue = (q, x) => {
+  const [a, b, c] = q.map(rational);
+  return a * x * x + b * x + c;
+};
+const rootsCheck = (q, roots) => {
+  const [a, b, c] = q.map(rational);
+  insist(a !== 0 && roots.length === 2, "Nondegenerate quadratic with two roots required");
+  const evaluatedRoots = roots.map(rational);
+  const residuals = evaluatedRoots.map((x) => near(qvalue(q, x), 0, "root residual"));
+  const sum = near(evaluatedRoots[0] + evaluatedRoots[1], -b / a, "Vieta sum");
+  const product = near(evaluatedRoots[0] * evaluatedRoots[1], c / a, "Vieta product");
+  return { coefficients: [a, b, c], roots: evaluatedRoots, residuals, sum, product };
+};
+
+record("_ledger", "parse-and-scope", () => {
+  data = JSON.parse(candidateBytes);
+  const expected = [
+    "1035a", "1035b", "1036a", "1036b", "1037a", "1037b", "1038", "1039",
+    "1040", "1041a", "1041b", "1041c", "1041d", "1042a", "1042b", "1042c", "1042d"
+  ];
+  insist(JSON.stringify(data.tasks.map((item) => item.task_id)) === JSON.stringify(expected), "Task scope/order mismatch");
+  insist(data.scope.exercise_count === 8 && data.scope.task_count === 17, "Scope counts mismatch");
+  insist(new Set(data.tasks.map((item) => item.exercise_number)).size === 8, "Exercise coverage mismatch");
+  for (const item of data.tasks) {
+    insist(item.source_excerpt && item.domain && item.derivation?.length, `${item.task_id}: incomplete author fields`);
+  }
+  insist(data.inputs.raw_sha256 === "4f068c310fc527d6bc8189dec87a645251dae4dfcfbee57a00880635badc26a0", "Raw hash binding mismatch");
+  insist(data.inputs.modern_sha256 === "d93723680e47259218d6038cfab7f9e6d852244b4e97bf3cb7c07a6fb09ce4e5", "Modern hash binding mismatch");
+  insist(data.boundaries.figures["fig-66"].opened === false && data.boundaries.figures["fig-66"].rendered === false, "Figure boundary mismatch");
+  return { exercise_count: 8, task_count: expected.length, ids: expected };
+});
+
+if (data?.tasks) {
+  for (const item of data.tasks) {
+    if (item.check_data.quadratic && item.check_data.algebraic_roots) {
+      record(item.task_id, "quadratic-roots-and-vieta", () =>
+        rootsCheck(item.check_data.quadratic, item.check_data.algebraic_roots));
+    }
+  }
+
+  record("1035a", "physical-setback-and-area", () => {
+    const item = task("1035a"), d = item.check_data;
+    const admitted = d.algebraic_roots.filter((t) => t > 0 && t < 55);
+    insist(JSON.stringify(admitted) === JSON.stringify(d.admissible_roots), "Setback domain filter mismatch");
+    near(item.answer.setback_m, admitted[0], "authored setback");
+    const sides = [150 - 2 * admitted[0], 110 - 2 * admitted[0]];
+    near(sides[0], item.answer.length_m, "authored length");
+    near(sides[1], item.answer.width_m, "authored width");
+    near(sides[0] * sides[1], item.answer.area_m2, "authored lawn area");
+    near(sides[0] * sides[1], (4 / 11) * 150 * 110, "required lawn fraction");
+    return { admitted, sides, area: sides[0] * sides[1], rejected: [105] };
+  });
+
+  record("1035b", "all-labelled-positive-branches", () => {
+    const d = task("1035b").check_data;
+    const pairs = d.algebraic_roots.map((l) => [l, 1200 / l]);
+    insist(JSON.stringify(pairs) === JSON.stringify(d.positive_pairs), "Positive branch mismatch");
+    const evidence = pairs.map(([l, w]) => {
+      insist(l > 0 && w > 0, "Nonpositive dimensions");
+      near(l * w, 1200, "original area");
+      near((l + 4) * (w + 6), 1620, "increased area");
+      return { l, w, original: l * w, increased: (l + 4) * (w + 6) };
+    });
+    const ordered = pairs.filter(([l, w]) => l >= w);
+    insist(JSON.stringify(ordered) === JSON.stringify(d.ordered_pairs), "Longer-side interpretation mismatch");
+    insist((75 + 4) * (16 + 6) !== 1620, "Swapped-label warning not supported");
+    return { branches: evidence, conventional_ordered: ordered };
+  });
+
+  record("1036a", "positive-shortened-rectangle", () => {
+    const d = task("1036a").check_data;
+    const pairs = d.algebraic_roots.map((l) => [l, (4 * l - 20) / 5]);
+    insist(JSON.stringify(pairs) === JSON.stringify(d.all_pairs), "Branch mismatch");
+    const admitted = pairs.filter(([l, w]) => l > 5 && w > 0);
+    insist(JSON.stringify(admitted) === JSON.stringify(d.admissible_pairs), "Physical branch mismatch");
+    const [l, w] = admitted[0];
+    near(l * w, 840, "original area");
+    near((l - 5) * (w + 4), 840, "changed area");
+    near(task("1036a").answer.length_m, l, "authored length");
+    near(task("1036a").answer.width_m, w, "authored width");
+    return { all_pairs: pairs, admitted, altered_sides: [l - 5, w + 4] };
+  });
+
+  record("1036b", "repeated-root-single-rectangle", () => {
+    const item = task("1036b"), [l, w] = item.check_data.admissible_pairs[0];
+    near(l * w, 1200, "original area");
+    near((l + 8) * (w + 6) - l * w, 528, "area increment");
+    near(item.answer.length_m, l, "authored length");
+    near(item.answer.width_m, w, "authored width");
+    const [a, b, c] = item.check_data.quadratic;
+    near(b * b - 4 * a * c, 0, "repeated-root discriminant");
+    return { l, w, increment: 528, discriminant: 0 };
+  });
+
+  record("1037a", "base-minus-four-walls", () => {
+    const item = task("1037a"), d = item.check_data;
+    const admitted = d.algebraic_roots.filter((s) => s > 0);
+    insist(JSON.stringify(admitted) === JSON.stringify(d.admissible_roots), "Positive-side filter mismatch");
+    const s = admitted[0], base = s * s, lateral = 4 * s * 10;
+    near(base - lateral, 176, "area difference");
+    near(item.answer.base_area_cm2, base, "authored base area");
+    near(item.answer.lateral_area_cm2, lateral, "authored lateral area");
+    return { s, base, lateral, difference: base - lateral };
+  });
+
+  record("1037b", "text-only-corner-cut-domain-and-surfaces", () => {
+    const item = task("1037b"), d = item.check_data;
+    const admitted = d.algebraic_roots.filter((s) => s > 0 && s < 15);
+    insist(JSON.stringify(admitted) === JSON.stringify(d.admissible_roots), "Cut domain filter mismatch");
+    const s = admitted[0], l = 48 - 2 * s, w = 30 - 2 * s;
+    const base = l * w, lateral = 2 * s * (l + w), retained = 30 * 48 - 4 * s * s;
+    near(base, lateral, "base equals lateral area");
+    near(retained, base + lateral, "retained sheet area");
+    near(item.answer.cut_square_side_cm, s, "authored cut size");
+    near(item.answer.base_area_cm2, base, "authored base area");
+    near(item.answer.lateral_area_cm2, lateral, "authored lateral area");
+    insist(30 - 2 * 20 < 0, "Rejected branch must have negative base side");
+    return { admitted, base_sides: [w, l], base, lateral, retained, figure_access: "NONE" };
+  });
+
+  record("1038", "both-cut-orientations-and-side-correspondences", () => {
+    const item = task("1038"), d = item.check_data;
+    for (const t of d.algebraic_roots) {
+      insist(t > 0 && t < 37 && t !== 37 / 2, "Cut not internal/unequal");
+      near(t * (37 - t), 36, "rotated similarity equation");
+      near(t / 6, 6 / (37 - t), "rotated similarity ratio");
+    }
+    const areas = d.pieces.map(([l, w]) => l * w);
+    insist(JSON.stringify(areas) === JSON.stringify(item.answer.areas_m2), "Authored area mismatch");
+    near(areas[0] + areas[1], 37 * 6, "area conservation");
+    near((6 / 1), (36 / 6), "long-to-short ratio match");
+    near(6 / 1, 36 / 6, "scale factor");
+    near(d.other_orientation_maximum_product, 6 * 6 / 4, "other orientation bound");
+    near(d.other_orientation_required_product, 37 * 37, "other orientation requirement");
+    insist(d.other_orientation_required_product > d.other_orientation_maximum_product, "Other orientation not excluded");
+    return { areas, unequal: true, quarter_turn_scale: 6, other_orientation_discriminant: 36 - 4 * 1369 };
+  });
+
+  record("1039", "near-strip-primary-rotated-similarity", () => {
+    const item = task("1039"), [a, b] = item.check_data.primary_sides;
+    insist(a > 0 && b > 9, "Primary physical domain failure");
+    near(2 * (a + b), 176, "perimeter");
+    near(a * a, 9 * b, "rotated strip similarity");
+    near(a * 9, item.answer.near_strip_area_m2, "near area");
+    near(a * (b - 9), item.answer.far_remainder_area_m2, "far area");
+    near(item.answer.near_strip_area_m2 + item.answer.far_remainder_area_m2, a * b, "area conservation");
+    return { a, b, areas: item.check_data.primary_areas, direct_correspondence_requires_b: 9 };
+  });
+
+  record("1039", "far-remainder-conditional-reading-exact-rationals", () => {
+    const item = task("1039"), d = item.check_data;
+    const [[an, ad], [bn, bd]] = d.alternative_sides;
+    insist(ad === bd && ad === 167, "Unexpected rational denominators");
+    const fdn = bn - 9 * bd;
+    insist(an * an === bn * fdn, "Exact far-remainder similarity identity failed");
+    insist(an + bn === 88 * ad, "Exact perimeter identity failed");
+    const a = an / ad, b = bn / bd;
+    insist(a > 0 && b > 9, "Alternative physical domain failure");
+    const [[nn, nd], [fn, fd], [tn, td]] = d.alternative_areas;
+    insist(nn === 9 * an && nd === ad, "Exact near area mismatch");
+    insist(fn === an * fdn && fd === ad * bd, "Exact far area mismatch");
+    insist(tn === an * bn && td === ad * bd, "Exact total area mismatch");
+    insist(nn * ad + fn === tn, "Exact area conservation mismatch");
+    const alt = item.alternative_interpretations[0];
+    insist(JSON.stringify(alt.exact_areas_m2.near_strip) === JSON.stringify([nn, nd]), "Authored near rational mismatch");
+    insist(JSON.stringify(alt.exact_areas_m2.far_remainder) === JSON.stringify([fn, fd]), "Authored far rational mismatch");
+    insist(JSON.stringify(alt.exact_areas_m2.total) === JSON.stringify([tn, td]), "Authored total rational mismatch");
+    return { exact_similarity: `${an}^2=${bn}*${fdn}`, sides: [a, b], exact_areas: d.alternative_areas };
+  });
+
+  record("1040", "added-extension-primary-both-labelled-solutions", () => {
+    const item = task("1040");
+    const evidence = item.check_data.primary_pairs.map(([u, v]) => {
+      const e = u + 15, f = v + 40;
+      insist(u > 0 && v > 0 && e > u && f > v, "External-support domain failure");
+      near(u + v, 49, "half perimeter");
+      near(u * v, item.answer.area_cm2, "primary area");
+      near(u / e + v / f, 1, "C on intercept line");
+      return { u, v, e, f, uv: u * v, slope: -f / e };
+    });
+    insist(JSON.stringify(item.check_data.primary_pairs) === JSON.stringify(item.answer.all_primary_labelled_pairs_cm), "Authored labelled pairs mismatch");
+    return evidence;
+  });
+
+  record("1040", "whole-and-mixed-intercept-readings", () => {
+    const d = task("1040").check_data;
+    const [u, v] = d.whole_intercept_pair.map(rational);
+    near(u + v, 49, "whole-intercept half perimeter");
+    near(u / 15 + v / 40, 1, "whole-intercept collinearity");
+    insist(u <= 0 || v <= 0, "Whole-positive-intercept rejection unsupported");
+    const r106 = Math.sqrt(106);
+    const mixed1 = [17 + 2 * r106, 32 - 2 * r106];
+    const mixed1Rejected = [17 - 2 * r106, 32 + 2 * r106];
+    near(qvalue(d.mixed_BE_AF_quadratic, mixed1[1]), 0, "mixed BE/AF root");
+    near(mixed1[0] + mixed1[1], 49, "mixed BE/AF half perimeter");
+    near(mixed1[0] / (mixed1[0] + 15) + mixed1[1] / 40, 1, "mixed BE/AF collinearity");
+    near(mixed1[0] * mixed1[1], 120 + 30 * r106, "mixed BE/AF area");
+    insist(mixed1[0] > 0 && mixed1[1] > 0 && mixed1[1] < 40 && mixed1Rejected[0] < 0, "mixed BE/AF physical classification");
+    const r5521 = Math.sqrt(5521);
+    const mixed2 = [(89 - r5521) / 2, (9 + r5521) / 2];
+    const mixed2Rejected = [(89 + r5521) / 2, (9 - r5521) / 2];
+    near(qvalue(d.mixed_AE_DF_quadratic, mixed2[0]), 0, "mixed AE/DF root");
+    near(mixed2[0] + mixed2[1], 49, "mixed AE/DF half perimeter");
+    near(mixed2[0] / 15 + mixed2[1] / (mixed2[1] + 40), 1, "mixed AE/DF collinearity");
+    near(mixed2[0] * mixed2[1], 20 * r5521 - 1180, "mixed AE/DF area");
+    insist(mixed2[0] > 0 && mixed2[1] > 0 && mixed2[0] < 15 && mixed2Rejected[1] < 0, "mixed AE/DF physical classification");
+    return { whole_intercept_pair: [u, v], whole_intercept_admissible: false, mixed_BE_AF: mixed1, mixed_AE_DF: mixed2, conditional_not_primary: true };
+  });
+
+  for (const id of ["1041a", "1041b", "1041c", "1041d"]) {
+    record(id, "real-radical-roots-discriminant-and-vieta", () => {
+      const item = task(id), d = item.check_data;
+      let q, roots;
+      if (d.B_sqrt_factor !== undefined) {
+        q = [d.A, d.B_sqrt_factor * Math.sqrt(d.B_radicand), d.C];
+        roots = d.root_sqrt_factors.map((factor) => factor * Math.sqrt(d.root_radicand));
+      } else {
+        q = d.quadratic;
+        const offset = d.root_sqrt_factor * Math.sqrt(d.root_radicand);
+        roots = [d.root_center + offset, d.root_center - offset];
+      }
+      near(q[1] * q[1] - 4 * q[0] * q[2], d.D, "discriminant");
+      insist(d.D > 0, "Real distinct roots required");
+      insist(item.vieta_check.sum && item.vieta_check.product, "Explicit Vieta author evidence missing");
+      return { ...rootsCheck(q, roots), discriminant: d.D, method: "Floating radical evaluation plus explicit authored exact Vieta identities" };
+    });
+  }
+
+  const general = {
+    "1042a": (b) => [2, b, -10],
+    "1042b": (b) => [3, b, 24],
+    "1042c": (b) => [b - 1, b + 1, -72],
+    "1042d": (b) => [b - 5, -(b + 2), b]
+  };
+  for (const id of Object.keys(general)) {
+    record(id, "prescribed-root-parameter-all-specialized-coefficients", () => {
+      const d = task(id).check_data, b = rational(d.b), r = rational(d.prescribed_root);
+      const q = general[id](b), authored = d.quadratic.map(rational);
+      for (let i = 0; i < 3; i++) near(q[i], authored[i], `coefficient ${i}`);
+      near(qvalue(q, r), 0, "prescribed root in original equation");
+      insist(q[0] !== 0, "Chosen parameter unexpectedly degenerate");
+      near(q[1] * q[1] - 4 * q[0] * q[2], rational(d.D), "specialized discriminant");
+      // The prescribed-root condition is affine in b; a nonzero slope establishes uniqueness.
+      const base = qvalue(general[id](0), r);
+      const slope = qvalue(general[id](1), r) - base;
+      insist(slope !== 0, "Parameter equation not uniquely solvable");
+      near(-base / slope, b, "unique parameter");
+      return { b, prescribed_root: r, coefficients: q, discriminant: rational(d.D), parameter_equation: { slope, constant: base } };
+    });
+  }
+
+  record("1042a", "general-degree-and-discriminant-cases", () => {
+    const q0 = general["1042a"](0);
+    insist(q0[0] === 2 && q0[1] === 0 && q0[2] === -10, "b=0 coefficients mismatch");
+    rootsCheck(q0, [Math.sqrt(5), -Math.sqrt(5)]);
+    return { never_linear: true, zero_middle_parameter: 0, minimum_discriminant: 80, never_zero_constant: true };
+  });
+
+  record("1042b", "general-degree-and-double-root-boundaries", () => {
+    const boundary = 12 * Math.sqrt(2);
+    for (const b of [-boundary, boundary]) {
+      const q = general["1042b"](b);
+      near(q[1] * q[1] - 4 * q[0] * q[2], 0, "double-root boundary");
+      near(qvalue(q, -q[1] / (2 * q[0])), 0, "repeated-root residual");
+    }
+    insist(qvalue(general["1042b"](0), 3) !== 0, "b=0 incorrectly contains prescribed root");
+    return { never_linear: true, boundaries: [-boundary, boundary], b_zero_discriminant: -288, never_zero_constant: true };
+  });
+
+  record("1042c", "linear-zero-middle-and-general-discriminant-cases", () => {
+    const d = task("1042c").check_data, linear = general["1042c"](d.linear_parameter);
+    insist(linear[0] === 0 && linear[1] === 2 && linear[2] === -72, "Linear coefficients mismatch");
+    near(qvalue(linear, d.linear_root), 0, "linear root");
+    insist(qvalue(linear, d.prescribed_root) !== 0, "Linear case contains prescribed root");
+    const zeroMiddle = general["1042c"](-1);
+    insist(zeroMiddle[0] < 0 && zeroMiddle[1] === 0 && zeroMiddle[2] < 0, "Zero-middle no-real-root classification");
+    const boundary = 8 * Math.sqrt(333);
+    const boundaries = [-145 - boundary, -145 + boundary];
+    const boundaryEvidence = boundaries.map((b) => {
+      const q = general["1042c"](b);
+      // Discriminants near cancellation are checked relative to the expanded terms.
+      const left = q[1] * q[1], right = 4 * q[0] * q[2];
+      near(left, right, "general discriminant boundary");
+      insist(q[0] !== 0, "Endpoint unexpectedly linear");
+      return { b, A: q[0], B: q[1], C: q[2], discriminant_residual: left - right };
+    });
+    const scaled = d.quadratic.map((value) => rational(value) * 2);
+    insist(JSON.stringify(scaled) === JSON.stringify(d.scaled_quadratic), "Scaled coefficients mismatch");
+    return { linear, linear_root: d.linear_root, zero_middle: zeroMiddle, repeated_boundaries: boundaryEvidence, no_all_zero_coefficients: true };
+  });
+
+  record("1042d", "linear-zero-middle-zero-constant-and-general-discriminant-cases", () => {
+    const d = task("1042d").check_data, linear = general["1042d"](d.linear_parameter);
+    insist(linear[0] === 0 && linear[1] === -7 && linear[2] === 5, "Linear coefficients mismatch");
+    near(qvalue(linear, rational(d.linear_root)), 0, "linear root");
+    insist(qvalue(linear, rational(d.prescribed_root)) !== 0, "Linear case contains prescribed root");
+    const zeroMiddle = general["1042d"](-2);
+    insist(zeroMiddle[0] === -7 && zeroMiddle[1] === 0 && zeroMiddle[2] === -2, "Zero-middle classification mismatch");
+    rootsCheck(general["1042d"](d.zero_constant_parameter), d.zero_constant_roots);
+    const offset = (2 / 3) * Math.sqrt(39);
+    const boundaries = [4 - offset, 4 + offset];
+    const boundaryEvidence = boundaries.map((b) => {
+      const q = general["1042d"](b);
+      near(q[1] * q[1], 4 * q[0] * q[2], "general discriminant boundary");
+      insist(q[0] !== 0, "Endpoint unexpectedly linear");
+      return { b, coefficients: q, discriminant: q[1] * q[1] - 4 * q[0] * q[2] };
+    });
+    return { linear, linear_root: rational(d.linear_root), zero_middle: zeroMiddle, zero_constant_roots: d.zero_constant_roots, repeated_boundaries: boundaryEvidence, no_all_zero_coefficients: true };
+  });
+}
+
+const receipt = {
+  schema: "offline-internal-math-once-receipt-v1",
+  ticket: "STEMROBIN-182",
+  assignment: "chat182-4",
+  cwd,
+  started_at: startedAt,
+  finished_at: new Date().toISOString(),
+  candidate_path: candidatePath,
+  candidate_sha256: hash(candidateBytes),
+  verifier_sha256: hash(fs.readFileSync(new URL(import.meta.url))),
+  status: faults.length ? "MATH_CHECK_FAULTS_RETAINED_NO_RERUN" : "LOCAL_MATH_CHECKS_COMPLETED_NO_REVIEW_APPROVAL",
+  exercise_count: data?.scope?.exercise_count ?? null,
+  task_count: data?.tasks?.length ?? null,
+  verified_task_count: [...touchedTasks].filter((id) => id !== "_ledger").length,
+  check_count: checks.length,
+  checked_count: checks.filter((item) => item.status === "CHECKED").length,
+  fault_count: faults.length,
+  faults,
+  checks,
+  actual_usage: {
+    internal_text_author_passes: 1,
+    local_math_process_runs: 1,
+    math_reruns: 0,
+    paid_calls: 0,
+    image_calls: 0,
+    image_pdf_browser_reads_or_renders: 0,
+    figure_66_accesses: 0,
+    database_connections: 0,
+    publisher_runs: 0,
+    git_commands: 0,
+    external_chat_agent_calls: 0,
+    model_token_usage: "Not exposed by this execution interface; no token count asserted."
+  },
+  limitations: [
+    "This is an author-owned local arithmetic/model check, not an independent content review.",
+    "Integer and listed rational identities are checked exactly where specified; radical residuals use binary64 with recorded tolerances.",
+    "A checked conditional interpretation does not disambiguate the source.",
+    "Figure relationships and visual approval are outside scope and remain unapproved."
+  ]
+};
+fs.writeFileSync(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`, { flag: "wx" });
+console.log(JSON.stringify({
+  receipt_path: receiptPath,
+  candidate_sha256: receipt.candidate_sha256,
+  verifier_sha256: receipt.verifier_sha256,
+  status: receipt.status,
+  exercise_count: receipt.exercise_count,
+  task_count: receipt.task_count,
+  verified_task_count: receipt.verified_task_count,
+  check_count: receipt.check_count,
+  checked_count: receipt.checked_count,
+  fault_count: receipt.fault_count,
+  faults: receipt.faults,
+  actual_usage: receipt.actual_usage
+}, null, 2));
+process.exitCode = faults.length ? 1 : 0;

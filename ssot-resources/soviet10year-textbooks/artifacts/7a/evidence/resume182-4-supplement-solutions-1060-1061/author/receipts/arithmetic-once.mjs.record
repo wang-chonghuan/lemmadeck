@@ -1,0 +1,76 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), repo);
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const root = '.tmp/resume182-4-supplement-solutions-author/1060-1061-author';
+const ledgerPath = '.tmp/resume182-4-supplement-solutions-author/1060-1061.json';
+const checks = [];
+function check(id, actual, expected) {
+  assert.equal(actual, expected, id);
+  checks.push({ id, actual: String(actual), expected: String(expected), pass: true });
+}
+
+const ledgerBytes = fs.readFileSync(ledgerPath);
+const ledger = JSON.parse(ledgerBytes);
+for (const input of [ledger.source, ledger.modern_identity_only]) {
+  check(`${input.path}:sha256`, sha(fs.readFileSync(input.path)), input.sha256);
+}
+check('exercises', ledger.exercises.length, 2);
+check('tasks', ledger.exercises.reduce((n, ex) => n + ex.tasks.length, 0), 8);
+
+// Fixed rational witnesses exercise every sign and repeated/zero-root boundary.
+function roots1060(n, d) {
+  const discriminantNumerator = 169n * d + 4n * n;
+  if (discriminantNumerator < 0n) return 0;
+  if (discriminantNumerator === 0n) return 2;
+  if (n < 0n) return 4;
+  if (n === 0n) return 3;
+  return 2;
+}
+for (const [n, d, expected] of [
+  [-43n, 1n, 0], [-169n, 4n, 2], [-42n, 1n, 4],
+  [-36n, 1n, 4], [-1n, 1n, 4], [0n, 1n, 3], [1n, 1n, 2],
+]) {
+  check(`1060:k=${n}/${d}:distinct-real-count`, roots1060(n, d), expected);
+}
+check('1060:double-positive-z', 4n * 13n * 13n - 4n * 13n * 26n + 169n * 4n, 0n);
+check('1060:k=0,z=0', 0n * 0n - 13n * 0n, 0n);
+check('1060:k=0,z=13', 13n * 13n - 13n * 13n, 0n);
+check('1060:k=-36,z=4', 4n * 4n - 13n * 4n + 36n, 0n);
+check('1060:k=-36,z=9', 9n * 9n - 13n * 9n + 36n, 0n);
+check('1060:k=-36,z-sum', 4n + 9n, 13n);
+check('1060:k=-36,z-product', 4n * 9n, 36n);
+for (const b of [-5n, -4n, -3n, 0n, 4n, 5n]) {
+  const expected = b === -5n ? 4 : b === -4n ? 2 : 0;
+  const delta = b * b - 16n;
+  const count = delta < 0n || b > 0n ? 0 : delta === 0n ? 2 : 4;
+  check(`1061:b=${b}:distinct-real-count`, count, expected);
+}
+check('1061:b=-4,z=2', 2n * 2n - 4n * 2n + 4n, 0n);
+check('1061:b=-5,z=1', 1n * 1n - 5n * 1n + 4n, 0n);
+check('1061:b=-5,z=4', 4n * 4n - 5n * 4n + 4n, 0n);
+check('1061:constant-term-nonzero', 4n !== 0n, true);
+
+const receipt = {
+  artifact_kind: 'single-exact-boundary-and-branch-arithmetic-run',
+  date: '2026-11-19',
+  cwd: repo,
+  ledger_path: ledgerPath,
+  ledger_sha256: sha(ledgerBytes),
+  source_text_redisplays_or_solves: 0,
+  source_data_accessed: false,
+  runs: 1,
+  retries: 0,
+  status: 'PASS',
+  checks,
+  proof_limit: 'Fixed exact rational sign/boundary witnesses support, but do not replace, the exhaustive symbolic case proof in the author ledger.',
+  parameter_mismatch_1061_unresolved: true,
+  final_keys_choices_or_whole_lesson_approved: false,
+};
+const bytes = Buffer.from(`${JSON.stringify(receipt, null, 2)}\n`);
+fs.writeFileSync(`${root}/arithmetic-receipt.json`, bytes, { flag: 'wx' });
+console.log(JSON.stringify({ ledger_sha256: receipt.ledger_sha256,
+  receipt_sha256: sha(bytes), checks: checks.length, runs: 1, status: receipt.status }));

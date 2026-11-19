@@ -1,0 +1,131 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const cwd = "/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck";
+const owner = path.dirname(fileURLToPath(import.meta.url));
+if (process.cwd() !== cwd) throw new Error("Wrong cwd; no math executed.");
+if (owner !== path.join(cwd, ".tmp/resume182-4-supplement-source-review-1060-1061")) {
+  throw new Error("Wrong owned output directory; no math executed.");
+}
+
+const lock = fs.openSync(path.join(owner, "exact-run.lock.json"), "wx", 0o600);
+const started = new Date().toISOString();
+fs.writeFileSync(lock, JSON.stringify({ started, pid: process.pid, run: 1 }) + "\n");
+fs.closeSync(lock);
+const start = process.hrtime.bigint();
+const checks = [];
+const failures = [];
+
+function check(name, actual, expected) {
+  const a = JSON.stringify(actual, (_, value) => typeof value === "bigint" ? String(value) : value);
+  const e = JSON.stringify(expected, (_, value) => typeof value === "bigint" ? String(value) : value);
+  const result = { name, actual: JSON.parse(a), expected: JSON.parse(e), pass: a === e };
+  checks.push(result);
+  if (!result.pass) failures.push(result);
+}
+
+function multiply(a, b) {
+  const result = Array(a.length + b.length - 1).fill(0n);
+  for (let i = 0; i < a.length; i++) {
+    for (let j = 0; j < b.length; j++) result[i + j] += a[i] * b[j];
+  }
+  return result;
+}
+
+function counts1060(n, d) {
+  if (d <= 0n) throw new Error("Rational denominator must be positive.");
+  const discriminantNumerator = 169n * d + 4n * n;
+  if (discriminantNumerator < 0n) return [0, 0, 4, 4];
+  if (discriminantNumerator === 0n) return [2, 4, 2, 4];
+  if (n === 0n) return [3, 4, 3, 4];
+  if (n < 0n) return [4, 4, 4, 4];
+  return [2, 2, 4, 4];
+}
+
+function counts1061(n, d) {
+  if (d <= 0n) throw new Error("Rational denominator must be positive.");
+  const discriminantNumerator = n * n - 16n * d * d;
+  if (discriminantNumerator < 0n) return [0, 0, 4, 4];
+  if (discriminantNumerator === 0n) {
+    return n < 0n ? [2, 4, 2, 4] : [0, 0, 2, 4];
+  }
+  return n < 0n ? [4, 4, 4, 4] : [0, 0, 4, 4];
+}
+
+try {
+  // Coefficients are ordered from constant term to highest power.
+  check("1060 lower-boundary: 4P = (2x^2-13)^2",
+    multiply([-13n, 0n, 2n], [-13n, 0n, 2n]), [169n, 0n, -52n, 0n, 4n]);
+  check("1060 zero-boundary: P = x^2(x^2-13)",
+    multiply([0n, 0n, 1n], [-13n, 0n, 1n]), [0n, 0n, -13n, 0n, 1n]);
+  check("1061 b=-4: Q = (x^2-2)^2",
+    multiply([-2n, 0n, 1n], [-2n, 0n, 1n]), [4n, 0n, -4n, 0n, 1n]);
+  check("1061 b=4: Q = (x^2+2)^2",
+    multiply([2n, 0n, 1n], [2n, 0n, 1n]), [4n, 0n, 4n, 0n, 1n]);
+
+  const samples1060 = [
+    [-43n, 1n, [0, 0, 4, 4]],
+    [-169n, 4n, [2, 4, 2, 4]],
+    [-42n, 1n, [4, 4, 4, 4]],
+    [-1n, 1n, [4, 4, 4, 4]],
+    [-1n, 100n, [4, 4, 4, 4]],
+    [0n, 1n, [3, 4, 3, 4]],
+    [1n, 100n, [2, 2, 4, 4]],
+    [1n, 1n, [2, 2, 4, 4]]
+  ];
+  for (const [n, d, expected] of samples1060) {
+    check(`1060 k=${n}/${d}: distinct R, mult R, distinct C, mult C`,
+      counts1060(n, d), expected);
+  }
+
+  const samples1061 = [
+    [-5n, 1n, [4, 4, 4, 4]],
+    [-401n, 100n, [4, 4, 4, 4]],
+    [-4n, 1n, [2, 4, 2, 4]],
+    [-399n, 100n, [0, 0, 4, 4]],
+    [0n, 1n, [0, 0, 4, 4]],
+    [399n, 100n, [0, 0, 4, 4]],
+    [4n, 1n, [0, 0, 2, 4]],
+    [401n, 100n, [0, 0, 4, 4]],
+    [5n, 1n, [0, 0, 4, 4]]
+  ];
+  for (const [n, d, expected] of samples1061) {
+    check(`1061 b=${n}/${d}: distinct R, mult R, distinct C, mult C`,
+      counts1061(n, d), expected);
+  }
+
+  check("1060 repeated nonzero root u=13/2 forces 4k=-169",
+    13n * 13n - 2n * 13n * 13n, -169n);
+  const scaledUSquared = multiply([0n, -1n], [0n, -1n]);
+  const twiceBScaledU = multiply([0n, 2n], [0n, -1n]);
+  const repeatedFourQ = scaledUSquared.map((value, index) =>
+    value + twiceBScaledU[index] + (index === 0 ? 16n : 0n));
+  check("1061 repeated root u=-b/2: 4Q=16-b^2, coefficient identity",
+    repeatedFourQ, [16n, 0n, -1n]);
+  check("1061 constant term excludes zero for every b", 4n, 4n);
+} catch (error) {
+  failures.push({ name: "execution-error", message: String(error.stack || error) });
+}
+
+const report = {
+  kind: "actual-single-exact-math-run",
+  run: 1,
+  started,
+  finished: new Date().toISOString(),
+  duration_nanoseconds: String(process.hrtime.bigint() - start),
+  cwd: process.cwd(),
+  arithmetic: "Built-in BigInt integer/rational sign and polynomial coefficient arithmetic; no math libraries.",
+  count_order: ["distinct_real", "real_with_multiplicity", "distinct_complex", "complex_with_multiplicity"],
+  limits: "Coefficient identities and rational partition witnesses corroborate the independent proof; no CAS, numerical root approximation, author comparison, or k/b identification.",
+  status: failures.length === 0 ? "PASS_EXACT_CHECK_ONLY" : "FAIL",
+  checks_attempted: checks.length,
+  checks_passed: checks.filter(item => item.pass).length,
+  checks,
+  failures,
+  rerun_allowed: false
+};
+fs.writeFileSync(path.join(owner, "exact-run.receipt.json"),
+  JSON.stringify(report, null, 2) + "\n", { flag: "wx", mode: 0o600 });
+console.log(JSON.stringify(report, null, 2));
+process.exitCode = failures.length === 0 ? 0 : 1;

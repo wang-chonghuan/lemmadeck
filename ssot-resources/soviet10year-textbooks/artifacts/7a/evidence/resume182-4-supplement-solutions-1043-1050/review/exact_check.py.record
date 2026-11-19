@@ -1,0 +1,244 @@
+import hashlib
+import json
+import os
+from pathlib import Path
+from fractions import Fraction as F
+import sys
+import time
+from datetime import datetime, timezone
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+OWN = ROOT / ".tmp/resume182-4-supplement-source-review-1043-1050"
+FIRST = OWN / "FIRST"
+RAW = ROOT / "ssot-resources/soviet10year-textbooks/artifacts/7a/lessons/alg7-c4-ex/exercises.json"
+MODERN = ROOT / ".tmp/resume182-4-supplement-modern/adapt/7a/modern-us-neutral/lessons/alg7-c4-ex/exercises.template.json"
+RAW_SHA = "4f068c310fc527d6bc8189dec87a645251dae4dfcfbee57a00880635badc26a0"
+MODERN_SHA = "d93723680e47259218d6038cfab7f9e6d852244b4e97bf3cb7c07a6fb09ce4e5"
+START = datetime.now(timezone.utc).isoformat()
+WALL = time.perf_counter_ns()
+CPU = time.process_time_ns()
+CHECKS = []
+
+
+def write_new(path, value):
+    with path.open("x", encoding="utf-8") as handle:
+        json.dump(value, handle, ensure_ascii=False, indent=2)
+        handle.write("\n")
+
+
+def check(task, label, condition):
+    if not condition:
+        raise AssertionError(f"{task}: {label}")
+    CHECKS.append({"task": task, "check": label, "status": "PASS"})
+
+
+def qadd(left, right):
+    return (left[0] + right[0], left[1] + right[1])
+
+
+def qmul(left, right, radicand):
+    return (
+        left[0] * right[0] + left[1] * right[1] * radicand,
+        left[0] * right[1] + left[1] * right[0],
+    )
+
+
+def qscale(value, scalar):
+    return (value[0] * scalar, value[1] * scalar)
+
+
+def polynomial_at(coefficients, root, radicand):
+    value = (F(0), F(0))
+    for coefficient in coefficients:
+        value = qadd(qmul(value, root, radicand), (coefficient, F(0)))
+    return value
+
+
+def run():
+    check("scope", "exact mandated cwd", Path.cwd() == ROOT)
+    raw_bytes = RAW.read_bytes()
+    modern_bytes = MODERN.read_bytes()
+    check("source", "authoritative raw SHA", hashlib.sha256(raw_bytes).hexdigest() == RAW_SHA)
+    check("source", "modern hash-only SHA", hashlib.sha256(modern_bytes).hexdigest() == MODERN_SHA)
+    del modern_bytes
+    raw = json.loads(raw_bytes)
+    items = raw if isinstance(raw, list) else raw["exercises"]
+    selected = [
+        item for item in items
+        if 1043 <= int(item.get("source_number", item.get("number"))) <= 1050
+    ]
+    projection = [
+        {key: item.get(key) for key in ("number", "source_number", "text", "figure_refs")}
+        for item in selected
+    ]
+    check("scope", "eight consecutive exercises", [
+        int(item["source_number"]) for item in projection
+    ] == list(range(1043, 1051)))
+    check("scope", "no figures required", all(item["figure_refs"] == [] for item in projection))
+    write_new(FIRST / "source-receipt.json", {
+        "observed_at_utc": START,
+        "cwd": str(ROOT),
+        "raw_path": str(RAW),
+        "raw_sha256": RAW_SHA,
+        "modern_path": str(MODERN),
+        "modern_sha256": MODERN_SHA,
+        "modern_access": "bytes_for_hash_only_never_parsed_or_displayed",
+        "filter_before_projection": "1043 <= source_number <= 1050",
+        "displayed_or_used_source_fields": ["number", "source_number", "text", "figure_refs"],
+        "source_data_accessed": False,
+        "source_projection": projection,
+        "author_material_accessed": False,
+    })
+    ledger = json.loads((FIRST / "solutions.json").read_text(encoding="utf-8"))
+    exercises = ledger["exercises"]
+    tasks = [task for exercise in exercises for task in exercise["tasks"]]
+    check("scope", "internal ledger has eight exercises", len(exercises) == 8)
+    check("scope", "internal ledger has seventeen tasks", len(tasks) == 17)
+    check("scope", "unique exact task coverage", {task["id"] for task in tasks} == {
+        "1043", "1044", "1045", "1046-a", "1046-b", "1047", "1048", "1049",
+        *{f"1050-{label}" for label in "abcdefghi"},
+    })
+    by_id = {task["id"]: task for task in tasks}
+
+    check("1043", "discriminant constant: -4*A*C = 644", -4 * 7 * (-23) == 644)
+    check("1043", "strictly positive discriminant offset", F(644) > 0)
+    check("1043", "Vieta product is nonzero and negative", F(-23, 7) < 0)
+    check("1043", "fixed positive leading coefficient", 7 > 0)
+
+    check("1044", "nonnegative-x coefficient proof", 12 > 0 and 70 > 0 and 1 > 0)
+    check("1044", "discriminant coefficients", 70**2 - 4 * 12 == 4852 and -4 * 12 == -48)
+    check("1044", "factored discriminant", 4852 == 4 * 1213 and 48 == 4 * 12)
+    check("1044", "exact real-root threshold", F(4852, 48) == F(1213, 12))
+    check("1044", "strictly negative plus branch when real", 1213 < 35**2)
+    repeated = F(-35, 12)
+    threshold_square = F(1213, 12)
+    check("1044", "repeated root substitution at threshold",
+          12 * repeated**2 + 70 * repeated + threshold_square + 1 == 0)
+
+    for branch in by_id["1045"]["branches"]:
+        b = F(branch["b"])
+        lower, upper = map(F, branch["roots_smaller_first"])
+        check("1045", f"b={b}: root separation", upper - lower == F(1, 6))
+        check("1045", f"b={b}: both root substitutions",
+              all(6 * root**2 + b * root + 1 == 0 for root in (lower, upper)))
+    check("1045", "exhaustive discriminant equation", 6**2 * F(1, 6)**2 + 24 == 25)
+    check("1045", "both signs of b retained", {F(v["b"]) for v in by_id["1045"]["branches"]} == {-5, 5})
+
+    c = F(by_id["1046-a"]["result"].split("=")[1].strip().rstrip("."))
+    lower, upper = map(F, by_id["1046-a"]["roots_smaller_first"])
+    check("1046-a", "exact decimal separation", upper - lower == F("0.8") == F(4, 5))
+    check("1046-a", "Vieta sum and product", lower + upper == F(6, 5) and 25 * lower * upper == c)
+    check("1046-a", "both root substitutions", all(25 * root**2 - 30 * root + c == 0 for root in (lower, upper)))
+    for branch in by_id["1046-b"]["branches"]:
+        b = F(branch["b"])
+        first, second = map(F, branch["ratio_ordered_roots"])
+        check("1046-b", f"b={b}: defined ratio", second != 0 and first / second == F("1.5"))
+        check("1046-b", f"b={b}: both root substitutions",
+              all(24 * root**2 + b * root + 25 == 0 for root in (first, second)))
+    check("1046-b", "exhaustive t-squared equation", F(25, 24) / F(3, 2) == F(25, 36))
+    check("1046-b", "both signs retained", {F(v["b"]) for v in by_id["1046-b"]["branches"]} == {-50, 50})
+
+    first, second = map(F, by_id["1047"]["squared_difference_order"])
+    check("1047", "nonzero root sum", first + second == F(-7, 2) != 0)
+    check("1047", "difference of squares is exact decimal",
+          first**2 - second**2 == F("1.75") == F(7, 4))
+    check("1047", "derived separation", F(7, 4) / F(-7, 2) == F(-1, 2))
+    check("1047", "both root substitutions at c=6", all(2 * root**2 + 7 * root + 6 == 0 for root in (first, second)))
+    check("1047", "label swap preserves coefficient", 2 * first * second == 2 * second * first == 6)
+
+    b, c = F(-1), F(-4)
+    roots = list(map(F, by_id["1048"]["roots"]))
+    check("1048", "literal coefficient is the second root", roots == [F(4, 3), b])
+    check("1048", "unique linear coefficient equation", 4 + 4 * b == 0)
+    check("1048", "constant coefficient from product", c == 4 * b)
+    check("1048", "both root substitutions", all(3 * root**2 + b * root + c == 0 for root in roots))
+
+    a, c = F(1), F(4)
+    check("1049", "admissible domain", a > 0 and c != 0)
+    check("1049", "both Vieta identities", a + c == 5 / a and a * c == c / a)
+    check("1049", "both root substitutions", all(a * root**2 - 5 * root + c == 0 for root in (a, c)))
+    check("1049", "positive sign selected from a^2=1", a**2 == 1 and F(-1) <= 0)
+    negative_a, negative_c = F(-1), F(-4)
+    check("1049", "excluded negative branch otherwise satisfies Vieta",
+          negative_a + negative_c == 5 / negative_a and negative_a * negative_c == negative_c / negative_a)
+    excluded_a = (F(0), F(1))
+    excluded_zero = (F(0), F(0))
+    check("1049", "excluded c=0 branch has real positive a=sqrt(5)",
+          5 > 0 and qmul(excluded_a, excluded_a, 5) == (F(5), F(0)))
+    check("1049", "excluded c=0 branch exact nonzero-root substitution",
+          qadd(qmul(qmul(excluded_a, excluded_a, 5), excluded_a, 5),
+               qscale(excluded_a, F(-5))) == excluded_zero)
+
+    # Quadratic-field pairs represent u+v*sqrt(d); no floating-point roots are used.
+    cases = {
+        "a": (0, [(F(10), F(0)), (F(12), F(0))]),
+        "b": (0, [(F(-3), F(0)), (F(8), F(0))]),
+        "c": (0, [(F(-7), F(0)), (F(0), F(0))]),
+        "d": (0, [(F(1, 3), F(0)), (F(3), F(0))]),
+        "e": (0, [(F(-2, 5), F(0)), (F("-0.1"), F(0))]),
+        "f": (5, [(F(0), F(-1)), (F(0), F(1))]),
+        "g": (3, [(F(2), F(-1)), (F(2), F(1))]),
+        "h": (30, [(F(11, 5), F(-2, 5)), (F(11, 5), F(2, 5))]),
+        "i": (2, [(F(-10, 3), F(-7, 3)), (F(-10, 3), F(7, 3))]),
+    }
+    for label, (radicand, roots) in cases.items():
+        task_id = f"1050-{label}"
+        task = by_id[task_id]
+        coefficients = list(map(F, task["coefficient_vector"]))
+        leading, middle, constant = coefficients
+        actual_sum = qadd(*roots)
+        actual_product = qmul(*roots, radicand)
+        check(task_id, "nonzero quadratic leading coefficient", leading != 0)
+        check(task_id, "exact source-root sum", actual_sum == (F(task["sum"]), F(0)))
+        check(task_id, "exact source-root product", actual_product == (F(task["product"]), F(0)))
+        check(task_id, "coefficient expansion",
+              middle == -leading * actual_sum[0] and constant == leading * actual_product[0])
+        check(task_id, "both exact root substitutions",
+              all(polynomial_at(coefficients, root, radicand) == (F(0), F(0)) for root in roots))
+        check(task_id, "real distinct roots", radicand >= 0 and roots[0] != roots[1])
+    check("1050-c", "zero root does not remove quadratic term", by_id["1050-c"]["coefficient_vector"] == ["1", "7", "0"])
+    check("1050-e", "decimal conversion is exact", F("-0.1") == F(-1, 10))
+    return {
+        "status": "PASS",
+        "exercise_count": len(exercises),
+        "task_count": len(tasks),
+        "math_task_ids": [task["id"] for task in tasks],
+        "check_count": len(CHECKS),
+        "checks": CHECKS,
+        "proof_boundary": "Exact rational and quadratic-field checks plus independent algebraic domain/exhaustiveness proofs in solutions.md; no numerical sampling.",
+        "coverage_note": "General-parameter sign and degeneracy arguments are analytical proofs, not finite sampling or a publisher schema gate.",
+        "faults": [],
+    }
+
+
+if (FIRST / "math-receipt.json").exists():
+    raise SystemExit("Refusing any rerun: math receipt already exists.")
+
+try:
+    result = run()
+except Exception as error:
+    result = {
+        "status": "FAIL",
+        "check_count": len(CHECKS),
+        "checks": CHECKS,
+        "faults": [{"type": type(error).__name__, "message": str(error)}],
+    }
+result.update({
+    "started_at_utc": START,
+    "finished_at_utc": datetime.now(timezone.utc).isoformat(),
+    "wall_elapsed_ns": time.perf_counter_ns() - WALL,
+    "cpu_elapsed_ns": time.process_time_ns() - CPU,
+    "cwd": str(Path.cwd()),
+    "command": "python3 -B .tmp/resume182-4-supplement-source-review-1043-1050/exact_check.py",
+    "python_version": sys.version,
+    "pid": os.getpid(),
+    "exact_math_runs": 1,
+    "paid_external_calls": 0,
+    "dependencies": "Python standard library only; no installations or dependency edits.",
+})
+write_new(FIRST / "math-receipt.json", result)
+print(json.dumps({key: result[key] for key in (
+    "status", "check_count", "exact_math_runs", "wall_elapsed_ns", "cpu_elapsed_ns", "faults"
+)}, ensure_ascii=False))
+raise SystemExit(0 if result["status"] == "PASS" else 1)

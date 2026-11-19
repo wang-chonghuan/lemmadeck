@@ -1,0 +1,544 @@
+{
+  "kind": "internal-author-ledger",
+  "ticket": "STEMROBIN-182",
+  "assignment": "chat182-4:7a alg7-c4-ex1027-1034",
+  "date": "2026-11-19",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck",
+  "book": "7a",
+  "lesson": "alg7-c4-ex",
+  "stage": "internal author only; not reviewed, not approved for publication",
+  "source": {
+    "raw_path": "ssot-resources/soviet10year-textbooks/artifacts/7a/lessons/alg7-c4-ex/exercises.json",
+    "raw_sha256": "4f068c310fc527d6bc8189dec87a645251dae4dfcfbee57a00880635badc26a0",
+    "modern_path": ".tmp/resume182-4-supplement-modern/adapt/7a/modern-us-neutral/lessons/alg7-c4-ex/exercises.template.json",
+    "modern_sha256": "d93723680e47259218d6038cfab7f9e6d852244b4e97bf3cb7c07a6fb09ce4e5",
+    "selection": ["1027", "1028", "1029", "1030", "1031", "1032", "1033", "1034"],
+    "display_policy": "Filter the eight exercises before display; never display or inspect whole embedded source.data.",
+    "grounding": "One author pass from the selected raw prose and selected modern prose; no old solutions, keys, choices or author review.",
+    "currency_policy": "1032a follows modern 美元 wording with the unchanged numbers 72, 1, 23. No exchange rate or currency conversion.",
+    "references_read": [
+      ".intentfold/readme.md",
+      ".intentfold/charter/engineering.md",
+      ".intentfold/charter/operations.md",
+      ".intentfold/project.json",
+      ".claude/skills/ld-s10y-lesson/references/production-resume.md"
+    ]
+  },
+  "counts": {
+    "exercises_expected": 8,
+    "exercises_actual": 8,
+    "tasks_expected": 15,
+    "tasks_actual": 15,
+    "tasks_per_exercise": [2, 2, 2, 2, 2, 2, 1, 2],
+    "unique": 9,
+    "conditional": 2,
+    "multiple_physical_solutions": 3,
+    "solved_with_wording_caveat": 1
+  },
+  "conventions": {
+    "T": "When used for a deadline, T is elapsed time from the planned start, not actual working duration after a delayed start.",
+    "rates": "Constant rates within each stated phase; simultaneous work rates add.",
+    "percentages": "All percentage bases are the whole stated planned task, not an already completed part.",
+    "domains": "Elapsed durations, rates, areas and solo completion times are positive. Negative or zero-duration roots are rejected.",
+    "fractions": "Fractional positive time is not excluded unless the prose explicitly requires an integer."
+  },
+  "faults": [
+    {
+      "id": "1027b-target-ambiguity",
+      "type": "source allocation ambiguity",
+      "quote": "两个劳动竞赛小组应当在某一期限内生产$240$个零件。",
+      "disposition": "Only conditionally use 240 for each group. If 240 is their combined output, the deadline is not uniquely determined; preserve the alternative model."
+    },
+    {
+      "id": "1028a-known-literal-risk",
+      "type": "preserved literal wording and nonuniqueness",
+      "quote": "甲队比乙队每天少耕地$3$公顷，但仍甲比乙队提前 $2$ 天完成生产任务。",
+      "disposition": "No invented erratum. The quantitative conditions as stated have two positive physical solutions, not a unique pair and not no solution."
+    },
+    {
+      "id": "1028b-nonuniqueness",
+      "type": "two physical solutions",
+      "disposition": "Both positive area pairs satisfy the stated yield difference; retain both."
+    },
+    {
+      "id": "1029b-nonuniqueness",
+      "type": "two physical solutions",
+      "disposition": "Both duration pairs satisfy the stated simultaneous-start rate and output conditions; retain both."
+    },
+    {
+      "id": "1031a-output-wording",
+      "type": "wording versus total-output distinction",
+      "quote": "由于超额完成任务",
+      "disposition": "264 is less than the total plan 270. Use the quantitative statement as an early delivery milestone and increased daily rate; do not claim that 264 completes or exceeds the whole 270-part plan."
+    },
+    {
+      "id": "1031b-known-literal-risk",
+      "type": "source verb ambiguity",
+      "quote": "并按期限提前 $1$ 天结果收割任务。",
+      "disposition": "Preserve 结果 verbatim. Conditional interpretation: the entire harvesting task ends one day before the deadline. This produces a unique numerical duration under that reading, but does not establish or silently repair the missing or malformed completion verb."
+    }
+  ],
+  "exercises": [
+    {
+      "number": "1027",
+      "pages": ["p0306#4"],
+      "tasks": [
+        {
+          "id": "1027a",
+          "status": "unique",
+          "variables": "T 为共同计划期限，a、b 为甲乙日产量。",
+          "domain": "T > 2; a > 0; b > 0.",
+          "timeline": [
+            "两厂从 t=0 开始。甲在 t=T-2 完成 720 台。",
+            "乙在 t=T-1 已产 660+22=682 台；乙实际产量不是 660。",
+            "两个工作区间同属一个计划时间轴，a-b=10。"
+          ],
+          "equations": ["a(T-2)=720", "b(T-1)=682", "a-b=10", "720/(T-2)-682/(T-1)=10"],
+          "steps": [
+            "在 T>2 内消去非零分母，得 5T^2-34T-312=0。",
+            "(T-12)(5T+26)=0；负期限 -26/5 不可用。",
+            "T=12，甲实际工作 10 天，乙实际工作 11 天；a=72，b=62。"
+          ],
+          "polynomial": {"variable": "T", "coefficients": [5, -34, -312]},
+          "cases": [
+            {"T": 12, "a": 72, "b": 62, "time_a": 10, "time_b": 11, "output_a": 720, "output_b": 682}
+          ],
+          "rejected_roots": [{"value": -5.2, "exact": "-26/5", "reason": "T<=2; nonphysical durations."}],
+          "requested": [
+            {"name": "甲厂日产量", "unit": "台/天", "case_field": "a"},
+            {"name": "乙厂日产量", "unit": "台/天", "case_field": "b"}
+          ],
+          "conclusion": "甲厂每天 72 台，乙厂每天 62 台。",
+          "fault_ids": []
+        },
+        {
+          "id": "1027b",
+          "status": "conditional",
+          "variables": "T 为共同期限，a、b 为甲乙日产量。",
+          "domain": "T > 3; a > 0; b > 0.",
+          "assumption": "题中的 240 个按每组各 240 个理解，而不是两组合计 240 个。原句未明确写出每组。",
+          "timeline": [
+            "甲从 t=0 工作到 T-3。",
+            "乙比甲晚 1 天完成，即从 t=0 工作到 T-2，而不是 T-4。",
+            "在每组各 240 个这一假设下，两组分别完成相同数量。"
+          ],
+          "equations": ["a(T-3)=240", "b(T-2)=240", "a-b=8", "240/(T-3)-240/(T-2)=8"],
+          "steps": [
+            "(T-3)(T-2)=30，得 T^2-5T-24=0。",
+            "(T-8)(T+3)=0，舍去负期限 -3。",
+            "T=8，甲工作 5 天、乙工作 6 天，日产量分别为 48 和 40。"
+          ],
+          "polynomial": {"variable": "T", "coefficients": [1, -5, -24]},
+          "cases": [{"T": 8, "a": 48, "b": 40, "time_a": 5, "time_b": 6, "output_a": 240, "output_b": 240}],
+          "rejected_roots": [{"value": -3, "exact": "-3", "reason": "T<=3."}],
+          "alternative_literal_model": {
+            "interpretation": "两组合计生产 240 个。",
+            "equations": ["a=b+8", "a(T-3)+b(T-2)=240"],
+            "parameterization": "令 u=T-3，则 0<u<30，b=(240-8u)/(2u+1)，a=b+8；因此 3<T<33。",
+            "examples": [
+              {"T": 8, "a": 288, "b": 200, "rate_denominator": 11, "time_a": 5, "time_b": 6},
+              {"T": 9, "a": 296, "b": 192, "rate_denominator": 13, "time_a": 6, "time_b": 7}
+            ],
+            "example_rate_note": "Examples store a and b as numerators divided by rate_denominator, not as integer rates.",
+            "conclusion": "若 240 是合计数，期限不唯一；不能无条件给出 8 天。"
+          },
+          "requested": [{"name": "完成任务的规定期限", "unit": "天", "case_field": "T"}],
+          "conclusion": "仅在每组各 240 个的解释下，规定期限为 8 天；合计 240 个的字面解释不确定。",
+          "fault_ids": ["1027b-target-ambiguity"]
+        }
+      ]
+    },
+    {
+      "number": "1028",
+      "pages": ["p0306#5", "p0307#1"],
+      "tasks": [
+        {
+          "id": "1028a",
+          "status": "multiple_physical_solutions",
+          "source_quote": "甲队比乙队每天少耕地$3$公顷，但仍甲比乙队提前 $2$ 天完成生产任务。",
+          "variables": "x 为甲每天耕地公顷数，乙为 x+3。",
+          "domain": "x > 0; both durations positive.",
+          "timeline": [
+            "乙的总任务以甲的 240 公顷为百分比基数，为 240(1+35%)=324 公顷。",
+            "共同从 t=0 开始，甲完成时刻为 240/x，乙为 324/(x+3)。",
+            "乙完成时刻减甲完成时刻为 2 天。"
+          ],
+          "equations": ["324/(x+3)-240/x=2", "x^2-39x+360=0"],
+          "steps": [
+            "消去正分母，得 (x-15)(x-24)=0。",
+            "x=15 时，乙每天 18 公顷，甲乙分别用 16、18 天。",
+            "x=24 时，乙每天 27 公顷，甲乙分别用 10、12 天。",
+            "两组均满足原数值、正数定义域和提前 2 天条件，无据删除其中一组。"
+          ],
+          "polynomial": {"variable": "x", "coefficients": [1, -39, 360]},
+          "cases": [
+            {"x": 15, "rate_a": 15, "rate_b": 18, "area_a": 240, "area_b": 324, "time_a": 16, "time_b": 18},
+            {"x": 24, "rate_a": 24, "rate_b": 27, "area_a": 240, "area_b": 324, "time_a": 10, "time_b": 12}
+          ],
+          "rejected_roots": [],
+          "requested": [
+            {"name": "甲队每日耕地量", "unit": "公顷/天", "case_field": "rate_a"},
+            {"name": "乙队每日耕地量", "unit": "公顷/天", "case_field": "rate_b"}
+          ],
+          "conclusion": "甲乙每日耕地量可以为 (15,18)，也可以为 (24,27) 公顷；条件不唯一。",
+          "fault_ids": ["1028a-known-literal-risk"]
+        },
+        {
+          "id": "1028b",
+          "status": "multiple_physical_solutions",
+          "variables": "S 为第一块地面积，第二块地为 S-12。",
+          "domain": "S > 12; both areas and yields positive.",
+          "timeline": ["这是同次收成的总产量与面积关系，不把总产量差 360 公担误作每公顷产量差。"],
+          "equations": ["1440/S-1080/(S-12)=2", "S^2-192S+8640=0"],
+          "steps": [
+            "消去正分母后，(S-72)(S-120)=0。",
+            "第一块 72、第二块 60 公顷时，单产分别为 20、18 公担/公顷。",
+            "第一块 120、第二块 108 公顷时，单产分别为 12、10 公担/公顷。",
+            "两个面积对均满足面积差和单产差；全部保留。"
+          ],
+          "polynomial": {"variable": "S", "coefficients": [1, -192, 8640]},
+          "cases": [
+            {"S": 72, "area_first": 72, "area_second": 60, "yield_first": 20, "yield_second": 18, "harvest_first": 1440, "harvest_second": 1080},
+            {"S": 120, "area_first": 120, "area_second": 108, "yield_first": 12, "yield_second": 10, "harvest_first": 1440, "harvest_second": 1080}
+          ],
+          "rejected_roots": [],
+          "requested": [
+            {"name": "第一块地面积", "unit": "公顷", "case_field": "area_first"},
+            {"name": "第二块地面积", "unit": "公顷", "case_field": "area_second"}
+          ],
+          "conclusion": "面积对为 (72,60) 或 (120,108) 公顷，均合题意。",
+          "fault_ids": ["1028b-nonuniqueness"]
+        }
+      ]
+    },
+    {
+      "number": "1029",
+      "pages": ["p0307#2"],
+      "tasks": [
+        {
+          "id": "1029a",
+          "status": "unique",
+          "variables": "T 为规定施工期限；计划日产量为 4500/T。",
+          "domain": "T > 4.",
+          "timeline": [
+            "计划在 t=T 完成 4500 立方米；实际日产量为 4500/T+45。",
+            "t=T-4 时只完成总任务的 96%，即 4320 立方米，不是完成整个 4500。"
+          ],
+          "equations": ["(4500/T+45)(T-4)=4500*96/100", "T^2-400=0"],
+          "steps": [
+            "(T-20)(T+20)=0，正期限为 20 天。",
+            "日定额 225，实际每天 270 立方米；工作 16 天完成 4320，恰为 96%。"
+          ],
+          "polynomial": {"variable": "T", "coefficients": [1, 0, -400]},
+          "cases": [{"T": 20, "planned_rate": 225, "actual_rate": 270, "elapsed": 16, "planned_output": 4500, "actual_output": 4320}],
+          "rejected_roots": [{"value": -20, "exact": "-20", "reason": "T<=4."}],
+          "requested": [{"name": "规定施工期限", "unit": "天", "case_field": "T"}],
+          "conclusion": "规定施工期限为 20 天。",
+          "fault_ids": []
+        },
+        {
+          "id": "1029b",
+          "status": "multiple_physical_solutions",
+          "variables": "x 为第一小队工作小时数；第二小队为 x-1。",
+          "domain": "x > 1.",
+          "timeline": [
+            "按共同开始工作理解，第一小队在 t=x 完成自己的部分，第二小队在 t=x-1 完成。",
+            "第一小队承担 7200 的 60%，即 4320 平方米；第二小队承担剩余 2880 平方米。",
+            "第一小队工作较久但小时率仍比第二小队高 120。"
+          ],
+          "equations": ["4320/x-2880/(x-1)=120", "x^2-13x+36=0"],
+          "steps": [
+            "(x-4)(x-9)=0。",
+            "第一第二小队分别工作 4、3 小时，小时率为 1080、960 平方米。",
+            "也可分别工作 9、8 小时，小时率为 480、360 平方米。",
+            "两组均有正时间且总面积、60% 份额、率差和结束时刻差完全符合。"
+          ],
+          "polynomial": {"variable": "x", "coefficients": [1, -13, 36]},
+          "cases": [
+            {"x": 4, "time_first": 4, "time_second": 3, "rate_first": 1080, "rate_second": 960, "output_first": 4320, "output_second": 2880},
+            {"x": 9, "time_first": 9, "time_second": 8, "rate_first": 480, "rate_second": 360, "output_first": 4320, "output_second": 2880}
+          ],
+          "rejected_roots": [],
+          "requested": [
+            {"name": "第一小队工作时间", "unit": "小时", "case_field": "time_first"},
+            {"name": "第二小队工作时间", "unit": "小时", "case_field": "time_second"}
+          ],
+          "conclusion": "第一第二小队的工作时间为 (4,3) 或 (9,8) 小时；原条件不唯一。",
+          "fault_ids": ["1029b-nonuniqueness"]
+        }
+      ]
+    },
+    {
+      "number": "1030",
+      "pages": ["p0307#3"],
+      "tasks": [
+        {
+          "id": "1030a",
+          "status": "unique",
+          "variables": "T 为计划期限，p=360/T 为日定额，r=p+9。",
+          "domain": "T > 1.",
+          "timeline": [
+            "t=0 开始，t=T-1 时超额 5%，实际总量为 360(1+5%)=378。",
+            "继续以相同实际日产量 r 工作至 t=T，还要再生产一天。"
+          ],
+          "equations": ["(360/T+9)(T-1)=378", "T^2-3T-40=0", "Q=(360/T+9)T"],
+          "steps": [
+            "(T-8)(T+5)=0，舍去 -5。",
+            "T=8，p=45，r=54；7 天产 378，8 天产 432。",
+            "所问是到原期限的实际产量，不是原计划 360 或提前一天的 378。"
+          ],
+          "polynomial": {"variable": "T", "coefficients": [1, -3, -40]},
+          "cases": [{"T": 8, "planned_rate": 45, "actual_rate": 54, "early_elapsed": 7, "early_output": 378, "deadline_output": 432}],
+          "rejected_roots": [{"value": -5, "exact": "-5", "reason": "T<=1."}],
+          "requested": [{"name": "到原期限时可生产的总零件数", "unit": "个", "case_field": "deadline_output"}],
+          "conclusion": "到原期限可生产 432 个零件。",
+          "fault_ids": []
+        },
+        {
+          "id": "1030b",
+          "status": "unique",
+          "variables": "T 为从计划开始算起的规定期限。",
+          "domain": "T > 3.",
+          "timeline": [
+            "49 公顷是总任务的 98%，所以全任务为 49/(98/100)=50 公顷。",
+            "原计划区间 [0,T]；实际迟两天开始，区间 [2,T-1]。",
+            "实际工作时长是 T-3，既不是 T-1，也不是 T-2。"
+          ],
+          "equations": ["planned_area=50", "(50/T+2)(T-3)=49", "2T^2-5T-150=0"],
+          "steps": [
+            "(T-10)(2T+15)=0，舍去 -15/2。",
+            "T=10，计划每天 5 公顷，实际每天 7 公顷。",
+            "从 t=2 到 t=9 共 7 天，完成 49 公顷，仍比全任务 50 少 1 公顷。"
+          ],
+          "polynomial": {"variable": "T", "coefficients": [2, -5, -150]},
+          "cases": [{"T": 10, "planned_area": 50, "planned_rate": 5, "actual_rate": 7, "start": 2, "finish": 9, "elapsed": 7, "actual_area": 49}],
+          "rejected_roots": [{"value": -7.5, "exact": "-15/2", "reason": "T<=3."}],
+          "requested": [{"name": "规定完成任务的期限", "unit": "天", "case_field": "T"}],
+          "conclusion": "规定期限为从计划开始计的 10 天；实际除草至所述 98% 节点用了 7 天。",
+          "fault_ids": []
+        }
+      ]
+    },
+    {
+      "number": "1031",
+      "pages": ["p0307#4", "p0308#1"],
+      "tasks": [
+        {
+          "id": "1031a",
+          "status": "solved_with_wording_caveat",
+          "variables": "p 为计划日产量，T=270/p 为计划期限。",
+          "domain": "p > 0; T > 4.",
+          "timeline": [
+            "计划在 T 天生产 270 个；实际日产量提高为 p+6。",
+            "t=T-4 时交出的是 264 个，这是题给交付节点，不是全计划 270 个已全部完成。",
+            "原文的超额字样与全任务产量有冲突；这里只按每日提高及交付量建立方程。"
+          ],
+          "equations": ["pT=270", "(p+6)(T-4)=264", "(p+6)(270/p-4)=264", "2p^2+9p-810=0"],
+          "steps": [
+            "(p-18)(2p+45)=0，负日产量 -45/2 不可用。",
+            "p=18，T=15；实际每天 24 个，11 天交出 264 个。",
+            "264<270，不把原句暗改为交出 270 个或把 264 称作超过整个计划。"
+          ],
+          "polynomial": {"variable": "p", "coefficients": [2, 9, -810]},
+          "cases": [{"p": 18, "T": 15, "actual_rate": 24, "early_elapsed": 11, "planned_output": 270, "delivered_output": 264}],
+          "rejected_roots": [{"value": -22.5, "exact": "-45/2", "reason": "p<=0; T nonpositive."}],
+          "requested": [
+            {"name": "计划一天应生产的零件数", "unit": "个/天", "case_field": "p"},
+            {"name": "规定完成任务期限", "unit": "天", "case_field": "T"}
+          ],
+          "conclusion": "依给出的日产量增加和交付节点，计划日产量为 18 个，规定期限为 15 天；保留原文超额措辞的限制。",
+          "fault_ids": ["1031a-output-wording"]
+        },
+        {
+          "id": "1031b",
+          "status": "conditional",
+          "source_quote": "并按期限提前 $1$ 天结果收割任务。",
+          "assumption": "条件化理解为全部收割任务在期限前 1 天结束。原文 结果 不替换为 结束，也不声称已确认勘误。",
+          "variables": "q 为原计划每日收割量，T=540/q 为原计划期限。",
+          "domain": "q > 0; first_phase > 0; second_phase > 0; elapsed > 0.",
+          "timeline": [
+            "从 t=0 以原计划率 q 收割全任务的 30%，即 162 公顷。",
+            "补领机器后的剩余任务为 540-162=378 公顷，每天收割 q+9。",
+            "两个阶段顺次相加：162/q+378/(q+9)=T-1；不把增加率应用于已收割的 30%。"
+          ],
+          "equations": ["T=540/q", "162/q+378/(q+9)=540/q-1", "q^2+9q-3402=0"],
+          "steps": [
+            "(q-54)(q+63)=0，舍去负率 -63。",
+            "q=54，T=10；第一阶段 162/54=3 天，第二阶段 378/63=6 天。",
+            "实际收割共 9 天，恰比计划 10 天少 1 天。",
+            "9 天只属于已明确写出的完成语义解释；原句的词语歧义仍在，未经作者核实不作为无条件恢复文本。"
+          ],
+          "polynomial": {"variable": "q", "coefficients": [1, 9, -3402]},
+          "cases": [{"q": 54, "T": 10, "later_rate": 63, "first_area": 162, "second_area": 378, "first_phase": 3, "second_phase": 6, "elapsed": 9}],
+          "rejected_roots": [{"value": -63, "exact": "-63", "reason": "q<=0; negative phase duration."}],
+          "requested": [{"name": "实际收割延续时间", "unit": "天", "case_field": "elapsed"}],
+          "conclusion": "若句意为全部任务提前 1 天结束，则实际收割延续 9 天；保留原文 结果 的歧义。",
+          "fault_ids": ["1031b-known-literal-risk"]
+        }
+      ]
+    },
+    {
+      "number": "1032",
+      "pages": ["p0308#2"],
+      "tasks": [
+        {
+          "id": "1032a",
+          "status": "unique",
+          "variables": "T 为预计旅行天数，p=72/T 为预算每日费用；实际旅行 T+1 天。",
+          "domain": "T > 4; T+1 > 5 so the later spending phase has positive duration.",
+          "timeline": [
+            "现代题面使用美元；72、每天增支 1、超支 23 均直接沿用原数字，不换算货币。",
+            "前 5 天每天 p 美元，共 5p。",
+            "以后延续到 T+1 天，后段为 T+1-5=T-4 天，每天 p+1 美元。",
+            "实际总费用为 72+23=95 美元，不把 23 当总费用。"
+          ],
+          "equations": ["5(72/T)+(T-4)(72/T+1)=95", "72/T+T=27", "T^2-27T+72=0"],
+          "steps": [
+            "(T-24)(T-3)=0。",
+            "T=3 会使实际总旅程只有 4 天，小于题给前 5 天且后段为负，必须舍去。",
+            "T=24，p=3；前 5 天花 15，后 20 天每天 4，共 80，总计 95。",
+            "实际旅程是 T+1=25 天，不是预计的 24 天。"
+          ],
+          "polynomial": {"variable": "T", "coefficients": [1, -27, 72]},
+          "cases": [{"T": 24, "planned_daily_spend": 3, "later_daily_spend": 4, "first_days": 5, "later_days": 20, "actual_days": 25, "first_cost": 15, "later_cost": 80, "planned_cost": 72, "actual_cost": 95}],
+          "rejected_roots": [{"value": 3, "exact": "3", "reason": "Actual trip 4 days cannot contain the first 5 days; later duration T-4 is negative."}],
+          "requested": [{"name": "旅行实际延续时间", "unit": "天", "case_field": "actual_days"}],
+          "conclusion": "实际旅行延续 25 天。",
+          "fault_ids": []
+        },
+        {
+          "id": "1032b",
+          "status": "unique",
+          "variables": "T 为计划期限，p=272/T 为日定额。",
+          "domain": "T > 11 so work after the first 10 days and before T-1 has positive duration.",
+          "timeline": [
+            "从 t=0 到 t=10 按 p 工作，第一阶段产量 10p。",
+            "从 t=10 到 t=T-1 按 p+4 工作，第二阶段时长 T-11。",
+            "在提前 1 天的节点，实际已产 280 而非 272。",
+            "延续提高后的日产量至 t=T，再增加一天的 p+4；题问原期限内可生产的实际数量。"
+          ],
+          "equations": ["10(272/T)+(T-11)(272/T+4)=280", "T^2-13T-68=0", "Q=280+(272/T+4)"],
+          "steps": [
+            "(T-17)(T+4)=0，舍去 -4。",
+            "T=17，p=16，提高后日产量 20。",
+            "前 10 天产 160，随后 6 天产 120，在第 16 天共有 280。",
+            "第 17 天再产 20，原定期限内可产 300 个；不回答计划 272 个。"
+          ],
+          "polynomial": {"variable": "T", "coefficients": [1, -13, -68]},
+          "cases": [{"T": 17, "planned_rate": 16, "later_rate": 20, "first_days": 10, "later_days_early": 6, "early_finish": 16, "first_output": 160, "later_output_early": 120, "early_output": 280, "planned_output": 272, "deadline_output": 300}],
+          "rejected_roots": [{"value": -4, "exact": "-4", "reason": "T<=11; invalid durations and rate."}],
+          "requested": [{"name": "在原定期限内可生产的总零件数", "unit": "个", "case_field": "deadline_output"}],
+          "conclusion": "按提高后的日产量继续至原定期限，可生产 300 个零件。",
+          "fault_ids": []
+        }
+      ]
+    },
+    {
+      "number": "1033",
+      "pages": ["p0308#3"],
+      "tasks": [
+        {
+          "id": "1033",
+          "status": "unique",
+          "variables": "T 为第一台单独完成全任务的小时数，第二台为 T-5；全任务取 1。",
+          "domain": "T > 5.",
+          "timeline": [
+            "t=0 到 t=2，只有第一台工作，完成 2/T。",
+            "t=2 到 t=10，两台再共同工作 8 小时，完成 8(1/T+1/(T-5))。",
+            "第一台累计 10 小时、第二台累计 8 小时，总完成量为 80%=4/5；不是总历时仅 8 小时。"
+          ],
+          "equations": ["2/T+8(1/T+1/(T-5))=4/5", "10/T+8/(T-5)=4/5", "2T^2-55T+125=0"],
+          "steps": [
+            "(T-25)(2T-5)=0。",
+            "T=5/2 会使第二台单独完成时间 T-5 为负，舍去。",
+            "T=25，第二台需 20 小时。",
+            "核对 2/25+8(1/25+1/20)=2/25+18/25=20/25=4/5。"
+          ],
+          "polynomial": {"variable": "T", "coefficients": [2, -55, 125]},
+          "cases": [{"T": 25, "solo_first": 25, "solo_second": 20, "first_only_hours": 2, "joint_hours": 8, "elapsed": 10, "first_work_hours": 10, "second_work_hours": 8, "completed_numerator": 4, "completed_denominator": 5}],
+          "rejected_roots": [{"value": 2.5, "exact": "5/2", "reason": "T<=5; second solo time is negative."}],
+          "requested": [
+            {"name": "第一台单独完成时间", "unit": "小时", "case_field": "solo_first"},
+            {"name": "第二台单独完成时间", "unit": "小时", "case_field": "solo_second"}
+          ],
+          "conclusion": "第一台单独需 25 小时，第二台单独需 20 小时。",
+          "fault_ids": []
+        }
+      ]
+    },
+    {
+      "number": "1034",
+      "pages": ["p0308#4", "p0309#1"],
+      "tasks": [
+        {
+          "id": "1034a",
+          "status": "unique",
+          "variables": "T 为规定期限，整批定货取 1。",
+          "domain": "T > 1.",
+          "timeline": [
+            "同从 t=0 开始，第一组单独需 T+3 天，第二组单独需 T+8 天。",
+            "协同完成时刻为 t=T-1，两组都在这个区间内工作。",
+            "协同率为两个单独率之和，两个推迟条件和一个提前条件同时使用。"
+          ],
+          "equations": ["1/(T+3)+1/(T+8)=1/(T-1)", "(T-1)(2T+11)=(T+3)(T+8)", "T^2-2T-35=0"],
+          "steps": [
+            "(T-7)(T+5)=0，舍去负期限 -5。",
+            "T=7，第一组单独需 10 天，第二组单独需 15 天，协同需 6 天。",
+            "1/10+1/15=1/6，且 10-7=3、15-7=8、7-6=1。"
+          ],
+          "polynomial": {"variable": "T", "coefficients": [1, -2, -35]},
+          "cases": [{"T": 7, "solo_first": 10, "solo_second": 15, "joint_days": 6}],
+          "rejected_roots": [{"value": -5, "exact": "-5", "reason": "T<=1; joint duration is nonpositive."}],
+          "requested": [
+            {"name": "第一组单独完成时间", "unit": "天", "case_field": "solo_first"},
+            {"name": "第二组单独完成时间", "unit": "天", "case_field": "solo_second"}
+          ],
+          "conclusion": "第一组单独需 10 天，第二组单独需 15 天。",
+          "fault_ids": []
+        },
+        {
+          "id": "1034b",
+          "status": "unique",
+          "variables": "t 为两台共同完成的小时数，整块地取 1。",
+          "domain": "t > 0.",
+          "timeline": [
+            "第一台单独需 t+18 小时，第二台单独需 t+32 小时。",
+            "共同工作 t 小时完成全任务，共同率等于两个单独率的和。",
+            "18 和 32 是分别相对共同工作时间的减少量，不是两台单独时间的比。"
+          ],
+          "equations": ["1/(t+18)+1/(t+32)=1/t", "t(2t+50)=(t+18)(t+32)", "t^2-576=0"],
+          "steps": [
+            "(t-24)(t+24)=0，舍去 -24。",
+            "共同用 24 小时；第一台单独需 42，第二台单独需 56 小时。",
+            "1/42+1/56=1/24，同时 42-24=18、56-24=32。"
+          ],
+          "polynomial": {"variable": "t", "coefficients": [1, 0, -576]},
+          "cases": [{"t": 24, "solo_first": 42, "solo_second": 56, "joint_hours": 24}],
+          "rejected_roots": [{"value": -24, "exact": "-24", "reason": "t<=0."}],
+          "requested": [
+            {"name": "第一台单独完成时间", "unit": "小时", "case_field": "solo_first"},
+            {"name": "第二台单独完成时间", "unit": "小时", "case_field": "solo_second"}
+          ],
+          "conclusion": "第一台单独需 42 小时，第二台单独需 56 小时。",
+          "fault_ids": []
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "author_passes": 1,
+    "content_revisions": 0,
+    "author_review_runs": 0,
+    "planned_bounded_math_runs": 1,
+    "external_math_libraries": 0,
+    "paid_calls": 0,
+    "images": 0,
+    "browser_runs": 0,
+    "publisher_runs": 0,
+    "db_operations": 0,
+    "git_operations": 0,
+    "dependency_changes": 0,
+    "token_usage": null,
+    "token_usage_note": "No measured per-assignment token counter is exposed; do not fabricate a number."
+  }
+}

@@ -1,0 +1,241 @@
+{
+  "schema": "internal-blind-first-source-math-review/v1",
+  "ticket": "STEMROBIN-182",
+  "assignment": "chat182-4",
+  "phase": "FIRST",
+  "scope": {
+    "book": "7a",
+    "lesson": "alg7-c4-ex",
+    "exercise_count": 2,
+    "task_count": 8,
+    "exercises": ["1060", "1061"],
+    "source_solve_passes": 1,
+    "author_disclosed": false,
+    "comparison_authorized": false
+  },
+  "assumptions": {
+    "primary_domain": "Real x and real coefficients/parameters.",
+    "primary_count": "Distinct real roots; repeated roots are counted once.",
+    "other_conventions": "Real roots counted with multiplicity and complex roots under both conventions are explicitly separated below.",
+    "source_limits": "Only the permitted filtered exercise fields were displayed. No source.data, modern wording, choices, keys, earlier answers or reviews were inspected.",
+    "1061_parameter": "The literal polynomial uses b, while the request for four roots asks for k. They are not identified."
+  },
+  "derivations": {
+    "1060": {
+      "polynomial": "P_k(x) = x^4 - 13*x^2 - k",
+      "substitution": "u = x^2. Real x requires u >= 0. Each distinct u > 0 contributes two distinct real x; u = 0 contributes one.",
+      "quadratic": "u^2 - 13*u - k = 0",
+      "discriminant": "D = 169 + 4*k",
+      "u_roots": "u_plus = (13 + sqrt(D))/2; u_minus = (13 - sqrt(D))/2 when D >= 0.",
+      "proof": [
+        "For k < -169/4, D < 0, so no real u and no real x exist.",
+        "For k = -169/4, both u values coincide at 13/2 > 0; x = +/-sqrt(13/2), each double.",
+        "For -169/4 < k < 0, 0 < D < 169, so u_plus and u_minus are distinct and positive; all four real x are simple.",
+        "For k = 0, u values are 13 and 0; x = +/-sqrt(13) are simple and x = 0 is double.",
+        "For k > 0, D > 169, so u_plus > 0 > u_minus; two simple real roots and two simple nonreal roots result.",
+        "Exactly one distinct real root is impossible: any nonzero real root occurs with its negative, and zero occurs only at k = 0, where +/-sqrt(13) also occur.",
+        "A repeated root requires P_k(x) = P_k'(x) = 0. Since P_k'(x) = 2*x*(2*x^2 - 13), repetitions occur only at k = 0 or k = -169/4."
+      ],
+      "partitions": [
+        {
+          "condition": "k < -169/4",
+          "distinct_real": 0,
+          "real_with_multiplicity": 0,
+          "distinct_complex": 4,
+          "complex_with_multiplicity": 4,
+          "roots": "+/-sqrt((13 + i*sqrt(-D))/2) and +/-sqrt((13 - i*sqrt(-D))/2), all simple and nonreal."
+        },
+        {
+          "condition": "k = -169/4",
+          "distinct_real": 2,
+          "real_with_multiplicity": 4,
+          "distinct_complex": 2,
+          "complex_with_multiplicity": 4,
+          "factorization": "P_k(x) = (x^2 - 13/2)^2",
+          "roots": "+/-sqrt(13/2), each double."
+        },
+        {
+          "condition": "-169/4 < k < 0",
+          "distinct_real": 4,
+          "real_with_multiplicity": 4,
+          "distinct_complex": 4,
+          "complex_with_multiplicity": 4,
+          "roots": "+/-sqrt(u_plus), +/-sqrt(u_minus), all simple and real."
+        },
+        {
+          "condition": "k = 0",
+          "distinct_real": 3,
+          "real_with_multiplicity": 4,
+          "distinct_complex": 3,
+          "complex_with_multiplicity": 4,
+          "factorization": "P_0(x) = x^2*(x^2 - 13)",
+          "roots": "0 double; +/-sqrt(13) simple."
+        },
+        {
+          "condition": "k > 0",
+          "distinct_real": 2,
+          "real_with_multiplicity": 2,
+          "distinct_complex": 4,
+          "complex_with_multiplicity": 4,
+          "roots": "+/-sqrt(u_plus) real and +/-i*sqrt(-u_minus) nonreal, all simple."
+        }
+      ]
+    },
+    "1061": {
+      "literal_polynomial": "Q_b(x) = x^4 + b*x^2 + 4",
+      "literal_request": "Find the set of k for four roots, although the polynomial contains b and does not contain k.",
+      "substitution": "u = x^2. Then u^2 + b*u + 4 = 0; u = 0 is impossible.",
+      "discriminant": "D_b = b^2 - 16",
+      "u_roots": "u_plus = (-b + sqrt(D_b))/2; u_minus = (-b - sqrt(D_b))/2 when D_b >= 0.",
+      "proof": [
+        "The u-root product is 4 > 0, so real u roots have the same nonzero sign; their sum is -b.",
+        "For b < -4, the discriminant is positive and the sum positive, so there are two distinct positive u roots and four simple real x.",
+        "For b = -4, Q_b(x) = (x^2 - 2)^2: +/-sqrt(2), each double.",
+        "For -4 < b < 4, the discriminant is negative, so there are no real x.",
+        "For b = 4, Q_b(x) = (x^2 + 2)^2: +/-i*sqrt(2), each double; no real x.",
+        "For b > 4, the two distinct real u roots are negative, so there are four simple purely imaginary x and no real x.",
+        "Q_b(0) = 4 for every b; zero never occurs, and there is no zero-root boundary.",
+        "A repeated root requires Q_b(x) = Q_b'(x) = 0. Since Q_b'(x) = 2*x*(2*x^2 + b) and zero is not a root, repetitions require x^2 = -b/2 and b^2 = 16."
+      ],
+      "partitions": [
+        {
+          "condition": "b < -4",
+          "distinct_real": 4,
+          "real_with_multiplicity": 4,
+          "distinct_complex": 4,
+          "complex_with_multiplicity": 4,
+          "roots": "+/-sqrt(u_plus), +/-sqrt(u_minus), all simple and real."
+        },
+        {
+          "condition": "b = -4",
+          "distinct_real": 2,
+          "real_with_multiplicity": 4,
+          "distinct_complex": 2,
+          "complex_with_multiplicity": 4,
+          "roots": "+/-sqrt(2), each double."
+        },
+        {
+          "condition": "-4 < b < 4",
+          "distinct_real": 0,
+          "real_with_multiplicity": 0,
+          "distinct_complex": 4,
+          "complex_with_multiplicity": 4,
+          "roots": "+/-sqrt((-b + i*sqrt(16 - b^2))/2), +/-sqrt((-b - i*sqrt(16 - b^2))/2), all simple and nonreal."
+        },
+        {
+          "condition": "b = 4",
+          "distinct_real": 0,
+          "real_with_multiplicity": 0,
+          "distinct_complex": 2,
+          "complex_with_multiplicity": 4,
+          "roots": "+/-i*sqrt(2), each double."
+        },
+        {
+          "condition": "b > 4",
+          "distinct_real": 0,
+          "real_with_multiplicity": 0,
+          "distinct_complex": 4,
+          "complex_with_multiplicity": 4,
+          "roots": "+/-i*sqrt(-u_plus), +/-i*sqrt(-u_minus), all simple."
+        }
+      ],
+      "parameter_ambiguity": {
+        "status": "UNRESOLVED_SOURCE_AMBIGUITY",
+        "not_an_erratum": true,
+        "no_silent_rename": true,
+        "coefficient_result": "Four distinct real roots require b < -4. Counting real multiplicities instead requires b <= -4.",
+        "literal_k_result": "No unique k condition follows from this polynomial. For an independently fixed b < -4, every real k is unconstrained; for fixed b >= -4, no k produces four distinct real roots. If b is existentially free and independent of k, the projection onto k is all real numbers. The source does not specify such a quantifier or b = k."
+      }
+    }
+  },
+  "tasks": [
+    {
+      "id": "1060a",
+      "request": "Four roots",
+      "status": "SOLVED_WITH_EXPLICIT_COUNT_CONVENTION",
+      "distinct_real_answer": "-169/4 < k < 0",
+      "real_multiplicity_answer": "-169/4 <= k <= 0",
+      "distinct_complex_answer": "k in R except -169/4 and 0",
+      "complex_multiplicity_answer": "Every real k"
+    },
+    {
+      "id": "1060b",
+      "request": "Two roots",
+      "status": "SOLVED_WITH_EXPLICIT_COUNT_CONVENTION",
+      "distinct_real_answer": "k = -169/4 or k > 0",
+      "real_multiplicity_answer": "k > 0",
+      "distinct_complex_answer": "k = -169/4",
+      "complex_multiplicity_answer": "Impossible"
+    },
+    {
+      "id": "1060-three-roots",
+      "request": "Three roots",
+      "status": "SOLVED_WITH_EXPLICIT_COUNT_CONVENTION",
+      "distinct_real_answer": "k = 0",
+      "real_multiplicity_answer": "Impossible",
+      "distinct_complex_answer": "k = 0",
+      "complex_multiplicity_answer": "Impossible"
+    },
+    {
+      "id": "1060-one-root",
+      "request": "One root",
+      "status": "SOLVED_WITH_EXPLICIT_COUNT_CONVENTION",
+      "distinct_real_answer": "Impossible",
+      "real_multiplicity_answer": "Impossible",
+      "distinct_complex_answer": "Impossible",
+      "complex_multiplicity_answer": "Impossible"
+    },
+    {
+      "id": "1060-no-roots",
+      "request": "No roots",
+      "status": "SOLVED_WITH_EXPLICIT_COUNT_CONVENTION",
+      "distinct_real_answer": "k < -169/4",
+      "real_multiplicity_answer": "k < -169/4",
+      "distinct_complex_answer": "Impossible",
+      "complex_multiplicity_answer": "Impossible"
+    },
+    {
+      "id": "1061-four-roots-requested-k",
+      "request": "Four roots; source requests k although coefficient is b",
+      "status": "UNRESOLVED_SOURCE_AMBIGUITY",
+      "distinct_real_coefficient_result": "b < -4",
+      "real_multiplicity_coefficient_result": "b <= -4",
+      "distinct_complex_coefficient_result": "b in R except -4 and 4",
+      "complex_multiplicity_coefficient_result": "Every real b",
+      "requested_k": "Underdetermined unless the source supplies the relation to b or its quantifier; no identification with b was made."
+    },
+    {
+      "id": "1061-two-roots",
+      "request": "Can the polynomial have two roots?",
+      "status": "SOLVED_IN_LITERAL_COEFFICIENT_B_WITH_EXPLICIT_COUNT_CONVENTION",
+      "distinct_real_answer": "Yes, exactly when b = -4; roots +/-sqrt(2), both double.",
+      "real_multiplicity_answer": "Impossible to have exactly two; the real multiplicity count is either 4 or 0.",
+      "distinct_complex_answer": "Yes, exactly when b = -4 or b = 4.",
+      "complex_multiplicity_answer": "Impossible"
+    },
+    {
+      "id": "1061-no-roots",
+      "request": "Can the polynomial have no roots?",
+      "status": "SOLVED_IN_LITERAL_COEFFICIENT_B_WITH_EXPLICIT_COUNT_CONVENTION",
+      "distinct_real_answer": "Yes, exactly when b > -4, including b = 4 and b = 0.",
+      "real_multiplicity_answer": "Yes, exactly when b > -4.",
+      "distinct_complex_answer": "Impossible",
+      "complex_multiplicity_answer": "Impossible"
+    }
+  ],
+  "faults": [
+    {
+      "id": "SOURCE-1061-B-VS-K",
+      "kind": "source_parameter_ambiguity",
+      "affected_task": "1061-four-roots-requested-k",
+      "disposition": "Keep the literal b polynomial and the literal k request; hold the requested-k answer pending source clarification. No author comparison or correction was authorized."
+    },
+    {
+      "id": "ROOT-COUNT-CONVENTION",
+      "kind": "explicit_interpretation_limit",
+      "affected_exercises": ["1060", "1061"],
+      "disposition": "The displayed source says roots without separately specifying real/complex or distinct/multiplicity. Primary solutions use distinct real roots, with all alternate conventions tabulated; no implicit convention is presented as source wording."
+    }
+  ],
+  "verdict": "FIRST_SOURCE_REVIEW_ONLY; 2 exercises / 8 tasks examined; 7 tasks solved under declared conventions and 1 requested-k task held for source ambiguity. Not an author validation, publication approval or comparison."
+}

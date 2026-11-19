@@ -1,0 +1,284 @@
+{
+  "schema": "internal-blind-first-mathematics-v1",
+  "ticket": "STEMROBIN-182",
+  "reviewer": "chat182-4",
+  "stage": "FIRST",
+  "scope": "alg7-c4-ex1035-1042",
+  "exercise_count": 8,
+  "task_count": 17,
+  "basis": "Permitted raw-source text only; one independent solve pass, no author disclosure or comparison.",
+  "exact_number_encoding": "A rational string, or [rational_part, radical_coefficient, radicand] meaning a+b*sqrt(d).",
+  "source_sha256": "4f068c310fc527d6bc8189dec87a645251dae4dfcfbee57a00880635badc26a0",
+  "modern_sha256_hash_only": "d93723680e47259218d6038cfab7f9e6d852244b4e97bf3cb7c07a6fb09ce4e5",
+  "visual_approval": false,
+  "tasks": [
+    {
+      "id": "1035a",
+      "domain": "Uniform inset t satisfies 0<t<55; both grass-bed sides are positive.",
+      "derivation": "(150-2t)(110-2t)=150*110*(4/11)=6000, hence t^2-130t+2625=0.",
+      "candidates": [
+        {"t": "25", "length": "100", "width": "60", "admissible": true},
+        {"t": "105", "length": "-60", "width": "-100", "admissible": false, "reason": "t>=55; negative side lengths"}
+      ],
+      "answer": "100 m by 60 m; common inset 25 m."
+    },
+    {
+      "id": "1035b",
+      "domain": "L>0, W>0. A separate convention L>=W is not silently imposed.",
+      "derivation": "LW=1200 and (L+4)(W+6)=1620 imply 3L+2W=198 and L^2-66L+800=0.",
+      "candidates": [
+        {"length": "50", "width": "24", "admissible": true},
+        {"length": "16", "width": "75", "admissible": true, "reason": "Valid labeled-side solution; excluded only if 'length' must denote the longer side."}
+      ],
+      "answer": "L=50 m, W=24 m under the longer-side convention; also L=16 m, W=75 m if labels are not ordered.",
+      "source_fault": "SIDE_LABEL_CONVENTION_UNSPECIFIED"
+    },
+    {
+      "id": "1036a",
+      "domain": "L>5, W>0 so the changed rectangle is nondegenerate.",
+      "derivation": "LW=840 and (L-5)(W+4)=840 imply 4L-5W=20 and L^2-5L-1050=0.",
+      "candidates": [
+        {"length": "35", "width": "24", "admissible": true},
+        {"length": "-30", "width": "-28", "admissible": false, "reason": "Negative dimensions"}
+      ],
+      "answer": "35 m by 24 m."
+    },
+    {
+      "id": "1036b",
+      "domain": "L>0, W>0.",
+      "derivation": "LW=1200 and (L+8)(W+6)=1728 imply 3L+4W=240 and (L-40)^2=0.",
+      "candidates": [
+        {"length": "40", "width": "30", "admissible": true, "multiplicity": 2}
+      ],
+      "answer": "40 m by 30 m; the eliminated quadratic has a repeated root."
+    },
+    {
+      "id": "1037a",
+      "domain": "Square-base side s>0; height 10 cm; lateral area excludes the base and absent lid.",
+      "derivation": "s^2-4*s*10=176, hence s^2-40s-176=0.",
+      "candidates": [
+        {"side": "44", "base_area": "1936", "lateral_area": "1760", "admissible": true},
+        {"side": "-4", "base_area": "16", "lateral_area": "-160", "admissible": false, "reason": "Negative side length"}
+      ],
+      "answer": "Base area 1936 cm^2."
+    },
+    {
+      "id": "1037b",
+      "domain": "Cut-square side x satisfies 0<x<15; folds give base (30-2x) by (48-2x) and height x.",
+      "derivation": "(30-2x)(48-2x)=2x[(30-2x)+(48-2x)] gives x^2-26x+120=0.",
+      "candidates": [
+        {"cut": "6", "length": "36", "width": "18", "base_area": "648", "lateral_area": "648", "admissible": true},
+        {"cut": "20", "length": "8", "width": "-10", "base_area": "-80", "lateral_area": "-80", "admissible": false, "reason": "x>=15; base width is negative"}
+      ],
+      "answer": "Cut 6 cm squares; resulting box has base 18 cm by 36 cm and height 6 cm.",
+      "figure_policy": "fig-66 is referenced by raw source but was never opened; prose-only mathematical result, no visual approval."
+    },
+    {
+      "id": "1038",
+      "domain": "Interior straight cut; positive subrectangle dimensions; the two pieces are similar to one another but not congruent.",
+      "branches": [
+        {
+          "id": "parallel-6-rotated",
+          "derivation": "Pieces u by 6 and (37-u) by 6 are similar after exchanging corresponding axes iff u(37-u)=36.",
+          "candidates": [
+            {"u": "1", "other": "36", "areas": ["6", "216"], "admissible": true},
+            {"u": "36", "other": "1", "areas": ["216", "6"], "admissible": true}
+          ]
+        },
+        {
+          "id": "parallel-6-unrotated",
+          "candidates": [
+            {"u": "37/2", "other": "37/2", "areas": ["111", "111"], "admissible": false, "reason": "Congruent pieces, contrary to unequal requirement"}
+          ]
+        },
+        {
+          "id": "parallel-37-unrotated",
+          "candidates": [
+            {"v": "3", "other": "3", "areas": ["111", "111"], "admissible": false, "reason": "Congruent pieces"}
+          ]
+        },
+        {
+          "id": "parallel-37-rotated",
+          "equation": "v(6-v)=1369",
+          "reason": "For 0<v<6, v(6-v)<=9<1369; no real admissible cut."
+        },
+        {
+          "id": "both-pieces-similar-to-original",
+          "reason": "An alternative referent for 'similar' is not equivalent to mutual similarity. A full-side proper strip can only be rotated-similar to the original. With the full side 6 it must have width 36/37; two such widths do not sum to 37. With full side 37 the required height 1369/6 exceeds 6. No admissible partition under that reading."
+        }
+      ],
+      "answer": "Under mutual similarity, unordered areas are 6 m^2 and 216 m^2.",
+      "source_fault": "SIMILARITY_REFERENT_AND_CUT_ORIENTATION_REQUIRE_EXPLICIT_TREATMENT"
+    },
+    {
+      "id": "1039",
+      "domain": "Let a be the side parallel to the line and b perpendicular: a>0, b>9, a+b=88. The line is 9 m from one boundary side.",
+      "branches": [
+        {
+          "id": "near-strip-is-similar",
+          "derivation": "Rotated similarity of a by 9 to a by b gives a^2=9b; a^2+9a-792=0.",
+          "candidates": [
+            {"a": "24", "b": "64", "near_area": "216", "far_area": "1320", "admissible": true},
+            {"a": "-33", "b": "121", "near_area": "-297", "far_area": "-3696", "admissible": false, "reason": "a<0"}
+          ]
+        },
+        {
+          "id": "far-complement-is-similar",
+          "derivation": "Rotated similarity of a by (b-9) to a by b gives a^2=b(b-9). With a+b=88, 167b=7744.",
+          "candidates": [
+            {"a": "6952/167", "b": "7744/167", "far_height": "6241/167", "near_area": "62568/167", "far_area": "43387432/27889", "admissible": true}
+          ]
+        },
+        {
+          "id": "unrotated-similarity",
+          "reason": "For the near strip, direct-axis similarity requires b=9 and degenerates the complement. For the far piece it requires b-9=b, impossible. Neither is an admissible interior partition."
+        }
+      ],
+      "answer": "Near-strip reading: 216 m^2 and 1320 m^2. Complement reading: 62568/167 m^2 and 43387432/27889 m^2.",
+      "source_fault": "SOURCE_DOES_NOT_EXPLICITLY_IDENTIFY_WHICH_OF_THE_TWO_PARTS_IS_SIMILAR",
+      "disposition": "Retain both readings; no unique-source approval."
+    },
+    {
+      "id": "1040",
+      "domain": "A=(0,0), B=(x,0), D=(0,y), C=(x,y), x,y>0, x+y=49. A finite external supporting line through C has positive axis intercepts E=(u,0), F=(0,v), with u>x, v>y and x/u+y/v=1.",
+      "branches": [
+        {
+          "id": "BE15-DF40",
+          "interpretation": "Standard beyond-side extension segments: BE=15 and DF=40.",
+          "derivation": "u=x+15, v=y+40; the intercept equation reduces to xy=15*40=600.",
+          "candidates": [
+            {"x": "25", "y": "24", "u": "40", "v": "64", "area": "600", "admissible": true},
+            {"x": "24", "y": "25", "u": "39", "v": "65", "area": "600", "admissible": true}
+          ]
+        },
+        {
+          "id": "AE15-AF40",
+          "interpretation": "If both quoted lengths instead mean whole intercepts from A.",
+          "derivation": "x/15+y/40=1, x+y=49 give x=-27/5, y=272/5.",
+          "candidates": [
+            {"x": "-27/5", "y": "272/5", "u": "15", "v": "40", "admissible": false, "reason": "No positive rectangle; in the positive intercept triangle x+y cannot exceed 40, whereas the perimeter requires 49."}
+          ]
+        },
+        {
+          "id": "BE15-AF40",
+          "interpretation": "Conditional mixed endpoints, if the first length is beyond B but the second is from A.",
+          "derivation": "u=x+15, v=40; y(x+15)=600, so y^2-64y+600=0.",
+          "candidates": [
+            {"x": ["17", "2", 106], "y": ["32", "-2", 106], "u": ["32", "2", 106], "v": "40", "area": ["120", "30", 106], "admissible": true},
+            {"x": ["17", "-2", 106], "y": ["32", "2", 106], "u": ["32", "-2", 106], "v": "40", "area": ["120", "-30", 106], "admissible": false, "reason": "x<0 and y>49"}
+          ]
+        },
+        {
+          "id": "AE15-DF40",
+          "interpretation": "Conditional mixed endpoints, if the first length is from A but the second is beyond D.",
+          "derivation": "u=15, v=y+40; x(y+40)=600, so x^2-89x+600=0.",
+          "candidates": [
+            {"x": ["89/2", "-1/2", 5521], "y": ["9/2", "1/2", 5521], "u": "15", "v": ["89/2", "1/2", 5521], "area": ["-1180", "20", 5521], "admissible": true},
+            {"x": ["89/2", "1/2", 5521], "y": ["9/2", "-1/2", 5521], "u": "15", "v": ["89/2", "-1/2", 5521], "area": ["-1180", "-20", 5521], "admissible": false, "reason": "x>49 and y<0"}
+          ]
+        }
+      ],
+      "answer": "Standard extension-segment reading: area 600 cm^2, sides 24 cm and 25 cm; either assignment to AB and AD works.",
+      "source_fault": "QUOTED_EXTENSION_SEGMENTS_HAVE_NO_EXPLICIT_ENDPOINT_LABELS",
+      "disposition": "Record the standard reading and conditional endpoint alternatives, not an image-based or author-based resolution."
+    },
+    {
+      "id": "1041a",
+      "variable": "x",
+      "coefficients": ["1", ["0", "-5", 2], "12"],
+      "roots": [["0", "3", 2], ["0", "2", 2]],
+      "vieta": {"sum": ["0", "5", 2], "product": "12"},
+      "answer": "x=3*sqrt(2), 2*sqrt(2)."
+    },
+    {
+      "id": "1041b",
+      "variable": "x",
+      "coefficients": ["1", ["0", "2", 3], "-72"],
+      "roots": [["0", "4", 3], ["0", "-6", 3]],
+      "vieta": {"sum": ["0", "-2", 3], "product": "-72"},
+      "answer": "x=4*sqrt(3), -6*sqrt(3)."
+    },
+    {
+      "id": "1041c",
+      "variable": "y",
+      "coefficients": ["1", "-6", "7"],
+      "roots": [["3", "1", 2], ["3", "-1", 2]],
+      "vieta": {"sum": "6", "product": "7"},
+      "answer": "y=3+sqrt(2), 3-sqrt(2)."
+    },
+    {
+      "id": "1041d",
+      "variable": "p",
+      "coefficients": ["1", "-10", "7"],
+      "roots": [["5", "3", 2], ["5", "-3", 2]],
+      "vieta": {"sum": "10", "product": "7"},
+      "answer": "p=5+3*sqrt(2), 5-3*sqrt(2)."
+    },
+    {
+      "id": "1042a",
+      "domain": "b and x real; the leading coefficient is always 2, so no degree degeneration.",
+      "given_root": "5",
+      "b": "-8",
+      "parameter_equation": "5b+40=0",
+      "coefficients": ["2", "-8", "-10"],
+      "factorization": "2(x-5)(x+1)=0",
+      "roots": ["5", "-1"],
+      "answer": "b=-8; x=5 or -1."
+    },
+    {
+      "id": "1042b",
+      "domain": "b and x real; the leading coefficient is always 3.",
+      "given_root": "3",
+      "b": "-17",
+      "parameter_equation": "3b+51=0",
+      "coefficients": ["3", "-17", "24"],
+      "factorization": "(x-3)(3x-8)=0",
+      "roots": ["3", "8/3"],
+      "answer": "b=-17; x=3 or 8/3."
+    },
+    {
+      "id": "1042c",
+      "domain": "b and x real. At b=1 the equation is linear, not quadratic.",
+      "given_root": "3",
+      "b": "13/2",
+      "parameter_equation": "12b-78=0",
+      "coefficients": ["11/2", "15/2", "-72"],
+      "factorization": "(x-3)(11x+48)/2=0",
+      "roots": ["3", "-48/11"],
+      "degenerate": {"b": "1", "coefficients": ["0", "2", "-72"], "roots": ["36"], "satisfies_given_root": false},
+      "answer": "b=13/2; x=3 or -48/11. b=1 fails the specified-root condition."
+    },
+    {
+      "id": "1042d",
+      "domain": "b and x real. At b=5 the equation is linear.",
+      "given_root": "1/2",
+      "b": "3",
+      "parameter_equation": "3b-9=0 after multiplying the given-root substitution by 4.",
+      "coefficients": ["-2", "-5", "3"],
+      "factorization": "-(2x-1)(x+3)=0",
+      "roots": ["1/2", "-3"],
+      "degenerate": {"b": "5", "coefficients": ["0", "-7", "5"], "roots": ["5/7"], "satisfies_given_root": false},
+      "answer": "b=3; x=1/2 or -3. b=5 fails the specified-root condition."
+    }
+  ],
+  "source_faults": [
+    {"task": "1035b", "kind": "SIDE_LABEL_CONVENTION_UNSPECIFIED", "effect": "Two positive labeled solutions unless the longer-side convention is imposed."},
+    {"task": "1038", "kind": "SIMILARITY_REFERENT", "effect": "Mutual-similarity reading yields 6 and 216; interpreting both pieces as similar to the original yields no such partition."},
+    {"task": "1039", "kind": "SIMILAR_PART_UNSPECIFIED", "effect": "Near-strip and far-complement readings yield different valid dimensions and areas."},
+    {"task": "1040", "kind": "EXTENSION_SEGMENT_ENDPOINTS", "effect": "Standard BE/DF reading yields 600; full-intercept reading is impossible; mixed readings yield other positive rectangles."},
+    {"task": "1037b", "kind": "VISUAL_REVIEW_NOT_AUTHORIZED", "effect": "Only the supplied rectangle/corner-square-cut box prose was used; fig-66 was not inspected."}
+  ],
+  "usage": {
+    "independent_solve_passes": 1,
+    "permitted_math_runs": 1,
+    "paid_calls": 0,
+    "browser_calls": 0,
+    "image_or_pdf_reads": 0,
+    "database_or_publisher_calls": 0,
+    "author_disclosures": 0,
+    "comparisons": 0,
+    "model_tokens": null,
+    "model_cost": null,
+    "unknown_usage_reason": "The current reviewer chat exposes neither token accounting nor monetary usage."
+  }
+}

@@ -1,0 +1,96 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+
+const cwd = "/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck";
+const out = path.join(cwd, ".tmp/resume182-4-supplement-source-review-1035-1042");
+const digest = (file) => crypto.createHash("sha256").update(fs.readFileSync(file)).digest("hex");
+const mode = (file) => (fs.statSync(file).mode & 0o777).toString(8).padStart(4, "0");
+const writeJson = (name, value) => fs.writeFileSync(path.join(out, name), `${JSON.stringify(value, null, 2)}\n`, { flag: "wx" });
+
+if (process.cwd() !== cwd) throw new Error("Explicit authorized cwd mismatch");
+if (fs.existsSync(path.join(out, "frozen-hashes.json"))) throw new Error("FIRST already frozen; do not overwrite");
+
+// This stage performs hashes/permission inspection only, never mathematics.
+const initial = fs.readdirSync(out).sort();
+const initialRecords = initial.map((name) => {
+  const file = path.join(out, name);
+  const stat = fs.lstatSync(file);
+  if (!stat.isFile() || stat.isSymbolicLink()) throw new Error(`Unexpected artifact type: ${name}`);
+  const sha256 = digest(file);
+  fs.chmodSync(file, 0o444);
+  if (mode(file) !== "0444" || digest(file) !== sha256) throw new Error(`Freeze inspection failed: ${name}`);
+  return { name, absolute_path: file, sha256, bytes: stat.size, observed_mode: mode(file), content_unchanged: true };
+});
+writeJson("freeze-receipt.json", {
+  stage: "FIRST",
+  actual_freeze_time: new Date().toISOString(),
+  cwd: process.cwd(),
+  method: "SHA-256 of each artifact and chmod 0444, then hash/permission inspection; no math execution.",
+  math_runs_in_this_stage: 0,
+  previously_completed_math_runs: 1,
+  original_raw_or_modern_file_permissions_changed: false,
+  inspected_initial_artifacts: initialRecords,
+  source_ambiguities_remain_unresolved: true,
+  disclosure_or_comparison: false,
+  boundary: "OS read-only snapshot plus hashes, not tamper-proof against a privileged user."
+});
+fs.chmodSync(path.join(out, "freeze-receipt.json"), 0o444);
+
+const records = fs.readdirSync(out).sort().map((name) => {
+  const file = path.join(out, name);
+  return { name, absolute_path: file, sha256: digest(file), bytes: fs.statSync(file).size, observed_mode: mode(file) };
+});
+writeJson("frozen-hashes.json", {
+  schema: "internal-blind-first-freeze-v1",
+  stage: "FIRST",
+  scope: "alg7-c4-ex1035-1042",
+  exercise_count: 8,
+  task_count: 17,
+  root: out,
+  records,
+  manifest_self_hash: "Excluded from its own records; included in SHA256SUMS and returned in the actual freeze command output.",
+  checksum_self_hash: "SHA256SUMS is excluded from itself; its hash is returned in the actual freeze command output.",
+  requested_file_mode: "0444",
+  requested_directory_mode: "0555",
+  disclosure_or_comparison: false
+});
+fs.chmodSync(path.join(out, "frozen-hashes.json"), 0o444);
+const sums = fs.readdirSync(out).sort().map((name) => `${digest(path.join(out, name))}  ${name}`).join("\n") + "\n";
+fs.writeFileSync(path.join(out, "SHA256SUMS"), sums, { flag: "wx" });
+fs.chmodSync(path.join(out, "SHA256SUMS"), 0o444);
+fs.chmodSync(out, 0o555);
+
+const verification = records.map((record) => ({
+  name: record.name,
+  unchanged_hash: digest(record.absolute_path) === record.sha256,
+  read_only: mode(record.absolute_path) === "0444"
+}));
+const allNames = fs.readdirSync(out).sort();
+const filesReadOnly = allNames.every((name) => mode(path.join(out, name)) === "0444");
+const directoryReadOnly = mode(out) === "0555";
+const allHashesMatch = verification.every((entry) => entry.unchanged_hash);
+if (!filesReadOnly || !directoryReadOnly || !allHashesMatch) throw new Error("Final freeze metadata verification failed");
+
+console.log(JSON.stringify({
+  stage: "FIRST",
+  frozen: true,
+  exercise_count: 8,
+  task_count: 17,
+  root: out,
+  artifact_count: allNames.length,
+  all_artifact_files_mode: "0444",
+  directory_mode: mode(out),
+  all_manifest_hashes_match: allHashesMatch,
+  solutions_json_sha256: digest(path.join(out, "solutions.json")),
+  solutions_md_sha256: digest(path.join(out, "solutions.md")),
+  source_projection_sha256: digest(path.join(out, "source-projection.json")),
+  math_receipt_sha256: digest(path.join(out, "math-receipt.json")),
+  command_receipt_sha256: digest(path.join(out, "command-receipt.json")),
+  frozen_hash_manifest_sha256: digest(path.join(out, "frozen-hashes.json")),
+  sha256sums_sha256: digest(path.join(out, "SHA256SUMS")),
+  math_runs_this_stage: 0,
+  total_math_runs: 1,
+  comparisons: 0,
+  stop: true
+}, null, 2));

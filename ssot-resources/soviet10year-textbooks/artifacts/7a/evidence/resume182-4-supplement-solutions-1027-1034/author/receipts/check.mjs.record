@@ -1,0 +1,313 @@
+import fs from "node:fs";
+import crypto from "node:crypto";
+
+const cwd = "/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck";
+const ledgerPath = ".tmp/resume182-4-supplement-solutions-author/1027-1034.json";
+const checkerPath = ".tmp/resume182-4-supplement-solutions-author/1027-1034-author/check.mjs";
+let assertions = 0;
+const requireTrue = (condition, label) => {
+  assertions++;
+  if (!condition) throw new Error(label);
+};
+const equal = (actual, expected, label) =>
+  requireTrue(Number.isFinite(actual) && Math.abs(actual - expected) <= 1e-9, label);
+const sha = (data) => crypto.createHash("sha256").update(data).digest("hex");
+const read = (path) => {
+  const bytes = fs.readFileSync(path);
+  return { bytes, data: JSON.parse(bytes), sha256: sha(bytes) };
+};
+requireTrue(process.cwd() === cwd, "exact command cwd");
+const ledger = read(ledgerPath);
+const d = ledger.data;
+const raw = read(d.source.raw_path);
+const modern = read(d.source.modern_path);
+requireTrue(raw.sha256 === d.source.raw_sha256, "pinned raw SHA");
+requireTrue(modern.sha256 === d.source.modern_sha256, "pinned modern SHA");
+requireTrue(modern.data.source.sha256 === raw.sha256, "modern raw binding");
+const numbers = ["1027", "1028", "1029", "1030", "1031", "1032", "1033", "1034"];
+// Select first; the embedded source.data is never used.
+const select = (document) => document.exercises.filter((e) => numbers.includes(e.number));
+const selectedRaw = select(raw.data);
+const selectedModern = select(modern.data);
+requireTrue(selectedRaw.length === 8 && selectedModern.length === 8, "eight selected from each input");
+requireTrue(JSON.stringify(selectedRaw.map((e) => e.number)) === JSON.stringify(numbers), "raw exact order");
+requireTrue(JSON.stringify(selectedModern.map((e) => e.number)) === JSON.stringify(numbers), "modern exact order");
+const sourceItems = selectedRaw.map((r, i) => {
+  const m = selectedModern[i];
+  requireTrue(r.text === m.source_text, `${r.number} source_text binding`);
+  requireTrue(m.numeric_changes.length === 0, `${r.number} no numeric adaptation`);
+  requireTrue(
+    JSON.stringify(r.text.match(/\$[^$]*\$/g)) === JSON.stringify(m.text.match(/\$[^$]*\$/g)),
+    `${r.number} unchanged math spans`,
+  );
+  return {
+    number: r.number,
+    pages: r.pages,
+    raw_text_sha256: sha(r.text),
+    modern_text_sha256: sha(m.text),
+    source_text_matches_raw: true,
+    numeric_changes: 0,
+    math_spans_unchanged: true,
+  };
+});
+for (const fault of d.faults.filter((f) => f.quote)) {
+  const r = selectedRaw.find((e) => fault.id.startsWith(e.number));
+  requireTrue(r && r.text.includes(fault.quote), `${fault.id} preserved literal quote`);
+}
+requireTrue(selectedRaw[5].text.includes("卢布"), "1032a original currency");
+requireTrue(selectedModern[5].text.includes("美元"), "1032a modern currency");
+requireTrue(!selectedModern[5].text.includes("卢布"), "1032a modern replaces word, not amount");
+requireTrue(JSON.stringify(d.exercises.map((e) => e.number)) === JSON.stringify(numbers), "ledger exact scope");
+const taskCounts = d.exercises.map((e) => e.tasks.length);
+requireTrue(JSON.stringify(taskCounts) === JSON.stringify([2, 2, 2, 2, 2, 2, 1, 2]), "task distribution");
+const tasks = d.exercises.flatMap((e) => e.tasks);
+requireTrue(tasks.length === 15 && new Set(tasks.map((t) => t.id)).size === 15, "actual 15 tasks");
+requireTrue(d.counts.exercises_actual === 8 && d.counts.tasks_actual === 15, "declared actual counts");
+const statusCounts = {};
+const domain = (id, c) => {
+  switch (id) {
+    case "1027a": return c.T > 2;
+    case "1027b": return c.T > 3;
+    case "1028a": return c.x > 0;
+    case "1028b": return c.S > 12;
+    case "1029a": return c.T > 4;
+    case "1029b": return c.x > 1;
+    case "1030a": return c.T > 1;
+    case "1030b": return c.T > 3;
+    case "1031a": return c.p > 0 && 270 / c.p > 4;
+    case "1031b": return c.q > 0;
+    case "1032a": return c.T > 4;
+    case "1032b": return c.T > 11;
+    case "1033": return c.T > 5;
+    case "1034a": return c.T > 1;
+    case "1034b": return c.t > 0;
+    default: throw new Error(`Unexpected task ${id}`);
+  }
+};
+const receipts = [];
+for (const task of tasks) {
+  const before = assertions;
+  const { variable, coefficients: [a, b, c] } = task.polynomial;
+  const roots = [...task.cases.map((v) => v[variable]), ...task.rejected_roots.map((r) => r.value)];
+  requireTrue(roots.length === 2 && roots[0] !== roots[1], `${task.id} exhaustive quadratic roots`);
+  equal(roots[0] + roots[1], -b / a, `${task.id} root sum`);
+  equal(roots[0] * roots[1], c / a, `${task.id} root product`);
+  for (const root of roots) equal(a * root * root + b * root + c, 0, `${task.id} polynomial root ${root}`);
+  for (const r of task.rejected_roots) {
+    requireTrue(!domain(task.id, { [variable]: r.value }), `${task.id} rejected physical root ${r.exact}`);
+  }
+  for (const v of task.cases) {
+    requireTrue(domain(task.id, v), `${task.id} admissible domain`);
+    for (const [field, value] of Object.entries(v)) {
+      requireTrue(Number.isFinite(value) && value > 0, `${task.id} positive physical field ${field}`);
+    }
+    for (const request of task.requested) {
+      requireTrue(Number.isFinite(v[request.case_field]), `${task.id} requested ${request.name}`);
+    }
+    const eq = (x, y, label) => equal(x, y, `${task.id}: ${label}`);
+    switch (task.id) {
+      case "1027a":
+        eq(v.T - 2, v.time_a, "A working duration");
+        eq(v.T - 1, v.time_b, "B working duration");
+        eq(v.a - v.b, 10, "daily rate difference");
+        eq(v.a * v.time_a, 720, "A actual output");
+        eq(v.b * v.time_b, 660 + 22, "B planned plus excess");
+        eq(v.output_a, 720, "stored A output");
+        eq(v.output_b, 682, "stored B output");
+        break;
+      case "1027b":
+        eq(v.T - 3, v.time_a, "A finish");
+        eq(v.T - 2, v.time_b, "B finish");
+        eq(v.time_b - v.time_a, 1, "finish difference");
+        eq(v.a - v.b, 8, "rate difference");
+        eq(v.a * v.time_a, v.output_a, "A equal-target assumption");
+        eq(v.b * v.time_b, v.output_b, "B equal-target assumption");
+        eq(v.output_a, 240, "A target");
+        eq(v.output_b, 240, "B target");
+        for (const e of task.alternative_literal_model.examples) {
+          const ra = e.a / e.rate_denominator;
+          const rb = e.b / e.rate_denominator;
+          requireTrue(ra > 0 && rb > 0 && e.T > 3 && e.T < 33, "1027b alternative domain");
+          eq(e.time_a, e.T - 3, "alternative A duration");
+          eq(e.time_b, e.T - 2, "alternative B duration");
+          eq(ra - rb, 8, "alternative rate difference");
+          eq(ra * e.time_a + rb * e.time_b, 240, "alternative combined target");
+          eq(rb, (240 - 8 * (e.T - 3)) / (2 * (e.T - 3) + 1), "alternative parameterization");
+        }
+        requireTrue(task.alternative_literal_model.examples[0].T !== task.alternative_literal_model.examples[1].T, "1027b combined target not unique");
+        break;
+      case "1028a":
+        eq(v.rate_a, v.x, "A root");
+        eq(v.rate_b - v.rate_a, 3, "rate difference");
+        eq(v.area_a, 240, "A task");
+        eq(v.area_b * 100, v.area_a * 135, "35 percent base");
+        eq(v.rate_a * v.time_a, v.area_a, "A duration");
+        eq(v.rate_b * v.time_b, v.area_b, "B duration");
+        eq(v.time_b - v.time_a, 2, "finish difference");
+        break;
+      case "1028b":
+        eq(v.area_first, v.S, "first area root");
+        eq(v.area_first - v.area_second, 12, "area difference");
+        eq(v.yield_first - v.yield_second, 2, "yield difference");
+        eq(v.area_first * v.yield_first, 1440, "first harvest");
+        eq(v.area_second * v.yield_second, 1080, "second harvest");
+        eq(v.harvest_first, 1440, "stored first harvest");
+        eq(v.harvest_second, 1080, "stored second harvest");
+        break;
+      case "1029a":
+        eq(v.T * v.planned_rate, 4500, "whole planned task");
+        eq(v.actual_rate - v.planned_rate, 45, "rate increment");
+        eq(v.elapsed, v.T - 4, "actual elapsed");
+        eq(v.actual_rate * v.elapsed, v.actual_output, "actual partial output");
+        eq(v.actual_output * 100, v.planned_output * 96, "96 percent whole-task base");
+        eq(v.planned_output, 4500, "stored planned output");
+        break;
+      case "1029b":
+        eq(v.time_first, v.x, "first duration root");
+        eq(v.time_first - v.time_second, 1, "first later finish");
+        eq(v.rate_first - v.rate_second, 120, "rate difference");
+        eq(v.time_first * v.rate_first, v.output_first, "first actual area");
+        eq(v.time_second * v.rate_second, v.output_second, "second actual area");
+        eq(v.output_first + v.output_second, 7200, "whole task");
+        eq(v.output_first * 100, 7200 * 60, "60 percent whole-task base");
+        break;
+      case "1030a":
+        eq(v.T * v.planned_rate, 360, "planned task");
+        eq(v.actual_rate - v.planned_rate, 9, "rate increment");
+        eq(v.early_elapsed, v.T - 1, "early elapsed");
+        eq(v.early_output * 100, 360 * 105, "5 percent excess");
+        eq(v.actual_rate * v.early_elapsed, v.early_output, "early actual output");
+        eq(v.actual_rate * v.T, v.deadline_output, "deadline actual output");
+        eq(v.deadline_output - v.early_output, v.actual_rate, "one more working day");
+        break;
+      case "1030b":
+        eq(v.planned_area * 98, 49 * 100, "whole task from 98 percent");
+        eq(v.planned_rate * v.T, v.planned_area, "planned rate");
+        eq(v.actual_rate - v.planned_rate, 2, "rate increment");
+        eq(v.start, 2, "delayed start");
+        eq(v.finish, v.T - 1, "early milestone finish");
+        eq(v.elapsed, v.finish - v.start, "actual interval");
+        eq(v.elapsed, v.T - 3, "both time offsets");
+        eq(v.elapsed * v.actual_rate, v.actual_area, "actual harvested area");
+        eq(v.actual_area, 49, "partial task");
+        break;
+      case "1031a":
+        eq(v.p * v.T, v.planned_output, "planned task");
+        eq(v.planned_output, 270, "270 plan");
+        eq(v.actual_rate - v.p, 6, "daily increment");
+        eq(v.early_elapsed, v.T - 4, "delivery time");
+        eq(v.actual_rate * v.early_elapsed, v.delivered_output, "actual delivered quantity");
+        eq(v.delivered_output, 264, "264 milestone");
+        requireTrue(v.delivered_output < v.planned_output, "1031a does not claim total task exceeded");
+        break;
+      case "1031b":
+        eq(v.q * v.T, 540, "planned task");
+        eq(v.first_area * 100, 540 * 30, "30 percent whole-task base");
+        eq(v.first_area + v.second_area, 540, "complete actual task");
+        eq(v.q * v.first_phase, v.first_area, "first phase output");
+        eq(v.later_rate - v.q, 9, "later rate increment");
+        eq(v.later_rate * v.second_phase, v.second_area, "second phase output");
+        eq(v.elapsed, v.first_phase + v.second_phase, "sequential elapsed");
+        eq(v.elapsed, v.T - 1, "conditional completion wording");
+        break;
+      case "1032a":
+        eq(v.planned_daily_spend * v.T, 72, "unchanged planned amount");
+        eq(v.first_days, 5, "first phase length");
+        eq(v.later_daily_spend - v.planned_daily_spend, 1, "unchanged daily increase");
+        eq(v.actual_days, v.T + 1, "one day late");
+        eq(v.later_days, v.actual_days - v.first_days, "actual later elapsed");
+        eq(v.first_cost, v.first_days * v.planned_daily_spend, "first cost");
+        eq(v.later_cost, v.later_days * v.later_daily_spend, "later cost");
+        eq(v.actual_cost, v.first_cost + v.later_cost, "actual total cost");
+        eq(v.actual_cost - v.planned_cost, 23, "unchanged excess amount");
+        eq(v.planned_cost, 72, "stored planned cost");
+        break;
+      case "1032b":
+        eq(v.planned_rate * v.T, 272, "planned task");
+        eq(v.planned_output, 272, "stored planned output");
+        eq(v.first_days, 10, "first phase length");
+        eq(v.later_rate - v.planned_rate, 4, "later rate increment");
+        eq(v.early_finish, v.T - 1, "early actual milestone");
+        eq(v.later_days_early, v.early_finish - v.first_days, "second phase elapsed");
+        eq(v.first_output, v.planned_rate * v.first_days, "first phase output");
+        eq(v.later_output_early, v.later_rate * v.later_days_early, "second phase output");
+        eq(v.early_output, v.first_output + v.later_output_early, "early total");
+        eq(v.early_output, 280, "actual early quantity");
+        eq(v.deadline_output, v.early_output + v.later_rate, "actual deadline quantity");
+        break;
+      case "1033":
+        eq(v.solo_first, v.T, "first solo root");
+        eq(v.solo_first - v.solo_second, 5, "solo difference");
+        eq(v.first_only_hours, 2, "initial solo interval");
+        eq(v.joint_hours, 8, "additional joint interval");
+        eq(v.elapsed, v.first_only_hours + v.joint_hours, "total timeline");
+        eq(v.first_work_hours, v.elapsed, "first works in both phases");
+        eq(v.second_work_hours, v.joint_hours, "second only in joint phase");
+        // Clear all denominators for the actual timeline, not a hypothetical 8-hour total.
+        eq(
+          5 * (v.first_work_hours * v.solo_second + v.second_work_hours * v.solo_first),
+          4 * v.solo_first * v.solo_second,
+          "80 percent after 2 solo plus 8 joint hours",
+        );
+        eq(v.completed_numerator, 4, "completion numerator");
+        eq(v.completed_denominator, 5, "completion denominator");
+        break;
+      case "1034a":
+        eq(v.solo_first - v.T, 3, "first solo late");
+        eq(v.solo_second - v.T, 8, "second solo late");
+        eq(v.T - v.joint_days, 1, "joint early");
+        eq(v.joint_days * (v.solo_first + v.solo_second), v.solo_first * v.solo_second, "joint rate sum");
+        break;
+      case "1034b":
+        eq(v.joint_hours, v.t, "joint root");
+        eq(v.solo_first - v.joint_hours, 18, "first solo offset");
+        eq(v.solo_second - v.joint_hours, 32, "second solo offset");
+        eq(v.joint_hours * (v.solo_first + v.solo_second), v.solo_first * v.solo_second, "joint rate sum");
+        break;
+    }
+  }
+  statusCounts[task.status] = (statusCounts[task.status] || 0) + 1;
+  receipts.push({
+    task: task.id,
+    status: task.status,
+    admitted_cases: task.cases.length,
+    rejected_roots: task.rejected_roots.map((r) => r.exact),
+    assertions: assertions - before,
+    result: "pass",
+  });
+}
+for (const [status, count] of Object.entries(statusCounts)) {
+  equal(d.counts[status], count, `declared status count ${status}`);
+}
+const checkerSha = sha(fs.readFileSync(checkerPath));
+const sourceReceipt = {
+  kind: "bounded-source-receipt",
+  cwd,
+  raw: { path: d.source.raw_path, sha256: raw.sha256 },
+  modern: { path: d.source.modern_path, sha256: modern.sha256 },
+  selected_exercises: 8,
+  embedded_source_data_used: false,
+  items: sourceItems,
+  literal_quotes_verified: d.faults.filter((f) => f.quote).map((f) => f.id),
+};
+const mathReceipt = {
+  kind: "one-run-candidate-equation-receipt",
+  cwd,
+  command: `node ${checkerPath}`,
+  ledger: { path: ledgerPath, sha256: ledger.sha256 },
+  checker: { path: checkerPath, sha256: checkerSha },
+  executions: 1,
+  external_libraries: 0,
+  exercises: 8,
+  tasks: 15,
+  task_distribution: taskCounts,
+  status_counts: statusCounts,
+  admitted_case_count: receipts.reduce((n, r) => n + r.admitted_cases, 0),
+  assertions,
+  receipts,
+  content_review: false,
+  source_restoration_approval: false,
+  publication_approval: false,
+  result: "pass",
+};
+console.log(JSON.stringify({ source_receipt: sourceReceipt, math_receipt: mathReceipt }, null, 2));
