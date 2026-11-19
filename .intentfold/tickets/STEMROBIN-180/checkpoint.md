@@ -1,6 +1,374 @@
 # 生产检查点
 
-## 第八十八批已提交推送，第八十九批接续
+## 180-4 合法工作树接管与实际生产
+
+2026-11-19（Europe/Dublin），按最新直接授权在本新会话正式
+create_worktree，workspace 为
+`/Users/yong/.codex/worktrees/stemrobin-180-resume/lemmadeck`；
+工具 registrationError=null，app/package.json 可读，detached HEAD 为
+`cd8a3907f32e2ee4526acac886eaaa63d0cb0bd4`。
+只应用 recovery `f06ece3f4513d13c699caf9e3c0d8cffd3c244a6`
+相对其精确 parent 的 Git binary diff。apply-check/apply 各一次0，
+878 个差异文件逐个 Git blob 匹配，mismatch0；71 个原字节
+行尾空白警告保留。没有应用旧 stash、切分支、改旧锁/登记、
+归属/应用DB，未唤醒或检查任何旧聊天/子代理。
+共享 main 只读；四个运行时链接仅复用其既有 Node/Python 依赖，
+无版本安装或 env 读取/输出。旧 ticket.json 归属记录保留不改。
+
+已实时读取 STEMROBIN-180 及其最新评论，finish=review、Grill=self；
+最新用户接管及普通修复授权优先于旧暂停/1/1解释。
+已恢复 FINAL n159 choice 独审 PASS 与 canonical choice-set，
+没有因旧 checkpoint 仍写 in-progress 重跑审查。
+**第一项具体生产动作：**在上述显式 workspace 执行
+`p2c.py render --book 7p --edition modern-us-neutral --lesson phy7-c2-s4-n159`，
+一次退出0：23 显示段、4 书写题、1 完整模型选择题。
+四条既有 textcircled 非致命警告如实保留；正文/题/图/键不改。
+本次新图片服务0、重试0，历史累计68/0保持，费用/token未知。
+下一动作仅补 n159 六 surface 隔离 headless 桌面/手机离线显示，
+不重跑 B89、SOURCE/TEXT/FIG/ANSWER/CHOICE 已PASS阶段。
+不是完整批次交付、正式review/handoff或全组完成。
+
+180-4 接续：n159 六显示面已实际完成，report 位于
+`tmp/resume-180-4/display/7p/report.json`，headless=true，
+1440x960/390x844 各 text/exercises/choices，全部 overflow0、
+formulaErrors0、末尾文字可达、内部键字段0；4书写题、1单选4选项。
+三 SVG 在桌面640px/手机358px实际媒体宽度下通过既有字号/像素判据。
+一次 helper末端检查 FIRST失败（要求超一屏末选项整体可见）原件
+failure.json保留；仅换末字符range可达，复用前两PASS，不改课件。
+另一个只读 Node 元数据查询有多余右括号 SyntaxError 原工具结果保留，
+没有把读取失败当来源否决。没有重复 render 或任何内容审查。
+
+随后收到监督最新直接纠偏：复用 n159 已保存的15px DOM/PNG边界、
+截图和不变PASS，停止新增显示/审查流水线。刚创建的短时桌面
+DISPLAY审查 Hooke 已关闭（previous_status=running），手机审查未创建；
+不将被中断审查计为PASS，不再浏览或独审已通过显示面。
+本次仅补已恢复 FINAL/choice-set 的封存记录；n159 为 B90 局部尾批
+完整1课，n157/n158的失落artwork、不可判定图细节仍HOLD，未计完成。
+所有旧 FIRST/FAIL/费用计数均不改，当前新付费0/新图服务0。
+只暂存 n159及直接来源/三图/批准报告，索引暂存只新增n159，
+其余恢复稿及旧索引不同字节原样留工作区；准备push后立即续n160。
+
+## 第八十九批已提交推送，第九十批接续
+
+n159 CHOICE受影响BLIND PASS已收取冻结：report046b7f17.../
+leakageff55d8e8.../truthsd4b12743.../status70309161.../
+manifestc9c9cd49...，独立2:2分布无唯一多数交集，真值集c；
+三个改foil完整独解与受影响关系PASS，未改SOURCE/原FIRST，
+3/8图不变，新图/键读取/内容重跑0，累计recorder24/bootstrap3。
+父先实际SHA/0444绑定后，才显式披露current full draft进行FINAL；
+仅作者键/推导/覆盖和production-loss比较，复用已冻结审查。
+盲审等待09:07:58→09:51:35Z后一次简短继续redirect；
+审者确认无在途命令被中断、无失败或已完成检查重跑，不编造故障。
+桌面/手机审者均PREPARED/0of8，实际DISPLAY尚未开始；
+FINAL/retention/render/browser仍未完成，B90完整0，父图10。
+
+n159 DISPLAY仅fresh桌面Ohm/手机Hume准备规则，各budget8/新图0；
+未获实际截图、不开始DISPLAY，不声明PASS。未跑helper只补截图
+documentBox与optionBox元数据，node --check一次0；验收条件、
+课程/图字节不改。必须受影响BLIND真值先冻→FINAL PASS→render
+和一次六surface headed实际检查后，才再次委托两审者读现有截图。
+当前renderer/browser仍NOT_RUN，完整课0，旧SOURCE和FIRST不改。
+
+n159 CHOICE repair1作者已收取未批准，draftf98c8abf.../
+digest6392d339...、pureviewd1eb5c9a.../digestfaf07541...；
+guard96ae48c0.../selected3dacc6ab.../report6e39222b.../
+manifestf719572c...，结构validate一次0。父实际SHA/0444与
+pureview exact projection核对0，完整intent/coverage/源/IDs/图不变，
+只三个foil文本及六推导/误解字段改变，作者3/8图且修复新图0。
+同Turing受影响BLIND已委托，仅纯view和无键selected可读；
+独立泄题观察先冻，再查改变选项全部真值，不披露full draft/key。
+FIRST REVISE和SOURCE继续0444不改，FINAL/retain/render/DISPLAY未跑，
+父图10/付费68/retry0/B90完整现代课0，无Git/DB/发布/handoff。
+
+n159 CHOICE BLIND FIRST REVISE已收取冻结，仅BLIND-FIRST-01泄题：
+三个完整分段的多数相同组交集唯一为c，文本匹配即可找答案。
+task fidelity/redundancy/四题30facets/物理真值均PASS；并非拒绝
+整模型识别或合理排除。reportec461bbf.../FIRST5904934b.../
+truthsfb6c9d6.../status7e3714cf.../manifest2d0fd86e...均0444，
+作者键尚未披露；SOURCE先冻证据不改。
+Rawls同3/8图context的repair1已委托，在现有错误间重新分布，
+不只改写相同3:1模板；仅tmp/repair1及choice-repair报告可写。
+Turing同3/8图context保留待受影响BLIND，PASS及truth先冻后才FINAL。
+本接续父11次bootstrap只读、一次输出截断及一次patch context失败
+保留，未改变文件；后续均recorder，不重setup/freshness/已PASS阶段，
+父图10/付费68/retry0/B90完整0。
+
+n159 CHOICE作者已收取AUTHOR_COMPLETE_NOT_REVIEWED，
+report0d4a21ba.../manifest340b1410...，draftb826716f.../
+digest6640a595...，pureview053fa754.../digest2d039329...；
+1single/4完整模型选项，覆盖4/4种子，作者solution8210a4aa...
+在08:32:01Z先冻，draft/view于08:36:48Z后冻，结构validate一次0。
+pureview确为{questions:[{id,view}]}无内部字段，父已实际hash/projection
+绑定。作者累计3/8图不变、phase2新图0、新图资产0/付费0。
+Turing SOURCE已先冻，仅纯view BLIND在途，未披露author键/理由；
+SOURCE/FIG/旧答案不重跑，B90完整现代课0，父图10保持。
+
+n159 CHOICE独立SOURCE PASS已收取冻结，report670eae56.../
+solutions75c1081f.../coverage8f983183.../manifest6e48c7e7...，
+4/4原题30内容点，Turing3/8图、0候选/view/key读取，
+12recorder/3bootstrap/0命令失败，两超长输出读取技术恢复留。
+与先前ANSWER的7primary facets是不同分解，未替代旧答案批准。
+Rawls phase2作者尚在途；BLIND及FINAL未开始，不提前披露作者键。
+所有SOURCE文件0444，父图10/付费68/retry0/B90完整0保持。
+父一次checkpoint补丁语法失败保留在工具历史，无文件改写/内容结论；
+只修正patch格式后续，不重生产或审查工具。
+
+本接续父bootstrap按实际turn工具历史核对为11次（3+4+4），此前14
+为账目笔误，现仅修正可编辑checkpoint/usage；原9次旧接续账不改。
+未据此重跑任何命令、产生新批准或改动不可变FIRST/FAIL/UNKNOWN。
+
+n159 CHOICE phase1 seed已收取冻结，seed0c2e65f9.../
+digestabe00b05.../evidencef3f35ad8.../freezee87732ad...，
+四原题+定义0,1,2,3,8,10,11,12,13,15,18,19+342343344当前SVG。
+Rawls实际3/8图，原SVG新完整view各一次，两个截图技术失败原件留，
+无旧答案/旧choice读取/语义gate重跑。现在Rawls同context phase2
+先独解冻作者solution再选项；fresh Turing仅同seed/实际三图SOURCE
+独解在途budget8，不读作者solution/draft/key或phase1观察文字。
+SOURCE先冻后BLIND view披露，BLIND完整truth先冻后key比较；
+尚无CHOICE/DISPLAY批准，B90完整0。父图10/付费68/retry0不变。
+
+n159342受影响FIG PASS已收取关闭，reportc325a42e.../
+status94b666e2.../manifestcf5574ce...，新1图/累计7/8，
+198未变objects+6改+2新增-8移除=206，作者文字“3新增”账差明确
+保留不改原报告。首次坐标映射漏居中offset技术失败与最小修正保留。
+三图均当前独立PASS；342官方record/promote各一次0，
+receiptb1beaba6.../durable reviewee868114...，SVG字节不变。
+12隔离FIG文件复制及唯一writable figures模板填入各一次0；
+standard adapt-finalize一次0（20prose/4题/3图），现代四文件
+retention一次0，receiptfdb68d00...；答案两文件retention一次0，
+receipt567881c2...，仅ready已审字节，题面/正文projection不改。
+现代书索引用现有update_book_index一次0补唯一n159，19→20row，
+旧19row/profile/其他metadata全部不变，旧索引0444备份。
+fresh Rawls仅新CHOICE phase1 seed准备/选定义/实际图观察在途，
+budget8；不读答案/旧选择配置，seed后独立SOURCE先冻再披露keys。
+尚未选择题批准/render/DISPLAY，B90完整现代课仍0。
+父图10/付费68/retry0；本轮无Git/DB/发布/正式handoff/合并部署关闭。
+
+n159342 R342-1作者repair2已收取关闭，reportf2593611.../
+manifest51a94f7a.../spec55834c32.../SVG814d3c6e...，
+一受影响render/native各一次0，24case，paint净间隙手机5.928px，
+实际shell/shaft填充及斜线分离，不只辅助点断言。198未变objects/
+83旧sealed文件identity，344343/TEXT/FIRST不改；作者累计8/8图。
+仅一新full640/mobile297组合native图，0原图重开/0crop/0付费。
+Bernoulli沿用6/8上下文仅R342-1受影响复核在途，预期一新native图；
+342仍未批准，无新official/promote/finalize/答案retain/选择/DISPLAY。
+父仅晋升helper342输入名改指repair2；受影响前提未放宽。
+答案retention及单课六surface headed DISPLAY helper已备NOT_RUN。
+父图10/付费68/retry0/B90完整现代课0，所有旧HOLD/UNKNOWN不动。
+
+n159 FIRST独立FIG343 PASS d379b03d.../status20ce0b3e.../
+manifest1fc109cd...已收取关闭，3/4图；Boole作者关闭。
+342/344 FIRST独立审查report5b67e3cf.../status95517c69.../
+manifestf3c5e094...已收取，6/8图：344 PASS，342 REVISE R342-1。
+342外壳剖面/斜线穿电极通道，辅助点1单位间隙被3px线宽遮住；
+普通受影响修复授权沿用，不放宽实际绝缘关系。Dalton仅342修复在途，
+累计7/8图不重置，限一新full640/mobile297 native图；FIRST均保留。
+343/344官方record与metadata-only promotion各一次0，共8新durable
+文件，SVG字节不变；receipts56906d74.../0e7a98f4...，
+durable review0e67d54f.../83616ab9...。不提前批准342或整课。
+130返回作者/答案文件实际hash绑定一次0，无语义重跑。
+本接续父第二只读路径错误为猜测不存在scripts/p2c.py，exit2保留；
+随后rg找到tools/p2c.py，未重生产工具。父图10/付费68/retry0/
+B90完整现代课0；adapt-finalize/答案retain/选择/DISPLAY未执行。
+
+n159四题ANSWER SOURCE/FINAL内容PASS已收取关闭，reportdb62cc2d.../
+0aa06ae7...，coverage27731501.../comparisonfc0f73c9...，
+freeze b0b6f932.../422b9773...，SOURCE先冻再披露candidate，
+4/4题7/7facets，derived4/ungraded4/auto0，0图/0内容修订。
+author/place/standard answer-finalize/seal各一次0，ready29c274c1.../
+audit5a6311c7...仅status和derived count变；尚未canonical答案retain。
+SOURCE/FINAL0444及uchg保持，SOURCE-local recorder仅prefix例外留存。
+n159三图作者均已收取但保持可用，343report168f766f.../
+manifest70a373aa...，3/4图，spec3e60a270.../SVG7bc312bd...；
+342344report34bf5e47.../manifest5e49bbd5...，7/8图，spec9b7f7ac8.../
+216f51e8...，一344内容修复及FIRST失败保留，无付费/晋升。
+fresh Socrates仅343独立FIG budget4，fresh Bernoulli仅342344独立FIG
+budget8；不重SOURCE/TEXT/作者render/native，不读取答案键。
+本接续11父bootstrap只读未包装，其后均recorder；一次父只读路径查询
+exit2因猜测不存在b90-n159-answer目录保留，已存在输出不重跑。
+父图10/付费68/retry0/B90完整现代课0，所有旧HOLD/UNKNOWN不变。
+只准备批准后元数据路径迁移helper，不提前official record/promote/
+adapt-finalize/选择/DISPLAY/DB/Git/正式handoff。
+
+n159 FIRST全TEXT PASS已收取关闭：reportfe676245.../
+statusa5f4bd0a.../manifest9e287abf...，17实际段/四原题/28refs/
+两相邻锚点均通过，0图/0新网络/1语义审查。审者首次错误要求
+未编辑FIRST等于作者seal的技术失败原件保留，仅该检查修正；
+候选/原文零修改，23recorder/5bootstrap。FIG仍未批准。
+五figure-context输入复制一次0，342343344各build_context一次0，
+fresh Dalton仅342344源先盘点/路线作者budget8，fresh Boole仅343
+图线源先盘点/路线作者budget4；无付费，不能简化绕过缺失artwork。
+五answer输入复制/standardprepare各一次0，四题无显式图引用，
+fresh Linnaeus仅ANSWER SOURCE独解budget0，先冻解再披露作者键。
+answer-author/place/helper已备NOT_RUN；22隔离finalize输入复制
+一次0，仅来源/模板备料，不adapt-finalize/新晋升/选择/DISPLAY。
+第四只读路径查询（不存在独立answer-seal脚本，seal实际同place
+脚本）exit1原件保留，不重已通过工具。父图10/付费68/retry0/
+完整现代课0；三个作者/独解在途，无父exec运行，无Git/DB/提交。
+
+n159受影响SOURCE PASS60f73c12.../report508b0f19.../
+manifestbc0d3359...，原观察复用0新图；原六canonical文件先备份
+再retention一次0，receipt3613a416...。15隔离RAW输入复制/
+expectation/strict assemble/objectcheck各一次0，28refs精确一次、
+20prose=14p+3fig+3cap/4g1题，402首段独立，两join正确；
+唯一warn0400#1属排除n158残段。独立RAW PASS99f2fff7.../
+resultcd8eb715.../manifestd5bdd38d...收取关闭，0新图，FIRST原件不改。
+审者一JS numeric-leading-key技术失败及一次修正已保留，裸caption
+projection差异由原emphasis wrappers解释，不是作者内容修订。
+原课3文件+342343344六原图retention一次0，共9新canonical文件。
+index-before/standard reindex/index-after各一次0，仅补n159，
+sourcebook0d1b1859.../29row，旧28row和87源课文件字节全部不变；
+不是新SOURCE/完整现代课批准。旧索引edb334fb...0444留存。
+modern prepare/author/两normalizer/flow/seal各一次0，14源p→17实际
+proseFlow，2真实adjacent锚点；lesson7d10aa5f.../exac627477.../
+figd70dfb65...0444，四原题、公式/全部原数字/器件标号/28refs未改。
+只澄清早期碳送话器与供电、收发定义、AB/BC及永磁铁静态/变动作用。
+fresh Chandrasekhar只FIRST全TEXT独审，budget0，在途；
+figure-context helper已备但NOT_RUN，不finalize/新FIG/答案/选择/DISPLAY。
+第三只读native路径查询exit2已保留，未调用native或浏览器。
+父图10/付费68/retry0/本批完整0，未Git/DB/正式handoff。
+
+n159对象边界FIRST澄清已收取，report93cb1a1e.../
+manifest98b5ac26...，Feynman3/3原页顺序观察，0crop/reopen。
+400#13/14确属159的定义脚注；401#10本页闭合，402#1另起段；
+400#12 open及400#15 foot不改。父仅三header+一diagnostic note
+编辑；author/finalize400/finalize402/seal各一次0，正文/数学/数字
+零改变，两页各23行/0normalization，fig344PNG字节不变。
+四KaTeX警告原内容/数量不变，仅两foot#13/14变p#13/14身份；
+守卫先于seal明确此机械映射，未放宽数学/内容检查。
+author0d6b6cde.../seal02383895...0444，原FIRST及旧拒绝不改。
+Feynman续受影响SOURCE复核，复用3原图，0新增图；未canonical
+retain或RAW装订。父已备n159隔离装订helper但所有stage NOT_RUN。
+本接续9次bootstrap只读未包装（首次4+第二轮5），其后recorder；
+两只读路径查询exit2原件保留（不存在audit.py/尚未生成affected）。
+Rutgers早期碳送话器资料实际200；Smithsonian两次403含wait8、
+Kenyon404均保留且未作科学依据，0截图/0付费/浏览器已关。
+父图10保持，sourcebook28row不改，本批完整现代课仍0。
+
+n159 SOURCE输入/原图技术恢复已收取关闭：report9dcf5256.../
+manifest9b1be248.../bindingsb0dbd97d...，401..403九页文件批准哈希
+全匹配；401402原PNG及342343344六PNG/SVG精确复现，prepare2/
+crop3/vector-core3，各一次0，无SOURCE/gate重审/图片/付费。
+42exec/36recorder、5bootstrap及1先于recorder失败例外已披露；
+两技术失败（label/非literal报告尾）原件保留并分别最小续接。
+原402403 FIRST BLOCK及F1旧REVISE、403旧glyph/footer UNKNOWN不改；
+402完整审查+材料affectedPASS实际literal绑定，不从作者推断批准。
+archive扩展由父在既有离线授权内限定三原child，不是新human授权。
+fresh Feynman仅400脚注/401末段→402首段的SOURCE对象边界原图澄清，
+budget3，无整页/SOURCE内容重审，尚在途；14隔离修复输入复制一次0，
+正文/标记均未改，source-author/finalize/RAW尚NOT_RUN，父图10保持。
+
+n158六题FINAL仅内容独审PASS已收取关闭，report6978c1f8.../
+receipt3de477c0...，来源解及candidate9fcf051b...未改，0图。
+五独立答案输入复制/prepare/author/place/标准answer-finalize/seal
+各一次0，仅批准draft TEXT隔离目录，auto0/ungraded6；
+ready21001595.../audit6a7aa682...0444，仅status与派生count改变。
+图HOLD前提不变，未canonical答案retain/现代课finalize/选择/DISPLAY。
+fresh Leibniz接下一未完整n159的SOURCE绑定及缺失原图技术恢复，
+budget0；仅已知本parent直接dispatch的402403原作者/原审者/材料
+affected三archive新增精确metadata范围，不读其他账户/聊天。
+SOURCE401PASS已知七哈希，402/403完整批准要实际绑定，不从FIRST
+BLOCK或单一材料affectedPASS冒认；未新SOURCE语义审查或RAW装订。
+
+n158两FIRST FIG作者HOLD已收取关闭，report17063aba.../
+manifestf2c4b1a...；340盘面刻字/完整针体未决，341源地球陆块语义
+需hybrid但no-generation，不作简图降级。作者2/8图、render/native
+均NOT_RUN；父仅针对340未决重开1原PNG确认像素不足，父现10。
+六题ANSWER SOURCE独解PASS先冻，reportb8f41181.../
+solution1e61c6e5.../receipt37554b15...，0图/0键读取，Hilbert保留。
+20隔离finalize输入复制一次0，标准原书reindex一次0新增唯一n158，
+原27row/56源JSON字节不改，旧索引2d4f9deb...0444保留，
+现索引edb334fb.../28row；非新SOURCE批准。六题均无图引用，
+父仅准备独立答案草稿输入/helper，图依赖的adapt-finalize/晋升/
+retain/DISPLAY继续HOLD，未新选择/提交/完整课/DB/付费。
+
+n158 FIRST全TEXT独审PASS已收取关闭，report8f90a18d.../
+manifest02eb2ee5...，13段/6题/26refs及科学限定通过，0图；
+首次审者check1仅过宽readonly假设，受影响check0，候选未改。
+figure-context四不可变输入复制一次0，340341各build_context一次0，
+仅批准TEXT草稿路径，非finalize。fresh Ramanujan仅两图FIRST作者
+budget8，必须源先盘点/路线、不降级避付费；fresh Hilbert仅6题
+ANSWER SOURCE独解budget0，先冻解再披露键。父新增隔离装订输入/
+答案作者helper尚NOT_RUN；未晋升/最终装订/新选择/DISPLAY/提交，
+完整现代课0/父图9/付费68/retry0保持同invocation180-3。
+
+RAW n158独审PASS收取关闭：report8df234b0.../manifest0aaebe34...，
+26refs精确一次、13p+2fig+2cap/6个g1题、唯一join正确；新图0/累计1/2。
+approved源400三文件+n158三RAW+340341四原图共10新文件retain一次0，
+398399及所有拒绝快照不改，sourcebook索引暂保留原dirty待批次。
+FIRST modern作者/两normalizer/flow/seal各一次0，13段/三真实相邻锚点，
+lesson模板bcf5ffcf.../ex7d9553cb.../fig模板7ff048b0...均0444。
+历史地磁坐标原数学及数值保留；仅q1补稳定水平分量条件、q6按原书
+大型异常实例提问；正文澄清历史观测、磁极命名、磁暴/空间异常、
+中子不带电、地磁起源及有限屏蔽。NASA/NOAA三实际200文字读已绑定，
+三404查询原件留且未用作科学证据，0截图/0付费，浏览器全部已关。
+fresh Kierkegaard仅FIRST全TEXT科学/题保真独审在途，budget0图；
+未新FIG/答案/选择/DISPLAY/finalize/提交，完整现代课0，父图9。
+
+400受影响SOURCE独审PASS已收取，reporte980b822.../
+manifest6c41941e...，1/2图无crop/reopen；此前FIRST仍REVISE。
+398原PNG及340/341四PNG/SVG全部精确复现，reporta90203ce.../
+manifest0e3e89e5...，6命令全0，prepare1/crop2/vector1，0图，
+Zeno已关闭。n158隔离13输入/预期冻结/strict assemble/object-check
+各一次0：仅完整目标17prose/6题/2图，正确接399#10→400#1；
+整体3页/3scratch项/11题包含两边界，唯一open400#12属排除n159。
+lesson187178ef.../ex13bcfcc7.../MD9acbd4c4...0444，Aristotle续零新图
+RAW归属/传播审查；adapt-prepare一次0仅n158两图模板，无新TEXT批准、
+无晋升/finalize/完整现代课/提交。父图9/付费68/retry0不变。
+
+400最小input/缺失prepare/finalize/seal各一次0，23行/15块/6题、
+0图/0normalization/0error；audit原8443511e.../四warning不动，
+MDa2c20a6a.../JSON1724d09f...，所有其他blocks及metadata仅profile
+hash事实刷新。原PNG586f76cf...精确复现，grid/layout/template仅新
+技术输出不冒称旧literal。fresh Aristotle仅句点受影响SOURCE审查，
+budget2；父图9，398输出另在途，未装订/晋升/完整课/提交。
+
+B90 n158 literal恢复现已收取关闭：400拒绝MD/JSON/audit/FIRST均精确
+0444独立恢复，SOURCE首次REVISE不改；398两图精确框及历史哈希已绑定。
+仅准备400捕获器后句点最小修复及隔离缺失备料，398/340/341由fresh
+Zeno作零图技术输出接续；未finalize/装订/新SOURCE审查、未晋升。
+付费68/retry0、父图9、完整0；同cap3 invocation180-3，不重setup。
+
+B90当前337/339独立FIG双PASS已收取关闭，report6a99d3f6.../
+reviewerseal75873d87...、6/8图0crop/reopen；作者也已收取关闭。
+两官方record各一次0、seal一次0，review7055791c.../ce3318a0...，
+仅当前图批准不晋升；339小内箭头native清晰属非阻塞。n157目前
+333/336/337/339四图ready，334/335失落artwork及338失落批准spec/
+SVG仍HOLD，完整0；历史FAIL/UNKNOWN不改。
+
+继续同范围下一未完整课n158，不触付费：398/399原页已存在，399
+三哈希与affectedPASS完全相符；400已审仅捕获器后句点误逗号，但
+失落MD/JSON须先literal恢复。fresh Herschel仅已知parent匹配400401
+及398399源作者/审者archives精确恢复/期望绑定，0图/0作者重跑；
+同时340/341四源图输出失落，仅补精确hash/crop绑定，未新截图、
+转写、裁图、vectorize、assemble或SOURCE重审。所有其他dirty保留。
+
+B90 337/339作者当前PASS收取，reportb9d25ee1.../seal7e7cf0ea...；
+specd19f220e.../c708c7ce...，两render/native各一次0、36宽度主题
+surface检查、最小17.325px，作者6/8图。339补充检查器FIRST只因
+token要求错误失败，原stream/脚本保留，唯独检查器修正续0，spec/
+render/native不重跑。fresh Erdos只两源图→当前候选独立FIG审查，
+未官方record/promote，Plato保留仅可能受影响作者接续；完整仍0。
+
+B90仅对恢复provenance列出的334/335/338十个精确primary对应路径
+作存在性读取，均不存在；未扩展其他archive/账户范围、未加载图、
+未重恢复器或把UNKNOWN改批准。333已通过技术seal，337/339作者仍
+在途。现有no-paid边界保持，不隐式改生成路线、压缩范围或关闭工单。
+
+B90图333仅缺SVG输出技术接续：输入复制/render/metadata/seal各
+一次0，17对象4label；SVG71375753...与历史批准期望完全同字节，
+spec738005fc.../源不改，历史独立FIG/native PASS复用0重开/重审。
+新review92880c13...只是当前metadata不是失落原review恢复；
+旧seal FIRSTFAIL/UNKNOWN仍留。fresh Plato仅337/339失败图新
+源像素修复作者，预算8；333/336/338已过内容不重审、334/335不付费，
+B90完整0，274范围保持。父图9/付费68/retry0无exec在途。
+
+B89实际commit/push各一次0，62文件、两完整课，HEAD/origin同为
+cd8a3907f32e2ee4526acac886eaaa63d0cb0bd4。scope/secret/whitespace各
+一次0，secret匹配0，其他dirty/索引字节/stash原样保留；不作仅报告提交。
+父无exec运行，B89全部作者/审者已收取关闭。现在继续B90 n157
+已恢复TEXT及缺失确定性输出，既有FIG PASS复用、历史FAIL/UNKNOWN保持，
+不付费、不写库、不正式handoff/合并/部署/关闭，274项仍未完成。
 
 B89两独立DISPLAY均PASS，桌面bd1d12ed.../手机d0bebea1...，
 各6原截图、crop/reopen0，已收取关闭，父图9保持。现在完整两课
