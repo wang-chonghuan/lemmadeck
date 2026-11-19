@@ -1,5 +1,21 @@
 # 开发路线
 
+## 184-4 n12/n13 两课窄交付（2026-11-19）
+
+复用已冻结 completion 及已过正文/答案/选择/显示证据，不重审、
+不重渲染、不复看图片。交付集合仅 ana9-c3-s1-n12、
+ana9-c3-s1-n13：2课、3答案、14选择题、51选项；旧累计不作为事实。
+只提交两课依赖的来源页、原课/现代课、n13长除法图、既有证据和
+本节记录；全书索引只暂存两课项，n6/n7/n14及其余工作区改动保留。
+source65计数21/21与n14标题/导航PASS复用；n14可读性、source62
+页脚、source65图5/6字形HOLD仅局部保留，不进入完整课交付集合。
+原completion中的unpushed是冻结前历史状态，实际交付以本节与
+usage的新课号/commit/push记录为准。提交前已fetch原分支，
+detached HEAD与origin/codex/STEMROBIN-184-textbooks均为
+b4374c2ee72c85f4c56f05318ed2660823e167c7；待窄提交与正常push。
+finish review / Grill self；父永久24/24，零新图片/DB/publisher/E/
+main/merge/deploy/formal handoff/closure/监督或同伴主动消息。
+
 ## 实际观察
 
 共同基线没有本组四册的 artifacts；源 PDF、中文和英文目录齐全。现有管线以逐页
