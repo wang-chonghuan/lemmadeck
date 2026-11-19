@@ -55,7 +55,14 @@ def keyed(value, key, names, where, expected=None):
 def visible_text(value, where):
     text(value, where)
     # Assets have a dedicated field; embedded media/HTML can hide extra inputs.
-    require(not re.search(r"!\[|</?[A-Za-z][^>]*>|<!--|(?:https?|file|data):",
+    # Require tag/attribute syntax so successive inequalities are not one tag.
+    html_tag = (
+        r"<[A-Za-z][A-Za-z0-9-]*"
+        r"(?:[ \t\n\r\f]+[A-Za-z_:][A-Za-z0-9_.:-]*"
+        r"""(?:[ \t\n\r\f]*=[ \t\n\r\f]*(?:"[^"]*"|'[^']*'|[^\s"'=<>`]+))?)*"""
+        r"[ \t\n\r\f]*/?>|</[A-Za-z][A-Za-z0-9-]*[ \t\n\r\f]*>"
+    )
+    require(not re.search(r"!\[|<!--|(?:https?|file|data):|" + html_tag,
                           value, re.IGNORECASE), f"{where}: embedded media/HTML/URL")
 
 

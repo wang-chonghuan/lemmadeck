@@ -1,0 +1,283 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { createServer } from 'node:http';
+import { createRequire } from 'node:module';
+import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+const OWN = path.join(R, '.tmp/resume182-4-postaccount/n22-missing-pixels-final');
+const OLD = path.join(R, '.tmp/resume182-4-postaccount/n22-missing-display-FIRST');
+const L = path.join(R, 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c3-s1-n22');
+const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+assert.equal(process.cwd(), R);
+assert.equal(path.dirname(fileURLToPath(import.meta.url)), OWN);
+assert.deepEqual(process.argv.slice(2), ['--one-missing-pixel-batch']);
+const temp = path.join(OWN, 'chromium-tmp');
+await mkdir(temp);
+process.env.TMPDIR = temp;
+const report = {
+  ticket: 'STEMROBIN-182', scope: 'n22 missing pixels only', cwd: R,
+  started: new Date().toISOString(), inputs: [], missing: {}, screenshots: [],
+  frameGeometry: [], firstFailures: [], servedRequests: [], blockedRequests: [],
+  browserErrors: [], requestFailures: [], cleanupFailures: [],
+  usage: {
+    invocations: 1, installedAppPlaywrightHeadlessLaunches: 0, memoryServers: 0,
+    screenshotCap: 8, screenshots: 0, imageOpensDuringRuntime: 0,
+    sourceAnswerKeyFigureSupplementImageOpens: 0, crops: 0, reopens: 0,
+    renderCalls: 0, DOMAcceptanceChecks: 0, testCalls: 0,
+    appDBProductionPaidDependencyGitOtherChatCalls: 0, contentEdits: 0,
+    outputSVG: 0,
+  },
+  cleanup: { contextsClosed: false, browserClosed: false, serverClosed: false },
+};
+let browser;
+let server;
+let origin;
+const contexts = [];
+const event = async (item) => appendFile(path.join(OWN, 'usage-events.ndjson'),
+  `${JSON.stringify({ time: new Date().toISOString(), ...item })}\n`);
+const bind = async (filename, expected) => {
+  const bytes = await readFile(filename);
+  const binding = { path: filename, sha256: sha(bytes), bytes: bytes.length };
+  report.inputs.push(binding);
+  if (expected) assert.equal(binding.sha256, expected, `Frozen hash binding: ${filename}`);
+  return bytes;
+};
+function targets(kind, values) {
+  return values.map((value) => ({
+    targetID: `${kind}:${value}`, kind, value,
+    selector: kind === 'prose' ? `p.para >> nth=${value}`
+      : kind === 'written' ? `#ex-${value}` : `section.choice >> nth=${value - 1}`,
+  }));
+}
+async function measure(page, selected) {
+  const result = [];
+  for (const target of selected) {
+    const geometry = await page.locator(target.selector).evaluate((element) => {
+      const box = (node) => {
+        const r = node.getBoundingClientRect();
+        return { left: r.left + scrollX, right: r.right + scrollX,
+          top: r.top + scrollY, bottom: r.bottom + scrollY,
+          width: r.width, height: r.height };
+      };
+      const style = getComputedStyle(element);
+      return { elementID: element.id || null, rect: box(element),
+        nativeFont: { family: style.fontFamily, size: style.fontSize, lineHeight: style.lineHeight },
+        options: [...element.querySelectorAll('.choice-options > li')].map((row) => ({
+          displayedID: row.querySelector('.option-id')?.textContent.trim(), rect: box(row),
+        })),
+      };
+    });
+    result.push({ ...target, ...geometry });
+  }
+  return result;
+}
+function bounds(selected) {
+  const x = Math.max(0, Math.floor(Math.min(...selected.map((item) => item.rect.left))) - 4);
+  const y = Math.max(0, Math.floor(Math.min(...selected.map((item) => item.rect.top))) - 4);
+  return { x, y,
+    width: Math.ceil(Math.max(...selected.map((item) => item.rect.right))) + 4 - x,
+    height: Math.ceil(Math.max(...selected.map((item) => item.rect.bottom))) + 4 - y,
+    scale: 1 };
+}
+async function capture(page, cdp, viewport, name, selected) {
+  const extent = bounds(selected);
+  const geometry = { name, viewport, extent, selected, setupOnly: true };
+  report.frameGeometry.push(geometry);
+  await event({ framing: geometry });
+  if (report.screenshots.length >= 8 || extent.height > 1536
+    || extent.width > viewport.width || selected.some((item) => item.rect.left < extent.x
+      || item.rect.right > extent.x + extent.width
+      || item.rect.top < extent.y || item.rect.bottom > extent.y + extent.height)) {
+    const failure = { stage: 'FIRST-framing-failure', name, extent,
+      reason: 'Bounded frame does not fit unchanged native width / 1536px image-height budget / eight-image cap' };
+    report.firstFailures.push(failure);
+    await event(failure);
+    return;
+  }
+  // Chromium captures the measured region directly, without a full-page image or post-crop.
+  const captured = await cdp.send('Page.captureScreenshot', {
+    format: 'png', fromSurface: true, captureBeyondViewport: true, clip: extent,
+  });
+  const bytes = Buffer.from(captured.data, 'base64');
+  const filename = path.join(OWN, `${name}.png`);
+  await writeFile(filename, bytes, { flag: 'wx' });
+  const dimensions = { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+  const entry = { path: filename, sha256: sha(bytes), ...dimensions, viewport, extent,
+    coveredTargetIDs: selected.map((item) => item.targetID),
+    targetGeometry: selected, visualStatus: 'PENDING_ONCE_ONLY_PIXEL_OBSERVATION', opens: 0 };
+  report.screenshots.push(entry);
+  report.usage.screenshots += 1;
+  await event({ screenshot: entry });
+}
+async function navigate(page, route) {
+  await page.goto(`${origin}/${route}.html`, { waitUntil: 'load' });
+  await page.evaluate(() => document.fonts.ready);
+}
+try {
+  report.captureUsage = { path: fileURLToPath(import.meta.url),
+    sha256: sha(await readFile(fileURLToPath(import.meta.url))) };
+  const oldBytes = await bind(path.join(OLD, 'final-result.json'));
+  const old = JSON.parse(oldBytes);
+  const visualBytes = await bind(path.join(OLD, 'visual-review.json'), old.outputs.visual_observations.sha256);
+  const visual = JSON.parse(visualBytes);
+  const missing = old.still_unobserved_in_pixels;
+  report.missing = {
+    desktop: { prose: missing.desktop_prose_zero_based_indices,
+      written: [], root: missing.desktop_root_one_based_questions },
+    mobile: { prose: missing.mobile_prose_zero_based_indices,
+      written: missing.mobile_written_objects, root: missing.mobile_root_one_based_questions },
+  };
+  assert.deepEqual(report.missing.desktop.prose, visual.still_unobserved_in_pixels.desktop.prose_zero_based_indices);
+  assert.deepEqual(report.missing.desktop.root, visual.still_unobserved_in_pixels.desktop.root_one_based_questions);
+  assert.deepEqual(report.missing.mobile.prose, visual.still_unobserved_in_pixels.mobile.prose_zero_based_indices);
+  assert.deepEqual(report.missing.mobile.written, visual.still_unobserved_in_pixels.mobile.written_objects);
+  assert.deepEqual(report.missing.mobile.root, visual.still_unobserved_in_pixels.mobile.root_one_based_questions);
+  report.inheritedEvidence = {
+    finalResultPath: path.join(OLD, 'final-result.json'), finalResultSha256: sha(oldBytes),
+    visualReviewPath: path.join(OLD, 'visual-review.json'), visualReviewSha256: sha(visualBytes),
+    oldStatus: old.status, rawReadyCounts: old.counts,
+    rawReadyBindings: old.old_ready_bindings,
+    supplement: old.supplement_inherited_not_retested,
+    originalFailuresHOLDAndProductionLossesUnchanged: true,
+    DOMAndPassedPixelsNotRerun: true,
+  };
+  const html = new Map();
+  for (const [route, filename, expected] of [
+    ['text', path.join(L, 'evidence/first-text-written-display/text.html'), old.old_ready_bindings.text_html_sha256],
+    ['exercises', path.join(L, 'evidence/first-text-written-display/exercises.html'), old.old_ready_bindings.written_html_sha256],
+    ['choices', path.join(L, 'choice-set/evidence/first-choice-display/choices.html'), old.old_ready_bindings.root_choices_html_sha256],
+  ]) html.set(`/${route}.html`, await bind(filename, expected));
+  server = createServer((request, response) => {
+    report.servedRequests.push({ method: request.method, path: request.url });
+    if (request.method !== 'GET') return void response.writeHead(405).end();
+    if (request.url === '/favicon.ico') return void response.writeHead(204).end();
+    const bytes = html.get(request.url);
+    if (!bytes) return void response.writeHead(404).end();
+    response.writeHead(200, {
+      'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store',
+      'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src 'none'; connect-src 'none'; script-src 'none'; form-action 'none';",
+    }).end(bytes);
+  });
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', resolve);
+  });
+  report.usage.memoryServers = 1;
+  origin = `http://127.0.0.1:${server.address().port}`;
+  report.memoryServer = { origin, exactFrozenBuffers: 3 };
+  const probe = await fetch(`${origin}/text.html`, { signal: AbortSignal.timeout(5000) });
+  assert.equal(sha(Buffer.from(await probe.arrayBuffer())), old.old_ready_bindings.text_html_sha256);
+  const requireApp = createRequire(path.join(R, 'app/package.json'));
+  const { chromium } = requireApp('@playwright/test');
+  browser = await chromium.launch({ headless: true, timeout: 30000,
+    tracesDir: temp, env: { ...process.env, TMPDIR: temp },
+    args: ['--disable-background-networking', '--disable-component-update', '--disable-sync',
+      '--no-default-browser-check', '--disable-default-apps'],
+  });
+  report.usage.installedAppPlaywrightHeadlessLaunches = 1;
+  report.browser = { version: browser.version(), package: requireApp.resolve('@playwright/test'), headless: true };
+  for (const viewport of [
+    { name: 'desktop', width: 1440, height: 960 },
+    { name: 'mobile', width: 390, height: 844 },
+  ]) {
+    const context = await browser.newContext({
+      viewport: { width: viewport.width, height: viewport.height }, deviceScaleFactor: 1,
+      serviceWorkers: 'block', acceptDownloads: false,
+    });
+    contexts.push(context);
+    context.setDefaultTimeout(15000);
+    await context.route('**/*', async (route) => {
+      const request = route.request();
+      const url = new URL(request.url());
+      if (request.method() === 'GET' && url.origin === origin && !url.search
+        && ['/text.html', '/exercises.html', '/choices.html', '/favicon.ico'].includes(url.pathname))
+        await route.continue();
+      else {
+        report.blockedRequests.push({ viewport: viewport.name, url: request.url() });
+        await route.abort('blockedbyclient');
+      }
+    });
+    await context.routeWebSocket(/.*/, async (socket) => {
+      report.blockedRequests.push({ viewport: viewport.name, kind: 'websocket' });
+      await socket.close();
+    });
+    const page = await context.newPage();
+    page.on('pageerror', (error) => report.browserErrors.push({ viewport: viewport.name, message: error.message }));
+    page.on('requestfailed', (request) => report.requestFailures.push({
+      viewport: viewport.name, url: request.url(), failure: request.failure(),
+    }));
+    const cdp = await context.newCDPSession(page);
+    const needed = report.missing[viewport.name];
+    await navigate(page, 'text');
+    const prose = await measure(page, targets('prose', needed.prose));
+    if (viewport.name === 'desktop') {
+      await capture(page, cdp, viewport, '01-desktop-prose-10-16', prose);
+    } else {
+      const splits = prose.slice(1).map((_, index) => {
+        const left = prose.slice(0, index + 1);
+        const right = prose.slice(index + 1);
+        return { left, right, cost: Math.max(bounds(left).height, bounds(right).height) };
+      }).sort((a, b) => a.cost - b.cost);
+      const split = splits[0];
+      report.mobileProsePartition = { method: 'Minimax measured complete-element extent, contiguous ranges',
+        leftTargetIDs: split.left.map((item) => item.targetID),
+        rightTargetIDs: split.right.map((item) => item.targetID), maxHeight: split.cost };
+      await capture(page, cdp, viewport, '03-mobile-prose-part-1', split.left);
+      await capture(page, cdp, viewport, '04-mobile-prose-part-2', split.right);
+      await navigate(page, 'exercises');
+      await capture(page, cdp, viewport, '05-mobile-written-543-544',
+        await measure(page, targets('written', needed.written)));
+    }
+    await navigate(page, 'choices');
+    if (viewport.name === 'desktop') {
+      await capture(page, cdp, viewport, '02-desktop-root-Q3-Q5',
+        await measure(page, targets('root', needed.root)));
+    } else {
+      await capture(page, cdp, viewport, '06-mobile-root-Q2-Q3',
+        await measure(page, targets('root', needed.root.filter((value) => value === 2 || value === 3))));
+      await capture(page, cdp, viewport, '07-mobile-root-Q4',
+        await measure(page, targets('root', needed.root.filter((value) => value === 4))));
+      await capture(page, cdp, viewport, '08-mobile-root-Q6',
+        await measure(page, targets('root', needed.root.filter((value) => value === 6))));
+    }
+    await cdp.detach();
+  }
+  report.inputAfter = [];
+  for (const binding of report.inputs) {
+    const current = sha(await readFile(binding.path));
+    report.inputAfter.push({ path: binding.path, sha256: current, unchanged: current === binding.sha256 });
+    assert.equal(current, binding.sha256, `Input changed during isolated run: ${binding.path}`);
+  }
+} catch (error) {
+  const failure = { stage: 'FIRST-runtime-failure', type: error.name, message: error.message, stack: error.stack };
+  report.firstFailures.push(failure);
+  await event(failure);
+} finally {
+  const pending = contexts.map(async (context) => {
+    try { await context.close(); return true; }
+    catch (error) { report.cleanupFailures.push({ target: 'context', message: error.message }); return false; }
+  });
+  report.cleanup.contextsClosed = (await Promise.all(pending)).every(Boolean);
+  try { if (browser) await browser.close(); report.cleanup.browserClosed = true; }
+  catch (error) { report.cleanupFailures.push({ target: 'browser', message: error.message }); }
+  try {
+    if (server?.listening) {
+      server.closeIdleConnections();
+      await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+    }
+    report.cleanup.serverClosed = true;
+  } catch (error) { report.cleanupFailures.push({ target: 'server', message: error.message }); }
+  report.finished = new Date().toISOString();
+  report.status = report.firstFailures.length || report.cleanupFailures.length
+    ? 'FIRST_FAILURE_PRESERVED_VISUAL_PENDING' : 'CAPTURE_COMPLETE_VISUAL_PENDING';
+  const filename = path.join(OWN, 'capture-FIRST.record');
+  const bytes = `${JSON.stringify(report, null, 2)}\n`;
+  await writeFile(filename, bytes, { flag: 'wx' });
+  console.log(JSON.stringify({ status: report.status, path: filename, sha256: sha(bytes),
+    screenshots: report.screenshots.map(({ targetGeometry, ...item }) => item),
+    firstFailures: report.firstFailures, cleanup: report.cleanup }, null, 2));
+  if (report.firstFailures.length || report.cleanupFailures.length) process.exitCode = 1;
+}

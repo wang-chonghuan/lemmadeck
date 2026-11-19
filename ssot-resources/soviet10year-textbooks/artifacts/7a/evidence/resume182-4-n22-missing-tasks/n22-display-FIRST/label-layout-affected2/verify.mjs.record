@@ -1,0 +1,355 @@
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
+import { createServer } from 'node:http';
+import { appendFile, mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+const BASE = path.join(R, '.tmp/resume182-4-postaccount/n22-display-FIRST');
+const OWN = path.join(BASE, 'label-layout-affected2');
+const OLD = path.join(BASE, 'affected1');
+const LESSON = 'alg7-c3-s1-n22';
+const SCRATCH = path.join(OLD, 'scratch/7a');
+const CHOICES = path.join(SCRATCH, 'editions/modern-us-neutral/lessons', LESSON, 'choice-set');
+const TOOL = path.join(R, '.claude/skills/ld-s10y-lesson/tools/render_lesson.js');
+const OUTPUT = path.join(OWN, 'render');
+const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const { chromium } = createRequire(path.join(R, 'app/package.json'))('playwright');
+assert.equal(process.cwd(), R);
+assert.equal(path.dirname(fileURLToPath(import.meta.url)), OWN);
+assert.deepEqual(process.argv.slice(2), ['--labels-only', 'STEMROBIN-182:RESUME']);
+const report = {
+  schema: 'resume182-n22-label-layout-affected2-v1',
+  started: new Date().toISOString(),
+  command: [process.execPath, fileURLToPath(import.meta.url), ...process.argv.slice(2)],
+  cwd: R,
+  scope: 'Offline affected label layout ONLY; newly approved n22 two-question/eight-option material',
+  noSourceKeyOrSemanticApprovalChange: true,
+  prior98PassedChecksRepeated: false,
+  priorFailuresPreserved: true,
+  inputHashes: [], labelChecks: [], screenshots: [], faults: [],
+  cleanup: { browser: 'not_started', server: 'not_started', contextsClosed: 0 },
+};
+const increment = {
+  renderCalls: 0, browserLaunches: 0, browserContexts: 0, pageNavigations: 0,
+  screenshotsCaptured: 0, imagesViewed: 0, viewImageCalls: 0,
+  runnerExecutionAttempts: 1, displayStageExecutions: 1,
+  agentTechnicalCorrections: 0, parentRendererLabelCorrections: 1,
+  semanticReviews: 0, validatorCalls: 0, repeatedPrior98Checks: 0,
+  paidCalls: 0, dbCalls: 0, dependencyInstalls: 0, appVisits: 0,
+  guiUses: 0, productionInteractions: 0, agentsOrChatsStarted: 0,
+  imageReopens: 0,
+};
+let browser;
+let context;
+let server;
+let origin;
+let frozen;
+const requests = [];
+const blockedRequests = [];
+const pageErrors = [];
+const consoleErrors = [];
+const write = async (filename, bytes) => {
+  assert.ok(filename.startsWith(`${OWN}${path.sep}`), 'Sole new write root');
+  await writeFile(filename, bytes, { flag: 'wx' });
+};
+const json = async (filename, value) => write(filename, `${JSON.stringify(value, null, 2)}\n`);
+const readJson = async (filename) => JSON.parse(await readFile(filename, 'utf8'));
+async function fingerprint(filename) {
+  const bytes = await readFile(filename);
+  report.inputHashes.push({ path: filename, bytes: bytes.length, sha256: sha(bytes) });
+  return bytes;
+}
+async function snapshot() {
+  const files = [];
+  async function visit(dir) {
+    for (const entry of (await readdir(dir, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name))) {
+      const filename = path.join(dir, entry.name);
+      if (filename === OWN) continue;
+      if (entry.isDirectory()) await visit(filename);
+      else {
+        assert.ok(entry.isFile(), 'Do not traverse symbolic links');
+        const bytes = await readFile(filename);
+        const metadata = await stat(filename);
+        files.push({ path: filename, bytes: bytes.length, sha256: sha(bytes), mtimeMs: metadata.mtimeMs, mode: metadata.mode });
+      }
+    }
+  }
+  await visit(BASE);
+  return files;
+}
+async function inspectLabel(node, expected) {
+  await document.fonts.ready;
+  node.scrollIntoView({ block: 'center', inline: 'nearest' });
+  const labelBox = node.getBoundingClientRect();
+  const row = node.closest('li');
+  const rowBox = row.getBoundingClientRect();
+  const body = row.querySelector('.choice-option-body');
+  const bodyBox = body.getBoundingClientRect();
+  const glyphs = [];
+  let stylesVisible = true;
+  for (let current = node; current; current = current.parentElement) {
+    const style = getComputedStyle(current);
+    if (style.display === 'none' || style.visibility !== 'visible' || Number(style.opacity) === 0) stylesVisible = false;
+  }
+  const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+  for (let text = walker.nextNode(); text; text = walker.nextNode()) {
+    let start = 0;
+    for (const character of text.data) {
+      const end = start + character.length;
+      if (character.trim()) {
+        const range = document.createRange();
+        range.setStart(text, start);
+        range.setEnd(text, end);
+        const rect = range.getBoundingClientRect();
+        const owner = document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2);
+        const unclippedByAncestors = (() => {
+          for (let ancestor = node; ancestor; ancestor = ancestor.parentElement) {
+            if (ancestor === document.body || ancestor === document.documentElement) continue;
+            const box = ancestor.getBoundingClientRect();
+            const style = getComputedStyle(ancestor);
+            const left = box.left + ancestor.clientLeft;
+            const top = box.top + ancestor.clientTop;
+            if (['hidden', 'clip', 'auto', 'scroll'].includes(style.overflowX)
+              && (rect.left < left - 0.5 || rect.right > left + ancestor.clientWidth + 0.5)) return false;
+            if (['hidden', 'clip', 'auto', 'scroll'].includes(style.overflowY)
+              && (rect.top < top - 0.5 || rect.bottom > top + ancestor.clientHeight + 0.5)) return false;
+          }
+          return true;
+        })();
+        glyphs.push({
+          character, x: rect.x, y: rect.y, width: rect.width, height: rect.height,
+          withinFixedColumn: rect.left >= labelBox.left - 0.5 && rect.right <= labelBox.right + 0.5,
+          inViewport: rect.left >= 0 && rect.right <= innerWidth && rect.top >= 0 && rect.bottom <= innerHeight,
+          beforeMaterial: rect.right <= bodyBox.left,
+          centerHitOnLabel: Boolean(owner && node.contains(owner)),
+          unclippedByAncestors,
+        });
+      }
+      start = end;
+    }
+  }
+  return {
+    text: node.textContent, expected, stylesVisible, glyphs,
+    fixedColumnWidth: labelBox.width,
+    gridTemplateColumns: getComputedStyle(row).gridTemplateColumns,
+    label: { left: labelBox.left, right: labelBox.right, top: labelBox.top, bottom: labelBox.bottom },
+    body: { left: bodyBox.left, right: bodyBox.right, top: bodyBox.top, bottom: bodyBox.bottom },
+    row: { left: rowBox.left, right: rowBox.right },
+    pass: node.textContent === expected && glyphs.length === 1 && stylesVisible
+      && glyphs.every((glyph) => glyph.width > 0 && glyph.height > 0 && glyph.withinFixedColumn
+        && glyph.inViewport && glyph.beforeMaterial && glyph.centerHitOnLabel && glyph.unclippedByAncestors),
+  };
+}
+
+try {
+  await mkdir(path.join(OWN, 'runtime-tmp'), { recursive: true });
+  await json(path.join(OWN, 'start.record'), report);
+  frozen = await snapshot();
+  await json(path.join(OWN, 'frozen-before.json'), frozen);
+  const priorUsage = await readJson(path.join(BASE, 'final-usage.json'));
+  report.priorUsage = { path: path.join(BASE, 'final-usage.json'), values: priorUsage };
+  const oldReport = await readJson(path.join(OLD, 'report-FIRST.json'));
+  const draftBytes = await fingerprint(path.join(CHOICES, 'draft.json'));
+  const seedBytes = await fingerprint(path.join(CHOICES, 'seed.json'));
+  const reviewBytes = await fingerprint(path.join(CHOICES, 'review.json'));
+  assert.equal(sha(draftBytes), oldReport.snapshotDigests.draftRawSha256);
+  assert.equal(sha(seedBytes), oldReport.snapshotDigests.seedRawSha256);
+  assert.equal(sha(reviewBytes), oldReport.snapshotDigests.reviewRawSha256);
+  const draft = JSON.parse(draftBytes);
+  report.metadataMapping = draft.questions.flatMap((question, questionIndex) =>
+    question.view.options.map((option, optionIndex) => ({
+      questionId: question.id, questionIndex, optionIndex,
+      rawOptionId: option.id, displayLetter: String.fromCharCode(65 + optionIndex),
+    })));
+  assert.equal(report.metadataMapping.length, 8);
+  const rendererBytes = await fingerprint(TOOL);
+  assert.ok(rendererBytes.toString().includes('String.fromCharCode(65 + optionIndex)'));
+  for (const filename of [
+    path.join(SCRATCH, 'book.json'),
+    path.join(SCRATCH, 'editions/modern-us-neutral/book.json'),
+    ...['lesson.json', 'exercises.json', 'figures.json'].map((name) =>
+      path.join(SCRATCH, 'editions/modern-us-neutral/lessons', LESSON, name)),
+  ]) await fingerprint(filename);
+  await json(path.join(OWN, 'metadata-mapping.json'), report.metadataMapping);
+  const rendererDir = path.join(OWN, 'renderer-once');
+  await mkdir(rendererDir);
+  const args = [TOOL, SCRATCH, '--out', OUTPUT, '--edition', 'modern-us-neutral', '--lesson', LESSON, '--choices-only'];
+  const started = new Date().toISOString();
+  await json(path.join(rendererDir, 'start.record'), { command: [process.execPath, ...args], cwd: R, started });
+  increment.renderCalls += 1;
+  const rendered = await new Promise((resolve) => {
+    const child = spawn(process.execPath, args, {
+      cwd: R, stdio: ['ignore', 'pipe', 'pipe'],
+      env: { PATH: process.env.PATH, HOME: process.env.HOME, LANG: 'en_US.UTF-8', TMPDIR: path.join(OWN, 'runtime-tmp') },
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (bytes) => { stdout += bytes; });
+    child.stderr.on('data', (bytes) => { stderr += bytes; });
+    child.once('error', (error) => resolve({ exitCode: null, stdout, stderr, error: error.message }));
+    child.once('close', (exitCode, signal) => resolve({ exitCode, signal, stdout, stderr }));
+  });
+  await write(path.join(rendererDir, 'stdout.txt'), rendered.stdout);
+  await write(path.join(rendererDir, 'stderr.txt'), rendered.stderr);
+  await json(path.join(rendererDir, 'receipt.record'), { ...rendered, command: [process.execPath, ...args], cwd: R, started, finished: new Date().toISOString() });
+  assert.equal(rendered.exitCode, 0);
+  const htmlPath = path.join(OUTPUT, LESSON, 'choices.html');
+  const newHtml = await fingerprint(htmlPath);
+  const oldHtmlPath = path.join(OLD, 'render', LESSON, 'choices.html');
+  const oldHtml = await fingerprint(oldHtmlPath);
+  report.html = { old: oldHtmlPath, oldSha256: sha(oldHtml), final: htmlPath, finalSha256: sha(newHtml), generatedByInstalledRenderer: true };
+  // This strict byte comparison settles that only generated label text changed.
+  const excludeLabelText = (html) => {
+    let count = 0;
+    const stripped = html.replace(/<span class="option-id">[^<]*<\/span>/gu, () => {
+      count += 1;
+      return '<span class="option-id"></span>';
+    });
+    assert.equal(count, 8);
+    return stripped;
+  };
+  const oldExcluded = excludeLabelText(oldHtml.toString('utf8'));
+  const finalExcluded = excludeLabelText(newHtml.toString('utf8'));
+  assert.equal(finalExcluded, oldExcluded, 'Nonlabel renderer bytes changed');
+  report.nonlabelByteComparison = {
+    equal: true, optionLabelNodesExcluded: 8,
+    oldSha256: sha(oldExcluded), finalSha256: sha(finalExcluded),
+    meaning: 'All HTML bytes including stems, options, tables, formulas, heading, CSS and embedded fonts unchanged except option labels.',
+  };
+  server = createServer((request, response) => {
+    const url = new URL(request.url, origin);
+    requests.push({ method: request.method, path: url.pathname });
+    if (request.method === 'GET' && !url.search && url.pathname === '/choices.html') {
+      response.writeHead(200, {
+        'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store',
+        'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data:; connect-src 'none';",
+      }).end(newHtml);
+    } else if (request.method === 'GET' && !url.search && url.pathname === '/favicon.ico') response.writeHead(204).end();
+    else response.writeHead(404).end();
+  });
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', resolve);
+  });
+  report.cleanup.server = 'started';
+  origin = `http://127.0.0.1:${server.address().port}`;
+  process.env.TMPDIR = path.join(OWN, 'runtime-tmp');
+  increment.browserLaunches += 1;
+  browser = await chromium.launch({
+    headless: true, downloadsPath: path.join(OWN, 'runtime-tmp/downloads'),
+    env: { PATH: process.env.PATH, HOME: process.env.HOME, LANG: 'en_US.UTF-8', TMPDIR: process.env.TMPDIR },
+    args: ['--disable-background-networking', '--disable-component-update', '--no-first-run',
+      '--disable-sync', '--disable-default-apps', '--metrics-recording-only',
+      '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1'],
+  });
+  report.cleanup.browser = 'started';
+  report.chromium = { headless: true, version: browser.version(), origin };
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    increment.browserContexts += 1;
+    context = await browser.newContext({ viewport, deviceScaleFactor: 1, serviceWorkers: 'block', acceptDownloads: false, locale: 'en-US' });
+    await context.route('**/*', async (route) => {
+      const request = route.request();
+      const url = new URL(request.url());
+      if (url.origin !== origin || !['/choices.html', '/favicon.ico'].includes(url.pathname) || url.search || request.method() !== 'GET') {
+        blockedRequests.push({ url: request.url(), method: request.method() });
+        await route.abort();
+      } else await route.continue();
+    });
+    const page = await context.newPage();
+    page.on('pageerror', (error) => pageErrors.push(error.message));
+    page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
+    increment.pageNavigations += 1;
+    const response = await page.goto(`${origin}/choices.html`, { waitUntil: 'networkidle' });
+    assert.equal(response.status(), 200);
+    await page.evaluate(() => document.fonts.ready);
+    const comparison = await page.evaluate((priorHtml) => {
+      const prior = new DOMParser().parseFromString(priorHtml, 'text/html').querySelector('.sheet');
+      const current = document.querySelector('.sheet').cloneNode(true);
+      const beforeLabels = [...prior.querySelectorAll('.option-id')].map((node) => node.textContent);
+      const afterLabels = [...current.querySelectorAll('.option-id')].map((node) => node.textContent);
+      for (const node of prior.querySelectorAll('.option-id')) node.remove();
+      for (const node of current.querySelectorAll('.option-id')) node.remove();
+      return { equal: prior.outerHTML === current.outerHTML, priorLearnerHtml: prior.outerHTML, finalLearnerHtml: current.outerHTML, beforeLabels, afterLabels };
+    }, oldHtml.toString('utf8'));
+    assert.equal(comparison.equal, true);
+    assert.deepEqual(comparison.afterLabels, ['A', 'B', 'C', 'D', 'A', 'B', 'C', 'D']);
+    assert.deepEqual(comparison.beforeLabels, report.metadataMapping.map((entry) => entry.rawOptionId));
+    report.learnerContentComparison ??= [];
+    report.learnerContentComparison.push({
+      viewport, equal: comparison.equal, excludedNodes: '.option-id',
+      priorLearnerHtmlSha256: sha(comparison.priorLearnerHtml),
+      finalLearnerHtmlSha256: sha(comparison.finalLearnerHtml),
+      beforeLabels: comparison.beforeLabels, afterLabels: comparison.afterLabels,
+    });
+    const labels = page.locator('.choice .option-id');
+    assert.equal(await labels.count(), 8);
+    for (const [index, mapping] of report.metadataMapping.entries()) {
+      const observed = await labels.nth(index).evaluate(inspectLabel, mapping.displayLetter);
+      const result = {
+        name: `${viewport.width}:${mapping.questionId}:${mapping.rawOptionId}->${mapping.displayLetter}`,
+        viewport, mapping, status: observed.pass ? 'PASS' : 'FAIL', observed,
+      };
+      report.labelChecks.push(result);
+      await appendFile(path.join(OWN, 'label-checks.ndjson'), `${JSON.stringify(result)}\n`);
+      if (!observed.pass) console.error(JSON.stringify(result));
+    }
+    await page.evaluate(() => window.scrollTo(0, 0));
+    assert.ok(increment.screenshotsCaptured < 2);
+    const screenshotPath = path.join(OWN, `${viewport.width}-whole-twoquestions.png`);
+    await page.locator('.sheet').screenshot({ path: screenshotPath, animations: 'disabled' });
+    increment.screenshotsCaptured += 1;
+    const bytes = await readFile(screenshotPath);
+    report.screenshots.push({ path: screenshotPath, viewport, bytes: bytes.length, sha256: sha(bytes), target: 'Entire sheet containing both questions and all eight options' });
+    await context.close();
+    context = null;
+    report.cleanup.contextsClosed += 1;
+  }
+  assert.equal(report.labelChecks.length, 16);
+} catch (error) {
+  report.executionError = { name: error.name, message: error.message, stack: error.stack };
+  report.faults.push({ stage: 'execution', ...report.executionError });
+} finally {
+  if (context) {
+    try { await context.close(); report.cleanup.contextsClosed += 1; }
+    catch (error) { report.faults.push({ stage: 'context-close', message: error.message }); }
+  }
+  if (browser) {
+    try { await browser.close(); report.cleanup.browser = 'closed'; }
+    catch (error) { report.faults.push({ stage: 'browser-close', message: error.message }); }
+  }
+  if (server) {
+    try {
+      server.closeAllConnections();
+      await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+      report.cleanup.server = 'closed';
+    } catch (error) { report.faults.push({ stage: 'server-close', message: error.message }); }
+  }
+  if (frozen) {
+    const after = await snapshot();
+    await json(path.join(OWN, 'frozen-after.json'), after);
+    report.frozenArtifactsUnchanged = JSON.stringify(frozen) === JSON.stringify(after);
+    if (!report.frozenArtifactsUnchanged) report.faults.push({ stage: 'frozen-artifact-preservation', message: 'Prior artifact bytes or metadata changed during focused run' });
+  }
+  report.runtimeFaults = { requests, blockedRequests, pageErrors, consoleErrors };
+  for (const failure of report.labelChecks.filter((entry) => entry.status === 'FAIL')) report.faults.push({ stage: 'label-layout', ...failure });
+  report.status = report.executionError || report.faults.length || blockedRequests.length || pageErrors.length || consoleErrors.length ? 'FAIL' : 'PASS';
+  report.visualObservationStatus = 'PENDING two bounded view_image inspections';
+  report.finished = new Date().toISOString();
+  report.usageIncrement = increment;
+  await json(path.join(OWN, 'report.json'), report);
+  await json(path.join(OWN, 'usage-run.json'), { prior: report.priorUsage, increment });
+  await json(path.join(OWN, 'faults.json'), { priorFaults: path.join(BASE, 'final-faults.json'), currentFaults: report.faults, runtimeFaults: report.runtimeFaults });
+  console.log(JSON.stringify({
+    status: report.status, labelChecks: report.labelChecks.length,
+    passed: report.labelChecks.filter((entry) => entry.status === 'PASS').length,
+    html: report.html, contentComparison: report.nonlabelByteComparison,
+    screenshots: report.screenshots, frozenArtifactsUnchanged: report.frozenArtifactsUnchanged,
+    cleanup: report.cleanup, usageIncrement: increment, faults: report.faults,
+    report: path.join(OWN, 'report.json'),
+  }, null, 2));
+  if (report.status !== 'PASS') process.exitCode = 1;
+}

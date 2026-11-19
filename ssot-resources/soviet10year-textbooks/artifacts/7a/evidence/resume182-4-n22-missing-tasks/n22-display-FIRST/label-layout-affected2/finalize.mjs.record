@@ -1,0 +1,127 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFile, readdir, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+const BASE = path.join(R, '.tmp/resume182-4-postaccount/n22-display-FIRST');
+const OWN = path.join(BASE, 'label-layout-affected2');
+assert.equal(process.cwd(), R);
+const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const readJson = async (filename) => JSON.parse(await readFile(filename, 'utf8'));
+const json = async (filename, value) => {
+  assert.ok(filename.startsWith(`${OWN}${path.sep}`));
+  await writeFile(filename, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+};
+const report = await readJson(path.join(OWN, 'report.json'));
+assert.equal(report.status, 'PASS');
+assert.equal(report.labelChecks.length, 16);
+assert.ok(report.labelChecks.every((entry) => entry.status === 'PASS'));
+assert.equal(report.frozenArtifactsUnchanged, true);
+assert.equal(report.screenshots.length, 2);
+const observations = report.screenshots.map((screenshot) => ({
+  path: screenshot.path, sha256: screenshot.sha256, viewport: screenshot.viewport,
+  tool: 'functions.view_image', inspections: 1, reopened: false,
+  imagePayloadReturnedToParent: false, status: 'PASS',
+  observation: screenshot.viewport.width === 1440
+    ? 'Desktop whole-two-question screenshot: both A-D groups are fully visible in the left column. Labels clearly separate from table headers and opening prose; prior collisions are gone.'
+    : 'Mobile whole-two-question screenshot: both A-D groups are fully visible. Each label remains in the fixed left column with a clear gap before table/prose content; no label collisions.',
+}));
+const increment = { ...report.usageIncrement, imagesViewed: 2, viewImageCalls: 2 };
+const prior = report.priorUsage.values;
+const cumulative = { ...prior };
+for (const field of [
+  'renderCalls', 'browserLaunches', 'browserContexts', 'pageNavigations',
+  'screenshotsCaptured', 'imagesViewed', 'viewImageCalls', 'runnerExecutionAttempts',
+  'displayStageExecutions', 'paidCalls', 'dbCalls', 'dependencyInstalls',
+  'appVisits', 'guiUses', 'productionInteractions', 'agentsOrChatsStarted', 'imageReopens',
+]) cumulative[field] = (prior[field] ?? 0) + (increment[field] ?? 0);
+cumulative.contextImagesLoaded = prior.contextImagesLoaded + increment.imagesViewed;
+cumulative.imageBatches = prior.imageBatches + 1;
+cumulative.technicalCorrections = prior.technicalCorrections + 1;
+cumulative.correctionBreakdown = {
+  ...prior.correctionBreakdown,
+  parentRendererDisplayLetterCorrection: 1,
+  agentAffected2Corrections: 0,
+};
+cumulative.contentRevisions = prior.contentRevisions;
+cumulative.sourceReviews = prior.sourceReviews;
+cumulative.pureViewReviews = prior.pureViewReviews;
+cumulative.keyReviews = prior.keyReviews;
+cumulative.validatorCalls = prior.validatorCalls;
+delete cumulative.screenshotLimit;
+cumulative.scopeLimits = { affected2Screenshots: 2, affected2ImagesViewed: 2, currentContextImages: 6, imageBatchMax: 8, imageContextMax: 24 };
+cumulative.note = 'Prior attempts and failures retained. Added one renderer call, one isolated headless browser run with two viewports, sixteen label-only checks and two screenshots viewed once each. Parent made the label-only renderer correction. No prior 98 checks or semantic/checker phases rerun.';
+const previousFaultPath = path.join(BASE, 'final-faults.json');
+const previousFaultBytes = await readFile(previousFaultPath);
+const usage = {
+  schema: 'resume182-label-layout-affected2-cumulative-usage-v1',
+  priorUsage: { path: report.priorUsage.path, sha256: sha(await readFile(report.priorUsage.path)), values: prior },
+  increment, cumulative, finalized: new Date().toISOString(),
+};
+const faults = {
+  schema: 'resume182-label-layout-affected2-fault-record-v1',
+  priorFaultsPreserved: { path: previousFaultPath, sha256: sha(previousFaultBytes) },
+  currentFaults: report.faults,
+  runtimeFaults: report.runtimeFaults,
+  previousLabelCollisionFailuresNotDeletedOrReclassified: true,
+};
+const result = {
+  schema: 'resume182-label-layout-affected2-final-v1',
+  status: 'PASS',
+  scope: report.scope,
+  scopeBoundary: 'Offline affected label layout only; no new source/key/semantic/structural approval or whole-app acceptance.',
+  focusedChecks: { total: 16, pass: 16, fail: 0 },
+  prior98ChecksRepeated: false,
+  metadataMapping: report.metadataMapping,
+  learnerContentExcludingOptionLabels: report.learnerContentComparison,
+  allNonlabelRendererBytesUnchanged: report.nonlabelByteComparison,
+  html: report.html,
+  observations,
+  cleanup: report.cleanup,
+  earlierArtifactsUnchanged: report.frozenArtifactsUnchanged,
+  sourceDraftSeedReviewUnchanged: report.inputHashes.filter((entry) =>
+    ['/draft.json', '/seed.json', '/review.json'].some((suffix) => entry.path.endsWith(suffix))),
+  renderer: report.inputHashes.find((entry) => entry.path.endsWith('/render_lesson.js')),
+  detailedChecks: path.join(OWN, 'report.json'),
+  usage: path.join(OWN, 'usage.json'),
+  faults: path.join(OWN, 'faults-final.json'),
+  finalized: usage.finalized,
+};
+await json(path.join(OWN, 'observations.json'), observations);
+await json(path.join(OWN, 'usage.json'), usage);
+await json(path.join(OWN, 'faults-final.json'), faults);
+await json(path.join(OWN, 'final-result.json'), result);
+const files = [];
+async function inventory(dir) {
+  for (const entry of (await readdir(dir, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name))) {
+    const filename = path.join(dir, entry.name);
+    if (entry.isDirectory()) await inventory(filename);
+    else if (entry.isFile() && entry.name !== 'sha256-manifest.json') {
+      const bytes = await readFile(filename);
+      files.push({ path: filename, bytes: bytes.length, sha256: sha(bytes) });
+    }
+  }
+}
+await inventory(OWN);
+const manifestPath = path.join(OWN, 'sha256-manifest.json');
+await json(manifestPath, {
+  schema: 'resume182-label-layout-affected2-evidence-sha256-v1',
+  algorithm: 'SHA-256 of raw file bytes', files,
+  inputs: report.inputHashes, excludes: ['sha256-manifest.json (self-reference)'],
+});
+console.log(JSON.stringify({
+  status: result.status, focusedChecks: result.focusedChecks, html: result.html,
+  observations,
+  cumulativeUsage: {
+    renderCalls: cumulative.renderCalls, browserLaunches: cumulative.browserLaunches,
+    runnerExecutionAttempts: cumulative.runnerExecutionAttempts,
+    screenshotsCaptured: cumulative.screenshotsCaptured, imagesViewed: cumulative.imagesViewed,
+    contextImagesLoaded: cumulative.contextImagesLoaded, validatorCalls: cumulative.validatorCalls,
+    paidCalls: cumulative.paidCalls,
+  },
+  cleanup: result.cleanup,
+  artifacts: files.filter((entry) =>
+    ['final-result.json', 'usage.json', 'faults-final.json', 'metadata-mapping.json'].includes(path.basename(entry.path))),
+  manifest: { path: manifestPath, sha256: sha(await readFile(manifestPath)) },
+}, null, 2));

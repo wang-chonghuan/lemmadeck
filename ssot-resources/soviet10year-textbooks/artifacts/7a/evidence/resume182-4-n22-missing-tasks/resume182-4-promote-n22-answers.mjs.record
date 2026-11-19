@@ -1,0 +1,53 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), repo);
+const work = '.tmp/resume182-4-postaccount';
+const lesson = 'alg7-c3-s1-n22';
+const relative = `7a/editions/modern-us-neutral/lessons/${lesson}`;
+const source = `${work}/answer-contract-root/${relative}`;
+const target = `ssot-resources/soviet10year-textbooks/artifacts/${relative}`;
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const load = file => JSON.parse(fs.readFileSync(file));
+const key = load(`${source}/answer-keys.json`);
+const audit = load(`${source}/answer-keys.audit.json`);
+const receipt = load(`${work}/receipts/n22-answer-finalize-FIRST/receipt.record`);
+assert.equal(receipt.returncode, 0);
+assert.equal(key.status, 'ready');
+assert.equal(key.count, 9);
+assert.equal(audit.status, 'pass');
+assert.equal(audit.auto, 6);
+assert.equal(audit.ungraded, 3);
+assert.equal(key.answers.flatMap(item => item.parts).length, 22);
+for (const file of ['lesson.json', 'exercises.json']) {
+  assert.deepEqual(fs.readFileSync(`${source}/${file}`), fs.readFileSync(`${target}/${file}`));
+}
+const frozenDraft = load(`${work}/answers/7a/modern-us-neutral/lessons/${lesson}/answer-keys.json`);
+assert.deepEqual(key.answers, frozenDraft.answers);
+const rootChoice = ['seed.json', 'draft.json', 'review.json', 'selection.json'].map(file => ({
+  path: `${target}/choice-set/${file}`, sha256: hash(fs.readFileSync(`${target}/choice-set/${file}`)),
+}));
+const outputs = [];
+for (const file of ['answer-keys.json', 'answer-keys.audit.json']) {
+  const bytes = fs.readFileSync(`${source}/${file}`);
+  assert.ok(!fs.existsSync(`${target}/${file}`));
+  fs.writeFileSync(`${target}/${file}`, bytes, { flag: 'wx' });
+  outputs.push({ source: `${source}/${file}`, path: `${target}/${file}`, sha256: hash(bytes) });
+}
+for (const item of rootChoice) assert.equal(hash(fs.readFileSync(item.path)), item.sha256);
+const record = {
+  schema: 'stemrobin-182/answer-promotion@1', date: '2026-11-19',
+  book: '7a', lesson, outputs, unchanged_root_choice: rootChoice,
+  original_source_review: `${work}/answer-compilation-review-FIRST/review.json`,
+  original_source_review_sha256: '815bf9cf7b7e810f5525b91aae2d4bfefb1c6b2a08525065326d184d63a4010d',
+  finalize_receipt: `${work}/receipts/n22-answer-finalize-FIRST/receipt.record`,
+  counts: { exercises: 9, auto: 6, ungraded: 3, exact_parts: 22 },
+  new_input_or_math_reruns: 0, interactions_created: false,
+  db_written: false, app_or_full_choice_delivery: false,
+};
+fs.writeFileSync(`${work}/n22-answer-promotion.record`,
+  `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ lesson, outputs, counts: record.counts }, null, 2));

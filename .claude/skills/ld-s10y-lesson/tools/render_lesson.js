@@ -336,7 +336,7 @@ async function renderChoicePages() {
         + `${view.mode === "multiple" ? "多选" : "单选"}</p>`
         + `<div class="choice-stem">${choiceHtml(view.stem)}${renderFigures(view.figure_ids)}</div>`
         + `<ol class="choice-options">`
-        + view.options.map((option) => `<li><span class="option-id">${esc(option.id)}</span>`
+        + view.options.map((option, optionIndex) => `<li><span class="option-id">${String.fromCharCode(65 + optionIndex)}</span>`
           + `<div class="choice-option-body">${choiceHtml(option.text)}`
           + `${renderFigures(option.figure_ids)}</div></li>`).join("")
         + `</ol></section>`;

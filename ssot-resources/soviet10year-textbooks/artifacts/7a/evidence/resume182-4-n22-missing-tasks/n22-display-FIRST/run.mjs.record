@@ -1,0 +1,740 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { createServer } from 'node:http';
+import { appendFile, mkdir, readFile, readdir, stat, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+const OWN = path.join(R, '.tmp/resume182-4-postaccount/n22-display-FIRST');
+const BOOK = '7a';
+const EDITION = 'modern-us-neutral';
+const LESSON = 'alg7-c3-s1-n22';
+const SOURCE = path.join(R, 'ssot-resources/soviet10year-textbooks/artifacts', BOOK);
+const MODERN = path.join(SOURCE, 'editions', EDITION);
+const APPROVED = path.join(R, '.tmp/resume182-4-postaccount/choices-n22');
+const TOOL = path.join(R, '.claude/skills/ld-s10y-lesson/tools/render_lesson.js');
+const SCRATCH = path.join(OWN, 'scratch', BOOK);
+const RENDER = path.join(OWN, 'render');
+const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const norm = (text) => text.normalize('NFC').replace(/\s+/gu, ' ').trim();
+const requireApp = createRequire(path.join(R, 'app/package.json'));
+const { chromium } = requireApp('playwright');
+const { marked } = await import(path.join(R, '.agents/skills/node_modules/marked/lib/marked.esm.js'));
+
+assert.equal(process.cwd(), R, 'Explicit authorized checkout required');
+assert.equal(path.dirname(fileURLToPath(import.meta.url)), OWN);
+assert.deepEqual(process.argv.slice(2), ['--offline-only', 'STEMROBIN-182:RESUME']);
+
+const report = {
+  schema: 'resume182-bounded-n22-offline-display-v1',
+  started: new Date().toISOString(),
+  cwd: R,
+  scope: 'Active STEMROBIN-182 RESUME; ONLY newly approved 541/547 choice display',
+  acceptanceBoundary: 'Actual offline choices-only renderer output; not app/ticket/production acceptance',
+  authorizedWriteRoot: OWN,
+  prohibitedStagesRun: [],
+  reusedPassedStages: ['source', 'pure-view', 'key-intent', 'reviewed-validator-exit0'],
+  inputHashes: [],
+  scratchFiles: [],
+  checks: [],
+  screenshots: [],
+  viewports: [],
+  faults: [
+    {
+      stage: 'read-only-discovery',
+      command: 'sed -n 1,120p ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/edition.json',
+      exitCode: 1,
+      diagnosis: 'Assumed index filename absent; rg found the existing edition book.json instead.',
+      contentFailure: false,
+    },
+    {
+      stage: 'read-only-discovery',
+      command: 'ls -ld .tmp/resume182-4-postaccount/n22-display-FIRST node_modules app/node_modules/playwright .claude/skills/ld-s10y-lesson/node_modules/katex ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/figures',
+      exitCode: 1,
+      diagnosis: 'New scratch directory and repo-root node_modules absent as expected; installed scoped packages present.',
+      contentFailure: false,
+    },
+  ],
+  cleanup: { contextsClosed: 0, browserClosed: false, serverClosed: false },
+};
+const usage = {
+  schema: 'resume182-display-usage-v1',
+  started: report.started,
+  renderCalls: 0,
+  browserLaunches: 0,
+  browserContexts: 0,
+  pageNavigations: 0,
+  screenshotsCaptured: 0,
+  imagesViewed: 0,
+  screenshotLimit: 4,
+  imageBatchLimit: 8,
+  imageContextLimit: 24,
+  technicalCorrections: 0,
+  contentRevisions: 0,
+  sourceReviews: 0,
+  pureViewReviews: 0,
+  keyReviews: 0,
+  validatorCalls: 0,
+  figureRenders: 0,
+  paidCalls: 0,
+  generatedImages: 0,
+  dependencyInstalls: 0,
+  dbCalls: 0,
+  productionInteractions: 0,
+  appVisits: 0,
+  guiUses: 0,
+  agentsOrChatsStarted: 0,
+  commitsOrPushes: 0,
+};
+let browser;
+let server;
+let context;
+let origin;
+const servedRequests = [];
+const externalRequests = [];
+const requestFailures = [];
+const browserErrors = [];
+const consoleErrors = [];
+let durableBefore;
+
+function own(filename) {
+  assert.ok(filename.startsWith(`${OWN}${path.sep}`), 'Write outside sole authorized root');
+  return filename;
+}
+
+async function json(filename, value) {
+  await writeFile(own(filename), `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+}
+
+async function event(value) {
+  await appendFile(own(path.join(OWN, 'events.ndjson')),
+    `${JSON.stringify({ time: new Date().toISOString(), ...value })}\n`);
+}
+
+async function check(name, pass, facts = {}) {
+  const result = { name, status: pass ? 'PASS' : 'FAIL', ...facts };
+  report.checks.push(result);
+  await event({ check: result });
+  if (!pass) console.error(JSON.stringify(result));
+  return pass;
+}
+
+async function fingerprint(filename, list = report.inputHashes) {
+  const bytes = await readFile(filename);
+  list.push({ path: filename, bytes: bytes.length, sha256: sha(bytes) });
+  return bytes;
+}
+
+async function durableSnapshot() {
+  const dir = path.join(MODERN, 'lessons', LESSON, 'choice-set');
+  const files = [];
+  async function visit(root) {
+    for (const entry of (await readdir(root, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name))) {
+      const filename = path.join(root, entry.name);
+      if (entry.isDirectory()) await visit(filename);
+      else {
+        assert.ok(entry.isFile(), `No symbolic durable source traversal: ${filename}`);
+        const metadata = await stat(filename);
+        const bytes = await readFile(filename);
+        files.push({
+          path: filename, bytes: bytes.length, sha256: sha(bytes),
+          mtimeMs: metadata.mtimeMs, mode: metadata.mode,
+        });
+      }
+    }
+  }
+  await visit(dir);
+  const draft = JSON.parse(await readFile(path.join(dir, 'draft.json'), 'utf8'));
+  return {
+    root: dir, files,
+    questions: draft.questions.length,
+    options: draft.questions.reduce((total, q) => total + q.view.options.length, 0),
+    // Hash existing evidence only; never load its screenshot pixels.
+    screenshotPixelsOpened: 0,
+  };
+}
+
+async function copySource(from, to) {
+  const bytes = await fingerprint(from);
+  await mkdir(own(path.dirname(to)), { recursive: true });
+  await writeFile(own(to), bytes, { flag: 'wx' });
+  report.scratchFiles.push({ source: from, path: to, bytes: bytes.length, sha256: sha(bytes) });
+  return JSON.parse(bytes);
+}
+
+function textProjection(text) {
+  const formulas = [];
+  const serialized = text.replace(/\$\$(.+?)\$\$|\$([^$]+?)\$/gs, (_, display, inline) => {
+    const index = formulas.length;
+    formulas.push(norm(display ?? inline));
+    return `[[MATH:${index}]]`;
+  }).replace(/\*\*([^*]+)\*\*/gu, '$1');
+  return { text: norm(serialized), formulas };
+}
+
+function expectedMaterial(text) {
+  const tokens = marked.lexer(text);
+  const parts = [];
+  const tables = [];
+  if (!tokens.some((token) => token.type === 'table')) return { ...textProjection(text), tables };
+  for (const token of tokens) {
+    if (token.type !== 'table') {
+      parts.push(token.raw);
+      continue;
+    }
+    const rows = [token.header, ...token.rows].map((row) => row.map((cell) => cell.text));
+    tables.push(rows.map((row) => row.map(textProjection)));
+    parts.push(...rows.map((row) => row.join(' ')));
+  }
+  return { ...textProjection(parts.join(' ')), tables };
+}
+
+// Inspect actual renderer DOM. Every painted text glyph and math rule must be
+// reachable in the viewport through native window/element scrolling.
+async function inspectMaterial(root) {
+  await document.fonts.ready;
+  const norm = (text) => text.normalize('NFC').replace(/\s+/gu, ' ').trim();
+  const round = (value) => Math.round(value * 100) / 100;
+  const formulas = [];
+  const targets = [];
+  const hidden = [];
+  let serialized = '';
+
+  function visible(element) {
+    for (let ancestor = element; ancestor; ancestor = ancestor.parentElement) {
+      const style = getComputedStyle(ancestor);
+      if (style.display === 'none' || style.visibility !== 'visible'
+        || Number(style.opacity) === 0) return false;
+    }
+    return true;
+  }
+
+  function glyphs(node, formulaIndex) {
+    let offset = 0;
+    for (const character of node.data) {
+      const end = offset + character.length;
+      if (!/[\s\u200b\u200c\u200d\u2060\ufeff]/u.test(character)) {
+        const range = document.createRange();
+        range.setStart(node, offset);
+        range.setEnd(node, end);
+        const rect = range.getBoundingClientRect();
+        if (rect.width <= 0 || rect.height <= 0 || !visible(node.parentElement)) {
+          hidden.push({ kind: 'text-glyph', character, formulaIndex });
+        } else targets.push({ range, element: node.parentElement, formulaIndex, kind: 'text-glyph' });
+      }
+      offset = end;
+    }
+  }
+
+  function walk(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      serialized += node.data;
+      glyphs(node, null);
+      return;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+    if (node.matches('br')) { serialized += ' '; return; }
+    if (node.matches('.katex')) {
+      const index = formulas.length;
+      const visual = node.querySelector('.katex-html');
+      const annotation = node.querySelector('annotation[encoding="application/x-tex"]');
+      formulas.push({
+        tex: annotation ? norm(annotation.textContent) : null,
+        visible: Boolean(visual && visible(visual)),
+        visualTextLength: visual?.textContent.trim().length ?? 0,
+      });
+      serialized += `[[MATH:${index}]]`;
+      if (visual) {
+        const walker = document.createTreeWalker(visual, NodeFilter.SHOW_TEXT);
+        for (let text = walker.nextNode(); text; text = walker.nextNode()) glyphs(text, index);
+        for (const rule of visual.querySelectorAll('.frac-line,.sqrt-line,.overline-line,.underline-line,svg')) {
+          const rect = rule.getBoundingClientRect();
+          const style = getComputedStyle(rule);
+          const painted = rule.tagName.toLowerCase() === 'svg'
+            || ['borderTopWidth', 'borderBottomWidth'].some((key) => parseFloat(style[key]) > 0);
+          if (!painted || rect.width <= 0 || !visible(rule)) hidden.push({ kind: 'math-rule', formulaIndex: index });
+          else targets.push({ element: rule, formulaIndex: index, kind: 'math-rule' });
+        }
+      }
+      return;
+    }
+    const separated = node.matches('td,th,tr,table,p');
+    if (separated) serialized += ' ';
+    for (const child of node.childNodes) walk(child);
+    if (separated) serialized += ' ';
+  }
+
+  walk(root);
+  const localProjection = (element) => {
+    let text = '';
+    const formulas = [];
+    const visit = (node) => {
+      if (node.nodeType === Node.TEXT_NODE) text += node.data;
+      else if (node.nodeType === Node.ELEMENT_NODE) {
+        if (node.matches('.katex')) {
+          text += `[[MATH:${formulas.length}]]`;
+          formulas.push(norm(node.querySelector('annotation').textContent));
+        } else if (node.matches('br')) text += ' ';
+        else for (const child of node.childNodes) visit(child);
+      }
+    };
+    visit(element);
+    return { text: norm(text), formulas };
+  };
+  const tableNodes = [...root.querySelectorAll('table')];
+  const tables = tableNodes.map((table) =>
+    [...table.rows].map((row) => [...row.cells].map(localProjection)));
+  const scrollElements = [root, ...root.querySelectorAll('*')]
+    .filter((element) => element.clientWidth > 0 && element.scrollWidth > element.clientWidth + 1);
+  const scrollers = scrollElements.map((element) => ({
+    tag: element.tagName, className: element.className,
+    overflowX: getComputedStyle(element).overflowX,
+    clientWidth: element.clientWidth, scrollWidth: element.scrollWidth,
+  }));
+  const rectFor = (target) => target.range?.getBoundingClientRect() ?? target.element.getBoundingClientRect();
+  const failures = [];
+  let reachable = 0;
+  let formulaGlyphs = 0;
+  let mathRules = 0;
+  for (const target of targets) {
+    let rect = rectFor(target);
+    window.scrollBy(0, rect.top + rect.height / 2 - innerHeight / 2);
+    for (let ancestor = target.element; ancestor; ancestor = ancestor.parentElement) {
+      if (ancestor === document.body || ancestor === document.documentElement) continue;
+      const style = getComputedStyle(ancestor);
+      if (!['auto', 'scroll'].includes(style.overflowX)
+        || ancestor.scrollWidth <= ancestor.clientWidth + 1) continue;
+      rect = rectFor(target);
+      const box = ancestor.getBoundingClientRect();
+      const left = box.left + ancestor.clientLeft;
+      const right = left + ancestor.clientWidth;
+      if (rect.left < left) ancestor.scrollLeft -= left - rect.left;
+      if (rect.right > right) ancestor.scrollLeft += rect.right - right;
+    }
+    rect = rectFor(target);
+    let reason = null;
+    if (rect.left < -1 || rect.right > innerWidth + 1
+      || rect.top < -1 || rect.bottom > innerHeight + 1) reason = 'viewport-clipping-after-native-scroll';
+    for (let ancestor = target.element; !reason && ancestor; ancestor = ancestor.parentElement) {
+      if (ancestor === document.body || ancestor === document.documentElement) continue;
+      const style = getComputedStyle(ancestor);
+      const box = ancestor.getBoundingClientRect();
+      const left = box.left + ancestor.clientLeft;
+      const top = box.top + ancestor.clientTop;
+      if (['auto', 'scroll', 'hidden', 'clip'].includes(style.overflowX)
+        && (rect.left < left - 1 || rect.right > left + ancestor.clientWidth + 1)) reason = 'ancestor-horizontal-clipping';
+      if (['auto', 'scroll', 'hidden', 'clip'].includes(style.overflowY)
+        && (rect.top < top - 1 || rect.bottom > top + ancestor.clientHeight + 1)) reason = 'ancestor-vertical-clipping';
+    }
+    if (reason) {
+      if (failures.length < 30) failures.push({
+        reason, formulaIndex: target.formulaIndex, kind: target.kind,
+        rect: { x: round(rect.x), y: round(rect.y), width: round(rect.width), height: round(rect.height) },
+      });
+    } else {
+      reachable += 1;
+      if (target.formulaIndex !== null && target.kind === 'text-glyph') formulaGlyphs += 1;
+      if (target.kind === 'math-rule') mathRules += 1;
+    }
+  }
+
+  const edgeResults = [];
+  for (const table of tableNodes) {
+    const cells = [...table.rows].flatMap((row) => [...row.cells]);
+    for (const cell of cells) {
+      let rect = cell.getBoundingClientRect();
+      window.scrollBy(0, rect.top + rect.height / 2 - innerHeight / 2);
+      for (let ancestor = cell.parentElement; ancestor; ancestor = ancestor.parentElement) {
+        if (ancestor === document.body || ancestor === document.documentElement) continue;
+        const style = getComputedStyle(ancestor);
+        if (['auto', 'scroll'].includes(style.overflowX) && ancestor.scrollWidth > ancestor.clientWidth + 1) {
+          ancestor.scrollLeft = ancestor.scrollWidth - ancestor.clientWidth;
+        }
+      }
+      rect = cell.getBoundingClientRect();
+      // A cell can be wider than the viewport: verify its right edge separately.
+      const point = { x: rect.right - 1, y: rect.top + rect.height / 2 };
+      const owner = document.elementFromPoint(point.x, point.y);
+      const isRightmost = cell === cell.parentElement.lastElementChild;
+      if (isRightmost) edgeResults.push({
+        right: round(rect.right), viewportWidth: innerWidth,
+        reachable: point.x >= 0 && point.x < innerWidth && Boolean(owner && cell.contains(owner)),
+      });
+    }
+  }
+  for (const element of scrollElements) element.scrollLeft = 0;
+  return {
+    text: norm(serialized), formulas, tables, scrollers,
+    totalPaintedTargets: targets.length, reachable, formulaGlyphs, mathRules,
+    hiddenCount: hidden.length, clippedCount: targets.length - reachable,
+    clippingExamples: failures, tableRightEdges: edgeResults,
+  };
+}
+
+async function inspectPage() {
+  await document.fonts.ready;
+  const collisions = [];
+  for (const row of document.querySelectorAll('.choice-options > li')) {
+    const label = row.querySelector('.option-id');
+    const body = row.querySelector('.choice-option-body');
+    const walker = document.createTreeWalker(label, NodeFilter.SHOW_TEXT);
+    const labelRects = [];
+    for (let text = walker.nextNode(); text; text = walker.nextNode()) {
+      const range = document.createRange();
+      range.selectNodeContents(text);
+      labelRects.push(...range.getClientRects());
+    }
+    const bodyBox = body.getBoundingClientRect();
+    for (const rect of labelRects) {
+      if (rect.right > bodyBox.left + 0.5) collisions.push({
+        option: label.textContent, labelRight: rect.right, bodyLeft: bodyBox.left,
+      });
+    }
+  }
+  const dangerousAttributes = [];
+  for (const element of document.querySelectorAll('*')) {
+    for (const attribute of element.attributes) {
+      if (/^on/iu.test(attribute.name) || /(?:correct|answer|key|rationale|intent|solution)/iu.test(attribute.name)) {
+        dangerousAttributes.push({ tag: element.tagName, name: attribute.name });
+      }
+    }
+  }
+  const nodes = [...document.querySelectorAll('.choice')];
+  const boxes = nodes.map((node) => {
+    const rect = node.getBoundingClientRect();
+    return { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right, height: rect.height };
+  });
+  return {
+    counts: {
+      questions: nodes.length, stems: document.querySelectorAll('.choice-stem').length,
+      optionGroups: document.querySelectorAll('.choice-options').length,
+      options: document.querySelectorAll('.choice-options > li').length,
+      tables: document.querySelectorAll('.choice table').length,
+      tableRows: document.querySelectorAll('.choice table tr').length,
+      cells: document.querySelectorAll('.choice table th,.choice table td').length,
+      katex: document.querySelectorAll('.choice .katex').length,
+      figures: document.querySelectorAll('figure,img,svg').length,
+      widgets: document.querySelectorAll('input,textarea,select,button,form,[contenteditable],[role="radio"],[role="checkbox"]').length,
+      scripts: document.querySelectorAll('script,iframe,object,embed').length,
+      links: document.querySelectorAll('a,link').length,
+      renderErrors: document.querySelectorAll('.err,.sr-tex-err,.katex-error').length,
+    },
+    labels: [...document.querySelectorAll('.option-id')].map((node) => node.textContent),
+    modes: [...document.querySelectorAll('.choice-heading')].map((node) => node.textContent.trim()),
+    documentWidth: document.documentElement.scrollWidth,
+    bodyWidth: document.body.scrollWidth, viewportWidth: innerWidth,
+    horizontalDocumentScroll: window.scrollX,
+    sectionBoxes: boxes, labelBodyCollisions: collisions, dangerousAttributes,
+    fonts: [...document.fonts].map((font) => ({ family: font.family, status: font.status })),
+    loadedResources: performance.getEntriesByType('resource').map((entry) => entry.name),
+    browserConnected: navigator.onLine,
+  };
+}
+
+async function renderOnce() {
+  const dir = path.join(OWN, 'renderer-FIRST');
+  await mkdir(own(dir));
+  const args = [
+    TOOL, SCRATCH, '--out', RENDER, '--edition', EDITION,
+    '--lesson', LESSON, '--choices-only',
+  ];
+  const started = new Date().toISOString();
+  await json(path.join(dir, 'start.record'), { command: [process.execPath, ...args], cwd: R, started });
+  usage.renderCalls += 1;
+  const result = await new Promise((resolve) => {
+    const child = spawn(process.execPath, args, {
+      cwd: R,
+      env: { PATH: process.env.PATH, HOME: process.env.HOME, LANG: 'en_US.UTF-8', TMPDIR: path.join(OWN, 'runtime-tmp') },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    let stdout = '';
+    let stderr = '';
+    child.stdout.on('data', (bytes) => { stdout += bytes; });
+    child.stderr.on('data', (bytes) => { stderr += bytes; });
+    child.once('error', (error) => resolve({ exitCode: null, signal: null, stdout, stderr, error: error.message }));
+    child.once('close', (exitCode, signal) => resolve({ exitCode, signal, stdout, stderr }));
+  });
+  await writeFile(own(path.join(dir, 'stdout.txt')), result.stdout, { flag: 'wx' });
+  await writeFile(own(path.join(dir, 'stderr.txt')), result.stderr, { flag: 'wx' });
+  await json(path.join(dir, 'receipt.record'), { ...result, command: [process.execPath, ...args], cwd: R, started, finished: new Date().toISOString() });
+  report.renderer = { ...result, receipt: path.join(dir, 'receipt.record') };
+  assert.equal(result.exitCode, 0, 'Stop dependent display after renderer execution failure');
+  const receipt = JSON.parse(result.stdout);
+  assert.equal(receipt.ok, true);
+  assert.deepEqual(receipt.lessons.map((entry) => entry.lesson), [LESSON]);
+  assert.equal(receipt.lessons[0].choices, 2);
+  assert.equal(receipt.lessons[0].sourcePagesSkipped, true);
+  assert.deepEqual(await readdir(path.join(RENDER, LESSON)), ['choices.html']);
+}
+
+try {
+  await mkdir(own(path.join(OWN, 'runtime-tmp')), { recursive: true });
+  await json(path.join(OWN, 'start.record'), { ...report, command: [process.execPath, fileURLToPath(import.meta.url), ...process.argv.slice(2)] });
+  durableBefore = await durableSnapshot();
+  assert.equal(durableBefore.questions, 7);
+  assert.equal(durableBefore.options, 43);
+  await json(path.join(OWN, 'durable-before.json'), durableBefore);
+  await fingerprint(TOOL);
+  for (const filename of ['choice_html.mjs', 'htmlfrag.js']) await fingerprint(path.join(path.dirname(TOOL), filename));
+  for (const filename of ['app/node_modules/playwright/package.json', '.claude/skills/ld-s10y-lesson/node_modules/katex/package.json']) await fingerprint(path.join(R, filename));
+
+  const seedBytes = await fingerprint(path.join(APPROVED, 'seed.json'));
+  const draftBytes = await fingerprint(path.join(APPROVED, 'author/draft.json'));
+  const reviewBytes = await fingerprint(path.join(APPROVED, 'reviewer-key-FIRST/review.json'));
+  const validatorBytes = await fingerprint(path.join(APPROVED, 'reviewer-key-FIRST/validation-FIRST/receipt.record'));
+  const seed = JSON.parse(seedBytes);
+  const draft = JSON.parse(draftBytes);
+  const review = JSON.parse(reviewBytes);
+  assert.equal(review.outcome, 'pass');
+  assert.equal(review.seed_sha256, sha(seedBytes));
+  assert.equal(review.draft_sha256, sha(draftBytes));
+  assert.equal(draft.seed_sha256, sha(seedBytes));
+  assert.equal(JSON.parse(validatorBytes).returncode, 0);
+  assert.equal(draft.questions.length, 2);
+  assert.equal(draft.questions.reduce((n, q) => n + q.view.options.length, 0), 8);
+  assert.deepEqual(draft.questions.map((q) => q.id), ['n22-products', 'n22-line-quadrants']);
+  assert.deepEqual(draft.questions.flatMap((q) => q.source_numbers), ['541', '547']);
+  assert.equal(seed.figures.length, 0);
+  assert.equal(draft.new_figures.length, 0);
+
+  for (const [sourceRoot, destRoot] of [
+    [SOURCE, SCRATCH], [MODERN, path.join(SCRATCH, 'editions', EDITION)],
+  ]) {
+    const bytes = await fingerprint(path.join(sourceRoot, 'book.json'));
+    const index = JSON.parse(bytes);
+    index.lessons = index.lessons.filter((lesson) => lesson.id === LESSON);
+    assert.equal(index.lessons.length, 1);
+    await mkdir(own(destRoot), { recursive: true });
+    await json(path.join(destRoot, 'book.json'), index);
+    for (const filename of ['lesson.json', 'exercises.json']) {
+      await copySource(path.join(sourceRoot, 'lessons', LESSON, filename),
+        path.join(destRoot, 'lessons', LESSON, filename));
+    }
+    await mkdir(own(path.join(destRoot, 'figures')), { recursive: true });
+  }
+  const modernLesson = path.join(SCRATCH, 'editions', EDITION, 'lessons', LESSON);
+  const manifest = await copySource(path.join(MODERN, 'lessons', LESSON, 'figures.json'),
+    path.join(modernLesson, 'figures.json'));
+  assert.equal(manifest.figures.length, 0);
+  const choiceDir = path.join(modernLesson, 'choice-set');
+  await mkdir(own(choiceDir));
+  for (const [filename, bytes] of [['seed.json', seedBytes], ['draft.json', draftBytes], ['review.json', reviewBytes]]) {
+    await writeFile(own(path.join(choiceDir, filename)), bytes, { flag: 'wx' });
+    report.scratchFiles.push({ path: path.join(choiceDir, filename), bytes: bytes.length, sha256: sha(bytes) });
+  }
+  await event({ stage: 'scratch-assembly', bookIndexLessons: 1, editionIndexLessons: 1, questions: 2, options: 8, figures: 0 });
+  await renderOnce();
+  const htmlPath = path.join(RENDER, LESSON, 'choices.html');
+  const html = await fingerprint(htmlPath);
+  report.renderedPage = { path: htmlPath, bytes: html.length, sha256: sha(html), unmodifiedInstalledRendererOutput: true };
+  const forbiddenWords = /\b(?:seed_sha256|draft_sha256|source_numbers|source_solution|independent_solution|correct_index|rationales|misconception|omitted_tasks|answer_key|api_key|secret|password|postgres(?:ql)?):?\b/iu;
+  await check('static-no-private-key-material', !forbiddenWords.test(html.toString('utf8')));
+  const expected = draft.questions.map((q) => ({
+    id: q.id, stem: expectedMaterial(q.view.stem),
+    options: q.view.options.map((option) => ({ id: option.id, material: expectedMaterial(option.text) })),
+  }));
+  report.expected = {
+    questions: 2, stems: 2, options: 8, tables: 5, tableRows: 25, cells: 55,
+    mathSpans: expected.reduce((sum, q) => sum + q.stem.formulas.length
+      + q.options.reduce((n, option) => n + option.material.formulas.length, 0), 0),
+  };
+  assert.equal(report.expected.mathSpans, 63);
+  await json(path.join(OWN, 'input-bindings.json'), { inputs: report.inputHashes, scratchFiles: report.scratchFiles, approvedReviewReused: true });
+
+  server = createServer((request, response) => {
+    const url = new URL(request.url, origin);
+    servedRequests.push({ method: request.method, path: url.pathname });
+    if (request.method === 'GET' && url.pathname === '/favicon.ico' && !url.search) {
+      response.writeHead(204).end();
+    } else if (request.method === 'GET' && url.pathname === '/choices.html' && !url.search) {
+      response.writeHead(200, {
+        'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store',
+        'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data:; connect-src 'none';",
+      }).end(html);
+    } else response.writeHead(404).end();
+  });
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', resolve);
+  });
+  origin = `http://127.0.0.1:${server.address().port}`;
+  report.server = { origin, allowlist: ['GET /choices.html', 'GET /favicon.ico'] };
+
+  // Keep Chromium's temporary profile under the sole writable root.
+  process.env.TMPDIR = path.join(OWN, 'runtime-tmp');
+  usage.browserLaunches += 1;
+  browser = await chromium.launch({
+    headless: true, downloadsPath: path.join(OWN, 'runtime-tmp', 'downloads'),
+    env: { PATH: process.env.PATH, HOME: process.env.HOME, LANG: 'en_US.UTF-8', TMPDIR: process.env.TMPDIR },
+    args: ['--disable-background-networking', '--disable-component-update', '--no-first-run',
+      '--disable-sync', '--disable-default-apps', '--metrics-recording-only',
+      '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1'],
+  });
+  report.chromium = { version: browser.version(), executable: chromium.executablePath(), headless: true };
+  const executableBytes = await readFile(chromium.executablePath());
+  report.chromium.executableSha256 = sha(executableBytes);
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    usage.browserContexts += 1;
+    context = await browser.newContext({
+      viewport, deviceScaleFactor: 1, serviceWorkers: 'block',
+      acceptDownloads: false, locale: 'en-US',
+    });
+    await context.route('**/*', async (route) => {
+      const request = route.request();
+      const url = new URL(request.url());
+      if (url.origin !== origin || !['/choices.html', '/favicon.ico'].includes(url.pathname)
+        || url.search || request.method() !== 'GET') {
+        externalRequests.push({ method: request.method(), url: request.url() });
+        await route.abort('blockedbyclient');
+      } else await route.continue();
+    });
+    const page = await context.newPage();
+    page.on('pageerror', (error) => browserErrors.push(error.message));
+    page.on('console', (message) => { if (message.type() === 'error') consoleErrors.push(message.text()); });
+    page.on('requestfailed', (request) => requestFailures.push({ url: request.url(), error: request.failure() }));
+    usage.pageNavigations += 1;
+    const response = await page.goto(`${origin}/choices.html`, { waitUntil: 'networkidle' });
+    assert.equal(response.status(), 200);
+    await page.evaluate(() => document.fonts.ready);
+    const entry = { viewport, materials: [], screenshots: [] };
+    report.viewports.push(entry);
+    const dom = await page.evaluate(inspectPage);
+    entry.dom = dom;
+    await check(`${viewport.width}:exact-rendered-counts`,
+      dom.counts.questions === 2 && dom.counts.stems === 2 && dom.counts.optionGroups === 2
+      && dom.counts.options === 8 && dom.counts.tables === 5 && dom.counts.tableRows === 25
+      && dom.counts.cells === 55 && dom.counts.katex === report.expected.mathSpans
+      && dom.counts.figures === 0, dom.counts);
+    await check(`${viewport.width}:exact-option-labels`,
+      JSON.stringify(dom.labels) === JSON.stringify(expected.flatMap((q) => q.options.map((option) => option.id))),
+      { labels: dom.labels });
+    await check(`${viewport.width}:no-widgets-key-leakage-or-render-errors`,
+      dom.counts.widgets === 0 && dom.counts.scripts === 0 && dom.counts.links === 0
+      && dom.counts.renderErrors === 0 && dom.dangerousAttributes.length === 0, {
+        counts: dom.counts, dangerousAttributes: dom.dangerousAttributes,
+      });
+    await check(`${viewport.width}:no-document-overflow`,
+      dom.documentWidth === viewport.width && dom.bodyWidth === viewport.width && dom.horizontalDocumentScroll === 0,
+      { documentWidth: dom.documentWidth, bodyWidth: dom.bodyWidth, viewportWidth: viewport.width });
+    await check(`${viewport.width}:labels-do-not-overlap-material`,
+      dom.labelBodyCollisions.length === 0, { collisions: dom.labelBodyCollisions });
+    await check(`${viewport.width}:sections-fit-and-do-not-overlap`,
+      dom.sectionBoxes.every((box, index, boxes) => box.left >= 0 && box.right <= viewport.width
+        && box.height > 0 && (index === 0 || box.top >= boxes[index - 1].bottom - 0.5)), { boxes: dom.sectionBoxes });
+    await check(`${viewport.width}:embedded-katex-fonts-loaded`,
+      dom.fonts.filter((font) => font.family.startsWith('KaTeX') && font.status === 'loaded').length > 0
+      && dom.fonts.every((font) => font.status !== 'error'), { fonts: dom.fonts });
+
+    for (const [index, question] of expected.entries()) {
+      const section = page.locator('.choice').nth(index);
+      const materialTargets = [
+        { name: `${question.id}:stem`, locator: section.locator('.choice-stem'), expected: question.stem },
+        ...question.options.map((option, optionIndex) => ({
+          name: `${question.id}:${option.id}`,
+          locator: section.locator('.choice-option-body').nth(optionIndex), expected: option.material,
+        })),
+      ];
+      for (const target of materialTargets) {
+        const actual = await target.locator.evaluate(inspectMaterial);
+        entry.materials.push({ name: target.name, ...actual });
+        await check(`${viewport.width}:${target.name}:text-and-tex-exact`,
+          actual.text === target.expected.text
+          && JSON.stringify(actual.formulas.map((formula) => formula.tex)) === JSON.stringify(target.expected.formulas),
+          { expected: target.expected, actualText: actual.text, formulas: actual.formulas });
+        await check(`${viewport.width}:${target.name}:table-cells-exact`,
+          JSON.stringify(actual.tables) === JSON.stringify(target.expected.tables), {
+            expectedTables: target.expected.tables, actualTables: actual.tables,
+          });
+        await check(`${viewport.width}:${target.name}:all-painted-glyphs-and-rules-reachable`,
+          actual.hiddenCount === 0 && actual.clippedCount === 0 && actual.totalPaintedTargets > 0
+          && actual.formulas.every((formula) => formula.visible && formula.visualTextLength > 0), {
+            totalPaintedTargets: actual.totalPaintedTargets, reachable: actual.reachable,
+            formulaGlyphs: actual.formulaGlyphs, mathRules: actual.mathRules,
+            hiddenCount: actual.hiddenCount, clippedCount: actual.clippedCount,
+            clippingExamples: actual.clippingExamples, scrollers: actual.scrollers,
+          });
+        await check(`${viewport.width}:${target.name}:table-right-edges-reachable`,
+          actual.tableRightEdges.every((edge) => edge.reachable), { edges: actual.tableRightEdges });
+      }
+      await section.scrollIntoViewIfNeeded();
+      await page.evaluate(() => {
+        for (const element of document.querySelectorAll('.choice-stem,.choice-option-body,.nb,.sr-nb')) element.scrollLeft = 0;
+      });
+      assert.ok(usage.screenshotsCaptured < 4);
+      const screenshotPath = path.join(OWN, `${viewport.width}-${question.id}-FIRST.png`);
+      await section.screenshot({ path: own(screenshotPath), animations: 'disabled' });
+      usage.screenshotsCaptured += 1;
+      const bytes = await readFile(screenshotPath);
+      const screenshot = {
+        path: screenshotPath, viewport, target: question.id,
+        bytes: bytes.length, sha256: sha(bytes), kind: 'targeted actual-renderer section; no other page',
+      };
+      entry.screenshots.push(screenshot);
+      report.screenshots.push(screenshot);
+      await event({ screenshot });
+    }
+    const after = await page.evaluate(inspectPage);
+    await check(`${viewport.width}:no-overflow-after-native-scrolling`,
+      after.documentWidth === viewport.width && after.bodyWidth === viewport.width
+      && after.horizontalDocumentScroll === 0, {
+        documentWidth: after.documentWidth, bodyWidth: after.bodyWidth,
+      });
+    await context.close();
+    report.cleanup.contextsClosed += 1;
+    context = null;
+  }
+  await check('no-external-requests-no-browser-or-console-errors',
+    externalRequests.length === 0 && requestFailures.length === 0 && browserErrors.length === 0
+    && consoleErrors.length === 0, { externalRequests, requestFailures, browserErrors, consoleErrors });
+  await check('only-authorized-offline-page-served',
+    servedRequests.length > 0 && servedRequests.every((request) =>
+      request.method === 'GET' && ['/choices.html', '/favicon.ico'].includes(request.path)), { servedRequests });
+} catch (error) {
+  report.executionError = { name: error.name, message: error.message, stack: error.stack };
+  report.faults.push({ stage: 'execution', ...report.executionError, preserved: true });
+  await event({ executionError: report.executionError });
+} finally {
+  if (context) {
+    try { await context.close(); report.cleanup.contextsClosed += 1; }
+    catch (error) { report.faults.push({ stage: 'context-close', message: error.message }); }
+  }
+  if (browser) {
+    try { await browser.close(); report.cleanup.browserClosed = true; }
+    catch (error) { report.faults.push({ stage: 'browser-close', message: error.message }); }
+  }
+  if (server) {
+    try {
+      server.closeAllConnections();
+      await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+      report.cleanup.serverClosed = true;
+    } catch (error) { report.faults.push({ stage: 'server-close', message: error.message }); }
+  }
+  if (durableBefore) {
+    const after = await durableSnapshot();
+    await json(path.join(OWN, 'durable-after.json'), after);
+    await check('existing-durable-7questions-43options-untouched',
+      JSON.stringify(durableBefore) === JSON.stringify(after), {
+        beforeQuestions: durableBefore.questions, beforeOptions: durableBefore.options,
+        afterQuestions: after.questions, afterOptions: after.options, filesHashed: after.files.length,
+      });
+  }
+  report.network = { servedRequests, externalRequests, requestFailures, browserErrors, consoleErrors };
+  const failed = report.checks.filter((result) => result.status === 'FAIL');
+  for (const failure of failed) report.faults.push({ stage: 'display-assertion', ...failure, preserved: true });
+  report.status = report.executionError || failed.length ? 'FAIL' : 'PASS';
+  report.visualObservationStatus = 'PENDING bounded view_image inspection';
+  report.finished = new Date().toISOString();
+  usage.finished = report.finished;
+  await json(path.join(OWN, 'report-FIRST.json'), report);
+  await json(path.join(OWN, 'usage-FIRST.json'), usage);
+  await json(path.join(OWN, 'faults-FIRST.json'), { faults: report.faults });
+  console.log(JSON.stringify({
+    status: report.status, report: path.join(OWN, 'report-FIRST.json'),
+    render: report.renderedPage, checks: report.checks.length, failed: failed.map((entry) => entry.name),
+    screenshots: report.screenshots, usage, cleanup: report.cleanup,
+  }, null, 2));
+  if (report.status !== 'PASS') process.exitCode = 1;
+}

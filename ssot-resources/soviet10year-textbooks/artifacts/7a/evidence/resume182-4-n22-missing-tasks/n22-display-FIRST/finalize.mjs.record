@@ -1,0 +1,161 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFile, readdir, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+const OWN = path.join(R, '.tmp/resume182-4-postaccount/n22-display-FIRST');
+const RUN = path.join(OWN, 'affected1');
+assert.equal(process.cwd(), R);
+const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const readJson = async (filename) => JSON.parse(await readFile(filename, 'utf8'));
+const writeJson = async (filename, value) => {
+  assert.ok(filename.startsWith(`${OWN}${path.sep}`));
+  await writeFile(filename, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+};
+const report = await readJson(path.join(RUN, 'report-FIRST.json'));
+const usage = await readJson(path.join(RUN, 'usage-FIRST.json'));
+const first = await readJson(path.join(OWN, 'report-FIRST.json'));
+const firstUsage = await readJson(path.join(OWN, 'usage-FIRST.json'));
+const launcherFault = await readJson(path.join(OWN, 'recovery-launch-fault.json'));
+assert.equal(report.status, 'FAIL');
+assert.equal(report.checks.length, 100);
+assert.deepEqual(report.checks.filter((check) => check.status === 'FAIL').map((check) => check.name),
+  ['1440:labels-do-not-overlap-material', '390:labels-do-not-overlap-material']);
+assert.equal(report.screenshots.length, 4);
+assert.equal(usage.browserLaunches, 1);
+assert.equal(usage.renderCalls, 1);
+assert.equal(report.cleanup.browserClosed, true);
+assert.equal(report.cleanup.serverClosed, true);
+
+const observations = [
+  {
+    width: 1440, target: 'n22-products',
+    text: 'Stem table and four result tables are legible. Fraction numerators, denominators, bars, and inequality signs are visible. products-* labels wrap in the narrow grid column and visibly overlap the neighboring Row headers.',
+  },
+  {
+    width: 1440, target: 'n22-line-quadrants',
+    text: 'All four textual descriptions, equation, coordinates, and interval notation are visible. Every graph-* label overlaps the opening The graph text.',
+  },
+  {
+    width: 390, target: 'n22-products',
+    text: 'All five tables fit the mobile content width. Right borders, row labels, fractions, and inequality signs are visible. products-* labels visibly collide with all four result-table headers.',
+  },
+  {
+    width: 390, target: 'n22-line-quadrants',
+    text: 'All descriptions wrap within the mobile column. Coordinates, negative signs, equations, strict inequalities, and axis-case notation remain visible. graph-* labels overlap each option opening.',
+  },
+].map((observation) => {
+  const screenshot = report.screenshots.find((entry) =>
+    entry.viewport.width === observation.width && entry.target === observation.target);
+  assert.ok(screenshot);
+  return {
+    ...observation, path: screenshot.path, sha256: screenshot.sha256,
+    inspectionTool: 'functions.view_image', inspections: 1, reopened: false,
+    imagePayloadReturnedToParent: false, verdict: 'FAIL label collision; other inspected material legible',
+  };
+});
+const perViewport = report.viewports.map((entry) => ({
+  viewport: entry.viewport,
+  renderedCounts: entry.dom.counts,
+  materialRegionsChecked: entry.materials.length,
+  paintedTargets: entry.materials.reduce((sum, material) => sum + material.totalPaintedTargets, 0),
+  reachableTargets: entry.materials.reduce((sum, material) => sum + material.reachable, 0),
+  actualKaTeXTextGlyphs: entry.materials.reduce((sum, material) => sum + material.formulaGlyphs, 0),
+  actualKaTeXRules: entry.materials.reduce((sum, material) => sum + material.mathRules, 0),
+  hiddenTargets: entry.materials.reduce((sum, material) => sum + material.hiddenCount, 0),
+  clippedTargets: entry.materials.reduce((sum, material) => sum + material.clippedCount, 0),
+  tableRightEdgesChecked: entry.materials.reduce((sum, material) => sum + material.tableRightEdges.length, 0),
+  labelCollisions: entry.dom.labelBodyCollisions,
+  documentOverflow: entry.dom.documentWidth !== entry.viewport.width,
+}));
+const faults = [
+  ...first.faults,
+  { stage: 'recovery-loader', ...launcherFault },
+  ...report.faults.filter((fault) => fault.stage !== 'read-only-discovery'),
+];
+const finalUsage = {
+  ...usage,
+  imagesViewed: 4,
+  imageBatches: 1,
+  contextImagesLoaded: 4,
+  viewImageCalls: 4,
+  imageReopens: 0,
+  runnerExecutionAttempts: 3,
+  displayStageExecutions: 1,
+  technicalCorrections: 2,
+  correctionBreakdown: {
+    rawVsCanonicalSnapshotBinding: 1,
+    preStageRecoveryModuleFileUrlResolution: 1,
+    displayOrContentCorrections: 0,
+  },
+  paidUsage: { calls: 0, cost: 0, tokens: 0 },
+  priorFIRST: {
+    renderCalls: firstUsage.renderCalls, browserLaunches: firstUsage.browserLaunches,
+    browser: 'not_started', server: 'not_started',
+    originalBooleanCleanupFieldsPreservedUnchanged: first.cleanup,
+  },
+  note: 'The loader failed before the affected display stage began. Exactly one actual render and one headless browser launch ran. No display retry or content change.',
+  finalized: new Date().toISOString(),
+};
+const result = {
+  schema: 'resume182-n22-offline-display-final-v1',
+  status: 'FAIL',
+  scope: report.scope,
+  boundary: 'Offline display only. Not app, production, whole-ticket, source, mathematics, or publishing acceptance.',
+  render: report.renderedPage,
+  authoritativeRenderer: report.inputHashes.find((entry) => entry.path.endsWith('/render_lesson.js')),
+  rawAndCanonicalSnapshotDigests: report.snapshotDigests,
+  sourceTraceBindings: report.traceBindings,
+  historicalIndexTracePreserved: true,
+  sourceBytesUnchangedExceptUnrelatedBookIndex: report.traceBindings.slice(1).every((entry) => entry.status === 'same'),
+  firstArtifactsPreserved: true,
+  priorFault: { report: path.join(OWN, 'report-FIRST.json'), error: first.executionError, browser: 'not_started', server: 'not_started' },
+  canonicalReviewAndSavedValidatorReused: true,
+  checkSummary: { total: 100, pass: 98, fail: 2 },
+  failedChecks: report.checks.filter((check) => check.status === 'FAIL'),
+  perViewport,
+  observations,
+  network: report.network,
+  cleanup: report.cleanup,
+  durablePreservationCheck: report.checks.find((check) => check.name === 'existing-durable-7questions-43options-untouched'),
+  usage: path.join(OWN, 'final-usage.json'),
+  faults: path.join(OWN, 'final-faults.json'),
+  detailedReport: path.join(RUN, 'report-FIRST.json'),
+  explanation: 'Installed renderer has a 1.8em option-label grid track. Full products-* IDs intrude approximately 49.91px and graph-* IDs 21px into adjacent table/prose content at both widths. Four bounded image observations confirm this. The generated HTML is untouched; assertions were not weakened. No further display correction or run.',
+  finalized: finalUsage.finalized,
+};
+await writeJson(path.join(OWN, 'screenshot-observations.json'), observations);
+await writeJson(path.join(OWN, 'final-usage.json'), finalUsage);
+await writeJson(path.join(OWN, 'final-faults.json'), { faults });
+await writeJson(path.join(OWN, 'final-report.json'), result);
+
+const files = [];
+async function inventory(dir) {
+  for (const entry of (await readdir(dir, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name))) {
+    const filename = path.join(dir, entry.name);
+    if (entry.isDirectory()) await inventory(filename);
+    else if (entry.isFile() && entry.name !== 'sha256-manifest.json') {
+      const bytes = await readFile(filename);
+      files.push({ path: filename, bytes: bytes.length, sha256: sha(bytes) });
+    }
+  }
+}
+await inventory(OWN);
+await writeJson(path.join(OWN, 'sha256-manifest.json'), {
+  schema: 'resume182-display-evidence-sha256-v1',
+  algorithm: 'SHA-256 of raw file bytes',
+  scope: OWN, excludes: ['sha256-manifest.json (self-reference)'],
+  inputHashes: report.inputHashes,
+  files,
+});
+console.log(JSON.stringify({
+  status: result.status, checkSummary: result.checkSummary,
+  renderedPage: result.render, perViewport: perViewport.map(({ labelCollisions, ...entry }) => ({
+    ...entry, labelCollisions: labelCollisions.length,
+  })),
+  keyArtifacts: files.filter((entry) =>
+    ['final-report.json', 'final-usage.json', 'final-faults.json', 'screenshot-observations.json'].includes(path.basename(entry.path))),
+  manifest: path.join(OWN, 'sha256-manifest.json'),
+  manifestSha256: sha(await readFile(path.join(OWN, 'sha256-manifest.json'))),
+}, null, 2));

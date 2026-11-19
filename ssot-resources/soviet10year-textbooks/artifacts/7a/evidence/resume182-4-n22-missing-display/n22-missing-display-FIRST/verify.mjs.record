@@ -1,0 +1,608 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { createServer } from 'node:http';
+import { createRequire } from 'node:module';
+import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+const OWN = path.join(R, '.tmp/resume182-4-postaccount/n22-missing-display-FIRST');
+const L = path.join(R,
+  'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c3-s1-n22');
+const TEXT = path.join(L, 'evidence/first-text-written-display');
+const CHOICE = path.join(L, 'choice-set/evidence/first-choice-display');
+const RUN = path.join(OWN, 'runtime-FIRST');
+const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const norm = (text) => text.normalize('NFC').replace(/\s+/gu, ' ').trim();
+const rel = (filename) => path.relative(R, filename);
+assert.equal(process.cwd(), R, 'Explicit authorized cwd R required');
+assert.equal(path.dirname(fileURLToPath(import.meta.url)), OWN);
+assert.deepEqual(process.argv.slice(2), ['--n22-only']);
+await mkdir(RUN);
+await mkdir(path.join(RUN, 'chromium-tmp'));
+process.env.TMPDIR = path.join(RUN, 'chromium-tmp');
+const report = {
+  schema: 'stemrobin-182/n22-missing-offline-display@1',
+  started: new Date().toISOString(), scope: 'n22 missing text/written/root-choice display ONLY',
+  authorization: 'Direct user n22-only authorization; NOT n12 READY',
+  cwd: R, inherited: {}, inputs: [], checks: [], viewports: [], screenshots: [],
+  imagesOpenedWithinRuntime: 0, newRenderCalls: 0, newValidatorCalls: 0,
+  n12Touched: false, supplementRetested: false, sourceMathKeyFigureReviewRepeated: false,
+  wholeCoursePASS: false, appDBProductionApproval: false, oldFailuresAndHoldsPreserved: true,
+  visualStatus: 'PENDING once-only views after runtime',
+  cleanup: { browserClosed: false, serverClosed: false, contextsClosed: true },
+};
+await writeFile(path.join(RUN, 'start.record'), JSON.stringify(report, null, 2), { flag: 'wx' });
+async function event(value) {
+  await appendFile(path.join(RUN, 'events.ndjson'),
+    `${JSON.stringify({ time: new Date().toISOString(), ...value })}\n`);
+}
+async function check(name, ok, facts = {}) {
+  const item = { name, status: ok ? 'PASS' : 'FAIL', ...facts };
+  report.checks.push(item);
+  await event({ check: item });
+  if (!ok) console.error(JSON.stringify(item));
+  return ok;
+}
+async function need(name, ok, facts = {}) {
+  assert.ok(await check(name, ok, facts), name);
+}
+async function input(filename) {
+  assert.ok(filename.startsWith(`${L}${path.sep}`) || filename === fileURLToPath(import.meta.url));
+  assert.ok(!filename.endsWith('.png'), 'No old/source/supplement image reads');
+  const bytes = await readFile(filename);
+  report.inputs.push({ path: rel(filename), sha256: sha(bytes), bytes: bytes.length });
+  return bytes;
+}
+async function json(filename) { return JSON.parse(await input(filename)); }
+function projection(text) {
+  const formulas = [];
+  const serialized = text.replace(/\$\$(.+?)\$\$|\$([^$]+?)\$/gs, (_, block, inline) => {
+    const index = formulas.length;
+    formulas.push(norm(block ?? inline));
+    return `[[MATH:${index}]]`;
+  }).replace(/\*\*([^*]+)\*\*/gu, '$1');
+  return { text: norm(serialized), lines: serialized.split('\n').map(norm), formulas };
+}
+function writtenText(item) {
+  const printed = Object.hasOwn(item, 'source_number') ? item.source_number : item.number;
+  const prefix = printed == null ? '' : String(printed);
+  const suffix = item.text.slice(prefix.length);
+  return prefix && item.text.startsWith(prefix)
+    && (/^\.\s/u.test(suffix) || /^\uFF0E(?![0-9\uFF10-\uFF19])/u.test(suffix))
+    ? item.text.slice(prefix.length + 1).trimStart() : item.text;
+}
+
+// Payload-only binding is allowed for the full documents. It does not repeat old
+// global count, math-validity, no-private-field, or first-window geometry checks.
+function payload(element) {
+  let text = '';
+  const formulas = [];
+  function walk(node) {
+    if (node.nodeType === Node.TEXT_NODE) { text += node.data; return; }
+    if (node.nodeType !== Node.ELEMENT_NODE || node.matches('figure')) return;
+    if (node.matches('br')) { text += '\n'; return; }
+    if (node.matches('.katex')) {
+      const index = formulas.length;
+      formulas.push(node.querySelector('annotation[encoding="application/x-tex"]')?.textContent
+        ?.trim().replace(/\s+/gu, ' ') ?? null);
+      text += `[[MATH:${index}]]`;
+      return;
+    }
+    for (const child of node.childNodes) walk(child);
+  }
+  walk(element);
+  const normalize = (value) => value.normalize('NFC').replace(/\s+/gu, ' ').trim();
+  return { text: normalize(text), lines: text.split('\n').map(normalize), formulas };
+}
+
+// Only newly unapproved logical lines are visited, not the already-passed ranges.
+async function missingGlyphs(element, startLine) {
+  const targets = [];
+  const failures = [];
+  const formulas = [];
+  const lineRects = [];
+  let logicalLine = 0;
+  let selectedGlyphs = 0;
+  const styleVisible = (target) => {
+    for (let current = target; current; current = current.parentElement) {
+      const style = getComputedStyle(current);
+      if (style.display === 'none' || style.visibility !== 'visible'
+        || Number(style.opacity) === 0 || style.contentVisibility === 'hidden') return false;
+    }
+    return true;
+  };
+  function addText(node, formulaIndex) {
+    if (logicalLine < startLine) return;
+    for (let offset = 0; offset < node.data.length; offset += 1) {
+      if (/[\s\u200b\u200c\u200d\u2060\ufeff]/u.test(node.data[offset])) continue;
+      selectedGlyphs += 1;
+      const range = document.createRange();
+      range.setStart(node, offset);
+      range.setEnd(node, offset + 1);
+      const rect = range.getBoundingClientRect();
+      (lineRects[logicalLine] ??= []).push({ top: rect.top, bottom: rect.bottom });
+      targets.push({ range, element: node.parentElement, formulaIndex, logicalLine });
+    }
+  }
+  function walk(node) {
+    if (node.nodeType === Node.TEXT_NODE) { addText(node, null); return; }
+    if (node.nodeType !== Node.ELEMENT_NODE || node.matches('figure, .katex-mathml')) return;
+    if (node.matches('br')) { logicalLine += 1; return; }
+    if (node.matches('.katex')) {
+      const index = formulas.length;
+      if (logicalLine >= startLine) {
+        const visual = node.querySelector('.katex-html');
+        formulas.push({
+          tex: node.querySelector('annotation[encoding="application/x-tex"]')?.textContent?.trim(),
+          nonempty: Boolean(visual?.textContent?.trim()), visible: Boolean(visual && styleVisible(visual)),
+        });
+        if (visual) {
+          const walker = document.createTreeWalker(visual, NodeFilter.SHOW_TEXT);
+          for (let text = walker.nextNode(); text; text = walker.nextNode()) addText(text, index);
+        }
+      }
+      return;
+    }
+    for (const child of node.childNodes) walk(child);
+  }
+  walk(element);
+  const geometry = lineRects.map((rects, line) => rects?.length ? {
+    line, top: Math.min(...rects.map((rect) => rect.top)),
+    bottom: Math.max(...rects.map((rect) => rect.bottom)),
+  } : null).filter(Boolean);
+  let reached = 0;
+  let formulaGlyphs = 0;
+  const touchedScrollers = new Set();
+  for (const target of targets) {
+    let rect = target.range.getBoundingClientRect();
+    window.scrollBy({ top: rect.top + rect.height / 2 - innerHeight / 2, behavior: 'instant' });
+    for (let ancestor = target.element; ancestor; ancestor = ancestor.parentElement) {
+      if (ancestor === document.body || ancestor === document.documentElement) continue;
+      const style = getComputedStyle(ancestor);
+      if (!['auto', 'scroll'].includes(style.overflowX)
+        || ancestor.scrollWidth <= ancestor.clientWidth + 1) continue;
+      touchedScrollers.add(ancestor);
+      rect = target.range.getBoundingClientRect();
+      const box = ancestor.getBoundingClientRect();
+      const left = box.left + ancestor.clientLeft;
+      const right = left + ancestor.clientWidth;
+      let delta = 0;
+      if (rect.left < left) delta = rect.left - left;
+      if (rect.right > right) delta = rect.right - right;
+      ancestor.scrollTo({ left: ancestor.scrollLeft + delta, behavior: 'instant' });
+    }
+    rect = target.range.getBoundingClientRect();
+    let reason = null;
+    if (rect.width <= 0 || rect.height <= 0 || !styleVisible(target.element)) reason = 'hidden-glyph';
+    if (!reason && (rect.left < -2 || rect.right > innerWidth + 2
+      || rect.top < -2 || rect.bottom > innerHeight + 2)) reason = 'unreachable-viewport';
+    for (let ancestor = target.element; !reason && ancestor; ancestor = ancestor.parentElement) {
+      if (ancestor === document.body || ancestor === document.documentElement) continue;
+      const style = getComputedStyle(ancestor);
+      const box = ancestor.getBoundingClientRect();
+      if (['auto', 'scroll', 'hidden', 'clip'].includes(style.overflowX)
+        && (rect.left < box.left + ancestor.clientLeft - 2
+          || rect.right > box.left + ancestor.clientLeft + ancestor.clientWidth + 2)) reason = 'x-clipping';
+      if (['auto', 'scroll', 'hidden', 'clip'].includes(style.overflowY)
+        && (rect.top < box.top + ancestor.clientTop - 2
+          || rect.bottom > box.top + ancestor.clientTop + ancestor.clientHeight + 2)) reason = 'y-clipping';
+    }
+    if (reason) {
+      if (failures.length < 20) failures.push({
+        line: target.logicalLine, formulaIndex: target.formulaIndex, reason,
+        rect: { x: rect.x, y: rect.y, width: rect.width, height: rect.height },
+      });
+    } else {
+      reached += 1;
+      if (target.formulaIndex !== null) formulaGlyphs += 1;
+    }
+  }
+  const ends = [];
+  for (const scroller of touchedScrollers) {
+    scroller.scrollTo({ left: scroller.scrollWidth - scroller.clientWidth, behavior: 'instant' });
+    ends.push({
+      clientWidth: scroller.clientWidth, scrollWidth: scroller.scrollWidth,
+      scrollLeft: scroller.scrollLeft, maximum: scroller.scrollWidth - scroller.clientWidth,
+    });
+    scroller.scrollTo({ left: 0, behavior: 'instant' });
+  }
+  return {
+    startLine, selectedGlyphs, reached, clippedOrHidden: selectedGlyphs - reached,
+    formulaGlyphs, formulas: formulas.length,
+    nonemptyVisibleMath: formulas.every((formula) => formula.nonempty && formula.visible),
+    logicalLineGeometry: geometry,
+    lineOrder: geometry.every((line, index) => !index || line.top > geometry[index - 1].top + 0.5),
+    ends, failures, tablesInMissingRange: element.querySelectorAll('table').length,
+  };
+}
+
+let server;
+let browser;
+let origin;
+let PNG;
+const contexts = [];
+const served = [];
+async function bind(locator, expected, label) {
+  const actual = await locator.evaluate(payload);
+  await need(`${label}: current visible payload equals frozen HTML`,
+    JSON.stringify(actual) === JSON.stringify(expected),
+    { expectedSha256: sha(JSON.stringify(expected)), actualSha256: sha(JSON.stringify(actual)),
+      regenerated: false });
+}
+async function inspect(locator, name, startLine = 0) {
+  const actual = await locator.evaluate(missingGlyphs, startLine);
+  await check(name, actual.selectedGlyphs > 0 && actual.clippedOrHidden === 0
+    && actual.nonemptyVisibleMath && actual.lineOrder
+    && actual.ends.every((end) => Math.abs(end.maximum - end.scrollLeft) < 1.1), actual);
+  return actual;
+}
+async function screenshot(page, name, targets) {
+  assert.ok(report.screenshots.length < 8, 'Eight-image cap');
+  const locators = targets.map((target) => page.locator(target.selector));
+  for (const locator of locators) {
+    await locator.scrollIntoViewIfNeeded();
+  }
+  const rectangles = [];
+  for (const locator of locators) {
+    rectangles.push(await locator.evaluate((element) => {
+      const rect = element.getBoundingClientRect();
+      const bad = [element, ...element.querySelectorAll('*')].filter((item) =>
+        !item.closest('.katex-mathml')).some((item) => item.clientWidth > 0
+          && item.scrollWidth > item.clientWidth + 1);
+      return { x: rect.left, right: rect.right, top: rect.top + scrollY,
+        bottom: rect.bottom + scrollY, bad };
+    }));
+  }
+  const width = page.viewportSize().width;
+  const top = Math.max(0, Math.floor(Math.min(...rectangles.map((rect) => rect.top)) - 4));
+  const bottom = Math.ceil(Math.max(...rectangles.map((rect) => rect.bottom)) + 4);
+  await need(`${name}: complete element focus, not a full-page dump`,
+    rectangles.every((rect) => rect.x >= 0 && rect.right <= width && !rect.bad)
+    && bottom - top <= page.viewportSize().height * 1.8,
+    { targets, height: bottom - top, viewport: page.viewportSize() });
+  const filename = path.join(RUN, `${name}.png`);
+  const bytes = await page.screenshot({
+    path: filename, type: 'png', animations: 'disabled', fullPage: true,
+    clip: { x: 0, y: top, width, height: bottom - top },
+  });
+  const decoded = PNG.sync.read(bytes);
+  let ink = 0;
+  for (let offset = 0; offset < decoded.data.length; offset += 4) {
+    if (decoded.data[offset + 3] && Math.max(...decoded.data.subarray(offset, offset + 3)) < 160) ink += 1;
+  }
+  const entry = {
+    path: rel(filename), sha256: sha(bytes), width: decoded.width, height: decoded.height,
+    targets, ink, opens: 0, visualStatus: 'PENDING one view after runtime',
+  };
+  report.screenshots.push(entry);
+  await check(`${name}: nonblank selected image`, ink > 200, entry);
+}
+
+try {
+  await input(fileURLToPath(import.meta.url));
+  const oldText = await json(path.join(TEXT, 'first-display-check.json'));
+  const oldTextReview = await json(path.join(TEXT, 'first-display-review.json'));
+  const oldChoices = await json(path.join(CHOICE, 'first-display-check.json'));
+  const oldChoiceReview = await json(path.join(CHOICE, 'first-display-review.json'));
+  const textRetention = await json(path.join(TEXT, 'retention.json'));
+  const choiceRetention = await json(path.join(CHOICE, 'retention.json'));
+  const textRender = await json(path.join(TEXT, 'first-render.json'));
+  const choiceRender = await json(path.join(CHOICE, 'FIRST-render.json'));
+  const supplementRetention = await json(path.join(L, 'choice-set/supplements/original541-547/retention.record'));
+  report.inherited = {
+    textWritten: {
+      receipt: rel(path.join(TEXT, 'first-display-check.json')),
+      review: rel(path.join(TEXT, 'first-display-review.json')),
+      scope: oldText.scope, rendererReceipt: rel(path.join(TEXT, 'first-render.json')),
+      counts: JSON.parse(textRender.stdout).lessons[0],
+      checks: oldText.checks.map((item) => ({
+        kind: item.kind, viewport: item.viewport, status: item.status,
+        documentWidth: item.geometry.documentWidth, recordedRegions: item.geometry.regions.length,
+      })),
+    },
+    rootChoices: {
+      receipt: rel(path.join(CHOICE, 'first-display-check.json')),
+      review: rel(path.join(CHOICE, 'first-display-review.json')),
+      rendererReceipt: rel(path.join(CHOICE, 'FIRST-render.json')),
+      checks: oldChoices.checks.map((item) => ({
+        viewport: item.viewport, questions: item.questions, options: item.options, status: item.status,
+        recordedRegions: item.geometry.regions.length,
+      })),
+    },
+    unchangedGlobalChecksNotRepeated: [
+      '21 prose / nine written exercise full counts from first render',
+      'seven root choice questions / 43 options from first display',
+      'old whole-document geometry and KaTeX checks',
+      'parent-declared passed no-private-field/static-safety checks',
+      'approved first visible windows',
+    ],
+    supplement: {
+      record: rel(path.join(L, 'choice-set/supplements/original541-547/retention.record')),
+      status: supplementRetention.status, sourceNumbers: supplementRetention.source_numbers,
+      displayReceipt: supplementRetention.display_receipt,
+      sourceViewKeyAndAffectedDisplayPASS: 'inherited direct parent declaration; not rerun',
+      productionLossRetained: supplementRetention.drawing_production_loss_retained,
+    },
+  };
+  await need('old ready receipts and retained review hashes current',
+    oldText.actual_exit === 0 && !oldText.failure && oldChoices.actual_exit === 0 && !oldChoices.failure
+    && oldText.checks.every((item) => item.status === 'pass')
+    && oldChoices.checks.every((item) => item.status === 'pass')
+    && textRender.actual_exit === 0 && choiceRender.actual_exit === 0
+    && sha(await readFile(path.join(TEXT, 'first-display-check.json'))) === textRetention.parent_DOM_receipt.raw_sha256
+    && sha(await readFile(path.join(TEXT, 'first-display-review.json'))) === textRetention.observer_report.raw_sha256
+    && sha(await readFile(path.join(CHOICE, 'first-display-check.json'))) === choiceRetention.parent_DOM_receipt.raw_sha256
+    && sha(await readFile(path.join(CHOICE, 'first-display-review.json'))) === choiceRetention.observer_report.raw_sha256);
+  const lesson = await json(path.join(L, 'lesson.json'));
+  const exercises = await json(path.join(L, 'exercises.json'));
+  const draft = await json(path.join(L, 'choice-set/draft.json'));
+  const requireApp = createRequire(path.join(R, 'app/package.json'));
+  const { chromium } = requireApp('@playwright/test');
+  const coreRoot = path.dirname(requireApp.resolve('playwright-core/package.json'));
+  ({ PNG } = requireApp(path.join(coreRoot, 'lib/utilsBundle.js')));
+  const requireSkill = createRequire(path.join(R, '.claude/skills/ld-s10y-lesson/tools/htmlfrag.js'));
+  const { proseFlow } = requireSkill('./htmlfrag.js');
+  const prose = proseFlow(lesson.prose, lesson.section_breaks).filter((item) => item.kind === 'p');
+  const views = draft.questions.map((question) => ({ id: question.id, view: question.view }));
+  report.currentPayloadCounts = {
+    kind: 'binding-only, not repeated global acceptance check',
+    proseBlocks: lesson.prose.length, proseParagraphs: prose.length,
+    writtenObjects: exercises.exercises.length, writtenIds: exercises.exercises.map((item) => item.number),
+    rootQuestions: views.length, rootOptions: views.reduce((sum, item) => sum + item.view.options.length, 0),
+    rootSources: ['539', '540', '542', '543', '544', '545', '546'],
+    tablesInCurrentRootPayload: views.flatMap((item) =>
+      [item.view.stem, ...item.view.options.map((option) => option.text)])
+      .filter((text) => /^\s*\|/mu.test(text)).length,
+  };
+  const html = new Map();
+  for (const [kind, filename, old] of [
+    ['text', path.join(TEXT, 'text.html'), oldText.checks.find((item) => item.kind === 'text').html],
+    ['exercises', path.join(TEXT, 'exercises.html'), oldText.checks.find((item) => item.kind === 'exercises').html],
+    ['choices', path.join(CHOICE, 'choices.html'), oldChoices.html],
+  ]) {
+    const bytes = await input(filename);
+    await need(`${kind}: exact old rendered bytes reused`, sha(bytes) === old.raw_sha256,
+      { actualSha256: sha(bytes), readySha256: old.raw_sha256, renderedAgain: false });
+    html.set(`/${kind}.html`, bytes);
+  }
+  server = createServer((request, response) => {
+    served.push({ method: request.method, path: request.url });
+    if (request.method !== 'GET') return void response.writeHead(405).end();
+    if (request.url === '/favicon.ico') return void response.writeHead(204).end();
+    const bytes = html.get(request.url);
+    if (!bytes) return void response.writeHead(404).end();
+    response.writeHead(200, {
+      'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store',
+      'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; font-src data:; "
+        + "img-src data:; connect-src 'none'; script-src 'none'; form-action 'none';",
+    }).end(bytes);
+  });
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', resolve);
+  });
+  origin = `http://127.0.0.1:${server.address().port}`;
+  for (const [route, bytes] of html) {
+    const probe = await fetch(`${origin}${route}`, { signal: AbortSignal.timeout(5000) });
+    assert.equal(probe.status, 200);
+    assert.equal(sha(Buffer.from(await probe.arrayBuffer())), sha(bytes));
+  }
+  await event({ stage: 'memory-server-responsive-prior-launch', origin });
+  browser = await chromium.launch({
+    headless: true, timeout: 30000, tracesDir: path.join(RUN, 'chromium-tmp'),
+    env: { ...process.env, TMPDIR: path.join(RUN, 'chromium-tmp') },
+    args: ['--disable-background-networking', '--disable-component-update', '--disable-sync',
+      '--no-default-browser-check', '--disable-default-apps'],
+  });
+  report.browser = {
+    version: browser.version(), headless: true, installedPackage: 'app/node_modules/@playwright/test',
+  };
+  for (const viewport of [
+    { name: 'desktop', width: 1440, height: 960 },
+    { name: 'mobile', width: 390, height: 844 },
+  ]) {
+    const result = {
+      ...viewport, missingText: [], missingWritten: [], missingChoices: [],
+      pageerrors: [], consoleErrors: [], requestFailures: [], blockedRequests: [],
+    };
+    report.viewports.push(result);
+    const context = await browser.newContext({
+      viewport: { width: viewport.width, height: viewport.height }, deviceScaleFactor: 1,
+      serviceWorkers: 'block', acceptDownloads: false,
+    });
+    context.setDefaultTimeout(15000);
+    contexts.push(context);
+    await context.route('**/*', async (route) => {
+      const request = route.request();
+      const url = new URL(request.url());
+      if (request.method() === 'GET' && url.origin === origin
+        && !url.search && ['/text.html', '/exercises.html', '/choices.html', '/favicon.ico'].includes(url.pathname)) {
+        await route.continue();
+      } else {
+        result.blockedRequests.push({ url: request.url(), kind: request.resourceType() });
+        await route.abort('blockedbyclient');
+      }
+    });
+    await context.routeWebSocket(/.*/, async (socket) => {
+      result.blockedRequests.push({ kind: 'websocket' });
+      await socket.close();
+    });
+    const page = await context.newPage();
+    page.on('pageerror', (error) => result.pageerrors.push(error.message));
+    page.on('console', (message) => {
+      if (message.type() === 'error') result.consoleErrors.push(message.text());
+    });
+    page.on('requestfailed', (request) =>
+      result.requestFailures.push({ url: request.url(), error: request.failure()?.errorText }));
+    const textWindow = oldTextReview.windows.find((item) =>
+      item.kind === 'text' && item.viewport.width === viewport.width);
+    const theoremMatches = [...textWindow.seen_scope.join(' ').matchAll(/Theorem (\d+) statement/gu)];
+    const lastTheorem = theoremMatches.at(-1)?.[1];
+    const theoremIndex = prose.findIndex((item) => item.text.includes(`定理 $${lastTheorem}$`));
+    assert.ok(theoremIndex >= 0, 'Old visible theorem boundary must bind unambiguously');
+    const firstParagraph = theoremIndex + 1;
+    result.inheritedText = { reviewSeenScope: textWindow.seen_scope,
+      lastCompleteParagraph: theoremIndex, missingFromParagraph: firstParagraph };
+    await page.goto(`${origin}/text.html`, { waitUntil: 'load' });
+    await page.evaluate(() => document.fonts.ready);
+    for (const [index, item] of prose.entries()) {
+      await bind(page.locator('p.para').nth(index), projection(item.text),
+        `${viewport.name} paragraph ${index} binding-only`);
+    }
+    for (let index = firstParagraph; index < prose.length; index += 1) {
+      result.missingText.push({ index, ...await inspect(page.locator('p.para').nth(index),
+        `${viewport.name}: newly missing prose ${index}`) });
+    }
+    if (viewport.name === 'desktop') {
+      await screenshot(page, '01-desktop-lower-prose', [17, 18, 19, 20].map((index) => ({
+        selector: `p.para:nth-of-type(${index + 1})`, proseIndex: index,
+      })));
+    } else {
+      await screenshot(page, '04-mobile-theorem1-proof', [5, 6].map((index) => ({
+        selector: `p.para:nth-of-type(${index + 1})`, proseIndex: index,
+      })));
+      await screenshot(page, '05-mobile-lower-prose', [19, 20].map((index) => ({
+        selector: `p.para:nth-of-type(${index + 1})`, proseIndex: index,
+      })));
+    }
+    const writtenWindow = oldTextReview.windows.find((item) =>
+      item.kind === 'exercises' && item.viewport.width === viewport.width);
+    const lastWritten = Number(writtenWindow.seen_scope.join(' ').match(/Questions \d+ through (\d+)/u)?.[1]);
+    assert.ok(Number.isInteger(lastWritten), 'Old written boundary must be explicit');
+    const partialPromptSeen = /Question 544 prompt/u.test(writtenWindow.seen_scope.join(' '));
+    result.inheritedWritten = { reviewSeenScope: writtenWindow.seen_scope, lastComplete: lastWritten };
+    await page.goto(`${origin}/exercises.html`, { waitUntil: 'load' });
+    await page.evaluate(() => document.fonts.ready);
+    for (const item of exercises.exercises) {
+      const body = page.locator(`#ex-${item.number} .body`);
+      await bind(body, projection(writtenText(item)), `${viewport.name} written ${item.number} binding-only`);
+      if (Number(item.number) > lastWritten) {
+        const startLine = partialPromptSeen && String(item.number) === '544' ? 1 : 0;
+        result.missingWritten.push({ id: item.number, ...await inspect(body,
+          `${viewport.name}: newly missing written ${item.number} from line ${startLine}`, startLine) });
+      }
+    }
+    const writtenIds = viewport.name === 'desktop' ? ['544', '545', '546', '547'] : ['545', '546', '547'];
+    await screenshot(page, viewport.name === 'desktop' ? '02-desktop-written-tail' : '06-mobile-written-tail',
+      writtenIds.map((id) => ({ selector: `#ex-${id}`, writtenId: id })));
+    const choiceWindow = oldChoiceReview.windows.find((item) => item.viewport.width === viewport.width);
+    const approvedOptions = choiceWindow.visible_scope.complete_visible_option_rows;
+    let consumed = 0;
+    let firstChoice = 0;
+    while (firstChoice < views.length
+      && consumed + views[firstChoice].view.options.length <= approvedOptions) {
+      consumed += views[firstChoice].view.options.length;
+      firstChoice += 1;
+    }
+    assert.equal(consumed, approvedOptions, 'Old option boundary must align to frozen current payload');
+    result.inheritedChoices = {
+      oldCompleteVisibleOptions: approvedOptions, firstMissingQuestionIndex: firstChoice,
+      visibleScope: choiceWindow.visible_scope.content,
+    };
+    await page.goto(`${origin}/choices.html`, { waitUntil: 'load' });
+    await page.evaluate(() => document.fonts.ready);
+    for (const [index, item] of views.entries()) {
+      const section = page.locator('section.choice').nth(index);
+      await bind(section.locator('.choice-stem'), projection(item.view.stem),
+        `${viewport.name} root ${index + 1} stem binding-only`);
+      const letters = await section.locator('.option-id').allTextContents();
+      await need(`${viewport.name} root ${index + 1}: frozen A-H visible IDs bind current payload`,
+        JSON.stringify(letters.map(norm)) === JSON.stringify(item.view.options.map((option) => option.id)));
+      for (const [optionIndex, option] of item.view.options.entries()) {
+        await bind(section.locator('.choice-option-body').nth(optionIndex), projection(option.text),
+          `${viewport.name} root ${index + 1}${option.id} binding-only`);
+      }
+      if (index >= firstChoice) {
+        const stem = await inspect(section.locator('.choice-stem'),
+          `${viewport.name}: newly missing root ${index + 1} stem`);
+        const options = [];
+        for (const [optionIndex, option] of item.view.options.entries()) {
+          const body = section.locator('.choice-option-body').nth(optionIndex);
+          options.push({ id: option.id, ...await inspect(body,
+            `${viewport.name}: newly missing root ${index + 1}${option.id}`) });
+        }
+        const order = await section.locator('.choice-options>li').evaluateAll((nodes) =>
+          nodes.map((node) => ({ top: node.getBoundingClientRect().top, bottom: node.getBoundingClientRect().bottom })));
+        await check(`${viewport.name}: newly missing root ${index + 1} option rows ordered/no overlap`,
+          order.every((row, rowIndex) => !rowIndex || row.top >= order[rowIndex - 1].bottom - 1), { order });
+        result.missingChoices.push({ index, id: item.id, stem, options });
+      }
+    }
+    if (viewport.name === 'desktop') {
+      await screenshot(page, '03-desktop-root-choice-tail', [5, 6].map((index) => ({
+        selector: `section.choice:nth-of-type(${index + 1})`, choiceIndex: index,
+      })));
+    } else {
+      await screenshot(page, '07-mobile-product-fractions', [{
+        selector: 'section.choice:nth-of-type(5)', choiceIndex: 4,
+      }]);
+      await screenshot(page, '08-mobile-root-final-options', [{
+        selector: 'section.choice:nth-of-type(7)', choiceIndex: 6,
+      }]);
+    }
+    await check(`${viewport.name}: own run no external requests/browser faults`,
+      result.pageerrors.length === 0 && result.consoleErrors.length === 0
+      && result.requestFailures.length === 0 && result.blockedRequests.length === 0,
+      { pageerrors: result.pageerrors, consoleErrors: result.consoleErrors,
+        requestFailures: result.requestFailures, blockedRequests: result.blockedRequests });
+    await context.close();
+    contexts.splice(contexts.indexOf(context), 1);
+  }
+  await need('exactly eight new focused screenshots, zero old image opens',
+    report.screenshots.length === 8, { images: report.screenshots.length, oldImagesOpened: 0 });
+  for (const binding of report.inputs) {
+    await check(`input remained unchanged: ${binding.path}`,
+      sha(await readFile(path.join(R, binding.path))) === binding.sha256);
+  }
+} catch (error) {
+  report.failure = { type: error.name, message: error.message, stack: error.stack };
+  await event({ stage: 'FIRST-failure-retained', failure: report.failure });
+  console.error(JSON.stringify(report.failure));
+} finally {
+  for (const context of contexts) {
+    try { await context.close(); } catch (error) {
+      report.cleanup.contextsClosed = false;
+      await event({ cleanupFailure: { target: 'context', message: error.message } });
+    }
+  }
+  try {
+    if (browser) await browser.close();
+    report.cleanup.browserClosed = true;
+  } catch (error) {
+    await event({ cleanupFailure: { target: 'browser', message: error.message } });
+  }
+  try {
+    if (server?.listening) {
+      server.closeIdleConnections();
+      await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+    }
+    report.cleanup.serverClosed = true;
+  } catch (error) {
+    await event({ cleanupFailure: { target: 'server', message: error.message } });
+  }
+  report.finished = new Date().toISOString();
+  report.servedRequests = served;
+  report.passCount = report.checks.filter((item) => item.status === 'PASS').length;
+  report.failCount = report.checks.filter((item) => item.status === 'FAIL').length;
+  report.status = report.failure || report.failCount || Object.values(report.cleanup).some((closed) => !closed)
+    ? 'FAIL_FIRST_PRESERVED' : 'DOM_MISSING_RANGES_PASS_VISUAL_PENDING';
+  report.stillUnobserved = [
+    'Pixels outside the exact old approved windows and eight selected new image regions',
+    'Supplement visuals inherited, not re-opened or re-tested',
+    'Source/math/key/figure correctness, independent production, APP/DB and real gestures',
+    'Whole course and 881 approval',
+  ];
+  const filename = path.join(RUN, 'receipt.record');
+  const serialized = `${JSON.stringify(report, null, 2)}\n`;
+  await writeFile(filename, serialized, { flag: 'wx' });
+  console.log(JSON.stringify({
+    status: report.status, receipt: filename, sha256: sha(serialized),
+    pass: report.passCount, fail: report.failCount, failure: report.failure?.message ?? null,
+    screenshots: report.screenshots.map((item) => ({
+      path: path.join(R, item.path), sha256: item.sha256, targets: item.targets,
+    })), cleanup: report.cleanup,
+  }, null, 2));
+  if (report.status === 'FAIL_FIRST_PRESERVED') process.exitCode = 1;
+}

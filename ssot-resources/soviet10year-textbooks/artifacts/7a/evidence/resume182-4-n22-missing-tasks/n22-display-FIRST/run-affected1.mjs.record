@@ -1,0 +1,104 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+const BASE = path.join(R, '.tmp/resume182-4-postaccount/n22-display-FIRST');
+assert.equal(process.cwd(), R);
+assert.deepEqual(process.argv.slice(2), ['--offline-only', 'STEMROBIN-182:RESUME']);
+const first = JSON.parse(await readFile(path.join(BASE, 'report-FIRST.json'), 'utf8'));
+const firstUsage = JSON.parse(await readFile(path.join(BASE, 'usage-FIRST.json'), 'utf8'));
+assert.equal(first.status, 'FAIL');
+assert.equal(firstUsage.renderCalls, 0);
+assert.equal(firstUsage.browserLaunches, 0);
+assert.ok(first.executionError?.stack.includes('run.mjs:492'));
+const original = await readFile(path.join(BASE, 'run.mjs'), 'utf8');
+const originalHash = createHash('sha256').update(original).digest('hex');
+let code = original;
+
+function replaceExactly(from, to) {
+  assert.ok(code.includes(from), `Recovery target absent: ${from}`);
+  assert.equal(code.indexOf(from), code.lastIndexOf(from), 'Recovery target must be unique');
+  code = code.replace(from, to);
+}
+
+replaceExactly(
+  "const OWN = path.join(R, '.tmp/resume182-4-postaccount/n22-display-FIRST');",
+  "const OWN = path.join(R, '.tmp/resume182-4-postaccount/n22-display-FIRST/affected1');",
+);
+// No module file or FIRST artifact is rewritten: execute the narrow recovery in
+// memory, with all outputs in a fresh affected1 child of the authorized root.
+replaceExactly(
+  'assert.equal(path.dirname(fileURLToPath(import.meta.url)), OWN);',
+  'assert.equal(path.dirname(path.resolve(process.argv[1])), path.dirname(OWN));',
+);
+code = code.replaceAll('fileURLToPath(import.meta.url)', 'path.resolve(process.argv[1])');
+replaceExactly(
+  "  cleanup: { contextsClosed: 0, browserClosed: false, serverClosed: false },",
+  "  cleanup: { contextsClosed: 0, browserClosed: 'not_started', serverClosed: 'not_started' },",
+);
+replaceExactly(
+  "import { fileURLToPath } from 'node:url';",
+  "import { fileURLToPath, pathToFileURL } from 'node:url';",
+);
+replaceExactly(
+  "await import(path.join(R, '.agents/skills/node_modules/marked/lib/marked.esm.js'))",
+  "await import(pathToFileURL(path.join(R, '.agents/skills/node_modules/marked/lib/marked.esm.js')).href)",
+);
+replaceExactly('  technicalCorrections: 0,', '  technicalCorrections: 1,');
+replaceExactly(
+  "  const seed = JSON.parse(seedBytes);",
+  `  const seed = JSON.parse(seedBytes);
+  const canonical = (value) => {
+    const ordered = (item) => Array.isArray(item) ? item.map(ordered)
+      : item && typeof item === 'object'
+        ? Object.fromEntries(Object.keys(item).sort().map((key) => [key, ordered(item[key])]))
+        : item;
+    return sha(JSON.stringify(ordered(value)).replace(/[\\u007f-\\uffff]/gu,
+      (character) => '\\\\u' + character.charCodeAt(0).toString(16).padStart(4, '0')));
+  };
+  report.recovery = {
+    stage: 'affected1', priorReport: ${JSON.stringify(path.join(BASE, 'report-FIRST.json'))},
+    originalRunnerSha256: ${JSON.stringify(originalHash)},
+    actualPriorFault: ${JSON.stringify(first.executionError)},
+    priorRuntimeState: { render: 'not_started', browser: 'not_started', server: 'not_started' },
+    correction: 'Compare canonical JSON snapshot digests rather than raw file SHA-256; preserve historical trace[0] and use current derived n22-only book index.',
+    validatorCalls: 0, semanticStagesRepeated: false, firstArtifactsModified: false,
+  };
+  report.snapshotDigests = {
+    seedRawSha256: sha(seedBytes), draftRawSha256: sha(draftBytes),
+    reviewRawSha256: sha(reviewBytes), seedCanonicalSha256: canonical(seed),
+  };
+  const traceBindings = [];
+  for (const [index, trace] of seed.trace.entries()) {
+    const current = await fingerprint(path.join(R, trace.path));
+    const binding = { path: trace.path, historicalSha256: trace.sha256,
+      currentRawSha256: sha(current), status: sha(current) === trace.sha256 ? 'same' : 'changed' };
+    if (index === 0) {
+      assert.equal(trace.path, 'ssot-resources/soviet10year-textbooks/artifacts/7a/book.json');
+      binding.policy = 'Historical book index trace preserved; unrelated rows may change. Scratch index derived from current n22 row only.';
+    } else {
+      assert.equal(sha(current), trace.sha256, 'Reviewed n22 source file changed');
+      binding.policy = 'Exact reviewed source bytes required';
+    }
+    traceBindings.push(binding);
+  }
+  report.traceBindings = traceBindings;`,
+);
+replaceExactly('  assert.equal(review.seed_sha256, sha(seedBytes));', '  assert.equal(review.seed_sha256, canonical(seed));');
+replaceExactly('  assert.equal(review.draft_sha256, sha(draftBytes));', '  assert.equal(review.draft_sha256, canonical(draft));');
+replaceExactly('  assert.equal(draft.seed_sha256, sha(seedBytes));', '  assert.equal(draft.seed_sha256, canonical(seed));');
+replaceExactly(
+  '  assert.equal(JSON.parse(validatorBytes).returncode, 0);',
+  `  assert.equal(JSON.parse(validatorBytes).returncode, 0);
+  report.snapshotDigests.draftCanonicalSha256 = canonical(draft);
+  report.snapshotDigests.reviewedSeedSha256 = review.seed_sha256;
+  report.snapshotDigests.reviewedDraftSha256 = review.draft_sha256;`,
+);
+replaceExactly(
+  "  report.executionError = { name: error.name, message: error.message, stack: error.stack };",
+  "  report.executionError = { name: error.name, message: error.message, stack: error.stack?.replace(/data:text\\/javascript;base64,[A-Za-z0-9+/=]+/gu, 'affected1-in-memory-runner') };",
+);
+
+await import(`data:text/javascript;base64,${Buffer.from(code).toString('base64')}`);

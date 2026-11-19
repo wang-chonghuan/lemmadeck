@@ -1,0 +1,63 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import assert from 'node:assert/strict';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [displayPath, displaySha] = process.argv.slice(2);
+assert.ok(displayPath?.startsWith('.tmp/resume182-4-postaccount/n22-display-FIRST/'));
+assert.match(displaySha, /^[a-f0-9]{64}$/);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const load = name => JSON.parse(fs.readFileSync(name));
+assert.equal(sha(fs.readFileSync(displayPath)), displaySha);
+assert.equal(load(displayPath).status, 'PASS');
+const source = '.tmp/resume182-4-postaccount/choices-n22';
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c3-s1-n22/choice-set';
+const target = `${root}/supplements/original541-547`;
+assert.ok(!fs.existsSync(target));
+const prior = ['seed.json', 'draft.json', 'review.json', 'selection.json', 'retention.json']
+  .map(file => ({ path: `${root}/${file}`, sha256: sha(fs.readFileSync(`${root}/${file}`)) }));
+const inputs = [
+  { source: `${source}/seed.json`, name: 'seed.json',
+    sha256: '1792b0b746732e27bad5d81d417c3ef3bfcaa025bf372e15ffb3c03d203eeef6' },
+  { source: `${source}/author/draft.json`, name: 'draft.json',
+    sha256: 'ebd623113ba61cc44737e56035ff07a4ab03f51add8920dd27e3600b09858814' },
+  { source: `${source}/reviewer-key-FIRST/review.json`, name: 'review.json',
+    sha256: '270f943a6347a7ba58e03f04349b6fc33148233051a72b6ff99cbb8fc1875f32' },
+];
+assert.equal(load(inputs[2].source).outcome, 'pass');
+assert.equal(load(`${source}/reviewer-key-FIRST/validation-FIRST/receipt.record`).returncode, 0);
+const seed = load(inputs[0].source);
+const exercises = load(path.join(path.dirname(root), 'exercises.json'));
+for (const item of seed.exercises) {
+  assert.equal(exercises.exercises.find(exercise => exercise.number === item.number).text, item.text);
+}
+const draft = load(inputs[1].source);
+assert.equal(draft.questions.length, 2);
+assert.equal(draft.questions.flatMap(question => question.view.options).length, 8);
+assert.equal(draft.new_figures.length, 0);
+assert.deepEqual(seed.exercises.map(item => item.number), ['541', '547']);
+for (const input of inputs) assert.equal(sha(fs.readFileSync(input.source)), input.sha256);
+fs.mkdirSync(target, { recursive: true });
+for (const input of inputs) {
+  fs.writeFileSync(`${target}/${input.name}`, fs.readFileSync(input.source), { flag: 'wx' });
+}
+for (const input of prior) assert.equal(sha(fs.readFileSync(input.path)), input.sha256);
+const record = {
+  schema: 'stemrobin-182/approved-choice-supplement-retention@1',
+  date: '2026-11-19', ticket: 'STEMROBIN-182',
+  book: '7a', lesson: 'alg7-c3-s1-n22',
+  status: 'approved-supplement-only', inputs, untouched_existing_root: prior,
+  source_numbers: ['541', '547'], questions: 2, options: 8,
+  display_receipt: { historical_path: displayPath, sha256: displaySha },
+  original_semantic_and_structural_pass_reused: true,
+  old_index_trace: 'Historical seed trace retained; adding unrelated n12 did not alter n22 sources.',
+  drawing_production_loss_retained: true,
+  whole_lesson_root_replaced: false, app_or_db_or_publish: false,
+  next_owner: 'E combines retained approved scopes without regenerating the original 7-question root.',
+};
+const bytes = Buffer.from(`${JSON.stringify(record, null, 2)}\n`);
+fs.writeFileSync(`${target}/retention.record`, bytes, { flag: 'wx' });
+console.log(JSON.stringify({ path: `${target}/retention.record`, sha256: sha(bytes),
+  questions: 2, options: 8, root_unchanged: true }, null, 2));
