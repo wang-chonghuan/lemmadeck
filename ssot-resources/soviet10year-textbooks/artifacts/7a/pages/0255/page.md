@@ -1,0 +1,92 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 255,
+  "printed_page": 249,
+  "notes": [
+    "The leading д)/е) row is exercise 853 continued from the open block on physical 254.",
+    "Unit 43 starts after review exercise 854. Its final paragraph continues to physical 256 with the word 集合 split between pages.",
+    "The displayed completing-the-square equality occupies two printed rows and keeps its actual break marker."
+  ],
+  "errata": [],
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 255
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "540a518b3e4fcc91d0e50408aa74772d89f6e1edf90ba011fe6205420aca0293"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 24,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 853 cont -->
+д) $3x^2+2x-5=0$；　е) $5x^2+12x-10=0$.
+
+<!-- exhead -->
+复习题
+
+<!-- ex 854 -->
+854. 求下式的值：
+$\frac{(y-x)^2}{x+y}\div\left(\frac{2xy}{y^2-x^2}+\frac{x}{x+y}-\frac{y}{y-x}\right)$
+设 $x=8.4$，$y=-0.6$.
+
+<!-- h3 -->
+43. 用配出二项式的平方的方法解二次方程
+
+<!-- p -->
+我们可以用图解法解二次方程
+
+<!-- p -->
+$x^2+6x+5=0$.　（1）
+
+<!-- p -->
+不用作图能不能解这个方程？
+
+<!-- p -->
+我们由三项式 $x^2+6x+5$ 配出二项式的平方. 如果把 $x^2$
+这一项看成二项式第一项的平方，而把 $6x$ 这一项看成第一项
+与第二项的积的两倍，那么由恒等式 $6x=2\cdot x\cdot3$ 可以明显
+地看出，二项式的第二项是 3. 把两个大小相等符号相反的
+数 $3^2$ 和 $-3^2$ 加到三项式里，得到：
+
+<!-- p -->
+$x^2+6x+5=x^2+6x+3^2-3^2+5↵=(x^2+6x+9)-9+5=(x+3)^2-4$.
+
+<!-- p -->
+方程（1）和下列方程同解：
+
+<!-- p -->
+$(x+3)^2-4=0$.　（2）
+
+<!-- p -->
+我们把方程（2）的左边作为平方差分解因式，得到：
+
+<!-- p -->
+$(x+3-2)(x+3+2)=0$，
+
+<!-- p -->
+就是
+
+<!-- p -->
+$(x+1)(x+5)=0$.　（3）
+
+<!-- p open -->
+方程（3）的根的集合，也就是和它同解的方程（1）根的集
+
+<!-- foot -->
+249

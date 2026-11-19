@@ -1,0 +1,70 @@
+{
+  "schema": "stemrobin182/n40-affected-every-option-true-sets@1",
+  "ticket": "STEMROBIN-182",
+  "stage": "AFFECTED_STAGE2_PRE_KEY",
+  "variant": "RECOVERY-BINDING",
+  "seedCanonicalSha256": "b09b1b3cd77b2721598378c273403291ac0863758200f6a5539182263866d6e7",
+  "viewsFileSha256": "430fbfac2c936aeaa12b2f74eaa98313b3bbdf8bc23391e5719a9bdb64469c8e",
+  "declaredDraftCanonicalSha256": "db0819e76a9eb146bf14ca6f803b4c7b72d4b3826356f24123da477a3c3fe5c3",
+  "declaredDraftDigestIndependentlyVerified": false,
+  "authorKeyComparisonPerformed": false,
+  "authorDerivationsOrMisconceptionsInspected": false,
+  "questionCount": 3,
+  "optionCount": 12,
+  "questions": [
+    {
+      "question_id": "n40-lookup-method-comparison",
+      "mode": "single",
+      "source_numbers": ["829"],
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "Normalize 0.3333=33.33*10^-2. At row33/main3/correction3, the table root is 5.771+0.003=5.774. Rescale by 0.1 to 0.5774, then multiply by 6 to obtain 3.4644, reporting 3.464 at three decimals. Exact inward transfer gives sqrt12, whose captured entry is 3.464 directly. Both three-decimal reports are 3.464. Route2 has one main lookup but no correction or rescaling, so it requires fewer such operations. Equality of reports does not make 0.3333 exactly 1/3.",
+        "correct": ["b"],
+        "option_checks": [
+          {"option_id": "a", "truth": "incorrect", "evidence": "3.4626=6*(5.771/10) omits the captured +0.003 correction. The required product is 3.4644, so route1's report is 3.464, not 3.463. The direct route2 value and convenience statement alone do not rescue this complete option."},
+          {"option_id": "b", "truth": "correct", "evidence": "6*((5.771+0.003)/10)=3.4644, round3=3.464; row12/main0 returns3.464. Route2 omits route1's correction lookup/addition and decimal root rescaling, matching all components."},
+          {"option_id": "c", "truth": "incorrect", "evidence": "0.34644=6*(5.774/100) applies the radicand's 10^-2 factor directly to the root instead of its 10^-1 square-root factor. Correct rescaling gives3.4644, not0.34644."},
+          {"option_id": "d", "truth": "incorrect", "evidence": "The numerical pair is correct, but route1 needs a main lookup, correction retrieval/addition and rescaling, while route2 needs only the main entry. Route1 is not the route with fewer table/correction/rescaling operations."}
+        ]
+      }
+    },
+    {
+      "question_id": "n40-table-ready-plan",
+      "mode": "single",
+      "source_numbers": ["830"],
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "Absorb positive coefficients: sqrt80, sqrt450, sqrt28, sqrt120. Normalize to sqrt80, 10sqrt4.5, sqrt28, 10sqrt1.2. Captured roots8.944,2.121,5.292,1.095 give the complete ordered tuple(8.944,21.21,5.292,10.95), without further rounding.",
+        "correct": ["b"],
+        "option_checks": [
+          {"option_id": "a", "truth": "incorrect", "evidence": "The second and fourth entries are unrescaled main roots2.121 and1.095. Since450=4.5*100 and120=1.2*100, their roots need multiplication by10, yielding21.21 and10.95."},
+          {"option_id": "b", "truth": "correct", "evidence": "sqrt80 uses8.944 directly; sqrt450=10sqrt4.5 gives21.21; sqrt28 uses5.292 directly; sqrt120=10sqrt1.2 gives10.95. All four source expressions and their order match."},
+          {"option_id": "c", "truth": "incorrect", "evidence": "212.1=2.121*100 and109.5=1.095*100 incorrectly apply the radicand factor100 as the root factor. The required root scale is10."},
+          {"option_id": "d", "truth": "incorrect", "evidence": "The two scaled values are swapped:15sqrt2 corresponds to sqrt450=10sqrt4.5=21.21, whereas12sqrt(5/6) corresponds to sqrt120=10sqrt1.2=10.95. The requested order is therefore not preserved."}
+        ]
+      }
+    },
+    {
+      "question_id": "n40-radius-and-area",
+      "mode": "single",
+      "source_numbers": ["831"],
+      "mathematics": {
+        "verdict": "pass",
+        "independent_solution": "Positive radius r=sqrt(S/pi). With pi approximated by3.14, quotients625/157=3.9808917... and412/157=2.6242038... round by the explicit item condition to3.981 and2.624. Row3.9/main8/correction1 returns1.995+0*0.001=1.995cm; row2.6/main2/correction4 returns1.619+1*0.001=1.620cm. Scaling area by4 and1/25 scales positive radius by2 and1/5. These are table reports, not exact measured radii.",
+        "correct": ["b"],
+        "option_checks": [
+          {"option_id": "a", "truth": "incorrect", "evidence": "r=S/pi omits the square root, reports rounded radicands3.981 and2.624 as radii, and copies area multipliers4 and1/25 as radius multipliers. Each conflicts with S=pi*r^2 and positive radius."},
+          {"option_id": "b", "truth": "correct", "evidence": "The positive-root formula, four-significant radicand addresses, captured corrections0 and1, returned radii1.995 and1.620cm, and square-root scale multipliers2 and1/5 all match."},
+          {"option_id": "c", "truth": "incorrect", "evidence": "The second root1.619 is the main entry at2.62 without the captured correction1 for the extra0.004. The item requires addressing2.624 and adding0.001, giving1.620cm."},
+          {"option_id": "d", "truth": "incorrect", "evidence": "The formula and numerical radii match, but the radius multipliers repeat the area multipliers. r'=sqrt(kS/pi)=sqrt(k)*r, so they must be2 and1/5, not4 and1/25."}
+        ]
+      }
+    }
+  ],
+  "completeTrueSets": {
+    "n40-lookup-method-comparison": ["b"],
+    "n40-table-ready-plan": ["b"],
+    "n40-radius-and-area": ["b"]
+  },
+  "nextAction": "Freeze before any repaired draft/key/author-derivation disclosure. Later comparison must not normalize these sets to match an author key."
+}

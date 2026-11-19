@@ -1,0 +1,88 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 253,
+  "printed_page": 247,
+  "notes": [
+    "The first prose row continues the open final paragraph on physical 252. The final paragraph continues to physical 254 after the printed words -4 and 2.",
+    "Figure 58 is referenced in prose but is not present on this page."
+  ],
+  "errata": [],
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 253
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "53d4489b8d42f8deeeb4458e8f56963be09dc6df577d9be7f2ba937911bc134f"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 26,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+引出这种方程，例如：
+
+<!-- p -->
+$5x^2+11x-10=0$，　$x^2-6x+8=0$，
+$2x^2+x-1=0$.
+
+<!-- p -->
+每一个方程的左边是具有一个变量的二次多项式，而右
+边是零. 这种形式的方程叫做二次方程.
+
+<!-- p -->
+定义　**$ax^2+bx+c=0$ 这种形式的方程叫做二次方程，
+其中 $x$ 是变量，$a$、$b$ 和 $c$ 是某一个数，并且 $a\neq0$.**
+
+<!-- p -->
+$x^2$ 的系数 $a$ 通常叫做首项系数，$x$ 的系数 $b$ 叫做第二项
+系数，而 $c$ 叫做二次方程的常数项.
+
+<!-- p -->
+方程 $3x^2-x-2=0$ 和 $x^2+2x-8=0$ 都是二次方程，因
+为它们都具有 $ax^2+bx+c=0$ 的形式. 第一个方程中，$a=3$，
+$b=-1$，$c=-2$，而第二个方程中，$a=1$，$b=2$，$c=-8$.
+
+<!-- p -->
+首项系数等于 1 的二次方程叫做简化的二次方程.
+
+<!-- p -->
+例如，下面两个方程就是简化的二次方程：
+
+<!-- p -->
+$x^2+2x-8=0$，
+$v^2-0.7v+5.6=0$.
+
+<!-- p -->
+我们已经学过用图解法解二次方程. 用图解法解方程
+$ax^2+bx+c=0$（$a\neq0$）时，最好把它写成 $ax^2=-bx-c$ 的形
+式. 抛物线 $y=ax^2$ 和直线 $y=-bx-c$ 的交点的横坐标就是
+方程的根.
+
+<!-- p -->
+例如，用图解法解方程 $x^2+2x-8=0$. 为此把它写成下
+面的形式：
+
+<!-- p -->
+$x^2=8-2x$.
+
+<!-- p open -->
+由公式 $y=x^2$ 和 $y=8-2x$ 给出的函数的图象相交于点
+$A$ 和 $B$，它们的横坐标相应地等于 $-4$ 和 2（图 58）. $-4$ 和 2
+
+<!-- foot -->
+247

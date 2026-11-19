@@ -1,0 +1,74 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 247,
+  "printed_page": 241,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 247
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "5f0b8c55f9a4d1e4bc271f23aa254c2a58ff70ec064173cbf99fff8565235dfc"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [],
+  "errata": [],
+  "printed_lines": 21,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+$=\frac{\sqrt{5}}{\sqrt{3}}$.
+
+<!-- p -->
+把分子和分母同乘以$\sqrt{3}$, 得:
+$\frac{\sqrt{5}}{\sqrt{3}}=\frac{\sqrt{5}\cdot\sqrt{3}}{\sqrt{3}\cdot\sqrt{3}}=\frac{1}{3}\sqrt{15}$.
+
+<!-- p -->
+于是,
+$\frac{\sqrt{15}+2\sqrt{5}}{3+2\sqrt{3}}=\frac{1}{3}\sqrt{15}$.
+
+<!-- p -->
+3. 查平方根表求表示式$\frac{3\sqrt{2}+4}{\sqrt{2}-1}$的近似值.
+
+<!-- p -->
+我们设法化简这个表示式. 把这个分式的分子和分母分
+解因式不能化简,因此用下面的方法来作: 把这个分式的分
+子和分母乘以这样一个式子,使得在分母里得到有理数.
+
+<!-- p -->
+式$\sqrt{2}+1$是这种因式当中最简单的一个.
+
+<!-- p -->
+实际上,$(\sqrt{2}-1)(\sqrt{2}+1)=(\sqrt{2})^2-1^2=2-1=1$.
+
+<!-- p -->
+于是,
+$\frac{3\sqrt{2}+4}{\sqrt{2}-1}=\frac{(3\sqrt{2}+4)(\sqrt{2}+1)}{(\sqrt{2}-1)(\sqrt{2}+1)}↵=(3\sqrt{2}+4)(\sqrt{2}+1)$.
+
+<!-- p -->
+作乘法计算后,得到:
+$(3\sqrt{2}+4)(\sqrt{2}+1)=3(\sqrt{2})^2+4\sqrt{2}+3\sqrt{2}+4↵=3\times2+7\sqrt{2}+4=10+7\sqrt{2}$.
+
+<!-- p -->
+查表求出$\sqrt{2}\approx1.414$. 由此得:
+$10+7\sqrt{2}\approx10+7\times1.414=19.898$.
+
+<!-- p open -->
+4. 证明: 对于任何$a\geq0$和$b\geq0$, 不等式
+
+<!-- foot -->
+241

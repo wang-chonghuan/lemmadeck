@@ -1,0 +1,92 @@
+diff --git a/.claude/skills/ld-s10y-lesson/tools/layout.py b/.claude/skills/ld-s10y-lesson/tools/layout.py
+index c8ff9f482..320c77a1d 100644
+--- a/.claude/skills/ld-s10y-lesson/tools/layout.py
++++ b/.claude/skills/ld-s10y-lesson/tools/layout.py
+@@ -114,6 +114,22 @@ def _row_fragments(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+ 
+ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool:
+     """Distinguish tall inline fractions from two full text rows."""
++    # Radical overbars at the band's top have no numerator above them.
++    ink = ink.copy()
++    band = ink[a:b + 1]
++    horizontal = ndimage.binary_opening(
++        band, structure=np.ones((1, max(2, int(0.7 * line_h))), dtype=bool)
++    )
++    components, _ = ndimage.label(horizontal)
++    for bounds in ndimage.find_objects(components):
++        if bounds is None:
++            continue
++        rows, columns = bounds
++        if (
++            rows.stop <= 0.2 * line_h
++            and np.count_nonzero(band[:rows.start, columns]) < 0.1 * line_h ** 2
++        ):
++            band[rows, columns] = False
+     band = ink[a:b + 1].copy()
+     height = band.shape[0]
+     rules = []
+@@ -399,20 +415,6 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+             for rows, columns in [bounds]
+         )
+     }
+-    # Isolated thin scan streaks have no neighboring numerator or glyph row.
+-    for a, b in raw:
+-        xs = np.flatnonzero(ink[a:b + 1].any(axis=0))
+-        if (
+-            b - a + 1 < 0.2 * glyph_h
+-            and xs.size and xs[-1] - xs[0] + 1 > 2 * glyph_h
+-            and not any(
+-                (c, d) != (a, b)
+-                and (c, d) in supporting_rows
+-                and max(c - b, a - d) <= 1.5 * glyph_h
+-                for c, d in raw
+-            )
+-        ):
+-            ink[a:b + 1] = False
+     # Dense, joined shallow blemishes are not glyphs or thin fraction rules.
+     # Remove them only when they occupy an otherwise isolated projection row.
+     for component_id, bounds in enumerate(bounds_list, 1):
+@@ -440,10 +442,42 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+             continue
+         rows, columns = bounds
+         height, width = rows.stop - rows.start, columns.stop - columns.start
+-        if height > 1.8 * line_h and width < 0.5 * line_h and width < 0.2 * height:
++        margin_outline = (
++            rows.start < 0.1 * ink.shape[0]
++            and height > 1.2 * glyph_h and width > 2 * glyph_h
++            and sizes[component_id] < 0.2 * width * height
++            and not any(
++                other_id != component_id
++                and sizes[other_id] >= 0.15 * glyph_h ** 2
++                and 0.6 * glyph_h <= other_rows.stop - other_rows.start <= 1.3 * glyph_h
++                and 0.2 * glyph_h <= other_columns.stop - other_columns.start <= 1.3 * glyph_h
++                and max(rows.start - other_rows.stop, other_rows.start - rows.stop) <= 1.5 * glyph_h
++                for other_id, other_bounds in enumerate(bounds_list, 1)
++                if other_bounds is not None
++                for other_rows, other_columns in [other_bounds]
++            )
++        )
++        if margin_outline or (
++            height > 1.8 * line_h and width < 0.5 * line_h and width < 0.2 * height
++        ):
+             region = ink[bounds]
+             region[components[bounds] == component_id] = False
+     raw = _row_fragments(ink, content_w)
++    # Check residual streaks after removing the larger scan outlines.
++    for a, b in raw:
++        xs = np.flatnonzero(ink[a:b + 1].any(axis=0))
++        if (
++            b - a + 1 < 0.2 * glyph_h
++            and xs.size and xs[-1] - xs[0] + 1 > 2 * glyph_h
++            and not any(
++                (c, d) != (a, b)
++                and (c, d) in supporting_rows
++                and max(c - b, a - d) <= 1.5 * glyph_h
++                for c, d in raw
++            )
++        ):
++            ink[a:b + 1] = False
++    raw = _row_fragments(ink, content_w)
+     if not raw:
+         return []
+     line_h = max(glyph_h, int(np.median([b - a + 1 for a, b in raw])))
