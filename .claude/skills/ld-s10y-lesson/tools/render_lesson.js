@@ -214,6 +214,8 @@ function page(title, crumb, bodyHtml, english = false) {
 const book = path.resolve(bookDir);
 const contentRoot = editionName ? path.join(book, "editions", editionName) : book;
 let englishMetadata;
+const metadataKey = label => label.replace(/\s+/g, " ").trim()
+  .replace(/(?<=[\u3400-\u9fff]) (?=[\u3400-\u9fff])/g, "");
 function metadataLabel(label, english) {
   if (!label || !english) return label;
   if (!englishMetadata) {
@@ -225,9 +227,9 @@ function metadataLabel(label, english) {
     const translations = new Map(entries(JSON.parse(fs.readFileSync(path.join(tocDir, "en.json"), "utf8")))
       .map(node => [node.id, node.title]));
     englishMetadata = new Map(entries(JSON.parse(fs.readFileSync(path.join(tocDir, "zh.json"), "utf8")))
-      .map(node => [node.title.replace(/\s+/g, " ").trim(), translations.get(node.id)]));
+      .map(node => [metadataKey(node.title), translations.get(node.id)]));
   }
-  const translated = englishMetadata.get(label.replace(/\s+/g, " ").trim());
+  const translated = englishMetadata.get(metadataKey(label));
   if (!translated) throw new Error(`Missing English TOC metadata for ${label}`);
   return translated;
 }

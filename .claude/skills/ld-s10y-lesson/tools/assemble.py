@@ -4,7 +4,7 @@
 标了类型、标了 cont/open，所以这里是**纯拼接**，不需要再猜：
 
   1. 合流   —— open 的块和下一页 cont 的块接成一个对象（跨页的段、跨页的题）
-  2. 切小节 —— h3 开一节，h1/h2 是它的祖先标题
+  2. 切小节 —— h3、目录认领的独立 h2/exhead 开卡，其余 h1/h2 是祖先标题
   3. 分流   —— ex/exhead 进习题，其余先进入课文候选
   4. 认领图 —— 正文图留在课文；练习图从课文移出，并按原书位置只展示一次
 
@@ -97,7 +97,7 @@ def merge_across_pages(stream: list[dict]) -> tuple[list[dict], list[str]]:
 
 
 def cut_lessons(stream: list[dict], toc_cards: list[dict] | None = None) -> list[dict]:
-    """h3 或目录中独立的 exhead 开卡；普通习题栏目仍留在原课。"""
+    """h3 或目录认领的独立 h2/exhead 开卡；普通栏目仍留在原课。"""
     lessons, pending = [], {"h1": None, "h2": None}
     cur = None
     heading_sources = []
@@ -105,11 +105,32 @@ def cut_lessons(stream: list[dict], toc_cards: list[dict] | None = None) -> list
         card for card in (toc_cards or []) if _card_printed_number(card) is None
     ]
     for b in stream:
+        independent_section = None
         if b["kind"] in ("h1", "h2"):
             pending[b["kind"]] = B.text_of(b)
             if b["kind"] == "h1":
                 pending["h2"] = None
-            continue
+            else:
+                # A TOC section without numbered topics is itself a card.
+                heading = B.text_of(b)
+                identity_heading = re.sub(
+                    r"\s+", "",
+                    heading[2:-2] if heading.startswith("**") and heading.endswith("**") else heading,
+                )
+                matches = [
+                    card for card in unnumbered_cards
+                    if card.get("kind") == "section"
+                    and card.get("page") == b.get("printed_page")
+                    and re.sub(
+                        r"\s+", "",
+                        card.get("source", {}).get("printedName") or card.get("title", ""),
+                    ) == identity_heading
+                ]
+                if len(matches) > 1:
+                    raise ValueError(f"{b['ref']}: 独立节标题对应多个目录卡片")
+                independent_section = matches[0] if matches else None
+            if independent_section is None:
+                continue
         independent_exhead = False
         if b["kind"] == "exhead":
             title = B.text_of(b)
@@ -122,14 +143,17 @@ def cut_lessons(stream: list[dict], toc_cards: list[dict] | None = None) -> list
             if len(matches) > 1:
                 raise ValueError(f"{b['ref']}: 独立习题标题对应多个目录卡片")
             independent_exhead = len(matches) == 1
-        if b["kind"] == "h3" or independent_exhead:
+        if b["kind"] == "h3" or independent_exhead or independent_section is not None:
             title = B.text_of(b)
             # Whole-heading emphasis is presentation, not the printed identity.
             identity_title = title[2:-2] if title.startswith("**") and title.endswith("**") else title
-            m = None if independent_exhead else SEC_NUM.match(identity_title)
+            m = None if independent_exhead or independent_section is not None else SEC_NUM.match(identity_title)
             cur = {"chapter": pending["h1"], "section": pending["h2"],
                    "number": m.group(1) if m else None,
-                   "title": m.group(2).strip() if m else identity_title,
+                   "title": (
+                       independent_section["title"] if independent_section is not None
+                       else m.group(2).strip() if m else identity_title
+                   ),
                    "printed_title": title, "blocks": [],
                    "start_page": b["page"], "start_printed": b.get("printed_page")}
             lessons.append(cur)
