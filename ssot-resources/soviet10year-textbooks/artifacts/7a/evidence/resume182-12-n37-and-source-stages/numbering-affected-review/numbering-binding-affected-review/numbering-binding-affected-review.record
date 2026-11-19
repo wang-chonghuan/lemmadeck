@@ -1,0 +1,128 @@
+{
+  "schema": "ld-s10y-numbering-binding-affected-review-summary@1",
+  "ticket": "STEMROBIN-182",
+  "review_date": "2026-11-19",
+  "cwd": "/Users/yong/.codex/worktrees/d9b1/lemmadeck",
+  "finish": "review",
+  "offline": true,
+  "status": "REVISE",
+  "prior_P1_answer_authority_bypass": "PASS",
+  "prior_P2_numbering_only_early_return": "PASS",
+  "remaining_edition_start_order_contract": "REVISE",
+  "source_numbering_metadata": "Inherited PASS; not re-reviewed",
+  "isolated_n37_candidate_fidelity": "Inherited PASS; not re-reviewed",
+  "findings": [
+    {
+      "id": "edition-continuation-first-same-ref-set",
+      "priority": 2,
+      "status": "REVISE",
+      "file": ".claude/skills/ld-s10y-lesson/tools/edition.py",
+      "line": 202,
+      "related_line": 244,
+      "title": "Edition authority accepts an invalid continuation-first exercise start binding",
+      "reproduction": "In actual candidate786, change only pages from [p0231#8,p0232#1] to [p0232#1,p0231#8]. Retain number786/source_number736 and the exact authoritative numbering_erratum whose block is p0231#8. With actual numbering-only pages231/232, source_errata calls authority and still returns [].",
+      "cause": "_authoritative_source_targets compares number/source_number/group/group_id/numbering_erratum, but not pages start identity. source_errata then compares reference sets, losing the start order.",
+      "impact": "The edition authority gate accepts start provenance inconsistent with the authoritative non-cont exercise block and the answer helper. The answer helper rejects this same input, so this is not a reproduced remaining historical-answer lookup bypass.",
+      "required_fix": "Validate the authoritative start ref, or ordered exercise refs, before the set-based comparison. Add a continuation-first same-ref-set negative case. Keep deliberate legacy missing-ref recovery explicit.",
+      "evidence": "start-order-confirmation.json",
+      "evidence_sha256": "82ef1d27d49542b44f1871e7f65f533edce05214a3a9d70a6d5fd0e23f44a7e3",
+      "probe_limit": "Exact current authority binding tail executed; upstream assembly/figure reconstruction omitted and inherited candidate supplied."
+    }
+  ],
+  "settled_fixes": [
+    {
+      "id": "prior-P1",
+      "status": "PASS",
+      "proof": "Actual786/787/788 missing/null/stale records, forged self-consistent ordinal, absent authority, erased correction, malformed ref, meta/page/index mismatch, non-ex and cont starts, and printed mismatch reject with zero answer iterations. cmd_prepare source_book=root wiring is statically present; prepare was not run."
+    },
+    {
+      "id": "prior-P2",
+      "status": "PASS",
+      "proof": "Actual pages231/232 contain three numbering records and no mathematical errata. source_errata invokes authority instead of early-returning. Missing/null/stale/forged numbering metadata rejects in the unchanged authority tail. A record itself rebound to p0232#1 also rejects."
+    },
+    {
+      "id": "ordinary-affected-compatibility",
+      "status": "PASS",
+      "proof": "18 ordinary book/lesson/lesson-group answer and sequence cases match tracked HEAD; all 19 actual uncorrected n37 exercise start bindings pass. No full suite or producer was run."
+    }
+  ],
+  "actual_candidate": {
+    "path": "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/resume182-12/n37-source-stage-affected/artifacts/7a/lessons/alg7-c4-s2-n37",
+    "exercises_sha256": "25956dd948d0d0e2d14755196c2d491f0e845dbd7b6680bae064a99b9d67d4fd",
+    "lesson_sha256": "14df96f91fc8119e75a050e225919a3ff7b7c2554f4033b28fde335be40f7c83",
+    "count": 22,
+    "canonical_selection": [
+      {"number": "786", "printed": "736", "start": "p0231#8", "historical_only_returns": null, "with_both_selects": "786"},
+      {"number": "787", "printed": "737", "start": "p0232#2", "historical_only_returns": null, "with_both_selects": "787"},
+      {"number": "788", "printed": "738", "start": "p0232#3", "historical_only_returns": null, "with_both_selects": "788"}
+    ],
+    "numbering_records_equal_exact_current_authoritative_start_ledger": true,
+    "approved_source_and_candidate_hashes_match_inherited_review": true,
+    "answer_data": "Non-mathematical sentinels only",
+    "mathematical_answer_content_approved": false,
+    "full_lesson_approved": false,
+    "promoted": false
+  },
+  "code_hash_bindings": {
+    ".claude/skills/ld-s10y-lesson/tools/assemble.py": {
+      "sha256": "b967a797c21f3086a20989684dcfc4a1353857f811dc316cfef61c2f95165ab7",
+      "bytes": 36945,
+      "_sequence_number": {"line": 388, "sha256": "7a04018723182c95554c24f71650e57d6a5c6821a72b920f07d567e39d43fa48"},
+      "bound_sequence_number": {"line": 411, "sha256": "877557eba14499822007ac962181a38be576db4ff437c6cd829420d111f2905d"}
+    },
+    ".claude/skills/ld-s10y-answer/tools/lesson_answers.py": {
+      "sha256": "da7ca38e5c76d3d069be6b7549e0a5028b790bc429f6aacd96f0cae7f71911d1",
+      "bytes": 22072,
+      "captured_answer": {"line": 207, "sha256": "2cbb3e67034143288263454b6bc17067430e6e4880fe38cf75ee0900f40a462e"},
+      "cmd_prepare": {"line": 263, "sha256": "b4dad01cc3fd57b04393819f2eb1177afa25fc1670f331527f4ccea17b13e8ef", "execution": "Static AST wiring only"}
+    },
+    ".claude/skills/ld-s10y-lesson/tools/edition.py": {
+      "sha256": "a8131148d5afdca7d4c1471ad4a8925bc33573eaee4b73f6f24614a27c1e3102",
+      "bytes": 78486,
+      "source_errata": {"line": 216, "sha256": "7798099207bc197ae599defc2b7237c3bb5493efdc83b64c85819f09c454c5eb"},
+      "_authoritative_source_targets": {"line": 126, "sha256": "38732b5889789aad3a9eb864c7516d7c880c9146e1280a187a8481ef3b574884", "execution": "Binding tail only; no upstream assembly"}
+    }
+  },
+  "evidence": {
+    "helper-probes-FIRST.json": {
+      "sha256": "05577dc6179d27dabf8625075ceb3e9d35228a26bcdd419e833bc3a68dcce309",
+      "checks": 110,
+      "PASS": 109,
+      "REVISE": 1,
+      "preserved": true
+    },
+    "start-order-confirmation.json": {
+      "sha256": "82ef1d27d49542b44f1871e7f65f533edce05214a3a9d70a6d5fd0e23f44a7e3",
+      "remaining_P2_independently_confirmed": true,
+      "code_and_previous_read_set_stable": true
+    },
+    "inherited_final_numbering_tests": {
+      "path": ".intentfold/tickets/STEMROBIN-182/tmp/resume182-12/stages/numbering-final-binding-tests-affected.receipt.json",
+      "exit": 0,
+      "tests": 7,
+      "stream_hashes_verified": true,
+      "rerun": false,
+      "source_code_digests_in_receipt": false
+    },
+    "earlier_assembly25_answer8_edition51_receipts": "Stream hashes verified; pre-fix evidence only, NOT current-code shared-path approval",
+    "full_input_and_function_bindings": "helper-probes-FIRST.json references/function_bindings and start-order-confirmation.json read_set",
+    "prior_review_sha256": "5bcb3861df2bdc606df0ca3e40f88012e47c9aee7aa0b8c961e1342aec3552bb",
+    "hash_manifest": "report-hashes.json"
+  },
+  "controls": {
+    "only_writes": "New reports and two scoped pure-helper verification scripts under B/numbering-binding-affected-review/",
+    "B": "/Users/yong/.codex/worktrees/d9b1/lemmadeck/.intentfold/tickets/STEMROBIN-182/tmp/resume182-12/numbering-affected-review",
+    "path_note": "Existing candidate/stages/snapshots are B.parent siblings, resolved from the prior report; no writes there.",
+    "images": 0,
+    "source_semantic_re_reviews": 0,
+    "tooling_resource_changes": 0,
+    "suite_producer_assembly_prepare_finalize_reruns": 0,
+    "git_writes": 0,
+    "DB_network_app_dependency_publish_interaction": 0,
+    "agents_chats": 0,
+    "cap3_E_merge_deploy_closure": 0,
+    "unrelated_dirty_work_preserved": true,
+    "prior_failed_tooling_patch_and_FIRST_tests_and_outputs_preserved": true
+  },
+  "gate": "Parent owns the remaining scoped repair, affected shared tests and n37 promotion gate. This review authorizes none of those operations."
+}

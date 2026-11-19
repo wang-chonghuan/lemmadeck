@@ -27,7 +27,7 @@ from pathlib import Path
 HEAD = re.compile(r"^<!--\s+(?P<kind>h1|h2|h3|p|exhead|ex|fig|cap|foot)\b"
                   r"(?P<rest>.*?)\s*-->$")
 BOX = re.compile(r"\bbox\s+(\d+,\d+,\d+,\d+)")
-FLAG = re.compile(r"\b(cont|open|samerow)\b")
+FLAG = re.compile(r"\b(cont|open|samerow|labelrow)\b")
 OWNER = re.compile(r"\bowner-ex\s+([A-Za-z0-9._:-]+)\b")
 WRAP = "↵"
 KINDS_TEXT = ("h1", "h2", "h3", "p", "exhead", "ex", "cap", "foot")
@@ -69,6 +69,10 @@ def parse(md: str) -> tuple[dict, list[dict]]:
                    "owner_exercise": owner_exercise,
                    "cont": "cont" in flags, "open": "open" in flags,
                    "samerow": "samerow" in flags, "lines": []}
+            if "labelrow" in flags:
+                if cur["kind"] != "ex":
+                    raise ValueError("labelrow 只适用于独立印刷的小问标号行")
+                cur["offset_label_row"] = True
             blocks.append(cur)
         elif cur is not None and raw.strip():
             if raw.strip().startswith("!["):      # 图片引用由 fig 块的 box 决定，忽略
@@ -77,6 +81,43 @@ def parse(md: str) -> tuple[dict, list[dict]]:
             # adjacent printed lines are otherwise concatenated verbatim in cap2.
             cur["lines"].append(raw)
     return meta, blocks
+
+
+def exercise_numbering_errata(meta: dict, blocks: list[dict], page: int) -> dict:
+    records = meta.get("exercise_numbering_errata", [])
+    if not isinstance(records, list):
+        raise ValueError("exercise_numbering_errata 必须是数组")
+    result, identifiers, corrected_numbers = {}, set(), set()
+    for record in records:
+        if not isinstance(record, dict):
+            raise ValueError("exercise_numbering_errata 项必须是对象")
+        identifier = record.get("id")
+        ref = record.get("block", "")
+        match = re.fullmatch(rf"p{page:04d}#([1-9]\d*)", ref) if isinstance(ref, str) else None
+        printed, corrected = record.get("printed"), record.get("corrected")
+        if (
+            not isinstance(identifier, str) or not identifier.strip()
+            or identifier in identifiers or not match
+            or not isinstance(printed, str) or not re.fullmatch(r"[1-9]\d*", printed)
+            or not isinstance(corrected, str) or not re.fullmatch(r"[1-9]\d*", corrected)
+            or printed == corrected or corrected in corrected_numbers
+            or not isinstance(record.get("reason"), str) or not record["reason"].strip()
+        ):
+            raise ValueError(f"无效题号勘误: {identifier!r}")
+        index = int(match.group(1)) - 1
+        if index >= len(blocks) or ref in result:
+            raise ValueError(f"题号勘误块不存在或重复: {ref}")
+        block = blocks[index]
+        prefix = re.match(r"^\s*(\d+)\s*[.．、]", text_of(block))
+        if (
+            block["kind"] != "ex" or block.get("cont")
+            or block.get("label") != printed or not prefix or prefix.group(1) != printed
+        ):
+            raise ValueError(f"题号勘误与忠实题号不一致: {ref}")
+        identifiers.add(identifier)
+        corrected_numbers.add(corrected)
+        result[ref] = dict(record)
+    return result
 
 
 def dump(meta: dict, blocks: list[dict], page: int) -> str:
@@ -96,6 +137,8 @@ def dump(meta: dict, blocks: list[dict], page: int) -> str:
             head.append("open")
         if b.get("samerow"):
             head.append("samerow")
+        if b.get("offset_label_row"):
+            head.append("labelrow")
         out.append(" ".join(head) + " -->")
         if b["kind"] == "fig":
             seq += 1
@@ -113,6 +156,8 @@ def printed_lines(blocks: list[dict]) -> int:
         if b["kind"] not in KINDS_TEXT:
             continue
         n += len(b["lines"]) + sum(ln.count(WRAP) for ln in b["lines"])
+        if b.get("offset_label_row"):
+            n += 1
         # samerow：本块与上一块共享印刷行。多行 cap 用于并排人物图题，
         # 每一行都与相邻图题或正文同排；其他块只声明首行同排。
         if b.get("samerow"):

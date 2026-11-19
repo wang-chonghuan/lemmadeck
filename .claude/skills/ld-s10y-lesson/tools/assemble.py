@@ -42,10 +42,15 @@ def load_stream(book: Path) -> list[dict]:
     for pj in sorted(book.glob("pages/*/page.json")):
         doc = json.loads(pj.read_text(encoding="utf-8"))
         page = doc["meta"]["page"]
+        numbering_errata = B.exercise_numbering_errata(doc["meta"], doc["blocks"], page)
         for i, b in enumerate(doc["blocks"]):
-            stream.append({**b, "page": page,
+            ref = f"p{page:04d}#{i+1}"
+            item = {**b, "page": page,
                            "printed_page": doc["meta"].get("printed_page"),
-                           "ref": f"p{page:04d}#{i+1}"})
+                           "ref": ref}
+            if ref in numbering_errata:
+                item["numbering_erratum"] = numbering_errata[ref]
+            stream.append(item)
     return stream
 
 
@@ -141,12 +146,13 @@ def split_lesson(
                 number = f"q{unnumbered}"
             else:
                 source_key = str(source_number)
+                identity_key = b.get("numbering_erratum", {}).get("corrected", source_key)
                 group_id = f"g{group_index}"
-                first_group = first_group_by_source.setdefault(source_key, group_id)
+                first_group = first_group_by_source.setdefault(identity_key, group_id)
                 number = (
-                    f"{group_id}-{_slug(source_key)}"
+                    f"{group_id}-{_slug(identity_key)}"
                     if exercise_numbering == "lesson-group" and first_group != group_id
-                    else source_key
+                    else identity_key
                 )
             exercises.append({"number": number,
                               "source_number": source_number, "group": group,
@@ -154,6 +160,8 @@ def split_lesson(
                               "text": B.text_of(b, join=""),
                               "lines": b["lines"], "pages": b.get("spans") or [b["ref"]],
                               "figure_refs": [], "figures": []})
+            if "numbering_erratum" in b:
+                exercises[-1]["numbering_erratum"] = dict(b["numbering_erratum"])
         else:
             prose.append(b)
     return prose, exercises
@@ -373,8 +381,66 @@ def _numeric_source_numbers(exercises: list[dict]) -> list[int]:
     return [
         int(number)
         for exercise in exercises
-        if (number := _source_number(exercise)) is not None and number.isdigit()
+        if (number := _sequence_number(exercise)) is not None and number.isdigit()
     ]
+
+
+def _sequence_number(exercise: dict) -> str | None:
+    record = exercise.get("numbering_erratum")
+    if record is None:
+        number, printed = str(exercise.get("number")), _source_number(exercise)
+        if printed is not None and number.isdigit() and printed.isdigit() and number != printed:
+            raise ValueError("数字顺序号与印刷号不同，但缺少题号勘误绑定")
+        return _source_number(exercise)
+    if (
+        not isinstance(record, dict)
+        or not isinstance(record.get("id"), str) or not record["id"].strip()
+        or not isinstance(record.get("reason"), str) or not record["reason"].strip()
+        or not isinstance(record.get("corrected"), str)
+        or re.fullmatch(r"[1-9]\d*", record["corrected"]) is None
+        or record.get("printed") != _source_number(exercise)
+        or record.get("corrected") != str(exercise.get("number"))
+        or not exercise.get("pages") or record.get("block") != exercise["pages"][0]
+        or not isinstance(record.get("block"), str)
+        or BLOCKREF.fullmatch(record["block"]) is None
+    ):
+        raise ValueError("题号勘误与装订身份不一致")
+    return record["corrected"]
+
+
+def bound_sequence_number(exercise: dict, book: Path | None) -> str | None:
+    """Bind corrected answer references to the current authoritative start block."""
+    number = _sequence_number(exercise)
+    record = exercise.get("numbering_erratum")
+    if book is None:
+        if record is not None:
+            raise ValueError("题号勘误的答案引用必须提供权威页目录")
+        return number
+    refs = exercise.get("pages", [])
+    match = BLOCKREF.fullmatch(refs[0]) if refs and isinstance(refs[0], str) else None
+    if match is None:
+        if record is not None or refs:
+            raise ValueError("题号勘误缺少权威起始块引用")
+        return number
+    page, index = int(match.group(1)), int(match.group(2)) - 1
+    source = book / "pages" / f"{page:04d}" / "page.json"
+    if not source.is_file():
+        if record is not None:
+            raise ValueError("题号勘误的权威页不存在")
+        return number
+    doc = json.loads(source.read_text(encoding="utf-8"))
+    if doc.get("meta", {}).get("page") != page or index < 0 or index >= len(doc["blocks"]):
+        raise ValueError("题目引用与权威页块位置不一致")
+    source_block = doc["blocks"][index]
+    if source_block.get("kind") != "ex" or source_block.get("cont"):
+        raise ValueError("题目必须引用权威习题起始块，不能引用续页或其他块")
+    if source_block.get("label") is not None and str(source_block["label"]) != _source_number(exercise):
+        raise ValueError("题目印刷号与权威起始块不一致")
+    ledger = B.exercise_numbering_errata(doc["meta"], doc["blocks"], page)
+    expected = ledger.get(refs[0])
+    if record != expected:
+        raise ValueError("题号勘误与当前权威页记录不一致")
+    return number
 
 
 def _audit_number_sequence(numbers: list[int], label: str) -> list[str]:
@@ -445,7 +511,7 @@ def audit(
                 int(number)
                 for lesson in lessons
                 for exercise in lesson["exercises"]
-                if (number := _source_number(exercise)) is not None
+                if (number := _sequence_number(exercise)) is not None
                 and number.isdigit()
                 and any(
                     (position := _block_position(ref)) is not None

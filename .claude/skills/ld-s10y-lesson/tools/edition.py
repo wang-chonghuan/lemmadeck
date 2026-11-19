@@ -199,8 +199,16 @@ def _authoritative_source_targets(
             "请重新运行 assemble"
         )
     for index, (raw_item, source_item) in enumerate(zip(raw_items, source_items)):
-        for field in ("number", "source_number", "group", "group_id"):
-            if field in raw_item and raw_item.get(field) != source_item.get(field):
+        if raw_item.get("pages") and raw_item["pages"] != source_item.get("pages", []):
+            raise SystemExit(
+                "ERROR: exercises 来源引用顺序与权威习题起始块不一致；"
+                "请重新运行 assemble"
+            )
+        for field in ("number", "source_number", "group", "group_id", "numbering_erratum"):
+            if (
+                (field in raw_item or field == "numbering_erratum")
+                and raw_item.get(field) != source_item.get(field)
+            ):
                 raise SystemExit(
                     "ERROR: exercises 题目身份与权威页装订结果不一致；"
                     "请重新运行 assemble"
@@ -215,10 +223,22 @@ def source_errata(book: Path, lesson: dict, exercises: dict) -> list[dict]:
         (page_path, load(page_path))
         for page_path in sorted(book.glob("pages/*/page.json"))
     ]
-    if not any(
+    numbering_bindings = any(
+        isinstance(item, dict) and (
+            "numbering_erratum" in item
+            or (
+                str(item.get("number", "")).isdigit()
+                and str(item.get("source_number", "")).isdigit()
+                and str(item["number"]) != str(item["source_number"])
+            )
+        )
+        for item in exercises.get("exercises", [])
+    )
+    if not numbering_bindings and not any(
         isinstance(erratum, dict)
         for _, page in pages
-        for erratum in page.get("meta", {}).get("errata", [])
+        for category in ("errata", "exercise_numbering_errata")
+        for erratum in page.get("meta", {}).get(category, [])
     ):
         return []
 
@@ -1587,7 +1607,7 @@ def validate_lesson(
         errors += validate_identity_fields(
             source_item,
             modern_item,
-            ("number", "source_number", "group", "group_id", "figure_refs", "figures"),
+            ("number", "source_number", "group", "group_id", "figure_refs", "figures", "numbering_erratum"),
             label,
         )
         errors += validate_text(

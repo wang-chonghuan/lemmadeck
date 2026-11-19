@@ -1,0 +1,125 @@
+diff --git a/.claude/skills/ld-s10y-lesson/tools/layout.py b/.claude/skills/ld-s10y-lesson/tools/layout.py
+index 53de493c7..d56e0e453 100644
+--- a/.claude/skills/ld-s10y-lesson/tools/layout.py
++++ b/.claude/skills/ld-s10y-lesson/tools/layout.py
+@@ -250,6 +290,63 @@ def _offset_system_label_band(
+     )
+ 
+ 
++def _fraction_system_row_count(
++    ink: np.ndarray, a: int, b: int, glyph_h: float, strong_rows: list
++) -> int | None:
++    """Combine fraction baselines with full rows inside a spanning brace."""
++    labels, _ = ndimage.label(ink[a:b + 1])
++    if not any(
++        rows.stop - rows.start >= 0.9 * (b - a + 1)
++        and columns.stop - columns.start < 0.8 * glyph_h
++        for bounds in ndimage.find_objects(labels) if bounds is not None
++        for rows, columns in [bounds]
++    ):
++        return None
++    band = ink[a:b + 1]
++    horizontal = ndimage.binary_opening(
++        band, structure=np.ones((1, max(2, int(0.7 * glyph_h))), dtype=bool)
++    )
++    rule_labels, _ = ndimage.label(horizontal)
++    rules = []
++    reach = int(1.5 * glyph_h)
++    for bounds in ndimage.find_objects(rule_labels):
++        if bounds is None:
++            continue
++        rows, columns = bounds
++        if (
++            rows.stop - rows.start <= 0.25 * glyph_h
++            and band[max(0, rows.start - reach):rows.start, columns].any()
++            and band[rows.stop:min(len(band), rows.stop + reach), columns].any()
++        ):
++            rules.append((rows.start, rows.stop, columns.start, columns.stop))
++    outer_rules = {
++        max(
++            (other for other in rules
++             if other[2] - 0.2 * glyph_h <= left
++             and right <= other[3] + 0.2 * glyph_h),
++            key=lambda other: other[3] - other[2],
++        )
++        for _, _, left, right in rules
++    }
++    fractions = []
++    for top, bottom, _, _ in sorted(outer_rules):
++        centre = a + (top + bottom) / 2
++        if not fractions or centre - fractions[-1] > 1.5 * glyph_h:
++            fractions.append(centre)
++    if not fractions:
++        return None
++    centres = sorted(fractions + [
++        (top + bottom) / 2 for top, bottom in strong_rows
++        if all(abs((top + bottom) / 2 - centre) > 1.5 * glyph_h
++               for centre in fractions)
++    ])
++    distinct = []
++    for centre in centres:
++        if not distinct or centre - distinct[-1] > 1.5 * glyph_h:
++            distinct.append(centre)
++    return len(distinct) if len(distinct) >= 2 else None
++
++
+ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+     """Count printed rows after masking model-identified figures."""
+     # Work on a counting-only copy; extraction pixels are never changed.
+@@ -504,6 +601,12 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+                 ) * max(widths)
+                 and large[0] <= small[0] <= small[-1] <= large[-1]
+             )
++            radical_overbar_spill = (
++                min(heights) < 0.4 * line_h
++                and max(heights) >= 1.35 * line_h
++                and b - prev_a + 1 <= 3.2 * max(line_h, glyph_h)
++                and _single_fraction_row(ink, prev_a, b, glyph_h)
++            )
+             separate_full_row = (
+                 max(heights) >= 1.8 * glyph_h
+                 and min(heights) >= 0.6 * glyph_h
+@@ -521,10 +624,11 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+                     compact_fragment and aligned
+                     and min(widths) / max(widths) >= 0.65
+                     or fraction_spill
++                    or radical_overbar_spill
+                 )
+             ):
+                 joined[-1] = (prev_a, b)
+-                if fraction_spill:
++                if fraction_spill or radical_overbar_spill:
+                     fraction_starts.add(prev_a)
+                 continue
+         joined.append((a, b))
+@@ -561,9 +665,15 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+             ]
+             if count == 3 and len(strong_rows) == 2:
+                 count = 2
++            system_rows = _fraction_system_row_count(ink, a, b, glyph_h, strong_rows)
++            if system_rows is not None:
++                count = system_rows
+             if (
+-                count == 2 and _single_fraction_row(ink, a, b, typical_h)
+-                or _single_fraction_row(ink, a, b, min(typical_h, glyph_h))
++                system_rows is None
++                and (
++                    count == 2 and _single_fraction_row(ink, a, b, typical_h)
++                    or _single_fraction_row(ink, a, b, min(typical_h, glyph_h))
++                )
+             ):
+                 count = 1
+         if count == 1:
+@@ -612,7 +722,11 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+                     bounds[1].start for bounds in glyphs
+                 )
+                 short_text = 0.3 * short_glyph_h <= glyph_w < 0.05 * content_w
+-        decoration = edge_border or (
++        horizontal_rule = (
++            band_h <= 0.2 * glyph_h and band_w >= 4 * glyph_h
++            and ink[a:b + 1, xs[0]:xs[-1] + 1].mean() >= 0.5
++        )
++        decoration = edge_border or horizontal_rule or (
+             thin
+             and (band_w > 0.3 * content_w or band_w < 0.05 * content_w)
+             and not short_text

@@ -1,5 +1,130 @@
 # 当前开发状态
 
+### resume182-12 接续 n37–n39 源页与受限恢复
+
+- 证据留存首次exit0，769份去重文件、排除4份含用户未提交helper的历史快照。
+  窄暂存893文件范围/secret/临时依赖PASS；默认空白检查exit2仅原补丁上下文行、
+  三份测试stderr尾空格及一份stdout末空行。九文件逐一与manifest和暂存blob哈希
+  一致，仅相应路径关闭blank-at-eol或blank-at-eof；其他所有文件默认检查PASS。
+  恢复exit0，未改变任何证据原字节、未重跑内容或图门禁。最终777份去重证据、
+  901暂存文件；layout只纳入已独审五hunk，用户helper/guard及旧测试仍未暂存。
+  下一批n39答案作者及独立源解只写tmp/resume182-13，不影响本批提交集合。
+- q31受限headed捕获exit0：343x604题块完整在390x844视口内，整页横溢0，
+  现有choices HTML哈希不变；fresh单图复核PASS并关闭，报告SHA
+  9760d46f8a26b5fc2bff114f25a5341d50d6c2fc24194c6f645973f36f308202。
+  FIRST两图报告SHA69710378f594abf28711caaa8b8cc161b420aa51a6f52e3a62c27dc2b840cbc1
+  原样保留；q01–q30手机和桌面原PASS继承，不冒称已观察手机图的隐藏右端。
+  n37现计一课完整离线产物：22原题/只读答案、31选择题/124项、8新选择图，
+  两课文/两书写/两选择视面由FIRST与affected绑定合并PASS。
+  n38答案仍HOLD18表值；n39答案和选择题尚未完成，不计整课或本会话上线。
+- n37选择FIRST两图独审REVISE仅PIXEL-01：手机长PNG在q30后重复页首，
+  q31未呈现；桌面q31、手机q01–q30及现有题稿/31题124项绑定PASS继承。
+  这只证明截图证据缺口，不证明HTML或数学有错，捕获原因尚未确定。
+  原FIRST PNG/命令/审查冻结；仅补q31手机局部捕获与fresh单图受限复核，
+  不重渲染、不改题稿、不重审source/view/key或八图，当前完整课仍计0。
+- 显示FIRST像素审查发现D1–D4：n37/n38手机长等式尾部裁切、790格式标号视觉
+  分离、796/805相邻方程组括号相连。离线修复前两次分别因重复根式选择器、
+  已相邻标号被误判而exit1，原脚本/收据及有效部分输出完整保留。
+  只定位带等号的唯一等式链、保留790原标号，移动端允许KaTeX已有base之间换行；
+  796/805仅加上下留白。四HTML的可见文字、TeX、KaTeX markup及题身份逐项一致。
+  恢复exit0；两手机课文及四桌面/手机书写视面affected命令均PASS，
+  fresh六图D1–D4像素复审PASS并关闭，34条文件绑定一致；
+  原两桌面课文PASS继承，不重跑完整批次。报告SHA
+  68f9bd68ace4c4c0593f6a5a9b54d95112e94fe94f37b9b97821a5cc4659d84c。
+- 图55源/实图独审PASS且持久路径重绑完成；n39首次modern-finalize/promote均exit0，
+  四课文/书写视面首次headed命令PASS。追加一个已测图的手机右端截图：
+  scrollLeft345、scrollWidth640、clientWidth295、媒体640px、最小字17.33px；
+  fresh五图像素审查在途，不重复源/数学/图审，也不宣称答案或选择题已完成。
+- n37选择独立源解与可见题面审查已冻结PASS，31题/124项逐项独立真值记录；
+  其后才授权读取作者键和误区推导进行Stage3。八新图独立审及持久路径重绑PASS，
+  重绑新增图打开0。用户原有_fraction_baselines和早期guard逐字保留；
+  自有五hunk暂存候选独立复审PASS，无未暂存helper依赖。两个探索性合成局限
+  同样复现于HEAD，只保留证据，不扩张本批修复。当前未commit，完成课仍计0。
+- n37 Stage3正式独立审查PASS：22源/101任务、31题/124项逐项对键及误区算法，
+  正确集/真值分歧0，独立解未改；新增图打开0，结构校验首次exit0。
+  canonical review SHA a4cb9bd897ac4ef2dcd3585ab7765df5519e4aa5a5f2884a75e5aa078d34b9ae。
+  父只将八SVG path及相应figure_checks路径绑定到已批准持久素材，exit0；
+  seed/题面/选项/keys/intent/coverage/basis/图片字节不变，零图同审者路径复核在途。
+- n39 FIRST五图显示独审仅手机prose26最后0.4848及标点裁切为REVISE；
+  其他三视面、14原题、图55手机右端PASS保留。只加同类离线等式base换行样式，
+  一HTML修复exit0，源文本/TeX/KaTeX markup一致；一手机视面affected命令PASS，
+  fresh一图受限复审PASS并关闭，报告SHA
+  8cf851e5e9a6d9341adcd96693cd6c456e7c7c88a218a1f1c736769a4aa4ccf5。
+  没有重跑三课原显示或重新数学解题。
+- n37路径绑定同审者零图PASS，新保留review SHA
+  6e43334f7b4cb2148baf7534276417a847b1364377d62b0b153ed3145f409175；
+  具名retain_choices首次exit0。仅choices-only render首次exit0，没有重写课文/书写页。
+  两桌面/手机选择视面首次headed命令PASS，31题/124项/8图和私有字段检查通过；
+  fresh两图显示复审在途。当前计划只把n37计完整离线课，n38/n39保留有效阶段，
+  n38未决18个修正表读取、n39答案与选择题不计完成；不改库、不由本会话上线。
+- 228–234 独立源审：228/230/231/234 原字节 PASS；229/233 完全文字忠实，
+  FIRST 只因计行 23/22、24/23 失败。只修计数器，affected finalize 22/22、
+  23/23 exit0；MD/JSON 原字节不变，fresh 零图 counter 复审 PASS。
+  分式42测试与layout17测试通过；四个旧页像素子例缺失而跳过，不冒称覆盖。
+  原 `_fraction_baselines` dirty 与旧测试保留，只增加本批自有四个计数 hunk 和新测试。
+- 232 真实误录指数 2^8→2^6，仅一个字节修订；affected finalize exit0、22/22，
+  fresh 一图源复审 PASS，原 FIRST/失败源稿冻结。其余题面和折行不改。
+- 独立像素确认题号实印736/737/738；n37隔离FIRST装订因断号 exit1。
+  只新增绑定块的题号勘误 metadata：逻辑786/787/788、source_number保留原印刷号，
+  忠实块头/题面不改；231/232 metadata收口exit0。新5例、assembly25、
+  answer8、edition51测试通过；affected隔离装订exit0，22原题、零图。
+  编号首次独审：来源metadata与隔离候选PASS，工具P1/P2要求修订。
+  已补答案引用权威起始块绑定、缺失/伪造/过时勘误拒绝、numbering-only edition
+  权威检查；最终受影响7例通过，assembly25/answer8/edition51均通过。
+  fresh零图绑定复审确认P1和提前返回已修，另发现同集合引用可续页在前。
+  仅增加非空习题引用与权威装订顺序一致的五行校验；focused8/edition51通过，
+  fresh单缺陷零图复审PASS。n37完整RAW三件已同字节提升，旧索引行不改。
+- 235–242 首次作者八图，89块、21题片段、一图55、一个数学勘误候选；
+  FIRST五页PASS，235书目根错误、237/238计行失败保留。235只修--books根，
+  复用备料和原稿后26/26、exit0。首次独立八页源审四PASS、四REVISE：
+  237独立小问标号行用labelrow记录，affected23/23；
+  238只排除脚注细横线，MD/JSON不变，affected25/25；
+  239fresh单裁图确认1.565，改单字并撤销误设数学勘误，affected26/26；
+  241仅修818б根号范围及说明，affected18/18，图55框和PNG哈希不变。
+  四页fresh局部复审PASS，只开237/241两grid，复用239像素裁决和238未变正文。
+  labelrow3与separator3聚焦测试通过；最新counter分式42（四历史像素子例跳过）、
+  layout17、blocks3、p2c5均通过，未重跑已通过备料或未变源页。
+  源审只看八张grid，无额外图/裁图；n40仅242边界，不进入选定完整课。
+- 本批父新增图片0、保守原有6；各fresh上下文累计图数独立记录。
+  所有 FIRST、受限修订及相关字节/命令证据保留在 tmp/resume182-12，
+  n37现代正文24块/29段/5边界/22原题/零图已独审PASS，四文件同字节提升。
+  FIRST finalize exit2为3.与3。数字签名差异，只恢复原终止ASCII句点后exit0；
+  原失败模板与审计保留，未修工具。22只读派生答案先独立逐题求解再对键PASS，
+  answer-finalize exit0，全部ungraded/parts=[]；收口前后answers内容一致。
+  答案迁移FIRST检查误读audit.errors而exit1，复制前停止；只改查实际status:pass，
+  affected迁移exit0，同字节保留key/audit，没有重跑生成或finalize。
+  n37选择作者在独立上下文进行，只读题面与概念，不接触答案。
+  n38/n39首次隔离装订exit0：21/28正文块、7/14原题、一图55属819且241→242闭合。
+  两课modern prepare首次exit0，完整RAW三件及图55原PNG已同字节提升，旧索引行不改。
+  n38文本FIRST finalize exit2，仅模板兼容恢复后exit0；21块/22段/4边界及7原题
+  独立文本数学审查PASS，四件同字节提升，不含未批准答案。
+  n39文本FIRST审查发现修正查表例6.734稍超半单位误差界限；只限定prose10主表
+  直接舍入的保证、prose16修正计算目标及对应anchor，公式/数字/来源与819均不变。
+  同一独立审查者受限复核PASS，未新增源勘误，FIRST完整保留。
+  n38答案49任务独立先解再对键，49算术参考一致；799c/800/801e–h共18修正表
+  读取未有权威表项，答案gate BLOCKED，不finalize、不提升，也不以直接计算冒充查表。
+  802–805逐题PASS复用；没有猜最后位或修改题目绕过来源。
+  图55 cap1一原PNG、零render完成；父以冻结819文本和同哈希持久PNG绑定首次render。
+  FIRST exit2只因原点0标签碰轴；唯一修订x=-0.2→-0.45，affected render exit0，
+  13对象/18标签/640px最小字17.33px。独立实图审查在途，尚不批准图或整课。
+  n37选择作者完成31题/124项/8新图，8FIRST碰撞及8受限layout恢复exit0保留；
+  fresh选择审查先独立求解源，另fresh八图审查在途，未披露作者键。
+  n37/n38课文及书写题真实headed Chromium在1440/390共8视面命令PASS，
+  零KaTeX/console错误、无整页横溢/提交控件；像素审查待完成，不冒充整课通过。
+  n40仅边界，不提升。
+  尚未留存或commit新批次。不重跑前批通过内容，不改DB/publisher/app/deps/
+  交互cap3/E/main/merge/deploy/closure，正式机械防线仍留最终handoff。
+
+- n34–n36已868文件窄commit/push，完整SHA
+  933d082e90b7f4de7d517fd20d6ef3feddf638f9，独立ls-remote一致，暂存区空。
+  最终709份必要去重证据；31原题/答案、39选择题/182项、原课现代图10及新选择图2，
+  三课十八当前显示视面PASS，首轮真实失败与受限恢复均保留。
+  没有DB/publisher/app/交互cap3/E/main拉取/合并/部署/关闭，正式机械防线仍留handoff。
+- 同一开发调用继续物理228–234首次备料，闭合n37；227既有theorem2 open直接接续，
+  n38在printed228/physical234，n39在printed231/physical237，n40在printed236/physical242。
+  不重跑n34–n36通过阶段；无关dirty layout、旧测试、4m及旧7a资源继续保留。
+  父保守6图，本续接新打开0；费用、host token及active时长未知。
+
 ### resume182-11 续接 n34–n36 源与现代阶段
 
 - 三课当前离线 gate 已收齐：31 原题/只读答案、39 选择题/182 选项，

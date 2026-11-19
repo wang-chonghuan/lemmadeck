@@ -38,7 +38,7 @@ TEXTBOOK_ROOT = (
 REPO = Path(__file__).resolve().parents[4]
 MATHLIVE_CHECK = Path(__file__).resolve().parent / "check_mathlive_exact.mjs"
 OPTIONAL_IDENTITY_FIELDS = ("source_number", "group_id")
-PRESERVED_IDENTITY_FIELDS = ("number", "group", "figure_refs", "figures")
+PRESERVED_IDENTITY_FIELDS = ("number", "group", "figure_refs", "figures", "numbering_erratum")
 
 
 def load(path: Path) -> dict:
@@ -209,8 +209,11 @@ def captured_answer(
     lesson: str,
     exercise: dict,
     numbering: str,
+    source_book: Path | None = None,
 ) -> dict | None:
     printed_number = source_number(exercise)
+    if numbering == "book":
+        printed_number = assemble.bound_sequence_number(exercise, source_book)
     if numbering == "lesson-group":
         exercise_id = str(exercise.get("number"))
         matches = [
@@ -322,6 +325,7 @@ def cmd_prepare(args: argparse.Namespace) -> int:
                 lesson,
                 exercise,
                 numbering,
+                source_book=root,
             )
             evidence = []
             for figure_id in exercise.get("figure_refs", []):

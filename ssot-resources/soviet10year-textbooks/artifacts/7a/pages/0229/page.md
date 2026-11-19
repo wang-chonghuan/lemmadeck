@@ -1,0 +1,75 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 229,
+  "printed_page": 223,
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 229
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "250e356301d466dbc521575d65d658fb4557863eb9780dafe5e546e1444d9722"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "notes": [
+    "首块承接物理228例2；末块例6续到物理230。本页无图。",
+    "例3公式中的第二个根式分子经本批唯一局部裁图确认读作33，保留原印刷错误；不改为36。",
+    "例4公式末尾=-7a另占印刷行，以↵保留；正文例题不作习题块。"
+  ],
+  "errata": [
+    {
+      "id": "p0229-math-1",
+      "block": "p0229#2",
+      "original": "$\\sqrt{\\frac{36}{169}}=\\frac{\\sqrt{33}}{\\sqrt{169}}=\\frac{6}{13}$",
+      "reason": "原印刷中间分子的33与左式36不同，且sqrt(33)不等于6；局部像素确认后忠实保留。"
+    }
+  ],
+  "printed_lines": 22,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+为了求出 $\sqrt{16\times49\times4}$ 的值，利用关于非负因数的积的
+平方根的定理，得到：
+$\sqrt{16\times49\times4}=\sqrt{16}\times\sqrt{49}\times\sqrt{4}=4\times7\times2=56$.
+
+<!-- p -->
+3. 求 $\sqrt{\frac{36}{169}}$ 的值.
+根据定理2，得：
+$\sqrt{\frac{36}{169}}=\frac{\sqrt{33}}{\sqrt{169}}=\frac{6}{13}$.
+
+<!-- p -->
+4. 把 $\sqrt{49a^2}$（$a<0$）写成单项式.
+根据关于非负因数的积的平方根定理，
+$\sqrt{49a^2}=\sqrt{49}\times\sqrt{a^2}=7\times|a|$.
+如果 $a<0$，那么 $|a|=-a$，于是，$\sqrt{49a^2}=7\times(-a)↵=-7a$.
+
+<!-- p -->
+5. 求积 $\sqrt{20}\times\sqrt{5}$ 的值.
+我们把等式 $\sqrt{ab}=\sqrt{a}\times\sqrt{b}$（$a\geq 0$，$b\geq 0$）写成另一形
+式，就是：
+$\sqrt{a}\cdot\sqrt{b}=\sqrt{ab}$.
+得到：
+$\sqrt{20}\cdot\sqrt{5}=\sqrt{100}=10$.
+
+<!-- p open -->
+6. 求商 $\frac{\sqrt{80}}{\sqrt{5}}$ 的值.
+我们把等式 $\sqrt{\frac{a}{b}}=\frac{\sqrt{a}}{\sqrt{b}}$（$a\geq 0$，$b>0$）写成另一形式，就
+是：
+$\frac{\sqrt{a}}{\sqrt{b}}=\sqrt{\frac{a}{b}}$.
+
+<!-- foot -->
+223

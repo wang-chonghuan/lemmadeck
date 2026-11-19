@@ -368,6 +368,10 @@ def cmd_finalize(a) -> int:
                 errors.append(f"{b['kind']}#{i+1}: 小问标号 {key!r} 不是西里尔")
 
     errors += _validate_page_errata(meta, blks, a.page)
+    try:
+        B.exercise_numbering_errata(meta, blks, a.page)
+    except ValueError as error:
+        errors.append(str(error))
 
     if meta.get("printed_page") is None:
         errors.append("printed_page 未填（页码承载溯源，不能空）")

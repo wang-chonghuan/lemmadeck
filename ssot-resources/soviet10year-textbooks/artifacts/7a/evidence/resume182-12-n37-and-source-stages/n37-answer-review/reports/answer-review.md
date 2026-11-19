@@ -1,0 +1,81 @@
+# Independent n37 Answer Review
+
+**PASS: 22 exercises, 101 subquestions/proof tasks, no defects. Exact image count: 0.**
+
+Ticket: STEMROBIN-182; finish: review. Sole operation cwd:
+`/Users/yong/.codex/worktrees/d9b1/lemmadeck`.
+
+Current modern written questions alone drove the independent solutions. They were
+saved and frozen at `2026-11-19T01:48:33.302Z`, before the first current-key read at
+`2026-11-19T01:48:47.857Z`. Freeze evidence records that no current key, author output,
+choice, old key, book answer or scan had been opened. All frozen files remained
+unchanged at the key read and will be checked again by the evidence verifier.
+
+## Reviewed Hashes
+
+- Modern exercises: `b343f01d32a8869cedc4717af94eb8ad79a0d5f9f0c6f5d3fbb975633418ab77`
+- Frozen independent solutions: `d64620e0108189b4d4379f0c9e22fd4a2d713b9dbe81ad52421b1e873510c8f3`
+- Source-first freeze: `5e74d6061db1c91865a92b8b8cc3a66540be5602d47676c06100a80ae1a9bd3f`
+- Current answer key: `ead21ae4952c532f9218af2d4ec0e2c5ce5b661779f807d89e973f0ac61c7b1d`
+
+## Per-Exercise Findings
+
+| Exercise | Result | Concrete comparison / defects |
+| --- | --- | --- |
+| 777 | PASS | All 9 nonnegative numeric roots match; no defects. |
+| 778 | PASS | All 8 fractions match; mixed numbers converted correctly; no defects. |
+| 779 | PASS | All 6 products and resulting roots match; no defects. |
+| 780 | PASS | Both exact-evaluation inequality proofs are complete; no defects. |
+| 781 | PASS | All 4 difference-of-squares calculations match; no defects. |
+| 782 | PASS | All 4 products, including mixed fractions, match; no defects. |
+| 783 | PASS | All 4 products of roots valid; a>=0 and c<=0 stated; no defects. |
+| 784 | PASS | All 4 root quotients valid; a>0 and b<=0 stated; no defects. |
+| 785 | PASS | All 9 products match, including 21^4 and mixed number; no defects. |
+| 786 / 736 | PASS | All 6 current-question quotients match; no historical lookup; no defects. |
+| 787 / 737 | PASS | All 8 rationalizations and minus signs match; no defects. |
+| 788 / 738 | PASS | All 4 even-power roots match the current questions; no defects. |
+| 789 | PASS | All 4 radicands factored into powers AND evaluated; no defects. |
+| 790 | PASS | All 6 worked-format reductions and values match; no table opened; no defects. |
+| 791 | PASS | All 6 approximate values retain exactly 3 significant digits; no defects. |
+| 792 | PASS | All 4 monomials respect stated signs, including -9y^3; no defects. |
+| 793 | PASS | Both fractions respect signs/nonzero denominators, including -12/y; no defects. |
+| 794 | PASS | Five-point construction and reflected graph complete; increasing/decreasing on all R respectively; no defects. |
+| 795 | PASS | Vertex, symmetry, plot points, opening and all 4 monotone branch pairs correct; no defects. |
+| 796 | PASS | Integer sets exactly {1} and {0,1,2,3,4,5,6,7,8}; strict bounds correct; no defects. |
+| 797 | PASS | Absolute-value signs checked before substitutions 14.2 and 2.18; no defects. |
+| 798 | PASS | Nonzero denominators, exact reduction to 2+5/x and both strict bounds proved; no defects. |
+
+## Gate Boundary
+
+All 22 keys are `source=derived`, `grading=ungraded`, `parts=[]`, without `bookRaw`.
+This is the intentional read-only ticket contract, not a missing automatic-grading
+or interaction defect. Durable 7a book-answer absence and current source-binding
+PASS were supplied as already verified; neither was re-audited. The keys for
+786/787/788 were compared only with the current questions printed 736/737/738.
+
+794 is complete using point plotting plus x-axis reflection; a second independent
+plot table in b is unnecessary. 795 is complete using the common vertex, axis and
+points (+/-1,a), with numeric coefficients set in a/b and sign cases in c/d.
+Closed-at-zero monotone branches, including the key's European bracket notation,
+are mathematically valid. 798 is a proof for every x>5, not a numeric sample check.
+
+No modern-text review, image inspection, choices, old answers, historical lookup,
+git, DB, network, app, dependency operation, suite/pipeline rerun, keyboard or
+interaction production, finalize, publish, merge, deploy, closure or chat/agent
+operation was performed. All writes are confined to `n37-answer-review/`.
+Parent owns finalize after this gate. PASS binds to the exact reviewed key hash.
+
+## Evidence Files
+
+- `source-solutions/independent-n37-solutions.json`: full independent answers, signs, domains and proofs.
+- `source-solutions/modern-question-snapshot.json`: only current modern question texts and identifiers.
+- `reports/independent-arithmetic.json`: pre-key exact rational/square/sign/scaling checks.
+- `reports/source-first-freeze.json`: pre-key hashes and input exclusions.
+- `reports/first-key-open.json`: first key hash and verified freeze order.
+- `reports/review-results.json`: full per-exercise mathematical adjudication.
+- `reports/evidence-verification.json`: final reviewed-byte, coverage and metadata check (generated by the focused verifier).
+
+The focused scripts use existing Node built-ins only. They are neither repository
+suites nor answer-generation/finalize pipelines. Mathematical PASS is the explicit
+source-first manual review; the final script verifies its evidence, not a general
+symbolic-equivalence assertion.
