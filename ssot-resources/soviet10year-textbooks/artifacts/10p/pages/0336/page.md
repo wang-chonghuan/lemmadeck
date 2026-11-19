@@ -1,0 +1,69 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 336,
+  "printed_page": 326,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 336
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "237100bb74bf92d98515b418d202b4d0f251bbf9d39ca4e809db887fca9450d7"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "D041 candidate from hash-bound independent observation. Native finalization is not SOURCE approval.",
+    "Observed alpha and x mathematical tokens are retained unchanged. Modern explanation must distinguish the initial historical question from later particle identification.",
+    "Maximal heavy statement spans two printed rows; punctuation and independently observed endpoints retained."
+  ],
+  "errata": [],
+  "printed_lines": 26,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+这样， 贝克勒尔就产生了一个问题： 当照射铀盐后 $\alpha$ 射
+线是否会和可见光同时出现呢？ 贝克勒尔把照相底片裹上厚
+实的黑纸，在纸上放了铀盐的颗粒， 然后放在明亮的阳光下。
+显影后照相底片在有铀盐的地方发黑了。 可见， 铀产生某种
+射线，此射线跟 $x$ 射线一样能穿过不透明的物体，使照相底片
+感光。 贝克勒尔认为，这个射线是在太阳光的作用下产生的，
+但有一次，在 1896 年 2 月，由于阴天，贝克勒尔进行照例的实
+验没有成功。 他就把底片放入桌子的抽屉里， 在底片上面放
+上一个铜十字， 铜十字上又覆盖着铀盐。 过了两天试着把底
+片显影， 他发现在底片上有清晰的十字阴影形状。 这说明**铀**
+**盐自发的不需要外界因素就能产生某种射线。** 于是开始了紧
+张的研究。 当然，如果没有这一偶然的发现，放射性现象也是
+会被发现的，但是肯定要晚得多。
+
+<!-- p -->
+过了不久，贝克勒尔就发现，铀盐的射线像 $x$ 射线一样能
+电离空气， 并且能使验电器放电。 贝克勒尔对铀的各种不同
+的化合物进行试验，确立了一个非常重要的事实，就是射线的
+强度仅仅由实验标本中铀的数量决定， 而与它是铀的什么样
+的化合物毫无关系。 由此可见， 这个属性不是化合物固有的
+属性，而是化学元素铀即铀原子固有的属性。
+
+<!-- p open -->
+人们很自然就试图发现除铀以外的其他化学元素是否有
+自然辐射的本领。 1898 年玛丽·斯可罗多夫斯卡·居里在
+法国和其他一些科学家发现了钍辐射。 玛丽·斯可罗多夫斯卡
+·居里和她的丈夫比埃尔·居里把主要精力用于寻找新元素。
+对含铀和钍的矿石进行的系统研究使他们分解出了一种新
+的、过去人们所不知道的化学元素钋，这是为纪念玛丽·斯可
+
+<!-- foot -->
+• 326 •

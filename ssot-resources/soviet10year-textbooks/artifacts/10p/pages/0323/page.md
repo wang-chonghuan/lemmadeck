@@ -1,0 +1,80 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 323,
+  "printed_page": 313,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 323
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "c0e59d9423a06fb7997b86cfc4d9e9fb477bef9e75e21167357664472ac3652e"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "D041 candidate from hash-bound independent observation. Native finalization is not SOURCE approval.",
+    "HOLD: p0323#4 line2 single frequency glyph remains nu/v-ambiguous. Frozen LaTeX is a candidate convention only, not approval of this glyph or unit123.",
+    "This neighbor formula is outside unit124's source objects p0323#6 and p0323#7. No whole-page source approval is asserted.",
+    "p0323#8 is an explanatory footnote owned by unit123 via its unique printed callout; it is not unit124 prose.",
+    "Literal source clarification is retained, including awkward printed wording; it is not repaired by grammar or physics."
+  ],
+  "errata": [],
+  "printed_lines": 25,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+达阳极的电子数与电压成正比地增长。
+
+<!-- p -->
+当电压提高到 4.9 伏时，电子和原子的碰撞就变为非弹
+性的了。原子的内能跳跃地增长，而在碰撞后电子几乎失去
+自己全部的动能。阻碍电场不允许低速电子到达阳极，电流
+强度就急剧减小。电流没有降到零是由于一部分电子没有受
+到非弹性碰撞而到达了栅极。
+
+<!-- p -->
+电子只有在通过电位差 4.9 伏以后到达栅极才能得到作
+非弹性碰撞所必需的能量。由此可见，**水银原子内能的变化**
+**数值不能小于 $\Delta E=4.9$ 电子伏特。**因此，原子的内能就不能
+取任意值，也不能作任意数值的变化：这就证明了原子的**稳**
+**定态**① 是不连续的。
+
+<!-- p -->
+这个结论的正确性还有如下材料作证明：即当电压为 4.9
+伏时，水银蒸汽就开始辐射。辐射频率按公式 $\nu=\frac{\Delta E}{h}$ 计算，其
+数值与实验观察出的数值相符。这就表明，被激发的水银原
+子随后向较低能态跃迁并辐射出与玻尔第二个假设一致的光
+量子。
+
+<!-- h3 -->
+124.　玻尔理论的困难　量子力学
+
+<!-- p -->
+玻尔理论的最大成绩在于对氢原子的运用，使建立氢原子光谱的
+定量理论成为可能。
+
+<!-- p -->
+但是在玻尔概念的基础上企图建立氦后面的氢原子的定量理论没
+有成功。对于氦原子和更复杂一些的原子，玻尔理论只能作一些定性
+的（虽然是极重要的）结论。
+
+<!-- p footnote -->
+①　图 253 中曲线的第二个最大值是由于在电压为 9.8 伏时电子在飞向栅
+极的途中遇到两次非弹性碰撞的结果。
+
+<!-- foot -->
+· 313 ·
