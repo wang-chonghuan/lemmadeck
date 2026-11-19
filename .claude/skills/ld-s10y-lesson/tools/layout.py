@@ -177,6 +177,21 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
     outside_bounds = [
         bounds for bounds in ndimage.find_objects(outside_components) if bounds is not None
     ]
+    # Offset short prose can disappear in the pooled ink or column thresholds.
+    body_centers = [
+        (start + end) / 2
+        for start, end in _row_fragments(outside, outside.shape[1])
+        if 0.6 * line_h <= end - start + 1 <= 1.35 * line_h
+        and any(
+            start - 0.25 * line_h <= rows.start
+            and rows.stop - 1 <= end + 0.25 * line_h
+            and 0.75 * line_h <= rows.stop - rows.start <= 1.35 * line_h
+            and 0.2 * line_h <= columns.stop - columns.start <= 1.3 * line_h
+            for rows, columns in outside_bounds
+        )
+    ]
+    if len(body_centers) >= 2 and body_centers[-1] - body_centers[0] >= 1.5 * line_h:
+        return False
     for left, right in _merge_close(_runs(outside.any(axis=0)), line_h):
         glyphs = [
             (rows, columns)
@@ -397,6 +412,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
     if not raw:
         return []
     line_h = int(np.median([b - a + 1 for a, b in raw]))
+    detected_raw = raw.copy()
     # Projection thresholds can miss a narrow standalone quotient such as 1 or 7.
     for component_id, bounds in enumerate(ndimage.find_objects(components), 1):
         if bounds is None:
@@ -412,6 +428,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
             raw.append((rows.start, rows.stop - 1))
     raw.sort()
     merged = []
+    independent_body_starts = set()
     merge_gap = max(2.0, GLYPH_GAP_FACTOR * min(line_h, glyph_h))
     for a, b in _merge_close(raw, 0):
         if merged:
@@ -425,6 +442,19 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
                 )
                 and not _single_fraction_row(ink, prev_a, b, glyph_h)
             )
+            if (
+                a - prev_b <= merge_gap and separate_tall_rows
+                and 0.6 * glyph_h <= b - a + 1 <= 1.35 * glyph_h
+            ):
+                # A proven body row keeps its projection, not recovered glyph tails.
+                body_rows = [
+                    (x, y) for x, y in detected_raw
+                    if a <= x <= y <= b
+                    and 0.6 * glyph_h <= y - x + 1 <= 1.35 * glyph_h
+                ]
+                if len(body_rows) == 1:
+                    a, b = body_rows[0]
+                independent_body_starts.add(a)
             separate_offset_rows = False
             if (
                 a - prev_b <= merge_gap
@@ -440,6 +470,7 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
                 a - prev_b <= merge_gap
                 and not separate_tall_rows
                 and not separate_offset_rows
+                and prev_a not in independent_body_starts
             ):
                 merged[-1] = (prev_a, b)
                 continue
@@ -472,7 +503,10 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
                 and large[0] <= small[0] <= small[-1] <= large[-1]
             )
             if (
-                a - prev_b <= (
+                # Preserve the independent body row on both sides of spill joins.
+                a not in independent_body_starts
+                and prev_a not in independent_body_starts
+                and a - prev_b <= (
                     0.6 if min(heights) < 0.4 * line_h else 0.5
                 ) * min(line_h, 1.5 * glyph_h)
                 and (

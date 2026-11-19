@@ -27,6 +27,7 @@ import mathcheck
 import normalize as nz
 
 FIGREF = re.compile(r"图\s*\$?\s*(\d+)(?!\d)")
+TABLE_PAGE_REF = re.compile(r"表\s*[（(]\s*见\s*第\s*(\d+)\s*页\s*[）)]")
 SEC_NUM = re.compile(r"^\s*(\d+)\s*[.．、]\s*(.+)$")
 BLOCKREF = re.compile(r"^p(\d+)#(\d+)$")
 OPTIONAL_EXERCISE_IDENTITY_FIELDS = ("source_number", "group_id")
@@ -47,6 +48,32 @@ def load_stream(book: Path) -> list[dict]:
                            "printed_page": doc["meta"].get("printed_page"),
                            "ref": f"p{page:04d}#{i+1}"})
     return stream
+
+
+def resolve_printed_page_table(stream: list[dict], printed_page: int) -> dict:
+    """Resolve an explicit table reference without changing source ownership."""
+    pages = {
+        block["page"] for block in stream
+        if block.get("printed_page") == printed_page
+    }
+    if len(pages) != 1:
+        raise ValueError(
+            f"表引用印刷页 {printed_page}: 必须对应唯一源页，"
+            f"找到 {len(pages)} 页 {sorted(pages)}"
+        )
+    tables = [
+        block for block in stream
+        if block.get("printed_page") == printed_page
+        and block["kind"] == "fig"
+        and (block.get("label") or "").strip() == "表"
+    ]
+    if len(tables) != 1:
+        candidates = [f"{block.get('id')}@{block['ref']}" for block in tables]
+        raise ValueError(
+            f"表引用印刷页 {printed_page}: 必须有唯一 label=表 的图，"
+            f"找到 {len(tables)} 张 {candidates}"
+        )
+    return tables[0]
 
 
 def merge_across_pages(stream: list[dict]) -> tuple[list[dict], list[str]]:
@@ -380,6 +407,7 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
             for n in FIGREF.findall(B.text_of(block))
         }
         exercise_users: dict[str, list[dict]] = {}
+        table_users: dict[str, tuple[dict, list[dict]]] = {}
         for exercise in lesson["exercises"]:
             for n in dict.fromkeys(FIGREF.findall(exercise["text"])):
                 referenced.add(n)
@@ -389,12 +417,31 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
                         exercise["figure_refs"].append(figure["id"])
                 if n not in fig_by_num:
                     warn.append(f"第 {exercise['number']} 题引用「图 {n}」，全书没有这张图")
+            for page in dict.fromkeys(TABLE_PAGE_REF.findall(exercise["text"])):
+                try:
+                    table = resolve_printed_page_table(stream, int(page))
+                except ValueError as error:
+                    errors.append(f"第 {exercise['number']} 题: {error}")
+                    continue
+                table_id = table["id"]
+                if table_id not in exercise["figure_refs"]:
+                    exercise["figure_refs"].append(table_id)
+                table_users.setdefault(table_id, (table, []))[1].append(exercise)
 
         for n, users in exercise_users.items():
             for figure in fig_by_num.get(n, []):
                 owner = _figure_owner(figure, users)
                 if figure["id"] not in {item["id"] for item in owner["figures"]}:
                     owner["figures"].append({"id": figure["id"], "label": figure.get("label")})
+
+        # Explicit page references share one display at the first citing exercise;
+        # the table remains in its original lesson's blocks and prose.
+        for table_id, (table, users) in table_users.items():
+            if not any(
+                item["id"] == table_id
+                for exercise in lesson["exercises"] for item in exercise["figures"]
+            ):
+                users[0]["figures"].append({"id": table_id, "label": table.get("label")})
 
         # cap 的「图 N」只是图题，不是正文引用。若图只被练习使用，图和图题都从
         # prose 移出；若真正正文也提到它，则正文和练习各展示一次是有意行为。

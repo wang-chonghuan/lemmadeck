@@ -1,5 +1,351 @@
 # 生产检查点
 
+## 180-4 b94 complete offline; selective commit pending
+
+2026-11-19. n92/n93/n94 TEXT-FIG-ANSWER-CHOICE-DISPLAY all complete offline.
+Official choice retention exit0 each:12 questions/52 options total;21 written
+tasks and every corresponding written answer retained. n94 g2-4 choice conversion
+explicitly deferred for absent permitted density; no all-eight conversion claim.
+n93 whitespace/digest-only affected PASS bound61, original reviews not replayed.
+n94 BLIND bound12 before author-key disclosure; FINAL PASS bound23,18 option
+rationales/12 misconception derivations compared, zero new images.
+
+One native batch render and DISPLAY check exit0:18 desktop1440x960/mobile390x844
+surfaces, zero overflow/formula errors/internal key-field leaks. Three fresh
+independent DISPLAY reviews PASS, actual mobile table scroll ends inspected;
+their manifests were bound before counting completion. Native and independent
+evidence remains headless offline, not live product/formal headed acceptance.
+
+HEAD plus only three narrow code patches passed29 focused tests:8 sentence
+layout,9 printed-page table bindings,12 fraction/body-row boundaries. Selected
+staged bytes must match this tested snapshot; no dependency package copies.
+Full-project tests remain deferred to formal handoff. Complete courses now6
+(n159/n160/n164/n92/n93/n94); parent19/24, zero new parent images/paid calls.
+
+Selective commit/push pending; only this completed batch, its source242/246,
+reviewed narrow code deltas and ticket evidence may be staged. Unrelated recovered
+work and held n91/n95/n98/n161-n163 remain excluded. UNKNOWN tokens/costs and all
+failed receipts preserved. No DB/publication/deploy/merge/closure/formal handoff.
+
+## 180-4 n93 original FINAL bound; n94 SOURCE bound before BLIND
+
+2026-11-19. n93 original FINAL PASS manifest
+0af93d50ea84495932d0b5d760845a8af54a0b59ab42760298b43ac6173064a0
+actually bound50;5 questions/20 options,7 true/13 false, zero new images.
+Approved layout isolated-finalize/retain both exit0. Exercises, figures and
+both answer files byte-unchanged. Choice retarget changes only whitespace in
+three definition blocks and draft seed digest. Beauvoir affected-only binding
+active; no solving or semantic-review replay. Missing concept-figure seed and
+duplicate exercise flag failures retained as technical, not content findings.
+
+n94 SOURCE manifest
+c1e8c7601af79d40102e6c13fb7fc09b4c25bef5df87504db2eff65846cbb11f
+actually bound16 before learner-only disclosure. Eight records:7 determinate,
+g2-4 conditional for absent permitted kerosene density; two reused image
+observations. Four learner views/18 options exactly equal draft view projection.
+Parent wrong wrapper-shape comparison failed and was corrected without content
+changes. Kierkegaard BLIND active, author key not disclosed.
+
+Complete courses still3, parent images19/24, new paid0. Selective staging is
+being prepared; no DISPLAY/new commit/push or formal handoff yet. Unrelated
+recovered edits, prior holds, failed receipts and UNKNOWN costs/tokens retained.
+
+## 180-4 n94 answers ready; n92 choices retained; n93/n94 choice reviews active
+
+2026-11-19. n92 affected choice manifestc281ea68dec5c393bf1086eccc18aa83deb6e2756c929ca24d733fcbcb3414a2
+bound36, original semantic reviews reused; official retain exit0, no solving/image
+replays. n93 BLIND manifestcb334be8bd33c7d911e79c506038012d3e9534aaac17c45c9a579975747bcf40
+bound27 before author-key disclosure;5 questions/20 options PASS, FINAL active.
+n93 answer's three scratch figureEvidence paths now bind byte-identical durable
+assets; approved semantic digest0272bac2ef2218d5527073e937ff59d92c3ed9a57991e7e6e8f9e7e4f630c876
+unchanged, no MathLive/finalize replay.
+
+n94 R1 two-field affected PASS bound29. First answer finalize exit2 retained:
+the Chinese table locality label was banned, but no valid prompt/paragraph
+history binding exists for a table-only locality. One display phrase now uses
+the independently approved Brown coal (Moscow region) row identity; geographic
+restriction, numbers, units and reasoning retained. Table-label affected manifest
+deb0cc67652cbd881d38838f4baaf5380a2bf33e1d45ef286f665221faeaaf4f bound41,
+M1 offline metadata PASS; no fabricated declaration or code change. Subsequent
+answer-finalize exit0 auto2/ungraded6. Final semantic digest
+e2b674aea2cbffa4959dabb9544d898da06c0c58dad723a88e8f0139af060f6b unchanged.
+Both answer files retained. Parent wrong-verdict-field and generated-count
+projection failures are recorded separately; they caused no content re-review.
+
+n94 choice author manifest3c08e7e6c2535575b98bd6022174c155e7ca1bce9d9dc5969b6e952dbc283620
+bound27 after explicit named index-projection alias repair. Original binding
+failure retained. Four questions/18 options,7 represented of8 seed tasks,
+g2-4 volume-only task explicitly deferred for missing allowed density. Author
+four image opens, closed. Fresh Kierkegaard SOURCE only; no view/key disclosure.
+
+Complete courses still3; parent19/24 images; no DISPLAY/new commit/push,
+DB/publication/merge/closure/formal handoff. UNKNOWN tokens/costs and prior
+permanent source/figure holds unchanged. Next n97 source256 approval was located
+read-only; n98 still requires source257 with exhausted repair, no new work yet.
+
+## 180-4 n94 retained; R1 affected repair and choice reviews continue
+
+2026-11-19. n92 FINAL choice PASS was actually bound (37 entries), 3 questions /
+14 options, validator exit0; original SOURCE/BLIND/FINAL snapshots remain immutable.
+n92 approved layout was finalized and retained once; exercises, figures and both
+answer files retain original bytes. Choice definition whitespace/hash retarget
+awaits affected-only binding, not re-solving. n93 SOURCE manifest
+861a881fe2ae80bb78c1e520429f36604ae959fd4b02bf9f1ff93a3f0557c5a2 bound48
+before learner-only disclosure; BLIND active, no author-key disclosure.
+
+Hypatia layout PASS manifest2f81c42497b4396182ebbd6160320f97095cf672db03216a1169fdbf41c4753d
+bound10; 17 changed blocks, 24 paragraphs, 57 lines, zero semantic/code findings.
+n94 FIG width-only PASS bound45; original invalid340px premise HOLD preserved.
+Both official figure reviews exit0; geometry/SVG unchanged, durable path retarget
+only. Approved normalized n94 isolated adapt-finalize and retain exit0; raw/index
+and four modern files retained without changing n92/n93. Answer prepare exit0.
+
+n94 FIRST ANSWER FINAL manifestd76020f53141bf28171dc4ea1d96a60381f75f811585c4187884c2a5588f448a
+bound38:75 facets PASS,2 facets REVISE representing one R1 issue. Exercise4's
+correct explanatory standard is retained; sole formula-only auto part changed to
+ungraded/empty parts. Frozen original refusal retained; one repair only, affected
+review active. Fresh n94 choice author owns offline whitelist work only.
+
+Complete courses remain3 (n159/n160/n164), parent images19/24, new paid calls0.
+No new commit/push, DISPLAY, DB, publication, merge, closure or formal handoff.
+UNKNOWN model tokens/costs remain unknown; inherited holds/repair budgets unchanged.
+
+## 180-4 正文normalizer窄修复；选择及n94答案独审继续
+
+2026-11-19，n94版式限定审查manifest
+`899c808c98e419b1c85088896f919fa30c25963043869bdf55dcdf85bd3d726f`
+实际绑定54项并关闭：原14/8语义PASS复用，但现有normalizer确实不识别
+ASCII句点与冒号后粗体关闭标记，原TEXT REVISE仍留，不把模板人工排版当修复。
+父保留code baseline，只改edition.py的三个分界判据并新增code-owned
+`test_ascii_sentence_layout.py`。首次系统Python缺PIL技术失败、下一次
+6PASS/2FAIL均留；最终既有venv8/8PASS。实际隔离候选n92/n93/n94
+分别5/6/6正文对象仅改空白及layout标记，数学/数字/其它身份不变，
+每个变更对象幂等，proseFlow通过。manifest
+`1aa1bc756e34c1b184fc2fab4ba4dbf4d8cf7841ad7ebb18abf876b4ad7bb8b7`
+等待fresh Hypatia限定独审；三个canonical课文未替换。
+
+n92 BLIND manifest
+`91daa00d4234bd7cab6dae7f2033c7fea7b084cc3128069c353627edff9b64e8`
+实际绑定15项：3题14项、11tasks PASS，0图；随后才披露作者稿，FINAL在途。
+n93选择作者manifest
+`0147c10e55e4481cba5b7580756250de1811852a880cb5777c5b0f54884200d1`
+实际绑定15项并关闭：6selected/5题20项、2图。首次绑定把book成员投影
+hash误作文件hash的技术失败保留；按现有prepare.book_lesson_hash核验后0。
+fresh Beauvoir仅SOURCE在途，未披露视图/作者键。
+
+n94 FIRST FIG manifest
+`4cce3ba03e10d684bf5c629b68dca0235276f8e80a6018f840778dddabd5c693`
+实际绑定328项：2图96对象全部源/科学/视觉PASS，4图，0内容缺陷；
+父错误要求340px导致唯一证据HOLD保留。实际fig226 inline已测
+640/358/297，表scroll640/660；同审者只限定审宽度前提，不新增图或重审源。
+n94答案作者manifest
+`660995da7945cdd919af9898a957d3836bcbb906b2b2d402d5730a64b680991d`
+绑定20项并关闭，8答案拟auto3/ungraded5、3图。SOURCE manifest
+`52fa7d0ac578fdf26bbdaad5cee677e7e0b29e79627b810b445f9bec9f3c7fd2`
+先实际绑定75项、8题/3数量/3图；之后才披露作者键，FINAL在途。
+完整课仍3；无DISPLAY、新提交/push、DB或正式handoff。父19/24，新付费0。
+
+## 180-4 n93正式收口；n94图稿已收取待独审
+
+2026-11-19，n93 TEXT/ANSWER SOURCE/共享图语境manifest依次
+`62c188ff213aa76200058e6f96b1053b35602a00d1e0cd2945b803ac30c3bfde`、
+`2fab397889c6f84e0e2d779b76fe33bc8407b5cc31c0cc0b875416a685794d84`、
+`84054b6ac4315885df989ce0911edd9159662c57e170d669c714964d39e78569`，
+实际绑定17/24/31项。SOURCE绑定后才披露作者键；
+FINAL manifest `53ee7df85feb6702b996649aee660b0613bb8814faad0252a9b86ded7f8ea110`
+绑定12项，8答案37facets语义PASS，审者关闭。
+246批准源及n93原课保留；共享表新增独立n93 spec/render/review，
+n92原课及原图metadata/SVG字节不变。正式review、隔离adapt-finalize、
+answer-prepare、语义metadata绑定、含真实MathLive的answer-finalize首次均0。
+投影 `0272bac2ef2218d5527073e937ff59d92c3ed9a57991e7e6e8f9e7e4f630c876`
+不变；auto2/ungraded6，六现代正式文件已保留。Euclid选择作者在途，
+暂无CHOICE/DISPLAY批准。
+
+n92 SOURCE manifest
+`757879932ba1281905b8c8b69d3941fb6014942b1f84dfc7e8ccda300e0979ea`
+初绑定脚本因byte_sha256字段识别0项，未披露视图；机械扩展后实际绑定33项。
+5源题/11tasks/0图复用，再披露learner-only视图；BLIND在途，未披露作者键。
+
+n94 FIRST TEXT manifest
+`c8318881ceeb548e7235297ed15b363603239f39ca4be0d67f00a2167059fb0d`
+绑定105项，原REVISE保留：两项仅模板分段/公式换行。
+正在限定确认这些是否由尚未执行的adapt-finalize确定性处理，
+不凭模板形态修改科学内容或重复全文审查。
+图作者manifest
+`4dc674cf6dc00726eb86c55dd21e62a15c0ea0e3a1d590ca775160f0e5a28059`
+绑定233项并关闭：2图、4实际图、26显示观察、每图一次修复，
+2内容失败和2技术失败均保留；fresh Locke FIRST FIG在途。
+独立答案作者与SOURCE审者各自求解8题，不互通答案；
+煤油密度另取同教材6p批准源表行，禁止猜常数。
+n95依赖图210原F210-LAYER-PLACEMENT-2 HOLD及1/1耗尽照留；
+不重修、不批准、不准备整课。完整课仍3，无新增commit/push或正式handoff，
+父19/24，新付费调用0，窄代码差异暂存可用性仅check0，尚未更改index。
+
+## 180-4 n92选择作者已收取；n93答案作者已收取；n94在途
+
+2026-11-19，n92选择作者stage2 manifest
+`7801e2ea352cbe38b00d517551843346b07d61b23621ba3da19ae38e2c26ab4a`
+实际绑定13项并关闭：3题、2single/1multiple、14选项，结构检查0，
+作者新增0图。fresh Planck只获seed，FIRST SOURCE在途；
+尚未披露learner-only视图或作者键，不把结构检查当语义批准。
+
+n93答案作者manifest
+`b9caa8fb0c1556440aae4bc649333d8c783956d3bb092e78145165e2520e43d6`
+实际绑定11项并关闭：8答案、拟auto2/ungraded6、2图；
+13条收据中的4次技术错误保留。作者稿尚未独立FINAL或工具收口。
+James的TEXT、ANSWER SOURCE及共享表语境限定审阅继续，未披露作者键。
+
+n94批准246与既有247/248字节隔离复用，prepare-cohort/assemble/
+adapt-prepare首次各0；14正文对象、8题、2图。只合并prose[13]
+相邻粗体分隔符；冻结正文manifest
+`1d82a274062474be35ef650aaf660b22519980ad7bfe224e9d618e223f2b155a`。
+Pascal制作两图、fresh Wegener仅TEXT审阅在途；n95 open边界不保留。
+无ANSWER、CHOICE、DISPLAY或整课批准，未晋升246源或n94课。
+父19/24，新付费调用0；完整课仍3，未新增commit/push或正式handoff。
+
+## 180-4 n92正文图答案收口；n93共享表绑定已修
+
+2026-11-19，n92 FIRST FIG manifest
+`b8099491e53996cf7bda887c40f632b6918c1d5a424c1abd832d83a6bce8c9b5`
+实际绑定271项，4图，审者收取关闭。批准SVG字节不变，仅重绑定来源/
+spec/output路径；正式review、隔离adapt-finalize、answer-prepare、
+语义投影绑定、answer-finalize均首次退出0。原答案17facets未重审；
+投影SHA `1a1a2521633d521b1c119fdb290ba3ea99cfca98b7f9e7ad5d94d55d7ad2b06f`
+保持，auto1/ungraded4。六现代正式文件及四表文件保留，暂无选择/DISPLAY批准。
+choice stage1 manifest
+`c28e61fbadc7208f6883c2b3d28cc25231f6ab504040c984bbd5835e565dee28`
+实际绑定5项；独立解5题后计划3新题，0图，正式现代就绪后才续选项作者。
+
+Huygens共享表解析补丁manifest
+`9266a890b68d6dca8c8a4257c599ab7280e3d99e27d29e5c55e11ea2f2da42e4`
+实际绑定55项并关闭。9针对性测试PASS、7页76块只读集成PASS，
+8条收据中的3次预期缺页/无表/歧义退出2保留，不隐藏为成功调用。
+只识别明确“表（见第N页）”并要求唯一源页/表；n93仅g2-2新增
+tbl-p0241-01引用及一次显示，原表仍归n92。42受保护文件未变，
+不放宽原始快照或现代身份校验。补丁与此前恢复的其它代码差异均未提交。
+
+n93首次装订及受影响表绑定重装各0；20正文对象/8题/0本课图。
+首次adapt-prepare0不重跑；仅更新g2-2图引用及source快照/hash，
+两处相邻粗体布局和登记p0244-math-1的初温减末温修正保留。
+原源码/数字/八题题文未改，n92原始三文件hash不变。
+冻结正文manifest
+`218081762dfb39ec3d25a7706bde72dabd229b72ee435dd9f51831aaafa9220b`。
+独立TEXT/ANSWER SOURCE和独立答案作者在途，不相互披露解或键。
+复用表格只新增n93完整语境的候选metadata，原n92图证据不改；
+新context manifest
+`8d4ca7dfc20788a3e29e586cda385c379146f8759110c64be35a7fa833388abc`
+尚待受影响语境复核，不凭复制视为FIG批准。
+父仍19/24，新付费图服务0，complete_courses仍3；未新commit/push或正式handoff。
+
+## 180-4 恢复接续；246 SOURCE PASS已收取
+
+2026-11-19，最新“继续”“现在可以继续工作了。对”撤销关机暂停。
+从原正式workspace及已保存字节续缺失阶段，不重做恢复或改变refs/锁。
+Confucius新246 SOURCE manifest
+`fb79bf6ce4452e8fd508b35329c73417848c7f297dbd00159ac05cbde91564e6`
+已实际绑定46项并关闭，24行/9块/图226全文PASS，3新图。
+原作者4图、首次绑定失败及历史F246-1/F246-2与1/1保持；
+246尚未晋升，不将n94边界当完整课。n93可用批准242–246接续。
+
+n92 TEXT manifest
+`70b7cc83c8e7d1a54f2d83bee84c6cb464f25acc191766edd360114ce8b7ff3b`
+实际绑定20项PASS；独立ANSWER SOURCE manifest
+`9dcabb4799aeb31f2fd219280abfd862bb47220955b441525619bd1373318901`
+先冻结5题17facets并绑定21项，之后才披露原作者FIRST候选。
+FIRST ANSWER FINAL报告已写PASS，manifest仍待收取，不能替代答案工具收口。
+表作者Turing已返回冻结候选，独立FIG尚缺；一次标题缺陷/一次标题限定修复保留，
+实际7图，数字/32单元格/16材料行未改。父仍19/24，付费图服务新增0。
+完整课仍n159/n160/n164共3，最新实际提交/push为23091b33；
+暂无新commit/push、CHOICE、DISPLAY、DB或正式handoff。
+
+## 180-4 239原生细节仍HOLD；不阻塞n92
+
+2026-11-19，Tesla限定SOURCE细节manifest
+`661a4ccd9115281db257e8a3ba6e6f0d5191551c6f3a155322b968f8b5f241dc`
+已实际绑定29项并关闭。PDF原生扫描无更高分辨率信息；
+①与引号间4×4笔迹不能可靠分类为标点或污点，维持HOLD。
+FIRST整页HOLD与当前源字节均不改；原5图加2新图共7/8，
+不靠放大假称新增信息、不派其它审者重复相同源、不猜逗号。
+父图仍19/24，n91不越HOLD；n92完整240–242来源独立继续。
+
+## 180-4 n92隔离正文候选；246新稿已收取待源审核
+
+2026-11-19，n92仅用批准240/241及新PASS242装订一次0：
+10正文对象、5书写题、1正文表；首240承上页警告属于未选n91，
+边界n93两段未计完整或保留。adapt-prepare一次0，proseFlow为8文字段。
+作者仅合并prose[6]相邻粗体分隔符，原source快照及物理文字/数字/五题不变。
+正文/原题冻结manifest
+`2834a23e9bbe25a8ce471e868da1721a40469b8b7b93cc3a57d8cde649fdca6c`；
+fresh Kuhn全文TEXT及随后先行五题ANSWER SOURCE在途，
+未向其披露作者答案。Turing仅现代表格作者在途，
+必须独立按原表16行/3栏映射全部数字、尾零和英文标签。
+
+作者答案FIRST候选SHA
+`27e5e3899c814c4cf317fe69eb8e458534cf45dd4bba945d390ee5c7ce43f788`，
+derived5、auto1/ungraded4；只是作者稿，尚无KEY FINAL或答案收口。
+没有CHOICE/render/DISPLAY或新增完整n92。
+
+246作者manifest
+`6be1aaa709e87c2245ddba39d2e577ca57a21c0cb009e02365c1d79dd8e30c96`
+已实际绑定141项并关闭Harvey。首次父绑定把历史pre-finalize可写路径
+误当当前hash导致失败，保留；仅排除这一历史可写引用，其冻结旧稿仍绑定，
+当前稿/所有冻结/实际收据全部有效。作者4/8图，1首次finalize0、
+vector0、native0，24/24行、0规范化；canonical226读取ENOENT
+失败保留，未假称原字节重用。fresh Confucius仅新246整页/源图SOURCE在途。
+未晋升246或按246重装n93，不重245/247的既有审批。
+
+## 180-4 新SOURCE242 PASS；239脚注笔迹限定HOLD
+
+2026-11-19，Tesla FIRST manifest
+`c6df1dc05137496bd808d7e7d2810afe39f6af5df96a9a0e959984cb4b2310e2`
+已实际绑定36项；5/8图，当前242全文/五题/所有边界PASS。
+239仅C-239-FOOTNOTE-MARK：p0239#12源行22的①与引号间微小笔迹
+无法判为印刷标点或扫描污点，其余22行/结构/定义续接均PASS。
+不猜标点、不覆盖FIRST HOLD。同审者仅新原像素细节观察在途，
+最多再3图；父图仍19/24。239 metadata旧block编号观察保留。
+n91因239未整体批准不装订；n92使用独立完整240–242范围先推进，
+不把239的局部HOLD变为其它已批准源的全局阻塞。
+
+246现存编辑稿缺失，原prepare一次0；fresh Harvey仅恢复这一源页，
+不回看245/247整页，旧两标点/多字拒绝与1/1计数保留。
+没有SOURCE246批准或新增完整课，三完整课计数不变。
+
+## 180-4 239/242当前稿已机械收口，首次源审核在途
+
+2026-11-19，精确layout候选SHA
+`f861ee2e32536b627ace3a4444a726355633527b9982067368c5342aba170f4a`
+接入后字节一致，所有既有layout改动保留。
+239脚注label修订稿与242原候选另存可写副本，各finalize一次0：
+每页13块、23/23行、5题、0图、0规范化；MD/JSON未被工具改字。
+当前六文件冻结manifest
+`c379b2a916946620d4642e91f822aa9bc4cc822b252828986a43794ab7b8abda`。
+fresh Tesla仅对这两页新字节独立SOURCE审查在途，不能复用未知旧稿PASS。
+
+新增code-owned `test_fraction_short_body_rows.py`与原242 PNG夹具，
+原图SHA `6e9bd9cd4db3940c3497de0100d6207285fdbe46af260f28d191c055960e914d`；
+持久路径测试一次12/12 PASS，不依赖scratch、绝对workspace或旧baseline。
+隔离四候选47项42PASS/5FAIL保持；新持久测试另计12PASS，
+不重隔离candidate测试或全项目检查。历史Volta7PASS/1FAIL不重置。
+241表PNG/SVG已实际绑定到历史批准hash，零重SOURCE/vectorize；
+准备在当前源PASS后隔离装订n91/n92，不晋升半页n90/n93。
+只读查找两个不存在的收据/测试名失败及一次未知JSON字段投影空值
+保留于本聊天工具记录；未触发生产重跑。
+
+## 180-4 n164 已提交推送，239/242机械恢复继续
+
+2026-11-19，窄范围检查PASS：50文件、24JSON，两索引仅新增n164，
+无秘密、app/依赖或其它恢复稿。提交及push实际各退出0，
+`23091b33d3291243e25ff98158ab79dbb5300857`已推同一目标分支。
+接续完整课程n159/n160/n164共3，不是全组review或handoff。
+
+Russell的242隔离候选manifest
+`933d4bc8578060d7eccddd747e5b98cd1ad4d419cb0290b42a963673985b2bf9`
+已实际绑定84项，baseline仍ed49a122，审者已关闭。
+候选12/12、23行与三个精确行带PASS，20其它行带不变；
+四次候选共47项42PASS/5FAIL及Volta历史7PASS/1FAIL全部保留。
+只接入baseline→候选的精确layout增量；SOURCE语义尚未批准，
+下一步只收口239修订稿与242当前稿，再独立审当前bytes。
+
 ## 180-4 n164 暂存执行故障恢复
 
 2026-11-19，首次stage-approved退出1，原因是git ls-tree列出整仓超出

@@ -380,6 +380,34 @@ def figure_sources(book: Path, figures: list[dict]) -> list[dict]:
     return result
 
 
+def lesson_figure_sources(book: Path, lesson: dict, exercises: dict) -> list[dict]:
+    figures = list(lesson.get("figures", []))
+    owned_ids = {figure["id"] for figure in figures}
+    referenced_ids = dict.fromkeys(
+        figure_id
+        for exercise in exercises.get("exercises", [])
+        for figure_id in (
+            *exercise.get("figure_refs", []),
+            *(figure["id"] for figure in exercise.get("figures", [])),
+        )
+    )
+    missing = [figure_id for figure_id in referenced_ids if figure_id not in owned_ids]
+    if missing:
+        stream = assemble.load_stream(book)
+        for figure_id in missing:
+            matches = [
+                block for block in stream
+                if block["kind"] == "fig" and block.get("id") == figure_id
+            ]
+            if len(matches) != 1:
+                raise SystemExit(
+                    f"ERROR: 共享图 {figure_id} 必须对应唯一权威页图块，"
+                    f"找到 {len(matches)} 张"
+                )
+            figures.append(matches[0])
+    return figure_sources(book, figures)
+
+
 def cmd_prepare(args: argparse.Namespace) -> int:
     book = source_dir(args)
     edition = edition_dir(args)
@@ -408,6 +436,7 @@ def cmd_prepare(args: argparse.Namespace) -> int:
         exercises_source = source_ref(book, exercises_path)
         raw_lesson = lesson_source["data"]
         raw_exercises = exercises_source["data"]
+        sources = lesson_figure_sources(book, raw_lesson, raw_exercises)
         target = work_edition / "lessons" / lesson_id
 
         lesson_template = {
@@ -433,7 +462,7 @@ def cmd_prepare(args: argparse.Namespace) -> int:
             "edition": args.edition,
             "lesson": lesson_id,
             "status": "draft",
-            "figures": figure_sources(book, raw_lesson.get("figures", [])),
+            "figures": sources,
         }
         for name, value in (
             ("lesson.template.json", lesson_template),
@@ -448,7 +477,7 @@ def cmd_prepare(args: argparse.Namespace) -> int:
             f"[adapt-prepare] {lesson_id}: "
             f"正文 {len(raw_lesson.get('prose', []))} 块, "
             f"题 {len(raw_exercises.get('exercises', []))} 道, "
-            f"图 {len(raw_lesson.get('figures', []))} 张 -> {target}"
+            f"图 {len(sources)} 张 -> {target}"
         )
         print(f"  完成后写入 {edition / 'lessons' / lesson_id}")
     return 0
@@ -565,8 +594,16 @@ def normalize_prose_layout(text: str) -> str:
             continue
         if char in "。！？；;":
             boundaries.add(index + 1)
+        elif char == ".":
+            previous = masked[index - 1:index] if index else ""
+            following = masked[index + 1:index + 2]
+            if previous != "." and following != "." and not (
+                previous.isdigit() and following.isdigit()
+            ):
+                boundaries.add(index + 1)
         elif char in "：:":
             rest = text[index + 1:].lstrip()
+            rest = re.sub(r"^\*{1,3}(?=\s*\$)", "", rest).lstrip()
             if rest.startswith("$"):
                 boundaries.add(index + 1)
 
@@ -585,7 +622,8 @@ def normalize_prose_layout(text: str) -> str:
             (boundary for boundary in initial_boundaries if boundary <= match.start()),
             default=0,
         )
-        if text[previous:match.start()].strip():
+        prefix = text[previous:match.start()].strip()
+        if prefix and not re.fullmatch(r"\*{1,3}", prefix):
             continue
         trailing = re.match(r"[，,；;]", text[match.end():])
         if trailing and text[match.end() + trailing.end():].strip():
