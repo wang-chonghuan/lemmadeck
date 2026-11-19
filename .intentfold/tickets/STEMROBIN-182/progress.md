@@ -1,6 +1,61 @@
 # 当前开发状态
 
+### 182-4 合法独立工作树续作 2026-11-19
+
+- 正式 create_worktree 完成并附着
+  `/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck`，registrationError=null；
+  detached HEAD 为 `11e7b4fc7400bc1471dbd333d93edea508077b2a`，app/package.json 可读。
+  仅应用恢复 ref `e0c97edebbc54be843e6660fe0ac638973d244b8` 相对 parent 的
+  Git binary diff，451 文件逐 blob 核对零差异。首个核对因 Node maxBuffer
+  ENOBUFS 失败；限制到451路径后成功，不重复生产或内容审查。
+  快照提交不作生产祖先，旧路径/锁/归属/DB均未改；运行时只链接既有依赖，
+  未安装、未修改 lock 或读取 env。
+- 已读取 live182 和最新四条评论、Charter、更新后的 IntentFold cap3/resume
+  约定。n44/n45交付复用；持久 n47 Stage3 FIRST 报告及收据为09:58 PASS，
+  19键/76项/51误区，validator仅原一次0，不重做 source/view/key。
+  n46六显示组合及 n47 既有显示PASS按检查点保留，不另造通过。
+- 首次实际续作命令：production.py prepare-range --repo . --book 7a
+  --first 307 --last 310 --work .tmp/ld-s10y-lesson，四页全部0，
+  原始命令stdout/stderr在新工作树各页prepare.0001.*。
+  这是丢失ignored备料的技术恢复，不计新内容批准或完整课交付；
+  随即续307页忠实转写，303–306原工作稿尚未恢复，局部保留明确缺口。
+  父上下文图片累计0，历史loads/失败/费用不清零；本次费用、host tokens、
+  active time未知。finish=review，不写库、不合并、不部署、不关工单。
+- 首次具体生产产物：307–310四份新可写忠实稿已各一次finalize0，
+  28/28/27/25行，共108行；309图66框吸附为[928,1651,365,268]。
+  稿件在`.tmp/resume182-4-source307-310/artifacts/7a/pages/`，四页首次独立
+  源审已启动，不计批准或整补充课。父实际只读四张grid，累计4；
+  审者独立最多四grid及一裁图，不向父返回图片。
+- n46/n47遗失离线HTML已用原renderer恢复一次，10/7书写题、26/19选择题，
+  没有浏览器或重复显示审查。n46选择HTML实际SHA256仍是原FIRST收据的
+  `766262b2174a7b89ba5fa2551880253141c8b69433f9df1c42c271b4267666a6`。
+  现有n45完整证据里的原四组合收据与逐像素审查记录复用；n46截图字节、
+  n46/n47源显示截图及n47额外显示收据未在本次快照恢复，明确只复用既有
+  PASS记录和用户最新n47显示PASS指令，未伪造找回或新增PASS。
+  n46/n47全部内容/答案/选择已可离线接续，17原题/答案、45选择题/190项，
+  原失败与观察限制原样保留。全项目机械检查仍留最终handoff。
+- 随即续下一有源页批311–314：prepare-range四次0，原命令流在各页
+  prepare.0001.*，为1046后续及第四章补充习题右边界，不制造n48。
+  旧303–306原稿仍未恢复，不以新猜测稿声称原字节恢复。
+
 ### resume182-13 接续 n39答案与n40–n43
+
+- 09:48接续：n45已commit/push11e7b4fc7400bc1471dbd333d93edea508077b2a，
+  一次ls-remote同SHA确认、index空。19原题/答案、48选择题/152项、三现代图
+  和一次批次显示可离线接续；442文件，三条原始证据空白仅按精确哈希豁免，
+  产品/代码空白通过，用户layout/helper/guard/test及n46/n47工作索引字节未改。
+  n47 affected Stage2 PASS三完整降次记录/12项，复用16题/64项及24源任务，
+  N47-VIEW-F01解决，19/76(13单6多)；已授权Stage3全19键/76误区比较，
+  不重解源或重复Stage2。n46全部六显示组合已绿，等待下一批完整交付。
+  297/298 affected3静态PASS，已按批准a7630955精确集成，剥离用户helper/guard
+  后字节同候选，helper哈希保持cda274fb；正常finalize各一次0，18/21行、
+  零规范化，原失败/四fixture/两反例/嵌套control证据保留不重跑。
+  299–302原1006符号HOLD经一次native crop确认1/no-text-change，
+  原inventory误读-1保留；四页12文件按批准字节提升，原4失败+4恢复不变。
+  303–306四源独审109行、零图，确认仅两文字/四句读差异，1021一行字词与6/16
+  仍待独立一次原生crop；父仅委托新可写受影响文本候选，无猜数或全页重开。
+  307–310四图作者继续，尚无整补充课交付。无DB/app/deps/新付费图/合并部署关闭，
+  全Charter检查留最终handoff；费用/host tokens/active time未知。
 
 - 09:08准备n45单课小批交付：19原题/答案、57任务、48选择题/152项及三图
   均已有一次独审及受影响修订批准。choice显示FIRST四组合中n45两组合、
