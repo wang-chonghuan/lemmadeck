@@ -171,6 +171,35 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
             rules.append((columns.start, columns.stop - 1))
     if not rules:
         return False
+    glyphs = []
+    tall_glyphs = []
+    for component_id, bounds in enumerate(glyph_bounds, 1):
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        if (
+            0.5 * line_h <= rows.stop - rows.start <= 1.5 * line_h
+            and 0.2 * line_h <= columns.stop - columns.start <= 1.6 * line_h
+            and np.count_nonzero(components[bounds] == component_id) >= 0.06 * line_h ** 2
+            and not any(
+                rule_left - 0.5 * line_h <= (columns.start + columns.stop - 1) / 2
+                <= rule_right + 0.5 * line_h
+                for rule_left, rule_right in rules
+            )
+        ):
+            glyphs.append(((rows.start + rows.stop - 1) / 2, columns.start, columns.stop))
+        elif (
+            1.8 * line_h <= rows.stop - rows.start <= 3.2 * line_h
+            and 0.6 * line_h <= columns.stop - columns.start <= 6 * line_h
+        ):
+            tall_glyphs.append(((rows.start + rows.stop - 1) / 2, columns.start, columns.stop))
+    for centre, left, right in tall_glyphs:
+        for other_centre, other_left, other_right in glyphs:
+            if (
+                other_centre - centre >= 0.55 * line_h
+                and max(other_left - right, left - other_right) >= 1.5 * line_h
+            ):
+                return False
     for left, right in rules:
         margin = int(0.5 * line_h)
         band[:, max(0, left - margin):min(band.shape[1], right + margin + 1)] = False
@@ -188,6 +217,55 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
     counts = band.sum(axis=1)
     remaining = np.flatnonzero(counts > max(8, 0.25 * counts.max()))
     return not remaining.size or remaining[-1] - remaining[0] + 1 <= 2.0 * line_h
+
+
+def _short_fraction_fragments(
+    ink: np.ndarray, prev_a: int, prev_b: int, a: int, b: int, glyph_h: float,
+) -> tuple[int, int] | None:
+    """Recover a narrow numerator when a short fraction rule and denominator split."""
+    if (
+        max(prev_b - prev_a + 1, b - a + 1) >= 0.85 * glyph_h
+        or a - prev_b > 1.25 * glyph_h
+        or b - prev_a + 1 > 3.2 * glyph_h
+    ):
+        return None
+    top = max(0, int(prev_a - 1.4 * glyph_h))
+    components, _ = ndimage.label(ink[top:b + 1])
+    bounds_list = ndimage.find_objects(components)
+    lower_x = np.flatnonzero(ink[a:b + 1].any(axis=0))
+    if not lower_x.size:
+        return None
+    for bounds in bounds_list:
+        if bounds is None:
+            continue
+        rows, columns = bounds
+        rule_top, rule_bottom = rows.start + top, rows.stop + top - 1
+        left, right = columns.start, columns.stop - 1
+        if not (
+            prev_a <= rule_top <= rule_bottom <= prev_b
+            and rows.stop - rows.start <= 0.25 * glyph_h
+            and columns.stop - columns.start >= 1.2 * glyph_h
+            and left - 0.15 * glyph_h <= lower_x[0] <= lower_x[-1] <= right + 0.15 * glyph_h
+        ):
+            continue
+        numerators = [
+            other[0].start + top
+            for other in bounds_list if other is not None
+            if 0.4 * glyph_h <= other[0].stop - other[0].start <= 1.5 * glyph_h
+            and other[0].stop + top <= rule_top
+            and rule_top - (other[0].stop + top) <= 0.5 * glyph_h
+            and left <= (other[1].start + other[1].stop - 1) / 2 <= right
+        ]
+        denominator = any(
+            other is not None
+            and a <= other[0].start + top <= other[0].stop + top - 1 <= b
+            and 0.4 * glyph_h <= other[0].stop - other[0].start <= 1.5 * glyph_h
+            and left <= (other[1].start + other[1].stop - 1) / 2 <= right
+            for other in bounds_list
+        )
+        if numerators and denominator:
+            return min(prev_a, min(numerators)), b
+    return None
 
 
 def _small_prose_continuation(
@@ -278,6 +356,61 @@ def _fraction_denominator(ink, rows, columns, bounds_list, glyph_h: float) -> bo
         ):
             return True
     return False
+
+
+def _small_prose_row_bands(
+    ink: np.ndarray, a: int, b: int, glyph_h: float,
+) -> list[tuple[int, int]]:
+    """Recover slanted small-font rows from full glyphs, not body-font pitch."""
+    components, _ = ndimage.label(ink)
+    bounds_list = ndimage.find_objects(components)
+    glyphs = [
+        (rows, columns)
+        for bounds in bounds_list if bounds is not None
+        for rows, columns in [bounds]
+        if a <= (rows.start + rows.stop - 1) / 2 <= b
+        and 0.6 * glyph_h <= rows.stop - rows.start <= 1.1 * glyph_h
+        and 0.5 * (rows.stop - rows.start) <= columns.stop - columns.start
+        <= 1.4 * (rows.stop - rows.start)
+    ]
+    if len(glyphs) < 6:
+        return []
+    local_h = float(np.median([r.stop - r.start for r, _ in glyphs]))
+    if local_h > 0.9 * glyph_h:
+        return []
+    glyphs = [
+        (r, c) for r, c in glyphs
+        if not _fraction_denominator(ink, r, c, bounds_list, local_h)
+    ]
+    groups = []
+    last_centre = None
+    for rows, columns in sorted(glyphs, key=lambda glyph: sum(
+        (glyph[0].start, glyph[0].stop)
+    )):
+        centre = (rows.start + rows.stop - 1) / 2
+        if last_centre is None or centre - last_centre > 0.75 * local_h:
+            groups.append([])
+        groups[-1].append((rows, columns))
+        last_centre = centre
+    if len(groups) < 2 or any(len(group) < 3 for group in groups):
+        return []
+    bands = []
+    lefts = []
+    heights = []
+    for group in groups:
+        top = min(r.start for r, _ in group)
+        bottom = max(r.stop - 1 for r, _ in group)
+        if bottom - top + 1 > 1.8 * local_h:
+            return []
+        bands.append((top, bottom))
+        lefts.append(min(c.start for _, c in group))
+        heights.append(float(np.median([r.stop - r.start for r, _ in group])))
+    if (
+        max(lefts) - min(lefts) > 2.5 * local_h
+        or max(heights) - min(heights) > 0.25 * local_h
+    ):
+        return []
+    return bands
 
 
 def _connected_radical_row(
@@ -452,6 +585,13 @@ def line_bands(
     for a, b in merged:
         if joined:
             prev_a, prev_b = joined[-1]
+            fraction_row = _short_fraction_fragments(
+                ink, prev_a, prev_b, a, b, glyph_h
+            )
+            if fraction_row is not None:
+                joined[-1] = fraction_row
+                fraction_starts.add(fraction_row[0])
+                continue
             if _connected_radical_row(ink, prev_a, prev_b, a, b, glyph_h):
                 joined[-1] = (prev_a, b)
                 radical_starts.add(prev_a)
@@ -519,6 +659,10 @@ def line_bands(
             a not in fraction_starts and a not in radical_starts
             and band_h > 1.8 * typical_h and pitch > 0
         ):
+            small_prose_rows = _small_prose_row_bands(ink, a, b, glyph_h)
+            if small_prose_rows:
+                expanded.extend(small_prose_rows)
+                continue
             # Brace-connected rows are often shorter than an integral pitch
             # multiple. Count the nearest number of row centres, not a floor.
             count = max(2, int(round((band_h + typical_gap) / pitch)))

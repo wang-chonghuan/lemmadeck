@@ -135,7 +135,13 @@ def _authoritative_source_targets(
 ) -> dict[str, dict[str, str]]:
     stream = assemble.load_stream(book)
     merged, _ = assemble.merge_across_pages(stream)
-    candidates = assemble.cut_lessons(merged)
+    toc = (
+        Path(__file__).resolve().parents[4]
+        / "ssot-resources/soviet10year-textbooks/toc"
+        / book.name / "zh.json"
+    )
+    toc_cards = assemble._toc_cards(load(toc)) if toc.is_file() else []
+    candidates = assemble.cut_lessons(merged, toc_cards)
     numbering = "book"
     book_path = book / "book.json"
     if book_path.exists():

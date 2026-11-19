@@ -96,22 +96,37 @@ def merge_across_pages(stream: list[dict]) -> tuple[list[dict], list[str]]:
     return out, warn
 
 
-def cut_lessons(stream: list[dict]) -> list[dict]:
-    """h3 开一节。h1/h2 记作祖先标题，跟着下一节走。"""
+def cut_lessons(stream: list[dict], toc_cards: list[dict] | None = None) -> list[dict]:
+    """h3 或目录中独立的 exhead 开卡；普通习题栏目仍留在原课。"""
     lessons, pending = [], {"h1": None, "h2": None}
     cur = None
     heading_sources = []
+    unnumbered_cards = [
+        card for card in (toc_cards or []) if _card_printed_number(card) is None
+    ]
     for b in stream:
         if b["kind"] in ("h1", "h2"):
             pending[b["kind"]] = B.text_of(b)
             if b["kind"] == "h1":
                 pending["h2"] = None
             continue
-        if b["kind"] == "h3":
+        independent_exhead = False
+        if b["kind"] == "exhead":
+            title = B.text_of(b)
+            identity_title = title[2:-2] if title.startswith("**") and title.endswith("**") else title
+            matches = [
+                card for card in unnumbered_cards
+                if card.get("page") == b.get("printed_page")
+                and card.get("title") == identity_title
+            ]
+            if len(matches) > 1:
+                raise ValueError(f"{b['ref']}: 独立习题标题对应多个目录卡片")
+            independent_exhead = len(matches) == 1
+        if b["kind"] == "h3" or independent_exhead:
             title = B.text_of(b)
             # Whole-heading emphasis is presentation, not the printed identity.
             identity_title = title[2:-2] if title.startswith("**") and title.endswith("**") else title
-            m = SEC_NUM.match(identity_title)
+            m = None if independent_exhead else SEC_NUM.match(identity_title)
             cur = {"chapter": pending["h1"], "section": pending["h2"],
                    "number": m.group(1) if m else None,
                    "title": m.group(2).strip() if m else identity_title,
@@ -119,7 +134,8 @@ def cut_lessons(stream: list[dict]) -> list[dict]:
                    "start_page": b["page"], "start_printed": b.get("printed_page")}
             lessons.append(cur)
             heading_sources.append((cur, b))
-            continue
+            if not independent_exhead:
+                continue
         if b["kind"] == "foot":
             continue
         if b["kind"] == "p" and b.get("label") == "footnote":
@@ -283,15 +299,18 @@ def _figure_owner(figure: dict, exercises: list[dict]) -> dict:
 
 def promote_figures(book: Path, work: Path | None, warnings: list[str]) -> None:
     """Promote rebuilt page figures without clearing the durable book library."""
+    page_root = work if work is not None else book
+    pngs = sorted(page_root.glob("pages/*/figures/*.png"))
+    seen = {}
+    for png in pngs:
+        if png.stem in seen:
+            raise ValueError(
+                f"图号 {png.stem} 在 {seen[png.stem]} 和 {png.parent.parent.name} "
+                "各出现一次，来源身份不唯一，不能覆盖")
+        seen[png.stem] = png.parent.parent.name
     library = book / "figures"
     library.mkdir(parents=True, exist_ok=True)
-    page_root = work if work is not None else book
-    seen = {}
-    for png in sorted(page_root.glob("pages/*/figures/*.png")):
-        if png.stem in seen:
-            warnings.append(
-                f"图号 {png.stem} 在 {seen[png.stem]} 和 {png.parent.parent.name} 各出现一次")
-        seen[png.stem] = png.parent.parent.name
+    for png in pngs:
         for source in (png, png.with_suffix(".svg")):
             if source.exists():
                 shutil.copy2(source, library / source.name)
@@ -301,18 +320,54 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
     """按语义认领图：正文图留正文，练习共享图只在练习区展示一次。"""
     errors, warn = [], []
     fig_by_num, all_figs = {}, []
+    split_numbers = {
+        suffix[0]
+        for block in stream if block["kind"] == "fig"
+        if (suffix := B.figure_suffix(block.get("label")))
+    }
+    refs = lambda text: B.figure_refs(text, split_numbers)
+    seen_ids = {}
     for b in stream:
         if b["kind"] != "fig":
             continue
         all_figs.append(b)
-        for n in FIGREF.findall(b.get("label") or ""):
+        if b["id"] in seen_ids:
+            errors.append(
+                f"{b['id']}: 来源身份重复于 {seen_ids[b['id']]} 和 {b['ref']}，"
+                "必须核对印刷标签，不能覆盖")
+        seen_ids[b["id"]] = b["ref"]
+        if B.figure_suffix(b.get("label")) and b["id"] != B.fig_id(b["label"], b["page"], 1):
+            errors.append(f"{b['ref']}: {b['id']} 不匹配明确的印刷标签 {b['label']}")
+        for n in refs(b.get("label") or ""):
             fig_by_num.setdefault(n, []).append(b)
+
+    def check_refs(text: str, owner: str) -> list[str]:
+        keys = refs(text)
+        for key in dict.fromkeys(keys):
+            if key in split_numbers:
+                errors.append(f"{owner}: 图 {key} 已分为明确后缀，引用未指定后缀，归属不唯一")
+            elif (
+                key not in fig_by_num
+                and (match := re.fullmatch(r"(\d+)[A-Za-z\u0400-\u04ff]", key))
+                and match.group(1) in split_numbers
+            ):
+                errors.append(f"{owner}: 精确引用「图 {key}」没有对应来源图")
+        return keys
+
+    for lesson in lessons:
+        for block in lesson["prose"]:
+            if block["kind"] not in ("fig", "cap"):
+                check_refs(B.text_of(block), block["ref"])
+        for exercise in lesson["exercises"]:
+            check_refs(exercise["text"], f"第 {exercise['number']} 题")
+    if errors:
+        return errors, warn
 
     prose_users: dict[str, set[int]] = {}
     for index, lesson in enumerate(lessons):
         for block in lesson["prose"]:
             if block["kind"] not in ("fig", "cap"):
-                for number in FIGREF.findall(B.text_of(block)):
+                for number in refs(B.text_of(block)):
                     prose_users.setdefault(number, set()).add(index)
 
     # A figure printed before a new heading can belong to that next unit's prose.
@@ -320,7 +375,7 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
         for figure in list(lesson["blocks"]):
             if figure["kind"] != "fig" or figure.get("owner_exercise"):
                 continue
-            numbers = set(FIGREF.findall(figure.get("label") or ""))
+            numbers = set(refs(figure.get("label") or ""))
             users = set().union(*(prose_users.get(number, set()) for number in numbers))
             if not users or source_index in users:
                 continue
@@ -332,7 +387,7 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
                 block for block in lesson["blocks"]
                 if block is figure or (
                     block["kind"] == "cap"
-                    and (caption_numbers := set(FIGREF.findall(
+                    and (caption_numbers := set(refs(
                         " ".join(filter(None, (block.get("label"), B.text_of(block))))
                     )))
                     and caption_numbers <= numbers
@@ -346,7 +401,7 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
                 insertion = next(
                     (index for index, block in enumerate(target[collection])
                      if block["kind"] not in ("fig", "cap")
-                     and numbers & set(FIGREF.findall(B.text_of(block)))),
+                     and numbers & set(refs(B.text_of(block)))),
                     0,
                 )
                 target[collection][insertion:insertion] = moving
@@ -356,7 +411,7 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
         for caption in list(lesson["blocks"]):
             if caption["kind"] != "cap":
                 continue
-            numbers = set(FIGREF.findall(
+            numbers = set(refs(
                 " ".join(filter(None, (caption.get("label"), B.text_of(caption))))
             ))
             users = set().union(*(prose_users.get(number, set()) for number in numbers))
@@ -367,7 +422,7 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
                 block for block in target["blocks"]
                 if block["kind"] == "fig"
                 and not block.get("owner_exercise")
-                and numbers <= set(FIGREF.findall(block.get("label") or ""))
+                and numbers <= set(refs(block.get("label") or ""))
                 and block.get("page") == caption.get("page")
             ]
             if len(figures) != 1:
@@ -430,11 +485,11 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
             n
             for block in lesson["prose"]
             if block["kind"] not in ("fig", "cap")
-            for n in FIGREF.findall(B.text_of(block))
+            for n in refs(B.text_of(block))
         }
         exercise_users: dict[str, list[dict]] = {}
         for exercise in lesson["exercises"]:
-            for n in dict.fromkeys(FIGREF.findall(exercise["text"])):
+            for n in dict.fromkeys(refs(exercise["text"])):
                 referenced.add(n)
                 exercise_users.setdefault(n, []).append(exercise)
                 for figure in fig_by_num.get(n, []):
@@ -457,7 +512,7 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
             if block["kind"] == "fig" and block.get("id") in explicitly_owned:
                 continue
             label_text = " ".join(filter(None, (block.get("label"), B.text_of(block))))
-            nums = set(FIGREF.findall(label_text))
+            nums = set(refs(label_text))
             exercise_only = (
                 block["kind"] in ("fig", "cap")
                 and nums
@@ -469,13 +524,13 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
         lesson["prose"] = kept_prose
 
         for b in lesson["prose"]:
-            for n in FIGREF.findall(B.text_of(b)):
-                referenced.add(n)
+            if b["kind"] not in ("fig", "cap"):
+                referenced.update(refs(B.text_of(b)))
         lesson["figures"] = [{"id": b["id"], "label": b.get("label"), "page": b["page"]}
                              for b in lesson["blocks"] if b["kind"] == "fig"]
 
     for f in all_figs:
-        nums = FIGREF.findall(f.get("label") or "")
+        nums = refs(f.get("label") or "")
         if nums and not (set(nums) & referenced):
             warn.append(f"{f['id']}（{f.get('label')}）全书没有任何正文引用它")
     return errors, warn
@@ -518,6 +573,12 @@ def audit(
 ) -> dict:
     """对象级对账。页级像素对账管不到的东西，这里全能看见。"""
     errors, warns = [], []
+    split_numbers = {
+        suffix[0]
+        for block in stream if block["kind"] == "fig"
+        if (suffix := B.figure_suffix(block.get("label")))
+    }
+    refs = lambda text: B.figure_refs(text, split_numbers)
 
     if exercise_numbering not in {"book", "lesson", "lesson-group"}:
         errors.append(f"未知 exercise numbering scope: {exercise_numbering!r}")
@@ -613,19 +674,19 @@ def audit(
             n
             for block in lesson["prose"]
             if block["kind"] not in ("fig", "cap")
-            for n in FIGREF.findall(B.text_of(block))
+            for n in refs(B.text_of(block))
         }
         exercise_refs = {
             n
             for exercise in lesson["exercises"]
-            for n in FIGREF.findall(exercise["text"])
+            for n in refs(exercise["text"])
         }
         leaked = []
         for block in lesson["prose"]:
             if block["kind"] not in ("fig", "cap"):
                 continue
             label_text = " ".join(filter(None, (block.get("label"), B.text_of(block))))
-            nums = set(FIGREF.findall(label_text))
+            nums = set(refs(label_text))
             if nums and nums <= exercise_refs and not (nums & real_prose_refs):
                 leaked.append(block.get("id") or block.get("label") or block["ref"])
         if leaked:
@@ -784,7 +845,8 @@ def run(
         return 2
 
     merged, warn_merge = merge_across_pages(stream)
-    lessons = cut_lessons(merged)
+    toc_cards = _toc_cards(json.loads(toc.read_text(encoding="utf-8"))) if toc else []
+    lessons = cut_lessons(merged, toc_cards)
     for l in lessons:
         l["prose"], l["exercises"] = split_lesson(l, exercise_numbering)
     figure_errors, warn_fig = claim_figures(lessons, merged)
@@ -801,7 +863,15 @@ def run(
 
     # 全书图库：.tmp 页目录里的裁图按原书图号提升，重号即报。
     # 只覆盖本次重建的图，不清空已有图库；这样删掉 .tmp 后重新 assemble 也不会丢图。
-    promote_figures(book, work, report["warnings"])
+    if figure_errors:
+        for error in figure_errors:
+            print(f"ERROR: {error}", file=sys.stderr)
+        return 1
+    try:
+        promote_figures(book, work, report["warnings"])
+    except ValueError as error:
+        print(f"ERROR: {error}", file=sys.stderr)
+        return 1
 
     out = book / "lessons"
     existing_exercises = {}

@@ -325,6 +325,32 @@ TEMPLATE = """---
 """
 
 
+def _validate_page_enums(blocks: list[dict], profile: dict) -> list[str]:
+    if profile.get("enum_marker_script") != "cyrillic":
+        return []
+    figure_labels = {
+        re.sub(r"[ \t]", "", b.get("label") or "")
+        for b in blocks if b["kind"] in ("fig", "cap")
+    }
+    errors = []
+    for i, b in enumerate(blocks):
+        text = B.text_of(b, join="\n")
+        for marker in ENUM_LINE.finditer(text):
+            key = marker.group(1)
+            if nz.enum_key_script(key) in ("cyrillic", "numeric"):
+                continue
+            # A printed prose line may split a known figure label before its suffix.
+            prefix = re.search(
+                r"[（(](图[ \t]*[0-9]+)[ \t]*\n[ \t]*\Z",
+                text[:marker.start(1)],
+            )
+            if (b["kind"] == "p" and prefix and key.isascii()
+                    and re.sub(r"[ \t]", "", prefix.group(1)) + key in figure_labels):
+                continue
+            errors.append(f"{b['kind']}#{i+1}: 小问标号 {key!r} 不是西里尔")
+    return errors
+
+
 def _validate_page_errata(meta: dict, blocks: list[dict], page: int) -> list[str]:
     records = meta.get("errata", [])
     if not isinstance(records, list):
@@ -539,13 +565,7 @@ def cmd_finalize(a) -> int:
             continue
         errors.append(e)
 
-    for i, b in enumerate(blks):
-        if profile.get("enum_marker_script") != "cyrillic":
-            break
-        for key in ENUM_LINE.findall(B.text_of(b, join="\n")):
-            if nz.enum_key_script(key) not in ("cyrillic", "numeric"):
-                errors.append(f"{b['kind']}#{i+1}: 小问标号 {key!r} 不是西里尔")
-
+    errors += _validate_page_enums(blks, profile)
     errors += _validate_page_errata(meta, blks, a.page)
 
     if meta.get("printed_page") is None:

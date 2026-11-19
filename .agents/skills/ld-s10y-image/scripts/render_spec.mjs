@@ -137,6 +137,70 @@ function chromeExecutable() {
   return executable
 }
 
+function materializeVectorAccents(text) {
+  const original = text.textContent
+  if (!original.includes('\u20d7')) return () => text.getBBox()
+  const characters = []
+  const accents = []
+  for (const character of original) {
+    if (character === '\u20d7') {
+      if (!/^[\p{L}\p{N}]$/u.test(characters.at(-1) || '') ||
+          accents.at(-1) === characters.length - 1) {
+        throw new Error(`Unsupported vector accent in label: ${original}`)
+      }
+      accents.push(characters.length - 1)
+    } else {
+      characters.push(character)
+    }
+  }
+  const namespace = 'http://www.w3.org/2000/svg'
+  const group = document.createElementNS(namespace, 'g')
+  group.setAttribute('data-vector-label', original)
+  group.setAttribute('role', 'img')
+  group.setAttribute('aria-label', original)
+  text.before(group)
+  group.appendChild(text)
+  text.textContent = characters.join('')
+  text.setAttribute('data-label-text', original)
+  text.setAttribute('aria-hidden', 'true')
+  const size = Number.parseFloat(text.getAttribute('font-size'))
+  const paths = accents.map(() => {
+    const accent = document.createElementNS(namespace, 'path')
+    accent.setAttribute('data-vector-accent', 'U+20D7')
+    accent.setAttribute('fill', 'none')
+    accent.setAttribute('stroke', text.getAttribute('fill'))
+    accent.setAttribute('stroke-width', String(size * 0.05))
+    accent.setAttribute('stroke-linecap', 'round')
+    accent.setAttribute('stroke-linejoin', 'round')
+    group.appendChild(accent)
+    return accent
+  })
+  return () => {
+    // Measure after anchoring so the accent follows its base, not a subscript.
+    for (const [index, character] of accents.entries()) {
+      const extent = text.getExtentOfChar(character)
+      const width = Math.max(size * 0.45, extent.width * 0.95)
+      const left = extent.x + (extent.width - width) / 2
+      const right = left + width
+      const y = extent.y + size * 0.16
+      const head = size * 0.09
+      paths[index].setAttribute(
+        'd',
+        `M${left} ${y}H${right}M${right - head} ${y - head}` +
+        `L${right} ${y}L${right - head} ${y + head}`,
+      )
+    }
+    const rect = group.getBBox()
+    const padding = size * 0.025
+    return {
+      x: rect.x - padding,
+      y: rect.y - padding,
+      width: rect.width + padding * 2,
+      height: rect.height + padding * 2,
+    }
+  }
+}
+
 async function render(spec, output) {
   const boardId = rendererBoardId(spec.id)
   const browser = await chromium.launch({
@@ -185,6 +249,9 @@ async function render(spec, output) {
     await page.addScriptTag({ path: jsxgraphPath })
     await page.addScriptTag({
       content: `window.materializeArrowheads = ${materializeArrowheads.toString()}`,
+    })
+    await page.addScriptTag({
+      content: `window.materializeVectorAccents = ${materializeVectorAccents.toString()}`,
     })
 
     const result = await page.evaluate(({ figureSpec, boardId }) => {
@@ -713,6 +780,7 @@ async function render(spec, output) {
         node.setAttribute('dominant-baseline', label.dominantBaseline)
         node.setAttribute('data-label-id', label.id)
         labelLayer.appendChild(node)
+        const measureLabel = window.materializeVectorAccents(node)
 
         const [anchorX, anchorY] = toScreen(label.at)
         const gap = label.placement.gap ?? Math.max(10, label.fontSize * 0.45)
@@ -742,7 +810,7 @@ async function render(spec, output) {
             String(anchorY + yDirection * gap + offset[1]),
           )
           node.setAttribute('text-anchor', label.textAnchor || anchor)
-          const rect = node.getBBox()
+          const rect = measureLabel()
           const padded = inflate(rect, minGap)
           const overlap = [...avoid, ...occupied].reduce(
             (sum, other) => sum + overlapArea(padded, other),
@@ -775,6 +843,7 @@ async function render(spec, output) {
         node.setAttribute('x', best.x)
         node.setAttribute('y', best.y)
         node.setAttribute('text-anchor', best.anchor)
+        measureLabel()
         occupied.push(inflate(best.rect, minGap))
         if (best.score > 0.5) {
           collisions.push({
@@ -805,7 +874,7 @@ async function render(spec, output) {
           const scale = matrix ? Math.hypot(matrix.a, matrix.b) : 0
           return {
             id: node.getAttribute('data-label-id'),
-            text: node.textContent,
+            text: node.getAttribute('data-label-text') || node.textContent,
             px: fontSize * scale,
           }
         })

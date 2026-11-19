@@ -181,7 +181,7 @@ p.para.section{border-top:1px solid var(--rule);margin-top:1.5em;padding-top:1.3
 .figure-layered{display:grid}
 .figure-layered>.figure-artwork,.figure-layered>.figure-vector{grid-area:1/1}
 .figure-vector{display:block;width:100%;max-width:100%;height:auto}
-.nb{display:inline-block;box-sizing:border-box;max-width:100%;overflow-x:auto;overflow-y:hidden;padding:.15em .1em;vertical-align:middle;white-space:nowrap}
+.nb{display:inline-block;box-sizing:border-box;max-width:100%;overflow-x:auto;overflow-y:hidden;padding:.15em .1em .25em;vertical-align:middle;white-space:nowrap}
 .err{color:#a3341f;background:#fdeeea;padding:1px 5px;border-radius:3px}
 .exgroup{margin:2.2em 0 .8em;font-weight:700;font-size:1.05em;
   border-left:3px solid var(--accent);padding-left:.6em}
@@ -248,7 +248,9 @@ for (const lid of lessonDirs) {
     if (e.group !== group) {
       if (out) out += "</ol>";
       group = e.group;
-      const groupLabel = (english && englishExerciseGroups.get(group)) || group;
+      const numberedGroup = english && /^练习\s+([0-9]+)$/.exec(group || "");
+      const groupLabel = (english && englishExerciseGroups.get(group))
+        || (numberedGroup && `Exercise ${numberedGroup[1]}`) || group;
       out += `<div class="exgroup">${inline(groupLabel || (english ? "Exercises" : "练习"))}</div><ol class="ex">`;
     }
     const figs = (e.figures || [])

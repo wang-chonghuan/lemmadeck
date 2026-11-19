@@ -31,6 +31,27 @@ FLAG = re.compile(r"\b(cont|open|samerow)\b")
 OWNER = re.compile(r"\bowner-ex\s+([A-Za-z0-9._:-]+)\b")
 WRAP = "↵"
 KINDS_TEXT = ("h1", "h2", "h3", "p", "exhead", "ex", "cap", "foot")
+FIGURE_REFERENCE = re.compile(
+    r"图\s*\$?\s*(\d+)(?!\d)(?:\s*\$)?\s*"
+    r"([A-Za-z\u0400-\u04ff])?(?![A-Za-z\u0400-\u04ff])"
+)
+FIGURE_LABEL = re.compile(FIGURE_REFERENCE.pattern + r"\s*\$?")
+
+
+def figure_suffix(label: str | None) -> tuple[str, str] | None:
+    """Only a complete, single-part printed label declares a separate suffix."""
+    match = FIGURE_LABEL.fullmatch((label or "").strip())
+    if match and match.group(2):
+        return match.group(1), match.group(2)
+    return None
+
+
+def figure_refs(text: str, split_numbers: set[str]) -> list[str]:
+    """Keep exact suffixes only for numbers declared as separate source figures."""
+    return [
+        number + (suffix or "") if number in split_numbers else number
+        for number, suffix in FIGURE_REFERENCE.findall(text)
+    ]
 
 
 def fig_id(label: str, page: int, seq: int) -> str:
@@ -39,6 +60,9 @@ def fig_id(label: str, page: int, seq: int) -> str:
     页内序号（fig-01/02）不行：同一张图的引用可能在邻页，题目里写的是「图 7」。
     没有印刷编号的（课程表这类）才退回按页编号。
     """
+    if suffix := figure_suffix(label):
+        number, letter = suffix
+        return "fig-" + number.zfill(2) + letter
     nums = re.findall(r"\d+", label or "")
     if nums:
         return "fig-" + "-".join(n.zfill(2) if i == 0 else n for i, n in enumerate(nums))

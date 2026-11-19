@@ -1,0 +1,181 @@
+{
+  "ticket": "STEMROBIN-181",
+  "card": "phy10-c2-s4-n99",
+  "batch": "batch-3",
+  "reviewBatchIndex": 2,
+  "status": "PASS",
+  "visualStatus": "PASS",
+  "scope": "Late recovery of the failed instruction-file lookup only; existing eight visual PASS observations are reused unchanged.",
+  "holdReasons": [],
+  "recovery": {
+    "failureKind": "TECHNICAL-INSTRUCTION-PATH-LOOKUP",
+    "previousStatus": "HOLD",
+    "originalHoldWasContentFailure": false,
+    "originalHoldReason": "Required imagebatches and lessonproduction-resume instruction paths were not located or read.",
+    "cause": "The initial lookup treated the instruction labels as filenames and did not resolve the actual Image batches section and production-resume.md reference.",
+    "correction": "Read both exact existing absolute document paths supplied by the latest direct human instruction, then checked the retained report and open log against their rules.",
+    "readTiming": "LATE: both documents were read after the original eight image opens and the FIRST HOLD report, during this explicitly authorized lookup-only recovery.",
+    "preReviewInstructionReadClaim": false,
+    "visualReviewReplayed": false,
+    "visualObservationsChanged": false,
+    "recoveryIsNewContentApproval": false,
+    "scopedPassBasis": "The sole technical lookup HOLD is resolved by actual document reads; the already-completed visual PASS and its bindings remain the evidence for this batch."
+  },
+  "instructionReads": [
+    {
+      "label": "imagebatches",
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.agents/skills/ld-s10y-image/SKILL.md",
+      "sha256": "d31ecbea164b4c5c0ac781146976f50381466ae4a8931486bdb2e92e29015747",
+      "section": "Image batches",
+      "actualRead": true,
+      "tool": "functions.exec_command",
+      "command": "sed -n '1,260p' /Users/yong/.codex/worktrees/00b1/lemmadeck/.agents/skills/ld-s10y-image/SKILL.md",
+      "workdir": "/Users/yong/.codex/worktrees/00b1/lemmadeck",
+      "timing": "late-lookup-recovery"
+    },
+    {
+      "label": "lessonproduction-resume",
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/references/production-resume.md",
+      "sha256": "8d489fdcdd1a00866e951958009f6c8602e6b970108f8e7fc87368c3197b6a58",
+      "section": "Full document: Small-batch production and recovery",
+      "actualRead": true,
+      "tool": "functions.exec_command",
+      "command": "sed -n '1,300p' /Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/references/production-resume.md",
+      "workdir": "/Users/yong/.codex/worktrees/00b1/lemmadeck",
+      "timing": "late-lookup-recovery"
+    }
+  ],
+  "retainedEvidence": {
+    "firstReport": {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1254-n98n99-first-display-reviews/n99/batch-3/report.json",
+      "sha256": "c5391936787987c61dddefd329d482ecbab3a5b8c056af133b9e259d3f029384",
+      "statusRetained": "HOLD",
+      "visualStatusRetained": "PASS",
+      "modified": false
+    },
+    "usage": {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1254-n98n99-first-display-reviews/n99/batch-3/usage.json",
+      "sha256": "32e78acae8251a2667402d2c62e51bcf0b92886cc175cb65537d73f5531b3db0",
+      "statusRetained": "HOLD",
+      "modified": false
+    },
+    "inputReport": {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1243-n98n99-first-display/n99-recovery/report.json",
+      "sha256": "ab6eeba9671547c8dd99923a75d3f6fc22bf53d4282cd3c0c0f8ca59b741eaf0",
+      "bindingSource": "retained firstReport.input",
+      "rereadDuringRecovery": false,
+      "modified": false
+    },
+    "unchangedVisualBinding": {
+      "targetsPointer": "/targets",
+      "targetsJsonSha256": "2c7de867cf2d896940a229fb94d90af313710109717973037f46db52391aed6a",
+      "visualSummaryPointer": "/visualSummary",
+      "visualSummaryJsonSha256": "136ae29a45d218af413a38cca12187fe021fe64105c424ab47744cfa7dcc50ec",
+      "openLogPointer": "/imageOpenLog",
+      "openLogJsonSha256": "783a7c95e4fd6ed739b2b67f1b0fadcfcea8c633cc6ad56e144b444e856a0d6f",
+      "serialization": "SHA256 of UTF-8 JSON.stringify(parsed referenced value), without whitespace or trailing newline.",
+      "observationAndCaptureBindingOwner": "retained firstReport.targets",
+      "imageOpenLogOwner": "retained usage.imageOpenLog",
+      "targetsRetained": 8,
+      "targetStatuses": [
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS",
+        "PASS"
+      ],
+      "captureBindingsChanged": false,
+      "observationsChanged": false,
+      "imageBytesReadDuringRecovery": false
+    }
+  },
+  "ruleChecks": [
+    {
+      "ruleSource": "imagebatches: Image batches",
+      "rule": "At most eight images per batch; every load, reopen, and crop counts toward the current-context maximum of twenty-four.",
+      "status": "PASS",
+      "evidence": "The retained open log contains eight entries for eight distinct assigned paths, each with openCount 1. The original batch used eight images; this recovery adds zero.",
+      "batchImageLoads": 8,
+      "batchLimit": 8,
+      "recordedReviewerImageLoads": 8,
+      "currentContextLimit": 24,
+      "reopens": 0
+    },
+    {
+      "ruleSource": "imagebatches: Image batches",
+      "rule": "Authorized bounded batches return text and evidence paths/hashes, without sending image payloads back to the parent or reopening the batch.",
+      "status": "PASS-WITHIN-RECORDED-SCOPE",
+      "evidence": "The original assignment authorized a fresh bounded batch; the retained usage records textual return mode and no additional parent image requests. This recovery uses no image tool, dispatches no batch, and returns text only.",
+      "parentBudgetAsRecordedNotIndependentlyReaudited": {
+        "used": 24,
+        "limit": 24
+      },
+      "additionalParentImageRequests": 0,
+      "newBatchStarted": false,
+      "imageHistoryClearedClaim": false
+    },
+    {
+      "ruleSource": "lessonproduction-resume: Continue from facts",
+      "rule": "Read the latest human instruction and existing checkpoint; distinguish technical execution failure from content failure.",
+      "status": "PASS",
+      "evidence": "The latest instruction authorizes only instruction lookup recovery. The retained FIRST report has exactly one HOLD reason, the missing instruction lookup; all eight target statuses and visualStatus are PASS."
+    },
+    {
+      "ruleSource": "lessonproduction-resume: Continue from facts",
+      "rule": "Preserve failed receipts and valid outputs; correct only the failed stage, reuse passed reviews, and do not reset real usage.",
+      "status": "PASS",
+      "evidence": "Original report.json and usage.json retain their original hashes and HOLD statuses. This separate recovery receipt resolves only the lookup. The eight observations, capture bindings, and open log are reused without replay; usage remains eight opens and zero reopens."
+    },
+    {
+      "ruleSource": "lessonproduction-resume: Existing tool contracts; Evidence without duplicate packages",
+      "rule": "Use the exact active checkout, retain immutable evidence separately, and reference existing evidence paths/hashes without duplicating a package or rerunning passed verification.",
+      "status": "PASS",
+      "evidence": "All shell calls use the authorized absolute workdir. Only report-recovery.json is added in the exclusive output directory; retained observations are referenced by file and JSON-value hashes rather than copied or rerendered."
+    },
+    {
+      "ruleSource": "lessonproduction-resume: Small-batch production and recovery",
+      "rule": "Active authorization controls scope; offline recovery does not authorize database writes, deployment, or other workers.",
+      "status": "PASS",
+      "evidence": "No images, native stages, DOM sessions, browsers, profiles, code changes, Git commands, database operations, network calls, paid calls, or chat/worker operations are performed in this recovery."
+    }
+  ],
+  "usage": {
+    "retainedAssignedImages": 8,
+    "retainedActualImages": 8,
+    "retainedActualImageOpens": 8,
+    "retainedDistinctPaths": 8,
+    "retainedReopens": 0,
+    "recoveryImageOpens": 0,
+    "recoveryImageByteReads": 0,
+    "recoveryReviewReplays": 0,
+    "cumulativeImageOpens": 8,
+    "cumulativeReopens": 0,
+    "newCrops": 0,
+    "newRenders": 0,
+    "newNativeRuns": 0,
+    "newDomSessions": 0,
+    "newBrowserSessions": 0,
+    "databaseOperations": 0,
+    "paidCalls": 0,
+    "networkCalls": 0,
+    "chatToolCalls": 0,
+    "writesOutsideExclusiveOutputDirectory": 0,
+    "newOutputFiles": [
+      "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1254-n98n99-first-display-reviews/n99/batch-3/report-recovery.json"
+    ],
+    "writeTool": "functions.apply_patch"
+  },
+  "firstFailureRetained": true,
+  "existingEditsPreserved": true,
+  "completeCard": false,
+  "fullCardPendingComposition": true,
+  "limitations": [
+    "PASS covers only the assigned batch after recovery of its instruction-file lookup HOLD.",
+    "The instruction reads were late; this receipt does not rewrite the timing or claim they occurred before the original visual review.",
+    "Visual observations and all existing native/source/SCI/TEXT/FIG227/DOM passes are reused, not replayed.",
+    "No whole-card completion, new figure approval, publication approval, or formal headed product acceptance is claimed."
+  ]
+}

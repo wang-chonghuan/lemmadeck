@@ -120,7 +120,10 @@ def rebuilt_exercises(
     if not stream:
         raise SystemExit(f"ERROR: {root}/pages 下没有 page.json，无法解析旧题栏目身份")
     merged, _ = assemble.merge_across_pages(stream)
-    lessons = assemble.cut_lessons(merged)
+    toc = TEXTBOOK_ROOT / "toc" / book / "zh.json"
+    if not toc.is_file():
+        raise SystemExit(f"ERROR: 缺少 {toc}，无法确定旧 lesson 身份")
+    lessons = assemble.cut_lessons(merged, assemble._toc_cards(load(toc)))
     for lesson in lessons:
         lesson["prose"], lesson["exercises"] = assemble.split_lesson(
             lesson,
@@ -131,9 +134,6 @@ def rebuilt_exercises(
         raise SystemExit(
             "ERROR: 无法从页级事实解析旧题栏目身份: " + "; ".join(figure_errors)
         )
-    toc = TEXTBOOK_ROOT / "toc" / book / "zh.json"
-    if not toc.is_file():
-        raise SystemExit(f"ERROR: 缺少 {toc}，无法确定旧 lesson 身份")
     assemble.check_toc(
         lessons,
         toc,

@@ -1,0 +1,233 @@
+{
+  "schema": "stemrobin/text-native-command-start@1",
+  "cwd": "/Users/yong/.codex/worktrees/00b1/lemmadeck",
+  "startedAt": "2026-11-19T07:26:30.586Z",
+  "argv": [
+    ".claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-c",
+    "import copy\nimport json\nimport subprocess\nimport sys\nfrom pathlib import Path\n\nrepo = Path.cwd()\ntools = repo / \".claude/skills/ld-s10y-lesson/tools\"\nsys.path.insert(0, str(tools))\nimport edition\nimport mathcheck\n\nowned = repo / \".intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author\"\nfreeze = edition.load(owned / \"FIRST-candidate-freeze.json\")\ncard = \"phy10-c2-s4-n99\"\nbook = repo / \".intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/root/10p\"\nraw_path = book / \"lessons\" / card\nraw_lesson = edition.load(raw_path / \"lesson.json\")\nraw_exercises = edition.load(raw_path / \"exercises.json\")\nrequirements = edition.load(repo / \".intentfold/tickets/STEMROBIN-181/tmp/d1201-n97n99-first-preparation/cards/phy10-c2-s4-n99/source-requirements.json\")\nprofile = edition.load(tools.parent / \"profiles/modern-us-neutral.json\")\nforbidden = profile[\"forbidden_terms\"] + profile[\"forbidden_person_names\"]\nerrors = []\nfor binding in freeze[\"inputs\"]:\n    if edition.sha256(Path(binding[\"path\"])) != binding[\"sha256\"]:\n        errors.append(f\"Frozen input changed: {binding['path']}\")\nfor candidate in freeze[\"candidates\"]:\n    for version in (\"current\", \"FIRST\"):\n        binding = candidate[version]\n        if edition.sha256(Path(binding[\"path\"])) != binding[\"sha256\"]:\n            errors.append(f\"Frozen candidate changed: {binding['path']}\")\n    if candidate[\"current\"][\"sha256\"] != candidate[\"FIRST\"][\"sha256\"]:\n        errors.append(f\"FIRST/current mismatch: {candidate['locale']}/{candidate['kind']}\")\n\nrequired_refs = [block[\"ref\"] for block in requirements[\"blocks\"] if block[\"kind\"] != \"h3\"]\nraw_refs = [ref for block in raw_lesson[\"prose\"] for ref in block[\"source_refs\"]]\nif len(raw_refs) != len(required_refs) or set(raw_refs) != set(required_refs):\n    errors.append(\"Closed source requirements do not match the complete raw prose reference set\")\nif \"p0267#1\" in raw_refs:\n    errors.append(\"Excluded successor heading entered n99\")\nif raw_lesson[\"exercise_count\"] != 0 or raw_exercises != {\"lesson\": card, \"count\": 0, \"exercises\": []}:\n    errors.append(\"Raw zero-exercise contract changed\")\nif [item[\"id\"] for item in raw_lesson[\"figures\"]] != requirements[\"sourceFigureIds\"]:\n    errors.append(\"Required figure identities changed\")\n\nresults = []\nmath_items = []\nnested_commands = []\nfor locale in (\"zh\", \"en\"):\n    local_errors = []\n    lesson = edition.load(owned / locale / \"lesson.template.json\")\n    exercises = edition.load(owned / locale / \"exercises.template.json\")\n    local_errors += edition.validate_source(book, lesson[\"source\"], raw_path / \"lesson.json\", \"lesson\")\n    local_errors += edition.validate_source(book, exercises[\"source\"], raw_path / \"exercises.json\", \"exercises\")\n    local_errors += edition.validate_lesson_identity(raw_lesson, lesson)\n    corrections, errata_errors = edition.validate_errata(book, raw_lesson, raw_exercises, lesson, exercises)\n    local_errors += errata_errors\n    if lesson[\"schema\"] != edition.LESSON_SCHEMA or exercises[\"schema\"] != edition.EXERCISES_SCHEMA:\n        local_errors.append(\"Native lesson/exercise schema mismatch\")\n    if lesson[\"edition\"] != \"modern-us-neutral\" or exercises[\"edition\"] != \"modern-us-neutral\":\n        local_errors.append(\"Edition mismatch\")\n    if lesson[\"locale\"] != locale or exercises[\"locale\"] != locale:\n        local_errors.append(\"Locale mismatch\")\n    if lesson[\"figures\"] != raw_lesson[\"figures\"]:\n        local_errors.append(\"Source figure list changed\")\n    if len(lesson[\"prose\"]) != len(raw_lesson[\"prose\"]):\n        local_errors.append(\"Prose count changed\")\n    if exercises[\"lesson\"] != card or exercises[\"count\"] != 0 or exercises[\"exercises\"] != []:\n        local_errors.append(\"Empty exercise template changed\")\n    if {key: value for key, value in exercises.items() if key != \"locale\"} != edition.load(\n        repo / \".intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/work/adapt/10p/modern-us-neutral/lessons/phy10-c2-s4-n99/exercises.template.json\"\n    ):\n        local_errors.append(\"Exercise template differs from preparation beyond locale\")\n    normalized = copy.deepcopy(lesson)\n    edition.normalize_lesson_layout(normalized)\n    if normalized != lesson:\n        local_errors.append(\"Candidate not already in deterministic native prose layout\")\n    flow, flow_errors = edition.prose_flow_contract(lesson[\"prose\"], lesson[\"section_breaks\"])\n    local_errors += flow_errors\n    nested_commands.append({\n        \"cwd\": str(repo), \"argv\": [\"node\", str(tools / \"prose_flow.mjs\"), \"--stdin\"],\n        \"input\": f\"{locale} candidate prose and section_breaks, bound by FIRST freeze\",\n    })\n    signatures = []\n    for index, (source, modern) in enumerate(zip(raw_lesson[\"prose\"], lesson[\"prose\"])):\n        label = f\"{locale}.lesson.prose[{index}]\"\n        local_errors += edition.validate_identity_fields(\n            source, modern, (\"kind\", \"id\", \"label\", \"printed_page\", \"source_refs\"), label\n        )\n        if modern[\"source_text\"] != source[\"text\"]:\n            local_errors.append(f\"{label}.source_text changed\")\n        local_errors += edition.validate_text(\n            source[\"text\"], modern[\"text\"], modern[\"changes\"], modern[\"numeric_changes\"],\n            label, forbidden, modern[\"historical_entities\"], corrections.get(f\"lesson.prose[{index}]\"),\n            modern.get(\"notation_changes\"),\n        )\n        source_tokens = [match.group(0) for match in edition.MATH.finditer(source[\"text\"])]\n        modern_tokens = [match.group(0) for match in edition.MATH.finditer(modern[\"text\"])]\n        if source_tokens != modern_tokens:\n            local_errors.append(f\"{label}: exact math token/order changed\")\n        for error in mathcheck.check_delimiters(modern[\"text\"]):\n            local_errors.append(f\"{label}: {error}\")\n        for tex, display in mathcheck.find_math_spans(modern[\"text\"]):\n            math_items.append({\"id\": label, \"field\": \"text\", \"tex\": tex, \"display\": display})\n        signatures.append({\n            \"source_refs\": source[\"source_refs\"],\n            \"mathTokens\": modern_tokens,\n            \"numbersAndReferences\": edition.prose_number_signature(modern[\"text\"]),\n            \"historicalEntities\": modern[\"historical_entities\"],\n        })\n    results.append({\n        \"locale\": locale,\n        \"status\": \"pass\" if not local_errors else \"fail\",\n        \"proseBlocks\": len(lesson[\"prose\"]),\n        \"textBlocks\": sum(block[\"kind\"] == \"p\" for block in lesson[\"prose\"]),\n        \"footnotes\": sum(block[\"label\"] == \"footnote\" for block in lesson[\"prose\"]),\n        \"exercises\": len(exercises[\"exercises\"]),\n        \"figures\": [item[\"id\"] for item in lesson[\"figures\"]],\n        \"mathTokenCount\": sum(len(item[\"mathTokens\"]) for item in signatures),\n        \"flow\": flow,\n        \"signatures\": signatures,\n        \"errors\": local_errors,\n    })\n    errors += local_errors\n\nargv = [\"node\", str(tools / \"katex_check.js\")]\nresult = subprocess.run(argv, input=json.dumps(math_items), capture_output=True, text=True, cwd=repo)\nnested_commands.append({\"cwd\": str(repo), \"argv\": argv, \"mathItems\": len(math_items), \"exitCode\": result.returncode})\nif result.returncode:\n    errors.append(f\"Native KaTeX command failed: {result.stderr}\")\n    katex_results = []\nelse:\n    katex_results = json.loads(result.stdout)\n    for item in katex_results:\n        if item.get(\"fatal\") or not item.get(\"ok\"):\n            errors.append(f\"Native KaTeX failed: {item}\")\n\ndef serializable(value):\n    if isinstance(value, set):\n        return sorted(value)\n    raise TypeError(type(value).__name__)\n\nreport = {\n    \"schema\": \"stemrobin/scoped-native-text-check@1\",\n    \"ticket\": \"STEMROBIN-181\", \"batch\": \"D037\", \"card\": card,\n    \"status\": \"pass\" if not errors else \"fail\",\n    \"scope\": \"current FIRST bilingual templates: source snapshots, identities, refs, text, numeric and exact math preservation, registered errata, native proseFlow, KaTeX\",\n    \"nativeAPIs\": [\n        \"edition.validate_source\", \"edition.validate_lesson_identity\", \"edition.validate_identity_fields\",\n        \"edition.validate_errata\", \"edition.validate_text\", \"edition.normalize_lesson_layout (in-memory stability only)\",\n        \"edition.prose_flow_contract\", \"mathcheck.check_delimiters\", \"mathcheck.find_math_spans\", \"katex_check.js\",\n    ],\n    \"freezeSHA256\": edition.sha256(owned / \"FIRST-candidate-freeze.json\"),\n    \"sourceCounts\": freeze[\"sourceCounts\"],\n    \"locales\": results, \"nestedCommands\": nested_commands, \"katex\": katex_results,\n    \"katexWarnings\": [warning for item in katex_results for warning in item.get(\"warnings\", [])],\n    \"errors\": errors,\n    \"semanticReview\": \"pending\", \"completeCard\": False,\n    \"notChecked\": [\"figure pixels/spec/render/review\", \"full native lesson finalization\", \"independent semantic review\", \"product/browser/publication\"],\n}\nprint(json.dumps(report, ensure_ascii=False, indent=2, default=serializable))\nsys.exit(0 if not errors else 1)\n"
+  ],
+  "codeReuse": {
+    "source": {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1090-n94-first-bilingual-text-author/text-check.py",
+      "sha256": "ea3a8379d0c5e7719528a6983ce302003501e3063457cb93000898bc94722bcb",
+      "bytes": 8924
+    },
+    "adaptation": "Only invocation-local paths, card id, batch, and excluded successor ref replaced in memory; the reused script and all native tools remain untouched.",
+    "replacements": [
+      [
+        "d1090-n94-first-bilingual-text-author",
+        "d1204-n99-first-bilingual-text-author"
+      ],
+      [
+        "d1086-source253-consume-n94-prepare",
+        "d1204-n99-first-bilingual-text-author"
+      ],
+      [
+        "phy10-c2-s4-n94",
+        "phy10-c2-s4-n99"
+      ],
+      [
+        "d1089-n94-heading-check-recovery/source-requirements.json",
+        "d1201-n97n99-first-preparation/cards/phy10-c2-s4-n99/source-requirements.json"
+      ],
+      [
+        "p0253#10",
+        "p0267#1"
+      ],
+      [
+        "Excluded n95 heading entered n94",
+        "Excluded successor heading entered n99"
+      ],
+      [
+        "\"batch\": \"D036\"",
+        "\"batch\": \"D037\""
+      ]
+    ],
+    "executedCodeSHA256": "9fb3a175d07566096e3065ecaff0e8c05aa124ee1342a1f3e44ae49434d7c369"
+  },
+  "freeze": {
+    "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/FIRST-candidate-freeze.json",
+    "sha256": "a8b8a5d96686e471377a2446980a6fe59ba14ed1910c4e88dfcd1ae677dbd4d3",
+    "bytes": 18604
+  },
+  "candidates": [
+    {
+      "locale": "zh",
+      "kind": "lesson",
+      "current": {
+        "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/zh/lesson.template.json",
+        "sha256": "5e953b63aeff68d23648db18d9ce370b2edc068b46c188c04ee0705c0280f5df",
+        "bytes": 26636
+      },
+      "FIRST": {
+        "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/FIRST/zh/lesson.template.json",
+        "sha256": "5e953b63aeff68d23648db18d9ce370b2edc068b46c188c04ee0705c0280f5df",
+        "bytes": 26636
+      }
+    },
+    {
+      "locale": "zh",
+      "kind": "exercises",
+      "current": {
+        "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/zh/exercises.template.json",
+        "sha256": "1f3fa50d818973494915b40301e9b4bfd209f9eb2df798f647d54eb1e7134cec",
+        "bytes": 440
+      },
+      "FIRST": {
+        "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/FIRST/zh/exercises.template.json",
+        "sha256": "1f3fa50d818973494915b40301e9b4bfd209f9eb2df798f647d54eb1e7134cec",
+        "bytes": 440
+      }
+    },
+    {
+      "locale": "en",
+      "kind": "lesson",
+      "current": {
+        "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/en/lesson.template.json",
+        "sha256": "fad55c280f0bb4c19fe627c8f379cef272bfb9e08df11c01408890489757e6a4",
+        "bytes": 27289
+      },
+      "FIRST": {
+        "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/FIRST/en/lesson.template.json",
+        "sha256": "fad55c280f0bb4c19fe627c8f379cef272bfb9e08df11c01408890489757e6a4",
+        "bytes": 27289
+      }
+    },
+    {
+      "locale": "en",
+      "kind": "exercises",
+      "current": {
+        "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/en/exercises.template.json",
+        "sha256": "a4090f2ce9f91eab03c6ebdff686d68468c6b9958ef42288e6f2e40a19f74a87",
+        "bytes": 440
+      },
+      "FIRST": {
+        "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/FIRST/en/exercises.template.json",
+        "sha256": "a4090f2ce9f91eab03c6ebdff686d68468c6b9958ef42288e6f2e40a19f74a87",
+        "bytes": 440
+      }
+    }
+  ],
+  "inputBindings": [
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/authored-prose.json",
+      "sha256": "094aa15abeda30af49912a6c51c0d1cafe1a8b7dd34f7fa4228597b1d78ddc7b",
+      "bytes": 11162
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/source-inventory.json",
+      "sha256": "de8ca7f9897cf4bc0fe34b0dcf8179dec1b50da94c6946828be7b8ec19b8c9f9",
+      "bytes": 12343
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/source-inventory-freeze.json",
+      "sha256": "13093c7ba84623941f8a36491344563f7be1309a8b92189716e1c81d02c0365a",
+      "bytes": 2274
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/scientific-numeric-check.json",
+      "sha256": "7e63d783406b484667c7076bc59edaab24f78c2cd1f47b61f202780c311f7618",
+      "bytes": 5059
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/seed-copy-receipt.json",
+      "sha256": "8f0209f64ae5dee735262dac73c62393ea820030bbcc13cb7726cb4f35c150c4",
+      "bytes": 5707
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1201-n97n99-first-preparation/cards/phy10-c2-s4-n99/source-requirements.json",
+      "sha256": "04c0e547091b0b2e83c6668939fb6aa9a99371170446c413d648653229237184",
+      "bytes": 12376
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1201-n97n99-first-preparation/root/10p/lessons/phy10-c2-s4-n99/lesson.json",
+      "sha256": "b79092b004c3b2ff74c20ec9248d985e8ad006a481433aedb34f809b327d1f31",
+      "bytes": 7355
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1201-n97n99-first-preparation/root/10p/lessons/phy10-c2-s4-n99/exercises.json",
+      "sha256": "037e873df069d3f64f5d484f53079efea2adf08b545d8fcfa6d3ad822644af87",
+      "bytes": 67
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/root/10p/book.json",
+      "sha256": "61c518be22adad5462ca861982c29339cc15e27953ef074342a48842f6a5eecb",
+      "bytes": 1257
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/root/10p/lessons/phy10-c2-s4-n99/lesson.json",
+      "sha256": "b79092b004c3b2ff74c20ec9248d985e8ad006a481433aedb34f809b327d1f31",
+      "bytes": 7355
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/root/10p/lessons/phy10-c2-s4-n99/exercises.json",
+      "sha256": "037e873df069d3f64f5d484f53079efea2adf08b545d8fcfa6d3ad822644af87",
+      "bytes": 67
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/root/10p/pages/0264/page.json",
+      "sha256": "4f507d9bc83ac9fb6bbab79800bbda069fa3d856df719310908cd54582d8a48c",
+      "bytes": 6987
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/root/10p/pages/0265/page.json",
+      "sha256": "fa71dcc6966c06c1d581f0eb2c46e1d7f663f328aa53b59baf2eee9282489a40",
+      "bytes": 8356
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/root/10p/pages/0266/page.json",
+      "sha256": "0249ddb405ef91fcede4618558ddc42352c74ac0a443a03954a8eb68727a2994",
+      "bytes": 5770
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/work/adapt/10p/modern-us-neutral/lessons/phy10-c2-s4-n99/lesson.template.json",
+      "sha256": "98ba283ecfcf018c3f6ccc868d6afea0ca5fc02f9425859bf46b542e8e72c813",
+      "bytes": 21719
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1204-n99-first-bilingual-text-author/work/adapt/10p/modern-us-neutral/lessons/phy10-c2-s4-n99/exercises.template.json",
+      "sha256": "735d0befaef891e661bbf897fe33a853e3af066056c7b22b6dc761339dfbcdca",
+      "bytes": 422
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/tools/edition.py",
+      "sha256": "476adeba622d7dcdb217ac5523157724412809a265b4f20db9f263fc5b0dbb43",
+      "bytes": 83564
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/tools/mathcheck.py",
+      "sha256": "8f703e723234c3ccc4d9b329d8e2f7b0053d0af261d0526169c31110a53fa8f7",
+      "bytes": 3443
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/tools/prose_flow.mjs",
+      "sha256": "f2a16357e2a0d5f8541b0cb401c5193c9cb10f6333dc16f92d5c7a18a5bee309",
+      "bytes": 1847
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/tools/htmlfrag.js",
+      "sha256": "89555696f4b92cf5194d910f27d5f2d04df5f3185452a218d6f3d8251cffbfbf",
+      "bytes": 7023
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/tools/katex_check.js",
+      "sha256": "59c500172eca6dd76baea669aa0d92f67c28512253a751018782a5006a619b56",
+      "bytes": 1338
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json",
+      "sha256": "f03840602a5de0c22b7eea096fe24db758c6d66b6532c75cda26c6766a1573f1",
+      "bytes": 3511
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1090-n94-first-bilingual-text-author/text-check.py",
+      "sha256": "ea3a8379d0c5e7719528a6983ce302003501e3063457cb93000898bc94722bcb",
+      "bytes": 8924
+    }
+  ],
+  "envOverrides": {
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "scope": "Native text-only snapshot, identity, formula/token/numeric preservation, errata, proseFlow, and KaTeX checks. Scientific numeric HOLD is separate and is not cleared by this check."
+}

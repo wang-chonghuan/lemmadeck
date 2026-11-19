@@ -1,0 +1,68 @@
+{
+  "schema": "stemrobin/affected-native-command-start@1",
+  "cwd": "/Users/yong/.codex/worktrees/00b1/lemmadeck",
+  "startedAt": "2026-11-19T07:34:17.867Z",
+  "argv": [
+    ".claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-c",
+    "import json,sys,subprocess,hashlib\nfrom pathlib import Path\nrepo=Path.cwd()\nowned=repo/\".intentfold/tickets/STEMROBIN-181/tmp/d1212-n99-two-errata-repair\"\ntools=repo/\".claude/skills/ld-s10y-lesson/tools\"\nsys.path.insert(0,str(tools))\nimport edition,mathcheck\nbook=owned/\"root/10p\"\nraw=edition.load(book/\"lessons/phy10-c2-s4-n99/lesson.json\")\nraw_exercises=edition.load(book/\"lessons/phy10-c2-s4-n99/exercises.json\")\nfreeze=edition.load(owned/\"current-candidate-freeze.json\")\nplan=edition.load(owned/\"repair-plan.json\")\ncanonical=edition.load(Path(plan[\"canonicalRecords\"][\"path\"]))\ndelta=edition.load(owned/\"before-after.json\")\nprofile=edition.load(tools.parent/\"profiles/modern-us-neutral.json\")\nforbidden=profile[\"forbidden_terms\"]+profile[\"forbidden_person_names\"]\nerrors=[]\nfor key in (\"inputFreeze\",\"delta\",\"canonicalRecords\",\"nativeSourceErrataBinding\"):\n    record=freeze[key]\n    if edition.sha256(Path(record[\"path\"]))!=record[\"sha256\"]: errors.append(\"Frozen input changed: \"+key)\nfor candidate in freeze[\"candidates\"]:\n    for version in (\"current\",\"CURRENT\"):\n        record=candidate[version]\n        if edition.sha256(Path(record[\"path\"]))!=record[\"sha256\"]: errors.append(\"Candidate changed: \"+record[\"path\"])\nresults=[]\nmath_items=[]\nfor locale in (\"zh\",\"en\"):\n    lesson=edition.load(owned/locale/\"lesson.template.json\")\n    exercises=edition.load(owned/locale/\"exercises.template.json\")\n    before=edition.load(owned/\"BEFORE\"/locale/\"lesson.template.json\")\n    before_exercises=edition.load(owned/\"BEFORE\"/locale/\"exercises.template.json\")\n    local_errors=[]\n    if exercises!=before_exercises: local_errors.append(\"Untouched exercises changed\")\n    if lesson[\"source\"]!=before[\"source\"]: local_errors.append(\"Faithful source snapshot changed\")\n    if len(lesson[\"prose\"])!=len(before[\"prose\"]): local_errors.append(\"Prose count changed\")\n    for index,(old,new) in enumerate(zip(before[\"prose\"],lesson[\"prose\"])):\n        if index!=10 and old!=new: local_errors.append(\"Untouched prose changed: \"+str(index))\n    for key in before:\n        if key not in (\"prose\",\"errata\",\"section_breaks\") and before[key]!=lesson[key]: local_errors.append(\"Untouched lesson field changed: \"+key)\n    corrections,errata_errors=edition.validate_errata(book,raw,raw_exercises,lesson,exercises)\n    local_errors+=errata_errors\n    if set(corrections)!={\"lesson.prose[10]\"}: local_errors.append(\"Corrections not confined to target10\")\n    if len(lesson[\"errata\"])!=2: local_errors.append(\"Expected exactly two registered errata\")\n    for record in lesson[\"errata\"]:\n        expected=next((item for item in canonical if item[\"id\"]==record[\"id\"]),None)\n        if expected is None: local_errors.append(\"Unexpected erratum\");continue\n        for key in (\"id\",\"source\",\"target\",\"original\",\"reason\"):\n            if record[key]!=expected[key]: local_errors.append(\"Canonical record drift: \"+record[\"id\"]+\".\"+key)\n        if record[\"corrected\"]!=plan[\"correctedStrings\"][locale][record[\"id\"]]: local_errors.append(\"Localized corrected string mismatch\")\n    target=lesson[\"prose\"][10]\n    label=locale+\".lesson.prose[10]\"\n    local_errors+=edition.validate_identity_fields(raw[\"prose\"][10],target,(\"kind\",\"id\",\"label\",\"printed_page\",\"source_refs\"),label)\n    if target[\"source_text\"]!=raw[\"prose\"][10][\"text\"]: local_errors.append(\"Target source_text changed\")\n    local_errors+=edition.validate_text(raw[\"prose\"][10][\"text\"],target[\"text\"],target[\"changes\"],target[\"numeric_changes\"],label,forbidden,target[\"historical_entities\"],corrections.get(\"lesson.prose[10]\"),target.get(\"notation_changes\"))\n    local_errors+=mathcheck.check_delimiters(target[\"text\"])\n    if edition.normalize_prose_layout(target[\"text\"])!=target[\"text\"]: local_errors.append(\"Affected target layout not stable\")\n    expected_text=raw[\"prose\"][10][\"text\"]\n    for replacement in corrections.get(\"lesson.prose[10]\",[]): expected_text=expected_text.replace(replacement[\"original\"],replacement[\"corrected\"],1)\n    source_math=edition.math_signature(raw[\"prose\"][10][\"text\"])\n    expected_math=edition.math_signature(expected_text)\n    modern_math=edition.math_signature(target[\"text\"])\n    if expected_math!=modern_math: local_errors.append(\"Affected formula changes exceed registered replacements\")\n    if modern_math!=[\"15\",\"100\",\"35\",\"40\",\"2000\",\"2000\"]: local_errors.append(\"Preserved mass factors or repaired speeds drifted\")\n    anchors=next(item[\"anchorChanges\"] for item in delta[\"locales\"] if item[\"locale\"]==locale)\n    flow_status=\"not replayed: anchors unchanged\"\n    if anchors:\n        flow,flow_errors=edition.prose_flow_contract(lesson[\"prose\"],lesson[\"section_breaks\"])\n        local_errors+=flow_errors\n        flow_status={\"status\":\"pass\" if not flow_errors else \"fail\",\"resolvedBreaks\":flow.get(\"resolvedBreaks\"),\"changedAnchorCount\":len(anchors)}\n    elif lesson[\"section_breaks\"]!=before[\"section_breaks\"]: local_errors.append(\"Unchanged anchors were modified\")\n    for tex,display in mathcheck.find_math_spans(target[\"text\"]): math_items.append({\"id\":label,\"field\":\"text\",\"tex\":tex,\"display\":display})\n    results.append({\"locale\":locale,\"target\":\"lesson.prose[10]\",\"status\":\"pass\" if not local_errors else \"fail\",\"registeredErrata\":lesson[\"errata\"],\"sourceMathTokens\":source_math,\"expectedMathTokens\":expected_math,\"currentMathTokens\":modern_math,\"massFactorsRetained\":[100,2000,2000],\"unchangedFieldsComparedNotNativeRevalidated\":True,\"affectedTargetNormalization\":\"stable\",\"anchors\":flow_status,\"errors\":local_errors})\n    errors+=local_errors\nkatex=mathcheck.katex_validate(math_items)\nfor item in katex:\n    if item.get(\"fatal\") or not item.get(\"ok\"): errors.append(\"Affected KaTeX failed: \"+str(item))\nreport={\"schema\":\"stemrobin/affected-native-text-errata-check@1\",\"ticket\":\"STEMROBIN-181\",\"batch\":\"D037\",\"card\":\"phy10-c2-s4-n99\",\"status\":\"pass\" if not errors else \"fail\",\"scope\":\"Only target10, the two registered errata, changed-target normalization, and the one affected Chinese section anchor; untouched objects compared for equality, not revalidated.\",\"freezeSHA256\":edition.sha256(owned/\"current-candidate-freeze.json\"),\"nativeAPIs\":[\"edition.validate_errata (existing source_errata binding)\",\"edition.validate_identity_fields (target10 only)\",\"edition.validate_text (target10 only)\",\"edition.normalize_prose_layout (target10 stability only)\",\"edition.prose_flow_contract (zh affected anchor only)\",\"mathcheck.check_delimiters (target10 only)\",\"mathcheck.katex_validate (affected math only)\"],\"locales\":results,\"katexCheckedTokens\":len(math_items),\"katex\":katex,\"errors\":errors,\"untouchedNativeReplays\":0,\"sourcePageNativeReplays\":0,\"figureChecks\":0,\"images\":0,\"inheritedFIRSTScientificHold\":\"preserved unchanged in D1204\",\"independentFullSubstantiveTextReview\":\"pending; no prior full substantive review claimed\",\"independentApproval\":False,\"completeCard\":False}\nprint(json.dumps(report,ensure_ascii=False,indent=2))\nsys.exit(0 if not errors else 1)\n"
+  ],
+  "envOverrides": {
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "inputs": [
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1212-n99-two-errata-repair/current-candidate-freeze.json",
+      "sha256": "85cacd4628796b4496b621ec08fa668389bef82c07808997b12ad3c08acd5d87",
+      "bytes": 4062
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1212-n99-two-errata-repair/input-freeze.json",
+      "sha256": "9b803c4f831e5bde5f0a4e954f8826f18a64c87e615281252456159b4d3b371d",
+      "bytes": 16535
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1212-n99-two-errata-repair/before-after.json",
+      "sha256": "033fc3534cf1e74dc5c3c8127952c0259853dc8d6b6e0c53b48112ac6e9f5570",
+      "bytes": 15404
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1212-n99-two-errata-repair/repair-plan.json",
+      "sha256": "1854b4d8952d7697a14d6817de1667b46284988fe5de41c01b6ee08f4fb052b3",
+      "bytes": 4931
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1212-n99-two-errata-repair/root/10p/pages/0266/page.json",
+      "sha256": "b3981fb8c4023b74903a844374e25e1486170dd4381bff7094074c5791138452",
+      "bytes": 6385
+    }
+  ],
+  "tools": [
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/tools/edition.py",
+      "sha256": "476adeba622d7dcdb217ac5523157724412809a265b4f20db9f263fc5b0dbb43",
+      "bytes": 83564
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/tools/mathcheck.py",
+      "sha256": "8f703e723234c3ccc4d9b329d8e2f7b0053d0af261d0526169c31110a53fa8f7",
+      "bytes": 3443
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/tools/katex_check.js",
+      "sha256": "59c500172eca6dd76baea669aa0d92f67c28512253a751018782a5006a619b56",
+      "bytes": 1338
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/tools/prose_flow.mjs",
+      "sha256": "f2a16357e2a0d5f8541b0cb401c5193c9cb10f6333dc16f92d5c7a18a5bee309",
+      "bytes": 1847
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/tools/htmlfrag.js",
+      "sha256": "89555696f4b92cf5194d910f27d5f2d04df5f3185452a218d6f3d8251cffbfbf",
+      "bytes": 7023
+    }
+  ],
+  "scope": "Affected TEXT only; no source-page native, full-card, figure or untouched-native replay."
+}
