@@ -33,7 +33,11 @@ MATH = re.compile(r"\$\$(.+?)\$\$|\$([^$]+?)\$", re.S)
 MATH_TEXT_LITERAL = re.compile(r"\\text\{([^{}]*)\}")
 MATH_BOUNDARY_PUNCTUATION = re.compile(r"[、，；。？！：]+")
 NUMBER = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])")
-PROSE_NUMBER = re.compile(NUMBER.pattern, re.ASCII)
+# A decimal followed by a sentence period is still a quantity, not an identifier.
+PROSE_NUMBER = re.compile(
+    NUMBER.pattern + r"|(?<![\w.])-?\d+\.\d+(?=\.(?![\w.]))",
+    re.ASCII,
+)
 FIGURE_REFERENCE = re.compile(r"(?:图\s*\.?\s*|Figures?\s+)(\d+)(?!\d)", re.I)
 SECTION_REFERENCE = re.compile(r"(?:第\s*(\d+)\s*节|Sections?\s+(\d+)(?!\d))", re.I)
 PART_MARKER = re.compile(

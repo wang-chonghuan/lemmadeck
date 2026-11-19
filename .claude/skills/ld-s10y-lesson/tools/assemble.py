@@ -62,7 +62,7 @@ def merge_across_pages(stream: list[dict]) -> tuple[list[dict], list[str]]:
     out, warn = [], []
     for b in stream:
         b = dict(b)
-        if b["kind"] == "p" and b.get("label") != "footnote":
+        if b["kind"] in ("p", "h3") and b.get("label") != "footnote":
             b["footnote_callouts"] = [
                 {"marker": marker, "ref": b["ref"]}
                 for marker in sorted(set(re.findall(f"[{FOOTNOTE_MARKERS}]", B.text_of(b))))
@@ -100,6 +100,7 @@ def cut_lessons(stream: list[dict]) -> list[dict]:
     """h3 开一节。h1/h2 记作祖先标题，跟着下一节走。"""
     lessons, pending = [], {"h1": None, "h2": None}
     cur = None
+    heading_sources = []
     for b in stream:
         if b["kind"] in ("h1", "h2"):
             pending[b["kind"]] = B.text_of(b)
@@ -117,6 +118,7 @@ def cut_lessons(stream: list[dict]) -> list[dict]:
                    "printed_title": title, "blocks": [],
                    "start_page": b["page"], "start_printed": b.get("printed_page")}
             lessons.append(cur)
+            heading_sources.append((cur, b))
             continue
         if b["kind"] == "foot":
             continue
@@ -137,6 +139,15 @@ def cut_lessons(stream: list[dict]) -> list[dict]:
                     for callout in block.get("footnote_callouts", [])
                 )
             ]
+            owners.extend(
+                (lesson, -1)
+                for lesson, heading in heading_sources
+                if any(
+                    callout["marker"] == marker.group(1)
+                    and callout["ref"].startswith(page_prefix)
+                    for callout in heading.get("footnote_callouts", [])
+                )
+            )
             if len(owners) != 1:
                 raise ValueError(
                     f"{b['ref']}: footnote 标记需唯一对应本页正文，找到 {len(owners)} 个"

@@ -1,0 +1,16 @@
+{
+  "command": [
+    "/Users/yong/.codex/worktrees/00b1/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import json,sys\nfrom pathlib import Path\nsys.path.insert(0,\".claude/skills/ld-s10y-lesson/tools\")\nimport edition\nprofile=json.loads(Path(\".claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json\").read_text())\nforbidden=profile[\"forbidden_terms\"]+profile[\"forbidden_person_names\"]\nerrors=[]\nfor name in (\"zh\",\"en\"):\n doc=json.loads((Path(sys.argv[1])/name/\"lesson.template.json\").read_text())\n item=doc[\"prose\"][7]\n errors+=edition.validate_text(item[\"source_text\"],item[\"text\"],item[\"changes\"],item[\"numeric_changes\"],name+\":prose[7]\",forbidden,item[\"historical_entities\"])\n assert edition.normalize_prose_layout(item[\"text\"])==item[\"text\"]\nassert not errors,errors\nprint(\"PASS affected-only two sentences; no unchanged text/source/native stages rerun\")",
+    "/Users/yong/.codex/worktrees/00b1/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1032-n92-scope-only-text-repair"
+  ],
+  "exitCode": 0,
+  "stdout": "PASS affected-only two sentences; no unchanged text/source/native stages rerun\n",
+  "stderr": "",
+  "helperCalls": {
+    "validateText": 2,
+    "normalizeProseLayout": 2
+  }
+}
