@@ -1,0 +1,188 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7p",
+  "page": 420,
+  "printed_page": 409,
+  "source": {
+    "pdf": "6-7p 苏联中学课本 物理 六-七年级.pdf",
+    "pdf_sha256": "46e2b2e4a92b7c00fab9adfc6a8a9b5340a9519fa90f1b82e79bc1e1432fcbb0",
+    "pdf_page": 420
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1472,
+    "h": 2161,
+    "sha256": "145cb413f95b2e5c2c27ab6825acef0bf06de3cf46e27cee564ec6a23766254d"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "ae373713f7b09f810d6de1e4a12b5916710e5673e4827148c875674f847f1e81"
+  },
+  "notes": [
+    "本页仅为必要实验章边界；实验作业及一、用天平测量物体的质量为真实印刷标题，不合成164或上游课程身份，也不装订实验课程。",
+    "p0420#9 为真实表格：两列，表头实验次数和物体的质量（克）；左列1、2、3，右列全部空白；不补测量值，不重绘或规整原书线条。",
+    "p0420#11 第一行替换法三字有下点着重号；该段在本页末使天平再次处未完，以open保存，不读或推断421。",
+    "页脚两个实心圆点夹斜体409，保留为一行。"
+  ],
+  "source_typography": [
+    {
+      "block": "p0420#1",
+      "style": "letter-spaced-heading",
+      "text": "实验作业"
+    },
+    {
+      "block": "p0420#2",
+      "style": "bold-heading",
+      "text": "一、用天平测量物体的质量"
+    },
+    {
+      "block": "p0420#3",
+      "style": "bold",
+      "text": "目的："
+    },
+    {
+      "block": "p0420#4",
+      "style": "bold",
+      "text": "器材："
+    },
+    {
+      "block": "p0420#5",
+      "style": "bold-subheading",
+      "text": "实验步骤"
+    },
+    {
+      "block": "p0420#10",
+      "style": "bold-subheading",
+      "text": "补充作业："
+    },
+    {
+      "block": "p0420#11",
+      "row": 1,
+      "style": "dot-under-emphasis",
+      "text": "替换法"
+    },
+    {
+      "block": "p0420#12",
+      "style": "italic-numerals-between-two-solid-dots",
+      "text": "409",
+      "dot_count": 2
+    },
+    {
+      "block": "p0420#2",
+      "row": 1,
+      "style": "italic",
+      "text": "物体"
+    },
+    {
+      "block": "p0420#3",
+      "row": 1,
+      "style": "italic",
+      "text": "物体"
+    },
+    {
+      "block": "p0420#4",
+      "row": 1,
+      "style": "italic",
+      "text": "物体"
+    },
+    {
+      "block": "p0420#11",
+      "row": 2,
+      "style": "italic",
+      "text": "物体"
+    },
+    {
+      "block": "p0420#11",
+      "row": 4,
+      "style": "italic",
+      "text": "物体"
+    }
+  ],
+  "source_table_inventory": {
+    "block": "p0420#9",
+    "id": "tbl-p0420-01",
+    "columns": 2,
+    "headers": [
+      "实验次数",
+      "物体的质量（克）"
+    ],
+    "body_rows": [
+      [
+        "1",
+        ""
+      ],
+      [
+        "2",
+        ""
+      ],
+      [
+        "3",
+        ""
+      ]
+    ],
+    "horizontal_rules": 3,
+    "internal_body_horizontal_rules": 0,
+    "central_vertical_partition": true
+  },
+  "errata": [],
+  "printed_lines": 16,
+  "figures": [
+    {
+      "id": "tbl-p0420-01",
+      "label": "表",
+      "box": [
+        200,
+        1288,
+        1153,
+        323
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- h1 -->
+实　验　作　业
+
+<!-- h3 -->
+**一、用天平测量*物体*的质量**
+
+<!-- p -->
+**目的：**学会使用天平及用天平来测量*物体*的质量.
+
+<!-- p -->
+**器材：**天平、砝码、几个质量不同的较小的*物体*、一个小
+罐、一些铅粒或干燥纯净的沙子.
+
+<!-- p -->
+**实验步骤**
+
+<!-- p -->
+1. 阅读后面所附的《称量规则》.
+
+<!-- p -->
+2. 按照称量规则的要求称量几个固体的质量，精确到
+0.1克.
+
+<!-- p -->
+3. 把测量结果记入表格中：
+
+<!-- fig 表 box 200,1288,1153,323 -->
+![表](figures/tbl-p0420-01.png)
+
+<!-- p -->
+**补充作业：**
+
+<!-- p open -->
+有一种特殊的称量方法叫做替换法. 用这种方法称量时，
+将待称量的*物体*放在天平左边的托盘中. 右边的托盘中放上
+一个小罐，并往罐中倒干沙子或小铅粒，直到天平平衡. 然后
+将*物体*从左边的托盘中取下，放上砝码来代替它，使天平再次
+
+<!-- foot -->
+· *409* ·

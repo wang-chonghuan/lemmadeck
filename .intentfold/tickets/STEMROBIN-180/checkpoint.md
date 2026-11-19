@@ -1,5 +1,166 @@
 # 生产检查点
 
+## 180-4 n164 暂存执行故障恢复
+
+2026-11-19，首次stage-approved退出1，原因是git ls-tree列出整仓超出
+Node缓冲（ENOBUFS）；失败发生在git add及索引写入之前。
+原helper另存0444 FIRST-ENOBUFS，原命令收据保留。
+仅把查询限定到7p/pages，同一暂存阶段重试退出0，50文件；
+严格git diff --cached --check退出0，两份索引仅新增n164。
+不改已批准内容，不重跑SOURCE/TEXT/ANSWER/CHOICE/DISPLAY，
+完整计数仍3，commit/push仍是上次实际d75e80a7。
+
+## 180-4 n164 全阶段收口，待窄提交
+
+2026-11-19，Hegel F01受影响FINAL PASS，manifest
+`922e7ae8fa50018ea694309bd1a0c65f7f84b843f14e9ac5c74910f6d4e43c62`
+已实际绑定12项并关闭；18源facets、十选项数学和BLIND不重跑。
+首轮REVISE保留，只修两内部来源字段，学生视图与键未变。
+with-review validate、choice retention、render各一次0，正式三份choice-set
+字节与批准快照一致。19正文段、5书写题、2选择题十选项、0图。
+一次隔离headless1440x960/390x844六surface PASS，overflow0、
+formulaErrors0、leakedFields0、末字可达。Herschel六完整截图各一次
+独立DISPLAY PASS，manifest
+`0539a37b6b07eba889b34fc14890c8fd48e9dcce65070c21e4bc13d838de0685`
+已实际绑定12项并关闭，父新图0。接续完整课程计n159/n160/n164共3，
+全274课仍未完成。commit/push尚未运行，最新实际HEAD仍d75e80a7。
+
+239/242新作者候选各13块23源行5题、4/4图已冻并收取关闭；
+239首次finalize0，之后单独脚注label修订未finalize；
+242首次finalize1（22/23）保持，不能复用旧MD/JSON源批准。
+首个父绑定因混入历史editable版本失败保留，限定排除两个旧editable
+版本后48项当前及冻结证据实际绑定；无作者或内容审查重跑。
+Russell只在scratch修复计行候选，生产layout及canonical页均未改。
+预提交同分支fetch一次0；不force、不移main、不夹带其他恢复稿。
+
+## 180-4 n164 CHOICE首轮FINAL真实REVISE，限定F01复核在途
+
+2026-11-19，Hegel BLIND已PASS全部十选项，六证据项绑定后才披露内部键。
+FIRST FINAL两个键、十真值、四正确理由、六错误程序及题级检查均PASS；
+唯一F01为分类题内部source_solution与coverage引入种子未绑定的具体
+历史电站和计划断言。FIRST FINAL manifest
+`edfcaa4770a87c7e533ecc2d570562002001380a96b26d1b2295c91215d69e69`
+已实际绑定8项，REVISE原件0444保留，不弱化为整体PASS。
+父只改两内部字段，删无绑定断言并明确种子无站名或计划记录；
+所有seed/view/选项/key字节或结构不变，修订draft canonical
+`4de987c5842fab5edeb0fb5381c3877f12e1291663c357202bc7299ef3ae9db6`。
+同审者仅F01受影响复核在途，复用18源facets及全部BLIND数学；
+没有CHOICE保留、render、DISPLAY或新增完整课，完整计数仍2。
+
+Dalton 356/358新独立FIRST FIG均PASS，manifest
+`b5934cf2e60d9a6b2e7046cd60a49aa303b43a0461e4825f1660cfa0385e427d`
+原已绑定，现收取并关闭；实际4/4图，不重父图或整批FIG。
+Ampere 355原图及两个精确裁图共3/3图仍无法定接点/半环/线圈端拓扑；
+manifest `2d74a0923fafb8544b94fc288553d2c13ab12dfeeef928a9eb24c949054a831f`
+实际绑定24项并关闭。旧HOLD/计数/稿件不变，未画猜测图或晋升n163。
+
+目录只读派生274卡：6p88/7p90/8p96；源目录缺失分别0/56/66。
+current audit/source哈希候选53/22/24只是机器状态，不是完整课批准。
+7p239/242旧ignored候选无法找到，不冒称字节恢复；原PDF各一次prepare0，
+242渲染SHA与旧source证据一致。只读counter一次复现22行和
+`(1012,1143)/(1148,1238)`，不把总数凑23当通过。
+Sartre限定两页原始转写恢复在途，Russell仅独立scratch计行器候选修复；
+旧239/242各1/1、Volta7PASS/1FAIL和所有拒绝报告不清零。
+未重跑相邻已PASS源页，不越缺口装订。父图仍19/24，新图服务/付费0；
+没有DB/PR/合并/部署/关闭工单/旧聊天/锁/E组操作。
+
+## 180-4 n164六正式文件已保留，CHOICE盲审在途
+
+2026-11-19，n164答案LF-01/LF-02/LF-03受影响复核PASS，
+5新PASS+21原PASS，20声明及5题判分结果复用；11项实际绑定并关闭Cicero。
+受影响FINAL manifest SHA
+`fe5463fc38e7741fdcc0bdc62630462a8fdaa555b2066ad7f0b050385c1b4d71`。
+复制批准键后首次answer-finalize写入失败：仅可写副本继承0444，
+所有原冻结候选/审查保留；副本哈希确认后只chmod0644，
+同一失败finalize重试0（auto1/ungraded4），未重内容审查。
+标准六文件字节一致保留到正式n164目录，仅现代索引追加n164。
+源/正文/答案PASS，尚无CHOICE/整课DISPLAY批准，不计完整课。
+
+Socrates两道选择作者inspect/prepare/structural各一次0，无技术重试；
+原stage1不改，30项作者证据绑定并关闭。native单选/多选，
+两个种子1/4、五定义块0/1/6/8/12、0图。
+Hegel SOURCE PASS独解18facets，11项字节/0444绑定后才披露learner-only
+view SHA `862721cf36960504a73fd3baa0cc204ef7e2ea9a03573c0feabacd12ba5bd2b6`。
+BLIND在途，内部键/理由仍未披露，不重SOURCE。
+历史苏联实例和开放电站回忆的能力损失保持明确，不能默认为全复现。
+目标分支fetch一次0，FETCH_HEAD=HEAD=`d75e80a7a87acb844dbc61850498d3a9dcb10e08`；
+未提交/push新批，不夹带恢复草稿或工具代码。
+
+n163 Laplace限定356/358作者修订均PASS，163项证据实际绑定并关闭；
+356只将定子孔填色透明，358修内齿/深度轮廓及出口水流箭头净空。
+图6/6，两个不支持CLI参数失败及一个临时helper权限失败保持，
+五继承生产失败和两旧视觉失败不清零；图服务0。
+Dalton新独立FIRST FIG仅这两图在途，预算4，仅原图与既有合成native；
+355来源接点和357真实机器素材仍HOLD，不晋升或计完整n163。
+父图累计19/24，历史图服务68/retry0及UNKNOWN成本/token保持；
+DB/部署/PR/合并/工单关闭/旧聊天/锁/E组0，全项目测试留正式handoff。
+
+## 180-4 n164答案FIRST FINAL三缺口，受影响修订在途
+
+2026-11-19，n164 SOURCE受影响语境补绑PASS，12项实际哈希/0444绑定后
+才披露作者键。Cicero LIMITED FINAL为REVISE：21PASS/4PARTIAL/1FAIL，
+20历史声明绑定及五题判分/parts PASS；不是SOURCE重新失败。
+FIRST FINAL报告SHA
+`7b3ea5e21f68675e6b34589a23dc81b940c732c1ef1c01e008363d572f67b3ab`
+及manifest SHA
+`07503b263cf7141ac2eb70ba1b8f991c9927fa59de67765734a0f37d72717f84`
+已实际绑定12项，原快照不改。
+作者只另存Q1电动机转为机械能的具体例子、Q4/Q5城市中的早期核电站，
+以及Q5同一时期装机功率口径、与发电量区别、已投运/在建/计划状态、
+图例或索引中的筛选规则与状态标注。新答案SHA
+`42dda58049c3f812500cc27dd988139d1c57c4bf7f59deae3fdf842afabe9178`。
+同审者只复核五个受影响facets；其余21PASS和20声明复用，不重全题。
+Q2/Q3、所有题面/parts/判分/来源/历史声明不变。
+未answer-finalize、正式现代晋升、选择或DISPLAY，不计完整n164。
+
+fresh Socrates无答案上下文的CHOICE作者已冻独立解与计划，
+选题1/4，定义块0/1/6/8/12；七项哈希绑定，尚未prepare或造选项。
+FIRST计划保持，等n164正式现代文件就绪再继续，不找旧选择/答案历史。
+
+n163 Sagan作者0PASS/4HOLD、图6/8，161证据项实际绑定并关闭。
+其临时证据误放顶层tmp/resume-180-4，原件保留不晋升；
+所有新工作仍用工单tmp和原recorder，不复写错误根或旧wrapper。
+355接点拓扑不确定、357真实机器素材缺失保持HOLD。
+356转子被定子填色遮住、358内齿轮廓缺失/水流箭头碰边是具体可修缺陷；
+fresh Laplace只在新目录修这两图，预算6，不操作355/357或新增付费。
+两次错误证据路径只读失败和一次pages误作数组的只读TypeError
+留工具历史，不伪称生产收据、不重跑成功阶段。
+父图仍19/24、历史服务68/retry0；DB/部署/PR/合并/工单关闭/旧会话/锁/E组0。
+
+## 180-4 n160 已实际推送；n164 TEXT修订收口
+
+2026-11-19，n160实际提交并推送
+`d75e80a7a87acb844dbc61850498d3a9dcb10e08`，77文件，
+`git push origin HEAD:refs/heads/codex/STEMROBIN-180-textbooks`退出0。
+下方ready-to-commit段落是历史，不再代表当前状态；未重跑任何n160批准。
+本次接续完整课程仍只计n159/n160两课。
+
+n164417–420 SOURCE两项局部修订已PASS，来源416–420连续装订为
+19正文/5题/0图；420实验课尾对象仍开放，不续421、不保留完整实验课。
+现代TEXT FIRST REVISE和首个权限断言失败均保留。
+Gauss限定F1/F2受影响复核PASS：只恢复P4来源归因的具体历史评价，
+加29正文/1题历史实体声明，原题面、来源快照、公式和数字不变。
+审查report SHA
+`8417269e86bf669655d667f732dd905217ada410ffe6c9154ac29cb894c97340`
+及manifest SHA
+`c5418ccebe62612022ff56481d20b7e1316820760d95f08e2c453e56a9574877`
+已实际0444/哈希绑定，审者关闭；只从独立可写副本一次adapt-finalize0。
+
+答案SOURCE独解5题/26facets已冻并绑定11项；首个绑定失败只因误查
+原始可写模板权限，原收据保留，不chmod原模板。
+Cicero仅继续零图受影响SOURCE语境补绑，未披露作者键。
+新答案副本仅补Q2具体引述、Q4/Q5准确历史站名及逐项来源声明；
+作者稿不是FINAL PASS，未answer-finalize、晋升、选择或DISPLAY。
+地图题仍是有用的不判分历史作图方法/核查标准，不伪造成图或当前排名。
+
+n162353/354 FIRST FIG PASS复用；352新细节观察仍来源不确定HOLD，
+法拉第肖像缺语义素材。353а身份修复后的FIRST独立FIG为REVISE：
+漏原图手握移动线圈的动作关系，其他九对象映射PASS不冒充整图批准。
+Dewey两图一次观察、19证据项实际绑定并关闭，旧身份/交叉线失败保持。
+未用示意线图替代手部语义素材，不晋升353а。n163355–358作者Sagan在途。
+父图累计仍19/24，新付费/图服务0；历史68/retry0及UNKNOWN成本/token保持。
+不写DB、不部署、不PR/合并/关闭工单，不操作旧聊天/锁或E组。
+
 ## 180-4 B91 n160 全阶段PASS，待实际提交
 
 2026-11-19，n160 SOURCE/TEXT/FIG/ANSWER/CHOICE/DISPLAY均已收口；
