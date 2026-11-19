@@ -2,6 +2,70 @@
 
 ### resume182-13 接续 n39答案与n40–n43
 
+- 07:38准备n44小批交付：最终七个受影响区域像素PASS，完整终项0及两表头可见；
+  原22图逐哈希覆盖、14张仅受影响补图，原FIRST/两部分blocked/疑点均保留。
+  aggregate FIRST仅PASS大小写读取误断，改按实际schema后RECOVERY1 exit0，
+  未重开图或重审；aggregate哈希d1ce727f，整课15原题及答案、33选择题/144项。
+  retain FIRST exit0，357种独立证据字节中110复用、247新保留，用户源码排除。
+  n45答案比较MATCH/PASS19原题/57任务，880/890条件分支完整，零issue units；
+  数学及四图观察全复用，不追加约定审批。
+  278作者第一候选offset fixture失败、aligned控制通过，修订实际26行通过，
+  非901的20行带及计数pixels不变；修订fixture缺口仍未放行，受影响独审
+  获现有工单内最多两次原冻结fixture调用授权，不误作新人工审批。
+  当前只准备窄暂存n44及259–266页，不含274补丁/用户helper/test或n45后续；
+  stage FIRST exit0/336文件，空白豁免零，准备commit/push同一分支后继续；
+  正式handoff与全Charter检查仍留最后。
+
+- 07:35接续：n44选择Stage3冻结PASS33题/144项，73条误解逐项匹配，
+  validator及retain各一次exit0，原132源任务复用。整课render FIRST通过；
+  首次显示因a.jump只读检查退出、零截图，原HTML机械移入render后
+  现有readonly工具只去两锚点，RECOVERY1六组合/22PNG通过。
+  像素批01通过、批02长图降采样留七区域缺口、批03留五右端观察疑点；
+  七张小区域补图已解3–7，14/15仍有捕获范围缺口。右端诊断仅DOM，
+  最终glyph在容器内；文档坐标误用导致FIRST零图退出，修为实际844视口
+  内七个表头/选项区域后RECOVERY1通过，最终受影响像素审查在途。
+  父代理仅打开q28具体疑点一图，正文/图/键/HTML零修改。
+  n45四真实输出绑定通过，五文件要求系父代理误记；changes内联，不造第五文件，
+  不重跑语义或图审。19份derived/ungraded/parts空答案冻结，57源任务复用比较在途；
+  RAW/现代课与索引仍等待n44提交后提升，不计整课。
+  274窄guard独审PASS，已仅集成批准补丁，去用户helper/guard后AST与dcdb85e7候选同；
+  用户helper哈希cda274fb与guard逐字不变、helper-free候选保留且未暂存。
+  正常finalize首恢复因JSON只读失败，保留失败输出后仅使工作JSON/audit可写，
+  RECOVERY2 exit0/20行；原sqrt(b)忠实保留，现代勘误sqrt(D)不撤销。
+  278诊断首次误断过滤应删两行，失败保留；恢复证实过滤零行，brace连通区
+  各扩展为两行吞掉真标签行，独审确认26行依据复用，窄计数修订在途。
+  279–282 FIRST源审FAIL发现280两负号及281/282各一标点；仅新工作副本
+  四行修正，三finalize exit0/22、23、28行，受影响独审PASS恰好四处差异。
+  未变279与图62像素/归属复用，原作者及FIRST审查完整保留，不计整课。
+  当前HEAD/FETCH_HEAD同9f063a99，index仍为空；无DB/app/deps/发布合并部署关闭，
+  全Charter检查留最终handoff，费用/host tokens/active time未知。
+
+- 07:10接续：live182及98382941纠正评论07:06重读，review授权不变。
+  n44答案独立MATCH15原题/64小问/120任务与四实际查表方法，31独立字节证据
+  已保留，数学字段深等，finalize FIRST exit0/ungraded15/parts空。
+  选择Stage2冻结33题/144项/71真73假，全部15原题覆盖；同审者Stage3在途，
+  源132任务/纯view结果复用，不新增审批门槛。
+  n45文字及三图独审PASS19原题/44小问/86公式/18段落/一边界，
+  六图只各读一次，三canonical记录成功；只source.path与metadata哈希重绑、
+  SVG几何和正文公式不变，adapt-finalize FIRST exit0，输出绑定独审在途。
+  n45原题数学独解开始，现代整课与答案/选择/显示尚不计完成。
+  274新短分式候选独审REVISE：预登记R2同列三行被合并，base6/candidate4；
+  actual20/12旧fixture/71旧测试仅复用，四新fixture原失败全保留，
+  当前工具及用户helper/guard/test未改，新窄guard修订在途，不阻塞交付。
+  275–278作者四图/四finalize，前三exit0、278为24/26行失败；四页独审在途。
+  279–282作者已接续现有备料，n47实际278开头、补充材料281不误作n48。
+  HEAD仍9f063a99已push，index未暂存；本接续父代理零新增视觉图。
+  无DB/app/deps/发布/合并部署关闭；费用/host tokens/active time未知。
+
+- 07:01本批已commit/push：9f063a99a2bdcd1a396f50d9e9bf1c6a8c0ef44d，
+  remote ls-remote独立核对一致，仍同一codex/STEMROBIN-182-textbooks分支；
+  n38/n39/n41三完整离线课、38原题及答案、65选择题/226项已交付。
+  当前index为空，用户helper/guard/原测试及n44/后续源页仍保留工作树。
+  继续n44：15答案/64小问/120原题任务及四实际查表方法独立比较MATCH，
+  issue_units为空，132源解复用；仅持久引用绑定后走现有答案finalize。
+  选择33题/144项纯view独审、n45现代图/文字、274窄支持独审及275–278源作者
+  继续，不暂停、不正式handoff；无DB/app/deps/发布/合并部署关闭。
+
 - 07:00批次交付准备：证据保留969种独立字节，439复用持久记录、
   530新文件，1份用户helper快照排除。窄暂存594文件一次exit0；
   6份不可变原始证据空白按哈希保留，其余diff-check通过。

@@ -1,0 +1,98 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 262,
+  "printed_page": 256,
+  "notes": [
+    "Unit 44 contains printed examples 2 and 3 and the introduction to incomplete quadratic equations.",
+    "The final paragraph ends after the printed character 左 and continues on physical 263.",
+    "No source figure or table is visible."
+  ],
+  "errata": [
+    {
+      "id": "p0262-math-1",
+      "block": "p0262#9",
+      "original": "$c=1.21$",
+      "reason": "原页例3印出方程 x^2-1.21=0，却在系数行印出 c=1.21；同例判别式计算又使用 (-1.21)。按 ax^2+bx+c=0 的定义，常数项应为 -1.21。独立源审已确认原印正号，忠实原式不改，仅允许现代层补负号，现代内容独审仍待完成。"
+    }
+  ],
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 262
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "247223f75947eb648e2d96c4cbfbed89936daae47f8a00d0e3f06c89e069ad2f"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 24,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+例 2　解方程 $x^2-12x+36=0$.
+
+<!-- p -->
+因为 $a=1$，$b=-12$，$c=36$，所以
+
+<!-- p -->
+$D=(-12)^2-4\times1\times36=0$.
+
+<!-- p -->
+方程有唯一根：　$x=\frac{12\pm\sqrt{0}}{2}=6$.
+
+<!-- p -->
+例 3　解方程 $7x^2-25x+23=0$.
+
+<!-- p -->
+这里 $a=7$，$b=-25$，$c=23$.
+
+<!-- p -->
+判别式 $D=(-25)^2-4\times7\times23=625-644$. 因为判别
+式是负的，所以方程没有根.
+
+<!-- p -->
+在 $ax^2+bx+c=0(a\neq0)$ 这种形式的方程里，系数 $b$ 或 $c$
+当中即使有一个等于零，也可以根据二次方程的根的公式求
+解. 系数 $b$ 或 $c$ 至少有一个等于零的方程叫做不完全的二次
+方程.
+
+<!-- p -->
+例如，$3x^2+17x=0$，$x^2-1.21=0$，$7x^2=0$ 都是不完全
+的二次方程. 在第一个方程里，$a=3$，$b=17$，$c=0$，在第
+二个方程里，$a=1$，$b=0$，$c=1.21$，在第三个方程里，$a=7$，
+$b=0$，$c=0$.
+
+<!-- p -->
+下面我们利用所推出的公式解不完全的二次方程
+
+<!-- p -->
+$x^2-1.21=0$.
+
+<!-- p -->
+得到：
+
+<!-- p -->
+$D=0^2-4\times1\times(-1.21)=4.84$，
+
+<!-- p -->
+$x=\frac{0\pm\sqrt{4.84}}{2}$，$x=-1.1$ 或 $x=1.1$.
+
+<!-- p open -->
+我们发现，解 $ax^2+bx=0$ 和 $ax^2+c=0$ 这种形式的不完
+全的二次方程时，正象我们在前面做过的一样，利用把方程左
+
+<!-- foot -->
+256
