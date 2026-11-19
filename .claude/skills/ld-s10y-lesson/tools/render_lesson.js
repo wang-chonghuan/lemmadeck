@@ -213,6 +213,24 @@ function page(title, crumb, bodyHtml, english = false) {
 
 const book = path.resolve(bookDir);
 const contentRoot = editionName ? path.join(book, "editions", editionName) : book;
+let englishMetadata;
+function metadataLabel(label, english) {
+  if (!label || !english) return label;
+  if (!englishMetadata) {
+    const tocDir = path.resolve(SKILL, "../../..", "ssot-resources/soviet10year-textbooks/toc", path.basename(book));
+    const entries = (node) => [
+      ...(node.id && node.title ? [node] : []),
+      ...["contents", "lessons", "topics"].flatMap(key => (node[key] || []).flatMap(entries)),
+    ];
+    const translations = new Map(entries(JSON.parse(fs.readFileSync(path.join(tocDir, "en.json"), "utf8")))
+      .map(node => [node.id, node.title]));
+    englishMetadata = new Map(entries(JSON.parse(fs.readFileSync(path.join(tocDir, "zh.json"), "utf8")))
+      .map(node => [node.title.replace(/\s+/g, " ").trim(), translations.get(node.id)]));
+  }
+  const translated = englishMetadata.get(label.replace(/\s+/g, " ").trim());
+  if (!translated) throw new Error(`Missing English TOC metadata for ${label}`);
+  return translated;
+}
 const lessonDirs = fs.readdirSync(path.join(contentRoot, "lessons"))
   .filter((d) => onlyLessons.size === 0 || onlyLessons.has(d)).sort();
 const done = [];
@@ -225,7 +243,8 @@ for (const lid of lessonDirs) {
   const X = JSON.parse(fs.readFileSync(path.join(dir, "exercises.json"), "utf8"));
   const english = L.locale === "en";
   const title = english ? L.title : (L.printed_title || L.title);
-  const crumb = [L.chapter, L.section, `${english ? "Printed page" : "印刷页"} ${L.start_printed ?? "?"}`]
+  const crumb = [metadataLabel(L.chapter, english), metadataLabel(L.section, english),
+    `${english ? "Printed page" : "印刷页"} ${L.start_printed ?? "?"}`]
     .filter(Boolean).join(" · ");
 
   // ---- 课文页
