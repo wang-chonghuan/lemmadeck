@@ -8758,3 +8758,537 @@ Standard answer preparation11tasks PASS. Fresh Plato answer and Parfit choice
 authors are active in disjoint roots; their unfinished outputs are not read.
 36 is not counted complete. No parent images, paid service calls, database
 writes, publication, synchronization, merge, deployment or ticket closure.
+
+### Nov18: Batch013 Committed And Pushed
+
+Same worker184-3 invocation and locked a07e checkout; no workflow or backend
+replay. Commit `5ef29a94759a7980c41056ed41f29fe3f83cb14d` successfully pushed
+to `origin/codex/STEMROBIN-184-textbooks`; both local HEAD and tracking ref
+match. This also pushes the nine already-existing local commits, without
+rewriting their history or synchronizing from main.
+
+The narrow staged set was543 files/17481409 working bytes. It includes only
+completed32-35 resources, required pipeline repairs, current source109/111-123,
+and approved raw/modern36 adaptation/figures as partial forward work.36's
+answer draft was explicitly excluded. Unrelated TOC changes, prepared/held
+history, T/ and other books stayed unstaged. Staged completion manifest matches
+the recorded SHA;429 text files had no credential-shaped finding and no env
+file was staged. `git diff --cached --check` exited2 for existing literal
+source-line trailing spaces on118/121; approved hash-bound source bytes were
+preserved, not cleaned or relabeled as a passing check.
+
+Plato's36 answer-author result received:11 draft answers,2auto/9ungraded,
+6images; report SHA
+`f8554c6dd495298cc27c6715a05b8b567b590a8e71813778f2383616559ef2a0`,
+answer SHA
+`9dd83b436e84387d17357d3ecbaaf4d0133c1cdbd8403fae73ad1b079a1328ef`.
+Author closed after complete report intake. Parfit choice author remains active;
+unfinished output contents are not read. Existing retention/check helpers now
+permit only the additional authorized36 and use separate batch014 output roots.
+No passed review/check rerun, parent image, paid call, DB write, publication,
+merge, deployment, closure, handoff or cross-chat message.
+
+### Nov18: Modern36 Authors Received, One Independent Gate Active
+
+Parfit's choice-author result received in full:11 unsolved seeds, one genuine
+concept block,12questions/50options (9single/3multiple),3actual image opens,
+no new figures. Original structural check exit0. The author disclosed that all
+nine single keys occupied the first position. Original seed/draft/report bytes
+remain unchanged; author closed after intake.
+
+A new parent-owned candidate changes only single-option order and consistently
+maps option IDs, correct sets and rationale references. Reversing each mapping
+and sort gives exact original-question deep equality; coverage, mathematical
+text, figures and all multiple questions are unchanged. New candidate file SHA
+`153c22566cbb9e4af39e40efc4043fd877971d54c837256249749226cb2c1d77`;
+structural check exit0, not semantic approval. The original and changed candidates
+plus proof are retained once at `batch014-choice-authorship-and-order`:
+6files/155043bytes, manifest SHA
+`2a6b43124151ac5b615626454db860284e675e2ee3e716f479508a394e843e69`.
+Completed answer-author report retained once at `batch014-answer-authorship`:
+1file/13270bytes, manifest SHA
+`c9334eda420c5dc9209a4887b38735ee6af17e2dea3827fccc407d0f3bcd5e67`.
+
+Fresh bounded Confucius owns the one substantive independent36 gate. It starts
+with source-only solving before any view or key, then judges the new view-only
+candidate before internal comparison, and only then compares the answer draft.
+Its cumulative8-image ceiling is unchanged across the queued continuation;
+four current modern previews plus three original figures suffice. Active reviewer
+output contents are not read. Existing source/figure/adaptation/render stages
+remain valid and are not repeated.36 is still not a complete lesson.
+
+### Nov18 23:22 UTC: Next Source124-127 Prepared
+
+Batch013 was pushed before continuing authorized next-batch production. TOC
+places37 at printed116,38 at121,39 at128 and40 at131; the existing physical123
+contains37's true incoming open paragraph. Only four absent new source pages
+124-127 were first prepared, through the existing production helper with the
+project-owned runtime. Actual outer status0/signalnull/errornull, all four native
+prepare statuses0; elapsed3.339seconds. Closed direct stdout3657bytes SHA
+`0a3c6d08d563c27ce9a1bb4eee7b482999f9dbf44196821d0b26a20fbc5c9a04`,
+stderr564bytes SHA
+`8973665b872ae96d47c355b40f27e13291f7a8ae3be51e04e38ffe1ea7b38a05`.
+No prepare replay, source/PDF/runtime recopy or model service call.
+
+Minimal outer receipt/streams retained once at
+`batch014-source124127-first-prepare`:3files/5586bytes, manifest SHA
+`aefd7609a9b41310c4c5c9bb70a69196106c255a9c3d9639261dc654e113d2fa`.
+This is mechanical evidence, not a whole native/dependency census, source
+approval or completion.
+
+Fresh Lorentz owns only new124-127 source transcription and owner finalization;
+fresh Ampere owns their independent source-first observations and later single
+comparison gate. Both bounded8-image contexts, no old-source image reopening,
+no source123 edits or active-output reads. Source128 remains unknown. Confucius
+continues modern36's separate gate. No complete new lesson, image opened by
+parent, paid call, database write, publication, merge, deploy or closure.
+
+### Nov18: Modern36 Gates And Affected Presentation/Source Repair
+
+Same worker184-3 invocation and locked a07e checkout. Confucius approved11answers
+after source-first solving:2auto/9ungraded;7images total. Existing owner finalize
+exited0 once; authored answers remained deep-equal. Ready answer SHA
+`d048af24108f2fd52d07770dc9a2a2d043befdded3abafd71c8a06583075a4df`.
+Numeric/expression and MathLive contract commands passed; zero exact candidates
+means no actual editor transaction is claimed for36.
+
+The first choice gate found all50option truths correct but required two
+internal-evidence repairs. Only rectangle optionc misconception and triangle
+construction optionc derivation changed; learner-facing views stayed byte-identical.
+Affected review and validator PASS; approved draft SHA
+`2b0b69aed672bfceea6788b0c25f714ba3d93a74692de4d94e2ea11dbf01a55e`,
+review SHA `a6c583518234b4bbb641f46fe00886937bc21ab2b7fa0595d85fbdabb03cd655`.
+Approved seed/draft/review retained through the existing owner. Original failed
+review and all13inputs remain retained unchanged.
+
+Zeno's first observation was5/6visualPASS despite6/6nativePASS: mobile Q3option4
+reportedly clipped. Original reports and screenshots were retained before edits
+at `batch014-display36-first-failure`,15files/2660699bytes, manifest
+`ccb307aaf09838b1c8775dd1dc8500a2280e97abac8c05a0279f4c84028c5f8b`.
+The viewer resized tall choice screenshots to6000px; that limitation remains.
+Parent text-only browser diagnosis found all preserved Q3KaTeX bases within
+the fieldset, so the original visual cause is not claimed established.
+Context7 KaTeX documentation confirms inline operator/relation wrapping.
+Choice fragments use unstyled `sr-nb`, not renderer `nb`; no global renderer
+or formula change was made. Only the scratch projection now separates controls
+and text with constrained grid tracks and clears fieldset intrinsic minimums.
+The strengthened checker asserts all50option boxes, control separation, >=16px
+text and every KaTeX base's locally reachable extent. Only both affected choice
+viewports reran, actualexit0,50/50boxes with zero local scrolling each; four
+text/exercise views were reused. Zeno's affected visual follow-up is pending,
+with at most2newopens remaining of its cumulative8-image allowance.
+36 is not counted complete yet.
+
+Lorentz124-127authorship and AmpereStageA received: four first finalizers
+PASS25/25,8/8,19/19,18/18; author5images/1ROI, independent6images/2ROIs.
+Original comparison FAIL_LITERAL only126/ex343row04comma versus printed period,
+retained at `batch014-source124127-first-comparison`, manifest
+`3008ef04aed1ecfdc1cc7143bfb6b81d01176bfe9aed925684271e633327b609`.
+Parent saved canonical before snapshots and changed only `倾斜角，如果` to
+`倾斜角. 如果`. Existing owner re-finalized only126, actualexit0/19:19;
+MD SHA `5db29cfbeed35170cb0f5545277760673a8a79673856a3192c1ca833f67fc49e`.
+124/125/127MD/JSON/audit bytes unchanged. Ampere's zero-new-image affected
+follow-up is pending. Fine137/138instrument engravings and140C/Oglyph stay
+qualified, not invented or settled from prose;349remains open at127.
+
+128-131first preparation previously exited0 for all four absent pages through
+the existing production helper; native streams remain under prepared page dirs.
+No canonical files existed before dispatch. Fresh bounded Avicenna owns only
+source128-131authorship/finalization; Raman owns source-first observations,
+each max8images without image-bearing history. No unfinished outputs read.
+Parent images0, historical24/24unchanged; paid/image-service calls0, token/cost
+unknown. No backend replay, synchronization, DB write, publication, merge,
+deployment, closure or cross-chat messages.
+
+### Nov18: Modern36 Offline Complete; Source124-127 Qualified Pass
+
+Zeno's affected presentation PASS received,8/8cumulativeimages and closed.
+The observer explicitly corrected its original overstatement: the clipping
+inference came from viewer reduction, not confirmed native clipping.
+New native358x1063Q3capture shows the complete terminal squared factor.
+Desktop observer delivery remained reduced; all50option boxes per viewport
+passed machine containment, control gap, >=16.64pxtext and local-end checks.
+Original FAIL reports remain unchanged. Composite retained at
+`batch014-display36-affected`,12files/2826787bytes, manifest
+`8e05b6189cdc6fe3e5be6541d66ca403c9cc46fa391888c90ea8e24a45ea0746`.
+
+Distinct `batch014-n36-completion.json` written once, SHA
+`4ebc57e6136ac6dd8eeee31af0a22c23bdd388cb76d5bda12fa513ded206b60a`.
+36offline complete:11answers(2auto/9ungraded),12choices/50options,4figures.
+Original four text/exercise visual passes and exact screenshot hashes reused;
+only choice views changed. Historical arithmetic totals now36lessons/
+294answers/273choices/1166options, not a fresh corpus recount.
+This is not live-product acceptance, publication or ticket completion.
+
+Ampere's source126 affected-only PASS received,0newimages; cumulative6/8.
+Only punctuation changed in MD and one pageJSONline; audit byte-identical,
+all nine unaffected124/125/127canonical files byte-identical. Composite
+124-127 PASS_QUALIFIED retains137/138fine engraving and140C/Ouncertainty;
+349whole and37closure still require128. Reviewer closed after intake.
+Affected proof/receipt/review retained at `batch014-source126-affected`,
+8files/39430bytes, manifest
+`97a30c957f7a6d80546ffd322ff9af494bae700840e7ce6f37848cc6a709ec24`.
+
+Six raw source135-140first traces now PASS, existing p2c vectorize on only
+124/125/126/127using the author's native-work. Source PNGbytes unchanged.
+Mismatch ratios135-140:0.018%,0%,0.101%,0.125%,0.183%,0%.
+Actual four native exits0; direct closed streams/receipts saved separately at
+`tmp/batch014-source124127-vectorize`. No modern37figure, assembly or
+lesson completion is claimed. Source128-131author and blind observer remain
+active; their unfinished outputs are not read. Full mechanical defence/build
+stays at formal handoff; parent images0 and no paid/image service/DB/publish/
+merge/deploy/closure/backend replay/cross-chat operation.
+
+132-135were absent and first-prepared once through existing production helper:
+outerexit0 and four nativeprepareexits0. Minimal closed outer receipt/streams
+and wrapper retained at `batch014-source132135-first-prepare`,4files/
+6533bytes, manifest
+`53142dcaae3209dc16444133cbed6f94d864fc39c6001842b3592ecb8af15926`.
+These are uninspected prepared pages, not source approval; no author/reviewer
+has been dispatched for them. Source37scoped assembly helper is prepared but
+unused until source128's full comparison passes. Distinct36completion-tool
+retained1file5805bytes, manifest
+`b6fa04f2bd22cef87a3be6d7d6b2ca33bfaa72a85f8eec452d8d17c7ff797504`;
+the immutable batch013sealer was not run.
+
+### Nov19: Source128-131 Author Received With Two Holds
+
+Avicennaauthor completed:78textrows,52blocks,8sourcefigures141-148,
+6/8imageopens including2ROIs; no reopens or newpaidcalls.
+Four first native finalizers:12820/20exit0,12913/13exit0,
+13025/26exit1,13120/20exit0. Direct receipts and failed130audit retained;
+no failed producer retry or passed-page replay. Original author package retained
+33files225360bytes at `batch014-source128131-authorship`, manifest
+`25c571a63c599912a2a1d6d8016263b1a4f763d1937d01ed30e197b81f375ce8`.
+Full author JSON SHA
+`d7c623872e2eec8c319791a8359df31eb004c98c7bf394b3c812738b3c97cb9e`.
+
+Actual128 closes349but also contains350and351before38starts.
+351(2)'s glyph between“的”and“点”is ink-obscured after whole-page/ROI
+reading; explicit placeholder and literal HOLD remain, not inferred“顶”.
+130's extra band is reported as a separate footnote separator; no exclusion
+or counter change applied before independent corroboration.
+355circle-marked exercise stays open at131after“平面”;38not complete.
+The unused source37assembler was corrected to the actual expected342-351/
+8figures, including128's141/142, but remains unexecuted pending review.
+Raman's source-first observations are still active and unread; Avicenna remains
+available for any affected-only repair without resetting usage.
+No additional complete lesson, assembly, publication, spend or Git action.
+
+Raman's completed StageA received in full:all78literalrows,8figure inventories
+and10uncertainty records consumed before comparison authorization.
+Sourcefirst6/8images,2/2ROIs; measured643seconds excludes untimed instruction
+reads. StageA reports/observations remain unchanged, retained8files100550bytes,
+manifest `9b13bc366e5db0e2808452854c0970532ff94e2d543d6d500a8b7f81486ccffc`.
+Same Raman now owns only one comparison against the completed author and current
+canonical128-131;0newimages or ROIs permitted. Canonical12before-repair files
+were snapshotted and remain unchanged while that comparison is active.
+Independently observed130separator supports investigating the existing narrow
+exclusion contract, not count fitting or approval. Other uncertainties are
+not resolved from author expectations.
+
+Only after both prior source-image batches returned text, fresh bounded
+Helmholtz and Hilbert dispatched for first-authorship and source-first
+observations of already prepared132-135, max8images each/2ROIs. They own
+disjoint roots and absent canonicalpages0132-0135; incoming355text goes only
+to the author. Unfinished outputs unread. Source37assembler remains unused.
+
+### Nov19 00:27 UTC: Local128-131 Repairs Retained; Next Source Gates
+
+Raman's original single comparison identified only three supported literal
+repairs:129period+space after图145,130missing的and到. Parent applied those
+three and the independently observed130thin footnote separator exclusion
+`separator-rule [139,1843,442,9]`, plus one appended historical-note clarifier.
+Only129/130were re-finalized by the existing owner:actualexit0,13/13and25/25.
+128/131all six canonicalfiles remain byte-identical; source/crop PNGbytes and
+geometry unchanged. Original13025/26exit1and first comparison are preserved.
+
+Raman's affected-only follow-up received and consumed in full:
+LOCAL_REPAIR_PASS_WHOLE_UNITS_HOLD, reportSHA
+`f016f29faba5270c76c7f42feb0ceea60e69b1c104ae9af2d07a5dd39bf69a60`.
+Zero newimages/ROIs/decodes, cumulative6/8imagesand2/2ROIs. New candidate/
+native/proof/review records retained once at `batch014-source129130-affected`,
+14files41809bytes, retentionSHA
+`6ef3c986fb9b02e0040a23c124084a98f9621705e85ebd71cdcda19e199d1b39`.
+Previous authorship and first-comparison packages are referenced, not copied.
+Raman and completed unused Avicenna closed after intake. Whole37stillHOLD
+for351(2)ink-obscuredglyph; whole38stillHOLD for129L-shapednotation,
+145marker and131inequality typography. No inferred顶orAOB=90degrees.
+355outgoingOPEN remains historical; its132continuation is now authored,
+not approved by the localized128-131follow-up.
+
+Both132-135completed packages received before Hilbert's singlecomparison:
+author87horizontalrows,6figures149-154, four firstfinalizers actual0:
+21/21,20/20,21/21,25/25;8/8imagesincluding2ROIsandtwo fullpage reopens.
+AuthorreportSHA `f407e663a9f479a827c12254666ada4145379e52f4c934d6726df0542ca523ed`;
+retained36files400912bytes, manifest
+`eacc121b7297991bae2d1367e12dc7c41dab413c973c2c65f89f5da539029e98`.
+Hilbert sourcefirst90rowitems include separate shared captions, not a count
+defect by assumption:6/8images,2/2ROIs; StageAreportSHA
+`be95ca3cf10cf4b62ee24fc717c6aaaaf1a4d45ee7a41ea772ae0062709eaf49`;
+retained8files106909bytes, manifest
+`fc7ef24da6677f85a12c8bb96161490037d6dfd294f395e06ce28ce50d9e9c9d`.
+Full canonical mathematical text, all sealed StageA observations and structured
+author inventories were consumed; oversized duplicated displays were truncated,
+not universal full-visibility claims. Helmholtz closed after intake.
+SameHilbert now compares once with zero newimages/ROIs. Active output unread.
+
+§38locally closes after368(2)before§39on135. Theorem22proof ends, subsequent
+paragraph remainsOPEN at“这个条件”;155referencedbutunseen. 364(1)'s absent
+vertex name remains absent. Incoming131was parent-supplied canonical author
+text, not direct human/pixel authority. No132-135finding claimed before result.
+
+136-139were firstprepared once:outerexit0andfournativeprepareexits0,
+elapsed2.878seconds; retained4files6533bytes, manifest
+`3ca7f5321f7be1f0108c8f1875c98b1f6aa24b5e1f866fccfd37c3d780ef82b1`.
+After prior image-batch textual intake, freshforkfalseDirac owns136-139
+authorship/ownerfinalization and Aquinas owns independent sourcefirstStageA.
+Eachmax8images/2ROIs, disjoint new roots and absent canonicals confirmed.
+Incoming135text goes only to author; outer140unknown. Unfinished output unread.
+No new complete lesson, assembly, modernfigure, DB, publisher, Git, deployment,
+closure, capability/freshness/backend replay or cross-chat message.
+
+Eight raw141-148figures were independently first traced by the existing
+deterministic p2c vectorizer; four nativeexit0, no retries, sourcePNGbytes
+unchanged. Mismatch percentages141-148:0.053,0.009,0.057,0.007,0.019,
+0.036,0.420,0.023. This is raw pixel preservation only, not source-symbol
+resolution or modernfigure approval;37/38HOLD remains. Closed receipts/
+streams/result and scratch wrappers retained once at
+`batch014-source128131-first-vectors`:15files13733bytes, manifest
+`64572a3445149edd7d5b7b28a2ebc45266520f6dc5629f320e75fe8b0e5ce034`.
+SourceSVGS remain in the author's native-work pending scoped assembly.
+One text-only lookup guessed nonexistent `comparison/report.md` and exited1
+after successfully printing128/129canonicals; discovered existing
+`comparison/fullreport.md` instead. Original failed lookup remains recorded,
+not relabeled or retried as a producer/source gate.
+
+Hilbert's ONE132-135comparison now received in full; statusHOLD, reportSHA
+`6b2e678fc903f3b5a422a18f1d726a687e300475ee7522044cb62a067a9185f6`.
+All90literalrows, locations, statuses and sixfigureinventories were consumed;
+oversized duplicate row displays were truncated, with133/134literal/math
+content separately exposed. Three caption-baseline merges reconcile90items
+to87horizontalrows;84encodingmatches,3anglehat-parenthesisvariants,
+3punctuationdisagreements,0unclassifiedrows. No numerical/formula omission
+found. The first comparison does not decide the three tinyperiod/comma glyphs.
+H153holds onlythicknesslabela/m and explicit terminalrightanglemark.
+F131confirmsauthor's“direct user/用户提供”provenance claim is incorrect:
+incoming131was parentcanonicalauthorTEXT, not directhuman/pixelapproval.
+Original author statements remain unchanged pending localized clarification.
+364missingvertexand368sourcehypothesesremain; noB/compatibilityconditionadded.
+Retainedonceat `batch014-source132135-first-comparison`,5files167723bytes,
+manifest `336fb8a4cc35256349408a7717708d6612c259d580d4e317d86ae485d9b0fcab`.
+Hilbert remains available for affected-only textual follow-up, cumulative6/8
+imagesand2/2ROIsunchanged. No newimages, sourceapproval orfullcomparisonreplay.
+136-139author/StageAremainactiveandunread; source-symbol adjudication waits
+for their completed image-batch textual intake before another bounded context.
+
+Raw149-154firstvectortraces also passed, three nativeexit0, PNGbytesunchanged:
+mismatchpercent0,0.019,0.022,0.011,0.066,0.004. Only132/133/134with
+figureswereexecuted;135hasnoneandwasnotreplayed. Closedstreams/receiptsand
+scratchwrappers retainedonceat `batch014-source132134-first-vectors`,
+11files10251bytes, manifest
+`04d28ccf4334b120b641267e3a76eeab7048a7b672088d4526d2342a9237a73f`.
+These sourceSVGSremain scratch;153's label/markHOLDnotresolvedbypixeltracing.
+
+### Nov19: Source136-139 Both Intakes And Localized Dispatches
+
+Same worker184-3 invocation continues; no workflow/freshness/backend replay.
+Dirac's completed authorship was consumed and retained before close:
+reportSHA `07ac28ddf00dd3db59a85f43ba76d6750d5ad58f1a4e16c9c6f41876d05f59c8`,
+4pages49blocks84rows5figures155-159 and18newexercises369-386.
+Native firstfinalizers:13625/25exit0,13726/27exit1,13817/17exit0,
+13916/16exit0; elapsed sum2.129666332seconds. Sourcefirst6/8images,
+2/2ROIs. Firstreport JSON survives its MD-helperfailure; MD-only recovery
+and original helper retained. Authorship retained53files251593bytes,
+manifest `0a3798c100f7a6e2037d1424af5f4dac82238f1508b4b7372670d97947e96a42`.
+
+Aquinas completed StageA received:all85literal groups,5figureinventories,
+19uncertainties/nontext/boundaries consumed.85includes138panel-markergroup,
+whereas author84excludes it; not a count defect by assumption. Sourcefirst
+6/8images,2/2ROIs; no canonicalreads or comparison yet. StageAreportSHA
+`862d75e543c1149160040756d09057d2c8cca3ee833545d92878d2bdba31a34b`.
+Three execution faults preserved:136crop metadata failure after crop creation,
+then existingcrop verification without regeneration; two ledger guard/glob
+registration faults corrected without imageopens. Zero pendingfaults/processes.
+Retained once38files321199bytes at `batch014-source136139-stagea`,
+manifest `84eef5461c747540578c13a092d1223bad68fda7fdd28f5b083cd851e2ebc7bf`.
+Current script/failure receipts retained, not a claim that absent prior script
+versions were recovered. Originalscan/runtime referenced, not copied.
+
+136goal bothreadalpha-perp-beta; conclusion authoralpha versus independenta
+remainsunadjudicated.137bothvisual26rowsversusmachine27; detachedmarginstreak
+is observed, not excluded or retried.138section39endsbefore40after382;
+figure157damagedleftglyphHOLD.139386punctuationpossible disagreement;
+outer140unknown, no whole40closure. Source37/38HOLD unchanged.
+
+Only after both136-139imagebatchtextintakes, freshforkfalse Meitner
+`01a1f140-e332-7633-acdc-ea225bcf4c3f` dispatched isolated129notation/
+145attachedmarkerarms, max3opens=1original+2newnativeROIs. Gauss
+`01a1f140-e35f-7141-bf58-81a01da75c45` dispatched three132/133punctuation
+glyphs and153thickness/terminalmark, max4opens=2originals+2newnativeROIs.
+Disjoint roots, no candidate/author/review reads or canonical edits; active
+contents unread. No nextimagebatch before their textual completion.
+
+Resume exploratory filename-only listings included then-active localized
+roots; no active content/imagepayload read. Oversized duplicate usage/StageA/
+filename displays truncated, not universal fullvisibility. One metadata lookup
+guessed132135-stagea/manifest.json and exited1 after displaying136139manifest;
+existing132135retention.json subsequently discovered, no failedproducer replay.
+Parentpermanent24/24unchanged, zero parentimageopens/decodes, paidcalls0.
+No assembly/modernization/newcomplete/DB/publish/Git/deploy/closure.
+
+Aquinas ONE136-139textcomparison dispatched after the above retained intakes,
+submission `01a1f143-cdf3-71e1-9196-41130c3638bd`;0newimages/ROIs/decodes,
+same6/8images2/2ROIs. New comparison root only; originals/canonicals untouched.
+Allrows/objects/figures/uncertainties required, including137countdiagnosis and
+136alpha/a disagreement without mathematical inference. Activeoutputunread.
+
+Both localized source batches now completed, consumed and retained, then closed.
+Meitner129reportSHA `0127e962c5e007372c98eb1f95512b46c7c8aab6e60623fbc13db6f257f3be00`:
+3/3opens,2/2newROIs. ItaliccapitalL LETTERFORM established, operatoridentity
+UNKNOWN.145threeclear locations:cornerboxbetweenupwardaedgeandOB;
+AOB/A1O1B1thinconnectorsnotclosedboxes; wedge measuresUNKNOWN; crowdedD1
+identity/armsUNKNOWN. No90degree/equality inference. Retained22files44611bytes,
+manifest `9ecc6031523e9dcf380babe3859685a882337ce28b9b5b1449bc58221b66a966`.
+
+Gauss132133reportSHA `6d24f6fb6ed368815dd9bf6746be6966fa37c3de513b67dbbb4b2cd1cd8901ef`:
+4/4opens,2/2ROIs; two technical Pillow source decodes for nativecrop separately
+accounted, no parentdecode.132after木工凿子 isdot;133after运动的阶梯and图153
+arecommas.153thicknessglyphpresenceconfirmedbutletterUNKNOWN; upper two
+shortlocalarms andloweroutwardturnexist, isolatedsquare/attachmentsUNKNOWN.
+No new perpendicularity/given. Nativecrop exits0,0; earlierstatprobeexit1
+for absentroot.venv preserved. Retained23files57521bytes, manifest
+`62bc65456022bb31af22a2745b5ef0d1ee23a40b8f0dc8c42be0376cfc0748b6`.
+
+Only132comma->dot+conventionalEOLspace applied, plus132twohistorical-note
+clarifiers(F131parentcanonicalauthorTEXTanddotproof) and133oneH153/commanote.
+Originalnotes/bodymath/source/crops/geometryunchanged;133bodybyteidentical.
+Affectedproofactualexit0SHA
+`51e51a7d64a75e0e856f7db162fffc6efe86fd075c5066af19b2437c3576e198`;
+132/133auditsbyteidentical;134/135sixcanonicalfilesbyteidentical.
+12beforefiles snapshotted,6afterfiles frozen; no finalizer/gate replay.
+SameHilbertaffected-onlytextfollowup dispatched submission
+`01a1f147-fed6-7583-994a-19a0cec44209`,0newimages/ROIs, same6/8and2/2.
+Whole37/38HOLD maintained. New source image batch not dispatched.
+Textsed guessed absentauthor132135/run.cjs exit1; exactscriptname query
+returnednoentriesexit1, not producer/sourcefailure. Originaltooloutputs preserved.
+
+Hilbert132133affected-only received/consumed:PASS_LOCAL_REPAIR_ONLY, reportSHA
+`1370e629c3580a77613584477fdd0dcac9125fe4679d2735662c7f86b0aa23c1`.
+F131andallthreepunctuationdispositionsresolved;153UNKNOWN/whole37/38HOLD
+remain.48textinputbindings preserved;0newimages/ROIs,6/8and2/2unchanged.
+Retained13files70469bytes, manifest
+`d19c501d21c84681843460581c3d13645147ebfcb947e0809721e64a918668bc`.
+Hilbertclosedafterintake. His155unseenqualification is historical132135scope,
+not a claim that136155was never later observed.
+
+Aquinas ONE136139comparison received/consumed:85groups=84textrows+one138
+panelmarkergroup;33objects,5figures/45labels,19uncertainties,15nontextgroups
+and boundaries allconsumed; three literaldisagreements and8qualifiedHOLD.
+ReportSHA `6b608d7d2ad8c4d786a4df98882c352789398a7cd92ae2636b6499f3f6428872`,
+rowreceiptSHA `ee7347234e306683046be9618b1ea76db5660eec58f49eb552fd8d1fc076cf68`.
+136proofalpha/a,138enumerationcomma/ideographiccomma and139386dot/comma
+remainunresolved;155/156corners157damage159fontcase remainqualified.
+13726/27failure diagnosed strongly from two direct nontext observations plus
+matchingfinalband, not newcomponentpixelproof. Inputvalidationfirstcallfailed
+before semanticcomparison on symbolicparenthelperread; scopedreadguardfix
+preservedfault and onlyonefirstsemanticcomparison executed. Giantduplicated
+report/native outputstruncated; compactall85rows/objects/findings consumed
+separately. Retained9files742324bytes, manifest
+`18bca03db9655a9a885574de9f049227f07e48668991ceb01f3a967293b2fea6`.
+
+137onlyobservedblankmargin scan-artifact[305,2061,29,57]andoneappendednote
+applied; originalbody/blocks unchanged. Existingownernativefinalizer137ONLY
+actualexit0,26/26,normalization0,elapsed0.531772167seconds. Samefig156geometry
+[821,528,396,402]andpage/cropPNGhashes unchanged;136138139ninecanonicalfiles
+unchanged. Originalauthor13726/27exit1andALLoriginalreports preserved.
+Native receiptSHA `8aea4dc3d9deec7e7c977b237bbc94aa6d5c1211e41cd7fea362bae6f1a05341`;
+proofSHA `bd35127201e1b13f123b4bfcabfd7f8f1a2884abe6b53286f750fe61f6141f1d`.
+SameAquinasaffected137ONLYtextfollowupdispatched submission
+`01a1f14d-cd5a-7c90-bfb1-a089a804dc50`,0newimages/ROIs/decodes.
+Nooriginalcountoverride/counterpatch/pixelalteration orsourceapproval.
+Activefollowupunread; formaldefence/build/assembly/modernization/Git stillnotrun.
+
+Aquinas137affected-only now received/consumed:LOCAL_COUNT_REPAIR_PASS_WHOLE_UNITS_HOLD,
+reportSHA `254abef10710089b9e4d358b1af56d34e6e7f51a205f08ea64c3bf1f360e3620`.
+67checksPASS,0failed, checkerelapsed0.009903542seconds,31textbindings.
+Exactmaskconversion,footeroutside,bodyscope1594bytes/12blocks,cropmetadata/
+closednativeactuals andhistoricalfailurepreservation verified; source/cropbyte
+identityremainsqualifiedparenthashproof, not reviewernewimageadjudication.
+Zero newimages/ROIs/decodes; cumulative6/8and2/2unchanged.
+Retainedonce14files111015bytes, manifest
+`e0e51ad413b0d3eb45260ea1603d6dccbf352f59cdbc19ebdd6cfcd6e595e2fd`.
+Aquinasclosedafterintake; allfourresumedagentsnowclosed, no parentexecsessions.
+137countHOLDlocallyrepaired;136proof/138enumeration/139386andfinefigures
+remainHOLD. Whole37/38HOLD unchanged; outer140unknown. No unitassembly,
+modernization, newcompletecourse, newbatchcommit, formalhandoff, DB,
+publication, merge, deployment orticketclosure.36complete historicalarithmetic
+and prior4ebc57e6completionremain unchanged, not a fresh corpus recount.
+This is an in-development checkpoint, not completion or a human pause.
+
+### Nov19: Batch015 Missing Stages Recovered
+
+Same worker184-3 invocation and checkout; no setup, freshness, backend or
+passed-stage replay. s14 has no written exercises in either source or modern
+edition: choices are not applicable, not an invented question set. Existing
+answer finalizer passed the exact empty answer set. Text-only fidelity covered
+all22source objects/12prose objects; five independent figure passes reused.
+Four headless offline desktop/mobile text/exercise checks and Lovelace's actual
+four-screenshot inspection passed. Completion SHA
+`f3a3d68de85f88f2f2c8685387073894dbae874f5ffabe66455a876312c0eaaf`.
+Generated fig72 uses generation metadata, not render metadata; original binding
+traversal failure and its script survive, with no figure-stage replay.
+
+n2's old rejected candidate was unavailable in bounded permitted searches.
+Dewey authored the authorized fallback7questions/28options without figures.
+Parent source-first, view-first and internal comparison passed all28alternatives,
+setsAD,C,B,C,BD,A,D; this is honest parent self_review, not a second child.
+Chinese localization changes visible prose only:151TeXspans and all non-view
+fields unchanged. Lovelace's affected wording pass retained, including a
+companion identity correction; original incorrectly attributed report unchanged.
+Final validator exit0, draft canonical SHA
+`9ca4577a8bf547b1c0808e5c6248020031aa6ec5d69ff6463215f3ce531030b8`;
+existing retain_choices succeeded. Both headless choice views passed and were
+actually inspected by Lovelace;70native geometry records support the review.
+Lovelace closed after full intake, cumulative6/6images exhausted,0ROIs.
+n2 completion SHA
+`2aa5bd1609b3a55bf90a590e4ef2a4cdf13191210340d7ec86c5fb2354460ff6`;
+58files/1869729bytes retained once, manifest
+`73fa371b28a5a36935c1e88226475222e39539ddca5262b34bcdf7b547e5cc5e`.
+Existing seven answers/prose/written display inherited unchanged. Historical
+plan264-270 reports their pass, but original screenshots/reports were not
+recovered in bounded searches; no fabricated hash or renewed review.
+
+Pending complete batch is n36+s14+n2, three lessons within the authorized3-5
+flexibility:18answers,19choices,78options,9figures. n36 completion and sealer/
+display stages remain unchanged. Historical36already includes n36; adding
+s14+n2 gives38lessons/301answers/280choices/1194options, arithmetic only,
+not a new corpus census or four-book completion.
+
+n12 current11questions/50options: added99(1)and conditional104(2)response
+units independently pass, old nine views/keys unchanged.99(2)/(3)remain blocked;
+101broad-predicate coverage remains qualified revise. Official checker exit3
+is the expected semantic-blocked result. s11 current11questions/53options has
+structural pass only;110(1)angle-domain and116disk/circumference remain held.
+n80 current5questions/24options represents seven sources, structural pass only;
+55coefficient ambiguity remains held. None is approved or counted complete.
+Retain each current partial package once; preserve prior failures and stages.
+
+Euler remains authoring all48n83sources71-118 in its existing isolated root,
+max4images/0ROIs, preferably zero. Group instructions are essential and may be
+omitted by the current projection; await actual producer evidence before a
+narrow fix.101mixed-number/product reading remains unforced. n83 answer
+templates exist but contain no authored answers. Parentpermanent24/24unchanged:
+zero parentimageopens/decodes, paidcalls, DB, publish, merge, deploy or closure.
+Formal defence/build stays reserved for actual final handoff. Commit/push this
+completed three-lesson batch, then immediately continue n83.
+
+Partial snapshots retained once without promotion: n12 20files/233325bytes,
+manifest`cbb18d67c31181572ed662002628a868e2cae197cca27eaa210751ee0492d530`;
+s11 7files/71573bytes,
+manifest`deeb4df6c86e966062161fb352b33860650b3e6de3f7b7d2c7d2667dd075b094`;
+n80 5files/51748bytes,
+manifest`3bb5cd4c764a49647658967ec6728d9399f31721ecf158b5604af640136a5095`.
+These are failure/pending evidence, zero completed lessons. Remote ticket branch
+fetched before commit; FETCH_HEAD and local HEAD both remain5ef29a94759a7980.
+No synchronization change or unrelated dirt reversal was needed.
