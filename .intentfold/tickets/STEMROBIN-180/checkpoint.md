@@ -1,5 +1,204 @@
 # 生产检查点
 
+## 180-4 B91 n160 全阶段PASS，待实际提交
+
+2026-11-19，n160 SOURCE/TEXT/FIG/ANSWER/CHOICE/DISPLAY均已收口；
+25原始正文块、六书写题、五现代图，答案auto0/ungraded6。
+Boyle受影响BLIND及FINAL PASS已实际哈希绑定并关闭；
+两选择题九选项完整保留，严格FINAL校验/retention/render均一次0。
+第一题未改，第二题仅补首次四分之一转、垂直平衡判断、
+适时换向及固定电刷/电流接触状态。SOURCE R1关于347/348
+只支持电流状态比较、不是轴线顶点轨迹的限制继续保留；
+所有FIRST REVISE及旧无关owner失败不重置、不重跑。
+实际render为31显示段，不把作者21段误记为最终显示段。
+一次隔离headless桌面1440x960/手机390x844六surface全部PASS：
+overflow0、formulaErrors0、键字段0、末字可达；345固定640可滚动，
+其余图桌面480/手机358。fresh Archimedes六截图一次DISPLAY PASS，
+报告实际SHA/0444绑定并关闭，没有新增父图，仍19/24。
+此处只记ready-to-commit；最新实际push仍18061ffdc，不预记B91提交。
+
+n162/n163的FIRST TEXT独审Carson均PASS，报告绑定并关闭；
+现代图尚未齐全，未现代收口或计完整课。Maxwell四图作者在途。
+n164新四源页作者Jason已完成并关闭：40块/80行，四finalize、
+table vectorize及integrity均0。fresh Linnaeus FIRST REVISE
+保持：418漏400万千瓦中的千；420五处物体斜体漏标。
+417/419及不变table PASS；审者图8/8，受影响复核只能复用已冻像素观察，
+不新增图。报告/manifest实际SHA/0444绑定，待单独副本局部修复。
+420仍仅下一实验课边界，不续421、不宣称实验课完整。
+新付费/图服务0，历史68/retry0及UNKNOWN成本/token不变；
+无DB、部署、PR、合并、关闭工单、旧会话或锁操作。
+
+## 180-4 n160 CHOICE受影响盲审；n162/n163连续源层已闭合
+
+接续仍在显式合法恢复workspace生产，不重setup/freshness/旧SOURCE或已PASS图。
+Boyle SOURCE6题/32facets/4完整图先冻，父实际5文件SHA/0444绑定；
+纯view断言FIRST1只因额外seed_sha256字段，投影修订0，未改内容。
+BLIND FIRST REVISE保持：第二题未要求垂直平衡方向，347/348
+未经限定称转动状态；独立九选项真值为a,b,d和b。
+父只修第二题的平行/垂直判断、首次四分之一转、适时换向、
+固定电刷及接触/绕组电流状态措辞，第一题及键未改。
+repair1 structural0，draft canonical
+`2ed2d6d60c91256907a101a9a6f1718486081f55959b2bf213a2e25e6ac62dcc`；
+viewSHA `9aa654ab22ff128b45cca10926667c8899c1f667cf5de5daa2c3f3357917b114`，
+0444；同审者限定受影响BLIND在途，尚未披露内部键做FINAL。
+所有首次REVISE、SOURCE R1投影轨迹限制及旧图批准范围保留，
+父新图0，累计19/24；未render/DISPLAY/新增完整课或B91提交。
+
+411–416缺失临时页各一次prepare0，六页PNG哈希与批准meta完全匹配。
+六图按批准精确框及既有crop/vector核心恢复12输出，未重SOURCE/
+finalize/回栅格门禁；历史输出哈希UNKNOWN，不冒称旧文件字节恢复。
+新409/410与批准411–416建连续隔离cohort，带TOC assemble一次0：
+n16222正文/7题/5图，n16323正文/9题/4图；
+原412肖像owner n162由真实已装订身份满足，未改归属或伪造标题。
+n164仍仅开放尾段，不计完成，不加入本次原始索引。
+两原始课及相关图/409410共30文件精确保留，原始索引只追加n162/n163。
+两课adapt-prepare一次0。作者两次写入前断言失败均留收据/helper：
+先遇prepare既有layout分行，再遇353多写一次；只修这些局部，
+最终作者0，来源快照/公式/数列不变，n16219显示段/n16325段，各2概念边界。
+OpenStax感应/发电、Royal Institution法拉第、EIA能量转换四页
+实际HTTP200；EIA2022统计不作当前统计，1822日记内容只归因原书。
+fresh Carson限定两课FIRST TEXT独审在途，图预算0，不先行现代收口。
+
+n164417–420缺失候选未冒称可恢复旧字节；新范围prepare一次0，
+fresh Jason限定四源页作者在途，420仅下一实验课边界，不续421。
+旧417/418 REVISE0of6及419/420 collector/误分类两失败保持。
+本段新图片服务/付费0，历史68/retry0和UNKNOWN费用/token保持。
+无DB、部署、合并、关闭工单、旧聊天/锁改动或新生产聊天。
+
+## 180-4 B91 n160 五图及六答案已收口，选择/显示待补
+
+2026-11-19，恢复上下文后仍显式在合法 workspace
+`/Users/yong/.codex/worktrees/stemrobin-180-resume/lemmadeck` 生产。
+346 第二受影响标签候选仍 B 碰撞失败，保留原稿和 render；
+只移动 B 的第三局部候选通过 render/native（14项，最小16.70625px）。
+345/347/348/349受影响 render/native PASS复用，不重跑。
+父只加载346失败输出1张诊断图，实际累计15；不重开全批。
+
+fresh Mendel限定345/346受影响FIG PASS，4图一次；
+fresh Averroes限定347–349受影响FIG PASS，6图一次；
+各原图清单完整，所有首轮REVISE、渲染失败、计数均保持。
+两位审者已收取关闭，报告分别SHA
+`a715396dfc0657ff66eb0832e6ecf55b69dfa5fa304bfdc7adce3bbcca21b566`、
+`c76f4e4b875b3bd88fd5642c7a2dd4c31b3accabd2909cfc6d1917cc53742148`。
+五图正式spec/render/review/SVG已晋升；仅来源/输出路径元数据变化，
+SVG和几何字节不变，机器绑定现有独立审查，不再做内容复审。
+
+Rawls六答案LIMITED FINAL原REVISE保持：Q1多“和可调电阻”。
+作者只删这5字；首次修订脚本误用id字段被断言拦截、未写候选，
+改为既有exercise字段后一次0。fresh Poincare限定Q1受影响PASS，
+5/5facets，其他五题及元数据不变；报告SHA
+`271c0f77dd8854f0a5ce6b6c341df6b4734d23554a624ae7f90960b8bedbf8b4`。
+源码独解31facets和原FINAL不重做，审者已关闭。
+
+canonical adapt-finalize首次2：旧在途`p0412#11`的owner-lesson n162
+尚未装订，校验器读到非目标范围，失败audit和收据完整保留。
+不改412/n162、TOC或校验规则；改用已批准403–406隔离来源集合。
+isolated adapt-finalize一次0（25正文块、6题、5图），
+answer-finalize一次0（auto0/ungraded6）。六正式现代文件精确复制，
+来源绑定和正式图元数据均耐久；原始/现代索引只追加n160，
+其他恢复稿不进入本项完整统计。选择题、整课DISPLAY未做，尚不计B91完整课。
+
+n161继续实际生产：34文件隔离cohort、带TOC assemble各一次0，
+完整15块正文/5题/3图；adapt-prepare一次0，作者现代稿15块/14显示段。
+KIT雅可比及DOE排放/电动汽车电池三页实际HTTP200，正文限定旧书
+优先发明、98%普遍化、碳刷供电、无火花及“将来”的语义。
+fresh Avicenna限定FIRST TEXT在途，预算0图。350/351/肖像未生成、
+未FIG批准，保留语义素材缺口，不以线图绕过，不新增付费。
+所有命令收据在本单tmp/resume-180-4/commands；早期未记录探索不冒充已记录。
+当前新图片服务/新付费0，历史68/retry0及UNKNOWN费用/token保持。
+没有DB写入、PR、合并、部署、工单关闭、追加生产聊天或旧任务唤醒。
+最新已push仍为B90 `18061ffdc`；继续n160 CHOICE/DISPLAY和后续有源课。
+
+## B91 n160 TEXT批准，五图及答案在独立审查
+
+Meitner限定TEXT PASS已收取关闭，报告SHA
+`ce2656919dacff0abe4090d64f17e1a867fc4b93b4b57c3d912cf5c020568987`。
+六题/21段/两个边界完整；第3题辅助lines仍旧文，实际消费text
+已补条件，非阻断差异如实保留，不因此重TEXT或改源快照。
+
+345–349五份新FigureSpec已按先前逐图像素清单制作。首次不可见
+构造点误列清单的两个validator失败、346短箭头失败、全部标签
+碰撞失败稿均保留；只在隔离新版本改清单映射/箭头/具体标签。
+347第二碰撞仍FAIL，仅剩brush1一处按当前普通修复继续补，
+额外受影响修复事实不隐藏、不重置，不称clean-FIRST。
+当前五图renderer/native均PASS，但未获FIG内容批准。
+render调用345/346/347/348/349分别3/4/3/2/1，原返回码在usage。
+345 native第一次把手机宽度当打印纸而失败；当前app明确A4，
+只修纸面fixture，前七项控制流通过复用，其未落盘数值UNKNOWN
+不编造。346既有18项PASS不重跑，其他当前各14项。原生新图
+父加载0；父总14、当前图批8不清零。
+
+fresh限定FIG审者：Einstein345/346，Helmholtz347/348，Zeno349；
+预算8/8/4，预期4/4/2，只原图及full640/actual297组合native，
+不回传像素、不重renderer/native/SOURCE/TEXT。
+六题独立ANSWER SOURCE审者Rawls预算0图，先冻结解答再披露作者键。
+标准prepare一次0，六题作者候选SHA
+`90a4d966217aac671fb6a8d8da973c6edf3cfeb16890834acc8a0415f489b38b`，
+全derived/ungraded，包含第6题两个问句，未finalize/晋升。
+
+新付费/图服务0，费用/token未知。早期探索读命令及错误路径/glob
+只留工具历史，未伪称全部recorder；新render起已有逐调用receipt。
+尚未canonical晋升、完整课计数、B91提交、选择或显示。n159全部PASS
+与已push保持不动；继续等具体缺陷，并做后续非重叠生产工作。
+
+## B91 五源页批准，n160 原始层已闭合
+
+406/407 FIRST强调缺失REVISE保留；只修五行共七个强调词，
+受影响SOURCE复核PASS，PNG/SVG及审计原字节不变。审者实际8图
+（原分配5加额外crop3），两次执行失败及超分配事实如实保留，
+复核新增0图，审者已关闭。408姓名“包”、两处句读及410
+末段字下点分别最小修复，408/410受影响PASS；409 FIRST PASS
+直接复用，四crop及SVG未改。该审者7图、复核新增0，已关闭；
+408“将来用”的FIRST词形不确定性仍记载，不伪称额外像素确认。
+
+n160 所需旧345–348原图输出已用批准PNG/精确框/既有核心恢复。
+346–348共六PNG/SVG与历史哈希完全匹配；345历史输出哈希未知，
+只声明由批准像素/框及不变核心重建，不伪称精确旧文件恢复。
+403新本地prepare一次0，404/405既有prepare直接复用；
+不重SOURCE作者/审查、snap/finalize或SVG回栅格门禁。
+
+只用403–406建22文件隔离cohort，一次带TOC assemble0：
+n160正文25块、六道题、五图，符合装订前期望；唯一open
+为排除的n161 `p0406#13`。一次adapt-prepare0，
+现代稿25块/21段、两处实际相邻概念边界，原始快照/公式/
+给定数/六题身份与图引用保持。OpenStax磁力、线圈力矩两页
+实际HTTP200，用于限定平行零力与惯性过平衡时的适时换向；
+现代TEXT审者Meitner在途，预算0图。尚未现代收口或晋升。
+
+父已按现代图要求新打开345–349各一次，先记录完整对象清单；
+累计真实加载14，转换后批次8。后续父不加载预览图，
+新图只可由限定独立审者分批检查，不能借压缩清零旧图次数。
+新付费/图服务0；未计新增完整现代课或B91提交，继续图稿。
+
+## 180-4 B90 已推送，B91 源缺口已补
+
+2026-11-19，n159 尾批已提交 `18061ffdc`，62 个文件；
+`git push origin HEAD:refs/heads/codex/STEMROBIN-180-textbooks`
+实际退出0。索引仅追加 n159；恢复快照及其它未完成稿未进入提交。
+复用 n159 全部既有批准，不再新增显示流水线。
+
+B91 新补物理7p406–410源稿，均在隔离 scratch：
+`.tmp/ld-s10y-lesson/resume-180-4-source/artifacts/7p/pages/`。
+406 首收口16/16行、407为21/21、408为23/23、409为25/25。
+410 首次13/12失败已独立保存到
+`tmp/resume-180-4/source410-FIRST-row-failure/`；像素诊断确认
+较大的着重点连通末行与页码，只改计行副本的着重点阈值，
+不改正文和图像，受影响收口13/13通过。
+图353与353а保持不同原书身份，编号函数最小保留末尾字母，
+避免第二裁图覆盖第一裁图。两组针对性测试各3项通过。
+六张编号图及雅可比肖像均各一次vectorize通过：
+349/350/351误差0.037%/0.051%/0.031%，
+肖像0.009%、352为0.010%、353及353а均0.000%。
+
+406/407独立SOURCE审者Popper仍在途，408–410新限定审者
+Lovelace已委托，预算分别5/7图；均不重跑收口/矢量门禁。
+作者父累计真实图加载9（转换前6，接续3，包括408重开1次），
+不因上下文转换清零，未重复打开已PASS的n159图。
+尚未得到新SOURCE批准，未装订、晋升或计完整现代课；
+n160六题在406闭合，n161五题在408闭合待批准，n162仍开放。
+历史付费图服务68/重试0保持，本批新服务0/新付费0，
+费用/token仍未知。没有共享DB写入、合并、部署或工单关闭。
+
 ## 180-4 合法工作树接管与实际生产
 
 2026-11-19（Europe/Dublin），按最新直接授权在本新会话正式
