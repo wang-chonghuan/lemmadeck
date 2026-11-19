@@ -33,7 +33,8 @@ MATH = re.compile(r"\$\$(.+?)\$\$|\$([^$]+?)\$", re.S)
 MATH_TEXT_LITERAL = re.compile(r"\\text\{([^{}]*)\}")
 MATH_BOUNDARY_PUNCTUATION = re.compile(r"[、，；。？！：]+")
 # Chinese unit text does not turn an adjacent quantity into an identifier.
-NUMBER = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])", re.ASCII)
+# A sentence-ending period is punctuation, not an unfinished decimal suffix.
+NUMBER = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?!\w|\.[\w.])", re.ASCII)
 PART_MARKER = re.compile(
     r"(?<![A-Za-z0-9_\u0400-\u04ff])(?<!\d\.)"
     r"(?P<open>[(（]?)(?P<label>\d{1,2}|[a-z]|[\u0430-\u044f\u0451])(?P<close>[)）])"
