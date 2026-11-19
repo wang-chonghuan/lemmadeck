@@ -1,0 +1,73 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 269,
+  "printed_page": 263,
+  "notes": [
+    "The opening conclusion is a new paragraph of the worked example from physical 268, not an incomplete incoming paragraph.",
+    "Exercises 873-876 close here. Exercise 877 remains open after part г and continues on physical 270 with parts д and е.",
+    "Part а and part б of exercise 877 share one physical formula row; the full-width separation retains the two-column placement.",
+    "Author-observed physical text rows including the footer: 24. There are no figures or captions."
+  ],
+  "errata": [],
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 269
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "ceaf26c1e75272655986cc532c181f61352e9edde761a577e17b74ea50c1fe1e"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 24,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+于是，问题有唯一解：摩托艇在静水里的速度等于 12 公
+里/小时.
+
+<!-- ex 873 -->
+873. а) 两个自然数的积等于 187. 已知这两个数当中一个
+比另一个大 6，求这两个数.
+б) 把 120 写成两个数的积，这两个数当中的一个比另一
+个小 2.
+
+<!-- ex 874 -->
+874. а) 矩形的长比宽大 4cm，而面积等于 60cm$^2$. 求它的
+周长.
+б) 矩形的周长等于 62m. 如果矩形的面积等于 210m$^2$，
+求它的边长.
+
+<!-- ex 875 -->
+875. а) 两个连续的自然数的积比它们的和大 109. 求这两
+个自然数.
+б) 两个连续的自然数的和的平方比它们的平方和大
+112. 求这两个自然数.
+
+<!-- ex 876 -->
+876. а) 直角三角形两直角边的比是 $8:15$，而斜边的长等于
+6.8m. 求三角形的面积.
+б) 直角三角形的斜边同它的一条直角边的比等于 $13:↵12$，而另一条直角边的长等于 15cm. 求三角形的周
+长.
+
+<!-- ex 877 open -->
+877. 解下列方程：
+а) $\frac{x^2+1}{2}-x=2$；　　　　б) $x\cdot\frac{x+1}{6}-2x=2$；
+в) $3-\frac{x+2}{4}\cdot x=x+5$；
+г) $\frac{3x+4}{5}-\frac{x^2-4x-6}{10}=-1$；
+
+<!-- foot -->
+263
