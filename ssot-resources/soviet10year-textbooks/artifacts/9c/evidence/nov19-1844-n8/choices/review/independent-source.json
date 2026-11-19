@@ -1,0 +1,42 @@
+{
+  "schema": "s10y-independent-source-freeze-v1",
+  "reviewer": {
+    "kind": "independent_agent",
+    "identity": "Codex reviewer chat 01a1f432-736d-73a0-a04e-3aedd4ccf5bb, separate from the draft author"
+  },
+  "seed_sha256": "2148d16b8d88638b0d97d017a08993edadf16a1f204b319bdfe0de60b47fdfdc",
+  "source_only_observed_at": "2026-11-19T14:25:38.544Z",
+  "independence": {
+    "inputs_read": [
+      ".agents/skills/ld-s10y-choice/SKILL.md",
+      ".agents/skills/ld-s10y-choice/references/review.md",
+      ".agents/skills/ld-s10y-choice/references/contract.md",
+      ".tmp/stemrobin-184-resume/n8-choices/seed.json"
+    ],
+    "draft_read": false,
+    "author_solution_or_key_read": false,
+    "answer_keys_or_history_read": false,
+    "images_or_browser_used": false
+  },
+  "source_number": "70",
+  "definition_assumption": "C_N^K counts K-element subsets of an N-element finite set, defined for integers N >= 0 and 0 <= K <= N. No extension to out-of-range lower indices is assumed. The seed includes no concept paragraph; this conventional notation assumption will be checked against the learner view.",
+  "source_tasks": [
+    {
+      "part": "a",
+      "domain": "Integers n >= 2 and 0 <= m <= n-2; equivalently integers m >= 0 and n >= m+2.",
+      "identity": "C_n^m + 2 C_n^(m+1) + C_n^(m+2) = C_(n+2)^(m+2)",
+      "independent_proof": "Start with n old elements and two distinguishable new elements. Every (m+2)-element subset contains t = 0, 1 or 2 new elements. These disjoint exhaustive classes contain respectively C_n^(m+2), 2 C_n^(m+1), C_n^m subsets. Their sum counts all C_(n+2)^(m+2) subsets, establishing the displayed identity for every integer pair in the domain.",
+      "algebraic_crosscheck": "(C_n^m+C_n^(m+1))+(C_n^(m+1)+C_n^(m+2)) = C_(n+1)^(m+1)+C_(n+1)^(m+2) = C_(n+2)^(m+2). Each Pascal use is within the finite domain.",
+      "boundary_check": "At n=2,m=0 the left side is 1+2*2+1=6 and the right side is C_4^2=6. At m=n-2 the t=0 class is C_n^n=1; at m=0 the t=2 class is C_n^0=1. Neither endpoint is omitted."
+    },
+    {
+      "part": "b",
+      "domain": "Integers n >= 3 and 0 <= m <= n-3; equivalently integers m >= 0 and n >= m+3.",
+      "identity": "C_n^m + 3 C_n^(m+1) + 3 C_n^(m+2) + C_n^(m+3) = C_(n+3)^(m+3)",
+      "independent_proof": "Start with n old elements and three distinguishable new elements. A chosen (m+3)-element subset contains t = 0, 1, 2 or 3 new elements. The respective counts are C_n^(m+3), 3 C_n^(m+2), 3 C_n^(m+1), C_n^m. There are three choices of the single new element and three choices of the pair, not one each. The classes are disjoint and exhaustive, so their sum is C_(n+3)^(m+3).",
+      "algebraic_crosscheck": "Write the left side as (C_n^m+2C_n^(m+1)+C_n^(m+2))+(C_n^(m+1)+2C_n^(m+2)+C_n^(m+3)). Apply part a to m and m+1, giving C_(n+2)^(m+2)+C_(n+2)^(m+3), then Pascal gives C_(n+3)^(m+3). The b-domain permits both uses of a, including its endpoints.",
+      "boundary_check": "At n=3,m=0 the left side is 1+3*3+3*3+1=20 and the right side is C_6^3=20. At m=n-3 the t=0 class is C_n^n=1; at m=0 the t=3 class is C_n^0=1."
+    }
+  ],
+  "coverage_baseline": "The source asks for two universal identity proofs, not evaluation at example values. A choice adaptation must preserve both weighted sums, upper and lower indices, exhaustive class counts or equivalent reasoning, and every finite-domain integer pair. Recognition can assess proof validity but cannot grade independent proof writing; that production loss must be explicitly retained."
+}
