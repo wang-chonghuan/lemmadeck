@@ -51,8 +51,8 @@
     "display_desktop_review_subagent": "Hooke closed after latest direct correction; never counted as PASS",
     "display_mobile_review_subagent_created": false,
     "additional_read_syntax_failures": 1,
-    "complete_courses": 6,
-    "new_git_commits": 3,
+    "complete_courses": 7,
+    "new_git_commits": 4,
     "commit": "23091b33d3291243e25ff98158ab79dbb5300857",
     "push_returncode": 0,
     "push_target": "origin/refs/heads/codex/STEMROBIN-180-textbooks",
@@ -245,9 +245,9 @@
       "fullCourseReady": false
     },
     "recordedCommandReceiptsAsOf": {
-      "scope": "Completed recorder receipts only; this executing receipt is not yet present. Retrospective records and UNKNOWN values remain explicitly identified in their original files.",
-      "count": 997,
-      "failed": 67,
+      "scope": "Completed recorder receipts only; executing completion receipt not yet present. Failed and historical receipts preserved; UNKNOWN costs and tokens unchanged.",
+      "count": 1126,
+      "failed": 74,
       "receipts": [
         {
           "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/answer-audit-contract-read-1.json",
@@ -443,6 +443,17 @@
           "command": "node",
           "args": [
             ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/record-b94-collected.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b94-commit-1.json",
+          "sha256": "5c22cdc9c3f378eee2170d760ae40e73ac676f223004181ca9bc589813be1066",
+          "returncode": 0,
+          "command": "git",
+          "args": [
+            "commit",
+            "-m",
+            "STEMROBIN-180: complete offline n92-n94 batch"
           ]
         },
         {
@@ -918,6 +929,15 @@
           ]
         },
         {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b94-mark-complete-1.json",
+          "sha256": "53e5e28cd7be7b64972e4bdd692e25303182e438526fc42e94607601f980003a",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/mark-b94-complete.mjs"
+          ]
+        },
+        {
           "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b94-narrow-code-proof-prepare-1.json",
           "sha256": "579be4016c6f02e9345580b26bb13f320580b7dacd27617bf23deebc9f16670c",
           "returncode": 0,
@@ -1092,6 +1112,37 @@
           ]
         },
         {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b94-push-1.json",
+          "sha256": "f7401e1f5f659358ca2cb796c4006e81ac0ed5836a82e9e5c6fa7e33eacfe7cd",
+          "returncode": 0,
+          "command": "git",
+          "args": [
+            "push",
+            "origin",
+            "HEAD:refs/heads/codex/STEMROBIN-180-textbooks"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b94-pushed-record-1.json",
+          "sha256": "0c9ae00d2b8f545611a5a5e6de513595687f6c0b749428875ec6f354239ef736",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/record-b94-pushed.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b94-remote-head-verify-1.json",
+          "sha256": "1b8b42b6c1eb98faa10b4ad9f8e9f04b3a890beb28939cdb4310fa3f4a0fdd6a",
+          "returncode": 0,
+          "command": "git",
+          "args": [
+            "ls-remote",
+            "origin",
+            "refs/heads/codex/STEMROBIN-180-textbooks"
+          ]
+        },
+        {
           "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b94-resume-git-status-1.json",
           "sha256": "5eb367e964f183f9ea36cbad2979fd6ff98d6608b7d1cae09683e3f08a777a62",
           "returncode": 0,
@@ -1225,6 +1276,15 @@
           ]
         },
         {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b94-stage-completed-1.json",
+          "sha256": "49c34436f9e727386066a268716303f19440183cbfb6538926002894f8711883",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/stage-b94-completed.mjs"
+          ]
+        },
+        {
           "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b94-stage-helper-and-narrow-patches-read-1.json",
           "sha256": "dabeedbbab3e0d29369a7a11e7f40cf272edb02fafbc933674e3aa01213d22c2",
           "returncode": 0,
@@ -1237,6 +1297,16 @@
           ]
         },
         {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b94-staged-scope-summary-1.json",
+          "sha256": "63d2290d289817e50e600d243497934299735fbf4aea9457305e005ea86c5836",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "-e",
+            "const cp=require(\"node:child_process\"),a=require(\"node:assert/strict\"),g=(...x)=>cp.execFileSync(\"git\",x,{encoding:\"utf8\",maxBuffer:32*1024*1024}).trim(),p=g(\"diff\",\"--cached\",\"--name-only\").split(\"\\n\");a.equal(p.some(x=>/(^|\\/)\\.env($|\\/)/.test(x)),false);a.equal(p.length,117);const root=\"ssot-resources/soviet10year-textbooks/artifacts/7p\";for(const x of [root+\"/book.json\",root+\"/editions/modern-us-neutral/book.json\"]){const j=JSON.parse(g(\"show\",\":\"+x));console.log(JSON.stringify({index:x,lessons:j.lessons.length,pages:j.pages,lastRows:j.lessons.slice(-3).map(v=>v.id)}));}console.log(JSON.stringify({staged:p.length,codeFiles:p.filter(x=>x.startsWith(\".claude/\")),productFiles:p.filter(x=>x.startsWith(\"ssot-resources/\")).length,ticketFiles:p.filter(x=>x.startsWith(\".intentfold/\")).length,credentialFiles:0,summary:g(\"diff\",\"--cached\",\"--shortstat\")}));"
+          ]
+        },
+        {
           "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b94-staging-inputs-1.json",
           "sha256": "269fc05d8887a6d77dd3cca86e82fb7834980470119d65a34e4764d17ac4af57",
           "returncode": 0,
@@ -1244,6 +1314,127 @@
           "args": [
             "-e",
             "const f=require(\"fs\"),cp=require(\"child_process\"),base=\"ssot-resources/soviet10year-textbooks/artifacts/7p\";for(const p of [base+\"/book.json\",base+\"/editions/modern-us-neutral/book.json\"]){const head=JSON.parse(cp.execFileSync(\"git\",[\"show\",\"HEAD:\"+p],{encoding:\"utf8\"}));console.log(JSON.stringify({path:p,keys:Object.keys(head),metadata:Object.fromEntries(Object.entries(head).filter(([k])=>k!==\"lessons\")),lessonCount:head.lessons.length}));} console.log(cp.execFileSync(\"git\",[\"ls-files\",base+\"/pages/0240\",base+\"/pages/0241\",base+\"/pages/0242\",base+\"/pages/0246\",base+\"/pages/0247\",base+\"/pages/0248\",base+\"/figures/fig-226.png\",base+\"/figures/fig-226.svg\",base+\"/figures/tbl-p0241-01.png\",base+\"/figures/tbl-p0247-01.png\"],{encoding:\"utf8\"}));"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b95-HEAD-before-commit-1.json",
+          "sha256": "d4432470a02ba86ea2139939d7ea04c420554b7c57f0365f16fc524a6c204879",
+          "returncode": 0,
+          "command": "git",
+          "args": [
+            "rev-parse",
+            "HEAD"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b95-before-staging-index-1.json",
+          "sha256": "41f9363378deb9e9c5e46fff412ae2099dc1bd027d6305c2e712c90529fa16a1",
+          "returncode": 0,
+          "command": "git",
+          "args": [
+            "diff",
+            "--cached",
+            "--name-only"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b95-completion-helper-syntax-1.json",
+          "sha256": "3a68639f843c99b1350e0c729afb8b28532c164e536a5fcae2dda8a303f75462",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "--check",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/mark-n97-complete.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b95-fetch-delivery-branch-1.json",
+          "sha256": "d9d4b5583387a133a1039df4bc3ab4eab8bf1974c5faf8cb67acdab439457d75",
+          "returncode": 0,
+          "command": "git",
+          "args": [
+            "fetch",
+            "origin",
+            "refs/heads/codex/STEMROBIN-180-textbooks"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b95-fetch-head-synchronization-1.json",
+          "sha256": "fcd0d5339c34643a1073e8d56c2c0693ee6bf289c6e564204376c236a6928b8d",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "-e",
+            "const a=require(\"node:assert/strict\"),{execFileSync}=require(\"node:child_process\"),g=(...x)=>execFileSync(\"git\",x,{encoding:\"utf8\"}).trim(),head=g(\"rev-parse\",\"HEAD\"),remote=g(\"rev-parse\",\"FETCH_HEAD\");a.equal(head,\"172a3d3dabef8892496fb7bb8b6d98ecb72714de\");a.equal(head,remote);console.log(JSON.stringify({head,deliveryBranchFetchedHead:remote,synchronized:true,worktreeChanged:false}));"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b95-final-artifact-read-1.json",
+          "sha256": "a73ec90eed358e70c2d7aa8768fe6a13fde651305bdb6244d4759845c6c7f8e9",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "-e",
+            "const f=require(\"node:fs\"),root=\"ssot-resources/soviet10year-textbooks/artifacts/7p/editions/modern-us-neutral/lessons/phy7-c1-s2-n97\",r=n=>JSON.parse(f.readFileSync(root+\"/\"+n));console.log(JSON.stringify({lesson:r(\"lesson.json\"),audit:r(\"adaptation.audit.json\"),figures:r(\"figures.json\"),exercises:r(\"exercises.json\")},null,2));"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b95-git-landing-skill-1.json",
+          "sha256": "97f088ca6d9fe721756f8dc2b5e67252b0bfa2c477a952747b8a5e1d967149ef",
+          "returncode": 0,
+          "command": "sed",
+          "args": [
+            "-n",
+            "1,150p",
+            "/Users/yong/.agents/skills/n-git/SKILL.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b95-native-display-1.json",
+          "sha256": "07b1a383c537a0c2ba61a6a3c8c5f2964579f2584ee19e58b8c32c513f7fe897",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/offline-check.mjs",
+            "--output",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/display-b95",
+            "7p",
+            "phy7-c1-s2-n97"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b95-offline-render-1.json",
+          "sha256": "b3e96778dd479e20e178cb39d7b3f2c5f2c308d84efe8a56795b5901378e42a2",
+          "returncode": 0,
+          "command": ".claude/skills/ld-s10y-lesson/.venv/bin/python",
+          "args": [
+            ".claude/skills/ld-s10y-lesson/tools/p2c.py",
+            "render",
+            "--book",
+            "7p",
+            "--edition",
+            "modern-us-neutral",
+            "--lesson",
+            "phy7-c1-s2-n97"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b95-progress-record-1.json",
+          "sha256": "e11f2bca13963df42404732d53b1aeabe253cbe734f592c92351544a80881867",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/record-b95-progress.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b95-staging-helper-syntax-1.json",
+          "sha256": "2d5d12232e628d5325f57f997ac7cb7a0128687537b6931f63da415ca8a6fcc6",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "--check",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/stage-n97-completed.mjs"
           ]
         },
         {
@@ -1430,6 +1621,44 @@
           "args": [
             "-e",
             "const f=require(\"fs\");for(const d of [\"n92-CHOICE-FIRST-SOURCE\",\"n94-FIRST-TEXT\",\"n94-figure-author\",\"n93-ANSWER-FINAL\"]){const b=\".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/\"+d;console.log(d,f.existsSync(b)?f.readdirSync(b):[]);}"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n100-figure229-current-assets-1.json",
+          "sha256": "cbd251f12a4e709a71d05710347098cb7fd11e4e3a7618aac1627932386eb897",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "-e",
+            "const fs=require(\"node:fs\"),c=require(\"node:crypto\"),root=\"ssot-resources/soviet10year-textbooks/artifacts/7p\",h=p=>c.createHash(\"sha256\").update(fs.readFileSync(p)).digest(\"hex\");for(const sub of [\"figures/fig-229.png\",\"figures/fig-229.svg\",\"pages/0258/page.json\",\"editions/modern-us-neutral/figures/fig-229.svg\",\"editions/modern-us-neutral/figures/fig-229.spec.json\",\"editions/modern-us-neutral/figures/fig-229.review.json\"]){const p=root+\"/\"+sub;console.log(JSON.stringify({path:p,exists:fs.existsSync(p),sha256:fs.existsSync(p)?h(p):null}));}"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n100-figure229-source-binding-read-1.json",
+          "sha256": "3682e44ca743a1181d9efe3e5d4f0bfcc08c21b1cc2c4572ce79b15afe51775d",
+          "returncode": 0,
+          "command": "sed",
+          "args": [
+            "-n",
+            "87,160p",
+            ".intentfold/tickets/STEMROBIN-180/source-review-7p-258259.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n100-figure229-status-lookup-1.json",
+          "sha256": "69c3c8efc8cc7f70dc71ed2904962dce77952e9652e55519632ae744923e012e",
+          "returncode": 0,
+          "command": "rg",
+          "args": [
+            "-n",
+            "-A",
+            "5",
+            "-B",
+            "4",
+            "229|SOURCE258|258.*PASS|F258",
+            ".intentfold/tickets/STEMROBIN-180/source-review-7p-258259.md",
+            ".intentfold/tickets/STEMROBIN-180/source-7p-258259.md",
+            ".intentfold/tickets/STEMROBIN-180/production-usage.json"
           ]
         },
         {
@@ -11151,6 +11380,874 @@
           ]
         },
         {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-DISPLAY-parent-bind-1.json",
+          "sha256": "1fd0ee0dedcc5b0dd3b568105c40d875739e7d8c5ec2ab5010e69e07b1c98f4f",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/bind-current-manifest.mjs",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-display-b95/manifest.json",
+            "8d14546a93d76c73c3f03c5913239e85a6e253e41eaebde32b1444a4476e5084"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-TEXT-affected-parent-bind-1.json",
+          "sha256": "f7901bb6eac38f01d3549b0bbff4fec25268acb3911b93667c160ce4e8a095ff",
+          "returncode": 1,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/bind-current-manifest.mjs",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-affected-review/manifest.json",
+            "b74ff64712fe615c21d3e5deb82fa5c480641d16d718e5efd76062cf27276eda"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-TEXT-affected-parent-bind-2.json",
+          "sha256": "5f8c56fe94e215f864f8140e9b1960604476ba65f61daeb90dc8a2e78e02d75d",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/bind-current-manifest.mjs",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-affected-parent-projection.json",
+            "ecb82b7c4f40d4e633e49b26c4d3a93d3ccab8f94be119da1eb405abb7a43268"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-TEXT-first-finding-read-1.json",
+          "sha256": "d1325d70ce2d943185bd260d490a119af55376cc3b4c6c478b0a01e8644d9405",
+          "returncode": 0,
+          "command": "sed",
+          "args": [
+            "-n",
+            "1,220p",
+            ".intentfold/tickets/STEMROBIN-180/modern-text-review-n97-b95.md",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-review/report.json"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-TEXT-parent-bind-1.json",
+          "sha256": "9bf57155d73b72beca36dcfe848154f9c8760d6b405b5e14ced1a02947fd87db",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/bind-current-manifest.mjs",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-review/manifest.json",
+            "832633952ae3f024db86910396d2a117a61ed4aab8e03dcfd21ce83febf84ba8"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-adapt-prepare-1.json",
+          "sha256": "250bf2c0da05ad3b38d617e9cbc0dbe2ca531d007d59081971d46a6c4a95350e",
+          "returncode": 0,
+          "command": ".claude/skills/ld-s10y-lesson/.venv/bin/python",
+          "args": [
+            ".claude/skills/ld-s10y-lesson/tools/p2c.py",
+            "adapt-prepare",
+            "--book",
+            "7p",
+            "--edition",
+            "modern-us-neutral",
+            "--lesson",
+            "phy7-c1-s2-n97",
+            "--root",
+            ".tmp/ld-s10y-lesson/resume-180-4-n97-cohort/artifacts",
+            "--work",
+            ".tmp/ld-s10y-lesson/resume-180-4-n97-cohort/work"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-affected-agents-read-1.json",
+          "sha256": "bd462c357d86c767ac691635a69857f0a75b26b8ddc050bf93ba2334418fe096",
+          "returncode": 0,
+          "command": "/bin/cat",
+          "args": [
+            "AGENTS.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-affected-bindings-shape-read-1.json",
+          "sha256": "287d678ccd2252b16fc893d690ef92e2b613ad350a0fddc677e196d85b646cf2",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "-e",
+            "const fs=require(\"node:fs\"),c=require(\"node:crypto\");const root=\".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/\";for(const p of [root+\"n97-text-repair-1/manifest.json\",root+\"n97-text-review/manifest.json\",root+\"n97-text-review/report.json\",root+\"n97-text-author/manifest.json\"]){const b=fs.readFileSync(p),o=JSON.parse(b);console.log(JSON.stringify({path:p,sha256:c.createHash(\"sha256\").update(b).digest(\"hex\"),bytes:b.length,keys:Object.keys(o),arrays:Object.fromEntries(Object.entries(o).filter(([k,v])=>Array.isArray(v)).map(([k,v])=>[k,{length:v.length,first:v[0],last:v.at(-1)}])),other:Object.fromEntries(Object.entries(o).filter(([k,v])=>!Array.isArray(v)&&k!==\"evidence\"))},null,2))}"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-affected-capture-bindings-1.json",
+          "sha256": "958c31884c320924014dd0963d5b15f36cde621fb44b9e3f9bf461167c8ba8b3",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-affected-review/review.mjs",
+            "capture"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-affected-charter-read-1.json",
+          "sha256": "f531a6d820cf50bd1496cdf704653975f42de51e1ca44de0e999b6a0a813ec89",
+          "returncode": 0,
+          "command": "/bin/cat",
+          "args": [
+            ".intentfold/project.json",
+            ".intentfold/charter/product.md",
+            ".intentfold/charter/engineering.md",
+            ".intentfold/charter/operations.md",
+            ".intentfold/charter/ui.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-affected-contract-tools-read-1.json",
+          "sha256": "f4d1169b4e686c1507cc66c0ff961ea877da287508d4dbad552cf0d8a56ae475",
+          "returncode": 0,
+          "command": "/bin/cat",
+          "args": [
+            ".claude/skills/ld-s10y-lesson/references/production-resume.md",
+            ".claude/skills/ld-s10y-lesson/references/edition-text-contract.md",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/run-stage.mjs",
+            ".claude/skills/ld-s10y-lesson/tools/prose_flow.mjs",
+            ".claude/skills/ld-s10y-lesson/tools/htmlfrag.js"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-affected-edition-locate-1.json",
+          "sha256": "65db9f397c45c52a660e94e0b665b11192aa5e0825257ff1ea8e8b095b699540",
+          "returncode": 0,
+          "command": "rg",
+          "args": [
+            "-n",
+            "^def normalize_prose_layout|^def |^import |^from |proseInline|section_breaks",
+            ".claude/skills/ld-s10y-lesson/tools/edition.py"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-affected-final-binding-1.json",
+          "sha256": "369822fab2ac53b1531b45251bbfb8ef304ca871cc761280e7dcaaebf06d1fb3",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-affected-review/review.mjs",
+            "final-binding"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-affected-freeze-1.json",
+          "sha256": "b396e08a44cdd2a73bdaf3e76d9ccdc4ca54f6fc37d0ea1b2b13c59a50659759",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-affected-review/review.mjs",
+            "seal"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-affected-fresh-fragments-1.json",
+          "sha256": "dc246ddefbd4aa440de61455a98c1946da856c039f1016c8b326cd286f394291",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-affected-review/review.mjs",
+            "fragments"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-affected-frozen-bindings-read-1.json",
+          "sha256": "b5080935fba3458356384cc157758fcc95f173974a78b173c28e2e6af62a7580",
+          "returncode": 0,
+          "command": "/bin/cat",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-repair-1/manifest.json",
+            ".intentfold/tickets/STEMROBIN-180/modern-text-review-n97-b95.md",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-review/manifest.json"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-affected-historical-binding-diagnosis-1.json",
+          "sha256": "c3b04d5b1a3b9f507c9b3bb98669c307c566ec6533dcc8cddf865d01a290d3ac",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "-e",
+            "const f=require(\"node:fs\"),c=require(\"node:crypto\"),m=JSON.parse(f.readFileSync(\".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-affected-review/manifest.json\")),h=p=>c.createHash(\"sha256\").update(f.readFileSync(p)).digest(\"hex\");console.log(JSON.stringify({keys:Object.keys(m),status:m.status,counts:m.counts}));function walk(v,key){if(!v||typeof v!==\"object\")return;const d=v.sha256??v.byte_sha256;if(typeof v.path===\"string\"&&typeof d===\"string\"&&(!f.existsSync(v.path)||h(v.path)!==d))console.log(JSON.stringify({key,record:v,current:f.existsSync(v.path)?h(v.path):null}));for(const [k,x] of Object.entries(v))walk(x,key+\".\"+k);}walk(m,\"manifest\");"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-affected-historical-projection-1.json",
+          "sha256": "6e80d16d12a5efbf695969510a5666886c00519b8567baf434e44d01630bcf86",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/project-n97-affected-bindings.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-affected-lesson-rules-read-1.json",
+          "sha256": "15e73777cc315cdfcd971c3cc83164f425c7bd5ab504acec952e11bc6d4f4dda",
+          "returncode": 0,
+          "command": "/usr/bin/sed",
+          "args": [
+            "-n",
+            "1,155p",
+            ".claude/skills/ld-s10y-lesson/SKILL.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-affected-normalizer-code-read-1.json",
+          "sha256": "dc1a38299b2113a7a2d5fbcfd008a2aa4a514ba835e80929df2fa7dfc3754b97",
+          "returncode": 0,
+          "command": "/usr/bin/sed",
+          "args": [
+            "-n",
+            "486,689p",
+            ".claude/skills/ld-s10y-lesson/tools/edition.py"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-affected-normalizer-import-read-1.json",
+          "sha256": "4501204e013696a49004af5213051c420f0a2bd0e10518035a3af651e7989418",
+          "returncode": 0,
+          "command": "/usr/bin/sed",
+          "args": [
+            "-n",
+            "1,95p",
+            ".claude/skills/ld-s10y-lesson/tools/assemble.py"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-affected-official-anchor-1.json",
+          "sha256": "b96b3a642cc6108dd31d1090f1d6e4b0e16164101694ae5a58504cc89e9f8be7",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".claude/skills/ld-s10y-lesson/tools/prose_flow.mjs",
+            "--json",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-repair-1/candidate.template.json"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-affected-parent-paths-read-1.json",
+          "sha256": "81c2aa3131355ef145c80a32d3aa6aaedb665e033fd22a67df755e6a5758a24e",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "-e",
+            "const fs=require(\"node:fs\");const r=\".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/\";const m=JSON.parse(fs.readFileSync(r+\"n97-text-review/manifest.json\",\"utf8\"));const entries=[];function visit(v){if(!v||typeof v!==\"object\")return;if(!Array.isArray(v)&&typeof v.path===\"string\"&&typeof v.sha256===\"string\"&&Number.isInteger(v.bytes))entries.push({path:v.path,sha256:v.sha256,bytes:v.bytes});for(const x of Object.values(v))visit(x)}visit(m);console.log(JSON.stringify({firstParentCount:entries.length,firstPaths:[...new Set(entries.map(e=>e.path))],ownedPathsAbsent:[r+\"n97-text-affected-review\",\".intentfold/tickets/STEMROBIN-180/modern-text-review-n97-affected-b95.md\"].map(path=>({path,absent:!fs.existsSync(path)}))},null,2));const p=r+\"n97-text-repair-1/candidate.template.json\",o=JSON.parse(fs.readFileSync(p,\"utf8\"));console.log(JSON.stringify({candidatePath:p,keys:Object.keys(o),source:o.source,definitions:[1,3,5,7].map(index=>({index,block:o.prose[index]})),section_breaks:o.section_breaks},null,2))"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-affected-router-read-1.json",
+          "sha256": "3768fe65acb9951a7e10a322ef57d1739749e74e3d70d4b30a370f35b388d44a",
+          "returncode": 0,
+          "command": "/bin/cat",
+          "args": [
+            ".intentfold/readme.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-affected-skills-read-1.json",
+          "sha256": "72fbb3f8b392d39fe46852714db1bf9fdf3c7ea7b8203ed9c33b03ab92641f85",
+          "returncode": 0,
+          "command": "/bin/cat",
+          "args": [
+            "/Users/yong/.agents/skills/intentfold/SKILL.md",
+            ".claude/skills/ld-s10y-lesson/SKILL.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-affected-structured-normalize-1.json",
+          "sha256": "f5d0054ba1ebe7b836a10709eccde6aa7e63c3980c559b1d10a926c8d7833c27",
+          "returncode": 0,
+          "command": ".claude/skills/ld-s10y-lesson/.venv/bin/python",
+          "args": [
+            "-B",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-affected-review/parse-normalize.py"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-candidate-prose-flow-1.json",
+          "sha256": "1c124e75f459366b414d85db1db49fecfb2c9a8a57d8718f51e02f854def91e7",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".claude/skills/ld-s10y-lesson/tools/prose_flow.mjs",
+            ".tmp/ld-s10y-lesson/resume-180-4-n97-cohort/work/adapt/7p/modern-us-neutral/lessons/phy7-c1-s2-n97/lesson.template.json"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-canonical-recovered-comparison-1.json",
+          "sha256": "6d6aca53d867769312479f48fd1927569542896642e470a243c2d9583f7cb368",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "-e",
+            "const fs=require(\"node:fs\"),c=require(\"node:crypto\"),h=p=>c.createHash(\"sha256\").update(fs.readFileSync(p)).digest(\"hex\"),id=\"phy7-c1-s2-n97\",a=\"ssot-resources/soviet10year-textbooks/artifacts/7p/lessons/\"+id,b=\".tmp/ld-s10y-lesson/resume-180-4-n97-cohort/artifacts/7p/lessons/\"+id;for(const n of [\"lesson.json\",\"lesson.md\",\"exercises.json\"]){const p=a+\"/\"+n,q=b+\"/\"+n;console.log(JSON.stringify({canonical:p,exists:fs.existsSync(p),canonicalSha256:fs.existsSync(p)?h(p):null,cohortSha256:h(q),byteIdentical:fs.existsSync(p)&&h(p)===h(q)}));}const m=\"ssot-resources/soviet10year-textbooks/artifacts/7p/editions/modern-us-neutral/lessons/\"+id;console.log(JSON.stringify({modernCanonical:m,exists:fs.existsSync(m),files:fs.existsSync(m)?fs.readdirSync(m):[]}));"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-cohort-prepare-1.json",
+          "sha256": "dab249ca329f5b44334f44d3b59393f46f97f06503d1e365cbea299d856bc475",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/prepare-n97-cohort.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-current-modern-template-read-1.json",
+          "sha256": "82f4d72f3d43be0c725401d6033822b8f89c67976a39063381595bd4cb994ecf",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "-e",
+            "const fs=require(\"node:fs\"),p=\".tmp/ld-s10y-lesson/resume-180-4-n97-cohort/work/adapt/7p/modern-us-neutral/lessons/phy7-c1-s2-n97/lesson.template.json\",x=JSON.parse(fs.readFileSync(p));console.log(JSON.stringify({path:p,keys:Object.keys(x),prose:x.prose,figures:x.figures,section_breaks:x.section_breaks},null,2));"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-display-b95-01-router-read-1.json",
+          "sha256": "bb5959d92e901f10efdb472c17447b66f0f0e45f79a5b2bc139ba30b5b6fd247",
+          "returncode": 0,
+          "command": "/bin/cat",
+          "args": [
+            "AGENTS.md",
+            ".intentfold/readme.md",
+            ".intentfold/charter/engineering.md",
+            ".intentfold/charter/operations.md",
+            ".intentfold/charter/ui.md",
+            ".agents/skills/ld-s10y-image/SKILL.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-display-b95-02-rules-read-1.json",
+          "sha256": "d9329bb57874c705d5520f64ec642c183336e3e105b1016422f2e90594cc252a",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "-e",
+            "const fs=require(\"node:fs\"); for(const p of [\".intentfold/project.json\",\".intentfold/charter/product.md\",\".intentfold/charter/engineering.md\",\".intentfold/charter/operations.md\",\"/Users/yong/.agents/skills/intentfold/SKILL.md\"]){const s=fs.readFileSync(p,\"utf8\"); console.log(\"FILE \"+p); if(p.endsWith(\"engineering.md\")) console.log(s.slice(s.indexOf(\"## Redlines\"))); else console.log(s);}"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-display-b95-03-native-inventory-1.json",
+          "sha256": "785ad1c3a5a7cb7cf7f6a1cee2a974822e1082afd098cac2f4e5b2720c85c6a5",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "-e",
+            "const fs=require(\"node:fs\"),c=require(\"node:crypto\"); const root=\".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4\"; const p=root+\"/display-b95/7p/report.json\",b=fs.readFileSync(p); console.log(JSON.stringify({path:p,sha256:c.createHash(\"sha256\").update(b).digest(\"hex\"),bytes:b.length,report:JSON.parse(b)},null,2)); console.log(\"ROOT NAMES\",JSON.stringify(fs.readdirSync(root).filter(n=>/b95|n97/.test(n)))); console.log(\"COMMAND NAMES\",JSON.stringify(fs.readdirSync(root+\"/commands\").filter(n=>/b95|n97/.test(n)))); for(const p of [root+\"/n97-display-b95\",\".intentfold/tickets/STEMROBIN-180/display-review-n97-b95.md\"]){console.log(\"OWNED\",p,fs.existsSync(p)?(fs.statSync(p).isDirectory()?fs.readdirSync(p):\"EXISTS\"):\"ABSENT\");}"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-display-b95-04-lineage-read-1.json",
+          "sha256": "a4c45b1c588f27215fd7b59f792ce965540c2674d756c4f74a1736bb51fd3403",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "-e",
+            "const fs=require(\"node:fs\"),c=require(\"node:crypto\"); const root=\".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4\"; for(const n of [\"n97-cohort-inputs.json\",\"n97-approved-retained.json\",\"n97-text-affected-parent-projection.json\",\"n97-text-affected-review/manifest.json\",\"commands/n97-isolated-adapt-finalize-1.json\",\"commands/n97-retain-approved-1.json\",\"commands/b95-offline-render-1.json\",\"commands/b95-native-display-1.json\"]){const p=root+\"/\"+n,b=fs.readFileSync(p); console.log(JSON.stringify({path:p,sha256:c.createHash(\"sha256\").update(b).digest(\"hex\"),bytes:b.length,data:JSON.parse(b)},null,2));}"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-display-b95-05-bind-current-1.json",
+          "sha256": "08b66bbebcc408e09ec373fa5a0ba56b84a478466b88e833ae68be2f23e2237c",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "-e",
+            "const fs=require(\"node:fs\"),c=require(\"node:crypto\"),path=require(\"node:path\"),assert=require(\"node:assert/strict\"); const root=\".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4\"; const bind=p=>{const b=fs.readFileSync(p); return {path:p,sha256:c.createHash(\"sha256\").update(b).digest(\"hex\"),bytes:b.length};}; for(const [n,h] of [[\"n97-text-affected-review/manifest.json\",\"b74ff64712fe615c21d3e5deb82fa5c480641d16d718e5efd76062cf27276eda\"],[\"n97-text-affected-parent-projection.json\",\"ecb82b7c4f40d4e633e49b26c4d3a93d3ccab8f94be119da1eb405abb7a43268\"]]){const p=root+\"/\"+n,b=bind(p);assert.equal(b.sha256,h);const j=JSON.parse(fs.readFileSync(p)); console.log(JSON.stringify({binding:b,status:j.status,counts:j.counts,usage:j.usage,firstReview:j.firstReview&&{status:j.firstReview.status,preserved:j.firstReview.preserved},applicability:j.applicability,inheritedBindingCounts:j.inheritedBindings&&{firstParentBound:j.inheritedBindings.firstParentBound,firstUnchanged:j.inheritedBindings.firstUnchanged,repairParentBound:j.inheritedBindings.repairParentBound},topLevelKeys:Object.keys(j)},null,2));} const ret=JSON.parse(fs.readFileSync(root+\"/n97-approved-retained.json\"));for(const e of ret.bindings.filter(x=>/phy7-c1-s2-n97/.test(x.path))){const b=bind(e.path);assert.equal(b.sha256,e.sha256);console.log(JSON.stringify({role:\"retained-current\",...b})); if(e.input){const i=bind(e.input);assert.equal(i.sha256,b.sha256);assert.equal(i.bytes,b.bytes);console.log(JSON.stringify({role:\"producer-current\",...i}));}} const raw=\"ssot-resources/soviet10year-textbooks/artifacts/7p/lessons/phy7-c1-s2-n97\";console.log(\"RAW FILES\",JSON.stringify(fs.readdirSync(raw)));const nr=JSON.parse(fs.readFileSync(root+\"/display-b95/7p/report.json\"));for(const r of nr.rows){for(const [p,h] of [[r.html,r.htmlSha256],[r.screenshot,r.screenshotSha256]]){const b=bind(p);assert.equal(b.sha256,h);console.log(JSON.stringify(b));}}for(const n of [\"n97-isolated-adapt-finalize-1\",\"n97-retain-approved-1\",\"b95-offline-render-1\",\"b95-native-display-1\"]){const p=root+\"/commands/\"+n+\".json\",j=JSON.parse(fs.readFileSync(p));console.log(JSON.stringify({binding:bind(p),receipt:j},null,2));}"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-display-b95-06-empty-and-receipts-1.json",
+          "sha256": "6725322ce2dc3093db6b93b950c15dc3fd5e771fcb101ad927b223b060ba039a",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "-e",
+            "const fs=require(\"node:fs\"),c=require(\"node:crypto\"),a=require(\"node:assert/strict\");const root=\".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4\";for(const p of [\"ssot-resources/soviet10year-textbooks/artifacts/7p/lessons/phy7-c1-s2-n97/exercises.json\",\"ssot-resources/soviet10year-textbooks/artifacts/7p/editions/modern-us-neutral/lessons/phy7-c1-s2-n97/exercises.json\",\"ssot-resources/soviet10year-textbooks/artifacts/7p/editions/modern-us-neutral/lessons/phy7-c1-s2-n97/figures.json\"]){console.log(\"FILE\",p,fs.readFileSync(p,\"utf8\"));}const proj=JSON.parse(fs.readFileSync(root+\"/n97-text-affected-parent-projection.json\"));console.log(JSON.stringify({parentBindingProjection:proj.parentBindingProjection,textRepairBudget:proj.textRepairBudget,firstReview:proj.firstReview},null,2));for(const n of [\"n97-isolated-adapt-finalize-1\",\"n97-retain-approved-1\",\"b95-offline-render-1\",\"b95-native-display-1\"]){const r=JSON.parse(fs.readFileSync(root+\"/commands/\"+n+\".json\"));a.equal(r.returncode,0);for(const s of [\"stdout\",\"stderr\"]){const b=fs.readFileSync(r[s]),h=c.createHash(\"sha256\").update(b).digest(\"hex\");a.equal(h,r[s+\"Sha256\"]);console.log(JSON.stringify({path:r[s],sha256:h,bytes:b.length}));}}"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-display-b95-07-freeze-owned-1.json",
+          "sha256": "4e1c16c5e9abdabeedf30bcf306a7a92d4841c34c87cf8e1fed83d56a7eaabef",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-display-b95/freeze.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-display-b95-08-verify-frozen-1.json",
+          "sha256": "38e68dba18424a7061f126c355669957532c99b71e72ae6f066c2d9cc1cc5cc9",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "-e",
+            "const fs=require(\"node:fs\"),c=require(\"node:crypto\"),a=require(\"node:assert/strict\"); const root=\".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4\",dir=root+\"/n97-display-b95\",mp=dir+\"/manifest.json\";const bind=p=>{const b=fs.readFileSync(p);return {path:p,sha256:c.createHash(\"sha256\").update(b).digest(\"hex\"),bytes:b.length};};const m=JSON.parse(fs.readFileSync(mp)),r=JSON.parse(fs.readFileSync(dir+\"/report.json\"));a.equal(m.status,\"pass\");a.equal(r.status,\"pass\");a.equal(r.usage.loadedImages,4);a.equal(r.surfaces.length,4);a.equal(bind(mp).sha256,\"8d14546a93d76c73c3f03c5913239e85a6e253e41eaebde32b1444a4476e5084\");for(const e of [...m.inputBindings,...m.outputBindings]){const b=bind(e.path);a.equal(b.sha256,e.sha256,e.path);a.equal(b.bytes,e.bytes,e.path);}for(const e of [...m.outputBindings,{path:mp}])a.equal(fs.statSync(e.path).mode&511,292,e.path);a.equal(new Set(r.surfaces.map(x=>x.screenshot.path)).size,4);a.equal(new Set(r.surfaces.map(x=>x.html.path)).size,2);for(const s of r.surfaces){a.equal(s.opens,1);a.equal(s.reusedNativeAssertions.rerun,false);}const sp=root+\"/commands/n97-display-b95-07-freeze-owned-1.json\",sr=JSON.parse(fs.readFileSync(sp));a.equal(sr.returncode,0);const streams=[\"stdout\",\"stderr\"].map(k=>{const b=bind(sr[k]);a.equal(b.sha256,sr[k+\"Sha256\"]);return b;});console.log(JSON.stringify({status:m.status,lesson:m.lesson,surfaces:r.surfaces.length,loadedImages:r.usage.loadedImages,verifiedExplicitBindings:m.inputBindings.length+m.outputBindings.length,ownedMode:\"0444\",manifest:bind(mp),report:bind(dir+\"/report.json\"),durableReport:bind(\".intentfold/tickets/STEMROBIN-180/display-review-n97-b95.md\"),sealReceipt:bind(sp),sealStreams:streams,parentBindingPending:true},null,2));"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-emphasis-parser-read-1.json",
+          "sha256": "5242a5f0886b7c403eae506a9f0a439a9ce0f5e133ab27754ccddaa54477a888",
+          "returncode": 0,
+          "command": "rg",
+          "args": [
+            "-n",
+            "-A",
+            "65",
+            "-B",
+            "15",
+            "emphasis|strong|italic|mdInline|inlineMarkdown|\\*\\*",
+            ".claude/skills/ld-s10y-lesson/tools/htmlfrag.js"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-emphasis-prose-flow-1.json",
+          "sha256": "2e78a8a87cf80242b8f863bf82bc653fd52e13efb7624725a36f35638ccabbde",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".claude/skills/ld-s10y-lesson/tools/prose_flow.mjs",
+            ".tmp/ld-s10y-lesson/resume-180-4-n97-cohort/work/adapt/7p/modern-us-neutral/lessons/phy7-c1-s2-n97/lesson.template.json"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-first-prose-flow-1.json",
+          "sha256": "5d1c77b6e21de1aea6ed3f19cbea4c16325b54cb377c5a1253605be8376b786e",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".claude/skills/ld-s10y-lesson/tools/prose_flow.mjs",
+            ".tmp/ld-s10y-lesson/resume-180-4-n97-cohort/work/adapt/7p/modern-us-neutral/lessons/phy7-c1-s2-n97/lesson.template.json"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-flow-anchor-contract-1.json",
+          "sha256": "7b1133473ee8d228f692860b25b6dbc90a1924b6a0c4c0c5e5944ec9cc4e9192",
+          "returncode": 0,
+          "command": "sed",
+          "args": [
+            "-n",
+            "1,135p",
+            ".claude/skills/ld-s10y-lesson/tools/prose_flow.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-isolated-adapt-finalize-1.json",
+          "sha256": "50d3a4646d4fdb23904f9ef83922aa631679e515fedf03fa3b7b9f5aa5acae44",
+          "returncode": 0,
+          "command": ".claude/skills/ld-s10y-lesson/.venv/bin/python",
+          "args": [
+            ".claude/skills/ld-s10y-lesson/tools/p2c.py",
+            "adapt-finalize",
+            "--book",
+            "7p",
+            "--edition",
+            "modern-us-neutral",
+            "--lesson",
+            "phy7-c1-s2-n97",
+            "--root",
+            ".tmp/ld-s10y-lesson/resume-180-4-n97-cohort/artifacts",
+            "--work",
+            ".tmp/ld-s10y-lesson/resume-180-4-n97-cohort/work"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-repair-1-anchor-flow-1.json",
+          "sha256": "8359807e8c84ac2ba424a3dc8ef043feccf3c0b1f3d91709fb06214c34e07ac2",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".claude/skills/ld-s10y-lesson/tools/prose_flow.mjs",
+            "--json",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-repair-1/candidate.pre-anchor.json"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-repair-input-read-1.json",
+          "sha256": "5e5f41792db116d9879f04481fff72a92213b537d2c90962cf7ebafa77813140",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "-e",
+            "const f=require(\"node:fs\"),x=JSON.parse(f.readFileSync(\".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-author/candidate.template.json\")); console.log(JSON.stringify({prose:x.prose.map((b,i)=>({i,...b})),boundaries:x.section_breaks},null,2));"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-repair-parser-premise-1.json",
+          "sha256": "bd455bfb53392b581c3b71bec589a838ccb180cb728611fd77e9d2def2e0a7c5",
+          "returncode": 1,
+          "command": "node",
+          "args": [
+            "-e",
+            "const a=require(\"node:assert/strict\"),f=require(\"node:fs\"),{proseInline}=require(\"./.claude/skills/ld-s10y-lesson/tools/htmlfrag.js\"),x=JSON.parse(f.readFileSync(\".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-author/candidate.template.json\"));for(const i of [1,3,5,7]){const text=x.prose[i].text.replaceAll(\"_物质_\",\"*物质*\").replace(/^\\*\\*\\*/,\"** *\"),html=proseInline(text);a.equal((html.match(/<strong>/g)||[]).length,1);a.equal((html.match(/<em>/g)||[]).length,[1,7].includes(i)?1:2);a.ok(!html.includes(\"_\")&&!html.includes(\"*\"));console.log(JSON.stringify({i,text,html}));}"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-retain-approved-1.json",
+          "sha256": "be2925af06b93a70966920c051c536d15817e1705d3195603c1ce2dc7ade33ba",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/retain-n97-approved.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-retention-helper-syntax-1.json",
+          "sha256": "dffebf21ea4f69d1697229b7541870efda127128ddf03b8dff0ab67ac3487a3f",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "--check",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/retain-n97-approved.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-source-assemble-1.json",
+          "sha256": "d13d92c2dfab71005ede590078993a5da13f21c66790c472567361804bf92d2a",
+          "returncode": 0,
+          "command": ".claude/skills/ld-s10y-lesson/.venv/bin/python",
+          "args": [
+            ".claude/skills/ld-s10y-lesson/tools/p2c.py",
+            "assemble",
+            "--book",
+            "7p",
+            "--toc",
+            "ssot-resources/soviet10year-textbooks/toc/7p/zh.json",
+            "--root",
+            ".tmp/ld-s10y-lesson/resume-180-4-n97-cohort/artifacts"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-supported-emphasis-contract-1.json",
+          "sha256": "0be14d0d93e2e4b4ae19256beede6088b02472827f2139f58e4d0f9a72b761ea",
+          "returncode": 0,
+          "command": "rg",
+          "args": [
+            "-n",
+            "-A",
+            "12",
+            "-B",
+            "8",
+            "<em>|<strong>|SOURCE_TAG|inline.*tag|emphasis|allowed.*tag",
+            ".claude/skills/ld-s10y-lesson/references/edition-text-contract.md",
+            ".claude/skills/ld-s10y-lesson/tools/edition.py"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-author-parent-bind-1.json",
+          "sha256": "483d8c71b7ff2bf440e51b3bb50fa026282454f7db159cd8547ce47e6fcc3884",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/bind-current-manifest.mjs",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-author/manifest.json",
+            "0f6850986c6d7604fe8a41fdbed4f61ef25504756aaca7628c331c1d590de1b4",
+            "phy7-c1-s2-n97"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-author-seal-1.json",
+          "sha256": "b3d01e29a3d3e0e16741e51f3427e94c2bb2f0463f49f9815ec7c1dfa9dbec60",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/seal-n97-text-author.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-before-freeze-1.json",
+          "sha256": "0a4ae84841b0030e07af09adc0c6a31fe2cf6a68dd47db0ab186358263e49753",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "-e",
+            "const fs=require(\"node:fs\"),c=require(\"node:crypto\"),a=require(\"node:assert/strict\");const p=\".tmp/ld-s10y-lesson/resume-180-4-n97-cohort/work/adapt/7p/modern-us-neutral/lessons/phy7-c1-s2-n97/lesson.template.json\",d=\".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-author\";a.equal(fs.existsSync(d),false);fs.mkdirSync(d);const o=d+\"/before.template.json\";fs.copyFileSync(p,o,fs.constants.COPYFILE_EXCL);fs.chmodSync(o,0o444);console.log(JSON.stringify({path:o,sha256:c.createHash(\"sha256\").update(fs.readFileSync(o)).digest(\"hex\"),bytes:fs.statSync(o).size}));"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-repair-1-author-1.json",
+          "sha256": "bfe6b7f0e74753d6eb516dfdf70dfb0beabc24d4170d135b85133ac78ff60486",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/repair-n97-text-1.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-repair-1-parent-bind-1.json",
+          "sha256": "b093ae0ed632590c88177392ab064515552ea41e54e44941b320110f8cea8456",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/bind-current-manifest.mjs",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-repair-1/manifest.json",
+            "0800d873eca02ad8ff45c6f7927dd5b86aebedf0a131e4f93f475e6d4f433127"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-bindings-a11-1.json",
+          "sha256": "e67c8fa2dad4dd3941b1a81bad08d2b2a7abb45e9e3473d4841aceb6289c759e",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "--input-type=module",
+            "-e",
+            "import fs from \"node:fs\";import crypto from \"node:crypto\";import assert from \"node:assert/strict\";const digest=p=>{const b=fs.readFileSync(p);return {path:p,sha256:crypto.createHash(\"sha256\").update(b).digest(\"hex\"),bytes:b.length,mode:(fs.statSync(p).mode&0o777).toString(8)}};const p=\".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-author/manifest.json\";const binding=digest(p);assert.equal(binding.sha256,\"0f6850986c6d7604fe8a41fdbed4f61ef25504756aaca7628c331c1d590de1b4\");const m=JSON.parse(fs.readFileSync(p,\"utf8\"));const entries=[...m.inputs,...m.outputs,...m.receipts,m.currentWorkingTemplate];assert.equal(entries.length,17);for(const e of entries){const d=digest(e.path);assert.equal(d.sha256,e.sha256,e.path);assert.equal(d.bytes,e.bytes,e.path)}const owned=[\".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-review\",\".intentfold/tickets/STEMROBIN-180/modern-text-review-n97-b95.md\"];for(const p of owned)assert.equal(fs.existsSync(p),false,\"Owned path already exists: \"+p);console.log(JSON.stringify({status:\"pass\",authorManifest:binding,verifiedEntries:entries.length,entries:entries.map(d=>({...d,mode:digest(d.path).mode})),ownedPathsAbsent:owned},null,2));"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-contract-a5-1.json",
+          "sha256": "43e8c3adf4b2f09aced2a8047bb6ceda0b6be42d52ea07eda5535cb4dd2797ab",
+          "returncode": 0,
+          "command": "/bin/cat",
+          "args": [
+            ".claude/skills/ld-s10y-lesson/SKILL.md",
+            ".claude/skills/ld-s10y-lesson/references/production-resume.md",
+            ".claude/skills/ld-s10y-lesson/references/edition-text-contract.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-create-probe-a17-1.json",
+          "sha256": "064b91b27304cd4d405abaf3168f8a41984cca52d560e9bba834cce3888d900e",
+          "returncode": 0,
+          "command": "/Users/yong/.codex/tmp/arg0-macos/codex-arg0ZArGKA/apply_patch",
+          "args": [
+            "*** Begin Patch\n*** Add File: .intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-review/probe.mjs\n+import fs from \"node:fs\"\n+import path from \"node:path\"\n+import crypto from \"node:crypto\"\n+import assert from \"node:assert/strict\"\n+\n+const cwd = \"/Users/yong/.codex/worktrees/stemrobin-180-resume/lemmadeck\"\n+assert.equal(process.cwd(), cwd)\n+const base = \".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4\"\n+const owned = `${base}/n97-text-review`\n+const author = `${base}/n97-text-author`\n+const cohort = \".tmp/ld-s10y-lesson/resume-180-4-n97-cohort\"\n+const source = `${cohort}/artifacts/7p`\n+const lesson = `${source}/lessons/phy7-c1-s2-n97`\n+const working = `${cohort}/work/adapt/7p/modern-us-neutral/lessons/phy7-c1-s2-n97`\n+const tools = \".claude/skills/ld-s10y-lesson/tools\"\n+const json = (file) => JSON.parse(fs.readFileSync(file, \"utf8\"))\n+const bind = (file) => {\n+  const bytes = fs.readFileSync(file)\n+  return {\n+    path: file,\n+    absolutePath: path.resolve(file),\n+    sha256: crypto.createHash(\"sha256\").update(bytes).digest(\"hex\"),\n+    bytes: bytes.length,\n+    mode: (fs.statSync(file).mode & 0o777).toString(8),\n+  }\n+}\n+const writeNew = (file, data) => fs.writeFileSync(\n+  file, `${JSON.stringify(data, null, 2)}\\n`, { flag: \"wx\" },\n+)\n+const manifestPath = `${author}/manifest.json`\n+assert.equal(bind(manifestPath).sha256,\n+  \"0f6850986c6d7604fe8a41fdbed4f61ef25504756aaca7628c331c1d590de1b4\")\n+const authorManifest = json(manifestPath)\n+const authorEntries = [\n+  ...authorManifest.inputs, ...authorManifest.outputs,\n+  ...authorManifest.receipts, authorManifest.currentWorkingTemplate,\n+]\n+assert.equal(authorEntries.length, 17)\n+for (const entry of authorEntries) {\n+  assert.equal(bind(entry.path).sha256, entry.sha256, entry.path)\n+  assert.equal(bind(entry.path).bytes, entry.bytes, entry.path)\n+}\n+const inputPaths = [\n+  \"AGENTS.md\", \".intentfold/readme.md\", \".intentfold/project.json\",\n+  ...[\"engineering\", \"operations\", \"product\", \"ui\"].map(\n+    (name) => `.intentfold/charter/${name}.md`,\n+  ),\n+  \"/Users/yong/.agents/skills/intentfold/SKILL.md\",\n+  `${base}/run-stage.mjs`,\n+  \".claude/skills/ld-s10y-lesson/SKILL.md\",\n+  \".claude/skills/ld-s10y-lesson/references/production-resume.md\",\n+  \".claude/skills/ld-s10y-lesson/references/edition-text-contract.md\",\n+  \".agents/skills/ld-s10y-image/SKILL.md\",\n+  \".agents/skills/ld-s10y-image/references/quality-gate.md\",\n+  manifestPath,\n+  `${author}/before.template.json`, `${author}/candidate.template.json`,\n+  `${base}/n97-cohort-inputs.json`,\n+  \".intentfold/tickets/STEMROBIN-180/source-review-7p-256-affected.md\",\n+  `${source}/pages/0256/page.json`, `${source}/pages/0256/page.md`,\n+  `${source}/pages/0256/audit.json`,\n+  `${lesson}/lesson.json`, `${lesson}/lesson.md`, `${lesson}/exercises.json`,\n+  `${working}/lesson.template.json`, `${working}/exercises.template.json`,\n+  `${working}/figures.template.json`,\n+  `${tools}/htmlfrag.js`, `${tools}/prose_flow.mjs`,\n+  `${tools}/render_lesson.js`, `${tools}/publish.mjs`, `${tools}/edition.py`,\n+]\n+const initialBindings = inputPaths.map(bind)\n+writeNew(`${owned}/input-bindings.json`, {\n+  schema: \"s10y-n97-text-review-input-bindings@1\",\n+  cwd, lesson: \"phy7-c1-s2-n97\", inputs: initialBindings,\n+  authorManifestEntries: authorEntries.map((entry) => ({\n+    ...bind(entry.path),\n+    access: inputPaths.includes(entry.path) ? \"review-input\" : \"hash-only\",\n+  })),\n+})\n+\n+const before = json(`${author}/before.template.json`)\n+const candidate = json(`${author}/candidate.template.json`)\n+const raw = json(`${lesson}/lesson.json`)\n+const page = json(`${source}/pages/0256/page.json`)\n+const cohortInputs = json(`${base}/n97-cohort-inputs.json`)\n+assert.equal(bind(`${source}/pages/0256/page.json`).sha256,\n+  \"ee534ac026a086222d0c0f5d7c4ca90ce4991a5abd5ee2f88d2b4244cc15eba0\")\n+assert.deepEqual(cohortInputs.pages, [256])\n+for (const entry of cohortInputs.bindings) {\n+  assert.equal(bind(entry.output).sha256, entry.sha256)\n+  assert.equal(bind(entry.output).bytes, entry.bytes)\n+}\n+assert.deepEqual(before.source, candidate.source)\n+assert.deepEqual(candidate.source.data, raw)\n+assert.equal(candidate.source.sha256, bind(`${lesson}/lesson.json`).sha256)\n+assert.equal(fs.readFileSync(`${working}/lesson.template.json`, \"utf8\"),\n+  fs.readFileSync(`${author}/candidate.template.json`, \"utf8\"))\n+\n+const receiptObservation = (label) => {\n+  const receiptPath = `${base}/commands/${label}-1.json`\n+  const receipt = json(receiptPath)\n+  assert.equal(receipt.cwd, cwd)\n+  assert.equal(receipt.returncode, 0)\n+  assert.equal(bind(receipt.stdout).sha256, receipt.stdoutSha256)\n+  assert.equal(bind(receipt.stderr).sha256, receipt.stderrSha256)\n+  return { receipt: bind(receiptPath), stdout: bind(receipt.stdout),\n+    stderr: bind(receipt.stderr), data: json(receipt.stdout) }\n+}\n+// Reuse the fresh shared-parser observations; do not replay DISPLAY or rendering.\n+const parser = receiptObservation(\"n97-text-review-emphasis-a13\")\n+const flow = receiptObservation(\"n97-text-review-flow-a14\")\n+assert.equal(parser.data.method, \"proseInline\")\n+const changed = [1, 3, 5, 7]\n+const expected = structuredClone(before)\n+let changedTerms = 0\n+for (const index of changed) {\n+  changedTerms += (before.prose[index].text.match(/\\*物质\\*/g) ?? []).length\n+  expected.prose[index].text = before.prose[index].text.replace(/\\*物质\\*/g, \"_物质_\")\n+  expected.prose[index].changes = [\"layout\"]\n+}\n+assert.equal(changedTerms, 6)\n+expected.section_breaks = [flow.data.boundaries[0]]\n+delete expected.section_breaks[0].index\n+assert.deepEqual(candidate, expected)\n+assert.deepEqual(flow.data.resolvedBreaks, [6])\n+assert.equal(flow.data.paragraphs.length, 11)\n+const stripLayout = (text) => text.replace(/[*_]/g, \"\").replace(/\\s+/g, \"\")\n+const formulas = (text) => [...text.matchAll(/\\$([^$]+)\\$/g)].map((match) => match[1])\n+const proseBlocks = page.blocks.map((block, index) => ({ ...block, ref: `p0256#${index + 1}` }))\n+  .filter((block) => block.kind === \"p\")\n+assert.equal(proseBlocks.length, 10)\n+const perBlock = raw.prose.map((block, index) => {\n+  const original = proseBlocks[index]\n+  assert.equal(block.text, original.lines.join(\"\").trim())\n+  assert.deepEqual(block.source_refs, [original.ref])\n+  assert.deepEqual(candidate.prose[index].source_refs, block.source_refs)\n+  assert.equal(candidate.prose[index].source_text, block.text)\n+  assert.equal(stripLayout(candidate.prose[index].text), stripLayout(block.text))\n+  assert.deepEqual(formulas(candidate.prose[index].text), formulas(block.text))\n+  assert.deepEqual(candidate.prose[index].numeric_changes, [])\n+  const observation = parser.data.blocks.find((row) => row.sourceRef === original.ref)\n+  if (observation) {\n+    assert.equal(observation.candidateText, candidate.prose[index].text)\n+    assert.equal(observation.beforeText, before.prose[index].text)\n+    assert.equal(observation.candidateHtml,\n+      `<strong>${observation.candidateText.slice(2, -3)}</strong>.`)\n+  }\n+  return { sourceRef: original.ref, proseIndex: index,\n+    sourceFidelity: \"pass\", formulas: formulas(block.text),\n+    definitionParser: observation ?? null }\n+})\n+assert.equal(fs.readFileSync(`${lesson}/lesson.md`, \"utf8\"),\n+  `# ${raw.printed_title}\\n\\n${raw.prose.map((block) => block.text).join(\"\\n\\n\")}\\n`)\n+assert.deepEqual(page.blocks.map((block) => block.kind),\n+  [\"h3\", ...Array(10).fill(\"p\"), \"foot\"])\n+assert.ok(page.blocks.every((block) => !block.open && !block.cont))\n+assert.equal(page.blocks[0].lines.join(\"\"), \"97. 晶体的熔解与凝固\")\n+assert.equal(page.meta.page, 256)\n+assert.equal(page.meta.printed_page, 245)\n+assert.equal(page.blocks.reduce((sum, block) => sum + block.lines.length, 0), 25)\n+assert.deepEqual(page.meta.errata, [])\n+assert.deepEqual(candidate.errata, [])\n+assert.deepEqual(json(`${lesson}/exercises.json`), {\n+  lesson: \"phy7-c1-s2-n97\", count: 0, exercises: [],\n+})\n+assert.deepEqual(json(`${working}/exercises.template.json`).source.data,\n+  json(`${lesson}/exercises.json`))\n+assert.equal(json(`${working}/exercises.template.json`).count, 0)\n+assert.deepEqual(json(`${working}/exercises.template.json`).exercises, [])\n+assert.deepEqual(json(`${working}/figures.template.json`).figures, [])\n+assert.deepEqual(page.meta.figures, [])\n+assert.deepEqual(raw.figures, [])\n+assert.deepEqual(candidate.figures, [])\n+assert.equal(raw.exercise_count, 0)\n+assert.equal(candidate.exercise_count, 0)\n+for (const entry of initialBindings) assert.deepEqual(bind(entry.path), entry)\n+const result = {\n+  schema: \"s10y-n97-text-review-probe@1\", lesson: \"phy7-c1-s2-n97\",\n+  status: \"revise\", technicalFailures: [],\n+  sourceIntegrity: \"pass\", authorManifestEntriesVerified: 17,\n+  sourcePage: { physical: 256, printed: 245, blocks: 12, rows: 25,\n+    proseObjects: 10, allClosed: true, incomingContinuation: false,\n+    outgoingContinuation: false, writtenExerciseBlocks: 0, figureBlocks: 0 },\n+  exactCandidateDelta: { definitionBlocks: 4, nestedTermRanges: 6,\n+    changedDelimiterCharacters: 12, sectionBreaksAdded: 1,\n+    wordingChanges: 0, punctuationChanges: 0, formulaChanges: 0,\n+    numericChanges: 0, protectedSourceSnapshotUnchanged: true },\n+  parserObservation: parser,\n+  parserSummary: { definitionFragments: 4, wholeDefinitionStrong: 4,\n+    expectedNestedEm: 6, actualNestedEm: 0, literalUnderscores: 12,\n+    terminalPeriodsOutsideStrong: 4, failedDefinitionBlocks: 4,\n+    wholeLessonRenders: 0, browserRuns: 0, images: 0 },\n+  flowObservation: flow,\n+  sectionBoundary: { status: \"pass\", paragraphs: 11, resolvedIndices: [6],\n+    from: \"p0256#6\", to: \"p0256#7\", authored: candidate.section_breaks },\n+  perBlock,\n+  applicability: { writtenExercises: 0, figures: 0, answerTasks: 0, choiceTasks: 0,\n+    basis: \"Complete approved page stream and all ten prose objects; instructional examples are descriptive prose, not written-response tasks.\" },\n+  inputFilesUnchanged: initialBindings.length,\n+}\n+writeNew(`${owned}/probe-result.json`, result)\n+console.log(JSON.stringify(result, null, 2))\n+process.exitCode = 1\n*** End Patch\n"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-domtool-a16-1.json",
+          "sha256": "598d91d09702f68d0045b53ce12ab6e54efb25fa9b1b5886ecfa5fd516d4148b",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "-e",
+            "const {createRequire}=require(\"node:module\");const path=require(\"node:path\");for(const base of [\".agents/skills/package.json\",\".claude/skills/ld-s10y-lesson/package.json\",\"app/package.json\"]){const r=createRequire(path.resolve(base));for(const name of [\"jsdom\",\"parse5\",\"cheerio\",\"@playwright/test\"]){try{console.log(JSON.stringify({base,name,resolved:r.resolve(name)}))}catch(e){console.log(JSON.stringify({base,name,unavailable:e.code}))}}}"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-emphasis-a13-1.json",
+          "sha256": "902c189a80a94db66fa01f3479cd4f021efaa2c502bc424ed2af83a0d56bd2da",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "-e",
+            "const fs=require(\"node:fs\");const assert=require(\"node:assert/strict\");const h=require(\"./.claude/skills/ld-s10y-lesson/tools/htmlfrag.js\");const root=\".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-author/\";const before=JSON.parse(fs.readFileSync(root+\"before.template.json\",\"utf8\"));const candidate=JSON.parse(fs.readFileSync(root+\"candidate.template.json\",\"utf8\"));const blocks=[1,3,5,7].map(i=>{const text=candidate.prose[i].text;const html=h.proseInline(text);return {sourceRef:candidate.prose[i].source_refs[0],beforeText:before.prose[i].text,candidateText:text,beforeHtml:h.proseInline(before.prose[i].text),candidateHtml:html,strongElements:(html.match(/<strong>/g)||[]).length,emElements:(html.match(/<em>/g)||[]).length,literalUnderscores:(html.match(/_/g)||[]).length,requiredNestedTerms:(text.match(/_物质_/g)||[]).length}});console.log(JSON.stringify({parser:\".claude/skills/ld-s10y-lesson/tools/htmlfrag.js\",method:\"proseInline\",status:blocks.every(b=>b.emElements===b.requiredNestedTerms&&b.literalUnderscores===0)?\"pass\":\"revise\",blocks},null,2));"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-entry-a1-1.json",
+          "sha256": "bf5f4711a599f2a7cccd6bbff5aa9a1671f5227c1f7e0f9a2e678a1eac134144",
+          "returncode": 0,
+          "command": "/bin/pwd",
+          "args": []
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-final-bind-a22-1.json",
+          "sha256": "2023e9396c3861629c2ae707213009303d3896fd95dc9dec4e6df58b46e70cc6",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "--input-type=module",
+            "-e",
+            "import fs from \"node:fs\";import crypto from \"node:crypto\";import path from \"node:path\";import assert from \"node:assert/strict\";const base=\".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4\";const owned=base+\"/n97-text-review\";const bind=p=>{const b=fs.readFileSync(p);return {path:p,absolutePath:path.resolve(p),sha256:crypto.createHash(\"sha256\").update(b).digest(\"hex\"),bytes:b.length,mode:(fs.statSync(p).mode&0o777).toString(8)}};const read=p=>JSON.parse(fs.readFileSync(p,\"utf8\"));const manifestPath=owned+\"/manifest.json\";const manifest=read(manifestPath);const verify=e=>{const b=bind(e.path);assert.equal(b.sha256,e.sha256,e.path);assert.equal(b.bytes,e.bytes,e.path);if(e.mode)assert.equal(b.mode,e.mode,e.path)};for(const e of [...manifest.inputs,...manifest.parentBoundAuthorEntries,...manifest.outputs])verify(e);for(const e of manifest.recorderReceipts){verify(e);verify(e.stdout);verify(e.stderr)}assert.equal(bind(manifestPath).mode,\"444\");assert.equal(manifest.status,\"revise\");assert.equal(manifest.outputs.length,6);for(const e of manifest.outputs)assert.equal(bind(e.path).mode,\"444\");const review=read(owned+\"/report.json\");const probe=read(owned+\"/probe-result.json\");assert.equal(review.perBlock.length,10);assert.equal(review.perBlock.filter(b=>b.status===\"revise\").length,4);assert.deepEqual(review.perBlock.map(b=>b.sourceRef),Array.from({length:10},(_,i)=>\"p0256#\"+(i+2)));assert.equal(probe.parserSummary.actualNestedEm,0);assert.equal(probe.parserSummary.literalUnderscores,12);assert.equal(review.noTaskApplicability.writtenExercises,0);assert.equal(review.noTaskApplicability.figures,0);assert.equal(review.counts.imageOpens,0);assert.equal(review.counts.finalDisplayApprovals,0);assert.equal(review.next,\"STOP_FOR_PARENT_BINDING; TEXT revise, no downstream approval\");const sealReceiptPath=base+\"/commands/n97-text-review-seal-a21-1.json\";const sealReceipt=read(sealReceiptPath);assert.equal(sealReceipt.returncode,0);assert.equal(bind(sealReceipt.stdout).sha256,sealReceipt.stdoutSha256);assert.equal(bind(sealReceipt.stderr).sha256,sealReceipt.stderrSha256);assert.equal(read(sealReceipt.stdout).manifest.sha256,bind(manifestPath).sha256);console.log(JSON.stringify({status:\"revise\",lesson:\"phy7-c1-s2-n97\",counts:{proseObjects:10,passBlocks:6,reviseBlocks:4,rootFindings:1,wholeStrong:4,nestedEmExpected:6,nestedEmActual:0,literalUnderscores:12,sectionBreaks:1,writtenExercises:0,figures:0,answerTasks:0,choiceTasks:0,imageOpens:0,officialFinalize:0,finalDisplayApprovals:0},report:bind(owned+\"/report.json\"),humanReport:bind(\".intentfold/tickets/STEMROBIN-180/modern-text-review-n97-b95.md\"),manifest:bind(manifestPath),sealReceipt:bind(sealReceiptPath),reviewInputsVerified:manifest.inputs.length,authorEntriesVerified:manifest.parentBoundAuthorEntries.length,ownedFilesFrozen:7,allBoundReceiptsVerified:manifest.recorderReceipts.length,next:\"STOP_FOR_PARENT_BINDING\"},null,2));"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-flow-a14-1.json",
+          "sha256": "7ac1f3d3e9f46a2020ba4e32d080586259aa68389a2e99bd5b282a836513bafe",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".claude/skills/ld-s10y-lesson/tools/prose_flow.mjs",
+            "--json",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-author/candidate.template.json"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-frozen-a7-1.json",
+          "sha256": "df7a5fb421d3aefaf3cc39bf75ebf7d15469463d14b0fa9aea553de40c00d175",
+          "returncode": 0,
+          "command": "/bin/cat",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-author/manifest.json",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-author/before.template.json",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-author/candidate.template.json",
+            ".intentfold/tickets/STEMROBIN-180/source-review-7p-256-affected.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-image-rules-a6-1.json",
+          "sha256": "f3ab68d225f36e203bec5baf36186b34dccd2c4f6523e5a6a9731eb6e6607ab4",
+          "returncode": 0,
+          "command": "/bin/cat",
+          "args": [
+            ".agents/skills/ld-s10y-image/SKILL.md",
+            ".agents/skills/ld-s10y-image/references/quality-gate.md",
+            ".intentfold/project.json",
+            ".intentfold/charter/product.md",
+            ".intentfold/charter/ui.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-intentfold-a4-1.json",
+          "sha256": "4b5242273716b032427766fdda4095c3768513d0bc64ea26d9d1690aa4ff8f17",
+          "returncode": 0,
+          "command": "/bin/cat",
+          "args": [
+            "/Users/yong/.agents/skills/intentfold/SKILL.md",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/run-stage.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-parsercode-a9-1.json",
+          "sha256": "bbef08cb2563b911851da7406739b041a44cdaa8dfcd8aed99945b7bf83d70b4",
+          "returncode": 0,
+          "command": "/bin/cat",
+          "args": [
+            ".claude/skills/ld-s10y-lesson/tools/htmlfrag.js",
+            ".claude/skills/ld-s10y-lesson/tools/prose_flow.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-patchtool-a12-1.json",
+          "sha256": "acb743dce6ce1977bee954cdd2bdb18ef16321e62795150329357bf558dcdc59",
+          "returncode": 0,
+          "command": "/usr/bin/which",
+          "args": [
+            "apply_patch"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-probe-clone-a18-1.json",
+          "sha256": "0bc069f17b85a33518b17a16286ac2d90100f97e1b8144395c51eeeb30ed1721",
+          "returncode": 0,
+          "command": "/Users/yong/.codex/tmp/arg0-macos/codex-arg0ZArGKA/apply_patch",
+          "args": [
+            "*** Begin Patch\n*** Update File: .intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-review/probe.mjs\n@@\n-expected.section_breaks = [flow.data.boundaries[0]]\n+expected.section_breaks = [structuredClone(flow.data.boundaries[0])]\n*** End Patch\n"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-renderer-path-a15-1.json",
+          "sha256": "dc1224a2601dbd28abbb67165130299ac6718da2f70c34d2874b6401a700adf3",
+          "returncode": 0,
+          "command": "/usr/bin/env",
+          "args": [
+            "rg",
+            "-n",
+            "htmlfrag|proseInline|inline\\(|proseFlow|marked|require\\(|renderLesson|module.exports",
+            ".claude/skills/ld-s10y-lesson/tools/render_lesson.js",
+            ".claude/skills/ld-s10y-lesson/tools/publish.mjs",
+            ".claude/skills/ld-s10y-lesson/tools/edition.py"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-router-a2-1.json",
+          "sha256": "c698a39c4c5c26b81680a5f4008c93a5908a8bdd8f1dfd1cacf031091b53817e",
+          "returncode": 0,
+          "command": "/bin/cat",
+          "args": [
+            "AGENTS.md",
+            ".intentfold/readme.md",
+            ".intentfold/charter/engineering.md",
+            ".intentfold/charter/operations.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-seal-a21-1.json",
+          "sha256": "0161e5494ba8b9d5800b87e88422b65266b64e97dccb7cb8a1f829aa4c54e75f",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-review/seal.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-skill-tail-a10-1.json",
+          "sha256": "fc953b213803aabd3b4c6c4784f73fb366f108e281363e2eabf87a99c7b09ca7",
+          "returncode": 0,
+          "command": "/usr/bin/sed",
+          "args": [
+            "-n",
+            "330,450p",
+            ".claude/skills/ld-s10y-lesson/SKILL.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-skillpaths-a3-1.json",
+          "sha256": "cf692d9fc0e41aa9b1e1e06ce318cab70581ed7ad56b91b9a8d6529df7247cd4",
+          "returncode": 0,
+          "command": "/usr/bin/env",
+          "args": [
+            "rg",
+            "--files",
+            ".claude/skills/ld-s10y-lesson",
+            ".agents/skills/ld-s10y-image",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-author"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-source-a8-1.json",
+          "sha256": "44035fd3505bd6b2fe77f1ff2862e266d13c485c5d7204990753d7ae58e725e6",
+          "returncode": 0,
+          "command": "/bin/cat",
+          "args": [
+            ".tmp/ld-s10y-lesson/resume-180-4-n97-cohort/artifacts/7p/pages/0256/page.json",
+            ".tmp/ld-s10y-lesson/resume-180-4-n97-cohort/artifacts/7p/pages/0256/page.md",
+            ".tmp/ld-s10y-lesson/resume-180-4-n97-cohort/artifacts/7p/pages/0256/audit.json",
+            ".tmp/ld-s10y-lesson/resume-180-4-n97-cohort/artifacts/7p/lessons/phy7-c1-s2-n97/lesson.json",
+            ".tmp/ld-s10y-lesson/resume-180-4-n97-cohort/artifacts/7p/lessons/phy7-c1-s2-n97/lesson.md",
+            ".tmp/ld-s10y-lesson/resume-180-4-n97-cohort/artifacts/7p/lessons/phy7-c1-s2-n97/exercises.json",
+            ".tmp/ld-s10y-lesson/resume-180-4-n97-cohort/work/adapt/7p/modern-us-neutral/lessons/phy7-c1-s2-n97/exercises.template.json",
+            ".tmp/ld-s10y-lesson/resume-180-4-n97-cohort/work/adapt/7p/modern-us-neutral/lessons/phy7-c1-s2-n97/figures.template.json",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-cohort-inputs.json"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-verify-a19-1.json",
+          "sha256": "e2957d439e8a54c244bd7e024c2dcb5afa4db29ca0e8bc102ff12780112fcdbe",
+          "returncode": 1,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-review/probe.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-write-report-a20-1.json",
+          "sha256": "ef0cb964245be28e2ab236f588548f851614b7f588edd62e06b32c376afb50e9",
+          "returncode": 0,
+          "command": "/Users/yong/.codex/tmp/arg0-macos/codex-arg0ZArGKA/apply_patch",
+          "args": [
+            "*** Begin Patch\n*** Add File: .intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-review/report.json\n+{\n+  \"schema\": \"s10y-independent-text-review@1\",\n+  \"ticket\": \"STEMROBIN-180\",\n+  \"batch\": \"C b95\",\n+  \"lesson\": \"phy7-c1-s2-n97\",\n+  \"status\": \"revise\",\n+  \"finish\": \"review\",\n+  \"reviewType\": \"Fresh independent offline TEXT; actual shared-parser fragment observations, not DISPLAY approval\",\n+  \"reviewer\": \"Independent reviewer of the frozen n97 candidate; no author changes performed\",\n+  \"authorManifest\": {\n+    \"path\": \".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-author/manifest.json\",\n+    \"sha256\": \"0f6850986c6d7604fe8a41fdbed4f61ef25504756aaca7628c331c1d590de1b4\",\n+    \"bytes\": 4513,\n+    \"entriesVerified\": 17\n+  },\n+  \"candidate\": {\n+    \"path\": \".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-author/candidate.template.json\",\n+    \"sha256\": \"a362c38ed5fca7f3bc1dc5cee1646b73dcf4a02704ef1c7e174084ed21469e2c\",\n+    \"bytes\": 10963\n+  },\n+  \"before\": {\n+    \"path\": \".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-author/before.template.json\",\n+    \"sha256\": \"843975fe7068b27c1b4927a2f4d1cf7e8f6acf32f32651afff489e3a9bda7099\",\n+    \"bytes\": 10563\n+  },\n+  \"approvedSourcePage\": {\n+    \"path\": \".tmp/ld-s10y-lesson/resume-180-4-n97-cohort/artifacts/7p/pages/0256/page.json\",\n+    \"sha256\": \"ee534ac026a086222d0c0f5d7c4ca90ce4991a5abd5ee2f88d2b4244cc15eba0\",\n+    \"bytes\": 5454,\n+    \"physicalPage\": 256,\n+    \"printedPage\": 245,\n+    \"sourceApprovalReused\": true,\n+    \"sourceRepairUsed\": 1,\n+    \"sourceRepairLimit\": 1,\n+    \"allBlocksClosed\": true,\n+    \"sourceApprovalReport\": \".intentfold/tickets/STEMROBIN-180/source-review-7p-256-affected.md\"\n+  },\n+  \"findings\": [\n+    {\n+      \"id\": \"N97-TEXT-1\",\n+      \"priority\": 2,\n+      \"status\": \"revise\",\n+      \"title\": \"Unsupported underscore emphasis leaks literal markers and loses all six nested italic terms\",\n+      \"sourceRefs\": [\"p0256#3\", \"p0256#5\", \"p0256#7\", \"p0256#9\"],\n+      \"proseIndices\": [1, 3, 5, 7],\n+      \"actualParser\": \".claude/skills/ld-s10y-lesson/tools/htmlfrag.js:27\",\n+      \"actualEntryPoint\": \"proseInline via renderInline and strong\",\n+      \"offlineRendererDelegation\": \".claude/skills/ld-s10y-lesson/tools/render_lesson.js:83\",\n+      \"publicationDelegation\": \".claude/skills/ld-s10y-lesson/tools/publish.mjs:174\",\n+      \"actual\": \"All four candidate definitions produce exactly one whole-definition strong element with the period outside it, but no nested em elements. The six _物质_ ranges remain literal, exposing twelve underscore characters in the generated HTML text.\",\n+      \"expected\": \"Whole-definition strong plus one, two, one and two nested italic 物质 terms respectively, with no visible delimiter characters and periods outside strong.\",\n+      \"impact\": \"The marker-only edit does not preserve intended emphasis or the displayed source wording, despite stored lexical content and numbers being unchanged after permitted marker normalization.\",\n+      \"requiredDisposition\": \"Parent must resolve the modern-text parser-compatible nesting and obtain affected TEXT evidence. This reviewer does not edit source, candidate, renderer or anchors, and does not authorize any downstream stage.\",\n+      \"evidence\": \".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-review/probe-result.json\"\n+    }\n+  ],\n+  \"perBlock\": [\n+    {\n+      \"sourceRef\": \"p0256#2\",\n+      \"proseIndex\": 0,\n+      \"status\": \"pass\",\n+      \"fidelity\": \"Exact original wording and punctuation retained; only existing sentence layout differs from source line wrapping. Both italic 物体 markers remain untouched.\",\n+      \"scientificContent\": \"Energy supplied can produce solid-to-liquid then liquid-to-gas transitions; released energy can produce the reverse sequence. Ice, water and steam examples and causal direction are preserved, with no added necessity or sufficiency claim.\",\n+      \"quantitiesAndUnits\": \"No numerical values or formulas.\",\n+      \"transition\": \"Introduces the reversible state-change context before defining melting.\",\n+      \"taskClassification\": \"Explanatory statements, not written-response tasks.\"\n+    },\n+    {\n+      \"sourceRef\": \"p0256#3\",\n+      \"proseIndex\": 1,\n+      \"status\": \"revise\",\n+      \"fidelity\": \"The definition of melting as solid-to-liquid is lexically unchanged; its only stored edit is the nested term marker syntax.\",\n+      \"scientificContent\": \"Correct direction of the phase change in this crystalline-material lesson; the original terminology is not modernized or confused with dissolution.\",\n+      \"parserConclusion\": \"Whole-definition strong passes and the final period stays outside. Required one nested italic 物质 term fails: em count zero and two literal underscores. N97-TEXT-1.\",\n+      \"taskClassification\": \"Definition, not a written task.\"\n+    },\n+    {\n+      \"sourceRef\": \"p0256#4\",\n+      \"proseIndex\": 2,\n+      \"status\": \"pass\",\n+      \"fidelity\": \"Exact source sentence and italic 物体 marker retained.\",\n+      \"scientificContent\": \"Heating to the transition temperature is presented as necessary, not as enough to complete melting. The later constant-temperature phase-change paragraph provides the compatible continuation; no contradictory heat-to-temperature relation is introduced.\",\n+      \"quantitiesAndUnits\": \"No added temperature or energy value.\",\n+      \"transition\": \"Connects the melting definition to the melting-point definition.\",\n+      \"taskClassification\": \"A general necessary-condition statement, not an instruction requiring a written answer.\"\n+    },\n+    {\n+      \"sourceRef\": \"p0256#5\",\n+      \"proseIndex\": 3,\n+      \"status\": \"revise\",\n+      \"fidelity\": \"The source melting-point definition and its punctuation are lexically unchanged.\",\n+      \"scientificContent\": \"Defines the temperature of melting in the stated crystal context; no changed value, unit or phase-change direction.\",\n+      \"parserConclusion\": \"Whole-definition strong passes and the final period stays outside. Required two nested italic 物质 terms fail: em count zero and four literal underscores. N97-TEXT-1.\",\n+      \"taskClassification\": \"Definition, not a written task.\"\n+    },\n+    {\n+      \"sourceRef\": \"p0256#6\",\n+      \"proseIndex\": 4,\n+      \"status\": \"pass\",\n+      \"fidelity\": \"All five example sentences, materials, apparatus, Celsius formulas, original punctuation and approximate 一千五百度左右 wording remain unchanged. The pre-existing two-paragraph layout is preserved.\",\n+      \"scientificContent\": \"Low/high melting-temperature comparison and heating causality are preserved. The boiling-water bath supplies a hotter environment than the stated naphthalene melting temperature. The source groups cast iron and steel under an approximate high-temperature description; this is an inherited alloy simplification, not a universal exact melting point.\",\n+      \"quantitiesAndUnits\": [\"0^\\\\circ\\\\mathrm{C}\", \"80^\\\\circ\\\\mathrm{C}\", \"约为一千五百度左右 (unchanged source approximate temperature description)\"],\n+      \"transition\": \"Actual prose_flow emits two paragraphs here. The section boundary follows the second, complete tin/lead and cast-iron/steel example paragraph, not the middle of an example.\",\n+      \"taskClassification\": \"Descriptive demonstration examples introduced by explanatory prose, with no exercise label, written-response demand, unknown quantity, observation-record requirement or answer slot. No laboratory task is manufactured or authorized.\",\n+      \"scientificLimitation\": \"No numerical erratum is registered. This review reports the inherited broad alloy approximation rather than rewriting it or certifying it as an exact modern materials datum.\"\n+    },\n+    {\n+      \"sourceRef\": \"p0256#7\",\n+      \"proseIndex\": 5,\n+      \"status\": \"revise\",\n+      \"fidelity\": \"The liquid-to-solid definition and crystallization synonym are unchanged.\",\n+      \"scientificContent\": \"Reverses the melting direction correctly within the crystal scope of the original card.\",\n+      \"parserConclusion\": \"Whole-definition strong passes and the final period stays outside. Required one nested italic 物质 term fails: em count zero and two literal underscores. N97-TEXT-1.\",\n+      \"transition\": \"The one new section break resolves uniquely before this paragraph, after all melting examples; it is a genuine concept switch.\",\n+      \"taskClassification\": \"Definition, not a written task.\"\n+    },\n+    {\n+      \"sourceRef\": \"p0256#8\",\n+      \"proseIndex\": 6,\n+      \"status\": \"pass\",\n+      \"fidelity\": \"Exact source cooling-condition sentence and italic 物质 marker preserved.\",\n+      \"scientificContent\": \"Cooling the melted material to a relevant temperature before crystallization starts is causally compatible with the preceding definition and subsequent freezing-point discussion. No nucleation, supercooling or new quantitative guarantee is added.\",\n+      \"transition\": \"Connects solidification to its characteristic temperature.\",\n+      \"taskClassification\": \"Explanatory condition, not a written-response task.\"\n+    },\n+    {\n+      \"sourceRef\": \"p0256#9\",\n+      \"proseIndex\": 7,\n+      \"status\": \"revise\",\n+      \"fidelity\": \"The freezing/crystallization-point definition, parentheses and punctuation are unchanged.\",\n+      \"scientificContent\": \"Defines the temperature of the reverse phase change without adding a number or altering the phase directions.\",\n+      \"parserConclusion\": \"Whole-definition strong passes and the final period stays outside. Required two nested italic 物质 terms fail: em count zero and four literal underscores. N97-TEXT-1.\",\n+      \"taskClassification\": \"Definition, not a written task.\"\n+    },\n+    {\n+      \"sourceRef\": \"p0256#10\",\n+      \"proseIndex\": 8,\n+      \"status\": \"pass\",\n+      \"fidelity\": \"Exact source comparison, water/ice example, pure-iron phrase, italic markers, bold range, punctuation and both Celsius formulas retained. Existing line splitting does not change them.\",\n+      \"scientificContent\": \"Equality of melting and freezing temperatures is the equilibrium crystalline-material relationship at comparable conditions. The water/ice example illustrates that relationship; the source iron datum is retained as printed, not silently replaced by a contemporary table value.\",\n+      \"quantitiesAndUnits\": [\"0^\\\\circ\\\\mathrm{C}\", \"1539^\\\\circ\\\\mathrm{C}\"],\n+      \"scientificLimitation\": \"The source does not qualify pressure, purity, alloy melting ranges or supercooling. Those inherited simplifications are not new candidate claims. 1539 remains the approved source datum; no registered numerical erratum or scientific rewrite is authorized.\",\n+      \"taskClassification\": \"Comparison with examples, not a numerical question or written exercise.\"\n+    },\n+    {\n+      \"sourceRef\": \"p0256#11\",\n+      \"proseIndex\": 9,\n+      \"status\": \"pass\",\n+      \"fidelity\": \"Both complete source sentences and the whole original bold constant-temperature statement remain unchanged. The last block closes on physical256.\",\n+      \"scientificContent\": \"Heating raises temperature before melting; during the crystalline melting process the temperature stays constant and solid/liquid coexist. The causal progression is consistent with heat going into the phase change rather than a temperature increase; no invented numerical latent-heat value or post-melting claim appears.\",\n+      \"transition\": \"Concludes the card with the phase-change temperature plateau and coexistence; no text from n98 or physical257 is needed for this closed object.\",\n+      \"taskClassification\": \"A first-person explanatory observation, not a request to perform or record an experiment and not a written-response task.\"\n+    }\n+  ],\n+  \"noTaskApplicability\": {\n+    \"status\": \"confirmed\",\n+    \"independentlyReviewedCompleteCard\": true,\n+    \"basis\": \"Approved page256 contains only one n97 heading, ten prose blocks and one footer, all closed with neither cont nor open flags. Each assembled prose object matches its p0256#2 through p0256#11 source lines. The complete source lesson Markdown, source exercises JSON and n97 cohort exercise/figure templates agree.\",\n+    \"writtenExercises\": 0,\n+    \"figures\": 0,\n+    \"FIG\": \"not-applicable\",\n+    \"ANSWER\": \"not-applicable\",\n+    \"CHOICE\": \"not-applicable\",\n+    \"reason\": \"Demonstration descriptions and definitions contain no numbered or unnumbered written-response tasks. No tasks, figures, answer keys or choices are manufactured from the explanatory examples.\"\n+  },\n+  \"sectionBoundary\": {\n+    \"status\": \"pass\",\n+    \"method\": \"Actual prose_flow.mjs --json output, backed by htmlfrag.js proseOutline and sectionBreakIndices\",\n+    \"parsedParagraphs\": 11,\n+    \"resolvedIndices\": [6],\n+    \"beforeSourceRef\": \"p0256#6\",\n+    \"afterSourceRef\": \"p0256#7\",\n+    \"exactAuthoredAnchorsMatchActualAdjacentParagraphs\": true,\n+    \"limitation\": \"Text-flow binding only, not a final DISPLAY judgment. If the modern definition syntax changes, its after anchor must be reconsidered against the actual new flow by the parent.\"\n+  },\n+  \"counts\": {\n+    \"sourcePages\": 1,\n+    \"sourceBlocks\": 12,\n+    \"sourceRows\": 25,\n+    \"sourceProseRows\": 23,\n+    \"proseObjects\": 10,\n+    \"parsedParagraphs\": 11,\n+    \"passBlocks\": 6,\n+    \"reviseBlocks\": 4,\n+    \"blockedBlocks\": 0,\n+    \"rootFindings\": 1,\n+    \"changedDefinitionBlocks\": 4,\n+    \"nestedItalicTermsExpected\": 6,\n+    \"nestedItalicTermsRendered\": 0,\n+    \"wholeDefinitionStrongRendered\": 4,\n+    \"literalUnderscoresRendered\": 12,\n+    \"terminalPeriodsOutsideStrong\": 4,\n+    \"newSectionBreaks\": 1,\n+    \"formulaOccurrences\": 4,\n+    \"registeredErrata\": 0,\n+    \"storedWordingChanges\": 0,\n+    \"storedPunctuationChanges\": 0,\n+    \"formulaChanges\": 0,\n+    \"numericChanges\": 0,\n+    \"scientificContentRewrites\": 0,\n+    \"writtenExercises\": 0,\n+    \"figures\": 0,\n+    \"answerTasks\": 0,\n+    \"choiceTasks\": 0,\n+    \"authorManifestEntriesVerified\": 17,\n+    \"reviewInputBindingsVerified\": 33,\n+    \"imageOpens\": 0,\n+    \"sourcePixelReviews\": 0,\n+    \"sourceReviewReplays\": 0,\n+    \"sourceFinalizeReplays\": 0,\n+    \"officialModernFinalizeRuns\": 0,\n+    \"nativeDisplayReplays\": 0,\n+    \"finalDisplayApprovals\": 0,\n+    \"wholeLessonRenders\": 0,\n+    \"browserRuns\": 0,\n+    \"candidateEdits\": 0,\n+    \"sourceEdits\": 0,\n+    \"paidCalls\": 0,\n+    \"dependencyOperations\": 0,\n+    \"environmentOperations\": 0,\n+    \"databaseOperations\": 0,\n+    \"publishOperations\": 0,\n+    \"deployOperations\": 0,\n+    \"appOperations\": 0,\n+    \"gitOperations\": 0,\n+    \"otherAgentOperations\": 0\n+  },\n+  \"technicalExecution\": {\n+    \"technicalFailures\": [],\n+    \"contentFailureReceipt\": \".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n97-text-review-verify-a19-1.json\",\n+    \"contentFailureExitCode\": 1,\n+    \"contentFailureExplanation\": \"All integrity assertions completed and probe-result.json was written. Exit1 deliberately preserves the four observed definition-rendering failures; it is not a runtime crash or an approval.\",\n+    \"optionalPackageDiscovery\": \"jsdom, parse5 and cheerio were unavailable from the three checked existing package roots. Existing app Playwright was resolvable, but no browser or dependency operation was needed: the actual shared fragment parser output directly settles the failure.\",\n+    \"allCommandsThroughExistingRunner\": true,\n+    \"runnerReplaced\": false,\n+    \"protectedReviewedInputsUnchanged\": true\n+  },\n+  \"limitations\": [\n+    \"Offline TEXT only; no SOURCE pixels, final whole-lesson render, native DISPLAY replay, official finalize, app, DB or publication verification.\",\n+    \"SOURCE256 approval and repair1/1 are reused, not reopened or reversed. The old generic marked lexer observation is source-literal context only and does not prove this shared renderer preserves nested emphasis.\",\n+    \"The actual source-marker strings also differ under this shared parser from the generic lexer described by SOURCE review; that is not a new SOURCE verdict. The modern candidate still fails all four nested-term requirements.\",\n+    \"Inherited alloy approximations and idealized phase-equilibrium assumptions are disclosed; source0/80/1539 Celsius and approximate1500 description are unchanged, with no registered numerical erratum or scientific rewrite.\",\n+    \"No browser DOM or computed-font proof is claimed. Four actual definition fragments, with text-only HTML observations, suffice to show missing em nodes and literal marker leakage.\",\n+    \"n98 and physical257 remain BLOCKED and excluded. No old modern, answer, choice or other-ticket output was consulted for content; author-manifest non-review entries were hash-bound only.\",\n+    \"Fresh reviewer image loads0; parent image count19/24 is unchanged and no image payload was returned.\"\n+  ],\n+  \"outputs\": {\n+    \"humanReport\": \".intentfold/tickets/STEMROBIN-180/modern-text-review-n97-b95.md\",\n+    \"probe\": \".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-review/probe-result.json\",\n+    \"inputBindings\": \".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-review/input-bindings.json\",\n+    \"manifest\": \".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-review/manifest.json\"\n+  },\n+  \"next\": \"STOP_FOR_PARENT_BINDING; TEXT revise, no downstream approval\"\n+}\n*** Add File: .intentfold/tickets/STEMROBIN-180/modern-text-review-n97-b95.md\n+# Independent TEXT Review: n97, C b95\n+\n+Status: **REVISE**. STEMROBIN-180; phy7-c1-s2-n97 only; offline finish=review.\n+This is fresh independent TEXT evidence, not SOURCE or final DISPLAY approval.\n+\n+## Finding\n+\n+**N97-TEXT-1 (P2): all six nested italic terms fail in the actual shared parser.**\n+The four candidate definitions at p0256#3/#5/#7/#9 generate one complete\n+`<strong>` element each, with the final period outside it, but generate zero\n+nested `<em>` elements. The six `_物质_` ranges remain literal: twelve visible\n+underscore characters. Thus the stored marker-only edit preserves normalized\n+lexical content but does not preserve the intended emphasis or displayed words.\n+\n+Actual `htmlfrag.js` `proseInline` observations, not a generic Markdown lexer:\n+\n+|Source block|Whole-definition strong|Required nested em|Actual em|Literal underscores|TEXT|\n+|---|---:|---:|---:|---:|---|\n+|p0256#3|1|1|0|2|REVISE|\n+|p0256#5|1|2|0|4|REVISE|\n+|p0256#7|1|1|0|2|REVISE|\n+|p0256#9|1|2|0|4|REVISE|\n+\n+Example actual output: `<strong>_物质_由固态变为液态叫做熔解</strong>.`\n+`render_lesson.js:18/83/321` delegates prose to this shared parser;\n+`publish.mjs:29/174` does likewise. Neither renderer nor publisher was run.\n+The unsupported-underscore failure is recorded without editing any candidate,\n+source, parser, anchor or other owned work.\n+\n+## Per-Block Conclusions\n+\n+All ten prose objects were reviewed against their complete approved source text.\n+The full substantive conclusions and scientific qualifications are in report.json.\n+\n+|Source|TEXT|Conclusion|\n+|---|---|---|\n+|#2|PASS|Energy supplied/released and forward/reverse state-change examples retain causal direction and exact words.|\n+|#3|REVISE|Melting definition is correct and faithful; one nested term fails actual parsing.|\n+|#4|PASS|Heating to the melting temperature remains a necessary condition, not a claim that transition completion requires no further heat.|\n+|#5|REVISE|Melting-point definition remains faithful; two nested terms fail actual parsing.|\n+|#6|PASS|All melting examples, materials, apparatus, 0/80 Celsius formulas and approximate1500 description are unchanged. Source alloy simplification is disclosed.|\n+|#7|REVISE|Solidification/crystallization definition retains phase direction; one nested term fails. The concept boundary before it is valid.|\n+|#8|PASS|Cooling condition leading to crystallization is unchanged and causally consistent.|\n+|#9|REVISE|Freezing/crystallization-point definition is unchanged; two nested terms fail.|\n+|#10|PASS|Equilibrium melting/freezing comparison and 0/1539 Celsius source values remain unchanged. Source pressure/purity/supercooling qualifications are not expanded.|\n+|#11|PASS|Constant temperature during crystalline melting and solid/liquid coexistence remain intact; the complete object closes on256.|\n+\n+The approximate cast-iron/steel description is not a universal exact alloy\n+melting datum; phase-point equality has the usual equilibrium/context limits.\n+These are inherited source simplifications, not a hidden candidate rewrite.\n+No numerical erratum is registered, and no scientific correction is authorized.\n+The source0/80/1539 Celsius and approximate1500 description are retained exactly.\n+\n+## Complete Card And Applicability\n+\n+Approved page256 (printed245) contains exactly12 blocks/25 rows: one n97 heading,\n+ten prose objects (23 prose rows), and one footer. Every block is closed, without\n+incoming or outgoing continuation. The assembled p0256#2 through #11 objects\n+match the original lines; lesson.md and all empty exercise/figure manifests agree.\n+\n+Independent prose review finds **zero written tasks**, not merely an empty JSON\n+array: descriptions of the water bath, heated metals and observed melting are\n+explanatory demonstrations, not numbered or unnumbered written-response demands.\n+No observation-record request, calculation question or answer slot is present.\n+Written exercises0, figures0, answer tasks0, choice tasks0: **FIG/ANSWER/CHOICE\n+are not applicable**. No laboratory assignment or new task is manufactured.\n+\n+## Boundary And Integrity\n+\n+The new section-break anchors exactly match `prose_flow.mjs --json` output.\n+It resolves uniquely at paragraph index6 of11, after the second melting-example\n+paragraph (#6) and before the complete solidification definition (#7).\n+This is a genuine concept transition, not an integer guessed from block counts.\n+It is text-flow proof only; changed definition syntax would affect its after anchor.\n+\n+Author manifest SHA256:\n+`0f6850986c6d7604fe8a41fdbed4f61ef25504756aaca7628c331c1d590de1b4`.\n+All17 parent-bound entries verified. Candidate SHA256:\n+`a362c38ed5fca7f3bc1dc5cee1646b73dcf4a02704ef1c7e174084ed21469e2c`.\n+Approved SOURCE256 JSON SHA256:\n+`ee534ac026a086222d0c0f5d7c4ca90ce4991a5abd5ee2f88d2b4244cc15eba0`.\n+\n+Exact candidate delta: four definition blocks, six nested term ranges/twelve\n+delimiter-character replacements, one section break, and associated layout tags.\n+Wording/punctuation/formulas/numbers and protected source snapshots are unchanged.\n+All33 reviewed input bindings and the current work-template equality verify.\n+\n+## Evidence And Limits\n+\n+- `.intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-review/report.json`\n+- `.intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-review/probe-result.json`\n+- `.intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-review/input-bindings.json`\n+- `.intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-review/manifest.json`\n+- Recorder receipts: `commands/n97-text-review-emphasis-a13-1.json`,\n+  `commands/n97-text-review-flow-a14-1.json`, and\n+  `commands/n97-text-review-verify-a19-1.json` under the same resume-180-4 root.\n+\n+The verify receipt exits1 deliberately for the real TEXT failure after all\n+integrity assertions completed; no technical execution failure occurred.\n+Optional DOM parser packages were unavailable; no dependency installation or\n+browser run was attempted. Actual shared-parser fragments settle this defect.\n+\n+Image opens0, SOURCE pixel reviews/replays0, source finalize replays0, official\n+modern finalize0, native DISPLAY replays0, final DISPLAY approvals0, whole-lesson\n+renders0, browser runs0, paid calls0, candidate/source edits0. Environment, DB,\n+publish, deploy, app, dependency, Git and other-agent operations0.\n+\n+SOURCE approval and repair1/1 are reused. The SOURCE report openly qualified its\n+generic lexer observation; it never proved modern shared-renderer nesting.\n+n98/physical257 remain BLOCKED and excluded. No old modern/answer/choice or\n+other-ticket content supplied a verdict. Parent images remain19/24; no image payload.\n+\n+Owned outputs and manifest are frozen0444. **STOP for parent binding.**\n+No candidate retention, staging, finalization or downstream approval is performed.\n*** Add File: .intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-review/seal.mjs\n+import fs from \"node:fs\"\n+import path from \"node:path\"\n+import crypto from \"node:crypto\"\n+import assert from \"node:assert/strict\"\n+\n+const cwd = \"/Users/yong/.codex/worktrees/stemrobin-180-resume/lemmadeck\"\n+assert.equal(process.cwd(), cwd)\n+const base = \".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4\"\n+const owned = `${base}/n97-text-review`\n+const humanReport = \".intentfold/tickets/STEMROBIN-180/modern-text-review-n97-b95.md\"\n+const read = (file) => JSON.parse(fs.readFileSync(file, \"utf8\"))\n+const bind = (file) => {\n+  const bytes = fs.readFileSync(file)\n+  return { path: file, absolutePath: path.resolve(file),\n+    sha256: crypto.createHash(\"sha256\").update(bytes).digest(\"hex\"),\n+    bytes: bytes.length, mode: (fs.statSync(file).mode & 0o777).toString(8) }\n+}\n+const review = read(`${owned}/report.json`)\n+const probe = read(`${owned}/probe-result.json`)\n+const inputs = read(`${owned}/input-bindings.json`)\n+assert.equal(review.status, \"revise\")\n+assert.equal(probe.status, \"revise\")\n+assert.equal(review.lesson, \"phy7-c1-s2-n97\")\n+assert.equal(review.perBlock.length, 10)\n+assert.equal(review.perBlock.filter((block) => block.status === \"revise\").length, 4)\n+assert.equal(review.perBlock.filter((block) => block.status === \"pass\").length, 6)\n+assert.equal(review.counts.reviewInputBindingsVerified, inputs.inputs.length)\n+assert.deepEqual(review.technicalExecution.technicalFailures, [])\n+for (const entry of [...inputs.inputs, ...inputs.authorManifestEntries]) {\n+  const current = bind(entry.path)\n+  for (const key of [\"sha256\", \"bytes\", \"mode\"]) assert.equal(current[key], entry[key], entry.path)\n+}\n+const commands = `${base}/commands`\n+const receipts = fs.readdirSync(commands)\n+  .filter((name) => name.startsWith(\"n97-text-review-\") && name.endsWith(\".json\"))\n+  .sort().map((name) => {\n+    const file = `${commands}/${name}`\n+    const receipt = read(file)\n+    assert.equal(receipt.cwd, cwd)\n+    assert.equal(bind(receipt.stdout).sha256, receipt.stdoutSha256)\n+    assert.equal(bind(receipt.stderr).sha256, receipt.stderrSha256)\n+    assert.equal(receipt.error, null)\n+    assert.equal(receipt.signal, null)\n+    const expectedExit = name === \"n97-text-review-verify-a19-1.json\" ? 1 : 0\n+    assert.equal(receipt.returncode, expectedExit, file)\n+    return { ...bind(file), returncode: receipt.returncode,\n+      classification: expectedExit === 1 ? \"preserved-content-failure\" : \"completed-command\",\n+      command: receipt.command, args: receipt.args,\n+      stdout: bind(receipt.stdout), stderr: bind(receipt.stderr) }\n+  })\n+assert.equal(receipts.length, 20)\n+const generatedBy = {\n+  \"probe.mjs\": \"n97-text-review-probe-clone-a18-1.json\",\n+  \"seal.mjs\": \"n97-text-review-write-report-a20-1.json\",\n+  \"input-bindings.json\": \"n97-text-review-verify-a19-1.json\",\n+  \"probe-result.json\": \"n97-text-review-verify-a19-1.json\",\n+  \"report.json\": \"n97-text-review-write-report-a20-1.json\",\n+}\n+const ownedFiles = fs.readdirSync(owned).sort().map((name) => `${owned}/${name}`)\n+assert.deepEqual(ownedFiles.map((file) => path.basename(file)), Object.keys(generatedBy).sort())\n+const outputFiles = [...ownedFiles, humanReport]\n+for (const file of outputFiles) fs.chmodSync(file, 0o444)\n+const outputs = outputFiles.map((file) => {\n+  const name = path.basename(file)\n+  const receiptName = generatedBy[name] ?? \"n97-text-review-write-report-a20-1.json\"\n+  const receipt = receipts.find((item) => item.path === `${commands}/${receiptName}`)\n+  assert.ok(receipt, file)\n+  return { ...bind(file), receipt: { path: receipt.path,\n+    sha256: receipt.sha256, bytes: receipt.bytes } }\n+})\n+const manifestPath = `${owned}/manifest.json`\n+assert.equal(fs.existsSync(manifestPath), false)\n+const manifest = {\n+  schema: \"s10y-n97-text-review-manifest@1\", ticket: \"STEMROBIN-180\", batch: \"C b95\",\n+  lesson: review.lesson, status: \"revise\", finish: \"review\", cwd,\n+  inputs: inputs.inputs,\n+  parentBoundAuthorEntries: inputs.authorManifestEntries,\n+  outputs, recorderReceipts: receipts, counts: review.counts,\n+  manifestReceiptProtocol: {\n+    creationReceipt: `${commands}/n97-text-review-seal-a21-1.json`,\n+    postFreezeBindingReceipt: `${commands}/n97-text-review-final-bind-a22-1.json`,\n+    binding: \"The post-freeze recorder stdout gives the exact manifest path/SHA256/bytes/mode; its JSON receipt hashes that stdout. The manifest is intentionally not self-hashed or included in its own output list.\",\n+  },\n+  frozenOutputMode: \"0444\", protectedInputsUnchanged: true,\n+  technicalFailures: [], preservedContentFailureReceipts: [\n+    `${commands}/n97-text-review-verify-a19-1.json`,\n+  ],\n+  noDownstreamApproval: true, next: \"STOP_FOR_PARENT_BINDING\",\n+}\n+fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\\n`, { flag: \"wx\" })\n+fs.chmodSync(manifestPath, 0o444)\n+console.log(JSON.stringify({ status: \"revise\", lesson: review.lesson,\n+  manifest: bind(manifestPath), outputs, receiptsBound: receipts.length,\n+  inputsUnchanged: inputs.inputs.length,\n+  authorEntriesUnchanged: inputs.authorManifestEntries.length,\n+  next: \"STOP_FOR_PARENT_BINDING\" }, null, 2))\n*** End Patch\n"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n99-bind-approved-source259260-1.json",
+          "sha256": "2a3e8df82149462da8725ba5eb0d629f77dd72a494926e1017f71430898f8ec4",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/bind-next-source259260.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n99-next-assembly-contract-1.json",
+          "sha256": "7571474d83f875b57b48644876654245ae4513c4c497e01a0b5b14239a3653ee",
+          "returncode": 0,
+          "command": "rg",
+          "args": [
+            "-n",
+            "-A",
+            "30",
+            "-B",
+            "10",
+            "def cmd_assemble|assemble_book|add_parser\\(\"assemble|--lesson|承上页",
+            ".claude/skills/ld-s10y-lesson/tools/p2c.py",
+            ".claude/skills/ld-s10y-lesson/tools/assemble.py"
+          ]
+        },
+        {
           "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/next-n97-cohort-helper-lookup-1.json",
           "sha256": "3686d8f91fcd573ad2d01f25c2cd287e4db3257806cde04a2142ea68db3d79e7",
           "returncode": 0,
@@ -11203,6 +12300,100 @@
           ]
         },
         {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/next-n99-required-source-approvals-read-1.json",
+          "sha256": "fbb38b828b25343852eb9a202cff500c4eff032fa22fa3364546565339434a01",
+          "returncode": 0,
+          "command": "cat",
+          "args": [
+            ".intentfold/tickets/STEMROBIN-180/source-review-7p-259-affected.md",
+            ".intentfold/tickets/STEMROBIN-180/source-review-7p-260261.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/next-n99-source-approval-name-lookup-1.json",
+          "sha256": "6a5c26b06ac25c0cdb37e4618f212a4a86c4460f2f2507e0dc5a1a1adda92710",
+          "returncode": 0,
+          "command": "rg",
+          "args": [
+            "--files",
+            ".intentfold/tickets/STEMROBIN-180",
+            "-g",
+            "*258259*.md",
+            "-g",
+            "*259*.md",
+            "-g",
+            "*260*.md",
+            "-g",
+            "!tmp/**"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/next-n99-source-object-readiness-1.json",
+          "sha256": "cdddbb8f181ab4b2ae14576b658e2cc0ea32c78d7c9f1473a3e4f402ecc12ba6",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "-e",
+            "const fs=require(\"node:fs\"),c=require(\"node:crypto\");for(const n of [259,260]){const p=\"ssot-resources/soviet10year-textbooks/artifacts/7p/pages/\"+String(n).padStart(4,\"0\")+\"/page.json\",b=fs.readFileSync(p),x=JSON.parse(b);console.log(JSON.stringify({page:n,sha256:c.createHash(\"sha256\").update(b).digest(\"hex\"),printedPage:x.meta.printed_page,notes:x.meta.notes,blocks:x.blocks.map((v,i)=>({index:i+1,kind:v.kind,lines:v.kind===\"h3\"?v.lines:undefined,open:v.open,cont:v.cont,label:v.label}))},null,2));}"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/next-retained-approval-manifests-1.json",
+          "sha256": "998532ca9face5162ecef6475b83e936f27e9cf62440d879e987adb8f6a883cc",
+          "returncode": 1,
+          "command": "rg",
+          "args": [
+            "--files",
+            "--hidden",
+            "--no-ignore",
+            ".tmp/ld-s10y-lesson",
+            "-g",
+            "approved-manifest.json",
+            "-g",
+            "approved-subset.json",
+            "-g",
+            "*229*"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/next-source260-author-read-1.json",
+          "sha256": "e416917c307cfe1e8f7ad4b9c04342bcc7a10bfd04a4c577a3c1f83f3b55bd28",
+          "returncode": 0,
+          "command": "sed",
+          "args": [
+            "-n",
+            "1,210p",
+            ".intentfold/tickets/STEMROBIN-180/source-7p-260261.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/next-source260-hash-evidence-1.json",
+          "sha256": "60b4b6439b054a2518dd5ecf519a1ec020b75ffd71999e63724914880a6bd12f",
+          "returncode": 2,
+          "command": "rg",
+          "args": [
+            "-n",
+            "936c8a5b|page\\.md.*sha|MD.*SHA|260.*SHA|Current.*260|page.json.*936",
+            ".intentfold/tickets/STEMROBIN-180/source-author-7p260261.md",
+            ".intentfold/tickets/STEMROBIN-180/source-review-7p-260261.md",
+            ".intentfold/tickets/STEMROBIN-180/counter260-repair-b84.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/next-source260-report-paths-1.json",
+          "sha256": "f021333493268d1b712ad1561e2551fdbf1b53d87d9ac6d1bb0b662a6061eb6f",
+          "returncode": 0,
+          "command": "rg",
+          "args": [
+            "--files",
+            ".intentfold/tickets/STEMROBIN-180",
+            "-g",
+            "*260*",
+            "-g",
+            "*259*"
+          ]
+        },
+        {
           "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/remaining-n96n104-inventory-1.json",
           "sha256": "d4f77e934ca7dea588fcd879b3cf2f4ccf1aa946c169d28efdde7a30a19a3f8b",
           "returncode": 0,
@@ -11219,6 +12410,282 @@
           "command": ".claude/skills/ld-s10y-lesson/.venv/bin/python",
           "args": [
             ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/remaining-source-inventory.py"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-b95-find-1.json",
+          "sha256": "bd19b748db29e00332fee2d73f8289138851259a38f8ab8a3b0486c7b6ce5254",
+          "returncode": 0,
+          "command": "rg",
+          "args": [
+            "-n",
+            "n97|b95|render_lesson|b94-stage|adapt-finalize|retain-approved",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands",
+            "--glob",
+            "*.json"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-charter-read-1.json",
+          "sha256": "75a58c282783b24ea6e79005e363010d25e1ddd0784c883eea212137566cfd30",
+          "returncode": 0,
+          "command": "sed",
+          "args": [
+            "-n",
+            "1,260p",
+            ".intentfold/charter/engineering.md",
+            ".intentfold/charter/operations.md",
+            ".intentfold/charter/product.md",
+            ".intentfold/project.json",
+            ".intentfold/tickets/STEMROBIN-180/ticket.json"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-checkpoint-read-1.json",
+          "sha256": "f2d0bae0dc464fed9668e78d57a188fd2df204c3defc595fb7666a90f74a9dd6",
+          "returncode": 0,
+          "command": "sed",
+          "args": [
+            "-n",
+            "1,260p",
+            ".intentfold/tickets/STEMROBIN-180/checkpoint.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-config-read-1.json",
+          "sha256": "4c4f1573574b315b766cefa514f7198f771da001f3b20b4b93e3e66176b3b730",
+          "returncode": 0,
+          "command": "head",
+          "args": [
+            "-c",
+            "18000",
+            ".intentfold/project.json",
+            ".intentfold/tickets/STEMROBIN-180/ticket.json",
+            ".claude/skills/ld-s10y-lesson/references/production-resume.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-current-b95-record-1.json",
+          "sha256": "c316b707cbd1ad500c5c60eeb51037611bb5973aee54786afd5159c4c0cc2495",
+          "returncode": 0,
+          "command": "node",
+          "args": [
+            "-e",
+            "const f=require(\"node:fs\"),u=JSON.parse(f.readFileSync(\".intentfold/tickets/STEMROBIN-180/production-usage.json\")); console.log(JSON.stringify({n97:u.resume_180_4.n97_b95,b94:u.resume_180_4.b94_completion},null,2));"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-display-pattern-1.json",
+          "sha256": "bb3d2739b3e8d779e63a6e4c52d40526fa1cd802b4a88872af26583d4e5b0bf2",
+          "returncode": 0,
+          "command": "head",
+          "args": [
+            "-c",
+            "10000",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b94-offline-render-1.json",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n93-display-b94/report.json",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/mark-b94-complete.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-entry-read-1.json",
+          "sha256": "ae5dc81f668d21c56a2bb640baae9775985917f3e945fc4be4335c9e49ec3aa9",
+          "returncode": 0,
+          "command": "sed",
+          "args": [
+            "-n",
+            "1,220p",
+            ".intentfold/readme.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-helper-read-1.json",
+          "sha256": "980ad49235816d6435f8e8853e8be3630adabae90e9bb556ed5841ff8824bdc8",
+          "returncode": 0,
+          "command": "sed",
+          "args": [
+            "-n",
+            "1,240p",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/bind-current-manifest.mjs",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/offline-check.mjs",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/prepare-n97-cohort.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-image-bounds-1.json",
+          "sha256": "e68da27dc0022a588f595708bf3fb8d721ff2849fb2b10305f0fff56401fb67f",
+          "returncode": 0,
+          "command": "rg",
+          "args": [
+            "-n",
+            "-A",
+            "45",
+            "-B",
+            "8",
+            "image-batches|Image Batches|图片批次|图片.*上限|24|8 张|bounded",
+            ".agents/skills/ld-s10y-image/SKILL.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-lesson-skill-1.json",
+          "sha256": "bff3f1a5eea115000ef8214c398aff7b553e52701e6a497f32704a128254f5ac",
+          "returncode": 0,
+          "command": "sed",
+          "args": [
+            "-n",
+            "1,260p",
+            ".claude/skills/ld-s10y-lesson/SKILL.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-next-source-approval-read-1.json",
+          "sha256": "0e651d3adf8ab1fe57c6483e99f837c7173415ee4f7a7b6c4c7a73b1f6ba8bd9",
+          "returncode": 0,
+          "command": "sed",
+          "args": [
+            "-n",
+            "1,180p",
+            ".intentfold/tickets/STEMROBIN-180/source-review-7p-259-affected.md",
+            ".intentfold/tickets/STEMROBIN-180/source-review-7p-260261.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-next-source-manifest-locate-1.json",
+          "sha256": "6ca3025c0bc162e9ac001b3db4ad0c35b15f572f5f1baefcdf22c728ead9aa2f",
+          "returncode": 1,
+          "command": "rg",
+          "args": [
+            "--files",
+            ".tmp/ld-s10y-lesson",
+            "-g",
+            "approved-manifest.json",
+            "-g",
+            "*subset*json",
+            "-g",
+            "*260261*",
+            "-g",
+            "*229*"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-operation-boundaries-1.json",
+          "sha256": "af3213a190e4513b1da3759f1651b33b270ccd31b2c2abe68f3432362ac5f53d",
+          "returncode": 0,
+          "command": "sed",
+          "args": [
+            "-n",
+            "1,230p",
+            ".intentfold/charter/operations.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-raw-retention-pattern-1.json",
+          "sha256": "0f71b6c41820768fbe91bbbeaffe549e35629e5fb1ef0735bdfc5ea7b9f6a369",
+          "returncode": 0,
+          "command": "sed",
+          "args": [
+            "-n",
+            "1,170p",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/retain-n164-source.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-retain-render-paths-1.json",
+          "sha256": "f225037a30ad55e228edd5ded9691d0bd1da5017154f0965ce2bd26541636851",
+          "returncode": 0,
+          "command": "rg",
+          "args": [
+            "--files",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4",
+            "-g",
+            "*retain*",
+            "-g",
+            "*render*json",
+            "-g",
+            "*n97-text-review*",
+            "-g",
+            "*mark-b94*"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-retention-contract-1.json",
+          "sha256": "935ce1a5d50b75643445901a3ecc85f080fde873a8ec60dde50df81f2d2e5276",
+          "returncode": 0,
+          "command": "sed",
+          "args": [
+            "-n",
+            "1,220p",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/retain-reviewed-modern.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-skill-read-1.json",
+          "sha256": "d8c8d9ae7f281ea642940977e49d912fb20dba2a15b6e02a055cfaf055704449",
+          "returncode": 0,
+          "command": "sed",
+          "args": [
+            "-n",
+            "1,240p",
+            "/Users/yong/.agents/skills/intentfold/SKILL.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-source260-bindings-1.json",
+          "sha256": "aa47907c34448ddd8fe181380a9f556f8392ec155f8681baeb92fc37fad2faf0",
+          "returncode": 0,
+          "command": "tail",
+          "args": [
+            "-n",
+            "85",
+            ".intentfold/tickets/STEMROBIN-180/source-review-7p-260261.md"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-stage-patterns-1.json",
+          "sha256": "b5b819369974ac30196ca8d46b4f7279e5125df1755e68a3c4bf9d92e8877a56",
+          "returncode": 1,
+          "command": "head",
+          "args": [
+            "-c",
+            "17000",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/n94-isolated-adapt-finalize-1.json",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/b94-native-render-1.json",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/stage-b94-completed.mjs",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/retain-n94-approved.mjs",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/run-stage.mjs"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-tools-list-1.json",
+          "sha256": "8dda853d86734d8887d6c205301c80c0424102cae2c84f80ef1f7d3933eda350",
+          "returncode": 0,
+          "command": "rg",
+          "args": [
+            "--files",
+            ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4",
+            ".claude/skills/ld-s10y-lesson",
+            ".agents/skills/ld-s10y-image"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-usage-read-1.json",
+          "sha256": "efa3820d0765b3c5f22f0a73dc670d5c9ba4a0a00649a685cc03ca0ad026c747",
+          "returncode": 0,
+          "command": "sed",
+          "args": [
+            "-n",
+            "1,240p",
+            ".intentfold/tickets/STEMROBIN-180/production-usage.json"
+          ]
+        },
+        {
+          "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/commands/resume-worktree-status-1.json",
+          "sha256": "3021764ba68af0ac7239138161709025f50d3d8871b83b1261111a28095c7dd6",
+          "returncode": 0,
+          "command": "git",
+          "args": [
+            "status",
+            "--short"
           ]
         },
         {
@@ -13098,7 +14565,127 @@
       "narrowFocusedTests": 29,
       "narrowFocusedFailures": 0,
       "fullProjectChecks": "deferred to formal handoff",
+      "commitAndPushNotYetRun": false,
+      "commit": "172a3d3dabef8892496fb7bb8b6d98ecb72714de",
+      "commitFiles": 117,
+      "pushReturncode": 0,
+      "pushTarget": "HEAD:refs/heads/codex/STEMROBIN-180-textbooks",
+      "remoteHeadVerified": "172a3d3dabef8892496fb7bb8b6d98ecb72714de",
+      "forcePush": false,
+      "rawIndexLessons": 32,
+      "rawIndexPages": 104,
+      "modernIndexLessons": 24
+    },
+    "n97_b95": {
+      "state": "complete-offline-ready-to-commit",
+      "lesson": "phy7-c1-s2-n97",
+      "sourcePages": [
+        256
+      ],
+      "sourceJsonSha256": "ee534ac026a086222d0c0f5d7c4ca90ce4991a5abd5ee2f88d2b4244cc15eba0",
+      "approvedSourceReport": ".intentfold/tickets/STEMROBIN-180/source-review-7p-256-affected.md",
+      "sourceRepairBudget": "1/1 exhausted; passed SOURCE reused, no replay",
+      "adjacent98": "BLOCKED-source257-excluded",
+      "newPaidCalls": 0,
+      "newParentImages": 0,
+      "cohortInputsSha256": "10d6f39d63049457c730337abdd37e4c479bdbb48e2cf21d68571199736d548f",
+      "sourceAssemblyReturncode": 0,
+      "adaptPrepareReturncode": 0,
+      "proseObjects": 10,
+      "writtenExercises": 0,
+      "figures": 0,
+      "candidateDefinitionBlocksChanged": 4,
+      "candidateNestedItalicMarkersChanged": 6,
+      "candidateSectionBreaks": 1,
+      "candidateScientificChanges": 0,
+      "candidateNumericChanges": 0,
+      "textAuthorManifestSha256": "0f6850986c6d7604fe8a41fdbed4f61ef25504756aaca7628c331c1d590de1b4",
+      "textAuthorBoundEntries": 17,
+      "textReviewerAgentId": "01a1f58a-0187-7543-b131-135978b4c059",
+      "sourceReviewReplays": 0,
+      "sourceFinalizeReplays": 0,
+      "canonicalRawAndModernPreviouslyAbsent": true,
+      "fullCourseReady": true,
+      "displayCompleted": true,
+      "textFirstStatus": "REVISE-preserved",
+      "textFirstManifestSha256": "832633952ae3f024db86910396d2a117a61ed4aab8e03dcfd21ce83febf84ba8",
+      "textFirstBoundEntries": 122,
+      "textFirstFinding": "N97-TEXT-1",
+      "textFirstReviewerClosed": true,
+      "textRepairUsed": 1,
+      "textRepairLimit": 1,
+      "textRepairManifest": {
+        "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-repair-1/manifest.json",
+        "sha256": "0800d873eca02ad8ff45c6f7927dd5b86aebedf0a131e4f93f475e6d4f433127"
+      },
+      "textRepairDefinitionBlocks": 4,
+      "textRepairNestedTerms": 6,
+      "technicalProbeFailure": "Wrong local expected-count lookup; candidate files unchanged by probe",
+      "textCompleted": true,
+      "textAffectedStatus": "PASS",
+      "textAffectedManifest": {
+        "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-affected-parent-projection.json",
+        "sha256": "ecb82b7c4f40d4e633e49b26c4d3a93d3ccab8f94be119da1eb405abb7a43268"
+      },
+      "textAffectedIndependentManifest": {
+        "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-text-affected-review/manifest.json",
+        "sha256": "b74ff64712fe615c21d3e5deb82fa5c480641d16d718e5efd76062cf27276eda"
+      },
+      "textAffectedBoundEntries": 184,
+      "firstGenericBindingFailurePreserved": true,
+      "historicalWorkingRebindingsExplicitlySeparated": 2,
+      "officialAdaptFinalizeReturncode": 0,
+      "retentionReturncode": 0,
+      "figureApplicability": "NOT_APPLICABLE-zero-original-figures",
+      "answerApplicability": "NOT_APPLICABLE-zero-original-written-tasks",
+      "choiceApplicability": "NOT_APPLICABLE-zero-original-written-tasks-none-invented",
+      "displayHeadless": true,
+      "displaySurfaces": 4,
+      "nativeDisplay": {
+        "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/display-b95/7p/report.json",
+        "sha256": "8b44afb42c954a1fc68457c5ce4e1b8288a28fa795c284da711f6ded15d14bae"
+      },
+      "independentDisplay": {
+        "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-display-b95/report.json",
+        "sha256": "3761679e40d8f9c56606cce5e05b87fd99066d1d3af32eb733b487e173763d0a",
+        "manifest": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n97-display-b95/manifest.json",
+        "manifestSha256": "8d14546a93d76c73c3f03c5913239e85a6e253e41eaebde32b1444a4476e5084",
+        "boundEntries": 90,
+        "images": 4
+      },
+      "fullCourseCountIncrement": 1,
+      "scientificChanges": 0,
+      "numericChanges": 0
+    },
+    "b95_completion": {
+      "lessons": [
+        "phy7-c1-s2-n97"
+      ],
+      "proseObjects": 10,
+      "writtenTasks": 0,
+      "choices": 0,
+      "figures": 0,
+      "nativeDisplaySurfaces": 4,
+      "independentDisplayImages": 4,
+      "parentNewImages": 0,
+      "textRepairUsed": 1,
+      "fullProjectChecks": "deferred to formal handoff",
       "commitAndPushNotYetRun": true
+    },
+    "n99_readiness": {
+      "status": "required-source259260-byte-bound-not-prepared",
+      "binding": {
+        "path": ".intentfold/tickets/STEMROBIN-180/tmp/resume-180-4/n99-source-bindings.json",
+        "sha256": "d29b2a3686a767242c49210e334481a4e715965771c8608a84da6b9156a0ed68"
+      },
+      "sourcePages": [
+        259,
+        260
+      ],
+      "sourceReviewReplays": 0,
+      "sourceFinalizeReplays": 0,
+      "n98": "BLOCKED-source257",
+      "n100": "Source figure229 PASS assets present; modern figure229 not yet authored or approved"
     }
   },
   "resumed_at": "2026-11-16T10:59:36Z",

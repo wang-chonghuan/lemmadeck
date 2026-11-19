@@ -1,5 +1,88 @@
 # 生产检查点
 
+## 180-4 b95 n97 complete offline; selective commit pending
+
+2026-11-19. n97 complete offline:10 prose objects,0 written tasks,0 figures.
+FIG/ANSWER/CHOICE explicitly not applicable; no invented questions or answers.
+FIRST TEXT REVISE remains bound122: unsupported underscores lost six italics.
+One modern repair1/1 changes only six marker pairs, four separating spaces and
+the affected section anchor. Actual shared-parser affected PASS bound before
+official isolated adapt-finalize/retention, both exit0. SOURCE2561/1 reused;
+no SOURCE/finalize/vectorize replay or scientific/numeric correction.
+
+One native render and check pass4 desktop1440x960/mobile390x844 surfaces.
+Fresh independent DISPLAY PASS is bound; 4 images, parent opens0.
+No overflow, formula errors, blank media or key metadata. Evidence is headless
+offline only, not live product acceptance or formal handoff. Complete courses7;
+parent19/24, new image services0, actual billed costs/model tokens UNKNOWN.
+
+n99 required259+260 source files byte-bound to retained approvals; no cohort
+prepared. n100 graph229 source PASS bytes present but no modern graph approval.
+n98/257 and inherited n91/n95/n161-n163 holds remain. Only n97/source256 and
+its evidence/index rows may be staged next; unrelated recovered work preserved.
+No DB, publication, deployment, merge, closure or full-project check replay.
+
+## 180-4 b95 n97 FIRST REVISE bound; sole marker repair awaits affected review
+
+2026-11-19. FIRST independent TEXT REVISE bound122: four definitions lose all
+six nested italics and expose12 literal underscores in the actual shared parser.
+Original author/review snapshots and real failed verify receipt stay frozen.
+One modern repair1/1 replaces six underscore pairs with supported stars and
+adds four separating spaces; the sole section after anchor follows actual flow.
+Wording, punctuation, formulas, quantities, source/raw snapshots and other
+metadata unchanged. Repair author manifest0800d873eca02ad8ff45c6f7927dd5b86aebedf0a131e4f93f475e6d4f433127
+bound14. Fresh Darwin affected-only independent TEXT active, images0.
+No official finalize, retention, DISPLAY or course-count increment.
+
+n99 source259+260 byte bindings PASS,9 entries, no cohort prepared. n100
+graph229 SOURCE-approved PNG/SVG bytes present, modern graph approval absent.
+n98/257 and prior holds unchanged. Complete courses6; parent19/24; no new
+parent images or image-service calls. Tokens/costs UNKNOWN, failed receipts
+and recovered work preserved; no DB/publish/deploy/merge/closure/handoff.
+
+## 180-4 b95 n97 author bound; independent TEXT active
+
+2026-11-19. n97 approved source256 reused byte-identically, all blocks closed,
+no source review/finalize/vectorize replay. Isolated prepare/assemble/adapt-prepare
+exit0:10 prose objects,0 written exercises,0 figures. Source no-task applicability
+is explicit, not manufactured answer/choice conversion.
+
+Modern candidate changes only six nested italic markers in four definitions
+plus one actual proseFlow section boundary. Entire raw/source snapshots,
+wording, punctuation, formulas and0/80/1539 Celsius/approx1500 are unchanged.
+Author manifest0f6850986c6d7604fe8a41fdbed4f61ef25504756aaca7628c331c1d590de1b4
+actually bound17. Fresh Heisenberg independent TEXT/parser-semantics review
+active; no official finalize, retention, DISPLAY or complete-course claim yet.
+Canonical raw/modern n97 directories are absent, so no recovered n97 edits
+will be overwritten. n98 and blocked257 remain excluded.
+
+b94 is already pushed/remote-verified at
+172a3d3dabef8892496fb7bb8b6d98ecb72714de. Complete courses6, parent19/24,
+new parent images/paid calls0. n99 read-only readiness lookup finds source259
+open prose needing260; no n99 cohort or source approval assumed. UNKNOWN
+costs/tokens, all failed receipts, inherited holds and unrelated work preserved.
+
+## 180-4 b94 committed and pushed; next n97
+
+2026-11-19. Completed n92/n93/n94 batch selectively committed as
+172a3d3dabef8892496fb7bb8b6d98ecb72714de (117 files), fast-forward push exit0
+to HEAD:refs/heads/codex/STEMROBIN-180-textbooks. Actual remote head verified
+identical. No force, main write, merge, publication, deploy or closure.
+Staged code exactly matched the isolated29-test proof. Only selected raw and
+modern book rows added:32 raw lessons/104 pages,24 modern lessons. Index empty.
+Unrelated recovered working edits remain intact.
+
+Complete courses6, parent images19/24, no new parent images or paid calls.
+Independent DISPLAY images7/8/8; all18 native surfaces and all three independent
+reviews passed/bound. Full-project checks still deferred to formal handoff.
+
+Continue authorized production with phy7-c1-s2-n97 from approved page256:
+source JSON ee534ac026a086222d0c0f5d7c4ca90ce4991a5abd5ee2f88d2b4244cc15eba0.
+Source-only approval and exhausted1/1 repair reused; no new SOURCE/finalize.
+All source prose closes on256, no incoming continuation or outgoing open block.
+n98 still requires blocked257 and is excluded. Next cohort not yet prepared.
+Prior holds, failed receipts, UNKNOWN tokens/costs and recovered work preserved.
+
 ## 180-4 b94 complete offline; selective commit pending
 
 2026-11-19. n92/n93/n94 TEXT-FIG-ANSWER-CHOICE-DISPLAY all complete offline.
