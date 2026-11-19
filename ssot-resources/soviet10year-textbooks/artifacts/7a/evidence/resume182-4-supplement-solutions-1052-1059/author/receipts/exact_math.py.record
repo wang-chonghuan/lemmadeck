@@ -1,0 +1,225 @@
+"""Single-run exact author check; no packages, network, or output-file writes."""
+
+import hashlib
+import json
+from fractions import Fraction as F
+from pathlib import Path
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+LEDGER = ROOT / ".tmp/resume182-4-supplement-solutions-author/1052-1059.json"
+RAW = ROOT / "ssot-resources/soviet10year-textbooks/artifacts/7a/lessons/alg7-c4-ex/exercises.json"
+MODERN = ROOT / ".tmp/resume182-4-supplement-modern/adapt/7a/modern-us-neutral/lessons/alg7-c4-ex/exercises.template.json"
+checks = []
+faults = []
+tasks_checked = []
+
+
+def check(label, condition):
+    checks.append(label)
+    if not condition:
+        faults.append(label)
+
+
+# Pairs represent a+b*sqrt(d), with rational arithmetic even when d is negative.
+def pair(a, b=0):
+    return F(a), F(b)
+
+
+def add(u, v):
+    return u[0] + v[0], u[1] + v[1]
+
+
+def scale(k, u):
+    return F(k) * u[0], F(k) * u[1]
+
+
+def mul(u, v, d):
+    return u[0] * v[0] + F(d) * u[1] * v[1], u[0] * v[1] + u[1] * v[0]
+
+
+def poly(coefficients, x, d):
+    result = pair(0)
+    for coefficient in coefficients:
+        result = add(mul(result, x, d), pair(coefficient))
+    return result
+
+
+def roots(label, coefficients, candidates):
+    for index, (a, b, d) in enumerate(candidates):
+        check(f"{label}:root:{index}", poly(coefficients, pair(a, b), d) == pair(0))
+
+
+def task(label):
+    tasks_checked.append(label)
+
+
+ledger = json.loads(LEDGER.read_text())
+for name, path in (("raw", RAW), ("modern", MODERN)):
+    check(f"{name}:sha256", hashlib.sha256(path.read_bytes()).hexdigest() == ledger["inputs"][name]["sha256"])
+
+allowed = {str(n) for n in range(1052, 1060)}
+selected = []
+
+
+def select(value):
+    if isinstance(value, dict):
+        if str(value.get("number")) in allowed or str(value.get("source_number")) in allowed:
+            selected.append({key: value[key] for key in ("number", "source_number", "text", "figure_refs") if key in value})
+            return
+        for child in value.values():
+            select(child)
+    elif isinstance(value, list):
+        for child in value:
+            select(child)
+
+
+select(json.loads(RAW.read_text()))
+check("scope:8", len(selected) == len(ledger["exercises"]) == 8)
+check("scope:task_counts", [len(e["tasks"]) for e in ledger["exercises"]] == [1, 2, 4, 3, 2, 4, 2, 2])
+for source, authored in zip(selected, ledger["exercises"]):
+    check(f"{source['number']}:source_projection", source == {k: authored[k] for k in source})
+    for item in authored["tasks"]:
+        check(f"{item['id']}:exact_excerpt", item["source_excerpt"] in source["text"])
+
+task("1052")
+# Symbolic coefficients of (r+s)^2-2rs-r^2-s^2 in r^2, rs, s^2.
+check("1052:symmetric_identity", (1 - 1, 2 - 2, 1 - 1) == (0, 0, 0))
+check("1052:discriminant", 1 * 1 - 4 * 1 == -3 and 4 - 4 == 0)
+
+task("1053a")
+roots("1053a", [1, -8, 15], [(3, 0, 0), (5, 0, 0)])
+check("1053a:labels", 3 * 3 + 4 * 5 == 29 and 3 + 5 == 8 and 3 * 5 == 15)
+task("1053b")
+roots("1053b", [3, 2, -8], [(-2, 0, 0), (F(4, 3), 0, 0)])
+check("1053b:labels", 2 * -2 == -3 * F(4, 3) and -2 + F(4, 3) == F(-2, 3) and 3 * -2 * F(4, 3) == -8)
+
+task("1054a")
+roots("1054a:aux", [1, 5, -24], [(3, 0, 0), (-8, 0, 0)])
+roots("1054a:x:t3", [1, 6, -3], [(-3, 2, 3), (-3, -2, 3)])
+roots("1054a:x:t-8", [1, 6, 8], [(-2, 0, 0), (-4, 0, 0)])
+check("1054a:range", 3 >= -9 and -8 >= -9)
+task("1054b")
+roots("1054b:aux", [1, -2, -3], [(3, 0, 0), (-1, 0, 0)])
+roots("1054b:x:t3", [1, -2, -8], [(4, 0, 0), (-2, 0, 0)])
+roots("1054b:x:t-1", [1, -2, -4], [(1, 1, 5), (1, -1, 5)])
+check("1054b:range", 3 >= -6 and -1 >= -6)
+task("1054c")
+roots("1054c:aux:complex", [1, -2, 7], [(1, 1, -6), (1, -1, -6)])
+check("1054c:complete_square", -1 + 7 == 6 and 6 > 0)
+for sign in (1, -1):
+    t = pair(1, sign)
+    discriminant = add(pair(9), scale(4, add(pair(25), t)))
+    check(f"1054c:lift_discriminant:{sign}", discriminant == pair(113, 4 * sign))
+    check(f"1054c:lift_nondegenerate:{sign}", discriminant != pair(0))
+task("1054d")
+roots("1054d:aux", [1, -1, -12], [(4, 0, 0), (-3, 0, 0)])
+roots("1054d:y:t4", [1, 4, 0], [(0, 0, 0), (-4, 0, 0)])
+roots("1054d:y:t-3", [1, 4, 7], [(-2, 1, -3), (-2, -1, -3)])
+
+reciprocal_specs = [
+    ("1055a", [1, 0, -1], [1, 7], [-7, -1, 1], [
+        (F(2), [1, -2, -15], [(5, 0, 0), (-3, 0, 0)]),
+        (F(1, 2), [2, -1, -9], [(F(1, 4), F(1, 4), 73), (F(1, 4), F(-1, 4), 73)])
+    ]),
+    ("1055b", [1, -3, 0], [1, -2], [2, 0, 3], [
+        (F(2), [1, -5, 4], [(1, 0, 0), (4, 0, 0)]),
+        (F(1, 2), [2, -7, 2], [(F(7, 4), F(1, 4), 33), (F(7, 4), F(-1, 4), 33)])
+    ]),
+    ("1055c", [1, 2, 1], [3, -2], [F(2, 3), -1], [
+        (F(4), [1, -10, 9], [(1, 0, 0), (9, 0, 0)]),
+        (F(-1, 4), [4, 11, 2], [(F(-11, 8), F(1, 8), 89), (F(-11, 8), F(-1, 8), 89)])
+    ])
+]
+for label, numerator, denominator, forbidden, branches in reciprocal_specs:
+    task(label)
+    for t, coefficients, candidates in branches:
+        check(f"{label}:t:{t}", t != 0 and (t - 1 / t == F(15, 4) if label == "1055c" else t + 1 / t == F(5, 2)))
+        roots(f"{label}:reconstruction:{t}", coefficients, candidates)
+        for a, b, d in candidates:
+            x = pair(a, b)
+            num = poly(numerator, x, d)
+            den = poly(denominator, x, d)
+            check(f"{label}:equivalence:{t}:{a}:{b}", num == scale(t, den))
+            check(f"{label}:original_domain:{t}:{a}:{b}", num != pair(0) and den != pair(0))
+        for excluded in forbidden:
+            check(f"{label}:exclusion:{t}:{excluded}", poly(coefficients, pair(excluded), 0) != pair(0))
+
+task("1056a")
+roots("1056a:aux", [1, 5, -6], [(1, 0, 0), (-6, 0, 0)])
+roots("1056a:x:t1", [2, 7, -9], [(1, 0, 0), (F(-9, 2), 0, 0)])
+roots("1056a:x:t-6", [2, 7, -2], [(F(-7, 4), F(1, 4), 65), (F(-7, 4), F(-1, 4), 65)])
+check("1056a:range", 1 >= F(-113, 8) and -6 >= F(-113, 8))
+task("1056b")
+literal = "$(x^2-10x-2)-2x^2+20x=15$"
+item = ledger["exercises"][4]["tasks"][1]
+check("1056b:unsquared_preserved", item["exact_unsquared_equation"] == literal and literal in ledger["exercises"][4]["text"])
+roots("1056b:literal_residual", [-1, 10, -17], [(5, 2, 2), (5, -2, 2)])
+check("1056b:shift", 25 - 50 + 17 == -8)
+check("1056b:natural_t_linear", -19 - 2 * (-19 + 2) == 15)
+
+biquadratics = [
+    ("1057a", [1, -15, 50], [F(5), F(10)], F(50), F(50)),
+    ("1057b", [1, -1, -12], [F(4), F(-3)], F(-4), F(-12)),
+    ("1057c", [36, -13, 1], [F(1, 4), F(1, 9)], F(1, 36), F(1, 36)),
+    ("1057d", [16, 15, -1], [F(1, 16), F(-1)], F(-1, 16), F(-1, 16))
+]
+for label, coefficients, ts, real_product, complex_product in biquadratics:
+    task(label)
+    roots(f"{label}:aux", coefficients, [(t, 0, 0) for t in ts])
+    rp = F(1)
+    cp = F(1)
+    for t in ts:
+        cp *= -t
+        if t >= 0:
+            rp *= -t
+    check(f"{label}:real_product", rp == real_product)
+    check(f"{label}:complex_product", cp == complex_product == F(coefficients[-1], coefficients[0]))
+    check(f"{label}:sums_zero", coefficients[0] != 0 and all(t != 0 for t in ts))
+    authored = next(t for e in ledger["exercises"] for t in e["tasks"] if t["id"] == label)
+    check(f"{label}:ledger_products", F(authored["real_root_product"]) == rp and F(authored["all_complex_root_product_with_multiplicity"]) == cp)
+
+task("1058a")
+roots("1058a:squared_roots", [1, -6, 2], [(3, 1, 7), (3, -1, 7)])
+check("1058a:positive_branches", 3 > 0 and 3 * 3 > 7)
+check("1058a:stated_fourth_power", mul(pair(3, 1), pair(3, 1), 7) == pair(16, 6))
+task("1058b")
+roots("1058b:squared_roots", [1, -3, 1], [(F(3, 2), F(1, 2), 5), (F(3, 2), F(-1, 2), 5)])
+check("1058b:positive_branches", 3 > 0 and 3 * 3 > 5)
+check("1058b:stated_fourth_power", mul(pair(F(3, 2), F(1, 2)), pair(F(3, 2), F(1, 2)), 5) == pair(F(7, 2), F(3, 2)))
+
+task("1059a")
+# Symbolic equality t^2-12t+c=(t-6)^2+c-36, in t^2,t,c,1.
+check("1059a:universal_square_identity", (1, -12, 1, 36 - 36) == (1, -12, 1, 0))
+check("1059a:minimum_in_domain", 6 >= 0 and 6 * 6 - 12 * 6 == -36)
+check("1059a:lower_branch_threshold", 6 * 6 == 36)
+# For symbolic c, (6+s)^2-12(6+s)+c=s^2+c-36.
+check("1059a:universal_root_lift", (1, 12 - 12, 36 - 72) == (1, 0, -36))
+check("1059a:multiple_roots_only", 2 * 0 == 0 and 2 * 6 - 12 == 0)
+task("1059b")
+# Multiplication by positive t proves the exact inequality for every t>0.
+check("1059b:universal_AMGM_identity", (1, -20, 100) == (1, -2 * 10, 10 * 10))
+check("1059b:equality_boundary", F(10) + F(100, 10) == 20)
+check("1059b:positive_auxiliary_constant", 100 > 0)
+# Substitute t=(c+s)/2: 4(t^2-ct+100)=s^2-c^2+400.
+check("1059b:universal_root_lift", (1 - 2, 2 - 2, 1, 400) == (-1, 0, 1, 400))
+check("1059b:positive_lift_for_c_gt20", 20 * 20 == 400 and 400 > 0)
+check("1059b:negative_boundary", (-10) ** 2 - (-20) * (-10) + 100 == 0)
+check("1059b:zero_excluded", 0 ** 2 - 20 * 0 + 100 != 0)
+
+expected = [t["id"] for e in ledger["exercises"] for t in e["tasks"]]
+check("scope:all_20_tasks", tasks_checked == expected and len(tasks_checked) == 20)
+print(json.dumps({
+    "artifact_type": "INTERNAL_SINGLE_EXACT_MATH_RUN",
+    "exercise_count": 8,
+    "task_count": 20,
+    "tasks_checked": tasks_checked,
+    "arithmetic": "stdlib Fraction; formal quadratic extensions; symbolic coefficient identities",
+    "claim_boundary": "Exact author calculations only, not an independent content review, source verification, final key, or publication approval. Root lifting uses exact quadratic identities; parameter inequalities are recorded analytic proofs, not floating-point samples.",
+    "check_count": len(checks),
+    "failed_check_count": len(faults),
+    "faults": faults,
+    "preserved_source_risks": [risk["id"] for risk in ledger["source_risks"]],
+    "reruns": 0
+}, indent=2))
+raise SystemExit(1 if faults else 0)

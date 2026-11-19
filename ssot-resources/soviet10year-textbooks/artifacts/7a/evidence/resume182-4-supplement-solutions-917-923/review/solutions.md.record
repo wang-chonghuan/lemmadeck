@@ -1,0 +1,176 @@
+# INTERNAL BLIND FIRST: STEMROBIN-182 / chat182-4
+
+Independent offline source pass, 2026-11-19. Scope: alg7-c4-ex917-923,
+seven exercises and 26 tasks, distributed (1,1,1,4,3,4,12).
+No author disclosure, external answer consultation, or comparison has occurred.
+This document is the prose counterpart of solutions.json, not a second pass.
+No diagram media is created; the descriptions below fully specify the regions.
+
+## Input binding
+
+- Raw source SHA-256:
+  `4f068c310fc527d6bc8189dec87a645251dae4dfcfbee57a00880635badc26a0`.
+  Filtered to 917-923 before displaying only number, source_number, text,
+  and figure_refs. All seven exercises have empty figure_refs.
+- Modern template SHA-256, obtained by hashing bytes only:
+  `d93723680e47259218d6038cfab7f9e6d852244b4e97bf3cb7c07a6fb09ce4e5`.
+  Its JSON and source.data were not parsed, displayed, or consulted.
+
+## 917: Triangle Euler diagram (one task)
+
+Let A be equilateral triangles, B isosceles triangles, and C all
+nondegenerate Euclidean triangles.
+
+Inclusive definition, "at least two equal sides": draw the A region wholly
+inside B and B wholly inside C, leaving both surrounding differences nonempty.
+Thus A is a proper subset of B, B is a proper subset of C, and
+A intersect B = A. Every equilateral triangle has at least two equal sides.
+Side lengths (3,3,3) witness A; (5,5,6) witness B minus A; (3,4,5) witness
+C minus B. Each example satisfies the strict triangle inequalities.
+
+Strict definition, "exactly two equal sides": draw disjoint A and B regions
+inside C, leaving the scalene region outside both. Then A intersect B is
+empty, and A union B is a proper subset of C. The same three witnesses occupy
+A, B, and the exterior of both, respectively.
+
+No shading is requested. The raw source does not settle which definition
+is intended, so both diagrams are retained as conditional solutions.
+
+## 918: Rectangles, Rhombi, and Shading (one task)
+
+Draw overlapping regions C (rectangles) and D (rhombi) in a quadrilateral
+universe. Neither contains the other. Hatch exactly the entire overlap,
+C intersect D, representing all squares. Do not hatch either exclusive
+region or the exterior.
+
+A square has both four right angles and four equal sides. Conversely, a
+rectangle that is also a rhombus has both properties and is a square, so the
+intersection is exactly the square set. A 3-by-2 rectangle witnesses C minus D.
+A rhombus spanned by (5,0) and (3,4) witnesses D minus C: both adjacent
+lengths are 5, but their dot product is 15, not zero. A side-2 square witnesses
+the intersection. Diagram construction and its requested shading together
+count as this one task.
+
+## 919: Five Quadrilateral Sets (one task)
+
+Draw A (convex quadrilaterals) as the outer region, with B (parallelograms)
+wholly inside. Place overlapping C (rectangles) and D (rhombi) wholly inside B.
+Label their entire overlap F (squares); F is not an independent extra region.
+No shading is requested.
+
+The relations are B proper-subset A, C proper-subset B, D proper-subset B,
+and F = C intersect D, with F a proper subset of both C and D.
+All five regions below must remain nonempty:
+
+| Region | Vertices in cyclic order |
+| --- | --- |
+| F | (0,0),(2,0),(2,2),(0,2) |
+| C minus D | (0,0),(3,0),(3,2),(0,2) |
+| D minus C | (0,0),(5,0),(8,4),(3,4) |
+| B minus (C union D) | (0,0),(4,0),(5,2),(1,2) |
+| A minus B | (0,0),(4,0),(3,2),(0,2) |
+
+Rectangles and rhombi are parallelograms; parallelograms are convex.
+The right-angle and equal-side conditions together define squares.
+These witnesses also refute C subset D, D subset C, B = C union D, and A = B.
+
+## 920: Relative Complements (four tasks)
+
+For each task, remove the named subset only from its stated ambient set.
+
+| Task | Complement | Included witness | Excluded witness |
+| --- | --- | --- | --- |
+| a | Rectangles that are not squares | 3-by-2 rectangle | side-2 square |
+| b | All non-equilateral triangles | (5,5,6) and (3,4,5) | (3,3,3) |
+| c | Rhombi that are not squares | rhombus spanned by (5,0),(3,4) | side-2 square |
+| d | {3k+1:k in Z} union {3k+2:k in Z} | 1,2,-1,-2 | 0,3,-3 |
+
+For a, a rectangle is non-square exactly when its adjacent side lengths differ.
+For b, a non-equilateral triangle has exactly two equal side lengths or all
+distinct side lengths. In particular, the complement is not just scalene
+triangles, regardless of the naming convention in 917.
+For c, the remaining rhombi have non-right angles. A non-right rhombus is not
+in the ambient set of a; a non-square rectangle is not in the ambient set of c.
+For d, the division algorithm n = 3q+r with r in {0,1,2} removes exactly r=0.
+Negative integers are included: -1=3(-1)+2 and -2=3(-1)+1. Zero is removed.
+
+## 921: Closure of {-1,0,1} (three tasks)
+
+Closure quantifies over every ordered pair in the set.
+
+| Task | Operation | Verdict | Complete reason |
+| --- | --- | --- | --- |
+| a | Addition | False | 1+1=2 is outside the set. |
+| b | Multiplication | True | A zero factor gives zero; otherwise both factors are signs and their product is 1 or -1. |
+| c | Subtraction | False | 1-(-1)=2 is outside the set. |
+
+The multiplication table, with both operand orders (-1,0,1), is:
+
+| x times y | -1 | 0 | 1 |
+| --- | --- | --- | --- |
+| -1 | 1 | 0 | -1 |
+| 0 | 0 | 0 | 0 |
+| 1 | -1 | 0 | 1 |
+
+The case proof and this exhaustive table cover all nine ordered pairs.
+
+## 922: Closure of Integers (four tasks)
+
+| Task | Operation | Verdict | Reason |
+| --- | --- | --- | --- |
+| a | Addition | Closed | For all m,n in Z, m+n is an integer. |
+| b | Subtraction | Closed | -n is an integer, so m-n=m+(-n) is an integer. |
+| c | Multiplication | Closed | The product of integer magnitudes is integral, and either product sign preserves integrality. |
+| d | Division | Not closed | 1/2 is not an integer, with both operands integral and divisor nonzero. |
+
+The source does not explicitly exclude zero in d. If the definition in 921
+is applied literally to every pair, (1,0) separately obstructs a total
+division operation: 1/0 is undefined, not a defined result outside Z.
+If nonzero divisors are implicitly intended, 1/2 still refutes closure.
+Neither issue authorizes replacing ordinary division with rounded integer
+division or a quotient-and-remainder operation.
+
+## 923: Three Sets Times Four Operations (12 tasks)
+
+Let E={2m:m in Z}, O={2m+1:m in Z}, and Q be the rational numbers.
+E includes zero and negative even integers; O includes negative odd integers
+but not zero. The source explicitly permits only nonzero divisors.
+
+| Task | Set | Operation | Verdict | Proof or counterexample |
+| --- | --- | --- | --- | --- |
+| a.add | E | Addition | Closed | 2m+2n=2(m+n). |
+| a.subtract | E | Subtraction | Closed | 2m-2n=2(m-n). |
+| a.multiply | E | Multiplication | Closed | (2m)(2n)=2(2mn). |
+| a.divide | E | Division | Not closed | 2/4=1/2 is not even; alternatively 2/2=1 is not even. |
+| b.add | O | Addition | Not closed | 1+1=2 is even; generally the sum is 2(m+n+1). |
+| b.subtract | O | Subtraction | Not closed | 1-1=0 is even; generally the difference is 2(m-n). |
+| b.multiply | O | Multiplication | Closed | (2m+1)(2n+1)=2(2mn+m+n)+1. |
+| b.divide | O | Division | Not closed | 1/3 is not an odd integer; its divisor is a nonzero odd integer. |
+| c.add | Q | Addition | Closed | (a/b)+(c/d)=(ad+bc)/(bd). |
+| c.subtract | Q | Subtraction | Closed | (a/b)-(c/d)=(ad-bc)/(bd). |
+| c.multiply | Q | Multiplication | Closed | (a/b)(c/d)=ac/(bd). |
+| c.divide | Q | Division | Closed on nonzero divisors | (a/b)/(c/d)=ad/(bc), with c nonzero. |
+
+The even and odd closure formulas hold for arbitrary integer m,n, so they
+are universal proofs, not conclusions inferred from finite samples.
+Every nonclosure counterexample uses two operands from the required set.
+Both displayed division counterexamples have nonzero divisors.
+
+For the rational proofs, a,b,c,d are integers and b,d are nonzero.
+Thus ad+bc, ad-bc, ac, and ad are integers, and bd is nonzero.
+For division the required nonzero rational divisor c/d implies c is nonzero,
+so bc is also nonzero. Every result is therefore a ratio of integers with
+a nonzero denominator. The proof includes zero numerators and negative
+operands. Rejecting rational division due to a zero divisor would contradict
+the explicit restriction in this exercise.
+
+## Evidence Boundary
+
+One bounded finite-set/exact-math execution is permitted after these solutions
+are recorded. Its script and actual receipt are separate files in this folder.
+The execution can exhaustively check finite 921, check concrete geometry and
+counterexamples, and check exact rational identities on a bounded domain.
+Finite samples are not a replacement for the universal proofs above.
+Any execution failure must remain in the receipt; no successful check is rerun.
+Actual receipt status, artifact hashes, usage, and unknown telemetry are reported
+in FIRST.json after that execution. No later comparison is authorized here.

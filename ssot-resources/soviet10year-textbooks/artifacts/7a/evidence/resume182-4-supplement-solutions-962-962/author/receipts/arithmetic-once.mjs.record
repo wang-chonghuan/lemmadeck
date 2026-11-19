@@ -1,0 +1,56 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), repo);
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const ledgerPath = '.tmp/resume182-4-supplement-solutions-author/0962-0962.json';
+const bytes = fs.readFileSync(ledgerPath);
+const ledger = JSON.parse(bytes);
+const checks = [];
+function check(id, actual, expected) {
+  assert.ok(actual === expected, id);
+  checks.push({ id, actual, expected, pass: true });
+}
+for (const input of [ledger.source, ledger.modern_identity_only]) {
+  check(`${input.path}:sha256`, sha(fs.readFileSync(input.path)), input.sha256);
+}
+check('exercise-count', ledger.exercises.length, 1);
+check('task-count', ledger.exercises[0].tasks.length, 4);
+const xValues = [-2, -1, 0, 1, 2];
+const expected = [
+  [-1, -1, null, 1, 1],
+  [2, 2, null, -2, -2],
+  [-4, -1, 0, 1, 4],
+  [4, 1, 0, -1, -4],
+];
+for (let task = 0; task < 4; task++) {
+  for (let i = 0; i < xValues.length; i++) {
+    const x = xValues[i];
+    const principal = Math.sqrt(x * x);
+    const y = task === 0 ? (x === 0 ? null : principal / x)
+      : task === 1 ? (x === 0 ? null : -2 * principal / x)
+      : task === 2 ? x * principal : -x * principal;
+    check(`962${'abcd'[task]}:x=${x}`, y, expected[task][i]);
+  }
+}
+const receipt = {
+  artifact_kind: 'single-exact-piecewise-boundary-witness-run',
+  date: '2026-11-19',
+  cwd: repo,
+  ledger_sha256: sha(bytes),
+  runs: 1,
+  retries: 0,
+  status: 'PASS',
+  checks,
+  source_text_redisplayed: false,
+  source_data_accessed: false,
+  limit: 'Fixed exact-integer graph witnesses support, but do not replace, the exhaustive absolute-value identity and domain proof.',
+  graphical_rendering_or_display_approved: false,
+};
+const output = Buffer.from(`${JSON.stringify(receipt, null, 2)}\n`);
+fs.writeFileSync('.tmp/resume182-4-supplement-solutions-author/0962-0962-author/arithmetic-receipt.json',
+  output, { flag: 'wx' });
+console.log(JSON.stringify({ ledger_sha256: receipt.ledger_sha256,
+  receipt_sha256: sha(output), checks: checks.length, status: 'PASS', runs: 1 }));

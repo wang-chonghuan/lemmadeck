@@ -1,0 +1,134 @@
+"""Single exact check of FIRST source-derived mathematics, not pixel fidelity."""
+
+import hashlib
+import json
+from fractions import Fraction as F
+from pathlib import Path
+
+
+def check(condition, label):
+    global checks
+    if not condition:
+        raise AssertionError(label)
+    checks += 1
+
+
+checks = 0
+path = Path(__file__).with_name("FIRSTsolutions.json")
+data = json.loads(path.read_text())
+by_number = {item["number"]: item for item in data["exercises"]}
+check(set(by_number) == {"938", "939", "942", "1051"}, "scope")
+
+for number, rising in (("938", True), ("939", False)):
+    item = by_number[number]
+    inventory = item["source_inventory"]
+    domain = inventory["domain"]
+    left, right = F(domain["left"]), F(domain["right"])
+    intersection = inventory["queried_intersections"]
+    check(len(intersection) == 1, number + ": one crossing")
+    crossing = F(intersection[0]["x"])
+    check(left < crossing < right, number + ": crossing inside domain")
+    check(
+        F(intersection[0]["y"]) == F(inventory["queried_horizontal_level"]),
+        number + ": queried ordinate",
+    )
+    solution = item["solutions"]
+    check(
+        list(map(F, solution["equal"]["points"])) == [crossing],
+        number + ": equality set",
+    )
+    low_side = solution["less" if rising else "greater"]
+    high_side = solution["greater" if rising else "less"]
+    check(
+        (F(low_side["left"]), F(low_side["right"])) == (left, crossing)
+        and low_side["left_closed"]
+        and not low_side["right_closed"],
+        number + ": left interval endpoints",
+    )
+    check(
+        (F(high_side["left"]), F(high_side["right"])) == (crossing, right)
+        and not high_side["left_closed"]
+        and high_side["right_closed"],
+        number + ": right interval endpoints",
+    )
+    check(
+        domain["left_closed"] and domain["right_closed"],
+        number + ": closed original domain",
+    )
+
+speed = by_number["942"]
+vertices = [tuple(map(F, vertex)) for vertex in speed["source_inventory"]["vertices_t_v"]]
+derived = {"increasing": [], "decreasing": [], "constant": []}
+for (t0, v0), (t1, v1) in zip(vertices, vertices[1:]):
+    check(t0 < t1, "942: strictly ordered time vertices")
+    check(v0 >= 0 and v1 >= 0, "942: nonnegative speeds")
+    interval = [str(t0), str(t1)]
+    if v1 > v0:
+        derived["increasing"].append(interval)
+    elif v1 < v0:
+        derived["decreasing"].append(interval)
+    else:
+        derived["constant"].append({"interval": interval, "speed": str(v0)})
+for category in derived:
+    check(derived[category] == speed["solutions"][category], "942: " + category)
+check(vertices[0][0] == 0 and vertices[-1][0] == 150, "942: exact domain")
+check(
+    sum(t1 - t0 for (t0, _), (t1, _) in zip(vertices, vertices[1:])) == 150,
+    "942: no time gaps",
+)
+check(len(vertices) == 14 and len(vertices) - 1 == 13, "942: vertex and segment counts")
+check(
+    [entry["interval"] for entry in derived["constant"] if F(entry["speed"]) == 0]
+    == speed["solutions"]["stationary_intervals"],
+    "942: both zero-speed stops",
+)
+
+table = by_number["1051"]
+given = table["source_inventory"]["given_cells"]
+solutions = table["solutions"]
+check(len(given) == len(solutions) == 6, "1051: actual six rows")
+actual_blanks = []
+row_reports = []
+for source, solution in zip(given, solutions):
+    row = source["row"]
+    check(row == solution["row"], "1051: row identity")
+    completed = {key: F(value) for key, value in solution["completed"].items()}
+    a, b, c, x1, x2 = [completed[key] for key in ("a", "b", "c", "x1", "x2")]
+    for key in ("a", "b", "c", "x1", "x2"):
+        if source[key] is None:
+            actual_blanks.append([row, key])
+        else:
+            check(completed[key] == F(source[key]), f"1051 row {row}: given {key}")
+    check(a != 0, f"1051 row {row}: a != 0")
+    check(x1 + x2 == -b / a, f"1051 row {row}: Vieta sum")
+    check(x1 * x2 == c / a, f"1051 row {row}: Vieta product")
+    check(a * x1 * x1 + b * x1 + c == 0, f"1051 row {row}: first root")
+    check(a * x2 * x2 + b * x2 + c == 0, f"1051 row {row}: second root")
+    blanks = {key for key in ("a", "b", "c", "x1", "x2") if source[key] is None}
+    check(set(solution["blank_answers"]) == blanks, f"1051 row {row}: exact blank coverage")
+    check(
+        all(F(value) == completed[key] for key, value in solution["blank_answers"].items()),
+        f"1051 row {row}: blank values",
+    )
+    row_reports.append({"row": row, "a_nonzero": True, "both_root_residuals": ["0", "0"]})
+
+check(actual_blanks == table["source_inventory"]["blank_cells"], "1051: source blank inventory")
+check(len(actual_blanks) == 12, "1051: actual blank count")
+check(6 + 3 + len(actual_blanks) == data["task_counts"]["requested_atomic_outputs"], "task count")
+check(table["method"]["underdetermined_rows"] == [], "1051: underdetermined rows")
+check(all(image["open_count"] == 1 for image in data["image_receipt"]["items"]), "one open per image")
+check(data["image_receipt"]["open_count"] == 4, "image open total")
+
+print(json.dumps({
+    "status": "PASS",
+    "exact_math_run": 1,
+    "checks": checks,
+    "input_sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+    "level_set_subparts_checked": 6,
+    "speed_interval_categories_checked": 3,
+    "speed_segments_checked": 13,
+    "table_rows_checked": 6,
+    "table_blank_cells_checked": len(actual_blanks),
+    "table_row_reports": row_reports,
+    "scope_limit": "Exact arithmetic and interval consistency against FIRST inventory; no independent pixel verification or author comparison.",
+}, indent=2))

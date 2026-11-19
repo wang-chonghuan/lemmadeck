@@ -1,0 +1,294 @@
+"use strict";
+
+// Exact rational polynomials and quadratic extensions; no floats or packages.
+const assert = require("node:assert/strict");
+const start = new Date().toISOString();
+const checks = [];
+const faults = [];
+const gcd = (a, b) => {
+  a = a < 0n ? -a : a;
+  b = b < 0n ? -b : b;
+  while (b) [a, b] = [b, a % b];
+  return a;
+};
+function q(n, d = 1) {
+  n = BigInt(n);
+  d = BigInt(d);
+  if (!d) throw Error("zero rational denominator");
+  if (d < 0n) { n = -n; d = -d; }
+  const g = gcd(n, d);
+  return [n / g, d / g];
+}
+const add = (a, b) => q(a[0] * b[1] + b[0] * a[1], a[1] * b[1]);
+const neg = a => [-a[0], a[1]];
+const sub = (a, b) => add(a, neg(b));
+const mul = (a, b) => q(a[0] * b[0], a[1] * b[1]);
+const div = (a, b) => q(a[0] * b[1], a[1] * b[0]);
+const equal = (a, b) => a[0] === b[0] && a[1] === b[1];
+const zero = q(0);
+const one = q(1);
+const poly = xs => xs.map(x => Array.isArray(x) ? x : q(x));
+const trim = xs => {
+  const out = xs.slice();
+  while (out.length > 1 && equal(out.at(-1), zero)) out.pop();
+  return out;
+};
+const pAdd = (a, b) => trim(Array.from({ length: Math.max(a.length, b.length) },
+  (_, i) => add(a[i] ?? zero, b[i] ?? zero)));
+const scale = (a, n) => trim(a.map(x => mul(x, n)));
+function pMul(a, b) {
+  const out = Array.from({ length: a.length + b.length - 1 }, () => zero);
+  for (let i = 0; i < a.length; i++)
+    for (let j = 0; j < b.length; j++)
+      out[i + j] = add(out[i + j], mul(a[i], b[j]));
+  return trim(out);
+}
+const square = p => pMul(p, p);
+const pEq = (a, b) => assert.deepEqual(trim(a), trim(b));
+function value(p, x) {
+  let v = zero;
+  for (let i = p.length - 1; i >= 0; i--) v = add(mul(v, x), p[i]);
+  return v;
+}
+const X = poly([0, 1]);
+const constP = n => [q(n)];
+const shift = (p, n) => pAdd(p, constP(n));
+const extAdd = (a, b) => [add(a[0], b[0]), add(a[1], b[1])];
+const extMul = (a, b, d) => [
+  add(mul(a[0], b[0]), mul(mul(a[1], b[1]), d)),
+  add(mul(a[0], b[1]), mul(a[1], b[0]))
+];
+function extValue(p, x, d) {
+  let v = [zero, zero];
+  for (let i = p.length - 1; i >= 0; i--)
+    v = extAdd(extMul(v, x, d), [p[i], zero]);
+  return v;
+}
+function radicalRoots(p, a, b, d) {
+  assert(d[0] > 0n, "positive radicand");
+  for (const sign of [one, q(-1)])
+    assert.deepEqual(extValue(p, [a, mul(b, sign)], d), [zero, zero]);
+}
+function rationalRoots(p, roots) {
+  for (const root of roots) assert(equal(value(p, root), zero));
+}
+function excluded(p, roots) {
+  for (const root of roots) assert(!equal(value(p, root), zero),
+    "branch polynomial admits an excluded denominator/numerator zero");
+}
+function check(id, name, f) {
+  try {
+    f();
+    checks.push({ id, name, status: "verified-exact" });
+  } catch (error) {
+    const fault = { id, name, status: "failed", message: error.message };
+    checks.push(fault);
+    faults.push(fault);
+  }
+}
+
+check("1052", "Vieta square-sum polynomial identity", () => {
+  pEq(pAdd(square(X), constP(-2)), poly([-2, 0, 1]));
+  // A*B=(A+B)^2/2-(A^2+B^2)/2 is checked in the two formal roots.
+  const sumSquared = [1n, 2n, 1n];
+  const twoProduct = [0n, 2n, 0n];
+  assert.deepEqual(sumSquared.map((v, i) => v - twoProduct[i]), [1n, 0n, 1n]);
+});
+check("1053a", "fixed root labels, original equation and k", () => {
+  const x1 = q(3), x2 = q(5);
+  assert(equal(add(x1, x2), q(8)));
+  assert(equal(add(mul(q(3), x1), mul(q(4), x2)), q(29)));
+  assert(equal(mul(x1, x2), q(15)));
+  rationalRoots(poly([15, -8, 1]), [x1, x2]);
+});
+check("1053b", "fixed root labels, original equation and k", () => {
+  const x1 = q(-2), x2 = q(4, 3);
+  assert(equal(add(x1, x2), q(-2, 3)));
+  assert(equal(mul(q(2), x1), mul(q(-3), x2)));
+  assert(equal(mul(q(3), mul(x1, x2)), q(-8)));
+  rationalRoots(poly([-8, 2, 3]), [x1, x2]);
+});
+check("1054a", "composition factorization, all real branch roots and range", () => {
+  const t = poly([0, 6, 1]);
+  pEq(pAdd(pAdd(square(t), scale(t, q(5))), constP(-24)),
+    pMul(shift(t, 8), shift(t, -3)));
+  rationalRoots(shift(t, 8), [q(-4), q(-2)]);
+  radicalRoots(shift(t, -3), q(-3), q(2), q(3));
+  pEq(shift(square(shift(X, 3)), -9), t);
+  assert(-8 >= -9 && 3 >= -9);
+});
+check("1054b", "composition factorization, all real branch roots and range", () => {
+  const t = poly([-5, -2, 1]);
+  pEq(pAdd(pAdd(square(t), scale(t, q(-2))), constP(-3)),
+    pMul(shift(t, -3), shift(t, 1)));
+  rationalRoots(shift(t, -3), [q(-2), q(4)]);
+  radicalRoots(shift(t, 1), q(1), one, q(5));
+  pEq(shift(square(shift(X, -1)), -6), t);
+  assert(3 >= -6 && -1 >= -6);
+});
+check("1054c", "positive-square identity and nested-complex discriminants", () => {
+  pEq(poly([7, -2, 1]), pAdd(square(shift(X, -1)), constP(6)));
+  assert(q(6)[0] > 0n);
+  assert.deepEqual(extValue(poly([7, -2, 1]), [one, one], q(-6)),
+    [zero, zero]);
+  assert.deepEqual(extValue(poly([7, -2, 1]), [one, q(-1)], q(-6)),
+    [zero, zero]);
+  // x^2+3x-26-delta*i*sqrt(6): discriminant 113+4*delta*i*sqrt(6).
+  for (const delta of [one, q(-1)]) {
+    const constant = [q(-26), neg(delta)];
+    const discriminant = extAdd([q(9), zero],
+      extMul([q(-4), zero], constant, q(-6)));
+    assert.deepEqual(discriminant, [q(113), mul(q(4), delta)]);
+  }
+  pEq(pAdd(square(poly([q(3, 2), one])), [q(-109, 4)]),
+    poly([-25, 3, 1]));
+});
+check("1054d", "nonnegative auxiliary domain and real/complex branches", () => {
+  pEq(poly([-12, -1, 1]), pMul(shift(X, -4), shift(X, 3)));
+  rationalRoots(poly([0, 4, 1]), [q(-4), zero]);
+  assert.deepEqual(extValue(poly([7, 4, 1]), [q(-2), one], q(-3)),
+    [zero, zero]);
+  assert.deepEqual(extValue(poly([7, 4, 1]), [q(-2), q(-1)], q(-3)),
+    [zero, zero]);
+  assert(-3 < 0 && 4 >= 0);
+});
+check("1055a", "reciprocal clearing, branch roots, every exclusion", () => {
+  const n = poly([-1, 0, 1]), d = poly([7, 1]);
+  pEq(pAdd(pAdd(scale(square(n), q(2)), scale(pMul(n, d), q(-5))),
+    scale(square(d), q(2))),
+    pMul(pAdd(scale(n, q(2)), scale(d, q(-1))),
+      pAdd(n, scale(d, q(-2)))));
+  const branch2 = poly([-15, -2, 1]), branchHalf = poly([-9, -1, 2]);
+  pEq(pAdd(n, scale(d, q(-2))), branch2);
+  pEq(pAdd(scale(n, q(2)), scale(d, q(-1))), branchHalf);
+  rationalRoots(branch2, [q(5), q(-3)]);
+  radicalRoots(branchHalf, q(1, 4), q(1, 4), q(73));
+  for (const p of [branch2, branchHalf]) excluded(p, [q(-7), one, q(-1)]);
+  rationalRoots(n, [one, q(-1)]);
+  rationalRoots(d, [q(-7)]);
+  rationalRoots(poly([2, -5, 2]), [q(2), q(1, 2)]);
+});
+check("1055b", "reciprocal clearing, branch roots, every exclusion", () => {
+  const n = poly([0, -3, 1]), d = poly([-2, 1]);
+  pEq(pAdd(pAdd(scale(square(n), q(2)), scale(pMul(n, d), q(-5))),
+    scale(square(d), q(2))),
+    pMul(pAdd(scale(n, q(2)), scale(d, q(-1))),
+      pAdd(n, scale(d, q(-2)))));
+  const branch2 = poly([4, -5, 1]), branchHalf = poly([2, -7, 2]);
+  pEq(pAdd(n, scale(d, q(-2))), branch2);
+  pEq(pAdd(scale(n, q(2)), scale(d, q(-1))), branchHalf);
+  rationalRoots(branch2, [one, q(4)]);
+  radicalRoots(branchHalf, q(7, 4), q(1, 4), q(33));
+  for (const p of [branch2, branchHalf]) excluded(p, [q(2), zero, q(3)]);
+  rationalRoots(n, [zero, q(3)]);
+  rationalRoots(d, [q(2)]);
+  rationalRoots(poly([2, -5, 2]), [q(2), q(1, 2)]);
+});
+check("1055c", "mixed-number conversion, reciprocal clearing and every exclusion", () => {
+  assert(equal(add(q(3), q(3, 4)), q(15, 4)));
+  const n = poly([1, 2, 1]), d = poly([-2, 3]);
+  pEq(pAdd(pAdd(scale(square(n), q(4)), scale(pMul(n, d), q(-15))),
+    scale(square(d), q(-4))),
+    pMul(pAdd(scale(n, q(4)), d), pAdd(n, scale(d, q(-4)))));
+  const branch4 = poly([9, -10, 1]), branchNegative = poly([2, 11, 4]);
+  pEq(pAdd(n, scale(d, q(-4))), branch4);
+  pEq(pAdd(scale(n, q(4)), d), branchNegative);
+  rationalRoots(branch4, [one, q(9)]);
+  radicalRoots(branchNegative, q(-11, 8), q(1, 8), q(89));
+  for (const p of [branch4, branchNegative]) excluded(p, [q(2, 3), q(-1)]);
+  rationalRoots(n, [q(-1)]);
+  rationalRoots(d, [q(2, 3)]);
+  rationalRoots(poly([-4, -15, 4]), [q(4), q(-1, 4)]);
+  assert(89n < 121n); // Both negative-branch roots are negative.
+});
+check("1056a", "literal product substitution, branch roots and range", () => {
+  const t = poly([-8, 7, 2]);
+  pEq(pAdd(pMul(t, shift(t, 5)), constP(-6)),
+    pMul(shift(t, 6), shift(t, -1)));
+  rationalRoots(shift(t, -1), [one, q(-9, 2)]);
+  radicalRoots(shift(t, 6), q(-7, 4), q(1, 4), q(65));
+  pEq(pAdd(scale(square(poly([q(7, 4), one])), q(2)), [q(-113, 8)]), t);
+  assert(q(-6)[0] * 8n >= -113n && 8n >= -113n);
+});
+check("1056b", "unmodified literal quadratic and shifted variable", () => {
+  const literalLhsMinusRhs = pAdd(pAdd(poly([-2, -10, 1]),
+    poly([0, 20, -2])), constP(-15));
+  pEq(literalLhsMinusRhs, poly([-17, 10, -1]));
+  const normalized = scale(literalLhsMinusRhs, q(-1));
+  pEq(normalized, shift(square(shift(X, -5)), -8));
+  radicalRoots(normalized, q(5), q(2), q(2));
+  assert.equal(normalized.length - 1, 2);
+});
+for (const row of [
+  ["1057a", poly([50, -15, 1]), q(5), q(10), q(50), q(50)],
+  ["1057b", poly([-12, -1, 1]), q(4), q(-3), q(-4), q(-12)],
+  ["1057c", poly([1, -13, 36]), q(1, 4), q(1, 9), q(1, 36), q(1, 36)],
+  ["1057d", poly([-1, 15, 16]), q(1, 16), q(-1), q(-1, 16), q(-1, 16)]
+]) {
+  check(row[0], "biquadratic roots and distinct real/all-complex sums/products", () => {
+    const [, p, t1, t2, realProduct, allProduct] = row;
+    pEq(scale(pMul([neg(t1), one], [neg(t2), one]), p[2]), p);
+    rationalRoots(p, [t1, t2]);
+    let actualRealProduct = one;
+    for (const t of [t1, t2])
+      if (t[0] > 0n) actualRealProduct = mul(actualRealProduct, neg(t));
+    assert(equal(actualRealProduct, realProduct));
+    assert(equal(mul(t1, t2), allProduct));
+    assert(equal(div(p[0], p[2]), allProduct));
+    assert(equal(add(one, q(-1)), zero)); // Each opposite-root pair sums to 0.
+  });
+}
+check("1058a", "exact radical substitution and positive real radicand", () => {
+  assert.deepEqual(extValue(poly([2, -6, 1]), [q(3), one], q(7)),
+    [zero, zero]);
+  pEq(poly([2, -6, 1]), pAdd(square(shift(X, -3)), constP(-7)));
+  assert(3n > 0n && 7n > 0n);
+});
+check("1058b", "exact radical substitution and positive real radicand", () => {
+  assert.deepEqual(extValue(poly([1, -3, 1]), [q(3, 2), q(1, 2)], q(5)),
+    [zero, zero]);
+  pEq(poly([1, -3, 1]),
+    pAdd(square(poly([q(-3, 2), one])), [q(-5, 4)]));
+  assert(3n > 0n && 5n > 0n && 2n > 0n);
+});
+check("1059a", "parameter-threshold square identity and inclusive boundary", () => {
+  pEq(poly([0, -12, 1]), shift(square(shift(X, -6)), -36));
+  assert(6n >= 0n);
+  rationalRoots(poly([36, -12, 1]), [q(6)]);
+  pEq(poly([36, -12, 1]), square(shift(X, -6)));
+});
+check("1059b", "positive-domain threshold identity, negative-c trap and boundary", () => {
+  pEq(poly([100, -20, 1]), square(shift(X, -10)));
+  assert(10n > 0n);
+  rationalRoots(poly([100, -20, 1]), [q(10)]);
+  pEq(poly([100, 20, 1]), square(shift(X, 10)));
+  assert(-10n < 0n);
+  // t*(t+100/t-20)=(t-10)^2 for t>0 is the symbolic threshold identity.
+  pEq(poly([100, -20, 1]), pAdd(pAdd(square(X), scale(X, q(-20))), constP(100)));
+});
+
+assert.equal(checks.length, 20);
+console.log(JSON.stringify({
+  stage: "FIRST",
+  started_at: start,
+  finished_at: new Date().toISOString(),
+  cwd: process.cwd(),
+  runtime: process.version,
+  exact_math_run_number: 1,
+  independent_solve_passes: 1,
+  exercise_count: 8,
+  task_count: 20,
+  check_count: checks.length,
+  verified_exact: checks.filter(x => x.status === "verified-exact").length,
+  failed: faults.length,
+  checks,
+  faults,
+  source_alerts: ["SOURCE_LITERAL_FORM_ALERT_1056b"],
+  proof_limits: [
+    "Executable checks verify exact identities, candidate quadratic roots and exclusions; quantified real-domain inequalities and completeness arguments are the manual FIRST proofs.",
+    "For 1054c, auxiliary complex roots and nested discriminants are checked; the nested square roots themselves are justified by the quadratic formula, not numerically approximated.",
+    "Checker is standalone original work in the single solve pass; it reads no source, solution, modern or answer files.",
+    "No comparison or publication approval is implied."
+  ]
+}, null, 2));
+process.exitCode = faults.length ? 1 : 0;

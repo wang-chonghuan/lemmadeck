@@ -1,0 +1,160 @@
+import json
+import sys
+from fractions import Fraction
+from math import isqrt
+
+
+def rational_sqrt(value):
+    numerator = isqrt(value.numerator)
+    denominator = isqrt(value.denominator)
+    if numerator * numerator != value.numerator:
+        raise ValueError("Square root numerator is not an exact square")
+    if denominator * denominator != value.denominator:
+        raise ValueError("Square root denominator is not an exact square")
+    return Fraction(numerator, denominator)
+
+
+def original(task_id, x):
+    root = rational_sqrt(x * x)
+    if task_id == "962-a":
+        return root / x
+    if task_id == "962-b":
+        return -2 * root / x
+    if task_id == "962-c":
+        return x * root
+    if task_id == "962-d":
+        return -x * root
+    raise ValueError("Unexpected task")
+
+
+def branch_value(formula, x):
+    formulas = {
+        "y=-1": lambda: Fraction(-1),
+        "y=1": lambda: Fraction(1),
+        "y=2": lambda: Fraction(2),
+        "y=-2": lambda: Fraction(-2),
+        "y=0": lambda: Fraction(0),
+        "y=x^2": lambda: x * x,
+        "y=-x^2": lambda: -x * x,
+    }
+    return formulas[formula]()
+
+
+def first_value(task, x):
+    condition = "x<0" if x < 0 else "x>0" if x > 0 else "x=0"
+    matches = [branch for branch in task["branches"] if branch["condition"] == condition]
+    if not matches and x == 0:
+        raise ZeroDivisionError("Zero excluded by the stored FIRST domain")
+    if len(matches) != 1:
+        raise ValueError("Expected exactly one applicable branch")
+    return branch_value(matches[0]["formula"], x)
+
+
+def main():
+    first = json.load(sys.stdin)
+    tasks = first["tasks"]
+    checks = 0
+    failures = []
+
+    def check(name, condition):
+        nonlocal checks
+        checks += 1
+        if not condition:
+            failures.append(name)
+
+    check("exercise count", first["exercise_count"] == 1)
+    check("task count", first["task_count"] == len(tasks) == 4)
+    check("task ids", [task["id"] for task in tasks] == ["962-a", "962-b", "962-c", "962-d"])
+    expected = {
+        "962-a": {
+            "formula": "y=sqrt(x^2)/x",
+            "branches": [("x<0", "y=-1"), ("x>0", "y=1")],
+            "open": [["0", "-1"], ["0", "1"]],
+            "halves": [],
+        },
+        "962-b": {
+            "formula": "y=-2*sqrt(x^2)/x",
+            "branches": [("x<0", "y=2"), ("x>0", "y=-2")],
+            "open": [["0", "2"], ["0", "-2"]],
+            "halves": [],
+        },
+        "962-c": {
+            "formula": "y=x*sqrt(x^2)",
+            "branches": [("x<0", "y=-x^2"), ("x=0", "y=0"), ("x>0", "y=x^2")],
+            "open": [],
+            "halves": [("y=-x^2", "x<=0"), ("y=x^2", "x>=0")],
+        },
+        "962-d": {
+            "formula": "y=-x*sqrt(x^2)",
+            "branches": [("x<0", "y=x^2"), ("x=0", "y=0"), ("x>0", "y=-x^2")],
+            "open": [],
+            "halves": [("y=x^2", "x<=0"), ("y=-x^2", "x>=0")],
+        },
+    }
+    grid = [Fraction(numerator, 4) for numerator in range(-12, 13)]
+    task_receipts = []
+    for task in tasks:
+        task_id = task["id"]
+        specification = expected[task_id]
+        defined_at_zero = task_id in ("962-c", "962-d")
+        check(task_id + " original formula", task["formula"] == specification["formula"])
+        check(
+            task_id + " piecewise expressions",
+            [(branch["condition"], branch["formula"]) for branch in task["branches"]]
+            == specification["branches"],
+        )
+        check(
+            task_id + " domain",
+            task["domain"] == (
+                "all real numbers" if defined_at_zero
+                else "(-infinity,0) union (0,infinity)"
+            ),
+        )
+        check(task_id + " zero defined", task["zero"]["defined"] == defined_at_zero)
+        check(task_id + " zero value", task["zero"]["value"] == ("0" if defined_at_zero else None))
+        check(task_id + " zero point", task["zero"]["included_points"] == ([["0", "0"]] if defined_at_zero else []))
+        check(task_id + " open endpoints", task["zero"]["open_endpoints"] == specification["open"])
+        check(task_id + " origin membership", task["zero"]["origin_on_graph"] == defined_at_zero)
+        check(
+            task_id + " half-parabolas",
+            [(half["parent"], half["retain"]) for half in task["half_parabolas"]]
+            == specification["halves"],
+        )
+        for x_text, y_text in task["plot_coordinates"]:
+            x, y = Fraction(x_text), Fraction(y_text)
+            check(task_id + " point " + x_text, original(task_id, x) == first_value(task, x) == y)
+        for x in grid:
+            if x == 0 and not defined_at_zero:
+                for name, function in (("original", original), ("FIRST", lambda _, value: first_value(task, value))):
+                    try:
+                        function(task_id, x)
+                    except ZeroDivisionError:
+                        check(task_id + " " + name + " zero excluded", True)
+                    else:
+                        check(task_id + " " + name + " zero excluded", False)
+            else:
+                check(task_id + " grid " + str(x), original(task_id, x) == first_value(task, x))
+        task_receipts.append({
+            "task_id": task_id,
+            "stored_plot_coordinates_checked": len(task["plot_coordinates"]),
+            "rational_grid_inputs": len(grid),
+            "zero_original_and_FIRST": "included" if defined_at_zero else "undefined",
+        })
+    receipt = {
+        "run": 1,
+        "arithmetic": "Python standard-library Fraction; square roots by exact integer-square verification",
+        "grid": {"from": "-3", "to": "3", "step": "1/4", "input_count_per_task": 25},
+        "exercise_count": 1,
+        "task_count": 4,
+        "assertion_count": checks,
+        "faults": failures,
+        "result": "PASS" if not failures else "FAIL",
+        "tasks": task_receipts,
+        "limits": "Exact arithmetic and stored branch checks only; no rendering, comparison, or all-real CAS proof.",
+    }
+    print(json.dumps(receipt, indent=2))
+    return 1 if failures else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

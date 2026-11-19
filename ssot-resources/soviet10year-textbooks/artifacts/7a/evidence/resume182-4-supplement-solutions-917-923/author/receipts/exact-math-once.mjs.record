@@ -1,0 +1,284 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import { fileURLToPath } from 'node:url';
+
+const started = process.hrtime.bigint();
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+const ledgerPath = `${root}/.tmp/resume182-4-supplement-solutions-author/0917-0923.json`;
+const checks = [];
+const counts = {};
+let ledger;
+const receipt = {
+  artifact_type: 'INTERNAL_actual_single_exact_math_execution_receipt',
+  ticket: 'STEMROBIN-182',
+  author_scope: 'AUTHOR917-923',
+  cwd: process.cwd(),
+  command: 'node .tmp/resume182-4-supplement-solutions-author/0917-0923-author/exact-math-once.mjs',
+  run_number: 1,
+  status: 'RUNNING',
+  checks,
+  counts,
+  usage: {
+    author_passes: 1,
+    content_revision_passes: 0,
+    finite_set_exact_math_runs: 1,
+    exec_commands_including_this_run: 5,
+    apply_patch_calls_observed_before_this_execution: 1,
+    paid_external_calls: 0,
+    browser_calls: 0,
+    image_reads: 0,
+    pdf_reads: 0,
+    dependency_actions: 0,
+    database_actions: 0,
+    publisher_actions: 0,
+    git_actions: 0,
+    skill_actions: 0,
+    app_actions: 0,
+    chat_agent_actions: 0,
+    modern_json_parses: 0,
+    unknown_telemetry: {
+      platform_input_tokens: null,
+      platform_output_tokens: null,
+      model_cost: null,
+      total_task_wall_clock_duration: null
+    },
+    unknown_telemetry_reason: 'Not exposed; no estimates substituted.'
+  },
+  evidence_limit: 'Finite samples do not prove infinite closure or diagram geometry. The author ledger supplies general proofs and semantic diagram obligations; this is not independent content approval.',
+  faults: []
+};
+
+function hash(bytes) {
+  return crypto.createHash('sha256').update(bytes).digest('hex');
+}
+
+function check(id, observed, expected) {
+  const matches = JSON.stringify(observed) === JSON.stringify(expected);
+  checks.push({ id, observed, expected, matches });
+  if (!matches) throw new Error(`EXACT_CHECK_MISMATCH: ${id}`);
+}
+
+function gcd(a, b) {
+  a = a < 0n ? -a : a;
+  b = b < 0n ? -b : b;
+  while (b !== 0n) [a, b] = [b, a % b];
+  return a;
+}
+
+function q(n, d = 1n) {
+  n = BigInt(n);
+  d = BigInt(d);
+  if (d === 0n) throw new Error('DIVISION_BY_ZERO');
+  if (d < 0n) [n, d] = [-n, -d];
+  const g = gcd(n, d);
+  return { n: n / g, d: d / g };
+}
+
+function text(x) {
+  return x.d === 1n ? String(x.n) : `${x.n}/${x.d}`;
+}
+
+function parseQ(s) {
+  const [n, d = '1'] = s.split('/');
+  return q(n, d);
+}
+
+const operations = {
+  addition: (x, y) => q(x.n * y.d + y.n * x.d, x.d * y.d),
+  subtraction: (x, y) => q(x.n * y.d - y.n * x.d, x.d * y.d),
+  multiplication: (x, y) => q(x.n * y.n, x.d * y.d),
+  division: (x, y) => q(x.n * y.d, x.d * y.n)
+};
+
+const member = {
+  S: x => x.d === 1n && [-1n, 0n, 1n].includes(x.n),
+  Z: x => x.d === 1n,
+  E: x => x.d === 1n && x.n % 2n === 0n,
+  O: x => x.d === 1n && x.n % 2n !== 0n
+};
+
+function table(set, operation) {
+  return set.map(x => set.map(y => text(operations[operation](q(x), q(y)))));
+}
+
+function cross(u, v) {
+  return u[0] * v[1] - u[1] * v[0];
+}
+
+function dot(u, v) {
+  return u[0] * v[0] + u[1] * v[1];
+}
+
+function subtract(u, v) {
+  return [u[0] - v[0], u[1] - v[1]];
+}
+
+function parallelogramClasses(u, v) {
+  const valid = cross(u, v) !== 0;
+  const rectangle = valid && dot(u, v) === 0;
+  const rhombus = valid && dot(u, u) === dot(v, v);
+  return { A: valid, B: valid, C: rectangle, D: rhombus, F: rectangle && rhombus };
+}
+
+try {
+  check('explicit_authorized_cwd', process.cwd(), root);
+  const bytes = fs.readFileSync(ledgerPath);
+  receipt.author_ledger_sha256 = hash(bytes);
+  receipt.checker_sha256 = hash(fs.readFileSync(fileURLToPath(import.meta.url)));
+  ledger = JSON.parse(bytes);
+  for (const [kind, path, expected] of [
+    ['raw', ledger.source_binding.raw_path, ledger.source_binding.raw_sha256],
+    ['modern_hash_only', ledger.source_binding.modern_path, ledger.source_binding.modern_sha256]
+  ]) {
+    const observed = hash(fs.readFileSync(`${root}/${path}`));
+    check(`${kind}_input_sha256`, observed, expected);
+    receipt[`${kind}_input_sha256`] = observed;
+  }
+  check('exercise_numbers', ledger.exercises.map(x => x.source_number), ['917', '918', '919', '920', '921', '922', '923']);
+  check('per_exercise_actual_tasks', ledger.exercises.map(x => x.tasks.length), [1, 1, 1, 4, 3, 4, 12]);
+  const tasks = ledger.exercises.flatMap(x => x.tasks);
+  check('actual_task_count', tasks.length, 26);
+  check('unique_task_ids', new Set(tasks.map(x => x.task_id)).size, 26);
+  const getTask = id => {
+    const task = tasks.find(x => x.task_id === id);
+    if (!task) throw new Error(`TASK_NOT_FOUND: ${id}`);
+    return task;
+  };
+  check('ledger_closed_matrix_921', ledger.exercises[4].tasks.map(x => x.closed), [false, true, false]);
+  check('ledger_closed_matrix_922', ledger.exercises[5].tasks.map(x => x.closed), [true, true, true, false]);
+  check('ledger_closed_matrix_923', ledger.exercises[6].tasks.map(x => x.closed), [true, true, true, false, false, false, true, false, true, true, true, true]);
+
+  const triangles = [
+    { sides: [2, 2, 2], expected: [true, true, true] },
+    { sides: [2, 2, 3], expected: [false, true, true] },
+    { sides: [2, 3, 4], expected: [false, false, true] }
+  ];
+  for (const { sides, expected } of triangles) {
+    const [a, b, c] = sides;
+    const valid = a + b > c && a + c > b && b + c > a;
+    check(`917_triangle_${sides.join('_')}`, [valid && a === b && b === c, valid && (a === b || b === c || a === c), valid], expected);
+  }
+  const witnesses = [
+    ['919_F_square', [1, 0], [0, 1], { A: true, B: true, C: true, D: true, F: true }],
+    ['918_919_920_rectangle_only', [2, 0], [0, 1], { A: true, B: true, C: true, D: false, F: false }],
+    ['918_919_920_rhombus_only', [1, 2], [2, 1], { A: true, B: true, C: false, D: true, F: false }],
+    ['919_B_neither_C_nor_D', [2, 0], [1, 1], { A: true, B: true, C: false, D: false, F: false }]
+  ];
+  for (const [id, u, v, expected] of witnesses) check(id, parallelogramClasses(u, v), expected);
+  const p = [[0, 0], [3, 0], [2, 1], [0, 1]];
+  const edges = p.map((point, i) => subtract(p[(i + 1) % 4], point));
+  check('919_A_minus_B_strict_convex_turns', edges.map((edge, i) => cross(edge, edges[(i + 1) % 4])), [3, 2, 2, 3]);
+  check('919_A_minus_B_not_both_opposite_pairs_parallel', cross(edges[0], edges[2]) === 0 && cross(edges[1], edges[3]) === 0, false);
+  counts.exact_triangle_witnesses = triangles.length;
+  counts.exact_quadrilateral_witnesses = witnesses.length + 1;
+
+  let residueCount = 0;
+  for (let n = -30n; n <= 30n; n++) {
+    const r = ((n % 3n) + 3n) % 3n;
+    const k = (n - r) / 3n;
+    if (n !== 3n * k + r || (n % 3n !== 0n) !== (r === 1n || r === 2n)) throw new Error(`920_d_RESIDUE_MISMATCH: ${n}`);
+    residueCount++;
+  }
+  counts.integer_mod_3_witnesses = residueCount;
+  check('920_d_negative_and_zero_membership', [-3n, -2n, -1n, 0n, 1n, 2n, 3n].map(n => n % 3n !== 0n), [false, true, true, false, true, true, false]);
+
+  const finite = [-1n, 0n, 1n];
+  const multiplicationTable = table(finite, 'multiplication');
+  check('921_complete_multiplication_table', multiplicationTable, getTask('921-b').complete_table.rows.map(row => row.map(String)));
+  for (const [operation, expected] of [['addition', false], ['multiplication', true], ['subtraction', false]]) {
+    const results = table(finite, operation);
+    check(`921_${operation}_all_nine_ordered_pairs`, results.every(row => row.every(x => member.S(parseQ(x)))), expected);
+  }
+  counts.finite_S_ordered_pairs_per_operation = 9;
+  counts.finite_S_operations = 3;
+
+  for (const [id, set] of [
+    ['921-a', 'S'], ['921-c', 'S'], ['922-d', 'Z'],
+    ['923-a-div', 'E'], ['923-b-add', 'O'], ['923-b-sub', 'O'], ['923-b-div', 'O']
+  ]) {
+    const task = getTask(id);
+    const { left, right, result } = task.counterexample;
+    const x = parseQ(left), y = parseQ(right);
+    check(`${id}_counterexample_operands`, [member[set](x), member[set](y)], [true, true]);
+    if (task.operation === 'division') check(`${id}_nonzero_divisor`, y.n !== 0n, true);
+    const actual = operations[task.operation](x, y);
+    check(`${id}_exact_counterexample_result`, text(actual), result);
+    check(`${id}_result_outside_set`, member[set](actual), false);
+  }
+  counts.exact_nonclosure_counterexamples = 7;
+
+  let zeroFault;
+  try { operations.division(q(1n), q(0n)); } catch (error) { zeroFault = error.message; }
+  check('ordinary_zero_divisor_is_undefined', zeroFault, 'DIVISION_BY_ZERO');
+  check('zero_in_Z_and_E_not_O', [member.Z(q(0n)), member.E(q(0n)), member.O(q(0n))], [true, true, false]);
+  check('rational_zero_numerator_division', text(operations.division(q(0n), q(-2n, 3n))), '0');
+
+  let integerPairs = 0;
+  let parityPairs = 0;
+  for (let m = -8n; m <= 8n; m++) {
+    for (let n = -8n; n <= 8n; n++) {
+      for (const operation of ['addition', 'subtraction', 'multiplication']) {
+        if (!member.Z(operations[operation](q(m), q(n)))) throw new Error(`922_${operation}_INTEGER_WITNESS_FAILURE`);
+      }
+      integerPairs++;
+      const e = q(2n * m), f = q(2n * n);
+      const a = q(2n * m + 1n), b = q(2n * n + 1n);
+      const identities = [
+        [operations.addition(e, f), q(2n * (m + n)), member.E],
+        [operations.subtraction(e, f), q(2n * (m - n)), member.E],
+        [operations.multiplication(e, f), q(2n * (2n * m * n)), member.E],
+        [operations.addition(a, b), q(2n * (m + n + 1n)), member.E],
+        [operations.subtraction(a, b), q(2n * (m - n)), member.E],
+        [operations.multiplication(a, b), q(2n * (2n * m * n + m + n) + 1n), member.O]
+      ];
+      for (const [actual, expected, belongs] of identities) {
+        if (text(actual) !== text(expected) || !belongs(actual)) throw new Error('923_EXACT_PARITY_IDENTITY_WITNESS_FAILURE');
+      }
+      parityPairs++;
+    }
+  }
+  counts.integer_ordered_pairs_per_operation = integerPairs;
+  counts.integer_closure_operations_sampled = 3;
+  counts.parity_parameter_pairs_per_identity = parityPairs;
+  counts.parity_identities_sampled = 6;
+  check('negative_integer_and_parity_sample_pairs', [integerPairs, parityPairs], [289, 289]);
+
+  const rationals = new Map();
+  for (let n = -3n; n <= 3n; n++) {
+    for (let d = 1n; d <= 3n; d++) {
+      const value = q(n, d);
+      rationals.set(text(value), value);
+    }
+  }
+  const rationalCounts = { addition: 0, subtraction: 0, multiplication: 0, division: 0, excluded_zero_divisor_pairs: 0 };
+  for (const x of rationals.values()) {
+    for (const y of rationals.values()) {
+      for (const operation of ['addition', 'subtraction', 'multiplication', 'division']) {
+        if (operation === 'division' && y.n === 0n) {
+          rationalCounts.excluded_zero_divisor_pairs++;
+          continue;
+        }
+        const result = operations[operation](x, y);
+        if (result.d <= 0n || gcd(result.n, result.d) !== 1n) throw new Error('923_RATIONAL_NORMALIZATION_FAILURE');
+        rationalCounts[operation]++;
+      }
+    }
+  }
+  counts.distinct_rational_sample_values = rationals.size;
+  counts.rational_exact_ordered_pair_operations = rationalCounts;
+  check('rational_exact_sample_and_nonzero_domain_counts', [rationals.size, rationalCounts], [
+    15, { addition: 225, subtraction: 225, multiplication: 225, division: 210, excluded_zero_divisor_pairs: 15 }
+  ]);
+  receipt.status = 'PASS';
+  receipt.scope = { exercises: 7, actual_tasks: 26, per_exercise: [1, 1, 1, 4, 3, 4, 12] };
+  receipt.faults = ledger.faults_and_disclosures;
+} catch (error) {
+  receipt.status = 'FAIL';
+  receipt.faults = [...(ledger?.faults_and_disclosures ?? []), { kind: 'execution_or_exact_math_failure', detail: error.message }];
+  process.exitCode = 1;
+} finally {
+  receipt.observed_check_count = checks.length;
+  receipt.math_execution_elapsed_ms = Number(process.hrtime.bigint() - started) / 1e6;
+  receipt.stdout_persistence = 'The actual stdout is to be retained with manual apply_patch in exact-math-receipt.json. Do not rerun a PASS.';
+  console.log(JSON.stringify(receipt, null, 2));
+}

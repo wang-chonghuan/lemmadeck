@@ -1,0 +1,268 @@
+"""Single-run internal arithmetic evidence; not a visual or independent review."""
+
+import hashlib
+import json
+from fractions import Fraction
+from pathlib import Path
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck")
+AUTHOR = ROOT / ".tmp/resume182-4-supplement-solutions-author"
+DOCUMENT = AUTHOR / "graphs-938-939-942-1051.json"
+RECEIPT = AUTHOR / "graphs-938-939-942-1051-author/exact-math-receipt.json"
+SNAPSHOT = AUTHOR / "graphs-938-939-942-1051-author/author-input-at-run.json"
+SELECTED = {"938", "939", "942", "1051"}
+FIELDS = ("number", "source_number", "text", "figure_refs")
+DATA_FIELDS = ("a", "b", "c", "x_1", "x_2")
+
+if RECEIPT.exists() or SNAPSHOT.exists():
+    raise SystemExit("Existing receipt: single-run contract prohibits a rerun.")
+
+document_bytes = DOCUMENT.read_bytes()
+with SNAPSHOT.open("xb") as stream:
+    stream.write(document_bytes)
+document = json.loads(document_bytes)
+checks = []
+execution_faults = []
+input_hashes = []
+
+
+def check(check_id, predicate, evidence):
+    checks.append({
+        "check_id": check_id,
+        "outcome": "consistent" if predicate else "fault",
+        "evidence": evidence,
+    })
+
+
+def filtered_snapshots(value):
+    result = []
+    if isinstance(value, dict):
+        if any(str(value.get(field)) in SELECTED for field in ("number", "source_number")):
+            return [{field: value[field] for field in FIELDS if field in value}]
+        for child in value.values():
+            result.extend(filtered_snapshots(child))
+    elif isinstance(value, list):
+        for child in value:
+            result.extend(filtered_snapshots(child))
+    return result
+
+
+try:
+    check("scope.exercises", set(document["exercise_numbers"]) == SELECTED,
+          {"exercise_numbers": document["exercise_numbers"]})
+    for source in [
+        document["sources"]["raw_exercises"],
+        document["sources"]["modern_hash_only"],
+        *document["sources"]["images"],
+    ]:
+        contents = (ROOT / source["path"]).read_bytes()
+        actual = hashlib.sha256(contents).hexdigest()
+        input_hashes.append({"path": source["path"], "sha256": actual})
+        check("hash." + source["path"], actual == source["sha256"],
+              {"sha256": actual})
+        if source is document["sources"]["raw_exercises"]:
+            snapshots = filtered_snapshots(json.loads(contents))
+            check("source.verbatim_projection",
+                  snapshots == document["source_verbatim_snapshots"],
+                  {"filtered_exercise_count": len(snapshots)})
+        # Modern bytes and PNG bytes are hashed only; no modern parsing or image decoding.
+
+    levels = document["solutions"]["938"]["tasks"]
+    crossing = Fraction(document["inventories"]["fig-63"]["queried_coordinates"][0]["coordinate"][0])
+    crossing_y = Fraction(document["inventories"]["fig-63"]["queried_coordinates"][0]["coordinate"][1])
+    check("938.level", crossing_y == Fraction(document["solutions"]["938"]["level"]),
+          {"inventory_y": str(crossing_y)})
+    check("938.a", levels[0]["set"] == {"kind": "finite", "values": [str(crossing)]},
+          {"authored_set": levels[0]["set"]})
+    check("938.b", levels[1]["set"] == {
+        "kind": "interval", "lower": "-1", "upper": str(crossing),
+        "lower_closed": True, "upper_closed": False,
+    }, {"authored_set": levels[1]["set"]})
+    check("938.c", levels[2]["set"] == {
+        "kind": "interval", "lower": str(crossing), "upper": "6",
+        "lower_closed": False, "upper_closed": True,
+    }, {"authored_set": levels[2]["set"]})
+
+    held_tasks = document["solutions"]["939"]["tasks"]
+    check("939.no_guessed_coordinate",
+          document["solutions"]["939"]["numeric_crossing"] is None
+          and all(task["answer"] is None and task["status"] == "hold_source_pixel"
+                  for task in held_tasks),
+          {"numeric_crossing": None, "held_task_ids": [task["task_id"] for task in held_tasks]})
+    check("939.symbolic_orientation_and_endpoints",
+          [task["exact_symbolic_set"] for task in held_tasks]
+          == ["{alpha}", "(alpha,5]", "[-2,alpha)"],
+          {"sets": [task["exact_symbolic_set"] for task in held_tasks],
+           "condition": "Conditional on the authored single descending crossing; no numeric crossing checked."})
+
+    vertices = document["inventories"]["fig-65"]["vertices"]
+    motion_by_kind = {"increasing": [], "decreasing": [], "constant": []}
+    motion_receipts = []
+    for index, (left, right) in enumerate(zip(vertices, vertices[1:])):
+        t0, v0 = map(Fraction, left["coordinate"])
+        t1, v1 = map(Fraction, right["coordinate"])
+        check("942.segment_time." + str(index), t1 > t0,
+              {"start": str(t0), "end": str(t1)})
+        slope = (v1 - v0) / (t1 - t0)
+        kind = "increasing" if slope > 0 else "decreasing" if slope < 0 else "constant"
+        interval = [str(t0), str(t1)]
+        motion_by_kind[kind].append(interval)
+        motion_receipts.append({
+            "segment": index, "interval_seconds": interval,
+            "speed_endpoints": [str(v0), str(v1)], "exact_slope": str(slope), "kind": kind,
+        })
+    for task in document["solutions"]["942"]["tasks"]:
+        kind = task["task_id"].split(".")[1]
+        check(task["task_id"], task["intervals_seconds"] == motion_by_kind[kind],
+              {"derived_intervals_seconds": motion_by_kind[kind]})
+    check("942.coverage", len(motion_receipts) == 13
+          and vertices[0]["coordinate"] == ["0", "0"]
+          and vertices[-1]["coordinate"] == ["150", "0"],
+          {"segments": len(motion_receipts), "domain": ["0", "150"]})
+
+    table = document["inventories"]["tbl-p0312-01"]
+    rows = document["solutions"]["1051"]["rows"]
+    blanks = [
+        (row["row"], field)
+        for row in table["rows"]
+        for field in DATA_FIELDS
+        if row["cells"][field] is None
+    ]
+    authored_cells = [
+        (row["row"], task["cell"])
+        for row in rows
+        for task in row["tasks"]
+    ]
+    check("1051.actual_table_count",
+          len(table["rows"]) == 6 and len(blanks) == 12,
+          {"data_rows": len(table["rows"]), "blank_cells": len(blanks)})
+    check("1051.blank_cell_coverage", sorted(blanks) == sorted(authored_cells)
+          and len(authored_cells) == len(set(authored_cells)),
+          {"actual_blank_cells": [[row, field] for row, field in blanks]})
+
+    table_receipts = []
+    for source_row, row in zip(table["rows"], rows):
+        a, b, c, x1, x2 = (Fraction(row["completed"][field]) for field in DATA_FIELDS)
+        S, P = x1 + x2, x1 * x2
+        given_unchanged = all(
+            value is None or Fraction(value) == Fraction(row["completed"][field])
+            for field, value in source_row["cells"].items()
+        )
+        row_id = "1051.r" + str(row["row"])
+        check(row_id + ".givens", given_unchanged and source_row["row"] == row["row"],
+              {"given": row["given"], "completed": row["completed"]})
+        check(row_id + ".quadratic", a != 0, {"a": str(a)})
+        check(row_id + ".vieta", a*S == -b and a*P == c
+              and Fraction(row["sum"]) == S and Fraction(row["product"]) == P,
+              {"sum": str(S), "product": str(P), "a_times_sum": str(a*S), "a_times_product": str(a*P)})
+        residues = [a*x*x + b*x + c for x in (x1, x2)]
+        check(row_id + ".both_root_substitutions", residues == [0, 0],
+              {"residuals": list(map(str, residues))})
+        discriminant = b*b - 4*a*c
+        check(row_id + ".discriminant", discriminant == a*a*(x1-x2)**2 and discriminant >= 0,
+              {"discriminant": str(discriminant), "a_squared_root_difference_squared": str(a*a*(x1-x2)**2)})
+        for task in row["tasks"]:
+            check(task["task_id"], Fraction(task["answer"]) == Fraction(row["completed"][task["cell"]]),
+                  {"cell": task["cell"], "exact_answer": task["answer"]})
+        table_receipts.append({
+            "row": row["row"], "completed": row["completed"],
+            "sum": str(S), "product": str(P), "discriminant": str(discriminant),
+            "root_residuals": list(map(str, residues)),
+        })
+
+    # Derive independently from only the inventoried given cells.
+    derived_rows = []
+    for source_row in table["rows"]:
+        values = {field: Fraction(value) if value is not None else None
+                  for field, value in source_row["cells"].items()}
+        a, b, c, x1, x2 = (values[field] for field in DATA_FIELDS)
+        number = source_row["row"]
+        if number == 1:
+            b, c = -a*(x1+x2), a*x1*x2
+        elif number == 2:
+            a = c/(x1*x2)
+            b = -a*(x1+x2)
+        elif number == 3:
+            a = -b/(x1+x2)
+            c = a*x1*x2
+        elif number == 4:
+            a = -(b*x2+c)/(x2*x2)
+            x1 = -b/a-x2
+        elif number == 5:
+            x2 = -b/a-x1
+            c = a*x1*x2
+        elif number == 6:
+            x2 = c/(a*x1)
+            b = -a*(x1+x2)
+        result = dict(zip(DATA_FIELDS, map(str, (a, b, c, x1, x2))))
+        derived_rows.append({"row": number, "completed": result})
+        check("1051.r" + str(number) + ".derive_from_givens",
+              result == rows[number-1]["completed"],
+              {"independently_derived": result})
+
+    tasks = [
+        *document["solutions"]["938"]["tasks"],
+        *document["solutions"]["939"]["tasks"],
+        *document["solutions"]["942"]["tasks"],
+        *(task for row in rows for task in row["tasks"]),
+    ]
+    task_ids = [task["task_id"] for task in tasks]
+    exact_count = sum(task["status"] == "authored_exact" for task in tasks)
+    held_count = sum(task["status"] == "hold_source_pixel" for task in tasks)
+    check("counts.actual_tasks", len(tasks) == 21 and len(set(task_ids)) == 21
+          and exact_count == 18 and held_count == 3,
+          {"task_ids": task_ids, "tasks": len(tasks), "authored_exact": exact_count, "held": held_count})
+except Exception as error:
+    execution_faults.append({"kind": type(error).__name__, "message": str(error)})
+
+arithmetic_faults = [item for item in checks if item["outcome"] == "fault"]
+receipt = {
+    "schema": "stemrobin-182/internal-source-math-receipt@1",
+    "ticket_id": "STEMROBIN-182",
+    "chat_id": "chat182-4",
+    "run_number": 1,
+    "maximum_runs": 1,
+    "status": "fault" if execution_faults or arithmetic_faults else "arithmetically_consistent_with_source_pixel_hold",
+    "document_sha256_at_run": hashlib.sha256(document_bytes).hexdigest(),
+    "document_at_run_snapshot": str(SNAPSHOT),
+    "script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+    "input_hashes": input_hashes,
+    "checks": checks,
+    "checks_count": len(checks),
+    "arithmetic_faults": arithmetic_faults,
+    "execution_faults": execution_faults,
+    "source_pixel_faults": document["faults"],
+    "motion": locals().get("motion_receipts", []),
+    "table": locals().get("table_receipts", []),
+    "derived_from_table_givens": locals().get("derived_rows", []),
+    "limits": {
+        "source_pixel_certification": False,
+        "independent_review": False,
+        "modern_visual_approval": False,
+        "modern_repair_limit_reset": False,
+        "image_decoding_in_this_run": False,
+        "rerun": False,
+    },
+    "usage": {"image_opens": 4, "exact_math_runs": 1, "telemetry": "unknown"},
+}
+with RECEIPT.open("x", encoding="utf-8") as stream:
+    json.dump(receipt, stream, indent=2, ensure_ascii=True)
+    stream.write("\n")
+
+print(json.dumps({
+    "receipt": str(RECEIPT),
+    "receipt_sha256": hashlib.sha256(RECEIPT.read_bytes()).hexdigest(),
+    "status": receipt["status"],
+    "checks": len(checks),
+    "arithmetic_faults": len(arithmetic_faults),
+    "execution_faults": len(execution_faults),
+    "source_pixel_faults": len(document["faults"]),
+    "task_count": len(locals().get("tasks", [])),
+    "table_rows": len(document["inventories"]["tbl-p0312-01"]["rows"]),
+    "table_blank_cells": document["inventories"]["tbl-p0312-01"]["blank_data_cells"],
+    "image_opens": 4,
+    "exact_math_runs": 1,
+    "telemetry": "unknown",
+}, indent=2))
+raise SystemExit(1 if execution_faults or arithmetic_faults else 0)

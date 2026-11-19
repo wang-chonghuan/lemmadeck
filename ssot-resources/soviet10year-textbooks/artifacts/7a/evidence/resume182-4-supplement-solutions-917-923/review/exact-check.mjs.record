@@ -1,0 +1,325 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+
+const root = process.cwd();
+const expectedRoot = "/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck";
+const directory = path.join(root, ".tmp/resume182-4-supplement-source-review-917-923");
+const receiptPath = path.join(directory, "exact-check.receipt.json");
+if (root !== expectedRoot) throw new Error("Unexpected cwd; no check started.");
+if (fs.existsSync(receiptPath)) throw new Error("Existing receipt; refusing a rerun.");
+
+const receipt = {
+  schema: "internal-blind-first-exact-receipt-v1",
+  run: 1,
+  started_at: new Date().toISOString(),
+  command: "node .tmp/resume182-4-supplement-source-review-917-923/exact-check.mjs",
+  cwd: root,
+  checks: [],
+  faults: [],
+  status: "RUNNING",
+  limits: {
+    finite_set_pairs_per_operation: 9,
+    integer_parameter_range: [-6, 6],
+    rational_numerator_range: [-3, 3],
+    rational_denominator_range: [-3, 3],
+    zero_denominators_excluded: true,
+    universal_claims_supported_by_written_proofs_not_sampling: true
+  }
+};
+fs.writeFileSync(receiptPath, JSON.stringify(receipt, null, 2) + "\n", {flag: "wx"});
+const sha256 = bytes => crypto.createHash("sha256").update(bytes).digest("hex");
+receipt.script_sha256 = sha256(fs.readFileSync(new URL(import.meta.url)));
+
+function check(id, details, execute) {
+  try {
+    const evidence = execute();
+    receipt.checks.push({id, details, status: "PASS", evidence});
+  } catch (error) {
+    const fault = {id, message: String(error?.stack || error)};
+    receipt.checks.push({id, details, status: "FAIL"});
+    receipt.faults.push(fault);
+  }
+}
+
+function requireTrue(condition, message) {
+  if (!condition) throw new Error(message);
+}
+
+function gcd(a, b) {
+  a = a < 0n ? -a : a;
+  b = b < 0n ? -b : b;
+  while (b !== 0n) [a, b] = [b, a % b];
+  return a;
+}
+
+function rational(n, d = 1n) {
+  n = BigInt(n);
+  d = BigInt(d);
+  if (d === 0n) throw new Error("Undefined division by zero");
+  if (d < 0n) [n, d] = [-n, -d];
+  const divisor = gcd(n, d);
+  return {n: n / divisor, d: d / divisor};
+}
+
+const show = r => r.d === 1n ? String(r.n) : `${r.n}/${r.d}`;
+const eq = (x, y) => x.n * y.d === y.n * x.d;
+const add = (x, y) => rational(x.n * y.d + y.n * x.d, x.d * y.d);
+const subtract = (x, y) => rational(x.n * y.d - y.n * x.d, x.d * y.d);
+const multiply = (x, y) => rational(x.n * y.n, x.d * y.d);
+const divide = (x, y) => rational(x.n * y.d, x.d * y.n);
+const integer = x => x.d === 1n;
+const even = x => integer(x) && x.n % 2n === 0n;
+const odd = x => integer(x) && x.n % 2n !== 0n;
+const dot = (a, b) => a[0] * b[0] + a[1] * b[1];
+const cross = (a, b) => a[0] * b[1] - a[1] * b[0];
+const minusVector = (a, b) => [a[0] - b[0], a[1] - b[1]];
+
+function shape(vertices) {
+  const edges = vertices.map((v, i) => minusVector(vertices[(i + 1) % 4], v));
+  const turns = edges.map((edge, i) => cross(edge, edges[(i + 1) % 4]));
+  const convex = turns.every(t => t > 0) || turns.every(t => t < 0);
+  const parallelogram = convex && edges[0][0] === -edges[2][0] &&
+    edges[0][1] === -edges[2][1] && edges[1][0] === -edges[3][0] &&
+    edges[1][1] === -edges[3][1];
+  const lengthsSquared = edges.map(edge => dot(edge, edge));
+  const rectangle = parallelogram && edges.every((edge, i) => dot(edge, edges[(i + 1) % 4]) === 0);
+  const rhombus = parallelogram && lengthsSquared.every(s => s === lengthsSquared[0]);
+  return {convex, parallelogram, rectangle, rhombus, square: rectangle && rhombus, turns, lengthsSquared};
+}
+
+try {
+  const solutionBytes = fs.readFileSync(path.join(directory, "solutions.json"));
+  receipt.solutions_sha256_before_run = sha256(solutionBytes);
+  const solutions = JSON.parse(solutionBytes);
+  const expectedCounts = [1, 1, 1, 4, 3, 4, 12];
+  const tasks = solutions.exercises.flatMap(exercise => exercise.tasks);
+
+  check("coverage", "Derive counts and task identities from the recorded solutions.", () => {
+    requireTrue(solutions.exercises.length === 7, "Exercise count differs from 7");
+    solutions.exercises.forEach((exercise, index) => {
+      requireTrue(exercise.number === 917 + index, "Unexpected exercise number");
+      requireTrue(exercise.tasks.length === expectedCounts[index], "Unexpected per-exercise count");
+      requireTrue(exercise.tasks.every(task => typeof task.proof === "string" && task.proof.length > 0),
+        "A task lacks its written proof");
+    });
+    requireTrue(tasks.length === 26 && new Set(tasks.map(t => t.id)).size === 26, "Task count or uniqueness fault");
+    requireTrue(solutions.exercises[1].tasks[0].diagram.shading.includes("exactly"), "918 shading missing");
+    const divisionTasks = tasks.filter(t => t.id.startsWith("923.") && t.operation === "division");
+    requireTrue(divisionTasks.length === 3 && divisionTasks.every(t => t.nonzero_divisor_required === true),
+      "923 division restrictions missing");
+    requireTrue(solutions.exercises[0].tasks[0].diagram.strict_description.length > 0 &&
+      solutions.exercises[0].tasks[0].diagram.inclusive_description.length > 0, "917 convention missing");
+    return {exercises: 7, tasks: 26, counts: expectedCounts, task_ids: tasks.map(t => t.id)};
+  });
+
+  check("917", "Exact side-length witnesses for both isosceles conventions.", () => {
+    const witnesses = [[3, 3, 3], [5, 5, 6], [3, 4, 5]].map(sides => {
+      const valid = sides.every((s, i) => s > 0 && s < sides[(i + 1) % 3] + sides[(i + 2) % 3]);
+      const distinct = new Set(sides).size;
+      requireTrue(valid, "Degenerate triangle witness");
+      return {sides, equilateral: distinct === 1, inclusive_isosceles: distinct <= 2, strict_isosceles: distinct === 2};
+    });
+    requireTrue(witnesses[0].equilateral && witnesses[0].inclusive_isosceles && !witnesses[0].strict_isosceles,
+      "Equilateral convention error");
+    requireTrue(witnesses[1].strict_isosceles && !witnesses[1].equilateral, "Strictness witness error");
+    requireTrue(!witnesses[2].inclusive_isosceles, "Scalene witness error");
+    return {witnesses, scope: "Concrete witnesses only; universal diagram relations have written proofs."};
+  });
+
+  const quadrilaterals = {
+    square: [[0, 0], [2, 0], [2, 2], [0, 2]],
+    rectangle_only: [[0, 0], [3, 0], [3, 2], [0, 2]],
+    rhombus_only: [[0, 0], [5, 0], [8, 4], [3, 4]],
+    parallelogram_only: [[0, 0], [4, 0], [5, 2], [1, 2]],
+    convex_only: [[0, 0], [4, 0], [3, 2], [0, 2]]
+  };
+  const memberships = Object.fromEntries(Object.entries(quadrilaterals).map(([name, vertices]) => [name, shape(vertices)]));
+
+  check("918", "Exact rectangle/rhombus/square witnesses and intersection membership.", () => {
+    requireTrue(memberships.square.rectangle && memberships.square.rhombus && memberships.square.square,
+      "Square intersection witness fault");
+    requireTrue(memberships.rectangle_only.rectangle && !memberships.rectangle_only.rhombus,
+      "Rectangle exclusive witness fault");
+    requireTrue(memberships.rhombus_only.rhombus && !memberships.rhombus_only.rectangle,
+      "Rhombus exclusive witness fault");
+    return {square: memberships.square, rectangle_only: memberships.rectangle_only, rhombus_only: memberships.rhombus_only};
+  });
+
+  check("919", "Exact nonempty-region witnesses for the five-set Euler diagram.", () => {
+    requireTrue(memberships.parallelogram_only.parallelogram && !memberships.parallelogram_only.rectangle &&
+      !memberships.parallelogram_only.rhombus, "B minus union witness fault");
+    requireTrue(memberships.convex_only.convex && !memberships.convex_only.parallelogram, "A minus B witness fault");
+    for (const member of Object.values(memberships)) {
+      requireTrue(!member.parallelogram || member.convex, "B subset A witness fault");
+      requireTrue(!(member.rectangle || member.rhombus) || member.parallelogram, "C/D subset B witness fault");
+    }
+    return {memberships, scope: "Exact witnesses, not an exhaustive classification of all quadrilaterals."};
+  });
+
+  check("920.a", "Rectangle relative-complement witnesses.", () => {
+    requireTrue(memberships.rectangle_only.rectangle && !memberships.rectangle_only.square, "Included witness fault");
+    requireTrue(memberships.square.rectangle && memberships.square.square, "Excluded square fault");
+    requireTrue(!memberships.rhombus_only.rectangle, "Ambient-set exclusion fault");
+    return {included: "3-by-2 rectangle", excluded: "side-2 square", outside_ambient: "non-right rhombus"};
+  });
+
+  check("920.b", "Triangle complement includes strict isosceles and scalene witnesses.", () => {
+    requireTrue(new Set([5, 5, 6]).size === 2 && new Set([3, 4, 5]).size === 3 &&
+      new Set([3, 3, 3]).size === 1, "Triangle complement witness fault");
+    return {included_sides: [[5, 5, 6], [3, 4, 5]], excluded_sides: [3, 3, 3]};
+  });
+
+  check("920.c", "Rhombus relative-complement witnesses.", () => {
+    requireTrue(memberships.rhombus_only.rhombus && !memberships.rhombus_only.square, "Included witness fault");
+    requireTrue(memberships.square.rhombus && memberships.square.square, "Excluded square fault");
+    requireTrue(!memberships.rectangle_only.rhombus, "Ambient-set exclusion fault");
+    return {included: "non-right rhombus", excluded: "side-2 square", outside_ambient: "3-by-2 rectangle"};
+  });
+
+  check("920.d", "Bounded exact residue classification, including negative integers and zero.", () => {
+    const residues = [];
+    for (let n = -12; n <= 12; n++) {
+      const r = ((n % 3) + 3) % 3;
+      const q = (n - r) / 3;
+      requireTrue(Number.isInteger(q) && n === 3 * q + r, "Division-algorithm witness fault");
+      requireTrue((n % 3 !== 0) === (r === 1 || r === 2), "Complement residue fault");
+      residues.push({n, q, r, in_complement: r !== 0});
+    }
+    return {range: [-12, 12], residues, scope: "Bounded examples; the written division-algorithm proof is universal."};
+  });
+
+  const finiteSet = [-1, 0, 1];
+  const finiteOperations = {
+    "921.a": (x, y) => x + y,
+    "921.b": (x, y) => x * y,
+    "921.c": (x, y) => x - y
+  };
+  for (const [id, operation] of Object.entries(finiteOperations)) {
+    check(id, "Exhaustive exact enumeration of all nine ordered pairs.", () => {
+      const table = finiteSet.map(x => finiteSet.map(y => operation(x, y)));
+      const outside = [];
+      for (const x of finiteSet) for (const y of finiteSet) {
+        const result = operation(x, y);
+        if (!finiteSet.includes(result)) outside.push({x, y, result});
+      }
+      const task = tasks.find(t => t.id === id);
+      requireTrue(task.closed === (outside.length === 0), "Finite closure verdict mismatch");
+      if (id === "921.b") requireTrue(JSON.stringify(table) === JSON.stringify(task.exhaustive_table.rows),
+        "Recorded multiplication table mismatch");
+      return {operand_order: finiteSet, pairs: 9, table, outside};
+    });
+  }
+
+  const integerOperations = {"922.a": add, "922.b": subtract, "922.c": multiply};
+  for (const [id, operation] of Object.entries(integerOperations)) {
+    check(id, "Exact bounded integer pairs; not a substitute for the universal proof.", () => {
+      let pairs = 0;
+      for (let m = -6; m <= 6; m++) for (let n = -6; n <= 6; n++) {
+        requireTrue(integer(operation(rational(m), rational(n))), "Integer result fault");
+        pairs++;
+      }
+      return {parameter_range: [-6, 6], pairs};
+    });
+  }
+
+  check("922.d", "Nonzero-divisor counterexample and separate undefined-zero diagnostic.", () => {
+    const result = divide(rational(1), rational(2));
+    requireTrue(show(result) === "1/2" && !integer(result), "Integer division counterexample fault");
+    let zeroDiagnostic = "";
+    try { divide(rational(1), rational(0)); } catch (error) { zeroDiagnostic = error.message; }
+    requireTrue(zeroDiagnostic === "Undefined division by zero", "Missing undefined-zero diagnostic");
+    return {counterexample: {left: "1", right: "2", result: show(result)}, zero_divisor_expected_diagnostic: zeroDiagnostic,
+      note: "Expected undefinedness is source-semantic evidence, not a run failure."};
+  });
+
+  const parityOperations = {
+    "923.a.add": {operation: add, formula: (m, n) => rational(2 * (m + n)), set: even},
+    "923.a.subtract": {operation: subtract, formula: (m, n) => rational(2 * (m - n)), set: even},
+    "923.a.multiply": {operation: multiply, formula: (m, n) => rational(2 * (2 * m * n)), set: even},
+    "923.b.multiply": {operation: multiply, formula: (m, n) => rational(2 * (2 * m * n + m + n) + 1), set: odd}
+  };
+  for (const [id, spec] of Object.entries(parityOperations)) {
+    check(id, "Bounded exact verification of the stated parity identity.", () => {
+      let pairs = 0;
+      const offset = id.startsWith("923.b") ? 1 : 0;
+      for (let m = -6; m <= 6; m++) for (let n = -6; n <= 6; n++) {
+        const result = spec.operation(rational(2 * m + offset), rational(2 * n + offset));
+        requireTrue(eq(result, spec.formula(m, n)) && spec.set(result), "Parity identity or membership fault");
+        pairs++;
+      }
+      return {parameter_range: [-6, 6], pairs, scope: "Exact bounded identity checks; universal algebra is in the written proof."};
+    });
+  }
+
+  const counterexamples = {
+    "923.a.divide": {left: 2, right: 4, operation: divide, set: even, expected: "1/2"},
+    "923.b.add": {left: 1, right: 1, operation: add, set: odd, expected: "2"},
+    "923.b.subtract": {left: 1, right: 1, operation: subtract, set: odd, expected: "0"},
+    "923.b.divide": {left: 1, right: 3, operation: divide, set: odd, expected: "1/3"}
+  };
+  for (const [id, spec] of Object.entries(counterexamples)) {
+    check(id, "Exact admissible counterexample, including operand membership.", () => {
+      const left = rational(spec.left);
+      const right = rational(spec.right);
+      requireTrue(spec.set(left) && spec.set(right), "Operand not in required set");
+      requireTrue(spec.operation !== divide || right.n !== 0n, "Forbidden zero divisor");
+      const result = spec.operation(left, right);
+      requireTrue(show(result) === spec.expected && !spec.set(result), "Counterexample result fault");
+      const task = tasks.find(t => t.id === id);
+      requireTrue(task.closed === false && task.counterexample.result === show(result), "Recorded verdict or result mismatch");
+      return {left: show(left), right: show(right), result: show(result), divisor_nonzero: right.n !== 0n};
+    });
+  }
+
+  const rationalOperations = {
+    "923.c.add": {operation: add, formula: (a, b, c, d) => rational(a * d + b * c, b * d)},
+    "923.c.subtract": {operation: subtract, formula: (a, b, c, d) => rational(a * d - b * c, b * d)},
+    "923.c.multiply": {operation: multiply, formula: (a, b, c, d) => rational(a * c, b * d)},
+    "923.c.divide": {operation: divide, formula: (a, b, c, d) => rational(a * d, b * c)}
+  };
+  for (const [id, spec] of Object.entries(rationalOperations)) {
+    check(id, "Bounded BigInt rational arithmetic with nonzero denominator and divisor restrictions.", () => {
+      let pairs = 0;
+      let zeroDivisorsSkipped = 0;
+      for (let a = -3n; a <= 3n; a++) for (let b = -3n; b <= 3n; b++) {
+        if (b === 0n) continue;
+        for (let c = -3n; c <= 3n; c++) for (let d = -3n; d <= 3n; d++) {
+          if (d === 0n) continue;
+          if (spec.operation === divide && c === 0n) { zeroDivisorsSkipped++; continue; }
+          const result = spec.operation(rational(a, b), rational(c, d));
+          requireTrue(result.d > 0n && eq(result, spec.formula(a, b, c, d)), "Rational identity fault");
+          pairs++;
+        }
+      }
+      return {numerator_range: [-3, 3], denominator_range: [-3, 3], pairs, zero_divisors_skipped: zeroDivisorsSkipped,
+        sample: {left: "-1/2", right: "2/3", result: show(spec.operation(rational(-1, 2), rational(2, 3)))},
+        scope: "Exact bounded verification, not a proof by finite sampling."};
+    });
+  }
+
+  check("receipt_task_coverage", "Every one of the 26 recorded tasks has exactly one task-specific check.", () => {
+    const ids = receipt.checks.map(item => item.id);
+    for (const task of tasks) requireTrue(ids.filter(id => id === task.id).length === 1,
+      `Missing or duplicated task-specific check: ${task.id}`);
+    return {task_checks: 26, structural_checks: 2};
+  });
+} catch (error) {
+  receipt.faults.push({id: "execution", message: String(error?.stack || error)});
+} finally {
+  receipt.finished_at = new Date().toISOString();
+  receipt.status = receipt.faults.length === 0 ? "PASS" : "FAIL";
+  receipt.actual = {
+    executions: 1,
+    total_checks: receipt.checks.length,
+    passed_checks: receipt.checks.filter(check => check.status === "PASS").length,
+    failed_checks: receipt.checks.filter(check => check.status === "FAIL").length,
+    exact_pairs: receipt.checks.reduce((sum, check) => sum + (check.evidence?.pairs || 0), 0),
+    reruns: 0,
+    network_calls: 0,
+    paid_calls: 0
+  };
+  fs.writeFileSync(receiptPath, JSON.stringify(receipt, null, 2) + "\n");
+  console.log(JSON.stringify({status: receipt.status, actual: receipt.actual, faults: receipt.faults, receipt: receiptPath}, null, 2));
+  if (receipt.status !== "PASS") process.exitCode = 1;
+}

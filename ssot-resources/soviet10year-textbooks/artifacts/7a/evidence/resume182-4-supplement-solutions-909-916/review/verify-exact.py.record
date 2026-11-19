@@ -1,0 +1,228 @@
+"""One bounded source-FIRST math run; report every fault without retrying."""
+
+import hashlib
+import json
+import sys
+from datetime import datetime, timezone
+from fractions import Fraction
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parent
+payload = (ROOT / "solutions.json").read_bytes()
+solution = json.loads(payload)
+tasks = {task["id"]: task for task in solution["tasks"]}
+expected_ids = [
+    "909a", "909b", "909c",
+    "910header", "910a", "910b", "910c", "910d",
+    "911header", "911a", "911b",
+    "912", "913a", "913b", "913c", "914",
+    "915a", "915b", "915c", "915d", "916",
+]
+integers = range(-96, 97)
+rationals = sorted({Fraction(n, d) for n in range(-12, 13) for d in range(1, 13)})
+results = []
+faults = []
+started = datetime.now(timezone.utc).isoformat()
+
+
+def require(condition, detail):
+    if not condition:
+        raise AssertionError(detail)
+
+
+def member(name, value):
+    value = Fraction(value)
+    integral = value.denominator == 1
+    if name == "Q":
+        return True
+    if name == "Z":
+        return integral
+    if name == "N0":
+        return integral and value >= 0
+    if name == "P":
+        return value > 0
+    modulus = {"K": 2, "L": 4, "B": 6, "C": 3}[name]
+    return integral and value.numerator % modulus == 0
+
+
+def relation(task, inside, outside):
+    require(task["relation"] == [inside, "proper_subset", outside], "wrong inclusion")
+    require(all(not member(inside, n) or member(outside, n) for n in integers), "inclusion sample fault")
+    witness = Fraction(task["properness_witness"])
+    require(member(outside, witness) and not member(inside, witness), "invalid strictness witness")
+    require(bool(task["diagram"]), "missing Euler placement coverage")
+
+
+def implication(task, antecedent, consequent, truth):
+    require(task["implication"] == [antecedent, consequent], "reversed implication")
+    require(task["truth"] is truth, "wrong truth value")
+    sampled_truth = all(not member(antecedent, n) or member(consequent, n) for n in rationals)
+    require(sampled_truth is truth, "truth does not match exact samples")
+    if not truth:
+        witness = Fraction(task["counterexample"])
+        require(member(antecedent, witness) and not member(consequent, witness), "invalid counterexample")
+
+
+def region_examples(task, expression, predicate):
+    require(task["set_expression"] == expression, "wrong region expression")
+    examples = [Fraction(value) for value in task["examples"]]
+    require(len(set(examples)) >= 3, "missing several distinct examples")
+    require(all(predicate(value) for value in examples), "example outside requested region")
+
+
+def interval_contains(interval, point):
+    low, high, left_closed, right_closed = interval
+    low, high = Fraction(low), Fraction(high)
+    return (point > low or (left_closed and point == low)) and (
+        point < high or (right_closed and point == high)
+    )
+
+
+def check_interval(task, removed, components):
+    require(task["universe"] == [3, 9, True, True], "wrong relative universe")
+    require(task["removed"] == removed, "wrong source interval or endpoint closure")
+    require(task["complement_components"] == components, "wrong authored complement components")
+    all_intervals = [task["universe"], task["removed"]] + task["complement_components"]
+    cuts = sorted({Fraction(bound) for interval in all_intervals for bound in interval[:2]})
+    probes = cuts + [(left + right) / 2 for left, right in zip(cuts, cuts[1:])]
+    probes += [cuts[0] - 1, cuts[-1] + 1]
+    for point in probes:
+        expected = interval_contains(task["universe"], point) and not interval_contains(task["removed"], point)
+        actual = any(interval_contains(component, point) for component in task["complement_components"])
+        require(actual == expected, "endpoint/open-cell mismatch at " + str(point))
+    return len(probes)
+
+
+def check_task(task_id):
+    task = tasks[task_id]
+    require(bool(task["coverage"]), "missing instruction coverage")
+    if task_id == "909a":
+        relation(task, "N0", "Q")
+        require(member("N0", 0), "inclusive-zero convention lost")
+    elif task_id == "909b":
+        region_examples(task, "Q\\N0", lambda value: not member("N0", value))
+        require(task["shade"] == "Q\\N0", "wrong relative shading")
+        require("-2" in task["examples"], "negative integer example lost")
+    elif task_id == "909c":
+        implication(task, "Q", "N0", False)
+    elif task_id == "910header":
+        relation(task, "L", "K")
+        require(task["shade"] == "K\\L", "wrong header shading")
+        require(task["shade_parameterization"] == "4k+2, k in Z", "wrong even nonmultiple parameterization")
+        require(all((member("K", n) and not member("L", n)) == (n % 4 == 2) for n in integers), "shade classification fault")
+        require(all(member("L", 4 * k) and member("K", 4 * k) for k in integers), "4k inclusion fault")
+    elif task_id in ("910a", "910d"):
+        implication(task, "L", "K", True)
+    elif task_id in ("910b", "910c"):
+        implication(task, "K", "L", False)
+    elif task_id == "911header":
+        relation(task, "B", "C")
+    elif task_id == "911a":
+        implication(task, "C", "B", False)
+    elif task_id == "911b":
+        implication(task, "B", "C", True)
+    elif task_id == "912":
+        require(task["relations"] == [["B", "proper_subset", "C"], ["C", "proper_subset", "Z"]], "wrong three-set chain")
+        require(all(not member("B", n) or member("C", n) for n in integers), "B-C fault")
+        require(all(not member("C", n) or member("Z", n) for n in integers), "C-Z fault")
+        require(member("C", 3) and not member("B", 3), "B-C strictness fault")
+        require(member("Z", 1) and not member("C", 1), "C-Z strictness fault")
+        require(bool(task["diagram"]), "missing header diagram")
+    elif task_id == "913a":
+        region_examples(task, "Z&P", lambda value: member("Z", value) and member("P", value))
+        require(not (member("Z", 0) and member("P", 0)), "zero wrongly treated as positive")
+        require(task["source_region"] == "overlap with both horizontal and vertical hatching", "wrong source region")
+    elif task_id == "913b":
+        region_examples(task, "P\\Z", lambda value: member("P", value) and not member("Z", value))
+        require(task["source_region"] == "right-only region with vertical hatching", "wrong source region")
+    elif task_id == "913c":
+        region_examples(task, "Z\\P", lambda value: member("Z", value) and not member("P", value))
+        require("0" in task["examples"], "nonpositive-integer zero example lost")
+        require(task["source_region"] == "left-only region with horizontal hatching", "wrong source region")
+    elif task_id == "914":
+        require(task["relations"] == [["K", "proper_subset", "Z"], ["Z", "proper_subset", "Q"]], "wrong four-set nesting")
+        require(all(not member("K", n) or member("Z", n) for n in integers), "K-Z fault")
+        require(member("Z", 1) and not member("K", 1), "K-Z strictness fault")
+        require(member("Q", Fraction(1, 2)) and not member("Z", Fraction(1, 2)), "Z-Q strictness fault")
+        witnesses = task["region_witnesses"]
+        predicates = {
+            "K&P": lambda value: member("K", value) and member("P", value),
+            "(Z\\K)&P": lambda value: member("Z", value) and not member("K", value) and member("P", value),
+            "(Q\\Z)&P": lambda value: member("Q", value) and not member("Z", value) and member("P", value),
+            "K\\P": lambda value: member("K", value) and not member("P", value),
+            "(Z\\K)\\P": lambda value: member("Z", value) and not member("K", value) and not member("P", value),
+            "(Q\\Z)\\P": lambda value: member("Q", value) and not member("Z", value) and not member("P", value),
+        }
+        for name, predicate in predicates.items():
+            require(predicate(Fraction(witnesses[name])), "wrong four-set region witness: " + name)
+        require(witnesses["P\\Q"] == "sqrt(2)", "positive irrational region missing")
+        require("rational-only" in task["domain_caveat"], "ambient-domain caveat missing")
+        require(bool(task["diagram"]), "four-set Euler diagram missing")
+    elif task_id == "915a":
+        return check_interval(task, [3, 6, True, True], [[6, 9, False, True]])
+    elif task_id == "915b":
+        return check_interval(task, [5, 6, True, True], [[3, 5, True, False], [6, 9, False, True]])
+    elif task_id == "915c":
+        return check_interval(task, [3, 9, False, False], [[3, 3, True, True], [9, 9, True, True]])
+    elif task_id == "915d":
+        return check_interval(task, [3, 9, True, False], [[9, 9, True, True]])
+    elif task_id == "916":
+        require(task["relation"] == ["A", "proper_subset", "B"], "wrong inclusive triangle relation")
+        sides = task["properness_witness_sides"]
+        require(sides == [5, 5, 6], "triangle witness changed")
+        require(all(sides[i] < sum(sides[j] for j in range(3) if j != i) for i in range(3)), "invalid triangle")
+        require(len(set(sides)) == 2, "witness not exactly-two-equal isosceles")
+        require(len(set([5, 5, 5])) == 1, "equilateral classification fault")
+        require("exactly two equal sides" in task["exclusive_definition_caveat"], "exclusive definition caveat missing")
+        require("neither is a subset" in task["exclusive_definition_caveat"], "exclusive relation missing")
+        require(bool(task["diagram"]), "triangle Euler diagram missing")
+    return None
+
+
+if list(tasks) != expected_ids or len(solution["tasks"]) != 21:
+    faults.append({"task": "coverage", "fault": "wrong, duplicate, missing, or reordered actual task IDs"})
+if solution["exercise_count"] != 8 or solution["actual_task_count"] != 21:
+    faults.append({"task": "coverage", "fault": "wrong declared exercise/task count"})
+if solution["comparison_performed"] is not False:
+    faults.append({"task": "independence", "fault": "FIRST comparison flag not false"})
+
+for task_id in expected_ids:
+    try:
+        probe_count = check_task(task_id)
+        result = {"task": task_id, "status": "pass"}
+        if probe_count is not None:
+            result["exact_endpoint_cell_probes"] = probe_count
+        results.append(result)
+    except Exception as error:
+        fault = {"task": task_id, "fault": type(error).__name__ + ": " + str(error)}
+        faults.append(fault)
+        results.append({"task": task_id, "status": "fault", "fault": fault["fault"]})
+
+receipt = {
+    "schema": "internal-blind-exact-math-run@1",
+    "run_number": 1,
+    "reruns": 0,
+    "status": "pass" if not faults else "fault",
+    "started_utc": started,
+    "ended_utc": datetime.now(timezone.utc).isoformat(),
+    "cwd": str(ROOT.parent.parent),
+    "python_version": sys.version.split()[0],
+    "script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+    "solutions_json_sha256": hashlib.sha256(payload).hexdigest(),
+    "exercise_count": 8,
+    "actual_task_count": 21,
+    "integer_sample_count": len(integers),
+    "integer_sample_bounds": [-96, 96],
+    "distinct_rational_sample_count": len(rationals),
+    "rational_generator": "Fraction(n,d), -12 <= n <= 12, 1 <= d <= 12",
+    "method": "Exact integer divisibility and Fraction membership; intervals checked at every endpoint and one rational point in every induced open cell, plus both exterior cells.",
+    "proof_boundary": "Universal containment and sqrt(2) irrationality use the independent written proofs, not a claim that finite samples prove universality. Source-region hatching checks bind the one manual source-image inventory; they are not another image inspection.",
+    "results": results,
+    "faults": faults,
+    "paid_calls": 0,
+    "network_calls": 0,
+    "new_media": 0,
+}
+print(json.dumps(receipt, indent=2))
+sys.exit(1 if faults else 0)
