@@ -1,0 +1,277 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+
+const cwd = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), cwd);
+const ledgerPath = '.tmp/resume182-4-supplement-solutions-author/1011-1018.json';
+const sourcePath = '.tmp/resume182-4-supplement-solutions-author/1011-1018-author/source-receipt.json';
+const scriptPath = '.tmp/resume182-4-supplement-solutions-author/1011-1018-author/arithmetic-once.mjs';
+const ledgerBytes = readFileSync(ledgerPath);
+const sourceBytes = readFileSync(sourcePath);
+const scriptBytes = readFileSync(scriptPath);
+const ledger = JSON.parse(ledgerBytes);
+const source = JSON.parse(sourceBytes);
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+
+const abs = n => n < 0n ? -n : n;
+function gcd(a, b) {
+  for (a = abs(a), b = abs(b); b !== 0n;) [a, b] = [b, a % b];
+  return a;
+}
+function q(value) {
+  if (Array.isArray(value)) return value;
+  let [n, d = 1n] = String(value).split('/').map(BigInt);
+  assert.notEqual(d, 0n);
+  if (d < 0n) [n, d] = [-n, -d];
+  const g = gcd(n, d);
+  return [n / g, d / g];
+}
+const add = (a, b) => { a = q(a); b = q(b); return q(`${a[0] * b[1] + b[0] * a[1]}/${a[1] * b[1]}`); };
+const neg = a => { a = q(a); return [-a[0], a[1]]; };
+const sub = (a, b) => add(a, neg(b));
+const mul = (a, b) => { a = q(a); b = q(b); return q(`${a[0] * b[0]}/${a[1] * b[1]}`); };
+const div = (a, b) => { b = q(b); assert.notEqual(b[0], 0n); return mul(a, q(`${b[1]}/${b[0]}`)); };
+const sq = a => mul(a, a);
+const eq = (a, b) => assert.deepEqual(q(a), q(b));
+const zero = a => q(a)[0] === 0n;
+const poly = (c, x) => c.reduce((p, n) => add(mul(p, x), n), q(0));
+const tasks = ledger.exercises.flatMap(ex => ex.tasks);
+const task = id => { const t = tasks.find(t => t.id === id); assert.ok(t, id); return t; };
+const expectedNumbers = Array.from({ length: 8 }, (_, i) => String(1011 + i));
+assert.deepEqual(ledger.scope, expectedNumbers);
+assert.deepEqual(ledger.exercises.map(ex => ex.number), expectedNumbers);
+assert.deepEqual(source.selected_sources.map(ex => ex.number), expectedNumbers);
+assert.equal(ledger.exercise_count, 8);
+assert.equal(ledger.task_count, 22);
+assert.equal(tasks.length, 22);
+assert.equal(new Set(tasks.map(t => t.id)).size, 22);
+assert.deepEqual(ledger.exercises.map(ex => ex.tasks.length), [2, 2, 6, 3, 3, 2, 2, 2]);
+for (const ex of ledger.exercises) {
+  assert.deepEqual(ex.tasks.map(t => t.label), Array.from({ length: ex.tasks.length }, (_, i) => String.fromCharCode(97 + i)));
+  const selected = source.selected_sources.find(s => s.number === ex.number);
+  assert.equal([...selected.modern_text.matchAll(/(?:^|\n)[a-f]\) /g)].length, ex.tasks.length);
+}
+assert.equal(source.raw.hash_matched, true);
+assert.equal(source.modern.hash_matched, true);
+assert.equal(source.raw.observed_sha256, ledger.sources.raw.sha256);
+assert.equal(source.modern.observed_sha256, ledger.sources.modern.sha256);
+
+const receipts = [];
+function recorded(id, details) { receipts.push({ task: id, passed: true, details }); }
+
+for (const [id, c, lhs, rhs] of [
+  ['1011-a', [1, 6, 5], a => add(add(sq(a), mul(7, a)), 6), a => add(a, 1)],
+  ['1011-b', [1, -6, 5], x => add(sub(mul(3, sq(x)), x), 1), x => sub(add(mul(2, sq(x)), mul(5, x)), 4)]
+]) {
+  for (const [variable, common] of task(id).result.variable_common_value_pairs) {
+    eq(poly(c, variable), 0);
+    eq(lhs(variable), common);
+    eq(rhs(variable), common);
+  }
+  assert.equal(task(id).result.variable_common_value_pairs.length, 2);
+  recorded(id, 'Both variable roots and both common expression values checked exactly.');
+}
+for (const [id, c, step, split] of [
+  ['1012-a', [1, -8, -20], 1, 3],
+  ['1012-b', [1, -4, -12], 2, 2]
+]) {
+  const sequences = task(id).result.sequences;
+  assert.equal(sequences.length, 2);
+  for (const sequence of sequences) {
+    eq(poly(c, sequence[0]), 0);
+    assert.equal(sequence.length, id === '1012-a' ? 5 : 3);
+    for (let i = 0; i < sequence.length; i++) {
+      assert.equal(q(sequence[i])[1], 1n);
+      eq(sequence[i], add(sequence[0], mul(step, i)));
+      if (step === 2) assert.equal(q(sequence[i])[0] % 2n, 0n);
+    }
+    eq(sequence.slice(0, split).reduce((s, n) => add(s, sq(n)), q(0)),
+      sequence.slice(split).reduce((s, n) => add(s, sq(n)), q(0)));
+  }
+  assert.ok(sequences.some(s => q(s[0])[0] < 0n));
+  recorded(id, 'All two polynomial branches are integral (even where required); both square-sum identities and negative sequences checked.');
+}
+
+const rationalCases = [
+  ['1013-a', [20, -12, -27], ['3/2', '-9/10'], [], [x => q(8), x => q(5)],
+    x => sub(div(sq(add(mul(2, x), 1)), 8), div(sub(mul(4, x), 1), 5)), x => q(1)],
+  ['1013-b', [1, 4, -21], ['-7', '3'], [], [x => q(20), x => q(2)],
+    x => sub(div(sq(sub(x, 3)), 20), div(sub(1, x), 2)), x => q(1)],
+  ['1013-e', [1, -4, -21], ['7', '-3'], ['-1', '1'], [x => sub(x, 1), x => add(x, 1)],
+    x => sub(div(12, sub(x, 1)), div(8, add(x, 1))), x => q(1)],
+  ['1013-f', [3, 2, -65], ['13/3', '-5'], ['1', '3'], [x => sub(x, 3), x => sub(1, x)],
+    x => add(div(16, sub(x, 3)), div(30, sub(1, x))), x => q(3)],
+  ['1014-a', [1, 1, -12], ['-4', '3'], ['-1', '2'], [x => add(x, 1), x => sub(x, 2)],
+    x => add(div(6, add(x, 1)), div(x, sub(x, 2))), x => mul(div(6, add(x, 1)), div(x, sub(x, 2)))],
+  ['1014-b', [1, 3, -18], ['-6', '3'], ['-3', '3'], [x => sub(x, 3), x => add(x, 3)],
+    x => add(div(x, sub(x, 3)), div(6, add(x, 3))), x => mul(div(x, sub(x, 3)), div(6, add(x, 3)))],
+  ['1014-c', [1, -8, -48], ['12', '-4'], ['-4', '4'], [x => sub(x, 4), x => add(x, 4)],
+    x => sub(div(add(x, 12), sub(x, 4)), div(x, add(x, 4))), x => mul(div(add(x, 12), sub(x, 4)), div(x, add(x, 4)))],
+  ['1015-a', [2, 1, -3], ['-3/2', '1'], ['-3', '0', '3'],
+    [x => sub(sq(x), 9), x => add(sq(x), mul(3, x)), x => add(mul(6, x), mul(2, sq(x)))],
+    x => add(sub(div(x, sub(sq(x), 9)), div(1, add(sq(x), mul(3, x)))), div(3, add(mul(6, x), mul(2, sq(x))))), x => q(0)],
+  ['1015-b', [22, -19, 4], ['1/2', '4/11'], ['-1/2', '0', '1/2'],
+    [x => add(mul(14, sq(x)), mul(7, x)), x => sub(mul(12, sq(x)), 3), x => sub(mul(6, sq(x)), mul(3, x))],
+    x => add(div(sub(x, 1), add(mul(14, sq(x)), mul(7, x))), div(8, sub(mul(12, sq(x)), 3))),
+    x => div(add(mul(2, x), 1), sub(mul(6, sq(x)), mul(3, x)))],
+  ['1015-c', [1, -6, -27], ['9', '-3'], ['-3', '0', '3'],
+    [x => sub(sq(x), 9), x => add(sub(9, mul(6, x)), sq(x)), x => add(mul(2, sq(x)), mul(6, x))],
+    x => sub(div(3, sub(sq(x), 9)), div(1, add(sub(9, mul(6, x)), sq(x)))),
+    x => div(3, add(mul(2, sq(x)), mul(6, x)))]
+];
+for (const [id, c, candidates, exclusions, denominators, lhs, rhs] of rationalCases) {
+  const t = task(id);
+  assert.deepEqual(t.candidates, candidates);
+  assert.deepEqual(t.excluded_values, exclusions);
+  assert.equal(t.original_denominators.length, denominators.length);
+  for (const value of exclusions) assert.ok(denominators.some(d => zero(d(value))));
+  const accepted = [];
+  const rejected = [];
+  for (const r of candidates) {
+    eq(poly(c, r), 0);
+    if (denominators.some(d => zero(d(r)))) rejected.push(r);
+    else { eq(lhs(r), rhs(r)); accepted.push(r); }
+  }
+  assert.deepEqual(t.result.real_solutions, accepted);
+  assert.deepEqual(t.result.rejected_candidates ?? [], rejected);
+  const [a, b, c0] = c;
+  eq(add(candidates[0], candidates[1]), div(-b, a));
+  eq(mul(candidates[0], candidates[1]), div(c0, a));
+  recorded(id, `Original denominator exclusions checked; two complete polynomial candidates; accepted=${accepted.join(',')}; rejected=${rejected.join(',') || 'none'}; original equations evaluated exactly.`);
+}
+
+assert.deepEqual(task('1013-c').excluded_values, ['1']);
+assert.deepEqual(task('1013-c').original_denominators, ['6', 'x-1']);
+eq(sub(sq(-24), mul(4, 179)), -140);
+eq(sub(179, sq(12)), 35);
+assert.deepEqual(task('1013-c').candidates, []);
+assert.deepEqual(task('1013-c').result.real_solutions, []);
+recorded('1013-c', 'Exact discriminant -140 and completed-square constant 35 certify no real candidate; x=1 excluded.');
+
+assert.deepEqual(task('1013-d').excluded_values, ['2']);
+assert.deepEqual(task('1013-d').original_denominators, ['4', 'x-2']);
+const irrationalRoots = ['(-5+sqrt(417))/2', '(-5-sqrt(417))/2'];
+assert.deepEqual(task('1013-d').candidates, irrationalRoots);
+assert.deepEqual(task('1013-d').result.real_solutions, irrationalRoots);
+eq(sub(sq(5), mul(4, -98)), 417);
+eq(poly([1, 5, -98], 2), -84);
+// Exact symbolic substitution x=(-5+s)/2: 4P(x)=s^2-417.
+eq(add(sub(sq(-5), mul(5, 10)), mul(4, -98)), -417);
+eq(add(mul(2, -5), mul(5, 2)), 0);
+// Clearing 4(x-2) in the original residual gives x^2+5x-98.
+eq(sub(sub(mul(15, -2), 84), mul(8, -2)), -98);
+eq(sub(add(15, -2), 8), 5);
+recorded('1013-d', 'Both +/-sqrt(417) branches checked symbolically with s^2=417; P(2)=-84 certifies nonzero original denominator; residual P(x)/(4(x-2)) vanishes.');
+
+const physical = [
+  ['1016-a', [1, 4, -1152], ['32', '-36'], 4,
+    v => sub(div(72, v), div(72, add(v, 4))), '1/4'],
+  ['1016-b', [1, 6, -3240], ['54', '-60'], 6,
+    v => sub(add(add(div(45, v), '1/12'), div(45, add(v, 6))), div(90, v)), '0'],
+  ['1017-a', [1, 10, -7200], ['80', '-90'], 10,
+    v => sub(add(add(div(240, v), '1/4'), div(180, add(v, 10))), div(420, v)), '0'],
+  ['1017-b', [1, 5, -2250], ['45', '-50'], 5,
+    v => sub(div(180, v), add(div(120, v), div(60, add(v, 5)))), '2/15'],
+  ['1018-a', [1, 15, -4500], ['60', '-75'], 15,
+    v => sub(div(150, v), div(150, add(v, 15))), '1/2'],
+  ['1018-b', [1, 10, -9000], ['90', '-100'], 10,
+    v => sub(add(add(div(180, v), '3/10'), div(270, add(v, 10))), div(450, v)), '0']
+];
+for (const [id, c, roots, increment, residual, target] of physical) {
+  assert.deepEqual(task(id).candidates, roots);
+  for (const r of roots) eq(poly(c, r), 0);
+  eq(add(roots[0], roots[1]), -c[1]);
+  eq(mul(roots[0], roots[1]), c[2]);
+  assert.ok(q(roots[0])[0] > 0n && q(add(roots[0], increment))[0] > 0n);
+  assert.ok(q(roots[1])[0] < 0n && q(add(roots[1], increment))[0] < 0n);
+  eq(residual(roots[0]), target);
+  recorded(id, 'Both quadratic branches checked; negative-speed branch physically rejected; positive-speed branch satisfies the exact time/distance equation.');
+}
+
+eq(div(15, 60), '1/4');
+eq(div(5, 60), '1/12');
+eq(div(8, 60), '2/15');
+eq(div(30, 60), '1/2');
+eq(div(18, 60), '3/10');
+eq(task('1016-a').result.first_car_speed_km_per_h, 36);
+eq(task('1016-a').result.second_car_speed_km_per_h, 32);
+eq(task('1016-b').result.original_speed_km_per_h, 54);
+eq(task('1016-b').result.increased_speed_km_per_h, 60);
+eq(task('1016-b').result.elapsed_time_h, div(90, 54));
+assert.equal(task('1016-b').result.elapsed_time_text, '1 h 40 min');
+eq(mul(420, '4/7'), 240);
+eq(sub(420, 240), 180);
+eq(task('1017-a').result.original_speed_km_per_h, 80);
+eq(task('1017-a').result.increased_speed_km_per_h, 90);
+eq(task('1017-a').result.full_elapsed_time_h, add(add(div(240, 80), '1/4'), div(180, 90)));
+eq(task('1017-a').result.moving_only_time_h, add(div(240, 80), div(180, 90)));
+assert.equal(task('1017-a').result.full_elapsed_time_text, '5 h 15 min');
+eq(mul(180, '2/3'), 120);
+eq(sub(180, 120), 60);
+eq(task('1017-b').result.original_speed_km_per_h, 45);
+eq(task('1017-b').result.increased_speed_km_per_h, 50);
+eq(task('1017-b').result.outbound_time_h, div(180, 45));
+eq(task('1017-b').result.return_time_h, add(div(120, 45), div(60, 50)));
+eq(task('1017-b').result.full_round_trip_time_h, add(div(180, 45), add(div(120, 45), div(60, 50))));
+eq(task('1017-b').result.full_round_trip_time_h, add(7, div(52, 60)));
+assert.equal(task('1017-b').result.full_round_trip_time_text, '7 h 52 min');
+eq(div(450, '3/4'), 600);
+eq(sub(600, 450), 150);
+eq(task('1018-a').result.original_speed_km_per_h, 60);
+eq(task('1018-a').result.increased_speed_km_per_h, 75);
+eq(task('1018-a').result.scheduled_full_time_h, div(600, 60));
+eq(add(add(div(450, 60), '1/2'), div(150, 75)), div(600, 60));
+eq(mul(450, '2/5'), 180);
+eq(sub(450, 180), 270);
+eq(task('1018-b').result.scheduled_speed_km_per_h, 90);
+eq(task('1018-b').result.increased_speed_km_per_h, 100);
+eq(task('1018-b').result.full_elapsed_time_h, add(add(div(180, 90), '3/10'), div(270, 100)));
+receipts.sort((a, b) => a.task.localeCompare(b.task));
+assert.deepEqual(receipts.map(r => r.task), tasks.map(t => t.id));
+assert.equal(receipts.length, 22);
+
+console.log(JSON.stringify({
+  artifact: 'single-bounded-arithmetic-execution-receipt',
+  ticket: 'STEMROBIN-182',
+  assignment: 'chat182-4',
+  cwd,
+  command: `node ${scriptPath}`,
+  status: 'passed-internal-arithmetic-not-review-or-approval',
+  exercise_count: 8,
+  task_count: 22,
+  tasks_checked: 22,
+  input_and_script_hashes: {
+    [ledgerPath]: sha(ledgerBytes),
+    [sourcePath]: sha(sourceBytes),
+    [scriptPath]: sha(scriptBytes)
+  },
+  verification_limits: 'One stdlib-only bounded arithmetic run over this authored selection; original corpus not reread; no full-corpus check; no reviewer or publisher invoked.',
+  usage: {
+    author_passes: 1,
+    source_read_runs: 1,
+    executable_math_runs: 1,
+    content_revisions: 0,
+    arithmetic_corrections: 0,
+    reviewer_runs: 0,
+    old_solution_key_choice_reads: 0,
+    paid_calls: 0,
+    browser_calls: 0,
+    image_pdf_figure_reads: 0,
+    db_operations: 0,
+    git_operations: 0,
+    dependency_changes: 0,
+    skills_loaded: 0,
+    app_chat_agent_operations: 0,
+    model_tokens: 'Not exposed by the tools; no token count or cost is invented.'
+  },
+  faults: {
+    instruction_order_deviations: 1,
+    instruction_order_deviation: 'Initial source metadata preceded filtering; no unselected exercise content was emitted. See source receipt.',
+    preflight_missing_owned_outputs_exit_code: 1,
+    preflight_missing_owned_outputs: 'Expected absent new output paths; no prior work overwritten.',
+    arithmetic_failures: 0,
+    unresolved_mathematical_faults: 0
+  },
+  task_receipts: receipts
+}, null, 2));
