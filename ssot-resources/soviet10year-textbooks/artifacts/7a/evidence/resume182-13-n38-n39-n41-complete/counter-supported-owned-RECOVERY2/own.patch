@@ -1,0 +1,92 @@
+diff --git a/.claude/skills/ld-s10y-lesson/tools/layout.py b/.claude/skills/ld-s10y-lesson/tools/layout.py
+index 320c77a1d..8972230ef 100644
+--- a/.claude/skills/ld-s10y-lesson/tools/layout.py
++++ b/.claude/skills/ld-s10y-lesson/tools/layout.py
+@@ -148,6 +148,7 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
+         band, structure=np.ones((1, max(2, int(0.7 * line_h))), dtype=bool)
+     )
+     rule_components, _ = ndimage.label(horizontal)
++    rule_bounds = []
+     for bounds in ndimage.find_objects(rule_components):
+         if bounds is None:
+             continue
+@@ -163,6 +164,21 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
+             )
+         ):
+             rules.append((columns.start, columns.stop - 1))
++            rule_bounds.append((rows, columns))
++    outer_rules = [
++        (rows, columns) for rows, columns in rule_bounds
++        if not any(
++            other_columns.start <= columns.start
++            and columns.stop <= other_columns.stop
++            and other_columns.stop - other_columns.start
++            > columns.stop - columns.start + 0.2 * line_h
++            for _, other_columns in rule_bounds
++        )
++    ]
++    if outer_rules:
++        centres = [(rows.start + rows.stop) / 2 for rows, _ in outer_rules]
++        if max(centres) - min(centres) > 1.5 * line_h:
++            return False
+     if not rules:
+         return False
+     for left, right in rules:
+@@ -466,9 +482,25 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+     # Check residual streaks after removing the larger scan outlines.
+     for a, b in raw:
+         xs = np.flatnonzero(ink[a:b + 1].any(axis=0))
++        fraction_support = (
++            xs.size
++            and b - a + 1 <= 0.25 * glyph_h
++            and xs[-1] - xs[0] + 1 >= 2 * glyph_h
++            and any(
++                rows.stop <= a and a - rows.stop <= 1.5 * glyph_h
++                and xs[0] <= (columns.start + columns.stop) / 2 <= xs[-1]
++                for rows, columns in glyph_boxes
++            )
++            and any(
++                rows.start > b and rows.start - b <= 1.5 * glyph_h
++                and xs[0] <= (columns.start + columns.stop) / 2 <= xs[-1]
++                for rows, columns in glyph_boxes
++            )
++        )
+         if (
+             b - a + 1 < 0.2 * glyph_h
+             and xs.size and xs[-1] - xs[0] + 1 > 2 * glyph_h
++            and not fraction_support
+             and not any(
+                 (c, d) != (a, b)
+                 and (c, d) in supporting_rows
+@@ -601,6 +633,9 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+                 and b - prev_a + 1 <= 3.2 * max(line_h, glyph_h)
+                 and _single_fraction_row(ink, prev_a, b, glyph_h)
+             )
++            supported_fraction = _fraction_across_split(
++                ink, prev_a, (prev_b + a) // 2, b, glyph_h
++            )
+             separate_full_row = (
+                 max(heights) >= 1.8 * glyph_h
+                 and min(heights) >= 0.6 * glyph_h
+@@ -612,17 +647,19 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+                 and not different_stacked_rows((prev_a, prev_b), (a, b))
+                 and
+                 a - prev_b <= (
+-                    0.6 if min(heights) < 0.4 * line_h else 0.5
++                    0.75 if supported_fraction
++                    else 0.6 if min(heights) < 0.4 * line_h else 0.5
+                 ) * min(line_h, 1.5 * glyph_h)
+                 and (
+                     compact_fragment and aligned
+                     and min(widths) / max(widths) >= 0.65
+                     or fraction_spill
+                     or radical_overbar_spill
++                    or supported_fraction
+                 )
+             ):
+                 joined[-1] = (prev_a, b)
+-                if fraction_spill or radical_overbar_spill:
++                if fraction_spill or radical_overbar_spill or supported_fraction:
+                     fraction_starts.add(prev_a)
+                 continue
+         joined.append((a, b))

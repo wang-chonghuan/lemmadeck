@@ -1,0 +1,85 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "7a",
+  "page": 260,
+  "printed_page": 254,
+  "notes": [
+    "Unit 44 continues with the D>0 case. Its first displayed identity wraps within the paragraph across two printed rows.",
+    "The final paragraph is open after the clause about D=0 and continues on physical 261.",
+    "No source figure or table is visible; typographic underlining of terms is not treated as an illustration."
+  ],
+  "errata": [],
+  "source": {
+    "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
+    "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",
+    "pdf_page": 260
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "134cc932ac4926875ca7b4a00fd2ad6a8e08baea0613488e9b777e65d16e9274"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "dad8d974ba16880482f359073263269de8c405ccf8cb17dc4215fad11da44849"
+  },
+  "printed_lines": 19,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p -->
+3. 设 $D>0$. 我们把分式 $\frac{D}{4a^2}$ 写成平方的形式：$\frac{D}{4a^2}=↵\left(\frac{\sqrt{D}}{2a}\right)^2$. 那么方程（1）就和下列方程同解：
+
+<!-- p -->
+$\left(x+\frac{b}{2a}\right)^2-\left(\frac{\sqrt{D}}{2a}\right)^2=0$，
+
+<!-- p -->
+就是
+
+<!-- p -->
+$\left(x+\frac{b}{2a}+\frac{\sqrt{D}}{2a}\right)\left(x+\frac{b}{2a}-\frac{\sqrt{D}}{2a}\right)=0$.
+
+<!-- p -->
+由此得：
+
+<!-- p -->
+$x+\frac{b}{2a}+\frac{\sqrt{D}}{2a}=0$　或　$x+\frac{b}{2a}-\frac{\sqrt{D}}{2a}=0$，
+
+<!-- p -->
+就是
+
+<!-- p -->
+$x=\frac{-b-\sqrt{D}}{2a}$　或　$x=\frac{-b+\sqrt{D}}{2a}$.
+
+<!-- p -->
+方程（1）有两个根：
+
+<!-- p -->
+$\frac{-b-\sqrt{D}}{2a}$　和　$\frac{-b+\sqrt{D}}{2a}$.
+
+<!-- p -->
+可采用下面的简便写法：
+
+<!-- p -->
+$x=\frac{-b\pm\sqrt{D}}{2a}$，其中　$D=b^2-4ac$，
+
+<!-- p -->
+我们把它叫做二次方程的根的公式.
+
+<!-- p -->
+我们看到，二次方程的根是不是存在以及根的个数决定
+于表示式 $D=b^2-4ac$ 的值. 这个表示式叫做二次方程的判
+别式.
+
+<!-- p open -->
+我们已经知道，当 $D<0$ 时，方程没有根；当 $D=0$ 时，
+
+<!-- foot -->
+254
