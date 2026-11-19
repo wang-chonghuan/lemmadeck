@@ -5,9 +5,16 @@
   "page": 219,
   "printed_page": 213,
   "notes": [
-    "751 а) 的左端印作 x，忠实写为 $x=-\\frac{6}{x}$，不改成 y，也不新增答案."
+    "751 а) 的左端独立源审确认印作x，忠实正文仍写$x=-\\frac{6}{x}$；局部独立数学裁决确认函数题应为$y=-\\frac{6}{x}$，仅登记勘误供现代层应用。"
   ],
-  "errata": [],
+  "errata": [
+    {
+      "id": "p0219-math-1",
+      "block": "p0219#10",
+      "original": "$x=-\\frac{6}{x}$",
+      "reason": "For real nonzero x the printed relation implies x^2=-6, so it has no real graph; x=0 is undefined. The task asks for function graphs and monotonic intervals and uses y as output in its companion and parallel tasks. Keeping the printed right-hand expression -6/x, the uniquely supported minimal semantic repair is y=-6/x. An alternative x=-6/y yields the identical graph, not a competing mathematical intent. Independent local adjudication SHA25643ee191e176f07eadcf53f3aae02feab7e71540cbe89a9f36e1ec279254cedc8; source leftx remains unchanged."
+    }
+  ],
   "source": {
     "pdf": "7a 苏联十年制学校数学教材 代数 七年级.pdf",
     "pdf_sha256": "8070c333ee46fb0dc650cb32d4d898f605ed308559b6cc430425d908dae6b052",

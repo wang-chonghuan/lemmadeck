@@ -22,11 +22,18 @@
   "notes": [
     "页首“象”承接物理214页末“图”；本页无新课程标题。",
     "图46与图47均为第34单元正文图，不属于习题；保留网格、曲线、轴及标签的整图粗框。",
-    "气温上升区间首端点本次像素识别为0，转写]0,16[；可能存在0/6识别或原书印误，保留不确定性供独立源审，零勘误，不按语义修正。",
+    "独立源审确认气温上升区间印刷首端点为0，忠实正文仍保留]0,16[；独立局部数学裁决确认应为]6,16[，仅登记勘误供现代层应用。",
     "图47图题与“取值区间是[-3,7]”末行同排，cap samerow。",
     "页末“从函数f在区间[-3,2[内的图象可以看出，随着自变量”续至物理216。"
   ],
-  "errata": [],
+  "errata": [
+    {
+      "id": "p0215-math-1",
+      "block": "p0215#5",
+      "original": "$]0,16[$",
+      "reason": "The printed decrease on [0,6[ contradicts the simultaneous printed increase on ]0,16[: at times 1<2 they require opposite strict inequalities. The same block explicitly changes from decreasing to increasing at6 and reverses at16. Keeping these statements and bracket conventions, the unique minimal repair of the intervening rising segment is ]6,16[. Independent local adjudication SHA25643ee191e176f07eadcf53f3aae02feab7e71540cbe89a9f36e1ec279254cedc8; source0 remains unchanged."
+    }
+  ],
   "printed_lines": 19,
   "figures": [
     {

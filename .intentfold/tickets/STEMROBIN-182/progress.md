@@ -1,7 +1,70 @@
 # 当前开发状态
 
+### resume182-11 续接 n34–n36 源与现代阶段
+
+- 三课当前离线 gate 已收齐：31 原题/只读答案、39 选择题/182 选项，
+  原课现代图10、新选择图2分别计数；现代正文流30/16/15段。
+  n35合并affected PASS、n36两题774读图affected PASS，十九未变题及全部键/选项复用。
+  三课具名retain均exit0；新图同字节提升，原FIRST失败稿与审查不改。
+- 显示FIRST：n34/n35各六DOM PASS但目视各四REVISE，真实缺陷为离线页脚导航，
+  n34另有分离图题。只作离线DOM派生，全部持久课文/题/答案/图稿哈希不变。
+  n34四视面affected DOM/目视PASS、n35四视面affected DOM/目视PASS；
+  两课各两选择视面原PASS保留。n36首次六视面DOM/目视PASS。
+  当前十八视面由原/affected哈希绑定合并，没有重新跑三课完整显示批次。
+  新目视图片上下文依次6/6/5/4/8，父新增0；压缩全页与手机隐藏横滚部分的
+  限制保留，不冒充新的数学/标签或应用交互验收。
+- 本分支fetch exit0，HEAD/FETCH_HEAD同为db55b23d03866184757cf0460e994817284bb221，
+  未pull main。接着去重留存FIRST/affected证据并窄commit/push；不等待整册完成，
+  n37仍仅227边界，不计交付。未知费用/host用量/active时长不估算。
+- 留存exit0；窄暂存FIRST因三份必要日志被*.log忽略而exit1，实际失败收据保留。
+  只将持久副本扩展名改为.record、重绑manifest路径，字节不变；700份去重证据，
+  从已有白名单部分暂存续接，不重跑已通过的内容或显示。
+- 路径恢复后859文件范围/secret/临时引用PASS，默认空白检查首次exit2仅报八份
+  不可变证据EOF空行。逐份确认工作稿、暂存blob与manifest哈希相同；仅此八文件
+  关闭blank-at-eof，其他文件默认规则，实际恢复检查exit0/0，原字节不改。
+  加留存恢复记录后709份去重证据、868暂存文件；非本批layout/测试/4m/旧7a未纳入。
+- 仅在 d9b1/182 同分支续做；n34/n35 已装订，n36 首次隔离装订及 modern
+  prepare 均 exit0：13 正文块、761–776 十六原题、零图。n37 仅 227 边界，
+  不提升部分课，不重跑此前装订。三课尚未计完整离线交付。
+- 221–227 七页 FIRST finalize 全 exit0；首次独审六 PASS，225 的 765b
+  原先误读为 a≥0，实际原页为 a>0；已最小修订并 affected finalize exit0、27/27。
+  零图 affected 绑定 PASS；同页 765a 的 c≥0、765d 的 a≥0 保留。
+- n34 登记 215 上升区间 0→6、219 题751左 x→y 两处勘误，各 affected
+  finalize exit0、19/19；来源块及图框不变。旧裁图无 digest 基线，未冒称旧字节
+  身份已证。现代 source_text/source.data 保留原式。
+- n34 第三处 218#9 首次字面唯一性 HOLD 保留；澄清确认等价表达不是数学意图
+  歧义，只改最后“函数值也较大”为“函数值也较小”，保留“不成立”及全部公式。
+  用完整含公式原段登记，218 仅一次 affected finalize exit0、24/24。
+  现代模板及持久草稿已应用；首次绑定脚本参数次序错误 exit1、零工作稿写入，
+  修正次序并复用原冻结稿后 exit0。fig51 仅改文本/metadata hash，SVG/预览未改。
+- n34 八图 FIRST 独审六 PASS、47/51 REVISE；只修三处标签，fresh 两图
+  affected 复审 PASS。原图、曲线、网格和其余对象保持；FIRST 失败候选保留。
+  十张 n34/n35 图同字节提升 spec/SVG，render 仅重绑持久路径，具名 review PASS。
+- n34 adapt-finalize FIRST exit0；n35 FIRST exit2 为工作模板图路径和边界绑定，
+  同步 final manifest 并按规范化 proseFlow 修复边界后 affected finalize exit0。
+  绑定 helper 两次零工作输出失败亦保留，不计内容失败；n35 最终16段、四边界。
+  n36 FIRST exit2 为原标题空格及776多余layout flag，最小修复后 exit0。
+- 三课选择作者已冻结40题186项（8/38、11/52、21/96），31 原题的 source
+  解均先冻结。n34结构首次记号失败与修复保留，source→view→key FIRST PASS；
+  已具名retain，三表面×桌面/手机六组合FIRST DOM检查PASS，截图独审在途。
+- n35 FIRST 独审仅q06/q09同完整结果跨题泄漏而REVISE；合并758/759c
+  同一图象—解集任务，改为10题48项，另外九题不变；affected独审在途。
+- n36 FIRST 独审仅774两题缺实际交点读图而BLOCKED，21键/96项真值全通过。
+  原ZERO图是初始设计目标而非人类红线；新增两张authoredBasis图无答案标注，
+  首图渲染四标签碰撞最小修复后通过、另一图FIRST通过；新图独审在途。
+  首次失败稿和审查保留，另外十九题不重复审查。
+- 31 个只读答案具名 prepare、全部 ungraded、parts=[]，bookRaw 保留。
+  FIRST 独审仅768漏“被开方式写成平方”，补全八小问推导后 affected PASS；
+  另外30题通过不重审。三课 answer-finalize 各 exit0；哈希确认只增加ready/count，
+  答案内容不变。三课完整离线 gate 完成，commit/push接上述最新记录。
+  父本次新图0，保守原图6不重开；原87/1506/6184/666及上一批新增完整课3不变。
+  无 DB/publisher/app/交互cap3/E/merge/deploy/closure；正式机械防线仍留最终 handoff。
+
 ### resume182-11 三课完整离线成果已收齐，窄提交后续 n34–n36
 
+- 492文件窄commit/push为db55b23d03866184757cf0460e994817284bb221，
+  独立ls-remote完整SHA一致、暂存区空。未pull main或更换工作树。
+  接续221–227首次备料以及n34已裁决的两处勘误登记，不重复三课通过阶段。
 - n31/n32/n33现代课均ready，合计67正文块、16原题及16标准答案、
   四确定性图、18新选择题/85选项。答案独立绑定三课PASS。
   n31首次语义exit3仅一条干扰项解释缺“取绝对值”，冻结原稿/原审后
