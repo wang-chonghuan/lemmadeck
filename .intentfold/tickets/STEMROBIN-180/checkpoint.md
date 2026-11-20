@@ -1,5 +1,276 @@
 # 生产检查点
 
+## 180-6 s23 complete offline; narrow commit/push next
+
+2026-11-20T04:21:26.147Z. s23 retains exact old approved TEXT, SOURCE7 and unchanged
+fig71..73. FIG70 FIRST REVISE preserved; two affected defects closed and
+durable approved figure retained. Missing current CHOICE independently passed
+seed alignment, pureview BLIND and key-last FINAL; seven derived/ungraded
+whole-task ANSWER candidates compared against reused independent SOURCE.
+Official retain/finalize and one new offline render/native6 passed; fresh
+six-image DISPLAY PASS parent-bound. Completecourses11->12 only now.
+
+Twenty-seven narrow durable files selected; only s23 modern index row and
+official current profile-path metadata changed, no other lesson row reorder.
+Parentimages0/new image-servicecalls0, historical68/costs/tokens UNKNOWN.
+Historicalfigure repair1/1 plus newlayout1/newassociation1/cumulative3 and
+width declarationcorrection1 retained; no budget reset. FIRST bind/read/path/
+native/content failures kept. n111 paid-request HOLD is separate and unstaged.
+Main/original trees/locks/backups/stash remain untouched; finishreview, no
+DB/merge/deploy/closure/interactions/full-project checks. Next narrow push on
+original branch, then a genuinely source-ready missing phase.
+
+## 180-6 s23 answers ready and native6 PASS; fresh DISPLAY observer active
+
+2026-11-20. CHOICE FINAL manifestf31e2f7b5c3511e722138352e0c87cfeb60b9c00cb88ee50e1de020732d45f56
+0444 parent-bound23 exit0, all20 options/14 wrong procedures/7 coverage records
+PASS. Official with-review validator1 exit0; exact3-file choice transfer and
+official retain1 exit0. Original scratch BLIND/FINAL reports copied exactly
+to durable ticket paths, no original manifest/report rewrite.
+
+ANSWER FINAL manifest70bf8b03b97f0902a5c57adc5240d3d7d1a6594e6544bc31169b71769ed7b4b4
+8762bytes0444 parent-bound14 exit0,7/7 complete displayAnswers PASS against
+reused SOURCE7, no corrections/solve replay. Exact display/parts preserved;
+only official prepared prompt/figure/historical metadata enriched. Official
+finalize1 exit0,auto0/ungraded7/ready. Current Dirac and Huygens closed only
+after actual returns, no old chats/reviewers woken.
+
+One new s23 offline render exit0,19 display paragraphs/7 tasks/5 choices.
+New native6 once exit0,desktop1440/mobile390 text/exercises/choices allPASS,
+reusedsurfaces0, no pageoverflow/keyleak/formulaerror, existing figures present.
+Fresh sole DISPLAY Kant01a1f72a-1c04-71e0-b2ca-1136f463617a now opens only6
+new screenshots once each; parent0. Actual independent DISPLAY result pending.
+Completecourses11; no seal/stage/commit/push yet. Newpaidimages0/historical68,
+costs/tokens UNKNOWN; originaltrees/locks/backups/stash/failures and n111
+paid-request HOLD preserved. Finishreview/no DB/merge/deploy/fullchecks.
+
+## 180-6 s23 BLIND PASS and author packets bound; CHOICE FINAL active
+
+2026-11-20. Current author returned frozen CHOICE and ANSWER packets, both
+DRAFT_NOT_APPROVED. CHOICE manifestb76c821d20a0a6b661c0c6f82e9eeca16a568f8c205813f8ab9977bc275f9608
+9778bytes; FIRST parentbind exit1 treated official selected-lesson index hash
+as whole-book byte hash. FIRST streams/binder kept; only explicit
+official_seed_trace book identity handling corrected,5 targeted checks PASS.
+Affected parentbind2 exit0 bound26; all authored files unchanged.
+ANSWER manifest63079ff4b90d701e677ab80ce731505f6d5223b0dc78f0d796cce182257cc89b
+6453bytes parent-bound14 exit0,7 derived/ungraded/parts0 candidates only.
+
+Same current Dirac returned BLIND_PASS_VISIBLE_CHOICES_ONLY,5 items20 options,
+6 independent true options0 blocking defects. Manifest23f594bb3fa9334048dfb95ccdf7a02482575ce023fe5328858f5813d3f783bb
+4534bytes0444 parent-bound8 exit0. Recognition/performance limits retained,
+not fullcoverage or FINAL approval. Current FINAL now discloses only CHOICE
+draft/key/author reasoning for20-option and7-source comparison. ANSWER stays
+withheld until CHOICE FINAL. No SOURCE solve/image replay or approval by
+checker. Retain/fullcourse tools prepared but not executed; no DISPLAY,
+staging/commit/push/count. Completecourses11/new image-servicecalls0 and
+parentimages0; costs/tokens UNKNOWN. Originaltrees/locks/backups/stash/
+failures unchanged; finishreview/no DB/merge/deploy/closure/fullchecks.
+
+## 180-6 s23 seed aligned; pureview BLIND active; partial binder corrected
+
+2026-11-20. Same current Dirac returned ALIGNED_FOR_PUREVIEW_BLIND_SUBMISSION,
+seven tasks/three definitions; manifest46cf9b79e7597f2d68c959c7a26396411e7c13aa76d310e37363077b7dd45245
+unchanged0444. FIRST parent binder exit0 recognized only2 output bindings and
+missed three nested before/after input records; FIRST receipt and pre-correction
+binder preserved. Narrow nested snapshot handling only, five synthetic targeted
+checks PASS. Affected parent bind attempt2 exit0,8 actual observations across5
+unique file records. No content/source review replay or budget reset.
+
+Same current Dirac now receives only pureview, no author key/draft/ANSWER.
+Current author saved CHOICE5/questions20/options, structuralcheck1 exit0;
+not semantic approval. Its FIRST report-path freeze failure retained, missing
+technical freeze completed without changing pureview/key or rerunning checker.
+Seven ANSWER candidates remain current author's own missing-stage work.
+No DISPLAY/staging/commit/push/completion increment. Completecourses11;
+old approvals/failures/locks/backups/stash/originals kept. Newpaidcalls0 and
+parentimages0; costs/tokens UNKNOWN. Finishreview/no DB/merge/deploy/fullchecks.
+
+## 180-6 s23 saved SOURCE7 eligible and parent-bound; CHOICE seed alignment active
+
+2026-11-20. Same current Dirac returned ELIGIBLE_FOR_CURRENT_S23,7 tasks,
+bindingmismatches0; manifest9b4055628d2ef681506957c64542d1fadda92fecb1e894099a8cd04ba40f4b10
+0444 parent-bound9 exit0. Five actual inputs unchanged, all task clauses and
+local-g/static-model/initial-state/scaled-drawing limits retained. Existing
+SOURCE19/19 s23 subset7 reused; solve-replays0, historicalfacets UNKNOWN.
+No new SOURCE semantic approval, candidate comparison or image replay.
+
+Same current Dirac now receives only frozen author seed for SOURCE alignment;
+no draft/key/ANSWER disclosure. Current Huygens continues CHOICE-first then
+ANSWER in its existing scratch, no replacement/restart. Its technical-FIRST
+records remain saved; no content verdict inferred from failed path/read syntax.
+FIG70/TEXT and fig71..73 passing stages untouched. No DISPLAY, staging, commit,
+push or completion increment. Completecourses11; new image-servicecalls0,
+parentimages0, costs/tokens UNKNOWN. Originals/locks/backups/stash/failures
+preserved; finishreview/no DB/merge/deploy/closure/interactions/fullchecks.
+
+## 180-6 s23 FIG70 affected PASS retained; missing CHOICE/ANSWER active
+
+2026-11-20. Same current Dirac closes both R106 defects, no new callout
+defect. Official record_review once exit0; affected manifest712b57ec1a01b52a92d6961dbc6da72c40b4671d5a0972093299f459f42674ef
+0444 parent-bound25 exit0. Original/source/FIRST screenshots not reopened,
+new affected screenshot1; reviewer context3 images, parent0. FIRST REVISE and
+all original failures retained. Historicalrepair1/1 + newlayout1 +
+association1/cumulative3 and declarationcorrection1 remain actual.
+
+Approved fig70 spec/SVG copied exactly to four durable figure files; render/
+review path metadata rebound only, no new rendering or visual approval.
+Existing13 fig71..73 files unchanged. Approved lesson/exercise TEXT exact
+working copies only; official adapt-finalize exit0,18 prose/7 tasks/4 figures.
+Modern6p index adds only s23 plus official current-profile path metadata;
+unrelated lesson rows/ordering unchanged. Official ANSWER prepare once exit0
+creates seven blank prepared candidates, not keys/approval.
+
+Fresh author Huygens01a1f710-1154-79a0-a119-479098ac1cad owns missing
+CHOICE-first (seed solve/view/key freeze) then ANSWER drafting in separate
+scratch roots; no prior choice/answers read. Same current Dirac binds reused
+old independent s23 SOURCE7 to current prompts, no new solve/author-key read.
+Only source binding is underway, no answer comparison/CHOICE BLIND yet.
+No fullcourse count, DISPLAY, staging/commit/push. Completecourses11;
+new image-service calls0/fees UNKNOWN. Originals/locks/backups/stash/failures
+kept. Finishreview; no DB/merge/deploy/closure/interactions/fullchecks.
+
+## 180-6 s23 affected render/native PASS; same reviewer affected comparison active
+
+2026-11-20. Current association spec7a39036ed0609a184dfc36685750db21a4a133c97a8400fe4214efe85ad20258
+official render exit0,35 objects/7 labels. New native exit0,14 observations,
+min16.70625px; screenshotd4891c9f0586fcd2c2145e9d16e10fb93fce3f0c62311e9deedafa5accb6d7fd.
+Same current Dirac receives only affected candidate/diff/new full-mobile
+screenshot, reuses original pixel inventory/prose/structure/units/equality
+and culture checks. Original image and FIRST screenshot will not be reopened.
+No affected independent verdict yet. FIRST REVISE and original failed stages
+stay bound. Render/native actual attempts3/3, first nativefailure1 retained;
+historicalrepair1/1+newlayout1+association1/cumulative3, declarationcorrection1.
+No approved TEXT/SOURCE/other-figure replay, retention, ANSWER/CHOICE or count.
+Completecourses11, parentimages0/newpaidimages0, fees UNKNOWN. Original trees,
+locks/backups/stash/failures kept; finishreview/no DB/merge/deploy/fullchecks.
+
+## 180-6 s23 independent FIRST REVISE bound; two-defect correction executed
+
+2026-11-20. Dirac genuine FIRST REVISE: FIG70-R106-01 unsupported
+reference-arm provenance; FIG70-R106-02 ambiguous1N upstream-connector
+association. Frozen failed review/report/manifest preserved unchanged.
+Manifest1e3a1e673951d753a90abac13bc7ea83dfcd2aeb3f3823ba0aa8953d9d87587c
+0444 parent-bound25 exit0; reviewer observed source1/native1 images.
+
+Latest direct ordinary reversible recovery delegation applied to one actual
+affected correction: neutral lower-member object/assertion IDs and inventory,
+function UNKNOWN retained; four plain leader segments bind unchanged force/mass
+labels explicitly to each assigned weight. Added geometry is callout-only,
+not changed apparatus geometry. Old text/values/anchors/thresholds unchanged.
+Inverse comparison confirms no other changes. Candidate7a39036ed0609a184dfc36685750db21a4a133c97a8400fe4214efe85ad20258,
+diff130382d398f8288d17a7e7080ec321094175ee53cea0a50a39d83337416f24c9.
+Historicalrepair1/1 stays, newlayout1+association1/cumulative3; no reset.
+Affected render issued once; no verdict/PASS assumed. Next only affected
+native and same reviewer's two-defect comparison, no original image replay.
+Completecourses11, no retention/ANSWER/CHOICE/DISPLAY. Parentimages0,
+new image-service calls0/fees UNKNOWN; originals/locks/backups/stash/failures
+kept. Finishreview; no DB/merge/deploy/closure/fullchecks/old-chat wakeup.
+
+## 180-6 s23 render/native PASS bound; first independent fig70 review active
+
+2026-11-20. Label candidate render exit0. FIRST current-CSS native exit1
+measured undeclared495px from real16.5px*30em prose CSS. New spec changes
+only widths to297/306/352/358/495/640/660; objects/thresholds unchanged.
+Affected official render exit0; SVG identicala698051ad200cd65018a83122a2d322050a753ebc7d678b573779592e1b085be.
+New native exit0,14 observations/min16.70625px, screenshot8fb2d8d2ec1c92d33fec611c8bc327d4175beb7ba1cbc649c2a68236b7dfa18f.
+Candidate manifestb8e0efc2300018b9cf80e82b41fbf057ecd233c5cdbe5b319eedc17770ab9c0b
+0444 parent-bound36 exit0. FIRST failure and both candidates preserved.
+Historicalrepair1/1, newlayout1/cumulative2 and declarationcorrection1 recorded.
+
+Fresh sole bounded independent Dirac01a1f6ff-f765-7821-8dc0-d410882272fb
+reviews only original fig70 once and new full/mobile native once. Its original
+pixel inventory freezes before candidate/text reading. No verdict returned yet.
+Existing19/19 SOURCE report covers unchanged s23 seven questions and can be
+reused; no source solve or passing TEXT/other-figure replay. No dependent
+ANSWER/CHOICE/retention/fullcourse claim. Completecourses11; parentimages0,
+new image-service calls0, tokens/fees UNKNOWN. Main/original trees, locks,
+backups, stash and failures preserved. Finishreview; no DB/merge/deploy,
+closure/interactions/fullchecks/old-chat wakeup or external progress message.
+
+## 180-6 s23 fig70 label-only candidate executed; render/review pending
+
+2026-11-20. Four saved label anchors changed exactly once in a new candidate;
+inverse object comparison confirms all other objects/assertions/source/canvas
+unchanged. Actual current-CSS width declarations add297/358/660 to306/640;
+minText16px and minLabelGap6 unchanged. Candidate2882533d92b1dbcaea18b3a9f206cb17c1673933111e256705f7e555d9661064,
+layoutdiff2702723a9ca16b828a0b77f2b03cf7d27ebab9d3531fe61299ac1be5f7aefa47.
+Historicalrepair1/1 retained, newlayoutrepair1/cumulative2 actually executed.
+Render command issued once; no pass or independent approval claimed yet.
+Unknown lower-member role and positional mass assignment remain unresolved.
+No passing-stage replay, other-figure load, new image-service request, canonical
+retention or completion increment. Completecourses11. Original trees, locks,
+backups, stash, failures and UNKNOWN costs retained. Finishreview; no DB,
+merge/deploy/closure/interactions/fullchecks or old-chat wakeup.
+
+## 180-6 s23 approved TEXT and exact failed spec recovered; label-only recovery next
+
+2026-11-20. Two successful saved cat streams recovered only exact approved s23
+lesson17564/exercises10957 bytes, old SHA01b02747/2df5dd3a matched in full.
+Recovery manifest802d97eb36d4583f4fe599916294875d44580f2d02707aa63708486bc1173b91
+0444 parent-bound7 exit0. Old TEXT PASS and raw byte identities reused; no
+TEXT/SOURCE/ANSWER/CHOICE semantic replay or canonical retention.
+
+Exact old failed fig70 spec22683 bytes recovered using only saved fig70
+constructor in read-only VM plus the original nine-fill deletion, before any
+write matched old handoff0e97a5e9cc635ac3af6be8f8edba8f5f033415c0a2e18544ceef30d04e583073.
+Recovery manifest44e25782ea1fc8cf0375103df3cb0c12d69391c7063e43761366dc51a018083f
+parent-bound9 exit0. Original failure stream preserved; FIRST constructed bytes
+have no independent historical hash and are labeled derived, not recovered.
+No old commands/render/browser/image/other-figure execution or package restore.
+
+Newest human reversible technical-recovery authority is applied only to four
+label positions in a new spec; no data/geometry/relations/threshold changes.
+Historicalrepair1/1 stays; planned newlayout1/cumulative2 must be observed, never
+reset or called independent approval. Fresh fig70 inventory UNKNOWNs stay.
+Failed render must pass and independent review is still missing. Completecourses11.
+No DB/merge/deploy/closure/interactions/fullchecks; original trees remain read-only.
+
+## 180-6 s23 SOURCE inventory bound; missing approved bytes remain local HOLD
+
+2026-11-20. Bounded AUTHOR Confucius completed and closed, original fig70 PNG
+opened exactly once; no repeat image/context/inventory. Frozen manifest
+e62c77711040e6dbe1648ddee854fb0457fb0db132c5800b57a0c9e0a324ec57
+parent-bound13 exit0 on attempt2. Two explicit UNKNOWN required premises stay
+unbound: approved modern TEXT templates and old failed fig70 spec. This is
+inventory binding only, not SOURCE/figure/TEXT approval or fullcourse readiness.
+
+FIRST parent-binding exit1/streams and pre-repair binder retained. Narrow
+binder repair recognizes only explicit all-UNKNOWN unboundRequiredPremises;
+known-file invalid/missing/mismatched hashes still fail. Seven targeted checks
+PASS. Frozen manifest/report/inventory/RAW premise bytes unchanged. Old fig70
+content repair1/1 remains exhausted; no new figure repair/render/generation.
+
+n109 pushed1e24e3b66c4b986488f31a03d16f21e55e3206f4; completecourses11.
+n111 fig241 paid-request local HOLD unchanged. Independent source-ready
+necessary stages next; no package-wide recovery or passing-stage replay.
+Image-service historical68/new0, billing/tokens UNKNOWN. Main/original trees,
+locks/backups/stash/failures preserved. No old chats/reviewers awakened.
+Finishreview; no DB/merge/deploy/closure/interactions/full-project checks.
+
+## 180-6 n109 pushed; s23 necessary source inventory active
+
+2026-11-20. n10920-file narrow commit
+1e24e3b66c4b986488f31a03d16f21e55e3206f4 fast-forward pushed to original
+codex/STEMROBIN-180-textbooks; actual ls-remote matches. Completecourses11.
+All old approved TEXT/ready ANSWER bytes retained without semantic replay;
+current CHOICE one-stem repair/affected BLIND/FINAL and new native6/fresh
+six-image DISPLAY sealed and parent-bound. DISPLAY bound20, reviewer closed.
+Recovery-to-complete wallclock2598.423s includes waiting/review, not API time.
+
+Immediately continued source-ready s23 missing phase. Prepared-baseline
+manifest bff749a5b85cd68da9c778849a001b49fc121f0a9f2ea60736115502475dcc1b
+0444 parent-bound8 exit0: exact old prepared figures manifest recovered;
+lesson/exercise prepared baselines are not old approved TEXT bytes.
+Fresh bounded AUTHOR Confucius01a1f6e8-97c6-7d80-a4da-ec4f023f9c48 owns
+only fig70 source inventory/modern-text prerequisite. Original PNG once,
+inventory freezes before RAW text; no draft/render/review/promote or old
+fig71-73 replay. Old fig70 repair1/1 and failed bytes' missing status kept.
+
+n111 fig241 paid-request local HOLD unchanged, no new image-service call.
+Historical68/costs and tokens UNKNOWN. Original trees/locks/backups/stash
+and all failures preserved, main read-only. No old chats/reviewers woken.
+Finishreview; no DB/merge/deploy/closure/interactions/full-project checks.
+
 ## 180-6 n109 complete offline; narrow commit/push next
 
 2026-11-20T03:01:58.538Z. n109 retained exact approved TEXT and three ready ungraded
