@@ -1,5 +1,152 @@
 # 生产检查点
 
+## 180-6 r185 n42 OFFLINE_COMPLETE_REVIEW_READY sealed; narrow delivery next
+
+Same exact absolute 9611W/current chat. McClintock FIRST six-screenshot
+DISPLAY all PASS returned/collected/closed; manifest f9eb4419/reportd2170b07/
+sealbc8af0cf/parentd7dd87b3 actualbytes bound. Six opened once, reopens0;
+parent screenshots0. Exact report retained without rerender/browser/review.
+Fullcourse sealb76f19c4/parenta93dab07 binds RAW2/
+11proseblocks/18paragraphs/anchors5,11,14,16/2FIG/3wholewritten/3ungraded/
+3free/3CHOICE12options/6headedpages and all approved stage records.
+Original source and earlier passed reviews reused; only previously missing
+stages completed. Remote fetch equals complete s17 HEAD982fbb79c, staged0.
+Complete17/continuation increment1 until actual push; target18. No partial
+resource/report-only commit. Original HOLD/FAILs/corrections/messages/trees/
+locks/backups/stash unchanged, unknownbytes0/service69/retry0/newpaid0/
+tokensbillingUNKNOWN/browser3. Currentchat/checkpoint/40minsupervision,
+finishreview/noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r184 n42 final reviews and native PASS; sole first DISPLAY active
+
+Same exact absolute 9611W/current chat. s17 delivered982fbb79c,
+complete17/continuation increment1 unchanged. Mendel final independent
+CHOICE3/12 + ANSWER3whole/Q2bothcases + affected ANCHOR PASS returned,
+collected/closed; manifest e4dafed9/noncircular seal/parent actualbytes bound.
+Approved choices retained; answer finalize PASS auto0/ungraded3/parts0;
+interaction prepare/finalize PASS free3. FIRST offline render and six-page
+headed native DISPLAY PASS f99cf0aa:18paragraphs/breaks5,11,14,16/2figures/
+3displayanswers each written surface/3choices12options/browser closed.
+Parent screenshots opened0/reopens0. Sole fresh McClintock
+01a1fa27-ff2d-74f2-952f-75f2eca79cd0 reviews six saved PNGs exactly once;
+no browser/rerender/SOURCE/TEXT/ANSWER/CHOICE/FIG replay.
+Complete seal/commit/push pending independent DISPLAY. Browser runs3
+=s17headed1+n42isolatedauthor1+n42headed1. Original HOLD/FAILs/messages/
+trees/locks/backups/stash preserved; unknown bytes restored0/service69/
+retry0/newpaid0/tokensbillingUNKNOWN. Progress only current chat/checkpoint,
+supervision40min/delegated ordinary reversible repairs, finishreview/
+noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
+## 180-6 r183 n42 CHOICE author bound; first final independent review active
+
+Same exactabsolute9611W/currentchat. s17 delivered982fbb79c/complete17/
+increment1 unchanged. n42 Mill FIRSTauthor returned/collected/closed;
+CHOICE3questions cover3WHOLEseeds/zeroimages, single+multiple native
+modes, capacityloss declared. Structuralonceexit0; manifest9df1d02f/
+parentb5b85159 actualbytesbound. No finalCHOICE PASS or retention yet.
+Only fresh Mendel01a1fa1e-4620-7963-b6d1-094993acf107 sole8p reviewer:
+seedblind→viewblind→authorkeys, then FIRSTwrittenkey comparison against
+existingSOURCE3whole/Q2bothcases and affectedanchor-onlymeaningcheck.
+No fullSOURCE/TEXT/FIG replay, images/browser/modelservice0.
+FIRSTn42native script446fc247 prepared/syntaxPASS only, NOTRUN;
+expected18paragraphs/4breaks/3displayanswers/6headedpages, figures115116.
+N42 finalANSWER/CHOICE/anchor approval/finalize/DISPLAY/seal/commit
+stillpending. OriginalHOLD/FAILs/corrections/stash/trees/locks/backups/
+messages unchanged; no oldchat/reviewerwake. Service69/retry0/newpaid0/
+tokensbillingUNKNOWN/currentchat/checkpoint/40minsupervision/
+finishreview/noDB/merge/deploy/formalhandoff/globalchecks.
+
+## 180-6 r182 n42 FIG+first SOURCE PASS bound, adaptation PASS; first CHOICE active
+
+Same exactabsolute9611W/currentchat. s17 complete17/increment1 delivered
+982fbb79c unchanged. FreshHelmholtz returned/collected/closed: manifest
+ccba21c0/parentb9a272b6 independentlyFIG115/116PASS + FIRSTwritten
+SOURCE3wholequestions/Q2bothcasesPASS. Source2+preview2once/reopens0.
+OfficialFIGrecordonce/pass and durablemetadata rebound; specSVGunchanged,
+retentione91c63eb. No figure/image/browser/source/TEXT review replay.
+
+FIRSTadaptFAILd8a35def on oldanchor after currentnormalization retained;
+audit frozen. Existingnormalizer-onlyrebinding64a42752 changed
+section_breaks only, actual18paragraphs/breaks5,11,14,16. AdaptPASS17133c4e;
+affectedanchormeaning observation still required in final independentreview.
+FIRSTwrittenkeycandidatef2d4a1c7/3ungraded/0parts frozen pendingfinal
+comparison to existing newlyapprovedSOURCE; no finalize yet.
+FIRSTchoiceseed05c34a85/3WHOLEtasks/concepts0,6,9/0images prepared.
+FreshMill01a1fa16-b6b0-7bd1-b957-5e578936c5eb sole8p blindauthor.
+Profilecurrentabsolute→relative samehash: initialcheckerFAILaacced66
+assumed oldrelative but old8p had absent0f12absolute; diagnosis78e0ecd6/
+correctscope7e3d0f03 prove only n42newrow+path, other24rows/order unchanged.
+
+All original HOLD/FAIL/correctioncost/locks/backups/stash/trees/messages
+preserved. Originaltreecheckpoint/usage/ticket exacthash+stashexistence
+supervisorproofa24ef38d; no stagedpartialfiles. Complete17 unchanged;
+N42 finalANSWER/CHOICE/DISPLAY/seal/commit still missing. Service69/
+retry0/newpaid0/tokensbillingUNKNOWN/currentchat/checkpoint/
+40minsupervision/finishreview/noDB/merge/deploy/formalhandoff/globalchecks.
+
+## 180-6 r180 n42 first FIG candidates bound; independent FIG+first written SOURCE active
+
+Same exactabsolute9611W/currentchat. s17 delivered982fbb79c; complete17/
+thisresumeincrement1 remains. n42 Boyle author returned/collected/closed:
+manifest568249a0/seald6f221ea/parentd760b8c3 actualbytes bound.
+FIG115 floatingblockschematic and FIG116 disk/sphere/teardrop FIRST
+deterministic candidates. Officialdraft/renderPASS + standalone18/18
+nativecases/fixed640px/mintext20px, NOT product/fullcourse evidence.
+Author openedSOURCE2+preview2once/4of8/reopens0/corrections0/paid0.
+Bootstrap/missingdocumentFAILs/deviations kept in original author package.
+
+Only fresh Helmholtz01a1fa09-5159-7633-b808-8e4af186cb38 sole8p:
+FIRSTindependentwrittenSOURCE-answer solve3WHOLEquestions/Q2bothparts
+saved before readingfigauthor specs/reasoning, then first independentFIG
+SOURCE2+candidate2once. No prioranswerkeys exist or answerSOURCE replay.
+OriginalSOURCEtranscription/TEXTreview are reused, not rerun or edited.
+No FIGreviewverdict/officialrecord/promotion/adaptfinalize yet.
+Currentnewbrowser2 = parents17headed1 + authorisolatedn42FIG1;
+parentnewimageopens0. Source2/index/approvedTEXT2 kept as r179,
+no unknown-byte restoration or partialcommit. Original HOLD/FAILs/locks/
+backups/stash/trees/messages preserved; no oldchat/reviewerwake.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN/finishreview/
+noDB/merge/deploy/closure/formalhandoff/globalchecks/40minsupervision.
+
+## 180-6 r179 n42 RAW2+approvedTEXT2 exactly retained; first FIG author active
+
+Same exactabsolute9611W/currentchat. s17 complete17/thisresumeincrement1
+delivered982fbb79c/remoteconfirmed unchanged. n42 only4necessaryfiles
+retained2ba8a9ed:actualRAWfullSHAf8723253/858ac6dc + writablecopy of
+2independentlyapprovedTEXTtemplates. No unknownfile/lesson.md invented.
+OfficialsourceindexfirstPASS393a2749/25rows; narrowcheckFAILfc89eac2
+localized to generator moving existingintro last→first. Firstgeneratedindex
+frozen; ORDER-ONLYrecovery7aa4c85c restores old24entryorder/values and
+keeps newn42row aftern41. No SOURCEparser/indexgenerator/model rerun.
+Raw2/index are uncommittedongoingn42 stages, NOT completecourse delivery.
+Fresh Boyle01a1fa00-7f00-7cf3-85ed-d71315778f47 sole8p FIRSTFIG115/116
+author still active; no returnedcandidate/independentreview/PASS/promotion.
+All earlier HOlDs/FAILs/correctioncounts/fees/messages/trees/locks/backups/
+stash remain. Newpaid0/service69/retry0/tokensbillingUNKNOWN.
+Currentchat/checkpoint/40minsupervision/finishreview/
+noDB/merge/deploy/formalhandoff/globalchecks.
+
+## 180-6 r178 s17 complete23files committed/pushed; immediately n42 missing FIG active
+
+Same exactabsolute9611W/currentchat. s17 narrowcomplete23filecommit
+982fbb79c49e005d34445b54fd92ffcb34fd4cbe pushed ORIGINAL
+codex/STEMROBIN-180-textbooks WITHOUTforce; actualremote equalHEAD.
+Fullseal9d6c7568/parent6b643053; DISPLAY3736e165/parent0ceb0a3d;
+FIRST6headedpages+independent6pngoncePASS/parentreopens0. Complete17/
+thisresumeincrement1, no n129/n85/n87/s6 redelivery or passedstage replay.
+No secret/app/DB/8p partialresource in commit. Push evidencec8de7ace.
+
+Immediately fresh Boyle01a1fa00-7f00-7cf3-85ed-d71315778f47 sole8p
+author handles firstmissingn42FIG115/116 from saved approvedTEXTcontexts.
+Original F1-F8 scientificHOLD retained as history; affectedTEXTPASS/bound
+reused. SourcePNG2once and currentcandidateonly boundedimagebatch;
+no paidcall/oldchat/reviewer wake/source/TEXT/ANSWER/CHOICE replay.
+No figurecandidate/PASS or n42completeclaim yet. Main/originaltrees/locks/
+backups/stash/failures/corrections/pendingmessages preserved.
+Progressonlythischat/checkpoint; supervision40min/delegatedordinaryrepairs.
+Service69/retry0/newpaid0/tokensbillingUNKNOWN/finishreview/
+noDB/merge/deploy/closure/formalhandoff/globalchecks.
+
 ## 180-6 r177 s17 OFFLINE_COMPLETE_REVIEW_READY sealed; narrow delivery next
 
 Same exactabsolute9611W/currentchat. FIRSTindependentDISPLAY6savedpngonce
