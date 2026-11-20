@@ -1,0 +1,9 @@
+# D076 Self-Grill
+
+- Did hashes or native mismatch decide fidelity? No. Six sequential RAW/native-preview observations established Task A inventories and stroke/label comparisons. The seventh full original page established the affected emphasis range. Hashes bind the inspected bytes only.
+- Was the original opened without spending another full-page review? Yes. Each D070 RAW is the retained D056 original crop, opened once, followed by its existing native SVG preview. No SOURCE306/307 page was reopened and no image was regenerated.
+- What could silently change the science? A reversed/missing field arrow, dropped loop contour, inverted N/S pole, misplaced alpha angle or omitted normal. All are visibly retained. No current direction or unprinted apparatus was inferred.
+- What resolves the emphasis finding? All seven comparison characters have individual dots beneath them; the comma does not. MD64 and JSON /blocks/0/lines/1 now match. MD24 and /meta/notes/1 document the complete range as a strong-markup surrogate, not printed bold.
+- Did a narrow repair invalidate other approvals? Structured before/current comparison permits exactly the note and emphasis row. All 64 other base input hashes remain equal, including SOURCE315, audits, RAW288289290, SVGs and existing previews. Those stages are reused, not re-reviewed.
+- Did this approve lessons123,127a or128, modern figures or publication? No. Only FIRST RAW/SVG281282283 and the affected314 finding pass. No whole-course or modern approval, source/course consumption, DB, deployment or formal handoff.
+- Were ownership and image limits honored? Seven actual opens in this context, zero reopens/grids/contact sheets; output only in the assigned D076 directory. No freshness/live-ticket rerun, product/meter/index write, Git/worktree mutation, other-chat operation or agent dispatch. Parent consumption remains pending.

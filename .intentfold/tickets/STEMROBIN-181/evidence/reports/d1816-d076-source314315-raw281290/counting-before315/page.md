@@ -1,0 +1,104 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 315,
+  "printed_page": 306,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 315
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "1899168fb20ee46d87161059376a8547156622abb88dd3946d55d4fdca5bceac"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "D071 first-author transcription from physical315 page.grid.png, opened once. Independent SOURCE/RAW/SVG review pending.",
+    "First paragraph is new, not an incoming continuation. Its first seven rows wrap left of figure290; caption290 shares the seventh row. The paragraph then continues through two full-width rows, so p open / figure / cap samerow / p cont preserves it.",
+    "Original figure290 is the complete sliding-bar circuit with A/B/C/D, dashed A-prime/B-prime position, l, vector-like velocity/field labels, alpha, displacement vDelta-t, magnetic-field arrows and right-branch circular instrument. Source crop must retain all labels/arrows without the caption or wrap prose.",
+    "Equations12-5 and12-6 retain |q|, sin-alpha, l, calligraphic E_i and literal positive signs. The work expression retains its printed middle dot. No Lorentz-force or induction sign correction is made.",
+    "A small handwritten-looking mark above AB near the final paragraph is not incorporated as a printed formula or new symbol; its status should be independently checked against the source, not treated as a new mathematical condition.",
+    "Final paragraph ends open at 感生 toward316. No heading, exercise or explanatory footnote is printed; no whole128 assembly or approval. Low full stops are ASCII dots and footer306 is slanted/heavy."
+  ],
+  "errata": [],
+  "printed_lines": 25,
+  "figures": [
+    {
+      "id": "fig-290",
+      "label": "图 290",
+      "box": [
+        631,
+        252,
+        621,
+        341
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p open -->
+现在我们计算匀强
+磁场中矩形回路中的感
+生电动势（图290）. 设
+回路的一边$AB=l$，以
+恒定的速度$\vec{v}$沿着两个
+边$BC$和$AD$滑动，在所
+有时间内都保持与$CD$
+
+<!-- fig 图 290 box 631,252,621,341 -->
+![图 290](figures/fig-290.png)
+
+<!-- cap 图 290 samerow -->
+图　290
+
+<!-- p cont -->
+边平行. 磁感应强度$\vec{B}$与导体$AB$垂直，与它的速度的夹角
+为$\alpha$.
+
+<!-- p -->
+磁场对运动的带电粒子的作用力（参阅§121），其大小等
+于
+
+<!-- p -->
+$f=|q|vB\sin\alpha$.　(12-5)
+
+<!-- p -->
+这个力的方向是沿着导体$AB$的方向. 洛仑兹力(12-5)在路
+程$l$上的功是
+
+<!-- p -->
+$A=f\cdot l=|q|vBl\sin\alpha$.
+
+<!-- p -->
+在导体$AB$中的感生电动势是单位正电荷移动的功：
+
+<!-- p -->
+$\mathcal{E}_i=\frac{A}{|q|}=vBl\sin\alpha$.　(12-6)
+
+<!-- p -->
+这个公式对于在匀强磁场中以速度$v$运动的长为$l$的任何导
+体都是正确的.
+
+<!-- p -->
+在回路的其他导体中电动势等于零，因为它们没有运动.
+因此，整个回路$ABCD$中的电动势等于$\mathcal{E}_i$(12-6)，如果运动
+的速度$v$是恒定的，则电动势保持不变. 此时电流增大，因为
+在导体$AB$向右移动时回路的总电阻减小.
+
+<!-- p open -->
+另一方面，利用电磁感应定律(12-4)也可以计算出感生
+
+<!-- foot -->
+• *306* •
