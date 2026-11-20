@@ -1,5 +1,17 @@
 # Edition Text Contract
 
+## English Headings
+
+With `locale: "en"`, `title`, `chapter`, and `printed_title` may be translated
+into nonempty English text. Preserve the printed title's numeric identifiers.
+Missing or null optional headings stay missing or null. Structural identity,
+including card IDs, section, lesson number, source pages and exercise count,
+remains unchanged, as do the complete source snapshot and its hash.
+Chinese and unspecified-locale headings retain exact source identity.
+Offline rendering uses the translated English chapter directly. Older English
+editions with a source-language chapter still use the English TOC mapping;
+the structurally unchanged section always uses that mapping.
+
 ## Shared Prose Figures
 
 A modern prose block may add `figures: [{"id": "fig-03", "label": "图 3"}]`

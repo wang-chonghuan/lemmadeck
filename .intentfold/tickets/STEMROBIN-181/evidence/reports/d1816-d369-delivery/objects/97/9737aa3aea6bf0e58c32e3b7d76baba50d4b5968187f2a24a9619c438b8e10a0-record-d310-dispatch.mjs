@@ -1,0 +1,11 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const file = '.intentfold/tickets/STEMROBIN-181/production-meter.json';
+const meter = JSON.parse(fs.readFileSync(file));
+assert.equal(meter.currentCheckpoint.completeDeliveredCards, 142);
+assert.equal(meter.currentResume1816.D310.author, null);
+meter.currentResume1816.D310.author = '01a1fabe-522c-7fe1-a4e0-0b3848ab369e';
+meter.currentResume1816.D310.status = 'FIRST_SOURCE380_382_BOUNDED_AUTHOR_ACTIVE';
+meter.updatedAt = new Date().toISOString();
+fs.writeFileSync(file, JSON.stringify(meter, null, 2) + '\n');
+console.log(JSON.stringify({ stage: 'D310', completeDelivered: 142, sourceApproval: false }));

@@ -15,6 +15,77 @@ RENDERER = SKILL / "scripts" / "render_spec.mjs"
 
 
 class RendererNamespaceTests(unittest.TestCase):
+    def test_short_arrows_keep_visible_heads_at_the_specified_endpoint(self):
+        with tempfile.TemporaryDirectory() as temp:
+            directory = Path(temp)
+            spec = json.loads(FIXTURE.read_text(encoding="utf-8"))
+            arrows = [
+                {
+                    "id": "short-arrow", "type": "arrow",
+                    "from": [-1, 2], "to": [-0.82, 2], "strokeWidth": 2.8,
+                },
+                {
+                    "id": "long-arrow", "type": "arrow",
+                    "from": [-4, -2], "to": [4, -2], "strokeWidth": 2.8,
+                },
+            ]
+            spec["objects"].extend(arrows)
+            spec["assertions"].append({
+                "id": "arrow-count", "type": "objectCount",
+                "objectType": "arrow", "count": 2,
+            })
+            spec["source"]["inventory"][0]["objects"].extend(
+                arrow["id"] for arrow in arrows
+            )
+            spec["source"]["inventory"][0]["assertions"].append("arrow-count")
+            spec_path = directory / "arrows.json"
+            svg_path = directory / "arrows.svg"
+            spec_path.write_text(json.dumps(spec), encoding="utf-8")
+            result = subprocess.run(
+                ["node", str(RENDERER), "--spec", str(spec_path),
+                 "--svg", str(svg_path)],
+                cwd=REPO, capture_output=True, text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+            root = ElementTree.fromstring(svg_path.read_text(encoding="utf-8"))
+            unit = min(spec["canvas"]["width"] / 14, spec["canvas"]["height"] / 6)
+            for arrow in arrows:
+                head = next(
+                    node for node in root.iter()
+                    if node.attrib.get("data-arrowhead-for", "").endswith(
+                        f"_ld-{arrow['id']}"
+                    )
+                )
+                values = re.fullmatch(
+                    r"translate\(([^ ]+) ([^)]+)\) rotate\(([^)]+)\) "
+                    r"scale\(([^)]+)\) translate\(([^ ]+) ([^)]+)\)",
+                    head.attrib["transform"],
+                )
+                self.assertIsNotNone(values)
+                x, y, angle, scale, ref_x, ref_y = map(float, values.groups())
+                self.assertGreater(scale, 0)
+                self.assertEqual(angle, 0)
+                self.assertAlmostEqual(
+                    x + (10 + ref_x) * scale,
+                    600 + arrow["to"][0] * unit, delta=0.1,
+                )
+                self.assertAlmostEqual(
+                    y + (5 + ref_y) * scale,
+                    300 - arrow["to"][1] * unit, delta=0.1,
+                )
+                expected_head = (
+                    0.18 * unit / 2 if arrow["id"] == "short-arrow" else 6 * 2.8
+                )
+                self.assertAlmostEqual(scale * 10, expected_head, places=5)
+                shaft = next(
+                    node for node in root.iter()
+                    if node.attrib.get("id") == head.attrib["data-arrowhead-for"]
+                )
+                self.assertNotIn("marker-end", shaft.attrib)
+                self.assertGreater(
+                    float(shaft.attrib["x2"]) - float(shaft.attrib["x1"]), 0,
+                )
+
     def render(self, figure_id, directory):
         spec = json.loads(FIXTURE.read_text(encoding="utf-8"))
         spec["id"] = figure_id

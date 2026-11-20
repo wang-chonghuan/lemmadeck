@@ -14,6 +14,61 @@ class RenderLessonFigureDisplayTests(unittest.TestCase):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(payload), encoding="utf-8")
 
+    def render_metadata(self, chapter, section=None, locale="en"):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            book = root / "10p"
+            lesson = book / "lessons" / "lesson-test"
+            output = root / "render"
+            self.write_json(lesson / "lesson.json", {
+                "title": "Particles",
+                "printed_title": "Particles",
+                "locale": locale,
+                "chapter": chapter,
+                "section": section,
+                "start_printed": 375,
+                "prose": [],
+                "section_breaks": [],
+            })
+            self.write_json(lesson / "exercises.json", {
+                "count": 0, "exercises": [],
+            })
+            result = subprocess.run(
+                ["node", str(RENDERER), str(book), "--out", str(output)],
+                cwd=SKILL.parents[2], capture_output=True, text=True,
+            )
+            rendered = output / "lesson-test" / "text.html"
+            return result, rendered.read_text() if rendered.exists() else None
+
+    def test_translated_english_chapter_is_rendered_without_a_second_translation(self):
+        result, html = self.render_metadata("Particles and Their Interactions")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn(
+            "Particles and Their Interactions \u00b7 Printed page 375", html,
+        )
+
+    def test_legacy_source_chapter_and_section_still_use_english_toc(self):
+        result, html = self.render_metadata(
+            "\u7b2c\u5341\u4e09\u7ae0\u3000\u57fa\u3000\u672c\u3000\u7c92\u3000\u5b50",
+            "\u5f15\u8a00",
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("Elementary particles \u00b7 Introduction", html)
+        self.assertNotIn("\u57fa\u672c\u7c92\u5b50", html)
+
+    def test_translated_chapter_does_not_bypass_missing_section_translation(self):
+        result, html = self.render_metadata("Elementary Particles", "Unknown section")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("Missing English TOC metadata for Unknown section", result.stderr)
+        self.assertIsNone(html)
+
+    def test_chinese_chapter_is_not_translated(self):
+        chapter = "\u7b2c\u5341\u4e09\u7ae0\u3000\u57fa\u672c\u7c92\u5b50"
+        result, html = self.render_metadata(chapter, locale="zh")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn(chapter, html)
+        self.assertNotIn("Elementary particles", html)
+
     def test_offline_render_consumes_figure_display_contract(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

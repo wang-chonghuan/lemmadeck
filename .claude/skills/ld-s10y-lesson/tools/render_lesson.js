@@ -216,8 +216,11 @@ const contentRoot = editionName ? path.join(book, "editions", editionName) : boo
 let englishMetadata;
 const metadataKey = label => label.replace(/\s+/g, " ").trim()
   .replace(/(?<=[\u3400-\u9fff]) (?=[\u3400-\u9fff])/g, "");
-function metadataLabel(label, english) {
+function metadataLabel(label, english, translatedHeading = false) {
   if (!label || !english) return label;
+  if (translatedHeading && !/[\u0400-\u04ff\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]/.test(label)) {
+    return label;
+  }
   if (!englishMetadata) {
     const tocDir = path.resolve(SKILL, "../../..", "ssot-resources/soviet10year-textbooks/toc", path.basename(book));
     const entries = (node) => [
@@ -245,7 +248,7 @@ for (const lid of lessonDirs) {
   const X = JSON.parse(fs.readFileSync(path.join(dir, "exercises.json"), "utf8"));
   const english = L.locale === "en";
   const title = english ? L.title : (L.printed_title || L.title);
-  const crumb = [metadataLabel(L.chapter, english), metadataLabel(L.section, english),
+  const crumb = [metadataLabel(L.chapter, english, true), metadataLabel(L.section, english),
     `${english ? "Printed page" : "印刷页"} ${L.start_printed ?? "?"}`]
     .filter(Boolean).join(" · ");
 

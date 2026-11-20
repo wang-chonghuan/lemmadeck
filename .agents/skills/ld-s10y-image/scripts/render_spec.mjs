@@ -374,12 +374,21 @@ async function render(spec, output) {
           })
           elements.set(object.id, line)
         } else if (object.type === 'arrow') {
+          const start = pointValue(object.from)
+          const end = pointValue(object.to)
+          const style = lineStyle(object, palette.accent)
+          const lengthPx = Math.hypot(
+            (end[0] - start[0]) * board.unitX,
+            (end[1] - start[1]) * board.unitY,
+          )
           const arrow = board.create('arrow', [
             jsxPoint(object.from),
             jsxPoint(object.to),
           ], {
             id: `ld-${object.id}`,
-            ...lineStyle(object, palette.accent),
+            ...style,
+            // JSXGraph hides heads larger than their segment; retain a visible shaft.
+            lastArrow: { type: 1, size: Math.min(6, lengthPx / (2 * style.strokeWidth)) },
           })
           elements.set(object.id, arrow)
         } else if (object.type === 'circle') {

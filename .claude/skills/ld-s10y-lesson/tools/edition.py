@@ -762,21 +762,32 @@ def validate_identity_fields(
 
 def validate_lesson_identity(source: dict, modern: dict) -> list[str]:
     locale = modern.get("locale")
+    translated_fields = ("title", "chapter", "printed_title") if locale == "en" else ()
     fields = tuple(
         field for field in IDENTITY_FIELDS
-        if not (locale == "en" and field == "title")
+        if field not in translated_fields
     )
     errors = validate_identity_fields(source, modern, fields, "lesson")
     if locale not in (None, "zh", "en"):
         errors.append("lesson.locale 必须是 zh 或 en")
     if locale == "en":
-        title = modern.get("title")
-        if (
-            not isinstance(title, str)
-            or not title.strip()
-            or NON_ENGLISH_FIGURE_SCRIPT.search(title)
-        ):
-            errors.append("lesson.title 必须是非空英文现代标题")
+        for field in translated_fields:
+            original = source.get(field)
+            translated = modern.get(field)
+            if field != "title" and not original:
+                errors.extend(validate_identity_fields(source, modern, (field,), "lesson"))
+                continue
+            if (
+                (field in source) != (field in modern)
+                or not isinstance(translated, str)
+                or not translated.strip()
+                or NON_ENGLISH_FIGURE_SCRIPT.search(translated)
+            ):
+                errors.append(f"lesson.{field} 必须是非空英文现代标题")
+            elif field == "printed_title" and re.findall(r"\d+(?:\.\d+)?", translated) != re.findall(
+                r"\d+(?:\.\d+)?", original
+            ):
+                errors.append("lesson.printed_title 不得改变印刷编号")
     return errors
 
 
