@@ -1,0 +1,106 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six/lemmadeck';
+assert.equal(process.cwd(), root);
+const source = '.tmp/resume182-6-n9-choice-FIRST';
+const output = '.tmp/resume182-6-n9-choice-retained-snapshot-FIRST';
+const target = 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/'
+  + 'modern-us-neutral/lessons/alg7-c1-s3-n9/choice-set/figures';
+const [reviewPath, imageReviews] = process.argv.slice(2);
+assert.ok(reviewPath?.startsWith('.tmp/resume182-6-n9-'));
+assert.ok(imageReviews?.startsWith('.tmp/resume182-6-n9-'));
+assert.ok(!fs.existsSync(output));
+assert.ok(!fs.existsSync(target));
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const canonical = value => {
+  const ordered = item => Array.isArray(item) ? item.map(ordered)
+    : item && typeof item === 'object'
+      ? Object.fromEntries(Object.keys(item).sort().map(key => [key, ordered(item[key])]))
+      : item;
+  return sha(JSON.stringify(ordered(value)).replace(/[\u007f-\uffff]/gu,
+    character => '\\u' + character.charCodeAt(0).toString(16).padStart(4, '0')));
+};
+const inputs = [];
+const changes = [];
+function read(filename) {
+  const bytes = fs.readFileSync(filename);
+  inputs.push({ path: filename, sha256: sha(bytes), bytes: bytes.length });
+  return bytes;
+}
+function write(filename, bytes) {
+  fs.mkdirSync(path.dirname(filename), { recursive: true });
+  fs.writeFileSync(filename, bytes, { flag: 'wx' });
+  changes.push({ path: filename, sha256: sha(bytes), bytes: bytes.length });
+}
+const seedBytes = read(`${source}/seed.json`);
+const draftBytes = read(`${source}/draft.json`);
+const original = JSON.parse(draftBytes);
+const review = JSON.parse(read(reviewPath));
+assert.equal(review.outcome, 'pass', 'Only migrate the independently passed snapshot');
+assert.equal(review.seed_sha256, canonical(JSON.parse(seedBytes)));
+assert.equal(review.draft_sha256, canonical(original));
+assert.equal(JSON.parse(seedBytes).source.lesson, 'alg7-c1-s3-n9');
+assert.equal(JSON.parse(seedBytes).source.book, '7a');
+const draft = structuredClone(original);
+for (const figure of draft.new_figures) {
+  const before = original.new_figures.find(item => item.id === figure.id);
+  assert.match(figure.id, /^fig-/);
+  assert.ok(before.path.startsWith(`${source}/figures/`));
+  const svg = read(before.path);
+  assert.equal(sha(svg), before.sha256);
+  const specPath = `${source}/figures/${figure.id}.spec.json`;
+  const renderPath = `${source}/figures/${figure.id}.render.json`;
+  const specBytes = read(specPath);
+  const renderBytes = read(renderPath);
+  const render = JSON.parse(renderBytes);
+  const visualBytes = read(`${imageReviews}/${figure.id}.review.json`);
+  const visual = JSON.parse(visualBytes);
+  assert.equal(render.status, 'pass');
+  assert.equal(render.figure, figure.id);
+  assert.equal(render.spec.sha256, sha(specBytes));
+  assert.equal(render.output.svg.sha256, sha(svg));
+  assert.equal(visual.status, 'pass');
+  assert.equal(visual.spec.sha256, sha(specBytes));
+  assert.equal(visual.render.sha256, sha(renderBytes));
+  assert.equal(visual.outputs.svg.sha256, sha(svg));
+  assert.ok(review.new_figure_reviews.some(item => item.figure_id === figure.id
+    && item.asset_sha256 === sha(svg) && item.verdict === 'pass'));
+  const files = {
+    svg: `${target}/${figure.id}.svg`,
+    spec: `${target}/${figure.id}.spec.json`,
+    render: `${target}/${figure.id}.render.json`,
+    review: `${target}/${figure.id}.review.json`,
+  };
+  write(files.svg, svg);
+  write(files.spec, specBytes);
+  render.spec.path = files.spec;
+  render.output.svg.path = files.svg;
+  const retainedRender = Buffer.from(`${JSON.stringify(render, null, 2)}\n`);
+  write(files.render, retainedRender);
+  visual.spec.path = files.spec;
+  visual.render.path = files.render;
+  visual.render.sha256 = sha(retainedRender);
+  visual.outputs.svg.path = files.svg;
+  write(files.review, Buffer.from(`${JSON.stringify(visual, null, 2)}\n`));
+  figure.path = files.svg;
+}
+assert.deepEqual(draft.questions, original.questions);
+assert.deepEqual(draft.coverage, original.coverage);
+assert.equal(draft.seed_sha256, original.seed_sha256);
+assert.deepEqual(draft.new_figures.map(({ path: ignored, ...item }) => item),
+  original.new_figures.map(({ path: ignored, ...item }) => item));
+write(`${output}/seed.json`, seedBytes);
+write(`${output}/draft.json`, Buffer.from(`${JSON.stringify(draft, null, 2)}\n`));
+write(`${output}/migration.record`, Buffer.from(`${JSON.stringify({
+  ticket: 'STEMROBIN-182', lesson: 'alg7-c1-s3-n9',
+  status: 'passed-figure-bytes-retained-path-binding-pending',
+  inputs, changes, originalSnapshotUnchanged: true,
+  questionsKeysCoverageAndBasisUnchanged: true,
+  specAndSvgBytesUnchanged: true, imageViews: 0, rendererCalls: 0,
+  boundary: 'Only metadata paths and render-review digest change. The retained draft still requires path-only independent review binding before choice retention.',
+}, null, 2)}\n`));
+console.log(JSON.stringify({ path: output, figures: draft.new_figures.length,
+  originalSnapshotUnchanged: true, pathOnlyReviewBindingPending: true }));

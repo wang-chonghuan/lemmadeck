@@ -1,0 +1,112 @@
+# N9 Offline Display Preparation
+
+Status: PREPARED_NOT_EXECUTED. Date: 2026-11-20.
+Scope: STEMROBIN-182, resume 182-6, 7a, modern-us-neutral, alg7-c1-s3-n9.
+All shell commands used explicit workdir:
+`/Users/yong/.codex/worktrees/stemrobin-182-six/lemmadeck`.
+Only this directory's run.mjs and preparation record were written.
+
+## Future Invocation Contract
+
+This command is documentation only. It was not executed:
+
+```sh
+node .tmp/resume182-6-n9-display-FIRST/run.mjs \
+  --parent-ready STEMROBIN-182:182-6:n9-approved \
+  --approved-choices /absolute/parent-approved/flat-choice-directory \
+  --validation-receipt /absolute/parent-provided/validation.receipt.record \
+  --text-evidence /absolute/parent-provided/n9-text-evidence.json \
+  --answer-evidence /absolute/parent-provided/n9-answer-evidence.json \
+  --choice-evidence /absolute/parent-provided/n9-choice-semantic-evidence.json
+```
+
+Exact argument order is required. All five paths must be absolute and resolve
+inside the specified worktree; choice inputs must be outside this output root.
+The marker is an invocation guard, NOT authorization. The parent must separately
+authorize the exact final choice directory/receipt/evidence paths after all
+content gates pass. No paths or approved hashes have been invented here.
+
+The choice directory must contain seed.json, draft.json, review.json, plus the
+spec/output/review/render-or-generation records needed by referenced candidates.
+Existing canonical seed/draft review bindings and the seed's current lesson,
+exercise and figure trace hashes are checked; the prior validator is not rerun.
+Content evidence is parent-provided JSON with pass verdict/outcome/status, or an
+exitCode/returncode 0 when no verdict is declared. An explicitly declared lesson
+must be N9. These records are fingerprinted, not new mathematical approvals.
+
+Current content was observed as 17 prose blocks, 16 written exercises (109-124),
+and no original figures. Counts of choice questions, options and candidates are
+derived only from the future approved draft. No current seed was approved by
+this preparation.
+
+## Reuse and Boundaries
+
+Implementation structure was copied from the existing
+`.tmp/resume182-4-postaccount/n13-display-FIRST/run.mjs`, not its evidence files.
+Reused helpers: sha/canonical/norm/same, own/save/event/check/fingerprint/under/
+stage, projection/writtenText, installDisplayTools/pageSafety, unionArea and
+captureCoverage; renderOnce and cleanup were narrowly adapted.
+proseFlow/proseOutline/sectionBreakIndices remain from existing htmlfrag.js;
+choice table projection still uses existing marked. No new renderer, framework,
+metric schema, mechanical-defence run, or general checking system was introduced.
+N13-specific table/hash/approval/math-fragment/recovery/screenshot reuse branches
+were removed. Neither N13 nor N22 was run; no evidence package was copied.
+
+Parent supplied the ignored app/node_modules, .agents/skills/node_modules and
+lesson node_modules symlinks. The runner uses normal worktree resolution to those
+existing dependencies; this preparation installed, copied or linked none.
+
+Future renderer: `.claude/skills/ld-s10y-lesson/tools/render_lesson.js`, one child
+invocation only. Stage root: `runtime-FIRST/scratch/7a/`; only this lesson,
+approved seed/draft/review and actually referenced candidate assets are staged.
+Only scratch candidate paths change; approved files remain read-only, candidate
+bytes bind to draft hashes, and input hashes are rechecked during cleanup.
+`approved-choice-view.json` exports the current approved views, counts, figure
+inventory and raw seed/draft/review hashes; it is not served.
+No book-wide content, answers, N13 table or prior screenshots are staged.
+
+Future browser is isolated headless Chromium, two fresh contexts with native
+1440x960 and 390x844 viewports, each visiting text/exercises/choices (six pages).
+Only the loopback HTML allowlist is served; local inline fonts/assets, CSP,
+request/WebSocket blocking, console/page/network failures remain enforced.
+Actual Range/HTML/SVG geometry, full mathematical visual DOM and text projection,
+actual media widths and SVG label sizes >=16px, edge reachability and native
+scroll-window coverage remain in the existing helper path. Text Range bounds use
+0.5px allowance; figures/SVG/math rules use zero containment allowance.
+Screenshots are native viewport, unresized/uncropped, unobserved; no image is
+opened by the runner.
+
+First failure stops dependent work, retains generated files and writes
+failure-receipt.record plus report/usage/visual handoff when the owned filesystem
+remains writable. Child/context/browser/server cleanup is in finally; no retry
+or renderer-recovery mode exists. An existing runtime-FIRST directory stops a
+second invocation without overwriting its evidence.
+Runtime success means only RUNTIME_PASS_VISUAL_PENDING, never content/visual/
+application approval.
+
+## Preparation Tool Faults
+
+1. Read-only dependency/output lookup (`ls -ld`) exited 1 before the parent's
+   dependency update: app/node_modules, .agents/skills/node_modules and the new
+   output directory did not yet exist. Lesson dependencies already had a symlink.
+   The parent subsequently supplied app/agents symlinks; a later read-only lookup
+   confirmed all three. Only the authorized output directory was created here.
+   No renderer or browser was started to diagnose this lookup.
+2. Read-only `rg` lookup exited 2 because guessed image-spec reference filenames
+   `references/spec-schema.md` and `references/spec.md` did not exist. Existing
+   SKILL.md matches were returned. No files were created there and no image was
+   opened. This was a documentation-path lookup fault, not runtime evidence.
+
+## Verification
+
+Single syntax-only command:
+`node --check .tmp/resume182-6-n9-display-FIRST/run.mjs`.
+Exit code: 0; stdout/stderr empty. The runner itself was not executed.
+Final run.mjs SHA-256:
+`37c7c974439e2b505a64b822385fdb7fdc90c000d81fec946793bf972cf4f966`.
+The final read-only directory listing contained only run.mjs and prepare.md;
+runtime-FIRST/render/screenshots did not exist. A read-only legacy-token scan
+returned no matches (rg exit 1, expected absence result, not a tool failure).
+Renderer calls: 0. Browser launches: 0. Screenshots generated: 0.
+Images viewed: 0. Network/DB/install/other-chat/commit operations: 0.
+No .env was read. Existing dirty files and concurrent changes were left intact.

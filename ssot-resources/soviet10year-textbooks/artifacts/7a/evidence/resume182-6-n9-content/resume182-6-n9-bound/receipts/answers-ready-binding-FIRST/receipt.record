@@ -1,0 +1,13 @@
+{
+  "command": [
+    "node",
+    "-e",
+    "const fs=require(\"node:fs\"),assert=require(\"node:assert/strict\"),crypto=require(\"node:crypto\"),path=require(\"node:path\");const out=\".tmp/resume182-6-n9-bound/answers-ready.record\",base=\"ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c1-s3-n9\",reads=[];function read(p){const b=fs.readFileSync(p);reads.push({path:path.resolve(p),sha256:crypto.createHash(\"sha256\").update(b).digest(\"hex\"),bytes:b.length});return JSON.parse(b)}const candidate=read(\".tmp/resume182-6-n9-answers-FIRST/answer-keys.json\"),review=read(\".tmp/resume182-6-n9-text-review-FIRST/answer-review-FIRST.json\"),ready=read(base+\"/answer-keys.json\"),audit=read(base+\"/answer-keys.audit.json\"),receipt=read(\".tmp/resume182-6-n9-bound/receipts/answers-finalize-FIRST/receipt.record\");assert.equal(review.status,\"pass\");assert.equal(receipt.returncode,0);assert.equal(ready.status,\"ready\");assert.equal(ready.count,16);assert.deepEqual(ready.answers,candidate.answers);assert.equal(audit.status,\"pass\");const r={schema:\"stemrobin-182/offline-answer-binding@1\",ticket:\"STEMROBIN-182\",lesson:\"alg7-c1-s3-n9\",status:\"pass\",inputs:reads,answers:ready.count,parts:ready.answers.reduce((n,x)=>n+x.parts.length,0),auto:audit.auto,ungraded:audit.ungraded,approvedAnswersSubtreeUnchanged:true,sourceMathReReviews:0,newFinalizations:0,passedInputCheckRepeated:false,internalSuccessfulFocusAttemptCounts:\"unknown; successful child stdout was not retained by existing finalize tool\",boundary:\"Ready offline answers only; no DB/application/display or whole-ticket approval\"};fs.writeFileSync(out,JSON.stringify(r,null,2)+\"\\n\",{flag:\"wx\"});console.log(JSON.stringify({path:out,sha256:crypto.createHash(\"sha256\").update(fs.readFileSync(out)).digest(\"hex\"),status:r.status,answers:r.answers,parts:r.parts}));"
+  ],
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-182-six/lemmadeck",
+  "started": "2026-11-20T01:04:36.840Z",
+  "finished": "2026-11-20T01:04:36.878Z",
+  "returncode": 0,
+  "signal": null,
+  "error": null
+}

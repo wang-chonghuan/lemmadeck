@@ -2,6 +2,174 @@
 
 ### 182-6 2026-11-20 正式接管与实际缺失显示续作
 
+- n9 DISPLAY batch7实际PASS，8张一次/额外图片操作0，SHA
+  `08850ce2d4501a02ab1efc5aac9a17f52a622f19ea0f577415c3a74f637275cd`；
+  Epicurus自然完成并关闭。56/56选中截图实际确认，父查看0，无在途审者/browser/exec。
+  最终binding FIRST exit0：`OFFLINE_DISPLAY_PASS`，529检查/56像素观察，
+  display SHA`325e54293268ab239e0316145aee60c524d0be1bd75df3c650e75f6543c76985`。
+  source/现代文字/答案/选择/七现代图PASS全复用，不重解或重跑；
+  n9当前完整离线课17正文、109–124共16源/16ready答案、20选择/73项、
+  七新图/10面板边界闭合，不是APP/全工单批准或正式handoff。
+  显示证据FIRST留存135唯一文件/156引用/20旧引用，保留60全部截图（4省略未看）、
+  FIRST失败/恢复/七观察结果/实际producer字节及usage，retention SHA
+  `215eeac32dce418a43ab42eca7068b26e441f9720e9ed1f2c1499dcefe80d0e7`。
+  原分支fetch已exit0；准备仅n9资源、page45必要勘误/索引/三证据包/本记录窄commit，
+  本行不是提交推送成功收据。未知旧失败原生字节及宿主token/费用仍未知。
+
+- n9 DISPLAY batch6实际PASS，8张一次/额外图片操作0，SHA
+  `76f30ffd252e83045bf08f8bbedd94840910849bc105ce54c475fc205f9d039b`；
+  Jason自然完成并关闭。当前48/56已观察，余8；
+  batch7 Epicurus `01a1f6a0-a76e-7be3-bd70-b55ba6b0210f`是唯一在途。
+  最终绑定scratch补当前FIRST/恢复producer、实际usage及selector/binder字节，
+  原renderer/529检查/旧七批结果不改、不重跑；尚未执行最终绑定/提交。
+
+- n9 DISPLAY batch4/batch5实际PASS，各8张一次/额外图片操作0；
+  SHA依次`35a632e12859ad18f7184c2be8832560b6cac1750d2840aff2e719f5b3e073ff`、
+  `0c8bbeea4e26089c07ae934293efffa2870abc133123f819e9cdf12757e29865`，
+  Harvey/Gauss均自然完成并关闭。当前40/56已观察，余16；
+  batch6 Jason `01a1f69f-112b-77b0-8f30-63d61453ce15`是唯一在途，父仍0。
+  下一课候选n14原321约定HOLD确认保留，不把它当可直接完成课；
+  8a n3原21图解任务未选未解、非现有10题PASS，将只续其真实缺失阶段。
+
+- n9 DISPLAY batch3实际PASS，8张一次/额外图片操作0，SHA
+  `502cce5b1bd9abb3af19825b463baed32e5e6c7a66adfc111a57b76321bbcf92`；
+  Mill自然完成并关闭。当前24/56已观察，余32；
+  batch4 Harvey `01a1f69b-d035-7712-872b-282a88054dc6`是唯一在途。
+  下一课只读确认7a n14已现代ready/17原题，已有16题盲解/选择PASS，
+  缺答案；不把8a n3十题选定包或n10两图HOLD称整课完成，未生产下一课。
+
+- n9 DISPLAY batch2实际PASS，8张一次/额外图片操作0，SHA
+  `03e3884ed5ff259365641f58d934b64535015029722bcfddcfd921912a9138c7`；
+  Franklin自然完成并关闭。当前16/56已观察，余40；
+  batch3 Mill `01a1f69a-3828-75d1-a7f3-81c990394c87`是唯一在途，父观察仍0。
+
+- n9 DISPLAY batch1实际PASS，8张一次/额外图片操作0；原结果SHA
+  `9dc5c0056dde45eafb0bd7fa9d7bdd9c7493e8a5fe7521b67139806ef1bdb386`，
+  Heisenberg自然完成并关闭。当前8/56已观察，余48，父观察0；
+  仅准备相同有界独审scratch指令，不重开任何图或恢复旧审者。
+
+- n9 rows-recovery1实际exit0：529检查/六视面，原runtime SHA
+  `0094e90732e94652d022d3e7e36a6cd939d1ce48fbaf0c09c822fd2afcb6a31a`，
+  FIRST SHA`0a238677e4f9c0a5316371853fc0a9dae961cb97d59cc6e56dfcb4bc7043bb4b`不改。
+  原渲染/桌面课文及书写PASS复用；累计renderer1/browser2/context3/navigation7/
+  截图60/父观察0，恢复新增renderer0。choice-0首非空行实际几何比较PASS，
+  原题面/公式摘要与失败同一，不改HTML。selection FIRST exit0：
+  56选中/4省略/11742目标/缺失0，省略图仍保留，图像观察全部pending。
+  fresh batch1 Heisenberg是唯一在途，只八张原生截图一次；其余六批未派。
+  后续绑定只加已过文字/答案回执的真实依赖SHA核验，不重审或重跑finalize。
+  一次只读答案文件名盘点误用answers.json，不作缺失结论；实际为answer-keys.json，
+  6a均有键；一次rg查询不存在的n10现代目录exit2保持。无其它课生产/DB/新push。
+
+- n9路径绑定实际PASS，原review/七图观察保持，新增图0；Halley自然完成并关闭。
+  新review SHA`bd86cb8d2922d01c8dc9dbf423f7353a32ccff0e366af97b3f57d576050ab402`，
+  path-binding SHA`f73d485f847597b53668dc48e9ad3242a5d4d5f2f3078b85dbf598b3fdaed598`。
+  choices-retain FIRST exit0；选择证据FIRST留存54唯一文件/56引用/1旧引用，
+  retention SHA`6dff49381ff16219c755a1055901f49cf71a1ba6492a3dfaa77914cd82e67ab0`。
+  display FIRST实际FAIL于1440 choice-0-stem小问行：题干合法双换行，旧检查器
+  与紧邻空行null几何框比较；原HTML/批准内容未改。实际renderer1/browser1/
+  context1/navigation3/截图7/图观察0，全清理true。准备仅失败及未执行阶段恢复，
+  复用原渲染/桌面课文书写检查和七图，不重新运行源/答案/图/选择validator。
+  本接续两次大metadata输出截断、一次apply_patch原子拒绝保留，未猜token/费用。
+  FIRST脚本及报告不改；新rows-recovery1仅检查器比较前一非空行，未执行前不计PASS。
+
+- 01:26Z本聊天监督检查：N13原分支push已完成；N9当前源/现代/答案/选择/新图
+  都已实际通过，仅路径绑定及离线显示未闭合，不等待普通审批。没有重复attach/
+  新工作树/替代聊天、旧聊天接续或向监督/同伴发消息；未知历史字节不称恢复。
+  Halley首次全包review实际PASS：20题/73项、16源数学复用，7图一次共10面板，
+  review原SHA`1d7a828420d1d38f23c3236b19cac85e980266c5c6e03b8109fb4270946114d6`，
+  canonical`a19b08430235ae2f0d7e29f7c7e12260b93b635c0c4d081d7cb9ec3d49c462bb`。
+  七个review@1均PASS，原图/新图重开、裁切、缩放、重渲染0；
+  该审者首两次大metadata读取被截断的技术故障已写其image-observations.record，
+  未拿原始stdout估算宿主token/费用。实际图观察7不清零，不含产品宽度/显示批准。
+  父图迁移FIRST exit0：SVG/spec同字节，render及图review仅路径/受影响摘要改；
+  source/题面/选项/键/coverage/basis和原稿审查不改。新待绑定快照为
+  `.tmp/resume182-6-n9-choice-retained-snapshot-FIRST`；
+  仅同一审者在途做0图的路径比较，不重审源/数学/73项，不启动renderer。
+
+- n9选择作者Carver已自然完成并关闭，20题/16single+4multiple/16原题coverage，
+  原稿SHA`cfac369fb8742cf49b8a7a1ab4682bebfd7aa376e8537800b6e2a5394795b849`，
+  canonical`70a14606ff3bd20acd0e58e008faac1d7f51b9865d14f9ecae607e8df78ff00b`；
+  7新图/10面板，作者实际看图0。结构validate仅一次exit0，不含review。
+  handoff SHA`3d14ff2fabc924363b5a24184bd1b163dd6e987a3318a8f87fffe1834b99b73a`；
+  实际render_spec22=结构失败2/标签失败13/最终完成7，浏览器/PNG20，
+  6次spec装配仅修失败映射/标签，已成图明确跳过，语义内容修订0；
+  FIRST/source-solutions.record保留5个技术事件和计数。当前目录是最终图/报告，
+  失败诊断及次数按实际文字/工具历史保留，不声称旧失败原生文件字节已恢复。
+  新独审Halley `01a1f683-f048-73f1-8576-89d12487ead9`是唯一在途；
+  只一批7张最终图实际像素、20题所有view/key，复用封存的先行源盲解，
+  不看答案/N13/N22或原页，不重新求解已过16源题。结果目录
+  `.tmp/resume182-6-n9-choice-review-FIRST`，未出现结果前不计图/选择PASS。
+  父仅准备批准后SVG/spec同字节留存与路径重绑定scratch，未执行迁移、
+  未渲染显示或观察新图/截图；无在途exec、DB、commit/push或其它聊天动作。
+
+- n9源/现代文字及答案独审均实际PASS，Kierkegaard自然完成并关闭；
+  初始result SHA`6c67513c1002621fb960c9e859d94f7b098549c7465bfe9f9f9604d36e72bf63`，
+  盲解SHA`7fed356b1156d6145b0521eb682bbd4506f4186af995dac8b761d82c6c474369`，
+  text明确绑定SHA`ecb399a460f0215fe3e3be5f7acfad1817f6bab71cbdefa36d8c436eb3c6041f`，
+  answer语义SHA`2b78502af23c2ce3c85e5b6bc380bd2cab5ea657a94a94863b7d0312b463137e`。
+  审者原源图实际1次、无重开，其后只复用封存盲解比较42parts/61expected，
+  原result和独解字节未改，不包含显示或输入链批准。
+  批准答案同字节stage FIRST exit0，finalize FIRST exit0（13auto/3ungraded），
+  原工具实际ComputeEngine/MathLive成功检查不重跑；成功子stdout未被工具保留，
+  内部焦点事务具体尝试数仍未知，未猜为0。ready答案子树与批准候选全同，
+  元数据绑定`.tmp/resume182-6-n9-bound/answers-ready.record` SHA
+  `8179e5c85dbc87d0e38d37775b9fe382a250b291168d90d7d06e0c38610d17aa`。
+  content保留FIRST exit0：`7a/evidence/resume182-6-n9-content/retention.record`
+  SHA`e84e07e78bd2f96cf0d0eef5b51d7df3f2e7cb0eb4d8d66104d3f5862af81ab4`，
+  42唯一新文件/56引用/14复用引用；只实际源字形PNG、当前文本/答案及失败回执，
+  未复制PDF/依赖/其它证据包。当前Carver是唯一在途作者，仅本课选择候选；
+  已有7个deterministic候选图文件不等于图/选择/显示批准，父未开这些图。
+  当前无在途exec或独审，未渲染N9显示、未新commit/push/DB/合并/部署。
+
+- n9答案作者Laplace已自然完成并关闭：候选SHA
+  `978313ac03e47691696cf44ec8f7133897976303adb4501dd89a756308a66bbf`，
+  独解作者记录SHA`7986e866ebf251614b3e35614ceaa7d0f568b32a352f3769ad2c1a61582c0d42`。
+  16题/42parts/61expected，13auto、121/122/124三题ungraded；
+  尚为draft，未独审、finalize、MathLive或保留ready。
+  同一盲解审者新增具体答案比较任务已接续，必须先保存原盲解再读候选，
+  不重解或再看源图。选择作者仍只读白名单题面，未接触答案。
+  Avicenna仅runner准备已自然完成并关闭，SHA
+  `37c7c974439e2b505a64b822385fdb7fdc90c000d81fec946793bf972cf4f966`，
+  只syntax一次PASS，renderer/browser/图片0；lookup失败在其prepare.md保留。
+  父只准备既有selector/binder/retention的N9窄适配，三项syntax首次PASS，
+  没有运行选择/最终绑定/渲染。ignored依赖只链接主工作区已有目录，未安装；
+  现代索引仅恢复profile仓库相对path，无其它旧条目改动。
+
+- 00:53Z接续同一正式工作树，未重复attach/create或恢复旧聊天。
+  n9仅physical45补备源PNG，与既有元数据SHA
+  `8921bbc2965bca0eaa1d5088a83c2f99ccaf9b932822a0717d3d45d27bffd280`相同；
+  父实际查看1次确认印刷等号，源正文/行流/图框不变，只加分母非零勘误。
+  page45 finalize首次PASS（8块/22行/规范化0）；新页JSON SHA
+  `64d87b696bd9548d0a17c3e1470f1645b98660745d6cc455c5b6d6e751939cad`。
+  原模板重备因目标存在拒绝的失败保留，不force；新绑定模板在
+  `.tmp/resume182-6-n9-bound/adapt/7a/modern-us-neutral/lessons/alg7-c1-s3-n9`。
+  只改prose[9]绑定非零、prose[7]粗体接缝、41个分题字母及119b的A/B地名，
+  两个分隔点用prose_flow实际输出，114b/c同式保留。
+  adapt-finalize FIRST exit2为地名误包成新增公式；仅移出数学区后恢复exit0，
+  17正文/16题/新源图0，不能把结构PASS计作语义/答案/选择/显示PASS。
+  answers-prepare、choice-inspect、choice-prepare FIRST均exit0；choice seed
+  SHA `8078e5cfacc3f17d47de7d7a92e1cc52f7a2da1f0d93c7cb0ee094d9bcc993d9`。
+  当前Laplace仅写答案候选、Carver仅写独解/选择候选和必要deterministic图，
+  Kierkegaard是唯一独审（page45一图/现代文字/盲数学，未读答案稿），
+  Avicenna仅准备既有离线runner适配、不执行renderer/browser。
+  均为本课有界子代理、各写集不交叠，无预取后课/旧审者恢复/其它聊天消息。
+  父本恢复源图片1、N13截图0、renderer0、DB0/外部生成付费0；
+  子代理当前实际用量须待结果，宿主token/费用及旧未知次数仍未知。
+
+- n13已实际窄commit/push：
+  `87a1d761429fa395c6e62ede3492dd596c718390`，
+  parent仍`d08f1b1835eae826a30c44d7b02ff4b3b8947763`，原分支
+  `codex/STEMROBIN-182-textbooks`；push exit0，独立ls-remote同SHA。
+  494文件仅本课7a资源、两处必要旧工具补丁、已过数字测试及本单记录，
+  暂存边界与代码/记录空白检查PASS，无.env/其它书/应用文件、无force或恢复祖先。
+- 已立即续下一实际阶段：n9 adapt-prepare FIRST exit0，17正文/109–124共16题/
+  图0，模板在`.tmp/ld-s10y-lesson/adapt/7a/modern-us-neutral/lessons/alg7-c1-s3-n9`。
+  发现p0045#3分母条件`x(3x+4)=0`与正文非零条件矛盾；权威页meta.notes本就写
+  “照印保留等号，待独立源页复核”，errata为空。仅该字形/数学勘误缺失需续，
+  不修改源正文、不默改现代公式、不重做全课SOURCE，局部n11/n12 HOLD不扩组。
+  常规旧源PNG路径及旧tmp目录不存在的只读故障保留；未称未知字节已恢复。
+  n13所有审者已自然完成并关闭；当前仅本地n9缺失阶段，无DB/合并/部署/全项目测试。
+
 - 最终绑定技术恢复一次exit0：`OFFLINE_DISPLAY_PASS`，74张/457原运行检查，
   display SHA `0efaf5f06e8f6ea99e35db0c7247e5ca375c5688c791b728693d542298f69393`。
   旧selection/运行报告与16张原PASS不改，新58张均只看一次；原6张失败、

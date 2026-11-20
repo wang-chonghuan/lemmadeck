@@ -1,0 +1,1038 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { createServer } from 'node:http';
+import { appendFile, mkdir, readFile, readdir, realpath, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six/lemmadeck';
+const OWN = path.join(R, '.tmp/resume182-6-n9-display-FIRST');
+const RUN = path.join(OWN, 'runtime-FIRST');
+const ID = 'alg7-c1-s3-n9';
+const BOOK = '7a';
+const EDITION = 'modern-us-neutral';
+const MODERN = path.join(R, 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions', EDITION);
+const LESSON = path.join(MODERN, 'lessons', ID);
+const TOOLS = path.join(R, '.claude/skills/ld-s10y-lesson/tools');
+const SCRATCH = path.join(RUN, 'scratch', BOOK);
+const STAGED = path.join(SCRATCH, 'editions', EDITION);
+const RENDER = path.join(RUN, 'render');
+const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const canonical = (value) => {
+  const ordered = (item) => Array.isArray(item) ? item.map(ordered)
+    : item && typeof item === 'object'
+      ? Object.fromEntries(Object.keys(item).sort().map((key) => [key, ordered(item[key])]))
+      : item;
+  return sha(JSON.stringify(ordered(value)).replace(/[\u007f-\uffff]/gu,
+    (character) => '\\u' + character.charCodeAt(0).toString(16).padStart(4, '0')));
+};
+const norm = (text) => String(text).normalize('NFC').replace(/\s+/gu, ' ').trim();
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const own = (filename) => {
+  assert.ok(filename.startsWith(`${RUN}${path.sep}`), 'Write outside owned runtime');
+  return filename;
+};
+
+// The argument is an invocation guard, not approval. A separate parent message
+// must confirm the exact approved flat choice directory before this file is run.
+assert.equal(process.cwd(), R, 'Use the explicit authorized checkout');
+assert.equal(path.dirname(fileURLToPath(import.meta.url)), OWN);
+const args = process.argv.slice(2);
+await mkdir(RUN);
+
+const report = {
+  schema: 'bounded-n9-offline-display@1',
+  status: 'RUNNING',
+  started: new Date().toISOString(),
+  scope: { ticket: 'STEMROBIN-182', book: BOOK, edition: EDITION, lesson: ID, writeRoot: OWN },
+  boundary: 'Offline renderer display only; not source/math/choice approval or application acceptance',
+  approval: { separateParentMessageRequired: true, invocationMarkerIsAuthorization: false,
+    directory: args[3], validationReceipt: args[5] },
+  contentEvidence: [],
+  sourceHoldsReleased: false,
+  inputs: [],
+  staged: [],
+  checks: [],
+  screenshots: [],
+  coverage: [],
+  faults: [],
+  cleanup: { rendererClosed: true, contextsClosed: true, browserClosed: true, serverClosed: true },
+};
+const usage = {
+  schema: 'bounded-n9-display-usage@1',
+  phase: 'RUNTIME',
+  rendererCalls: 0, browserLaunches: 0, browserContexts: 0, pageNavigations: 0,
+  screenshotsCaptured: 0, imagesObserved: 0,
+  observationBatchLimit: 8, observationContextLimit: 24,
+  sourceReviews: 0, mathReviews: 0, choiceReviews: 0, validatorCalls: 0,
+  finalizations: 0, figureRenders: 0, paidCalls: 0, generatedImages: 0,
+  dbCalls: 0, appVisits: 0, productionInteractions: 0, dependencyChanges: 0,
+  gitOperations: 0, otherChatsMessaged: 0,
+};
+let browser;
+let server;
+let rendererChild;
+let origin;
+let PNG;
+const contexts = [];
+const network = { served: [], blocked: [], failures: [], pageErrors: [], consoleErrors: [], badResponses: [] };
+
+async function save(filename, value) {
+  await writeFile(own(path.join(RUN, filename)), `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+}
+async function event(value) {
+  await appendFile(own(path.join(RUN, 'events.ndjson')),
+    `${JSON.stringify({ time: new Date().toISOString(), ...value })}\n`);
+}
+async function check(name, passed, facts = {}) {
+  assertOfflineRuntime();
+  const result = { name, status: passed ? 'PASS' : 'FAIL', ...facts };
+  report.checks.push(result);
+  await event({ check: result });
+  assert.ok(passed, name);
+}
+async function fingerprint(filename, expectedHash) {
+  assert.ok(!path.basename(filename).startsWith('.env'), 'Never read environment files');
+  const bytes = await readFile(filename);
+  const entry = { path: filename, bytes: bytes.length, sha256: sha(bytes) };
+  report.inputs.push(entry);
+  if (expectedHash) assert.equal(entry.sha256, expectedHash, `Approved input changed: ${filename}`);
+  return bytes;
+}
+async function under(root, filename) {
+  const base = await realpath(root);
+  const target = await realpath(filename);
+  assert.ok(target.startsWith(`${base}${path.sep}`), `Input escaped approved root: ${filename}`);
+  return target;
+}
+async function stage(filename, bytes) {
+  own(filename);
+  await mkdir(path.dirname(filename), { recursive: true });
+  await writeFile(filename, bytes, { flag: 'wx' });
+  report.staged.push({ path: filename, bytes: bytes.length, sha256: sha(bytes) });
+}
+function assertOfflineRuntime() {
+  assert.ok(network.blocked.length === 0 && network.failures.length === 0
+    && network.pageErrors.length === 0 && network.consoleErrors.length === 0
+    && network.badResponses.length === 0, 'Stop on first console/page/network fault');
+}
+function projection(text) {
+  const formulas = [];
+  const serialized = text.replace(/\$\$(.+?)\$\$|\$([^$]+?)\$/gs, (_, block, inline) => {
+    formulas.push(norm(block ?? inline));
+    return `[[MATH:${formulas.length - 1}]]`;
+  }).replace(/\*\*([^*]+)\*\*/gu, '$1');
+  return { serialized: norm(serialized), formulas, lines: serialized.split('\n').map(norm) };
+}
+function writtenText(exercise) {
+  const number = Object.hasOwn(exercise, 'source_number') ? exercise.source_number : exercise.number;
+  const prefix = number == null ? '' : String(number);
+  const suffix = exercise.text.slice(prefix.length);
+  const prefixed = prefix && exercise.text.startsWith(prefix)
+    && (/^\.\s/u.test(suffix) || /^\uFF0E(?![0-9\uFF10-\uFF19])/u.test(suffix));
+  return { number: number == null ? '' : `${number}.`,
+    text: prefixed ? exercise.text.slice(prefix.length + 1).trimStart() : exercise.text };
+}
+
+// Reused display pools retain actual Range/SVG geometry, not inferred
+// character widths or MathML rectangles.
+async function installDisplayTools({ materials, figureContracts }) {
+  await document.fonts.ready;
+  const normalize = (text) => String(text).normalize('NFC').replace(/\s+/gu, ' ').trim();
+  const targets = [];
+  const roots = [];
+  const figures = [];
+  const hidden = [];
+  const visible = (element) => {
+    for (let node = element; node; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      if (style.display === 'none' || style.visibility !== 'visible'
+        || Number(style.opacity) === 0 || style.contentVisibility === 'hidden') return false;
+    }
+    return true;
+  };
+  const rectFor = (target) => target.rect();
+  const frameFor = (element) => {
+    const frame = { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
+    for (let node = element; node; node = node.parentElement) {
+      if (node === document.body || node === document.documentElement) continue;
+      const style = getComputedStyle(node);
+      const box = node.getBoundingClientRect();
+      const borders = { left: parseFloat(style.borderLeftWidth) || 0,
+        right: parseFloat(style.borderRightWidth) || 0,
+        top: parseFloat(style.borderTopWidth) || 0,
+        bottom: parseFloat(style.borderBottomWidth) || 0 };
+      const verticalBar = Number.isFinite(node.offsetWidth)
+        ? Math.max(0, node.offsetWidth - node.clientWidth - borders.left - borders.right) : 0;
+      const horizontalBar = Number.isFinite(node.offsetHeight)
+        ? Math.max(0, node.offsetHeight - node.clientHeight - borders.top - borders.bottom) : 0;
+      if (['auto', 'scroll', 'hidden', 'clip'].includes(style.overflowX)) {
+        frame.left = Math.max(frame.left, box.left + borders.left);
+        frame.right = Math.min(frame.right, box.right - borders.right - verticalBar);
+      }
+      if (['auto', 'scroll', 'hidden', 'clip'].includes(style.overflowY)) {
+        frame.top = Math.max(frame.top, box.top + borders.top);
+        frame.bottom = Math.min(frame.bottom, box.bottom - borders.bottom - horizontalBar);
+      }
+    }
+    return frame;
+  };
+  // Range bounds include unpainted font metrics at subpixel clip edges.
+  const contained = (target, tolerance = target.kind === 'text-glyph' ? 0.5 : 0) => {
+    const rect = rectFor(target);
+    const frame = frameFor(target.element);
+    return visible(target.element) && rect.width > 0 && rect.height > 0
+      && rect.left >= frame.left - tolerance && rect.right <= frame.right + tolerance
+      && rect.top >= frame.top - tolerance && rect.bottom <= frame.bottom + tolerance;
+  };
+  function add(element, rect, key, kind, formulaIndex = null, lineIndex = null) {
+    const target = { id: targets.length, element, rect, key, kind, formulaIndex, lineIndex };
+    const box = rectFor(target);
+    if (!visible(element) || box.width <= 0 || box.height <= 0) {
+      hidden.push({ key, kind, formulaIndex, lineIndex });
+    }
+    targets.push(target);
+  }
+  function addGlyphs(node, key, formulaIndex, lineIndex) {
+    let offset = 0;
+    for (const character of node.data) {
+      const end = offset + character.length;
+      if (!/[\s\u200b\u200c\u200d\u2060\ufeff]/u.test(character)) {
+        const range = document.createRange();
+        range.setStart(node, offset);
+        range.setEnd(node, end);
+        add(node.parentElement, () => range.getBoundingClientRect(), key,
+          'text-glyph', formulaIndex, lineIndex);
+      }
+      offset = end;
+    }
+  }
+  function textOf(root, collect = false, key = '') {
+    let serialized = '';
+    const formulas = [];
+    let lineIndex = 0;
+    const walk = (node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        serialized += node.data;
+        if (collect) addGlyphs(node, key, null, lineIndex);
+        return;
+      }
+      if (node.nodeType !== Node.ELEMENT_NODE || node.matches('figure')) return;
+      if (node.matches('br')) { serialized += '\n'; lineIndex += 1; return; }
+      if (node.matches('.katex')) {
+        const visual = node.querySelector('.katex-html');
+        const index = formulas.length;
+        formulas.push({
+          tex: normalize(node.querySelector('annotation[encoding="application/x-tex"]')?.textContent ?? ''),
+          visible: Boolean(visual && visible(visual)), nonempty: Boolean(visual?.textContent.trim()),
+        });
+        serialized += `[[MATH:${index}]]`;
+        if (collect && visual) {
+          const walker = document.createTreeWalker(visual, NodeFilter.SHOW_TEXT);
+          for (let text = walker.nextNode(); text; text = walker.nextNode()) {
+            addGlyphs(text, key, index, lineIndex);
+          }
+          for (const rule of visual.querySelectorAll(
+            '.frac-line,.sqrt-line,.overline-line,.underline-line,svg')) {
+            const style = getComputedStyle(rule);
+            const painted = rule.tagName.toLowerCase() === 'svg'
+              || parseFloat(style.borderTopWidth) > 0 || parseFloat(style.borderBottomWidth) > 0;
+            if (!painted) hidden.push({ key, kind: 'unpainted-math-rule', formulaIndex: index });
+            // A CSS fraction line has a border but may have zero content height.
+            add(rule, () => {
+              const box = rule.getBoundingClientRect();
+              const height = Math.max(box.height, parseFloat(style.borderTopWidth) || 0,
+                parseFloat(style.borderBottomWidth) || 0);
+              return { ...box.toJSON(), top: box.top, bottom: box.top + height, height };
+            }, key, 'math-rule', index, lineIndex);
+          }
+        }
+        return;
+      }
+      const separator = node.matches('table,tr,td,th,p');
+      if (separator && node !== root) serialized += ' ';
+      for (const child of node.childNodes) walk(child);
+      if (separator && node !== root) serialized += ' ';
+    };
+    walk(root);
+    return { serialized: normalize(serialized), lines: serialized.split('\n').map(normalize), formulas };
+  }
+  for (const descriptor of materials) {
+    const element = document.querySelectorAll(descriptor.selector)[descriptor.index ?? 0];
+    if (!element) throw new Error(`Missing material: ${descriptor.key}`);
+    const start = targets.length;
+    const text = textOf(element, true, descriptor.key);
+    const tableCells = [...element.querySelectorAll('table')].map((table) =>
+      [...table.rows].map((row) => [...row.cells].map((cell) => {
+        const value = textOf(cell);
+        return { serialized: value.serialized, formulas: value.formulas.map((formula) => formula.tex),
+          lines: value.lines };
+      })));
+    const indices = targets.slice(start).map((target) => target.id);
+    const lineGeometry = text.lines.map((_, lineIndex) => {
+      const rects = indices.map((id) => targets[id]).filter((target) => target.lineIndex === lineIndex)
+        .map(rectFor);
+      return rects.length ? { top: Math.min(...rects.map((box) => box.top)),
+        bottom: Math.max(...rects.map((box) => box.bottom)) } : null;
+    });
+    const style = getComputedStyle(element);
+    const mathTypography = [...element.querySelectorAll('.prose-math,.katex')].map((node) => ({
+      family: getComputedStyle(node).fontFamily, px: parseFloat(getComputedStyle(node).fontSize),
+    }));
+    roots.push({ key: descriptor.key, ...text, tables: tableCells, indices, lineGeometry,
+      fontPx: parseFloat(style.fontSize), textIndent: style.textIndent, mathTypography });
+  }
+  for (const [index, figure] of [...document.querySelectorAll('figure')].entries()) {
+    const contract = figureContracts[figure.id];
+    if (!contract) throw new Error(`Unbound displayed figure: ${figure.id}`);
+    const media = figure.querySelector('.figure-media');
+    const svg = media?.querySelector('svg');
+    const image = media?.querySelector('img');
+    if (!media || (!svg && !image)) throw new Error(`Missing figure media: ${figure.id}`);
+    if (image && (!image.complete || image.naturalWidth <= 0)) throw new Error('Unloaded figure image');
+    const key = `figure-${index}-${figure.id}`;
+    const labels = [];
+    const first = targets.length;
+    for (const label of svg?.querySelectorAll('text') ?? []) {
+      const matrix = label.getScreenCTM();
+      const scale = matrix ? Math.hypot(matrix.a, matrix.b) : 0;
+      const box = label.getBoundingClientRect();
+      const svgBox = svg.getBoundingClientRect();
+      labels.push({ id: label.getAttribute('data-label-id'), text: label.textContent.trim(),
+        px: parseFloat(getComputedStyle(label).fontSize) * scale,
+        insideSvg: box.left >= svgBox.left && box.right <= svgBox.right
+          && box.top >= svgBox.top && box.bottom <= svgBox.bottom });
+      for (let char = 0; char < label.getNumberOfChars(); char += 1) {
+        add(label, () => {
+          const extent = label.getExtentOfChar(char);
+          const transform = label.getScreenCTM();
+          const points = [[extent.x, extent.y], [extent.x + extent.width, extent.y],
+            [extent.x, extent.y + extent.height], [extent.x + extent.width, extent.y + extent.height]]
+            .map(([x, y]) => new DOMPoint(x, y).matrixTransform(transform));
+          const left = Math.min(...points.map((p) => p.x));
+          const right = Math.max(...points.map((p) => p.x));
+          const top = Math.min(...points.map((p) => p.y));
+          const bottom = Math.max(...points.map((p) => p.y));
+          return { left, right, top, bottom, width: right - left, height: bottom - top };
+        }, key, 'svg-glyph');
+      }
+    }
+    const box = media.getBoundingClientRect();
+    // Adjacent media tiles include blank regions and borders, not just labels.
+    for (let y = 0; y < box.height; y += 64) {
+      for (let x = 0; x < box.width; x += 64) {
+        const width = Math.min(64, box.width - x);
+        const height = Math.min(64, box.height - y);
+        add(media, () => {
+          const current = media.getBoundingClientRect();
+          return { left: current.left + x, right: current.left + x + width,
+            top: current.top + y, bottom: current.top + y + height, width, height };
+        }, key, 'figure-region');
+      }
+    }
+    const expectedLabels = contract.labels ?? [];
+    const labelBindings = expectedLabels.every((expected) => labels.some((actual) =>
+      actual.id === expected.id && actual.text === expected.text));
+    figures.push({ key, id: figure.id, media, figure, labels, labelBindings,
+      minimumPx: contract.minimumPx, expectedLayout: contract.layout,
+      expectedWidth: contract.maxWidthPx, layout: figure.dataset.figureLayout,
+      mediaWidth: box.width, mediaHeight: box.height,
+      svgWidth: svg?.getBoundingClientRect().width ?? null,
+      indices: targets.slice(first).map((target) => target.id) });
+  }
+  const scrollables = [...document.querySelectorAll('*')].filter((element) =>
+    !element.closest('.katex-mathml') && element.clientWidth > 0
+    && (element.scrollWidth > element.clientWidth + 1 || element.scrollHeight > element.clientHeight + 1)
+    && ['auto', 'scroll'].some((mode) => {
+      const style = getComputedStyle(element);
+      return style.overflowX === mode || style.overflowY === mode;
+    }));
+  function bring(id) {
+    const target = targets[id];
+    let rect = rectFor(target);
+    window.scrollBy({ top: rect.top + rect.height / 2 - innerHeight / 2, behavior: 'instant' });
+    for (let ancestor = target.element; ancestor; ancestor = ancestor.parentElement) {
+      if (ancestor === document.body || ancestor === document.documentElement) continue;
+      const style = getComputedStyle(ancestor);
+      rect = rectFor(target);
+      const box = ancestor.getBoundingClientRect();
+      let left = ancestor.scrollLeft;
+      let top = ancestor.scrollTop;
+      if (['auto', 'scroll'].includes(style.overflowX)) {
+        if (rect.left < box.left + ancestor.clientLeft) left -= box.left + ancestor.clientLeft - rect.left;
+        if (rect.right > box.left + ancestor.clientLeft + ancestor.clientWidth) {
+          left += rect.right - box.left - ancestor.clientLeft - ancestor.clientWidth;
+        }
+      }
+      if (['auto', 'scroll'].includes(style.overflowY)) {
+        if (rect.top < box.top + ancestor.clientTop) top -= box.top + ancestor.clientTop - rect.top;
+        if (rect.bottom > box.top + ancestor.clientTop + ancestor.clientHeight) {
+          top += rect.bottom - box.top - ancestor.clientTop - ancestor.clientHeight;
+        }
+      }
+      ancestor.scrollTo({ left, top, behavior: 'instant' });
+    }
+    return contained(target);
+  }
+  const failed = [];
+  for (const target of targets) if (!bring(target.id)) failed.push({
+    id: target.id, key: target.key, kind: target.kind,
+  });
+  const ends = [];
+  for (const element of scrollables) {
+    const style = getComputedStyle(element);
+    if (!['auto', 'scroll'].includes(style.overflowX)) continue;
+    element.scrollTo({ left: element.scrollWidth - element.clientWidth, behavior: 'instant' });
+    ends.push({ maximum: element.scrollWidth - element.clientWidth, actual: element.scrollLeft });
+  }
+  function reset() {
+    for (const element of scrollables) element.scrollTo({ left: 0, top: 0, behavior: 'instant' });
+    window.scrollTo({ left: 0, top: 0, behavior: 'instant' });
+  }
+  reset();
+  function snapshot() {
+    return {
+      visibleIds: targets.filter((target) => contained(target)).map((target) => target.id),
+      scroll: { x: scrollX, y: scrollY },
+      scrollables: scrollables.map((element, index) => ({
+        index, left: element.scrollLeft, top: element.scrollTop,
+      })),
+      figureRegions: figures.map(({ key, media }) => {
+        const box = media.getBoundingClientRect();
+        const frame = frameFor(media);
+        const left = Math.max(box.left, frame.left);
+        const top = Math.max(box.top, frame.top);
+        const right = Math.min(box.right, frame.right);
+        const bottom = Math.min(box.bottom, frame.bottom);
+        return { key, x: left - box.left, y: top - box.top,
+          width: Math.max(0, right - left), height: Math.max(0, bottom - top) };
+      }),
+    };
+  }
+  window.__n9Display = { bring, reset, snapshot,
+    targetCount: targets.length, maxY: () => Math.max(0, document.documentElement.scrollHeight - innerHeight) };
+  return {
+    roots, hidden, failed, ends, targetCount: targets.length,
+    targets: targets.map(({ id, key, kind, formulaIndex, lineIndex }) =>
+      ({ id, key, kind, formulaIndex, lineIndex })),
+    figures: figures.map(({ media, figure, ...value }) => value),
+  };
+}
+
+async function pageSafety() {
+  const dangerousAttributes = [...document.querySelectorAll('*')].flatMap((element) =>
+    [...element.attributes].filter((attribute) => /^on/iu.test(attribute.name)
+      || /(?:answer|correct|accept|key|intent|rationale|solution|source[-_])/iu.test(attribute.name))
+      .map((attribute) => ({ tag: element.tagName, name: attribute.name })));
+  const labelBodyCollisions = [...document.querySelectorAll('.choice-options > li')].flatMap((row) => {
+    const label = row.querySelector('.option-id');
+    const body = row.querySelector('.choice-option-body');
+    const box = body.getBoundingClientRect();
+    const walker = document.createTreeWalker(label, NodeFilter.SHOW_TEXT);
+    const result = [];
+    for (let text = walker.nextNode(); text; text = walker.nextNode()) {
+      const range = document.createRange();
+      range.selectNodeContents(text);
+      for (const rect of range.getClientRects()) if (rect.right > box.left + 0.5) {
+        result.push({ label: label.textContent, right: rect.right, bodyLeft: box.left });
+      }
+    }
+    return result;
+  });
+  const sections = [...document.querySelectorAll('li.ex,.choice')].map((element) => {
+    const box = element.getBoundingClientRect();
+    return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, height: box.height };
+  });
+  return {
+    width: innerWidth, documentWidth: document.documentElement.scrollWidth, bodyWidth: document.body.scrollWidth,
+    scrollX, dangerousAttributes, labelBodyCollisions, sections,
+    errors: document.querySelectorAll('.err,.katex-error,.sr-tex-err').length,
+    widgets: document.querySelectorAll('input,textarea,select,button,form,'
+      + '[contenteditable]:not([contenteditable="false"]),[role="textbox"],[role="radio"],'
+      + '[role="checkbox"],[role="button"],[role="status"],[role="alert"]').length,
+    scripts: document.querySelectorAll('script,iframe,object,embed').length,
+    fonts: [...document.fonts].map((font) => ({ family: font.family, status: font.status })),
+  };
+}
+
+function unionArea(rectangles) {
+  const boxes = rectangles.filter((r) => r.width > 0 && r.height > 0);
+  const xs = [...new Set(boxes.flatMap((r) => [r.x, r.x + r.width]))].sort((a, b) => a - b);
+  let area = 0;
+  for (let i = 1; i < xs.length; i += 1) {
+    const intervals = boxes.filter((r) => r.x <= xs[i - 1] && r.x + r.width >= xs[i])
+      .map((r) => [r.y, r.y + r.height]).sort((a, b) => a[0] - b[0]);
+    let height = 0;
+    let end = -Infinity;
+    for (const [top, bottom] of intervals) {
+      height += Math.max(0, bottom - Math.max(top, end));
+      end = Math.max(end, bottom);
+    }
+    area += (xs[i] - xs[i - 1]) * height;
+  }
+  return area;
+}
+async function captureCoverage(page, viewport, surface, dom) {
+  const covered = new Set();
+  const states = new Set();
+  const images = [];
+  const shot = async () => {
+    const frame = await page.evaluate(() => window.__n9Display.snapshot());
+    const newIds = frame.visibleIds.filter((id) => !covered.has(id));
+    if (!newIds.length) return;
+    const state = JSON.stringify([frame.scroll, frame.scrollables]);
+    if (states.has(state)) return;
+    states.add(state);
+    const filename = `${viewport.width}-${surface}-${String(images.length + 1).padStart(3, '0')}.png`;
+    const output = own(path.join(RUN, 'screenshots', filename));
+    assertOfflineRuntime();
+    const bytes = await page.screenshot({
+      path: output, type: 'png', fullPage: false, animations: 'disabled',
+    });
+    assertOfflineRuntime();
+    const decoded = PNG.sync.read(bytes);
+    assert.equal(decoded.width, viewport.width, 'No resized/cropped screenshot');
+    assert.equal(decoded.height, viewport.height, 'No fullpage screenshot');
+    let ink = 0;
+    for (let index = 0; index < decoded.data.length; index += 4) {
+      if (decoded.data[index + 3] && Math.max(...decoded.data.subarray(index, index + 3)) < 180) ink += 1;
+    }
+    assert.ok(ink > 20, 'Blank screenshot cannot establish pixel coverage');
+    const after = await page.evaluate(() => window.__n9Display.snapshot());
+    assert.ok(same(frame, after), 'Screenshot geometry changed during capture');
+    for (const id of frame.visibleIds) covered.add(id);
+    const image = {
+      path: output, sha256: sha(bytes), width: decoded.width, height: decoded.height, ink,
+      viewport, surface, ...frame, newIds,
+      visualObservation: 'UNOBSERVED', nativeSize: true, fullPage: false, croppedOrResized: false,
+    };
+    images.push(image);
+    report.screenshots.push(image);
+    usage.screenshotsCaptured += 1;
+    await event({ screenshot: { path: output, sha256: image.sha256,
+      targetsVisible: frame.visibleIds.length, newTargets: newIds.length } });
+  };
+  await page.evaluate(() => window.__n9Display.reset());
+  const maximum = await page.evaluate(() => window.__n9Display.maxY());
+  const stride = viewport.height - 64;
+  for (let y = 0; y < maximum + stride; y += stride) {
+    await page.evaluate((top) => window.scrollTo({ top, left: 0, behavior: 'instant' }), Math.min(y, maximum));
+    await shot();
+    if (y >= maximum) break;
+  }
+  // Only still-uncovered targets trigger additional horizontal/native-scroll
+  // captures. No viewport state is captured twice and no saved image is reopened.
+  for (const target of dom.targets) {
+    if (covered.has(target.id)) continue;
+    const reachable = await page.evaluate((id) => window.__n9Display.bring(id), target.id);
+    assert.ok(reachable, `Unreachable pixel target ${surface}:${target.id}`);
+    await shot();
+  }
+  const materialCoverage = [...dom.roots, ...dom.figures].map((root) => ({
+    key: root.key, domTargets: root.indices.length,
+    capturedTargets: root.indices.filter((id) => covered.has(id)).length,
+    screenshotPaths: images.filter((image) => image.visibleIds.some((id) => root.indices.includes(id)))
+      .map((image) => image.path),
+    // A long paragraph/option may be readable across several adjacent views.
+    completeInSingleScreenshot: images.some((image) => root.indices.every((id) => image.visibleIds.includes(id))),
+    completeAcrossNativeScreenshots: root.indices.every((id) => covered.has(id)),
+  }));
+  const figureCoverage = dom.figures.map((figure) => {
+    const regions = images.flatMap((image) => image.figureRegions.filter((r) => r.key === figure.key));
+    const area = unionArea(regions);
+    return { key: figure.key, nativeWidth: figure.mediaWidth, nativeHeight: figure.mediaHeight,
+      requiredArea: figure.mediaWidth * figure.mediaHeight, capturedArea: area,
+      complete: area === figure.mediaWidth * figure.mediaHeight, regions };
+  });
+  const inventory = {
+    viewport, surface, domTargets: dom.targetCount, capturedTargets: covered.size,
+    missingTargets: dom.targets.filter((target) => !covered.has(target.id)),
+    materialCoverage, figureCoverage, screenshotPaths: images.map((image) => image.path),
+    pixelClaim: 'Native viewport captures cover measured targets and media regions; human visual review is separate',
+    visualObservation: 'PENDING',
+  };
+  report.coverage.push(inventory);
+  await save(`${viewport.width}-${surface}-coverage.json`, { ...inventory, targetInventory: dom.targets });
+  await check(`${viewport.width}:${surface}:complete-pixel-coverage-not-just-DOM`,
+    inventory.missingTargets.length === 0 && materialCoverage.every((m) => m.completeAcrossNativeScreenshots)
+    && figureCoverage.every((f) => f.complete), {
+      domTargets: inventory.domTargets, capturedTargets: covered.size,
+      screenshots: images.length, figures: figureCoverage.map(({ regions, ...value }) => value),
+    });
+}
+
+async function renderOnce() {
+  const args = [path.join(TOOLS, 'render_lesson.js'), SCRATCH, '--out', RENDER,
+    '--edition', EDITION, '--lesson', ID];
+  assert.equal(usage.rendererCalls, 0, 'Renderer runs once; no failure recovery');
+  await save('renderer-start.record', { command: [process.execPath, ...args], cwd: R });
+  usage.rendererCalls += 1;
+  report.cleanup.rendererClosed = false;
+  const receipt = await new Promise((resolve) => {
+    let stdout = '';
+    let stderr = '';
+    let error;
+    let timedOut = false;
+    rendererChild = spawn(process.execPath, args, {
+      cwd: R, stdio: ['ignore', 'pipe', 'pipe'],
+      env: { PATH: process.env.PATH, HOME: process.env.HOME, LANG: 'en_US.UTF-8',
+        TMPDIR: path.join(RUN, 'browser-tmp') },
+    });
+    const timer = setTimeout(() => { timedOut = true; rendererChild.kill('SIGKILL'); }, 120000);
+    rendererChild.stdout.on('data', (bytes) => { stdout += bytes; });
+    rendererChild.stderr.on('data', (bytes) => { stderr += bytes; });
+    rendererChild.once('error', (failure) => { error = failure.message; });
+    rendererChild.once('close', (exitCode, signal) => {
+      clearTimeout(timer);
+      report.cleanup.rendererClosed = true;
+      rendererChild = null;
+      resolve({ exitCode, signal, stdout, stderr, error, timedOut });
+    });
+  });
+  await save('renderer-receipt.record', receipt);
+  assert.equal(receipt.exitCode, 0, 'Stop dependent display on renderer failure');
+  assert.ok(!receipt.error && !receipt.timedOut);
+  const result = JSON.parse(receipt.stdout);
+  assert.equal(result.ok, true);
+  assert.ok(same(result.lessons.map((lesson) => lesson.lesson), [ID]), 'Never render old courses');
+  assert.equal(result.lessons[0].exercises, report.projection.exerciseIds.length);
+  assert.equal(result.lessons[0].choices, report.choiceBinding.questions);
+  assert.ok(same((await readdir(path.join(RENDER, ID))).sort(),
+    ['choices.html', 'exercises.html', 'text.html']), 'Exactly the three current N9 surfaces');
+  report.renderer = result;
+}
+
+try {
+  assert.equal(args.length, 12, 'Parent marker, choices, validation and three N9 evidence paths required');
+  assert.equal(args[0], '--parent-ready');
+  assert.equal(args[1], 'STEMROBIN-182:182-6:n9-approved');
+  for (const [index, flag] of [[2, '--approved-choices'], [4, '--validation-receipt'],
+    [6, '--text-evidence'], [8, '--answer-evidence'], [10, '--choice-evidence']]) {
+    assert.equal(args[index], flag);
+    assert.ok(path.isAbsolute(args[index + 1]), 'Use parent-confirmed absolute paths');
+  }
+  await mkdir(path.join(RUN, 'browser-tmp'));
+  await mkdir(path.join(RUN, 'screenshots'));
+  await save('start.record', { ...report, argv: args });
+  const requireApp = createRequire(path.join(R, 'app/package.json'));
+  const { chromium, expect } = requireApp('@playwright/test');
+  const core = path.dirname(requireApp.resolve('playwright-core/package.json'));
+  ({ PNG } = requireApp(path.join(core, 'lib/utilsBundle.js')));
+  const { proseFlow, proseOutline, sectionBreakIndices } =
+    createRequire(path.join(TOOLS, 'htmlfrag.js'))('./htmlfrag.js');
+  const { marked } = await import(path.join(R, '.agents/skills/node_modules/marked/lib/marked.esm.js'));
+  const expectedChoice = (text) => {
+    const tokens = marked.lexer(text);
+    const tables = [];
+    if (!tokens.some((token) => token.type === 'table')) return { ...projection(text), tables, literalLF: true };
+    const pieces = [];
+    for (const token of tokens) {
+      if (token.type !== 'table') { pieces.push(token.raw); continue; }
+      const rows = [token.header, ...token.rows].map((row) => row.map((cell) => cell.text));
+      tables.push(rows.map((row) => row.map(projection)));
+      pieces.push(...rows.map((row) => row.join(' ')));
+    }
+    return { ...projection(pieces.join(' ')), tables, literalLF: false };
+  };
+  const lessonBytes = await fingerprint(await under(R, path.join(LESSON, 'lesson.json')));
+  const exerciseBytes = await fingerprint(await under(R, path.join(LESSON, 'exercises.json')));
+  const manifestBytes = await fingerprint(await under(R, path.join(LESSON, 'figures.json')));
+  const lesson = JSON.parse(lessonBytes);
+  const exercises = JSON.parse(exerciseBytes);
+  const manifest = JSON.parse(manifestBytes);
+  for (const [kind, gatePath] of [['text', args[7]], ['answer', args[9]], ['choice', args[11]]]) {
+    await under(R, gatePath);
+    const gate = JSON.parse(await fingerprint(gatePath));
+    const verdict = gate.verdict ?? gate.outcome ?? gate.status;
+    assert.ok(verdict == null ? gate.returncode === 0 || gate.exitCode === 0
+      : String(verdict).toLowerCase() === 'pass',
+      `Parent-provided ${kind} evidence must have passed`);
+    const declaredLesson = gate.scope?.lesson ?? gate.lesson ?? gate.lesson_id;
+    if (declaredLesson != null) assert.equal(declaredLesson, ID, 'Evidence belongs to another lesson');
+    report.contentEvidence.push({ kind, path: gatePath, sha256: report.inputs.at(-1).sha256,
+      parentSuppliedForLesson: ID, semanticRecomputed: false });
+  }
+  assert.equal(lesson.id, ID);
+  assert.equal(lesson.status, 'ready');
+  assert.equal(exercises.status, 'ready');
+  assert.equal(exercises.lesson, ID);
+  assert.equal(manifest.lesson, ID);
+  assert.equal(lesson.prose.length, 17, 'Current N9 content boundary');
+  assert.equal(lesson.source.data.prose.length, 17);
+  assert.equal(exercises.count, 16);
+  assert.equal(lesson.exercise_count, 16);
+  assert.equal(exercises.exercises.length, 16);
+  assert.equal(exercises.source.data.exercises.length, 16);
+  const exerciseIds = exercises.exercises.map((exercise) => String(exercise.number));
+  assert.equal(new Set(exerciseIds).size, exerciseIds.length);
+  assert.equal(manifest.figures.length, 0, 'N9 has no original images');
+  assert.equal((lesson.figures ?? []).length, 0);
+  assert.equal(exercises.exercises.flatMap((exercise) => exercise.figures ?? []).length, 0);
+  const outline = proseOutline(lesson.prose);
+  const paragraphs = proseFlow(lesson.prose, lesson.section_breaks).filter((b) => b.kind === 'p');
+  const boundaries = sectionBreakIndices(lesson.prose, lesson.section_breaks);
+  assert.equal(new Set(outline.map((p) => p.blockIndex)).size, lesson.prose.length);
+  report.projection = {
+    sourceBlocks: lesson.prose.length, paragraphs: paragraphs.length, boundaries, exerciseIds,
+    sourceBlockParagraphs: Array.from({ length: lesson.prose.length }, (_, blockIndex) => ({
+      sourceBlock: blockIndex, paragraphIndices: outline.filter((p) => p.blockIndex === blockIndex).map((p) => p.index),
+    })),
+  };
+  const stagedLesson = path.join(STAGED, 'lessons', ID);
+  for (const [filename, bytes] of [['lesson.json', lessonBytes], ['exercises.json', exerciseBytes],
+    ['figures.json', manifestBytes]]) await stage(path.join(stagedLesson, filename), bytes);
+  const approved = await realpath(args[3]);
+  assert.ok(approved.startsWith(`${R}${path.sep}`), 'Parent-approved choices must be in this checkout');
+  const ownedReal = await realpath(OWN);
+  assert.ok(approved !== ownedReal && !approved.startsWith(`${ownedReal}${path.sep}`),
+    'Do not use output as approved input');
+  const seedBytes = await fingerprint(await under(approved, path.join(approved, 'seed.json')));
+  const draftBytes = await fingerprint(await under(approved, path.join(approved, 'draft.json')));
+  const reviewBytes = await fingerprint(await under(approved, path.join(approved, 'review.json')));
+  const validation = JSON.parse(await fingerprint(await under(R, args[5])));
+  const seed = JSON.parse(seedBytes);
+  const draft = JSON.parse(draftBytes);
+  const review = JSON.parse(reviewBytes);
+  assert.equal(seed.schema, 's10y-choice-seed-v1');
+  assert.equal(draft.schema, 's10y-choice-draft-v1');
+  assert.equal(seed.source.lesson, ID);
+  assert.equal(seed.source.book, BOOK);
+  assert.equal(draft.seed_sha256, canonical(seed));
+  assert.equal(review.outcome, 'pass');
+  assert.equal(review.seed_sha256, canonical(seed));
+  assert.equal(review.draft_sha256, canonical(draft));
+  assert.ok(validation.returncode === 0 || validation.exitCode === 0, 'Prior validation must have passed');
+  assert.ok(draft.questions.length > 0);
+  assert.equal(seed.figures.length, 0, 'No original images in the N9 seed');
+  assert.ok(same(seed.exercises, exercises.exercises.map((exercise) => ({
+    number: String(exercise.number), text: exercise.text, figure_ids: [],
+  }))), 'Approved seed must cover the current N9 written content');
+  for (const filename of ['lesson.json', 'exercises.json', 'figures.json']) {
+    const source = path.join(LESSON, filename);
+    const entry = seed.trace.find((item) => path.resolve(R, item.path) === source);
+    assert.equal(entry?.sha256, report.inputs.find((item) => item.path === source)?.sha256,
+      `Approved seed is stale for current N9 ${filename}`);
+  }
+  const figureContracts = {};
+  const stagedChoices = path.join(stagedLesson, 'choice-set');
+  await stage(path.join(stagedChoices, 'seed.json'), seedBytes);
+  await stage(path.join(stagedChoices, 'review.json'), reviewBytes);
+  const stagedDraft = structuredClone(draft);
+  const usedFigures = new Set(draft.questions.flatMap((question) =>
+    [...question.view.figure_ids, ...question.view.options.flatMap((option) => option.figure_ids)]));
+  let relocatedAssetPaths = 0;
+  for (const asset of stagedDraft.new_figures) {
+    if (!usedFigures.has(asset.id)) continue;
+    const source = await under(approved, path.resolve(R, asset.path));
+    const output = path.join(stagedChoices, 'figures', path.basename(source));
+    const assetBytes = await fingerprint(source, asset.sha256);
+    await stage(output, assetBytes);
+    asset.path = output;
+    relocatedAssetPaths += 1;
+    const specSource = await under(approved, path.join(approved, 'figures', `${asset.id}.spec.json`));
+    const specBytes = await fingerprint(specSource);
+    const spec = JSON.parse(specBytes);
+    await stage(path.join(stagedChoices, 'figures', `${asset.id}.spec.json`), specBytes);
+    const mode = spec.mode === 'generated' ? 'generation' : 'render';
+    const evidenceBytes = await fingerprint(await under(approved,
+      path.join(approved, 'figures', `${asset.id}.${mode}.json`)));
+    const reviewFigureBytes = await fingerprint(await under(approved,
+      path.join(approved, 'figures', `${asset.id}.review.json`)));
+    const figureReview = JSON.parse(reviewFigureBytes);
+    assert.equal(figureReview.status, 'pass');
+    assert.equal(figureReview.spec.sha256, sha(specBytes));
+    assert.equal(figureReview[mode]?.sha256, sha(evidenceBytes));
+    assert.ok(Object.values(figureReview.outputs ?? {}).some((entry) => entry.sha256 === sha(assetBytes)),
+      'New choice figure must have an existing hash-bound output review');
+    await stage(path.join(stagedChoices, 'figures', `${asset.id}.${mode}.json`), evidenceBytes);
+    await stage(path.join(stagedChoices, 'figures', `${asset.id}.review.json`), reviewFigureBytes);
+    assert.ok(spec.display.minTextPx >= 16, 'Reuse a readable approved choice-figure contract');
+    figureContracts[asset.id] = { minimumPx: spec.display.minTextPx,
+      layout: spec.display.layout, maxWidthPx: spec.display.maxWidthPx ?? null,
+      labels: (spec.objects ?? []).filter((o) => o.type === 'text' || o.label)
+        .map((o) => ({ id: `${o.id}-label`, text: String(o.text ?? o.label).trim() })) };
+  }
+  // Asset path relocation is scratch-only. Approved view/text/options/key bytes
+  // remain untouched; the renderer does not require revalidation of this copy.
+  const stagedDraftBytes = draft.new_figures.length
+    ? Buffer.from(`${JSON.stringify(stagedDraft, null, 2)}\n`) : draftBytes;
+  await stage(path.join(stagedChoices, 'draft.json'), stagedDraftBytes);
+  report.choiceBinding = { seed: sha(seedBytes), draft: sha(draftBytes), review: sha(reviewBytes),
+    questions: draft.questions.length, options: draft.questions.reduce((n, q) => n + q.view.options.length, 0),
+    scratchAssetPathsRelocated: relocatedAssetPaths, privateMaterialServed: false };
+  await save('approved-choice-view.json', {
+    book: BOOK, lesson: ID, ...report.choiceBinding,
+    views: draft.questions.map((question) => question.view),
+    figures: draft.new_figures.map(({ id, path: source }) => ({ id, path: source })),
+  });
+  await fingerprint(path.join(TOOLS, 'render_lesson.js'));
+  await fingerprint(path.join(TOOLS, 'htmlfrag.js'));
+  await fingerprint(path.join(TOOLS, 'choice_html.mjs'));
+  await renderOnce();
+  const html = new Map();
+  const leakage = /\b(?:seed_sha256|draft_sha256|source_numbers|source_solution|independent_solution|correct_index|correctIndex|answerKey|answer_key|rationales|misconception|omitted_tasks|api_key|password|postgres(?:ql)?|intent)\b/iu;
+  for (const filename of ['text.html', 'exercises.html', 'choices.html']) {
+    const bytes = await fingerprint(path.join(RENDER, ID, filename));
+    await check(`${filename}:no-private-choice-key-intent-or-source-payload`, !leakage.test(bytes.toString('utf8')));
+    html.set(`/${filename}`, bytes);
+  }
+  server = createServer((request, response) => {
+    network.served.push({ method: request.method, path: request.url });
+    if (request.method === 'GET' && request.url === '/favicon.ico') return void response.writeHead(204).end();
+    const bytes = request.method === 'GET' ? html.get(request.url) : undefined;
+    if (!bytes) return void response.writeHead(404).end();
+    response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store',
+      'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data:; "
+        + "script-src 'none'; connect-src 'none'; frame-src 'none'; form-action 'none';" }).end(bytes);
+  });
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', resolve);
+  });
+  report.cleanup.serverClosed = false;
+  origin = `http://127.0.0.1:${server.address().port}`;
+  for (const [route, bytes] of html) {
+    const response = await fetch(`${origin}${route}`, { signal: AbortSignal.timeout(5000) });
+    assert.equal(response.status, 200, 'Server must respond before browser launch');
+    assert.equal(sha(Buffer.from(await response.arrayBuffer())), sha(bytes));
+  }
+  process.env.TMPDIR = path.join(RUN, 'browser-tmp');
+  usage.browserLaunches += 1;
+  browser = await chromium.launch({
+    headless: true, timeout: 30000, downloadsPath: path.join(RUN, 'browser-tmp'),
+    env: { PATH: process.env.PATH, HOME: process.env.HOME, LANG: 'en_US.UTF-8', TMPDIR: process.env.TMPDIR },
+    args: ['--disable-background-networking', '--disable-component-update', '--disable-sync', '--no-first-run',
+      '--disable-default-apps', '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1'],
+  });
+  report.cleanup.browserClosed = false;
+  report.browser = { family: 'Chromium', version: browser.version(), installedInApp: true, headless: true,
+    limitation: 'Offline display evidence, not headed product acceptance' };
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1,
+      serviceWorkers: 'block', acceptDownloads: false });
+    context.setDefaultTimeout(20000);
+    contexts.push(context);
+    usage.browserContexts += 1;
+    await context.route('**/*', async (route) => {
+      const request = route.request();
+      const url = new URL(request.url());
+      if (request.method() === 'GET' && url.origin === origin && !url.search && !url.hash
+        && [...html.keys(), '/favicon.ico'].includes(url.pathname)) await route.continue();
+      else {
+        network.blocked.push({ method: request.method(), url: request.url() });
+        await route.abort('blockedbyclient');
+      }
+    });
+    await context.routeWebSocket(/.*/, async (socket) => {
+      network.blocked.push({ kind: 'websocket' });
+      await socket.close();
+    });
+    const page = await context.newPage();
+    page.on('pageerror', (error) => network.pageErrors.push(error.message));
+    page.on('console', (message) => { if (message.type() === 'error') network.consoleErrors.push(message.text()); });
+    page.on('requestfailed', (request) => network.failures.push({ url: request.url(), error: request.failure() }));
+    page.on('response', (response) => {
+      if (response.status() >= 400) network.badResponses.push({ url: response.url(), status: response.status() });
+    });
+    for (const surface of ['text', 'exercises', 'choices']) {
+      usage.pageNavigations += 1;
+      const response = await page.goto(`${origin}/${surface}.html`, { waitUntil: 'load' });
+      assert.equal(response.status(), 200);
+      await page.evaluate(() => document.fonts.ready);
+      assertOfflineRuntime();
+      await expect(page.locator('h1')).toBeVisible();
+      const materials = [];
+      const add = (key, selector, index, expected, paragraph = false) => {
+        materials.push({ key, selector, index, expected, paragraph });
+      };
+      add('title', 'h1', 0, projection(surface === 'text'
+        ? lesson.printed_title || lesson.title
+        : `${lesson.printed_title || lesson.title} · ${surface === 'exercises' ? '习题' : '选择题'}`));
+      if (surface === 'text') {
+        await expect(page.locator('p.para')).toHaveCount(paragraphs.length);
+        await expect(page.locator('figure,li.ex,.choice')).toHaveCount(0);
+        for (const [index, paragraph] of paragraphs.entries()) {
+          add(`prose-${index}`, 'p.para', index, projection(paragraph.text), true);
+        }
+        const actualBoundaries = await page.locator('p.para').evaluateAll((nodes) => nodes.flatMap((node, index) => {
+          const style = getComputedStyle(node);
+          return parseFloat(style.borderTopWidth) > 0 && style.borderTopStyle !== 'none' ? [index] : [];
+        }));
+        await check(`${viewport.width}:prose-current-source-blocks-and-anchored-rules`,
+          same(actualBoundaries, boundaries), {
+            actualParagraphs: paragraphs.length, sourceBlocks: lesson.prose.length });
+        await expect(page.getByRole('link')).toHaveAttribute('href', 'exercises.html');
+      } else if (surface === 'exercises') {
+        await expect(page.locator('li.ex')).toHaveCount(exercises.exercises.length);
+        assert.ok(same(await page.locator('li.ex').evaluateAll((nodes) => nodes.map((n) => n.id)),
+          exerciseIds.map((id) => `ex-${id}`)));
+        for (const exercise of exercises.exercises) {
+          const display = writtenText(exercise);
+          add(`exercise-${exercise.number}`, `#ex-${exercise.number} .body`, 0, projection(display.text));
+          add(`number-${exercise.number}`, `#ex-${exercise.number} .no`, 0, projection(display.number));
+        }
+        await expect(page.locator('figure')).toHaveCount(0);
+        await expect(page.getByRole('link')).toHaveAttribute('href', 'text.html');
+      } else {
+        await expect(page.locator('.choice')).toHaveCount(draft.questions.length);
+        await expect(page.locator('.choice-options > li')).toHaveCount(report.choiceBinding.options);
+        await expect(page.locator('a,link')).toHaveCount(0);
+        for (const [index, question] of draft.questions.entries()) {
+          add(`choice-${index}-heading`, '.choice-heading', index,
+            projection(`${index + 1}. ${question.view.mode === 'multiple' ? '多选' : '单选'}`));
+          add(`choice-${index}-stem`, '.choice-stem', index, expectedChoice(question.view.stem));
+          const selector = `.choice:nth-of-type(${index + 1})`;
+          for (const [optionIndex, option] of question.view.options.entries()) {
+            add(`choice-${index}-option-${optionIndex}`, `${selector} .choice-option-body`, optionIndex,
+              expectedChoice(option.text));
+            add(`choice-${index}-label-${optionIndex}`, `${selector} .option-id`, optionIndex,
+              projection(String.fromCharCode(65 + optionIndex)));
+          }
+          const actualFigureIds = await page.locator(selector).locator('figure').evaluateAll((nodes) => nodes.map((n) => n.id));
+          assert.ok(same(actualFigureIds, [...question.view.figure_ids,
+            ...question.view.options.flatMap((o) => o.figure_ids)]), 'All and only approved choice figures');
+        }
+      }
+      const dom = await page.evaluate(installDisplayTools, {
+        materials: materials.map(({ expected, paragraph, ...descriptor }) => descriptor), figureContracts,
+      });
+      await check(`${viewport.width}:${surface}:every-glyph-math-rule-and-media-edge-reachable`,
+        dom.hidden.length === 0 && dom.failed.length === 0 && dom.targetCount > 0
+        && dom.ends.every((end) => Math.abs(end.maximum - end.actual) <= 1),
+        { targets: dom.targetCount, hidden: dom.hidden, failed: dom.failed, nativeEnds: dom.ends });
+      for (const material of materials) {
+        const actual = dom.roots.find((root) => root.key === material.key);
+        const expected = material.expected;
+        const literalLF = expected.literalLF !== false;
+        const typography = !material.paragraph || parseFloat(actual.textIndent) === 0
+          && actual.mathTypography.every((font) => /KaTeX_Main/u.test(font.family)
+            && font.px >= actual.fontPx * 1.1 - 0.02);
+        const subparts = actual.lines.flatMap((line, index) =>
+          /^(?:[a-z]|\d+)\)\s/u.test(line) ? [index] : []);
+        const separateRows = subparts.every((index) => index === 0 || actual.lineGeometry[index]
+          && actual.lineGeometry[index - 1]
+          && actual.lineGeometry[index].top > actual.lineGeometry[index - 1].top + 0.5);
+        const tables = actual.tables.map((rows) => rows.map((row) =>
+          row.map(({ serialized, formulas, lines }) => ({ serialized, formulas, lines }))));
+        await check(`${viewport.width}:${surface}:${material.key}:projected-text-formulas-subpart-rows`,
+          actual.serialized === expected.serialized
+          && same(actual.formulas.map((formula) => formula.tex), expected.formulas)
+          && actual.formulas.every((formula) => formula.visible && formula.nonempty)
+          && (!literalLF || same(actual.lines, expected.lines))
+          && same(tables, expected.tables ?? []) && typography && separateRows,
+          { textSha256: sha(actual.serialized), formulasSha256: sha(JSON.stringify(actual.formulas.map((f) => f.tex))),
+            formulas: actual.formulas.length, literalLF, subpartLineIndices: subparts,
+            separateRows, typography, domTargets: actual.indices.length });
+      }
+      for (const figure of dom.figures) {
+        await check(`${viewport.width}:${surface}:${figure.key}:current-figure-labels-native-minimum`,
+          figure.labelBindings
+          && figure.labels.every((label) => label.insideSvg && label.px >= figure.minimumPx)
+          && figure.layout === figure.expectedLayout
+          && figure.mediaWidth > 0 && figure.mediaHeight > 0
+          && (figure.svgWidth === null || figure.svgWidth === figure.mediaWidth)
+          && (figure.expectedWidth === null || figure.layout !== 'scroll'
+            || figure.mediaWidth === figure.expectedWidth),
+          { id: figure.id, mediaWidth: figure.mediaWidth, mediaHeight: figure.mediaHeight,
+            requiredMinimumPx: figure.minimumPx, labels: figure.labels, labelBindings: figure.labelBindings });
+      }
+      const safety = await page.evaluate(pageSafety);
+      await check(`${viewport.width}:${surface}:readonly-no-key-leakage-overflow-or-label-overlap`,
+        safety.documentWidth <= viewport.width + 1 && safety.bodyWidth <= viewport.width + 1 && safety.scrollX === 0
+        && safety.errors === 0 && safety.widgets === 0 && safety.scripts === 0
+        && safety.dangerousAttributes.length === 0 && safety.labelBodyCollisions.length === 0
+        && safety.sections.every((box, index, boxes) => box.left >= -1 && box.right <= viewport.width + 1
+          && box.height > 0 && (index === 0 || box.top >= boxes[index - 1].bottom - 0.5))
+        && safety.fonts.some((font) => font.family.startsWith('KaTeX') && font.status === 'loaded')
+        && safety.fonts.every((font) => font.status !== 'error'), safety);
+      await captureCoverage(page, viewport, surface, dom);
+      const after = await page.evaluate(pageSafety);
+      await check(`${viewport.width}:${surface}:wholepage-still-contained-after-all-native-scrolls`,
+        after.documentWidth <= viewport.width + 1 && after.bodyWidth <= viewport.width + 1 && after.scrollX === 0);
+    }
+    await context.close();
+    contexts.splice(contexts.indexOf(context), 1);
+  }
+  await check('one-render-one-browser-two-contexts-six-current-n9-surfaces',
+    usage.rendererCalls === 1 && usage.browserLaunches === 1 && usage.browserContexts === 2
+    && usage.pageNavigations === 6
+    && report.coverage.length === 6);
+  await check('no-browser-errors-or-nonoffline-requests',
+    network.blocked.length === 0 && network.failures.length === 0 && network.pageErrors.length === 0
+    && network.consoleErrors.length === 0 && network.badResponses.length === 0
+    && network.served.every((r) => r.method === 'GET' && [...html.keys(), '/favicon.ico'].includes(r.path)), network);
+} catch (error) {
+  report.executionFailure = { name: error.name, message: error.message, stack: error.stack };
+  report.faults.push({ stage: 'FIRST-runtime',
+    ...report.executionFailure, preserved: true });
+  await event({ failure: report.executionFailure });
+} finally {
+  if (rendererChild) {
+    rendererChild.kill('SIGKILL');
+    await new Promise((resolve) => rendererChild.once('close', resolve));
+    report.cleanup.rendererClosed = true;
+  }
+  for (const context of contexts) {
+    try { await context.close(); } catch (error) {
+      report.cleanup.contextsClosed = false;
+      report.faults.push({ stage: 'context-close', message: error.message });
+    }
+  }
+  try { if (browser) await browser.close(); report.cleanup.browserClosed = true; }
+  catch (error) {
+    report.cleanup.browserClosed = false;
+    report.faults.push({ stage: 'browser-close', message: error.message });
+  }
+  try {
+    if (server?.listening) {
+      server.closeAllConnections();
+      await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+    }
+    report.cleanup.serverClosed = true;
+  } catch (error) {
+    report.cleanup.serverClosed = false;
+    report.faults.push({ stage: 'server-close', message: error.message });
+  }
+  for (const input of report.inputs) {
+    try {
+      assert.equal(sha(await readFile(input.path)), input.sha256);
+    } catch (error) {
+      report.faults.push({ stage: 'input-preservation', path: input.path, message: error.message });
+    }
+  }
+  report.network = network;
+  report.finished = new Date().toISOString();
+  report.status = report.executionFailure || report.faults.length
+    || Object.values(report.cleanup).some((closed) => !closed) ? 'FAIL' : 'RUNTIME_PASS_VISUAL_PENDING';
+  if (report.status === 'FAIL') await save('failure-receipt.record', {
+    status: report.status, firstFailure: report.executionFailure ?? report.faults[0],
+    faults: report.faults, cleanup: report.cleanup, generatedFilesPreserved: true,
+    rendererCalls: usage.rendererCalls, browserLaunches: usage.browserLaunches,
+    noAutomaticRetry: true,
+  });
+  const batches = [];
+  for (let index = 0; index < report.screenshots.length; index += 8) {
+    batches.push({ batch: batches.length + 1, status: 'UNOBSERVED',
+      paths: report.screenshots.slice(index, index + 8).map((image) => image.path) });
+  }
+  const visual = {
+    status: 'PENDING', imagesObserved: 0, batchLimit: 8, contextLimit: 24,
+    firstBoundedObservationBatch: batches[0] ?? null, untouchedRemainingBatches: batches.slice(1),
+    allPaths: report.screenshots.map((image) => image.path),
+    rule: 'Observe each image once. Return text and paths only. After at most eight new images stop; fresh agents take untouched paths.',
+    coveragePath: path.join(RUN, 'report-FIRST.json'),
+    domCoverageIsNotVisualApproval: true, pixelCoverageIsNotHumanObservation: true,
+  };
+  await save('report-FIRST.json', report);
+  await save('usage-FIRST.json', usage);
+  await save('visual-handoff.json', visual);
+  console.log(JSON.stringify({
+    status: report.status, report: path.join(RUN, 'report-FIRST.json'),
+    usage: path.join(RUN, 'usage-FIRST.json'), visualHandoff: path.join(RUN, 'visual-handoff.json'),
+    screenshots: visual.allPaths, cleanup: report.cleanup,
+    note: 'No images observed by this script. Visual review remains pending; no rerender or screenshot recapture.',
+  }, null, 2));
+  if (report.status === 'FAIL') process.exitCode = 1;
+}

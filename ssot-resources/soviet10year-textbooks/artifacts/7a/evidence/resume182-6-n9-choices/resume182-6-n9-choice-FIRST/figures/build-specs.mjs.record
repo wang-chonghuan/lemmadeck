@@ -1,0 +1,262 @@
+import fs from 'node:fs'
+import path from 'node:path'
+
+// This only assembles supported FigureSpec objects; render_spec owns drawing.
+const root = path.resolve('.tmp/resume182-6-n9-choice-FIRST')
+const out = path.join(root, 'figures')
+const seed = JSON.parse(fs.readFileSync(path.join(root, 'seed.json'), 'utf8'))
+fs.mkdirSync(out, { recursive: true })
+
+function addPoint(spec, id, at, visible = false) {
+  spec.objects.push({
+    id, type: 'point', at, visible, size: 3,
+    stroke: 'ink', fill: 'ink',
+  })
+  return id
+}
+
+function addEdge(spec, id, from, to) {
+  spec.objects.push({
+    id, type: 'segment', from, to, stroke: 'ink', strokeWidth: 3,
+  })
+  spec.assertions.push({ id: `${id}-connects`, type: 'connects', arrow: id, from, to })
+}
+
+function axes(spec, prefix, cx, xmax, ymax, fontSize, ticks, k = 1) {
+  const grid = `${prefix}-grid`
+  const yStep = ymax === 12 ? 2 : 1
+  spec.objects.push({
+    id: grid, type: 'grid', xStep: 1, yStep, xOffset: cx,
+    bounds: [cx - xmax, ymax, cx + xmax, -ymax],
+    stroke: 'grid', strokeWidth: 1,
+  })
+  spec.assertions.push({
+    id: `${grid}-dimensions`, type: 'gridDimensions', grid,
+    columns: 2 * xmax, rows: 2 * ymax / yStep,
+  })
+  spec.objects.push({
+    id: `${prefix}-x-axis`, type: 'axis',
+    from: [cx - xmax, 0], to: [cx + xmax, 0],
+    stroke: 'muted', strokeWidth: 2, fontSize,
+    ticks: ticks ? [-4, -2, 2, 4].map(x => ({
+      at: [cx + x, 0], label: String(x), size: 0.15,
+      labelPlacement: {
+        position: k * x > 0 ? 'S' : 'N',
+        offset: [0, k * x > 0 ? 10 : -10],
+        fallback: true,
+      },
+    })) : [],
+  }, {
+    id: `${prefix}-y-axis`, type: 'axis',
+    from: [cx, -ymax], to: [cx, ymax],
+    stroke: 'muted', strokeWidth: 2, fontSize,
+    ticks: ticks ? [-10, -5, -2, 2, 5, 10].map(y => ({
+      at: [cx, y], label: String(y), size: 0.08,
+      labelPlacement: {
+        position: k * y > 0 ? 'W' : 'E',
+        offset: [k * y > 0 ? -12 : 12, 0],
+        fallback: true,
+      },
+    })) : [],
+  }, {
+    id: `${prefix}-x-label`, type: 'text',
+    at: [cx + xmax + (ticks ? 1.1 : 0.25), ticks ? 0 : -0.4],
+    text: 'x', fontSize,
+    labelPlacement: { position: 'CENTER', offset: [0, 0] },
+  }, {
+    id: `${prefix}-y-label`, type: 'text',
+    at: [ticks ? cx : cx - Math.sign(k) * 0.55,
+      ticks ? ymax + 0.25 : ymax - 0.35],
+    text: 'y', fontSize,
+    labelPlacement: ticks ? {} : { position: 'CENTER', offset: [0, 0] },
+  })
+  const center = addPoint(spec, `${prefix}-origin`, [cx, 0])
+  return center
+}
+
+function reciprocal(spec, prefix, cx, k, xmax, ymax, center, samples) {
+  const xmin = Math.abs(k) / ymax
+  const xs = []
+  for (let i = 0; i <= samples; i += 1) {
+    xs.push(xmin * (xmax / xmin) ** (i / samples))
+  }
+  xs.push(xmin, xmax)
+  for (const x of [1, 2, 3, 4, 5]) {
+    if (x >= xmin && x <= xmax) xs.push(x)
+  }
+  const ordered = [...new Set(xs)].sort((a, b) => a - b)
+  const pairs = []
+  const markedPairs = []
+  ordered.forEach((x, i) => {
+    const y = k / x
+    const visible = x === (xmax === 6 ? 2 : 1)
+    const a = addPoint(spec, `${prefix}-positive-${i}`, [cx + x, y], visible)
+    const b = addPoint(spec, `${prefix}-negative-${i}`, [cx - x, -y], visible)
+    pairs.push({ a, b })
+    if (visible) markedPairs.push({ a, b })
+    if (i > 0) {
+      addEdge(spec, `${prefix}-positive-edge-${i}`,
+        `${prefix}-positive-${i - 1}`, a)
+      addEdge(spec, `${prefix}-negative-edge-${i}`,
+        `${prefix}-negative-${i - 1}`, b)
+    }
+  })
+  spec.assertions.push({
+    id: `${prefix}-symmetry`, type: 'centralSymmetry', center, pairs,
+    tolerance: 1e-9,
+  }, {
+    id: `${prefix}-marked-symmetry`, type: 'centralSymmetry',
+    center: [cx, 0], pairs: markedPairs, tolerance: 1e-9,
+  })
+}
+
+function proportional(spec, prefix, cx, slope, center) {
+  const pairs = []
+  for (let i = 1; i <= 3; i += 1) {
+    const a = addPoint(spec, `${prefix}-positive-${i}`, [cx + i, slope * i], i === 1)
+    const b = addPoint(spec, `${prefix}-negative-${i}`, [cx - i, -slope * i], i === 1)
+    pairs.push({ a, b })
+    if (i === 1) {
+      addEdge(spec, `${prefix}-positive-edge-${i}`, center, a)
+      addEdge(spec, `${prefix}-negative-edge-${i}`, center, b)
+    } else {
+      addEdge(spec, `${prefix}-positive-edge-${i}`,
+        `${prefix}-positive-${i - 1}`, a)
+      addEdge(spec, `${prefix}-negative-edge-${i}`,
+        `${prefix}-negative-${i - 1}`, b)
+    }
+    spec.assertions.push({
+      id: `${prefix}-collinear-${i}`, type: 'collinear', a, b, c: center,
+    })
+  }
+  spec.assertions.push({
+    id: `${prefix}-symmetry`, type: 'centralSymmetry', center, pairs,
+  }, {
+    id: `${prefix}-marked-symmetry`, type: 'centralSymmetry',
+    center: [cx, 0], pairs: [pairs[0]],
+  })
+}
+
+function base(id, number, basis, paired) {
+  return {
+    schema: 'ld-s10y-image/figure-spec@2',
+    id, mode: 'deterministic',
+    description: 'Authored graph-recognition alternative; not an original source image.',
+    source: {
+      authoredBasis: basis,
+      authoritativeText: [{
+        lesson: seed.source.lesson, exercise: number,
+        text: seed.exercises.find(e => e.number === number).text,
+      }],
+      inventory: [],
+    },
+    canvas: paired
+      ? { width: 960, height: 480, boundingBox: [-8, 4, 8, -4], background: 'paper' }
+      : {
+        width: 640, height: 480, boundingBox: [-8, 15, 8, -15],
+        background: 'paper', keepAspectRatio: false,
+      },
+    display: paired
+      ? { layout: 'scroll', purpose: 'instructional', minTextPx: 16, widths: [640] }
+      : {
+        layout: 'inline', purpose: 'instructional', minTextPx: 16,
+        maxWidthPx: 640, widths: [320, 640],
+      },
+    objects: [], assertions: [], layout: { minLabelGap: 6 },
+  }
+}
+
+function inventory(spec, prefix, description) {
+  spec.source.inventory.push({
+    id: `${prefix}-authored-inventory`, description,
+    objects: spec.objects.filter(o => o.id.startsWith(`${prefix}-`)
+      && o.visible !== false).map(o => o.id),
+    assertions: spec.assertions.filter(a => a.id.startsWith(`${prefix}-`)).map(a => a.id),
+    requires: ['gridDimensions', 'pointRelationships'],
+  })
+}
+
+function save(spec) {
+  const structureRepair = process.argv.includes('--repair-structure')
+  const labelRepair = process.argv.includes('--repair-labels-121')
+    || process.argv.includes('--repair-failed-labels')
+  if (structureRepair && fs.existsSync(path.join(out, `${spec.id}.svg`))) {
+    throw new Error(`Refusing to rewrite a rendered spec: ${spec.id}`)
+  }
+  const report = path.join(out, `${spec.id}.render.json`)
+  if (labelRepair && fs.existsSync(report)
+    && JSON.parse(fs.readFileSync(report, 'utf8')).status !== 'fail') {
+    console.log(`Retained successful output: ${spec.id}`)
+    return
+  }
+  fs.writeFileSync(path.join(out, `${spec.id}.spec.json`),
+    `${JSON.stringify(spec, null, 2)}\n`,
+    { flag: structureRepair || labelRepair ? 'w' : 'wx' })
+  console.log(spec.id)
+}
+
+for (const [suffix, k, meaning] of [
+  ['a', 4, 'Correct candidate for y=4/x.'],
+  ['b', 10, 'Deliberate false alternative: drop the minus in y=-10/x.'],
+  ['c', -10, 'Correct candidate for y=-10/x.'],
+  ['d', -4, 'Deliberate false alternative: negate y=4/x.'],
+]) {
+  const id = `fig-choice-n9-121-${suffix}`
+  const spec = base(id, '121',
+    `${meaning} Independently derived xy=${k}; paired points (x,k/x) and `
+    + `(-x,-k/x). Finite window x in [-6,6], y in [-12,12]. `
+    + `Log-spaced segments approximate each separate reciprocal branch; `
+    + `no segment crosses x=0, no endpoint marker denotes a domain endpoint. `
+    + `The visible opposite points have local x=2 and -2. `
+    + `All candidates share identical axes and scales.`, false)
+  const center = axes(spec, 'graph', 0, 6, 12, 32, true, k)
+  reciprocal(spec, 'graph', 0, k, 6, 12, center, 120)
+  inventory(spec, 'graph',
+    'Authored 12 by 12 scale grid, x/y axes, visible opposite markers and '
+    + 'all connecting segments. Hidden sampling nodes are covered by the '
+    + 'mapped symmetry and connects assertions, not listed as visible objects. '
+    + 'Symmetry covers every defining point pair; '
+    + 'numeric curve correctness must also be checked independently.')
+  save(spec)
+}
+
+for (const [suffix, left, right, meaning] of process.argv.includes('--repair-labels-121') ? [] : [
+  ['a', 'line-positive', 'line-negative',
+    'Deliberate false alternatives y=x and y=-x confuse proportional and reciprocal functions.'],
+  ['b', 'reciprocal-positive', 'reciprocal-negative',
+    'Correct shape representatives y=1/x and y=-1/x for positive and negative k.'],
+  ['c', 'reciprocal-positive', 'reciprocal-positive',
+    'Deliberate false right panel uses |k|/x for negative k; the left panel is correct.'],
+]) {
+  const id = `fig-choice-n9-122-${suffix}`
+  const spec = base(id, '122',
+    `${meaning} Panels are centered at (-4,0) and (4,0); local axes have `
+    + `identical unit scale and a [-3,3] square window. Reciprocal curves use `
+    + `separate log-spaced segment branches and no x=0 point. `
+    + `Line candidates pass through the local origin. k=±1 represent shapes, `
+    + `not the same quantitative curve for every nonzero k.`, true)
+  for (const [prefix, cx, type, title] of [
+    ['left', -4, left, 'k > 0'],
+    ['right', 4, right, 'k < 0'],
+  ]) {
+    const center = axes(spec, prefix, cx, 3, 3, 30, false,
+      type.endsWith('negative') ? -1 : 1)
+    spec.objects.push({
+      id: `${prefix}-condition`, type: 'text', at: [cx, 3.55],
+      text: title, fontSize: 30,
+      labelPlacement: { position: 'CENTER', offset: [0, 0] },
+    })
+    if (type.startsWith('line')) {
+      proportional(spec, prefix, cx, type.endsWith('negative') ? -1 : 1, center)
+    } else {
+      reciprocal(spec, prefix, cx, type.endsWith('negative') ? -1 : 1,
+        3, 3, center, 100)
+    }
+    inventory(spec, prefix,
+      `Authored ${title} panel, 6 by 6 unit grid, local axes, visible opposite `
+      + 'markers and segments. Hidden nodes are covered through the mapped '
+      + 'assertions. Each opposite defining point pair is asserted; '
+      + 'the header is a condition, not a claim that the candidate is true.')
+  }
+  save(spec)
+}

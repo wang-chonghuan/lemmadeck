@@ -1,0 +1,59 @@
+# N9 Bounded Display Observation
+
+You are the single fresh independent observer for the assigned batch only.
+The parent supplies a batch number. All shell commands MUST explicitly use
+workdir `/Users/yong/.codex/worktrees/stemrobin-182-six/lemmadeck`.
+You are not alone; do not modify files owned by others.
+
+Read the Image batches section in `.agents/skills/ld-s10y-image/SKILL.md`
+and `.claude/skills/ld-s10y-lesson/references/production-resume.md`.
+The parent has already completed ticket setup and authority reads. Do not
+reinitialize, query a backend, open another chat, start agents, use network/DB,
+read `.env`, render, validate, solve math, read answers/keys or source figures.
+
+Input:
+`.tmp/resume182-6-n9-display-selection-FIRST/batch<N>.json`.
+Output:
+`.tmp/resume182-6-n9-display-observe-batch<N>/result.json`.
+
+Read only the bounded batch metadata and verify every assigned PNG SHA.
+View each assigned native PNG exactly ONCE using `view_image`.
+No reopens, crops, resizing, alternate screenshots or images outside this batch.
+Max 8 images per batch and 24 per context.
+Check actual visible text/formulas/tables/figure pixels for legibility,
+collisions, blank content, permanent internal clipping and unintended layout.
+Native viewport-edge cropping and intentional horizontal-scroll windows are
+expected. Metadata may locate a window but cannot approve unseen pixels.
+Do not call a partial scroll window permanent loss without visible evidence.
+This is display-only, not a re-review of approved mathematics.
+
+Create the output directory with `mkdir` if needed and write the new result
+using `apply_patch`. Required schema:
+
+```json
+{
+  "status": "DISPLAY_PASS or DISPLAY_FAIL",
+  "blockers": [],
+  "images": [
+    {
+      "path": "absolute assigned path",
+      "sha256": "assigned hash",
+      "observations": ["concrete textual visual observations"],
+      "blockers": []
+    }
+  ],
+  "imageAccounting": {
+    "views": 8,
+    "uniqueImages": 8,
+    "reopens": 0,
+    "crops": 0,
+    "resizes": 0,
+    "rerenders": 0
+  }
+}
+```
+
+Use actual assigned counts. Record defects honestly. Preserve tool errors and
+unknown host token/cost accounting as unknown; never reset actual counts.
+Return only textual verdict, output absolute path, SHA and counts. Do not
+return image payloads to the parent. Stop after this batch; no prefetch.
