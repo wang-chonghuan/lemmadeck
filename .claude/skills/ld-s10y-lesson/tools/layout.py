@@ -564,10 +564,10 @@ def _single_fraction_row(
             and (not glyph_stroke or local_fraction)
             and all(
                 _straight_fraction_rule(
-                    # Connected numerators need only their horizontal bar checked.
+                    # Attached glyphs or scan ink need only their thin bar checked.
                     horizontal[bounds]
                     if original_bounds[component_id - 1][0].stop
-                    - original_bounds[component_id - 1][0].start > 0.5 * line_h
+                    - original_bounds[component_id - 1][0].start > 0.2 * line_h
                     else components[original_bounds[component_id - 1]] == component_id,
                     line_h,
                 )

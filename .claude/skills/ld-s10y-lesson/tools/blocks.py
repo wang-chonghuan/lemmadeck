@@ -33,7 +33,16 @@ WRAP = "↵"
 KINDS_TEXT = ("h1", "h2", "h3", "p", "exhead", "ex", "cap", "foot")
 
 
-def fig_id(label: str, page: int, seq: int) -> str:
+def numbering_scope(meta: dict) -> str:
+    if "numbering_scope" not in meta:
+        return ""
+    scope = meta["numbering_scope"]
+    if not isinstance(scope, str) or not re.fullmatch(r"[a-z][a-z0-9-]{0,47}", scope):
+        raise ValueError("numbering_scope 必须是稳定的小写字母/数字/连字符标识")
+    return scope
+
+
+def fig_id(label: str, page: int, seq: int, scope: str = "") -> str:
     """图片文件名。用**原书的图号**，跨页唯一——`图 7` 在哪一页都是 fig-07。
 
     页内序号（fig-01/02）不行：同一张图的引用可能在邻页，题目里写的是「图 7」。
@@ -41,7 +50,8 @@ def fig_id(label: str, page: int, seq: int) -> str:
     """
     nums = re.findall(r"\d+", label or "")
     if nums:
-        return "fig-" + "-".join(n.zfill(2) if i == 0 else n for i, n in enumerate(nums))
+        prefix = f"fig-{scope}-" if scope else "fig-"
+        return prefix + "-".join(n.zfill(2) if i == 0 else n for i, n in enumerate(nums))
     return f"tbl-p{page:04d}-{seq:02d}"
 
 
@@ -99,7 +109,7 @@ def dump(meta: dict, blocks: list[dict], page: int) -> str:
         out.append(" ".join(head) + " -->")
         if b["kind"] == "fig":
             seq += 1
-            fid = b.get("id") or fig_id(b.get("label"), page, seq)
+            fid = b.get("id") or fig_id(b.get("label"), page, seq, numbering_scope(meta))
             out.append(f"![{b.get('label') or ''}](figures/{fid}.png)")
         out.extend(b["lines"])
         out.append("")

@@ -139,6 +139,16 @@ function chromeExecutable() {
 
 async function render(spec, output) {
   const boardId = rendererBoardId(spec.id)
+  const hasVectorAccents = JSON.stringify(spec.objects).includes('\u20d7')
+  const accentFontPath = path.resolve(
+    skillsDir, '../../.claude/skills/ld-s10y-lesson/node_modules/katex/dist/fonts',
+    'KaTeX_Main-Regular.woff2',
+  )
+  const accentFontCss = hasVectorAccents
+    ? '@font-face{font-family:LDVectorAccents;src:url(data:font/woff2;base64,' +
+      fs.readFileSync(accentFontPath).toString('base64') +
+      ') format("woff2");}'
+    : ''
   const browser = await chromium.launch({
     executablePath: chromeExecutable(),
     headless: true,
@@ -157,6 +167,7 @@ async function render(spec, output) {
         <head>
           <meta charset="utf-8">
           <style>
+            ${accentFontCss}
             :root {
               --ld-figure-ink: #15201f;
               --ld-figure-muted: #4c5a58;
@@ -186,8 +197,14 @@ async function render(spec, output) {
     await page.addScriptTag({
       content: `window.materializeArrowheads = ${materializeArrowheads.toString()}`,
     })
+    if (hasVectorAccents) {
+      const loaded = await page.evaluate(async () =>
+        (await document.fonts.load('42px LDVectorAccents', '\u20d7')).length,
+      )
+      if (!loaded) throw new Error('Vector accent font did not load')
+    }
 
-    const result = await page.evaluate(({ figureSpec, boardId }) => {
+    const result = await page.evaluate(({ figureSpec, boardId, accentFontCss }) => {
       const SVG_NS = 'http://www.w3.org/2000/svg'
       const palette = {
         ink: 'var(--ld-figure-ink, #15201f)',
@@ -607,6 +624,11 @@ async function render(spec, output) {
         }
       }
       const labelLayer = document.createElementNS(SVG_NS, 'g')
+      if (accentFontCss) {
+        const style = document.createElementNS(SVG_NS, 'style')
+        style.textContent = accentFontCss
+        svg.appendChild(style)
+      }
       labelLayer.setAttribute('id', `${boardId}-label-layer`)
       svg.appendChild(labelLayer)
       const geometryNodes = [...svg.querySelectorAll(
@@ -708,7 +730,9 @@ async function render(spec, output) {
         const node = document.createElementNS(SVG_NS, 'text')
         node.textContent = label.text
         node.setAttribute('fill', label.fill)
-        node.setAttribute('font-family', 'Arial, Helvetica, sans-serif')
+        node.setAttribute('font-family', label.text.includes('\u20d7')
+          ? 'LDVectorAccents, Arial, Helvetica, sans-serif'
+          : 'Arial, Helvetica, sans-serif')
         node.setAttribute('font-size', String(label.fontSize))
         node.setAttribute('font-weight', String(label.fontWeight))
         node.setAttribute('dominant-baseline', label.dominantBaseline)
@@ -851,7 +875,7 @@ async function render(spec, output) {
         imageFits,
         displayChecks,
       }
-    }, { figureSpec: spec, boardId })
+    }, { figureSpec: spec, boardId, accentFontCss })
 
     const screenshotSvg = async (svg, filePath, transparent) => {
       ensureParent(filePath)
@@ -872,6 +896,7 @@ async function render(spec, output) {
         </style>
         ${svg}
       `)
+      if (hasVectorAccents) await page.evaluate(() => document.fonts.ready)
       await page.screenshot({
         path: filePath,
         type: 'png',

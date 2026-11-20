@@ -83,9 +83,15 @@ def source_files(repo, book, lesson):
     return repo, base, directory, paths, data
 
 
-def exercise_projection(item):
+def exercise_projection(item, include_group_instructions=True):
     number = text(item["number"], "exercise.number")
     body = text(item["text"], f"exercise {number}.text")
+    if include_group_instructions:
+        group = item.get("group")
+        require(group is None or isinstance(group, str),
+                f"exercise {number}.group: text required")
+        if group and group.strip():
+            body = group + "\n" + body
     refs = item.get("figure_refs", [])
     require(isinstance(refs, list), f"exercise {number}.figure_refs: list required")
     refs = [text(ref, "figure reference") for ref in refs]
@@ -136,13 +142,16 @@ def project_figure(figure, repo, base, directory):
     return {"id": text(figure["id"], "figure id"), "label": label, "assets": assets}
 
 
-def prepare_seed(repo, book, lesson, numbers, blocks, concept_figures):
+def prepare_seed(repo, book, lesson, numbers, blocks, concept_figures,
+                 include_group_instructions=True):
     repo, base, directory, paths, data = source_files(repo, book, lesson)
     require(bool(numbers), "select at least one exercise")
     unique(numbers, "selected exercises")
     unique(blocks, "selected concept blocks")
     unique(concept_figures, "selected concept figures")
-    all_exercises = [exercise_projection(item) for item in data[2]["exercises"]]
+    require(type(include_group_instructions) is bool, "group projection mode must be boolean")
+    all_exercises = [exercise_projection(item, include_group_instructions)
+                     for item in data[2]["exercises"]]
     unique([item["number"] for item in all_exercises], "source exercise numbers")
     by_number = {item["number"]: item for item in all_exercises}
     require(set(numbers) <= set(by_number), "unknown exercise number")
@@ -163,8 +172,11 @@ def prepare_seed(repo, book, lesson, numbers, blocks, concept_figures):
     needed = list(dict.fromkeys([ref for item in exercises for ref in item["figure_ids"]] +
                                concept_figures))
     require(set(needed) <= set(figures_by_id), "referenced figure absent from figures.json")
+    source = {"book": book, "lesson": lesson, "concept_figure_ids": concept_figures}
+    if include_group_instructions:
+        source["include_group_instructions"] = True
     return {"schema": SEED_SCHEMA,
-            "source": {"book": book, "lesson": lesson, "concept_figure_ids": concept_figures},
+            "source": source,
             "exercises": exercises, "concepts": concepts,
             "figures": [project_figure(figures_by_id[ref], repo, base, directory) for ref in needed],
             "trace": [{"path": path.relative_to(repo).as_posix(), "sha256": file_hash(path)}

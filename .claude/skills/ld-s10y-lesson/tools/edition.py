@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import base64
 import copy
 import hashlib
 import json
@@ -980,6 +981,26 @@ def validate_figure_spec(
     return spec, errors
 
 
+def svg_resource_scan(root: ET.Element) -> str:
+    scanned = copy.deepcopy(root)
+    font = Path(__file__).resolve().parents[1] / (
+        "node_modules/katex/dist/fonts/KaTeX_Main-Regular.woff2"
+    )
+    expected_font_style = (
+        "@font-face{font-family:LDVectorAccents;src:url(data:font/woff2;base64,"
+        + base64.b64encode(font.read_bytes()).decode("ascii")
+        + ') format("woff2");}'
+    ) if font.is_file() else None
+    for node in scanned.iter():
+        # Only the renderer's byte-identical bundled font is self-contained.
+        if local_name(node.tag) == "style" and node.text == expected_font_style:
+            node.text = ""
+    return re.sub(
+        r'\sxmlns(?::\w+)?="[^"]+"', "",
+        ET.tostring(scanned, encoding="unicode"),
+    )
+
+
 def validate_svg(
     path: Path,
     spec_path: Path,
@@ -994,13 +1015,13 @@ def validate_svg(
     if not spec_path.exists():
         return [f"缺少 SVG spec: {spec_path}"]
     text = path.read_text(encoding="utf-8")
-    link_scan = re.sub(r'\sxmlns(?::\w+)?="[^"]+"', "", text)
-    if "data:" in link_scan or "http://" in link_scan or "https://" in link_scan:
-        errors.append(f"{path}: 禁止 data URI 或外链")
     try:
         root = ET.fromstring(text)
     except ET.ParseError as error:
         return [f"{path}: SVG XML 无效: {error}"]
+    link_scan = svg_resource_scan(root)
+    if "data:" in link_scan or "http://" in link_scan or "https://" in link_scan:
+        errors.append(f"{path}: 禁止 data URI 或外链")
     if local_name(root.tag) != "svg":
         errors.append(f"{path}: 根节点必须是 svg")
     if not root.get("viewBox"):

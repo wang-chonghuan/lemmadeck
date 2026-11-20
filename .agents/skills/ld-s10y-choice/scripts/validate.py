@@ -62,7 +62,14 @@ def visible_text(value, where):
 def check_seed(seed, repo):
     fields(seed, "schema source exercises concepts figures trace", "seed")
     require(seed["schema"] == "s10y-choice-seed-v1", "seed schema mismatch")
-    fields(seed["source"], "book lesson concept_figure_ids", "seed.source")
+    source = seed["source"]
+    require(isinstance(source, dict), "seed.source: wrong fields")
+    source_fields = "book lesson concept_figure_ids"
+    if "include_group_instructions" in source:
+        require(source["include_group_instructions"] is True,
+                "seed.source.include_group_instructions must be true")
+        source_fields += " include_group_instructions"
+    fields(source, source_fields, "seed.source")
     exercises = keyed(seed["exercises"], "number", "number text figure_ids", "seed.exercises")
     require(bool(exercises), "empty seed")
     blocks = []
@@ -71,9 +78,10 @@ def check_seed(seed, repo):
         require(type(concept["block"]) is int, "concept block must be an integer")
         text(concept["text"], "concept text")
         blocks.append(concept["block"])
-    source = seed["source"]
     refreshed = prepare_seed(repo, source["book"], source["lesson"], list(exercises),
-                             blocks, source["concept_figure_ids"])
+                             blocks, source["concept_figure_ids"],
+                             include_group_instructions=source.get(
+                                 "include_group_instructions", False))
     require(isinstance(seed["trace"], list) and len(seed["trace"]) == len(refreshed["trace"]),
             "seed trace is incomplete")
     # The index is only used to establish membership, not as question content.

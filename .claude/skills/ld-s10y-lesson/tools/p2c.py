@@ -273,6 +273,11 @@ def cmd_finalize(a) -> int:
         return 2
 
     meta, blks = B.parse(md_path.read_text(encoding="utf-8"))
+    try:
+        scope = B.numbering_scope(meta)
+    except ValueError as error:
+        print(f"ERROR: {error}", file=sys.stderr)
+        return 2
     profile = nz.load_profile(DEFAULT_PROFILE)
     render_path = work / "page.png"
     if not render_path.exists():
@@ -290,7 +295,11 @@ def cmd_finalize(a) -> int:
             prior_audit = {}
     errors: list[str] = []
 
-    # 1) 插图：粗框吸附到真实墨迹再裁；文件名用原书图号，跨页唯一
+    if prior_audit.get("numbering_scope", "") not in ("", scope):
+        print("ERROR: 已收口页的 numbering_scope 不得静默改名", file=sys.stderr)
+        return 2
+
+    # 1) 插图：粗框吸附到真实墨迹再裁；显式编号作用域隔离合订本的重号。
     figs, seq = [], 0
     for b in blks:
         if b["kind"] != "fig":
@@ -299,10 +308,15 @@ def cmd_finalize(a) -> int:
         if not b.get("box"):
             errors.append(f"fig {b.get('label')}: 缺 box")
             continue
-        b["id"] = B.fig_id(b.get("label"), a.page, seq)
+        b["id"] = B.fig_id(b.get("label"), a.page, seq, scope)
         reused = _reusable_figure_geometry(
             meta, prior_audit, b["id"], b["box"], render_sha256
         )
+        if reused is None and scope and not prior_audit.get("numbering_scope"):
+            reused = _reusable_figure_geometry(
+                meta, prior_audit, B.fig_id(b.get("label"), a.page, seq),
+                b["box"], render_sha256,
+            )
         box, info = reused if reused is not None else layout.snap(ink, b["box"])
         b["box"] = box
         figs.append({"id": b["id"], "label": b.get("label"), "box": box, **info})
@@ -442,12 +456,14 @@ def cmd_finalize(a) -> int:
     }
     md_path.write_text(B.dump(meta, blks, a.page), encoding="utf-8")
     _dump(pdir / "page.json", {"meta": meta, "blocks": blks})
-    _dump(pdir / "audit.json", {"page": a.page, "lines_printed": want, "lines_md": got,
-                                "figures": figs, "normalizations": applied,
-                                "unknown_chars": unknown, "katex_warnings": m_warn,
-                                "errata": len(meta.get("errata", [])),
-                                "count_exclusions": exclusions,
-                                "errors": errors})
+    audit = {"page": a.page, "lines_printed": want, "lines_md": got,
+             "figures": figs, "normalizations": applied,
+             "unknown_chars": unknown, "katex_warnings": m_warn,
+             "errata": len(meta.get("errata", [])),
+             "count_exclusions": exclusions, "errors": errors}
+    if scope:
+        audit["numbering_scope"] = scope
+    _dump(pdir / "audit.json", audit)
 
     print(f"[finalize] {a.book} p{a.page:04d}: {len(blks)} 块 / {got} 行"
           f"（印刷 {want}）, 插图 {len(figs)} 张, 规范化 {len(applied)} 处")

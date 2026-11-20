@@ -1,0 +1,128 @@
+{
+  "phase": "2-pre-key",
+  "private_fields_read": false,
+  "question_reviews": [
+    {
+      "question_id": "view-1",
+      "task_fidelity": {"verdict":"pass","evidence":"All four original vectors and their order are retained. Euclidean norm, not coordinate sum, is required. Production loss: one tuple recognition can succeed after computing only its first discriminating component, so independent production of four lengths is not compelled; genuine norm judgment remains."},
+      "redundancy": {"verdict":"pass","evidence":"Direct norms of four signed vectors differ from view 3 addition and view 4 weighted combination. In view 8 the first vector has the same norm but needs direction cosines with different signs; this is formula reuse, not duplication of the full task."},
+      "answer_leakage": {"verdict":"pass","evidence":"No original number or key is visible. Tuples 3/6/2/2, square roots, maxima and squared norms cannot be selected from the raw coordinate list without mathematical norm judgment; partial mathematical elimination is recorded as a production loss, not textual leakage."},
+      "mathematics": {
+        "verdict":"pass",
+        "independent_solution":"Coordinates are (1,-1,1),(2,1,-3),(0,1,-1),(0,-2,0); squared lengths are 3,14,2,4. Taking nonnegative square roots gives (sqrt(3),sqrt(14),sqrt(2),2).",
+        "correct":["B"],
+        "option_checks":[
+          {"option_id":"A","truth":"incorrect","evidence":"(3,6,2,2) is the sum of absolute components: 1+1+1,2+1+3,0+1+1,0+2+0. These are not Euclidean lengths; already 3 != sqrt(3)."},
+          {"option_id":"B","truth":"correct","evidence":"Square-root sums of squares are sqrt(3),sqrt(14),sqrt(2),sqrt(4)=2; every tuple entry agrees."},
+          {"option_id":"C","truth":"incorrect","evidence":"(1,3,1,2) takes the largest absolute coordinate in each vector, not its Euclidean norm. The first three entries differ from sqrt(3),sqrt(14),sqrt(2)."},
+          {"option_id":"D","truth":"incorrect","evidence":"(3,14,2,4) gives squared norms and omits the square root in all four entries; d has length 2, not 4."}
+        ]
+      }
+    },
+    {
+      "question_id":"view-2",
+      "task_fidelity":{"verdict":"pass","evidence":"The length 3 and equality of ALL three coordinates are unchanged. Multiple mode preserves both sign branches. Loss: recognizing given triples replaces independently generating the complete coordinate set, but length and equality must both be judged."},
+      "redundancy":{"verdict":"pass","evidence":"This solves an inverse norm constraint with equal coordinates and sign completeness; view 1 instead calculates norms from supplied coordinates. The repeated sqrt(3) does not make the constraints identical."},
+      "answer_leakage":{"verdict":"pass","evidence":"A and C have opposite uniform signs, while D shares their magnitude and length but violates coordinate equality. Distinguishing them requires the source's conjunction of conditions, not copying 3 or a marked key."},
+      "mathematics":{
+        "verdict":"pass","independent_solution":"For (t,t,t), sqrt(3t^2)=3 implies t^2=3, hence t=+sqrt(3) or -sqrt(3). No mixed signs can satisfy equal coordinates.","correct":["A","C"],
+        "option_checks":[
+          {"option_id":"A","truth":"correct","evidence":"All coordinates equal sqrt(3); squared norm 3+3+3=9 and norm 3."},
+          {"option_id":"B","truth":"incorrect","evidence":"Coordinates are equal but norm sqrt(1+1+1)=sqrt(3), not 3. This is the result of dividing length 3 equally as a linear sum 3t=3."},
+          {"option_id":"C","truth":"correct","evidence":"All coordinates equal -sqrt(3); their squares still sum to 9. Negative uniform sign is permitted by the premises."},
+          {"option_id":"D","truth":"incorrect","evidence":"Norm is 3, but the third coordinate -sqrt(3) is unequal to the first two. Allowing independent signs after solving t^2=3 abandons the single shared coordinate t."}
+        ]
+      }
+    },
+    {
+      "question_id":"view-3",
+      "task_fidelity":{"verdict":"pass","evidence":"Both original pairs, their order and target |a+b| are retained, including exact cancellation in pair 2. Loss: paired-answer recognition and partial elimination replace independently writing both sum vectors and lengths; vector addition-before-norm remains the core judgment."},
+      "redundancy":{"verdict":"pass","evidence":"Unlike view 1 this first forms sums, and unlike view 4 coefficients are 1,1. Pair 2 tests cancellation, not the unequal-coefficient workflow."},
+      "answer_leakage":{"verdict":"pass","evidence":"No correct result is stated in the stem. Recognizing pair 2 cancellation can eliminate A/D, but distinguishing B/C still tests norm versus squared norm. This is mathematical elimination, not a wording or key cue."},
+      "mathematics":{
+        "verdict":"pass","independent_solution":"Pair 1 sum is (4,2,-3), squared norm 16+4+9=29. Pair 2 sum is (0,0,0), norm 0. Thus the ordered result is (sqrt(29),0).","correct":["C"],
+        "option_checks":[
+          {"option_id":"A","truth":"incorrect","evidence":"sqrt(19)=sqrt(6+13) and sqrt(22)=sqrt(11+11) omit cross terms by using sqrt(|a|^2+|b|^2). Here 2a dot b is 10 and -22 respectively, so neither is valid."},
+          {"option_id":"B","truth":"incorrect","evidence":"(29,0) correctly forms the sums but reports squared lengths. The nonzero result must be sqrt(29)."},
+          {"option_id":"C","truth":"correct","evidence":"Component sums (4,2,-3) and (0,0,0) have lengths sqrt(29) and 0."},
+          {"option_id":"D","truth":"incorrect","evidence":"sqrt(6)+sqrt(13) and 2sqrt(11) add the individual vector lengths. Equality in the triangle inequality is not valid here; pair 2 opposite vectors give zero, not 2sqrt(11)."}
+        ]
+      }
+    },
+    {
+      "question_id":"view-4",
+      "task_fidelity":{"verdict":"pass","evidence":"Both original pairs and unequal coefficients 2a+3b are retained. Loss: one complete tuple allows partial elimination and does not compel free production of each coordinate sum; scaling, addition and norm are still distinguished."},
+      "redundancy":{"verdict":"pass","evidence":"This adds unequal coefficients to the simpler addition task in view 3. Omitting the cross term in |2a+3b|^2 tests a weighted norm distinction absent from direct coordinate norms."},
+      "answer_leakage":{"verdict":"pass","evidence":"No computed length appears in the stem; each tuple embodies a different calculation procedure. Identifying the first valid norm can discriminate the tuple, a recognition loss rather than data copying."},
+      "mathematics":{
+        "verdict":"pass","independent_solution":"For pair 1, 2a+3b=(8,2,-2), squared norm 72. For pair 2 it is (6,5,-3), squared norm 70. The lengths are 6sqrt(2),sqrt(70).","correct":["A"],
+        "option_checks":[
+          {"option_id":"A","truth":"correct","evidence":"sqrt(8^2+2^2+(-2)^2)=sqrt(72)=6sqrt(2); sqrt(6^2+5^2+(-3)^2)=sqrt(70)."},
+          {"option_id":"B","truth":"incorrect","evidence":"Ignoring both coefficients gives a+b=(3,1,-1),(3,2,-1), whose lengths are sqrt(11),sqrt(14); these are not the requested combinations."},
+          {"option_id":"C","truth":"incorrect","evidence":"Swapping coefficients yields 3a+2b=(7,3,-3),(9,5,-2), squared norms 67 and 110, not 48 and 58. The displayed 4sqrt(3),sqrt(58) instead arise from sqrt(4|a|^2+9|b|^2): sqrt(12+36),sqrt(40+18), which wrongly omits 12 a dot b."},
+          {"option_id":"D","truth":"incorrect","evidence":"72 and 70 are the correctly formed combinations' squared norms. Omitting the final square root makes both numbers incorrect."}
+        ]
+      }
+    },
+    {
+      "question_id":"view-5",
+      "task_fidelity":{"verdict":"pass","evidence":"The original two vectors and ANGLE target are unchanged. [0,pi] is the ordinary vector-angle domain, not an acute/sign assumption. Loss: inverse-cosine recognition replaces independently constructing the angle expression, but dot-product and normalization judgments remain."},
+      "redundancy":{"verdict":"pass","evidence":"View 6 asks a cosine after forming two new vectors. This instead asks the actual angle of supplied vectors, including its inverse-cosine conversion."},
+      "answer_leakage":{"verdict":"pass","evidence":"Every candidate is an arccos of an in-domain rational. Neither syntax nor domain alone selects one; signed multiplication and both vector norms determine the argument."},
+      "mathematics":{
+        "verdict":"pass","independent_solution":"a dot b=-6+6+12=12, |a|=3, |b|=9, so cosine is 4/9 and theta=arccos(4/9) in [0,pi].","correct":["D"],
+        "option_checks":[
+          {"option_id":"A","truth":"incorrect","evidence":"arccos(-4/9) uses dot -12. Misreading (-2)(-6) as -12 produces -6+6-12=-12. The actual product is +12 and the actual angle is acute."},
+          {"option_id":"B","truth":"incorrect","evidence":"arccos(8/9) uses dot 24. Replacing the signed -1*6=-6 by +6 produces 6+6+12=24. Actual dot is 12."},
+          {"option_id":"C","truth":"incorrect","evidence":"Using squared norms as denominator gives 12/(9*81)=4/243. The cosine denominator must be lengths 3*9=27, not squared lengths 729."},
+          {"option_id":"D","truth":"correct","evidence":"The exact dot and length product give arccos(12/27)=arccos(4/9), which is the requested angle rather than its cosine."}
+        ]
+      }
+    },
+    {
+      "question_id":"view-6",
+      "task_fidelity":{"verdict":"pass","evidence":"The original a,b and target cosine between a-b and a+b are retained. Loss: scalar recognition replaces independent scalar production; forming the derived vectors or using difference of squared norms still requires real reasoning."},
+      "redundancy":{"verdict":"pass","evidence":"a dot b=0 is not itself the requested derived-vector dot product. This sum/difference distinction is absent from view 5 and prevents treating the two cosine questions as the same task."},
+      "answer_leakage":{"verdict":"pass","evidence":"The stem gives no computed cosine. Although a and b are orthogonal, copying that fact would select the wrong 0 alternative; actual sum/difference computation is needed."},
+      "mathematics":{
+        "verdict":"pass","independent_solution":"u=(-1,3,1),v=(3,1,1), u dot v=1, each norm sqrt(11). Cosine=1/11, also (|a|^2-|b|^2)/11=(6-5)/11.","correct":["B"],
+        "option_checks":[
+          {"option_id":"A","truth":"incorrect","evidence":"Original a dot b=2-2+0=0, but u dot v=1. Transferring original orthogonality to their sum/difference wrongly assumes equal original lengths."},
+          {"option_id":"B","truth":"correct","evidence":"(-1)(3)+3(1)+1(1)=1 and sqrt(11)*sqrt(11)=11, giving 1/11."},
+          {"option_id":"C","truth":"incorrect","evidence":"Reversing the subtraction to b-a changes u to -u and the dot to -1, yielding -1/11 for a different requested angle."},
+          {"option_id":"D","truth":"incorrect","evidence":"Dividing dot 1 by only one norm sqrt(11) omits the other vector's norm; actual denominator is 11."}
+        ]
+      }
+    },
+    {
+      "question_id":"view-7",
+      "task_fidelity":{"verdict":"pass","evidence":"All three source tasks remain: signed direction-cosine proof, sum-of-squares proof and both gamma values when alpha=beta=60 degrees. Nonzero and [0,pi] only clarify defined direction angles. Loss: validating complete supplied chains replaces free proof writing and can use one invalid inference to reject a chain. Same-direction positive scaling, signed dot products and squared-sum reasoning still demand actual proof-validity judgment."},
+      "redundancy":{"verdict":"pass","evidence":"The proofs justify a general statement for arbitrary p,q,r and then apply a two-branch angle constraint. View 8 computes four concrete triples instead. Recognizing formula overlap does not duplicate proof validity or the full gamma set."},
+      "answer_leakage":{"verdict":"pass","evidence":"A and B share the final 45/135 values, so those values alone cannot reveal the valid chain. All alternatives give three steps; A's direction reversal, C's absolute-coordinate assertion and D's square-of-sum substitution must be evaluated. The schematic provides no coordinate signs or numerical gamma."},
+      "mathematics":{
+        "verdict":"pass","independent_solution":"L>0 and dot products give cos(alpha)=p/L, cos(beta)=q/L, cos(gamma)=r/L. u=a/L has unit length and positive-scalar same direction; its squared components sum to 1. For alpha=beta=60 degrees, cos(gamma)=+/-1/sqrt(2), hence 45 or 135 degrees. Both branches are realized by unit vectors (1/2,1/2,+/-1/sqrt(2)).","correct":["B"],
+        "option_checks":[
+          {"option_id":"A","truth":"incorrect","evidence":"-a/L is unit but opposite to every nonzero a. Dot products with the positive basis give p/L,q/L,r/L, not their negatives. The first proof is false even though the squared identity and final two gamma values are true."},
+          {"option_id":"B","truth":"correct","evidence":"Positive 1/L proves same direction, normalization proves unit length, and the three dot-product equations identify all signed cosines. The squared identity uses L^2=p^2+q^2+r^2. Both cosine signs are admitted and both angles lie in [0,pi]."},
+          {"option_id":"C","truth":"incorrect","evidence":"For a=(0,-3,-1), taking absolute components yields (0,3,1)/sqrt(10), opposite rather than same direction, and changes both negative cosines to positive. Also (1/2,1/2,-1/sqrt(2)) realizes gamma=135 degrees, contradicting the asserted nonnegative cosine and incomplete 45-only conclusion."},
+          {"option_id":"D","truth":"incorrect","evidence":"The square of the sum has cross terms and is not the sum of squares. For a=(1,1,1), squared cosines sum to 1 but (sum cosines)^2=3. With alpha=beta=60 degrees, gamma=90 degrees would give squared-cosine sum 1/4+1/4+0=1/2, not 1."}
+        ]
+      }
+    },
+    {
+      "question_id":"view-8",
+      "task_fidelity":{"verdict":"pass","evidence":"All four original vectors and all twelve ordered i,j,k cosines are present. Negative and zero components are retained. Loss: complete-table recognition does not compel production of every cell; some alternatives can be eliminated using one normalization or sign cell. Core signed normalization judgment remains and is not data copying."},
+      "redundancy":{"verdict":"pass","evidence":"View 7 offers the general proof formula and view 1 a same-magnitude example, but neither gives these four full signed triples. Computing negative-axis, zero-component and 3-4-5 cases is the application task, not another proof or direct length question."},
+      "answer_leakage":{"verdict":"pass","evidence":"The source lists coordinates, while candidate tables distinguish unnormalized coordinates, squared-length division, erased signs and correct division. View 7's formula is conceptual scaffolding, not a table of these answers. Even distinguishing A/C requires sign judgment rather than textual cues."},
+      "mathematics":{
+        "verdict":"pass","independent_solution":"Lengths are sqrt(3),sqrt(10),5,5. Divide each signed coordinate triple by its own positive length: (1/sqrt(3),1/sqrt(3),1/sqrt(3));(0,-3/sqrt(10),-1/sqrt(10));(-1,0,0);(0,3/5,4/5).","correct":["C"],
+        "option_checks":[
+          {"option_id":"A","truth":"incorrect","evidence":"Rows a,d agree, but b erases the signs of both negative coordinates and c reports +1 instead of -1 with i. Absolute coordinates give this table but change the actual obtuse direction angles."},
+          {"option_id":"B","truth":"incorrect","evidence":"Every row divides by squared norm 3,10,25,25 rather than norm sqrt(3),sqrt(10),5,5. For c this gives -5/25=-1/5 instead of -1; for a the squared-cosine sum becomes 1/3 instead of 1."},
+          {"option_id":"C","truth":"correct","evidence":"All twelve cells equal their signed components divided by positive lengths sqrt(3),sqrt(10),5,5. Zero components remain zero and squared cosines sum to 1 in each row."},
+          {"option_id":"D","truth":"incorrect","evidence":"This table copies bare coordinates without normalization. Entries -3,-5,3,4 are outside the cosine range [-1,1], and a=(1,1,1) has squared-cosine sum 3 rather than 1."}
+        ]
+      }
+    }
+  ]
+}

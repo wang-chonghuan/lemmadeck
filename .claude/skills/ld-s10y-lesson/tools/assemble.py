@@ -45,10 +45,14 @@ def load_stream(book: Path) -> list[dict]:
     for pj in sorted(book.glob("pages/*/page.json")):
         doc = json.loads(pj.read_text(encoding="utf-8"))
         page = doc["meta"]["page"]
+        scope = B.numbering_scope(doc["meta"])
         for i, b in enumerate(doc["blocks"]):
-            stream.append({**b, "page": page,
-                           "printed_page": doc["meta"].get("printed_page"),
-                           "ref": f"p{page:04d}#{i+1}"})
+            block = {**b, "page": page,
+                     "printed_page": doc["meta"].get("printed_page"),
+                     "ref": f"p{page:04d}#{i+1}"}
+            if scope:
+                block["numbering_scope"] = scope
+            stream.append(block)
     return stream
 
 
@@ -66,8 +70,11 @@ def merge_across_pages(stream: list[dict]) -> tuple[list[dict], list[str]]:
         if b.get("cont"):
             if prev is None or not prev.get("open"):
                 warn.append(f"{b['ref']}: 标了 cont，但上一块没标 open")
+            elif prev.get("numbering_scope", "") != b.get("numbering_scope", ""):
+                warn.append(f"{b['ref']}: cont 跨越不同编号作用域，未接合")
             elif prev["kind"] != b["kind"] or (
-                    b["kind"] == "ex" and prev.get("label") not in (None, b.get("label"))):
+                    b["kind"] == "ex" and b.get("label") is not None
+                    and prev.get("label") not in (None, b["label"])):
                 warn.append(f"{b['ref']}: cont 接不上——上块是 {prev['kind']}"
                             f"{prev.get('label') or ''}，本块是 {b['kind']}{b.get('label') or ''}")
             else:
@@ -268,14 +275,42 @@ def promote_figures(book: Path, work: Path | None, warnings: list[str]) -> None:
                 shutil.copy2(source, library / source.name)
 
 
-def _claim_next_lesson_prose_figures(lessons: list[dict]) -> None:
+def _figure_refs(block: dict, text: str | None = None) -> list[tuple[str, str]]:
+    return [(block.get("numbering_scope", ""), number)
+            for number in FIGREF.findall(B.text_of(block) if text is None else text)]
+
+
+def _scopes_by_ref(stream: list[dict]) -> dict[str, str]:
+    scopes = {}
+    for block in stream:
+        scope = B.numbering_scope(block)
+        ref = block.get("ref")
+        if scope and not ref:
+            raise ValueError("声明 numbering_scope 的块必须有来源引用")
+        if ref:
+            scopes[ref] = scope
+    return scopes
+
+
+def _exercise_scope(exercise: dict, scopes: dict[str, str]) -> str:
+    found = {scopes[ref] for ref in exercise.get("pages", []) if ref in scopes}
+    if len(found) > 1:
+        raise ValueError(f"第 {exercise['number']} 题跨越不同编号作用域")
+    return next(iter(found), "")
+
+
+def _claim_next_lesson_prose_figures(
+    lessons: list[dict], scopes: dict[str, str] | None = None,
+) -> None:
     """A page-top figure can precede the heading of its uniquely referencing lesson."""
+    if scopes is None:
+        scopes = _scopes_by_ref([b for lesson in lessons for b in lesson["blocks"]])
     prose_refs = [
         {
             number
             for block in lesson["prose"]
             if block["kind"] not in ("fig", "cap")
-            for number in FIGREF.findall(B.text_of(block))
+            for number in _figure_refs(block)
         }
         for lesson in lessons
     ]
@@ -283,7 +318,8 @@ def _claim_next_lesson_prose_figures(lessons: list[dict]) -> None:
         {
             number
             for exercise in lesson["exercises"]
-            for number in FIGREF.findall(exercise["text"])
+            for number in _figure_refs(
+                {"numbering_scope": _exercise_scope(exercise, scopes)}, exercise["text"])
         }
         for lesson in lessons
     ]
@@ -292,7 +328,7 @@ def _claim_next_lesson_prose_figures(lessons: list[dict]) -> None:
         for figure in list(lesson["blocks"]):
             if figure["kind"] != "fig" or figure.get("owner_exercise"):
                 continue
-            numbers = set(FIGREF.findall(figure.get("label") or ""))
+            numbers = set(_figure_refs(figure, figure.get("label") or ""))
             if not numbers or numbers & (prose_refs[index] | exercise_refs[index]):
                 continue
             owners = [i for i, refs in enumerate(prose_refs) if numbers & refs]
@@ -301,7 +337,7 @@ def _claim_next_lesson_prose_figures(lessons: list[dict]) -> None:
             captions = [
                 block for block in lesson["prose"]
                 if block["kind"] == "cap"
-                and set(FIGREF.findall(" ".join(filter(None, (
+                and set(_figure_refs(block, " ".join(filter(None, (
                     block.get("label"), B.text_of(block),
                 ))))) == numbers
             ]
@@ -312,7 +348,7 @@ def _claim_next_lesson_prose_figures(lessons: list[dict]) -> None:
                 anchor = next(
                     i for i, block in enumerate(target[field])
                     if block["kind"] not in ("fig", "cap")
-                    and numbers & set(FIGREF.findall(B.text_of(block)))
+                    and numbers & set(_figure_refs(block))
                 )
                 target[field][anchor + 1:anchor + 1] = moved
 
@@ -320,15 +356,16 @@ def _claim_next_lesson_prose_figures(lessons: list[dict]) -> None:
 def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], list[str]]:
     """按语义认领图：正文图留正文，练习共享图只在练习区展示一次。"""
     errors, warn = [], []
+    scopes = _scopes_by_ref(stream)
     fig_by_num, all_figs = {}, []
     for b in stream:
         if b["kind"] != "fig":
             continue
         all_figs.append(b)
-        for n in FIGREF.findall(b.get("label") or ""):
+        for n in _figure_refs(b, b.get("label") or ""):
             fig_by_num.setdefault(n, []).append(b)
 
-    _claim_next_lesson_prose_figures(lessons)
+    _claim_next_lesson_prose_figures(lessons, scopes)
     referenced = set()
     for lesson in lessons:
         exercises_by_number: dict[str, list[dict]] = {}
@@ -377,18 +414,20 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
             n
             for block in lesson["prose"]
             if block["kind"] not in ("fig", "cap")
-            for n in FIGREF.findall(B.text_of(block))
+            for n in _figure_refs(block)
         }
         exercise_users: dict[str, list[dict]] = {}
         for exercise in lesson["exercises"]:
-            for n in dict.fromkeys(FIGREF.findall(exercise["text"])):
+            for n in dict.fromkeys(_figure_refs(
+                    {"numbering_scope": _exercise_scope(exercise, scopes)}, exercise["text"])):
                 referenced.add(n)
                 exercise_users.setdefault(n, []).append(exercise)
                 for figure in fig_by_num.get(n, []):
                     if figure["id"] not in exercise["figure_refs"]:
                         exercise["figure_refs"].append(figure["id"])
                 if n not in fig_by_num:
-                    warn.append(f"第 {exercise['number']} 题引用「图 {n}」，全书没有这张图")
+                    suffix = f"（{n[0]}）" if n[0] else ""
+                    warn.append(f"第 {exercise['number']} 题引用「图 {n[1]}」{suffix}，全书没有这张图")
 
         for n, users in exercise_users.items():
             for figure in fig_by_num.get(n, []):
@@ -406,7 +445,7 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
             if block["kind"] == "fig" and block.get("id") in explicitly_owned:
                 continue
             label_text = " ".join(filter(None, (block.get("label"), B.text_of(block))))
-            nums = set(FIGREF.findall(label_text))
+            nums = set(_figure_refs(block, label_text))
             exercise_only = (
                 block["kind"] in ("fig", "cap")
                 and nums
@@ -418,13 +457,13 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
         lesson["prose"] = kept_prose
 
         for b in lesson["prose"]:
-            for n in FIGREF.findall(B.text_of(b)):
+            for n in _figure_refs(b):
                 referenced.add(n)
         lesson["figures"] = [{"id": b["id"], "label": b.get("label"), "page": b["page"]}
                              for b in lesson["blocks"] if b["kind"] == "fig"]
 
     for f in all_figs:
-        nums = FIGREF.findall(f.get("label") or "")
+        nums = _figure_refs(f, f.get("label") or "")
         if nums and not (set(nums) & referenced):
             warn.append(f"{f['id']}（{f.get('label')}）全书没有任何正文引用它")
     return errors, warn
@@ -467,6 +506,7 @@ def audit(
 ) -> dict:
     """对象级对账。页级像素对账管不到的东西，这里全能看见。"""
     errors, warns = [], []
+    scopes = _scopes_by_ref(stream)
 
     if exercise_numbering not in {"book", "lesson", "lesson-group"}:
         errors.append(f"未知 exercise numbering scope: {exercise_numbering!r}")
@@ -502,13 +542,22 @@ def audit(
         for number in _numeric_source_numbers(lesson["exercises"])
     ]
     seq = sorted(nums)
+    scoped_numbers = [
+        (_exercise_scope(exercise, scopes), int(number))
+        for lesson in lessons
+        for exercise in lesson["exercises"]
+        if (number := _source_number(exercise)) is not None and number.isdigit()
+    ]
     if exercise_numbering == "book":
-        if len(seq) != len(set(seq)):
-            dup = sorted({n for n in seq if seq.count(n) > 1})
-            errors.append(f"题号重复: {dup}")
+        for scope in sorted({scope for scope, _ in scoped_numbers}):
+            numbers = [number for owner, number in scoped_numbers if owner == scope]
+            dup = sorted({n for n in numbers if numbers.count(n) > 1})
+            if dup:
+                suffix = f"（{scope}）" if scope else ""
+                errors.append(f"题号重复{suffix}: {dup}")
         for first_page, last_page in _page_segments({b["page"] for b in stream}):
-            segment_nums = sorted(
-                int(number)
+            segment_exercises = [
+                exercise
                 for lesson in lessons
                 for exercise in lesson["exercises"]
                 if (number := _source_number(exercise)) is not None
@@ -518,31 +567,43 @@ def audit(
                     and first_page <= position // 10_000 <= last_page
                     for ref in exercise.get("pages", [])
                 )
-            )
-            gaps = [
-                n for n in range(segment_nums[0], segment_nums[-1])
-                if n not in set(segment_nums)
-            ] if segment_nums else []
-            if gaps:
-                errors.append(
-                    f"题号缺号（页段 {first_page}-{last_page}）: {gaps}（可能漏页或漏题）")
+            ]
+            for scope in sorted({_exercise_scope(e, scopes) for e in segment_exercises}):
+                segment_nums = sorted(
+                    int(_source_number(e)) for e in segment_exercises
+                    if _exercise_scope(e, scopes) == scope
+                )
+                gaps = [
+                    n for n in range(segment_nums[0], segment_nums[-1])
+                    if n not in set(segment_nums)
+                ] if segment_nums else []
+                if gaps:
+                    suffix = f"，{scope}" if scope else ""
+                    errors.append(
+                        f"题号缺号（页段 {first_page}-{last_page}{suffix}）: "
+                        f"{gaps}（可能漏页或漏题）")
 
     fignums = sorted({int(n) for b in stream if b["kind"] == "fig"
                       for n in FIGREF.findall(b.get("label") or "")})
     for first_page, last_page in _page_segments({b["page"] for b in stream}):
-        segment_fignums = sorted({
-            int(n)
-            for b in stream
+        segment_figures = [
+            b for b in stream
             if b["kind"] == "fig" and first_page <= b["page"] <= last_page
-            for n in FIGREF.findall(b.get("label") or "")
-        })
-        fgaps = [
-            n for n in range(segment_fignums[0], segment_fignums[-1])
-            if n not in set(segment_fignums)
-        ] if segment_fignums else []
-        if fgaps:
-            errors.append(
-                f"图号缺号（页段 {first_page}-{last_page}）: {fgaps}（可能漏裁）")
+        ]
+        for scope in sorted({b.get("numbering_scope", "") for b in segment_figures}):
+            segment_fignums = sorted({
+                int(n)
+                for b in segment_figures if b.get("numbering_scope", "") == scope
+                for n in FIGREF.findall(b.get("label") or "")
+            })
+            fgaps = [
+                n for n in range(segment_fignums[0], segment_fignums[-1])
+                if n not in set(segment_fignums)
+            ] if segment_fignums else []
+            if fgaps:
+                suffix = f"，{scope}" if scope else ""
+                errors.append(
+                    f"图号缺号（页段 {first_page}-{last_page}{suffix}）: {fgaps}（可能漏裁）")
 
     for lesson in lessons:
         exercise_figure_ids = [
