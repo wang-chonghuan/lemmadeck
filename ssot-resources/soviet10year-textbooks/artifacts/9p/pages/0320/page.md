@@ -1,0 +1,81 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 320,
+  "printed_page": 311,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 320
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "c83dde3c695fdf889e2d2103598426fbbb328079659338d442de4be039bc9b64"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "D077 first-author transcription from physical320 page.grid.png, opened once. No original figure or caption is present.",
+    "Actual heading131 is 电流的能量, not a substituted magnetic-field title. It provides the local right boundary of130 without rewriting or redelivering the existing130 course.",
+    "Printed bold ranges 电流的能量等于电源, 为产生 and 电流所消耗的能量 are preserved separately across the parenthesis and printed rows. Other uneven heavy scan ink is not promoted to emphasis.",
+    "The independent two-row footnote is owned by the printed① after 电场. The horizontal separator is not another row or a figure. Scalar v, kinetic-energy fraction and source I are retained. A detached small irregular mark above the first bold 电流 is not transcribed as a mathematical symbol; independent source review must judge it from pixels.",
+    "Last main paragraph ends open at I， toward321; the explanatory footnote and footer are transparent to that continuation. No whole131 approval. Low full stops are ASCII dots; footer311 is heavy/slanted."
+  ],
+  "errata": [],
+  "counting": {
+    "edge_margin_px": 80,
+    "reason": "D077 source-grid inspection and native band diagnosis identify the extra y2151-2180 band as scan-edge blemishes below footer311. Printed rows start beyond x230. Exclude only counting-copy edges; source pixels, block text and formulas remain unchanged."
+  },
+  "printed_lines": 24,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- h3 -->
+**131. 电流的能量**
+
+<!-- p -->
+现在我们讨论导体中电流所具有的能量. 根据能量守恒
+定律，**电流的能量等于电源**（电池，发电站的发电机等）**为产生**
+**电流所消耗的能量**. 当电流停止时，这个能量以某种形式放
+出.
+
+<!-- p -->
+现在要说的电流的能量，与根据焦耳-楞次定律在直流电
+路中以热的形式所放出的能量没有任何关系.
+
+<!-- p -->
+当接通含有稳恒电动势的电路时，电源的能量首先消耗
+在产生电流上，即使导体的电子运动；还有一部分用来增加
+导体的内能，即给导体加热. 电流强度达到稳定数值以后，电
+源的能量只用来放出热量；这时，电流的能量就不再改变了.
+电源的化学能或机械能，以电流为媒介，转变为导体粒子热运
+动的能量.
+
+<!-- p -->
+同样，为了使汽车在水平道路上达到恒定的速度$v$，需
+要做功$\frac{mv^2}{2}$. 此时，发动机的一部分功率用来克服摩擦，而另
+一部分功率用来增加汽车的速度. 当$v=$恒量时，发动机的
+全部功率都用来克服摩擦，而汽车的动能不变.
+
+<!-- p open -->
+现在我们说明，为什么为了产生电流必须消耗能量，即必
+须做功. 这是因为，当接通电路电流开始增大时，在导体中出
+现了涡旋电场，其方向与电源在导体中产生的电场①（在§88
+曾描述了产生的过程）的方向相反. 为了使电流强度达到$I$，
+
+<!-- p footnote -->
+①　这是在导体表面上的带电粒子所产生的电场，它与交变磁场所产生的
+涡旋电场不同.
+
+<!-- foot -->
+• *311* •

@@ -1,0 +1,41 @@
+{
+  "reviewer": "D098",
+  "failures": [
+    {
+      "stage": "read-only path inspection",
+      "command": "rg -n section/prose/paragraph/split/anchor/flow/errata/changes against selected paths",
+      "workdir": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck",
+      "exitCode": 2,
+      "diagnosis": "Guessed proseflow.py did not exist; the actual routed file is tools/prose_flow.mjs, subsequently read without executing it.",
+      "nativePipelineFailure": false,
+      "contentVerdict": null
+    },
+    {
+      "stage": "structure.mjs first independent comparison",
+      "command": "node .intentfold/tickets/STEMROBIN-181/tmp/d1816-d098-n128-layout-display-n129-affected-review/structure.mjs",
+      "workdir": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck",
+      "exitCode": 1,
+      "error": "AssertionError [ERR_ASSERTION]: clear only genuinely unchanged source text",
+      "target": "n128 EN /prose/9/changes",
+      "observedBefore": ["translation"],
+      "observedAfter": ["translation", "layout"],
+      "diagnosis": "Reviewer script incorrectly classified every changes-array modification as removal. Native whitespace normalization also adds layout to EN block 9, preserving translation.",
+      "recovery": "Inspection script now distinguishes layout addition from removal; no candidate or upstream evidence edited, no native validation rerun.",
+      "nativePipelineFailure": false,
+      "contentVerdict": null
+    },
+    {
+      "stage": "structure.mjs second independent comparison",
+      "command": "node .intentfold/tickets/STEMROBIN-181/tmp/d1816-d098-n128-layout-display-n129-affected-review/structure.mjs",
+      "workdir": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck",
+      "exitCode": 1,
+      "error": "AssertionError [ERR_ASSERTION]: 0 !== 1 at structure.mjs:222",
+      "target": "n129 source.authoritativeText lookup",
+      "diagnosis": "Reviewer used the n128 edition-based context selector on n129, whose existing bound context explicitly uses locale instead.",
+      "recovery": "Use n129's actual lesson-and-locale fields. No schema fields or tokens invented; no candidate, figure or native stage changed.",
+      "nativePipelineFailure": false,
+      "contentVerdict": null
+    }
+  ],
+  "resetOrDiscarded": false
+}
