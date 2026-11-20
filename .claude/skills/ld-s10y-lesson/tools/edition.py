@@ -452,6 +452,12 @@ def math_signature(text: str) -> list[str]:
         # Upright descriptive subscripts are localized labels, not new variables.
         expression = expression.replace(r"\mathrm{м}", r"\mathrm{m}")
         expression = expression.replace(r"\mathrm{н}", r"\mathrm{n}")
+        # The source uses a bare Cyrillic amplitude label on voltage and current.
+        expression = re.sub(
+            r"(?<![A-Za-z\\])([UI])_м(?![A-Za-z\u0400-\u04ff])",
+            r"\1_{\\mathrm{m}}",
+            expression,
+        )
         signature.extend(
             part.strip()
             for part in MATH_BOUNDARY_PUNCTUATION.split(expression)
