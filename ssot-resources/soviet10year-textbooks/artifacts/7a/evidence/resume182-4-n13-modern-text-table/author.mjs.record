@@ -1,0 +1,282 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { spawnSync } from 'node:child_process'
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck'
+const OWN = path.join(R, '.tmp/resume182-4-postaccount/n13-table-FIRST')
+assert.equal(process.cwd(), R, 'Commands must use the explicit repository workdir')
+
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
+const fileHash = file => hash(fs.readFileSync(file))
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const write = (name, value) => {
+  const file = path.join(OWN, name)
+  assert.ok(!fs.existsSync(file), `Preserve FIRST: ${file} already exists`)
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`)
+  return file
+}
+
+const figure = 'tbl-p0064-01'
+const lessonId = 'alg7-c1-s4-n13'
+const candidate = path.join(
+  R, '.tmp/resume182-4-postaccount/n13-adapt/adapt/7a/modern-us-neutral/lessons',
+  lessonId,
+)
+const original = path.join(
+  R, 'ssot-resources/soviet10year-textbooks/artifacts/7a/figures',
+  `${figure}.png`,
+)
+const sourceHash = '7d74363e688baa48d395105181f028afa73144901551504f0f128ed0a857d285'
+assert.equal(fileHash(original), sourceHash)
+
+const projectionRoot = path.join(OWN, 'context-projection')
+const projectedBook = path.join(projectionRoot, '7a')
+const projectedLesson = path.join(
+  projectedBook, 'editions/modern-us-neutral/lessons', lessonId,
+)
+fs.mkdirSync(projectedLesson, { recursive: true })
+fs.mkdirSync(path.join(projectedBook, 'figures'), { recursive: true })
+fs.mkdirSync(path.join(OWN, 'runtime'), { recursive: true })
+
+const copies = [
+  [path.join(candidate, 'lesson.template.json'), path.join(projectedLesson, 'lesson.json')],
+  [path.join(candidate, 'exercises.template.json'), path.join(projectedLesson, 'exercises.json')],
+  [original, path.join(projectedBook, 'figures', `${figure}.png`)],
+]
+const copiedInputs = copies.map(([from, to]) => {
+  assert.ok(!fs.existsSync(to), `Preserve FIRST: ${to} already exists`)
+  fs.copyFileSync(from, to, fs.constants.COPYFILE_EXCL)
+  assert.equal(fileHash(from), fileHash(to))
+  return { from, to, sha256: fileHash(to), byteIdentical: true }
+})
+
+const projectedExercises = read(path.join(projectedLesson, 'exercises.json'))
+const exercise = projectedExercises.exercises.find(item => item.number === '181')
+assert.ok(exercise)
+const expectedText = '181. \u4e0b\u8868\u4fdd\u7559\u4e86\u539f\u6559\u6750\u5217\u51fa\u7684\u592a\u9633\u7cfb\u4e5d\u4e2a\u5929\u4f53\u7684\u8d28\u91cf\u6570\u636e\uff1a\n'
+  + 'a) \u628a\u884c\u661f\u6309\u7167\u8d28\u91cf\u9012\u589e\u7684\u987a\u5e8f\u5199\u51fa\u6765\uff1b\n'
+  + 'b) \u6728\u661f\u8d28\u91cf\u662f\u5730\u7403\u8d28\u91cf\u7684\u591a\u5c11\u500d\uff1f'
+assert.equal(exercise.text, expectedText)
+assert.deepEqual(exercise.figure_refs, [figure])
+assert.deepEqual(exercise.figures.map(item => item.id), [figure])
+
+const contextFile = path.join(OWN, 'context-FIRST.json')
+assert.ok(!fs.existsSync(contextFile), 'Preserve FIRST context')
+const contextArgs = [
+  '.agents/skills/ld-s10y-image/scripts/build_context.py',
+  '--book', '7a', '--edition', 'modern-us-neutral', '--figure', figure,
+  '--root', projectionRoot, '--output', contextFile,
+]
+const built = spawnSync('python3', contextArgs, {
+  cwd: R,
+  env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+  encoding: 'utf8',
+})
+assert.equal(built.status, 0, built.stderr || built.stdout)
+const context = read(contextFile)
+assert.equal(context.schema, 'ld-s10y-image/context@1')
+assert.equal(context.sourceImage.sha256, sourceHash)
+assert.equal(context.lessons.length, 1)
+assert.equal(context.lessons[0].lesson, lessonId)
+assert.deepEqual(context.lessons[0].exercises.map(item => item.exercise), ['181'])
+assert.equal(context.lessons[0].exercises[0].text, exercise.text)
+assert.deepEqual(context.lessons[0].prose, [])
+
+// These strings were independently transcribed in pixel-inventory-FIRST.md.
+const dataset = [
+  ['upper', 2, 'Mercury', '3.17', '23'],
+  ['upper', 3, 'Venus', '4.87', '24'],
+  ['upper', 4, 'Earth', '5.98', '24'],
+  ['upper', 5, 'Mars', '6.40', '23'],
+  ['lower', 2, 'Jupiter', '1.90', '27'],
+  ['lower', 3, 'Saturn', '5.69', '26'],
+  ['lower', 4, 'Uranus', '8.70', '25'],
+  ['lower', 5, 'Neptune', '1.03', '26'],
+  ['lower', 6, 'Pluto', '5.40', '24'],
+]
+const superscripts = {
+  2: '\u00b2', 3: '\u00b3', 4: '\u2074',
+  5: '\u2075', 6: '\u2076', 7: '\u2077',
+}
+const bands = {
+  upper: { columns: 5, bounds: [20, 272, 620, 164], xStep: 120, yStep: 54 },
+  lower: { columns: 6, bounds: [20, 158, 620, 50], xStep: 100, yStep: 54 },
+}
+const objects = Object.entries(bands).map(([id, band]) => ({
+  id: `${id}-grid`, type: 'grid', bounds: band.bounds,
+  xStep: band.xStep, yStep: band.yStep,
+  xOffset: band.bounds[0], yOffset: band.bounds[3],
+  stroke: 'muted', strokeWidth: 1.25,
+}))
+objects.push(
+  {
+    id: 'middle-boundary-top', type: 'segment',
+    from: [20, 164], to: [620, 164], stroke: 'ink', strokeWidth: 1.5,
+  },
+  {
+    id: 'middle-boundary-bottom', type: 'segment',
+    from: [20, 158], to: [620, 158], stroke: 'ink', strokeWidth: 1.5,
+  },
+  {
+    id: 'middle-boundary-left-join', type: 'segment',
+    from: [20, 164], to: [20, 158], stroke: 'muted', strokeWidth: 1.25,
+  },
+  {
+    id: 'middle-boundary-right-join', type: 'segment',
+    from: [620, 164], to: [620, 158], stroke: 'muted', strokeWidth: 1.25,
+  },
+)
+const center = (bandId, column, row) => {
+  const band = bands[bandId]
+  return [
+    band.bounds[0] + (column - 0.5) * band.xStep,
+    band.bounds[1] - (row - 0.5) * band.yStep,
+  ]
+}
+const text = (id, at, value, heading = false) => ({
+  id, type: 'text', at, text: value, fontSize: heading ? 17 : 16,
+  fontWeight: heading ? 600 : 400, labelColor: 'ink',
+  labelPlacement: { position: 'CENTER', offset: [0, 0] },
+})
+for (const bandId of Object.keys(bands)) {
+  objects.push(
+    text(`${bandId}-head-body`, center(bandId, 1, 1), 'Body', true),
+    text(`${bandId}-head-mass`, center(bandId, 1, 2), 'Mass (kg)'),
+  )
+}
+const rowMapping = dataset.map(([band, column, body, mantissa, exponent]) => {
+  const id = body.toLowerCase()
+  const massText = `${mantissa} \u00b7 10${[...exponent].map(digit => superscripts[digit]).join('')}`
+  objects.push(
+    text(`${id}-name`, center(band, column, 1), body, true),
+    text(`${id}-mass`, center(band, column, 2), massText),
+  )
+  return {
+    band, column, nameRow: 1, massRow: 2, body, mantissa, exponent,
+    unit: 'kg', massText, nameObject: `${id}-name`, massObject: `${id}-mass`,
+    grid: `${band}-grid`, gridAssertion: `${band}-grid-dimensions`,
+  }
+})
+const assertions = [
+  ...Object.entries(bands).map(([band, grid]) => ({
+    id: `${band}-grid-dimensions`, type: 'gridDimensions',
+    grid: `${band}-grid`, columns: grid.columns, rows: 2,
+  })),
+  { id: 'two-grids', type: 'objectCount', objectType: 'grid', count: 2 },
+  { id: 'double-boundary-and-joins', type: 'objectCount', objectType: 'segment', count: 4 },
+  { id: 'complete-labels', type: 'objectCount', objectType: 'text', count: 22 },
+]
+const inventory = [
+  ...Object.entries(bands).map(([band, grid]) => ({
+    id: `source-${band}-band`,
+    description: `Source ${band} band has 2 rows and ${grid.columns} columns, including one heading column; the two rows contain body names and masses in kilograms. English translation and clean equal-width cells are modern decisions, not source typography.`,
+    objects: [`${band}-grid`, `${band}-head-body`, `${band}-head-mass`],
+    assertions: [`${band}-grid-dimensions`, 'complete-labels'],
+    requires: ['gridDimensions'],
+  })),
+  {
+    id: 'source-double-middle-boundary',
+    description: 'Two distinct full-width horizontal rules separate the stacked bands; side joins preserve one connected outer rectangular frame. Clean 6 px separation is modern regularization.',
+    objects: [
+      'middle-boundary-top', 'middle-boundary-bottom',
+      'middle-boundary-left-join', 'middle-boundary-right-join',
+    ],
+    assertions: ['double-boundary-and-joins'],
+  },
+  ...rowMapping.map(row => ({
+    id: `source-${row.body.toLowerCase()}-entry`,
+    description: `${row.band} band, column ${row.column}: ${row.body} in row 1; ${row.mantissa} x 10^${row.exponent} kg in row 2. Preserve the printed mantissa, including trailing zeros. English name and superscript typesetting are modern translations, not changes to the historical dataset.`,
+    objects: [row.grid, row.nameObject, row.massObject],
+    assertions: [row.gridAssertion, 'complete-labels'],
+    requires: ['gridDimensions'],
+  })),
+]
+const spec = {
+  schema: 'ld-s10y-image/figure-spec@2',
+  id: figure,
+  mode: 'deterministic',
+  description: 'Exercise 181 historical source mass table: inspect nine given masses in scientific notation. Preserve source ordering and values without sorting, ratio results, or claims of current measurements.',
+  source: {
+    image: { path: original, sha256: sourceHash },
+    authoritativeText: [{ lesson: lessonId, exercise: '181', text: exercise.text }],
+    inventory,
+  },
+  canvas: {
+    width: 640, height: 320, boundingBox: [0, 320, 640, 0],
+    background: 'paper', keepAspectRatio: true,
+  },
+  display: { layout: 'scroll', purpose: 'instructional', widths: [640], minTextPx: 16 },
+  layout: { minLabelGap: 3 },
+  objects,
+  assertions,
+}
+assert.equal(rowMapping.length, 9)
+assert.equal(objects.filter(item => item.type === 'text').length, 22)
+assert.ok(!objects.some(item => item.type === 'point'))
+assert.ok(!inventory.some(group => group.requires?.includes('pointRelationships')))
+for (const row of rowMapping) {
+  const name = objects.find(item => item.id === row.nameObject)
+  const mass = objects.find(item => item.id === row.massObject)
+  assert.equal(name.text, row.body)
+  assert.equal(mass.text, row.massText)
+  assert.deepEqual(name.at, center(row.band, row.column, 1))
+  assert.deepEqual(mass.at, center(row.band, row.column, 2))
+}
+
+const specFile = write('spec-FIRST.json', spec)
+const datasetFile = write('dataset-row-mapping-FIRST.json', {
+  sourceImage: { path: original, sha256: sourceHash },
+  kind: 'historical-source-data',
+  observationBasis: 'pixel-inventory-FIRST.md; source PNG viewed once before candidate metadata',
+  bands, rows: rowMapping, count: rowMapping.length,
+  modernDecisions: [
+    'English Body and Mass (kg) labels; English body names',
+    'Equal-width cells within each original band and clean neutral linework',
+    'Centered labels, scientific superscripts, 640 px fixed instructional scroll media',
+    'No extra title, updated measurements, sorting, or ratio result',
+  ],
+})
+const bindings = write('bindings-FIRST.json', {
+  schema: 'stemrobin-182/table-author-bindings@1',
+  role: 'bounded-author-sidecar-not-independent-review',
+  figure, ticket: 'STEMROBIN-182', workdir: R, writeRoot: OWN,
+  copiedInputs,
+  context: { path: contextFile, sha256: fileHash(contextFile) },
+  source: { path: original, sha256: sourceHash },
+  spec: { path: specFile, sha256: fileHash(specFile) },
+  inventory: {
+    path: path.join(OWN, 'pixel-inventory-FIRST.md'),
+    sha256: fileHash(path.join(OWN, 'pixel-inventory-FIRST.md')),
+  },
+  dataset: { path: datasetFile, sha256: fileHash(datasetFile) },
+  authoritativeExercise: {
+    number: '181', text: exercise.text, textSha256: hash(exercise.text),
+    figure_refs: exercise.figure_refs, figures: exercise.figures,
+    source: 'current candidate top-level exercises; not retained source.data',
+  },
+  contextBuilder: {
+    command: ['python3', ...contextArgs], cwd: R, exitCode: built.status,
+    stdout: built.stdout, stderr: built.stderr, invocations: 1,
+    scriptSha256: fileHash(path.join(R, contextArgs[0])),
+  },
+  rendererScriptSha256: fileHash(path.join(R, '.agents/skills/ld-s10y-image/scripts/render_spec.mjs')),
+  validatorScriptSha256: fileHash(path.join(R, '.agents/skills/ld-s10y-image/scripts/validate_spec.py')),
+  countsBeforeValidation: {
+    sourceImageViews: 1, previewImageViews: 0, contextBuilds: 1,
+    explicitDraftValidations: 0, renders: 0, repairs: 0, paidCalls: 0,
+  },
+  formalIndependentReview: 'not performed; separate reviewer required',
+  promotion: 'not performed',
+})
+console.log(JSON.stringify({
+  context: { path: contextFile, sha256: fileHash(contextFile) },
+  spec: { path: specFile, sha256: fileHash(specFile) },
+  bindings,
+  exercise181Preserved: true,
+  sourceHash,
+  datasetEntries: rowMapping.length,
+  objects: objects.length,
+  assertions: assertions.length,
+}, null, 2))

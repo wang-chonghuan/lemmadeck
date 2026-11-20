@@ -1,0 +1,21 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+import { createRequire } from 'node:module';
+
+const require = createRequire(import.meta.url);
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+const { Resvg } = require(`${root}/.claude/skills/ld-s10y-lesson/node_modules/@resvg/resvg-js`);
+const own = `${root}/.tmp/resume182-4-postaccount/n13-answer-review-FIRST`;
+const relative = 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/figures/tbl-p0064-01.svg';
+const bytes = fs.readFileSync(`${root}/${relative}`);
+const svg = bytes.toString().replace(/var\(--[^,]+,\s*([^)]+)\)/g, '$1');
+const preview = new Resvg(svg, { fitTo: { mode: 'width', value: 640 }, background: '#ffffff' }).render().asPng();
+fs.writeFileSync(`${own}/current-declared-svg-640.png`, preview, { flag: 'wx' });
+console.log(JSON.stringify({
+  operation: 'rasterize_current_declared_svg_only',
+  source: relative,
+  sourceSha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+  preview: `${own}/current-declared-svg-640.png`,
+  previewSha256: crypto.createHash('sha256').update(preview).digest('hex'),
+  note: 'CSS variable fallbacks resolved only in memory for resvg; original SVG unchanged.'
+}, null, 2));

@@ -1,0 +1,189 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
+const { spawnSync } = require('node:child_process');
+
+const repo = process.cwd();
+const owner = path.join(repo, '.tmp/resume182-4-postaccount/n13-choice-author-FIRST');
+const seed = path.join(repo, '.tmp/resume182-4-postaccount/n13-choice-seed-FIRST/seed.json');
+const draft = path.join(owner, 'draft.json');
+const solutions = path.join(owner, 'source-solutions-FIRST.json');
+const request = path.join(owner, 'figure-request-183-FIRST.json');
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const artifact = filename => {
+  const bytes = fs.readFileSync(filename);
+  const entry = { path: filename, file_sha256: hash(bytes), bytes: bytes.length };
+  if (path.extname(filename) === '.json') {
+    const digest = spawnSync('python3', [
+      '.agents/skills/ld-s10y-choice/scripts/prepare.py', 'digest', filename,
+    ], { cwd: repo, encoding: 'utf8' });
+    if (digest.status !== 0) throw new Error(`Digest failed: ${digest.stderr}`);
+    entry.canonical_sha256 = digest.stdout.trim();
+  }
+  return entry;
+};
+const save = (filename, content) => fs.writeFileSync(
+  path.join(owner, filename), content, { flag: 'wx' },
+);
+const saveJson = (filename, value) => save(filename, `${JSON.stringify(value, null, 2)}\n`);
+const outputFiles = [
+  'validation.stdout.txt', 'validation.stderr.txt', 'validation.exit.txt',
+  'usage-FIRST.json', 'result-FIRST.json',
+];
+for (const filename of outputFiles) {
+  if (fs.existsSync(path.join(owner, filename))) {
+    throw new Error(`Refusing to overwrite an execution receipt: ${filename}`);
+  }
+}
+
+const sourceRecord = artifact(solutions);
+if (sourceRecord.file_sha256 !== '0a340bb24e01e47d63158ff2780fe656f7e63892106a8536eff70c6f68282d19') {
+  throw new Error('The source-first record changed after its pre-option receipt.');
+}
+const seedRecord = artifact(seed);
+if (seedRecord.canonical_sha256 !== '91f4f50a1d6575319157af24b2789dad9b6c613985dbca0ac732e0e688bfacf6') {
+  throw new Error('The prepared seed differs from the authorized snapshot.');
+}
+const artifactsBeforeValidation = [
+  seedRecord,
+  sourceRecord,
+  artifact(draft),
+  artifact(request),
+  artifact(path.join(owner, 'table-full-640.png')),
+  artifact(path.join(owner, 'render-source-preview.cjs')),
+  artifact(path.join(owner, 'record-execution-FIRST.cjs')),
+];
+const questionData = JSON.parse(fs.readFileSync(draft, 'utf8'));
+const args = [
+  '.agents/skills/ld-s10y-choice/scripts/validate.py',
+  '--repo', repo,
+  '--seed', seed,
+  '--draft', draft,
+];
+const validationStarted = new Date().toISOString();
+
+// Exactly one structural-validator invocation; preserve both streams even on failure.
+const validation = spawnSync('python3', args, {
+  cwd: repo, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024,
+});
+const validationFinished = new Date().toISOString();
+save('validation.stdout.txt', validation.stdout || '');
+save('validation.stderr.txt', validation.stderr || '');
+save('validation.exit.txt', `${validation.status === null ? 'null' : validation.status}\n`);
+
+const usage = {
+  schema: 'offline-choice-author-usage-v1',
+  owner,
+  first_record_observed_at: '2026-11-19T21:02:06+00:00',
+  source_solution_hash_recorded_before_options_at: '2026-11-19T21:05:00+00:00',
+  source_solution_file_unchanged: true,
+  source_solution_birthtime: fs.statSync(solutions).birthtime.toISOString(),
+  draft_birthtime: fs.statSync(draft).birthtime.toISOString(),
+  source_record_created_before_draft: fs.statSync(solutions).birthtimeMs < fs.statSync(draft).birthtimeMs,
+  source_solution_records: 17,
+  complete_independent_numeric_or_algebraic_solutions: 16,
+  unreadable_source_solutions: 1,
+  draft_author_passes: 1,
+  staged_draft_construction_writes: 2,
+  post_validation_content_edits: 0,
+  self_reviews: 0,
+  independent_reviews: 0,
+  image_batches: 1,
+  actual_image_views: 1,
+  images_in_current_context: 1,
+  source_svg_preparation_runs: 1,
+  source_preview_dimensions: [640, 320],
+  source_preview_render_exit: 0,
+  unreadable_actual_image_views: 1,
+  source_image_reopens: 0,
+  image_preparation_repairs: 0,
+  new_figure_creations: 0,
+  bounded_figure_requests: 1,
+  paid_calls: 0,
+  model_service_calls: 0,
+  web_or_library_documentation_requests: 0,
+  dependency_changes: 0,
+  application_changes: 0,
+  database_operations: 0,
+  git_operations: 0,
+  other_chat_messages: 0,
+  permanent_tasks: 0,
+  promotions: 0,
+  validator_invocations: 1,
+  validator_with_review: false,
+  validator_retries: 0,
+  validator: {
+    command: ['python3', ...args],
+    cwd: repo,
+    started_at: validationStarted,
+    finished_at: validationFinished,
+    exit_code: validation.status,
+    signal: validation.signal,
+    spawn_error: validation.error ? String(validation.error) : null,
+  },
+  counts: {
+    selected_sources: 17,
+    coverage_entries: questionData.coverage.length,
+    question_count: questionData.questions.length,
+    option_count: questionData.questions.reduce((sum, item) => sum + item.view.options.length, 0),
+    single_questions: questionData.questions.filter(item => item.view.mode === 'single').length,
+    multiple_questions: questionData.questions.filter(item => item.view.mode === 'multiple').length,
+    covered_sources: questionData.coverage.filter(item => item.question_ids.length > 0).length,
+    held_sources: questionData.coverage.filter(item => item.question_ids.length === 0).length,
+    new_figures: questionData.new_figures.length,
+  },
+  boundaries: {
+    input: 'Only the authorized prepared seed and declared actual SVG were used as mathematical inputs; no additional lesson projection was read.',
+    no_prohibited_materials: 'No old choices, answers, answer slots/interactions, tests, ticket outputs, environment files or database content were read.',
+    writes: 'All files were written only under the authorized author directory.',
+    tool_exception: 'The authorized validator refreshes its whitelist seed projection from original lesson files; its stdout and stderr are retained without reinterpretation.',
+  },
+};
+saveJson('usage-FIRST.json', usage);
+const result = {
+  schema: 'offline-choice-author-result-v1',
+  phase: 'author_first_structural_check_only',
+  semantic_review: 'pending_independent_reviewer',
+  validation_result: validation.status === 0
+    ? 'structural_pass_without_review'
+    : 'failure_preserved_no_repair',
+  validator_exit_code: validation.status,
+  counts: usage.counts,
+  holds: [
+    {
+      source_number: '181',
+      kind: 'unreadable_actual_table',
+      reason: 'Single complete 640x320 resvg preview view is entirely black; no mass rows can be read. All ordering and ratio tasks are held without invented data.',
+      evidence_path: path.join(owner, 'source-solutions-FIRST.json'),
+    },
+    {
+      source_number: '183',
+      kind: 'bounded_candidate_figures_pending',
+      reason: 'Independent roots and intersection coordinates are solved. Existing ld-s10y-image authoredBasis request covers three paired graph alternatives; no ad hoc image is produced. Ordinary drawing-to-recognition loss alone is not an approval gate.',
+      request_path: request,
+      requested_candidate_assets: 3,
+      requested_panels: 6,
+    },
+  ],
+  receipts: [
+    artifact(path.join(owner, 'validation.stdout.txt')),
+    artifact(path.join(owner, 'validation.stderr.txt')),
+    artifact(path.join(owner, 'validation.exit.txt')),
+    artifact(path.join(owner, 'usage-FIRST.json')),
+  ],
+  artifacts: artifactsBeforeValidation,
+  no_post_validation_repairs: true,
+};
+saveJson('result-FIRST.json', result);
+console.log(JSON.stringify({
+  result: artifact(path.join(owner, 'result-FIRST.json')),
+  usage: artifact(path.join(owner, 'usage-FIRST.json')),
+  draft: artifactsBeforeValidation.find(item => item.path === draft),
+  source_first: sourceRecord,
+  figure_request: artifactsBeforeValidation.find(item => item.path === request),
+  counts: usage.counts,
+  validator_exit_code: validation.status,
+  validator_stdout: validation.stdout,
+  validator_stderr: validation.stderr,
+  semantic_review: 'pending_independent_reviewer',
+}));

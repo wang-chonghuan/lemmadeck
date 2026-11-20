@@ -1,0 +1,94 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const source = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six/lemmadeck';
+assert.equal(process.cwd(), root);
+const scratch = '.tmp/resume182-4-postaccount';
+const artifact = 'ssot-resources/soviet10year-textbooks/artifacts/7a';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const entries = new Map();
+const recovered = [];
+const read = relative => JSON.parse(fs.readFileSync(path.join(source, relative)));
+
+function copy(relative, expected) {
+  assert.ok(!path.isAbsolute(relative) && !relative.startsWith('../'));
+  const origin = path.join(source, relative);
+  const stat = fs.lstatSync(origin);
+  if (stat.isDirectory()) {
+    for (const name of fs.readdirSync(origin).sort()) copy(path.join(relative, name));
+    return;
+  }
+  assert.ok(stat.isFile(), `not regular: ${relative}`);
+  const bytes = fs.readFileSync(origin);
+  const hash = sha(bytes);
+  if (expected) assert.equal(hash, expected, `source changed: ${relative}`);
+  const target = path.join(root, relative === '.claude/skills/ld-s10y-lesson/tools/render_lesson.js'
+    ? `.tmp/resume182-6-n13/runtime-inputs/${relative}` : relative);
+  if (fs.existsSync(target)) {
+    assert.equal(sha(fs.readFileSync(target)), hash, `destination differs: ${relative}`);
+  } else {
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.copyFileSync(origin, target, fs.constants.COPYFILE_EXCL);
+  }
+  entries.set(origin, { source: origin, path: target, sha256: hash, bytes: bytes.length });
+}
+
+const selectionPath = `${scratch}/n13-display-selection-FIRST/selection.record`;
+const selection = read(selectionPath);
+copy(selectionPath);
+copy(path.relative(source, selection.authority.path), selection.authority.sha256);
+const runtime = JSON.parse(fs.readFileSync(selection.authority.path));
+assert.equal(runtime.status, 'RUNTIME_PASS_VISUAL_PENDING');
+assert.equal(selection.counts.missing, 0);
+for (const input of runtime.inputs) {
+  if (input.path.endsWith('/tools/render_lesson.js')) {
+    recovered.push({ historicalPath: input.path, expected: input.sha256,
+      currentSourceSha256: sha(fs.readFileSync(input.path)),
+      status: 'Historical producer bytes unresolved; not claimed restored. Existing produced HTML and screenshots remain hash-bound.',
+      failedReconstructionSha256: sha(fs.readFileSync('.tmp/resume182-6-n13/renderer-at-display.js.record')) });
+    continue;
+  }
+  copy(path.relative(source, input.path), input.sha256);
+}
+for (const image of selection.selected) copy(path.relative(source, image.path), image.sha256);
+for (const batch of [1, 2, 3]) copy(`${scratch}/n13-display-observe-batch${batch}/result.json`);
+for (const relative of [
+  `${artifact}/lessons/alg7-c1-s4-n13`,
+  `${artifact}/editions/modern-us-neutral/lessons/alg7-c1-s4-n13`,
+  `${artifact}/evidence/resume182-4-n13-source-records`,
+  `${artifact}/evidence/resume182-4-n13-modern-text-table`,
+  `${artifact}/evidence/resume182-4-n13-answers`,
+  `${artifact}/evidence/resume182-4-n13-choices`,
+  `${artifact}/pages/0062`, `${artifact}/pages/0063`,
+  `${artifact}/pages/0064`, `${artifact}/pages/0065`,
+  `${artifact}/figures/tbl-p0064-01.png`,
+  `${artifact}/figures/tbl-p0064-01.svg`,
+]) copy(relative);
+
+const out = '.tmp/resume182-6-n13';
+fs.mkdirSync(out, { recursive: true });
+const receipt = {
+  source, workspace: root, head: 'd08f1b1835eae826a30c44d7b02ff4b3b8947763',
+  purpose: 'Only current n13 content and bytes required for missing display observation and binding.',
+  originalBytesAndPathsUnmodified: true, entries: [...entries.values()], recovered,
+  omittedScreenshotBytesCopied: 0, imageViews: 0, rendererRuns: 0,
+  oldBatch4ImageUsage: 'unknown; no completed result; not reset',
+};
+fs.writeFileSync(`${out}/migration.record`, `${JSON.stringify(receipt, null, 2)}\n`, { flag: 'wx' });
+for (const batch of selection.batches.filter(item => item.id !== 'batch3')) {
+  const assignment = {
+    batch: batch.id,
+    images: batch.images.map(image => ({
+      ...image, localPath: path.join(root, path.relative(source, image.path)),
+    })),
+    originalSelectionSha256: sha(fs.readFileSync(path.join(source, selectionPath))),
+    oldBatch4ImageUsage: receipt.oldBatch4ImageUsage,
+  };
+  fs.writeFileSync(`${out}/${batch.id}.record`, `${JSON.stringify(assignment, null, 2)}\n`, { flag: 'wx' });
+}
+console.log(JSON.stringify({ copiedOrVerified: entries.size, selected: selection.selected.length,
+  pending: selection.batches.filter(item => item.id !== 'batch3').reduce((sum, b) => sum + b.images.length, 0),
+  migrationSha256: sha(fs.readFileSync(`${out}/migration.record`)), imagesViewed: 0 }));

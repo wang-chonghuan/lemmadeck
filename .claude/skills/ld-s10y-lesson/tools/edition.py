@@ -34,7 +34,12 @@ MATH = re.compile(r"\$\$(.+?)\$\$|\$([^$]+?)\$", re.S)
 MATH_TEXT_LITERAL = re.compile(r"\\text\{([^{}]*)\}")
 MATH_BOUNDARY_PUNCTUATION = re.compile(r"[、，；。？！：]+")
 NUMBER = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])")
-ERRATA_NUMBER = re.compile(NUMBER.pattern, re.ASCII)
+# Model-name hyphens have the same boundary in source Cyrillic and modern Latin.
+ERRATA_NUMBER = re.compile(
+    r"(?<![A-Za-z0-9_\u0400-\u04ff.])-?\d+(?:\.\d+)?"
+    r"(?![A-Za-z0-9_\u0400-\u04ff.])",
+    re.ASCII,
+)
 PART_MARKER = re.compile(
     r"(?<![A-Za-z0-9_\u0400-\u04ff])(?<!\d\.)"
     r"(?P<open>[(（]?)(?P<label>\d{1,2}|[a-z]|[\u0430-\u044f\u0451])(?P<close>[)）])"

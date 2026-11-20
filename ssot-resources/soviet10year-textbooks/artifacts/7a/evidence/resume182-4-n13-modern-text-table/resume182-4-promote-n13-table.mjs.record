@@ -1,0 +1,92 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), repo);
+const work = '.tmp/resume182-4-postaccount';
+const source = `${work}/n13-table-text-binding-affected1`;
+const reviewPath = `${work}/n13-table-review-FIRST/tbl-p0064-01.review-affected1.json`;
+const edition = 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral';
+const hash = bytes => createHash('sha256').update(bytes).digest('hex');
+const read = file => JSON.parse(fs.readFileSync(file));
+const bytes = {
+  spec: fs.readFileSync(`${source}/spec.json`),
+  svg: fs.readFileSync(`${source}/tbl-p0064-01.svg`),
+  render: fs.readFileSync(`${source}/tbl-p0064-01.render.json`),
+};
+assert.equal(hash(bytes.spec), '63346b82116cdf2b48f813f5089e71e8474886807503bcd9d95054c9621f7950');
+assert.equal(hash(bytes.svg), '18d5481948b31819c9dc95abd53c2ad3230b5566062b9c26005bd7014d2b31e7');
+assert.equal(hash(bytes.render), '2ab57bcb0eedfb7772b7f42dd1cf04e3305025307581ce4cb6fe4d29e2a6b01f');
+const reviewBytes = fs.readFileSync(reviewPath);
+assert.equal(hash(reviewBytes), '91568dc3ca0423ba3a0c66badb811b998014c543f335100c047121d3257eb79a');
+const originalReview = JSON.parse(reviewBytes);
+assert.equal(originalReview.status, 'pass');
+assert.equal(originalReview.spec.sha256, hash(bytes.spec));
+assert.equal(originalReview.outputs.svg.sha256, hash(bytes.svg));
+assert.equal(originalReview.render.sha256, hash(bytes.render));
+const existing = [];
+function snapshot(directory) {
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const file = path.join(directory, entry.name);
+    if (entry.isDirectory()) snapshot(file);
+    else if (entry.isFile()) existing.push({ path: file, sha256: hash(fs.readFileSync(file)) });
+  }
+}
+snapshot(edition);
+fs.writeFileSync(`${work}/n13-before-modern.record`, `${JSON.stringify(existing, null, 2)}\n`, { flag: 'wx' });
+const targets = Object.fromEntries(['spec', 'svg', 'render', 'review'].map(name => [
+  name, `${edition}/figures/tbl-p0064-01.${name === 'svg' ? 'svg' : `${name}.json`}`,
+]));
+const originalRender = JSON.parse(bytes.render);
+const render = structuredClone(originalRender);
+render.spec.path = targets.spec;
+render.output.svg.path = targets.svg;
+const comparable = structuredClone(render);
+comparable.spec.path = originalRender.spec.path;
+comparable.output.svg.path = originalRender.output.svg.path;
+assert.deepEqual(comparable, originalRender);
+bytes.render = Buffer.from(`${JSON.stringify(render, null, 2)}\n`);
+const review = structuredClone(originalReview);
+review.spec.path = targets.spec;
+review.render.path = targets.render;
+review.render.sha256 = hash(bytes.render);
+review.outputs.svg.path = targets.svg;
+const comparableReview = structuredClone(review);
+comparableReview.spec.path = originalReview.spec.path;
+comparableReview.render = structuredClone(originalReview.render);
+comparableReview.outputs.svg.path = originalReview.outputs.svg.path;
+assert.deepEqual(comparableReview, originalReview);
+bytes.review = Buffer.from(`${JSON.stringify(review, null, 2)}\n`);
+const outputs = [];
+for (const name of ['spec', 'svg', 'render', 'review']) {
+  assert.ok(!fs.existsSync(targets[name]));
+  fs.writeFileSync(targets[name], bytes[name], { flag: 'wx' });
+  outputs.push({ path: targets[name], sha256: hash(bytes[name]) });
+}
+const templatePath = `${work}/n13-adapt/adapt/7a/modern-us-neutral/lessons/alg7-c1-s4-n13/figures.template.json`;
+const template = read(templatePath);
+assert.equal(template.figures.length, 1);
+assert.equal(template.figures[0].id, 'tbl-p0064-01');
+Object.assign(template.figures[0], Object.fromEntries(
+  ['spec', 'svg', 'render', 'review'].map(name => [name, `figures/${path.basename(targets[name])}`])));
+assert.ok(!template.figures[0].png && !template.figures[0].artwork && !template.figures[0].generation);
+fs.writeFileSync(templatePath, `${JSON.stringify(template, null, 2)}\n`);
+for (const input of existing) assert.equal(hash(fs.readFileSync(input.path)), input.sha256);
+const record = {
+  schema: 'stemrobin-182/figure-approved-path-migration@1',
+  date: '2026-11-19', book: '7a', lesson: 'alg7-c1-s4-n13', figure: 'tbl-p0064-01',
+  status: 'approved-observations-migrated-static-final-binding-pending',
+  original_review: { historical_path: reviewPath, sha256: hash(reviewBytes) },
+  original_render_sha256: hash(fs.readFileSync(`${source}/tbl-p0064-01.render.json`)),
+  outputs, unchanged_spec_and_svg: true,
+  render_changes: ['spec.path', 'output.svg.path'],
+  review_changes: ['spec.path', 'render.path', 'render.sha256', 'outputs.svg.path'],
+  original_review_timestamp_notes_source_and_substance_preserved: true,
+  existing_modern_files_unchanged: existing.length,
+  source_visual_render_and_record_review_repeats: 0,
+  finalized: false, whole_lesson_approved: false,
+};
+fs.writeFileSync(`${work}/n13-table-promotion.record`, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(record, null, 2));

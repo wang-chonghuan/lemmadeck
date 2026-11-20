@@ -1,0 +1,96 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const root = process.cwd();
+const base = '.tmp/resume182-4-postaccount';
+const out = `${base}/n13-display-binding-FIRST`;
+assert.ok(!fs.existsSync(out), 'binding transaction already exists');
+const digest = bytes => createHash('sha256').update(bytes).digest('hex');
+const bound = [];
+function read(input, expected) {
+  const bytes = fs.readFileSync(input);
+  const sha256 = digest(bytes);
+  if (expected) assert.equal(sha256, expected, `changed input: ${input}`);
+  bound.push({ path: path.resolve(input), sha256, bytes: bytes.length });
+  return JSON.parse(bytes);
+}
+const selection = read(`${base}/n13-display-selection-FIRST/selection.record`);
+const runtime = read(selection.authority.path, selection.authority.sha256);
+assert.equal(runtime.status, 'RUNTIME_PASS_VISUAL_PENDING');
+assert.ok(runtime.checks.every(check => check.status === 'PASS'));
+assert.ok(Object.values(runtime.cleanup).every(value => value === true));
+assert.equal(selection.counts.missing, 0);
+for (const input of runtime.inputs) {
+  assert.equal(digest(fs.readFileSync(input.path)), input.sha256,
+    `runtime input changed: ${input.path}`);
+}
+const observers = new Map();
+const first = read(`${base}/n13-display-observe-batch1/result.json`);
+const desktopText = first.images.find(image => image.path ===
+  selection.selected.find(image => image.prior?.status === 'OBSERVED').path);
+assert.ok(desktopText && desktopText.observations.length);
+observers.set(desktopText.path, { ...desktopText, batch: 1 });
+const second = read(`${base}/n13-display-observe-batch2/result.json`);
+assert.equal(second.verdict, 'PASS');
+assert.equal(second.counts.viewImageCalls, 7);
+assert.equal(second.counts.reopens, 0);
+assert.equal(second.counts.crops, 0);
+assert.equal(second.counts.visibleBlockers, 0);
+for (const image of second.views) {
+  assert.equal(image.verdict, 'PASS');
+  assert.ok(!observers.has(image.path));
+  observers.set(image.path, { ...image, batch: 2 });
+}
+for (const batch of selection.batches) {
+  const result = read(`${base}/n13-display-observe-${batch.id}/result.json`);
+  assert.equal(result.status, 'DISPLAY_PASS', `${batch.id} did not pass`);
+  assert.equal(result.blockers.length, 0);
+  assert.equal(result.images.length, batch.images.length);
+  assert.equal(result.imageAccounting.views, batch.images.length);
+  assert.equal(result.imageAccounting.uniqueImages, batch.images.length);
+  for (const key of ['reopens', 'crops', 'resizes', 'rerenders']) {
+    assert.equal(result.imageAccounting[key], 0, `${batch.id}:${key}`);
+  }
+  for (const assigned of batch.images) {
+    const image = result.images.find(item => item.path === assigned.path);
+    assert.ok(image, `unobserved assignment: ${assigned.path}`);
+    assert.equal(image.sha256, assigned.sha256);
+    assert.equal(image.blockers.length, 0);
+    assert.ok(image.observations.length);
+    assert.ok(!observers.has(image.path), `repeated selected observation: ${image.path}`);
+    observers.set(image.path, { ...image, batch: batch.id });
+  }
+}
+assert.equal(observers.size, selection.counts.selected);
+const images = selection.selected.map(assigned => {
+  const observed = observers.get(assigned.path);
+  assert.ok(observed, `no observer: ${assigned.path}`);
+  assert.equal(observed.sha256, assigned.sha256);
+  assert.equal(digest(fs.readFileSync(assigned.path)), assigned.sha256);
+  return { path: assigned.path, sha256: assigned.sha256,
+    viewport: assigned.viewport, surface: assigned.surface,
+    batch: observed.batch, verdict: 'PASS' };
+});
+const record = {
+  schema: 'stemrobin-182/offline-display-binding@1', ticket: 'STEMROBIN-182',
+  date: '2026-11-19', lesson: 'alg7-c1-s4-n13', status: 'OFFLINE_DISPLAY_PASS',
+  runtime: { path: selection.authority.path, sha256: selection.authority.sha256,
+    checks: runtime.checks.length, status: runtime.status, originalUnmodified: true },
+  coverage: { ...selection.counts, missing: 0, surfaces: selection.surfaces,
+    method: selection.method },
+  inputsAndObserverReports: bound, images,
+  inheritedFailuresPreserved: true,
+  independentMathSourceImageReviewsRepeated: false,
+  newRendererBrowserOrValidatorRuns: 0, parentImageViews: 0,
+  selectedPixelViews: images.length,
+  historicalNonCurrentExerciseViews: first.imageAccounting.views - 1,
+  hostTokenUsageAndCost: 'unknown; no estimate or reset',
+  boundary: 'Complete selected native offline display observation only. No DB/application/publication acceptance, whole-ticket approval, formal handoff, merge, deploy or ticket closure.',
+};
+fs.mkdirSync(out);
+const bytes = Buffer.from(`${JSON.stringify(record, null, 2)}\n`);
+fs.writeFileSync(`${out}/display.record`, bytes, { flag: 'wx' });
+console.log(JSON.stringify({ path: `${out}/display.record`, sha256: digest(bytes),
+  status: record.status, observed: images.length, checks: runtime.checks.length }));

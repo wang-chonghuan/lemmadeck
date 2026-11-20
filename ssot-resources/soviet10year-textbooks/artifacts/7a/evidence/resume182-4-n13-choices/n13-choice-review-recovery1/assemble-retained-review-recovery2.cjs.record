@@ -1,0 +1,326 @@
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const assert = require("node:assert/strict");
+const root = "/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck";
+const prefix = ".tmp/resume182-4-postaccount";
+const own = prefix + "/n13-choice-review-recovery1";
+const staging = prefix + "/n13-choice-retention-staging1";
+const first = prefix + "/n13-choice-review-FIRST";
+const hash = (value) => crypto.createHash("sha256").update(value).digest("hex");
+const bindings = [];
+function canonical(value) {
+  if (Array.isArray(value)) return "[" + value.map(canonical).join(",") + "]";
+  if (value && typeof value === "object") {
+    return "{" + Object.keys(value).sort().map((key) =>
+      canonical(key) + ":" + canonical(value[key])).join(",") + "}";
+  }
+  return JSON.stringify(value).replace(/[\u007f-\uffff]/g,
+    (char) => "\\u" + char.charCodeAt(0).toString(16).padStart(4, "0"));
+}
+function bytes(relative) {
+  return fs.readFileSync(path.join(root, relative));
+}
+function read(relative) {
+  const buffer = bytes(relative);
+  const value = JSON.parse(buffer);
+  bindings.push({ path: relative, byte_sha256: hash(buffer), canonical_sha256: hash(canonical(value)) });
+  return value;
+}
+function write(relative, value) {
+  assert(relative === staging + "/review.json" || relative.startsWith(own + "/"));
+  fs.writeFileSync(path.join(root, relative), JSON.stringify(value, null, 2) + "\n", { flag: "wx" });
+}
+const seed = read(staging + "/seed.json");
+const draft = read(staging + "/draft.json");
+const originalSeed = read(prefix + "/n13-choice-seed-FIRST/seed.json");
+const compiled = read(prefix + "/n13-choice-author-183-compilation1/draft.json");
+const retained = read(prefix + "/n13-choice-image-retention.record");
+const compilationReceipt = read(prefix + "/n13-choice-author-183-compilation1/compilation.record");
+const source = read(own + "/independent-source-solutions-recovery1.json");
+const view = read(own + "/view-affected-results-recovery1.json");
+const viewFreeze = read(own + "/view-freeze-recovery1.json");
+const graphs = read(own + "/actual-graph-reviews-recovery1.json");
+const comparison = read(own + "/author-comparison-recovery2.json");
+const affectedCoverage = read(own + "/source-coverage-recovery2.json");
+const firstSource = read(first + "/independent-source-solutions-FIRST.json");
+const firstView = read(first + "/view-FIRST-results.json");
+const firstComparison = read(first + "/author-comparison-FIRST.json");
+const firstCoverage = read(first + "/source-coverage-FIRST.json");
+const firstDraft = read(first + "/draft-snapshot-FIRST.json");
+const base181 = read(prefix + "/n13-choice-author-FIRST/affected181/draft.json");
+const seedDigest = hash(canonical(seed));
+assert.equal(seedDigest, "91f4f50a1d6575319157af24b2789dad9b6c613985dbca0ac732e0e688bfacf6");
+assert.deepEqual(seed, originalSeed);
+assert.equal(draft.seed_sha256, seedDigest);
+assert.equal(hash(canonical(compiled)), view.draft_sha256);
+assert.equal(hash(bytes(own + "/independent-source-solutions-recovery1.json")),
+  "5395a510611472b84a6eccab65262d089a94e48a667bc24d670427620b091881");
+assert.equal(hash(bytes(own + "/view-affected-results-recovery1.json")),
+  viewFreeze.view_results_byte_sha256);
+assert.equal(hash(bytes(own + "/actual-graph-reviews-recovery1.json")),
+  viewFreeze.actual_graph_review_byte_sha256);
+assert.equal(hash(bytes(staging + "/draft.json")), retained.staged_draft.sha256);
+assert.equal(hash(bytes(prefix + "/n13-choice-author-183-compilation1/draft.json")),
+  retained.original_draft.sha256);
+assert.equal(hash(bytes(own + "/actual-graph-reviews-recovery1.json")),
+  retained.independent_actual_image_review.sha256);
+assert.equal(hash(canonical(firstDraft)), firstView.draft_sha256);
+assert.equal(hash(canonical(firstDraft)), firstComparison.draft_sha256);
+assert.equal(firstSource.seed_sha256, seedDigest);
+assert.equal(firstComparison.author_keys_agree_with_independent_complete_true_sets, true);
+assert.equal(firstComparison.author_per_option_truths_agree, true);
+assert.equal(comparison.outcome, "pass");
+assert.equal(view.outcome, "pass");
+assert.equal(graphs.outcome, "pass");
+assert.deepEqual(draft.questions, compiled.questions);
+assert.deepEqual(draft.coverage, compiled.coverage);
+assert.deepEqual(base181.questions, compiled.questions.filter((question) =>
+  !question.source_numbers.includes("183")));
+assert.deepEqual(base181.coverage.filter((item) => item.source_number !== "183"),
+  compiled.coverage.filter((item) => item.source_number !== "183"));
+const normalizedStaged = structuredClone(draft);
+normalizedStaged.new_figures.forEach((figure, index) => {
+  assert.equal(figure.id, compiled.new_figures[index].id);
+  figure.path = compiled.new_figures[index].path;
+});
+assert.deepEqual(normalizedStaged, compiled);
+assert.equal(draft.questions.length, 20);
+assert.equal(draft.questions.reduce((sum, question) => sum + question.view.options.length, 0), 60);
+assert.equal(seed.exercises.length, 17);
+assert.equal(firstView.question_reviews.length, 17);
+const oldIds = new Set(firstView.question_reviews.map((review) => review.question_id));
+const newIds = new Set(view.question_reviews.map((review) => review.question_id));
+assert.deepEqual([...newIds].sort(), [
+  "graphical-equation-pair", "historical-jupiter-earth-ratio", "historical-mass-global-order"
+]);
+assert.equal(draft.questions.filter((question) => oldIds.has(question.id)).length, 17);
+for (const oldReview of firstView.question_reviews) {
+  const oldQuestion = firstDraft.questions.find((question) => question.id === oldReview.question_id);
+  const currentQuestion = draft.questions.find((question) => question.id === oldReview.question_id);
+  assert.deepEqual(currentQuestion, oldQuestion);
+  for (const gate of ["task_fidelity", "redundancy", "answer_leakage", "mathematics"]) {
+    assert.equal(oldReview[gate].verdict, "pass");
+  }
+}
+const independentSourceNumbers = new Set(source.source_reviews.map((item) => item.source_number));
+assert.deepEqual([...independentSourceNumbers].sort(), ["181", "183"]);
+const oldSourceNumbers = seed.exercises.map((exercise) => exercise.number)
+  .filter((number) => !independentSourceNumbers.has(number));
+assert.equal(oldSourceNumbers.length, 15);
+for (const number of oldSourceNumbers) {
+  assert.deepEqual(draft.coverage.find((item) => item.source_number === number),
+    firstDraft.coverage.find((item) => item.source_number === number));
+  assert.equal(firstCoverage.find((item) => item.source_number === number).verdict, "pass");
+}
+for (const reviewed of view.question_reviews) {
+  const question = draft.questions.find((item) => item.id === reviewed.question_id);
+  assert.deepEqual(reviewed.mathematics.correct, question.key.correct);
+  for (const check of reviewed.mathematics.option_checks) {
+    assert.equal(check.truth, question.key.rationales.find((item) => item.option_id === check.option_id).truth);
+  }
+}
+const formalRebindings = [];
+for (const figure of draft.new_figures) {
+  const retentionAsset = retained.assets.find((item) => item.id === figure.id);
+  const oldReview = read(retentionAsset.original_review);
+  assert.equal(hash(bytes(retentionAsset.original_review)), retentionAsset.original_review_sha256);
+  const durableStem = figure.path.slice(0, -4);
+  const render = read(durableStem + ".render.json");
+  const review = read(durableStem + ".review.json");
+  const originalRenderPath = oldReview.render.path;
+  const originalRender = read(originalRenderPath);
+  const expectedRender = structuredClone(originalRender);
+  expectedRender.spec.path = durableStem + ".spec.json";
+  expectedRender.output.svg.path = figure.path;
+  assert.deepEqual(render, expectedRender);
+  const expectedReview = structuredClone(oldReview);
+  expectedReview.spec.path = durableStem + ".spec.json";
+  expectedReview.render.path = durableStem + ".render.json";
+  expectedReview.render.sha256 = hash(bytes(durableStem + ".render.json"));
+  expectedReview.outputs.svg.path = figure.path;
+  assert.deepEqual(review, expectedReview);
+  assert.equal(review.status, "pass");
+  assert.equal(hash(bytes(figure.path)), figure.sha256);
+  assert.equal(hash(bytes(durableStem + ".spec.json")), oldReview.spec.sha256);
+  assert.equal(hash(bytes(oldReview.spec.path)), oldReview.spec.sha256);
+  assert.equal(render.output.svg.sha256, figure.sha256);
+  assert.equal(review.outputs.svg.sha256, figure.sha256);
+  assert.equal(review.spec.sha256, hash(bytes(durableStem + ".spec.json")));
+  for (const retainedFile of retentionAsset.files) {
+    assert.equal(hash(bytes(retainedFile.path)), retainedFile.sha256);
+  }
+  const actualReview = graphs.new_figure_reviews.find((item) => item.figure_id === figure.id);
+  assert.equal(actualReview.asset_sha256, figure.sha256);
+  formalRebindings.push({
+    figure_id: figure.id,
+    original_review_path: retentionAsset.original_review,
+    original_review_byte_sha256: hash(bytes(retentionAsset.original_review)),
+    retained_review_path: durableStem + ".review.json",
+    retained_review_byte_sha256: hash(bytes(durableStem + ".review.json")),
+    output_sha256: figure.sha256,
+    spec_byte_identical: true,
+    svg_byte_identical: true,
+    render_only_changed_fields: ["spec.path", "output.svg.path"],
+    formal_review_only_changed_fields: ["spec.path", "render.path", "render.sha256", "outputs.svg.path"],
+    original_reviewedAt_preserved: true,
+    reopened: false,
+    record_review_repeated: false
+  });
+}
+const sourceReviews = seed.exercises.map((exercise) => {
+  const isNew = independentSourceNumbers.has(exercise.number);
+  const item = (isNew ? source.source_reviews : firstSource.source_reviews)
+    .find((entry) => entry.source_number === exercise.number);
+  const coverage = (isNew ? affectedCoverage : firstCoverage)
+    .find((entry) => entry.source_number === exercise.number);
+  return {
+    source_number: exercise.number,
+    independent_solution: item.independent_solution,
+    coverage: { verdict: coverage.verdict, evidence: coverage.evidence }
+  };
+});
+const questionReviews = draft.questions.map((question) =>
+  (oldIds.has(question.id) ? firstView.question_reviews : view.question_reviews)
+    .find((item) => item.question_id === question.id));
+const table = source.figure_checks[0];
+assert.equal(hash(bytes(table.asset_path)), table.asset_sha256);
+const figureChecks = [{
+  figure_id: table.figure_id,
+  asset_path: table.asset_path,
+  asset_sha256: table.asset_sha256,
+  observation: table.observation
+}, ...graphs.figure_checks.map((item) => ({
+  ...item,
+  asset_path: draft.new_figures.find((figure) => figure.id === item.figure_id).path
+}))];
+const reviewer = {
+  kind: "independent_agent",
+  identity: "Codex independent n13 recovery reviewer (recovery1 continued as recovery2); 15 source and 17 question records reused verbatim from Codex independent n13 CHOICE reviewer FIRST; identities and snapshot provenance in final-recovery2.receipt.json"
+};
+const review = {
+  schema: "s10y-choice-review-v1",
+  seed_sha256: seedDigest,
+  draft_sha256: hash(canonical(draft)),
+  reviewer,
+  source_reviews: sourceReviews,
+  figure_checks: figureChecks,
+  new_figure_reviews: graphs.new_figure_reviews,
+  question_reviews: questionReviews,
+  outcome: "pass"
+};
+assert.equal(review.source_reviews.length, 17);
+assert.equal(review.question_reviews.length, 20);
+assert.equal(review.figure_checks.length, 4);
+assert.equal(review.new_figure_reviews.length, 3);
+write(staging + "/review.json", review);
+const output = {
+  path: staging + "/review.json",
+  byte_sha256: hash(bytes(staging + "/review.json")),
+  canonical_sha256: hash(canonical(review)),
+  seed_sha256: seedDigest,
+  draft_sha256: review.draft_sha256
+};
+write(own + "/final-recovery2.receipt.json", {
+  schema: "stemrobin-182/n13-independent-review-recovery2@1",
+  ticket: "STEMROBIN-182",
+  stage: "missing-author-key-derivation-coverage-comparison-and-static-retained-binding-complete",
+  output,
+  outcome: "pass",
+  counts: { source_reviews: 17, question_reviews: 20, options: 60, figure_checks: 4, new_figure_reviews: 3 },
+  reviewer_provenance: [
+    {
+      reviewer: firstSource.reviewer,
+      source_numbers: oldSourceNumbers,
+      question_ids: [...oldIds],
+      sources_reused: 15,
+      questions_reused: 17,
+      options_reused: 51,
+      rerereview: false,
+      original_records_untouched: true
+    },
+    {
+      reviewer: source.reviewer,
+      continuity: "recovery2 is the same human-assigned independent non-author reviewer continuing recovery1",
+      source_numbers: ["181", "183"],
+      question_ids: [...newIds],
+      sources_independently_solved_in_recovery1: 2,
+      questions_view_reviewed_in_recovery1: 3,
+      options_view_reviewed_in_recovery1: 9,
+      internal_comparison_finished_in_recovery2: 3
+    }
+  ],
+  original_question_subtrees_unchanged: 17,
+  affected181_question_subtrees_unchanged: 2,
+  previous19_question_subtrees_unchanged: true,
+  previous16_non183_coverage_entries_unchanged: true,
+  retained_draft_only_changed_fields: ["new_figures[].path"],
+  retained_questions_keys_coverage_basis_unchanged: true,
+  freeze_sequence_preserved: true,
+  formal_image_review_rebindings: formalRebindings,
+  input_bindings: bindings,
+  technical_failure_history: {
+    runtime_restart_failure: {
+      exact_reported_code: "not_found",
+      provenance: "Initial direct human instruction; original separate reviewer FIRST became unavailable after runtime restart.",
+      original_passed_outputs_reused: true
+    },
+    exact_prior_swedencentral_token_rate_error: compilationReceipt.author_recovery_error,
+    exact_last_reported_token_rate_error: "rate limit exceeded: Your requests to gpt-6.1-sol for gpt-6.1-sol in swedencentral have exceeded token rate limit.",
+    last_error_provenance: "Direct human recovery2 continuation reports the same swedencentral token-rate failure. Exact wording retained from the existing compilation.record; no raw model error was returned by an execution tool in this visible continuation.",
+    prior_rate_failure_count: null,
+    prior_rate_failure_count_note: "No authoritative cumulative count was supplied; preserved existing receipts and human reports rather than inventing or resetting a count.",
+    new_rate_failures_this_visible_continuation: 0,
+    stagger: "Direct human reports >65 seconds after last observed failure; no sleep or immediate model probe performed here.",
+    graph_input_hash_hold: {
+      interpretation: "Raw seed-byte SHA versus canonical JSON SHA confusion, not a source or geometry defect.",
+      official_seed_canonical_sha256: seedDigest,
+      seed_byte_sha256: hash(bytes(staging + "/seed.json")),
+      original_request_preserved: true
+    },
+    local_metadata_read_failure: [
+      "jq: error (at .tmp/resume182-4-postaccount/n13-choice-review-FIRST/independent-source-solutions-FIRST.json:159): null (null) has no keys",
+      "jq: error (at .tmp/resume182-4-postaccount/n13-choice-review-FIRST/view-FIRST-results.json:306): null (null) has no keys",
+      "jq: error (at .tmp/resume182-4-postaccount/n13-choice-review-FIRST/author-comparison-FIRST.json:44): null (null) has no keys",
+      "jq: error (at .tmp/resume182-4-postaccount/n13-choice-review-FIRST/source-coverage-FIRST.json:19): Cannot index array with string \"reviewer\""
+    ],
+    local_metadata_failure_recovery: "Corrected the metadata-only jq projection once; no passed source or question review repeated."
+  },
+  usage: {
+    recovery1_actual_table_views: 1,
+    recovery1_actual_graph_views: 3,
+    recovery1_image_views_total: 4,
+    recovery1_formal_record_review_calls: 3,
+    recovery1_formal_record_review_passes: 3,
+    recovery2_source_solutions: 0,
+    recovery2_view_reviews: 0,
+    recovery2_images: 0,
+    recovery2_formal_record_review_calls: 0,
+    source_page_views: 0,
+    image_reopens: 0,
+    crops: 0,
+    renders: 0,
+    standalone_validators: 0,
+    choice_validators: 0,
+    record_review_builtin_binding_checks: 3,
+    model_workers_started: 0,
+    paid_calls: 0,
+    db_calls: 0,
+    dependency_changes: 0,
+    git_operations: 0,
+    prior_first_review_usage: firstSource.usage,
+    prior_first_view_usage: firstView.usage,
+    first_review_records_overwritten: 0,
+    author_files_modified: 0
+  },
+  writes: [staging + "/review.json", own + "/final-recovery2.receipt.json"],
+  next_authorized_step: "Parent runs retain_choices.py reviewed validator once; reviewer did not run it."
+});
+console.log(JSON.stringify({
+  outcome: "pass",
+  ...output,
+  counts: { sources: 17, questions: 20, options: 60, figure_checks: 4, new_figure_reviews: 3 },
+  receipt: own + "/final-recovery2.receipt.json",
+  validator_runs: 0,
+  additional_image_views: 0
+}, null, 2));

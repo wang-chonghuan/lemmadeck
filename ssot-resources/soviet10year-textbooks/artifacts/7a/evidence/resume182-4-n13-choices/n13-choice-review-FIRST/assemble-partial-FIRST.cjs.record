@@ -1,0 +1,31 @@
+const fs = require("node:fs");
+const p = ".tmp/resume182-4-postaccount/n13-choice-review-FIRST/";
+const source = JSON.parse(fs.readFileSync(p + "independent-source-solutions-FIRST.json"));
+const view = JSON.parse(fs.readFileSync(p + "view-FIRST-results.json"));
+const coverage = JSON.parse(fs.readFileSync(p + "source-coverage-FIRST.json"));
+const review = {
+  schema: "s10y-choice-review-v1",
+  seed_sha256: source.seed_sha256,
+  draft_sha256: view.draft_sha256,
+  reviewer: source.reviewer,
+  source_reviews: source.source_reviews.map((s) => {
+    const c = coverage.find((item) => item.source_number === s.source_number);
+    return {
+      source_number: s.source_number,
+      independent_solution: s.independent_solution,
+      coverage: { verdict: c.verdict, evidence: c.evidence },
+    };
+  }),
+  figure_checks: source.figure_checks.map((f) => ({
+    figure_id: f.figure_id,
+    asset_path: f.asset_path,
+    asset_sha256: f.asset_sha256,
+    observation: f.observation,
+  })),
+  new_figure_reviews: [],
+  question_reviews: view.question_reviews,
+  outcome: "blocked",
+};
+const bytes = JSON.stringify(review, null, 2) + "\n";
+fs.writeFileSync(p + "review-FIRST-partial.json", bytes, { flag: "wx" });
+console.log("Wrote immutable FIRST partial review: 17 source records,17 question records; outcome blocked for181/183. No validator executed.");

@@ -1,0 +1,195 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
+const { spawnSync } = require('node:child_process');
+
+const repo = process.cwd();
+const first = path.join(repo, '.tmp/resume182-4-postaccount/n13-choice-author-FIRST');
+const owner = path.join(first, 'affected181');
+const firstDraft = path.join(first, 'draft.json');
+const patchPath = path.join(owner, 'questions-181.json');
+const sourcePath = path.join(owner, 'source-solutions-181-SOURCE.json');
+const newDraft = path.join(owner, 'draft.json');
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const saveJson = (filename, value) => fs.writeFileSync(
+  path.join(owner, filename), `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' },
+);
+const artifact = filename => {
+  const bytes = fs.readFileSync(filename);
+  const entry = { path: filename, file_sha256: hash(bytes), bytes: bytes.length };
+  if (path.extname(filename) === '.json') {
+    const digest = spawnSync('python3', [
+      '.agents/skills/ld-s10y-choice/scripts/prepare.py', 'digest', filename,
+    ], { cwd: repo, encoding: 'utf8' });
+    if (digest.status !== 0) throw new Error(`Digest failed: ${digest.stderr}`);
+    entry.canonical_sha256 = digest.stdout.trim();
+  }
+  return entry;
+};
+for (const filename of ['draft.json', 'usage.json', 'result.json']) {
+  if (fs.existsSync(path.join(owner, filename))) {
+    throw new Error(`Refusing to overwrite affected evidence: ${filename}`);
+  }
+}
+const firstSnapshot = fs.readdirSync(first, { withFileTypes: true })
+  .filter(item => item.isFile())
+  .map(item => ({
+    path: path.join(first, item.name),
+    file_sha256: hash(fs.readFileSync(path.join(first, item.name))),
+  }));
+if (hash(fs.readFileSync(firstDraft)) !== '612c87665ac7d03cffb7d9fbf60212102c74e88d5ee650d9800b7c207eb38a17') {
+  throw new Error('FIRST draft differs from the retained baseline.');
+}
+if (hash(fs.readFileSync(sourcePath)) !== '9adb200054668e4211484eb75b64960c7a73668d17ef59d7406a3f9f6f2f822e') {
+  throw new Error('The affected source-first record changed after its pre-option receipt.');
+}
+if (fs.statSync(sourcePath).birthtimeMs >= fs.statSync(patchPath).birthtimeMs) {
+  throw new Error('The source record was not created before the new option patch.');
+}
+const svgPath = path.join(repo, 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/figures/tbl-p0064-01.svg');
+if (hash(fs.readFileSync(svgPath)) !== '18d5481948b31819c9dc95abd53c2ad3230b5566062b9c26005bd7014d2b31e7') {
+  throw new Error('The current declared source SVG changed.');
+}
+
+const baseline = JSON.parse(fs.readFileSync(firstDraft, 'utf8'));
+const patch = JSON.parse(fs.readFileSync(patchPath, 'utf8'));
+const affected = structuredClone(baseline);
+affected.questions.push(...patch.questions);
+affected.coverage = affected.coverage.map(item => item.source_number === '181' ? patch.coverage : item);
+
+// Mechanical preservation checks only; no semantic review or validator is run.
+const retainedQuestions = affected.questions.slice(0, baseline.questions.length);
+const retainedCoverage = affected.coverage.filter(item => item.source_number !== '181');
+const previousCoverage = baseline.coverage.filter(item => item.source_number !== '181');
+if (JSON.stringify(retainedQuestions) !== JSON.stringify(baseline.questions)) {
+  throw new Error('An existing question was modified.');
+}
+if (JSON.stringify(retainedCoverage) !== JSON.stringify(previousCoverage)) {
+  throw new Error('Coverage outside source 181 was modified.');
+}
+saveJson('draft.json', affected);
+for (const entry of firstSnapshot) {
+  if (hash(fs.readFileSync(entry.path)) !== entry.file_sha256) {
+    throw new Error(`FIRST file changed: ${entry.path}`);
+  }
+}
+
+const counts = {
+  selected_sources: 17,
+  coverage_entries: affected.coverage.length,
+  affected_sources: 1,
+  added_questions: patch.questions.length,
+  added_options: patch.questions.reduce((sum, item) => sum + item.view.options.length, 0),
+  combined_questions: affected.questions.length,
+  combined_options: affected.questions.reduce((sum, item) => sum + item.view.options.length, 0),
+  combined_single_questions: affected.questions.filter(item => item.view.mode === 'single').length,
+  combined_multiple_questions: affected.questions.filter(item => item.view.mode === 'multiple').length,
+  combined_covered_sources: affected.coverage.filter(item => item.question_ids.length > 0).length,
+  combined_held_sources: affected.coverage.filter(item => item.question_ids.length === 0).length,
+  original_question_subtrees_preserved: baseline.questions.length,
+  unaffected_coverage_entries_preserved: previousCoverage.length,
+  source_181_bodies_ordered: 9,
+  source_181_complete_tasks_solved: 2,
+  new_figures: affected.new_figures.length,
+  pending_source_183_candidate_assets: 3,
+};
+const usage = {
+  schema: 'affected-offline-author-usage-v1',
+  owner,
+  recorded_at: new Date().toISOString(),
+  recovery_scope: '181 only; retain FIRST and source-183 graph request unchanged',
+  source_record_hash_observed_before_options_at: '2026-11-19T21:17:09+00:00',
+  source_record_before_options: true,
+  source_record_before_affected_draft: fs.statSync(sourcePath).birthtimeMs < fs.statSync(newDraft).birthtimeMs,
+  first_root_files_unchanged: true,
+  first_root_file_snapshot: firstSnapshot,
+  first_counts_unchanged: {
+    selected_sources: 17,
+    questions: 17,
+    options: 51,
+    covered_sources: 15,
+    held_sources: 2,
+  },
+  affected_author_passes: 1,
+  incremental_actual_image_views: 1,
+  cumulative_author_actual_image_views: 2,
+  incremental_image_reopens: 0,
+  existing_white_preview_reused: true,
+  preview_path: path.join(repo, '.tmp/resume182-4-postaccount/n13-table-FIRST/tbl-p0064-01-preview-FIRST.png'),
+  preview_sha256: '35aaf83011c3e95dc669dd12883073db269acf8d3c3726b1277df392e0ecac9b',
+  preview_dimensions: [640, 320],
+  preview_binding: 'Parent-provided binding to the unchanged declared seed SVG; actual pixels viewed independently.',
+  preview_rasterization_runs_in_this_pass: 0,
+  figure_spec_render_runs: 0,
+  browser_sessions_started: 0,
+  servers_started: 0,
+  browsers_or_servers_left_open: 0,
+  preview_recovery_classification: 'Technical CSS-variable theme-resolution recovery, not source-HOLD approval or new figure production',
+  new_figure_production: 0,
+  paid_calls: 0,
+  model_service_calls: 0,
+  semantic_self_reviews: 0,
+  independent_reviews: 0,
+  validator_runs_in_this_pass: 0,
+  cumulative_author_validator_runs: 1,
+  combined_validation: 'Deferred to parent when source 183 is ready',
+  source_183_request_executions: 0,
+  application_changes: 0,
+  database_operations: 0,
+  dependency_changes: 0,
+  git_operations: 0,
+  other_chat_messages: 0,
+  permanent_tasks: 0,
+  promotions: 0,
+  counts,
+};
+saveJson('usage.json', usage);
+const result = {
+  schema: 'affected-offline-author-result-v1',
+  scope: '181 preview technical recovery and complete missing-task authoring',
+  source_number: '181',
+  source_solution: 'Independent nine-body ordering and exact Jupiter/Earth ratio saved before new options',
+  ratio_exact: '95000/299',
+  source_181_state: 'Authored from readable actual preview; independent semantic review pending',
+  semantic_review: 'Not performed',
+  validation: 'Not run in this pass; parent will run combined review/validation when 183 is ready',
+  first_root_files_unchanged: true,
+  existing_questions_unchanged: true,
+  coverage_change: '181 only',
+  counts,
+  holds: [
+    {
+      source_number: '183',
+      kind: 'bounded_candidate_figures_pending',
+      request_path: path.join(first, 'figure-request-183-FIRST.json'),
+      request_file_sha256: '9844b7b727989e77ea42c359471d99a934cc65c7e680b3e166221c922e6e2430',
+      candidate_assets: 3,
+      panels: 6,
+      execution_in_this_pass: false,
+      provenance_clarification_path: path.join(owner, 'provenance-clarification.json'),
+    },
+  ],
+  artifacts: [
+    artifact(sourcePath),
+    artifact(patchPath),
+    artifact(newDraft),
+    artifact(path.join(owner, 'provenance-clarification.json')),
+    artifact(path.join(owner, 'materialize-affected181.cjs')),
+    artifact(path.join(owner, 'usage.json')),
+  ],
+};
+saveJson('result.json', result);
+console.log(JSON.stringify({
+  draft: artifact(newDraft),
+  source_record: artifact(sourcePath),
+  provenance: artifact(path.join(owner, 'provenance-clarification.json')),
+  usage: artifact(path.join(owner, 'usage.json')),
+  result: artifact(path.join(owner, 'result.json')),
+  counts,
+  first_unchanged: true,
+  validator_runs_in_this_pass: 0,
+  reviews_in_this_pass: 0,
+  incremental_image_views: 1,
+  cumulative_author_image_views: 2,
+  pending_graph_assets: 3,
+}));

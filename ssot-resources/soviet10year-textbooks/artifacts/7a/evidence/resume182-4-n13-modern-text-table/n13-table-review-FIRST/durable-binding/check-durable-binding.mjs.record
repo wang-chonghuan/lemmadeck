@@ -1,0 +1,154 @@
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { isDeepStrictEqual } from 'node:util'
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck'
+if (process.cwd() !== root) throw new Error('Explicit repository cwd required')
+const own = path.join(root, '.tmp/resume182-4-postaccount/n13-table-review-FIRST')
+const outputRoot = path.join(own, 'durable-binding')
+const edition = path.join(root, 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral')
+const approved = path.join(root, '.tmp/resume182-4-postaccount/n13-table-text-binding-affected1')
+const lesson = path.join(root, '.tmp/resume182-4-postaccount/n13-adapt/adapt/7a/modern-us-neutral/lessons/alg7-c1-s4-n13')
+const paths = {
+  baselineResult: path.join(own, 'results-FIRST-affected1.json'),
+  baselineBinding: path.join(own, 'static-binding-affected1.json'),
+  baselineUsage: path.join(own, 'usage-FIRST-affected1.json'),
+  sourceInventory: path.join(own, 'source-inventory-FIRST.json'),
+  observations: path.join(own, 'observations-FIRST.md'),
+  substantive: path.join(own, 'substantive-FIRST.json'),
+  approvedSpec: path.join(approved, 'spec.json'),
+  approvedSvg: path.join(approved, 'tbl-p0064-01.svg'),
+  approvedRender: path.join(approved, 'tbl-p0064-01.render.json'),
+  approvedReview: path.join(own, 'tbl-p0064-01.review-affected1.json'),
+  durableSpec: path.join(edition, 'figures/tbl-p0064-01.spec.json'),
+  durableSvg: path.join(edition, 'figures/tbl-p0064-01.svg'),
+  durableRender: path.join(edition, 'figures/tbl-p0064-01.render.json'),
+  durableReview: path.join(edition, 'figures/tbl-p0064-01.review.json'),
+  sourcePng: path.join(root, 'ssot-resources/soviet10year-textbooks/artifacts/7a/figures/tbl-p0064-01.png'),
+  sourceSvg: path.join(root, 'ssot-resources/soviet10year-textbooks/artifacts/7a/figures/tbl-p0064-01.svg'),
+  currentText: path.join(lesson, 'exercises.template.json'),
+  figureTemplate: path.join(lesson, 'figures.template.json'),
+  migrationRecord: path.join(root, '.tmp/resume182-4-postaccount/n13-table-promotion.record'),
+  staticScript: path.join(outputRoot, 'check-durable-binding.mjs'),
+}
+const hash = value => crypto.createHash('sha256').update(value).digest('hex')
+const bytes = Object.fromEntries(Object.entries(paths).map(([key, p]) => [key, fs.readFileSync(p)]))
+const records = Object.fromEntries(Object.entries(paths).map(([key, p]) => [key, { path: p, sha256: hash(bytes[key]) }]))
+const parse = key => JSON.parse(bytes[key].toString('utf8'))
+const baseline = parse('baselineResult')
+const binding = parse('baselineBinding')
+const usage = parse('baselineUsage')
+const spec = parse('durableSpec')
+const render = parse('durableRender')
+const review = parse('durableReview')
+const oldRender = parse('approvedRender')
+const oldReview = parse('approvedReview')
+const migration = parse('migrationRecord')
+const template = parse('figureTemplate')
+const exercises = parse('currentText')
+const checks = []
+const check = (name, actual, expected) => {
+  checks.push({ name, status: isDeepStrictEqual(actual, expected) ? 'PASS' : 'REVISE', actual, expected })
+}
+function differences(a, b, pointer = '') {
+  if (Object.is(a, b)) return []
+  if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object' || Array.isArray(a) !== Array.isArray(b)) return [pointer]
+  return [...new Set([...Object.keys(a), ...Object.keys(b)])].flatMap(key => differences(a[key], b[key], `${pointer}/${key}`))
+}
+const relative = p => path.relative(root, p).split(path.sep).join('/')
+check('baseline-result-hash', records.baselineResult.sha256, 'db3ac769a6476717b41af01bbb6d0cd75820c6b4e82873ec327f9bbcb66911b8')
+check('baseline-substantive-and-binding-PASS', [baseline.status, baseline.substantiveFIRSTStatus, baseline.currentBindingStatus], ['PASS', 'PASS', 'PASS'])
+for (const [key, artifact] of [['baselineBinding', 'static-binding-affected1.json'], ['baselineUsage', 'usage-FIRST-affected1.json'], ['sourceInventory', 'source-inventory-FIRST.json'], ['observations', 'observations-FIRST.md'], ['substantive', 'substantive-FIRST.json'], ['approvedReview', 'tbl-p0064-01.review-affected1.json']]) {
+  check(`preserved-${key}-hash`, records[key].sha256, baseline.artifacts[artifact].sha256)
+}
+for (const [key, input] of [['approvedSpec', 'affectedSpec'], ['approvedSvg', 'affectedSvg'], ['approvedRender', 'affectedRender'], ['sourcePng', 'source'], ['currentText', 'currentText']]) {
+  check(`current-${key}-matches-approved-hash`, records[key].sha256, binding.inputs[input].sha256)
+}
+check('spec-byte-identical-to-approved', bytes.durableSpec.equals(bytes.approvedSpec), true)
+check('svg-byte-identical-to-approved', bytes.durableSvg.equals(bytes.approvedSvg), true)
+check('durable-spec-hash', records.durableSpec.sha256, '63346b82116cdf2b48f813f5089e71e8474886807503bcd9d95054c9621f7950')
+check('durable-svg-hash', records.durableSvg.sha256, '18d5481948b31819c9dc95abd53c2ad3230b5566062b9c26005bd7014d2b31e7')
+check('durable-render-hash', records.durableRender.sha256, '1f098a6082c3b1fc37ff3036c22de1dc4d6f43d934c2b7eb09be5b37bbcddf68')
+check('durable-review-hash', records.durableReview.sha256, '1b24c2aa4b9aa068e046a0b4ff828bdd6044cac9fc8c3f8d5d2d5d471e1828fe')
+const renderDiffs = differences(oldRender, render)
+const reviewDiffs = differences(oldReview, review)
+check('exact-render-allowlisted-diffs', renderDiffs, ['/spec/path', '/output/svg/path'])
+check('exact-review-allowlisted-diffs', reviewDiffs, ['/spec/path', '/render/path', '/render/sha256', '/outputs/svg/path'])
+const expectedRender = structuredClone(oldRender)
+expectedRender.spec.path = relative(paths.durableSpec)
+expectedRender.output.svg.path = relative(paths.durableSvg)
+check('complete-render-after-only-allowed-migration', render, expectedRender)
+const expectedReview = structuredClone(oldReview)
+expectedReview.spec.path = relative(paths.durableSpec)
+expectedReview.render.path = relative(paths.durableRender)
+expectedReview.render.sha256 = records.durableRender.sha256
+expectedReview.outputs.svg.path = relative(paths.durableSvg)
+check('complete-review-after-only-allowed-migration', review, expectedReview)
+check('render-spec-current-binding', render.spec, { path: relative(paths.durableSpec), sha256: records.durableSpec.sha256 })
+check('render-svg-current-binding', render.output.svg, { path: relative(paths.durableSvg), sha256: records.durableSvg.sha256 })
+check('review-spec-current-binding', review.spec, { path: relative(paths.durableSpec), sha256: records.durableSpec.sha256 })
+check('review-render-current-binding', review.render, { path: relative(paths.durableRender), sha256: records.durableRender.sha256 })
+check('review-svg-current-binding', review.outputs.svg, { path: relative(paths.durableSvg), sha256: records.durableSvg.sha256 })
+check('review-time-preserved', review.reviewedAt, oldReview.reviewedAt)
+check('review-notes-preserved', review.notes, oldReview.notes)
+check('producer-and-review-PASS', [render.status, review.status], ['pass', 'pass'])
+check('source-binding-in-spec-and-review', [spec.source.image, review.source], [records.sourcePng, records.sourcePng])
+check('source-inventory-current-hash', parse('sourceInventory').source.sha256, records.sourcePng.sha256)
+const exercise = exercises.exercises.find(item => String(item.number) === '181')
+check('current-181-authoritative-text', spec.source.authoritativeText, [{ lesson: 'alg7-c1-s4-n13', exercise: '181', text: exercise?.text }])
+check('181-text-unchanged-since-reviewed', exercise?.text, binding.currentAuthoritativeText)
+check('181-lines-match-text', exercise?.lines.join('\n'), exercise?.text)
+check('181-table-membership-and-no-numeric-changes', [exercise?.figure_refs, exercise?.numeric_changes], [['tbl-p0064-01'], []])
+check('template-context', [template.schema, template.edition, template.lesson, template.status], ['ld-s10y-lesson/edition-figures@1', 'modern-us-neutral', 'alg7-c1-s4-n13', 'draft'])
+check('template-has-one-table-record', template.figures.map(item => item.id), ['tbl-p0064-01'])
+const entry = template.figures.find(item => item.id === 'tbl-p0064-01')
+const slots = { spec: 'durableSpec', svg: 'durableSvg', render: 'durableRender', review: 'durableReview' }
+for (const [field, key] of Object.entries(slots)) {
+  const expected = `figures/tbl-p0064-01.${field === 'spec' ? 'spec.json' : field === 'svg' ? 'svg' : `${field}.json`}`
+  check(`template-${field}-exact-relative-path`, entry?.[field], expected)
+  check(`template-${field}-resolves-durably`, path.resolve(edition, entry?.[field] ?? ''), paths[key])
+  check(`durable-${field}-realpath-and-no-symlink-escape`, fs.realpathSync(paths[key]), paths[key])
+}
+check('template-deterministic-contract-fields', Object.keys(entry ?? {}).sort(), ['changes', 'id', 'label', 'render', 'review', 'source', 'spec', 'svg'])
+check('template-source-png-lineage', entry?.source.png, { path: 'figures/tbl-p0064-01.png', sha256: records.sourcePng.sha256 })
+check('template-source-svg-lineage', entry?.source.svg, { path: 'figures/tbl-p0064-01.svg', sha256: records.sourceSvg.sha256 })
+check('migration-original-review-binding', migration.original_review, { historical_path: relative(paths.approvedReview), sha256: records.approvedReview.sha256 })
+check('migration-original-render-binding', migration.original_render_sha256, records.approvedRender.sha256)
+check('migration-outputs-exact', migration.outputs, ['durableSpec', 'durableSvg', 'durableRender', 'durableReview'].map(key => ({ path: relative(paths[key]), sha256: records[key].sha256 })))
+check('migration-diff-claims', [migration.render_changes, migration.review_changes], [['spec.path', 'output.svg.path'], ['spec.path', 'render.path', 'render.sha256', 'outputs.svg.path']])
+check('migration-preservation-claims', [migration.unchanged_spec_and_svg, migration.original_review_timestamp_notes_source_and_substance_preserved], [true, true])
+check('cumulative-images-and-review-not-repeated', [usage.imageUsage.totalViews, usage.executionUsage.formalRecordReviewInvocations], [2, 1])
+const failures = checks.filter(item => item.status !== 'PASS')
+const status = failures.length ? 'REVISE' : 'PASS'
+const recordedAt = new Date().toISOString()
+const result = {
+  schema: 'bounded-static-durable-binding-result@1',
+  ticket: 'STEMROBIN-182', figureId: 'tbl-p0064-01', status, recordedAt,
+  scope: 'Static durable-path reconciliation only; prior SOURCE-first/native-640 observations reused without image decoding or viewing.',
+  inputHashes: records, renderDiffs, reviewDiffs,
+  checks, checkCount: checks.length, failureCount: failures.length,
+  inheritedObservations: { sourceInventory: records.sourceInventory, visual: records.observations, substantive: records.substantive, firstAndAffectedEvidence: records.baselineBinding, totalImageViews: 2, originalFormalReview: records.approvedReview, originalReviewedAt: oldReview.reviewedAt },
+  preservedSemanticData: status === 'PASS', fourRelativeOutputSlots: Object.keys(slots),
+  sourcePngHashCurrent: records.sourcePng.sha256, currentExerciseTemplateHash: records.currentText.sha256,
+  execution: { command: `node ${relative(paths.staticScript)}`, cwd: root, staticDurableComparisons: 1, exitCode: failures.length ? 1 : 0 },
+  migrationPerformedByThisAgent: false, finalizedByThisAgent: false, wholeLessonApproval: false,
+  outOfScope: 'Parent claim about 1913 other modern files was not independently audited; no Git, corpus, app, or DB operations performed.',
+  nextAction: 'Stop and return static binding status and hashes; parent closes.',
+}
+const finalUsage = {
+  schema: 'bounded-static-durable-binding-usage@1', ticket: 'STEMROBIN-182', figureId: 'tbl-p0064-01', status, recordedAt,
+  thisStep: { staticDurableComparisons: 1, specByteEqualityComparisons: 1, svgByteEqualityComparisons: 1, imageViews: 0, imagePayloads: 0, imageDecodes: 0, crops: 0, reopens: 0, validators: 0, renders: 0, recordReview: 0, finalize: 0, app: 0, database: 0, dependencies: 0, git: 0, paidCalls: 0, otherChats: 0, candidateEdits: 0, durableEdits: 0, migrationOperations: 0 },
+  cumulative: { imageViews: 2, sourceViews: 1, native640PreviewViews: 1, crops: 0, reopens: 0, formalReviewCalls: 1, separateValidatorCalls: 0, earlierEmbeddedValidationByFormalTool: 1, reviewerRenders: 0, reviewerGeometryRepairs: 0 },
+  earlierParentReportedProducer: { renders: 2, geometryRepairs: 0, attribution: 'Inherited report, not new execution by this agent.' },
+  outputRoot, reusedEvidence: records.baselineResult,
+}
+const outputs = {}
+for (const [name, payload] of [['final-binding.json', result], ['usage.json', finalUsage]]) {
+  const destination = path.join(outputRoot, name)
+  if (path.dirname(destination) !== outputRoot) throw new Error('Write root mismatch')
+  fs.writeFileSync(destination, `${JSON.stringify(payload, null, 2)}\n`, { flag: 'wx' })
+  outputs[name] = { path: destination, sha256: hash(fs.readFileSync(destination)) }
+}
+console.log(JSON.stringify({ status, checkCount: checks.length, failureCount: failures.length, failures, renderDiffs, reviewDiffs, durableHashes: Object.fromEntries(['durableSpec', 'durableSvg', 'durableRender', 'durableReview', 'sourcePng', 'currentText', 'figureTemplate', 'migrationRecord'].map(key => [key, records[key]])), outputs, staticScript: records.staticScript, cumulativeImageViews: 2, additionalImageViews: 0, cumulativeFormalReviewCalls: 1 }, null, 2))
+process.exitCode = failures.length ? 1 : 0

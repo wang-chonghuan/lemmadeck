@@ -1,0 +1,273 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+const own = `${root}/.tmp/resume182-4-postaccount/n13-answer-review-FIRST`;
+const author = `${root}/.tmp/resume182-4-postaccount/n13-answer-author-FIRST`;
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const readJson = path => JSON.parse(fs.readFileSync(path));
+const writeJson = (name, data) => fs.writeFileSync(`${own}/${name}`, `${JSON.stringify(data, null, 2)}\n`, { flag: 'wx' });
+const independent = readJson(`${own}/independent-source-solutions-FIRST.json`);
+const freeze = readJson(`${own}/source-freeze-manifest-FIRST.json`);
+const first = readJson(`${own}/candidate-comparison-FIRST.json`);
+const candidateBytes = fs.readFileSync(`${author}/answer-keys.json`);
+const candidate = JSON.parse(candidateBytes);
+const candidateHash = sha(candidateBytes);
+const compilation = readJson(`${author}/compilation.record`);
+const authorBindings = readJson(`${author}/source-bindings-FIRST.json`);
+const authorHashes = readJson(`${author}/hashes-FIRST.json`);
+const sourceReceipts = freeze.sources.map(s => {
+  const currentSha256 = sha(fs.readFileSync(s.path));
+  return { ...s, currentSha256, unchanged: currentSha256 === s.sha256 };
+});
+const judgeCounts = { exact: 0, numeric: 0, expression: 0 };
+let expectedValues = 0;
+for (const a of candidate.answers) {
+  for (const p of a.parts) {
+    judgeCounts[p.judge] += 1;
+    expectedValues += p.expected.length;
+  }
+}
+const perExercise = first.perExercise.map(finding => {
+  const source = independent.exercises.find(e => e.exercise === finding.exercise);
+  const answer = candidate.answers.find(e => e.exercise === finding.exercise);
+  return {
+    ...finding,
+    actualGrading: answer.grading,
+    actualParts: answer.parts.length,
+    derivationsAndCompilation: 'pass: independently reviewed later and consistent with first source-only solutions and candidate comparison',
+    partComparisons: answer.parts.map((p, i) => ({
+      part: i + 1,
+      sourceTask: source.independentParts[i],
+      candidateLabel: p.label,
+      judge: p.judge,
+      expected: p.expected,
+      unit: p.unit ?? null,
+      status: 'pass',
+      basis: 'Manual mathematical review against the independently solved source task; no new lexical or serialization gate.'
+    })),
+    graphComparisons: (source.graphTasks ?? []).map(g => ({
+      sourceTask: g.label,
+      status: 'pass',
+      curves: g.curves,
+      domain: g.domain,
+      intersections: g.intersections,
+      roots: g.roots,
+      method: 'Candidate identifies each requested line and both hyperbola branches on common axes, locates concrete intersections, uses their x-coordinates, and keeps asymptotes/nonzero domain. Exact b coordinates are correct supplementary values, not a fabricated rounded graph reading.'
+    }))
+  };
+});
+const supportFiles = [
+  'independent-derivations-FIRST.md',
+  'compilation.record',
+  'source-bindings-FIRST.json',
+  'hashes-FIRST.json'
+].map(name => {
+  const path = `${author}/${name}`;
+  const actualSha256 = sha(fs.readFileSync(path));
+  const declared = authorHashes.files.find(f => f.path === path);
+  return {
+    path,
+    sha256: actualSha256,
+    declaredSha256: declared?.sha256 ?? null,
+    declaredHashMatches: declared ? declared.sha256 === actualSha256 : null,
+    semanticReview: 'read only after first candidate comparison was saved'
+  };
+});
+const sourceAuthorCrossBindings = authorBindings.inputs
+  .filter(i => sourceReceipts.some(s => s.path === `${root}/${i.path}`))
+  .map(i => {
+    const independentReceipt = sourceReceipts.find(s => s.path === `${root}/${i.path}`);
+    return {
+      path: independentReceipt.path,
+      authorDeclaredSha256: i.sha256,
+      independentFrozenSha256: independentReceipt.sha256,
+      currentSha256: independentReceipt.currentSha256,
+      matches: i.sha256 === independentReceipt.currentSha256
+    };
+  });
+const stable = candidateHash === first.candidate.sha256 && sourceReceipts.every(s => s.unchanged);
+const usage = {
+  role: 'independent ANSWER semantic reviewer',
+  root,
+  ownOnly: own,
+  imageViews: 2,
+  originalPngViews: 1,
+  currentDeclaredSvgPreviewViews: 1,
+  previewWidthPx: 640,
+  crops: 0,
+  reopens: 0,
+  otherPageViews: 0,
+  shellCommands: 33,
+  execExit0: 31,
+  execExit1: 1,
+  execExit2: 1,
+  applyPatchCalls: 5,
+  rasterizationCommands: 2,
+  rasterizationSuccesses: 1,
+  deterministicMathCalculationCommands: 0,
+  mathematicalSolutions: 'Independently solved by reviewer before candidate access; counting/hash receipt scripts are not mathematical calculators or validators.',
+  structuralReceiptCommands: 2,
+  paidCalls: 0,
+  cost: 'unknown',
+  productionValidators: 0,
+  prepare: 0,
+  finalize: 0,
+  publish: 0,
+  databaseOperations: 0,
+  appRuntimeOperations: 0,
+  appContractFilesReadOnly: ['app/src/lib/answer-normalize.ts', 'app/src/lib/textbook-answer.ts'],
+  environmentOperations: 0,
+  dependencyOperations: 0,
+  gitOperations: 0,
+  otherChatOperations: 0,
+  authorOrCurrentFilesEdited: 0,
+  firstTechnicalFailure: `${own}/FIRST-technical-failure.json`,
+  firstRasterizationFailure: `${own}/preview-FIRST-execution-failure.json`,
+  firstContentFailure: null
+};
+const report = {
+  ticket: 'STEMROBIN-182',
+  role: 'A n13 independent ANSWER semantic reviewer FIRST',
+  lesson: 'alg7-c1-s4-n13',
+  edition: 'modern-us-neutral',
+  status: stable ? 'pass' : 'blocked',
+  scope: first.scope,
+  sequence: [
+    'Read answer SKILL/gate2, production-resume, image-batch contract and current source text/template/spec.',
+    'Viewed original PNG once; rasterized actual current declared SVG with existing resvg and viewed own640px preview once.',
+    'Independently solved every source task and wrote source-only JSON/Markdown/hash freeze.',
+    'Opened candidate for the first time, compared all84 parts plus both183 graph tasks and saved first comparison.',
+    'Then read author derivations, compilation, bindings and hash record.',
+    'Recorded present hashes/counts and final semantic findings. No production or serialization validator run.'
+  ],
+  completedAt: new Date().toISOString(),
+  candidate: { path: `${author}/answer-keys.json`, sha256: candidateHash, unchangedSinceFirstComparison: candidateHash === first.candidate.sha256 },
+  sourceFreeze: {
+    json: freeze.independentJson,
+    markdown: freeze.independentMarkdown,
+    manifest: { path: `${own}/source-freeze-manifest-FIRST.json`, sha256: sha(fs.readFileSync(`${own}/source-freeze-manifest-FIRST.json`)) },
+    timestamp: freeze.frozenAt,
+    allSourceBindingsStillCurrent: sourceReceipts.every(s => s.unchanged),
+    sourceReceipts
+  },
+  counts: {
+    exercises: candidate.answers.length,
+    pass: stable ? 17 : 0,
+    revise: 0,
+    blocked: stable ? 0 : 17,
+    autoExercises: candidate.answers.filter(a => a.grading === 'auto').length,
+    ungradedExercises: candidate.answers.filter(a => a.grading === 'ungraded').length,
+    independentJudgeableFields: freeze.counts.judgeableFields,
+    candidateParts: candidate.answers.reduce((n, a) => n + a.parts.length, 0),
+    judgeCounts,
+    expectedValues,
+    genuinelyUngradedGraphTasksSolved: 2,
+    bookRawEntries: candidate.answers.filter(a => Object.hasOwn(a, 'bookRaw')).length,
+    actionableFindings: 0,
+    holds: 0
+  },
+  conclusions: {
+    mathematics: 'pass: all values, orders, carries, units, exact arithmetic, roots and signs correct',
+    coverage: 'pass: full84-part coverage in source order;183 separately solved as two genuine graph tasks',
+    positiveCoefficientBounds: 'pass: all standard-form coefficients satisfy1<=a<10, and quantity order is the integer exponent',
+    historicalData: 'pass: historical estimates/distances/table used as stated; Pluto5.40*10^24kg preserved; names and source-bound declarations correct; no new measurement precision inferred',
+    rounding: first.roundingQualification,
+    representation: 'pass: canonical exact keys for requested standard form and unique names/yes-no; numeric for arithmetic quantities/orders; expression for184. No code-style function expectations or explanations in expected values.',
+    graph183: 'pass:6/x withx!=0 and both branches, actual requested lines, correct intersections/roots, asymptotes; ungraded legitimately preserves drawing task',
+    domains184: 'pass:a,b!=0 andx,y!=0 retained despite cancellation;2b^5 and-y/2 correct',
+    derivationsAndCompilation: 'pass: later-read derivations independently agree with frozen source solutions; draft compilation counts38exact+44numeric+2expression=84 and93 expected alternatives agree with present candidate',
+    serialization: first.serializationQualification
+  },
+  perExercise,
+  actionableFindings: stable ? [] : [{
+    status: 'blocked',
+    finding: 'Candidate or source hash changed since first comparison. Retain first comparison and perform affected-only review before approval.'
+  }],
+  supportingAuthorEvidence: supportFiles,
+  sourceAuthorCrossBindings,
+  authorAdditionalPriorPreviewBindings: 'Two extra bindings point to the author-used prior table SVG/preview. Not reopened or independently relied on. Reviewer generated a fresh preview from the declared currentSVG and read currentFigureSpec.',
+  existingContractHashes: ['app/src/lib/answer-normalize.ts', 'app/src/lib/textbook-answer.ts'].map(path => ({
+    path: `${root}/${path}`,
+    sha256: sha(fs.readFileSync(`${root}/${path}`))
+  })),
+  downstreamNotRun: ['MathLive actual keyboard-edit serialization check', 'ComputeEngine parsing validator', 'lesson_answers.py finalize', 'prepare', 'publish', 'DB/app/runtime/deployment/Git/dependencies'],
+  firstComparison: { path: `${own}/candidate-comparison-FIRST.json`, sha256: sha(fs.readFileSync(`${own}/candidate-comparison-FIRST.json`)) },
+  firstContentFailure: null,
+  technicalFailuresPreserved: [usage.firstTechnicalFailure, usage.firstRasterizationFailure],
+  usage
+};
+writeJson('usage.json', usage);
+writeJson('review-FIRST.json', report);
+const md = [
+  '# n13 ANSWER Semantic Review FIRST',
+  '',
+  `Result: ${report.status.toUpperCase()}. No mathematical, unit, source-data, coverage or grading-disposition defect found.`,
+  `Candidate SHA-256: ${candidateHash}`,
+  `Candidate: ${report.candidate.path}`,
+  '',
+  '## Scope and Source-First Freeze',
+  `Independent source solutions frozen at ${freeze.frozenAt}, before author candidate or derivations.`,
+  `JSON: ${freeze.independentJson.path}`,
+  `JSON SHA-256: ${freeze.independentJson.sha256}`,
+  `Markdown: ${freeze.independentMarkdown.path}`,
+  `Markdown SHA-256: ${freeze.independentMarkdown.sha256}`,
+  'Read current modern lesson/exercises/template/FigureSpec. Viewed original table once and actual declaredSVG own640px raster once. No other pages, crops or reopens; no old answer keys or ticket results.',
+  `Current source hashes stable: ${report.sourceFreeze.allSourceBindingsStillCurrent}; candidate unchanged: ${report.candidate.unchangedSinceFirstComparison}.`,
+  '',
+  '## Findings',
+  '17 pass;0 revise;0 blocked.16 auto exercises with84 parts:38exact,44numeric,2expression;93 expected strings. Exercise183 is genuinely ungraded, with both graphical subtasks solved. No bookRaw in template or candidate.',
+  '',
+  '| Exercise | Status | Parts | Concrete Review |',
+  '| --- | --- | ---: | --- |',
+  ...perExercise.map(e => `| ${e.exercise} | ${e.status} | ${e.partsReviewed} | ${e.finding} |`),
+  '',
+  '## Qualifications',
+  report.conclusions.rounding,
+  report.conclusions.serialization,
+  'The graph answer183 gives the actual hyperbola, each actual line, correct intersections and nonzero domain; its ungraded drawing disposition is not a mathematical-coverage omission.',
+  '184 expression grading is existing mathematical equivalence on the stated original domains, not a claim to mechanically judge domain declarations or syntactic simplification.',
+  'Later author derivations/compilation match independent solutions and present candidate counts. Source-bound history and given measurement precision remain intact.',
+  '',
+  '## Usage and Boundaries',
+  'Exactly2 image views;33 shell commands (31 exit0,1 exit1,1 exit2);5 apply_patch calls;0 deterministic math-calculator commands;0 paid calls;cost unknown.',
+  'Two technical diagnostics retained: optional nonexistent lookup roots and an incorrect reviewer-relative resvg import. One successful640px raster followed correction. Neither was a content failure; no content revision or image budget reset.',
+  'Writes only in designated reviewer directory. No author/current edits, other chats, Git, DB, app runtime, env, dependency, prepare, validator, finalize, publish or paid operations.',
+  'Actionable findings: none. This is semantic approval only; downstream editor/parser/production checks were neither run nor claimed.',
+  ''
+].join('\n');
+fs.writeFileSync(`${own}/review-FIRST.md`, md, { flag: 'wx' });
+const ownedTextOutputs = [
+  'independent-source-solutions-FIRST.json',
+  'independent-source-solutions-FIRST.md',
+  'source-freeze-manifest-FIRST.json',
+  'candidate-comparison-FIRST.json',
+  'review-FIRST.json',
+  'review-FIRST.md',
+  'usage.json',
+  'FIRST-technical-failure.json',
+  'preview-FIRST-execution-failure.json',
+  'preview-source.mjs',
+  'freeze-source.mjs',
+  'record-review.mjs'
+];
+const hashes = {
+  algorithm: 'SHA-256',
+  candidate: report.candidate,
+  sourceFreeze: report.sourceFreeze,
+  files: ownedTextOutputs.map(name => ({ path: `${own}/${name}`, sha256: sha(fs.readFileSync(`${own}/${name}`)) })),
+  preview: freeze.preview,
+  supportFiles,
+  noSelfHash: 'Manifest itself is hashed in command output, not recursively embedded.'
+};
+writeJson('hashes-FIRST.json', hashes);
+console.log(JSON.stringify({
+  status: report.status,
+  counts: report.counts,
+  candidate: report.candidate,
+  textOutputs: hashes.files.filter(f => ['review-FIRST.json', 'review-FIRST.md', 'usage.json', 'independent-source-solutions-FIRST.json', 'independent-source-solutions-FIRST.md'].some(n => f.path.endsWith(`/${n}`))),
+  hashesManifest: { path: `${own}/hashes-FIRST.json`, sha256: sha(fs.readFileSync(`${own}/hashes-FIRST.json`)) },
+  usage,
+  actionableFindings: report.actionableFindings,
+  sourceAuthorCrossBindings
+}, null, 2));

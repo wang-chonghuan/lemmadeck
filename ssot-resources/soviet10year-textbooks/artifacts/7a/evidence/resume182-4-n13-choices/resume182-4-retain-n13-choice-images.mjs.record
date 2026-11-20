@@ -1,0 +1,95 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), repo);
+const work = '.tmp/resume182-4-postaccount';
+const source = `${work}/n13-choice-author-183-compilation1/draft.json`;
+const staging = `${work}/n13-choice-retention-staging1`;
+const target = 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c1-s4-n13/choice-set/figures';
+const read = file => JSON.parse(fs.readFileSync(file));
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const original = read(source);
+const draft = structuredClone(original);
+const imageReviewPath = `${work}/n13-choice-review-recovery1/actual-graph-reviews-recovery1.json`;
+const images = read(imageReviewPath);
+assert.equal(images.outcome, 'pass');
+assert.equal(images.new_figure_reviews.length, 3);
+const planned = [];
+for (const [index, asset] of draft.new_figures.entries()) {
+  const root = `${work}/n13-choice-graphs-FIRST/${asset.id}`;
+  const suffix = index === 0 ? '-label-repair1' : '-FIRST';
+  const inputSpec = `${root}.spec${suffix}.json`;
+  const inputRender = `${root}.render${suffix}.json`;
+  const inputReview = `${work}/n13-choice-review-recovery1/${asset.id}.review-recovery1.json`;
+  const svgBytes = fs.readFileSync(asset.path);
+  const specBytes = fs.readFileSync(inputSpec);
+  const render = read(inputRender);
+  const review = read(inputReview);
+  const svgPath = `${target}/${asset.id}.svg`;
+  const specPath = `${target}/${asset.id}.spec.json`;
+  const renderPath = `${target}/${asset.id}.render.json`;
+  const reviewPath = `${target}/${asset.id}.review.json`;
+  assert.equal(sha(svgBytes), asset.sha256);
+  assert.equal(render.status, 'pass');
+  assert.equal(render.spec.sha256, sha(specBytes));
+  assert.equal(review.status, 'pass');
+  assert.equal(review.spec.sha256, sha(specBytes));
+  assert.equal(review.render.sha256, sha(fs.readFileSync(inputRender)));
+  assert.equal(review.outputs.svg.sha256, sha(svgBytes));
+  const independent = images.new_figure_reviews.find(item => item.figure_id === asset.id);
+  assert.equal(independent.verdict, 'pass');
+  assert.equal(independent.reviewer.kind, 'independent_agent');
+  assert.equal(independent.asset_sha256, sha(svgBytes));
+  render.spec.path = specPath;
+  render.output.svg.path = svgPath;
+  const renderBytes = Buffer.from(`${JSON.stringify(render, null, 2)}\n`);
+  review.spec.path = specPath;
+  review.render = {path: renderPath, sha256: sha(renderBytes)};
+  review.outputs.svg.path = svgPath;
+  const reviewBytes = Buffer.from(`${JSON.stringify(review, null, 2)}\n`);
+  asset.path = svgPath;
+  planned.push({
+    id: asset.id, original_asset: original.new_figures[index].path,
+    original_review: inputReview, original_review_sha256: sha(fs.readFileSync(inputReview)),
+    files: [
+      {path: svgPath, bytes: svgBytes}, {path: specPath, bytes: specBytes},
+      {path: renderPath, bytes: renderBytes}, {path: reviewPath, bytes: reviewBytes},
+    ],
+    svg_and_spec_byte_identical: true, render_changes: ['spec.path', 'output.svg.path'],
+    review_changes: ['spec.path', 'render.path', 'render.sha256', 'outputs.svg.path'],
+  });
+}
+assert.deepEqual(draft.questions, original.questions);
+assert.deepEqual(draft.coverage, original.coverage);
+for (const entry of planned) {
+  for (const file of entry.files) assert.ok(!fs.existsSync(file.path));
+}
+assert.ok(!fs.existsSync(staging));
+for (const entry of planned) {
+  for (const file of entry.files) {
+    fs.mkdirSync(path.dirname(file.path), {recursive: true});
+    fs.writeFileSync(file.path, file.bytes, {flag: 'wx'});
+  }
+}
+fs.mkdirSync(staging, {recursive: true});
+const seedPath = `${work}/n13-choice-seed-FIRST/seed.json`;
+fs.writeFileSync(`${staging}/seed.json`, fs.readFileSync(seedPath), {flag: 'wx'});
+fs.writeFileSync(`${staging}/draft.json`, `${JSON.stringify(draft, null, 2)}\n`, {flag: 'wx'});
+const record = {
+  schema: 'stemrobin-182/approved-choice-image-retention@1', ticket: 'STEMROBIN-182',
+  date: '2026-11-19', lesson: 'alg7-c1-s4-n13',
+  original_draft: {path: source, sha256: sha(fs.readFileSync(source))},
+  staged_draft: {path: `${staging}/draft.json`, sha256: sha(fs.readFileSync(`${staging}/draft.json`))},
+  independent_actual_image_review: {path: imageReviewPath, sha256: sha(fs.readFileSync(imageReviewPath))},
+  assets: planned.map(entry => ({...entry, files: entry.files.map(file => ({
+    path: file.path, bytes: file.bytes.length, sha256: sha(file.bytes),
+  }))})),
+  questions_coverage_keys_and_basis_unchanged: true, only_draft_change: 'new_figures[].path',
+  source_or_image_or_question_review_repeated: false, renderer_calls: 0, validators: 0,
+  whole_choice_package_approval: false, db_written: false,
+};
+fs.writeFileSync(`${work}/n13-choice-image-retention.record`, `${JSON.stringify(record, null, 2)}\n`, {flag: 'wx'});
+console.log(JSON.stringify(record, null, 2));

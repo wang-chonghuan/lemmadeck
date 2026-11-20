@@ -1,0 +1,36 @@
+const fs = require("node:fs");
+const crypto = require("node:crypto");
+const prefix = ".tmp/resume182-4-postaccount/n13-choice-review-FIRST/";
+const input = ".tmp/resume182-4-postaccount/n13-choice-author-FIRST/draft.json";
+const bytes = fs.readFileSync(input);
+const draft = JSON.parse(bytes);
+const sort = (x) => Array.isArray(x) ? x.map(sort) : x && typeof x === "object"
+  ? Object.fromEntries(Object.keys(x).sort().map((k) => [k, sort(x[k])])) : x;
+const canonical = JSON.stringify(sort(draft)).replace(
+  /[\u0080-\uffff]/g,
+  (ch) => "\\u" + ch.charCodeAt(0).toString(16).padStart(4, "0")
+);
+const view = draft.questions.map(({ id, source_numbers, view }) => ({
+  id, source_numbers, view,
+}));
+fs.writeFileSync(prefix + "draft-snapshot-FIRST.json", bytes, { flag: "wx" });
+fs.writeFileSync(prefix + "projected-view-FIRST.json", JSON.stringify(view, null, 2) + "\n", {
+  flag: "wx",
+});
+const receipt = {
+  phase: "view-only",
+  draft_path: input,
+  snapshot_path: prefix + "draft-snapshot-FIRST.json",
+  draft_sha256: crypto.createHash("sha256").update(canonical).digest("hex"),
+  draft_file_sha256: crypto.createHash("sha256").update(bytes).digest("hex"),
+  projection_sha256: crypto.createHash("sha256").update(
+    fs.readFileSync(prefix + "projected-view-FIRST.json")
+  ).digest("hex"),
+  question_count: view.length,
+  option_count: view.reduce((n, q) => n + q.view.options.length, 0),
+  disclosure: "Only id,source_numbers,view exposed to reviewer. Original bytes preserved without displaying author intent,key or derivations.",
+};
+fs.writeFileSync(prefix + "view-snapshot-hashes-FIRST.json", JSON.stringify(receipt, null, 2) + "\n", {
+  flag: "wx",
+});
+console.log(JSON.stringify(receipt, null, 2));

@@ -1,0 +1,61 @@
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const root = "/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck";
+const out = path.join(root, ".tmp/resume182-4-postaccount/n13-choice-review-recovery1");
+const prefix = ".tmp/resume182-4-postaccount";
+const hash = (value) => crypto.createHash("sha256").update(value).digest("hex");
+function canonical(value) {
+  if (Array.isArray(value)) return "[" + value.map(canonical).join(",") + "]";
+  if (value && typeof value === "object") {
+    return "{" + Object.keys(value).sort().map((key) =>
+      canonical(key) + ":" + canonical(value[key])).join(",") + "}";
+  }
+  return JSON.stringify(value).replace(/[\u007f-\uffff]/g,
+    (char) => "\\u" + char.charCodeAt(0).toString(16).padStart(4, "0"));
+}
+function read(relative) {
+  const bytes = fs.readFileSync(path.join(root, relative));
+  const value = JSON.parse(bytes);
+  return { value, path: relative, byte_sha256: hash(bytes), canonical_sha256: hash(canonical(value)) };
+}
+function save(name, value) {
+  fs.writeFileSync(path.join(out, name), JSON.stringify(value, null, 2) + "\n", { flag: "wx" });
+}
+const base = read(prefix + "/n13-choice-author-FIRST/affected181/draft.json");
+const final = read(prefix + "/n13-choice-author-183-compilation1/draft.json");
+const sourceFreeze = fs.readFileSync(path.join(out, "independent-source-solutions-recovery1.json"));
+if (hash(sourceFreeze) !== "5395a510611472b84a6eccab65262d089a94e48a667bc24d670427620b091881") {
+  throw new Error("Independent source freeze changed");
+}
+const project = (draft, source) => draft.questions
+  .filter((question) => question.source_numbers.includes(source))
+  .map((question) => ({ id: question.id, source_numbers: question.source_numbers, view: question.view }));
+const units181 = project(base.value, "181");
+const final181 = project(final.value, "181");
+const units183 = project(final.value, "183");
+if (units181.length !== 2 || units183.length !== 1) throw new Error("Affected scope differs");
+if (canonical(units181) !== canonical(final181)) throw new Error("Final 181 views changed");
+const questions = [...units181, ...units183];
+if (questions.reduce((sum, question) => sum + question.view.options.length, 0) !== 9) {
+  throw new Error("Affected option scope differs");
+}
+save("projected-affected-view-recovery1.json", {
+  phase: "view-only-before-key", author_key_or_intent_exposed: false,
+  seed_sha256: final.value.seed_sha256,
+  questions
+});
+save("view-snapshot-bindings-recovery1.json", {
+  phase: "view-projection-created-after-independent-source-and-actual-image-review",
+  author_internal_fields_disclosed: false,
+  snapshots: [base, final].map(({ value, ...binding }) => binding),
+  source_freeze_byte_sha256: hash(sourceFreeze),
+  projected_view_byte_sha256: hash(fs.readFileSync(path.join(out, "projected-affected-view-recovery1.json"))),
+  projected_view_canonical_sha256: hash(canonical(questions)),
+  scope: { sources: ["181", "183"], questions: 3, options: 9, unchanged_181_views: true }
+});
+console.log(JSON.stringify({
+  final_draft_sha256: final.canonical_sha256,
+  question_ids: questions.map((question) => question.id),
+  projection: path.join(out, "projected-affected-view-recovery1.json")
+}, null, 2));

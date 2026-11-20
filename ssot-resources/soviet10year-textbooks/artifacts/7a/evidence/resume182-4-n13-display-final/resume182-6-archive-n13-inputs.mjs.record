@@ -1,0 +1,42 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six/lemmadeck';
+const old = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), root);
+const relative = '.tmp/resume182-4-postaccount/n13-display-FIRST';
+const entries = [];
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+function copy(input) {
+  const source = path.join(old, input);
+  const target = path.join(root, input);
+  const bytes = fs.readFileSync(source);
+  if (fs.existsSync(target)) assert.equal(sha(fs.readFileSync(target)), sha(bytes));
+  else {
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.copyFileSync(source, target, fs.constants.COPYFILE_EXCL);
+  }
+  entries.push({ historical_path: source, path: target, sha256: sha(bytes), bytes: bytes.length });
+}
+for (const folder of fs.readdirSync(path.join(old, relative)).sort()) {
+  const parent = path.join(old, relative, folder);
+  if (!fs.lstatSync(parent).isDirectory() || !folder.startsWith('runtime-')) continue;
+  for (const name of fs.readdirSync(parent).sort()) {
+    if (!name.endsWith('.record') && name !== 'report-FIRST.json') continue;
+    if (fs.lstatSync(path.join(parent, name)).isFile()) copy(path.join(relative, folder, name));
+  }
+}
+for (const name of fs.readdirSync(path.join(old, relative)).sort()) {
+  if (name.endsWith('.record') || name === 'run.mjs') copy(path.join(relative, name));
+}
+const first = JSON.parse(fs.readFileSync('.tmp/resume182-4-postaccount/n13-display-observe-batch1/result.json'));
+for (const image of first.images) copy(path.relative(old, image.path));
+for (const name of ['resume182-4-n13-select-display.mjs', 'resume182-4-n13-bind-display.mjs']) {
+  copy(`.tmp/${name}`);
+}
+fs.writeFileSync('.tmp/resume182-6-n13/archive-inputs.record',
+  `${JSON.stringify({ entries, imageViews: 0, rerenders: 0, failuresNotReset: true }, null, 2)}\n`,
+  { flag: 'wx' });
+console.log(JSON.stringify({ copiedOrVerified: entries.length, imageViews: 0, rerenders: 0 }));

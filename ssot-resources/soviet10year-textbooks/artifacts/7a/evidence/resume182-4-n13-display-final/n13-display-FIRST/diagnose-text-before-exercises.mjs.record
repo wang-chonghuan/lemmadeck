@@ -1,0 +1,62 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), R);
+const root = '.tmp/resume182-4-postaccount/n13-display-FIRST';
+const runtime = `${root}/runtime-render-recovery1`;
+const htmlPath = `${runtime}/render/alg7-c1-s4-n13/text.html`;
+const code = fs.readFileSync(`${root}/run.mjs`, 'utf8');
+const start = code.indexOf('async function installDisplayTools(');
+const end = code.indexOf('async function pageSafety()', start);
+assert.ok(start > 0 && end > start);
+const hook = 'window.__n13Display = { bring, reset, snapshot,';
+const source = code.slice(start, end);
+assert.equal(source.split(hook).length, 2);
+const instrumented = source.replace(hook, `${hook}
+    debug: (ids) => ids.map(id => {
+      const target = targets[id];
+      const rect = rectFor(target);
+      const frame = frameFor(target.element);
+      return { id, key: target.key, rect, frame, zero: contained(target),
+        halfPixel: contained(target, 0.5), onePixel: contained(target, 1),
+        overflow: { left: frame.left - rect.left, right: rect.right - frame.right,
+          top: frame.top - rect.top, bottom: rect.bottom - frame.bottom },
+        tag: target.element.tagName, text: target.element.textContent };
+    }),
+`);
+const install = new Function(`return (${instrumented.trim()});`)();
+const { chromium } = createRequire(path.join(R, 'app/package.json'))('@playwright/test');
+const inventory = JSON.parse(fs.readFileSync(`${runtime}/1440-text-coverage.json`));
+const html = fs.readFileSync(htmlPath);
+const browser = await chromium.launch({ headless: true });
+let result;
+try {
+  const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
+  await page.route('**/*', route => route.abort());
+  await page.setContent(html.toString('utf8'));
+  await page.evaluate(() => document.fonts.ready);
+  const count = await page.locator('p.para').count();
+  const materials = [{ key: 'title', selector: 'h1', index: 0 },
+    ...Array.from({ length: count }, (_, index) => ({
+      key: `prose-${index}`, selector: 'p.para', index,
+    }))];
+  const dom = await page.evaluate(install, { materials, figureContracts: {} });
+  assert.equal(dom.targetCount, inventory.domTargets);
+  result = await page.evaluate(ids => window.__n13Display.debug(ids),
+    inventory.missingTargets.map(target => target.id));
+} finally {
+  await browser.close();
+}
+const record = {
+  status: 'NUMERIC_DIAGNOSIS_ONLY', html: htmlPath,
+  html_sha256: createHash('sha256').update(html).digest('hex'),
+  targets: result, browserLaunches: 1, screenshots: 0, imagesObserved: 0,
+  source_math_or_passed_checks_repeated: false, browserClosed: true,
+};
+fs.writeFileSync(`${root}/pixel-numeric-diagnosis1.record`,
+  `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(record, null, 2));

@@ -1,0 +1,30 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), repo);
+const root = '.tmp/resume182-4-postaccount/n13-choice-graphs-FIRST';
+const input = `${root}/choice-graph-pair-a.spec-FIRST.json`;
+const output = `${root}/choice-graph-pair-a.spec-label-repair1.json`;
+const bytes = fs.readFileSync(input);
+const document = JSON.parse(bytes);
+const label = document.objects.find(item => item.id === 'ii-intersection-2');
+assert.deepEqual(label.labelPlacement, {position: 'N', gap: 48});
+assert.equal(label.label, '1.372');
+label.labelPlacement = {position: 'E', gap: 32};
+const revised = Buffer.from(`${JSON.stringify(document, null, 2)}\n`);
+const sha = value => createHash('sha256').update(value).digest('hex');
+fs.writeFileSync(output, revised, {flag: 'wx'});
+fs.writeFileSync(`${root}/label-repair1.record`, `${JSON.stringify({
+  ticket: 'STEMROBIN-182', source: '183', asset: 'choice-graph-pair-a',
+  first_spec: {path: input, sha256: sha(bytes)},
+  revised_spec: {path: output, sha256: sha(revised)},
+  changed_field: 'objects[ii-intersection-2].labelPlacement',
+  before: {position: 'N', gap: 48}, after: {position: 'E', gap: 32},
+  geometry_assertions_text_and_other_objects_unchanged: true,
+  cause: 'FIRST renderer collision and parent actual preview show the 1.372 label crossing the reciprocal branch',
+  parent_diagnostic_image_views: 1, independent_review: false,
+  producer_FIRST_preserved: true, repair_count: 1, paid_calls: 0,
+}, null, 2)}\n`, {flag: 'wx'});
+console.log(output);

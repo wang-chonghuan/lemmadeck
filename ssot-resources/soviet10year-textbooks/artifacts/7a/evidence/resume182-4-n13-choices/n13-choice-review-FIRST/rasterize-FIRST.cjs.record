@@ -1,0 +1,26 @@
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const root = process.cwd();
+const { Resvg } = require(path.join(
+  root,
+  ".claude/skills/ld-s10y-lesson/node_modules/@resvg/resvg-js"
+));
+const asset = process.argv[2];
+const output = process.argv[3];
+const bytes = fs.readFileSync(path.resolve(root, asset));
+// Resolve CSS variable fallbacks in memory; never modify the actual asset.
+const svg = bytes.toString("utf8").replace(/var\(--[^,]+,\s*([^)]+)\)/g, "$1");
+const image = new Resvg(svg, {
+  fitTo: { mode: "width", value: 640 },
+  background: "white",
+}).render();
+fs.writeFileSync(path.resolve(root, output), image.asPng(), { flag: "wx" });
+console.log(JSON.stringify({
+  asset,
+  asset_sha256: crypto.createHash("sha256").update(bytes).digest("hex"),
+  preview: output,
+  width: image.width,
+  height: image.height,
+  preview_sha256: crypto.createHash("sha256").update(image.asPng()).digest("hex"),
+}, null, 2));

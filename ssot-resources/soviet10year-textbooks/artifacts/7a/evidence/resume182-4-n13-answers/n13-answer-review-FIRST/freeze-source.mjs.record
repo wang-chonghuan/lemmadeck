@@ -1,0 +1,93 @@
+import fs from 'node:fs';
+import crypto from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+const own = `${root}/.tmp/resume182-4-postaccount/n13-answer-review-FIRST`;
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const name = 'independent-source-solutions-FIRST';
+const bytes = fs.readFileSync(`${own}/${name}.json`);
+const data = JSON.parse(bytes);
+const parts = data.exercises.reduce((n, e) => n + e.independentParts.length, 0);
+const graphs = data.exercises.reduce((n, e) => n + (e.graphTasks?.length ?? 0), 0);
+const lines = [
+  '# Independent Source Solutions FIRST',
+  '',
+  'STEMROBIN-182 / alg7-c1-s4-n13 / modern-us-neutral.',
+  'Frozen before opening author answer keys, derivations, or compilation.',
+  `17 exercises; ${parts} judgeable fields; ${graphs} genuinely ungraded graph tasks.`,
+  'Source: current modern lesson/exercises, prepared template, original table PNG, actual declared modern SVG at 640px, and current FigureSpec.',
+  'No bookRaw is present in the prepared template. No old answer keys or ticket results read.',
+  'Exactly two image views, no crops, reopens, or other pages.',
+  '',
+  '## Contract',
+  ...Object.entries(data.contract).map(([k, v]) => `- ${k}: ${v}`),
+  '',
+  '## Independently Read Table',
+  ...data.figureObservations.data.map(d => `- ${d.modernName} (${d.sourceName}): ${d.massKg} kg.`),
+  '',
+  data.figureObservations.original,
+  data.figureObservations.modern,
+  data.figureObservations.spec,
+  ''
+];
+for (const e of data.exercises) {
+  lines.push(`## Exercise ${e.exercise}`, '', e.derivation, '');
+  for (const p of e.independentParts) {
+    lines.push(`- ${p.label}: ${p.value}${p.unit ? ` [${p.unit}]` : ''}${p.domain ? `; domain ${p.domain}` : ''}${p.sourceName ? ` (${p.sourceName})` : ''}.`);
+    for (const key of ['exactValue', 'decimalValue', 'standardDecimal', 'qualifier', 'rounding']) {
+      if (p[key]) lines.push(`  ${key}: ${p[key]}.`);
+    }
+  }
+  if (e.gradingConclusion) lines.push(e.gradingConclusion);
+  for (const g of e.graphTasks ?? []) {
+    lines.push(`- ${g.label} domain ${g.domain}; curves ${g.curves.join(' and ')}.`,
+      `  Construction: ${g.construction}`,
+      `  Intersections: ${g.intersections.join('; ')}.`,
+      `  Roots: ${g.roots.join('; ')}.`,
+      `  Cross-check: ${g.algebraCrossCheck}`);
+  }
+  lines.push('');
+}
+const md = Buffer.from(`${lines.join('\n')}\n`);
+fs.writeFileSync(`${own}/${name}.md`, md, { flag: 'wx' });
+const sourcePaths = [
+  '.claude/skills/ld-s10y-answer/SKILL.md',
+  '.claude/skills/ld-s10y-answer/references/gate-2-lesson-answers/gate.md',
+  '.claude/skills/ld-s10y-lesson/references/production-resume.md',
+  '.agents/skills/ld-s10y-image/SKILL.md',
+  'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c1-s4-n13/lesson.json',
+  'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c1-s4-n13/exercises.json',
+  'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c1-s4-n13/figures.json',
+  '.tmp/resume182-4-postaccount/n13-answer-work/7a/modern-us-neutral/lessons/alg7-c1-s4-n13/answer-keys.template.json',
+  'ssot-resources/soviet10year-textbooks/artifacts/7a/figures/tbl-p0064-01.png',
+  'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/figures/tbl-p0064-01.svg',
+  'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/figures/tbl-p0064-01.spec.json'
+];
+const template = JSON.parse(fs.readFileSync(`${root}/${sourcePaths[7]}`));
+const manifest = {
+  phase: 'source_only_freeze_before_author_open',
+  frozenAt: new Date().toISOString(),
+  independentJson: { path: `${own}/${name}.json`, sha256: sha(bytes) },
+  independentMarkdown: { path: `${own}/${name}.md`, sha256: sha(md) },
+  sources: sourcePaths.map(path => ({ path: `${root}/${path}`, sha256: sha(fs.readFileSync(`${root}/${path}`)) })),
+  preview: { path: `${own}/current-declared-svg-640.png`, sha256: sha(fs.readFileSync(`${own}/current-declared-svg-640.png`)) },
+  counts: {
+    sourceExercises: data.exercises.length,
+    judgeableFields: parts,
+    graphicalTasks: graphs,
+    perExercise: Object.fromEntries(data.exercises.map(e => [e.exercise, e.independentParts.length])),
+    templateBookRawEntries: template.answers.filter(e => Object.hasOwn(e, 'bookRaw')).length,
+    imageViews: 2,
+    shellCommandsThroughFreeze: 22,
+    paidCalls: 0,
+    cost: 'unknown'
+  },
+  authorCandidateRead: false,
+  authorDerivationsRead: false,
+  oldAnswerKeysRead: false
+};
+fs.writeFileSync(`${own}/source-freeze-manifest-FIRST.json`, `${JSON.stringify(manifest, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({
+  ...manifest,
+  manifestSha256: sha(fs.readFileSync(`${own}/source-freeze-manifest-FIRST.json`))
+}, null, 2));

@@ -1,0 +1,135 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+assert.equal(process.cwd(), R);
+const W = '.tmp/resume182-4-postaccount';
+const originalRoot = `${W}/n13-choice-retention-staging1`;
+const recovery = `${W}/n13-choice-identity-recovery1`;
+const staging = `${recovery}/staging`;
+const target = 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c1-s4-n13/choice-set';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const read = file => JSON.parse(fs.readFileSync(file));
+const bytes = value => Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
+const ordered = value => Array.isArray(value) ? value.map(ordered)
+  : value && typeof value === 'object'
+    ? Object.fromEntries(Object.keys(value).sort().map(key => [key, ordered(value[key])]))
+    : value;
+const digest = value => sha(JSON.stringify(ordered(value)).replace(/[\u007f-\uffff]/g,
+  character => '\\u' + character.charCodeAt(0).toString(16).padStart(4, '0')));
+const original = read(`${originalRoot}/draft.json`);
+const approvedReview = read(`${originalRoot}/review.json`);
+assert.equal(approvedReview.outcome, 'pass');
+assert.equal(approvedReview.draft_sha256, digest(original));
+const firstRender = read(`${W}/n13-display-FIRST/runtime-FIRST/renderer-receipt.record`);
+assert.equal(firstRender.exitCode, 1);
+assert.match(firstRender.stderr, /选择题图片显示规范无效 choice-graph-pair-a/);
+assert.ok(!fs.existsSync(recovery));
+const mapping = new Map();
+const plans = [];
+for (const asset of original.new_figures) {
+  const oldRoot = `${target}/figures/${asset.id}`;
+  const specBytes = fs.readFileSync(`${oldRoot}.spec.json`);
+  const spec = JSON.parse(specBytes);
+  assert.equal(spec.id, `fig-${asset.id}`);
+  mapping.set(asset.id, spec.id);
+  const newRoot = `${target}/figures/${spec.id}`;
+  const svgBytes = fs.readFileSync(`${oldRoot}.svg`);
+  assert.equal(sha(svgBytes), asset.sha256);
+  const oldRenderBytes = fs.readFileSync(`${oldRoot}.render.json`);
+  const oldReviewBytes = fs.readFileSync(`${oldRoot}.review.json`);
+  const render = JSON.parse(oldRenderBytes);
+  const review = JSON.parse(oldReviewBytes);
+  assert.equal(render.spec.sha256, sha(specBytes));
+  assert.equal(render.output.svg.sha256, sha(svgBytes));
+  assert.equal(review.status, 'pass');
+  assert.equal(review.render.sha256, sha(oldRenderBytes));
+  assert.equal(review.outputs.svg.sha256, sha(svgBytes));
+  render.spec.path = `${newRoot}.spec.json`;
+  render.output.svg.path = `${newRoot}.svg`;
+  const renderBytes = bytes(render);
+  review.spec.path = `${newRoot}.spec.json`;
+  review.render.path = `${newRoot}.render.json`;
+  review.render.sha256 = sha(renderBytes);
+  review.outputs.svg.path = `${newRoot}.svg`;
+  plans.push({ oldRoot, newRoot, specBytes, svgBytes, oldRenderBytes, oldReviewBytes,
+    renderBytes, reviewBytes: bytes(review) });
+  for (const suffix of ['.svg', '.spec.json', '.render.json', '.review.json']) {
+    assert.ok(!fs.existsSync(`${newRoot}${suffix}`));
+  }
+}
+const draft = structuredClone(original);
+const review = structuredClone(approvedReview);
+const id = value => mapping.get(value) ?? value;
+for (const asset of draft.new_figures) {
+  asset.id = id(asset.id);
+  asset.path = `${target}/figures/${asset.id}.svg`;
+}
+for (const question of draft.questions) {
+  question.view.figure_ids = question.view.figure_ids.map(id);
+  for (const option of question.view.options) option.figure_ids = option.figure_ids.map(id);
+  for (const observation of question.intent.figure_observations) {
+    observation.figure_id = id(observation.figure_id);
+  }
+}
+for (const check of review.figure_checks) {
+  if (!mapping.has(check.figure_id)) continue;
+  check.figure_id = id(check.figure_id);
+  check.asset_path = `${target}/figures/${check.figure_id}.svg`;
+}
+for (const check of review.new_figure_reviews) check.figure_id = id(check.figure_id);
+review.draft_sha256 = digest(draft);
+assert.deepEqual(draft.coverage, original.coverage);
+assert.deepEqual(review.source_reviews, approvedReview.source_reviews);
+assert.deepEqual(review.question_reviews, approvedReview.question_reviews);
+for (const [index, question] of draft.questions.entries()) {
+  const before = original.questions[index];
+  assert.deepEqual(question.key, before.key);
+  assert.equal(question.view.stem, before.view.stem);
+  assert.deepEqual(question.view.options.map(option => ({ id: option.id, text: option.text })),
+    before.view.options.map(option => ({ id: option.id, text: option.text })));
+}
+for (const file of ['seed.json', 'draft.json', 'review.json']) {
+  assert.deepEqual(fs.readFileSync(`${target}/${file}`), fs.readFileSync(`${originalRoot}/${file}`));
+}
+fs.mkdirSync(`${recovery}/history`, { recursive: true });
+fs.mkdirSync(staging);
+for (const file of ['seed.json', 'draft.json', 'review.json']) {
+  fs.renameSync(`${target}/${file}`, `${recovery}/history/${file}`);
+}
+for (const plan of plans) {
+  fs.renameSync(`${plan.oldRoot}.svg`, `${plan.newRoot}.svg`);
+  fs.renameSync(`${plan.oldRoot}.spec.json`, `${plan.newRoot}.spec.json`);
+  for (const slot of ['render', 'review']) {
+    fs.renameSync(`${plan.oldRoot}.${slot}.json`,
+      `${recovery}/history/${path.basename(plan.oldRoot)}.${slot}.json`);
+    fs.writeFileSync(`${plan.newRoot}.${slot}.json`, plan[`${slot}Bytes`], { flag: 'wx' });
+  }
+}
+fs.writeFileSync(`${staging}/seed.json`, fs.readFileSync(`${originalRoot}/seed.json`), { flag: 'wx' });
+fs.writeFileSync(`${staging}/draft.json`, bytes(draft), { flag: 'wx' });
+fs.writeFileSync(`${staging}/review.json`, bytes(review), { flag: 'wx' });
+const record = {
+  schema: 'stemrobin-182/n13-figure-identity-recovery@1',
+  ticket: 'STEMROBIN-182', date: '2026-11-19',
+  reason: firstRender.stderr.trim(), mapping: Object.fromEntries(mapping),
+  original: { path: originalRoot, draft_sha256: digest(original),
+    review_byte_sha256: sha(fs.readFileSync(`${originalRoot}/review.json`)) },
+  recovered: { path: staging, draft_sha256: digest(draft), review_byte_sha256: sha(bytes(review)) },
+  semantic_review_provenance_unchanged: true,
+  metadata_rebinder: 'parent; mechanical identity/path substitution, no new semantic verdict',
+  svg_and_spec_byte_identical: true, questions_keys_coverage_math_unchanged: true,
+  source_reviews_question_reviews_unchanged: true, source_or_image_reviews_repeated: false,
+  renderer_calls: 0, validator_calls: 0, images_observed: 0,
+  artifacts: plans.map(plan => ({
+    from: plan.oldRoot, to: plan.newRoot, svg_sha256: sha(plan.svgBytes),
+    spec_sha256: sha(plan.specBytes), render_sha256: sha(plan.renderBytes),
+    review_sha256: sha(plan.reviewBytes),
+  })),
+  prior_root_preserved: `${recovery}/history`,
+};
+fs.writeFileSync(`${recovery}/binding.record`, bytes(record), { flag: 'wx' });
+console.log(JSON.stringify({ status: 'IDENTITY_REBOUND_PENDING_AFFECTED_VALIDATION', staging,
+  mapping: record.mapping, images: 0, rerenders: 0 }, null, 2));

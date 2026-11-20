@@ -1,0 +1,353 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const crypto = require('node:crypto');
+const { spawnSync } = require('node:child_process');
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck';
+const root = path.join(repo, '.tmp/resume182-4-postaccount/n13-choice-graphs-FIRST');
+const requestPath = path.join(repo, '.tmp/resume182-4-postaccount/n13-choice-author-FIRST/figure-request-183-FIRST.json');
+const seedPath = path.join(repo, '.tmp/resume182-4-postaccount/n13-choice-seed-FIRST/seed.json');
+const skill = path.join(repo, '.agents/skills/ld-s10y-image');
+const request = JSON.parse(fs.readFileSync(requestPath, 'utf8'));
+const source = JSON.parse(fs.readFileSync(seedPath, 'utf8')).exercises.find(item => item.number === '183');
+const scale = 640 / 15;
+const step = 1 / 64;
+const maxErrorPx = 1.5 * step ** 2 / 0.75 ** 3 * scale;
+
+function hash(file) {
+  return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+}
+
+function write(name, value, json = true) {
+  const target = path.join(root, name);
+  if (!target.startsWith(root + path.sep)) throw new Error('Output escapes ownership');
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, json ? JSON.stringify(value, null, 2) + '\n' : value, { flag: 'wx' });
+  return target;
+}
+
+function text(id, at, value, size = 16, placement = { position: 'CENTER' }) {
+  return { id, type: 'text', at, text: value, fontSize: size, fontWeight: 500, labelPlacement: placement, labelColor: 'ink' };
+}
+
+function specFor(candidate) {
+  const id = 'fig-' + candidate.figure_id;
+  const objects = [];
+  const assertions = [];
+  const inventory = [];
+  const panelEvidence = [];
+  for (const [index, panel] of candidate.panels.entries()) {
+    const p = panel.panel.toLowerCase();
+    const offset = -20 * index;
+    const at = ([x, y]) => [x, y + offset];
+    const window = [-6, 8 + offset, 6, -8 + offset];
+    const frame = p + '-window';
+    const grid = p + '-grid';
+    objects.push({ id: grid, type: 'grid', bounds: window, xStep: 1, yStep: 1, stroke: 'grid', strokeWidth: 1 });
+    objects.push({ id: frame, type: 'polygon', points: [[-6, -8], [6, -8], [6, 8], [-6, 8]].map(at), stroke: 'muted', strokeWidth: 1, fillOpacity: 0 });
+    objects.push({
+      id: p + '-x-axis', type: 'axis', from: at([-6, 0]), to: at([6, 0]),
+      stroke: 'ink', strokeWidth: 1.5, tickSize: 0.1,
+      ticks: Array.from({ length: 13 }, (_, n) => ({ at: at([n - 6, 0]) })),
+    });
+    objects.push({
+      id: p + '-y-axis', type: 'axis', from: at([0, -8]), to: at([0, 8]),
+      stroke: 'ink', strokeWidth: 1.5, tickSize: 0.1,
+      ticks: Array.from({ length: 17 }, (_, n) => ({ at: at([0, n - 8]) })),
+    });
+    objects.push(text(p + '-panel', at([-6, 9.2]), panel.panel, 22));
+    objects.push(text(p + '-x', at([6.65, 0]), 'x', 18));
+    objects.push(text(p + '-y', at([0, 8.65]), 'y', 18));
+    const frameObjectIds = [grid, frame, p + '-x-axis', p + '-y-axis', p + '-panel', p + '-x', p + '-y'];
+    for (let x = -6; x <= 6; x++) {
+      const tickId = p + '-x-tick-' + (x + 6);
+      objects.push(text(tickId, at([x, -8.6]), String(x)));
+      frameObjectIds.push(tickId);
+    }
+    for (let y = -8; y <= 8; y++) {
+      const tickId = p + '-y-tick-' + (y + 8);
+      objects.push(text(tickId, at([-6.65, y]), String(y)));
+      frameObjectIds.push(tickId);
+    }
+    const frameAssertions = [
+      { id: p + '-grid-dimensions', type: 'gridDimensions', grid, columns: 12, rows: 16 },
+      { id: p + '-axes-perpendicular', type: 'perpendicular', a: at([-6, 0]), b: at([6, 0]), c: at([0, -8]), d: at([0, 8]) },
+      { id: p + '-x-span', type: 'displacement', from: at([-6, 0]), to: at([6, 0]), dx: 12, dy: 0 },
+      { id: p + '-y-span', type: 'displacement', from: at([0, -8]), to: at([0, 8]), dx: 0, dy: 16 },
+    ];
+    assertions.push(...frameAssertions);
+    inventory.push({
+      id: p + '-authored-window',
+      description: 'Modern authored frame, not source pixels: local x [-6,6], y [-8,8]; unit grid/ticks, English axes, and panel ' + panel.panel + '. Numeric grid labels sit outside the frame to avoid obscuring intersections.',
+      objects: frameObjectIds, assertions: frameAssertions.map(a => a.id), requires: ['gridDimensions'],
+    });
+
+    const shift = candidate.figure_id.endsWith('-c') ? (index === 0 ? 1 : -3) : (index === 0 ? -1 : 3);
+    const isReciprocal = !candidate.figure_id.endsWith('-b');
+    const roots = isReciprocal
+      ? [(-shift - Math.sqrt(shift * shift + 24)) / 2, (-shift + Math.sqrt(shift * shift + 24)) / 2]
+      : [shift / 5];
+    const coordinates = roots.map(x => [x, isReciprocal ? 6 / x : 6 * x]);
+    const lineEndpoints = panel.line_window_endpoints;
+    const lineId = p + '-shifted-line';
+    objects.push({ id: lineId, type: 'segment', from: at(lineEndpoints[0]), to: at(lineEndpoints[1]), stroke: 'ink', strokeWidth: 3, dash: 2 });
+    const lineAssertions = [{
+      id: p + '-line-window-displacement', type: 'displacement', from: at(lineEndpoints[0]), to: at(lineEndpoints[1]),
+      dx: lineEndpoints[1][0] - lineEndpoints[0][0], dy: lineEndpoints[1][0] - lineEndpoints[0][0],
+    }];
+    assertions.push(...lineAssertions);
+    inventory.push({
+      id: p + '-authored-shifted-line', description: 'Declared actual line ' + panel.curves[1] + ', clipped algebraically to the local plotting window; crop ends have no domain endpoint markers.',
+      objects: [lineId], assertions: lineAssertions.map(a => a.id),
+    });
+
+    const familyIds = [];
+    const familyAssertions = [];
+    const branchEvidence = [];
+    const branchSegments = [];
+    if (isReciprocal) {
+      for (const [branch, start, end] of [['negative', -6, -0.75], ['positive', 0.75, 6]]) {
+        // Existing segment objects approximate the equation; all roots are exact knots.
+        const knots = Array.from({ length: 337 }, (_, n) => start + n * step);
+        knots.push(...roots.filter(x => x >= start && x <= end));
+        knots.sort((a, b) => a - b);
+        const xs = knots.filter((x, n) => n === 0 || x !== knots[n - 1]);
+        const segments = [];
+        for (let n = 0; n < xs.length - 1; n++) {
+          const a = xs[n], b = xs[n + 1];
+          const segmentId = `${p}-reciprocal-${branch}-${n}`;
+          const from = at([a, 6 / a]), to = at([b, 6 / b]);
+          objects.push({ id: segmentId, type: 'segment', from, to, stroke: 'accent', strokeWidth: 3 });
+          familyIds.push(segmentId);
+          const relation = {
+            id: segmentId + '-secant-displacement', type: 'displacement', from, to,
+            dx: b - a, dy: -6 * (b - a) / (a * b), tolerance: 1e-8,
+          };
+          assertions.push(relation);
+          familyAssertions.push(relation.id);
+          segments.push({ id: segmentId, from: [a, 6 / a], to: [b, 6 / b] });
+        }
+        branchSegments.push(...segments);
+        branchEvidence.push({
+          branch, visibleX: [start, end], localEndpoints: [[start, 6 / start], [end, 6 / end]],
+          segmentCount: segments.length, maxXStep: step, errorBoundPxAt640: maxErrorPx,
+          endpointMarkers: false, mathematicalDomain: 'x != 0',
+          unsupported: 'No exact function-curve primitive or pointOnFunction assertion in the current contract. This is an equation-derived secant approximation, not an exact analytic renderer.',
+        });
+      }
+    } else {
+      const curveId = p + '-replacement-linear';
+      const ends = request.candidates.find(c => c.figure_id.endsWith('-b')).replacement_curve_window_endpoints;
+      objects.push({ id: curveId, type: 'segment', from: at(ends[0]), to: at(ends[1]), stroke: 'accent', strokeWidth: 3 });
+      familyIds.push(curveId);
+      const relation = {
+        id: curveId + '-displacement', type: 'displacement', from: at(ends[0]), to: at(ends[1]),
+        dx: 8 / 3, dy: 16,
+      };
+      assertions.push(relation);
+      familyAssertions.push(relation.id);
+      branchSegments.push({ id: curveId, from: ends[0], to: ends[1] });
+      branchEvidence.push({ actualEquation: 'y=6x', localEndpoints: ends, segmentCount: 1, endpointMarkers: false });
+    }
+    inventory.push({
+      id: p + '-authored-first-curve',
+      description: isReciprocal
+        ? 'Declared y=6/x drawn with independent negative/positive equation-derived segment chains, clipped to [-6,-0.75] and [0.75,6]. Displacement assertions check secants only, not analytic function membership or root completeness.'
+        : 'Deliberate replacement y=6x, clipped exactly to y [-8,8]. This is authored alternative geometry, not a source fact.',
+      objects: familyIds, assertions: familyAssertions,
+    });
+    const pointIds = [];
+    const pointAssertions = [];
+    const pointEvidence = [];
+    coordinates.forEach(([x, y], n) => {
+      const pointId = p + '-intersection-' + (n + 1);
+      const expectedLabel = panel.intersection_x_labels[n];
+      const derivedLabel = Number.isInteger(x) ? String(x) : x.toFixed(3);
+      if (expectedLabel !== derivedLabel) throw new Error('Declared label differs from independently derived root');
+      const placement = !isReciprocal || (candidate.figure_id.endsWith('-c') && index === 1 && n === 0)
+        ? { position: 'W', gap: 32 } : { position: 'N', gap: 48 };
+      objects.push({
+        id: pointId, type: 'point', at: at([x, y]), label: expectedLabel,
+        size: 4, strokeWidth: 2, stroke: 'ink', fill: 'paper',
+        fontSize: 17, fontWeight: 600, labelColor: 'ink', labelPlacement: placement,
+      });
+      pointIds.push(pointId);
+      const segment = branchSegments.find(s => s.from[0] <= x && s.to[0] >= x);
+      if (!segment) throw new Error('Missing curve segment containing derived intersection');
+      const relations = [
+        { id: pointId + '-on-declared-line', type: 'pointOnLine', point: pointId, a: at(lineEndpoints[0]), b: at(lineEndpoints[1]), tolerance: 1e-8 },
+        { id: pointId + '-on-rendered-segment', type: 'pointOnLine', point: pointId, a: at(segment.from), b: at(segment.to), tolerance: 1e-8 },
+        { id: pointId + '-inside-window', type: 'inside', point: pointId, container: frame },
+      ];
+      assertions.push(...relations);
+      pointAssertions.push(...relations.map(a => a.id));
+      pointEvidence.push({
+        objectId: pointId, localCoordinates: [x, y], displayedX: expectedLabel,
+        actualCurves: panel.curves,
+        exactCoordinatesFromRequest: panel.intersections_exact[n],
+        independentDerivation: isReciprocal
+          ? `x solves x^2 + (${shift})x - 6 = 0; y = 6/x = x + (${shift}).`
+          : `6x = x + (${shift}); x = (${shift})/5; y = 6x.`,
+        reciprocalMembershipResidual: isReciprocal ? x * y - 6 : null,
+        lineMembershipResidual: y - x - shift,
+        validationLimit: isReciprocal
+          ? 'pointOnLine proves membership in the actual rendered chord at an exact root knot and in the shifted line, not pointOnFunction or completeness of intersections.'
+          : 'Two supported pointOnLine assertions prove membership in both declared straight lines. Unequal slopes 6 and 1 imply one intersection algebraically; no completeness assertion type exists.',
+      });
+    });
+    inventory.push({
+      id: p + '-authored-intersections',
+      description: 'All independently derived intersections of the declared actual curves. Labels give x only, using exact integers or three decimals. Root completeness and nonlinear membership are algebraic source basis, not unsupported executable assertions.',
+      objects: pointIds, assertions: pointAssertions,
+    });
+    panelEvidence.push({
+      panel: panel.panel, localWindow: [-6, 8, 6, -8], boardYOffset: offset,
+      actualCurves: panel.curves, visibleEquationLabels: false, curveRoles: ['accent', 'ink'],
+      shiftedLineEndpoints: lineEndpoints, intersections: pointEvidence, branches: branchEvidence,
+    });
+  }
+  const spec = {
+    schema: 'ld-s10y-image/figure-spec@2', id, mode: 'deterministic',
+    description: 'Source 183 whole-pair graph recognition: two stacked common-scale panels with all actual intersections of their declared authored curves, including deliberate alternatives.',
+    source: {
+      authoritativeText: [{ exercise: '183', text: source.text }],
+      authoredBasis: [
+        'New written-mathematics choice diagram, not a recovered scan. Asset ID: ' + candidate.figure_id + '.',
+        candidate.basis, candidate.mathematical_derivation,
+        'Declared actual panel geometry: ' + JSON.stringify(candidate.panels),
+        'Equation labels are uniformly omitted as a task-fidelity design: the stem supplies target equations, so learners must inspect graphs rather than match printed alternative formulas. This does not change source data or seek new human approval.',
+        'Separate reciprocal branches; x=0 is excluded mathematically. Algebraic window clipping is not a domain endpoint declaration. Segment approximation max error at 640 px: ' + maxErrorPx + ' px.',
+        'Current executable contract has no pointOnFunction/intersection/root-completeness assertion or analytic function object. Supported displacement/pointOnLine assertions must not be described as proving these unsupported constraints.',
+      ].join('\n'),
+      inventory,
+    },
+    canvas: { width: 640, height: 1664, boundingBox: [-7.5, 10, 7.5, -29], background: 'paper', keepAspectRatio: true },
+    display: { layout: 'scroll', purpose: 'instructional', minTextPx: 16, widths: [640] },
+    objects, assertions, layout: { minLabelGap: 3 },
+  };
+  return { spec, evidence: { assetId: candidate.figure_id, figureSpecId: id, deliberateDifferences: candidate.deliberate_differences, panels: panelEvidence } };
+}
+
+function plan() {
+  if (!source || source.figure_ids.length) throw new Error('Expected source 183 written mathematics with no original figure');
+  if (request.candidates.length !== 3) throw new Error('Unexpected asset count');
+  const evidence = request.candidates.map(candidate => {
+    const authored = specFor(candidate);
+    write(candidate.figure_id + '.spec-FIRST.json', authored.spec);
+    return authored.evidence;
+  });
+  write('mathematical-source-basis-FIRST.json', {
+    ticket: 'STEMROBIN-182', sourceNumber: '183',
+    inputs: {
+      request: { path: requestPath, sha256: hash(requestPath) },
+      preparedSeed: { path: seedPath, sha256: hash(seedPath), requestDeclaredSeedSha256: request.seed_sha256, requestHashMatchesCurrentFile: hash(seedPath) === request.seed_sha256 },
+      requestDeclaredSourceFirstRecordSha256: request.source_first_record_sha256,
+      sourceRecord: source,
+    },
+    authority: {
+      requestLatestHumanClarification: 'Parent technical authority, not new human approval. Existing broad ticket authorizes ordinary offline figure work.',
+      latestDesignInstruction: 'Uniformly omit every curve-equation label. Retain common axes/ticks/panels and intersection x labels, with consistent accent first-curve and ink shifted-line styling.',
+      originalPng: null, fabricatedSourceImageOrPixelInventory: false, answerKeysUsed: false,
+    },
+    math: {
+      reciprocalVisibleDomains: [[-6, -0.75], [0.75, 6]],
+      sourceDomain: 'x != 0', xWindow: [-6, 6], yWindow: [-8, 8],
+      interpolation: { primitive: 'existing JSXGraph segment', maximumXStep: step, maximumErrorPxAt640: maxErrorPx, proof: '|second derivative of f(x)| <= 12/(0.75^3); secant error <= max|second derivative| h^2/8; scale=640/15 px per coordinate unit. Every root is an exact segment knot.' },
+    },
+    contractHolds: [
+      'NONLINEAR-CONTRACT: exact function-curve rendering, executable pointOnFunction, and intersection-completeness assertions are unsupported. a/c are bounded secant approximations, not exact analytic curves. No new object/assertion type, engine, SVG path drawing, or dependency was introduced.',
+      'ID-MAPPING: requested stable asset IDs choice-graph-pair-a/b/c map to required FigureSpec IDs fig-choice-graph-pair-a/b/c. Exact unprefixed spec IDs would fail current authoredBasis validation.',
+      'INPUT-HASH: request seed_sha256 differs from the current prepared seed file. Both are preserved; source 183 is read from the current seed and matches the written task. The request-declared source-first record hash is unverified because no authorized raw record path is supplied.',
+      'REVIEW: no independent image review or promotion is performed by this author.',
+    ],
+    assets: evidence,
+  });
+  write('usage-start-FIRST.json', { plannedAssets: 3, plannedPanels: 6, plannedImageContextLoads: 3, imageContextLoads: 0, renderAttempts: 0, paidCalls: 0, otherChatMessages: 0, independentReviewAttempts: 0, promotion: false });
+  console.log('Planned 3 specs and mathematical source basis in ' + root);
+}
+
+function execute(assetId) {
+  if (!request.candidates.some(c => c.figure_id === assetId)) throw new Error('Unknown asset');
+  const spec = path.join(root, assetId + '.spec-FIRST.json');
+  const validateArgs = [path.join(skill, 'scripts/validate_spec.py'), spec, '--stage', 'draft', '--json'];
+  const started = new Date().toISOString();
+  const validated = spawnSync('python3', validateArgs, { cwd: repo, encoding: 'utf8' });
+  write(assetId + '.validation.stdout-FIRST.txt', validated.stdout || '', false);
+  write(assetId + '.validation.stderr-FIRST.txt', validated.stderr || '', false);
+  write(assetId + '.validation.receipt-FIRST.json', { started, completed: new Date().toISOString(), command: ['python3', ...validateArgs], exitCode: validated.status, error: validated.error?.message || null });
+  if (validated.status !== 0) {
+    console.log(assetId + ': genuine validation failed; render not attempted');
+    return;
+  }
+  const svg = path.join(root, assetId + '-FIRST.svg');
+  const preview = path.join(root, assetId + '.preview-640-FIRST.png');
+  const report = path.join(root, assetId + '.render-FIRST.json');
+  for (const target of [svg, preview, report]) if (fs.existsSync(target)) throw new Error('Refusing to overwrite existing rendered output: ' + target);
+  const renderArgs = [path.join(skill, 'scripts/render_spec.mjs'), '--spec', spec, '--svg', svg, '--png', preview, '--report', report];
+  const renderStarted = new Date().toISOString();
+  const rendered = spawnSync(process.execPath, renderArgs, { cwd: repo, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 });
+  write(assetId + '.render.stdout-FIRST.txt', rendered.stdout || '', false);
+  write(assetId + '.render.stderr-FIRST.txt', rendered.stderr || '', false);
+  write(assetId + '.render.receipt-FIRST.json', { started: renderStarted, completed: new Date().toISOString(), command: [process.execPath, ...renderArgs], exitCode: rendered.status, error: rendered.error?.message || null, rendererPerformsOwnDraftValidation: true });
+  console.log(assetId + ': render exit ' + rendered.status + '; outputs preserved');
+}
+
+function finalize() {
+  const observationsPath = path.join(root, 'preview-observations-FIRST.json');
+  const observations = JSON.parse(fs.readFileSync(observationsPath, 'utf8'));
+  const assets = request.candidates.map(candidate => {
+    const assetId = candidate.figure_id;
+    const names = ['.spec-FIRST.json', '-FIRST.svg', '.render-FIRST.json', '.preview-640-FIRST.png', '.validation.stdout-FIRST.txt', '.validation.stderr-FIRST.txt', '.validation.receipt-FIRST.json', '.render.stdout-FIRST.txt', '.render.stderr-FIRST.txt', '.render.receipt-FIRST.json'];
+    const files = names.map(suffix => path.join(root, assetId + suffix)).filter(file => fs.existsSync(file)).map(file => ({ path: file, sha256: hash(file), bytes: fs.statSync(file).size }));
+    const reportPath = path.join(root, assetId + '.render-FIRST.json');
+    const report = fs.existsSync(reportPath) ? JSON.parse(fs.readFileSync(reportPath, 'utf8')) : null;
+    return { assetId, figureSpecId: 'fig-' + assetId, files, rendererStatus: report?.status || 'not_rendered', objectCount: report?.objects || null, labelCount: report?.labels || null, collisions: report?.collisions || null, displayChecks: report?.displayChecks || null, authorObservation: observations.assets.find(item => item.assetId === assetId) };
+  });
+  const receiptFiles = fs.readdirSync(root).filter(name => name.endsWith('.render.receipt-FIRST.json'));
+  const renders = receiptFiles.map(name => JSON.parse(fs.readFileSync(path.join(root, name), 'utf8')));
+  const usagePath = write('usage-FIRST.json', {
+    ticket: 'STEMROBIN-182', specAssetsAuthored: 3, panelsAuthored: 6,
+    explicitDraftValidationCalls: 3, rendererInternalValidationCalls: renders.length,
+    renderAttempts: renders.length, renderExitCodes: renders.map(item => item.exitCode),
+    rendererFailures: renders.filter(item => item.exitCode !== 0).length,
+    renderedAssets: assets.filter(item => item.files.some(file => file.path.endsWith('.svg'))).length,
+    previewFilesGenerated: assets.filter(item => item.files.some(file => file.path.endsWith('.png'))).length,
+    imageContextLoads: observations.imageContextLoads, previewLoadsPerAsset: observations.assets.map(item => ({ assetId: item.assetId, count: item.contextLoads })),
+    contentRevisionAttempts: 0, targetedRepairAttempts: 0,
+    imageGenerationAttempts: 0, paidCalls: 0, otherChatMessages: 0,
+    independentReviewAttempts: 0, promotion: false, countersReset: false,
+  });
+  const basisPath = path.join(root, 'mathematical-source-basis-FIRST.json');
+  const result = {
+    ticket: 'STEMROBIN-182', sourceNumber: '183', ownedRoot: root,
+    status: 'HOLD_CONTRACT_AND_INDEPENDENT_REVIEW',
+    rendererStatusesAreNotIndependentReviewPasses: true,
+    reviewCreated: false, promoted: false,
+    mathematicalSourceBasis: { path: basisPath, sha256: hash(basisPath) },
+    usage: { path: usagePath, sha256: hash(usagePath) },
+    previewObservations: { path: observationsPath, sha256: hash(observationsPath) },
+    contractHolds: JSON.parse(fs.readFileSync(basisPath, 'utf8')).contractHolds,
+    assets,
+  };
+  const resultPath = write('result-FIRST.json', result);
+  const manifest = fs.readdirSync(root).sort().filter(name => name !== 'SHA256SUMS-FIRST.txt' && name !== 'result-FIRST.txt').map(name => {
+    const file = path.join(root, name);
+    return hash(file) + '  ' + file;
+  }).join('\n') + '\n';
+  const manifestPath = write('SHA256SUMS-FIRST.txt', manifest, false);
+  write('result-FIRST.txt', [
+    'HOLD_CONTRACT_AND_INDEPENDENT_REVIEW',
+    'Root: ' + root,
+    'Result: ' + resultPath + ' sha256=' + hash(resultPath),
+    'Manifest: ' + manifestPath + ' sha256=' + hash(manifestPath),
+    'Usage: ' + usagePath + ' sha256=' + hash(usagePath),
+    '3 authored assets / 6 panels; 3 render attempts; 3 actual preview context loads (once each); zero paid calls, new engines/deps, other chats, independent PASS reviews or promotion.',
+    ...result.contractHolds,
+  ].join('\n') + '\n', false);
+  console.log('Result: ' + resultPath + '\nSHA256: ' + hash(resultPath) + '\nManifest: ' + manifestPath + '\nSHA256: ' + hash(manifestPath));
+}
+
+if (process.argv[2] === 'plan') plan();
+else if (process.argv[2] === 'execute') execute(process.argv[3]);
+else if (process.argv[2] === 'finalize') finalize();
+else throw new Error('Expected plan, execute <asset-id>, or finalize');

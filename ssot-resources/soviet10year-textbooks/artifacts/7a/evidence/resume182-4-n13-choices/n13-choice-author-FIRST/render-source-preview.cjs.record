@@ -1,0 +1,27 @@
+const fs = require('node:fs');
+const crypto = require('node:crypto');
+const path = require('node:path');
+const { Resvg } = require(require.resolve('@resvg/resvg-js', {
+  paths: [path.join(process.cwd(), '.claude/skills/ld-s10y-lesson')],
+}));
+
+const source = 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/figures/tbl-p0064-01.svg';
+const output = '.tmp/resume182-4-postaccount/n13-choice-author-FIRST/table-full-640.png';
+const bytes = fs.readFileSync(source);
+const renderer = new Resvg(bytes, {
+  fitTo: { mode: 'width', value: 640 },
+  font: { loadSystemFonts: true },
+});
+const image = renderer.render();
+const png = image.asPng();
+fs.writeFileSync(output, png, { flag: 'wx' });
+console.log(JSON.stringify({
+  source,
+  source_sha256: crypto.createHash('sha256').update(bytes).digest('hex'),
+  output,
+  output_sha256: crypto.createHash('sha256').update(png).digest('hex'),
+  width: image.width,
+  height: image.height,
+  preparation_only: true,
+  new_figure_creation: false,
+}));

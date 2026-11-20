@@ -1,0 +1,174 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-resume/lemmadeck'
+assert.equal(process.cwd(), root)
+const own = path.join(root, '.tmp/resume182-4-postaccount/n13-table-review-FIRST')
+const first = path.join(root, '.tmp/resume182-4-postaccount/n13-table-FIRST')
+const affected = path.join(root, '.tmp/resume182-4-postaccount/n13-table-text-binding-affected1')
+const paths = {
+  sourceInventory: path.join(own, 'source-inventory-FIRST.json'),
+  observations: path.join(own, 'observations-FIRST.md'),
+  firstSpec: path.join(first, 'spec-FIRST.json'),
+  firstRender: path.join(first, 'tbl-p0064-01-render-FIRST.json'),
+  firstPreview: path.join(first, 'tbl-p0064-01-preview-FIRST.png'),
+  currentText: path.join(root, '.tmp/resume182-4-postaccount/n13-adapt/adapt/7a/modern-us-neutral/lessons/alg7-c1-s4-n13/exercises.template.json'),
+  affectedSpec: path.join(affected, 'spec.json'),
+  affectedRender: path.join(affected, 'tbl-p0064-01.render.json'),
+}
+const bytes = Object.fromEntries(Object.entries(paths).map(([key, p]) => [key, fs.readFileSync(p)]))
+const parse = key => JSON.parse(bytes[key].toString('utf8'))
+const hash = value => crypto.createHash('sha256').update(value).digest('hex')
+const inventory = parse('sourceInventory')
+const spec = parse('firstSpec')
+const report = parse('firstRender')
+const current = parse('affectedSpec')
+const currentReport = parse('affectedRender')
+const exercise = parse('currentText').exercises.find(item => String(item.number) === '181')
+assert.ok(exercise)
+paths.source = inventory.source.path
+bytes.source = fs.readFileSync(paths.source)
+assert.equal(hash(bytes.source), inventory.source.sha256)
+assert.deepEqual(spec.source.image, inventory.source)
+assert.equal(inventory.independence.originalOpenedBeforeAuthorSpecOrInventory, true)
+assert.equal(inventory.independence.authorSpecReadsAtRecordTime, 0)
+assert.deepEqual(spec.display, { layout: 'scroll', purpose: 'instructional', widths: [640], minTextPx: 16 })
+assert.equal(spec.canvas.width, 640)
+assert.equal(spec.canvas.height, 320)
+assert.equal(bytes.firstPreview.readUInt32BE(16), 640)
+assert.equal(bytes.firstPreview.readUInt32BE(20), 320)
+
+const objects = new Map(spec.objects.map(item => [item.id, item]))
+const assertions = new Map(spec.assertions.map(item => [item.id, item]))
+assert.equal(objects.size, spec.objects.length)
+assert.equal(assertions.size, spec.assertions.length)
+assert.equal(spec.source.inventory.length, 12)
+for (const group of spec.source.inventory) {
+  for (const id of group.objects) assert.ok(objects.has(id), `Missing mapped object ${id}`)
+  for (const id of group.assertions) assert.ok(assertions.has(id), `Missing mapped assertion ${id}`)
+}
+const grids = []
+for (const block of ['upper', 'lower']) {
+  const expected = inventory.structure[block]
+  const grid = objects.get(`${block}-grid`)
+  const assertion = assertions.get(`${block}-grid-dimensions`)
+  assert.equal(assertion.type, 'gridDimensions')
+  assert.equal(assertion.grid, grid.id)
+  const [xMin, yMax, xMax, yMin] = grid.bounds
+  const columns = (xMax - xMin) / grid.xStep
+  const rows = (yMax - yMin) / grid.yStep
+  const offsetSteps = [(xMin - grid.xOffset) / grid.xStep, (xMax - grid.xOffset) / grid.xStep, (yMin - grid.yOffset) / grid.yStep, (yMax - grid.yOffset) / grid.yStep]
+  assert.ok(offsetSteps.every(Number.isInteger))
+  assert.equal(columns, expected.columnsIncludingStub)
+  assert.equal(rows, expected.rows)
+  assert.equal(assertion.columns, columns)
+  assert.equal(assertion.rows, rows)
+  const group = spec.source.inventory.find(item => item.id === `source-${block}-band`)
+  assert.ok(group.requires.includes('gridDimensions'))
+  assert.ok(group.objects.includes(grid.id))
+  assert.ok(group.assertions.includes(assertion.id))
+  assert.equal(objects.get(`${block}-head-body`).text, 'Body')
+  assert.equal(objects.get(`${block}-head-mass`).text, 'Mass (kg)')
+  grids.push({ sourceRequirement: expected.id, authorInventoryId: group.id, gridId: grid.id, assertionId: assertion.id, bounds: grid.bounds, xStep: grid.xStep, yStep: grid.yStep, offsetSteps, columns, rows, execution: 'Independent static arithmetic executed; not a validator CLI invocation.', status: 'PASS' })
+}
+const superscriptDigits = ['\u2070', '\u00b9', '\u00b2', '\u00b3', '\u2074', '\u2075', '\u2076', '\u2077', '\u2078', '\u2079']
+const entries = inventory.entries.map(entry => {
+  const body = entry.name.toLowerCase()
+  const grid = objects.get(`${entry.block}-grid`)
+  const name = objects.get(`${body}-name`)
+  const mass = objects.get(`${body}-mass`)
+  const group = spec.source.inventory.find(item => item.id === `source-${body}-entry`)
+  const expectedMass = `${entry.coefficientLiteral} \u00b7 10${String(entry.exponent).split('').map(digit => superscriptDigits[Number(digit)]).join('')}`
+  assert.equal(name.text, entry.name)
+  assert.equal(mass.text, expectedMass)
+  const [xMin, yMax] = grid.bounds
+  const x = xMin + (entry.columnIncludingStub - 0.5) * grid.xStep
+  assert.deepEqual(name.at, [x, yMax - grid.yStep * 0.5])
+  assert.deepEqual(mass.at, [x, yMax - grid.yStep * 1.5])
+  assert.ok(group.requires.includes('gridDimensions'))
+  for (const id of [grid.id, name.id, mass.id]) assert.ok(group.objects.includes(id))
+  assert.ok(group.assertions.includes(`${entry.block}-grid-dimensions`))
+  assert.equal(name.fontSize, 17)
+  assert.equal(mass.fontSize, 16)
+  return { sourceRequirement: entry.id, authorInventoryId: group.id, nameObject: name.id, massObject: mass.id, gridObject: grid.id, assertionId: `${entry.block}-grid-dimensions`, sourceMassLiteral: entry.massLiteral, visibleMassLiteral: mass.text, columnIncludingStub: entry.columnIncludingStub, nameAt: name.at, massAt: mass.at, status: 'PASS' }
+})
+const boundary = ['middle-boundary-top', 'middle-boundary-bottom', 'middle-boundary-left-join', 'middle-boundary-right-join'].map(id => objects.get(id))
+assert.deepEqual(boundary.map(item => [item.from, item.to]), [[[20, 164], [620, 164]], [[20, 158], [620, 158]], [[20, 164], [20, 158]], [[620, 164], [620, 158]]])
+for (const assertion of spec.assertions.filter(item => item.type === 'objectCount')) {
+  assert.equal(spec.objects.filter(item => item.type === assertion.objectType).length, assertion.count)
+}
+assert.equal(report.status, 'pass')
+assert.equal(report.spec.sha256, hash(bytes.firstSpec))
+assert.equal(report.objects, 28)
+assert.equal(report.labels, 22)
+assert.deepEqual(report.collisions, [])
+assert.deepEqual(report.displayChecks, [{ width: 640, minTextPx: 16, measuredMinPx: 16, failures: [], status: 'pass' }])
+paths.firstSvg = path.resolve(root, report.output.svg.path)
+bytes.firstSvg = fs.readFileSync(paths.firstSvg)
+assert.equal(hash(bytes.firstSvg), report.output.svg.sha256)
+
+function differences(a, b, pointer = '') {
+  if (Object.is(a, b)) return []
+  if (a === null || b === null || typeof a !== 'object' || typeof b !== 'object' || Array.isArray(a) !== Array.isArray(b)) return [pointer]
+  return [...new Set([...Object.keys(a), ...Object.keys(b)])].flatMap(key => differences(a[key], b[key], `${pointer}/${key}`))
+}
+const specDifferences = differences(spec, current)
+assert.deepEqual(specDifferences, ['/source/authoritativeText/0/text'])
+const oldA = 'a) \u628a\u884c\u661f\u6309\u7167\u8d28\u91cf\u9012\u589e\u7684\u987a\u5e8f\u5199\u51fa\u6765\uff1b'
+const newA = 'a) \u628a\u8868\u4e2d\u7684\u4e5d\u4e2a\u5929\u4f53\u6309\u7167\u8d28\u91cf\u9012\u589e\u7684\u987a\u5e8f\u5199\u51fa\u6765\uff1b'
+const oldText = spec.source.authoritativeText[0].text
+assert.ok(oldText.includes(oldA))
+assert.equal(oldText.split(oldA).length, 2)
+assert.equal(current.source.authoritativeText[0].text, oldText.replace(oldA, newA))
+assert.equal(current.source.authoritativeText[0].text, exercise.text)
+assert.equal(exercise.lines.join('\n'), exercise.text)
+assert.ok(exercise.figure_refs.includes(spec.id))
+assert.deepEqual(exercise.numeric_changes, [])
+assert.equal(hash(bytes.affectedSpec), '63346b82116cdf2b48f813f5089e71e8474886807503bcd9d95054c9621f7950')
+assert.equal(currentReport.spec.sha256, hash(bytes.affectedSpec))
+assert.equal(path.resolve(root, currentReport.spec.path), paths.affectedSpec)
+const reportDifferences = differences(report, currentReport)
+assert.deepEqual(reportDifferences, ['/spec/path', '/spec/sha256', '/output/svg/path'])
+paths.affectedSvg = path.resolve(root, currentReport.output.svg.path)
+bytes.affectedSvg = fs.readFileSync(paths.affectedSvg)
+assert.equal(hash(bytes.affectedSvg), currentReport.output.svg.sha256)
+assert.ok(bytes.firstSvg.equals(bytes.affectedSvg))
+assert.equal(hash(bytes.affectedSvg), '18d5481948b31819c9dc95abd53c2ad3230b5566062b9c26005bd7014d2b31e7')
+assert.equal(currentReport.status, 'pass')
+const inputs = Object.fromEntries(Object.entries(paths).map(([key, p]) => [key, { path: p, sha256: hash(bytes[key]) }]))
+const recordedAt = new Date().toISOString()
+const substantive = {
+  schema: 'bounded-independent-substantive-review@1',
+  ticket: 'STEMROBIN-182', figureId: spec.id, phase: 'FIRST', recordedAt, status: 'PASS',
+  inputs: Object.fromEntries(['sourceInventory', 'observations', 'source', 'firstSpec', 'firstRender', 'firstSvg', 'firstPreview', 'currentText'].map(key => [key, inputs[key]])),
+  counts: { sourceImageViews: 1, firstPreviewImageViews: 1, totalImageViews: 2, crops: 0, reopens: 0, massEntries: entries.length, terminalZeroEntries: inventory.literalPrecision.trailingZeroEntries.length, labels: 22, objects: 28, sourceRows: 4, mappedSourceGroups: 12, assertions: 5, gridDimensionsAssertionsExecutedIndependently: grids.length },
+  gridDimensions: grids, entryMapping: entries,
+  middleBoundary: { sourceRequirement: 'source-double-middle-boundary', authorInventoryId: 'source-double-middle-boundary', objectIds: boundary.map(item => item.id), assertionId: 'double-boundary-and-joins', assertionKind: 'objectCount', gapPxAt640: 6, independentlyCheckedEndpoints: true, visualDoubleRuleConfirmed: true, status: 'PASS' },
+  visualGate: { status: 'PASS', widthPx: 640, heightPx: 320, observedAllEntriesVisible: true, observedEnglishLabelsAndKg: true, observedSourceOrderAndLiteralZeros: true, observedUpper2x5Lower2x6: true, observedDoubleBoundaryAndConnectedFrame: true, observedNoClippingOrOverlap: true, observedNoCulturalOrAnswerLeakage: true, actualWidthRendererMinTextPx: 16, evidence: inputs.observations },
+  currentQuestion: { exercise: '181', includesAllNineBodies: true, bUnchanged: true, noAnswerNeededOrConsulted: true, firstTextBindingStaleOnly: true },
+  formalReview: 'Not performed by this static script; permitted only after these PASS results.',
+  promotion: false,
+}
+const binding = {
+  schema: 'bounded-static-binding-reconciliation@1',
+  ticket: 'STEMROBIN-182', figureId: spec.id, phase: 'affected1', recordedAt, status: 'PASS',
+  staticAffectedComparisonsExecuted: 1, svgByteComparisonsExecuted: 1, additionalImageViews: 0,
+  inputs, specDifferences, renderDifferences: reportDifferences,
+  oldAuthoritativeText: oldText, currentAuthoritativeText: exercise.text,
+  only181aMembershipWordingChanged: true, currentTextMatchesTemplate: true,
+  canvasObjectsAssertionsDisplaySourceInventoryAndRawSourceUnchanged: true,
+  sourceDerivedMappingsUnchanged: true, bAndValuesUnchanged: true,
+  firstAndAffectedSvgExactBytesEqual: true, inheritedVisualEvidence: inputs.observations,
+  producerRenderStatus: currentReport.status, formalReviewEligible: true,
+  producerCumulativeRenders: { count: 2, attribution: 'Parent-reported; this agent did not render.' },
+  geometryRepairs: { count: 0, attribution: 'Parent-reported and compatible with the executed single-field spec comparison.' },
+  standaloneValidatorInvocations: 0, rendersByThisAgent: 0, promotion: false,
+}
+for (const [name, payload] of [['substantive-FIRST.json', substantive], ['static-binding-affected1.json', binding]]) {
+  const destination = path.join(own, name)
+  assert.equal(path.dirname(destination), own)
+  fs.writeFileSync(destination, `${JSON.stringify(payload, null, 2)}\n`, { flag: 'wx' })
+}
+console.log(JSON.stringify({ status: 'PASS', recordedAt, specDifferences, renderDifferences: reportDifferences, svgExactBytesEqual: true, gridDimensions: grids, counts: substantive.counts, inputHashes: Object.fromEntries(Object.entries(inputs).map(([key, value]) => [key, value.sha256])), generatedReceipts: ['substantive-FIRST.json', 'static-binding-affected1.json'] }, null, 2))

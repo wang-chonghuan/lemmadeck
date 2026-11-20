@@ -1,0 +1,134 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const root = process.cwd();
+const base = '.tmp/resume182-4-postaccount/n13-display-FIRST';
+const input = `${base}/runtime-font-box-recovery5/report-FIRST.json`;
+const output = '.tmp/resume182-4-postaccount/n13-display-selection-FIRST';
+assert.ok(!fs.existsSync(output), 'selection transaction already exists');
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const bytes = fs.readFileSync(input);
+const report = JSON.parse(bytes);
+assert.equal(report.status, 'RUNTIME_PASS_VISUAL_PENDING');
+assert.ok(report.checks.every(check => check.status === 'PASS'));
+const groupKey = item => `${item.viewport.width}:${item.surface}`;
+const groups = new Map(report.coverage.map(item => [groupKey(item), item]));
+const universe = new Set();
+const shots = report.screenshots.map(item => ({
+  ...item, targets: new Set(), prior: null,
+}));
+assert.equal(groups.size, 6);
+for (const [key, group] of groups) {
+  assert.ok(group.domTargets > 0);
+  assert.equal(group.missingTargets.length, 0);
+  const members = shots.filter(item => groupKey(item) === key);
+  for (let id = 0; id < group.domTargets; id++) universe.add(`${key}:dom:${id}`);
+  for (const shot of members) {
+    for (const id of shot.visibleIds) {
+      assert.ok(Number.isInteger(id) && id >= 0 && id < group.domTargets);
+      shot.targets.add(`${key}:dom:${id}`);
+    }
+  }
+  for (const figure of group.figureCoverage) {
+    assert.equal(figure.complete, true);
+    const rectangles = new Map(members.map(shot => [shot.path,
+      shot.figureRegions.filter(region => region.key === figure.key).map(region => ({
+        x1: Math.max(0, Math.min(figure.nativeWidth, region.x)),
+        x2: Math.max(0, Math.min(figure.nativeWidth, region.x + region.width)),
+        y1: Math.max(0, Math.min(figure.nativeHeight, region.y)),
+        y2: Math.max(0, Math.min(figure.nativeHeight, region.y + region.height)),
+      })).filter(region => region.x2 > region.x1 && region.y2 > region.y1),
+    ]));
+    const xs = [...new Set([0, figure.nativeWidth,
+      ...[...rectangles.values()].flatMap(items => items.flatMap(r => [r.x1, r.x2])),
+    ])].sort((a, b) => a - b);
+    const ys = [...new Set([0, figure.nativeHeight,
+      ...[...rectangles.values()].flatMap(items => items.flatMap(r => [r.y1, r.y2])),
+    ])].sort((a, b) => a - b);
+    for (let x = 0; x < xs.length - 1; x++) {
+      for (let y = 0; y < ys.length - 1; y++) {
+        const target = `${key}:figure:${figure.key}:${x}:${y}`;
+        universe.add(target);
+        const owners = members.filter(shot => rectangles.get(shot.path).some(r =>
+          r.x1 <= xs[x] && r.x2 >= xs[x + 1] &&
+          r.y1 <= ys[y] && r.y2 >= ys[y + 1]));
+        assert.ok(owners.length, `uncaptured figure region: ${target}`);
+        for (const shot of owners) shot.targets.add(target);
+      }
+    }
+  }
+}
+const priorResult = '.tmp/resume182-4-postaccount/n13-display-observe-batch1/result.json';
+const prior = JSON.parse(fs.readFileSync(priorResult));
+const text = shots.find(shot => shot.surface === 'text' && shot.viewport.width === 1440);
+const observed = prior.images.find(image => image.path === text.path);
+assert.equal(observed.sha256, text.sha256);
+text.prior = { status: 'OBSERVED', result: path.resolve(priorResult),
+  resultSha256: sha(fs.readFileSync(priorResult)) };
+for (const shot of shots.filter(item => item.surface === 'exercises' &&
+  item.viewport.width === 1440)) {
+  shot.prior = { status: 'ASSIGNED', agent: '01a1f5fb-3ade-7723-8264-a095c4e51529',
+    result: path.resolve('.tmp/resume182-4-postaccount/n13-display-observe-batch2/result.json') };
+}
+const selected = shots.filter(shot => shot.prior);
+const missing = new Set(universe);
+for (const shot of selected) for (const target of shot.targets) missing.delete(target);
+while (missing.size) {
+  const candidates = shots.filter(shot => !selected.includes(shot)).map(shot => ({
+    shot, gain: [...shot.targets].filter(target => missing.has(target)).length,
+  })).sort((a, b) => b.gain - a.gain || a.shot.path.localeCompare(b.shot.path));
+  assert.ok(candidates[0]?.gain > 0, `uncovered targets: ${missing.size}`);
+  const shot = candidates[0].shot;
+  selected.push(shot);
+  for (const target of shot.targets) missing.delete(target);
+}
+// Remove redundant choices after greedy selection; fixed prior assignments stay intact.
+for (const shot of [...selected].reverse()) {
+  if (shot.prior) continue;
+  const others = new Set(selected.filter(other => other !== shot)
+    .flatMap(other => [...other.targets]));
+  if ([...shot.targets].every(target => others.has(target))) {
+    selected.splice(selected.indexOf(shot), 1);
+  }
+}
+const covered = new Set(selected.flatMap(shot => [...shot.targets]));
+assert.equal([...universe].filter(target => !covered.has(target)).length, 0);
+const pending = selected.filter(shot => !shot.prior).sort((a, b) =>
+  groupKey(a).localeCompare(groupKey(b)) || a.path.localeCompare(b.path));
+const summary = shot => ({
+  path: shot.path, sha256: shot.sha256, viewport: shot.viewport,
+  surface: shot.surface, targetCount: shot.targets.size,
+  visibleCount: shot.visibleIds.length, prior: shot.prior,
+  figureRegions: shot.figureRegions.filter(region => region.width > 0 && region.height > 0),
+});
+const record = {
+  schema: 'bounded-display-selection@1', date: '2026-11-19', ticket: 'STEMROBIN-182',
+  lesson: 'alg7-c1-s4-n13', status: 'COVERAGE_SELECTED_VISUAL_PENDING',
+  authority: { path: path.resolve(input), sha256: sha(bytes) },
+  method: 'Greedy set cover plus redundancy elimination; keys are viewport/surface/DOM target and exact rectangular figure cells derived from all clipped capture edges. No images loaded.',
+  counts: { saved: shots.length, selected: selected.length,
+    prior: selected.length - pending.length, pending: pending.length,
+    omitted: shots.length - selected.length, targets: universe.size, missing: 0 },
+  surfaces: [...groups].map(([key, group]) => ({
+    key, domTargets: group.domTargets, figures: group.figureCoverage.length,
+    selected: selected.filter(shot => groupKey(shot) === key).length,
+    pending: pending.filter(shot => groupKey(shot) === key).length,
+  })),
+  selected: selected.map(summary),
+  omitted: shots.filter(shot => !selected.includes(shot)).map(shot => ({
+    path: shot.path, sha256: shot.sha256, reason: 'All DOM and full-figure-region targets covered by selected screenshots.',
+  })),
+  batches: Array.from({ length: Math.ceil(pending.length / 8) }, (_, index) => ({
+    id: `batch${index + 3}`, images: pending.slice(index * 8, (index + 1) * 8).map(summary),
+  })),
+  imageLoads: 0, validatorsOrRenders: 0,
+};
+fs.mkdirSync(output);
+fs.writeFileSync(`${output}/selection.record`, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+for (const batch of record.batches) {
+  fs.writeFileSync(`${output}/${batch.id}.json`, `${JSON.stringify(batch, null, 2)}\n`, { flag: 'wx' });
+}
+console.log(JSON.stringify({ path: `${output}/selection.record`,
+  counts: record.counts, surfaces: record.surfaces, batches: record.batches.length }));
