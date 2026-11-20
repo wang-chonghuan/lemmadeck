@@ -1,0 +1,43 @@
+
+
+
+prose[1] 的数学公式变化没有匹配已绑定勘误
+prose[2] 的数学公式变化没有匹配已绑定勘误
+node:internal/errors:985
+  const err = new Error(message);
+              ^
+
+Error: Command failed: .claude/skills/ld-s10y-lesson/.venv/bin/python -c import json,sys
+sys.path.insert(0,".claude/skills/ld-s10y-lesson/tools")
+import edition
+d=json.load(sys.stdin)
+errors=[]
+for i,p in enumerate(d["prose"]):
+ p["text"]=edition.normalize_prose_layout(p["text"])
+ errors += edition.validate_text(p["source_text"],p["text"],p["changes"],p["numeric_changes"],f"prose[{i}]",[],p.get("historical_entities"))
+if errors: raise SystemExit("\n".join(errors))
+print(json.dumps(d,ensure_ascii=False))
+prose[1] 的数学公式变化没有匹配已绑定勘误
+prose[2] 的数学公式变化没有匹配已绑定勘误
+
+    at genericNodeError (node:internal/errors:985:15)
+    at wrappedFn (node:internal/errors:539:14)
+    at checkExecSyncError (node:child_process:925:11)
+    at execFileSync (node:child_process:961:15)
+    at file:///Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-recovery/prepare-d046-n119.mjs:77:33
+    at ModuleJob.run (node:internal/modules/esm/module_job:439:25)
+    at async node:internal/modules/esm/loader:633:26
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:101:5) {
+  status: 1,
+  signal: null,
+  output: [
+    null,
+    '',
+    'prose[1] 的数学公式变化没有匹配已绑定勘误\nprose[2] 的数学公式变化没有匹配已绑定勘误\n'
+  ],
+  pid: 98655,
+  stdout: '',
+  stderr: 'prose[1] 的数学公式变化没有匹配已绑定勘误\nprose[2] 的数学公式变化没有匹配已绑定勘误\n'
+}
+
+Node.js v24.16.0

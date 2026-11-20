@@ -1,0 +1,134 @@
+{
+  "schema": "STEMROBIN-181/bounded-independent-findings@1",
+  "batch": "D046",
+  "id": "phy9-c2-s5-n119",
+  "status": "hold",
+  "reviewerIsAuthor": false,
+  "findings": [
+    {
+      "id": "IDENTITY-01",
+      "status": "hold",
+      "severity": "P2",
+      "scope": "both finalized editions; isolated raw carrier",
+      "finding": "The correct card id, number, localized titles, printed page, four owned source references and both ready edition indexes are present. However, chapter and section are null in the raw carrier, templates and finalized lessons. No n119 final text.html, exercises.html, rendered identity receipt or display receipt was found in the supplied D046 production tree or the n119-specific scratch inventory.",
+      "risk": "render_lesson.js:248 derives the offline breadcrumb from these nullable fields, so they cannot supply the known TOC parents. publish.mjs:203 also derives concept from them and retains null parents in content. Runtime navigation uses the localized TOC instead, which mitigates card routing but does not prove offline rendered identity or metadata completeness.",
+      "decision": "Do not repair the faithful source text or guess labels from unseen pages. Preserve the raw carrier as reviewed. Before blanket identity acceptance, the owning producer must either supply a bound final identity/display observation demonstrating that the correct TOC/card context is sufficient, or make a separately authorized scoped metadata repair from the actual localized TOC and obtain fresh evidence. This reviewer performs neither repair nor native replay.",
+      "expectedParents": {
+        "zh": {
+          "chapterId": "phy9-c2",
+          "chapterTitle": "第二编　电动力学基础",
+          "sectionId": "phy9-c2-s5",
+          "sectionTitle": "第十一章　电流的磁场"
+        },
+        "en": {
+          "chapterId": "phy9-c2",
+          "chapterTitle": "Part Two. Foundations of Electrodynamics",
+          "sectionId": "phy9-c2-s5",
+          "sectionTitle": "Chapter 11. The magnetic field of an electric current"
+        }
+      }
+    },
+    {
+      "id": "OUTPUT-01",
+      "status": "note",
+      "severity": "informational",
+      "finding": "Each actual finalized edition directory contains exactly lesson.json, exercises.json, figures.json and adaptation.audit.json. Neither contains lesson.md. The actual raw lesson.md is bound separately and is not represented as modern translated Markdown.",
+      "decision": "This is consistent with edition.py:2011-2043, whose native finalization contract writes those four JSON files and the edition book index, not edition Markdown. Do not invent a missing file or hash. The requested edition lesson.md binding cannot be supplied; this is an explicit evidence limitation, not a native SCI or ZHEN failure."
+    },
+    {
+      "id": "HISTORY-01",
+      "status": "resolved",
+      "severity": "historical",
+      "finding": "The first author attempt failed with exitCode 1. Its stderr identifies zero-based prose[1] and prose[2] formula changes without bound errata. The failed bilingual draft and failure receipt remain intact.",
+      "resolution": "The current templates and finalized prose retain each original formula token in exact order in all four paragraphs: vector B; vector B, vector B_0, B/B_0=mu; vector B, vector B; no formula in the last paragraph. The existing recovery receipt has exitCode 0; both existing adapt-finalize receipts report PASS 4/4. No native command was replayed.",
+      "independence": "Neither author assertions nor native success were used as source approval."
+    }
+  ],
+  "sourceChecks": [
+    {
+      "id": "SOURCE292-01",
+      "status": "pass",
+      "finding": "One direct view of the actual page.png shows PDF page 292, printed page 283, beginning at heading 119. 电流的磁场. Canonical page.md and page.json preserve all visible text and punctuation, including the original historical greater-than-vacuum claim and terminology; they do not silently modernize the source."
+    },
+    {
+      "id": "SOURCE292-02",
+      "status": "pass",
+      "finding": "Block p0292#1 is the actual heading. Exactly four complete owned paragraphs are p0292#2 through p0292#5. Paragraph #5 ends with 讨论它。 before heading 120. 安培定律 at p0292#6. Block #7 is only the opening paragraph of 120 and is not proof that 120 is complete. Block #8 is the printed footer 283. No previous-unit text is claimed."
+    },
+    {
+      "id": "SOURCE292-03",
+      "status": "pass",
+      "finding": "Visible vector arrows are preserved as vec{B}, vec{B}_0 and the scalar ratio frac{B}{B_0}=mu. The dotted emphasis on 介质的磁导率 is preserved as Markdown strong emphasis. Heading/body/footer line counts are 1+2+6+4+4+1+4+1=23, agreeing with both structured source and audit. The page has no drawn figure or written exercise; the figure-251 reference belongs only to the 120 opening, not to owned 119."
+    }
+  ],
+  "scientificChecks": [
+    {
+      "sourceRef": "p0292#2",
+      "status": "pass",
+      "finding": "Both editions retain the small current-carrying probe loop and magnitude/direction of vector B, with appropriate measurement-method qualification. The added current-produces-field context agrees with the already acquired OpenStax current-elements text."
+    },
+    {
+      "sourceRef": "p0292#3",
+      "status": "pass",
+      "finding": "Both editions qualify current proportionality by fixed geometry/observation conditions and linear response. They distinguish the source's dimensionless B/B_0=mu ratio from SI absolute permeability, permit field enhancement or reduction, and restrict the scalar material model to a linear isotropic homogeneous medium with negligible boundary effects. This corrects overgeneralized historical prose without altering the original formula tokens. The existing matter receipt supports material response, the solenoid model and the dimensionless-versus-dimensional distinction; no external formula, number or figure is imported."
+    },
+    {
+      "sourceRef": "p0292#4",
+      "status": "pass",
+      "finding": "Both editions correctly explain vector superposition at the same observation point in vacuum or a linear medium, not addition of magnitudes. Changing loop position or orientation can change total magnitude and direction."
+    },
+    {
+      "sourceRef": "p0292#5",
+      "status": "pass",
+      "finding": "Both editions retain calculation from current-element contributions and the decision not to derive the detailed law. The added short-wire-element explanation and vector-addition warning agree with the existing current-elements receipt. No Biot-Savart equation or worked example is imported, and its historical exact-mu0 statement is not used."
+    }
+  ],
+  "bilingualChecks": [
+    {
+      "sourceRef": "p0292#2",
+      "status": "pass",
+      "finding": "Chinese and English preserve the same three ideas: current produces and experiences a magnetic field; a characterized small loop with a suitable method probes vector B; magnitude and direction both matter."
+    },
+    {
+      "sourceRef": "p0292#3",
+      "status": "pass",
+      "finding": "All qualifications and distinctions are equivalent in both languages: fixed conditions, linear response, surrounding material, isotropy and negligible boundaries, same-current vacuum reference, dimensionless relative permeability, possible enhancement or weakening, limited scalar applicability, and the source-book thirteenth-chapter reference."
+    },
+    {
+      "sourceRef": "p0292#4",
+      "status": "pass",
+      "finding": "Both languages preserve vector superposition and the effect of moving or reorienting a loop at unchanged current. Their different final paragraph indexes for the concept break reflect sentence layout, not a content or source-boundary mismatch."
+    },
+    {
+      "sourceRef": "p0292#5",
+      "status": "pass",
+      "finding": "Both languages explain short current elements, conditional vector summation, differing contribution directions and the omitted derivation. No meaning-bearing sentence or applicability qualifier is lost or added in only one language."
+    }
+  ],
+  "grill": [
+    {
+      "question": "Am I approving source from author text or native PASS instead of the scan?",
+      "answer": "No. Source fidelity was judged from the single actual scan view against every canonical block. Native receipts are separate historical evidence."
+    },
+    {
+      "question": "Could an adjacent incomplete unit or its figure enter 119?",
+      "answer": "The actual boundary is heading #6; raw and finalized source references are exactly #2..#5. The 120 heading/opening and its figure-251 reference are excluded. No other source page or image was reviewed."
+    },
+    {
+      "question": "Did a scientific clarification silently mutate source mathematics or flatten vectors?",
+      "answer": "No. All current template/final formula sequences equal the raw source sequences exactly. Modern relative-permeability explanations concern interpretation and applicability; the failed formula-changing draft is retained."
+    },
+    {
+      "question": "Can null parent metadata be declared harmless just because card id and indexes match?",
+      "answer": "No. They mitigate routing, but the offline breadcrumb and publication concept depend on the missing parents and no final display evidence is available. IDENTITY-01 remains HOLD."
+    },
+    {
+      "question": "Would requiring an edition Markdown file falsely contradict the native contract?",
+      "answer": "Yes. Native finalization writes four JSON files. The raw Markdown is real but is not translated edition output. Its binding is separate and absence of modern Markdown is disclosed, not concealed or synthesized."
+    },
+    {
+      "question": "Have I confused a clean SCI/ZHEN review with full production acceptance?",
+      "answer": "No. SOURCE292 and both SCI/ZHEN assessments pass, but overall status is HOLD for identity evidence. No promotion, complete-course acceptance, database action or formal handoff is authorized or performed."
+    }
+  ]
+}
