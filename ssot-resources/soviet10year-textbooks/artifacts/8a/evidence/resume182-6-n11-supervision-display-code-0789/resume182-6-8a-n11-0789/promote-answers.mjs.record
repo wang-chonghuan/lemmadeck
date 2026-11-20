@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [reviewPath, reviewHash] = process.argv.slice(2);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bytes = fs.readFileSync(reviewPath);
+assert.equal(sha(bytes), reviewHash);
+const review = JSON.parse(bytes);
+assert.equal(review.status, 'pass');
+assert.equal(review.reviewer.kind, 'independent_agent');
+assert.equal(review.book, '8a');
+assert.equal(review.lesson, 'alg8-c3-s1-n11');
+assert.equal(review.edition, 'modern-us-neutral');
+const candidate = fs.readFileSync(review.answerKey.path);
+assert.equal(sha(candidate), review.answerKey.sha256);
+const data = JSON.parse(candidate);
+assert.equal(data.answers.length, 16);
+assert.ok(data.answers.every(answer => answer.parts.every(part => part.judge !== 'exact')));
+const target = `${repo}/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c3-s1-n11/answer-keys.json`;
+assert.ok(!fs.existsSync(target), 'Do not overwrite an existing answer key');
+fs.writeFileSync(target, candidate, { flag: 'wx' });
+const record = {
+  status: 'INDEPENDENTLY_APPROVED_BYTES_PROMOTED_NATIVE_FINALIZE_PENDING',
+  review: { path: path.resolve(reviewPath), sha256: reviewHash },
+  candidate: review.answerKey, target: { path: target, sha256: sha(candidate) },
+  rendererCalls: 0, browserLaunches: 0, databaseWrites: 0, finish: 'review',
+};
+fs.writeFileSync('.tmp/resume182-6-8a-n11-0789/answer-promotion.record',
+  `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(record));

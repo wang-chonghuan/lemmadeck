@@ -1,0 +1,832 @@
+17-NON_ENGLISH = re.compile(
+18-    r"[\u0400-\u04ff\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff]"
+19-)
+20-CENTRAL_SYMMETRY = re.compile(
+21-    r"中心对称|对称中心|central symmetry|centrally symmetric|half-turn|"
+22-    r"180(?:°| degrees?)",
+23-    re.IGNORECASE,
+24-)
+25-GEOMETRY_TYPES = {
+26-    "point", "segment", "line", "arrow", "circle", "polygon", "arc",
+27:    "grid", "axis", "measure", "svgPath",
+28-}
+29:SUPPORTED_TYPES = GEOMETRY_TYPES | {"text", "image"}
+30-COLOR_ROLES = {"ink", "muted", "accent", "accentSoft", "grid", "paper"}
+31-
+32-
+33-def load(path: Path) -> dict:
+34-    try:
+35:        return json.loads(path.read_text(encoding="utf-8"))
+36-    except FileNotFoundError:
+37-        raise SystemExit(f"ERROR: missing spec: {path}")
+38-    except json.JSONDecodeError as error:
+39-        raise SystemExit(f"ERROR: invalid JSON {path}: {error}")
+40-
+41-
+42-def sha256(path: Path) -> str:
+43-    digest = hashlib.sha256()
+44-    with path.open("rb") as handle:
+45-        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+46-            digest.update(chunk)
+47-    return digest.hexdigest()
+48-
+49-
+50-def finite_number(value: Any) -> bool:
+51-    return (
+52-        isinstance(value, (int, float))
+53-        and not isinstance(value, bool)
+54-        and math.isfinite(value)
+55-    )
+56-
+57-
+58-def coordinate(value: Any) -> bool:
+59-    return (
+60-        isinstance(value, list)
+61-        and len(value) == 2
+62-        and all(finite_number(item) for item in value)
+63-    )
+64-
+65-
+66-def point_map(objects: list[dict]) -> dict[str, tuple[float, float]]:
+67-    points = {}
+68-    for item in objects:
+69-        if item.get("type") == "point" and coordinate(item.get("at")):
+70-            points[item["id"]] = tuple(item["at"])
+--
+78-    kind = assertion.get("type")
+79-    fields = {
+80-        "distance": ("a", "b"),
+81-        "equalDistance": ("a", "b", "c", "d"),
+82-        "collinear": ("a", "b", "c"),
+83-        "parallel": ("a", "b", "c", "d"),
+84-        "perpendicular": ("a", "b", "c", "d"),
+85-        "pointOnLine": ("point", "a", "b"),
+86-        "pointOnCircle": ("point", "center"),
+87-        "connects": ("from", "to"),
+88:        "displacement": ("from", "to"),
+89-    }.get(kind, ())
+90-    values = [assertion.get(field) for field in fields]
+91-    if kind == "centralSymmetry":
+92-        values.append(assertion.get("center"))
+93-        for pair in assertion.get("pairs", []):
+94-            if isinstance(pair, dict):
+95-                values.extend((pair.get("a"), pair.get("b")))
+96-    return {
+97-        value
+98-        for value in values
+99-        if isinstance(value, str) and value in point_ids
+100-    }
+101-
+102-
+103-def resolve_point(
+104-    value: Any,
+105-    points: dict[str, tuple[float, float]],
+106-    label: str,
+107-    errors: list[str],
+108-) -> tuple[float, float] | None:
+109-    if coordinate(value):
+110-        return float(value[0]), float(value[1])
+111-    if isinstance(value, str) and value in points:
+112-        return points[value]
+113-    errors.append(f"{label}: expected coordinate or point id")
+114-    return None
+115-
+116-
+117-def resolve_position(
+118-    value: Any,
+119-    objects_by_id: dict[str, dict],
+120-    points: dict[str, tuple[float, float]],
+121-    label: str,
+122-    errors: list[str],
+123-) -> tuple[float, float] | None:
+124-    if isinstance(value, str):
+125-        obj = objects_by_id.get(value)
+126:        if isinstance(obj, dict) and obj.get("type") in {"point", "text"}:
+127-            at = obj.get("at")
+128-            if coordinate(at):
+129-                return float(at[0]), float(at[1])
+130-    return resolve_point(value, points, label, errors)
+131-
+132-
+133-def distance(a: tuple[float, float], b: tuple[float, float]) -> float:
+134-    return math.hypot(a[0] - b[0], a[1] - b[1])
+135-
+136-
+137-def vector(a: tuple[float, float], b: tuple[float, float]) -> tuple[float, float]:
+138-    return b[0] - a[0], b[1] - a[1]
+139-
+140-
+141-def cross(a: tuple[float, float], b: tuple[float, float]) -> float:
+142-    return a[0] * b[1] - a[1] * b[0]
+143-
+144-
+145-def dot(a: tuple[float, float], b: tuple[float, float]) -> float:
+146-    return a[0] * b[0] + a[1] * b[1]
+147-
+148-
+149-def point_to_segment_distance(
+150-    point: tuple[float, float],
+151-    start: tuple[float, float],
+152-    end: tuple[float, float],
+153-) -> float:
+154-    segment = vector(start, end)
+155-    length_squared = dot(segment, segment)
+156-    if length_squared == 0:
+157-        return distance(point, start)
+158-    offset = vector(start, point)
+159-    position = max(0.0, min(1.0, dot(offset, segment) / length_squared))
+160-    projection = (
+161-        start[0] + segment[0] * position,
+--
+236-            ),
+237-            None,
+238-        )
+239-        for item in objects
+240-        if isinstance(item, dict)
+241-        and item.get("visible") is not False
+242-        and isinstance(item.get("id"), str)
+243-        and (
+244-            item.get("type") == "point"
+245-            or (
+246:                item.get("type") == "text"
+247-                and item["id"].endswith("-label")
+248-            )
+249-        )
+250-    }
+251-    members = {
+252-        member_id: container_id
+253-        for member_id, container_id in members.items()
+254-        if container_id is not None
+255-    }
+256-    errors = []
+257-    canvas_width = spec.get("canvas", {}).get("width")
+258-    bounding_box = spec.get("canvas", {}).get("boundingBox")
+259-    widths = spec.get("display", {}).get("widths")
+260-    user_width = (
+261-        bounding_box[2] - bounding_box[0]
+262-        if isinstance(bounding_box, list)
+263-        and len(bounding_box) == 4
+264-        and all(finite_number(value) for value in bounding_box)
+265-        else None
+266-    )
+267-    user_units_per_canvas_px = (
+268-        user_width / canvas_width
+269-        if finite_number(user_width)
+270-        and finite_number(canvas_width)
+271-        and canvas_width > 0
+272-        else 1.0
+273-    )
+274-    user_units_per_product_px = (
+275-        user_width / min(widths)
+276-        if finite_number(user_width)
+277-        and isinstance(widths, list)
+278-        and widths
+279-        and all(finite_number(width) and width > 0 for width in widths)
+280-        else user_units_per_canvas_px
+281-    )
+--
+297-        position = resolve_position(
+298-            member_id,
+299-            objects_by_id,
+300-            points,
+301-            f"set member {member_id!r}",
+302-            errors,
+303-        )
+304-        if position is None:
+305-            continue
+306-
+307:        if member.get("type") == "text":
+308-            font_size = member.get("fontSize", 16)
+309:            text = member.get("text", "")
+310-            half_height = font_size * 0.5 if finite_number(font_size) else 8
+311-            half_width = (
+312:                font_size * 0.3 * max(len(text), 1)
+313-                if finite_number(font_size)
+314-                else 8
+315-            )
+316-            required_clearance = (
+317-                max(half_height, half_width) * user_units_per_canvas_px
+318-                + 4 * user_units_per_product_px
+319-            )
+320-        else:
+321-            size = member.get("size", 3)
+322-            required_clearance = (
+323-                size if finite_number(size) and size >= 0 else 3
+324-            ) * user_units_per_canvas_px + 4 * user_units_per_product_px
+325-
+326-        clearances = []
+327-        for assertion in member_assertions:
+328-            container = set_polygons.get(assertion.get("container"))
+329-            if container is None:
+330-                continue
+331-            polygon = []
+332-            for value in container.get("points", []):
+333-                resolved = resolve_point(
+334-                    value,
+335-                    points,
+336-                    f"container {container.get('id')!r}",
+337-                    errors,
+338-                )
+339-                if resolved is not None:
+340-                    polygon.append(resolved)
+341-            if len(polygon) >= 3 and point_in_polygon(position, polygon):
+342-                clearances.append(min(
+343-                    point_to_segment_distance(position, start, end)
+344-                    for start, end in zip(polygon, polygon[1:] + polygon[:1])
+345-                ))
+346-
+347-        if clearances and max(clearances) < required_clearance:
+--
+420-                mapped_objects = [
+421-                    by_id[object_id]
+422-                    for object_id in required_objects
+423-                    if object_id in by_id
+424-                ]
+425-                requirements = group.get("requires", [])
+426-                if (
+427-                    not isinstance(requirements, list)
+428-                    or any(
+429-                        requirement not in {
+430:                            "gridDimensions", "pointRelationships"
+431-                        }
+432-                        for requirement in requirements
+433-                    )
+434-                    or len(requirements) != len(set(requirements))
+435-                ):
+436-                    errors.append(
+437-                        f"{label}.requires must contain unique supported requirements"
+438-                    )
+439-                    requirements = []
+440-                mapped_grids = [
+441-                    item["id"]
+442-                    for item in mapped_objects
+443-                    if item.get("type") == "grid"
+444-                ]
+445:                if "gridDimensions" in requirements:
+446-                    if not mapped_grids:
+447-                        errors.append(
+448:                            f"{label}: gridDimensions requirement needs a mapped grid"
+449-                        )
+450-                    for grid_id in mapped_grids:
+451-                        if not any(
+452:                            item.get("type") == "gridDimensions"
+453-                            and item.get("grid") == grid_id
+454-                            for item in mapped_assertions
+455-                        ):
+456-                            errors.append(
+457-                                f"{label}: grid {grid_id!r} requires a mapped "
+458:                                "gridDimensions assertion; objectCount is insufficient"
+459-                            )
+460-                mapped_points = [
+461-                    item["id"]
+462-                    for item in mapped_objects
+463-                    if item.get("type") == "point"
+464-                ]
+465-                if "pointRelationships" in requirements:
+466-                    if len(mapped_points) < 2:
+467-                        errors.append(
+468-                            f"{label}: pointRelationships requirement needs "
+469-                            "at least two mapped points"
+470-                        )
+471-                    else:
+472-                        mapped_point_ids = set(mapped_points)
+473-                        relationship_coverages = []
+474-                        for item in mapped_assertions:
+475-                            references = assertion_point_ids(
+476-                                item, set(points)
+477-                            )
+478-                            if (
+479-                                len(references) >= 2
+480-                                and references <= mapped_point_ids
+481-                            ):
+482-                                relationship_coverages.append(references)
+483-                        if not relationship_coverages:
+484-                            errors.append(
+485-                                f"{label}: multiple source points require a "
+486-                                "mapped relationship assertion wholly within "
+487:                                "the inventory group; objectCount or unrelated "
+488-                                "relationships are insufficient"
+489-                            )
+490-                        else:
+491-                            covered_points = set().union(
+492-                                *relationship_coverages
+493-                            )
+494-                            missing_points = sorted(
+495-                                mapped_point_ids - covered_points
+496-                            )
+497-                            if missing_points:
+498-                                errors.append(
+499-                                    f"{label}: pointRelationships missing "
+500-                                    "mapped relation coverage for "
+501-                                    + ", ".join(repr(item) for item in missing_points)
+502-                                )
+503-            if current and len(inventory_ids) != len(set(inventory_ids)):
+504-                errors.append("source.inventory ids must be unique")
+505-
+506-    box = spec.get("canvas", {}).get("boundingBox")
+507-    if not isinstance(box, list) or len(box) != 4 or not all(map(finite_number, box)):
+508-        return errors
+509-    xmin, ymax, xmax, ymin = box
+510-    for obj in objects:
+511-        if not isinstance(obj, dict) or obj.get("visible") is False:
+512-            continue
+513-        kind = obj.get("type")
+514-        # Infinite lines and viewport grids are intentionally bounded by the viewport.
+515-        if kind in {"line", "svgPath", "image"}:
+516-            continue
+517-        coordinates = []
+518-        if kind == "grid":
+519-            bounds = obj.get("bounds")
+520-            if isinstance(bounds, list) and len(bounds) == 4:
+521-                coordinates = [
+522-                    [bounds[0], bounds[1]],
+523-                    [bounds[2], bounds[3]],
+524-                ]
+525-            else:
+526-                continue
+527:        elif kind in {"point", "text"}:
+528-            coordinates = [obj.get("at")]
+529:        elif kind in {"segment", "arrow", "measure", "axis"}:
+530-            coordinates = [obj.get("from"), obj.get("to")]
+531-        elif kind == "polygon":
+532-            coordinates = obj.get("points", [])
+533-        elif kind == "circle" and finite_number(obj.get("radius")):
+534-            center = obj.get("center")
+535-            center = points.get(center) if isinstance(center, str) else center
+536-            if center is not None and len(center) == 2:
+537-                radius = obj["radius"]
+538-                coordinates = [
+539-                    [center[0] - radius, center[1] - radius],
+540-                    [center[0] + radius, center[1] + radius],
+541-                ]
+542-        elif kind == "arc":
+543-            coordinates = [obj.get("start"), obj.get("end")]
+544-        for value in coordinates:
+545-            value = points.get(value) if isinstance(value, str) else value
+546-            if not isinstance(value, (list, tuple)) or len(value) != 2:
+547-                continue
+548-            if not all(map(finite_number, value)):
+549-                continue
+550-            if not (xmin <= value[0] <= xmax and ymin <= value[1] <= ymax):
+551-                errors.append(f"{obj.get('id')}: geometry outside canvas at {value}")
+552-                break
+553-    return errors
+554-
+555-
+556-def assertion_errors(
+557-    assertions: list[dict],
+558-    objects: list[dict],
+559-    points: dict[str, tuple[float, float]],
+560-) -> list[str]:
+561-    errors = []
+562-    objects_by_id = {
+563-        item.get("id"): item
+564-        for item in objects
+565-        if isinstance(item, dict) and isinstance(item.get("id"), str)
+566-    }
+567-    for index, item in enumerate(assertions):
+568-        label = f"assertions[{index}]"
+569-        kind = item.get("type")
+570-        tolerance = item.get("tolerance", 1e-6)
+571-        if not finite_number(tolerance) or tolerance < 0:
+572-            errors.append(f"{label}.tolerance must be a nonnegative number")
+573-            continue
+574:        if kind == "objectCount":
+575-            object_type = item.get("objectType")
+576-            expected = item.get("count")
+577-            actual = sum(obj.get("type") == object_type for obj in objects)
+578-            if not isinstance(expected, int) or actual != expected:
+579-                errors.append(
+580-                    f"{label}: expected {expected} {object_type}, found {actual}"
+581-                )
+582-            continue
+583:        if kind == "gridDimensions":
+584-            grid_id = item.get("grid")
+585-            grid = objects_by_id.get(grid_id)
+586-            if not isinstance(grid, dict) or grid.get("type") != "grid":
+587-                errors.append(f"{label}.grid must reference a grid")
+588-                continue
+589-            columns = item.get("columns")
+590-            rows = item.get("rows")
+591-            if (
+592-                not isinstance(columns, int)
+593-                or isinstance(columns, bool)
+594-                or columns <= 0
+595-            ):
+596-                errors.append(f"{label}.columns must be a positive integer")
+597-            if (
+598-                not isinstance(rows, int)
+599-                or isinstance(rows, bool)
+600-                or rows <= 0
+601-            ):
+602-                errors.append(f"{label}.rows must be a positive integer")
+603-            bounds = grid.get("bounds")
+604-            x_step = grid.get("xStep")
+605-            y_step = grid.get("yStep")
+606-            if (
+607-                not isinstance(bounds, list)
+608-                or len(bounds) != 4
+609-                or not all(finite_number(value) for value in bounds)
+610-            ):
+611-                errors.append(
+612:                    f"{label}: gridDimensions requires finite grid bounds"
+613-                )
+614-                continue
+615-            if (
+616-                not finite_number(x_step)
+617-                or x_step <= 0
+618-                or not finite_number(y_step)
+619-                or y_step <= 0
+620-            ):
+621-                continue
+622-            x_offset = grid.get("xOffset", 0)
+623-            y_offset = grid.get("yOffset", 0)
+624-            if not finite_number(x_offset) or not finite_number(y_offset):
+625-                continue
+626-            x_min, y_max, x_max, y_min = bounds
+627-            aligned = all(
+628-                abs(value - round(value)) <= tolerance
+629-                for value in (
+630-                    (x_min - x_offset) / x_step,
+631-                    (x_max - x_offset) / x_step,
+632-                    (y_min - y_offset) / y_step,
+633-                    (y_max - y_offset) / y_step,
+634-                )
+635-            )
+636-            if not aligned:
+637-                errors.append(
+638-                    f"{label}: grid bounds must align with its offsets and steps"
+639-                )
+640-                continue
+641-            actual_columns = round((x_max - x_min) / x_step)
+642-            actual_rows = round((y_max - y_min) / y_step)
+643-            if isinstance(columns, int) and actual_columns != columns:
+644-                errors.append(
+645-                    f"{label}: grid has {actual_columns} columns, expected {columns}"
+646-                )
+647-            if isinstance(rows, int) and actual_rows != rows:
+648-                errors.append(
+649-                    f"{label}: grid has {actual_rows} rows, expected {rows}"
+650-                )
+651-            continue
+652:        if kind == "displacement":
+653-            start = resolve_point(
+654-                item.get("from"), points, f"{label}.from", errors
+655-            )
+656-            end = resolve_point(
+657-                item.get("to"), points, f"{label}.to", errors
+658-            )
+659-            expected_dx = item.get("dx")
+660-            expected_dy = item.get("dy")
+661-            if not finite_number(expected_dx):
+662-                errors.append(f"{label}.dx must be finite")
+663-            if not finite_number(expected_dy):
+664-                errors.append(f"{label}.dy must be finite")
+665-            if (
+666-                start is not None
+667-                and end is not None
+668-                and finite_number(expected_dx)
+669-                and finite_number(expected_dy)
+670-            ):
+671-                actual_dx = end[0] - start[0]
+672-                actual_dy = end[1] - start[1]
+673-                if (
+674-                    abs(actual_dx - expected_dx) > tolerance
+675-                    or abs(actual_dy - expected_dy) > tolerance
+676-                ):
+677-                    errors.append(
+678:                        f"{label}: displacement ({actual_dx:.8g}, "
+679-                        f"{actual_dy:.8g}) != ({expected_dx!r}, "
+680-                        f"{expected_dy!r})"
+681-                    )
+682-            continue
+683-        if kind == "pointOnCircle":
+684-            point = resolve_point(item.get("point"), points, f"{label}.point", errors)
+685-            center = resolve_point(item.get("center"), points, f"{label}.center", errors)
+686-            radius = item.get("radius")
+687-            if not finite_number(radius) or radius <= 0:
+688-                errors.append(f"{label}.radius must be positive")
+689-            elif point is not None and center is not None:
+690-                if abs(distance(point, center) - radius) > tolerance:
+691-                    errors.append(f"{label}: point is not on circle")
+692-            continue
+693-        if kind == "centralSymmetry":
+694-            center = resolve_point(
+695-                item.get("center"), points, f"{label}.center", errors
+696-            )
+697-            pairs = item.get("pairs")
+698-            if not isinstance(pairs, list) or not pairs:
+699-                errors.append(f"{label}.pairs must be a nonempty array")
+700-                continue
+701-            if center is None:
+702-                continue
+703-            for pair_index, pair in enumerate(pairs):
+704-                pair_label = f"{label}.pairs[{pair_index}]"
+705-                if not isinstance(pair, dict):
+706-                    errors.append(f"{pair_label} must be an object")
+707-                    continue
+708-                first = resolve_point(
+709-                    pair.get("a"), points, f"{pair_label}.a", errors
+710-                )
+711-                second = resolve_point(
+712-                    pair.get("b"), points, f"{pair_label}.b", errors
+713-                )
+--
+903-            elif image_sha != sha256(path):
+904-                errors.append("source.image.sha256 is stale")
+905-        if not isinstance(image_sha, str) or not re.fullmatch(r"[a-f0-9]{64}", image_sha):
+906-            errors.append("source.image.sha256 must be lowercase SHA-256")
+907-    authoritative = source.get("authoritativeText")
+908-    if not isinstance(authoritative, list) or not authoritative:
+909-        errors.append("source.authoritativeText must be nonempty")
+910-        authoritative = []
+911-    elif any(
+912-        not isinstance(item, dict)
+913:        or not isinstance(item.get("text"), str)
+914:        or not item["text"].strip()
+915-        for item in authoritative
+916-    ):
+917:        errors.append("every authoritativeText item needs nonempty text")
+918-    if current and not source.get("inventory"):
+919-        errors.append("current FigureSpec requires source.inventory")
+920-
+921-    canvas = spec.get("canvas")
+922-    if not isinstance(canvas, dict):
+923-        errors.append("canvas must be an object")
+924-        canvas = {}
+925-    for key in ("width", "height"):
+926-        value = canvas.get(key)
+927-        if not isinstance(value, int) or not 320 <= value <= 4096:
+928-            errors.append(f"canvas.{key} must be an integer from 320 to 4096")
+929-    bounding_box = canvas.get("boundingBox")
+930-    if (
+931-        not isinstance(bounding_box, list)
+932-        or len(bounding_box) != 4
+933-        or not all(finite_number(item) for item in bounding_box)
+934-    ):
+935-        errors.append("canvas.boundingBox must contain four finite numbers")
+936-    elif not (
+937-        bounding_box[0] < bounding_box[2]
+938-        and bounding_box[3] < bounding_box[1]
+939-    ):
+940-        errors.append("canvas.boundingBox must be [xMin, yMax, xMax, yMin]")
+941-    if current and canvas.get("background", "paper") not in {
+942-        "paper", "transparent"
+943-    }:
+944-        errors.append("canvas.background must be paper or transparent")
+945-
+946-    display = spec.get("display")
+947-    if current:
+948-        if not isinstance(display, dict):
+949-            errors.append("current FigureSpec requires display")
+950-            display = {}
+951-        layout = display.get("layout")
+952-        if layout not in {"inline", "scroll"}:
+953-            errors.append("display.layout must be inline or scroll")
+954-        purpose = display.get("purpose", "instructional")
+955-        if purpose not in {"instructional", "decorative"}:
+956-            errors.append(
+957-                "display.purpose must be instructional or decorative"
+958-            )
+959-        max_width = display.get("maxWidthPx")
+960:        min_text = display.get("minTextPx")
+961:        if not finite_number(min_text) or min_text < 16:
+962-            errors.append("display.minTextPx must be at least 16")
+963-        widths = display.get("widths")
+964-        if (
+965-            not isinstance(widths, list)
+966-            or not widths
+967-            or any(
+968-                not isinstance(width, int) or not 128 <= width <= 1600
+969-                for width in widths
+970-            )
+971-        ):
+972-            errors.append(
+973-                "display.widths must be a nonempty array of widths from 128 to 1600"
+974-            )
+975-        elif layout == "inline" and min(widths) > 352:
+976-            errors.append("inline display must include a width of 352px or less")
+977-        if "maxWidthPx" in display:
+978-            if (
+979-                not isinstance(max_width, int)
+980-                or isinstance(max_width, bool)
+981-                or not 128 <= max_width <= 960
+982-            ):
+983-                errors.append(
+984-                    "display.maxWidthPx must be an integer from 128 to 960"
+985-                )
+986-            else:
+987-                if layout != "inline":
+988-                    errors.append(
+989-                        "display with maxWidthPx must use inline layout"
+990-                    )
+991-                if isinstance(widths, list) and any(
+992-                    isinstance(width, int) and width > max_width
+993-                    for width in widths
+994-                ):
+995-                    errors.append(
+996-                        "display widths must not exceed display.maxWidthPx"
+--
+1061-    for index, item in enumerate(objects):
+1062-        label = f"objects[{index}]"
+1063-        if not isinstance(item, dict):
+1064-            errors.append(f"{label} must be an object")
+1065-            continue
+1066-        kind = item.get("type")
+1067-        if kind not in SUPPORTED_TYPES:
+1068-            errors.append(f"{label}: unsupported type {kind!r}")
+1069-            continue
+1070-        placements = [(label, item.get("labelPlacement"))]
+1071:        if kind == "axis":
+1072-            placements.extend(
+1073-                (f"{label}.ticks[{tick_index}]", tick.get("labelPlacement"))
+1074-                for tick_index, tick in enumerate(item.get("ticks", []))
+1075-                if isinstance(tick, dict)
+1076-            )
+1077-        for owner, placement in placements:
+1078-            if placement is None:
+1079-                continue
+1080-            if not isinstance(placement, dict):
+1081-                errors.append(f"{owner}.labelPlacement must be an object")
+1082-                continue
+1083-            position = placement.get("position")
+1084-            if position is not None and position not in {
+1085-                "CENTER", "NE", "NW", "SE", "SW", "E", "W", "N", "S"
+1086-            }:
+1087-                errors.append(f"{owner}.labelPlacement.position is unsupported: {position!r}")
+1088-        if current:
+1089-            for field in ("stroke", "fill", "labelColor"):
+1090-                role = item.get(field)
+1091-                if role is not None and role not in COLOR_ROLES:
+1092-                    errors.append(
+1093-                        f"{label}.{field} must use a semantic color role"
+1094-                    )
+1095:        for field in ("label", "text"):
+1096:            text = item.get(field)
+1097:            if isinstance(text, str) and text:
+1098:                labels.append((label, text))
+1099-        if kind == "point" and not coordinate(item.get("at")):
+1100-            errors.append(f"{label}.at must be [x, y]")
+1101:        elif kind in {"segment", "line", "arrow", "axis", "measure"}:
+1102-            resolve_point(item.get("from"), points, f"{label}.from", errors)
+1103-            resolve_point(item.get("to"), points, f"{label}.to", errors)
+1104-        elif kind == "circle":
+1105-            resolve_point(item.get("center"), points, f"{label}.center", errors)
+1106-            if not finite_number(item.get("radius")) or item["radius"] <= 0:
+1107-                errors.append(f"{label}.radius must be positive")
+1108-        elif kind == "polygon":
+1109-            values = item.get("points")
+1110-            if not isinstance(values, list) or len(values) < 3:
+1111-                errors.append(f"{label}.points needs at least three points")
+1112-            else:
+1113-                for point_index, value in enumerate(values):
+1114-                    resolve_point(
+1115-                        value, points, f"{label}.points[{point_index}]", errors
+1116-                    )
+1117-        elif kind == "arc":
+1118-            for field in ("center", "start", "end"):
+1119-                resolve_point(item.get(field), points, f"{label}.{field}", errors)
+1120-        elif kind == "grid":
+1121-            for field in ("xStep", "yStep"):
+1122-                if not finite_number(item.get(field)) or item[field] <= 0:
+1123-                    errors.append(f"{label}.{field} must be positive")
+1124-            for field in ("xOffset", "yOffset"):
+1125-                if field in item and not finite_number(item.get(field)):
+1126-                    errors.append(f"{label}.{field} must be finite")
+1127-            bounds = item.get("bounds")
+1128-            if bounds is not None:
+1129-                if (
+1130-                    not isinstance(bounds, list)
+1131-                    or len(bounds) != 4
+1132-                    or not all(map(finite_number, bounds))
+1133-                ):
+1134-                    errors.append(
+1135-                        f"{label}.bounds must be [xMin, yMax, xMax, yMin]"
+1136-                    )
+1137-                elif not (bounds[0] < bounds[2] and bounds[3] < bounds[1]):
+1138-                    errors.append(
+1139-                        f"{label}.bounds must be [xMin, yMax, xMax, yMin]"
+1140-                    )
+1141:        elif kind == "text":
+1142-            resolve_point(item.get("at"), points, f"{label}.at", errors)
+1143:            if not isinstance(item.get("text"), str) or not item["text"].strip():
+1144:                errors.append(f"{label}.text must be nonempty")
+1145-        elif kind == "image":
+1146-            image_count += 1
+1147-            if item.get("asset") not in asset_ids:
+1148-                errors.append(f"{label}.asset does not resolve")
+1149-            if not coordinate(item.get("at")) or not coordinate(item.get("size")):
+1150-                errors.append(f"{label}.at and size must be [x, y]")
+1151-            elif item["size"][0] <= 0 or item["size"][1] <= 0:
+1152-                errors.append(f"{label}.size values must be positive")
+1153-            rotation = item.get("rotation")
+1154-            if rotation is not None:
+1155-                if not isinstance(rotation, dict):
+1156-                    errors.append(f"{label}.rotation must be an object")
+1157-                else:
+1158-                    if not finite_number(rotation.get("angleDegrees")):
+1159-                        errors.append(
+1160-                            f"{label}.rotation.angleDegrees must be finite"
+1161-                        )
+1162-                    if not coordinate(rotation.get("center")):
+1163-                        errors.append(
+1164-                            f"{label}.rotation.center must be [x, y]"
+1165-                        )
+1166-        elif kind == "svgPath":
+1167-            if not isinstance(item.get("d"), str) or not item["d"].strip():
+1168-                errors.append(f"{label}.d must be nonempty")
+1169:    for label, text in labels:
+1170:        if NON_ENGLISH.search(text):
+1171:            errors.append(f"{label}: visible text must be English: {text!r}")
+1172-
+1173-    if mode == "generated" and objects:
+1174-        errors.append("generated mode must not contain deterministic objects")
+1175-    if mode == "hybrid" and image_count == 0:
+1176-        errors.append("hybrid mode requires an image object")
+1177-    if mode == "hybrid":
+1178-        first_geometry = next(
+1179-            (
+1180-                index
+1181-                for index, item in enumerate(objects)
+1182-                if isinstance(item, dict) and item.get("type") != "image"
+1183-            ),
+1184-            len(objects),
+1185-        )
+1186-        if any(
+1187-            isinstance(item, dict) and item.get("type") == "image"
+1188-            for item in objects[first_geometry:]
+1189-        ):
+1190-            errors.append("hybrid image objects must precede overlay objects")
+1191-    if mode == "deterministic" and image_count:
+1192-        errors.append("deterministic mode cannot contain image objects")
+1193-
+1194-    if stage in {"rendered", "approved"}:
+1195-        for index, asset in enumerate(assets):
+1196-            path = Path(asset.get("path", ""))
+1197-            if not path.is_file():
+1198-                errors.append(f"assets[{index}]: missing file {path}")
+1199-            metadata = asset.get("metadata")
+1200-            if metadata and not Path(metadata).is_file():
+1201-                errors.append(f"assets[{index}]: missing metadata {metadata}")
+1202-
+1203-    assertions = spec.get("assertions")
+1204-    if not isinstance(assertions, list):
+1205-        errors.append("assertions must be an array")
+1206-        assertions = []
+--
+1221-        item.get("type") in GEOMETRY_TYPES
+1222-        for item in objects
+1223-        if isinstance(item, dict)
+1224-    ) and not assertions:
+1225-        errors.append("mathematical objects require assertions")
+1226-    errors += assertion_errors(assertions, objects, points)
+1227-    errors += completeness_errors(spec, objects, points, assertions, current)
+1228-    errors += relation_membership_errors(
+1229-        spec, objects, points, assertions, current
+1230-    )
+1231:    symmetry_text = " ".join([
+1232-        spec.get("description", ""),
+1233-        *[
+1234:            item.get("text", "")
+1235-            for item in authoritative
+1236-            if isinstance(item, dict)
+1237-        ],
+1238-    ])
+1239-    if (
+1240-        mode in {"deterministic", "hybrid"}
+1241:        and CENTRAL_SYMMETRY.search(symmetry_text)
+1242-        and not any(
+1243-            isinstance(item, dict) and item.get("type") == "centralSymmetry"
+1244-            for item in assertions
+1245-        )
+1246-    ):
+1247-        errors.append(
+1248-            "central-symmetry content requires a centralSymmetry assertion"
+1249-        )
+1250-
+1251-    if not current:
+1252-        review = spec.get("review")
+1253-        if not isinstance(review, dict) or review.get("status") not in {
+1254-            "draft", "pass", "fail"
+1255-        }:
+1256-            errors.append("review.status must be draft, pass, or fail")
+1257-        elif stage == "approved" and review.get("status") != "pass":
+1258-            errors.append("approved stage requires review.status pass")
+1259-    return errors
+1260-
+1261-
+1262-def main() -> int:
+1263-    parser = argparse.ArgumentParser(description=__doc__)
+1264-    parser.add_argument("spec", type=Path)
+1265-    parser.add_argument(
+1266-        "--stage",
+1267-        choices=("draft", "rendered", "approved"),
+1268-        default="draft",
+1269-    )
+1270-    parser.add_argument("--json", action="store_true")
+1271-    args = parser.parse_args()
+1272-    errors = validate(args.spec, args.stage)
+1273-    payload = {
+1274-        "schema": "ld-s10y-image/spec-validation@1",
+1275-        "spec": args.spec.as_posix(),
+1276-        "stage": args.stage,

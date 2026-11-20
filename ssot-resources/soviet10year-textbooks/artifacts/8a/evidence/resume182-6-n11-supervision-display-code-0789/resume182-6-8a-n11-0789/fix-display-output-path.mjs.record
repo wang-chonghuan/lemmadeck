@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const own = `${repo}/.tmp/resume182-6-8a-n11-0789/display-FIRST`;
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const run = `${own}/run.mjs`;
+const before = fs.readFileSync(run);
+const originalReady = fs.readFileSync(`${own}/ready-FIRST.record`);
+const ready = JSON.parse(originalReady);
+assert.equal(sha(before), ready.files.find(item => item.path === run).sha256);
+assert.ok(!fs.existsSync(`${own}/runtime-FIRST`));
+fs.writeFileSync(`${own}/run-before-output-path1.mjs.record`, before, { flag: 'wx' });
+const first = "path.join(RUN, `published/${surface}.html`)";
+assert.equal(before.toString().split(first).length, 2);
+const after = before.toString()
+  .replace(first, "path.join(RUN, `published/formula-padding/${surface}.html`)")
+  .replace("path.join(OWN, 'ready-FIRST.record')", "path.join(OWN, 'ready-output-path1.record')");
+fs.writeFileSync(run, after);
+const check = spawnSync(process.execPath, ['--check', run], { encoding: 'utf8' });
+assert.equal(check.status, 0, check.stderr);
+const digest = sha(fs.readFileSync(run));
+for (const items of [ready.files, ready.pins]) {
+  items.find(item => item.path === run).sha256 = digest;
+}
+ready.correction = {
+  diagnosis: 'Standard-answer and formula-padding stages used the same wx output path.',
+  originalReady: { path: `${own}/ready-FIRST.record`, sha256: sha(originalReady) },
+  originalRun: { path: `${own}/run-before-output-path1.mjs.record`, sha256: sha(before) },
+  change: 'Keep both static HTML snapshots; deliver the formula-padding snapshot.',
+  syntaxExit: 0, rendererCalls: 0, browserLaunches: 0, oldPassReruns: 0,
+};
+fs.writeFileSync(`${own}/ready-output-path1.record`, `${JSON.stringify(ready, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: 'OUTPUT_PATH_CORRECTED_RUNTIME_NOT_EXECUTED',
+  run: { path: run, sha256: digest }, ready: `${own}/ready-output-path1.record`,
+  rendererCalls: 0, browserLaunches: 0 }));

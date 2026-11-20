@@ -1,0 +1,73 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const own = `${repo}/.tmp/resume182-6-8a-n11-0789/display-FIRST`;
+assert.ok(!fs.existsSync(own));
+const evidence = `${repo}/ssot-resources/soviet10year-textbooks/artifacts/8a/evidence`;
+const sourceDirectory = `${evidence}/resume182-6-n10-supervision-and-display-code3695/resume182-6-8a-n10-display3695-FIRST`;
+const helperSource = `${evidence}/resume182-6-n6-display-runtime3695/resume182-6-8a-n6-display3695-FIRST/display-helper.mjs.record`;
+const staticSurfaceSource = `${evidence}/resume182-6-c2ex-display-failed-runtimes-and-current-code5724/resume182-6-8a-c2ex-display5724-FIRST/run.mjs.record`;
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const lessonDirectory = `${repo}/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c3-s1-n11`;
+const figureIds = JSON.parse(fs.readFileSync(`${lessonDirectory}/figures.json`)).figures.map(item => item.id);
+const staticSurfaceBytes = fs.readFileSync(staticSurfaceSource);
+const staticSurfaceText = staticSurfaceBytes.toString('utf8');
+const slice = (text, first, last) => {
+  const start = text.indexOf(first), end = text.indexOf(last, start);
+  assert.ok(start >= 0 && end > start, 'The retained helper boundary must be exact');
+  return text.slice(start, end);
+};
+fs.mkdirSync(own);
+const origins = [];
+for (const name of ['prepare.mjs', 'run.mjs', 'display-helper.mjs']) {
+  const source = name === 'display-helper.mjs' ? helperSource : `${sourceDirectory}/${name}.record`;
+  const bytes = fs.readFileSync(source);
+  let text = bytes.toString('utf8');
+  if (name !== 'display-helper.mjs') {
+    text = text.replaceAll('/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck', repo)
+      .replaceAll('.tmp/resume182-6-8a-n10-display3695-FIRST', '.tmp/resume182-6-8a-n11-0789/display-FIRST')
+      .replaceAll('.tmp/resume182-6-8a-n6-display3695-FIRST', '.tmp/resume182-6-8a-n11-0789/display-FIRST')
+      .replaceAll('alg8-c2-s2-n10', 'alg8-c3-s1-n11')
+      .replaceAll('n10-parent-display-ready@1', 'n11-parent-display-ready@1')
+      .replaceAll('bounded-n10-offline-display@1', 'bounded-n11-offline-display@1');
+    if (name === 'prepare.mjs') {
+      text = text.replace("export const requiredFigures = ['fig-22', 'fig-23', 'fig-24', 'fig-25'];",
+        `export const requiredFigures = ${JSON.stringify(figureIds)};`);
+    } else {
+      const original = slice(text, "        if (surface === 'exercises')", '        await page.evaluate(() => document.fonts.ready);');
+      const replacement = slice(staticSurfaceText, "        if (surface === 'exercises' && !report.deliveredSurfaces)",
+        '        await page.evaluate(() => document.fonts.ready);');
+      text = text.replace(original, replacement);
+      const restore = slice(staticSurfaceText, '    if (prior?.deliveredSurfaces)', "    process.env.TMPDIR = path.join(RUN, 'browser-tmp');");
+      text = text.replace("    process.env.TMPDIR = path.join(RUN, 'browser-tmp');",
+        `${restore}    process.env.TMPDIR = path.join(RUN, 'browser-tmp');`);
+      text = text.replace('usage.pageNavigations === 6', 'usage.pageNavigations >= 6');
+    }
+  }
+  const target = `${own}/${name}`;
+  fs.writeFileSync(target, text, { flag: 'wx' });
+  const check = spawnSync(process.execPath, ['--check', target], { cwd: repo, encoding: 'utf8' });
+  assert.equal(check.status, 0, check.stderr);
+  origins.push({ source: path.relative(repo, source), sourceSha256: sha(bytes),
+    path: target, sha256: sha(fs.readFileSync(target)), syntaxExit: check.status });
+}
+const prepared = await import(`${own}/prepare.mjs`);
+const pins = prepared.support.map(filename => ({
+  path: filename, realpath: fs.realpathSync(filename), sha256: sha(fs.readFileSync(filename)),
+}));
+const record = {
+  status: 'SCRIPTS_PREPARED_RUNTIME_NOT_EXECUTED', workdir: repo,
+  files: origins.map(({ path, sha256 }) => ({ path, sha256 })), origins, pins,
+  pendingFigureInventory: false, figureIds, parentReadyRequired: true,
+  staticSurfaceHelper: { path: path.relative(repo, staticSurfaceSource), sha256: sha(staticSurfaceBytes) },
+  rendererCalls: 0, browserLaunches: 0, screenshotsCaptured: 0,
+  databaseWrites: 0, finish: 'review',
+};
+fs.writeFileSync(`${own}/ready-FIRST.record`, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: `${own}/ready-FIRST.record`,
+  sha256: sha(fs.readFileSync(`${own}/ready-FIRST.record`)), rendererCalls: 0 }));

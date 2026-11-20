@@ -1,0 +1,514 @@
+"""Text-only evidence and production-normalized copies for authorized182-6."""
+
+import copy
+import hashlib
+import json
+import os
+import re
+import sys
+import time
+from collections import Counter
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+SCOPE = ROOT / ".tmp/resume182-6-8a-n11-0789/modern-text-review-FIRST"
+TOOLS = ROOT / ".claude/skills/ld-s10y-lesson/tools"
+MODERN = ROOT / (
+    ".tmp/resume182-6-8a-n11-0789/modern-affected-join1/adapt/"
+    "8a/modern-us-neutral/lessons/alg8-c3-s1-n11"
+)
+RAW = ROOT / (
+    "ssot-resources/soviet10year-textbooks/artifacts/8a/"
+    "lessons/alg8-c3-s1-n11"
+)
+SOURCE_REVIEW = ROOT / (
+    ".tmp/resume182-6-8a-n11-0789/source-review-FIRST/"
+    "result-affected-join1.record"
+)
+APPROVAL_SHA = "2a74806246d0ff5f8afd6d2ba64674a9f6f14116c37c21a424d772c939954968"
+EXPECTED_SOURCE = {
+    "lesson": "2032cc6aaee8ca39f04c44b2b02de11f9269810a464d8a97cf5dfba5555bdf0c",
+    "exercises": "d5de841e47b2601e1130e353e1aff02b5aee259bbd9b531b7d2d6cededbd17e7",
+}
+EXPECTED_TEMPLATE = {
+    "lesson": "f91591040a6f8e3508b38649ce324d00c7af571dbe0a78b2fc5218438b29baa0",
+    "exercises": "bb277f1ae04c19c4ff8c68c78aab657f8a89bb910a354cc89ad2d424309cd49d",
+}
+EXPECTED_SUBPARTS = {
+    "191": 3, "192": 2, "193": 4, "194": 2, "195": 3, "196": 4,
+    "198": 3, "199": 2, "200": 2, "202": 2, "203": 2,
+}
+
+
+def sha_bytes(value):
+    return hashlib.sha256(value).hexdigest()
+
+
+def json_bytes(value):
+    return (json.dumps(value, ensure_ascii=False, indent=2) + "\n").encode("utf-8")
+
+
+def json_sha(value):
+    return sha_bytes(json_bytes(value))
+
+
+def binding(path, data):
+    return {"path": str(path), "sha256": sha_bytes(data)}
+
+
+def save_record(name, value):
+    path = SCOPE / name
+    if path.parent != SCOPE or path.exists():
+        raise RuntimeError(f"Refusing non-exclusive record write: {path}")
+    payload = json_bytes(value)
+    with path.open("xb") as handle:
+        handle.write(payload)
+    path.chmod(0o444)
+    return binding(path, payload)
+
+
+def whitespace_equivalent(text):
+    return re.sub(r"\s+", "", text)
+
+
+def exact_formulas(text):
+    return [
+        match.group(1) or match.group(2)
+        for match in edition.MATH.finditer(text)
+    ]
+
+
+def multiset_record(expressions):
+    return [
+        {"expression": expression, "multiplicity": count}
+        for expression, count in sorted(Counter(expressions).items())
+    ]
+
+
+def split_parts(text, alphabet):
+    markers = [
+        match for match in edition.PART_MARKER.finditer(edition.masked_math(text))
+        if match.group("label") in alphabet
+    ]
+    if not markers:
+        return {"prefix": text, "parts": []}
+    parts = []
+    for index, marker in enumerate(markers):
+        end = markers[index + 1].start() if index + 1 < len(markers) else len(text)
+        parts.append({
+            "label": marker.group("label"),
+            "payload": text[marker.end():end].strip(),
+            "offset": marker.start(),
+        })
+    return {"prefix": text[:markers[0].start()].rstrip(), "parts": parts}
+
+
+started = datetime.now(timezone.utc).isoformat()
+clock = time.monotonic()
+if Path.cwd() != ROOT or os.environ.get("PYTHONDONTWRITEBYTECODE") != "1":
+    raise RuntimeError("Wrong workspace or missing PYTHONDONTWRITEBYTECODE=1")
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(TOOLS))
+import edition
+
+input_paths = {
+    "original_lesson_template": MODERN / "lesson.template.json",
+    "original_exercises_template": MODERN / "exercises.template.json",
+    "raw_lesson": RAW / "lesson.json",
+    "raw_exercises": RAW / "exercises.json",
+    "reused_source_approval": SOURCE_REVIEW,
+    "edition_text_contract": ROOT / (
+        ".claude/skills/ld-s10y-lesson/references/edition-text-contract.md"
+    ),
+    "edition_profile": ROOT / ".claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json",
+    "lesson_edition_contract": ROOT / ".claude/skills/ld-s10y-lesson/SKILL.md",
+    "production_edition_module": TOOLS / "edition.py",
+    "review_command": Path(__file__),
+}
+input_bytes = {name: path.read_bytes() for name, path in input_paths.items()}
+files = {
+    name: binding(input_paths[name], payload)
+    for name, payload in input_bytes.items()
+}
+original_lesson = json.loads(input_bytes["original_lesson_template"])
+original_exercises = json.loads(input_bytes["original_exercises_template"])
+raw_lesson = json.loads(input_bytes["raw_lesson"])
+raw_exercises = json.loads(input_bytes["raw_exercises"])
+approval = json.loads(input_bytes["reused_source_approval"])
+profile = json.loads(input_bytes["edition_profile"])
+checks = []
+blockers = []
+
+
+def check(name, passed, detail=None):
+    record = {"name": name, "pass": bool(passed)}
+    if detail is not None:
+        record["detail"] = detail
+    checks.append(record)
+    if not passed:
+        blockers.append({"check": name, "detail": detail})
+    return bool(passed)
+
+
+check("reused_source_approval_sha", files["reused_source_approval"]["sha256"] == APPROVAL_SHA)
+check("reused_source_status", approval["status"] == "SOURCE_PASS")
+check("reused_source_identity", (
+    approval["book"] == "8a" and approval["lesson"] == "alg8-c3-s1-n11"
+))
+for kind, original, raw in [
+    ("lesson", original_lesson, raw_lesson),
+    ("exercises", original_exercises, raw_exercises),
+]:
+    check(
+        f"{kind}_original_template_sha",
+        files[f"original_{kind}_template"]["sha256"] == EXPECTED_TEMPLATE[kind],
+    )
+    check(
+        f"{kind}_current_raw_sha",
+        files[f"raw_{kind}"]["sha256"] == EXPECTED_SOURCE[kind],
+    )
+    check(f"{kind}_source_snapshot_exact", original["source"]["data"] == raw)
+    check(
+        f"{kind}_source_binding_exact",
+        original["source"]["sha256"] == files[f"raw_{kind}"]["sha256"]
+        and original["source"]["path"] == f"lessons/alg8-c3-s1-n11/{kind}.json",
+    )
+    check(f"{kind}_edition", original["edition"] == "modern-us-neutral")
+
+lesson = copy.deepcopy(original_lesson)
+exercises = copy.deepcopy(original_exercises)
+edition.normalize_lesson_layout(lesson)
+edition.normalize_exercise_layout(exercises)
+
+normalization_differences = []
+for kind, original, normalized, collection in [
+    ("lesson", original_lesson, lesson, "prose"),
+    ("exercises", original_exercises, exercises, "exercises"),
+]:
+    for index, (before, after) in enumerate(zip(original[collection], normalized[collection])):
+        if before != after:
+            changed_fields = [
+                key for key in sorted(set(before) | set(after))
+                if before.get(key) != after.get(key)
+            ]
+            normalization_differences.append({
+                "kind": kind,
+                "index": index,
+                "number": after.get("number"),
+                "source_refs": after.get("source_refs", after.get("pages")),
+                "changed_fields": changed_fields,
+            })
+            check(
+                f"{kind}_{index}_normalization_only",
+                set(changed_fields) <= {"text", "lines", "changes"}
+                and whitespace_equivalent(before["text"]) == whitespace_equivalent(after["text"]),
+                changed_fields,
+            )
+    copy_for_idempotence = copy.deepcopy(normalized)
+    if kind == "lesson":
+        edition.normalize_lesson_layout(copy_for_idempotence)
+    else:
+        edition.normalize_exercise_layout(copy_for_idempotence)
+    check(f"{kind}_production_normalization_idempotent", copy_for_idempotence == normalized)
+
+files["normalized_lesson_template"] = save_record("lesson.template.json.record", lesson)
+files["normalized_exercises_template"] = save_record("exercises.template.json.record", exercises)
+
+check("lesson_identity_fields", all(
+    lesson.get(field) == raw_lesson.get(field) for field in edition.IDENTITY_FIELDS
+))
+check("lesson_figure_bindings", lesson["figures"] == raw_lesson["figures"])
+check("prose_count_and_order", len(lesson["prose"]) == len(raw_lesson["prose"]) == 25)
+check("exercise_numbers_order_count", (
+    [item["number"] for item in exercises["exercises"]]
+    == [item["number"] for item in raw_exercises["exercises"]]
+    == [str(number) for number in range(188, 204)]
+    and exercises["count"] == raw_exercises["count"] == 16
+))
+check("section_breaks_no_modern_drift", lesson["section_breaks"] == original_lesson["section_breaks"] == [])
+check("errata_no_modern_math_change", lesson["errata"] == original_lesson["errata"] == [])
+
+formula_evidence = []
+layout_evidence = []
+for kind, raw_doc, original_doc, normalized_doc, collection in [
+    ("prose", raw_lesson, original_lesson, lesson, "prose"),
+    ("exercise", raw_exercises, original_exercises, exercises, "exercises"),
+]:
+    for index, (raw, original, normalized) in enumerate(zip(
+        raw_doc[collection], original_doc[collection], normalized_doc[collection],
+    )):
+        object_id = f"prose:{index}" if kind == "prose" else f"exercise:{raw['number']}"
+        expressions = exact_formulas(raw["text"])
+        original_expressions = exact_formulas(original["text"])
+        normalized_expressions = exact_formulas(normalized["text"])
+        raw_multiset = multiset_record(expressions)
+        exact_multiset = (
+            Counter(expressions) == Counter(original_expressions)
+            == Counter(normalized_expressions)
+        )
+        exact_order = expressions == original_expressions == normalized_expressions
+        check(f"{object_id}_exact_formula_multiset", exact_multiset)
+        check(f"{object_id}_exact_formula_order", exact_order)
+        chinese_math_punctuation = [
+            expression for expression in normalized_expressions
+            if re.search(r"[、，；。？！：]", expression)
+        ]
+        check(f"{object_id}_chinese_punctuation_outside_math", not chinese_math_punctuation)
+        check(
+            f"{object_id}_numbers_and_conditions",
+            edition.number_signature(raw["text"]) == edition.number_signature(normalized["text"]),
+        )
+        check(f"{object_id}_source_text_exact", normalized["source_text"] == raw["text"])
+        identity_fields = (
+            ("kind", "id", "label", "printed_page", "source_refs")
+            if kind == "prose" else
+            ("number", "source_number", "group", "group_id", "pages", "figure_refs", "figures")
+        )
+        check(
+            f"{object_id}_metadata_refs_groups",
+            all(normalized.get(key) == raw.get(key) for key in identity_fields),
+        )
+        check(f"{object_id}_no_numeric_changes", normalized["numeric_changes"] == [])
+        check(f"{object_id}_no_historical_entities", normalized["historical_entities"] == [])
+        check(f"{object_id}_modern_cyrillic_absent", not edition.CYRILLIC.search(normalized["text"]))
+        forbidden = [
+            term for term in profile["forbidden_terms"] + profile["forbidden_person_names"]
+            if term in normalized["text"]
+        ]
+        check(f"{object_id}_modern_profile_terms", not forbidden, forbidden)
+        formula_evidence.append({
+            "object": object_id,
+            "source_refs": raw.get("source_refs", raw.get("pages")),
+            "count": len(expressions),
+            "raw_multiset": raw_multiset,
+            "raw_multiset_sha256": json_sha(raw_multiset),
+            "original_multiset_sha256": json_sha(multiset_record(original_expressions)),
+            "normalized_multiset_sha256": json_sha(multiset_record(normalized_expressions)),
+            "exact_multiset_equal": exact_multiset,
+            "exact_order_equal": exact_order,
+            "layout_math_splitting_needed": False,
+            "chinese_punctuation_inside_math": chinese_math_punctuation,
+        })
+        if kind == "prose":
+            check(
+                f"{object_id}_only_whitespace_layout",
+                whitespace_equivalent(normalized["text"]) == whitespace_equivalent(raw["text"]),
+            )
+            paragraphs = normalized["text"].split("\n\n") if normalized["text"] else []
+            layout_evidence.append({
+                "object": object_id,
+                "kind": normalized["kind"],
+                "paragraphs": paragraphs,
+                "paragraph_count": len(paragraphs),
+                "source_refs": raw["source_refs"],
+            })
+        else:
+            check(
+                f"{object_id}_lines_exactly_text",
+                normalized["lines"] == normalized["text"].splitlines(),
+            )
+
+context_evidence = []
+subpart_evidence = []
+for raw, modern in zip(raw_exercises["exercises"], exercises["exercises"]):
+    number = raw["number"]
+    expected = raw["text"]
+    if number == "188":
+        expected = expected.replace("\u00ab\u8230\u65d7\u00bb", " Westview ")
+        expected = expected.replace("\u00ab\u4e1c\u65b9\u00bb", " Eastside ")
+        check("exercise:188_exact_query_name_replacement", modern["text"] == expected)
+        context_evidence.append({
+            "object": "exercise:188",
+            "changes": modern["changes"],
+            "replacements": [
+                {"source": "\u00ab\u8230\u65d7\u00bb", "modern": "Westview", "authorized_rank": 1},
+                {"source": "\u00ab\u4e1c\u65b9\u00bb", "modern": "Eastside", "authorized_rank": 4},
+            ],
+            "authorized_table_order": ["Westview", "Dawn", "Zenith", "Eastside", "Harvest"],
+            "order_evidence_origin": "Human authorization in this request, not an image observation",
+            "query_relations_unchanged": True,
+            "five_distinct_ranked_terms_preserved": True,
+            "figure_ref": modern["figure_refs"],
+            "figure_contents_inspected_or_approved": False,
+            "text": modern["text"],
+        })
+    elif number == "190":
+        expected = expected.replace("\u4fc4\u8bed", "\u82f1\u8bed")
+        check("exercise:190_exact_subject_replacement", modern["text"] == expected)
+        context_evidence.append({
+            "object": "exercise:190",
+            "changes": modern["changes"],
+            "replacement": {"source": "\u4fc4\u8bed", "modern": "\u82f1\u8bed"},
+            "four_subject_order_unchanged": True,
+            "grade_day_lesson_count_and_each_subject_condition_unchanged": True,
+            "text": modern["text"],
+        })
+    elif number in EXPECTED_SUBPARTS:
+        source_parts = split_parts(raw["text"], edition.CYRILLIC_PARTS)
+        modern_parts = split_parts(modern["text"], edition.LATIN_PARTS)
+        count = EXPECTED_SUBPARTS[number]
+        source_labels = [part["label"] for part in source_parts["parts"]]
+        modern_labels = [part["label"] for part in modern_parts["parts"]]
+        check(
+            f"exercise:{number}_natural_label_order",
+            source_labels == list(edition.CYRILLIC_PARTS[:count])
+            and modern_labels == list(edition.LATIN_PARTS[:count]),
+            {"source_labels": source_labels, "modern_labels": modern_labels},
+        )
+        check(
+            f"exercise:{number}_prefix_unchanged",
+            whitespace_equivalent(source_parts["prefix"])
+            == whitespace_equivalent(modern_parts["prefix"]),
+        )
+        parts = []
+        for source_part, modern_part in zip(source_parts["parts"], modern_parts["parts"]):
+            same = (
+                whitespace_equivalent(source_part["payload"])
+                == whitespace_equivalent(modern_part["payload"])
+            )
+            check(
+                f"exercise:{number}_complete_payload_{modern_part['label']}",
+                same,
+                {"source_label": source_part["label"], "modern_label": modern_part["label"]},
+            )
+            parts.append({
+                "source_label": source_part["label"],
+                "modern_label": modern_part["label"],
+                "source_complete_payload": source_part["payload"],
+                "modern_complete_payload": modern_part["payload"],
+                "payload_equal_except_whitespace": same,
+            })
+        line_labels = [
+            re.match(r"^([a-z])\) ", line).group(1)
+            for line in modern["text"].splitlines()
+            if re.match(r"^([a-z])\) ", line)
+        ]
+        check(
+            f"exercise:{number}_one_prefix_and_one_line_per_complete_subpart",
+            line_labels == list(edition.LATIN_PARTS[:count])
+            and len(modern["text"].splitlines()) == count + 1
+            and "\u3000" not in modern["text"],
+        )
+        subpart_evidence.append({
+            "number": number,
+            "source_refs": raw["pages"],
+            "source_labels": source_labels,
+            "modern_labels": modern_labels,
+            "prefix": modern_parts["prefix"],
+            "parts": parts,
+            "complete_payloads_checked_not_just_formula_multiset": True,
+            "mechanical_column_reassignment_used": False,
+        })
+    else:
+        check(f"exercise:{number}_neutral_text_unchanged", modern["text"] == raw["text"])
+
+check("eleven_cyrillic_subpart_items", len(subpart_evidence) == 11)
+check("context_change_declarations", all(
+    item["changes"] == ["context"]
+    for item in exercises["exercises"] if item["number"] in {"188", "190"}
+))
+check("review_group_preserved", [
+    (item["number"], item["group"], item["group_id"])
+    for item in exercises["exercises"] if item["group_id"] == "g1"
+] == [("202", "\u590d\u4e60\u9898", "g1"), ("203", "\u590d\u4e60\u9898", "g1")])
+all_refs = [
+    ref for item in lesson["prose"] for ref in item["source_refs"]
+] + [
+    ref for item in exercises["exercises"] for ref in item["pages"]
+]
+check("approved_right_boundary_excluded", approval["assemblyChecks"]["boundary"]["excluded_right"] not in all_refs)
+
+for name, path in input_paths.items():
+    check(f"{name}_unchanged_after_review", sha_bytes(path.read_bytes()) == files[name]["sha256"])
+for name in ("normalized_lesson_template", "normalized_exercises_template"):
+    record = files[name]
+    path = Path(record["path"])
+    check(f"{name}_sealed_hash", sha_bytes(path.read_bytes()) == record["sha256"])
+    check(f"{name}_read_only", path.stat().st_mode & 0o222 == 0)
+
+evidence = {
+    "schema": "stemrobin-182/independent-modern-text-evidence@1",
+    "date": "2026-11-20",
+    "book": "8a",
+    "lesson": "alg8-c3-s1-n11",
+    "edition": "modern-us-neutral",
+    "files": files,
+    "checks": checks,
+    "blockers": blockers,
+    "normalization_differences": normalization_differences,
+    "formulas_per_object": formula_evidence,
+    "context_changes": context_evidence,
+    "natural_subparts": subpart_evidence,
+    "normalized_prose_layout": layout_evidence,
+    "source_boundary_reused": approval["assemblyChecks"]["boundary"],
+    "newImageViews": 0,
+    "imageFileReads": 0,
+    "source_pixels_rereviewed": False,
+    "figures_approved": False,
+    "answers_or_choices_read": False,
+    "production_validators_invoked": False,
+    "publishers_or_renderers_invoked": False,
+}
+evidence_binding = save_record("evidence.record", evidence)
+usage_binding = save_record("usage.record", {
+    "schema": "stemrobin-182/independent-review-usage@1",
+    "reviewer_kind": "independent_agent",
+    "hostTokens": "unknown",
+    "cost": "unknown",
+    "newImageViews": 0,
+    "imageFileReads": 0,
+    "networkCalls": 0,
+    "databaseActions": 0,
+    "dependenciesInstalled": 0,
+    "answersOrChoicesRead": False,
+    "sourcePixelsRereviewed": False,
+    "figuresApproved": False,
+    "productionValidatorsInvoked": False,
+    "publishersOrRenderersInvoked": False,
+})
+receipt_binding = save_record("command.receipt.record", {
+    "schema": "stemrobin-182/independent-modern-text-command-receipt@1",
+    "command": (
+        "PYTHONDONTWRITEBYTECODE=1 .claude/skills/ld-s10y-lesson/.venv/bin/python "
+        ".tmp/resume182-6-8a-n11-0789/modern-text-review-FIRST/review.py"
+    ),
+    "cwd": str(ROOT),
+    "started_at_utc": started,
+    "finished_at_utc": datetime.now(timezone.utc).isoformat(),
+    "duration_seconds": round(time.monotonic() - clock, 3),
+    "exit_code": 0,
+    "requested_python": str(ROOT / ".claude/skills/ld-s10y-lesson/.venv/bin/python"),
+    "actual_python": sys.executable,
+    "python_version": sys.version,
+    "PYTHONDONTWRITEBYTECODE": os.environ["PYTHONDONTWRITEBYTECODE"],
+    "sys_dont_write_bytecode": sys.dont_write_bytecode,
+    "production_functions_called": [
+        "edition.normalize_lesson_layout",
+        "edition.normalize_exercise_layout",
+    ],
+    "evidence_helpers_only": [
+        "edition.MATH", "edition.PART_MARKER", "edition.masked_math",
+        "edition.number_signature", "standard-library JSON and SHA256",
+    ],
+    "image_api_calls": 0,
+    "no_production_validators_publishers_or_renderers": True,
+    "input_files": files,
+    "output_evidence": evidence_binding,
+    "output_usage": usage_binding,
+    "check_count": len(checks),
+    "failed_checks": len(blockers),
+})
+print(json.dumps({
+    "blockers": blockers,
+    "checks": len(checks),
+    "normalization_differences": normalization_differences,
+    "formula_occurrences": sum(item["count"] for item in formula_evidence),
+    "formula_objects": len(formula_evidence),
+    "source_subpart_items": len(subpart_evidence),
+    "files": files,
+    "evidence": evidence_binding,
+    "usage": usage_binding,
+    "command_receipt": receipt_binding,
+}, ensure_ascii=False, indent=2))

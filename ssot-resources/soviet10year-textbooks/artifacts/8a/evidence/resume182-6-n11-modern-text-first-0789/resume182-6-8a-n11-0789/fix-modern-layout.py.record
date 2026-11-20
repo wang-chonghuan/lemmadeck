@@ -1,0 +1,80 @@
+import hashlib
+import json
+import os
+import sys
+from copy import deepcopy
+from pathlib import Path
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+assert Path.cwd() == REPO
+assert os.environ.get("PYTHONDONTWRITEBYTECODE") == "1"
+BASE = REPO / ".tmp/resume182-6-8a-n11-0789"
+REVIEW = BASE / "modern-text-review-FIRST"
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+import edition
+
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def write_new(file, data):
+    with file.open("xb") as stream:
+        stream.write(data)
+
+
+review_bytes = (REVIEW / "result.record").read_bytes()
+assert digest(review_bytes) == "6fa18b2f6814826e0cb2bf42374e6d8efe2e630611a5b23f519b975662ea9693"
+review = json.loads(review_bytes)
+assert review["status"] == "TEXT_REVISE"
+defect_bytes = (REVIEW / "layout-defect.record").read_bytes()
+assert digest(defect_bytes) == review["files"]["layout_defect"]["sha256"]
+defect = json.loads(defect_bytes)
+target = Path(defect["smallest_fix"]["target"])
+assert target.is_relative_to(BASE)
+before = target.read_bytes()
+assert digest(before) == review["files"]["original_lesson_template"]["sha256"]
+document = json.loads(before)
+original = deepcopy(document)
+text = document["prose"][0]["text"]
+assert text == defect["actual_text"]
+for change in defect["smallest_fix"]["replacements"]:
+    assert text.count(change["before"]) == 1
+    text = text.replace(change["before"], change["after"])
+document["prose"][0]["text"] = text
+edition.normalize_lesson_layout(document)
+assert document["prose"][0]["text"] == defect["proposed_normalized_text"]
+unchanged = deepcopy(document)
+unchanged["prose"][0] = original["prose"][0]
+assert unchanged == original
+assert "".join(document["prose"][0]["text"].split()) == "".join(
+    original["prose"][0]["text"].split()
+)
+output = BASE / "modern-layout-affected1"
+output.mkdir()
+write_new(output / "lesson.before.record", before)
+after = (json.dumps(document, ensure_ascii=False, indent=2) + "\n").encode()
+write_new(output / "lesson.after.record", after)
+target.write_bytes(after)
+record = {
+    "schema": "stemrobin-182/modern-text-layout-fix@1",
+    "status": "FIXED_REVIEW_PENDING",
+    "book": "8a",
+    "lesson": "alg8-c3-s1-n11",
+    "edition": "modern-us-neutral",
+    "originalReview": {"path": str(REVIEW / "result.record"), "sha256": digest(review_bytes)},
+    "before": {"path": str(output / "lesson.before.record"), "sha256": digest(before)},
+    "after": {"path": str(target), "sha256": digest(after)},
+    "immutableAfter": {"path": str(output / "lesson.after.record"), "sha256": digest(after)},
+    "changedProseIndices": [0],
+    "nonWhitespaceChanges": 0,
+    "formulaChanges": 0,
+    "sourceChanges": 0,
+    "imageReads": 0,
+    "oldPassReruns": 0,
+    "databaseWrites": 0,
+    "finish": "review",
+}
+record_bytes = (json.dumps(record, ensure_ascii=False, indent=2) + "\n").encode()
+write_new(output / "fix.record", record_bytes)
+print(json.dumps({"path": str(output / "fix.record"), "sha256": digest(record_bytes)}))

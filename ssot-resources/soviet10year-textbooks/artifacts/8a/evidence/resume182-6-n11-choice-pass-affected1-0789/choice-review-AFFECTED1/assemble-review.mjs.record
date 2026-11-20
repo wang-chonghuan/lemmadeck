@@ -1,0 +1,38 @@
+import fs from "node:fs";
+import crypto from "node:crypto";
+
+const root = "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck";
+const firstPath = ".tmp/resume182-6-8a-n11-0789/choice-review-FIRST/review.json";
+const dir = ".tmp/resume182-6-8a-n11-0789/choice-review-AFFECTED1";
+if (process.cwd() !== root) throw new Error("Unexpected cwd");
+
+// Mechanically carry forward the prior report; only authored affected checks replace it.
+const firstBytes = fs.readFileSync(firstPath);
+const firstHash = crypto.createHash("sha256").update(firstBytes).digest("hex");
+if (firstHash !== "0be621d3dca4f7a777a05855dc70eecd0cfd76267189e1abd86adc6e80c35a20") {
+  throw new Error("FIRST report binding changed");
+}
+const report = JSON.parse(firstBytes.toString("utf8"));
+const affected = JSON.parse(fs.readFileSync(`${dir}/affected-checks.json`, "utf8"));
+const questions = new Map(affected.question_reviews.map((q) => [q.question_id, q]));
+const sources = new Map(affected.source_coverage.map((s) => [s.source_number, s.coverage]));
+
+report.draft_sha256 = affected.draft_sha256;
+report.question_reviews = report.question_reviews.map((q) => questions.get(q.question_id) ?? q);
+report.source_reviews = report.source_reviews.map((s) =>
+  sources.has(s.source_number) ? { ...s, coverage: sources.get(s.source_number) } : s,
+);
+report.outcome = affected.outcome;
+
+const output = `${JSON.stringify(report, null, 2)}\n`;
+fs.writeFileSync(`${dir}/review.json`, output, { flag: "wx" });
+console.log(JSON.stringify({
+  path: `${dir}/review.json`,
+  byte_sha256: crypto.createHash("sha256").update(output).digest("hex"),
+  outcome: report.outcome,
+  replaced_question_ids: [...questions.keys()],
+  replaced_source_coverage: [...sources.keys()],
+  reused_question_reviews: report.question_reviews.length - questions.size,
+  reused_source_coverage: report.source_reviews.length - sources.size,
+  reused_figure_checks: report.figure_checks.length,
+}, null, 2));

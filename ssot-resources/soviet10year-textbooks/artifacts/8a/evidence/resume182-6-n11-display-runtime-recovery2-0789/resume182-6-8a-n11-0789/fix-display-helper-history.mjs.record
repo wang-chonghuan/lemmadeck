@@ -1,0 +1,51 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const own = `${repo}/.tmp/resume182-6-8a-n11-0789/display-FIRST`;
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const priorPath = `${own}/ready-helper-contract1.record`;
+const ready = JSON.parse(fs.readFileSync(priorPath));
+const first = JSON.parse(fs.readFileSync(`${own}/runtime-FIRST/report-FIRST.json`));
+const failed = JSON.parse(fs.readFileSync(`${own}/runtime-recovery-helper-contract1/report-FIRST.json`));
+assert.equal(failed.status, 'FAIL');
+assert.equal(failed.screenshots.length, 0);
+assert.ok(Object.values(failed.cleanup).every(Boolean));
+assert.equal(first.renderer.ok, true);
+ready.historicalImplementation = ['prepare.mjs', 'run.mjs', 'display-helper.mjs'].map(name => {
+  const originalPath = `${own}/${name}`;
+  const file = `${originalPath}-before-helper-contract1.record`;
+  const hash = sha(fs.readFileSync(file));
+  assert.equal(hash, first.inputs.find(item => item.path === originalPath).sha256);
+  return { originalPath, path: file, sha256: hash };
+});
+for (const file of ready.files) {
+  const bytes = fs.readFileSync(file.path);
+  if (!file.path.endsWith('/run.mjs')) assert.equal(sha(bytes), file.sha256);
+  else {
+    const previous = bytes.toString()
+      .replace("ready-helper-history1.record", "ready-helper-contract1.record")
+      .replace(/      const historicalImplementation = \[\];\n      for \(const input of prior\.inputs\) \{[\s\S]*?      \}\n      for \(const input of prior\.staged\)/u,
+        '      for (const input of prior.inputs) await bound(input.path, input.sha256);\n      for (const input of prior.staged)')
+      .replace('originalFailureUnmodified: true,\n        historicalImplementation', 'originalFailureUnmodified: true');
+    assert.equal(sha(previous), file.sha256);
+    fs.writeFileSync(`${file.path}-before-helper-history1.record`, previous, { flag: 'wx' });
+  }
+  const check = spawnSync(process.execPath, ['--check', file.path], { encoding: 'utf8' });
+  assert.equal(check.status, 0, check.stderr);
+  file.sha256 = sha(bytes);
+}
+ready.pins = ready.pins.filter(item => !ready.files.some(file => file.path === item.path));
+ready.pins.push(...ready.files.map(file => ({ ...file, realpath: fs.realpathSync(file.path) })));
+ready.historicalImplementationRecovery = {
+  preservedReady: { path: priorPath, sha256: sha(fs.readFileSync(priorPath)) },
+  reason: 'Preserved FIRST implementation snapshots bind old code; new implementation pins bind repaired code. All content and renderer bytes still use original hashes.',
+  rendererCalls: 0, browserLaunches: 0, contentApprovalReruns: 0, databaseWrites: 0,
+};
+const output = `${own}/ready-helper-history1.record`;
+fs.writeFileSync(output, `${JSON.stringify(ready, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: 'HISTORICAL_IMPLEMENTATION_BOUND_RECOVERY_PENDING',
+  path: output, sha256: sha(fs.readFileSync(output)) }));

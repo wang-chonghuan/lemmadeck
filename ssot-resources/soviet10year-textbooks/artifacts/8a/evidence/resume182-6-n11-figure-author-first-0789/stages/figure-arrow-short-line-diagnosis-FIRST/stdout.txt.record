@@ -1,0 +1,373 @@
+659-            el.visPropCalc.typeLast = typeLast;
+660-
+661-            return {
+662-                evFirst: ev_fa,
+663-                evLast: ev_la,
+664-                typeFirst: typeFirst,
+665-                typeLast: typeLast,
+666-                offFirst: offFirst,
+667-                offLast: offLast,
+668-                sizeFirst: sizeFirst,
+669-                sizeLast: sizeLast,
+670-                showFirst: 1, // Show arrow head. 0 if the distance is too small
+671:                showLast: 1, // Show arrow head. 0 if the distance is too small
+672-                minLen: minlen,
+673-                strokeWidth: strokewidth
+674-            };
+675-        },
+676-
+677-        /**
+678-         * Corrects the line length if there are arrow heads, such that
+679-         * the arrow ends exactly at the intended position.
+680-         * Calls the renderer method to draw the line.
+681-         *
+682-         * @param {JXG.Line} el Reference to a line object, that has to be drawn
+683-         * @param {Object} arrowData Data concerning possible arrow heads
+684-         *
+685-         * @returns {JXG.AbstractRenderer} Reference to the renderer
+686-         *
+687-         * @private
+688-         * @see Line
+689-         * @see JXG.Line
+690-         * @see JXG.AbstractRenderer#updateLine
+691-         * @see JXG.AbstractRenderer#getPositionArrowHead
+692-         *
+693-         */
+694-        updateLineWithEndings: function (el, arrowData) {
+695-            var c1,
+696-                c2,
+697-                // useTotalLength = true,
+698-                margin = null;
+699-
+700-            c1 = new Coords(Const.COORDS_BY_USER, el.point1.coords.usrCoords, el.board);
+701-            c2 = new Coords(Const.COORDS_BY_USER, el.point2.coords.usrCoords, el.board);
+702-            margin = el.evalVisProp('margin');
+703-            if (!el.evalVisProp('clip')) {
+704-                margin += 4096;
+705-            }
+706-            Geometry.calcStraight(el, c1, c2, margin);
+707-
+708-            this.handleTouchpoints(el, c1, c2, arrowData);
+709-            this.getPositionArrowHead(el, c1, c2, arrowData);
+710-
+711-            this.updateLinePrim(
+712-                el.rendNode,
+713-                c1.scrCoords[1],
+714-                c1.scrCoords[2],
+715-                c2.scrCoords[1],
+716-                c2.scrCoords[2],
+717-                el.board
+718-            );
+719-
+720-            return this;
+721-        },
+722-
+723-        /**
+724-         *
+725-         * Calls the renderer method to draw a curve.
+726-         *
+727-         * @param {JXG.GeometryElement} el Reference to a line object, that has to be drawn.
+728-         * @returns {JXG.AbstractRenderer} Reference to the renderer
+729-         *
+730-         * @private
+731-         * @see Curve
+732-         * @see JXG.Curve
+733-         * @see JXG.AbstractRenderer#updateCurve
+734-         *
+735-         */
+736-        updatePath: function (el) {
+--
+740-                this.updatePathPrim(el.rendNode, this.updatePathStringPrim(el), el.board);
+741-            }
+742-
+743-            return this;
+744-        },
+745-
+746-        /**
+747-         * Shorten the length of a line element such that the arrow head touches
+748-         * the start or end point and such that the arrow head ends exactly
+749-         * at the start / end position of the line.
+750-         * <p>
+751-         * The Coords objects c1 and c2 are changed in place. In object a, the Boolean properties
+752:         * 'showFirst' and 'showLast' are set.
+753-         *
+754-         * @param  {JXG.Line} el Reference to the line object that gets arrow heads.
+755-         * @param  {JXG.Coords} c1  Coords of the first point of the line (after {@link JXG.Math.Geometry#calcStraight}).
+756-         * @param  {JXG.Coords} c2  Coords of the second point of the line (after {@link JXG.Math.Geometry#calcStraight}).
+757-         * @param  {Object}  a Object { evFirst: Boolean, evLast: Boolean} containing information about arrow heads.
+758-         * @see JXG.AbstractRenderer#getArrowHeadData
+759-         *
+760-         */
+761-        getPositionArrowHead: function (el, c1, c2, a) {
+762-            var d, d1x, d1y, d2x, d2y;
+763-
+764-            //    Handle arrow heads.
+765-
+766-            //    The default arrow head (type==1) is an isosceles triangle with base length 10 units and height 10 units.
+767-            //    These 10 units are scaled to strokeWidth * arrowSize pixels.
+768-            if (a.evFirst || a.evLast) {
+769-                // Correct the position of the arrow heads
+770-                d1x = d1y = d2x = d2y = 0.0;
+771-                d = c1.distance(Const.COORDS_BY_SCREEN, c2);
+772-
+773-                if (a.evFirst && el.board.renderer.type !== 'vml') {
+774-                    if (d >= a.minLen) {
+775-                        d1x = ((c2.scrCoords[1] - c1.scrCoords[1]) * a.offFirst) / d;
+776-                        d1y = ((c2.scrCoords[2] - c1.scrCoords[2]) * a.offFirst) / d;
+777-                    } else {
+778-                        a.showFirst = 0;
+779-                    }
+780-                }
+781-
+782-                if (a.evLast && el.board.renderer.type !== 'vml') {
+783-                    if (d >= a.minLen) {
+784-                        d2x = ((c2.scrCoords[1] - c1.scrCoords[1]) * a.offLast) / d;
+785-                        d2y = ((c2.scrCoords[2] - c1.scrCoords[2]) * a.offLast) / d;
+786-                    } else {
+787:                        a.showLast = 0;
+788-                    }
+789-                }
+790-                c1.setCoordinates(
+791-                    Const.COORDS_BY_SCREEN,
+792-                    [c1.scrCoords[1] + d1x, c1.scrCoords[2] + d1y],
+793-                    false,
+794-                    true
+795-                );
+796-                c2.setCoordinates(
+797-                    Const.COORDS_BY_SCREEN,
+798-                    [c2.scrCoords[1] - d2x, c2.scrCoords[2] - d2y],
+799-                    false,
+800-                    true
+801-                );
+802-            }
+803-
+804-            return this;
+805-        },
+806-
+807-        /**
+808-         * Handle touchlastpoint / touchfirstpoint
+809-         *
+810-         * @param {JXG.GeometryElement} el
+811-         * @param {JXG.Coords} c1 Coordinates of the start of the line. The coordinates are changed in place.
+812-         * @param {JXG.Coords} c2 Coordinates of the end of the line. The coordinates are changed in place.
+813-         * @param {Object} a
+814-         * @see JXG.AbstractRenderer#getArrowHeadData
+815-         */
+816-        handleTouchpoints: function (el, c1, c2, a) {
+817-            var s1, s2, d, d1x, d1y, d2x, d2y;
+818-
+819-            if (a.evFirst || a.evLast) {
+820-                d = d1x = d1y = d2x = d2y = 0.0;
+821-
+822-                s1 = el.point1.evalVisProp('size') +
+823-                    el.point1.evalVisProp('strokewidth');
+824-
+825-                s2 = el.point2.evalVisProp('size') +
+826-                    el.point2.evalVisProp('strokewidth');
+827-
+828-                // Handle touchlastpoint /touchfirstpoint
+829-                if (a.evFirst && el.evalVisProp('touchfirstpoint') &&
+830-                        el.point1.evalVisProp('visible')) {
+831-                    d = c1.distance(Const.COORDS_BY_SCREEN, c2);
+832-                    //if (d > s) {
+833-                    d1x = ((c2.scrCoords[1] - c1.scrCoords[1]) * s1) / d;
+834-                    d1y = ((c2.scrCoords[2] - c1.scrCoords[2]) * s1) / d;
+835-                    //}
+836-                }
+837-                if (a.evLast && el.evalVisProp('touchlastpoint') &&
+838-                        el.point2.evalVisProp('visible')) {
+839-                    d = c1.distance(Const.COORDS_BY_SCREEN, c2);
+840-                    //if (d > s) {
+841-                    d2x = ((c2.scrCoords[1] - c1.scrCoords[1]) * s2) / d;
+842-                    d2y = ((c2.scrCoords[2] - c1.scrCoords[2]) * s2) / d;
+843-                    //}
+844-                }
+845-                c1.setCoordinates(
+846-                    Const.COORDS_BY_SCREEN,
+847-                    [c1.scrCoords[1] + d1x, c1.scrCoords[2] + d1y],
+848-                    false,
+849-                    true
+850-                );
+851-                c2.setCoordinates(
+852-                    Const.COORDS_BY_SCREEN,
+853-                    [c2.scrCoords[1] - d2x, c2.scrCoords[2] - d2y],
+854-                    false,
+855-                    true
+856-                );
+857-            }
+858-
+859-            return this;
+860-        },
+861-
+862-        /**
+863:         * Set the arrow head size.
+864-         *
+865-         * @param {JXG.GeometryElement} el Reference to a line or curve object that has to be drawn.
+866-         * @param {Object} arrowData Data concerning possible arrow heads
+867-         * @returns {JXG.AbstractRenderer} Reference to the renderer
+868-         *
+869-         * @private
+870-         * @see Line
+871-         * @see JXG.Line
+872-         * @see Curve
+873-         * @see JXG.Curve
+874-         * @see JXG.AbstractRenderer#updatePathWithArrowHeads
+875-         * @see JXG.AbstractRenderer#getArrowHeadData
+876-         */
+877-        setArrowSize: function (el, a) {
+878-            if (a.evFirst) {
+879:                this._setArrowWidth(
+880-                    el.rendNodeTriangleStart,
+881-                    a.showFirst * a.strokeWidth,
+882-                    el.rendNode,
+883-                    a.sizeFirst
+884-                );
+885-            }
+886-            if (a.evLast) {
+887:                this._setArrowWidth(
+888-                    el.rendNodeTriangleEnd,
+889:                    a.showLast * a.strokeWidth,
+890-                    el.rendNode,
+891-                    a.sizeLast
+892-                );
+893-            }
+894-            return this;
+895-        },
+896-
+897-        /**
+898-         * Update the line endings (linecap) of a straight line from its attribute
+899-         * 'linecap'.
+900-         * Possible values for the attribute 'linecap' are: 'butt', 'round', 'square'.
+901-         * The default value is 'butt'. Not available for VML renderer.
+902-         *
+903-         * @param {JXG.Line} element A arbitrary line.
+904-         * @see Line
+905-         * @see JXG.Line
+906-         * @see JXG.AbstractRenderer#updateLine
+907-         */
+908-        setLineCap: function (el) { /* stub */ },
+909-
+910-        /* ********* Ticks related stuff *********** */
+911-
+912-        /**
+913-         * Creates a rendering node for ticks added to a line.
+914-         * @param {JXG.Line} el A arbitrary line.
+915-         * @see Line
+916-         * @see Ticks
+917-         * @see JXG.Line
+918-         * @see JXG.Ticks
+919-         * @see JXG.AbstractRenderer#updateTicks
+920-         */
+921-        drawTicks: function (el) {
+922-            el.rendNode = this.appendChildPrim(
+923-                this.createPrim("path", el.id),
+924-                el.evalVisProp('layer')
+925-            );
+926-            this.appendNodesToElement(el, 'path');
+927-        },
+928-
+929-        /**
+930-         * Update {@link Ticks} on a {@link JXG.Line}. This method is only a stub and has to be implemented
+931-         * in any descendant renderer class.
+932-         * @param {JXG.Ticks} el Reference of a ticks object that has to be updated.
+933-         * @see Line
+934-         * @see Ticks
+935-         * @see JXG.Line
+936-         * @see JXG.Ticks
+937-         * @see JXG.AbstractRenderer#drawTicks
+938-         */
+939-        updateTicks: function (el) { /* stub */ },
+940-
+941-        /* ********* Circle related stuff *********** */
+942-
+943-        /**
+944-         * Draws a {@link JXG.Circle}
+945-         * @param {JXG.Circle} el Reference to a {@link JXG.Circle} object that has to be drawn.
+946-         * @see Circle
+947-         * @see JXG.Circle
+948-         * @see JXG.AbstractRenderer#updateEllipse
+949-         */
+950-        drawEllipse: function (el) {
+951-            el.rendNode = this.appendChildPrim(
+952-                this.createPrim("ellipse", el.id),
+953-                el.evalVisProp('layer')
+954-            );
+--
+1671-         * @param {JXG.GeometryElement} el The element the arrows are to be attached to.
+1672-         * @param {Object} arrowData Data concerning possible arrow heads
+1673-         *
+1674-         */
+1675-        makeArrows: function (el, arrowData) { /* stub */ },
+1676-
+1677-        /**
+1678-         * Updates width of an arrow DOM node. Used in
+1679-         * @param {Node} node The arrow node.
+1680-         * @param {Number} width
+1681-         * @param {Node} parentNode Used in IE only
+1682-         */
+1683:        _setArrowWidth: function (node, width, parentNode) { /* stub */ },
+1684-
+1685-        /**
+1686-         * Updates an ellipse node primitive. This is an abstract method which has to be implemented in all renderers
+1687-         * that use the <tt>createPrim</tt> method.
+1688-         * @param {Node} node Reference to the node.
+1689-         * @param {Number} x Centre X coordinate
+1690-         * @param {Number} y Centre Y coordinate
+1691-         * @param {Number} rx The x-axis radius.
+1692-         * @param {Number} ry The y-axis radius.
+1693-         */
+1694-        updateEllipsePrim: function (node, x, y, rx, ry) { /* stub */ },
+1695-
+1696-        /**
+1697-         * Refreshes a line node. This is an abstract method which has to be implemented in all renderers that use
+1698-         * the <tt>createPrim</tt> method.
+1699-         * @param {Node} node The node to be refreshed.
+1700-         * @param {Number} p1x The first point's x coordinate.
+1701-         * @param {Number} p1y The first point's y coordinate.
+1702-         * @param {Number} p2x The second point's x coordinate.
+1703-         * @param {Number} p2y The second point's y coordinate.
+1704-         * @param {JXG.Board} board
+1705-         */
+1706-        updateLinePrim: function (node, p1x, p1y, p2x, p2y, board) { /* stub */ },
+1707-
+1708-        /**
+1709-         * Updates a path element. This is an abstract method which has to be implemented in all renderers that use
+1710-         * the <tt>createPrim</tt> method.
+1711-         * @param {Node} node The path node.
+1712-         * @param {String} pathString A string formatted like e.g. <em>'M 1,2 L 3,1 L5,5'</em>. The format of the string
+1713-         * depends on the rendering engine.
+1714-         * @param {JXG.Board} board Reference to the element's board.
+1715-         */
+1716-        updatePathPrim: function (node, pathString, board) { /* stub */ },
+1717-
+1718-        /**
+1719-         * Builds a path data string to draw a point with a face other than <em>rect</em> and <em>circle</em>. Since
+1720-         * the format of such a string usually depends on the renderer this method
+1721-         * is only an abstract method. Therefore, it has to be implemented in the descendant renderer itself unless
+1722-         * the renderer does not use the createPrim interface but the draw* interfaces to paint.
+1723-         * @param {JXG.Point} el The point element
+1724-         * @param {Number} size A positive number describing the size. Usually the half of the width and height of
+1725-         * the drawn point.
+1726-         * @param {String} type A string describing the point's face. This method only accepts the shortcut version of
+1727-         * each possible face: <tt>x, +, |, -, [], <>, <<>>,^, v, >, < </tt>
+1728-         */
+1729-        updatePathStringPoint: function (el, size, type) { /* stub */ },
+1730-
+1731-        /**
+1732-         * Builds a path data string from a {@link JXG.Curve} element. Since the path data strings heavily depend on the
+1733-         * underlying rendering technique this method is just a stub. Although such a path string is of no use for the
+1734-         * CanvasRenderer, this method is used there to draw a path directly.
+1735-         * @param {JXG.GeometryElement} el
+1736-         */
+1737-        updatePathStringPrim: function (el) { /* stub */ },
+1738-
+1739-        /**
+1740-         * Builds a path data string from a {@link JXG.Curve} element such that the curve looks like hand drawn. Since
+1741-         * the path data strings heavily depend on the underlying rendering technique this method is just a stub.
+1742-         * Although such a path string is of no use for the CanvasRenderer, this method is used there to draw a path
+1743-         * directly.
+1744-         * @param  {JXG.GeometryElement} el
+1745-         */
+1746-        updatePathStringBezierPrim: function (el) { /* stub */ },
+1747-
+1748-        /**

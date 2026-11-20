@@ -1,0 +1,243 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), root);
+const own = '.tmp/resume182-6-8a-n11-0789/figure-author-FIRST';
+const templates = '.tmp/resume182-6-8a-n11-0789/modern-affected-join1/adapt/8a/modern-us-neutral/lessons/alg8-c3-s1-n11';
+const read = p => JSON.parse(fs.readFileSync(p, 'utf8'));
+const hash = p => createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+const writeNew = (p, value) => {
+  fs.mkdirSync(path.dirname(p), { recursive: true });
+  fs.writeFileSync(p, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+};
+const inventory = read(`${own}/source.inventory.record`);
+const lesson = read(`${templates}/lesson.template.json`);
+const exercises = read(`${templates}/exercises.template.json`);
+const manifest = read(`${templates}/figures.template.json`);
+assert.deepEqual(manifest.figures.map(f => f.id), inventory.figures.map(f => f.id));
+assert.match(exercises.exercises.find(e => e.number === '188').text, /直接跟随 Westview/);
+assert.match(exercises.exercises.find(e => e.number === '188').text, /紧接在 Eastside 前面/);
+
+const text = (id, at, value, fontSize, placement = {}) => ({
+  id, type: 'text', at, text: value, fontSize, fontWeight: 400,
+  labelColor: 'ink',
+  labelPlacement: { position: 'CENTER', gap: 0, ...placement },
+});
+const group = (id, description, objects, assertions, requires = []) => ({
+  id, description, objects, assertions, ...(requires.length ? { requires } : {}),
+});
+const authoritative = figureId => [
+  ...lesson.prose.filter(p => p.kind === 'p' && p.text.trim())
+    .map(p => ({ lesson: lesson.id, text: p.text })),
+  ...exercises.exercises.filter(e => e.figure_refs.includes(figureId))
+    .map(e => ({ exercise: e.number, text: e.text })),
+];
+const base = item => ({
+  schema: 'ld-s10y-image/figure-spec@2',
+  id: item.id,
+  mode: 'deterministic',
+  description: '',
+  source: { image: item.source, authoritativeText: authoritative(item.id), inventory: [] },
+  canvas: { width: 640, height: 640, boundingBox: [-3.8, 7.8, 9.8, -5.8], background: 'paper', keepAspectRatio: true },
+  display: { purpose: 'instructional', layout: 'scroll', minTextPx: 16, widths: [640] },
+  layout: { minLabelGap: 1 },
+  objects: [],
+  assertions: [],
+});
+
+function graph(spec, id, facts, offset, fontSize, sequenceLabel, marker) {
+  const shift = ([x, y]) => [x + offset[0], y + offset[1]];
+  const [xmin, ymax, xmax, ymin] = facts.grid.bounds;
+  const gridId = facts.grid.id;
+  spec.objects.push({
+    id: gridId, type: 'grid',
+    bounds: [xmin + offset[0], ymax + offset[1], xmax + offset[0], ymin + offset[1]],
+    xStep: 1, yStep: 1, xOffset: offset[0], yOffset: offset[1],
+    stroke: 'muted', strokeWidth: 1.1, opacity: 0.3,
+  });
+  const gridAssertion = `${id}-grid-dimensions`;
+  spec.assertions.push({
+    id: gridAssertion, type: 'gridDimensions', grid: gridId,
+    columns: facts.grid.columns, rows: facts.grid.rows,
+  });
+  spec.source.inventory.push(group(
+    `${id}-source-grid`,
+    `Source pixel lattice: local bounds ${JSON.stringify(facts.grid.bounds)}; ${facts.grid.columns} columns, ${facts.grid.rows} rows; unit steps; local phase (0,0), no gaps. Modern translation ${JSON.stringify(offset)} preserves all counts and data offsets.`,
+    [gridId], [gridAssertion], ['gridDimensions'],
+  ));
+
+  const axisIds = [];
+  for (const [name, start, end] of [
+    ['n', [xmin, 0], [xmax - 0.5, 0]],
+    ['value', [0, ymin], [0, ymax - 0.8]],
+  ]) {
+    const axisId = `${id}-${name}-axis`;
+    const from = shift(start);
+    const to = shift(end);
+    spec.objects.push({ id: axisId, type: 'axis', from, to, stroke: 'ink', strokeWidth: 2.4 });
+    axisIds.push(axisId);
+    if (name === 'n' || id !== 'fig-28') {
+      const arrowId = `${axisId}-direction`;
+      const arrowStart = shift(name === 'n' ? [xmax - 1.3, 0] : [0, ymax - 1.6]);
+      spec.objects.push({ id: arrowId, type: 'arrow', from: arrowStart, to, stroke: 'ink', strokeWidth: 2.4 });
+      spec.assertions.push({ id: `${arrowId}-connects`, type: 'connects', arrow: arrowId, from: arrowStart, to });
+      axisIds.push(arrowId);
+    }
+  }
+
+  const xTicks = facts.axes.xTickLabels ?? facts.axes.x.numberedTicks;
+  const yTicks = facts.axes.yTickLabels ?? facts.axes.y.numberedTicks;
+  for (const value of xTicks) {
+    const above = id === 'fig-29-a' && value === 2;
+    const tickLabel = text(`${id}-n-tick-${value}`, shift([value, above ? 0.7 : -0.85]), String(value), fontSize);
+    if (id === 'fig-29-d' && value === 6) {
+      tickLabel.labelPlacement.offset = [10, 0];
+      tickLabel.textAnchor = 'start';
+    }
+    spec.objects.push(tickLabel);
+    axisIds.push(tickLabel.id);
+  }
+  for (const value of yTicks) {
+    const tickLabel = text(`${id}-value-tick-${value}`, shift([-0.18, value]), String(value), fontSize, { position: 'W', gap: 4 });
+    spec.objects.push(tickLabel);
+    axisIds.push(tickLabel.id);
+  }
+  for (const label of [
+    text(`${id}-origin`, shift([-0.25, -0.7]), 'O', fontSize),
+    text(`${id}-n-label`, shift([xmax - 0.25, -0.7]), 'n', fontSize, { position: 'W', gap: 0 }),
+    text(`${id}-sequence-label`, shift([-0.25, ymax - 0.5]), sequenceLabel, fontSize + 2, { position: 'W', gap: 4 }),
+  ]) {
+    if (label.id.endsWith('-origin')) label.textAnchor = 'end';
+    spec.objects.push(label);
+    axisIds.push(label.id);
+  }
+  if (marker) {
+    const label = text(`${id}-marker`, shift([xmin + 0.35, ymin + 1]), marker, 18, { position: 'E', gap: 0 });
+    spec.objects.push(label);
+    axisIds.push(label.id);
+  }
+  const axisAssertions = spec.assertions.filter(a => a.id.startsWith(id) && a.type === 'connects').map(a => a.id);
+  spec.source.inventory.push(group(
+    `${id}-source-axes-labels`,
+    `Source axes n and ${facts.axes.y?.label ?? facts.sequenceLabel}; origin O; numbered x crossings ${JSON.stringify(xTicks)} and y crossings ${JSON.stringify(yTicks)}. No numbered labels invented. ${marker ? `Printed marker ${facts.originalMarker} mapped to ${marker}. ` : ''}Modern typography and small label offsets only; source unit crossings remain grid ticks.`,
+    axisIds, axisAssertions,
+  ));
+
+  const pointIds = [];
+  const relationshipIds = [];
+  for (const p of facts.points) {
+    const at = shift(p.at);
+    spec.objects.push({ id: p.id, type: 'point', at, size: id === 'fig-28' ? 4 : 2.5, strokeWidth: 1, fill: 'ink', stroke: 'ink' });
+    pointIds.push(p.id);
+    const coordinateId = `${p.id}-coordinate`;
+    spec.assertions.push({
+      id: coordinateId, type: 'displacement',
+      from: shift([0, 0]), to: p.id, dx: p.at[0], dy: p.at[1],
+    });
+    relationshipIds.push(coordinateId);
+  }
+  for (let index = 1; index < facts.points.length; index += 1) {
+    const a = facts.points[index - 1];
+    const b = facts.points[index];
+    const relationId = `${id}-step-${index}-${index + 1}`;
+    spec.assertions.push({
+      id: relationId, type: 'displacement', from: a.id, to: b.id,
+      dx: b.at[0] - a.at[0], dy: b.at[1] - a.at[1],
+    });
+    relationshipIds.push(relationId);
+  }
+  spec.source.inventory.push(group(
+    `${id}-source-points`,
+    `Every original discrete source point, in n order: ${JSON.stringify(facts.points.map(p => p.at))}. All half-grid values retained. Each point has an absolute coordinate assertion and adjacent source-point relationship coverage wholly within this graph. No curves, connecting lines, extensions, or classifications. Modern translation ${JSON.stringify(offset)} only.`,
+    pointIds, relationshipIds, ['pointRelationships'],
+  ));
+}
+
+function table(spec, item) {
+  const id = item.id;
+  const facts = item.sourceFacts;
+  const cols = facts.structure.columns;
+  spec.description = `Read the original two-row ${cols}-column table as a finite sequence; headings excluded from the data sequence. Original order and repeated values unchanged.`;
+  spec.canvas = { width: 640, height: 320, boundingBox: [0, 320, 640, 0], background: 'paper', keepAspectRatio: true };
+  const grids = id === 'tbl-p0077-02'
+    ? [{ id: `${id}-grid`, bounds: [16, 220, 624, 100], columns: 6, xStep: 608 / 6, xOffset: 16 }]
+    : [
+      { id: `${id}-header-grid`, bounds: [16, 220, 124, 100], columns: 1, xStep: 108, xOffset: 16 },
+      { id: `${id}-data-grid`, bounds: [124, 220, 624, 100], columns: 6, xStep: 500 / 6, xOffset: 124 },
+    ];
+  for (const g of grids) {
+    spec.objects.push({
+      id: g.id, type: 'grid', bounds: g.bounds, xStep: g.xStep, yStep: 60,
+      xOffset: g.xOffset, yOffset: 100, stroke: 'ink', strokeWidth: 1.3,
+    });
+    spec.assertions.push({ id: `${g.id}-dimensions`, type: 'gridDimensions', grid: g.id, columns: g.columns, rows: 2 });
+  }
+  spec.source.inventory.push(group(
+    `${id}-source-lattice`,
+    `Source ${cols} contiguous columns (one heading plus ${cols - 1} data), exactly two rows; pixel column boundaries ${JSON.stringify(facts.structure.pixelColumnBoundaries)}, pixel row boundaries ${JSON.stringify(facts.structure.pixelRowBoundaries)}. Modern regularization: ${id === 'tbl-p0077-02' ? 'six equal 608/6px columns' : '108px heading plus six equal 500/6px data columns, preserving approximately 1.3:1 width ratio'}, y step 60px, phase 100px, x phases ${grids.map(g => g.xOffset).join(',')}px; no cell gaps. Added outer vertical borders are modern additions, not printed source facts.`,
+    grids.map(g => g.id), grids.map(g => `${g.id}-dimensions`), ['gridDimensions'],
+  ));
+  const cellIds = [];
+  for (let row = 0; row < 2; row += 1) {
+    for (let col = 0; col < cols; col += 1) {
+      const x = id === 'tbl-p0077-02'
+        ? 16 + (col + 0.5) * 608 / 6
+        : col === 0 ? 70 : 124 + (col - 0.5) * 500 / 6;
+      const label = text(`${id}-r${row + 1}-c${col}`, [x, row === 0 ? 190 : 130], facts.modernCellValues[`row${row + 1}`][col], 17);
+      spec.objects.push(label);
+      cellIds.push(label.id);
+    }
+  }
+  const cellCountId = `${id}-cell-label-count`;
+  spec.assertions.push({ id: cellCountId, type: 'objectCount', objectType: 'text', count: 2 * cols });
+  spec.source.inventory.push(group(
+    `${id}-source-cells`,
+    `Source row1 ${JSON.stringify(facts.structure.row1)}, row2 ${JSON.stringify(facts.structure.row2)}. Authorized English row1 ${JSON.stringify(facts.modernCellValues.row1)}, row2 ${JSON.stringify(facts.modernCellValues.row2)}. Cell order, heading exclusion, six periods and duplicate periods 3/4 (when applicable) are unchanged; neither query nor answer is printed into the table. Source facts and language replacements are separately retained in source.inventory.record.`,
+    cellIds, [cellCountId],
+  ));
+}
+
+writeNew(`${own}/history/figures.template.before.record`, manifest);
+writeNew(`${own}/input-bindings.record`, {
+  sourceInventory: { path: `${own}/source.inventory.record`, sha256: hash(`${own}/source.inventory.record`) },
+  templates: ['lesson.template.json', 'exercises.template.json', 'figures.template.json'].map(file => ({
+    path: `${templates}/${file}`, sha256: hash(`${templates}/${file}`),
+  })),
+  sourcePass: inventory.sourcePass,
+  sourceImages: inventory.figures.map(f => {
+    assert.equal(hash(f.source.path), f.source.sha256);
+    return f.source;
+  }),
+  paidCalls: 0, hostTokens: 'unknown', cost: 'unknown',
+});
+
+for (const item of inventory.figures) {
+  const spec = base(item);
+  if (item.id === 'fig-28') {
+    spec.description = 'The finite sequence -4, -2, 0, 2, 4 is exactly five isolated points at (1,-4), (2,-2), (3,0), (4,2), (5,4) in the original coordinate lattice.';
+    graph(spec, item.id, item.sourceFacts, [0, 0], 22, 'yₙ');
+    spec.assertions.push({ id: 'fig-28-point-count', type: 'objectCount', objectType: 'point', count: 5 });
+    spec.source.inventory.find(g => g.id === 'fig-28-source-points').assertions.push('fig-28-point-count');
+  } else if (item.id === 'fig-29') {
+    spec.description = 'Four original sequence graphs in a 2x2 composite; preserve all 28 isolated points, half-unit values, exact independent grids and source axis labels so learners can inspect the sequences without a supplied classification.';
+    spec.canvas = { width: 640, height: 544, boundingBox: [0, 34, 40, 0], background: 'paper', keepAspectRatio: true };
+    const offsets = [[6, 23], [26, 30], [6, 4], [26, 4]];
+    const labels = ['aₙ', 'bₙ', 'cₙ', 'dₙ'];
+    item.sourceFacts.subfigures.forEach((sub, i) => graph(spec, sub.id, sub, offsets[i], 16, labels[i], sub.modernMarker));
+    spec.assertions.push({ id: 'fig-29-point-count', type: 'objectCount', objectType: 'point', count: 28 });
+    spec.source.inventory.push(group('fig-29-source-composite', 'Exactly four original frames in 2x2 order a,b,c,d; 28 total source dots. Modern common pitch 16px per unit, 32px horizontal/vertical inter-frame gaps, 16px outer margins. No source subfigure omitted.', item.sourceFacts.subfigures.map(s => `${s.id}-marker`), ['fig-29-point-count']));
+  } else {
+    table(spec, item);
+  }
+  writeNew(`${own}/${item.id}/${item.id}.spec.json`, spec);
+  writeNew(`${own}/history/${item.id}.spec.FIRST.record`, spec);
+  console.log(JSON.stringify({
+    figure: item.id, spec: `${own}/${item.id}/${item.id}.spec.json`,
+    sha256: hash(`${own}/${item.id}/${item.id}.spec.json`),
+    objects: spec.objects.length, assertions: spec.assertions.length,
+    imageViews: 4, sourceReopens: 0,
+  }));
+}

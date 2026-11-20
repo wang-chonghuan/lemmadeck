@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = `${repo}/.tmp/resume182-6-8a-n11-0789`;
+const pairs = process.argv.slice(2);
+assert.ok(pairs.length && pairs.length % 2 === 0);
+const outputs = [];
+for (let index = 0; index < pairs.length; index += 2) {
+  const [batch, agent] = pairs.slice(index, index + 2);
+  assert.match(batch, /^batch\d+$/);
+  assert.match(agent, /^[a-f0-9-]{36}$/);
+  const file = `${base}/observations/results/${batch}.record`;
+  const bytes = fs.readFileSync(file);
+  const hash = crypto.createHash('sha256').update(bytes).digest('hex');
+  const result = JSON.parse(bytes);
+  assert.equal(result.status, 'DISPLAY_PASS');
+  const run = spawnSync(process.execPath, [`${base}/run-stage.mjs`,
+    `display-bind-${batch}-FIRST`, process.execPath, `${base}/observe-tools.mjs`,
+    'bind', batch, agent, file, hash], { cwd: repo, encoding: 'utf8' });
+  process.stdout.write(run.stdout);
+  process.stderr.write(run.stderr);
+  assert.equal(run.status, 0);
+  outputs.push({ batch, agent, status: result.status, result: path.resolve(file),
+    sha256: hash, images: result.imageAccounting.views, agentCompletedAndClosed: true });
+}
+console.log(JSON.stringify({ status: 'COMPLETED_CLOSED_OBSERVERS_BOUND', outputs }));

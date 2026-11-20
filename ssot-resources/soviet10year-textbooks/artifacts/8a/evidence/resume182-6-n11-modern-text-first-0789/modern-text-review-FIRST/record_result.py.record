@@ -1,0 +1,238 @@
+"""Seal the independent text decision without changing either candidate."""
+
+import hashlib
+import json
+import os
+import re
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+SCOPE = ROOT / ".tmp/resume182-6-8a-n11-0789/modern-text-review-FIRST"
+if Path.cwd() != ROOT or os.environ.get("PYTHONDONTWRITEBYTECODE") != "1":
+    raise RuntimeError("Wrong workspace or bytecode setting")
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(ROOT / ".claude/skills/ld-s10y-lesson/tools"))
+import edition
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def bind(path):
+    return {"path": str(path), "sha256": sha(path)}
+
+
+def save(name, value):
+    path = SCOPE / name
+    with path.open("x", encoding="utf-8") as handle:
+        handle.write(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+    path.chmod(0o444)
+    return bind(path)
+
+
+evidence_path = SCOPE / "evidence.record"
+evidence = json.loads(evidence_path.read_text())
+if evidence["blockers"]:
+    raise RuntimeError("Mechanical binding evidence has unresolved failures")
+for record in evidence["files"].values():
+    if sha(Path(record["path"])) != record["sha256"]:
+        raise RuntimeError(f"Binding changed: {record['path']}")
+candidate = json.loads(Path(
+    evidence["files"]["normalized_lesson_template"]["path"]
+).read_text())
+text = candidate["prose"][0]["text"]
+replacements = [
+    ("$15,25,35,45,55,65,75,85,95$. ", "$15,25,35,45,55,65,75,85,95$.\n"),
+    ("\u6570\u662f95. \u4ece1\u52309", "\u6570\u662f95.\n\u4ece1\u52309"),
+    ("$1\\to15,2\\to25,3\\to35,\\cdots,9\\to95$. ",
+     "$1\\to15,2\\to25,3\\to35,\\cdots,9\\to95$.\n"),
+    ("$\\{15,25,35,\\cdots,95\\}$. ", "$\\{15,25,35,\\cdots,95\\}$.\n"),
+]
+proposed = text
+for before, after in replacements:
+    if proposed.count(before) != 1:
+        raise RuntimeError("Non-unique proposed newline anchor")
+    proposed = proposed.replace(before, after, 1)
+proposed_block = json.loads(json.dumps(candidate["prose"][0]))
+proposed_block["text"] = proposed
+proposal_doc = {"prose": [proposed_block]}
+edition.normalize_lesson_layout(proposal_doc)
+proposal = proposal_doc["prose"][0]["text"]
+if (
+    len(text.split("\n\n")) != 1
+    or len(proposal.split("\n\n")) != 3
+    or re.sub(r"\s+", "", text) != re.sub(r"\s+", "", proposal)
+    or edition.math_signature(text) != edition.math_signature(proposal)
+):
+    raise RuntimeError("Proposed whitespace-only production normalization is not established")
+layout_binding = save("layout-defect.record", {
+    "schema": "stemrobin-182/independent-modern-text-layout-defect@1",
+    "json_pointer": "/prose/0/text",
+    "source_refs": ["p0074#4"],
+    "candidate": evidence["files"]["normalized_lesson_template"],
+    "actual_text": text,
+    "actual_complete_sentences": 6,
+    "actual_paragraphs": 1,
+    "actual_introduced_formula_lines_continue_with_prose": 2,
+    "contract": {
+        "file": evidence["files"]["lesson_edition_contract"],
+        "section": "cap4, item 4",
+        "requirement": "Introduced formulas on their own lines; short paragraphs of 2-3 complete sentences",
+        "paragraph_definition_module": str(ROOT / ".claude/skills/ld-s10y-lesson/tools/htmlfrag.js"),
+        "paragraph_definition": "proseParagraphs splits at two or more consecutive newline characters",
+        "paragraph_definition_observation": "Production function read only; not executed or rendered",
+    },
+    "smallest_fix": {
+        "target": evidence["files"]["original_lesson_template"]["path"],
+        "json_pointer": "/prose/0/text",
+        "operation": "Replace these four unique U+0020 separators with U+000A, then use edition.normalize_lesson_layout",
+        "replacements": [{"before": before, "after": after} for before, after in replacements],
+        "other_text_or_metadata_changes": 0,
+        "source_changes": 0,
+        "formula_changes": 0,
+    },
+    "proposal_applied_to_candidate": False,
+    "proposal_checked_in_memory_only": True,
+    "proposal_normalized_by_production_function": "edition.normalize_lesson_layout",
+    "proposed_normalized_text": proposal,
+    "proposed_paragraphs": 3,
+    "proposed_sentences_per_paragraph": [2, 2, 2],
+    "all_non_whitespace_tokens_and_formulas_unchanged": True,
+})
+receipt_binding = save("result-command.receipt.record", {
+    "schema": "stemrobin-182/independent-modern-text-command-receipt@1",
+    "command": (
+        "PYTHONDONTWRITEBYTECODE=1 .claude/skills/ld-s10y-lesson/.venv/bin/python "
+        ".tmp/resume182-6-8a-n11-0789/modern-text-review-FIRST/record_result.py"
+    ),
+    "cwd": str(ROOT),
+    "finished_at_utc": datetime.now(timezone.utc).isoformat(),
+    "exit_code": 0,
+    "script": bind(Path(__file__)),
+    "PYTHONDONTWRITEBYTECODE": "1",
+    "sys_dont_write_bytecode": True,
+    "production_normalization": "edition.normalize_lesson_layout on in-memory proposed fix only",
+    "proposed_fix_applied": False,
+    "all_original_raw_and_normalized_bindings_rechecked": True,
+    "newImageViews": 0,
+    "imageFileReads": 0,
+    "networkCalls": 0,
+    "databaseActions": 0,
+    "production_validators_publishers_or_renderers_invoked": False,
+})
+result = {
+    "schema": "stemrobin-182/independent-modern-text-review@1",
+    "status": "TEXT_REVISE",
+    "date": "2026-11-20",
+    "authorization": "authorized182-6",
+    "repo": str(ROOT),
+    "book": "8a",
+    "lesson": "alg8-c3-s1-n11",
+    "edition": "modern-us-neutral",
+    "reviewer": {
+        "kind": "independent_agent",
+        "identity": "codex-independent-modern-text-review-authorized182-6-FIRST",
+        "modernTextAuthor": False,
+        "sourceAuthor": False,
+        "figureAuthor": False,
+    },
+    "blockers": [{
+        "id": "modern-prose-0-short-paragraph-layout",
+        "kind": "text-layout",
+        "json_pointer": "/prose/0/text",
+        "source_refs": ["p0074#4"],
+        "defect": "Six complete sentences remain in one paragraph; both introduced formula lines also contain following prose. Production normalization alone leaves this unchanged.",
+        "smallest_fix": "Four unique spaces changed to line breaks in this modern prose block only, followed by the existing production normalizer; exact replacements and the resulting three two-sentence paragraphs are in layout-defect.record.",
+        "evidence": layout_binding,
+        "fix_applied": False,
+    }],
+    "scope": {
+        "reviewed": [
+            "New ex188 query-name substitutions and human-authorized table-name order",
+            "New ex190 Russian-to-English subject substitution",
+            "Natural Latin enumeration and complete payload order for 11 exercises",
+            "Final normalized text layout under the lesson edition text contract",
+            "Object-level formulas, conditions, identities, numbers, groups, boundaries and references compared with the approved current raw text",
+        ],
+        "not_reviewed": [
+            "Source recognition, source pixels, source mathematics correctness",
+            "Any source or modern image bytes, source crops, modern figures or their rendered layouts",
+            "Answers, choices, prior ticket outputs",
+            "Publisher, renderer, production validators, database or application behavior",
+        ],
+    },
+    "reused_source_approval": {
+        **evidence["files"]["reused_source_approval"],
+        "status": "SOURCE_PASS",
+        "sha256_matches_authorization": True,
+        "source_pixels_or_math_not_rereviewed": True,
+        "boundary": evidence["source_boundary_reused"],
+    },
+    "files": {
+        **evidence["files"],
+        "text_evidence": bind(evidence_path),
+        "layout_defect": layout_binding,
+        "normalization_command_receipt": bind(SCOPE / "command.receipt.record"),
+        "result_command_receipt": receipt_binding,
+        "usage": bind(SCOPE / "usage.record"),
+    },
+    "evidence": {
+        "new_semantic_differences": {
+            "status": "PASS",
+            "ex188": "Only the two query names changed: source Flagship label to Westview, source East label to Eastside. Relative-position questions and five-team setting are unchanged.",
+            "authorized_table_order": ["Westview", "Dawn", "Zenith", "Eastside", "Harvest"],
+            "table_order_basis": "Human-supplied mapping; no figure contents inspected or approved",
+            "ex190": "Only the subject name changed from Russian to English; grade, one school day, four lessons and inclusion of every subject remain unchanged.",
+            "subparts": "All 29 complete subpart payloads in 11 exercises retain their source ordinal and conditions; no column redistribution or detached payload reconstruction.",
+        },
+        "source_object_preservation": {
+            "status": "PASS",
+            "objects": 41,
+            "prose_objects_including_figure_placeholder_and_caption": 25,
+            "exercises": 16,
+            "formula_occurrences": 122,
+            "exact_formula_multiset_and_order_preserved_per_object": True,
+            "math_split_exception_needed": False,
+            "source_snapshots_and_sha_exact": True,
+            "numbers_conditions_groups_refs_and_boundary_unchanged": True,
+            "review_group": ["202", "203"],
+            "forbidden_modern_terms_or_cyrillic": 0,
+            "chinese_punctuation_inside_math": 0,
+            "mechanical_evidence": bind(evidence_path),
+            "mechanical_checks": 557,
+            "failed_mechanical_checks": 0,
+        },
+        "layout": {
+            "status": "REVISE",
+            "production_normalization_idempotent": True,
+            "normalization_changed_current_candidates": False,
+            "normalized_candidate_bytes_equal_original_templates": True,
+            "subpart_prefix_and_each_complete_subpart_on_separate_lines": True,
+            "subparts_in_natural_order": True,
+            "source_column_alignment_spaces_removed_from_subparts": True,
+            "definite_prose_layout_defect": layout_binding,
+            "remaining_prose_review": "Other normalized blocks preserve complete statements and introduced expressions; no further definite modern text defect identified.",
+        },
+    },
+    "normalized_candidates_approved": False,
+    "handoff": "Do not promote these TEXT_REVISE candidates as text-approved. Apply only the recorded modern-text whitespace fix after the figure author's work ends, then obtain an affected-only text-layout decision before existing edition-tool finalization.",
+    "newImageViews": 0,
+    "imageFileReads": 0,
+    "figuresApproved": False,
+    "sourcePixelsApprovedByThisReviewer": False,
+    "hostTokens": "unknown",
+    "cost": "unknown",
+}
+result_binding = save("result.record", result)
+print(json.dumps({
+    "status": result["status"],
+    "result": result_binding,
+    "normalized_candidates": [
+        evidence["files"]["normalized_lesson_template"],
+        evidence["files"]["normalized_exercises_template"],
+    ],
+}, indent=2))

@@ -1,0 +1,28 @@
+import json
+from pathlib import Path
+from xml.etree import ElementTree
+
+repo = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+assert Path.cwd() == repo
+base = repo / ".tmp/resume182-6-8a-n11-0789/figure-label-affected1/fig-29"
+report = json.loads(base.with_suffix(".render.json").read_text())
+assert report["status"] == "pass"
+root = ElementTree.parse(base.with_suffix(".svg")).getroot()
+labels = [node for node in root.iter() if node.attrib.get("data-label-id") == "fig-29-d-n-tick-6-label"]
+assert len(labels) == 1
+label = labels[0]
+assert "".join(label.itertext()) == "6"
+assert float(label.attrib["x"]) == 512
+assert abs(float(label.attrib["y"]) - 465.6) < 0.001
+assert label.attrib["text-anchor"] == "middle"
+assert float(label.attrib["y"]) < 480
+print(json.dumps({
+    "status": "pass",
+    "label": label.attrib,
+    "sourceCrossingX": 512,
+    "sourceAxisY": 480,
+    "sourceSixthDotY": 504,
+    "noHorizontalOffset": True,
+    "visualReviewStillRequired": True,
+    "imageReads": 0,
+}))

@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n11-0789';
+const [first, last] = process.argv.slice(2).map(Number);
+assert.ok(Number.isInteger(first) && Number.isInteger(last) && first >= 1 && last >= first && last <= 44);
+const sources = [];
+for (let index = first; index <= last; index++) {
+  const id = `batch${index}`;
+  const binding = `${base}/observations/bindings/${id}.record`;
+  const data = JSON.parse(fs.readFileSync(binding));
+  assert.equal(data.status, 'DISPLAY_PASS');
+  assert.equal(data.agentCompletedAndClosed, true);
+  sources.push(binding, `${base}/observations/results/${id}.record`,
+    `${base}/observations/assignments/${id}.record`, `${base}/stages/display-bind-${id}-FIRST`);
+}
+if (first === 1) sources.push(`${base}/observations/selection.record`,
+  `${base}/observations/observer-brief.md`, `${base}/observations/dispatch-first.record`,
+  `${base}/observe-bind.mjs`, `${base}/retain-observations.mjs`);
+const run = spawnSync(process.execPath, [`${base}/retain.mjs`,
+  `display-observations-${first}-${last}`, ...sources], { cwd: repo, encoding: 'utf8' });
+process.stdout.write(run.stdout);
+process.stderr.write(run.stderr);
+assert.equal(run.status, 0);

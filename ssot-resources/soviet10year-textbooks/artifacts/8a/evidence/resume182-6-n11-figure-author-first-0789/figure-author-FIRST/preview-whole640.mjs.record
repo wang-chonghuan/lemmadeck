@@ -1,0 +1,52 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), root);
+const require = createRequire(path.resolve('.claude/skills/ld-s10y-lesson/package.json'));
+const { Resvg } = require('@resvg/resvg-js');
+const [id, variant = ''] = process.argv.slice(2);
+assert.ok(['fig-28', 'tbl-p0077-02', 'tbl-p0078-01', 'fig-29'].includes(id));
+assert.ok(variant === '' || variant === 'GLYPH1');
+const own = '.tmp/resume182-6-8a-n11-0789/figure-author-FIRST';
+const base = `${own}/${id}/${id}`;
+const previewBase = `${base}.preview640${variant ? `.${variant}` : ''}`;
+const hash = p => createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+const spec = JSON.parse(fs.readFileSync(`${base}.spec.json`, 'utf8'));
+const report = JSON.parse(fs.readFileSync(`${base}.render.json`, 'utf8'));
+assert.equal(report.status, 'pass');
+assert.equal(report.spec.sha256, hash(`${base}.spec.json`));
+assert.equal(report.output.svg.sha256, hash(`${base}.svg`));
+assert.ok(report.displayChecks.some(c => c.width === 640 && c.status === 'pass' && c.measuredMinPx >= 16));
+assert.ok(!fs.existsSync(`${previewBase}.png`));
+const svg = fs.readFileSync(`${base}.svg`, 'utf8');
+const roles = { ink: '#15201f', muted: '#4c5a58', accent: '#15201f', 'accent-soft': '#8a9795', grid: '#e3eae9', paper: '#ffffff' };
+// Resvg does not resolve CSS variables. Resolve only semantic-color fallbacks
+// in memory for raster evidence; the generated SVG remains untouched.
+const resolved = svg.replace(/var\(--ld-figure-([a-z-]+),\s*([^)]+)\)/g, (_, role, fallback) => roles[role] ?? fallback);
+const renderer = new Resvg(resolved, {
+  background: '#ffffff',
+  fitTo: { mode: 'width', value: 640 },
+  font: { loadSystemFonts: true, defaultFontFamily: 'Arial' },
+});
+const png = renderer.render().asPng();
+assert.equal(png.readUInt32BE(16), 640);
+assert.equal(png.readUInt32BE(20), spec.canvas.height);
+fs.writeFileSync(`${previewBase}.png`, png, { flag: 'wx' });
+const metadata = {
+  schema: 'figure-author/whole-media-preview@1', figure: id,
+  renderer: 'existing @resvg/resvg-js',
+  dependencyPath: '.claude/skills/ld-s10y-lesson/node_modules/@resvg/resvg-js',
+  dependencyVersion: require('@resvg/resvg-js/package.json').version,
+  sourceSvg: { path: `${base}.svg`, sha256: hash(`${base}.svg`) },
+  spec: { path: `${base}.spec.json`, sha256: hash(`${base}.spec.json`) },
+  png: { path: `${previewBase}.png`, sha256: hash(`${previewBase}.png`), width: 640, height: png.readUInt32BE(20) },
+  completeFigure: true, crops: 0, colorResolution: 'in-memory only; exact semantic palette',
+  displayChecks: report.displayChecks,
+  paidCalls: 0, hostTokens: 'unknown', cost: 'unknown',
+};
+fs.writeFileSync(`${previewBase}.record`, `${JSON.stringify(metadata, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(metadata, null, 2));

@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const helper = '.tmp/resume182-6-8a-n11-0789/figure-author-FIRST/preview-whole640.mjs';
+const source = fs.readFileSync(helper, 'utf8');
+const original = 'const base = `${own}/${id}/${id}`;';
+assert.equal(source.split(original).length, 2);
+const current = source.replace(original,
+  "const base = '.tmp/resume182-6-8a-n11-0789/figure-label-affected1/fig-29';");
+const result = spawnSync(process.execPath,
+  ['--input-type=module', '-e', current, 'affected-preview', 'fig-29'],
+  { cwd: repo, env: process.env, encoding: 'utf8' });
+process.stdout.write(result.stdout ?? '');
+process.stderr.write(result.stderr ?? '');
+process.exitCode = result.status ?? 1;

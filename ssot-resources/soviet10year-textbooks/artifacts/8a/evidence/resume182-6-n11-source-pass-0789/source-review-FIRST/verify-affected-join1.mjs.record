@@ -1,0 +1,435 @@
+import assert from "node:assert/strict";
+import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const repo = "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck";
+assert.equal(process.cwd(), repo);
+const scratch = path.join(repo, ".tmp/resume182-6-8a-n11-0789");
+const owned = path.join(scratch, "source-review-FIRST");
+const originalPath = path.join(owned, "result.record");
+const outputPath = path.join(owned, "result-affected-join1.record");
+assert.equal(fs.existsSync(outputPath), false, "Never overwrite a review result");
+const expectedOriginalHash = "3a958f44351b70c0e0271739f6cc6e1af4b922ed2cc1f3d3c8c9523d6fc4ce75";
+const expectedAssemblyHash = "a2a70ec46f505f01676a7063ca28d026a053d4a1dc43c0790677d2bfbac32423";
+const bytes = (file) => fs.readFileSync(file);
+const text = (file) => fs.readFileSync(file, "utf8");
+const json = (file) => JSON.parse(text(file));
+const hash = (file) => crypto.createHash("sha256").update(bytes(file)).digest("hex");
+const binding = (file) => ({ path: file, sha256: hash(file) });
+const clone = (value) => structuredClone(value);
+const serialize = (value) => `${JSON.stringify(value, null, 2)}\n`;
+
+assert.equal(hash(originalPath), expectedOriginalHash);
+assert.equal(fs.statSync(originalPath).mode & 0o777, 0o444);
+const original = json(originalPath);
+assert.equal(original.schema, "stemrobin-182/independent-source-review@1");
+assert.equal(original.status, "SOURCE_REVISE");
+assert.equal(original.summary.sourcePixelReview, "PASS");
+assert.equal(original.reviewer.kind, "independent_agent");
+assert.equal(original.fixes.length, 9);
+assert.equal(original.imageAccounting.actualViews, 8);
+assert.equal(original.imageAccounting.unique, 8);
+assert.deepEqual(original.summary.affectedPhysicalPages, [74, 78, 79, 81]);
+const originalBindings = new Map(original.bindings.map((item) => [item.path, item.sha256]));
+const verifyOriginalBinding = (retainedPath, originalBoundPath = retainedPath) => {
+  assert(originalBindings.has(originalBoundPath), originalBoundPath);
+  assert.equal(hash(retainedPath), originalBindings.get(originalBoundPath), retainedPath);
+};
+
+const oldStage = path.join(scratch, "assembly-recovery-preflight-copy1");
+const newStage = path.join(scratch, "assembly-affected-join1");
+const rawBook = path.join(repo, "ssot-resources/soviet10year-textbooks/artifacts/8a");
+const oldBook = path.join(oldStage, "artifacts/8a");
+const newBook = path.join(newStage, "artifacts/8a");
+const oldAssemblyPath = path.join(oldStage, "assembly.record");
+const newAssemblyPath = path.join(newStage, "assembly.record");
+verifyOriginalBinding(oldAssemblyPath);
+assert.equal(hash(newAssemblyPath), expectedAssemblyHash);
+const oldAssembly = json(oldAssemblyPath);
+const newAssembly = json(newAssemblyPath);
+assert.deepEqual(
+  Object.fromEntries(Object.entries(newAssembly).filter(([key]) => key !== "entries")),
+  Object.fromEntries(Object.entries(oldAssembly).filter(([key]) => key !== "entries")),
+);
+
+const allBindings = [];
+const retainedPageBindings = [];
+const mechanicalSourceHashes = [];
+const mechanicalCropHashes = [];
+const oldByRef = new Map();
+const newByRef = new Map();
+const pageChecks = [];
+const fixChecks = [];
+let addedRawBytes = 0;
+
+const pointerValue = (object, pointer) =>
+  pointer.slice(1).split("/").reduce((value, key) => value[key], object);
+const pointerSet = (object, pointer, value) => {
+  const parts = pointer.slice(1).split("/");
+  const last = parts.pop();
+  const parent = parts.reduce((item, key) => item[key], object);
+  parent[last] = value;
+};
+
+for (let physical = 74; physical <= 81; physical += 1) {
+  const id = String(physical).padStart(4, "0");
+  const oldPage = path.join(oldBook, "pages", id);
+  const rawPage = path.join(rawBook, "pages", id);
+  const stagedPage = path.join(newBook, "pages", id);
+  for (const name of ["page.md", "page.json", "audit.json"]) {
+    const oldFile = path.join(oldPage, name);
+    const currentFile = path.join(rawPage, name);
+    verifyOriginalBinding(oldFile, currentFile);
+    retainedPageBindings.push(binding(oldFile));
+    assert.deepEqual(bytes(path.join(stagedPage, name)), bytes(currentFile));
+    allBindings.push(binding(currentFile));
+  }
+
+  const oldMd = text(path.join(oldPage, "page.md"));
+  const currentMd = text(path.join(rawPage, "page.md"));
+  const oldJson = json(path.join(oldPage, "page.json"));
+  const currentJson = json(path.join(rawPage, "page.json"));
+  const expectedMdLines = oldMd.split("\n");
+  const expectedJson = clone(oldJson);
+  const pageFixes = original.fixes.filter((fix) => fix.physical === physical);
+
+  for (const fix of pageFixes) {
+    assert.equal(expectedMdLines[fix.mdLine - 1], fix.current, fix.id);
+    assert.equal(pointerValue(expectedJson, fix.jsonPointer), fix.current, fix.id);
+    assert.equal(fix.replacement, `${fix.current}\u0020`, fix.id);
+    expectedMdLines[fix.mdLine - 1] = fix.replacement;
+    pointerSet(expectedJson, fix.jsonPointer, fix.replacement);
+    assert.equal(currentMd.split("\n")[fix.mdLine - 1], fix.replacement, fix.id);
+    assert.equal(pointerValue(currentJson, fix.jsonPointer), fix.replacement, fix.id);
+    fixChecks.push({
+      id: fix.id,
+      sourceRef: fix.sourceRef,
+      mdLine: fix.mdLine,
+      jsonPointer: fix.jsonPointer,
+      addedCodePoint: "U+0020",
+      addedBytes: 1,
+      status: "PASS",
+    });
+  }
+
+  assert.equal(currentMd, expectedMdLines.join("\n"), `${id}: exact MD delta`);
+  assert.deepEqual(currentJson, expectedJson, `${id}: exact JSON delta`);
+  assert.equal(text(path.join(rawPage, "page.json")), serialize(expectedJson));
+  assert.deepEqual(
+    bytes(path.join(rawPage, "audit.json")),
+    bytes(path.join(oldPage, "audit.json")),
+    `${id}: audit must be byte-identical`,
+  );
+  assert.deepEqual(currentJson.meta, oldJson.meta);
+  assert.deepEqual(currentJson.meta.figures, oldJson.meta.figures);
+  assert.deepEqual(currentJson.meta.errata, []);
+  assert.deepEqual(currentJson.blocks.map(({ lines, ...rest }) => rest),
+    oldJson.blocks.map(({ lines, ...rest }) => rest));
+  assert.deepEqual(
+    currentMd.match(/\$[^$]*\$/g),
+    oldMd.match(/\$[^$]*\$/g),
+    `${id}: formulas unchanged`,
+  );
+  const audit = json(path.join(rawPage, "audit.json"));
+  assert.deepEqual(audit.errors, []);
+  assert.equal(audit.lines_md, audit.lines_printed);
+  assert.equal(audit.lines_md, original.pages.find((item) => item.physical === physical).mdRows);
+  const delta = Buffer.byteLength(currentMd) - Buffer.byteLength(oldMd);
+  assert.equal(delta, pageFixes.length);
+  addedRawBytes += delta;
+
+  for (let i = 0; i < oldJson.blocks.length; i += 1) {
+    oldByRef.set(`p${id}#${i + 1}`, oldJson.blocks[i]);
+    newByRef.set(`p${id}#${i + 1}`, currentJson.blocks[i]);
+  }
+
+  const gridPath = path.join(scratch, "source/8a/pages", id, "page.grid.png");
+  verifyOriginalBinding(gridPath);
+  allBindings.push(binding(gridPath));
+  const pageImagePath = path.join(scratch, "source/8a/pages", id, "page.png");
+  assert.equal(hash(pageImagePath), oldJson.meta.render.sha256);
+  mechanicalSourceHashes.push({
+    physical,
+    grid: binding(gridPath),
+    pageImage: binding(pageImagePath),
+    unchanged: true,
+    method: "SHA256 over bytes only; no image decoder or image-view tool",
+  });
+  pageChecks.push({
+    physical,
+    printed: currentJson.meta.printed_page,
+    addedSpaces: pageFixes.length,
+    allOtherMdBytesUnchanged: true,
+    allOtherJsonValuesUnchanged: true,
+    auditByteIdentical: true,
+    figureBoxesAndFlagsUnchanged: true,
+    formulasUnchanged: true,
+    rows: audit.lines_md,
+  });
+}
+assert.equal(addedRawBytes, 9);
+assert.equal(fixChecks.length, 9);
+assert.deepEqual(
+  pageChecks.filter((item) => item.addedSpaces).map((item) => item.physical),
+  [74, 78, 79, 81],
+);
+
+assert.equal(newAssembly.entries.length, 32);
+for (const entry of newAssembly.entries) {
+  const sourcePath = path.join(repo, entry.source);
+  const stagedPath = path.join(repo, entry.path);
+  assert.equal(hash(sourcePath), entry.sha256);
+  assert.equal(hash(stagedPath), entry.sha256);
+  assert.equal(bytes(sourcePath).length, entry.bytes);
+  const oldEntry = oldAssembly.entries.find((item) => item.source === entry.source);
+  assert(oldEntry, entry.source);
+  const retainedPath = path.join(repo, oldEntry.path);
+  assert.equal(hash(retainedPath), oldEntry.sha256);
+  if (entry.source.includes("/figures/")) {
+    assert.equal(entry.sha256, oldEntry.sha256);
+    mechanicalCropHashes.push({
+      source: binding(sourcePath),
+      retained: binding(retainedPath),
+      assembled: binding(stagedPath),
+      unchanged: true,
+      method: "SHA256 over bytes only; no image decoding, crop or render",
+    });
+  }
+}
+assert.equal(mechanicalCropHashes.length, 8);
+
+const lessonId = "alg8-c3-s1-n11";
+const oldLessonDir = path.join(oldBook, "lessons", lessonId);
+const newLessonDir = path.join(newBook, "lessons", lessonId);
+for (const name of ["lesson.json", "lesson.md", "exercises.json"]) {
+  verifyOriginalBinding(path.join(oldLessonDir, name));
+}
+const oldLesson = json(path.join(oldLessonDir, "lesson.json"));
+const currentLesson = json(path.join(newLessonDir, "lesson.json"));
+const oldExercises = json(path.join(oldLessonDir, "exercises.json"));
+const currentExercises = json(path.join(newLessonDir, "exercises.json"));
+const expectedLesson = clone(oldLesson);
+const expectedExercises = clone(oldExercises);
+const joinRefs = (refs, sourceMap) => refs.flatMap((ref) => {
+  assert(sourceMap.has(ref), ref);
+  return sourceMap.get(ref).lines;
+}).join("").replaceAll("\u21b5", "");
+const changedObjects = [];
+
+for (let index = 0; index < oldLesson.prose.length; index += 1) {
+  const oldObject = oldLesson.prose[index];
+  assert.equal(oldObject.text, joinRefs(oldObject.source_refs, oldByRef));
+  const expectedText = joinRefs(oldObject.source_refs, newByRef);
+  expectedLesson.prose[index].text = expectedText;
+  if (expectedText !== oldObject.text) {
+    changedObjects.push({
+      kind: "prose",
+      index,
+      sourceRefs: oldObject.source_refs,
+      addedSpaces: Buffer.byteLength(expectedText) - Buffer.byteLength(oldObject.text),
+    });
+  }
+}
+for (let index = 0; index < oldExercises.exercises.length; index += 1) {
+  const oldObject = oldExercises.exercises[index];
+  assert.equal(oldObject.text, joinRefs(oldObject.pages, oldByRef));
+  const expectedLines = oldObject.pages.flatMap((ref) => newByRef.get(ref).lines);
+  const expectedText = joinRefs(oldObject.pages, newByRef);
+  expectedExercises.exercises[index].lines = expectedLines;
+  expectedExercises.exercises[index].text = expectedText;
+  if (expectedText !== oldObject.text) {
+    changedObjects.push({
+      kind: "exercise",
+      number: oldObject.number,
+      index,
+      sourceRefs: oldObject.pages,
+      addedSpaces: Buffer.byteLength(expectedText) - Buffer.byteLength(oldObject.text),
+    });
+  }
+}
+assert.deepEqual(currentLesson, expectedLesson);
+assert.deepEqual(currentExercises, expectedExercises);
+assert.equal(text(path.join(newLessonDir, "lesson.json")), serialize(expectedLesson));
+assert.equal(text(path.join(newLessonDir, "exercises.json")), serialize(expectedExercises));
+assert.equal(changedObjects.length, 8);
+assert.deepEqual(
+  changedObjects.filter((item) => item.kind === "prose").map((item) => item.index),
+  [0],
+);
+assert.deepEqual(
+  changedObjects.filter((item) => item.kind === "exercise").map((item) => item.number),
+  ["190", "191", "192", "193", "197", "199", "203"],
+);
+assert.equal(changedObjects.reduce((total, item) => total + item.addedSpaces, 0), 9);
+
+let expectedLessonMd = text(path.join(oldLessonDir, "lesson.md"));
+for (const fix of original.fixes.filter((item) => item.physical === 74)) {
+  assert.equal(expectedLessonMd.split(fix.assembledJoinBefore).length - 1, 1);
+  expectedLessonMd = expectedLessonMd.replace(fix.assembledJoinBefore, fix.assembledJoinAfter);
+}
+assert.equal(text(path.join(newLessonDir, "lesson.md")), expectedLessonMd);
+assert.equal(
+  Buffer.byteLength(expectedLessonMd) - bytes(path.join(oldLessonDir, "lesson.md")).length,
+  2,
+);
+
+assert.equal(currentLesson.id, lessonId);
+assert.equal(currentLesson.prose.length, 25);
+assert.equal(currentLesson.exercise_count, 16);
+assert.equal(currentExercises.count, 16);
+assert.deepEqual(
+  currentExercises.exercises.map((item) => item.number),
+  Array.from({ length: 16 }, (_,index) => String(index + 188)),
+);
+assert.deepEqual(
+  currentLesson.figures.map((item) => item.id).sort(),
+  ["fig-28", "fig-29", "tbl-p0077-02", "tbl-p0078-01"].sort(),
+);
+assert.deepEqual(
+  currentExercises.exercises.filter((item) => item.group === "\u590d\u4e60\u9898")
+    .map((item) => item.number),
+  ["202", "203"],
+);
+assert.deepEqual(newAssembly.boundary_refs, { start: "p0074#3", excluded_right: "p0081#4" });
+const allRefs = [
+  ...currentLesson.prose.flatMap((item) => item.source_refs),
+  ...currentExercises.exercises.flatMap((item) => item.pages),
+];
+assert(!allRefs.some((ref) => ref.startsWith("p0081#") && Number(ref.split("#")[1]) >= 4));
+assert.deepEqual(fs.readdirSync(path.join(newBook, "lessons")), [lessonId]);
+const index = json(path.join(newBook, "book.json"));
+assert.deepEqual(index.lessons.map((item) => item.id), [lessonId]);
+assert.deepEqual(index.audit.errors, []);
+
+const affectedFinalizeReceipts = [];
+for (const physical of [74, 78, 79, 81]) {
+  const receiptPath = path.join(scratch, `stages/source-finalize${physical}-AFFECTED-join1/receipt.record`);
+  const receipt = json(receiptPath);
+  assert.equal(receipt.returncode, 0);
+  assert.equal(receipt.cwd, repo);
+  assert(receipt.command.includes("finalize"));
+  assert.equal(receipt.command[receipt.command.indexOf("--book") + 1], "8a");
+  assert.equal(receipt.command[receipt.command.indexOf("--page") + 1], String(physical));
+  affectedFinalizeReceipts.push({ physical, returncode: 0, ...binding(receiptPath) });
+}
+
+allBindings.push(binding(newAssemblyPath));
+for (const name of ["lesson.json", "lesson.md", "exercises.json"]) {
+  allBindings.push(binding(path.join(newLessonDir, name)));
+}
+assert.equal(allBindings.length, 36);
+assert.equal(new Set(allBindings.map((item) => item.path)).size, 36);
+assert.equal(hash(originalPath), expectedOriginalHash);
+for (const item of allBindings) assert.equal(hash(item.path), item.sha256);
+for (const item of retainedPageBindings) assert.equal(hash(item.path), item.sha256);
+
+const result = {
+  schema: "stemrobin-182/independent-source-review@1",
+  status: "SOURCE_PASS",
+  date: "2026-11-20",
+  authorization: "authorized182-6",
+  book: "8a",
+  lesson: lessonId,
+  repo,
+  reviewer: {
+    kind: "independent_agent",
+    identity: original.reviewer.identity,
+    continuation: "Same independent reviewer; affected-only textual verification",
+    sourceAuthor: false,
+    assemblyAuthor: false,
+  },
+  blockers: [],
+  originalResult: { path: originalPath, sha256: expectedOriginalHash },
+  newImageViews: 0,
+  inheritedOriginalImages: 8,
+  scope: {
+    requestedFixes: 9,
+    addedRawSpaces: 9,
+    affectedPhysicalPages: [74, 78, 79, 81],
+    affectedAssembledObjects: 8,
+    sourcePixelsRereviewed: false,
+    inheritedPixelApproval: "Original pixel PASS reused only after all eight grid hashes, source-page render hashes and unchanged figure bindings were verified mechanically",
+    originalReviseRetained: true,
+    mathematicalChanges: 0,
+    sourceRecognitionChanges: 0,
+  },
+  fixes: fixChecks,
+  pageChecks,
+  assemblyChecks: {
+    attempt: "assembly-affected-join1",
+    record: binding(newAssemblyPath),
+    inputEntriesVerified: 32,
+    currentRawEqualsNewAssemblyInputs: true,
+    rawBlocksAndMetadataPreserved: true,
+    allOtherMdAndJsonBytesUnchanged: true,
+    allEightAuditFilesByteIdentical: true,
+    currentLessonEqualsOldLessonPlusRequestedSpaces: true,
+    currentExercisesEqualsOldExercisesPlusRequestedSpaces: true,
+    lessonMdOnlyTwoRequestedSpacesAdded: true,
+    allOtherAssembledObjectsUnchanged: true,
+    changedObjects,
+    proseObjects: 25,
+    exerciseCount: 16,
+    exerciseNumbers: currentExercises.exercises.map((item) => item.number),
+    figureIds: currentLesson.figures.map((item) => item.id),
+    figureRefsAndDisplayOwnershipUnchanged: true,
+    sourceRefsAndContinuationMultiplicityUnchanged: true,
+    reviewExercises202And203Preserved: true,
+    boundary: newAssembly.boundary_refs,
+    n12EntirelyExcluded: true,
+  },
+  imageAccounting: {
+    newImageViews: 0,
+    inheritedOriginalImages: 8,
+    originalImageViews: 8,
+    totalActualViewsThisReviewer: 8,
+    reopens: 0,
+    crops: 0,
+    resizes: 0,
+    decodersInvoked: 0,
+    imagePayloadReturned: false,
+    sourceAndCropCheckMethod: "SHA256 bytes only",
+    hostTokens: "unknown",
+    cost: "unknown",
+  },
+  mechanicalSourceHashes,
+  mechanicalCropHashes,
+  affectedFinalizeReceipts,
+  retainedEvidence: {
+    oldAssembly: binding(oldAssemblyPath),
+    oldLessonFiles: ["lesson.json", "lesson.md", "exercises.json"]
+      .map((name) => binding(path.join(oldLessonDir, name))),
+    oldRawPageFiles: retainedPageBindings,
+    allRetainedFilesMatchOriginalReviewBindings: true,
+    originalResultUnmodified: true,
+  },
+  verification: {
+    script: binding(fileURLToPath(import.meta.url)),
+    method: "Independent byte/JSON comparisons against hash-bound retained FIRST recovery inputs; no producer invocation",
+    totalPrintedRows: pageChecks.reduce((total, item) => total + item.rows, 0),
+    finalizeRunsByReviewer: 0,
+    vectorizationRunsByReviewer: 0,
+    assemblyRunsByReviewer: 0,
+    databaseActions: 0,
+    gitActions: 0,
+    peerOrChatActions: 0,
+    worktreeActions: 0,
+    rawOrModernOrSourceWrites: 0,
+    immutableFileMode: "0444",
+  },
+  bindings: allBindings,
+};
+
+fs.writeFileSync(outputPath, serialize(result), { flag: "wx", mode: 0o444 });
+assert.equal(fs.statSync(outputPath).mode & 0o777, 0o444);
+console.log(serialize({
+  path: outputPath,
+  sha256: hash(outputPath),
+  status: result.status,
+  fixes: fixChecks.length,
+  affectedObjects: changedObjects.length,
+  bindings: allBindings.length,
+  newImageViews: 0,
+}).trimEnd());

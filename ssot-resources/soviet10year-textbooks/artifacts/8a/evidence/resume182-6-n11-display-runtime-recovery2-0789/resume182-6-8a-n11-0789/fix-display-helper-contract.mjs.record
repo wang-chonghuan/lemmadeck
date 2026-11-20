@@ -1,0 +1,67 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const own = `${repo}/.tmp/resume182-6-8a-n11-0789/display-FIRST`;
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const priorReadyPath = `${own}/ready-output-path1.record`;
+const priorReadyBytes = fs.readFileSync(priorReadyPath);
+const ready = JSON.parse(priorReadyBytes);
+const first = JSON.parse(fs.readFileSync(`${own}/runtime-FIRST/report-FIRST.json`));
+assert.equal(first.status, 'FAIL');
+assert.equal(first.renderer.ok, true);
+assert.equal(first.screenshots.length, 0);
+assert.ok(Object.values(first.cleanup).every(Boolean));
+const source = `${repo}/ssot-resources/soviet10year-textbooks/artifacts/8a/evidence/resume182-6-c2ex-display-failed-runtimes-and-current-code5724/resume182-6-8a-c2ex-display5724-FIRST/display-helper.mjs.record`;
+const wrapperBytes = fs.readFileSync(source);
+const old = new Map();
+for (const name of ['prepare.mjs', 'run.mjs', 'display-helper.mjs']) {
+  const file = `${own}/${name}`;
+  const bytes = fs.readFileSync(file);
+  assert.equal(sha(bytes), ready.files.find(item => item.path === file).sha256);
+  fs.writeFileSync(`${file}-before-helper-contract1.record`, bytes, { flag: 'wx' });
+  old.set(name, bytes);
+}
+const basePath = `${own}/display-helper-base.mjs`;
+fs.writeFileSync(basePath, old.get('display-helper.mjs'), { flag: 'wx' });
+const baseImport = "'../resume182-6-8a-n6-display3695-FIRST/display-helper.mjs'";
+assert.equal(wrapperBytes.toString().split(baseImport).length, 2);
+fs.writeFileSync(`${own}/display-helper.mjs`,
+  wrapperBytes.toString().replace(baseImport, "'./display-helper-base.mjs'"));
+const implementation = "['prepare.mjs', 'run.mjs', 'display-helper.mjs']";
+assert.equal(old.get('prepare.mjs').toString().split(implementation).length, 2);
+fs.writeFileSync(`${own}/prepare.mjs`, old.get('prepare.mjs').toString()
+  .replace(implementation, "['prepare.mjs', 'run.mjs', 'display-helper.mjs', 'display-helper-base.mjs']"));
+fs.writeFileSync(`${own}/run.mjs`, old.get('run.mjs').toString()
+  .replace("path.join(OWN, 'ready-output-path1.record')", "path.join(OWN, 'ready-helper-contract1.record')"));
+const moduleNames = ['prepare.mjs', 'run.mjs', 'display-helper.mjs', 'display-helper-base.mjs'];
+for (const name of moduleNames) {
+  const file = `${own}/${name}`;
+  const check = spawnSync(process.execPath, ['--check', file], { encoding: 'utf8' });
+  assert.equal(check.status, 0, check.stderr);
+}
+ready.files = moduleNames.map(name => ({
+  path: `${own}/${name}`, sha256: sha(fs.readFileSync(`${own}/${name}`)),
+}));
+ready.pins = ready.pins.filter(item => !moduleNames.some(name => item.path === `${own}/${name}`));
+ready.pins.push(...ready.files.map(item => ({ ...item, realpath: fs.realpathSync(item.path) })));
+ready.helperContractRecovery = {
+  diagnosis: 'Runner expects the retained extended install(page,args) API, not the base page-context collector.',
+  preservedReady: { path: priorReadyPath, sha256: sha(priorReadyBytes) },
+  preservedHelper: { path: `${own}/display-helper.mjs-before-helper-contract1.record`,
+    sha256: sha(old.get('display-helper.mjs')) },
+  extendedHelperSource: { path: source, sha256: sha(wrapperBytes) },
+  sourceChange: 'Only rebind the existing wrapper import to its exact retained base bytes.',
+  base: { path: basePath, sha256: sha(fs.readFileSync(basePath)) },
+  firstRendererReused: true, rendererCalls: 0, browserLaunches: 0,
+  contentApprovalsRerun: 0, databaseWrites: 0, finish: 'review',
+};
+const readyPath = `${own}/ready-helper-contract1.record`;
+fs.writeFileSync(readyPath, `${JSON.stringify(ready, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: 'HELPER_CONTRACT_REPAIRED_RECOVERY_PENDING',
+  ready: { path: readyPath, sha256: sha(fs.readFileSync(readyPath)) },
+  files: ready.files, rendererCalls: 0, browserLaunches: 0 }));

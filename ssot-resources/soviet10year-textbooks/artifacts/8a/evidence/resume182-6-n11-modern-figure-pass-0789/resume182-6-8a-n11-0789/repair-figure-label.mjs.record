@@ -1,0 +1,53 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const base = '.tmp/resume182-6-8a-n11-0789';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const reviewFile = `${base}/figure-review-FIRST/result.record`;
+const reviewBytes = fs.readFileSync(reviewFile);
+assert.equal(sha(reviewBytes), 'e083839b04bd090184c0196e837911c74657ea5b94186adf7f968ec1e6ef3a36');
+const review = JSON.parse(reviewBytes);
+assert.equal(review.status, 'revise');
+const figure = review.figures.find(item => item.id === 'fig-29');
+assert.equal(figure.blockers.length, 1);
+assert.equal(figure.blockers[0].id, 'fig-29-d-n6-label-registration');
+const before = fs.readFileSync(figure.spec.path);
+assert.equal(sha(before), figure.spec.sha256);
+const spec = JSON.parse(before);
+const original = structuredClone(spec);
+const label = spec.objects.find(item => item.id === 'fig-29-d-n-tick-6');
+assert.equal(label.text, '6');
+assert.deepEqual(label.at, [32, 3.15]);
+assert.deepEqual(label.labelPlacement.offset, [10, 0]);
+label.at = [32, 4.9];
+label.labelPlacement.offset = [0, 0];
+label.textAnchor = 'middle';
+const reverted = structuredClone(spec);
+reverted.objects[spec.objects.indexOf(label)] = original.objects[spec.objects.indexOf(label)];
+assert.deepEqual(reverted, original, 'Only the affected label placement may change');
+const output = `${base}/figure-label-affected1`;
+fs.mkdirSync(output);
+const specFile = `${output}/fig-29.spec.json`;
+const after = Buffer.from(`${JSON.stringify(spec, null, 2)}\n`);
+fs.writeFileSync(specFile, after, { flag: 'wx' });
+const record = {
+  schema: 'stemrobin-182/distinct-figure-label-repair@1',
+  status: 'RENDER_AND_AFFECTED_VISUAL_REVIEW_PENDING',
+  book: '8a', lesson: 'alg8-c3-s1-n11', edition: 'modern-us-neutral',
+  originalReview: { path: reviewFile, sha256: sha(reviewBytes) },
+  before: figure.spec, after: { path: specFile, sha256: sha(after) },
+  affectedObject: label.id, originalPlacement: original.objects[spec.objects.indexOf(label)],
+  correctedPlacement: label,
+  rationale: 'Center 6 exactly at the original n=6 crossing x, above the axis to clear the sixth dot below it. Only vertical label placement is a modern readability addition; no tick, grid, point or data value changes.',
+  sourceContentChanges: 0, pointChanges: 0, gridChanges: 0, otherObjectChanges: 0,
+  previousDistinctGlyphRepairCount: 1,
+  thisLabelRegistrationDefectRepairAttempt: 1, totalDistinctVisualRepairs: 2,
+  priorTechnicalFailuresAndVisualRepairPreserved: true,
+  parentImageViews: 0, paidCalls: 0, databaseWrites: 0, finish: 'review',
+};
+const bytes = Buffer.from(`${JSON.stringify(record, null, 2)}\n`);
+fs.writeFileSync(`${output}/repair.record`, bytes, { flag: 'wx' });
+console.log(JSON.stringify({ path: `${output}/repair.record`, sha256: sha(bytes), specFile }));

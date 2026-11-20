@@ -1,0 +1,60 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [expectedHash] = process.argv.slice(2);
+const base = `${repo}/.tmp/resume182-6-8a-n11-0789`;
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const retention = JSON.parse(fs.readFileSync(
+  'ssot-resources/soviet10year-textbooks/artifacts/8a/evidence/resume182-6-n11-choice-author-first-0789/retention.record'));
+const original = retention.entries.find(item =>
+  item.historical_path.endsWith('/choices-FIRST/draft.json'));
+assert.equal(original.sha256, '4c93488e128d7b9858e447faa4d825998e1fff40f21fe1dbfdcda54e0901f602');
+const originalBytes = fs.readFileSync(original.path);
+assert.equal(sha(originalBytes), original.sha256);
+const before = JSON.parse(originalBytes);
+const draftPath = `${base}/choices-FIRST/draft.json`;
+const revisedBytes = fs.readFileSync(draftPath);
+assert.equal(sha(revisedBytes), expectedHash);
+const revised = JSON.parse(revisedBytes);
+const ids = ['q192-multiples', 'q192-parity', 'q193-neighbors', 'q199-round-seven'];
+assert.equal(revised.seed_sha256, before.seed_sha256);
+assert.deepEqual(revised.new_figures, before.new_figures);
+assert.deepEqual(revised.questions.map(item => item.id), before.questions.map(item => item.id));
+for (const question of before.questions.filter(item => !ids.includes(item.id))) {
+  assert.deepEqual(revised.questions.find(item => item.id === question.id), question);
+}
+for (const coverage of before.coverage.filter(item => !['192', '193', '199'].includes(item.source_number))) {
+  assert.deepEqual(revised.coverage.find(item => item.source_number === coverage.source_number), coverage);
+}
+const oldMultiples = before.questions.find(item => item.id === 'q192-multiples');
+const newMultiples = revised.questions.find(item => item.id === 'q192-multiples');
+assert.deepEqual(newMultiples.view, oldMultiples.view);
+assert.deepEqual(newMultiples.intent, oldMultiples.intent);
+assert.deepEqual(newMultiples.key.correct, oldMultiples.key.correct);
+assert.deepEqual(newMultiples.key.rationales.filter(item => item.option_id !== 'A'),
+  oldMultiples.key.rationales.filter(item => item.option_id !== 'A'));
+const reviewPath = `${base}/choice-review-FIRST/review.json`;
+const firstReviewBytes = fs.readFileSync(reviewPath);
+assert.equal(sha(firstReviewBytes), '0be621d3dca4f7a777a05855dc70eecd0cfd76267189e1abd86adc6e80c35a20');
+const own = `${base}/choice-review-AFFECTED1`;
+assert.ok(!fs.existsSync(own));
+fs.mkdirSync(own);
+const projection = {
+  schema: 'stemrobin-182/affected-choice-visible-review-projection@1',
+  book: '8a', lesson: 'alg8-c3-s1-n11', edition: 'modern-us-neutral',
+  draft: { path: draftPath, sha256: expectedHash },
+  firstReview: { path: reviewPath, sha256: sha(firstReviewBytes) },
+  sourceAndFiguresUnchanged: true, unaffectedQuestionCount: revised.questions.length - ids.length,
+  affectedQuestionIds: ids,
+  questions: revised.questions.filter(item => ids.includes(item.id)).map(item => ({
+    id: item.id, source_numbers: item.source_numbers, view: item.view,
+  })),
+  authorKeysAndIntentDisclosed: false, imageReopensRequired: 0,
+};
+const file = `${own}/views.record`;
+fs.writeFileSync(file, `${JSON.stringify(projection, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: file, sha256: sha(fs.readFileSync(file)),
+  affected: ids, unaffectedExact: projection.unaffectedQuestionCount }));

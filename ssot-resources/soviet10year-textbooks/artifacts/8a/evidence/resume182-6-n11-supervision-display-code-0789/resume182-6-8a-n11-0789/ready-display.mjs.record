@@ -1,0 +1,106 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [answerReviewPath, answerReviewHash] = process.argv.slice(2);
+const base = '.tmp/resume182-6-8a-n11-0789';
+const edition = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral';
+const lesson = `${edition}/lessons/alg8-c3-s1-n11`;
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const bound = file => ({ path: path.resolve(file), sha256: sha(fs.readFileSync(file)) });
+const read = (file, hash) => {
+  const entry = bound(file);
+  if (hash) assert.equal(entry.sha256, hash, file);
+  return JSON.parse(fs.readFileSync(file));
+};
+const write = (file, value) => {
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+  return bound(file);
+};
+const textReviewPath = `${base}/modern-text-review-FIRST/result-affected-layout1.record`;
+const textReview = read(textReviewPath, '80641b1dc953815c249f2f46d428dbad92084eba28ddb06ae4d3e0b61202b9dc');
+assert.equal(textReview.status, 'TEXT_PASS');
+for (const [name, item] of Object.entries(textReview.approved_text_bindings)) {
+  const template = read(item.path, item.sha256);
+  const final = read(`${lesson}/${name === 'lesson' ? 'lesson' : 'exercises'}.json`);
+  assert.equal(final.status, 'ready');
+  template.status = final.status;
+  assert.deepEqual(final, template, 'Final edition must equal the text-approved normalized candidate');
+}
+const figureReviewPath = `${base}/figure-review-affected-label1/result.record`;
+const figureReview = read(figureReviewPath);
+assert.equal(figureReview.status, 'pass');
+assert.equal(figureReview.reviewer.kind, 'independent_agent');
+const answerReview = read(answerReviewPath, answerReviewHash);
+assert.equal(answerReview.status, 'pass');
+assert.equal(answerReview.reviewer.kind, 'independent_agent');
+assert.equal(answerReview.book, '8a');
+assert.equal(answerReview.lesson, 'alg8-c3-s1-n11');
+assert.equal(answerReview.edition, 'modern-us-neutral');
+const candidate = read(answerReview.answerKey.path, answerReview.answerKey.sha256);
+const answers = read(`${lesson}/answer-keys.json`);
+const candidateComparable = structuredClone(candidate);
+const finalComparable = structuredClone(answers);
+for (const value of [candidateComparable, finalComparable]) {
+  delete value.status;
+  delete value.count;
+}
+assert.deepEqual(candidateComparable, finalComparable);
+assert.equal(answers.status, 'ready');
+assert.equal(answers.answers.length, 16);
+assert.ok(answers.answers.every(answer => answer.parts.every(part => part.judge !== 'exact')));
+const files = {
+  modern: ['lesson.json', 'exercises.json', 'figures.json', 'adaptation.audit.json']
+    .map(name => bound(`${lesson}/${name}`)),
+  answers: ['answer-keys.json', 'answer-keys.audit.json'].map(name => bound(`${lesson}/${name}`)),
+  choices: ['seed.json', 'draft.json', 'review.json'].map(name => bound(`${lesson}/choice-set/${name}`)),
+  figures: ['fig-28', 'fig-29', 'tbl-p0077-02', 'tbl-p0078-01']
+    .flatMap(id => ['spec.json', 'svg', 'render.json', 'review.json']
+      .map(ext => bound(`${edition}/figures/${id}.${ext}`))),
+};
+assert.equal(read(`${lesson}/adaptation.audit.json`).status, 'pass');
+assert.equal(read(`${lesson}/answer-keys.audit.json`).status, 'pass');
+assert.equal(read(`${lesson}/choice-set/review.json`).outcome, 'pass');
+for (const id of ['fig-28', 'fig-29', 'tbl-p0077-02', 'tbl-p0078-01']) {
+  assert.equal(read(`${edition}/figures/${id}.review.json`).status, 'pass');
+}
+const previousUsagePath = 'ssot-resources/soviet10year-textbooks/artifacts/8a/evidence/resume182-6-c2ex-final-runtime-selection-and-supervision5724/runtime-recovery-choice-fraction-padding/usage-FIRST.json.record';
+const previousUsage = read(previousUsagePath, 'c796cedf801fc967b85d5d2944c6c8f57f735fb4d47ae052e71c080743da51e0');
+const usage = write(`${base}/upstream-usage.record`, {
+  schema: 'stemrobin-182/upstream-usage-preservation@1',
+  cumulative: previousUsage.cumulative,
+  previous: bound(previousUsagePath),
+  currentEvidence: [
+    bound(`${base}/source-author/result.record`),
+    bound(`${base}/source-review-FIRST/result-affected-join1.record`),
+    bound(`${base}/figure-author-FIRST/result.record`),
+    bound(figureReviewPath), bound(textReviewPath), bound(answerReviewPath),
+    bound(`${lesson}/choice-set/review.json`),
+  ],
+  note: 'Unknown inherited totals remain unknown. Exact current stage/image usage remains in bound original receipts; no reset or estimated recovery.',
+  parentImageViewsThisContinuation: 0,
+  hostTokens: 'unknown', totalCost: 'unknown', databaseWrites: 0, finish: 'review',
+});
+const ready = {
+  schema: 'n11-parent-display-ready@1', status: 'parentREADY', ticket: 'STEMROBIN-182',
+  scope: { root: repo, book: '8a', edition: 'modern-us-neutral', lesson: 'alg8-c3-s1-n11' },
+  authorization: { offlineDisplay: true, rendererCalls: 1, appAcceptance: false, production: false },
+  files: Object.values(files).flat(),
+  approvals: {
+    modern: { status: 'pass', files: files.modern,
+      receipts: [bound(textReviewPath), bound(`${lesson}/adaptation.audit.json`)] },
+    answers: { status: 'pass', finalized: true, files: files.answers,
+      receipts: [bound(answerReviewPath), bound(`${lesson}/answer-keys.audit.json`)] },
+    choices: { status: 'pass', retained: true, files: files.choices,
+      receipts: [bound(`${lesson}/choice-set/review.json`)] },
+    figures: { status: 'pass', ids: ['fig-28', 'fig-29', 'tbl-p0077-02', 'tbl-p0078-01'],
+      files: files.figures, receipts: [bound(figureReviewPath)] },
+  },
+  upstreamUsage: usage,
+  currentImageAccountingPreserved: true, oldPassReruns: 0,
+  databaseWrites: 0, finish: 'review',
+};
+console.log(JSON.stringify(write(`${base}/parent-ready.record`, ready)));

@@ -1,0 +1,219 @@
+"""Affected-only continuation; no source, image, answer or figure reads."""
+
+import copy
+import hashlib
+import json
+import os
+import re
+import sys
+from collections import Counter
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck")
+SCOPE = ROOT / ".tmp/resume182-6-8a-n11-0789/modern-text-review-FIRST"
+FIX = ROOT / ".tmp/resume182-6-8a-n11-0789/modern-layout-affected1/fix.record"
+FIX_SHA = "a0181f70b42f2e98a5996d2b2c3ff3f9ae8aff11b51ffb1ffdd71435e719c830"
+ORIGINAL_SHA = "6fa18b2f6814826e0cb2bf42374e6d8efe2e630611a5b23f519b975662ea9693"
+
+if Path.cwd() != ROOT or os.environ.get("PYTHONDONTWRITEBYTECODE") != "1":
+    raise RuntimeError("Wrong workspace or missing bytecode restriction")
+sys.dont_write_bytecode = True
+sys.path.insert(0, str(ROOT / ".claude/skills/ld-s10y-lesson/tools"))
+import edition
+
+bindings = {}
+
+
+def read_bound(name, record):
+    path = Path(record["path"])
+    if not path.is_relative_to(ROOT):
+        raise RuntimeError("Read outside authorized workspace")
+    payload = path.read_bytes()
+    actual = hashlib.sha256(payload).hexdigest()
+    if actual != record["sha256"]:
+        raise RuntimeError(f"Stale binding: {name}")
+    bindings[name] = {"path": str(path), "sha256": actual}
+    return payload
+
+
+fix = json.loads(read_bound("fix", {"path": str(FIX), "sha256": FIX_SHA}))
+original = json.loads(read_bound("originalReview", fix["originalReview"]))
+if bindings["originalReview"]["sha256"] != ORIGINAL_SHA or original["status"] != "TEXT_REVISE":
+    raise RuntimeError("Wrong original independent review")
+before = json.loads(read_bound("before", fix["before"]))
+after_bytes = read_bound("immutableAfter", fix["immutableAfter"])
+after = json.loads(after_bytes)
+current_bytes = read_bound("current_lesson_template", fix["after"])
+current = json.loads(current_bytes)
+exercises_bytes = read_bound(
+    "current_exercises_template", original["files"]["original_exercises_template"],
+)
+defect = json.loads(read_bound("original_layout_defect", original["files"]["layout_defect"]))
+checks = []
+
+
+def check(name, passed):
+    checks.append({"name": name, "pass": bool(passed)})
+
+
+check("fix_identity", (
+    fix["book"] == "8a"
+    and fix["lesson"] == "alg8-c3-s1-n11"
+    and fix["edition"] == "modern-us-neutral"
+))
+check("before_is_FIRST_reviewed_template", (
+    bindings["before"]["sha256"] == original["files"]["original_lesson_template"]["sha256"]
+))
+check("current_lesson_byte_identical_to_immutable_after", current_bytes == after_bytes)
+check("exercises_byte_identical_to_FIRST_reviewed_template", (
+    hashlib.sha256(exercises_bytes).hexdigest()
+    == original["files"]["normalized_exercises_template"]["sha256"]
+))
+before_except_text = copy.deepcopy(before)
+after_except_text = copy.deepcopy(current)
+before_text = before_except_text["prose"][0].pop("text")
+after_text = after_except_text["prose"][0].pop("text")
+check("only_prose_0_text_changed", before_except_text == after_except_text)
+check("prose_0_non_whitespace_tokens_unchanged", (
+    re.sub(r"\s+", "", before_text) == re.sub(r"\s+", "", after_text)
+))
+replayed = before_text
+for replacement in defect["smallest_fix"]["replacements"]:
+    check("replacement_anchor_unique", replayed.count(replacement["before"]) == 1)
+    replayed = replayed.replace(replacement["before"], replacement["after"], 1)
+replay_doc = {"prose": [copy.deepcopy(before["prose"][0])]}
+replay_doc["prose"][0]["text"] = replayed
+edition.normalize_lesson_layout(replay_doc)
+check("exact_four_replacements_plus_production_normalizer", replay_doc["prose"][0] == current["prose"][0])
+check("actual_layout_equals_original_reviewer_proposed_layout", (
+    after_text == defect["proposed_normalized_text"]
+))
+paragraphs = after_text.split("\n\n")
+check("three_complete_short_paragraphs", len(paragraphs) == 3)
+check("two_introduced_formulas_on_own_lines", (
+    "$15,25,35,45,55,65,75,85,95$." in paragraphs[0].splitlines()
+    and "$1\\to15,2\\to25,3\\to35,\\cdots,9\\to95$." in paragraphs[1].splitlines()
+))
+before_formulas = [match.group(1) or match.group(2) for match in edition.MATH.finditer(before_text)]
+after_formulas = [match.group(1) or match.group(2) for match in edition.MATH.finditer(after_text)]
+check("affected_formula_multiset_exact", Counter(before_formulas) == Counter(after_formulas))
+check("affected_formula_sequence_exact", before_formulas == after_formulas)
+check("chinese_punctuation_outside_affected_math", not any(
+    re.search(r"[、，；。？！：]", formula) for formula in after_formulas
+))
+check("only_original_blocker_was_affected_layout", (
+    [blocker["id"] for blocker in original["blockers"]]
+    == ["modern-prose-0-short-paragraph-layout"]
+))
+for name, record in list(bindings.items()):
+    check(f"{name}_unchanged_after_observation", (
+        hashlib.sha256(Path(record["path"]).read_bytes()).hexdigest() == record["sha256"]
+    ))
+
+failed = [item["name"] for item in checks if not item["pass"]]
+passed = not failed
+blockers = [] if passed else [{
+    "id": "modern-prose-0-short-paragraph-layout",
+    "kind": "affected-text-layout-or-binding",
+    "json_pointer": "/prose/0/text",
+    "failed_observations": failed,
+    "smallest_fix": "Restore the bound four-replacement normalized text without changing any other field.",
+}]
+result = {
+    "schema": "stemrobin-182/independent-modern-text-review@1",
+    "status": "TEXT_PASS" if passed else "TEXT_REVISE",
+    "date": "2026-11-20",
+    "authorization": "authorized182-6 affected-only continuation",
+    "repo": str(ROOT),
+    "book": "8a",
+    "lesson": "alg8-c3-s1-n11",
+    "edition": "modern-us-neutral",
+    "reviewer": {
+        **original["reviewer"],
+        "continuation": "Same independent reviewer; only the original prose/0 layout blocker reconsidered",
+        "layoutFixAuthor": False,
+    },
+    "originalReview": bindings["originalReview"],
+    "originalReviewPreserved": True,
+    "fixRecord": bindings["fix"],
+    "files": {
+        **bindings,
+        "review_command": {
+            "path": str(Path(__file__)),
+            "sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        },
+    },
+    "fixed_blockers": [{
+        "id": "modern-prose-0-short-paragraph-layout",
+        "status": "FIXED",
+        "json_pointer": "/prose/0/text",
+        "source_refs": ["p0074#4"],
+        "evidence": "Exact original proposed text now appears as three two-sentence paragraphs with both introduced formulas on separate lines.",
+    }] if passed else [],
+    "remaining_blockers": blockers,
+    "blockers": blockers,
+    "scope": {
+        "affected_only": True,
+        "reviewed_json_pointer": "/prose/0/text",
+        "changed_object_indices": [0],
+        "current_full_lesson_compared_structurally_only_to_verify_no_other_change": True,
+        "current_exercises_hashed_only": True,
+        "no_semantic_rereview_of_unchanged_objects": True,
+    },
+    "reused_source_approval": original["reused_source_approval"],
+    "reused_FIRST_findings": {
+        "originalReview": bindings["originalReview"],
+        "new_semantic_differences": original["evidence"]["new_semantic_differences"],
+        "source_object_preservation": original["evidence"]["source_object_preservation"],
+        "all_other_prose_and_subpart_layout_findings_reused": True,
+        "reused_not_reexecuted": True,
+    },
+    "affected_evidence": {
+        "checks": checks,
+        "failed_checks": failed,
+        "production_normalization_replay_in_memory_only": True,
+        "paragraphs": paragraphs,
+        "complete_sentences_per_paragraph": [2, 2, 2],
+        "affected_formula_occurrences": len(after_formulas),
+        "before_formulas": before_formulas,
+        "after_formulas": after_formulas,
+        "no_candidate_or_template_writes": True,
+    },
+    "approved_text_bindings": {
+        "lesson": bindings["current_lesson_template"],
+        "exercises": bindings["current_exercises_template"],
+    } if passed else None,
+    "command_receipt": {
+        "command": (
+            "PYTHONDONTWRITEBYTECODE=1 .claude/skills/ld-s10y-lesson/.venv/bin/python "
+            ".tmp/resume182-6-8a-n11-0789/modern-text-review-FIRST/review_affected_layout1.py"
+        ),
+        "cwd": str(ROOT),
+        "finished_at_utc": datetime.now(timezone.utc).isoformat(),
+        "exit_code": 0,
+        "PYTHONDONTWRITEBYTECODE": "1",
+    },
+    "newImageViews": 0,
+    "imageFileReads": 0,
+    "sourceRereviewed": False,
+    "sourceMathematicsRederived": False,
+    "figuresApproved": False,
+    "answersOrChoicesRead": False,
+    "validatorsInvoked": False,
+    "renderersOrPublishersInvoked": False,
+    "databaseActions": 0,
+    "gitWorktreeChatOrAppActions": 0,
+    "hostTokens": "unknown",
+    "cost": "unknown",
+}
+path = SCOPE / "result-affected-layout1.record"
+with path.open("x", encoding="utf-8") as handle:
+    handle.write(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+path.chmod(0o444)
+print(json.dumps({
+    "path": str(path),
+    "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+    "status": result["status"],
+}, indent=2))

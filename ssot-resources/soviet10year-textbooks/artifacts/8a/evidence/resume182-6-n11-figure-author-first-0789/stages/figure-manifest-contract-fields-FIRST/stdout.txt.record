@@ -1,0 +1,341 @@
+16-
+17-from PIL import Image
+18-
+19-import assemble
+20-import blocks
+21-
+22-
+23-LESSON_SCHEMA = "ld-s10y-lesson/edition-lesson@1"
+24-EXERCISES_SCHEMA = "ld-s10y-lesson/edition-exercises@1"
+25-FIGURES_SCHEMA = "ld-s10y-lesson/edition-figures@1"
+26:IMAGE_FIGURE_SPEC_SCHEMA = "ld-s10y-image/figure-spec@2"
+27:LEGACY_IMAGE_FIGURE_SPEC_SCHEMA = "ld-s10y-image/figure-spec@1"
+28-IMAGE_RENDER_SCHEMA = "ld-s10y-image/render@2"
+29-LEGACY_IMAGE_RENDER_SCHEMA = "ld-s10y-image/render@1"
+30-IMAGE_REVIEW_SCHEMA = "ld-s10y-image/review@1"
+31-AUDIT_SCHEMA = "ld-s10y-lesson/edition-audit@1"
+32-BOOK_SCHEMA = "ld-s10y-lesson/edition-book@1"
+33-MATH = re.compile(r"\$\$(.+?)\$\$|\$([^$]+?)\$", re.S)
+34-MATH_TEXT_LITERAL = re.compile(r"\\text\{([^{}]*)\}")
+35-MATH_BOUNDARY_PUNCTUATION = re.compile(r"[、，；。？！：]+")
+36-NUMBER = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])")
+37-# Model-name hyphens have the same boundary in source Cyrillic and modern Latin.
+38-ERRATA_NUMBER = re.compile(
+39-    r"(?<![A-Za-z0-9_\u0400-\u04ff.])-?\d+(?:\.\d+)?"
+40-    r"(?![A-Za-z0-9_\u0400-\u04ff.])",
+41-    re.ASCII,
+42-)
+43-PART_MARKER = re.compile(
+44-    r"(?<![A-Za-z0-9_\u0400-\u04ff])(?<!\d\.)"
+45-    r"(?P<open>[(（]?)(?P<label>\d{1,2}|[a-z]|[\u0430-\u044f\u0451])(?P<close>[)）])"
+46-)
+47-LATIN_PARTS = tuple("abcdefghijklmnopqrstuvwxyz")
+--
+355-        })
+356-    return result
+357-
+358-
+359-def figure_sources(book: Path, figures: list[dict]) -> list[dict]:
+360-    result = []
+361-    for figure in figures:
+362-        item = {
+363-            "id": figure["id"],
+364-            "label": figure.get("label"),
+365:            "spec": f"figures/{figure['id']}.spec.json",
+366-            "changes": ["modernized"],
+367-            "source": {},
+368-        }
+369-        for suffix in (".png", ".svg"):
+370-            path = book / "figures" / f"{figure['id']}{suffix}"
+371-            if path.exists():
+372-                item["source"][suffix[1:]] = {
+373-                    "path": path.relative_to(book).as_posix(),
+374-                    "sha256": sha256(path),
+375-                }
+376-        result.append(item)
+377-    return result
+378-
+379-
+380-def cmd_prepare(args: argparse.Namespace) -> int:
+381-    book = source_dir(args)
+382-    edition = edition_dir(args)
+383-    work_edition = work_edition_dir(args)
+384-    profile_path = Path(args.profile)
+385-    profile = load(profile_path)
+--
+853-    ]
+854-    if hits:
+855-        errors.append(f"{label} 仍含旧文化词或俄文人名: {', '.join(hits)}")
+856-    return errors
+857-
+858-
+859-def local_name(tag: str) -> str:
+860-    return tag.rsplit("}", 1)[-1]
+861-
+862-
+863:def validate_figure_spec(
+864-    spec_path: Path,
+865-    figure_id: str,
+866-    require_review: bool,
+867-) -> tuple[dict, list[str]]:
+868-    if not spec_path.exists():
+869:        return {}, [f"缺少 figure spec: {spec_path}"]
+870-    spec = load(spec_path)
+871-    errors = []
+872:    if spec.get("id") != figure_id:
+873:        errors.append(f"{spec_path}: id 与 figure 不一致")
+874-    schema = spec.get("schema")
+875-    if schema in {
+876-        IMAGE_FIGURE_SPEC_SCHEMA,
+877-        LEGACY_IMAGE_FIGURE_SPEC_SCHEMA,
+878-    }:
+879-        stage = "draft"
+880-        if require_review:
+881-            stage = (
+882-                "rendered"
+883-                if schema == IMAGE_FIGURE_SPEC_SCHEMA
+884-                else "approved"
+885-            )
+886-        repo = Path(__file__).resolve().parents[4]
+887-        validator = (
+888-            repo
+889-            / ".agents"
+890-            / "skills"
+891-            / "ld-s10y-image"
+892-            / "scripts"
+893-            / "validate_spec.py"
+--
+956-        errors.append(f"{path}: 没有可见矢量图元")
+957-    if figure_text_language == "English":
+958-        for node in root.iter():
+959-            if local_name(node.tag) not in {"text", "title", "desc"}:
+960-                continue
+961-            value = "".join(node.itertext()).strip()
+962-            if NON_ENGLISH_FIGURE_SCRIPT.search(value):
+963-                errors.append(
+964-                    f"{path}: {local_name(node.tag)} 必须使用英文，发现 {value!r}"
+965-                )
+966:    spec, spec_errors = validate_figure_spec(
+967-        spec_path,
+968-        figure["id"],
+969-        require_review=True,
+970-    )
+971-    errors += spec_errors
+972:    expected_modes = expected_modes or {"deterministic"}
+973-    if spec.get("mode") not in expected_modes:
+974-        errors.append(
+975-            f"{spec_path}: SVG mode 必须是 {', '.join(sorted(expected_modes))}"
+976-        )
+977-    if spec.get("schema") in {
+978-        IMAGE_FIGURE_SPEC_SCHEMA,
+979-        LEGACY_IMAGE_FIGURE_SPEC_SCHEMA,
+980-    }:
+981-        if metadata_path is None or not metadata_path.exists():
+982-            errors.append(f"{path}: 缺 JSXGraph 渲染报告")
+983-        else:
+984-            metadata = load(metadata_path)
+985-            expected_render_schema = (
+986-                IMAGE_RENDER_SCHEMA
+987-                if spec.get("schema") == IMAGE_FIGURE_SPEC_SCHEMA
+988-                else LEGACY_IMAGE_RENDER_SCHEMA
+989-            )
+990-            if metadata.get("schema") != expected_render_schema:
+991-                errors.append(f"{metadata_path}: render schema 非法")
+992-            if metadata.get("mode") != spec.get("mode"):
+--
+1020-    evidence_path: Path,
+1021-    outputs: dict[str, Path],
+1022-    figure_id: str,
+1023-) -> list[str]:
+1024-    if not path.exists():
+1025-        return [f"缺少图片 review 证据: {path}"]
+1026-    review = load(path)
+1027-    errors = []
+1028-    if review.get("schema") != IMAGE_REVIEW_SCHEMA:
+1029-        errors.append(f"{path}: review schema 非法")
+1030:    if review.get("figure") != figure_id:
+1031-        errors.append(f"{path}: figure 与清单不一致")
+1032-    if review.get("status") != "pass":
+1033-        errors.append(f"{path}: review status 必须是 pass")
+1034-    if review.get("spec", {}).get("sha256") != sha256(spec_path):
+1035-        errors.append(f"{path}: FigureSpec review 已过期")
+1036-    if not evidence_path.is_file():
+1037-        errors.append(f"{path}: 缺 review 对应的 {evidence_name} 文件")
+1038-    elif review.get(evidence_name, {}).get("sha256") != sha256(evidence_path):
+1039-        errors.append(f"{path}: {evidence_name} review 已过期")
+1040-    recorded_outputs = review.get("outputs")
+1041-    if not isinstance(recorded_outputs, dict):
+1042-        errors.append(f"{path}: 缺输出 review 记录")
+1043-        recorded_outputs = {}
+1044-    for name, output_path in outputs.items():
+1045-        record = recorded_outputs.get(name, {})
+1046-        if (
+1047-            not output_path.is_file()
+1048-            or record.get("sha256") != sha256(output_path)
+1049-        ):
+1050-            errors.append(f"{path}: {name} review 已过期")
+--
+1162-            nonwhite = [pixel for pixel in pixels if min(pixel) < 245]
+1163-            colorful = [
+1164-                pixel for pixel in nonwhite
+1165-                if max(pixel) - min(pixel) >= 18
+1166-            ]
+1167-            if not nonwhite or len(colorful) / len(nonwhite) < 0.01:
+1168-                errors.append(f"{path}: 图像近似黑白，必须是完整彩色图")
+1169-    except (OSError, ValueError) as error:
+1170-        errors.append(f"{path}: PNG 无效: {error}")
+1171-
+1172:    spec, spec_errors = validate_figure_spec(
+1173-        spec_path,
+1174-        figure["id"],
+1175-        require_review=True,
+1176-    )
+1177-    errors += spec_errors
+1178-    if metadata_path.exists():
+1179-        metadata = load(metadata_path)
+1180-        if spec.get("schema") == IMAGE_FIGURE_SPEC_SCHEMA:
+1181-            if spec.get("mode") != "generated":
+1182-                errors.append(f"{spec_path}: 当前 PNG 只允许 generated mode")
+1183-            errors += validate_generation_metadata(
+1184-                metadata_path,
+1185-                spec,
+1186-                figure,
+1187-                path,
+1188-            )
+1189-        else:
+1190-            if spec.get("mode") == "hybrid":
+1191-                if metadata.get("schema") != LEGACY_IMAGE_RENDER_SCHEMA:
+1192-                    errors.append(f"{metadata_path}: hybrid mode 缺 JSXGraph 渲染报告")
+--
+1237-
+1238-def validate_artwork(
+1239-    path: Path,
+1240-    render_path: Path,
+1241-    spec_path: Path,
+1242-    figure: dict,
+1243-) -> list[str]:
+1244-    if not path.exists():
+1245-        return [f"缺少 hybrid artwork: {path}"]
+1246-    errors = []
+1247:    spec, spec_errors = validate_figure_spec(
+1248-        spec_path,
+1249-        figure["id"],
+1250-        require_review=True,
+1251-    )
+1252-    errors += spec_errors
+1253-    if spec.get("schema") != IMAGE_FIGURE_SPEC_SCHEMA:
+1254-        errors.append(f"{spec_path}: layered hybrid 必须使用当前 FigureSpec")
+1255-        return errors
+1256-    if spec.get("mode") != "hybrid":
+1257-        errors.append(f"{spec_path}: artwork 只允许 hybrid mode")
+1258-    try:
+1259-        with Image.open(path) as image:
+1260-            image.verify()
+1261-        with Image.open(path) as image:
+1262-            if image.format != "PNG":
+1263-                errors.append(f"{path}: artwork 必须是 PNG")
+1264-            expected = (
+1265-                spec.get("canvas", {}).get("width"),
+1266-                spec.get("canvas", {}).get("height"),
+1267-            )
+--
+1664-        )
+1665-        if isinstance(figure_id, str)
+1666-    } | exercise_figure_ids
+1667-    if (
+1668-        manifest_ids[:len(raw_figure_ids)] != raw_figure_ids
+1669-        or len(manifest_ids) != len(set(manifest_ids))
+1670-        or set(manifest_ids) != expected_ids
+1671-    ):
+1672-        errors.append("现代图必须保留原书图顺序，并只追加实际引用的共享图")
+1673-    for figure in figure_items:
+1674:        spec_path = edition / figure.get("spec", "")
+1675-        spec = load(spec_path) if spec_path.is_file() else {}
+1676-        schema = spec.get("schema")
+1677-        mode = spec.get("mode")
+1678-        if require_current_figures and schema != IMAGE_FIGURE_SPEC_SCHEMA:
+1679-            errors.append(
+1680-                f"{figure.get('id')}: 发布要求 {IMAGE_FIGURE_SPEC_SCHEMA}，"
+1681-                "历史 FigureSpec 只读"
+1682-            )
+1683:        if figure["id"] in exercise_figure_ids and spec:
+1684-            if not spec.get("source", {}).get("inventory"):
+1685-                errors.append(f"{figure['id']}: exercise figure requires source.inventory")
+1686-        if schema == IMAGE_FIGURE_SPEC_SCHEMA:
+1687:            review = figure.get("review")
+1688-            if not isinstance(review, str) or not review:
+1689:                errors.append(f"{figure.get('id')}: 当前图片缺 review 证据路径")
+1690:                review = f"figures/{figure.get('id')}.review.json"
+1691-            review_path = edition / review
+1692:            if mode == "deterministic":
+1693-                if any(figure.get(field) for field in ("png", "artwork", "generation")):
+1694:                    errors.append(f"{figure.get('id')}: deterministic 只允许 svg/render/review")
+1695-                svg = figure.get("svg")
+1696-                render = figure.get("render")
+1697-                if not isinstance(svg, str) or not svg:
+1698:                    errors.append(f"{figure.get('id')}: deterministic 缺 svg")
+1699-                    svg = f"figures/{figure.get('id')}.svg"
+1700-                if not isinstance(render, str) or not render:
+1701:                    errors.append(f"{figure.get('id')}: deterministic 缺 render")
+1702-                    render = f"figures/{figure.get('id')}.render.json"
+1703-                svg_path = edition / svg
+1704-                render_path = edition / render
+1705-                errors += validate_svg(
+1706-                    svg_path,
+1707-                    spec_path,
+1708-                    figure,
+1709-                    profile.get("figure_text_language"),
+1710-                    render_path,
+1711:                    {"deterministic"},
+1712-                )
+1713-                errors += validate_review(
+1714-                    review_path,
+1715-                    spec_path,
+1716-                    "render",
+1717-                    render_path,
+1718-                    {"svg": svg_path},
+1719-                    figure["id"],
+1720-                )
+1721-            elif mode == "hybrid":
+1722-                if any(figure.get(field) for field in ("png", "generation")):
+1723-                    errors.append(f"{figure.get('id')}: hybrid 不再交付扁平 PNG")
+1724-                artwork = figure.get("artwork")
+1725-                svg = figure.get("svg")
+1726-                render = figure.get("render")
+1727-                if not isinstance(artwork, str) or not artwork:
+1728-                    errors.append(f"{figure.get('id')}: hybrid 缺 artwork")
+1729-                    artwork = f"figures/{figure.get('id')}.artwork.png"
+1730-                if not isinstance(svg, str) or not svg:
+1731-                    errors.append(f"{figure.get('id')}: hybrid 缺 overlay svg")
+--
+1753-                errors += validate_review(
+1754-                    review_path,
+1755-                    spec_path,
+1756-                    "render",
+1757-                    render_path,
+1758-                    {"artwork": artwork_path, "svg": svg_path},
+1759-                    figure["id"],
+1760-                )
+1761-            elif mode == "generated":
+1762-                if any(figure.get(field) for field in ("svg", "artwork", "render")):
+1763:                    errors.append(f"{figure.get('id')}: generated 只允许 png/generation/review")
+1764-                png = figure.get("png")
+1765-                generation = figure.get("generation")
+1766-                if not isinstance(png, str) or not png:
+1767-                    errors.append(f"{figure.get('id')}: generated 缺 png")
+1768-                    png = f"figures/{figure.get('id')}.png"
+1769-                if not isinstance(generation, str) or not generation:
+1770-                    errors.append(f"{figure.get('id')}: generated 缺 generation")
+1771-                    generation = f"figures/{figure.get('id')}.png.json"
+1772-                png_path = edition / png
+1773-                generation_path = edition / generation
+1774-                errors += validate_png(
+1775-                    png_path,
+1776-                    generation_path,
+1777-                    spec_path,
+1778-                    figure,
+1779-                )
+1780-                errors += validate_review(
+1781-                    review_path,
+1782-                    spec_path,
+1783-                    "generation",

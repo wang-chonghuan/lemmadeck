@@ -1,0 +1,217 @@
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { writeFile } from 'node:fs/promises';
+import { createDisplayHelpers as n6Helpers } from './display-helper-base.mjs';
+
+// Reuse the executed n6 glyph/media collector. Extend its actual target inventory.
+export function createDisplayHelpers(bindings) {
+  const base = n6Helpers(bindings);
+  const { report, usage, sha, PNG, RUN, own, event, save, check, assertOfflineRuntime } = bindings;
+  const install = async (page, args) => {
+    const settled = () => page.evaluate(() => new Promise(resolve =>
+      requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    await settled();
+    const dom = await page.evaluate(base.installDisplayTools, args);
+    await settled();
+    const extra = await page.evaluate(extendTargets, { materials: args.materials, offset: dom.targetCount });
+    for (const target of extra.targets) {
+      const root = dom.roots.find(item => item.key === target.key);
+      if (root) root.indices.push(target.id);
+    }
+    dom.targets.push(...extra.targets);
+    dom.targetCount = dom.targets.length;
+    dom.formulaBoxes = extra.formulaBoxes;
+    dom.formulaGlyphFonts = extra.formulaGlyphFonts;
+    dom.horizontalEnds = extra.horizontalEnds;
+    dom.internalClips = extra.internalClips;
+    dom.failed.push(...extra.failed);
+    return dom;
+  };
+  const captureCoverage = async (page, viewport, surface, dom) => {
+    const images = report.screenshots.filter(image => image.viewport.width === viewport.width
+      && image.viewport.height === viewport.height && image.surface === surface && image.captureChecks === 'PASS');
+    const covered = new Set(images.flatMap(image => image.visibleIds));
+    const states = new Set(images.map(image => JSON.stringify([image.scroll, image.scrollables])));
+    const shot = async () => {
+      await page.evaluate(() => new Promise(resolve =>
+        requestAnimationFrame(() => requestAnimationFrame(resolve))));
+      const frame = await page.evaluate(() => window.__n6Display.snapshot());
+      const newIds = frame.visibleIds.filter(id => !covered.has(id));
+      if (!newIds.length) return;
+      const state = JSON.stringify([frame.scroll, frame.scrollables]);
+      if (states.has(state)) return;
+      assertOfflineRuntime();
+      // Playwright never writes over a screenshot. Retain bytes before pixel assertions.
+      const bytes = await page.screenshot({ type: 'png', fullPage: false, animations: 'disabled' });
+      usage.screenshotsCaptured += 1;
+      const output = own(path.join(RUN, 'screenshots',
+        `${viewport.width}-${surface}-${String(usage.screenshotsCaptured).padStart(4, '0')}.png`));
+      await writeFile(output, bytes, { flag: 'wx' });
+      const image = { path: output, sha256: sha(bytes), viewport, surface, ...frame, newIds,
+        visualObservation: 'UNOBSERVED', nativeSize: true, fullPage: false,
+        croppedOrResized: false, captureChecks: 'PENDING' };
+      report.screenshots.push(image);
+      await event({ screenshot: image });
+      assertOfflineRuntime();
+      const decoded = PNG.sync.read(bytes);
+      assert.equal(decoded.width, viewport.width); assert.equal(decoded.height, viewport.height);
+      let ink = 0;
+      for (let index = 0; index < decoded.data.length; index += 4)
+        if (decoded.data[index + 3] && Math.max(...decoded.data.subarray(index, index + 3)) < 180) ink += 1;
+      assert.ok(ink > 20, 'Blank native capture');
+      assert.deepEqual(await page.evaluate(() => window.__n6Display.snapshot()), frame);
+      Object.assign(image, { width: decoded.width, height: decoded.height, ink, captureChecks: 'PASS' });
+      images.push(image); states.add(state);
+      for (const id of frame.visibleIds) covered.add(id);
+    };
+    await page.evaluate(() => window.__n6Display.reset());
+    const maximum = await page.evaluate(() => window.__n6Display.maxY());
+    for (let y = 0; y < maximum + viewport.height - 64; y += viewport.height - 64) {
+      await page.evaluate(top => window.scrollTo({ top, left: 0, behavior: 'instant' }), Math.min(y, maximum));
+      await shot();
+      if (y >= maximum) break;
+    }
+    for (const target of dom.targets) {
+      if (covered.has(target.id)) continue;
+      assert.ok(await page.evaluate(id => window.__n6Display.bring(id), target.id),
+        `Unreachable target ${surface}:${target.id}`);
+      await shot();
+    }
+    const mapped = root => ({
+      key: root.key, domTargets: root.indices.length,
+      capturedTargets: root.indices.filter(id => covered.has(id)).length,
+      screenshotPaths: images.filter(image => image.visibleIds.some(id => root.indices.includes(id))).map(image => image.path),
+      completeAcrossNativeScreenshots: root.indices.every(id => covered.has(id)),
+      completeInSingleScreenshot: images.some(image => root.indices.every(id => image.visibleIds.includes(id))),
+    });
+    const formulaCoverage = dom.formulaBoxes.map(formula => ({
+      ...formula, screenshotPaths: images.filter(image => image.visibleIds.some(id => formula.indices.includes(id))).map(image => image.path),
+      complete: formula.indices.every(id => covered.has(id)),
+    }));
+    const inventory = { viewport, surface, targetInventory: dom.targets,
+      domTargets: dom.targetCount, capturedTargets: covered.size,
+      missingTargets: dom.targets.filter(target => !covered.has(target.id)),
+      materialCoverage: dom.roots.map(mapped), figureCoverage: dom.figures.map(mapped),
+      formulaCoverage, horizontalEnds: dom.horizontalEnds,
+      screenshotPaths: images.map(image => image.path), visualObservation: 'PENDING',
+      pixelClaim: 'All glyphs, math rules, formula-box tiles and full media tiles across native views; not human approval' };
+    report.coverage = report.coverage.filter(item => item.viewport.width !== viewport.width || item.surface !== surface);
+    report.coverage.push(inventory);
+    await save(`${viewport.width}-${surface}-coverage.json`, inventory);
+    await check(`${viewport.width}:${surface}:complete-native-target-coverage`,
+      !inventory.missingTargets.length && inventory.materialCoverage.every(item => item.completeAcrossNativeScreenshots)
+      && inventory.figureCoverage.every(item => item.completeAcrossNativeScreenshots)
+      && formulaCoverage.every(item => item.complete), { domTargets: dom.targetCount, screenshots: images.length });
+  };
+  return { projection: base.projection, pageSafety: base.pageSafety, install, captureCoverage };
+}
+
+async function extendTargets({ materials, offset }) {
+  const base = window.__n6Display, targets = [], formulaBoxes = [], formulaGlyphFonts = [];
+  const horizontalEnds = [], internalClips = [];
+  const frame = element => {
+    const result = { left: 0, right: innerWidth, top: 0, bottom: innerHeight };
+    for (let node = element; node && node !== document.body && node !== document.documentElement; node = node.parentElement) {
+      const style = getComputedStyle(node), box = node.getBoundingClientRect();
+      if (['auto', 'scroll', 'hidden', 'clip'].includes(style.overflowX)) {
+        result.left = Math.max(result.left, box.left + node.clientLeft);
+        result.right = Math.min(result.right, box.left + node.clientLeft + node.clientWidth);
+      }
+      if (['auto', 'scroll', 'hidden', 'clip'].includes(style.overflowY)) {
+        result.top = Math.max(result.top, box.top + node.clientTop);
+        result.bottom = Math.min(result.bottom, box.top + node.clientTop + node.clientHeight);
+      }
+    }
+    return result;
+  };
+  const contained = target => {
+    const box = target.rect(), clip = frame(target.element);
+    return box.width > 0 && box.height > 0 && box.left >= clip.left - 0.5
+      && box.right <= clip.right + 0.5 && box.top >= clip.top - 0.5 && box.bottom <= clip.bottom + 0.5;
+  };
+  const add = (element, rect, key, kind, formulaIndex) => {
+    const id = offset + targets.length;
+    targets.push({ id, element, rect, key, kind, formulaIndex, lineIndex: null });
+    return id;
+  };
+  const visited = new Set();
+  for (const material of materials) {
+    const root = document.querySelectorAll(material.selector)[material.index ?? 0];
+    for (const [formulaIndex, visual] of [...root.querySelectorAll('.katex-html')].entries()) {
+      const box = visual.getBoundingClientRect(), indices = [];
+      if (!(box.width > 0 && box.height > 0)) throw new Error('Empty formula box');
+      const walker = document.createTreeWalker(visual, NodeFilter.SHOW_TEXT);
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (!node.data.replace(/[\s\u200b\u200c\u200d\u2060\ufeff]/gu, '')) continue;
+        const style = getComputedStyle(node.parentElement);
+        const family = style.fontFamily.split(',')[0].trim().replace(/^["']|["']$/gu, '');
+        const loaded = [...document.fonts].some(font => font.family.replace(/^["']|["']$/gu, '') === family
+          && font.status === 'loaded');
+        formulaGlyphFonts.push({ key: material.key, formulaIndex, text: node.data,
+          family, px: parseFloat(style.fontSize), loaded,
+          available: document.fonts.check(`${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`, node.data) });
+      }
+      for (let y = 0; y < box.height; y += 32) for (let x = 0; x < box.width; x += 32) {
+        const width = Math.min(32, box.width - x), height = Math.min(32, box.height - y);
+        indices.push(add(visual, () => {
+          const actual = visual.getBoundingClientRect();
+          return { left: actual.left + x, right: actual.left + x + width,
+            top: actual.top + y, bottom: actual.top + y + height, width, height };
+        }, material.key, 'formula-box-region', formulaIndex));
+      }
+      formulaBoxes.push({ key: material.key, formulaIndex, indices, width: box.width, height: box.height });
+    }
+    for (const node of [root, ...root.querySelectorAll('*')]) {
+      if (visited.has(node) || node.closest('.katex-mathml,figure')) continue;
+      visited.add(node);
+      const style = getComputedStyle(node);
+      // The document viewport is not an internal clipping box.
+      if (node !== document.body && node !== document.documentElement
+        && ['hidden', 'clip'].includes(style.overflowY) && node.scrollHeight > node.clientHeight + 1)
+        internalClips.push({ key: material.key, axis: 'y', overflow: style.overflowY,
+          client: node.clientHeight, content: node.scrollHeight });
+      if (['hidden', 'clip'].includes(style.overflowX) && node.scrollWidth > node.clientWidth + 1)
+        internalClips.push({ key: material.key, axis: 'x', overflow: style.overflowX,
+          client: node.clientWidth, content: node.scrollWidth });
+      if (!['auto', 'scroll'].includes(style.overflowX) || node.clientWidth <= 0
+        || node.scrollWidth <= node.clientWidth + 1) continue;
+      node.scrollTo({ left: 0, behavior: 'instant' });
+      const left = node.scrollLeft, maximum = node.scrollWidth - node.clientWidth;
+      node.scrollTo({ left: maximum, behavior: 'instant' });
+      const right = node.scrollLeft;
+      horizontalEnds.push({ key: material.key, index: horizontalEnds.length,
+        left, right, maximum, formula: node.matches('.nb,.sr-nb') || Boolean(node.querySelector('.katex')) });
+    }
+  }
+  const bring = id => {
+    if (id < offset) return base.bring(id);
+    const target = targets[id - offset];
+    let box = target.rect();
+    window.scrollBy({ top: Math.ceil(box.top + box.height / 2 - innerHeight / 2), behavior: 'instant' });
+    for (let node = target.element; node && node !== document.body && node !== document.documentElement; node = node.parentElement) {
+      box = target.rect();
+      const clip = node.getBoundingClientRect(), style = getComputedStyle(node);
+      if (['auto', 'scroll'].includes(style.overflowX)) {
+        if (box.left < clip.left + node.clientLeft) node.scrollLeft -= Math.ceil(clip.left + node.clientLeft - box.left);
+        if (box.right > clip.left + node.clientLeft + node.clientWidth)
+          node.scrollLeft += Math.ceil(box.right - clip.left - node.clientLeft - node.clientWidth);
+      }
+      if (['auto', 'scroll'].includes(style.overflowY)) {
+        if (box.top < clip.top + node.clientTop) node.scrollTop -= Math.ceil(clip.top + node.clientTop - box.top);
+        if (box.bottom > clip.top + node.clientTop + node.clientHeight)
+          node.scrollTop += Math.ceil(box.bottom - clip.top - node.clientTop - node.clientHeight);
+      }
+    }
+    return contained(target);
+  };
+  const failed = targets.filter(target => !bring(target.id))
+    .map(({ id, key, kind }) => ({ id, key, kind }));
+  base.reset();
+  window.__n6Display = { ...base, bring, targetCount: offset + targets.length,
+    snapshot: () => {
+      const result = base.snapshot();
+      return { ...result, visibleIds: result.visibleIds.concat(targets.filter(contained).map(target => target.id)) };
+    } };
+  return { targets: targets.map(({ id, key, kind, formulaIndex, lineIndex }) =>
+    ({ id, key, kind, formulaIndex, lineIndex })), formulaBoxes, formulaGlyphFonts, horizontalEnds, internalClips, failed };
+}

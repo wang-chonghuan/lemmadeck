@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [reviewPath, expectedHash] = process.argv.slice(2);
+const base = `${repo}/.tmp/resume182-6-8a-n11-0789`;
+assert.ok(path.resolve(reviewPath).startsWith(`${base}/`));
+const bytes = fs.readFileSync(reviewPath);
+const sha = value => crypto.createHash('sha256').update(value).digest('hex');
+assert.equal(sha(bytes), expectedHash);
+const review = JSON.parse(bytes);
+assert.equal(review.schema, 's10y-choice-review-v1');
+assert.equal(review.outcome, 'pass');
+assert.equal(review.reviewer.kind, 'independent_agent');
+const target = `${base}/choices-FIRST/review.json`;
+assert.ok(!fs.existsSync(target), 'Do not replace a prior review');
+fs.writeFileSync(target, bytes, { flag: 'wx' });
+console.log(JSON.stringify({ status: 'APPROVED_REVIEW_BYTES_PROMOTED_NATIVE_RETENTION_PENDING',
+  source: { path: path.resolve(reviewPath), sha256: expectedHash },
+  target: { path: target, sha256: sha(bytes) }, databaseWrites: 0, finish: 'review' }));

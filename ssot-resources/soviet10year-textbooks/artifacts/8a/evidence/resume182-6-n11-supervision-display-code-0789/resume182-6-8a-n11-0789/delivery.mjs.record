@@ -1,0 +1,76 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [mode] = process.argv.slice(2);
+assert.ok(['--stage', '--check'].includes(mode));
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const edition = `${root}/editions/modern-us-neutral`;
+const id = 'alg8-c3-s1-n11';
+const exact = [
+  '.intentfold/tickets/STEMROBIN-182/progress.md',
+  `${root}/book.json`, `${edition}/book.json`,
+];
+for (const figure of ['fig-28', 'fig-29', 'tbl-p0077-02', 'tbl-p0078-01']) {
+  exact.push(...['png', 'svg'].map(ext => `${root}/figures/${figure}.${ext}`));
+  exact.push(...['svg', 'spec.json', 'render.json', 'review.json']
+    .map(ext => `${edition}/figures/${figure}.${ext}`));
+}
+for (const page of ['0074', '0075', '0076', '0077', '0078', '0079', '0080', '0081']) {
+  exact.push(...['page.md', 'page.json', 'audit.json']
+    .map(name => `${root}/pages/${page}/${name}`));
+}
+const directories = [
+  `${root}/lessons/${id}`, `${edition}/lessons/${id}`,
+  ...fs.readdirSync(`${root}/evidence`).sort()
+    .filter(name => name.startsWith('resume182-6-n11-'))
+    .map(name => `${root}/evidence/${name}`),
+];
+const run = (args, options = {}) => {
+  const result = spawnSync('git', args, { cwd: repo, ...options });
+  assert.equal(result.status, 0, result.stderr?.toString());
+  return result.stdout;
+};
+const display = JSON.parse(fs.readFileSync(`${edition}/lessons/${id}/offline-display.json`));
+assert.equal(display.status, 'OFFLINE_DISPLAY_PASS');
+assert.equal(display.lesson, id);
+assert.equal(display.coverage.pending, 0);
+assert.equal(display.coverage.missing, 0);
+if (mode === '--stage') {
+  assert.equal(run(['diff', '--cached', '--name-only', '-z'], { encoding: 'utf8' }), '');
+  for (const file of [...exact, ...directories]) assert.ok(fs.existsSync(file), file);
+  run(['add', '--', ...exact, ...directories], { encoding: 'utf8' });
+  console.log(JSON.stringify({ status: 'N11_NARROW_STAGED', halfLessonsIncluded: false }));
+} else {
+  const revisions = run(['rev-parse', 'HEAD', 'origin/codex/STEMROBIN-182-textbooks'],
+    { encoding: 'utf8' }).trim().split('\n');
+  assert.equal(revisions[0], revisions[1], 'Remote advanced; do not overwrite delivery branch');
+  const files = run(['diff', '--cached', '--name-only', '-z'], { encoding: 'utf8' }).split('\0').filter(Boolean);
+  assert.ok(files.length);
+  const forbidden = [
+    /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/,
+    /postgres(?:ql)?:\/\/[^\s"'<>]+:[^\s"'<>]+@/i,
+    /\b(?:gh[pousr]_[A-Za-z0-9]{24,}|github_pat_[A-Za-z0-9_]{24,})\b/,
+    /\bsk-(?:proj-)?[A-Za-z0-9_-]{24,}\b/,
+    /(?:api[_-]?key|access[_-]?token|client[_-]?secret)\s*["']?\s*[:=]\s*["'][A-Za-z0-9/+_-]{24,}["']/i,
+  ];
+  let bytes = 0;
+  for (const file of files) {
+    assert.ok(exact.includes(file) || directories.some(dir => file.startsWith(`${dir}/`)), file);
+    assert.ok(!file.split('/').some(part => /^(?:\.env(?:\..*)?|node_modules|\.venv)$/.test(part)), file);
+    assert.ok(!run(['ls-files', '--stage', '--', file], { encoding: 'utf8' }).startsWith('120000'), file);
+    const blob = run(['show', `:${file}`], { maxBuffer: Math.max(16 * 1024 * 1024, fs.statSync(file).size + 65536) });
+    bytes += blob.length;
+    if (!blob.includes(0)) for (const pattern of forbidden) assert.ok(!pattern.test(blob.toString('utf8')), file);
+  }
+  for (const file of [`${root}/book.json`, `${edition}/book.json`]) {
+    const before = JSON.parse(run(['show', `HEAD:${file}`], { encoding: 'utf8' }));
+    const after = JSON.parse(run(['show', `:${file}`], { encoding: 'utf8' }));
+    assert.deepEqual(after.lessons.filter(item => item.id !== id), before.lessons);
+    assert.equal(after.lessons.filter(item => item.id === id).length, 1);
+  }
+  console.log(JSON.stringify({ status: 'STAGED_SCOPE_AND_SECRET_PASS', files: files.length, bytes,
+    remoteBase: revisions[0], oldIndexEntriesUnchanged: true, halfLessonsIncluded: false }));
+}

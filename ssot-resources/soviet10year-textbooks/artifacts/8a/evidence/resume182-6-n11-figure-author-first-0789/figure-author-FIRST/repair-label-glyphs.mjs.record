@@ -1,0 +1,53 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), root);
+const own = '.tmp/resume182-6-8a-n11-0789/figure-author-FIRST';
+const hash = p => createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+const changes = [];
+for (const id of ['fig-28', 'fig-29']) {
+  const base = `${own}/${id}/${id}`;
+  for (const suffix of ['spec.json', 'svg', 'render.json', 'preview640.png', 'preview640.record']) {
+    fs.copyFileSync(`${base}.${suffix}`, `${own}/history/${id}.${suffix}.before-glyph-repair.record`, fs.constants.COPYFILE_EXCL);
+  }
+  const spec = JSON.parse(fs.readFileSync(`${base}.spec.json`, 'utf8'));
+  const changedLabels = [];
+  for (const object of spec.objects.filter(o => o.id.endsWith('-sequence-label'))) {
+    const before = object.text;
+    assert.equal(before[1], '\u2099');
+    object.text = `${before[0]}_n`;
+    changedLabels.push({ id: object.id, before, after: object.text });
+  }
+  assert.equal(changedLabels.length, id === 'fig-28' ? 1 : 4);
+  fs.writeFileSync(`${base}.spec.json`, `${JSON.stringify(spec, null, 2)}\n`);
+  fs.copyFileSync(`${base}.spec.json`, `${own}/history/${id}.spec.GLYPH1.record`, fs.constants.COPYFILE_EXCL);
+  changes.push({ figure: id, changedLabels, specSha256: hash(`${base}.spec.json`) });
+}
+const record = {
+  schema: 'figure-author/one-targeted-visual-repair@1',
+  repairNumber: 1,
+  defect: 'The whole 640px fig-28 Resvg preview displayed missing-glyph boxes for the Unicode subscript label. Native SVG labels had passed size/collision checks, but the raster glyph fallback was unusable.',
+  observedCandidate: {
+    path: `${own}/history/fig-28.preview640.png.before-glyph-repair.record`,
+    sha256: hash(`${own}/history/fig-28.preview640.png.before-glyph-repair.record`),
+    loadedOnce: true,
+  },
+  correction: 'Replace only the five sequence text strings with conventional ASCII mathematical subscript notation y_n, a_n, b_n, c_n, d_n. No source points, numbers, axes, grids, positions, assertions, or labels identifying answers change.',
+  changes,
+  modernAdditionOverride: 'The initial source inventory records attempted typographic subscripts. Final outputs instead use literal ASCII mathematical subscript notation for reliable existing Resvg/Arial glyph coverage. This is a modern typesetting correction, not a source fact.',
+  affectedFigures: ['fig-28', 'fig-29'],
+  unaffectedFigures: ['tbl-p0077-02', 'tbl-p0078-01'],
+  imageBudget: {
+    actualOriginalLoads: 4, actualPreviewLoadsAtRepair: 1,
+    maxTotalLoads: 8, reopens: 0, crops: 0,
+    finalFig28PreviewWillNotBeReloaded: true,
+    reason: 'The human maximum is eight image loads with no reopens. Three remaining final whole previews will be viewed once. Independent parent review must inspect the regenerated fig-28 final raster.',
+  },
+  sourceContentRepairs: 0, targetedVisualRepairCount: 1,
+  paidCalls: 0, hostTokens: 'unknown', cost: 'unknown',
+  approval: 'None',
+};
+fs.writeFileSync(`${own}/glyph-repair.record`, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify(record, null, 2));

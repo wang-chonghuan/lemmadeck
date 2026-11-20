@@ -1,0 +1,47 @@
+# Bounded Native Display Observation
+
+Workdir is exclusively /Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck.
+Read your named assignments/batchN.record. It supplies exactly the newly captured
+native screenshots you own. Read every assigned image ONCE through view_image,
+at most 8 images total, no other images, crops, resizing, browser or rerender.
+You have no image-bearing history. Parent does not reopen these images.
+You are not alone in this checkout; do not modify or revert anyone else's work.
+Your only write scope is observations/results/batchN.record and optional scratch
+code alongside that result. Use apply_patch for manual edits.
+
+This is visual display review only, not mathematical/source/key review.
+All content, choices and figures are already independently approved, and the
+runtime's exact text, SVG, coverage, scrolling, fonts and offline checks passed.
+Observe actual pixels for unreadable text, missing-glyph squares, wrong formula
+layout, unexpected overlap, malformed rows, or clipped content that cannot be
+reached. These are native viewport scroll positions, so normal content continuing
+above/below the viewport, or a horizontally scrollable mathematical line at a
+nonzero scroll position, is not itself a defect. Do not claim offscreen pixels
+were seen. Record specific visible observations for each actual image.
+
+Return JSON in observations/results/batchN.record:
+{
+  "status": "DISPLAY_PASS" or "DISPLAY_REVISE",
+  "blockers": [],
+  "images": [
+    {
+      "path": "<exact assignment absolute image path>",
+      "sha256": "<exact verified SHA256>",
+      "observations": ["specific visible content/layout observations"],
+      "blockers": []
+    }
+  ],
+  "imageAccounting": {
+    "views": <actual>, "uniqueImages": <actual>,
+    "reopens": 0, "crops": 0, "resizes": 0, "rerenders": 0
+  },
+  "parentImages": 0, "databaseWrites": 0, "finish": "review",
+  "hostTokens": "unknown", "totalCost": "unknown"
+}
+
+Use DISPLAY_PASS only after all assigned images were actually observed with no
+blocking display defect. A failed image tool call is not an observation; preserve
+its actual failure and report it. Compute the result SHA and return only a compact
+text result with batch ID, status, output absolute path, SHA and image count.
+Do not send image payloads, message other chats, commit, push, create/attach a
+worktree, mutate content, write DB, merge or deploy.
