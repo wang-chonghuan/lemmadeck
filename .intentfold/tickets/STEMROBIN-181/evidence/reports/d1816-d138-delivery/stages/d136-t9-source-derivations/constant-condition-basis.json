@@ -1,0 +1,94 @@
+{
+  "schema": "d136-t9-constant-condition-basis-v1",
+  "source_authority_path": ".intentfold/tickets/STEMROBIN-181/tmp/d1816-d134-t9-text-review-input/source-only.json",
+  "source_authority_sha256": "4fda02c4e523d294757b36d6f70cdcadc0d170619a89474d7be0f524c48dd30a",
+  "original_definition_paragraphs": [
+    {
+      "zero_based_index": 0,
+      "text": "$p=\\frac{1}{3}mn\\overline{v^2}.$　$(3-10)$",
+      "source_refs": ["p0083#4"],
+      "interpretation": "Here m is one molecule's mass, n is molecular number density, and overline(v^2) is mean square speed."
+    },
+    {
+      "zero_based_index": 1,
+      "text": "**理想气体的压强与分子的质量、单位体积内的分子数和****分子运动的均方速度的乘积成正比。**",
+      "source_refs": ["p0083#6"],
+      "interpretation": "The historical words 均方速度 denote the overline(v^2) factor in paragraph 0; they do not denote its square root."
+    }
+  ],
+  "notation": [
+    {"symbol": "N", "meaning": "total molecule count", "unit": "dimensionless count, reported as molecules"},
+    {"symbol": "n_density", "meaning": "molecular number density, the n in the source pressure formula", "unit": "m^-3"},
+    {"symbol": "nu", "meaning": "amount of gas or water substance, distinct from n_density", "unit": "mol"},
+    {"symbol": "m", "meaning": "mass of one molecule in the pressure and equipartition formulas", "unit": "kg"},
+    {"symbol": "M", "meaning": "molecular molar mass", "unit": "kg/mol"},
+    {"symbol": "overline(v^2)", "meaning": "mean square of the molecular speed", "unit": "m^2/s^2"},
+    {"symbol": "sqrt(overline(v^2))", "meaning": "rms speed, separately named and not the supplied historical 均方速度", "unit": "m/s"},
+    {"symbol": "W_by", "meaning": "signed work by the gas; positive for net energy transfer from the gas as work", "unit": "J"},
+    {"symbol": "W_on", "meaning": "signed work on the gas; W_on = -W_by", "unit": "J"},
+    {"symbol": "Q", "meaning": "heat positive into the gas", "unit": "J"}
+  ],
+  "constants_and_conversions": [
+    {"id": "K_B", "value": 1.380649e-23, "unit": "J/K", "basis": "Exact SI Boltzmann constant; declared offline standard constant, not printed in the allowed source.", "tasks": ["1", "3", "4", "5"]},
+    {"id": "N_A", "value": 6.02214076e23, "unit": "mol^-1", "basis": "Exact SI Avogadro constant; declared offline standard constant, not printed in the allowed source.", "tasks": ["3"]},
+    {"id": "R", "value": 8.31446261815324, "unit": "J/(mol K)", "basis": "Derived as N_A * k_B; use consistently instead of mixing independently rounded constants.", "tasks": ["1", "3", "6"]},
+    {"id": "CELSIUS_OFFSET", "value": 273.15, "unit": "K", "basis": "Absolute temperature T/K = t/degree_Celsius + 273.15; Delta T has the same numerical size in K and degrees Celsius.", "tasks": ["3", "4", "5", "6"]},
+    {"id": "STANDARD_ATMOSPHERE", "value": 101325, "unit": "Pa", "basis": "Conventional standard atmosphere corresponding to the source's 标准大气压; 1 Pa = 1 N/m^2.", "tasks": ["3"]},
+    {"id": "CM3_TO_M3", "value": 1e-6, "unit": "m^3 per cm^3", "basis": "1 cm = 1e-2 m, so 1 cm^3 = (1e-2)^3 m^3. Volume conversion is cubed.", "tasks": ["3", "5"]},
+    {"id": "WATER_DENSITY_APPROX", "value": 1000, "unit": "kg/m^3", "basis": "Declared ordinary-liquid-water classroom approximation. Not source-supplied, not an exact density measurement and not a consulted density table.", "tasks": ["3"]},
+    {"id": "WATER_MOLAR_MASS_APPROX", "value": 0.018, "unit": "kg/mol", "basis": "Declared H2O molecular molar-mass approximation, equivalent to 18 g/mol. Not source-supplied.", "tasks": ["3"]},
+    {"id": "H2_MOLAR_MASS_APPROX", "value": 0.002, "unit": "kg/mol", "basis": "Declared approximately 2 g/mol for an illustrative mass ratio only; no isotope-specific exact ratio claimed.", "tasks": ["1"]},
+    {"id": "N2_MOLAR_MASS_APPROX", "value": 0.028, "unit": "kg/mol", "basis": "Declared approximately 28 g/mol for an illustrative mass ratio only; no isotope-specific exact ratio claimed.", "tasks": ["1"]}
+  ],
+  "physics_model_basis": [
+    {
+      "id": "CLASSICAL_TRANSLATIONAL_EQUIPARTITION",
+      "relation": "(1/2) m overline(v^2) = (3/2) k_B T",
+      "unit_check": "kg * m^2/s^2 = J; k_B T = (J/K) K = J.",
+      "provenance": "General classical equilibrium physics supplied explicitly by the author, not quoted from the two allowed definition paragraphs.",
+      "domain": "Nonrelativistic molecular translational thermal motion. For a classical liquid with the usual quadratic kinetic energy, thermal velocity scaling does not require a liquid ideal-gas equation of state.",
+      "tasks": ["1", "3", "4", "5", "6"]
+    },
+    {
+      "id": "IDEAL_GAS_COUNT",
+      "relation": "p = n_density k_B T; p V = N k_B T = nu R T",
+      "derivation": "Combine the supplied pressure equation with declared translational equipartition; use n_density = N/V and N = nu N_A.",
+      "unit_check": "Pa m^3 = J; J/(J per molecule) is a molecule count.",
+      "domain": "Room air and dilute residual gas approximated as ideal gases; not liquid water.",
+      "tasks": ["3", "5"]
+    },
+    {
+      "id": "LIQUID_WATER_COUNT",
+      "relation": "N_water = (rho_water V_water/M_water) N_A",
+      "unit_check": "(kg/m^3)(m^3)/(kg/mol) * mol^-1 gives a molecular count.",
+      "provenance": "Mass, amount of substance and molecular-count definitions applied with declared material approximations.",
+      "tasks": ["3"]
+    },
+    {
+      "id": "MONATOMIC_INTERNAL_ENERGY",
+      "relation": "U = (3/2) nu R T; Delta U = (3/2) nu R Delta T",
+      "unit_check": "mol * J/(mol K) * K = J.",
+      "domain": "Classical monatomic ideal gas with three translational degrees of freedom, no additional excited thermal degrees of freedom relevant to this model.",
+      "provenance": "General physics inference from the source's monatomic ideal-gas condition, not stated in the two pressure definition paragraphs.",
+      "tasks": ["6"]
+    },
+    {
+      "id": "FIRST_LAW",
+      "relation": "Delta U = Q - W_by = Q + W_on",
+      "domain": "Closed gas system; other macroscopic energy changes neglected. Adiabatic gives Q = 0.",
+      "provenance": "Declared energy-balance and sign convention. The source leaves the work actor unstated.",
+      "tasks": ["6"]
+    }
+  ],
+  "source_condition_map": [
+    {"source_number": "1", "source_given": ["atmosphere", "hydrogen versus nitrogen molecules"], "author_conditions": ["H2 versus N2", "common local temperature and classical thermal equilibrium"], "ambiguity": "A measure for 较快 and a common temperature are not explicitly stated; qualitative ordering is statistic-independent at equal T."},
+    {"source_number": "2", "source_given": ["ideal gas", "five named paths in fig-24 and fig-30"], "author_conditions": [], "ambiguity": "Required figure state and axis data are absent from permitted text-only access.", "disposition": "NOT_SOLVED/HOLD"},
+    {"source_number": "3", "source_given": ["standard atmospheric pressure", "20 degrees Celsius", "50 m^3 room", "200 cm^3 water"], "author_conditions": ["ideal-gas room air", "ordinary liquid-water density approximation", "H2O molar mass approximation"], "ambiguity": "Exact material constants and precision are not supplied."},
+    {"source_number": "4", "source_given": ["blood water molecules", "37 to 40 degrees Celsius", "historically defined 均方速度"], "author_conditions": ["same molecular species", "classical translational thermal equilibrium"], "ambiguity": "No unresolved lexical ambiguity remains after applying the supplied definition."},
+    {"source_number": "5", "source_given": ["1.3e-10 N/m^2, approximately 1e-12 mm mercury", "27 degrees Celsius", "1 cm^3"], "author_conditions": ["ideal residual gas", "use the stated SI pressure", "expected average count"], "ambiguity": "Approximate pressure equivalence is not an exact second datum."},
+    {"source_number": "6", "source_given": ["compression", "4 mol", "monatomic ideal gas", "500 J per stroke", "adiabatic", "requested temperature rise"], "author_conditions": ["500 J is net compression work on the gas for the positive-rise calculation", "closed thermal system", "declared work sign convention"], "ambiguity": "Work actor, signed quantity versus magnitude, and gross versus net transfer are not explicit; positive rise is conditional."}
+  ],
+  "precision_policy": "Retain unrounded checkpoints internally, report task 3 as approximately 1.25e27 versus 6.69e24 molecules and about 1.9e2 times, task 4 as about 0.97%, task 5 as about 3.1e4 molecules, and task 6 conditionally as about 10.0 K. Source measurement tolerances are not invented.",
+  "online_or_external_source_lookup_performed": false,
+  "source_text_edited": false
+}

@@ -49,6 +49,54 @@ class EnglishEditionIdentityTests(unittest.TestCase):
         self.assertFalse(edition.same_figure_label("\u56fe 195", "Drawing 195", "en"))
         self.assertFalse(edition.same_figure_label("\u56fe 195", "Figure 195", "zh"))
 
+    def test_exercise_figures_localize_labels_only(self):
+        source = {
+            "number": "2", "figure_refs": ["fig-24", "fig-30"],
+            "figures": [
+                {"id": "fig-24", "label": "\u56fe 24", "owner": "2"},
+                {"id": "fig-30", "label": "\u56fe 30"},
+            ],
+        }
+        modern = copy.deepcopy(source)
+        modern["figures"][0]["label"] = "Figure 24"
+        modern["figures"][1]["label"] = "Figure 30"
+        self.assertEqual(edition.validate_exercise_identity(source, modern, "en", "ex"), [])
+        for locale in (None, "zh"):
+            self.assertTrue(edition.validate_exercise_identity(source, modern, locale, "ex"))
+        for change in (
+            lambda row: row["figures"].reverse(),
+            lambda row: row["figures"].pop(),
+            lambda row: row["figures"][0].update(label="Figure 25"),
+            lambda row: row["figures"][0].update(id="fig-25"),
+            lambda row: row["figures"][0].update(owner="3"),
+            lambda row: row["figures"][0].update(extra=True),
+            lambda row: row["figures"][0].pop("owner"),
+            lambda row: row["figure_refs"].reverse(),
+            lambda row: row.update(number="3"),
+        ):
+            candidate = copy.deepcopy(modern)
+            change(candidate)
+            self.assertTrue(edition.validate_exercise_identity(source, candidate, "en", "ex"))
+
+    def test_exercise_figure_field_presence_and_unchanged_labels(self):
+        for source in ({}, {"figures": None}, {"figures": []}, {"figures": [{"id": "fig-24"}]}):
+            self.assertEqual(
+                edition.validate_exercise_identity(source, copy.deepcopy(source), "en", "ex"), [],
+            )
+        self.assertTrue(edition.validate_exercise_identity({}, {"figures": None}, "en", "ex"))
+        self.assertTrue(edition.validate_exercise_identity({"figures": []}, {}, "en", "ex"))
+        self.assertTrue(edition.validate_exercise_identity(
+            {"figures": [{"id": "fig-24"}]},
+            {"figures": [{"id": "fig-24", "label": "Figure 24"}]}, "en", "ex",
+        ))
+
+    def test_english_figure_references_do_not_relax_formula_order(self):
+        source = "In \u56fe $24$, processes $1-1'$ and $1'-2$."
+        reordered = "Processes $1-1'$ and $1'-2$ in Figure $24$."
+        preserved = "In Figure $24$, processes $1-1'$ and $1'-2$."
+        self.assertTrue(edition.validate_text(source, reordered, ["translation"], [], "ex", []))
+        self.assertEqual(edition.validate_text(source, preserved, ["translation"], [], "ex", []), [])
+
     def test_localization_does_not_relax_source_snapshot_binding(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

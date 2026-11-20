@@ -785,6 +785,32 @@ def same_figure_label(source: object, modern: object, locale: object) -> bool:
     return bool(number and modern == f"Figure {number.group(1)}")
 
 
+def validate_exercise_identity(source: dict, modern: dict, locale: object, label: str) -> list[str]:
+    errors = validate_identity_fields(
+        source, modern,
+        ("number", "source_number", "group", "group_id", "figure_refs"),
+        label,
+    )
+    source_figures = source.get("figures")
+    modern_figures = modern.get("figures")
+    same = source_figures == modern_figures
+    if not same and locale == "en" and isinstance(source_figures, list) and isinstance(modern_figures, list):
+        same = len(source_figures) == len(modern_figures) and all(
+            isinstance(before, dict)
+            and isinstance(after, dict)
+            and before.keys() == after.keys()
+            and all(
+                same_figure_label(before[field], after[field], locale)
+                if field == "label" else before[field] == after[field]
+                for field in before
+            )
+            for before, after in zip(source_figures, modern_figures)
+        )
+    if ("figures" in source) != ("figures" in modern) or not same:
+        errors.append(f"{label}.figures 不得改变")
+    return errors
+
+
 def validate_text(
     source: str,
     modern: object,
@@ -1714,10 +1740,10 @@ def validate_lesson(
         label = f"exercises[{index}]"
         if modern_item.get("source_text") != source_item.get("text", ""):
             errors.append(f"{label}.source_text 与原书不一致")
-        errors += validate_identity_fields(
+        errors += validate_exercise_identity(
             source_item,
             modern_item,
-            ("number", "source_number", "group", "group_id", "figure_refs", "figures"),
+            lesson.get("locale"),
             label,
         )
         errors += validate_text(
