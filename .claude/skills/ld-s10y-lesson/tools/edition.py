@@ -597,7 +597,8 @@ def normalize_prose_layout(text: str) -> str:
         elif char == ".":
             previous = masked[index - 1:index] if index else ""
             following = masked[index + 1:index + 2]
-            if previous != "." and following != "." and not (
+            numbered_heading = re.fullmatch(r"\*{0,3}\d+\.", masked[:index + 1].strip())
+            if not numbered_heading and previous != "." and following != "." and not (
                 previous.isdigit() and following.isdigit()
             ):
                 boundaries.add(index + 1)

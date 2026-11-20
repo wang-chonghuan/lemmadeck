@@ -19,6 +19,21 @@ class AsciiSentenceLayoutTests(unittest.TestCase):
             "Value is 3.50.\nNext is 0.80.",
         )
 
+    def test_leading_heading_ordinal_is_not_a_sentence(self):
+        for marker in ("", "*", "**", "***"):
+            with self.subTest(marker=marker):
+                source = f"{marker}2. Heading.{marker} First sentence. Second sentence."
+                expected = f"{marker}2. Heading.{marker}\nFirst sentence.\nSecond sentence."
+                actual = edition.normalize_prose_layout(source)
+                self.assertEqual(actual, expected)
+                self.assertEqual(edition.normalize_prose_layout(actual), expected)
+
+    def test_sentence_ending_integer_still_breaks(self):
+        self.assertEqual(
+            edition.normalize_prose_layout("The number is 2. Next sentence."),
+            "The number is 2.\nNext sentence.",
+        )
+
     def test_math_periods_remain_inside_math(self):
         self.assertEqual(
             edition.normalize_prose_layout("Take $0.50$ kg. Then use $Q=cm(20.5-10.5)$."),

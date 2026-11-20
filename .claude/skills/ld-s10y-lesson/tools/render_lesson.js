@@ -148,7 +148,7 @@ p.para{margin:0 0 1em;text-indent:0;line-height:1.95;font-size:1.06em}
 p.para .katex,.prose-math{font-size:1.1em}
 .prose-math{font-family:KaTeX_Main,serif}
 p.para.section{border-top:1px solid var(--rule);margin-top:1.5em;padding-top:1.35em}
-.figcap{text-align:center;color:var(--sub);font-size:.85em;margin:.2em 0 1.2em}
+.figcap{text-align:center;color:var(--sub);font-size:1em;margin:.2em 0 1.2em}
 .fig{margin:1.3em 0 .2em;text-align:center;max-width:100%}
 .figure-media{--ld-figure-ink:var(--ink);--ld-figure-muted:var(--sub);
   --ld-figure-accent:var(--ink);--ld-figure-accent-soft:var(--sub);

@@ -55,7 +55,10 @@ class RenderLessonFigureDisplayTests(unittest.TestCase):
             self.write_json(lesson / "lesson.json", {
                 "title": "Display contract",
                 "printed_title": "Display contract",
-                "prose": [{"kind": "fig", "id": "fig-inline", "label": "Inline"}],
+                "prose": [
+                    {"kind": "fig", "id": "fig-inline", "label": "Inline"},
+                    {"kind": "cap", "text": "Figure 1", "label": "Inline"},
+                ],
                 "section_breaks": [],
             })
             self.write_json(lesson / "exercises.json", {
@@ -96,6 +99,15 @@ class RenderLessonFigureDisplayTests(unittest.TestCase):
             self.assertIn('data-figure-layout="scroll"', exercises_html)
             self.assertIn('data-figure-mode="deterministic"', exercises_html)
             self.assertIn(svg, text_html)
+            self.assertIn(
+                '<div class="figcap"><span class="prose-math">Figure</span> '
+                '<span class="prose-math">1</span></div>',
+                text_html,
+            )
+            self.assertIn(
+                ".figcap{text-align:center;color:var(--sub);font-size:1em;",
+                text_html,
+            )
             self.assertNotIn("data:image/png", text_html)
             self.assertIn('width:40em;max-width:none', exercises_html)
             self.assertNotIn(
