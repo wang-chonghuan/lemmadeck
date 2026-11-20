@@ -1,5 +1,1346 @@
 # 生产检查点
 
+## 180-6 r177 s17 OFFLINE_COMPLETE_REVIEW_READY sealed; narrow delivery next
+
+Same exactabsolute9611W/currentchat. FIRSTindependentDISPLAY6savedpngonce
+PASS returned/collected/closed, parentactualbytesbound; parentreopens0.
+Fullcourse9d6c7568/parent6b643053
+sealed:10proseblocks/9paragraphs/anchors1,4,7/2FIG/2written+displayanswers/
+2ungraded/2free/2CHOICE9options/6headedpages. All actualdurable outputs,
+SOURCE/retainedTEXT/affectedFIG/firstfinalANSWER+CHOICE+DISPLAY bound.
+Only indexprofile absolute→repositoryrelative metadata repaired, sameSHA
+and otherindexentriesunchanged. No renderer/image/semanticreview replay.
+Complete16/increment0 until actualpush; deliverytarget17. Originalbranch
+fetchconfirmedHEAD8d455c7ca equalremote; no rebase/force/sharedmainwrite.
+Narrow fullcourse commit/push next, then immediately n42 firstmissingFIG.
+Originalfailure/history/contactcorrections2/stash/trees/locks/backups/
+pendingmessages retained. Service69/retry0/newpaid0/tokensbillingUNKNOWN.
+Finishreview/noDB/merge/deploy/formalhandoff/globalchecks; supervision40min.
+
+## 180-6 r176 s17 final ANSWER/CHOICE PASS; first six-page native PASS, DISPLAY active
+
+Same exactabsolute9611W/currentchat. Fresh Schrodinger returned/collected/closed:
+manifest881c21c4/parent3a3309a5 bound actualbytes; FIRSTCHOICE2questions/
+9options, FIRSTwrittencomparison2ungraded/0parts and affectedanchor1,4,7 PASS.
+Original SOURCE and TEXT reused; no fullsemanticreplay. Reviewer2SOURCE
+extractionFAILs and qualified normalization diagnostic preserved unchanged.
+Approvedchoice retained once; answerfinalizePASS/2freeinteractionPASS.
+FIRSToffline render/nativePASSed1de870:6headedpages/6savedscreenshots/
+2displayedanswers perwritten surface; browserclosed/parentimageopens0.
+Only fresh Peirce01a1f9fb-5438-7da2-b725-ca3daba73f43 reviews6saved
+DISPLAYpngonce; no browser/figure/source/TEXT/ANSWER/CHOICE rerun.
+No completecourse seal/commit yet; complete16/increment0/service69/retry0/
+newpaid0/tokensbillingUNKNOWN. n42 firstfigurecontexts ready unchanged.
+Original trees/main/locks/backups/stash/FAIL/contactcorrections2/pendingmessages
+retained; no oldchat/reviewer wake. Currentchat/checkpoint/40minsupervision,
+finishreview/noDB/merge/deploy/formalhandoff/globalchecks.
+
+## 180-6 r175 n42 affected TEXT PASS parent-bound; s17 final independent review active
+
+Same exactabsolute9611W/currentchat. n42 independentPASS f7d28266/
+manifest93f926bc/seal4ff988b1 received, reviewer Noether collected/closed.
+F1-F8/Q2bothparts/anchors3,8,11,13 passed; original scientificHOLD remains
+historical. First genericparent ea40db7b failed on expressly absent0f12 RAW
+paths; NOT independentREVISE. Only2named r166 savedRAW fullSHA f8723253/
+858ac6dc relocated unchanged; correctedparent c734725a bound all actual
+records, no missing/unknown-byte exemption or source/model replay.
+n42 source-ready firstFIG115/116 inputs being prepared, not figure/coursePASS.
+
+s17 CHOICE FIRSTauthor candidate a8feb0b9/draft61c9b9da/view48d798bb
+2questions/9options structuralPASS72e619b2; parentc76ff850 bound, Gibbs closed.
+Only fresh Schrodinger01a1f9ef-b3b1-73f3-8e1a-df8b45ea94f7 independent6p
+review: sourceblind then visibleoptions then keys; finally compare2written
+answerkeys against existing independentSOURCE. Same pass includes affected
+anchor-layout meaning only, no fullTEXT/source review replay. All zeroimages.
+No finalANSWER/CHOICE PASS, finalize, DISPLAY or course seal/commit yet.
+Complete16/increment0/newpaid0/service69/retry0/tokensbillingUNKNOWN.
+All original trees/main/locks/backups/stash/FAIL/correctioncounts/pendingmessages
+preserved; no oldchat/reviewer wake. Currentchat/checkpoint/40minsupervision,
+finishreview/noDB/merge/deploy/formalhandoff/globalchecks.
+
+## 180-6 r174 s17 first answer candidate frozen; sole6p CHOICE author active
+
+Same exactabsolute9611W/currentchat. s17 FIRSTanswercandidate2ungraded/
+2wholequestions/0auto/0parts frozen; original SOURCE review reused unchanged.
+No final-answerapproval/finalize or fullcourse claim. FIRSTchoiceseed
+5eb098169d49afd22c3dae9bc9c753d9c8e6d36a51e3352e1c188df649f18089
+officially prepared from2writtenquestions/concepts0,1,6/0imageassets.
+Fresh Gibbs01a1f9e9-64dc-7a63-8eaf-dfe7ecb91b17 sole6p author reads only
+seed/definitions, no answer keys/source-answerreport/oldchoices/history.
+Existing8p Noether reviews n42 F1-F8 independently; no duplicate6p reviewer.
+First s17 native scriptb713b923 prepared/syntaxPASS only, browser NOT_RUN;
+derives6surfaces/two displayed reference answers/actual mobile scroll endpoints.
+No n129/n85/n87/s6 replay; complete16/increment0; parentnewimages0,
+newbrowser0/newpaid0/service69/retry0/tokensbillingUNKNOWN. All prior failures,
+old trees/main/stash/locks/backups/pendingmessages preserved, progress only here
+and currentcheckpoint. Finishreview/noDB/merge/deploy/formalhandoff.
+
+## 180-6 r173 s17 first adaptation PASS; existing SOURCE reused, n42 review active
+
+2026-11-20. Same official9611W/currentchat; exact absolute productioncwd.
+Fig58 independentPASS973314cf/manifestfb9923c2 parent013ebab2 bound;
+old reviewer collected/closed, never woken. Official record first failed only
+because old relative SVG path was absent in newW; original receiptf496cbd9
+retained, separate path-only recovery13a2d1cc and recorde022ea62 PASS.
+SavedSVG/spec unchanged; no render/browser/source-image/TEXT replay.
+Durable fig58 retained151dc576; fig59 priorPASS/spec63cb3854/SVG658aedba
+reused unchanged. OriginalFAIL/correction1of1+additional1/cumulative2 retained.
+
+s17 FIRSTadapt failed only old anchor paragraph text after layout normalization;
+receipt3007e928 and original failed audit preserved. Existing tool normalized
+only before/after anchors to same approved supported-rest/elastic-origin/
+spring-suspension concepts; all other template fields unchanged. Actual current
+proseFlow9paragraphs/breaks1,4,7; anchor receiptba669f64. Adaptation PASS
+a6bc148f:10proseblocks/2wholequestions/2figures. No fullcourse claim yet.
+Prior independent SOURCE answer-source-c3-s15-s18t1.md reused, not re-solved.
+FIRSTanswerprepareb3341f76/2ungraded-intended and FIRSTchoiceseed9be3edd9/
+2sourcequestions/0images ready; finalANSWER/CHOICE/DISPLAY/seal still missing.
+
+Only fresh Noether01a1f9e4-6f82-7102-aa03-014050cdc078 reviews n42 affected
+F1-F8 plus saved anchors, zeroimages; no second inflight reviewer or old wake.
+No n129/n85/n87/s6 stage/delivery replay. Completecourses16/increment0,
+newpaid0/service69/retry0/parentnewimages0/tokensbillingUNKNOWN.
+Original trees/main/locks/backups/stash/failures/pendingmessages preserved.
+Currentchat/checkpoint only/40minsupervision/finishreview/noDB/merge/deploy.
+
+## 180-6 r172 official 9611 immediate resume; actual n129 delivery reused
+
+2026-11-20. Official create_worktree operation6fbb90e7 completed/registered;
+production workspace /Users/yong/.codex/worktrees/stemrobin-180-six-9611/lemmadeck. Every production command uses this absolute cwd.
+Initial requested7af826870; original branch fetched/read-only source retained,
+current deliveryHEAD8d455c7ca9ac09d78fa48cd8a663de2574802ec0. No repeatattach/newchat/old reviewer wake.
+Actual old checkpoint r171 supersedes stale first-attach/n129-pending premise.
+n129 complete24file commit23c99d40 already pushed2026-11-20T00:13Z and
+ancestor of fetched remote; no source/image/browser/TEXT/ANSWER/CHOICE/DISPLAY
+or seal/commit/push replay. n85/n87/s6 likewise delivered and reused.
+
+Existing fig58 independent affected review returned PASS with unchangedPASS
+reuse; report973314cf/manifestfb9923c2. Parent bound actual saved bytes only.
+Actual reviewer images3/reopens0 pre-resume; parentnew0/browser0/paid0.
+No official fig58 recording/promotion yet; n42 affected review not dispatched.
+Only named state/fig58/s17/n42 saved inputs selected; no whole package/stash
+apply/pop or unknown restoration. Original trees/main/locks/backups/stash/
+oldFAIL/correction1of1+additional1/cumulative2/pendingmessages preserved.
+Completecourses16/increment0. Service69/retry0/tokensbillingUNKNOWN.
+Currentchat/checkpoint only; supervision40min/reversible repairs delegated;
+finishreview/no DB/merge/deploy/closure/formalhandoff/global checks.
+
+## 180-6 r171 supervisor resolved delegation; sole fig58 affected review active
+
+Directsupervisor resolution in this currentchat authorizes temporary independent
+affectedreview for s17fig58 then n42, SERIAL/oneinflight pergroup. No further
+humanconfirmation needed. Prior unanswered question/r170 history retained.
+SolefreshKierkegaard01a1f9dc-546d-76c3-af6b-38f71c04a02d owns only
+s17-fig58-independent-r171 scratch: oldFAIL/changedb-board.d/three NEWsaved
+neutralframes once. Sourceinventory/all unchangedPASS/native6surfaces9frames
+reused; no originalPNG/fig59/browser/render/source/TEXT/answer/choice replay.
+No independentverdict or promotion yet; n42review NOTDISPATCHED.
+
+Parent locally found fig59 durable committedPASS/spec63cb3854/SVG658aedba;
+no redraw/imageopen/reapproval. Preparing only missing s17dependent stages.
+24recoveredfiles/oldhashes/failures/correction1of1+additional1/cumulative2
+preserved. Existingcomplete16/remote8d455c7ca unchanged; no partialcommit.
+Everyproductioncommand exactabsolute6813W; sharedmain/originaltrees readonly.
+n27author remainsclosed/no retry/filterbypass. Newpaid0/historical69/retry0,
+actualtokens/billingUNKNOWN. No newproductionchat/branch/DB/merge/deploy;
+finishreview/40minsupervision/progressonlycurrentchat/checkpoint/no messages.
+
+## 180-6 r170 named saved-byte recovery complete; affected approval remains unresolved
+
+Same6813W/currentchat/officialattachment; no create/attach/newchat/newworker/
+oldreviewer wake. Every productioncommand used exactabsoluteW.
+n129/n85/n87/s6 delivered stages reused; completecourses16/6813increment1.
+No new completecourse, staging/commit/push/DB/merge/deploy/formalhandoff.
+Readonly originalbranch remote queryr170 exit0 confirms8d455c7ca9ac09d78fa48cd8a663de2574802ec0,
+receipt57c47468; no fetch/rebase/sharedmain write. Savedstate sync82f88460 exit0.
+
+n50 exactrecoveryr169 actualexit0: manifest9aa72ede/parent86915ffd
+PASS_BYTES_ONLY7files:3templates2RAW2oldreports. Full modernlessonSHA
+8983ca51 matches priorFIRST snapshot, recovered from complete savedMETA/
+25MODERNblocks and source.data insertionorder. Exercises/figures literal
+savedstdout; bothRAW match pinnedstash624fab98/sourcebindings.
+Original indexFAIL05f17280 and scientificHOLDb46eb7c9 unchanged;
+S1-S4 HOLD/U1-U2 UNKNOWN/processrecovery1of1 retained. No parser replay.
+
+n40/n43/n46 exactrecoveryr170 actualexit0: manifest5e00ea2e/parent6b0b7c84
+PASS_BYTES_ONLY17files. n40 literal3templates+RAW2+FIRSTreport,24blocks/
+0questions/F1-F6 unchanged. n43 literal2TEXTtemplates+RAW2+FIRSTreport,
+13blocks/3wholequestions/F1-F3 unchanged; missingFIGtemplate notinvented.
+n46 literal3templates+RAW2+FIRSTreport,10blocks/3wholequestions/H1H2R1
+unchanged. All completefileSHA match actual old freezes; no SOURCE/
+TEXT/figures/ANSWER/CHOICE/DISPLAY approval or downstreamrelease.
+This continuation recovered24files; priorr1667files reused,31total named
+savedfiles including s17. Originaltrees/main/locks/backups/stash untouched.
+
+s17fig58 finalbce9f025/parentfb4a2cb2 and n42 final8b7b501d/parent
+e5209eba remain authorcandidates only; independentaffectedapproval NOT_RUN.
+No oldimage reopen/newbrowser/paidrequest or reviewer spawn this continuation.
+Original independent-review delegation question has no recorded human answer;
+it is not permission to self-certify or wake oldreviewers. All prior failure
+and pendingmessage history retained, not converted to approval or exhaustion.
+
+One readonly archive-inspection command exit1: Buffer.byteLength received
+array-valued tooloutput. No content/image decode/write or productiongate ran.
+Typed, named functionoutput selection corrected later lookup; no failed
+command rerun, budgetreset or source/semantic failure added.
+Newpaid0/service69/retry0, newimages0 here/cumulativeparent3/historical2
+preserved; tokens/billingUNKNOWN. Progresscurrentchat/checkpoint only;
+supervision40min/delegated reversibletechnicalrepair/finishreview.
+
+## 180-6 r169 saved affected candidates bound; n50 exact-byte recovery active
+
+Same official6813 W/attachment reused; no create/attach/newchat/newworker/
+oldreviewer wake. LivePlane180 r169 actualHTTP200/exit0; finishreview.
+Last deliveredHEAD8d455c7ca9ac09d78fa48cd8a663de2574802ec0 remains;
+completecourses16/current6813increment1 unchanged. No partialcommit/push.
+
+Previously completed r167/r168 results now synchronized, not rerun:
+s17 fig58 only b-board.d repaired, oldFAIL/correction1of1 retained;
+one additional delegated contactrepair/cumulative2. Officialaffectedrender
+and native6surfaces9frames PASS; parent actuallyopened3neutralframes once.
+Finalcandidatebce9f025/parentfb4a2cb2 PASS_BYTES_ONLY; author/native evidence,
+independentaffectedapproval NOT_RUN. No fig59/source/TEXT replay.
+
+n42 FIRST scientificHOLD F1-F8 preserved13e61e3b. One source-supported
+contentcandidate keeps7proseobjects/3wholequestions/Q2bothparts/source
+identity/figures/data. ActualproseFlow15paragraphs; anchoredcandidate
+breaks3/8/11/13. Finalcandidate8b7b501d/parente5209eba PASS_BYTES_ONLY;
+not TEXTapproved/finalized or completecourse. Originalcandidate retained.
+
+n50 later scientificreportb46eb7c9 exists separately from presemantic
+indexFAIL05f17280. Prior25blocks/8questions/27paragraphs/2anchors/62math
+reviewed with scientificS1-S4 HOLD and figureU1-U2 UNKNOWN; process
+recovery1of1 retained. Continue only fullhash-matching savedbytes; no
+unknown reconstruction, prepare/assemble/parser/figure/browser replay.
+Independent-review delegation question remains unresolved; no reviewer
+spawn or self-authored independentPASS. Other bounded recovery continues.
+
+n27 interruption/7sourceopens/no candidates/finalize unchanged; no retry.
+Newpaid0/service69/retry0; parentnewimages3 this continuation, historical2
+preserved; tokens/billingUNKNOWN. Main/originaltrees/locks/backups/stash/
+failures/costs/pendingmessages untouched. Progresscurrentchat/checkpoint,
+supervision40min/delegated reversible repairs/noDB/merge/deploy/handoff.
+
+## 180-6 r167 exact TEXT bytes recovered; fig58 sole affected geometry stage active
+
+r166 known-text recovery actualexit0, manifestcd5209f6/parenta2664365
+PASS7files. n42 three literalFIRST templates4236/1137/13070bytes recovered
+from archived savedstdout; all match firstindependent completefileSHA.
+TwoRAW JSON files exactly match pinnedstash624fab98 and old source bindings.
+n42 FIRST eightscientificHOLDs unchanged, no dependent stage released.
+
+s17 two approved templates recovered from savedcompletejqprojection plus
+hash-bound canonical source.data and savedfinalsectionbreaks. Full lessonSHA
+df470706 and exercises41c19d18 match old independentPASS exactly.
+This is completehash-proven saved-operation recovery, not guessed prose or
+unknownbyte replacement. PriorTEXT/paragraphbreakPASS reused without rerun.
+
+Only requirednext s17 fig58: recover known failedspecd98c6c3d from actual
+savedauthor operations, then repair oldindependent board/support contact
+finding only. OldgeometryFAIL/correction1of1 preserved; repairedcandidate
+requires affected evidence and independentapproval, not reportedPASS.
+No originalPNG/spec59/browser/TEXT/ANSWER/CHOICE replay or paidrequest.
+No create/attach/newchat/newworker/oldreviewer wake, main/originaltrees/stash
+readonly. Completecourses16/new6813increment1 unchanged; no partialcommit.
+Progressonlycurrentchat/checkpoint/finishreview/supervision40min.
+
+## 180-6 r166 same-chat continuation; pinned saved-byte selection active
+
+Official6813 W remains current absolute production cwd, detachedHEAD
+8d455c7ca9ac09d78fa48cd8a663de2574802ec0. Existing official success reused;
+no create/attach/newchat/oldreviewer wake. n129/n85/n87/s6 delivered stages
+not repeated; completecourses16/new6813increment1 unchanged.
+r165 n27 syntax failure and separately reported filter interruption remain;
+no retry of that task, SOURCEapproval or global source-exhaustion claim.
+
+Preserved stash pinned read-only to4fa8161e4327782915232c5d6ea1c3c950a0d9d0,
+untracked-parent624fab9832519f13eb3376b38cc01819d279f25b.
+Inspect only named unfinished8p n40/n42/n43/n46/n50 and their approvals,
+then select necessary saved stages; no stashapply/pop/bulkrestore or
+unknown-template reconstruction. Originaltrees/main/locks/backups/stash/
+failures/costs/pendingmessages untouched. Bounded investigation still active;
+no course completion or partial/report-only commit claimed.
+
+Progress only currentchat/checkpoint; supervision40min/delegated reversible
+technical repairs/finishreview. NoDB/merge/deploy/closure/formalhandoff/
+globaltests/newworker/newpaidrequest. Tokens/billingUNKNOWN/service69/retry0.
+
+## 180-6 r165 s6 remote delivery complete; n27 reported filter interruption preserved
+
+Official6813 W/samechat, source7161/main readonly; no repeatattach/newchat.
+s6 seal0c26e987/effectiveDISPLAY6surfaces9frames/affectedPASSae508693,
+all parentbindingsPASS. Narrow27files committed/pushed original branch,
+remoteHEAD8d455c7ca9ac09d78fa48cd8a663de2574802ec0; delivery57c68c9a.
+Completecourses16/new6813increment1; no partialcourse/report-only commit.
+First DISPLAY REVISE and seal path failure retained. No passed SOURCE/TEXT/
+ANSWER/CHOICE/figure/browser stages replayed in s6 completion.
+
+Immediately next8p n27 FIRSTprepare122123124 allPASS addd0668 and firstauthor
+actually attempted. Own sourceimages7/reopens0, actual printed110111112;
+author observations not SOURCEapproval. First draft writing did not produce
+page.md; first actual patch error was missing "*** End Patch", not finalize.
+Two SAME fresh-author immediate continuations kept7images/no reread/crop/
+inventory replay. r164 returned a separate AUTHOR-REPORTED platform filter
+block for prior response, diagnostic e2fc56e4 (0444/bytes matched).
+No separate exact platform message supplied; patch grammar and reported
+filter remain distinct facts. After that explicit report no further retry or
+workaround of blocked transcription. Author collected/closed, activeagents0.
+All3source candidates absent/finalize0/source repairs0/interruptionevents1,
+no source approval/assembly/modernTEXT/ANSWER/CHOICE/fullcourseclaim.
+Prepared bytes/inventory/crops/frozen diagnostics and earlier opinions remain.
+This local interruption is NOT global source exhaustion or permission to
+recreate missing approved s5/n2/n55/n90 stages.
+
+Currentchat/checkpoint only, supervision40min authorization retained.
+Parentnewimages0/historical2/newpaid0/service69/retry0/UNKNOWNtokensbilling;
+oldtrees/locks/backups/stash/failures/budgets/pendingmessages preserved.
+Finishreview/noDB/publication/merge/deploy/closure/formalhandoff/globaltests.
+
+## 180-6 r164 n27 exact tool diagnostic is patch grammar; same missing stage continued
+
+r163 diagnostic48b4a0c6/manifest3e0a0824/parent00b800a1 PASS.
+Exact recorded error: apply_patch invalid patch, last line must be
+"*** End Patch". No distinct policy/content-rejection tool message supplied.
+First author's platform-restriction opinion retained, not adopted as proven
+source/permission HOLD. Concrete repair is valid per-page patch framing.
+Immediate SAME fresh author continuation01a1f993-7909-7391-b6d2-60fdf4731c88:
+write first122 separately, then123124 only on successful patch; no source
+image reopen/crop/inventory redo/PDF rerender. Outputs continuation-r164
+preserve both earlier evidence records. Honor any actual distinct content
+rejection and return its exact message; no workaround to a real restriction.
+First page candidates/finalize still absent at dispatch; author active.
+Actualimages7/reopens0/formatfailureevent1/repairs0/no budget reset.
+s6 remote8d455c7ca/complete16 unchanged; no approval of newn27.
+Progress only currentchat/checkpoint; no oldchat/reviewer wake/DB/merge/deploy.
+
+## 180-6 r163 n27 author interrupted before transcription; same fresh author continued
+
+s6 complete16/newincrement1 already remote8d455c7ca; no s6 replay.
+New Aristotle returned BLOCKED_SOURCE_AUTHOR35e01e9d/reporte8fd1425,
+parent e0dc9be5 PASS. Seven actual image opens0reopens/observed rows24/23/25,
+actual printed110111112 and n27end-before-n28 verified as AUTHOR observations.
+No page.md candidate, no finalize, no line-counter or SOURCE verdict.
+First report's content-generation limitation before text write retained;
+first absent-candidate/input snapshots preserved. This is not global source
+exhaustion, page ambiguity, consumed source repair allowance or course approval.
+
+Immediate SAME new author continuation01a1f990-8c82-7110-b865-399a4f8bc40f:
+clarified user-supplied project PDF transformation premise; missing writing
+stage ONLY, already observed seven images/context reused without reopen,
+new continuation-r163 output directory preserves first frozen report/ledger.
+Correct current .claude/.../tools/p2c.py path, no roottools expectation;
+ordinary reversible path repair delegated. First finalize still pending.
+No replacementchat/oldreviewer wake/sourceinventory rerun/PDF rerender.
+Author active; no SOURCE approval/assembly/modernTEXT/ANSWER/CHOICE yet.
+
+Parent newimages0/historical2/newpaid0/service69/retry0/UNKNOWNbilling.
+Currentchat/checkpoint only; oldtrees/main/locks/backups/stash/failures/
+costs/pendingmessages untouched. Finishreview/noDB/merge/deploy/handoff.
+
+## 180-6 r162 s6 complete committed/pushed; next8p n27 FIRSTSOURCE preparation
+
+Official6813 W/same chat, every production command absolute W.
+Ptolemy affected DISPLAY PASS3/3 ae508693/reportf347f81c,
+exact5newopens0reopens0crops; parentc477f722 PASS, collectedclosed.
+First REVISE retained, F1/F2 resolved, F3 disabled previews allowed.
+Effective six surfaces/nine frames0c41f2a4/parenta8055bea PASS:
+five new affected frames/four reused old frames, no parent image opens.
+
+Seal0c26e987/parent1e520a1e PASS, 19blocks20paragraphs3breaks,
+10written10readyanswers10displayedanswers/width10free,4figures,
+7choices34options. First seal path typo failedc3e6d8fc retained;
+only actual first-binding filename corrected, no gate/content replay.
+Narrow27files include renderer fix/focused3PASStests and complete s6
+content/reports. No checkpoint/usage/ticket/partialcourse/.env staged.
+Secret scan0/diffcheckPASS, commit5807b512/pushd159baef exit0.
+Actual remote equals HEAD8d455c7ca9ac09d78fa48cd8a663de2574802ec0.
+Delivery57c68c9a/record61137286 PASS. Completecourses16/new6813increment1.
+
+Immediately next source-backed phy8-c2-s1-n27 "力": TOC printed110..111,
+actual8p PDF4ec6a3d5/16961276bytes, manifest lesson-group numbering.
+Selection8fbc9a7d/source-provenance only; exact current/original canonical
+122123124 and n27 paths absent. No unknown old-byte recovery.
+FIRST official prepare122..124 addd0668 exit0/all3prepared, existing readonly
+interpreter/no install; all writes confined to W/next-8p-n27-r162.
+Fresh Aristotle01a1f987-c134-7b00-84b5-02db47f0a481 owns FIRSTSOURCE
+author only, three pages/<=8images, no oldstage/review wake. Author active,
+not SOURCE approval, no assembly/TEXT/ANSWER/CHOICE/newcourse seal yet.
+Actual printed numbers/title/end must be checked from its own pixels.
+s5 known-stageENOENT/n2source17/18HOLD/n55paidPLANONLY/n90239gap excluded,
+not global exhaustion or new approval. No old chat/reviewer wake.
+
+Parent new images0/historical2/reopens0/newpaid0/service69/retry0;
+actualtokens/billingUNKNOWN, all original locks/backups/stash/failures/costs/
+pendingmessages preserved. Progress currentchat/checkpoint only,
+supervision40min/delegated reversible repair/finishreview.
+No DB/publication/merge/deploy/closure/handoff/full-project checks.
+
+## 180-6 r161 first DISPLAY REVISE preserved; affected native PASS/review active
+
+Official6813 W/same chat, original trees/main remain read-only.
+Archimedes FIRST DISPLAY REVISE868d2b67 collected/closed; first report and
+parent binding retained. F1 mobile final-example right end lacked evidence;
+existing horizontal math scroll works, source/formulas/text HTML unchanged.
+F2 ten approved written answers absent from offline exercises. F3 conditional
+zero-widget wording reconciled: disabled choice previews allowed; enabled
+written/numeric response inputs forbidden. Choices unchanged/no reapproval.
+
+Minimal renderer repair shows exact ready displayAnswer with ownership and
+coverage validation; exercises-only route prevents rewriting text/choices.
+First focused assertion failure retained, corrected focused tests3PASS.
+Affected render succeeded/displayedanswers10; headed native3 affected surfaces
+PASS e72a1da9/parent8d094371. Five new frames: text390right plus both written
+widths left/right. Exact approved answers unchanged/overflow0/errors0/
+activeinputs0/lastreachable/allbrowsersclosed. No new source/image science/
+TEXT/ANSWER/CHOICE stages. Old six native and first rejection unchanged.
+
+Fresh Ptolemy01a1f97e-52f4-7bf1-832e-8eefa20fa2f8 owns only affected
+DISPLAY: five new saved images once, no old image reopen/browser/semantic
+review. Unaffected text1440/choices1440/choices390 reuse first report.
+Composite seal will state six surfaces/nine accepted frames, not six PNGs.
+Seal/stage/commitpush not yet run. Completecourses15/currentincrement0.
+Next verified source-backed course immediately after complete s6 delivery.
+
+Parent new images0/historical2/reopens0/newpaid0/service69/retry0;
+actual tokens/billing UNKNOWN. Original locks/backups/stash/failures/costs/
+pending messages preserved. Progress only current chat/checkpoint; supervision
+40min/delegated reversible repair/finishreview. No DB/merge/deploy/handoff.
+
+## 180-6 r160 s6 FIRST CHOICE PASS/native6 PASS; independent DISPLAY active
+
+Official6813 W/same chat. Meitner FIRST CHOICE PASS all10seeds/7questions/
+34options14true20false, source/view reasoning frozen before author key.
+Exactly3 saved images once, zero reopens/renders. Manifest38f546e5/review
+4f624201/report e0477f69/validator ef4a6f02 exit0/parent7310805e PASS.
+Collected and closed; no new author repair or old semantic stage replay.
+Official retain2e74af3c exit0, exact seed/draft/review bytes preserved.
+
+FIRST full-course offline render failed0290a19a before any output because
+new W lacked existing .agents/skills/node_modules/marked path. Failed
+receipt retained. Read-only link241ce68f/no installation or dependency edit;
+corrected render382d24b2 exit0, source/approved contents unchanged.
+FIRST headed native6 desktop1440/mobile390 text/exercises/choices PASS
+b57d3ad8 exit0/native4a5cd40d/parent30644fd9. 20paragraphs3breaks,
+10written10answers10free, 4figures, 7choices34options; actual captions16px,
+all instructional labels>=specmin, nonblank pixels/no overflow/no error/
+internal leakage0/active inputs0/lastreachable. All browsers closed.
+
+Fresh Archimedes01a1f96d-2415-7961-9788-467b09416d5e owns ONLY FIRST
+independent DISPLAY: exact six already saved screenshots once, no crop/
+reopen/new browser/source/answer/figure/choice scientific review.
+Seal and narrow staging prepared NOT RUN until returned DISPLAY PASS.
+Completecourses15/current6813increment0; no partial-course commit.
+Next s5 exact six known old-path probes ENOENT, not a scientific verdict
+or global source exhaustion. No unknown-byte/full-package recovery started.
+
+Parent new images0/historical2/reopens0/newpaid0/service69/retry0;
+actual token usage/billing UNKNOWN. Original trees/main/locks/backups/
+stash/failures/budgets/pending messages preserved. Current chat/checkpoint
+only; supervision40min/ordinary reversible repairs delegated/finish review.
+No DB/merge/deploy/publication/closure/formalhandoff/full-project checks.
+
+## 180-6 r159 official 6813 resume; s6 FIRST CHOICE review active
+
+Same chat restored through official create_worktree operation
+270dae40-9739-4a9c-b920-b8fc23a55d16, no repeat attach/new replacement chat.
+Active absolute W=/Users/yong/.codex/worktrees/stemrobin-180-six-6813/lemmadeck;
+all production commands use W. Original7161/source3112/main remain read-only.
+Started at required7af826870; fetched original delivery branch and continued
+at actual a8a81031d. Checkpoint r158 and saved bytes supersede stale n129
+DISPLAY premise: n129/n85/n87 already delivered, no repeated stages or push.
+Complete courses15, new continuation increment0.
+
+Selected migration31 files/reuse12 canonical114115116 files: f0c86b1e;
+parent9af7f6d0 PASS. First migration failed only absolute profile-path
+comparison2ee94952; partial exact copies reused, corrected73253eda PASS.
+Only s6 index entry plus repo-relative profile path, profile hash unchanged.
+Original failure retained; no unknown-byte restoration/package recovery.
+Original checkpoint/usage/ticket bytes preserved before updating new copies.
+
+Einstein author collected/closed: 7 questions34 options4single3multiple,
+all10 seeds accounted, actual source freeze before options, 3 opens0reopens.
+Exact draft da7057d1/frozen manifest82291096, parenta2737777 PASS.
+Not semantic approval. Sole fresh Meitner01a1f963-6621-7703-8b8b-8422301bf17a
+owns FIRST independent CHOICE review with exactly3 saved images once;
+no old reviewer wake, source/TEXT/ANSWER/FIGURE reapproval or new browser.
+Passed old stages reused; s6 FIRST DISPLAY/seal/commitpush not run.
+
+Live180 read db771f7b exit0, finish review/small complete-course delivery
+confirmed. Current source-backed next remains s5, only after s6 commitpush.
+Parent new image opens0 (historical2 retained), new paid0/service69/retry0;
+actual tokens/billing UNKNOWN. Original trees/locks/backups/stash/pending
+messages/failed calls and budgets preserved. Progress only current chat
+and existing checkpoint. Supervision40min/ordinary reversible repair delegated;
+no DB/merge/deploy/publication/closure/formalhandoff/full-project checks.
+
+## 180-6 r158 s6 FIRSTfinalANSWERcomparison/finalize PASS; FIRSTCHOICE author active
+
+Banach final-bindingauthor returned10draftkeys19890bytes/full53880a90;
+manifestce556777/parentreceipt9139e7dfexit0, collectedclosed. Exactold13
+draft53b60b64 remainsunchanged. Author7opens/no reopens; finalbinding
+correctedoneoldg3-1sentence(lowerfarther->upperfarther) andreadonlypolicy
+3auto->ungraded/5partsremovedfromNEWdraftonly, oldpartsretainedhistorically.
+ParentONLYspecificfinding viewedoriginal116/current116rasteronceeach:
+2opens0reopens, bothconfirmuppertracefarther; no otherimage/sourcereview.
+Currentall10comparisonreusesoldindependentSOURCEsolutions/currentapproved
+figs; nineanswersdisplayexactold, onlyoneobservationchanged. Report
+final-answer-review-6p-s6-r158.md PASS, comparison3563b345.
+
+FIRSTapprovedanswerbind2f5bea1bexit0; FIRSTanswerfinalizee75bbc3cexit0.
+FIRSTinteractionsprepare6f233d85/finalize4d2929acexit0,10free/0numericinputs.
+Readybindingc94917e2/parenta01d1ef2exit0: actualcurrentreadykeys/audit/
+interactions bound; oldcomparisonoutputwasdraft/historicalreceiptretained,
+in-memoryoldframehashmatches, finalizeranswercontentunchanged.
+No SOURCE/TEXTsolving/review replay; source/modelparametersunchanged.
+
+SoleactiveEinstein01a1f953-3f83-7522-be00-154298f60ba5 ownsFIRSTCHOICE
+author. No CHOICEindependentPASS/offlinerender/DISPLAY/seal/commitpushyet.
+Allpassedn129/n85/n87/s6FIG/TEXT/ANSWERstagesnotreplayed. Completecourses15/
+currentcontinuationincrement1/head a8a81031 unchanged. Preparedseal/native
+scriptsnotrunbeforegates. Nextsource-backedlookahead s5only: sourceTEXT
+metadataREVISE andFIG113oldwaterpolygonborderFAIL preserved; no recovery/
+repairstartedbeforecurrentcoursecommit.
+
+Parentcumulativeimageopens2(previous0 preserved)/reopens0; newpaid0/
+service69/retry0/tokensbillingUNKNOWN. Main/originaltrees/locks/backups/
+stash/pendingmessages preserved. Progressonlycurrentchat/checkpoint/
+finishreview/supervision40min; noDB/merge/deploy/publication/closure/
+formalhandoff/fullprojectchecks.
+
+## 180-6 r157 FIG117 affected PASS retained; s6 FIRSTadaptPASS; finalANSWER/CHOICE authors active
+
+Popper affected-onlyFIG117 PASS original1+savednative6=7opens0reopens;
+manifest0688e16d/reviewa0c51b0e/parent8f1f2e47 PASS, receiptf5dfa8beexit0.
+Collectedclosed; oldFAIL/correction1of1/cumulative2 unchanged. Canonical
+114115116reusedunchanged; onlynewapproved117retainedwithpath-only
+spec/render/reviewrebinding, unchangedSVG a84b8c50. Retentionmanifest
+d4197823/parent3a9bd3e7/receiptf5daded5exit0, no speculativewrite.
+FIRSTadapt-finalize bebe74abexit0; exact19proseblocks/20paras/3anchors/
+10tasks/sourcehashesunchanged. Indexnowcontains s6, NOTcompletecourse.
+
+Avicenna recoveredonlyoldactive13draft17955bytes/full53b60b64beforewrite;
+manifest2847df68/parentadec9fc2/receipt8c3e46feexit0, collectedclosed.
+No newmathauthoring/PASS. Ten s6entriesselectedlater; three s9stayhistorical.
+FIRSTstableanswerprepare a589d9c0exit0 binds currentprompts/figEvidence.
+Read-onlySVG115116rasterinspection79e3354aexit0/manifest4423b075:
+twoapprovedSVGsunchanged, notnewfigureproducer/approval/courseDISPLAY.
+FreshBanach01a1f953-3f3e-7b70-aedb-77469c27c743 ONLYFIRSTfinalANSWER
+binding(authorroot/report),7imagebudget; reuseoldderivations, readonly
+writtenpolicychangesold3auto->ungraded/parts[],oldinitialdraftpreserved.
+FreshEinstein01a1f953-3f83-7522-be00-154298f60ba5 ONLYFIRSTCHOICE
+author,3savedmodernimagebudget, whitelistnoanswers/oldchoices.
+No finalANSWERPASS/CHOICEPASS/offlinerender/DISPLAY/seal/commitpushyet.
+
+PreparedbutNOTRUNfullnativeDISPLAYscript s6-display-first-r158.mjs;
+nextgatesindependentfinalANSWER/CHOICE thenactual6desktopmobilepages.
+Completecourses15/currentcontinuationincrement1/head a8a81031 unchanged.
+No n129/n85/n87stage replay. Parentimages0/newpaid0/service69/retry0/
+tokensbillingUNKNOWN. Main/originaltrees/locks/backups/stash/pendingmsgs
+unchanged. Progresscurrentchat/checkpoint/finishreview/supervision40min;
+noDB/merge/deploy/closure/publication/formalhandoff/fullprojectchecks.
+
+## 180-6 r156 s6 exact3inputs bound; FIG117 arrow-only native PASS; affected review active
+
+Sameofficial7161W/samechat/no createattach/oldchatwake. Pasteur exact3known
+inputs84687bytes recovered/fulloldSHA beforewrite; manifest5bbc18e8/
+parent9cea0b94 PASS22entries20distinct, receipted16890967exit0; collectedclosed.
+Sourcebindingsmatch; no missing3targetbytes/no scientificapproval.
+Rawlesson19812124/exercises68904ad6/PNG4a505fab unchanged.
+
+AuthorizedFIG117layout only2arrowstrokeWidth3->1.5 plussourcepathrelocation;
+80objects/26assertions/allpositionsdirectionsmouthsreadinglevels/text unchanged.
+OriginalauthorFAIL1/independentFAIL1/originalcorrection1of1 plusauthorized
+layout1(cumulative2) retained, no budgetreset. Renderf710b417exit0;
+speca0c7b508/SVGa84b8c50/delta97b3a82b/manifest73fa7536,
+parenta727f808 PASS. Nativeattempt1 unitparserNumber('1.5px') failedc843ad29;
+attempt2abortedGoogleFontsimportfailedec6c6d56; bothreceipts/emptydirsretained.
+ONLYharnessparseFloat/importremovalcorrected; no renderer/productCSS redo.
+Correctedheaded6screens306/640neutralaccentprint48e05562exit0,
+native2cd8a3ae/parentf2563845 PASS. Actualfilledheadseparation
+1.869468747pxmobile/3.909999994pxdesktop,7heads/2labels>=17.2125px,
+nonblank/overflow0/endvisible/errors0/Arialverified; browsersclosed.
+
+FreshPopper01a1f94b-ea42-7a70-b4d8-c0f65b38c77b ownsONLYaffectedFIG117
+review: original1+sixsavednative7imagebudget; reuseoldunaffectedPASS.
+FreshAvicenna01a1f94b-eaa2-7282-bb9a-24a6a59f7fbf ownsONLYexactold
+active13ANSWERdraft53b60b64recovery; no solving/newfinalANSWERapproval.
+Parentpreparescourseclosure; canonical114/115/116PASSbytebindingsreused.
+No FIG117promotion/adapt/ANSWER/CHOICE/DISPLAY/seal/pushyet.
+
+Completecourses15/currentcontinuationincrement1/head a8a81031 unchanged;
+n129/n85/n87completedstagesnotreplayed. Parentimages0/newpaid0/service69/
+retry0/tokensbillingUNKNOWN. Originaltrees/main/locks/backups/stash/
+pendingmessages/costs preserved. Progressonlycurrentchat/checkpoint/
+finishreview/supervision40min; noDB/merge/deploy/publication/closure/
+formalhandoff/fullprojectchecks.
+
+## 180-6 r155 n87 complete32file commit/push confirmed; next6p s6 exact recovery active
+
+Same7161W/samechat/no createattach/oldchatwake. Cicero affectedDISPLAY PASS
+2opens0reopens,4oldpagesreused: manifestb5836013/report368b588b/machine67bd69dc,
+parent3a14e928 exit0; reviewercollectedclosed. FirstcaptionREVISE remains.
+Complete n87 seal complete-course-n87-r154.json30642bytes/full95bb94bd,
+parentb6f152df PASS95entries86distinct. 15blocks14paras5breaks3written/
+3answers3free3figures3choices12options/effective6surfaces completeoffline.
+Originalgeneration/derivation/219220/source/approvedtext unchanged.
+
+Narrowstage8d8c80df PASS32files; sharedcheckpointusage/ticket andpartialn55
+resources/reports stayedunstaged. Requiredjointn87/n55answercomparison supports
+completedn87; not a partialreportcommit. Commitd2173c0d/pushaa0a1d92 exit0:
+HEAD a8a81031d30b0dd9a8eb91c1ca3679cddd96cc0d ondetachedW,
+remoteoriginalcodex/STEMROBIN-180-textbooks confirmedidentical46ffaf06.
+Deliveryrecordn87-delivery-r155.json6eedff51/receipt2e62fdab exit0.
+Completecourses15/current7161resumeincrement1. n12923c99d40/n853dd065128
+alreadydeliveredreused, no stage/pushreplay. No ticketcompleteclaim.
+
+Immediatelynextsource-backed6p phy6-c4-s6(液体对容器底及容器壁的压强的计算):
+19blocks10tasks/TEXT PASS20paragraphs3anchors reused;114115116canonicalPASS.
+FIG117 oldfirstindependentFAIL only2bpressurearrowheadintersection, original
+author1of1consumed. Sourceanswers10derived/rawauthoravailablehistorically,
+NOT FINALfigure-boundPASS. RawPNGexists; old0f12sixexactpathprobesENOENT
+preserved, notglobalexhaustion orscientificverdict.
+FreshPasteur01a1f93f-5714-72f0-a2e5-87fc6d30836b ownsONLY
+s6-fig117-known-stage-recovery-r155: exact3knownSHA spec/lesson/exercises
+fromsavedbytes/serialization, no newgeometry/images/sourceTEXTreviews.
+FullSHA requiredbeforeanywrite; no broadunknown-byte orwholepackage recovery.
+No FIG117repair/render/native/approvalyet; nextdependentstagewaitsactualbytes.
+
+Parentimageopens0/newpaid0/service69/retry0/tokensbillingUNKNOWN. Original
+failurecounts/budgets/costs/trees/main/locks/backups/stash/pendingmessages
+unchanged. Progresscurrentchat/checkpoint/finishreview/supervision40min;
+no DB/publication/merge/deploy/closure/formalhandoff/fullprojectchecks.
+
+## 180-6 r154 n87 first DISPLAY REVISE preserved; caption-only affected review active
+
+Mencius FIRST siximageDISPLAY returnedREVISEonly3captions13.6pxatbothwidths.
+Other4pages/allunchangedcontent/layoutPASS. Exactly6opens/noreopens;
+manifest7b410888/reporte434638d/machinec977b9c0/parent2ec0bd4a, closed.
+Ordinaryreversiblefix changesonlyrender_lesson.js .figcap fontsize.85em->1em.
+Newtext-onlyrender12e46b20; currentHTML equalsoriginalexceptthisoneCSSproperty,
+oldHTML/screens unchanged. OnefixturetestfalseexpectedunmarkedLatin failed
+483bb206; correctedexistingKaTeX_Main-spanassertion29e27324exit0. Retained.
+Affectedheadednative62324189 PASS2newtextscreens,3captions16pxeach,14paras/
+5sections/3completefigures/nooverflow/noerror/lastreachable. Manifest9939a376/
+parent7600aa37. Reuseoriginal4exercisechoicepages, no fullsixpage replay.
+FreshCicero01a1f939-0507-71c0-92aa-7c38545e9114 ONLYaffectedDISPLAY,
+2existingnewtextscreens once, owns n87-display-caption-independent-r154/report.
+Seal/staging scripts preparedNOTRUNpendingPASS. Completecourses14/increment0.
+Currentindex profilepath normalizedbacktoreporelative; officialsourceorder
+retained; existingrowcontentsunchanged. No n129/n85stage replay/newpaid/
+parentimages/DB/merge/deploy/closure/formalhandoff/fullprojectchecks.
+Alloriginalfailures/correctionbudgets/trees/locks/backups/stash/pendingmessages/
+costs retained. TokenbillingUNKNOWN/service69/retry0/finishreview/supervision40.
+
+## 180-6 r153 n87 ready stages/native PASS; FIRST independent DISPLAY active
+
+Same7161 official W/samechat/no createattach/oldchatwake. Hume FIRST
+FIG221 PASS collectedclosed: manifest5058e58d/report39e255dd/official1b88f57c,
+exact8imageopens/record1exit0/parent7entries/receipt8e438162.
+Retainonlynew221/reusecanonical219220unchanged; original221 generationac0f45da
+andderivationc65d0664 unchanged. Originalfailures2/correction1of1 plusone
+human-authorizedlayoutrepair remain; historicalredundant220render disclosed.
+
+FIRSTadapt-finalize failed2times: absentkatex22fba373 thenanchor80655bc8.
+Bothimmutablefailreceipts retained. Ordinarytechnicalfix: readonlyexisting
+runtime plusleadingheadingordinal-period recognition inedition.py. Exact
+approved15blocks/14paragraphs/5anchors unchanged; focused1e0b8dce and10
+persistentregressiontests2e53c1df exit0. Correctedadapt53a78579 PASS.
+Answerdraftretainedexact/readyCHOICEprojectionidentical excludingtrace;
+onlyseed/drafthashbindingschanged, no SOURCE/TEXT/ANSWER/CHOICEredo.
+FIRSTanswerc6e58826/CHOICEb47fb90a/interactions1c225126,eeb37342 exit0.
+
+FIRSTfullofflinerender2178189e PASS; FIRSTheadednative6surfaces1440/390
+text/exercises/choicesc947e7f7 PASS, native603780c4/parentb36dc011.
+14paragraphs5breaks3written3answers3free3figures3choices12options,
+realtext>=16/nonblank/aligned/nooverflow/noerror/nointernalleak/lastreachable.
+FreshMencius01a1f92f-f833-72b1-a884-fdf842dba85b ONLYindependentDISPLAY,
+existing6screens once, owns n87-display-first-independent-r153/report.
+Parentimageopens0/rendernativebrowsersclosed/newpaid0.
+
+Read-only exactn85 identityconfirmed samealreadysealed3dd065128, notnextnewcourse.
+Oldcommit omittedmodernindexrow; officialupdate_book_index addedonlyn85row
+once9c2b711e, all18canonicalcourse/figurehashes matcholdsealff2afa12,
+otherrowsunchanged/no stageorcompletionreplay. Currentn87indexpresent.
+Deliveryfetch84e98c7d exit0 HEAD/FETCH_HEAD3dd065128; no commitpushyet.
+Completecourses14/resumeincrement0 untilDISPLAYandcompleteseal.
+No partialreportcommit/DB/merge/deploy/publication/closure/formalhandoff/
+fullprojectchecks. Main/originaltrees/locks/backups/stash/pendingmessages/
+failurebudgets/costs remain; tokensbillingUNKNOWN/service69/retry0.
+Progresscurrentchat/checkpoint/finishreview/supervision40min.
+
+## 180-6 r152 FIG221 label/native PASS; sole FIRST independent figure review active
+
+Same official absolute7161 W/samechat, no create/attach or oldchatwake.
+FIG220 SVG59760bytes/fullold9d6ea422 producedexit0, manifest65dbfa89/
+parent72e5b58c PASS11entries/receipt2d71aec3. Sourcepathonly; oldnative/
+semanticreview notrerun. IMPORTANT latercanonicallookup found219AND220
+alreadyretained in originaldeliveryHEAD withmatchingcurrentPASScontracts,
+includingexact220SVG. Therefore220producer wasredundanttechnicalexecution,
+notnecessarynewcompletion; preservedhonestly, not erased or countedcourse.
+Canonical219/220specs/reviews/generation/render/PNGs/SVGs remainunchanged.
+Only reuseexisting219/220 forfuture n87closure, no overwrite/re-render.
+
+FIG221 sevenlabelanchor-only authorizedtechnicalrepair nowrenderPASS,
+collisions0, min17.2125pxat306/36pxat640, source/text/geometry/assets/
+assertionsunchanged. Spec9c30efac/deltacc19e480/manifest8d9aa7a4,
+parent2926fba4 PASS16entries/receipt4995f7d7exit0.
+Originaltwofailures/1of1originalcorrection remain; newauthorizedtechnical
+layout1/cumulativecorrectionevents2/no reset. No metadata regeneration.
+FIRST native(allhistoricalnative0) nowPASS6surfaces306/640three themes,
+26labels/alllayersaligned/actualpixelsnonblank/overflow0,
+nativea6fba775/parentcbd9768f PASS12entries/receipt837f3a10exit0.
+Parentopened0images; render/nativebrowsersclosed.
+
+Fresh Hume01a1f91e-ca05-7ab2-b3d4-6832ec0e9e03 isONLY independent
+FIRST FIG221reviewer, own n87-fig221-first-independent-r152.
+Sourcefirstinventory -> fullapprovedn87context -> spec/artwork/native,
+exact8imagebudget(original1/artworklayer1/sixnative), no oldreviewer/
+answers/choices/sourceTEXT re-review; officialrecord ONLYifPASS.
+Parentowns preparedretention scriptn87-retain-approved-course-inputs-r153.mjs,
+notrunbeforefirstreview. Itreusescanonical219220; onlynew221andn87inputs.
+
+Initial33trackedtargets now25exactavailable/8historicaltargetsnotrestored;
+currentrepaired221outputs areNOToldrejectedoutputbyte recovery. r151exact
+generation/derivation/219review retained, token/billingUNKNOWN/service69/
+retries0/newpaid0. Completecourses14/resumeincrement0/head3dd065128.
+No partial/reportcommit, no newhandoff/DB/merge/deploy/publication/
+closure/fullprojectchecks; main/originaltrees/locks/backups/stash preserved.
+Metadata and checkpoint need finalparse/diffcheck afterthisupdate.
+
+## 180-6 r151 exact219 review and221 original generation/derivation recovered
+
+Same official absolute7161 W/samechat; no create/attach/oldchat wake.
+r150 metadataJSONparse/gitdiffcheck PASS. FIG219 officialreview nowexact
+9afe91da(1377bytes), manifest4c626282/parentab0d4cd4 PASS3entries,
+receipt8fbfe5f5 exit0. Saved originalrecord script supplies ALLfields/notes;
+only savedcall clockwindow candidates tested againstfulloldSHA beforewrite.
+141066clockcandidates yieldedexact historicalreview08:17:29.922065UTC.
+No newsemanticreview/record_review invocation or inventedPASS.
+
+FIG221 originalgenerationmetadata nowexactac0f45da(8216bytes),
+manifest229d1532/parentc62f2edc PASS7entries; receipt90411847 exit0.
+Exactoldprompt expression/approvedtemplates/source/opaque bytes andsaved
+response clockwindow produceonlyfulloldSHA matches. Firstrecovery
+receipt575caa5c exit1(8218vs8216bytes) preserved; identifiedmissingoriginal
+read_prompt.strip fixedonlycandidate serialization, nooutputonfailure.
+3321clockcandidates yieldedexactoriginalcreated_at08:00:05.827320UTC.
+Thisis originalmetadata byteidentity, not substituteprovenance/newgeneration.
+Usage2389input/1372output/3761total retained; billedUSDUNKNOWN.
+
+FIG221 artworkderivation nowexactc65d0664(3491bytes), using savedrecord
+fieldorder/exactspritestdout/originalalphadeclaration/recoveredmetadata.
+Manifest1e493fdd/parent742f54a7 PASS7entries/receipt8df0ba44 exit0.
+No backgroundremoval/cropping/imageopening; alpha hashdeclaredhistorically,
+not asserted that itsactualPNG wasrestored. Initial33trackedtargets now
+24exactavailable/9stillmissing. Critical220SVG59760bytes remainsmissing;
+incompleteXML stillnot reconstructed. FIG221 originaltwofailures/seven
+collisions/1of1originalcorrection preserved; labeltechnicalfix notyetrun.
+ExistingSOURCE/TEXT/ANSWER/CHOICE/FIRST219220PASS unchanged.
+
+Completecourses14/currentresumeincrement0/originalbranchhead3dd065128;
+n129/n85sealedpush not replayed/no partialreportcommit. Noagents/sessions
+active atthischeckpoint. Newpaid0/parentimages0/service69/retries0;
+tokensbillingUNKNOWN. Progresscurrentchat/checkpoint/supervision40min/
+finishreview. Main/originaltrees/locks/backups/stash untouched.
+No DB/merge/deploy/publication/closure/formalhandoff/fullprojectchecks.
+Continuation next:220missingSVGtechnicaloutput,221knowncollisionlayout
+repair retaining originalbudgets; no repeatedpassednativeorcontentreview.
+
+## 180-6 r150 n87 CHOICE FIRST PASS; exact approved figure records/native recovered
+
+Same official absolute7161 W/samechat. Leibniz FIRST n87 CHOICE PASS
+collectedclosed: manifest93a308d6/review5ad63c9d/report490e57fa,
+parentb5d290a1 PASS15entries;3questions12options/single3,
+independenttruesetsB/D/A. Orderedseedsolve/viewtruth/key freezes retained;
+reviewedvalidator1exit0/candidatechanges0/images0/newfailures0.
+Authorfirstdraft1/correction0of1/discoveryfailure1 retained. Allthree
+modernanswers FIRSTPASS and allthree choices FIRSTPASS, not wholecourse.
+
+Newnested-record serialization, not repeated rawbyte scan, recovered exact
+FIG220officialreviewe8e154a0(2068bytes) and authorfreezede6f7b69(22396bytes)
+fromactualsavedAmpere archive. Manifest1f819041/parentaa38c0fb PASS5entries,
+receiptedddb3fc exit0; fulloldSHA matched beforewrites. Authorfreeze then
+supplied previouslyunknown nativeJSON pin0778dd51(4179bytes).
+ONLY its single savedcat output was extracted, not screenshots recreated:
+manifestad7cc9ca/parent5941d41c PASS2entries/receipte336888c exit0.
+Existing 219/220 source/math/native PASS reused, no render/browser/visual
+review/generation. Across initial33trackedtargets, exact21nowavailable/
+12stillmissing; prior11+serializer7+officialreview/authorfreeze2+native1.
+FIG220SVG59760bytes stillmissing. SavedXMLreadback has76hiddenelements
+omitted, so it is not the fullSVG and was not reconstructed into one.
+FIG219officialreview and FIG221originalgenerationmetadata remain exact
+localgaps; no broadarchiveexhaustion/falseapproval or substitute metadata.
+FIG221actualfailures2/inclusivecorrection1of1/sevencollisions retained.
+
+n55 FIRST partialANSWER and CHOICE cover1/3/4/5/6; task2 FIG152artwork,
+FIG149/150artwork and completecourse stages remain. n87 fullANSWER3 and
+CHOICE3 firstcomparisons nowcomplete; figurecontracts/finalization/
+retention/DISPLAY/seal stillpending. No partial/reportonlycommit.
+Read-only lookahead found all zerofigure rawcourses alreadyinmodernindex;
+readyanswer/choice-set candidates are existing work, not newlycompleted.
+Older s29 FIG83 repair/TEXT PASS and modernindex were found/reused, not
+repaired/reviewed or countedagain. Earlierlookup used audit.json/choices
+instead of adaptation.audit.json/choice-set; no eligibility verdict derived.
+The guessed editions.py lookup returnedexit2; no skill or content change.
+
+All current authors/reviewers collectedclosed; no command/browser remains
+inflight. This is saved continuation, not humanpause, fullhandoff or ticket
+completion. Completecourses14/currentresumeincrement0; originalbranchhead
+3dd065128 unchanged, n12923c99d40/n85 deliveredstages not replayed.
+Metadataparse/diffcheck afterr149 PASS; finalmetadata checks follow.
+Service69/retry0/newpaid0/parentimages0/tokensbillingUNKNOWN.
+Progress currentchat/checkpoint only/supervision40min/finishreview;
+main/originaltrees/locks/backups/stash untouched. No DB/merge/deploy/
+publication/closure/formalhandoff/fullprojectchecks.
+
+## 180-6 r149 modern-answer FIRST PASS; n87 CHOICE author bound and sole review active
+
+Same official absolute7161 W/samechat. Bohr FIRST modernanswercomparison
+PASS n55tasks3/6(2) andn87tasks1/2/3(3), REVISE0,5fulldisplays/
+3fullnotes/2optionalnotesabsent, ungraded5/parts0/candidatesunchanged.
+Manifestfb6d079d/report9007c791/results979380ae,
+parent69a347c2 PASS25entries; reviewercollectedclosed, SOURCEapprovalreused/
+source-re-solve0/images0/fullGate2orcourseapproval0.
+
+Plato exactsavedserializer recovery collectedclosed: manifest-final717682f7,
+7knownSHAfiles1727075bytes all0444; both221specs/foursprites/220spec.
+Genericparentbinder failedENOENT becauseit descended intohistorical
+outputdeclarations. No outputwritten; failurepreserved. Narrowactual-output
+binding correctedonlythat scope: parentcad69e8c PASS7actualfiles,
+receipt26c52e19 exit0, no recoveryreplay or evidence mutation.
+Prior11exactfiles retained;15parentgaps remainincluding221metadata.
+FIG221rejected/failures2/inclusivecorrection1of1/sevencollisions unchanged.
+No labelrepair/newrender/native/image/service or semanticapproval.
+
+Hilbert FIRST n87 CHOICE author returned: manifest15892a79,
+parent5f2ce3b1 PASS16entries; draft026506ce/view0495ee93/sourcefreezed5617c14,
+3questions12options/single3/firstdraft1/correction0of1/structural1exit0.
+Discoveryfailure1 retained. Authorcollectedclosed.
+Fresh Leibniz01a1f903-f122-7412-8286-208f96871abb ONLY independentreviewer:
+seedsolvefreeze -> pure-view/alloptiontruthfreeze -> authorinternals,
+images0; no oldanswers/sourceanswers disclosure. No fulln87approval.
+Parenttargeted saved220reviewer archive located (Ampere01a1e401);
+onlyread-event/serialization recovery, no oldreviewerwake. Earlier219
+hyphenquery nohit retained; actual archiveVolta candidate alreadyknown,
+no globalexhaustion claim. Requiredoriginal-path6ENOENT retained.
+
+Completecourses14/currentresumeincrement0/no partial-reportcommit;
+service69/retry0/newpaid0/parentimages0/tokensbillingUNKNOWN.
+Progress currentchat/checkpoint only/supervision40min/finishreview;
+main/originaltrees/locks/backups/stash untouched. No DB/merge/deploy/
+publication/closure/formalhandoff/fullprojectchecks.
+
+## 180-6 r148 CHOICE36 FIRST PASS bound; missing modern-answer comparison active
+
+Same official absolute7161 W/samechat. Gauss FIRST CHOICE36 PASS returned:
+manifestb662effb/review3728e34e/report86365956,
+parent0e7d0cc1 PASS17actualentries; tasks3/6,2questions8options,
+independenttruesetsB/A, seed->viewtruth->author keys ordered freezes.
+Savednative2 onebatch2/reopens0, reviewedvalidator1exit0/newfailures0.
+Reviewercollectedclosed beforefresh Bohr01a1f8fd-96fa-7d21-b38b-48341f5cfffd
+dispatch. Bohr is ONLY independentreviewer: FIRST modernanswercomparison
+n55tasks3/6 plusn87all3 againstexistingapprovedSOURCE conclusions.
+Images0; no SOURCEsolve/review, figure/TEXT re-review or fullGate2/finalready.
+HilbertCHOICEn87 author and Plato exactserializer remaininflight.
+
+Parentrequiredoriginal-pathprobe6 returnedENOENT for219review,220SVG/
+review/authorfreeze/native and221metadata; receipt2b234dd6 exit0,
+each precise localgap retained, not globalexhaustion or contentFAIL.
+Plato's distinctsavedbuilder/crop recovery is not repeated.
+Parent targeted savedreviewer-spawn locator for220 found oneevent;
+receiptddaa7f7a exit0. Archive-read only, no oldreviewer/chat wake.
+Existing approved219/220 native/render/content checks remainreused.
+MetadataJSONparse and gitdiffcheck passed afterr147; parentwrong
+answer-authormanifest filename and nonexistentimagecontract path reads
+are lookupfailures only, preserved; actual filenamesresolved.
+Completecourses14/currentresumeincrement0/no partial-reportcommit;
+service69/retry0/newpaid0/parentimages0/tokensbillingUNKNOWN.
+Progress currentchat/checkpoint only/supervision40min/finishreview;
+no DB/merge/deploy/publication/closure/formalhandoff/fullprojectchecks.
+
+## 180-6 r147 n87 exact figure recovery bound; known-hash serializer continuation
+
+Same official absolute7161 W/samechat; createoperation5c161ddd verified
+fromticket, no create/attach replay. n12923c99d40/n853dd065128
+alreadysealed/pushed and reused; originalbranchdelivery unchanged.
+Planck exactfigure recovery collectedclosed: manifest2857d92e,
+parent8cc139cb PASS23actualentries; exact11files/required33/missing22.
+FIG219spec/PNG/metadata/nativeJSON/handoff and FIG220render recovered;
+historicalPASS retained, missingofficialreview/spec/SVG/native bytes
+are not newfailure or blanketarchiveexhaustion. FIG221originalopaque/
+rejectedrender/repairreport/usage/validatorstdout recovered, failures2/
+inclusivecorrection1of1/sevencollisions preserved. No imageopens/render/
+browser/capture/generation/repair/promotion or unknownbyterestoration.
+
+Fresh Plato01a1f8f4-af2c-7ea1-8bd0-905ac14b00bd owns ONLY
+n87-known-serializer-recovery-r147: exactsavedbuilder/crop derivations
+inmemory, fullpinnedSHA before anytargetwrite, no newgeometry/labels.
+This differs fromPlanck's completed archivebyte scan; no duplicate task.
+Gauss01a1f8f0-e9e3-74d0-8909-fa83663c0cf6 remains ONLY independent
+reviewer(FIRSTCHOICE36); Hilbert01a1f8f0-4692-7d60-9468-ef8473f03768
+FIRSTCHOICEn87 author remains active. Existing partialreviewpasses reused.
+
+LivePlane180 readHTTP200/receipt090ec82a, localexactsequence180 selection
+confirmed target5d849725/finishreview/statec964bceb; queryfilter was not
+serverapplied, no unrelated ticket adopted. Directhumanresume supersedes
+oldticketpause. Parentwrongusagefilename readexit1 and prematureserializer
+directory rgexit2 preserved as lookupfailures only; no contentverdict.
+No oldchat/reviewer wake or remoteprogresswrite. Metadataonly atthispoint.
+Completecourses14/currentresumeincrement0/no partial-reportcommit;
+service69/retry0/newpaid0/parentimages0/tokensbillingUNKNOWN.
+Progress currentchat/checkpoint only/supervision40min/finishreview;
+main/originaltrees/locks/backups/stash read-only. No DB/merge/deploy/
+publication/closure/formalhandoff/fullprojectchecks.
+
+## 180-6 r146 CHOICE145 independent PASS; n87 exact TEXT/SOURCE restored and missing stages continued
+
+Same official absolute7161 W/samechat. Euler FIRST CHOICE145 PASS returned:
+manifest76e84028/reviewec5c55b6/report4ce7e5c7,
+parent46457557 PASS12entries. Source-first and pure-view/all-option
+truth frozen beforeauthorinternals; tasks1/4/5,3questions13options,
+true setsACD/C/B, reviewedvalidator1exit0/images0/candidatechanges0.
+Reviewer collectedclosed. No wholecourse or partial FINAL ready claim.
+Fresh Gauss01a1f8f0-e9e3-74d0-8909-fa83663c0cf6 is ONLY independent
+reviewer: FIRST CHOICE36, savednative2 once, ordered seed/view/key freezes.
+After closure, partial ANSWER36 comparison and n87 missing reviews follow.
+
+Lovelace n87 exact four-file recovery completed: manifestcb275990,
+parent380ec0ef PASS14entries; fourknownSHA snapshots39481bytes/all0444,
+missing0/failures0/receipt1exit0. Authorclosed. Existing TEXT15objects/
+14paragraphs3tasks5anchors and SOURCE3PASS retained, not rerun.
+Planck exactFIG219/220PASS and FIG221rejected-stage recovery still in flight;
+one parent manifest-locator rg returnedexit1 beforethe return, no verdict inferred.
+
+n87 isolated text-only inputmanifest1800fbed parent0fdfdac7 PASS10entries.
+Exactly three drafttemplates renamed to JSON plus canonicalbook copied,
+no canonicalpromotion. All3tasks have nofigureassociation; selecteddefinition
+blocks0/1/7/14 excludefigures/solvedexamples. Actualapprovedprose selection
+precededofficialinspect; inspect0/prepare0, seedce59c67b frozen0444.
+Hilbert01a1f8f0-4692-7d60-9468-ef8473f03768 FIRST CHOICE n87 author
+owns independentseedsolve/freeze and newdraft; noanswers disclosed.
+Parent FIRST n87 displayanswerdraft3/ungraded3/parts0 authored against
+exactapprovedSOURCE and modernquestions: manifestff625844,
+parent42c2500e PASS8entries/identity-onlyreceipt0/source re-solve0/images0.
+FIRST modernanswer comparison notyet; no Gate2/finalization/retention.
+
+n55 currently FIRST partialANSWER145 and CHOICE145 PASS; FIRST ANSWER36/
+CHOICE36 author drafts bound. Task2 FIG152artwork and fulllessonstages remain.
+Completecourses14/currentresumeincrement0/no partial-reportcommit;
+service69/retry0/newpaid0/tokensbillingUNKNOWN. All author failures/
+correctionlimits/provenance cautions and originaltrees/locks/backups/stash kept.
+Progress currentchat/checkpoint only/supervision40min/finishreview;
+no DB/merge/deploy/publication/closure/formalhandoff/fullprojectchecks.
+
+## 180-6 r145 ANSWER36 and CHOICE36 first authors collected; five-task partial continuation
+
+Same official absolute7161 W/samechat. Sagan ANSWER36 author returned:
+manifest3337fab5/reportc05b6d77/partialkeys5e309921,
+parent35702bec PASS42actualentries; tasks3/6 ungraded2/parts0,
+original2+savednative2 onebatch4/reopens0. Existing SOURCE conclusions,
+exact FIG153/154 and prior approvals reused; authorclosed.
+No source/math/figure re-review or fullGate2/final-ready approval.
+
+Harvey CHOICE36 author returned: manifestabceba63/reportebf43723,
+source-firsta0e46e91/draft937eae46/pureview7a602508,
+parent56d8f170 PASS22entries. Firstdraft1/correction0of1;
+structuralvalidator1exit0 receipt7c1a3ee2. Savednative2 onebatch2/
+reopens0/no newrender/browser/capture; authorclosed.
+Neither draft nor bytebinding is independent semanticapproval.
+Euler ONLY FIRST CHOICE145 reviewer remains in flight. After collection/
+closure, FIRST review36 and partialanswercomparison36 remain in queue.
+ANSWER145 existing FIRST partialPASS retained; all answercandidates draft.
+
+Lovelace exact n87 TEXT/SOURCE four-file recovery continues.
+Fresh Planck01a1f8ec-5149-7a62-b078-c25cf54db344 owns disjoint exact
+FIG219/220 approved output and FIG221 rejected-stage recovery only.
+Requires complete known SHA before writes; no wholepackage/unknown byte
+restoration, generation or figure repair/review. FIG221 originalcollisions/
+failure2/inclusivecorrection1of1 preserved. Latest ordinarytechnicalrepair
+authorization does not erase these failures or grant newpaid artwork.
+
+Completecourses14/increment0/no partial-reportcommit. Service69/retry0/
+newpaid0/tokensbillingUNKNOWN. All failures/provenance cautions retained.
+Progress currentchat/checkpoint only/supervision40min/finishreview;
+main/originaltrees/locks/backups/stash read-only; no DB/merge/deploy/publication/
+closure/formalhandoff/fullprojectchecks.
+
+## 180-6 r144 CHOICE145 author bound; FIRST independent review active; n87 exact recovery
+
+Same official absolute7161 W/samechat. Goodall collected and closed:
+CHOICE145 manifest736e6164 parent13b76608 PASS26actualentries.
+Draft3questions/13options(single2/multiple1), source-first freeze retained;
+authorfirstdraft1/contentcorrection1of1/validator1exit0/review0/images0.
+Before-validator correction made continuous angle law/trend explicit;
+old draft5a7b1702 and correction322ee24d retained. Expectedabsenceprobe
+and correctedcontentgap remain two recorded failures, not hidden/reset.
+Fresh Euler01a1f8e8-729c-7530-94f0-83d3f54d2d46 is ONLY independentreviewer:
+FIRST seed solve/freeze -> pure-view fidelity/all-option truth freeze ->
+authorinternals comparison. No other answers/source solutions disclosed.
+Harvey FIRST CHOICE36 and Sagan FIRST partial ANSWER36 remain in flight.
+ANSWER145 FIRST partialPASS already parent-bound and closed; no replay.
+
+Read-only current-artifact lookahead used an incorrect audit filename and
+then incorrect ready-vs-pass audit status; both inventories were corrected
+beforeany target authoring/promotion. Final actual modernready/auditpass
+and zero-exercise scope excludes all already delivered easy candidates,
+including n73/n101/n104/n105 and n129/n85. No completeness increment.
+Named0f12 n87 directories and oldstemrobin-resume tmp were absent;
+failed read-only probes retained, not source/contentFAIL or exhaustion.
+No source233 missing-byte probe, author or review repeated.
+
+Next source-backed n87 has existing TEXT15objects14paragraphs3tasks5anchors
+and SOURCE3answers PASS. Lovelace01a1f8ea-76ec-7ec3-a2fb-a502ba20a199
+owns ONLY exact known-SHA recovery of three templates plus sourceJSON;
+saved archive bytes/known paths, no unknown/fullpackage reconstruction.
+FIG219/220 existingPASS, FIG221 originalauthorBLOCKED sevenlabelcollisions/
+mechanicalinclusive1of1 exhausted retained. No newfigureapproval/repair
+or budgetreset claimed. Source/currentrawbytes and originaltrees read-only.
+
+Completecourses14/currentresumeincrement0/no partial-reportcommit;
+newpaid/auth/image0/service69/retry0/tokensbillingUNKNOWN.
+Progress currentchat/checkpoint only/supervision40min/finishreview;
+no DB/merge/deploy/publication/closure/formalhandoff/fullprojectchecks.
+
+## 180-6 r143 first partial ANSWER145 PASS; independent CHOICE and ANSWER36 continued
+
+Same official absolute7161 W/samechat; existing create/attach and n129/n85
+delivery not replayed. r141 idle recovered by independent missing stages.
+Feynman FIRST modern display-answer comparison145 returned PASS3/REVISE0:
+manifesteb478afc/report34914454/result14605040, parentec0f6098 PASS12entries.
+Reused approved SOURCE conclusions, no source solve/review, images0/candidate
+change0/ungraded3/parts0/interactions0. Reviewer collected and closed.
+This is partial FIRST comparison, not fullGate2 or final-ready approval.
+
+r142 isolated draft input manifest0bd4ffe3 parent0415610a PASS10entries;
+official seed145 a9b74e5a frozen0444/prepare0/inspect0. Receipt name1345
+is a naming typo: actual selection only1/4/5 with concepts0/1/2/3.
+Parent selected actual approved prose before inspect; chronology not rewritten.
+Partial ANSWER145 author manifest5e6dded9 parent2a62122a PASS6entries.
+Goodall01a1f8df-3605-7160-9a1f-22dbef6bb3b5 is existing FIRST CHOICE145
+author; collect returned actual draft/view/freeze/receipts, do not duplicate.
+
+r143 isolated draft input36 manifest25d7328b parent7035b585 PASS26entries;
+exact FIG153/154 SVG references only, no complete edition figure promotion.
+Official seed36 prepare0/inspect0 frozen; saved full640neutral native PNGs
+bound to current approved SVGs, no new render/browser/capture.
+Harvey01a1f8e6-8695-7572-8f9f-1c4ee3fa53c5 FIRST CHOICE36 author and
+Sagan01a1f8e6-d99e-7400-8620-ec845d5a6d45 FIRST partial ANSWER36 author
+have disjoint scratch ownership. No independent reviewer currently in flight.
+Authors must return text manifests; CHOICE independent solve/freeze first.
+
+Task dependencies:1/4/5 no figures;3 FIG153;6 FIG154;2 missingFIG152 artwork.
+FIG149/150/152 local hybrid artwork HOLDs remain, not all-work blockers.
+Original SOURCE6/TEXT28objects39paragraphs6tasks7refs and figure approvals
+reused. All inputs/answers remain draft; fulln55 finalize/answer/choice retention/
+DISPLAY/seal incomplete. Completecourses14/currentresumeincrement0.
+No partial/report-onlycommit or new paid/auth/image request; service69/retry0,
+tokens/billingUNKNOWN and all failures/provenance cautions remain preserved.
+No source233 missing-byte probe replay or oldchat/reviewer wake.
+Progress currentchat/checkpoint only; supervision40min/finishreview;
+main/originaltrees/locks/backups/stash untouched; no DB/merge/deploy/publication/
+closure/formalhandoff/fullprojectchecks.
+
+## 180-6 r141 FIG154 first independent PASS bound; exact n55 continuation retained
+
+Samechat/official absolute7161 W; no create/attach/deliveredstage replay.
+Russell FIRST FIG154 independentPASS collected: manifest9ee42d6e/
+report4cff8ecc/officialreviewfb2fc0ff, parentdac7a80e PASS54actualentries.
+Source1/native6 onebatch7/reopens0/crops0/newreviewfailures0/recorder1.
+No browser/render/capture replay; reviewerclosed. Existing labelrepair
+changedonlyoneSVGy; originalauthorfailures2/correction1of1/additionalrepair1/
+cumulativecorrectionevents2 and originalprompt-exposurecaution remain.
+No claim of perfectlyblind authorinput; no canonicalpromotion/courseapproval.
+
+n55 SOURCE6/TEXT28objects39paragraphs6tasks7refs reused. Current FIG148,
+FIG151(scopedaffectedPASSwithfirstmath/sourceconclusions), FIG153 and FIG154
+have independent approvals and parentbytebindings. FIG149/150/152 each
+genuinehybridPLAN_ONLY/artworkmissing; not scientificFAIL or permanentban.
+Budgetquestion is in currentchat because actual remainingmonetarycap is
+unverified. No new paid/auth request. Rawcanonicalretention, remainingfigure
+outputs/reviews, modernfinalization, FINALanswers, CHOICE, fullcourseDISPLAY
+and seal remain pending; no falsecompletecourse or report-onlycommit.
+
+n12923c99d40/n853dd065128 remainalreadypushed/reused; completecourses14,
+currentresumeincrement0. Index verifiedempty; ticket/usage JSONparsePASS,
+finishreview. No currentauthor/reviewer/command/browser remainsinflight.
+Continuation is saved here; this is not humanpause, handoff or globalexhaustion.
+All originaltrees/locks/backups/stash/failures/pendingmessages/costs preserved.
+Historicalimageservice69/retry0/tokensbillingUNKNOWN/newparentimages0.
+Progress only currentchat/checkpoint, supervision40min; no DB/merge/deploy/
+publication/closure/formalhandoff/fullprojectchecks.
+
+## 180-6 r140 FIG148 PASS; FIG154 one-label recovery; FIG149 hybrid PLAN bound
+
+Same official absolute7161 W/samechat, no creation/attach or deliveredstage replay.
+Curie FIRST FIG148 independentPASS collected: manifest7f2a421d/reportce172693/
+officialreview0c57b0a7, parent2e454b74 PASS48actualentries. Source1/native6
+onebatch7/reopens0/crops0/recorder1; oldrelative SVG resolvedinmemoryonly,
+no validator/render/browser/capture rerun. Reviewerclosed; no promotion.
+FIG151 affectedPASS and FIG153 firstPASS retained, not rerun.
+
+Bernoulli FIRST FIG154 author collected: manifest333377cb/author436f1619/
+report5b7c4505, parent799048c3 PASS39entries. Deterministic apparatus,
+firstassertion-contractFAIL and subsequentA/ground-rendercollisionFAIL retained,
+draft1/correction1of1/source1/preview1/native0/paid0; authorclosed.
+Latest human ordinary-reversible-repair authorization used ONLY for
+source-A labelPlacement.offset[-10,0]->[-10,-34]. No geometry/value/text edit.
+Additionaltechnicalrepair1/cumulativecorrectionevents2, not budgetreset.
+Preparedeltaexit0 receipt09074abe; correctedfailed-stagerenderexit0 bf31393c;
+FIRST missingnative6 exit0 e8b905f5, min16.25594815340909px,
+mingroundgap9.037179287997162px. ActualSVG only oneelementy changed.
+Repairmanifest5ce0e1a0 frozen0444, parent3d868029 PASS39entries.
+Russell01a1f8b1-4d43-7631-95b1-0769ce26d423 is ONLY independentreviewer:
+FIRST wholeFIG154 sourcePNG+current6native; no rendering/browser replay.
+ReviewPASS stillpending. Originalauthorprompt exposed forbidden-example
+force-result numbers; inputnotperfectlyblind remains explicit. Thelabelrepair
+doesnot certify authorprovenance or change/add any visiblevalues.
+
+Anscombe FIRST FIG149 author PLAN_ONLY/HYBRID collected:
+manifestff1fc2ed parent29490a84 PASS28entries; source1/reopens0/correction0/
+failures0/paid0. Authorclosed. Genuine semanticartworkmissing, not scientific
+FAIL or permanentcourseprohibition. FIG150/152 priorhybridPLAN holds reused.
+Asked human for totalnewimage-callbudget for149/150/152 because verifiable
+remaining monetarycap stillabsent; no paid/auth calls issued.
+
+LivePlane180 readHTTP200, finishreview/state_groupstarted unchanged;
+GETreceipt ded96f3d retained. Broaderrawstat-only lookahead initially used
+wrong prose type keys; corrected tokind/id and figures beforeany selection,
+so falsezerofigure list yieldedno author/approval/promotion. Selected233
+byte-locator probes in originalresume returnednohit; no sourcebytes written,
+rerender/sourceauthor/review, unknownrestoration or exhaustionclaim.
+Parent guessedfile reads/glob failures preserved as technicalprobes only.
+Newparentimageloads0. Historicalimageservice69/retry0/tokensbillingUNKNOWN.
+n12923c99d40/n853dd065128 delivered/reused; completecourses14/increment0.
+No partial/report-onlycommit. Progress only currentchat/checkpoint,
+supervision40min; main/originaltrees/locks/backups/stash untouched;
+no DB/merge/deploy/publication/closure/formalhandoff/fullprojectchecks.
+
+## 180-6 r139 FIG151 affected PASS bound; collect FIG148/154 before next dispatch
+
+Same official absolute7161 W, samechat; no create/attach replay.
+Latest saved FIG151 affected-only Volta return is PASS_AFFECTED_ONLY_WITH_SCOPED_REUSE:
+manifestc75e62cb/officialreviewcc7572d7, parentb843883f PASS47actualentries.
+All six repairednative loadedonce/reopens0/source0/browser0/render0.
+First wholefigure r135 source/math/cultural/unchanged-element PASS reused;
+originalREVISE/HOLD/correction1of1/runtimeFAIL and additionalauthorized
+labelrepair1/cumulativecorrectionevents2 retained, no budgetreset.
+Reviewerclosed. One reviewer wrong-retention-path read failedexit1,
+actual target then recovered through existingbinding; failure preserved.
+No canonicalpromotion/fullcourseapproval.
+
+Current fresh Curie01a1f8a6-d550-7a23-8068-b27bd6f1e2e4 is ONLY independent
+reviewer: FIRST FIG148 originalPNG+sixsavedscreens, no rendering replay.
+Bernoulli01a1f8a7-3cc2-7d80-8739-c1c4519522c7 is FIRST FIG154 author,
+not reviewer. Both were already dispatched before this contextresume;
+collect actual returned manifests before closing/dispatching another reviewer.
+FIG154 prompt contained forbidden-example force-result numbers: exposure
+must remain explicit; no claim of perfectly blind author input or approval.
+No parentimage loads or additionalpaid requests.
+
+n12923c99d40/n853dd065128 alreadydelivered/pushed; no stage or push replay.
+n55 SOURCE6/TEXT28objects39paragraphs6tasks7refs and FIG153PASS reused.
+FIG149 firstauthor missing; FIG150/152 hybridartwork absent/PLAN holds.
+Completecourses14/currentresumeincrement0; no partial/report-onlycommit.
+Historicalimageservice69/retry0, tokens/billingUNKNOWN, failures/costs kept.
+Parent recovery rg probe used absent newtree3112tmp path and exited2;
+no bytes written and no scientific verdict inferred.
+Progress only thischat/currentcheckpoint; finishreview/supervision40min.
+Sharedmain/originaltrees/locks/stash/backups preserved; no DB/merge/deploy/
+publication/closure/formalhandoff/fullprojectchecks.
+
+## 180-6 r138 FIG153 independent PASS bound; FIG151 affected-only review active
+
+Same7161 official absoluteW. FIG153 sole first independent Chandrasekhar
+returned PASS: manifest779d1205/report9ee22345/officialreview283811bd.
+Parent58aab929 PASS45actualentries; recorder1, originalsource1/native6
+onebatch7/reopens0/no browser/render/capture replay. Reviewerclosed.
+Original firstauthor1/correction0of1 and all outputs remain0444.
+No canonical promotion/fullcourse approval. Completecourseincrement0.
+
+FIG151 one-label repair manifest6c5b7e8b frozen0444, parent610e77d0
+PASS34entries. Current6native gap5.0406265px306/10.546875px640,
+fonts16.25625/34 unchanged. Source/math/label text and all182SVG elements
+except existingalpha x/y unchanged. Old FIRST independentREVISE303bc218/
+author1of1/HOLD/failure and additionalruntimeFAIL eaf8fef7 preserved.
+Technicallayoutrepair1/cumulativecorrectionevents2, not budgetreset.
+Fresh Volta01a1f89c-bcb1-7463-bf4f-1f0278165e31 is ONLY independent reviewer,
+affected-only six NEW savednative screens. Prior fullsource/math/TEXT PASS
+conclusions reused; no originalPNG/oldscreen/browser/renderer re-open.
+Affected visual approval still pending; no premature officialPASS.
+
+One metadata apply_patch failed because checkpoint context did not match;
+subsequent rg confirmed no partial writes. Failure is retained, not hidden
+as success or treated as scientific verdict. Corrected usage/ticket update
+records current7161 checkpoint, all additional/extra/stopped reviewer costs
+UNKNOWN, historicalservice69/retry0 unchanged. No additionalpaid request.
+
+n55 SOURCE6/TEXT28objects39paragraphs6tasks7refs approved and exact-retained;
+extra SOURCE comparison and stopped duplicateTEXT remain recorded.
+FIG148 independent stillmissing, FIG149 firstauthor notyet, FIG150/152
+hybridPLAN holds, FIG154 firstauthor notyet. No fulln55course seal or
+partial/report-only commit. n12923c99d40/n853dd065128 already pushed/reused,
+no repeated n129/n85 stage/delivery. Completecourses14/increment0.
+Progress only thischat/checkpoint; finishreview/supervision40min,
+no sharedmain/original-parent writes, lock/stash/backup removal,
+DB/merge/deploy/publication/closure/formalhandoff/fullprojectcheck.
+
+## 180-6 r137 FIG153 first author ready; FIG151 one-label technical repair
+
+Same7161 official absoluteworkdir, no originaltree/main/lock/stash edits.
+n55 original SOURCE/TEXT PASS exact retention6568ffe2 parent015e6de2
+PASS13entries, no source/text replay by retention. Extra SOURCE comparison
+and stopped extraTEXT dispatch remain fully recorded below/usage.
+
+FIG153 FIRST author Copernicus completed deterministic: manifestf2afd7d7/
+authorresultf2fa4203/report3b88f19c, parent2a2cbc58 PASS63actualentries.
+35objects/2labels, officialrender and sixnative PASS/min18.16875px,
+source1/preview1/native6 onebatch8/reopens0, firstdraft1/correction0of1.
+Author closed. Fresh Chandrasekhar01a1f893-0a6f-7431-bb4c-66493be433bd is
+the ONLY independent reviewer, FIRST FIG153 on originalPNG+saved6native,
+no browser/renderer/source or TEXT replay. Approval still pending.
+
+FIG151 first independent Zeno returned REVISE loweralpha touches ABCarc
+in all6screens, no other source/math/cultural/visual defect. Manifest303bc218/
+report73809f20, parent6bf34b2a PASS41entries; reviewerclosed, notwoken.
+Original author1of1 and all failures/HOLD remain immutable.
+Latest human ordinary-reversible-technical-repair authorization applied
+only to existing lowerlabel anchor[225,387]->[191,395]. This is an additional
+technical layout repair1, cumulative correctionevents2, not budgetreset
+or scientific reauthoring. Delta contract compares entire parsedspec and
+allows exactly that one pointer. New renderer corrected exit0/ae23194f:
+SVG182elements, exactly one text node's x/y changed; all arc/force/source/
+TEXT/label content unchanged. Old independentREVISE remains separate.
+
+First new render exited1 ERR_MODULE_NOT_FOUND playwright-core beforebrowser,
+receipt eaf8fef7 plus fullstdout/stderr retained. Existing readonly
+.agents/skills/node_modules and app/node_modules linked ONLY into7161;
+no install, dependency edit or sharedmain write. Corrected failed-stage
+render and first affected6native exit0, receiptcea0d076, fullimage inviewport
+and label/arcgap>=4px at306/640 eachtheme. Newnative is mechanical only,
+not independent figure approval. Seal and affected-only independent review
+remain next, no sourceimage reopen or wholefigure meaning review replay.
+
+FIG152 remains hybrid PLAN_ONLY/no artwork/no renderer; FIG150 likewise
+HOLD_AT_PLAN; FIG148 first independent approval missing. No fulln55 course
+seal or narrowcommit/push yet. Completecourses14/increment0. n12923c99d40/
+n853dd065128 alreadypushed/reused; no repeated stage or delivery.
+Historicalservice69/retry0 and all unknowntoken/billingcosts preserved;
+no new paidimage requests. Progress only currentchat/checkpoint,
+finishreview/supervision40min, no DB/merge/deploy/closure/formalhandoff.
+
+## 180-6 r135 n55 natural SOURCE/TEXT return reused; FIG151 first review active
+
+2026-11-20, same official absolute7161 workdir. Existing pending Fermat
+01a1f879-73c6-7e10-8685-b69adae46bf2 naturally returned SOURCE6/6PASS and
+TEXT28objects/39paragraphs/6tasks/7references PASS. No old reviewer message
+or wake was sent. Original final manifest22331bytes/
+1244261363a8afb8a6c5251ea844ffdd259ab340976ed853eeea95459468626f
+has parent binding3e475c59 PASS_BYTES_ONLY59actualentries.
+Original reports sourcefce523d6/text7c9e61dc remain0444, candidates unchanged.
+Exact report retention into7161 is next; no author/review replay.
+
+Recovery routing mistake is preserved: the existing pending Fermat result
+was not collected before a new SOURCE comparer Kuhn was dispatched.
+Kuhn's additional SOURCE6/6PASS already ran; manifest44c4aec7/
+reporta1cf732a/solutiond35dd05e, parent6c38f25c PASS28entries.
+Both independent comparisons and their seven-image batches remain recorded,
+not counted as two courses or called one total comparison. Kuhn closed.
+New TEXT Maxwell01a1f885-ac61-7fb2-b999-99728354a87c was stopped immediately
+when Fermat returned; no owned output directory existed. Its dispatch/
+unknown token costs remain, no TEXT PASS claimed from it. Directory absence
+probe rg exited2/no writes; preserve as technical observation, not verdict.
+Fermat's natural outputs in3112 remain intact; parent performed0oldtreewrites.
+Global rule unavailable evidence in original report remains historical even
+after official relink restored the link; no rewritten evidence.
+
+Fresh Zeno01a1f887-4819-7f22-b141-f19ca3e5a1af is the ONLY current independent
+reviewer, FIRST missing FIG151 using originalPNG and six complete saved/
+recovered native screens, no browser/render/capture replay. Source inventory
+before author-read; current exact TEXT has independent approval above.
+Old FIG151 failures, authorHOLD and correction1of1 remain immutable.
+No independent FIG151 PASS yet. Capture parent1804df01 PASS9actualentries.
+
+FIG152 FIRST author James returned PLAN_ONLY: hybrid lamp artwork absent,
+draftvalidation1PASS, no render/preview/native or independent approval.
+Manifestc7aeea36/authorresult516d212c/report79e0176c parentcaa14d9d
+PASS23actualentries, sourceimage1/reopens0, corrections0of1, absenceprobe1.
+James closed; no paid/artwork/auth call. It remains a held phase, not a
+course-level prohibition or manufactured geometry substitute.
+
+n129 remains pushed23c99d40a6844badfa4ea35349341eaaf6ee5838, n85 remains
+pushed3dd065128c94eeb32bf32c992762794819871a8a, neither replayed.
+Completecourses14/currentresumeincrement0; index has no staged partial
+course/report-only commit. Current instruction is finishreview/40min.
+New parentimages0, known additional SOURCEimages7/FIG152images1 and
+capture2 retained; pending FIG151 reviewer usage not yet final.
+Historicalservice69/retry0 unchanged, all actualtokens/billingUNKNOWN,
+including extra/stopped reviewers. No DB/merge/deploy/publication/closure/
+formalhandoff/fullprojectchecks; sharedmain/locks/backups/stash untouched.
+
+## 180-6 r132 official immediate resume into 7161; delivered n129/n85 reused
+
+Same chat, direct human immediate-resume instruction on 2026-11-20. Official
+create_worktree used sourceRoot /Users/yong/work/lemmadeck-ws/lemmadeck,
+ref 7af8268705129aa3ed067ac73a443352e8815c27, name stemrobin-180-six,
+allowAsync true. Operation 5c161ddd-07fc-4a79-866f-badc2394ef4a completed
+and registered /Users/yong/.codex/worktrees/stemrobin-180-six-7161/lemmadeck.
+No repeat attach, replacement chat, old chat/reviewer wake or archive.
+All subsequent production commands use that explicit absolute workdir.
+
+Read the original 3112 checkpoint top and saved bytes, not the stale queued
+message. Actual original HEAD and freshly fetched original delivery branch
+are 3dd065128c94eeb32bf32c992762794819871a8a. New detached tree fast-forwarded
+from the requested initial ref to that existing delivered commit, without
+rewriting any local or remote branch. n85 complete offline narrow24file
+commit/push is already done, not repeated. n129 is already complete and
+pushed23c99d40; no DISPLAY/IMAGE/TEXT/ANSWER/CHOICE stage rerun or new seal.
+Completecourses14, this resume increment0. No partial/report-only commit.
+
+Next source-backed lesson is 8p n55. FIRST TEXT candidate r127 and FIRST
+SOURCE six-answer author r128 exist; their first independent comparisons
+remain missing. Migrate only hash-bound inputs needed for these stages.
+FIG151 returned result is local-HOLD-native-screen-visual-evidence, not
+approval; first failure, correction1/1, source/native usage and all outputs
+remain in the original tree. Do not redraw it or reset its budgets.
+FIG150 hybrid HOLD_AT_PLAN and FIG148 missing independent approval remain.
+
+One new SkillHost update failed exit1: "Refusing to update dirty repository:
+/Users/yong/.skillhost/user_repos/narrative-skills"; tool also reported
+unlinking Codex skill links. Preserve this failure and the dirty skill repo;
+no fresh IntentFold capability is executed with stale skills. This record
+and byte recovery follow direct human authorization, not a new capability
+or formal handoff. Live Plane180 read HTTP200, finishreview and started;
+no backend write or message, no DB/merge/deploy/closure/fullproject checks.
+
+Sharedmain is read-only. Original trees, locks, backups, stash, failures,
+pending messages and prior costs remain untouched. New image/paid requests0;
+historicalservice69/retry0 retained, actual tokens/billingUNKNOWN.
+Progress only this chat/current checkpoint. Supervision40min and ordinary
+reversible technical recovery remain human-authorized, finishreview.
+
+Saved recovery facts: selected migration exit0,24files exact, manifest
+16607bytes/1d3d1419be4747f1eda954c028ca9470d1af6452e389b1827a1f5ed60bb67a81.
+Fresh Kuhn01a1f87e-093f-7282-a9dc-ec225f146cf4 is the sole FIRST SOURCE
+independent comparer for n55, raw-only solve/freeze before author-open.
+No TEXT independent comparison yet, no stage PASS inferred from migration.
+Official skillhost relink exit0 restored only the removed Codex links,
+leaving the dirty skill repository and update failure unchanged.
+Offline FIG151 original PNG diagnosis:640x1260 files retain0drawingpixels
+in each band starting1000/1100/1200 for screen neutral/accent, while print
+retains2598/1187/252. Prepare only two affected screen captures with taller
+viewport; no FigureSpec/SVG edit or source/native-passed-stage replay.
+
+Affected FIG151 capture recovery exit0, receipt5014bytes/
+ca60721793ca2684cb546df833a8eb2a47befb1331a15f3e82658b44876b874e,
+PASS_CAPTURE_ONLY. Media640x1260 unchanged, viewport1440x1280. New neutral
+matches existing print03e8ec97 exactly; accent5cb25cb4 has lower bands
+4004/1198/252. Original neutral/accent lower bands0 remain immutable.
+No author/independent figure approval claimed, no spec/SVG/render redo.
+Parentimages0, newcapture2, paid0; prior failures/correction1of1 preserved.
+Fresh James01a1f881-0350-7a42-bd71-c24af2c9aa4a handles only FIRST missing
+FIG152 author, no answer access or independent review. Current TEXT draft
+dependency remains explicit/unapproved; if hybrid-needed stop atplan/no paid.
+
 ## 180-6 r131 n85 complete offline course sealed and parent-bound; narrow delivery next
 
 2026-11-20T10:18Z. Same chat/official absolute W. n129 remains pushed23c99d40
