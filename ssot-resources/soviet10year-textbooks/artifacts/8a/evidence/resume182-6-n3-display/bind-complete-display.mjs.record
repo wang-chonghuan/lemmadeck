@@ -1,0 +1,137 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-7186/lemmadeck';
+assert.equal(process.cwd(), root);
+const id = 'alg8-c1-s1-n3';
+const lesson = `ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/${id}`;
+const choice = `${lesson}/choice-set`;
+const runs = '.tmp/resume182-6-8a-n3-display-FIRST';
+const combined = '.tmp/resume182-6-8a-n3-combined-FIRST';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const read = file => fs.readFileSync(file);
+const json = file => JSON.parse(read(file));
+const digestFile = file => ({ path: file, sha256: sha(read(file)) });
+const prepared = json(`${runs}/prepared-bindings.json`);
+const desktop = json(`${runs}/runtime-recovery2/report-FIRST.json`);
+const mobile = json(`${runs}/runtime-recovery3/report-FIRST.json`);
+assert.equal(mobile.status, 'CAPTURED_UNOBSERVED');
+assert.equal(desktop.views.find(view => view.viewport.width === 1440).status, 'CAPTURED_UNOBSERVED');
+assert.equal(desktop.coverage[0].domTargets, desktop.coverage[0].capturedTargets);
+assert.equal(mobile.coverage[0].domTargets, mobile.coverage[0].capturedTargets);
+for (const coverage of [desktop.coverage[0], mobile.coverage[0]]) {
+  assert.equal(coverage.missingTargets.length, 0);
+  assert.ok(coverage.figureCoverage.length > 0);
+  assert.ok(coverage.figureCoverage.every(figure => figure.complete && figure.capturedArea === figure.requiredArea));
+}
+assert.equal(desktop.inheritedCSS.equal, true);
+assert.equal(mobile.inheritedCSS.equal, true);
+const images = [...desktop.screenshots, ...mobile.screenshots];
+assert.equal(images.length, 21);
+const observed = new Map();
+const observers = [];
+for (const batch of [1, 2, 3]) {
+  const resultPath = `.tmp/resume182-6-8a-n3-observe7186-batch${batch}/result.json`;
+  const result = json(resultPath);
+  const manifest = json(resultPath.replace('result.json', 'batch.json'));
+  assert.equal(result.status, 'PASS');
+  assert.equal(result.image_loads, manifest.images.length);
+  assert.equal(result.reopens, 0);
+  assert.equal(result.crops, 0);
+  for (const image of result.images) {
+    assert.equal(image.status, 'PASS');
+    assert.ok(!observed.has(image.path), 'Duplicate image observation');
+    observed.set(image.path, image.sha256);
+  }
+  observers.push(digestFile(resultPath));
+}
+for (const image of images) {
+  assert.equal(sha(read(image.path)), image.sha256);
+  assert.equal(observed.get(image.path), image.sha256);
+}
+const draft = json(`${combined}/draft.json`);
+for (const name of ['seed.json', 'draft.json', 'review.json']) {
+  assert.deepEqual(read(`${choice}/${name}`), read(`${combined}/${name}`));
+}
+assert.equal(draft.questions.length, 11);
+assert.equal(draft.questions.reduce((total, question) => total + question.view.options.length, 0), 54);
+assert.equal(json(`${lesson}/answer-keys.json`).status, 'ready');
+assert.equal(json(`${lesson}/answer-keys.audit.json`).answerCount, 11);
+const sections = html => [...html.matchAll(/<section class="choice">[\s\S]*?<\/section>/gu)].map(match => match[0]);
+const retained = read(prepared.oldChoices.html.path).toString();
+const oldBlocks = sections(retained);
+const gapHtml = read(`${runs}/runtime-recovery3/choices-retained-css.html`).toString();
+const gapBlocks = sections(gapHtml);
+const gapQuestions = draft.questions.filter(question => question.id !== 'n3-13');
+assert.equal(gapBlocks.length, gapQuestions.length);
+const complete = gapBlocks.map((block, index) => {
+  const ordinal = draft.questions.findIndex(question => question.id === gapQuestions[index].id) + 1;
+  const prefix = `<section class="choice"><p class="choice-heading">${index + 1}. `;
+  assert.ok(block.startsWith(prefix));
+  let current = block.replace(prefix, `<section class="choice"><p class="choice-heading">${ordinal}. `);
+  if (gapQuestions[index].id === 'n3-12') {
+    const marker = '<ol class="choice-options">';
+    const start = oldBlocks[0].indexOf(marker) + marker.length;
+    const end = oldBlocks[0].lastIndexOf('</ol>');
+    const options = [...oldBlocks[0].slice(start, end).matchAll(/<li>[\s\S]*?<\/li>/gu)].map(match => match[0]);
+    assert.equal(options.length, 6);
+    const insertion = current.lastIndexOf('</ol>');
+    current = current.slice(0, insertion) + options[5] + current.slice(insertion);
+  }
+  return current;
+});
+complete.splice(1, 0, oldBlocks[1]);
+for (const old of prepared.oldChoices.questions) {
+  assert.equal(sha(Buffer.from(complete[draft.questions.findIndex(question => question.id === old.id)])), old.sectionSha256);
+}
+const first = gapHtml.indexOf(gapBlocks[0]);
+const last = gapHtml.lastIndexOf(gapBlocks.at(-1)) + gapBlocks.at(-1).length;
+const fullHtml = gapHtml.slice(0, first) + complete.join('') + gapHtml.slice(last);
+assert.equal(sections(fullHtml).length, 11);
+const css = [...fullHtml.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gu)];
+assert.equal(css.length, 1);
+assert.equal(sha(Buffer.from(css[0][1])), prepared.oldChoices.cssSha256);
+assert.ok(!/\b(?:correct_index|answerKey|source_solution|misconception|rationales)\b/u.test(fullHtml));
+const output = '.tmp/resume182-6-8a-n3-complete-display7186-FIRST';
+assert.ok(!fs.existsSync(output));
+fs.mkdirSync(output);
+fs.writeFileSync(`${output}/complete-choices.html`, fullHtml, { flag: 'wx' });
+const binding = {
+  schema: 'stemrobin-182/n3-complete-offline-display@1', status: 'OFFLINE_DISPLAY_PASS',
+  book: '8a', lesson: id, date: '2026-11-20', questions: 11, options: 54,
+  originalExercises: 11, readyAnswers: 11,
+  inheritedWritten: prepared.inheritedWritten,
+  inheritedChoice13: prepared.oldChoices.fullQuestionReuse,
+  inheritedChoice12: prepared.oldChoices.partialQuestionReuse,
+  contentInputs: ['seed.json', 'draft.json', 'review.json'].map(name => digestFile(`${combined}/${name}`)),
+  answerInputs: ['answer-keys.json', 'answer-keys.audit.json'].map(name => digestFile(`${lesson}/${name}`)),
+  renderInputs: [digestFile(`${runs}/runtime-FIRST/report-FIRST.json`),
+    digestFile(`${runs}/runtime-recovery1/report-FIRST.json`),
+    digestFile(`${runs}/runtime-recovery2/report-FIRST.json`),
+    digestFile(`${runs}/runtime-recovery3/report-FIRST.json`)],
+  observers, screenshots: images.map(image => ({ path: image.path, sha256: image.sha256,
+    width: image.width, height: image.height })),
+  geometry: { desktopTargets: desktop.coverage[0].domTargets, mobileTargets: mobile.coverage[0].domTargets,
+    desktopCaptured: desktop.coverage[0].capturedTargets, mobileCaptured: mobile.coverage[0].capturedTargets },
+  visibleTableJointCoverage: {
+    B: 'Batch2 actual observations of mobile007 header/first row and mobile008 rows I-IV jointly cover B. Batch3 does not independently approve unseen B regions.',
+    E: 'Batch2 mobile008 upper rows plus batch3 mobile009 complete E; no new image opening.',
+    figure: 'Native 640x640 media union equals 409600 pixels in both views; final mobile scroll frames separately show every Roman and axis label.',
+  },
+  fullHTML: digestFile(`${output}/complete-choices.html`),
+  css: { effectiveSha256: prepared.oldChoices.cssSha256,
+    policy: 'exact-retained-css-for-this-frozen-offline-lesson',
+    sharedRendererModified: false, sharedCurrentCSSApproved: false },
+  counts: { newImagesObserved: 21, oldImagesReopened: 0, parentImageLoads: 0,
+    rendererCalls: 1, displayBrowserCalls: 3, diagnosticBrowserCalls: 2,
+    choiceWithReviewValidatorCalls: 1, answerFinalizeCalls: 1,
+    sourceReviewsRepeated: 0, newFigureRenders: 0, technicalFailures: 3,
+    originalFailuresCountsAndCostsPreserved: true, hostTokensAndCost: 'unknown' },
+  wholeAppOrDBOrTicketApproval: false, DBWrites: 0, mergeOrDeploy: false,
+  oldQuestion13Rerendered: false, oldQuestion12OptionFRerendered: false,
+};
+fs.writeFileSync(`${output}/binding.record`, `${JSON.stringify(binding, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: binding.status, images: images.length,
+  path: `${output}/binding.record`, sha256: sha(read(`${output}/binding.record`)) }));

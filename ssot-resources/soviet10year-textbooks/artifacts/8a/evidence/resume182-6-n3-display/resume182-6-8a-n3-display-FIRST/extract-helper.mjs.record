@@ -1,0 +1,137 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
+import { mkdir, readFile, realpath, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six/lemmadeck';
+const OWN = path.join(R, '.tmp/resume182-6-8a-n3-display-FIRST');
+assert.equal(process.cwd(), R);
+assert.equal(path.dirname(fileURLToPath(import.meta.url)), OWN);
+const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const requireApp = createRequire(path.join(R, 'app/package.json'));
+const { parse } = requireApp('@babel/parser');
+const sourcePath = path.join(R, '.tmp/resume182-6-n9-display-FIRST/rows-recovery1.mjs');
+const sourceBytes = await readFile(sourcePath);
+const source = sourceBytes.toString('utf8');
+const ast = parse(source, { sourceType: 'module' });
+const names = ['projection', 'installDisplayTools', 'pageSafety', 'unionArea', 'captureCoverage'];
+const functions = names.map((name) => {
+  const matches = ast.program.body.filter((node) =>
+    node.type === 'FunctionDeclaration' && node.id.name === name);
+  assert.equal(matches.length, 1, `Unique AST function ${name}`);
+  const node = matches[0];
+  const text = source.slice(node.start, node.end);
+  return { name, start: node.start, end: node.end, text, sha256: sha(text) };
+});
+const helper = [
+  '// Exact AST slices; the source runner is never imported or executed.',
+  'export function createDisplayHelpers(bindings) {',
+  'const { norm, own, RUN, assertOfflineRuntime, PNG, same, sha, report, usage, event, save, check } = bindings;',
+  ...functions.map((entry) => entry.text),
+  'return { projection, installDisplayTools, pageSafety, captureCoverage };',
+  '}',
+  '',
+].join('\n');
+await writeFile(path.join(OWN, 'display-helper.mjs'), helper, { flag: 'wx' });
+
+const MODERN = path.join(R, 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral');
+const LESSON = path.join(MODERN, 'lessons/alg8-c1-s1-n3');
+const evidence = path.join(LESSON, 'choice-set/evidence');
+const files = {};
+const readBound = async (filename, parseJson = false) => {
+  const bytes = await readFile(filename);
+  files[filename] = { path: filename, bytes: bytes.length, sha256: sha(bytes) };
+  return parseJson ? JSON.parse(bytes) : bytes;
+};
+const display = await readBound(path.join(evidence, 'display-check.json'), true);
+const original = await readBound(path.join(evidence, 'original-display-review.json.txt'), true);
+const htmlBytes = await readBound(path.join(evidence, 'choices.html'));
+assert.equal(sha(htmlBytes), display.checks[0].html.sha256);
+const html = htmlBytes.toString('utf8');
+const sections = [...html.matchAll(/<section class="choice">[\s\S]*?<\/section>/gu)].map((m) => m[0]);
+const styles = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gu)].map((m) => m[1]);
+assert.equal(sections.length, 10);
+assert.equal(styles.length, 1);
+const draft = await readBound(path.join(LESSON, 'choice-set/draft.json'), true);
+await readBound(path.join(LESSON, 'choice-set/seed.json'));
+await readBound(path.join(LESSON, 'choice-set/review.json'));
+assert.equal(draft.questions.length, 10);
+assert.equal(draft.questions.reduce((sum, q) => sum + q.view.options.length, 0), 49);
+assert.equal(draft.questions[1].id, 'n3-13');
+assert.deepEqual(draft.questions[1].source_numbers, ['13']);
+assert.equal(draft.questions[1].view.options.length, 9);
+assert.ok(sections[1].startsWith('<section class="choice"><p class="choice-heading">2. '));
+const writtenPath = path.join(R,
+  'ssot-resources/soviet10year-textbooks/artifacts/8a/review-history/batch23-modern-evidence/actual-observations.json');
+const written = await readBound(writtenPath, true);
+const writtenProjection = written.combinations
+  .filter((c) => c.lesson === 'alg8-c1-s1-n3')
+  .map(({ lesson, surface, viewport, status, exact_render_SHA256,
+    written_original_numbers, rendered_prose_blocks, remaining_vertical_gaps, actual_observation }) =>
+    ({ lesson, surface, viewport, status, exact_render_SHA256,
+      written_original_numbers, rendered_prose_blocks, remaining_vertical_gaps, actual_observation }));
+assert.equal(writtenProjection.length, 4);
+assert.ok(writtenProjection.every((c) => c.status === 'pass' && c.remaining_vertical_gaps.length === 0));
+for (const filename of ['lesson.json', 'exercises.json', 'figures.json']) {
+  await readBound(path.join(LESSON, filename));
+}
+for (const suffix of ['svg', 'spec.json', 'render.json', 'review.json']) {
+  await readBound(path.join(MODERN, `figures/fig-01.${suffix}`));
+}
+for (const filename of ['render_lesson.js', 'choice_html.mjs', 'htmlfrag.js']) {
+  await readBound(path.join(R, '.claude/skills/ld-s10y-lesson/tools', filename));
+}
+const observerImages = display.visual_observations.map((entry) => {
+  const originalEntry = original.images.find((image) => image.path.endsWith(path.basename(entry.path)));
+  assert.equal(originalEntry?.actual_sha256, entry.actual_sha256);
+  assert.equal(originalEntry?.visible, entry.visible);
+  assert.equal(originalEntry?.held_unseen, entry.held_unseen);
+  return { path: path.resolve(R, entry.path), sha256: entry.actual_sha256,
+    viewport: entry.receipt_viewport, visible: entry.visible, held_unseen: entry.held_unseen,
+    status: entry.status, visible_status: entry.visible_status, openedThisPreparation: false };
+});
+const bindings = {
+  schema: 'n3-display-prepared-bindings@1',
+  prepared: new Date().toISOString(),
+  scope: { book: '8a', lesson: 'alg8-c1-s1-n3', owner: await realpath(OWN) },
+  helper: { source: sourcePath, sourceSha256: sha(sourceBytes),
+    output: path.join(OWN, 'display-helper.mjs'), sha256: sha(helper),
+    functions: functions.map(({ text, ...entry }) => entry), exactASTSlices: true },
+  files,
+  inheritedWritten: { path: writtenPath, sha256: files[writtenPath].sha256,
+    combinations: writtenProjection, repeatRender: 0, repeatCapture: 0 },
+  oldChoices: {
+    count: 10, options: 49, html: files[path.join(evidence, 'choices.html')],
+    cssSha256: sha(styles[0]),
+    questions: draft.questions.map((q, index) => ({
+      id: q.id, index, source_numbers: q.source_numbers, view: q.view,
+      sectionSha256: sha(sections[index]), sectionBytes: Buffer.byteLength(sections[index]),
+    })),
+    observations: observerImages,
+    fullQuestionReuse: { id: 'n3-13', oldIndex: 1, sourceNumber: '13',
+      sectionSha256: sha(sections[1]), cssSha256: sha(styles[0]),
+      completeVisible: ['stem', 'material a-i', 'options A-I'],
+      provenance: 'Displayed question 2 mapped by the retained HTML section order AND retained draft id/source_numbers, not by a screenshot filename.',
+      rendererExcluded: true, screenshotExcluded: true },
+    partialQuestionReuse: {
+      id: 'n3-12', oldIndex: 0,
+      '1440': { optionIndices: [0, 1, 2, 3, 4, 5], missing: ['heading', 'stem/material'] },
+      '390': { optionIndices: [5], missing: ['heading', 'stem/material', 'options A-E'] },
+      wholeQuestionPass: false,
+    },
+    unseenOldQuestionIds: draft.questions.filter((q) => q.id !== 'n3-13').map((q) => q.id),
+  },
+  preparationIsDisplayPass: false,
+  parentApprovalPending: true,
+  usage: { rendererCalls: 0, originalTextRenders: 0, writtenExerciseRenders: 0,
+    figureRenders: 0, browserLaunches: 0, browserContexts: 0, serverStarts: 0,
+    validatorCalls: 0, screenshotsCaptured: 0, imagesOpened: 0, oldScreenshotsOpened: 0,
+    sourceOrMathReviews: 0, paidCalls: 0, dbCalls: 0, networkCalls: 0,
+    dependencyChanges: 0, gitOperations: 0, hostUsage: null, hostUsageStatus: 'unknown' },
+};
+await writeFile(path.join(OWN, 'prepared-bindings.json'), `${JSON.stringify(bindings, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ helper: bindings.helper.output, helperSha256: bindings.helper.sha256,
+  bindings: path.join(OWN, 'prepared-bindings.json'), bindingsSha256: sha(`${JSON.stringify(bindings, null, 2)}\n`),
+  imagesOpened: 0, parentApprovalPending: true }, null, 2));

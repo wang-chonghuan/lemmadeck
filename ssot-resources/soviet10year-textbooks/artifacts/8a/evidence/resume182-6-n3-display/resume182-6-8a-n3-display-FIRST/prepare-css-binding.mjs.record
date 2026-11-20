@@ -1,0 +1,53 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
+import { readFile, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six/lemmadeck';
+const OWN = path.join(R, '.tmp/resume182-6-8a-n3-display-FIRST');
+assert.equal(process.cwd(), R);
+assert.equal(path.dirname(fileURLToPath(import.meta.url)), OWN);
+const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const prepared = JSON.parse(await readFile(path.join(OWN, 'prepared-bindings.json')));
+const rendererPath = path.join(R, '.claude/skills/ld-s10y-lesson/tools/render_lesson.js');
+const rendererBytes = await readFile(rendererPath);
+assert.equal(sha(rendererBytes), prepared.files[rendererPath].sha256);
+const { parse } = createRequire(path.join(R, 'app/package.json'))('@babel/parser');
+const ast = parse(rendererBytes.toString('utf8'), { sourceType: 'script' });
+const css = ast.program.body.filter((node) => node.type === 'VariableDeclaration')
+  .flatMap((node) => node.declarations).find((node) => node.id.name === 'CSS')?.init;
+assert.equal(css?.type, 'TemplateLiteral');
+assert.equal(css.expressions.length, 1);
+assert.equal(css.expressions[0].type, 'CallExpression');
+assert.equal(css.expressions[0].callee.name, 'katexCss');
+const currentTail = css.quasis[1].value.cooked;
+const oldHtml = await readFile(prepared.oldChoices.html.path, 'utf8');
+const oldCss = oldHtml.match(/<style>([\s\S]*?)<\/style>/u)[1];
+const oldTail = oldCss.slice(oldCss.indexOf('\n:root'));
+const nbRule = (text) => text.match(/\.nb,\.sr-nb\{[^}]*\}/u)?.[0];
+const binding = {
+  schema: 'n3-display-css-binding@1', rendererPath,
+  rendererSha256: sha(rendererBytes), retainedCssSha256: sha(oldCss),
+  oldLiteralTailSha256: sha(oldTail), currentLiteralTailSha256: sha(currentTail),
+  literalTailMatches: oldTail === currentTail,
+  status: oldTail === currentTail ? 'STATIC_TAIL_COMPATIBLE_FULL_CSS_CHECK_PENDING'
+    : 'KNOWN_CSS_DRIFT_INHERITED_CURRENT_DISPLAY_HOLD',
+  difference: { oldNbRule: nbRule(oldTail), currentNbRule: nbRule(currentTail) },
+  compiledKatexCssNotExecuted: true, rendererCalls: 0, browserLaunches: 0,
+  oldQuestion13Recapture: 0, inheritedWholeCurrentDisplayPass: false,
+  runtimePolicy: {
+    default: 'require-current-css-byte-equality',
+    knownDriftStopsBeforeRenderer: true,
+    parentMayExplicitlyChoose: 'preserve-old-pass-current-css-hold-no-recapture',
+    explicitHoldPolicyAllowsOnlyIndependentGapCapture: true,
+    noOldVisiblePassPromotedToNewCss: true,
+    original12DesktopOptionsAFAlwaysSkipped: true,
+    original12MobileOptionFAlwaysSkipped: true,
+  },
+};
+const bytes = `${JSON.stringify(binding, null, 2)}\n`;
+await writeFile(path.join(OWN, 'css-binding.json'), bytes, { flag: 'wx' });
+console.log(JSON.stringify({ path: path.join(OWN, 'css-binding.json'), sha256: sha(bytes),
+  status: binding.status, rendererCalls: 0, browserLaunches: 0 }, null, 2));

@@ -1,0 +1,50 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-7186/lemmadeck';
+assert.equal(process.cwd(), root);
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const book = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const entries = new Map();
+const retentions = [];
+for (const name of ['n3-content', 'n3-display']) {
+  const filename = `${book}/evidence/resume182-6-${name}/retention.record`;
+  const bytes = fs.readFileSync(filename);
+  const retention = JSON.parse(bytes);
+  for (const entry of retention.entries) entries.set(entry.historical_path, entry);
+  retentions.push({ path: filename, sha256: sha(bytes) });
+}
+function durable(value) {
+  if (Array.isArray(value)) return value.map(durable);
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, durable(item)]));
+  }
+  if (typeof value !== 'string') return value;
+  let relative = value.startsWith(`${root}/`) ? value.slice(root.length + 1) : value;
+  if (relative.startsWith('.tmp/')) {
+    const entry = entries.get(relative);
+    assert.ok(entry, `Unretained current evidence: ${relative}`);
+    assert.equal(sha(fs.readFileSync(entry.path)), entry.sha256);
+    return entry.path;
+  }
+  if (relative.startsWith('ssot-resources/')) return relative;
+  return value;
+}
+const original = '.tmp/resume182-6-8a-n3-complete-display7186-FIRST';
+const sourceBinding = JSON.parse(fs.readFileSync(`${original}/binding.record`));
+assert.equal(sourceBinding.status, 'OFFLINE_DISPLAY_PASS');
+const binding = durable(sourceBinding);
+const choice = `${book}/editions/modern-us-neutral/lessons/alg8-c1-s1-n3/choice-set`;
+const html = fs.readFileSync(`${original}/complete-choices.html`);
+const htmlPath = `${choice}/evidence/complete-choices.html`;
+assert.equal(sha(html), binding.fullHTML.sha256);
+fs.writeFileSync(htmlPath, html, { flag: 'wx' });
+binding.fullHTML.path = htmlPath;
+binding.evidenceRetentions = retentions;
+binding.historicalScratchBindings = entries.get(`${original}/binding.record`).path;
+binding.paths = 'Active path fields are durable repository resources; raw retained records preserve historical provenance without creating runtime dependencies.';
+const output = `${choice}/evidence/complete-display.json`;
+fs.writeFileSync(output, `${JSON.stringify(binding, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: binding.status, path: output,
+  sha256: sha(fs.readFileSync(output)), html: htmlPath, htmlSha256: sha(html) }));

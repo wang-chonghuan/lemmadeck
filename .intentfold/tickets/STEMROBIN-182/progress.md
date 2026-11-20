@@ -1,6 +1,137 @@
 # 当前开发状态
 
+### 182-6 2026-11-20 即时接续，官方新树注册成功
+
+- 当前完整课8a n3已实际闭合：19正文/原12–22共11题、11ready答案
+  (4auto/7ungraded)、11选择题54项/新增21一题五项、原fig01复用。
+  原十题49项/view/key/coverage/review子树保持；原三快照同字节移入
+  本课 choice-set/review-history/resume182-6-before-full21，不动原树。
+  Mencius新增21及十一答案候选独审PASS复用，仅combined withreview一次exit0，
+  answer finalize一次exit0、40判题parts/原数学不重解，无DB/交互生产。
+- 当前缺口21张实际原生截图(桌面6/手机15)各一次已由新有界观察批完成，
+  Bohr/Mendel/Peirce原结果SHA依次
+  `80e45abc270482c1889f879e8bbdb350403d95514bf147a99cd18c6cf1952286`、
+  `0d756a6665b6857e254fd84d848f175ccdb3cb16600031a443a2155bbf471c62`、
+  `04e17f3be5a0bc3bc5604dfef238c38139fdc5e96fd4e40321af6a9dc10f6242`。
+  均完成停止，旧聊天/审者未接续；父观察0/重开0/裁切0。
+  最后批未声称看完整B表；B表头007及四行008由第二批实际观察联合覆盖，
+  图所有边缘/曲线标签由实际横滚帧联合覆盖，不补看未显示区域。
+- 第一显示运行renderer唯一一次exit0后因runtime根目录守卫误拒绝文件FAIL；
+  recovery1复用HTML/renderer0，桌面检查PASS后helper漏path/assert导入FAIL；
+  recovery2桌面6图/1959目标覆盖PASS，手机两个标签亚像素舍入越界FAIL；
+  仅滚动距离向内ceil，裁切容差不放宽，recovery3只续手机15图/2091目标PASS。
+  三失败/所有产生字节保持，累计renderer1、display browser3、诊断browser2；
+  原文本/书写4视面及旧n3-13整题/12桌面A–F/手机F均复用，不重渲染/截图。
+- 旧1px差异不隐藏：本课冻结离线HTML使用已过完整CSS原字节
+  `9e4d91245be1c3c9c6433c0e2e2121cb7900b31d4d0700bf327820c25f005fb5`，
+  原renderer产物保持，共享renderer/默认新CSS未修改或批准。
+  原十题各section字节、CSS及稳定ordinal全部绑定；
+  桌面/手机640x640图区域各409600像素完整联合覆盖。
+  最终binding FIRST exit0，canonical complete-display.json SHA
+  `4e82717a25e772f160a658ac4c1e39cd904e2d837ead139f2e4ba4229bdf7d69`；
+  complete-choices.html SHA
+  `bfbf426bb5f40795b42a796eb9d2d52ad6af1d03593632db8009d9a66f785c04`。
+  活跃path均持久资源；保留记录中的scratch路径只为历史来源，不作运行依赖。
+- 本课content留存59唯一/77引用/8旧引用、display留存92唯一/158引用/50旧引用，
+  retention SHA依次
+  `5bdb2eb14f81af3e052398d231614514aad894e967b46baa79392177e0df8373`、
+  `0e0cf1d7ef57d8dae7909da1a6f56eb50218f3c69da57b98cb80b20ca8b3642c`。
+  未复制PDF/依赖/其它课包，不猜未知宿主tokens/费用或历史字节。
+  当前准备仅本课资源/本已有记录/ticket路径元数据窄commit/push，
+  此行不是提交成功收据；不计APP/DB/全工单批准，正式全项目检查仍留handoff。
+
+- 最新人类指定的官方 create_worktree 已实际 completed，operation
+  `b4694b50-bc31-412f-b0a1-fafb09996fb0`，registrationError=null；
+  sourceRoot/ref/name/allowAsync 均按原指令，名称冲突由官方返回
+  `/Users/yong/.codex/worktrees/stemrobin-182-six-7186/lemmadeck`。
+  不重复 attach、不创建替代聊天，首次 attach 失败、旧 interrupted create、
+  未决/排队消息和以下原记录不删除、不冒称排队接续已执行。
+- 创建时 HEAD 为指定 d08f1b183；读取原树顶部发现同一 182-6 已实际完成
+  n13/n9。fetch exit0 后仅快进到原交付远端 `820d6ce5a08c73e269845a2e8e7bcefea9dc1976`，
+  不回退原分支、不重跑或再迁移已提交 n13/n22/PASS。
+  此后全部生产命令显式只用上面的返回绝对 workdir。
+- 只复制当前 n3 必需 54 个实际 scratch 文件；8 处执行路径结构化迁移，
+  原字节封存于 `.tmp/resume182-6-recovery7186/originals/`。
+  migration.record 与原 progress 原字节均已保存；原树未写入/删除0，
+  n28脏稿、所有锁/备份/失败/计数/费用留原位，未知字节不声称恢复。
+  Plane首次 search 参数未过滤并导致大输出截断；HTTP200，不是工单缺失；
+  后续按 results/sequence_id 得到实际182，started，未写工单。
+  快进命令 diffstat 大输出亦截断，命令 exit0，不重跑。
+- Mencius实际新增21 choice review及十一题答案 review已找到，复用原字节；
+  Russell仅准备与syntax PASS，尚无renderer/browser/截图显示 PASS。
+  所有旧聊天/审者仍暂停，不发送消息；仅本聊天与本既有检查点续。
+  当前普通修复自决、监督间隔40分钟、finish=review，仅6a/7a/8a；
+  不写DB/合并/部署/关闭工单，整课闭合后窄commit/push原远端分支再续有源课。
+
 ### 182-6 2026-11-20 正式接管与实际缺失显示续作
+
+- n28局部字形/HOLD证据留存FIRST exit0：
+  `7a/evidence/resume182-6-n28-source-hold/retention.record` SHA
+  `d53da1db4ad3be98fd1959b5e9c1818c8c039016987ee82f3a893212c92aba01`，
+  34唯一新文件/36引用/2旧引用，原九快照、两实际PNG、盲解和cap1 HOLD保持，
+  不解除624、不重跑SOURCE/现代图/数学。所有原树/锁/失败/未知费用不动。
+  当前独立续8a n3（实际id `alg8-c1-s1-n3`）；此前s2假设路径exit2不作缺失。
+  lesson/exercises/figure及原十题49项都在本树，未迁移原树8a文件。
+  inspect/21种子/十一题合并种子/答案prepare FIRST各exit0，后两者只是准备。
+  原正文及十一书写题桌面/手机四视面已有完整像素PASS与持久HTML，全部复用；
+  旧选择只n3-13两个实际可见区域PASS，不冒充十题全显示覆盖。
+  Mencius仅新21盲解实际已封存：I=1、II=2、III=-1/4、IV=-1，
+  由(1,1)/(1,2)/(2,-1)/(1,-1)及两小格一单位读数，不从spec取答案。
+  独解SHA`094100ae53b824f03121327009438210aef584d3e0ea9f8955ce43f00981c805`，
+  原生观察/同SVG预览绑定SHA
+  `6e379ea15f84c3c422739fec11d66916c85cfd87c939fda049b9fe9a75a314c6`；
+  原PNG/已绑定现代PNG各1次，图renderer0、旧十题重解0、候选读取0。
+  其初始记录self_review表示自行盲解；实际是与作者分离的新子代理，
+  不是父自审、整课SOURCE或新图PASS。父提示封存文件名与其实际文件名不同
+  引起空定位和列表截断1，未替代未知证据；实际三个记录均保持。
+  Newton仅新21选择作者、Darwin仅十题已过独解→新答案及新增21装订、
+  Russell仅缺口显示runner准备；写集分离，没有给旧暂停审者/聊天发消息。
+  新选择/整课答案/缺口显示尚未批准或finalize，本课不计完整。
+  本父旧renderer.js误路径rg exit2、一次大观察JSON输出截断均保留，
+  随后只投影实际记录，未重跑任何producer或猜宿主token/费用。
+
+- 02:07Z本聊天40分钟监督接续：正式workdir仍为
+  `/Users/yong/.codex/worktrees/stemrobin-182-six/lemmadeck`；HEAD为已push的n9
+  `820d6ce5a08c73e269845a2e8e7bcefea9dc1976`，无在途agent/exec/browser/server。
+  不重复create/attach、不新建聊天、不恢复旧聊天或审者，不写DB/合并/部署。
+  Dalton实际已完成并关闭：21题原盲解及原歧义封存不变，两字形局部批准，
+  616(a)仅按显式e→c勘误附录解释为周长约25.2米，其它20题不重解。
+  三记录原SHA依次`2d32915e7b2b540b0b3fa57e8d0eef42bc0e16e7735f3bce7c4211c4c9a6595f`、
+  `74325aa5609ee614fe97563c1c5294d8570dcaeece931e7a97de62ddd1b356d1`、
+  `bbad99457255be692afd90e6993b846e1b34c622d44bff5c158fca9abef36db9`。
+  原record是纯文本；父JSON.parse失败保留，后续仅按实际原字节SHA读取，
+  不重跑producer/盲解/图审。其“direct human instruction”自述不改原字节：
+  真实来源是父代理在既有人类授权下的接续委派，不是新增直接人类批准。
+  n28仍HOLD624物理尺度，未现代finalize/答案/选择/显示，不计完整课。
+  n3假设路径查询exit2为定位技术事件，未据此声称8a源丢失或未知字节恢复。
+
+- n28 fig37 cap1作者Hume已自然完成并关闭，实际原图1次/preview0/renderer0，
+  draft结构validate一次exit0；context SHA
+  `75c256ef60269b3b28dcbc7c1a83f6ddb5942d2438e9a1e0b84384370410347c`，
+  spec SHA`5c8ca28b55b5286cc6d30b4e4eacabb8b7cc142ca89f546242aa711b5c8e6e22`，
+  handoff SHA`817a49cc330c5ceb4508303f49ffb90e52ca87323ae07b7f47fef662e9bb7240`。
+  624原图没有物理单位/标定，源物理测量尺度实质HOLD，不从像素/DPI造厘米，
+  不渲染/提升新现代图或把该课计完整；初始目录ls exit2保持，不冒充源科学失败。
+  Dalton仅在原盲解封存后接续两已补页的字形/元数据局部比较，旧盲解不覆盖、
+  其它20题不重解；未读任何答案候选。183审计仅errata计数0→1，其余已过
+  26行/图框/连通域/图字节全复用，没有为元数据勘误重新裁图/重跑SOURCE。
+  本局部HOLD不阻断其它有源课，下一独立缺口将转8a n3原21图解与缺失答案，
+  原10题49项/已过图及可见显示PASS保持，不以补课为由重新命题或复审它们。
+
+- n9已实际窄commit/push：`820d6ce5a08c73e269845a2e8e7bcefea9dc1976`，
+  parent`87a1d761429fa395c6e62ede3492dd596c718390`，原分支push exit0，
+  独立ls-remote同SHA；276文件仅本课/必要page45勘误及索引/三证据包/本记录。
+  已继续7a n28真实缺失现代阶段：adapt-prepare FIRST exit0，
+  41正文/611–631共21原题/1原图；Hume仅新fig37候选，Dalton仅新待完成盲数学，
+  各写集不交叠，不触其它书/旧审者/DB/APP/依赖或正式handoff。
+  n28现有原fig37 PNG实际存在，原SVG缺失的ls失败及两次空证据索引查询保留；
+  未声称历史页面PNG或旧producer已恢复。仅179/183两页补备各一次，SHA与既存
+  render元数据相等；父局部观察各一次（本接续累计源页3，重开/裁切/缩放0）。
+  179页确印“积”，只修旧转写“和”及n28忠实装订同一字；183页616a确印e，
+  源正文e保持，只增p0183#1符号勘误，现代统一c尚未生产/批准。
+  修改前九文件实际字节在`.tmp/resume182-6-n28-source-before-FIRST`，
+  初始模板不覆盖；glyph observations记录两实际观察，不计整页SOURCE或624图批准。
+  原failed/计数/费用及未知字节均保持；宿主token/费用未知。
 
 - n9 DISPLAY batch7实际PASS，8张一次/额外图片操作0，SHA
   `08850ce2d4501a02ab1efc5aac9a17f52a622f19ea0f577415c3a74f637275cd`；

@@ -1,0 +1,679 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { appendFile, mkdir, readFile, readdir, realpath, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-7186/lemmadeck';
+const OWN = path.join(R, '.tmp/resume182-6-8a-n3-display-FIRST');
+const RUN = path.join(OWN, 'runtime-recovery1');
+const FIRST = path.join(OWN, 'runtime-FIRST');
+const ID = 'alg8-c1-s1-n3';
+const EDITION = 'modern-us-neutral';
+const MODERN = path.join(R, 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions', EDITION);
+const LESSON = path.join(MODERN, 'lessons', ID);
+const TOOLS = path.join(R, '.claude/skills/ld-s10y-lesson/tools');
+const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const norm = (text) => String(text).normalize('NFC').replace(/\s+/gu, ' ').trim();
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const canonical = (value) => {
+  const order = (item) => Array.isArray(item) ? item.map(order)
+    : item && typeof item === 'object'
+      ? Object.fromEntries(Object.keys(item).sort().map((key) => [key, order(item[key])])) : item;
+  return sha(JSON.stringify(order(value)).replace(/[\u007f-\uffff]/gu,
+    (c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')));
+};
+const sectionBlocks = (html) => [...html.matchAll(/<section class="choice">[\s\S]*?<\/section>/gu)]
+  .map((match) => match[0]);
+const optionBlockRange = (section) => {
+  const marker = '<ol class="choice-options">';
+  const start = section.indexOf(marker) + marker.length;
+  const end = section.lastIndexOf('</ol>');
+  assert.ok(start >= marker.length && end >= start);
+  return { start, end, blocks: [...section.slice(start, end).matchAll(/<li>[\s\S]*?<\/li>/gu)]
+    .map((match) => match[0]) };
+};
+const cssBlock = (html) => {
+  const blocks = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gu)];
+  assert.equal(blocks.length, 1, 'One authoritative renderer CSS block');
+  return blocks[0][1];
+};
+const own = (filename) => {
+  assert.ok(path.resolve(filename).startsWith(`${RUN}${path.sep}`), 'Write escaped sole runtime root');
+  return filename;
+};
+
+// This is an execution interlock, not a substitute for the parent's direct approval.
+assert.equal(process.cwd(), R, 'Every exec must use the explicitly authorized checkout');
+assert.equal(path.dirname(fileURLToPath(import.meta.url)), OWN);
+const args = process.argv.slice(2);
+assert.equal(args.length, 6, 'Require --parent-approved-combined DIR --approval FILE --approval-sha256 SHA256');
+assert.equal(args[0], '--parent-approved-combined');
+assert.equal(args[2], '--approval');
+assert.equal(args[4], '--approval-sha256');
+assert.ok(path.isAbsolute(args[1]) && path.isAbsolute(args[3]));
+assert.match(args[5], /^[a-f0-9]{64}$/u);
+const approved = await realpath(args[1]);
+const approvalPath = await realpath(args[3]);
+assert.ok(approved.startsWith(`${R}${path.sep}`) && !approved.startsWith(`${OWN}${path.sep}`));
+assert.ok(approvalPath.startsWith(`${approved}${path.sep}`), 'Approval is in the exact approved combined directory');
+assert.equal(path.basename(approvalPath), 'display-approval-recovery1.json');
+assert.ok(!approvalPath.split(path.sep).some((part) => /^\.env(?:\.|$)/u.test(part)));
+const approvalBytes = await readFile(approvalPath);
+assert.equal(sha(approvalBytes), args[5], 'Parent-supplied approval receipt SHA256');
+const approval = JSON.parse(approvalBytes);
+assert.equal(approval.schema, 'n3-choices-display-parent-approval@1');
+assert.equal(approval.status, 'approved');
+assert.equal(approval.book, '8a');
+assert.equal(approval.lesson, ID);
+assert.equal(await realpath(approval.combinedDirectory), approved);
+assert.equal(approval.runnerWriteRoot, OWN);
+assert.equal(approval.runnerSha256, sha(await readFile(fileURLToPath(import.meta.url))));
+assert.match(approval.preparedBindingsSha256 ?? '', /^[a-f0-9]{64}$/u);
+assert.match(approval.cssBindingSha256 ?? '', /^[a-f0-9]{64}$/u);
+assert.ok(['require-current-css-byte-equality', 'preserve-old-pass-current-css-hold-no-recapture',
+  'use-retained-css-byte-equality']
+  .includes(approval.inheritedCSSPolicy), 'Parent explicitly chooses equality guard or historical-only CSS HOLD');
+assert.equal(approval.allowChoicesOnlyRendererCalls, 1);
+assert.equal(approval.allowFigureRendererCalls, 0);
+assert.equal(approval.allowOriginalTextRenders, 0);
+assert.equal(approval.allowWrittenExerciseRenders, 0);
+assert.deepEqual(approval.viewports, [{ width: 1440, height: 960 }, { width: 390, height: 844 }]);
+assert.equal(approval.screenshots, 'unobserved-parent-fresh8-only');
+assert.equal(approval.onFirstFailure, 'preserve-and-stop-no-retry');
+assert.ok(typeof approval.parentAuthorizationReference === 'string' && approval.parentAuthorizationReference.trim());
+for (const name of ['seed.json', 'draft.json', 'review.json']) {
+  assert.match(approval.files?.[name]?.sha256 ?? '', /^[a-f0-9]{64}$/u);
+}
+await mkdir(RUN); // EEXIST preserves FIRST and forbids a second invocation.
+assert.equal(await realpath(RUN), RUN);
+
+const report = {
+  schema: 'n3-choices-gap-display-FIRST@1', status: 'RUNNING', started: new Date().toISOString(),
+  scope: { book: '8a', lesson: ID, writeRoot: OWN, runtimeRoot: RUN },
+  approval: { path: approvalPath, sha256: sha(approvalBytes), combinedDirectory: approved,
+    parentAuthorizationReference: approval.parentAuthorizationReference, invocationMarkerIsApproval: false },
+  checks: [], inputs: [], staged: [], inherited: [], screenshots: [], screenshotReceipts: [],
+  views: [], coverage: [], faults: [],
+  preparationOrGeometryIsVisualPass: false, sourceHoldsReleased: false,
+  visualObservation: 'UNOBSERVED',
+  cleanup: { rendererClosed: true, contextsClosed: true, browserClosed: true, serverClosed: true },
+};
+const usage = {
+  phase: 'RUNTIME-FIRST', rendererCalls: 0, originalTextRenders: 0, writtenExerciseRenders: 0,
+  figureRenders: 0, browserLaunches: 0, browserContexts: 0, pageNavigations: 0,
+  serverStarts: 0, validatorCalls: 0, screenshotAttempts: 0,
+  screenshotsProduced: 0, screenshotsCaptured: 0, imagesObserved: 0,
+  oldScreenshotsOpened: 0, oldQuestion13MaterialRenders: 0, paidCalls: 0,
+  oldQuestion12OptionFMaterialRenders: 0,
+  sourceReviews: 0, mathReviews: 0, choiceReviews: 0, dbCalls: 0,
+  dependencyChanges: 0, gitOperations: 0, hostUsage: null, hostUsageStatus: 'unknown',
+};
+const network = { blocked: [], failures: [], pageErrors: [], consoleErrors: [], badResponses: [] };
+let rendererChild;
+let browser;
+let PNG;
+const contexts = [];
+let terminated = false;
+const interrupted = () => { terminated = true; rendererChild?.kill('SIGKILL'); };
+process.once('SIGINT', interrupted);
+process.once('SIGTERM', interrupted);
+async function save(filename, value) {
+  await writeFile(own(path.join(RUN, filename)), `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+}
+async function event(value) {
+  await appendFile(own(path.join(RUN, 'events.ndjson')),
+    `${JSON.stringify({ time: new Date().toISOString(), ...value })}\n`);
+}
+function assertOfflineRuntime() {
+  assert.equal(terminated, false, 'Interrupted: preserve FIRST and stop');
+  assert.ok(Object.values(network).every((entries) => entries.length === 0),
+    'First browser/network fault stops dependent stages');
+}
+async function check(name, passed, facts = {}) {
+  assertOfflineRuntime();
+  const result = { name, status: passed ? 'PASS' : 'FAIL', ...facts, visualApproval: false };
+  report.checks.push(result);
+  await event({ check: result });
+  assert.ok(passed, name);
+}
+async function fingerprint(filename, expectedHash) {
+  const actual = await realpath(filename);
+  assert.ok(actual.startsWith(`${R}${path.sep}`), 'No inputs outside this checkout');
+  assert.ok(!actual.split(path.sep).some((part) => /^\.env(?:\.|$)/u.test(part)), 'No environment inputs');
+  const bytes = await readFile(actual);
+  const entry = { path: actual, bytes: bytes.length, sha256: sha(bytes) };
+  report.inputs.push(entry);
+  if (expectedHash) assert.equal(entry.sha256, expectedHash, `Changed bound input: ${actual}`);
+  return bytes;
+}
+async function stage(filename, bytes) {
+  own(filename);
+  await mkdir(path.dirname(filename), { recursive: true });
+  const parent = await realpath(path.dirname(filename));
+  assert.ok(parent === RUN || parent.startsWith(`${RUN}${path.sep}`));
+  await writeFile(filename, bytes, { flag: 'wx' });
+  assert.deepEqual(await readFile(filename), bytes);
+  report.staged.push({ path: filename, bytes: bytes.length, sha256: sha(bytes), byteIdenticalCopy: true });
+}
+async function readApproved(name) {
+  const filename = await realpath(path.join(approved, name));
+  assert.ok(filename.startsWith(`${approved}${path.sep}`));
+  return fingerprint(filename, approval.files[name].sha256);
+}
+async function renderOnce(book, output) {
+  assert.equal(usage.rendererCalls, 0);
+  const prior = JSON.parse(await readFile(path.join(FIRST, 'report-FIRST.json')));
+  assert.equal(prior.renderer.exitCode, 0);
+  assert.equal(prior.renderer.cwd, R);
+  for (const name of ['seed.json', 'draft.json', 'review.json']) {
+    const relative = path.join('editions', EDITION, 'lessons', ID, 'choice-set', name);
+    assert.deepEqual(await readFile(path.join(book, relative)),
+      await readFile(path.join(FIRST, 'scratch/8a', relative)));
+  }
+  const priorHtml = path.join(FIRST, 'render', ID, 'choices.html');
+  const binding = prior.inputs.find(entry => entry.path === priorHtml);
+  assert.ok(binding);
+  const bytes = await fingerprint(priorHtml, binding.sha256);
+  await stage(path.join(output, ID, 'choices.html'), bytes);
+  report.renderer = { ...prior.renderer, reused: true, recoveryRendererCalls: 0,
+    inheritedFailure: path.join(FIRST, 'report-FIRST.json'),
+    htmlSha256: sha(bytes), allGapChoiceInputsIdentical: true };
+  return;
+  const argv = [path.join(TOOLS, 'render_lesson.js'), book, '--out', output,
+    '--edition', EDITION, '--lesson', ID, '--choices-only'];
+  await save('renderer-FIRST-start.json', { executable: process.execPath, argv, workdir: R });
+  usage.rendererCalls += 1;
+  report.cleanup.rendererClosed = false;
+  const started = new Date().toISOString();
+  let stdout = '';
+  let stderr = '';
+  let processError;
+  rendererChild = spawn(process.execPath, argv, {
+    cwd: R, stdio: ['ignore', 'pipe', 'pipe'],
+    env: { PATH: '/usr/bin:/bin:/usr/sbin:/sbin', HOME: path.join(RUN, 'browser-home'),
+      TMPDIR: path.join(RUN, 'browser-tmp'), LANG: 'en_US.UTF-8' },
+  });
+  const child = rendererChild;
+  child.stdout.on('data', (bytes) => { stdout += bytes; });
+  child.stderr.on('data', (bytes) => { stderr += bytes; });
+  child.once('error', (error) => { processError = error.message; });
+  const timeout = setTimeout(() => child.kill('SIGKILL'), 60000);
+  const [exitCode, signal] = await new Promise((resolve) => child.once('close',
+    (code, exitSignal) => resolve([code, exitSignal])));
+  clearTimeout(timeout);
+  rendererChild = undefined;
+  report.cleanup.rendererClosed = true;
+  await writeFile(own(path.join(RUN, 'renderer-FIRST.stdout')), stdout, { flag: 'wx' });
+  await writeFile(own(path.join(RUN, 'renderer-FIRST.stderr')), stderr, { flag: 'wx' });
+  report.renderer = { argv, cwd: R, started, ended: new Date().toISOString(), exitCode, signal, processError };
+  await save('renderer-FIRST-receipt.json', report.renderer);
+  assert.equal(processError, undefined);
+  assert.equal(exitCode, 0, 'No producer retry after FIRST renderer fault');
+  const result = JSON.parse(stdout);
+  assert.equal(result.ok, true);
+  assert.equal(result.lessons.length, 1);
+  assert.equal(result.lessons[0].sourcePagesSkipped, true);
+  assert.equal(result.lessons[0].lesson, ID);
+  assert.deepEqual((await readdir(path.join(output, ID))).sort(), ['choices.html'],
+    'Original lesson/written render counts must remain zero');
+}
+
+try {
+  await mkdir(path.join(RUN, 'browser-tmp'));
+  await mkdir(path.join(RUN, 'browser-home'));
+  await mkdir(path.join(RUN, 'screenshots'));
+  await save('start-FIRST.json', { scope: report.scope, approval: report.approval, argv: args, usage });
+  const bindingBytes = await fingerprint(path.join(OWN, 'prepared-bindings.json'), approval.preparedBindingsSha256);
+  const prepared = JSON.parse(bindingBytes);
+  assert.equal(prepared.parentApprovalPending, true);
+  const cssPreparation = JSON.parse(await fingerprint(path.join(OWN, 'css-binding.json'), approval.cssBindingSha256));
+  if (!cssPreparation.literalTailMatches) {
+    assert.ok(['preserve-old-pass-current-css-hold-no-recapture', 'use-retained-css-byte-equality']
+      .includes(approval.inheritedCSSPolicy),
+      'Known CSS drift: stop before renderer unless parent explicitly authorizes independent gaps with inherited current-CSS HOLD');
+  }
+  await fingerprint(prepared.helper.output, prepared.helper.sha256);
+  const oldBytes = new Map();
+  for (const entry of Object.values(prepared.files)) {
+    oldBytes.set(entry.path, await fingerprint(entry.path, entry.sha256));
+  }
+  report.inherited.push(prepared.inheritedWritten);
+  const retainedHtml = oldBytes.get(prepared.oldChoices.html.path).toString('utf8');
+  const retainedSections = sectionBlocks(retainedHtml);
+  assert.equal(sha(cssBlock(retainedHtml)), prepared.oldChoices.cssSha256);
+  const seedBytes = await readApproved('seed.json');
+  const draftBytes = await readApproved('draft.json');
+  const reviewBytes = await readApproved('review.json');
+  const seed = JSON.parse(seedBytes);
+  const draft = JSON.parse(draftBytes);
+  const review = JSON.parse(reviewBytes);
+  assert.equal(seed.schema, 's10y-choice-seed-v1');
+  assert.equal(draft.schema, 's10y-choice-draft-v1');
+  assert.equal(seed.source.book, '8a');
+  assert.equal(seed.source.lesson, ID);
+  assert.equal(draft.seed_sha256, canonical(seed));
+  assert.equal(review.outcome, 'pass');
+  assert.equal(review.seed_sha256, canonical(seed));
+  assert.equal(review.draft_sha256, canonical(draft));
+  assert.equal(draft.new_figures.length, 0, 'Reuse original fig-01, not a new figure producer');
+  const combinedIds = draft.questions.map((q) => q.id);
+  assert.equal(new Set(combinedIds).size, combinedIds.length);
+  const oldIds = new Set(prepared.oldChoices.questions.map((q) => q.id));
+  for (const old of prepared.oldChoices.questions) {
+    const current = draft.questions.find((q) => q.id === old.id);
+    assert.ok(current, `Missing retained choice ${old.id}`);
+    assert.ok(same(current.view, old.view) && same(current.source_numbers, old.source_numbers),
+      `Retained reviewed choice changed: ${old.id}; do not rerender its PASS materials`);
+  }
+  const reusedIndex = combinedIds.indexOf('n3-13');
+  assert.equal(reusedIndex, 1, 'Keep the inherited displayed-question-2 mapping');
+  assert.equal(sha(retainedSections[1]), prepared.oldChoices.fullQuestionReuse.sectionSha256);
+  const additions = draft.questions.filter((q) => !oldIds.has(q.id));
+  assert.ok(additions.length > 0, 'Derive nonempty new choices from approved combined input');
+  assert.ok(additions.every((q) => q.source_numbers.length > 0
+    && q.source_numbers.every((number) => String(number) === '21')),
+  'Only newly added original question 21 belongs to this run');
+  assert.deepEqual(seed.figures.map((figure) => figure.id), ['fig-01']);
+  assert.ok(additions.some((q) => [q.view.figure_ids, ...q.view.options.map((o) => o.figure_ids)]
+    .flat().includes('fig-01')), 'New original 21 really displays fig-01');
+  const gapQuestions = draft.questions.filter((q) => q.id !== 'n3-13');
+  assert.equal(gapQuestions.filter((q) => oldIds.has(q.id)).length, 9);
+  const usedFigures = new Set(gapQuestions.flatMap((q) =>
+    [...q.view.figure_ids, ...q.view.options.flatMap((o) => o.figure_ids)]));
+  assert.deepEqual([...usedFigures], ['fig-01']);
+
+  const snapshot = path.join(RUN, 'approved-byte-snapshot');
+  for (const [name, bytes] of [['seed.json', seedBytes], ['draft.json', draftBytes], ['review.json', reviewBytes]]) {
+    await stage(path.join(snapshot, name), bytes);
+  }
+  const book = path.join(RUN, 'scratch/8a');
+  const content = path.join(book, 'editions', EDITION);
+  const stagedLesson = path.join(content, 'lessons', ID);
+  for (const name of ['lesson.json', 'exercises.json', 'figures.json']) {
+    const source = path.join(LESSON, name);
+    const bytes = oldBytes.get(source);
+    assert.ok(seed.trace.some((entry) => path.resolve(R, entry.path) === source
+      && entry.sha256 === sha(bytes)), `Combined seed stale for current ${name}`);
+    await stage(path.join(stagedLesson, name), bytes);
+  }
+  await stage(path.join(stagedLesson, 'choice-set/seed.json'), seedBytes);
+  await stage(path.join(stagedLesson, 'choice-set/review.json'), reviewBytes);
+  // Remove the complete observed question and original-12 F, which has already
+  // been seen in both views. A-E is rendered once for the unseen mobile region.
+  const gapDraft = { ...draft, questions: gapQuestions.map((question) => question.id === 'n3-12'
+    ? { ...question, view: { ...question.view,
+      options: question.view.options.filter((_, optionIndex) => optionIndex !== 5) } } : question) };
+  const gapDraftBytes = Buffer.from(`${JSON.stringify(gapDraft, null, 2)}\n`);
+  await stage(path.join(stagedLesson, 'choice-set/draft.json'), gapDraftBytes);
+  report.staged.at(-1).byteIdenticalCopy = false;
+  report.staged.at(-1).derivedGapProjection = true;
+  const figureBase = path.join(MODERN, 'figures/fig-01');
+  const figureSpecBytes = oldBytes.get(`${figureBase}.spec.json`);
+  const figureSvgBytes = oldBytes.get(`${figureBase}.svg`);
+  const figureRenderBytes = oldBytes.get(`${figureBase}.render.json`);
+  const figureReviewBytes = oldBytes.get(`${figureBase}.review.json`);
+  const spec = JSON.parse(figureSpecBytes);
+  const figureReview = JSON.parse(figureReviewBytes);
+  assert.equal(spec.id, 'fig-01');
+  assert.equal(spec.mode, 'deterministic');
+  assert.equal(figureReview.status, 'pass');
+  assert.equal(figureReview.spec.sha256, sha(figureSpecBytes));
+  assert.equal(figureReview.render.sha256, sha(figureRenderBytes));
+  assert.equal(figureReview.outputs.svg.sha256, sha(figureSvgBytes));
+  assert.ok(spec.display.minTextPx >= 16);
+  for (const [suffix, bytes] of [['svg', figureSvgBytes], ['spec.json', figureSpecBytes],
+    ['render.json', figureRenderBytes], ['review.json', figureReviewBytes]]) {
+    await stage(path.join(content, `figures/fig-01.${suffix}`), bytes);
+  }
+  const figureContracts = {
+    'fig-01': { minimumPx: spec.display.minTextPx, layout: spec.display.layout,
+      maxWidthPx: spec.display.maxWidthPx ?? null,
+      labels: (spec.objects ?? []).filter((o) => o.type === 'text' || o.label)
+        .map((o) => ({ id: `${o.id}-label`, text: String(o.text ?? o.label).trim() })) },
+  };
+  report.figureReuse = { id: 'fig-01', svgSha256: sha(figureSvgBytes), specSha256: sha(figureSpecBytes),
+    reviewSha256: sha(figureReviewBytes), mode: 'hash-bound-review-reuse-only', scientificReReview: false,
+    newFigureRenders: 0, browserLabelMinimumRequired: 16 };
+  report.choiceProjection = { approvedQuestions: draft.questions.length,
+    inheritedWholeQuestion: 'n3-13', nineOldGapQuestions: gapQuestions.filter((q) => oldIds.has(q.id)).map((q) => q.id),
+    additions: additions.map((q) => ({ id: q.id, source_numbers: q.source_numbers })),
+    rendererQuestionIds: gapQuestions.map((q) => q.id), seedSha256: sha(seedBytes),
+    neverRenderedRegions: ['n3-13:whole-observed-material', 'n3-12:option-F'],
+    original12OptionsAE: 'rendered-once-for-mobile-gap-only-not-captured-on-desktop',
+    approvedDraftSha256: sha(draftBytes), approvedReviewSha256: sha(reviewBytes),
+    rendererGapDraftSha256: sha(gapDraftBytes), approvedSnapshotImmutable: true,
+    derivedProjectionReviewHashNotRebound: true, authorMathOrChoiceApprovalClaim: false };
+  await save('choice-gap-projection.json', report.choiceProjection);
+  await renderOnce(book, path.join(RUN, 'render'));
+  const htmlBytes = await fingerprint(path.join(RUN, 'render', ID, 'choices.html'));
+  const producedHtml = htmlBytes.toString('utf8');
+  let html = producedHtml;
+  if (approval.inheritedCSSPolicy === 'use-retained-css-byte-equality') {
+    const producedCSS = cssBlock(producedHtml);
+    const retainedCSS = cssBlock(retainedHtml);
+    assert.equal(sha(retainedCSS), prepared.oldChoices.cssSha256);
+    html = producedHtml.replace(producedCSS, retainedCSS);
+    assert.deepEqual(sectionBlocks(html), sectionBlocks(producedHtml));
+    await stage(path.join(RUN, 'choices-retained-css.html'), Buffer.from(html));
+    report.staged.at(-1).byteIdenticalCopy = false;
+    report.retainedCSSSnapshot = {
+      status: 'EXACT_OLD_CSS_FOR_THIS_OFFLINE_SNAPSHOT_ONLY',
+      producedCSSSha256: sha(producedCSS), effectiveCSSSha256: sha(retainedCSS),
+      producedHTMLUnmodified: true, contentSectionsUnchanged: true,
+      sharedRendererModified: false, defaultCurrentCSSApproved: false,
+      oldRegionsRerenderedOrRecaptured: false,
+    };
+  }
+  const currentCSSSha256 = sha(cssBlock(html));
+  const cssEqual = currentCSSSha256 === prepared.oldChoices.cssSha256;
+  if (!cssEqual) assert.equal(approval.inheritedCSSPolicy, 'preserve-old-pass-current-css-hold-no-recapture',
+    'CSS differs: inherited n3-13 observations cannot silently transfer');
+  report.inheritedCSS = { oldCSSSha256: prepared.oldChoices.cssSha256, currentCSSSha256,
+    equal: cssEqual, policy: approval.inheritedCSSPolicy,
+    status: cssEqual ? 'BYTE_BOUND_REUSE' : 'HISTORICAL_PASS_ONLY_CURRENT_CSS_HOLD',
+    oldQuestion13RerenderedOrRecaptured: false,
+    original12OptionFRerenderedOrRecaptured: false,
+    original12DesktopOptionsAFRecaptured: false,
+    original12OptionsAEOneRenderForMobileGap: true,
+    wholeCurrentChoiceDisplayPassClaimed: false };
+  const blocks = sectionBlocks(html);
+  assert.equal(blocks.length, gapQuestions.length);
+  const ordinalBoundBlocks = blocks.map((block, index) => {
+    const originalIndex = combinedIds.indexOf(gapQuestions[index].id);
+    const prefix = `<section class="choice"><p class="choice-heading">${index + 1}. `;
+    assert.ok(block.startsWith(prefix));
+    let restored = block.replace(prefix, `<section class="choice"><p class="choice-heading">${originalIndex + 1}. `);
+    if (gapQuestions[index].id === 'n3-12') {
+      const oldOptions = optionBlockRange(retainedSections[0]);
+      const renderedOptions = optionBlockRange(restored);
+      assert.equal(oldOptions.blocks.length, 6);
+      assert.equal(renderedOptions.blocks.length, 5);
+      assert.ok(oldOptions.blocks[5].startsWith('<li><span class="option-id">F</span>'));
+      // This binding-only reconstruction is never navigated. F's old bytes are
+      // discarded again when both viewport-specific gap pages are formed.
+      restored = restored.slice(0, renderedOptions.end) + oldOptions.blocks[5] + restored.slice(renderedOptions.end);
+    }
+    return restored;
+  });
+  for (const old of prepared.oldChoices.questions.filter((q) => q.id !== 'n3-13')) {
+    assert.equal(sha(ordinalBoundBlocks[gapQuestions.findIndex((q) => q.id === old.id)]), old.sectionSha256,
+      `Current same-question byte/CSS binding failed: ${old.id}`);
+  }
+  report.inherited.push({ ...prepared.oldChoices.fullQuestionReuse, originalIndex: reusedIndex,
+    approvedViewSemanticSha256: canonical(draft.questions[reusedIndex].view),
+    oldViewSemanticSha256: canonical(prepared.oldChoices.questions[1].view),
+    retainedHTMLSha256: prepared.oldChoices.html.sha256,
+    currentCSSSha256, cssEqualityVerified: cssEqual,
+    reuseStatus: cssEqual ? 'BYTE_AND_SEMANTIC_CSS_BOUND' : 'OLD_CSS_OBSERVATION_ONLY_CURRENT_CSS_HOLD',
+    sectionWasNotRerendered: true,
+    sameSectionBytesVerifiedInRetainedHTML: true,
+    currentApprovedViewAndOrdinalUnchanged: true, observations: prepared.oldChoices.observations });
+  await save('inherited-region-bindings.json', report.inherited);
+
+  const requireApp = createRequire(path.join(R, 'app/package.json'));
+  const { chromium, expect } = requireApp('@playwright/test');
+  const core = path.dirname(requireApp.resolve('playwright-core/package.json'));
+  ({ PNG } = requireApp(path.join(core, 'lib/utilsBundle.js')));
+  const { createDisplayHelpers } = await import(pathToFileURL(prepared.helper.output).href);
+  const { projection, installDisplayTools, pageSafety, captureCoverage } = createDisplayHelpers({
+    norm, own, RUN, assertOfflineRuntime, PNG, same, sha, report, usage, event, save, check,
+  });
+  const { marked } = await import(pathToFileURL(path.join(R,
+    '.agents/skills/node_modules/marked/lib/marked.esm.js')).href);
+  const expectedChoice = (text) => {
+    const tokens = marked.lexer(text);
+    const tables = [];
+    if (!tokens.some((token) => token.type === 'table')) return { ...projection(text), tables, literalLF: true };
+    const pieces = [];
+    for (const token of tokens) {
+      if (token.type !== 'table') { pieces.push(token.raw); continue; }
+      const rows = [token.header, ...token.rows].map((row) => row.map((cell) => cell.text));
+      tables.push(rows.map((row) => row.map(projection)));
+      pieces.push(...rows.map((row) => row.join(' ')));
+    }
+    return { ...projection(pieces.join(' ')), tables, literalLF: false };
+  };
+  const leakage = /\b(?:seed_sha256|draft_sha256|source_numbers|source_solution|independent_solution|correct_index|correctIndex|answerKey|answer_key|rationales|misconception|omitted_tasks|api_key|password|postgres(?:ql)?|intent)\b/iu;
+  assert.ok(!leakage.test(html), 'Never serve private choice review/key payload');
+  usage.browserLaunches += 1;
+  report.cleanup.browserClosed = false;
+  browser = await chromium.launch({
+    headless: true, timeout: 30000, downloadsPath: path.join(RUN, 'browser-tmp'),
+    env: { PATH: '/usr/bin:/bin:/usr/sbin:/sbin', HOME: path.join(RUN, 'browser-home'),
+      TMPDIR: path.join(RUN, 'browser-tmp'), LANG: 'en_US.UTF-8' },
+    args: ['--disable-background-networking', '--disable-component-update', '--disable-sync',
+      '--no-first-run', '--disable-default-apps', '--host-resolver-rules=MAP * ~NOTFOUND'],
+  });
+  report.browser = { package: requireApp.resolve('@playwright/test'), version: browser.version(),
+    headless: true, deviceScaleFactor: 1, serverRequired: false,
+    limitation: 'Offline choice-gap evidence only; not headed app acceptance' };
+  for (const viewport of approval.viewports) {
+    assertOfflineRuntime();
+    const viewProgress = { viewport, status: 'STARTED', surface: 'choices',
+      imagesObserved: 0, inheritedQuestion13Captured: false };
+    report.views.push(viewProgress);
+    const partial = prepared.oldChoices.partialQuestionReuse[String(viewport.width)];
+    const viewBlocks = ordinalBoundBlocks.map((block, index) => {
+      if (gapQuestions[index].id !== 'n3-12') return block;
+      const { start, end, blocks: options } = optionBlockRange(block);
+      assert.equal(options.length, 6);
+      const missingOptions = options.filter((_, optionIndex) => !partial.optionIndices.includes(optionIndex));
+      return block.slice(0, start) + missingOptions.join('') + block.slice(end);
+    });
+    let viewHtml = html;
+    for (let index = 0; index < blocks.length; index += 1) {
+      assert.equal(viewHtml.split(blocks[index]).length, 2);
+      viewHtml = viewHtml.replace(blocks[index], viewBlocks[index]);
+    }
+    assert.ok(!sectionBlocks(viewHtml).some((block) => sha(block)
+      === prepared.oldChoices.fullQuestionReuse.sectionSha256), 'Never load n3-13 PASS materials');
+    assert.equal(sha(cssBlock(viewHtml)), currentCSSSha256);
+    const viewPath = path.join(RUN, `${viewport.width}-choices-gaps.html`);
+    await stage(viewPath, Buffer.from(viewHtml));
+    report.staged.at(-1).byteIdenticalCopy = false;
+    const pageUrl = pathToFileURL(viewPath).href;
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1,
+      serviceWorkers: 'block', acceptDownloads: false });
+    context.setDefaultTimeout(20000);
+    contexts.push(context);
+    usage.browserContexts += 1;
+    report.cleanup.contextsClosed = false;
+    await context.route('**/*', async (route) => {
+      const request = route.request();
+      if (request.method() === 'GET' && request.url() === pageUrl) await route.continue();
+      else {
+        network.blocked.push({ method: request.method(), url: request.url() });
+        await route.abort('blockedbyclient');
+      }
+    });
+    await context.routeWebSocket(/.*/, async (socket) => {
+      network.blocked.push({ kind: 'websocket' });
+      await socket.close();
+    });
+    const page = await context.newPage();
+    page.on('pageerror', (error) => network.pageErrors.push(error.message));
+    page.on('console', (message) => {
+      if (message.type() === 'error') network.consoleErrors.push(message.text());
+    });
+    page.on('requestfailed', (request) => network.failures.push({ url: request.url(), error: request.failure() }));
+    page.on('response', (response) => {
+      if (response.status() >= 400) network.badResponses.push({ url: response.url(), status: response.status() });
+    });
+    usage.pageNavigations += 1;
+    await page.goto(pageUrl, { waitUntil: 'load' });
+    assertOfflineRuntime();
+    await expect(page.locator('.choice')).toHaveCount(gapQuestions.length);
+    await expect(page.locator('a,link')).toHaveCount(0);
+    const materials = [];
+    const add = (key, selector, index, expected) => materials.push({ key, selector, index, expected });
+    const lesson = JSON.parse(oldBytes.get(path.join(LESSON, 'lesson.json')));
+    add('title', 'h1', 0, projection(`${lesson.printed_title || lesson.title} \u00b7 \u9009\u62e9\u9898`));
+    for (const [index, question] of gapQuestions.entries()) {
+      const selector = `.choice:nth-of-type(${index + 1})`;
+      const originalIndex = combinedIds.indexOf(question.id);
+      add(`${question.id}-heading`, `${selector} .choice-heading`, 0,
+        projection(`${originalIndex + 1}. ${question.view.mode === 'multiple' ? '\u591a\u9009' : '\u5355\u9009'}`));
+      add(`${question.id}-stem`, `${selector} .choice-stem`, 0, expectedChoice(question.view.stem));
+      let displayedOptionIndex = 0;
+      for (const [optionIndex, option] of question.view.options.entries()) {
+        if (question.id === 'n3-12' && partial.optionIndices.includes(optionIndex)) continue;
+        add(`${question.id}-option-${optionIndex}`, `${selector} .choice-option-body`, displayedOptionIndex,
+          expectedChoice(option.text));
+        add(`${question.id}-label-${optionIndex}`, `${selector} .option-id`, displayedOptionIndex,
+          projection(String.fromCharCode(65 + optionIndex)));
+        displayedOptionIndex += 1;
+      }
+      await expect(page.locator(selector).locator('.choice-options > li')).toHaveCount(displayedOptionIndex);
+      const actualFigureIds = await page.locator(selector).locator('figure').evaluateAll((nodes) => nodes.map((n) => n.id));
+      assert.ok(same(actualFigureIds, [...question.view.figure_ids,
+        ...question.view.options.flatMap((o) => o.figure_ids)]));
+    }
+    const dom = await page.evaluate(installDisplayTools, {
+      materials: materials.map(({ expected, ...descriptor }) => descriptor), figureContracts,
+    });
+    await save(`${viewport.width}-gap-target-inventory.json`, {
+      viewport, surface: 'choices', visualObservation: 'UNOBSERVED',
+      materials: materials.map(({ expected, ...descriptor }) => ({
+        ...descriptor, expectedTextSha256: sha(expected.serialized),
+        expectedFormulaCount: expected.formulas.length, expectedTableCount: (expected.tables ?? []).length,
+      })), roots: dom.roots, targets: dom.targets, figures: dom.figures,
+      hidden: dom.hidden, failed: dom.failed, ends: dom.ends,
+      inheritedQuestion13: prepared.oldChoices.fullQuestionReuse,
+      inheritedQuestion12OptionIndices: partial.optionIndices,
+    });
+    viewProgress.targetInventory = path.join(RUN, `${viewport.width}-gap-target-inventory.json`);
+    await check(`${viewport.width}:choices:every-gap-glyph-rule-and-full-media-edge-reachable`,
+      dom.hidden.length === 0 && dom.failed.length === 0 && dom.targetCount > 0
+      && dom.ends.every((end) => Math.abs(end.maximum - end.actual) <= 1),
+      { targets: dom.targetCount, hidden: dom.hidden, failed: dom.failed, ends: dom.ends });
+    for (const material of materials) {
+      const actual = dom.roots.find((root) => root.key === material.key);
+      const expected = material.expected;
+      const subparts = actual.lines.flatMap((line, index) => /^(?:[a-z]|\d+)\)\s/u.test(line) ? [index] : []);
+      const rows = subparts.map((index) => {
+        let previous = index - 1;
+        while (previous >= 0 && actual.lines[previous] === '') previous -= 1;
+        return { index, previous, current: actual.lineGeometry[index],
+          preceding: previous < 0 ? null : actual.lineGeometry[previous] };
+      });
+      const separateRows = rows.every(({ previous, current, preceding }) =>
+        previous < 0 || current && preceding && current.top > preceding.top + 0.5);
+      const tables = actual.tables.map((table) => table.map((row) =>
+        row.map(({ serialized, formulas, lines }) => ({ serialized, formulas, lines }))));
+      await check(`${viewport.width}:${material.key}:exact-text-table-formula-and-rows`,
+        actual.serialized === expected.serialized
+        && same(actual.formulas.map((f) => f.tex), expected.formulas)
+        && actual.formulas.every((f) => f.visible && f.nonempty)
+        && (expected.literalLF === false || same(actual.lines, expected.lines))
+        && same(tables, expected.tables ?? []) && separateRows,
+        { textSha256: sha(actual.serialized), formulas: actual.formulas.length,
+          tableCount: tables.length, separateRows, rows, targets: actual.indices.length });
+    }
+    for (const figure of dom.figures) {
+      await check(`${viewport.width}:${figure.key}:actual-SVG-transform-label-minimum`,
+        figure.labelBindings && figure.labels.length > 0
+        && figure.labels.every((label) => label.insideSvg && label.px >= 16 && label.px >= figure.minimumPx)
+        && figure.layout === figure.expectedLayout && figure.mediaWidth > 0 && figure.mediaHeight > 0
+        && figure.svgWidth === figure.mediaWidth,
+        { labels: figure.labels, requiredMinimumPx: 16, mediaWidth: figure.mediaWidth,
+          mediaHeight: figure.mediaHeight, labelsMeasuredThroughScreenCTM: true, scientificReReview: false });
+    }
+    const safety = await page.evaluate(pageSafety);
+    await check(`${viewport.width}:choices:read-only-contained-no-label-collision`,
+      safety.documentWidth <= viewport.width + 1 && safety.bodyWidth <= viewport.width + 1
+      && safety.scrollX === 0 && safety.errors === 0 && safety.widgets === 0 && safety.scripts === 0
+      && safety.dangerousAttributes.length === 0 && safety.labelBodyCollisions.length === 0
+      && safety.sections.every((box, index, boxes) => box.left >= -1 && box.right <= viewport.width + 1
+        && box.height > 0 && (index === 0 || box.top >= boxes[index - 1].bottom - 0.5))
+      && safety.fonts.some((font) => font.family.startsWith('KaTeX') && font.status === 'loaded')
+      && safety.fonts.every((font) => font.status !== 'error'), safety);
+    // The exact inherited helper counts indexed captures. This adapter also
+    // records produced bytes before a subsequent decode/coverage check can fail.
+    const capturePage = {
+      evaluate: page.evaluate.bind(page),
+      screenshot: async (options) => {
+        usage.screenshotAttempts += 1;
+        const bytes = await page.screenshot(options);
+        usage.screenshotsProduced += 1;
+        const receipt = { path: options.path, sha256: sha(bytes), bytes: bytes.length,
+          viewport, surface: 'choices', visualObservation: 'UNOBSERVED',
+          fullPage: false, nativeViewport: true, oldScreenshotReopened: false };
+        report.screenshotReceipts.push(receipt);
+        await event({ producedScreenshot: receipt });
+        return bytes;
+      },
+    };
+    await captureCoverage(capturePage, viewport, 'choices', dom);
+    const inventory = report.coverage.at(-1);
+    inventory.inheritedQuestion13 = { id: 'n3-13', bindingFile: path.join(RUN, 'inherited-region-bindings.json'),
+      capturedThisRun: false };
+    inventory.inheritedQuestion12Options = partial.optionIndices;
+    const snapshot = await page.evaluate(() => window.__n9Display.snapshot());
+    inventory.finalGeometry = snapshot;
+    await save(`${viewport.width}-per-view-coverage.json`, {
+      ...inventory, questionIds: gapQuestions.map((q) => q.id),
+      textTableFormulaTargets: dom.targets, figures: dom.figures,
+      sourceHTML: { path: viewPath, sha256: sha(Buffer.from(viewHtml)) },
+    });
+    viewProgress.status = 'CAPTURED_UNOBSERVED';
+    viewProgress.coverage = path.join(RUN, `${viewport.width}-per-view-coverage.json`);
+    await context.close();
+    contexts.splice(contexts.indexOf(context), 1);
+    report.cleanup.contextsClosed = contexts.length === 0;
+  }
+  await check('exactly-one-choices-only-render-two-native-views-no-passed-surface-repeat',
+    usage.rendererCalls === 1 && usage.browserLaunches === 1 && usage.browserContexts === 2
+    && usage.pageNavigations === 2 && report.coverage.length === 2
+    && usage.oldQuestion13MaterialRenders === 0 && usage.originalTextRenders === 0
+    && usage.oldQuestion12OptionFMaterialRenders === 0
+    && usage.writtenExerciseRenders === 0 && usage.figureRenders === 0 && usage.validatorCalls === 0);
+  report.status = report.inheritedCSS.equal ? 'CAPTURED_UNOBSERVED'
+    : 'CAPTURED_UNOBSERVED_INHERITED_CSS_HOLD';
+} catch (error) {
+  report.status = 'FAIL-FIRST';
+  report.executionFailure = { name: error.name, message: error.message, stack: error.stack };
+  report.faults.push({ stage: 'FIRST', ...report.executionFailure, preserved: true, retry: false });
+  await event({ failure: report.executionFailure });
+} finally {
+  if (rendererChild) {
+    rendererChild.kill('SIGKILL');
+    await new Promise((resolve) => rendererChild.once('close', resolve));
+    report.cleanup.rendererClosed = true;
+  }
+  for (const context of contexts) {
+    try { await context.close(); } catch (error) {
+      report.faults.push({ stage: 'context-close', message: error.message });
+    }
+  }
+  report.cleanup.contextsClosed = contexts.every((context) => context.pages().length === 0);
+  try { if (browser) await browser.close(); report.cleanup.browserClosed = true; }
+  catch (error) {
+    report.cleanup.browserClosed = false;
+    report.faults.push({ stage: 'browser-close', message: error.message });
+  }
+  if (Object.values(report.cleanup).some((closed) => !closed) || terminated || report.faults.length) {
+    report.status = 'FAIL-FIRST';
+  }
+  report.network = network;
+  report.ended = new Date().toISOString();
+  usage.screenshotsCaptured = usage.screenshotsProduced;
+  for (const view of report.views) if (view.status === 'STARTED') {
+    view.status = 'INCOMPLETE-FIRST';
+    view.failure = report.executionFailure ?? { message: 'Interrupted or cleanup failure' };
+  }
+  report.visualObservation = 'UNOBSERVED';
+  report.reviewHandoff = { required: true, reviewer: 'parent-dispatched-fresh-image-batches',
+    imagesPerBatchMaximum: 8, contextImageMaximum: 24, screenshotReopensByProducer: 0,
+    screenshotPaths: report.screenshotReceipts.map((image) => ({ path: image.path, sha256: image.sha256 })),
+    notAVisualPass: true };
+  await save('usage-FIRST.json', usage);
+  await save('report-FIRST.json', report);
+  process.removeListener('SIGINT', interrupted);
+  process.removeListener('SIGTERM', interrupted);
+  if (report.status === 'FAIL-FIRST') process.exitCode = 1;
+  console.log(JSON.stringify({ status: report.status, report: path.join(RUN, 'report-FIRST.json'),
+    screenshots: report.screenshots.length, imagesObserved: 0, cleanup: report.cleanup }, null, 2));
+}

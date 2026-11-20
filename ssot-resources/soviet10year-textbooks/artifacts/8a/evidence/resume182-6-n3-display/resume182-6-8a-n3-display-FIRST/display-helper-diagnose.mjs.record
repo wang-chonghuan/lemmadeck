@@ -1,0 +1,445 @@
+// Exact AST slices; the source runner is never imported or executed.
+import path from 'node:path';
+import assert from 'node:assert/strict';
+export function createDisplayHelpers(bindings) {
+const { norm, own, RUN, assertOfflineRuntime, PNG, same, sha, report, usage, event, save, check } = bindings;
+function projection(text) {
+  const formulas = [];
+  const serialized = text.replace(/\$\$(.+?)\$\$|\$([^$]+?)\$/gs, (_, block, inline) => {
+    formulas.push(norm(block ?? inline));
+    return `[[MATH:${formulas.length - 1}]]`;
+  }).replace(/\*\*([^*]+)\*\*/gu, '$1');
+  return { serialized: norm(serialized), formulas, lines: serialized.split('\n').map(norm) };
+}
+async function installDisplayTools({ materials, figureContracts, reuseReachability = false }) {
+  await document.fonts.ready;
+  const normalize = (text) => String(text).normalize('NFC').replace(/\s+/gu, ' ').trim();
+  const targets = [];
+  const roots = [];
+  const figures = [];
+  const hidden = [];
+  const visible = (element) => {
+    for (let node = element; node; node = node.parentElement) {
+      const style = getComputedStyle(node);
+      if (style.display === 'none' || style.visibility !== 'visible'
+        || Number(style.opacity) === 0 || style.contentVisibility === 'hidden') return false;
+    }
+    return true;
+  };
+  const rectFor = (target) => target.rect();
+  const frameFor = (element) => {
+    const frame = { left: 0, top: 0, right: innerWidth, bottom: innerHeight };
+    for (let node = element; node; node = node.parentElement) {
+      if (node === document.body || node === document.documentElement) continue;
+      const style = getComputedStyle(node);
+      const box = node.getBoundingClientRect();
+      const borders = { left: parseFloat(style.borderLeftWidth) || 0,
+        right: parseFloat(style.borderRightWidth) || 0,
+        top: parseFloat(style.borderTopWidth) || 0,
+        bottom: parseFloat(style.borderBottomWidth) || 0 };
+      const verticalBar = Number.isFinite(node.offsetWidth)
+        ? Math.max(0, node.offsetWidth - node.clientWidth - borders.left - borders.right) : 0;
+      const horizontalBar = Number.isFinite(node.offsetHeight)
+        ? Math.max(0, node.offsetHeight - node.clientHeight - borders.top - borders.bottom) : 0;
+      if (['auto', 'scroll', 'hidden', 'clip'].includes(style.overflowX)) {
+        frame.left = Math.max(frame.left, box.left + borders.left);
+        frame.right = Math.min(frame.right, box.right - borders.right - verticalBar);
+      }
+      if (['auto', 'scroll', 'hidden', 'clip'].includes(style.overflowY)) {
+        frame.top = Math.max(frame.top, box.top + borders.top);
+        frame.bottom = Math.min(frame.bottom, box.bottom - borders.bottom - horizontalBar);
+      }
+    }
+    return frame;
+  };
+  // Range bounds include unpainted font metrics at subpixel clip edges.
+  const contained = (target, tolerance = target.kind === 'text-glyph' ? 0.5 : 0) => {
+    const rect = rectFor(target);
+    const frame = frameFor(target.element);
+    return visible(target.element) && rect.width > 0 && rect.height > 0
+      && rect.left >= frame.left - tolerance && rect.right <= frame.right + tolerance
+      && rect.top >= frame.top - tolerance && rect.bottom <= frame.bottom + tolerance;
+  };
+  function add(element, rect, key, kind, formulaIndex = null, lineIndex = null) {
+    const target = { id: targets.length, element, rect, key, kind, formulaIndex, lineIndex };
+    const box = rectFor(target);
+    if (!visible(element) || box.width <= 0 || box.height <= 0) {
+      hidden.push({ key, kind, formulaIndex, lineIndex });
+    }
+    targets.push(target);
+  }
+  function addGlyphs(node, key, formulaIndex, lineIndex) {
+    let offset = 0;
+    for (const character of node.data) {
+      const end = offset + character.length;
+      if (!/[\s\u200b\u200c\u200d\u2060\ufeff]/u.test(character)) {
+        const range = document.createRange();
+        range.setStart(node, offset);
+        range.setEnd(node, end);
+        add(node.parentElement, () => range.getBoundingClientRect(), key,
+          'text-glyph', formulaIndex, lineIndex);
+      }
+      offset = end;
+    }
+  }
+  function textOf(root, collect = false, key = '') {
+    let serialized = '';
+    const formulas = [];
+    let lineIndex = 0;
+    const walk = (node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        serialized += node.data;
+        if (collect) addGlyphs(node, key, null, lineIndex);
+        return;
+      }
+      if (node.nodeType !== Node.ELEMENT_NODE || node.matches('figure')) return;
+      if (node.matches('br')) { serialized += '\n'; lineIndex += 1; return; }
+      if (node.matches('.katex')) {
+        const visual = node.querySelector('.katex-html');
+        const index = formulas.length;
+        formulas.push({
+          tex: normalize(node.querySelector('annotation[encoding="application/x-tex"]')?.textContent ?? ''),
+          visible: Boolean(visual && visible(visual)), nonempty: Boolean(visual?.textContent.trim()),
+        });
+        serialized += `[[MATH:${index}]]`;
+        if (collect && visual) {
+          const walker = document.createTreeWalker(visual, NodeFilter.SHOW_TEXT);
+          for (let text = walker.nextNode(); text; text = walker.nextNode()) {
+            addGlyphs(text, key, index, lineIndex);
+          }
+          for (const rule of visual.querySelectorAll(
+            '.frac-line,.sqrt-line,.overline-line,.underline-line,svg')) {
+            const style = getComputedStyle(rule);
+            const painted = rule.tagName.toLowerCase() === 'svg'
+              || parseFloat(style.borderTopWidth) > 0 || parseFloat(style.borderBottomWidth) > 0;
+            if (!painted) hidden.push({ key, kind: 'unpainted-math-rule', formulaIndex: index });
+            // A CSS fraction line has a border but may have zero content height.
+            add(rule, () => {
+              const box = rule.getBoundingClientRect();
+              const height = Math.max(box.height, parseFloat(style.borderTopWidth) || 0,
+                parseFloat(style.borderBottomWidth) || 0);
+              return { ...box.toJSON(), top: box.top, bottom: box.top + height, height };
+            }, key, 'math-rule', index, lineIndex);
+          }
+        }
+        return;
+      }
+      const separator = node.matches('table,tr,td,th,p');
+      if (separator && node !== root) serialized += ' ';
+      for (const child of node.childNodes) walk(child);
+      if (separator && node !== root) serialized += ' ';
+    };
+    walk(root);
+    return { serialized: normalize(serialized), lines: serialized.split('\n').map(normalize), formulas };
+  }
+  for (const descriptor of materials) {
+    const element = document.querySelectorAll(descriptor.selector)[descriptor.index ?? 0];
+    if (!element) throw new Error(`Missing material: ${descriptor.key}`);
+    const start = targets.length;
+    const text = textOf(element, true, descriptor.key);
+    const tableCells = [...element.querySelectorAll('table')].map((table) =>
+      [...table.rows].map((row) => [...row.cells].map((cell) => {
+        const value = textOf(cell);
+        return { serialized: value.serialized, formulas: value.formulas.map((formula) => formula.tex),
+          lines: value.lines };
+      })));
+    const indices = targets.slice(start).map((target) => target.id);
+    const lineGeometry = text.lines.map((_, lineIndex) => {
+      const rects = indices.map((id) => targets[id]).filter((target) => target.lineIndex === lineIndex)
+        .map(rectFor);
+      return rects.length ? { top: Math.min(...rects.map((box) => box.top)),
+        bottom: Math.max(...rects.map((box) => box.bottom)) } : null;
+    });
+    const style = getComputedStyle(element);
+    const mathTypography = [...element.querySelectorAll('.prose-math,.katex')].map((node) => ({
+      family: getComputedStyle(node).fontFamily, px: parseFloat(getComputedStyle(node).fontSize),
+    }));
+    roots.push({ key: descriptor.key, ...text, tables: tableCells, indices, lineGeometry,
+      fontPx: parseFloat(style.fontSize), textIndent: style.textIndent, mathTypography });
+  }
+  for (const [index, figure] of [...document.querySelectorAll('figure')].entries()) {
+    const contract = figureContracts[figure.id];
+    if (!contract) throw new Error(`Unbound displayed figure: ${figure.id}`);
+    const media = figure.querySelector('.figure-media');
+    const svg = media?.querySelector('svg');
+    const image = media?.querySelector('img');
+    if (!media || (!svg && !image)) throw new Error(`Missing figure media: ${figure.id}`);
+    if (image && (!image.complete || image.naturalWidth <= 0)) throw new Error('Unloaded figure image');
+    const key = `figure-${index}-${figure.id}`;
+    const labels = [];
+    const first = targets.length;
+    for (const label of svg?.querySelectorAll('text') ?? []) {
+      const matrix = label.getScreenCTM();
+      const scale = matrix ? Math.hypot(matrix.a, matrix.b) : 0;
+      const box = label.getBoundingClientRect();
+      const svgBox = svg.getBoundingClientRect();
+      labels.push({ id: label.getAttribute('data-label-id'), text: label.textContent.trim(),
+        px: parseFloat(getComputedStyle(label).fontSize) * scale,
+        insideSvg: box.left >= svgBox.left && box.right <= svgBox.right
+          && box.top >= svgBox.top && box.bottom <= svgBox.bottom });
+      for (let char = 0; char < label.getNumberOfChars(); char += 1) {
+        add(label, () => {
+          const extent = label.getExtentOfChar(char);
+          const transform = label.getScreenCTM();
+          const points = [[extent.x, extent.y], [extent.x + extent.width, extent.y],
+            [extent.x, extent.y + extent.height], [extent.x + extent.width, extent.y + extent.height]]
+            .map(([x, y]) => new DOMPoint(x, y).matrixTransform(transform));
+          const left = Math.min(...points.map((p) => p.x));
+          const right = Math.max(...points.map((p) => p.x));
+          const top = Math.min(...points.map((p) => p.y));
+          const bottom = Math.max(...points.map((p) => p.y));
+          return { left, right, top, bottom, width: right - left, height: bottom - top };
+        }, key, 'svg-glyph');
+      }
+    }
+    const box = media.getBoundingClientRect();
+    // Adjacent media tiles include blank regions and borders, not just labels.
+    for (let y = 0; y < box.height; y += 64) {
+      for (let x = 0; x < box.width; x += 64) {
+        const width = Math.min(64, box.width - x);
+        const height = Math.min(64, box.height - y);
+        add(media, () => {
+          const current = media.getBoundingClientRect();
+          return { left: current.left + x, right: current.left + x + width,
+            top: current.top + y, bottom: current.top + y + height, width, height };
+        }, key, 'figure-region');
+      }
+    }
+    const expectedLabels = contract.labels ?? [];
+    const labelBindings = expectedLabels.every((expected) => labels.some((actual) =>
+      actual.id === expected.id && actual.text === expected.text));
+    figures.push({ key, id: figure.id, media, figure, labels, labelBindings,
+      minimumPx: contract.minimumPx, expectedLayout: contract.layout,
+      expectedWidth: contract.maxWidthPx, layout: figure.dataset.figureLayout,
+      mediaWidth: box.width, mediaHeight: box.height,
+      svgWidth: svg?.getBoundingClientRect().width ?? null,
+      indices: targets.slice(first).map((target) => target.id) });
+  }
+  const scrollables = [...document.querySelectorAll('*')].filter((element) =>
+    !element.closest('.katex-mathml') && element.clientWidth > 0
+    && (element.scrollWidth > element.clientWidth + 1 || element.scrollHeight > element.clientHeight + 1)
+    && ['auto', 'scroll'].some((mode) => {
+      const style = getComputedStyle(element);
+      return style.overflowX === mode || style.overflowY === mode;
+    }));
+  function bring(id) {
+    const target = targets[id];
+    let rect = rectFor(target);
+    window.scrollBy({ top: rect.top + rect.height / 2 - innerHeight / 2, behavior: 'instant' });
+    for (let ancestor = target.element; ancestor; ancestor = ancestor.parentElement) {
+      if (ancestor === document.body || ancestor === document.documentElement) continue;
+      const style = getComputedStyle(ancestor);
+      rect = rectFor(target);
+      const box = ancestor.getBoundingClientRect();
+      let left = ancestor.scrollLeft;
+      let top = ancestor.scrollTop;
+      if (['auto', 'scroll'].includes(style.overflowX)) {
+        if (rect.left < box.left + ancestor.clientLeft) left -= box.left + ancestor.clientLeft - rect.left;
+        if (rect.right > box.left + ancestor.clientLeft + ancestor.clientWidth) {
+          left += rect.right - box.left - ancestor.clientLeft - ancestor.clientWidth;
+        }
+      }
+      if (['auto', 'scroll'].includes(style.overflowY)) {
+        if (rect.top < box.top + ancestor.clientTop) top -= box.top + ancestor.clientTop - rect.top;
+        if (rect.bottom > box.top + ancestor.clientTop + ancestor.clientHeight) {
+          top += rect.bottom - box.top - ancestor.clientTop - ancestor.clientHeight;
+        }
+      }
+      ancestor.scrollTo({ left, top, behavior: 'instant' });
+    }
+    return contained(target);
+  }
+  const failed = [];
+  for (const target of reuseReachability ? [] : targets) if (!bring(target.id)) failed.push({
+    id: target.id, key: target.key, kind: target.kind,
+  });
+  const ends = [];
+  for (const element of reuseReachability ? [] : scrollables) {
+    const style = getComputedStyle(element);
+    if (!['auto', 'scroll'].includes(style.overflowX)) continue;
+    element.scrollTo({ left: element.scrollWidth - element.clientWidth, behavior: 'instant' });
+    ends.push({ maximum: element.scrollWidth - element.clientWidth, actual: element.scrollLeft });
+  }
+  function reset() {
+    for (const element of scrollables) element.scrollTo({ left: 0, top: 0, behavior: 'instant' });
+    window.scrollTo({ left: 0, top: 0, behavior: 'instant' });
+  }
+  reset();
+  function snapshot() {
+    return {
+      visibleIds: targets.filter((target) => contained(target)).map((target) => target.id),
+      scroll: { x: scrollX, y: scrollY },
+      scrollables: scrollables.map((element, index) => ({
+        index, left: element.scrollLeft, top: element.scrollTop,
+      })),
+      figureRegions: figures.map(({ key, media }) => {
+        const box = media.getBoundingClientRect();
+        const frame = frameFor(media);
+        const left = Math.max(box.left, frame.left);
+        const top = Math.max(box.top, frame.top);
+        const right = Math.min(box.right, frame.right);
+        const bottom = Math.min(box.bottom, frame.bottom);
+        return { key, x: left - box.left, y: top - box.top,
+          width: Math.max(0, right - left), height: Math.max(0, bottom - top) };
+      }),
+    };
+  }
+  window.__n9Display = { bring, reset, snapshot,
+    inspect: id => ({ rect: targets[id].rect(), frame: frameFor(targets[id].element),
+      text: targets[id].element.textContent,
+      ancestors: [...function* () {
+        for (let element = targets[id].element; element; element = element.parentElement) {
+          yield { tag: element.tagName, overflow: getComputedStyle(element).overflow,
+            box: element.getBoundingClientRect().toJSON() };
+        }
+      }()] }),
+    targetCount: targets.length, maxY: () => Math.max(0, document.documentElement.scrollHeight - innerHeight) };
+  return {
+    roots, hidden, failed, ends, targetCount: targets.length,
+    targets: targets.map(({ id, key, kind, formulaIndex, lineIndex }) =>
+      ({ id, key, kind, formulaIndex, lineIndex })),
+    figures: figures.map(({ media, figure, ...value }) => value),
+  };
+}
+async function pageSafety() {
+  const dangerousAttributes = [...document.querySelectorAll('*')].flatMap((element) =>
+    [...element.attributes].filter((attribute) => /^on/iu.test(attribute.name)
+      || /(?:answer|correct|accept|key|intent|rationale|solution|source[-_])/iu.test(attribute.name))
+      .map((attribute) => ({ tag: element.tagName, name: attribute.name })));
+  const labelBodyCollisions = [...document.querySelectorAll('.choice-options > li')].flatMap((row) => {
+    const label = row.querySelector('.option-id');
+    const body = row.querySelector('.choice-option-body');
+    const box = body.getBoundingClientRect();
+    const walker = document.createTreeWalker(label, NodeFilter.SHOW_TEXT);
+    const result = [];
+    for (let text = walker.nextNode(); text; text = walker.nextNode()) {
+      const range = document.createRange();
+      range.selectNodeContents(text);
+      for (const rect of range.getClientRects()) if (rect.right > box.left + 0.5) {
+        result.push({ label: label.textContent, right: rect.right, bodyLeft: box.left });
+      }
+    }
+    return result;
+  });
+  const sections = [...document.querySelectorAll('li.ex,.choice')].map((element) => {
+    const box = element.getBoundingClientRect();
+    return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, height: box.height };
+  });
+  return {
+    width: innerWidth, documentWidth: document.documentElement.scrollWidth, bodyWidth: document.body.scrollWidth,
+    scrollX, dangerousAttributes, labelBodyCollisions, sections,
+    errors: document.querySelectorAll('.err,.katex-error,.sr-tex-err').length,
+    widgets: document.querySelectorAll('input,textarea,select,button,form,'
+      + '[contenteditable]:not([contenteditable="false"]),[role="textbox"],[role="radio"],'
+      + '[role="checkbox"],[role="button"],[role="status"],[role="alert"]').length,
+    scripts: document.querySelectorAll('script,iframe,object,embed').length,
+    fonts: [...document.fonts].map((font) => ({ family: font.family, status: font.status })),
+  };
+}
+function unionArea(rectangles) {
+  const boxes = rectangles.filter((r) => r.width > 0 && r.height > 0);
+  const xs = [...new Set(boxes.flatMap((r) => [r.x, r.x + r.width]))].sort((a, b) => a - b);
+  let area = 0;
+  for (let i = 1; i < xs.length; i += 1) {
+    const intervals = boxes.filter((r) => r.x <= xs[i - 1] && r.x + r.width >= xs[i])
+      .map((r) => [r.y, r.y + r.height]).sort((a, b) => a[0] - b[0]);
+    let height = 0;
+    let end = -Infinity;
+    for (const [top, bottom] of intervals) {
+      height += Math.max(0, bottom - Math.max(top, end));
+      end = Math.max(end, bottom);
+    }
+    area += (xs[i] - xs[i - 1]) * height;
+  }
+  return area;
+}
+async function captureCoverage(page, viewport, surface, dom) {
+  const covered = new Set();
+  const states = new Set();
+  const images = [];
+  const shot = async () => {
+    const frame = await page.evaluate(() => window.__n9Display.snapshot());
+    const newIds = frame.visibleIds.filter((id) => !covered.has(id));
+    if (!newIds.length) return;
+    const state = JSON.stringify([frame.scroll, frame.scrollables]);
+    if (states.has(state)) return;
+    states.add(state);
+    const filename = `${viewport.width}-${surface}-${String(images.length + 1).padStart(3, '0')}.png`;
+    const output = own(path.join(RUN, 'screenshots', filename));
+    assertOfflineRuntime();
+    const bytes = await page.screenshot({
+      path: output, type: 'png', fullPage: false, animations: 'disabled',
+    });
+    assertOfflineRuntime();
+    const decoded = PNG.sync.read(bytes);
+    assert.equal(decoded.width, viewport.width, 'No resized/cropped screenshot');
+    assert.equal(decoded.height, viewport.height, 'No fullpage screenshot');
+    let ink = 0;
+    for (let index = 0; index < decoded.data.length; index += 4) {
+      if (decoded.data[index + 3] && Math.max(...decoded.data.subarray(index, index + 3)) < 180) ink += 1;
+    }
+    assert.ok(ink > 20, 'Blank screenshot cannot establish pixel coverage');
+    const after = await page.evaluate(() => window.__n9Display.snapshot());
+    assert.ok(same(frame, after), 'Screenshot geometry changed during capture');
+    for (const id of frame.visibleIds) covered.add(id);
+    const image = {
+      path: output, sha256: sha(bytes), width: decoded.width, height: decoded.height, ink,
+      viewport, surface, ...frame, newIds,
+      visualObservation: 'UNOBSERVED', nativeSize: true, fullPage: false, croppedOrResized: false,
+    };
+    images.push(image);
+    report.screenshots.push(image);
+    usage.screenshotsCaptured += 1;
+    await event({ screenshot: { path: output, sha256: image.sha256,
+      targetsVisible: frame.visibleIds.length, newTargets: newIds.length } });
+  };
+  await page.evaluate(() => window.__n9Display.reset());
+  const maximum = await page.evaluate(() => window.__n9Display.maxY());
+  const stride = viewport.height - 64;
+  for (let y = 0; y < maximum + stride; y += stride) {
+    await page.evaluate((top) => window.scrollTo({ top, left: 0, behavior: 'instant' }), Math.min(y, maximum));
+    await shot();
+    if (y >= maximum) break;
+  }
+  // Only still-uncovered targets trigger additional horizontal/native-scroll
+  // captures. No viewport state is captured twice and no saved image is reopened.
+  for (const target of dom.targets) {
+    if (covered.has(target.id)) continue;
+    const reachable = await page.evaluate((id) => window.__n9Display.bring(id), target.id);
+    assert.ok(reachable, `Unreachable pixel target ${surface}:${target.id}`);
+    await shot();
+  }
+  const materialCoverage = [...dom.roots, ...dom.figures].map((root) => ({
+    key: root.key, domTargets: root.indices.length,
+    capturedTargets: root.indices.filter((id) => covered.has(id)).length,
+    screenshotPaths: images.filter((image) => image.visibleIds.some((id) => root.indices.includes(id)))
+      .map((image) => image.path),
+    // A long paragraph/option may be readable across several adjacent views.
+    completeInSingleScreenshot: images.some((image) => root.indices.every((id) => image.visibleIds.includes(id))),
+    completeAcrossNativeScreenshots: root.indices.every((id) => covered.has(id)),
+  }));
+  const figureCoverage = dom.figures.map((figure) => {
+    const regions = images.flatMap((image) => image.figureRegions.filter((r) => r.key === figure.key));
+    const area = unionArea(regions);
+    return { key: figure.key, nativeWidth: figure.mediaWidth, nativeHeight: figure.mediaHeight,
+      requiredArea: figure.mediaWidth * figure.mediaHeight, capturedArea: area,
+      complete: area === figure.mediaWidth * figure.mediaHeight, regions };
+  });
+  const inventory = {
+    viewport, surface, domTargets: dom.targetCount, capturedTargets: covered.size,
+    missingTargets: dom.targets.filter((target) => !covered.has(target.id)),
+    materialCoverage, figureCoverage, screenshotPaths: images.map((image) => image.path),
+    pixelClaim: 'Native viewport captures cover measured targets and media regions; human visual review is separate',
+    visualObservation: 'PENDING',
+  };
+  report.coverage.push(inventory);
+  await save(`${viewport.width}-${surface}-coverage.json`, { ...inventory, targetInventory: dom.targets });
+  await check(`${viewport.width}:${surface}:complete-pixel-coverage-not-just-DOM`,
+    inventory.missingTargets.length === 0 && materialCoverage.every((m) => m.completeAcrossNativeScreenshots)
+    && figureCoverage.every((f) => f.complete), {
+      domTargets: inventory.domTargets, capturedTargets: covered.size,
+      screenshots: images.length, figures: figureCoverage.map(({ regions, ...value }) => value),
+    });
+}
+return { projection, installDisplayTools, pageSafety, captureCoverage };
+}

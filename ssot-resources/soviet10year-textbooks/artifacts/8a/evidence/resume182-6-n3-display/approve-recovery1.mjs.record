@@ -1,0 +1,31 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-7186/lemmadeck';
+assert.equal(process.cwd(), root);
+const combined = path.join(root, '.tmp/resume182-6-8a-n3-combined-FIRST');
+const runner = path.join(root, '.tmp/resume182-6-8a-n3-display-FIRST');
+const sha = file => createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+const review = JSON.parse(fs.readFileSync(path.join(combined, 'review.json')));
+assert.equal(review.outcome, 'pass');
+const receipt = {
+  schema: 'n3-choices-display-parent-approval@1', status: 'approved',
+  book: '8a', lesson: 'alg8-c1-s1-n3', combinedDirectory: combined,
+  runnerWriteRoot: runner, runnerSha256: sha(path.join(runner, 'run-recovery1.mjs')),
+  preparedBindingsSha256: sha(path.join(runner, 'prepared-bindings.json')),
+  cssBindingSha256: sha(path.join(runner, 'css-binding.json')),
+  inheritedCSSPolicy: 'use-retained-css-byte-equality',
+  parentAuthorizationReference: 'Latest direct human immediate 182-6 continuation; ordinary repair delegated. Only exact n3 frozen offline CSS, not shared renderer/default-CSS approval.',
+  files: Object.fromEntries(['seed.json', 'draft.json', 'review.json'].map(name =>
+    [name, { sha256: sha(path.join(combined, name)) }])),
+  allowChoicesOnlyRendererCalls: 1, allowFigureRendererCalls: 0,
+  allowOriginalTextRenders: 0, allowWrittenExerciseRenders: 0,
+  viewports: [{ width: 1440, height: 960 }, { width: 390, height: 844 }],
+  screenshots: 'unobserved-parent-fresh8-only',
+  onFirstFailure: 'preserve-and-stop-no-retry',
+};
+const output = path.join(combined, 'display-approval-recovery1.json');
+fs.writeFileSync(output, `${JSON.stringify(receipt, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ output, sha256: sha(output), runnerSha256: receipt.runnerSha256 }));

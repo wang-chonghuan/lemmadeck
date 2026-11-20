@@ -1,0 +1,746 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { appendFile, mkdir, readFile, readdir, realpath, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six/lemmadeck';
+const OWN = path.join(R, '.tmp/resume182-6-8a-n3-display-FIRST');
+const RUN = path.join(OWN, 'runtime-css-reuse-FIRST');
+const ID = 'alg8-c1-s1-n3';
+const EDITION = 'modern-us-neutral';
+const MODERN = path.join(R, 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions', EDITION);
+const LESSON = path.join(MODERN, 'lessons', ID);
+const TOOLS = path.join(R, '.claude/skills/ld-s10y-lesson/tools');
+const sha = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const norm = (text) => String(text).normalize('NFC').replace(/\s+/gu, ' ').trim();
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const canonical = (value) => {
+  const order = (item) => Array.isArray(item) ? item.map(order)
+    : item && typeof item === 'object'
+      ? Object.fromEntries(Object.keys(item).sort().map((key) => [key, order(item[key])])) : item;
+  return sha(JSON.stringify(order(value)).replace(/[\u007f-\uffff]/gu,
+    (c) => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0')));
+};
+const sectionBlocks = (html) => [...html.matchAll(/<section class="choice">[\s\S]*?<\/section>/gu)]
+  .map((match) => match[0]);
+const optionBlockRange = (section) => {
+  const marker = '<ol class="choice-options">';
+  const start = section.indexOf(marker) + marker.length;
+  const end = section.lastIndexOf('</ol>');
+  assert.ok(start >= marker.length && end >= start);
+  return { start, end, blocks: [...section.slice(start, end).matchAll(/<li>[\s\S]*?<\/li>/gu)]
+    .map((match) => match[0]) };
+};
+const cssBlock = (html) => {
+  const blocks = [...html.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gu)];
+  assert.equal(blocks.length, 1, 'One authoritative renderer CSS block');
+  return blocks[0][1];
+};
+const styleByteRange = (bytes) => {
+  const open = Buffer.from('<style>');
+  const close = Buffer.from('</style>');
+  const start = bytes.indexOf(open);
+  const closeStart = bytes.indexOf(close, start + open.length);
+  assert.ok(start >= 0 && closeStart > start);
+  assert.equal(bytes.indexOf(open, start + open.length), -1, 'Exactly one literal style tag');
+  assert.equal(bytes.indexOf(close, closeStart + close.length), -1);
+  const end = closeStart + close.length;
+  return { start, end, tag: bytes.subarray(start, end),
+    css: bytes.subarray(start + open.length, closeStart),
+    withoutStyle: Buffer.concat([bytes.subarray(0, start), bytes.subarray(end)]) };
+};
+const own = (filename) => {
+  assert.ok(path.resolve(filename).startsWith(`${RUN}${path.sep}`), 'Write escaped sole runtime root');
+  return filename;
+};
+
+// This is an execution interlock, not a substitute for the parent's direct approval.
+assert.equal(process.cwd(), R, 'Every exec must use the explicitly authorized checkout');
+assert.equal(path.dirname(fileURLToPath(import.meta.url)), OWN);
+const args = process.argv.slice(2);
+assert.equal(args.length, 6, 'Require --parent-approved-combined DIR --approval FILE --approval-sha256 SHA256');
+assert.equal(args[0], '--parent-approved-combined');
+assert.equal(args[2], '--approval');
+assert.equal(args[4], '--approval-sha256');
+assert.ok(path.isAbsolute(args[1]) && path.isAbsolute(args[3]));
+assert.match(args[5], /^[a-f0-9]{64}$/u);
+const approved = await realpath(args[1]);
+const approvalPath = await realpath(args[3]);
+assert.ok(approved.startsWith(`${R}${path.sep}`) && !approved.startsWith(`${OWN}${path.sep}`));
+assert.ok(approvalPath.startsWith(`${approved}${path.sep}`), 'Approval is in the exact approved combined directory');
+assert.equal(path.basename(approvalPath), 'display-css-reuse-approval.json');
+assert.ok(!approvalPath.split(path.sep).some((part) => /^\.env(?:\.|$)/u.test(part)));
+const approvalBytes = await readFile(approvalPath);
+assert.equal(sha(approvalBytes), args[5], 'Parent-supplied approval receipt SHA256');
+const approval = JSON.parse(approvalBytes);
+assert.equal(approval.schema, 'n3-choices-display-css-reuse-parent-approval@1');
+assert.equal(approval.status, 'approved');
+assert.equal(approval.book, '8a');
+assert.equal(approval.lesson, ID);
+assert.equal(await realpath(approval.combinedDirectory), approved);
+assert.equal(approval.runnerWriteRoot, OWN);
+assert.equal(approval.runnerSha256, sha(await readFile(fileURLToPath(import.meta.url))));
+assert.match(approval.preparedBindingsSha256 ?? '', /^[a-f0-9]{64}$/u);
+assert.match(approval.cssBindingSha256 ?? '', /^[a-f0-9]{64}$/u);
+assert.match(approval.cssReuseBindingSha256 ?? '', /^[a-f0-9]{64}$/u);
+assert.equal(approval.cssPresentationPolicy, 'reuse-retained-css-for-gap-display');
+assert.match(approval.retainedCSSSha ?? '', /^[a-f0-9]{64}$/u);
+assert.equal(approval.presentationScope, 'offline-retained-css-plus-new-gap-observation-only');
+assert.equal(approval.currentAPPOrSharedCSSApproval, false);
+assert.equal(approval.allowChoicesOnlyRendererCalls, 1);
+assert.equal(approval.allowFigureRendererCalls, 0);
+assert.equal(approval.allowOriginalTextRenders, 0);
+assert.equal(approval.allowWrittenExerciseRenders, 0);
+assert.deepEqual(approval.viewports, [{ width: 1440, height: 960 }, { width: 390, height: 844 }]);
+assert.equal(approval.screenshots, 'unobserved-parent-fresh8-only');
+assert.equal(approval.onFirstFailure, 'preserve-and-stop-no-retry');
+assert.ok(typeof approval.parentAuthorizationReference === 'string' && approval.parentAuthorizationReference.trim());
+for (const name of ['seed.json', 'draft.json', 'review.json']) {
+  assert.match(approval.files?.[name]?.sha256 ?? '', /^[a-f0-9]{64}$/u);
+}
+await mkdir(RUN); // EEXIST preserves FIRST and forbids a second invocation.
+assert.equal(await realpath(RUN), RUN);
+
+const report = {
+  schema: 'n3-choices-gap-display-css-reuse-FIRST@1', status: 'RUNNING', started: new Date().toISOString(),
+  scope: { book: '8a', lesson: ID, writeRoot: OWN, runtimeRoot: RUN },
+  approval: { path: approvalPath, sha256: sha(approvalBytes), combinedDirectory: approved,
+    parentAuthorizationReference: approval.parentAuthorizationReference, invocationMarkerIsApproval: false,
+    cssPresentationPolicy: approval.cssPresentationPolicy, retainedCSSSha: approval.retainedCSSSha },
+  checks: [], inputs: [], staged: [], inherited: [], screenshots: [], screenshotReceipts: [],
+  views: [], coverage: [], faults: [],
+  preparationOrGeometryIsVisualPass: false, sourceHoldsReleased: false,
+  integrationHold: { status: 'HOLD', currentSharedCSSApproved: false, currentAPPCSSVerified: false,
+    currentAPPCSS: 'UNKNOWN_UNVERIFIED', currentAppVisited: false,
+    scope: 'Offline retained-CSS presentation plus independently observed new gaps only',
+    priorCurrentCSSDriftDiagnosticPreserved: true },
+  visualObservation: 'UNOBSERVED',
+  cleanup: { rendererClosed: true, contextsClosed: true, browserClosed: true, serverClosed: true },
+};
+const usage = {
+  phase: 'RUNTIME-CSS-REUSE-FIRST', rendererCalls: 0, originalTextRenders: 0, writtenExerciseRenders: 0,
+  figureRenders: 0, browserLaunches: 0, browserContexts: 0, pageNavigations: 0,
+  serverStarts: 0, validatorCalls: 0, screenshotAttempts: 0,
+  screenshotsProduced: 0, screenshotsCaptured: 0, imagesObserved: 0,
+  oldScreenshotsOpened: 0, oldQuestion13MaterialRenders: 0, paidCalls: 0,
+  oldQuestion12OptionFMaterialRenders: 0,
+  sourceReviews: 0, mathReviews: 0, choiceReviews: 0, dbCalls: 0,
+  dependencyChanges: 0, gitOperations: 0, hostUsage: null, hostUsageStatus: 'unknown',
+};
+const network = { blocked: [], failures: [], pageErrors: [], consoleErrors: [], badResponses: [] };
+let rendererChild;
+let browser;
+let PNG;
+const contexts = [];
+let terminated = false;
+const interrupted = () => { terminated = true; rendererChild?.kill('SIGKILL'); };
+process.once('SIGINT', interrupted);
+process.once('SIGTERM', interrupted);
+async function save(filename, value) {
+  await writeFile(own(path.join(RUN, filename)), `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+}
+async function event(value) {
+  await appendFile(own(path.join(RUN, 'events.ndjson')),
+    `${JSON.stringify({ time: new Date().toISOString(), ...value })}\n`);
+}
+function assertOfflineRuntime() {
+  assert.equal(terminated, false, 'Interrupted: preserve FIRST and stop');
+  assert.ok(Object.values(network).every((entries) => entries.length === 0),
+    'First browser/network fault stops dependent stages');
+}
+async function check(name, passed, facts = {}) {
+  assertOfflineRuntime();
+  const result = { name, status: passed ? 'PASS' : 'FAIL', ...facts, visualApproval: false };
+  report.checks.push(result);
+  await event({ check: result });
+  assert.ok(passed, name);
+}
+async function fingerprint(filename, expectedHash) {
+  const actual = await realpath(filename);
+  assert.ok(actual.startsWith(`${R}${path.sep}`), 'No inputs outside this checkout');
+  assert.ok(!actual.split(path.sep).some((part) => /^\.env(?:\.|$)/u.test(part)), 'No environment inputs');
+  const bytes = await readFile(actual);
+  const entry = { path: actual, bytes: bytes.length, sha256: sha(bytes) };
+  report.inputs.push(entry);
+  if (expectedHash) assert.equal(entry.sha256, expectedHash, `Changed bound input: ${actual}`);
+  return bytes;
+}
+async function stage(filename, bytes) {
+  own(filename);
+  await mkdir(path.dirname(filename), { recursive: true });
+  assert.ok((await realpath(path.dirname(filename))).startsWith(`${RUN}${path.sep}`));
+  await writeFile(filename, bytes, { flag: 'wx' });
+  assert.deepEqual(await readFile(filename), bytes);
+  report.staged.push({ path: filename, bytes: bytes.length, sha256: sha(bytes), byteIdenticalCopy: true });
+}
+async function readApproved(name) {
+  const filename = await realpath(path.join(approved, name));
+  assert.ok(filename.startsWith(`${approved}${path.sep}`));
+  return fingerprint(filename, approval.files[name].sha256);
+}
+async function renderOnce(book, output) {
+  assert.equal(usage.rendererCalls, 0);
+  const argv = [path.join(TOOLS, 'render_lesson.js'), book, '--out', output,
+    '--edition', EDITION, '--lesson', ID, '--choices-only'];
+  await save('renderer-FIRST-start.json', { executable: process.execPath, argv, workdir: R });
+  usage.rendererCalls += 1;
+  report.cleanup.rendererClosed = false;
+  const started = new Date().toISOString();
+  let stdout = '';
+  let stderr = '';
+  let processError;
+  rendererChild = spawn(process.execPath, argv, {
+    cwd: R, stdio: ['ignore', 'pipe', 'pipe'],
+    env: { PATH: '/usr/bin:/bin:/usr/sbin:/sbin', HOME: path.join(RUN, 'browser-home'),
+      TMPDIR: path.join(RUN, 'browser-tmp'), LANG: 'en_US.UTF-8' },
+  });
+  const child = rendererChild;
+  child.stdout.on('data', (bytes) => { stdout += bytes; });
+  child.stderr.on('data', (bytes) => { stderr += bytes; });
+  child.once('error', (error) => { processError = error.message; });
+  const timeout = setTimeout(() => child.kill('SIGKILL'), 60000);
+  const [exitCode, signal] = await new Promise((resolve) => child.once('close',
+    (code, exitSignal) => resolve([code, exitSignal])));
+  clearTimeout(timeout);
+  rendererChild = undefined;
+  report.cleanup.rendererClosed = true;
+  await writeFile(own(path.join(RUN, 'renderer-FIRST.stdout')), stdout, { flag: 'wx' });
+  await writeFile(own(path.join(RUN, 'renderer-FIRST.stderr')), stderr, { flag: 'wx' });
+  report.renderer = { argv, cwd: R, started, ended: new Date().toISOString(), exitCode, signal, processError };
+  await save('renderer-FIRST-receipt.json', report.renderer);
+  assert.equal(processError, undefined);
+  assert.equal(exitCode, 0, 'No producer retry after FIRST renderer fault');
+  const result = JSON.parse(stdout);
+  assert.equal(result.ok, true);
+  assert.equal(result.lessons.length, 1);
+  assert.equal(result.lessons[0].sourcePagesSkipped, true);
+  assert.equal(result.lessons[0].lesson, ID);
+  assert.deepEqual((await readdir(path.join(output, ID))).sort(), ['choices.html'],
+    'Original lesson/written render counts must remain zero');
+}
+
+try {
+  await mkdir(path.join(RUN, 'browser-tmp'));
+  await mkdir(path.join(RUN, 'browser-home'));
+  await mkdir(path.join(RUN, 'screenshots'));
+  await save('start-FIRST.json', { scope: report.scope, approval: report.approval, argv: args, usage });
+  const bindingBytes = await fingerprint(path.join(OWN, 'prepared-bindings.json'), approval.preparedBindingsSha256);
+  const prepared = JSON.parse(bindingBytes);
+  assert.equal(prepared.parentApprovalPending, true);
+  const cssPreparation = JSON.parse(await fingerprint(path.join(OWN, 'css-binding.json'), approval.cssBindingSha256));
+  const cssReuse = JSON.parse(await fingerprint(path.join(OWN, 'css-reuse-binding.record'), approval.cssReuseBindingSha256));
+  assert.equal(cssReuse.schema, 'n3-display-css-reuse-binding@1');
+  assert.equal(cssReuse.cssPresentationPolicy, approval.cssPresentationPolicy);
+  assert.equal(cssReuse.retainedStyle.cssSha256, approval.retainedCSSSha);
+  assert.equal(cssReuse.replacementRun.path, fileURLToPath(import.meta.url));
+  assert.equal(cssReuse.replacementRun.sha256, approval.runnerSha256);
+  for (const entry of cssReuse.preservedFIRSTFiles) {
+    await fingerprint(entry.path, entry.sha256);
+  }
+  report.integrationHold.priorCSSDiagnosis = { path: path.join(OWN, 'css-binding.json'),
+    sha256: approval.cssBindingSha256, status: cssPreparation.status,
+    difference: cssPreparation.difference, notReinterpretedAsCurrentCSSApproval: true };
+  await fingerprint(cssReuse.currentRenderer.path, cssReuse.currentRenderer.sha256);
+  await fingerprint(prepared.helper.output, prepared.helper.sha256);
+  const oldBytes = new Map();
+  for (const entry of Object.values(prepared.files)) {
+    oldBytes.set(entry.path, await fingerprint(entry.path, entry.sha256));
+  }
+  report.inherited.push(prepared.inheritedWritten);
+  const retainedHTMLBytes = oldBytes.get(prepared.oldChoices.html.path);
+  assert.equal(sha(retainedHTMLBytes), cssReuse.retainedHTML.sha256);
+  const retainedStyle = styleByteRange(retainedHTMLBytes);
+  assert.equal(retainedStyle.start, cssReuse.retainedStyle.startByte);
+  assert.equal(retainedStyle.end, cssReuse.retainedStyle.endByteExclusive);
+  assert.equal(sha(retainedStyle.tag), cssReuse.retainedStyle.tagSha256);
+  assert.equal(sha(retainedStyle.css), approval.retainedCSSSha);
+  const fontURLs = [...retainedStyle.css.toString('utf8').matchAll(/url\(([^)]*)\)/gu)]
+    .map((match) => match[1].replace(/[\u0022\u0027]/gu, '').trim());
+  assert.equal(fontURLs.length, cssReuse.retainedStyle.inlineFontURLCount);
+  assert.ok(fontURLs.length > 0 && fontURLs.every((url) => url.startsWith('data:')),
+    'Retained KaTeX fonts must remain wholly inline');
+  const retainedHtml = retainedHTMLBytes.toString('utf8');
+  const retainedSections = sectionBlocks(retainedHtml);
+  assert.equal(sha(cssBlock(retainedHtml)), prepared.oldChoices.cssSha256);
+  const seedBytes = await readApproved('seed.json');
+  const draftBytes = await readApproved('draft.json');
+  const reviewBytes = await readApproved('review.json');
+  const seed = JSON.parse(seedBytes);
+  const draft = JSON.parse(draftBytes);
+  const review = JSON.parse(reviewBytes);
+  assert.equal(seed.schema, 's10y-choice-seed-v1');
+  assert.equal(draft.schema, 's10y-choice-draft-v1');
+  assert.equal(seed.source.book, '8a');
+  assert.equal(seed.source.lesson, ID);
+  assert.equal(draft.seed_sha256, canonical(seed));
+  assert.equal(review.outcome, 'pass');
+  assert.equal(review.seed_sha256, canonical(seed));
+  assert.equal(review.draft_sha256, canonical(draft));
+  assert.equal(draft.new_figures.length, 0, 'Reuse original fig-01, not a new figure producer');
+  const combinedIds = draft.questions.map((q) => q.id);
+  assert.equal(new Set(combinedIds).size, combinedIds.length);
+  const oldIds = new Set(prepared.oldChoices.questions.map((q) => q.id));
+  for (const old of prepared.oldChoices.questions) {
+    const current = draft.questions.find((q) => q.id === old.id);
+    assert.ok(current, `Missing retained choice ${old.id}`);
+    assert.ok(same(current.view, old.view) && same(current.source_numbers, old.source_numbers),
+      `Retained reviewed choice changed: ${old.id}; do not rerender its PASS materials`);
+  }
+  const reusedIndex = combinedIds.indexOf('n3-13');
+  assert.equal(reusedIndex, 1, 'Keep the inherited displayed-question-2 mapping');
+  assert.equal(sha(retainedSections[1]), prepared.oldChoices.fullQuestionReuse.sectionSha256);
+  const additions = draft.questions.filter((q) => !oldIds.has(q.id));
+  assert.ok(additions.length > 0, 'Derive nonempty new choices from approved combined input');
+  assert.ok(additions.every((q) => q.source_numbers.length > 0
+    && q.source_numbers.every((number) => String(number) === '21')),
+  'Only newly added original question 21 belongs to this run');
+  assert.deepEqual(seed.figures.map((figure) => figure.id), ['fig-01']);
+  assert.ok(additions.some((q) => [q.view.figure_ids, ...q.view.options.map((o) => o.figure_ids)]
+    .flat().includes('fig-01')), 'New original 21 really displays fig-01');
+  const gapQuestions = draft.questions.filter((q) => q.id !== 'n3-13');
+  assert.equal(gapQuestions.filter((q) => oldIds.has(q.id)).length, 9);
+  const usedFigures = new Set(gapQuestions.flatMap((q) =>
+    [...q.view.figure_ids, ...q.view.options.flatMap((o) => o.figure_ids)]));
+  assert.deepEqual([...usedFigures], ['fig-01']);
+
+  const snapshot = path.join(RUN, 'approved-byte-snapshot');
+  for (const [name, bytes] of [['seed.json', seedBytes], ['draft.json', draftBytes], ['review.json', reviewBytes]]) {
+    await stage(path.join(snapshot, name), bytes);
+  }
+  const book = path.join(RUN, 'scratch/8a');
+  const content = path.join(book, 'editions', EDITION);
+  const stagedLesson = path.join(content, 'lessons', ID);
+  for (const name of ['lesson.json', 'exercises.json', 'figures.json']) {
+    const source = path.join(LESSON, name);
+    const bytes = oldBytes.get(source);
+    assert.ok(seed.trace.some((entry) => path.resolve(R, entry.path) === source
+      && entry.sha256 === sha(bytes)), `Combined seed stale for current ${name}`);
+    await stage(path.join(stagedLesson, name), bytes);
+  }
+  await stage(path.join(stagedLesson, 'choice-set/seed.json'), seedBytes);
+  await stage(path.join(stagedLesson, 'choice-set/review.json'), reviewBytes);
+  // Remove the complete observed question and original-12 F, which has already
+  // been seen in both views. A-E is rendered once for the unseen mobile region.
+  const gapDraft = { ...draft, questions: gapQuestions.map((question) => question.id === 'n3-12'
+    ? { ...question, view: { ...question.view,
+      options: question.view.options.filter((_, optionIndex) => optionIndex !== 5) } } : question) };
+  const gapDraftBytes = Buffer.from(`${JSON.stringify(gapDraft, null, 2)}\n`);
+  await stage(path.join(stagedLesson, 'choice-set/draft.json'), gapDraftBytes);
+  report.staged.at(-1).byteIdenticalCopy = false;
+  report.staged.at(-1).derivedGapProjection = true;
+  const figureBase = path.join(MODERN, 'figures/fig-01');
+  const figureSpecBytes = oldBytes.get(`${figureBase}.spec.json`);
+  const figureSvgBytes = oldBytes.get(`${figureBase}.svg`);
+  const figureRenderBytes = oldBytes.get(`${figureBase}.render.json`);
+  const figureReviewBytes = oldBytes.get(`${figureBase}.review.json`);
+  const spec = JSON.parse(figureSpecBytes);
+  const figureReview = JSON.parse(figureReviewBytes);
+  assert.equal(spec.id, 'fig-01');
+  assert.equal(spec.mode, 'deterministic');
+  assert.equal(figureReview.status, 'pass');
+  assert.equal(figureReview.spec.sha256, sha(figureSpecBytes));
+  assert.equal(figureReview.render.sha256, sha(figureRenderBytes));
+  assert.equal(figureReview.outputs.svg.sha256, sha(figureSvgBytes));
+  assert.ok(spec.display.minTextPx >= 16);
+  for (const [suffix, bytes] of [['svg', figureSvgBytes], ['spec.json', figureSpecBytes],
+    ['render.json', figureRenderBytes], ['review.json', figureReviewBytes]]) {
+    await stage(path.join(content, `figures/fig-01.${suffix}`), bytes);
+  }
+  const figureContracts = {
+    'fig-01': { minimumPx: spec.display.minTextPx, layout: spec.display.layout,
+      maxWidthPx: spec.display.maxWidthPx ?? null,
+      labels: (spec.objects ?? []).filter((o) => o.type === 'text' || o.label)
+        .map((o) => ({ id: `${o.id}-label`, text: String(o.text ?? o.label).trim() })) },
+  };
+  report.figureReuse = { id: 'fig-01', svgSha256: sha(figureSvgBytes), specSha256: sha(figureSpecBytes),
+    reviewSha256: sha(figureReviewBytes), mode: 'hash-bound-review-reuse-only', scientificReReview: false,
+    newFigureRenders: 0, browserLabelMinimumRequired: 16 };
+  report.choiceProjection = { approvedQuestions: draft.questions.length,
+    inheritedWholeQuestion: 'n3-13', nineOldGapQuestions: gapQuestions.filter((q) => oldIds.has(q.id)).map((q) => q.id),
+    additions: additions.map((q) => ({ id: q.id, source_numbers: q.source_numbers })),
+    rendererQuestionIds: gapQuestions.map((q) => q.id), seedSha256: sha(seedBytes),
+    neverRenderedRegions: ['n3-13:whole-observed-material', 'n3-12:option-F'],
+    original12OptionsAE: 'rendered-once-for-mobile-gap-only-not-captured-on-desktop',
+    approvedDraftSha256: sha(draftBytes), approvedReviewSha256: sha(reviewBytes),
+    rendererGapDraftSha256: sha(gapDraftBytes), approvedSnapshotImmutable: true,
+    derivedProjectionReviewHashNotRebound: true, authorMathOrChoiceApprovalClaim: false };
+  await save('choice-gap-projection.json', report.choiceProjection);
+  await renderOnce(book, path.join(RUN, 'render'));
+  const htmlBytes = await fingerprint(path.join(RUN, 'render', ID, 'choices.html'));
+  const html = htmlBytes.toString('utf8');
+  const currentCSSSha256 = sha(cssBlock(html));
+  const rendererStyle = styleByteRange(htmlBytes);
+  assert.equal(sha(rendererStyle.css), currentCSSSha256);
+  report.inheritedCSS = { oldCSSSha256: prepared.oldChoices.cssSha256, currentCSSSha256,
+    rendererCSSMatchesRetainedCSS: currentCSSSha256 === approval.retainedCSSSha,
+    presentationCSSSha256: approval.retainedCSSSha, policy: approval.cssPresentationPolicy,
+    status: 'RETAINED_CSS_BYTE_BOUND_OFFLINE_REUSE_ONLY',
+    oldQuestion13RerenderedOrRecaptured: false,
+    original12OptionFRerenderedOrRecaptured: false,
+    original12DesktopOptionsAFRecaptured: false,
+    original12OptionsAEOneRenderForMobileGap: true,
+    wholeCurrentChoiceDisplayPassClaimed: false };
+  report.cssPresentation = {
+    policy: approval.cssPresentationPolicy, retainedHTML: cssReuse.retainedHTML,
+    retainedStyle: cssReuse.retainedStyle,
+    currentRenderer: { path: cssReuse.currentRenderer.path, sha256: cssReuse.currentRenderer.sha256,
+      CSSSha256: currentCSSSha256, styleTagSha256: sha(rendererStyle.tag),
+      output: { path: path.join(RUN, 'render', ID, 'choices.html'), sha256: sha(htmlBytes),
+        navigated: false, observed: false, overwritten: false } },
+    substitutionTarget: 'New scratch-only final gap HTML before first navigation',
+    retainedCSSCopiedByOriginalBytes: true, CSSReconstructedFromGuesses: false,
+    finalViews: [], currentSharedCSSOrAPPApproval: false, currentAPPCSS: 'UNKNOWN_UNVERIFIED',
+  };
+  await save('css-presentation-source-binding.json', report.cssPresentation);
+  const blocks = sectionBlocks(html);
+  assert.equal(blocks.length, gapQuestions.length);
+  const ordinalBoundBlocks = blocks.map((block, index) => {
+    const originalIndex = combinedIds.indexOf(gapQuestions[index].id);
+    const prefix = `<section class="choice"><p class="choice-heading">${index + 1}. `;
+    assert.ok(block.startsWith(prefix));
+    let restored = block.replace(prefix, `<section class="choice"><p class="choice-heading">${originalIndex + 1}. `);
+    if (gapQuestions[index].id === 'n3-12') {
+      const oldOptions = optionBlockRange(retainedSections[0]);
+      const renderedOptions = optionBlockRange(restored);
+      assert.equal(oldOptions.blocks.length, 6);
+      assert.equal(renderedOptions.blocks.length, 5);
+      assert.ok(oldOptions.blocks[5].startsWith('<li><span class="option-id">F</span>'));
+      // This binding-only reconstruction is never navigated. F's old bytes are
+      // discarded again when both viewport-specific gap pages are formed.
+      restored = restored.slice(0, renderedOptions.end) + oldOptions.blocks[5] + restored.slice(renderedOptions.end);
+    }
+    return restored;
+  });
+  for (const old of prepared.oldChoices.questions.filter((q) => q.id !== 'n3-13')) {
+    assert.equal(sha(ordinalBoundBlocks[gapQuestions.findIndex((q) => q.id === old.id)]), old.sectionSha256,
+      `Current same-question byte/CSS binding failed: ${old.id}`);
+  }
+  report.inherited.push({ ...prepared.oldChoices.fullQuestionReuse, originalIndex: reusedIndex,
+    approvedViewSemanticSha256: canonical(draft.questions[reusedIndex].view),
+    oldViewSemanticSha256: canonical(prepared.oldChoices.questions[1].view),
+    retainedHTMLSha256: prepared.oldChoices.html.sha256,
+    currentRendererCSSSha256: currentCSSSha256, presentationCSSSha256: approval.retainedCSSSha,
+    reuseStatus: 'BYTE_AND_SEMANTIC_BOUND_TO_EXACT_RETAINED_CSS_ONLY',
+    sectionWasNotRerendered: true,
+    sameSectionBytesVerifiedInRetainedHTML: true,
+    currentApprovedViewAndOrdinalUnchanged: true, observations: prepared.oldChoices.observations });
+  await save('inherited-region-bindings.json', report.inherited);
+
+  const requireApp = createRequire(path.join(R, 'app/package.json'));
+  const { chromium, expect } = requireApp('@playwright/test');
+  const core = path.dirname(requireApp.resolve('playwright-core/package.json'));
+  ({ PNG } = requireApp(path.join(core, 'lib/utilsBundle.js')));
+  const { createDisplayHelpers } = await import(pathToFileURL(prepared.helper.output).href);
+  const { projection, installDisplayTools, pageSafety, captureCoverage } = createDisplayHelpers({
+    norm, own, RUN, assertOfflineRuntime, PNG, same, sha, report, usage, event, save, check,
+  });
+  const { marked } = await import(pathToFileURL(path.join(R,
+    '.agents/skills/node_modules/marked/lib/marked.esm.js')).href);
+  const expectedChoice = (text) => {
+    const tokens = marked.lexer(text);
+    const tables = [];
+    if (!tokens.some((token) => token.type === 'table')) return { ...projection(text), tables, literalLF: true };
+    const pieces = [];
+    for (const token of tokens) {
+      if (token.type !== 'table') { pieces.push(token.raw); continue; }
+      const rows = [token.header, ...token.rows].map((row) => row.map((cell) => cell.text));
+      tables.push(rows.map((row) => row.map(projection)));
+      pieces.push(...rows.map((row) => row.join(' ')));
+    }
+    return { ...projection(pieces.join(' ')), tables, literalLF: false };
+  };
+  const leakage = /\b(?:seed_sha256|draft_sha256|source_numbers|source_solution|independent_solution|correct_index|correctIndex|answerKey|answer_key|rationales|misconception|omitted_tasks|api_key|password|postgres(?:ql)?|intent)\b/iu;
+  assert.ok(!leakage.test(html), 'Never serve private choice review/key payload');
+  usage.browserLaunches += 1;
+  report.cleanup.browserClosed = false;
+  browser = await chromium.launch({
+    headless: true, timeout: 30000, downloadsPath: path.join(RUN, 'browser-tmp'),
+    env: { PATH: '/usr/bin:/bin:/usr/sbin:/sbin', HOME: path.join(RUN, 'browser-home'),
+      TMPDIR: path.join(RUN, 'browser-tmp'), LANG: 'en_US.UTF-8' },
+    args: ['--disable-background-networking', '--disable-component-update', '--disable-sync',
+      '--no-first-run', '--disable-default-apps', '--host-resolver-rules=MAP * ~NOTFOUND'],
+  });
+  report.browser = { package: requireApp.resolve('@playwright/test'), version: browser.version(),
+    headless: true, deviceScaleFactor: 1, serverRequired: false,
+    limitation: 'Offline choice-gap evidence only; not headed app acceptance' };
+  for (const viewport of approval.viewports) {
+    assertOfflineRuntime();
+    const viewProgress = { viewport, status: 'STARTED', surface: 'choices',
+      imagesObserved: 0, inheritedQuestion13Captured: false };
+    report.views.push(viewProgress);
+    const partial = prepared.oldChoices.partialQuestionReuse[String(viewport.width)];
+    const viewBlocks = ordinalBoundBlocks.map((block, index) => {
+      if (gapQuestions[index].id !== 'n3-12') return block;
+      const { start, end, blocks: options } = optionBlockRange(block);
+      assert.equal(options.length, 6);
+      const missingOptions = options.filter((_, optionIndex) => !partial.optionIndices.includes(optionIndex));
+      return block.slice(0, start) + missingOptions.join('') + block.slice(end);
+    });
+    let projectedHtml = html;
+    for (let index = 0; index < blocks.length; index += 1) {
+      assert.equal(projectedHtml.split(blocks[index]).length, 2);
+      projectedHtml = projectedHtml.replace(blocks[index], viewBlocks[index]);
+    }
+    const projectedBytes = Buffer.from(projectedHtml);
+    const projectedStyle = styleByteRange(projectedBytes);
+    assert.deepEqual(projectedStyle.tag, rendererStyle.tag, 'Gap projection did not alter renderer CSS');
+    // Both versions are new and unobserved. Copy the entire retained style tag
+    // verbatim; only this scratch final version may be navigated.
+    const finalBytes = Buffer.concat([projectedBytes.subarray(0, projectedStyle.start),
+      retainedStyle.tag, projectedBytes.subarray(projectedStyle.end)]);
+    const finalStyle = styleByteRange(finalBytes);
+    assert.deepEqual(finalStyle.tag, retainedStyle.tag, 'Final complete style tag byte equality');
+    assert.deepEqual(finalStyle.css, retainedStyle.css, 'Final CSS and inline font byte equality');
+    assert.deepEqual(finalStyle.withoutStyle, projectedStyle.withoutStyle,
+      'CSS substitution must preserve every non-CSS content byte');
+    const viewHtml = finalBytes.toString('utf8');
+    assert.deepEqual(sectionBlocks(viewHtml), viewBlocks, 'All final source-view section bytes remain identical');
+    assert.ok(!sectionBlocks(viewHtml).some((block) => sha(block)
+      === prepared.oldChoices.fullQuestionReuse.sectionSha256), 'Never load n3-13 PASS materials');
+    assert.equal(sha(cssBlock(viewHtml)), approval.retainedCSSSha);
+    const projectedPath = path.join(RUN, `${viewport.width}-choices-gaps-current-css-unvisited.html`);
+    await stage(projectedPath, projectedBytes);
+    report.staged.at(-1).byteIdenticalCopy = false;
+    const viewPath = path.join(RUN, `${viewport.width}-choices-gaps-retained-css.html`);
+    await stage(viewPath, finalBytes);
+    report.staged.at(-1).byteIdenticalCopy = false;
+    const cssViewBinding = {
+      viewport, policy: approval.cssPresentationPolicy,
+      rawProjection: { path: projectedPath, sha256: sha(projectedBytes), navigated: false, observed: false },
+      finalView: { path: viewPath, sha256: sha(finalBytes), neverPreviouslyNavigatedOrObserved: true },
+      currentRendererCSSSha256: currentCSSSha256, retainedCSSSha256: approval.retainedCSSSha,
+      finalCSSSha256: sha(finalStyle.css), finalStyleTagSha256: sha(finalStyle.tag),
+      finalCSSEqualsOriginalRetainedCSSBytes: true, completeStyleTagCopiedByOriginalBytes: true,
+      allNonCSSSourceBytesEqual: true, nonCSSBytesSha256: sha(finalStyle.withoutStyle),
+      allSourceViewSectionBytesEqual: true,
+      displayedSources: gapQuestions.map((question) => ({
+        id: question.id, source_numbers: question.source_numbers,
+        approvedViewSemanticSha256: canonical(question.view),
+        excludedOptions: question.id === 'n3-12' ? partial.optionIndices : [],
+      })),
+      substitutionOnlyScratchFinalNewHTML: true, currentSharedCSSOrAPPApproved: false,
+      visualObservation: 'UNOBSERVED',
+    };
+    report.cssPresentation.finalViews.push(cssViewBinding);
+    await save(`${viewport.width}-css-reuse-binding.json`, cssViewBinding);
+    const pageUrl = pathToFileURL(viewPath).href;
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1,
+      serviceWorkers: 'block', acceptDownloads: false });
+    context.setDefaultTimeout(20000);
+    contexts.push(context);
+    usage.browserContexts += 1;
+    report.cleanup.contextsClosed = false;
+    await context.route('**/*', async (route) => {
+      const request = route.request();
+      if (request.method() === 'GET' && request.url() === pageUrl) await route.continue();
+      else {
+        network.blocked.push({ method: request.method(), url: request.url() });
+        await route.abort('blockedbyclient');
+      }
+    });
+    await context.routeWebSocket(/.*/, async (socket) => {
+      network.blocked.push({ kind: 'websocket' });
+      await socket.close();
+    });
+    const page = await context.newPage();
+    page.on('pageerror', (error) => network.pageErrors.push(error.message));
+    page.on('console', (message) => {
+      if (message.type() === 'error') network.consoleErrors.push(message.text());
+    });
+    page.on('requestfailed', (request) => network.failures.push({ url: request.url(), error: request.failure() }));
+    page.on('response', (response) => {
+      if (response.status() >= 400) network.badResponses.push({ url: response.url(), status: response.status() });
+    });
+    usage.pageNavigations += 1;
+    await page.goto(pageUrl, { waitUntil: 'load' });
+    assertOfflineRuntime();
+    await expect(page.locator('style')).toHaveCount(1);
+    const DOMCSSBytes = Buffer.from(await page.locator('style').textContent());
+    await check(`${viewport.width}:final-DOM-CSS-original-byte-equality`,
+      DOMCSSBytes.equals(retainedStyle.css) && sha(DOMCSSBytes) === approval.retainedCSSSha,
+      { currentRendererCSSSha256: currentCSSSha256, DOMCSSSha256: sha(DOMCSSBytes),
+        retainedCSSSha256: approval.retainedCSSSha, currentAPPOrSharedCSSApproval: false });
+    await expect(page.locator('.choice')).toHaveCount(gapQuestions.length);
+    await expect(page.locator('a,link')).toHaveCount(0);
+    const materials = [];
+    const add = (key, selector, index, expected) => materials.push({ key, selector, index, expected });
+    const lesson = JSON.parse(oldBytes.get(path.join(LESSON, 'lesson.json')));
+    add('title', 'h1', 0, projection(`${lesson.printed_title || lesson.title} \u00b7 \u9009\u62e9\u9898`));
+    for (const [index, question] of gapQuestions.entries()) {
+      const selector = `.choice:nth-of-type(${index + 1})`;
+      const originalIndex = combinedIds.indexOf(question.id);
+      add(`${question.id}-heading`, `${selector} .choice-heading`, 0,
+        projection(`${originalIndex + 1}. ${question.view.mode === 'multiple' ? '\u591a\u9009' : '\u5355\u9009'}`));
+      add(`${question.id}-stem`, `${selector} .choice-stem`, 0, expectedChoice(question.view.stem));
+      let displayedOptionIndex = 0;
+      for (const [optionIndex, option] of question.view.options.entries()) {
+        if (question.id === 'n3-12' && partial.optionIndices.includes(optionIndex)) continue;
+        add(`${question.id}-option-${optionIndex}`, `${selector} .choice-option-body`, displayedOptionIndex,
+          expectedChoice(option.text));
+        add(`${question.id}-label-${optionIndex}`, `${selector} .option-id`, displayedOptionIndex,
+          projection(String.fromCharCode(65 + optionIndex)));
+        displayedOptionIndex += 1;
+      }
+      await expect(page.locator(selector).locator('.choice-options > li')).toHaveCount(displayedOptionIndex);
+      const actualFigureIds = await page.locator(selector).locator('figure').evaluateAll((nodes) => nodes.map((n) => n.id));
+      assert.ok(same(actualFigureIds, [...question.view.figure_ids,
+        ...question.view.options.flatMap((o) => o.figure_ids)]));
+    }
+    const dom = await page.evaluate(installDisplayTools, {
+      materials: materials.map(({ expected, ...descriptor }) => descriptor), figureContracts,
+    });
+    await save(`${viewport.width}-gap-target-inventory.json`, {
+      viewport, surface: 'choices', visualObservation: 'UNOBSERVED',
+      materials: materials.map(({ expected, ...descriptor }) => ({
+        ...descriptor, expectedTextSha256: sha(expected.serialized),
+        expectedFormulaCount: expected.formulas.length, expectedTableCount: (expected.tables ?? []).length,
+      })), roots: dom.roots, targets: dom.targets, figures: dom.figures,
+      hidden: dom.hidden, failed: dom.failed, ends: dom.ends,
+      inheritedQuestion13: prepared.oldChoices.fullQuestionReuse,
+      inheritedQuestion12OptionIndices: partial.optionIndices,
+      cssPresentationBinding: cssViewBinding,
+    });
+    viewProgress.targetInventory = path.join(RUN, `${viewport.width}-gap-target-inventory.json`);
+    await check(`${viewport.width}:choices:every-gap-glyph-rule-and-full-media-edge-reachable`,
+      dom.hidden.length === 0 && dom.failed.length === 0 && dom.targetCount > 0
+      && dom.ends.every((end) => Math.abs(end.maximum - end.actual) <= 1),
+      { targets: dom.targetCount, hidden: dom.hidden, failed: dom.failed, ends: dom.ends });
+    for (const material of materials) {
+      const actual = dom.roots.find((root) => root.key === material.key);
+      const expected = material.expected;
+      const subparts = actual.lines.flatMap((line, index) => /^(?:[a-z]|\d+)\)\s/u.test(line) ? [index] : []);
+      const rows = subparts.map((index) => {
+        let previous = index - 1;
+        while (previous >= 0 && actual.lines[previous] === '') previous -= 1;
+        return { index, previous, current: actual.lineGeometry[index],
+          preceding: previous < 0 ? null : actual.lineGeometry[previous] };
+      });
+      const separateRows = rows.every(({ previous, current, preceding }) =>
+        previous < 0 || current && preceding && current.top > preceding.top + 0.5);
+      const tables = actual.tables.map((table) => table.map((row) =>
+        row.map(({ serialized, formulas, lines }) => ({ serialized, formulas, lines }))));
+      await check(`${viewport.width}:${material.key}:exact-text-table-formula-and-rows`,
+        actual.serialized === expected.serialized
+        && same(actual.formulas.map((f) => f.tex), expected.formulas)
+        && actual.formulas.every((f) => f.visible && f.nonempty)
+        && (expected.literalLF === false || same(actual.lines, expected.lines))
+        && same(tables, expected.tables ?? []) && separateRows,
+        { textSha256: sha(actual.serialized), formulas: actual.formulas.length,
+          tableCount: tables.length, separateRows, rows, targets: actual.indices.length });
+    }
+    for (const figure of dom.figures) {
+      await check(`${viewport.width}:${figure.key}:actual-SVG-transform-label-minimum`,
+        figure.labelBindings && figure.labels.length > 0
+        && figure.labels.every((label) => label.insideSvg && label.px >= 16 && label.px >= figure.minimumPx)
+        && figure.layout === figure.expectedLayout && figure.mediaWidth > 0 && figure.mediaHeight > 0
+        && figure.svgWidth === figure.mediaWidth,
+        { labels: figure.labels, requiredMinimumPx: 16, mediaWidth: figure.mediaWidth,
+          mediaHeight: figure.mediaHeight, labelsMeasuredThroughScreenCTM: true, scientificReReview: false });
+    }
+    const safety = await page.evaluate(pageSafety);
+    await check(`${viewport.width}:choices:read-only-contained-no-label-collision`,
+      safety.documentWidth <= viewport.width + 1 && safety.bodyWidth <= viewport.width + 1
+      && safety.scrollX === 0 && safety.errors === 0 && safety.widgets === 0 && safety.scripts === 0
+      && safety.dangerousAttributes.length === 0 && safety.labelBodyCollisions.length === 0
+      && safety.sections.every((box, index, boxes) => box.left >= -1 && box.right <= viewport.width + 1
+        && box.height > 0 && (index === 0 || box.top >= boxes[index - 1].bottom - 0.5))
+      && safety.fonts.some((font) => font.family.startsWith('KaTeX') && font.status === 'loaded')
+      && safety.fonts.every((font) => font.status !== 'error'), safety);
+    // The exact inherited helper counts indexed captures. This adapter also
+    // records produced bytes before a subsequent decode/coverage check can fail.
+    const capturePage = {
+      evaluate: page.evaluate.bind(page),
+      screenshot: async (options) => {
+        usage.screenshotAttempts += 1;
+        const bytes = await page.screenshot(options);
+        usage.screenshotsProduced += 1;
+        const receipt = { path: options.path, sha256: sha(bytes), bytes: bytes.length,
+          viewport, surface: 'choices', visualObservation: 'UNOBSERVED',
+          fullPage: false, nativeViewport: true, oldScreenshotReopened: false };
+        report.screenshotReceipts.push(receipt);
+        await event({ producedScreenshot: receipt });
+        return bytes;
+      },
+    };
+    await captureCoverage(capturePage, viewport, 'choices', dom);
+    const inventory = report.coverage.at(-1);
+    inventory.inheritedQuestion13 = { id: 'n3-13', bindingFile: path.join(RUN, 'inherited-region-bindings.json'),
+      capturedThisRun: false };
+    inventory.inheritedQuestion12Options = partial.optionIndices;
+    const snapshot = await page.evaluate(() => window.__n9Display.snapshot());
+    inventory.finalGeometry = snapshot;
+    await save(`${viewport.width}-per-view-coverage.json`, {
+      ...inventory, questionIds: gapQuestions.map((q) => q.id),
+      textTableFormulaTargets: dom.targets, figures: dom.figures,
+      sourceHTML: { path: viewPath, sha256: sha(Buffer.from(viewHtml)) },
+      cssPresentationBinding: cssViewBinding, integrationHold: report.integrationHold,
+    });
+    viewProgress.status = 'CAPTURED_UNOBSERVED';
+    viewProgress.coverage = path.join(RUN, `${viewport.width}-per-view-coverage.json`);
+    await context.close();
+    contexts.splice(contexts.indexOf(context), 1);
+    report.cleanup.contextsClosed = contexts.length === 0;
+  }
+  await check('exactly-one-choices-only-render-two-native-views-no-passed-surface-repeat',
+    usage.rendererCalls === 1 && usage.browserLaunches === 1 && usage.browserContexts === 2
+    && usage.pageNavigations === 2 && report.coverage.length === 2
+    && usage.oldQuestion13MaterialRenders === 0 && usage.originalTextRenders === 0
+    && usage.oldQuestion12OptionFMaterialRenders === 0
+    && usage.writtenExerciseRenders === 0 && usage.figureRenders === 0 && usage.validatorCalls === 0);
+  await check('exactly-two-byte-bound-retained-CSS-final-gap-views',
+    report.cssPresentation.finalViews.length === 2
+    && report.cssPresentation.finalViews.every((view) => view.finalCSSEqualsOriginalRetainedCSSBytes
+      && view.allNonCSSSourceBytesEqual && view.allSourceViewSectionBytesEqual)
+    && report.integrationHold.currentAPPCSSVerified === false);
+  report.status = 'CAPTURED_UNOBSERVED_RETAINED_CSS_APP_HOLD';
+} catch (error) {
+  report.status = 'FAIL-FIRST';
+  report.executionFailure = { name: error.name, message: error.message, stack: error.stack };
+  report.faults.push({ stage: 'FIRST', ...report.executionFailure, preserved: true, retry: false });
+  await event({ failure: report.executionFailure });
+} finally {
+  if (rendererChild) {
+    rendererChild.kill('SIGKILL');
+    await new Promise((resolve) => rendererChild.once('close', resolve));
+    report.cleanup.rendererClosed = true;
+  }
+  for (const context of contexts) {
+    try { await context.close(); } catch (error) {
+      report.faults.push({ stage: 'context-close', message: error.message });
+    }
+  }
+  report.cleanup.contextsClosed = contexts.every((context) => context.pages().length === 0);
+  try { if (browser) await browser.close(); report.cleanup.browserClosed = true; }
+  catch (error) {
+    report.cleanup.browserClosed = false;
+    report.faults.push({ stage: 'browser-close', message: error.message });
+  }
+  if (Object.values(report.cleanup).some((closed) => !closed) || terminated || report.faults.length) {
+    report.status = 'FAIL-FIRST';
+  }
+  report.network = network;
+  report.ended = new Date().toISOString();
+  usage.screenshotsCaptured = usage.screenshotsProduced;
+  for (const view of report.views) if (view.status === 'STARTED') {
+    view.status = 'INCOMPLETE-FIRST';
+    view.failure = report.executionFailure ?? { message: 'Interrupted or cleanup failure' };
+  }
+  report.visualObservation = 'UNOBSERVED';
+  report.reviewHandoff = { required: true, reviewer: 'parent-dispatched-fresh-image-batches',
+    imagesPerBatchMaximum: 8, contextImageMaximum: 24, screenshotReopensByProducer: 0,
+    screenshotPaths: report.screenshotReceipts.map((image) => ({ path: image.path, sha256: image.sha256 })),
+    presentationPolicy: approval.cssPresentationPolicy, retainedCSSSha256: approval.retainedCSSSha,
+    approvalScope: 'Complete offline retained-CSS presentation with inherited old pixels plus new gap observation',
+    currentAPPOrSharedCSSApproval: false, currentAPPCSS: 'UNKNOWN_UNVERIFIED',
+    notAVisualPass: true };
+  await save('usage-FIRST.json', usage);
+  await save('report-FIRST.json', report);
+  process.removeListener('SIGINT', interrupted);
+  process.removeListener('SIGTERM', interrupted);
+  if (report.status === 'FAIL-FIRST') process.exitCode = 1;
+  console.log(JSON.stringify({ status: report.status, report: path.join(RUN, 'report-FIRST.json'),
+    screenshots: report.screenshots.length, imagesObserved: 0, cleanup: report.cleanup }, null, 2));
+}
