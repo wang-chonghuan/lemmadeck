@@ -1,0 +1,75 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-5724/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [phase] = process.argv.slice(2);
+assert.ok(['before', 'after'].includes(phase));
+const own = '.tmp/resume182-6-c2ex-answer-final-binding5724-FIRST';
+const lesson = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c2-ex';
+const keyFile = `${lesson}/answer-keys.json`;
+const capture = '.tmp/resume182-6-c2ex-answer-finalize-capture5724-FIRST/captured';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const entry = file => ({ path: file, sha256: sha(fs.readFileSync(file)) });
+const load = file => JSON.parse(fs.readFileSync(file));
+const dumpNew = (file, value) =>
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+if (phase === 'before') {
+  const integrationFile = '.tmp/resume182-6-c2ex-answer-integration5724-FIRST/integration.record';
+  const integration = load(integrationFile);
+  assert.equal(integration.status, 'pass');
+  const bytes = fs.readFileSync(keyFile);
+  assert.equal(sha(bytes), integration.answerFile.sha256);
+  assert.equal(JSON.parse(bytes).status, 'draft');
+  fs.writeFileSync(`${own}/keys.before.record`, bytes, { flag: 'wx' });
+  dumpNew(`${own}/before.record`, { status: 'not-yet-finalized',
+    integration: entry(integrationFile), keys: entry(keyFile) });
+} else {
+  const before = load(`${own}/keys.before.record`);
+  const current = load(keyFile);
+  assert.equal(current.status, 'ready');
+  assert.equal(current.count, 50);
+  const comparable = structuredClone(current);
+  comparable.status = before.status;
+  delete comparable.count;
+  assert.deepEqual(comparable, before, 'Only ready/count metadata may change');
+  const checks = {};
+  for (const tool of ['check_math_expressions.mjs', 'check_mathlive_exact.mjs']) {
+    const directory = `${capture}/${tool}`;
+    const receipt = load(`${directory}/receipt.record`);
+    assert.equal(receipt.returncode, 0);
+    const report = load(`${directory}/stdout.txt`);
+    assert.equal(report.status, 'pass');
+    checks[tool] = { receipt: entry(`${directory}/receipt.record`),
+      report: entry(`${directory}/stdout.txt`), stderr: entry(`${directory}/stderr.txt`) };
+    if (tool === 'check_mathlive_exact.mjs') {
+      assert.equal(report.schema, 'ld-s10y-answer/mathlive-exact-report@1');
+      assert.ok(report.caseCount > 0);
+      assert.equal(report.caseCount, report.results.length);
+      assert.equal(report.failures, 0);
+      for (const result of report.results) {
+        assert.ok(result.accepted && result.inserted && result.preserved);
+        assert.ok(result.inputEvents > 0 && result.emitted?.trim());
+        assert.ok(result.rejected.every(negative => negative.rejected));
+      }
+      checks[tool].actualCases = report.caseCount;
+    }
+  }
+  assert.equal(load(`${lesson}/answer-keys.audit.json`).status, 'pass');
+  dumpNew(`${own}/ready.record`, {
+    schema: 'stemrobin-182/final-answer-binding@1', status: 'pass',
+    book: '8a', lesson: 'alg8-c2-ex', edition: 'modern-us-neutral',
+    before: entry(`${own}/keys.before.record`), final: entry(keyFile),
+    audit: entry(`${lesson}/answer-keys.audit.json`),
+    integration: load(`${own}/before.record`).integration, checks,
+    standardAnswers: current.answers.length,
+    auto: current.answers.filter(answer => answer.grading === 'auto').length,
+    ungraded: current.answers.filter(answer => answer.grading === 'ungraded').length,
+    answerContentChangesDuringFinalize: 0, nativeFinalizeCalls: 1,
+    realMathliveGateCalls: 1, oldPassReruns: 0, databaseWrites: 0,
+    completeLessonApproval: false, hostTokens: 'unknown', totalCost: 'unknown', finish: 'review',
+  });
+}
+const file = `${own}/${phase === 'before' ? 'before' : 'ready'}.record`;
+console.log(JSON.stringify({ path: file, sha256: sha(fs.readFileSync(file)) }));

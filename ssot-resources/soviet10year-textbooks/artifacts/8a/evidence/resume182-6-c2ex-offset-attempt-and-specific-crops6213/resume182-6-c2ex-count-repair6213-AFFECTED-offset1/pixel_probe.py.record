@@ -1,0 +1,71 @@
+"""Read numerical ink geometry only; never display or rewrite source pixels."""
+import hashlib
+import inspect
+import json
+from pathlib import Path
+import sys
+
+from PIL import Image
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck")
+assert Path.cwd() == REPO
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+import layout
+
+MASKS = {73: [346, 1930, 1724, 611]}
+lines, start = inspect.getsourcelines(layout.line_bands)
+probe = start + next(i for i, line in enumerate(lines) if line.strip() == "if count == 1:")
+
+for page in map(int, sys.argv[1:]):
+    assert page in (66, 67, 72, 73)
+    base = REPO / ".tmp/ld-s10y-lesson/8a/pages" / f"{page:04d}"
+    source = base / "page.png"
+    metadata = json.loads((base / "layout.json").read_text())
+    with Image.open(source) as image:
+        ink = layout.ink_mask(image)
+    if page in MASKS:
+        x, y, width, height = MASKS[page]
+        ink[y:y + height, x:x + width] = False
+    scalars, bands = {}, []
+
+    def trace(frame, event, argument):
+        if frame.f_code is not layout.line_bands.__code__:
+            return trace
+        values = frame.f_locals
+        if event == "line" and frame.f_lineno == probe:
+            a, b, glyph_h = (values[key] for key in ("a", "b", "glyph_h"))
+            record = {key: values[key] for key in ("a", "b", "count", "spanning_brace")}
+            if values["band_h"] > 2 * glyph_h:
+                record["strong_rows"] = values.get("strong_rows")
+                record["geometry"] = [
+                    [rows.start, rows.stop, columns.start, columns.stop]
+                    for bounds in values["bounds_list"] if bounds is not None
+                    for rows, columns in [bounds]
+                    if a <= (rows.start + rows.stop) / 2 <= b
+                    and rows.stop - rows.start >= 0.6 * glyph_h
+                    and columns.stop - columns.start >= 0.2 * glyph_h
+                ]
+                record["braces"] = [
+                    [rows.start, rows.stop, columns.start, columns.stop]
+                    for bounds in values["bounds_list"] if bounds is not None
+                    for rows, columns in [bounds]
+                    if min(rows.stop, b + 1) - max(rows.start, a) >= 0.9 * (b - a + 1)
+                    and columns.stop - columns.start < 0.8 * glyph_h
+                ]
+            bands.append(record)
+        if event == "return":
+            scalars.update({key: values.get(key) for key in
+                            ("line_h", "glyph_h", "typical_h", "typical_gap", "pitch")})
+        return trace
+
+    sys.settrace(trace)
+    result = layout.line_bands(ink, metadata["content_width"])
+    sys.settrace(None)
+    print(json.dumps({
+        "page": page, "source": str(source),
+        "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+        "implementation_sha256": layout.sha256_file(Path(layout.__file__)),
+        "figure_mask": MASKS.get(page), "scalars": scalars,
+        "pre_expansion": bands, "count": len(result), "bands": result,
+        "image_observations": 0, "status": "NUMERICAL_COUNTER_NOT_SOURCE_APPROVAL",
+    }, default=lambda value: value.item()))

@@ -1,0 +1,47 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck';
+assert.equal(process.cwd(), repo);
+const output = `${repo}/.tmp/resume182-6-plane-current182-read6213-FIRST`;
+fs.mkdirSync(output);
+const helper = '/Users/yong/.agents/skills/n-plane/scripts/plane.sh';
+const project = '556c9df8-f5ac-435a-8abd-53bc522dd8a7';
+const id = '8603d84a-66dc-4a54-8ea4-c95c254940de';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const calls = [];
+function call(operation, endpoint) {
+  const started = new Date().toISOString();
+  const result = spawnSync('/bin/bash', [helper, operation, ...(endpoint ? [endpoint] : [])], {
+    cwd: repo, encoding: 'utf8', maxBuffer: 4 * 1024 * 1024,
+    env: { ...process.env, PLANE_WORKSPACE_SLUG: 'intentmill' },
+  });
+  const record = { operation, endpoint: endpoint ?? null, started,
+    finished: new Date().toISOString(), returncode: result.status,
+    signal: result.signal, error: result.error?.message ?? null,
+    stdoutSha256: sha(result.stdout ?? ''), stderr: result.stderr ?? '',
+    accountVerificationBodyRetained: false, backendWrites: 0 };
+  calls.push(record);
+  fs.writeFileSync(`${output}/${operation}.receipt.record`,
+    `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+  assert.equal(result.status, 0, result.stderr);
+  return result.stdout;
+}
+call('verify');
+const body = call('get', `@/projects/${project}/work-items/${id}/`);
+const value = JSON.parse(body);
+assert.equal(value.id, id);
+assert.equal(value.sequence_id, 182);
+fs.writeFileSync(`${output}/ticket-live.response`, body, { flag: 'wx' });
+const record = { status: 'LIVE_TICKET_READ', id, sequence_id: value.sequence_id,
+  name: value.name, state: value.state,
+  response: { path: `${output}/ticket-live.response`, sha256: sha(body) },
+  source: 'Official Plane helper GET; transient read, not a local requirements authority',
+  calls, backendWrites: 0, accountVerificationBodyRetained: false };
+fs.writeFileSync(`${output}/ready.record`, `${JSON.stringify(record, null, 2)}\n`,
+  { flag: 'wx' });
+console.log(JSON.stringify({ status: record.status, id, name: value.name,
+  path: `${output}/ready.record`, sha256: sha(fs.readFileSync(`${output}/ready.record`)),
+  backendWrites: 0 }));

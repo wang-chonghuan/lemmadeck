@@ -1,0 +1,84 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck';
+const prior = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const old = `${prior}/.tmp/resume182-6-8a-n10-display3695-FIRST`;
+const own = `${repo}/.tmp/resume182-6-8a-c2ex-display6213-FIRST`;
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const entries = [];
+fs.mkdirSync(own);
+for (const name of ['prepare.mjs', 'run.mjs', 'display-helper.mjs']) {
+  const source = `${old}/${name}`;
+  const original = fs.readFileSync(source);
+  let text = original.toString('utf8');
+  if (name !== 'display-helper.mjs') {
+    text = text.replaceAll(prior, repo).replaceAll('alg8-c2-s2-n10', 'alg8-c2-ex')
+      .replaceAll('n10', 'c2ex').replaceAll('3695', '6213');
+  }
+  if (name === 'prepare.mjs') {
+    const edits = [
+      ["export const BASE = path.join(R, '.tmp/resume182-6-8a-n6-display6213-FIRST');",
+        'export const BASE = OWN;'],
+      ["export const requiredFigures = ['fig-22', 'fig-23', 'fig-24', 'fig-25'];",
+        'export const requiredFigures = [];'],
+      ["assert.ok(sourceBlocks > 0 && originalExercises > 0, 'Approved source inventory cannot be empty');",
+        "assert.ok(sourceBlocks >= 0 && originalExercises > 0, 'Exercise-only source still needs real exercises');"],
+      ['assert.ok(lesson.prose.length > 0);',
+        'assert.equal(lesson.prose.length === 0, sourceBlocks === 0);'],
+    ];
+    for (const [before, after] of edits) {
+      assert.equal(text.split(before).length - 1, 1, before);
+      text = text.replace(before, after);
+    }
+  }
+  const output = `${own}/${name}`;
+  fs.writeFileSync(output, text, { flag: 'wx' });
+  const command = [process.execPath, '--check', output];
+  const result = spawnSync(command[0], command.slice(1), { cwd: repo, encoding: 'utf8' });
+  for (const stream of ['stdout', 'stderr']) {
+    fs.writeFileSync(`${own}/${name}.syntax-${stream}.txt`, result[stream] ?? '', { flag: 'wx' });
+  }
+  fs.writeFileSync(`${own}/${name}.syntax.record`, `${JSON.stringify({
+    command, cwd: repo, returncode: result.status, signal: result.signal,
+    error: result.error?.message ?? null,
+  }, null, 2)}\n`, { flag: 'wx' });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(sha(fs.readFileSync(source)), sha(original));
+  entries.push({ source, sourceSha256: sha(original), output,
+    sha256: sha(fs.readFileSync(output)), bytes: fs.statSync(output).size });
+}
+for (const [name, source] of [
+  ['.tmp/resume182-6-8a-c2ex-display-select6213.mjs',
+    `${prior}/.tmp/resume182-6-8a-n10-display-select3695.mjs`],
+]) {
+  const original = fs.readFileSync(source);
+  const output = path.join(repo, name);
+  const text = original.toString('utf8').replaceAll(prior, repo)
+    .replaceAll('alg8-c2-s2-n10', 'alg8-c2-ex').replaceAll('n10', 'c2ex')
+    .replaceAll('3695', '6213');
+  fs.writeFileSync(output, text, { flag: 'wx' });
+  entries.push({ source, sourceSha256: sha(original), output,
+    sha256: sha(fs.readFileSync(output)), bytes: fs.statSync(output).size });
+}
+fs.writeFileSync(`${own}/code-prepared.record`, `${JSON.stringify({
+  status: 'CODE_PREPARED_NOT_CONTENT_READY', created: new Date().toISOString(),
+  root: repo, book: '8a', lesson: 'alg8-c2-ex', entries,
+  reuse: 'Existing n10 display implementation; helper bytes unchanged.',
+  changes: ['Root and lesson identity', 'Allow source-confirmed exercise-only lessons',
+    'Self-contained helper references', 'Figure inventory pending source completion'],
+  originalImplementationValidation: {
+    commit: 'a0679a3f1bd5bca90c6c598eee0962e20a198004',
+    binding: 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c2-s2-n10/offline-display.json',
+  },
+  syntaxCalls: 3, contentReadinessChecks: 0, rendererCalls: 0, browserCalls: 0,
+  imagesObserved: 0, oldPassReruns: 0, unknownHistoricalBytesRecovered: false,
+  databaseWrites: 0, finish: 'review',
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: `${own}/code-prepared.record`,
+  sha256: sha(fs.readFileSync(`${own}/code-prepared.record`)),
+  syntaxCalls: 3, rendererCalls: 0, imagesObserved: 0 }));

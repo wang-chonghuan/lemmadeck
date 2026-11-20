@@ -1,0 +1,255 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+
+const cwd = "/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck";
+assert.equal(fs.realpathSync(process.cwd()), cwd);
+const out = ".tmp/resume182-6-8a-c2ex-source-review6213-FIRST-part1";
+const author = ".tmp/resume182-6-8a-c2ex-source-author6213-FIRST-part1";
+const backup = ".tmp/resume182-6-8a-c2ex-subsection6213-FIRST";
+const working = ".tmp/resume182-6-8a-c2ex-source6213-FIRST/draft-root/8a/pages";
+const deltaRoot = ".tmp/resume182-6-c2ex-subsection-delta6213-FIRST";
+const inputs = new Map();
+function read(file, mode = "text") {
+  const bytes = fs.readFileSync(file);
+  inputs.set(path.resolve(file), crypto.createHash("sha256").update(bytes).digest("hex"));
+  return mode === "bytes" ? bytes : mode === "json" ? JSON.parse(bytes.toString("utf8")) : bytes.toString("utf8");
+}
+function hash(file) {
+  read(file, "bytes");
+  return inputs.get(path.resolve(file));
+}
+function split(md) {
+  const match = md.match(/^---\n([\s\S]*?)\n---\n/);
+  assert(match);
+  return { meta: JSON.parse(match[1]), body: md.slice(match[0].length) };
+}
+function projection(body) {
+  const blocks = [];
+  for (const line of body.split("\n")) {
+    const match = line.match(/^<!-- (.*?) -->$/);
+    if (match) {
+      const tokens = match[1].split(" ");
+      blocks.push({
+        kind: tokens[0], label: tokens[0] === "ex" ? tokens[1] : null,
+        box: null, owner_exercise: null,
+        cont: tokens.includes("cont"), open: tokens.includes("open"),
+        samerow: tokens.includes("samerow"), lines: [],
+      });
+    } else if (line.trim()) {
+      assert(blocks.length);
+      blocks.at(-1).lines.push(line);
+    }
+  }
+  return blocks;
+}
+function differences(a, b, at = "") {
+  if (JSON.stringify(a) === JSON.stringify(b)) return [];
+  if (a && b && typeof a === "object" && typeof b === "object") {
+    return [...new Set([...Object.keys(a), ...Object.keys(b)])]
+      .flatMap(k => differences(a[k], b[k], `${at}/${k}`));
+  }
+  return [{ path: at, before: a ?? null, after: b ?? null }];
+}
+
+const firstPath = `${out}/ready.record`;
+const first = read(firstPath, "json");
+const firstSha = inputs.get(path.resolve(firstPath));
+assert.equal(firstSha, "9643958f381477eef432858dc87aa5be4fc95a7df1099f3715a34aa9a8ad0252");
+assert.equal(first.status, "HOLD");
+assert.equal(hash(`${author}/ready.record`), first.author_ready_sha256);
+const before = read(`${backup}/before.record`, "json");
+const stdout = read(`${deltaRoot}/stdout.txt`, "json");
+const receipt = read(`${deltaRoot}/receipt.record`, "json");
+assert.equal(receipt.cwd, cwd);
+assert.equal(receipt.returncode, 0);
+assert.equal(stdout.bodyEdits, 0);
+assert.equal(stdout.imageViews, 0);
+assert.equal(stdout.passedFinalizeReruns, 0);
+assert.deepEqual(stdout.changes, ["p65:exhead", "p70:exhead"]);
+const beforeHashChecks = before.entries.map(entry => {
+  const actual = hash(entry.target);
+  assert.equal(actual, entry.sha256);
+  return { path: path.resolve(entry.target), sha256: actual, expected_sha256: entry.sha256, matches: true };
+});
+
+const pages = [["0065", "第8小节", 24, 7], ["0070", "第9小节", 26, 4]].map(([n, heading, count, index]) => {
+  const immutablePath = `${author}/pages/${n}/page.md`;
+  const immutable = split(read(immutablePath));
+  assert.equal(inputs.get(path.resolve(immutablePath)), first.pages.find(p => p.physical_page === Number(n)).candidate_sha256);
+  const backupPath = `${backup}/${n}/page.md.before`;
+  const old = split(read(backupPath));
+  const mdPath = `${working}/${n}/page.md`;
+  const currentMd = split(read(mdPath));
+  const jsonPath = `${working}/${n}/page.json`;
+  const currentJson = read(jsonPath, "json");
+  const from = `<!-- h3 -->\n${heading}`;
+  const to = `<!-- exhead -->\n${heading}`;
+  assert.equal(old.body.split(from).length, 2);
+  assert.equal(immutable.body, old.body);
+  assert.equal(currentMd.body, old.body.replace(from, to));
+  assert.deepEqual(currentMd.meta, currentJson.meta);
+  const generated = {
+    printed_lines: count,
+    figures: [],
+    provenance: { cap: "1", normalized: true },
+  };
+  assert.deepEqual(currentMd.meta, { ...immutable.meta, ...generated });
+  assert.equal(currentJson.meta.printed_lines, count);
+  const expectedBlocks = projection(immutable.body);
+  assert.equal(expectedBlocks[index].kind, "h3");
+  assert.deepEqual(expectedBlocks[index].lines, [heading]);
+  expectedBlocks[index].kind = "exhead";
+  assert.deepEqual(currentJson.blocks, expectedBlocks);
+  const expectedMd = projection(currentMd.body);
+  assert.deepEqual(expectedMd, currentJson.blocks);
+  const rows = currentJson.blocks.reduce((sum, b) =>
+    sum + b.lines.reduce((s, line) => s + line.split("\u21b5").length, 0), 0);
+  assert.equal(rows, count);
+  let jsonBackupDiff = null;
+  const jsonBackupPath = `${backup}/${n}/page.json.before`;
+  if (n === "0065") {
+    const oldJson = read(jsonBackupPath, "json");
+    jsonBackupDiff = differences(oldJson, currentJson);
+    assert.deepEqual(jsonBackupDiff, [{ path: "/blocks/7/kind", before: "h3", after: "exhead" }]);
+    assert.deepEqual(old.meta, currentMd.meta);
+    assert.deepEqual(oldJson.blocks, projection(old.body));
+    assert.equal(hash(`${working}/${n}/audit.json`), hash(`${backup}/${n}/audit.json.before`));
+  } else {
+    assert.equal(fs.existsSync(jsonBackupPath), false);
+    assert.deepEqual(old.meta, immutable.meta);
+  }
+  return {
+    physical_page: Number(n), status: "PASS", heading, block_index: index,
+    changed_kind: { before: "h3", after: "exhead" },
+    immutable_author_path: path.resolve(immutablePath),
+    immutable_author_sha256: inputs.get(path.resolve(immutablePath)),
+    backup_md_path: path.resolve(backupPath),
+    backup_md_sha256: inputs.get(path.resolve(backupPath)),
+    working_md_path: path.resolve(mdPath),
+    working_md_sha256: inputs.get(path.resolve(mdPath)),
+    working_json_path: path.resolve(jsonPath),
+    working_json_sha256: inputs.get(path.resolve(jsonPath)),
+    actual_json_backup_differences: jsonBackupDiff,
+    json_backup_available: n === "0065",
+    new_json_verification: n === "0070" ? "No prior page.json exists in the supplied backup. Current JSON was compared field-by-field to the immutable Markdown block projection, with only the reviewed h3 -> exhead classification changed." : null,
+    actual_md_metadata_differences_vs_backup: differences(old.meta, currentMd.meta),
+    actual_md_metadata_differences_vs_immutable: differences(immutable.meta, currentMd.meta),
+    generated_metadata_additions_separate_from_header_delta: generated,
+    source_body_identical_except_single_header_marker: true,
+    mathematical_and_prose_text_unchanged: true,
+    block_order_labels_flags_and_indices_unchanged: true,
+    represented_rows: rows,
+    independent_first_rows_reused: count,
+    parent_finalize_not_rerun: true,
+    parent_p65_audit_byte_identity: n === "0065" ? true : null,
+    p70_finalize_26_26: n === "0070" ? "User-reported FIRST finalize; not rerun here. Current generated printed_lines and text representation independently checked as 26." : null,
+    image_views: 0,
+  };
+});
+
+const patterns = first.boundary_metadata_review.same_book_text_patterns.map(entry => {
+  const actual = hash(entry.path);
+  const expected = first.input_files.find(x => x.path === entry.path).sha256;
+  assert.equal(actual, expected);
+  return { ...entry, sha256: actual, first_text_pattern_preserved: true, image_views: 0 };
+});
+const boundaryFiles = first.input_files.filter(x =>
+  /artifacts\/8a\/pages\/0063\/page\.(md|json)$/.test(x.path));
+assert.equal(boundaryFiles.length, 2);
+const currentBoundary = boundaryFiles.map(entry => {
+  const actual = hash(entry.path);
+  assert.equal(actual, entry.sha256);
+  return { path: entry.path, sha256: actual, first_review_sha256: entry.sha256, unchanged: true };
+});
+const unchangedN10 = first.boundary_metadata_review.unchanged_n10_hash_only.map(entry => {
+  const actual = hash(entry.path);
+  assert.equal(actual, entry.sha256);
+  return { ...entry, sha256: actual, still_unchanged: true };
+});
+const tocEntry = first.input_files.find(x => /\/toc\/8a\/zh.json$/.test(x.path));
+assert(tocEntry);
+assert.equal(hash(tocEntry.path), tocEntry.sha256);
+hash(`${out}/verify-metadata.mjs`);
+hash(`${out}/verification-recovery.record`);
+
+const result = {
+  schema: "ld-s10y-lesson/affected-only-source-metadata-review@1",
+  ticket: "STEMROBIN-182", continuation: "182-6",
+  role: "FIRST_REVIEWER_QUEUED_ZERO_IMAGE_METADATA_FOLLOWUP",
+  checked_at: new Date().toISOString(), workdir: cwd, write_root: path.resolve(out),
+  book: "8a", lesson: "alg8-c2-ex", edition: "modern-us-neutral",
+  status: "PASS",
+  scope: "Affected metadata only: repaired parent working p0065/p0070 Markdown/JSON, plus preserved hash-bound p0063 metadata review. Not source-figure approval or whole-lesson approval.",
+  image_views: 0, reopens: 0, crops: 0, other_images: 0,
+  source_edits: 0, finalize_runs: 0, old_pass_audit_runs: 0,
+  original_first_verdict: {
+    path: path.resolve(firstPath), sha256: firstSha, status: "HOLD",
+    preserved_unchanged: true,
+    issues_not_deleted: first.issues.map(x => x.id),
+  },
+  working_copy_resolution: [
+    { original_issue: "FIRST-P65-HEADER", affected_only_status: "PASS", immutable_author_still_unchanged: true },
+    { original_issue: "FIRST-P70-HEADER", affected_only_status: "PASS", immutable_author_still_unchanged: true },
+  ],
+  remaining_original_hold: { id: "FIRST-P71-FIG26", status: "HOLD", unchanged: true, no_new_image_or_figure_review: true },
+  parent_receipt: {
+    path: path.resolve(`${deltaRoot}/receipt.record`),
+    sha256: inputs.get(path.resolve(`${deltaRoot}/receipt.record`)),
+    returncode: receipt.returncode,
+    stdout_path: path.resolve(`${deltaRoot}/stdout.txt`),
+    stdout_sha256: inputs.get(path.resolve(`${deltaRoot}/stdout.txt`)),
+    declarations_compared_with_actual_files: true,
+    note: "Producer delta receipt checks p65 JSON and both pre-finalize MD bodies. This independent follow-up also checks current p70 FIRST-finalized JSON against immutable source blocks and explicitly accounts for generated frontmatter additions.",
+  },
+  before_hash_checks: beforeHashChecks,
+  pages,
+  same_book_patterns: patterns,
+  boundary0063: {
+    status: "PASS",
+    first_affected_only_review_reused: true,
+    old_pass_not_refinalized_or_reaudited: true,
+    original_differences: first.boundary_metadata_review.actual_json_differences,
+    current_files: currentBoundary,
+    source_text_and_indices_unchanged: true,
+    image_views: 0,
+  },
+  classification: {
+    status: "PASS",
+    supplement_count: 1,
+    supplement_title: "第二章补充习题",
+    toc_id: "alg8-c2-ex",
+    toc_printed_page: 56,
+    toc_sha256: tocEntry.sha256,
+    subsection7_8_9_kind: "exhead",
+    new_numbered_units_created_by_repaired_headers: 0,
+    unchanged_n10_hash_only: unchangedN10,
+    whole_lesson_assembly_or_delivery_performed: false,
+  },
+  input_files: [...inputs].map(([file, sha256]) => ({ path: file, sha256 })),
+  constraints: {
+    writes_outside_reviewer_root: 0, git_db_cloud_operations: 0,
+    worktrees_attachments_new_chats_old_reviewer_resumes: 0,
+    source_finalization_or_image_reviews_rerun: 0,
+    solutions_keys_or_modern_artifact_content_read: 0,
+    modern_n10_files_hash_only: 2,
+    others_changes_reverted: 0,
+  },
+  self_sha256: "Reported externally, not recursively embedded.",
+};
+const recordPath = `${out}/metadata-only.record`;
+fs.writeFileSync(recordPath, `${JSON.stringify(result, null, 2)}\n`, { flag: "wx" });
+assert.equal(hash(firstPath), firstSha);
+console.log(JSON.stringify({
+  status: result.status,
+  record: path.resolve(recordPath),
+  sha256: hash(recordPath),
+  original_first_ready_sha256_unchanged: firstSha,
+  pages: pages.map(p => ({ page: p.physical_page, status: p.status, md_sha256: p.working_md_sha256, json_sha256: p.working_json_sha256 })),
+  p63: "PASS",
+  supplement_count: 1,
+  unchanged_n10: true,
+  remaining_figure26: "HOLD",
+  additional_images: 0,
+}, null, 2));

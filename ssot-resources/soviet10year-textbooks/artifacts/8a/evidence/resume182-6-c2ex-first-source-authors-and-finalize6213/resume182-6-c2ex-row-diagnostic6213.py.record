@@ -1,0 +1,45 @@
+import hashlib
+import inspect
+import json
+from pathlib import Path
+import sys
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck")
+assert Path.cwd() == REPO
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+import layout
+from PIL import Image
+
+page = int(sys.argv[1])
+assert page in (66, 67)
+base = REPO / ".tmp/ld-s10y-lesson/8a/pages" / f"{page:04d}"
+source = base / "page.png"
+metadata = json.loads((base / "layout.json").read_text())
+lines, start = inspect.getsourcelines(layout.line_bands)
+probe = start + next(i for i, line in enumerate(lines) if line.strip() == "if count == 1:")
+bands = []
+scalars = {}
+
+def trace(frame, event, argument):
+    if frame.f_code is layout.line_bands.__code__:
+        values = frame.f_locals
+        if event == "line" and frame.f_lineno == probe:
+            bands.append({key: values[key] for key in
+                ("a", "b", "band_h", "count", "spanning_brace")})
+        if event == "return":
+            scalars.update({key: values.get(key) for key in
+                ("line_h", "supported_h", "glyph_h", "typical_h", "typical_gap", "pitch")})
+    return trace
+
+sys.settrace(trace)
+result = layout.line_bands(layout.ink_mask(Image.open(source)), metadata["content_width"])
+sys.settrace(None)
+print(json.dumps({
+    "status": "PIXEL_COUNT_DIAGNOSTIC_NOT_SOURCE_APPROVAL",
+    "page": page, "source": str(source),
+    "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+    "implementation": str(Path(layout.__file__)),
+    "implementation_sha256": hashlib.sha256(Path(layout.__file__).read_bytes()).hexdigest(),
+    "scalars": scalars, "pre_expansion_bands": bands, "result": result,
+    "count": len(result), "image_observations": 0,
+}, ensure_ascii=True, default=lambda value: value.item()))

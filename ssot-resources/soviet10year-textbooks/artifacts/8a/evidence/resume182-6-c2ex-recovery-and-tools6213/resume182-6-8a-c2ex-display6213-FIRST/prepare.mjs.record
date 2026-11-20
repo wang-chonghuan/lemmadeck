@@ -1,0 +1,261 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFile, realpath } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+export const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck';
+export const OWN = path.join(R, '.tmp/resume182-6-8a-c2ex-display6213-FIRST');
+export const BASE = OWN;
+export const BOOK = '8a', EDITION = 'modern-us-neutral', ID = 'alg8-c2-ex';
+export const MODERN = path.join(R, 'ssot-resources/soviet10year-textbooks/artifacts', BOOK, 'editions', EDITION);
+export const LESSON = path.join(MODERN, 'lessons', ID);
+export const CHOICES = path.join(LESSON, 'choice-set');
+export const TOOLS = path.join(R, '.claude/skills/ld-s10y-lesson/tools');
+export const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+export const norm = text => String(text).normalize('NFC').replace(/\s+/gu, ' ').trim();
+export const canonical = value => {
+  const ordered = item => Array.isArray(item) ? item.map(ordered)
+    : item && typeof item === 'object'
+      ? Object.fromEntries(Object.keys(item).sort().map(key => [key, ordered(item[key])])) : item;
+  return sha(JSON.stringify(ordered(value)).replace(/[\u007f-\uffff]/gu,
+    character => '\\u' + character.charCodeAt(0).toString(16).padStart(4, '0')));
+};
+export const requiredFigures = [];
+export const mandatory = [
+  ...['lesson.json', 'exercises.json', 'figures.json', 'adaptation.audit.json',
+    'answer-keys.json', 'answer-keys.audit.json'].map(name => path.join(LESSON, name)),
+  ...['seed.json', 'draft.json', 'review.json'].map(name => path.join(CHOICES, name)),
+  ...requiredFigures.flatMap(id => ['svg', 'spec.json', 'render.json', 'review.json']
+    .map(ext => path.join(MODERN, 'figures', `${id}.${ext}`))),
+];
+export const implementation = ['prepare.mjs', 'run.mjs', 'display-helper.mjs'];
+export const usageCounters = ['rendererCalls', 'browserLaunches', 'browserContexts', 'pageNavigations',
+  'screenshotsCaptured', 'imagesObserved', 'sourceReviews', 'mathReviews', 'choiceReviews', 'figureReviews',
+  'validatorCalls', 'finalizations', 'figureRenders', 'paidCalls', 'generatedImages', 'dbCalls',
+  'appVisits', 'productionInteractions', 'dependencyChanges', 'gitOperations', 'otherChatsMessaged'];
+export const actualOrUnknown = value => value === null || value === 'unknown'
+  || Number.isInteger(value) && value >= 0;
+export function addUsage(left, right) {
+  assert.ok(actualOrUnknown(left) && actualOrUnknown(right), 'Usage must be actual or explicitly unknown');
+  return typeof left === 'number' && typeof right === 'number' ? left + right : null;
+}
+export const approvedReceipt = (value, stage) => value.status === 'pass' || value.status === 'PASS' || value.outcome === 'pass'
+  || /^PASS(?:_|$)/u.test(value.verdict ?? '') || stage === 'modern' && value.status === 'TEXT_PASS';
+export const support = [
+  ...implementation.map(name => path.join(BASE, name)),
+  ...['render_lesson.js', 'htmlfrag.js', 'choice_html.mjs', 'publish_merge.js'].map(name => path.join(TOOLS, name)),
+  path.join(R, 'app/node_modules/@playwright/test/package.json'),
+  path.join(R, 'app/node_modules/playwright-core/package.json'),
+  path.join(R, '.agents/skills/node_modules/marked/lib/marked.esm.js'),
+  path.join(R, '.claude/skills/ld-s10y-lesson/node_modules/katex/package.json'),
+  path.join(R, '.claude/skills/ld-s10y-lesson/node_modules/katex/dist/katex.min.css'),
+];
+
+export async function location() {
+  assert.equal(process.cwd(), R, 'Only the assigned workdir is authorized');
+  assert.equal(path.dirname(fileURLToPath(import.meta.url)), OWN);
+  assert.equal(await realpath(OWN), OWN);
+}
+export async function receiptFile(filename, expectedHash) {
+  assert.ok(path.isAbsolute(filename) && path.resolve(filename) === filename && filename.startsWith(`${R}/`));
+  assert.ok(!filename.split(path.sep).some(part => part === '.env' || /candidate/iu.test(part)));
+  assert.ok(!/\/answers\.draft\.json$/u.test(filename), 'Never consume an answer candidate');
+  assert.match(expectedHash, /^[a-f0-9]{64}$/u, 'A receipt needs an explicit byte hash');
+  assert.equal(await realpath(filename), filename, 'Receipts and content must stay in this checkout');
+  const bytes = await readFile(filename);
+  assert.equal(sha(bytes), expectedHash, `Changed approved bytes: ${filename}`);
+  return bytes;
+}
+const refs = exercise => [...new Set([...(exercise.figure_refs ?? []),
+  ...(exercise.figures ?? []).map(figure => figure.id)])];
+
+// No modern lesson, answer, choice, or figure is opened before the parent gate.
+export async function preparedInputs(parentPath, parentHash, ready) {
+  await location();
+  const parentBytes = await receiptFile(parentPath, parentHash);
+  const parent = JSON.parse(parentBytes);
+  assert.equal(parent.schema, 'c2ex-parent-display-ready@1');
+  assert.equal(parent.status, 'parentREADY');
+  assert.equal(parent.ticket, 'STEMROBIN-182');
+  assert.deepEqual(parent.scope, { root: R, book: BOOK, edition: EDITION, lesson: ID });
+  assert.deepEqual(parent.authorization, { offlineDisplay: true, rendererCalls: 1,
+    appAcceptance: false, production: false });
+  const entries = [{ path: parentPath, sha256: parentHash, bytes: parentBytes.length }];
+  const bytesByPath = new Map();
+  const read = async (filename, hash) => {
+    if (bytesByPath.has(filename)) {
+      if (hash) assert.equal(sha(bytesByPath.get(filename)), hash);
+      return bytesByPath.get(filename);
+    }
+    const bytes = await receiptFile(filename, hash);
+    bytesByPath.set(filename, bytes);
+    entries.push({ path: filename, sha256: sha(bytes), bytes: bytes.length });
+    return bytes;
+  };
+  const hashes = new Map();
+  for (const item of parent.files) {
+    assert.ok(item.path.startsWith(`${LESSON}/`) || item.path.startsWith(`${MODERN}/figures/`));
+    assert.ok(!hashes.has(item.path), 'Duplicate approval binding');
+    assert.match(item.sha256, /^[a-f0-9]{64}$/u);
+    hashes.set(item.path, item.sha256);
+  }
+  for (const filename of mandatory) assert.ok(hashes.has(filename), `Approval is incomplete: ${filename}`);
+  const approvedPaths = [...hashes.keys()];
+  const approvalGroups = {
+    modern: approvedPaths.filter(filename => path.dirname(filename) === LESSON
+      && !path.basename(filename).startsWith('answer-keys')),
+    answers: approvedPaths.filter(filename => path.basename(filename).startsWith('answer-keys')),
+    choices: approvedPaths.filter(filename => filename.startsWith(`${CHOICES}/`)),
+    figures: approvedPaths.filter(filename => filename.startsWith(`${MODERN}/figures/`)),
+  };
+  for (const [stage, required] of Object.entries(approvalGroups)) {
+    const approval = parent.approvals[stage];
+    assert.equal(approval.status, 'pass', `${stage} approval is not ready`);
+    if (stage === 'answers') assert.equal(approval.finalized, true);
+    if (stage === 'choices') assert.equal(approval.retained, true);
+    if (stage === 'figures') assert.deepEqual([...approval.ids].sort(), [...requiredFigures].sort());
+    const bindings = new Map(approval.files.map(item => [item.path, item.sha256]));
+    for (const filename of required) assert.equal(bindings.get(filename), hashes.get(filename),
+      `${stage} approval does not bind ${filename}`);
+    assert.ok(approval.receipts.length > 0);
+    for (const receipt of approval.receipts) {
+      assert.ok(!['lesson.json', 'exercises.json', 'figures.json', 'answer-keys.json', 'seed.json', 'draft.json']
+        .includes(path.basename(receipt.path)), 'Content cannot approve itself; native audits/reviews are allowed');
+      if (hashes.has(receipt.path)) assert.equal(receipt.sha256, hashes.get(receipt.path));
+      const value = JSON.parse(await read(receipt.path, receipt.sha256));
+      assert.ok(approvedReceipt(value, stage), `Unapproved receipt: ${receipt.path}`);
+      const identities = [value, value.scope, value.source].filter(identity => identity && typeof identity === 'object');
+      for (const [field, identity] of [['book', BOOK], ['lesson', ID], ['edition', EDITION]]) {
+        for (const owner of identities)
+          if (Object.hasOwn(owner, field)) assert.equal(owner[field], identity, `Wrong approval owner: ${receipt.path}`);
+        if (!hashes.has(receipt.path)) assert.ok(identities.some(owner => Object.hasOwn(owner, field)
+          && owner[field] === identity), `External approval lacks ${field} identity: ${receipt.path}`);
+      }
+    }
+  }
+  const upstream = JSON.parse(await read(parent.upstreamUsage.path, parent.upstreamUsage.sha256));
+  const upstreamUsage = upstream.cumulative ?? upstream.usage?.cumulative ?? upstream.usage ?? upstream;
+  for (const counter of usageCounters) {
+    assert.ok(Object.hasOwn(upstreamUsage, counter) && actualOrUnknown(upstreamUsage[counter]),
+      `Upstream usage receipt lacks actual or explicitly unknown ${counter}`);
+  }
+  for (const pin of ready.pins) {
+    assert.equal(await realpath(pin.path), pin.realpath);
+    const bytes = await readFile(pin.path);
+    assert.equal(sha(bytes), pin.sha256, `Changed reference or installed dependency: ${pin.path}`);
+    entries.push({ path: pin.path, realpath: pin.realpath, sha256: pin.sha256, bytes: bytes.length,
+      dependency: pin.path.includes('/node_modules/') });
+  }
+  for (const filename of hashes.keys()) await read(filename, hashes.get(filename));
+  const json = filename => JSON.parse(bytesByPath.get(filename));
+  const lesson = json(path.join(LESSON, 'lesson.json'));
+  const exercises = json(path.join(LESSON, 'exercises.json'));
+  const manifest = json(path.join(LESSON, 'figures.json'));
+  const adaptation = json(path.join(LESSON, 'adaptation.audit.json'));
+  assert.equal(lesson.id, ID);
+  for (const value of [lesson, exercises, manifest]) {
+    assert.equal(value.edition, EDITION); assert.equal(value.status, 'ready');
+  }
+  assert.equal(exercises.lesson, ID); assert.equal(manifest.lesson, ID);
+  assert.equal(adaptation.lesson, ID); assert.equal(adaptation.edition, EDITION);
+  assert.equal(adaptation.status, 'pass'); assert.deepEqual(adaptation.errors, []);
+  const sourceBlocks = lesson.source.data.prose.length;
+  const originalExercises = exercises.source.data.exercises.length;
+  assert.ok(sourceBlocks >= 0 && originalExercises > 0, 'Exercise-only source still needs real exercises');
+  assert.equal(lesson.prose.length === 0, sourceBlocks === 0);
+  assert.equal(exercises.exercises.length, originalExercises);
+  assert.equal(exercises.count, originalExercises); assert.equal(lesson.exercise_count, originalExercises);
+  assert.deepEqual(exercises.exercises.map(item => String(item.number)),
+    exercises.source.data.exercises.map(item => {
+      assert.ok(item.number !== undefined && item.number !== null, 'Approved source exercise number is missing');
+      return String(item.number);
+    }));
+  assert.deepEqual(manifest.figures.map(figure => figure.id).sort(), [...requiredFigures].sort());
+  assert.deepEqual(lesson.figures.map(figure => figure.id).sort(), [...requiredFigures].sort());
+  const answers = json(path.join(LESSON, 'answer-keys.json'));
+  const answersAudit = json(path.join(LESSON, 'answer-keys.audit.json'));
+  assert.equal(answers.schema, 'ld-s10y-answer/lesson-answers@1');
+  assert.equal(answersAudit.schema, 'ld-s10y-answer/lesson-audit@1');
+  assert.equal(answers.status, 'ready'); assert.equal(answersAudit.status, 'pass');
+  for (const value of [answers, answersAudit]) {
+    assert.equal(value.book, BOOK); assert.equal(value.lesson, ID); assert.equal(value.edition, EDITION);
+  }
+  assert.equal(answers.answers.length, exercises.count);
+  assert.equal(answers.count, exercises.count); assert.equal(answersAudit.answerCount, exercises.count);
+  assert.deepEqual(answers.answers.map(answer => String(answer.exercise)),
+    exercises.exercises.map(exercise => String(exercise.number)));
+  const answerDisplay = answers.answers.map(answer => {
+    assert.ok(typeof answer.displayAnswer === 'string' && answer.displayAnswer.trim());
+    return { exercise: String(answer.exercise), text: answer.displayAnswer };
+  });
+  const seed = json(path.join(CHOICES, 'seed.json'));
+  const draft = json(path.join(CHOICES, 'draft.json'));
+  const review = json(path.join(CHOICES, 'review.json'));
+  assert.equal(seed.schema, 's10y-choice-seed-v1'); assert.equal(draft.schema, 's10y-choice-draft-v1');
+  assert.equal(seed.source.book, BOOK); assert.equal(seed.source.lesson, ID);
+  assert.equal(draft.seed_sha256, canonical(seed)); assert.equal(review.outcome, 'pass');
+  assert.equal(review.seed_sha256, canonical(seed)); assert.equal(review.draft_sha256, canonical(draft));
+  assert.ok(draft.questions.length > 0, 'Derive the approved choice count, never assume the original-exercise count');
+  assert.equal(new Set(draft.questions.map(question => question.id)).size, draft.questions.length);
+  assert.deepEqual(seed.exercises, exercises.exercises.map(exercise => ({
+    number: String(exercise.number), text: exercise.text, figure_ids: refs(exercise),
+  })));
+  for (const name of ['lesson.json', 'exercises.json', 'figures.json']) {
+    const filename = path.join(LESSON, name);
+    assert.equal(seed.trace.find(item => path.resolve(R, item.path) === filename)?.sha256, hashes.get(filename));
+  }
+  for (const concept of seed.concepts) assert.equal(concept.text, lesson.prose[concept.block]?.text);
+  for (const figure of seed.figures) for (const asset of figure.assets)
+    assert.equal(hashes.get(path.resolve(R, asset.path)), asset.sha256);
+  const views = draft.questions.map(question => {
+    const view = question.view;
+    assert.ok(['single', 'multiple'].includes(view.mode));
+    assert.ok(typeof view.stem === 'string' && view.stem.trim());
+    assert.ok(view.options.length >= 2 && view.options.length <= 26);
+    return { mode: view.mode, stem: view.stem, figure_ids: [...view.figure_ids],
+      options: view.options.map((option, index) => {
+        assert.ok(typeof option.id === 'string' && option.id.trim());
+        assert.ok(typeof option.text === 'string' && (option.text.trim() || option.figure_ids.length));
+        return { id: String.fromCharCode(65 + index), text: option.text, figure_ids: [...option.figure_ids] };
+      }) };
+  });
+  const figureContracts = {}, assetsToStage = [];
+  const bindFigure = (id, directory, filename) => {
+    const specPath = path.join(directory, `${id}.spec.json`);
+    const evidencePath = path.join(directory, `${id}.render.json`);
+    const figureReview = json(path.join(directory, `${id}.review.json`));
+    const spec = json(specPath), evidence = json(evidencePath);
+    assert.equal(spec.id, id); assert.equal(spec.mode, 'deterministic',
+      'This SVG helper supports deterministic figures; no silent raster or hybrid substitution');
+    assert.equal(evidence.status, 'pass'); assert.equal(figureReview.status, 'pass');
+    assert.equal(figureReview.spec.sha256, hashes.get(specPath));
+    assert.equal(figureReview.render.sha256, hashes.get(evidencePath));
+    assert.ok(Object.values(figureReview.outputs).some(output => output.sha256 === hashes.get(filename)));
+    assert.ok(spec.display.minTextPx >= 16);
+    assert.ok(['inline', 'scroll'].includes(spec.display.layout));
+    const svgMarkup = bytesByPath.get(filename).toString('utf8').replace(/<\?xml[^>]*\?>/u, '');
+    figureContracts[id] = { minimumPx: spec.display.minTextPx, layout: spec.display.layout,
+      maxWidthPx: spec.display.layout === 'scroll' ? 640 : null, svgMarkup,
+      labels: spec.objects.filter(item => item.type === 'text' || item.label)
+        .map(item => ({ id: `${item.id}-label`, text: String(item.text ?? item.label).trim() })) };
+    assetsToStage.push({ id, directory, filename });
+  };
+  for (const figure of manifest.figures) {
+    assert.equal(figure.svg, `figures/${figure.id}.svg`);
+    assert.ok(!figure.png && !figure.artwork && !figure.generation, 'No conflicting figure output mode');
+    bindFigure(figure.id, path.join(MODERN, 'figures'), path.join(MODERN, figure.svg));
+  }
+  const used = new Set(views.flatMap(view => [...view.figure_ids,
+    ...view.options.flatMap(option => option.figure_ids)]));
+  for (const asset of draft.new_figures) {
+    const filename = path.resolve(R, asset.path);
+    assert.ok(filename.startsWith(`${CHOICES}/figures/`), 'Only already retained choice figures');
+    assert.equal(path.extname(filename), '.svg');
+    assert.equal(hashes.get(filename), asset.sha256);
+    if (used.has(asset.id)) bindFigure(asset.id, path.join(CHOICES, 'figures'), filename);
+  }
+  for (const id of used) assert.ok(figureContracts[id], `Missing approved choice figure: ${id}`);
+  return { entries, bytesByPath, parent, upstreamUsage, lesson, exercises, manifest,
+    answerDisplay, views, seed, draft, figureContracts, assetsToStage };
+}

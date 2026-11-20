@@ -1,0 +1,434 @@
+#!/usr/bin/env python3
+"""Copy unchanged review records, bind the affected review, and validate once."""
+
+import copy
+import hashlib
+import json
+import os
+from pathlib import Path
+import shlex
+import subprocess
+import sys
+from datetime import datetime, timezone
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-5724/lemmadeck")
+OWNED_REL = ".tmp/resume182-6-c2ex-choice147-review5724-AFFECTED1"
+OWNED = ROOT / OWNED_REL
+ORIGINAL = ".tmp/resume182-6-8a-c2ex-choice-author6213-FIRST-part1"
+CURRENT = ".tmp/resume182-6-c2ex-choice1475724-AFFECTED1"
+OLD_REVIEW = ".tmp/resume182-6-8a-c2ex-choice-review6213-FIRST-part1/review.json"
+IDENTITY = "codex-independent-review5724-source147-AFFECTED1"
+SOURCE = "147"
+QUESTION = "c2p1-reciprocal-graphs"
+VALIDATOR = ".agents/skills/ld-s10y-choice/scripts/validate.py"
+
+
+def require(condition, message):
+    if not condition:
+        raise RuntimeError(message)
+
+
+def canonical(value):
+    return json.dumps(
+        value, sort_keys=True, ensure_ascii=True, separators=(",", ":")
+    ).encode("utf-8")
+
+
+def digest(value):
+    return hashlib.sha256(canonical(value)).hexdigest()
+
+
+def sha256(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def write_json(name, value):
+    target = OWNED / name
+    require(target.parent.resolve() == OWNED.resolve(), "Output outside ownership")
+    with target.open("x", encoding="utf-8") as stream:
+        json.dump(value, stream, ensure_ascii=True, indent=2)
+        stream.write("\n")
+
+
+def metadata(relative, data, value=None):
+    result = {"path": str(ROOT / relative), "sha256": sha256(data)}
+    if value is not None:
+        result["canonical_sha256"] = digest(value)
+    return result
+
+
+def timestamp():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def keyed(rows, field):
+    result = {row[field]: row for row in rows}
+    require(len(result) == len(rows), "Duplicate identifiers")
+    return result
+
+
+def main():
+    require(Path.cwd() == ROOT, "Sole authorized absolute cwd required")
+    require(Path(__file__).resolve().parent == OWNED.resolve(), "Wrong script owner")
+    outputs = [
+        "equality.record.json", "review.json", "validate.stdout", "validate.stderr",
+        "validate.receipt.json", "ready.record",
+    ]
+    require(not any((OWNED / name).exists() for name in outputs),
+            "Outputs already exist; refuse rerun or overwriting evidence")
+
+    input_paths = {
+        "seed": ORIGINAL + "/seed.json",
+        "old_draft": ORIGINAL + "/draft.json",
+        "new_draft": CURRENT + "/draft.json",
+        "view": CURRENT + "/147.views.json",
+        "delta": CURRENT + "/delta.record",
+        "old_review": OLD_REVIEW,
+        "source_freeze": OWNED_REL + "/01-source147-independent.freeze.md",
+        "view_freeze": OWNED_REL + "/02-views-independent.freeze.json",
+        "late_comparison": OWNED_REL + "/03-source147-late-comparison.json",
+        "validator": VALIDATOR,
+        "assembler": OWNED_REL + "/assemble_validate.py",
+    }
+    raw = {name: (ROOT / path).read_bytes() for name, path in input_paths.items()}
+    data = {name: json.loads(raw[name]) for name in [
+        "seed", "old_draft", "new_draft", "view", "delta", "old_review",
+        "view_freeze", "late_comparison",
+    ]}
+    seed, old, new, prior = (
+        data["seed"], data["old_draft"], data["new_draft"], data["old_review"]
+    )
+    freeze, late, delta = (
+        data["view_freeze"], data["late_comparison"], data["delta"]
+    )
+    binding = {
+        name: metadata(path, raw[name], data.get(name))
+        for name, path in input_paths.items()
+    }
+
+    require(seed["schema"] == "s10y-choice-seed-v1", "Wrong official seed")
+    require(old["schema"] == new["schema"] == "s10y-choice-draft-v1",
+            "Wrong draft schema")
+    require(prior["schema"] == "s10y-choice-review-v1", "Wrong original review")
+    require(prior["outcome"] == "revise", "Original REVISE not preserved")
+    require(prior["reviewer"]["identity"] != IDENTITY, "Reviewer identity collision")
+    require(old["seed_sha256"] == new["seed_sha256"] ==
+            prior["seed_sha256"] == digest(seed), "Seed canonical binding changed")
+    require(prior["draft_sha256"] == digest(old), "Original review/draft mismatch")
+    require(delta["original"]["sha256"] == sha256(raw["old_draft"]) and
+            delta["current"]["sha256"] == sha256(raw["new_draft"]) and
+            delta["oldReview"]["sha256"] == sha256(raw["old_review"]),
+            "Delta file hashes differ from actual snapshots")
+    require(delta["source"] == SOURCE and delta["unchangedQuestionCount"] == 41
+            and delta["unchangedSourceCount"] == 22, "Unexpected delta scope")
+    require(set(old) == set(new), "Draft top-level fields changed")
+    require({key: value for key, value in old.items()
+             if key not in {"questions", "coverage"}} ==
+            {key: value for key, value in new.items()
+             if key not in {"questions", "coverage"}},
+            "Draft fields outside questions/coverage changed")
+    require(seed["figures"] == [] and new["new_figures"] == [],
+            "Unexpected figure dependency; no image work authorized")
+
+    old_questions = keyed(old["questions"], "id")
+    new_questions = keyed(new["questions"], "id")
+    old_coverage = keyed(old["coverage"], "source_number")
+    new_coverage = keyed(new["coverage"], "source_number")
+    require(len(old_questions) == len(new_questions) == 42,
+            "Expected 42 full-draft questions")
+    require(len(old_coverage) == len(new_coverage) == 23,
+            "Expected 23 coverage entries")
+    require(set(old_questions) == set(new_questions) and
+            set(old_coverage) == set(new_coverage), "Identifier set changed")
+    require([row["id"] for row in old["questions"]] ==
+            [row["id"] for row in new["questions"]], "Question order changed")
+    require([row["source_number"] for row in old["coverage"]] ==
+            [row["source_number"] for row in new["coverage"]],
+            "Coverage order changed")
+    changed_questions = [
+        key for key in old_questions if old_questions[key] != new_questions[key]
+    ]
+    changed_sources = [
+        key for key in old_coverage if old_coverage[key] != new_coverage[key]
+    ]
+    require(changed_questions == [QUESTION] and changed_sources == [SOURCE],
+            "Changes exceed sole affected question/source")
+    unchanged_questions_old = [
+        row for row in old["questions"] if row["id"] != QUESTION
+    ]
+    unchanged_questions_new = [
+        row for row in new["questions"] if row["id"] != QUESTION
+    ]
+    unchanged_coverage_old = [
+        row for row in old["coverage"] if row["source_number"] != SOURCE
+    ]
+    unchanged_coverage_new = [
+        row for row in new["coverage"] if row["source_number"] != SOURCE
+    ]
+    require(unchanged_questions_old == unchanged_questions_new and
+            len(unchanged_questions_new) == 41,
+            "Other 41 full question objects are not exactly equal")
+    require(unchanged_coverage_old == unchanged_coverage_new and
+            len(unchanged_coverage_new) == 22,
+            "Other 22 coverage objects are not exactly equal")
+    require([row["number"] for row in seed["exercises"]] ==
+            [row["source_number"] for row in old["coverage"]],
+            "Seed/source scope mismatch")
+
+    affected = new_questions[QUESTION]
+    require(affected["source_numbers"] == [SOURCE],
+            "Affected question unexpectedly merges another source")
+    require([row["id"] for row in new["questions"]
+             if SOURCE in row["source_numbers"]] == [QUESTION],
+            "Unexpected extra affected question")
+    require(data["view"]["questions"] == [
+        {field: affected[field] for field in ("id", "source_numbers", "view")}
+    ] and data["view"]["internalAuthorSolutionAndKeyIncluded"] is False,
+            "Frozen learner-view input does not match new actual draft")
+    require(freeze["author_intent_or_key_read"] is False and
+            freeze["delta_or_old_review_read"] is False and
+            freeze["reviewer_identity"] == late["reviewer_identity"] == IDENTITY,
+            "Independent-freeze identity/order mismatch")
+    require(late["source_review"]["source_number"] == SOURCE,
+            "Wrong replacement source")
+
+    replacement_question = copy.deepcopy(freeze["question_review"])
+    require(replacement_question["question_id"] == QUESTION,
+            "Wrong independently frozen question")
+    math = replacement_question["mathematics"]
+    require(math["correct"] == affected["key"]["correct"],
+            "Independent exact set disagrees with author's key")
+    option_checks = keyed(math["option_checks"], "option_id")
+    rationales = keyed(affected["key"]["rationales"], "option_id")
+    require(set(option_checks) == set(rationales) ==
+            {option["id"] for option in affected["view"]["options"]},
+            "Incomplete affected option comparison")
+    require(all(option_checks[key]["truth"] == rationales[key]["truth"]
+                for key in option_checks), "Independent option truth mismatch")
+    replacement_question["task_fidelity"]["evidence"] += (
+        " " + late["late_fidelity_note"]
+    )
+    math["independent_solution"] += " " + late["late_mathematics_note"]
+    for check in math["option_checks"]:
+        check["evidence"] += " " + late["late_option_notes"][check["option_id"]]
+
+    prior_sources = keyed(prior["source_reviews"], "source_number")
+    prior_questions = keyed(prior["question_reviews"], "question_id")
+    require(set(prior_sources) == set(old_coverage) and
+            set(prior_questions) == set(old_questions),
+            "Original review completeness mismatch")
+    require(prior_sources[SOURCE]["coverage"]["verdict"] == "revise" and
+            prior_questions[QUESTION]["task_fidelity"]["verdict"] == "revise",
+            "Original affected REVISE not found")
+    require(all(row["coverage"]["verdict"] == "pass"
+                for key, row in prior_sources.items() if key != SOURCE),
+            "A reused source is not an existing PASS")
+    require(all(all(row[field]["verdict"] == "pass" for field in
+                    ("task_fidelity", "redundancy", "answer_leakage", "mathematics"))
+                for key, row in prior_questions.items() if key != QUESTION),
+            "A reused question is not an existing PASS")
+    require(prior["figure_checks"] == prior["new_figure_reviews"] == [],
+            "Unexpected figure-review records")
+
+    review = copy.deepcopy(prior)
+    review["seed_sha256"] = digest(seed)
+    review["draft_sha256"] = digest(new)
+    review["reviewer"] = {
+        "kind": "independent_agent",
+        "identity": IDENTITY + "; not candidate author; fresh source147/question "
+        "only; 22 source and 41 question PASS records mechanically reused from "
+        "the original independent FIRST reviewer6213-part1",
+    }
+    review["source_reviews"] = [
+        copy.deepcopy(late["source_review"]) if row["source_number"] == SOURCE
+        else row for row in review["source_reviews"]
+    ]
+    review["question_reviews"] = [
+        replacement_question if row["question_id"] == QUESTION else row
+        for row in review["question_reviews"]
+    ]
+    verdicts = [row["coverage"]["verdict"] for row in review["source_reviews"]]
+    verdicts += [
+        row[field]["verdict"] for row in review["question_reviews"] for field in
+        ("task_fidelity", "redundancy", "answer_leakage", "mathematics")
+    ]
+    review["outcome"] = (
+        "blocked" if "blocked" in verdicts else
+        "revise" if "revise" in verdicts else "pass"
+    )
+    reused_source_rows = [
+        row for row in review["source_reviews"] if row["source_number"] != SOURCE
+    ]
+    reused_question_rows = [
+        row for row in review["question_reviews"] if row["question_id"] != QUESTION
+    ]
+    require(reused_source_rows == [
+        row for row in prior["source_reviews"] if row["source_number"] != SOURCE
+    ] and reused_question_rows == [
+        row for row in prior["question_reviews"] if row["question_id"] != QUESTION
+    ], "Existing PASS review records were altered")
+
+    counts = {
+        "full_seed_sources": len(seed["exercises"]),
+        "full_draft_questions": len(new_questions),
+        "full_draft_coverage_entries": len(new_coverage),
+        "freshly_reviewed_sources": 1,
+        "freshly_reviewed_questions": 1,
+        "freshly_reviewed_options": len(option_checks),
+        "unchanged_full_questions_equal": 41,
+        "unchanged_coverage_entries_equal": 22,
+        "reused_existing_pass_source_reviews": len(reused_source_rows),
+        "reused_existing_pass_question_reviews": len(reused_question_rows),
+        "reused_existing_pass_option_checks": sum(
+            len(row["mathematics"]["option_checks"]) for row in reused_question_rows
+        ),
+        "unchanged_sources_freshly_reviewed": 0,
+        "unchanged_questions_freshly_reviewed": 0,
+        "old_review_reruns": 0,
+        "validator_invocations": 1,
+        "image_views_or_renders": 0,
+    }
+    equality = {
+        "result": "pass",
+        "comparison": "Parsed full-object equality, including every unaffected "
+        "view, intent, key/rationale and coverage entry; no fresh semantic review.",
+        "inputs": binding,
+        "changed_question_ids": changed_questions,
+        "changed_coverage_sources": changed_sources,
+        "unchanged_question_ids": [row["id"] for row in unchanged_questions_new],
+        "unchanged_coverage_sources": [
+            row["source_number"] for row in unchanged_coverage_new
+        ],
+        "unchanged_questions_canonical_sha256": digest(unchanged_questions_new),
+        "unchanged_coverage_canonical_sha256": digest(unchanged_coverage_new),
+        "reused_source_reviews_canonical_sha256": digest(reused_source_rows),
+        "reused_question_reviews_canonical_sha256": digest(reused_question_rows),
+        "counts": counts,
+    }
+    write_json("equality.record.json", equality)
+    write_json("review.json", review)
+    review_before_validation = (OWNED / "review.json").read_bytes()
+    command = [
+        sys.executable, "-B", VALIDATOR, "--repo", ".",
+        "--seed", ORIGINAL + "/seed.json",
+        "--draft", CURRENT + "/draft.json",
+        "--review", OWNED_REL + "/review.json",
+    ]
+    started = timestamp()
+    environment = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")
+    with (OWNED / "validate.stdout").open("xb") as stdout, \
+            (OWNED / "validate.stderr").open("xb") as stderr:
+        try:
+            completed = subprocess.run(
+                command, cwd=str(ROOT), env=environment,
+                stdout=stdout, stderr=stderr, check=False,
+            )
+            exit_code = completed.returncode
+            execution_error = None
+        except OSError as error:
+            exit_code = None
+            execution_error = str(error)
+            stderr.write((execution_error + "\n").encode("utf-8"))
+
+    stable = all((ROOT / path).read_bytes() == raw[name]
+                 for name, path in input_paths.items())
+    stable = stable and (OWNED / "review.json").read_bytes() == review_before_validation
+    receipt = {
+        "artifact": "single-native-validator-invocation-receipt",
+        "cwd": str(ROOT),
+        "argv": command,
+        "command": shlex.join(command),
+        "started_utc": started,
+        "finished_utc": timestamp(),
+        "invocations": 1,
+        "exit_code": exit_code,
+        "execution_error": execution_error,
+        "inputs_and_review_unchanged_after_validation": stable,
+        "bytecode_writes_disabled": True,
+        "stdout": metadata(OWNED_REL + "/validate.stdout",
+                           (OWNED / "validate.stdout").read_bytes()),
+        "stderr": metadata(OWNED_REL + "/validate.stderr",
+                           (OWNED / "validate.stderr").read_bytes()),
+        "review": metadata(OWNED_REL + "/review.json",
+                           review_before_validation, review),
+        "result": "pass" if exit_code == 0 and stable else "failure_preserved",
+    }
+    write_json("validate.receipt.json", receipt)
+
+    result = "pass" if exit_code == 0 and stable and review["outcome"] == "pass" \
+        else "not_ready_failure_preserved"
+    source_index = next(
+        index for index, row in enumerate(prior["source_reviews"])
+        if row["source_number"] == SOURCE
+    )
+    question_index = next(
+        index for index, row in enumerate(prior["question_reviews"])
+        if row["question_id"] == QUESTION
+    )
+    output_bindings = {}
+    for name in ["review.json", "equality.record.json",
+                 "validate.stdout", "validate.stderr", "validate.receipt.json"]:
+        contents = (OWNED / name).read_bytes()
+        value = json.loads(contents) if name.endswith(".json") else None
+        output_bindings[name] = metadata(OWNED_REL + "/" + name, contents, value)
+    ready = {
+        "artifact": "Same182-6-source147-independent-AFFECTED-only-review-ready",
+        "result": result,
+        "declared_semantic_outcome": review["outcome"],
+        "validator_exit_code": exit_code,
+        "scope": {
+            "sole_authorized_cwd": str(ROOT),
+            "sole_owned_output_directory": str(OWNED),
+            "fresh_source_numbers": [SOURCE],
+            "fresh_question_ids": [QUESTION],
+            "unchanged_pass_policy": "Exactly reuse the original 22 source and "
+            "41 question PASS objects after mechanical equality verification; "
+            "not freshly reviewed, not freshly solved, not self-approved.",
+            "reviewer": review["reviewer"],
+            "prohibited_actions_performed": [],
+            "content_authorship": "No seed, question, option, intent, key or "
+            "coverage content was written; review evidence only.",
+        },
+        "counts": counts,
+        "actual_input_files": binding,
+        "original_REVISE": {
+            **binding["old_review"],
+            "outcome": prior["outcome"],
+            "affected_record_json_pointers": [
+                "/source_reviews/" + str(source_index) + "/coverage",
+                "/question_reviews/" + str(question_index) + "/task_fidelity",
+            ],
+            "retained": "Original rejected review is unchanged and not rerun.",
+        },
+        "independent_freezes_in_observed_order": [
+            {
+                **binding["source_freeze"],
+                "stage": "Source-only derivation frozen before candidate views.",
+            },
+            {
+                **binding["view_freeze"],
+                "stage": "Fidelity/leakage/redundancy and every option frozen "
+                "before author intent/key; delta/old REVISE read still later.",
+            },
+        ],
+        "outputs": output_bindings,
+        "validation": receipt,
+        "tool_limit": "Exit 0 is a mechanical structure/binding result, not "
+        "automatic proof of mathematics or fidelity. Fresh affected semantic "
+        "evidence is in the two freezes, late comparison and replacement records.",
+    }
+    write_json("ready.record", ready)
+    print(json.dumps({
+        "result": result,
+        "validator_exit_code": exit_code,
+        "counts": counts,
+        "review": output_bindings["review.json"],
+        "ready_record": metadata(OWNED_REL + "/ready.record",
+                                 (OWNED / "ready.record").read_bytes()),
+    }, ensure_ascii=True, indent=2))
+    return 0 if result == "pass" else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

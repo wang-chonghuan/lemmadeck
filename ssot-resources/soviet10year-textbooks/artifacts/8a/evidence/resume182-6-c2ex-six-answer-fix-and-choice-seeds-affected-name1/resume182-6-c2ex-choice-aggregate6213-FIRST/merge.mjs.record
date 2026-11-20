@@ -1,0 +1,73 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { canonical } from '../resume182-6-8a-c2ex-display6213-FIRST/prepare.mjs';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [configFile] = process.argv.slice(2);
+const own = '.tmp/resume182-6-c2ex-choice-aggregate6213-FIRST';
+const config = JSON.parse(fs.readFileSync(configFile));
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const readBound = entry => {
+  assert.ok(path.resolve(entry.path).startsWith(`${repo}/`));
+  const bytes = fs.readFileSync(entry.path);
+  assert.equal(sha(bytes), entry.sha256, entry.path);
+  return JSON.parse(bytes);
+};
+const dumpNew = (file, value) =>
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+const seed = readBound(config.fullSeed);
+assert.equal(seed.schema, 's10y-choice-seed-v1');
+assert.equal(seed.source.book, '8a');
+assert.equal(seed.source.lesson, 'alg8-c2-ex');
+assert.equal(seed.exercises.length, 50);
+const coverage = new Map(), questions = [], figures = [];
+for (const chunk of config.chunks) {
+  const partial = readBound(chunk.seed);
+  const draft = readBound(chunk.draft);
+  assert.equal(draft.schema, 's10y-choice-draft-v1');
+  assert.equal(draft.seed_sha256, canonical(partial));
+  assert.deepEqual(partial.trace, seed.trace);
+  assert.deepEqual(partial.concepts, seed.concepts);
+  for (const exercise of partial.exercises) {
+    assert.deepEqual(seed.exercises.find(item => item.number === exercise.number), exercise);
+  }
+  for (const figure of partial.figures) {
+    assert.deepEqual(seed.figures.find(item => item.id === figure.id), figure);
+  }
+  for (const item of draft.coverage) {
+    assert.ok(!coverage.has(item.source_number), `Duplicate source ${item.source_number}`);
+    coverage.set(item.source_number, item);
+  }
+  questions.push(...structuredClone(draft.questions));
+  figures.push(...structuredClone(draft.new_figures));
+}
+assert.equal(coverage.size, seed.exercises.length);
+assert.ok(questions.length);
+assert.equal(new Set(questions.map(question => question.id)).size, questions.length);
+assert.equal(new Set(figures.map(figure => figure.id)).size, figures.length);
+questions.sort((left, right) =>
+  Math.min(...left.source_numbers.map(Number)) - Math.min(...right.source_numbers.map(Number))
+  || left.id.localeCompare(right.id));
+const draft = { schema: 's10y-choice-draft-v1', seed_sha256: canonical(seed),
+  new_figures: figures, questions,
+  coverage: seed.exercises.map(exercise => {
+    const item = coverage.get(exercise.number);
+    assert.ok(item, exercise.number);
+    return structuredClone(item);
+  }) };
+dumpNew(`${own}/draft.json`, draft);
+dumpNew(`${own}/merge.record`, {
+  schema: 'stemrobin-182/choice-assembly-binding@1', status: 'DRAFT_NOT_APPROVAL',
+  book: '8a', lesson: 'alg8-c2-ex', edition: 'modern-us-neutral',
+  inputs: config, fullSeedCanonicalSha256: canonical(seed),
+  finalDraft: { path: `${own}/draft.json`, sha256: sha(fs.readFileSync(`${own}/draft.json`)),
+    canonicalSha256: canonical(draft) },
+  originalExercises: seed.exercises.length, actualChoiceQuestions: questions.length,
+  semanticContentChanges: 0, changes: ['Question ordering by source, full seed digest rebinding only'],
+  independentReviewsStillRequired: true, oldPassReruns: 0, databaseWrites: 0, finish: 'review',
+});
+console.log(JSON.stringify({ path: `${own}/merge.record`,
+  sha256: sha(fs.readFileSync(`${own}/merge.record`)), questions: questions.length }));

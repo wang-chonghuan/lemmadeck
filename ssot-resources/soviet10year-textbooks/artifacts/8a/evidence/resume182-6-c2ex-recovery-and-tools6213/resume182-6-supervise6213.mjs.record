@@ -1,0 +1,65 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck';
+const old = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [due, agentsJSON = '[]'] = process.argv.slice(2);
+assert.equal((Date.parse(due) - Date.parse('2026-11-20T13:09:50Z')) % 2400000, 0);
+assert.ok(Date.now() >= Date.parse(due));
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const receipts = [];
+function visit(file, root) {
+  const stat = fs.lstatSync(file);
+  if (stat.isDirectory()) {
+    for (const name of fs.readdirSync(file)) visit(path.join(file, name), root);
+  } else if (stat.isFile() && path.basename(file) === 'receipt.record') {
+    const value = JSON.parse(fs.readFileSync(file));
+    if (value.finished) receipts.push({
+      path: file, sha256: sha(fs.readFileSync(file)), root, finished: value.finished,
+      returncode: value.returncode ?? value.exitCode ?? null, error: value.error ?? null,
+    });
+  }
+}
+for (const root of [old, repo]) {
+  for (const name of fs.readdirSync(`${root}/.tmp`)) {
+    if (name.startsWith('resume182-6-')) visit(`${root}/.tmp/${name}`, root);
+  }
+}
+const git = spawnSync('git', ['rev-parse', 'HEAD', 'origin/codex/STEMROBIN-182-textbooks'],
+  { cwd: repo, encoding: 'utf8' });
+assert.equal(git.status, 0);
+const [head, remote] = git.stdout.trim().split('\n');
+const record = {
+  schema: 'resume182-6/supervision-checkpoint@1',
+  scope: { root: repo, books: ['6a', '7a', '8a'], ticket: 'STEMROBIN-182', chat: '182-6' },
+  anchoredDue: due, actual: new Date().toISOString(),
+  nextAnchoredDue: new Date(Date.parse(due) + 2400000).toISOString(),
+  head, remote, originalDeliveryBranch: 'codex/STEMROBIN-182-textbooks',
+  remoteObservation: 'Local tracking ref; this inspection performs no external Git operation.',
+  agentsLastObserved: JSON.parse(agentsJSON),
+  otherParentInFlightExecSessions: 0,
+  finishedReceipts: receipts,
+  knownNonzeroOrErrorReceiptCount: receipts.filter(item =>
+    typeof item.returncode === 'number' && item.returncode !== 0 || item.error).length,
+  unknownReturncodeReceiptCount: receipts.filter(item => item.returncode === null).length,
+  priorRootReceiptsReferencedReadOnly: true, countsIncludeCopiedHistoricalReferences: true,
+  oldChatsAndMenciusRussellNotResumed: true,
+  createWorktreeCallsThisContinuation: 1, attachCallsThisContinuation: 0,
+  replacementChatsCreated: 0, otherChatsMessaged: 0,
+  imageViewsThisSupervision: 0, oldPassReruns: 0,
+  databaseWrites: 0, merges: 0, deployments: 0, formalHandoffRuns: 0, finish: 'review',
+  removedProbeReceiptFilesStillUnrecovered: 8,
+  previousFailuresLocksBackupsAndPendingMessagesPreserved: true,
+  unknownHistoricalBytesRecovered: false, hostTokens: 'unknown', totalCost: 'unknown',
+};
+const target = `${repo}/.tmp/resume182-6-supervision-${due.replace(/[-:]/g, '')}-6213.record`;
+fs.writeFileSync(target, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: target, sha256: sha(fs.readFileSync(target)),
+  actual: record.actual, nextAnchoredDue: record.nextAnchoredDue,
+  finishedReceiptReferences: receipts.length,
+  knownNonzeroOrErrorReceiptCount: record.knownNonzeroOrErrorReceiptCount,
+  unknownReturncodeReceiptCount: record.unknownReturncodeReceiptCount }));

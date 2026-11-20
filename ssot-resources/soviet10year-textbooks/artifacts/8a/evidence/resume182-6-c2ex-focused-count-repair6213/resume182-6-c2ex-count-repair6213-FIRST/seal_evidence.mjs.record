@@ -1,0 +1,164 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck';
+assert.equal(process.cwd(), repo);
+const root = path.join(repo, '.tmp/resume182-6-c2ex-count-repair6213-FIRST');
+const hash = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const file = name => {
+  const absolute = path.resolve(repo, name);
+  return { path: absolute, sha256: hash(fs.readFileSync(absolute)) };
+};
+const json = name => JSON.parse(fs.readFileSync(path.join(root, name), 'utf8'));
+const layoutPath = '.claude/skills/ld-s10y-lesson/tools/layout.py';
+const testPath = '.claude/skills/ld-s10y-lesson/tools/test_layout_multiline_count.py';
+const implementation = file(layoutPath);
+const tests = file(testPath);
+const runNames = [
+  'p66-pixel-before', 'p67-pixel-before', 'focused-before',
+  'p67-adjacent-before', 'focused-after-01', 'fraction-join-diagnostic-01',
+  'focused-after-02', 'p66-count-after', 'p67-count-after',
+];
+const expectedCodes = [0, 0, 1, 0, 1, 0, 0, 0, 0];
+const runs = runNames.map((name, index) => {
+  const receipt = json(`${name}/receipt.record`);
+  assert.equal(receipt.cwd, repo);
+  assert.equal(receipt.returncode, expectedCodes[index]);
+  return {
+    name, ...receipt,
+    receipt: file(path.join(root, name, 'receipt.record')),
+    start: file(path.join(root, name, 'start.record')),
+    stdout: file(path.join(root, name, 'stdout.txt')),
+    stderr: file(path.join(root, name, 'stderr.txt')),
+  };
+});
+const finalStderr = fs.readFileSync(
+  path.join(root, 'focused-after-02/stderr.txt'), 'utf8',
+);
+assert.match(finalStderr, /Ran 13 tests/);
+assert.match(finalStderr, /\nOK\n/);
+assert.doesNotMatch(finalStderr, /skipped=/);
+const firstImplementation = '77c9013fa9966348e0242af75f50f118d1348f1a4976bd48a6da09faf32f06b6';
+const pages = [66, 67].map(page => {
+  const before = json(`p${page}-pixel-before/stdout.txt`);
+  const after = json(`p${page}-count-after/stdout.txt`);
+  const expected = page === 66 ? 26 : 25;
+  assert.equal(before.implementation_sha256, firstImplementation);
+  assert.equal(before.actual, page === 66 ? 15 : 27);
+  assert.equal(after.count, expected);
+  assert.equal(after.implementation_sha256, implementation.sha256);
+  assert.equal(after.image_observations, 0);
+  assert.equal(after.source_sha256, before.source_sha256);
+  assert.equal(file(after.source).sha256, after.source_sha256);
+  if (page === 66) {
+    assert.equal(after.pre_expansion_bands.filter(band => band.count === 2).length, 11);
+  } else {
+    assert(after.result.some(([a, b]) => a === 987 && b === 1132));
+    assert(!after.result.some(([a, b]) => a <= 3422 && b >= 3391));
+  }
+  return {
+    page, expected_from_independent_review: expected,
+    before_count: before.actual, after_count: after.count,
+    source: file(after.source),
+    prepared_layout_read_only: file(path.join(path.dirname(after.source), 'layout.json')),
+    numerical_receipt: file(path.join(root, `p${page}-count-after/receipt.record`)),
+    numerical_result: file(path.join(root, `p${page}-count-after/stdout.txt`)),
+  };
+});
+const oldFailures = [66, 67].map(page => {
+  const directory = `.tmp/resume182-6-c2ex-p${page}-finalize6213-FIRST`;
+  const originalReceipt = JSON.parse(
+    fs.readFileSync(path.join(repo, directory, 'receipt.record'), 'utf8'),
+  );
+  assert.notEqual(originalReceipt.returncode, 0);
+  return {
+    page,
+    receipt: file(`${directory}/receipt.record`),
+    stdout: file(`${directory}/stdout.txt`),
+    stderr: file(`${directory}/stderr.txt`),
+    row_diagnostic: file(`.tmp/resume182-6-c2ex-p${page}-row-diagnostic6213-FIRST/stdout.txt`),
+    preserved_in_place_not_rerun: true,
+  };
+});
+const candidate = path.join(root, 'candidate');
+fs.mkdirSync(candidate, { recursive: true });
+for (const source of [implementation, tests]) {
+  const bytes = fs.readFileSync(source.path);
+  fs.writeFileSync(path.join(candidate, path.basename(source.path)), bytes, { flag: 'wx' });
+}
+const git = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8' });
+assert.equal(git.status, 0);
+const diff = spawnSync('git', ['diff', '--', layoutPath], { cwd: repo, encoding: 'utf8' });
+assert.equal(diff.status, 0);
+fs.writeFileSync(path.join(root, 'layout.patch'), diff.stdout, { flag: 'wx' });
+const reviewPath = '.tmp/resume182-6-8a-c2ex-source-review6213-FIRST-part1/review.md';
+const reviewReady = path.join(path.dirname(reviewPath), 'ready.record');
+const record = {
+  record_type: 'counter-repair-ready',
+  status: 'FOCUSED_COUNTER_REPAIR_VERIFIED_NOT_SOURCE_APPROVAL',
+  ticket: 'STEMROBIN-182', continuation: '182-6', workdir: repo,
+  checked_at: new Date().toISOString(),
+  git_head: git.stdout.trim(),
+  write_set: [implementation.path, tests.path, root],
+  implementation_before_sha256: firstImplementation,
+  implementation,
+  focused_test: tests,
+  changed_candidate_snapshots: [
+    file(path.join(candidate, 'layout.py')),
+    file(path.join(candidate, 'test_layout_multiline_count.py')),
+  ],
+  implementation_patch: file(path.join(root, 'layout.patch')),
+  contracts: [
+    file('AGENTS.md'),
+    file('.intentfold/charter/engineering.md'),
+    file('.claude/skills/ld-s10y-lesson/SKILL.md'),
+    file('.claude/skills/ld-s10y-lesson/references/production-resume.md'),
+  ],
+  expected_count_authority: {
+    review: file(reviewPath),
+    review_ready: fs.existsSync(path.join(repo, reviewReady)) ? file(reviewReady) : null,
+    meaning: 'Independent original-pixel baseline inventory, not author rows or counter output.',
+    source_author_ready: file('.tmp/resume182-6-8a-c2ex-source-author6213-FIRST-part1/ready.record'),
+  },
+  result: {
+    focused_tests: 13, synthetic_tests: 11, reviewed_pixel_fixture_tests: 2,
+    failures: 0, skipped: 0,
+    pages,
+  },
+  repair: [
+    'Use compact glyph height instead of a system-inflated median projection height for expansion.',
+    'Recognize short supported fraction rules and allow one glyph height for adjoining inline ink.',
+    'Reject an isolated dense sub-glyph blot at the extreme bottom edge, preserving short footer glyphs.',
+  ],
+  runs,
+  first_failures_preserved: oldFailures,
+  image_observations: 0,
+  numerical_source_reads_only: true,
+  source_or_prepared_layout_writes: false,
+  page_specific_production_overrides: false,
+  existing_unit_tests_read_for_design: false,
+  broad_tests_build_finalize_handoff: false,
+  installs_environment_db_paid_services_new_chats_worktrees_attachments_commit_push: false,
+  unresolved: [
+    'No remaining p66/p67 count failure under the requested focused tests.',
+    'Independent source/content approval is not supplied by this repair; the parent owns that workflow.',
+    'The author-reported p71 prepared-layout mismatch and figure ambiguities were not inspected or repaired.',
+    'Other pages and broad regression behavior were not verified, per the requested scope.',
+  ],
+};
+fs.writeFileSync(
+  path.join(root, 'ready.record'), `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' },
+);
+console.log(JSON.stringify({
+  status: record.status,
+  ready: file(path.join(root, 'ready.record')),
+  implementation, focused_test: tests,
+  source_author_ready: record.expected_count_authority.source_author_ready,
+  source_review_ready: record.expected_count_authority.review_ready,
+  counts: pages.map(page => ({ page: page.page, before: page.before_count, after: page.after_count })),
+  focused_tests: record.result.focused_tests,
+  source_approval_claimed: false,
+}, null, 2));

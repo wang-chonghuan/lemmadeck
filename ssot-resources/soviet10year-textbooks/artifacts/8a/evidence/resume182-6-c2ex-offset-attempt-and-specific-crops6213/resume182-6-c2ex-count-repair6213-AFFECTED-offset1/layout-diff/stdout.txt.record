@@ -1,0 +1,88 @@
+--- .tmp/resume182-6-c2ex-count-repair6213-FIRST/candidate/layout.py	2026-11-20 14:56:57
++++ .claude/skills/ld-s10y-lesson/tools/layout.py	2026-11-20 15:09:01
+@@ -279,7 +279,50 @@
+             for _, brace_columns in braces
+         )
+         for _, columns in glyphs
++    )
++
++
++def _independent_offset_label_rows(
++    ink: np.ndarray, content_w: int, glyph_h: float, bounds_list: list
++) -> list[tuple[int, int]]:
++    """Keep label-only baselines, not labels sharing any equation's ink row."""
++    braces = [
++        (rows, columns)
++        for bounds in bounds_list if bounds is not None
++        for rows, columns in [bounds]
++        if 2 * glyph_h < rows.stop - rows.start < 6 * glyph_h
++        and columns.stop - columns.start < 0.6 * glyph_h
++    ]
++    if not braces:
++        return []
++    labels = [
++        (rows, columns)
++        for bounds in bounds_list if bounds is not None
++        for rows, columns in [bounds]
++        if 0.6 * glyph_h <= rows.stop - rows.start <= 1.5 * glyph_h
++        and 0.2 * glyph_h <= columns.stop - columns.start <= 1.3 * glyph_h
++        and any(
++            brace_rows.start <= rows.start and rows.stop <= brace_rows.stop
++            and brace_columns.start - 2 * glyph_h <= columns.start
++            and columns.stop <= brace_columns.start
++            for brace_rows, brace_columns in braces
++        )
++    ]
++    if not labels:
++        return []
++    equations = ink.copy()
++    for rows, columns in braces + labels:
++        equations[rows, columns] = False
++    equation_rows = _merge_close(_row_fragments(equations, content_w), 0.4 * glyph_h)
++    label_rows = _merge_close(
++        sorted((rows.start, rows.stop - 1) for rows, _ in labels), 0.25 * glyph_h
+     )
++    return [
++        (a, b) for a, b in label_rows
++        if ink[a:b + 1].any()
++        and any(rows.start < a <= b < rows.stop for rows, _ in braces)
++        and not any(c <= b and a <= d for c, d in equation_rows)
++    ]
+ 
+ 
+ def _fraction_system_row_count(
+@@ -685,6 +728,25 @@
+     typical_gap = float(np.median(nearby_gaps)) if nearby_gaps else typical_h * 0.75
+     pitch = typical_h + typical_gap
+     counts = ink.sum(axis=1)
++    offset_label_rows = _independent_offset_label_rows(
++        ink, content_w, glyph_h, bounds_list
++    )
++    equation_ink = ink.copy()
++    for a, b in offset_label_rows:
++        equation_ink[a:b + 1] = False
++    if offset_label_rows:
++        # Count equations without the bridging label ink, then restore each event.
++        separated = []
++        for a, b in merged:
++            if any(c <= b and a <= d for c, d in offset_label_rows):
++                separated.extend(
++                    (a + c, a + d) for c, d in _merge_close(
++                        _row_fragments(equation_ink[a:b + 1], content_w), merge_gap
++                    )
++                )
++            else:
++                separated.append((a, b))
++        merged = separated
+     expanded = []
+     for a, b in merged:
+         band_h = b - a + 1
+@@ -792,7 +854,7 @@
+         )
+         if not decoration:
+             out.append((a, b))
+-    return out
++    return sorted(out + offset_label_rows)
+ 
+ 
+ def snap(ink: np.ndarray, box: list[int]) -> tuple[list[int], dict]:

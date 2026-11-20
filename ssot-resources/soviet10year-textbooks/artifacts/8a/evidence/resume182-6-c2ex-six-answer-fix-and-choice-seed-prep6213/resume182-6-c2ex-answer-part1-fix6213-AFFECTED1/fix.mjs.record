@@ -1,0 +1,61 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck';
+assert.equal(process.cwd(), repo);
+const own = '.tmp/resume182-6-c2ex-answer-part1-fix6213-AFFECTED1';
+const source = '.tmp/resume182-6-8a-c2ex-answer-author6213-FIRST-part1/candidate.json';
+const reviewFile = '.tmp/resume182-6-8a-c2ex-answer-review6213-FIRST-part1/ready.record';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+assert.equal(sha(fs.readFileSync(source)), '7a6fc8bce0f9a0e13d69e4770d8a196be4bfd255b1b8323aaae9da4dcffa951a');
+assert.equal(sha(fs.readFileSync(reviewFile)), 'ff3c3f8f08dbe2781935ac7067b520b9577eee5a84e3e7482e5c7b7df52843bf');
+const original = JSON.parse(fs.readFileSync(source));
+const candidate = structuredClone(original);
+const labels = new Set(['152', '153', '156', '157', '158']);
+const affected = new Set(['151', ...labels]);
+const deltas = [];
+let changedLabels = 0;
+for (const answer of candidate.answers) {
+  const before = original.answers.find(item => item.exercise === answer.exercise);
+  if (answer.exercise === '151') {
+    answer.grading = 'ungraded';
+    answer.parts = [];
+    answer.notes = '明确要求图解法，故不自动判定作图正误。标准答案保留所有具体图象、交点和无解结论；原题 xy=-12 不改号。';
+  } else if (labels.has(answer.exercise)) {
+    for (const part of answer.parts) {
+      if (/^[a-f]\) 解1 x$/u.test(part.label)) {
+        part.label += '（按x递增，同x时按y递增）';
+        changedLabels += 1;
+      }
+    }
+    const restored = structuredClone(answer);
+    restored.parts.forEach((part, index) => { part.label = before.parts[index].label; });
+    assert.deepEqual(restored, before, 'Only affected public part labels may change');
+  } else {
+    assert.deepEqual(answer, before, 'Unchanged approved exercises must remain exact');
+  }
+  assert.equal(answer.displayAnswer, before.displayAnswer);
+  if (affected.has(answer.exercise)) {
+    deltas.push({ exercise: answer.exercise, before: sha(JSON.stringify(before)),
+      after: sha(JSON.stringify(answer)), unchangedMathematicalDisplay: true });
+  }
+}
+assert.equal(changedLabels, 20);
+const dumpNew = (file, value) =>
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+dumpNew(`${own}/candidate.json`, candidate);
+dumpNew(`${own}/delta.record`, {
+  schema: 'stemrobin-182/affected-answer-grading-delta@1', status: 'DRAFT_NOT_APPROVAL',
+  book: '8a', lesson: 'alg8-c2-ex', edition: 'modern-us-neutral',
+  original: { path: source, sha256: sha(fs.readFileSync(source)) },
+  firstReview: { path: reviewFile, sha256: sha(fs.readFileSync(reviewFile)) },
+  candidate: { path: `${own}/candidate.json`, sha256: sha(fs.readFileSync(`${own}/candidate.json`)) },
+  affectedExercises: [...affected], unchangedApprovedExerciseCount: 17,
+  changedLabels, removedAutoPartsFor151: 25, mathematicalDisplayChanges: 0,
+  otherExpectedJudgeAndPartsChanges: 0, deltas, originalWrites: 0,
+  oldPassReruns: 0, databaseWrites: 0, finish: 'review',
+});
+console.log(JSON.stringify({ candidate: `${own}/candidate.json`,
+  candidateSha256: sha(fs.readFileSync(`${own}/candidate.json`)),
+  delta: `${own}/delta.record`, deltaSha256: sha(fs.readFileSync(`${own}/delta.record`)) }));

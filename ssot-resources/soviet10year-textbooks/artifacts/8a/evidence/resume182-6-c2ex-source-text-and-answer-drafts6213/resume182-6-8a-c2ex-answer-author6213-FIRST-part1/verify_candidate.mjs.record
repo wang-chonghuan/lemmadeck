@@ -1,0 +1,218 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import {spawnSync} from 'node:child_process'
+import {createRequire} from 'node:module'
+import {fileURLToPath} from 'node:url'
+
+const root = process.cwd()
+const own = path.dirname(fileURLToPath(import.meta.url))
+const expectedRoot = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck'
+if (root !== expectedRoot) throw new Error(`Wrong cwd: ${root}`)
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex')
+const writeRecord = (name, data) => fs.writeFileSync(
+  path.join(own, name), JSON.stringify(data, null, 2) + '\n', {flag: 'wx'},
+)
+const commands = [
+  {
+    command: 'ls -ld .tmp/resume182-6-8a-c2ex-answer-author6213-FIRST-part1 .claude/skills/ld-s10y-lesson/.venv/bin/python',
+    exitCode: 1,
+    result: 'Both paths did not exist at initial inspection. The sidecar was subsequently created only by apply_patch. No venv was created.',
+    stderr: 'ls: .claude/skills/ld-s10y-lesson/.venv/bin/python: No such file or directory\nls: .tmp/resume182-6-8a-c2ex-answer-author6213-FIRST-part1: No such file or directory',
+  },
+  {
+    command: 'python3 -c \'import sys; print(sys.executable); import sympy; print("sympy", sympy.__version__)\'',
+    exitCode: 1,
+    stdout: '/Users/yong/.local/bin/python3\n',
+    stderr: "ModuleNotFoundError: No module named 'sympy'",
+    result: 'Availability failure only. No installation attempted.',
+  },
+  {
+    command: 'ls -d app/node_modules/@cortex-js/compute-engine app/node_modules/mathlive .claude/skills/ld-s10y-lesson/node_modules/@cortex-js/compute-engine',
+    exitCode: 1,
+    stdout: 'app/node_modules/@cortex-js/compute-engine\napp/node_modules/mathlive\n',
+    stderr: 'ls: .claude/skills/ld-s10y-lesson/node_modules/@cortex-js/compute-engine: No such file or directory',
+    result: 'App packages already available; optional lesson-local package absent. No installation attempted.',
+  },
+  {
+    command: 'node -e \'const {createRequire}=require("module");const r=createRequire(process.cwd()+"/app/package.json");const {ComputeEngine}=r("@cortex-js/compute-engine");const c=new ComputeEngine();for(const s of ["\\\\text{是}","\\\\text{否}","\\\\infty","\\\\left(-3\\\\sqrt{2},3\\\\sqrt{2}\\\\right)","\\\\left[-10\\\\sqrt{2},10\\\\sqrt{2}\\\\right]","\\\\varnothing"]){const p=c.parse(s);console.log(JSON.stringify({latex:s,json:p.json,error:p.has("Error")}));}\'',
+    exitCode: 0,
+    result: 'Six preliminary exact representations parsed without Error. This was not MathLive or input-contract verification.',
+  },
+]
+const algebraCommand = ['python3', path.join(own, 'verify_algebra.py')]
+const run = spawnSync(algebraCommand[0], algebraCommand.slice(1), {
+  cwd: root, encoding: 'utf8', env: {...process.env, PYTHONDONTWRITEBYTECODE: '1'},
+})
+commands.push({
+  argv: algebraCommand, exitCode: run.status, stderr: run.stderr,
+  result: run.status === 0 ? 'Exact algebra verifier completed.' : 'Exact algebra execution failed.',
+})
+if (run.status !== 0) {
+  writeRecord('verification-failure.record', {
+    status: 'LOCAL_VERIFICATION_FAILURE_NOT_CONTENT_APPROVAL',
+    argv: algebraCommand, exitCode: run.status, stdout: run.stdout, stderr: run.stderr,
+  })
+  writeRecord('commands.record', {cwd: root, records: commands})
+  throw new Error(run.stderr || 'Algebra verifier failed')
+}
+const algebra = JSON.parse(run.stdout)
+writeRecord('algebra-verification.record', algebra)
+
+const candidateBytes = fs.readFileSync(path.join(own, 'candidate.json'))
+const candidate = JSON.parse(candidateBytes)
+const inputBefore = [
+  {
+    path: path.resolve(root, candidate.inputBinding.template),
+    sha256: candidate.inputBinding.templateSha256,
+  },
+  {
+    path: path.resolve(root, candidate.inputBinding.textAuthorReady),
+    sha256: candidate.inputBinding.textAuthorReadySha256,
+  },
+]
+const loaded = inputBefore.map(input => {
+  const bytes = fs.readFileSync(input.path)
+  if (sha(bytes) !== input.sha256) throw new Error(`Binding mismatch: ${input.path}`)
+  return JSON.parse(bytes)
+})
+const [template, authorReady] = loaded
+const selected = template.exercises.filter(e => +e.number >= 138 && +e.number <= 160)
+const demand = (condition, message) => {if (!condition) throw new Error(message)}
+demand(candidate.status === 'DRAFT_NOT_APPROVAL', 'Draft status lost')
+demand(candidate.book === '8a' && candidate.lesson === 'alg8-c2-ex'
+  && candidate.edition === 'modern-us-neutral', 'Identity mismatch')
+demand(candidate.answers.length === 23 && selected.length === 23, 'Not exactly 23')
+demand(candidate.answers.every((a, i) => a.exercise === String(138+i)), 'Coverage/order mismatch')
+const readyTemplate = authorReady.files.find(f => f.path === inputBefore[0].path)
+demand(readyTemplate?.sha256 === inputBefore[0].sha256, 'Parent template hash mismatch')
+const textBindings = selected.map(e => {
+  const textSha256 = sha(Buffer.from(e.text))
+  const parent = authorReady.entries.find(item => item.exercise === e.number)
+  demand(parent?.text_sha256 === textSha256, `Parent literal-text mismatch: ${e.number}`)
+  demand(e.figure_refs.length === 0 && e.figures.length === 0, `Unexpected figure: ${e.number}`)
+  return {exercise: e.number, textSha256, figureRefs: []}
+})
+
+const require = createRequire(path.join(root, 'app/package.json'))
+const {ComputeEngine} = require('@cortex-js/compute-engine')
+const engine = new ComputeEngine()
+const parsedKeys = []
+for (const answer of candidate.answers) {
+  demand(answer.source === 'derived' && !('bookRaw' in answer), `Provenance: ${answer.exercise}`)
+  demand(typeof answer.displayAnswer === 'string' && answer.displayAnswer.trim(), 'Empty display')
+  demand(['auto', 'ungraded'].includes(answer.grading), 'Invalid grading')
+  demand(Array.isArray(answer.parts), 'Missing parts array')
+  demand(answer.grading === 'auto' ? answer.parts.length > 0 : answer.parts.length === 0,
+    `Grading/parts inconsistency: ${answer.exercise}`)
+  demand(new Set(answer.parts.map(p => p.label)).size === answer.parts.length, 'Duplicate labels')
+  for (const part of answer.parts) {
+    demand(['exact', 'numeric', 'expression'].includes(part.judge), 'Invalid judge')
+    demand(Array.isArray(part.expected) && part.expected.length > 0, 'Empty expected')
+    for (const expected of part.expected) {
+      demand(typeof expected === 'string' && expected.trim(), 'Blank key')
+      demand(!/(?<![\\a-zA-Z])(?:abs|sqrt)\s*\(/.test(expected), 'Code-style function notation')
+      const parsed = engine.parse(expected)
+      demand(!parsed.has('Error'), `LaTeX parse error: ${answer.exercise} ${part.label}`)
+      const record = {
+        exercise: answer.exercise, label: part.label, judge: part.judge,
+        latex: expected, mathJson: parsed.json, parseError: false,
+      }
+      if (part.judge === 'numeric') {
+        const numeric = parsed.N()
+        demand(Number.isFinite(numeric.re) && numeric.im === 0, 'Nonfinite/nonreal numeric key')
+        record.numericValue = numeric.re
+      }
+      parsedKeys.push(record)
+    }
+  }
+}
+
+const agreement = []
+for (const [system, pairs] of Object.entries(algebra.finiteSolutions)) {
+  const match = system.match(/^(151|152|153|156|157|158)([a-f])$/)
+  if (!match && system !== '159') continue
+  const exercise = match?.[1] ?? '159'
+  const subpart = match?.[2]
+  const keys = parsedKeys.filter(k => k.exercise === exercise && k.judge === 'numeric'
+    && (!subpart || k.label.startsWith(`${subpart})`)))
+  const expectedNumbers = pairs.flatMap(pair => pair.map(q => q.approximate))
+  demand(keys.length === expectedNumbers.length, `Numeric coordinate coverage: ${system}`)
+  keys.forEach((key, i) => {
+    const independent = expectedNumbers[i]
+    demand(Math.abs(key.numericValue-independent) <= 1e-11*Math.max(1, Math.abs(independent)),
+      `Numeric key does not agree with exact algebra: ${system} ${key.label}`)
+    agreement.push({system, label: key.label, numericKey: key.numericValue,
+      exactAlgebraValue: pairs[Math.floor(i/2)][i%2], result: 'pass'})
+  })
+}
+const ungraded = candidate.answers.filter(a => a.grading === 'ungraded').map(a => a.exercise)
+demand(JSON.stringify(ungraded) === JSON.stringify(['140','141','142','145','146','147','148']),
+  'Unexpected grading downgrade')
+const inputAfter = inputBefore.map(input => {
+  const actualSha256 = sha(fs.readFileSync(input.path))
+  demand(actualSha256 === input.sha256, `Concurrent input change: ${input.path}`)
+  return {...input, recheckedSha256: actualSha256}
+})
+const report = {
+  status: 'LOCAL_DETERMINISTIC_VERIFICATION_ONLY', result: 'pass', approval: false,
+  candidateSha256: sha(candidateBytes), inputs: inputAfter, literalTextBindings: textBindings,
+  exerciseCount: 23, autoCount: 16, ungradedCount: 7, ungradedExercises: ungraded,
+  keyCount: parsedKeys.length, numericCount: parsedKeys.filter(k => k.judge === 'numeric').length,
+  exactCount: parsedKeys.filter(k => k.judge === 'exact').length,
+  parsedKeys, coordinateAgreement: agreement,
+  mathliveEditingCheck: 'NOT_RUN_NOT_AUTHORIZED',
+  independentAnswerReview: 'NOT_RUN_PARENT_OWNED',
+  independentTextApproval: 'PENDING_PARENT_OWNED',
+  imagesViewed: 0, imagesWritten: 0, browserCalls: 0, modelServiceCalls: 0,
+  databaseCalls: 0, gitCalls: 0, dependenciesInstalled: 0,
+}
+writeRecord('candidate-verification.record', report)
+commands.push({
+  command: 'node .tmp/resume182-6-8a-c2ex-answer-author6213-FIRST-part1/verify_candidate.mjs',
+  exitCode: 0,
+  result: 'Local verification complete; this script generates reports and a draft binding record only.',
+})
+writeRecord('commands.record', {
+  schema: 'stemrobin-182/local-verification-commands@1',
+  status: 'EXECUTION_EVIDENCE_NOT_APPROVAL', cwd: root, records: commands,
+  note: 'Scope is availability probes and local deterministic verification; no browser, application tests, finalize, publish, model service, DB, Git, attachments, chats, or installs were run.',
+})
+const outputNames = [
+  'candidate.json', 'reasoning.md', 'verify_algebra.py', 'verify_candidate.mjs',
+  'algebra-verification.record', 'candidate-verification.record', 'commands.record',
+]
+const outputs = outputNames.map(name => ({
+  path: path.join(own, name), sha256: sha(fs.readFileSync(path.join(own, name))),
+}))
+writeRecord('ready.record', {
+  schema: 'stemrobin-182/preliminary-answer-author@1',
+  status: 'DRAFT_NOT_APPROVAL', ticket: 'STEMROBIN-182', book: '8a',
+  lesson: 'alg8-c2-ex', edition: 'modern-us-neutral', exercises: selected.map(e => e.number),
+  exerciseCount: 23, soleWorkdir: root, ownedDirectory: own,
+  inputBindings: inputAfter, literalTextBindings: textBindings, outputs,
+  source: 'derived', autoCount: 16, ungradedCount: 7,
+  localVerification: {algebra: 'pass', latexAndNumeric: 'pass'},
+  independentTextApproval: 'PENDING_PARENT_OWNED',
+  independentAnswerReview: 'NOT_RUN_PARENT_OWNED',
+  cap2Ready: false, finalized: false, promoted: false, approved: false,
+  mathliveInputContract: 'NOT_RUN_NOT_AUTHORIZED',
+  unresolvedMathematicalIssues: [],
+  cautions: [
+    'This record binds a preliminary literal snapshot, not independently approved modern text.',
+    '151a has no real solution with the literal xy=-12. No signs were changed.',
+    '154 uses arbitrary real r as printed; the nonnegative-radius convention is separately disclosed.',
+    'Exact keys require later authorized real MathLive editing checks; parsing alone is not that check.',
+  ],
+  imagesViewed: 0, imagesWritten: 0, dependenciesInstalled: 0,
+  durableKeysCreated: 0, browserCalls: 0, applicationTestRuns: 0,
+  modelServiceCalls: 0, databaseCalls: 0, gitCalls: 0,
+  parentResponsibility: 'Integration and separate answer review after final modern text/figures.',
+})
+console.log(JSON.stringify({
+  status: 'DRAFT_NOT_APPROVAL', result: 'local-verification-pass',
+  exerciseCount: 23, algebraCheckCount: algebra.checkCount,
+  keyCount: report.keyCount, coordinateAgreementCount: agreement.length,
+  outputs: [...outputs, {path: path.join(own, 'ready.record'),
+    sha256: sha(fs.readFileSync(path.join(own, 'ready.record')))}],
+}, null, 2))

@@ -1,0 +1,46 @@
+import json
+from pathlib import Path
+import sys
+
+from PIL import Image
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck")
+assert Path.cwd() == REPO
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+import layout
+
+
+def boxes(values):
+    return [
+        [columns.start, rows.start, columns.stop - columns.start, rows.stop - rows.start]
+        for rows, columns in values
+    ]
+
+
+def trace(frame, event, result):
+    values = frame.f_locals
+    if (event == "return"
+            and frame.f_code is layout._fraction_across_split.__code__
+            and values["a"] == 987 and values["b"] == 1132):
+        print(json.dumps({
+            "status": "FRACTION_JOIN_NUMERICAL_DIAGNOSTIC",
+            "image_observations": 0,
+            "split": values["split"],
+            "glyph_h": values["glyph_h"],
+            "returned": bool(result),
+            "supported": boxes(values.get("supported", [])),
+            "glyphs": boxes(values["glyphs"]),
+            "last_rows": [values["rows"].start, values["rows"].stop],
+            "last_columns": [values["columns"].start, values["columns"].stop],
+        }, indent=2))
+    return trace
+
+
+base = REPO / ".tmp/ld-s10y-lesson/8a/pages/0067"
+metadata = json.loads((base / "layout.json").read_text())
+with Image.open(base / "page.png") as image:
+    ink = layout.ink_mask(image)
+sys.settrace(trace)
+result = layout.line_bands(ink, metadata["content_width"])
+sys.settrace(None)
+print(json.dumps({"count": len(result), "result": result}))

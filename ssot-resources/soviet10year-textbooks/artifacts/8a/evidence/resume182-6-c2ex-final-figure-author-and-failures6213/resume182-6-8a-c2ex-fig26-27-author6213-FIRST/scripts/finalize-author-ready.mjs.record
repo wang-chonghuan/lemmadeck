@@ -1,0 +1,143 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+
+const workdir = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck'
+assert.equal(process.cwd(), workdir)
+const root = '.tmp/resume182-6-8a-c2ex-fig26-27-author6213-FIRST'
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const hash = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const bind = file => ({ path: file, sha256: hash(file) })
+const first = {
+  markdown: bind(`${root}/inventory.md`),
+  record: bind(`${root}/inventory.record`),
+}
+assert.equal(first.markdown.sha256, '2978b3433d7beebb137f303e44ad36ce4793ff531828135c88439a1dcb4668fa')
+assert.equal(first.record.sha256, 'e9cd75034b20dc242fce6696a84afe953703959448d39c127abaf73d075c178f')
+const repair = read(`${root}/context-plan/layout-repair.record`)
+assert.equal(repair.contentRepairCountPerFigure, 1)
+for (const binding of repair.bindings) assert.equal(hash(binding.path), binding.sha256)
+const figures = []
+for (const figure of ['fig-26', 'fig-27']) {
+  const spec = bind(`${root}/spec/${figure}.spec.json`)
+  const data = read(spec.path)
+  const renderDir = `${root}/render/${figure}/attempt-02`
+  const report = bind(`${renderDir}/${figure}.render.json`)
+  const rendered = read(report.path)
+  assert.equal(rendered.status, 'pass')
+  assert.equal(rendered.spec.sha256, spec.sha256)
+  assert.equal(rendered.collisions.length, 0)
+  assert.equal(rendered.displayChecks.length, 1)
+  assert.equal(rendered.displayChecks[0].width, 640)
+  assert.equal(rendered.displayChecks[0].measuredMinPx, 20)
+  const svg = bind(`${renderDir}/${figure}.svg`)
+  const png = bind(`${renderDir}/${figure}.png`)
+  assert.deepEqual(rendered.output.svg, svg)
+  const pngBytes = fs.readFileSync(png.path)
+  assert.equal(pngBytes.readUInt32BE(16), 640)
+  assert.equal(pngBytes.readUInt32BE(20), 1024)
+  const source = bind(data.source.image.path)
+  assert.deepEqual(source, data.source.image)
+  assert.ok(source.path.startsWith('ssot-resources/'))
+  const invocations = []
+  for (const [stage, directory] of [
+    ['validate-draft', `${root}/context-plan/validate-draft/${figure}`],
+    ['render', `${root}/render/${figure}`],
+    ['validate-rendered', `${root}/context-plan/validate-rendered/${figure}`],
+  ]) {
+    const attempts = fs.readdirSync(directory).filter(name => /^attempt-\d+$/.test(name)).sort()
+    assert.equal(attempts.length, stage === 'validate-rendered' ? 1 : 2)
+    for (const attempt of attempts) {
+      const file = `${directory}/${attempt}/invocation.record`
+      const receipt = read(file)
+      assert.ok(receipt.completed && receipt.inputUnchanged)
+      assert.equal(hash(receipt.snapshot.path), receipt.input.sha256)
+      assert.equal(receipt.executionError, null)
+      invocations.push({ ...bind(file), stage, attempt: receipt.attempt, exitCode: receipt.exitCode })
+    }
+  }
+  const failedDir = `${root}/render/${figure}/attempt-01`
+  const failedReport = bind(`${failedDir}/${figure}.render.json`)
+  assert.equal(read(failedReport.path).status, 'fail')
+  figures.push({
+    figure, spec, report, svg, png, source,
+    authorFinalPngViews: 1,
+    rendererStatus: rendered.status,
+    independentFigureApproval: false,
+    minTextPxAt640: 20,
+    contentRepairCount: 1,
+    repairKind: figure === 'fig-26' ? 'origin-label-side-and-hatch-clearance' : 'upper-label-gap-and-hatch-clearance',
+    renderAttempts: 2,
+    executionRepairCount: 0,
+    invocations,
+    preservedFirstFailure: {
+      report: failedReport,
+      svg: bind(`${failedDir}/${figure}.svg`),
+      png: bind(`${failedDir}/${figure}.png`),
+      inputSnapshot: bind(`${failedDir}/input.spec.snapshot.json`),
+      authorPngViews: 0,
+    },
+    sourceInventory: data.source.inventory.map(group => ({
+      id: group.id, requires: group.requires ?? [], mappedObjects: group.objects.length,
+      mappedAssertions: group.assertions.length,
+    })),
+  })
+}
+const ready = {
+  recordType: 'NEW-figure-author-cap1-cap2-handoff',
+  status: 'AUTHOR_READY_FOR_FRESH_INDEPENDENT_REVIEW',
+  ticket: 'STEMROBIN-182/182-6', book: '8a', lesson: 'alg8-c2-ex',
+  workdir, ownedRoot: root, authorOnly: true, independentReviewer: false,
+  figureApproval: false, sourceApproval: false, promotable: false,
+  modernStageRemainsDraft: true,
+  firstInventory: { ...first, unchanged: true, nativeViews: 2, reopens: 0 },
+  provenanceBindings: repair.bindings,
+  authorPlan: bind(`${root}/context-plan/inventory-addendum.md`),
+  authorObservations: bind(`${root}/context-plan/author-observations.md`),
+  firstConstruction: bind(`${root}/context-plan/build.record`),
+  firstBuilderSnapshot: bind(`${root}/context-plan/build-specs.attempt-01.snapshot.mjs`),
+  layoutRepair: bind(`${root}/context-plan/layout-repair.record`),
+  scripts: ['build-specs.mjs', 'run-stage.mjs', 'finalize-author-ready.mjs'].map(name => bind(`${root}/scripts/${name}`)),
+  figures,
+  authorVisualConcerns: [{
+    figure: 'fig-27', panel: 'a',
+    observation: 'Pale grid strokes visibly cross/overpaint the circular rim at some lattice intersections.',
+    disposition: 'Fresh independent source-plus-modern review must judge continuous-boundary raster fidelity; author does not approve or resolve this concern.',
+    furtherRenderAuthorized: false,
+  }],
+  imageBudget: {
+    cumulativeNativeSourceViews: 2, sourceReopens: 0,
+    continuationFinalPngViews: 2, eachFinalPngViews: 1,
+    cumulativeAuthorViews: 4, cumulativeAuthorReopens: 0,
+    sourceCropViews: 0, sourcePageViews: 0, failedPngViews: 0, otherImageViews: 0,
+    producedPngFiles: 4, furtherViewsAuthorized: 0,
+    externalAdjudicatorViewsNotAddedToAuthorBudget: true,
+  },
+  attemptCounts: {
+    constructionInvocations: 2, directDraftValidatorCalls: 4,
+    directRenderedValidatorCalls: 2, rendererInternalValidatorCalls: 4,
+    totalValidatorCalls: 10, totalRendererCalls: 4,
+    failedRendererCallsDueToLabelCollisions: 2,
+    successfulRendererCalls: 2,
+    contentRepairs: { 'fig-26': 1, 'fig-27': 1 },
+    executionRepairs: 0, serviceCalls: 0,
+  },
+  parentNextStage: 'Collect actual hash-bound candidates, then fresh independent bounded source-plus-modern review and parent-owned integration. No author self-signed review@1.',
+  operations: {
+    reviewAt1Written: false, durablePromotion: false,
+    modernTextOrFiguresTemplateEdits: false, answersReadOrWritten: false,
+    database: false, environmentSetupOrModification: false, installs: false,
+    modelService: false, git: false, createOrAttach: false,
+    sourceImagesReopened: false, otherAuthorsFilesChangedOrReverted: false,
+    rerenderAfterFinalObservations: false,
+  },
+}
+const file = `${root}/ready.record`
+assert.ok(!fs.existsSync(file), 'Preserve an existing handoff; do not overwrite it.')
+fs.writeFileSync(file, `${JSON.stringify(ready, null, 2)}\n`)
+console.log(JSON.stringify({
+  ready: bind(file),
+  figures: figures.map(({ figure, spec, report, svg, png }) => ({ figure, spec, report, svg, png })),
+  counts: ready.attemptCounts,
+  imageBudget: ready.imageBudget,
+}, null, 2))

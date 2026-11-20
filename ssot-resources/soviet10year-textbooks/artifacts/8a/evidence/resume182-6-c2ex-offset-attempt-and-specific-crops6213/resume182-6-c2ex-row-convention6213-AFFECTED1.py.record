@@ -1,0 +1,37 @@
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck")
+assert Path.cwd() == REPO
+OUT = REPO / ".tmp/resume182-6-c2ex-row-convention6213-AFFECTED1"
+assert not OUT.exists()
+OUT.mkdir()
+entries = []
+for page, box, expected in (
+    (66, (450, 260, 2050, 470),
+     "2874fe3003762f0ca5484e44dc04461320bac38de9f46899e3c2989309b5a121"),
+    (73, (450, 500, 2050, 710),
+     "82f5d8938d16bff784e2956498fddd4084a2d7a5d2e95c4d54c083939a8b8516"),
+):
+    source = REPO / f".tmp/ld-s10y-lesson/8a/pages/{page:04d}/page.png"
+    assert hashlib.sha256(source.read_bytes()).hexdigest() == expected
+    target = OUT / f"p{page}-first-system-native-crop.png"
+    with Image.open(source) as image:
+        image.crop(box).save(target)
+    entries.append({
+        "page": page, "source": str(source), "source_sha256": expected,
+        "crop_box": list(box), "path": str(target),
+        "sha256": hashlib.sha256(target.read_bytes()).hexdigest(),
+    })
+record = {
+    "schema": "stemrobin-182/affected-row-convention-crops@1",
+    "ticket": "STEMROBIN-182", "lesson": "alg8-c2-ex", "entries": entries,
+    "reason": "Resolve incompatible centered-label row conventions, not repeat source review.",
+    "generated_crops": 2, "observations_at_generation": 0,
+    "source_writes": 0, "database_writes": 0, "finish": "review",
+}
+(OUT / "crops.record").write_text(json.dumps(record, indent=2) + "\n")
+print(json.dumps(record))

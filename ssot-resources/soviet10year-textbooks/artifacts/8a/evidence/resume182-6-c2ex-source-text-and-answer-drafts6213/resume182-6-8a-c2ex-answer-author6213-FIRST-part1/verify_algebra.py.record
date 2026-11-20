@@ -1,0 +1,335 @@
+"""Exact local arithmetic only: no imports outside Python's standard library."""
+
+from fractions import Fraction as F
+from itertools import product
+import json
+
+
+class Q:
+    """An exact a + b sqrt(d); all operations here stay in one quadratic field."""
+
+    def __init__(self, a=0, b=0, d=0):
+        self.a, self.b, self.d = F(a), F(b), d if b else 0
+
+    def align(self, other):
+        other = other if isinstance(other, Q) else Q(other)
+        assert not (self.b and other.b and self.d != other.d), "Mixed fields"
+        return other, self.d if self.b else other.d
+
+    def __add__(self, other):
+        other, d = self.align(other)
+        return Q(self.a + other.a, self.b + other.b, d)
+
+    __radd__ = __add__
+
+    def __neg__(self):
+        return Q(-self.a, -self.b, self.d)
+
+    def __sub__(self, other):
+        return self + (-other if isinstance(other, Q) else -Q(other))
+
+    def __rsub__(self, other):
+        return -self + other
+
+    def __mul__(self, other):
+        other, d = self.align(other)
+        return Q(self.a * other.a + self.b * other.b * d,
+                 self.a * other.b + self.b * other.a, d)
+
+    __rmul__ = __mul__
+
+    def __truediv__(self, other):
+        other, d = self.align(other)
+        norm = other.a**2 - d * other.b**2
+        assert norm != 0, "Zero denominator"
+        return self * Q(other.a / norm, -other.b / norm, d)
+
+    def __rtruediv__(self, other):
+        return Q(other) / self
+
+    def __pow__(self, n):
+        assert isinstance(n, int) and n >= 0
+        answer = Q(1)
+        for _ in range(n):
+            answer = answer * self
+        return answer
+
+    def is_zero(self):
+        return self.a == 0 and self.b == 0
+
+    def approximate(self):
+        return float(self.a) + float(self.b) * self.d**0.5
+
+    def serial(self):
+        return {"a": str(self.a), "b": str(self.b), "d": self.d,
+                "approximate": self.approximate()}
+
+
+class P:
+    """Exact bivariate polynomial for coefficient-wise identity verification."""
+
+    def __init__(self, terms):
+        if not isinstance(terms, dict):
+            terms = {(0, 0): F(terms)}
+        self.terms = {k: F(v) for k, v in terms.items() if v}
+
+    def __add__(self, other):
+        other = other if isinstance(other, P) else P(other)
+        result = dict(self.terms)
+        for k, value in other.terms.items():
+            result[k] = result.get(k, F(0)) + value
+        return P(result)
+
+    __radd__ = __add__
+
+    def __neg__(self):
+        return P({k: -v for k, v in self.terms.items()})
+
+    def __sub__(self, other):
+        return self + (-other if isinstance(other, P) else -P(other))
+
+    def __rsub__(self, other):
+        return -self + other
+
+    def __mul__(self, other):
+        other = other if isinstance(other, P) else P(other)
+        result = {}
+        for (i, j), a in self.terms.items():
+            for (k, l), b in other.terms.items():
+                key = (i + k, j + l)
+                result[key] = result.get(key, F(0)) + a * b
+        return P(result)
+
+    __rmul__ = __mul__
+
+    def __truediv__(self, other):
+        return self * (1 / F(other))
+
+    def __pow__(self, n):
+        result = P(1)
+        for _ in range(n):
+            result = result * self
+        return result
+
+
+checks = []
+finite_solutions = {}
+
+
+def certify(label, condition, detail):
+    assert condition, label
+    checks.append({"label": label, "result": "pass", "detail": detail})
+
+
+def identity(label, lhs, rhs):
+    certify(label, not (lhs - rhs).terms, "Exact polynomial coefficients agree.")
+
+
+def solutions(label, pairs, equations, denominator_domain=False):
+    pairs = [(x if isinstance(x, Q) else Q(x),
+              y if isinstance(y, Q) else Q(y)) for x, y in pairs]
+    pairs.sort(key=lambda p: (p[0].approximate(), p[1].approximate()))
+    fingerprints = [(str(x.a), str(x.b), x.d, str(y.a), str(y.b), y.d)
+                    for x, y in pairs]
+    certify(label + ".distinct", len(set(fingerprints)) == len(pairs),
+            f"{len(pairs)} distinct finite pairs.")
+    for i, (x, y) in enumerate(pairs, 1):
+        if denominator_domain:
+            certify(f"{label}.{i}.domain", not x.is_zero() and not y.is_zero(),
+                    "Both original denominators are nonzero.")
+        for j, equation in enumerate(equations, 1):
+            result = equation(x, y)
+            certify(f"{label}.{i}.equation{j}", result.is_zero(),
+                    "Exact residual a + b sqrt(d) is zero.")
+    finite_solutions[label] = [[x.serial(), y.serial()] for x, y in pairs]
+
+
+X, Y = P({(1, 0): 1}), P({(0, 1): 1})
+R2, R3, R11, R33, R51 = [Q(0, 1, d) for d in (2, 3, 11, 33, 51)]
+
+# Literal substitutions and square-completion certificates.
+f138 = lambda x, y: x*x - 3*x*y + y*y
+for suffix, pair, value in [
+    ("a", (-3, -11), 31), ("b", (3, 11), 31),
+    ("c", (3, -2), 31), ("d", (-2, 3), 31),
+    ("e", (2, 3), -5), ("f", (3 + 2*R2, 3 - 2*R2), 31),
+]:
+    certify("138" + suffix, (f138(Q(pair[0]) if not isinstance(pair[0], Q)
+                                  else pair[0], Q(pair[1]) if not isinstance(pair[1], Q)
+                                  else pair[1]) - value).is_zero(),
+            f"Literal left side equals {value}.")
+identity("138.sum-product", X**2 - 3*X*Y + Y**2, (X+Y)**2 - 5*X*Y)
+solutions("139d", list(product((-3, 3), (-2, 2))),
+          [lambda x, y: (x*x-9)**2 + (y*y-4)**2])
+solutions("139f", [(1, 1)], [lambda x, y: (x-y)**2+(y-1)**2])
+identity("140a", X**2-2*X*Y+Y**2+8, (X-Y)**2+8)
+identity("140b", X**2+8*X+Y**2+17, (X+4)**2+Y**2+1)
+identity("140c", X**2-10*X+Y**2+100, (X-5)**2+Y**2+75)
+identity("140d", X**2-2*X*Y+2*Y**2+4*Y+7, (X-Y)**2+(Y+2)**2+3)
+identity("141a", X**2+6*X+Y**2-10*Y+34, (X+3)**2+(Y-5)**2)
+identity("141b", 2*X**2-6*X*Y+9*Y**2-10*X+25,
+         (X-3*Y)**2+(X-5)**2)
+solutions("141a", [(-3, 5)], [lambda x, y: x*x+6*x+y*y-10*y+34])
+solutions("141b", [(5, F(5, 3))], [lambda x, y: 2*x*x-6*x*y+9*y*y-10*x+25])
+solutions("142b", [(0, 0)], [lambda x, y: x*x+y*y])
+solutions("142c", [(-1, 0), (1, 0)], [lambda x, y: (x*x-1)**2+y*y])
+solutions("142d", [(-1, 0), (0, 0), (1, 0)],
+          [lambda x, y: (x*(x-1)*(x+1))**2+y*y])
+solutions("143b", [(1, 13), (13, 1), (-1, -13), (-13, -1)],
+          [lambda x, y: x*y-13])
+solutions("143d", [(8, 1), (8, -1)],
+          [lambda x, y: x-7/(y*y)-1], True)
+divisors = [d for d in range(-36, 37) if d and 36 % d == 0 and d != -6]
+certify("143e.divisor-count", len(divisors) == 17,
+        "All signed divisors of 36 except -6; no denominator-zero pair.")
+solutions("143e", [(6+d, 6+F(36, d)) for d in divisors],
+          [lambda x, y: 1/x+1/y-F(1, 6)], True)
+solutions("143f", list(product((-6, 6), (-5, 5))),
+          [lambda x, y: x*x-y*y-11])
+certify("143a.obstruction", 4 % 3 != 0, "4 is not divisible by 3.")
+certify("143c.obstruction", F("-7.5").denominator != 1,
+        "-7.5 is not an integer.")
+certify("144a", 5**3 + 2*(-4)**2 + 3 == 160, "A gives 160, not zero.")
+certify("144b", 7**2 - 7*7**2*(-3) - 11*7*(-3)**3
+        + 10*7 - 19*(-3) + 24 == 3308, "B gives 3308, not zero.")
+identity("145d", X**2-Y**2, (X-Y)*(X+Y))
+for x, y in product(range(-2, 3), repeat=2):
+    certify(f"146d.region.{x}.{y}",
+            (abs(x)+abs(y) == x+y) == (x >= 0 and y >= 0),
+            "Closed-first-quadrant membership on this integer point.")
+for label, radius, squared in [("148a", Q(7), 49),
+                              ("148b", 4*R3, 48),
+                              ("148c", Q(F(13, 2)), F("42.25")),
+                              ("148d", Q(F(9, 2)), F("20.25"))]:
+    certify(label, (radius*radius-squared).is_zero(), "Exact radius squared.")
+for label, xx, yy in [("B", -X, Y), ("C", -X, -Y), ("D", X, -Y),
+                     ("E", Y, X), ("K", -Y, X), ("M", -Y, -X)]:
+    identity("149." + label, xx**2+yy**2, X**2+Y**2)
+certify("150.radius", 8**2+15**2 == 289, "Radius squared is 289.")
+certify("150.B", 7**2+16**2 == 305 and 305 > 289, "Outside.")
+certify("150.C", 9**2+14**2 == 277 and 277 < 289, "Inside.")
+certify("150.D", ((-Q(1))**2+(12*R2)**2-289).is_zero(), "On circle.")
+
+# System residuals are the literal original equations, not their eliminations.
+systems = {
+    "151b": ([(4-7*R2/2, 4+7*R2/2), (4+7*R2/2, 4-7*R2/2)],
+             [lambda x, y: x+y-8, lambda x, y: x*x+y*y-81]),
+    "151c": ([(4, 3), (F(24, 5), F(7, 5))],
+             [lambda x, y: 2*x+y-11, lambda x, y: x*x+y*y-25]),
+    "151d": ([((-3-R33)/4, (21+3*R33)/8),
+              ((-3+R33)/4, (21-3*R33)/8)],
+             [lambda x, y: y-x*x, lambda x, y: 3*x+2*y-3]),
+    "151e": ([(-1-R11, -11-R11), (-1+R11, -11+R11)],
+             [lambda x, y: y+x+x*x, lambda x, y: x-y-10]),
+    "151f": ([(-3, -1), (-1, -3), (1, 3), (3, 1)],
+             [lambda x, y: x*x+y*y-10, lambda x, y: x*y-3]),
+    "152a": ([(F(8, 5), F(11, 5))],
+             [lambda x, y: 2*x-y-1, lambda x, y: 7*x-y-9]),
+    "152b": ([(1, -1)],
+             [lambda x, y: x-4*y-5, lambda x, y: x+8*y+7]),
+    "152c": ([(8, 6), (12, 4)],
+             [lambda x, y: x*y-48, lambda x, y: x+2*y-20]),
+    "152d": ([(-8, -15), (10, 12)],
+             [lambda x, y: 3*x-2*y-6, lambda x, y: x*y-120]),
+    "152e": ([(-2, -3), (2, 5)],
+             [lambda x, y: x+x*y-y-7, lambda x, y: 2*x-y+1]),
+    "152f": ([(-11, F(9, 2)), (4, -3)],
+             [lambda x, y: 4*x-x*y+3*y-19, lambda x, y: x+2*y+2]),
+    "153a": ([((1-3*R3)/2, (-1+R3)/2), ((1+3*R3)/2, (-1-R3)/2)],
+             [lambda x, y: x+3*y+1, lambda x, y: x*x+2*x*y+y*y-3]),
+    "153b": ([(0, -1), (3, 5)],
+             [lambda x, y: 2*x-y-1, lambda x, y: x*y-y*y+3*x+1]),
+    "153c": ([(3, 5), (6, -1)],
+             [lambda x, y: 2*x+y-11, lambda x, y: 2*x+5*y-y*y-6]),
+    "153d": ([(6, 2), (11, 7)],
+             [lambda x, y: 2*x*x-3*y*y-5*x-2*y-26, lambda x, y: x-y-4]),
+    "153e": ([(4, 1)],
+             [lambda x, y: 4*x*x-9*y*y+x-40*y-19, lambda x, y: 2*x-3*y-5]),
+    "153f": ([(-5, -3), (F(-5, 4), F(3, 4))],
+             [lambda x, y: 3*x*x+y*y+8*x+13*y-5, lambda x, y: x-y+2]),
+    "156a": ([(F(3, 2), -2), (10, 15)],
+             [lambda x, y: 1/x+1/y-F(1, 6), lambda x, y: 2*x-y-5]),
+    "156b": ([(4, 5), (70, -28)],
+             [lambda x, y: 1/x-1/y-F(1, 20), lambda x, y: x+2*y-14]),
+    "156c": ([(6, 8), (8, 6)],
+             [lambda x, y: x+y-14, lambda x, y: x/y+y/x-F(25, 12)]),
+    "156d": ([(F(4, 5), F(-6, 5)), (6, 4)],
+             [lambda x, y: x-y-2, lambda x, y: x/y-y/x-F(5, 6)]),
+    "157a": ([(F(1, 3), F(-1, 3)), (1, 1)],
+             [lambda x, y: (x+y)*(x-y), lambda x, y: 2*x-y-1]),
+    "157b": ([(0, 5), (3, -4), (3, 4)],
+             [lambda x, y: x*x+y*y-25, lambda x, y: (x-3)*(y-5)]),
+    "157c": (list(product((-7*R2, 7*R2), (-R2, R2))),
+             [lambda x, y: x*x+y*y-100, lambda x, y: (x-7*y)*(x+7*y)]),
+    "157d": ([(-R51, -1), (R51, -1)],
+             [lambda x, y: x*x-y*y-50, lambda x, y: x*(y+1)]),
+    "158a": ([(-6, 2), (-2, 6), (2, -6), (6, -2)],
+             [lambda x, y: x*x+y*y-40, lambda x, y: x*y+12]),
+    "158b": ([(-6*R2, -2*R2), (-2*R2, -6*R2),
+              (2*R2, 6*R2), (6*R2, 2*R2)],
+             [lambda x, y: x*x+y*y-80, lambda x, y: x*y-24]),
+    "158c": ([(-2*R3, -R3), (-R3, -2*R3),
+              (R3, 2*R3), (2*R3, R3)],
+             [lambda x, y: x*x+y*y-15, lambda x, y: x*y-6]),
+    "159": ([(7, 3)], [lambda x, y: x*x-3*x*y+y*y+x+2*y-8,
+                       lambda x, y: 2*x-5*y+1, lambda x, y: 3*y-x-2]),
+}
+for label, (pairs, equations) in systems.items():
+    solutions(label, pairs, equations, label.startswith("156"))
+
+# Coefficient identities certify the one-variable elimination polynomials.
+identity("151a.SOS", X**2-X+12, (X-F(1, 2))**2+F(47, 4))
+certify("151a.discriminant", 1-4*12 == -47 and -47 < 0, "No real roots.")
+identity("151b.elimination", X**2+(8-X)**2-81, 2*(X-4)**2-49)
+identity("151c.elimination", X**2+(11-2*X)**2-25, (X-4)*(5*X-24))
+identity("151d.elimination", 3*X+2*X**2-3, 2*X**2+3*X-3)
+identity("151e.elimination", (X-10)+X+X**2, (X+1)**2-11)
+identity("152a.elimination", 7*X-(2*X-1)-9, 5*X-8)
+identity("152b.elimination", (5+4*Y)+8*Y+7, 12*(Y+1))
+identity("152c.elimination", (20-2*Y)*Y-48, -2*(Y-4)*(Y-6))
+identity("152d.elimination", X*(3*X-6)/2-120, F(3, 2)*(X-10)*(X+8))
+identity("152e.elimination", X+X*(2*X+1)-(2*X+1)-7, 2*(X-2)*(X+2))
+identity("152f.elimination", 4*(-2-2*Y)-(-2-2*Y)*Y+3*Y-19,
+         (2*Y-9)*(Y+3))
+identity("153a.elimination", (-1-3*Y)**2+2*(-1-3*Y)*Y+Y**2-3,
+         (-1-2*Y)**2-3)
+identity("153b.elimination", X*(2*X-1)-(2*X-1)**2+3*X+1, -2*X*(X-3))
+identity("153c.elimination", (11-Y)+5*Y-Y**2-6, -(Y-5)*(Y+1))
+identity("153d.elimination", 2*(Y+4)**2-3*Y**2-5*(Y+4)-2*Y-26,
+         -(Y-2)*(Y-7))
+xe = (5+3*Y)/2
+identity("153e.elimination", 4*xe**2-9*Y**2+xe-40*Y-19,
+         F(17, 2)*(1-Y))
+identity("153f.elimination", 3*(Y-2)**2+Y**2+8*(Y-2)+13*Y-5,
+         (4*Y-3)*(Y+3))
+identity("154.minimum", X**2+Y**2, ((X+Y)**2+(X-Y)**2)/2)
+identity("154.branches", (3+X)**2+(3-X)**2, 18+2*X**2)
+certify("154.threshold", ((3*R2)**2-18).is_zero(), "Both threshold signs square to 18.")
+identity("155.branches", ((X+Y)/2)**2+((X-Y)/2)**2, (X**2+Y**2)/2)
+certify("155.threshold", ((10*R2)**2-200).is_zero(), "Closed thresholds square to 200.")
+identity("156a.elimination", X*(2*X-5)-6*(X+(2*X-5)), (2*X-3)*(X-10))
+identity("156b.elimination", 2*(X*(14-X)/2-20*((14-X)/2-X)),
+         -(X-4)*(X-70))
+identity("156c.product", P(196)-2*X-F(25, 12)*X, F(49, 12)*(48-X))
+identity("156c.roots", X**2-14*X+48, (X-6)*(X-8))
+identity("156d.elimination", 5*(Y+2)*Y-6*((Y+2)**2-Y**2), (5*Y+6)*(Y-4))
+identity("157c.elimination", (7*Y)**2+Y**2-100, 50*(Y**2-2))
+identity("157d.elimination", X**2-(-P(1))**2-50, X**2-51)
+identity("158.sum", (X+Y)**2, X**2+Y**2+2*X*Y)
+identity("158.difference", (X-Y)**2, X**2+Y**2-2*X*Y)
+certify("158d.no-real", 9-(-24)+2*(-24) == -15 and -15 < 0,
+        "(x+y)^2=-15; no real solution.")
+solutions("160.lines", [(4, 3)], [lambda x, y: x/2-y/3-1, lambda x, y: x+y-7])
+certify("160.remaining", 4**2+4*3-2*3**2-4+3 == 9 and 9 != 5,
+        "The only two-line intersection fails the literal remaining equation.")
+
+print(json.dumps({
+    "status": "LOCAL_DETERMINISTIC_VERIFICATION_ONLY",
+    "result": "pass",
+    "dependencyPolicy": "Python standard library only; no filesystem or network operations.",
+    "checkCount": len(checks),
+    "checks": checks,
+    "finiteSolutions": finite_solutions,
+    "completeness": "Elimination identities, factor branches, domain exclusions, and sum/difference branches are also derived in reasoning.md; substitution alone is not asserted to prove exhaustiveness.",
+    "approval": False,
+}, indent=2))

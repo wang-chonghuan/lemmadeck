@@ -1,0 +1,122 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck';
+assert.equal(process.cwd(), repo);
+const root = path.join(repo, '.tmp/resume182-6-c2ex-count-repair6213-AFFECTED-offset1');
+const first = path.join(repo, '.tmp/resume182-6-c2ex-count-repair6213-FIRST');
+const reviewRoot = path.join(repo, '.tmp/resume182-6-8a-c2ex-source-review6213-FIRST-part2');
+const hash = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+const bound = p => ({ path: p, sha256: hash(p) });
+const json = p => JSON.parse(fs.readFileSync(p, 'utf8'));
+const firstReady = bound(path.join(first, 'ready.record'));
+const sourceReady = bound(path.join(reviewRoot, 'ready.record'));
+assert.equal(firstReady.sha256, '4d80029f1a5be98b3994b5fc9a404104143210b3f17a2653d339fdd5f9b59910');
+assert.equal(sourceReady.sha256, '590ce00282a1163bff888f7ef5382f61f4bbd42c9d195060e28328412408b1ac');
+const originals = json(firstReady.path);
+const review = json(sourceReady.path);
+const tools = path.join(repo, '.claude/skills/ld-s10y-lesson/tools');
+const implementation = bound(path.join(tools, 'layout.py'));
+const test = bound(path.join(tools, 'test_layout_multiline_count.py'));
+const snapshots = [];
+fs.mkdirSync(path.join(root, 'candidate'), { recursive: true });
+for (const input of [implementation, test]) {
+  const output = path.join(root, 'candidate', path.basename(input.path));
+  fs.copyFileSync(input.path, output, fs.constants.COPYFILE_EXCL);
+  fs.chmodSync(output, 0o444);
+  snapshots.push(bound(output));
+}
+const runs = fs.readdirSync(root, { withFileTypes: true })
+  .filter(entry => entry.isDirectory())
+  .map(entry => path.join(root, entry.name))
+  .filter(directory => fs.existsSync(path.join(directory, 'receipt.record')))
+  .map(directory => ({
+    name: path.basename(directory),
+    ...json(path.join(directory, 'receipt.record')),
+    receipt: bound(path.join(directory, 'receipt.record')),
+    start: bound(path.join(directory, 'start.record')),
+    stdout: bound(path.join(directory, 'stdout.txt')),
+    stderr: bound(path.join(directory, 'stderr.txt')),
+    exit_one_is_expected_diff: ['layout-diff', 'test-diff'].includes(path.basename(directory)),
+  }));
+const numerical = fs.readFileSync(path.join(root, 'numerical-after/stdout.txt'), 'utf8')
+  .trim().split('\n').map(line => JSON.parse(line));
+const expected = new Map([
+  ...originals.result.pages.map(page => [page.page, page.expected_from_independent_review]),
+  ...review.pages.filter(page => [72, 73].includes(page.physical_page))
+    .map(page => [page.physical_page, page.source_rows]),
+]);
+const resultPages = numerical.map(page => {
+  assert.equal(page.implementation_sha256, implementation.sha256);
+  const source = bound(page.source);
+  assert.equal(source.sha256, page.source_sha256);
+  const oldPage = originals.result.pages.find(item => item.page === page.page);
+  const reviewedPage = review.pages.find(item => item.physical_page === page.page);
+  assert.equal(source.sha256, oldPage?.source.sha256 ?? reviewedPage.source.sha256);
+  return {
+    page: page.page, expected_from_independent_review: expected.get(page.page),
+    actual: page.count, pass: page.count === expected.get(page.page),
+    figure_mask: page.figure_mask, source,
+    prepared_layout_read_only: bound(path.join(path.dirname(page.source), 'layout.json')),
+    bands: page.bands,
+  };
+});
+assert.deepEqual(resultPages.map(page => page.actual), [26, 25, 26, 20]);
+const focusedOutput = fs.readFileSync(path.join(root, 'focused-after-01/stderr.txt'), 'utf8');
+assert.match(focusedOutput, /Ran 19 tests/);
+assert.match(focusedOutput, /FAILED \(failures=2\)/);
+const record = {
+  record_type: 'affected-offset-label-counter-attempt',
+  status: 'PARTIAL_COUNTER_CHANGE_P72_P73_UNRESOLVED_NOT_READY_FOR_FINALIZE',
+  ticket: 'STEMROBIN-182', continuation: '182-6', checked_at: new Date().toISOString(),
+  workdir: repo, git_head_read_at_session_entry: originals.git_head,
+  write_set: [implementation.path, test.path, root],
+  first_repair_preserved: firstReady,
+  first_candidate_snapshots_unchanged: originals.changed_candidate_snapshots.map(item => {
+    const actual = bound(item.path);
+    assert.equal(actual.sha256, item.sha256);
+    return actual;
+  }),
+  source_expectation_authorities: [
+    originals.expected_count_authority.review,
+    originals.expected_count_authority.review_ready,
+    bound(path.join(reviewRoot, 'review.md')), sourceReady,
+  ],
+  implementation_before: bound(path.join(first, 'candidate/layout.py')),
+  focused_test_before: bound(path.join(first, 'candidate/test_layout_multiline_count.py')),
+  implementation, focused_test: test, candidate_snapshots: snapshots,
+  report: bound(path.join(root, 'report.md')),
+  probe_scripts: ['pixel_probe.py', 'label_probe.py', 'record-ready.mjs']
+    .map(name => bound(path.join(root, name))),
+  result: {
+    focused_tests: 19, synthetic_tests: 15, synthetic_failures: 0,
+    reviewed_pixel_fixture_tests: 4, fixture_failures: 2, skipped: 0, pages: resultPages,
+  },
+  exact_runs: runs,
+  first_failures_preserved: originals.first_failures_preserved,
+  existing_offset_diagnostic: bound(path.join(repo,
+    '.tmp/resume182-6-c2ex-offset-label-count6213-FIRST/stdout.txt')),
+  image_observations: 0, numerical_png_reads_only: true,
+  source_or_prepared_layout_writes: false, blocks_py_read_or_write: false,
+  other_workers_files_written_or_reverted: false,
+  page_specific_production_overrides: false, source_expectations_weakened: false,
+  existing_other_unit_tests_read_for_design: false,
+  broad_tests_build_finalize_handoff: false,
+  env_install_db_paid_newchat_worktree_attach_commit_push: false,
+  unresolved: [
+    'p72 remains 26 versus independent SOURCE expectation 28: two label events missing.',
+    'p73 remains 20 versus independent SOURCE expectation 26: six label events missing.',
+    'The strict non-overlapping-ink predicate is too conservative for these scanned offset labels.',
+    'A broader generic pixel baseline classifier preserving p66/p67 still requires implementation and verification.',
+    'No source finalization or later-stage approval is supplied by this candidate.',
+  ],
+};
+const output = path.join(root, 'ready.record');
+fs.writeFileSync(output, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ ready: bound(output), status: record.status,
+  pages: resultPages.map(({page, expected_from_independent_review, actual, pass}) =>
+    ({page, expected_from_independent_review, actual, pass})),
+  implementation, focused_test: test, exact_run_count: runs.length,
+}, null, 2));

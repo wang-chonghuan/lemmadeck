@@ -1,0 +1,63 @@
+"""Repeated offset labels stay in one source block with stable indices."""
+import copy
+import unittest
+
+import blocks as B
+
+
+def document(header):
+    return (
+        '---\n{"page":73}\n---\n\n'
+        '<!-- ex 184 -->\n184. stem\n\n'
+        f'<!-- ex 185 {header} -->\n'
+        '185. stem\n'
+        'first system\nsecond system\nthird system\nfourth system\nfifth system\n\n'
+        '<!-- ex 186 -->\n186. next\n'
+    )
+
+
+class LabelRowsTest(unittest.TestCase):
+    def test_multiple_events_preserve_text_and_block_indices(self):
+        _, before = B.parse(document(""))
+        meta, current = B.parse(document("labelrows 5"))
+        expected = copy.deepcopy(before)
+        expected[1]["offset_label_rows"] = 5
+        self.assertEqual(current, expected)
+        self.assertEqual(B.printed_lines(current), B.printed_lines(before) + 5)
+        self.assertEqual([block["label"] for block in current], ["184", "185", "186"])
+        self.assertEqual(B.parse(B.dump(meta, current, 73)), (meta, current))
+
+    def test_legacy_single_event_is_unchanged(self):
+        meta, current = B.parse(document("labelrow"))
+        self.assertIs(current[1]["offset_label_row"], True)
+        self.assertNotIn("offset_label_rows", current[1])
+        self.assertEqual(B.printed_lines(current), 9)
+        self.assertEqual(B.parse(B.dump(meta, current, 73)), (meta, current))
+
+    def test_formula_wraps_remain_separate_from_label_events(self):
+        _, blocks = B.parse(document("labelrows 5"))
+        blocks[1]["lines"][1] += B.WRAP + "second equation"
+        self.assertEqual(B.printed_lines(blocks), 14)
+
+    def test_invalid_headers_are_rejected(self):
+        for header in ("labelrows", "labelrows -1", "labelrows 0", "labelrows 1.5",
+                       "labelrows 2 labelrows 3", "labelrows 2 labelrows junk",
+                       "labelrow labelrows 2"):
+            with self.subTest(header=header), self.assertRaises(ValueError):
+                B.parse(document(header))
+
+    def test_non_exercise_marker_is_rejected(self):
+        with self.assertRaises(ValueError):
+            B.parse(document("labelrows 2").replace("ex 185", "p"))
+
+    def test_invalid_structured_counts_are_rejected(self):
+        _, blocks = B.parse(document(""))
+        for count in (True, 0, -1, 1.5, "2", 100):
+            bad = copy.deepcopy(blocks)
+            bad[1]["offset_label_rows"] = count
+            with self.subTest(count=count), self.assertRaises(ValueError):
+                B.printed_lines(bad)
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

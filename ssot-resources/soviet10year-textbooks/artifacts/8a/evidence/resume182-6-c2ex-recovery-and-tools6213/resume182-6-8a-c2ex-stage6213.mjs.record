@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [part, firstText, lastText] = process.argv.slice(2);
+const first = Number(firstText), last = Number(lastText);
+assert.ok(['part1', 'part2'].includes(part));
+assert.ok(Number.isInteger(first) && Number.isInteger(last));
+assert.ok(first >= 64 && last <= 74 && last >= first && last - first < 8);
+const author = `.tmp/resume182-6-8a-c2ex-source-author6213-FIRST-${part}`;
+const ready = `${author}/ready.record`;
+assert.ok(fs.existsSync(ready), 'Collect completed author receipt before staging');
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const entries = [];
+for (let page = first; page <= last; page++) {
+  const id = String(page).padStart(4, '0');
+  const source = `${author}/pages/${id}/page.md`;
+  const target = `.tmp/resume182-6-8a-c2ex-source6213-FIRST/draft-root/8a/pages/${id}/page.md`;
+  const bytes = fs.readFileSync(source);
+  assert.ok(bytes.length > 0);
+  assert.ok(!fs.existsSync(target), `Refuse existing staged page: ${target}`);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, bytes, { flag: 'wx' });
+  assert.equal(sha(fs.readFileSync(source)), sha(bytes));
+  assert.equal(sha(fs.readFileSync(target)), sha(bytes));
+  entries.push({ source, target, sha256: sha(bytes), bytes: bytes.length });
+}
+const output = `.tmp/resume182-6-8a-c2ex-source6213-FIRST/stage-${part}.record`;
+fs.writeFileSync(output, `${JSON.stringify({
+  status: 'AUTHOR_BYTES_STAGED_NOT_SOURCE_APPROVED',
+  date: new Date().toISOString(), root: repo, book: '8a', lesson: 'alg8-c2-ex',
+  authorReceipt: { path: ready, sha256: sha(fs.readFileSync(ready)) }, entries,
+  sourceImageViews: 0, finalizeRuns: 0, priorSourceWrites: 0,
+  unknownHistoricalBytesRecovered: false, finish: 'review', databaseWrites: 0,
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: output, sha256: sha(fs.readFileSync(output)),
+  pages: entries.length, sourceApproved: false }));

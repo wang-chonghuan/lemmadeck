@@ -1,0 +1,278 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+
+const cwd = "/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck";
+assert.equal(fs.realpathSync(process.cwd()), cwd);
+const output = ".tmp/resume182-6-8a-c2ex-source-review6213-FIRST-part1";
+const author = ".tmp/resume182-6-8a-c2ex-source-author6213-FIRST-part1";
+const prepared = ".tmp/ld-s10y-lesson/8a/pages";
+const boundary = ".tmp/resume182-6-8a-c2ex-boundary6213-FIRST";
+const durable = "ssot-resources/soviet10year-textbooks/artifacts/8a/pages/0063";
+const tocPath = "ssot-resources/soviet10year-textbooks/toc/8a/zh.json";
+const inputHashes = new Map();
+function read(file, mode = "text") {
+  const bytes = fs.readFileSync(file);
+  inputHashes.set(path.resolve(file), crypto.createHash("sha256").update(bytes).digest("hex"));
+  return mode === "bytes" ? bytes : mode === "json" ? JSON.parse(bytes.toString("utf8")) : bytes.toString("utf8");
+}
+function hash(file) {
+  read(file, "bytes");
+  return inputHashes.get(path.resolve(file));
+}
+function blocks(md) {
+  const lines = md.split("\n");
+  const frontEnd = lines.indexOf("---", 1);
+  assert(frontEnd > 0);
+  const meta = JSON.parse(lines.slice(1, frontEnd).join("\n"));
+  const result = [];
+  for (let i = frontEnd + 1; i < lines.length; i++) {
+    const match = lines[i].match(/^<!-- (.*?) -->$/);
+    if (match) {
+      result.push({ header: match[1], line: i + 1, rows: [] });
+    } else if (lines[i].trim()) {
+      assert(result.length);
+      result.at(-1).rows.push({ line: i + 1, text: lines[i] });
+    }
+  }
+  return { meta, blocks: result };
+}
+function diff(a, b, at = "") {
+  if (JSON.stringify(a) === JSON.stringify(b)) return [];
+  if (a && b && typeof a === "object" && typeof b === "object") {
+    return [...new Set([...Object.keys(a), ...Object.keys(b)])]
+      .flatMap(key => diff(a[key], b[key], `${at}/${key}`));
+  }
+  return [{ path: at, before: a, after: b }];
+}
+
+const ready = read(`${author}/ready.record`, "json");
+const authorReadySha = inputHashes.get(path.resolve(`${author}/ready.record`));
+assert.equal(authorReadySha, "b6af0f8600e4f9b4bbd51c20c663235d2639649851d42ac6d60afebb45dfa805");
+const originalShas = [
+  "f1b1e797b352db213898cee393640d5c8efa849f305dc6a33982a92373af88d8",
+  "88af40e1eb5dcf0ad488b0fcfc15a0ad0f9ff4bd1ac724422d7ba18318276819",
+  "2874fe3003762f0ca5484e44dc04461320bac38de9f46899e3c2989309b5a121",
+  "9f82b6b7cb38365fea228743b8deaa6e8dbb2497e5fab7d05679c12c0e21ca9c",
+  "73a41eb61065c43930e597f6607365a60caed992d51dc7b0158edc6514203d5f",
+  "2f78da4864e93f4df777cf3115743f157eb4468f8c1f173bcc765462cf5e9715",
+  "f96a7ee9f54e9809dc09ea2befb0002de310383cf417c4bac49efb367653c2c2",
+  "5adad5e959aa1f9eba65e3ef5b0fe5c8620742d4f2abdc4e519769823e8cc631",
+];
+const physicalRows = [24, 24, 26, 25, 23, 26, 26, 20];
+const groups = [
+  { "138cont": 3, "139": 4, "140": 5, "141": 3, "142": 3, "143": 4, "144open": 1, footer: 1 },
+  { "144cont": 2, "145": 3, "146": 4, "147": 2, "148": 3, "149": 4, "150": 3, subsection8: 1, "151open": 1, footer: 1 },
+  { "151cont": 6, "152": 7, "153": 11, "154open": 1, footer: 1 },
+  { "154cont": 2, "155": 3, "156": 5, "157": 5, "158": 5, "159": 4, footer: 1 },
+  { "160": 2, "161": 5, "162": 8, "163": 4, "164open": 3, footer: 1 },
+  { "164cont": 5, "165": 10, "166open": 10, footer: 1 },
+  { "166cont": 1, "167": 7, "168": 6, "169": 8, subsection9: 1, "170open": 2, footer: 1 },
+  { "170cont": 2, "171": 2, "172": 2, "173": 2, "174": 4, "175": 2, "176": 2, "177": 1, caption26: 1, "178open": 1, footer: 1 },
+];
+const occurrences = [];
+const pages = ready.pages.map((entry, i) => {
+  const page = String(entry.physical_page).padStart(4, "0");
+  const candidatePath = `${author}/pages/${page}/page.md`;
+  const candidate = blocks(read(candidatePath));
+  const candidateSha = inputHashes.get(path.resolve(candidatePath));
+  assert.equal(candidateSha, entry.output_sha256);
+  const imagePath = `${prepared}/${page}/page.png`;
+  const png = read(imagePath, "bytes");
+  const imageSha = inputHashes.get(path.resolve(imagePath));
+  assert.equal(imageSha, originalShas[i]);
+  assert.equal(imageSha, candidate.meta.render.sha256);
+  assert.equal(png.readUInt32BE(16), candidate.meta.render.w);
+  assert.equal(png.readUInt32BE(20), candidate.meta.render.h);
+  const layoutPath = `${prepared}/${page}/layout.json`;
+  const layout = read(layoutPath, "json");
+  assert.equal(inputHashes.get(path.resolve(layoutPath)), entry.layout_sha256);
+  assert.equal(candidate.meta.book, "8a");
+  assert.equal(candidate.meta.page, 64 + i);
+  assert.equal(candidate.meta.printed_page, 57 + i);
+  const represented = candidate.blocks.reduce((n, b) =>
+    n + b.rows.reduce((s, r) => s + r.text.split("\u21b5").length, 0), 0);
+  assert.equal(represented, physicalRows[i]);
+  assert.equal(Object.values(groups[i]).reduce((a, b) => a + b), physicalRows[i]);
+  for (const block of candidate.blocks) {
+    const ex = block.header.match(/^ex (\d+)(?: (cont|open))?$/);
+    if (ex) occurrences.push({ identity: Number(ex[1]), page, flag: ex[2] ?? "complete" });
+    for (const row of block.rows) {
+      assert.equal((row.text.match(/\$/g) ?? []).length % 2, 0);
+      assert(!/(?:^|[;； ]+)[abe]\)/.test(row.text));
+    }
+  }
+  return {
+    physical_page: 64 + i,
+    printed_page: 57 + i,
+    status: [65, 70, 71].includes(64 + i) ? "HOLD" : "PASS",
+    image: path.resolve(imagePath),
+    image_sha256: imageSha,
+    source_png_dimensions: [png.readUInt32BE(16), png.readUInt32BE(20)],
+    candidate: path.resolve(candidatePath),
+    candidate_sha256: candidateSha,
+    layout: path.resolve(layoutPath),
+    layout_sha256: inputHashes.get(path.resolve(layoutPath)),
+    source_view_count: 1,
+    reopens: 0,
+    independent_physical_rows: physicalRows[i],
+    independent_row_groups: groups[i],
+    candidate_represented_rows_actual: represented,
+    prepared_band_count_actual: layout.line_bands.length,
+    actual_visual_check: {
+      all_outside_figure_printed_rows_compared: true,
+      printed_text_numbers_math_symbols_sublabels_match: true,
+      source_text_correction_observed: false,
+      block_classification_matches: ![65, 70].includes(64 + i),
+      source_figure_details_fully_certified: i === 7 ? false : null,
+      inventory_and_row_line_mapping: `${path.resolve(output)}/review.md#physical-${page}`,
+    },
+    source_figures: i === 7 ? [{ number: 26, subfigures: ["\u0430)", "\u0431)"], referenced_by: 177, coarse_box: [310, 2270, 1740, 590], exact_dimensions_certified: false }] : [],
+    candidate_blocks: candidate.blocks.map(b => ({
+      header: b.header, line: b.line,
+      candidate_text_lines: b.rows.map(r => r.line),
+      physical_rows_represented: b.rows.reduce((n, r) => n + r.text.split("\u21b5").length, 0),
+    })),
+  };
+});
+const identities = [...new Set(occurrences.map(x => x.identity))].sort((a, b) => a - b);
+assert.deepEqual(identities, Array.from({ length: 41 }, (_, i) => i + 138));
+assert.deepEqual(occurrences.filter(x => x.flag === "cont").map(x => x.identity), [138, 144, 151, 154, 164, 166, 170]);
+assert.deepEqual(occurrences.filter(x => x.flag === "open").map(x => x.identity), [144, 151, 154, 164, 166, 170, 178]);
+
+const beforeRecord = read(`${boundary}/before.record`, "json");
+const oldMd = read(`${boundary}/page.md.before`);
+const currentMd = read(`${durable}/page.md`);
+assert.equal(oldMd.replace("<!-- h2 -->\n第二章补充习题", "<!-- h3 -->\n第二章补充习题")
+  .replace("<!-- h3 -->\n第7小节", "<!-- exhead -->\n第7小节"), currentMd);
+const oldJson = read(`${boundary}/page.json.before`, "json");
+const currentJson = read(`${durable}/page.json`, "json");
+const boundaryDiff = diff(oldJson, currentJson);
+assert.deepEqual(boundaryDiff, [
+  { path: "/blocks/4/kind", before: "h2", after: "h3" },
+  { path: "/blocks/5/kind", before: "h3", after: "exhead" },
+]);
+assert.equal(currentJson.blocks[4].lines.join(""), "第二章补充习题");
+assert.equal(currentJson.blocks[5].lines.join(""), "第7小节");
+for (const entry of beforeRecord.entries.filter(e => /page\.(md|json)$/.test(e.source))) {
+  assert.equal(hash(entry.target), entry.sha256);
+}
+const delta = read(".tmp/resume182-6-c2ex-boundary-delta6213-FIRST/stdout.txt", "json");
+assert.deepEqual(delta.changed.map(x => [x.index, x.before, x.after]), [[4, "h2", "h3"], [5, "h3", "exhead"]]);
+const unchangedN10 = beforeRecord.unchanged.map(entry => {
+  const actual = hash(entry.path);
+  assert.equal(actual, entry.sha256);
+  return { path: path.resolve(entry.path), sha256: actual, expected_sha256: entry.sha256, matches: true, hash_only: true, content_parsed_or_reviewed: false };
+});
+const patterns = ["0035", "0037", "0039", "0040"].map(n => {
+  const file = `ssot-resources/soviet10year-textbooks/artifacts/8a/pages/${n}/page.md`;
+  const text = read(file);
+  return { page: n, path: path.resolve(file), headers: [...text.matchAll(/^<!-- (h3|exhead) -->\n([^\n]+)/gm)].map(m => ({ kind: m[1], text: m[2] })) };
+});
+assert.deepEqual(patterns.map(x => x.headers), [
+  [{ kind: "h3", text: "第一章补充习题" }, { kind: "exhead", text: "第2小节" }, { kind: "exhead", text: "第3小节" }],
+  [{ kind: "exhead", text: "第4小节" }],
+  [{ kind: "exhead", text: "第5小节" }],
+  [{ kind: "exhead", text: "第6小节" }],
+]);
+const toc = read(tocPath, "json");
+const supplement = toc.contents.flatMap(c => c.lessons ?? []).filter(l => l.id === "alg8-c2-ex");
+assert.equal(supplement.length, 1);
+assert.equal(supplement[0].page, 56);
+assert.equal(supplement[0].kind, "exercises");
+assert.equal(supplement[0].title, "第二章补充习题");
+for (const file of [
+  ".claude/skills/ld-s10y-lesson/SKILL.md",
+  ".claude/skills/ld-s10y-lesson/references/production-resume.md",
+  ".agents/skills/ld-s10y-image/SKILL.md",
+  ".intentfold/readme.md",
+  ".intentfold/charter/engineering.md",
+]) hash(file);
+
+const record = {
+  schema: "ld-s10y-lesson/independent-source-review@1",
+  ticket: "STEMROBIN-182",
+  continuation: "182-6",
+  role: "FIRST_FRESH_INDEPENDENT_SOURCE_REVIEWER_ONLY",
+  checked_at: new Date().toISOString(),
+  workdir: cwd,
+  write_root: path.resolve(output),
+  book: "8a",
+  lesson: "alg8-c2-ex",
+  edition: "modern-us-neutral",
+  status: "HOLD",
+  original_first_verdict_preserved: true,
+  verdict_input: "immutable author pages, not subsequently repaired parent working copies",
+  author_ready_sha256: authorReadySha,
+  exact_author_ready_hash_matched: true,
+  immutable_candidates_and_originals_match_pre_view_hashes: true,
+  physical_pages: pages.map(p => p.physical_page),
+  independent_physical_row_counts: physicalRows,
+  outside_figure_rows_compared: physicalRows.reduce((a, b) => a + b),
+  text_glyph_findings: "No outside-figure source text, numeral, equation, relation or sublabel mismatch observed. Exact row-level observations are preserved in review.md.",
+  image_usage: {
+    view: 8, unique_original_images: 8, views_each: 1, reopens: 0, grids: 0, crops: 0, other_images: 0,
+    zero_image_boundary_review: true,
+    method: "Eight functions.view_image calls, each on the listed prepared page.png exactly once. Byte hashing and PNG IHDR dimensions do not load images into visual context.",
+    next_batch_started: false,
+  },
+  pages,
+  issues: [
+    { id: "FIRST-P65-HEADER", status: "HOLD", category: "source_block_classification", candidate: pages[1].candidate, line: 65, original: "<!-- h3 -->", heading_line: 66, heading: "第8小节", observed_correction: "<!-- exhead -->", source_text_or_index_change: false, reason: "Printed supplement subsection, same-book exhead pattern and lesson-skill h3 unit-start contract.", candidate_rewritten: false },
+    { id: "FIRST-P70-HEADER", status: "HOLD", category: "source_block_classification", candidate: pages[6].candidate, line: 62, original: "<!-- h3 -->", heading_line: 63, heading: "第9小节", observed_correction: "<!-- exhead -->", source_text_or_index_change: false, reason: "Printed supplement subsection, same-book exhead pattern and lesson-skill h3 unit-start contract.", candidate_rewritten: false },
+    { id: "FIRST-P71-FIG26", status: "HOLD", category: "source_only_ambiguity", candidate: pages[7].candidate, notes_lines: [25, 26, 27], figure_line: 68, observed_correction: null, unresolved: ["exact grid rows/columns and offsets in both panels", "all obscured signed labels", "strict straightness versus bend of right boundary", "exact interrupted-stroke endpoints and guide-versus-grid/label ownership"], inferred_numerals_equations_or_geometry: false, band_mismatch_used_as_source_ambiguity: false },
+  ],
+  nonblocking_source_uncertainty: [
+    { page: 68, location: "far-left hook near ex164", finding: "Not readable in-text content; origin not determined; no insertion." },
+    { page: 71, location: "right-margin block and short horizontal mark", finding: "Disconnected from source text/figure; origin not determined; no insertion." },
+  ],
+  segmentation_findings_not_source_ambiguities: [
+    { page: 66, bands: 15, independent_rows: 26, explanation: "Eleven two-equation groups merged into eleven tall bands, plus four single rows." },
+    { page: 67, bands: 27, independent_rows: 25, explanation: "Upper reciprocal-equation row split at [987,1037]/[1045,1132], plus bottom-margin blot [3391,3422]." },
+    { page: 71, bands: 1, independent_rows: 20, explanation: "Only [2162,3001] detected; does not represent complete page text." },
+  ],
+  continuation_check: {
+    status: "PASS_WITH_SCOPE_BOUNDARIES",
+    identities, occurrences,
+    complete_identities_in_scope: Array.from({ length: 39 }, (_, i) => i + 139),
+    left_opening_138: "saved p0063 text only; source image not viewed",
+    right_178: "prompt only; completion outside scope and not approved",
+  },
+  boundary_metadata_review: {
+    status: "PASS", physical_page: 63, image_views: 0, affected_only: true,
+    actual_json_differences: boundaryDiff,
+    markdown_only_two_marker_differences: true,
+    all_other_source_text_metadata_indices_unchanged: true,
+    declared_delta_matches_actual: true,
+    same_book_text_patterns: patterns,
+    toc: { path: path.resolve(tocPath), json_pointer: "/contents/1/lessons/2", ...supplement[0] },
+    supplement_count: 1, unchanged_n10_hash_only: unchangedN10,
+    prior_pass_refinalized_or_reaudited: false,
+    caveat: "p0063 classification PASS; original p65/p70 h3 markers remain FIRST HOLD against immutable candidates.",
+  },
+  input_files: [...inputHashes].map(([file, sha256]) => ({ path: file, sha256 })),
+  constraints: {
+    source_edits: 0, git_operations: 0, db_operations: 0, cloud_operations: 0,
+    created_or_attached_worktrees: 0, created_or_messaged_chats: 0, old_reviewer_resumes: 0,
+    source_finalize_or_old_pass_audit_runs: 0, solutions_or_keys_read: 0,
+    modern_artifact_content_read: 0, modern_n10_files_hashed_only_for_authorized_unchanged_check: 2,
+    parent_working_copy_edits: 0, others_changes_reverted: 0, whole_lesson_delivery: false,
+  },
+  evidence: [
+    { path: path.resolve(`${output}/review.md`), sha256: hash(`${output}/review.md`) },
+    { path: path.resolve(`${output}/verify-first.mjs`), sha256: hash(`${output}/verify-first.mjs`) },
+  ],
+  ready_self_hash: "Reported externally, not recursively embedded.",
+};
+fs.writeFileSync(`${output}/ready.record`, `${JSON.stringify(record, null, 2)}\n`, { flag: "wx" });
+console.log(JSON.stringify({
+  status: record.status,
+  ready: path.resolve(`${output}/ready.record`),
+  ready_sha256: hash(`${output}/ready.record`),
+  review_sha256: hash(`${output}/review.md`),
+  rows: physicalRows,
+  views: 8,
+  reopens: 0,
+  boundary: "PASS",
+}, null, 2));

@@ -1,0 +1,127 @@
+import hashlib
+import inspect
+import json
+from pathlib import Path
+import sys
+
+import numpy as np
+from PIL import Image
+from scipy import ndimage
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck")
+assert Path.cwd() == REPO
+sys.path.insert(0, str(REPO / ".claude/skills/ld-s10y-lesson/tools"))
+import layout
+
+page = int(sys.argv[1])
+assert page in (66, 67)
+base = REPO / ".tmp/ld-s10y-lesson/8a/pages" / f"{page:04d}"
+source = base / "page.png"
+metadata = json.loads((base / "layout.json").read_text())
+with Image.open(source) as image:
+    original = layout.ink_mask(image)
+
+lines, start = inspect.getsourcelines(layout.line_bands)
+probe = start + next(
+    i for i, line in enumerate(lines) if line.strip() == "if count == 1:"
+)
+bands = []
+scalars = {}
+cleaned = None
+
+
+def trace(frame, event, argument):
+    global cleaned
+    if frame.f_code is layout.line_bands.__code__:
+        values = frame.f_locals
+        if event == "line" and frame.f_lineno == probe:
+            if cleaned is None:
+                cleaned = values["ink"].copy()
+            bands.append({key: values[key] for key in
+                          ("a", "b", "band_h", "count", "spanning_brace")})
+        if event == "return":
+            scalars.update({key: values.get(key) for key in
+                           ("line_h", "supported_h", "glyph_h",
+                            "typical_h", "typical_gap", "pitch")})
+    return trace
+
+
+sys.settrace(trace)
+result = layout.line_bands(original, metadata["content_width"])
+sys.settrace(None)
+assert cleaned is not None
+labels, _ = ndimage.label(original)
+original_bounds = ndimage.find_objects(labels)
+glyph_h = scalars["glyph_h"]
+inventory = []
+for band in bands:
+    a, b = band["a"], band["b"]
+    crop = cleaned[a:b + 1]
+    counts = crop.sum(axis=1)
+    strong = layout._merge_close(
+        [(a + x, a + y) for x, y in layout._runs(counts > 0.4 * counts.max())],
+        max(2, 0.25 * glyph_h),
+    )
+    tall = [
+        {"box_xywh": [columns.start, rows.start,
+                      columns.stop - columns.start, rows.stop - rows.start],
+         "area": int(np.count_nonzero(labels[bounds] == component_id))}
+        for component_id, bounds in enumerate(original_bounds, 1)
+        if bounds is not None
+        for rows, columns in [bounds]
+        if min(rows.stop, b + 1) - max(rows.start, a) >= 0.8 * (b - a + 1)
+        and columns.stop - columns.start <= 1.5 * glyph_h
+    ]
+    horizontal = ndimage.binary_opening(
+        crop, structure=np.ones((1, max(2, int(0.7 * glyph_h))), dtype=bool)
+    )
+    rule_labels, _ = ndimage.label(horizontal)
+    rules = [
+        [columns.start, a + rows.start,
+         columns.stop - columns.start, rows.stop - rows.start]
+        for bounds in ndimage.find_objects(rule_labels) if bounds is not None
+        for rows, columns in [bounds]
+    ]
+    xs = np.flatnonzero(crop.any(axis=0))
+    inventory.append({
+        **band,
+        "x_extent": [int(xs[0]), int(xs[-1])],
+        "ink_area": int(crop.sum()),
+        "strong_rows_glyph_scale": strong,
+        "single_fraction_row_glyph_scale":
+            layout._single_fraction_row(cleaned, a, b, glyph_h),
+        "original_tall_components": tall,
+        "horizontal_rules_xywh": rules,
+    })
+
+expected = {66: 26, 67: 25}[page]
+adjacent = []
+for first, second in zip(bands, bands[1:]):
+    a, split, b = first["a"], second["a"], second["b"]
+    if second["a"] - first["b"] > glyph_h:
+        continue
+    adjacent.append({
+        "span": [a, b],
+        "split": split,
+        "single_fraction_row": layout._single_fraction_row(cleaned, a, b, glyph_h),
+        "fraction_across_split":
+            layout._fraction_across_split(cleaned, a, (first["b"] + split) // 2, b, glyph_h),
+    })
+print(json.dumps({
+    "status": "NUMERICAL_PIXEL_INVENTORY_NOT_SOURCE_APPROVAL",
+    "page": page,
+    "image_observations": 0,
+    "source": str(source),
+    "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+    "implementation_sha256":
+        hashlib.sha256(Path(layout.__file__).read_bytes()).hexdigest(),
+    "shape_hw": original.shape,
+    "content_width": metadata["content_width"],
+    "scalars": scalars,
+    "inventory": inventory,
+    "adjacent": adjacent,
+    "result": result,
+    "actual": len(result),
+    "expected_from_independent_review": expected,
+    "matches_review": len(result) == expected,
+}, default=lambda value: value.item(), indent=2))

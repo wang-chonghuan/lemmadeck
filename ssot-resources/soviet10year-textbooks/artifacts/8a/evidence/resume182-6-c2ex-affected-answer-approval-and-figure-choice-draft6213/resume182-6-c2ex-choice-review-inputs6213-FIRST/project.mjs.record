@@ -1,0 +1,25 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [source, output] = process.argv.slice(2);
+assert.ok(path.resolve(source).startsWith(`${repo}/.tmp/resume182-6-`));
+assert.ok(path.resolve(output).startsWith(`${repo}/.tmp/resume182-6-c2ex-choice-review-inputs6213-FIRST/`));
+const bytes = fs.readFileSync(source);
+const draft = JSON.parse(bytes);
+assert.equal(draft.schema, 's10y-choice-draft-v1');
+const value = {
+  schema: 'stemrobin-182/choice-visible-review-projection@1',
+  source: { path: source, sha256: crypto.createHash('sha256').update(bytes).digest('hex') },
+  questions: draft.questions.map(question => ({
+    id: question.id, source_numbers: question.source_numbers, view: question.view,
+  })),
+  internalAuthorSolutionAndKeyIncluded: false,
+};
+fs.writeFileSync(output, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: output,
+  sha256: crypto.createHash('sha256').update(fs.readFileSync(output)).digest('hex'),
+  questions: value.questions.length }));

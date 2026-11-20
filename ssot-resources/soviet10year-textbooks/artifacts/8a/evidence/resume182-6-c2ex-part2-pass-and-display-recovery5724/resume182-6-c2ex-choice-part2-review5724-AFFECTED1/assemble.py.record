@@ -1,0 +1,413 @@
+#!/usr/bin/env python3
+"""Mechanically bind and reuse old evidence; semantic additions are manual freezes."""
+
+import copy
+import hashlib
+import json
+from pathlib import Path
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-5724/lemmadeck")
+OUT = ROOT / ".tmp/resume182-6-c2ex-choice-part2-review5724-AFFECTED1"
+OLD = ROOT / ".tmp/resume182-6-8a-c2ex-choice-author6213-FIRST-part2"
+PREVIOUS = ROOT / ".tmp/resume182-6-c2ex-choice-part2-review5724-FIRST"
+NEW = ROOT / ".tmp/resume182-6-c2ex-choice-part2-fix5724-AFFECTED1"
+QIDS = [
+    "c2p2-parabola-regions",
+    "c2p2-zero-square-sets",
+    "c2p2-strip-and-singleton",
+    "c2p2-equality-rays",
+]
+SOURCES = ["172", "176", "181", "182"]
+
+
+def load(path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def canonical(value):
+    return json.dumps(
+        value, sort_keys=True, ensure_ascii=True, separators=(",", ":")
+    ).encode("utf-8")
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def binding(path):
+    raw = path.read_bytes()
+    return {
+        "path": str(path),
+        "bytes": len(raw),
+        "byte_sha256": sha(raw),
+        "canonical_sha256": sha(canonical(json.loads(raw))),
+    }
+
+
+def same(left, right):
+    return canonical(left) == canonical(right)
+
+
+def keyed(rows, key):
+    result = {row[key]: row for row in rows}
+    assert len(result) == len(rows), f"duplicate {key}"
+    return result
+
+
+def save(name, value):
+    path = OUT / name
+    assert path.parent == OUT
+    with path.open("x", encoding="utf-8") as handle:
+        json.dump(value, handle, ensure_ascii=True, indent=2)
+        handle.write("\n")
+
+
+def main():
+    assert Path.cwd().resolve() == ROOT
+    seed = load(OLD / "seed.json")
+    old = load(OLD / "draft.json")
+    new = load(NEW / "draft.json")
+    previous = load(PREVIOUS / "review.json")
+    ready = load(PREVIOUS / "ready.record")
+    delta = load(NEW / "delta.record")
+    projection = load(NEW / "affected.views.json")
+    sf = load(OUT / "source.freeze.json")
+    vf = load(OUT / "views.freeze.json")
+    ac = load(OUT / "affected.checks.json")
+    bindings = {
+        "seed": binding(OLD / "seed.json"),
+        "old_draft": binding(OLD / "draft.json"),
+        "new_draft": binding(NEW / "draft.json"),
+        "old_review": binding(PREVIOUS / "review.json"),
+        "old_ready": binding(PREVIOUS / "ready.record"),
+        "delta": binding(NEW / "delta.record"),
+        "projection": binding(NEW / "affected.views.json"),
+        "source_freeze": binding(OUT / "source.freeze.json"),
+        "views_freeze": binding(OUT / "views.freeze.json"),
+        "author_comparison": binding(OUT / "affected.checks.json"),
+    }
+    for old_key, ready_key in [
+        ("seed", "source"), ("old_draft", "draft"), ("old_review", "review")
+    ]:
+        for name in ("bytes", "byte_sha256", "canonical_sha256"):
+            assert bindings[old_key][name] == ready[ready_key][name]
+    for current_key, delta_key in [
+        ("old_draft", "original"), ("new_draft", "current"),
+        ("old_review", "priorReview"),
+    ]:
+        assert bindings[current_key]["byte_sha256"] == delta[delta_key]["sha256"]
+        assert ROOT / delta[delta_key]["path"] == Path(bindings[current_key]["path"])
+    assert sf["seed_byte_sha256"] == bindings["seed"]["byte_sha256"]
+    assert sf["seed_canonical_sha256"] == bindings["seed"]["canonical_sha256"]
+    assert vf["source_freeze_byte_sha256"] == bindings["source_freeze"]["byte_sha256"]
+    assert vf["source_freeze_canonical_sha256"] == bindings["source_freeze"]["canonical_sha256"]
+    assert vf["projection_byte_sha256"] == bindings["projection"]["byte_sha256"]
+    assert vf["projection_canonical_sha256"] == bindings["projection"]["canonical_sha256"]
+    assert sf["frozen_at"] < vf["frozen_at"]
+    assert sf["read_scope"] == SOURCES
+    assert len(sf["solutions"]) == len(vf["observations"]) == len(ac["comparisons"]) == 4
+    assert projection["internalAuthorSolutionAndKeyIncluded"] is False
+    assert set(projection) == {"questions", "internalAuthorSolutionAndKeyIncluded"}
+    assert [q["id"] for q in projection["questions"]] == QIDS
+    assert old["seed_sha256"] == new["seed_sha256"] == bindings["seed"]["canonical_sha256"]
+    assert previous["seed_sha256"] == old["seed_sha256"]
+    assert previous["draft_sha256"] == bindings["old_draft"]["canonical_sha256"]
+    assert previous["outcome"] == ready["status"] == "revise"
+    assert ready["approved"] is False
+    assert ready["validation"]["invocations"] == 1
+    assert ready["validation"]["exit_code"] == 3
+    assert ready["counts"]["options"] == 163
+    assert ready["counts"]["checks"]["mathematics"]["pass"] == 47
+
+    old_q = keyed(old["questions"], "id")
+    new_q = keyed(new["questions"], "id")
+    old_c = keyed(old["coverage"], "source_number")
+    new_c = keyed(new["coverage"], "source_number")
+    old_qr = keyed(previous["question_reviews"], "question_id")
+    old_sr = keyed(previous["source_reviews"], "source_number")
+    fresh = keyed(vf["observations"], "question_id")
+    comparison = keyed(ac["comparisons"], "question_id")
+    solutions = keyed(sf["solutions"], "source_subpart")
+    assert set(old_q) == set(new_q) == set(old_qr)
+    assert set(old_c) == set(new_c) == set(old_sr)
+    assert len(old_q) == 47 and len(old_c) == 25
+    assert len(seed["exercises"]) == 25
+    assert [q["id"] for q in old["questions"]] == [q["id"] for q in new["questions"]]
+    assert [c["source_number"] for c in old["coverage"]] == [
+        c["source_number"] for c in new["coverage"]
+    ]
+    assert same(
+        {k: v for k, v in old.items() if k not in {"questions", "coverage"}},
+        {k: v for k, v in new.items() if k not in {"questions", "coverage"}},
+    )
+    changed_q = [qid for qid in old_q if not same(old_q[qid], new_q[qid])]
+    changed_c = [s for s in old_c if not same(old_c[s], new_c[s])]
+    assert changed_q == QIDS and changed_c == SOURCES
+    assert delta["changedQuestions"] == changed_q
+    assert delta["changedCoverageSources"] == changed_c
+    unchanged_q = [qid for qid in old_q if qid not in QIDS]
+    unchanged_c = [s for s in old_c if s not in SOURCES]
+    assert len(unchanged_q) == delta["unchangedQuestions"] == 43
+    assert len(unchanged_c) == delta["unchangedCoverageSources"] == 21
+    assert all(same(old_q[qid], new_q[qid]) for qid in unchanged_q)
+    assert all(same(old_c[s], new_c[s]) for s in unchanged_c)
+    assert all(old_qr[qid]["mathematics"]["verdict"] == "pass" for qid in old_q)
+    assert all(
+        old_qr[qid][check]["verdict"] == "pass"
+        for qid in unchanged_q
+        for check in ("task_fidelity", "redundancy", "answer_leakage")
+    )
+    assert all(old_sr[s]["coverage"]["verdict"] == "pass" for s in unchanged_c)
+    assert all(old_sr[s]["coverage"]["verdict"] == "revise" for s in SOURCES)
+    assert all(
+        old_qr[qid][check]["verdict"] == "revise"
+        for qid in QIDS for check in ("task_fidelity", "answer_leakage")
+    )
+    assert all(old_qr[qid]["redundancy"]["verdict"] == "pass" for qid in QIDS)
+    assert not seed["figures"] and not old["new_figures"] and not new["new_figures"]
+    assert not previous["figure_checks"] and not previous["new_figure_reviews"]
+
+    per_question = []
+    for projected, qid, source in zip(projection["questions"], QIDS, SOURCES):
+        oq, nq = old_q[qid], new_q[qid]
+        assert same(projected, {k: nq[k] for k in ("id", "source_numbers", "view")})
+        assert [o["id"] for o in oq["view"]["options"]] == ["a", "b", "c"]
+        assert [o["id"] for o in nq["view"]["options"]] == ["a", "b", "c", "d"]
+        assert same(oq["view"]["options"], nq["view"]["options"][:3])
+        assert same(
+            {k: v for k, v in oq["view"].items() if k != "options"},
+            {k: v for k, v in nq["view"].items() if k != "options"},
+        )
+        assert same(oq["key"]["correct"], nq["key"]["correct"])
+        assert same(oq["key"]["rationales"], nq["key"]["rationales"][:3])
+        assert len(nq["key"]["rationales"]) == 4
+        assert nq["key"]["rationales"][-1]["option_id"] == "d"
+        assert nq["key"]["rationales"][-1]["truth"] == "incorrect"
+        assert "d" not in nq["key"]["correct"]
+        assert nq["key"]["rationales"][-1]["misconception"]
+        assert same(
+            {k: v for k, v in oq["intent"].items() if k != "unit_reason"},
+            {k: v for k, v in nq["intent"].items() if k != "unit_reason"},
+        )
+        assert nq["intent"]["unit_reason"].startswith(oq["intent"]["unit_reason"] + " ")
+        assert same(
+            {k: v for k, v in oq.items() if k not in {"view", "intent", "key"}},
+            {k: v for k, v in nq.items() if k not in {"view", "intent", "key"}},
+        )
+        assert same(
+            {k: v for k, v in old_c[source].items() if k != "reason"},
+            {k: v for k, v in new_c[source].items() if k != "reason"},
+        )
+        assert new_c[source]["reason"].startswith(old_c[source]["reason"] + " ")
+        assert comparison[qid]["source_number"] == source
+        assert comparison[qid]["source_subpart"] == fresh[qid]["source_subpart"]
+        assert comparison[qid]["rationale_and_misconception_verdict"] == "pass"
+        assert old_qr[qid]["mathematics"]["correct"] == nq["key"]["correct"]
+        assert fresh[qid]["d_check"]["truth"] == "incorrect"
+        per_question.append({
+            "question_id": qid,
+            "source_number": source,
+            "old_question_canonical_sha256": sha(canonical(oq)),
+            "new_question_canonical_sha256": sha(canonical(nq)),
+            "old_options_canonical_sha256": sha(canonical(oq["view"]["options"])),
+            "new_first_three_options_canonical_sha256": sha(canonical(nq["view"]["options"][:3])),
+            "old_rationales_canonical_sha256": sha(canonical(oq["key"]["rationales"])),
+            "new_first_three_rationales_canonical_sha256": sha(canonical(nq["key"]["rationales"][:3])),
+            "unchanged_correct": nq["key"]["correct"],
+            "correct_set_canonical_sha256": sha(canonical(nq["key"]["correct"])),
+            "added_option_id": "d",
+            "added_truth": fresh[qid]["d_check"]["truth"],
+            "added_option": copy.deepcopy(nq["view"]["options"][-1]),
+            "added_rationale": copy.deepcopy(nq["key"]["rationales"][-1]),
+            "fresh_check": copy.deepcopy(fresh[qid]),
+            "rationale_comparison": copy.deepcopy(comparison[qid]),
+            "only_other_question_change": "intent.unit_reason appended",
+            "only_coverage_change": "reason appended; identifiers and omissions identical",
+        })
+
+    old_options = sum(len(q["view"]["options"]) for q in old_q.values())
+    new_options = sum(len(q["view"]["options"]) for q in new_q.values())
+    old_checks = sum(len(q["mathematics"]["option_checks"]) for q in old_qr.values())
+    assert old_options == old_checks == 163
+    assert new_options == delta["currentOptions"] == 167
+    assert delta["oldOptionsAndTheirRationalesChanged"] == 0
+    assert delta["originalCorrectSetsChanged"] == 0
+    assert delta["addedFalseAlternatives"] == 4
+    assert delta["source171Changed"] is False
+    assert delta["oldPassReruns"] == 0
+    source171_qids = [qid for qid, q in old_q.items() if "171" in q["source_numbers"]]
+    assert source171_qids and not set(source171_qids).intersection(QIDS)
+    assert same(old_c["171"], new_c["171"])
+    assert all(same(old_q[qid], new_q[qid]) for qid in source171_qids)
+    assert ready["source171"]["original_convention"] == "genuinely unresolved; not guessed"
+
+    review = copy.deepcopy(previous)
+    review["draft_sha256"] = bindings["new_draft"]["canonical_sha256"]
+    review["reviewer"] = {
+        "kind": "independent_agent",
+        "identity": (
+            "Same182-6 reviewer5724-AFFECTED1: fresh independent reviewer of the "
+            "four corrected source subparts and views, not the corrected-draft author; "
+            "source.freeze.json and views.freeze.json precede author-key disclosure. "
+            "Explicit reuse of reviewer5724-FIRST's independently frozen 47 math PASS "
+            "records, 163 old option checks, 43 unchanged question reviews and 21 "
+            "unchanged source reviews after exact mechanical equality. Only four d "
+            "option checks and affected fidelity/redundancy/leakage/coverage are fresh; "
+            "not a fresh 47-question review. Provenance and hashes are in ready.record."
+        ),
+    }
+    qr = keyed(review["question_reviews"], "question_id")
+    sr = keyed(review["source_reviews"], "source_number")
+    for qid, source in zip(QIDS, SOURCES):
+        row = qr[qid]
+        for check in ("task_fidelity", "redundancy", "answer_leakage"):
+            row[check] = copy.deepcopy(fresh[qid][check])
+        math = row["mathematics"]
+        math["independent_solution"] += (
+            " [REUSE: preceding solution, complete correct set, and all original "
+            "option checks are reviewer5724-FIRST independently frozen PASS evidence; "
+            "old options, rationales and key were mechanically verified identical, "
+            "not freshly rederived. FRESH AFFECTED1 d check: "
+            + fresh[qid]["d_check"]["evidence"]
+            + " Rationale/misconception comparison: "
+            + comparison[qid]["rationale_evidence"] + "]"
+        )
+        math["option_checks"].append(copy.deepcopy(fresh[qid]["d_check"]))
+        sr[source]["coverage"] = copy.deepcopy(comparison[qid]["coverage"])
+        sr[source]["independent_solution"] += (
+            " [REUSE: preceding full-source independent solution is retained from "
+            "reviewer5724-FIRST; no other subpart is rederived. FRESH AFFECTED1 "
+            + comparison[qid]["source_subpart"] + ": "
+            + solutions[comparison[qid]["source_subpart"]]["independent_solution"] + "]"
+        )
+
+    verdicts = [s["coverage"]["verdict"] for s in review["source_reviews"]]
+    for row in review["question_reviews"]:
+        verdicts.extend(row[k]["verdict"] for k in (
+            "task_fidelity", "redundancy", "answer_leakage", "mathematics"
+        ))
+    review["outcome"] = (
+        "blocked" if "blocked" in verdicts else "revise" if "revise" in verdicts else "pass"
+    )
+    assert review["outcome"] == "pass"
+    assert all(same(qr[qid], old_qr[qid]) for qid in unchanged_q)
+    assert all(same(sr[s], old_sr[s]) for s in unchanged_c)
+    assert same(sr["171"], old_sr["171"])
+    assert all(same(qr[qid], old_qr[qid]) for qid in source171_qids)
+    assert same(review["figure_checks"], previous["figure_checks"])
+    assert same(review["new_figure_reviews"], previous["new_figure_reviews"])
+    assert all(
+        same(qr[qid]["mathematics"]["option_checks"][:3],
+             old_qr[qid]["mathematics"]["option_checks"])
+        for qid in QIDS
+    )
+    assert sum(len(row["mathematics"]["option_checks"]) for row in qr.values()) == 167
+    for qid in old_q:
+        assert qr[qid]["mathematics"]["correct"] == old_qr[qid]["mathematics"]["correct"]
+        assert qr[qid]["mathematics"]["correct"] == new_q[qid]["key"]["correct"]
+        original_checks = old_qr[qid]["mathematics"]["option_checks"]
+        assert same(qr[qid]["mathematics"]["option_checks"][:len(original_checks)], original_checks)
+        original_rationales = keyed(old_q[qid]["key"]["rationales"], "option_id")
+        for check in original_checks:
+            assert check["truth"] == original_rationales[check["option_id"]]["truth"]
+
+    unchanged_q_before = [old_q[qid] for qid in unchanged_q]
+    unchanged_q_after = [new_q[qid] for qid in unchanged_q]
+    unchanged_c_before = [old_c[s] for s in unchanged_c]
+    unchanged_c_after = [new_c[s] for s in unchanged_c]
+    unchanged_qr_before = [old_qr[qid] for qid in unchanged_q]
+    unchanged_qr_after = [qr[qid] for qid in unchanged_q]
+    unchanged_sr_before = [old_sr[s] for s in unchanged_c]
+    unchanged_sr_after = [sr[s] for s in unchanged_c]
+    audit = {
+        "record": "same182-6-affected1-exact-mechanical-equality",
+        "result": "pass",
+        "bindings": bindings,
+        "old_review_preserved": {
+            "outcome": previous["outcome"],
+            "byte_sha256": bindings["old_review"]["byte_sha256"],
+            "canonical_sha256": bindings["old_review"]["canonical_sha256"],
+            "old_ready_status": ready["status"],
+            "old_validation_exit_code": ready["validation"]["exit_code"],
+            "no_previous_file_rewritten": True,
+        },
+        "checks": {
+            "delta_byte_hashes_match_actual_files": True,
+            "old_ready_byte_and_canonical_hashes_match": True,
+            "seed_unchanged_and_both_drafts_bound": True,
+            "projection_exactly_matches_four_new_full_draft_views": True,
+            "only_named_four_questions_and_four_coverage_rows_changed": True,
+            "all_163_old_options_and_rationales_unchanged": True,
+            "all_47_correct_sets_unchanged": True,
+            "four_old_three_option_sequences_and_rationale_sequences_exact": True,
+            "four_additions_are_only_d_false_options_and_rationales": True,
+            "other_affected_intent_fields_identical": True,
+            "affected_stems_modes_sources_figures_identical": True,
+            "only_intent_unit_reason_and_coverage_reason_appended": True,
+            "affected_coverage_question_ids_and_omissions_identical": True,
+            "43_other_full_questions_and_21_coverage_entries_identical": True,
+            "43_old_question_reviews_and_21_old_source_reviews_identical": True,
+            "all_163_old_review_option_checks_identical": True,
+            "all_47_old_math_pass_verdicts_and_correct_sets_reused": True,
+            "source171_draft_coverage_question_and_review_entries_identical": True,
+            "source171_original_ambiguity_and_conditional_treatment_not_guessed": True,
+            "both_freezes_bound_and_source_precedes_views": True,
+        },
+        "per_affected_question": per_question,
+        "unchanged_equality": {
+            "question_ids": unchanged_q,
+            "source_numbers": unchanged_c,
+            "43_old_questions_canonical_sha256": sha(canonical(unchanged_q_before)),
+            "43_new_questions_canonical_sha256": sha(canonical(unchanged_q_after)),
+            "21_old_coverage_canonical_sha256": sha(canonical(unchanged_c_before)),
+            "21_new_coverage_canonical_sha256": sha(canonical(unchanged_c_after)),
+            "43_old_question_reviews_canonical_sha256": sha(canonical(unchanged_qr_before)),
+            "43_reused_question_reviews_canonical_sha256": sha(canonical(unchanged_qr_after)),
+            "21_old_source_reviews_canonical_sha256": sha(canonical(unchanged_sr_before)),
+            "21_reused_source_reviews_canonical_sha256": sha(canonical(unchanged_sr_after)),
+        },
+        "source171": {
+            "operation": "mechanical equality and verbatim record reuse only",
+            "question_ids": source171_qids,
+            "original_ready_record_verbatim": copy.deepcopy(ready["source171"]),
+            "old_coverage_canonical_sha256": sha(canonical(old_c["171"])),
+            "new_coverage_canonical_sha256": sha(canonical(new_c["171"])),
+            "old_source_review_canonical_sha256": sha(canonical(old_sr["171"])),
+            "reused_source_review_canonical_sha256": sha(canonical(sr["171"])),
+            "full_draft_questions_equal": True,
+            "full_review_questions_equal": True,
+        },
+        "counts": {
+            "sources": 25,
+            "questions": 47,
+            "old_math_pass_records_reused": 47,
+            "old_option_checks_reused": 163,
+            "fresh_d_option_checks": 4,
+            "total_option_checks": 167,
+            "unchanged_full_question_reviews_reused": 43,
+            "unchanged_source_reviews_reused": 21,
+            "fresh_affected_source_solutions": 4,
+            "fresh_affected_fidelity_checks": 4,
+            "fresh_affected_redundancy_checks": 4,
+            "fresh_affected_leakage_checks": 4,
+            "fresh_affected_coverage_checks": 4,
+            "fresh_added_rationale_misconception_checks": 4,
+            "old_mathematics_rederivations": 0,
+        },
+        "native_review_outcome": review["outcome"],
+    }
+    # Assembly copies all untouched rows; only manual frozen observations are added.
+    save("review.json", review)
+    audit["new_review"] = binding(OUT / "review.json")
+    save("equality.record.json", audit)
+    print(json.dumps({
+        "mechanical_equality": "pass",
+        "counts": audit["counts"],
+        "new_review": audit["new_review"],
+        "new_draft": bindings["new_draft"],
+    }, ensure_ascii=True, indent=2))
+
+
+if __name__ == "__main__":
+    main()

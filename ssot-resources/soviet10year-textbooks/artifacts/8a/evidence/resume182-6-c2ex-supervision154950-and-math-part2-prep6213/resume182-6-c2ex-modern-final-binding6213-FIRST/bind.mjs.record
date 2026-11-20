@@ -1,0 +1,75 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [phase] = process.argv.slice(2);
+assert.ok(['before', 'after'].includes(phase));
+const own = '.tmp/resume182-6-c2ex-modern-final-binding6213-FIRST';
+const modern = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral';
+const lesson = `${modern}/lessons/alg8-c2-ex`;
+const templates = '.tmp/resume182-6-8a-c2ex-modern6213-AFFECTED-continuation1/adapt/8a/modern-us-neutral/lessons/alg8-c2-ex';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const load = file => JSON.parse(fs.readFileSync(file));
+const dumpNew = (file, value) => {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+};
+const indexFile = `${modern}/book.json`;
+if (phase === 'before') {
+  const bytes = fs.readFileSync(indexFile);
+  fs.writeFileSync(`${own}/book.before.record`, bytes, { flag: 'wx' });
+  dumpNew(`${own}/before.record`, {
+    schema: 'stemrobin-182/modern-binding-before@1',
+    source: { path: indexFile, sha256: sha(bytes) },
+    snapshot: `${own}/book.before.record`, finalization: 'not-yet-executed',
+  });
+} else {
+  const before = load(`${own}/book.before.record`);
+  const current = load(indexFile);
+  const oldRows = before.lessons;
+  assert.ok(Array.isArray(oldRows) && oldRows.length > 0);
+  for (const row of oldRows) {
+    assert.deepEqual(current.lessons.find(item => item.id === row.id), row, row.id);
+  }
+  assert.equal(current.lessons.length, oldRows.length + 1);
+  assert.equal(current.lessons.filter(item => item.id === 'alg8-c2-ex').length, 1);
+  const textReview = '.tmp/resume182-6-8a-c2ex-modern-text-review6213-FIRST/ready.record';
+  assert.equal(sha(fs.readFileSync(textReview)), '34e87282e54905e8f45c178de32348de8e07cb3f4033cb0315c939dac796a6d3');
+  const inputs = [];
+  for (const name of ['lesson', 'exercises']) {
+    const templateFile = `${templates}/${name}.template.json`;
+    const finalFile = `${lesson}/${name}.json`;
+    const template = load(templateFile);
+    const final = load(finalFile);
+    assert.equal(final.status, 'ready');
+    const field = name === 'lesson' ? 'prose' : 'exercises';
+    assert.deepEqual(final[field].map(item => item.text), template[field].map(item => item.text));
+    if (field === 'exercises') {
+      assert.equal(final[field].length, 50);
+      for (const key of ['number', 'source_number', 'group', 'group_id', 'pages', 'figure_refs']) {
+        assert.deepEqual(final[field].map(item => item[key]), template[field].map(item => item[key]), key);
+      }
+    }
+    inputs.push(...[templateFile, finalFile].map(file =>
+      ({ path: file, sha256: sha(fs.readFileSync(file)) })));
+  }
+  const audit = load(`${lesson}/adaptation.audit.json`);
+  assert.equal(audit.status, 'pass');
+  assert.deepEqual(audit.errors, []);
+  dumpNew(`${own}/ready.record`, {
+    schema: 'stemrobin-182/final-modern-text-binding@1', status: 'pass',
+    book: '8a', lesson: 'alg8-c2-ex', edition: 'modern-us-neutral',
+    preservedTextReview: { path: textReview, sha256: sha(fs.readFileSync(textReview)) },
+    inputs, oldIndexRowsUnchanged: oldRows.length, addedLessons: ['alg8-c2-ex'],
+    index: { path: indexFile, sha256: sha(fs.readFileSync(indexFile)) },
+    adaptation: { path: `${lesson}/adaptation.audit.json`,
+      sha256: sha(fs.readFileSync(`${lesson}/adaptation.audit.json`)) },
+    textContentChangesAfterApproval: 0, oldPassReruns: 0, databaseWrites: 0,
+    completeLessonApproval: false, finish: 'review',
+  });
+}
+const result = `${own}/${phase === 'before' ? 'before' : 'ready'}.record`;
+console.log(JSON.stringify({ path: result, sha256: sha(fs.readFileSync(result)) }));

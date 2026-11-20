@@ -1,0 +1,41 @@
+import json
+from pathlib import Path
+import sys
+
+import numpy as np
+
+records = Path(sys.argv[1]).read_text().splitlines()
+for record in map(json.loads, records):
+    gh = record["scalars"]["glyph_h"]
+    print("PAGE", record["page"], "glyph_h", gh)
+    for band in record["pre_expansion"]:
+        boxes = band.get("geometry", [])
+        braces = [box for box in boxes
+                  if box[1] - box[0] > 2 * gh and box[3] - box[2] < 0.6 * gh]
+        if not braces:
+            continue
+        labels = [
+            box for box in boxes
+            if box[1] - box[0] <= 1.4 * gh
+            and any(brace[2] - 2 * gh <= box[2] and box[3] <= brace[2]
+                    and brace[0] < (box[0] + box[1]) / 2 < brace[1]
+                    for brace in braces)
+        ]
+        equations = [box for box in boxes if box not in labels and box not in braces]
+        centres = []
+        for top, bottom in band.get("strong_rows", []):
+            centre = (top + bottom) / 2
+            members = [(box[0] + box[1]) / 2 for box in equations
+                       if abs((box[0] + box[1]) / 2 - centre) < 0.6 * gh]
+            centres.append(float(np.median(members)) if members else centre)
+        for brace in braces:
+            members = [box for box in labels if brace[2] - 2 * gh <= box[2]
+                       and box[3] <= brace[2]]
+            if members:
+                label = float(np.median([(box[0] + box[1]) / 2 for box in members]))
+                print(json.dumps({
+                    "band": [band["a"], band["b"]], "brace": brace, "labels": members,
+                    "label_centre": label, "equation_centres": centres,
+                    "min_distance_glyph_h": min(abs(label - centre) for centre in centres) / gh
+                    if centres else None,
+                }))

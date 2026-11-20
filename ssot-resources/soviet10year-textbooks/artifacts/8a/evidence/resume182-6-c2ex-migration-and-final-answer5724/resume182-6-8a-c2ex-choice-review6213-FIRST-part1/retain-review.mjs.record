@@ -1,0 +1,259 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+const cwd = "/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck";
+if (process.cwd() !== cwd) throw new Error("Wrong checkout; no outputs written");
+const own = path.dirname(fileURLToPath(import.meta.url));
+const relativeOwn = path.relative(cwd, own);
+const seedPath = ".tmp/resume182-6-8a-c2ex-choice-author6213-FIRST-part1/seed.json";
+const viewsPath = ".tmp/resume182-6-c2ex-choice-review-inputs6213-FIRST/part1.views.json";
+const draftPath = ".tmp/resume182-6-8a-c2ex-choice-author6213-FIRST-part1/draft.json";
+const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const canonical = (value) => JSON.stringify(value, (_key, item) =>
+  item && typeof item === "object" && !Array.isArray(item)
+    ? Object.fromEntries(Object.keys(item).sort().map((key) => [key, item[key]]))
+    : item
+).replace(/[\u007f-\uffff]/g, (char) =>
+  "\\u" + char.charCodeAt(0).toString(16).padStart(4, "0")
+);
+const read = (file) => JSON.parse(fs.readFileSync(file, "utf8"));
+const binding = (file) => {
+  const bytes = fs.readFileSync(file);
+  return {
+    path: path.relative(cwd, path.resolve(file)),
+    byte_sha256: hash(bytes),
+    canonical_sha256: hash(canonical(JSON.parse(bytes))),
+  };
+};
+const write = (name, value) => fs.writeFileSync(
+  path.join(own, name), JSON.stringify(value, null, 2) + "\n", { flag: "wx" }
+);
+const assert = (condition, message) => {
+  if (!condition) throw new Error(message);
+};
+const sameSet = (left, right) =>
+  JSON.stringify([...left].sort()) === JSON.stringify([...right].sort());
+
+assert(!fs.existsSync(path.join(own, "review.json")), "Review already exists; refusing a rerun");
+assert(!fs.existsSync(path.join(own, "validator.call.json")), "Validator receipt exists; refusing a rerun");
+const sourceFreezePath = path.join(own, "source-solutions.freeze.json");
+const viewFreezePath = path.join(own, "views-judgments.freeze.json");
+const comparisonPath = path.join(own, "late-comparison.json");
+const sourceFreeze = read(sourceFreezePath);
+const viewFreeze = read(viewFreezePath);
+const comparison = read(comparisonPath);
+const inputs = {
+  seed: binding(seedPath),
+  views: binding(viewsPath),
+  draft: binding(draftPath),
+  source_freeze: binding(sourceFreezePath),
+  views_freeze: binding(viewFreezePath),
+  late_comparison: binding(comparisonPath),
+};
+assert(inputs.seed.byte_sha256 === sourceFreeze.seed_byte_sha256, "Seed bytes changed");
+assert(inputs.seed.canonical_sha256 === sourceFreeze.seed_canonical_sha256, "Seed content changed");
+assert(inputs.views.byte_sha256 === viewFreeze.views_byte_sha256, "Views changed");
+assert(inputs.draft.byte_sha256 === comparison.draft_byte_sha256, "Draft bytes changed");
+assert(inputs.draft.canonical_sha256 === comparison.draft_canonical_sha256, "Draft content changed");
+assert(inputs.source_freeze.byte_sha256 === viewFreeze.source_freeze_byte_sha256, "Source freeze changed");
+assert(inputs.views_freeze.byte_sha256 === comparison.view_freeze_byte_sha256, "View freeze changed");
+assert(inputs.views_freeze.canonical_sha256 === comparison.view_freeze_canonical_sha256, "View freeze content changed");
+
+const seed = read(seedPath);
+const views = read(viewsPath);
+const draft = read(draftPath);
+assert(seed.source.book === "8a" && seed.source.lesson === "alg8-c2-ex", "Wrong source identity");
+assert(seed.exercises.length === 23 && sourceFreeze.solutions.length === 23, "Source count mismatch");
+assert(draft.questions.length === 42 && viewFreeze.questions.length === 42, "Question count mismatch");
+assert(comparison.questions.length === 42 && comparison.source_coverage.length === 23, "Comparison incomplete");
+assert(seed.figures.length === 0 && draft.new_figures.length === 0, "Unexpected images; do not open");
+let correctCount = 0;
+let incorrectCount = 0;
+for (const question of draft.questions) {
+  const visible = views.questions.find((item) => item.id === question.id);
+  const frozen = viewFreeze.questions.find((item) => item.id === question.id);
+  const late = comparison.questions.find((item) => item.id === question.id);
+  assert(visible && frozen && late, "Missing authored review unit: " + question.id);
+  assert(JSON.stringify(question.view) === JSON.stringify(visible.view), "Visible snapshot mismatch");
+  assert(JSON.stringify(question.source_numbers) === JSON.stringify(visible.source_numbers), "Mapping mismatch");
+  assert(question.view.figure_ids.length === 0, "Unexpected view figure");
+  assert(frozen.options.length === question.view.options.length, "Option count mismatch");
+  assert(sameSet(
+    frozen.correct.map((number) => `${question.id}-option-${number}`),
+    question.key.correct
+  ), "Frozen/author key disagreement");
+  for (const option of frozen.options) {
+    const optionId = `${question.id}-option-${option.number}`;
+    assert(question.view.options.some((item) => item.id === optionId && item.figure_ids.length === 0),
+      "Wrong option identifier/figure");
+    const rationale = question.key.rationales.find((item) => item.option_id === optionId);
+    assert(rationale?.truth === option.truth, "Frozen/author truth disagreement");
+    if (option.truth === "correct") {
+      correctCount++;
+    } else {
+      incorrectCount++;
+      assert(typeof late.false_derivations[option.number] === "string", "Missing late distractor check");
+    }
+  }
+}
+assert(correctCount === 69 && incorrectCount === 83, "Incomplete option enumeration");
+const expectedSources = seed.exercises.map((item) => item.number);
+assert(sameSet(expectedSources, sourceFreeze.solutions.map((item) => item.source_number)), "Frozen source set mismatch");
+assert(sameSet(expectedSources, comparison.source_coverage.map((item) => item.source_number)), "Coverage review mismatch");
+const declaredLosses = draft.coverage.filter((item) => item.omitted_tasks.length > 0);
+assert(draft.coverage.length === 23 && declaredLosses.length === 20, "Coverage metadata changed");
+
+write("precheck.record.json", {
+  stage: "serialization-and-binding-precheck",
+  semantic_approval: false,
+  explanation: "Checks snapshot bindings and copies already authored semantic evidence. Does not solve mathematics or infer fidelity, and does not replace the existing validator.",
+  checked_at: new Date().toISOString(),
+  inputs,
+  source_count: 23,
+  question_count: 42,
+  option_count: 152,
+  true_options: correctCount,
+  false_options: incorrectCount,
+  view_projection_identical: true,
+  frozen_keys_match_late_author_keys: true,
+});
+
+const review = {
+  schema: "s10y-choice-review-v1",
+  seed_sha256: inputs.seed.canonical_sha256,
+  draft_sha256: inputs.draft.canonical_sha256,
+  reviewer: {
+    kind: "independent_agent",
+    identity: "Codex independent FIRST reviewer6213-part1; not the candidate author; source-only and view-only freezes precede late author comparison",
+  },
+  source_reviews: sourceFreeze.solutions.map((source) => {
+    const coverage = comparison.source_coverage.find((item) => item.source_number === source.source_number);
+    return {
+      source_number: source.source_number,
+      independent_solution: source.independent_solution,
+      coverage: { verdict: coverage.verdict, evidence: coverage.evidence },
+    };
+  }),
+  figure_checks: [],
+  new_figure_reviews: [],
+  question_reviews: viewFreeze.questions.map((question) => {
+    const late = comparison.questions.find((item) => item.id === question.id);
+    return {
+      question_id: question.id,
+      task_fidelity: question.task_fidelity,
+      redundancy: question.redundancy,
+      answer_leakage: question.answer_leakage,
+      mathematics: {
+        verdict: "pass",
+        independent_solution: question.independent_solution + " Late comparison: " + late.true_rationales,
+        correct: question.correct.map((number) => `${question.id}-option-${number}`),
+        option_checks: question.options.map((option) => ({
+          option_id: `${question.id}-option-${option.number}`,
+          truth: option.truth,
+          evidence: option.evidence + " Late author-rationale comparison: " +
+            (option.truth === "correct" ? late.true_rationales : late.false_derivations[option.number]),
+        })),
+      },
+    };
+  }),
+  outcome: comparison.outcome,
+};
+const verdicts = [
+  ...review.source_reviews.map((item) => item.coverage.verdict),
+  ...review.question_reviews.flatMap((item) => [
+    item.task_fidelity.verdict, item.redundancy.verdict, item.answer_leakage.verdict,
+    item.mathematics.verdict,
+  ]),
+];
+const outcome = verdicts.includes("blocked") ? "blocked" : verdicts.includes("revise") ? "revise" : "pass";
+assert(outcome === comparison.outcome, "Authored outcome disagrees with authored check verdicts");
+write("review.json", review);
+
+const sourcePersistedAt = fs.statSync(sourceFreezePath).mtime.toISOString();
+const viewsPersistedAt = fs.statSync(viewFreezePath).mtime.toISOString();
+assert(sourcePersistedAt < viewFreeze.views_first_read_at, "Source freeze timing violated");
+assert(viewsPersistedAt < comparison.draft_first_read_at, "View freeze timing violated");
+write("read-order.record.json", {
+  cwd,
+  evidence_basis: "Retained immutable semantic files, their current byte/canonical hashes and filesystem modification times, plus observed first-read timestamps from the actual tool calls.",
+  events: [
+    { sequence: 1, stage: "seed-only", input: inputs.seed, evidence: "Seed byte hash verified before content displayed; canonical hash verified by prepare.py digest. Seed alone contains23 written exercises and no concepts/figures." },
+    { sequence: 2, stage: "source-solutions-frozen", snapshot: inputs.source_freeze, persisted_at: sourcePersistedAt, evidence: "All23 sources completely solved, including real branches and denominator/parameter domains, before any view file was opened." },
+    { sequence: 3, stage: "views-first-read", input: inputs.views, observed_at: viewFreeze.views_first_read_at, evidence: "Byte hash checked before displaying views. This file reports internalAuthorSolutionAndKeyIncluded=false." },
+    { sequence: 4, stage: "all-view-judgments-frozen", snapshot: inputs.views_freeze, persisted_at: viewsPersistedAt, evidence: "Task fidelity/redundancy/leakage and all152 option truths across42 questions frozen before author draft access." },
+    { sequence: 5, stage: "full-author-draft-first-read", input: inputs.draft, observed_at: comparison.draft_first_read_at, evidence: "Actual full file byte and canonical bindings verified before intents/keys/rationales/coverage were compared in three complete groups." },
+    { sequence: 6, stage: "late-comparison", snapshot: inputs.late_comparison, evidence: "All83 distractor procedures reproduced; all69 true rationale calculations checked; all23 source coverage relationships and20 declared losses judged substantively." },
+  ],
+  exclusions: ["images", "answer files", "old choices", "interactions", "history", "ticket outputs", "reference author reasoning before the late stage", "DB", "git", "browser", "model calls", "installs", "finalization", "promotion", "old PASS reruns"],
+});
+
+const reviewRelative = path.join(relativeOwn, "review.json");
+const validatorArgs = [
+  ".agents/skills/ld-s10y-choice/scripts/validate.py",
+  "--repo", ".", "--seed", seedPath, "--draft", draftPath, "--review", reviewRelative,
+];
+const startedAt = new Date().toISOString();
+write("validator.call.json", {
+  cwd, executable: "python3", args: validatorArgs,
+  display_command: "python3 " + validatorArgs.join(" "),
+  started_at: startedAt, semantic_approval: false,
+  invocation_count: 1,
+  input_bindings: { seed: inputs.seed, draft: inputs.draft, review: binding(path.join(own, "review.json")) },
+});
+const result = spawnSync("python3", validatorArgs, {
+  cwd, encoding: "utf8", env: { ...process.env, PYTHONDONTWRITEBYTECODE: "1" },
+});
+fs.writeFileSync(path.join(own, "validator.stdout.txt"), result.stdout ?? "", { flag: "wx" });
+fs.writeFileSync(path.join(own, "validator.stderr.txt"), result.stderr ?? "", { flag: "wx" });
+const validation = {
+  started_at: startedAt,
+  completed_at: new Date().toISOString(),
+  exit_code: result.status,
+  signal: result.signal,
+  execution_error: result.error?.message ?? null,
+  structurally_valid_nonpassing_review: result.status === 3,
+  semantic_approval: false,
+  explanation: "Existing validator run once. Exit3 means structurally valid review with a nonpassing semantic verdict, not a failed tool execution or a semantic proof from the tool.",
+};
+write("validator.result.json", validation);
+const receipt = (name) => ({
+  path: path.join(relativeOwn, name),
+  byte_sha256: hash(fs.readFileSync(path.join(own, name))),
+});
+write("ready.record", {
+  status: result.status === 3 ? "revise" : "blocked",
+  semantic_verdict: review.outcome,
+  book: "8a",
+  lesson: "alg8-c2-ex",
+  edition: "modern-us-neutral",
+  cwd,
+  reviewer: review.reviewer,
+  completed_at: new Date().toISOString(),
+  seed: inputs.seed,
+  views: inputs.views,
+  draft: inputs.draft,
+  review: binding(path.join(own, "review.json")),
+  source_freeze: inputs.source_freeze,
+  views_freeze: inputs.views_freeze,
+  late_comparison: inputs.late_comparison,
+  read_order_evidence: binding(path.join(own, "read-order.record.json")),
+  counts: { sources: 23, questions: 42, options: 152, true_options: 69, false_options: 83, declared_loss_sources: 20, source_coverage_pass: 22, source_coverage_revise: 1, mathematics_pass: 42 },
+  declared_loss_source_numbers: declaredLosses.map((item) => item.source_number),
+  findings: comparison.package_findings,
+  validation,
+  receipts: ["precheck.record.json", "validator.call.json", "validator.stdout.txt", "validator.stderr.txt", "validator.result.json"].map(receipt),
+  next_stage_authorized: false,
+  disposition: "Offline independent review only. No finalize, retain_choices, promotion, DB, browser, git or publication. Repair only the changed147 unit and affected snapshot/coverage through separately authorized affected-only review; keep this rejected FIRST review.",
+});
+console.log(JSON.stringify({
+  status: result.status === 3 ? "revise" : "blocked",
+  semantic_verdict: review.outcome,
+  review: binding(path.join(own, "review.json")),
+  ready: binding(path.join(own, "ready.record")),
+  read_order: binding(path.join(own, "read-order.record.json")),
+  validation,
+}, null, 2));
+if (result.status !== 3) process.exitCode = 1;

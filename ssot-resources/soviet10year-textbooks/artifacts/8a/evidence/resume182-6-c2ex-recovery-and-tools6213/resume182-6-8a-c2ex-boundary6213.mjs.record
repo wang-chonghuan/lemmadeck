@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck';
+assert.equal(process.cwd(), repo);
+const own = '.tmp/resume182-6-8a-c2ex-boundary6213-FIRST';
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+fs.mkdirSync(own);
+const entries = [];
+for (const name of ['page.md', 'page.json', 'audit.json']) {
+  const source = `${root}/pages/0063/${name}`;
+  const target = `${own}/${name}.before`;
+  const bytes = fs.readFileSync(source);
+  fs.writeFileSync(target, bytes, { flag: 'wx' });
+  entries.push({ source, target, sha256: sha(bytes), bytes: bytes.length });
+}
+const unchanged = [];
+for (const edition of ['', '/editions/modern-us-neutral']) {
+  for (const name of ['lesson.json', 'exercises.json']) {
+    const file = `${root}${edition}/lessons/alg8-c2-s2-n10/${name}`;
+    unchanged.push({ path: file, sha256: sha(fs.readFileSync(file)) });
+  }
+}
+const record = { status: 'BEFORE_BOUNDARY_METADATA_ONLY',
+  actual: new Date().toISOString(), book: '8a', lesson: 'alg8-c2-ex', entries, unchanged,
+  changesPlanned: ['h2 -> h3 for 第二章补充习题', 'h3 -> exhead for 第7小节'],
+  sourceImageViews: 0, oldPassReruns: 0, databaseWrites: 0 };
+fs.writeFileSync(`${own}/before.record`, `${JSON.stringify(record, null, 2)}\n`,
+  { flag: 'wx' });
+console.log(JSON.stringify({ path: `${own}/before.record`,
+  sha256: sha(fs.readFileSync(`${own}/before.record`)), sourceImageViews: 0 }));

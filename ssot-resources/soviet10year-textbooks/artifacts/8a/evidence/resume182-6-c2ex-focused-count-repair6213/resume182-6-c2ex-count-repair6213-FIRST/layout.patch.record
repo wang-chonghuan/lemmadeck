@@ -1,0 +1,60 @@
+diff --git a/.claude/skills/ld-s10y-lesson/tools/layout.py b/.claude/skills/ld-s10y-lesson/tools/layout.py
+index 8887b3527..8128bfd80 100644
+--- a/.claude/skills/ld-s10y-lesson/tools/layout.py
++++ b/.claude/skills/ld-s10y-lesson/tools/layout.py
+@@ -204,7 +204,7 @@ def _single_fraction_row(ink: np.ndarray, a: int, b: int, line_h: float) -> bool
+ def _fraction_across_split(
+     ink: np.ndarray, a: int, split: int, b: int, glyph_h: float
+ ) -> bool:
+-    """Recognize an outer rule bundled with its denominator projection."""
++    """Recognize a supported fraction rule, including single-digit quotients."""
+     band = ink[a:b + 1]
+     labels, _ = ndimage.label(band)
+     boxes = [bounds for bounds in ndimage.find_objects(labels) if bounds is not None]
+@@ -218,7 +218,7 @@ def _fraction_across_split(
+         centre = a + (rows.start + rows.stop) / 2
+         if not (
+             rows.stop - rows.start <= 0.25 * glyph_h
+-            and columns.stop - columns.start >= 2 * glyph_h
++            and columns.stop - columns.start >= 0.7 * glyph_h
+             and abs(centre - split) <= 0.5 * glyph_h
+         ):
+             continue
+@@ -242,7 +242,7 @@ def _fraction_across_split(
+         if not any(
+             rule_columns.start - 0.15 * glyph_h <= centre_x
+             <= rule_columns.stop + 0.15 * glyph_h
+-            or abs(centre_y - (rule_rows.start + rule_rows.stop) / 2) <= 0.9 * glyph_h
++            or abs(centre_y - (rule_rows.start + rule_rows.stop) / 2) <= glyph_h
+             for rule_rows, rule_columns in supported
+         ):
+             return False
+@@ -675,7 +675,8 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+     # continuously live across two or more printed rows. Recover the row count
+     # from the page's normal band height and inter-line gap instead of treating
+     # one unusually tall projection band as one line.
+-    typical_h = float(line_h)
++    # A page dominated by brace-connected systems has a multi-row median band.
++    typical_h = float(min(line_h, glyph_h))
+     nearby_gaps = [
+         next_a - prev_b - 1
+         for (_, prev_b), (next_a, _) in zip(merged, merged[1:])
+@@ -774,7 +775,17 @@ def line_bands(ink: np.ndarray, content_w: int) -> list[tuple[int, int]]:
+             band_h <= 0.2 * glyph_h and band_w >= 4 * glyph_h
+             and ink[a:b + 1, xs[0]:xs[-1] + 1].mean() >= 0.5
+         )
+-        decoration = edge_border or horizontal_rule or (
++        edge_blot = (
++            a > 0.95 * page_h
++            and band_h < 0.65 * glyph_h and band_w < 0.65 * glyph_h
++            and ink[a:b + 1, xs[0]:xs[-1] + 1].mean() >= 0.5
++            and not any(
++                (c, d) != (a, b)
++                and max(c - b, a - d) <= 1.5 * glyph_h
++                for c, d in merged
++            )
++        )
++        decoration = edge_border or horizontal_rule or edge_blot or (
+             thin
+             and (band_w > 0.3 * content_w or band_w < 0.05 * content_w)
+             and not short_text

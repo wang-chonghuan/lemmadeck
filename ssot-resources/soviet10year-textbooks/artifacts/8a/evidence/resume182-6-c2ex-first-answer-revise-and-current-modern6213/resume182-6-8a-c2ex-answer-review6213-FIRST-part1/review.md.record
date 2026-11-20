@@ -1,0 +1,405 @@
+# FIRST independent answer review: 8a / alg8-c2-ex / 138-160
+
+Verdict: **REVISE**, scoped strictly to these 23 exercises and the bound candidate.
+All mathematical results and displayed graph/proof descriptions are correct.
+Two grading-contract defects require candidate revision; no source rerun or
+mathematical reauthoring is indicated.
+
+Review date: 2026-11-20. Ticket/scope: STEMROBIN-182 / same182-6.
+Sole command cwd: `/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck`.
+Only new files under
+`.tmp/resume182-6-8a-c2ex-answer-review6213-FIRST-part1/` were written.
+The candidate was never edited. No work by another contributor was reverted.
+
+## Findings
+
+### R1 [P2]: graphical solving is incorrectly marked auto
+
+Exercise 151, candidate lines 149-180, explicitly says to solve by the graphical
+method. The candidate nevertheless has `grading: "auto"` and 25 exact/numeric
+parts. Its private note at line 153 explicitly chooses to grade only results.
+That does not meet the skill's rule 7 or Gate 2's graph/ungraded rule: a correct
+coordinate entry cannot establish the requested graphical work.
+
+There is also a concrete false negative for graph reading: the displayed
+approximation -0.9497 for b)'s first x-coordinate is rejected by the actual
+isolated product judge against the exact radical, with no tolerance configured.
+This is not speculation about a browser or database.
+
+Required revision: make 151 `ungraded`, with no auto parts, retain its concrete
+graph descriptions and all exact/approximate intersection answers, and remove
+the note claiming that auto grading meets the graphical-method task. All six
+subpart values themselves pass. Do not change the literal xy=-12 in a).
+
+### R2 [P2]: multi-solution ordering is hidden from the student
+
+Affected exercises: 152(c-f), 153(a-d,f), 156(a-d), 157(a-d), 158(a-c):
+20 multi-solution source subparts. Exercise 151 also has this issue before R1
+is fixed, but making it ungraded removes its positional grading problem.
+
+The candidate sorts roots by increasing x and then y, but specifies that only
+in private `notes` (candidate lines 187,216,266,291,322). The public labels
+merely say "solution 1 x", "solution 1 y", etc. The literal modern text does
+not prescribe root ordering. The public answer projection in
+`app/src/lib/lessons.ts:125` emits label/unit/input, not those notes.
+The judge in `app/src/lib/textbook-answer.ts:166` matches submission indices
+against the corresponding fixed parts and does not compare solution sets.
+
+Failing witness, independently solved before opening the candidate:
+152(c)'s complete solution set is {(12,4),(8,6)}. Entering
+`["12","4","8","6"]` in its four c) fields gives
+`[false,false,false,false]` from the isolated production judge, despite
+12*4=48, 12+2*4=20, 8*6=48, and 8+2*6=20.
+The values are correct; the undisclosed positional convention causes rejection.
+
+Required scoped revision: put the ordering convention in the affected PUBLIC
+part labels, including the tie-break on y for 157, so students can know which
+solution belongs in each field before submitting. An alternative is ungraded
+handling if suitable public labels cannot be provided. Do not edit the passed
+modern-text snapshot, change the source, or add a runtime feature under this
+review authorization.
+
+## Authority and bindings
+
+All paths below are relative to the sole cwd above; ready.record stores their
+absolute paths and actual hashes.
+
+| Role | Actual path | SHA-256 |
+|---|---|---|
+| Literal modern exercises | `.tmp/resume182-6-8a-c2ex-modern6213-AFFECTED-continuation1/adapt/8a/modern-us-neutral/lessons/alg8-c2-ex/exercises.template.json` | `154b9cac05f121628bcdbbe511127d48d1462be141da8fe6f05851d752d42fa0` |
+| Authorized current TEXT_PASS | `.tmp/resume182-6-8a-c2ex-modern-text-review6213-FIRST/ready.record` | `34e87282e54905e8f45c178de32348de8e07cb3f4033cb0315c939dac796a6d3` |
+| Unchanged candidate | `.tmp/resume182-6-8a-c2ex-answer-author6213-FIRST-part1/candidate.json` | `7a6fc8bce0f9a0e13d69e4770d8a196be4bfd255b1b8323aaae9da4dcffa951a` |
+| Independent solutions frozen before candidate reading | `independent-solutions.md` in this review directory | `ad94698ace947719bf84a6049d7cbc6c94e9c90ef4620bebb8751913920bbd40` |
+| Independent arithmetic script | `verify-independent.mjs` in this review directory | `37f23d4a23528c52ff8c490100ef043cff9a987d50c543c06fc64c325cc1bd51` |
+| Independent candidate/runtime script | `verify-candidate-runtime.mjs` in this review directory | `e314279860aee1d0df1e934b109e3e2fee6eb9394df0fac16c73576ad24b784e` |
+| Candidate/runtime observations | `candidate-runtime.record` in this review directory | `225389d955b69bdd6818172606283183e4082a09ca111c32b5e856cf7862bc92` |
+
+The candidate's own older "text approval pending" wording is not the review's
+authority. This review consumes the directly authorized actual FIRST TEXT_PASS
+receipt. It does not inspect or rerun that author's text/source work.
+
+## Independence and method
+
+1. Read the answer skill, Gate 2 and production-resume rules, plus local
+   engineering/operations rules. Verify the three supplied hashes.
+2. Parse only modern `text` for exercises 138-160. Solve all subparts and named
+   point targets over the stated domains without candidate content.
+3. Write the independent derivations, run `verify-independent.mjs` once, and
+   hash the independent files BEFORE the first candidate-content read (C15).
+4. Compare every candidate display answer, proof, graph branch and expected
+   coordinate to those prior solutions.
+5. Execute only the pure normalizer and numeric/exact judge function bodies,
+   extracted from existing local TypeScript and type-stripped with Node's
+   built-in parser. Do not import the server module or any DB/auth helper.
+   Use the already installed app ComputeEngine; no installation or doc fetch.
+6. Consult the CURRENT author's verification/usage receipts only after
+   independent solving. Preserve their failures and counts; do not rerun their
+   scripts or substitute their reported success for the independent review.
+
+The arithmetic script made 199 passing substitution/identity-value checks.
+It corroborates the complete handwritten reductions, which prove branch
+completeness; numerical spot checks alone are not claimed as symbolic proof.
+The candidate/runtime script independently compared all 132 finite real numeric
+keys against values derived before candidate reading. It also executed 165
+positive pure judge checks and 132 deliberately wrong-value rejection checks.
+All 165 expected strings parse without Error; all 132 numeric values are finite
+and real. The two content-contract observations above are real failures of the
+candidate design, not execution failures of the checking scripts.
+
+Coverage: 23 exercises, 17 explicitly letter-labeled exercises, 76 explicit
+a)-style subparts, 9 additional named point targets (149 and 150), and 4 single
+tasks (154,155,159,160): 89 independent answer targets.
+The frozen independent document mistakenly calls the labeled-exercise count
+"18"; the actual text-derived command output is 17. The 76 and 89 counts were
+correct. This is a reviewer bookkeeping correction, recorded here without
+rewriting the frozen pre-candidate evidence or changing any candidate content.
+
+Candidate structure: exactly 138-160 in order, no duplicates or omissions,
+16 auto and 7 ungraded answers, 165 parts/keys (132 numeric, 33 exact).
+All entries are `derived`, with no `bookRaw`; no book-answer provenance was
+invented. No older answers, choices, interactions or chat/history were read.
+No figure is referenced by any of the 23 scoped literal exercises, so no
+picture is needed to settle their math. No images or asset bytes were read.
+
+## Per-Exercise Findings
+
+"APPROVAL" below means mathematical display content and STATIC grading shape
+pass within this independent review, subject to the separate exact-editor
+limitation below. It is not a cap2-ready, finalization or release approval.
+
+### 138: APPROVAL
+
+a,b,c,d,f are yes; e is no. Direct left sides are 31,31,31,31,-5,31.
+For f), x+y=6 and xy=1 give 36-5=31. All six display answers and all six
+exact yes/no keys agree; no domain or unit ambiguity. Auto existence tests are
+appropriate, pending real editing evidence for their text-mode exact keys.
+
+### 139: APPROVAL
+
+a) x=+/-sqrt(7), arbitrary real y: infinite.
+b) x=2y: infinite.
+c) union x=+/-3 or y=+/-2: infinite.
+d) four independent sign pairs (+/-3,+/-2).
+e) diagonal x=y: infinite; the origin branch is already included.
+f) exactly (1,1), count 1.
+All counts and displays agree. Infinity is exact `\infty`, not a nonfinite
+numeric value; finite counts 4 and 1 are numeric. Six parts are correctly split.
+
+### 140: APPROVAL
+
+a) (x-y)^2+8; b) (x+4)^2+y^2+1;
+c) (x-5)^2+y^2+75; d) (x-y)^2+(y+2)^2+3.
+Each literal left side is strictly positive over the reals. All four concrete
+proofs are correct and ungraded, with no fake automatic proof verdict.
+
+### 141: APPROVAL
+
+a) (x+3)^2+(y-5)^2=0 forces (-3,5).
+b) (x-3y)^2+(x-5)^2=0 forces (5,5/3).
+Both identities and their zero conditions prove uniqueness and existence.
+Concrete complete proofs are correctly ungraded.
+
+### 142: APPROVAL
+
+a) x^2+y^2+1=0 has none.
+b) x^2+y^2=0 has (0,0).
+c) (x^2-1)^2+y^2=0 has (-1,0),(1,0).
+d) [x(x-1)(x+1)]^2+y^2=0 has (-1,0),(0,0),(1,0).
+The examples match independent valid constructions; simultaneous zero squares
+exclude all other real roots. Open construction is correctly ungraded.
+
+### 143: APPROVAL
+
+a) no, by divisibility by 3.
+b) yes, exactly signed factor pairs of 13:
+(1,13),(13,1),(-1,-13),(-13,-1).
+c) no, an integer product cannot be -7.5.
+d) y!=0; y^2 divides 7 and must equal 1: (8,+/-1).
+e) x,y!=0; (x-6)(y-6)=36 gives
+(6+d,6+36/d) for every signed divisor d of 36 except -6.
+All 17 allowed integer pairs are accounted for; (0,0) is rightly excluded.
+f) signed odd factors of 11 give (+/-6,+/-5), all four.
+All six yes/no keys agree and do not incorrectly demand enumeration for a
+question asking only existence. The displays nevertheless supply full branches.
+
+### 144: APPROVAL
+
+a) at (5,-4), 125+32+3=160, not zero.
+b) at (7,-3), 49+1029+2079+70+57+24=3308, not zero.
+Both no keys agree. Literal powers/signs are preserved; no silent source fix
+was made merely to force membership.
+
+### 145: APPROVAL
+
+a) complete lines x=4 and y=3, meeting at (4,3).
+b) complete lines x=1 and y=x, meeting at (1,1).
+c) full hyperbola y=6/x, x!=0, quadrants I/III, plus y=-x;
+no real intersections between them because -x^2=6 is impossible.
+d) complete diagonals y=+/-x.
+Concrete branches, test points, intersections and asymptotes are supplied.
+Drawing is correctly ungraded; the line's origin is not lost to the
+hyperbola's excluded denominator.
+
+### 146: APPROVAL
+
+a) inverted V y=4-|x|, vertex (0,4), domain rays split at x=0.
+b) leftward V x=4-|y|, vertex (4,0), both rays restricted to x<=4.
+c) square/diamond boundary with vertices (+/-4,0),(0,+/-4);
+four stated segment domains are correct, and the interior is excluded.
+d) the ENTIRE closed first quadrant, including its boundary and origin;
+the nonnegative-term proof is correct and does not confuse the locus with axes.
+e) y=6/|x|, two upper branches, x!=0, no points on either axis.
+f) xy=+/-6, four branches, x!=0, both axes excluded/asymptotic.
+All six concrete drawing answers agree and are correctly ungraded.
+
+### 147: APPROVAL
+
+a) y=-5/x, x!=0, quadrants II/IV; all four stated anchor points check.
+b) y=7.5/x, x!=0, quadrants I/III; all six stated anchor points check.
+Both axes are asymptotes, not included graph points. Correct ungraded drawings.
+
+### 148: APPROVAL
+
+Four full circumferences centered at (0,0), not disks, of radii
+a) 7, b) 4sqrt(3), c) 6.5, d) 4.5. All axis intercepts agree.
+No physical unit is invented. Correct ungraded drawings rather than grading
+only a radius.
+
+### 149: APPROVAL
+
+B,C,D,E,K,M each have squared norm a^2+b^2=r^2 after the listed sign changes
+or swaps. All six yes keys agree; labels separately name all six points.
+Coincidences or r=0 do not break the argument. Auto membership tests are suitable.
+
+### 150: APPROVAL
+
+The circle radius is 17, squared radius 289.
+B: 305>289, outside. C: 277<289, inside. D: 289, on the circumference.
+All three named exact position keys agree. Labels and units are appropriate
+to the literal coordinate task; no measurement unit is missing.
+
+### 151: REVISE (R1; also R2 until made ungraded)
+
+a) y=x-1 versus y=-12/x, discriminant -47: no real intersections.
+b) y=8-x versus circle radius 9:
+(4-7sqrt(2)/2,4+7sqrt(2)/2) and its reversal.
+c) y=11-2x versus circle radius 5: (4,3),(24/5,7/5).
+d) parabola y=x^2 and line y=(3-3x)/2:
+((-3-sqrt(33))/4,(21+3sqrt(33))/8),
+((-3+sqrt(33))/4,(21-3sqrt(33))/8).
+e) downward parabola y=-(x+1/2)^2+1/4 and line y=x-10:
+(-1-sqrt(11),-11-sqrt(11)),(-1+sqrt(11),-11+sqrt(11)).
+f) circle radius sqrt(10) and y=3/x:
+(-3,-1),(-1,-3),(1,3),(3,1).
+Every exact coordinate, rounded display and graph description agrees.
+The problem is auto grading a requested graphical method, not missing
+solutions or an incorrect no-solution sign.
+
+### 152: REVISE (R2; all mathematics passes)
+
+a) (8/5,11/5), b) (1,-1).
+c) (8,6),(12,4), from (y-4)(y-6)=0.
+d) (-8,-15),(10,12), from (x-10)(x+8)=0.
+e) (-2,-3),(2,5), from x^2=4.
+f) (-11,9/2),(4,-3), from (2y-9)(y+3)=0.
+All 20 coordinate keys agree; substitution is reversible and all real roots
+are retained. Numeric scalar editors are mathematically appropriate, but
+c-f require publicly disclosed ordering, not only private notes.
+
+### 153: REVISE (R2; all mathematics passes)
+
+a) ((1-3sqrt(3))/2,(-1+sqrt(3))/2) and
+((1+3sqrt(3))/2,(-1-sqrt(3))/2).
+b) (0,-1),(3,5); x=0 is not forbidden.
+c) (3,5),(6,-1).
+d) (6,2),(11,7).
+e) only (4,1). The candidate's alternative reduction x-10y+6=0 is
+correct under 2x-3y=5: substitute 2x+3y=5+6y into
+5(2x+3y)+x-40y-19=0. It agrees with the independently derived
+11x-25y-19=0 on that same constraint; there is no display-algebra defect.
+f) (-5,-3),(-5/4,3/4).
+All 22 keys agree. Multi-root subparts a-d,f require public ordering labels.
+
+### 154: APPROVAL
+
+Under x+y=6, x^2+y^2=18+(x-y)^2/2.
+No solutions iff r^2<18, i.e. -3sqrt(2)<r<3sqrt(2).
+Both signed endpoints give only (3,3); |r| greater than the endpoint gives
+two real solutions with the displayed correlated +/- signs.
+The literal text allows arbitrary real r; negative r is correctly included.
+The separate nonnegative-radius convention is explicitly conditional, not
+used to truncate the key. The exact interval is open and correct, and its
+PUBLIC label explicitly requests interval notation. Real editor testing remains
+pending; this is not an assumed inequality-equivalence judge.
+
+### 155: APPROVAL
+
+Existence iff c^2<=200, i.e. the closed interval
+[-10sqrt(2),10sqrt(2)]. Inside: two real solutions; signed endpoints:
+(+/-5sqrt(2),+/-5sqrt(2)) with matching signs, one at each endpoint;
+outside: none. The displayed constructive formula proves sufficiency.
+Correct exact closed interval with a public interval-format label; editor
+editing verification remains pending.
+
+### 156: REVISE (R2; all mathematics passes)
+
+Original domain x!=0,y!=0 in all four systems.
+a) (3/2,-2),(10,15), from (2x-3)(x-10)=0.
+b) (4,5),(70,-28), from (x-4)(x-70)=0.
+c) (6,8),(8,6); the mixed number is 25/12, so xy=48.
+d) (4/5,-6/5),(6,4), from (5y+6)(y-4)=0.
+All 16 keys match, satisfy original denominators and retain every negative
+branch. Finite numeric grading is appropriate after public ordering is supplied.
+
+### 157: REVISE (R2; all mathematics passes)
+
+a) x=-y gives (1/3,-1/3); x=y gives (1,1).
+b) x=3 gives (3,+/-4); y=5 gives (0,5): three pairs.
+c) x=+/-7y, y=+/-sqrt(2): all four independent sign combinations.
+d) x=0 is impossible over the reals; y=-1 gives (+/-sqrt(51),-1).
+All 22 keys agree. The x-then-y tie-break must be public, especially for
+b) and c), whose solution lists contain equal x-coordinates.
+
+### 158: REVISE (R2; all mathematics passes)
+
+a) (-6,2),(-2,6),(2,-6),(6,-2).
+b) (-6sqrt(2),-2sqrt(2)),(-2sqrt(2),-6sqrt(2)),
+(2sqrt(2),6sqrt(2)),(6sqrt(2),2sqrt(2)).
+c) (-2sqrt(3),-sqrt(3)),(-sqrt(3),-2sqrt(3)),
+(sqrt(3),2sqrt(3)),(2sqrt(3),sqrt(3)).
+These exhaust independent signs of x+y and x-y.
+d) xy=-24 forces x^2+y^2=33, hence (x+y)^2=-15: empty real set.
+All 24 numeric keys and the exact empty-set key agree. Ordered coordinate
+submission is not equivalent to the requested SET without a public convention.
+
+### 159: APPROVAL
+
+The two linear equations force (7,3); the nonlinear left side is
+49-63+9+7+6=8. Thus yes, exactly one solution.
+The boolean exact key and the two numeric coordinate keys agree, with public
+labels identifying all three requested submission fields. No false uniqueness
+claim arises from ignoring the nonlinear equation.
+
+### 160: APPROVAL
+
+The two lines force (4,3). The remaining left side there is
+16+12-18-4+3=9, not 5. No point lies on all three graphs.
+The no key and reasoning agree. This asks common-point existence, not drawing,
+so deterministic auto membership grading is suitable.
+
+## Expected Editors and Limits
+
+- All expected values are LaTeX, not code-style sqrt()/abs() or display prose.
+  Numeric values are legitimate scalar real answers; radical numeric values
+  need the math-capable editor/full keyboard, not plain decimal-only entry.
+  Existing fallback maps numeric to number and exact to math; no interaction
+  artifact was read or authored, so this is not an actual widget approval.
+- Chinese yes/no and position keys are `\text{...}`; infinity, empty set and
+  intervals are formula-editor exact representations. These are plausible
+  input targets, but parsing and normalized string equality are NOT evidence
+  of successful real editor entry/edit/reserialization.
+- Actual MathLive setter-plus-keyboard-edit tests were NOT run, as browsers and
+  finalize are explicitly unauthorized. All 33 exact keys retain that pending
+  requirement; no test attempt, focus retry or successful editing result is
+  invented. A later authorized stage must prove the real input contract.
+- Parameter interval endpoints and sign/domain branches are complete. Interval
+  labels specify the canonical format, avoiding an assumed general logical
+  equivalence test for inequalities.
+- Proof/open construction and drawing answers 140,141,142,145-148 correctly
+  have concrete displays and empty auto parts. 151 must join that group.
+- No physical units, names, dates or historical entities were added to these
+  coordinate/algebra answers.
+
+## Commands, Usage and Failures
+
+`commands.record` preserves every review shell command and its sole cwd, plus
+the manual patch invocations and final sealing checks. Reviewer execution:
+33 shell commands, 4 apply_patch calls, 7 parallel wrappers, 0 failed commands,
+0 retries, 1 warning (Node experimental stripTypeScriptTypes; C29 exited 0).
+Independent verifier: 1 run, 199 checks. Candidate/runtime verifier: 1 run,
+132 independent numeric comparisons, 165 positive and 132 negative pure
+judge checks. One FIRST independent model review; no external model-service
+calls or paid generation jobs were invoked. Token/cost telemetry was not
+exposed and is not fabricated as zero.
+
+The author's CURRENT receipts remain supplementary, not approval. Their
+commands.record has 6 recorded commands and 3 failed availability probes:
+missing optional paths, unavailable sympy, and missing optional lesson-local
+ComputeEngine. The first failure messages and exact commands are preserved
+verbatim inside candidate-runtime.record. No installation or rerun was made.
+Their reported algebra count 333 and candidate-key count 165 are retained
+separately, not added to the reviewer's independent check counts or reset.
+Their reported images, installed dependencies, durable keys, browser/app-test,
+model-service, DB and Git counts are all 0 and are preserved as REPORTED usage.
+Nothing here claims access to unreported cumulative production usage.
+
+Review + supplementary recorded shell totals: 39 commands, 3 failures; the
+author's 3 failures remain counted unchanged. Execution failures are separate
+from this review's two content-contract findings.
+
+Prohibited operations actually performed: images 0; old answer/choice/
+interaction/history reads 0; DB 0; Git 0; browsers 0; finalize 0; publication/
+promotion 0; source reruns 0; author verification reruns 0; candidate/source
+writes 0; writes outside owned directory 0; new chats/workers 0; installs 0.
+Do not treat this review receipt as cap2-ready, whole-lesson approval,
+authorization to finalize/promote/publish, or a finding about 161-187.

@@ -1,0 +1,140 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+const source = '/Users/yong/.codex/worktrees/stemrobin-182-six-4196/lemmadeck';
+const own = '.tmp/resume182-6-c2ex-recovery0789';
+const previous = '.tmp/resume182-6-c2ex-recovery4196';
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const edition = `${root}/editions/modern-us-neutral`;
+const id = 'alg8-c2-ex';
+const base = 'a0679a3f1bd5bca90c6c598eee0962e20a198004';
+assert.equal(process.cwd(), repo);
+assert.equal(execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), base);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const previousBytes = fs.readFileSync(`${source}/${previous}/migration.record`);
+assert.equal(sha(previousBytes), '09452aa8f562a1073fa278e80156a22efdc02a59333468116be99b61a2091d41');
+const prior = JSON.parse(previousBytes);
+assert.equal(prior.entries.length, 2117);
+const entries = new Map();
+const aliases = new Map();
+const replaceable = new Set([
+  `${root}/book.json`, `${edition}/book.json`,
+  `${root}/pages/0063/page.json`, `${root}/pages/0063/page.md`,
+  `${root}/pages/0063/audit.json`,
+  '.claude/skills/ld-s10y-lesson/tools/layout.py',
+  '.claude/skills/ld-s10y-lesson/tools/test_layout_multiline_count.py',
+]);
+function writeExact(file, bytes) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  if (fs.existsSync(file)) assert.equal(sha(fs.readFileSync(file)), sha(bytes), file);
+  else fs.writeFileSync(file, bytes, { flag: 'wx' });
+}
+function copy(relative, expected) {
+  const from = path.join(source, relative);
+  const stat = fs.lstatSync(from);
+  assert.ok(!stat.isSymbolicLink(), from);
+  if (stat.isDirectory()) {
+    for (const name of fs.readdirSync(from).sort()) copy(`${relative}/${name}`);
+    return;
+  }
+  assert.ok(stat.isFile(), from);
+  assert.ok(!relative.split('/').some(part => /^(?:\.env(?:\..*)?|node_modules|\.venv)$/.test(part)));
+  const bytes = fs.readFileSync(from);
+  const digest = sha(bytes);
+  if (expected) assert.equal(digest, expected, from);
+  if (!entries.has(relative)) {
+    if (fs.existsSync(relative) && sha(fs.readFileSync(relative)) !== digest) {
+      assert.ok(replaceable.has(relative), `Different existing bytes: ${relative}`);
+      writeExact(`${own}/before/${relative}.record`, fs.readFileSync(relative));
+      fs.writeFileSync(relative, bytes);
+    } else writeExact(relative, bytes);
+    entries.set(relative, { source: from, path: path.resolve(relative), sha256: digest, bytes: bytes.length });
+  } else assert.equal(entries.get(relative).sha256, digest, from);
+  assert.equal(sha(fs.readFileSync(from)), digest, `Source changed during relocation: ${from}`);
+  aliases.set(from, path.resolve(relative));
+}
+for (const index of [`${root}/book.json`, `${edition}/book.json`]) {
+  const before = JSON.parse(fs.readFileSync(index));
+  const after = JSON.parse(fs.readFileSync(`${source}/${index}`));
+  assert.deepEqual(after.lessons.filter(item => item.id !== id), before.lessons);
+  assert.equal(after.lessons.filter(item => item.id === id).length, 1);
+}
+for (const entry of prior.entries) {
+  const relative = path.relative(source, entry.path);
+  assert.ok(!relative.startsWith('../'), entry.path);
+  assert.ok(relative.startsWith(`${root}/`) || relative.startsWith('.tmp/resume182-6-')
+    || replaceable.has(relative), relative);
+  copy(relative, entry.sha256);
+}
+for (const item of prior.aliases) {
+  const relative = path.relative(source, item.current_path);
+  assert.ok(!relative.startsWith('../'), item.current_path);
+  assert.ok(fs.existsSync(relative), relative);
+  aliases.set(item.historical_path, path.resolve(relative));
+}
+for (const name of fs.readdirSync(`${source}/${root}/evidence`).sort()) {
+  if (name.startsWith('resume182-6-c2ex-')) copy(`${root}/evidence/${name}`);
+}
+copy(`${previous}/migration.record`, sha(previousBytes));
+copy(`${previous}/observer-protocol.md`);
+for (let n = 13; n <= 22; n++) {
+  copy(`${previous}/assignments/batch${n}.json`);
+  copy(`.tmp/resume182-6-c2ex-observe4196-batch${n}/result.json`);
+  const binding = `${previous}/observer-bindings/batch${n}.record`;
+  if (fs.existsSync(`${source}/${binding}`)) copy(binding);
+}
+for (const file of [
+  '.tmp/resume182-6-8a-c2ex-display-bind4196.mjs',
+  '.tmp/resume182-6-c2ex-observer-bind4196.mjs',
+  '.tmp/resume182-6-c2ex-delivery4196.mjs',
+  '.tmp/resume182-6-8a-c2ex-retain4196.mjs',
+]) copy(file);
+const selectionPath = '.tmp/resume182-6-8a-c2ex-display5724-FIRST/selection-first/selection.record';
+const selection = JSON.parse(fs.readFileSync(selectionPath));
+assert.equal(selection.counts.selected, 248);
+assert.equal(selection.counts.missing, 0);
+for (let n = 23; n <= 31; n++) {
+  const from = `${source}/${previous}/assignments/batch${n}.json`;
+  const bytes = fs.readFileSync(from);
+  const assignment = JSON.parse(bytes);
+  const mapped = {
+    ...assignment,
+    previousAssignment: { path: from, sha256: sha(bytes) },
+    images: assignment.images.map(image => {
+      const current = aliases.get(image.path);
+      assert.ok(current, image.path);
+      assert.equal(sha(fs.readFileSync(current)), image.sha256, current);
+      return { ...image, previous_path: image.path, path: current };
+    }),
+  };
+  writeExact(`${own}/assignments/batch${n}.json`, Buffer.from(`${JSON.stringify(mapped, null, 2)}\n`));
+}
+const record = {
+  schema: 'stemrobin-182/current-lesson-byte-migration@1',
+  actual: new Date().toISOString(), ticket: 'STEMROBIN-182', lesson: id,
+  source, worktree: repo, base,
+  previousMigration: { path: `${previous}/migration.record`, sha256: sha(previousBytes),
+    migratedFilesReused: prior.entries.length, bytesReused: 266228013 },
+  entries: [...entries.values()],
+  aliases: [...aliases].map(([historical_path, current_path]) => ({ historical_path, current_path })),
+  dependencyProvenance: prior.dependencyProvenance,
+  reusedReports: prior.reusedReports,
+  reusedViews: 176, remainingViews: 72,
+  originalTreesWritten: 0, rendererBrowserOrContentReviewRuns: 0,
+  parentImageViewsThisMigration: 0,
+  parentCumulativeImageAccounting: 'Preserved in existing progress and receipts; not reset by this continuation.',
+  unknownHistoricalBytesRecovered: false,
+  hostTokens: 'unknown', totalCost: 'unknown', finish: 'review',
+  originalProgressPreservedAt: `${own}/before/progress.md`,
+  effectiveContinuationPreservedAt: `${own}/checkpoints/progress.md`,
+  oldFailuresAndUnresolvedMessagesPreserved: true,
+};
+const output = `${own}/migration.record`;
+writeExact(output, Buffer.from(`${JSON.stringify(record, null, 2)}\n`));
+console.log(JSON.stringify({ path: output, sha256: sha(fs.readFileSync(output)),
+  copiedFiles: entries.size, bytes: [...entries.values()].reduce((sum, item) => sum + item.bytes, 0),
+  reusedViews: 176, remainingViews: 72, sourceWrites: 0, newImageViews: 0 }));

@@ -1,0 +1,10 @@
+{
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck",
+  "command": [
+    "node",
+    "--input-type=module",
+    "-e",
+    "import fs from \"node:fs\"; import crypto from \"node:crypto\"; const sha=b=>crypto.createHash(\"sha256\").update(b).digest(\"hex\"); const root=\"ssot-resources/soviet10year-textbooks/artifacts/8a\"; const known=new Map(); for(const name of fs.readdirSync(`${root}/evidence`)){if(!name.startsWith(\"resume182-6-c2ex-\"))continue;const file=`${root}/evidence/${name}/retention.record`;if(!fs.existsSync(file))continue;for(const e of JSON.parse(fs.readFileSync(file)).entries??[]){if(fs.existsSync(e.path)&&sha(fs.readFileSync(e.path))===e.sha256)known.set(e.sha256,e.path)}} const m=JSON.parse(fs.readFileSync(\".tmp/resume182-6-c2ex-recovery0789/migration.record\")); const a=new Map(m.aliases.map(x=>[x.historical_path,x.current_path])); const s=JSON.parse(fs.readFileSync(\".tmp/resume182-6-8a-c2ex-display5724-FIRST/selection-first/selection.record\"));const r=JSON.parse(fs.readFileSync(a.get(s.authority.path))); const missing=[s.authority,...r.inputs,...r.deliveredSurfaces,...s.selected].filter(x=>{const p=a.get(x.path)||x.path;return p.includes(\"/.tmp/\")&&!known.has(x.sha256)}).map(x=>({historical_path:x.path,path:a.get(x.path)||x.path,sha256:x.sha256,actual:sha(fs.readFileSync(a.get(x.path)||x.path))}));console.log(JSON.stringify({missing},null,2));"
+  ],
+  "started": "2026-11-20T19:57:37.327Z"
+}

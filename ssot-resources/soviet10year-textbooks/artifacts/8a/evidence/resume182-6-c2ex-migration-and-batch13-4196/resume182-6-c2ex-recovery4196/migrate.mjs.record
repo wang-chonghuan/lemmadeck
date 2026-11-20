@@ -1,0 +1,201 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-4196/lemmadeck';
+const source = '/Users/yong/.codex/worktrees/stemrobin-182-six-5724/lemmadeck';
+assert.equal(process.cwd(), repo);
+const own = '.tmp/resume182-6-c2ex-recovery4196';
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const edition = `${root}/editions/modern-us-neutral`;
+const id = 'alg8-c2-ex';
+const base = 'a0679a3f1bd5bca90c6c598eee0962e20a198004';
+assert.equal(execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(), base);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const entries = [];
+const aliases = new Map();
+const durable = new Map();
+const dependencyProvenance = [];
+function writeExact(file, bytes) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  if (fs.existsSync(file)) assert.equal(sha(fs.readFileSync(file)), sha(bytes), file);
+  else fs.writeFileSync(file, bytes, { flag: 'wx' });
+}
+function copy(relative, replace = false) {
+  const from = `${source}/${relative}`;
+  const stat = fs.lstatSync(from);
+  assert.ok(!stat.isSymbolicLink(), from);
+  if (stat.isDirectory()) {
+    for (const name of fs.readdirSync(from).sort()) copy(`${relative}/${name}`, replace);
+    return;
+  }
+  assert.ok(stat.isFile());
+  const bytes = fs.readFileSync(from);
+  const digest = sha(bytes);
+  if (fs.existsSync(relative) && sha(fs.readFileSync(relative)) !== digest) {
+    assert.ok(replace, `Different existing bytes: ${relative}`);
+    writeExact(`${own}/before/${relative}.record`, fs.readFileSync(relative));
+    fs.writeFileSync(relative, bytes);
+  } else writeExact(relative, bytes);
+  assert.equal(sha(fs.readFileSync(from)), digest, `Source changed during copy: ${from}`);
+  entries.push({ source: from, path: path.resolve(relative), sha256: digest, bytes: bytes.length });
+  aliases.set(from, path.resolve(relative));
+  if (relative.startsWith('ssot-resources/')) durable.set(digest, relative);
+}
+for (const index of [`${root}/book.json`, `${edition}/book.json`]) {
+  const before = JSON.parse(fs.readFileSync(index));
+  const after = JSON.parse(fs.readFileSync(`${source}/${index}`));
+  assert.deepEqual(after.lessons.filter(item => item.id !== id), before.lessons);
+  assert.equal(after.lessons.filter(item => item.id === id).length, 1);
+  copy(index, true);
+}
+copy(`${root}/lessons/${id}`);
+copy(`${edition}/lessons/${id}`);
+for (let n = 63; n <= 73; n++) {
+  const page = `${root}/pages/${String(n).padStart(4, '0')}`;
+  for (const file of ['page.md', 'page.json', 'audit.json']) copy(`${page}/${file}`, n === 63);
+}
+for (const figure of ['fig-26', 'fig-27']) {
+  for (const ext of ['png', 'svg']) copy(`${root}/figures/${figure}.${ext}`);
+  for (const ext of ['svg', 'spec.json', 'render.json', 'review.json']) {
+    copy(`${edition}/figures/${figure}.${ext}`);
+  }
+}
+for (const name of fs.readdirSync(`${source}/${root}/evidence`).sort()) {
+  if (name.startsWith('resume182-6-c2ex-')) copy(`${root}/evidence/${name}`);
+}
+for (const file of [
+  '.claude/skills/ld-s10y-lesson/tools/layout.py',
+  '.claude/skills/ld-s10y-lesson/tools/test_layout_multiline_count.py',
+]) copy(file, true);
+
+// Only runtime-bound actual inputs are relocated; dependencies stay provenance.
+const selectionRelative = '.tmp/resume182-6-8a-c2ex-display5724-FIRST/selection-first';
+copy(selectionRelative);
+const selectionPath = `${selectionRelative}/selection.record`;
+const selection = JSON.parse(fs.readFileSync(selectionPath));
+assert.equal(selection.counts.selected, 248);
+assert.equal(selection.counts.missing, 0);
+const readSource = input => {
+  const bytes = fs.readFileSync(input.path);
+  assert.equal(sha(bytes), input.sha256, input.path);
+  return bytes;
+};
+const runtimeBytes = readSource(selection.authority);
+const runtime = JSON.parse(runtimeBytes);
+assert.equal(runtime.status, 'RUNTIME_PASS_VISUAL_PENDING');
+assert.ok(runtime.checks.every(item => item.status === 'PASS'));
+assert.ok(Object.values(runtime.cleanup).every(Boolean));
+function relocate(input, forceScratch = false) {
+  const bytes = readSource(input);
+  if (input.path.includes('/node_modules/')) {
+    dependencyProvenance.push({ ...input, bytesCopied: false });
+    return;
+  }
+  const relative = path.relative(source, input.path);
+  assert.ok(!relative.startsWith('../'), input.path);
+  const target = durable.get(input.sha256);
+  if (!forceScratch && target) {
+    aliases.set(input.path, path.resolve(target));
+    return;
+  }
+  if (fs.existsSync(relative) && sha(fs.readFileSync(relative)) === input.sha256) {
+    aliases.set(input.path, path.resolve(relative));
+    return;
+  }
+  if (relative.startsWith('.tmp/')) {
+    writeExact(relative, bytes);
+    aliases.set(input.path, path.resolve(relative));
+    entries.push({ source: input.path, path: path.resolve(relative), sha256: input.sha256, bytes: bytes.length });
+    return;
+  }
+  assert.ok(target, `Different producer bytes have no immutable evidence: ${input.path}`);
+  aliases.set(input.path, path.resolve(target));
+}
+relocate(selection.authority, true);
+for (const input of [...runtime.inputs, ...runtime.deliveredSurfaces]) relocate(input);
+for (const image of selection.selected) relocate(image, true);
+let reusedViews = 0;
+const reusedReports = [];
+for (let n = 1; n <= 12; n++) {
+  const relative = `.tmp/resume182-6-8a-c2ex-observe5724-batch${n}/result.json`;
+  const bytes = fs.readFileSync(`${source}/${relative}`);
+  const result = JSON.parse(bytes);
+  const batch = selection.batches.find(item => item.id === `batch${n}`);
+  assert.equal(result.status, 'DISPLAY_PASS');
+  assert.equal(result.images.length, batch.images.length);
+  assert.equal(result.imageAccounting.views, 8);
+  assert.equal(result.imageAccounting.uniqueImages, 8);
+  for (const key of ['reopens', 'crops', 'resizes', 'rerenders']) assert.equal(result.imageAccounting[key], 0);
+  assert.equal(result.blockers.length, 0);
+  for (const assigned of batch.images) {
+    const image = result.images.find(item => item.path === assigned.path);
+    assert.ok(image && image.observations.length);
+    assert.equal(image.sha256, assigned.sha256);
+    assert.equal(image.blockers.length, 0);
+  }
+  copy(relative);
+  const binding = `.tmp/resume182-6-c2ex-observer-bindings5724-FIRST/batch${n}.record`;
+  if (fs.existsSync(`${source}/${binding}`)) copy(binding);
+  reusedViews += result.imageAccounting.views;
+  reusedReports.push({ batch: n, path: path.resolve(relative), sha256: sha(bytes), views: 8 });
+}
+assert.equal(reusedViews, 96);
+for (let n = 13; n <= 31; n++) {
+  const batch = selection.batches.find(item => item.id === `batch${n}`);
+  const bytes = Buffer.from(`${JSON.stringify({
+    ...batch,
+    originalAssignment: { path: `${source}/${selectionRelative}/batch${n}.json`,
+      sha256: sha(fs.readFileSync(`${source}/${selectionRelative}/batch${n}.json`)) },
+    images: batch.images.map(image => ({
+      ...image, historical_path: image.path, path: aliases.get(image.path),
+    })),
+  }, null, 2)}\n`);
+  writeExact(`${own}/assignments/batch${n}.json`, bytes);
+}
+for (const file of [
+  '.tmp/resume182-6-8a-c2ex-display-bind5724.mjs',
+  '.tmp/resume182-6-c2ex-observer-bind5724.mjs',
+  '.tmp/resume182-6-c2ex-delivery5724.mjs',
+  '.tmp/resume182-6-8a-c2ex-retain5724.mjs',
+  '.tmp/resume182-6-c2ex-observer-protocol5724.md',
+]) copy(file);
+const upstreamProgress = fs.readFileSync('.intentfold/tickets/STEMROBIN-182/progress.md');
+writeExact(`${own}/remote-progress-at-sync.record`, upstreamProgress);
+const oldProgress = fs.readFileSync(`${source}/.intentfold/tickets/STEMROBIN-182/progress.md`, 'utf8');
+const ownProgress = fs.readFileSync(`${own}/progress-before-sync.record`, 'utf8');
+const prefixEnd = ownProgress.indexOf('### 182-6 2026-11-20 正式接管与实际缺失显示续作');
+assert.ok(prefixEnd > 0);
+const prefix = ownProgress.slice(ownProgress.indexOf('\n') + 1, prefixEnd);
+const body = oldProgress.slice(oldProgress.indexOf('\n') + 1);
+fs.writeFileSync('.intentfold/tickets/STEMROBIN-182/progress.md', `# 当前开发状态\n${prefix}${body}`);
+const ticket = JSON.parse(fs.readFileSync('.intentfold/tickets/STEMROBIN-182/ticket.json'));
+writeExact(`${own}/remote-ticket-at-sync.record`, fs.readFileSync('.intentfold/tickets/STEMROBIN-182/ticket.json'));
+ticket.worktree = repo;
+ticket.resumption_source_worktree = source;
+ticket.finish = 'review';
+ticket.supervision.monitoring = true;
+ticket.supervision.inspection_interval_minutes = 40;
+fs.writeFileSync('.intentfold/tickets/STEMROBIN-182/ticket.json', `${JSON.stringify(ticket, null, 2)}\n`);
+const record = {
+  schema: 'stemrobin-182/current-lesson-byte-migration@1',
+  actual: new Date().toISOString(), ticket: 'STEMROBIN-182', lesson: id,
+  source, worktree: repo, base,
+  entries, aliases: [...aliases].map(([historical_path, current_path]) => ({ historical_path, current_path })),
+  dependencyProvenance, reusedReports, reusedViews, remainingViews: 152,
+  originalTreesWritten: 0, rendererBrowserOrContentReviewRuns: 0,
+  parentImageViews: 0, unknownHistoricalBytesRecovered: false,
+  hostTokens: 'unknown', totalCost: 'unknown', finish: 'review',
+  originalProgressPreservedAt: `${own}/remote-progress-at-sync.record`,
+  oldFailuresAndUnresolvedMessagesPreserved: true,
+};
+const output = `${own}/migration.record`;
+writeExact(output, Buffer.from(`${JSON.stringify(record, null, 2)}\n`));
+console.log(JSON.stringify({
+  path: output, sha256: sha(fs.readFileSync(output)), copiedFiles: entries.length,
+  bytes: entries.reduce((sum, entry) => sum + entry.bytes, 0),
+  reusedViews, remainingViews: 152, checksReused: runtime.checks.length,
+  sourceWrites: 0, imagesOpened: 0,
+}));

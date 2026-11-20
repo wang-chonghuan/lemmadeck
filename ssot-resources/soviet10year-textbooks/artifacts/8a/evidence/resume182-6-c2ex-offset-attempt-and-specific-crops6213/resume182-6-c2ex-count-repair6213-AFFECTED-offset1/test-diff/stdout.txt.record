@@ -1,0 +1,95 @@
+--- .tmp/resume182-6-c2ex-count-repair6213-FIRST/candidate/test_layout_multiline_count.py	2026-11-20 14:56:57
++++ .claude/skills/ld-s10y-lesson/tools/test_layout_multiline_count.py	2026-11-20 15:07:41
+@@ -39,6 +39,13 @@
+         glyph(ink, column - 60, y + 26 * (rows - 1))
+ 
+ 
++def offset_system(ink, y, rows=2, column=120, pitch=90):
++    for index in range(rows):
++        text_row(ink, y + pitch * index, x=column, count=7)
++    brace(ink, column - 22, y, y + pitch * (rows - 1) + 30)
++    glyph(ink, column - 60, y + pitch // 2)
++
++
+ def fraction(ink, x, y, width=40, nested=False):
+     glyph(ink, x + 12, y, width=16, height=26)
+     ink[y + 34:y + 37, x:x + width] = True
+@@ -82,6 +89,43 @@
+         text_row(ink, 260, count=2, height=20)
+         self.assert_rows(ink, 4)
+ 
++    def test_paired_two_equations_with_one_shared_offset_label_baseline(self):
++        ink = np.zeros((400, 900), dtype=bool)
++        text_row(ink, 15)
++        for column in (120, 450):
++            offset_system(ink, 100, column=column)
++        text_row(ink, 320, count=2, height=20)
++        bands = self.assert_rows(ink, 5)
++        self.assertTrue(any(a <= 145 and b >= 174 for a, b in bands), bands)
++
++    def test_mixed_three_and_two_equations_with_one_offset_label_baseline(self):
++        ink = np.zeros((500, 900), dtype=bool)
++        text_row(ink, 15)
++        for index in range(3):
++            text_row(ink, 100 + 90 * index, x=120, count=7)
++        brace(ink, 98, 100, 310)
++        glyph(ink, 60, 190)
++        offset_system(ink, 100, column=450)
++        text_row(ink, 400, count=2, height=20)
++        bands = self.assert_rows(ink, 6)
++        self.assertTrue(any(a <= 145 and b >= 174 for a, b in bands), bands)
++
++    def test_multiple_offset_label_events_are_not_collapsed(self):
++        ink = np.zeros((650, 900), dtype=bool)
++        text_row(ink, 15)
++        for y in (100, 300):
++            for column in (120, 450):
++                offset_system(ink, y, column=column)
++        text_row(ink, 550, count=2, height=20)
++        self.assert_rows(ink, 8)
++
++    def test_labels_overlapping_equation_ink_are_not_independent(self):
++        ink = np.zeros((400, 900), dtype=bool)
++        text_row(ink, 15)
++        system(ink, 100)
++        text_row(ink, 310, count=2, height=20)
++        self.assert_rows(ink, 4)
++
+     def test_single_reciprocal_baseline_above_full_equation(self):
+         ink = np.zeros((400, 900), dtype=bool)
+         text_row(ink, 15)
+@@ -162,7 +206,10 @@
+     fixtures = {
+         66: (26, "2874fe3003762f0ca5484e44dc04461320bac38de9f46899e3c2989309b5a121"),
+         67: (25, "9f82b6b7cb38365fea228743b8deaa6e8dbb2497e5fab7d05679c12c0e21ca9c"),
++        72: (28, "85cc2a807c3b1e310a5db266cb13938422e19523417a339031575cc53faaf44c"),
++        73: (26, "82f5d8938d16bff784e2956498fddd4084a2d7a5d2e95c4d54c083939a8b8516"),
+     }
++    figure_masks = {73: (346, 1930, 1724, 611)}
+ 
+     def setUp(self):
+         if self.source_root is None:
+@@ -177,6 +224,9 @@
+         metadata = json.loads((base / "layout.json").read_text())
+         with Image.open(source) as image:
+             ink = ink_mask(image)
++        if page in self.figure_masks:
++            x, y, width, height = self.figure_masks[page]
++            ink[y:y + height, x:x + width] = False
+         original = ink.copy()
+         bands = line_bands(ink, metadata["content_width"])
+         self.assertEqual(len(bands), expected, bands)
+@@ -191,7 +241,13 @@
+     def test_reviewed_p67_has_25_baselines(self):
+         self.check_page(67)
+ 
++    def test_reviewed_p72_has_28_baselines(self):
++        self.check_page(72)
+ 
++    def test_reviewed_p73_has_26_baselines_outside_snapped_figure(self):
++        self.check_page(73)
++
++
+ if __name__ == "__main__":
+     parser = argparse.ArgumentParser()
+     parser.add_argument("--source-root", type=Path)

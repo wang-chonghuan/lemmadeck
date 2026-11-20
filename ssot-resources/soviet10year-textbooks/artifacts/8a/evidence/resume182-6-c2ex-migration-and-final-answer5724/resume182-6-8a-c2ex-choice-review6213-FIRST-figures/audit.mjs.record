@@ -1,0 +1,89 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { spawnSync } from "node:child_process";
+
+const root = "/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck";
+const own = path.join(root, ".tmp/resume182-6-8a-c2ex-choice-review6213-FIRST-figures");
+const inputs = {
+  seed: {
+    path: ".tmp/resume182-6-8a-c2ex-choice-author6213-FIRST-figures/seed.json",
+    byte: "9afe63da6264263c75c5accac94071c23761cfaa9d17ce84a479912d59a88905",
+    canonical: "9167b7f63a700005d60d6652fc8d9cedb9d189b273136fe7aab53de1e23b0e83",
+  },
+  views: {
+    path: ".tmp/resume182-6-c2ex-choice-review-inputs6213-FIRST/figures.views.json",
+    byte: "9e41599dd1d62ab6638fbe0533eaa1a599e11cd38b9406a439a1605322df0242",
+    predecessor: "source-solutions.frozen.json",
+  },
+  draft: {
+    path: ".tmp/resume182-6-8a-c2ex-choice-author6213-FIRST-figures/draft.json",
+    byte: "2a93ac52a9e74da55d018bb0553c26932b5f16355c312fa27fa9b53bc66fd745",
+    canonical: "796773f99c6152c25f9984a57093f416c10fd33a3a2927ed323b1253f16de1e7",
+    predecessor: "visible-evaluation.frozen.json",
+  },
+};
+const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const canonical = (value) => {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+  if (value !== null && typeof value === "object") {
+    return `{${Object.keys(value).sort().map((key) => `${canonical(key)}:${canonical(value[key])}`).join(",")}}`;
+  }
+  return JSON.stringify(value).replace(/[\u007f-\uffff]/g, (char) =>
+    `\\u${char.charCodeAt(0).toString(16).padStart(4, "0")}`);
+};
+const binding = (file) => {
+  const bytes = fs.readFileSync(file);
+  const value = JSON.parse(bytes.toString("utf8"));
+  return { path: path.relative(root, file), byte_sha256: hash(bytes), canonical_sha256: hash(canonical(value)) };
+};
+const writeNew = (file, value) => fs.writeFileSync(path.join(own, file), `${JSON.stringify(value, null, 2)}\n`, { flag: "wx" });
+if (process.cwd() !== root) throw new Error("Incorrect cwd");
+const stage = process.argv[2];
+if (stage in inputs) {
+  const input = inputs[stage];
+  const receiptName = `${stage}.snapshot-read.json`;
+  if (fs.existsSync(path.join(own, receiptName))) throw new Error("Snapshot already read");
+  let predecessor = null;
+  if (input.predecessor) {
+    predecessor = binding(path.join(own, input.predecessor));
+    const previousStage = stage === "views" ? "seed" : "views";
+    if (!fs.existsSync(path.join(own, `${previousStage}.snapshot-read.json`))) throw new Error("Missing earlier snapshot receipt");
+  }
+  const file = path.join(root, input.path);
+  const actual = binding(file);
+  if (actual.byte_sha256 !== input.byte || (input.canonical && actual.canonical_sha256 !== input.canonical)) throw new Error("Snapshot hash mismatch");
+  const value = JSON.parse(fs.readFileSync(file, "utf8"));
+  const assets = stage === "seed" ? value.figures.flatMap((figure) => figure.assets.map((asset) => {
+    const actualHash = hash(fs.readFileSync(path.join(root, asset.path)));
+    if (actualHash !== asset.sha256) throw new Error(`Seed asset mismatch: ${asset.path}`);
+    return { figure_id: figure.id, path: asset.path, byte_sha256: actualHash };
+  })) : [];
+  const receipt = { stage, observed_at: new Date().toISOString(), ...actual, predecessor_freeze: predecessor, assets, content_disclosure: stage === "views" ? "Learner-facing projection only" : stage };
+  writeNew(receiptName, receipt);
+  console.log(JSON.stringify({ receipt, content: value }, null, 2));
+} else if (stage === "validate") {
+  if (fs.existsSync(path.join(own, "validation.receipt.json"))) throw new Error("Validator already run");
+  const review = binding(path.join(own, "review.json"));
+  const seed = binding(path.join(root, inputs.seed.path));
+  const draft = binding(path.join(root, inputs.draft.path));
+  if (seed.byte_sha256 !== inputs.seed.byte || draft.byte_sha256 !== inputs.draft.byte) throw new Error("Input bytes changed");
+  const args = [".agents/skills/ld-s10y-choice/scripts/validate.py", "--repo", ".", "--seed", inputs.seed.path, "--draft", inputs.draft.path, "--review", path.relative(root, path.join(own, "review.json"))];
+  const startedAt = new Date().toISOString();
+  const result = spawnSync("python3", args, { cwd: root, encoding: "utf8" });
+  fs.writeFileSync(path.join(own, "validation.stdout.txt"), result.stdout ?? "", { flag: "wx" });
+  fs.writeFileSync(path.join(own, "validation.stderr.txt"), result.stderr ?? "", { flag: "wx" });
+  const receipt = {
+    command: ["python3", ...args], cwd: root, started_at: startedAt, finished_at: new Date().toISOString(),
+    exit_code: result.status, signal: result.signal, error: result.error?.message ?? null,
+    seed, draft, review,
+    stdout_sha256: hash(result.stdout ?? ""), stderr_sha256: hash(result.stderr ?? ""),
+    invocation_count: 1,
+  };
+  writeNew("validation.receipt.json", receipt);
+  console.log(JSON.stringify(receipt, null, 2));
+  console.log(result.stdout ?? "");
+  console.error(result.stderr ?? "");
+} else {
+  throw new Error("Expected seed, views, draft, or validate");
+}

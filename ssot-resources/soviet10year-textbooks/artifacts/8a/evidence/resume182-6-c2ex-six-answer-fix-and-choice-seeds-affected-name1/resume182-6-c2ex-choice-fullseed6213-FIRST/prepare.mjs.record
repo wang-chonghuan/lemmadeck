@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck';
+assert.equal(process.cwd(), repo);
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c2-ex';
+const exerciseDoc = JSON.parse(fs.readFileSync(`${root}/exercises.json`));
+const lessonDoc = JSON.parse(fs.readFileSync(`${root}/lesson.json`));
+assert.equal(exerciseDoc.status, 'ready');
+assert.equal(exerciseDoc.exercises.length, 50);
+assert.deepEqual(lessonDoc.prose, []);
+const selected = exerciseDoc.exercises.map(item => String(item.number));
+assert.equal(new Set(selected).size, selected.length);
+const result = spawnSync('node', [
+  '.tmp/resume182-6-run6213.mjs',
+  '.tmp/resume182-6-c2ex-choice-fullseed-run6213-FIRST',
+  '/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python', '-B',
+  '.agents/skills/ld-s10y-choice/scripts/prepare.py', 'prepare',
+  '--repo', '.', '--book', '8a', '--lesson', 'alg8-c2-ex',
+  ...selected.flatMap(number => ['--exercise', number]), '--no-concepts',
+  '--out', '.tmp/resume182-6-c2ex-choice-fullseed6213-FIRST/seed.json',
+], { cwd: repo, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
+process.stdout.write(result.stdout ?? '');
+process.stderr.write(result.stderr ?? '');
+process.exit(result.status ?? 1);

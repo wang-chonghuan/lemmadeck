@@ -1,0 +1,135 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import crypto from "node:crypto";
+
+const root = "/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck";
+assert.equal(process.cwd(), root);
+const paths = {
+  template: ".tmp/resume182-6-8a-c2ex-modern6213-AFFECTED-continuation1/adapt/8a/modern-us-neutral/lessons/alg8-c2-ex/exercises.template.json",
+  textPass: ".tmp/resume182-6-8a-c2ex-modern-text-review6213-FIRST/ready.record",
+  candidate: ".tmp/resume182-6-8a-c2ex-answer-author6213-FIRST-part1/candidate.json",
+};
+const expectedHashes = {
+  template: "154b9cac05f121628bcdbbe511127d48d1462be141da8fe6f05851d752d42fa0",
+  textPass: "34e87282e54905e8f45c178de32348de8e07cb3f4033cb0315c939dac796a6d3",
+  candidate: "7a6fc8bce0f9a0e13d69e4770d8a196be4bfd255b1b8323aaae9da4dcffa951a",
+};
+const hash = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const bindings = Object.fromEntries(Object.entries(paths).map(([key, path]) => {
+  const actual = hash(fs.readFileSync(path));
+  assert.equal(actual, expectedHashes[key], `${key} hash changed`);
+  return [key, { path: `${root}/${path}`, sha256: actual }];
+}));
+// Candidate bytes are hashed only. No candidate answer content is parsed here.
+const template = JSON.parse(fs.readFileSync(paths.template, "utf8"));
+const receipt = JSON.parse(fs.readFileSync(paths.textPass, "utf8"));
+assert.equal(receipt.status, "TEXT_PASS");
+const exercises = template.exercises.filter((e) => Number(e.number) >= 138 && Number(e.number) <= 160);
+assert.equal(exercises.length, 23);
+assert.deepEqual(exercises.map((e) => e.number), Array.from({ length: 23 }, (_, i) => String(138 + i)));
+assert(exercises.every((e) => e.figure_refs.length === 0 && e.figures.length === 0));
+const labelCounts = exercises.map((e) => ({
+  exercise: e.number,
+  count: [...e.text.matchAll(/(?:^|\n)[a-z]\)/g)].length,
+}));
+const explicitSubparts = labelCounts.reduce((sum, item) => sum + item.count, 0);
+
+let checks = 0;
+const near = (actual, expected, message) => {
+  assert(Number.isFinite(actual), `${message}: nonfinite`);
+  assert(Math.abs(actual - expected) <= 1e-9 * Math.max(1, Math.abs(expected)), `${message}: ${actual} != ${expected}`);
+  checks++;
+};
+const pairs = (label, values, constraints, nonzero = false) => {
+  assert(values.length > 0, `${label}: zero candidate roots`);
+  const keys = new Set();
+  for (const [x, y] of values) {
+    const key = `${x.toPrecision(14)},${y.toPrecision(14)}`;
+    assert(!keys.has(key), `${label}: duplicate root`);
+    keys.add(key);
+    if (nonzero) assert(x !== 0 && y !== 0, `${label}: original denominator is zero`);
+    for (const [left, right] of constraints) near(left(x, y), right, `${label} at (${x},${y})`);
+  }
+};
+const q138 = (x, y) => x * x - 3 * x * y + y * y;
+const sqrt = Math.sqrt;
+pairs("138 a-d,f", [[-3, -11], [3, 11], [3, -2], [-2, 3], [3 + 2 * sqrt(2), 3 - 2 * sqrt(2)]], [[q138, 31]]);
+near(q138(2, 3), -5, "138e");
+for (const [x, y] of [[-4, 2], [0, 0], [5, -3], [7 / 3, -11 / 2]]) {
+  near(x * x - 2 * x * y + y * y + 8, (x - y) ** 2 + 8, "140a identity");
+  near(x * x + 8 * x + y * y + 17, (x + 4) ** 2 + y * y + 1, "140b identity");
+  near(x * x - 10 * x + y * y + 100, (x - 5) ** 2 + y * y + 75, "140c identity");
+  near(x * x - 2 * x * y + 2 * y * y + 4 * y + 7, (x - y) ** 2 + (y + 2) ** 2 + 3, "140d identity");
+  near(2 * x * x - 6 * x * y + 9 * y * y - 10 * x + 25, (x - 3 * y) ** 2 + (x - 5) ** 2, "141b identity");
+}
+pairs("141a", [[-3, 5]], [[(x, y) => x * x + 6 * x + y * y - 10 * y, -34]]);
+pairs("141b", [[5, 5 / 3]], [[(x, y) => 2 * x * x - 6 * x * y + 9 * y * y - 10 * x + 25, 0]]);
+pairs("143b", [[1, 13], [13, 1], [-1, -13], [-13, -1]], [[(x, y) => x * y, 13]]);
+pairs("143d", [[8, 1], [8, -1]], [[(x, y) => x - 7 / (y * y), 1]]);
+const divisors = Array.from({ length: 73 }, (_, i) => i - 36).filter((d) => d !== 0 && 36 % d === 0);
+const integer143e = divisors.filter((d) => d !== -6).map((d) => [6 + d, 6 + 36 / d]);
+assert.equal(integer143e.length, 17);
+assert(integer143e.every(([x, y]) => Number.isInteger(x) && Number.isInteger(y)));
+pairs("143e all integer solutions", integer143e, [[(x, y) => 1 / x + 1 / y, 1 / 6]], true);
+pairs("143f", [[6, 5], [6, -5], [-6, 5], [-6, -5]], [[(x, y) => x * x - y * y, 11]]);
+near(5 ** 3 + 2 * (-4) ** 2 + 3, 160, "144a");
+near(7 ** 2 - 7 * 7 ** 2 * (-3) - 11 * 7 * (-3) ** 3 + 10 * 7 - 19 * (-3) + 24, 3308, "144b");
+near(8 * 8 + 15 * 15, 289, "150 radius squared");
+near(7 * 7 + 16 * 16, 305, "150B");
+near(9 * 9 + 14 * 14, 277, "150C");
+near(1 + (12 * sqrt(2)) ** 2, 289, "150D");
+near(1 - 48, -47, "151a discriminant");
+pairs("151b", [[4 + 7 * sqrt(2) / 2, 4 - 7 * sqrt(2) / 2], [4 - 7 * sqrt(2) / 2, 4 + 7 * sqrt(2) / 2]], [[(x, y) => x + y, 8], [(x, y) => x * x + y * y, 81]]);
+pairs("151c", [[4, 3], [24 / 5, 7 / 5]], [[(x, y) => 2 * x + y, 11], [(x, y) => x * x + y * y, 25]]);
+pairs("151d", [[(-3 + sqrt(33)) / 4, (21 - 3 * sqrt(33)) / 8], [(-3 - sqrt(33)) / 4, (21 + 3 * sqrt(33)) / 8]], [[(x, y) => y - x * x, 0], [(x, y) => 3 * x + 2 * y, 3]]);
+pairs("151e", [[-1 + sqrt(11), -11 + sqrt(11)], [-1 - sqrt(11), -11 - sqrt(11)]], [[(x, y) => y + x + x * x, 0], [(x, y) => x - y, 10]]);
+pairs("151f", [[3, 1], [1, 3], [-3, -1], [-1, -3]], [[(x, y) => x * x + y * y, 10], [(x, y) => x * y, 3]]);
+pairs("152a", [[8 / 5, 11 / 5]], [[(x, y) => 2 * x - y, 1], [(x, y) => 7 * x - y, 9]]);
+pairs("152b", [[1, -1]], [[(x, y) => x - 4 * y, 5], [(x, y) => x + 8 * y, -7]]);
+pairs("152c", [[12, 4], [8, 6]], [[(x, y) => x * y, 48], [(x, y) => x + 2 * y, 20]]);
+pairs("152d", [[10, 12], [-8, -15]], [[(x, y) => 3 * x - 2 * y, 6], [(x, y) => x * y, 120]]);
+pairs("152e", [[2, 5], [-2, -3]], [[(x, y) => x + x * y - y, 7], [(x, y) => 2 * x - y, -1]]);
+pairs("152f", [[-11, 9 / 2], [4, -3]], [[(x, y) => 4 * x - x * y + 3 * y, 19], [(x, y) => x + 2 * y, -2]]);
+pairs("153a", [[(1 + 3 * sqrt(3)) / 2, (-1 - sqrt(3)) / 2], [(1 - 3 * sqrt(3)) / 2, (-1 + sqrt(3)) / 2]], [[(x, y) => x + 3 * y, -1], [(x, y) => x * x + 2 * x * y + y * y, 3]]);
+pairs("153b", [[0, -1], [3, 5]], [[(x, y) => 2 * x - y, 1], [(x, y) => x * y - y * y + 3 * x, -1]]);
+pairs("153c", [[3, 5], [6, -1]], [[(x, y) => 2 * x + y - 11, 0], [(x, y) => 2 * x + 5 * y - y * y - 6, 0]]);
+pairs("153d", [[6, 2], [11, 7]], [[(x, y) => 2 * x * x - 3 * y * y - 5 * x - 2 * y, 26], [(x, y) => x - y, 4]]);
+pairs("153e", [[4, 1]], [[(x, y) => 4 * x * x - 9 * y * y + x - 40 * y - 19, 0], [(x, y) => 2 * x - 3 * y, 5]]);
+pairs("153f", [[-5 / 4, 3 / 4], [-5, -3]], [[(x, y) => 3 * x * x + y * y + 8 * x + 13 * y, 5], [(x, y) => x - y + 2, 0]]);
+near((3 * sqrt(2)) ** 2, 18, "154 endpoints");
+near((10 * sqrt(2)) ** 2, 200, "155 endpoints");
+pairs("156a", [[10, 15], [3 / 2, -2]], [[(x, y) => 1 / x + 1 / y, 1 / 6], [(x, y) => 2 * x - y, 5]], true);
+pairs("156b", [[4, 5], [70, -28]], [[(x, y) => 1 / x - 1 / y, 1 / 20], [(x, y) => x + 2 * y, 14]], true);
+pairs("156c", [[6, 8], [8, 6]], [[(x, y) => x + y, 14], [(x, y) => x / y + y / x, 25 / 12]], true);
+pairs("156d", [[6, 4], [4 / 5, -6 / 5]], [[(x, y) => x - y, 2], [(x, y) => x / y - y / x, 5 / 6]], true);
+pairs("157a", [[1, 1], [1 / 3, -1 / 3]], [[(x, y) => (x + y) * (x - y), 0], [(x, y) => 2 * x - y, 1]]);
+pairs("157b", [[3, 4], [3, -4], [0, 5]], [[(x, y) => x * x + y * y, 25], [(x, y) => (x - 3) * (y - 5), 0]]);
+pairs("157c", [[7 * sqrt(2), sqrt(2)], [7 * sqrt(2), -sqrt(2)], [-7 * sqrt(2), sqrt(2)], [-7 * sqrt(2), -sqrt(2)]], [[(x, y) => x * x + y * y, 100], [(x, y) => (x - 7 * y) * (x + 7 * y), 0]]);
+pairs("157d", [[sqrt(51), -1], [-sqrt(51), -1]], [[(x, y) => x * x - y * y, 50], [(x, y) => x * (y + 1), 0]]);
+pairs("158a", [[6, -2], [-2, 6], [-6, 2], [2, -6]], [[(x, y) => x * x + y * y, 40], [(x, y) => x * y, -12]]);
+pairs("158b", [[6 * sqrt(2), 2 * sqrt(2)], [2 * sqrt(2), 6 * sqrt(2)], [-6 * sqrt(2), -2 * sqrt(2)], [-2 * sqrt(2), -6 * sqrt(2)]], [[(x, y) => x * x + y * y, 80], [(x, y) => x * y, 24]]);
+pairs("158c", [[2 * sqrt(3), sqrt(3)], [sqrt(3), 2 * sqrt(3)], [-2 * sqrt(3), -sqrt(3)], [-sqrt(3), -2 * sqrt(3)]], [[(x, y) => x * x + y * y, 15], [(x, y) => x * y, 6]]);
+near(33 + 2 * (-24), -15, "158d squared sum impossible");
+pairs("159", [[7, 3]], [[(x, y) => x * x - 3 * x * y + y * y + x + 2 * y, 8], [(x, y) => 2 * x - 5 * y, -1], [(x, y) => 3 * y - x, 2]]);
+pairs("160 linear intersection", [[4, 3]], [[(x, y) => x / 2 - y / 3, 1], [(x, y) => x + y, 7]]);
+near(4 * 4 + 4 * 3 - 2 * 3 * 3 - 4 + 3, 9, "160 nonlinear residual (not 5)");
+
+console.log(JSON.stringify({
+  status: "PASS",
+  scope: "138-160 ONLY",
+  bindings,
+  exerciseCount: exercises.length,
+  labeledExerciseCount: labelCounts.filter((item) => item.count > 0).length,
+  explicitSubparts,
+  labelCounts,
+  namedPointTargets: 9,
+  singleTasks: 4,
+  totalAnswerTargets: explicitSubparts + 9 + 4,
+  arithmeticChecks: checks,
+  integer143eSolutions: integer143e.length,
+  candidateContentParsed: false,
+  completenessProof: "Independent reversible reductions and branch proofs in independent-solutions.md; numerical substitutions corroborate but do not prove completeness.",
+  writes: 0,
+  browserCalls: 0,
+  finalizerCalls: 0,
+}, null, 2));

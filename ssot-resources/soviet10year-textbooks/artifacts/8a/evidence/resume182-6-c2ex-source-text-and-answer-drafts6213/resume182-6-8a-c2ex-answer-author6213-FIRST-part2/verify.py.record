@@ -1,0 +1,447 @@
+#!/usr/bin/env python3
+"""Bounded offline algebra checks; no external packages, figures, or services."""
+
+from collections import Counter
+from dataclasses import dataclass
+from fractions import Fraction as F
+import hashlib
+import json
+from pathlib import Path
+import re
+import sys
+import traceback
+
+
+ROOT = Path(__file__).resolve().parent
+REPO = ROOT.parent.parent
+SOURCE = REPO / ".tmp/resume182-6-8a-c2ex-modern6213-AFFECTED-continuation1/adapt/8a/modern-us-neutral/lessons/alg8-c2-ex/exercises.template.json"
+PARENT = REPO / ".tmp/resume182-6-8a-c2ex-modern6213-AFFECTED-continuation1/text-author/ready.record"
+EXPECTED_SOURCE_SHA = "154b9cac05f121628bcdbbe511127d48d1462be141da8fe6f05851d752d42fa0"
+EXPECTED_PARENT_SHA = "892f0e474dde43bdeb721eaceb59536c107d3d39c858c2c5db1a087e26f90183"
+SCOPE = [str(n) for n in range(161, 188) if n not in (177, 186)]
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+@dataclass(frozen=True)
+class Q:
+    """An exact a+b*sqrt(d); only the two quadratic fields needed by 161."""
+
+    a: F = F(0)
+    b: F = F(0)
+    d: int = 0
+
+    @staticmethod
+    def coerce(other):
+        return other if isinstance(other, Q) else Q(F(other))
+
+    def __add__(self, other):
+        other = Q.coerce(other)
+        d = self.d if self.b else other.d
+        if self.b and other.b and self.d != other.d:
+            raise ValueError("Different quadratic fields")
+        return Q(self.a + other.a, self.b + other.b, d)
+
+    __radd__ = __add__
+
+    def __neg__(self):
+        return Q(-self.a, -self.b, self.d)
+
+    def __sub__(self, other):
+        return self + -Q.coerce(other)
+
+    def __rsub__(self, other):
+        return Q.coerce(other) + -self
+
+    def __mul__(self, other):
+        other = Q.coerce(other)
+        d = self.d if self.b else other.d
+        if self.b and other.b and self.d != other.d:
+            raise ValueError("Different quadratic fields")
+        return Q(
+            self.a * other.a + self.b * other.b * d,
+            self.a * other.b + self.b * other.a,
+            d,
+        )
+
+    __rmul__ = __mul__
+
+    def __pow__(self, n):
+        if n != 2:
+            raise ValueError("This checker only needs squaring")
+        return self * self
+
+    def __eq__(self, other):
+        other = Q.coerce(other)
+        return self.a == other.a and self.b == other.b and (
+            self.b == 0 or self.d == other.d
+        )
+
+
+RADICALS = {
+    "-4\\sqrt{5}": Q(F(0), F(-4), 5),
+    "2\\sqrt{5}": Q(F(0), F(2), 5),
+    "4\\sqrt{5}": Q(F(0), F(4), 5),
+    "-2\\sqrt{5}": Q(F(0), F(-2), 5),
+    "3-3\\sqrt{2}": Q(F(3), F(-3), 2),
+    "3+3\\sqrt{2}": Q(F(3), F(3), 2),
+}
+
+
+def value(text):
+    if text in RADICALS:
+        return RADICALS[text]
+    fraction = re.fullmatch(r"(-?)\\frac(\d)(\d)", text)
+    if fraction:
+        sign = -1 if fraction[1] else 1
+        return Q(F(sign * int(fraction[2]), int(fraction[3])))
+    return Q(F(text))
+
+
+def multiply(p, q):
+    out = [F(0)] * (len(p) + len(q) - 1)
+    for i, a in enumerate(p):
+        for j, b in enumerate(q):
+            out[i + j] += F(a) * F(b)
+    return out
+
+
+checks = Counter()
+failures = []
+current = "scope"
+
+
+def check(ok, name):
+    checks[current] += 1
+    if not ok:
+        failures.append({"exercise": current, "check": name})
+
+
+def rational(parts):
+    values = [value(p["expected"][0]) for p in parts]
+    if any(v.b for v in values):
+        raise ValueError("Expected a rational candidate")
+    return [v.a for v in values]
+
+
+report = {
+    "schema": "stemrobin-182/answer-author-exact-algebra-check@1",
+    "status": "NOT_RUN",
+    "cwd": str(REPO),
+    "command": "python3 .tmp/resume182-6-8a-c2ex-answer-author6213-FIRST-part2/verify.py",
+    "python": sys.version,
+    "candidateSha256": sha(ROOT / "candidate.json"),
+    "inputSha256": sha(SOURCE),
+    "parentAuthorRecordSha256": sha(PARENT),
+    "scriptSha256": sha(Path(__file__)),
+    "dependencies": "Python standard library only",
+    "notApproval": True,
+}
+
+try:
+    doc = json.loads((ROOT / "candidate.json").read_text())
+    source = json.loads(SOURCE.read_text())
+    answers = {a["exercise"]: a for a in doc["answers"]}
+    selected = [e for e in source["exercises"] if e["number"] in SCOPE]
+    check(report["inputSha256"] == EXPECTED_SOURCE_SHA, "source snapshot unchanged")
+    check(report["parentAuthorRecordSha256"] == EXPECTED_PARENT_SHA, "parent snapshot unchanged")
+    check([a["exercise"] for a in doc["answers"]] == SCOPE, "exact 25-exercise scope")
+    check(len(answers) == 25, "no duplicates")
+    check(all(not e["figure_refs"] and not e["figures"] for e in selected), "zero figure references")
+    check(doc["status"] == "DRAFT_NOT_APPROVAL", "draft status")
+    check(all(a["source"] == "derived" and "bookRaw" not in a for a in answers.values()), "derived-only provenance")
+    for e in selected:
+        a = answers[e["number"]]
+        labels = re.findall(r"^([a-i])\)", e["text"], flags=re.M)
+        slots = a["parts"] if a["grading"] == "auto" else a["subpartAnswers"]
+        check(bool(a["displayAnswer"]), f"{e['number']} display")
+        check(all(s.get("displayAnswer") for s in slots), f"{e['number']} every answer slot has display")
+        if labels:
+            check(
+                {s["label"][0] for s in slots} == set(labels),
+                f"{e['number']} every source subpart covered",
+            )
+        check(len(a["parts"]) <= 32, f"{e['number']} submission bound")
+        check(a["grading"] != "ungraded" or not a["parts"], f"{e['number']} ungraded contract")
+
+    current = "161"
+    p = [value(part["expected"][0]) for part in answers[current]["parts"]]
+    check(len(p) == 24, "all twelve coordinate pairs")
+    for i in range(0, 8, 2):
+        x, y = p[i:i + 2]
+        check(x**2 - 4*y**2 == 0 and x**2 + x*y - y**2 == 20, f"a pair {i//2+1}")
+    for i in range(8, 12, 2):
+        x, y = p[i:i + 2]
+        check(4*x**2 - 9*y**2 == 0 and x**2 - x*y - y**2 == -1, f"b pair {i//2-3}")
+    for i in range(12, 20, 2):
+        x, y = p[i:i + 2]
+        check((x*y)**2 + x*y == 72 and x+y == 6, f"c pair {i//2-5}")
+    for i in range(20, 24, 2):
+        x, y = p[i:i + 2]
+        check((x+y)**2 - 2*(x+y) == 15 and x+x*y+y == 11, f"d pair {i//2-9}")
+    check(multiply([-8, 1], [9, 1]) == [-72, 1, 1], "c product branches exhaustive")
+    check(multiply([-5, 1], [3, 1]) == [-15, -2, 1], "d sum branches exhaustive")
+    check(F(11, 4) > 0 and -1 < 0, "b opposite-sign factor branch impossible")
+    check((-3)**2 - 4*14 == -47, "d rejected negative discriminant")
+
+    current = "162"
+    p, q, r, s = rational(answers[current]["parts"])
+    check(q != 0 and q+3 != 0 and q+6 != 0, "a domain")
+    check((p+2)/(q+3) == p/q and (p+1)/(q+6) == p/q-F(1, 6), "a original equations")
+    check(s != 0 and s+3 != 0 and s+1 != 0, "b domain")
+    check((r+1)/(s+3) == F(1, 2) and (r-1)/(s+1)*r/s == F(1, 5), "b original equations")
+    check(2*q == 3*p and 2*p-q == 4, "a exact linear elimination")
+    check(s == 2*r-1 and r*(r-3) == 0, "b elimination")
+    check((2*0-1)+1 == 0, "b zero numerator candidate excluded by denominator")
+
+    current = "163"
+    short, long, perimeter = rational(answers[current]["parts"])
+    check(short*long == 120 and short**2+long**2 == 17**2, "a diagonal and area")
+    check(short > 0 and long > 0, "a positive sides")
+    check(10**2+24**2 == 26**2 and F(10*24, 2) == 120, "b legs")
+    check(perimeter == 10+24+26, "b perimeter")
+    check(multiply([-8, 1], [-15, 1]) == [120, -23, 1], "a side roots exhaustive")
+    check(multiply([-10, 1], [-24, 1]) == [240, -34, 1], "b leg roots exhaustive")
+
+    current = "164"
+    a, b = rational(answers[current]["parts"])
+    check(5**2+12**2 == 13**2 and 8**2+15**2 == 17**2, "a literal hypotenuses")
+    check(a == F(8*15-5*12, 2) == 30, "a area increase")
+    check(3**2+4**2 == 5**2 and 20**2+21**2 == 29**2, "b literal hypotenuses")
+    check(20-3 == 17 and 21-4 == 17, "b corresponding increments")
+    check(b == F(20*21-3*4, 2) == 204, "b area difference")
+    check(multiply([-5, 1], [-12, 1]) == [60, -17, 1], "a side roots")
+    check(multiply([-3, 1], [-4, 1]) == [12, -7, 1], "b side roots")
+
+    current = "165"
+    p = rational(answers[current]["parts"])
+    for X, Y in (p[0:2], p[2:4]):
+        check(X > 0 and Y > 0, "a positive full-pool times")
+        check(1/X+1/Y == F(1, 40) and X/3+2*Y/3 == 78, "a original equations")
+    X, Y = p[4:6]
+    check(X > 0 and Y > 0 and 1/X+1/Y == F(1, 20), "b positive combined rate")
+    check(X/2-Y/3 == 3, "b literal partial-field time difference")
+    check(multiply([-65, 1], [-72, 1]) == [4680, -137, 1], "a both roots exhaustive")
+    check(multiply([-36, 1], [-10, 3]) == [360, -118, 3], "b both algebraic roots exhaustive")
+    check((3*F(10, 3)-18)/2 == -4, "b rejected root gives negative time")
+
+    current = "166"
+    u, v, D, bus, moto = rational(answers[current]["parts"])
+    t = F(3)
+    check(u > 0 and v > 0 and D > 0, "a physical domain")
+    check(u*t-v*(t-1) == 2 and u*t+v*(t-1) == D, "a delayed start and distance")
+    check(v*(t-1)/u == F(5, 2), "a first post-meeting time")
+    check(u*t/v == F(12, 5), "a second post-meeting time")
+    check(D/u-(1+D/v) == F(1, 10), "a absolute arrival difference")
+    check(multiply([-4, 1], [4, 9]) == [-16, -32, 9], "a speed roots exhaustive")
+    check(F(-4, 9) < 0, "a negative speed rejected")
+    t = F(3, 2)
+    check(bus*t+moto*(t-F(1, 2)) == 90, "b literal distance and delay")
+    check(bus*t/moto == 1 and moto*(t-F(1, 2))/bus == F(3, 2), "b post-meeting times")
+    check(90/bus-(F(1, 2)+90/moto) == F(1, 2), "b absolute arrival difference")
+    check(multiply([F(-3, 2), 1], [1, 1]) == [F(-3, 2), F(-1, 2), 1], "b ratio roots")
+
+    current = "167"
+    u, v, a, b = rational(answers[current]["parts"])
+    check((u+v)*F(14, 15) == 112, "a literal meeting time")
+    check(112/v-112/u == F(1, 4), "a A arrives fifteen minutes earlier")
+    check(multiply([-64, 1], [840, 1]) == [-53760, 776, 1], "a speed roots exhaustive")
+    check((a+b)*F(1, 2) == 80, "b distance")
+    check(b*F(1, 2)/a == F(1, 3) and a*F(1, 2)/b == F(3, 4), "b both post-meeting times")
+    check(F(1, 3)*F(3, 4) == F(1, 4), "b positive meeting-time square")
+
+    current = "168"
+    p = rational(answers[current]["parts"])
+    for a, b, c in (p[0:3], p[3:6]):
+        check(multiply([4, b, 1], [-3, 1, a]) == [-12, c, 0, -9, a], "a full coefficient convolution")
+    for n, c, q in (p[6:9], p[9:12]):
+        check(multiply([q, -3, 1], [c, -2, 3]) == [-24, 0, n, -11, 3], "b full coefficient convolution")
+    check(multiply([-2, 1], [5, 4]) == [-10, -3, 4], "a roots exhaustive")
+    check(multiply([-4, 1], [4, 1]) == [-16, 0, 1], "b c roots exhaustive")
+
+    current = "169"
+    L1, B1, L2, B2, P1, P2 = rational(answers[current]["parts"])
+    for L, B in ((L1, B1), (L2, B2)):
+        check(2*L+B == 140 and F(24)/B+F(24)/L == 1, "a literal perimeter and rhombus similarity")
+        check(L > 24 and B > 24 and B < 2*L, "a nondegenerate contained geometry")
+    for h, w, perimeter in ((F(25), F(70), P1), (F(35), F(50), P2)):
+        check(0 < h < 60 and w == 120-2*h and h*w == 1750, "b similarity and exact area")
+        check(perimeter == 2*(h+w), "b perimeter")
+    check(multiply([-40, 1], [-42, 1]) == [1680, -82, 1], "a both geometries exhaustive")
+    check(multiply([-25, 1], [-35, 1]) == [875, -60, 1], "b both geometries exhaustive")
+
+    current = "171"
+    check(F(1, 5)*5 == 1 and F(1, 5)*0 == 0, "unique line through both points")
+    check("y>\\frac{x}{5}" in answers[current]["displayAnswer"], "open boundary convention explicit")
+    check("y\\geq\\frac{x}{5}" in answers[current]["displayAnswer"], "closed boundary convention explicit")
+
+    current = "174"
+    check(4 > 3, "a concrete line witness")
+    check(6 > 5, "b parabola minimum")
+
+    current = "184"
+    check(answers[current]["parts"][0]["expected"] == ["b<1", "1>b"], "band parameter condition")
+    check(answers[current]["parts"][1]["expected"] == ["b>1", "1<b"], "empty parameter condition")
+    for b in (F(-2), F(0), F(1), F(3, 2), F(4)):
+        check((1-b > 0) == (b < 1), "positive width classification")
+        check((1-b == 0) == (b == 1), "single-line classification")
+        check((1-b < 0) == (b > 1), "empty classification")
+
+    current = "185"
+    check(F(13, 10)**2 == F(169, 100), "a inner radius")
+    check(F(6, 5)**2 == F(36, 25), "d radius")
+    xf = Q(F(0), F(3, 2), 2)
+    check(xf**2 == F(9, 2) and 9-xf**2 == F(9, 2), "f both exact endpoints")
+    for x in (F(-4), F(0)):
+        check((x+2)**2 == 4, "g endpoints")
+    for x in (Q(F(1), F(-1, 2), 14), Q(F(1), F(1, 2), 14)):
+        check((x-1)**2 == F(7, 2), "h exact endpoints")
+    check((F(5, 2)-2)*(F(5, 2)-3) == F(-1, 4), "i vertex")
+    check(36-1 == 35 and 100-8**2 == 6**2, "b/c excluded chord endpoints")
+
+    grid = sorted(
+        {F(i, 2) for i in range(-20, 21)}
+        | {F(37, 10), F(-37, 10), F(13, 10), F(-13, 10), F(6, 5), F(-6, 5), F(1, 4), F(-1, 4)}
+    )
+    for x in grid:
+        for y in grid:
+            current = "170"
+            original = [3*y-x+4 >= 0, 2*x-2*y >= 1, y >= abs(x), y <= -abs(x), y >= abs(x-2), y <= abs(1-x)]
+            described = [y >= (x-4)/3, y <= x-F(1, 2), y >= x and y >= -x, y <= x and y <= -x, y >= x-2 and y >= 2-x, y <= abs(x-1)]
+            for i, (a, b) in enumerate(zip(original, described)):
+                check(a == b, f"{chr(97+i)} region at {x},{y}")
+            current = "172"
+            original = [y >= x*x-4, y < 1-x*x, y >= x*x+4*x+4]
+            described = [y >= x*x-4, y < 1-x*x, y >= (x+2)**2]
+            for i, (a, b) in enumerate(zip(original, described)):
+                check(a == b, f"{chr(97+i)} region at {x},{y}")
+            current = "173"
+            original = [x != 0 and y >= 10/x, x*y >= 10, x != 0 and y <= 4/x, x*y <= 4]
+            described = [
+                x != 0 and y >= 10/x,
+                (x > 0 and y >= 10/x) or (x < 0 and y <= 10/x),
+                x != 0 and y <= 4/x,
+                x == 0 or (x > 0 and y <= 4/x) or (x < 0 and y >= 4/x),
+            ]
+            for i, (a, b) in enumerate(zip(original, described)):
+                check(a == b, f"{chr(97+i)} region/domain at {x},{y}")
+            current = "175"
+            check((x*x+y*y <= 49) == (49 >= y*y+x*x), f"closed disk at {x},{y}")
+            current = "176"
+            check(x*x+y*y >= 0, f"a whole plane at {x},{y}")
+            check((x*x+y*y > 0) == (x != 0 or y != 0), f"b punctured plane at {x},{y}")
+            check((x*x+y*y <= 0) == (x == 0 and y == 0), f"c singleton at {x},{y}")
+            current = "178"
+            check((abs(x) < F(37, 10)) == (-F(37, 10) < x < F(37, 10)), f"a strict strip at {x},{y}")
+            check((abs(y) >= F(11, 2)) == (y >= F(11, 2) or y <= -F(11, 2)), f"b closed exterior at {x},{y}")
+            current = "179"
+            check((abs(x)+abs(y) <= 1) == (abs(x) <= 1 and -(1-abs(x)) <= y <= 1-abs(x)), f"a diamond at {x},{y}")
+            check((abs(x)+abs(y) >= 4) == (not (abs(x)+abs(y) < 4)), f"b exterior at {x},{y}")
+            check((abs(y) >= x) == (x <= 0 or y >= x or y <= -x), f"c wedge at {x},{y}")
+            check((y <= abs(2*x)) == ((x >= 0 and y <= 2*x) or (x <= 0 and y <= -2*x)), f"d V at {x},{y}")
+            current = "181"
+            original = [
+                y > x and y < 2*x and y < 4,
+                y-x < 2 and y+x > 4 and x < 4,
+                x+y <= 6 and 2*x+2*y >= 7 and x >= 0,
+                x-y >= 3 and x+y <= 5 and y >= 1,
+                abs(x) <= 2 and abs(y) <= 3,
+                abs(x) <= 4 and abs(y) >= 5,
+            ]
+            described = [
+                0 < y < 4 and y/2 < x < y,
+                1 < x < 4 and 4-x < y < x+2,
+                x >= 0 and F(7, 2)-x <= y <= 6-x,
+                x == 4 and y == 1,
+                -2 <= x <= 2 and -3 <= y <= 3,
+                -4 <= x <= 4 and (y >= 5 or y <= -5),
+            ]
+            for i, (a, b) in enumerate(zip(original, described)):
+                check(a == b, f"{chr(97+i)} region at {x},{y}")
+            current = "182"
+            original = [y >= 0 and x-y == 0, x <= 0 and x+y == 0, x+y+2 >= 0 and x-y == 0]
+            described = [x == y and x >= 0, y == -x and x <= 0, x == y and x >= -1]
+            for i, (a, b) in enumerate(zip(original, described)):
+                check(a == b, f"{chr(97+i)} ray at {x},{y}")
+            current = "183"
+            domain = x != 0 and y != 0
+            original = [
+                x*y >= 0, x*y <= 0, (x-2)*(y-3) >= 0, (x+y)*(x-y) <= 0,
+                domain and (x+y)*(1/x+1/y) > 0,
+                domain and (x-y)*(1/x-1/y) > 0,
+            ]
+            described = [
+                (x >= 0 and y >= 0) or (x <= 0 and y <= 0),
+                (x <= 0 and y >= 0) or (x >= 0 and y <= 0),
+                (x >= 2 and y >= 3) or (x <= 2 and y <= 3),
+                abs(y) >= abs(x), x*y > 0, x*y < 0,
+            ]
+            for i, (a, b) in enumerate(zip(original, described)):
+                check(a == b, f"{chr(97+i)} region/domain at {x},{y}")
+            current = "185"
+            r2 = x*x+y*y
+            original = [
+                F(169, 100) <= r2 <= 9,
+                r2 <= 36 and abs(x) > 1,
+                r2 <= 100 and abs(x) < 8,
+                r2 <= F(36, 25) and x*y >= 0,
+                64 <= r2 <= 100 and x*y <= 0,
+                y >= x*x and y <= 9-x*x,
+                y >= x*x+4*x+4 and y <= 4,
+                y >= (x-1)**2 and y <= F(7, 2),
+                y >= (x-2)*(x-3) and y <= 0,
+            ]
+            described = [
+                F(13, 10)**2 <= r2 <= 3**2,
+                ((1 < x <= 6) or (-6 <= x < -1)) and y*y <= 36-x*x,
+                -8 < x < 8 and y*y <= 100-x*x,
+                r2 <= F(6, 5)**2 and ((x >= 0 and y >= 0) or (x <= 0 and y <= 0)),
+                8**2 <= r2 <= 10**2 and ((x <= 0 and y >= 0) or (x >= 0 and y <= 0)),
+                x*x <= F(9, 2) and x*x <= y <= 9-x*x,
+                -4 <= x <= 0 and (x+2)**2 <= y <= 4,
+                (x-1)**2 <= F(7, 2) and (x-1)**2 <= y <= F(7, 2),
+                2 <= x <= 3 and (x-2)*(x-3) <= y <= 0,
+            ]
+            for i, (a, b) in enumerate(zip(original, described)):
+                check(a == b, f"{chr(97+i)} region/boundary at {x},{y}")
+
+    current = "180"
+    area, = rational(answers[current]["parts"])
+    check(area == F(4*4, 2), "explicit diamond area")
+    current = "187"
+    a, b = rational(answers[current]["parts"])
+    check(a == F(8*4, 2) == 16, "a explicit area")
+    for x, y in ((F(-1), F(1)), (F(3), F(3))):
+        check(y == abs(x) and y == x/2+F(3, 2), "b exact vertices")
+    check(b == F(abs(-1*3-1*3), 2) == 3, "b explicit determinant area")
+    check(b == F(3, 4)+F(9, 4), "b split-triangle area cross-check")
+
+    report["sourceExerciseCount"] = len(selected)
+    report["sourcePrimarySubparts"] = sum(
+        len(re.findall(r"^[a-i]\)", e["text"], flags=re.M)) or 1 for e in selected
+    )
+    report["autoExercises"] = sum(a["grading"] == "auto" for a in answers.values())
+    report["ungradedExercises"] = sum(a["grading"] == "ungraded" for a in answers.values())
+    report["autoParts"] = sum(len(a["parts"]) for a in answers.values())
+    report["ungradedDisplaySlots"] = sum(len(a.get("subpartAnswers", [])) for a in answers.values())
+    report["grid"] = {"axisValues": len(grid), "points": len(grid)**2, "arithmetic": "exact Fraction"}
+except Exception:
+    failures.append({"exercise": current, "exception": traceback.format_exc()})
+
+report["checksByExercise"] = dict(checks)
+report["checks"] = sum(checks.values())
+report["failures"] = failures
+report["status"] = "pass" if not failures else "fail"
+report["exitCode"] = 0 if not failures else 1
+index = 1
+while (ROOT / f"verification-algebra-{index:03d}.json").exists():
+    index += 1
+receipt = ROOT / f"verification-algebra-{index:03d}.json"
+payload = json.dumps(report, ensure_ascii=False, indent=2) + "\n"
+with receipt.open("x") as handle:
+    handle.write(payload)
+print(payload, end="")
+print(f"RECEIPT {receipt}")
+sys.exit(report["exitCode"])

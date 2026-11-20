@@ -1,0 +1,242 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
+
+const root = "/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck";
+if (process.cwd() !== root) throw new Error("Wrong review workdir");
+const rawBase = ".tmp/resume182-6-8a-c2ex-assembly6213-AFFECTED-continuation1";
+const modernBase = ".tmp/resume182-6-8a-c2ex-modern6213-AFFECTED-continuation1";
+const rawDir = `${rawBase}/artifacts/8a/lessons/alg8-c2-ex`;
+const modernDir = `${modernBase}/adapt/8a/modern-us-neutral/lessons/alg8-c2-ex`;
+const inputs = [
+  ["raw_lesson", `${rawDir}/lesson.json`],
+  ["raw_exercises", `${rawDir}/exercises.json`],
+  ["lesson_template", `${modernDir}/lesson.template.json`],
+  ["exercises_template", `${modernDir}/exercises.template.json`],
+  ["figures_template_metadata_only", `${modernDir}/figures.template.json`],
+  ["assembly_record", `${rawBase}/assembly.record`],
+  ["author_ready_record", `${modernBase}/text-author/ready.record`],
+];
+const hash = (value) => crypto.createHash("sha256").update(value).digest("hex");
+const loaded = Object.fromEntries(inputs.map(([role, relative]) => {
+  const absolute = path.join(root, relative);
+  const bytes = fs.readFileSync(absolute);
+  return [role, { path: absolute, sha256: hash(bytes), data: JSON.parse(bytes) }];
+}));
+const raw = loaded.raw_exercises.data;
+const modern = loaded.exercises_template.data;
+const lesson = loaded.raw_lesson.data;
+const modernLesson = loaded.lesson_template.data;
+const figureMetadata = loaded.figures_template_metadata_only.data;
+const assembly = loaded.assembly_record.data;
+const author = loaded.author_ready_record.data;
+const profile = JSON.parse(fs.readFileSync(path.join(root,
+  ".claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json"), "utf8"));
+const defects = [];
+const check = (condition, message, target = "package") => {
+  if (!condition) defects.push({ target, message });
+  return Boolean(condition);
+};
+const equal = (a, b) => isDeepStrictEqual(a, b);
+
+check(loaded.assembly_record.sha256 ===
+  "bcb0c46e6af3839959cf22e5f099acca1a983dcc68a300860ddabf22369b29b6",
+  "Assembly record differs from directly supplied SHA");
+check(loaded.author_ready_record.sha256 ===
+  "892f0e474dde43bdeb721eaceb59536c107d3d39c858c2c5db1a087e26f90183",
+  "Author ready record differs from directly supplied SHA");
+check(assembly.book === "8a" && assembly.lesson === "alg8-c2-ex" &&
+  assembly.each_source_block_contributes_once === true,
+  "Supplied assembly identity or contribution receipt differs");
+check(author.book === "8a" && author.lesson === "alg8-c2-ex" &&
+  author.edition === "modern-us-neutral", "Author record identity differs");
+for (const entry of author.files) {
+  const input = Object.values(loaded).find((file) => file.path === entry.path);
+  check(input && input.sha256 === entry.sha256,
+    `Author-bound candidate bytes differ: ${entry.path}`);
+}
+check(equal(modern.source.data, raw), "Exercise source snapshot differs from actual raw");
+check(modern.source.sha256 === loaded.raw_exercises.sha256,
+  "Exercise source SHA differs from actual raw");
+check(equal(modernLesson.source.data, lesson), "Lesson source snapshot differs from actual raw");
+check(modernLesson.source.sha256 === loaded.raw_lesson.sha256,
+  "Lesson source SHA differs from actual raw");
+for (const [key, value] of Object.entries(lesson)) {
+  check(equal(value, modernLesson[key]), `Lesson metadata changed: ${key}`);
+}
+check(modern.lesson === "alg8-c2-ex" && lesson.id === "alg8-c2-ex" &&
+  modernLesson.id === "alg8-c2-ex" && figureMetadata.lesson === "alg8-c2-ex",
+  "Lesson identity differs");
+check([modern, modernLesson, figureMetadata].every((item) =>
+  item.edition === "modern-us-neutral"), "Edition identity differs");
+check(equal(modernLesson.prose, []) && equal(modernLesson.section_breaks, []) &&
+  equal(modernLesson.errata, []), "Unexpected prose, section boundary, or erratum");
+check(raw.count === 50 && modern.count === 50 && lesson.exercise_count === 50 &&
+  raw.exercises.length === 50 && modern.exercises.length === 50,
+  "Exercise count differs from 50");
+const expectedNumbers = Array.from({ length: 50 }, (_, i) => String(138 + i));
+check(equal(raw.exercises.map((item) => item.number), expectedNumbers),
+  "Raw exercise sequence is not exactly 138 through 187");
+check(equal(modern.exercises.map((item) => item.number), expectedNumbers),
+  "Modern exercise sequence is not exactly 138 through 187");
+check(equal(figureMetadata.figures.map((figure) => figure.id),
+  lesson.figures.map((figure) => figure.id)), "Figure manifest identities differ");
+
+const cyrillicLabels = "\u0430\u0431\u0432\u0433\u0434\u0435\u0436\u0437\u0438";
+const chinesePunctuation = /[\u3001\uff0c\uff1b\u3002\uff1f\uff01\uff1a]/u;
+const blockedNames = [...profile.forbidden_terms, ...profile.forbidden_person_names];
+// Only outside-math enumeration and whitespace are normalized for text equality.
+const splitMath = (text) => text.split("$");
+const formulas = (text) => splitMath(text).filter((_, i) => i % 2 === 1);
+const outsideMath = (text) => splitMath(text).filter((_, i) => i % 2 === 0).join("");
+const normalizeLabel = (text) => text.replace(/([\u0430-\u044f])\)/gu,
+  (_, letter) => {
+    const index = cyrillicLabels.indexOf(letter);
+    if (index === -1) throw new Error(`Unexpected Cyrillic label: ${letter}`);
+    return `${String.fromCharCode(97 + index)})`;
+  });
+const canonicalText = (text, translate) => splitMath(text).map((part, i) =>
+  i % 2 === 1 ? `$${part}$` :
+    (translate ? normalizeLabel(part) : part).replace(/\s+/gu, "")).join("");
+const subparts = (text) => {
+  const parts = splitMath(text);
+  let offset = 0;
+  const labels = [];
+  parts.forEach((part, i) => {
+    if (i % 2 === 0) {
+      for (const match of part.matchAll(/([a-z\u0430-\u044f])\)/gu)) {
+        labels.push({ label: match[1], start: offset + match.index });
+      }
+    }
+    offset += part.length + 1;
+  });
+  return {
+    prefix: labels.length ? text.slice(0, labels[0].start) : text,
+    items: labels.map((label, i) => ({
+      label: label.label,
+      text: text.slice(label.start + 2, labels[i + 1]?.start ?? text.length),
+    })),
+  };
+};
+
+const perExercise = raw.exercises.map((source, index) => {
+  const candidate = modern.exercises[index];
+  const target = source.number;
+  const beforeDefects = defects.length;
+  const rawFormulas = formulas(source.text);
+  const modernFormulas = formulas(candidate.text);
+  const rawParts = subparts(source.text);
+  const modernParts = subparts(candidate.text);
+  const metadata = ["number", "source_number", "group", "group_id",
+    "pages", "figure_refs", "figures"];
+  for (const key of metadata) {
+    check(equal(source[key], candidate[key]), `Changed ${key}`, target);
+  }
+  check(candidate.source_text === source.text, "source_text differs from actual raw", target);
+  check(equal(candidate.numeric_changes, []) &&
+    equal(candidate.historical_entities, []), "Unexpected context declarations", target);
+  check(candidate.changes.every((change) => ["layout", "labels"].includes(change)),
+    "Unexpected non-layout or non-label change", target);
+  check(equal(rawFormulas, modernFormulas),
+    "Formula spans differ in content, order, or multiplicity", target);
+  check(splitMath(source.text).length % 2 === 1 &&
+    splitMath(candidate.text).length % 2 === 1, "Unbalanced math delimiters", target);
+  check(canonicalText(source.text, true) === canonicalText(candidate.text, false),
+    "Text changes exceed outside-math labels and whitespace", target);
+  check(equal(source.text.match(/[0-9]+(?:\.[0-9]+)?/gu) ?? [],
+    candidate.text.match(/[0-9]+(?:\.[0-9]+)?/gu) ?? []),
+    "Numeric token sequence or multiplicity changed", target);
+  check(rawParts.items.length === modernParts.items.length, "Subpart count changed", target);
+  check(canonicalText(rawParts.prefix, true) === canonicalText(modernParts.prefix, false),
+    "Stem prefix changed", target);
+  rawParts.items.forEach((part, i) => {
+    const adapted = modernParts.items[i];
+    check(adapted && normalizeLabel(`${part.label})`) === `${adapted.label})`,
+      `Incorrect source-to-modern label at subpart ${i + 1}`, target);
+    check(adapted && canonicalText(part.text, false) === canonicalText(adapted.text, false),
+      `Subpart ${i + 1} changed or assigned to a different label`, target);
+  });
+  const lines = candidate.text.split("\n");
+  check(equal(candidate.lines, lines), "lines differs from current text", target);
+  check(lines.every((line) => line === line.trim() && line.length > 0),
+    "Empty or padded candidate line", target);
+  if (modernParts.items.length > 0) {
+    check(lines.length === modernParts.items.length + 1,
+      "Stem or subpart does not occupy exactly one line", target);
+    lines.slice(1).forEach((line, i) => {
+      check(line.startsWith(`${String.fromCharCode(97 + i)}) `),
+        `Non-natural or misplaced label on line ${i + 2}`, target);
+    });
+  }
+  check(!/[\u0400-\u052f]/u.test(candidate.text), "Cyrillic remains in candidate text", target);
+  check(!/[\u3000\u21b5]/u.test(candidate.text), "Print alignment or continuation mark remains", target);
+  check(!modernFormulas.some((formula) => chinesePunctuation.test(formula)),
+    "Chinese punctuation occurs inside math", target);
+  check(!candidate.text.includes("$$") && !/\$[ \t]*\$/u.test(candidate.text),
+    "Adjacent scalar math spans have no semantic separator", target);
+  for (const term of blockedNames) {
+    check(![candidate.text, candidate.group].some((text) => text.includes(term)),
+      `Banned cultural term/name remains: ${term}`, target);
+  }
+  const authorEntry = author.entries.find((entry) => entry.exercise === target);
+  check(authorEntry && authorEntry.text_sha256 === hash(candidate.text),
+    "Current text differs from author-ready text hash", target);
+  return {
+    number: target,
+    source_number: source.source_number,
+    group: source.group,
+    group_id: source.group_id,
+    pages: source.pages,
+    figure_refs: source.figure_refs,
+    subparts: modernParts.items.length,
+    formula_spans: modernFormulas.length,
+    raw_text_sha256: hash(source.text),
+    modern_text_sha256: hash(candidate.text),
+    status: beforeDefects === defects.length ? "MATCH" : "REVISE",
+  };
+});
+const crossPage = perExercise.filter((item) =>
+  new Set(item.pages.map((reference) => reference.split("#")[0])).size > 1);
+check(equal(crossPage.map((item) => item.number),
+  ["138", "144", "151", "154", "164", "166", "170", "178"]),
+  "Cross-page exercise set differs");
+const groups = Array.from(new Set(perExercise.map((item) => item.group_id))).map((id) => {
+  const items = perExercise.filter((item) => item.group_id === id);
+  return { group_id: id, group: items[0].group, first: items[0].number,
+    last: items.at(-1).number, count: items.length };
+});
+for (const field of ["title", "printed_title", "chapter"]) {
+  for (const term of blockedNames) {
+    check(!modernLesson[field].includes(term), `Banned term in lesson ${field}: ${term}`);
+  }
+}
+for (const input of Object.values(loaded)) {
+  check(hash(fs.readFileSync(input.path)) === input.sha256,
+    `Input changed during comparison: ${input.path}`);
+}
+console.log(JSON.stringify({
+  schema: "stemrobin-182/independent-modern-text-comparison@1",
+  book: "8a",
+  lesson: "alg8-c2-ex",
+  edition: "modern-us-neutral",
+  status: defects.length ? "REVISE" : "TEXT_PASS",
+  files: Object.entries(loaded).map(([role, file]) =>
+    ({ role, path: file.path, sha256: file.sha256 })),
+  exercise_count: perExercise.length,
+  subpart_exercise_count: perExercise.filter((item) => item.subparts > 0).length,
+  subpart_count: perExercise.reduce((total, item) => total + item.subparts, 0),
+  formula_span_count: perExercise.reduce((total, item) => total + item.formula_spans, 0),
+  groups,
+  cross_page: crossPage.map((item) => ({ number: item.number, pages: item.pages })),
+  per_exercise: perExercise,
+  defects,
+  limits: {
+    image_views: 0,
+    image_file_reads: 0,
+    solutions_computed: 0,
+    existing_validator_calls: 0,
+    source_page_audits: 0,
+    candidate_writes: 0,
+  },
+}, null, 2));

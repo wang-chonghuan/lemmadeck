@@ -1,0 +1,46 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-0789/lemmadeck';
+assert.equal(process.cwd(), repo);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const migration = JSON.parse(fs.readFileSync('.tmp/resume182-6-c2ex-recovery0789/migration.record'));
+const aliases = new Map(migration.aliases.map(item => [item.historical_path, item.current_path]));
+const selection = JSON.parse(fs.readFileSync('.tmp/resume182-6-8a-c2ex-display5724-FIRST/selection-first/selection.record'));
+const reportPath = aliases.get(selection.authority.path);
+const reportBytes = fs.readFileSync(reportPath);
+assert.equal(sha(reportBytes), selection.authority.sha256);
+const report = JSON.parse(reportBytes);
+const surface = report.deliveredSurfaces.find(item => item.path.endsWith('exercises.html'));
+const htmlPath = aliases.get(surface.path);
+const htmlBytes = fs.readFileSync(htmlPath);
+assert.equal(sha(htmlBytes), surface.sha256);
+const css = htmlBytes.toString('utf8').match(/\.nb,\.sr-nb\{[^}]+\}/)?.[0];
+assert.ok(css?.includes('overflow-x:auto') && css.includes('scrollbar-width:none'));
+const check = report.checks.find(item => item.name === '390:exercises:glyph-rules-media-and-formula-boxes-reachable');
+assert.equal(check.status, 'PASS');
+const relevantKeys = new Set(['standard-138', 'standard-143', 'exercise-144', 'standard-144']);
+const horizontalEnds = check.horizontalEnds.filter(item => relevantKeys.has(item.key));
+assert.equal(horizontalEnds.length, 5);
+const names = ['390-exercises-0050.png', '390-exercises-0054.png', '390-exercises-0055.png'];
+const captures = report.screenshots.filter(item => names.some(name => item.path.endsWith(name))).map(item => ({
+  path: aliases.get(item.path), historical_path: item.path, sha256: item.sha256, scroll: item.scroll,
+  formulaScrollPositions: item.scrollables.filter(position =>
+    horizontalEnds.some(end => end.index === position.index)),
+}));
+const record = {
+  schema: 'stemrobin-182/affected-scroll-attribution@1',
+  actual: new Date().toISOString(),
+  authority: { path: reportPath, sha256: sha(reportBytes) },
+  html: { path: htmlPath, sha256: sha(htmlBytes) },
+  css, horizontalEnds, captures,
+  runtimeInternalClips: check.internalClips,
+  source: 'Existing immutable runtime and HTML only; no rerun or screenshot open.',
+  newImageViews: 0,
+  attributionOnly: true,
+  pendingOtherWindowPixelObservationUnchanged: true,
+};
+const target = '.tmp/resume182-6-c2ex-observe0789-batch23/scroll-contract.json';
+fs.writeFileSync(target, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: target, sha256: sha(fs.readFileSync(target)), formulaScrolls: horizontalEnds.length, newViews: 0 }));

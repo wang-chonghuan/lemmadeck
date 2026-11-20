@@ -1,0 +1,416 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+
+const checkout = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck'
+assert.equal(process.cwd(), checkout)
+const root = '.tmp/resume182-6-8a-c2ex-fig26-27-author6213-FIRST'
+const repairLayout = process.argv.includes('--repair-layout')
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'))
+const write = (file, value) => {
+  fs.mkdirSync(path.dirname(file), { recursive: true })
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`)
+}
+const bindings = [
+  ['.tmp/resume182-6-8a-c2ex-modern-text-review6213-FIRST/ready.record',
+    '34e87282e54905e8f45c178de32348de8e07cb3f4033cb0315c939dac796a6d3'],
+  ['.tmp/resume182-6-8a-c2ex-source-figure-adjudication6213-AFFECTED1/ready.record',
+    '5b8689119189179f90421e147941a2d940e5ce2a62c53767e0fd7a399f64bf58'],
+  ['.tmp/resume182-6-8a-c2ex-source-figure-adjudication6213-AFFECTED1/affected-H1-crop.record',
+    '1277ff87e6215d98ac79b8de54312b6ac24eece3a2c099e717e885c8fd5d5d15'],
+  [`${root}/inventory.md`, '2978b3433d7beebb137f303e44ad36ce4793ff531828135c88439a1dcb4668fa'],
+  [`${root}/inventory.record`, 'e9cd75034b20dc242fce6696a84afe953703959448d39c127abaf73d075c178f'],
+]
+for (const [file, expected] of bindings) assert.equal(sha(file), expected, file)
+assert.equal(read(bindings[0][0]).status, 'TEXT_PASS')
+assert.equal(read(bindings[2][0]).h1_classification, 'supported-solid-continuous')
+
+const canvas = { width: 640, height: 1024, boundingBox: [-5.25, 8.25, 5.25, -8.55], background: 'paper', keepAspectRatio: true }
+const scale = canvas.width / 10.5
+const round = value => Number(value.toFixed(10))
+const localBounds = [-4.5, 3, 4.5, -3]
+const manifest = { bindings: bindings.map(([file, hash]) => ({ path: file, sha256: hash })), figures: [] }
+
+function newSpec(number) {
+  const id = `fig-${number}`
+  const contextPath = `.tmp/resume182-6-8a-c2ex-figure-context6213-FIRST/${id}.context.json`
+  const context = read(contextPath)
+  assert.equal(context.figure, id)
+  assert.equal(context.lessons.length, 1)
+  assert.deepEqual(context.lessons[0].prose, [])
+  assert.equal(context.lessons[0].exercises.length, 1)
+  assert.equal(context.lessons[0].exercises[0].exercise, number === 26 ? '177' : '186')
+  const source = `ssot-resources/soviet10year-textbooks/artifacts/8a/figures/${id}.png`
+  assert.equal(sha(source), context.sourceImage.sha256, source)
+  const spec = {
+    schema: 'ld-s10y-image/figure-spec@2',
+    id,
+    mode: 'deterministic',
+    description: number === 26
+      ? 'Two independent half-unit coordinate grids with solid separators, coordinate projection guides, and the source-selected hatched sides. Read with exercise 177; no solution annotations.'
+      : 'Two independent half-unit coordinate grids showing lateral circular caps and the left wedge between two complete solid diagonals. Read with exercise 186; no solution annotations.',
+    source: {
+      image: { path: source, sha256: sha(source) },
+      authoritativeText: context.lessons.flatMap(lesson => lesson.exercises.map(exercise => ({
+        lesson: lesson.lesson, exercise: exercise.exercise, text: exercise.text,
+      }))),
+      inventory: [],
+    },
+    canvas,
+    display: { purpose: 'instructional', layout: 'scroll', minTextPx: 16, widths: [640] },
+    objects: [],
+    assertions: [],
+    layout: { minLabelGap: 4 },
+  }
+  manifest.figures.push({
+    figure: id, context: { path: contextPath, sha256: sha(contextPath) },
+    durableSource: spec.source.image, modernAdditions: [], derivedCoordinates: [], panels: [],
+  })
+  return spec
+}
+
+function panel(spec, letter, cy) {
+  const prefix = `${spec.id.replace('-', '')}-${letter}`
+  const info = manifest.figures.at(-1)
+  const objects = spec.objects
+  const assertions = spec.assertions
+  const inventory = spec.source.inventory
+  const pointIds = []
+  const relationIds = []
+  const hiddenIds = []
+  const constructionAssertions = []
+  const hatchClearances = []
+  const global = ([x, y]) => [round(x), round(y + cy)]
+  const add = object => { objects.push(object); return object.id }
+  const relation = assertion => { assertions.push(assertion); relationIds.push(assertion.id); return assertion.id }
+  const construction = assertion => { assertions.push(assertion); constructionAssertions.push(assertion.id) }
+  const anchor = (name, at, provenance) => {
+    const id = `${prefix}-${name}`
+    pointIds.push(id)
+    add({ id, type: 'point', at: global(at), size: 0.5, strokeWidth: 0.2, stroke: 'ink', fill: 'ink' })
+    info.derivedCoordinates.push({ id, localAt: at, provenance, visibleCoordinateLabel: false, anchorFootprint: 'contained within existing axis/boundary ink' })
+    return id
+  }
+  const hidden = (name, at, provenance) => {
+    const id = `${prefix}-${name}`
+    hiddenIds.push(id)
+    add({ id, type: 'point', at: global(at), visible: false })
+    info.derivedCoordinates.push({ id, localAt: at, provenance, visibleCoordinateLabel: false, visibleMarker: false })
+    return id
+  }
+  const segment = (name, from, to, options = {}) => add({
+    id: `${prefix}-${name}`, type: 'segment',
+    from: typeof from === 'string' ? from : global(from),
+    to: typeof to === 'string' ? to : global(to),
+    stroke: 'ink', strokeWidth: 3.5, dash: 0, ...options,
+  })
+  const labelClearance = (at, text, position, gap, fontSize = 20) => {
+    const width = text.length * fontSize * 0.63
+    const xSign = position.includes('W') ? -1 : position.includes('E') ? 1 : 0
+    const ySign = position.includes('N') ? 1 : position.includes('S') ? -1 : 0
+    const centerX = at[0] + (xSign * (gap + width / 2)) / scale
+    const centerY = at[1] + ySign * gap / scale
+    hatchClearances.push([
+      centerX - (width / 2 + 4) / scale, centerY + (fontSize / 2 + 5) / scale,
+      centerX + (width / 2 + 4) / scale, centerY - (fontSize / 2 + 5) / scale,
+    ])
+  }
+  const tick = (at, label, position = 'S', gap = 18) => {
+    labelClearance(at, String(label), position, gap)
+    return { at: global(at), label: String(label), size: 0.07, fontSize: 20, labelPlacement: { position, gap } }
+  }
+  const gridId = add({
+    id: `${prefix}-grid`, type: 'grid', bounds: globalBounds(cy),
+    xStep: 0.5, yStep: 0.5, xOffset: 0, yOffset: cy,
+    stroke: 'grid', strokeWidth: 1.3,
+  })
+  const gridAssertion = `${prefix}-grid-18x12`
+  assertions.push({ id: gridAssertion, type: 'gridDimensions', grid: gridId, columns: 18, rows: 12 })
+  const frame = add({
+    id: `${prefix}-frame`, type: 'polygon',
+    points: [[-4.5, -3], [4.5, -3], [4.5, 3], [-4.5, 3]].map(global),
+    fillOpacity: 0, stroke: 'muted', strokeWidth: 1.5,
+  })
+  inventory.push({
+    id: `${prefix}-source-grid`,
+    description: 'Independent source frame: 18 columns / 12 rows; half-unit steps; origin nine columns from either side and six rows from top/bottom. Zero LOCAL axis-relative phase; global phase is the explicit panel translation. Hatch-masked strokes are not claimed individually visible.',
+    objects: [gridId, frame], assertions: [gridAssertion], requires: ['gridDimensions'],
+  })
+  const caption = add({ id: `${prefix}-caption`, type: 'text', at: global([-4.1, 3.65]), text: `(${letter})`, fontSize: 22, labelPlacement: { position: 'CENTER' } })
+  info.modernAdditions.push({ panel: prefix, kind: 'layout-and-caption', description: 'Vertical panel arrangement; English caption outside source frame; 640px actual scroll media; 20px scale labels.' })
+  const axisObjects = []
+  const axes = (xTicks, yTicks) => {
+    axisObjects.push(add({
+      id: `${prefix}-x-axis`, type: 'axis', from: global([-4.5, 0]), to: global([4.5, 0]),
+      stroke: 'ink', strokeWidth: 2.3, ticks: xTicks.map(args => tick(...args)),
+    }))
+    axisObjects.push(add({
+      id: `${prefix}-y-axis`, type: 'axis', from: global([0, -3]), to: global([0, 3]),
+      stroke: 'ink', strokeWidth: 2.3, ticks: yTicks.map(([at, text, position = 'W', gap = 18]) => tick(at, text, position, gap)),
+    }))
+    for (const [name, from, to] of [['x-positive', [4.12, 0], [4.5, 0]], ['y-positive', [0, 2.62], [0, 3]]]) {
+      axisObjects.push(add({ id: `${prefix}-${name}`, type: 'arrow', from: global(from), to: global(to), stroke: 'ink', strokeWidth: 2.3 }))
+    }
+    axisObjects.push(add({ id: `${prefix}-x-name`, type: 'text', at: global([4.5, 0]), text: 'x', fontSize: 20, labelPlacement: { position: 'E', gap: 20 } }))
+    axisObjects.push(add({ id: `${prefix}-y-name`, type: 'text', at: global([0, 3]), text: 'y', fontSize: 20, labelPlacement: { position: 'N', gap: 20 } }))
+    inventory.push({
+      id: `${prefix}-source-axes`,
+      description: 'Own solid coordinate axes with positive-direction arrowheads; certified source scale marks only. Origin label is normalized as 0. Unreadable source negative glyphs are omitted, not reconstructed.',
+      objects: axisObjects, assertions: [],
+    })
+  }
+  const origin = anchor('origin', [0, 0], 'Source axis intersection, no printed ordered pair.')
+  const originPosition = repairLayout && prefix === 'fig26-b' ? 'SW' : 'SE'
+  Object.assign(objects.find(object => object.id === origin), {
+    label: '0', fontSize: 20, labelPlacement: { position: originPosition, gap: 14 },
+  })
+  labelClearance([0, 0], '0', originPosition, 14)
+  const cover = (name, from, to, dx, dy) => relation({ id: `${prefix}-${name}`, type: 'displacement', from, to, dx, dy, tolerance: 1e-8 })
+  const onCircle = (point, radius) => relation({ id: `${point}-on-circle`, type: 'pointOnCircle', point, center: origin, radius, tolerance: 1e-8 })
+  const collinear = (name, a, b, c, derived = false) => {
+    const assertion = { id: `${prefix}-${name}`, type: 'collinear', a, b, c, tolerance: 1e-8 }
+    if (derived) construction(assertion)
+    else relation(assertion)
+  }
+  const hatch = (name, slope, pitch, halfplanes, circle = false) => {
+    const ids = []
+    let excludedPieces = 0
+    const extremes = [[-4.5, -3], [-4.5, 3], [4.5, -3], [4.5, 3]].map(([x, y]) => y - slope * x)
+    const start = Math.floor(Math.min(...extremes) / pitch)
+    const end = Math.ceil(Math.max(...extremes) / pitch)
+    for (let index = start; index <= end; index++) {
+      const intercept = index * pitch
+      const constraints = [
+        [-1, 0, 4.5], [1, 0, 4.5], [0, 1, 3], [0, -1, 3], ...halfplanes,
+      ]
+      let span = [-4.5, 4.5]
+      if (circle) {
+        const a = 1 + slope ** 2
+        const b = 2 * slope * intercept
+        const c = intercept ** 2 - 4
+        const discriminant = b ** 2 - 4 * a * c
+        if (discriminant <= 0) continue
+        span = [(-b - Math.sqrt(discriminant)) / (2 * a), (-b + Math.sqrt(discriminant)) / (2 * a)]
+      }
+      span = clip(span, slope, intercept, constraints)
+      if (!span) continue
+      let pieces = [span]
+      for (const [xmin, ymax, xmax, ymin] of hatchClearances) {
+        const blocked = clip(span, slope, intercept, [[-1, 0, -xmin], [1, 0, xmax], [0, 1, ymax], [0, -1, -ymin]])
+        if (!blocked) continue
+        pieces = pieces.flatMap(([lo, hi]) => {
+          if (blocked[1] <= lo || blocked[0] >= hi) return [[lo, hi]]
+          excludedPieces++
+          return [[lo, Math.min(hi, blocked[0])], [Math.max(lo, blocked[1]), hi]].filter(([a, b]) => b - a > 1e-6)
+        })
+      }
+      for (const [piece, [lo, hi]] of pieces.entries()) {
+        if (hi - lo < 0.025) continue
+        for (const x of [lo, (lo + hi) / 2, hi]) {
+          for (const [a, b, c] of constraints) assert.ok(a * x + b * (slope * x + intercept) <= c + 1e-8)
+          if (circle) assert.ok(x ** 2 + (slope * x + intercept) ** 2 <= 4 + 1e-8)
+        }
+        ids.push(segment(`${name}-${index - start}-${piece}`, [lo, slope * lo + intercept], [hi, slope * hi + intercept], { stroke: 'muted', strokeWidth: 1.2, opacity: 0.75 }))
+      }
+    }
+    assert.ok(ids.length > 0)
+    info.hatchConstructionChecks ??= []
+    info.hatchConstructionChecks.push({
+      panel: prefix, region: name, segments: ids.length, slope, pitch,
+      checkedPointsPerSegment: ['start', 'midpoint', 'end'],
+      frameAndHalfplaneConstraints: true, circleConstraint: circle,
+      exactClipConstruction: true, labelClearanceSplits: excludedPieces,
+    })
+    inventory.push({
+      id: `${prefix}-source-${name}`,
+      description: `Source-selected hatch region, bounded by the original mathematical boundaries and frame. Exact analytic clipping uses construction coordinates, not printed givens. Modern additions: uniform pitch and ${excludedPieces} hatch-only label-clearance splits; the complete half-unit grid remains.`,
+      objects: ids, assertions: [],
+    })
+    return ids
+  }
+  const finish = (description, boundaryIds) => {
+    inventory.push({
+      id: `${prefix}-source-landmarks`,
+      description,
+      objects: [...pointIds, ...boundaryIds], assertions: relationIds, requires: ['pointRelationships'],
+    })
+    if (constructionAssertions.length) inventory.push({
+      id: `${prefix}-derived-construction`,
+      description: 'Analytic frame clips and guide ends derived from source-supported geometry; invisible construction points, never printed givens, visible coordinates, finite-domain endpoints, or answer annotations.',
+      objects: [], assertions: constructionAssertions,
+    })
+    inventory.push({
+      id: `${prefix}-modern-caption`,
+      description: 'Modern addition: normalized English panel caption outside the source lattice, with vertical re-layout only.',
+      objects: [caption], assertions: [],
+    })
+    info.panels.push({ id: prefix, translation: [0, cy], grid: { columns: 18, rows: 12, step: 0.5 }, mappedLandmarks: pointIds, hiddenConstructionPoints: hiddenIds })
+  }
+  return { prefix, global, anchor, hidden, axes, segment, cover, collinear, onCircle, hatch, finish, origin, relation, construction, info }
+}
+
+function globalBounds(cy) {
+  return [localBounds[0], localBounds[1] + cy, localBounds[2], localBounds[3] + cy]
+}
+
+// Intersect a parametric hatch line with convex half-planes; keep exact boundary contacts.
+function clip(initial, slope, intercept, constraints) {
+  let [lo, hi] = initial
+  for (const [a, b, c] of constraints) {
+    const coefficient = a + b * slope
+    const remainder = c - b * intercept
+    if (Math.abs(coefficient) < 1e-12) {
+      if (remainder < -1e-9) return null
+    } else if (coefficient > 0) hi = Math.min(hi, remainder / coefficient)
+    else lo = Math.max(lo, remainder / coefficient)
+    if (hi - lo <= 1e-8) return null
+  }
+  return [lo, hi]
+}
+
+const fig26 = newSpec(26)
+{
+  const p = panel(fig26, 'a', 4)
+  p.axes([[[-3, 0], '-3'], [[-2, 0], '-2'], [[2, 0], '2'], [[3, 0], '3']],
+    [[[0, -2], '-2'], [[0, -1], '-1'], [[0, 1], '1'], [[0, 2], '2']])
+  const left = p.anchor('node-c5-r8', [-2, -1], 'Source-supported grid locator (c5,r8), not a printed ordered pair.')
+  const right = p.anchor('node-c13-r4', [2, 1], 'Source-supported grid locator (c13,r4), not a printed ordered pair.')
+  p.cover('origin-to-left', p.origin, left, -2, -1)
+  p.cover('origin-to-right', p.origin, right, 2, 1)
+  p.collinear('three-source-nodes', left, p.origin, right)
+  const clipLeft = p.hidden('left-frame-clip', [-4.5, -2.25], 'Analytic collinear frame clip from the three supported internal nodes.')
+  const clipRight = p.hidden('right-frame-clip', [4.5, 2.25], 'Analytic collinear frame clip from the three supported internal nodes.')
+  const boundary = p.segment('solid-separator', clipLeft, clipRight)
+  p.collinear('left-clip-collinear', clipLeft, left, p.origin, true)
+  p.collinear('right-clip-collinear', p.origin, right, clipRight, true)
+  const guides = []
+  for (const [name, from, to] of [['upper', [0, 1], [2, 1]], ['lower', [-2, -1], [0, -1]]]) {
+    const start = p.hidden(`${name}-guide-start`, from, 'Supported horizontal source projection; not a set boundary.')
+    const end = p.hidden(`${name}-guide-end`, to, 'Supported horizontal source projection; no visible endpoint marker.')
+    guides.push(p.segment(`${name}-coordinate-guide`, start, end, { strokeWidth: 1.8, dash: 2 }))
+    p.construction({ id: `${p.prefix}-${name}-guide-horizontal`, type: 'displacement', from: start, to: end, dx: to[0] - from[0], dy: 0 })
+  }
+  p.hatch('upper-left-hatch', -1, 0.22, [[0.5, -1, 0]])
+  p.finish('Source solid separator through (-2,-1), origin, and (2,1); upper-left hatch; short dashed horizontal coordinate guides at local y=+1/-1, never a dashed set boundary. Unreadable nearest negative x glyph is omitted.', [boundary, ...guides])
+}
+{
+  const p = panel(fig26, 'b', -4.5)
+  p.axes([[[1, 0], '1']], [[[0, -1], '-1'], [[0, 1], '1']])
+  const xInt = p.anchor('x-intercept-c10-r6', [0.5, 0], 'Source-supported first half-unit grid crossing right of origin.')
+  const yInt = p.anchor('y-intercept-c9-r8', [0, -1], 'Source-supported negative unit-height crossing.')
+  const unit = p.anchor('unit-node-c11-r4', [1, 1], 'Source-supported positive unit-height projection node.')
+  p.cover('origin-to-x-intercept', p.origin, xInt, 0.5, 0)
+  p.cover('origin-to-y-intercept', p.origin, yInt, 0, -1)
+  p.cover('origin-to-unit-node', p.origin, unit, 1, 1)
+  p.collinear('three-source-nodes', yInt, xInt, unit)
+  const bottom = p.hidden('bottom-frame-clip', [-1, -3], 'Analytic frame clip from supported intercepts.')
+  const top = p.hidden('top-frame-clip', [2, 3], 'Analytic frame clip from supported intercepts.')
+  const boundary = p.segment('solid-separator', bottom, top)
+  p.collinear('bottom-clip-collinear', bottom, yInt, xInt, true)
+  p.collinear('top-clip-collinear', xInt, unit, top, true)
+  const guides = []
+  for (const [name, from, to] of [['upper', [0, 1], [1, 1]], ['lower', [-1, -1], [0, -1]]]) {
+    const provenance = name === 'lower'
+      ? 'Modern regularization of the supported short negative-level coordinate-guide fragment; exact source fragment endpoints were not certified.'
+      : 'Supported positive-unit horizontal coordinate projection.'
+    const start = p.hidden(`${name}-guide-start`, from, provenance)
+    const end = p.hidden(`${name}-guide-end`, to, provenance)
+    guides.push(p.segment(`${name}-coordinate-guide`, start, end, { strokeWidth: 1.8, dash: 2 }))
+    p.construction({ id: `${p.prefix}-${name}-guide-horizontal`, type: 'displacement', from: start, to: end, dx: to[0] - from[0], dy: 0 })
+  }
+  p.info.modernAdditions.push({ panel: p.prefix, kind: 'negative-guide-fragment', description: 'Supported negative-level horizontal fragment regularized to a one-unit extent left of y-axis; its endpoints are construction, not source given values or boundaries.' })
+  p.hatch('right-below-hatch', -1, 0.22, [[-2, 1, -1]])
+  p.finish('Source solid separator through (.5,0), (0,-1), and (1,1); right/below hatch. Dashed positive horizontal coordinate projection preserved; negative short guide fragment explicitly regularized, not a mathematical boundary.', [boundary, ...guides])
+}
+
+const fig27 = newSpec(27)
+{
+  const p = panel(fig27, 'a', 4)
+  p.axes([[[1, 0], '1', 'SW', 14], [[2, 0], '2', 'SE', 18]], [[[0, 1], '1']])
+  const cardinal = [['left', [-2, 0]], ['right', [2, 0]], ['top', [0, 2]], ['bottom', [0, -2]]]
+  for (const [name, at] of cardinal) {
+    const id = p.anchor(`circle-${name}`, at, 'Source circle axial extreme four half-unit cells from origin.')
+    p.cover(`origin-to-${name}-extreme`, p.origin, id, ...at)
+    p.onCircle(id, 2)
+  }
+  const root3 = Math.sqrt(3)
+  const contacts = {}
+  for (const x of [-1, 1]) {
+    const side = x < 0 ? 'left' : 'right'
+    for (const ySign of [-1, 1]) {
+      const end = ySign < 0 ? 'bottom' : 'top'
+      const at = [x, ySign * root3]
+      const id = p.anchor(`${side}-chord-${end}`, at, 'Analytic chord contact from source radius 2 and cutoff x=+/-1; radical height is construction only, not printed or visibly labeled.')
+      contacts[`${side}-${end}`] = id
+      p.onCircle(id, 2)
+      p.cover(`origin-to-${side}-${end}`, p.origin, id, ...at)
+    }
+    p.cover(`${side}-vertical-chord`, contacts[`${side}-bottom`], contacts[`${side}-top`], 0, 2 * root3)
+  }
+  const circle = `${p.prefix}-solid-circle`
+  fig27.objects.push({ id: circle, type: 'circle', center: p.origin, radius: 2, stroke: 'ink', strokeWidth: 3.5, fillOpacity: 0 })
+  const boundaries = [circle]
+  for (const side of ['left', 'right']) boundaries.push(p.segment(`${side}-vertical-cutoff`, contacts[`${side}-bottom`], contacts[`${side}-top`]))
+  p.hatch('left-cap-hatch', 1, 0.20, [[1, 0, -1]], true)
+  p.hatch('right-cap-hatch', 1, 0.20, [[-1, 0, -1]], true)
+  p.finish('Source origin-centered radius-2 circular outline and four cardinal grid intersections; vertical cap boundaries x=+/-1 terminate at all four circle contacts. Contact heights are analytically constructed, never printed givens. Two lateral caps hatched; center strip and exterior unhatched. Solid continuous upper-right arc supported by the new H1-only record.', boundaries)
+}
+{
+  const p = panel(fig27, 'b', -4.5)
+  p.axes([[[1, 0], '1', 'SW', 16]], [[[0, 1], '1', 'W', repairLayout ? 26 : 18]])
+  p.info.modernAdditions.push({ panel: p.prefix, kind: 'normalized-scale-label', description: 'Clean upper 1 at the source-supported unit-height junction; not recovery of the crowded literal source glyph.' })
+  const junction = p.anchor('junction-c9-r4', [0, 1], 'Source-supported junction two half-unit rows above origin.')
+  const negative = p.anchor('negative-crossing-c7-r6', [-1, 0], 'Source-supported lattice crossing; no recovered printed negative numeral.')
+  const positive = p.anchor('positive-crossing-c11-r6', [1, 0], 'Source-supported crossing at positive x unit mark.')
+  p.cover('origin-to-junction', p.origin, junction, 0, 1)
+  p.cover('origin-to-negative-crossing', p.origin, negative, -1, 0)
+  p.cover('origin-to-positive-crossing', p.origin, positive, 1, 0)
+  const bottomLeft = p.hidden('ascending-bottom-clip', [-4, -3], 'Analytic ascending diagonal frame clip from junction and negative crossing.')
+  const topRight = p.hidden('ascending-top-clip', [2, 3], 'Analytic ascending diagonal frame clip from junction and negative crossing.')
+  const topLeft = p.hidden('descending-top-clip', [-2, 3], 'Analytic descending diagonal frame clip from junction and positive crossing.')
+  const bottomRight = p.hidden('descending-bottom-clip', [4, -3], 'Analytic descending diagonal frame clip from junction and positive crossing.')
+  p.collinear('ascending-left-clip', bottomLeft, negative, junction, true)
+  p.collinear('ascending-right-clip', negative, junction, topRight, true)
+  p.collinear('descending-left-clip', topLeft, junction, positive, true)
+  p.collinear('descending-right-clip', junction, positive, bottomRight, true)
+  const boundaries = [p.segment('solid-ascending', bottomLeft, topRight), p.segment('solid-descending', topLeft, bottomRight)]
+  p.hatch('left-wedge-hatch', 2.5, 0.45, [[1, 1, 1], [1, -1, -1]])
+  p.finish('Source junction (0,1) and x-axis crossings at -1/+1 on the owning grid. Two complete solid diagonals continue on both sides of the junction; the left-facing wedge alone is hatched. No visible ordered pairs, negative-intercept label, equations, or systems.', boundaries)
+}
+
+for (const spec of [fig26, fig27]) {
+  const file = `${root}/spec/${spec.id}.spec.json`
+  if (repairLayout) {
+    const first = read(`${root}/context-plan/build.record`).figures.find(figure => figure.figure === spec.id)
+    assert.equal(sha(file), first.spec.sha256, 'Only one layout repair is authorized.')
+    const previous = read(file)
+    assert.deepEqual(spec.assertions, previous.assertions)
+    assert.deepEqual(spec.source.image, previous.source.image)
+    assert.deepEqual(spec.source.authoritativeText, previous.source.authoritativeText)
+    for (const object of previous.objects) {
+      const targetedLabel = ['fig26-b-origin', 'fig27-b-y-axis'].includes(object.id)
+      const targetedHatch = /^(fig26-b|fig27-b)-.*hatch-/.test(object.id)
+      if (!targetedLabel && !targetedHatch) {
+        assert.deepEqual(spec.objects.find(candidate => candidate.id === object.id), object, object.id)
+      }
+    }
+  } else assert.ok(!fs.existsSync(file), 'Do not overwrite an existing construction without an affected repair.')
+  write(file, spec)
+  const info = manifest.figures.find(figure => figure.figure === spec.id)
+  info.spec = { path: file, sha256: sha(file) }
+  info.objects = spec.objects.length
+  info.assertions = spec.assertions.length
+}
+write(`${root}/context-plan/${repairLayout ? 'layout-repair.record' : 'build.record'}`, {
+  recordType: 'NEW-author-spec-construction',
+  authorOnly: true,
+  sourceViews: 2, sourceReopens: 0, newImageViews: 0,
+  buildInvocation: repairLayout ? 2 : 1,
+  contentRepairCountPerFigure: repairLayout ? 1 : 0,
+  repairReason: repairLayout ? 'First renderer reports detected fig26-b origin 0 / separator collision and fig27-b upper 1 / diagonals collision. Move only these labels and their hatch clearances; all mathematical assertions and untargeted geometry are byte-equivalent.' : null,
+  approval: null,
+  ...manifest,
+})
+console.log(JSON.stringify(manifest.figures.map(({ figure, spec, objects, assertions }) => ({ figure, spec, objects, assertions })), null, 2))

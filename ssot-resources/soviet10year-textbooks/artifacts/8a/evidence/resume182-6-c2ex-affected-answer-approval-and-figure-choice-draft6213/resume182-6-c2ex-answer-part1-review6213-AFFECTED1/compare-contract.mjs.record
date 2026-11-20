@@ -1,0 +1,150 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck'
+assert.equal(process.cwd(), root, 'Wrong checkout')
+const inputs = {
+  first: ['.tmp/resume182-6-8a-c2ex-answer-review6213-FIRST-part1/ready.record', 'ff3c3f8f08dbe2781935ac7067b520b9577eee5a84e3e7482e5c7b7df52843bf'],
+  original: ['.tmp/resume182-6-8a-c2ex-answer-author6213-FIRST-part1/candidate.json', '7a6fc8bce0f9a0e13d69e4770d8a196be4bfd255b1b8323aaae9da4dcffa951a'],
+  candidate: ['.tmp/resume182-6-c2ex-answer-part1-fix6213-AFFECTED1/candidate.json', 'eb77079387bd6be5e4522aaec6d324bd869f459bc5fb1d77c283ba0458733ff4'],
+  delta: ['.tmp/resume182-6-c2ex-answer-part1-fix6213-AFFECTED1/delta.record', '22cc4584ad60758690464765a6dc02be8dee68f97ebea1a375d21e37c9a3eeef'],
+  modern: ['ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c2-ex/exercises.json', 'd742de8a70222a402a9e6184bf632f06c393dfc28f495cdb84a984613e7fbf3e'],
+  binding: ['.tmp/resume182-6-c2ex-modern-final-binding6213-FIRST/ready.record', '9060dd35f9e2d4b342875c37f4b6de7db5266a70f3d13306221626e68bfe7605'],
+}
+const sha = value => crypto.createHash('sha256').update(value).digest('hex')
+const loaded = Object.fromEntries(Object.entries(inputs).map(([key, [relative, expected]]) => {
+  const bytes = fs.readFileSync(path.join(root, relative))
+  assert.equal(sha(bytes), expected, `${key} SHA mismatch`)
+  return [key, { bytes, json: JSON.parse(bytes.toString('utf8')) }]
+}))
+const first = loaded.first.json
+const original = loaded.original.json
+const candidate = loaded.candidate.json
+const delta = loaded.delta.json
+const binding = loaded.binding.json
+const ids = Array.from({ length: 23 }, (_, i) => String(138 + i))
+const affected = ['151', '152', '153', '156', '157', '158']
+const reused = ids.filter(id => !affected.includes(id))
+for (const document of [first, original, candidate, delta, binding]) {
+  assert.equal(document.book, '8a')
+  assert.equal(document.lesson, 'alg8-c2-ex')
+  assert.equal(document.edition, 'modern-us-neutral')
+}
+assert.equal(first.status, 'REVISE')
+assert.equal(binding.status, 'pass')
+assert.deepEqual(original.answers.map(a => a.exercise), ids)
+assert.deepEqual(candidate.answers.map(a => a.exercise), ids)
+assert.deepEqual(first.reviewed_exercises, ids)
+assert.deepEqual(first.per_exercise.filter(a => a.verdict === 'APPROVAL').map(a => a.exercise), reused)
+assert(first.per_exercise.every(a => a.math === 'PASS'))
+assert.equal(first.artifacts.find(a => a.role === 'independent_observations_and_preserved_author_failure_receipts').scientific_answer_values, 'PASS_ALL_23')
+assert.equal(first.inputs.find(a => a.role === 'unchanged_scoped_answer_candidate').sha256, inputs.original[1])
+assert.equal(binding.inputs.find(a => a.path === inputs.modern[0]).sha256, inputs.modern[1])
+assert.equal(binding.inputs.find(a => a.path === original.inputBinding.template).sha256, original.inputBinding.templateSha256)
+assert.deepEqual(delta.affectedExercises, affected)
+assert.equal(delta.original.sha256, inputs.original[1])
+assert.equal(delta.candidate.sha256, inputs.candidate[1])
+assert.equal(delta.firstReview.sha256, inputs.first[1])
+
+// Remove only insignificant JSON whitespace; retain every raw string token.
+function compactTokens(bytes) {
+  let inString = false
+  let escaped = false
+  let result = ''
+  for (const character of bytes.toString('utf8')) {
+    if (inString) {
+      result += character
+      if (escaped) escaped = false
+      else if (character === '\\') escaped = true
+      else if (character === '"') inString = false
+    } else if (character === '"') {
+      inString = true
+      result += character
+    } else if (!' \r\n\t'.includes(character)) result += character
+  }
+  assert.equal(inString, false)
+  return result
+}
+for (const name of ['original', 'candidate']) {
+  assert.equal(compactTokens(loaded[name].bytes), JSON.stringify(loaded[name].json), `${name}: unexpected raw token serialization`)
+}
+const restored = structuredClone(candidate)
+const suffix = '\uff08\u6309x\u9012\u589e\uff0c\u540cx\u65f6\u6309y\u9012\u589e\uff09'
+const firstSubparts = first.findings.find(f => f.id === 'R2').source_subparts
+let changedLabels = 0
+let preservedParts = 0
+const collection = []
+for (let i = 0; i < ids.length; i++) {
+  const before = original.answers[i]
+  const after = candidate.answers[i]
+  const id = ids[i]
+  assert(Buffer.from(before.displayAnswer).equals(Buffer.from(after.displayAnswer)), `${id}: displayAnswer bytes changed`)
+  const prior = first.per_exercise.find(a => a.exercise === id)
+  if (!affected.includes(id)) {
+    assert.equal(JSON.stringify(before), JSON.stringify(after), `${id}: unaffected JSON changed`)
+  } else if (id === '151') {
+    assert.equal(before.grading, 'auto')
+    assert.equal(before.parts.length, 25)
+    assert.equal(after.grading, 'ungraded')
+    assert.deepEqual(after.parts, [])
+    assert.notEqual(before.notes, after.notes)
+    for (const field of ['grading', 'parts', 'notes']) restored.answers[i][field] = before[field]
+  } else {
+    assert.equal(after.grading, 'auto')
+    assert.equal(before.parts.length, after.parts.length)
+    for (let j = 0; j < before.parts.length; j++) {
+      const oldPart = before.parts[j]
+      const newPart = after.parts[j]
+      const required = firstSubparts[id].some(subpart => oldPart.label === `${subpart}) \u89e31 x`)
+      assert.equal(newPart.label, oldPart.label + (required ? suffix : ''), `${id}/${j}: label contract mismatch`)
+      if (required) {
+        changedLabels++
+        restored.answers[i].parts[j].label = oldPart.label
+      }
+    }
+  }
+  preservedParts += after.parts.length
+  collection.push({
+    exercise: id,
+    verdict: 'APPROVAL',
+    math: 'REUSED_FIRST_PASS',
+    grading_static: affected.includes(id) ? 'AFFECTED_CONTRACT_APPROVAL' : 'REUSED_FIRST_APPROVAL',
+    original_exercise_sha256: sha(JSON.stringify(before)),
+    candidate_exercise_sha256: sha(JSON.stringify(after)),
+    exercise_hash_basis: 'UTF-8 JSON.stringify parsed exercise, property and array order retained',
+    original_first_verdict: prior.verdict,
+    parts: after.parts.length,
+  })
+}
+assert.equal(changedLabels, 20)
+assert.equal(preservedParts, 140)
+assert.equal(JSON.stringify(restored), compactTokens(loaded.original.bytes), 'Unidentified changes remain after restoring authorized fields')
+for (const item of delta.deltas) {
+  const observed = collection.find(a => a.exercise === item.exercise)
+  assert.equal(item.before, observed.original_exercise_sha256)
+  assert.equal(item.after, observed.candidate_exercise_sha256)
+}
+assert.equal(delta.changedLabels, changedLabels)
+assert.equal(delta.unchangedApprovedExerciseCount, reused.length)
+assert.equal(delta.removedAutoPartsFor151, 25)
+console.log(JSON.stringify({
+  status: 'PASS_MECHANICAL_COMPARISON_ONLY',
+  input_hashes_match: true,
+  reviewed_exercises: ids,
+  affected_reviewed_exercises: affected,
+  reused_unchanged_approved_exercises: reused,
+  changed_labels: changedLabels,
+  removed_parts: 25,
+  retained_parts: preservedParts,
+  all_23_displayAnswer_utf8_bytes_unchanged: true,
+  all_17_unaffected_exercise_JSON_tokens_unchanged: true,
+  all_remaining_140_part_judge_expected_and_order_unchanged: true,
+  only_authorized_data_changes: true,
+  raw_file_bytes_identical: loaded.original.bytes.equals(loaded.candidate.bytes),
+  serialization_note: 'Insignificant JSON whitespace is reformatted; raw-file byte identity is not claimed.',
+  newMathReviews: 0,
+  runtime_or_judge_executions: 0,
+  per_exercise: collection,
+}, null, 2))

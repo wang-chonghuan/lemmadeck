@@ -1,0 +1,88 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import { createRequire } from 'node:module'
+import { fileURLToPath } from 'node:url'
+import { validateMathExpected } from '../../.claude/skills/ld-s10y-answer/tools/check_math_expressions.mjs'
+
+const root = path.dirname(fileURLToPath(import.meta.url))
+const repo = path.resolve(root, '../..')
+const require = createRequire(path.join(repo, 'app/package.json'))
+const { ComputeEngine } = require('@cortex-js/compute-engine')
+const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const candidate = path.join(root, 'candidate.json')
+const document = JSON.parse(fs.readFileSync(candidate, 'utf8'))
+const engine = new ComputeEngine()
+const parts = document.answers.flatMap((a) => a.parts)
+const report = {
+  schema: 'stemrobin-182/answer-author-local-latex-check@1',
+  command: 'node .tmp/resume182-6-8a-c2ex-answer-author6213-FIRST-part2/verify-math.mjs',
+  cwd: repo,
+  candidateSha256: sha(candidate),
+  scriptSha256: sha(fileURLToPath(import.meta.url)),
+  repositoryValidatorSha256: sha(path.join(repo, '.claude/skills/ld-s10y-answer/tools/check_math_expressions.mjs')),
+  enginePackageSha256: sha(path.join(repo, 'app/node_modules/@cortex-js/compute-engine/package.json')),
+  engineVersion: JSON.parse(fs.readFileSync(path.join(repo, 'app/node_modules/@cortex-js/compute-engine/package.json'), 'utf8')).version,
+  nodeVersion: process.version,
+  dependenciesChanged: false,
+  images: 0,
+  browserUsed: false,
+  mathliveActualEditGateRun: false,
+  finalized: false,
+  notApproval: true,
+  numericExpressionValidation: validateMathExpected(parts),
+  numericKeys: [],
+  exactKeys: [],
+  failures: [],
+}
+
+for (const a of document.answers) {
+  for (const [index, part] of a.parts.entries()) {
+    for (const expected of part.expected) {
+      const parsed = engine.parse(expected)
+      if (part.judge === 'numeric') {
+        const n = parsed.N()
+        report.numericKeys.push({
+          exercise: a.exercise,
+          part: index + 1,
+          label: part.label,
+          expected,
+          parsed: parsed.json,
+          real: n.re,
+          imaginary: n.im,
+          finiteReal: Number.isFinite(n.re) && n.im === 0,
+        })
+      } else if (part.judge === 'exact') {
+        report.exactKeys.push({
+          exercise: a.exercise,
+          part: index + 1,
+          expected,
+          parsed: parsed.json,
+          parseError: parsed.has('Error'),
+          mathliveActualEditGate: 'NOT_RUN_NOT_APPROVAL',
+        })
+        if (parsed.has('Error')) {
+          report.failures.push(`${a.exercise} part ${index + 1}: exact LaTeX parse error ${expected}`)
+        }
+      }
+    }
+  }
+}
+report.failures.push(...report.numericExpressionValidation.failures)
+report.status = report.failures.length ? 'fail' : 'pass'
+report.exitCode = report.failures.length ? 1 : 0
+let index = 1
+while (fs.existsSync(path.join(root, `verification-latex-${String(index).padStart(3, '0')}.json`))) index++
+const receipt = path.join(root, `verification-latex-${String(index).padStart(3, '0')}.json`)
+fs.writeFileSync(receipt, JSON.stringify(report, null, 2) + '\n', { flag: 'wx' })
+console.log(JSON.stringify({
+  status: report.status,
+  candidateSha256: report.candidateSha256,
+  numericExpressionValidation: report.numericExpressionValidation,
+  numericKeyCount: report.numericKeys.length,
+  exactKeyCount: report.exactKeys.length,
+  failures: report.failures,
+  mathliveActualEditGateRun: false,
+  receipt,
+}, null, 2))
+process.exitCode = report.exitCode

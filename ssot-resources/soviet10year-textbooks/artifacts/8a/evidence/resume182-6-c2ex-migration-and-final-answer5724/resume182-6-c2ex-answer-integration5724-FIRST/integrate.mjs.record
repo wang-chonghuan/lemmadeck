@@ -1,0 +1,89 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-5724/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [configFile] = process.argv.slice(2);
+const own = '.tmp/resume182-6-c2ex-answer-integration5724-FIRST';
+const lesson = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c2-ex';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const readBound = entry => {
+  const absolute = path.resolve(entry.path).replace("/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck", repo);
+  assert.ok(absolute.startsWith(`${repo}/`));
+  assert.equal(fs.realpathSync(absolute), absolute);
+  const bytes = fs.readFileSync(absolute);
+  assert.equal(sha(bytes), entry.sha256);
+  return JSON.parse(bytes);
+};
+const dumpNew = (file, value) => {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+};
+const config = JSON.parse(fs.readFileSync(configFile));
+const finalizedModern = readBound(config.modernBinding);
+assert.equal(finalizedModern.status, 'pass');
+assert.equal(finalizedModern.textContentChangesAfterApproval, 0);
+const template = readBound(config.answerTemplate);
+const exercises = JSON.parse(fs.readFileSync(`${lesson}/exercises.json`)).exercises;
+assert.equal(exercises.length, 50);
+assert.deepEqual(template.answers.map(item => item.exercise), exercises.map(item => String(item.number)));
+const approved = new Map();
+const bindings = [];
+const allowed = ['exercise', 'grading', 'source', 'displayAnswer', 'parts',
+  'historical_entities', 'bookRaw', 'notes'];
+const hasBinding = (value, entry) => {
+  if (!value || typeof value !== 'object') return false;
+  if (typeof value.path === 'string' && value.sha256 === entry.sha256
+    && path.resolve(value.path) === path.resolve(entry.path)) return true;
+  return Object.values(value).some(child => hasBinding(child, entry));
+};
+for (const chunk of config.chunks) {
+  const candidate = readBound(chunk.candidate);
+  const review = readBound(chunk.review);
+  assert.equal(review.status, 'APPROVAL');
+  assert.equal(review.book, '8a');
+  assert.equal(review.lesson, 'alg8-c2-ex');
+  assert.equal(review.edition, 'modern-us-neutral');
+  assert.ok(hasBinding(review, chunk.candidate),
+    'Independent review must bind the actual candidate');
+  assert.deepEqual([...review.reviewed_exercises].sort(),
+    candidate.answers.map(answer => answer.exercise).sort());
+  for (const answer of candidate.answers) {
+    assert.ok(!approved.has(answer.exercise), `Duplicate exercise ${answer.exercise}`);
+    const source = template.answers.find(item => item.exercise === answer.exercise);
+    assert.ok(source);
+    assert.equal(answer.source, source.source);
+    if (Object.hasOwn(source, 'bookRaw')) assert.equal(answer.bookRaw, source.bookRaw);
+    const final = Object.fromEntries(allowed.filter(key => Object.hasOwn(answer, key))
+      .map(key => [key, structuredClone(answer[key])]));
+    assert.ok(final.displayAnswer.trim());
+    assert.ok(['auto', 'ungraded'].includes(final.grading));
+    approved.set(answer.exercise, final);
+  }
+  bindings.push(chunk);
+}
+assert.equal(approved.size, exercises.length);
+const answers = exercises.map(exercise => {
+  const answer = approved.get(String(exercise.number));
+  assert.ok(answer, `Missing ${exercise.number}`);
+  return answer;
+});
+const document = { schema: template.schema, book: template.book, lesson: template.lesson,
+  edition: template.edition, status: 'draft', answers };
+assert.equal(document.schema, 'ld-s10y-answer/lesson-answers@1');
+assert.ok(!JSON.stringify(document).includes('.tmp/'), 'Durable keys cannot depend on scratch');
+dumpNew(`${lesson}/answer-keys.json`, document);
+dumpNew(`${own}/integration.record`, {
+  schema: 'stemrobin-182/answer-math-binding@1', status: 'pass',
+  book: '8a', lesson: 'alg8-c2-ex', edition: 'modern-us-neutral',
+  modernBinding: config.modernBinding, answerTemplate: config.answerTemplate,
+  chunks: bindings, uniqueExercises: answers.length, answerContentChanges: 0,
+  answerFile: { path: `${lesson}/answer-keys.json`,
+    sha256: sha(fs.readFileSync(`${lesson}/answer-keys.json`)) },
+  nativeFinalizeStillRequired: true, databaseWrites: 0, oldPassReruns: 0,
+  completeLessonApproval: false, finish: 'review',
+});
+console.log(JSON.stringify({ path: `${own}/integration.record`,
+  sha256: sha(fs.readFileSync(`${own}/integration.record`)), exerciseCount: answers.length }));

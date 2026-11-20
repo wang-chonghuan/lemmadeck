@@ -1,0 +1,95 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import { R, OWN, BOOK, EDITION, ID, LESSON, MODERN, CHOICES,
+  mandatory, implementation, support, usageCounters, sha } from '../resume182-6-8a-c2ex-display5724-FIRST/prepare.mjs';
+
+assert.equal(process.cwd(), R);
+const [configFile] = process.argv.slice(2);
+assert.ok(configFile?.startsWith('.tmp/resume182-6-'));
+const own = '.tmp/resume182-6-c2ex-display-gate5724-FIRST';
+const config = JSON.parse(fs.readFileSync(configFile));
+const entry = file => ({ path: path.resolve(file), sha256: sha(fs.readFileSync(file)) });
+const loadBound = record => {
+  assert.equal(fs.realpathSync(record.path), record.path);
+  const bytes = fs.readFileSync(record.path);
+  assert.equal(sha(bytes), record.sha256, record.path);
+  return JSON.parse(bytes);
+};
+const dumpNew = (file, value) => {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+};
+for (const stage of ['modern', 'answers', 'choices', 'figures']) {
+  assert.ok(config.approvals[stage].receipts.length);
+  for (const record of config.approvals[stage].receipts) {
+    const value = loadBound(record);
+    assert.ok(value.status === 'pass' || value.status === 'TEXT_PASS' || value.outcome === 'pass', record.path);
+  }
+}
+const documents = Object.fromEntries(mandatory.map(file =>
+  [path.relative(LESSON, file), JSON.parse(fs.readFileSync(file))]));
+for (const name of ['lesson.json', 'exercises.json', 'figures.json', 'answer-keys.json']) {
+  assert.equal(documents[name].status, 'ready', name);
+}
+assert.equal(documents['adaptation.audit.json'].status, 'pass');
+assert.equal(documents['answer-keys.audit.json'].status, 'pass');
+assert.equal(documents['answer-keys.json'].answers.length, 50);
+assert.equal(documents['choice-set/review.json'].outcome, 'pass');
+const figureIDs = documents['figures.json'].figures.map(figure => figure.id);
+assert.deepEqual([...figureIDs].sort(), ['fig-26', 'fig-27']);
+const files = mandatory.map(entry);
+for (const id of figureIDs) {
+  for (const extension of ['spec.json', 'svg', 'render.json', 'review.json']) {
+    files.push(entry(path.join(MODERN, 'figures', `${id}.${extension}`)));
+  }
+}
+for (const figure of documents['choice-set/draft.json'].new_figures) {
+  files.push(entry(figure.path));
+  const base = path.join(path.dirname(path.resolve(figure.path)), figure.id);
+  for (const extension of ['spec.json', 'render.json', 'review.json']) {
+    files.push(entry(`${base}.${extension}`));
+  }
+}
+const unique = [...new Map(files.map(file => [file.path, file])).values()];
+const approvals = {};
+const groups = {
+  modern: unique.filter(file => path.dirname(file.path) === LESSON
+    && !path.basename(file.path).startsWith('answer-keys')),
+  answers: unique.filter(file => path.basename(file.path).startsWith('answer-keys')),
+  choices: unique.filter(file => file.path.startsWith(`${CHOICES}/`)),
+  figures: unique.filter(file => file.path.startsWith(`${MODERN}/figures/`)),
+};
+for (const [stage, stageFiles] of Object.entries(groups)) {
+  approvals[stage] = { status: 'pass', files: stageFiles,
+    receipts: config.approvals[stage].receipts };
+}
+approvals.answers.finalized = true;
+approvals.choices.retained = true;
+approvals.figures.ids = figureIDs;
+const usage = loadBound(config.upstreamUsage);
+for (const counter of usageCounters) {
+  assert.ok(Object.hasOwn(usage.cumulative, counter));
+  const value = usage.cumulative[counter];
+  assert.ok(value === null || value === 'unknown' || Number.isInteger(value) && value >= 0);
+}
+const pins = support.map(file => ({
+  ...entry(file), realpath: fs.realpathSync(file),
+}));
+const ready = {
+  status: 'SCRIPTS_PREPARED_RUNTIME_NOT_EXECUTED', workdir: R,
+  files: implementation.map(name => entry(path.join(OWN, name))), pins,
+  rendererCalls: 0, browserLaunches: 0, screenshotsCaptured: 0,
+};
+const parent = {
+  schema: 'c2ex-parent-display-ready@1', status: 'parentREADY',
+  ticket: 'STEMROBIN-182', scope: { root: R, book: BOOK, edition: EDITION, lesson: ID },
+  authorization: { offlineDisplay: true, rendererCalls: 1, appAcceptance: false, production: false },
+  files: unique, approvals, upstreamUsage: config.upstreamUsage,
+  originalExercises: 50, derivedChoiceQuestions: documents['choice-set/draft.json'].questions.length,
+  unknownHistoricalBytesRecovered: false, finish: 'review',
+};
+dumpNew(path.join(OWN, 'ready-FIRST.record'), ready);
+dumpNew(`${own}/parentREADY.record`, parent);
+console.log(JSON.stringify({ ready: entry(path.join(OWN, 'ready-FIRST.record')),
+  parent: entry(`${own}/parentREADY.record`), runtimeExecuted: false }));

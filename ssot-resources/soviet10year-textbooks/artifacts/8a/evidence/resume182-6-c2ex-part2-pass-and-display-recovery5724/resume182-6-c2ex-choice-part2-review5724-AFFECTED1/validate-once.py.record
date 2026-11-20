@@ -1,0 +1,246 @@
+#!/usr/bin/env python3
+"""One validator invocation, retained raw outputs, receipt and mechanical ready record."""
+
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-5724/lemmadeck")
+OUT = ROOT / ".tmp/resume182-6-c2ex-choice-part2-review5724-AFFECTED1"
+SEED = ".tmp/resume182-6-8a-c2ex-choice-author6213-FIRST-part2/seed.json"
+DRAFT = ".tmp/resume182-6-c2ex-choice-part2-fix5724-AFFECTED1/draft.json"
+REVIEW = ".tmp/resume182-6-c2ex-choice-part2-review5724-AFFECTED1/review.json"
+ARGV = [
+    "python3",
+    ".agents/skills/ld-s10y-choice/scripts/validate.py",
+    "--repo", ".",
+    "--seed", SEED,
+    "--draft", DRAFT,
+    "--review", REVIEW,
+]
+
+
+def now():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def binding(path, json_file=True):
+    raw = path.read_bytes()
+    value = {
+        "path": str(path),
+        "bytes": len(raw),
+        "byte_sha256": sha(raw),
+    }
+    if json_file:
+        value["canonical_sha256"] = sha(json.dumps(
+            json.loads(raw), sort_keys=True, ensure_ascii=True, separators=(",", ":")
+        ).encode("utf-8"))
+    return value
+
+
+def save(name, value):
+    with (OUT / name).open("x", encoding="utf-8") as handle:
+        json.dump(value, handle, ensure_ascii=True, indent=2)
+        handle.write("\n")
+
+
+def main():
+    assert Path.cwd().resolve() == ROOT
+    audit = json.loads((OUT / "equality.record.json").read_text(encoding="utf-8"))
+    review = json.loads((ROOT / REVIEW).read_text(encoding="utf-8"))
+    stdout_path = OUT / "validate.stdout.txt"
+    stderr_path = OUT / "validate.stderr.txt"
+    for name in (
+        "validation.receipt.json", "ready.record", "validate.stdout.txt", "validate.stderr.txt"
+    ):
+        assert not (OUT / name).exists(), "Never rerun this validation wrapper"
+    watched = dict(audit["bindings"])
+    watched["new_review"] = audit["new_review"]
+    for item in watched.values():
+        assert binding(Path(item["path"])) == item, "bound input changed before validation"
+
+    started = now()
+    environment = os.environ.copy()
+    environment["PYTHONDONTWRITEBYTECODE"] = "1"
+    exit_code = None
+    launch_error = None
+    # Exclusive output creation also prevents accidentally invoking the validator twice.
+    with stdout_path.open("xb") as stdout, stderr_path.open("xb") as stderr:
+        try:
+            completed = subprocess.run(
+                ARGV, cwd=str(ROOT), env=environment,
+                stdout=stdout, stderr=stderr, check=False,
+            )
+            exit_code = completed.returncode
+        except OSError as error:
+            launch_error = f"{type(error).__name__}: {error}"
+            stderr.write((launch_error + "\n").encode("utf-8"))
+    finished = now()
+    after = {name: binding(Path(item["path"])) for name, item in watched.items()}
+    stable = {name: item == after[name] for name, item in watched.items()}
+    receipt = {
+        "record": "same182-6-affected1-single-validator-receipt",
+        "cwd": str(ROOT),
+        "argv": ARGV,
+        "started_at": started,
+        "finished_at": finished,
+        "attempts": 1,
+        "process_invocations": 0 if launch_error else 1,
+        "rerun": False,
+        "exit_code": exit_code,
+        "launch_error": launch_error,
+        "stdout": binding(stdout_path, False),
+        "stderr": binding(stderr_path, False),
+        "bound_inputs_before": watched,
+        "bound_inputs_after": after,
+        "all_bound_inputs_byte_and_canonical_unchanged": all(stable.values()),
+        "per_file_unchanged": stable,
+        "bytecode_writes_disabled": True,
+        "semantic_proof_by_validator_claimed": False,
+        "failures_retained_without_retry": True,
+    }
+    save("validation.receipt.json", receipt)
+    validation_pass = exit_code == 0 and all(stable.values()) and not launch_error
+    ready = {
+        "schema": "stemrobin-182/choice-review-ready@1",
+        "status": review["outcome"] if validation_pass else "blocked",
+        "native_review_outcome": review["outcome"],
+        "approved": validation_pass and review["outcome"] == "pass",
+        "offline_handoff_only": True,
+        "native_finalize_run": False,
+        "cwd": str(ROOT),
+        "sole_write_root": str(OUT),
+        "reviewer": review["reviewer"],
+        "review_scope": (
+            "Fresh independent AFFECTED-only review of 172a/176a/181d/182a. "
+            "Old independently frozen PASS evidence mechanically reused; not a fresh47review."
+        ),
+        "source": after["seed"],
+        "draft": after["new_draft"],
+        "review": after["new_review"],
+        "original_REVISE_preservation": {
+            **audit["old_review_preserved"],
+            "review": after["old_review"],
+            "ready": after["old_ready"],
+            "original_draft": after["old_draft"],
+            "all_original_bytes_unchanged_after_validation": all(
+                stable[key] for key in ("old_review", "old_ready", "old_draft", "seed")
+            ),
+        },
+        "both_independent_freezes": {
+            "source": after["source_freeze"],
+            "views": after["views_freeze"],
+            "source_before_projection": True,
+            "both_before_author_intent_or_key": True,
+            "neither_freeze_changed_after_disclosure": (
+                stable["source_freeze"] and stable["views_freeze"]
+            ),
+        },
+        "author_comparison": after["author_comparison"],
+        "projection": after["projection"],
+        "delta": after["delta"],
+        "exact_equality_evidence": {
+            "record": binding(OUT / "equality.record.json"),
+            "checks": audit["checks"],
+            "unchanged_equality": audit["unchanged_equality"],
+        },
+        "actual_four_corrected_checks": audit["per_affected_question"],
+        "source171": audit["source171"],
+        "counts": {
+            **audit["counts"],
+            "source_coverage_pass": sum(
+                row["coverage"]["verdict"] == "pass" for row in review["source_reviews"]
+            ),
+            "task_fidelity_pass": sum(
+                row["task_fidelity"]["verdict"] == "pass" for row in review["question_reviews"]
+            ),
+            "redundancy_pass": sum(
+                row["redundancy"]["verdict"] == "pass" for row in review["question_reviews"]
+            ),
+            "answer_leakage_pass": sum(
+                row["answer_leakage"]["verdict"] == "pass" for row in review["question_reviews"]
+            ),
+            "mathematics_pass": sum(
+                row["mathematics"]["verdict"] == "pass" for row in review["question_reviews"]
+            ),
+            "old_complete_option_checks_rederived": 0,
+            "validation_invocations": 0 if launch_error else 1,
+            "source_figure_views": 0,
+            "new_figure_views": 0,
+            "browser_calls": 0,
+            "render_calls": 0,
+            "database_calls": 0,
+            "git_commands": 0,
+            "installs": 0,
+            "network_calls": 0,
+            "model_service_calls": 0,
+            "paid_calls": 0,
+            "new_chats": 0,
+            "new_worktrees": 0,
+            "new_branches": 0,
+            "messaging_calls": 0,
+        },
+        "read_order": [
+            "Read governing choice skill/review/contract; only sources172/176/181/182 from official seed.",
+            "Freeze independent reasoning for 172a/176a/181d/182a via apply_patch before any candidate views.",
+            "Read only the new pure affected.views.json projection.",
+            "Freeze fresh fidelity, redundancy, leakage, cross-choice discrimination and four d truth checks via apply_patch.",
+            "Only then select four named full-draft questions and four coverage rows; compare new rationales/misconceptions.",
+            "Record post-freeze author comparison via apply_patch; then read delta.record.",
+            "Read old review, ready and original author draft solely for mechanical snapshot/equality and evidence reuse.",
+            "Mechanically assemble complete native review without rederiving unchanged mathematics or re-reviewing unaffected tasks.",
+            "Invoke validate.py once; preserve stdout/stderr/receipt, including any failure; no rerun.",
+        ],
+        "writes": {
+            "manual_edits": "apply_patch only, inside sole authorized output directory",
+            "generated_outputs": (
+                "Mechanical native review assembly/equality record and validator output/receipt/ready record "
+                "are created exclusively inside the same directory; existing outputs are not overwritten."
+            ),
+            "candidate_draft_changed": False,
+            "other_files_or_staging_changed": False,
+            "no_revert_or_staging_operations": True,
+        },
+        "validation": {
+            "receipt": binding(OUT / "validation.receipt.json"),
+            "stdout": receipt["stdout"],
+            "stderr": receipt["stderr"],
+            "argv": ARGV,
+            "exit_code": exit_code,
+            "invocations": 0 if launch_error else 1,
+            "attempts": 1,
+            "rerun": False,
+            "mechanical_pass": validation_pass,
+            "declared_semantic_review": review["outcome"],
+            "semantic_proof_by_validator_claimed": False,
+        },
+        "all_bound_inputs_unchanged": all(stable.values()),
+        "ready_record_self_hash_note": (
+            "A file cannot contain its own byte digest without circularity; ready.record "
+            "byte/canonical hashes are reported externally at handoff."
+        ),
+    }
+    save("ready.record", ready)
+    print(json.dumps({
+        "status": ready["status"],
+        "approved": ready["approved"],
+        "validation_exit_code": exit_code,
+        "stdout": stdout_path.read_text(encoding="utf-8"),
+        "stderr": stderr_path.read_text(encoding="utf-8"),
+        "review": after["new_review"],
+        "ready": binding(OUT / "ready.record"),
+        "receipt": binding(OUT / "validation.receipt.json"),
+        "all_bound_inputs_unchanged": all(stable.values()),
+    }, ensure_ascii=True, indent=2))
+
+
+if __name__ == "__main__":
+    main()

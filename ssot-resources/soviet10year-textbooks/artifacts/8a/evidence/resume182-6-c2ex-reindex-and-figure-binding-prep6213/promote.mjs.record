@@ -1,0 +1,93 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [reviewFile, reviewHash] = process.argv.slice(2);
+const own = '.tmp/resume182-6-c2ex-figure-promotion6213-FIRST';
+const edition = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral';
+const templates = '.tmp/resume182-6-8a-c2ex-modern6213-AFFECTED-continuation1/adapt/8a/modern-us-neutral/lessons/alg8-c2-ex';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const readBound = entry => {
+  assert.match(entry.sha256, /^[a-f0-9]{64}$/u);
+  const absolute = path.resolve(entry.path);
+  assert.ok(absolute.startsWith(`${repo}/`));
+  assert.equal(fs.realpathSync(absolute), absolute);
+  const bytes = fs.readFileSync(absolute);
+  assert.equal(sha(bytes), entry.sha256, entry.path);
+  return bytes;
+};
+const dumpNew = (file, value) => {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+};
+const writeNewBytes = (file, bytes) => {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, bytes, { flag: 'wx' });
+  assert.equal(sha(fs.readFileSync(file)), sha(bytes));
+};
+const review = JSON.parse(readBound({ path: reviewFile, sha256: reviewHash }));
+assert.equal(review.schema, 'stemrobin-182/independent-current-figure-review@1');
+assert.equal(review.status, 'pass');
+assert.equal(review.book, '8a');
+assert.equal(review.lesson, 'alg8-c2-ex');
+assert.equal(review.edition, 'modern-us-neutral');
+assert.equal(review.reviewer.kind, 'independent_agent');
+assert.deepEqual(review.figures.map(item => item.id).sort(), ['fig-26', 'fig-27']);
+const originalTemplate = fs.readFileSync(`${templates}/figures.template.json`);
+assert.equal(sha(originalTemplate), '55a3166b2e6c22dcbb6168f1fb95a6139487309ac3b5b2f54c1d2da3ad3153c1');
+const manifest = JSON.parse(originalTemplate);
+assert.deepEqual(manifest.figures.map(item => item.id), ['fig-26', 'fig-27']);
+const inputs = [], outputs = [];
+for (const figure of review.figures) {
+  assert.equal(figure.status, 'pass');
+  const bound = Object.fromEntries(['spec', 'render', 'svg', 'png', 'source'].map(key => {
+    inputs.push({ role: `${figure.id}:${key}`, ...figure[key] });
+    return [key, readBound(figure[key])];
+  }));
+  const spec = JSON.parse(bound.spec);
+  const render = JSON.parse(bound.render);
+  assert.equal(spec.id, figure.id);
+  assert.equal(spec.source.image.sha256, sha(bound.source));
+  assert.equal(render.status, 'pass');
+  assert.equal(render.spec.sha256, sha(bound.spec));
+  assert.equal(render.output.svg.sha256, sha(bound.svg));
+  const final = Object.fromEntries(['spec', 'render', 'svg'].map(key =>
+    [key, `${edition}/figures/${figure.id}.${key === 'svg' ? 'svg' : `${key}.json`}`]));
+  for (const filename of Object.values(final)) assert.ok(!fs.existsSync(filename), filename);
+  writeNewBytes(final.spec, bound.spec);
+  writeNewBytes(final.svg, bound.svg);
+  const rebound = structuredClone(render);
+  rebound.spec.path = final.spec;
+  rebound.output.svg.path = final.svg;
+  const reverted = structuredClone(rebound);
+  reverted.spec.path = render.spec.path;
+  reverted.output.svg.path = render.output.svg.path;
+  assert.deepEqual(reverted, render, 'Only portable metadata paths may change');
+  dumpNew(final.render, rebound);
+  for (const [role, filename] of Object.entries(final)) {
+    outputs.push({ role: `${figure.id}:${role}`, path: filename,
+      sha256: sha(fs.readFileSync(filename)) });
+  }
+  const entry = manifest.figures.find(item => item.id === figure.id);
+  Object.assign(entry, { svg: `figures/${figure.id}.svg`,
+    render: `figures/${figure.id}.render.json`, review: `figures/${figure.id}.review.json` });
+  for (const key of ['png', 'artwork', 'generation']) delete entry[key];
+}
+writeNewBytes(`${own}/figures.template.before.record`, originalTemplate);
+fs.writeFileSync(`${templates}/figures.template.json`, `${JSON.stringify(manifest, null, 2)}\n`);
+dumpNew(`${own}/promotion.record`, {
+  schema: 'stemrobin-182/figure-portable-binding@1', status: 'pass',
+  book: '8a', lesson: 'alg8-c2-ex', edition: 'modern-us-neutral',
+  independentReview: { path: reviewFile, sha256: reviewHash }, inputs, outputs,
+  template: { path: `${templates}/figures.template.json`,
+    sha256: sha(fs.readFileSync(`${templates}/figures.template.json`)) },
+  byteIdenticalSpecAndSvg: true, renderMetadataChangedPathsOnly: true,
+  nativeReviewStillRequired: true, finalModernLessonReady: false,
+  rerenders: 0, oldPassReruns: 0, databaseWrites: 0, finish: 'review',
+  unknownHistoricalBytesRecovered: false,
+});
+console.log(JSON.stringify({ path: `${own}/promotion.record`,
+  sha256: sha(fs.readFileSync(`${own}/promotion.record`)), outputs }));

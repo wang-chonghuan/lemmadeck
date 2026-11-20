@@ -1,0 +1,40 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck';
+assert.equal(process.cwd(), root);
+const out = '.tmp/resume182-6-c2ex-label-withdrawal6213-AFFECTED1';
+assert.ok(!fs.existsSync(out));
+const files = [
+  '.claude/skills/ld-s10y-lesson/SKILL.md',
+  '.claude/skills/ld-s10y-lesson/tools/blocks.py',
+  '.claude/skills/ld-s10y-lesson/tools/test_blocks_labelrows.py',
+  '.claude/skills/ld-s10y-lesson/tools/layout.py',
+  '.claude/skills/ld-s10y-lesson/tools/test_layout_multiline_count.py',
+  '.tmp/resume182-6-8a-c2ex-source6213-FIRST/draft-root/8a/pages/0072/page.md',
+  '.tmp/resume182-6-8a-c2ex-source6213-FIRST/draft-root/8a/pages/0073/page.md',
+];
+const sha = value => crypto.createHash('sha256').update(value).digest('hex');
+const entries = files.map(source => {
+  const bytes = fs.readFileSync(source);
+  const target = path.join(out, 'before', source);
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.writeFileSync(target, bytes, { flag: 'wx', mode: 0o444 });
+  assert.equal(sha(fs.readFileSync(target)), sha(bytes));
+  return { source, path: target, sha256: sha(bytes), bytes: bytes.length };
+});
+const record = {
+  schema: 'stemrobin-182/withdrawn-label-attempt-snapshot@1',
+  ticket: 'STEMROBIN-182', book: '8a', lesson: 'alg8-c2-ex',
+  status: 'EXACT_BEFORE_BYTES_RETAINED_NOT_APPROVAL', entries,
+  basis: {
+    path: '.tmp/resume182-6-8a-c2ex-source-review6213-FIRST-part2/affected-row-convention.record',
+    sha256: '9548d4608e5c3c77e6a117efc349a66e9f5f862985ba2414112f3bd638d0bb68',
+  },
+  unknownHistoricalBytesRecovered: false, databaseWrites: 0, finish: 'review',
+};
+assert.equal(sha(fs.readFileSync(record.basis.path)), record.basis.sha256);
+fs.writeFileSync(`${out}/before.record`, JSON.stringify(record, null, 2) + '\n', { flag: 'wx' });
+console.log(JSON.stringify({ path: `${out}/before.record`, entries: entries.length }));

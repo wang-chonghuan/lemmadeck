@@ -1,0 +1,30 @@
+import hashlib
+import json
+from pathlib import Path
+
+from PIL import Image
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck")
+assert Path.cwd() == REPO
+SOURCE = REPO / ".tmp/ld-s10y-lesson/8a/pages/0073/figures/fig-27.png"
+EXPECTED = "ad1c1fffb28bdc37c55cfd1f9b01e8353710d2ecb66086df1c71eaa24802e89c"
+assert hashlib.sha256(SOURCE.read_bytes()).hexdigest() == EXPECTED
+OUT = REPO / ".tmp/resume182-6-c2ex-arc-crop6213-AFFECTED1"
+assert not OUT.exists()
+OUT.mkdir()
+BOX = (425, 110, 665, 335)
+target = OUT / "fig27a-upper-right-native.png"
+with Image.open(SOURCE) as image:
+    image.crop(BOX).save(target)
+record = {
+    "schema": "stemrobin-182/affected-arc-crop@1",
+    "ticket": "STEMROBIN-182", "book": "8a", "lesson": "alg8-c2-ex",
+    "source": str(SOURCE), "source_sha256": EXPECTED,
+    "crop_box": list(BOX), "path": str(target),
+    "sha256": hashlib.sha256(target.read_bytes()).hexdigest(),
+    "reason": "Specific unresolved fig27a upper-right arc style, not a whole-figure repeat.",
+    "generated_crops": 1, "observations_at_generation": 0,
+    "source_writes": 0, "database_writes": 0, "finish": "review",
+}
+(OUT / "crop.record").write_text(json.dumps(record, indent=2) + "\n")
+print(json.dumps(record))

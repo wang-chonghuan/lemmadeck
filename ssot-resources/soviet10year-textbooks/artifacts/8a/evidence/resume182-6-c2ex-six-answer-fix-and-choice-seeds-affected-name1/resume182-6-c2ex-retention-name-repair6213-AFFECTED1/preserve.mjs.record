@@ -1,0 +1,68 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck';
+assert.equal(process.cwd(), repo);
+const own = '.tmp/resume182-6-c2ex-retention-name-repair6213-AFFECTED1';
+const tool = '.tmp/resume182-6-8a-c2ex-retain6213.mjs';
+const partial = 'ssot-resources/soviet10year-textbooks/artifacts/8a/evidence/resume182-6-c2ex-six-answer-fix-and-choice-seed-prep6213';
+const failed = '.tmp/resume182-6-c2ex-retain-six-answer-fix-and-choice-prep6213-FIRST';
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const origins = [
+  '.tmp/resume182-6-c2ex-answer-part1-fix6213-AFFECTED1',
+  '.tmp/resume182-6-c2ex-answer-part1-fix-run6213-AFFECTED1',
+  '.tmp/resume182-6-c2ex-choice-figures-dispatch6213-FIRST',
+  '.tmp/resume182-6-8a-c2ex-choice-author6213-FIRST-part1/seed.json',
+  '.tmp/resume182-6-8a-c2ex-choice-author6213-FIRST-part2/seed.json',
+  '.tmp/resume182-6-8a-c2ex-choice-author6213-FIRST-figures/seed.json',
+  '.tmp/resume182-6-c2ex-choice-fullseed6213-FIRST',
+  '.tmp/resume182-6-c2ex-choice-fullseed-run6213-FIRST',
+  '.tmp/resume182-6-c2ex-choice-fullseed-preparation6213-FIRST',
+  '.tmp/resume182-6-c2ex-answer-integration6213-FIRST',
+  '.tmp/resume182-6-c2ex-answer-integration-syntax6213-FIRST',
+];
+const visit = (file, callback) => {
+  const stat = fs.lstatSync(file);
+  assert.ok(!stat.isSymbolicLink(), file);
+  if (stat.isDirectory()) {
+    for (const name of fs.readdirSync(file)) visit(path.join(file, name), callback);
+  } else {
+    assert.ok(stat.isFile());
+    callback(file, fs.readFileSync(file));
+  }
+};
+const byHash = new Map();
+for (const origin of origins) visit(origin, (file, bytes) => {
+  const digest = sha(bytes);
+  if (!byHash.has(digest)) byHash.set(digest, file);
+});
+const entries = [];
+visit(partial, (file, bytes) => {
+  const digest = sha(bytes);
+  assert.ok(byHash.has(digest), 'Every partial byte must match an actual input');
+  entries.push({ historical_path: byHash.get(digest), path: file,
+    sha256: digest, bytes: bytes.length });
+});
+assert.ok(entries.length > 0);
+const before = fs.readFileSync(tool);
+fs.writeFileSync(`${own}/retainer.before.record`, before, { flag: 'wx' });
+const record = {
+  schema: 'stemrobin-182/production-evidence-retention@1',
+  ticket: 'STEMROBIN-182', book: '8a', lesson: 'alg8-c2-ex',
+  evidence_package: 'six-answer-fix-and-choice-seed-prep6213',
+  status: 'FAILED_PARTIAL_ACTUAL_BYTES_PRESERVED',
+  entries, unique_files: entries.length, allRequestedInputsRetained: false,
+  originalFailure: { path: `${failed}/receipt.record`,
+    sha256: sha(fs.readFileSync(`${failed}/receipt.record`)),
+    stderrSha256: sha(fs.readFileSync(`${failed}/stderr.txt`)), returncode: 1 },
+  cause: 'Distinct individual input files shared the basename seed.json.',
+  unchangedPartialFiles: true, unknownHistoricalBytesRecovered: false,
+  hostTokens: 'unknown', totalCost: 'unknown', newContentOrRuntimeRuns: 0,
+  databaseWrites: 0, finish: 'review',
+};
+fs.writeFileSync(`${partial}/retention.record`, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: `${partial}/retention.record`,
+  sha256: sha(fs.readFileSync(`${partial}/retention.record`)),
+  actualPartialFiles: entries.length, beforeToolSha256: sha(before) }));

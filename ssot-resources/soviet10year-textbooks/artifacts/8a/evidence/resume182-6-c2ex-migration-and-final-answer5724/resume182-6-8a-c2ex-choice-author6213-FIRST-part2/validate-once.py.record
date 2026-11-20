@@ -1,0 +1,108 @@
+"""Retain one structural checker execution; never create or alter question content."""
+
+import datetime
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+import sys
+
+
+REPO = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck")
+OWN = REPO / ".tmp/resume182-6-8a-c2ex-choice-author6213-FIRST-part2"
+SEED = OWN / "seed.json"
+DRAFT = OWN / "draft.json"
+CHECKER = REPO / ".agents/skills/ld-s10y-choice/scripts/validate.py"
+PREPARE = CHECKER.with_name("prepare.py")
+EXPECTED_SEED = "163dba30def1f4c9cce1b3f9522098ff82e9f25198d46aca63498b37f5b85375"
+
+
+def snapshot(path):
+    raw = path.read_bytes()
+    value = json.loads(raw)
+    canonical = json.dumps(
+        value, sort_keys=True, ensure_ascii=True, separators=(",", ":")
+    ).encode("utf-8")
+    return {
+        "raw_sha256": hashlib.sha256(raw).hexdigest(),
+        "canonical_sha256": hashlib.sha256(canonical).hexdigest(),
+    }, value
+
+
+def retain_json(path, value):
+    with path.open("x", encoding="utf-8") as stream:
+        json.dump(value, stream, ensure_ascii=False, indent=2)
+        stream.write("\n")
+
+
+def now():
+    return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+
+def main():
+    if Path.cwd().resolve() != REPO:
+        raise RuntimeError("Wrong cwd; no checker was run")
+    seed_before, seed = snapshot(SEED)
+    draft_before, draft = snapshot(DRAFT)
+    if seed_before["canonical_sha256"] != EXPECTED_SEED:
+        raise RuntimeError("Unexpected immutable seed; no checker was run")
+    command = [
+        sys.executable, "-B", str(CHECKER), "--repo", str(REPO),
+        "--seed", str(SEED), "--draft", str(DRAFT),
+    ]
+    attempt = {
+        "kind": "STRUCTURAL_ONLY_ONE_ATTEMPT",
+        "started_at_utc": now(),
+        "cwd": str(REPO),
+        "command_argv": command,
+        "review_argument": None,
+        "seed_before": seed_before,
+        "draft_before": draft_before,
+        "checker_sha256": hashlib.sha256(CHECKER.read_bytes()).hexdigest(),
+        "prepare_sha256": hashlib.sha256(PREPARE.read_bytes()).hexdigest(),
+        "semantic_review": "NOT_RUN_AUTHOR_ONLY",
+    }
+    retain_json(OWN / "validation.attempt.json", attempt)
+    launch_error = None
+    with (OWN / "validation.stdout").open("xb") as out:
+        with (OWN / "validation.stderr").open("xb") as err:
+            try:
+                result = subprocess.run(command, cwd=REPO, stdout=out, stderr=err)
+                exit_code = result.returncode
+            except OSError as error:
+                launch_error = str(error)
+                err.write((launch_error + "\n").encode("utf-8"))
+                exit_code = 126
+    seed_after, _ = snapshot(SEED)
+    draft_after, _ = snapshot(DRAFT)
+    unchanged = seed_before == seed_after and draft_before == draft_after
+    receipt = {
+        **attempt,
+        "finished_at_utc": now(),
+        "exit_code": exit_code,
+        "launch_error": launch_error,
+        "seed_after": seed_after,
+        "draft_after": draft_after,
+        "input_snapshots_unchanged": unchanged,
+        "question_count": len(draft["questions"]),
+        "single_count": sum(q["view"]["mode"] == "single" for q in draft["questions"]),
+        "multiple_count": sum(q["view"]["mode"] == "multiple" for q in draft["questions"]),
+        "option_count": sum(len(q["view"]["options"]) for q in draft["questions"]),
+        "seed_source_count": len(seed["exercises"]),
+        "coverage_count": len(draft["coverage"]),
+        "new_figure_count": len(draft["new_figures"]),
+        "status": "STRUCTURAL_PASS_SEMANTIC_PENDING"
+        if exit_code == 0 and unchanged else "STRUCTURAL_FAILURE_RETAINED",
+        "approval": "NONE",
+        "stdout_path": str(OWN / "validation.stdout"),
+        "stderr_path": str(OWN / "validation.stderr"),
+        "stdout_sha256": hashlib.sha256((OWN / "validation.stdout").read_bytes()).hexdigest(),
+        "stderr_sha256": hashlib.sha256((OWN / "validation.stderr").read_bytes()).hexdigest(),
+    }
+    retain_json(OWN / "validation.receipt.json", receipt)
+    print(json.dumps(receipt, ensure_ascii=False, indent=2))
+    return exit_code if not (exit_code == 0 and not unchanged) else 2
+
+
+if __name__ == "__main__":
+    sys.exit(main())

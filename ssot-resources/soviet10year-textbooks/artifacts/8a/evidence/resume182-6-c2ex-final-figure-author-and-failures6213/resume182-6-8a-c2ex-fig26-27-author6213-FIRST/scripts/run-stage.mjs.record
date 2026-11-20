@@ -1,0 +1,52 @@
+import assert from 'node:assert/strict'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import path from 'node:path'
+import { spawnSync } from 'node:child_process'
+
+const checkout = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck'
+assert.equal(process.cwd(), checkout)
+const root = '.tmp/resume182-6-8a-c2ex-fig26-27-author6213-FIRST'
+const [stage, figure] = process.argv.slice(2)
+assert.ok(['validate-draft', 'render', 'validate-rendered'].includes(stage))
+assert.ok(['fig-26', 'fig-27'].includes(figure))
+const sha = file => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex')
+const spec = `${root}/spec/${figure}.spec.json`
+const owner = stage === 'render' ? `${root}/render/${figure}` : `${root}/context-plan/${stage}/${figure}`
+fs.mkdirSync(owner, { recursive: true })
+const count = fs.readdirSync(owner).filter(name => /^attempt-\d+$/.test(name)).length + 1
+const attempt = `${owner}/attempt-${String(count).padStart(2, '0')}`
+assert.ok(!fs.existsSync(attempt))
+fs.mkdirSync(attempt)
+fs.copyFileSync(spec, `${attempt}/input.spec.snapshot.json`)
+const command = stage === 'render' ? 'node' : 'python3'
+const args = stage === 'render'
+  ? ['.agents/skills/ld-s10y-image/scripts/render_spec.mjs', '--spec', spec,
+    '--svg', `${attempt}/${figure}.svg`, '--png', `${attempt}/${figure}.png`,
+    '--report', `${attempt}/${figure}.render.json`]
+  : ['.agents/skills/ld-s10y-image/scripts/validate_spec.py', spec,
+    '--stage', stage === 'validate-draft' ? 'draft' : 'rendered', '--json']
+const receipt = {
+  recordType: 'author-stage-invocation', stage, figure, attempt: count,
+  command, args, workdir: process.cwd(), started: new Date().toISOString(),
+  input: { path: spec, sha256: sha(spec) },
+  snapshot: { path: `${attempt}/input.spec.snapshot.json`, sha256: sha(`${attempt}/input.spec.snapshot.json`) },
+  completed: false, approval: null,
+}
+const receiptPath = `${attempt}/invocation.record`
+fs.writeFileSync(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`)
+const result = spawnSync(command, args, { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 })
+receipt.completed = true
+receipt.finished = new Date().toISOString()
+receipt.exitCode = result.status
+receipt.signal = result.signal
+receipt.executionError = result.error?.message ?? null
+receipt.stdout = result.stdout ?? ''
+receipt.stderr = result.stderr ?? ''
+receipt.inputUnchanged = receipt.input.sha256 === sha(spec)
+receipt.produced = fs.readdirSync(attempt).filter(name => !['invocation.record', 'input.spec.snapshot.json'].includes(name)).map(name => ({
+  path: `${attempt}/${name}`, sha256: sha(`${attempt}/${name}`),
+}))
+fs.writeFileSync(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`)
+console.log(JSON.stringify(receipt, null, 2))
+process.exitCode = result.status ?? 1

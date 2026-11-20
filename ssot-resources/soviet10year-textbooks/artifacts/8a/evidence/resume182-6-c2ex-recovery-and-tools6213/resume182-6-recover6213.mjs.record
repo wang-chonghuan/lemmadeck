@@ -1,0 +1,83 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck';
+const old = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const output = `${repo}/.tmp/resume182-6-recovery6213`;
+fs.mkdirSync(output);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const files = [];
+function copy(relative, target = relative) {
+  const source = path.join(old, relative);
+  const dest = path.join(repo, target);
+  const stat = fs.lstatSync(source);
+  assert.ok(!stat.isSymbolicLink(), source);
+  if (stat.isDirectory()) {
+    for (const name of fs.readdirSync(source).sort()) {
+      copy(path.join(relative, name), path.join(target, name));
+    }
+    return;
+  }
+  assert.ok(stat.isFile(), source);
+  const bytes = fs.readFileSync(source);
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  if (fs.existsSync(dest)) {
+    assert.equal(sha(fs.readFileSync(dest)), sha(bytes), `Conflicting target: ${dest}`);
+  } else {
+    fs.writeFileSync(dest, bytes, { flag: 'wx', mode: stat.mode & 0o777 });
+  }
+  assert.equal(sha(fs.readFileSync(source)), sha(bytes), `Source changed: ${source}`);
+  assert.equal(sha(fs.readFileSync(dest)), sha(bytes));
+  files.push({ source, target: dest, bytes: bytes.length, sha256: sha(bytes) });
+}
+copy('.intentfold/tickets/STEMROBIN-182/progress.md',
+  '.tmp/resume182-6-recovery6213/source-progress.original.md');
+for (let page = 64; page <= 71; page++) {
+  copy(`.tmp/ld-s10y-lesson/8a/pages/${String(page).padStart(4, '0')}`);
+}
+for (const name of [
+  'resume182-6-8a-c2ex-prepare-range3695-FIRST',
+  'resume182-6-8a-c2ex-prepare-range3695-AFFECTED64-67',
+  'resume182-6-8a-c2ex-prepare-range3695-AFFECTED68-71',
+]) copy(`.tmp/${name}`);
+const progress = fs.readFileSync(`${output}/source-progress.original.md`);
+const current = `${repo}/.intentfold/tickets/STEMROBIN-182/progress.md`;
+fs.copyFileSync(current, `${output}/destination-progress.before.md`,
+  fs.constants.COPYFILE_EXCL);
+fs.writeFileSync(current, progress);
+const git = spawnSync('git', ['rev-parse', 'HEAD'], { cwd: repo, encoding: 'utf8' });
+assert.equal(git.status, 0);
+const record = {
+  schema: 'resume182-6/migration@1', actual: new Date().toISOString(),
+  officialCreation: {
+    operationId: 'c8e27f99-25ec-43d5-80c0-b0b0705fc59d',
+    startingRef: 'd08f1b1835eae826a30c44d7b02ff4b3b8947763',
+    workdir: repo, stage: 'completed', registrationError: null,
+    createCalls: 1, attachCalls: 0, replacementChats: 0,
+  },
+  head: git.stdout.trim(), files, count: files.length,
+  bytes: files.reduce((sum, item) => sum + item.bytes, 0),
+  n13BytesMigrated: 0, n13AlreadyDelivered: '87a1d761429fa395c6e62ede3492dd596c718390',
+  oldWrites: 0, unknownHistoricalBytesRecovered: false,
+  priorFailureAndPendingMessagesPreserved: true,
+  oldReviewerChatsNotResumed: true,
+  inFlightOldSourceAuthor: {
+    id: '01a1f95a-f666-7123-bf35-7ac7a8be338c',
+    closePreviousStatus: 'running', observedFinalStatus: 'shutdown',
+    sourceApprovalClaimed: false,
+  },
+  hostTokens: 'unknown', totalCost: 'unknown',
+  removedProbeReceiptFilesStillUnrecovered: 8, finish: 'review',
+  databaseWrites: 0, merges: 0, deployments: 0,
+};
+const target = `${output}/migration.record`;
+fs.writeFileSync(target, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({
+  status: 'KNOWN_BYTES_MIGRATED', path: target,
+  sha256: sha(fs.readFileSync(target)), count: record.count, bytes: record.bytes,
+  oldWrites: 0, n13BytesMigrated: 0, unknownHistoricalBytesRecovered: false,
+}));

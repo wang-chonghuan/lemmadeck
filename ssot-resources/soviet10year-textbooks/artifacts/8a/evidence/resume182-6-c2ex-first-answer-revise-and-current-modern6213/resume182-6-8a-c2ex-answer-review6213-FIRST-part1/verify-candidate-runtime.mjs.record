@@ -1,0 +1,242 @@
+import assert from "node:assert/strict";
+import fs from "node:fs";
+import crypto from "node:crypto";
+import vm from "node:vm";
+import { createRequire, stripTypeScriptTypes } from "node:module";
+
+const root = "/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck";
+const owned = `${root}/.tmp/resume182-6-8a-c2ex-answer-review6213-FIRST-part1`;
+assert.equal(process.cwd(), root);
+const r = createRequire(`${root}/app/package.json`);
+const { ComputeEngine } = r("@cortex-js/compute-engine");
+const engine = new ComputeEngine();
+const digest = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const candidatePath = `${root}/.tmp/resume182-6-8a-c2ex-answer-author6213-FIRST-part1/candidate.json`;
+const candidateBytes = fs.readFileSync(candidatePath);
+assert.equal(digest(candidateBytes), "7a6fc8bce0f9a0e13d69e4770d8a196be4bfd255b1b8323aaae9da4dcffa951a");
+const candidate = JSON.parse(candidateBytes.toString("utf8"));
+assert.deepEqual(candidate.answers.map((a) => a.exercise), Array.from({ length: 23 }, (_, i) => String(138 + i)));
+assert(candidate.answers.every((a) => a.source === "derived" && a.bookRaw === undefined && a.displayAnswer.trim()));
+
+const normalizerPath = `${root}/app/src/lib/answer-normalize.ts`;
+const judgePath = `${root}/app/src/lib/textbook-answer.ts`;
+const projectionPath = `${root}/app/src/lib/lessons.ts`;
+const normalizer = fs.readFileSync(normalizerPath, "utf8");
+const judgeSource = fs.readFileSync(judgePath, "utf8");
+const projectionSource = fs.readFileSync(projectionPath, "utf8");
+const normalizeJs = stripTypeScriptTypes(normalizer).replace(/^export /gm, "");
+const { exactMathAnswersMatch, normalizeMathAnswer } = vm.compileFunction(
+  `${normalizeJs}\nreturn { exactMathAnswersMatch, normalizeMathAnswer };`,
+)();
+const begin = judgeSource.indexOf("function cleanNumericLatex(");
+const end = judgeSource.indexOf("export async function recordTextbookSubmission(");
+assert(begin >= 0 && end > begin);
+const judgeSlice = judgeSource.slice(begin, end);
+assert(judgeSlice.includes("export async function judgeTextbookPart("));
+assert(!judgeSlice.includes("sql(") && !judgeSlice.includes("createServerFn"));
+const judgeJs = stripTypeScriptTypes(judgeSlice).replace(/^export /gm, "");
+const judgeTextbookPart = vm.compileFunction(
+  `${judgeJs}\nreturn judgeTextbookPart;`,
+  ["exactMathAnswersMatch", "mathEngine"],
+)(exactMathAnswersMatch, async () => engine);
+// Only the two pure function declarations above execute. No server module,
+// database helper, authentication helper, browser, or publisher is imported.
+
+const sqrt = Math.sqrt;
+const sorted = (pairs) => [...pairs].sort(([ax, ay], [bx, by]) => ax - bx || ay - by);
+const independentPairs = {
+  "151:b": [[4 + 7 * sqrt(2) / 2, 4 - 7 * sqrt(2) / 2], [4 - 7 * sqrt(2) / 2, 4 + 7 * sqrt(2) / 2]],
+  "151:c": [[4, 3], [24 / 5, 7 / 5]],
+  "151:d": [[(-3 + sqrt(33)) / 4, (21 - 3 * sqrt(33)) / 8], [(-3 - sqrt(33)) / 4, (21 + 3 * sqrt(33)) / 8]],
+  "151:e": [[-1 + sqrt(11), -11 + sqrt(11)], [-1 - sqrt(11), -11 - sqrt(11)]],
+  "151:f": [[3, 1], [1, 3], [-3, -1], [-1, -3]],
+  "152:a": [[8 / 5, 11 / 5]],
+  "152:b": [[1, -1]],
+  "152:c": [[12, 4], [8, 6]],
+  "152:d": [[10, 12], [-8, -15]],
+  "152:e": [[2, 5], [-2, -3]],
+  "152:f": [[-11, 9 / 2], [4, -3]],
+  "153:a": [[(1 + 3 * sqrt(3)) / 2, (-1 - sqrt(3)) / 2], [(1 - 3 * sqrt(3)) / 2, (-1 + sqrt(3)) / 2]],
+  "153:b": [[0, -1], [3, 5]],
+  "153:c": [[3, 5], [6, -1]],
+  "153:d": [[6, 2], [11, 7]],
+  "153:e": [[4, 1]],
+  "153:f": [[-5 / 4, 3 / 4], [-5, -3]],
+  "156:a": [[10, 15], [3 / 2, -2]],
+  "156:b": [[4, 5], [70, -28]],
+  "156:c": [[6, 8], [8, 6]],
+  "156:d": [[6, 4], [4 / 5, -6 / 5]],
+  "157:a": [[1, 1], [1 / 3, -1 / 3]],
+  "157:b": [[3, 4], [3, -4], [0, 5]],
+  "157:c": [[7 * sqrt(2), sqrt(2)], [7 * sqrt(2), -sqrt(2)], [-7 * sqrt(2), sqrt(2)], [-7 * sqrt(2), -sqrt(2)]],
+  "157:d": [[sqrt(51), -1], [-sqrt(51), -1]],
+  "158:a": [[6, -2], [-2, 6], [-6, 2], [2, -6]],
+  "158:b": [[6 * sqrt(2), 2 * sqrt(2)], [2 * sqrt(2), 6 * sqrt(2)], [-6 * sqrt(2), -2 * sqrt(2)], [-2 * sqrt(2), -6 * sqrt(2)]],
+  "158:c": [[2 * sqrt(3), sqrt(3)], [sqrt(3), 2 * sqrt(3)], [-2 * sqrt(3), -sqrt(3)], [-sqrt(3), -2 * sqrt(3)]],
+};
+const independentNumeric = { "139:d) 解的个数": 4, "139:f) 解的个数": 1, "159:x": 7, "159:y": 3 };
+for (const [id, values] of Object.entries(independentPairs)) {
+  const [exercise, subpart] = id.split(":");
+  const valuesSorted = sorted(values);
+  valuesSorted.forEach(([x, y], index) => {
+    const prefix = `${subpart}) ${values.length === 1 ? "" : `解${index + 1} `}`;
+    independentNumeric[`${exercise}:${prefix}x`] = x;
+    independentNumeric[`${exercise}:${prefix}y`] = y;
+  });
+}
+let numericCount = 0;
+let exactCount = 0;
+let equalityPositiveChecks = 0;
+let equalityNegativeChecks = 0;
+const exactDetails = [];
+const exerciseResults = [];
+for (const answer of candidate.answers) {
+  assert(["auto", "ungraded"].includes(answer.grading));
+  if (answer.grading === "ungraded") assert.equal(answer.parts.length, 0);
+  const labels = new Set();
+  for (const part of answer.parts) {
+    assert(!labels.has(part.label), `Duplicate label ${answer.exercise}:${part.label}`);
+    labels.add(part.label);
+    assert(Array.isArray(part.expected) && part.expected.length === 1);
+    const latex = part.expected[0];
+    assert(!/\b(?:sqrt|abs)\s*\(/.test(latex), `Code-style expected ${latex}`);
+    const parsed = engine.parse(latex);
+    assert(parsed && !parsed.has("Error"), `${answer.exercise}:${part.label}: parse failure`);
+    if (part.judge === "numeric") {
+      numericCount++;
+      const key = `${answer.exercise}:${part.label}`;
+      assert(Object.hasOwn(independentNumeric, key), `No independent numeric value ${key}`);
+      const value = parsed.N();
+      assert(Number.isFinite(value.re) && value.im === 0, `${key}: not finite real`);
+      const expected = independentNumeric[key];
+      assert(Math.abs(value.re - expected) < 1e-9, `${key}: numerical discrepancy`);
+      assert(await judgeTextbookPart(part, latex), `${key}: production numeric equality rejected`);
+      equalityPositiveChecks++;
+      assert(!(await judgeTextbookPart(part, `${expected + 1000}`)), `${key}: wrong value accepted`);
+      equalityNegativeChecks++;
+    } else {
+      assert.equal(part.judge, "exact");
+      exactCount++;
+      assert(await judgeTextbookPart(part, latex), "Pure normalized exact comparison rejected");
+      equalityPositiveChecks++;
+      exactDetails.push({ exercise: answer.exercise, label: part.label, latex, normalized: normalizeMathAnswer(latex), editorEditVerified: false });
+    }
+  }
+  exerciseResults.push({ exercise: answer.exercise, grading: answer.grading, parts: answer.parts.length, mathComparison: "PASS" });
+}
+assert.equal(numericCount, 132);
+assert.equal(exactCount, 33);
+assert.equal(Object.keys(independentNumeric).length, numericCount);
+
+const swapped152c = [["12", "4"], ["8", "6"]].flat();
+const answer152 = candidate.answers.find((a) => a.exercise === "152");
+const parts152c = answer152.parts.filter((p) => p.label.startsWith("c)"));
+const swappedJudgments = await Promise.all(parts152c.map((part, i) => judgeTextbookPart(part, swapped152c[i])));
+assert(swappedJudgments.every((value) => value === false));
+assert.equal(12 * 4, 48);
+assert.equal(12 + 2 * 4, 20);
+assert.equal(8 * 6, 48);
+assert.equal(8 + 2 * 6, 20);
+assert(answer152.notes.includes("按 x 递增"));
+assert(!parts152c.some((p) => /递增|由小|排序/.test(p.label)));
+assert(!projectionSource.includes("answerKey.notes"));
+assert(judgeSource.includes("judgeTextbookPart(part, data.answers[index])"));
+
+const answer151 = candidate.answers.find((a) => a.exercise === "151");
+assert.equal(answer151.grading, "auto");
+const graphRoundedPart = answer151.parts.find((p) => p.label === "b) 解1 x");
+assert(!(await judgeTextbookPart(graphRoundedPart, "-0.9497")));
+
+const authorDir = `${root}/.tmp/resume182-6-8a-c2ex-answer-author6213-FIRST-part1`;
+const authorNames = ["ready.record", "commands.record", "candidate-verification.record", "algebra-verification.record"];
+const authorFiles = authorNames.map((name) => {
+  const path = `${authorDir}/${name}`;
+  const bytes = fs.readFileSync(path);
+  return { path, sha256: digest(bytes), parsed: JSON.parse(bytes.toString("utf8")) };
+});
+const authorCommands = authorFiles.find((f) => f.path.endsWith("/commands.record")).parsed;
+const authorReady = authorFiles.find((f) => f.path.endsWith("/ready.record")).parsed;
+const authorCandidateCheck = authorFiles.find((f) => f.path.endsWith("/candidate-verification.record")).parsed;
+const authorAlgebra = authorFiles.find((f) => f.path.endsWith("/algebra-verification.record")).parsed;
+assert.equal(authorReady.outputs.find((f) => f.path === candidatePath).sha256, digest(candidateBytes));
+assert.equal(authorCandidateCheck.candidateSha256, digest(candidateBytes));
+
+const output = {
+  schema: "stemrobin-182/independent-scoped-answer-runtime-check@1",
+  status: "CHECKS_EXECUTED_REVISE_REQUIRED",
+  scientificAnswerValues: "PASS_ALL_23",
+  inputCandidate: { path: candidatePath, sha256: digest(candidateBytes), unchangedAfter: digest(fs.readFileSync(candidatePath)) },
+  isolatedProductFunctions: [
+    { path: normalizerPath, sha256: digest(normalizer), functions: ["normalizeMathAnswer", "exactMathAnswersMatch"] },
+    { path: judgePath, sha256: digest(judgeSource), functions: ["cleanNumericLatex", "judgeTextbookPart"], serverModuleImported: false },
+    { path: projectionPath, sha256: digest(projectionSource), executed: false, projectionInspection: "Labels/unit/input only; private notes are not projected." },
+  ],
+  runtime: { node: process.version, computeEngineResolvedFromApp: r.resolve("@cortex-js/compute-engine") },
+  exerciseResults,
+  keyCount: numericCount + exactCount,
+  numericCount,
+  exactCount,
+  equalityPositiveChecks,
+  equalityNegativeChecks,
+  independentNumericValuesCompared: numericCount,
+  exactDetails,
+  observedDefects: [
+    {
+      id: "R1",
+      exercise: "151",
+      detail: "Explicit graphical-method task marked auto; graph-rounded -0.9497 is rejected without tolerance. Gate requires graphical work ungraded.",
+      roundedInput: "-0.9497",
+      roundedInputAccepted: false,
+    },
+    {
+      id: "R2",
+      exercises: ["152", "153", "156", "157", "158"],
+      also151BeforeR1Fix: true,
+      detail: "All-pairs mathematical answers are judged positionally without a public sorting convention; ordering is in private notes only.",
+      witnessExercise: "152c",
+      witnessSubmitted: swapped152c,
+      witnessAllPairsSatisfyLiteralSystem: true,
+      witnessPartJudgments: swappedJudgments,
+    },
+  ],
+  exactMathliveEditStatus: "NOT_RUN_NOT_AUTHORIZED; pure normalized comparisons are not editor input evidence",
+  supplementaryAuthorEvidence: {
+    firstConsultedAfterIndependentSolutionsFrozen: true,
+    files: authorFiles.map(({ parsed, ...file }) => file),
+    commandsPreservedVerbatim: authorCommands.records,
+    commandCount: authorCommands.records.length,
+    failedCommands: authorCommands.records.filter((item) => item.exitCode !== 0).length,
+    recoveredFailuresReset: false,
+    algebraCheckCountReportedByAuthor: authorAlgebra.checkCount,
+    candidateKeyCountReportedByAuthor: authorCandidateCheck.keyCount,
+    reportedUsagePreserved: Object.fromEntries([
+      "imagesViewed", "imagesWritten", "dependenciesInstalled", "durableKeysCreated",
+      "browserCalls", "applicationTestRuns", "modelServiceCalls", "databaseCalls", "gitCalls",
+    ].map((field) => [field, authorReady[field]])),
+    authorStatus: authorReady.status,
+    treatedAsIndependentApproval: false,
+    reruns: 0,
+  },
+  writes: [`${owned}/candidate-runtime.record`],
+  databaseCalls: 0,
+  browserCalls: 0,
+  finalizerCalls: 0,
+};
+assert.equal(output.inputCandidate.sha256, output.inputCandidate.unchangedAfter);
+const outputPath = `${owned}/candidate-runtime.record`;
+assert(!fs.existsSync(outputPath), "Refusing to overwrite existing evidence");
+fs.writeFileSync(outputPath, `${JSON.stringify(output, null, 2)}\n`, { flag: "wx" });
+console.log(JSON.stringify({
+  status: output.status,
+  scientificAnswerValues: output.scientificAnswerValues,
+  keyCount: output.keyCount,
+  numericCount,
+  exactCount,
+  equalityPositiveChecks,
+  equalityNegativeChecks,
+  observedDefects: output.observedDefects,
+  authorCommandCount: output.supplementaryAuthorEvidence.commandCount,
+  authorFailedCommands: output.supplementaryAuthorEvidence.failedCommands,
+  editorChecks: output.exactMathliveEditStatus,
+  output: { path: outputPath, sha256: digest(fs.readFileSync(outputPath)) },
+}, null, 2));

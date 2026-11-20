@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-5724/lemmadeck';
+assert.equal(process.cwd(), repo);
+const capture = path.join(repo, '.tmp/resume182-6-c2ex-answer-finalize-capture5724-FIRST/capture.mjs');
+const result = spawnSync(
+  '/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python',
+  ['-B', '.claude/skills/ld-s10y-answer/tools/lesson_answers.py', 'finalize',
+    '--book', '8a', '--edition', 'modern-us-neutral', '--lesson', 'alg8-c2-ex'],
+  { cwd: repo, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024,
+    env: { ...process.env, NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --import=${capture}`.trim() } },
+);
+process.stdout.write(result.stdout ?? '');
+process.stderr.write(result.stderr ?? '');
+process.exit(result.status ?? 1);

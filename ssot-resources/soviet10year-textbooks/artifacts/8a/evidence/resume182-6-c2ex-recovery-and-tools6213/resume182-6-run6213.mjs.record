@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-6213/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [directory, ...command] = process.argv.slice(2);
+assert.ok(directory.startsWith('.tmp/resume182-6-'));
+assert.ok(command.length);
+fs.mkdirSync(directory, { recursive: true });
+const started = new Date().toISOString();
+fs.writeFileSync(`${directory}/start.record`,
+  `${JSON.stringify({ command, cwd: repo, started }, null, 2)}\n`, { flag: 'wx' });
+const result = spawnSync(command[0], command.slice(1), {
+  cwd: repo, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024,
+  env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+});
+for (const stream of ['stdout', 'stderr']) {
+  fs.writeFileSync(`${directory}/${stream}.txt`, result[stream] ?? '', { flag: 'wx' });
+}
+fs.writeFileSync(`${directory}/receipt.record`, `${JSON.stringify({
+  command, cwd: repo, started, finished: new Date().toISOString(),
+  returncode: result.status, signal: result.signal, error: result.error?.message ?? null,
+}, null, 2)}\n`, { flag: 'wx' });
+process.stdout.write(result.stdout ?? '');
+process.stderr.write(result.stderr ?? '');
+process.exit(result.status ?? 1);

@@ -1,0 +1,191 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { spawnSync } from "node:child_process";
+
+const repo = "/Users/yong/.codex/worktrees/stemrobin-182-six-5724/lemmadeck";
+const own = ".tmp/resume182-6-c2ex-choice-part2-review5724-FIRST";
+if (process.cwd() !== repo) throw new Error("Unauthorized cwd");
+const seedPath = ".tmp/resume182-6-8a-c2ex-choice-author6213-FIRST-part2/seed.json";
+const draftPath = ".tmp/resume182-6-8a-c2ex-choice-author6213-FIRST-part2/draft.json";
+const viewsPath = ".tmp/resume182-6-c2ex-choice-part2-review-input5724-FIRST/views.json";
+const read = (p) => JSON.parse(fs.readFileSync(path.join(repo, p), "utf8"));
+const sha = (b) => crypto.createHash("sha256").update(b).digest("hex");
+function canonical(value) {
+  if (Array.isArray(value)) return "[" + value.map(canonical).join(",") + "]";
+  if (value && typeof value === "object") {
+    return "{" + Object.keys(value).sort().map((key) =>
+      canonical(key) + ":" + canonical(value[key])).join(",") + "}";
+  }
+  return JSON.stringify(value).replace(/[\u007f-\uffff]/g, (ch) =>
+    "\\u" + ch.charCodeAt(0).toString(16).padStart(4, "0"));
+}
+const digest = (value) => sha(canonical(value));
+const binding = (p) => {
+  const bytes = fs.readFileSync(path.join(repo, p));
+  return { path: p, bytes: bytes.length, byte_sha256: sha(bytes),
+    canonical_sha256: digest(JSON.parse(bytes.toString("utf8"))) };
+};
+function addWithPatch(relative, contents) {
+  if (!relative.startsWith(own + "/")) throw new Error("Write outside authorized root");
+  if (fs.existsSync(path.join(repo, relative))) throw new Error("Refusing overwrite: " + relative);
+  const patch = "*** Begin Patch\n*** Add File: " + path.join(repo, relative) +
+    "\n" + contents.replace(/\n$/, "").split("\n").map((line) => "+" + line).join("\n") +
+    "\n*** End Patch\n";
+  const result = spawnSync("apply_patch", [], { cwd: repo, input: patch, encoding: "utf8" });
+  if (result.status !== 0) {
+    console.error(result.stdout, result.stderr);
+    throw new Error("apply_patch failed for " + relative);
+  }
+}
+const addJson = (p, value) => addWithPatch(p, JSON.stringify(value, null, 2) + "\n");
+const seed = read(seedPath);
+const draft = read(draftPath);
+const views = read(viewsPath);
+const sourceFreeze = read(own + "/source-solutions.freeze.json");
+const correction = read(own + "/source-solutions.correction-before-key.json");
+const visibleFreeze = read(own + "/visible-judgments.complete.freeze.json");
+const comparison = read(own + "/author-comparison.json");
+if (binding(seedPath).byte_sha256 !== sourceFreeze.input.byte_sha256 ||
+    binding(draftPath).byte_sha256 !== comparison.draft.byte_sha256 ||
+    binding(viewsPath).byte_sha256 !== visibleFreeze.views_byte_sha256 ||
+    binding(own + "/visible-judgments.complete.freeze.json").byte_sha256 !== comparison.pre_key_freeze.byte_sha256) {
+  throw new Error("Frozen input bytes changed");
+}
+if (canonical(views.questions) !== canonical(draft.questions.map((q) =>
+  ({ id: q.id, source_numbers: q.source_numbers, view: q.view })))) {
+  throw new Error("Visible projection differs from candidate");
+}
+const questionReviews = structuredClone(visibleFreeze.question_reviews);
+for (const edit of comparison.review_evidence_corrections) {
+  const q = questionReviews.find((q) => q.question_id === edit.question_id);
+  q.mathematics.option_checks.find((o) => o.option_id === edit.option_id).evidence = edit.evidence;
+}
+for (const q of questionReviews) {
+  const c = comparison.question_comparisons.find((c) => c.question_id === q.question_id);
+  if (!c || c.verdict !== "pass") throw new Error("Missing author comparison");
+  q.mathematics.independent_solution += " Author comparison: " + c.evidence;
+}
+const sourceReviews = sourceFreeze.solutions.map((s) => {
+  const coverage = visibleFreeze.source_coverage.find((r) => r.source_number === s.source_number);
+  return {
+    source_number: s.source_number,
+    independent_solution: s.source_number === correction.source_number ?
+      correction.independent_solution + " Reviewer original freeze arithmetic error retained; correction independently made before author-key disclosure." :
+      s.independent_solution,
+    coverage: { verdict: coverage.verdict, evidence: coverage.evidence },
+  };
+});
+const verdicts = [
+  ...sourceReviews.map((s) => s.coverage.verdict),
+  ...questionReviews.flatMap((q) => [
+    q.task_fidelity.verdict, q.redundancy.verdict, q.answer_leakage.verdict, q.mathematics.verdict,
+  ]),
+];
+const outcome = verdicts.includes("blocked") ? "blocked" :
+  verdicts.includes("revise") ? "revise" : "pass";
+const reviewPath = own + "/review.json";
+const review = {
+  schema: "s10y-choice-review-v1",
+  seed_sha256: digest(seed),
+  draft_sha256: digest(draft),
+  reviewer: {
+    kind: "independent_agent",
+    identity: "Same182-6 reviewer5724-FIRST; separate candidate reviewer, not author; original source freeze, pre-key arithmetic correction and complete visible freeze precede author disclosure; exact file bindings/read order in ready.record",
+  },
+  source_reviews: sourceReviews,
+  figure_checks: [],
+  new_figure_reviews: [],
+  question_reviews: questionReviews,
+  outcome,
+};
+addJson(reviewPath, review);
+const command = ["python3", ".agents/skills/ld-s10y-choice/scripts/validate.py", "--repo", ".",
+  "--seed", seedPath, "--draft", draftPath, "--review", reviewPath];
+const receiptPath = own + "/validation.receipt.json";
+if (fs.existsSync(path.join(repo, receiptPath))) throw new Error("Validation already attempted");
+const start = new Date().toISOString();
+const run = spawnSync(command[0], command.slice(1), {
+  cwd: repo, env: { ...process.env, PYTHONDONTWRITEBYTECODE: "1" }, maxBuffer: 16 * 1024 * 1024,
+});
+const stdout = run.stdout ?? Buffer.alloc(0);
+const stderr = run.stderr ?? Buffer.alloc(0);
+// These are unmodified command-output bytes, not manually authored files.
+fs.writeFileSync(path.join(repo, own, "validate.stdout.txt"), stdout, { flag: "wx" });
+fs.writeFileSync(path.join(repo, own, "validate.stderr.txt"), stderr, { flag: "wx" });
+const receipt = {
+  command, cwd: repo, invocations: 1, started_at_utc: start, finished_at_utc: new Date().toISOString(),
+  exit_code: run.status, signal: run.signal, spawn_error: run.error ? String(run.error) : null,
+  stdout: { path: own + "/validate.stdout.txt", bytes: stdout.length, sha256: sha(stdout) },
+  stderr: { path: own + "/validate.stderr.txt", bytes: stderr.length, sha256: sha(stderr) },
+  semantic_outcome: outcome, review: binding(reviewPath), rerun: false,
+  usage: "unknown",
+};
+addJson(receiptPath, receipt);
+const stagePaths = [
+  own + "/source-solutions.freeze.json",
+  own + "/source-solutions.correction-before-key.json",
+  own + "/visible-judgments.freeze.json",
+  own + "/visible-judgments.complete.freeze.json",
+  own + "/author-comparison.json",
+];
+const counts = {
+  sources: seed.exercises.length, source_solution_records: sourceReviews.length,
+  questions: draft.questions.length, question_reviews: questionReviews.length,
+  options: draft.questions.reduce((n, q) => n + q.view.options.length, 0),
+  option_checks: questionReviews.reduce((n, q) => n + q.mathematics.option_checks.length, 0),
+  single: draft.questions.filter((q) => q.view.mode === "single").length,
+  multiple: draft.questions.filter((q) => q.view.mode === "multiple").length,
+  source_figures: seed.figures.length, new_figures: draft.new_figures.length,
+  figure_checks: 0, new_figure_reviews: 0,
+  author_source_solutions_checked: comparison.aggregate.author_source_solutions_checked,
+  author_exact_sets_checked: comparison.aggregate.exact_correct_sets_checked,
+  author_rationales_checked: comparison.aggregate.rationales_checked,
+  correct_rationales: draft.questions.reduce((n, q) => n + q.key.rationales.filter((r) => r.truth === "correct").length, 0),
+  incorrect_rationales: draft.questions.reduce((n, q) => n + q.key.rationales.filter((r) => r.truth === "incorrect").length, 0),
+  source_coverage: Object.fromEntries(["pass", "revise", "blocked"].map((v) =>
+    [v, sourceReviews.filter((s) => s.coverage.verdict === v).length])),
+  checks: Object.fromEntries(["task_fidelity", "redundancy", "answer_leakage", "mathematics"].map((check) =>
+    [check, Object.fromEntries(["pass", "revise", "blocked"].map((v) =>
+      [v, questionReviews.filter((q) => q[check].verdict === v).length]))])),
+  unique_findings: comparison.findings.length,
+  key_set_disagreements: 0, option_truth_disagreements: 0, author_math_or_rationale_defects: 0,
+  validation_invocations: 1, browser_calls: 0, render_calls: 0, paid_calls: 0,
+  external_api_or_model_calls: 0,
+};
+const ready = {
+  schema: "stemrobin-182/choice-review-ready@1",
+  status: outcome, approved: false, native_finalize_run: false,
+  cwd: repo, sole_write_root: path.join(repo, own), reviewer: review.reviewer,
+  source: binding(seedPath), draft: binding(draftPath), review: binding(reviewPath),
+  views: binding(viewsPath), freeze_and_comparison_bindings: stagePaths.map(binding),
+  read_order: [
+    "Governing skill/review/contract and repo instructions; only official prepared seed as mathematical input.",
+    "All25 source prose independently solved; source-solutions.freeze.json created via apply_patch before any views.",
+    "Pure views.json read; verbose truncation recovered with two compact projections.",
+    "Independent option substitution found161a reviewer arithmetic mistake; original freeze retained and correction-before-key created.",
+    "Incomplete provisional visible freeze retained; complete47-question163-option judgments frozen via apply_patch.",
+    "Only then originalpart2 draft read: all47 intents/solutions,47keys,163rationales/misconceptions,25coverage rows.",
+    "Author comparison recorded; reviewer187b option-evidence breakdown corrected transparently without changing key.",
+    "Native review mechanically assembled from manual freezes/comparison using apply_patch.",
+    "Existing validate.py invoked exactlyonce with originalseed,draftandnative review; alloutputs andnonzeroverdict retained.",
+  ],
+  source171: {
+    status: "local honest limitation, not blocked",
+    boundary: "5y-x=0", open_component: "5y-x>0", closure: "5y-x>=0",
+    original_convention: "genuinely unresolved; not guessed",
+    visible_question: "explicitly tests strict upper interior and does not force convention",
+  },
+  counts, findings: comparison.findings,
+  retained_failures: comparison.retained_reviewer_failures,
+  validation: { path: receiptPath, exit_code: run.status, stdout_path: own + "/validate.stdout.txt",
+    stderr_path: own + "/validate.stderr.txt", invocations: 1, rerun: false },
+  usage: { tokens: "unknown", service_usage: "unknown", paid_calls_authorized_or_made: 0 },
+  forbidden_inputs_read: false,
+  candidate_authored_or_edited: false,
+  other_files_or_staging_modified: false,
+};
+addJson(own + "/ready.record", ready);
+console.log(JSON.stringify({ status: outcome, review: binding(reviewPath),
+  ready: binding(own + "/ready.record"), counts, validation_exit_code: run.status,
+  validation_stdout: stdout.toString("utf8"), validation_stderr: stderr.toString("utf8") }, null, 2));
