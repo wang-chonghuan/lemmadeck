@@ -1,0 +1,107 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 307,
+  "printed_page": 298,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 307
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "fb0912b39abe578cd294377c323c430090ae320109a04302d25f89b7d3bc7313"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "D056 FIRST SOURCE AUTHOR candidate only; no independent SOURCE, SCI, modern or figure approval. Existing0307 bytes were saved before edits; source recognition here is from the prepared PNG opened once.",
+    "First printed words are 流越大., continuing306's 感生电; no unprinted 的强度 or 就 is inserted. 流越大 is heavy, followed by normal-weight prose.",
+    "Actual heading124. 磁通量 follows the final123 paragraph and is the observed local right boundary only, not approval or whole123 SOURCE closure. Heading125. 感生电流的方向 楞次定律 follows124's final paragraph.",
+    "The faint 磁通量 in p0307#3 has three explicit dot-under emphasis marks. Markdown bold is the available emphasis surrogate for those dots, not a source font-weight assertion.",
+    "The flux-definition span in p0307#4 is heavy over four actual rows. In p0307#8, 乘积 Bcos(alpha)=B_n and the next row 此 are also heavy. The initial 磁感应强度 in p0307#9 is heavy. Displayed equations are separate literal rows with equation numbers12-1 and12-2; no formula correction is made.",
+    "Figure283 is one whole drawing: three rightward horizontal field arrows, a rising-right heavy segment crossing them, a down-right arrowed normal, an angle arc, alpha, and overhead-accent B/n labels. Its actual relation, trace and label inventory are AUTHOR-only.",
+    "Caption283 shares the last preceding prose row 磁通量Phi:, before the displayed equation; p open / figure / cap samerow / p cont preserves this paragraph.",
+    "HOLD D056-0307-B-ACCENT: p0307#10 row2 has a horizontal overhead B mark without a confidently resolved arrowhead. Candidate uses bar B, not an inferred vector arrow. This is source-recognition uncertainty, not confirmed mathematical erratum; remaining detail inspection is pending.",
+    "Greek alpha/Phi and Latin-looking B/n/S are visual LaTeX conventions, not proof of hidden source-font encoding.",
+    "The last sentence and paragraph close after 问题.; unit125 has no subsequent heading in this batch and remains open. No exercise or footnote is printed. Twenty-five printed text rows include the caption sharing one prose row.",
+    "No counting margins, figure_crops, exclusions or mathematical correction are introduced. Previous exact fig283 snap geometry is reused by native finalize rather than resnapped."
+  ],
+  "errata": [],
+  "printed_lines": 25,
+  "figures": [
+    {
+      "id": "fig-283",
+      "label": "图 283",
+      "box": [
+        901,
+        901,
+        387,
+        193
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+**流越大**. 磁力线数目改变的原因，可以是完全不同的. 这可
+以是由于相邻线圈中电流强度的改变，从而使穿过静止导体
+的磁感应强度改变；也可以是由于线圈在不均匀磁场（空间
+中磁力线密度不同）中运动而使磁感应强度改变(图 282).
+
+<!-- h3 -->
+**124. 磁通量**
+
+<!-- p -->
+为了精确地、定量地表述法拉第电磁感应定律，需要引入
+一个新的量——**磁通量**.
+
+<!-- p open -->
+现在，我们讨论一个放在匀强磁场中的平面闭合导线(回
+路)，回路的面积等于 $S$. 平面回路的法线 $\vec{n}$ 与磁感应强度 $\vec{B}$
+的夹角为 $\alpha$ (图 283). **磁感应强度**
+**的大小跟面积 $S$ 和 $\vec{B}$ 与 $\vec{n}$ 的夹角 $\alpha$**
+**的余弦的乘积，叫做通过面积 $S$ 的**
+**磁通量 $\Phi$**：
+
+<!-- fig 图 283 box 901,901,387,193 -->
+![图 283](figures/fig-283.png)
+
+<!-- cap 图 283 samerow -->
+图　283
+
+<!-- p cont -->
+$\Phi=BS\cos\alpha$.　(12-1)
+
+<!-- p -->
+**乘积 $B\cos\alpha=B_n$** 是磁感应强度在平面回路法线上的投影. 因
+**此**，
+$\Phi=B_nS$.　(12-2)
+
+<!-- p -->
+**磁感应强度** $\vec{B}$ 表征空间中每一点的磁场. 磁通量不仅与
+$\vec{B}$ 有关，而且与回路面积和回路相对于磁力线的取向有关.
+
+<!-- p -->
+可以把磁通量解释为穿过面积 $S$ 的磁力线的数目. 如果
+规定穿过垂直于矢量 $\bar{B}$ 的单位面积的磁力线数目等于矢量的
+大小 $B$，则磁通量就等于穿过面积 $S$ 的磁力线的数目.
+
+<!-- h3 -->
+**125. 感生电流的方向　楞次定律**
+
+<!-- p -->
+现在我们说明关于感生电流的方向这个重要问题.
+
+<!-- foot -->
+• 298 •

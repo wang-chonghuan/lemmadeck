@@ -1,0 +1,72 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 304,
+  "printed_page": 295,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 304
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "6c069cf799c1d511142b5fb15b609178e4ed6a492bd8415a8d6f950e255ddf24"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "FIRST SOURCE AUTHOR only. Actual headings are 第十二章 电磁感应 and the bold unit heading 123. 电磁感应的发现; no section heading is printed. This local next-unit boundary does not approve source122.",
+    "The two-row statement beginning 随时间变化的磁场能够产生电场 and ending 化的电场也能够产生磁场 has printed under-dots. Preserve under-dot markup, not fabricated bold emphasis. Irregular body ink weight is not interpreted as a separate bold span.",
+    "No figure, caption, numbered question, mathematical formula or formula number is printed on this page.",
+    "The final paragraph is open after 法拉第同时，瑞士物理学家科拉顿也想利用磁铁在闭合线圈 and continues on physical305. Footer is printed295."
+  ],
+  "errata": [],
+  "printed_lines": 22,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- h1 -->
+第十二章 电磁感应
+
+<!-- h3 -->
+**123. 电磁感应的发现**
+
+<!-- p -->
+迄今，我们讨论了不随时间改变的电场和磁场. 曾阐明
+了电场是由电荷产生的，而磁场是由运动电荷，即电流产生
+的. 现在我们开始研究随时间改变的场的规律.
+
+<!-- p -->
+发现过一个最重要的事实，这就是电场和磁场之间有着
+密切的联系. <span style="text-emphasis-style: dot; text-emphasis-position: under; -webkit-text-emphasis-style: dot; -webkit-text-emphasis-position: under;">随时间变化的磁场能够产生电场，而随时间变</span>
+<span style="text-emphasis-style: dot; text-emphasis-position: under; -webkit-text-emphasis-style: dot; -webkit-text-emphasis-position: under;">化的电场也能够产生磁场</span>. 没有场之间的这种联系，各式各
+样的电磁现象就不能象实际上有的那么广泛，既不会有无线
+电波，也不会有光.
+
+<!-- p -->
+电磁场概念的奠基人法拉第，在发现电磁相互作用新的
+性质中迈出关键性的第一步，不是偶然的. 法拉第完全确信
+电现象和磁现象有统一的本质. 法拉第基于这种信念发现的
+现象，是世界上发电厂把机械能转变为电流能的发电机设备
+的基础. （其他电源：干电池，蓄电池等只给出很小一部分
+能量. ）
+
+<!-- p open -->
+法拉第曾考虑过：电流能够使铁块磁化. 磁铁就不能产
+生电流吗？很长时间没有发现这种联系，主要是很难想到：只
+有运动的磁铁或随时间变化的磁场，才能在闭合线圈中产生
+电流. 下列事实说明各种偶然性都可能破坏新发现. 几乎跟
+法拉第同时，瑞士物理学家科拉顿也想利用磁铁在闭合线圈
+
+<!-- foot -->
+• 295 •
