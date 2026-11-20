@@ -1,5 +1,19 @@
 # 开发路线
 
+## 184-6 n14 尾批窄交付（2026-11-20）
+
+按当前继续授权交付这一实际尾批，不以一课长期未推送收尾。
+仅ana9-c3-s1-n14：一离线完整课、两ungraded完整标准答案、
+两multiple选择/十选项、十二显示正文段落；既过阶段直接复用。
+新E可读性只补两mobile原生endpoint观察，原科学/字形/细墨迹
+HOLD及所有初FAIL保留。completion与对应失败/修复证据在
+artifacts/9c/evidence/nov20-1846-n14/。父永久24/24零新图，
+独立Raman2/2关闭。窄提交只带该课、必要58/59来源页、
+索引n14条目和本段；初始layout/test/104/122/135及其余
+plan/usage未提交改动保留。finish review，不写DB或部署。
+交付仍detached HEAD→codex/STEMROBIN-184-textbooks正常push，
+禁止force/rebase；完成后立即推进38的缺失142–146来源页。
+
 ## 184-6 合法接管与实际生产（2026-11-19）
 
 实时读取184评论4b9fcf39-d624-4a9b-b445-3423973df95b及179评论
