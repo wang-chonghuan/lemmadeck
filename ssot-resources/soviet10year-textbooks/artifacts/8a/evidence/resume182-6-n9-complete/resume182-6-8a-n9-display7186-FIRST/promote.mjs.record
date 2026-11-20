@@ -1,0 +1,65 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-7186/lemmadeck';
+assert.equal(process.cwd(), root);
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const book = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const lesson = `${book}/editions/modern-us-neutral/lessons/alg8-c2-s2-n9`;
+const retentionPath = `${book}/evidence/resume182-6-n9-complete/retention.record`;
+const retention = JSON.parse(fs.readFileSync(retentionPath));
+const entries = new Map(retention.entries.map(entry => [entry.historical_path, entry]));
+const reportPath = '.tmp/resume182-6-8a-n9-display7186-FIRST/runtime/report.json';
+const reviewPath = '.tmp/resume182-6-8a-n9-review7186-FIRST/review.json';
+const report = JSON.parse(fs.readFileSync(reportPath));
+const review = JSON.parse(fs.readFileSync(reviewPath));
+assert.equal(report.status, 'CAPTURED_UNOBSERVED');
+assert.equal(review.status, 'PASS');
+assert.equal(review.image_loads, 2);
+assert.equal(review.reopens, 0);
+assert.equal(review.crops, 0);
+assert.equal(report.screenshots.length, 2);
+assert.equal(report.views.length, 2);
+assert.equal(report.checks.filter(check => check.status !== 'PASS').length, 0);
+for (const image of report.screenshots) {
+  const observed = review.images.find(item => item.path === image.path);
+  assert.ok(observed);
+  assert.equal(observed.sha256, image.sha256);
+  assert.equal(observed.status, 'PASS');
+  assert.equal(sha(fs.readFileSync(image.path)), image.sha256);
+}
+for (const input of report.inputs) assert.equal(sha(fs.readFileSync(input.path)), input.sha256);
+assert.ok(report.coverage.every(view => view.missingTargets.length === 0
+  && view.domTargets === view.capturedTargets));
+const reference = input => {
+  const relative = input.startsWith(`${root}/`) ? input.slice(root.length + 1) : input;
+  const entry = entries.get(relative);
+  assert.ok(entry, `Unretained current evidence ${relative}`);
+  assert.equal(sha(fs.readFileSync(entry.path)), entry.sha256);
+  return { path: entry.path, sha256: entry.sha256 };
+};
+fs.mkdirSync(`${lesson}/evidence`);
+const html = fs.readFileSync(report.inputHTML.path);
+fs.writeFileSync(`${lesson}/evidence/text.html`, html, { flag: 'wx' });
+const binding = {
+  schema: 'stemrobin-182/pure-reading-offline-display@1', status: 'OFFLINE_DISPLAY_PASS',
+  book: '8a', lesson: 'alg8-c2-s2-n9', proseBlocks: 4, originalExercises: 0,
+  figures: 0, answerOrChoiceProductionRequired: false, inventedExercises: 0,
+  contentReview: reference(reviewPath), runtime: reference(reportPath),
+  inputs: report.inputs, images: report.screenshots.map(image => ({
+    ...reference(image.path), width: image.width, height: image.height, status: 'PASS',
+  })),
+  html: { path: `${lesson}/evidence/text.html`, sha256: sha(html) },
+  coverage: report.coverage.map(view => ({ viewport: view.viewport,
+    domTargets: view.domTargets, capturedTargets: view.capturedTargets })),
+  retention: { path: retentionPath, sha256: sha(fs.readFileSync(retentionPath)) },
+  actualUsage: { rendererCalls: 1, displayBrowserCalls: 1, screenshotObservations: 2,
+    sourceImageReopens: 0, failedPreparationCalls: 1, paidCalls: 0,
+    oldPassReruns: 0, DBWrites: 0, hostTokensAndCost: 'unknown' },
+  appOrWholeTicketApproval: false, mergeOrDeploy: false,
+};
+fs.writeFileSync(`${lesson}/evidence/display.json`, `${JSON.stringify(binding, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: binding.status, html: binding.html.path,
+  binding: `${lesson}/evidence/display.json`,
+  sha256: sha(fs.readFileSync(`${lesson}/evidence/display.json`)) }));

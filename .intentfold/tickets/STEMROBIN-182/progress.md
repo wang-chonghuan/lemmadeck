@@ -2,6 +2,35 @@
 
 ### 182-6 2026-11-20 即时接续，官方新树注册成功
 
+- n3已实际窄commit/push：
+  `a277f78c34e67dd9f99dfe45f9a02b744564460d`，
+  parent `820d6ce5a08c73e269845a2e8e7bcefea9dc1976`；
+  166文件仅n3/两证据包/本已有记录/ticket新树路径，暂存边界与完整空白检查PASS，
+  push exit0且独立ls-remote同SHA。git commit详细创建清单输出截断保持，
+  不重跑commit/不猜费用；锁定旧树的本地分支未移动，原远端分支快进。
+- 已接续其它有源课：8a n4现有9选定源38项PASS不是11题整课，
+  原32a重根计数约定HOLD及未批准23图解保持，不重解九PASS或凭目录补答案；
+  7a n4/11/14选择覆盖分别缺62/148/321，未据省略本身判科学失败或假定全课PASS；
+  各旧HOLD按原记录保留，6a第二章266题未动。
+  这些边界不阻断8a n9实际完整纯阅读源(四段/0题/0图)。
+- n9 adapt-prepare FIRST因系统Python无numpy exit1，失败保留；
+  使用主树已有虚拟环境的解释器、当前树代码与绝对workdir recovery1 exit0，
+  依赖安装/复制0。原树错误假设venv路径ls exit1保留，不当源丢失。
+  只改四段公式外句号排版，源文/引用/数值/严格不等号不改；
+  adapt-finalize一次exit0、renderer一次exit0，正文4/原题0/图0，不编答案或选择题。
+  索引仅新增n9、profile恢复原仓库相对path，其他四课条目保持。
+- n9实际桌面/手机各1张原生截图、完整字形及公式覆盖PASS；
+  Faraday唯一新四段现代内容+两截图独立复核PASS，review SHA
+  `a314eaa0c0f03ae02b5f7fb9f8811a784c8426a143e467368338ecce01e0e38f`，
+  已完成停止，源页复看/旧PASS复审/父图片/DB均0，宿主tokens/费用未知。
+  retained evidence 32唯一文件/38引用/5旧引用，retention SHA
+  `240b4cbb2f29b93d0ebe19a4135360c67d0616a33039d047b57545640d00dbc3`。
+  最终离线绑定FIRST exit0，display.json SHA
+  `fe0aef4ec5df9e82b9c5071e661dc43b168111c636832764ed02a9e701f8e61e`；
+  持久text.html及同字节0题exercises.html配对，原生回链可用，不生成练习内容。
+  n9为完整离线纯阅读课，不是APP/全工单批准；准备窄commit/push，
+  此行尚非成功提交收据。当前没有在途agent/exec/browser/server。
+
 - 当前完整课8a n3已实际闭合：19正文/原12–22共11题、11ready答案
   (4auto/7ungraded)、11选择题54项/新增21一题五项、原fig01复用。
   原十题49项/view/key/coverage/review子树保持；原三快照同字节移入
