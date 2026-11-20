@@ -1,5 +1,216 @@
 # 生产检查点
 
+## 180-6 n109 complete offline; narrow commit/push next
+
+2026-11-20T03:01:58.538Z. n109 retained exact approved TEXT and three ready ungraded
+answers; original SOURCE/TEXT/ANSWER PASS and successful finalization reused.
+Missing old CHOICE bytes were not claimed recovered. New missing-phase two
+natural questions/single1/multiple1/11 options passed SOURCE alignment, view-only
+BLIND and key-last FINAL; all packages parent-bound. Current BLIND FIRST
+REVISE retained; only first stem's visible process scope changed once and
+passed affected-only BLIND. Original CHOICE FIRST,
+REVISE/correction1, wrong-token inspect and binder FIRST/partial failures kept.
+
+One new offline render and six desktop/mobile native surfaces exit0; fresh
+six-image independent DISPLAY PASS parent-bound. Completecourses10->11 only
+now. Twenty narrow durable files, only n109 modern index row added; raw36/
+modern29/pages105 unchanged. No ANSWER replay or substantive answer edit.
+Current agents closed, parent image loads0; image-service newcalls0, historical
+68 and UNKNOWN costs/tokens preserved. Next narrow push on original branch,
+then other authorized source-ready missing phases. n111 fig241 paid-request
+local HOLD and missing saved s23 templates/fig70 failure bytes remain separate.
+Original trees/locks/backups/stash untouched. Finishreview, no DB/merge/deploy/
+interactions/closure/full-project checks.
+
+## 180-6 n109 CHOICE retained; native6 PASS, fresh DISPLAY active
+
+2026-11-20. Sole FINAL manifest
+918f8b3df5be24176478d9cd44b96669c30679f515ffe2da1bfc7e3af6b8ae1c
+0444 parent-bound33 exit0. Two questions/11 rationales/5 misconceptions,
+3 original tasks/13 facets and7 recognition losses compared; official
+with-review validator once exit0. FIRST REVISE plus affected PASS kept.
+Current author and semantic reviewer closed. Approved3-file exact transfer
+and official CHOICE retain exit0.
+
+One new official offline render exit0; six text/exercises/choices desktop1440/
+mobile390 native surfaces exit0. Fresh sole Hubble
+01a1f6e2-c02e-71b3-a7d4-fb073e23a892 opens only those6 new captures once,
+parent0 images. Await real independent DISPLAY return/binding before count,
+20-file narrow seal/commit/push; completecoursesstill10.
+
+s23 only missing local prepare rebuilt in new scratch once exit0: raw hashes
+match old TEXT PASS. Prepared figures template exactly matches old88fc6f9f;
+lesson/exercise baselines do not match old approved TEXT hashes, so no
+TEXT recovery/approval or fullcourse claim. Old fig70 failures and missing
+saved template/spec bytes remain. No source review/image/browser replay.
+Old trees/locks/backups/stash/failures and historical image-service68/new0,
+UNKNOWN costs/tokens preserved. Finishreview, no DB/merge/deploy/fullchecks.
+
+## 180-6 n109 affected BLIND PASS bound; key-last FINAL active
+
+2026-11-20. Same reviewer affected BLIND manifest
+c28b0b36c65166ef9c72360c6a6b4dee48dc71984701e11db788b66bc7fcdfcd
+0444 parent-bound14 exit0. Only changed stem explicitly scopes the question
+to this lesson's expansion-work process; B1 closed, no new leakage.
+Original11 option checks/second question/13 SOURCE facets reused.
+FIRST REVISE and author's one content correction remain; no budget reset.
+
+Only after binding, full current affected draft and original source-solve/
+seed disclosed to same sole reviewer for FINAL key/derivation/misconception/
+limitations/coverage comparison and one official with-review validator.
+No SOURCE/BLIND replay, ANSWER stage, CHOICE retain or DISPLAY yet.
+Completecourses10, original trees/locks/backups/stash/failures preserved.
+Historical image-service68/new0; costs/tokens UNKNOWN. Finishreview.
+
+## 180-6 n109 one-stem author repair bound; affected-only BLIND active
+
+2026-11-20. Current author affected-r1 manifest
+a3a7e15494debeb43bf11c7ecb24325fc93cab774439bc6768bc73e9a6503cf6
+0444 parent-bound20 exit0. Actual structural diff changes only
+questions[0].view.stem; all11 options/second question/key/intent/coverage,
+original seed/solve and FIRST bytes unchanged. One new missing-phase content
+repair executed, structural validate once exit0; historicalcorrection1 unchanged.
+
+Same sole reviewer now sees only affected pureview
+86d8f71a2759120855f8caeb709e4510cbb5d83749aca231d2c99b69e319b2f4,
+3376bytes/0444. Reuses prior SOURCE/all-option checks, reviews only B1 scope
+and affected leakage/package consequence. No author key or FINAL yet.
+Completecourses10, no CHOICE retain/DISPLAY/commit. Image-service newcalls0,
+UNKNOWN fees/tokens, old failures/trees/locks/backups/stash kept. Finishreview.
+
+## 180-6 n109 BLIND FIRST REVISE bound; one visible-scope repair active
+
+2026-11-20. Same sole independent BLIND report genuinely returned REVISE:
+n109-energy-process stem did not limit temperature-direction contrast to
+the expansion-work process described in this lesson. FIRST manifest
+3eca518ce697f0208eb7c2ac8857f833938f5361de89ee8f6c67de10584644c0
+0444 parent-bound13 exit0. All11 independent option checks and second
+question PASS retained; no author draft/key disclosed to reviewer.
+
+Same current author is changing only first visible stem in new affected-r1
+copies. Original seed/solve/draft/view/key and second question remain frozen.
+This is one genuine new missing-phase content repair, not a technical failure
+or reset of historical CHOICE correction1. Await author diff/structural receipt
+and binding, then affected-only BLIND; no FINAL/retain/DISPLAY/completion yet.
+Completecourses10; image-service newcalls0, UNKNOWN costs/tokens and all
+original trees/locks/backups/stash/failures preserved. Finishreview.
+
+## 180-6 n109 SOURCE bound; same sole reviewer in view-only BLIND
+
+2026-11-20. Collected saved current author manifest
+0eef6d0bba3b1d7a28ad29e8f7c24aa2f3c57fdd98ab50d3ee17b1979cca4c17,
+fully parent-bound28 on attempt3; FIRST wrong book token and FIRST/partial
+binder failures remain. Two natural questions, single1/multiple1,11 options.
+Current SOURCE manifest
+1ec8bc062635580e613cf326878058cff56068c7955b5f3f9e5195665ee9ad5b
+now parent-bound19 exit0. Old independent SOURCE solutions reused; no
+SOURCE solve, ANSWER or TEXT semantic replay.
+
+Same current sole Herschel receives only pureview.json for BLIND; author
+draft/solution/key not disclosed. Await actual BLIND return and binding,
+then FINAL with-review comparison. No CHOICE retention/DISPLAY/count yet.
+Old CHOICE rejection/correction1, recovered TEXT/ready ANSWER and failures
+kept. n111 fig241 paid-request local HOLD unchanged, no new image-service call.
+Completecourses10/raw36/modern29/pages105; original trees/locks/backups/stash
+untouched, tokens/billing UNKNOWN. Finishreview, no DB/merge/deploy/fullchecks.
+
+## 180-6 n111 PASS stages bound; n109 wrong-token inspect repaired in same author
+
+2026-11-20. n111 genuine TEXT/SOURCE manifestcdfbfae9f84a54ad87db5203c21b1259d03feb565ccc8b7e94e826badea90f50
+parent-bound34exit0; fig240 PASS manifest3ddf5da6ac3578e4e334f29000b4e5baba4514fd8b02b939e72a641781204391
+parent-bound61exit0. Two independentSOURCE answers/13 facets, figure review
+opens source+native once each; all n111 new actual image loads5, parent0.
+Fig240 current author closed; fig241 paid-request local HOLD remains, no
+canonical n111/finalization/ANSWER comparison/CHOICE/DISPLAY/fullcourse claim.
+
+n109 fresh author's FIRST inspect exit2 retained: parent phrase canonical7p
+was mistakenly used as literal book token. Immediately corrected to book7p
+in same author, only failedinspect resumed; valid seed preparation now exists.
+This is ordinary reversible parameter recovery, not content failure, approval
+wait, new author/chat or budgetreset. Old CHOICE FIRST and affected rejection,
+historical correction1 and exact recovered TEXT/ANSWER remain.
+Still completecourses10/raw36/modern29/pages105; no new paid image call.
+Finishreview; old source trees/locks/backups/stash preserved, no DB/merge/deploy.
+
+## 180-6 n109 exact TEXT/ANSWER recovered; missing CHOICE active, n111 artwork local HOLD
+
+2026-11-20. n111 fig240 candidate02 author bound32; only display widths
+[640,660] changed, SVG/preview byte-identical, contentcorrection0.
+New native02 PASS14 current-CSS observations/mintext32px, FIRST exit1 retained.
+Same sole Herschel finishes n111 TEXT/two SOURCE tasks and FIRST fig240
+source/native-composite review; no parent keys, fullcourse or fig241 approval.
+Fig241 remains saved ARTWORK_NEEDED. Current authorization does not grant a
+new paid image request; no Azure mutation/call. Official tariff/output estimate
+read-only evidence retained, not a spend authorization or observed bill.
+Current fig241 author closed, its original one image load and frozen files kept.
+
+Immediately continued source-ready n109 missing phases, not a replacement
+chat/wholelesson restart. Located three old returned TEXT templates whose hashes
+exactly match original PASS and raw files byte-equal approved frozen raw.
+Only named necessary files recovered/parent-bound16; original trees untouched.
+Git recovery snapshot's modern text was pre-author, not approved TEXT: did not
+restore it. One missing current canonical finalization uses approved templates;
+four TEXT files and one modern index row retained, raw unchanged.
+
+Three actual old ready answers exactly equal approved FIRST candidate except
+status; original finalizeexit0/streams match. Retained those exact two ready
+files; ANSWER prepare/finalize/semantic replay0, substantive edits0, allungraded.
+Missing old CHOICE bytes not fabricated/recovered; old FIRST/affected REVISE
+and correction1 preserved. Fresh source-first AUTHOR Aquinas01a1f6c0-ffb7-7cf0-b7bf-6c909a183597
+owns only current missing CHOICE phase, no old answers/choices supplied.
+Canonical raw36/modern29/pages105; completecoursesstill10. No new image-service
+calls, costs/tokensUNKNOWN. Finishreview, no DB/merge/deploy/fullchecks.
+
+## 180-6 n111 saved authors collected; TEXT/SOURCE active, fig240 display declaration repair
+
+2026-11-20. Same official six worktree; no create/attach replay. n130 complete
+29-file push018c20e20a96a2a00580656a01f83421f9a49d91 preserved; completecourses10.
+Collected and parent-bound fig240 author manifest2724d3c85f2f7a28cde7e3533716135482250fd3900d08526d4cf0cd9773150f
+and fig241 ARTWORK_NEEDED manifestd509a0045f2b4ab536b3b3e4ec10ca9dacf8bf675d646b07f43bd8cbc86b1531.
+Both author results are saved, not figure approval; working templates unchanged.
+
+First new fig240 native current-CSS fixture exit1, receipt retained. Product
+prose16.5px/40em differs from documented640px; narrow added660px display
+declaration requested from same current author, retain640px minimum. Geometry,
+source inventory and candidate01 frozen bytes remain; no source/preview replay.
+Fixture diagnostic now saves failing observation. No content-failure verdict.
+
+Fresh sole independent Herschel01a1f6b7-0586-7950-833f-dc81f7bbc96e reviews
+frozen n111 TEXT and solves two original SOURCE tasks before answers/keys.
+No author answers/CHOICE reasoning disclosed; no figure or full-course approval.
+Fig241 live Azure session/deployment and current official docs/pricing inspected
+read-only; no image request yet, sub-$5 preflight still being established.
+Canonical raw36/modern28/pages105; new image-service calls0; billing/tokensUNKNOWN.
+Old tree/locks/backups/stash/failures unchanged. Finishreview, no DB/merge/deploy.
+
+## 180-6 n130 pushed; n111 two fresh figure authors active
+
+2026-11-20. Complete n13029-file narrowcommit
+018c20e20a96a2a00580656a01f83421f9a49d91 fast-forwardpushed to original
+codex/STEMROBIN-180-textbooks; actualls-remote matches. Completecourses10.
+TEXT/SOURCE, ANSWER notes-only affectedPASS, CHOICE and native6surface/
+fresh6image DISPLAY all sealed andparent-bound; both reviewers closed.
+All FIRSTfailures, changed drafts, ownbinderrepair and source327 provenance kept.
+No n129/n112 replay or originaltree/lock/backup/stash change.
+
+Immediately resumed source-readyn111 from already approved283284285 and
+actualexisting isolatedassembly/adaptprepare, no stage replay. Raw13prose/
+2originaltasks/2figures. Fresh bounded AUTHORS (not reviewers):
+Newton01a1f6a9-ecd7-7830-b2df-16d0966c222c fig240;
+Darwin01a1f6a9-edcb-7761-8611-1a54ce272f66 fig241.
+Each opens only its actual originalPNG once, inventories pixels first, owns
+separate new scratch andreport. Existingtemplates/rawbytes preserved.
+Deterministic current-skill drafting/rendering authorized; genuinely required
+semanticartwork needs explicit bounded request/preflight, no paidcall in
+these subtasks. No n111 TEXT/figureapproval/canonical/fullcourse claim.
+
+Parent prepares n111 source-first concept reasoning before answer candidate
+or formalchoice; no answers/keys sent to authors. n109 oldCHOICEspentbudget
+HOLD and incomplete n131/330gap stay separate, not replaced or bulkrestored.
+Raw36/modern28/pages105; model/image-service newcalls0 and billing/tokens
+UNKNOWN. Only this chat/checkpoint used, no oldchat/reviewer wake.
+Finishreview; no DB/merge/deploy/closure/interactions/full-project checks.
+
 ## 180-6 n130 complete offline; narrow commit/push next
 
 2026-11-20T01:52:52.693Z. n13011 prose/15 display paragraphs,5 full original written
