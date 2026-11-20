@@ -138,7 +138,8 @@ def cut_lessons(stream: list[dict], toc_cards: list[dict] | None = None) -> list
             matches = [
                 card for card in unnumbered_cards
                 if card.get("page") == b.get("printed_page")
-                and card.get("title") == identity_title
+                and re.sub(r"\s+", "", card.get("title", ""))
+                == re.sub(r"\s+", "", identity_title)
             ]
             if len(matches) > 1:
                 raise ValueError(f"{b['ref']}: 独立习题标题对应多个目录卡片")
