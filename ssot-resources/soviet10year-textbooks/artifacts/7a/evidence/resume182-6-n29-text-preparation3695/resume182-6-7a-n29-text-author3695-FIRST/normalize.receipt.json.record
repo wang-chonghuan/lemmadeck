@@ -1,0 +1,32 @@
+{
+  "name": "normalize",
+  "executable": "/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+  "args": [
+    "-B",
+    "-c",
+    "import json, sys\nsys.path.insert(0, \".claude/skills/ld-s10y-lesson/tools\")\nimport edition\npayload = json.load(sys.stdin)\nedition.normalize_lesson_layout(payload[\"lesson\"])\nedition.normalize_exercise_layout(payload[\"exercises\"])\nchecks = []\nfor kind, key in [(\"lesson\", \"prose\"), (\"exercises\", \"exercises\")]:\n    for index, item in enumerate(payload[kind][key]):\n        if kind == \"lesson\" and item[\"kind\"] != \"p\":\n            continue\n        errors = edition.validate_text(item[\"source_text\"], item[\"text\"], item[\"changes\"], item[\"numeric_changes\"], f\"{kind}[{index}]\", [], item[\"historical_entities\"])\n        if kind == \"exercises\":\n            errors += edition.validate_numbered_subpart_layout(item[\"text\"])\n        checks.append({\"target\": f\"{kind}[{index}]\", \"errors\": errors, \"mathSignaturePreserved\": edition.math_signature(item[\"source_text\"]) == edition.math_signature(item[\"text\"]), \"numberSignaturePreserved\": edition.number_signature(item[\"source_text\"]) == edition.number_signature(item[\"text\"])})\nprint(json.dumps({\"lesson\": payload[\"lesson\"], \"exercises\": payload[\"exercises\"], \"checks\": checks, \"module\": edition.__file__, \"python\": sys.executable}, ensure_ascii=False, indent=2))"
+  ],
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck",
+  "startedAt": "2026-11-20T04:47:07.030Z",
+  "endedAt": "2026-11-20T04:47:07.090Z",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "stdout": {
+    "path": ".tmp/resume182-6-7a-n29-text-author3695-FIRST/normalize.stdout.json",
+    "encoding": "JSON string, exact decoded stream",
+    "sha256": "b0bd34e81e907d569d5bb2a5f5b8cc4d874a6c1eb277d9a17fa3c34877ca950e",
+    "bytes": 41680
+  },
+  "stderr": {
+    "path": ".tmp/resume182-6-7a-n29-text-author3695-FIRST/normalize.stderr.json",
+    "encoding": "JSON string, exact decoded stream",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "bytes": 0
+  },
+  "stdin": {
+    "path": ".tmp/resume182-6-7a-n29-text-author3695-FIRST/normalize.stdin.json",
+    "sha256": "b4e595f4bdb222b5008499dcd36340e3d01f0c878f169490be33dd31518b43fc",
+    "bytes": 38466
+  }
+}

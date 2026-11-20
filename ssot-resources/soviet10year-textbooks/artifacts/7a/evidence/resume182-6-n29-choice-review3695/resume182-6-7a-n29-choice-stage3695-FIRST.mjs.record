@@ -1,0 +1,38 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const destination = '.tmp/resume182-6-7a-n29-choice-approved3695-FIRST';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const sources = [
+  ['seed.json', '.tmp/resume182-6-7a-n29-choices3695-FIRST/seed.json',
+    '223d0d449abffa119a1060492be22b0b4c3914f85cddbfd1f8524d0b8dd17df4'],
+  ['draft.json', '.tmp/resume182-6-7a-n29-choices3695-FIRST/draft.json',
+    '77da9c1548bf1202ea1dd8a57a60d639ed7aa6415f692c91478d42c7e2ad627f'],
+  ['review.json', '.tmp/resume182-6-7a-n29-choice-review3695-FIRST/review.json',
+    'd9adc8073361ac2401d9554d2b64c239ae5c349d453ebe07d0cdc4d51493a284'],
+];
+const files = sources.map(([name, source, digest]) => {
+  const bytes = fs.readFileSync(source);
+  assert.equal(sha(bytes), digest);
+  return { name, source, bytes, digest };
+});
+fs.mkdirSync(destination);
+for (const file of files) {
+  const target = `${destination}/${file.name}`;
+  fs.writeFileSync(target, file.bytes, { flag: 'wx' });
+  assert.equal(sha(fs.readFileSync(target)), file.digest);
+}
+const record = {
+  status: 'APPROVED_CHOICE_SAME_BYTES_STAGED',
+  source: destination,
+  files: files.map(({ name, source, digest, bytes }) => ({
+    path: `${destination}/${name}`, source, sha256: digest, bytes: bytes.length,
+  })),
+  newSemanticReviews: 0, sourceSolutions: 0, imagesObserved: 0,
+};
+fs.writeFileSync(`${destination}/stage.record`, `${JSON.stringify(record, null, 2)}\n`,
+  { flag: 'wx' });
+console.log(JSON.stringify(record));

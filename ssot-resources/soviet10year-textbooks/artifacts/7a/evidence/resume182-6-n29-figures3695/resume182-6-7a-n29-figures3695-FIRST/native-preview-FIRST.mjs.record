@@ -1,0 +1,64 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const id = process.argv[2];
+assert.ok(['fig-40', 'fig-41'].includes(id));
+const own = '.tmp/resume182-6-7a-n29-figures3695-FIRST';
+const directory = `${own}/${id}`;
+const svgPath = `${directory}/${id}-FIRST.svg`;
+const pngPath = `${directory}/${id}-native640-FIRST.png`;
+const reportPath = `${directory}/${id}-render-FIRST.json`;
+const require = createRequire(path.resolve('.claude/skills/ld-s10y-lesson/package.json'));
+const { Resvg } = require('@resvg/resvg-js');
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const svgBytes = fs.readFileSync(svgPath);
+const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+assert.equal(report.status, 'pass');
+assert.equal(sha(svgBytes), report.output.svg.sha256);
+let substitutions = 0;
+// Resolve only the renderer's explicit CSS-var fallbacks for native rasterization.
+const rasterInput = svgBytes.toString('utf8').replace(
+  /var\((--ld-figure-[a-z-]+),\s*(#[0-9a-fA-F]{3,8})\)/g,
+  (_match, _role, fallback) => { substitutions += 1; return fallback; },
+);
+assert.ok(substitutions > 0);
+assert.ok(!rasterInput.includes('var('), 'unresolved semantic color');
+const fontPath = '/System/Library/Fonts/Supplemental/Arial.ttf';
+const image = new Resvg(rasterInput, {
+  fitTo: { mode: 'width', value: 640 }, background: '#ffffff',
+  font: { loadSystemFonts: false, fontFiles: [fontPath], defaultFontFamily: 'Arial' },
+}).render();
+assert.equal(image.width, 640);
+assert.equal(image.height, 640);
+const pixels = image.pixels;
+let nonwhite = 0;
+let transparent = 0;
+for (let index = 0; index < pixels.length; index += 4) {
+  if (pixels[index + 3] < 255) transparent += 1;
+  if (Math.min(pixels[index], pixels[index + 1], pixels[index + 2]) < 220) nonwhite += 1;
+}
+assert.equal(transparent, 0);
+assert.ok(nonwhite > 5000 && nonwhite < 640 * 640 * 0.4, 'blank or black native preview');
+const png = image.asPng();
+fs.writeFileSync(pngPath, png, { flag: 'wx' });
+const evidence = {
+  schema: 'resume182-6/native-raster@1', figure: id, cwd: repo,
+  renderer: { name: '@resvg/resvg-js', version: require('@resvg/resvg-js/package.json').version },
+  originalSVG: { path: path.resolve(svgPath), sha256: sha(svgBytes) },
+  nativePNG: { path: path.resolve(pngPath), sha256: sha(png), bytes: png.length },
+  width: 640, height: 640, nonwhitePixels: nonwhite, transparentPixels: transparent,
+  rasterOnlyTransformation: {
+    semanticCSSFallbackSubstitutions: substitutions, rasterInputSha256: sha(rasterInput),
+    originalSVGWritten: false, persistedTransformedSVG: false,
+    font: { path: fontPath, sha256: sha(fs.readFileSync(fontPath)) },
+  },
+  status: 'pass', visualInspection: 'NOT_RUN', independentReview: 'PENDING',
+};
+fs.writeFileSync(`${directory}/native-FIRST/pixels-FIRST.record`,
+  `${JSON.stringify(evidence, null, 2)}\n`, { flag: 'wx' });
+process.stdout.write(`${JSON.stringify(evidence, null, 2)}\n`);

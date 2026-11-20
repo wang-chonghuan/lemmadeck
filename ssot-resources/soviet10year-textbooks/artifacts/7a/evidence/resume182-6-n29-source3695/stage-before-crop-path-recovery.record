@@ -1,0 +1,81 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const own = '.tmp/resume182-6-7a-n29-source3695-FIRST';
+const root = `${own}/artifacts/7a`;
+const source = 'ssot-resources/soviet10year-textbooks/artifacts/7a';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const records = [];
+const copy = (input, output) => {
+  const bytes = fs.readFileSync(input);
+  fs.mkdirSync(path.dirname(output), { recursive: true });
+  const reusedFromFailedStage = fs.existsSync(output);
+  if (!reusedFromFailedStage) fs.writeFileSync(output, bytes, { flag: 'wx' });
+  assert.equal(sha(fs.readFileSync(output)), sha(bytes));
+  records.push({ input, output, sha256: sha(bytes), bytes: bytes.length, reusedFromFailedStage });
+};
+assert.ok(!fs.existsSync(`${own}/inputs.record`));
+for (const page of [195, 196, 197]) {
+  const id = String(page).padStart(4, '0');
+  const audit = JSON.parse(fs.readFileSync(`${source}/pages/${id}/audit.json`));
+  assert.deepEqual(audit.errors, []);
+  for (const name of ['page.md', 'page.json', 'audit.json'])
+    copy(`${source}/pages/${id}/${name}`, `${root}/pages/${id}/${name}`);
+}
+const boundaryInput = `${source}/pages/0198/page.json`;
+const boundaryBytes = fs.readFileSync(boundaryInput), boundary = JSON.parse(boundaryBytes);
+const stop = boundary.blocks.findIndex(block => block.kind === 'h3' && /30\./u.test(block.lines.join('')));
+assert.ok(stop > 0);
+assert.equal(boundary.blocks[stop - 1].kind, 'ex');
+assert.equal(String(boundary.blocks[stop - 1].label), '712');
+const projection = { meta: { ...boundary.meta, figures: [], notes: [
+  'Target-only prefix projection before n30 heading; not a replacement for the faithful original page.',
+] }, blocks: boundary.blocks.slice(0, stop) };
+const projected = Buffer.from(`${JSON.stringify(projection, null, 2)}\n`);
+fs.mkdirSync(`${root}/pages/0198`, { recursive: true });
+fs.writeFileSync(`${root}/pages/0198/page.json`, projected, { flag: 'wx' });
+records.push({ input: boundaryInput, inputSha256: sha(boundaryBytes),
+  output: `${root}/pages/0198/page.json`, sha256: sha(projected),
+  type: 'target-prefix-projection-not-source-page', originalBlockIndexes: Array.from({ length: stop }, (_, i) => i),
+  stopBeforeHeading: boundary.blocks[stop].lines.join(''), n30Included: false });
+const page195 = JSON.parse(fs.readFileSync(`${source}/pages/0195/page.json`));
+const audit195 = JSON.parse(fs.readFileSync(`${source}/pages/0195/audit.json`));
+assert.deepEqual(audit195.figures.map(f => f.id), ['fig-40', 'fig-41']);
+const imagePath = `${own}/prepare/7a/pages/0195/page.png`;
+assert.equal(sha(fs.readFileSync(imagePath)), page195.meta.render.sha256);
+const commands = [];
+for (const figure of audit195.figures) {
+  const output = `${own}/work/7a/pages/0195/figures/${figure.id}.png`;
+  const command = ['/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python',
+    '-B', '-c', 'import sys,json;sys.path.insert(0,".claude/skills/ld-s10y-lesson/tools");import layout;layout.crop(sys.argv[1],json.loads(sys.argv[2]),sys.argv[3])',
+    imagePath, JSON.stringify(figure.box), output];
+  const result = spawnSync(command[0], command.slice(1), { cwd: repo, encoding: 'utf8' });
+  const receipt = { command, workdir: repo, returncode: result.status,
+    stdout: result.stdout, stderr: result.stderr, error: result.error?.message ?? null,
+    reusedExactApprovedGeometry: figure.box, sourcePixelSha256: page195.meta.render.sha256,
+    snapCalls: 0, sourceReviewOrImageViews: 0 };
+  const receiptPath = `${own}/${figure.id}-crop.receipt.record`;
+  fs.writeFileSync(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`, { flag: 'wx' });
+  commands.push({ path: receiptPath, sha256: sha(fs.readFileSync(receiptPath)) });
+  assert.equal(result.status, 0, result.stderr);
+  records.push({ input: imagePath, output, sha256: sha(fs.readFileSync(output)),
+    bytes: fs.statSync(output).size, type: 'new-crop-from-approved-identical-source-pixels',
+    box: figure.box, unknownHistoricalBytesRecovered: false });
+}
+const record = { schema: 'stemrobin-182/n29-isolated-source-inputs@1', status: 'SOURCE_INPUTS_READY',
+  ticket: 'STEMROBIN-182', book: '7a', lesson: 'alg7-c4-s1-n29', stageRoot: root,
+  inputs: records, commands, sourcePageWrites: 0, sourceImageViews: 0,
+  sourceReviewReruns: 0, newRawCrops: 2, unknownHistoricalBytesRecovered: false,
+  boundary: 'Only complete n29 may be promoted; no n30 prose, heading or exercise.',
+  counter196Recovery: {
+    path: '.tmp/resume182-6-7a-n29-counter-finalize3695-FIRST/recovery.record',
+    sha256: sha(fs.readFileSync('.tmp/resume182-6-7a-n29-counter-finalize3695-FIRST/recovery.record')),
+  }, hostTokens: 'unknown', cost: 'unknown', DBWrites: 0 };
+fs.writeFileSync(`${own}/inputs.record`, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: record.status, root, copiedPages: 3, boundaryProjection: 1,
+  newRawCrops: 2, sourceImageViews: 0, sourcePageWrites: 0 }));

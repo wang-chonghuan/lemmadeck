@@ -1,0 +1,42 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), R);
+const own = path.join(R, '.tmp/resume182-6-7a-n29-display3695-FIRST');
+const before = path.join(own, 'ready-AFFECTED1.record');
+const bytes = fs.readFileSync(before);
+const sha = value => createHash('sha256').update(value).digest('hex');
+const previous = JSON.parse(bytes);
+const updated = structuredClone(previous);
+const checks = [];
+for (const name of ['prepare', 'run']) {
+  const directory = `.tmp/resume182-6-7a-n29-display-${name}-syntax3695-AFFECTED2`;
+  const receipt = JSON.parse(fs.readFileSync(`${directory}/receipt.record`));
+  assert.equal(receipt.returncode, 0);
+  const file = path.join(own, `${name}.mjs`);
+  const current = fs.readFileSync(file);
+  const entry = updated.files.find(item => item.path === file);
+  assert.ok(entry);
+  entry.sha256 = sha(current);
+  entry.bytes = current.length;
+  checks.push({ path: file, command: receipt.command, exitCode: receipt.returncode,
+    stdout: fs.readFileSync(`${directory}/stdout.txt`, 'utf8'),
+    stderr: fs.readFileSync(`${directory}/stderr.txt`, 'utf8') });
+}
+updated.priorPreparation = { path: before, sha256: sha(bytes), immutable: true };
+updated.date = new Date().toISOString();
+updated.checks = checks;
+updated.affectedOnlyRepair = {
+  cause: 'Option IDs are opaque stable identifiers; official renderer labels options by positional A/B/C.',
+  changedProjection: 'Display-only expected labels now match that unchanged renderer. Seed, draft, keys and option text are untouched.',
+  sourceOrChoiceOrFigureOrRendererReviews: 0, runtimeExecutions: 0,
+};
+updated.usage.syntaxPasses += 1;
+updated.usage.syntaxChecks += 2;
+const target = path.join(own, 'ready-AFFECTED2.record');
+const output = Buffer.from(`${JSON.stringify(updated, null, 2)}\n`);
+fs.writeFileSync(target, output, { flag: 'wx' });
+console.log(JSON.stringify({ status: updated.status, path: target, sha256: sha(output),
+  runtimeExecuted: false, candidateChanged: false }));

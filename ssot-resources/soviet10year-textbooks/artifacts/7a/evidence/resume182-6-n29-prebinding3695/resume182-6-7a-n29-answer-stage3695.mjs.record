@@ -1,0 +1,65 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const json = file => JSON.parse(fs.readFileSync(file));
+const directory = '.tmp/resume182-6-7a-n29-answer-stage3695-FIRST';
+const lessonRoot = 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c4-s1-n29';
+const reviewPath = '.tmp/resume182-6-7a-n29-answer-review3695-FIRST/review.record';
+assert.equal(sha(fs.readFileSync(reviewPath)), '608979e346cf656b1112679c7dec8abd5b378f5298c51c4639f601a76a4e1753');
+const review = json(reviewPath);
+assert.equal(review.status, 'PASS');
+const source = '.tmp/resume182-6-7a-n29-answers3695-FIRST/answers.draft.json';
+const candidateBytes = fs.readFileSync(source);
+assert.equal(sha(candidateBytes), review.bindings.candidate.sha256);
+assert.equal(sha(fs.readFileSync('.tmp/resume182-6-7a-n29-blind3695-FIRST/solutions.record')),
+  review.bindings.reference.sha256);
+const candidate = JSON.parse(candidateBytes);
+const exercises = json(`${lessonRoot}/exercises.json`);
+assert.deepEqual(candidate.answers.map(answer => answer.exercise),
+  exercises.exercises.map(exercise => String(exercise.number)));
+const approvedText = json('.tmp/resume182-6-7a-n29-text-author3695-FIRST/candidate.lesson.template.json');
+const approvedExercises = json('.tmp/resume182-6-7a-n29-text-author3695-FIRST/candidate.exercises.template.json');
+const finalLesson = json(`${lessonRoot}/lesson.json`);
+const formulas = text => [...text.matchAll(/\$\$(.+?)\$\$|\$([^$]+?)\$/gs)]
+  .map(match => match[1] ?? match[2]);
+const compact = text => text.replace(/\s+/g, '');
+for (const [before, after] of [
+  [approvedText.prose, finalLesson.prose],
+  [approvedExercises.exercises, exercises.exercises],
+]) {
+  assert.equal(before.length, after.length);
+  for (let index = 0; index < before.length; index++) {
+    assert.deepEqual(formulas(before[index].text), formulas(after[index].text));
+    assert.equal(compact(before[index].text), compact(after[index].text));
+  }
+}
+const target = `${lessonRoot}/answer-keys.json`;
+assert.ok(!fs.existsSync(target));
+fs.mkdirSync(directory);
+fs.writeFileSync(target, candidateBytes, { flag: 'wx' });
+const indexPath = 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral/book.json';
+const indexBytes = fs.readFileSync(indexPath);
+fs.writeFileSync(`${directory}/index-before-portable-path.record`, indexBytes, { flag: 'wx' });
+const index = JSON.parse(indexBytes);
+if (path.isAbsolute(index.profile.path)) {
+  assert.ok(index.profile.path.startsWith(`${repo}/`));
+  index.profile.path = path.relative(repo, index.profile.path);
+}
+assert.equal(sha(fs.readFileSync(index.profile.path)), index.profile.sha256);
+fs.writeFileSync(indexPath, `${JSON.stringify(index, null, 2)}\n`);
+fs.writeFileSync(`${directory}/binding.record`, `${JSON.stringify({
+  candidate: { path: source, sha256: sha(candidateBytes) },
+  answerReviewSha256: sha(fs.readFileSync(reviewPath)),
+  target, targetBytesUnchanged: true, answerCount: candidate.answers.length,
+  finalTextAndExercisesOnlyWhitespaceNormalized: true,
+  all109FormulaSpansUnchanged: true,
+  newIndependentSourceOrMathOrImageReviews: 0,
+  indexProfileOnlyRepoRelativePath: index.profile,
+  formalAnswerFinalizerPending: true, DBWrites: 0,
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ staged: 14, formulaOrAnswerChanges: 0, target }));

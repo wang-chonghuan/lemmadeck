@@ -1,0 +1,115 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const own = '.tmp/resume182-6-7a-n29-modern-figures-binding3695-FIRST';
+const modern = 'ssot-resources/soviet10year-textbooks/artifacts/7a/editions/modern-us-neutral';
+const target = `${modern}/figures`;
+const candidates = '.tmp/resume182-6-7a-n29-figures3695-FIRST/ready.record';
+const reviewFile = '.tmp/resume182-6-7a-n29-figure-review3695-FIRST/review.record';
+const retainedFile = 'ssot-resources/soviet10year-textbooks/artifacts/7a/evidence/resume182-6-n29-figures3695/retention.record';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const read = file => fs.readFileSync(file);
+const parse = file => JSON.parse(read(file));
+const write = (file, bytes) => {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, bytes, { flag: 'wx' });
+};
+const save = (file, value) => write(file, `${JSON.stringify(value, null, 2)}\n`);
+const bytes = item => {
+  assert.ok(path.resolve(item.path).startsWith(`${repo}/`));
+  const value = read(item.path);
+  assert.equal(sha(value), item.sha256);
+  return value;
+};
+const [approvedHash] = process.argv.slice(2);
+assert.match(approvedHash, /^[a-f0-9]{64}$/);
+assert.equal(sha(read(reviewFile)), approvedHash);
+const review = parse(reviewFile), ready = parse(candidates), retention = parse(retainedFile);
+assert.equal(review.status, 'PASS');
+assert.deepEqual(ready.figures.map(f => f.figure).sort(), ['fig-40', 'fig-41']);
+const durable = digest => {
+  const entry = retention.entries.find(item => item.sha256 === digest);
+  assert.ok(entry && !entry.path.startsWith('.tmp/'));
+  assert.equal(sha(read(entry.path)), digest);
+  return { path: entry.path, sha256: digest };
+};
+fs.mkdirSync(own);
+save(`${own}/start.record`, { workdir: repo, started: new Date().toISOString(),
+  approvedReview: durable(sha(read(reviewFile))), images: 0, figureRenders: 0, DBWrites: 0 });
+const bindings = [];
+for (const candidate of ready.figures) {
+  const id = candidate.figure;
+  const observed = review.figures.find(f => f.figure === id);
+  assert.equal(observed.conclusion, 'PASS');
+  assert.deepEqual(observed.blockers, []);
+  const approved = JSON.parse(bytes(observed.review));
+  assert.equal(approved.status, 'pass');
+  const specBytes = bytes(candidate.spec);
+  const spec = JSON.parse(specBytes);
+  const svgRecord = candidate.outputs.find(item => item.path.endsWith('.svg'));
+  const renderRecord = candidate.outputs.find(item => item.path.endsWith('.json'));
+  const svgBytes = bytes(svgRecord), renderBytes = bytes(renderRecord);
+  const render = JSON.parse(renderBytes);
+  assert.equal(render.status, 'pass');
+  assert.equal(approved.spec.sha256, sha(specBytes));
+  assert.equal(approved.render.sha256, sha(renderBytes));
+  assert.equal(approved.outputs.svg.sha256, sha(svgBytes));
+  assert.equal(render.spec.sha256, sha(specBytes));
+  assert.equal(sha(read(spec.source.image.path)), spec.source.image.sha256);
+  assert.ok(!JSON.stringify(spec).includes('.tmp/'), 'Durable spec cannot depend on scratch');
+  const specPath = `${target}/${id}.spec.json`, svgPath = `${target}/${id}.svg`;
+  const renderPath = `${target}/${id}.render.json`, reviewPath = `${target}/${id}.review.json`;
+  write(specPath, specBytes);
+  write(svgPath, svgBytes);
+  const boundRender = structuredClone(render);
+  boundRender.spec.path = specPath;
+  boundRender.output.svg.path = svgPath;
+  save(renderPath, boundRender);
+  const command = ['/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python',
+    '-B', '.agents/skills/ld-s10y-image/scripts/record_review.py', '--spec', specPath,
+    '--render', renderPath, '--output', reviewPath, '--status', 'pass', '--notes',
+    `Inherited independent first PASS: ${durable(sha(read(reviewFile))).path} sha256=${sha(read(reviewFile))}. ` +
+    `Original official review: ${durable(sha(bytes(observed.review))).path}. ` +
+    'Only spec.path and output.svg.path in render metadata changed for durable binding. ' +
+    'Source, spec, SVG and native 640 screenshot bytes unchanged; zero new images, renderer calls or semantic reviews.'];
+  save(`${own}/${id}-binding-start.record`, { command, workdir: repo, pathBindingOnly: true });
+  const result = spawnSync(command[0], command.slice(1), {
+    cwd: repo, encoding: 'utf8', env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+  });
+  save(`${own}/${id}-binding-receipt.record`, { command, workdir: repo,
+    returncode: result.status, signal: result.signal, stdout: result.stdout, stderr: result.stderr,
+    error: result.error?.message ?? null, newImageOrRenderOrSemanticReview: 0 });
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(sha(read(specPath)), sha(specBytes));
+  assert.equal(sha(read(svgPath)), sha(svgBytes));
+  bindings.push({ figure: id, specBytesUnchanged: true, svgBytesUnchanged: true,
+    nativePreview: durable(candidate.outputs.find(item => item.path.endsWith('.png')).sha256),
+    originalReview: durable(sha(bytes(observed.review))),
+    originalRender: durable(sha(renderBytes)),
+    changedRenderFields: ['spec.path', 'output.svg.path'],
+    files: [specPath, svgPath, renderPath, reviewPath].map(file => ({ path: file, sha256: sha(read(file)) })) });
+}
+const manifestPath = '.tmp/ld-s10y-lesson/adapt/7a/modern-us-neutral/lessons/alg7-c4-s1-n29/figures.template.json';
+const manifestBytes = read(manifestPath), manifest = JSON.parse(manifestBytes);
+write(`${own}/figures-template-before.record`, manifestBytes);
+assert.deepEqual(manifest.figures.map(f => f.id).sort(), ['fig-40', 'fig-41']);
+for (const figure of manifest.figures) {
+  figure.spec = `figures/${figure.id}.spec.json`;
+  figure.svg = `figures/${figure.id}.svg`;
+  figure.render = `figures/${figure.id}.render.json`;
+  figure.review = `figures/${figure.id}.review.json`;
+}
+fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+save(`${own}/binding.record`, { status: 'APPROVED_FIGURE_BYTES_DURABLY_BOUND',
+  ticket: 'STEMROBIN-182', book: '7a', lesson: 'alg7-c4-s1-n29', bindings,
+  manifest: { path: manifestPath, sha256: sha(read(manifestPath)) },
+  independentReview: durable(sha(read(reviewFile))), images: 0, figureRenders: 0,
+  sourceMathReviews: 0, DBWrites: 0, hostTokens: 'unknown', cost: 'unknown',
+  modernFinalizationPending: true, fullLessonApproved: false });
+console.log(JSON.stringify({ status: 'APPROVED_FIGURE_BYTES_DURABLY_BOUND', figures: bindings.length,
+  images: 0, renders: 0, record: `${own}/binding.record`, sha256: sha(read(`${own}/binding.record`)) }));

@@ -1,0 +1,465 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const own = '.tmp/resume182-6-7a-n29-figures3695-FIRST';
+const contextRoot = '.tmp/resume182-6-7a-n29-figure-context3695-FIRST';
+const python = '/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python';
+const validator = '.agents/skills/ld-s10y-image/scripts/validate_spec.py';
+const renderer = '.agents/skills/ld-s10y-image/scripts/render_spec.mjs';
+const native = `${own}/native-preview-FIRST.mjs`;
+const lessonPath = `${contextRoot}/artifacts/7a/editions/modern-us-neutral/lessons/alg7-c4-s1-n29/lesson.json`;
+const exercisesPath = lessonPath.replace('lesson.json', 'exercises.json');
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const read = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const bind = file => ({
+  path: path.resolve(file),
+  sha256: sha(fs.readFileSync(file)),
+  bytes: fs.statSync(file).size,
+});
+const write = (file, data) => {
+  assert.ok(path.resolve(file).startsWith(`${path.resolve(own)}/`) ||
+    ['40', '41'].some(number => path.resolve(file).startsWith(
+      `${repo}/.tmp/resume182-6-7a-n29-fig${number}-render3695-FIRST/`)));
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, typeof data === 'string' ? data : `${JSON.stringify(data, null, 2)}\n`,
+    { flag: 'wx' });
+};
+const round = n => Number(n.toFixed(8));
+const at = p => p.map(round);
+const distance = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
+const commands = [];
+const frozen = [lessonPath, exercisesPath, validator, renderer,
+  '.agents/skills/ld-s10y-image/assets/figure-spec.schema.json',
+  '.agents/skills/ld-s10y-image/scripts/materialize_arrowheads.mjs',
+  `${own}/author-FIRST.mjs`, native];
+
+// Observations were made once from each durable source PNG, not from old specs.
+const observations = {
+  'fig-40': {
+    imageLoads: 1,
+    subfigures: 1,
+    boundaries: ['Large closed near-circular Z boundary.',
+      'Smaller closed near-circular N boundary, wholly inside Z and offset above-left.'],
+    labels: ['N inside the inner disk.', 'Z right-below N, inside Z but outside N.'],
+    regions: ['N has fine parallel strokes descending to the right in screen coordinates.',
+      'Z outside N is unhatched; modern prose identifies it as the nonpositive integers.'],
+    relationships: ['N is a proper subset of Z in one shared frame.'],
+    sourcePoints: [], sourceArrows: [], sourceAxes: [], sourceTicks: [],
+    sourceGridRows: 0, sourceGridColumns: 0, givenNumericalValues: [],
+    incidentalMarks: ['Small black speck at the top-left crop edge is not instructional.'],
+  },
+  'fig-41': {
+    imageLoads: 1,
+    subfigures: 1,
+    boundaries: ['Largest closed near-circular Q boundary.',
+      'Middle closed near-circular Z boundary wholly inside Q, offset below-right.',
+      'Smallest closed near-circular N boundary wholly inside Z, offset above-left of Z.'],
+    labels: ['N in the innermost disk.',
+      'Z below-right of N, inside Z but outside N.',
+      'Q upper-right of Z, inside Q but outside Z.'],
+    regions: ['N strokes descend right in screen coordinates.',
+      'Z outside N has strokes rising right, opposite to the N strokes.',
+      'Q outside Z is unhatched.'],
+    relationships: ['N is a proper subset of Z, and Z is a proper subset of Q, in one shared frame.'],
+    sourcePoints: [], sourceArrows: [], sourceAxes: [], sourceTicks: [],
+    sourceGridRows: 0, sourceGridColumns: 0, givenNumericalValues: [],
+    incidentalMarks: ['Tiny edge specks are not instructional.'],
+  },
+};
+const plans = {
+  'fig-40': [
+    { name: 'Z', center: [320, 320], radius: 275, label: [475, 270] },
+    { name: 'N', center: [284, 382], radius: 132, label: [284, 382], direction: [1, -1] },
+  ],
+  'fig-41': [
+    { name: 'Q', center: [320, 320], radius: 275, label: [490, 454] },
+    { name: 'Z', center: [346, 290], radius: 177, label: [425, 222], direction: [1, 1] },
+    { name: 'N', center: [324, 322], radius: 90, label: [324, 322], direction: [1, -1] },
+  ],
+};
+
+function run(directory, command, specPath) {
+  assert.ok(!fs.existsSync(directory), `refusing to reuse receipt directory: ${directory}`);
+  fs.mkdirSync(`${directory}/runtime`, { recursive: true });
+  const env = {
+    PYTHON: python, PYTHONDONTWRITEBYTECODE: '1',
+    TMPDIR: path.resolve(`${directory}/runtime`),
+    TMP: path.resolve(`${directory}/runtime`),
+    TEMP: path.resolve(`${directory}/runtime`),
+  };
+  if (specPath) write(`${directory}/original-spec.json`, fs.readFileSync(specPath, 'utf8'));
+  const start = {
+    command, cwd: repo, started: new Date().toISOString(), environmentOverrides: env,
+    originalSpec: specPath ? bind(`${directory}/original-spec.json`) : null,
+  };
+  write(`${directory}/command.json`, start);
+  const result = spawnSync(command[0], command.slice(1), {
+    cwd: repo, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024,
+    env: { ...process.env, ...env },
+  });
+  write(`${directory}/stdout.txt`, result.stdout ?? '');
+  write(`${directory}/stderr.txt`, result.stderr ?? '');
+  write(`${directory}/receipt.record`, {
+    ...start, finished: new Date().toISOString(), returncode: result.status,
+    signal: result.signal, error: result.error?.message ?? null,
+    stdout: bind(`${directory}/stdout.txt`), stderr: bind(`${directory}/stderr.txt`),
+  });
+  const entry = {
+    command: bind(`${directory}/command.json`),
+    receipt: bind(`${directory}/receipt.record`),
+    stdout: bind(`${directory}/stdout.txt`), stderr: bind(`${directory}/stderr.txt`),
+    originalSpec: start.originalSpec, returncode: result.status,
+  };
+  commands.push(entry);
+  process.stdout.write(result.stdout ?? '');
+  process.stderr.write(result.stderr ?? '');
+  return entry;
+}
+
+function subtract(intervals, cut) {
+  if (!cut) return intervals;
+  return intervals.flatMap(([lo, hi]) => {
+    if (cut[1] <= lo || cut[0] >= hi) return [[lo, hi]];
+    const pieces = [];
+    if (cut[0] > lo) pieces.push([lo, Math.min(cut[0], hi)]);
+    if (cut[1] < hi) pieces.push([Math.max(cut[1], lo), hi]);
+    return pieces;
+  });
+}
+
+function makeSpec(id, lesson) {
+  const sourceImage = `ssot-resources/soviet10year-textbooks/artifacts/7a/figures/${id}.png`;
+  const context = read(`${contextRoot}/${id}.context.json`);
+  assert.equal(context.sourceImage.sha256, sha(fs.readFileSync(sourceImage)));
+  assert.equal(context.figure, id);
+  assert.equal(context.book, '7a');
+  assert.equal(context.edition, 'modern-us-neutral');
+  const objects = [];
+  const assertions = [];
+  const inventory = [];
+  const hatchChecks = [];
+  const groups = plans[id].map(group => ({
+    ...group,
+    key: `${id}-${group.name.toLowerCase()}`,
+    vertices: Array.from({ length: 96 }, (_, index) => {
+      const angle = 2 * Math.PI * index / 96;
+      return at([group.center[0] + group.radius * Math.cos(angle),
+        group.center[1] + group.radius * Math.sin(angle)]);
+    }),
+  }));
+  const add = (target, item) => { target.push(item); return item.id; };
+  for (const [index, group] of groups.entries()) {
+    const ids = [];
+    add(objects, { id: `${group.key}-set`, type: 'polygon', points: group.vertices,
+      fill: 'paper', fillOpacity: 0, stroke: 'ink', strokeWidth: 3 });
+    for (const [vertexIndex, vertex] of group.vertices.entries()) {
+      ids.push(add(assertions, {
+        id: `${group.key}-circular-boundary-${vertexIndex}`, type: 'pointOnCircle',
+        point: vertex, center: group.center, radius: group.radius,
+      }));
+      for (const ancestor of groups.slice(0, index)) {
+        ids.push(add(assertions, {
+          id: `${group.key}-boundary-${vertexIndex}-inside-${ancestor.name.toLowerCase()}`,
+          type: 'inside', point: vertex, container: `${ancestor.key}-set`, margin: 8,
+        }));
+      }
+    }
+    inventory.push({
+      id: `${group.key}-source-boundary`,
+      description: `Source ${group.name} closed near-circular boundary in the single shared frame. ` +
+        (index ? `All of ${group.name} lies strictly inside ${groups[index - 1].name}. ` : '') +
+        'Modern regularization: 96-vertex convex circular boundary; its radius and exact coordinates are not source-given numbers.',
+      objects: [`${group.key}-set`], assertions: ids,
+    });
+  }
+  for (const [index, group] of groups.entries()) {
+    if (!group.direction) continue;
+    const d = group.direction.map(value => value / Math.SQRT2);
+    const normal = [-d[1], d[0]];
+    const labelBox = [group.label[0] - 36, group.label[1] - 39,
+      group.label[0] + 36, group.label[1] + 39];
+    const circleInterval = (p, circle, radius) => {
+      const v = [p[0] - circle.center[0], p[1] - circle.center[1]];
+      const projection = v[0] * d[0] + v[1] * d[1];
+      const perpendicular = v[0] * normal[0] + v[1] * normal[1];
+      const discriminant = radius * radius - perpendicular * perpendicular;
+      if (discriminant <= 0) return null;
+      const half = Math.sqrt(discriminant);
+      return [-projection - half, -projection + half];
+    };
+    const hatchIds = [];
+    const checkIds = [];
+    let sequence = 0;
+    for (let offset = -group.radius + 12; offset < group.radius - 8; offset += 18) {
+      const p = [group.center[0] + normal[0] * offset,
+        group.center[1] + normal[1] * offset];
+      let intervals = [circleInterval(p, group, group.radius - 4)].filter(Boolean);
+      const child = groups[index + 1];
+      if (child) intervals = subtract(intervals, circleInterval(p, child, child.radius + 6));
+      const boxInterval = [0, 1].map(axis => [
+        (labelBox[axis] - p[axis]) / d[axis],
+        (labelBox[axis + 2] - p[axis]) / d[axis],
+      ].sort((a, b) => a - b));
+      const boxCut = [Math.max(...boxInterval.map(item => item[0])),
+        Math.min(...boxInterval.map(item => item[1]))];
+      if (boxCut[0] < boxCut[1]) intervals = subtract(intervals, boxCut);
+      for (const [lo, hi] of intervals) {
+        if (hi - lo < 5) continue;
+        const from = at([p[0] + lo * d[0], p[1] + lo * d[1]]);
+        const to = at([p[0] + hi * d[0], p[1] + hi * d[1]]);
+        const key = `${group.key}-hatch-${sequence++}`;
+        hatchIds.push(add(objects, { id: key, type: 'segment', from, to,
+          stroke: 'muted', strokeWidth: 1.5 }));
+        checkIds.push(add(assertions, { id: `${key}-endpoints`, type: 'connects',
+          arrow: key, from, to }));
+        checkIds.push(add(assertions, { id: `${key}-direction`, type: 'displacement',
+          from, to, dx: round(to[0] - from[0]), dy: round(to[1] - from[1]) }));
+        for (const [suffix, point] of [['from', from], ['to', to]]) {
+          checkIds.push(add(assertions, { id: `${key}-${suffix}-inside`,
+            type: 'inside', point, container: `${group.key}-set`, margin: 2 }));
+        }
+        if (child) {
+          const v = [to[0] - from[0], to[1] - from[1]];
+          const t = Math.max(0, Math.min(1, ((child.center[0] - from[0]) * v[0] +
+            (child.center[1] - from[1]) * v[1]) / (v[0] * v[0] + v[1] * v[1])));
+          const nearest = at([from[0] + t * v[0], from[1] + t * v[1]]);
+          const clearance = distance(nearest, child.center) - child.radius;
+          assert.ok(clearance >= 6 - 1e-6);
+          checkIds.push(add(assertions, { id: `${key}-child-exclusion-distance`,
+            type: 'distance', a: nearest, b: child.center,
+            value: distance(nearest, child.center) }));
+          hatchChecks.push({ segment: key, excludedSet: `${child.key}-set`,
+            nearest, minimumClearance: clearance, status: 'pass' });
+        }
+      }
+    }
+    inventory.push({
+      id: `${group.key}-source-hatching`,
+      description: `Source ${group.name}${index + 1 < groups.length ? ` outside ${groups[index + 1].name}` : ''} ` +
+        `has parallel hatching ${group.direction[1] < 0 ? 'descending' : 'rising'} right in screen coordinates. ` +
+        'The source irregular stroke count and spacing are not given mathematical values. ' +
+        'Modern additions: regular 18px spacing, 4px boundary inset, 6px inner-set clearance, and a label clearance gap.',
+      objects: hatchIds, assertions: checkIds,
+    });
+  }
+  for (const [index, group] of groups.entries()) {
+    const labelId = `${group.key}-label`;
+    add(objects, { id: labelId, type: 'text', at: group.label, text: group.name,
+      fontSize: 48, fontWeight: 600, labelColor: 'ink',
+      labelPlacement: { position: 'CENTER', gap: 0 } });
+    const ids = [];
+    for (const ancestor of groups.slice(0, index + 1)) {
+      ids.push(add(assertions, {
+        id: `${labelId}-inside-${ancestor.name.toLowerCase()}`, type: 'inside',
+        point: labelId, container: `${ancestor.key}-set`, margin: 36,
+      }));
+    }
+    const child = groups[index + 1];
+    if (child) {
+      assert.ok(distance(group.label, child.center) - child.radius >= 36);
+      ids.push(add(assertions, { id: `${labelId}-outside-${child.name.toLowerCase()}-distance`,
+        type: 'distance', a: group.label, b: child.center,
+        value: distance(group.label, child.center) }));
+    }
+    inventory.push({
+      id: `${group.key}-source-label`,
+      description: `Source label ${group.name} is inside ${group.name}` +
+        (child ? ` and outside ${child.name}, in the complement region` : '') +
+        '. Modern addition: centered English mathematical label with clearance for its complete 48px text footprint.',
+      objects: [labelId], assertions: ids,
+    });
+  }
+  const absenceIds = ['point', 'arrow', 'axis', 'grid'].map(type =>
+    add(assertions, { id: `${id}-no-source-${type}`, type: 'objectCount', objectType: type, count: 0 }));
+  absenceIds.push(add(assertions, { id: `${id}-source-boundary-count`, type: 'objectCount',
+    objectType: 'polygon', count: groups.length }));
+  absenceIds.push(add(assertions, { id: `${id}-source-label-count`, type: 'objectCount',
+    objectType: 'text', count: groups.length }));
+  inventory.push({
+    id: `${id}-single-frame-and-absence`,
+    description: 'One source subfigure with shared nested set boundaries; no source member points, axes, number line, ticks, grid, arrows, values, or subpart labels. Boundary/label counts supplement, not replace, the complete boundary containment assertions.',
+    objects: groups.map(group => `${group.key}-set`), assertions: absenceIds,
+  });
+  const spec = {
+    schema: 'ld-s10y-image/figure-spec@2', id, mode: 'deterministic',
+    description: id === 'fig-40'
+      ? 'Inspect N as a proper subset of Z and distinguish the unhatched nonpositive-integer complement in one shared frame.'
+      : 'Inspect N as a proper subset of Z and Z as a proper subset of Q; opposite hatching distinguishes the two inner regions within one shared frame.',
+    source: {
+      image: { path: sourceImage, sha256: sha(fs.readFileSync(sourceImage)) },
+      authoritativeText: lesson.prose.filter(block => block.kind === 'p' && block.text)
+        .map(block => ({ lesson: lesson.id, text: block.text })),
+      inventory,
+    },
+    canvas: { width: 640, height: 640, boundingBox: [0, 640, 640, 0],
+      background: 'paper', keepAspectRatio: true },
+    display: { layout: 'scroll', purpose: 'instructional', minTextPx: 16, widths: [640, 320] },
+    objects, assertions, layout: { minLabelGap: 4 },
+  };
+  assert.deepEqual(new Set(inventory.flatMap(item => item.objects)), new Set(objects.map(item => item.id)));
+  assert.deepEqual(new Set(inventory.flatMap(item => item.assertions)), new Set(assertions.map(item => item.id)));
+  return { spec, hatchChecks, groups };
+}
+
+const action = process.argv[2];
+if (action === 'author') {
+  assert.ok(!fs.existsSync(`${own}/inputs-FIRST.record`), 'FIRST has already been authored');
+  for (const id of Object.keys(plans)) {
+    frozen.push(`${contextRoot}/${id}.context.json`,
+      `ssot-resources/soviet10year-textbooks/artifacts/7a/figures/${id}.png`);
+  }
+  write(`${own}/inputs-FIRST.record`, frozen.map(bind));
+  write(`${own}/source-observations-FIRST.record`, {
+    schema: 'resume182-6/source-pixel-inventory@1', cwd: repo, observations,
+    sourceImageLoads: 2, sourcePageLoads: 0, answerLoads: 0,
+    nativePreviewImageLoads: 0, independentReview: 'NOT_RUN',
+  });
+  const lesson = read(lessonPath);
+  const exercises = read(exercisesPath);
+  assert.equal(lesson.id, 'alg7-c4-s1-n29');
+  assert.ok(!exercises.exercises.some(item => (item.figure_refs ?? [])
+    .some(id => Object.hasOwn(plans, id))), 'unexpected exercise-specific figure context');
+  for (const id of Object.keys(plans)) {
+    const { spec, hatchChecks, groups } = makeSpec(id, lesson);
+    write(`${own}/${id}/spec-FIRST.json`, spec);
+    write(`${own}/${id}/construction-FIRST.record`, {
+      source: bind(spec.source.image.path), context: bind(`${contextRoot}/${id}.context.json`),
+      spec: bind(`${own}/${id}/spec-FIRST.json`), pixelObservation: observations[id],
+      modernRegularization: 'Coordinates, radii, 96-vertex circular polygons, hatch spacing, and label keepout are author layout decisions, not source-given values.',
+      geometry: groups.map(({ name, center, radius, label }) => ({ name, center, radius, label })),
+      completeHatchExclusionChecks: hatchChecks, status: 'pass',
+      displayEvidence: {
+        layout: 'scroll', desktopAndMobileActualMediaWidthPx: 640,
+        basis: [
+          bind('.agents/skills/ld-s10y-image/references/figure-spec.md'),
+          bind('app/src/styles/app.css'),
+        ],
+        note: 'Existing official scroll-media contract uses 640px on both desktop and mobile. The 320px check is extra shrink stress, not a claimed measured inline product width. No browser/product measurement was run in this author scope.',
+      },
+    });
+  }
+  process.stdout.write('Authored two source-first FigureSpec FIRST files; no prior spec reused.\n');
+} else if (action === 'render') {
+  const id = process.argv[3];
+  assert.ok(Object.hasOwn(plans, id));
+  const spec = `${own}/${id}/spec-FIRST.json`;
+  const gate = run(`${own}/${id}/validate-FIRST`, [python, '-B', validator, spec,
+    '--stage', 'draft', '--json'], spec);
+  if (gate.returncode !== 0) process.exit(gate.returncode ?? 1);
+  const number = id.slice(4);
+  const receipt = run(`.tmp/resume182-6-7a-n29-fig${number}-render3695-FIRST`,
+    ['node', renderer, '--spec', spec, '--svg', `${own}/${id}/${id}-FIRST.svg`,
+      '--report', `${own}/${id}/${id}-render-FIRST.json`], spec);
+  process.exit(receipt.returncode ?? 1);
+} else if (action === 'native') {
+  for (const id of Object.keys(plans)) {
+    const spec = `${own}/${id}/spec-FIRST.json`;
+    const report = read(`${own}/${id}/${id}-render-FIRST.json`);
+    assert.equal(report.status, 'pass', 'native preview waits for a passing render');
+    const result = run(`${own}/${id}/native-FIRST`,
+      ['node', native, id], spec);
+    if (result.returncode !== 0) process.exit(result.returncode ?? 1);
+  }
+} else if (action === 'ready') {
+  const inputs = read(`${own}/inputs-FIRST.record`);
+  for (const item of inputs) assert.equal(bind(item.path).sha256, item.sha256, `input drift: ${item.path}`);
+  const figures = Object.keys(plans).map(id => {
+    const number = id.slice(4);
+    const specPath = `${own}/${id}/spec-FIRST.json`;
+    const reportPath = `${own}/${id}/${id}-render-FIRST.json`;
+    const report = read(reportPath);
+    const spec = read(specPath);
+    assert.equal(report.status, 'pass');
+    assert.equal(report.spec.sha256, bind(specPath).sha256);
+    assert.equal(report.output.svg.sha256, bind(report.output.svg.path).sha256);
+    const validation = read(`${own}/${id}/validate-FIRST/stdout.txt`);
+    assert.equal(validation.status, 'pass');
+    const nativeReport = read(`${own}/${id}/native-FIRST/receipt.record`);
+    assert.equal(nativeReport.returncode, 0);
+    const pngPath = `${own}/${id}/${id}-native640-FIRST.png`;
+    assert.equal(fs.readFileSync(pngPath).readUInt32BE(16), 640);
+    assert.equal(fs.readFileSync(pngPath).readUInt32BE(20), 640);
+    return {
+      figure: id, mode: 'deterministic', status: 'READY_FOR_INDEPENDENT_REVIEW',
+      spec: bind(specPath), source: bind(spec.source.image.path),
+      context: bind(`${contextRoot}/${id}.context.json`),
+      contextBinding: 'Frozen context file hash, figure/book/edition and source-image hash are bound outside the spec. Its scratch sourceImage.path is not copied into spec.source.image.',
+      construction: bind(`${own}/${id}/construction-FIRST.record`),
+      outputs: { svg: bind(report.output.svg.path), render: bind(reportPath), nativePNG: bind(pngPath) },
+      officialValidation: bind(`${own}/${id}/validate-FIRST/receipt.record`),
+      rendererReceipt: bind(`.tmp/resume182-6-7a-n29-fig${number}-render3695-FIRST/receipt.record`),
+      rendererOriginalSpec: bind(`.tmp/resume182-6-7a-n29-fig${number}-render3695-FIRST/original-spec.json`),
+      nativeReceipt: bind(`${own}/${id}/native-FIRST/receipt.record`),
+      assertionsExecutedPerValidation: spec.assertions.length,
+      validationCalls: { explicit: 1, rendererInternal: 1 },
+      renderCalls: 1, nativePNGCount: 1, repairs: 0, failures: [],
+      displayChecks: report.displayChecks,
+    };
+  });
+  const evidence = [];
+  function collect(directory) {
+    for (const item of fs.readdirSync(directory, { withFileTypes: true })) {
+      if (item.name === 'runtime') continue;
+      const file = `${directory}/${item.name}`;
+      if (item.isDirectory()) collect(file);
+      else if (/command\.json|receipt\.record|stdout\.txt|stderr\.txt|original-spec\.json|pixels-FIRST\.record/.test(item.name))
+        evidence.push(bind(file));
+    }
+  }
+  collect(own);
+  for (const number of ['40', '41'])
+    collect(`.tmp/resume182-6-7a-n29-fig${number}-render3695-FIRST`);
+  write(`${own}/ready.record`, {
+    schema: 'resume182-6/figure-author-ready@1', ticket: 'STEMROBIN-182', lesson: 'alg7-c4-s1-n29',
+    phase: 'FIRST_AUTHOR_ONLY', status: 'READY_FOR_INDEPENDENT_REVIEW',
+    created: new Date().toISOString(), cwd: repo, productionRoot: repo,
+    writeSet: [path.resolve(own),
+      ...['40', '41'].map(number => path.resolve(`.tmp/resume182-6-7a-n29-fig${number}-render3695-FIRST`))],
+    frozenInputs: inputs, frozenInputsUnchanged: true,
+    modernText: { lesson: bind(lessonPath), exercises: bind(exercisesPath),
+      exerciseFigureReferences: 0, answersRead: false },
+    sourcePixelObservations: bind(`${own}/source-observations-FIRST.record`),
+    figures, evidence,
+    execution: {
+      authorRuns: 1, explicitDraftValidations: 2, rendererInternalValidations: 2,
+      rendererInvocations: 2, nativeResvgInvocations: 2, officialAssertionsPerFullPass:
+        figures.reduce((sum, figure) => sum + figure.assertionsExecutedPerValidation, 0),
+      targetedRepairs: 0, validationFailures: 0, rendererFailures: 0, nativeFailures: 0,
+      readOnlyExploration: {
+        shellGlobFailures: 1,
+        note: 'One initial rg probe failed before execution because app/src/components/lesson* did not match. Corrected to explicit paths; no writes or mathematical/render failure. Expected ls absence probes and rg no-match exits were not render attempts.',
+      },
+      nativePreviewVisualInspections: 0, sourceReopens: 0,
+      commandReceipts: 'Each official validate, renderer and native preview call retains command, stdout, stderr, receipt and the original spec with exclusive writes.',
+      chromium: 'Only unchanged official deterministic renderer launches Chromium; no page/product/browser review. TMPDIR/TMP/TEMP remain within each renderer receipt runtime directory; renderer closes its browser in finally.',
+    },
+    images: {
+      batchLimit: 8, contextLoaded: 2, sourcePNGsLoaded: 2, sourcePagesLoaded: 0,
+      nativePNGsCreated: 2, nativePNGsLoaded: 0, sourceCropsCreated: 0,
+      rendererScreenshotsCreated: 0, repeatedVisualChecks: 0,
+      distinctSourceAndOutputImages: 4,
+      note: 'Only the two durable original PNGs were viewed once. One 640px resvg PNG per figure is prepared for the independent reviewer, not opened by this author.',
+    },
+    cost: { paidImageGenerationCalls: 0, providerChargesUsd: null,
+      agentExecutionCostUsd: null, status: 'unknown', note: 'Unknown charges are not represented as zero.' },
+    scope: { promotionCalls: 0, recordReviewCalls: 0, databaseCalls: 0, gitCalls: 0,
+      lessonManifestEdits: 0, contextBuildCalls: 0, independentReviewCalls: 0,
+      wholeLessonBrowserChecks: 0, dependenciesChanged: 0, rendererEdits: 0,
+      validatorEdits: 0, answerReads: 0, previousArtifactsOrLocksModified: 0 },
+    risks: [
+      'Official draft/render gates and nonvisual native-raster checks passed; independent mathematical, cultural and visual review is pending. READY is not PASS for promotion.',
+      'Only the official 640px scroll-media contract and an extra 320px shrink check are covered. No headed product or horizontal-scroll-end acceptance was authorized or run.',
+      'PNG preview resolves semantic CSS variables to the renderer neutral fallbacks in memory only. The original CSS-variable SVG is unchanged; alternate-theme and print visual review remains pending.',
+      'Draft output and render paths intentionally remain under FIRST scratch. No durable edition binding or final-output promotion is asserted.',
+      'Exact radii, regular hatch spacing and polygon vertex count are modern layout additions. Source topology, label regions and hatch direction remain source-bound.',
+    ],
+  });
+  process.stdout.write(`${JSON.stringify(bind(`${own}/ready.record`), null, 2)}\n`);
+} else {
+  throw new Error('expected author, render <id>, native, or ready');
+}

@@ -1,0 +1,52 @@
+"""Hash this FIRST package; do not inspect source content or evaluate mathematics."""
+
+import hashlib
+import json
+from pathlib import Path
+
+WORK = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.tmp/resume182-6-7a-n29-choices3695-FIRST")
+names = ["seed.json", "draft.json", "author.record", "run_official.py", "seal_evidence.py"]
+for stage in ("inspect", "prepare", "validate"):
+    names += [f"{stage}.FIRST.stdout", f"{stage}.FIRST.stderr", f"{stage}.FIRST.receipt.json"]
+
+files = []
+for name in names:
+    path = WORK / name
+    raw = path.read_bytes()
+    row = {"path": str(path), "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()}
+    if name in ("seed.json", "draft.json", "author.record"):
+        value = json.loads(raw)
+        canonical = json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+        row["canonical_sha256"] = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    files.append(row)
+
+draft = json.loads((WORK / "draft.json").read_text(encoding="utf-8"))
+record = json.loads((WORK / "author.record").read_text(encoding="utf-8"))
+manifest = {
+    "kind": "FIRST hash-only handoff manifest",
+    "files": files,
+    "counts": {
+        "sources": len(draft["coverage"]),
+        "original_subquestions": sum(row["original_subquestions"] for row in record["source_task_coverage"]),
+        "requested_results": sum(row["result_count"] for row in record["source_task_coverage"]),
+        "listed_source_tasks": sum(len(row["tasks"]) for row in record["source_task_coverage"]),
+        "questions": len(draft["questions"]),
+        "single": sum(q["view"]["mode"] == "single" for q in draft["questions"]),
+        "multiple": sum(q["view"]["mode"] == "multiple" for q in draft["questions"]),
+        "options": sum(len(q["view"]["options"]) for q in draft["questions"]),
+        "rationales": sum(len(q["key"]["rationales"]) for q in draft["questions"]),
+        "declared_correct_options": sum(len(q["key"]["correct"]) for q in draft["questions"]),
+        "new_figures": len(draft["new_figures"]),
+        "image_opens": 0,
+        "image_renders": 0
+    },
+    "semantic_review": "PENDING; no semantic review performed by author",
+    "structural_receipt": str(WORK / "validate.FIRST.receipt.json"),
+    "fee": "unknown"
+}
+target = WORK / "hashes.FIRST.json"
+with target.open("x", encoding="utf-8") as stream:
+    json.dump(manifest, stream, ensure_ascii=True, indent=2)
+    stream.write("\n")
+print(json.dumps(manifest, ensure_ascii=True, indent=2))
+print("manifest_sha256=" + hashlib.sha256(target.read_bytes()).hexdigest())

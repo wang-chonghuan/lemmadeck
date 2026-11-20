@@ -1,0 +1,224 @@
+import fs from 'node:fs'
+import path from 'node:path'
+import crypto from 'node:crypto'
+import assert from 'node:assert/strict'
+import { spawnSync } from 'node:child_process'
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck'
+assert.equal(process.cwd(), root)
+const own = '.tmp/resume182-6-7a-n29-text-author3695-FIRST'
+const working = '.tmp/ld-s10y-lesson/adapt/7a/modern-us-neutral/lessons/alg7-c4-s1-n29'
+const raw = 'ssot-resources/soviet10year-textbooks/artifacts/7a/lessons/alg7-c4-s1-n29'
+const tools = '.claude/skills/ld-s10y-lesson/tools'
+const python = '/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python'
+const hash = value => crypto.createHash('sha256').update(value).digest('hex')
+const read = filename => fs.readFileSync(path.join(root, filename), 'utf8')
+const load = filename => JSON.parse(read(filename))
+const serialize = value => JSON.stringify(value, null, 2) + '\n'
+
+function patchFile(filename, text) {
+  assert(filename.startsWith(own + '/') || [
+    `${working}/lesson.template.json`, `${working}/exercises.template.json`,
+  ].includes(filename))
+  assert(text.endsWith('\n'))
+  const target = path.join(root, filename)
+  const lines = text.slice(0, -1).split('\n')
+  let patch
+  if (fs.existsSync(target)) {
+    const old = read(filename)
+    if (old === text) return
+    assert(old.endsWith('\n'))
+    patch = `*** Begin Patch\n*** Update File: ${filename}\n@@\n`
+      + old.slice(0, -1).split('\n').map(line => '-' + line).join('\n') + '\n'
+      + lines.map(line => '+' + line).join('\n') + '\n*** End Patch\n'
+  } else {
+    patch = `*** Begin Patch\n*** Add File: ${filename}\n`
+      + lines.map(line => '+' + line).join('\n') + '\n*** End Patch\n'
+  }
+  const result = spawnSync('apply_patch', [patch], { cwd: root, encoding: 'utf8' })
+  if (result.status !== 0) {
+    throw new Error(serialize({ filename, status: result.status, stdout: result.stdout, stderr: result.stderr }))
+  }
+  assert.equal(read(filename), text)
+}
+
+function retain(filename, text) {
+  assert(!fs.existsSync(path.join(root, filename)), `Do not overwrite ${filename}`)
+  patchFile(filename, text)
+}
+
+function run(name, executable, args, input) {
+  assert(!fs.existsSync(path.join(root, own, `${name}.receipt.json`)))
+  const startedAt = new Date().toISOString()
+  const result = spawnSync(executable, args, {
+    cwd: root, input, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024,
+    env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+  })
+  const endedAt = new Date().toISOString()
+  const stdout = result.stdout ?? ''
+  const stderr = result.stderr ?? ''
+  // Empty streams are represented by an empty JSON string, not a fabricated newline.
+  retain(`${own}/${name}.stdout.json`, serialize(stdout))
+  retain(`${own}/${name}.stderr.json`, serialize(stderr))
+  if (input !== undefined) retain(`${own}/${name}.stdin.json`, serialize(input))
+  const receipt = {
+    name, executable, args, cwd: root, startedAt, endedAt,
+    exitCode: result.status, signal: result.signal, error: result.error?.message ?? null,
+    stdout: { path: `${own}/${name}.stdout.json`, encoding: 'JSON string, exact decoded stream', sha256: hash(stdout), bytes: Buffer.byteLength(stdout) },
+    stderr: { path: `${own}/${name}.stderr.json`, encoding: 'JSON string, exact decoded stream', sha256: hash(stderr), bytes: Buffer.byteLength(stderr) },
+    stdin: input === undefined ? null : { path: `${own}/${name}.stdin.json`, sha256: hash(input), bytes: Buffer.byteLength(input) },
+  }
+  retain(`${own}/${name}.receipt.json`, serialize(receipt))
+  assert.equal(result.status, 0, serialize(receipt))
+  return stdout
+}
+
+const command = process.argv[2]
+if (command === 'preserve') {
+  const sourceHashes = {}
+  const currentHashes = {}
+  for (const kind of ['lesson', 'exercises']) {
+    const currentPath = `${working}/${kind}.template.json`
+    const rawPath = `${raw}/${kind}.json`
+    const current = read(currentPath)
+    const currentDocument = JSON.parse(current)
+    const source = read(rawPath)
+    assert.equal(currentDocument.source.sha256, hash(source))
+    assert.deepEqual(currentDocument.source.data, JSON.parse(source))
+    retain(`${own}/current.${kind}.template.json`, current)
+    sourceHashes[kind] = { path: rawPath, sha256: hash(source) }
+    currentHashes[kind] = { path: currentPath, sha256: hash(current) }
+  }
+  const rawLesson = load(`${raw}/lesson.json`)
+  const rawExercises = load(`${raw}/exercises.json`)
+  assert.equal(rawLesson.prose.length, 11)
+  assert.equal(rawExercises.count, 14)
+  assert.deepEqual(rawExercises.exercises.map(item => item.number), Array.from({ length: 14 }, (_, i) => String(699 + i)))
+  assert.deepEqual(rawLesson.figures.map(item => item.id), ['fig-40', 'fig-41'])
+  retain(`${own}/current.record.json`, serialize({
+    ticket: 'STEMROBIN-182', batch: '182-6', lesson: 'alg7-c4-s1-n29',
+    cwd: root, startedAt: new Date().toISOString(), currentHashes, sourceHashes,
+    helpers: Object.fromEntries(['edition.py', 'prose_flow.mjs', 'htmlfrag.js'].map(name => [name, { path: `${tools}/${name}`, sha256: hash(read(`${tools}/${name}`)) }])),
+  }))
+  console.log(serialize({ stage: 'preserved', currentHashes, sourceHashes }))
+} else if (command === 'normalize') {
+  const before = {}
+  const input = {}
+  for (const kind of ['lesson', 'exercises']) {
+    before[kind] = hash(read(`${working}/${kind}.template.json`))
+    input[kind] = load(`${working}/${kind}.template.json`)
+    retain(`${own}/authored-pre-normalize.${kind}.template.json`, read(`${working}/${kind}.template.json`))
+  }
+  const code = [
+    'import json, sys',
+    `sys.path.insert(0, ${JSON.stringify(tools)})`,
+    'import edition',
+    'payload = json.load(sys.stdin)',
+    'edition.normalize_lesson_layout(payload["lesson"])',
+    'edition.normalize_exercise_layout(payload["exercises"])',
+    'checks = []',
+    'for kind, key in [("lesson", "prose"), ("exercises", "exercises")]:',
+    '    for index, item in enumerate(payload[kind][key]):',
+    '        if kind == "lesson" and item["kind"] != "p":',
+    '            continue',
+    '        errors = edition.validate_text(item["source_text"], item["text"], item["changes"], item["numeric_changes"], f"{kind}[{index}]", [], item["historical_entities"])',
+    '        if kind == "exercises":',
+    '            errors += edition.validate_numbered_subpart_layout(item["text"])',
+    '        checks.append({"target": f"{kind}[{index}]", "errors": errors, "mathSignaturePreserved": edition.math_signature(item["source_text"]) == edition.math_signature(item["text"]), "numberSignaturePreserved": edition.number_signature(item["source_text"]) == edition.number_signature(item["text"])})',
+    'print(json.dumps({"lesson": payload["lesson"], "exercises": payload["exercises"], "checks": checks, "module": edition.__file__, "python": sys.executable}, ensure_ascii=False, indent=2))',
+  ].join('\n')
+  const stdout = run('normalize', python, ['-B', '-c', code], serialize(input))
+  const output = JSON.parse(stdout)
+  for (const check of output.checks) {
+    assert.deepEqual(check.errors, [], serialize(check))
+    assert.equal(check.mathSignaturePreserved, true)
+    assert.equal(check.numberSignaturePreserved, true)
+  }
+  for (const kind of ['lesson', 'exercises']) {
+    patchFile(`${working}/${kind}.template.json`, serialize(output[kind]))
+    retain(`${own}/normalized.${kind}.template.json`, read(`${working}/${kind}.template.json`))
+  }
+  retain(`${own}/normalize.checks.json`, serialize(output.checks))
+  console.log(serialize({ stage: 'normalized', before, after: Object.fromEntries(['lesson', 'exercises'].map(kind => [kind, hash(read(`${working}/${kind}.template.json`))])), checkedTargets: output.checks.length }))
+} else if (command === 'boundaries') {
+  assert.equal(read(`${working}/lesson.template.json`), read(`${own}/normalized.lesson.template.json`))
+  const stdout = run('prose-flow-normalized', 'node', [`${tools}/prose_flow.mjs`, `${working}/lesson.template.json`])
+  const actual = stdout.split('\n').filter(line => line.startsWith('    break: ')).map(line => JSON.parse(line.slice('    break: '.length)))
+  const selected = [
+    ['具体数集示例转入一般补集定义', '一般来说，'],
+    ['一般补集定义转入有理数集及其包含关系', '整数集又是'],
+    ['数集包含关系转入有理数的分数表示定义', '能写成分数形式、'],
+    ['分数表示示例转入不可约分数的唯一性', '我们发现，'],
+  ].map(([concept, start]) => {
+    const matches = actual.filter(boundary => boundary.after.startsWith(start))
+    assert.equal(matches.length, 1, concept)
+    return { concept, boundary: matches[0] }
+  })
+  retain(`${own}/selected-boundaries.json`, serialize(selected))
+  const lesson = load(`${working}/lesson.template.json`)
+  lesson.section_breaks = selected.map(item => item.boundary)
+  patchFile(`${working}/lesson.template.json`, serialize(lesson))
+  console.log(serialize({ stage: 'boundaries-selected-from-actual-output', selected, actualStdout: `${own}/prose-flow-normalized.stdout.json` }))
+} else if (command === 'verify') {
+  const original = load(`${own}/current.record.json`)
+  const lesson = load(`${working}/lesson.template.json`)
+  const exercises = load(`${working}/exercises.template.json`)
+  const normalizedLesson = load(`${own}/normalized.lesson.template.json`)
+  assert.deepEqual({ ...lesson, section_breaks: normalizedLesson.section_breaks }, normalizedLesson)
+  assert.equal(read(`${working}/exercises.template.json`), read(`${own}/normalized.exercises.template.json`))
+  for (const kind of ['lesson', 'exercises']) {
+    assert.equal(hash(read(original.sourceHashes[kind].path)), original.sourceHashes[kind].sha256)
+    const current = load(`${own}/current.${kind}.template.json`)
+    const candidate = kind === 'lesson' ? lesson : exercises
+    assert.deepEqual(candidate.source, current.source)
+    const collection = kind === 'lesson' ? 'prose' : 'exercises'
+    const omitMutable = item => Object.fromEntries(Object.entries(item).filter(([key]) => !['text', 'lines', 'changes'].includes(key)))
+    assert.deepEqual(candidate[collection].map(omitMutable), current[collection].map(omitMutable))
+    const omitCollection = document => Object.fromEntries(Object.entries(document).filter(([key]) => ![collection, 'section_breaks'].includes(key)))
+    assert.deepEqual(omitCollection(candidate), omitCollection(current))
+    if (kind === 'lesson') {
+      for (let i = 0; i < candidate.prose.length; i++) {
+        if (candidate.prose[i].kind !== 'p') assert.deepEqual(candidate.prose[i], current.prose[i])
+      }
+    }
+  }
+  const expectedParts = [6, 6, 3, 2, 2, 5, 3, 2, 8, 4, 4, 4, 0, 0]
+  for (let i = 0; i < exercises.exercises.length; i++) {
+    const item = exercises.exercises[i]
+    assert.deepEqual(item.lines, item.text.split('\n'))
+    const labels = item.lines.flatMap(line => [...line.matchAll(/^([a-z])\) /g)].map(match => match[1]))
+    assert.deepEqual(labels, [...'abcdefghijklmnopqrstuvwxyz'].slice(0, expectedParts[i]))
+    assert(!/[\u0400-\u04ff\u3000]/u.test(item.text))
+    assert(!item.text.includes('<'))
+    assert(item.text.startsWith(`${item.number}. `))
+  }
+  const stdout = run('prose-flow-candidate', 'node', [`${tools}/prose_flow.mjs`, '--json', `${working}/lesson.template.json`])
+  const flow = JSON.parse(stdout)
+  assert.deepEqual(flow.boundaries.map(({ before, after }) => ({ before, after })), lesson.section_breaks)
+  const current2candidate = Object.fromEntries(['lesson', 'exercises'].map(kind => {
+    const candidatePath = `${working}/${kind}.template.json`
+    retain(`${own}/candidate.${kind}.template.json`, read(candidatePath))
+    return [kind, { path: candidatePath, currentSha256: original.currentHashes[kind].sha256, candidateSha256: hash(read(candidatePath)), candidateSnapshot: `${own}/candidate.${kind}.template.json` }]
+  }))
+  const record = {
+    schema: 'ld-s10y-lesson/modern-text-author-record@1',
+    ticket: 'STEMROBIN-182', batch: '182-6', book: '7a', lesson: 'alg7-c4-s1-n29',
+    authorBatch: 'n29-text-author3695-FIRST', authorBatchCount: 1,
+    status: 'candidate-ready-for-parent-integration-and-independent-review',
+    cwd: root, startedAt: original.startedAt, endedAt: new Date().toISOString(),
+    scope: { rawProseBlocks: 11, textualProseBlocks: 7, exercises: 14, firstExercise: '699', lastExercise: '712', figures: ['fig-40', 'fig-41'] },
+    current2candidate, sourceHashes: original.sourceHashes, helpers: original.helpers,
+    normalization: { receipt: `${own}/normalize.receipt.json`, normalizedBeforeAnchorSelection: true, officialModuleImportedFromThisWorktree: true },
+    sectionBreaks: { count: lesson.section_breaks.length, actualBoundaryObjects: lesson.section_breaks, resolvedIndices: flow.resolvedBreaks, finalParagraphCount: flow.paragraphs.length, selectedFrom: `${own}/prose-flow-normalized.stdout.json`, concepts: load(`${own}/selected-boundaries.json`), verificationReceipt: `${own}/prose-flow-candidate.receipt.json` },
+    checks: { officialTextChecks: `${own}/normalize.checks.json`, sourceSnapshotsAndRawHashesUnchanged: true, allMathematicalExpressionsAndNumericSignaturesPreservedInOrder: true, nonTextMetadataUnchanged: true, naturalLatinSequencesAndOwnLines: true, figuresAndCaptionsUntouched: true },
+    sourceSemanticsRetained: { naturalNumbers: 'positive counting numbers; zero remains in the non-positive complement of N in Z', fractions: 'Q excluding Z, not all rational numbers', sourceFootnoteMarker: 'literal * preserved; no missing footnote invented', answersAdded: false },
+    usage: { authorBatches: 1, authoredLessonProseBlocks: 7, authoredExercises: 14, authoredSubquestions: 49, officialNormalizationSubprocesses: 1, canonicalParserSubprocesses: 2, imageReads: 0, sourceReviews: 0, sourceResolvingOrExerciseSolving: 0, answerOrChoiceConsultations: 0, imageCalls: 0, externalModelCalls: 0, dbCalls: 0, finalizeCalls: 0, browserCalls: 0, pushes: 0, otherChatCalls: 0, hostTokens: null, hostCost: null, hostUsageAvailability: 'unknown; not exposed to this author' },
+    retainedTechnicalFailure: `${own}/initial-import-failure.record.json`,
+    omittedStagesOwnedByParent: ['integration', 'independent review'],
+  }
+  assert.equal(expectedParts.reduce((sum, count) => sum + count, 0), record.usage.authoredSubquestions)
+  retain(`${own}/author.record.json`, serialize(record))
+  console.log(serialize({ authorRecord: path.join(root, own, 'author.record.json'), authorRecordSha256: hash(read(`${own}/author.record.json`)), current2candidate, usage: record.usage, resolvedSectionBreaks: flow.resolvedBreaks, finalParagraphCount: flow.paragraphs.length }))
+} else {
+  throw new Error('Expected preserve, normalize, boundaries, or verify')
+}

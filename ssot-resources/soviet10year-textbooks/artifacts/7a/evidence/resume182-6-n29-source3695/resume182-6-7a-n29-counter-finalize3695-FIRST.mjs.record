@@ -1,0 +1,57 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const own = '.tmp/resume182-6-7a-n29-counter-finalize3695-FIRST';
+const pdir = 'ssot-resources/soviet10year-textbooks/artifacts/7a/pages/0196';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+fs.mkdirSync(own);
+const before = {};
+for (const name of ['page.md', 'page.json', 'audit.json']) {
+  const bytes = fs.readFileSync(`${pdir}/${name}`);
+  before[name] = { bytes, sha256: sha(bytes) };
+  fs.writeFileSync(`${own}/${name}.before.record`, bytes, { flag: 'wx' });
+}
+assert.equal(JSON.parse(before['audit.json'].bytes).lines_printed, 19);
+assert.equal(JSON.parse(before['audit.json'].bytes).lines_md, 18);
+const checkDir = '.tmp/resume182-6-7a-n29-counter3695-FIRST';
+const check = JSON.parse(fs.readFileSync(`${checkDir}/stdout.txt`));
+assert.equal(check.actualRows, 18);
+assert.equal(check.sourceReviewedTextRows, 18);
+assert.equal(JSON.parse(fs.readFileSync(`${checkDir}/receipt.record`)).returncode, 0);
+const command = ['/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python',
+  '-B', '.claude/skills/ld-s10y-lesson/tools/p2c.py', 'finalize', '--book', '7a', '--page', '196'];
+const result = spawnSync(process.execPath, ['.tmp/resume182-6-run3695.mjs',
+  '.tmp/resume182-6-7a-n29-counter-finalize-command3695-FIRST', ...command],
+{ cwd: repo, encoding: 'utf8', env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' } });
+process.stdout.write(result.stdout ?? '');
+process.stderr.write(result.stderr ?? '');
+assert.equal(result.status, 0, result.stderr);
+const after = Object.fromEntries(Object.keys(before).map(name =>
+  [name, { path: `${pdir}/${name}`, sha256: sha(fs.readFileSync(`${pdir}/${name}`)) }]));
+const audit = JSON.parse(fs.readFileSync(`${pdir}/audit.json`));
+assert.equal(audit.lines_printed, 18);
+assert.equal(audit.lines_md, 18);
+assert.deepEqual(audit.errors, []);
+for (const name of ['page.md', 'page.json']) assert.equal(after[name].sha256, before[name].sha256,
+  `Counter recovery must not change already approved text: ${name}`);
+const record = { schema: 'stemrobin-182/failed-counter-recovery@1', status: 'COUNTER_PASS_SOURCE_CONTENT_REUSED',
+  ticket: 'STEMROBIN-182', book: '7a', page: 196,
+  before: Object.fromEntries(Object.entries(before).map(([name, value]) =>
+    [name, { path: `${own}/${name}.before.record`, sha256: value.sha256 }])),
+  after, actualTextRows: 18, priorIncorrectRows: 19, sourceContentBytesUnchanged: true,
+  currentCounterAlreadyCorrectNoCodeChange: true, sourcePixelSha256: check.pixelSha256,
+  inheritedSourceReview: {
+    path: 'ssot-resources/soviet10year-textbooks/artifacts/7a/evidence/resume182-6-source196-202/source196-202-review.md',
+    sha256: sha(fs.readFileSync('ssot-resources/soviet10year-textbooks/artifacts/7a/evidence/resume182-6-source196-202/source196-202-review.md')),
+    units: ['SOURCE content PASS for all 18 rows', 'E196-1 non-text separator diagnosis'],
+  },
+  newSourceImageOrMathReviews: 0, imagesObserved: 0, DBWrites: 0,
+  sourceTreeWrites: 0, hostTokens: 'unknown', cost: 'unknown', completeLessonApproved: false };
+fs.writeFileSync(`${own}/recovery.record`, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: record.status, path: `${own}/recovery.record`,
+  sha256: sha(fs.readFileSync(`${own}/recovery.record`)), sourceContentBytesUnchanged: true }));

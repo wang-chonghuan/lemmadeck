@@ -1,0 +1,269 @@
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+import { spawnSync } from "node:child_process";
+
+const root = "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck";
+const out = path.join(root, ".tmp/resume182-6-7a-n29-figure-review3695-FIRST");
+const readyPath = path.join(root, ".tmp/resume182-6-7a-n29-figures3695-FIRST/ready.record");
+const expectedReady = "541b3ed8e54422b4bd2b75801d809797d16c8f660f60e24590f3990b8b09414e";
+const python = "/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python";
+if (process.cwd() !== root) throw new Error("Wrong production cwd");
+const digest = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const read = (file) => {
+  const absolute = path.resolve(root, file);
+  if (!absolute.startsWith(`${root}/`)) throw new Error(`Read outside production root: ${file}`);
+  return fs.readFileSync(absolute);
+};
+const json = (file) => JSON.parse(read(file).toString("utf8"));
+const binding = (file) => {
+  const bytes = read(file);
+  return { path: path.resolve(root, file), sha256: digest(bytes), bytes: bytes.length };
+};
+const write = (file, value) => {
+  const absolute = path.resolve(out, file);
+  if (!absolute.startsWith(`${out}/`)) throw new Error("Write outside authorized FIRST");
+  fs.writeFileSync(absolute, value, { flag: "wx" });
+  return binding(absolute);
+};
+const writeJSON = (file, value) => write(file, `${JSON.stringify(value, null, 2)}\n`);
+const readyBytes = read(readyPath);
+if (digest(readyBytes) !== expectedReady) throw new Error("ready.record hash differs from human binding");
+const ready = JSON.parse(readyBytes.toString("utf8"));
+const references = new Map();
+const collect = (value) => {
+  if (!value || typeof value !== "object") return;
+  if (typeof value.path === "string" && typeof value.sha256 === "string") {
+    const previous = references.get(value.path);
+    if (previous && previous.sha256 !== value.sha256) throw new Error("Conflicting registered hash");
+    references.set(value.path, value);
+  }
+  for (const item of Object.values(value)) collect(item);
+};
+collect(ready);
+const currentInputs = () => [...references.values()].map((registered) => {
+  const actual = binding(registered.path);
+  return {
+    ...actual,
+    registeredSha256: registered.sha256,
+    hashMatches: actual.sha256 === registered.sha256,
+    bytesMatch: registered.bytes === undefined || actual.bytes === registered.bytes,
+  };
+});
+const checkFrozen = () => {
+  const frozen = json(path.join(out, "frozen-inputs-FIRST.record"));
+  for (const record of frozen.inputs) {
+    const actual = binding(record.path);
+    if (actual.sha256 !== record.sha256) throw new Error(`Frozen input changed: ${record.path}`);
+  }
+  return frozen;
+};
+
+const [action, figure] = process.argv.slice(2);
+if (action === "freeze") {
+  const inputs = currentInputs();
+  const mismatches = inputs.filter((item) => !item.hashMatches || !item.bytesMatch);
+  const rules = [
+    ".agents/skills/ld-s10y-image/SKILL.md",
+    ".agents/skills/ld-s10y-image/references/quality-gate.md",
+    ".agents/skills/ld-s10y-image/references/figure-spec.md",
+    ".claude/skills/ld-s10y-lesson/references/production-resume.md",
+    ".agents/skills/ld-s10y-image/scripts/record_review.py",
+  ].map(binding);
+  const pngs = ready.figures.flatMap((item) => [
+    ["source", item.source], ["nativePNG", item.outputs.nativePNG],
+  ].map(([role, record]) => {
+    const bytes = read(record.path);
+    if (bytes.subarray(1, 4).toString() !== "PNG") throw new Error("Not a PNG");
+    return {
+      figure: item.figure, role, ...binding(record.path),
+      width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20),
+      pixelsObserved: false,
+    };
+  }));
+  const receipt = writeJSON("frozen-inputs-FIRST.record", {
+    schema: "resume182-6/independent-figure-freeze@1",
+    created: new Date().toISOString(),
+    cwd: root, writeSet: [out], ready: binding(readyPath),
+    status: mismatches.length ? "FAIL" : "FROZEN",
+    inputs: [binding(readyPath), ...inputs, ...rules],
+    mismatches, pngs,
+    observationCountAtFreeze: 0,
+    sourcePagesRead: 0,
+    note: "Actual file bytes frozen before any reviewer image observation. Reference hashing does not adopt author observations or reviews.",
+  });
+  console.log(JSON.stringify({ ...receipt, inputCount: inputs.length, mismatches, pngs }, null, 2));
+  if (mismatches.length) process.exitCode = 1;
+} else if (action === "text") {
+  checkFrozen();
+  const lesson = json(ready.modernText.lesson.path);
+  const exercises = json(ready.modernText.exercises.path);
+  console.log(JSON.stringify({
+    lesson,
+    exercisesShape: exercises.exercises.map((item) => ({
+      id: item.id, keys: Object.keys(item),
+    })),
+  }, null, 2));
+} else if (action === "specs") {
+  checkFrozen();
+  for (const item of ready.figures) {
+    const spec = json(item.spec.path);
+    const objectTypes = {};
+    const assertionTypes = {};
+    for (const object of spec.objects) objectTypes[object.type] = (objectTypes[object.type] || 0) + 1;
+    for (const assertion of spec.assertions) assertionTypes[assertion.type] = (assertionTypes[assertion.type] || 0) + 1;
+    console.log(JSON.stringify({
+      figure: item.figure, schema: spec.schema, description: spec.description,
+      source: spec.source, canvas: spec.canvas, display: spec.display,
+      layout: spec.layout, objectTypes, assertionTypes,
+      textObjects: spec.objects.filter((object) => object.type === "text"),
+      firstObjects: spec.objects.slice(0, 6),
+      nonPointNonSegmentObjects: spec.objects.filter((object) => !["point", "segment", "text"].includes(object.type)),
+      render: json(item.outputs.render.path),
+    }, null, 2));
+  }
+} else if (action === "record") {
+  checkFrozen();
+  const observations = json(path.join(out, "independent-observations-FIRST.record"));
+  const observation = observations.figures.find((item) => item.figure === figure);
+  const candidate = ready.figures.find((item) => item.figure === figure);
+  if (!observation || !candidate || observation.conclusion !== "PASS") throw new Error("No independent PASS");
+  const runDir = path.join(out, `${figure}-record-review-FIRST`);
+  fs.mkdirSync(runDir);
+  const runtime = path.join(runDir, "runtime");
+  fs.mkdirSync(runtime);
+  const output = path.join(out, `${figure}.review.json`);
+  if (fs.existsSync(output)) throw new Error("Review output already exists");
+  const args = [
+    "-B", path.join(root, ".agents/skills/ld-s10y-image/scripts/record_review.py"),
+    "--spec", candidate.spec.path, "--render", candidate.outputs.render.path,
+    "--output", output, "--status", "pass", "--notes", observation.officialNotes,
+  ];
+  const env = {
+    PYTHONDONTWRITEBYTECODE: "1",
+    TMPDIR: runtime, TMP: runtime, TEMP: runtime,
+  };
+  const command = writeJSON(`${figure}-record-review-FIRST/command.json`, {
+    executable: python, argv: args, cwd: root, environmentOverrides: env,
+    observationEvidence: binding(path.join(out, "independent-observations-FIRST.record")),
+    executionContract: "Only record_review.py's built-in rendered-stage mechanical checks are allowed; no standalone validation, render or rasterization.",
+  });
+  const started = new Date().toISOString();
+  const result = spawnSync(python, args, { cwd: root, env: { ...process.env, ...env } });
+  const stdout = write(`${figure}-record-review-FIRST/stdout.txt`, result.stdout || Buffer.alloc(0));
+  const stderr = write(`${figure}-record-review-FIRST/stderr.txt`, result.stderr || Buffer.alloc(0));
+  const outputRecord = fs.existsSync(output) ? binding(output) : null;
+  const after = currentInputs();
+  const receipt = writeJSON(`${figure}-record-review-FIRST/receipt.record`, {
+    schema: "resume182-6/figure-review-command@1", figure,
+    started, finished: new Date().toISOString(), cwd: root,
+    command, stdout, stderr, exitCode: result.status, signal: result.signal,
+    error: result.error ? String(result.error) : null, review: outputRecord,
+    frozenInputsUnchanged: after.every((item) => item.hashMatches && item.bytesMatch),
+    recordReviewCalls: 1, standaloneValidateCalls: 0, renderCalls: 0,
+    status: result.status === 0 && outputRecord ? "PASS" : "FAIL",
+  });
+  console.log(JSON.stringify({
+    receipt, review: outputRecord, exitCode: result.status,
+    stdout: (result.stdout || Buffer.alloc(0)).toString(),
+    stderr: (result.stderr || Buffer.alloc(0)).toString(),
+  }, null, 2));
+  if (result.status !== 0) process.exitCode = 1;
+} else if (action === "aggregate") {
+  const frozen = checkFrozen();
+  const observations = json(path.join(out, "independent-observations-FIRST.record"));
+  const pixelObservations = json(path.join(out, "first-pixel-observations.record"));
+  const modernText = {
+    lesson: binding(ready.modernText.lesson.path),
+    exercises: binding(ready.modernText.exercises.path),
+    completeModernProseRead: observations.modernText.completeModernProseRead,
+    writtenExercisePromptsRead: observations.modernText.writtenExercisePromptsRead,
+    exerciseFigureReferences: 0, answerReads: 0, generatedChoiceReads: 0,
+  };
+  const figures = ready.figures.map((candidate) => {
+    const observation = observations.figures.find((item) => item.figure === candidate.figure);
+    const receiptPath = path.join(out, `${candidate.figure}-record-review-FIRST/receipt.record`);
+    const receipt = fs.existsSync(receiptPath) ? json(receiptPath) : null;
+    const reviewPath = path.join(out, `${candidate.figure}.review.json`);
+    const review = fs.existsSync(reviewPath) ? json(reviewPath) : null;
+    const reviewBound = Boolean(review &&
+      review.status === "pass" && review.figure === candidate.figure &&
+      review.source.sha256 === candidate.source.sha256 &&
+      review.spec.sha256 === candidate.spec.sha256 &&
+      review.render.sha256 === candidate.outputs.render.sha256 &&
+      review.outputs.svg.sha256 === candidate.outputs.svg.sha256);
+    const commandPass = receipt?.status === "PASS" && receipt.frozenInputsUnchanged;
+    const conclusion = observation.conclusion === "PASS" && commandPass && reviewBound ? "PASS" : "FAIL";
+    return {
+      figure: candidate.figure, conclusion,
+      blockers: [
+        ...observation.blockers,
+        ...(commandPass ? [] : ["Official review command absent or failed, or frozen inputs changed."]),
+        ...(reviewBound ? [] : ["Official review missing, not pass, or not bound to current candidate."]),
+      ],
+      observations: observation.observations,
+      independentPixelInventory: pixelObservations.imageObservations.find(
+        (item) => item.figure === candidate.figure && item.role === "source").inventory,
+      source: binding(candidate.source.path),
+      spec: binding(candidate.spec.path),
+      svg: binding(candidate.outputs.svg.path),
+      render: binding(candidate.outputs.render.path),
+      native: binding(candidate.outputs.nativePNG.path),
+      context: binding(candidate.context.path),
+      modernText, review: review ? binding(reviewPath) : { path: reviewPath, sha256: null },
+      command: receipt ? receipt.command : null,
+      stdout: receipt ? receipt.stdout : null,
+      stderr: receipt ? receipt.stderr : null,
+      receipt: receipt ? binding(receiptPath) : null,
+      observedImages: pixelObservations.imageObservations.filter((item) => item.figure === candidate.figure),
+      specFacts: observation.specFacts, modernAdditions: observation.modernAdditions,
+      priorAuthorEvidenceReused: {
+        validation: binding(candidate.officialValidation.path),
+        renderer: binding(candidate.rendererReceipt.path),
+        native: binding(candidate.nativeReceipt.path),
+      },
+    };
+  });
+  const status = figures.every((item) => item.conclusion === "PASS") ? "PASS" : "FAIL";
+  const record = writeJSON("review.record", {
+    schema: "resume182-6/independent-figure-review@1",
+    ticket: "STEMROBIN-182", lesson: ready.lesson,
+    phase: "FIRST_INDEPENDENT_REVIEW", status, created: new Date().toISOString(),
+    cwd: root, productionRoot: root, writeSet: [out],
+    ready: binding(readyPath), frozenInputs: binding(path.join(out, "frozen-inputs-FIRST.record")),
+    frozenInputsUnchanged: true, frozenInputCount: frozen.inputs.length,
+    modernText, figures,
+    observationEvidence: binding(path.join(out, "independent-observations-FIRST.record")),
+    firstPixelEvidence: binding(path.join(out, "first-pixel-observations.record")),
+    script: binding(import.meta.filename),
+    images: observations.images,
+    execution: {
+      independentFigureReviews: 2, officialRecordReviewCalls: figures.filter((item) => item.receipt).length,
+      officialRecordReviewFailures: figures.filter((item) => item.conclusion === "FAIL").length,
+      officialBuiltInRenderedValidationCalls: figures.filter((item) => item.receipt).length,
+      officialBuiltInAssertionsExecuted: figures.filter((item) => item.receipt)
+        .reduce((count, item) => count + item.specFacts.assertions, 0),
+      standaloneValidateCalls: 0, renderCalls: 0, nativeRasterCalls: 0,
+      sourcePageReviewCalls: 0, imageToolCalls: 4, targetedRepairs: 0,
+      readOnlySvgXmlParseCalls: 1, readOnlyPathProbeFailures: 1,
+      truncatedExplorationOutputs: 1,
+      note: observations.executionBeforeOfficialRecord.failureExplanation,
+    },
+    cost: observations.cost,
+    pendingAcceptance: observations.pendingAcceptance,
+    scope: {
+      productMediaScroll640Measured: false, wholeLessonHeadedChecks: 0,
+      offlineLessonRenderCalls: 0, browserCalls: 0, databaseCalls: 0, gitCalls: 0,
+      messageCalls: 0, promotionCalls: 0, finalizeCalls: 0, candidateEdits: 0,
+      oldPassReads: 0, answerReads: 0, generatedChoiceReads: 0,
+      authorPixelObservationProseRead: false,
+      otherPausedWorkResumed: false, previousFIRSTOverwrites: 0,
+      exclusiveCheckoutClaimed: false,
+    },
+    gateMeaning: "PASS approves only this frozen first independent mathematical/cultural/native640 visual figure review. It does not claim product/media/scroll acceptance, complete lesson acceptance, publication, promotion or finalize.",
+  });
+  console.log(JSON.stringify({ status, record, figures: figures.map(
+    ({ figure, conclusion, blockers, review, receipt }) => ({ figure, conclusion, blockers, review, receipt })) }, null, 2));
+} else {
+  throw new Error("Expected freeze, text, specs, record, or aggregate");
+}

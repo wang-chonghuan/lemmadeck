@@ -1,0 +1,63 @@
+"""Capture each authorized official FIRST call without overwriting evidence."""
+
+import datetime
+import hashlib
+import json
+import os
+from pathlib import Path
+import shlex
+import subprocess
+import sys
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck")
+WORK = ROOT / ".tmp/resume182-6-7a-n29-choices3695-FIRST"
+PYTHON = "/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python"
+BASE = ".agents/skills/ld-s10y-choice/scripts/"
+REL = WORK.relative_to(ROOT).as_posix()
+
+stage = sys.argv[1]
+if stage == "inspect":
+    args = [PYTHON, "-B", BASE + "prepare.py", "inspect",
+            "--repo", ".", "--book", "7a", "--lesson", "alg7-c4-s1-n29"]
+elif stage == "prepare":
+    args = [PYTHON, "-B", BASE + "prepare.py", "prepare",
+            "--repo", ".", "--book", "7a", "--lesson", "alg7-c4-s1-n29"]
+    for number in range(699, 713):
+        args += ["--exercise", str(number)]
+    for block in map(int, sys.argv[2:]):
+        args += ["--concept-block", str(block)]
+    args += ["--out", REL + "/seed.json"]
+elif stage == "validate":
+    args = [PYTHON, "-B", BASE + "validate.py", "--repo", ".",
+            "--seed", REL + "/seed.json", "--draft", REL + "/draft.json"]
+else:
+    raise SystemExit("Only inspect, prepare and single structural validate authorized")
+
+paths = {kind: WORK / f"{stage}.FIRST.{kind}" for kind in ("stdout", "stderr", "receipt.json")}
+if any(path.exists() for path in paths.values()):
+    raise SystemExit("FIRST evidence already exists; no repeat")
+overrides = {"PYTHONDONTWRITEBYTECODE": "1", "TMPDIR": str(WORK),
+             "TMP": str(WORK), "TEMP": str(WORK)}
+env = dict(os.environ)
+env.update(overrides)
+started = datetime.datetime.now(datetime.timezone.utc).isoformat()
+with paths["stdout"].open("xb") as out, paths["stderr"].open("xb") as err:
+    result = subprocess.run(args, cwd=ROOT, env=env, stdout=out, stderr=err, check=False)
+receipt = {
+    "stage": stage, "attempt": "FIRST", "cwd": str(ROOT),
+    "argv": args, "command": shlex.join(args), "environment_overrides": overrides,
+    "started_at": started,
+    "finished_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+    "exit_code": result.returncode,
+    "stdout": str(paths["stdout"]), "stderr": str(paths["stderr"]),
+    "stdout_sha256": hashlib.sha256(paths["stdout"].read_bytes()).hexdigest(),
+    "stderr_sha256": hashlib.sha256(paths["stderr"].read_bytes()).hexdigest(),
+    "cost": "unknown", "semantic_review": False
+}
+with paths["receipt.json"].open("x", encoding="utf-8") as stream:
+    json.dump(receipt, stream, indent=2, ensure_ascii=True)
+    stream.write("\n")
+print(json.dumps(receipt, indent=2))
+print(paths["stdout"].read_text(encoding="utf-8"), end="")
+print(paths["stderr"].read_text(encoding="utf-8"), end="", file=sys.stderr)
+raise SystemExit(result.returncode)
