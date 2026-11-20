@@ -265,6 +265,12 @@ def promote_figures(book: Path, work: Path | None, warnings: list[str]) -> None:
 def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], list[str]]:
     """按语义认领图：正文图留正文，练习共享图只在练习区展示一次。"""
     errors, warn = [], []
+    all_exercise_refs = {
+        number
+        for lesson in lessons
+        for exercise in lesson["exercises"]
+        for number in FIGREF.findall(exercise["text"])
+    }
     fig_by_num, all_figs = {}, []
     for b in stream:
         if b["kind"] != "fig":
@@ -323,6 +329,12 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
             if block["kind"] not in ("fig", "cap")
             for n in FIGREF.findall(B.text_of(block))
         }
+        local_figure_refs = {
+            number
+            for block in lesson["prose"]
+            if block["kind"] == "fig"
+            for number in FIGREF.findall(block.get("label") or "")
+        }
         exercise_users: dict[str, list[dict]] = {}
         for exercise in lesson["exercises"]:
             for n in dict.fromkeys(FIGREF.findall(exercise["text"])):
@@ -352,7 +364,11 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
             exercise_only = (
                 block["kind"] in ("fig", "cap")
                 and nums
-                and nums <= exercise_refs
+                and nums <= (
+                    all_exercise_refs
+                    if block["kind"] == "cap" and not (nums & local_figure_refs)
+                    else exercise_refs
+                )
                 and not (nums & real_prose_refs)
             )
             if not exercise_only:

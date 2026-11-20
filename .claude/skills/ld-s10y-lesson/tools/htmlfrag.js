@@ -30,6 +30,9 @@ const TRAIL = /^[;,.、，。：:！!？?)）\]]+/
 
 function renderInline(text, renderText) {
   let out = "", last = 0
+  let marker = "S10YINLINE"
+  while (text.includes(marker)) marker += "X"
+  const mathHtml = []
   for (const m of text.matchAll(MATH)) {
     out += renderText(text.slice(last, m.index))
     const tex = m[1] ?? m[2]
@@ -42,9 +45,13 @@ function renderInline(text, renderText) {
     last = m.index + m[0].length
     const t = (text.slice(last).match(TRAIL) || [""])[0]
     last += t.length
-    out += `<span class="sr-nb">${html}${esc(t)}</span>`
+    mathHtml.push(`<span class="sr-nb">${html}${esc(t)}</span>`)
+    out += `${marker}${mathHtml.length - 1}END`
   }
-  return strong(out + renderText(text.slice(last)))
+  // Bold syntax must not consume wildcard stars inside rendered formulas.
+  return strong(out + renderText(text.slice(last))).replace(
+    new RegExp(`${marker}(\\d+)END`, "g"), (_, index) => mathHtml[Number(index)],
+  )
 }
 
 const inline = (text) => renderInline(text, escText)
