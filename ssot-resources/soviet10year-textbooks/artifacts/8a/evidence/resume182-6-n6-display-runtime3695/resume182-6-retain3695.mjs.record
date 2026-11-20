@@ -1,0 +1,82 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [name, ...sources] = process.argv.slice(2);
+assert.match(name, /^n6-[a-z0-9-]+$/);
+assert.ok(sources.length);
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const target = `${root}/evidence/resume182-6-${name}`;
+assert.ok(!fs.existsSync(target));
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const existing = new Map();
+const retained = new Map();
+const entries = [];
+let reused = 0;
+function register(file) {
+  if (!fs.existsSync(file)) return;
+  if (fs.lstatSync(file).isDirectory()) {
+    for (const item of fs.readdirSync(file).sort()) register(path.join(file, item));
+  } else if (fs.lstatSync(file).isFile()) existing.set(sha(fs.readFileSync(file)), file);
+}
+const lesson = `${root}/editions/modern-us-neutral/lessons/alg8-c1-s2-n6`;
+register(lesson);
+for (const id of ['fig-09', 'fig-10', 'fig-11', 'fig-12']) {
+  for (const suffix of ['svg', 'png']) register(`${root}/figures/${id}.${suffix}`);
+  for (const suffix of ['svg', 'spec.json', 'render.json', 'review.json']) {
+    register(`${root}/editions/modern-us-neutral/figures/${id}.${suffix}`);
+  }
+}
+for (const directory of fs.readdirSync(`${root}/evidence`).sort()) {
+  const record = `${root}/evidence/${directory}/retention.record`;
+  if (!fs.existsSync(record)) continue;
+  for (const entry of JSON.parse(fs.readFileSync(record)).entries ?? []) {
+    if (!existing.has(entry.sha256)) existing.set(entry.sha256, entry.path);
+  }
+}
+function retain(file, destination) {
+  const stat = fs.lstatSync(file);
+  if (stat.isDirectory()) {
+    for (const name of fs.readdirSync(file).sort()) {
+      retain(path.join(file, name), path.join(destination, name));
+    }
+    return;
+  }
+  assert.ok(stat.isFile());
+  const bytes = fs.readFileSync(file);
+  const digest = sha(bytes);
+  let output = retained.get(digest) ?? existing.get(digest);
+  if (output) {
+    assert.equal(sha(fs.readFileSync(output)), digest);
+    if (existing.get(digest) === output) reused++;
+  } else {
+    output = destination.endsWith('.record') ? destination : `${destination}.record`;
+    fs.mkdirSync(path.dirname(output), { recursive: true });
+    fs.writeFileSync(output, bytes, { flag: 'wx' });
+    retained.set(digest, output);
+  }
+  entries.push({ historical_path: file, path: output, sha256: digest, bytes: bytes.length });
+}
+for (const file of sources) {
+  assert.ok(file.startsWith('.tmp/resume182-6-'));
+  retain(file, `${target}/${path.basename(file)}`);
+}
+const value = {
+  schema: 'stemrobin-182/production-evidence-retention@1',
+  ticket: 'STEMROBIN-182', book: '8a', evidence_package: name,
+  date: '2026-11-20', entries, unique_files: retained.size,
+  reused_existing_references: reused, status: 'retained-existing-bytes-only',
+  paths: 'historical_path is provenance only; path binds durable bytes.',
+  rejected_FIRST_and_usage_preserved: true,
+  unknownHistoricalBytesRecovered: false,
+  new_math_source_image_or_validator_runs: 0,
+  hostTokens: 'unknown', totalCost: 'unknown', DBWrites: 0,
+};
+const bytes = Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
+fs.mkdirSync(target, { recursive: true });
+fs.writeFileSync(`${target}/retention.record`, bytes, { flag: 'wx' });
+console.log(JSON.stringify({ path: `${target}/retention.record`, sha256: sha(bytes),
+  unique: retained.size, references: entries.length, reused }));

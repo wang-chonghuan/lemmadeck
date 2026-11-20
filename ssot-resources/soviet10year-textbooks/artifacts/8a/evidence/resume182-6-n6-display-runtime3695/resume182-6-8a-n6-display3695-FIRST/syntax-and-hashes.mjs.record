@@ -1,0 +1,74 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { readFile, writeFile, access, realpath } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const OWN = path.join(R, '.tmp/resume182-6-8a-n6-display3695-FIRST');
+assert.equal(process.cwd(), R);
+assert.equal(path.dirname(fileURLToPath(import.meta.url)), OWN);
+assert.equal(await realpath(OWN), OWN);
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const prep = JSON.parse(await readFile(path.join(OWN, 'preparation.record')));
+const scripts = ['prepare.mjs', 'run.mjs', 'display-helper.mjs', 'syntax-and-hashes.mjs']
+  .map(name => path.join(OWN, name)).concat(path.join(R, '.tmp/resume182-6-8a-n6-select3695.mjs'));
+const checks = [];
+for (const filename of scripts) {
+  const result = spawnSync(process.execPath, ['--check', filename], {
+    cwd: R, encoding: 'utf8', timeout: 30000,
+  });
+  checks.push({ path: filename, command: [process.execPath, '--check', filename],
+    exitCode: result.status, stdout: result.stdout, stderr: result.stderr,
+    error: result.error?.message });
+  assert.equal(result.status, 0, `Syntax check failed: ${filename}`);
+}
+const files = [];
+for (const filename of [...scripts, path.join(OWN, 'README.md'), path.join(OWN, 'preparation.record'),
+  path.join(OWN, 'preparation-FIRST-failure.record')]) {
+  const bytes = await readFile(filename);
+  files.push({ path: filename, bytes: bytes.length, sha256: sha(bytes) });
+}
+for (const imported of prep.imports) assert.equal(sha(await readFile(imported.retained)), imported.sha256);
+for (const pin of prep.pins) {
+  assert.equal(await realpath(pin.path), pin.realpath);
+  assert.equal(sha(await readFile(pin.path)), pin.sha256, `Pinned input changed during preparation: ${pin.path}`);
+}
+const dependencies = [];
+for (const filename of prep.dependencies) {
+  try {
+    const bytes = await readFile(filename);
+    dependencies.push({ path: filename, presentAtPreparation: true, sha256: sha(bytes),
+      readinessNotExecuted: true });
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+    dependencies.push({ path: filename, presentAtPreparation: false, readinessNotExecuted: true });
+  }
+}
+let runtimeExists = false;
+try { await access(path.join(OWN, 'runtime-FIRST')); runtimeExists = true; }
+catch (error) { if (error.code !== 'ENOENT') throw error; }
+assert.equal(runtimeExists, false, 'Preparation must not run or reserve runtime-FIRST');
+const record = {
+  schema: 'n6-display-ready@1', status: 'READY_PREPARATION_ONLY', date: new Date().toISOString(),
+  workdir: R, writeRoot: OWN, files, checks, pins: prep.pins, dependencies,
+  usage: { syntaxChecks: checks.length, rendererCalls: 0, browserLaunches: 0,
+    screenshotsCaptured: 0, imagesObserved: 0, sourceReviews: 0, mathReviews: 0, figureReviews: 0,
+    figureRenders: 0, validatorCalls: 0, paidCalls: 0, generatedImages: 0, dbCalls: 0,
+    networkCalls: 0, dependencyChanges: 0, gitOperations: 0, otherChatsMessaged: 0 },
+  commands: {
+    checkInputs: ['node', path.join(OWN, 'run.mjs'), '--check-inputs'],
+    first: ['node', path.join(OWN, 'run.mjs'), '--first', '--wait-seconds', '1800'],
+    selector: ['node', path.join(R, '.tmp/resume182-6-8a-n6-select3695.mjs'), '--report',
+      path.join(OWN, 'runtime-FIRST/report-FIRST.json'), '--name', 'first'],
+    recover: ['node', path.join(OWN, 'run.mjs'), '--recover', 'correction1', '--from',
+      path.join(OWN, 'runtime-FIRST/report-FIRST.json')],
+  },
+  runtimeFirstCreated: false, selectorsExecuted: false, imageObservationOwner: 'fresh bounded reviewers',
+  finalBindingOwner: 'parent', runtimeVerificationNotPerformed: true,
+};
+const bytes = Buffer.from(`${JSON.stringify(record, null, 2)}\n`);
+await writeFile(path.join(OWN, 'ready.record'), bytes, { flag: 'wx' });
+console.log(JSON.stringify({ status: record.status, record: path.join(OWN, 'ready.record'), sha256: sha(bytes),
+  files, syntaxChecks: checks.length, dependencies, usage: record.usage }));

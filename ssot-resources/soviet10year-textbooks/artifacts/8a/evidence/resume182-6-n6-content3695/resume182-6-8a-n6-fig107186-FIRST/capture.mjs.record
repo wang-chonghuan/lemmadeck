@@ -1,0 +1,65 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-7186/lemmadeck';
+assert.equal(process.cwd(), root);
+const directory = '.tmp/resume182-6-8a-n6-fig107186-FIRST';
+const output = `${directory}/preview-actual640.png`;
+assert.ok(!fs.existsSync(output));
+const svg = fs.readFileSync(`${directory}/fig-10.svg`, 'utf8');
+const require = createRequire(path.join(root, 'app/package.json'));
+const { chromium } = require('@playwright/test');
+const core = path.dirname(require.resolve('playwright-core/package.json'));
+const { PNG } = require(path.join(core, 'lib/utilsBundle.js'));
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const browser = await chromium.launch({ headless: true });
+let context;
+const errors = [];
+try {
+  context = await browser.newContext({
+    viewport: { width: 640, height: Math.ceil(871 * 640 / 514) },
+    deviceScaleFactor: 1,
+  });
+  const page = await context.newPage();
+  await page.route('**/*', async route => {
+    errors.push(route.request().url());
+    await route.abort();
+  });
+  page.on('pageerror', error => errors.push(error.message));
+  await page.setContent(`<html><head><style>
+    html,body{margin:0;width:640px;background:white;overflow:hidden}
+    svg{display:block;width:640px;height:auto}
+  </style></head><body>${svg}</body></html>`, { waitUntil: 'load' });
+  const bounds = await page.locator('svg').evaluate(element => {
+    const box = element.getBoundingClientRect();
+    return { width: box.width, height: box.height };
+  });
+  assert.equal(bounds.width, 640);
+  assert.equal(errors.length, 0);
+  const png = await page.screenshot({ path: output, fullPage: true });
+  const decoded = PNG.sync.read(png);
+  assert.equal(decoded.width, 640);
+  assert.equal(decoded.height, Math.ceil(bounds.height));
+  let inkPixels = 0;
+  for (let index = 0; index < decoded.data.length; index += 4) {
+    if (decoded.data[index + 3] > 0
+      && Math.min(...decoded.data.subarray(index, index + 3)) < 200) inkPixels++;
+  }
+  assert.ok(inkPixels > 1000 && inkPixels < decoded.width * decoded.height / 2);
+  fs.writeFileSync(`${directory}/capture.record`, `${JSON.stringify({
+    status: 'CAPTURED_UNOBSERVED',
+    svg: { path: `${directory}/fig-10.svg`, sha256: sha(Buffer.from(svg)) },
+    screenshot: { path: output, sha256: sha(png), width: decoded.width, height: decoded.height },
+    actualMediaBounds: bounds, inkPixels, errors,
+    rendererCalls: 0, screenshots: 1, imageObservations: 0,
+    cleanup: { browserClosed: true, contextsClosed: true },
+    hostTokensCost: 'unknown',
+  }, null, 2)}\n`, { flag: 'wx' });
+} finally {
+  await context?.close();
+  await browser.close();
+}
+console.log(output);

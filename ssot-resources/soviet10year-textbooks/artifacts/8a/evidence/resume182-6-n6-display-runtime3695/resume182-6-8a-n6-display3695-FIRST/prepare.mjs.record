@@ -1,0 +1,140 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFile, writeFile, realpath } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const OWN = path.join(R, '.tmp/resume182-6-8a-n6-display3695-FIRST');
+assert.equal(process.cwd(), R);
+assert.equal(path.dirname(fileURLToPath(import.meta.url)), OWN);
+assert.equal(await realpath(OWN), OWN);
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+async function retainOnce(filename, bytes) {
+  try { await writeFile(filename, bytes, { flag: 'wx' }); }
+  catch (error) {
+    if (error.code !== 'EEXIST') throw error;
+    assert.deepEqual(await readFile(filename), Buffer.from(bytes), 'Do not replace already retained bytes');
+  }
+}
+const sources = [
+  ['original-runner.bytes', '/Users/yong/.codex/worktrees/stemrobin-182-six/lemmadeck/.tmp/resume182-6-n9-display-FIRST/run.mjs'],
+  ['original-rows-recovery.bytes', '/Users/yong/.codex/worktrees/stemrobin-182-six/lemmadeck/.tmp/resume182-6-n9-display-FIRST/rows-recovery1.mjs'],
+  ['original-selector.bytes', '/Users/yong/.codex/worktrees/stemrobin-182-six/lemmadeck/.tmp/resume182-6-n9-select-display.mjs'],
+  ['original-helper.bytes', '/Users/yong/.codex/worktrees/stemrobin-182-six-7186/lemmadeck/.tmp/resume182-6-8a-n3-display-FIRST/display-helper.mjs'],
+];
+const imports = [];
+let helper;
+for (const [name, source] of sources) {
+  const bytes = await readFile(source);
+  await retainOnce(path.join(OWN, name), bytes);
+  imports.push({ source, retained: path.join(OWN, name), bytes: bytes.length, sha256: sha(bytes) });
+  if (name === 'original-helper.bytes') helper = bytes.toString('utf8');
+}
+const changes = [];
+function replace(before, after) {
+  assert.ok(helper.includes(before), `Mechanical adaptation anchor missing: ${before}`);
+  helper = helper.replace(before, after);
+  changes.push({ before, after });
+}
+helper = helper.replaceAll('__n9Display', '__n6Display');
+replace('const hidden = [];', 'const hidden = [];\n  const collectedTextNodes = new Set();');
+replace('let offset = 0;', 'collectedTextNodes.add(node);\n    let offset = 0;');
+replace("window.scrollBy({ top: rect.top + rect.height / 2 - innerHeight / 2, behavior: 'instant' });",
+  "window.scrollBy({ top: Math.ceil(rect.top + rect.height / 2 - innerHeight / 2), behavior: 'instant' });");
+replace('left -= box.left + ancestor.clientLeft - rect.left;',
+  'left -= Math.ceil(box.left + ancestor.clientLeft - rect.left);');
+replace('left += rect.right - box.left - ancestor.clientLeft - ancestor.clientWidth;',
+  'left += Math.ceil(rect.right - box.left - ancestor.clientLeft - ancestor.clientWidth);');
+replace('top -= box.top + ancestor.clientTop - rect.top;',
+  'top -= Math.ceil(box.top + ancestor.clientTop - rect.top);');
+replace('top += rect.bottom - box.top - ancestor.clientTop - ancestor.clientHeight;',
+  'top += Math.ceil(rect.bottom - box.top - ancestor.clientTop - ancestor.clientHeight);');
+replace('const expectedLabels = contract.labels ?? [];', `if (!svg) throw new Error('This retained figure contract requires SVG');
+    const expectedTemplate = document.createElement('template');
+    expectedTemplate.innerHTML = contract.svgMarkup;
+    const expectedSvg = expectedTemplate.content.querySelector('svg');
+    const exactSvg = svg.outerHTML === expectedSvg.outerHTML;
+    const expectedLabels = contract.labels ?? [];`);
+replace('const labelBindings = expectedLabels.every((expected) => labels.some((actual) =>',
+  'const labelBindings = expectedLabels.length === labels.length && expectedLabels.every((expected) => labels.some((actual) =>');
+replace('minimumPx: contract.minimumPx, expectedLayout: contract.layout,',
+  'minimumPx: contract.minimumPx, exactSvg, expectedLayout: contract.layout,');
+replace("const scrollables = [...document.querySelectorAll('*')].filter((element) =>", `const bodyText = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let node = bodyText.nextNode(); node; node = bodyText.nextNode()) {
+    if (!node.data.trim() || node.parentElement.closest('style,script,figure,.katex-mathml')) continue;
+    if (!collectedTextNodes.has(node)) throw new Error('Unbound actual DOM text: ' + node.data);
+  }
+  const scrollables = [...document.querySelectorAll('*')].filter((element) =>`);
+replace('rect.right > box.left + 0.5', 'rect.right > box.left');
+replace('return { key, x: left - box.left, y: top - box.top,',
+  'return { key, x: Math.max(0, left - box.left), y: Math.max(0, top - box.top),');
+// Preserve the actual PNG receipt even if a subsequent pixel/geometry assertion fails.
+replace('const decoded = PNG.sync.read(bytes);', `const image = {
+      path: output, sha256: sha(bytes), viewport, surface, ...frame, newIds,
+      visualObservation: 'UNOBSERVED', nativeSize: true, fullPage: false, croppedOrResized: false,
+      captureChecks: 'PENDING',
+    };
+    images.push(image);
+    report.screenshots.push(image);
+    usage.screenshotsCaptured += 1;
+    await event({ screenshot: { path: output, sha256: image.sha256,
+      targetsVisible: frame.visibleIds.length, newTargets: newIds.length } });
+    const decoded = PNG.sync.read(bytes);`);
+replace(`const image = {
+      path: output, sha256: sha(bytes), width: decoded.width, height: decoded.height, ink,
+      viewport, surface, ...frame, newIds,
+      visualObservation: 'UNOBSERVED', nativeSize: true, fullPage: false, croppedOrResized: false,
+    };
+    images.push(image);
+    report.screenshots.push(image);
+    usage.screenshotsCaptured += 1;
+    await event({ screenshot: { path: output, sha256: image.sha256,
+      targetsVisible: frame.visibleIds.length, newTargets: newIds.length } });`,
+  "Object.assign(image, { width: decoded.width, height: decoded.height, ink, captureChecks: 'PASS' });");
+replace(`const covered = new Set();
+  const states = new Set();
+  const images = [];`, `const images = report.screenshots.filter(image => image.viewport.width === viewport.width
+    && image.surface === surface && image.captureChecks === 'PASS');
+  const covered = new Set(images.flatMap(image => image.visibleIds));
+  const states = new Set(images.map(image => JSON.stringify([image.scroll, image.scrollables])));`);
+replace('report.coverage.push(inventory);', `report.coverage = report.coverage.filter(item =>
+    item.viewport.width !== viewport.width || item.surface !== surface);
+  report.coverage.push(inventory);`);
+await retainOnce(path.join(OWN, 'display-helper.mjs'), helper);
+
+const base = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral';
+const lesson = `${base}/lessons/alg8-c1-s2-n6`;
+const paths = [
+  ...['lesson.json', 'exercises.json', 'figures.json', 'adaptation.audit.json'].map(name => `${lesson}/${name}`),
+  ...['fig-09', 'fig-10', 'fig-11', 'fig-12'].flatMap(id =>
+    ['svg', 'spec.json', 'render.json', 'review.json'].map(ext => `${base}/figures/${id}.${ext}`)),
+  ...['render_lesson.js', 'htmlfrag.js', 'choice_html.mjs', 'publish_merge.js'].map(name =>
+    `.claude/skills/ld-s10y-lesson/tools/${name}`),
+  'app/node_modules/@playwright/test/package.json',
+  '.agents/skills/node_modules/marked/lib/marked.esm.js',
+  '.claude/skills/ld-s10y-lesson/node_modules/katex/package.json',
+];
+const pins = [];
+for (const relative of paths) {
+  const filename = path.join(R, relative);
+  const resolved = await realpath(filename);
+  const dependency = relative.includes('/node_modules/');
+  assert.ok(dependency || resolved.startsWith(`${R}/`), `Pin escaped current tree: ${filename}`);
+  const bytes = await readFile(filename);
+  pins.push({ path: filename, realpath: resolved, existingDependencyLink: dependency,
+    bytes: bytes.length, sha256: sha(bytes) });
+}
+const record = {
+  schema: 'n6-display-preparation@1', status: 'PREPARED_NOT_EXECUTED',
+  scope: { root: R, owned: OWN, book: '8a', edition: 'modern-us-neutral', lesson: 'alg8-c1-s2-n6' },
+  imports, adaptations: changes, pins,
+  dependencies: ['choice-set/seed.json', 'choice-set/draft.json', 'choice-set/review.json',
+    'answer-keys.json', 'answer-keys.audit.json'].map(name => path.join(R, lesson, name)),
+  usage: { rendererCalls: 0, browserLaunches: 0, screenshotsCaptured: 0, imagesObserved: 0,
+    sourceReviews: 0, mathReviews: 0, figureReviews: 0, figureRenders: 0, validatorCalls: 0,
+    dbCalls: 0, networkCalls: 0, dependencyChanges: 0, gitOperations: 0, otherChatsMessaged: 0 },
+};
+await writeFile(path.join(OWN, 'preparation.record'), `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ status: record.status, path: path.join(OWN, 'preparation.record'),
+  imports: imports.map(({ source, sha256 }) => ({ source, sha256 })), pinnedInputs: pins.length }));

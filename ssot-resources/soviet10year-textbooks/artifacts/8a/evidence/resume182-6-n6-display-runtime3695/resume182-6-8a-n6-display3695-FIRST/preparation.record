@@ -1,0 +1,321 @@
+{
+  "schema": "n6-display-preparation@1",
+  "status": "PREPARED_NOT_EXECUTED",
+  "scope": {
+    "root": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck",
+    "owned": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.tmp/resume182-6-8a-n6-display3695-FIRST",
+    "book": "8a",
+    "edition": "modern-us-neutral",
+    "lesson": "alg8-c1-s2-n6"
+  },
+  "imports": [
+    {
+      "source": "/Users/yong/.codex/worktrees/stemrobin-182-six/lemmadeck/.tmp/resume182-6-n9-display-FIRST/run.mjs",
+      "retained": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.tmp/resume182-6-8a-n6-display3695-FIRST/original-runner.bytes",
+      "bytes": 56992,
+      "sha256": "37c7c974439e2b505a64b822385fdb7fdc90c000d81fec946793bf972cf4f966"
+    },
+    {
+      "source": "/Users/yong/.codex/worktrees/stemrobin-182-six/lemmadeck/.tmp/resume182-6-n9-display-FIRST/rows-recovery1.mjs",
+      "retained": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.tmp/resume182-6-8a-n6-display3695-FIRST/original-rows-recovery.bytes",
+      "bytes": 57603,
+      "sha256": "d14ed9002af72d34be6dfd0cfb7fec4659eb1ca494113cb035e5f4b6db19e95e"
+    },
+    {
+      "source": "/Users/yong/.codex/worktrees/stemrobin-182-six/lemmadeck/.tmp/resume182-6-n9-select-display.mjs",
+      "retained": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.tmp/resume182-6-8a-n6-display3695-FIRST/original-selector.bytes",
+      "bytes": 6184,
+      "sha256": "4742c47ff7c37a94ce493043d7b85f6db01817c8f73ca86e9c2d18962c9b06c2"
+    },
+    {
+      "source": "/Users/yong/.codex/worktrees/stemrobin-182-six-7186/lemmadeck/.tmp/resume182-6-8a-n3-display-FIRST/display-helper.mjs",
+      "retained": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.tmp/resume182-6-8a-n6-display3695-FIRST/original-helper.bytes",
+      "bytes": 22787,
+      "sha256": "852860f43d99c6fcb821d7fdf12b3ae5deaabc17ee728d900b5c5e6e74fb1341"
+    }
+  ],
+  "adaptations": [
+    {
+      "before": "const hidden = [];",
+      "after": "const hidden = [];\n  const collectedTextNodes = new Set();"
+    },
+    {
+      "before": "let offset = 0;",
+      "after": "collectedTextNodes.add(node);\n    let offset = 0;"
+    },
+    {
+      "before": "window.scrollBy({ top: rect.top + rect.height / 2 - innerHeight / 2, behavior: 'instant' });",
+      "after": "window.scrollBy({ top: Math.ceil(rect.top + rect.height / 2 - innerHeight / 2), behavior: 'instant' });"
+    },
+    {
+      "before": "left -= box.left + ancestor.clientLeft - rect.left;",
+      "after": "left -= Math.ceil(box.left + ancestor.clientLeft - rect.left);"
+    },
+    {
+      "before": "left += rect.right - box.left - ancestor.clientLeft - ancestor.clientWidth;",
+      "after": "left += Math.ceil(rect.right - box.left - ancestor.clientLeft - ancestor.clientWidth);"
+    },
+    {
+      "before": "top -= box.top + ancestor.clientTop - rect.top;",
+      "after": "top -= Math.ceil(box.top + ancestor.clientTop - rect.top);"
+    },
+    {
+      "before": "top += rect.bottom - box.top - ancestor.clientTop - ancestor.clientHeight;",
+      "after": "top += Math.ceil(rect.bottom - box.top - ancestor.clientTop - ancestor.clientHeight);"
+    },
+    {
+      "before": "const expectedLabels = contract.labels ?? [];",
+      "after": "if (!svg) throw new Error('This retained figure contract requires SVG');\n    const expectedTemplate = document.createElement('template');\n    expectedTemplate.innerHTML = contract.svgMarkup;\n    const expectedSvg = expectedTemplate.content.querySelector('svg');\n    const exactSvg = svg.outerHTML === expectedSvg.outerHTML;\n    const expectedLabels = contract.labels ?? [];"
+    },
+    {
+      "before": "const labelBindings = expectedLabels.every((expected) => labels.some((actual) =>",
+      "after": "const labelBindings = expectedLabels.length === labels.length && expectedLabels.every((expected) => labels.some((actual) =>"
+    },
+    {
+      "before": "minimumPx: contract.minimumPx, expectedLayout: contract.layout,",
+      "after": "minimumPx: contract.minimumPx, exactSvg, expectedLayout: contract.layout,"
+    },
+    {
+      "before": "const scrollables = [...document.querySelectorAll('*')].filter((element) =>",
+      "after": "const bodyText = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);\n  for (let node = bodyText.nextNode(); node; node = bodyText.nextNode()) {\n    if (!node.data.trim() || node.parentElement.closest('style,script,figure,.katex-mathml')) continue;\n    if (!collectedTextNodes.has(node)) throw new Error('Unbound actual DOM text: ' + node.data);\n  }\n  const scrollables = [...document.querySelectorAll('*')].filter((element) =>"
+    },
+    {
+      "before": "rect.right > box.left + 0.5",
+      "after": "rect.right > box.left"
+    },
+    {
+      "before": "return { key, x: left - box.left, y: top - box.top,",
+      "after": "return { key, x: Math.max(0, left - box.left), y: Math.max(0, top - box.top),"
+    },
+    {
+      "before": "const decoded = PNG.sync.read(bytes);",
+      "after": "const image = {\n      path: output, sha256: sha(bytes), viewport, surface, ...frame, newIds,\n      visualObservation: 'UNOBSERVED', nativeSize: true, fullPage: false, croppedOrResized: false,\n      captureChecks: 'PENDING',\n    };\n    images.push(image);\n    report.screenshots.push(image);\n    usage.screenshotsCaptured += 1;\n    await event({ screenshot: { path: output, sha256: image.sha256,\n      targetsVisible: frame.visibleIds.length, newTargets: newIds.length } });\n    const decoded = PNG.sync.read(bytes);"
+    },
+    {
+      "before": "const image = {\n      path: output, sha256: sha(bytes), width: decoded.width, height: decoded.height, ink,\n      viewport, surface, ...frame, newIds,\n      visualObservation: 'UNOBSERVED', nativeSize: true, fullPage: false, croppedOrResized: false,\n    };\n    images.push(image);\n    report.screenshots.push(image);\n    usage.screenshotsCaptured += 1;\n    await event({ screenshot: { path: output, sha256: image.sha256,\n      targetsVisible: frame.visibleIds.length, newTargets: newIds.length } });",
+      "after": "Object.assign(image, { width: decoded.width, height: decoded.height, ink, captureChecks: 'PASS' });"
+    },
+    {
+      "before": "const covered = new Set();\n  const states = new Set();\n  const images = [];",
+      "after": "const images = report.screenshots.filter(image => image.viewport.width === viewport.width\n    && image.surface === surface && image.captureChecks === 'PASS');\n  const covered = new Set(images.flatMap(image => image.visibleIds));\n  const states = new Set(images.map(image => JSON.stringify([image.scroll, image.scrollables])));"
+    },
+    {
+      "before": "report.coverage.push(inventory);",
+      "after": "report.coverage = report.coverage.filter(item =>\n    item.viewport.width !== viewport.width || item.surface !== surface);\n  report.coverage.push(inventory);"
+    }
+  ],
+  "pins": [
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c1-s2-n6/lesson.json",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c1-s2-n6/lesson.json",
+      "existingDependencyLink": false,
+      "bytes": 23058,
+      "sha256": "ecb046b5cf91297a597dd1dd46801b41ef2e6df1eec97462c15f5066ad089a15"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c1-s2-n6/exercises.json",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c1-s2-n6/exercises.json",
+      "existingDependencyLink": false,
+      "bytes": 19584,
+      "sha256": "59df5d7111fd6b0539e0b762f5cb9e1b31e26211e97bcd42cb239409283deb6d"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c1-s2-n6/figures.json",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c1-s2-n6/figures.json",
+      "existingDependencyLink": false,
+      "bytes": 2605,
+      "sha256": "b69c01eb52b44e890621c6b4cd3cdf191368eede0f74dbf483b47dfc72d2e4f9"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c1-s2-n6/adaptation.audit.json",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c1-s2-n6/adaptation.audit.json",
+      "existingDependencyLink": false,
+      "bytes": 2065,
+      "sha256": "9ccf8885843b06aac5307eddb98e2b7acc8daefa30d353b29decc5cd4821069a"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-09.svg",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-09.svg",
+      "existingDependencyLink": false,
+      "bytes": 10953,
+      "sha256": "3f86cb5dd9bf013449182f53d8fb7cd81561587e19f3829cec70c14395351937"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-09.spec.json",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-09.spec.json",
+      "existingDependencyLink": false,
+      "bytes": 10932,
+      "sha256": "bcbafc77ed2ef869458c9f29dc3951820b99fd79d0aa6c87f6fc769882f41bcd"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-09.render.json",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-09.render.json",
+      "existingDependencyLink": false,
+      "bytes": 1047,
+      "sha256": "ea89932ab615669b0cb164e2058cac94afa2ce30c04009c91a1439be3d056803"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-09.review.json",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-09.review.json",
+      "existingDependencyLink": false,
+      "bytes": 1265,
+      "sha256": "0f7a579b1419c5b7e0d2a979177c623d1621c6b86ad2784224266ce075e5d658"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-10.svg",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-10.svg",
+      "existingDependencyLink": false,
+      "bytes": 9787,
+      "sha256": "a797e78477bca09e31b4366badd55e1eb646b04a855d7fffe817127b54d70ac5"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-10.spec.json",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-10.spec.json",
+      "existingDependencyLink": false,
+      "bytes": 7814,
+      "sha256": "0f41562995437e53c631ba6731b89b90ab0f926f78e281c3d8aaf7552f675724"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-10.render.json",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-10.render.json",
+      "existingDependencyLink": false,
+      "bytes": 1047,
+      "sha256": "ebbfd1696cd78d3e653bee2737d12811cc173a6de3a3461bf82006e07a636fb1"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-10.review.json",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-10.review.json",
+      "existingDependencyLink": false,
+      "bytes": 2971,
+      "sha256": "55fec3a1cef79dc8076178729923f89eeaced168519c89afcae989fc59686dd4"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-11.svg",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-11.svg",
+      "existingDependencyLink": false,
+      "bytes": 9433,
+      "sha256": "e7c8febcc19a8444d0e64e08f6953a8536fb35a53e7f34120034f5d332b3b395"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-11.spec.json",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-11.spec.json",
+      "existingDependencyLink": false,
+      "bytes": 8699,
+      "sha256": "d8464935a672e5f4e7ad0a7c878f9285b96fbde0bb9220a02a484e24f389e81d"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-11.render.json",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-11.render.json",
+      "existingDependencyLink": false,
+      "bytes": 1048,
+      "sha256": "a3e152a03a4e3fad73259fab45177d2f6ab74faea4db6485940bed5ff1ecc85d"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-11.review.json",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-11.review.json",
+      "existingDependencyLink": false,
+      "bytes": 1265,
+      "sha256": "05c379c6b33a95cc87a46ca1404c129111a1e1cadb1693108600b338e122c744"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-12.svg",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-12.svg",
+      "existingDependencyLink": false,
+      "bytes": 101791,
+      "sha256": "8e5d18fe93da1db25ffab0c8dc9c614e6c9f56450b5986d916d24bf472bdf323"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-12.spec.json",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-12.spec.json",
+      "existingDependencyLink": false,
+      "bytes": 53624,
+      "sha256": "76c94809427c19f526039fa0a6c09362431cc985b628d437ca018b3c2368e5ad"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-12.render.json",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-12.render.json",
+      "existingDependencyLink": false,
+      "bytes": 1049,
+      "sha256": "0f05cbcf3beaa1c3dd3845edf6f0e2a9f629fe1eaabd8520677f497481b71959"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-12.review.json",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-12.review.json",
+      "existingDependencyLink": false,
+      "bytes": 1265,
+      "sha256": "c6ba9b3a1bc4c0ae43ef7446eb14a0996139833b48f86b7988d7d4967b48b9dc"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.claude/skills/ld-s10y-lesson/tools/render_lesson.js",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.claude/skills/ld-s10y-lesson/tools/render_lesson.js",
+      "existingDependencyLink": false,
+      "bytes": 17409,
+      "sha256": "ea222721061d1f962ac978e2caacf5fcefbec50d06c5fcb96029899d223de417"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.claude/skills/ld-s10y-lesson/tools/htmlfrag.js",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.claude/skills/ld-s10y-lesson/tools/htmlfrag.js",
+      "existingDependencyLink": false,
+      "bytes": 5155,
+      "sha256": "c2f0301c5ba7811336a5268a404f795ace7873b75eb93c42c10186f3d9c3f9f6"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.claude/skills/ld-s10y-lesson/tools/choice_html.mjs",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.claude/skills/ld-s10y-lesson/tools/choice_html.mjs",
+      "existingDependencyLink": false,
+      "bytes": 711,
+      "sha256": "32854ab0a6c120438a5b552ffbe4e7224bfe3ae72b3a3f11cbac9e81d3cb3727"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.claude/skills/ld-s10y-lesson/tools/publish_merge.js",
+      "realpath": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.claude/skills/ld-s10y-lesson/tools/publish_merge.js",
+      "existingDependencyLink": false,
+      "bytes": 1329,
+      "sha256": "ffeeafdfaf6372efd9de9ba7abeb143c81016080cbb7644c9a278be1848917ee"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/app/node_modules/@playwright/test/package.json",
+      "realpath": "/Users/yong/work/lemmadeck-ws/lemmadeck/app/node_modules/@playwright/test/package.json",
+      "existingDependencyLink": true,
+      "bytes": 754,
+      "sha256": "9d8556509e073169efec663b7f71c13f17d7002b307d00d48bf88ee91c387f3e"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.agents/skills/node_modules/marked/lib/marked.esm.js",
+      "realpath": "/Users/yong/work/lemmadeck-ws/lemmadeck/.agents/skills/node_modules/marked/lib/marked.esm.js",
+      "existingDependencyLink": true,
+      "bytes": 42042,
+      "sha256": "43e1fc0927b2d397bdc786c0a9efa8414ce18e7781d0b3490faceea35b7d0d15"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/.claude/skills/ld-s10y-lesson/node_modules/katex/package.json",
+      "realpath": "/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/node_modules/katex/package.json",
+      "existingDependencyLink": true,
+      "bytes": 6430,
+      "sha256": "940355baf91a1b07d0b42c15e38edb25704cd5a7020b2d1aceeca37708e35b29"
+    }
+  ],
+  "dependencies": [
+    "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c1-s2-n6/choice-set/seed.json",
+    "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c1-s2-n6/choice-set/draft.json",
+    "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c1-s2-n6/choice-set/review.json",
+    "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c1-s2-n6/answer-keys.json",
+    "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c1-s2-n6/answer-keys.audit.json"
+  ],
+  "usage": {
+    "rendererCalls": 0,
+    "browserLaunches": 0,
+    "screenshotsCaptured": 0,
+    "imagesObserved": 0,
+    "sourceReviews": 0,
+    "mathReviews": 0,
+    "figureReviews": 0,
+    "figureRenders": 0,
+    "validatorCalls": 0,
+    "dbCalls": 0,
+    "networkCalls": 0,
+    "dependencyChanges": 0,
+    "gitOperations": 0,
+    "otherChatsMessaged": 0
+  }
+}

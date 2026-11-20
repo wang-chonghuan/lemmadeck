@@ -1,0 +1,628 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawn } from 'node:child_process';
+import { createRequire } from 'node:module';
+import { createServer } from 'node:http';
+import { appendFile, mkdir, readFile, readdir, realpath, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { createDisplayHelpers } from './display-helper.mjs';
+
+const R = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const OWN = path.join(R, '.tmp/resume182-6-8a-n6-display3695-FIRST');
+const FIRST = path.join(OWN, 'runtime-FIRST');
+const BOOK = '8a', EDITION = 'modern-us-neutral', ID = 'alg8-c1-s2-n6';
+const MODERN = path.join(R, 'ssot-resources/soviet10year-textbooks/artifacts', BOOK, 'editions', EDITION);
+const LESSON = path.join(MODERN, 'lessons', ID);
+const CHOICES = path.join(LESSON, 'choice-set');
+const TOOLS = path.join(R, '.claude/skills/ld-s10y-lesson/tools');
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const norm = text => String(text).normalize('NFC').replace(/\s+/gu, ' ').trim();
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+const canonical = value => {
+  const ordered = item => Array.isArray(item) ? item.map(ordered)
+    : item && typeof item === 'object'
+      ? Object.fromEntries(Object.keys(item).sort().map(key => [key, ordered(item[key])])) : item;
+  return sha(JSON.stringify(ordered(value)).replace(/[\u007f-\uffff]/gu,
+    character => '\\u' + character.charCodeAt(0).toString(16).padStart(4, '0')));
+};
+assert.equal(process.cwd(), R, 'Use only the authorized current tree');
+assert.equal(path.dirname(fileURLToPath(import.meta.url)), OWN);
+assert.equal(await realpath(OWN), OWN);
+const argv = process.argv.slice(2);
+let mode, recoveryName, from, waitSeconds = 0;
+for (let index = 0; index < argv.length; index += 1) {
+  const flag = argv[index];
+  if (['--first', '--check-inputs'].includes(flag)) {
+    assert.equal(mode, undefined); mode = flag;
+  } else if (flag === '--recover') {
+    assert.equal(mode, undefined); mode = flag; recoveryName = argv[++index];
+    assert.match(recoveryName, /^[a-z][a-z0-9-]{0,63}$/u);
+  } else if (flag === '--from') from = argv[++index];
+  else if (flag === '--wait-seconds') {
+    waitSeconds = Number(argv[++index]);
+    assert.ok(Number.isInteger(waitSeconds) && waitSeconds >= 0 && waitSeconds <= 7200);
+  } else throw new Error(`Unknown argument: ${flag}`);
+}
+assert.ok(mode, 'Choose --check-inputs, --first, or --recover <unique-name> --from <report>');
+if (mode === '--recover') assert.ok(path.isAbsolute(from));
+else assert.equal(from, undefined);
+const RUN = mode === '--recover' ? path.join(OWN, `runtime-recovery-${recoveryName}`) : FIRST;
+const own = filename => {
+  assert.ok(path.resolve(filename).startsWith(`${RUN}/`), 'Write outside this owned transaction');
+  return filename;
+};
+const prep = JSON.parse(await readFile(path.join(OWN, 'preparation.record')));
+assert.equal(prep.scope.root, R);
+const report = {
+  schema: 'bounded-n6-offline-display@1', status: 'RUNNING', started: new Date().toISOString(),
+  scope: { ticket: 'STEMROBIN-182', book: BOOK, edition: EDITION, lesson: ID, writeRoot: OWN },
+  boundary: 'Offline display only; parent owns integration, observations and final binding',
+  preconditions: { retainedChoiceSet: CHOICES, parentApprovalRequired: false, waitSeconds },
+  inputs: [], staged: [], checks: [], screenshots: [], coverage: [], completedViews: [], faults: [],
+  cleanup: { rendererClosed: true, contextsClosed: true, browserClosed: true, serverClosed: true },
+};
+const usage = {
+  schema: 'bounded-n6-display-usage@1', rendererCalls: 0, browserLaunches: 0,
+  browserContexts: 0, pageNavigations: 0, screenshotsCaptured: 0, imagesObserved: 0,
+  observationBatchLimit: 8, observationContextLimit: 24, sourceReviews: 0, mathReviews: 0,
+  choiceReviews: 0, figureReviews: 0, validatorCalls: 0, finalizations: 0, figureRenders: 0,
+  paidCalls: 0, generatedImages: 0, dbCalls: 0, appVisits: 0, productionInteractions: 0,
+  dependencyChanges: 0, gitOperations: 0, otherChatsMessaged: 0,
+};
+const network = { served: [], blocked: [], failures: [], pageErrors: [], consoleErrors: [], badResponses: [] };
+const contexts = [];
+let browser, server, rendererChild, model, renderRoot, scratchRoot, prior, origin;
+const passedNames = new Set();
+async function save(name, value) {
+  await writeFile(own(path.join(RUN, name)), `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+}
+async function event(value) {
+  await appendFile(own(path.join(RUN, 'events.ndjson')), `${JSON.stringify({ time: new Date().toISOString(), ...value })}\n`);
+}
+function assertOfflineRuntime() {
+  assert.ok(['blocked', 'failures', 'pageErrors', 'consoleErrors', 'badResponses']
+    .every(key => network[key].length === 0), 'Stop dependent stages on first browser/network fault');
+}
+async function check(name, passed, facts = {}) {
+  assertOfflineRuntime();
+  const result = { name, status: passed ? 'PASS' : 'FAIL', ...facts };
+  report.checks.push(result);
+  await event({ check: result });
+  assert.ok(passed, name);
+}
+async function readBound(filename, expectedHash, entries = report.inputs) {
+  assert.ok(!path.basename(filename).startsWith('.env'));
+  const actual = await realpath(filename);
+  const dependencyPin = prep.pins.find(pin => pin.path === filename && pin.existingDependencyLink);
+  assert.ok(actual.startsWith(`${R}/`) || dependencyPin?.realpath === actual,
+    `Input escaped current tree or pinned existing dependency: ${filename}`);
+  const bytes = await readFile(filename);
+  if (expectedHash) assert.equal(sha(bytes), expectedHash, `Input hash changed: ${filename}`);
+  if (!entries.some(entry => entry.path === filename)) entries.push({ path: filename, bytes: bytes.length, sha256: sha(bytes) });
+  return bytes;
+}
+async function stage(filename, bytes) {
+  own(filename);
+  await mkdir(path.dirname(filename), { recursive: true });
+  await writeFile(filename, bytes, { flag: 'wx' });
+  report.staged.push({ path: filename, bytes: bytes.length, sha256: sha(bytes) });
+}
+function refs(exercise) {
+  return [...new Set([...(exercise.figure_refs ?? []), ...(exercise.figures ?? []).map(figure => figure.id)])];
+}
+function writtenText(exercise) {
+  const number = Object.hasOwn(exercise, 'source_number') ? exercise.source_number : exercise.number;
+  const prefix = number == null ? '' : String(number), suffix = exercise.text.slice(prefix.length);
+  const prefixed = prefix && exercise.text.startsWith(prefix)
+    && (/^\.\s/u.test(suffix) || /^\uFF0E(?![0-9\uFF10-\uFF19])/u.test(suffix));
+  return { number: number == null ? '' : `${number}.`,
+    text: prefixed ? exercise.text.slice(prefix.length + 1).trimStart() : exercise.text };
+}
+async function preparedInputs() {
+  const entries = [], bytesByPath = new Map();
+  const read = async (filename, hash) => {
+    const bytes = await readBound(filename, hash, entries); bytesByPath.set(filename, bytes); return bytes;
+  };
+  for (const pin of prep.pins) await read(pin.path, pin.sha256);
+  const json = async filename => JSON.parse(bytesByPath.get(filename) ?? await read(filename));
+  const lesson = await json(path.join(LESSON, 'lesson.json'));
+  const exercises = await json(path.join(LESSON, 'exercises.json'));
+  const manifest = await json(path.join(LESSON, 'figures.json'));
+  const adaptation = await json(path.join(LESSON, 'adaptation.audit.json'));
+  assert.equal(lesson.id, ID); assert.equal(exercises.lesson, ID); assert.equal(manifest.lesson, ID);
+  for (const value of [lesson, exercises, manifest]) {
+    assert.equal(value.status, 'ready'); assert.equal(value.edition, EDITION);
+  }
+  assert.equal(adaptation.status, 'pass'); assert.equal(adaptation.lesson, ID);
+  assert.equal(adaptation.edition, EDITION); assert.deepEqual(adaptation.errors, []);
+  assert.equal(lesson.prose.length, 23); assert.equal(lesson.source.data.prose.length, 23);
+  assert.equal(exercises.count, 12); assert.equal(lesson.exercise_count, 12);
+  assert.equal(exercises.source.data.exercises.length, 12);
+  assert.deepEqual(exercises.exercises.map(item => String(item.number)),
+    Array.from({ length: 12 }, (_, i) => String(i + 43)));
+  assert.deepEqual(manifest.figures.map(item => item.id), ['fig-09', 'fig-10', 'fig-11', 'fig-12']);
+  assert.deepEqual((lesson.figures ?? []).map(item => item.id), manifest.figures.map(item => item.id));
+  const answers = await json(path.join(LESSON, 'answer-keys.json'));
+  const answersAudit = await json(path.join(LESSON, 'answer-keys.audit.json'));
+  assert.equal(answers.schema, 'ld-s10y-answer/lesson-answers@1');
+  if (answers.status !== 'ready') {
+    const pending = new Error('Ready answer-keys.json precondition is not complete');
+    pending.code = 'PRECONDITIONS_PENDING'; throw pending;
+  }
+  assert.equal(answersAudit.schema, 'ld-s10y-answer/lesson-audit@1');
+  assert.equal(answersAudit.status, 'pass');
+  for (const value of [answers, answersAudit]) {
+    assert.equal(value.lesson, ID); assert.equal(value.book, BOOK); assert.equal(value.edition, EDITION);
+  }
+  assert.equal(answers.count, answers.answers.length);
+  assert.equal(answersAudit.answerCount, answers.answers.length);
+  assert.equal(answers.answers.length, exercises.exercises.length);
+  assert.deepEqual(answers.answers.map(item => String(item.exercise)), exercises.exercises.map(item => String(item.number)));
+  const answerReview = await json(path.join(R, '.tmp/resume182-6-8a-n6-blind7186-FIRST/answers-review.record'));
+  assert.equal(answerReview.verdict, 'PASS_INDEPENDENT_CANDIDATE_COMPARISON');
+  const candidateBytes = await read(path.join(R,
+    '.tmp/resume182-6-8a-n6-answers7186-FIRST/answers.draft.json'), answerReview.inputs.candidate.sha256);
+  assert.deepEqual(answers.answers, JSON.parse(candidateBytes).answers,
+    'Final answers must retain the independently approved candidate subtree');
+  const seed = await json(path.join(CHOICES, 'seed.json'));
+  const draft = await json(path.join(CHOICES, 'draft.json'));
+  const review = await json(path.join(CHOICES, 'review.json'));
+  assert.equal(seed.schema, 's10y-choice-seed-v1'); assert.equal(draft.schema, 's10y-choice-draft-v1');
+  assert.equal(seed.source.book, BOOK); assert.equal(seed.source.lesson, ID);
+  assert.equal(draft.seed_sha256, canonical(seed));
+  assert.equal(review.outcome, 'pass');
+  assert.equal(review.seed_sha256, canonical(seed)); assert.equal(review.draft_sha256, canonical(draft));
+  assert.ok(draft.questions.length > 0);
+  assert.deepEqual(seed.exercises, exercises.exercises.map(item => ({
+    number: String(item.number), text: item.text, figure_ids: refs(item),
+  })));
+  for (const name of ['lesson.json', 'exercises.json', 'figures.json']) {
+    const filename = path.join(LESSON, name);
+    const trace = seed.trace.find(item => path.resolve(R, item.path) === filename);
+    assert.equal(trace?.sha256, sha(bytesByPath.get(filename)), `Stale choice trace: ${name}`);
+  }
+  for (const concept of seed.concepts) assert.equal(concept.text, lesson.prose[concept.block]?.text);
+  for (const figure of seed.figures) for (const asset of figure.assets) {
+    const filename = path.resolve(R, asset.path);
+    assert.ok(filename.startsWith(`${MODERN}/figures/`));
+    await read(filename, asset.sha256);
+  }
+  const figureContracts = {}, assetsToStage = [];
+  async function bindFigure(id, directory, assetPath) {
+    const specPath = path.join(directory, `${id}.spec.json`);
+    const spec = await json(specPath);
+    const mode = spec.mode === 'generated' ? 'generation' : 'render';
+    const evidencePath = path.join(directory, `${id}.${mode}.json`);
+    const figureReview = await json(path.join(directory, `${id}.review.json`));
+    const evidence = await read(evidencePath);
+    const asset = await read(assetPath);
+    assert.equal(spec.id, id); assert.equal(figureReview.status, 'pass');
+    assert.equal(figureReview.spec.sha256, sha(bytesByPath.get(specPath)));
+    assert.equal(figureReview[mode].sha256, sha(evidence));
+    assert.ok(Object.values(figureReview.outputs).some(output => output.sha256 === sha(asset)));
+    assert.ok(spec.display.minTextPx >= 16);
+    assert.equal(path.extname(assetPath), '.svg', 'Do not substitute an unbound raster contract');
+    figureContracts[id] = {
+      minimumPx: spec.display.minTextPx, layout: spec.display.layout,
+      maxWidthPx: spec.display.layout === 'scroll' ? spec.display.maxWidthPx ?? 640 : null,
+      svgMarkup: asset.toString('utf8').replace(/<\?xml[^>]*\?>/u, ''),
+      labels: (spec.objects ?? []).filter(item => item.type === 'text' || item.label)
+        .map(item => ({ id: `${item.id}-label`, text: String(item.text ?? item.label).trim() })),
+    };
+  }
+  for (const figure of manifest.figures) {
+    assert.equal(figure.svg, `figures/${figure.id}.svg`);
+    await bindFigure(figure.id, path.join(MODERN, 'figures'), path.join(MODERN, figure.svg));
+  }
+  const used = new Set(draft.questions.flatMap(question =>
+    [...question.view.figure_ids, ...question.view.options.flatMap(option => option.figure_ids)]));
+  for (const asset of draft.new_figures) {
+    const filename = path.resolve(R, asset.path);
+    assert.ok(filename.startsWith(`${CHOICES}/figures/`), 'Choices must already be retained in this lesson');
+    await read(filename, asset.sha256);
+    if (used.has(asset.id)) {
+      await bindFigure(asset.id, path.join(CHOICES, 'figures'), filename);
+      assetsToStage.push({ id: asset.id, source: filename });
+    }
+  }
+  for (const id of used) assert.ok(figureContracts[id], `Unbound choice figure: ${id}`);
+  for (const question of draft.questions) {
+    assert.ok(['single', 'multiple'].includes(question.view.mode));
+    assert.ok(question.view.options.length >= 2 && question.view.options.length <= 26);
+    assert.ok(question.view.stem.trim());
+    assert.ok(question.view.options.every(option => typeof option.text === 'string'
+      && (option.text.trim() || option.figure_ids.length)));
+  }
+  return { entries, bytesByPath, lesson, exercises, manifest, seed, draft, figureContracts, assetsToStage };
+}
+async function waitForInputs() {
+  const deadline = Date.now() + waitSeconds * 1000;
+  let last;
+  do {
+    try { return await preparedInputs(); }
+    catch (error) {
+      last = error;
+      // Pins and already present but invalid inputs are real failures, not waiting conditions.
+      if (!['ENOENT', 'PRECONDITIONS_PENDING'].includes(error.code)) throw error;
+      if (Date.now() >= deadline) break;
+      await new Promise(resolve => setTimeout(resolve, Math.min(1000, deadline - Date.now())));
+    }
+  } while (Date.now() <= deadline);
+  throw new Error(`PRECONDITIONS_NOT_READY: ${last.message}`);
+}
+if (mode === '--check-inputs') {
+  try {
+    const ready = await waitForInputs();
+    console.log(JSON.stringify({ status: 'INPUTS_READY_NOT_EXECUTED', inputs: ready.entries,
+      choiceQuestions: ready.draft.questions.length, answerAuditsReady: true, rendererCalls: 0 }));
+  } catch (error) {
+    console.log(JSON.stringify({ status: 'PRECONDITIONS_NOT_READY', message: error.message, rendererCalls: 0 }));
+    process.exitCode = 1;
+  }
+} else {
+await mkdir(RUN);
+assert.equal(await realpath(RUN), RUN);
+try {
+  await save('start.record', { argv, cwd: R, mode, rendererBudget: mode === '--first' ? 1 : 0 });
+  report.implementation = [];
+  for (const name of ['run.mjs', 'display-helper.mjs', 'preparation.record']) {
+    const filename = path.join(OWN, name), bytes = await readFile(filename);
+    report.implementation.push({ path: filename, bytes: bytes.length, sha256: sha(bytes) });
+  }
+  if (mode === '--recover') {
+    assert.ok(from.startsWith(`${OWN}/runtime-`) && from.endsWith('/report-FIRST.json'));
+    const priorBytes = await readBound(from);
+    prior = JSON.parse(priorBytes);
+    assert.equal(prior.status, 'FAIL'); assert.equal(prior.scope.lesson, ID);
+    assert.ok(Object.values(prior.cleanup).every(Boolean));
+    assert.equal(prior.renderer?.ok, true, 'No retry of a failed renderer; recover only passed HTML');
+    for (const input of prior.inputs) await readBound(input.path, input.sha256);
+    for (const staged of prior.staged) await readBound(staged.path, staged.sha256);
+    for (const shot of prior.screenshots) await readBound(shot.path, shot.sha256);
+    model = JSON.parse(await readBound(prior.model.path, prior.model.sha256));
+    renderRoot = prior.renderRoot; scratchRoot = prior.scratchRoot;
+    assert.ok(renderRoot.startsWith(`${FIRST}/`) && scratchRoot.startsWith(`${FIRST}/`));
+    report.checks = prior.checks.filter(item => item.status === 'PASS');
+    report.screenshots = structuredClone(prior.screenshots);
+    report.coverage = structuredClone(prior.coverage);
+    report.completedViews = structuredClone(prior.completedViews);
+    report.staged = structuredClone(prior.staged);
+    report.renderer = prior.renderer; report.model = prior.model;
+    for (const item of report.checks) passedNames.add(item.name);
+    const priorUsage = JSON.parse(await readBound(path.join(path.dirname(from), 'usage-FIRST.json')));
+    report.recovery = { from, sha256: sha(priorBytes), rendererReused: true,
+      passedViewsReused: report.completedViews,
+      originalFailureUnmodified: true, cumulativePriorUsage: priorUsage };
+  } else {
+    const ready = await waitForInputs();
+    report.inputs = ready.entries;
+    scratchRoot = path.join(FIRST, 'scratch', BOOK); renderRoot = path.join(FIRST, 'render');
+    const stagedModern = path.join(scratchRoot, 'editions', EDITION);
+    const stagedLesson = path.join(stagedModern, 'lessons', ID);
+    for (const name of ['lesson.json', 'exercises.json', 'figures.json'])
+      await stage(path.join(stagedLesson, name), ready.bytesByPath.get(path.join(LESSON, name)));
+    for (const figure of ready.manifest.figures) for (const ext of ['svg', 'spec.json', 'render.json', 'review.json']) {
+      const relative = `figures/${figure.id}.${ext}`;
+      await stage(path.join(stagedModern, relative), ready.bytesByPath.get(path.join(MODERN, relative)));
+    }
+    for (const name of ['seed.json', 'review.json'])
+      await stage(path.join(stagedLesson, 'choice-set', name), ready.bytesByPath.get(path.join(CHOICES, name)));
+    const scratchDraft = structuredClone(ready.draft);
+    for (const asset of ready.assetsToStage) {
+      const target = path.join(stagedLesson, 'choice-set', 'figures', path.basename(asset.source));
+      await stage(target, ready.bytesByPath.get(asset.source));
+      scratchDraft.new_figures.find(item => item.id === asset.id).path = target;
+      for (const ext of ['spec.json', 'render.json', 'review.json']) {
+        const filename = `${asset.id}.${ext}`;
+        await stage(path.join(stagedLesson, 'choice-set', 'figures', filename),
+          ready.bytesByPath.get(path.join(CHOICES, 'figures', filename)));
+      }
+    }
+    await stage(path.join(stagedLesson, 'choice-set', 'draft.json'),
+      Buffer.from(`${JSON.stringify(scratchDraft, null, 2)}\n`));
+    model = { lesson: ready.lesson, exercises: ready.exercises, manifest: ready.manifest,
+      views: ready.draft.questions.map(question => question.view), figureContracts: ready.figureContracts };
+    await save('display-model.json', model);
+    const modelBytes = await readBound(path.join(RUN, 'display-model.json'));
+    report.model = { path: path.join(RUN, 'display-model.json'), sha256: sha(modelBytes) };
+    await mkdir(path.join(RUN, 'browser-tmp'));
+    const command = [path.join(TOOLS, 'render_lesson.js'), scratchRoot, '--out', renderRoot,
+      '--edition', EDITION, '--lesson', ID];
+    await save('renderer-start.record', { command: [process.execPath, ...command], cwd: R });
+    assert.equal(usage.rendererCalls, 0);
+    usage.rendererCalls += 1; report.cleanup.rendererClosed = false;
+    const receipt = await new Promise(resolve => {
+      let stdout = '', stderr = '', error, timedOut = false;
+      rendererChild = spawn(process.execPath, command, { cwd: R, stdio: ['ignore', 'pipe', 'pipe'],
+        env: { PATH: '/usr/bin:/bin:/usr/sbin:/sbin', LANG: 'en_US.UTF-8', TMPDIR: path.join(RUN, 'browser-tmp') } });
+      const timer = setTimeout(() => { timedOut = true; rendererChild.kill('SIGKILL'); }, 120000);
+      rendererChild.stdout.on('data', bytes => { stdout += bytes; });
+      rendererChild.stderr.on('data', bytes => { stderr += bytes; });
+      rendererChild.once('error', failure => { error = failure.message; });
+      rendererChild.once('close', (exitCode, signal) => {
+        clearTimeout(timer); rendererChild = null; report.cleanup.rendererClosed = true;
+        resolve({ stdout, stderr, error, exitCode, signal, timedOut });
+      });
+    });
+    await save('renderer-receipt.record', receipt);
+    assert.equal(receipt.exitCode, 0, 'FIRST renderer failure stops all dependent stages');
+    assert.ok(!receipt.error && !receipt.timedOut);
+    const result = JSON.parse(receipt.stdout);
+    assert.equal(result.ok, true);
+    assert.deepEqual(result.lessons.map(item => item.lesson), [ID]);
+    assert.equal(result.lessons[0].exercises, 12);
+    assert.equal(result.lessons[0].choices, model.views.length);
+    assert.deepEqual((await readdir(path.join(renderRoot, ID))).sort(), ['choices.html', 'exercises.html', 'text.html']);
+    report.renderer = result;
+  }
+  report.renderRoot = renderRoot; report.scratchRoot = scratchRoot;
+  await mkdir(path.join(RUN, 'screenshots'));
+  if (mode === '--recover') await mkdir(path.join(RUN, 'browser-tmp'));
+  const requireApp = createRequire(path.join(R, 'app/package.json'));
+  const { chromium, expect } = requireApp('@playwright/test');
+  const core = path.dirname(requireApp.resolve('playwright-core/package.json'));
+  const { PNG } = requireApp(path.join(core, 'lib/utilsBundle.js'));
+  const { projection, installDisplayTools, pageSafety, captureCoverage } = createDisplayHelpers({
+    norm, own, RUN, assertOfflineRuntime, PNG, same, sha, report, usage, event, save, check,
+  });
+  const { proseFlow, proseOutline, sectionBreakIndices } = createRequire(path.join(TOOLS, 'htmlfrag.js'))('./htmlfrag.js');
+  const { marked } = await import(path.join(R, '.agents/skills/node_modules/marked/lib/marked.esm.js'));
+  const expectedChoice = text => {
+    const tokens = marked.lexer(text), tables = [], pieces = [];
+    if (!tokens.some(token => token.type === 'table')) return { ...projection(text), tables, literalLF: true };
+    for (const token of tokens) {
+      if (token.type !== 'table') { pieces.push(token.raw); continue; }
+      const rows = [token.header, ...token.rows].map(row => row.map(cell => cell.text));
+      tables.push(rows.map(row => row.map(projection))); pieces.push(...rows.map(row => row.join(' ')));
+    }
+    return { ...projection(pieces.join(' ')), tables, literalLF: false };
+  };
+  const { lesson, exercises, manifest, views, figureContracts } = model;
+  const flow = proseFlow(lesson.prose, lesson.section_breaks), outline = proseOutline(lesson.prose);
+  const paragraphs = flow.filter(item => item.kind === 'p');
+  const boundaries = sectionBreakIndices(lesson.prose, lesson.section_breaks);
+  assert.equal(new Set(outline.map(item => item.blockIndex)).size,
+    lesson.prose.filter(item => item.kind === 'p').length);
+  report.projection = { sourceBlocks: 23, paragraphs: paragraphs.length, boundaries,
+    exerciseIds: exercises.exercises.map(item => String(item.number)),
+    sourceBlockParagraphs: Array.from({ length: 23 }, (_, blockIndex) => ({
+      sourceBlock: blockIndex, kind: lesson.prose[blockIndex].kind,
+      paragraphIndices: outline.filter(item => item.blockIndex === blockIndex).map(item => item.index),
+    })), choices: views.length, options: views.reduce((sum, view) => sum + view.options.length, 0) };
+  const html = new Map();
+  const leakage = /\b(?:seed_sha256|draft_sha256|source_numbers|source_solution|independent_solution|correct_index|correctIndex|answerKey|answer_key|rationales|misconception|omitted_tasks|api_key|password|postgres(?:ql)?|intent)\b/iu;
+  for (const name of ['text.html', 'exercises.html', 'choices.html']) {
+    const filename = path.join(renderRoot, ID, name);
+    const expectedHash = prior?.inputs.find(input => input.path === filename)?.sha256;
+    if (prior) assert.ok(expectedHash, 'Recovery requires already bound FIRST HTML');
+    const bytes = await readBound(filename, expectedHash);
+    await check(`${name}:no-private-choice-key-intent-or-source-payload`, !leakage.test(bytes.toString('utf8')));
+    html.set(`/${name}`, bytes);
+  }
+  server = createServer((request, response) => {
+    network.served.push({ method: request.method, path: request.url });
+    if (request.method === 'GET' && request.url === '/favicon.ico') return void response.writeHead(204).end();
+    const bytes = request.method === 'GET' ? html.get(request.url) : undefined;
+    if (!bytes) return void response.writeHead(404).end();
+    response.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store',
+      'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; font-src data:; img-src data:; script-src 'none'; connect-src 'none'; frame-src 'none'; form-action 'none';" }).end(bytes);
+  });
+  await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
+  report.cleanup.serverClosed = false;
+  origin = `http://127.0.0.1:${server.address().port}`;
+  for (const [route, bytes] of html) {
+    const response = await fetch(`${origin}${route}`, { signal: AbortSignal.timeout(5000) });
+    assert.equal(response.status, 200); assert.equal(sha(Buffer.from(await response.arrayBuffer())), sha(bytes));
+  }
+  usage.browserLaunches += 1;
+  browser = await chromium.launch({ headless: true, timeout: 30000, downloadsPath: path.join(RUN, 'browser-tmp'),
+    env: { PATH: '/usr/bin:/bin:/usr/sbin:/sbin', LANG: 'en_US.UTF-8', TMPDIR: path.join(RUN, 'browser-tmp') },
+    args: ['--disable-background-networking', '--disable-component-update', '--disable-sync', '--no-first-run',
+      '--disable-default-apps', '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1'] });
+  report.cleanup.browserClosed = false;
+  report.browser = { family: 'Chromium', version: browser.version(), headless: true, isolated: true,
+    installedInApp: true, limitation: 'Not headed application acceptance' };
+  for (const viewport of [{ width: 1440, height: 960 }, { width: 390, height: 844 }]) {
+    const pending = ['text', 'exercises', 'choices'].filter(surface =>
+      !report.completedViews.includes(`${viewport.width}:${surface}`));
+    if (!pending.length) continue;
+    const context = await browser.newContext({ viewport, deviceScaleFactor: 1, serviceWorkers: 'block', acceptDownloads: false });
+    contexts.push(context); usage.browserContexts += 1;
+    context.setDefaultTimeout(20000);
+    await context.route('**/*', async route => {
+      const request = route.request(), url = new URL(request.url());
+      if (request.method() === 'GET' && url.origin === origin && !url.search && !url.hash
+        && [...html.keys(), '/favicon.ico'].includes(url.pathname)) await route.continue();
+      else { network.blocked.push({ method: request.method(), url: request.url() }); await route.abort('blockedbyclient'); }
+    });
+    await context.routeWebSocket(/.*/, async socket => { network.blocked.push({ kind: 'websocket' }); await socket.close(); });
+    const page = await context.newPage();
+    page.on('pageerror', error => network.pageErrors.push(error.message));
+    page.on('console', message => { if (message.type() === 'error') network.consoleErrors.push(message.text()); });
+    page.on('requestfailed', request => network.failures.push({ url: request.url(), error: request.failure() }));
+    page.on('response', response => { if (response.status() >= 400) network.badResponses.push({ url: response.url(), status: response.status() }); });
+    for (const surface of pending) {
+      usage.pageNavigations += 1;
+      const response = await page.goto(`${origin}/${surface}.html`, { waitUntil: 'load' });
+      assert.equal(response.status(), 200); await page.evaluate(() => document.fonts.ready);
+      assertOfflineRuntime(); await expect(page.locator('h1')).toBeVisible();
+      const materials = [];
+      const add = (key, selector, index, expected, paragraph = false) => materials.push({ key, selector, index, expected, paragraph });
+      const title = lesson.printed_title || lesson.title;
+      add('title', 'h1', 0, projection(surface === 'text' ? title : `${title} · ${surface === 'exercises' ? '\u4e60\u9898' : '\u9009\u62e9\u9898'}`));
+      const crumb = surface === 'choices' ? '' : [lesson.chapter, lesson.section, `\u5370\u5237\u9875 ${lesson.start_printed ?? '?'}`].filter(Boolean).join(' \u00b7 ');
+      add('crumb', '.crumb', 0, projection(crumb));
+      if (surface === 'text') {
+        await expect(page.locator('p.para')).toHaveCount(paragraphs.length);
+        for (const [index, paragraph] of paragraphs.entries()) add(`prose-${index}`, 'p.para', index, projection(paragraph.text), true);
+        const caps = flow.filter(item => item.kind === 'cap');
+        await expect(page.locator('.figcap')).toHaveCount(caps.length);
+        for (const [index, cap] of caps.entries()) add(`caption-${index}`, '.figcap', index, projection(cap.text));
+        const ids = flow.filter(item => item.kind === 'fig').map(item => item.id);
+        assert.deepEqual(await page.locator('figure').evaluateAll(nodes => nodes.map(node => node.id)), ids);
+        assert.ok(ids.every(id => manifest.figures.some(figure => figure.id === id)));
+        const actual = await page.locator('p.para').evaluateAll(nodes => nodes.flatMap((node, index) =>
+          parseFloat(getComputedStyle(node).borderTopWidth) > 0 ? [index] : []));
+        await check(`${viewport.width}:prose-current-source-blocks-and-anchored-rules`, same(actual, boundaries));
+        add('jump', '.jump', 0, projection(`\u53bb\u505a\u9898 \u00b7 ${exercises.count} \u9053 \u2192`));
+        await expect(page.getByRole('link')).toHaveAttribute('href', 'exercises.html');
+      } else if (surface === 'exercises') {
+        await expect(page.locator('li.ex')).toHaveCount(12);
+        assert.deepEqual(await page.locator('li.ex').evaluateAll(nodes => nodes.map(node => node.id)),
+          exercises.exercises.map(item => `ex-${item.number}`));
+        for (const exercise of exercises.exercises) {
+          const display = writtenText(exercise);
+          add(`exercise-${exercise.number}`, `#ex-${exercise.number} .body`, 0, projection(display.text));
+          add(`number-${exercise.number}`, `#ex-${exercise.number} .no`, 0, projection(display.number));
+        }
+        const groups = exercises.exercises.filter((item, index, all) => index === 0 || item.group !== all[index - 1].group);
+        await expect(page.locator('.exgroup')).toHaveCount(groups.length);
+        for (const [index, group] of groups.entries()) add(`group-${index}`, '.exgroup', index, projection(group.group || '\u7ec3\u4e60'));
+        assert.deepEqual(await page.locator('figure').evaluateAll(nodes => nodes.map(node => node.id)),
+          exercises.exercises.flatMap(item => (item.figures ?? []).map(figure => figure.id)));
+        add('jump', '.jump', 0, projection('\u2190 \u56de\u8bfe\u6587'));
+        await expect(page.getByRole('link')).toHaveAttribute('href', 'text.html');
+      } else {
+        await expect(page.locator('.choice')).toHaveCount(views.length);
+        await expect(page.locator('.choice-options > li')).toHaveCount(report.projection.options);
+        await expect(page.locator('a,link')).toHaveCount(0);
+        for (const [index, view] of views.entries()) {
+          const selector = `.choice:nth-of-type(${index + 1})`;
+          add(`choice-${index}-heading`, '.choice-heading', index, projection(`${index + 1}. ${view.mode === 'multiple' ? '\u591a\u9009' : '\u5355\u9009'}`));
+          add(`choice-${index}-stem`, '.choice-stem', index, expectedChoice(view.stem));
+          for (const [optionIndex, option] of view.options.entries()) {
+            add(`choice-${index}-option-${optionIndex}`, `${selector} .choice-option-body`, optionIndex, expectedChoice(option.text));
+            add(`choice-${index}-label-${optionIndex}`, `${selector} .option-id`, optionIndex, projection(String.fromCharCode(65 + optionIndex)));
+          }
+          assert.deepEqual(await page.locator(selector).locator('figure').evaluateAll(nodes => nodes.map(node => node.id)),
+            [...view.figure_ids, ...view.options.flatMap(option => option.figure_ids)]);
+        }
+      }
+      const dom = await page.evaluate(installDisplayTools, {
+        materials: materials.map(({ expected, paragraph, ...descriptor }) => descriptor), figureContracts,
+        reuseReachability: passedNames.has(`${viewport.width}:${surface}:every-glyph-math-rule-and-media-edge-reachable`),
+      });
+      if (prior) {
+        const previousDomPath = path.join(path.dirname(from), `${viewport.width}-${surface}-dom.json`);
+        const previousDomInput = prior.inputs.find(input => input.path === previousDomPath)
+          ?? prior.inputs.find(input => input.path.endsWith(`/${viewport.width}-${surface}-dom.json`));
+        if (previousDomInput) {
+          const previousDom = JSON.parse(await readBound(previousDomInput.path, previousDomInput.sha256));
+          assert.deepEqual(dom.targets, previousDom.targets, 'Recovery receipts require stable actual DOM target IDs');
+        } else assert.ok(!report.screenshots.some(shot => shot.viewport.width === viewport.width
+          && shot.surface === surface), 'Cannot reuse captures without their target inventory');
+      }
+      await save(`${viewport.width}-${surface}-dom.json`, dom);
+      await readBound(path.join(RUN, `${viewport.width}-${surface}-dom.json`));
+      const reachability = `${viewport.width}:${surface}:every-glyph-math-rule-and-media-edge-reachable`;
+      if (!passedNames.has(reachability)) await check(reachability,
+        dom.hidden.length === 0 && dom.failed.length === 0 && dom.targetCount > 0
+        && dom.ends.every(end => end.maximum === end.actual), { targets: dom.targetCount, hidden: dom.hidden, failed: dom.failed, ends: dom.ends });
+      for (const material of materials) {
+        const name = `${viewport.width}:${surface}:${material.key}:projected-text-formulas-subpart-rows`;
+        if (passedNames.has(name)) continue;
+        const actual = dom.roots.find(root => root.key === material.key), expected = material.expected;
+        const literalLF = expected.literalLF !== false;
+        const typography = !material.paragraph || parseFloat(actual.textIndent) === 0
+          && actual.mathTypography.every(font => /KaTeX_Main/u.test(font.family) && font.px >= actual.fontPx * 1.1 - 0.02);
+        const subparts = actual.lines.flatMap((line, index) => /^(?:[a-z]|\d+)\)\s/u.test(line) ? [index] : []);
+        const rowComparisons = subparts.map(index => {
+          let previous = index - 1;
+          while (previous >= 0 && actual.lines[previous] === '') previous -= 1;
+          return { index, previous, current: actual.lineGeometry[index], preceding: previous < 0 ? null : actual.lineGeometry[previous] };
+        });
+        const separateRows = rowComparisons.every(({ previous, current, preceding }) =>
+          previous < 0 || current && preceding && current.top > preceding.top + 0.5);
+        const tables = actual.tables.map(rows => rows.map(row => row.map(({ serialized, formulas, lines }) => ({ serialized, formulas, lines }))));
+        await check(name, actual.serialized === expected.serialized
+          && same(actual.formulas.map(formula => formula.tex), expected.formulas)
+          && actual.formulas.every(formula => formula.visible && formula.nonempty)
+          && (!literalLF || same(actual.lines, expected.lines)) && same(tables, expected.tables ?? [])
+          && typography && separateRows, { textSha256: sha(actual.serialized), formulas: actual.formulas.length,
+            formulasSha256: sha(JSON.stringify(actual.formulas.map(formula => formula.tex))),
+            literalLF, typography, separateRows, rowComparisons, domTargets: actual.indices.length });
+      }
+      for (const figure of dom.figures) {
+        const name = `${viewport.width}:${surface}:${figure.key}:current-figure-labels-native-minimum`;
+        if (passedNames.has(name)) continue;
+        await check(name, figure.exactSvg && figure.labelBindings
+          && figure.labels.every(label => label.insideSvg && label.px >= figure.minimumPx)
+          && figure.minimumPx >= 16 && figure.layout === figure.expectedLayout
+          && figure.mediaWidth > 0 && figure.mediaHeight > 0 && figure.svgWidth === figure.mediaWidth
+          && (figure.expectedWidth === null || figure.layout !== 'scroll' || figure.mediaWidth === figure.expectedWidth),
+        { id: figure.id, exactSvg: figure.exactSvg, labels: figure.labels, mediaWidth: figure.mediaWidth,
+          mediaHeight: figure.mediaHeight, requiredMinimumPx: figure.minimumPx });
+      }
+      const safety = await page.evaluate(pageSafety);
+      await check(`${viewport.width}:${surface}:readonly-no-key-leakage-overflow-or-label-overlap`,
+        safety.documentWidth <= viewport.width && safety.bodyWidth <= viewport.width && safety.scrollX === 0
+        && safety.errors === 0 && safety.widgets === 0 && safety.scripts === 0
+        && safety.dangerousAttributes.length === 0 && safety.labelBodyCollisions.length === 0
+        && safety.sections.every((box, index, boxes) => box.left >= 0 && box.right <= viewport.width
+          && box.height > 0 && (index === 0 || box.top >= boxes[index - 1].bottom))
+        && safety.fonts.some(font => font.family.startsWith('KaTeX') && font.status === 'loaded')
+        && safety.fonts.every(font => font.status !== 'error'), safety);
+      await captureCoverage(page, viewport, surface, dom);
+      await readBound(path.join(RUN, `${viewport.width}-${surface}-coverage.json`));
+      const after = await page.evaluate(pageSafety);
+      await check(`${viewport.width}:${surface}:wholepage-still-contained-after-all-native-scrolls`,
+        after.documentWidth <= viewport.width && after.bodyWidth <= viewport.width && after.scrollX === 0);
+      report.completedViews.push(`${viewport.width}:${surface}`);
+    }
+    await context.close(); contexts.splice(contexts.indexOf(context), 1);
+  }
+  await check('one-render-budget-six-current-n6-surfaces',
+    usage.rendererCalls === (mode === '--first' ? 1 : 0)
+    && (mode !== '--first' || usage.browserContexts === 2 && usage.pageNavigations === 6)
+    && report.completedViews.length === 6
+    && new Set(report.coverage.map(item => `${item.viewport.width}:${item.surface}`)).size === 6);
+  await check('no-browser-errors-or-nonoffline-requests',
+    network.served.every(item => item.method === 'GET' && [...html.keys(), '/favicon.ico'].includes(item.path)), network);
+} catch (error) {
+  report.executionFailure = { name: error.name, message: error.message, stack: error.stack };
+  report.faults.push({ stage: mode, ...report.executionFailure, preserved: true });
+  await event({ failure: report.executionFailure });
+} finally {
+  if (rendererChild) {
+    const child = rendererChild;
+    const closed = new Promise(resolve => child.once('close', resolve));
+    child.kill('SIGKILL'); await closed; report.cleanup.rendererClosed = true;
+  }
+  for (const context of contexts) {
+    try { await context.close(); } catch (error) { report.cleanup.contextsClosed = false; report.faults.push({ stage: 'context-close', message: error.message }); }
+  }
+  try { if (browser) await browser.close(); report.cleanup.browserClosed = true; }
+  catch (error) { report.cleanup.browserClosed = false; report.faults.push({ stage: 'browser-close', message: error.message }); }
+  try {
+    if (server?.listening) { server.closeAllConnections(); await new Promise((resolve, reject) => server.close(error => error ? reject(error) : resolve())); }
+    report.cleanup.serverClosed = true;
+  } catch (error) { report.cleanup.serverClosed = false; report.faults.push({ stage: 'server-close', message: error.message }); }
+  for (const input of [...report.inputs, ...report.staged]) {
+    try { assert.equal(sha(await readFile(input.path)), input.sha256); }
+    catch (error) { report.faults.push({ stage: 'input-preservation', path: input.path, message: error.message }); }
+  }
+  report.network = network; report.finished = new Date().toISOString();
+  const priorUsage = report.recovery?.cumulativePriorUsage;
+  usage.cumulative = Object.fromEntries(Object.entries(usage)
+    .filter(([key, value]) => typeof value === 'number'
+      && !['observationBatchLimit', 'observationContextLimit'].includes(key))
+    .map(([key, value]) => [key, value + (priorUsage?.cumulative?.[key] ?? priorUsage?.[key] ?? 0)]));
+  report.status = report.executionFailure || report.faults.length || Object.values(report.cleanup).some(closed => !closed)
+    ? 'FAIL' : 'RUNTIME_PASS_VISUAL_PENDING';
+  if (report.status === 'FAIL') await save('failure-receipt.record', {
+    firstFailure: report.executionFailure ?? report.faults[0], faults: report.faults,
+    generatedFilesPreserved: true, cleanup: report.cleanup, noAutomaticRetry: true,
+    rendererCalls: usage.rendererCalls, browserLaunches: usage.browserLaunches,
+  });
+  await save('report-FIRST.json', report);
+  await save('usage-FIRST.json', usage);
+  await save('visual-handoff.json', { status: 'PENDING', imagesObserved: 0, batchLimit: 8, contextLimit: 24,
+    report: path.join(RUN, 'report-FIRST.json'), allPaths: report.screenshots.map(shot => shot.path),
+    rule: 'Run the owned selector against actual receipts. Fresh bounded image reviewers inspect only its selected batches. No assumed observation or final binding.',
+    domCoverageIsNotVisualApproval: true, screenshotsPreservedEvenIfRedundant: true });
+  console.log(JSON.stringify({ status: report.status, report: path.join(RUN, 'report-FIRST.json'),
+    usage: path.join(RUN, 'usage-FIRST.json'), screenshots: report.screenshots.length, imagesObserved: 0, cleanup: report.cleanup }));
+  if (report.status === 'FAIL') process.exitCode = 1;
+}
+}

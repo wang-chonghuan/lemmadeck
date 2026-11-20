@@ -1,0 +1,54 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-7186/lemmadeck';
+assert.equal(process.cwd(), root);
+const source = '.tmp/resume182-6-8a-n6-fig107186-FIRST';
+const reviewRoot = '.tmp/resume182-6-8a-n6-fig10-review7186-FIRST';
+const target = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures';
+const evidence = `${target}/evidence/fig-10/resume182-6-current`;
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const read = filename => fs.readFileSync(filename);
+const write = (filename, bytes) => {
+  assert.ok(!fs.existsSync(filename), `Existing bytes must remain: ${filename}`);
+  fs.mkdirSync(path.dirname(filename), { recursive: true });
+  fs.writeFileSync(filename, bytes, { flag: 'wx' });
+};
+const spec = read(`${source}/spec.json`);
+const svg = read(`${source}/fig-10.svg`);
+const report = JSON.parse(read(`${source}/fig-10.render.json`));
+const review = JSON.parse(read(`${reviewRoot}/review.json`));
+assert.equal(review.status, 'pass');
+assert.equal(report.status, 'pass');
+assert.equal(review.spec.sha256, sha(spec));
+assert.equal(review.outputs.svg.sha256, sha(svg));
+assert.equal(review.render.sha256, sha(read(`${source}/fig-10.render.json`)));
+assert.equal(JSON.parse(read(`${reviewRoot}/review.record`)).status, 'pass');
+write(`${target}/fig-10.spec.json`, spec);
+write(`${target}/fig-10.svg`, svg);
+const durableReport = structuredClone(report);
+durableReport.spec.path = `${target}/fig-10.spec.json`;
+durableReport.output.svg.path = `${target}/fig-10.svg`;
+write(`${target}/fig-10.render.json`, `${JSON.stringify(durableReport, null, 2)}\n`);
+for (const [input, name] of [
+  [`${source}/fig-10.render.json`, 'original-render.json.record'],
+  [`${source}/capture.record`, 'capture.record'],
+  [`${source}/preview-actual640.png`, 'preview-actual640.png'],
+  [`${reviewRoot}/review.json`, 'original-review.json.record'],
+  [`${reviewRoot}/review.record`, 'review.record'],
+]) write(`${evidence}/${name}`, read(input));
+write(`${source}/durable-stage.record`, `${JSON.stringify({
+  status: 'APPROVED_BYTES_STAGED_FOR_PATH_BINDING',
+  specBytesUnchanged: true, svgBytesUnchanged: true,
+  renderChanges: ['spec.path', 'output.svg.path'],
+  originalReview: { path: `${evidence}/original-review.json.record`, sha256: sha(read(`${reviewRoot}/review.json`)) },
+  detailedReview: { path: `${evidence}/review.record`, sha256: sha(read(`${reviewRoot}/review.record`)) },
+  files: ['spec.json', 'svg', 'render.json'].map(suffix => ({
+    path: `${target}/fig-10.${suffix}`, sha256: sha(read(`${target}/fig-10.${suffix}`)),
+  })),
+  screenshot: { path: `${evidence}/preview-actual640.png`, sha256: sha(read(`${source}/preview-actual640.png`)) },
+  rendererImageMathReviewRuns: 0, durableReviewPending: true, DBWrites: 0,
+}, null, 2)}\n`);
+console.log(JSON.stringify({ status: 'staged', reviewPending: true, evidence }));

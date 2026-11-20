@@ -1,0 +1,98 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const require = createRequire(import.meta.url);
+const { proseOutline, sectionBreakIndices } = require(`${repo}/.claude/skills/ld-s10y-lesson/tools/htmlfrag.js`);
+const python = '/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python';
+const directory = '.tmp/resume182-6-8a-n6-path-repair3695-FIRST';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const json = file => JSON.parse(fs.readFileSync(file));
+const save = (file, value) => fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
+const lessonPath = '.tmp/ld-s10y-lesson/adapt/8a/modern-us-neutral/lessons/alg8-c1-s2-n6/lesson.template.json';
+const bytes = fs.readFileSync(lessonPath);
+fs.writeFileSync(`${directory}/lesson-before.record`, bytes, { flag: 'wx' });
+const candidate = JSON.parse(bytes);
+const normalizedResult = spawnSync(python, ['-B', '-c',
+  'import json,sys;sys.path.insert(0,".claude/skills/ld-s10y-lesson/tools");from edition import normalize_lesson_layout;d=json.load(sys.stdin);normalize_lesson_layout(d);print(json.dumps(d,ensure_ascii=False))'],
+{ cwd: repo, input: bytes, encoding: 'utf8' });
+assert.equal(normalizedResult.status, 0, normalizedResult.stderr);
+const normalized = JSON.parse(normalizedResult.stdout);
+const outline = proseOutline(normalized.prose);
+const changedBoundaries = [];
+for (let index = 0; index < candidate.section_breaks.length; index++) {
+  const old = candidate.section_breaks[index];
+  const matches = outline.filter(item => item.text === old.after);
+  assert.equal(matches.length, 1);
+  const position = matches[0].index;
+  assert.ok(position > 0);
+  const before = outline[position - 1].text;
+  if (before === old.before) continue;
+  const compact = text => text.replace(/\s+/g, '');
+  assert.ok(compact(old.before).endsWith(compact(before)),
+    'Changed anchor must be the same final sentence of its approved paragraph');
+  candidate.section_breaks[index] = { before, after: old.after };
+  changedBoundaries.push({ index, before: old, after: candidate.section_breaks[index] });
+}
+assert.equal(changedBoundaries.length, 1);
+normalized.section_breaks = candidate.section_breaks;
+const resolved = sectionBreakIndices(normalized.prose, normalized.section_breaks);
+save(lessonPath, candidate);
+const figureRoot = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures';
+const pathBindings = [];
+for (const id of ['fig-09', 'fig-11', 'fig-12']) {
+  const specPath = `${figureRoot}/${id}.spec.json`;
+  const renderPath = `${figureRoot}/${id}.render.json`;
+  const reviewPath = `${figureRoot}/${id}.review.json`;
+  const originals = {};
+  for (const [kind, file] of [['spec', specPath], ['render', renderPath], ['review', reviewPath]]) {
+    const data = fs.readFileSync(file);
+    fs.writeFileSync(`${directory}/${id}-original-${kind}.record`, data, { flag: 'wx' });
+    originals[kind] = { sha256: sha(data), data: JSON.parse(data) };
+  }
+  assert.equal(originals.review.data.status, 'pass');
+  assert.equal(originals.render.data.status, 'pass');
+  const spec = structuredClone(originals.spec.data);
+  const originalSourcePath = spec.source.image.path;
+  const sourcePath = `ssot-resources/soviet10year-textbooks/artifacts/8a/figures/${id}.png`;
+  assert.equal(sha(fs.readFileSync(sourcePath)), spec.source.image.sha256);
+  spec.source.image.path = sourcePath;
+  const restored = structuredClone(spec);
+  restored.source.image.path = originalSourcePath;
+  assert.deepEqual(restored, originals.spec.data);
+  save(specPath, spec);
+  const render = structuredClone(originals.render.data);
+  const svgPath = render.output.svg.path;
+  assert.equal(sha(fs.readFileSync(svgPath)), render.output.svg.sha256);
+  assert.equal(render.spec.path, specPath);
+  render.spec.sha256 = sha(fs.readFileSync(specPath));
+  const restoredRender = structuredClone(render);
+  restoredRender.spec.sha256 = originals.render.data.spec.sha256;
+  assert.deepEqual(restoredRender, originals.render.data);
+  save(renderPath, render);
+  const command = [python, '-B', '.agents/skills/ld-s10y-image/scripts/record_review.py',
+    '--spec', specPath, '--render', renderPath, '--output', reviewPath, '--status', 'pass',
+    '--notes', 'Inherited original independent PASS. Only stale source.image.path was replaced by the current byte-identical repository source; mathematical inventory, geometry, SVG and prior pixel observations are unchanged. Zero new images, renderings or semantic reviews.'];
+  const result = spawnSync(command[0], command.slice(1), { cwd: repo, encoding: 'utf8' });
+  save(`${directory}/${id}-recorder.receipt.record`,
+    { command, cwd: repo, returncode: result.status, stdout: result.stdout, stderr: result.stderr });
+  assert.equal(result.status, 0, result.stderr);
+  pathBindings.push({
+    id, originals: Object.fromEntries(Object.entries(originals).map(([key, value]) => [key, value.sha256])),
+    originalSourcePath, sourcePath, sourceSha256: spec.source.image.sha256,
+    currentSpecSha256: sha(fs.readFileSync(specPath)),
+    currentRenderSha256: sha(fs.readFileSync(renderPath)),
+    currentReviewSha256: sha(fs.readFileSync(reviewPath)),
+    svgSha256: render.output.svg.sha256, sourcePixelsAndSVGUnchanged: true,
+    changedFields: ['spec.source.image.path', 'render.spec.sha256', 'review source/spec/render bindings'],
+  });
+}
+save(`${directory}/binding.record`, { changedBoundaries, resolved, pathBindings,
+  sourceOrMathOrImageReruns: 0, approvedCandidateProseAndExercisesChanged: false,
+  originalFailurePreserved: true, sourceTreeWrites: 0, hostTokens: 'unknown', cost: 'unknown' });
+console.log(JSON.stringify({ changedBoundaries: changedBoundaries.length,
+  resolved, pathBindings: pathBindings.length, images: 0, renders: 0 }));
