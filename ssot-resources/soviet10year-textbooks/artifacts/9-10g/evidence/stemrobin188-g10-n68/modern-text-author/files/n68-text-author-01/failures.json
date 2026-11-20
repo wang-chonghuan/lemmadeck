@@ -1,0 +1,47 @@
+{
+  "schema": "stemrobin188-author-failures@1",
+  "ticket": "STEMROBIN-188",
+  "assignment": "SAME188-6",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck",
+  "failures": [
+    {
+      "stage": "read-template-validator",
+      "command": "rg -n 'function proseOutline|function proseFlow|function sectionBreakIndices|numeric_changes|historical_entities|changes.*layout' .claude/skills/ld-s10y-lesson/tools/htmlfrag.js .claude/skills/ld-s10y-lesson/tools/adapt.py",
+      "exitCode": 2,
+      "failureClass": "technical-missing-file",
+      "stderr": "rg: .claude/skills/ld-s10y-lesson/tools/adapt.py: No such file or directory (os error 2)",
+      "validOutputRetained": [
+        ".claude/skills/ld-s10y-lesson/tools/htmlfrag.js:60:function proseOutline(blocks) {",
+        ".claude/skills/ld-s10y-lesson/tools/htmlfrag.js:73:function sectionBreakIndices(blocks, sectionBreaks = []) {",
+        ".claude/skills/ld-s10y-lesson/tools/htmlfrag.js:115:function proseFlow(blocks, sectionBreaks = []) {"
+      ],
+      "recoveryCommand": "rg -n 'historical_entities|numeric_changes|context-number|modernized|wording' .claude/skills/ld-s10y-lesson/tools",
+      "recoveryExitCode": 0,
+      "recoveryFile": ".claude/skills/ld-s10y-lesson/tools/edition.py",
+      "candidateContentChangedAsRepair": false
+    },
+    {
+      "stage": "live-ticket-read-output-parser",
+      "command": "node --input-type=module -e 'import {spawnSync} from \"node:child_process\";const cwd=\"/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck\";const r=spawnSync(\"/Users/yong/.agents/skills/n-plane/scripts/plane.sh\",[\"paginate\",\"@/projects/556c9df8-f5ac-435a-8abd-53bc522dd8a7/work-items/?per_page=100\"],{cwd,env:{...process.env,PLANE_WORKSPACE_SLUG:\"intentmill\"},encoding:\"utf8\",maxBuffer:16000000});process.stderr.write(r.stderr);if(r.status!==0){console.log(r.stdout);process.exit(r.status??1)}const d=JSON.parse(r.stdout);const items=Array.isArray(d)?d:(d.results??d.data??[]);const t=items.filter(i=>i.sequence_id===188);if(t.length!==1)throw Error(\"STEMROBIN-188 did not resolve uniquely\");console.log(JSON.stringify(t.map(i=>({id:i.id,sequence_id:i.sequence_id,name:i.name,state:i.state,description_html:i.description_html,description_stripped:i.description_stripped})),null,2));'",
+      "exitCode": 1,
+      "failureClass": "technical-output-parser",
+      "helperExitCode": 0,
+      "httpStatuses": [200, 200],
+      "stderr": "SyntaxError: Unexpected non-whitespace character after JSON at position 403185 (line 4486 column 1)",
+      "cause": "plane.sh paginate emitted consecutive JSON documents; JSON.parse was incorrectly applied to the whole stdout.",
+      "validOutputDisposition": "The two HTTP 200 status lines and parser failure are retained. Full collection stdout was held only in the failed process memory and was not saved; no recovered full evidence is claimed and no large collection copy is included.",
+      "recoveryCommand": "node --input-type=module -e 'import {spawnSync} from \"node:child_process\";const cwd=\"/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck\";const args=[\"get\",\"@/projects/556c9df8-f5ac-435a-8abd-53bc522dd8a7/work-items/?per_page=100\"];const r=spawnSync(\"/Users/yong/.agents/skills/n-plane/scripts/plane.sh\",args,{cwd,env:{...process.env,PLANE_WORKSPACE_SLUG:\"intentmill\"},encoding:\"utf8\",maxBuffer:16000000});process.stderr.write(r.stderr);if(r.status!==0)process.exit(r.status??1);const d=JSON.parse(r.stdout);const items=Array.isArray(d)?d:(d.results??[]);const t=items.filter(i=>i.sequence_id===188);if(t.length!==1)throw Error(\"STEMROBIN-188 did not resolve uniquely on this page\");console.log(JSON.stringify(t.map(i=>({id:i.id,sequence_id:i.sequence_id,name:i.name,state:i.state,description_stripped:i.description_stripped,description_html:i.description_html})),null,2));'",
+      "recoveryExitCode": 0,
+      "recoveryHttpStatus": 200,
+      "resolvedTicket": {
+        "id": "957bb507-3fd0-4b3f-a0b3-72b2b00f697d",
+        "sequence_id": 188,
+        "name": "接续两册几何剩余教材与练习"
+      },
+      "candidateContentChangedAsRepair": false
+    }
+  ],
+  "contentRepairs": 0,
+  "nativeProseFlowFailures": 0,
+  "newRepairCountApprovalGate": false
+}

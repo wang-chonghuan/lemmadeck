@@ -1,0 +1,42 @@
+{
+  "schema": "stemrobin188-author-command@1",
+  "stage": "native-text-contract-and-author-preservation",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck",
+  "argv": [
+    "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import hashlib, json, sys\nfrom pathlib import Path\nroot = Path(sys.argv[1])\nrepo = Path(sys.argv[2])\nsys.path.insert(0, str(repo / \".claude/skills/ld-s10y-lesson/tools\"))\nimport edition\nmanifest = json.loads((repo / \".intentfold/tickets/STEMROBIN-188/tmp/n68-modern-text-author-inputs-01/manifest.json\").read_text())\nprofile = json.loads((repo / \".claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json\").read_text())\nforbidden = profile[\"forbidden_terms\"] + profile[\"forbidden_person_names\"]\nrecords, errors = [], []\nfor name, binding, collection, stable_fields in [(\"lesson.template.json\", manifest[\"rawLesson\"], \"prose\", [\"kind\", \"id\", \"label\", \"printed_page\", \"source_refs\"]), (\"exercises.template.json\", manifest[\"rawExercises\"], \"exercises\", [\"number\", \"source_number\", \"group\", \"group_id\", \"pages\", \"figure_refs\", \"figures\"])]:\n    candidate = json.loads((root / name).read_text())\n    raw_bytes = Path(binding[\"path\"]).read_bytes()\n    raw = json.loads(raw_bytes)\n    if hashlib.sha256(raw_bytes).hexdigest() != binding[\"sha256\"]: errors.append(name + \": raw binding drift\")\n    if candidate[\"source\"][\"data\"] != raw or candidate[\"source\"][\"sha256\"] != binding[\"sha256\"]: errors.append(name + \": embedded raw snapshot drift\")\n    if len(candidate[collection]) != len(raw[collection]): errors.append(name + \": object count drift\")\n    if collection == \"prose\":\n        for field in edition.IDENTITY_FIELDS:\n            if candidate.get(field) != raw.get(field): errors.append(name + \": identity drift: \" + field)\n        if candidate[\"figures\"] != raw[\"figures\"]: errors.append(name + \": lesson figure-reference drift\")\n    else:\n        if candidate[\"lesson\"] != raw[\"lesson\"] or candidate[\"count\"] != raw[\"count\"]: errors.append(name + \": exercise document identity drift\")\n    for i, (item, source) in enumerate(zip(candidate[collection], raw[collection])):\n        refs = source.get(\"source_refs\", source.get(\"pages\"))\n        label = name + \".\" + collection + \"[\" + str(i) + \"]\"\n        item_errors = edition.validate_text(source[\"text\"], item[\"text\"], item.get(\"changes\"), item.get(\"numeric_changes\"), label, forbidden, item.get(\"historical_entities\"))\n        identities = all(item.get(field) == source.get(field) and (field in item) == (field in source) for field in stable_fields)\n        if not identities: item_errors.append(label + \": identity or source-ref drift\")\n        if item.get(\"source_text\") != source[\"text\"]: item_errors.append(label + \": source_text drift\")\n        if item.get(\"numeric_changes\") != [] or item.get(\"historical_entities\") != []: item_errors.append(label + \": unexpected numeric/historical declaration\")\n        if any(edition.MATH_BOUNDARY_PUNCTUATION.search(match.group(1) or match.group(2)) for match in edition.MATH.finditer(item[\"text\"])): item_errors.append(label + \": CJK punctuation inside math\")\n        if collection == \"exercises\" and item[\"lines\"] != item[\"text\"].split(\"\\n\"): item_errors.append(label + \": lines/text mismatch\")\n        record = {\"target\": collection + \"[\" + str(i) + \"]\", \"number\": item.get(\"number\"), \"kind\": item.get(\"kind\", \"exercise\"), \"source_refs\": refs, \"source_text_sha256\": hashlib.sha256(source[\"text\"].encode()).hexdigest(), \"modern_text_sha256\": hashlib.sha256(item[\"text\"].encode()).hexdigest(), \"text_changed\": item[\"text\"] != source[\"text\"], \"changes\": item[\"changes\"], \"numeric_changes\": item[\"numeric_changes\"], \"historical_entities\": item[\"historical_entities\"], \"identities_preserved\": identities, \"math_signature_preserved\": edition.math_signature(source[\"text\"]) == edition.math_signature(item[\"text\"]), \"native_number_signature_preserved\": edition.number_signature(edition.normalize_numbered_subparts(source[\"text\"])) == edition.number_signature(edition.normalize_numbered_subparts(item[\"text\"])), \"errors\": item_errors}\n        records.append(record)\n        errors.extend(item_errors)\nresult = {\"schema\": \"stemrobin188-author-coverage@1\", \"ticket\": \"STEMROBIN-188\", \"assignment\": \"SAME188-6\", \"book\": \"9-10g\", \"lesson\": \"geo910-c2-s3-n68\", \"role\": \"bounded-text-author-self-check-not-independent-review\", \"objectsRequired\": 13, \"objectsCovered\": len(records), \"counts\": {\"source_prose_objects\": sum(r[\"target\"].startswith(\"prose[\") for r in records), \"exercises\": sum(r[\"kind\"] == \"exercise\" for r in records), \"rewritten_prose_text_objects\": sum(r[\"kind\"] == \"p\" and r[\"text_changed\"] for r in records), \"retained_nontext_prose_objects\": sum(r[\"kind\"] in [\"fig\", \"cap\"] and not r[\"text_changed\"] for r in records)}, \"native_text_contract\": \"edition.validate_text\", \"objects\": records, \"errors\": errors, \"authorPreservationChecksPass\": not errors and len(records) == 13, \"independentReviewPerformed\": False, \"wholeLessonApproved\": False, \"published\": False}\nprint(json.dumps(result, ensure_ascii=False, indent=2))\nsys.exit(0 if result[\"authorPreservationChecksPass\"] else 1)\n",
+    "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n68-text-author-01",
+    "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck"
+  ],
+  "startedAt": "2026-11-20T21:54:07.310Z",
+  "finishedAt": "2026-11-20T21:54:07.572Z",
+  "exitCode": 0,
+  "signal": null,
+  "error": null,
+  "inputs": [
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n68-text-author-01/lesson.template.json",
+      "sha256": "355324ae98996556e8040b98f4ea36d4ead69d942b1e3edb2fdd5ed1b4fd9c5e"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n68-text-author-01/exercises.template.json",
+      "sha256": "ce063b0b420575bdcb607030ffd326a90bea7bd28f58095bc5499e3fb8a765d5"
+    }
+  ],
+  "nativeValidator": {
+    "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/edition.py",
+    "sha256": "733f48acaceeb3879fb14b33fe7b170b5597a3b8f98ae38cb17aa1076de8783c"
+  },
+  "stdout": {
+    "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n68-text-author-01/coverage.json",
+    "sha256": "9c0d035bd5db896cd0ccea6702cf66b3819b1796d7d09b9ffc07dcc37bcbfd80",
+    "bytes": 8726,
+    "mode": "0444"
+  },
+  "stderr": "",
+  "independentReviewPerformed": false,
+  "rendererCalled": false,
+  "adaptFinalizeCalled": false
+}

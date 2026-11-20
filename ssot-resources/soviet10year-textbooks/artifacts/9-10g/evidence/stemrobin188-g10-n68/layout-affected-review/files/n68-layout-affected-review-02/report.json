@@ -1,0 +1,191 @@
+{
+  "schema": "stemrobin188-independent-affected-layout-review@1",
+  "ticket": "STEMROBIN-188",
+  "lesson": "geo910-c2-s3-n68",
+  "scope": "Offline affected-only review of newline normalization and two section_breaks anchors after the retained genuine native finalize failure.",
+  "status": "pass",
+  "findings": [],
+  "retainedObservations": [
+    {
+      "id": "N68-WHITESPACE-ONLY-PROSE",
+      "status": "pass",
+      "observation": "Before/current prose is identical after removing whitespace. All dollar-delimited formula spans are byte-for-byte identical and in the same order. Source objects, source_text, source_refs, printed-page bindings, figure/caption metadata, errata, and every other non-layout field are deeply equal. This is an identity comparison, not a renewed source, figure, or mathematics review.",
+      "normalization": "For each prose text, remove Unicode whitespace with /\\s+/gu; hash the UTF-8 JSON serialization of ordered {kind,text} pairs.",
+      "normalizedBeforeSHA256": "2ac4c5a138c0e30443b68f4644c4ebedf8c72c9932b78f6a0c04bc858443f609",
+      "normalizedCurrentSHA256": "2ac4c5a138c0e30443b68f4644c4ebedf8c72c9932b78f6a0c04bc858443f609",
+      "changedPaths": [
+        "/prose/0/text",
+        "/prose/1/text",
+        "/prose/4/text",
+        "/section_breaks/0/before",
+        "/section_breaks/0/after",
+        "/section_breaks/1/after"
+      ]
+    },
+    {
+      "id": "N68-CURRENT-NATIVE-FLOW",
+      "status": "pass",
+      "observation": "The supplied native-flow command exited 0, and its parsed stdout exactly matches bound-prose-flow.json. Its five paragraphs, in order, are theorem, proof setup, generating semicircle, rotation plus integral proof, and end-proof symbol. Each p block matches its bound native paragraphs after whitespace normalization. No native finalize or prose-flow command was replayed.",
+      "paragraphCount": 5,
+      "paragraphRoles": [
+        "theorem",
+        "proof setup",
+        "generating semicircle",
+        "rotation plus integral proof",
+        "end-proof symbol"
+      ],
+      "resolvedBreaks": [1, 3],
+      "candidateAnchorsExactlyMatchNativeBoundaries": true,
+      "eachBoundaryIdentifiesExactlyOneAdjacentPair": true
+    },
+    {
+      "id": "N68-THEOREM-TO-PROOF",
+      "status": "pass",
+      "boundaryIndex": 1,
+      "observation": "The first boundary separates the complete theorem statement and its formula from proof setup. Newlines after the theorem label and proof label preserve their respective grouping. Both anchor strings exactly match adjacent native paragraphs 0 and 1; there is no formula split."
+    },
+    {
+      "id": "N68-GENERATING-REGION-TO-ROTATION",
+      "status": "pass",
+      "boundaryIndex": 3,
+      "observation": "The second boundary separates the completed generating-region description from rotation and the integral proof. Its after anchor now copies the whole native rotation-plus-integral paragraph rather than the old introductory prefix; this adds no lesson content. Both strings exactly match adjacent native paragraphs 2 and 3. The existing figure/caption references do not constitute a prose boundary and were not visually reviewed."
+    },
+    {
+      "id": "N68-AFFECTED-READABILITY",
+      "status": "pass",
+      "observation": "Removing the blank line before the integral keeps the method introduction and sequential calculation together. The end-proof symbol remains last in its own native paragraph, with no added section break. The theorem, proof setup, generating region, and rotation/proof groups remain intelligible; no affected readability or grouping defect was found. This is textual/native-flow review, not rendered-image or application acceptance."
+    },
+    {
+      "id": "N68-EXISTING-MODERN-PASS-REUSED",
+      "status": "pass",
+      "observation": "The supplied prior modern text/figure104 report remains the reused content evidence: status pass, objectsRequired 13, objectsReviewed 13, and all 13 objects pass. Source transcription, figure, mathematics, exercises, and answers were not reviewed again. Its earlier layout claim is not substituted for the retained genuine finalize failure or this current affected-only judgment.",
+      "objectsRequired": 13,
+      "objectsReviewed": 13,
+      "reusedNotRepeated": true,
+      "inputRole": "prior-modern-text-figure-pass"
+    },
+    {
+      "id": "N68-GENUINE-FIRST-FINALIZE-FAIL-RETAINED",
+      "status": "fail",
+      "observation": "The original native adapt-finalize receipt remains unchanged with exitCode 2. The FIRSTFAIL adaptation audit remains status fail and records section_breaks[0] matching zero adjacent paragraph pairs. This affected-only PASS does not rewrite that audit, claim a successful finalize, or authorize a replay.",
+      "inputRoles": [
+        "historical-first-failed-adaptation-audit",
+        "historical-failed-native-finalize-command"
+      ]
+    },
+    {
+      "id": "R104-CROP-OBSERVATION",
+      "status": "hold",
+      "observation": "Retain the earlier exact-source-glyph HOLD for endpoint-coordinate punctuation and fine basis-vector glyph strokes. Existing mathematical-role PASS is reused, not literal-stroke recertification; no image was opened."
+    },
+    {
+      "id": "R237-EX257-RELATION-GLYPH",
+      "status": "hold",
+      "observation": "Retain the earlier exact-original-inequality-glyph HOLD. The prior inclusive-region semantic PASS is reused without recertifying the original slanted-glyph encoding."
+    },
+    {
+      "id": "N68-EX253-AMBIGUITY-PRESERVED",
+      "status": "hold",
+      "observation": "The earlier exercise253 volume-increase interpretation HOLD remains outside this layout review. The prior modern-text PASS for preserving the ambiguity is reused; no doubled-final-volume or additive-increase interpretation is selected."
+    },
+    {
+      "id": "N68-EX255-MISSING-DENSITY-PRESERVED",
+      "status": "hold",
+      "observation": "The earlier exercise255 missing-density HOLD remains outside this layout review. The prior modern-text PASS for preserving the underdetermination is reused; no density, unique diameter, or answer is supplied."
+    },
+    {
+      "id": "N68-INTAKE-INTEGRITY",
+      "status": "pass",
+      "observation": "The manifest and all eight listed intake files were hashed before and after review. All declared hashes match, and every intake file retains its bytes and permission mode. The applied working-template path mentioned in repair.json is historical provenance only, not an independently inspected intake file."
+    }
+  ],
+  "inputBindings": [
+    {
+      "role": "intake-manifest",
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n68-layout-review-inputs-02/manifest.json",
+      "sha256Before": "88537733c076a18ddc432e9860fb524762171e0baac9fa16e9970a18e2e87f89",
+      "sha256After": "88537733c076a18ddc432e9860fb524762171e0baac9fa16e9970a18e2e87f89",
+      "bytes": 2496,
+      "mode": "0644"
+    },
+    {
+      "role": "repair-provenance",
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n68-layout-repair-02/repair.json",
+      "manifestSHA256": "a732092a407812b2e77dab66e910272e0a524ad3304a793497a77ae552e59b9b",
+      "sha256Before": "a732092a407812b2e77dab66e910272e0a524ad3304a793497a77ae552e59b9b",
+      "sha256After": "a732092a407812b2e77dab66e910272e0a524ad3304a793497a77ae552e59b9b",
+      "bytes": 1557,
+      "mode": "0644"
+    },
+    {
+      "role": "before-template",
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n68-layout-repair-02/lesson.template.before.json",
+      "manifestSHA256": "355324ae98996556e8040b98f4ea36d4ead69d942b1e3edb2fdd5ed1b4fd9c5e",
+      "sha256Before": "355324ae98996556e8040b98f4ea36d4ead69d942b1e3edb2fdd5ed1b4fd9c5e",
+      "sha256After": "355324ae98996556e8040b98f4ea36d4ead69d942b1e3edb2fdd5ed1b4fd9c5e",
+      "bytes": 6127,
+      "mode": "0444"
+    },
+    {
+      "role": "current-template",
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n68-layout-repair-02/lesson.template.repair02.json",
+      "manifestSHA256": "70c67c4da3bd81818d7b35007a878c5157ac72aaa80dec6a5d72b7fcb1cd9bd8",
+      "sha256Before": "70c67c4da3bd81818d7b35007a878c5157ac72aaa80dec6a5d72b7fcb1cd9bd8",
+      "sha256After": "70c67c4da3bd81818d7b35007a878c5157ac72aaa80dec6a5d72b7fcb1cd9bd8",
+      "bytes": 6278,
+      "mode": "0644"
+    },
+    {
+      "role": "current-bound-native-flow",
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n68-layout-repair-02/bound-prose-flow.json",
+      "manifestSHA256": "624ee43be97f92ebbb4f69b61c095a8344f2a7f49536924630dc052b74d7bc6a",
+      "sha256Before": "624ee43be97f92ebbb4f69b61c095a8344f2a7f49536924630dc052b74d7bc6a",
+      "sha256After": "624ee43be97f92ebbb4f69b61c095a8344f2a7f49536924630dc052b74d7bc6a",
+      "bytes": 1894,
+      "mode": "0644"
+    },
+    {
+      "role": "current-bound-native-flow-command",
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n68-layout-repair-02/bound-prose-flow.command.json",
+      "manifestSHA256": "757baf6e71564de4dbf747c5350737811c05f02ccc62350e1e836cf88d053858",
+      "sha256Before": "757baf6e71564de4dbf747c5350737811c05f02ccc62350e1e836cf88d053858",
+      "sha256After": "757baf6e71564de4dbf747c5350737811c05f02ccc62350e1e836cf88d053858",
+      "bytes": 2171,
+      "mode": "0644"
+    },
+    {
+      "role": "historical-first-failed-adaptation-audit",
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n68-layout-repair-02/adaptation.audit.FIRSTFAIL.json",
+      "manifestSHA256": "26340568ac1678d77cc03d06e5ded1bae5ff64b05f78b5e4bb1f51f249016ccc",
+      "sha256Before": "26340568ac1678d77cc03d06e5ded1bae5ff64b05f78b5e4bb1f51f249016ccc",
+      "sha256After": "26340568ac1678d77cc03d06e5ded1bae5ff64b05f78b5e4bb1f51f249016ccc",
+      "bytes": 289,
+      "mode": "0644"
+    },
+    {
+      "role": "prior-modern-text-figure-pass",
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n68-text-figure104-review-01/text-review.json",
+      "manifestSHA256": "1521282a8b58473164798609e749789a17f2a7ee10a786d0ae79f277dc2881f3",
+      "sha256Before": "1521282a8b58473164798609e749789a17f2a7ee10a786d0ae79f277dc2881f3",
+      "sha256After": "1521282a8b58473164798609e749789a17f2a7ee10a786d0ae79f277dc2881f3",
+      "bytes": 31173,
+      "mode": "0444"
+    },
+    {
+      "role": "historical-failed-native-finalize-command",
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n68-modern-adapt-finalize-01/adapt-finalize.command.json",
+      "manifestSHA256": "ce51d45218ce6eadc7dae7f6f1676e1c871774cc4696ed7c48ffca90d28bab8c",
+      "sha256Before": "ce51d45218ce6eadc7dae7f6f1676e1c871774cc4696ed7c48ffca90d28bab8c",
+      "sha256After": "ce51d45218ce6eadc7dae7f6f1676e1c871774cc4696ed7c48ffca90d28bab8c",
+      "bytes": 887,
+      "mode": "0644"
+    }
+  ],
+  "imagesLoaded": 0,
+  "nativeFinalizeReplays": 0,
+  "sourceFigureMathAnswerReviewsRepeated": 0,
+  "additionalReviewersDispatched": 0,
+  "published": false,
+  "wholeLessonApproved": false,
+  "productApproved": false
+}

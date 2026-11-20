@@ -1,0 +1,20 @@
+{
+  "schema": "same188-6-affected-review-assembly-firstfail-v1",
+  "command": ["python3", "-B", ".intentfold/tickets/STEMROBIN-188/tmp/n68-choice253-affected-review-02/assemble-evidence.py", "assemble"],
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck",
+  "actual_exit_code": 1,
+  "stdout": "",
+  "stderr": "Traceback (most recent call last):\n  File \"/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n68-choice253-affected-review-02/assemble-evidence.py\", line 543, in <module>\n    main()\n    ~~~~^^\n  File \"/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n68-choice253-affected-review-02/assemble-evidence.py\", line 539, in main\n    {\"assemble\": assemble, \"validate-once\": validate_once, \"finalize\": finalize}[stage]()\n    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^\n  File \"/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n68-choice253-affected-review-02/assemble-evidence.py\", line 219, in assemble\n    receipt = verify_reuse()\n  File \"/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n68-choice253-affected-review-02/assemble-evidence.py\", line 266, in verify_reuse\n    assert all(matches.values()), qid\n           ~~~^^^^^^^^^^^^^^^^^^\nAssertionError: q-volume-ratio\n",
+  "failure_class": "technical evidence-check error, not a content verdict",
+  "cause": "The helper incorrectly required raw byte equality for original versus candidate views/keys. Candidate pretty-print indentation changed, but all eight parsed view and key subtrees and canonical digests are equal. The artifact contract explicitly permits formatting-only differences.",
+  "valid_output_preserved": {
+    "path": "review.json",
+    "sha256": "b30274d8ec5c2ee63d2790860a2607bf52c14cbf6fe06368f7b8d0dbb372bdd3",
+    "bytes": 28791,
+    "mode": "0644"
+  },
+  "recovery": "Keep the existing full review unchanged. Correct the helper's original/candidate comparison to canonical and decoded equality while still requiring exact raw bytes for all old native review records. Resume only the missing reuse-verification receipt, then run the native validator once.",
+  "source_or_view_review_rerun": false,
+  "candidate_or_input_edited": false,
+  "native_validator_had_run": false
+}
