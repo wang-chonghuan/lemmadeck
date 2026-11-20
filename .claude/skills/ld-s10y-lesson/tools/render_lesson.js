@@ -15,7 +15,7 @@ const fs = require("fs");
 const path = require("path");
 const katex = require("katex");
 const { spawnSync } = require("node:child_process");
-const { proseFlow, proseInline: sharedProseInline } = require("./htmlfrag.js");
+const { proseFlow, inline: sharedInline, proseInline: sharedProseInline } = require("./htmlfrag.js");
 const { sourceNumberForArtifact } = require("./publish_merge.js");
 const { choiceHtml } = require("./choice_html.mjs");
 
@@ -54,36 +54,12 @@ function katexCss() {
 }
 
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-const escText = (s) => esc(s).replace(/\r?\n/g, "<br>");
-// 还原转写中的黑体和强调标记，不改变正文。
-const strong = (h) => h.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-  .replace(/(?<!\*)\*([^*\n]+)\*(?!\*)/g, "<em>$1</em>");
-const MATH = /\$\$(.+?)\$\$|\$([^$]+?)\$/gs;
-// 公式后面紧跟的标点必须与公式绑在一起，否则 `$…$;` 的分号会被甩到下一行
-const TRAIL = /^[;,.、，。：:！!？?)）\]]+/;
-
-function renderInline(text, renderText) {
-  let out = "", last = 0;
-  for (const m of text.matchAll(MATH)) {
-    out += renderText(text.slice(last, m.index));
-    const tex = m[1] ?? m[2];
-    let html;
-    try {
-      html = katex.renderToString(tex, { displayMode: !!m[1], throwOnError: false });
-    } catch (e) { html = `<span class="err">${esc(tex)}</span>`; }
-    last = m.index + m[0].length;
-    const t = (text.slice(last).match(TRAIL) || [""])[0];
-    last += t.length;
-    out += `<span class="nb">${html}${esc(t)}</span>`;
-  }
-  return strong(out + renderText(text.slice(last)));
-}
-
-const inline = (text) => renderInline(text, escText);
-const proseInline = (text) => sharedProseInline(text)
+const previewClasses = (html) => html
   .replace(/class="sr-prose-math"/g, 'class="prose-math"')
   .replace(/class="sr-nb"/g, 'class="nb"')
   .replace(/class="sr-tex-err"/g, 'class="err"');
+const inline = (text) => previewClasses(sharedInline(text));
+const proseInline = (text) => previewClasses(sharedProseInline(text));
 
 function figureContract(contentRoot, id, strictEdition, manifest) {
   const fallback = {
@@ -214,7 +190,8 @@ li.ex .body .fig[data-figure-layout="scroll"] .figure-media{
 `;
 
 function page(title, crumb, bodyHtml) {
-  const tabTitle = title.replace(/\*\*([^*]+)\*\*/g, "$1");
+  const tabTitle = title.replace(/<\/?(?:strong|em)>/g, "")
+    .replace(/\*\*([^*]+)\*\*/g, "$1");
   return `<!DOCTYPE html><meta charset="utf-8"><title>${esc(tabTitle)}</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>${CSS}</style><div class="sheet"><h1>${inline(title)}</h1>

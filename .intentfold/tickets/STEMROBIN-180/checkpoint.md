@@ -1,5 +1,119 @@
 # 生产检查点
 
+## 180-6 intro complete offline; narrow19-file commit/push next
+
+2026-11-20T05:15:42.312Z. phy8-c1-s1-t1 fullcourse ready: exact RAW recovered,
+old TEXT FIRST failure retained; F1/F2 affected TEXT PASS parent-bound63.
+All14 accepted source/prose blocks and retained10 file hashes unchanged.
+Zero original figures/tasks; FIG/ANSWER/CHOICE NOT_APPLICABLE, no invented work.
+
+DISPLAY FIRST REVISE5be1ce80 parent-bound45 retained. One scoped safe-format
+repair closes D1/D2, new affected-native4 exit0. Independent affected DISPLAY
+PASS f5e306ec parent-bound162; sole current reviewer closed after actual return.
+Four FIRST/four affected actual image opens, reopens0/parent0/newpaid0.
+FIRST HTML/renderer copies and obsolete-test exit1 receipt preserved; affected
+test6/focused4 pass, no whole-project or old-course replay.
+
+Completecourses12->13 once. Narrow19 files include this complete course,
+two index appends only, actual FIRST/affected reports and minimal formatter
+repair with focused tests. No unrelated n111 files staged or included.
+Historicalpaid68/tokens-billingUNKNOWN; all trees/locks/backups/stash/unknown
+bytes/HOLDs and budgets preserved. Finishreview/no DB/merge/deploy/closure.
+Next narrow push original branch, then genuinely missing source-ready work.
+
+## 180-6 intro TEXT retained; DISPLAY FIRST REVISE parent-bound, affected repair next
+
+2026-11-20. Official attachment confirmed in this chat, no create/attach replay.
+Latest actual saved evidence supersedes the older review-active entry below.
+Affected TEXT PASS ac6009f0 parent-bound63; official finalize and canonical
+retention exit0. RAW2 recovered exactly; RAW Markdown is a new deterministic
+view, not historical recovered bytes. All14 source blocks remain bound.
+
+FIRST independent DISPLAY REVISE5be1ce80 parent-bound45 exit0: D1 exposed
+safe title/under-dot tags; D2 detached reference and broken small-footnote
+grouping/separator. Four actual reviewer image opens, parent0. FIRST native4
+automated PASS remains historical evidence, not independent DISPLAY approval.
+Only these four affected intro surfaces may be regenerated after a minimal
+shared-formatting repair; accepted TEXT and source bytes stay unchanged.
+
+Completecourses12, pushedHEAD2f4c12dc; no new completion or partial commit.
+Existing n149 exact-SVG gaps/fig305 HOLD and n111 paid HOLD remain unchanged.
+No old chats/reviewers, main/original trees, locks/backups/stash or budgets
+touched. Historicalpaid68/new0; tokens/billing UNKNOWN. Finishreview, no DB/
+merge/deploy/closure/TEXT-ANSWER-CHOICE replay/full-project checks.
+
+## 180-6 n149 seven exact FIG documents recovered; missing intro affected TEXT active
+
+2026-11-20. Official attached stemrobin-180-six workspace reused; no create/
+attach replay, main/original trees/locks/backups/stash untouched. Current pushed
+HEAD remains2f4c12dcf6cda08a9661c1e0c0705e99a63d8cbd; completecourses12.
+Live180 read once HTTP200 in current-6 receipt; no ticket/comment write.
+
+n149 actual next recovery retained seven exact PASS-bound spec/render/width
+documents306..308 from selected saved successful outputs, each0444.
+Manifest71127133acd9872c3dac3d08e05c8f053ef93301aedf948843f879774e2ebde4
+parent-bound19 exit0. Three SVG outputs were truncated; exact SVG/review files
+remain explicit unrecovered gaps, not reconstructed or silently approved.
+Existing FIG306..308 PASS reports reused; fig305 SOURCE/artwork HOLD unchanged.
+No renderer/browser/images/reviewer/re-finalize/dependent-phase/partial commit.
+
+Continued real missing phy8-c1-s1-t1, not complete inherited n150. Selected saved
+streams recovered exact RAW2/FIRST-template3 and final old REVISE reportc78c0784,
+including both oldF1/F2 and source14 historical1/1. Manifest81a57277 parent18.
+No new SOURCE repair/review/assembly or unknown-byte restoration.
+
+Only modern textindexes8/11 changed: original history/date/full footnote retained,
+global/local eclipse distinction and invalid recurrence-to-uniqueness/infallibility
+argument corrected with explicit historical-quote framing. USA declaration only
+atindex9; other12 blocks and complete source snapshots unchanged, all number
+tokens unchanged. Author29632908 parent-bound17 exit0, candidate NOT APPROVED.
+Sole fresh current Hegel01a1f751-2476-7653-9ee6-4b065f6299f9 affected-only
+TEXT review active; old chats/reviewers not woken. No canonical retention or
+completion increment; zero original figures/tasks, no invented ANSWER/CHOICE.
+
+New image-servicecalls0/historical68, tokens/costs UNKNOWN, parentimages0.
+Actual read/path/parser probe failures remain in this chat/tool history; these
+are technical observations, not source/semantic verdicts or reset counters.
+Finishreview/no DB/merge/deploy/closure/interactions/full-project checks.
+
+## 180-6 s23 pushed; n149 approved TEXT recovered and working templates retained
+
+2026-11-20. Complete s23 narrow27-file commit
+2f4c12dcf6cda08a9661c1e0c0705e99a63d8cbd fast-forward pushed to original
+codex/STEMROBIN-180-textbooks; actual ls-remote HEAD matches. Completecourses12.
+DISPLAY da741d974580282f21dcd971a1b2f13f5f271b00a6f4f829c3f15fe85b00b344
+parent-bound36 exit0,6 actual image opens/reopens0/parent0; observer closed.
+All s23 stages and complete seal actual exit0; no full-project handoff or DB.
+
+Immediately inspected named n150 saved bytes. Twelve legacy0f12 scratch paths
+are absent, not a content failure. Current n150 raw/modern/ready ANSWER/CHOICE
+are already retained, including known exact source/template/choice bindings.
+No missing course phase there: no recovery/review/re-finalize/display/count
+or new commit for n150. Its legacy UNKNOWN observations remain recorded.
+
+Continued genuinely missing n149 approved-TEXT integration. Specified archived
+successful cat outputs recovered only three exact approved templates,
+17733/6708/2120bytes with hashes b53c4307/d2890b0f/3ab2b69c. Manifest
+2c79c7a2cd99580623c6c96611d58eabd20bbbcc70ec8ba5f2934e4659846eaf
+0444 parent-bound8 exit0. Current RAW source snapshots match exactly; old TEXT
+PASS reused. No patch replay, source/TEXT review, unknown-byte reconstruction,
+image/browser/model-service call or old-reviewer wakeup.
+
+Official missing-work adapt-prepare1 exit0,17 blocks/6 tasks/4 figure slots.
+Three exact writable templates retained at
+.tmp/ld-s10y-lesson/resume-180-6-n149/adapt/7p/modern-us-neutral/lessons/phy7-c2-s3-n149/.
+Prepared-FIRST backups frozen separately; old originals/reports unchanged.
+Historical n149 integration-directory failures and fig305 SOURCE/artwork HOLD
+remain, not reset or converted to approval. No modern finalize/figure promotion/
+dependent ANSWER/CHOICE/DISPLAY/fullcourse claim or partial-course commit.
+
+Only next progress/checkpoint records are dirty after s23 push; n111 untracked
+reports remain unstaged and its fig241 paid-request HOLD unchanged. Complete12,
+new image-servicecalls0/historical68 and billing/tokens UNKNOWN. Main/original
+trees/locks/backups/stash/failures untouched; finishreview/no DB/merge/deploy/
+closure/interactions/fullchecks. No current child or parent command remains
+in flight; this is a saved production continuation point, not a human pause.
+
 ## 180-6 s23 complete offline; narrow commit/push next
 
 2026-11-20T04:21:26.147Z. s23 retains exact old approved TEXT, SOURCE7 and unchanged

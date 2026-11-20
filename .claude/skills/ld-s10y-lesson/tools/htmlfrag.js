@@ -33,10 +33,11 @@ const strong = (h) => h.replace(
 )
 const MATH = /\$\$(.+?)\$\$|\$([^$]+?)\$/gs
 const SOURCE_TAG = /<\/?[A-Za-z](?:[^<>"']|"[^"]*"|'[^']*')*>/g
-const INLINE_TOKEN = new RegExp(`${MATH.source}|${SOURCE_TAG.source}`, "gs")
-const SOURCE_DOTS = /^<span\s+style=(["'])\s*(text-emphasis-style\s*:\s*dot|text-emphasis\s*:\s*filled\s+dot)\s*;\s*text-emphasis-position\s*:\s*under\s*;\s*\1\s*>$/
+const SOURCE_ENTITY = /&#(?:[0-9]{1,7}|x[0-9a-fA-F]{1,6});/
+const INLINE_TOKEN = new RegExp(`${MATH.source}|${SOURCE_TAG.source}|${SOURCE_ENTITY.source}`, "gs")
+const SOURCE_DOTS = /^<span\s+style=(["'])\s*(text-emphasis-style\s*:\s*dot|text-emphasis\s*:\s*filled\s+dot)\s*;\s*text-emphasis-position\s*:\s*under\s*;?\s*\1\s*>$/
 function sourceTagHtml(tag) {
-  if (/^<\/?(?:strong|em)>$/.test(tag) || tag === "</span>") return tag
+  if (/^<\/?(?:strong|em|sup|small)>$/.test(tag) || tag === "</span>") return tag
   const dots = tag.match(SOURCE_DOTS)
   if (!dots) return null
   const style = dots[2].startsWith("text-emphasis-style")
@@ -51,7 +52,7 @@ function renderInline(text, renderText) {
   const allowedTags = new Map(), stack = []
   for (const token of tokens) {
     if (!token[0].startsWith("<")) continue
-    const name = token[0].match(/^<(\/?)(span|strong|em)\b/i)
+    const name = token[0].match(/^<(\/?)(span|strong|em|sup|small)\b/i)
     if (!name) continue
     const html = sourceTagHtml(token[0])
     if (!name[1]) {
@@ -75,6 +76,15 @@ function renderInline(text, renderText) {
   let out = "", last = 0
   for (const m of tokens) {
     out += renderText(text.slice(last, m.index))
+    if (m[0].startsWith("&#")) {
+      const value = m[0].slice(2, -1)
+      const code = value.startsWith("x")
+        ? parseInt(value.slice(1), 16) : Number(value)
+      out += renderText(code > 0 && code <= 0x10ffff && !(code >= 0xd800 && code <= 0xdfff)
+        ? String.fromCodePoint(code) : m[0])
+      last = m.index + m[0].length
+      continue
+    }
     if (m[0].startsWith("<")) {
       out += protect(allowedTags.get(m.index) ?? escText(m[0]))
       last = m.index + m[0].length
@@ -102,7 +112,19 @@ const inline = (text) => renderInline(text, escText)
 const proseInline = (text) => renderInline(text, escProseText)
 
 function proseParagraphs(text) {
-  return String(text ?? "")
+  // Layout normalization can separate a reference or split a whole-note wrapper.
+  const normalized = String(text ?? "").trim().replace(
+    /\s*<sup>\s*((?:&#(?:\d+|x[\da-f]+);|\d+)+)\s*<\/sup>/gi,
+    (_, marker) => `<sup>${marker}</sup>`,
+  )
+  const note = normalized.match(/^<small>([\s\S]*)<\/small>$/)
+  if (note && !/<\/?small>/.test(note[1])) {
+    const body = note[1]
+      .replace(/^(&#(?:\d+|x[\da-f]+);)\s*\n\s*/i, "$1 ")
+      .replace(/\s*\n\s*([”’])/g, "$1")
+    return proseParagraphs(body).map((paragraph) => `<small>${paragraph}</small>`)
+  }
+  return normalized
     .split(/\n{2,}/)
     .map((paragraph) => paragraph.trim())
     .filter(Boolean)
@@ -180,6 +202,13 @@ function proseFlow(blocks, sectionBreaks = []) {
   })
   const out = []
   for (let index = 0; index < flow.length;) {
+    if (flow[index].label === "source-footnote-rule"
+      && flow[index].text === "---"
+      && flow[index + 1]?.text.startsWith("<small>")) {
+      flow[index + 1] = { ...flow[index + 1], sectionBreak: true }
+      index++
+      continue
+    }
     if (!["fig", "cap"].includes(flow[index].kind)) {
       out.push(flow[index++])
       continue

@@ -26,11 +26,13 @@ test("only the two actual source under-dot styles accept attribute whitespace", 
   )
 })
 
-test("source strong and em remain attribute-free and properly nested", () => {
+test("source formatting remains attribute-free and properly nested", () => {
   const source = `<strong><em>${word}</em>${word}</strong>`
   assert.equal(proseInline(source), source)
   for (const tag of ["sup", "small"]) {
-    assert.equal(proseInline(`<${tag}>${word}</${tag}>`), `&lt;${tag}&gt;${word}&lt;/${tag}&gt;`)
+    assert.equal(proseInline(`<${tag}>${word}</${tag}>`), `<${tag}>${word}</${tag}>`)
+    assert.equal(proseInline(`<${tag} onclick="alert(1)">${word}</${tag}>`),
+      `&lt;${tag} onclick="alert(1)"&gt;${word}&lt;/${tag}&gt;`)
   }
 })
 
