@@ -1,5 +1,261 @@
 # 生产检查点
 
+## 180-6 b97 n129 complete offline; selective push next
+
+2026-11-20T00:12:40.373Z. n129 TEXT/ANSWER/CHOICE/DISPLAY complete offline.
+7 source-bound prose objects,8 displayed paragraphs,3 full original questions,
+0 structural figures. SOURCE3/12 and final answer comparison PASS; official
+answer finalize exit0, auto0/ungraded3. Choice2/8 follows frozen SOURCE,
+view-only BLIND and author-key comparison, all independent PASS. Retention exit0.
+Actual source128 prefix and incomplete130 remain excluded; graph273 is prose-only.
+
+One native render/check exits0 on6 desktop1440x960/mobile390x844 surfaces.
+Independent bounded observation of those existing screenshots also PASS, manifest
+e008a2a10a76ab74638b9e43743a3da9882da7b34e585a3a53da0c0983ec006f; no browser rerun or parent image opens.
+No overflow/formula errors/key leakage, all terminal content reachable.
+Headless offline evidence only, not live-product acceptance or formal handoff.
+
+Complete courses now8; parent images19/24 and all previous errors/HOLDs/budgets
+remain unchanged. New image-service calls0; billed costs/tokens UNKNOWN.
+Elapsed wall clock 8364 seconds includes quota interruptions, not request runtime.
+Completion hashes/actual receipts:tmp/resume-180-4/n129-complete.json.
+Selective commit/push is next; no DB/publish/merge/deploy/closure or full-project
+test/build replay. Finish remains review; continue authorized source-ready work.
+
+## 180-6 officially registered; n129 DISPLAY seal recovery
+
+2026-11-20T00:11:38.514Z. Official attachment failed: This worktree is owned by another task.
+First create attempt timed out; both failures remain in this chat. Official creation
+829f6122-13a1-4d5d-9cfe-b93e4f1f55ab completed with registrationError=null.
+Workspace /Users/yong/.codex/worktrees/stemrobin-180-six/lemmadeck; detached HEAD7af8268705129aa3ed067ac73a443352e8815c27.
+Only n129 required bytes/evidence copied, with original byte hashes and modes.
+Original worktree, old agents, locks, backups, refs and stash remain untouched.
+Existing six-image DISPLAY PASS report is copied unchanged; manifest and parent
+binding are next. No image opens, browser/render/semantic replay or service calls.
+Complete courses remain7; parent historical19/24; costs/tokens UNKNOWN preserved.
+Finish=review, Grill=self; no DB, merge, deploy, closure or whole-project checks.
+
+## 180-4 paused by latest human instruction; n129 preserved without push
+
+2026-11-19 22:53 UTC. Latest direct human instruction pauses all C/STEMROBIN-180
+production for later new-session planning. No continuation, next lesson, model
+call, review, render, test, completion marking, staging, commit or push after pause.
+Only agent shutdown, passive inventory and this safety checkpoint were performed.
+No six-session creation. Finish remains review; ticket/worktree remain open.
+
+HEAD and last pushed remote remain7af8268705129aa3ed067ac73a443352e8815c27,
+detached at the original codex/STEMROBIN-180-textbooks delivery head. Index empty.
+Uncommitted n129 raw/modern files are under the respective7p lessons/
+phy7-c2-s2-n129 directories; original/source snapshots, candidate files, all
+receipts and rendered HTML/screenshots remain in tmp/resume-180-4/ and
+.tmp/ld-s10y-lesson/render/7p/modern-us-neutral/phy7-c2-s2-n129/.
+No rollback/reset/delete/force-push; all unrelated recovered edits, locks,
+backups/recovery refs and original C stash are untouched.
+
+Actual completed n129 phases before pause:
+- TEXT independent PASS and71 bindings; formal modern finalize/retention exit0.
+- ANSWER SOURCE3/12 and candidate comparison3/12 independent PASS; official
+  answer finalize exit0, auto0/ungraded3, all3 full original questions preserved.
+- CHOICE seed-first/view-only BLIND and final author-key comparison independent
+  PASS,2 questions/8 options/5 misconceptions; final17 bindings and retention exit0.
+- One complete native offline render/check exit0 on6 desktop1440x960 and
+  mobile390x844 pages: body, written exercises and choices; no overflow,
+  formula error or internal-key leakage, terminal content reachable.
+
+Independent DISPLAY observer actually opened all6 existing screenshots once,
+verified native hashes and wrote display-review-n129-b97.md plus
+tmp/resume-180-4/n129-DISPLAY-review/report.json (declared PASS,0444).
+Pause interrupted it before manifest.json existed or a final result returned.
+No parent DISPLAY binding, n129-complete.json or b97-staging.json exists.
+Keep the report as written-but-unconfirmed; do not call it a delivered bound
+approval or redo the already observed screenshots just to replace its missing
+seal. Next missing step, only after human resumption: recover/seal the existing
+DISPLAY evidence, bind it, then record completion and narrow commit/push.
+mark-n129-complete.mjs and stage-n129-completed.mjs are prepared but NEVER RUN.
+n129 has not incremented completion: complete courses remain7, not8.
+
+Temporary agents closed without reawakening:
+- Einstein01a1f600-36e9-75e1-8c9b-4f414b477223: close returned running;
+  shutdown notification received; read_thread confirms interrupted/notLoaded.
+- Zeno01a1f5de-aae9-7b31-9bb7-c78abc9595c7: closed after final CHOICE PASS.
+- Volta01a1f5de-7a5a-7bb2-b96e-1235f76554dc: closed after TEXT PASS.
+All visible child commands ended; native browser closed in its finally block.
+This run started no dev server or background job; all parent exec calls returned.
+Passive process inventory only matched the concurrent read-only inventory call,
+not an ongoing production process. No known owned operation remains in flight.
+
+Parent images19/24 unchanged; observer6/24 documented by actual imageView events.
+New image-service calls0; actual model tokens/billing UNKNOWN. All old401/429
+and each Zeno rate-error receipt, source HOLDs and spent repair budgets stay.
+No shared DB, publication, merge, deployment, closure, full-project check or
+formal handoff. Results only in this chat/current checkpoint; no other-chat message.
+Paused, idle, awaiting the human's next instruction.
+
+## 180-4 b97 n129 source recovered; answer comparison active
+
+2026-11-19 22:34 UTC. The next authorized normal continuation of the same Zeno
+agent actually ran and completed SOURCE PASS:3/3 written tasks,12/12 facets,
+0 unresolved facets/images, recommended ungraded3. No parent answer or choice
+key was disclosed before these independent solutions. Manifest
+24083e7373c85b56d2b5917daf8de23db2f6568a01a17c9fc2fa86d08ad9f2ea
+is0444, its2 outputs and2 before/after inputs now bind separately, both exit0.
+SOURCE report is answer-source-n129-b97.md; this is source-only approval.
+
+Latest submission01a1f5ee-8b02-7e33-905b-3707d19ef906 was confirmed
+inProgress with actual commands/new source files by read_thread, then completed
+by wait_agent. resume_agent returned the previously retained rate-error status,
+not an agent-not-found error; send_input returned a submission ID. The earlier
+supervisor's failed-tool interpretation does not describe this newest successful
+turn. No replacement agent or concurrent review was created; every original
+rate-error receipt stays unchanged. No new rate error occurred in this source turn.
+
+The same Zeno is now comparing the saved3-answer candidate against completed
+independent source facets, before CHOICE inputs/keys. This is ongoing production,
+not a human pause or a request for new ordinary approval. Candidate structure
+validation already exited0, explicitly semanticApproval=false. Next is complete
+answer comparison, seed/view/key-ordered CHOICE review, one desktop/mobile
+DISPLAY check and a narrow complete-course commit/push. Do not replay passed
+TEXT71, SOURCE325/326, assembly, freeze or modern finalization.
+Complete courses7, parent images19/24 and UNKNOWN costs/tokens unchanged;
+no DB/publish/merge/deploy/closure or formal handoff.
+
+## 180-4 b97 serial recovery: n129 TEXT retained; SOURCE rate-limited again
+
+2026-11-19 22:25 UTC. Explicit staggered continuation resumed the existing
+Volta TEXT stage first, then existing Zeno ANSWER SOURCE only after Volta finished.
+No simultaneous dispatch, replacement reviewer, next-lesson review or cloud change.
+Volta returned substantive independent TEXT PASS:7 source-bound prose objects,
+8 final paragraphs,3 task identities,0 structural figures,2 actual anchors[3,7].
+Manifest f75d8cb5eb5782a32b2431df4df7800fa41e60cc00aadcf5b7913d2fe3d65423
+binds71 entries. First parent binding failed only because its mode was0644
+instead of0444; exact failure receipt retained. Mode-only correction and binding2
+exit0, no semantic or source review replay. Official isolated adapt-finalize and
+selective retention both exit0. Canonical raw/modern n129 files and only its book
+index rows are now present, preserving unrelated recovered edits.
+
+The serial Zeno source continuation terminated again with the exact error:
+`rate limit exceeded: Your requests to gpt-6.1-sol for gpt-6.1-sol in swedencentral have exceeded token rate limit.`
+No HTTP status or retry-after was exposed. No source directory or report was
+created; there are still no delivered independent source solutions. New terminal
+error is preserved separately at tmp/resume-180-4/n129-staggered-source-rate-limit.json;
+the first two errors remain unchanged. No reissue after this new failure,
+no credentials/model/configuration changes or paid probes. Shared-window failure
+is an execution checkpoint, not a scientific rejection or permanent content HOLD.
+
+Parent-only three-answer candidate remains draft/ungraded3; official answer
+prepare exit0 binds all3 current prompts, with no captured book-answer input.
+No answer approval/finalize or new legacy input interactions.
+CHOICE seed prepares all3 originals with definition blocks2/3/6, no solved
+experiment examples in the concept selection. Parent author source solutions
+and candidate are saved in tmp/resume-180-4/n129-choice/.
+One natural multiple and one single question,8 options,0 authored figures;
+first structural validation exit0, frozen views-only projection retained.
+This is NOT independent CHOICE approval. Recognition's loss of autonomous
+explanation and physical performance is explicit; full original questions remain.
+
+Resume next from independent ANSWER SOURCE, then candidate-key comparison,
+CHOICE seed-first/view-only/key-last review, and one complete offline DISPLAY.
+Do not redo approved TEXT, source325/326, isolated assembly or author freeze.
+Complete courses remain7; n129 is not complete. Parent images19/24;
+new parent images/image-service calls0, billed costs/tokens UNKNOWN.
+No batch commit/push, DB, publication, merge, deployment, closure,
+full-project test/build replay or formal handoff. Finish remains review.
+No other-chat or ticket message was sent.
+
+## 180-4 b97 n129 frozen; new token-rate-limit blocks reviews
+
+2026-11-19 22:13 UTC. The authorized single continuation reused approved
+SOURCE325/326 bindings and the completed isolated assembly/adapt preparation;
+n99/n100, source capture, SOURCE review and assembly were not repeated.
+The previously missing author freeze now actually exits0. Manifest
+e72eb28517708e21664b5451f99eadab165d3d49637349ba91fff96bdbfd69b6
+binds11 entries:7 prose objects,8 display paragraphs,3 original tasks,
+0 structural figures and2 actual proseFlow boundary anchors.
+graph273 remains a cross-course prose reference. Prefix128 and incomplete130
+remain excluded. Candidate only: no semantic or course-completion claim.
+
+Both newly dispatched independent stages terminated with the same exact error:
+`rate limit exceeded: Your requests to gpt-6.1-sol for gpt-6.1-sol in swedencentral have exceeded token rate limit.`
+Volta TEXT agent01a1f5de-7a5a-7bb2-b96e-1235f76554dc and Zeno ANSWER SOURCE
+agent01a1f5de-aae9-7b31-9bb7-c78abc9595c7 returned errored notifications,
+not review verdicts or independent solutions. No HTTP status was exposed;
+do not invent one. Exact notifications are retained in
+tmp/resume-180-4/n129-new-review-rate-limit.json.
+No resend, agent replacement, credential/configuration change or paid probe.
+The supplied proxy-reload/200 report was not independently probed.
+Existing401/429 receipts, source HOLDs, exhausted budgets and all prior work stay.
+
+Next missing stages are independent TEXT and three-task ANSWER SOURCE, then
+applicable answer/CHOICE and one complete offline DISPLAY check. No official
+adapt-finalize, canonical promotion, completed-course increment or narrow push.
+The original summary's source solution "started" means dispatch, not delivery:
+there are no independent n129 solution outputs to reuse yet.
+Complete courses7; parent images19/24, new parent images/image-service calls0.
+Tokens and billed costs remain UNKNOWN. HEAD/last push remains
+7af8268705129aa3ed067ac73a443352e8815c27; detached checkout and dirty
+recovered work retained. No shared DB, publish, merge, deploy, closure, new
+full-project checks or formal handoff. Finish remains review.
+Results stay in this chat and its existing checkpoint; no other-chat or ticket
+message was sent. Live180 ticket read succeeded; one local jq projection error
+after successful200 GETs was corrected without any backend mutation.
+
+## 180-4 b96 n99/n100 rediscovered; duplicate n99 stopped
+
+2026-11-19. n99 and n100 already exist at HEAD with retained approvals.
+Their raw/modern/answer/choice bytes are HEAD-identical. Byte/provenance audit
+bound 112 entries; f5da5401dc309d8411ab64070c508706f8be05b6261aaa6e10d9a385e456a028.
+No semantic review, source/finalize/render/choice/DISPLAY replay.
+n99 FIRST TEXT and answers bind through explicit inverse-finalizer metadata
+projections; CHOICE approved review bytes and canonical digests bind directly.
+n99 title FIRST FAIL/affected PASS, isolation caveat and exhausted budgets stay.
+n100 source261 erratum approval matches current bytes; source exponent6 and
+approved modern exponent5 retained. Table261 is the sole structural figure.
+Graph229 is an approved prose-only reference, not a new missing dependency.
+
+Fresh n99 cohort/candidate and modern-text-author-n99-b96.md are preserved
+UNUSED/SUPERSEDED; do not promote or stage as approved content. Noether closed
+without TEXT verdict or ANSWER SOURCE solutions. Its STOPPED_BY_USER wording
+is preserved but corrected here: parent-directed stop, no human production pause.
+Original stop inventory fe534ebaaf58002ddc78a5fc2b45222dd4ef8c3e933e6d7cb17234b9c7f4de43.
+Historical detailed manifests/screenshots remain missing; retained reports and
+current hashes do not constitute full historical evidence recovery.
+
+Complete courses7; n99/n100 add0. Last pushed commit remains 7af8268705129aa3ed067ac73a443352e8815c27.
+Parent19/24; new parent images/service calls0; UNKNOWN tokens/costs unchanged.
+Records intentionally dirty; no new commit/push or formal handoff.
+n98/source257, n91/source239, n95/fig210 and n161-n163 holds unchanged.
+Full-project checks deferred; no DB/env/publish/deploy/merge/closure.
+
+Read-only lookahead: n90 remains open at p0238#7 and requires held239;
+n111/n112 retain the existing two-unit assembly blocker and spent heading
+repair budget. No failed assemble was retried and no parser change made.
+n129 (TOC phy7-c2-s2-n129) is only a next readiness candidate:
+retained325/326 SOURCE reports exist,
+but exact source approval binding and the external graph273 reference still
+need a scoped check. No cohort, author/reviewer, new HOLD or completion claim.
+Both raw and modern selected n99/n100 index rows equal HEAD; unrelated
+whole-index working changes were preserved, not hashed as whole-book approvals.
+
+## 180-4 b95 n97 committed/pushed; n99 sources ready
+
+2026-11-19. n97 completed offline and selectively committed as
+7af8268705129aa3ed067ac73a443352e8815c27 (16 files), fast-forward pushed to HEAD:refs/heads/codex/STEMROBIN-180-textbooks.
+Actual remote head verified identical; detached HEAD and empty index retained.
+No force/main write/merge/publication/deploy/closure. Raw/modern indexes derive
+from prior HEAD plus only n97: 33 raw lessons,
+104 pages, 25 modern lessons.
+Unrelated recovered edits preserved. Post-push bookkeeping remains dirty.
+
+Complete courses7 (n159/n160/n164/n92/n93/n94/n97). n97 FIRST TEXT REVISE
+and sole repair1/1 preserved; affected PASS bound184 with explicit historic
+working-path separation, not verdict replay. Four native and independent
+DISPLAY surfaces pass. Parent19/24; new parent images/image-service calls0.
+Full-project checks remain deferred; tokens/costs UNKNOWN.
+
+n99 needs259+260; exact6 page files plus3 retained reports bound9. No n99
+cohort yet. n100 source graph229 bytes PASS; modern graph not approved.
+n98/257, n91/source239, n95/fig210 and n161-n163 holds unchanged.
+
 ## 180-4 b95 n97 complete offline; selective commit pending
 
 2026-11-19. n97 complete offline:10 prose objects,0 written tasks,0 figures.
