@@ -1,5 +1,103 @@
 # 生产检查点
 
+## 180-6 n112 complete offline; narrow commit/push next
+
+2026-11-20T00:56:17.858Z. n1123 source/modern prose,2 full written tasks,
+2 ungraded answers,1 natural single-choice/4 options,0 structural figures.
+TEXT/SOURCE, ANSWER FINAL and seed-first/BLIND/key-last CHOICE independently
+PASS and parent-bound. Official adapt/answer finalize and choice retention exit0.
+q2 remains one full historical report/3 topics; no claim of choice report ability.
+
+One headless offline render/check on6 desktop/mobile surfaces exit0; independent
+six-image observation PASS, manifestb4a0cd550a51613c3b214c811ac81f633bdf97c1d91ecba01de6164ee9e8440b bound13.
+No n129 replay, image-service call, live-app acceptance or formal handoff.
+Complete courses8->9 only after actual DISPLAY binding. Wall clock2291.532s
+includes real waiting/review; tokens/billed costs UNKNOWN. Historical failures,
+markup warnings, snapshot-digest misclassification and every old budget retained.
+
+Narrow complete-course staging/commit/push is next on original delivery branch.
+Raw35/modern27 lessons. n111 remains scratch only; new32724/24 candidate and
+approved326/328 boundaries are ready for the next n130 SOURCE stage, no SOURCE
+approval or n130/n131 retention. Old trees/chats/locks/backups/stash untouched.
+Finish=review; no DB/merge/deploy/closure, interactions or full-project checks.
+
+## 180-6 n112 TEXT/source bound and retained; CHOICE BLIND active
+
+2026-11-20. Pascal returned genuine separate TEXT and ANSWER SOURCE PASS.
+Manifest52cc6b7f420299b51a2954c5f00f955bbb8aa7f8e8857bc5151b6ab690bceb7a
+sealed0444; parent actual binding exit0,140 recognized bindings. All2 source
+tasks/7 facets independently solved; originalq2 remains one report/3 topics.
+Five primary pages actually read;404 and earlier reviewer markup warnings
+remain retained, not adopted as evidence or erased.
+
+Official n112 isolatedadapt-finalize exit0; seven raw/modern files and only
+its two index rows retained, leaving prior rows unchanged. Raw35/modern27
+lessons; no full-course increment. Answers prepared2/ungraded2; manual concise
+candidate frozen in n112-answer-author/, not yet compared/finalized.
+
+CHOICE uses onlyq1 and definitionblocks1/2, no images; originalq2 remains in
+written exercises and the candidate standard report. Structural checker exit0,
+one natural single question/four options; no mechanical chopping or report
+recognition claim. Author-key-free view and seed frozen; same sole Pascal now
+does SOURCE reuse plus BLIND. No new reviewer, no answer candidate/key sent.
+
+New source327 remains24/24 finalized/frozen candidate, no SOURCE PASS.
+Only approved326/328 and boundaryfigure279 prepared for later narrow n130;
+no assembly or n131 retention. n111 source-era wording edited only in scratch.
+Complete courses8, image-service calls0, historical costs/tokens UNKNOWN.
+Next missing steps: n112 BLIND, final answer/key comparison, official answer
+finalize/choice retention and one new six-surface headless offline DISPLAY.
+Old trees, chats, locks, stash, first failures and budgets remain untouched.
+Finish=review; no DB, merge, deploy, closure, interactions or formalhandoff.
+
+## 180-6 n111/n112 assembled; source327 reconstructed, review pending
+
+2026-11-20. Same official worktree and original delivery branch; complete
+courses remain8. The two narrowly corrected assembler defects now have4
+focused tests PASS and actual affected assembly/adapt-prepare exit0:
+n11113 prose/2 tasks/2 source figures; n1123 prose/2 tasks/0 figures.
+Only approved283..287 source bytes were reused; incomingx1 and incomplete
+n113 are excluded. No modern figure approval or full-course completion implied.
+
+n112 author manifest acec8b35104e3579f1deca7198a9d7f9b9cb1089611121965c6785b420c934a5
+is frozen0444. Pascal01a1f651-c4b7-7fc0-85cf-1b33aafeb629 is the sole new
+independent reviewer: TEXT plus source-only full ANSWER solutions. His real
+parser/source commands exist, but final sealed result remains pending. No
+author answer/choice key disclosed and no second reviewer dispatched.
+
+Old327 candidate bytes were not found in the exact preserved locations.
+Only physical327 was prepared from the unchanged shared scan. Newly authored
+page327 keeps24 rows/10 blocks, three known italic units, two fractions,
+incomingcont and terminalsemicolon/open. Actual finalize exit0,24/24 and
+zero normalizations. This is a reconstructed candidate, not recovered old
+bytes, SOURCE approval, or n130 completion. Approved326/328 remain unchanged.
+No source-image/browser rerun for n129. Prior source327 image open1 plus this
+context's necessary reopen1 are conservatively recorded as2/24; old parent19/24
+remains historical. Image-service calls0; actual costs/tokens UNKNOWN.
+
+Next: collect Pascal, bind n112 TEXT/source, then narrowly finalize/retain,
+candidate-answer comparison, seed-first/view-only/key-last CHOICE and one new
+offline DISPLAY. SOURCE327 independently reviewed only when the slot is free.
+Old trees, chats, locks, backups, stash, failures and usage remain untouched.
+No DB, merge, deploy, closure, new old-input interactions or formal handoff.
+
+## 180-6 n129 pushed; n111/n112 actual assembly repair
+
+2026-11-20T00:16:04.432Z. n129 commit23c99d40a6844badfa4ea35349341eaaf6ee5838
+fast-forward pushed to original codex/STEMROBIN-180-textbooks; ls-remote matched.
+24 files; raw34 lessons/104 pages, modern26 lessons. DISPLAY recovery bound30;
+original observer report and images unchanged, new image/browser/semantic runs0.
+Complete courses8. Source tree, old agents, locks, stash and recovery refs untouched.
+Fetched origin/main=fdadfcbfc1a07a90b47fc077836fd761270969f5 is an ancestor;
+shared main checkout not modified. No merge, force, DB, deploy or handoff.
+
+Next existing source283..287 copied into isolated n111/n112 cohort only.
+Two known parser defects corrected: split-bold numbered heading identity and
+collision of explicitq1 with following anonymous report. Original SOURCE bytes
+and historical FIRST failure/budget retained; no repeated SOURCE review.
+Focused tests and affected assembly are next, not yet claimed approved.
+Parent historical19/24 preserved; this context image opens0, costs/tokens UNKNOWN.
+
 ## 180-6 b97 n129 complete offline; selective push next
 
 2026-11-20T00:12:40.373Z. n129 TEXT/ANSWER/CHOICE/DISPLAY complete offline.

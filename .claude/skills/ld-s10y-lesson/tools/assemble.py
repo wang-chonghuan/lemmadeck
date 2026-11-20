@@ -146,7 +146,7 @@ def cut_lessons(stream: list[dict]) -> list[dict]:
             continue
         if b["kind"] == "h3":
             title = B.text_of(b)
-            numbered_title = title.strip()
+            numbered_title = re.sub(r"\*\*([^*]+)\*\*", r"\1", title.strip())
             if numbered_title.startswith("**") and numbered_title.endswith("**"):
                 numbered_title = numbered_title[2:-2].strip()
             m = SEC_NUM.match(numbered_title)
@@ -176,6 +176,10 @@ def split_lesson(
     prose, exercises, group = [], [], None
     group_index = 0
     unnumbered = 0
+    reserved_numbers = {
+        b["label"] for b in lesson["blocks"]
+        if b["kind"] == "ex" and re.fullmatch(r"q\d+", b.get("label") or "")
+    }
     first_group_by_source: dict[str, str] = {}
     for b in lesson["blocks"]:
         if b["kind"] == "exhead":
@@ -185,6 +189,8 @@ def split_lesson(
             source_number = b.get("label")
             if source_number is None:
                 unnumbered += 1
+                while f"q{unnumbered}" in reserved_numbers:
+                    unnumbered += 1
                 number = f"q{unnumbered}"
             else:
                 source_key = str(source_number)
