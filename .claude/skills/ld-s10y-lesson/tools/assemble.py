@@ -26,7 +26,7 @@ import blocks as B
 import mathcheck
 import normalize as nz
 
-FIGREF = re.compile(r"图\s*\$?\s*(\d+)(?!\d)")
+FIGREF = re.compile(r"图\s*\$?\s*(\d+(?!\d)|[IVXLCDM]+(?![A-Za-z]))")
 SEC_NUM = re.compile(r"^\s*(\d+)\s*[.．、]\s*(.+)$")
 BLOCKREF = re.compile(r"^p(\d+)#(\d+)$")
 OPTIONAL_EXERCISE_IDENTITY_FIELDS = ("source_number", "group_id")
@@ -362,8 +362,18 @@ def claim_figures(lessons: list[dict], stream: list[dict]) -> tuple[list[str], l
         for b in lesson["prose"]:
             for n in FIGREF.findall(B.text_of(b)):
                 referenced.add(n)
-        lesson["figures"] = [{"id": b["id"], "label": b.get("label"), "page": b["page"]}
-                             for b in lesson["blocks"] if b["kind"] == "fig"]
+        local_ids = {
+            b["id"] for b in lesson["blocks"] if b["kind"] == "fig"
+        }
+        used_ids = {
+            figure_id
+            for exercise in lesson["exercises"]
+            for figure_id in exercise["figure_refs"]
+        }
+        lesson["figures"] = [
+            {"id": b["id"], "label": b.get("label"), "page": b["page"]}
+            for b in all_figs if b["id"] in local_ids | used_ids
+        ]
 
     for f in all_figs:
         nums = FIGREF.findall(f.get("label") or "")
@@ -528,13 +538,14 @@ def audit(
                     f"题号缺号（页段 {first_page}-{last_page}）: {gaps}（可能漏页或漏题）")
 
     fignums = sorted({int(n) for b in stream if b["kind"] == "fig"
-                      for n in FIGREF.findall(b.get("label") or "")})
+                      for n in FIGREF.findall(b.get("label") or "") if n.isdigit()})
     for first_page, last_page in _page_segments({b["page"] for b in stream}):
         segment_fignums = sorted({
             int(n)
             for b in stream
             if b["kind"] == "fig" and first_page <= b["page"] <= last_page
             for n in FIGREF.findall(b.get("label") or "")
+            if n.isdigit()
         })
         fgaps = [
             n for n in range(segment_fignums[0], segment_fignums[-1])

@@ -826,3 +826,19 @@ def ink_coverage(ink: np.ndarray, boxes: list[list[int]]) -> dict:
     total = int(ink.sum())
     return {"ink_px": total, "outside_px": int(resid.sum()),
             "outside_ratio": round(int(resid.sum()) / max(total, 1), 5)}
+
+
+def mask_figures_for_lines(ink, figures, blocks):
+    """Keep explicitly boxed captions visible when their pixels lie inside a crop."""
+    masked = ink.copy()
+    for figure in figures:
+        x, y, width, height = figure["box"]
+        masked[max(0, y):y + height, max(0, x):x + width] = False
+    for block in blocks:
+        if block["kind"] != "cap" or not block.get("box"):
+            continue
+        x, y, width, height = block["box"]
+        if x < 0 or y < 0 or width <= 0 or height <= 0 or x + width > ink.shape[1] or y + height > ink.shape[0]:
+            raise ValueError("Caption box lies outside source pixels")
+        masked[y:y + height, x:x + width] = ink[y:y + height, x:x + width]
+    return masked

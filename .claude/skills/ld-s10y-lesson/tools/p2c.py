@@ -319,10 +319,7 @@ def cmd_finalize(a) -> int:
             stale.unlink()
 
     # 2) 行数对账：挖掉插图后的印刷行数 == 块体行数。页级唯一的完整性硬证据。
-    masked = ink.copy()
-    for f in figs:
-        x, y, w, h = f["box"]
-        masked[max(0, y):y + h, max(0, x):x + w] = False
+    masked = layout.mask_figures_for_lines(ink, figs, blks)
     cols = ink.any(axis=0).nonzero()[0]
     content_w = int(cols[-1] - cols[0] + 1) if cols.size else img.width
     want = len(layout.line_bands(masked, content_w))
