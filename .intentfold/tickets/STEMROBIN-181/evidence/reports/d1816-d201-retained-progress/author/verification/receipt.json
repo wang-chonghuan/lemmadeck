@@ -1,0 +1,38 @@
+{
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck",
+  "command": [
+    ".claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "import json, sys\nsys.path.insert(0, '.claude/skills/ld-s10y-lesson/tools')\nfrom edition import normalize_prose_layout, prose_number_signature\ndocuments = json.load(sys.stdin)\nreport = []\nfor document in documents:\n    blocks = []\n    for block in document[\"prose\"]:\n        blocks.append({\n            \"source_refs\": block[\"source_refs\"],\n            \"non_formula_numbers_and_references_preserved\":\n                prose_number_signature(block[\"text\"]) == prose_number_signature(block[\"source_text\"]),\n            \"layout_idempotent\": block[\"kind\"] != \"p\" or\n                normalize_prose_layout(block[\"text\"]) == block[\"text\"],\n        })\n    report.append({\"edition\": document[\"edition\"], \"blocks\": blocks})\nprint(json.dumps(report, ensure_ascii=False))"
+  ],
+  "exitCode": 0,
+  "error": null,
+  "onlyFunctionsCalled": [
+    "normalize_prose_layout",
+    "prose_number_signature"
+  ],
+  "nativeFinalizationOrRenderingCalled": false,
+  "inputs": [
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.tmp/STEMROBIN-181/d1816-d201/work/adapt/10p/modern-us-neutral/lessons/phy10-c1-s3-n23/lesson.template.json",
+      "bytes": 30639,
+      "sha256": "6c64ec20ebe4b07163e4ecf578a1df298c6a78b01f4902d6c9c18e0c9f8df7db"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.tmp/STEMROBIN-181/d1816-d201/work/adapt/10p/modern-us-neutral-en/lessons/phy10-c1-s3-n23/lesson.template.json",
+      "bytes": 32201,
+      "sha256": "d1661e7ced5d4a0e01e59f9e25bd1625e703d21f81d0ffcfe0f183404dbf7011"
+    }
+  ],
+  "stdout": {
+    "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d201-n23-text-author/verification/stdout.json",
+    "bytes": 5052,
+    "sha256": "679d03ae9f1f9e98760bf979f22e26691dfbb8cd1df6a4aa5ca83966c7a63c23"
+  },
+  "stderr": {
+    "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d201-n23-text-author/verification/stderr.txt",
+    "bytes": 0,
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

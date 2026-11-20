@@ -1,0 +1,43 @@
+{
+  "schema": "STEMROBIN-181/fig-10-source-inspection-receipts@1",
+  "workdir": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck",
+  "nativeFigureStages": false,
+  "receipts": [
+    {
+      "id": "sips-combined-crop-resize",
+      "command": "sips -c 126 260 --cropOffset 325 9 -z 504 1040 .tmp/STEMROBIN-181/d1816-d149/root/9p/figures/fig-10.png --out .tmp/STEMROBIN-181/d1816-d157/figures/fig-10/source-inspection/particles-4x.png",
+      "exitCode": 0,
+      "stdout": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/9p/figures/fig-10.png\n  /Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.tmp/STEMROBIN-181/d1816-d157/figures/fig-10/source-inspection/particles-4x.png\n",
+      "dimensionCommand": "sips -g pixelWidth -g pixelHeight .tmp/STEMROBIN-181/d1816-d157/figures/fig-10/source-inspection/particles-4x.png",
+      "observedDimensions": [972, 141],
+      "status": "FAILED_TECHNICAL_DERIVATIVE",
+      "diagnosis": "Combined crop/resample produced a distorted 972x141 image rather than the intended 1040x504 crop. Open counted; output preserved and excluded from source judgments."
+    },
+    {
+      "id": "system-python-crop",
+      "command": "python3 .tmp/STEMROBIN-181/d1816-d157/figures/fig-10/source-inspection/crop_source.py",
+      "exitCode": 1,
+      "stderr": "Traceback (most recent call last):\n  File \"/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.tmp/STEMROBIN-181/d1816-d157/figures/fig-10/source-inspection/crop_source.py\", line 2, in <module>\n    from PIL import Image\nModuleNotFoundError: No module named 'PIL'\n",
+      "status": "FAILED_TECHNICAL_EXECUTION",
+      "diagnosis": "System Python lacks Pillow. No output created; no image open. Retry used the existing native lesson venv without modifying tools or installing dependencies."
+    },
+    {
+      "id": "native-venv-fixed-crop",
+      "command": ".claude/skills/ld-s10y-lesson/.venv/bin/python .tmp/STEMROBIN-181/d1816-d157/figures/fig-10/source-inspection/crop_source.py",
+      "exitCode": 0,
+      "stdout": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.tmp/STEMROBIN-181/d1816-d157/figures/fig-10/source-inspection/particles-nearest-4x.png\nsource box=[9,325,269,451], output=1040x504, nearest-neighbor\n",
+      "status": "PASS_INSPECTION_DERIVATIVE"
+    },
+    {
+      "id": "native-venv-source-halves",
+      "command": ".claude/skills/ld-s10y-lesson/.venv/bin/python .tmp/STEMROBIN-181/d1816-d157/figures/fig-10/source-inspection/crop_halves.py",
+      "exitCode": 0,
+      "stdout": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.tmp/STEMROBIN-181/d1816-d157/figures/fig-10/source-inspection/particles-left-nearest-8x.png: source box=(9, 331, 141, 441), output=1056x880\n/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.tmp/STEMROBIN-181/d1816-d157/figures/fig-10/source-inspection/particles-right-nearest-8x.png: source box=(133, 331, 265, 441), output=1056x880\n",
+      "status": "PASS_INSPECTION_DERIVATIVES"
+    }
+  ],
+  "technicalRecoveryAttempts": 2,
+  "contentRepairs": 0,
+  "failedFigureCandidates": [],
+  "note": "Raw command outcomes transcribed from execution results; source derivatives are not modern figure candidates or native render evidence."
+}

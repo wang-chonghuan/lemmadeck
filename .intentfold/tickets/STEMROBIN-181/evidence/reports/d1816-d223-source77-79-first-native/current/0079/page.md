@@ -1,0 +1,84 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 79,
+  "printed_page": 69,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 79
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "1df40a7a4cbaddbf8af44bb64356f46a20935b8610873ae511866f6e780890f9"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "54c02ea7d234571bd2d87c14289640701d1aa7ada4c3aed67403cec26680cddc"
+  },
+  "notes": [
+    "D220 FIRST source AUTHOR draft only, not source/page/figure/lesson approval. Original page viewed individually; no grid needed, no native stages.",
+    "23 printed text rows: 18 prose rows, four standalone displayed formula rows and one footer. The inline radical in 如果 R<<sqrt(L/C)，那么 remains a single printed prose row.",
+    "The first row continues physical78 电流强度的振幅 with 和频率间的对应关系如图48所示. This is an actual N28 citation of figure48 on physical77 and establishes candidate semantic ownership across the intervening N28 heading.",
+    "HOLD p79-amplitude-alphabet: all amplitude subscripts are provisionally Cyrillic lowercase м (U+043C). Script/case remain unresolved; no Latin-m normalization from physics.",
+    "HOLD p79-capacitance-alphabet: C-shaped capacitance labels, including the subscript in u_C, are provisionally Latin uppercase C (U+0043); Latin C versus Cyrillic С and small-font case cannot be certified from these pixels.",
+    "HOLD p79-omega-origin-digit: the subscript in omega_0 is provisionally digit zero; letter o/O cannot be excluded solely from the source shape. Preserve the source and do not decide from resonance conventions.",
+    "Four unnumbered displayed formulas are retained, including both resonance-voltage identities, the applied-voltage identity, and the final voltage comparison. The source << and >> are \\ll and \\gg, not two unrelated inequalities.",
+    "Source emphasis is retained: the voltage-growth statement begins mid-row, the phase-zero statement is bold, and 电流 in the later power paragraph is bold.",
+    "The terminal N28 paragraph ends 在电路中接通, open to uninspected physical80. No closure, page/lesson approval, canonical promotion or subsequent content is inferred."
+  ],
+  "errata": []
+}
+---
+
+<!-- p cont -->
+和频率间的对应关系如图 48 所示（$R_1<R_2<R_3$）.
+
+<!-- p -->
+在共振的情况下，在电流强度增大的同时，**电容器和电感**
+**线圈上的电压急剧地增大，这两个元件上的电压变为相等的，**
+**并且超过外加电压很多倍.**
+
+<!-- p -->
+事实上，
+
+<!-- p -->
+$U_{\mathrm{м},C\text{共振}}=I_{\mathrm{м},\text{共振}}\frac{1}{\omega_0 C}=I_{\mathrm{м},\text{共振}}\sqrt{\frac{L}{C}}$
+$U_{\mathrm{м},L\text{共振}}=I_{\mathrm{м},\text{共振}}\omega_0 L=I_{\mathrm{м},\text{共振}}\sqrt{\frac{L}{C}}$
+
+<!-- p -->
+外加电压与共振电流的关系如下：
+
+<!-- p -->
+$U_{\mathrm{м}}=I_{\mathrm{м},\text{共振}}R$
+
+<!-- p -->
+如果$R\ll\sqrt{\frac{L}{C}}$，那么
+
+<!-- p -->
+$U_{\mathrm{м},C\text{共振}}=U_{\mathrm{м},L\text{共振}}\gg U_{\mathrm{м}}$
+
+<!-- p -->
+**在共振时电流和电压间的相位差等于零.**
+
+<!-- p -->
+事实上，在电感线圈和电容器上电压的振荡永远是反相
+位的. 这两个电压的共振振幅是一样的. 结果线圈上和电容
+器上的电压彼此完全抵消（$u_L=-u_C$），而仅仅在纯电阻上有
+电压降.
+
+<!-- p -->
+根据功率表示式（2.46），在共振时，电压和**电流**间的相位
+差等于零，这为交流电源向电路输入能量保证了最有利的条
+件. 这和机械振动完全是类似的：在共振时，外力（相当于电
+路的外电压）与速度（相当于电流强度）相位一致.
+
+<!-- p open -->
+可能提出这样的问题：在共振时，系统从哪里获得较大的
+能量呢？ 这里道理与机械共振情况完全一致. 在电路中接通
+
+<!-- foot -->
+• 69 •

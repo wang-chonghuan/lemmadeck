@@ -1,0 +1,104 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 77,
+  "printed_page": 67,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 77
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "62c26ae89cd27c8386cd4eef16b89ce5dd743712627afee28d294bccfb5c71e7"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "54c02ea7d234571bd2d87c14289640701d1aa7ada4c3aed67403cec26680cddc"
+  },
+  "notes": [
+    "D220 FIRST source AUTHOR draft only, not source/page/figure/lesson approval. Original and grid viewed separately; native stages unattempted.",
+    "Incoming prose continues the supplied physical76 N27 candidate immediately after 为了提高线路中. That preceding candidate remains author-only/source review queued.",
+    "25 textual rows occupy 24 unique visual rows: the caption 图 48 shares the second printed row of question3. The question is split open/cont around that caption solely to preserve the actual same-row position.",
+    "Figure48 coarse box [812,525,525,565] encloses the original graph, including labels, tails and axes, and excludes its separate caption and adjacent question text. No crop, snap, vectorization or content repair has occurred.",
+    "HOLD p77-threshold-glyph: the sign before 0.85 is provisionally transcribed as \\leq. The source-only inspection crop shows the main < silhouette plus a tiny detached lower mark, not a certifiable complete underbar. Independent source review must distinguish a broken underbar from scan noise; neither < nor <= is approved. Do not decide from electrical-engineering convention.",
+    "HOLD fig48-amplitude-alphabet: the subscript on the vertical I label is м/M-like and its script/case is not resolved from pixels. Keep the source image; do not standardize to a physics amplitude convention.",
+    "HOLD fig48-origin-and-arrows: the origin glyph is provisionally uppercase italic O rather than zero; both axis-end marks and the three curve-leader tips must be reviewed as source marks, without adding assumed arrowheads.",
+    "The source 问题 group has exactly questions1-4. Figure48 precedes the N28 heading physically, but physical79 first row actually cites it in N28. Candidate ownership is N28 by that citation, not N27 by proximity to the questions. Source figure review remains pending.",
+    "The N28 heading 28. 电谐振 is visible at y1433-1482. Its final paragraph ends 可以立即作出以 and is genuinely right-open into physical78. No N28 completion is claimed."
+  ],
+  "errata": [],
+  "printed_lines": 24,
+  "figures": [
+    {
+      "id": "fig-48",
+      "label": "图 48",
+      "box": [
+        812,
+        531,
+        515,
+        555
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+的$\cos\varphi$，在供给大量使用电动机的企业的线路中要接入特
+殊的补偿电容器. 还应注意不要使电动机无负荷或负荷不足
+地运转，这也会减小整个电路的功率因数. 提高$\cos\varphi$是国
+民经济的重要任务，因为这样就可以利用发电站的发电机尽
+可能多地输出功率和减少能量的损耗. 利用正确设计的电路
+可以做到这一点. $\cos\varphi\leq0.85$的设备是禁止使用的.
+
+<!-- fig 图 48 box 812,531,515,555 -->
+![图 48](figures/fig-48.png)
+
+<!-- exhead -->
+问题
+
+<!-- ex 1 -->
+1. 用什么公式来计算容
+抗与感抗？
+
+<!-- ex 2 -->
+2. 在交流电路中，电容器
+上的电流强度的有效值和电压
+的有效值之间的关系如何？
+
+<!-- ex 3 open -->
+3. 在电感线圈上电流强
+度的有效值和电压的有效值之
+
+<!-- cap 图 48 samerow -->
+图 48
+
+<!-- ex 3 cont -->
+间的关系如何？ 线圈的电阻可以忽略不计.
+
+<!-- ex 4 -->
+4. 交流电路里电流和电压之间的相位差对功率有什么
+影响？
+
+<!-- h3 -->
+28. 电谐振
+
+<!-- p -->
+在研究受迫机械振动时，我们已经认识了一种重要的现
+象——**共振**. 当振动系统的固有频率和外力的频率一致时，
+就发生共振. 当摩擦力很小时，稳定的受迫振动的振幅就会
+急剧增大.
+
+<!-- p open -->
+由机械振动和电磁振荡规律的一致性，可以立即作出以
+
+<!-- foot -->
+• 67 •

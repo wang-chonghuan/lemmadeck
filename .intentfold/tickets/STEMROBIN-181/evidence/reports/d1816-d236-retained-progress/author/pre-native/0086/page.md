@@ -1,0 +1,85 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "10p",
+  "page": 86,
+  "printed_page": 76,
+  "source": {
+    "pdf": "10p 苏联中学课本 物理 十年级 .pdf",
+    "pdf_sha256": "7190041b66182e5f6c5a4ef7ae0b04ee3f1afa0df1f5b3ff6317b2c2d1cb8f40",
+    "pdf_page": 86
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1536,
+    "h": 2337,
+    "sha256": "a9b986866563845b5f25ec7f69dc74ae189dccabd0b4a4c264412d00484c30f3"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "54c02ea7d234571bd2d87c14289640701d1aa7ada4c3aed67403cec26680cddc"
+  },
+  "notes": [
+    "D236 FIRST draft-only SOURCE86 author; original86 and original87 opened individually before grids/details. No native stage or independent source approval.",
+    "Actual pixel inventory: eight rows in four numbered prose items, one three-star separator row, four concluding prose rows, one 问题 heading row, seven rows in questions1-4, one 练习2 heading row, one first row of exercise1 and one footer row: 24 printed rows including the separator. No figure/table/figure caption occurs.",
+    "HOLD p86-separator-counting: the prepared layout has 23 bands and omits the short three-star row at y approximately 869-885. All three stars are retained as one p row. Native counting has NOT run; do not delete this printed row or invent an image to fit 23.",
+    "The four numbered prose items are the actual following explanation of SOURCE85's colon-led 基本组成部分（图56）：. They are not exercises, not a new title and not a fabricated p cont pair; the immutable SOURCE85 candidate's last p is not marked open.",
+    "问题1-4 belong to phy10-c1-s3-n30, group 问题, group_id g1. The bound TOC identifies 练习2 on printed76 as the separate unnumbered card phy10-c1-s3-t15; its exercises begin a separate card-local group g1, not N30 group g2.",
+    "Exercise2 task1 is genuinely open at 在回路里 and continues with SOURCE87 ex1 cont. The q=10^{-5} quantity is visible in the original-only detail crop. No formula is corrected or answered.",
+    "SOURCE85 remains draft/native-only; its held coil-subscript and frequency glyphs remain unapproved and are not resolved by this draft."
+  ],
+  "errata": []
+}
+---
+
+<!-- p -->
+1) 用来维持无衰减振荡的能源（在电子管振荡器里是直
+流电源）.
+
+<!-- p -->
+2) 调节从能源输入能量的装置——“阀门”（在电子管振
+荡器里三极管就起“阀门”的作用）.
+
+<!-- p -->
+3) 振荡系统即自激振荡系统的直接振荡部分（在电子管
+振荡器里就是振荡回路）.
+
+<!-- p -->
+4) 振荡系统用以控制“阀门”的反馈（在电子管振荡器里
+是回路线圈和栅极电路里线圈的电感性耦合）.
+
+<!-- p -->
+* * *
+
+<!-- p -->
+到这里我们结束了机械振动和电振荡的学习. 这两种不
+同本质的过程，它们的一般特征相同，描写它们的数学方程式
+也相同. 正如我们所看到的，这些相同点使学习振荡变得容
+易了.
+
+<!-- exhead -->
+问题
+
+<!-- ex 1 -->
+1. 在纯电阻为 $R$ 的振荡回路中，共振时，电流强度的振
+幅能否超过纯电阻也为 $R$，而电压等于交流电压振幅的直流
+电路中的电流强度?
+
+<!-- ex 2 -->
+2. 在三极管中，栅极的作用是什么?
+
+<!-- ex 3 -->
+3. 在电子管振荡器里反馈是怎样实现的?
+
+<!-- ex 4 -->
+4. 指出自激振荡系统的基本组成部分（以电子管振荡器
+为例）.
+
+<!-- exhead -->
+练习 2
+
+<!-- ex 1 open -->
+1. 把 $q=10^{-5}$ 库仑的电荷传给振荡回路的电容器以后，在回路里
+
+<!-- foot -->
+• 76 •
