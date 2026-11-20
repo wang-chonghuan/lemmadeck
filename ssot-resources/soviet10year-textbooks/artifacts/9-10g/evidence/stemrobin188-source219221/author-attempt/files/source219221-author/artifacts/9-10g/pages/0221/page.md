@@ -1,0 +1,82 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9-10g",
+  "page": 221,
+  "printed_page": 214,
+  "numbering_scope": "g10",
+  "source": {
+    "pdf": "9-10g 苏联十年制学校数学教材 几何 9-10年级.pdf",
+    "pdf_sha256": "1900be5207d00404f64e5a40ab855fbfb8495bd2a06c5ce295ae0e145444578a",
+    "pdf_page": 221
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1506,
+    "h": 2126,
+    "sha256": "766d946a26f24131610ed8337e34ce2d1d67b960625e599092ac674e5999ea72"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "19d56195a3a63cf4be93a7a159e1513d37b9b17d1b92235d8ae3d4e826cc45d0"
+  },
+  "notes": [
+    "SOURCE AUTHOR ONLY; original-FIRST/physical221-FIRST.json sealed 0444 before supplied predecessor, TOC, namespace, template and candidate semantics. Not independent approval.",
+    "Initial ex 209 cont is the two-row source fragment beginning alpha and ending 截面面积.; identity derives from observed physical220 ex209 open, not grammar or answers.",
+    "Exercises 210-215 and all numbered subquestions retain physical printed rows. No figures, captions, tables, section heading or pedagogical footnote appears.",
+    "Ex211 literal 底边边长 and ex210 source verb 苫 retained; no prose correction from grammar.",
+    "All source units, 10 percent, angles 30/45/60 degrees, alpha 28 degrees 42 minutes and areas 12.56/15.31 square centimetres retained.",
+    "Ex215 references figure88 on physical220. Its last question and parenthesis are visibly complete; physical222 and any subsequent subquestion are unobserved. No whole-lesson right-boundary approval.",
+    "Inherited numbering_scope g10 retained. Intentional-bold boundaries and small punctuation confidence limitations remain in FIRST; no count exclusions, synthetic breaks or errata."
+  ],
+  "errata": [],
+  "printed_lines": 26,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 209 cont -->
+$\alpha$. 一个平面经过圆锥顶点，与底面相交所成的角是$\varphi$. 求
+截面面积.
+
+<!-- ex 210 -->
+210. 青贮塔圆锥形的顶部的直径是$6\mathrm{m}$，高$2\mathrm{m}$. 如果
+用$0.7\mathrm{m}\times1.4\mathrm{m}$的铁片苫屋顶，并且接缝处和损耗占屋顶面
+积的$10\%$，问需多少张铁片？
+
+<!-- ex 211 -->
+211. 1) 有一条直角边等于$a$、它所对的角是$30^{\circ}$的直
+角三角形绕斜边旋转. 求由这个三角形两条直角边组成的折
+线旋转所得到的图形的面积.
+2) 底边边长是$b$，顶角是$\varphi$的等腰三角形绕底边旋转.
+求由两腰组成的折线旋转所得到的图形的面积.
+
+<!-- ex 212 -->
+212. 通过夹角为$\alpha$的两条母线引平面，得到的截面面积
+等于$S$. 圆锥的底面面积等于$Q$. 求侧面积. 如果$\alpha=28^{\circ}42'$，
+$S=12.56\mathrm{cm}^2$，$Q=15.31\mathrm{cm}^2$，求侧面积的值.
+
+<!-- ex 213 -->
+213. 1) 圆台的高等于$6\mathrm{cm}$，底面半径等于$10\mathrm{cm}$和
+$2\mathrm{cm}$. 求它的侧面积和全面积.
+2) 圆台的高为$h$，底面半径的比为$1:3$，母线与底面夹
+角等于$45^{\circ}$. 求圆台的表面积.
+
+<!-- ex 214 -->
+214. 直角梯形绕它较小的一腰旋转. 如果梯形较小的
+底边长等于$2\mathrm{cm}$，并且与底边成$60^{\circ}$角的腰长是$12\mathrm{cm}$，求这
+个旋转图形的表面积.
+
+<!-- ex 215 -->
+215. 1) 圆台的底面半径是$5\mathrm{cm}$和$2\mathrm{cm}$，高是$4\mathrm{cm}$. 求
+侧面展开图(图 88)的大小(半径和弧的值).
+2) 如果水桶的底面直径是$28\mathrm{cm}$和$20\mathrm{cm}$，高是$24\mathrm{cm}$，
+它的侧面展开图的大小是多少？要制造这个水桶需要多少平
+方米的材料(接缝处所用去的料忽略不计)？
+
+<!-- foot -->
+·214·

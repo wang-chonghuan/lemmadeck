@@ -1,0 +1,71 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9-10g",
+  "page": 223,
+  "printed_page": 216,
+  "numbering_scope": "g10",
+  "source": {
+    "pdf": "9-10g 苏联十年制学校数学教材 几何 9-10年级.pdf",
+    "pdf_sha256": "1900be5207d00404f64e5a40ab855fbfb8495bd2a06c5ce295ae0e145444578a",
+    "pdf_page": 223
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1506,
+    "h": 2126,
+    "sha256": "fb534ee49736e99202d5495bfd2f7586283a5d30d95278c375ad8d6f2450f7cf"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "19d56195a3a63cf4be93a7a159e1513d37b9b17d1b92235d8ae3d4e826cc45d0"
+  },
+  "notes": [
+    "SOURCE AUTHOR ONLY. FIRST223 sealed before bound semantics. Source-emphasis boundary HOLD is not waived by native PASS.",
+    "No new topic or parent heading printed. Fig91 and its cap are transparent before p cont from physical222; equation paragraph closes after first displayed equation.",
+    "Fig91 belongs to §62 prose, not exercises. Preserve all axes, unit-vector arrows, sphere ellipse, S-M radius R, O-S and O-M lines; unidentified diagonal dark mark has no invented label.",
+    "Source emphasis: 习题 definitely bold. Definite emphasized object 球心在坐标原点的球面 and cross-line full term 球心在坐标原点的球面的方程 recorded; exact bold boundary including 的方程 HOLD, left unasserted in body markup.",
+    "Exercise markers 216 internal 1°)/2°), 217°, 218-220 preserved. ex220 open ends 求这. No owner-ex guessed for numbered prose figure.",
+    "Footer decorations inventoried in FIRST. No exclusions or artificial row-count adjustments. Not whole-lesson approval."
+  ],
+  "errata": []
+}
+---
+
+<!-- fig 图 91 box 430,210,565,600 -->
+
+<!-- cap 图 91 -->
+图 91
+
+<!-- p cont -->
+(§44), 我们得到:
+$(x-a)^2+(y-b)^2+(z-c)^2=R^2$.
+
+<!-- p -->
+假如 $a=b=c=0$, 我们得到球心在坐标原点的球面
+的方程:
+$x^2+y^2+z^2=R^2$.
+
+<!-- exhead -->
+习题
+
+<!-- ex 216 -->
+216. 1°) 证明: 球心是球的对称中心; 2°) 球面有多少
+对称轴和对称面?
+
+<!-- ex 217 -->
+217°. 球面与经过球心的平面的交集是什么图形?
+
+<!-- ex 218 -->
+218. 已知点$A(1,-2,3)$, $B(3,-3,1)$, $C(1,1,\sqrt{2})$,
+$D(0,-3,\sqrt{7})$. 这些点中哪些点属于球心是$S(1,-2,0)$、
+半径等于3的球面?
+
+<!-- ex 219 -->
+219. 求球面$x^2+y^2+z^2=R^2$与坐标轴交点的坐标.
+
+<!-- ex 220 open -->
+220. 已知球面$x^2+y^2+z^2=200$和点$S(3,4,5)$. 求这
+
+<!-- foot -->
+216

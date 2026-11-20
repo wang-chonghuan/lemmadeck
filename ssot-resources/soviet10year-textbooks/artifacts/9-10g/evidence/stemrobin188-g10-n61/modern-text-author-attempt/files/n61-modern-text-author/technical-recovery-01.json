@@ -1,0 +1,28 @@
+{
+  "schema": "n61-author-technical-recovery@1",
+  "stage": "Report receipt aggregation only",
+  "failedCommandReceipt": "receipts/finish-author-01/command.json",
+  "cause": "run-stage created its receipt directory before launching the child; the child enumerated that in-flight directory and tried to read its command.json before the wrapper had written it.",
+  "resolution": "Only aggregate existing completed command.json receipts; retain the original failure and collect the successful recovery receipt during index sealing.",
+  "validOutputsReused": [
+    "input-bindings.after.json",
+    "FIRST/freeze.json",
+    "focused-author-check-01.json",
+    "prose-flow.saved.json",
+    "anchor-binding.json",
+    "lesson.template.json",
+    "lesson.candidate.json",
+    "exercises.template.json",
+    "exercises.candidate.json"
+  ],
+  "savedPriorChecksRerun": false,
+  "inputHashChecksRerun": false,
+  "finalCandidateWritesRepeated": false,
+  "contentChanges": 0,
+  "contentRepairsConsumed": 0,
+  "FIRSTScriptsUnchanged": true,
+  "originalFailedScript": "FIRST/scripts/finish-author.mjs",
+  "recoveryScript": "finish-author-recover-01.mjs",
+  "originalSealerScript": "FIRST/scripts/seal-index.mjs",
+  "workingSealerChange": "Collect recovery receipt and mark only the known original report-aggregation failure resolved; no content or check changes."
+}

@@ -1,0 +1,85 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9-10g",
+  "page": 232,
+  "printed_page": 225,
+  "numbering_scope": "g10",
+  "source": {
+    "pdf": "9-10g 苏联十年制学校数学教材 几何 9-10年级.pdf",
+    "pdf_sha256": "1900be5207d00404f64e5a40ab855fbfb8495bd2a06c5ce295ae0e145444578a",
+    "pdf_page": 232
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1506,
+    "h": 2126,
+    "sha256": "6faf83b1aceba04d3f5f11407638f5f87acfece1d12925b320f9d8173fc20a48"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "19d56195a3a63cf4be93a7a159e1513d37b9b17d1b92235d8ae3d4e826cc45d0"
+  },
+  "notes": [
+    "原图独看 FIRST 已封存；本稿未获独立来源批准。",
+    "首块 cont 承接 p0231#12 的源字面“圆（或”；Godel2限定231末行像素确认末字为“或”，本页首字“者”保持。局部接缝“圆（或者一个点）.”按冻结独审修复，旧FIRST“着”及旧尾文“最”均保留为历史，不以句意推字。",
+    "末两式右侧 S 的括号组实际下移，忠实写为下标；不按函数惯例改写，不登记推测勘误。",
+    "图100的原点 0/O 与箭头字形保留 source-glyph HOLD；裁图保留原墨迹，不断言码点身份。",
+    "继承的 source229 OZero、真实字体/字形 HOLD 与历史231标点 finding 不因新页 native 通过而解除。",
+    "无实际标题、习题、上标星号；式(1)是式号。"
+  ],
+  "errata": [],
+  "printed_lines": 18,
+  "figures": [
+    {
+      "id": "fig-g10-100",
+      "label": "图 100",
+      "box": [
+        362,
+        1246,
+        679,
+        428
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+者一个点）. 如果截面通过横坐标为 $x$ 的点（$x\in[a,b]$），那么
+这个截面的面积 $S(x)$ 等于 $\pi f^2(x)$. 经过点 $a$ 和 $x$ 的截面所
+围成的这一部分的体积记作 $V(x)$. 我们来研究在区间 $[a,b]$
+上的函数 $S(x)$ 和 $V(x)$.
+
+<!-- p -->
+假定函数 $f(x)$ 在 $[a,b]$ 上是递增的（或者递减的）. 我们证
+明图形 $\Phi$ 的体积可以借助下面公式求得：
+$V=\int_a^b S(x)dx.$
+
+<!-- p -->
+这里，我们利用在证明棱锥体积定理时用过的那种方法
+（§58）.
+
+<!-- p open -->
+给 $x$ 一个增量 $\Delta x>0(x+\Delta x\leqslant b)$，那么体积 $V(x)$ 也得到
+一个增量 $\Delta V$（图100）. 现在研究有公共高 $\Delta x$ 的圆柱. 第一
+个圆柱以面积等于 $S(x)$ 的圆作为底面，第二个圆柱以面积等
+于 $S(x+\Delta x)$ 的圆作为底面（图100）. 根据图形体积的性质
+（§65），有
+
+<!-- fig 图 100 box 362,1246,679,428 -->
+![图 100](figures/fig-g10-100.png)
+
+<!-- cap 图 100 -->
+图 100
+
+<!-- p cont -->
+$S(x)\Delta x\leqslant\Delta V\leqslant S_{(x+\Delta x)}\cdot\Delta x,$
+因此，$S(x)\leqslant\frac{\Delta V}{\Delta x}\leqslant S_{(x+\Delta x)}.$ （1）
+
+<!-- foot -->
+225

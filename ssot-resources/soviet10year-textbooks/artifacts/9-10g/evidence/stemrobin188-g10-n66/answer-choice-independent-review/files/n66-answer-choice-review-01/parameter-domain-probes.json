@@ -1,0 +1,224 @@
+{
+  "schema": "stemrobin188-n66-parameter-domain-engine-probe@1",
+  "result": "FAIL",
+  "scope": "Exercise242 part4 automatic expression grading under the stated a>0 domain; not answer-volume correctness.",
+  "candidatePath": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n66-answer-author/answer-keys.candidate.json",
+  "candidateSha256Before": "fde642b39ea78def16a0f6425ab2c2f9805a3c511cf1b731c4e9097338494cac",
+  "candidateSha256After": "fde642b39ea78def16a0f6425ab2c2f9805a3c511cf1b731c4e9097338494cac",
+  "judge": "expression",
+  "targetLatex": "\\frac{\\pi a^3}{2}",
+  "targetCanonical": [
+    "Multiply",
+    [
+      "Rational",
+      1,
+      2
+    ],
+    "Pi",
+    [
+      "Power",
+      "a",
+      3
+    ]
+  ],
+  "interface": "Installed ComputeEngine.parse().isEqual(target)===true, as used by current judgeTextbookPart with no domain assumptions.",
+  "checks": [
+    {
+      "input": "\\frac{\\pi\\left|a\\right|^3}{2}",
+      "expectedVerdict": true,
+      "actualVerdict": false,
+      "result": "FAIL",
+      "parseError": false,
+      "canonical": [
+        "Multiply",
+        [
+          "Rational",
+          1,
+          2
+        ],
+        "Pi",
+        [
+          "Power",
+          [
+            "Abs",
+            "a"
+          ],
+          3
+        ]
+      ],
+      "proof": "a>0 implies |a|=a, so this is pi*a^3/2 throughout the prompt domain."
+    },
+    {
+      "input": "\\frac{\\pi\\sqrt{a^6}}{2}",
+      "expectedVerdict": true,
+      "actualVerdict": false,
+      "result": "FAIL",
+      "parseError": false,
+      "canonical": [
+        "Multiply",
+        [
+          "Rational",
+          1,
+          2
+        ],
+        "Pi",
+        [
+          "Sqrt",
+          [
+            "Power",
+            "a",
+            6
+          ]
+        ]
+      ],
+      "proof": "For a>0, a^3>0 and the principal real square root sqrt((a^3)^2)=a^3."
+    },
+    {
+      "input": "\\frac{\\pi a^2\\sqrt{a^2}}{2}",
+      "expectedVerdict": true,
+      "actualVerdict": false,
+      "result": "FAIL",
+      "parseError": false,
+      "canonical": [
+        "Multiply",
+        [
+          "Rational",
+          1,
+          2
+        ],
+        "Pi",
+        [
+          "Power",
+          "a",
+          2
+        ],
+        [
+          "Sqrt",
+          [
+            "Power",
+            "a",
+            2
+          ]
+        ]
+      ],
+      "proof": "a>0 implies sqrt(a^2)=a, so the numerator is pi*a^3."
+    },
+    {
+      "input": "-\\frac{\\pi\\left|a\\right|^3}{2}",
+      "expectedVerdict": false,
+      "actualVerdict": false,
+      "result": "PASS",
+      "parseError": false,
+      "canonical": [
+        "Negate",
+        [
+          "Multiply",
+          [
+            "Rational",
+            1,
+            2
+          ],
+          "Pi",
+          [
+            "Power",
+            [
+              "Abs",
+              "a"
+            ],
+            3
+          ]
+        ]
+      ],
+      "proof": "For a>0 the proposed value is the negative of the strictly positive volume."
+    }
+  ],
+  "failures": [
+    {
+      "input": "\\frac{\\pi\\left|a\\right|^3}{2}",
+      "expectedVerdict": true,
+      "actualVerdict": false,
+      "result": "FAIL",
+      "parseError": false,
+      "canonical": [
+        "Multiply",
+        [
+          "Rational",
+          1,
+          2
+        ],
+        "Pi",
+        [
+          "Power",
+          [
+            "Abs",
+            "a"
+          ],
+          3
+        ]
+      ],
+      "proof": "a>0 implies |a|=a, so this is pi*a^3/2 throughout the prompt domain."
+    },
+    {
+      "input": "\\frac{\\pi\\sqrt{a^6}}{2}",
+      "expectedVerdict": true,
+      "actualVerdict": false,
+      "result": "FAIL",
+      "parseError": false,
+      "canonical": [
+        "Multiply",
+        [
+          "Rational",
+          1,
+          2
+        ],
+        "Pi",
+        [
+          "Sqrt",
+          [
+            "Power",
+            "a",
+            6
+          ]
+        ]
+      ],
+      "proof": "For a>0, a^3>0 and the principal real square root sqrt((a^3)^2)=a^3."
+    },
+    {
+      "input": "\\frac{\\pi a^2\\sqrt{a^2}}{2}",
+      "expectedVerdict": true,
+      "actualVerdict": false,
+      "result": "FAIL",
+      "parseError": false,
+      "canonical": [
+        "Multiply",
+        [
+          "Rational",
+          1,
+          2
+        ],
+        "Pi",
+        [
+          "Power",
+          "a",
+          2
+        ],
+        [
+          "Sqrt",
+          [
+            "Power",
+            "a",
+            2
+          ]
+        ]
+      ],
+      "proof": "a>0 implies sqrt(a^2)=a, so the numerator is pi*a^3."
+    }
+  ],
+  "comparisonCount": 4,
+  "positiveCount": 3,
+  "negativeCount": 1,
+  "expectedSelfComparisons": 0,
+  "networkCalls": 0,
+  "databaseConnections": 0,
+  "testsRead": false
+}

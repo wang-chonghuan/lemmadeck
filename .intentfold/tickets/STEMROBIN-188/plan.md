@@ -3249,3 +3249,378 @@ tmp/batch-03-staging/result.json记录范围与实际Git blob。
 接下来提交/推送本原分支，然后续已完整来源且text/六图局部审齐备的
 N61缺失现代模板/native/答案/choice/显示阶段，不重旧PASS。
 整组与正式handoff仍未完成；无DB/付费/合并/部署/关单。
+
+## 2026-11-20 N61实际恢复生产
+
+batch03推送已实际exit0，HEAD与远端均为
+14f0b48aeb209f7ddeecefb70da82e9e84af9b58；777路径仅N47/N62及
+必要审证闭包。暂存区为空，工作区book.json保持原sha13e3b8d0，
+提交索引为原隔离blob c56e51c0；layout.py及全部未完稿保留。
+用户明确恢复同一188-6，原树/分支不变，不把push或检查点当停产条件。
+实时188 GET HTTP200仍started、finish=review，未重setup/freshness/Grill。
+
+finish-n61-modern-01 prepare、adapt-finalize、render各首次exit0。
+六图83/84/85/86repair5/87repair2/88按现有独审hash复用，spec/SVG
+不变，只迁移render metadata路径并首次生成持久review记录；
+无新图读取、重画或重独审。20正文对象/十原题/六现代图首次native
+收口，尚非整课。adopt首次保存当前源/现代课、218–221源页及六图；
+source reindex与edition index仅目录派生各一次，不重装订。
+212仅既有H1证据、222仅既有右边界，不新增两页内容批准。
+
+answer-prepare首次十题，choice prepare首次十原题/七定义/一图88；
+两个新限定作者Franklin2（01a1fa67-320b-7983-9c99-ae02687460b0）
+和Ramanujan2（01a1fa67-3256-7880-9ea1-dc8ef6ff8ccd）分别只写自身
+答案/选择目录，无在途独审。父不读取其在途产物，同步准备最终显示。
+父新增0图，累计15/24保持；历史FAIL/修复数/源字形及过程HOLD不清。
+两项错误旧脚本名只读ENOENT保留，不重生产来补文件名。
+N61仍缺答案准入、交互、choice独审及最终双尺寸显示；无新增完整课、
+全项目机械防线/正式handoff/DB/付费/merge/deploy/关单或同伴消息。
+
+## 2026-11-20 N64缺失阶段接续
+
+g10-n64 seed、assemble-source-01、vectorize-source-01、
+assemble-source-02及adapt-prepare-isolated-01均已首次exit0。
+边界p0226#8至p0228#6之前，八正文对象、七题229–235、一图96；
+231跨227→228闭合。212仅既有H1 ancestor；226227已有FIRST独审
+直接复用，局部内容FAIL为空，原细标点、字体及晚0444过程HOLD保留，
+不重审源页或把原始矢量化0.006%误当现代图批准。
+原始模板首次封存为实际0444 FIRST；现代正文仅措辞/排版更新，
+232仅在原两个小问之间加换行，数学公式及数字不改。
+先前错误gate文件名只读ENOENT，已定位现有edition-text-contract，
+不重prepare。文字独审和现代图96仍待执行，不能计完整课。
+父本段0新图，累计15/24不清零，无DB、付费、Git提交或其它聊天消息。
+
+N61答案作者Franklin2已返回并关闭；collector-n61-n64首次核验12outputs，
+连索引/collector共15bindings首次留存。当前v2实际path位于作者work/
+9-10g/modern-us-neutral/lessons/geo910-c2-s3-n61，sha60d5c4de；
+父入口仅绑定该实际路径，不重prepare或作者。FIRST实际0444、
+Q(...)解析歧义失败、两处expected显式乘号修复及全部旧字节保留。
+作者8auto/2ungraded、25parts、0exact，仅作者结构/parse通过，
+尚非独审、native finalize或整课。子代理自身保守3图独立记录；
+其报告将父15相加为18是汇总口径，父未接图像，父实际15/24不变。
+Lorentz2仅N64现代文字首审及图96作者在途；Ramanujan2选择作者仍在途，
+没有另派第二独审者。
+
+235236首次prepare-range两页exit0，首次text-only前页尾备料exit0：
+继承234#末题243open，仅“通过顶点”尾文字和g10元数据，不开234图。
+McClintock3仅235/236新源作者在途，未看237/未装订；不是源独审。
+N65源229的O/0不等式字形HOLD继续保留，不用数学惯例改成0。
+两个收取/留存入口及N61choice入口已准备，尚未执行choice批准或显示。
+仍不把检查点、commit或压缩当停产条件，继续有源缺失阶段。
+
+Lorentz2已返回并关闭：N64现代文字8对象/七题语义PASS、findings为空；
+图96首次draft校验FAIL后仅一次实质修spec，当前draft/rendered及首次renderer
+PASS，未经自审。collector首次核验17outputs，20bindings留存（17copy/3reuse）。
+父错误旧报告名只读ENOENT，随后只读实际author-report.json；未重图生产。
+Hegel3为当前唯一在途独审者，仅源96独立FIRST与当前图首次视觉/数学/文化，
+保留glyph/FIRST过程HOLD，不重N64文字PASS，不把内部repair0当审批门槛。
+N64接合入口已准备未执行；拟只迁移source.image和render metadata路径，
+必须图审PASS后继续，SVG及所有几何/断言不变。
+
+N66首次seed29copy、assemble-source-01、三页各vectorize、assemble-source-02、
+adapt-prepare-isolated-01均exit0。16正文对象、242一原题六小问、98–101四图；
+边界p0231#6至p0234#2前。231232旧受影响PASS/233234局部PASS直接复用，
+不重源审；OZero在229不属本课，实印S下标形式原样保留、不猜改式。
+四原始矢量化不匹配0.029/0.017/0.017/0.020%，不是现代图批准。
+Wegener3仅N66零图文字作者在途；McClintock3仅235/236源作者在途；
+Ramanujan2仍N61选择作者在途，父不读这些在途产物。
+N61完整retainer仅准备，尚未答案独审/native/choice/display，不能计完整。
+父0新图累计15/24，无全项目防线、新commit/push、DB、付费、合并、部署或关单。
+
+N61选择作者Ramanujan2已返回并关闭；collector首次核验9outputs，
+12bindings留存（10copy/2reuse）。14questions、11single/3multiple、
+0新图，draft SHA4a101838与实际0444 FIRST同字节，唯一结构validator exit0。
+图88读取/透明预览/截图超时及白底补图保留，作者自身保守5图，不传父；
+作者将父15加为20仅其保守汇总，父实际15不变。水桶端向/开口与采购取整
+新增可见条件及原任务容量损失均已记录，不提前宣称源题唯一答案或语义PASS。
+prepare-n61-answer-choice-review-01首次完成14个view投影/输入bindings，
+候选v2及draftKeyLast显式绑定；尚未派N61独审，先等唯一Hegel3完成。
+
+235236源作者McClintock3已返回并关闭；collector首次核验43outputs，
+46bindings留存（36copy/10reuse）。235印228、25/25，236印229、13/13，
+首次native finalize两次各exit0、内容修复0。原页2/native图2，4图只在子代理；
+103前60字形局部HOLD未猜解，104已实际crop观察只作者、不冒独审。
+243承前cont闭合、251末题closed、236证明closed均仅作者事实，
+不批准N67/N68或按未看237猜右界。
+235236首独审input首次完成，blind-intake要求自封原图FIRST再读候选；
+还未派审，不重source234已存在局部PASS。
+
+N66零图文字作者Wegener3已返回并关闭：16对象/14短段落、题242六小问、
+0内容修复，两FIRST实际0444、输入before/after一致，尚未独审。
+首次collector因该明确schema用hash而非sha256真实exit1；FIRSTFAIL收据保存，
+仅为n66-text-author-output-index@1补该字段读取，未改索引或候选/重作者。
+恢复首次核验16outputs，20bindings留存（18copy/2reuse）。
+237238首次prepare-range、text-only前页closed尾备料各exit0，Faraday3仅该
+两页新源作者在途；不看236图/103 HOLD，也不猜239闭合。
+N64答案/交互入口只准备未执行；目前独审仍只有Hegel3图96，
+所有新完整课计数仍0，不把准备/候选presence当批准或停产条件。
+
+## 2026-11-20 N64原生收口与237238来源事实接续
+
+Hegel3图96独审已收取关闭，report status=pass/findings=[]，索引SHA
+a86d53a0218d77d437964559f65cd37c39a0881eeeb7ba446e6e48611972acbe。
+24outputs首次核验，27bindings持久留存；原图1、桌面1、手机起中末3，
+子代理实际5图，不回传图像。640px instructional scroll及末端可达PASS。
+N64 prepare/adapt-finalize/render/adopt各首次exit0，仅搬迁source.image
+与render metadata路径，SVG及几何不变，不重renderer或源文字/图审。
+N64八正文对象/七原题/图96已原生持久保存，仍不是完整课。
+answer-prepare及choice inspect/prepare各首次exit0；七题229–235、
+concepts0/2/6、零图，seed SHAd4e6f911。Tesla3答案和Erdos3选择作者在途，
+无正式finalize。display-n64-complete-01语法检查exit0，未执行。
+
+Archimedes3当前为唯一在途独审，仅N61十题206–215答案与14选择题，
+source-FIRST/view-first/key-last，父未读在途文件，不另派独审。
+父实际图累计15/24、本接续0新图；子报告加父图仅保守口径，不重复计。
+
+237238源作者Faraday3已收取关闭，44outputs核验、48bindings留存。
+索引SHA5d95b70b6c188ad6d8d4542a78a1666a9838e5087c590b57f4103b5be2b51317；
+首次collector因absolute_path明确schema真实失败，原FIRSTFAIL保存，
+仅schema adapter恢复，不改源稿或FIRST。237行24/24、238行16/16，
+各首次native finalize exit0；源原页2/native图105 crop2仅子代理实际4图。
+237题252–259均closed，p0237#10实际为§69；238末定义段closed，
+239未读，图106在238仅引用、实际图及§69全课右界UNKNOWN。
+唯一新源HOLD为图105建筑小铭文字形未可靠解码，原raster保留，
+不得以nativePASS清除；p0238正文“|AB|=2R为半径”按印刷保存，
+未自行猜改为直径。237238仍未独审、装订、提升core或批准整课。
+
+继续准备N66图98/99与100/101两个不相交作者批次。只使用已收取的
+现代文字候选和实际原PNG；正文独审仍待，作者不兼独审、不接答案或历史图稿。
+全项目防线仅正式handoff一次；本接续未commit/push、DB/付费、
+merge/deploy/关单或发送其它生产聊天消息，finish=review不变。
+
+N66图作者Darwin3（01a1fa87-6170-7933-8cfc-7f2e92c4fa07）仅98/99，
+Mill3（01a1fa87-89c6-7d80-a1e4-c890675bc6e5）仅100/101，输入首次封存；
+各只读实际原PNG及现代候选，作者不独审。N66零图文字独审manifest首次完成，
+尚未派文字独审。N64最终retainer和复核入口已准备/语法exit0，未运行。
+
+N64答案Tesla3已返回关闭，12outputs首次核验、15bindings留存；
+索引SHA9a215015d7faa835f8e3801f6a4342ecbcf3e5daec6becd8edc5ee4c7ce9f0c6，
+候选SHAc1e8476fd7beebb6dcc0862b342201d0d0ab3fd8fafa514b45709edd46ab7f3a。
+七derived、1auto/6ungraded、3expression parts/0exact，零图。FIRST actual0444，
+仅230一处display位置向量记号澄清，旧structure/parser结果绑定FIRST且不重跑。
+232(1)两个区域条件值未强加唯一答案；作者自检不是Gate2或独审PASS。
+source239240首次prepare-range各exit0、238closed文字尾备料exit0；
+Socrates3（01a1fa8a-0ee4-7070-8c03-193abbaa0bf1）只在两页新源作者阶段，
+不看238原图、不猜图106位置。237238首独审inputs首次完成，未派审。
+
+## 2026-11-20 N61答案215真实FAIL与有界修复
+
+Archimedes3首独审已返回关闭，15outputs首次核验、18bindings留存，
+索引SHAd4d19c23eef0ff38ffe1ad7c97ef023dd6e862fe9637a531e3c239a42e97c9f1。
+九原题答案PASS；215展开图十数值PASS，但最后用料auto唯一键FAIL，
+N61-A215-END-CONDITION：实际题和图88均未指定桶的端向/开口，
+小底封底0.21486772249m²不是唯一源支持值，大底封底可为0.24502701197m²。
+原FAIL SHA99c55adb保留，不推进错误candidate准入。14choices/59options
+独审PASS，view已显式补条件并记录能力损失，只有一次validator exit0。
+choice SHA4a101838不变；finish-n61-choice首次retain exit0，零新图或发布。
+
+父单次repair仅215 grading/parts/用料段/notes，候选独立保存SHA
+45855d9103f9016e7cb107adf79caa7ccdc95297939b36e47826a975c1a142a7；
+旧v2/FIRST/FAIL不改，九PASS及215十展开量display原字节前缀不变。
+215整题ungraded/parts=[]，显式列小底、大底单开口与双封闭条件用料；
+现规格不能小问混合grading，十个唯一数值只读显示、不再自动判分，
+此能力损失如实留存；源题、图、选择稿零改。新总7auto/3ungraded。
+Archimedes3已原上下文恢复，仅新目录n61-answer215-affected-review-02
+复核受影响字段，继承九PASS和自己的sealed source-FIRST，不开图、
+不重choice/source/figure；当前仍唯一在途独审。native答案/交互/最终显示未运行。
+父实际新增0图、累计15/24；检查点/小批次不是停产或交付，继续生产。
+
+215affected独审实际PASS/findings=[]已返回关闭，output-index SHA
+8f4b109517a89b047203ba6f22961ee17ef9aaa8a345da17978808338fcba4ea；
+5outputs首次核验、8bindings留存。九答案PASS与十展开数值继承原独审，
+新零图、原FAIL不清；7auto/3ungraded。N61答案admit/finalize及交互
+prepare/finalize各首次exit0，answer键SHA20b62603520dddf0c3eab8d8c80ee1aceb4a2ccfcedb02936523a945aa98a313，
+interactions SHA710b52c4724866b69c4d5d79f43b63ffced5c748a07c482507d3cc56f002b109。
+十四选择/59选项已正式retain，choice稿hash不变，尚待完整显示目视。
+
+display-n61-complete首次因无标签图88被错误要求textPx.length>0而失败，
+截图0、结果和原脚本actual0444均留存，不记内容失败、不改图。
+明确renderer labels=0后仅修checker为当前labels计数相等和逐标签>=16；
+恢复display02首次八截图机械PASS，源/图/choice/键hash不变，无重producer。
+KaTeX“侧/全”中文数学下标warn如实保留；Aquinas3
+（01a1fa92-6e78-7550-b036-9e8522f45bfc）是唯一在途最终离线目视者，
+新上下文只看八新截图，不重原图/内容审，父0图、累计15/24不变。
+
+N64选择Erdos3已返回关闭，9outputs首次核验、12bindings留存；
+原draft/FIRST SHA1efeaf7ac77fb2e8bee3d03331cb1c3651f531ee6207f8a27f5800d1a4a7ac4c，
+5single/20options，覆盖七来源但只表示13任务中的12项，
+232(1)原唯一距离缺扇区约定blocked，0图/0修复，仅structure一次exit0。
+首独审manifest首次完成，未派审。父批准有界native条件比较设计：
+原五题不改，新增显式区分所选区域与球心区域的半角距离判断，
+不改source/seed、不替原题猜唯一约定，原唯一措辞欠定及能力损失继续披露。
+原作者Erdos3已恢复，只写n64-choice232-author-02新目录，先自己的
+source解再options，不读答案，仍非独审或批准。
+
+N66两图作者均已收取关闭：98/99索引SHAfd47f17d5ce5fcf8785e4d64b9866a5da2329261b59a3712c6e88491631df0de，
+28outputs/31bindings；100/101索引SHA2f5e0a2845af447f1e040cb2d0e2f54c76246086088cbe33697e0b09177cfcad，
+30outputs/33bindings。两作者各实际2原图、0现代图，父不接图像；
+99/100各唯一label修复1，98/101修复0，所有FIRST actual0444及FAIL保留。
+100当前SVG是repair01，不把旧失败同名svg当当前；glyph/HOLD不提升。
+两独审inputs首次各6截图（两桌面、四手机起末）机械PASS，
+每批计划2原图+6当前截图=8，仅准备未派图独审，不重renderer。
+
+239240作者Socrates3已返回关闭，44outputs/47bindings首次核验留存，
+索引SHA6c665a2b585df78ab9004115a967f29ef1e688c80acfdc539b52230a2bd38cee；
+两页24/24各首次native exit0、FIRST actual0444、子实际3图。
+图106是239原页实际所见，不猜238对应关系；240实际第六章复习题h3，
+末p0240#9题274只到“制造”且open=true，图107未见，右界未知。
+继承238公式/105铭文及239/240细glyph/footer装饰HOLD分别保留。
+241242仅准备下一备料入口，尚未运行、未看原图。新完整课仍0，
+无新commit/push、全项目防线、DB/付费/合并/部署/关单或生产聊天消息。
+
+## 2026-11-20 N61实际完整离线留存并续N66
+
+Aquinas3最终显示独审已返回关闭，八截图各实际观察一次、43输入绑定
+不变、status=pass/findings=[]。索引SHA8353ed642dbd66ed194c8e63e542538e1da1a849c780855cb5dfd3c29a839d44，
+1output/4bindings首次核验留存。CJK下标warn是实际渲染警告，八表面
+目视未发现 unreadable/overlap/clipping，原警告和headless/offline限制保留，
+不是源文字重审或真实产品验收；父不重开八图。
+retain-n61-completion首次成功111bindings（51copy/60reuse），
+status=complete-offline：20正文对象/十原题/六现代图/十答案/十交互/
+十四选择题/59选项，7auto/3ungraded，八最终显示独审PASS。
+本接续现新增完整离线课1，仅N61；215原FAIL/单次修复/十net量只读
+能力损失及图86修复5/87修复2、源字形/FIRST HOLD均不清零。
+无正式handoff或新commit/push，不将此局部收口当整单完成或停产。
+
+Cicero3（01a1fa97-ef13-7661-8167-a45c2d5599f2）当前为唯一在途
+独审，N66图98/99首审与16对象/242六小问的零图现代文字首审同包。
+先两原图独立FIRST实际0444，再只六当前桌面/手机起末截图，
+计划8图，不能重开100/101或任何旧图，text-review写同一reviewroot
+避免重复包。finish-n66-modern入口已准备/语法exit0，须双图批及
+文本真实PASS且关闭收取后才运行，未提前promote/native。
+
+241242首次prepare-range各exit0，240 ex274“制造”open文字尾备料exit0；
+Peirce3（01a1fa97-0d0a-7f61-ac62-e17d6f192f4f）仅该两页新源作者，
+不看240原图、不猜图107位置或续文。Erdos3仍只在新232native
+条件选择作者阶段，未读其在途产物；没有第二独审者。
+父新增0图、累计15/24保持；无DB/付费/merge/deploy/关单，
+全项目防线仍留正式handoff一次，生产接续。
+
+## 2026-11-20 新快照绑定与来源清单技术恢复
+
+Erdos3已返回关闭，新232条件比较作者10outputs首次核验、13bindings留存；
+索引SHA53eaa97f86969d986ff8773a293f09cf5f5d02ae63184b70f28b29240db6cef3，
+候选SHA6f5c0b2b51c1cd133dcf6639cfe740b8b79d8bc25f813115c43ce4867a800da4。
+原五题字节不变，新总6single/24options；原232(1)唯一距离仍欠定，
+只新增一次显式区域条件比较，能力损失保留，零新图。
+新review-inputs02首次完成，旧五题inputs01从未派审，不把作者结构PASS
+当独审。finish/retainer入口仅改为绑定新快照并保留两版。
+
+Cicero3已返回关闭，98/99与N66现代16对象/242六小问首独审PASS；
+索引SHA0da3fcf6a1728d9d076e035aac9ad396b9027592e5756eb840cd7aa5c27a4d06，
+13outputs/16bindings首次收存。8图只在子代理，五glyphHOLD未清。
+Bohr3（01a1faa0-0439-7c13-b181-d719ff27db7c）为当前唯一独审，
+仅100/101原图FIRST及六当前截图，不重9899/文字；100用repair01。
+
+prepare-source235237-review01真实ENOENT在blind已保存、manifest未保存处；
+103误指0235，实际103/104都在0236。旧入口FIRSTFAIL actual0444
+和检查点来源failure收据保留，明确未保留原raw stack，不虚构。
+recover-source235237-manifest首次只补manifest，blind复用，零source/native
+重跑；103明确p0236#1 owner-ex250接p0235#8，属N67；104属§68证明。
+新source235237首审仍未派，235236及237238原intakes从未派审。
+
+Peirce3已返回关闭，24118/18、24226/26首次native均exit0，49outputs/
+52bindings首次核验留存，索引SHA072f8bcbe5f4b129484e28773cdb103047026fd82cfa01f060b8dbd5b49bf34a。
+原图2/crop107一图只子代理实际3；274闭合仅作者事实，286附解OPEN，
+108尚未见，SA_1B/SD及既有glyph/footer/HOLD不猜解、不提升审批。
+243244新备料入口已写待运行。两个只读旧文件名ENOENT属路由故障，
+未重生产；实时188 GET HTTP200仍started/finishreview。父本段0新图，
+累计15/24不变；新增完整课仍只N61，继续生产，不正式handoff或停产。
+
+## 2026-11-20 N64判分HOLD有界修复与N66接入
+
+N64首独审已关闭收取，17outputs/20bindings，索引SHA
+dec4f5a1aceee9c15bf019e8a4f0fa169902df31a707527fcbafa98afd063b3b。
+七数学答案与六题24选项数学PASS；234自动资格HOLD是真实误收
+x=3为y=3，不是方程数学错误。233覆盖revise仅缺显式披露源切面构造
+被题干直接给出；原HOLD/revise/FIRST保持原字节。
+父单次修复只234 grading/parts/notes与233 limitations/omitted_tasks；
+七display、六view及所有keys不变。新答案SHA6850c533、新draftSHA7cfae21d，
+结构首次exit0。全七原题ungraded，三正确切面方程只读显示，
+未用exact掩盖变量误收；旧数学PASS继承，新字段尚待独审。
+
+N66两锚点复核Cicero3实际PASS，关闭收取6outputs/9bindings，
+索引SHAa50db3a6ccea1676fcf10142974b91e7f2e9d964561aa8c4cc3018d30b25e108。
+仅两before字段改变、分段2/14，源字形HOLD及native首FAIL均保留。
+adopt首次exit0，16正文对象/242六小问/四图接入，producerRuns=0；
+不重文字/图/renderer。answer-prepare与choice inspect/prepare首次exit0，
+concept12、0图；Sagan3答案作者与Lovelace3选择作者在各新目录在途。
+Cicero3原上下文恢复为唯一在途独审，仅N64两个修复字段，新增0图。
+父累计15/24保持，正式全项目防线未执行，未DB/付费/commit/push、
+merge/deploy/关单或发送其它生产聊天消息，继续小批制作。
+
+N64受影响独审实际PASS已关闭收取8outputs/11bindings，索引SHA
+e8b1766124844807c69c1195fd495bea6d298b0081e82951ac85ebb6ef46398f。
+原生with-review首次exit0，数学PASS继承，原HOLD/revise不改。
+答案admit首调用在role-keyed inputBindings被误按array读取处真实exit1；
+原stack和脚本FIRST actual0444留存。仅Object.values读取恢复，
+新admit02首次成功，候选hash不变、0重作者或审查。
+answer-finalize及interaction prepare/finalize各首次exit0；
+choice首次retain成功、0图。display-n64-complete首次8截图机械PASS，
+Kierkegaard3是当前唯一在途最终离线目视者，只八新截图，父不接图像。
+N66答案Sagan3已关闭收取5outputs/8bindings，candidateSHAfde642b3，
+242六量5numeric/1expression、1auto、0图/0修复，仍待首独审；
+Lovelace3选择作者在途，未读其在途稿。新增完整课计数仍只N61，
+父累计15/24不变，继续制作而非正式handoff。
+
+N64最终显示Kierkegaard3实际八图各观察一次PASS，关闭收取，
+索引SHA63e29c706557b3b1ef7638de4f8f3fe3af8beb4fbbd9b45faff5bc164cc7cbb7。
+146bindings首次完整离线留存（53copy/93reuse）：8正文对象/7原题/
+图96/7答案与交互/6single24options、0auto7ungraded。手机图96隐藏右端
+只继承机械横滚末端证据，未假称目视重审；源HOLD、234误收HOLD与233
+构造能力损失保留。新完整离线课累计N61/N64两课，尚未正式整单验收。
+
+N66选择Lovelace3已关闭收取6outputs/9bindings，draftSHA5365e4b9，
+3single12options覆盖六小问，结构一次exit0，0图。Pasteur3为唯一在途
+首独审，242源独立FIRST→view/optionsFIRST→key-last，未提前admit。
+245246原prepare已真实exit0直接复用，inputs首次完成；
+Descartes3只在两新页来源作者阶段，不看244图、不猜247或TOC续文。
+窄暂存入口准备但未运行，目标N61/N64/N66三完整课；git fetch只同步本单
+远端跟踪状态、不pull或改main/工作区，无commit/push/DB/发布/关单。
+
+## 2026-11-20 N66判分修复与显示检查技术恢复
+
+242首独审数学与选择PASS，自动资格FAIL为a>0域内合法绝对值/根式
+被当前判分器误拒。单次仅改grading/parts/notes为ungraded，六量display
+字节不变；整题规格导致五个可靠数值小问也失去自动判分，能力损失保留。
+候选SHA f4a23561bcd449ce43d2d8007b1064cb5e151650017d8eaf2567bec03066154d。
+Pasteur3局部PASS关闭收取，索引SHA
+928faa91c3445a40fbfcdda4ea3464d7b05f65a2db1f0d143e4c14c5ef7e98f3，
+7bindings留存；原FAIL不清，3single/12options复用、不重choice审查。
+answer-admit/finalize、interaction prepare/finalize各首次exit0；
+新答案SHA3a6303fd，交互SHAd9f4cab4。父新增0图，累计15/24。
+
+display-n66-complete01真实exit1：native render.labels是整数，checker误取
+length，断言8!==undefined；截图0。原结果含实际stack，原脚本封0444。
+只新display02读取数量、检查非负整数并绑定旧失败，课程/图/答案/选择
+不改；未重复producer或独审，尚未派最终显示独审。
+Descartes3来源245246作者已关闭收取，索引SHA
+38615f0ea5d6dd987d0ec5f708781a6d4ffca62ec4295f3ab6186d3768ab3cf2，
+42bindings（37copy/5reuse）；245计行11/11、246计行26/26，
+作者实际8图及246一处标点修复保留，末17题open、未看247，
+源作者结果不是批准、未promote。实时188 GET HTTP200仍started/finishreview。
+
+display02首次八截图机械PASS，Beauvoir3
+（01a1fad2-a2a3-7913-a59d-0e93cae5393e）为唯一在途最终显示独审，
+仅八当前截图各一次，不重source/数学/choice/旧图。父0新增图、累计15。
+两错误只读路径ENOENT已转实际文件名，不重作者。source-next-reviews入口
+重入首断言真实exit1且写入0；现有joint235237+figure27及source241244
+两manifest完整、12/33bindings未变直接复用，未派审、未重建。
+receipt为prepare-source-next-reviews-01-existing.failure.json。
+247248两页首次prepare-range均exit0、tail17open备料exit0；
+Laplace3（01a1fad4-1767-7953-a884-a9ed4c054d96）仅两新页源作者，
+不看246/249、不猜目录边界，仍非独审或批准。
+新fetch后本单HEAD/remote=0/0，未pull/rebase或动main、旧工作树。
+
+N66最终显示Beauvoir3实际八图各一次PASS/findings=[]，已关闭收取；
+索引SHA3f130ce49de69a930107042eac3323c16e58594f03b44d7a21080a855b065ce5，
+4bindings（3copy/1reuse）。手机隐藏右端未重目视，继承已有图宽度PASS
+与本次scroll-end机械事实，不冒称真实产品或数学重审。
+N66完整离线retain首次exit0、147bindings（64copy/83reuse）：
+16正文对象/1原题六小问/4现代图/1答案与交互/3single12options，
+0auto1ungraded；原判分FAIL/显示checkerFAIL/两锚点修复及全部HOLD保留。
+本接续累计三完整离线课N61/N64/N66，正式全项目防线仍未执行。
+245246来源首审备料首次完成（2original+crop110=3），未派审；
+Ptolemy3（01a1fad7-ed5c-7270-a405-c88ac09d329d）为当前唯一独审，
+仅235237三源页与N48图27当前repair02组合8图，不重旧PASS。
+开始三课窄暂存/commit/push，未完成源作者和layout.py不混入。

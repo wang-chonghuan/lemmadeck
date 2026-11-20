@@ -1,0 +1,46 @@
+{
+  "schema": "bounded-author/visual-observations@1",
+  "role": "figure-author-only",
+  "independentReview": false,
+  "imageOpensCumulative": 4,
+  "figures": [
+    {
+      "figure": "fig-g10-83",
+      "draft": "FIRST",
+      "imageOpenOrdinal": 3,
+      "image": "fig-g10-83.FIRST.snapshot.png",
+      "nativeValidation": "pass",
+      "nativeRender": "pass",
+      "authorVisualStatus": "FAIL",
+      "observed": "Five labels S,B,C,A,O and the three solid generators and three dashed interior lines are visible. Both required base-rim arcs are absent from the visible canvas. No label clipping or answer annotation observed.",
+      "failure": "FIRST83-RIM-OFFCANVAS",
+      "repairCounterBefore": 0,
+      "dependentStepsStoppedAt": "author visual observation",
+      "review": "PENDING, not approved"
+    },
+    {
+      "figure": "fig-g10-84",
+      "draft": "FIRST",
+      "imageOpenOrdinal": 4,
+      "image": "fig-g10-84.FIRST.snapshot.png",
+      "nativeValidation": "pass",
+      "nativeRender": "pass",
+      "authorVisualStatus": "FAIL",
+      "observed": "Two panels and all eight labels including English a),b) and A_1 are visible; the sector closes through its two straight boundaries and lower arc. The cone's front and rear base-rim arcs are absent. No disk, flap, connecting arrow, numerical dimension or answer annotation observed.",
+      "failure": "FIRST84-RIM-OFFCANVAS",
+      "repairCounterBefore": 0,
+      "dependentStepsStoppedAt": "author visual observation",
+      "review": "PENDING, not approved"
+    }
+  ],
+  "diagnosis": {
+    "kind": "actual-spec coordinate-unit defect",
+    "evidence": ".agents/skills/ld-s10y-image/scripts/render_spec.mjs raw path layer multiplies input coordinates by scaleX/scaleY.",
+    "cause": "The FIRST specs encoded rim path coordinates in final output pixels; the existing raw path layer scales them again by 20, moving both arcs outside the canvas.",
+    "targetedRepair": "Re-encode only the two cone rim svgPath.d fields in pre-scale top-left source-screen user units. Keep geometry, all point coordinates, labels, assertions, net, layout, widths and source mapping unchanged.",
+    "allowedPerFigure": 1,
+    "generatedSVGEditing": false,
+    "newMobileFrames": false
+  },
+  "approval": "NONE; first failures preserved independently of native pass"
+}
