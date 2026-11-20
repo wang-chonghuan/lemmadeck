@@ -18,6 +18,7 @@ from pathlib import Path
 from PIL import Image
 
 import assemble
+from mathcheck import katex_validate
 
 
 LESSON_SCHEMA = "ld-s10y-lesson/edition-lesson@1"
@@ -139,7 +140,13 @@ def _authoritative_source_targets(
 ) -> dict[str, dict[str, str]]:
     stream = assemble.load_stream(book)
     merged, _ = assemble.merge_across_pages(stream)
-    candidates = assemble.cut_lessons(merged)
+    toc = (
+        Path(__file__).resolve().parents[4]
+        / "ssot-resources/soviet10year-textbooks/toc" / book.name / "zh.json"
+    )
+    if not toc.is_file():
+        raise SystemExit(f"ERROR: 缺少权威 TOC，无法重建 lesson 来源边界: {toc}")
+    candidates = assemble.cut_lessons(merged, toc)
     numbering = "book"
     book_path = book / "book.json"
     if book_path.exists():
@@ -518,17 +525,58 @@ def math_signature(text: str) -> list[str]:
             expression,
         )
 
+    matches = list(MATH.finditer(text))
+    continuations = {
+        index
+        for index, match in enumerate(matches)
+        if index > 0
+        and not text[matches[index - 1].end():match.start()].strip()
+        and (match.group(1) or match.group(2)).lstrip().startswith(("=", "+", "-"))
+    }
+    renderable = {}
+    if continuations:
+        items = [
+            {"id": str(index), "field": "math", "tex": match.group(1) or match.group(2),
+             "display": match.group(1) is not None}
+            for index, match in enumerate(matches)
+        ]
+        results = katex_validate(items)
+        for result in results:
+            if result.get("fatal"):
+                raise SystemExit(f"ERROR: {result['fatal']}")
+            renderable[int(result["id"])] = result.get("ok") is True
+
     signature = []
-    for match in MATH.finditer(text):
+    previous_end = None
+    for index, match in enumerate(matches):
         expression = normalize_math_sentence_boundary(
             match.group(1) or match.group(2),
         )
         expression = normalize_text_literals(expression)
-        signature.extend(
-            part.strip()
+        parts = [
+            "\x1f".join(re.findall(r"\\[A-Za-z]+|\\.|[^\s]", part))
             for part in MATH_BOUNDARY_PUNCTUATION.split(expression)
             if part.strip()
+        ]
+        # Continue only independently renderable rows, never an open TeX argument.
+        continues = (
+            index in continuations
+            and renderable.get(index - 1, False)
+            and renderable.get(index, False)
+            and (
+                expression.lstrip().startswith("=")
+                or not re.search(r"[=<>]|\\(?:leq?|geq?|neq?|approx|equiv)\b", expression)
+            )
+            and previous_end is not None
+            and not text[previous_end:match.start()].strip()
+            and expression.lstrip().startswith(("=", "+", "-"))
+            and signature
+            and parts
         )
+        if continues:
+            signature[-1] += "\x1f" + parts.pop(0)
+        signature.extend(parts)
+        previous_end = match.end()
     return signature
 
 

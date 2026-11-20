@@ -1,0 +1,88 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9-10g",
+  "page": 163,
+  "printed_page": 156,
+  "numbering_scope": "g10",
+  "source": {
+    "pdf": "9-10g 苏联十年制学校数学教材 几何 9-10年级.pdf",
+    "pdf_sha256": "1900be5207d00404f64e5a40ab855fbfb8495bd2a06c5ce295ae0e145444578a",
+    "pdf_page": 163
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1506,
+    "h": 2126,
+    "sha256": "ea3ea94aad3915ea1132dc307c45f557db624c5447dd14abefada6a96f996240"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "19d56195a3a63cf4be93a7a159e1513d37b9b17d1b92235d8ae3d4e826cc45d0"
+  },
+  "notes": [
+    "Author-only transcription from the actual full physical163 page; no independent review or approval.",
+    "Printed page is 156. Opening subparts 3) and 4) continue the actual exercise 30 fragment at the end of physical162. The continuation closes with a printed period before exercise 31.",
+    "Established numbering_scope g10 retained by explicit authorization; original numeric exercise/subpart labels are not relabeled.",
+    "The pre-section exercise run ends with exercise 33. The actual next printed heading is §46. 变换的坐标公式. 位似, and the entire right-boundary page fragment is transcribed.",
+    "The numeral 1 and numeral 2 below §46 are visible inline prose subdivisions, not inferred complete curriculum-card identities. No full N46 or complete section46 is claimed.",
+    "Figure 12 is referenced in the text, but no actual figure is printed on this page. No missing figure content or next-page continuation is inferred.",
+    "The last definition ends with a printed period and is not tagged open merely because section46 continues beyond the authorized page range.",
+    "No UNKNOWN text was found in inspected pixels. Source joins before physical162, a printed §45 header, and the remainder of section46 remain unobserved."
+  ],
+  "errata": [],
+  "printed_lines": 25,
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 30 cont -->
+3) 通过点$A(3,0,0)$和$B(0,3,0)$，且平行于竖坐标轴；4) 通
+过点$C(-\sqrt{3},0,0)$和$D(0,0,-1)$，且垂直于平面$Oxy$.
+
+<!-- ex 31 -->
+31. 下列平面是平行平面吗？1) $x+2y+3z+5=0$和
+$2x+4y+6z+11=0$；2) $x-7y+5z-1=0$和$2x+y-3z+4$
+$=0$.
+
+<!-- ex 32 -->
+32. 一个平面通过点$M(1,3,-1)$，且平行于下列平面，
+求这个平面的方程：1) $3x+y-z+5=0$；2) $x-y+5z-4$
+$=0$.
+
+<!-- ex 33 -->
+33. 下列两个平面互相垂直吗？1) $2x-5y+z+4=0$和
+$3x+2y+4z-1=0$；2) $7x-y+9=0$和$y+2z-3=0$.
+
+<!-- h3 -->
+§46. 变换的坐标公式. 位似
+
+<!-- p -->
+1. 假设给定了直角坐标系和空间的变换$f$. 可以提出
+问题：推出根据任意点$M$的坐标计算它的象$f(M)$的坐标公
+式. 这样的公式叫做变换的坐标公式.
+
+<!-- p -->
+问题1. 求平移(向量$\vec{p}=(a,b,c)$的坐标公式.
+
+<!-- p -->
+解. 我们研究任意点$M(x,y,z)$和它的象$M_1(x_1,y_1,z_1)$
+(图12). 从条件$\vec{p}(M)=M_1$得出$\overrightarrow{MM_1}=\vec{p}$. 将这个等式变
+为坐标形式(§44，习题2)，得到：$x_1-x=a$，$y_1-y=b$，$z_1-z$
+$=c$. 由此，得：
+$x_1=a+x$，$y_1=b+y$，$z_1=c+z$.
+
+<!-- p -->
+2. 空间的位似的定义，同平面几何的位似的定义相同.
+
+<!-- p -->
+定义. 如果在空间的变换下，任意的一点$M$的象是点
+$M_1$，而且$\overrightarrow{OM_1}=k\overrightarrow{OM}$($k\ne0$)，这样的空间变换叫做以$O$为
+中心、系数为$k$的位似.
+
+<!-- foot -->
+·156·

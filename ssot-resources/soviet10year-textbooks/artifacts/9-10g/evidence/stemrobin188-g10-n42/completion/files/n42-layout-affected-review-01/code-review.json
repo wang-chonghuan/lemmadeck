@@ -1,0 +1,65 @@
+{
+  "schema": "n42-localized-code-review-v1",
+  "status": "revise",
+  "reviewer": {
+    "kind": "independent_agent",
+    "identity": "Codex sole independent affected-layout/trace reviewer for STEMROBIN-188 SAME188-6 N42, separate from parent; independently verifies the trace-only transition; inherits Dirac semantic PASS with original solutions and figure observations unchanged; no new independent solutions or figure review"
+  },
+  "inputs": [
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/edition.py",
+      "sha256": "fb29824c83ab22957738b21ea83a8fd669aa7489fa7277dbdb227fc4fb6e0579",
+      "size": 82189
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/test_math_continuation_layout.py",
+      "sha256": "bc9d15b5604ee7180cfbd7f14f9a1723f93c3802876d8a74aae9894ed9ce6331",
+      "size": 1513
+    }
+  ],
+  "scope": "Localized math_signature continuation/token change and its new test file only",
+  "findings": [
+    {
+      "id": "N42-CODE-01",
+      "severity": "P2",
+      "status": "revise",
+      "title": "Continuation equality accepts a split inside an unclosed TeX argument",
+      "file": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/edition.py",
+      "start": 541,
+      "end": 550,
+      "affected_test_file": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/test_math_continuation_layout.py",
+      "affected_test_start": 7,
+      "affected_test_end": 31,
+      "counterexample": {
+        "source": "$\\frac{a+b}{c}$",
+        "changed": "$\\frac{a$\n$+b}{c}$",
+        "signatures_equal": true,
+        "exact_observed_signature": [
+          "\\frac\u001f{\u001fa\u001f+\u001fb\u001f}\u001f{\u001fc\u001f}"
+        ],
+        "method": "Read-only python3 -B AST extraction and execution of current normalize_math_sentence_boundary/math_signature plus their regex constants. No production module import, image load or unit-test execution.",
+        "first_fragment": "\\frac{a",
+        "second_fragment": "+b}{c}",
+        "first_fragment_missing_closing_brace": true,
+        "second_fragment_has_unmatched_closing_brace": true
+      },
+      "evidence": "The new continuation condition checks whitespace and a leading =/+/-, but does not check that each math span is independently closed. The reproduced invalid fraction fragments therefore receive exactly the same signature as the intact fraction. validate_text uses this equality as its math-preservation gate at edition.py:867; the new tests protect command boundaries and changed group tokens, but do not reject splitting a formula inside its still-open group.",
+      "consequence": "A malformed layout-only candidate can pass this shared mathematical-preservation comparison. The renderer handles each math span separately (render_lesson.js:73, throwOnError:false), so this equality is not evidence that the split retains a renderable formula. This is a concrete gate regression, not a defect in the current N42 row or an inherited answer/choice semantic finding.",
+      "requested_repair": "Before treating spans as continuations, reject boundaries inside unclosed TeX groups or paired environments; retain the current complete-row N42 repair. Add a negative regression for the supplied split-fraction counterexample, without weakening the existing token/sign/command-boundary protections.",
+      "no_silent_edit": true,
+      "current_n42_formula_corrupted": false
+    }
+  ],
+  "retained_strengths": [
+    "The token separator retains TeX command-token boundaries, including alpha followed by b versus alphab.",
+    "The supplied tests cover valid complete-row continuations, whitespace, intervening prose/punctuation, changed signs, missing operators, different grouping tokens and changed basis vectors.",
+    "The actual N42 transition keeps all TeX tokens and all nine terms and has a separate two-screen visual PASS."
+  ],
+  "tests_read": true,
+  "tests_edited": false,
+  "tests_executed": false,
+  "isolated_counterexample_probes": 1,
+  "limitations": [
+    "No new lesson candidate, full validator, render or adapt-finalize was run for the malformed fraction. The counterexample establishes the exact shared signature false equivalence."
+  ]
+}

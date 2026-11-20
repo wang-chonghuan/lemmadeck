@@ -88,9 +88,10 @@ def merge_across_pages(stream: list[dict]) -> tuple[list[dict], list[str]]:
     return out, warn
 
 
-def cut_lessons(stream: list[dict]) -> list[dict]:
-    """h3 开一节。h1/h2 记作祖先标题，跟着下一节走。"""
+def cut_lessons(stream: list[dict], toc: Path | None = None) -> list[dict]:
+    """h3 或 TOC 确认的独立 exhead 开一课；普通习题栏仍属于当前课。"""
     lessons, pending = [], {"h1": None, "h2": None}
+    exhead_boundaries = _toc_exhead_boundaries(toc) if toc is not None else set()
     cur = None
     preface = []
     for b in stream:
@@ -102,13 +103,18 @@ def cut_lessons(stream: list[dict]) -> list[dict]:
         if b["kind"] == "p" and b.get("label") == "preface":
             preface.append(b)
             continue
-        if b["kind"] == "h3":
+        standalone_exhead = (
+            b["kind"] == "exhead"
+            and (B.text_of(b), b.get("printed_page")) in exhead_boundaries
+        )
+        if b["kind"] == "h3" or standalone_exhead:
             title = B.text_of(b)
             m = SEC_NUM.match(title)
             cur = {"chapter": pending["h1"], "section": pending["h2"],
                    "number": m.group(1) if m else None,
                    "title": m.group(2).strip() if m else title,
-                   "printed_title": title, "blocks": preface,
+                   "printed_title": title,
+                   "blocks": preface + ([b] if standalone_exhead else []),
                    "start_page": b["page"], "start_printed": b.get("printed_page")}
             preface = []
             lessons.append(cur)
@@ -690,6 +696,24 @@ def _card_printed_number(card: dict) -> object:
     return named.group(1) if named else None
 
 
+def _toc_exhead_boundaries(toc_path: Path) -> set[tuple[str, int]]:
+    """Only an exact, unnumbered TOC card at its printed start page is a boundary."""
+    toc = json.loads(toc_path.read_text(encoding="utf-8"))
+    boundaries = set()
+    for card in _toc_cards(toc):
+        if _card_printed_number(card) is not None:
+            continue
+        name = card.get("source", {}).get("printedName") or card.get("title")
+        page = card.get("page")
+        if not isinstance(name, str) or not isinstance(page, int):
+            continue
+        key = (name.strip(), page)
+        if key in boundaries:
+            raise ValueError(f"TOC 独立习题卡的标题和印刷页不唯一: {name} / {page}")
+        boundaries.add(key)
+    return boundaries
+
+
 def check_toc(lessons: list[dict], toc_path: Path, book_id: str,
               extracted_printed_pages: set[int] | None = None) -> list[str]:
     """TOC 是外部真源，做两件事：核对覆盖，并把小节钉到目录的**卡片 id** 上。
@@ -796,7 +820,7 @@ def run(
         return 2
 
     merged, warn_merge = merge_across_pages(stream)
-    lessons = cut_lessons(merged)
+    lessons = cut_lessons(merged, toc)
     for l in lessons:
         l["prose"], l["exercises"] = split_lesson(l, exercise_numbering)
     figure_errors, warn_fig = claim_figures(lessons, merged)

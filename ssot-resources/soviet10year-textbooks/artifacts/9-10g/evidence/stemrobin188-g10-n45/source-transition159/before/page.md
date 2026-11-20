@@ -1,0 +1,98 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9-10g",
+  "page": 159,
+  "numbering_scope": "g10",
+  "printed_page": 152,
+  "source": {
+    "pdf": "9-10g 苏联十年制学校数学教材 几何 9-10年级.pdf",
+    "pdf_sha256": "1900be5207d00404f64e5a40ab855fbfb8495bd2a06c5ce295ae0e145444578a",
+    "pdf_page": 159
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1506,
+    "h": 2126,
+    "sha256": "4f8efe027661e6515d9ebcb7c8ddd35ad901bbb2e0908d1fb35d4c199be05878"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "19d56195a3a63cf4be93a7a159e1513d37b9b17d1b92235d8ae3d4e826cc45d0"
+  },
+  "notes": [
+    "逐页源图转写。页首是物理158习题16的3)、4)、5)，使用ex 16 cont，不虚构页首印刷16。",
+    "源图习题17至22之后实际出现§45. 平面的方程。标题与TOC路由一致，但只按本页像素记录边界。",
+    "题22原印刷题号后带*，保留该标记；本页无插图或图题。",
+    "印刷页脚数字可读为152；前后装饰墨点有破损，右侧另有细小弯曲墨迹，以[unknown]保留局部不确定，不猜标点。",
+    "页底边界外有残碎墨迹，无法确认来自串页或扫描；不拼进正文。独立源审确认右下边缘局部残碎墨迹不是额外可读文字行，仅以精确count_exclusions作用于计数副本，不改源图或真实页脚。",
+    "§45最后本页可读完整句为“每一个解是一个数组(x,y,z).”；下一物理页未获授权读取，后续段落连接未知，不补写后文、不判定课完成。",
+    "所有数学忠实保留，不使用答案键，不登记推测勘误。",
+    "仅来源作者候选，无独立审查、来源批准或现代图批准。"
+  ],
+  "errata": [],
+  "printed_lines": 23,
+  "count_exclusions": [
+    {
+      "kind": "scan-artifact",
+      "box": [
+        1188,
+        2100,
+        80,
+        26
+      ],
+      "reason": "Isolated fragmented lower-right edge residue below the genuine printed 152 footer, within a non-content margin; independently inspected full page and limited crop show no additional readable text row."
+    }
+  ],
+  "figures": [],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- ex 16 cont -->
+3) $D\left(-3,\frac12,-1\right)$；4) $E(0,2,-3)$；5) $G\left(0,0,-\frac32\right)$.
+
+<!-- ex 17 -->
+17. 根据点 $P$ 和 $Q$ 的坐标求向量 $\overrightarrow{PQ}$ 的坐标：
+1) $P(2,-3,0)$，$Q(-1,2,-3)$；2) $P\left(\frac12,-\frac43,\frac56\right)$，
+$Q\left(-\frac35,0,\frac23\right)$.
+
+<!-- ex 18 -->
+18. 点 $B$ 是点 $A(2,-3,1)$ 在坐标平面 $Oyz$ 的正投影. 计
+算 $|\overrightarrow{OB}|$.
+
+<!-- ex 19 -->
+19. 计算在坐标轴 $Oy$ 上与点 $A(2,-1,1)$ 和 $B(0,1,3)$
+等远的点的坐标.
+
+<!-- ex 20 -->
+20. 给定三角形的顶点的坐标为 $A(3,-2,1)$、$B(3,1,5)$、
+$C(4,0,3)$. 计算：1)中线 $AA_1$ 和 $BB_1$ 的长；2)从坐标原点到
+三角形 $ABC$ 中线交点的距离；3) 这个三角形内角的大小.
+
+<!-- ex 21 -->
+21. 已知平行四边形三个顶点的坐标：$A(1,-3,0)$、
+$B(-2,4,1)$、$C(-3,1,1)$，计算这个平行四边形对角线的
+长度.
+
+<!-- ex 22 -->
+22. *证明：点 $A(2,4,-4)$、$B(1,1,-3)$、$C(-2,0,5)$，
+$D(-1,3,4)$ 是平行四边形的顶点. 并计算它的两条对角线
+的夹角的大小.
+
+<!-- h3 -->
+§45. 平面的方程
+
+<!-- p -->
+在空间里引进直角坐标系以后，便可以用代数课中讲过
+的方法解决几何问题. 我们研究含三个变量的方程：
+$P(x,y,z)=0$.
+
+<!-- p -->
+假定它的解集不是空集. 每一个解是一个数组 $(x,y,z)$.
+
+<!-- foot -->
+· 152 · [unknown]

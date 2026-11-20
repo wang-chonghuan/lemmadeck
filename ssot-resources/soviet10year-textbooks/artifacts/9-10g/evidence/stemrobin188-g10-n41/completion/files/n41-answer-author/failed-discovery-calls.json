@@ -1,0 +1,60 @@
+{
+  "schema": "n41-answer-author/failed-discovery-calls@1",
+  "purpose": "Supplement the immutable first-input receipt with literal early failure calls and observed combined output. These were file-discovery failures, not mathematical or producer failures.",
+  "calls": [
+    {
+      "cwd": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck",
+      "command": "rg --files ssot-resources/soviet10year-textbooks/artifacts/9-10g/editions/modern-us-neutral/lessons/geo910-c1-s3-n41 .intentfold/tickets/STEMROBIN-188/tmp/n41-answer-author",
+      "exitCode": 2,
+      "observedCombinedOutput": [
+        "rg: .intentfold/tickets/STEMROBIN-188/tmp/n41-answer-author: No such file or directory (os error 2)",
+        "ssot-resources/soviet10year-textbooks/artifacts/9-10g/editions/modern-us-neutral/lessons/geo910-c1-s3-n41/lesson.json",
+        "ssot-resources/soviet10year-textbooks/artifacts/9-10g/editions/modern-us-neutral/lessons/geo910-c1-s3-n41/figures.json",
+        "ssot-resources/soviet10year-textbooks/artifacts/9-10g/editions/modern-us-neutral/lessons/geo910-c1-s3-n41/adaptation.audit.json",
+        "ssot-resources/soviet10year-textbooks/artifacts/9-10g/editions/modern-us-neutral/lessons/geo910-c1-s3-n41/exercises.json"
+      ],
+      "recovery": "Created only the permitted own author directory via apply_patch. Did not rerun this discovery command or any producer."
+    },
+    {
+      "cwd": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck",
+      "command": "rg -n 'resvg|ComputeEngine|katex|parse' .claude/skills/ld-s10y-answer/tools/check_expected.mjs .claude/skills/ld-s10y-answer/tools/lesson_answers.py .agents/skills/ld-s10y-image/scripts/render_spec.mjs .agents/skills/package.json .claude/skills/ld-s10y-lesson/package.json app/package.json",
+      "exitCode": 2,
+      "observedCombinedOutput": [
+        "rg: .claude/skills/ld-s10y-answer/tools/check_expected.mjs: No such file or directory (os error 2)",
+        ".claude/skills/ld-s10y-answer/tools/lesson_answers.py:6:import argparse",
+        ".claude/skills/ld-s10y-answer/tools/lesson_answers.py:61:def selected_lessons(args: argparse.Namespace) -> list[str]:",
+        ".claude/skills/ld-s10y-answer/tools/lesson_answers.py:69:def book_dir(args: argparse.Namespace) -> Path:",
+        ".claude/skills/ld-s10y-answer/tools/lesson_answers.py:73:def lessons_dir(args: argparse.Namespace) -> Path:",
+        ".claude/skills/ld-s10y-answer/tools/lesson_answers.py:260:def cmd_prepare(args: argparse.Namespace) -> int:",
+        ".claude/skills/ld-s10y-answer/tools/lesson_answers.py:502:def cmd_finalize(args: argparse.Namespace) -> int:",
+        ".claude/skills/ld-s10y-answer/tools/lesson_answers.py:578:def add_common(parser: argparse.ArgumentParser) -> None:",
+        ".claude/skills/ld-s10y-answer/tools/lesson_answers.py:579:    parser.add_argument(\"--book\", required=True)",
+        ".claude/skills/ld-s10y-answer/tools/lesson_answers.py:580:    parser.add_argument(\"--lesson\", action=\"append\")",
+        ".claude/skills/ld-s10y-answer/tools/lesson_answers.py:581:    parser.add_argument(\"--edition\", required=True)",
+        ".claude/skills/ld-s10y-answer/tools/lesson_answers.py:582:    parser.add_argument(\"--root\", default=DEFAULT_ROOT)",
+        ".claude/skills/ld-s10y-answer/tools/lesson_answers.py:583:    parser.add_argument(\"--work\", default=DEFAULT_WORK)",
+        ".claude/skills/ld-s10y-answer/tools/lesson_answers.py:586:def build_parser() -> argparse.ArgumentParser:",
+        ".claude/skills/ld-s10y-answer/tools/lesson_answers.py:587:    parser = argparse.ArgumentParser(",
+        ".claude/skills/ld-s10y-answer/tools/lesson_answers.py:591:    subparsers = parser.add_subparsers(dest=\"command\", required=True)",
+        ".claude/skills/ld-s10y-answer/tools/lesson_answers.py:592:    prepare = subparsers.add_parser(\"prepare\")",
+        ".claude/skills/ld-s10y-answer/tools/lesson_answers.py:595:    finalize = subparsers.add_parser(\"finalize\")",
+        ".claude/skills/ld-s10y-answer/tools/lesson_answers.py:598:    return parser",
+        ".claude/skills/ld-s10y-answer/tools/lesson_answers.py:602:    args = build_parser().parse_args()",
+        "app/package.json:18:    \"katex\": \"^0.18.1\",",
+        ".claude/skills/ld-s10y-lesson/package.json:5:    \"@resvg/resvg-js\": \"^2.6.2\",",
+        ".claude/skills/ld-s10y-lesson/package.json:6:    \"katex\": \"^0.16.11\",",
+        ".agents/skills/ld-s10y-image/scripts/render_spec.mjs:34:function parseArgs(argv) {",
+        ".agents/skills/ld-s10y-image/scripts/render_spec.mjs:144:    skillsDir, '../../.claude/skills/ld-s10y-lesson/node_modules/katex/dist/fonts',",
+        ".agents/skills/ld-s10y-image/scripts/render_spec.mjs:640:        Number.parseFloat(node.getAttribute('stroke-width') || '0') > 2.5",
+        ".agents/skills/ld-s10y-image/scripts/render_spec.mjs:828:          const fontSize = Number.parseFloat(node.getAttribute('font-size') || '0')",
+        ".agents/skills/ld-s10y-image/scripts/render_spec.mjs:924:  const args = parseArgs(process.argv.slice(2))",
+        ".agents/skills/ld-s10y-image/scripts/render_spec.mjs:927:  const rawSpec = JSON.parse(fs.readFileSync(specPath, 'utf8'))",
+        ".agents/skills/ld-s10y-image/scripts/render_spec.mjs:954:      version: JSON.parse("
+      ],
+      "recovery": "Read lesson_answers.py to discover its actual check_math_expressions.mjs helper. Did not retry the guessed path or run a validation twice."
+    }
+  ],
+  "producerOrCheckFailures": [],
+  "producerOrCheckRetries": 0,
+  "originalReceiptsUnchanged": true
+}

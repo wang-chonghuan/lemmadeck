@@ -1,0 +1,162 @@
+{
+  "schema": "same188-6/n42-code-affected@1",
+  "status": "pass",
+  "finding": "N42-CODE-01",
+  "scope": "Affected current math_signature repair and regression tests only; no new N42 content/answer/visual re-review",
+  "reasons": [
+    "Before/current diff is limited to the existing mathcheck.katex_validate import, bounded continuation candidate collection/renderability guard, extra relation guard and focused regression assertions. Tokenization/normalization itself is unchanged.",
+    "Each adjacent whitespace-only candidate is identified by raw leading =,+,-; one structured existing KaTeX batch runs only when candidates exist. Inputs retain independent raw TeX and display mode with unique index IDs.",
+    "Joining requires BOTH immediately adjacent rows to have ok exactly True. Missing/false results cannot authorize joining. A fatal parser/helper receipt raises SystemExit before signature construction, rather than approving an unchecked concatenation.",
+    "The supplied broken fraction cannot now acquire the intact signature: its two independently parsed rows fail renderability, preserving the two-span boundary. The added negative cases also cover unclosed aligned environments, unmatched left/right and missing unbraced fraction arguments.",
+    "Complete =-prefixed equation rows can continue, while standalone +/- rows containing =,<,>, or the enumerated le/leq/ge/geq/ne/neq/approx/equiv relation commands are conservatively kept separate. The new a=1 then -b=2 regression explicitly rejects the misleading concatenated equation.",
+    "The original TeX token separator, command-token boundaries, braces, all sign/operator tokens and variable/vector names remain unchanged. Existing negative token/group/sign tests remain in the current file; whitespace-only and intended complete N42 additive/equality continuations remain supported.",
+    "No concrete new regression in this affected repair was identified. This resolves the original independently-unrenderable-row finding, not a claim that a syntactic fingerprint proves arbitrary mathematical equivalence."
+  ],
+  "codeLocations": [
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/edition.py",
+      "start": 21,
+      "subject": "Existing helper import"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/edition.py",
+      "start": 528,
+      "end": 548,
+      "subject": "Raw candidates and structured renderability/fatal handling"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/edition.py",
+      "start": 562,
+      "end": 582,
+      "subject": "Both-row guard, relation guard, preserved token concatenation"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/test_math_continuation_layout.py",
+      "start": 6,
+      "end": 48,
+      "subject": "Preserved positives/token negatives and added malformed-row/relation negatives"
+    }
+  ],
+  "reusedExecutionEvidence": {
+    "method": "Read actual command/stdout/stderr receipts and verify their current-code byte bindings; no unit tests or current-N42 gate repeated.",
+    "tests": {
+      "command": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-signature-code-repair-01/tests.command.json",
+        "sha256": "c8c2764ea1f1db8b6facbf50e11150a0037891fbaea9a1386bce96b192bd83d0"
+      },
+      "exitCode": 0,
+      "actualReceipt": "test_closed_equation_continuations_preserve_tokens (test_math_continuation_layout.MathContinuationLayoutTests.test_closed_equation_continuations_preserve_tokens) ... ok\ntest_formula_whitespace_is_layout (test_math_continuation_layout.MathContinuationLayoutTests.test_formula_whitespace_is_layout) ... ok\ntest_mathematical_changes_still_fail (test_math_continuation_layout.MathContinuationLayoutTests.test_mathematical_changes_still_fail) ... ok\ntest_noncontinuations_remain_separate (test_math_continuation_layout.MathContinuationLayoutTests.test_noncontinuations_remain_separate) ... ok\ntest_unrenderable_fragments_cannot_continue (test_math_continuation_layout.MathContinuationLayoutTests.test_unrenderable_fragments_cannot_continue) ... ok\n\n----------------------------------------------------------------------\nRan 5 tests in 0.322s\n\nOK\n"
+    },
+    "currentN42Gate": {
+      "command": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-signature-code-repair-01/current-n42-gate.command.json",
+        "sha256": "111a40fd8edd3d41ea75e1a0c6983b5d8bf12af412f65cd57052d26b17db5f3c"
+      },
+      "exitCode": 0,
+      "result": {
+        "status": "pass",
+        "errors": [],
+        "field": "prose[15]",
+        "finalize_repeated": false,
+        "render_repeated": false
+      }
+    }
+  },
+  "originalFinding": {
+    "binding": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-signature-code-repair-01/first-finding.json",
+      "sha256": "6faad89788d75f74c9d4ae3b3c115653f307f76b55713fd8e8ffc95c6b315075"
+    },
+    "historicalReport": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-layout-affected-review-01/report.json",
+      "sha256": "21e3e470ad1776abebf8d58dc3f83c50a93baa3ac8e0f49b45b459efba5bbb24"
+    },
+    "originalReportStatus": "revise",
+    "originalFindingStatusRetained": "revise",
+    "currentAffectedResolution": "pass",
+    "historyReset": false
+  },
+  "preservedRepairAccounting": {
+    "prior": {
+      "existing_content_repair_delta": 1,
+      "history_reset": false,
+      "prior_cumulative_counts_not_replaced": true,
+      "newly_authored_repairs_by_reviewer": 0,
+      "new_paid_calls_by_reviewer": 0,
+      "historical_image_count": 8,
+      "current_actual_image_count": 2,
+      "known_prior_plus_current_review_image_subtotal": 10,
+      "whole_production_image_total_claimed": false
+    },
+    "currentParentCodeRepair": "Existing n42-signature-code-repair-01 is retained; no repair authored here and no cumulative count replaced or reset.",
+    "reviewerRepairDelta": 0,
+    "reviewerPaidCallDelta": 0
+  },
+  "actualImageLoads": 0,
+  "independentTargetedCodeExecutions": 0,
+  "testsRepeated": 0,
+  "lessonGatesRepeated": 0,
+  "noProductFilesEdited": true,
+  "bindings": [
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/edition.py",
+      "sha256": "733f48acaceeb3879fb14b33fe7b170b5597a3b8f98ae38cb17aa1076de8783c"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/test_math_continuation_layout.py",
+      "sha256": "e0e780a704b109d7932471316db61882116e1b4ceb5adcd512e535c60e66418f"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/mathcheck.py",
+      "sha256": "8f703e723234c3ccc4d9b329d8e2f7b0053d0af261d0526169c31110a53fa8f7"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/katex_check.js",
+      "sha256": "59c500172eca6dd76baea669aa0d92f67c28512253a751018782a5006a619b56"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-signature-code-repair-01/before/edition.py",
+      "sha256": "fb29824c83ab22957738b21ea83a8fd669aa7489fa7277dbdb227fc4fb6e0579"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-signature-code-repair-01/before/test_math_continuation_layout.py",
+      "sha256": "bc9d15b5604ee7180cfbd7f14f9a1723f93c3802876d8a74aae9894ed9ce6331"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-signature-code-repair-01/first-finding.json",
+      "sha256": "6faad89788d75f74c9d4ae3b3c115653f307f76b55713fd8e8ffc95c6b315075"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-signature-code-repair-01/tests.command.json",
+      "sha256": "c8c2764ea1f1db8b6facbf50e11150a0037891fbaea9a1386bce96b192bd83d0"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-signature-code-repair-01/tests.stdout.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-signature-code-repair-01/tests.stderr.txt",
+      "sha256": "98dbed6020d814b59f710005163ee978f7f258bd2367899ae59f8a0b821d9a2b"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-signature-code-repair-01/current-n42-gate.command.json",
+      "sha256": "111a40fd8edd3d41ea75e1a0c6983b5d8bf12af412f65cd57052d26b17db5f3c"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-signature-code-repair-01/current-n42-gate.stdout.txt",
+      "sha256": "31ae00d3ad5b13ce46bd52bc04a3b358ad361791505c9666f2cf7b4134b56820"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-signature-code-repair-01/current-n42-gate.stderr.txt",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-layout-affected-review-01/report.json",
+      "sha256": "21e3e470ad1776abebf8d58dc3f83c50a93baa3ac8e0f49b45b459efba5bbb24"
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-layout-affected-review-01/code-review.json",
+      "sha256": "84fc032179d8e4c792f4f2633c83c69c97245edf9d20b485050881a6f9172be9"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "stage": "post_report_byte_integrity",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck",
+  "command": "node -e 'const fs=require(\"fs\"),c=require(\"crypto\"),path=require(\"path\");const root=path.resolve(\".intentfold/tickets/STEMROBIN-188/tmp/n41-choice-author\"); const d=JSON.parse(fs.readFileSync(path.join(root,\"delivery-hashes.json\"),\"utf8\"));const r=JSON.parse(fs.readFileSync(path.join(root,\"report.json\"),\"utf8\"));let n=0;for(const f of [...d.files,...r.own_artifacts_with_actual_byte_hashes,...r.actual_inputs]){const h=c.createHash(\"sha256\").update(fs.readFileSync(f.path)).digest(\"hex\");if(h!==f.sha256)throw Error(\"Hash mismatch: \"+f.path);n++;}console.log(\"Byte-integrity bindings verified: \"+n+\"; no semantic review or second structural validation.\");'",
+  "exit_code": 1,
+  "stdout": "",
+  "stderr_key_line": "Error: Hash mismatch: /Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/9-10g/book.json",
+  "recorded_index_sha256": "2177df6b732a1040ef08bb8e6048b5d8b024a89ad464985afb86b15bdf8f8a26",
+  "observed_later_index_sha256": "113a58e1294fd3fc18b2a5a2bdd93fe488e77d5671ecc400969eadf0903a2598",
+  "affected": "Mutable book index only; nine non-index input byte hashes still match.",
+  "classification": "Concurrent index drift, not a question-content failure or semantic review.",
+  "recovery": "Preserve first report snapshots and failure; annotate the seed's immutable historical catalogue binding. Recheck only file-byte integrity excluding volatile catalogue equality, not authoring or structural/semantic gates."
+}

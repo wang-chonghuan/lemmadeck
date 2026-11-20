@@ -1,0 +1,37 @@
+{
+  "schema": "same188-6/failed-check-recovery@1",
+  "id": "PIXEL-CHECK-01",
+  "first_command": "node wrapper invoking .claude/skills/ld-s10y-lesson/.venv/bin/python -B .intentfold/tickets/STEMROBIN-188/tmp/n46-note-source175176-review-02/pixel-check.py",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck",
+  "exit_code": 1,
+  "first_output": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n46-note-source175176-review-02/crop-pixels.json",
+  "initial_status": "revise",
+  "diagnosis": "Reviewer's check compared full native PNG dimensions with an unpadded source rectangle. Each output is width+24,height+24 because the existing native crop format adds 12px white padding on each side.",
+  "contract_evidence": [
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/layout.py",
+      "line": 1667,
+      "fact": "crop(..., pad: int = 12) creates a white padded canvas and pastes only the exact source rectangle."
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/p2c.py",
+      "line": 378,
+      "fact": "Existing finalization calls layout.crop without overriding pad."
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/source175176-author/evidence/final-verification.json",
+      "raw_sha256": "f3b37f6226d585961337e99461147ee993942e69eb3f44b8ca0f32924459077d",
+      "fact": "Supplied author evidence also records native_padding_px=12. Used for diagnosis, not substituted for independent comparison."
+    }
+  ],
+  "recovery": {
+    "only_failed_stage_rechecked": "pixel comparison with --native-padding",
+    "new_result": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n46-note-source175176-review-02/crop-pixels-native.json",
+    "original_failure_preserved": true,
+    "default_unpadded_check_still_reproducible": true,
+    "candidate_or_native_repair": false,
+    "native_finalize_or_passed_stage_rerun": false,
+    "additional_context_images": 0,
+    "meaning": "A test-contract diagnosis; does not resolve separate content/glyph/all-ink HOLDs or approve source."
+  }
+}

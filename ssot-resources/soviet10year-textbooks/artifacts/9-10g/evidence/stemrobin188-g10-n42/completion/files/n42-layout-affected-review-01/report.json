@@ -1,0 +1,838 @@
+{
+  "schema": "n42-affected-layout-trace-report-v1",
+  "ticket": "STEMROBIN-188",
+  "assignment": "SAME188-6 bounded N42 affected layout/trace-only transition",
+  "review_date": "2026-11-20",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck",
+  "reviewer": {
+    "kind": "independent_agent",
+    "identity": "Codex sole independent affected-layout/trace reviewer for STEMROBIN-188 SAME188-6 N42, separate from parent; independently verifies the trace-only transition; inherits Dirac semantic PASS with original solutions and figure observations unchanged; no new independent solutions or figure review"
+  },
+  "status": "revise",
+  "outcomes": {
+    "affected_visual_layout": "pass",
+    "trace_only_choice_transition": "pass",
+    "inherited_answer_semantics": "pass",
+    "inherited_choice_semantics": "pass",
+    "localized_code_review": "revise",
+    "overall": "revise"
+  },
+  "findings": [
+    {
+      "id": "N42-CODE-01",
+      "severity": "P2",
+      "status": "revise",
+      "title": "Continuation equality accepts a split inside an unclosed TeX argument",
+      "file": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/edition.py",
+      "start": 541,
+      "end": 550,
+      "affected_test_file": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/test_math_continuation_layout.py",
+      "affected_test_start": 7,
+      "affected_test_end": 31,
+      "counterexample": {
+        "source": "$\\frac{a+b}{c}$",
+        "changed": "$\\frac{a$\n$+b}{c}$",
+        "signatures_equal": true,
+        "exact_observed_signature": [
+          "\\frac\u001f{\u001fa\u001f+\u001fb\u001f}\u001f{\u001fc\u001f}"
+        ],
+        "method": "Read-only python3 -B AST extraction and execution of current normalize_math_sentence_boundary/math_signature plus their regex constants. No production module import, image load or unit-test execution.",
+        "first_fragment": "\\frac{a",
+        "second_fragment": "+b}{c}",
+        "first_fragment_missing_closing_brace": true,
+        "second_fragment_has_unmatched_closing_brace": true
+      },
+      "evidence": "The new continuation condition checks whitespace and a leading =/+/-, but does not check that each math span is independently closed. The reproduced invalid fraction fragments therefore receive exactly the same signature as the intact fraction. validate_text uses this equality as its math-preservation gate at edition.py:867; the new tests protect command boundaries and changed group tokens, but do not reject splitting a formula inside its still-open group.",
+      "consequence": "A malformed layout-only candidate can pass this shared mathematical-preservation comparison. The renderer handles each math span separately (render_lesson.js:73, throwOnError:false), so this equality is not evidence that the split retains a renderable formula. This is a concrete gate regression, not a defect in the current N42 row or an inherited answer/choice semantic finding.",
+      "requested_repair": "Before treating spans as continuations, reject boundaries inside unclosed TeX groups or paired environments; retain the current complete-row N42 repair. Add a negative regression for the supplied split-fraction counterexample, without weakening the existing token/sign/command-boundary protections.",
+      "no_silent_edit": true,
+      "current_n42_formula_corrupted": false
+    }
+  ],
+  "resolved_affected_issue": {
+    "id": "N42-VIS-01",
+    "current_status": "pass",
+    "historical_revise_preserved": true,
+    "visual_observation": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-layout-affected-review-01/visual-observation.json",
+      "sha256": "96a24743efa5e155f495feef5233b3355ac01acfc46a930eea216d436dbbdbec",
+      "size": 13753
+    }
+  },
+  "input_bindings": [
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.agents/skills/ld-s10y-image/SKILL.md",
+      "sha256": "d31ecbea164b4c5c0ac781146976f50381466ae4a8931486bdb2e92e29015747",
+      "size": 12304
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/references/production-resume.md",
+      "sha256": "8d489fdcdd1a00866e951958009f6c8602e6b970108f8e7fc87368c3197b6a58",
+      "size": 4311
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.agents/skills/ld-s10y-choice/SKILL.md",
+      "sha256": "3b4e5adf74af7e7b461fd218c6ac51c4cca28a1c03ef05ba9a87bec12732ee3b",
+      "size": 4651
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.agents/skills/ld-s10y-choice/references/contract.md",
+      "sha256": "a9a44012fb526b24d8d0718c4e5e8966a49313c2a01548416cdd8699c2910083",
+      "size": 8272
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.agents/skills/ld-s10y-choice/references/review.md",
+      "sha256": "7ab367601247bece0fa05b60a9cd1555d78f1169ed581db76f18385f75aaacea",
+      "size": 4670
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.agents/skills/ld-s10y-choice/scripts/prepare.py",
+      "sha256": "d0ab465fedc54f9baf42700088db4888f1d549462a4627d165781dbdcc9b2027",
+      "size": 10568
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-mobile-layout-repair-01/template-transition.json",
+      "sha256": "eda2ad7b398e44f90100932cf0014373bc7dd97ed136e8e1dd69cf2f7a5f9ba0",
+      "size": 816
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-mobile-layout-repair-01/modern-transition.json",
+      "sha256": "4c4de5b6d3baeb52890ad4a3073652a251aa23a1be0f8aeddbdb5cdbfed68f96",
+      "size": 768
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-mobile-layout-repair-01/snapshot.json",
+      "sha256": "d070c5661d8fff1fcbded004a5234c33947ee4a45abc9a10511fb8520d4a2899",
+      "size": 1608
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-layout-choice-transition-01/bindings.json",
+      "sha256": "298583b2ae5f2f0a2177ceaffba6160530f3654d6bb53aad7af9a380ccc3c646",
+      "size": 2050
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-choice-prerequisite-repair-01/seed.json",
+      "sha256": "7af941de3c3b69c17374070d44b48a548ca7a64b4789c2f9c01a02de9fb9308e",
+      "size": 6262
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-choice-prerequisite-repair-01/draft.json",
+      "sha256": "c1e5d47b47720c7e10ec4ebbf436561991c08eab7bb5bafaac196e57429afcbd",
+      "size": 34689
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-layout-choice-transition-01/seed.json",
+      "sha256": "5e2f19af4dcd9509022a4fdac27ef2682678dd3d82c28ccd9463a62f49615013",
+      "size": 5048
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-layout-choice-transition-01/draft.json",
+      "sha256": "fc772d2c3b58f1f2dd9d545d726a9b606a315291a34735c2768c625264d1389f",
+      "size": 35333
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-answer-choice-review/review.json",
+      "sha256": "48e100f957a2ce2166def36a19267624d3f2ba2b46ce5b4e0e3d28ecc64a0d63",
+      "size": 20152
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-answer-choice-review/report.json",
+      "sha256": "a45496de9606de8dd0fc641e2d7d088aa2075788f96881c972055fc7903f8bc7",
+      "size": 46455
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-answer-choice-review/visual-observation.json",
+      "sha256": "ac9b09a225b9417649e7ef24fecfd08de47a8a6e1dd10a0686d034e367672a5f",
+      "size": 41564
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-answer-choice-review/first-defect.json",
+      "sha256": "b1897b1469c130fa04f61a56502dada67314b524afc8c74a5da6bdc239bc667f",
+      "size": 926
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-answer-choice-review/FIRST-seal.json",
+      "sha256": "408fe0d71a378122cb51861b55c8ce9a2fd66405589c47ede9241ff8538bfd2e",
+      "size": 8493
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-answer-choice-review/PREKEY-seal.json",
+      "sha256": "405e5dca633c9ea2ffb62f93ff175062393b97a0b900cc238eab18c999a5972b",
+      "size": 2278
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-answer-choice-review/keys-read-receipt.json",
+      "sha256": "9351a4e658c8be16f8920b7ecbd9ebb50703a7017e4902a8540a7577d6d0a7b3",
+      "size": 1702
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/edition.py",
+      "sha256": "fb29824c83ab22957738b21ea83a8fd669aa7489fa7277dbdb227fc4fb6e0579",
+      "size": 82189
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/test_math_continuation_layout.py",
+      "sha256": "bc9d15b5604ee7180cfbd7f14f9a1723f93c3802876d8a74aae9894ed9ce6331",
+      "size": 1513
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/offline-display-9-10g_geo910-c2-s1-n42-surfaces-layout-repair-01/result.json",
+      "sha256": "248a743fb4f2368abf22df035d4c44f7abf38b885119382948a974b501629a34",
+      "size": 2331
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-layout-affected-review-01/assemble-review.mjs",
+      "sha256": "02c3cfff8a8c38350a4f072b2b6f8e0d265b5df4d67f51b560311f25dba1f6e5",
+      "size": 29378
+    }
+  ],
+  "layout_transitions": [
+    {
+      "kind": "template",
+      "before": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-mobile-layout-repair-01/before/lesson.template.json",
+        "sha256": "e1fc3a3a0d7ac2ec40fd19eed7bd47758007daf345dde676e50ca67b8c200377",
+        "size": 18203
+      },
+      "current": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/g10-n42n43/work/adapt/9-10g/modern-us-neutral/lessons/geo910-c2-s1-n42/lesson.template.json",
+        "sha256": "65551237c150c9d837cd29c5846fc572de453948f6fdcefd92c5847a378d30bc",
+        "size": 18207
+      },
+      "changed_fields": [
+        "prose[15].text"
+      ],
+      "source_selector": "prose[15].text",
+      "source_ref": "p0154#1",
+      "source_data_exact": true,
+      "source_text_exact": true,
+      "all_other_lesson_fields_exact": true,
+      "delimiter_whitespace_removed_stream_equal": true,
+      "removed_stream_sha256": "568913b78215cc56c078127185cdefec03961dd1b565dd5fd16abe3af6d753bb",
+      "tex_token_stream_equal": true,
+      "tex_token_count": 197,
+      "tex_token_stream_sha256": "b00ccd32d8c71aa29a2f8f1ba92332335cac704a0b430581f2e884a53516318e",
+      "before_formula_rows": 3,
+      "current_formula_rows": 4,
+      "independent_semantic_review_rerun": false
+    },
+    {
+      "kind": "modern",
+      "before": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-mobile-layout-repair-01/before/lesson.json",
+        "sha256": "7c4cd2d448bd19f249b11cf146b8e7580fa88bac3dd6459fa2b70d303f863aff",
+        "size": 18276
+      },
+      "current": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/9-10g/editions/modern-us-neutral/lessons/geo910-c2-s1-n42/lesson.json",
+        "sha256": "579f5f82542c054e7f93b08dedbcf1b5a7ba8dcfc8be94e9495cba33c6b35468",
+        "size": 18280
+      },
+      "changed_fields": [
+        "prose[15].text"
+      ],
+      "source_selector": "prose[15].text",
+      "source_ref": "p0154#1",
+      "source_data_exact": true,
+      "source_text_exact": true,
+      "all_other_lesson_fields_exact": true,
+      "delimiter_whitespace_removed_stream_equal": true,
+      "removed_stream_sha256": "568913b78215cc56c078127185cdefec03961dd1b565dd5fd16abe3af6d753bb",
+      "tex_token_stream_equal": true,
+      "tex_token_count": 197,
+      "tex_token_stream_sha256": "b00ccd32d8c71aa29a2f8f1ba92332335cac704a0b430581f2e884a53516318e",
+      "before_formula_rows": 3,
+      "current_formula_rows": 4,
+      "independent_semantic_review_rerun": false
+    }
+  ],
+  "unchanged_documents": [
+    {
+      "name": "exercises.json",
+      "before": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-mobile-layout-repair-01/before/exercises.json",
+        "sha256": "79d44233d7e12d01cb0d24eb2322bd083ca1e007d7bc66b8dbd6e144a5758615",
+        "size": 12700
+      },
+      "current": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/9-10g/editions/modern-us-neutral/lessons/geo910-c2-s1-n42/exercises.json",
+        "sha256": "79d44233d7e12d01cb0d24eb2322bd083ca1e007d7bc66b8dbd6e144a5758615",
+        "size": 12700
+      },
+      "byte_identical": true
+    },
+    {
+      "name": "figures.json",
+      "before": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-mobile-layout-repair-01/before/figures.json",
+        "sha256": "f8958ab6285faa9129e1effbcc720d336288916e964cd685f7be6cf46cb7bf35",
+        "size": 1437
+      },
+      "current": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/9-10g/editions/modern-us-neutral/lessons/geo910-c2-s1-n42/figures.json",
+        "sha256": "f8958ab6285faa9129e1effbcc720d336288916e964cd685f7be6cf46cb7bf35",
+        "size": 1437
+      },
+      "byte_identical": true
+    },
+    {
+      "name": "adaptation.audit.json",
+      "before": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-mobile-layout-repair-01/before/adaptation.audit.json",
+        "sha256": "cb8a65aa1772a0e21830744731a9daa4ede5514cd8824b7e8d91b103c0c880d7",
+        "size": 859
+      },
+      "current": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/9-10g/editions/modern-us-neutral/lessons/geo910-c2-s1-n42/adaptation.audit.json",
+        "sha256": "cb8a65aa1772a0e21830744731a9daa4ede5514cd8824b7e8d91b103c0c880d7",
+        "size": 859
+      },
+      "byte_identical": true
+    }
+  ],
+  "raw_source_bindings": [
+    {
+      "historical": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/9-10g/lessons/geo910-c2-s1-n42/lesson.json",
+        "sha256": "e97a6cf0b0e0629c72c0e8d87ea40738ce513a144d77087cc95fc37130355a36",
+        "size": 6026,
+        "roles": [
+          "raw source bytes"
+        ],
+        "canonical_sha256": "6fc2d9cfe4fa2b5d05a953ea742042e70b229ab714a92c46be72b52706c1b059"
+      },
+      "current": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/9-10g/lessons/geo910-c2-s1-n42/lesson.json",
+        "sha256": "e97a6cf0b0e0629c72c0e8d87ea40738ce513a144d77087cc95fc37130355a36",
+        "size": 6026
+      },
+      "byte_identical": true,
+      "reinterpreted": false
+    },
+    {
+      "historical": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/9-10g/lessons/geo910-c2-s1-n42/exercises.json",
+        "sha256": "94ad62709a3a901db7ef359e53f14c2eb30aa1ee14630bb353573af08efa88a4",
+        "size": 4751,
+        "roles": [
+          "raw exercise bytes"
+        ],
+        "canonical_sha256": "51d947e0ce1862c49cd12099dd0d511627b4fddc4a35d5956585038f443a494e"
+      },
+      "current": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/9-10g/lessons/geo910-c2-s1-n42/exercises.json",
+        "sha256": "94ad62709a3a901db7ef359e53f14c2eb30aa1ee14630bb353573af08efa88a4",
+        "size": 4751
+      },
+      "byte_identical": true,
+      "reinterpreted": false
+    }
+  ],
+  "current_seed_trace_bindings": [
+    {
+      "declared": {
+        "path": "ssot-resources/soviet10year-textbooks/artifacts/9-10g/book.json",
+        "sha256": "2177df6b732a1040ef08bb8e6048b5d8b024a89ad464985afb86b15bdf8f8a26"
+      },
+      "current": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/9-10g/book.json",
+        "sha256": "2177df6b732a1040ef08bb8e6048b5d8b024a89ad464985afb86b15bdf8f8a26",
+        "size": 7918
+      },
+      "matches": true
+    },
+    {
+      "declared": {
+        "path": "ssot-resources/soviet10year-textbooks/artifacts/9-10g/editions/modern-us-neutral/lessons/geo910-c2-s1-n42/lesson.json",
+        "sha256": "579f5f82542c054e7f93b08dedbcf1b5a7ba8dcfc8be94e9495cba33c6b35468"
+      },
+      "current": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/9-10g/editions/modern-us-neutral/lessons/geo910-c2-s1-n42/lesson.json",
+        "sha256": "579f5f82542c054e7f93b08dedbcf1b5a7ba8dcfc8be94e9495cba33c6b35468",
+        "size": 18280
+      },
+      "matches": true
+    },
+    {
+      "declared": {
+        "path": "ssot-resources/soviet10year-textbooks/artifacts/9-10g/editions/modern-us-neutral/lessons/geo910-c2-s1-n42/exercises.json",
+        "sha256": "79d44233d7e12d01cb0d24eb2322bd083ca1e007d7bc66b8dbd6e144a5758615"
+      },
+      "current": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/9-10g/editions/modern-us-neutral/lessons/geo910-c2-s1-n42/exercises.json",
+        "sha256": "79d44233d7e12d01cb0d24eb2322bd083ca1e007d7bc66b8dbd6e144a5758615",
+        "size": 12700
+      },
+      "matches": true
+    },
+    {
+      "declared": {
+        "path": "ssot-resources/soviet10year-textbooks/artifacts/9-10g/editions/modern-us-neutral/lessons/geo910-c2-s1-n42/figures.json",
+        "sha256": "f8958ab6285faa9129e1effbcc720d336288916e964cd685f7be6cf46cb7bf35"
+      },
+      "current": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/9-10g/editions/modern-us-neutral/lessons/geo910-c2-s1-n42/figures.json",
+        "sha256": "f8958ab6285faa9129e1effbcc720d336288916e964cd685f7be6cf46cb7bf35",
+        "size": 1437
+      },
+      "matches": true
+    }
+  ],
+  "inherited_figure_asset_bindings": [
+    {
+      "historical": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/9-10g/editions/modern-us-neutral/figures/fig-g10-01.svg",
+        "sha256": "349fe50a8e1d821f35dd2dd78c7d06d6ca9bd82181505c9bc8a85d19342ab35f",
+        "size": 13797,
+        "roles": [
+          "current SVG rendered and opened as PNG"
+        ]
+      },
+      "current": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/9-10g/editions/modern-us-neutral/figures/fig-g10-01.svg",
+        "sha256": "349fe50a8e1d821f35dd2dd78c7d06d6ca9bd82181505c9bc8a85d19342ab35f",
+        "size": 13797
+      },
+      "byte_identical": true,
+      "approval_repeated": false
+    },
+    {
+      "historical": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/9-10g/editions/modern-us-neutral/figures/fig-g10-02.svg",
+        "sha256": "445a58965f437aae03e56c1e6df66fe88f95989da9a948b13f770b170bd1d90e",
+        "size": 34044,
+        "roles": [
+          "current SVG rendered and opened as PNG"
+        ]
+      },
+      "current": {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts/9-10g/editions/modern-us-neutral/figures/fig-g10-02.svg",
+        "sha256": "445a58965f437aae03e56c1e6df66fe88f95989da9a948b13f770b170bd1d90e",
+        "size": 34044
+      },
+      "byte_identical": true,
+      "approval_repeated": false
+    }
+  ],
+  "outputs": [
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-layout-affected-review-01/visual-observation.json",
+      "sha256": "96a24743efa5e155f495feef5233b3355ac01acfc46a930eea216d436dbbdbec",
+      "size": 13753
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-layout-affected-review-01/review.json",
+      "sha256": "81a7e7e3e5e60f0285bba2c30b0df37c883b847b9bdda7161b55226660dbc177",
+      "size": 20362
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-layout-affected-review-01/trace-review.json",
+      "sha256": "f3ad3995603d98abb536789db2801185134057cc86d125c03ae2490ce8f169ad",
+      "size": 33379
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-layout-affected-review-01/code-review.json",
+      "sha256": "84fc032179d8e4c792f4f2633c83c69c97245edf9d20b485050881a6f9172be9",
+      "size": 4367
+    },
+    {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-layout-affected-review-01/report.md",
+      "sha256": "b225039a06315206d3b088f02958d8090d4d1ab4c29e1a45552bcede9c041f3c",
+      "size": 3481
+    }
+  ],
+  "standard_review_semantic_rows_exact": [
+    {
+      "field": "source_reviews",
+      "count": 7,
+      "retained_exact": true,
+      "before_row_sha256": "be6139b7d18179d7ba4945514789ca0f7cb9d473b09add10cae4e87227f4b096",
+      "current_row_sha256": "be6139b7d18179d7ba4945514789ca0f7cb9d473b09add10cae4e87227f4b096"
+    },
+    {
+      "field": "figure_checks",
+      "count": 1,
+      "retained_exact": true,
+      "before_row_sha256": "44cb8c3e37b57ac7bd76633de6bc1a171fdb7dea70b748da711cdcf2dce4c518",
+      "current_row_sha256": "44cb8c3e37b57ac7bd76633de6bc1a171fdb7dea70b748da711cdcf2dce4c518"
+    },
+    {
+      "field": "new_figure_reviews",
+      "count": 0,
+      "retained_exact": true,
+      "before_row_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "current_row_sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "field": "question_reviews",
+      "count": 7,
+      "retained_exact": true,
+      "before_row_sha256": "e0899d6440779311b8920f0502f593dafa545aae19ffe8bd70fc509c3855a800",
+      "current_row_sha256": "e0899d6440779311b8920f0502f593dafa545aae19ffe8bd70fc509c3855a800"
+    }
+  ],
+  "historical": {
+    "prior_report": {
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-answer-choice-review/report.json",
+      "sha256": "a45496de9606de8dd0fc641e2d7d088aa2075788f96881c972055fc7903f8bc7",
+      "size": 46455
+    },
+    "prior_outcomes": {
+      "answer_semantics": "pass",
+      "choice_semantics": "pass",
+      "fresh_four_surface_visual": "revise",
+      "overall": "revise"
+    },
+    "prior_first_genuine_defect": {
+      "schema": "n42-first-genuine-defect-v1",
+      "status": "revise",
+      "id": "N42-VIS-01",
+      "first_observed_at_image_load": 7,
+      "screenshot": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/offline-display-9-10g_geo910-c2-s1-n42-surfaces/geo910-c2-s1-n42/text-390.png",
+      "screenshot_sha256": "faf155c1c6920998e8efa9a01f852f621553184a3cfde28b91e7c0c513a79d73",
+      "source_lesson_sha256": "7c4cd2d448bd19f249b11cf146b8e7580fa88bac3dd6459fa2b70d303f863aff",
+      "source_selector": "prose[15]",
+      "source_ref": "p0154#1",
+      "observation": "The first expanded dot-product proof row is cut at the right visible content edge; the complete trailing +y1y2*j^2 term is not visible.",
+      "no_silent_edit": true,
+      "retained_revise": true,
+      "locality": "Mobile text proof presentation. Independent answer and choice semantics remain pass; formal figure/content approvals are not reopened.",
+      "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-answer-choice-review/first-defect.json",
+      "sha256": "b1897b1469c130fa04f61a56502dada67314b524afc8c74a5da6bdc239bc667f"
+    },
+    "prior_failures": [
+      {
+        "id": "N42-VIS-01",
+        "severity": "P2",
+        "status": "revise",
+        "surface": "text-390",
+        "source_selector": "prose[15]",
+        "source_ref": "p0154#1",
+        "evidence": "Right-edge-hidden tail of first expanded dot-product row in the actual complete mobile screenshot; trailing y1y2*j^2 term is not completely readable.",
+        "requested_repair": "Parent should preserve the mathematics and make the long proof row completely readable at390px, normally with presentation-only line breaks, then obtain an affected-only fresh surface observation. No edit is made by this reviewer.",
+        "scope": "Static mobile proof presentation only; not an answer, choice, figure-geometry or source-content defect."
+      }
+    ],
+    "prior_preserved_history": {
+      "original_four_question_bindings": [
+        {
+          "id": "n42-coordinates",
+          "expected_sha256": "aa1ee48d4d88b860178f20dd91a2dde226a2edbfd2cd5228a5b05d99c99526e3",
+          "actual_sha256": "aa1ee48d4d88b860178f20dd91a2dde226a2edbfd2cd5228a5b05d99c99526e3"
+        },
+        {
+          "id": "n42-add-subtract",
+          "expected_sha256": "bf7a3408d4467c4c8a016b8ba8c2058ba7f0442f5c12587f4ee517e2d87bb1dc",
+          "actual_sha256": "bf7a3408d4467c4c8a016b8ba8c2058ba7f0442f5c12587f4ee517e2d87bb1dc"
+        },
+        {
+          "id": "n42-scalar-combinations",
+          "expected_sha256": "31fa445e269f9668cb766ba708698949ebd9fe1260731a3bab0dca1e94c8ae91",
+          "actual_sha256": "31fa445e269f9668cb766ba708698949ebd9fe1260731a3bab0dca1e94c8ae91"
+        },
+        {
+          "id": "n42-dot-products",
+          "expected_sha256": "43d1f2062259305fa2131112cd8bd0a1f6360bf4d763f7da096f2eedb4ac3021",
+          "actual_sha256": "43d1f2062259305fa2131112cd8bd0a1f6360bf4d763f7da096f2eedb4ac3021"
+        }
+      ],
+      "historical_hold_coverage": [
+        {
+          "source_number": "4",
+          "retained_record": {
+            "source_number": "4",
+            "question_ids": [],
+            "omitted_tasks": [
+              "HOLD: geometric collinearity classification and explanation for the pair a=(3/7,1/2,-3/4), b=(2/7,1/3,-1/2).",
+              "HOLD: geometric collinearity classification and explanation for the pair c=(-3/2,6,4/3), d=(9/8,-9/2,-1)."
+            ],
+            "reason": "The independently computed coordinate identities are b=(2/3)a and d=(-3/4)c, checked in all three coordinates. The source explicitly requires the collinearity condition in section 20, but that condition is not supplied in the allowed current N42 definitions. No general geometric convention is manufactured, no collinearity answer is keyed, and scalar-multiple recognition is not passed off as completion of the original task."
+          },
+          "equals_prior_author_coverage": true
+        },
+        {
+          "source_number": "5",
+          "retained_record": {
+            "source_number": "5",
+            "question_ids": [],
+            "omitted_tasks": [
+              "HOLD: determine and justify all x,y making the given vectors geometrically collinear."
+            ],
+            "reason": "Solving a=t b independently forces t=-5/3, x=-5/3 and y=6/5, and all three coordinates check exactly. This settles the scalar-multiple equations but not their necessity and sufficiency for the unavailable source collinearity predicate. The original complete geometric parameter task remains HOLD rather than being silently rewritten."
+          },
+          "equals_prior_author_coverage": true
+        },
+        {
+          "source_number": "7",
+          "retained_record": {
+            "source_number": "7",
+            "question_ids": [],
+            "omitted_tasks": [
+              "HOLD: decide perpendicularity of a=(-2,1,3), b=(6,-5,7).",
+              "HOLD: decide perpendicularity of c=(6,0,12), d=(-8,13,4)."
+            ],
+            "reason": "The complete scalar products were independently computed as 4 and 0. All four vectors are nonzero; this is not an invented zero-vector ambiguity. The allowed N42 definition prose contains the scalar-product coordinate rule and a perpendicular unit basis, but not a general criterion connecting scalar-product values to arbitrary-vector perpendicularity. Both original geometric decisions remain HOLD with no asserted truth set or replacement arithmetic item."
+          },
+          "equals_prior_author_coverage": true
+        }
+      ],
+      "historical_author_hold_records": [
+        {
+          "source_numbers": [
+            "4",
+            "5"
+          ],
+          "missing_authority": "The section 20 collinearity condition explicitly referenced by original exercise 4 is absent from permitted current N42 definition prose.",
+          "independently_resolved_arithmetic": "b=(2/3)a; d=(-3/4)c; the equations a=t b uniquely yield t=x=-5/3 and y=6/5.",
+          "retained_unknown_task": "Geometric classification of both source 4 pairs and the necessity/sufficiency of the complete source 5 collinearity parameter answer.",
+          "resumption_input": "Parent-authorized clean current READY definition text for the referenced condition, with source identity; no old key or answer-author material."
+        },
+        {
+          "source_numbers": [
+            "7"
+          ],
+          "missing_authority": "Permitted N42 definition prose does not state a general arbitrary-vector perpendicularity criterion; the perpendicular basis illustration is not that criterion.",
+          "independently_resolved_arithmetic": "The two original scalar products are exactly 4 and 0; every given vector is nonzero.",
+          "retained_unknown_task": "Both original perpendicularity decisions remain unkeyed rather than being replaced by arithmetic questions.",
+          "resumption_input": "Parent-authorized clean current READY definition of the geometric criterion, not a generic convention or answer key."
+        }
+      ],
+      "unrelated_n20_figure116_hold": "Unapproved, unread and untouched; not a prerequisite approval gate.",
+      "candidate_status": "draft, never edited or promoted",
+      "machine_result_status": [
+        {
+          "kind": "text",
+          "width": 1440,
+          "status": "mechanical display pass; visual inspection pending"
+        },
+        {
+          "kind": "exercises",
+          "width": 1440,
+          "status": "mechanical display pass; visual inspection pending"
+        },
+        {
+          "kind": "text",
+          "width": 390,
+          "status": "mechanical display pass; visual inspection pending"
+        },
+        {
+          "kind": "exercises",
+          "width": 390,
+          "status": "mechanical display pass; visual inspection pending"
+        }
+      ]
+    },
+    "prior_technical_events": [
+      {
+        "command": "ls -ld review-output .agents/skills/node_modules/@resvg/resvg-js original-crops",
+        "exit": 1,
+        "detail": "Output directory did not yet exist and the guessed installed resvg location was absent. Recovered locally by apply_patch directory creation and locating existing lesson-owned resvg; no install.",
+        "content_failure": false
+      },
+      {
+        "command": "rg --files installed dependency roots -g *resvg*",
+        "exit": 2,
+        "detail": "Missing repo-root node_modules warning; same command located installed lesson-owned resvg. No dependency, env or network change.",
+        "content_failure": false
+      },
+      {
+        "command": "rg render_offline.mjs and render_spec.mjs",
+        "exit": 2,
+        "detail": "Guessed render_offline.mjs path absent. Direct current-SVG resvg rasterization subsequently succeeded; FigureSpec renderer never ran.",
+        "content_failure": false
+      }
+    ],
+    "prior_author_boundary_deviation": "The authorized answer-author report discloses an initial read-only git status invocation. This independent reviewer made zero Git calls; the historical deviation is retained and is not used as mathematical evidence.",
+    "seals": [
+      {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-answer-choice-review/FIRST-seal.json",
+        "sha256": "408fe0d71a378122cb51861b55c8ce9a2fd66405589c47ede9241ff8538bfd2e",
+        "size": 8493
+      },
+      {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-answer-choice-review/PREKEY-seal.json",
+        "sha256": "405e5dca633c9ea2ffb62f93ff175062393b97a0b900cc238eab18c999a5972b",
+        "size": 2278
+      },
+      {
+        "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-answer-choice-review/keys-read-receipt.json",
+        "sha256": "9351a4e658c8be16f8920b7ecbd9ebb50703a7017e4902a8540a7577d6d0a7b3",
+        "size": 1702
+      }
+    ],
+    "exercise_surface_entries_retained_exact": true,
+    "historical_images_loaded": false,
+    "failure_and_recovery_receipts": [
+      {
+        "phase": "snapshot",
+        "evidence": {
+          "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-mobile-layout-repair-01/snapshot-first-failure.json",
+          "sha256": "1efe2ec3daac927f8cc0d7748db7ba85b5f3ea1d6b8853b1ff5945344976e3ff",
+          "size": 272
+        },
+        "retained_receipt": {
+          "action": "snapshot",
+          "exitCode": 1,
+          "error": "ENOENT modern lesson.md does not exist",
+          "copiedBeforeFailure": [
+            "before/lesson.json"
+          ],
+          "contentChanged": false,
+          "recovery": "Use actual modern JSON artifact inventory; reuse exact copied lesson.json"
+        },
+        "content_failure": false
+      },
+      {
+        "phase": "adapt-finalize-first-failure",
+        "evidence": {
+          "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-mobile-layout-repair-01/adapt-finalize/command.json",
+          "sha256": "cf5eb7cfed414b66c2f74640374e0a9fdb6fc7b122a20c9ac298bf88f401da35",
+          "size": 787
+        },
+        "retained_receipt": {
+          "command": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+          "args": [
+            "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/p2c.py",
+            "adapt-finalize",
+            "--root",
+            "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts",
+            "--work",
+            "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/g10-n42n43/work",
+            "--book",
+            "9-10g",
+            "--edition",
+            "modern-us-neutral",
+            "--lesson",
+            "geo910-c2-s1-n42"
+          ],
+          "cwd": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck",
+          "exitCode": 2,
+          "offline": true,
+          "published": false,
+          "issue": "N42-VIS-01"
+        },
+        "stdout": {
+          "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-mobile-layout-repair-01/adapt-finalize/stdout.txt",
+          "sha256": "d7df775d65b3f0b5c24e353adb2652d4976587e4ec432944083a415e9dff741c",
+          "size": 90
+        },
+        "stdout_text": "ERROR geo910-c2-s1-n42: lesson.prose[15] 的数学公式变化没有匹配已绑定勘误\n",
+        "repeated_by_reviewer": false
+      },
+      {
+        "phase": "adapt-finalize-recovery-01",
+        "evidence": {
+          "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-mobile-layout-repair-01/adapt-finalize-recovery-01/command.json",
+          "sha256": "a30cb86fbb7f2a6fe66d8bc95df533d1815e5361f7b4233b56cba408a1eaa193",
+          "size": 787
+        },
+        "retained_receipt": {
+          "command": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+          "args": [
+            "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/p2c.py",
+            "adapt-finalize",
+            "--root",
+            "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts",
+            "--work",
+            "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/g10-n42n43/work",
+            "--book",
+            "9-10g",
+            "--edition",
+            "modern-us-neutral",
+            "--lesson",
+            "geo910-c2-s1-n42"
+          ],
+          "cwd": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck",
+          "exitCode": 0,
+          "offline": true,
+          "published": false,
+          "issue": "N42-VIS-01"
+        },
+        "repeated_by_reviewer": false
+      },
+      {
+        "phase": "render",
+        "evidence": {
+          "path": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-mobile-layout-repair-01/render/command.json",
+          "sha256": "d423f8791e54354272a06733db61655a84332d3c3185af3185ed3a6b65f9106b",
+          "size": 745
+        },
+        "retained_receipt": {
+          "command": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+          "args": [
+            "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools/p2c.py",
+            "render",
+            "--root",
+            "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/ssot-resources/soviet10year-textbooks/artifacts",
+            "--work",
+            "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.tmp/ld-s10y-lesson",
+            "--book",
+            "9-10g",
+            "--edition",
+            "modern-us-neutral",
+            "--lesson",
+            "geo910-c2-s1-n42"
+          ],
+          "cwd": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck",
+          "exitCode": 0,
+          "offline": true,
+          "published": false,
+          "issue": "N42-VIS-01"
+        },
+        "repeated_by_reviewer": false
+      }
+    ],
+    "repair_accounting": {
+      "existing_content_repair_delta": 1,
+      "history_reset": false,
+      "prior_cumulative_counts_not_replaced": true,
+      "newly_authored_repairs_by_reviewer": 0,
+      "new_paid_calls_by_reviewer": 0,
+      "historical_image_count": 8,
+      "current_actual_image_count": 2,
+      "known_prior_plus_current_review_image_subtotal": 10,
+      "whole_production_image_total_claimed": false
+    }
+  },
+  "boundaries": {
+    "sole_reviewer": true,
+    "delegated_tasks": 0,
+    "other_task_messages": 0,
+    "actual_image_count": 2,
+    "actual_image_limit": 2,
+    "image_reopens": 0,
+    "image_crops": 0,
+    "browser_runs": 0,
+    "source_or_candidate_edits": 0,
+    "core_code_edits": 0,
+    "test_edits": 0,
+    "test_runs": 0,
+    "reviewed_checker_runs": 0,
+    "semantic_review_reruns": 0,
+    "figure_review_reruns": 0,
+    "network_calls": 0,
+    "db_calls": 0,
+    "env_access": 0,
+    "paid_calls": 0,
+    "installs": 0,
+    "git_calls": 0,
+    "publish_calls": 0,
+    "deploy_calls": 0,
+    "all_exec_cwd_explicit": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck",
+    "only_output_directory_written": "/Users/yong/.codex/worktrees/stemrobin-188-six/lemmadeck/.intentfold/tickets/STEMROBIN-188/tmp/n42-layout-affected-review-01",
+    "isolated_signature_counterexample_probe": true,
+    "current_source_binding_checks_only": true
+  },
+  "reviewer_technical_events": [
+    "Two read-only rg calls named absent guessed validate_edition.py/render.py/display.py paths; inspection continued using the actual edition.py/render_lesson.js/mathcheck.py files. No dependency installation or rerun of passed stages."
+  ],
+  "limitations": [
+    "Only the two named NEW complete static screenshots were actually loaded, once each. No crop, reopen, prior failed screenshot, exercise screenshot, original figure or new browser was opened.",
+    "Screenshots are existing headless offline text surfaces, not headed production, live interaction, choice widgets, MathLive editing, answer grading, retention or publication evidence.",
+    "Dirac's prior seven-answer and seven-question/28-option semantic PASS, independent solutions, source coverage and figure observations are inherited, not newly solved or re-reviewed.",
+    "Existing semantic/source/figure approvals and tests were not rerun. No reviewed choice checker was run; its one authorized run remains with the parent.",
+    "Code review includes one isolated AST-extracted math_signature counterexample, not unit-test execution or an end-to-end adapt-finalize probe. No new malformed lesson was created.",
+    "Historical cumulative repairs, failures, HOLD records and image usage remain historical. This review adds two actual image loads and resets no counts."
+  ],
+  "remaining_action": "Parent repairs N42-CODE-01 at the localized gate/test boundary; do not repeat passed semantic/figure reviews. Parent owns the single reviewed choice checker run."
+}
