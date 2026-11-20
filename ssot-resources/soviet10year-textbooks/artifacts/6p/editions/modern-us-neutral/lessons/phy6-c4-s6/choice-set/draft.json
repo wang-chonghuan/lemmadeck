@@ -1,0 +1,490 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "3c66bcb016d5afec8a98624b1f2a2cf722a9f8a7165767e3e333adc11aed88f9",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "q-bottom-dependencies",
+      "source_numbers": ["1", "2", "3"],
+      "view": {
+        "mode": "multiple",
+        "stem": "在同一地点，比较密度均匀的静止液体对容器底部产生的压强。这里不计液面上方空气压强的变化。选择所有正确的判断。",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "密度和液深均不变，底面积增为原来的两倍，底部压强也增为原来的两倍。", "figure_ids": []},
+          {"id": "b", "text": "密度不变，液面到容器底的竖直距离增为原来的两倍，底部压强增为原来的两倍。", "figure_ids": []},
+          {"id": "c", "text": "液面到容器底的竖直距离不变，密度增为原来的两倍，底部压强增为原来的两倍。", "figure_ids": []},
+          {"id": "d", "text": "密度不变，液面到容器底的竖直距离增为原来的两倍，底部压强增为原来的四倍。", "figure_ids": []},
+          {"id": "e", "text": "密度增为原来的两倍，液面到容器底的竖直距离减为原来的一半，底部压强不变。", "figure_ids": []},
+          {"id": "f", "text": "液面到容器底的竖直距离不变，密度增为原来的两倍，底部压强减为原来的一半。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Judge the independent density/depth/area comparisons controlling bottom pressure, with g held fixed.",
+        "source_solution": "Full conceptual seeds 1-3: p=rho*g*h, so rho and vertical depth control pressure at the fixed location. With fixed rho, depth times two gives pressure times two. With fixed h, density times two gives pressure times two. Area is absent from p; it instead multiplies force F=p*S. Compensating rho times two and h divided by two leaves p unchanged.",
+        "unit_reason": "The three source prompts ask complementary dependencies of the same scalar pressure law. One native multi-select preserves independently judged transformations and a compensating change, rather than three repetitive formula-recall clicks or one option per printed blank.",
+        "concept_blocks": [8, 12, 13, 14],
+        "limitations": ["Recognition does not prove independently writing the dependency list or the proportionality explanations."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b", "c", "e"],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "derivation": "Correct pressure remains rho*g*h at fixed rho,h. The mistaken procedure doubles S in F=rho*g*h*S and reports the force's twofold change as a pressure change without dividing by the changed S.",
+            "misconception": "Compute total force using the larger bottom area, then substitute that force ratio for the pressure ratio; omits the force-per-area division."
+          },
+          {
+            "option_id": "b",
+            "truth": "correct",
+            "derivation": "p_new/p_old = (rho*g*2h)/(rho*g*h) = 2.",
+            "misconception": null
+          },
+          {
+            "option_id": "c",
+            "truth": "correct",
+            "derivation": "p_new/p_old = (2rho*g*h)/(rho*g*h) = 2.",
+            "misconception": null
+          },
+          {
+            "option_id": "d",
+            "truth": "incorrect",
+            "derivation": "Only one h factor occurs in p, giving ratio 2. The wrong procedure first doubles pressure for the doubled column weight, then doubles it again for the same height change, giving 2*2=4.",
+            "misconception": "Count the single depth increase twice, once as extra column weight and again as a separate pressure-depth multiplier."
+          },
+          {
+            "option_id": "e",
+            "truth": "correct",
+            "derivation": "p_new = (2rho)*g*(h/2) = rho*g*h = p_old.",
+            "misconception": null
+          },
+          {
+            "option_id": "f",
+            "truth": "incorrect",
+            "derivation": "Correct density ratio gives pressure ratio 2. Using the inverse rule p proportional to 1/rho gives p_new/p_old=rho/(2rho)=1/2, which yields this false alternative.",
+            "misconception": "Replace the direct density proportionality with an inverse proportionality while holding depth fixed."
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-bottom-wall-law",
+      "source_numbers": ["4", "5"],
+      "view": {
+        "mode": "single",
+        "stem": "容器中装着密度为 $\\rho$ 的均匀静止液体，液面到容器底的竖直距离为 $H$。选取液面以下、液深上半部的一个侧壁点，其距液面的竖直深度为 $h$，即 $0<h<H/2$。已知当地的 $g$。由液体产生的底部压强 $p_{\\text{底}}$ 和该侧壁点的压强 $p_{\\text{壁}}$ 应怎样计算？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$p_{\\text{底}}=\\rho gH$，$p_{\\text{壁}}=\\rho gH$。", "figure_ids": []},
+          {"id": "b", "text": "$p_{\\text{底}}=\\rho H/g$，$p_{\\text{壁}}=\\rho h/g$。", "figure_ids": []},
+          {"id": "c", "text": "$p_{\\text{底}}=\\rho gH$，$p_{\\text{壁}}=\\rho g(H-h)$。", "figure_ids": []},
+          {"id": "d", "text": "$p_{\\text{底}}=\\rho gH$，$p_{\\text{壁}}=\\rho gh$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Use the hydrostatic formula at bottom and wall, identifying the required local depth for each.",
+        "source_solution": "Full seeds 4 and 5: know rho, g and the point's vertical depth below the free surface. The same law p=rho*g*depth applies to bottom, sidewall and other directions. Here bottom depth is H and the wall point's depth is h, not H or H-h. The result is pressure in N/m^2=Pa, not the force F=p*S.",
+        "unit_reason": "Required data and formula form one coherent application: choosing the complete bottom/wall expression pair retains the wall depth distinction instead of splitting two substitutions into separate clicks. The qualitative transformations in q-bottom-dependencies do not supply this point's reference-depth assignment.",
+        "concept_blocks": [8, 13, 15, 16],
+        "limitations": ["Does not demonstrate independent recall, derivation, or written listing of the required variables.", "The visible upper-half wall-point condition is an authored instance of the general source question; it ensures a depth-from-floor alternative cannot accidentally equal the correct depth at the midpoint."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["d"],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "derivation": "The wrong procedure uses the container's full fill height H as the liquid column above every point, yielding rho*g*H at both locations. Since 0<h<H/2, the actual wall pressure rho*g*h is smaller.",
+            "misconception": "Use total filling height for the wall point instead of its depth below the free surface."
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "derivation": "The wrong derivation replaces the weight conversion g*m by m/g; dividing the resulting column value by area gives rho*depth/g at each point rather than rho*g*depth.",
+            "misconception": "Invert the mass-to-weight g factor when deriving pressure from a liquid column."
+          },
+          {
+            "option_id": "c",
+            "truth": "incorrect",
+            "derivation": "H-h is the wall point's height above the floor. Substituting that height as the liquid depth produces rho*g*(H-h) rather than the required rho*g*h. For the visible condition 0<h<H/2, H-h>h, so the alternative is strictly greater than the correct pressure and cannot coincide at a midpoint.",
+            "misconception": "Measure wall depth upward from the container bottom instead of downward from the free surface."
+          },
+          {
+            "option_id": "d",
+            "truth": "correct",
+            "derivation": "Substitute H for the bottom depth and h for the wall point's depth into p=rho*g*depth; directional equality makes the same formula applicable to the wall.",
+            "misconception": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-three-liquid-pressures",
+      "source_numbers": ["g2-1"],
+      "view": {
+        "mode": "single",
+        "stem": "分别计算水、煤油、水银中距各自液面 $0.6\\,\\mathrm{m}$ 深处由液体产生的压强。为使计算数据完整，本题另给密度：水 $1000\\,\\mathrm{kg/m^3}$、煤油 $800\\,\\mathrm{kg/m^3}$、水银 $13600\\,\\mathrm{kg/m^3}$。取 $g=9.8\\,\\mathrm{N/kg}$。哪一组按水、煤油、水银的顺序列出的压强正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$5880\\,\\mathrm{Pa}$；$79968\\,\\mathrm{Pa}$；$4704\\,\\mathrm{Pa}$。", "figure_ids": []},
+          {"id": "b", "text": "$5880\\,\\mathrm{Pa}$；$4704\\,\\mathrm{Pa}$；$79968\\,\\mathrm{Pa}$。", "figure_ids": []},
+          {"id": "c", "text": "$6000\\,\\mathrm{Pa}$；$4800\\,\\mathrm{Pa}$；$81600\\,\\mathrm{Pa}$。", "figure_ids": []},
+          {"id": "d", "text": "$588000\\,\\mathrm{Pa}$；$470400\\,\\mathrm{Pa}$；$7996800\\,\\mathrm{Pa}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Compute and preserve the complete ordered triple of pressures under explicit newly supplied density data.",
+        "source_solution": "The original full task asks for water, kerosene and mercury at depth 0.6 m but lacks all three density values in the allowed prompt/selected definitions. It therefore determines only (5.88*rho_water,5.88*rho_kerosene,5.88*rho_mercury) Pa. The self-contained authored extension visibly supplies (1000,800,13600) kg/m^3 as additional data, not recovered source facts. With g=9.8: (1000*9.8*0.6,800*9.8*0.6,13600*9.8*0.6)=(5880,4704,79968) Pa. No density was borrowed from a solved example or answer.",
+        "unit_reason": "One complete coherent triple preserves all three computations and the liquid-to-result correspondence. It is not split into three isolated numeric clicks. Visible added givens make the conditional calculation determinate while retaining the original data insufficiency in coverage.",
+        "concept_blocks": [13, 14, 16],
+        "limitations": ["Original missing-density task remains unresolved as an original numerical answer.", "Density lookup/choice and independent written substitution/calculation are replaced by recognition under explicit added values.", "Stipulated numerical data do not establish measured material density or measurement precision."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["b"],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "derivation": "Compute all three products correctly, then interchange the kerosene and mercury assignments: use rho=13600 for the second slot and rho=800 for the third. This yields (5880,79968,4704) Pa, contradicting the stem's order.",
+            "misconception": "Reverse the kerosene-to-density and mercury-to-density correspondence while retaining the liquid labels."
+          },
+          {
+            "option_id": "b",
+            "truth": "correct",
+            "derivation": "Multiply each stated density by 9.8*0.6=5.88: 1000*5.88=5880; 800*5.88=4704; 13600*5.88=79968 Pa.",
+            "misconception": null
+          },
+          {
+            "option_id": "c",
+            "truth": "incorrect",
+            "derivation": "Substitute g=10 despite the explicit 9.8: 1000*10*0.6=6000; 800*10*0.6=4800; 13600*10*0.6=81600 Pa.",
+            "misconception": "Silently replace the specified gravitational factor by a convenient rounded value."
+          },
+          {
+            "option_id": "d",
+            "truth": "incorrect",
+            "derivation": "Convert 0.6 m to the numeral 60 in centimeters but use 60 as meters with SI density/g: (1000,800,13600)*9.8*60=(588000,470400,7996800) Pa.",
+            "misconception": "Mix centimeter depth numerals with kg/m^3 and N/kg without converting the depth back to meters."
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-seawater-pressure",
+      "source_numbers": ["g2-2"],
+      "view": {
+        "mode": "single",
+        "stem": "按密度恒定的静水模型，求海水在 $10900\\,\\mathrm{m}$ 深的海洋盆底产生的压强。海水密度为 $1030\\,\\mathrm{kg/m^3}$，取 $g=9.8\\,\\mathrm{N/kg}$，不计海面空气压强。按这些给定数值计算，结果是多少？",
+        "figure_ids": [],
+        "options": [
+          {"id": "a", "text": "$106820000\\,\\mathrm{Pa}$。", "figure_ids": []},
+          {"id": "b", "text": "$11227000\\,\\mathrm{Pa}$。", "figure_ids": []},
+          {"id": "c", "text": "$110024600\\,\\mathrm{Pa}$。", "figure_ids": []},
+          {"id": "d", "text": "$1100246\\,\\mathrm{Pa}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Calculate the complete seawater-produced bottom pressure using the given depth and seawater density.",
+        "source_solution": "Full seed: h=10900 m, rho=1030 kg/m^3; selected definition supplies g=9.8 N/kg. In the stipulated constant-density model p=rho*g*h=1030*9.8*10900=110024600 Pa. This is liquid-produced gauge pressure, not the absolute atmospheric-plus-water total. It is the arithmetic of stated values, not a measurement-precision claim or a real-ocean variable-density calculation.",
+        "unit_reason": "The single complete scalar pressure with units is the source task's natural result; there is no splitting into multiplication stages.",
+        "concept_blocks": [13, 16],
+        "limitations": ["Selection does not demonstrate independent written calculation.", "The constant-density model and liquid-produced gauge interpretation are explicit; no real-ocean measurements, compressibility assessment or precision estimate are assessed."],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["c"],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "incorrect",
+            "derivation": "Replace the given seawater density 1030 with 1000: 1000*9.8*10900=106820000 Pa.",
+            "misconception": "Substitute a freshwater-style density in place of the explicitly supplied seawater density."
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "derivation": "Omit g and multiply only density by depth: 1030*10900=11227000; incorrectly label that product Pa.",
+            "misconception": "Use p=rho*h rather than converting the liquid-column mass contribution to weight with g."
+          },
+          {
+            "option_id": "c",
+            "truth": "correct",
+            "derivation": "9.8*10900=106820, then 1030*106820=110024600 Pa.",
+            "misconception": null
+          },
+          {
+            "option_id": "d",
+            "truth": "incorrect",
+            "derivation": "Treat the already-meter-valued 10900 as centimeters and divide it by 100: h=109 m. Then 1030*9.8*109=1100246 Pa.",
+            "misconception": "Apply an unnecessary centimeters-to-meters conversion to a depth already given in meters."
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-bladder-contact",
+      "source_numbers": ["g2-3"],
+      "view": {
+        "mode": "single",
+        "stem": "水充满足球胆及与它相连的开口玻璃管，木板上放着质量为 $5\\,\\mathrm{kg}$ 的砝码。图示水柱高度为 $1\\,\\mathrm{m}$。本题补充计算条件：水的密度为 $1000\\,\\mathrm{kg/m^3}$；这 $1\\,\\mathrm{m}$ 是从木板接触平面到管内自由水面的竖直高度差；忽略木板自重及球胆膜的作用力，装置处于静力平衡。取 $g=9.8\\,\\mathrm{N/kg}$。接触处由水产生的压强与木板和球胆的接触面积分别是多少？",
+        "figure_ids": ["fig-115"],
+        "options": [
+          {"id": "a", "text": "$9800\\,\\mathrm{Pa}$；$50\\,\\mathrm{cm^2}$。", "figure_ids": []},
+          {"id": "b", "text": "$19600\\,\\mathrm{Pa}$；$25\\,\\mathrm{cm^2}$。", "figure_ids": []},
+          {"id": "c", "text": "$4900\\,\\mathrm{Pa}$；$100\\,\\mathrm{cm^2}$。", "figure_ids": []},
+          {"id": "d", "text": "$9800\\,\\mathrm{Pa}$；$0.5\\,\\mathrm{cm^2}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Solve the complete loaded-bladder contact-area problem through hydrostatic/mechanical equilibrium, retaining pressure and area units.",
+        "source_solution": "The source asks for contact area with a 5 kg mass and 1 m water column. In general F=m*g=49 N and S=m/(rho_water*h) under the idealized equilibrium; 5 kg is not 5 N. The allowed seed/definitions omit rho_water, board/membrane contributions and an explicit dimension reference plane. The question visibly adds rho_water=1000 kg/m^3, h=1 m from contact plane to open free surface, negligible board/membrane forces and static balance. Then p=1000*9.8*1=9800 Pa; S=49/9800=0.005 m^2=50 cm^2. These are conditional added-model results, not recovered source data.",
+        "unit_reason": "The complete pressure/area pair retains the decisive connection p=F/S and the unknown contact area. Pressure is the meaningful inference enabling the area result, not an independent per-blank click.",
+        "concept_blocks": [11, 12, 13, 16],
+        "limitations": ["Source water density and unquantified board/membrane contributions remain unresolved; explicit extra givens define the assessed model.", "Selection does not demonstrate deriving equilibrium, measuring area or writing the full solution.", "The raster's 1 m label is not used to invent a pixel-measured dimension reference."],
+        "figure_observations": [
+          {
+            "figure_id": "fig-115",
+            "observation": "Opened the complete permitted saved 640 px raster once. The 5 kg weight sits on the board over the bladder, which connects by a bent neck to the right-hand vertical tube. Glass tube and Water column: 1 m are visible, as are the full stand, bottom platform and Football bladder label. Density/contact area and a dimension-reference line are absent. Canonical SVG actual bytes and saved raster are bound in input-bindings.json; the added reference-plane assumption is not claimed as a measured image fact."
+          }
+        ]
+      },
+      "key": {
+        "correct": ["a"],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "correct",
+            "derivation": "F=5*9.8=49 N. Equilibrium pressure is 1000*9.8*1=9800 Pa. Divide F by p: S=0.005 m^2; multiply by 10000 cm^2/m^2 to obtain 50 cm^2.",
+            "misconception": null
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "derivation": "Compute rho*g*h=9800 Pa, then count this equilibrium pressure twice as separate bladder-load and tube-column contributions: p_wrong=9800+9800=19600 Pa. With the correctly converted weight 49 N, S_wrong=49/19600=0.0025 m^2=25 cm^2.",
+            "misconception": "Add two descriptions of the same equilibrium pressure as if they were independent applied pressures."
+          },
+          {
+            "option_id": "c",
+            "truth": "incorrect",
+            "derivation": "Compute the column pressure 9800 Pa, then divide it equally between the connected bladder and tube: p_wrong=9800/2=4900 Pa. Use the correct 49 N weight, obtaining S_wrong=49/4900=0.01 m^2=100 cm^2.",
+            "misconception": "Split transmitted pressure between two connected parts as though pressure were a conserved total force to share."
+          },
+          {
+            "option_id": "d",
+            "truth": "incorrect",
+            "derivation": "Correctly obtain p=9800 Pa and S=0.005 m^2, then convert area using the linear length factor 100 rather than its square 10000: 0.005*100=0.5, incorrectly reported in cm^2.",
+            "misconception": "Use meters-to-centimeters conversion once for an area, rather than squaring the length conversion."
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-three-hole-explanation",
+      "source_numbers": ["g3-1"],
+      "view": {
+        "mode": "multiple",
+        "stem": "竖直容器侧壁的三个小孔位于不同高度，且都在水面以下，水从孔口流出。结合图中的装置，判断流动原因、刚离开孔口时的方向、随后弯曲的原因及射程的影响因素。本题补充理想化条件：三个薄壁小孔大小相同，比较时水位近似不变，忽略流动阻力和空气阻力。选择所有正确的解释。",
+        "figure_ids": ["fig-116"],
+        "options": [
+          {"id": "a", "text": "孔内侧水的压强大于孔外空气压强，水刚离开竖直侧壁时大致沿水平方向流出。", "figure_ids": []},
+          {"id": "b", "text": "水流离孔后弯曲，说明水对竖直侧壁的压力方向沿竖直方向向下。", "figure_ids": []},
+          {"id": "c", "text": "水流离孔后受到重力作用，轨迹逐渐向下弯曲。", "figure_ids": []},
+          {"id": "d", "text": "在比较的同一瞬间，较深孔口处的水压强较大，水的出口速度也较大。", "figure_ids": []},
+          {"id": "e", "text": "比较水流落到同一水平承接面上的射程，需要同时考虑出口速度和孔口到承接面的高度。", "figure_ids": []},
+          {"id": "f", "text": "比较水流落到同一水平承接面上的射程，只需比较孔口的深度，不必考虑孔口到承接面的高度。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Judge the independent emergence/direction, curvature, pressure-speed and range explanations of the complete practical seed without claiming to perform it.",
+        "source_solution": "Full seed includes making/drilling/filling/opening, observing three jets and explaining why they emerge, the near-wall direction and what it shows, why they curve and why ranges differ. Actual making and observation remain READ_ONLY. Under explicit similar-hole/slowly changing-water-level/no-loss conditions, inner pressure exceeds ambient by rho*g*h; pressure force is normal to the vertical wall, so initial velocity is roughly horizontal. Gravity bends the airborne path downward. Deeper submergence increases p and ideal v=sqrt(2*g*h), but range to a shared plane also needs fall height y and flight time sqrt(2*y/g): R=2*sqrt(h*y). No unconditional lower-hole-farthest rule follows. The image shows a longest upper jet and shorter lower jets without calibrated geometry or timings.",
+        "unit_reason": "The practical seed's explanations are independent claims about a single apparatus, making native multi-select appropriate. One coherent unit keeps exit direction separate from later gravity and range separate from pressure-driven speed; it is not a sequence of yes/no clicks for each printed sentence.",
+        "concept_blocks": [13, 14, 15],
+        "limitations": ["READ_ONLY: no drilling, filling, opening holes, making observations or conducting the experiment is assessed or performed.", "Independent experimental records and written explanations are not demonstrated.", "No measured range or numerical geometric ranking can be established from the uncalibrated drawing.", "Similar-hole, near-constant-level and negligible-resistance assumptions are visible authored idealizations."],
+        "figure_observations": [
+          {
+            "figure_id": "fig-116",
+            "observation": "Opened the complete permitted saved 640 px raster once. Three holes at different heights lie on the same vertical wall beneath the free surface. Three near-horizontal rightward arrows begin downward-curved jets into a shared tray. The upper drawn jet reaches farthest right, the middle intermediate and the lower nearest. The full support, rightmost tray edge and bottom are visible. No depths, distances or times are labelled; the drawn ranking is not a universal law. Actual canonical SVG and raster bindings are in input-bindings.json."
+          }
+        ]
+      },
+      "key": {
+        "correct": ["a", "c", "d", "e"],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "correct",
+            "derivation": "Every submerged hole has excess inner pressure rho*g*h>0 relative to the same outside air. Local pressure traction is normal to the vertical wall; in the thin-wall model the emerging water initially flows horizontally outward.",
+            "misconception": null
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "derivation": "Observe downward curvature after emergence, then assign the later gravitational acceleration's downward direction to the earlier wall pressure force. Hydrostatic pressure traction on the vertical wall is horizontal, so the asserted downward wall-force direction is false.",
+            "misconception": "Use the direction of gravity acting on airborne water to infer the direction of liquid pressure force on a vertical wall."
+          },
+          {
+            "option_id": "c",
+            "truth": "correct",
+            "derivation": "After a horizontal initial velocity, downward gravitational acceleration gives vertical displacement proportional to elapsed time squared, while horizontal motion continues, so the trajectory bends down.",
+            "misconception": null
+          },
+          {
+            "option_id": "d",
+            "truth": "correct",
+            "derivation": "At one instant with a common water surface, greater submergence h gives greater p=rho*g*h and, under the stipulated lossless comparable-hole model, greater v=sqrt(2*g*h). This asserts exit speed, not a universal range ranking.",
+            "misconception": null
+          },
+          {
+            "option_id": "e",
+            "truth": "correct",
+            "derivation": "For a shared receiving plane, horizontal range equals exit speed times flight time. Flight time depends on drop y, t=sqrt(2*y/g); therefore both exit speed and receiving-plane height relative to each hole matter.",
+            "misconception": null
+          },
+          {
+            "option_id": "f",
+            "truth": "incorrect",
+            "derivation": "The wrong procedure ranks p=rho*g*h and v by h, then uses that as the range ranking while omitting t. With fixed free-surface height L above the receiver, y=L-h and R=2*sqrt(h*(L-h)); for example h=L/2 gives R=L, whereas h=3L/4 gives R=(sqrt(3)/2)*L despite greater depth. These symbolic values are a mathematical counterexample, not invented measured dimensions of the figure.",
+            "misconception": "Replace range v*t by exit-speed ordering and discard the different fall times from different hole heights."
+          }
+        ]
+      }
+    },
+    {
+      "id": "q-bottle-mechanism",
+      "source_numbers": ["g3-2"],
+      "view": {
+        "mode": "multiple",
+        "stem": "图中的密闭瓶有三根下端浸水的开口玻璃管，还有一根向瓶内空气加压的管。判断对装置原理及改变浸水管口深度后结果的解释。本题补充理想化条件：三根玻璃管上端均通同一外界空气，下端始终浸在同一种水中，忽略毛细作用及流动压降，并比较静止状态。改变管口深度时，保持瓶内与外界的气压差不变。选择所有正确判断。",
+        "figure_ids": ["fig-117"],
+        "options": [
+          {"id": "a", "text": "压缩打气球提高瓶中液面上方的气压，增大的压强经水向各方向传递；这对应帕斯卡定律。", "figure_ids": []},
+          {"id": "b", "text": "弯管中的液柱压强应按沿管道弯曲路径的总长度计算，而不是按竖直高度计算。", "figure_ids": []},
+          {"id": "c", "text": "浸水管口处，瓶内和管内的压强相等；比较两侧同一深度的液柱时，可以消去管口深度。", "figure_ids": []},
+          {"id": "d", "text": "保持给定气压差，把一根管的下端移得更深，该管水面相对瓶内水面的高度就更大。", "figure_ids": []},
+          {"id": "e", "text": "把一根管的下端移得更深，会同时增加管口处两侧的液柱压强；保持给定气压差时，该管水面相对瓶内水面的高度不变。", "figure_ids": []},
+          {"id": "f", "text": "若把其中一根管的上端密封，它仍必然具有与另外两根开口管相同的气压边界条件。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "Explain the pressure-transmission mechanism and law, independently judge hydrostatic balance, and predict changing a submerged end's depth under explicit boundary conditions.",
+        "source_solution": "Full seed supplies common rise in panel b, asks why and which law, asks making/operating the apparatus (including alternate ways to pressurize air), and asks repeating after moving tube ends to different depths. Making and observations remain READ_ONLY. Let bottle gas pressure be P_b, shared open-top pressure P_0, end depth d_i and tube rise relative to bottle water H_i. Static equality at an end gives P_b+rho*g*d_i=P_0+rho*g*(d_i+H_i); cancel d_i to obtain H_i=(P_b-P_0)/(rho*g). Thus end depth and bent path length do not determine rise under common open-top pressure, same density, submerged communication, negligible capillarity and static conditions. At unchanged gas pressure difference, a deeper end leaves relative rise unchanged. Pressure increment applied at the bottle water surface is transmitted in all directions (Pascal's law), not equal absolute pressure at distinct depths. A sealed top changes the gas boundary. No numerical rise is available.",
+        "unit_reason": "Independent mechanism, equilibrium, geometry-change and boundary-condition judgments about one apparatus are naturally multiple-select. The stem does not supply the common-rise answer to be copied; the figure's given equal level is used only as apparatus evidence, while the response requires explanation and a changed-depth prediction.",
+        "concept_blocks": [13, 15],
+        "limitations": ["READ_ONLY: no apparatus fabrication, sealing, tube arrangement, bulb squeezing/loading, alternate pressurization, observation, measurement or repeat experiment is performed or assessed.", "Choices do not verify Pascal's law experimentally or demonstrate independent written explanations.", "No numeric rise can be inferred from the uncalibrated figure.", "Shared outside pressure, submerged ends, negligible capillarity/flow losses and constant gas-pressure difference are visible added model conditions."],
+        "figure_observations": [
+          {
+            "figure_id": "fig-117",
+            "observation": "Opened the complete permitted 640x640 saved neutral raster once. Panels a/b show three top-open glass tubes, submerged straight/bent lower portions, and a separate air hose whose bottle end is above water and whose outer end reaches a bulb. Panel b depicts tube water levels at one shared line above bottle water plus pressure/load arrows. Both bottle bottoms, submerged bends, a/b labels and the full rightmost bulb/downward arrow are visible. Common rise is already given, no numeric height appears. Actual canonical SVG and this saved raster are bound in input-bindings.json; no spec or prior review substitutes for this personal observation."
+          }
+        ]
+      },
+      "key": {
+        "correct": ["a", "c", "e"],
+        "rationales": [
+          {
+            "option_id": "a",
+            "truth": "correct",
+            "derivation": "Compression raises P_b over the bottle water. The resulting added pressure is transmitted through the connected confined liquid in all directions; this is Pascal's pressure-increment law. Absolute pressure may still vary with depth.",
+            "misconception": null
+          },
+          {
+            "option_id": "b",
+            "truth": "incorrect",
+            "derivation": "The wrong procedure adds the lengths of the straight and bent pipe segments and inserts that total as h in rho*g*h. Hydrostatic increments depend on vertical elevation change; bends add path length without corresponding vertical head.",
+            "misconception": "Replace the vertical hydrostatic head by the length travelled along a bent tube."
+          },
+          {
+            "option_id": "c",
+            "truth": "correct",
+            "derivation": "At the communicating submerged end, P_b+rho*g*d_i=P_0+rho*g*(d_i+H_i). Subtract the identical rho*g*d_i terms to leave P_b-P_0=rho*g*H_i.",
+            "misconception": null
+          },
+          {
+            "option_id": "d",
+            "truth": "incorrect",
+            "derivation": "The wrong procedure increases the bottle-side end pressure by rho*g*delta_d, then attributes all of that increase to rise while leaving the tube-side submerged column d_i unchanged. It predicts H_new=H_old+delta_d. In reality d_i increases on both sides and cancels, leaving H unchanged.",
+            "misconception": "Count extra end depth only on the bottle side of the pressure balance and omit the matching submerged tube-column increment."
+          },
+          {
+            "option_id": "e",
+            "truth": "correct",
+            "derivation": "H=(P_b-P_0)/(rho*g). With pressure difference, density and g fixed, d_i does not appear, so moving a still-submerged end deeper leaves its relative surface height unchanged.",
+            "misconception": null
+          },
+          {
+            "option_id": "f",
+            "truth": "incorrect",
+            "derivation": "The wrong procedure retains P_0 as the top boundary even after sealing, as though that end remained connected to outside air. A sealed end traps gas with its own pressure/volume response, so its boundary is not necessarily the other open tubes' P_0.",
+            "misconception": "Reuse an open-to-atmosphere pressure boundary after replacing it with a sealed trapped-gas boundary."
+          }
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {
+      "source_number": "1",
+      "question_ids": ["q-bottom-dependencies"],
+      "omitted_tasks": ["Independent written identification/explanation of all dependencies is replaced by judging supplied comparisons."],
+      "reason": "The coherent density/depth/area multi-select tests the same pressure-dependence distinctions at fixed g; it does not prove written production."
+    },
+    {
+      "source_number": "2",
+      "question_ids": ["q-bottom-dependencies"],
+      "omitted_tasks": ["Independent written formulation of the height-proportionality relation."],
+      "reason": "Direct depth doubling and a compensating depth change retain proportional reasoning, without a mechanical separate click for this prompt."
+    },
+    {
+      "source_number": "3",
+      "question_ids": ["q-bottom-dependencies"],
+      "omitted_tasks": ["Independent written formulation of the density-proportionality relation."],
+      "reason": "Density doubling, inverse-density error and compensation retain the density distinction in the same meaningful response unit."
+    },
+    {
+      "source_number": "4",
+      "question_ids": ["q-bottom-wall-law"],
+      "omitted_tasks": ["Independent written listing of wall-pressure data."],
+      "reason": "The complete bottom/wall law pair requires rho, g and the wall point's depth from the free surface, not its height from the floor."
+    },
+    {
+      "source_number": "5",
+      "question_ids": ["q-bottom-wall-law"],
+      "omitted_tasks": ["Independent formula recall and derivation."],
+      "reason": "The coherent expression pair preserves applying one pressure law at bottom and wall; recognition is not unaided writing."
+    },
+    {
+      "source_number": "g2-1",
+      "question_ids": ["q-three-liquid-pressures"],
+      "omitted_tasks": ["The original numerical answer is unresolved because all three densities are absent from allowed prompt/definitions.", "Independent density lookup/selection and written calculations are not assessed."],
+      "reason": "The choice visibly adds three stipulated densities and retains the full ordered numerical triple. This is conditional added-data coverage, not a claim to have recovered missing original data or precision."
+    },
+    {
+      "source_number": "g2-2",
+      "question_ids": ["q-seawater-pressure"],
+      "omitted_tasks": ["Independent written substitution/calculation."],
+      "reason": "The complete pressure in Pa retains source depth and density and definition g=9.8. Constant-density gauge interpretation is explicit; no real-ocean precision claim is made."
+    },
+    {
+      "source_number": "g2-3",
+      "question_ids": ["q-bladder-contact"],
+      "omitted_tasks": ["Original missing water density and unquantified board/membrane/reference-plane conditions are not recovered as source facts.", "Independent derivation, physical area measurement and written numerical solution are not assessed."],
+      "reason": "The complete equilibrium pressure/area pair preserves the unknown-area inference, with added density/reference/idealizations visible. Weight is correctly 49 N for 5 kg; no 5 kg-to-5 N procedure is used."
+    },
+    {
+      "source_number": "g3-1",
+      "question_ids": ["q-three-hole-explanation"],
+      "omitted_tasks": ["READ_ONLY: vessel preparation/drilling, blocking and opening holes, filling, actual observation and performing the experiment.", "Independent experimental records and written causal explanations.", "Quantitative range measurements absent from the seed."],
+      "reason": "Native multi-select covers emergence, wall-normal initial direction, gravity curvature and speed-versus-flight-time range reasoning. The illustrative image ranking is recorded honestly without an unconditional deeper-hole-farther law or a claim of hands-on verification."
+    },
+    {
+      "source_number": "g3-2",
+      "question_ids": ["q-bottle-mechanism"],
+      "omitted_tasks": ["READ_ONLY: apparatus fabrication/sealing, tube arrangement, applying pressure by bulb/weight or alternate method, observation/measurement and repeating after changing end depths.", "Independent written explanation and actual experimental verification of Pascal's law.", "Numeric rise, because no dimensions/pressure measurements are supplied."],
+      "reason": "Given common rise is not re-asked as height recognition. The multi-select preserves pressure transmission/law, same-depth equilibrium, depth cancellation and changed-end-depth prediction; explicit boundary-condition judgments retain why the mechanism works."
+    }
+  ]
+}

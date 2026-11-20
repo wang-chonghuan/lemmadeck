@@ -9,7 +9,7 @@
  * 按 ; 匹配会一个字体都替换不到，页面看着能用（系统字体兜底）但并不自包含。
  * 所以内联数为 0 直接抛错，不允许静默降级。
  *
- * 用法: render_lesson.js <bookDir> --out <dir> [--edition <name>] [--lesson <lessonId>]... [--text-only | --titles-only | --groups-only]
+ * 用法: render_lesson.js <bookDir> --out <dir> [--edition <name>] [--lesson <lessonId>]... [--text-only | --exercises-only | --titles-only | --groups-only]
  */
 const fs = require("fs");
 const path = require("path");
@@ -26,9 +26,10 @@ const bookDir = args.find((arg) => !arg.startsWith("--"));
 const editionName = args.includes("--edition") ? args[args.indexOf("--edition") + 1] : null;
 const outRoot = args.includes("--out") ? args[args.indexOf("--out") + 1] : null;
 const textOnly = args.includes("--text-only");
+const exercisesOnly = args.includes("--exercises-only");
 const titlesOnly = args.includes("--titles-only");
 const groupsOnly = args.includes("--groups-only");
-if ([textOnly, titlesOnly, groupsOnly].filter(Boolean).length > 1) {
+if ([textOnly, exercisesOnly, titlesOnly, groupsOnly].filter(Boolean).length > 1) {
   throw new Error("Select only one partial render surface");
 }
 const onlyLessons = new Set(args.flatMap((arg, index) =>
@@ -170,6 +171,8 @@ li.ex .no{font-family:ui-monospace,Menlo,monospace;color:var(--accent);
 li.ex .body{min-width:0;overflow-x:auto;line-height:1.9;font-size:1.04em}
 li.ex .body .fig{margin:.7em 0 0;text-align:left}
 li.ex .body .figure-media{margin:0;max-width:min(100%,22em)}
+.written-answer{margin-top:.8em;padding-top:.6em;border-top:1px solid var(--rule)}
+.answer-label{display:block;color:var(--sub);font-size:1em;margin-bottom:.25em}
 .choice{border-top:1px solid var(--rule);padding:1.2em 0;line-height:1.9}
 .choice-stem{margin:0 0 .8em;font-size:1.04em}
 .choice-options{list-style:none;margin:0;padding:0}
@@ -273,9 +276,11 @@ for (const lid of lessonDirs) {
     done.push({ lesson: lid, surface: "titles", pages: replacements.length, output: outDir });
     continue;
   }
+  let prose = [];
+  if (!exercisesOnly) {
   // ---- 课文页
   let body = "";
-  const prose = proseFlow(L.prose, L.section_breaks);
+  prose = proseFlow(L.prose, L.section_breaks);
   const captionFor = new Map();
   for (const block of prose.filter((item) => item.kind === "fig")) {
     const figures = prose.filter((item) => item.kind === "fig" && item.label === block.label);
@@ -306,8 +311,32 @@ for (const lid of lessonDirs) {
     done.push({ lesson: lid, surface: "text", prose: prose.length, output: outDir });
     continue;
   }
+  }
 
   // ---- 习题页：每题独立编号，带自己的图
+  const answerPath = path.join(dir, "answer-keys.json");
+  const readyAnswers = new Map();
+  if (editionName && fs.existsSync(answerPath)) {
+    const keys = JSON.parse(fs.readFileSync(answerPath, "utf8"));
+    if (keys.status === "ready") {
+      if (keys.book !== path.basename(book) || keys.lesson !== lid
+        || keys.edition !== editionName || !Array.isArray(keys.answers)) {
+        throw new Error(`${lid}: ready written answers belong to another lesson`);
+      }
+      for (const answer of keys.answers) {
+        const id = String(answer.exercise);
+        if (readyAnswers.has(id) || typeof answer.displayAnswer !== "string"
+          || !answer.displayAnswer.trim()) {
+          throw new Error(`${lid}: missing or duplicate ready displayed answer ${id}`);
+        }
+        readyAnswers.set(id, answer.displayAnswer);
+      }
+      if (readyAnswers.size !== X.exercises.length
+        || X.exercises.some((exercise) => !readyAnswers.has(String(exercise.number)))) {
+        throw new Error(`${lid}: ready written answer coverage differs from exercises`);
+      }
+    }
+  }
   let group = null, out = "";
   for (const e of X.exercises) {
     if (e.group !== group) {
@@ -319,13 +348,22 @@ for (const lid of lessonDirs) {
       .map((f) => renderFigure(f.id, f.label)).join("");
     const printedNumber = sourceNumberForArtifact(e);
     const sourceNumber = printedNumber == null ? "" : `${esc(String(printedNumber))}.`;
+    const answer = readyAnswers.get(String(e.number));
+    const answerHtml = answer === undefined ? ""
+      : `<div class="written-answer"><span class="answer-label">参考答案</span>`
+        + `<div class="answer-text">${proseInline(answer)}</div></div>`;
     out += `<li class="ex" id="ex-${esc(e.number)}"><div class="no">${sourceNumber}</div>`
-      + `<div class="body">${inline(e.text)}${figs}</div></li>`;
+      + `<div class="body">${inline(e.text)}${figs}${answerHtml}</div></li>`;
   }
   if (out) out += "</ol>";
   out += `<a class="jump" href="text.html">← 回课文</a>`;
   fs.writeFileSync(path.join(outDir, "exercises.html"),
     page(`${L.printed_title || L.title} · 习题`, crumb, out));
+  if (exercisesOnly) {
+    done.push({ lesson: lid, surface: "exercises", exercises: X.count,
+      displayedAnswers: readyAnswers.size, output: outDir });
+    continue;
+  }
   let choiceCount = 0;
   if (fs.existsSync(choiceDir)) {
     const repo = path.resolve(SKILL, "../../..");
