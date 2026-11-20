@@ -1,0 +1,30 @@
+import { spawnSync } from 'node:child_process';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const output = dirname(fileURLToPath(import.meta.url));
+const [id, command, ...args] = process.argv.slice(2);
+if (!/^[0-9]{3}-[a-z0-9-]+$/.test(id ?? '') || !command) {
+  throw new Error('A receipt id and command are required.');
+}
+const receipts = join(output, 'receipts');
+mkdirSync(receipts, { recursive: true });
+const result = spawnSync(command, args, {
+  cwd: root,
+  encoding: 'utf8',
+  maxBuffer: 64 * 1024 * 1024,
+});
+const stdout = result.stdout ?? '';
+const stderr = (result.stderr ?? '') + (result.error ? `${result.error.message}\n` : '');
+const status = result.status ?? 1;
+writeFileSync(join(receipts, `${id}.command.json`), JSON.stringify({
+  cwd: root, command, args, signal: result.signal, cost: 'unknown',
+}, null, 2) + '\n', { flag: 'wx' });
+writeFileSync(join(receipts, `${id}.stdout`), stdout, { flag: 'wx' });
+writeFileSync(join(receipts, `${id}.stderr`), stderr, { flag: 'wx' });
+writeFileSync(join(receipts, `${id}.exitcode`), `${status}\n`, { flag: 'wx' });
+process.stdout.write(stdout);
+process.stderr.write(stderr);
+process.exitCode = status;

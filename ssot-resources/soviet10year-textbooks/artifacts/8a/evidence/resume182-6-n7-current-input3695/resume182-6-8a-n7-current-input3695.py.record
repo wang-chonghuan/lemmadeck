@@ -1,0 +1,107 @@
+import copy
+import json
+import sys
+from pathlib import Path
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck")
+assert Path.cwd() == ROOT
+sys.path.insert(0, str(ROOT / ".claude/skills/ld-s10y-lesson/tools"))
+import edition
+
+ID = "alg8-c2-s1-n7"
+BOOK = ROOT / "ssot-resources/soviet10year-textbooks/artifacts/8a"
+OWN = ROOT / ".tmp/resume182-6-8a-n7-current-input3695-FIRST"
+assert not OWN.exists()
+lesson_ref = edition.source_ref(BOOK, BOOK / "lessons" / ID / "lesson.json")
+exercises_ref = edition.source_ref(BOOK, BOOK / "lessons" / ID / "exercises.json")
+raw = lesson_ref["data"]
+raw_exercises = exercises_ref["data"]
+assert raw["exercise_count"] == raw_exercises["count"] == 14
+lesson = {
+    **copy.deepcopy(raw), "schema": edition.LESSON_SCHEMA,
+    "edition": "modern-us-neutral", "status": "draft", "source": lesson_ref,
+    "prose": edition.modern_prose(raw), "section_breaks": [],
+    "errata": edition.source_errata(BOOK, raw, raw_exercises),
+}
+exercises = {
+    **copy.deepcopy(raw_exercises), "schema": edition.EXERCISES_SCHEMA,
+    "edition": "modern-us-neutral", "status": "draft", "source": exercises_ref,
+    "exercises": edition.modern_exercises(raw_exercises),
+}
+labels = dict(zip(edition.CYRILLIC_PARTS, edition.LATIN_PARTS))
+mapped = 0
+for item in exercises["exercises"]:
+    before = item["text"]
+    text = before
+    masked = edition.masked_math(text)
+    depths = edition.nesting_depths(masked)
+    markers = [marker for marker in edition.PART_MARKER.finditer(masked)
+               if marker.group("label") in labels and depths[marker.start()] == 0]
+    for marker in reversed(markers):
+        start, end = marker.span("label")
+        text = text[:start] + labels[marker.group("label")] + text[end:]
+    assert [match.group(0) for match in edition.MATH.finditer(before)] == [
+        match.group(0) for match in edition.MATH.finditer(text)]
+    if markers:
+        item["text"] = text
+        item["lines"] = text.splitlines()
+        item["changes"] = list(dict.fromkeys(item["changes"] + ["layout"]))
+        mapped += len(markers)
+values = {
+    "lesson.template.json": lesson,
+    "exercises.template.json": exercises,
+    "figures.template.json": {
+        "schema": edition.FIGURES_SCHEMA, "edition": "modern-us-neutral",
+        "lesson": ID, "status": "draft",
+        "figures": edition.figure_sources(BOOK, raw["figures"]),
+    },
+}
+target = OWN / "adapt/8a/modern-us-neutral/lessons" / ID
+target.mkdir(parents=True)
+outputs = []
+for name, value in values.items():
+    file = target / name
+    with file.open("x", encoding="utf-8") as stream:
+        json.dump(value, stream, ensure_ascii=False, indent=2)
+        stream.write("\n")
+    outputs.append({"path": str(file), "sha256": edition.sha256(file)})
+assert all(not item.get("figure_refs") for item in raw_exercises["exercises"])
+blind = {
+    "schema": "stemrobin-182/current-original-math-input@1",
+    "root": str(ROOT), "book": "8a", "lesson": ID,
+    "source": {
+        "path": str(BOOK / "lessons" / ID / "exercises.json"),
+        "sha256": exercises_ref["sha256"],
+    },
+    "exercises": copy.deepcopy(raw_exercises["exercises"]),
+    "definitions": [copy.deepcopy(raw["prose"][index]) for index in [2, 8, 11, 14, 15, 29]],
+    "definitionSource": {
+        "path": str(BOOK / "lessons" / ID / "lesson.json"),
+        "sha256": lesson_ref["sha256"],
+    },
+    "images": [], "excludesWorkedExamplesAnswersAndChoices": True,
+    "scope": "Current first original solving input; no historical solution bytes are asserted restored.",
+}
+blind_file = OWN / "blind-input.record"
+with blind_file.open("x", encoding="utf-8") as stream:
+    json.dump(blind, stream, ensure_ascii=False, indent=2)
+    stream.write("\n")
+record = {
+    "status": "CURRENT_NEW_AUTHOR_AND_ISOLATED_MATH_INPUTS",
+    "root": str(ROOT), "book": "8a", "lesson": ID,
+    "outputs": outputs,
+    "blindInput": {"path": str(blind_file), "sha256": edition.sha256(blind_file)},
+    "rawLessonSHA": lesson_ref["sha256"], "rawExercisesSHA": exercises_ref["sha256"],
+    "mappedNonMathLabels": mapped, "errataCount": len(lesson["errata"]),
+    "sourceReviewRuns": 0, "oldPrepareCLIReplays": 0, "imageViews": 0,
+    "oldMathOrTextPASSReruns": 0, "wholeLessonApproval": False,
+    "unknownHistoricalBytesRecovered": False,
+    "hostTokens": "unknown", "totalCost": "unknown", "DBWrites": 0,
+}
+file = OWN / "inputs.record"
+with file.open("x", encoding="utf-8") as stream:
+    json.dump(record, stream, ensure_ascii=False, indent=2)
+    stream.write("\n")
+print(json.dumps({"path": str(file), "sha256": edition.sha256(file),
+                  "outputs": outputs, "blindInput": record["blindInput"],
+                  "errataCount": len(lesson["errata"])}))

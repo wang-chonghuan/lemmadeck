@@ -1,0 +1,156 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [reviewFile, expectedReviewSHA] = process.argv.slice(2);
+const id = 'alg8-c2-s1-n7';
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const modern = `${root}/editions/modern-us-neutral`;
+const own = '.tmp/resume182-6-8a-n7-approved-binding3695-FIRST';
+const textInput = '.tmp/resume182-6-8a-n7-review-input3695-AFFECTED-order1';
+const readyFile = '.tmp/resume182-6-8a-n7-figures3695-AFFECTED1/ready.record';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const read = file => fs.readFileSync(file);
+const parse = file => JSON.parse(read(file));
+const write = (file, bytes) => {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, bytes, { flag: 'wx' });
+};
+const save = (file, value) => write(file, `${JSON.stringify(value, null, 2)}\n`);
+const bytes = binding => {
+  assert.ok(path.resolve(binding.path).startsWith(`${repo}/`));
+  const value = read(binding.path);
+  assert.equal(sha(value), binding.sha256, binding.path);
+  return value;
+};
+assert.match(expectedReviewSHA, /^[a-f0-9]{64}$/);
+assert.equal(sha(read(reviewFile)), expectedReviewSHA);
+const review = parse(reviewFile);
+assert.equal(review.status, 'PASS');
+assert.equal(review.book, '8a');
+assert.equal(review.lesson, id);
+assert.equal(review.edition, 'modern-us-neutral');
+assert.equal(review.textReview.status, 'TEXT_PASS');
+const textReview = JSON.parse(bytes(review.textReview));
+assert.equal(textReview.status, 'TEXT_PASS');
+assert.equal(sha(read(`${textInput}/input.record`)), '01bc2668d18dc2df2997a5805835ccb4743bd12f554bd0ed9d93e257e9e25845');
+assert.equal(sha(read(readyFile)), '5e712534fc2b18ec0c0daf337ac0adbde884d20a0dc0d285f59feb7661f38d84');
+const ready = parse(readyFile), input = parse(`${textInput}/input.record`);
+assert.deepEqual(review.figures.map(item => item.figure).sort(), ['fig-14', 'fig-15']);
+assert.ok(!fs.existsSync(own));
+const retained = new Map();
+for (const directory of fs.readdirSync(`${root}/evidence`).sort()) {
+  const record = `${root}/evidence/${directory}/retention.record`;
+  if (!fs.existsSync(record)) continue;
+  for (const entry of parse(record).entries ?? []) {
+    if (!retained.has(entry.sha256)) retained.set(entry.sha256, entry.path);
+  }
+}
+const durable = binding => {
+  const file = retained.get(binding.sha256);
+  assert.ok(file, `Approved evidence not retained: ${binding.path}`);
+  assert.equal(sha(read(file)), binding.sha256);
+  return { path: file, sha256: binding.sha256 };
+};
+const durableReview = durable({ path: reviewFile, sha256: expectedReviewSHA });
+const durableText = durable(review.textReview);
+const snapshot = `${modern}/book.json`;
+write(`${own}/edition-book-before.record`, read(snapshot));
+save(`${own}/start.record`, { root: repo, started: new Date().toISOString(),
+  approvedReview: durableReview, approvedText: durableText, imageViews: 0,
+  rendererCalls: 0, sourceReviews: 0, DBWrites: 0 });
+const bindings = [];
+for (const observed of review.figures) {
+  assert.equal(observed.conclusion, 'PASS');
+  assert.deepEqual(observed.blockers, []);
+  const candidate = ready.entries.find(item => item.id === observed.figure);
+  assert.ok(candidate);
+  const id = observed.figure;
+  assert.equal(observed.spec.sha256, candidate.currentCandidate.sha256);
+  assert.equal(observed.render.sha256, candidate.currentOutput.report.sha256);
+  assert.equal(observed.svg.sha256, candidate.currentOutput.svg.sha256);
+  assert.equal(observed.preview.sha256, candidate.currentOutput.native640.sha256);
+  const approved = JSON.parse(bytes(observed.review));
+  const specBytes = bytes(observed.spec), svgBytes = bytes(observed.svg);
+  const renderBytes = bytes(observed.render), render = JSON.parse(renderBytes);
+  const spec = JSON.parse(specBytes);
+  assert.equal(approved.status, 'pass');
+  assert.equal(render.status, 'pass');
+  assert.equal(approved.spec.sha256, sha(specBytes));
+  assert.equal(approved.render.sha256, sha(renderBytes));
+  assert.equal(approved.outputs.svg.sha256, sha(svgBytes));
+  assert.equal(render.spec.sha256, sha(specBytes));
+  assert.ok(path.resolve(spec.source.image.path).startsWith(`${repo}/${root}/figures/`));
+  assert.equal(sha(read(spec.source.image.path)), spec.source.image.sha256);
+  const target = `${modern}/figures/${id}`;
+  for (const suffix of ['spec.json', 'svg', 'render.json', 'review.json']) {
+    assert.ok(!fs.existsSync(`${target}.${suffix}`), `Refuse to replace existing bytes: ${target}.${suffix}`);
+  }
+  write(`${target}.spec.json`, specBytes);
+  write(`${target}.svg`, svgBytes);
+  const boundRender = structuredClone(render);
+  boundRender.spec.path = `${target}.spec.json`;
+  boundRender.output.svg.path = `${target}.svg`;
+  save(`${target}.render.json`, boundRender);
+  const command = ['/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python',
+    '-B', '.agents/skills/ld-s10y-image/scripts/record_review.py',
+    '--spec', `${target}.spec.json`, '--render', `${target}.render.json`,
+    '--output', `${target}.review.json`, '--status', 'pass', '--notes',
+    `Path binding only; inherited independent PASS ${durableReview.path} sha256=${durableReview.sha256}. ` +
+    `Original official review ${durable(observed.review).path}. ` +
+    'Spec, source and SVG bytes unchanged; only render spec.path/output.svg.path changed. ' +
+    'No new images, renderer or semantic review; all previous failures and counts preserved.'];
+  const receipt = `${own}/${id}-path-binding`;
+  save(`${receipt}/start.record`, { command, cwd: repo, pathBindingOnly: true });
+  const result = spawnSync(command[0], command.slice(1), {
+    cwd: repo, encoding: 'utf8', env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+  });
+  write(`${receipt}/stdout.txt`, result.stdout ?? '');
+  write(`${receipt}/stderr.txt`, result.stderr ?? '');
+  save(`${receipt}/receipt.record`, { command, cwd: repo, returncode: result.status,
+    signal: result.signal, error: result.error?.message ?? null });
+  assert.equal(result.status, 0, result.stderr);
+  bindings.push({ figure: id, specAndSVGBytesUnchanged: true,
+    source: spec.source.image, approvedPreview: durable(observed.preview),
+    originalReview: durable(observed.review), originalRender: durable(observed.render),
+    changedRenderFields: ['spec.path', 'output.svg.path'],
+    files: ['spec.json', 'svg', 'render.json', 'review.json'].map(suffix => ({
+      path: `${target}.${suffix}`, sha256: sha(read(`${target}.${suffix}`)),
+    })) });
+}
+const work = `${own}/adapt/8a/modern-us-neutral/lessons/alg8-c2-s1-n7`;
+for (const item of input.bindings) {
+  const data = bytes(item.output);
+  const target = `${work}/${item.name}.template.json`;
+  if (item.name !== 'figures') write(target, data);
+  else {
+    const manifest = JSON.parse(data);
+    assert.deepEqual(manifest.figures.map(figure => figure.id).sort(), ['fig-14', 'fig-15']);
+    for (const figure of manifest.figures) {
+      figure.spec = `figures/${figure.id}.spec.json`;
+      figure.svg = `figures/${figure.id}.svg`;
+      figure.render = `figures/${figure.id}.render.json`;
+      figure.review = `figures/${figure.id}.review.json`;
+      assert.ok(!figure.png && !figure.artwork && !figure.generation);
+    }
+    save(target, manifest);
+  }
+}
+const record = { status: 'APPROVED_BYTES_BOUND_PENDING_MODERN_FINALIZATION',
+  ticket: 'STEMROBIN-182', book: '8a', lesson: id, edition: 'modern-us-neutral',
+  root: repo, review: durableReview, textReview: durableText, bindings,
+  templates: ['lesson', 'exercises', 'figures'].map(name => ({
+    path: `${work}/${name}.template.json`, sha256: sha(read(`${work}/${name}.template.json`)),
+    changedFields: name === 'figures' ? ['svg', 'render', 'review'] : [],
+  })),
+  newImageSourceMathOrSemanticReviewCalls: 0, pathBindingRecorderCalls: 2,
+  oldFAILHOLDAndAllCountersPreserved: true, unknownHistoricalBytesRecovered: false,
+  DBWrites: 0, wholeLessonApproval: false, hostTokens: 'unknown', totalCost: 'unknown',
+};
+save(`${own}/binding.record`, record);
+console.log(JSON.stringify({ path: `${own}/binding.record`, sha256: sha(read(`${own}/binding.record`)),
+  work: own, figures: bindings.length, imageViews: 0, rendererCalls: 0 }));

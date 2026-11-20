@@ -1,0 +1,44 @@
+import hashlib
+import json
+import math
+import sys
+import xml.etree.ElementTree as ET
+
+source = sys.stdin.read()
+root = ET.fromstring(source)
+changes = []
+for layer in root.iter():
+    if not layer.get("id", "").endswith("-raw-path-layer"):
+        continue
+    transform = layer.get("transform", "")
+    assert transform.startswith("scale(") and transform.endswith(")")
+    factors = [float(value) for value in transform[6:-1].split()]
+    assert len(factors) == 2 and factors[0] > 0
+    assert math.isclose(factors[0], factors[1], abs_tol=1e-9)
+    scale = factors[0]
+    for node in layer:
+        if node.get("vector-effect") != "non-scaling-stroke":
+            continue
+        assert node.tag.endswith("}path")
+        assert node.get("transform") is None
+        old_width = float(node.get("stroke-width"))
+        adjusted_width = old_width / scale
+        node.set("stroke-width", str(adjusted_width))
+        del node.attrib["vector-effect"]
+        changes.append({
+            "layer": layer.get("id"),
+            "uniformScale": scale,
+            "inputStrokeWidth": old_width,
+            "rasterCompatibleStrokeWidth": adjusted_width,
+            "effectiveFullWidthStrokePx": adjusted_width * scale,
+            "pathDataChanged": False,
+        })
+assert len(changes) == 1
+result = ET.tostring(root, encoding="unicode")
+print(json.dumps({
+    "svg": result,
+    "changes": changes,
+    "inputSHA256": hashlib.sha256(source.encode()).hexdigest(),
+    "normalizedSHA256": hashlib.sha256(result.encode()).hexdigest(),
+    "persistedTransformedSVG": False,
+}))

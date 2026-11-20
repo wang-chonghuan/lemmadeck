@@ -1,0 +1,9 @@
+{
+  "command": [
+    "node",
+    "-e",
+    "const fs=require(\"node:fs\"), crypto=require(\"node:crypto\"), p=require(\"node:path\"); for (const path of [\".intentfold/charter/engineering.md\", \".intentfold/charter/operations.md\"]) console.log(JSON.stringify({path,content:fs.readFileSync(path,\"utf8\")})); const selectionPath=p.resolve(\".tmp/resume182-6-8a-n7-display3695-FIRST/selection-d-label-affected/batch6.json\"); const selection=JSON.parse(fs.readFileSync(selectionPath,\"utf8\")); console.log(JSON.stringify({selectionPath,selection})); const paths=[]; function collect(v){ if(typeof v===\"string\"&&v.endsWith(\".png\")) paths.push(v); else if(Array.isArray(v)) v.forEach(collect); else if(v&&typeof v===\"object\") Object.values(v).forEach(collect); } collect(selection); const unique=[...new Set(paths)]; if(unique.length!==8) throw new Error(\"Expected exactly eight assigned PNG paths, found \"+unique.length); for(const path of unique){ if(!p.isAbsolute(path)) throw new Error(\"Assigned path is not absolute: \"+path); console.log(JSON.stringify({path,sha256:crypto.createHash(\"sha256\").update(fs.readFileSync(path)).digest(\"hex\")})); }"
+  ],
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck",
+  "started": "2026-11-20T09:04:51.303Z"
+}

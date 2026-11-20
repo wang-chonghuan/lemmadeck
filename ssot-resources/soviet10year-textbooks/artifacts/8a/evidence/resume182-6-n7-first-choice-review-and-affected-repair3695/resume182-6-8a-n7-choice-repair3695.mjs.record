@@ -1,0 +1,56 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), root);
+const original = '.tmp/resume182-6-8a-n7-choice-author3695-FIRST';
+const own = '.tmp/resume182-6-8a-n7-choice-repair3695-AFFECTED1';
+const replacement = '.tmp/resume182-6-8a-n7-hyperbola-question3695-AFFECTED1.json';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const read = file => fs.readFileSync(file);
+const binding = file => ({ path: path.resolve(file), sha256: sha(read(file)) });
+const save = (file, value) => fs.writeFileSync(file,
+  `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+assert.ok(!fs.existsSync(own));
+const beforeBytes = read(`${original}/draft.json`);
+assert.equal(sha(beforeBytes), '52bf28478d782734e8934c3dbdea3c7a55358db64dfd4beedb028a716ff6288d');
+const before = JSON.parse(beforeBytes), after = structuredClone(before);
+const change = JSON.parse(read(replacement));
+const questionIndex = before.questions.findIndex(item => item.id === 'q-hyperbola-pair');
+const coverageIndex = before.coverage.findIndex(item => item.source_number === '94');
+assert.ok(questionIndex >= 0 && coverageIndex >= 0);
+assert.equal(change.question.id, before.questions[questionIndex].id);
+assert.deepEqual(change.question.source_numbers, ['94']);
+after.questions[questionIndex] = change.question;
+after.coverage[coverageIndex] = change.coverage;
+const unchanged = structuredClone(after);
+unchanged.questions[questionIndex] = before.questions[questionIndex];
+unchanged.coverage[coverageIndex] = before.coverage[coverageIndex];
+assert.deepEqual(unchanged, before);
+assert.deepEqual(after.questions[questionIndex].key.correct, before.questions[questionIndex].key.correct);
+assert.deepEqual(after.questions[questionIndex].view.options.map(item => item.id),
+  before.questions[questionIndex].view.options.map(item => item.id));
+fs.mkdirSync(own);
+fs.writeFileSync(`${own}/seed.json`, read(`${original}/seed.json`), { flag: 'wx' });
+save(`${own}/draft.json`, after);
+save(`${own}/question-view.json`, { id: change.question.id, view: change.question.view });
+save(`${own}/question-internal.json`, change);
+save(`${own}/ready.record`, {
+  status: 'AFFECTED_ONE_QUESTION_CANDIDATE_PENDING_REVIEW',
+  root, book: '8a', lesson: 'alg8-c2-s1-n7', edition: 'modern-us-neutral',
+  priorDraft: binding(`${original}/draft.json`),
+  candidate: binding(`${own}/draft.json`), seed: binding(`${own}/seed.json`),
+  replacement: binding(replacement), view: binding(`${own}/question-view.json`),
+  internalToReadAfterViewSeal: binding(`${own}/question-internal.json`),
+  priorReview: binding('.tmp/resume182-6-8a-n7-choice-review3695-FIRST/review.json'),
+  changedQuestion: 'q-hyperbola-pair', changedCoverageSource: '94',
+  questionIndex, coverageIndex, other27QuestionsAndOther13CoverageEntriesUnchanged: true,
+  counts: { questions: 28, options: 112, sourceCount: 14, newFigures: 0 },
+  changedResponseUnits: 1, priorContentRepairs: 0, cumulativeChoiceContentRepairs: 1,
+  oldReviseAndAllCountersPreserved: true, originalCorrectSetUnchanged: true,
+  imageSourceAnswerOrOtherPASSReruns: 0, validatorCalls: 0, DBWrites: 0,
+  wholeLessonApproval: false, hostTokens: 'unknown', totalCost: 'unknown',
+});
+console.log(JSON.stringify({ ...binding(`${own}/ready.record`), candidate: binding(`${own}/draft.json`) }));

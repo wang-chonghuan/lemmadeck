@@ -1,0 +1,13 @@
+{
+  "command": "node",
+  "args": [
+    "-e",
+    "const fs=require(\"node:fs\");const crypto=require(\"node:crypto\");const assert=require(\"node:assert/strict\");const base=process.cwd()+\"/.tmp/resume182-6-8a-n7-text-author3695-FIRST\";const sha=p=>crypto.createHash(\"sha256\").update(fs.readFileSync(p)).digest(\"hex\");const record=JSON.parse(fs.readFileSync(base+\"/author.record\",\"utf8\"));for(const file of [...record.inputs,...record.outputs])assert.equal(sha(file.path),file.sha256);const receiptDir=base+\"/receipts\";const exits=fs.readdirSync(receiptDir).filter(n=>n.endsWith(\".exit.json\"));for(const name of exits){const prefix=name.slice(0,-\".exit.json\".length);assert.ok(fs.existsSync(receiptDir+\"/\"+prefix+\".stdout\"));assert.ok(fs.existsSync(receiptDir+\"/\"+prefix+\".stderr\"));assert.equal(JSON.parse(fs.readFileSync(receiptDir+\"/\"+name,\"utf8\")).exit,0);}assert.equal(record.TEXT_PASS,false);assert.equal(record.sectionBreaks.runs,1);console.log(JSON.stringify({status:record.status,outputs:record.outputs,authorRecord:{path:base+\"/author.record\",sha256:sha(base+\"/author.record\")},completedReceiptTriplesBeforeThisCommand:exits.length,inputsStillMatch:true,TEXT_PASS:false,graphOutputs:0,totalCost:\"unknown\"},null,2));"
+  ],
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck",
+  "started": "2026-11-20T07:16:19.016Z",
+  "ended": "2026-11-20T07:16:19.051Z",
+  "exit": 0,
+  "signal": null,
+  "error": null
+}

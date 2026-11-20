@@ -1,0 +1,126 @@
+import hashlib
+import json
+from pathlib import Path
+
+
+R = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck")
+OUT = R / ".tmp/resume182-6-8a-n7-affected-review3695-FIRST"
+assert Path.cwd() == R
+
+
+def load(path):
+    return json.loads(Path(path).read_bytes())
+
+
+def binding(path):
+    path = Path(path)
+    if not path.is_absolute():
+        path = R / path
+    path = path.resolve()
+    return {"path": str(path), "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
+
+
+def verify(record):
+    assert binding(record["path"]) == {"path": str(Path(record["path"]).resolve()), "sha256": record["sha256"]}
+
+
+bound = load(OUT / "binding-check.record")
+verify(bound["ready"])
+ready = load(bound["ready"]["path"])
+sealed = load(OUT / "observation-seal.record")
+for record in sealed["records"]:
+    verify(record)
+text = load(OUT / "text-review.record")
+for key in ("input", "inheritedFermatFirstReview", "currentLesson", "currentExercises", "evidence"):
+    verify(text[key])
+assert text["status"] == "TEXT_PASS"
+figures = []
+for item in bound["figures"]:
+    figure = item["figure"]
+    for key in ("source", "context", "spec", "render", "svg", "preview", "pixelsRecord"):
+        verify(item[key])
+    review_path = OUT / ("fig-14.official-review.json" if figure == "fig-14" else "fig-15.fail.record")
+    review = load(review_path)
+    if figure == "fig-14":
+        assert review["schema"] == "ld-s10y-image/review@1"
+        assert review["status"] == "pass"
+        for key in ("source", "spec", "render"):
+            verify(review[key])
+            assert binding(review[key]["path"]) == item[key]
+        assert binding(review["outputs"]["svg"]["path"]) == item["svg"]
+        decision = load(OUT / "fig-14.decision.record")
+        conclusion, blockers = decision["conclusion"], decision["blockers"]
+    else:
+        assert review["status"] == "fail"
+        for key in ("source", "spec", "render", "svg", "preview"):
+            verify(review[key])
+            assert binding(review[key]["path"]) == item[key]
+        conclusion, blockers = review["conclusion"], review["blockers"]
+    figures.append({
+        "figure": figure,
+        "conclusion": conclusion,
+        "blockers": blockers,
+        "review": binding(review_path),
+        "spec": item["spec"],
+        "render": item["render"],
+        "svg": item["svg"],
+        "preview": item["preview"],
+    })
+
+payload = {
+    "status": "HOLD",
+    "book": "8a",
+    "lesson": "alg8-c2-s1-n7",
+    "edition": "modern-us-neutral",
+    "textReview": {**binding(OUT / "text-review.record"), "status": "TEXT_PASS"},
+    "figures": figures,
+    "imageAccounting": {
+        "batchLimit": 8,
+        "contextLimit": 24,
+        "taskLimit": 4,
+        "thisReviewerImageOpens": 4,
+        "thisReviewerOriginalOpens": 2,
+        "thisReviewerCurrentNative640Opens": 2,
+        "perImageOpens": {"fig-14.original": 1, "fig-15.original": 1, "fig-14.currentNative640": 1, "fig-15.currentNative640": 1},
+        "thisReviewerReopens": 0,
+        "thisReviewerCrops": 0,
+        "thisReviewerResizes": 0,
+        "thisReviewerOldFAILFileOpens": 0,
+        "thisReviewerHistoricalFigureCandidateFilesOpened": 0,
+        "oldFailureMetadata": "Only metadata embedded in the required ready.record; no historical figure spec/review/report/image file opened.",
+        "parentImagePayloads": 0,
+        "newRenderCalls": 0,
+        "newNativeRasterCalls": 0,
+        "newIndependentValidatorCalls": 0,
+        "officialRecorderCalls": {"fig-14": 1, "fig-15": 0},
+        "officialRecorderEmbeddedValidationCalls": 1,
+        "newIndependentFigureDecisions": 2,
+        "newIndependentFigurePasses": 1,
+        "newIndependentFigureHolds": 1,
+        "inheritedReady": bound["ready"],
+        "inheritedCountersUnchanged": ready["countersThisTask"],
+        "inheritedPerFigureCountersUnchanged": {item["id"]: item["countersThisTask"] for item in ready["entries"]},
+        "historicalFailureRecordsAndCounters": "Retained in place; not restored, rewritten, reset or re-approved.",
+        "combinedKnownRenderCalls": ready["countersThisTask"]["renderCalls"],
+        "combinedKnownNativeRasterCalls": ready["countersThisTask"]["nativeRasterCalls"],
+        "crossChatImageHistory": "unknown; not loaded into this review context",
+        "paidCallsThisReviewer": 0,
+        "hostTokens": "unknown",
+        "totalCost": "unknown"
+    },
+    "wholeLessonApproval": False,
+    "scope": "Incremental text metadata and two bound current figures only. No math solving, author repair, flow/normalizer, promotion, DB, answer, choice, other lesson, old chat, progress or git action.",
+    "observationSeal": binding(OUT / "observation-seal.record"),
+    "bindingEvidence": binding(OUT / "binding-check.record"),
+    "svgAudit": binding(OUT / "svg-audit.record"),
+    "figure14Decision": binding(OUT / "fig-14.decision.record"),
+    "commandCaptures": [binding(path) for path in sorted((OUT / "commands").glob("*.json"))],
+    "writeSet": str(OUT) + "/",
+    "completionNote": "fig-14 official PASS recorded once. fig-15 fail saved without invoking the pass-only-authorized official recorder or modifying a candidate."
+}
+target = OUT / "review.record"
+with target.open("x") as stream:
+    json.dump(payload, stream, ensure_ascii=True, indent=2)
+    stream.write("\n")
+for path in (OUT / "text-review.record", OUT / "fig-14.official-review.json", OUT / "fig-15.fail.record", target):
+    print(json.dumps(binding(path)))

@@ -1,0 +1,38 @@
+import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const cwd = "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck";
+const root = path.dirname(fileURLToPath(import.meta.url));
+const [id, executable, ...args] = process.argv.slice(2);
+if (!id || !/^[a-z0-9-]+$/.test(id) || !executable) {
+  throw new Error("Expected unique evidence id, executable, and arguments");
+}
+const destination = path.join(root, "commands", id);
+if (existsSync(destination)) throw new Error("Refusing to overwrite evidence");
+mkdirSync(destination, { recursive: true });
+writeFileSync(path.join(destination, "request.json"), JSON.stringify({
+  cwd, argv: [executable, ...args], startedAt: new Date().toISOString(),
+}, null, 2) + "\n", { flag: "wx" });
+const result = spawnSync(executable, args, {
+  cwd, encoding: null, maxBuffer: 16 * 1024 * 1024,
+});
+const stdout = result.stdout ?? Buffer.alloc(0);
+const stderr = result.stderr ?? Buffer.alloc(0);
+writeFileSync(path.join(destination, "stdout.txt"), stdout, { flag: "wx" });
+writeFileSync(path.join(destination, "stderr.txt"), stderr, { flag: "wx" });
+const digest = (bytes) => createHash("sha256").update(bytes).digest("hex");
+writeFileSync(path.join(destination, "result.json"), JSON.stringify({
+  endedAt: new Date().toISOString(),
+  exitCode: result.status,
+  signal: result.signal,
+  error: result.error ? String(result.error) : null,
+  stdoutSha256: digest(stdout),
+  stderrSha256: digest(stderr),
+}, null, 2) + "\n", { flag: "wx" });
+process.stdout.write(stdout);
+process.stderr.write(stderr);
+if (result.error) process.stderr.write(String(result.error) + "\n");
+process.exitCode = result.status ?? 1;

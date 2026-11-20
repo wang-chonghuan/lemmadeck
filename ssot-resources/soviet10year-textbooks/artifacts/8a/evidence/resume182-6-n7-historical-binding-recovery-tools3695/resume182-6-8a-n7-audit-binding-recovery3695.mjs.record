@@ -1,0 +1,57 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), root);
+const own = '.tmp/resume182-6-8a-n7-audit-binding-recovery3695-AFFECTED1';
+const evidence = 'ssot-resources/soviet10year-textbooks/artifacts/8a/evidence';
+const previous = `${evidence}/resume182-6-n7-first-binding-and-finalize-failure3695/retention.record`;
+const saved = '.tmp/resume182-6-8a-n7-layout-recovery3695-AFFECTED3/failed-adaptation.audit.record';
+const oldSHA = '45fcb622359b59716947acabea6792f50c6942b6e1cd3fe46a1a090a2e11af55';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const read = file => fs.readFileSync(file);
+const bytes = read(saved), previousBytes = read(previous);
+assert.equal(sha(bytes), oldSHA);
+assert.equal(sha(previousBytes), '3eff2e4cc28a4c63b15a36b830ae9950c07c3c815a557532f9237f10bc406ac7');
+const entry = JSON.parse(previousBytes).entries.find(item =>
+  item.historical_path === saved && item.sha256 === oldSHA);
+assert.ok(entry);
+const activeSHA = sha(read(entry.path));
+assert.equal(activeSHA, '3811d00554b1b313e97319b5aefffb9e6a4da4860dc7273ab97dd62ba8c5cf84');
+assert.equal(JSON.parse(read(entry.path)).status, 'pass');
+const target = `${evidence}/resume182-6-n7-historical-audit-binding-recovery3695`;
+assert.ok(!fs.existsSync(own) && !fs.existsSync(target));
+fs.mkdirSync(own);
+fs.mkdirSync(target);
+const file = `${target}/failed-adaptation.audit.record`;
+fs.writeFileSync(file, bytes, { flag: 'wx' });
+assert.equal(sha(read(file)), oldSHA);
+const correction = {
+  originalRecord: { path: previous, sha256: sha(previousBytes) },
+  historicalSource: { path: saved, sha256: oldSHA },
+  supersededMutableReference: { path: entry.path, expected: oldSHA, current: activeSHA },
+  correctedImmutableReference: { path: file, sha256: oldSHA, bytes: bytes.length },
+  oldRecordAndCurrentApprovedAuditUnchanged: true,
+};
+const record = {
+  schema: 'stemrobin-182/production-evidence-retention@1',
+  ticket: 'STEMROBIN-182', book: '8a', lesson: 'alg8-c2-s1-n7',
+  status: 'retained-existing-bytes-only', evidence_package: 'n7-historical-audit-binding-recovery3695',
+  entries: [{ historical_path: saved, path: file, sha256: oldSHA, bytes: bytes.length }],
+  unique_files: 1, reused_existing_references: 0, corrections: [correction],
+  method: 'Bind the existing saved failure bytes once; never substitute the current PASS audit for the old FAIL or rewrite the original retention record.',
+  unknownHistoricalBytesRecovered: false, imageSourceMathValidatorOrRendererCalls: 0,
+  oldFailuresAndCountsPreserved: true, DBWrites: 0, finish: 'review',
+  wholeLessonApproval: false, hostTokens: 'unknown', totalCost: 'unknown',
+};
+const recordBytes = Buffer.from(`${JSON.stringify(record, null, 2)}\n`);
+fs.writeFileSync(`${target}/retention.record`, recordBytes, { flag: 'wx' });
+fs.writeFileSync(`${own}/binding.record`, `${JSON.stringify({
+  status: 'HISTORICAL_BINDING_RECOVERED_FROM_KNOWN_SAVED_BYTES',
+  root, correction, retention: { path: `${target}/retention.record`, sha256: sha(recordBytes) },
+  approvedAuditChanged: false, unknownHistoricalBytesRecovered: false,
+}, null, 2)}\n`, { flag: 'wx' });
+console.log(JSON.stringify({ path: `${own}/binding.record`, sha256: sha(read(`${own}/binding.record`)),
+  retention: { path: `${target}/retention.record`, sha256: sha(recordBytes) }, recoveredKnownBytes: bytes.length }));

@@ -1,0 +1,66 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const output = path.join(root, '.tmp/resume182-6-8a-n7-choice-review3695-FIRST');
+const command = JSON.parse(fs.readFileSync(path.join(output, 'validator.command.record'), 'utf8'));
+const sha256 = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const writeRecord = (file, record) => fs.writeFileSync(file, `${JSON.stringify(record, null, 2)}\n`, { flag: 'wx' });
+
+if (process.cwd() !== root || command.cwd !== root) throw new Error('Wrong active cwd');
+for (const file of Object.values(command.capture)) {
+  if (fs.existsSync(file)) throw new Error(`Refusing a second run or overwrite: ${file}`);
+}
+for (const [flag, expected] of [
+  ['--seed', command.seed_bytes_sha256],
+  ['--draft', command.draft_bytes_sha256],
+  ['--review', command.review_bytes_sha256],
+]) {
+  const file = command.argv[command.argv.indexOf(flag) + 1];
+  if (sha256(fs.readFileSync(file)) !== expected) throw new Error(`Snapshot changed: ${flag}`);
+}
+
+const started = new Date().toISOString();
+writeRecord(command.capture.start, {
+  state: 'ACTUAL_SINGLE_INVOCATION_START',
+  started_at: started,
+  cwd: process.cwd(),
+  argv: command.argv,
+  command_record_sha256: sha256(fs.readFileSync(path.join(output, 'validator.command.record'))),
+});
+
+const child = spawnSync(command.argv[0], command.argv.slice(1), {
+  cwd: root,
+  shell: false,
+  maxBuffer: 16 * 1024 * 1024,
+});
+const stdout = child.stdout ?? Buffer.alloc(0);
+const stderr = child.stderr ?? Buffer.alloc(0);
+fs.writeFileSync(command.capture.stdout, stdout, { flag: 'wx' });
+fs.writeFileSync(command.capture.stderr, stderr, { flag: 'wx' });
+const result = {
+  state: 'ACTUAL_SINGLE_INVOCATION_RESULT',
+  started_at: started,
+  finished_at: new Date().toISOString(),
+  cwd: root,
+  argv: command.argv,
+  exit_code: child.status,
+  signal: child.signal,
+  spawn_error: child.error ? { name: child.error.name, message: child.error.message, code: child.error.code ?? null } : null,
+  stdout_path: command.capture.stdout,
+  stdout_bytes: stdout.length,
+  stdout_sha256: sha256(stdout),
+  stderr_path: command.capture.stderr,
+  stderr_bytes: stderr.length,
+  stderr_sha256: sha256(stderr),
+  review_bytes_sha256_after_run: sha256(fs.readFileSync(command.argv[command.argv.indexOf('--review') + 1])),
+  official_validator_invocations: 1,
+  reruns: 0,
+};
+writeRecord(command.capture.result, result);
+process.stdout.write(stdout);
+process.stderr.write(stderr);
+console.log(JSON.stringify(result));
+process.exitCode = child.status ?? 125;

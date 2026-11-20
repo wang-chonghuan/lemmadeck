@@ -1,0 +1,69 @@
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const assert = require("node:assert/strict");
+
+const root = "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck";
+assert.equal(process.cwd(), root);
+const candidate = path.join(root, ".tmp/resume182-6-8a-n7-fig15-D-label-repair3695-AFFECTED3");
+const hash = (p) => crypto.createHash("sha256").update(fs.readFileSync(p)).digest("hex");
+const readyPath = path.join(candidate, "ready.record");
+assert.equal(hash(readyPath), "bfd9afa205e7dba3f4f73586fab0070433a3afca6381d3c8a8b7df16abe8adcf");
+const ready = JSON.parse(fs.readFileSync(readyPath, "utf8"));
+const bindings = { ready: { path: readyPath, sha256: hash(readyPath) } };
+for (const key of ["originalSpec", "spec", "render", "svg", "preview", "priorDisplayHold"]) {
+  const record = ready[key];
+  assert.ok(record.path.startsWith(`${root}/`));
+  assert.equal(hash(record.path), record.sha256, key);
+  assert.equal(fs.statSync(record.path).size, record.bytes, key);
+  bindings[key] = record;
+}
+const prior = JSON.parse(fs.readFileSync(ready.originalSpec.path, "utf8"));
+const spec = JSON.parse(fs.readFileSync(ready.spec.path, "utf8"));
+const differences = [];
+function diff(before, after, pointer = "") {
+  if (JSON.stringify(before) === JSON.stringify(after)) return;
+  if (before && after && typeof before === "object" && typeof after === "object"
+      && Array.isArray(before) === Array.isArray(after)) {
+    const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
+    for (const key of keys) {
+      diff(before[key], after[key], `${pointer}/${key.replace(/~/g, "~0").replace(/\//g, "~1")}`);
+    }
+  } else {
+    differences.push({ path: pointer, before, after });
+  }
+}
+diff(prior, spec);
+const index = spec.objects.findIndex((object) => object.id === "fig-15-D");
+assert.equal(index, 8);
+assert.deepEqual(differences, [
+  { path: "/objects/8/labelPlacement/position", before: "SE", after: "W" },
+  { path: "/objects/8/labelPlacement/offset/0", before: 12, after: -12 },
+  { path: "/objects/8/labelPlacement/offset/1", before: 12, after: 0 },
+]);
+assert.deepEqual(prior.objects[index].labelPlacement, { position: "SE", offset: [12, 12] });
+assert.deepEqual(spec.objects[index].labelPlacement, { position: "W", offset: [-12, 0] });
+const report = JSON.parse(fs.readFileSync(ready.render.path, "utf8"));
+assert.equal(report.status, "pass");
+assert.equal(report.spec.sha256, ready.spec.sha256);
+assert.equal(report.output.svg.sha256, ready.svg.sha256);
+assert.equal(path.resolve(root, report.output.svg.path), ready.svg.path);
+const png = fs.readFileSync(ready.preview.path);
+assert.equal(png.subarray(0, 8).toString("hex"), "89504e470d0a1a0a");
+assert.equal(png.readUInt32BE(16), 640);
+assert.equal(png.readUInt32BE(20), 480);
+const inheritedPath = path.join(root, ".tmp/resume182-6-8a-n7-fig15-y-label-review3695-AFFECTED2/review.record");
+const inherited = JSON.parse(fs.readFileSync(inheritedPath, "utf8"));
+const hold = JSON.parse(fs.readFileSync(ready.priorDisplayHold.path, "utf8"));
+console.log(JSON.stringify({
+  bindings,
+  differences,
+  changedObject: "fig-15-D",
+  changedField: "/objects/fig-15-D/labelPlacement",
+  otherRecursiveStructureUnchanged: true,
+  priorSourceAndMathematicsNotRereviewed: true,
+  previewHeader: { width: 640, height: 480, visualViewsByThisCommand: 0 },
+  inheritedReviewBinding: { path: inheritedPath, sha256: hash(inheritedPath) },
+  inheritedReview: inherited,
+  priorDisplayHold: hold,
+}, null, 2));

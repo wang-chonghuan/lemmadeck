@@ -2,6 +2,607 @@
 
 ### 182-6 2026-11-20 即时接续3695，官方创建注册成功
 
+- Hooke the 2nd仅batch9实际7图DISPLAY_PASS，已收回close，
+  result SHA
+  `23f7f17a371185dcbddf805fd019862d8ff354e2e6007003b89084bb27ee2737`；
+  10新唯一/13引用/3复用留存，retention SHA
+  `ca848d6ad36d71622da77d78499bb46d1959b699c9adc20ee7a58ecf77cc4711`。
+  n7全部70所选图实际观察齐，新增47/继承23，实际显示71（含旧
+  rejected1）、父1/受影响图独审1合计73；重开/裁切/缩放/重渲染0。
+  最终binding FIRST真实exit1仅缺n7留存索引中的5条已有n6/n29脚本
+  引用，非内容/显示失败。三个首次写入HTML全部原位保留、同SHA复用，
+  原binder/FAIL/完整流不删；5脚本从已有持久字节引用，不复制旧包。
+  恢复材料12新唯一/22引用/10复用留存，retention SHA
+  `873f158b4024a78cee8529a08ca1e9eaf1865e639c7d612eb3ab3f544c86829a`。
+  AFFECTED-retention1 binding实际exit0，787运行检查/70观察/
+  27360目标0缺失，最终OFFLINE_DISPLAY_PASS SHA
+  `8a35a862f71a5b24799716e5a3892d58c21697533f5672450def1434e734ef23`。
+  恢复仅字节引用与既有观察绑定，renderer/browser/validator/源/数学/
+  图/观察重跑0，旧HOLD整批不批准；未知历史字节恢复0。
+  最终回执6新唯一/9引用/3复用留存，retention SHA
+  `8a74a706a4347f2ee2b2f86c573281f32f1a964051d69eaa3e3259d05543ffd9`。
+  当前完整课仅n7待窄staging/check/commit/push，排除n5与7a半课；
+  非APP/整票验收/正式handoff，不写DB/合并/部署。
+
+- Maxwell the 2nd仅batch8实际8图DISPLAY_PASS，已收回close，
+  result SHA
+  `4b0dbb135b9e25270408e1578eeecdb94ab940bea9d424234ac8f13a6f715a88`；
+  12新唯一/17引用/5复用留存，retention SHA
+  `ba21afdac48f826d7f2098015715a2619094c4f786a06602fe0eb4dfc2bcf80d`。
+  当前可用63/70，Hooke the 2nd唯一在途batch9仅7张，未提前绑定/
+  commit；手机媒体及公式正常横向滚动片段不冒作整图全可见。
+  本轮只读查找两处路径不存在及一处glob无匹配均未写输出，不当PASS，
+  保留实际工具失败；n8仍只有文本/元数据准备、生产0。
+
+- 2026-11-20T09:09:50Z 本聊天按既有40分钟直接授权监督：持续真实
+  工具动作，普通修复不等额外审批；旧聊天/Mencius/Russell仍暂停，
+  未新建或重置监督、未给其它聊天发消息、旧排队/失败消息不删。
+  下次09:49:50Z。Huygens the 2nd仅batch7实际8图DISPLAY_PASS，
+  已收回close，result SHA
+  `acd68c728bb5956142b1f2aa3306eeadb0df7a519cdec0050ef5569064c9aa0c`。
+  24新唯一/37引用/13复用留存，retention SHA
+  `c6e4f8073da45216b63311bfdd696fdacdf1cc97fe581cdb8a2f584989b7d19e`。
+  当前可用55/70，Maxwell the 2nd唯一在途batch8；fetch PRECOMMIT
+  实际exit0，仅同步原分支远端ref，无切分支/合并/旧树修改。
+  尚未整课绑定/commit/push，全部边界及真实失败费用不变。
+
+- Lovelace the 2nd仅batch6实际8图DISPLAY_PASS，已收回close，
+  result SHA
+  `ca0484fff4ce0a28bde369445c33a1678d0df43ec06c56c35da923285db3d21e`；
+  13新唯一/17引用/4复用留存，retention SHA
+  `9beac860d2a708f890b0c2e6f02879a7d4083641c32f398e7bbd0de4a78f26ff`。
+  当前可用47/70，Huygens the 2nd唯一在途batch7，旧HOLD整份不改为
+  PASS；其它旧PASS/暂停/树/锁/未知费用不变，未整课绑定或提交。
+
+- Helmholtz the 2nd仅batch5实际8图DISPLAY_PASS，已收回close，
+  result SHA
+  `1d632c26895fe972533a297aafd3e1fc8b6ecd76bc41479063d30064ec652faf`；
+  15新唯一/21引用/6复用留存，retention SHA
+  `85343ad26c1f9cbc1e148b964ec0b62e3e79b54ffcc9345b511e3fef21e27955`。
+  当前可用39/70，Lovelace the 2nd唯一在途batch6，父不重看整批、
+  新批重开/裁切/缩放/重渲染0；未提前整课绑定或提交。
+
+- Dewey the 2nd仅batch4实际8原生图各一次DISPLAY_PASS，已收回close，
+  result SHA
+  `d77a505c39ddd01d39ada1f138895339eb9f870568e5c264e6bb761c4a52b998`。
+  新推广/runtime/activeSurfaces/选片/binder及batch4实际证据67新唯一/
+  89引用/22复用留存，retention SHA
+  `3608ec9ba86acbc2f7e116da2984f0b471abcc0de96cd96cf52fda4fc2b3d088`。
+  当前可用31/70，实际旧24+新8显示观察、父1/独立受影响图1，
+  所有新批重开/裁切/缩放/重渲染0；Helmholtz the 2nd唯一在途batch5。
+  当前live182只读GET HTTP200，finish=review不变；原票面历史暂停不
+  覆盖当前人类直接接续授权。不重审源/数学/答案/选择/旧图PASS，
+  未整课绑定/commit/push、DB/合并/部署/正式handoff0。
+
+- 本次接续只读官方attachments再次确认3695已注册，create/attach/
+  替代聊天0；09:00:21Z仍有实际工具动作，旧聊天/审者暂停不变。
+  Locke batch3实际收回close为HOLD：七张零阻断观察可单独复用，
+  唯一fig15 D标签跨底边/y轴的原FAIL及24次旧显示观察保留。
+  父仅该一张具体失败图确认，父图片累计1，不再声称0。
+  普通修复只fig-15-D.labelPlacement由SE/[12,12]改W/[-12,0]，
+  其它spec字节及源/几何/正文/答案/选择不变，累计图内容修正3，
+  原声明预算0不重置。新renderer1/native640 raster1；已知累计
+  renderer7/native6，未知历史费用不猜。McClintock实际收回close
+  受影响独审PASS，review SHA
+  `e9cd3f1ee2dfc52b11cedf9930e827868c722e9c84ce6d6e9f7d83e891ff5dc7`。
+  正式推广exit0仅四当前fig15文件，旧实际字节原样保存并提供9条
+  历史可变引用修正，原records不改；promotion binding SHA
+  `18091e5de02ed70521ef48a5229fa4dbbddf60c641f3794afe648272071ead40`。
+  显示受影响接续exit0仅替换正文嵌入fig15并重跑两正文视面，
+  四习题/选择组合及无影响截图复用，新14截图；本课累计display
+  renderer1/browser5/context7/navigation11/captures103。usage SHA
+  `b9450fb906778939294c992a4471a01b85ba2c29ed3a10e39d989e05fea730d0`。
+  新选片86→70、27360目标0缺失，复用23观察/待47，仅batch4–9，
+  Dewey the 2nd唯一在途batch4；未因文件存在批准/替换该审者。
+  最终binder仅syntax PASS未执行，使用activeSurfaces不取历史同名
+  HTML；未整课批准/commit/push。uppercase包名留存失败、duplicate
+  fetch-wrapper EEXIST均保留，原fetch及remote SHA ecec13c9复用。
+  新推广/显示/选片/最终binder证据待增量留存，n13/n22及旧PASS0重跑，
+  未知历史字节恢复0；旧树/锁/备份/未决消息/失败/计数/费用保留。
+
+- James仅batch2实际8图DISPLAY_PASS收回close，result SHA
+  `801515149a4712042969e31ca8fc03ea119a37a86f1235590a08daaae27c585e`；
+  Locke仅batch3在途。已实际观察16/70，重开/裁切/缩放/重渲染0，
+  父图片0，不提前整课绑定或提交；旧FAIL/未决消息及暂停不变。
+
+- Ptolemy仅batch1实际8原生图各一次DISPLAY_PASS，已收回close；
+  result SHA
+  `d672fe9d7d096ba193570cc8590cc7d142012082c26b36b316f3ea027d54e1c2`，
+  19唯一/25引用/6复用留存，retention SHA
+  `fdb7ea4d5cf4ee7373c5bd6e7a24d3c1f70a3817868133ee98c5a3d73542c11b`。
+  James仅batch2在途，整体观察8/70，父图片0，不提前整课批准。
+  恢复及选片证据158唯一/215引用/57复用留存，retention SHA
+  `be04951192d65eede98c8fdd02f48b1a65e41610cbb9eed0af42e6c8fc592e2c`。
+  下一源只读定位8a n8：本树已有原fig16及持久first-visual-FAIL
+  context/spec/render/preview/review；旧失效锚点点盘/y箭头与640认证
+  缺口不是PASS。当前仅元数据/文本定位，未开图、复制旧树、生产或
+  修改n8。n31–33旧完整18视面PASS等保持，不凭新格式文件缺失重跑。
+
+- n7首次离线display FIRST真实exit1：renderer成功、1440:text完成、
+  四未观察PNG保留；标准95 sr-nb client44/content46纵向2px裁切阻断。
+  恢复padding1在应用样式前因诊断误含隐藏MathML exit1；padding2
+  排除辅助节点后定位真实sr-nb，但统一padding引入答案根节点2px
+  overflow，exit1保留。padding3只该实测框paddingBottom4.2→7.2px，
+  client/content均47；其它公式/答案/题/图/源及renderer HTML不变，
+  受影响显示接续exit0，785检查/六组合全部runtime PASS，非视觉批准。
+  累计本课display renderer1/browser4/context5/navigation9，
+  89保存截图、父观察0；三FAIL/所有流及未知全历史费用均保留。
+  usage SHA
+  `510eab593767ba75034e3d29d0de856a22e16b662efd81340b28ec0c35ff6a13`。
+  选片FIRST exit1为旧complete字段协议失配，不重跑显示；
+  复用现有n29当前采集器选择逻辑、仅本课身份机械替换AFFECTED1
+  exit0。89→70张，27360实际glyph/rule/formula/media目标0缺失，
+  19未选原图保留；9批fresh独立观察，Ptolemy仅batch1在途，未
+  观察原SOURCE/图/答案/选择PASS。parentREADY不当整课批准/commit。
+  首选择复审及首次显示失败留存49唯一/77引用/28复用，retention SHA
+  `fb78492a851acdac677880b451818666293fcf787ecc08f40e081004f630acfd`。
+
+- 本次即时接续实际核对官方attachments：3695已注册，不再create/attach，
+  不建替代聊天。live182只读GET HTTP200，finish=review及无写库/合并/
+  部署边界不变，当前直接人类恢复授权优先于票面历史暂停。
+  Hilbert已实际返回收回close，仅q-hyperbola-pair/4项/源94覆盖PASS，
+  review SHA
+  `8d239b8e9c397246c8758c444765c135b52bfe394cc7842c646a38949c857ab8`；
+  尺度变换60/-120时正确集由A变D，三错程序均对应所列坐标；
+  其它27题/13覆盖PASS未重审、作图能力损失与首bootstrap日志缺口保留。
+  组合一次exit0，composed review SHA
+  `165a5e13bae71bbabf2dfaa26ee4be58778d9bb789e08a045a6d616da79c0d36`；
+  受影响语义validator一次exit0，正式retain_choices首次exit0。
+  parentREADY首次exit0，SHA
+  `4a25e05252a9a40d344cd6003bce1ac85dd2b56941cb50f0d09919eb15dff752`。
+  本课首次离线显示已执行中，尚未观察/整课批准/commit；
+  所有旧树/锁/失败/备份/未决消息/计数/未知费用不变，n13/n22等PASS0重跑。
+
+- 2026-11-20T08:29:50Z 本聊天40分钟授权监督检查：当前有持续工具动作，
+  不再是首次attach失败后的无动作状态。create/attach/替代聊天0；
+  旧消息、树、锁、备份、费用及未知字节声明不变，旧聊天/审者仍暂停，
+  既有监督不新建/重置。普通修复直接解决，未索取额外人类审批。
+  Hooke已实际收回close：14源/28题112项、29真/83假全部数学匹配；
+  仅源94定量尺度遗漏导致q-hyperbola-pair task_fidelity及coverage
+  revise，原validator1 exit3保留，review SHA
+  `deac70febefa5790a942869e6c635ccd8b12a3f221838552f13dfc6a446e37e4`，
+  result SHA
+  `64e02912254ed545f53ddfda01293f0566823fbea75377568417439154497ceb`。
+  唯一选择内容修正1：只该题/源94coverage；A/D保留同象限/渐近线，
+  加入原尺度与十倍尺度的成对坐标，必须判断6/-12的实际坐标乘积。
+  其它27题/13覆盖条目、seed/正确集/28题112项与图数均不变，
+  draft SHA
+  `042797ad21082b55739b97bf5f7278d7938d0f29feaff852c64cfc9366149950`，
+  ready SHA
+  `9898c35379e0fe92d7cbce2e121da5cbaa18fd126fd7a98fe4ee8156e482152f`；
+  受影响结构一次exit0，不当语义批准。Hilbert唯一在途审者仅这1题/
+  4项/源94覆盖，先纯view封存再看键，不重审其它PASS。
+  旧review/新候选/控制及真实回执28唯一/33引用/5复用留存，
+  retention SHA
+  `09aeb320ee344b3105f0d2b4f634a193bbb41e375d23c86d0ef25a45c0696c0b`。
+  最终组合脚本仅备妥syntax1 exit0，尚未执行、parentREADY/runtime0；
+  不以数学全匹配掩盖定量任务修订，不提交半课或DB/合并/部署。
+
+- 最终字节依赖只读盘点：跨包12路径中无必须夹入其它半课包的依赖；
+  唯一未tracked项是本课活动audit。实际发现旧失败留存entry指向后来被
+  正式收口替换的活动audit，原记录SHA不改。仅从现有已保存失败副本
+  恢复372已知字节到不可覆盖的新n7绑定，未知字节恢复0、语义/源/
+  图/validator重跑0；旧FAIL SHA
+  `45fcb622359b59716947acabea6792f50c6942b6e1cd3fe46a1a090a2e11af55`，
+  本次binding SHA
+  `bb593711913f9d1885c1a799ddc45758bd6dc86b46e91a4b4e25fb9cd4d70840`，
+  correction retention SHA
+  `c7728139aa020bc689f92a0f3569478486751609c09fabf7d36a5d850978a950`。
+  最终binder显式绑定该修正，原record和当前PASS audit均不改。
+  相关工具/回执12唯一/16引用/4复用留存，retention SHA
+  `02f5dcbe00a1e59d7555ea026d24b445ba8d3c063eeeebd1bb233bfc33fb762f`；
+  此留存exit0的旧式entry路径类型warning保留，只补后续类型保护，
+  不重跑已成功输出或猜旧式条目的未知字节。Hooke仍唯一在途，
+  其阶段文件存在不作为整包PASS，未parentREADY/显示/commit。
+
+- Maxwell作者已实际收回close，首次选择28题/112项、26single/
+  2multiple、14/14完整源覆盖、new_figures0；结构一次exit0，语义未审。
+  11源的作图/证明/任意造解/独立书写能力损失如实保留，不当自动批准；
+  author SHA
+  `1e1f43f3aad0a56b85579e66d19cef2270c44d0420a37410b6e44b9f44812201`，
+  draft SHA
+  `52bf28478d782734e8934c3dbdea3c7a55358db64dfd4beedb028a716ff6288d`，
+  canonical SHA
+  `3986a4edae1d116539a3463e96e2ed0bbce8c438740876416ea0eaf2e043d137`。
+  首本树venv读取失败及原树既有runtime引用保留，未安装/复制依赖。
+  原稿不复制/改键，source→纯view→key独审投影FIRST exit0，
+  packet SHA
+  `4822ec6abe37247e3a09d977aa9e00c23a6342c4edf5b3ed16ce2ff6873e3e71`；
+  24唯一/33引用/9复用留存，retention SHA
+  `1a9e70a202aa015c20b5d4ac8a86682ff691fa0ca5355d59059c2851746255d3`。
+  Hooke唯一在途选择审者，先独立种子/纯view封存后才读作者键；
+  不读已有答案/旧choice/图，未提前PASS、显示或commit。
+  原分支定向fetch FIRST exit0，无merge/rebase/force。只读下一源盘点
+  不把旧课不同显示证据格式当缺失，不重跑其PASS，下一课生产仍未启动。
+
+- Carson已实际收回close，仅四受影响块/四边界TEXT_PASS，review SHA
+  `6fa755c0b9f1d0b10d12a6e25eff920c124210e543af8404643520c79be82785`；
+  其比较器FIRST失败/最小技术恢复及首入口落盘缺口均保留，未改候选、
+  重解/看图或重审原PASS。48新唯一/65引用/17复用留存，retention SHA
+  `6f244128f284bfa74e349afc9bd40abfe875ab5461844f31c4b2c530426608e5`。
+  n7 adapt-finalize AFFECTED3 exit0：30正文/14原题/2图；
+  累计正式现代finalize2（FIRST exit2保留）。
+  原答案候选同字节接入FIRST exit0，122公式跨度仅绑定、重算0，
+  binding SHA
+  `dad49fc042a31d34484849797f331145088fb1074a5ed2e316117f870d02f6a4`；
+  首次官方答案finalize exit0，5auto/9ungraded；未重解或重跑源/图审。
+  首次choice inspect/prepare均exit0，14完整原题88–101、六定义块
+  2/8/11/14/15/29、零源图，canonical seed SHA
+  `874befcbcaa98183219b688ef0aac1cc2741b86a16fd17fd623bbfef7fd3f6ef`。
+  Maxwell仅本组fresh选择作者，不读答案/旧choice，当前唯一在途；
+  不是已通过选择/整课批准，显示仍runtime0、未parentREADY或commit。
+  显示选片/最终绑定只身份机械替换备妥，syntax2 exit0，ready SHA
+  `a1d1053d128e856272e353d6739e7294541e37a660071c46e55dbc0f372a44c1`；
+  最终门禁备料15唯一/26引用/11复用留存，retention SHA
+  `8f584b1d807b5bb6f428fd78d3e33507812fd31b7714990e7bceeb19afb43044`。
+
+- n7图/文字组合绑定FIRST exit0，无新图/renderer，review SHA
+  `4f1b411c898d71beb713dc60d79b9c7347d7d8cc0cd67deb05a1d38e94c73e46`；
+  两图持久路径绑定FIRST exit0，官方recorder2仅路径绑定，binding SHA
+  `a5ae505d9caafeb471fbacf1c6142f89e3e53753af3e9a488f91b13df4aa175f`。
+  正式adapt-finalize FIRST exit2：四边界中第三个在正式空白分段后失配，
+  prose4句末源4.被当前数字边界检测漏识，现代4。被报新增数字。
+  原失败audit/流保留，不作为科学/源/图失败。
+  AFFECTED3仅prose4句末保留源4.、三块官方确定性空白分段、同四处
+  概念切换按已保存官方flow实际段落重绑定；source/公式/身份/习题/
+  两图不变。normalizer1/flow1，ready SHA
+  `4203d788b6d43a42962925e78cb1b4bff771375ac20a73599559f33494739439`，
+  lesson SHA
+  `1045b70ae8865e29b3d7bec16b85a2b64ee87b286aa2c7d7726d79409c8fa398`。
+  Carson唯一在途仅这四变化块/边界审；其它PASS不重审，未提前finalize。
+  留存FIRST误传非.tmp路径exit1，已写部分字节原位保留，明确partial
+  recovery一次exit0补齐记录，17新唯一/48引用/30复用，retention SHA
+  `3eff2e4cc28a4c63b15a36b830ae9950c07c3c815a557532f9237f10bc406ac7`。
+  没有重新图渲染/源审/盲解/答案/选择或显示；整课尚未READY/commit。
+
+- Rawls已实际收回close：只新fig15 Chromium640 PNG一次，y/箭头间距、
+  不出画布、其它可见端点/下标无新增遮挡PASS；review SHA
+  `45ab5c1e1d175adafdb0935947ac9bfe8b4ac8d5b5c167825381c83ac00a2402`，
+  official review SHA
+  `5026f903673ffd5582ed67626a11fbd30198d85ddbdbc198134e850640e7ba82`。
+  官方recorder1 exit0，父新图0；首三条规则读取未预落盘的缺口如实保留，
+  不伪造原命令流。隐藏源虚实仍unknown，old FAIL/计数不删。
+  绑定脚本仅接入新ready SHA及y.at差分证明，两受影响syntax各exit0；
+  已留9唯一/14引用/5复用，retention SHA
+  `6351592c5267eab876a49996bb9f1f226d8fb7aee2f0c1e85897d21129202706`。
+  Rawls的conclusion是完整PASS说明，不是裸PASS；compose只从status
+  规范化门禁值并保留独审原说明，不修改原review或重跑内容审查。
+
+- 本轮仍只在官方已注册3695生产根接续，create/attach/替代聊天0；
+  旧树、锁、备份、失败/未决消息不动，旧聊天/Mencius/Russell继续暂停。
+  Godel已实际收回close：同字节Chromium下标PASS，y轴箭头干扰仍HOLD，
+  review SHA
+  `3ecb46b5300af46b932a6f8329a9f65e98316523abe7cef3d8efc6e6034f833c`。
+  按直接人类普通修复授权，仅fig-15-y-label.at由[-0.35,6.6]
+  改为[0.8,7.05]，其它spec序列化字节、源、几何/关系不变；
+  累计内容修正2，旧声明预算0及旧失败不重置。新renderer1/native1
+  均exit0，browser/context/page全部close，父新图0；已知累计render6/
+  native5，全历史/费用仍unknown。ready SHA
+  `481a8c3c936e0f1db67cf3d02d11d5c34119388a8d72c9674b55758283157f10`，
+  9唯一/11引用/2复用实际留存，retention SHA
+  `b2ab83ca3668fefa604299acc80e8f32ab9eb73f3a7fa468cb93e91d2679c708`。
+  Rawls唯一在途审者只新y修复PNG一次，检查间距及可见内容未受影响；
+  尚未实际返回，不因观察文件存在提前PASS，不重派发/重看源或旧PASS。
+  n7仍未finalize/parentREADY/commit，既有40分钟监督不新增不重置。
+
+- n7 Turing首次受影响审已实际完成收回close：两标签绑定TEXT_PASS，
+  text SHA
+  `952fcbe7272e807c46b7689aea0c6ae3a80b46b50ac1771b1bfc97c8b6b03e47`；
+  fig14官方PASS，SHA
+  `49a743df756c90131d6bcc31753aec725ce01efe1a0c74d24ed0724ac366598c`。
+  fig15在Resvg native640下标空框、y/箭头间距未确认，fail SHA
+  `8d62a0407e071b3881aabd81c946869ee5bb998f52dd3c7bef322ba5a791c97c`；
+  overall review SHA
+  `fea136a69f533e736b4a7f3883678ba357383ac80c4361c1f4299cbcfc01ec55`。
+  原/新图四张各一次；网格、圆与所有端点关系已确认，隐藏源叠线虚实
+  仍unknown，未删关系或把机器PASS冒视觉批准。
+  34唯一/34引用留存，retention SHA
+  `60039abaabb88bedce7824bc587fa1d6e401545b75b2db1f593701a0334b8589`。
+- fig15仅技术预览路径恢复：现有同字节SVG做一次Chromium640x480，
+  SVG/spec未改、vector renderer0/源图0；新增browser1/context1/
+  screenshot1/native1，全部close、无网络，图片尚未观察。
+  preview record SHA
+  `baa7507a862de743d39b3d43c752adf7bc20a6f8bfe996a3a780096a4b52dd8d`，
+  PNG SHA
+  `883676d1e9737ae0f9cd64b14b814a7e347e1eab0e4cce88e6954b11ea0b60be`。
+  Godel本组唯一在途审者，只这一新图的两受影响事项，不再看源、
+  原失败图/fig14/文字PASS，不增加内容修正预算。
+  15唯一/20引用/5复用留存，retention SHA
+  `050d8b4ccb381d3d2b6351782e1bbea689e0bce9a16aa170a00efbc70d340be8`。
+- n7答案由父（与作者/盲解者分离）首次对照封存62要求结果，14题/
+  54小问全部匹配、5auto/9ungraded/25parts，未重解/算术/图/正式验证；
+  review SHA
+  `d69ed8a36891b709684b05d0122071b1c5ce524eb1dfbefe7de6e4a68dc7134d`。
+  15唯一/22引用/7复用留存，retention SHA
+  `e9b99a2e7a610098241b2603db9c77e9b4fc0e9d74d63281baefb49ec4a97748`。
+  本树8a/answers.json实际不存在，未编bookRaw。
+- n5只已通过fig06完成独立持久路径绑定FIRST exit0，SVG/源PNG/数学
+  同字节，仅spec来源路径及render对应绑定字段变化；官方path-binding
+  recorder1，new image/render/semantic review0，binding SHA
+  `39d46cf944e42f4d835f1c179739e07e355f9ae64ddb93c0ba53dcaea140f7cd`。
+  12唯一/15引用/3复用留存，retention SHA
+  `7128b17da220a8540b0cf8bbb83f95b13f0cbd39c53e152312222961350169b1`。
+  fig07 HOLD不动，不finalize或提交n5整课。
+- 原分支定向fetch FIRST exit0；HEAD与origin/
+  codex/STEMROBIN-182-textbooks均仍
+  `ecec13c9eb000a2220b733affc969c593ab286af`。无新commit/push。
+  n7图绑定脚本只备妥，未在overall HOLD下执行；新增Chromium预览允许
+  仅同SVG哈希的显式证据分支，原脚本版本/语法回执已在持久留存中。
+
+- n7 Fermat首审已实际收回close：HOLD仅/prose/27/changes、
+  /prose/29/changes多余wording，其余30块/14题/50标号/四锚点无新增
+  阻断；review SHA
+  `a66f542d41fdae7641a7683f2c838af815ab29e76fa1000ac19d0a8586927b50`。
+  标签修复FIRST误假定原数组顺序[layout,wording]，实际
+  [wording,layout]，exit1在模板写出前停止；原脚本/回执/空目录保留。
+  只修该顺序假设，新AFFECTED-order1 exit0；metadataApplicationAttempts2，
+  当前lesson SHA
+  `54b28d9b2b01ff0898ef9096ffaad2539506dd2ecbd23707b5bf1b39db00c9fe`，
+  exercise/figures及所有文字/数学/来源/锚点字节不变；
+  input SHA
+  `01bc2668d18dc2df2997a5805835ccb4743bd12f554bd0ed9d93e257e9e25845`。
+  48唯一/93引用/44复用实际留存，retention SHA
+  `0568307b39d7074acb75a860ced1dc3efde16e6db9fb40660f1b65fcb43a651a`。
+  Turing为n7唯一在途审者，仅上述两标签绑定及两图首次独审；
+  当前最多四新图片、无新render/browser/raster，不因在途文件提前PASS。
+- n7 Poincare答案候选已实际收回close：14题/54小问/62结果，
+  5auto/9ungraded/25parts，仅消费封存结果不重解；draft SHA
+  `42e33e5d4c9f11945531cd5356c0d79d7348bfeb148d5c8827720a275da3a6a4`，
+  author SHA
+  `e808652a1d7c85344bdaa70aa76a1c619b56ae3c3e7a4e7d9b6366c368f164fe`。
+  23唯一/40引用/17复用留存，retention SHA
+  `7d077edd0a0a168fad80c064fe598421ec255c301076d839c4861568163fca5e`。
+  首cwd回执补记保留、不声称未知原流；答案尚未独审/正式验证，
+  现代/两图也未正式绑定或finalize，不以候选冒整课READY/commit。
+
+- n5 Lovelace增量审实际完成收回close：当前标签删除绑定TEXT_PASS，
+  text SHA
+  `4767b7619a045a555e54424f5435e1c2fc244f4e3c86d0416a13fadcac567746`；
+  仅现有未看Chromium640 PNG一次，fig06官方review PASS，
+  SHA`06257f8473910e95221fce5c22977e92254d52be4c15386930781fcd96bfd2ca`，
+  observations SHA
+  `67ae095ac26f5737e9e545fc310c747dcc304eaa62720733d856410af58d4d08`。
+  九答案对封存9原题/29小问/50结果首次比较PASS，SHA
+  `d04a3f258b1032b1dd19d832073130ab50b590af987bca81465a6972b54e5dfc`；
+  正式答案运行验证尚未执行。官方recorder一次exit0，父新图0，
+  无新renderer/browser/重解/normalizer；其读取diff叶路径误断言exit1
+  技术恢复已记在原review，不伪造未返回流。
+  四实际文件留4唯一/4引用，retention SHA
+  `34a8dd276626cf9e719b29d725797e906ce4166bc78728243147992d24049e32`。
+  旧文字HOLD、Resvg FAIL和fig07真实HOLD不删；n5不整课finalize，
+  不以局部PASS提前commit或parentREADY，不重跑两表/fig08。
+
+- n7 Ohm两受影响图候选已实际收回close，ready SHA
+  `5e712534fc2b18ec0c0daf337ac0adbde884d20a0dc0d285f59feb7661f38d84`。
+  原PNG各新观察1、新预览观察0；实际render5/native3，包含fig15
+  FIRST碰撞FAIL及唯一内容修正、fig14 native描边兼容修复及同字节
+  render重复，全部原流/失败/计数保留，不把重复当独审。
+  fig14当前spec/SVG不变；fig15仅认证可见实线，隐藏虚实仍unknown，
+  现代强调线明确是展示选择，尚未独审/提升/整课批准。
+  62唯一/84引用/12复用已留存，retention SHA
+  `bfd5ed8799bf2658729038e4646292e5a0c583541aa7486ada0e5a7dc6ba0bd6`。
+- n7显示脚本FIRST只备料exit0：复用n5现有门禁，六处课号/图清单
+  机械替换；helper全字节相同且复用已留存syntax，不重跑。
+  两个改动脚本syntax各1次exit0，回执逐项先保存；
+  preparation SHA
+  `da65521257a86f6fa45a1ee588f27ffc06dfc62e491775d85b94c05c4110965b`，
+  ready SHA
+  `a1c21a89e7c63a06eac133f8553dfa909f93d57c377f820bed899eb5f8819e30`。
+  未读取课程/答案/选择/图，未生成/消费parentREADY，renderer/browser/
+  runtime均0。17唯一/26引用/9复用留存，retention SHA
+  `3955c4dc1fa1600d13b3b63b29421e4a74701d16da4c631f0d5e7cda80cc37a7`。
+  本次live工单定向GET HTTP200，finish仍review，Plane/DB写入0。
+
+- 本次即时接续实际核对3695官方附件仍注册；create/attach/替代聊天均0。
+  唯一生产cwd保持3695，旧树、锁、备份、旧失败和未决消息不动；
+  旧聊天/Mencius/Russell仍暂停，既有40分钟监督不新增、不重置。
+- Nietzsche的n7首次盲解已实际收回并close：14原题/54原小问/
+  62要求结果，全部PASS、HOLD0；solutions SHA
+  `af3aa17d5519f837e1bf4ce367fde20cd8873165958608e8d82b27b17a6ba1f0`。
+  不重解；88h最高次抵消、95f单点、99用y表示x并保留例外空纤维、
+  100原定义域洞均在封存记录内。
+- Kuhn当前n7文字候选已实际收回close，仅作者draft、非TEXT_PASS：
+  lesson/exercises SHA
+  `5c98ffcaa8f2fe376d38f6d7fd0ae19639e026c6c63d37de6cdb4fc5c66a9a46` /
+  `a7fd94033738e0aa8cb63030dea99afc094d51e9de4b135795963b63c715af36`，
+  author SHA
+  `192bd8f778d67136e25d50ed48e9b8b0ab585b1a94c90fa31eb25ba917dfa432`。
+  四个真实边界复制唯一官方prose_flow输出，数学/身份/源/脚注不变；
+  40唯一/59引用/18复用实际留存，retention SHA
+  `d2f67dbd94ac1e3004e3e581612225fc37045000d6af3e5427db807bd5710ee6`。
+  Poincare仅消费封存62结果生成答案候选，Fermat是n7唯一在途文字审者；
+  Ohm仍只两受影响图作者；未因文件存在提前收取或PASS。
+- Herschel前次实际结果保留：两个文字修复本身已接受，HOLD仅额外
+  `/exercises/0/changes`的wording；现只删除该标签，当前exercises SHA
+  `b8196fc080dfe4679fe5a90aa80bdc7a677325565bc48c43d342812298f22564`，
+  lesson及其它字节不变。恢复输入SHA
+  `4f162e71aaa38e020e3a7ae98372c3e796db5feb71875aff543993618a27253f`，
+  已留存6唯一/9引用/3复用，retention SHA
+  `c912fd5264625ef58fe27c4ac3a93cb1458ee64bfc5fd1b2453932c4c816aed4`。
+  fig06前次Resvg native640粗黑带FAIL仍保留；SVG/spec未改，
+  仅选择同FIRST尚未看过的Chromium640 PNG增量观察，不再渲染或重开
+  原图/失败图。Lovelace仍为n5唯一在途审者，另审九答案对封存50结果；
+  fig07虚实/左延伸仍真实HOLD，两表及fig08旧PASS不重跑。
+  本次读取一个不存在的历史math留存回执路径exit1，仅读取探针失败；
+  已显示的恢复input及留存输出有效，不重新调用生产或伪造缺失回执。
+- 当前无新完整课、无新commit/push或文档专用提交，仍developing/
+  finish=review；父新图片0，不写DB/Plane、不合并部署/关单/正式handoff。
+
+- n5三syntax受影响恢复实际回执已绑定：每文件累计2次，原FIRST退出码
+  仍null，新增3退出0；recovery SHA
+  `9809d9a0bd65a29f71f561da67a2049682f24904552f51dd21b9fa8d008efb83`。
+  11唯一/18引用/7复用留存，retention SHA
+  `f44966ba3b2f1c9add437fd63f46f2957b000bae60021ba7cc838603756d902d`。
+  未生成/消费parentREADY、runtime仍0，语法不作为整课批准。
+- n7两已有context路径绑定及实际脚本回执留8唯一/9引用/1复用，
+  retention SHA
+  `4c4dc5910f86a44f5809dbbd0b46b2d5fe15e3a3b2042b259b9888ba0ad0b213`。
+  当前新作者/隔离数学输入FIRST exit0：30正文块、88–101共14原题、
+  零习题图引用、errata0；inputs SHA
+  `432a7dba884f8390ec8e2b416165a42148d982cf48414559a558b718fb31416b`，
+  blind input SHA
+  `96da79133366a3cb346b24f7fa7c273f40bb33408ddf3e46ec45e7e7a3ef559e`。
+  9唯一/10引用/1复用留存，retention SHA
+  `1252bed65129bf9f09d30e760a284642e2961d1943223b5a0295e9e29cc3510d`。
+  当前模板是持久RAW+edition纯构造，不重放SOURCE/旧prepare，不声称
+  恢复未知旧数学/模板；Nietzsche本组唯一数学审者只14原题与六必要定义、
+  不看例/图/答案/选择；Kuhn仅当前现代作者，Ohm仍只两受影响图作者。
+  三写集分离且尚在途，不提前算完成；n5 Herschel仍为其组唯一审者。
+
+- n5本轮实际应用/首失败/恢复/两context/盲解/标号原字节已留存：
+  40唯一/55引用/11复用，retention SHA
+  `5c1fd38c9b12b10927d1901907071f2a417252207d106d0f6fe3acbda707892d`。
+  Planck已自然完成收回close，fig06受影响draft/render各一次exit0，
+  native640已生成未自看；fig07横线角色仍真实HOLD，draft exit2/render0，
+  原PNG各新看一次，旧FAIL不清零，ready SHA
+  `bcaad86357f6ac1683cf85c5afc32c8d85585c337172911a5f801df8e2e272fb`。
+  图作者实际28唯一/33引用/4复用留存，retention SHA
+  `b48871cdd1f961ac3b885ea8087631332bf221c155d6cb69a630249d072ab020`。
+- Pasteur当前新模板FIRST已收回close：16正文新审/1批准块仅绑定、
+  23块/9题/27标号/完整数学与身份均保持；HOLD于真实概念切换无边界
+  及34共同追问并入d行，review SHA
+  `800905bbd225b1c74fb5a2885a15c16f90f5b68c32ea1e0989b50ac35b36e28c`。
+  官方prose_flow FIRST exit0后仅复制实际相邻锚点；保留共同追问原字句，
+  将其移入a前公共prefix（原normalizer会重新合并尾行，未重跑或改工具）；
+  两项repair FIRST exit0，SHA
+  `42c73a6a21aebbc7c20ce4bc19df3193e75ed26e1e81dff61ff056a6521ee9ac`。
+  当前lesson/exercises SHA
+  `a4f7e1bc8c4771cc4385c23fb50469b6897043f5aab42e0193366eb3ff5ee0f2` /
+  `79ac991bf762f917b568e584e3fb90680f02812e7d8a780353a0eb96ddc3c6bf`。
+  FIRST及修复实际字节各已留存，不冒TEXT_PASS；
+  Herschel本组唯一在途审者，只审两改项/fig06首次及fig07具体横线歧义，
+  父不重开图片，两表/fig08旧PASS完全复用。
+- Socrates九答案候选已收回close，原50要求结果复用封存解不重解，
+  draft SHA`f706dc53a4801ae8297a5daf2556ad7a29d93c79695d3a45a0a48a6d2cc58a20`，
+  1auto/8ungraded/6parts，只是候选，无正式或独审PASS；
+  两文件留存SHA
+  `65e37a4c632c5774d8db9a8db679e4ace6272e419f45bdf40b663c7dacc0825f`。
+- Copernicus显示工具已收回close，helper同字节；FIRST记录器误断言
+  22而实际21，在三次syntax后、回执留存前失败，三退出码unknown/null。
+  原verification/ready-FIRST与失败保留，未推断未知日志；
+  同字节三syntax只补缺回执，各AFFECTED-recorder1 exit0，
+  实际累计六次syntax（原三结果仍unknown），renderer/browser/runtime均0，
+  无parentREADY。工具/失败实际7唯一/8引用/1复用已留存。
+- n5真实局部图HOLD不阻断其它有源课：8a n7仅从已有持久两context
+  做sourceImage.path绑定，source/文字逐字节不变，FIRST exit0，
+  binding SHA`ca1e1dc184b8d1a3bb3884403167be914f9ed9714a89e84d8a729da4cf34edea`。
+  无build_context/源审/PASS重跑、无未知字节恢复；Ohm仅fig14旧椭圆消失/
+  隐藏锚点/y标号与fig15旧虚实HOLD的受影响图作者，尚在途未批准。
+  当前仍无新完整课，不作文档专用commit/push、不DB/merge/deploy/handoff。
+
+- 本次工具实际核对3695已在官方附件中注册；create/attach/替代聊天均0，
+  只在3695绝对cwd继续，旧树/锁/备份/失败/未决消息保持。
+  定向live工单GET HTTP200，finish=review，无Plane/DB写入。
+- 8a n5已批准单块勘误实际装入当前新构造模板，不是恢复未知旧模板：
+  application SHA`b0e1ae9646b6249aed0e7a671e405459c91587aff5109d387b81101156187365`，
+  lesson SHA`3983b6e65a8a2891f2ad0e3ea748fd316c0054622799aa1cf2ec5b3edfb1a00c`。
+  FIRST exit1因本地误断言prose:13，在任何输出写入前失败；
+  原脚本/失败保持，只改实际lesson.prose[13]绑定后AFFECTED-target1 exit0，
+  applicationAttempts/sourceErrataBindingHelperInvocations均2，不清零。
+  两原PNG与当前模板隔离context FIRST各exit0，stage SHA
+  `5ae248863f6460dcb3b50956174b4a29e80de8cf086f1d18ec7106648b802cc0`；
+  父图0，不重审两表/fig08或旧SOURCE/PASS。
+- 已备标号脚本本轮FIRST实际exit0：7题27个公式外西里尔标号机械转拉丁，
+  全公式/身份/embedded RAW/已批准lesson字节不变，normalizer重跑0；
+  layout SHA`dc52b680b72928b56f3a2af493b9a376053ea0064c146d7716c6b64c111961f5`，
+  exercises SHA`eb375e7a79f38a48b00eaec69614453861bd952e22ce2aae3c19421982494d60`。
+- Banach原题34–42首次独立盲解已实际收回并close：9原题/29原小问/
+  50要求结果，9PASS/0HOLD，solutions SHA
+  `2a2d3dfa5b141511ea569a02bb30f8ff1909f71ec4e45f5026bfbb820d873272`。
+  只37必要原fig08一次用于新数学阶段，非图审重跑；原生JS算术0，
+  费用/hostTokens未知，后续仅消费封存解不重解。
+  Planck两受影响图作者仍在途，未因文件存在计完成；
+  Socrates仅当前9答案候选作者，Pasteur本组唯一在途审者，仅首次检查
+  当前新模板尚无字节批准部分，已批准勘误只绑定不重审。
+  尚无当前整课现代/图/答案/选择/显示批准，不commit文档包。
+
+- c3-ex缺定义的受影响接续已实际完成：Erdos只读12题已封存分支/
+  7个必要定义块，11题RESOLVED_CONVENTION，690仍HOLD准确数/近似数前提；
+  resolution SHA`24df5caa0e660c68b8a7f4bc02fa47cbbd41ef2d33fdea9c60623a8f3b559f0d`。
+  新输入SHA`3b2c71a9251ac8ab3993acf282661a17458ebfc3b9368ec4cf8793519bf810e0`，
+  原52题PASS/所有原算术不重解，图/validator/算术脚本均0；
+  新definition-binding FIRST exit0，
+  SHA`7b1dd07ae395b1a17f2494ab87fca0a350e21ca6a8078097d8d26a020863af4e`，
+  是增量引用，不替换FIRST封存。当前数学HOLD四题632/648/676/690，
+  两段实际隔离HOLD仍2，整课status仍HOLD；实践报告不冒充严格误差保证。
+  16唯一/19引用/3复用实际字节持久留存，retention SHA
+  `dd326fc1eacbaa0d5397f0698324be15c2b1c95f91dc277be292610b4356ea1e`。
+- 另一独立有源缺口8a n5仅接p0027-math-1：原登记误印x^4，
+  前一原题/顶点式唯一支持x^2。只准备一块新候选，
+  SHA`702f96eb0f333e31b5fbcc65dc1fced1a4ecd432d07e24c334af30ccc31336ac`，
+  Sartre受影响首次独审AFFECTED_TEXT_PASS，
+  SHA`9436c30de62a62115ffbd41fd3d7399773b6db114d109ceeb1b6424bcbd983e1`。
+  非数学字节全相等，仅指数4→2一个字节；未重建未知旧模板/回执，
+  无源写入/TEXT旧门禁/图审/renderer/答案/选择/显示。
+  两表及fig08旧PASS复用，fig06/07来源HOLD保留；
+  尚未把候选装进正式现代模板或批准整课。
+  retain FIRST exit1，当前树无6a/evidence，在任何目标复制前停止；
+  原脚本/失败流先保存，只补目录存在判断后AFFECTED-missing6a1 exit0。
+  留12唯一/14引用/2复用，retention SHA
+  `c24b3e25b8c402a39c1e5b64f119c79ba027a64a793c4e2b1a59d71b987ae07c`。
+- 本轮新Erdos/Sartre均完成收回并close，无本轮在途agent/exec/browser；
+  旧聊天/审者仍暂停。父图0、重跑旧PASS0，hostTokens/费用仍unknown。
+  c3-ex和n5上述真实HOLD不被ungraded或假完整课绕过；当前无新完整课，
+  无本轮新commit/push，也不做文档专用commit，证据随下一真实内容批次走。
+  n29既有完整窄commit/push及n6/n13/n22/n31–n36等旧PASS不动；
+  原树/锁/备份/所有失败与未决消息保持，仍developing/finish=review，
+  不写DB/Plane、不合并部署/正式handoff，既有40分钟监督不重置。
+
+- 本次从3695已注册绝对工作树即时接续，create/attach/替代聊天均0；
+  实时工单定向GET HTTP200，finish=review，不写Plane/DB/merge/deploy。
+  Schrodinger首次结果已实际收回并close；旧聊天/Mencius/Russell仍暂停，
+  既有40分钟监督未新增或重置，原树/锁/备份/失败/未决消息均保持。
+- c3-ex Dewey现代文字已收回：67题、101原标号小问、365完整数学区；
+  exercises模板SHA`785e8aceac6ce78b5c9a872ccf2f579cfbe95fca7cf5d095eb9c5f6908c0b665`，
+  author SHA`4a3479daf32a8cdcd0a976bf951f8dd84cec033be32c8b67d57afd7f70a607f0`。
+  原normalize启动127和技术恢复保持，实际纯函数一次；尚无TEXT_PASS。
+- c3-ex三段首次盲解22/23/22题实际收齐，67原题/140计数小问/
+  176要求结果；原解SHA依次
+  `98a233526cab59d03380db318a5459f7de886ccae7e2e02ae3fd8b069b0442e1`、
+  `1d4b716a0055ed0248dcffd85bc62d28d0962a911fbd0c632b60b83871eaf7bd`、
+  `04dfb34785d8cab25bfb0468f270a42159025ac1a9a0fab0d2857c6437486fc6`。
+  封存脚本执行前只修part2/3实际.json文件名，明确绑定part2原越界回执/
+  part3实际完成通知的父记录，不重派、不重解、不伪造未返回的worker流。
+  seal FIRST exit0，SHA`4a616cfa02e92a5385448bf3cc1c65e0c3c8402f06b6452af0133a48068fdbba`，
+  数学HOLD15题，隔离协议HOLD2，sealStatus=HOLD；不批准整课。
+  原fig38/39各首次观察1、父新图0；费用/hostTokens仍unknown。
+- 上述实际文字、三原解/算术回执/越界记录、FIRST封存及定向GET，
+  留20唯一/27引用/7复用，retention SHA
+  `25b470935eace4a18460101c49e3453ebd70e0133e84b3bbde166f90fca29a45`。
+  未finalize/派现代图/正式答案/选择/显示/新commit或push。
+  648b旧源审明确印刷ab+4≤4且只有一个右4，本次仅读既有187节，
+  不重渲染/观察源页、不补14。正在只补缺失定义与任务约定；
+  定义补充不抹掉两段已发生的隔离HOLD，不用ungraded掩盖真实缺陷。
+
+- alg7-c3-ex当前作者输入构造FIRST exit0，零正文/67题/两原图；
+  RAW三文件与两PNG全等既有封存SHA，复用edition纯构造函数，
+  无SOURCE/装订/旧prepare CLI/图片观察；新输入record SHA
+  `3b30ce1ba5ae63d6600aa89c417671882f8015490d5fbd53d3652967f9ad688c`。
+  三模板和实际脚本/回执留9唯一/10引用/1复用，retention SHA
+  `3ae1bda52177c54290a72ab408697195d9a983abc74125d8a7755291c612ffb7`，
+  这是当前新构造字节，unknownHistoricalBytesRecovered=false，不迁移原树整包。
+- 新Dewey仅现代文字工作副本；新Ramanujan只632–653零图首次盲解、
+  新Euclid只654–676及674原fig38一次、新Schrodinger只677–698及697
+  原fig39一次，三原题段22/23/22互不重叠，只各自写集。
+  已派发仍在途，不提前称PASS/完成；父新图0，费用/hostTokens未知。
+  新整课显示runner仅备料，无parentREADY/runtime预算或新renderer/browser；
+  当前课现代/图/正式答案/选择/显示尚未批准。
+
+- n29完整离线课已窄commit/push：
+  `ecec13c9eb000a2220b733affc969c593ab286af`，
+  parent `03220dd6ab3a994a15950a5b9bc1ad6c3e286c87`。
+  526文件32707995字节，仅本课/必要图与证据/196审计/两索引投影/既有记录；
+  范围与秘密路径检查FIRST、完整空白检查FIRST均exit0。
+  raw38→39、modern31→32，旧索引行逐行不变，仅加n29；
+  两实际工作树book.json字节全相等，n30未进入暂存投影或提交。
+  commit/push各exit0，独立ls-remote完整SHA等于HEAD，暂存区实际空；
+  detached/旧本地分支锁保持，无force/DB/merge/deploy/closure/handoff。
+- 窄stage恢复/检查/commit/push/远端独立核对原回执留33唯一/45引用/12复用，
+  retention SHA`b86aebd820a79a5671fcb114b683bbbfe360410e69b33d4b9da64df3271e93eb`。
+  这些提交后回执与本行只随下一真实内容批次提交，不另做文档commit。
+  当前按直接授权接alg7-c3-ex现有有源完整课；n29全部PASS不重跑，
+  n30/727真实HOLD、n31–33既有完整PASS、旧树/锁/备份/未知费用均保持。
+
 - n29窄stage FIRST exit1，在任何index写入前把已选中的本课choice-set/review
   误当他课untracked；实际暂存集仍空。原脚本/首FAIL/空写集目录保持，
   AFFECTED1仅已选集合成员直接复用，同SHA/其它课未提交内容拒绝规则不变；

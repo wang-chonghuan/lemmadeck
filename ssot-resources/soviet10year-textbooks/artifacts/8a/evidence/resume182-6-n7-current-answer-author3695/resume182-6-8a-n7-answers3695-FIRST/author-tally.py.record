@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+"""Inventory authoring bytes and coverage counts; no mathematics or gate run."""
+
+from collections import Counter
+import hashlib
+import json
+from pathlib import Path
+import re
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck")
+OUT = ROOT / ".tmp/resume182-6-8a-n7-answers3695-FIRST"
+CANDIDATE = ROOT / ".tmp/resume182-6-8a-n7-text-author3695-FIRST/candidate.exercises.template.json"
+SEALED = ROOT / ".tmp/resume182-6-8a-n7-blind3695-FIRST/solutions.record"
+
+candidate = json.loads(CANDIDATE.read_text())
+sealed_text = SEALED.read_text()
+draft = json.loads((OUT / "answers.draft.json").read_text())
+sealed_counts = {
+    number: (int(children), int(results))
+    for number, children, results in re.findall(
+        r"^(\d{2,3})\s+\|\s+(\d+)\s+\|\s+(\d+)\s+\|\s+PASS\s*$",
+        sealed_text,
+        re.MULTILINE,
+    )
+}
+candidate_by_number = {item["number"]: item for item in candidate["exercises"]}
+rows = []
+for answer in draft["answers"]:
+    number = answer["exercise"]
+    item = candidate_by_number[number]
+    modern_labels = re.findall(r"^([a-h])\)", item["text"], re.MULTILINE)
+    if number == "97":
+        modern_labels = re.findall(r"^\$([BCDE])\(", item["text"], re.MULTILINE)
+    children, results = sealed_counts[number]
+    rows.append({
+        "exercise": number,
+        "candidateItemLabels": modern_labels,
+        "candidateSubquestions": len(modern_labels),
+        "sealedSubquestions": children,
+        "sealedRequiredResults": results,
+        "grading": answer["grading"],
+        "parts": len(answer.get("parts", [])),
+        "partLabels": [part["label"] for part in answer.get("parts", [])],
+        "displayLabels": re.findall(r"(?:^|[；。\n ])([a-h])\)", answer["displayAnswer"]),
+        "coverageLocation": "displayAnswer plus parts" if answer["grading"] == "auto" else "displayAnswer",
+    })
+
+receipts = [json.loads(path.read_text()) for path in sorted((OUT / "wx").glob("*.json"))]
+files = [CANDIDATE, SEALED, OUT / "answers.draft.json", OUT / "wx.py", OUT / "author-tally.py"]
+result = {
+    "purpose": "Author inventory only; not a validator, mathematical review, approval, or grading execution.",
+    "inputAndOutputSha256": {
+        str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in files
+    },
+    "schema": draft["schema"],
+    "book": draft["book"],
+    "lesson": draft["lesson"],
+    "edition": draft["edition"],
+    "status": draft["status"],
+    "exerciseKeys": [answer["exercise"] for answer in draft["answers"]],
+    "counts": {
+        "candidateExercises": len(candidate["exercises"]),
+        "answerKeys": len(draft["answers"]),
+        "candidateSubquestions": sum(row["candidateSubquestions"] for row in rows),
+        "sealedSubquestions": sum(row["sealedSubquestions"] for row in rows),
+        "sealedRequiredResults": sum(row["sealedRequiredResults"] for row in rows),
+        "gradingKeys": dict(Counter(answer["grading"] for answer in draft["answers"])),
+        "parts": sum(row["parts"] for row in rows),
+        "partJudges": dict(Counter(part["judge"] for answer in draft["answers"] for part in answer.get("parts", []))),
+        "bookRawKeys": sum("bookRaw" in answer for answer in draft["answers"]),
+        "sources": dict(Counter(answer["source"] for answer in draft["answers"])),
+        "priorCommandReceipts": len(receipts),
+        "priorCommandNonzeroExitCodes": sum(receipt["exitCode"] != 0 for receipt in receipts),
+        "priorRetrospectiveReceipts": sum(receipt.get("receiptMode") == "retrospective-exact-output" for receipt in receipts),
+    },
+    "perExercise": rows,
+    "cost": "unknown",
+}
+print(json.dumps(result, ensure_ascii=False, indent=2))

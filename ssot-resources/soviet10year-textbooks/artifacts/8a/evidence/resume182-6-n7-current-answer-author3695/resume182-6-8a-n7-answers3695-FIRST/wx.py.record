@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+"""Run an authoring command and retain its complete execution receipt."""
+
+import argparse
+import datetime
+import json
+from pathlib import Path
+import subprocess
+import sys
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck")
+WRITE_ROOT = ROOT / ".tmp/resume182-6-8a-n7-answers3695-FIRST"
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--id", required=True)
+parser.add_argument("command", nargs=argparse.REMAINDER)
+args = parser.parse_args()
+command = args.command[1:] if args.command[:1] == ["--"] else args.command
+if Path.cwd() != ROOT:
+    parser.error("cwd must equal the authorized root")
+if not args.id or any(c not in "abcdefghijklmnopqrstuvwxyz0123456789-_" for c in args.id):
+    parser.error("receipt id must be a lowercase filename token")
+if not command:
+    parser.error("a command is required")
+receipt_dir = WRITE_ROOT / "wx"
+receipt_dir.mkdir(exist_ok=True)
+prefix = receipt_dir / args.id
+if any(Path(str(prefix) + suffix).exists() for suffix in (".stdout", ".stderr", ".json")):
+    parser.error("receipt id already exists; retained receipts cannot be overwritten")
+started = datetime.datetime.now(datetime.timezone.utc).isoformat()
+with Path(str(prefix) + ".stdout").open("xb") as out, Path(str(prefix) + ".stderr").open("xb") as err:
+    try:
+        result = subprocess.run(command, cwd=ROOT, stdout=out, stderr=err, check=False)
+        exit_code = result.returncode
+    except OSError as exc:
+        err.write((str(exc) + "\n").encode())
+        exit_code = 127
+receipt = {
+    "id": args.id,
+    "cwd": str(ROOT),
+    "command": command,
+    "startedAt": started,
+    "finishedAt": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+    "exitCode": exit_code,
+    "cost": "unknown",
+    "stdout": str(prefix) + ".stdout",
+    "stderr": str(prefix) + ".stderr",
+}
+Path(str(prefix) + ".json").write_text(json.dumps(receipt, indent=2) + "\n")
+sys.stdout.buffer.write(Path(str(prefix) + ".stdout").read_bytes())
+sys.stderr.buffer.write(Path(str(prefix) + ".stderr").read_bytes())
+print(f"\nwx receipt: {prefix}.json; exitCode={exit_code}; cost=unknown", file=sys.stderr)
+sys.exit(exit_code)

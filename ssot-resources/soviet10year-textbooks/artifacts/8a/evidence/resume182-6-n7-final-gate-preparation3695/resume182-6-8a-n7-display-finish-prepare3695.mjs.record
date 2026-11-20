@@ -1,0 +1,55 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), root);
+const own = '.tmp/resume182-6-8a-n7-display-finish-prepare3695-FIRST';
+assert.ok(!fs.existsSync(own));
+fs.mkdirSync(own);
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const save = (file, value) => fs.writeFileSync(file,
+  `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+const entries = [];
+for (const action of ['select', 'bind']) {
+  const source = `.tmp/resume182-6-8a-n6-${action}3695.mjs`;
+  const target = `.tmp/resume182-6-8a-n7-display-${action}3695.mjs`;
+  const bytes = fs.readFileSync(source);
+  const substitutions = [
+    ['resume182-6-8a-n6-', 'resume182-6-8a-n7-'],
+    ['alg8-c1-s2-n6', 'alg8-c2-s1-n7'],
+    ...(action === 'select'
+      ? [['bounded-n6-display-selection@1', 'bounded-n7-display-selection@1'],
+        ['resume182-6-8a-n7-select3695.mjs', 'resume182-6-8a-n7-display-select3695.mjs']]
+      : [['resume182-6-n6-', 'resume182-6-n7-']]),
+  ];
+  let code = bytes.toString('utf8');
+  const changes = substitutions.map(([before, after]) => {
+    const matches = code.split(before).length - 1;
+    assert.ok(matches > 0);
+    code = code.replaceAll(before, after);
+    return { before, after, matches };
+  });
+  fs.writeFileSync(target, code, { flag: 'wx' });
+  const command = [process.execPath, '--check', target];
+  save(`${own}/${action}-syntax-start.record`, { command, cwd: root });
+  const result = spawnSync(command[0], command.slice(1), { cwd: root, encoding: 'utf8' });
+  fs.writeFileSync(`${own}/${action}-syntax-stdout.record`, result.stdout ?? '', { flag: 'wx' });
+  fs.writeFileSync(`${own}/${action}-syntax-stderr.record`, result.stderr ?? '', { flag: 'wx' });
+  save(`${own}/${action}-syntax-receipt.record`, {
+    returncode: result.status, signal: result.signal, error: result.error?.message ?? null,
+  });
+  assert.equal(result.status, 0);
+  entries.push({ source: { path: source, sha256: sha(bytes) },
+    target: { path: target, sha256: sha(Buffer.from(code)) }, changes });
+}
+save(`${own}/ready.record`, {
+  status: 'FINISH_SCRIPTS_PREPARED_NOT_EXECUTED', root, book: '8a',
+  lesson: 'alg8-c2-s1-n7', entries, syntaxCalls: 2,
+  changesOnlyIdentitySubstitutions: true, courseAnswerChoiceOrFigureReads: 0,
+  rendererBrowserImageValidatorOrFinalBindingCalls: 0, DBWrites: 0,
+  wholeLessonApproval: false, hostTokens: 'unknown', totalCost: 'unknown',
+});
+console.log(JSON.stringify({ path: `${own}/ready.record`,
+  sha256: sha(fs.readFileSync(`${own}/ready.record`)), files: entries.length }));

@@ -1,0 +1,16 @@
+#!/bin/zsh
+set -u
+root=${0:A:h}
+id=$1
+shift
+log="$root/commands/$id"
+mkdir -p "$log"
+printf '%q ' "$@" > "$log/command"
+printf '\n' >> "$log/command"
+: > "$log/stdin"
+"$@" < "$log/stdin" > "$log/stdout" 2> "$log/stderr"
+result=$?
+printf '%s\n' "$result" > "$log/exit"
+/bin/cat "$log/stdout"
+/bin/cat "$log/stderr" >&2
+exit "$result"

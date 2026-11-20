@@ -1,0 +1,127 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const own = '.tmp/resume182-6-8a-n7-fig15-D-label-repair3695-AFFECTED3';
+const oldSpecPath = 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/fig-15.spec.json';
+const failPath = '.tmp/resume182-6-8a-n7-observe3695-batch3/result.json';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const read = file => fs.readFileSync(file);
+const binding = file => ({ path: path.resolve(file), sha256: sha(read(file)), bytes: read(file).length });
+const save = (name, value) => fs.writeFileSync(`${own}/${name}`,
+  `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+const oldSpecBytes = read(oldSpecPath);
+assert.equal(sha(oldSpecBytes), '37bbe7a2bec6318963d9dc7554bb066688d49cdf541c8486442288ed4565ed5b');
+assert.equal(sha(read(failPath)), 'ebd16f32cd365a4d7387f7d860562999e20650e8c96254d29540cade7e46dc12');
+const spec = JSON.parse(oldSpecBytes);
+const index = spec.objects.findIndex(item => item.id === 'fig-15-D');
+assert.ok(index >= 0);
+const before = { position: 'SE', offset: [12, 12] };
+const after = { position: 'W', offset: [-12, 0] };
+assert.deepEqual(spec.objects[index].labelPlacement, before);
+spec.objects[index].labelPlacement = after;
+const restored = structuredClone(spec);
+restored.objects[index].labelPlacement = before;
+assert.equal(`${JSON.stringify(restored, null, 2)}\n`, oldSpecBytes.toString('utf8'));
+assert.ok(!fs.existsSync(own));
+fs.mkdirSync(own);
+fs.writeFileSync(`${own}/prior-approved-spec.record`, oldSpecBytes, { flag: 'wx' });
+const specPath = `${own}/fig-15.spec.json`;
+save('fig-15.spec.json', spec);
+const record = {
+  status: 'RUNNING_AFFECTED_D_LABEL_REPAIR', root: repo, book: '8a',
+  lesson: 'alg8-c2-s1-n7', figure: 'fig-15', started: new Date().toISOString(),
+  originalSpec: binding(`${own}/prior-approved-spec.record`), priorDisplayHold: binding(failPath),
+  changedField: `/objects/${index}/labelPlacement`, before, after,
+  allOtherSpecSerializationBytesUnchanged: true, sourceGeometryAndRelationshipsUnchanged: true,
+  priorPostRenderContentRepairs: 2, cumulativePostRenderContentRepairs: 3,
+  originalDeclaredRemainingContentRepairBudget: 0,
+  authorization: 'Latest direct human authorization: ordinary repairs resolve blockers without awaiting approval. One repair of the newly exposed D-label/grid-boundary visual defect; original budget/records not reset.',
+  repairAttemptsThisNewDefect: 1, imageViews: 0, parentSpecificDisplayFindingViews: 1, sourceViews: 0,
+  rendererCalls: 0, technicalNativeRasterCalls: 0, browserLaunchesForNative: 0,
+  priorKnownFigureRenders: 6, priorKnownNativeRasters: 5,
+  cleanup: { pageClosed: true, contextClosed: true, browserClosed: true },
+  unknownHistoricalBytesRecovered: false, wholeLessonApproval: false,
+  hostTokens: 'unknown', totalCost: 'unknown', DBWrites: 0,
+};
+save('start.record', record);
+const svgPath = `${own}/fig-15.svg`, renderPath = `${own}/fig-15.render.json`;
+const command = [process.execPath, '.agents/skills/ld-s10y-image/scripts/render_spec.mjs',
+  '--spec', specPath, '--svg', svgPath, '--report', renderPath];
+save('renderer-start.record', { command, cwd: repo });
+record.rendererCalls++;
+const result = spawnSync(command[0], command.slice(1), {
+  cwd: repo, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024,
+  env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1',
+    PYTHON: '/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python' },
+});
+fs.writeFileSync(`${own}/renderer-stdout.txt`, result.stdout ?? '', { flag: 'wx' });
+fs.writeFileSync(`${own}/renderer-stderr.txt`, result.stderr ?? '', { flag: 'wx' });
+save('renderer-receipt.record', { command, cwd: repo, returncode: result.status,
+  signal: result.signal, error: result.error?.message ?? null });
+let browser, context, page;
+try {
+  assert.equal(result.status, 0, result.stderr);
+  const render = JSON.parse(read(renderPath));
+  assert.equal(render.status, 'pass');
+  assert.deepEqual(render.collisions, []);
+  record.spec = binding(specPath);
+  record.render = binding(renderPath);
+  record.svg = binding(svgPath);
+  const svg = read(svgPath);
+  const require = createRequire(path.join(repo, 'app/package.json'));
+  const { chromium } = require('@playwright/test');
+  record.browserLaunchesForNative++;
+  browser = await chromium.launch({ headless: true });
+  record.cleanup.browserClosed = false;
+  context = await browser.newContext({ viewport: { width: 640, height: 480 }, deviceScaleFactor: 1 });
+  record.cleanup.contextClosed = false;
+  const requests = [], errors = [];
+  await context.route('**/*', async route => { requests.push(route.request().url()); await route.abort(); });
+  page = await context.newPage();
+  record.cleanup.pageClosed = false;
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  await page.setContent(`<!doctype html><html><head><meta charset="utf-8"></head>` +
+    `<body style="margin:0;background:white;"><img id="figure" width="640" height="480" ` +
+    `style="display:block;width:640px;height:480px;" src="data:image/svg+xml;base64,${svg.toString('base64')}"></body></html>`,
+    { waitUntil: 'load' });
+  await page.locator('#figure').evaluate(image => image.decode());
+  record.display = await page.locator('#figure').evaluate(image => {
+    const rect = image.getBoundingClientRect();
+    return { width: rect.width, height: rect.height, naturalWidth: image.naturalWidth,
+      naturalHeight: image.naturalHeight, complete: image.complete };
+  });
+  assert.equal(record.display.width, 640);
+  assert.equal(record.display.height, 480);
+  assert.equal(record.display.naturalWidth / record.display.naturalHeight, 640 / 480);
+  assert.ok(record.display.complete);
+  assert.deepEqual(requests, []);
+  assert.deepEqual(errors, []);
+  const png = await page.screenshot({ fullPage: false, animations: 'disabled' });
+  record.technicalNativeRasterCalls++;
+  assert.equal(png.readUInt32BE(16), 640);
+  assert.equal(png.readUInt32BE(20), 480);
+  fs.writeFileSync(`${own}/fig-15-chromium640-FIRST.png`, png, { flag: 'wx' });
+  record.preview = binding(`${own}/fig-15-chromium640-FIRST.png`);
+  assert.equal(sha(read(oldSpecPath)), sha(oldSpecBytes));
+  record.status = 'AFFECTED_D_LABEL_CANDIDATE_RENDERED_UNOBSERVED_NOT_APPROVED';
+} catch (error) {
+  record.status = 'FAIL';
+  record.failure = { message: error.message, stack: error.stack };
+  process.exitCode = 1;
+} finally {
+  if (page) { await page.close(); record.cleanup.pageClosed = true; }
+  if (context) { await context.close(); record.cleanup.contextClosed = true; }
+  if (browser) { await browser.close(); record.cleanup.browserClosed = true; }
+  record.finished = new Date().toISOString();
+  save('ready.record', record);
+  console.log(JSON.stringify({ path: `${own}/ready.record`, sha256: sha(read(`${own}/ready.record`)),
+    status: record.status, spec: record.spec, render: record.render, svg: record.svg,
+    preview: record.preview, cleanup: record.cleanup }));
+}

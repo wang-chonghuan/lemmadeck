@@ -1,0 +1,42 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), root);
+const [expectedDraftSHA] = process.argv.slice(2);
+assert.match(expectedDraftSHA, /^[a-f0-9]{64}$/);
+const author = '.tmp/resume182-6-8a-n7-choice-author3695-FIRST';
+const own = '.tmp/resume182-6-8a-n7-choice-review-input3695-FIRST';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const read = file => fs.readFileSync(file);
+const binding = file => ({ path: path.resolve(file), sha256: sha(read(file)), bytes: read(file).length });
+const save = (file, value) => fs.writeFileSync(file,
+  `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+const bytes = read(`${author}/draft.json`);
+assert.equal(sha(bytes), expectedDraftSHA);
+const seed = JSON.parse(read(`${author}/seed.json`)), draft = JSON.parse(bytes);
+assert.equal(seed.schema, 's10y-choice-seed-v1');
+assert.equal(draft.schema, 's10y-choice-draft-v1');
+assert.equal(seed.source.book, '8a');
+assert.equal(seed.source.lesson, 'alg8-c2-s1-n7');
+assert.equal(draft.seed_sha256, '874befcbcaa98183219b688ef0aac1cc2741b86a16fd17fd623bbfef7fd3f6ef');
+assert.ok(!fs.existsSync(own));
+fs.mkdirSync(own);
+save(`${own}/views.json`, draft.questions.map(question => ({
+  id: question.id, view: question.view,
+})));
+save(`${own}/packet.record`, {
+  status: 'CHOICE_REVIEW_INPUT_PREPARED_NOT_REVIEWED',
+  root, book: '8a', lesson: 'alg8-c2-s1-n7', edition: 'modern-us-neutral',
+  seed: binding(`${author}/seed.json`), views: binding(`${own}/views.json`),
+  authorDraftToReadOnlyAfterSourceAndViewSeals: binding(`${author}/draft.json`),
+  authorDraftBytesChangedOrCopied: false, viewProjectionHasAuthorKeys: false,
+  instructions: 'Seal independent source reasoning first. Then read views and seal fidelity/leakage, independent complete true sets and per-option reasoning. Only then consult the unchanged author draft and complete the semantic review.',
+  newReviewsRendererBrowserImageOrValidatorCalls: 0, DBWrites: 0,
+  wholeLessonApproval: false, hostTokens: 'unknown', totalCost: 'unknown',
+});
+console.log(JSON.stringify({ path: `${own}/packet.record`,
+  sha256: sha(read(`${own}/packet.record`)), questions: draft.questions.length,
+  options: draft.questions.reduce((sum, question) => sum + question.view.options.length, 0) }));

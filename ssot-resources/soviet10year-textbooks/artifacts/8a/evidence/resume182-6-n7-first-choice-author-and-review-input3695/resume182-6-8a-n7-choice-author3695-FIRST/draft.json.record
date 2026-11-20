@@ -1,0 +1,989 @@
+{
+  "schema": "s10y-choice-draft-v1",
+  "seed_sha256": "874befcbcaa98183219b688ef0aac1cc2741b86a16fd17fd623bbfef7fd3f6ef",
+  "new_figures": [],
+  "questions": [
+    {
+      "id": "q-degree",
+      "source_numbers": ["88"],
+      "view": {
+        "mode": "single",
+        "stem": "确定各方程的次数，选择按 a 至 h 顺序列出的完整结果。\n\na) $x^2+y^2-12=0$；\nb) $5x-6y-14=0$；\nc) $x^3-5x^2y^4+y^5-8y^3=0$；\nd) $x^2-5x^3y+y^4-1=0$；\ne) $x-xy=65$；\nf) $x^4-8x^2y^3+y^4=16$；\ng) $3xy=x(y+1)-5y$；\nh) $7x^8-12xy+y=7x^2(x^6+1)$。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$(2,1,5,4,1,4,1,8)$", "figure_ids": []},
+          {"id": "B", "text": "$(2,1,6,4,2,5,2,8)$", "figure_ids": []},
+          {"id": "C", "text": "$(2,1,6,4,2,5,2,2)$", "figure_ids": []},
+          {"id": "D", "text": "$(2,1,6,4,2,5,1,2)$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "比较标准化后各多项式的总次数，保留混合项和最高幂消去的区别。",
+        "source_solution": "各式标准化后的最大总次数依次为 $2,1,6,4,2,5,2,2$。c 的 $x^2y^4$ 总次数为 6；d 的 $x^3y$ 为 4；g 化为 $2xy-x+5y=0$；h 消去 $7x^8$ 后为 $-12xy+y-7x^2=0$，次数 2。",
+        "unit_reason": "八式共同使用总次数与标准化判据，整组结果同时保留混合项、常数和消项，不把每个次数拆成孤立点击。整组有唯一正确结果，使用 single。",
+        "concept_blocks": [2, 8],
+        "limitations": [],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "不先标准化，对两边出现的单个变量幂取最大值；xy 记作 1，c 的 x^2y^4 记作 4 但另有 y^5 故记 5，x^3y 记作 3 但另有 y^4 故 d 记 4，x^2y^3 记作 3 但另有 x^4 故 f 记 4，h 保留 8。得到所列完整序列。", "misconception": "把多变量总次数换成最大单变量指数，并在等式两边取幂而不合并。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "a 至 g 正确标准化；h 直接把左边的 7x^8 当最高项，不展开并消去右边同项，故末项误记 8。", "misconception": "次数在等式移项消去前就已确定。"},
+          {"option_id": "C", "truth": "correct", "derivation": "逐式移项合并，混合项指数相加；g 剩 2xy，h 只剩二次与一次项，得到 $(2,1,6,4,2,5,2,2)$。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "其余各式正确；在 g 中展开右边后，把左边 3xy 与右边 xy 当成可全部消去，不保留系数差 2，剩 -x+5y=0，误记 1。", "misconception": "跨等号消同类项时忽略系数差。"}
+        ]
+      }
+    },
+    {
+      "id": "q-solution-pairs",
+      "source_numbers": ["89"],
+      "view": {
+        "mode": "multiple",
+        "stem": "选择所有使方程 $x^2-y+2=0$ 成立的数对 $(x,y)$。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$(1,3)$", "figure_ids": []},
+          {"id": "B", "text": "$(0,0)$", "figure_ids": []},
+          {"id": "C", "text": "$(-2,2)$", "figure_ids": []},
+          {"id": "D", "text": "$(-1,-3)$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "依据解的定义逐一判断四个数对。",
+        "source_solution": "代入后的左边依次为 $0,2,4,6$，仅 $(1,3)$ 是解。",
+        "unit_reason": "四个数对是同一方程下的一组独立断言，选择所有成立者使用原生 multiple；真实正确数为一，不改造为组合编码。",
+        "concept_blocks": [11],
+        "limitations": [],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "$1^2-3+2=0$。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "真实代入得 2；若遗漏常数项，只检验 x^2-y=0，则在 (0,0) 得 0 并误选。", "misconception": "检验方程时丢弃非零常数项。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "真实代入得 4；把 (-2)^2 误算成 -4，同时把左边 -y 误读成 +y，则按错误代入程序得到 -4+2+2=0，从而误选。", "misconception": "负数平方保留负号，并把减去 y 误作加上 y。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "真实代入得 6；若把关系误写成 y=-x^2-2，则 x=-1 时得到 y=-1-2=-3，误选。", "misconception": "分离 y 时给 x^2 和常数同时加负号。"}
+        ]
+      }
+    },
+    {
+      "id": "q-two-linear-first",
+      "source_numbers": ["90"],
+      "view": {
+        "mode": "single",
+        "stem": "对于方程 $x-3y=1$，下列哪一组含有两个不同的解？数对按 $(x,y)$ 书写。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$(1,0)$ 和 $(4,1)$", "figure_ids": []},
+          {"id": "B", "text": "$(1,0)$ 和 $(-2,1)$", "figure_ids": []},
+          {"id": "C", "text": "$(3,0)$ 和 $(4,1)$", "figure_ids": []},
+          {"id": "D", "text": "$(0,1)$ 和 $(1,4)$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "识别用自由变量构成的一组两解。",
+        "source_solution": "全体解为 $(1+3t,t)$，任取不同实数 t 即得两解。取 t=0,1 得 $(1,0),(4,1)$。",
+        "unit_reason": "一个完整的两解组是响应单元，而不是两个数格。此线性关系与同源其他方程的系数及可取自由变量不同，独立求解不依赖其他题的答案；四组中只有一组全部成立，使用 single。",
+        "concept_blocks": [11],
+        "limitations": ["只识别已给出的两解，不能检验自主选择参数、任意构造两个不同解。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "$1-3\\cdot0=1$，$4-3\\cdot1=1$，两个数对不同。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "误移项为 x=1-3y，取 y=0,1，得到 (1,0),(-2,1)；第二对原式为 -5。", "misconception": "把 -3y 移至右边仍保留负号。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "把 x-3y=1 中常数 1 和系数 3 交换，按 x-y=3 取 y=0,1，得到 (3,0),(4,1)；第一对原式为 3。", "misconception": "混淆乘在变量上的系数与等式右端常数。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "先正确取两解 (1,0),(4,1)，再把 (x,y) 反写为 (y,x)，得到所列两对；原式分别为 -3,-11。", "misconception": "交换有序数对坐标。"}
+        ]
+      }
+    },
+    {
+      "id": "q-two-linear-second",
+      "source_numbers": ["90"],
+      "view": {
+        "mode": "single",
+        "stem": "对于方程 $5x+y=2$，下列哪一组含有两个不同的解？数对按 $(x,y)$ 书写。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$(0,2)$ 和 $(1,7)$", "figure_ids": []},
+          {"id": "B", "text": "$(0,2)$ 和 $(1,-3)$", "figure_ids": []},
+          {"id": "C", "text": "$(2,0)$ 和 $(-3,1)$", "figure_ids": []},
+          {"id": "D", "text": "$(0,10)$ 和 $(1,5)$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "在另一独立线性关系中检验完整两解组。",
+        "source_solution": "全体解为 $(t,2-5t)$；t=0,1 给出 $(0,2),(1,-3)$。",
+        "unit_reason": "自由变量取 x，由 y=2-5x 构造完整两解；与 x-3y=1 的参数表达、两解及常数不共用答案。保留此独立求解任务而不是按印刷字母配额，采用 single。",
+        "concept_blocks": [11],
+        "limitations": ["选择现成两解不能证明自主构造任意两个解。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "误移项为 y=2+5x，取 x=0,1 得 (0,2),(1,7)；第二对原式为 12。", "misconception": "移项时不改变 5x 的符号。"},
+          {"option_id": "B", "truth": "correct", "derivation": "$5\\cdot0+2=2$，$5\\cdot1-3=2$，两对不同。", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "把正确的 (0,2),(1,-3) 交换坐标，得到 (2,0),(-3,1)；原式为 10,-14。", "misconception": "把 (x,y) 写成 (y,x)。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "把 5x+y=2 错化为 x+y/5=2，继而 y=5(2-x)，取 x=0,1 得 (0,10),(1,5)；原式均为 10。", "misconception": "除以 5 时只除左边，未除右端常数。"}
+        ]
+      }
+    },
+    {
+      "id": "q-two-product",
+      "source_numbers": ["90"],
+      "view": {
+        "mode": "single",
+        "stem": "对于方程 $x-xy=15$，下列哪一组含有两个不同的解？数对按 $(x,y)$ 书写。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$(15,0)$ 和 $(5,2)$", "figure_ids": []},
+          {"id": "B", "text": "$(15,0)$ 和 $(5,-2)$", "figure_ids": []},
+          {"id": "C", "text": "$(0,15)$ 和 $(-2,5)$", "figure_ids": []},
+          {"id": "D", "text": "$(15,0)$ 和 $(14,1)$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "在含积的关系中识别两解，保留不能取 x=0 的限制。",
+        "source_solution": "$x(1-y)=15$ 要求 x 非零，全体解 $(t,1-15/t)$，$t\\ne0$。取 t=15,5 得 $(15,0),(5,-2)$。",
+        "unit_reason": "该方程需要提取含变量的公因子并排除 x=0，不能由其他线性题直接得解；完整两解组判定不依赖同源其他题，不泄露彼此答案。四组中唯一一组全部满足，使用 single。",
+        "concept_blocks": [11],
+        "limitations": ["不能检验任意选择非零参数并自主生成两解的能力。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "由 1-y=15/x 错移成 y=15/x-1，取 x=15,5 得 y=0,2；第二对原式为 -5。", "misconception": "分离带负系数的 y 时符号反向。"},
+          {"option_id": "B", "truth": "correct", "derivation": "$15-15\\cdot0=15$，$5-5(-2)=15$。", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "把正确两解的坐标交换为 (0,15),(-2,5)；原式为 0,8。", "misconception": "忽略有序数对表示方向。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "把 -xy 误读成 +y，按 x+y=15 取 y=0,1，得到 (15,0),(14,1)。第二对原式为 0。", "misconception": "把乘积项视作单变量项，并混淆其运算符号。"}
+        ]
+      }
+    },
+    {
+      "id": "q-two-square",
+      "source_numbers": ["90"],
+      "view": {
+        "mode": "single",
+        "stem": "对于方程 $x^2+3y=1$，下列哪一组含有两个不同的解？数对按 $(x,y)$ 书写。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$(1,0)$ 和 $(-1,\\frac23)$", "figure_ids": []},
+          {"id": "B", "text": "$(1,0)$ 和 $(-1,-\\frac23)$", "figure_ids": []},
+          {"id": "C", "text": "$(1,0)$ 和 $(-1,0)$", "figure_ids": []},
+          {"id": "D", "text": "$(0,3)$ 和 $(1,0)$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "利用平方对正负 x 的对称性识别两解。",
+        "source_solution": "全体解为 $(t,(1-t^2)/3)$。t=1,-1 都给 y=0，数对不同。",
+        "unit_reason": "平方约束与同源各线性、零积关系独立，正负参数给同一 y 的判断不依赖其他问题。一个两解组含完整关系，使用 single。",
+        "concept_blocks": [11],
+        "limitations": ["选出两解不检验自主构造任意两解。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "把 x^2 换成 x，按 y=(1-x)/3 取 x=1,-1，得到 y=0,2/3；第二对原式为 3。", "misconception": "丢掉平方指数。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "先把 x^2 换成 x，再把移项写成 3y=x-1；取 x=1,-1 得 y=0,-2/3；第二对原式为 -1。", "misconception": "同时丢掉平方并反向移项。"},
+          {"option_id": "C", "truth": "correct", "derivation": "$1^2+3\\cdot0=1$，$(-1)^2+3\\cdot0=1$。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "从 3y=1-x^2 错得 y=3(1-x^2)，取 x=0,1 得 y=3,0；第一对原式为 9。", "misconception": "分离 y 时把除以 3 换成乘以 3。"}
+        ]
+      }
+    },
+    {
+      "id": "q-two-zero-product",
+      "source_numbers": ["90"],
+      "view": {
+        "mode": "single",
+        "stem": "对于方程 $(x-1)(y-2)=0$，下列哪一组含有两个不同的解？数对按 $(x,y)$ 书写。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$(1,0)$ 和 $(0,2)$", "figure_ids": []},
+          {"id": "B", "text": "$(1,0)$ 和 $(0,-2)$", "figure_ids": []},
+          {"id": "C", "text": "$(0,1)$ 和 $(2,0)$", "figure_ids": []},
+          {"id": "D", "text": "$(1,2)$ 和 $(2,3)$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "识别零积关系两分支中的解。",
+        "source_solution": "全体解为 x=1 或 y=2；(1,0) 来自第一分支，(0,2) 来自第二分支。",
+        "unit_reason": "两个可为零的因子允许两条不同分支，独立于其他方程。选项以两解组呈现，不能拆成坐标格点击。single 判断整组两解。",
+        "concept_blocks": [11],
+        "limitations": ["不能检验自主在两分支中任选两个不同解。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "第一对令 x-1=0，第二对令 y-2=0，均使乘积为零。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "正确取 x=1 的第一点，但把 y-2=0 解成 y=-2，再令 x=0 得第二点；第二点乘积为 4。", "misconception": "解线性因子时常数符号不变。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "把正确的 (1,0),(0,2) 交换坐标，得到所列组；乘积分别为 1,-2。", "misconception": "把 x 与 y 的位置互换。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "把零积错判为两因子相等，设 x-1=y-2，得 y=x+1，取 x=1,2 得 (1,2),(2,3)；第二点乘积为 1。", "misconception": "把乘积为零替换为两因子相等。"}
+        ]
+      }
+    },
+    {
+      "id": "q-two-positive-factor",
+      "source_numbers": ["90"],
+      "view": {
+        "mode": "single",
+        "stem": "对于方程 $(x^2+1)(y-5)=0$，下列哪一组含有两个不同的实数解？数对按 $(x,y)$ 书写。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$(0,4)$ 和 $(1,3)$", "figure_ids": []},
+          {"id": "B", "text": "$(0,5)$ 和 $(1,-5)$", "figure_ids": []},
+          {"id": "C", "text": "$(5,0)$ 和 $(5,1)$", "figure_ids": []},
+          {"id": "D", "text": "$(0,5)$ 和 $(1,5)$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "依据恒正因子确定全部实数解所在分支。",
+        "source_solution": "$x^2+1>0$，所以必须 y=5，x 任意实数；取 x=0,1 得所列正确两解。",
+        "unit_reason": "恒正平方因子排除一个零积分支，是独立于两个线性因子均可为零的任务。一个完整两解组构成 single 单元，其他题的解不能推出此题的 y。",
+        "concept_blocks": [11],
+        "limitations": ["不能检验自主选择任意两个不同 x 并构造两解。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "把两因子的积换成和，令 x^2+1+y-5=0，得 y=4-x^2；取 x=0,1 得 (0,4),(1,3)，原式为 -1,-4。", "misconception": "把乘积为零误作因子之和为零。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "把 y-5=0 误扩成 y^2=25，分别给 x=0,1 选 y=5,-5；第二点原式为 -20。", "misconception": "把线性等式无依据地扩成含两个符号的平方等式。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "正确取得 (0,5),(1,5) 后交换坐标；所列组原式为 -130,-104。", "misconception": "交换数对中的变量方向。"},
+          {"option_id": "D", "truth": "correct", "derivation": "两点都使 y-5=0，且 x=0 与 x=1 不同。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q-square-sum-negative",
+      "source_numbers": ["91"],
+      "view": {
+        "mode": "single",
+        "stem": "对于实数方程 $(x+5)^2+(y-2)^2=-1$，下列关于解集的论断及其理由，哪一项正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "解集为空；两个平方均非负，和也非负，不可能等于 $-1$。", "figure_ids": []},
+          {"id": "B", "text": "解集为 $\\{(-5,2)\\}$；两个平方同时取最小值 $0$ 就满足方程。", "figure_ids": []},
+          {"id": "C", "text": "解集为以 $(-5,2)$ 为圆心、半径为 $1$ 的圆周；平方和给出距离的平方。", "figure_ids": []},
+          {"id": "D", "text": "解集为 $\\{(-6,2),(-4,2)\\}$；令 $y=2$ 后得到 $x+5=\\pm1$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "识别覆盖全部实数而不是几个样点的无解论证。",
+        "source_solution": "任意实数的平方非负，两平方和至少为零，不能等于 -1，因此解集为空。",
+        "unit_reason": "负目标与零目标对应不同的存在性结论；此题要求普遍非负推理，不能由另一唯一解题得到。用完整论断加理由作 single，不退化成仅猜空集。",
+        "concept_blocks": [11, 14],
+        "limitations": ["只检验完整无解论证的识别，未检验独立组织和书写证明。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "$ (x+5)^2\\ge0,(y-2)^2\\ge0$ 对所有实数成立，故左边不可能等于负数。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "求出左边最小值 0 的位置 (-5,2)，却把最小位置自动判为方程解，不核对右端 -1；该点左边为 0。", "misconception": "最小值点必满足任意指定右端。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "把右端 -1 改成其绝对值 1，使用距离平方等于 1 得到所述圆；圆上各点的左边为 1，不是 -1。", "misconception": "距离平方公式中无依据地取右端绝对值。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "令 y=2 后从 (x+5)^2=-1 开方时取 sqrt(1)，得 x+5=±1，因此 x=-6,-4；两点左边都为 1。", "misconception": "对负数平方目标开方时丢掉负号。"}
+        ]
+      }
+    },
+    {
+      "id": "q-square-sum-zero",
+      "source_numbers": ["91"],
+      "view": {
+        "mode": "single",
+        "stem": "对于实数方程 $(x-7)^2+(y+4)^2=0$，下列关于解集的论断及其理由，哪一项正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "解集为 $\\{(7,t):t\\in\\mathbb R\\}$；第一个平方为零就足以使和为零。", "figure_ids": []},
+          {"id": "B", "text": "解集为 $\\{(7,4)\\}$；两平方都为零要求 $x=7$ 且 $y=4$。", "figure_ids": []},
+          {"id": "C", "text": "解集为 $\\{(7,-4)\\}$；非负平方的和为零要求两项都为零，该数对也满足方程。", "figure_ids": []},
+          {"id": "D", "text": "解集为空；两个实数平方的和总是严格大于零，不能等于零。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "识别同时证明存在与唯一性的平方和论证。",
+        "source_solution": "两项非负且和为零，故同时为零；解得 x=7,y=-4，代入成立，解恰有一个。",
+        "unit_reason": "零边界需要非负项同时为零并核验存在，不同于负目标的矛盾证明；两题各自方程的坐标值不共用答案。以完整论断及理由作 single。",
+        "concept_blocks": [11, 14],
+        "limitations": ["不能检验自主写出存在性、必要性和唯一性的证明。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "把非负项之和为零错用零积的或条件，只令 x-7=0，放任 y 任意；例如 (7,0) 左边为 16。", "misconception": "平方和为零只需一项为零。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "正确令两括号为零，但把 y+4=0 解成 y=4；(7,4) 左边为 64。", "misconception": "移项未改变 +4 的符号。"},
+          {"option_id": "C", "truth": "correct", "derivation": "由两项同时为零必得 (7,-4)，该点代入左边为 0，既存在又唯一。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "把 t^2≥0 错强为 t^2>0，对两项都应用严格正性，得和>0；遗漏两个括号均为零的情形。", "misconception": "将平方非负误当恒正。"}
+        ]
+      }
+    },
+    {
+      "id": "q-linear-graphs",
+      "source_numbers": ["92"],
+      "view": {
+        "mode": "single",
+        "stem": "对于下列四个方程，哪一项依次描述了它们的完整图象？\n\na) $2x-3y=6$；\nb) $\\frac{x}{2}+\\frac{y}{3}=1$；\nc) $x=-4$；\nd) $y=2$。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "a) 经过 $(3,0),(0,2)$ 的完整直线；b) 经过 $(2,0),(0,3)$ 的完整直线；c) 竖直直线 $x=-4$；d) 水平直线 $y=2$。", "figure_ids": []},
+          {"id": "B", "text": "a) 经过 $(3,0),(0,-2)$ 的完整直线；b) 经过 $(2,0),(0,3)$ 的完整直线；c) 竖直直线 $x=-4$；d) 水平直线 $y=2$。", "figure_ids": []},
+          {"id": "C", "text": "a) 经过 $(3,0),(0,-2)$ 的完整直线；b) 经过 $(2,0),(0,3)$ 的完整直线；c) 水平直线 $y=-4$；d) 竖直直线 $x=2$。", "figure_ids": []},
+          {"id": "D", "text": "a) 以 $(3,0),(0,-2)$ 为端点的线段；b) 以 $(2,0),(0,3)$ 为端点的线段；c) 竖直直线 $x=-4$；d) 水平直线 $y=2$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "识别全部解点组成的四种直线图象，保留截距、方向及无限延伸。",
+        "source_solution": "a 为 y=2x/3-2；b 为 y=-3x/2+3；c 是所有 (-4,t)；d 是所有 (t,2)，t 为任意实数。两斜线的截距分别是 (3,0),(0,-2) 和 (2,0),(0,3)，均非线段。",
+        "unit_reason": "四式共同考查线性图象的完整点集及横竖退化形式，整组可比较截距、方向和无限延伸。使用完整图象描述而非复制方程或孤立坐标点击，single 选择唯一完整组。",
+        "concept_blocks": [11, 14, 15],
+        "limitations": ["没有新图；文本判断保留图象数学性质，但不检验建立坐标轴、按尺度标点、连线及画出四个完整图象。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "a 移项为 -3y=6-2x 后除以 3 而不是 -3，得 y=2-2x/3，因此误取 y 截距 +2；b 至 d 正确。", "misconception": "分离 y 时遗漏负系数符号。"},
+          {"option_id": "B", "truth": "correct", "derivation": "令 x 或 y 为零分别求两斜线截距；x 固定给竖线、y 固定给横线，四式均取全部实数解点。", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "a,b 正确；把 x=-4 解释为第二坐标固定，把 y=2 解释为第一坐标固定，分别误得 y=-4 与 x=2。", "misconception": "混淆横坐标、纵坐标的固定方向。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "求对 a,b 截距后，只把两点之间的线段当作全图，未把直线延伸到两点外；c,d 正确。", "misconception": "两个截距限定了图象的端点，而不是确定一条无限直线。"}
+        ]
+      }
+    },
+    {
+      "id": "q-crossing-diagonal-locus",
+      "source_numbers": ["93"],
+      "view": {
+        "mode": "single",
+        "stem": "方程 $(x-y)(x+y)=0$ 的完整图象是什么？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "只有直线 $y=x$。", "figure_ids": []},
+          {"id": "B", "text": "只有点 $(0,0)$。", "figure_ids": []},
+          {"id": "C", "text": "直线 $y=x$ 与直线 $y=-x$ 的并集。", "figure_ids": []},
+          {"id": "D", "text": "抛物线 $y=x^2$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "判断两个线性零因子给出的完整解点集。",
+        "source_solution": "零积要求 x-y=0 或 x+y=0，故图象为 y=x 与 y=-x 的两条完整直线，交于原点。",
+        "unit_reason": "两个因子分别涉及 x 与 y 的和差，图象是斜线并集；与另一含固定坐标因子的图象任务独立，不能互相提供坐标答案。single 选择完整点集，非每条线分别点击。",
+        "concept_blocks": [11, 14, 15],
+        "limitations": ["保留说明完整图象的判断；未检验实际画出两条斜直线及其交点。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "直接除以 x+y，得 x-y=0，却不补上 x+y=0 的情形，遗失 y=-x 分支。", "misconception": "除以可能为零的因子时丢解。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "把零积的或条件改成且，同时解 x-y=0 与 x+y=0，得到 x=y=0。", "misconception": "把两分支并集误作交集。"},
+          {"option_id": "C", "truth": "correct", "derivation": "乘积为零当且仅当至少一个因子为零，分别得到 y=x 与 y=-x，取并集。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "展开得 x^2-y^2=0 后漏掉 y 的平方指数，误成 x^2-y=0，得到 y=x^2。", "misconception": "在平方差中只保留一个变量的平方。"}
+        ]
+      }
+    },
+    {
+      "id": "q-crossing-axis-parallel-locus",
+      "source_numbers": ["93"],
+      "view": {
+        "mode": "single",
+        "stem": "方程 $(x-3)(y+1)=0$ 的完整图象是什么？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "只有点 $(3,-1)$。", "figure_ids": []},
+          {"id": "B", "text": "水平直线 $y=3$ 与竖直直线 $x=-1$ 的并集。", "figure_ids": []},
+          {"id": "C", "text": "竖直直线 $x=-3$ 与水平直线 $y=1$ 的并集。", "figure_ids": []},
+          {"id": "D", "text": "竖直直线 $x=3$ 与水平直线 $y=-1$ 的并集。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "识别含固定坐标因子的零积图象，保持常数符号及横竖方向。",
+        "source_solution": "x=3 或 y=-1，图象为竖线 x=3 与横线 y=-1 的并集，交点 (3,-1)。",
+        "unit_reason": "固定坐标因子需要独立求根并判断方向，不能由斜线和差方程确定其常数。完整点集作为 single 单元，不按印刷小问固定配额。",
+        "concept_blocks": [11, 14, 15],
+        "limitations": ["文本判断不检验实际画出完整横竖直线及交点。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "把乘积为零判为两个因子必须同时为零，解出 x=3,y=-1 后只保留交点。", "misconception": "零积条件的或变成且。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "正确求出两常量 3,-1，但互换 x 与 y 的角色，得到 y=3 与 x=-1。", "misconception": "固定第一坐标和固定第二坐标的方向互换。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "由 x-3=0 错取 x=-3，由 y+1=0 错取 y=1，再取两直线并集。", "misconception": "两个线性因子求零点时都未反转常数符号。"},
+          {"option_id": "D", "truth": "correct", "derivation": "至少一个因子为零，给出 x=3 或 y=-1；对应竖线与横线的完整并集。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q-hyperbola-pair",
+      "source_numbers": ["94"],
+      "view": {
+        "mode": "single",
+        "stem": "比较 $y=\\frac6x$ 与 $xy=-12$ 的完整图象，哪一项描述正确？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "两者都是双曲线；前者的两支在第一、第三象限，后者在第二、第四象限；两坐标轴都是渐近线，图象上没有坐标轴上的点。", "figure_ids": []},
+          {"id": "B", "text": "两者都是双曲线；前者的两支在第二、第四象限，后者在第一、第三象限；两坐标轴都是渐近线，图象上没有坐标轴上的点。", "figure_ids": []},
+          {"id": "C", "text": "两者都是双曲线的一支；前者仅在第一象限，后者仅在第四象限；两坐标轴都是渐近线，图象上没有坐标轴上的点。", "figure_ids": []},
+          {"id": "D", "text": "两者都是双曲线与两坐标轴的并集；前者的曲线两支在第一、第三象限，后者在第二、第四象限；坐标轴上的点也属于图象。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "识别非零乘积符号决定的全部双曲线分支、原定义域及渐近线与图象的区别。",
+        "source_solution": "前式等价于 xy=6，x,y 同号且均非零，在 I、III 象限；后式 x,y 异号且均非零，在 II、IV 象限。两者定义域 x≠0，坐标轴为渐近线而不含轴上点，可由成对同反号样点构图。",
+        "unit_reason": "两个非零常数的符号形成一个连贯的分支比较任务，完整双图性质作为 single 单元，不拆成几个象限或坐标格点击。性质须由乘积符号及零值限制推导，不只是搬运方程文字。",
+        "concept_blocks": [11, 14, 15],
+        "limitations": ["不检验选取足够样点、标点和画出完整两支曲线的作图能力；没有展示新候选图。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "xy=6 同号，xy=-12 异号；非零常数排除任一坐标为零，倒数随另一坐标无限增大趋零形成轴渐近线。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "分离 y 时在两式都额外添负号，误得 y=-6/x 与 y=12/x，按这两式的符号取象限，恰好交换两图分支。", "misconception": "分离乘积变量时无依据地变号。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "把分母 x≠0 错强为 x>0，前式只剩 y>0，后式只剩 y<0，舍去全部负 x 解点。", "misconception": "分母非零被误当分母必须为正，缩小原定义域。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "正确判断双曲线分支后，把作为渐近线绘出的两轴也纳入解点集；任一轴上点都使 xy=0，不能等于 6 或 -12。", "misconception": "渐近线本身也属于曲线解集。"}
+        ]
+      }
+    },
+    {
+      "id": "q-origin-circle-family",
+      "source_numbers": ["95"],
+      "view": {
+        "mode": "single",
+        "stem": "下列方程的完整图象，按 a 至 f 顺序是哪一组？\n\na) $x^2+y^2=16$；\nb) $x^2+y^2=36$；\nc) $x^2+y^2=6\\frac14$；\nd) $x^2+y^2=20$；\ne) $x^2+y^2=12$；\nf) $x^2+y^2=0$。\n\n选项中列出的圆周，圆心均为坐标原点。",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "a 至 e 分别为半径 $4,6,\\frac{25}{4},2\\sqrt5,2\\sqrt3$ 的圆周；f 只有点 $(0,0)$。", "figure_ids": []},
+          {"id": "B", "text": "a 至 e 分别为半径 $16,36,\\frac{25}{4},20,12$ 的圆周；f 只有点 $(0,0)$。", "figure_ids": []},
+          {"id": "C", "text": "a 至 e 分别为半径 $4,6,\\frac52,2\\sqrt5,2\\sqrt3$ 的圆周；f 只有点 $(0,0)$。", "figure_ids": []},
+          {"id": "D", "text": "a 至 e 分别为半径 $4,6,\\frac52,2\\sqrt5,2\\sqrt3$ 的圆周；f 的图象为空集。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "把五个正常圆的半径和零边界单点统一识别为完整图象。",
+        "source_solution": "右端依次 16,36,25/4,20,12,0；正数时半径为正平方根，依次 4,6,5/2,2√5,2√3，点集为圆周不是圆盘；零时两个平方均为零，仅 (0,0)。定义中的 r>0 不覆盖零半径圆周。",
+        "unit_reason": "同一距离平方判据统摄整组六个图象，并必须处理零值的不同边界类型。以完整半径和点集组为 single 单元，不拆成逐半径数格点击；原式到半径的推导保留了数学判断。",
+        "concept_blocks": [14, 29],
+        "limitations": ["完整图象性质识别不检验按比例定半径、作五个圆及在坐标平面上标出退化点的生产能力。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "其余式正确开方；c 先把带分数化为 25/4，随后未开平方便把该数作为半径，得到 25/4。", "misconception": "带分数化为假分数后跳过半径的平方根步骤。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "把每个正右端常数直接当半径，c 仅做带分数转换，列出 16,36,25/4,20,12；零式另正确判为原点。", "misconception": "圆方程右端等于半径而非半径平方。"},
+          {"option_id": "C", "truth": "correct", "derivation": "对五个正常数取正平方根；零式由非负平方和等于零得 x=y=0，保留单点边界。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "五个正常圆计算正确；对 f 只检查圆周定义要求 r>0，发现 r=0 不符合就认定无任何解点，未直接解平方和方程。", "misconception": "不属于正半径圆周就被当作没有图象，遗漏原点解。"}
+        ]
+      }
+    },
+    {
+      "id": "q-radius-equation-family",
+      "source_numbers": ["96"],
+      "view": {
+        "mode": "single",
+        "stem": "四个圆周的圆心均在坐标原点，半径依次为 $2$、$4.5$、$\\sqrt{13}$、$\\frac{\\sqrt6}{2}$。哪一组方程按此顺序分别表示这四个圆周？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$x^2+y^2=2$；$x^2+y^2=\\frac92$；$x^2+y^2=\\sqrt{13}$；$x^2+y^2=\\frac{\\sqrt6}{2}$。", "figure_ids": []},
+          {"id": "B", "text": "$x^2+y^2=4$；$x^2+y^2=\\frac{81}{4}$；$x^2+y^2=13$；$x^2+y^2=\\frac32$。", "figure_ids": []},
+          {"id": "C", "text": "$x^2+y^2=4$；$x^2+y^2=\\frac{81}{4}$；$x^2+y^2=13$；$x^2+y^2=3$。", "figure_ids": []},
+          {"id": "D", "text": "$x^2+y^2=4$；$x^2+y^2=\\frac{81}{2}$；$x^2+y^2=13$；$x^2+y^2=3$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "从四类正半径完整构造原点圆周方程。",
+        "source_solution": "方程右端取 r²，分别为 4,(9/2)²=81/4,13,(√6/2)²=6/4=3/2。",
+        "unit_reason": "同一构造关系 r→r² 贯穿整数、小数、根式和分式半径，保留完整四方程组而非逐数点击，single 选择唯一整组。",
+        "concept_blocks": [29],
+        "limitations": ["识别完整方程组不能证明自主生成和书写四个方程。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "直接令右端等于给定半径，小数仅转为 9/2，其余原样抄入，得到所列四式。", "misconception": "省略半径平方。"},
+          {"option_id": "B", "truth": "correct", "derivation": "分别平方四个半径；整个分数的分子、分母都平方，得到 4,81/4,13,3/2。", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "前三个正确，第四个把 (√6/2)² 算作 6/2=3，只平方分子。", "misconception": "根式分数平方时保留原分母。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "所有分数平方都按 p²/q 而非 p²/q²，第二个 (9/2)² 算成 81/2，第四个算成 6/2=3，其余整数及根式平方正确。", "misconception": "对分数平方只作用于分子。"}
+        ]
+      }
+    },
+    {
+      "id": "q-circumference-points",
+      "source_numbers": ["97"],
+      "view": {
+        "mode": "multiple",
+        "stem": "选择所有在圆周 $x^2+y^2=144$ 上的点。",
+        "figure_ids": [],
+        "options": [
+          {"id": "B", "text": "$B(7,9)$", "figure_ids": []},
+          {"id": "C", "text": "$C(10,7)$", "figure_ids": []},
+          {"id": "D", "text": "$D(0,-12)$", "figure_ids": []},
+          {"id": "E", "text": "$E(-8,4\\sqrt5)$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "逐点判断圆周归属，区别圆周、圆内及圆外。",
+        "source_solution": "B,C,D,E 的平方和分别为 130,149,144,144，故在圆周上恰为 D,E。",
+        "unit_reason": "同一圆周下四个独立点的归属判断是一组自然 multiple，保留全部候选点，不用组合码或每点二选一。",
+        "concept_blocks": [11, 29],
+        "limitations": [],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["D", "E"],
+        "rationales": [
+          {"option_id": "B", "truth": "incorrect", "derivation": "49+81=130，不等于 144；若把圆周关系 =144 换成 ≤144，会因 130≤144 而误选 B。", "misconception": "把圆内及圆周整个圆盘当成圆周。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "100+49=149，不等于 144；若把圆周关系 =144 换成 ≥144，会因 149≥144 而误选 C。", "misconception": "把到原点距离不小于半径的外部判据当成圆周判据。"},
+          {"option_id": "D", "truth": "correct", "derivation": "$0^2+(-12)^2=144$。", "misconception": null},
+          {"option_id": "E", "truth": "correct", "derivation": "$(-8)^2+(4\\sqrt5)^2=64+16\\cdot5=144$。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q-point-determined-circles",
+      "source_numbers": ["98"],
+      "view": {
+        "mode": "single",
+        "stem": "两个圆周的圆心都在坐标原点，第一个经过 $M(5,12)$，第二个经过 $N(-1,-3)$。哪一项依次给出这两个圆周的方程？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$x^2+y^2=13$；$x^2+y^2=\\sqrt{10}$。", "figure_ids": []},
+          {"id": "B", "text": "$x^2+y^2=17$；$x^2+y^2=-4$。", "figure_ids": []},
+          {"id": "C", "text": "$x^2+y^2=169$；$x^2+y^2=-10$。", "figure_ids": []},
+          {"id": "D", "text": "$x^2+y^2=169$；$x^2+y^2=10$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "分别由非原点的坐标求原点圆周的平方半径。",
+        "source_solution": "M 的平方距离 25+144=169，N 的平方距离 1+9=10，两个圆分别为 x²+y²=169 与 x²+y²=10。",
+        "unit_reason": "两点分别确定两圆，是同一距离平方构造规则的连贯比较，保留完整两圆方程组。没有改成同一圆同时过两点，也不拆成孤立右端数值点击；使用 single。",
+        "concept_blocks": [11, 29],
+        "limitations": ["完整方程识别不能证明自主从点构造和书写圆周方程。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "先正确求半径 √169=13 与 √10，再把半径本身放在方程右端而不平方。", "misconception": "把半径与方程常数 r² 混淆。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "把距离平方 x₀²+y₀² 错换成坐标和 x₀+y₀，计算 5+12=17 与 -1-3=-4。", "misconception": "使用坐标和而非坐标平方和。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "M 正确；N 把 (-1)² 记作 -1²=-1，把 (-3)² 记作 -3²=-9，相加误得 -10。", "misconception": "负坐标平方时漏掉底数的括号。"},
+          {"option_id": "D", "truth": "correct", "derivation": "将每个点代入 x²+y²=r²，分别得 r²=169 和 10，两者都正且唯一。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q-express-x-linear-first",
+      "source_numbers": ["99"],
+      "view": {
+        "mode": "single",
+        "stem": "用变量 $y$ 表示方程 $2x+3y=7$ 中的变量 $x$。哪一项同时给出正确表达式及原方程允许的全部 $y$ 值？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$x=\\frac{7+3y}{2}$，$y\\in\\mathbb R$。", "figure_ids": []},
+          {"id": "B", "text": "$x=\\frac{7-3y}{2}$，$y\\in\\mathbb R$。", "figure_ids": []},
+          {"id": "C", "text": "$x=7-\\frac{3y}{2}$，$y\\in\\mathbb R$。", "figure_ids": []},
+          {"id": "D", "text": "$x=\\frac{7-2y}{3}$，$y\\in\\mathbb R$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "保持 y→x 的表示方向并完整分离 x。",
+        "source_solution": "2x=7-3y，除以非零常量 2 得 x=(7-3y)/2，所有实数 y 都允许。",
+        "unit_reason": "完整表达式与允许范围是一项推导结果，不按每次运算拆题。它的系数与另一线性式及含参数除式不同，求解不依赖其他题；使用 single。",
+        "concept_blocks": [11, 14],
+        "limitations": ["不能检验独立移项、整式除法和书写表示式。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "移 3y 到右边时不变号，写成 2x=7+3y，随后正确除以 2。", "misconception": "移项常量系数项不改变符号。"},
+          {"option_id": "B", "truth": "correct", "derivation": "两边减去 3y 后把整个右边除以 2，分母常数非零，无 y 限制。", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "得到 2x=7-3y 后只把右边第二项除以 2，保留 7，误得 x=7-3y/2。", "misconception": "和式除法不作用于每项。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "把 x,y 的系数 2,3 交换为 3x+2y=7，再按此错误方程分离 x。", "misconception": "分离变量时互换系数归属。"}
+        ]
+      }
+    },
+    {
+      "id": "q-express-x-linear-second",
+      "source_numbers": ["99"],
+      "view": {
+        "mode": "single",
+        "stem": "用变量 $y$ 表示方程 $3x-5y=1$ 中的变量 $x$。哪一项同时给出正确表达式及原方程允许的全部 $y$ 值？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$x=\\frac{1+5y}{3}$，$y\\in\\mathbb R$。", "figure_ids": []},
+          {"id": "B", "text": "$x=\\frac{1-5y}{3}$，$y\\in\\mathbb R$。", "figure_ids": []},
+          {"id": "C", "text": "$x=\\frac{1+3y}{5}$，$y\\in\\mathbb R$。", "figure_ids": []},
+          {"id": "D", "text": "$x=1+\\frac{5y}{3}$，$y\\in\\mathbb R$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "独立分离带负系数 y 项的 x，保持完整右端除法。",
+        "source_solution": "3x=1+5y，所以 x=(1+5y)/3；每个实数 y 都给唯一 x。",
+        "unit_reason": "该完整推导的移项符号及除数与同源其他式不同，各题输入和输出不共用数值答案。single 选择表达式和完整范围，不把算术步骤做成数格。",
+        "concept_blocks": [11, 14],
+        "limitations": ["选择结果不能证明自主进行分离变量的代数推导。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "两边加 5y，再把右边整个和除以 3；无参数零除情形。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "把 -5y 移到右边仍写 -5y，得 3x=1-5y，再除以 3。", "misconception": "移项遗漏符号改变。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "把系数互换，按 5x-3y=1 分离 x，得到所列式。", "misconception": "交换两个变量的系数。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "从 3x=1+5y 除以 3 时只除第二项，留下常数 1。", "misconception": "除以常数只作用于含变量项。"}
+        ]
+      }
+    },
+    {
+      "id": "q-express-x-product",
+      "source_numbers": ["99"],
+      "view": {
+        "mode": "single",
+        "stem": "用变量 $y$ 表示方程 $x+xy=10$ 中的变量 $x$。哪一项同时给出正确表达式及原方程允许的全部 $y$ 值？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$x=\\frac{10}{y}$，$y\\ne0$。", "figure_ids": []},
+          {"id": "B", "text": "$x=10-y$，$y\\in\\mathbb R$。", "figure_ids": []},
+          {"id": "C", "text": "$x=\\frac{10}{1+y}$，$y\\ne-1$。", "figure_ids": []},
+          {"id": "D", "text": "$x=\\frac{10}{1+y}$，$y\\notin\\{-1,0\\}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "提取 x 并保留恰好全部允许的参数范围。",
+        "source_solution": "x(1+y)=10，y=-1 时变成 0=10，无任何 x；其余 y 得 x=10/(1+y)。特别 y=0 允许且 x=10。",
+        "unit_reason": "除数含 y 导致一个不可解参数值，与常数除法任务独立；完整范围是响应结果的一部分，不能用另一题的排除值。采用 single，表达式相同但范围不同者是不同完整结果。",
+        "concept_blocks": [11, 14],
+        "limitations": ["不能检验独立提公因式及讨论零除数情形的生产能力。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "忽略左边单独的 x，仅解 xy=10，除以 y 得 10/y 并排除 y=0。", "misconception": "提取公因式时丢掉单独的 x 项。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "把 xy 误作 y，将关系改为 x+y=10，移项得 x=10-y，允许全部实数。", "misconception": "将乘积项视为单变量项。"},
+          {"option_id": "C", "truth": "correct", "derivation": "x(1+y)=10，分母非零时分离 x；为零时原方程矛盾，故恰好 y≠-1。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "先两边除以 y，得到 x/y+x=10/y，自行要求 y≠0；随后正确合并得到 x=10/(1+y)，却未补回 y=0 的原方程解。", "misconception": "用多余的参数除法引入限制后未恢复被排除的合法情形。"}
+        ]
+      }
+    },
+    {
+      "id": "q-express-x-square-product",
+      "source_numbers": ["99"],
+      "view": {
+        "mode": "single",
+        "stem": "用变量 $y$ 表示方程 $xy-y^2-2x=1$ 中的变量 $x$。哪一项同时给出正确表达式及原方程允许的全部 $y$ 值？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$x=\\frac{y^2+1}{y-2}$，$y\\ne2$。", "figure_ids": []},
+          {"id": "B", "text": "$x=\\frac{y^2-1}{y-2}$，$y\\ne2$。", "figure_ids": []},
+          {"id": "C", "text": "$x=\\frac{y^2+1}{y+2}$，$y\\ne-2$。", "figure_ids": []},
+          {"id": "D", "text": "$x=\\frac{y^2+1}{y-2}$，$y>2$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "合并含 x 的两项，正确移项平方并保留原允许范围。",
+        "source_solution": "x(y-2)=y²+1；y=2 时左边为零、右边为5，故不允许。其余 y 给 x=(y²+1)/(y-2)。例如 y=0 给 x=-1/2，负分母也允许。",
+        "unit_reason": "需要把 xy 与 -2x 合并，且独立处理 y=2 的空解情形；与另一含积式的常数和排除点不同。完整表达式与全部范围为 single 单元，不向其他题提供正确公式。",
+        "concept_blocks": [11, 14],
+        "limitations": ["选择结果不能证明自主收集变量项并讨论分母为零。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "两边加 y²，提 x 得 x(y-2)=1+y²，非零分母下除法等价；y=2 无解。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "移项时把右端 1 同时误变为 -1，写成 xy-2x=y²-1，再提 x 并除以 y-2。", "misconception": "只需移动 -y² 时无依据地改变右端常数符号。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "把 xy-2x 提成 x(y+2)，其余步骤正确，产生分母 y+2 及排除 -2。", "misconception": "提取公因式时把负系数改成正系数。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "正确得到分式，但把分母非零误加强为 y-2>0，得 y>2，丢掉所有 y<2 的原解。", "misconception": "实数分式的分母被误要求为正。"}
+        ]
+      }
+    },
+    {
+      "id": "q-simplify-cancellable",
+      "source_numbers": ["100"],
+      "view": {
+        "mode": "single",
+        "stem": "化简 $\\frac{a^2+7a+6}{(a-3)^2-16}$，并保留原式的定义域。哪一项是完整结果？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$\\frac{a+6}{a-7}$，$a\\notin\\{-1,7\\}$。", "figure_ids": []},
+          {"id": "B", "text": "$\\frac{a+6}{a-7}$，$a\\ne7$。", "figure_ids": []},
+          {"id": "C", "text": "$\\frac{a+6}{a+7}$，$a\\notin\\{-1,-7\\}$。", "figure_ids": []},
+          {"id": "D", "text": "$\\frac{a+1}{a-7}$，$a\\notin\\{-1,7\\}$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "分解平方差并合法约分，保留被约因子的原定义域孔洞。",
+        "source_solution": "分子 (a+1)(a+6)，分母 (a-7)(a+1)，原定义域 a≠-1,7；在该域化为 (a+6)/(a-7)，不能补入 a=-1。",
+        "unit_reason": "化简式与原定义域是一个完整结果。该题有可约因子和约后孔洞，与另一不可约题的代数结构独立，不能互相泄露结果；使用 single，范围不同即完整结果不同。",
+        "concept_blocks": [],
+        "limitations": ["识别化简结果不能检验独立因式分解、约分和记录原定义域的能力。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "分子分母按所述分解，约去非零 a+1，但仍排除其零点 -1，另排除分母零点 7。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "正确约分后只检查新分母 a-7，未保留原分母 a+1 的零点，于是错误纳入 a=-1。", "misconception": "约去的因子使原定义域无定义点变成合法点。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "平方差分解时把 (a-3)-4 中的 -3-4 错算成 +3+4，得到因子 a+7；另一因子 a+1 正确，约分后分母为 a+7，并按错误分母给出两排除点。", "misconception": "计算平方差线性因子时同时翻转两个减项。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "分解正确后，把分子的 a+6 与分母的 a+1 当作相同因子约去，保留分子 a+1 和分母 a-7；原排除点仍保留。", "misconception": "含同一变量的不同线性因子可直接约去。"}
+        ]
+      }
+    },
+    {
+      "id": "q-simplify-noncancellable",
+      "source_numbers": ["100"],
+      "view": {
+        "mode": "single",
+        "stem": "化简 $\\frac{4b^2-7b-2}{81(b+7)^2}$，并保留原式的定义域。哪一项是完整结果？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$\\frac{(4b-1)(b+2)}{81(b+7)^2}$，$b\\ne-7$。", "figure_ids": []},
+          {"id": "B", "text": "$\\frac{(4b+1)(b-2)}{81(b+7)^2}$，$b\\ne-7$。", "figure_ids": []},
+          {"id": "C", "text": "$\\frac{(4b+1)(b-2)}{9(b+7)^2}$，$b\\ne-7$。", "figure_ids": []},
+          {"id": "D", "text": "$\\frac{(4b+1)(b-2)}{81(b+7)}$，$b\\ne-7$。", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "检验非首一二次式分解及不可约分的完整有理式。",
+        "source_solution": "(4b+1)(b-2)=4b²-8b+b-2=4b²-7b-2，与 b+7 无公因式；分母保持 81(b+7)²，原定义域 b≠-7。",
+        "unit_reason": "此式需要验证交叉项且无共同因子，与可约平方差式的孔洞问题数学独立；以完整因式结果及范围作 single，不单独考一个系数数格。",
+        "concept_blocks": [],
+        "limitations": ["不能检验自主完成交叉项因式分解及确定不能约分。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "选定常数因子 -1,+2，却只核对首项 4b² 与常数 -2，不核对交叉项；展开所得 4b²+7b-2，与原 -7b 符号相反。", "misconception": "因式分解只配首项和常数，不检查中间项。"},
+          {"option_id": "B", "truth": "correct", "derivation": "展开分子得正确交叉项 -8b+b=-7b；两个线性因子均不等于 b+7，没有约分，排除 -7。", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "分子正确分解，却将分母 81 换为其平方根 9，以为化简需对平方数常量开方，其他部分不变。", "misconception": "有理式化简时无等价依据地对单个分母常量开方。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "分子正确分解后，无分子同因子便从分母 (b+7)² 划去一个 b+7，得到一次分母。", "misconception": "分母重复因子可自行消去而无需分子同因子。"}
+        ]
+      }
+    },
+    {
+      "id": "q-inequality-two-roots",
+      "source_numbers": ["101"],
+      "view": {
+        "mode": "single",
+        "stem": "不等式 $P^2-10P+21<0$ 的完整实数解集是什么？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$(-\\infty,3)\\cup(7,+\\infty)$", "figure_ids": []},
+          {"id": "B", "text": "$[3,7]$", "figure_ids": []},
+          {"id": "C", "text": "$(3,7)$", "figure_ids": []},
+          {"id": "D", "text": "$(-7,-3)$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "由两个简单根及开口方向判断严格负值区间。",
+        "source_solution": "(P-3)(P-7)<0，当且仅当 3<P<7；两端等于零必须排除。",
+        "unit_reason": "两个不同实根的负值区间与同源重根、恒正、恒负情形独立，根及解集不能由其他项得到。完整解集为 single 单元，不拆成两端点或符号格。",
+        "concept_blocks": [],
+        "limitations": ["不能检验自主分解、制作符号分析和书写求解过程。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["C"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "正确求根 3,7，却把乘积为负的异号条件写成同号，选择两个根外侧开区间。", "misconception": "乘积负值的区间方向反转。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "正确选择根之间，但将严格 <0 视作 ≤0，把使乘积为零的两个端点纳入。", "misconception": "严格不等式包含等号边界。"},
+          {"option_id": "C", "truth": "correct", "derivation": "两因子异号要求 3<P<7，端点都取零不满足。", "misconception": null},
+          {"option_id": "D", "truth": "incorrect", "derivation": "因式分解时把一次项 -10P 误作 +10P，使用 (P+3)(P+7)<0 得 -7<P<-3。", "misconception": "因式分解遗漏一次项负号，翻转两根。"}
+        ]
+      }
+    },
+    {
+      "id": "q-inequality-repeated-root",
+      "source_numbers": ["101"],
+      "view": {
+        "mode": "single",
+        "stem": "不等式 $u^2-8u+16>0$ 的完整实数解集是什么？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$\\varnothing$", "figure_ids": []},
+          {"id": "B", "text": "$\\mathbb R$", "figure_ids": []},
+          {"id": "C", "text": "$(4,+\\infty)$", "figure_ids": []},
+          {"id": "D", "text": "$(-\\infty,4)\\cup(4,+\\infty)$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "识别非负平方严格为正时只排除一个点。",
+        "source_solution": "(u-4)²>0 当且仅当 u≠4，左右两个开区间都保留。",
+        "unit_reason": "重根导致正值区间只缺一个点，不同于两根之间负值、恒正或恒负；完整解集独立求得且不向其他题给根。使用 single。",
+        "concept_blocks": [],
+        "limitations": ["不能检验独立配方及论证排除重根的求解能力。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["D"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "判别式为零，只存在一个根 4；误把严格正值区域当作必须夹在两个不同根之间，因没有两个不同根就判空。", "misconception": "所有二次严格不等式都必须在两个不同根之间有解。"},
+          {"option_id": "B", "truth": "incorrect", "derivation": "发现是完全平方便认定恒正，不检查 u=4 时恰为零，纳入全部实数。", "misconception": "平方非负等于平方恒正。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "从 (u-4)²>0 只取正底数 u-4>0，遗漏底数负而平方正的情形。", "misconception": "平方大于零只保留正号分支。"},
+          {"option_id": "D", "truth": "correct", "derivation": "实数平方严格为正当且仅当底数非零，故只排除 u=4。", "misconception": null}
+        ]
+      }
+    },
+    {
+      "id": "q-inequality-always-positive",
+      "source_numbers": ["101"],
+      "view": {
+        "mode": "single",
+        "stem": "不等式 $q^2+6q+13>0$ 的完整实数解集是什么？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$\\mathbb R$", "figure_ids": []},
+          {"id": "B", "text": "$\\varnothing$", "figure_ids": []},
+          {"id": "C", "text": "$(-\\infty,-3)\\cup(-3,+\\infty)$", "figure_ids": []},
+          {"id": "D", "text": "$(-3,+\\infty)$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "通过正的最小值识别恒正二次式的全部解。",
+        "source_solution": "q²+6q+13=(q+3)²+4≥4>0，每个实数 q 都满足，包括 q=-3。",
+        "unit_reason": "无实根但恒正的式子要求独立判断最小值，不能照搬重根式的排除点，也不由恒负题得答案。完整实数解集作 single。",
+        "concept_blocks": [],
+        "limitations": ["解集识别不能检验独立配方及证明正下界。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["A"],
+        "rationales": [
+          {"option_id": "A", "truth": "correct", "derivation": "配成 (q+3)²+4，平方非负使左边至少 4，全部实数成立。", "misconception": null},
+          {"option_id": "B", "truth": "incorrect", "derivation": "计算判别式 36-52=-16<0，发现对应等式无实根，直接把等式无根误当不等式无解。", "misconception": "方程没有实根等于严格不等式没有解。"},
+          {"option_id": "C", "truth": "incorrect", "derivation": "配方后丢掉 +4，只解 (q+3)²>0，排除 q=-3，得到所列双开区间。", "misconception": "遗漏配方后正的常数余项。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "先删掉配方余项 +4，再把 (q+3)²>0 化为 q+3>0，只留下 q>-3。", "misconception": "遗漏正余项并对平方只取正底数。"}
+        ]
+      }
+    },
+    {
+      "id": "q-inequality-always-negative",
+      "source_numbers": ["101"],
+      "view": {
+        "mode": "single",
+        "stem": "不等式 $-m^2-2m-3>0$ 的完整实数解集是什么？",
+        "figure_ids": [],
+        "options": [
+          {"id": "A", "text": "$\\mathbb R$", "figure_ids": []},
+          {"id": "B", "text": "$\\varnothing$", "figure_ids": []},
+          {"id": "C", "text": "$(-\\infty,-1)\\cup(-1,+\\infty)$", "figure_ids": []},
+          {"id": "D", "text": "$(-\\infty,-1)$", "figure_ids": []}
+        ]
+      },
+      "intent": {
+        "task": "用严格负上界判断空解，保留负号对平方的作用。",
+        "source_solution": "-m²-2m-3=-(m+1)²-2≤-2<0，永不大于零，解集为空。",
+        "unit_reason": "负平方及负常数给恒负式，必须独立处理负号和上界；不同于其他不等式的根与值域，没有交叉数值答案。完整空解结果作 single。",
+        "concept_blocks": [],
+        "limitations": ["选择空解不能检验独立配方及证明严格负上界。"],
+        "figure_observations": []
+      },
+      "key": {
+        "correct": ["B"],
+        "rationales": [
+          {"option_id": "A", "truth": "incorrect", "derivation": "两边乘 -1 时不翻转 >，误成 m²+2m+3>0，配成 (m+1)²+2>0，得全部实数。", "misconception": "乘负数时不等号未反向。"},
+          {"option_id": "B", "truth": "correct", "derivation": "负平方至多零，再减 2 至多 -2，故没有任何实数满足 >0。", "misconception": null},
+          {"option_id": "C", "truth": "incorrect", "derivation": "配成 -(m+1)²-2 后删去 -2，再把 -(m+1)²>0 中前置负号也删去，求 (m+1)²>0，排除 -1。", "misconception": "丢掉配方余项和平方前负号。"},
+          {"option_id": "D", "truth": "incorrect", "derivation": "配方后删去 -2，从 -(m+1)²>0 错推为 -(m+1)>0，相当于把平方去掉却保留一次负号，得到 m<-1。", "misconception": "将平方项无依据降为一次项并遗漏常数。"}
+        ]
+      }
+    }
+  ],
+  "coverage": [
+    {
+      "source_number": "88",
+      "question_ids": ["q-degree"],
+      "omitted_tasks": [],
+      "reason": "完整保留八个方程及顺序，需按定义标准化并辨别最大总次数，没有只抽一格或跳过消项。"
+    },
+    {
+      "source_number": "89",
+      "question_ids": ["q-solution-pairs"],
+      "omitted_tasks": [],
+      "reason": "保留全部四个原数对，以同一方程下的原生 multiple 判断所有解，原书本就要求判断归属。"
+    },
+    {
+      "source_number": "90",
+      "question_ids": ["q-two-linear-first", "q-two-linear-second", "q-two-product", "q-two-square", "q-two-zero-product", "q-two-positive-factor"],
+      "omitted_tasks": ["六个方程均未检验任意自主构造两个不同解；只能检验完整现成两解组的数学有效性。"],
+      "reason": "保留六个完整独立方程，包括非零参数、平方对称、零积并集和恒正因子；各解组由本方程独立确定，题间不共享答案。分题依据完整独立造解任务，不依据小问数配额。"
+    },
+    {
+      "source_number": "91",
+      "question_ids": ["q-square-sum-negative", "q-square-sum-zero"],
+      "omitted_tasks": ["未检验自主组织和书写两个证明；唯一解题未检验学习者自己生成存在性与唯一性论证。"],
+      "reason": "完整保留负目标空解与零目标唯一解的原条件，选项包含可判断的完整论断及理由；识别论证与生产证明明确不同。"
+    },
+    {
+      "source_number": "92",
+      "question_ids": ["q-linear-graphs"],
+      "omitted_tasks": ["未作图，未检验定轴、选择坐标尺度、标点、连线和向两端延伸四条直线。"],
+      "reason": "保留全部四式并要求完整图象描述，含双截距、横竖方向及无限点集；纯文本仍需数学判断，但不能代表实际作图成功。"
+    },
+    {
+      "source_number": "93",
+      "question_ids": ["q-crossing-diagonal-locus", "q-crossing-axis-parallel-locus"],
+      "omitted_tasks": ["未检验在坐标平面上画出两组直线并集及相交位置。"],
+      "reason": "保留两个完整零积关系及说明图象的任务，分别由和差因子与常量因子独立确定不同完整点集；文本识别只覆盖说明，不覆盖作图。"
+    },
+    {
+      "source_number": "94",
+      "question_ids": ["q-hyperbola-pair"],
+      "omitted_tasks": ["未检验选择和标注样点、连续画出双曲线两支及呈现渐近趋势的实际作图能力。"],
+      "reason": "两式保持非零原定义域，完整分支象限与渐近线归属构成连贯比较；无候选图，文字性质判断不声称已画图。"
+    },
+    {
+      "source_number": "95",
+      "question_ids": ["q-origin-circle-family"],
+      "omitted_tasks": ["未检验定尺度、作五个正半径圆周和准确标出零式原点图象。"],
+      "reason": "完整覆盖六式，正半径和单点边界分开；没有把零式改成空解、圆盘或定义之外的正半径圆。图象数学性质判断不替代绘图生产能力。"
+    },
+    {
+      "source_number": "96",
+      "question_ids": ["q-radius-equation-family"],
+      "omitted_tasks": ["未检验自主生成和书写四个圆周方程。"],
+      "reason": "四个正半径和表示方向完整保留，以整组方程考查平方规则，包括分母平方；不逐格点击，也不把识别当书写。"
+    },
+    {
+      "source_number": "97",
+      "question_ids": ["q-circumference-points"],
+      "omitted_tasks": [],
+      "reason": "保留四个原点坐标、根式和同一圆周，逐一判断全部归属；原生 multiple 不用组合编码。"
+    },
+    {
+      "source_number": "98",
+      "question_ids": ["q-point-determined-circles"],
+      "omitted_tasks": ["未检验自主依据点的距离构造和书写两个圆周方程。"],
+      "reason": "完整保留两个分别经过指定点的原点圆，而非强改成一个圆同时经过两点；整组完整方程仍需平方距离判断。"
+    },
+    {
+      "source_number": "99",
+      "question_ids": ["q-express-x-linear-first", "q-express-x-linear-second", "q-express-x-product", "q-express-x-square-product"],
+      "omitted_tasks": ["未检验独立书写四个分离变量过程及自行组织零因子参数的讨论。"],
+      "reason": "完整保留四式及用 y 表示 x 的方向，每式独立推导且不共用答案；常数除法及两个不同不可解参数均记录全部允许范围，不缩域或把空参数情形补入。"
+    },
+    {
+      "source_number": "100",
+      "question_ids": ["q-simplify-cancellable", "q-simplify-noncancellable"],
+      "omitted_tasks": ["未检验独立因式分解、约分并自主写出原定义域限制。"],
+      "reason": "分别保留可约与不可约有理式的独立代数任务，正确结果不扩大原定义域；表达式和完整原范围是一个结果，不按各因子或数格分题。"
+    },
+    {
+      "source_number": "101",
+      "question_ids": ["q-inequality-two-roots", "q-inequality-repeated-root", "q-inequality-always-positive", "q-inequality-always-negative"],
+      "omitted_tasks": ["未检验独立制作符号分析、配方、证明上下界和书写四个不等式求解过程。"],
+      "reason": "保留四个完整且独立的不等式：开区间、只排除一点、全实数和空解均按原严格符号处理；各题根和常量不同，不共享答案或把边界改成闭区间。"
+    }
+  ]
+}

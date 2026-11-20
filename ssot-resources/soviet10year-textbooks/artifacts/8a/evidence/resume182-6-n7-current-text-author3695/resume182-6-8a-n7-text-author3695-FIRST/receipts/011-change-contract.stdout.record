@@ -1,0 +1,83 @@
+) -> list[str]:
+    errors = []
+    if not isinstance(modern, str):
+        return [f"{label}.text 必须是字符串"]
+    if not isinstance(changes, list) or any(not isinstance(item, str) for item in changes):
+        errors.append(f"{label}.changes 必须是字符串数组")
+        changes = []
+    if modern != source and not changes:
+        errors.append(f"{label} 已改写但 changes 为空")
+    if modern == source and changes:
+        errors.append(f"{label} 未改写但 changes 非空")
+    comparison_source = source
+    if source_lines is not None:
+        if (
+            not isinstance(source_lines, list)
+            or not source_lines
+            or any(not isinstance(line, str) for line in source_lines)
+        ):
+            return errors + [f"{label}.source_lines 必须是非空字符串数组"]
+        if blocks.text_of({"lines": source_lines}) != source:
+            return errors + [f"{label}.source_lines 与原书 source 文本不一致"]
+        # Keep authoritative row boundaries without altering wrapped formulas.
+        boundaries = {
+            len(blocks.text_of({"lines": source_lines[:index]}))
+            for index in range(1, len(source_lines))
+        }
+        formulas = list(MATH.finditer(source))
+        for boundary in sorted(boundaries, reverse=True):
+            if not any(match.start() < boundary < match.end() for match in formulas):
+                comparison_source = (
+                    comparison_source[:boundary] + "\n" + comparison_source[boundary:]
+                )
+    canonical_source = normalize_numbered_subparts(comparison_source)
+    canonical_modern = normalize_numbered_subparts(modern)
+    expected_math_source = canonical_source
+    for correction in math_corrections or []:
+        expected_math_source = expected_math_source.replace(
+            correction["original"],
+            correction["corrected"],
+            1,
+        )
+    if math_signature(canonical_modern) != math_signature(expected_math_source):
+        errors.append(f"{label} 的数学公式变化没有匹配已绑定勘误")
+    if math_corrections and "math-correction" not in changes:
+        errors.append(f"{label} 应在 changes 中包含 math-correction")
+    if not math_corrections and "math-correction" in changes:
+        errors.append(f"{label} 声明 math-correction 但没有已绑定勘误")
+    source_numbers = number_signature(expected_math_source)
+    modern_numbers = number_signature(canonical_modern)
+    if not isinstance(numeric_changes, list):
+        errors.append(f"{label}.numeric_changes 必须是数组")
+        numeric_changes = []
+    expected_numbers = source_numbers[:]
+    for index, change in enumerate(numeric_changes):
+        change_label = f"{label}.numeric_changes[{index}]"
+        if not isinstance(change, dict):
+            errors.append(f"{change_label} 必须是对象")
+            continue
+        before = str(change.get("from", ""))
+        after = str(change.get("to", ""))
+        reason = change.get("reason")
+        if not before or not after or not isinstance(reason, str) or not reason.strip():
+            errors.append(f"{change_label} 必须包含 from、to 和 reason")
+            continue
+        try:
+            position = expected_numbers.index(before)
+        except ValueError:
+            errors.append(f"{change_label}.from={before!r} 不在原文剩余数字中")
+            continue
+        expected_numbers[position] = after
+    if modern_numbers != expected_numbers:
+        errors.append(
+            f"{label} 的非公式数字变化未被准确声明: "
+            f"want={expected_numbers}, got={modern_numbers}"
+        )
+    if numeric_changes and "context-number" not in changes:
+        errors.append(f"{label} 有 numeric_changes，但 changes 缺 context-number")
+    if CYRILLIC.search(modern):
+        errors.append(f"{label} 仍含西里尔字母")
+    allowed_historical = set()
+    if historical_entities is not None:
+        if not isinstance(historical_entities, list):
+            errors.append(f"{label}.historical_entities 必须是数组")

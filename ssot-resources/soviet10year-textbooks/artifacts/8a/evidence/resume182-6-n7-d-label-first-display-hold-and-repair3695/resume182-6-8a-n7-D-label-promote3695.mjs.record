@@ -1,0 +1,134 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), root);
+const [reviewPath, reviewSHA] = process.argv.slice(2);
+const own = '.tmp/resume182-6-8a-n7-D-label-promote3695-AFFECTED3';
+const base = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const target = `${base}/editions/modern-us-neutral/figures/fig-15`;
+const evidence = `${base}/evidence/resume182-6-n7-D-label-historical-corrections3695`;
+const readyPath = '.tmp/resume182-6-8a-n7-fig15-D-label-repair3695-AFFECTED3/ready.record';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const read = file => fs.readFileSync(file);
+const json = file => JSON.parse(read(file));
+const binding = file => ({ path: path.resolve(file), sha256: sha(read(file)), bytes: read(file).length });
+const write = (file, bytes, flag = 'wx') => {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, bytes, { flag });
+};
+const save = (file, value) => write(file, `${JSON.stringify(value, null, 2)}\n`);
+const verified = item => {
+  assert.equal(sha(read(item.path)), item.sha256);
+  return read(item.path);
+};
+assert.match(reviewSHA, /^[a-f0-9]{64}$/);
+assert.equal(sha(read(reviewPath)), reviewSHA);
+const review = json(reviewPath), ready = json(readyPath);
+assert.equal(review.status, 'PASS');
+assert.equal(review.figure, 'fig-15');
+assert.equal(review.lesson, 'alg8-c2-s1-n7');
+assert.deepEqual(review.blockers, []);
+assert.equal(sha(read(readyPath)), 'bfd9afa205e7dba3f4f73586fab0070433a3afca6381d3c8a8b7df16abe8adcf');
+assert.equal(ready.cumulativePostRenderContentRepairs, 3);
+assert.equal(ready.originalDeclaredRemainingContentRepairBudget, 0);
+for (const field of ['spec', 'render', 'svg', 'preview']) {
+  assert.equal(review[field].sha256, ready[field].sha256);
+  verified(ready[field]);
+}
+const official = JSON.parse(verified(review.review));
+assert.equal(official.status, 'pass');
+assert.equal(official.spec.sha256, ready.spec.sha256);
+assert.equal(official.outputs.svg.sha256, ready.svg.sha256);
+assert.ok(!fs.existsSync(own) && !fs.existsSync(evidence));
+fs.mkdirSync(own);
+const prior = ['spec.json', 'svg', 'render.json', 'review.json'].map(suffix => {
+  const mutable = `${target}.${suffix}`, immutable = `${evidence}/prior-${suffix}.record`;
+  const bytes = read(mutable);
+  write(immutable, bytes);
+  return { mutable: binding(mutable), immutable: binding(immutable) };
+});
+assert.equal(prior[0].mutable.sha256, ready.originalSpec.sha256);
+const entries = prior.map(item => ({
+  historical_path: item.mutable.path, path: path.relative(root, item.immutable.path),
+  sha256: item.immutable.sha256, bytes: item.immutable.bytes,
+}));
+const corrections = [];
+for (const name of fs.readdirSync(`${base}/evidence`).sort()) {
+  if (!name.startsWith('resume182-6-n7-') || name === path.basename(evidence)) continue;
+  const file = `${base}/evidence/${name}/retention.record`;
+  if (!fs.existsSync(file)) continue;
+  for (const entry of json(file).entries ?? []) {
+    if (typeof entry.path !== 'string' || typeof entry.sha256 !== 'string') continue;
+    const item = prior.find(value => path.resolve(entry.path) === value.mutable.path
+      && entry.sha256 === value.mutable.sha256);
+    if (item) corrections.push({
+      originalRecord: { path: file, sha256: sha(read(file)) },
+      supersededMutableReference: { path: entry.path, sha256: entry.sha256 },
+      correctedImmutableReference: { path: path.relative(root, item.immutable.path),
+        sha256: item.immutable.sha256, bytes: item.immutable.bytes },
+      knownBytesOnly: true, originalRecordUnchanged: true,
+    });
+  }
+}
+save(`${evidence}/retention.record`, {
+  schema: 'stemrobin-182/production-evidence-retention@1', ticket: 'STEMROBIN-182',
+  book: '8a', lesson: 'alg8-c2-s1-n7', date: '2026-11-20',
+  status: 'retained-existing-bytes-only', entries, corrections,
+  unknownHistoricalBytesRecovered: false, wholeLessonApproval: false,
+  sourceMathImageOrValidatorReruns: 0, totalCost: 'unknown',
+});
+save(`${own}/start.record`, {
+  review: binding(reviewPath), ready: binding(readyPath), prior,
+  parentSpecificDisplayFindingViews: 1, unchangedOtherStages: true,
+});
+write(`${target}.spec.json`, verified(ready.spec), 'w');
+write(`${target}.svg`, verified(ready.svg), 'w');
+const render = JSON.parse(verified(ready.render));
+render.spec.path = `${target}.spec.json`;
+render.output.svg.path = `${target}.svg`;
+write(`${target}.render.json`, `${JSON.stringify(render, null, 2)}\n`, 'w');
+const command = ['/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python',
+  '-B', '.agents/skills/ld-s10y-image/scripts/record_review.py',
+  '--spec', `${target}.spec.json`, '--render', `${target}.render.json`,
+  '--output', `${own}/durable-path-review.json`, '--status', 'pass',
+  '--notes', `Path binding only. Inherited affected D-label PASS ${reviewPath} sha256=${reviewSHA}. `
+    + 'Only D label placement changed; all prior source/geometry and other labels are inherited. '
+    + 'Old four active figure files are preserved exactly with immutable correction bindings. '
+    + 'Cumulative figure content repairs3; original declared budget0 retained. Parent inspected1 old display finding. '
+    + 'No new image, renderer or semantic review in this promotion; costs and full history unknown.'];
+save(`${own}/recorder-start.record`, { command, cwd: root });
+const result = spawnSync(command[0], command.slice(1), { cwd: root, encoding: 'utf8' });
+write(`${own}/recorder-stdout.txt`, result.stdout ?? '');
+write(`${own}/recorder-stderr.txt`, result.stderr ?? '');
+save(`${own}/recorder-receipt.record`, { command, returncode: result.status,
+  signal: result.signal, error: result.error?.message ?? null });
+assert.equal(result.status, 0, result.stderr);
+write(`${target}.review.json`, read(`${own}/durable-path-review.json`), 'w');
+const oldParentPath = '.tmp/resume182-6-8a-n7-parent-ready3695-FIRST/parent-ready.record';
+assert.equal(sha(read(oldParentPath)), '4a25e05252a9a40d344cd6003bce1ac85dd2b56941cb50f0d09919eb15dff752');
+const parent = json(oldParentPath);
+const current = prior.map(item => binding(item.mutable.path));
+const replace = files => files.map(item => current.find(value => value.path === item.path) ?? item);
+parent.files = replace(parent.files);
+parent.approvals.figures.files = replace(parent.approvals.figures.files);
+parent.approvals.figures.receipts = replace(parent.approvals.figures.receipts);
+parent.created = new Date().toISOString();
+parent.affectedFigureApproval = { review: binding(reviewPath), oldParent: binding(oldParentPath),
+  cumulativeContentRepairs: 3, originalDeclaredBudget: 0 };
+save(`${own}/parent-ready.record`, parent);
+save(`${own}/binding.record`, {
+  status: 'PASS', root, book: '8a', lesson: 'alg8-c2-s1-n7', edition: 'modern-us-neutral',
+  ready: binding(readyPath), review: binding(reviewPath), current,
+  immutablePriorFiles: prior, corrections: binding(`${evidence}/retention.record`),
+  parentReady: binding(`${own}/parent-ready.record`), oldParent: binding(oldParentPath),
+  originalParentUnchanged: true, otherApprovedContentUnchanged: true,
+  recorderCalls: 1, rendererCalls: 0, newImageViews: 0, parentFindingViews: 1,
+  cumulativeFigureContentRepairs: 3, originalDeclaredBudget: 0,
+  wholeLessonApproval: false, totalCost: 'unknown', DBWrites: 0,
+});
+console.log(JSON.stringify({ binding: binding(`${own}/binding.record`),
+  parentReady: binding(`${own}/parent-ready.record`), corrections: corrections.length }));

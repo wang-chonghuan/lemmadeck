@@ -1,0 +1,55 @@
+import hashlib
+import json
+import os
+from pathlib import Path
+import sys
+
+from PIL import Image
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck")
+OWN = ROOT / ".tmp/resume182-6-8a-n7-figures3695-AFFECTED1"
+assert Path.cwd() == ROOT
+attempt = sys.argv[1]
+assert attempt in {"REPEAT1", "NATIVEFIX1"}
+directory = OWN / "fig-14" / f"native-{attempt}"
+png_path = directory / f"fig-14-native640-{attempt}.png"
+with Image.open(png_path) as image:
+    assert image.size == (640, 260)
+    rgba = image.convert("RGBA")
+    # This strip is outside the ellipse's y=3 extremum and thin stroke,
+    # away from axes, labels and frame. Pale grid ink is above this threshold.
+    regions = [[190, 70, 299, 77], [341, 70, 450, 77]]
+    unexpected_dark_pixels = 0
+    for left, top, right, bottom in regions:
+        for y in range(top, bottom):
+            for x in range(left, right):
+                red, green, blue, alpha = rgba.getpixel((x, y))
+                if alpha and min(red, green, blue) < 220:
+                    unexpected_dark_pixels += 1
+record = {
+    "schema": "resume182-6/native-stroke-check@1",
+    "root": str(ROOT),
+    "figure": "fig-14",
+    "attempt": attempt,
+    "png": {
+        "path": str(png_path),
+        "sha256": hashlib.sha256(png_path.read_bytes()).hexdigest(),
+    },
+    "check": "Scalar raster check for enlarged raw-path non-scaling stroke; not visual review",
+    "regions": regions,
+    "unexpectedDarkPixelsOutsideCurveStroke": unexpected_dark_pixels,
+    "allowed": 0,
+    "status": "pass" if unexpected_dark_pixels == 0 else "fail",
+    "failureClassification": (
+        None if unexpected_dark_pixels == 0
+        else "native raster stroke compatibility; current passed SVG remains unchanged"
+    ),
+    "imagesEmittedOrVisuallyInspected": 0,
+    "independentReview": "NOT_RUN",
+    "pid": os.getpid(),
+}
+with (directory / "stroke-check.record").open("x") as handle:
+    json.dump(record, handle, indent=2)
+    handle.write("\n")
+print(json.dumps(record, indent=2))
+sys.exit(0 if record["status"] == "pass" else 2)

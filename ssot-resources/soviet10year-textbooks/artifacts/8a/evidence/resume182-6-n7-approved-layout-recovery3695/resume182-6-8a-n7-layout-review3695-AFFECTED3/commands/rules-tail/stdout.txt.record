@@ -1,0 +1,25 @@
+   human's work until they say otherwise.
+3. **Sending an answer key to the client** — forbidden outright. The quiz question fetchers
+   (`getLessonQuestions` / `getStoryQuestions` in `app/src/lib/quiz.ts`) must never include
+   `correct_index`, `answer`, or `accept` in what they return; correctness is judged server-side in
+   the `record*` server functions.
+4. **Opening a database connection anywhere under `app/` other than `app/src/lib/db.ts`** —
+   forbidden outright. A second `postgres` client, or a connection string reaching any file under
+   `app/src/routes/` or any `.tsx`, is the crossing this names. Content scripts under
+   `.agents/skills/` are node CLIs governed by entry 9.
+5. **Adding, removing, or changing a dependency** — not without the human's explicit approval, and
+   only when a ticket carries that decision.
+6. **Hand-editing a generated file** — forbidden outright: `app/src/routeTree.gen.ts`, anything under
+   `app/.output/`.
+7. **Changing the DB schema anywhere other than `ssot-schemas/db-schemas/lemmadeck.sql`** —
+   forbidden outright. Ad hoc `ALTER`/`CREATE` against the shared server is drift.
+8. **Using a database connection other than `LEMMADECK_DATABASE_URL` for application or content
+   access** — forbidden outright. `DATABASE_URL` and `EASYAPP_DATABASE_URL` are not aliases;
+   same-named schemas on other servers are not the product database.
+9. **A content script under `.agents/skills/` calling `postgres(` directly** — forbidden outright.
+   Every content script connects through `.agents/skills/lib/content-db.mjs`.
+10. **Adding a repo-root `package.json`, or a second application** — not without the human's explicit
+    approval. The standalone-`app/` layout is what the root `Dockerfile` builds.
+11. **Committing a product resource outside `ssot-resources/`, or making durable content depend on
+    `.tmp/`** — forbidden outright. Code-owned schemas, profiles, dependency files and test fixtures
+    remain beside code. `python3 ssot-resources/audit.py` is the mechanical boundary.

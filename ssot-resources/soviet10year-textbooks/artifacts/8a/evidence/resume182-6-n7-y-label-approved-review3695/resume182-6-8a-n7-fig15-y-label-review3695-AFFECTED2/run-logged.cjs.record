@@ -1,0 +1,36 @@
+const fs = require("node:fs");
+const path = require("node:path");
+const { spawnSync } = require("node:child_process");
+
+const root = "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck";
+const output = path.join(root, ".tmp/resume182-6-8a-n7-fig15-y-label-review3695-AFFECTED2");
+const [name, command, ...args] = process.argv.slice(2);
+if (process.cwd() !== root || !/^[a-z0-9-]+$/.test(name || "") || !command) {
+  throw new Error("Explicit repository cwd and a valid log name are required.");
+}
+const log = path.join(output, `${name}.command.record`);
+if (fs.existsSync(log)) throw new Error(`Refusing to overwrite ${log}`);
+const startedAt = new Date().toISOString();
+const result = spawnSync(command, args, {
+  cwd: root,
+  encoding: "utf8",
+  maxBuffer: 16 * 1024 * 1024,
+  env: { ...process.env, PYTHONDONTWRITEBYTECODE: "1" },
+});
+const record = {
+  cwd: root,
+  command: [command, ...args],
+  startedAt,
+  finishedAt: new Date().toISOString(),
+  stdout: result.stdout || "",
+  stderr: result.stderr || "",
+  exit: result.status,
+  signal: result.signal,
+  executionError: result.error ? String(result.error) : null,
+  cost: "unknown",
+};
+fs.writeFileSync(log, `${JSON.stringify(record, null, 2)}\n`, { flag: "wx" });
+process.stdout.write(record.stdout);
+process.stderr.write(record.stderr);
+process.stdout.write(`\nSaved command evidence: ${log}\nExit: ${record.exit}\n`);
+process.exitCode = result.status === null ? 1 : result.status;

@@ -1,0 +1,69 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const root = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const edition = `${root}/editions/modern-us-neutral`;
+const lesson = `${edition}/lessons/alg8-c2-s1-n7`;
+const exact = new Set([
+  '.intentfold/tickets/STEMROBIN-182/progress.md',
+  `${edition}/book.json`,
+]);
+for (const id of ['fig-14', 'fig-15']) {
+  for (const suffix of ['svg', 'spec.json', 'render.json', 'review.json']) {
+    exact.add(`${edition}/figures/${id}.${suffix}`);
+  }
+}
+const prefixes = [
+  `${lesson}/`,
+  ...fs.readdirSync(`${root}/evidence`)
+    .filter(name => name.startsWith('resume182-6-n7-'))
+    .map(name => `${root}/evidence/${name}/`),
+];
+const run = (args, options = {}) => {
+  const result = spawnSync('git', args, { cwd: repo, ...options });
+  assert.equal(result.status, 0, result.stderr?.toString());
+  return result.stdout;
+};
+const revisions = run(['rev-parse', 'HEAD', 'origin/codex/STEMROBIN-182-textbooks'],
+  { encoding: 'utf8' }).trim().split('\n');
+assert.equal(revisions[0], revisions[1], 'Remote advanced; do not overwrite the original branch');
+const files = run(['diff', '--cached', '--name-only', '-z'], { encoding: 'utf8' })
+  .split('\0').filter(Boolean);
+assert.ok(files.length);
+const forbidden = [
+  /-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----/,
+  /postgres(?:ql)?:\/\/[^\s"'<>]+:[^\s"'<>]+@/i,
+  /\b(?:gh[pousr]_[A-Za-z0-9]{24,}|github_pat_[A-Za-z0-9_]{24,})\b/,
+  /\bsk-(?:proj-)?[A-Za-z0-9_-]{24,}\b/,
+  /(?:api[_-]?key|access[_-]?token|client[_-]?secret)\s*["']?\s*[:=]\s*["'][A-Za-z0-9/+_-]{24,}["']/i,
+];
+let bytes = 0;
+for (const file of files) {
+  assert.ok(exact.has(file) || prefixes.some(prefix => file.startsWith(prefix)),
+    `Out of scope staged path: ${file}`);
+  assert.ok(!file.split('/').some(segment => /^(?:\.env(?:\..*)?|node_modules|\.venv)$/.test(segment)),
+    `Forbidden staged path: ${file}`);
+  const mode = run(['ls-files', '--stage', '--', file], { encoding: 'utf8' });
+  assert.ok(!mode.startsWith('120000'), `Staged symlink: ${file}`);
+  const blob = run(['show', `:${file}`], { maxBuffer: 16 * 1024 * 1024 });
+  bytes += blob.length;
+  if (!blob.includes(0)) {
+    for (const pattern of forbidden) {
+      assert.ok(!pattern.test(blob.toString('utf8')), `Potential secret in: ${file}`);
+    }
+  }
+}
+const oldIndex = JSON.parse(run(['show', `HEAD:${edition}/book.json`], { encoding: 'utf8' }));
+const newIndex = JSON.parse(fs.readFileSync(`${edition}/book.json`, 'utf8'));
+assert.deepEqual(newIndex.lessons.filter(item => item.id !== 'alg8-c2-s1-n7'), oldIndex.lessons);
+assert.equal(newIndex.lessons.filter(item => item.id === 'alg8-c2-s1-n7').length, 1);
+const display = JSON.parse(fs.readFileSync(`${lesson}/offline-display.json`, 'utf8'));
+assert.equal(display.status, 'OFFLINE_DISPLAY_PASS');
+assert.equal(display.lesson, 'alg8-c2-s1-n7');
+assert.equal(display.coverage.pending, 0);
+assert.equal(display.coverage.missing, 0);
+console.log(JSON.stringify({ status: 'STAGED_SCOPE_AND_SECRET_PASS', files: files.length,
+  bytes, oldIndexEntriesUnchanged: true, remoteBase: revisions[0] }));

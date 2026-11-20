@@ -1,0 +1,376 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const own = path.join(root, '.tmp/resume182-6-8a-n7-figures3695-AFFECTED1');
+assert.equal(process.cwd(), root);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const ref = file => {
+  const bytes = fs.readFileSync(file);
+  return { path: file, sha256: sha(bytes), bytes: bytes.length };
+};
+const json = file => JSON.parse(fs.readFileSync(file, 'utf8'));
+const write = (name, value) => fs.writeFileSync(
+  path.join(own, name), `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' },
+);
+const sourceInventoryPath = path.join(own, 'sourceinventory.record');
+assert.equal(
+  ref(sourceInventoryPath).sha256,
+  'dce1e711d85d15a5b2ef748311947c3e68032c2dc69af00e9205fd60eda6cb3c',
+);
+const inventory = json(sourceInventoryPath);
+const author = json(path.join(own, 'author.receipt.record'));
+const repair = json(path.join(own, 'repair1.receipt.record'));
+const entries = [];
+const receipts = [];
+for (const source of inventory.figures) {
+  const id = source.id;
+  const directory = path.join(own, id);
+  const specName = id === 'fig-14' ? `${id}.spec-AFFECTED1.json` : `${id}.spec-REPAIR1.json`;
+  const specPath = path.join(directory, specName);
+  const specRef = ref(specPath);
+  const spec = json(specPath);
+  const draftDir = path.join(directory, 'draft-FIRST');
+  const draft = json(path.join(draftDir, 'stdout.txt'));
+  assert.equal(draft.status, 'pass');
+  const attempts = id === 'fig-14' ? ['FIRST', 'REPEAT1'] : ['FIRST', 'REPAIR1', 'REPEAT1'];
+  const renderEvidence = [];
+  for (const attempt of attempts) {
+    const phaseDir = path.join(directory, `render-${attempt}`);
+    const receiptPath = path.join(phaseDir, 'receipt.record');
+    const receipt = json(receiptPath);
+    const reportPath = path.join(phaseDir, `${id}-render-${attempt}.json`);
+    const report = json(reportPath);
+    const svgPath = path.join(phaseDir, `${id}-${attempt}.svg`);
+    const svgRef = ref(svgPath);
+    assert.equal(svgRef.sha256, report.output.svg.sha256);
+    assert.equal(report.spec.sha256, receipt.spec.sha256);
+    assert.equal(receipt.exitCode, report.status === 'pass' ? 0 : 2);
+    const evidence = {
+      attempt,
+      status: report.status,
+      exitCode: receipt.exitCode,
+      spec: receipt.spec,
+      report: ref(reportPath),
+      svg: svgRef,
+      receipt: ref(receiptPath),
+      collisions: report.collisions,
+      displayChecks: report.displayChecks,
+    };
+    renderEvidence.push(evidence);
+    receipts.push(receipt);
+  }
+  const finalRender = renderEvidence.at(-1);
+  const priorPass = renderEvidence.at(-2);
+  assert.equal(finalRender.status, 'pass');
+  assert.equal(priorPass.status, 'pass');
+  assert.equal(finalRender.spec.sha256, specRef.sha256);
+  assert.equal(finalRender.svg.sha256, priorPass.svg.sha256);
+  const nativeAttempt = id === 'fig-14' ? 'NATIVEFIX1' : 'REPEAT1';
+  const nativeDir = path.join(directory, `native-${nativeAttempt}`);
+  const nativeRecordPath = path.join(nativeDir, 'pixels.record');
+  const native = json(nativeRecordPath);
+  assert.equal(native.status, 'pass');
+  assert.equal(native.width, 640);
+  assert.equal(native.transparentPixels, 0);
+  assert.equal(native.sourceSVG.sha256, finalRender.svg.sha256);
+  assert.equal(ref(native.nativePNG.path).sha256, native.nativePNG.sha256);
+  const nativeEvidence = {
+    ...native.nativePNG,
+    status: 'MACHINE_RASTER_PASS_UNVIEWED',
+    record: ref(nativeRecordPath),
+    width: native.width, height: native.height,
+    nonwhitePixels: native.nonwhitePixels,
+    transparentPixels: native.transparentPixels,
+    visualInspection: 'NOT_RUN',
+  };
+  if (id === 'fig-14') {
+    const strokeCheckPath = path.join(nativeDir, 'stroke-check.record');
+    const strokeCheck = json(strokeCheckPath);
+    assert.equal(strokeCheck.status, 'pass');
+    assert.equal(strokeCheck.unexpectedDarkPixelsOutsideCurveStroke, 0);
+    nativeEvidence.strokeCompatibility = ref(strokeCheckPath);
+    const rawPath = spec.objects.find(item => item.id === 'fig-14-ellipse');
+    assert.equal(rawPath.d, 'M 11 8.125 A 9 3 0 1 0 29 8.125 A 9 3 0 1 0 11 8.125 Z');
+    for (const suffix of ['origin', 'left-extremum', 'right-extremum', 'top-extremum', 'bottom-extremum']) {
+      assert.equal(spec.objects.find(item => item.id === `fig-14-${suffix}`).visible, false);
+    }
+    assert.equal(spec.objects.find(item => item.id === 'fig-14-y-unit-label').labelPlacement.position, 'W');
+  } else {
+    for (const suffix of ['AA1-guide', 'BB1-guide', 'DD1-guide']) {
+      const guide = spec.objects.find(item => item.id === `fig-15-${suffix}`);
+      assert.equal(guide.dash, 0);
+      assert.equal(guide.strokeWidth, 2.5);
+    }
+  }
+  const previous = author.entries.find(item => item.id === id);
+  entries.push({
+    id,
+    status: id === 'fig-14'
+      ? 'READY_FOR_AFFECTED_INDEPENDENT_REVIEW'
+      : 'READY_FOR_AFFECTED_INDEPENDENT_REVIEW_VISIBLE_INK_ONLY',
+    source: source.source,
+    context: source.context,
+    inputVerification: 'Verified at initial once-only read; not reopened by readiness generation',
+    sourceInventory: ref(sourceInventoryPath),
+    sourceFactToCandidateInventoryGroups: spec.source.inventory.map(group => group.id),
+    historicalEvidence: {
+      directory: path.dirname(previous.historicalSpec.path),
+      directorySHA256: 'unknown',
+      spec: previous.historicalSpec,
+      status: id === 'fig-14' ? 'OLD_VISUAL_FAIL_PRESERVED' : 'OLD_CAP1_HOLD_PRESERVED',
+      reason: id === 'fig-14'
+        ? 'Human-reported absent ellipse, exposed anchors and y-axis unit/arrow overlap'
+        : 'Separate projection-overlay solid/dashed style obscured by solid coincident grid',
+      oldImagesAndRuntimeAndCounters: 'Not reopened or restored; original records left unchanged',
+      historicalSourceImageViews: 'unknown',
+      historicalRenderCalls: 'unknown',
+      historicalRevisions: 'unknown',
+      historicalIndependentReviews: 'unknown',
+      oldPassesReplayed: 0,
+      historicalFailureOrHoldCount: 'unknown',
+      knownFailureOrHoldLowerBound: 1,
+    },
+    initialCandidate: previous.candidate,
+    currentCandidate: { ...specRef, status: 'CURRENT_RENDERED_AUTHOR_CANDIDATE_NOT_APPROVED' },
+    draft: {
+      status: draft.status,
+      receipt: ref(path.join(draftDir, 'receipt.record')),
+      validation: ref(path.join(draftDir, 'stdout.txt')),
+      appliesDirectlyToCurrentSpec: id === 'fig-14',
+      currentSpecAlsoValidatedByEachRenderer: true,
+      explicitDraftRuns: 1,
+    },
+    renders: renderEvidence,
+    currentOutput: {
+      svg: finalRender.svg,
+      report: finalRender.report,
+      renderStatus: 'pass',
+      native640: nativeEvidence,
+      declaredProductWidths: [640],
+      measuredMinimumTextPx: 16,
+      byteIdenticalCurrentPassAndAuthorizedRepeat: true,
+      repeatProves: 'renderer determinism only; no source or independent visual approval',
+    },
+    repairs: id === 'fig-14'
+      ? {
+          postRenderContentRepairs: 0,
+          nativeTechnicalRepairs: 1,
+          unchangedSpecAndSVG: true,
+          failedNativePreviewPreserved: json(path.join(directory, 'native-REPEAT1/stroke-check.record')).png,
+          failedNativeCheck: ref(path.join(directory, 'native-REPEAT1/stroke-check.record')),
+          recovery: ref(nativeRecordPath),
+        }
+      : {
+          postRenderContentRepairs: 1,
+          remainingContentRepairBudget: 0,
+          receipt: ref(path.join(own, 'repair1.receipt.record')),
+          endpointGeometryMoved: false,
+          fieldsChanged: repair.changes,
+          nativeTechnicalRepairs: 0,
+        },
+    sourceSemantics: {
+      requiredMathematicalRolesOrEndpointsUnresolved: false,
+      separateProjectionOverlayStyle: id === 'fig-15' ? 'unknown' : 'not applicable',
+      certifiedProjectionInk: id === 'fig-15' ? 'visible solid coincident grid-line ink only' : 'not applicable',
+      modernProjectionEmphasis: id === 'fig-15' ? 'declared solid muted 2.5 px presentation choice' : 'not applicable',
+      hiddenDashStyleAssertedKnown: false,
+      historicalHoldAutomaticallyApprovedByRenderer: false,
+    },
+    countersThisTask: {
+      contextReads: 1,
+      originalPNGByteReads: 1,
+      originalPNGImageViews: 1,
+      oldSpecTextReads: 2,
+      oldFAILImageViews: 0,
+      newPreviewImageViews: 0,
+      explicitDraftRuns: 1,
+      embeddedDraftRuns: attempts.length,
+      renderCalls: attempts.length,
+      renderPasses: id === 'fig-14' ? 2 : 2,
+      renderFailures: id === 'fig-14' ? 0 : 1,
+      nativeRasterCalls: id === 'fig-14' ? 2 : 1,
+      nativeStrokeChecks: id === 'fig-14' ? 2 : 0,
+      nativeStrokeCheckFailures: id === 'fig-14' ? 1 : 0,
+      initialAffectedCandidates: 1,
+      postRenderContentRepairs: id === 'fig-14' ? 0 : 1,
+      independentReviews: 0,
+      promotions: 0,
+      paidCalls: 0,
+    },
+    independentReview: 'PENDING_NOT_PERFORMED',
+    promotion: 'NOT_PERFORMED_NOT_AUTHORIZED',
+    lessonApproval: 'NOT_PERFORMED_NOT_AUTHORIZED',
+  });
+}
+const figureFailures = entries.flatMap(entry => entry.renders
+  .filter(render => render.status !== 'pass')
+  .map(render => ({ figure: entry.id, classification: 'current-render-layout', ...render })));
+figureFailures.push({
+  figure: 'fig-14',
+  classification: 'native-raster-stroke-compatibility',
+  status: 'fail',
+  evidence: ref(path.join(own, 'fig-14/native-REPEAT1/stroke-check.record')),
+  receipt: ref(path.join(own, 'technical-commands/native-stroke-check-REPEAT1/receipt.record')),
+  repairedOnlyAtNativeStage: true,
+});
+const fileManifest = [];
+const walk = directory => {
+  for (const item of fs.readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+    const file = path.join(directory, item.name);
+    assert.ok(file.startsWith(`${own}/`));
+    if (item.isDirectory()) walk(file);
+    else if (item.isFile()) {
+      const artifact = ref(file);
+      let status = 'retained';
+      if (item.name === 'receipt.record') {
+        const receipt = json(file);
+        status = receipt.exitCode === 0 ? 'execution-pass' : 'execution-fail';
+      } else if (file.endsWith('fig-14-native640-REPEAT1.png')) {
+        status = 'FAILED_NATIVE_STROKE_COMPATIBILITY_DO_NOT_USE';
+      } else if (file.endsWith('fig-15-FIRST.svg')) {
+        status = 'FAILED_RENDER_COLLISIONS_DO_NOT_USE';
+      } else if (file.endsWith('.png')) {
+        status = 'CURRENT_NATIVE_PREVIEW_UNVIEWED';
+      }
+      fileManifest.push({ ...artifact, status });
+    } else {
+      throw new Error(`unexpected non-file artifact: ${file}`);
+    }
+  }
+};
+walk(own);
+const runtimePaths = [
+  process.execPath,
+  '/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python',
+  path.join(root, '.agents/skills/ld-s10y-image/scripts/validate_spec.py'),
+  path.join(root, '.agents/skills/ld-s10y-image/scripts/render_spec.mjs'),
+  path.join(root, '.agents/skills/ld-s10y-image/scripts/materialize_arrowheads.mjs'),
+  path.join(root, '.agents/skills/node_modules/jsxgraph/distrib/jsxgraphcore.js'),
+  path.join(root, '.agents/skills/node_modules/jsxgraph/package.json'),
+  path.join(root, '.agents/skills/node_modules/playwright-core/package.json'),
+  path.join(root, '.claude/skills/ld-s10y-lesson/node_modules/@resvg/resvg-js/package.json'),
+  path.join(root, '.tmp/resume182-6-8a-n5-figures3695-AFFECTED1/native-preview.mjs'),
+  path.join(root, '.tmp/resume182-6-8a-n5-figures3695-AFFECTED1/run-phase.mjs'),
+];
+const ready = {
+  schema: 'resume182-6/affected-figures-ready@1',
+  status: 'READY_FOR_AFFECTED_INDEPENDENT_REVIEW_NOT_APPROVED',
+  root, outputRoot: own,
+  book: '8a', lesson: 'alg8-c2-s1-n7', figures: ['fig-14', 'fig-15'],
+  authorRoleOnly: true,
+  createdAt: new Date().toISOString(),
+  binding: inventory.binding,
+  sourceInventory: ref(sourceInventoryPath),
+  authorReceipt: ref(path.join(own, 'author.receipt.record')),
+  entries,
+  actualFailuresThisTask: figureFailures,
+  readOnlyDiscoveryFailure: ref(path.join(own, 'exploration-failures.record')),
+  countersThisTask: {
+    contextReads: 2,
+    originalPNGByteReads: 2,
+    originalPNGImageViews: 2,
+    sourceImagesPerBatch: 2,
+    oldFAILImageViews: 0,
+    newPreviewImageViews: 0,
+    imageViewsTotal: 2,
+    explicitDraftRuns: 2,
+    rendererEmbeddedDraftRuns: 5,
+    renderCalls: 5,
+    renderPasses: 4,
+    renderFailures: 1,
+    authorizedDeterminismRepeats: 2,
+    oldPassedStageReplays: 0,
+    initialAffectedCandidates: 2,
+    postRenderContentRepairs: 1,
+    nativeRasterCalls: 3,
+    nativeStrokeChecks: 2,
+    nativeStrokeCheckFailures: 1,
+    nativeTechnicalRepairs: 1,
+    readOnlyRuntimeDiscoveryFailures: 1,
+    technicalNativeNormalizerCalls: 1,
+    independentReviews: 0,
+    independentPassClaims: 0,
+    paidCalls: 0,
+    packagesInstalled: 0,
+    packagesOrRuntimesCopied: 0,
+    DBWrites: 0,
+    promotions: 0,
+    lessonApprovals: 0,
+    applicationChecks: 0,
+  },
+  historicalCounters: {
+    sourceImageViews: 'unknown',
+    previewImageViews: 'unknown',
+    renderCalls: 'unknown',
+    contentRevisions: 'unknown',
+    independentReviews: 'unknown',
+    paidCalls: 'unknown',
+    neverResetToCurrentTaskValues: true,
+    historicalFAILAndHOLDRecordsPreserved: true,
+    unknownRuntimeNotRestored: true,
+  },
+  imageBudget: {
+    originalImagesObserved: ['fig-14', 'fig-15'],
+    originalImageViewsPerFigure: 1,
+    currentContextTotalImageViews: 2,
+    previewImageViews: 0,
+    scalarRasterChecksAreNotVisualReviews: true,
+    delivery: 'TEXT_ONLY_PARENT_MUST_NOT_REOPEN_IMAGES_FROM_THIS_AUTHOR_RESULT',
+  },
+  readinessChecks: {
+    outputHashesVerified: true,
+    currentPassAndRequestedRepeatByteIdentityVerified: true,
+    repeatedSVGDoesNotProveSourceFidelity: true,
+    currentRendererReportCollisions: 0,
+    minimumFinalTextPxAt640: 16,
+    nativeStrokeCompatibilityFailurePreservedAndAffectedStageOnlyRepaired: true,
+    originalSourcesAndContextsNotReopened: true,
+    noReviewFileCreated: true,
+    notIndependentReview: true,
+  },
+  scope: {
+    writesOnlyInside: own,
+    sharedRepositoryNotExclusive: true,
+    otherAgentsChangesNotReverted: true,
+    sourceLessonIndexDatabaseAppDependencyProgressOldChatWrites: 0,
+    independentReview: 'PENDING_NOT_PERFORMED',
+    promotion: 'NOT_AUTHORIZED',
+    wholeLessonApproval: 'NOT_AUTHORIZED',
+    productOrDeploymentApproval: 'NOT_AUTHORIZED',
+  },
+  reusedRuntimeAndToolReferences: runtimePaths.map(ref),
+  versions: {
+    node: process.version,
+    JSXGraph: '1.13.1',
+    Resvg: '2.6.2',
+  },
+  allSavedArtifactsExcludingReadySelfAndItsChecksum: fileManifest,
+  readySelf: {
+    path: path.join(own, 'ready.record'),
+    sha256: 'external ready.sha256.record; self-hash cannot be embedded',
+  },
+  hostTokens: 'unknown',
+  totalCost: 'unknown',
+  approval: 'NONE',
+};
+write('ready.record', ready);
+const readyRef = ref(path.join(own, 'ready.record'));
+write('ready.sha256.record', { ...readyRef, status: ready.status });
+console.log(JSON.stringify({
+  ...readyRef,
+  checksumRecord: path.join(own, 'ready.sha256.record'),
+  status: ready.status,
+  entries: entries.map(entry => ({
+    id: entry.id,
+    status: entry.status,
+    spec: entry.currentCandidate,
+    svg: entry.currentOutput.svg,
+    native640: entry.currentOutput.native640,
+  })),
+  counters: ready.countersThisTask,
+  savedArtifactCount: fileManifest.length,
+  hostTokens: 'unknown', totalCost: 'unknown',
+}, null, 2));

@@ -1,0 +1,47 @@
+import { spawnSync } from 'node:child_process';
+import { writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const output = join(root, '.tmp/resume182-6-8a-n7-text-author3695-FIRST/receipts');
+const [label, command, ...args] = process.argv.slice(2);
+if (!/^[0-9]{3}-[a-z0-9-]+$/.test(label ?? '') || !command) {
+  throw new Error('A unique receipt label and command are required.');
+}
+const started = new Date().toISOString();
+const result = spawnSync(command, args, {
+  cwd: root,
+  encoding: 'utf8',
+  maxBuffer: 32 * 1024 * 1024,
+});
+writeFileSync(join(output, `${label}.stdout`), result.stdout ?? '', { flag: 'wx' });
+writeFileSync(join(output, `${label}.stderr`), result.stderr ?? '', { flag: 'wx' });
+writeFileSync(join(output, `${label}.exit.json`), JSON.stringify({
+  command,
+  args,
+  cwd: root,
+  started,
+  ended: new Date().toISOString(),
+  exit: result.status,
+  signal: result.signal,
+  error: result.error ? String(result.error) : null,
+}, null, 2) + '\n', { flag: 'wx' });
+if (label === '013-prose-flow') {
+  const afterPrefixes = [
+    '再看一个含两个变量',
+    '使二元方程成为真等式',
+    '图14画出了方程',
+    '图15画出了一个圆周',
+  ];
+  for (const line of (result.stdout ?? '').split('\n')) {
+    if (!line.startsWith('    break: ')) continue;
+    const boundary = JSON.parse(line.slice('    break: '.length));
+    if (afterPrefixes.some((prefix) => boundary.after.startsWith(prefix))) {
+      process.stdout.write(line + '\n');
+    }
+  }
+} else {
+  process.stdout.write(result.stdout ?? '');
+}
+process.stderr.write(result.stderr ?? '');
+process.exitCode = result.status ?? 1;

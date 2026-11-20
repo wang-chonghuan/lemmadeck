@@ -1,0 +1,142 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const inputRoot = join(root, '.tmp/resume182-6-8a-n7-current-input3695-FIRST');
+const input = join(inputRoot, 'adapt/8a/modern-us-neutral/lessons/alg8-c2-s1-n7');
+const output = join(root, '.tmp/resume182-6-8a-n7-text-author3695-FIRST');
+const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const inputs = [
+  [join(input, 'lesson.template.json'), '0badc41abb2fe6e6863a81c7eaf31c028bde2eab9b0ac181da5170129005dc68'],
+  [join(input, 'exercises.template.json'), 'a48266a10eef12b2149d8e9a13e6e37406837c8311a5381eb6c10643d2b2fa5f'],
+  [join(input, 'figures.template.json'), '01d9dda4e23ebf1d707ed43e36a31c977187fb84d9248251a52274012806953b'],
+  [join(inputRoot, 'inputs.record'), '432a7dba884f8390ec8e2b416165a42148d982cf48414559a558b718fb31416b'],
+];
+for (const [path, expected] of inputs) {
+  assert.equal(hash(readFileSync(path)), expected, `Input hash changed: ${path}`);
+}
+const originalLesson = JSON.parse(readFileSync(inputs[0][0], 'utf8'));
+const originalExercises = JSON.parse(readFileSync(inputs[1][0], 'utf8'));
+const lesson = structuredClone(originalLesson);
+const exercises = structuredClone(originalExercises);
+const formulaPattern = /\$\$[\s\S]*?\$\$|\$[^$]*\$/g;
+const formulas = (text) => text.match(formulaPattern) ?? [];
+const outside = (text) => text.replace(formulaPattern, '');
+const numbers = (text) => outside(text).match(/\d+(?:\.\d+)?/g) ?? [];
+const latin = (text) => outside(text).match(/[A-Za-z]+/g) ?? [];
+const changes = [];
+
+// Formula placeholders are opaque copies, not newly authored mathematics.
+function compose(original, draft, target) {
+  const spans = formulas(original);
+  const used = [];
+  const result = draft.replace(/\{\{F(\d+)\}\}/g, (_, rawIndex) => {
+    const index = Number(rawIndex);
+    assert.ok(index < spans.length, `Missing formula: ${target}`);
+    used.push(index);
+    return spans[index];
+  });
+  assert.deepEqual(used, spans.map((_, index) => index), `Formula order: ${target}`);
+  assert.deepEqual(formulas(result), spans, `Formula bytes: ${target}`);
+  assert.deepEqual(numbers(result), numbers(original), `Number bytes: ${target}`);
+  assert.deepEqual(latin(result), latin(original), `Latin labels: ${target}`);
+  return result;
+}
+
+const drafts = new Map([
+  [0, '先看一个含变量{{F0}}和{{F1}}的多项式{{F2}}。'],
+  [1, '先明确含几个变量的多项式的次数的概念。'],
+  [2, '在标准形式的多项式中，找出各变量的幂指数之和最大的一项*。\n这一项各变量的幂指数之和，就是这个多项式的次数。'],
+  [3, '例如，在上面的多项式中，单项式{{F0}}是二次项（这个单项式中变量{{F1}}是零次幂）。\n单项式{{F2}}中各变量的幂指数之和等于3，因此它是三次项。\n单项式{{F3}}是二次项，而8是零次项。\n因此，多项式{{F4}}是三次多项式。'],
+  [4, '多项式{{F0}}是四次多项式，因为各项中变量的幂指数之和的最大值（第二项和第三项）等于4。'],
+  [5, '再看一个含两个变量{{F0}}和{{F1}}的方程{{F2}}。'],
+  [6, '这个方程的左边是六次多项式，右边是零。\n我们称它为六次方程。'],
+  [8, '含几个变量的方程，如果左边是标准形式的多项式，右边是零，就把这个多项式的次数作为方程的次数。'],
+  [9, '要确定方程{{F0}}的次数，先把它变形，使左边成为标准形式的多项式，右边等于零。\n这样得到与原方程同解的方程{{F1}}。\n因此，这个方程和原方程都是四次方程。'],
+  [10, '本章主要讨论二元一次方程和二元二次方程。'],
+  [11, '使二元方程成为真等式的变量取值数对，叫做这个二元方程的解。'],
+  [12, '例如，数对{{F0}}（第一个数表示变量{{F1}}的值，第二个数表示变量{{F2}}的值）是方程{{F3}}的解。\n代入后，等式{{F4}}是真等式。'],
+  [13, '任意选取{{F0}}值，再求出对应的{{F1}}值，就可以得到任意多个其他数对，它们都是这个方程的解。\n例如，选取{{F2}}值等于0，得到{{F3}}值等于{{F4}}。\n数对{{F5}}就是方程{{F6}}的解。'],
+  [14, '每一个含两个变量{{F0}}和{{F1}}的方程，都确定一个由它的解组成的变量取值数对{{F2}}的集合，也就是在变量{{F3}}的值和变量{{F4}}的值之间建立某种关系。\n二元方程给出的关系的图象，简称二元方程的图象，是以这个方程的解为坐标的平面上点的集合。'],
+  [15, '{{F0}}或{{F1}}这种形式的方程，其图象是直线；{{F2}}这种形式的方程，其图象是抛物线；{{F3}}这种形式的方程，其图象是双曲线。'],
+  [16, '图14画出了方程{{F0}}的图象。\n这种形式的曲线叫做椭圆。'],
+  [19, '图15画出了一个圆周，它的圆心在坐标原点，半径为5个单位长。\n下面求以这个圆周为图象的方程。'],
+  [22, '设点{{F0}}是这个圆周上不在两个坐标轴上的任意一点。\n在直角三角形{{F1}}中，由勾股定理得：\n{{F2}}。\n显然，{{F3}}，{{F4}}，{{F5}}。\n因此，圆周上不在两个坐标轴上的任意一点的坐标都满足方程{{F6}}： （1）'],
+  [23, '圆周与{{F0}}轴、{{F1}}轴的每一个交点，其坐标也满足方程（1）。\n例如，把点{{F2}}的坐标代入方程（1），得到真等式：\n{{F3}}。'],
+  [24, '因此，这个圆周上任意一点的坐标都满足方程（1）。'],
+  [25, '再来证明：不在这个圆周上的点，其坐标不满足方程（1）。'],
+  [26, '设点{{F0}}在圆内（参看图15），那么{{F1}}，{{F2}}。'],
+  [27, '如果点{{F0}}在圆外，那么{{F1}}，{{F2}}。'],
+  [28, '因此，当且仅当坐标为{{F0}}和{{F1}}的点位于圆心在坐标原点、半径为5个单位长的圆周上时，等式{{F2}}成立。\n所以，图15中的圆周就是方程{{F3}}的图象。'],
+  [29, '一般地，圆心在坐标原点、半径等于{{F0}}的圆周，是方程{{F1}}的图象，其中{{F2}}和{{F3}}是变量，{{F4}}是正数。'],
+]);
+for (const [index, draft] of drafts) {
+  const block = lesson.prose[index];
+  assert.equal(block.kind, 'p');
+  const original = block.text;
+  block.text = compose(original, draft, `prose[${index}]`);
+  block.changes = [...new Set([...block.changes, 'wording', 'layout'])];
+  changes.push({ target: `prose[${index}]`, scope: ['wording', 'layout'] });
+}
+
+for (const item of exercises.exercises) {
+  const original = item.text;
+  if (item.number === '95') continue;
+  if (item.number === '97') {
+    item.text = compose(original,
+      '97. 下列各点在圆周{{F0}}上吗？\n{{F1}}；\n{{F2}}；\n{{F3}}；\n{{F4}}。',
+      'exercise[97]');
+  } else if (item.number === '91') {
+    item.text = item.lines.map((line, index) => index === 0 ? line : line.replace(/\.$/, '。')).join('\n');
+  } else {
+    item.text = original.replace(/\.$/, '。');
+  }
+  if (item.number === '90') item.text = item.text.replace('任何两个解', '任意两个解');
+  if (item.number === '93') item.text = item.text.replace('并且作出图象', '并作出图象');
+  assert.deepEqual(formulas(item.text), formulas(original), `Exercise formula bytes: ${item.number}`);
+  assert.deepEqual(numbers(item.text), numbers(original), `Exercise number bytes: ${item.number}`);
+  assert.deepEqual(latin(item.text), latin(original), `Exercise Latin labels: ${item.number}`);
+  item.lines = item.text.split('\n');
+  const scope = ['90', '93'].includes(item.number) ? ['wording', 'layout'] : ['layout'];
+  item.changes = [...new Set([...item.changes, ...scope])];
+  changes.push({ target: `exercise[${item.number}]`, scope });
+}
+
+assert.deepEqual(lesson.prose[7], originalLesson.prose[7], 'Footnote content and identity');
+assert.deepEqual(lesson.source, originalLesson.source, 'Embedded lesson source snapshot');
+assert.deepEqual(exercises.source, originalExercises.source, 'Embedded exercise source snapshot');
+assert.deepEqual(exercises.exercises.find((item) => item.number === '95'),
+  originalExercises.exercises.find((item) => item.number === '95'), 'Entire exercise 95');
+const outputs = [];
+for (const [filename, document] of [
+  ['candidate.lesson.template.json', lesson],
+  ['candidate.exercises.template.json', exercises],
+]) {
+  const bytes = JSON.stringify(document, null, 2) + '\n';
+  const path = join(output, filename);
+  writeFileSync(path, bytes, { flag: 'wx' });
+  outputs.push({ path, sha256: hash(bytes) });
+}
+const construction = {
+  status: 'CURRENT_NEW_TEXT_AUTHOR_DRAFT',
+  readerAssumption: 'An algebra learner reading this unit and its unchanged written exercises.',
+  readerQuestion: 'What do the degree, solutions, and graph of a two-variable equation mean?',
+  priority: 'Retain the provided concept sequence, all mathematical content, and all source identities.',
+  inputs: inputs.map(([path, sha256]) => ({ path, sha256 })),
+  outputsBeforeProseFlow: outputs,
+  changes,
+  proseTextSHA256: hash(JSON.stringify(lesson.prose.map((block) => block.text))),
+  exerciseTextSHA256: hash(JSON.stringify(exercises.exercises.map((item) => item.text))),
+  footnote: 'Entire supplied prose[7], including its source binding, unchanged.',
+  exercise95: 'Entire supplied exercise 95 unchanged, including f and its zero.',
+  mathematicalJudgment: 'Not performed; assertions compare preserved bytes only.',
+  culturalReplacements: [],
+  imageViews: 0,
+  imageWrites: 0,
+  hostTokens: 'unknown',
+  totalCost: 'unknown',
+};
+writeFileSync(join(output, 'construction.record'), JSON.stringify(construction, null, 2) + '\n', { flag: 'wx' });
+console.log(JSON.stringify({ status: construction.status, outputs, changes }, null, 2));

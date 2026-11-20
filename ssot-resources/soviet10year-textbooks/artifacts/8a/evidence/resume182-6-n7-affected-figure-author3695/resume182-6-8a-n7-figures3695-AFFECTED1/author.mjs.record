@@ -1,0 +1,201 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const own = path.join(root, '.tmp/resume182-6-8a-n7-figures3695-AFFECTED1');
+assert.equal(process.cwd(), root);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const write = (file, value) => fs.writeFileSync(
+  path.join(own, file), `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' },
+);
+const inventoryPath = path.join(own, 'sourceinventory.record');
+const inventoryBytes = fs.readFileSync(inventoryPath);
+const inventoryHash = 'dce1e711d85d15a5b2ef748311947c3e68032c2dc69af00e9205fd60eda6cb3c';
+assert.equal(sha(inventoryBytes), inventoryHash);
+const inventory = JSON.parse(inventoryBytes);
+assert.equal(inventory.status, 'SEALED_BEFORE_OLD_SPEC_READ');
+const historical = {
+  'fig-14': {
+    phase: 'first-visual-FAIL',
+    sha256: 'e21e76aa3dcdb033d69defddafedd16dd8f5557ad934e9db2c3e1c4218f0593d',
+  },
+  'fig-15': {
+    phase: 'cap1-HOLD',
+    sha256: 'bc92bcf20351f72ef425dad99b2f070f02634f4cba10e5fdb997c960237f8c05',
+  },
+};
+const results = [];
+for (const source of inventory.figures) {
+  const id = source.id;
+  const previous = historical[id];
+  const oldPath = path.join(
+    root, 'ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/figures/evidence',
+    id, previous.phase, 'spec.json.txt',
+  );
+  const oldBytes = fs.readFileSync(oldPath);
+  assert.equal(sha(oldBytes), previous.sha256);
+  const spec = JSON.parse(oldBytes);
+  assert.equal(spec.id, id);
+  assert.equal(spec.source.image.sha256, source.source.sha256);
+  spec.source.image.path = source.source.path;
+  const object = suffix => {
+    const result = spec.objects.find(item => item.id === `${id}-${suffix}`);
+    assert.ok(result, `missing existing object: ${id}-${suffix}`);
+    return result;
+  };
+  const group = (factId, objects, assertions, requires) => {
+    const fact = source.sourceFacts.find(item => item.id === factId);
+    assert.ok(fact);
+    return {
+      id: `${id}-${factId}`,
+      description: fact.description,
+      objects: objects.map(suffix => `${id}-${suffix}`),
+      assertions: assertions.map(suffix => `${id}-${suffix}`),
+      ...(requires ? { requires } : {}),
+    };
+  };
+  if (id === 'fig-14') {
+    const [xmin, ymax, xmax, ymin] = spec.canvas.boundingBox;
+    const scaleX = spec.canvas.width / (xmax - xmin);
+    const scaleY = spec.canvas.height / (ymax - ymin);
+    assert.equal(scaleX, scaleY);
+    assert.equal(scaleX, 32);
+    const left = -9 - xmin;
+    const right = 9 - xmin;
+    const centerY = ymax;
+    object('ellipse').d =
+      `M ${left} ${centerY} A 9 3 0 1 0 ${right} ${centerY} ` +
+      `A 9 3 0 1 0 ${left} ${centerY} Z`;
+    const origin = object('origin');
+    const originLabel = {
+      id: `${id}-origin-text`,
+      type: 'text',
+      at: [...origin.at],
+      text: origin.label,
+      fontSize: origin.fontSize,
+      labelColor: origin.labelColor,
+      labelPlacement: structuredClone(origin.labelPlacement),
+    };
+    delete origin.label;
+    origin.visible = false;
+    for (const suffix of [
+      'left-extremum', 'right-extremum', 'top-extremum', 'bottom-extremum',
+    ]) object(suffix).visible = false;
+    spec.objects.splice(spec.objects.indexOf(origin) + 1, 0, originLabel);
+    Object.assign(object('y-unit-label'), {
+      at: [0, 1], labelPlacement: { position: 'W', offset: [-8, 0] },
+    });
+    Object.assign(object('y-label'), {
+      at: [0, 5.4], labelPlacement: { position: 'W', offset: [-8, 0] },
+    });
+    Object.assign(object('x-unit-label'), {
+      at: [1, 0], labelPlacement: { position: 'S', offset: [0, 10] },
+    });
+    Object.assign(object('x-label'), {
+      at: [18.3, 0], labelPlacement: { position: 'S', offset: [0, 10] },
+    });
+    spec.source.inventory = [
+      group('source-grid', ['grid', 'frame'], ['grid-38-by-12'], ['gridDimensions']),
+      group('source-axes-labels', [
+        'x-axis', 'y-axis', 'origin-text', 'x-label', 'y-label',
+        'x-unit-label', 'y-unit-label',
+      ], ['x-axis-extent', 'y-axis-extent', 'axes-perpendicular']),
+      {
+        ...group('source-ellipse', ['ellipse', 'equation-label'], [
+          'one-ellipse', 'origin-to-left', 'origin-to-right', 'origin-to-top', 'origin-to-bottom',
+        ]),
+        description: source.sourceFacts.find(fact => fact.id === 'source-ellipse').description +
+          ' Unmarked extrema and O use explicitly hidden construction anchors. They are not ' +
+          'claimed as visible source-point objects. Their displacement assertions still enforce ' +
+          'the source-bound extrema; the visible curve and equation are the mapped ink.',
+      },
+    ];
+    spec.description = 'AFFECTED1 AUTHOR CANDIDATE ONLY: ellipse x^2+9y^2=81 on the ' +
+      'original 38 by 12 unit grid. Closed extrema (-9,0),(9,0),(0,3),(0,-3) were ' +
+      'independently observed before reading the historical failed spec. Reuses that actual ' +
+      'spec, correcting its raw-path coordinate units for the current renderer and replacing ' +
+      'zero-size visibility assumptions with explicit hidden construction anchors. ' +
+      'Axis labels use fixed clearance. Clean typography, finite frame and pale regularized ' +
+      'grid are modern presentation choices. Source inventory seal: ' + inventoryPath +
+      '; SHA-256 ' + inventoryHash + '. Current context: ' + source.context.path +
+      '; SHA-256 ' + source.context.sha256 + '. Historical first-visual-FAIL remains ' +
+      'immutable. No candidate visual inspection, independent review, promotion or lesson approval.';
+  } else {
+    for (const suffix of ['AA1-guide', 'BB1-guide', 'DD1-guide']) {
+      Object.assign(object(suffix), { stroke: 'muted', strokeWidth: 2.5, dash: 0 });
+    }
+    spec.source.inventory = [
+      group('source-grid', ['grid', 'frame'], ['grid-38-by-27'], ['gridDimensions']),
+      group('source-axes-labels', [
+        'x-axis', 'y-axis', 'origin', 'x-label', 'y-label', 'x-unit-label', 'y-unit-label',
+      ], ['x-axis-extent', 'y-axis-extent', 'axes-perpendicular']),
+      group('source-circle', ['circle', 'origin', 'C'], [
+        'one-circle', 'C-on-circle', 'origin-to-C',
+      ], ['pointRelationships']),
+      group('source-labelled-points', ['origin', 'A', 'B', 'C', 'D', 'A1', 'B1', 'D1'], [
+        'A-on-circle', 'C-on-circle', 'origin-to-C',
+        'origin-to-A1', 'origin-to-B1', 'origin-to-D1',
+        'A1-to-A', 'B1-to-B', 'D1-to-D',
+        'B-inside-sample-distance', 'D-outside-sample-distance',
+      ], ['pointRelationships']),
+      group('source-radial', ['OA', 'OB', 'OD'], [
+        'OA-endpoints', 'OB-endpoints', 'OD-endpoints',
+      ]),
+      {
+        ...group('source-projection-locations', ['AA1-guide', 'BB1-guide', 'DD1-guide'], [
+          'AA1-endpoints', 'BB1-endpoints', 'DD1-endpoints',
+          'A-right-angle', 'B-right-angle', 'D-right-angle',
+        ]),
+        description: source.sourceFacts.find(fact => fact.id === 'source-projection-locations').description +
+          ' The candidate certifies visible solid ink only. Muted 2.5 px solid emphasis over ' +
+          'the pale 1 px grid is a declared modern presentation choice. Separate source ' +
+          'projection-overlay style remains unknown, not a known solid or dashed source fact.',
+      },
+    ];
+    spec.description = 'AFFECTED1 AUTHOR CANDIDATE ONLY: origin-centered radius-five circle ' +
+      'on the original 38 by 27 half-unit grid, with eight labelled locations, three solid ' +
+      'radial segments and three perpendicular projections, including exterior D. ' +
+      'Independently observed original pixels establish endpoint roles and visible solid ink; ' +
+      'the separately overlaid projection stroke style cannot be distinguished from the grid ' +
+      'and remains unknown. No hidden dashed style is certified or invented. Reuses the actual ' +
+      'historical cap1-HOLD spec. Only projection emphasis changes: solid muted 2.5 px over ' +
+      'the pale grid is a modern presentation choice, not a newly resolved source-style fact. ' +
+      'Historical HOLD evidence remains immutable, while this candidate is prepared for ' +
+      'affected-only independent review under the human visible-ink instruction. ' +
+      'Numeric sample positions remain structural measurements, not extra printed givens. ' +
+      'Source inventory seal: ' + inventoryPath + '; SHA-256 ' + inventoryHash +
+      '. Current context: ' + source.context.path + '; SHA-256 ' + source.context.sha256 +
+      '. No candidate visual inspection, independent review, promotion or lesson approval.';
+  }
+  const directory = path.join(own, id);
+  fs.mkdirSync(directory);
+  const candidatePath = path.join(directory, `${id}.spec-AFFECTED1.json`);
+  const bytes = Buffer.from(`${JSON.stringify(spec, null, 2)}\n`);
+  fs.writeFileSync(candidatePath, bytes, { flag: 'wx' });
+  results.push({
+    id,
+    historicalSpec: { path: oldPath, sha256: sha(oldBytes), status: previous.phase },
+    currentContext: source.context,
+    source: source.source,
+    candidate: { path: candidatePath, sha256: sha(bytes), status: 'DRAFT_UNVERIFIED' },
+    contextsReadByGenerator: 0,
+    originalPNGsReadByGenerator: 0,
+    inheritedAuthoritativeTextComparedInMemoryToSuppliedContext: true,
+  });
+}
+const receipt = {
+  schema: 'resume182-6/affected-author@1',
+  status: 'CANDIDATES_WRITTEN_NOT_APPROVED',
+  root, book: '8a', lesson: 'alg8-c2-s1-n7',
+  inventorySeal: { path: inventoryPath, sha256: inventoryHash },
+  entries: results,
+  dependenciesInstalled: 0, paidCalls: 0, candidateImageViews: 0,
+  oldFailuresAndRendersAndObservationCounts: 'retained; unrecovered totals remain unknown',
+  historicalRevisionTotals: 'unknown',
+  independentReview: 'NOT_RUN', promotion: 'NOT_RUN', DBWrites: 0,
+  hostTokens: 'unknown', totalCost: 'unknown',
+};
+write('author.receipt.record', receipt);
+console.log(JSON.stringify(receipt, null, 2));

@@ -1,0 +1,101 @@
+import argparse
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+import sys
+
+
+ROOT = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck")
+WORK = ROOT / ".tmp/resume182-6-8a-n7-choice-author3695-FIRST"
+EXPECTED_SEED = "874befcbcaa98183219b688ef0aac1cc2741b86a16fd17fd623bbfef7fd3f6ef"
+
+
+def canonical(value):
+    return json.dumps(value, sort_keys=True, ensure_ascii=True, separators=(",", ":")).encode("utf-8")
+
+
+def read_json(name):
+    return json.loads((WORK / name).read_text(encoding="utf-8"))
+
+
+def hashes(name):
+    path = WORK / name
+    data = path.read_bytes()
+    value = json.loads(data)
+    return {
+        "path": str(path),
+        "sha256": hashlib.sha256(data).hexdigest(),
+        "canonical_sha256": hashlib.sha256(canonical(value)).hexdigest(),
+    }
+
+
+def snapshot():
+    seed = hashes("seed.json")
+    if seed["canonical_sha256"] != EXPECTED_SEED:
+        raise ValueError("seed canonical SHA mismatch")
+    result = {"seed": seed, "solutions": hashes("solutions.record")}
+    if (WORK / "draft.json").exists():
+        draft = read_json("draft.json")
+        result["draft"] = hashes("draft.json")
+        result["counts"] = {
+            "questions": len(draft["questions"]),
+            "options": sum(len(q["view"]["options"]) for q in draft["questions"]),
+            "single": sum(q["view"]["mode"] == "single" for q in draft["questions"]),
+            "multiple": sum(q["view"]["mode"] == "multiple" for q in draft["questions"]),
+            "coverage_sources": len(draft["coverage"]),
+            "sources_with_questions": sum(bool(c["question_ids"]) for c in draft["coverage"]),
+            "sources_with_losses": sum(bool(c["omitted_tasks"]) for c in draft["coverage"]),
+        }
+    if (WORK / "author.record").exists():
+        result["author"] = hashes("author.record")
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+
+
+def validate_once():
+    request = read_json("validation.request.json")
+    if Path.cwd() != ROOT or request["cwd"] != str(ROOT):
+        raise ValueError("cwd mismatch")
+    result_path = WORK / "validation.result.json"
+    paths = [result_path, WORK / "validation.stdout", WORK / "validation.stderr"]
+    if any(path.exists() for path in paths):
+        raise FileExistsError("validation receipt already exists; refusing to rerun")
+    bound = snapshot_inputs = {
+        "seed": hashes("seed.json"),
+        "draft": hashes("draft.json"),
+        "solutions": hashes("solutions.record"),
+    }
+    if bound["seed"]["canonical_sha256"] != EXPECTED_SEED:
+        raise ValueError("seed canonical SHA mismatch")
+    if request["draft_canonical_sha256"] != bound["draft"]["canonical_sha256"]:
+        raise ValueError("request is not bound to this draft")
+    with paths[1].open("xb") as stdout, paths[2].open("xb") as stderr:
+        completed = subprocess.run(
+            request["argv"], cwd=request["cwd"], stdout=stdout, stderr=stderr,
+            check=False,
+        )
+    result = {
+        "schema": "s10y-first-author-validation-result-v1",
+        "request": str(WORK / "validation.request.json"),
+        "cwd": request["cwd"],
+        "argv": request["argv"],
+        "inputs": snapshot_inputs,
+        "stdout_path": str(paths[1]),
+        "stderr_path": str(paths[2]),
+        "stdout": paths[1].read_text(encoding="utf-8"),
+        "stderr": paths[2].read_text(encoding="utf-8"),
+        "exit": completed.returncode,
+        "semantic_review_performed": False,
+    }
+    result_path.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(result, ensure_ascii=False, indent=2))
+    return completed.returncode
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("action", choices=["snapshot", "validate-once"])
+args = parser.parse_args()
+if args.action == "snapshot":
+    snapshot()
+else:
+    sys.exit(validate_once())

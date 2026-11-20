@@ -1,0 +1,26 @@
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parent
+name, *command = sys.argv[1:]
+if not name or any(c not in "abcdefghijklmnopqrstuvwxyz0123456789-_" for c in name):
+    raise SystemExit("Invalid capture name")
+record_path = ROOT / "commands" / (name + ".json")
+if record_path.exists():
+    raise SystemExit("Refusing to overwrite a command capture")
+result = subprocess.run(command, input="", text=True, capture_output=True)
+record = {
+    "command": command,
+    "cwd": str(Path.cwd()),
+    "stdin": "",
+    "stdout": result.stdout,
+    "stderr": result.stderr,
+    "exit": result.returncode,
+}
+record_path.write_text(json.dumps(record, ensure_ascii=True, indent=2) + "\n")
+sys.stdout.write(result.stdout)
+sys.stderr.write(result.stderr)
+raise SystemExit(result.returncode)

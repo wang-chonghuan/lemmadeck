@@ -1,0 +1,10 @@
+{
+  "command": [
+    "node",
+    "--input-type=module",
+    "-e",
+    "import fs from \"node:fs\"; import crypto from \"node:crypto\"; import assert from \"node:assert/strict\"; const root = process.cwd(); const directory = root + \"/.tmp/resume182-6-8a-n7-observe3695-batch7\"; const path = directory + \"/result.json\"; const bytes = fs.readFileSync(path); const result = JSON.parse(bytes.toString(\"utf8\")); const initial = JSON.parse(fs.readFileSync(directory + \"/log-06-selection-hashes/stdout.txt\", \"utf8\")); assert.equal(result.book, \"8a\"); assert.equal(result.lesson, \"alg8-c2-s1-n7\"); assert.equal(result.batch, \"batch7\"); assert.equal(result.status, \"DISPLAY_PASS\"); assert.equal(result.images.length, 8); assert.equal(new Set(result.images.map(image => image.path)).size, 8); result.images.forEach((image, index) => { assert.equal(image.path, initial.images[index].path); assert.equal(image.sha256, initial.images[index].sha256); assert.ok(image.observations.length > 0); assert.equal(image.blockers.length, 0); }); assert.equal(result.blockers.length, 0); assert.deepEqual(result.imageAccounting, {views: 8, uniqueImages: 8, reopens: 0, crops: 0, resizes: 0, rerenders: 0}); assert.equal(result.wholeLessonApproval, false); assert.equal(result.hostTokens, \"unknown\"); assert.equal(result.totalCost, \"unknown\"); console.log(JSON.stringify({path, sha256: crypto.createHash(\"sha256\").update(bytes).digest(\"hex\"), status: result.status, imageCount: result.images.length, blockerCount: result.blockers.length, imageAccounting: result.imageAccounting}, null, 2));"
+  ],
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck",
+  "started": "2026-11-20T09:09:37.284Z"
+}

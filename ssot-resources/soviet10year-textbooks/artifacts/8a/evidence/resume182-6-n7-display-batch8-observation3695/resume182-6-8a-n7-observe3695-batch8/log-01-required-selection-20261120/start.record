@@ -1,0 +1,10 @@
+{
+  "command": [
+    "node",
+    "--input-type=module",
+    "-e",
+    "import fs from \"node:fs\"; import path from \"node:path\"; import crypto from \"node:crypto\"; const root=process.cwd(); for (const name of [\".intentfold/readme.md\", \".intentfold/charter/engineering.md\", \".intentfold/charter/operations.md\", \".claude/skills/ld-s10y-lesson/references/production-resume.md\", \".agents/skills/ld-s10y-image/SKILL.md\"]) {console.log(`\\n=== ${name} ===\\n${fs.readFileSync(name,\"utf8\")}`);} const file=\".tmp/resume182-6-8a-n7-display3695-FIRST/selection-d-label-affected/batch8.json\"; const data=JSON.parse(fs.readFileSync(file,\"utf8\")); console.log(\"\\n=== ASSIGNED SELECTION ===\\n\"+JSON.stringify(data,null,2)); const strings=[]; function walk(v){if(typeof v===\"string\"&&v.endsWith(\".png\"))strings.push(v); else if(Array.isArray(v))v.forEach(walk); else if(v&&typeof v===\"object\")Object.values(v).forEach(walk);} walk(data); const files=[...new Set(strings.map(p=>path.isAbsolute(p)?p:path.resolve(root,p)))]; if(files.length!==8)throw new Error(`Expected 8 assigned PNGs, found ${files.length}`); console.log(\"\\n=== ACTUAL SHA256 ===\\n\"+JSON.stringify(files.map(p=>({path:p,sha256:crypto.createHash(\"sha256\").update(fs.readFileSync(p)).digest(\"hex\")})),null,2));"
+  ],
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck",
+  "started": "2026-11-20T09:10:22.780Z"
+}

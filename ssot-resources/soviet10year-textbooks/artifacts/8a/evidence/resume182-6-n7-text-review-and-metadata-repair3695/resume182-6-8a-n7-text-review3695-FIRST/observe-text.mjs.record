@@ -1,0 +1,182 @@
+import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { isDeepStrictEqual } from 'node:util';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const input = `${root}/.tmp/resume182-6-8a-n7-current-input3695-FIRST/adapt/8a/modern-us-neutral/lessons/alg8-c2-s1-n7`;
+const author = `${root}/.tmp/resume182-6-8a-n7-text-author3695-FIRST`;
+const read = path => JSON.parse(readFileSync(path, 'utf8'));
+const initialLesson = read(`${input}/lesson.template.json`);
+const initialExercises = read(`${input}/exercises.template.json`);
+const lesson = read(`${author}/candidate.lesson.template.json`);
+const exercises = read(`${author}/candidate.exercises.template.json`);
+const authorRecord = read(`${author}/author.record`);
+const equal = isDeepStrictEqual;
+const digest = value => createHash('sha256').update(JSON.stringify(value)).digest('hex');
+const omit = (value, keys) => Object.fromEntries(
+  Object.entries(value).filter(([key]) => !keys.includes(key)),
+);
+
+// These are literal text spans, never parsed or evaluated as mathematics.
+const formulas = text => text.match(/(?<!\\)\$[^$]*(?<!\\)\$/g) ?? [];
+const outside = text => text.replace(/(?<!\\)\$[^$]*(?<!\\)\$/g, ' ');
+const numbers = text => outside(text).match(/\d+(?:\.\d+)?/g) ?? [];
+const latin = text => outside(text).match(/[A-Za-z]+/g) ?? [];
+const bareWording = text => outside(text).replace(/[\s\p{P}]/gu, '');
+const spans = (text, pattern) => {
+  const labels = [...text.matchAll(pattern)];
+  return labels.map((label, index) => ({
+    label: label[1],
+    content: text.slice(label.index + label[0].length, labels[index + 1]?.index ?? text.length),
+  }));
+};
+
+const blockObservations = (candidate, initial, raw) => ({
+  literalFormulaCount: formulas(candidate.text).length,
+  formulaSpansEqualInitial: equal(formulas(candidate.text), formulas(initial.text)),
+  formulaSpansEqualEmbeddedSource: equal(formulas(candidate.text), formulas(raw.text)),
+  outsideMathNumberTokensEqualInitial: equal(numbers(candidate.text), numbers(initial.text)),
+  outsideMathNumberTokensEqualEmbeddedSource: equal(numbers(candidate.text), numbers(raw.text)),
+  outsideMathLatinTokensEqualInitial: equal(latin(candidate.text), latin(initial.text)),
+  immutableFieldsEqualInitial: equal(
+    omit(candidate, ['text', 'lines', 'changes']),
+    omit(initial, ['text', 'lines', 'changes']),
+  ),
+  sourceTextEqualEmbeddedSource: candidate.source_text === raw.text,
+});
+
+const prose = lesson.prose.map((block, index) => ({
+  index,
+  kind: block.kind,
+  sourceRefs: block.source_refs,
+  changes: block.changes,
+  textChangedFromInitial: block.text !== initialLesson.prose[index].text,
+  outsideMathWordingEqualEmbeddedSource: bareWording(block.text) === bareWording(block.source_text),
+  ...blockObservations(block, initialLesson.prose[index], lesson.source.data.prose[index]),
+}));
+
+const questions = exercises.exercises.map((question, index) => {
+  const raw = exercises.source.data.exercises[index];
+  const oldSpans = spans(raw.text, /([абвгдежз])\)\s*/g);
+  const newSpans = spans(question.text, /^([a-z])\)\s*/gm);
+  return {
+    number: question.number,
+    sourceNumber: question.source_number,
+    group: question.group,
+    groupId: question.group_id,
+    pages: question.pages,
+    changes: question.changes,
+    textChangedFromInitial: question.text !== initialExercises.exercises[index].text,
+    textEqualsJoinedLines: question.text === question.lines.join('\n'),
+    ...blockObservations(question, initialExercises.exercises[index], raw),
+    sourceLabelCount: oldSpans.length,
+    modernLabelCount: newSpans.length,
+    labels: oldSpans.map((part, labelIndex) => ({
+      source: part.label,
+      modern: newSpans[labelIndex]?.label ?? null,
+      expectedModern: String.fromCharCode(97 + labelIndex),
+      formulaSpansEqual: equal(formulas(part.content), formulas(newSpans[labelIndex]?.content ?? '')),
+      outsideMathNumberTokensEqual: equal(numbers(part.content), numbers(newSpans[labelIndex]?.content ?? '')),
+      modernOwnLine: question.lines.some(line => line.startsWith(`${newSpans[labelIndex]?.label}) `)),
+    })),
+  };
+});
+
+const flowText = readFileSync(`${author}/receipts/013-prose-flow.stdout`, 'utf8');
+const boundaryObjects = flowText.split('\n')
+  .filter(line => line.startsWith('    break: '))
+  .map(line => JSON.parse(line.slice('    break: '.length)));
+const paragraphs = [];
+for (const line of flowText.split('\n')) {
+  if (line.startsWith('    break: ')) continue;
+  const match = /^\[(\d+)\] (.*)$/.exec(line);
+  if (match) paragraphs.push({ officialIndex: Number(match[1]), text: match[2] });
+  else if (line && paragraphs.length) paragraphs.at(-1).text += `\n${line}`;
+}
+
+const footnote = lesson.prose[7];
+const ninetyFive = exercises.exercises.find(question => question.number === '95');
+const ninetyNine = exercises.exercises.find(question => question.number === '99');
+console.log(JSON.stringify({
+  kind: 'read-only literal text and metadata observations; no mathematical verification',
+  proseArrayLength: lesson.prose.length,
+  pKindCount: lesson.prose.filter(block => block.kind === 'p').length,
+  declaredExerciseCount: lesson.exercise_count,
+  exerciseArrayLength: exercises.exercises.length,
+  exercisesDeclaredCount: exercises.count,
+  embeddedLessonSourceEqualInitial: equal(lesson.source, initialLesson.source),
+  embeddedExercisesSourceEqualInitial: equal(exercises.source, initialExercises.source),
+  lessonTopLevelImmutableFieldsEqualInitial: equal(
+    omit(lesson, ['prose', 'section_breaks']), omit(initialLesson, ['prose', 'section_breaks']),
+  ),
+  exerciseTopLevelImmutableFieldsEqualInitial: equal(
+    omit(exercises, ['exercises']), omit(initialExercises, ['exercises']),
+  ),
+  prose,
+  questions,
+  totalSourceNonMathLabels: questions.reduce((count, question) => count + question.sourceLabelCount, 0),
+  totalModernNonMathLabels: questions.reduce((count, question) => count + question.modernLabelCount, 0),
+  punctuationOnlyWithWording: prose.filter(block =>
+    block.changes.includes('wording') && block.outsideMathWordingEqualEmbeddedSource,
+  ).map(block => block.index),
+  changedProseIndicesEqualAuthorRecord: equal(
+    prose.filter(block => block.textChangedFromInitial).map(block => block.index),
+    authorRecord.changes.changedProseIndices,
+  ),
+  changedQuestionNumbersEqualAuthorRecord: equal(
+    questions.filter(question => question.textChangedFromInitial).map(question => question.number),
+    authorRecord.changes.changedExerciseNumbers,
+  ),
+  literalChinesePunctuationInsideFormulaSpans: [
+    ...lesson.prose.map((block, index) => ({ target: `prose[${index}]`, text: block.text })),
+    ...exercises.exercises.map(question => ({ target: `exercise[${question.number}]`, text: question.text })),
+  ].flatMap(block => formulas(block.text)
+    .filter(span => /[、，；。？！：]/.test(span))
+    .map(span => ({ target: block.target, span }))),
+  modernTextFullwidthSpaces: [
+    ...lesson.prose.map((block, index) => ({ target: `prose[${index}]`, text: block.text })),
+    ...exercises.exercises.map(question => ({ target: `exercise[${question.number}]`, text: question.text })),
+  ].filter(block => block.text.includes('\u3000')).map(block => block.target),
+  modernTextCyrillic: [
+    ...lesson.prose.map((block, index) => ({ target: `prose[${index}]`, text: block.text })),
+    ...exercises.exercises.map(question => ({ target: `exercise[${question.number}]`, text: question.text })),
+  ].filter(block => /[\u0400-\u04ff]/.test(block.text)).map(block => block.target),
+  footnote: {
+    index: 7,
+    entireObjectEqualInitial: equal(footnote, initialLesson.prose[7]),
+    serializedObjectSHA256: digest(footnote),
+    sourceTextEqualEmbeddedSource: footnote.source_text === lesson.source.data.prose[7].text,
+    parentAsteriskCountEqualInitial: equal(
+      lesson.prose[2].text.match(/\*/g), initialLesson.prose[2].text.match(/\*/g),
+    ),
+  },
+  exercise95: {
+    entireObjectEqualInitial: equal(ninetyFive, initialExercises.exercises.find(question => question.number === '95')),
+    serializedObjectSHA256: digest(ninetyFive),
+    fLine: ninetyFive.lines.find(line => line.startsWith('f) ')),
+    fLiteralFormula: formulas(ninetyFive.lines.find(line => line.startsWith('f) '))),
+  },
+  exercise99: {
+    sourceDirectionPrefix: ninetyNine.source_text.slice(0, ninetyNine.source_text.indexOf('а)')),
+    candidateDirectionPrefix: ninetyNine.lines[0],
+    directionPrefixExactlyEqualAfterTrimming: ninetyNine.source_text
+      .slice(0, ninetyNine.source_text.indexOf('а)')).trim() === ninetyNine.lines[0],
+  },
+  flow: {
+    readOnly: true,
+    paragraphCount: paragraphs.length,
+    paragraphTextsEqualCandidatePBlocks: equal(
+      paragraphs.map(paragraph => paragraph.text),
+      lesson.prose.filter(block => block.kind === 'p').map(block => block.text),
+    ),
+    sectionBreaksEqualAuthorRecord: equal(lesson.section_breaks, authorRecord.sectionBreaks.boundaries),
+    boundaries: lesson.section_breaks.map((boundary, index) => ({
+      index,
+      exactObjectPresentInOfficialStdout: boundaryObjects.some(item => equal(item, boundary)),
+      officialAdjacentPair: paragraphs.slice(1).some((paragraph, paragraphIndex) =>
+        paragraphs[paragraphIndex].text === boundary.before && paragraph.text === boundary.after,
+      ),
+      boundary,
+    })),
+  },
+}, null, 2));

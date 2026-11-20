@@ -1,0 +1,98 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { createRequire } from 'node:module';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const own = '.tmp/resume182-6-8a-n7-fig15-chromium-preview3695-FIRST';
+const svgPath = '.tmp/resume182-6-8a-n7-figures3695-AFFECTED1/fig-15/render-REPEAT1/fig-15-REPEAT1.svg';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const svg = fs.readFileSync(svgPath);
+assert.equal(sha(svg), '98ee8fad0618387c3c71b46629ff8db93f117cd47a32d68fbf7521fd3656a4f8');
+const failPath = '.tmp/resume182-6-8a-n7-affected-review3695-FIRST/fig-15.fail.record';
+assert.equal(sha(fs.readFileSync(failPath)), '8d62a0407e071b3881aabd81c946869ee5bb998f52dd3c7bef322ba5a791c97c');
+assert.ok(!fs.existsSync(own));
+fs.mkdirSync(own);
+const save = (name, value) => fs.writeFileSync(`${own}/${name}`,
+  `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+const require = createRequire(path.join(repo, 'app/package.json'));
+const { chromium } = require('@playwright/test');
+const record = {
+  status: 'RUNNING_TECHNICAL_PREVIEW_ONLY', root: repo, book: '8a',
+  lesson: 'alg8-c2-s1-n7', figure: 'fig-15',
+  started: new Date().toISOString(),
+  sourceSVG: { path: svgPath, sha256: sha(svg), bytes: svg.length },
+  priorFail: { path: failPath, sha256: sha(fs.readFileSync(failPath)) },
+  width: 640, height: 480, deviceScaleFactor: 1,
+  imageViews: 0, vectorProducerOrSpecValidatorCalls: 0,
+  browserLaunches: 0, browserContexts: 0, pageSetContentCalls: 0,
+  browserScreenshots: 0, technicalNativeRasterCalls: 0,
+  networkRequests: [], errors: [],
+  cleanup: { pageClosed: true, contextClosed: true, browserClosed: true },
+  SVGOrSpecChanged: false, wholeLessonApproval: false,
+  previous5Renders3NativeAndAllFailuresPreserved: true,
+  unknownHistoricalBytesRecovered: false, hostTokens: 'unknown', totalCost: 'unknown', DBWrites: 0,
+};
+save('start.record', record);
+let browser, context, page;
+try {
+  record.browserLaunches++;
+  browser = await chromium.launch({ headless: true });
+  record.cleanup.browserClosed = false;
+  record.browserContexts++;
+  context = await browser.newContext({ viewport: { width: 640, height: 480 }, deviceScaleFactor: 1 });
+  record.cleanup.contextClosed = false;
+  await context.route('**/*', async route => {
+    record.networkRequests.push(route.request().url());
+    await route.abort();
+  });
+  page = await context.newPage();
+  record.cleanup.pageClosed = false;
+  page.on('pageerror', error => record.errors.push(error.message));
+  page.on('console', message => {
+    if (message.type() === 'error') record.errors.push(message.text());
+  });
+  const data = `data:image/svg+xml;base64,${svg.toString('base64')}`;
+  record.pageSetContentCalls++;
+  await page.setContent(`<!doctype html><html><head><meta charset="utf-8"></head>` +
+    `<body style="margin:0;background:white;"><img id="figure" width="640" height="480" ` +
+    `style="display:block;width:640px;height:480px;" src="${data}"></body></html>`,
+    { waitUntil: 'load' });
+  await page.locator('#figure').evaluate(image => image.decode());
+  record.display = await page.locator('#figure').evaluate(image => {
+    const rect = image.getBoundingClientRect();
+    return { complete: image.complete, naturalWidth: image.naturalWidth,
+      naturalHeight: image.naturalHeight, width: rect.width, height: rect.height };
+  });
+  assert.ok(record.display.complete);
+  assert.equal(record.display.width, 640);
+  assert.equal(record.display.height, 480);
+  assert.equal(record.display.naturalWidth / record.display.naturalHeight, 640 / 480);
+  assert.deepEqual(record.errors, []);
+  assert.deepEqual(record.networkRequests, []);
+  const png = await page.screenshot({ fullPage: false, animations: 'disabled' });
+  record.browserScreenshots++;
+  record.technicalNativeRasterCalls++;
+  assert.equal(png.readUInt32BE(16), 640);
+  assert.equal(png.readUInt32BE(20), 480);
+  const output = `${own}/fig-15-chromium640-FIRST.png`;
+  fs.writeFileSync(output, png, { flag: 'wx' });
+  record.preview = { path: path.resolve(output), sha256: sha(png), bytes: png.length };
+  assert.equal(sha(fs.readFileSync(svgPath)), sha(svg));
+  record.status = 'CHROMIUM_PREVIEW_CREATED_UNOBSERVED_NOT_APPROVED';
+} catch (error) {
+  record.status = 'FAIL';
+  record.failure = { message: error.message, stack: error.stack };
+  process.exitCode = 1;
+} finally {
+  if (page) { await page.close(); record.cleanup.pageClosed = true; }
+  if (context) { await context.close(); record.cleanup.contextClosed = true; }
+  if (browser) { await browser.close(); record.cleanup.browserClosed = true; }
+  record.finished = new Date().toISOString();
+  save('preview.record', record);
+  console.log(JSON.stringify({ path: `${own}/preview.record`,
+    sha256: sha(fs.readFileSync(`${own}/preview.record`)), status: record.status,
+    preview: record.preview ?? null, cleanup: record.cleanup }));
+}

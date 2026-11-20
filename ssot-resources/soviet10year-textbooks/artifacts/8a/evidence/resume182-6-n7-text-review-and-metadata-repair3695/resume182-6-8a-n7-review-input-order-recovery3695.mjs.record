@@ -1,0 +1,67 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const own = '.tmp/resume182-6-8a-n7-review-input3695-AFFECTED-order1';
+const id = 'alg8-c2-s1-n7';
+const target = `${own}/adapt/8a/modern-us-neutral/lessons/${id}`;
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const reviewFile = '.tmp/resume182-6-8a-n7-text-review3695-FIRST/review.record';
+assert.equal(sha(fs.readFileSync(reviewFile)), 'a66f542d41fdae7641a7683f2c838af815ab29e76fa1000ac19d0a8586927b50');
+assert.ok(!fs.existsSync(own));
+const inputs = [
+  ['lesson', '.tmp/resume182-6-8a-n7-text-author3695-FIRST/candidate.lesson.template.json',
+    '5c98ffcaa8f2fe376d38f6d7fd0ae19639e026c6c63d37de6cdb4fc5c66a9a46'],
+  ['exercises', '.tmp/resume182-6-8a-n7-text-author3695-FIRST/candidate.exercises.template.json',
+    'a7fd94033738e0aa8cb63030dea99afc094d51e9de4b135795963b63c715af36'],
+  ['figures', `.tmp/resume182-6-8a-n7-current-input3695-FIRST/adapt/8a/modern-us-neutral/lessons/${id}/figures.template.json`,
+    '01d9dda4e23ebf1d707ed43e36a31c977187fb84d9248251a52274012806953b'],
+];
+const bindings = [];
+fs.mkdirSync(target, { recursive: true });
+for (const [name, file, digest] of inputs) {
+  const original = fs.readFileSync(file);
+  assert.equal(sha(original), digest);
+  const value = JSON.parse(original);
+  let bytes = original;
+  if (name === 'lesson') {
+    for (const index of [27, 29]) {
+      assert.deepEqual(value.prose[index].changes, ['wording', 'layout']);
+      value.prose[index].changes = ['layout'];
+    }
+    const restored = structuredClone(value);
+    for (const index of [27, 29]) restored.prose[index].changes = ['wording', 'layout'];
+    assert.equal(`${JSON.stringify(restored, null, 2)}\n`, original.toString('utf8'));
+    bytes = Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
+  }
+  const output = `${target}/${name}.template.json`;
+  fs.writeFileSync(output, bytes, { flag: 'wx' });
+  bindings.push({ name, input: { path: path.resolve(file), sha256: digest },
+    output: { path: path.resolve(output), sha256: sha(bytes), bytes: bytes.length },
+    changedFields: name === 'lesson' ? ['/prose/27/changes', '/prose/29/changes'] : [],
+    allOtherSerializationBytesUnchanged: true });
+}
+const figureReady = '.tmp/resume182-6-8a-n7-figures3695-AFFECTED1/ready.record';
+assert.equal(sha(fs.readFileSync(figureReady)), '5e712534fc2b18ec0c0daf337ac0adbde884d20a0dc0d285f59feb7661f38d84');
+const first = '.tmp/resume182-6-8a-n7-review-input-run3695-FIRST';
+assert.equal(JSON.parse(fs.readFileSync(`${first}/receipt.record`)).returncode, 1);
+const record = {
+  status: 'TWO_METADATA_LABELS_REMOVED_PENDING_INCREMENTAL_REVIEW',
+  root: repo, book: '8a', lesson: id, edition: 'modern-us-neutral',
+  priorTextReview: { path: path.resolve(reviewFile), sha256: sha(fs.readFileSync(reviewFile)), status: 'HOLD' },
+  bindings, changes: { before: ['wording', 'layout'], after: ['layout'] },
+  figuresReady: { path: path.resolve(figureReady), sha256: sha(fs.readFileSync(figureReady)) },
+  textFormulaNumbersSourceIdentityAndSectionAnchorsUnchanged: true,
+  firstFailure: { directory: first, originalScript: '.tmp/resume182-6-8a-n7-review-input3695.mjs',
+    cause: 'Actual metadata order is wording, layout; FIRST expected layout, wording.',
+    originalOutputFilesWritten: 0, originalEmptyDirectoryPreserved: true },
+  metadataApplicationAttempts: 2, normalizerFlowSourceMathOrImageCalls: 0, oldPASSReruns: 0,
+  independentReview: 'PENDING', wholeLessonApproval: false,
+  unknownHistoricalBytesRecovered: false, hostTokens: 'unknown', totalCost: 'unknown', DBWrites: 0,
+};
+const bytes = Buffer.from(`${JSON.stringify(record, null, 2)}\n`);
+fs.writeFileSync(`${own}/input.record`, bytes, { flag: 'wx' });
+console.log(JSON.stringify({ path: `${own}/input.record`, sha256: sha(bytes), bindings }));

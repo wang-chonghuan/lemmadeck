@@ -1,0 +1,267 @@
+import hashlib
+import json
+import re
+import struct
+import xml.etree.ElementTree as ET
+from pathlib import Path
+
+
+R = Path("/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck")
+OUT = R / ".tmp/resume182-6-8a-n7-affected-review3695-FIRST"
+assert Path.cwd() == R
+CACHE = {}
+
+
+def read(path):
+    path = Path(path)
+    if not path.is_absolute():
+        path = R / path
+    path = path.resolve()
+    assert path.is_relative_to(R) or str(path) == "/System/Library/Fonts/Supplemental/Arial.ttf"
+    if path not in CACHE:
+        CACHE[path] = path.read_bytes()
+    return CACHE[path]
+
+
+def sha(path):
+    return hashlib.sha256(read(path)).hexdigest()
+
+
+def load(path):
+    return json.loads(read(path))
+
+
+def bind(record):
+    actual = sha(record["path"])
+    assert actual == record["sha256"], record["path"]
+    return {"path": str(Path(record["path"]).resolve()), "sha256": actual}
+
+
+def save(name, value):
+    target = OUT / name
+    with target.open("x") as stream:
+        json.dump(value, stream, ensure_ascii=True, indent=2)
+        stream.write("\n")
+    print(json.dumps({"path": str(target), "sha256": sha(target)}, ensure_ascii=True))
+
+
+input_path = R / ".tmp/resume182-6-8a-n7-review-input3695-AFFECTED-order1/input.record"
+old_review_path = R / ".tmp/resume182-6-8a-n7-text-review3695-FIRST/review.record"
+ready_path = R / ".tmp/resume182-6-8a-n7-figures3695-AFFECTED1/ready.record"
+input_binding = bind({"path": str(input_path), "sha256": "01bc2668d18dc2df2997a5805835ccb4743bd12f554bd0ed9d93e257e9e25845"})
+old_binding = bind({"path": str(old_review_path), "sha256": "a66f542d41fdae7641a7683f2c838af815ab29e76fa1000ac19d0a8586927b50"})
+ready_binding = bind({"path": str(ready_path), "sha256": "5e712534fc2b18ec0c0daf337ac0adbde884d20a0dc0d285f59feb7661f38d84"})
+record = load(input_path)
+old_review = load(old_review_path)
+ready = load(ready_path)
+pointers = ["/prose/27/changes", "/prose/29/changes"]
+assert [finding["jsonPointer"] for finding in old_review["findings"]] == pointers
+assert old_review["summary"].startswith("HOLD only because")
+
+# Locate JSON value spans without reserializing or changing any input bytes.
+decoder = json.JSONDecoder()
+
+
+def value_spans(text):
+    spans = {}
+
+    def whitespace(index):
+        while index < len(text) and text[index].isspace():
+            index += 1
+        return index
+
+    def parse(index, pointer):
+        index = whitespace(index)
+        start = index
+        if text[index] == "{":
+            index = whitespace(index + 1)
+            if text[index] != "}":
+                while True:
+                    key, index = decoder.raw_decode(text, index)
+                    index = whitespace(index)
+                    assert text[index] == ":"
+                    escaped = key.replace("~", "~0").replace("/", "~1")
+                    index = whitespace(parse(index + 1, pointer + "/" + escaped))
+                    if text[index] == "}":
+                        break
+                    assert text[index] == ","
+                    index = whitespace(index + 1)
+            index += 1
+        elif text[index] == "[":
+            index = whitespace(index + 1)
+            item = 0
+            if text[index] != "]":
+                while True:
+                    index = whitespace(parse(index, pointer + "/" + str(item)))
+                    item += 1
+                    if text[index] == "]":
+                        break
+                    assert text[index] == ","
+                    index = whitespace(index + 1)
+            index += 1
+        else:
+            _, index = decoder.raw_decode(text, index)
+        spans[pointer] = (start, index)
+        return index
+
+    assert whitespace(parse(0, "")) == len(text)
+    return spans
+
+
+bindings = {}
+delta = []
+for item in record["bindings"]:
+    name = item["name"]
+    before_binding, after_binding = bind(item["input"]), bind(item["output"])
+    bindings[name] = {"before": before_binding, "after": after_binding}
+    before_bytes, after_bytes = read(item["input"]["path"]), read(item["output"]["path"])
+    if name != "lesson":
+        assert before_bytes == after_bytes
+        continue
+    assert after_binding["sha256"] == "54b28d9b2b01ff0898ef9096ffaad2539506dd2ecbd23707b5bf1b39db00c9fe"
+    assert (
+        before_binding["path"] == old_review["bindings"]["candidateLesson"]["path"]
+        and before_binding["sha256"] == old_review["bindings"]["candidateLesson"]["sha256"]
+    )
+    before, after = before_bytes.decode(), after_bytes.decode()
+    before_spans, after_spans = value_spans(before), value_spans(after)
+    previous_before = previous_after = 0
+    before_segments, after_segments = [], []
+    for pointer in pointers:
+        bs, be = before_spans[pointer]
+        ns, ne = after_spans[pointer]
+        before_segment = before[previous_before:bs].encode()
+        after_segment = after[previous_after:ns].encode()
+        assert before_segment == after_segment
+        before_segments.append(before_segment)
+        after_segments.append(after_segment)
+        assert json.loads(before[bs:be]) == ["wording", "layout"]
+        assert json.loads(after[ns:ne]) == ["layout"]
+        delta.append({"jsonPointer": pointer, "before": ["wording", "layout"], "after": ["layout"]})
+        previous_before, previous_after = be, ne
+    before_segments.append(before[previous_before:].encode())
+    after_segments.append(after[previous_after:].encode())
+    assert before_segments == after_segments
+    unchanged_digest = hashlib.sha256()
+    for segment in before_segments:
+        unchanged_digest.update(struct.pack(">Q", len(segment)))
+        unchanged_digest.update(segment)
+    unchanged_segment_hash = unchanged_digest.hexdigest()
+
+assert bindings["exercises"]["after"]["sha256"] == "a7fd94033738e0aa8cb63030dea99afc094d51e9de4b135795963b63c715af36"
+assert bindings["exercises"]["before"]["sha256"] == old_review["bindings"]["candidateExercises"]["sha256"]
+save("text-delta-evidence.record", {
+    "status": "PASS",
+    "input": input_binding,
+    "inheritedFirstReview": old_binding,
+    "bindings": bindings,
+    "changedFields": delta,
+    "allOtherSerializationBytesUnchanged": True,
+    "unchangedLengthFramedSegmentsSHA256": unchanged_segment_hash,
+    "exercisesByteIdentical": True,
+    "figuresTemplateByteIdentical": True,
+    "proseBlocksOrQuestionsReReviewed": 0,
+    "flowCalls": 0,
+    "normalizerCalls": 0,
+    "mathematicalApproval": False,
+    "wholeLessonApproval": False
+})
+
+figures = []
+svg_audits = []
+for entry in ready["entries"]:
+    figure = entry["id"]
+    output = entry["currentOutput"]
+    bound = {
+        "figure": figure,
+        "source": bind(entry["source"]),
+        "context": bind(entry["context"]),
+        "spec": bind(entry["currentCandidate"]),
+        "render": bind(output["report"]),
+        "svg": bind(output["svg"]),
+        "preview": bind(output["native640"]),
+        "pixelsRecord": bind(output["native640"]["record"]),
+    }
+    assert read(bound["preview"]["path"])[:8] == b"\x89PNG\r\n\x1a\n"
+    bound["pngDimensions"] = list(struct.unpack(">II", read(bound["preview"]["path"])[16:24]))
+    observation = load(OUT / (figure + ".preview-first.json"))
+    assert bound["preview"]["sha256"] == observation["expectedSha256"]
+    assert bound["pngDimensions"] == observation["declaredSize"]
+    spec = load(bound["spec"]["path"])
+    report = load(bound["render"]["path"])
+    pixels = load(bound["pixelsRecord"]["path"])
+    assert bind(spec["source"]["image"]) == bound["source"]
+    assert bind(report["spec"]) == bound["spec"]
+    assert bind(report["output"]["svg"]) == bound["svg"]
+    assert bind(pixels["sourceSVG"]) == bound["svg"]
+    assert bind(pixels["renderReport"]) == bound["render"]
+    assert bind(pixels["nativePNG"]) == bound["preview"]
+    assert report["status"] == "pass"
+    font = bind(pixels["rasterOnlyTransformation"]["font"])
+    root = ET.fromstring(read(bound["svg"]["path"]))
+    texts = []
+    hidden = []
+    raw_layers = []
+    for node in root.iter():
+        if node.tag.endswith("}text"):
+            texts.append({"attributes": dict(node.attrib), "text": "".join(node.itertext())})
+        if node.tag.endswith("}circle"):
+            hidden.append(dict(node.attrib))
+        if node.get("id", "").endswith("-raw-path-layer"):
+            raw_layers.append({
+                "attributes": dict(node.attrib),
+                "children": [{"attributes": dict(child.attrib), "tag": child.tag} for child in node]
+            })
+    svg_audits.append({
+        "figure": figure,
+        "svg": bound["svg"],
+        "rootAttributes": dict(root.attrib),
+        "textNodes": texts,
+        "circleElementAttributes": hidden,
+        "rawPathLayers": raw_layers,
+        "font": font,
+        "declaredMinTextPx": spec["display"]["minTextPx"],
+        "reportDisplayChecks": report["displayChecks"],
+    })
+    if figure == "fig-14":
+        recovery_dir = R / ".tmp/resume182-6-8a-n7-figures3695-AFFECTED1/technical-commands/native-raster-recovery-NATIVEFIX1"
+        receipt = load(recovery_dir / "receipt.record")
+        assert receipt["exitCode"] == 0
+        script_binding = bind(receipt["script"])
+        assert sha(recovery_dir / "stdout.txt") == receipt["stdoutSHA256"] == bound["pixelsRecord"]["sha256"]
+        assert read(recovery_dir / "stderr.txt") == b""
+        normalizer_binding = bind(pixels["rasterOnlyTransformation"]["normalizer"])
+        assert len(raw_layers) == 1
+        layer = raw_layers[0]
+        assert layer["attributes"]["transform"] == "scale(32 32)"
+        assert len(layer["children"]) == 1
+        raw = layer["children"][0]["attributes"]
+        assert raw["vector-effect"] == "non-scaling-stroke"
+        assert float(raw["stroke-width"]) == 3
+        assert raw["d"] == next(o["d"] for o in spec["objects"] if o["id"] == "fig-14-ellipse")
+        bound["nativeStrokeProof"] = {
+            "executionReceipt": {"path": str(recovery_dir / "receipt.record"), "sha256": sha(recovery_dir / "receipt.record")},
+            "runner": script_binding,
+            "normalizerCode": normalizer_binding,
+            "currentRawPathTransform": "scale(32 32)",
+            "currentVectorEffect": "non-scaling-stroke",
+            "currentStrokeWidth": 3,
+            "recordedAdjustedStrokeWidth": 0.09375,
+            "pathDExactlyMatchesCurrentSpec": True,
+            "normalizerExecutedByReviewer": False,
+            "rasterExecutedByReviewer": False,
+            "recordedRasterInputHash": pixels["rasterOnlyTransformation"]["normalizedRasterInputSHA256"],
+            "limitations": "Transformed SVG is not persisted; its hash is execution-record evidence, not independently regenerated evidence."
+        }
+    figures.append(bound)
+
+save("binding-check.record", {
+    "status": "PASS",
+    "ready": ready_binding,
+    "figures": figures,
+    "allCurrentRefsHashMatched": True,
+    "historicalCountersPreservedByReference": ready_binding,
+    "sourceAndPreviewImageOpens": 4,
+    "imageDecodeOrRenderCallsDuringBindingCheck": 0
+})
+save("svg-audit.record", {"status": "INSPECTED_NOT_VISUAL_APPROVAL", "figures": svg_audits})

@@ -1,0 +1,207 @@
+import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import path from "node:path";
+import { isDeepStrictEqual } from "node:util";
+
+const cwd = "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck";
+if (process.cwd() !== cwd) throw new Error("Wrong cwd");
+const root = ".tmp/resume182-6-8a-n7-layout-recovery3695-AFFECTED3";
+const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
+const read = (relative) => {
+  const absolute = path.resolve(cwd, relative);
+  const bytes = readFileSync(absolute);
+  return { path: absolute, sha256: sha(bytes), bytes };
+};
+const json = (relative) => {
+  const file = read(relative);
+  return { ...file, data: JSON.parse(file.bytes.toString("utf8")) };
+};
+const binding = ({ path: absolute, sha256 }) => ({ path: absolute, sha256 });
+const ready = json(`${root}/ready.record`);
+const prior = json(ready.data.prior.path);
+const candidate = json(ready.data.candidate.path);
+const inherited = json(".tmp/resume182-6-8a-n7-affected-review3695-FIRST/text-review.record");
+const normalized = json(`${root}/normalized-without-anchors.template.record`);
+const normalizerStdout = json(`${root}/normalize-affected/stdout.txt`);
+const flow = json(`${root}/official-prose-flow/stdout.txt`);
+const flowStart = json(`${root}/official-prose-flow/start.record`);
+const flowReceipt = json(`${root}/official-prose-flow/receipt.record`);
+const flowStdin = read(`${root}/official-prose-flow/stdin.record`);
+const flowStderr = read(`${root}/official-prose-flow/stderr.txt`);
+const normalizerStart = json(`${root}/normalize-affected/start.record`);
+const normalizerReceipt = json(`${root}/normalize-affected/receipt.record`);
+const normalizerStderr = read(`${root}/normalize-affected/stderr.txt`);
+const checks = [];
+const check = (name, pass) => checks.push({ name, pass: Boolean(pass) });
+const same = isDeepStrictEqual;
+const stripWhitespace = (text) => text.replace(/\s/gu, "");
+const formulas = (text) => text.match(/\$[^$]*\$/gu) ?? [];
+const numbers = (text) => text.match(/\d+(?:\.\d+)?/gu) ?? [];
+const diffPaths = (left, right, pointer = "") => {
+  if (same(left, right)) return [];
+  if (left && right && typeof left === "object" && typeof right === "object") {
+    return [...new Set([...Object.keys(left), ...Object.keys(right)])]
+      .flatMap((key) => diffPaths(left[key], right[key], `${pointer}/${key}`));
+  }
+  return [pointer];
+};
+
+check("ready SHA matches human supplied binding",
+  ready.sha256 === "4203d788b6d43a42962925e78cb1b4bff771375ac20a73599559f33494739439");
+check("candidate SHA matches human and ready",
+  candidate.sha256 === "1045b70ae8865e29b3d7bec16b85a2b64ee87b286aa2c7d7726d79409c8fa398"
+  && candidate.sha256 === ready.data.candidate.sha256);
+check("prior SHA matches ready and inherited TEXT_PASS",
+  prior.sha256 === ready.data.prior.sha256
+  && prior.sha256 === inherited.data.currentLesson.sha256);
+check("inherited status and lesson identity match",
+  inherited.data.status === "TEXT_PASS" && inherited.data.TEXT_PASS === true
+  && [ready.data, candidate.data, inherited.data].every((object) =>
+    (object.lesson ?? object.card_id) === "alg8-c2-s1-n7")
+  && ready.data.book === "8a" && inherited.data.book === "8a"
+  && [ready.data, candidate.data, inherited.data].every((object) =>
+    object.edition === "modern-us-neutral"));
+check("ready root matches sole cwd", ready.data.root === cwd);
+const affected = [3, 4, 15, 22];
+check("ready changes are exactly the four authorized blocks",
+  same(ready.data.changes.map((change) => change.block), affected));
+const changedPointers = diffPaths(prior.data, candidate.data);
+const allowedPointers = new Set([
+  ...affected.map((index) => `/prose/${index}/text`),
+  ...[0, 1, 2, 3].flatMap((index) => [
+    `/section_breaks/${index}/before`, `/section_breaks/${index}/after`,
+  ]),
+]);
+check("all object changes are confined to four texts and section anchors",
+  changedPointers.every((pointer) => allowedPointers.has(pointer)));
+const withoutAnchors = ({ section_breaks, ...rest }) => rest;
+check("candidate except anchors equals retained official normalized output",
+  same(withoutAnchors(candidate.data), withoutAnchors(normalized.data)));
+check("saved normalizer stdout except old anchors equals retained normalized snapshot",
+  same(withoutAnchors(normalizerStdout.data), withoutAnchors(normalized.data)));
+check("saved normalizer stdout retained only the prior four anchors before explicit removal",
+  same(normalizerStdout.data.section_breaks, prior.data.section_breaks));
+check("saved normalized snapshot has no anchors", same(normalized.data.section_breaks, []));
+check("saved normalizer succeeded at authorized cwd",
+  normalizerStart.data.cwd === cwd && normalizerReceipt.data.returncode === 0
+  && normalizerReceipt.data.signal === null && normalizerReceipt.data.error === null);
+check("saved normalizer stderr is empty", normalizerStderr.bytes.length === 0);
+check("saved flow succeeded at authorized cwd",
+  flowStart.data.cwd === cwd && flowReceipt.data.returncode === 0
+  && flowReceipt.data.signal === null && flowReceipt.data.error === null);
+check("saved flow argv points to the sole retained normalized snapshot",
+  flowStart.data.command.length === 4
+  && flowStart.data.command[1] === ".claude/skills/ld-s10y-lesson/tools/prose_flow.mjs"
+  && flowStart.data.command[2] === "--json"
+  && path.resolve(cwd, flowStart.data.command[3]) === normalized.path);
+check("saved flow stdin and stderr are empty",
+  flowStdin.bytes.length === 0 && flowStderr.bytes.length === 0);
+check("saved flow is anchor-free and has contiguous paragraph indices",
+  same(flow.data.resolvedBreaks, []) && same(flow.data.boundaries, [])
+  && flow.data.paragraphs.every((paragraph, index) => paragraph.index === index));
+check("prose count unchanged", prior.data.prose.length === candidate.data.prose.length);
+check("all source, block metadata and non-affected text remain byte-identical as field values",
+  prior.data.prose.every((block, index) => {
+    const { text: oldText, ...oldMetadata } = block;
+    const { text: newText, ...newMetadata } = candidate.data.prose[index];
+    return same(oldMetadata, newMetadata)
+      && (affected.includes(index) || oldText === newText);
+  }));
+check("all prose formulas remain exact bytes",
+  prior.data.prose.every((block, index) =>
+    same(formulas(block.text), formulas(candidate.data.prose[index].text))));
+check("all prose numerical tokens remain exact",
+  prior.data.prose.every((block, index) =>
+    same(numbers(block.text), numbers(candidate.data.prose[index].text))));
+
+const affectedText = ready.data.changes.map((change) => {
+  const oldBlock = prior.data.prose[change.block];
+  const newBlock = candidate.data.prose[change.block];
+  const punctuationOnly = change.block === 4;
+  const expected = punctuationOnly
+    ? oldBlock.text.slice(0, -1) + "."
+    : stripWhitespace(oldBlock.text);
+  check(`ready change /prose/${change.block}/text matches old and new exact strings`,
+    oldBlock.text === change.before && newBlock.text === change.after
+    && change.punctuationOnly === punctuationOnly);
+  check(`/prose/${change.block}/text is only its authorized delta`,
+    punctuationOnly
+      ? oldBlock.text.endsWith("4\u3002") && newBlock.text === expected
+      : stripWhitespace(newBlock.text) === expected);
+  const savedParagraphs = flow.data.paragraphs
+    .filter((paragraph) => paragraph.blockIndex === change.block);
+  check(`/prose/${change.block}/text exact paragraph bytes match the saved official flow`,
+    savedParagraphs.length > 0
+    && savedParagraphs.map((paragraph) => paragraph.text).join("\n\n") === newBlock.text);
+  if (punctuationOnly) {
+    check("prose 4 retained source terminal 4. without changing source field",
+      newBlock.source_text.endsWith("4.") && oldBlock.source_text === newBlock.source_text);
+  }
+  return {
+    jsonPointer: `/prose/${change.block}/text`,
+    before: oldBlock.text,
+    after: newBlock.text,
+    savedFlowParagraphs: savedParagraphs,
+    formulasExactBytes: same(formulas(oldBlock.text), formulas(newBlock.text)),
+    numericTokensExact: same(numbers(oldBlock.text), numbers(newBlock.text)),
+  };
+});
+const afterIdentities = [5, 11, 16, 19];
+check("ready preserves exactly after block identities 5,11,16,19",
+  same(ready.data.preservedAfterBlockIdentities, afterIdentities));
+check("candidate has exactly ready's four anchor pairs",
+  same(candidate.data.section_breaks, ready.data.boundaries)
+  && candidate.data.section_breaks.length === 4);
+const boundaries = candidate.data.section_breaks.map((anchor, boundaryIndex) => {
+  const matches = flow.data.paragraphs.flatMap((paragraph, index, paragraphs) =>
+    paragraph.text === anchor.after && index > 0 && paragraphs[index - 1].text === anchor.before
+      ? [{ before: paragraphs[index - 1], after: paragraph }] : []);
+  check(`boundary ${boundaryIndex} exact pair occurs once as saved-flow neighbors`, matches.length === 1);
+  const match = matches[0];
+  const afterIndex = afterIdentities[boundaryIndex];
+  check(`boundary ${boundaryIndex} after block identity remains ${afterIndex}`,
+    match?.after.blockIndex === afterIndex);
+  const oldAnchor = prior.data.section_breaks[boundaryIndex];
+  const oldBlock = prior.data.prose[afterIndex];
+  check(`boundary ${boundaryIndex} original after anchor binds unchanged designated block`,
+    oldAnchor?.after === oldBlock.text
+    && oldBlock.text === candidate.data.prose[afterIndex].text
+    && stripWhitespace(anchor.after) === stripWhitespace(oldBlock.text));
+  return {
+    boundaryIndex, prior: oldAnchor, candidate: anchor,
+    savedFlowAdjacentPair: match ?? null,
+    preservedAfterBlockIndex: afterIndex,
+    afterBlockMetadataUnchanged: same(
+      { ...oldBlock, text: null }, { ...candidate.data.prose[afterIndex], text: null }),
+  };
+});
+const retainedAssets = ["exercises.template.json", "figures.template.json"].map((filename) => {
+  const oldFile = read(path.join(path.dirname(prior.path), filename));
+  const newFile = read(path.join(path.dirname(candidate.path), filename));
+  const unchanged = oldFile.bytes.equals(newFile.bytes);
+  check(`${filename} entire serialization bytes unchanged`, unchanged);
+  return { filename, prior: binding(oldFile), candidate: binding(newFile), bytesUnchanged: unchanged };
+});
+const output = {
+  schema: "resume182-6/affected-layout-byte-evidence@1",
+  status: checks.every((item) => item.pass) ? "MECHANICAL_PASS" : "HOLD",
+  ready: binding(ready), prior: binding(prior), candidate: binding(candidate),
+  inheritedTextReview: binding(inherited),
+  normalized: binding(normalized),
+  savedNormalizerStdout: binding(normalizerStdout),
+  savedOfficialFlow: binding(flow),
+  savedOfficialFlowStart: binding(flowStart),
+  savedOfficialFlowReceipt: binding(flowReceipt),
+  savedOfficialFlowStdin: binding(flowStdin),
+  savedOfficialFlowStderr: binding(flowStderr),
+  savedNormalizerStart: binding(normalizerStart),
+  savedNormalizerReceipt: binding(normalizerReceipt),
+  savedNormalizerStderr: binding(normalizerStderr),
+  changedPointers, affectedText, boundaries, retainedAssets, checks,
+  humanReadingScope: "Only four affected texts and four saved-flow boundary pairs. Other prose is compared opaquely for unchanged values, not displayed or reviewed.",
+  flowReruns: 0, normalizerCalls: 0, finalizerCalls: 0,
+  newSourceReviews: 0, newMathReviews: 0, newImageReviews: 0,
+  wholeLessonApproval: false, totalCost: "unknown",
+};
+process.stdout.write(JSON.stringify(output, null, 2) + "\n");
+if (output.status !== "MECHANICAL_PASS") process.exitCode = 1;

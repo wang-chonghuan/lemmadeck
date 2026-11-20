@@ -1,0 +1,87 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { canonical } from './resume182-6-8a-n7-display3695-FIRST/prepare.mjs';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), root);
+const [affectedPath, expectedSHA] = process.argv.slice(2);
+assert.match(expectedSHA, /^[a-f0-9]{64}$/);
+const own = '.tmp/resume182-6-8a-n7-choice-composed-review3695-FIRST';
+const candidate = '.tmp/resume182-6-8a-n7-choice-repair3695-AFFECTED1';
+const firstPath = '.tmp/resume182-6-8a-n7-choice-review3695-FIRST/review.json';
+const originalPath = '.tmp/resume182-6-8a-n7-choice-author3695-FIRST/draft.json';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const read = file => fs.readFileSync(file);
+const json = file => JSON.parse(read(file));
+const binding = file => ({ path: path.resolve(file), sha256: sha(read(file)) });
+const save = (file, value) => fs.writeFileSync(file,
+  `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' });
+assert.equal(sha(read(affectedPath)), expectedSHA);
+assert.equal(sha(read(firstPath)), 'deac70febefa5790a942869e6c635ccd8b12a3f221838552f13dfc6a446e37e4');
+assert.equal(sha(read(originalPath)), '52bf28478d782734e8934c3dbdea3c7a55358db64dfd4beedb028a716ff6288d');
+assert.equal(sha(read(`${candidate}/draft.json`)), '042797ad21082b55739b97bf5f7278d7938d0f29feaff852c64cfc9366149950');
+const first = json(firstPath), affected = json(affectedPath);
+assert.equal(first.outcome, 'revise');
+assert.equal(affected.status, 'PASS');
+assert.equal(affected.book, '8a');
+assert.equal(affected.lesson, 'alg8-c2-s1-n7');
+assert.equal(affected.edition, 'modern-us-neutral');
+const references = [];
+const collect = item => {
+  if (!item || typeof item !== 'object') return;
+  if (typeof item.path === 'string' && typeof item.sha256 === 'string') references.push(item);
+  for (const value of Object.values(item)) collect(value);
+};
+collect(affected);
+for (const file of [`${candidate}/draft.json`, `${candidate}/ready.record`]) {
+  const expected = binding(file);
+  assert.ok(references.some(item => path.resolve(item.path) === expected.path && item.sha256 === expected.sha256),
+    `Affected review lacks the current binding: ${file}`);
+}
+const question = affected.question_review, source = affected.source_review;
+assert.equal(question.question_id, 'q-hyperbola-pair');
+assert.equal(source.source_number, '94');
+for (const field of ['task_fidelity', 'redundancy', 'answer_leakage', 'mathematics']) {
+  assert.equal(question[field].verdict, 'pass');
+}
+assert.equal(source.coverage.verdict, 'pass');
+const oldDraft = json(originalPath), newDraft = json(`${candidate}/draft.json`);
+const restored = structuredClone(newDraft);
+const qIndex = oldDraft.questions.findIndex(item => item.id === question.question_id);
+const cIndex = oldDraft.coverage.findIndex(item => item.source_number === source.source_number);
+assert.ok(qIndex >= 0 && cIndex >= 0);
+restored.questions[qIndex] = oldDraft.questions[qIndex];
+restored.coverage[cIndex] = oldDraft.coverage[cIndex];
+assert.deepEqual(restored, oldDraft);
+const review = structuredClone(first);
+for (const item of review.question_reviews) if (item.question_id !== question.question_id) {
+  for (const field of ['task_fidelity', 'redundancy', 'answer_leakage', 'mathematics']) {
+    assert.equal(item[field].verdict, 'pass');
+  }
+}
+for (const item of review.source_reviews) if (item.source_number !== '94') {
+  assert.equal(item.coverage.verdict, 'pass');
+}
+review.question_reviews[review.question_reviews.findIndex(item => item.question_id === question.question_id)] = question;
+review.source_reviews[review.source_reviews.findIndex(item => item.source_number === '94')] = source;
+review.draft_sha256 = canonical(newDraft);
+assert.equal(review.seed_sha256, canonical(json(`${candidate}/seed.json`)));
+review.reviewer = { kind: 'independent_agent',
+  identity: 'Hooke FIRST: 27 unchanged questions and 13 unchanged sources; Hilbert: affected q-hyperbola-pair/source94. Parent composition only, no semantic re-review.' };
+review.outcome = 'pass';
+assert.ok(!fs.existsSync(own) && !fs.existsSync(`${candidate}/review.json`));
+fs.mkdirSync(own);
+save(`${candidate}/review.json`, review);
+save(`${own}/binding.record`, {
+  status: 'PASS', root, book: '8a', lesson: 'alg8-c2-s1-n7', edition: 'modern-us-neutral',
+  firstReview: binding(firstPath), affectedReview: binding(affectedPath),
+  candidate: binding(`${candidate}/draft.json`), composedReview: binding(`${candidate}/review.json`),
+  method: 'Replace only the single affected question/source94 review; verify unchanged object values for all other questions and coverage. Preserve FIRST revise and original drafts.',
+  inheritedQuestionReviews: 27, inheritedSourceReviews: 13, newQuestionReviews: 1,
+  cumulativeChoiceContentRepairs: 1, imageSourceAnswerOrOtherPASSReruns: 0,
+  wholeLessonApproval: false, DBWrites: 0, hostTokens: 'unknown', totalCost: 'unknown',
+});
+console.log(JSON.stringify({ path: `${own}/binding.record`, sha256: sha(read(`${own}/binding.record`)),
+  review: binding(`${candidate}/review.json`), draftCanonical: review.draft_sha256 }));

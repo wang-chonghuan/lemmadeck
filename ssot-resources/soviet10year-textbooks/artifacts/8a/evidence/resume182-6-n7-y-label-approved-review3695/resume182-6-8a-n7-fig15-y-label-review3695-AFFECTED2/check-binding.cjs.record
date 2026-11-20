@@ -1,0 +1,141 @@
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const assert = require("node:assert/strict");
+
+const root = "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck";
+const output = path.join(root, ".tmp/resume182-6-8a-n7-fig15-y-label-review3695-AFFECTED2");
+assert.equal(process.cwd(), root);
+const sha256 = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const checked = (record) => {
+  assert.ok(record.path.startsWith(`${root}/`));
+  const bytes = fs.readFileSync(record.path);
+  assert.equal(sha256(bytes), record.sha256, `SHA mismatch: ${record.path}`);
+  return bytes;
+};
+const observations = {
+  path: path.join(output, "observations.record"),
+  sha256: "6aa111288744b12ef70f398164d91e350672a0439a30278ecf40a1d674c26110",
+};
+const observed = JSON.parse(checked(observations));
+assert.equal(observed.status, "PASS");
+const sealCommand = JSON.parse(fs.readFileSync(path.join(output, "observations-sealed.command.record"), "utf8"));
+const readyCommand = JSON.parse(fs.readFileSync(path.join(output, "ready-and-inherited-evidence.command.record"), "utf8"));
+assert.equal(sealCommand.exit, 0);
+assert.equal(readyCommand.exit, 0);
+assert.ok(Date.parse(sealCommand.finishedAt) <= Date.parse(readyCommand.startedAt));
+const readyRef = {
+  path: path.join(root, ".tmp/resume182-6-8a-n7-fig15-y-label-repair3695-AFFECTED2/ready.record"),
+  sha256: "481a8c3c936e0f1db67cf3d02d11d5c34119388a8d72c9674b55758283157f10",
+};
+const ready = JSON.parse(checked(readyRef));
+const inheritedFirst = {
+  path: path.join(root, ".tmp/resume182-6-8a-n7-affected-review3695-FIRST/review.record"),
+  sha256: "fea136a69f533e736b4a7f3883678ba357383ac80c4361c1f4299cbcfc01ec55",
+};
+const inheritedChromium = {
+  path: path.join(root, ".tmp/resume182-6-8a-n7-fig15-chromium-review3695-FIRST/review.record"),
+  sha256: "3ecb46b5300af46b932a6f8329a9f65e98316523abe7cef3d8efc6e6034f833c",
+};
+const first = JSON.parse(checked(inheritedFirst));
+const chromium = JSON.parse(checked(inheritedChromium));
+const firstFigure = first.figures.find((item) => item.figure === "fig-15");
+assert.ok(firstFigure);
+assert.equal(firstFigure.spec.sha256, ready.originalSpec.sha256);
+assert.equal(chromium.spec.sha256, ready.originalSpec.sha256);
+assert.equal(chromium.inheritedFirstReview.review.sha256, inheritedFirst.sha256);
+assert.equal(chromium.failEvidence.sha256, ready.priorChromiumFail.sha256);
+assert.equal(chromium.inheritedFirstReview.hiddenProjectionOverlayStyle, "unknown");
+assert.ok(chromium.resolvedAffectedItems.some((item) => item.id === "FIG15-SUBSCRIPT-GLYPHS" && item.conclusion === "PASS"));
+
+const originalBytes = checked(ready.originalSpec);
+const currentBytes = checked(ready.spec);
+const original = JSON.parse(originalBytes);
+const current = JSON.parse(currentBytes);
+assert.equal(current.id, "fig-15");
+const originalLabel = original.objects.find((item) => item.id === "fig-15-y-label");
+const currentLabel = current.objects.find((item) => item.id === "fig-15-y-label");
+assert.equal(original.objects.indexOf(originalLabel), 20);
+assert.equal(current.objects.indexOf(currentLabel), 20);
+assert.deepEqual(originalLabel.at, [-0.35, 6.6]);
+assert.deepEqual(currentLabel.at, [0.8, 7.05]);
+const restored = structuredClone(current);
+restored.objects[20].at = originalLabel.at;
+assert.deepEqual(restored, original);
+
+let prefix = 0;
+while (prefix < originalBytes.length && prefix < currentBytes.length && originalBytes[prefix] === currentBytes[prefix]) prefix++;
+let suffix = 0;
+while (suffix < originalBytes.length - prefix && suffix < currentBytes.length - prefix && originalBytes[originalBytes.length - suffix - 1] === currentBytes[currentBytes.length - suffix - 1]) suffix++;
+const beforeBytes = originalBytes.subarray(prefix, originalBytes.length - suffix).toString("utf8");
+const afterBytes = currentBytes.subarray(prefix, currentBytes.length - suffix).toString("utf8");
+assert.deepEqual(JSON.parse(`[${beforeBytes}]`), originalLabel.at);
+assert.deepEqual(JSON.parse(`[${afterBytes}]`), currentLabel.at);
+assert.equal(beforeBytes.replace(/[-0-9.]+/g, ""), afterBytes.replace(/[-0-9.]+/g, ""));
+
+const render = JSON.parse(checked(ready.render));
+assert.equal(render.status, "pass");
+assert.equal(render.figure, current.id);
+assert.equal(render.spec.sha256, ready.spec.sha256);
+checked(ready.svg);
+checked(ready.preview);
+assert.equal(ready.preview.path, observed.preview.path);
+assert.equal(ready.preview.sha256, observed.preview.sha256);
+assert.deepEqual(ready.display, {
+  width: 640,
+  height: 480,
+  naturalWidth: 1280,
+  naturalHeight: 960,
+  complete: true,
+});
+assert.ok(Object.values(render.output).some((item) => item.sha256 === ready.svg.sha256 && path.resolve(root, item.path) === ready.svg.path));
+checked(ready.priorChromiumFail);
+checked(firstFigure.review);
+assert.equal(ready.cumulativePostRenderContentRepairs, 2);
+assert.equal(ready.originalDeclaredRemainingContentRepairBudget, 0);
+assert.equal(ready.rendererCalls, 1);
+assert.equal(ready.technicalNativeRasterCalls, 1);
+assert.deepEqual(ready.cleanup, { pageClosed: true, contextClosed: true, browserClosed: true });
+
+const binding = {
+  status: "MATCH",
+  checkedAfterObservationSeal: true,
+  observations,
+  ready: readyRef,
+  spec: ready.spec,
+  render: ready.render,
+  svg: ready.svg,
+  preview: ready.preview,
+  originalSpec: ready.originalSpec,
+  diffProof: {
+    changedObject: "fig-15-y-label",
+    changedField: "/objects/20/at",
+    before: originalLabel.at,
+    after: currentLabel.at,
+    actualSerializedBefore: beforeBytes,
+    actualSerializedAfter: afterBytes,
+    identicalPrefixBytes: prefix,
+    identicalSuffixBytes: suffix,
+    allOtherSerializationBytesUnchanged: true,
+    allOtherParsedValuesUnchanged: true,
+    sourceGridPointsCircleRelationshipsAndSubscriptIdentitiesUnchanged: true,
+  },
+  inheritedFirstReview: inheritedFirst,
+  inheritedChromiumReview: inheritedChromium,
+  preservedFailureRecords: [firstFigure.review, chromium.failEvidence],
+  inheritedSourceRelationshipsNotReobserved: true,
+  inheritedSubscriptPassNotSourceReReview: true,
+  hiddenProjectionOverlayStyle: "unknown",
+  originalDeclaredRemainingContentRepairBudget: 0,
+  cumulativePostRenderContentRepairs: 2,
+  newDefectRepairAttempts: 1,
+  existingRendererPassHashBound: true,
+  cleanupVerifiedFromReady: true,
+  newIndependentValidatorCalls: 0,
+  sourceImagesOpened: 0,
+  wholeLessonApproval: false,
+  cost: "unknown",
+};
+const target = path.join(output, "binding.record");
+fs.writeFileSync(target, `${JSON.stringify(binding, null, 2)}\n`, { flag: "wx" });
+console.log(JSON.stringify({ path: target, sha256: sha256(fs.readFileSync(target)), record: binding }, null, 2));

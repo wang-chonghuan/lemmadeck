@@ -1,0 +1,101 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+import { spawnSync } from 'node:child_process';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const own = path.join(root, '.tmp/resume182-6-8a-n7-figures3695-AFFECTED1');
+assert.equal(process.cwd(), root);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const id = 'fig-14';
+const directory = path.join(own, id, 'native-NATIVEFIX1');
+fs.mkdirSync(directory);
+const failedCheckPath = path.join(own, id, 'native-REPEAT1/stroke-check.record');
+const failedCheckBytes = fs.readFileSync(failedCheckPath);
+const failedCheck = JSON.parse(failedCheckBytes);
+assert.equal(failedCheck.status, 'fail');
+assert.equal(failedCheck.unexpectedDarkPixelsOutsideCurveStroke, 1256);
+const reportPath = path.join(own, id, 'render-REPEAT1/fig-14-render-REPEAT1.json');
+const reportBytes = fs.readFileSync(reportPath);
+const report = JSON.parse(reportBytes);
+assert.equal(report.status, 'pass');
+const svgPath = path.join(own, id, 'render-REPEAT1/fig-14-REPEAT1.svg');
+const svgBytes = fs.readFileSync(svgPath);
+assert.equal(sha(svgBytes), report.output.svg.sha256);
+let substitutions = 0;
+const cssResolved = svgBytes.toString('utf8').replace(
+  /var\((--ld-figure-[a-z-]+),\s*(#[0-9a-fA-F]{3,8})\)/g,
+  (_match, _role, fallback) => { substitutions++; return fallback; },
+);
+assert.ok(substitutions > 0 && !cssResolved.includes('var('));
+const python = '/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python';
+const normalizerPath = path.join(own, 'normalize-native-stroke.py');
+const normalization = spawnSync(python, ['-B', normalizerPath], {
+  cwd: root,
+  env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1', TMPDIR: directory },
+  input: cssResolved, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024,
+});
+assert.equal(normalization.status, 0, normalization.stderr || 'normalizer failed');
+const normalized = JSON.parse(normalization.stdout);
+assert.equal(normalized.inputSHA256, sha(cssResolved));
+assert.equal(normalized.normalizedSHA256, sha(normalized.svg));
+assert.equal(normalized.changes[0].effectiveFullWidthStrokePx, 3);
+const require = createRequire(path.join(root, '.claude/skills/ld-s10y-lesson/package.json'));
+const { Resvg } = require('@resvg/resvg-js');
+const font = '/System/Library/Fonts/Supplemental/Arial.ttf';
+const image = new Resvg(normalized.svg, {
+  fitTo: { mode: 'width', value: 640 }, background: '#ffffff',
+  font: { loadSystemFonts: false, fontFiles: [font], defaultFontFamily: 'Arial' },
+}).render();
+assert.equal(image.width, 640);
+assert.equal(image.height, 260);
+const pixels = image.pixels;
+let nonwhite = 0;
+let transparent = 0;
+for (let index = 0; index < pixels.length; index += 4) {
+  if (pixels[index + 3] < 255) transparent++;
+  if (Math.min(pixels[index], pixels[index + 1], pixels[index + 2]) < 220) nonwhite++;
+}
+assert.equal(transparent, 0);
+assert.ok(nonwhite > 3000 && nonwhite < 640 * 260 * 0.4);
+const png = image.asPng();
+const pngPath = path.join(directory, 'fig-14-native640-NATIVEFIX1.png');
+fs.writeFileSync(pngPath, png, { flag: 'wx' });
+const receipt = {
+  schema: 'resume182-6/native-raster@1',
+  status: 'pass',
+  figure: id, cwd: root, attempt: 'NATIVEFIX1',
+  classification: 'technical native raster recovery only; no content revision',
+  actualFailedRasterCheck: {
+    path: failedCheckPath, sha256: sha(failedCheckBytes),
+    unexpectedDarkPixelsOutsideCurveStroke: failedCheck.unexpectedDarkPixelsOutsideCurveStroke,
+  },
+  priorNativePreview: { ...failedCheck.png, status: 'FAILED_NATIVE_STROKE_COMPATIBILITY' },
+  sourceSVG: { path: svgPath, sha256: sha(svgBytes) },
+  renderReport: { path: reportPath, sha256: sha(reportBytes), status: 'pass' },
+  renderer: { name: '@resvg/resvg-js', version: require('@resvg/resvg-js/package.json').version },
+  nativePNG: { path: pngPath, sha256: sha(png), bytes: png.length },
+  width: image.width, height: image.height,
+  nonwhitePixels: nonwhite, transparentPixels: transparent,
+  rasterOnlyTransformation: {
+    semanticCSSFallbackSubstitutions: substitutions,
+    vectorEffectNormalization: normalized.changes,
+    normalizer: { path: normalizerPath, sha256: sha(fs.readFileSync(normalizerPath)) },
+    normalizedRasterInputSHA256: normalized.normalizedSHA256,
+    originalSVGWritten: false,
+    transformedSVGPersisted: false,
+    font: { path: font, sha256: sha(fs.readFileSync(font)) },
+  },
+  mathematicalCoordinatesChanged: false,
+  originalPathDataChanged: false,
+  specChanged: false, renderCalls: 0, nativeRasterCalls: 1,
+  dependenciesInstalledOrCopied: 0,
+  sourcePNGsRead: 0, imagesEmittedOrVisuallyInspected: 0,
+  visualInspection: 'NOT_RUN', independentReview: 'PENDING',
+};
+fs.writeFileSync(
+  path.join(directory, 'pixels.record'), `${JSON.stringify(receipt, null, 2)}\n`, { flag: 'wx' },
+);
+console.log(JSON.stringify(receipt, null, 2));

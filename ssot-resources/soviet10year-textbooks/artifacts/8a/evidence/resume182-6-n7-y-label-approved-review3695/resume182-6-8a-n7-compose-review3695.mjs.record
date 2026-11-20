@@ -1,0 +1,93 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const repo = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), repo);
+const [affectedPath, affectedSHA] = process.argv.slice(2);
+const firstPath = '.tmp/resume182-6-8a-n7-affected-review3695-FIRST/review.record';
+const own = '.tmp/resume182-6-8a-n7-composed-review3695-FIRST';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const read = file => fs.readFileSync(file);
+const verified = binding => {
+  const bytes = read(binding.path);
+  assert.equal(sha(bytes), binding.sha256);
+  return JSON.parse(bytes);
+};
+const firstSHA = 'fea136a69f533e736b4a7f3883678ba357383ac80c4361c1f4299cbcfc01ec55';
+const first = verified({ path: firstPath, sha256: firstSHA });
+assert.match(affectedSHA, /^[a-f0-9]{64}$/);
+const affected = verified({ path: affectedPath, sha256: affectedSHA });
+assert.equal(first.status, 'HOLD');
+assert.equal(affected.status, 'PASS');
+assert.match(affected.conclusion, /^PASS\b/);
+assert.deepEqual(affected.blockers, []);
+assert.equal(affected.figure, 'fig-15');
+for (const value of [first, affected]) {
+  assert.equal(value.book, '8a');
+  assert.equal(value.lesson, 'alg8-c2-s1-n7');
+  assert.equal(value.edition, 'modern-us-neutral');
+}
+assert.equal(first.textReview.status, 'TEXT_PASS');
+assert.equal(verified(first.textReview).status, 'TEXT_PASS');
+const pass = first.figures.find(item => item.figure === 'fig-14');
+const held = first.figures.find(item => item.figure === 'fig-15');
+assert.equal(pass.conclusion, 'PASS');
+assert.deepEqual(pass.blockers, []);
+assert.equal(verified(pass.review).status, 'pass');
+assert.equal(verified(affected.review).status, 'pass');
+const repairBinding = {
+  path: '.tmp/resume182-6-8a-n7-fig15-y-label-repair3695-AFFECTED2/ready.record',
+  sha256: '481a8c3c936e0f1db67cf3d02d11d5c34119388a8d72c9674b55758283157f10',
+};
+const repair = verified(repairBinding);
+assert.equal(repair.originalSpec.sha256, held.spec.sha256);
+assert.equal(repair.changedField, '/objects/20/at');
+assert.equal(repair.allOtherSpecSerializationBytesUnchanged, true);
+assert.equal(repair.sourceGeometryAndRelationshipsUnchanged, true);
+assert.equal(repair.cumulativePostRenderContentRepairs, 2);
+assert.equal(repair.originalDeclaredRemainingContentRepairBudget, 0);
+assert.ok(Object.values(repair.cleanup).every(Boolean));
+const before = verified(held.spec), after = verified(repair.spec);
+assert.equal(before.objects[20].id, 'fig-15-y-label');
+assert.equal(after.objects[20].id, 'fig-15-y-label');
+assert.deepEqual(before.objects[20].at, [-0.35, 6.6]);
+assert.deepEqual(after.objects[20].at, [0.8, 7.05]);
+after.objects[20].at = before.objects[20].at;
+assert.deepEqual(after, before);
+for (const field of ['spec', 'render', 'svg', 'preview']) {
+  assert.equal(affected[field].sha256, repair[field].sha256);
+  assert.equal(sha(read(affected[field].path)), affected[field].sha256);
+}
+assert.equal(affected.preview.sha256, 'fbc2c263ce2334ddda7a51695b12bba925a4e5c44ec860cf4fcf65f2c88f7fe7');
+assert.equal(sha(read(affected.preview.path)), affected.preview.sha256);
+assert.ok(!fs.existsSync(own));
+fs.mkdirSync(own);
+const record = {
+  schema: 'resume182-6/incremental-approved-reviews-binding@1',
+  status: 'PASS', ticket: 'STEMROBIN-182', root: repo, book: '8a',
+  lesson: 'alg8-c2-s1-n7', edition: 'modern-us-neutral', date: '2026-11-20',
+  textReview: first.textReview,
+  figures: [pass, {
+    ...Object.fromEntries(['figure', 'blockers', 'review',
+      'spec', 'render', 'svg', 'preview'].map(key => [key, affected[key]])),
+    conclusion: affected.status, independentConclusion: affected.conclusion,
+  }],
+  firstReview: { path: path.resolve(firstPath), sha256: firstSHA, originalStatus: 'HOLD' },
+  affectedReview: { path: path.resolve(affectedPath), sha256: affectedSHA },
+  affectedRepair: { ...repairBinding, path: path.resolve(repairBinding.path),
+    changedField: repair.changedField, before: repair.before, after: repair.after,
+    allOtherSpecSerializationBytesUnchanged: true,
+    cumulativePostRenderContentRepairs: 2, originalDeclaredRemainingContentRepairBudget: 0 },
+  oldResvgFAILPreserved: true, hiddenSourceProjectionStyle: 'unknown',
+  modernSolidProjectionEmphasisIsPresentationOnly: true,
+  newImageRendererBrowserSourceMathOrSemanticReviewCalls: 0,
+  method: 'Bind the unchanged fig14/text PASS and only the new fig15 y-label affected PASS, with explicit repair provenance; do not rewrite FIRST.',
+  wholeLessonApproval: false, DBWrites: 0, unknownHistoricalBytesRecovered: false,
+  hostTokens: 'unknown', totalCost: 'unknown',
+};
+const bytes = Buffer.from(`${JSON.stringify(record, null, 2)}\n`);
+fs.writeFileSync(`${own}/review.record`, bytes, { flag: 'wx' });
+console.log(JSON.stringify({ path: `${own}/review.record`, sha256: sha(bytes),
+  status: record.status, imagesViewed: 0 }));

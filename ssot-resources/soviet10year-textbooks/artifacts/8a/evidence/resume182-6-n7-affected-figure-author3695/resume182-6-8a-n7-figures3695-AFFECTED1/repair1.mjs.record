@@ -1,0 +1,73 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const own = path.join(root, '.tmp/resume182-6-8a-n7-figures3695-AFFECTED1');
+assert.equal(process.cwd(), root);
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const directory = path.join(own, 'fig-15');
+const failedSpecPath = path.join(directory, 'fig-15.spec-AFFECTED1.json');
+const failedReportPath = path.join(directory, 'render-FIRST/fig-15-render-FIRST.json');
+const failedSpecBytes = fs.readFileSync(failedSpecPath);
+const failedReportBytes = fs.readFileSync(failedReportPath);
+const report = JSON.parse(failedReportBytes);
+assert.equal(report.status, 'fail');
+assert.equal(report.spec.sha256, sha(failedSpecBytes));
+assert.deepEqual(
+  report.collisions.map(item => item.id).sort(),
+  ['fig-15-A-label', 'fig-15-B1-label', 'fig-15-D1-label'].sort(),
+);
+const spec = JSON.parse(failedSpecBytes);
+const priorGeometry = spec.objects.map(({ labelPlacement, ...geometry }) => geometry);
+const placements = {
+  'fig-15-A': { position: 'NW', offset: [-12, -12] },
+  'fig-15-B1': { position: 'S', offset: [0, 24] },
+  'fig-15-D1': { position: 'N', offset: [0, -24] },
+};
+const changes = [];
+for (const object of spec.objects) {
+  if (!(object.id in placements)) continue;
+  changes.push({
+    id: object.id,
+    field: 'labelPlacement',
+    before: object.labelPlacement,
+    after: placements[object.id],
+  });
+  object.labelPlacement = placements[object.id];
+}
+assert.equal(changes.length, 3);
+assert.deepEqual(spec.objects.map(({ labelPlacement, ...geometry }) => geometry), priorGeometry);
+spec.description += ' REPAIR1 after the preserved first current render FAIL: move only the ' +
+  'A, B1 and D1 endpoint labels to clear the circle and nearby point footprints under the ' +
+  'current label-placement API. This is the single bounded affected endpoint/projection ' +
+  'layout repair. Mathematical geometry, source text, guide style and source facts are unchanged.';
+const candidatePath = path.join(directory, 'fig-15.spec-REPAIR1.json');
+const bytes = Buffer.from(`${JSON.stringify(spec, null, 2)}\n`);
+fs.writeFileSync(candidatePath, bytes, { flag: 'wx' });
+const receipt = {
+  schema: 'resume182-6/affected-repair@1',
+  status: 'REPAIR1_CANDIDATE_NOT_VERIFIED',
+  root, figure: 'fig-15',
+  cause: 'current affected spec endpoint/projection label layout; renderer collision failure',
+  historicalCap1Hold: 'preserved; unobservable separate source projection style remains unknown',
+  actualFailure: {
+    spec: { path: failedSpecPath, sha256: sha(failedSpecBytes) },
+    report: { path: failedReportPath, sha256: sha(failedReportBytes) },
+    exitCode: 2,
+    collisions: report.collisions,
+  },
+  changes,
+  geometryMoved: false,
+  currentCandidate: { path: candidatePath, sha256: sha(bytes) },
+  repairBudgetUsedThisTask: 1,
+  repairBudgetRemainingThisTask: 0,
+  newStandaloneDraftRuns: 0,
+  imageViews: 0,
+  independentReview: 'NOT_RUN', promotion: 'NOT_RUN',
+};
+fs.writeFileSync(
+  path.join(own, 'repair1.receipt.record'), `${JSON.stringify(receipt, null, 2)}\n`, { flag: 'wx' },
+);
+console.log(JSON.stringify(receipt, null, 2));

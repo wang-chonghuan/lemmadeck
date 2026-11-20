@@ -1,0 +1,10 @@
+{
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck",
+  "command": "node",
+  "args": [
+    "-e",
+    "const fs=require(\"node:fs\"); const crypto=require(\"node:crypto\"); const path=require(\"node:path\"); const root=process.cwd(); const reviewPath=path.join(root,\".tmp/resume182-6-8a-n7-text-review3695-FIRST/review.record\"); const bytes=fs.readFileSync(reviewPath); const record=JSON.parse(bytes); const sha=b=>crypto.createHash(\"sha256\").update(b).digest(\"hex\"); const bindings=Object.entries(record.bindings).map(([name,binding])=>({name,path:binding.path,sha256:sha(fs.readFileSync(binding.path)),matchesReviewedSHA:sha(fs.readFileSync(binding.path))===binding.sha256})); const receiptDirectory=record.commandReceipts.directory; const priorReceipts=record.commandReceipts.ids.filter(id=>id!==\"018-final-bindings\").map(id=>({id,stdout:fs.existsSync(path.join(receiptDirectory,id+\".stdout\")),stderr:fs.existsSync(path.join(receiptDirectory,id+\".stderr\")),exitcode:fs.readFileSync(path.join(receiptDirectory,id+\".exitcode\"),\"utf8\").trim(),command:fs.existsSync(path.join(receiptDirectory,id+\".command.json\"))})); console.log(JSON.stringify({status:record.status,TEXT_PASS:record.TEXT_PASS,reviewRecord:{path:reviewPath,sha256:sha(bytes)},bindings,priorReceipts,finalReceipt:\"018-final-bindings is retained by capture.mjs immediately after this command returns\",totalCost:\"unknown\"},null,2));"
+  ],
+  "signal": null,
+  "cost": "unknown"
+}

@@ -1,0 +1,73 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { createRequire } from 'node:module';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), root);
+const own = path.join(root, '.tmp/resume182-6-8a-n7-figures3695-AFFECTED1');
+const [id, attempt] = process.argv.slice(2);
+assert.ok(['fig-14', 'fig-15'].includes(id));
+assert.equal(attempt, 'REPEAT1');
+const renderDir = path.join(own, id, `render-${attempt}`);
+const nativeDir = path.join(own, id, `native-${attempt}`);
+const svgPath = path.join(renderDir, `${id}-${attempt}.svg`);
+const reportPath = path.join(renderDir, `${id}-render-${attempt}.json`);
+const report = JSON.parse(fs.readFileSync(reportPath));
+assert.equal(report.status, 'pass');
+const require = createRequire(path.join(root, '.claude/skills/ld-s10y-lesson/package.json'));
+const { Resvg } = require('@resvg/resvg-js');
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const svg = fs.readFileSync(svgPath);
+assert.equal(sha(svg), report.output.svg.sha256);
+let substitutions = 0;
+const input = svg.toString('utf8').replace(
+  /var\((--ld-figure-[a-z-]+),\s*(#[0-9a-fA-F]{3,8})\)/g,
+  (_match, _role, fallback) => { substitutions++; return fallback; },
+);
+assert.ok(substitutions > 0 && !input.includes('var('));
+const font = '/System/Library/Fonts/Supplemental/Arial.ttf';
+const image = new Resvg(input, {
+  fitTo: { mode: 'width', value: 640 }, background: '#ffffff',
+  font: { loadSystemFonts: false, fontFiles: [font], defaultFontFamily: 'Arial' },
+}).render();
+assert.equal(image.width, 640);
+const pixels = image.pixels;
+let nonwhite = 0;
+let transparent = 0;
+for (let index = 0; index < pixels.length; index += 4) {
+  if (pixels[index + 3] < 255) transparent++;
+  if (Math.min(pixels[index], pixels[index + 1], pixels[index + 2]) < 220) nonwhite++;
+}
+assert.equal(transparent, 0);
+assert.ok(nonwhite > 3000 && nonwhite < image.width * image.height * 0.4);
+const png = image.asPng();
+const pngPath = path.join(nativeDir, `${id}-native640-${attempt}.png`);
+fs.writeFileSync(pngPath, png, { flag: 'wx' });
+const evidence = {
+  schema: 'resume182-6/native-raster@1',
+  figure: id, cwd: root,
+  renderer: { name: '@resvg/resvg-js', version: require('@resvg/resvg-js/package.json').version },
+  sourceSVG: { path: svgPath, sha256: sha(svg) },
+  renderReport: { path: reportPath, sha256: sha(fs.readFileSync(reportPath)) },
+  nativePNG: { path: pngPath, sha256: sha(png), bytes: png.length },
+  width: image.width, height: image.height,
+  nonwhitePixels: nonwhite, transparentPixels: transparent,
+  rasterOnlyTransformation: {
+    semanticCSSFallbackSubstitutions: substitutions,
+    rasterInputSHA256: sha(input),
+    originalSVGWritten: false, transformedSVGPersisted: false,
+    font: { path: font, sha256: sha(fs.readFileSync(font)) },
+  },
+  reusedEnvironment: {
+    referenceScript: path.join(root, '.tmp/resume182-6-8a-n5-figures3695-AFFECTED1/native-preview.mjs'),
+    dataAndImagesFromReferenceNotRead: true,
+    packagesInstalledOrCopied: 0,
+  },
+  status: 'pass', visualInspection: 'NOT_RUN', independentReview: 'PENDING',
+};
+fs.writeFileSync(
+  path.join(nativeDir, 'pixels.record'), `${JSON.stringify(evidence, null, 2)}\n`, { flag: 'wx' },
+);
+console.log(JSON.stringify(evidence, null, 2));

@@ -1,0 +1,97 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), root);
+const own = '.tmp/resume182-6-8a-n7-layout-recovery3695-AFFECTED3';
+const prior = '.tmp/resume182-6-8a-n7-approved-binding3695-FIRST/adapt/8a/modern-us-neutral/lessons/alg8-c2-s1-n7';
+const target = `${own}/adapt/8a/modern-us-neutral/lessons/alg8-c2-s1-n7`;
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const read = file => fs.readFileSync(file);
+const save = (file, data) => {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, data, { flag: 'wx' });
+};
+const json = (file, data) => save(file, `${JSON.stringify(data, null, 2)}\n`);
+assert.ok(!fs.existsSync(own));
+const originalBytes = read(`${prior}/lesson.template.json`);
+assert.equal(sha(originalBytes), '54b28d9b2b01ff0898ef9096ffaad2539506dd2ecbd23707b5bf1b39db00c9fe');
+const original = JSON.parse(originalBytes), candidate = structuredClone(original);
+save(`${own}/failed-adaptation.audit.record`, read('ssot-resources/soviet10year-textbooks/artifacts/8a/editions/modern-us-neutral/lessons/alg8-c2-s1-n7/adaptation.audit.json'));
+assert.ok(candidate.prose[4].text.endsWith('4。'));
+assert.ok(candidate.prose[4].source_text.endsWith('4.'));
+candidate.prose[4].text = candidate.prose[4].text.slice(0, -1) + '.';
+const run = (label, command, input) => {
+  json(`${own}/${label}/start.record`, { command, cwd: root });
+  save(`${own}/${label}/stdin.record`, input ?? '');
+  const result = spawnSync(command[0], command.slice(1), {
+    cwd: root, input, encoding: 'utf8', env: { ...process.env, PYTHONDONTWRITEBYTECODE: '1' },
+  });
+  save(`${own}/${label}/stdout.txt`, result.stdout ?? '');
+  save(`${own}/${label}/stderr.txt`, result.stderr ?? '');
+  json(`${own}/${label}/receipt.record`, {
+    returncode: result.status, signal: result.signal, error: result.error?.message ?? null,
+  });
+  assert.equal(result.status, 0, result.stderr);
+  return JSON.parse(result.stdout);
+};
+const normalized = run('normalize-affected', [
+  '/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python',
+  '-B', '-c',
+  'import sys,json;sys.path.insert(0,".claude/skills/ld-s10y-lesson/tools");import edition;d=json.load(sys.stdin);edition.normalize_lesson_layout(d);print(json.dumps(d,ensure_ascii=False))',
+], JSON.stringify(candidate));
+const nonWhitespaceChanges = [];
+for (let index = 0; index < candidate.prose.length; index++) {
+  const compact = text => text.replace(/\s+/gu, '');
+  assert.equal(compact(normalized.prose[index].text), compact(candidate.prose[index].text));
+  if (normalized.prose[index].text !== original.prose[index].text) {
+    nonWhitespaceChanges.push({ block: index, before: original.prose[index].text,
+      after: normalized.prose[index].text, punctuationOnly: index === 4 });
+  }
+}
+assert.deepEqual(normalized.source, original.source);
+const afterBlocks = original.section_breaks.map(boundary => {
+  const matches = original.prose.flatMap((block, index) =>
+    block.kind === 'p' && block.text === boundary.after ? [index] : []);
+  assert.equal(matches.length, 1);
+  return matches[0];
+});
+normalized.section_breaks = [];
+json(`${own}/normalized-without-anchors.template.record`, normalized);
+const flow = run('official-prose-flow', [
+  process.execPath, '.claude/skills/ld-s10y-lesson/tools/prose_flow.mjs', '--json',
+  `${own}/normalized-without-anchors.template.record`,
+]);
+const boundaries = afterBlocks.map(blockIndex => {
+  const after = flow.paragraphs.find(item => item.blockIndex === blockIndex && item.paragraphInBlock === 0);
+  assert.ok(after && after.index > 0);
+  const before = flow.paragraphs.find(item => item.index === after.index - 1);
+  assert.ok(before);
+  return { before: before.text, after: after.text };
+});
+normalized.section_breaks = boundaries;
+json(`${target}/lesson.template.json`, normalized);
+for (const name of ['exercises', 'figures']) {
+  save(`${target}/${name}.template.json`, read(`${prior}/${name}.template.json`));
+}
+const record = {
+  status: 'AFFECTED_LAYOUT_CANDIDATE_PENDING_REVIEW',
+  root, ticket: 'STEMROBIN-182', book: '8a', lesson: 'alg8-c2-s1-n7',
+  edition: 'modern-us-neutral',
+  prior: { path: `${prior}/lesson.template.json`, sha256: sha(originalBytes) },
+  candidate: { path: `${target}/lesson.template.json`, sha256: sha(read(`${target}/lesson.template.json`)) },
+  changes: nonWhitespaceChanges, boundaries, preservedAfterBlockIdentities: afterBlocks,
+  numberFourRetained: true,
+  punctuationReason: 'Retain source final 4. to avoid the current numeric-boundary detector treating punctuation localization as a new numeric token.',
+  formulaSourceIdentityExercisesAndFiguresUnchanged: true,
+  newMathSourceOrImageReviews: 0, sourceWrites: 0, DBWrites: 0,
+  officialNormalizerCalls: 1, officialFlowCalls: 1,
+  oldFailureAndAllCountsPreserved: true, wholeLessonApproval: false,
+  hostTokens: 'unknown', totalCost: 'unknown',
+};
+json(`${own}/ready.record`, record);
+console.log(JSON.stringify({ path: `${own}/ready.record`, sha256: sha(read(`${own}/ready.record`)),
+  candidate: record.candidate, work: own, changedBlocks: nonWhitespaceChanges.length }));

@@ -1,0 +1,174 @@
+const fs = require("node:fs");
+const path = require("node:path");
+const crypto = require("node:crypto");
+const assert = require("node:assert/strict");
+
+const root = "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck";
+const output = path.join(root, ".tmp/resume182-6-8a-n7-fig15-y-label-review3695-AFFECTED2");
+assert.equal(process.cwd(), root);
+const sha256 = (bytes) => crypto.createHash("sha256").update(bytes).digest("hex");
+const reference = (file) => ({ path: file, sha256: sha256(fs.readFileSync(file)) });
+const checked = (record) => {
+  const bytes = fs.readFileSync(record.path);
+  assert.equal(sha256(bytes), record.sha256, `SHA mismatch: ${record.path}`);
+  return bytes;
+};
+const bindingRef = {
+  path: path.join(output, "binding.record"),
+  sha256: "528a1779dfc4385f459caa6928be6f49840aacb219d1eac01fdc14033196bff6",
+};
+const binding = JSON.parse(checked(bindingRef));
+const observations = JSON.parse(checked(binding.observations));
+const ready = JSON.parse(checked(binding.ready));
+const first = JSON.parse(checked(binding.inheritedFirstReview));
+const chromium = JSON.parse(checked(binding.inheritedChromiumReview));
+assert.equal(binding.status, "MATCH");
+assert.equal(observations.status, "PASS");
+const officialRef = reference(path.join(output, "fig-15.official-review.json"));
+const official = JSON.parse(checked(officialRef));
+const officialCommand = JSON.parse(fs.readFileSync(path.join(output, "official-review.command.record"), "utf8"));
+assert.equal(officialCommand.exit, 0);
+assert.equal(officialCommand.stderr, "");
+assert.ok(officialCommand.stdout.startsWith("PASS: fig-15 -> "));
+assert.equal(official.status, "pass");
+assert.equal(official.figure, "fig-15");
+assert.equal(official.spec.sha256, binding.spec.sha256);
+assert.equal(official.render.sha256, binding.render.sha256);
+assert.ok(Object.values(official.outputs).some((item) => item.sha256 === binding.svg.sha256));
+for (const record of [binding.spec, binding.render, binding.svg, binding.preview, binding.originalSpec, ...binding.preservedFailureRecords]) checked(record);
+const commandFiles = fs.readdirSync(output).filter((name) => name.endsWith(".command.record")).sort();
+const commandCaptures = commandFiles.map((name) => reference(path.join(output, name)));
+const compact = ({ path: file, sha256: hash }) => ({ path: file, sha256: hash });
+
+const record = {
+  status: "PASS",
+  book: "8a",
+  lesson: "alg8-c2-s1-n7",
+  edition: "modern-us-neutral",
+  figure: "fig-15",
+  conclusion: "PASS for the current affected y-label layout only: the single supplied native 640x480 preview shows a clearly readable y with sufficient visible separation from the arrowhead and vertical axis and no canvas clipping. Other visible endpoints and subscripts show no new obstruction. Inherit original source and other confirmed relationships and the prior Chromium subscript PASS; do not re-review source semantics. Hidden overlapping projection solid/dashed source styling remains unknown. The only content delta is fig-15-y-label.at from [-0.35,6.6] to [0.8,7.05]. All other serialized spec bytes and values are unchanged. Historical FAILs and counters are preserved; this is not whole-lesson approval or promotion.",
+  blockers: [],
+  review: officialRef,
+  spec: compact(binding.spec),
+  render: compact(binding.render),
+  svg: compact(binding.svg),
+  preview: compact(binding.preview),
+  observations: binding.observations,
+  binding: bindingRef,
+  ready: binding.ready,
+  inheritedFirstReview: binding.inheritedFirstReview,
+  inheritedChromiumReview: binding.inheritedChromiumReview,
+  preservedFailureRecords: binding.preservedFailureRecords,
+  resolvedAffectedItems: [
+    {
+      id: "FIG15-Y-ARROW-CLEARANCE",
+      conclusion: "PASS",
+      scope: "Only the current hash-bound layout, based on the sealed independent single-image observation.",
+    },
+    {
+      id: "FIG15-SUBSCRIPT-GLYPHS",
+      conclusion: "INHERITED_PASS_UNCHANGED",
+      scope: "Prior Chromium readability PASS is inherited; current visible subscripts have no new obstruction. No source-semantic re-review.",
+    },
+  ],
+  sourceAndRelationshipReview: {
+    inheritedFrom: [binding.inheritedFirstReview, binding.inheritedChromiumReview],
+    sourceImagesObservedThisReviewer: 0,
+    sourceSemanticsReReviewed: false,
+    allOtherSourceAndRelationshipsUnchanged: true,
+    hiddenProjectionOverlayStyle: "unknown",
+    sourceStyleClaimAdded: false,
+    relationshipsRemoved: 0,
+    officialSourceBinding: official.source,
+    sourceHashVerificationByRecorderIsNotVisualReview: true,
+  },
+  contentRepairAccounting: {
+    priorPostRenderContentRepairs: ready.priorPostRenderContentRepairs,
+    cumulativePostRenderContentRepairs: ready.cumulativePostRenderContentRepairs,
+    originalDeclaredRemainingContentRepairBudget: ready.originalDeclaredRemainingContentRepairBudget,
+    oldBudgetReset: false,
+    newDefectRepairAttempts: ready.repairAttemptsThisNewDefect,
+    authorization: ready.authorization,
+    priorFAILsRetainedInPlace: true,
+  },
+  imageAccounting: {
+    batchLimit: 8,
+    contextLimit: 24,
+    thisReviewerTaskLimit: 1,
+    thisReviewerImageOpens: 1,
+    thisReviewerChromiumNative640Opens: 1,
+    perImageOpens: { "fig-15-chromium640-FIRST.png": 1 },
+    thisReviewerReopens: 0,
+    thisReviewerCrops: 0,
+    thisReviewerResizes: 0,
+    thisReviewerSourceImageOpens: 0,
+    thisReviewerOldPreviewImageOpens: 0,
+    thisReviewerOtherImageOpens: 0,
+    parentImagePayloads: 0,
+    inheritedFirstImageAccountingUnchanged: first.imageAccounting,
+    inheritedChromiumImageAccountingUnchanged: chromium.imageAccounting,
+    newDefectProducerAccounting: {
+      authority: binding.ready,
+      rendererCalls: ready.rendererCalls,
+      technicalNativeRasterCalls: ready.technicalNativeRasterCalls,
+      browserLaunchesForNative: ready.browserLaunchesForNative,
+      contentRepairs: 1,
+      cumulativePostRenderContentRepairs: ready.cumulativePostRenderContentRepairs,
+      originalDeclaredRemainingContentRepairBudget: ready.originalDeclaredRemainingContentRepairBudget,
+      cleanup: ready.cleanup,
+    },
+    combinedKnownRenderCalls: chromium.imageAccounting.combinedKnownRenderCalls + ready.rendererCalls,
+    combinedKnownNativeRasterCalls: chromium.imageAccounting.combinedKnownNativeRasterCalls + ready.technicalNativeRasterCalls,
+    newRenderCallsThisReviewer: 0,
+    newNativeRasterCallsThisReviewer: 0,
+    newBrowserCallsThisReviewer: 0,
+    newIndependentValidatorCallsThisReviewer: 0,
+    newContentRepairsThisReviewer: 0,
+    officialRecorderCallsThisReviewer: 1,
+    officialRecorderEmbeddedValidationCallsThisReviewer: 1,
+    newIndependentAffectedLayoutReviews: 1,
+    newAffectedLayoutPasses: 1,
+    mathematicalSolutionsThisReviewer: 0,
+    fig14PASSChangesThisReviewer: 0,
+    textPASSChangesThisReviewer: 0,
+    answerChoicesObservedThisReviewer: 0,
+    answerOrChoiceActionsThisReviewer: 0,
+    DBWritesThisReviewer: 0,
+    gitActionsThisReviewer: 0,
+    progressActionsThisReviewer: 0,
+    otherChatActionsThisReviewer: 0,
+    promotionsThisReviewer: 0,
+    paidCallsThisReviewer: 0,
+    crossChatImageHistory: "unknown; not loaded",
+    hostTokens: "unknown",
+    totalCost: "unknown",
+  },
+  officialRecorderCalledOnce: true,
+  nominalFontSizeUsedAsVisualPassEvidence: false,
+  rendererPassUsedAsPixelEvidence: false,
+  observationsSealedBeforeReadyAndDiffRead: true,
+  commandCaptures,
+  commandCapturePolicy: {
+    stdoutStderrExitSavedBeforeDisplayForLoggedCommands: true,
+    root: output,
+    finalizationCommandCapture: path.join(output, "finalize.command.record"),
+    finalIdentityCommandCapture: path.join(output, "final-identities.command.record"),
+    initialInstructionReadCaptureGap: "The first three read-only instruction commands (image skill, intentfold readme, engineering charter) returned exec tool stdout with exit 0 before the on-disk logger was created. Those original outputs were not persisted to disk before display; no claim of complete pre-persisted capture is made. Every subsequent shell command uses the on-disk logger, including the single official recorder invocation.",
+  },
+  scope: "Only the newly repaired fig-15 y-label layout and absence of new visible endpoint/subscript obstruction. No source image, old preview, fig-14/text PASS action, solving, answer/choice, DB, git, progress, other chat, asset promotion, manual SVG edit, or additional renderer/browser/raster/independent-validator run.",
+  writeSet: `${output}/`,
+  wholeLessonApproval: false,
+};
+const target = path.join(output, "review.record");
+fs.writeFileSync(target, `${JSON.stringify(record, null, 2)}\n`, { flag: "wx" });
+console.log(JSON.stringify({
+  status: record.status,
+  conclusion: record.conclusion,
+  reviewRecord: reference(target),
+  officialReview: officialRef,
+  observations: binding.observations,
+  binding: bindingRef,
+  combinedKnownRenderCalls: record.imageAccounting.combinedKnownRenderCalls,
+  combinedKnownNativeRasterCalls: record.imageAccounting.combinedKnownNativeRasterCalls,
+  wholeLessonApproval: false,
+}, null, 2));

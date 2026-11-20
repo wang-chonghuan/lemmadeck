@@ -1,0 +1,90 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const own = path.join(root, '.tmp/resume182-6-8a-n7-figures3695-AFFECTED1');
+assert.equal(process.cwd(), root);
+const [id, phase, attempt = 'FIRST', specName = `${id}.spec-AFFECTED1.json`] = process.argv.slice(2);
+assert.ok(['fig-14', 'fig-15'].includes(id));
+assert.ok(['draft', 'render', 'native'].includes(phase));
+assert.ok(['FIRST', 'REPAIR1', 'REPEAT1'].includes(attempt));
+assert.equal(path.basename(specName), specName);
+const directory = path.join(own, id);
+const specPath = path.join(directory, specName);
+const phaseDirectory = path.join(directory, `${phase}-${attempt}`);
+fs.mkdirSync(phaseDirectory);
+const python = '/Users/yong/work/lemmadeck-ws/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python';
+const env = {
+  ...process.env, PYTHON: python, PYTHONDONTWRITEBYTECODE: '1',
+  PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  TMPDIR: phaseDirectory,
+};
+let executable;
+let args;
+if (phase === 'draft') {
+  executable = python;
+  args = [
+    path.join(root, '.agents/skills/ld-s10y-image/scripts/validate_spec.py'),
+    specPath, '--stage', 'draft', '--json',
+  ];
+} else if (phase === 'render') {
+  executable = process.execPath;
+  args = [
+    path.join(root, '.agents/skills/ld-s10y-image/scripts/render_spec.mjs'),
+    '--spec', specPath,
+    '--svg', path.join(phaseDirectory, `${id}-${attempt}.svg`),
+    '--report', path.join(phaseDirectory, `${id}-render-${attempt}.json`),
+  ];
+} else {
+  executable = process.execPath;
+  args = [path.join(own, 'native-preview.mjs'), id, attempt];
+}
+const sha = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+const start = {
+  cwd: root, figure: id, phase, attempt,
+  command: [executable, ...args],
+  spec: { path: specPath, sha256: sha(fs.readFileSync(specPath)) },
+  environment: {
+    python,
+    chromium: env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,
+    TMPDIR: phaseDirectory,
+    PYTHONDONTWRITEBYTECODE: '1',
+    dependencies: 'existing environments only; no install or copy',
+  },
+  createdAt: new Date().toISOString(),
+  independentReview: 'NOT_RUN', hostTokens: 'unknown', totalCost: 'unknown',
+};
+const write = (name, value) => fs.writeFileSync(
+  path.join(phaseDirectory, name), `${JSON.stringify(value, null, 2)}\n`, { flag: 'wx' },
+);
+write('start.record', start);
+const result = spawnSync(executable, args, {
+  cwd: root, env, encoding: 'utf8', maxBuffer: 8 * 1024 * 1024,
+});
+fs.writeFileSync(path.join(phaseDirectory, 'stdout.txt'), result.stdout || '', { flag: 'wx' });
+fs.writeFileSync(path.join(phaseDirectory, 'stderr.txt'), result.stderr || '', { flag: 'wx' });
+const receipt = {
+  ...start,
+  exitCode: result.status,
+  signal: result.signal,
+  executionError: result.error?.message || null,
+  finishedAt: new Date().toISOString(),
+  stdoutSHA256: sha(result.stdout || ''),
+  stderrSHA256: sha(result.stderr || ''),
+  explicitDraftGateRuns: phase === 'draft' ? 1 : 0,
+  rendererEmbeddedDraftValidations: phase === 'render' ? 1 : 0,
+  renderCalls: phase === 'render' ? 1 : 0,
+  nativeRasterCalls: phase === 'native' ? 1 : 0,
+  imageVisualLoads: 0,
+  approval: 'NONE',
+};
+write('receipt.record', receipt);
+console.log(JSON.stringify(receipt, null, 2));
+if (result.status !== 0 || phase === 'draft') {
+  console.log(result.stdout || '');
+  console.error(result.stderr || '');
+}
+process.exitCode = result.status ?? 1;

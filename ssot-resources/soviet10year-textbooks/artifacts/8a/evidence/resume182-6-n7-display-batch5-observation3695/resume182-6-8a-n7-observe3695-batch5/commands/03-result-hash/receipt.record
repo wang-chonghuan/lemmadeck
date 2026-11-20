@@ -1,0 +1,14 @@
+{
+  "command": [
+    "node",
+    "--input-type=module",
+    "-e",
+    "import fs from \"node:fs\"; import crypto from \"node:crypto\"; import assert from \"node:assert/strict\"; const root=\"/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck\"; const path=`${root}/.tmp/resume182-6-8a-n7-observe3695-batch5/result.json`; const bytes=fs.readFileSync(path); const r=JSON.parse(bytes); const s=JSON.parse(fs.readFileSync(`${root}/.tmp/resume182-6-8a-n7-display3695-FIRST/selection-d-label-affected/batch5.json`,\"utf8\")); assert.equal(r.images.length,8); assert.deepEqual(r.images.map(x=>x.path),s.images.map(x=>x.path)); for(const x of r.images) assert.equal(x.sha256,crypto.createHash(\"sha256\").update(fs.readFileSync(x.path)).digest(\"hex\")); assert.deepEqual(r.imageAccounting,{views:8,uniqueImages:8,reopens:0,crops:0,resizes:0,rerenders:0}); assert.equal(r.wholeLessonApproval,false); assert.equal(r.status,\"DISPLAY_PASS\"); assert.equal(r.blockers.length,0); assert.ok(r.images.every(x=>x.observations.length>0&&x.blockers.length===0)); console.log(JSON.stringify({path,sha256:crypto.createHash(\"sha256\").update(bytes).digest(\"hex\"),status:r.status,images:r.images.length,blockers:r.blockers.length,imageAccounting:r.imageAccounting,wholeLessonApproval:r.wholeLessonApproval},null,2));"
+  ],
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck",
+  "started": "2026-11-20T09:03:43.061Z",
+  "finished": "2026-11-20T09:03:43.097Z",
+  "returncode": 0,
+  "signal": null,
+  "error": null
+}

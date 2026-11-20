@@ -1,0 +1,9 @@
+{
+  "command": [
+    "node",
+    "-e",
+    "const fs=require(\"node:fs\"),crypto=require(\"node:crypto\"),assert=require(\"node:assert/strict\");const p=\".tmp/resume182-6-8a-n7-display3695-FIRST/selection-targets-affected1/batch1.json\";const raw=fs.readFileSync(p);const batch=JSON.parse(raw);assert.equal(batch.id,\"batch1\");assert.equal(batch.images.length,8);assert.equal(new Set(batch.images.map(i=>i.path)).size,8);const images=batch.images.map(i=>{assert.ok(i.path.startsWith(process.cwd()+\"/.tmp/resume182-6-8a-n7-display3695-FIRST/runtime-recovery-padding3/screenshots/\"));const bytes=fs.readFileSync(i.path);const actual=crypto.createHash(\"sha256\").update(bytes).digest(\"hex\");assert.equal(actual,i.sha256);return {path:i.path,assignedSha256:i.sha256,actualSha256:actual,hashMatches:true};});console.log(JSON.stringify({batchPath:process.cwd()+\"/\"+p,batchSha256:crypto.createHash(\"sha256\").update(raw).digest(\"hex\"),images},null,2));"
+  ],
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck",
+  "started": "2026-11-20T08:39:58.468Z"
+}

@@ -1,0 +1,202 @@
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+const output = join(root, '.tmp/resume182-6-8a-n7-text-author3695-FIRST');
+const receiptDirectory = join(output, 'receipts');
+const hash = (bytes) => createHash('sha256').update(bytes).digest('hex');
+const read = (path) => JSON.parse(readFileSync(path, 'utf8'));
+const constructionPath = join(output, 'construction.record');
+const construction = read(constructionPath);
+for (const input of construction.inputs) {
+  assert.equal(hash(readFileSync(input.path)), input.sha256, `Input drift: ${input.path}`);
+}
+const originalLesson = read(construction.inputs[0].path);
+const originalExercises = read(construction.inputs[1].path);
+const lessonPath = join(output, 'candidate.lesson.template.json');
+const exercisesPath = join(output, 'candidate.exercises.template.json');
+const lesson = read(lessonPath);
+const exercises = read(exercisesPath);
+const formulaPattern = /\$\$[\s\S]*?\$\$|\$[^$]*\$/g;
+const formulas = (text) => text.match(formulaPattern) ?? [];
+const outside = (text) => text.replace(formulaPattern, '');
+const numbers = (text) => outside(text).match(/\d+(?:\.\d+)?/g) ?? [];
+const latin = (text) => outside(text).match(/[A-Za-z]+/g) ?? [];
+const omit = (value, fields) => Object.fromEntries(
+  Object.entries(value).filter(([key]) => !fields.includes(key)),
+);
+const compare = (original, current, label) => {
+  assert.deepEqual(formulas(current), formulas(original), `Formula bytes: ${label}`);
+  assert.deepEqual(numbers(current), numbers(original), `Number bytes: ${label}`);
+  assert.deepEqual(latin(current), latin(original), `Latin labels: ${label}`);
+};
+assert.deepEqual(omit(lesson, ['prose', 'section_breaks']), omit(originalLesson, ['prose', 'section_breaks']));
+assert.deepEqual(omit(exercises, ['exercises']), omit(originalExercises, ['exercises']));
+assert.equal(lesson.prose.length, originalLesson.prose.length);
+assert.equal(exercises.exercises.length, originalExercises.exercises.length);
+const changedProse = [];
+for (const [index, block] of lesson.prose.entries()) {
+  const original = originalLesson.prose[index];
+  assert.deepEqual(omit(block, ['text', 'changes']), omit(original, ['text', 'changes']));
+  compare(original.text, block.text, `prose[${index}]`);
+  if (block.kind !== 'p' || original.text.startsWith('* ')) {
+    assert.deepEqual(block, original, 'Figure, caption, or footnote');
+  }
+  if (block.text !== original.text) changedProse.push(index);
+}
+const changedExercises = [];
+for (const [index, item] of exercises.exercises.entries()) {
+  const original = originalExercises.exercises[index];
+  assert.deepEqual(omit(item, ['text', 'lines', 'changes']), omit(original, ['text', 'lines', 'changes']));
+  compare(original.text, item.text, `exercise[${item.number}]`);
+  assert.equal(item.lines.join('\n'), item.text);
+  if (item.text !== original.text) changedExercises.push(item.number);
+}
+assert.deepEqual(exercises.exercises.map((item) => item.number),
+  Array.from({ length: 14 }, (_, index) => String(88 + index)));
+assert.deepEqual(exercises.exercises.find((item) => item.number === '95'),
+  originalExercises.exercises.find((item) => item.number === '95'));
+assert.equal(hash(JSON.stringify(lesson.prose.map((block) => block.text))), construction.proseTextSHA256);
+assert.equal(hash(JSON.stringify(exercises.exercises.map((item) => item.text))), construction.exerciseTextSHA256);
+assert.equal(lesson.prose.map((block) => outside(block.text)).join('').split('*').length,
+  originalLesson.prose.map((block) => outside(block.text)).join('').split('*').length,
+  'Footnote asterisk count');
+
+const flowPath = join(receiptDirectory, '013-prose-flow.stdout');
+const flowExit = read(join(receiptDirectory, '013-prose-flow.exit.json'));
+assert.equal(flowExit.exit, 0);
+const officialBoundaries = readFileSync(flowPath, 'utf8').split('\n')
+  .filter((line) => line.startsWith('    break: '))
+  .map((line) => JSON.parse(line.slice('    break: '.length)));
+for (const boundary of lesson.section_breaks) {
+  assert.deepEqual(Object.keys(boundary), ['before', 'after']);
+  assert.ok(officialBoundaries.some((official) =>
+    JSON.stringify(official) === JSON.stringify(boundary)), 'Boundary absent from official stdout');
+}
+const existingExitReceipts = readdirSync(receiptDirectory)
+  .filter((filename) => filename.endsWith('.exit.json'))
+  .map((filename) => ({ filename, ...read(join(receiptDirectory, filename)) }));
+const flowRuns = existingExitReceipts.filter((receipt) =>
+  receipt.command === 'node' &&
+  receipt.args?.includes('.claude/skills/ld-s10y-lesson/tools/prose_flow.mjs'));
+assert.equal(flowRuns.length, 1);
+
+// Retain the bootstrap placeholder and add the exact empty-stderr receipt.
+const bootstrapLabel = '000-bootstrap-pwd-exact';
+writeFileSync(join(receiptDirectory, `${bootstrapLabel}.stdout`), root + '\n', { flag: 'wx' });
+writeFileSync(join(receiptDirectory, `${bootstrapLabel}.stderr`), '', { flag: 'wx' });
+writeFileSync(join(receiptDirectory, `${bootstrapLabel}.exit.json`), JSON.stringify({
+  command: 'pwd',
+  cwd: root,
+  exit: 0,
+  signal: null,
+  capture: 'Retrospective exact copy of tool-observed output; original bootstrap files retained.',
+}, null, 2) + '\n', { flag: 'wx' });
+
+const outputs = [lessonPath, exercisesPath].map((path) => ({
+  path,
+  sha256: hash(readFileSync(path)),
+}));
+const author = {
+  schema: 'resume182-current-text-author-draft@1',
+  status: 'CURRENT_NEW_TEXT_AUTHOR_DRAFT',
+  root,
+  writeSet: output + '/',
+  book: '8a',
+  lesson: 'alg8-c2-s1-n7',
+  role: 'modern text author, not reviewer or mathematical checker',
+  inputProvenance: 'The supplied current newly constructed input; no unknown old modern files recovered.',
+  inputs: construction.inputs,
+  outputs,
+  construction: { path: constructionPath, sha256: hash(readFileSync(constructionPath)) },
+  changes: {
+    scope: 'Non-mathematical wording, sentence-external punctuation, line layout, and official adjacent-paragraph anchors only.',
+    changedProseIndices: changedProse,
+    changedExerciseNumbers: changedExercises,
+    boundaryCount: lesson.section_breaks.length,
+    exercise97: 'Point list displayed on separate lines; no new subpart labels.',
+    culturalReplacements: [],
+    latinRenormalization: false,
+  },
+  sectionBreaks: {
+    method: 'Copied exact before/after objects from the one official prose_flow.mjs stdout.',
+    stdoutPath: flowPath,
+    stdoutSHA256: hash(readFileSync(flowPath)),
+    stderrPath: join(receiptDirectory, '013-prose-flow.stderr'),
+    exitPath: join(receiptDirectory, '013-prose-flow.exit.json'),
+    inputCandidateSHA256: construction.outputsBeforeProseFlow[0].sha256,
+    proseUnchangedAfterFlow: true,
+    runs: flowRuns.length,
+    boundaries: lesson.section_breaks,
+    indicesHandCounted: false,
+  },
+  bytePreservation: {
+    formulasInOriginalOrder: true,
+    outsideMathNumericTokens: true,
+    outsideMathLatinTokens: true,
+    exerciseNumbers: exercises.exercises.map((item) => item.number),
+    allNonMutableFields: true,
+    embeddedLessonSource: true,
+    embeddedExerciseSource: true,
+    sourceRefsAndFigureRefs: true,
+    figureAndCaptionBlocks: true,
+    footnote: {
+      originalContentAndIdentityUnchanged: true,
+      blockSHA256: hash(JSON.stringify(originalLesson.prose.find((block) => block.text.startsWith('* ')))),
+      parentAsteriskCountUnchanged: true,
+    },
+    exercise95: {
+      entireObjectUnchanged: true,
+      fAndItsZeroUnchanged: true,
+      blockSHA256: hash(JSON.stringify(originalExercises.exercises.find((item) => item.number === '95'))),
+      note: 'No reinterpretation of the user-specified single-point case; no mathematical judgment performed.',
+    },
+    suppliedInputFilesUnchanged: true,
+    kind: 'Byte and metadata preservation assertions, not mathematical validation or independent review.',
+  },
+  commandReceipts: {
+    directory: receiptDirectory,
+    stdoutStderrExitRetained: true,
+    mode: 'spawnSync with explicit root cwd; receipt files created with wx before child exit is returned.',
+    bootstrap: 'Initial pwd was captured retrospectively; authoritative exact receipts use 000-bootstrap-pwd-exact.',
+    authorRecordCommand: '014-author-record',
+  },
+  excludedActions: {
+    sourceOrPrepareRuns: 0,
+    originalNormalizerRuns: 0,
+    oldTextRuns: 0,
+    mathCheckerRuns: 0,
+    imageViews: 0,
+    imageWrites: 0,
+    graphOutputs: 0,
+    answerOrChoiceInputs: 0,
+    oldChatReadsOrWrites: 0,
+    persistentLessonWrites: 0,
+    indexWrites: 0,
+    DBWrites: 0,
+    appOrDependencyWrites: 0,
+    progressWrites: 0,
+  },
+  TEXT_PASS: false,
+  wholeLessonApproval: false,
+  globalHOLD: 'Not adjudicated or cleared by this author batch.',
+  hostTokens: 'unknown',
+  totalCost: 'unknown',
+};
+const recordPath = join(output, 'author.record');
+writeFileSync(recordPath, JSON.stringify(author, null, 2) + '\n', { flag: 'wx' });
+console.log(JSON.stringify({
+  status: author.status,
+  outputs,
+  authorRecord: { path: recordPath, sha256: hash(readFileSync(recordPath)) },
+  changedProseCount: changedProse.length,
+  changedExerciseCount: changedExercises.length,
+  boundaryCount: lesson.section_breaks.length,
+  proseFlowRuns: flowRuns.length,
+  preservationOnly: true,
+  TEXT_PASS: false,
+  graphOutputs: 0,
+  totalCost: 'unknown',
+}, null, 2));

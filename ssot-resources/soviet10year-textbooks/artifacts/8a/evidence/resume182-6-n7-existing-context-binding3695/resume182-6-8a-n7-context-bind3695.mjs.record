@@ -1,0 +1,55 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+
+const root = '/Users/yong/.codex/worktrees/stemrobin-182-six-3695/lemmadeck';
+assert.equal(process.cwd(), root);
+const own = '.tmp/resume182-6-8a-n7-figure-context3695-AFFECTED1';
+assert.ok(!fs.existsSync(own));
+const base = 'ssot-resources/soviet10year-textbooks/artifacts/8a';
+const sha = bytes => createHash('sha256').update(bytes).digest('hex');
+const entries = [];
+const inputs = [
+  ['fig-14', `${base}/editions/modern-us-neutral/figures/evidence/fig-14/first-visual-FAIL/context.json.txt`],
+  ['fig-15', `${base}/editions/modern-us-neutral/figures/evidence/fig-15/cap1-HOLD/context.json.txt`],
+];
+for (const [id, file] of inputs) {
+  const originalBytes = fs.readFileSync(file);
+  const value = JSON.parse(originalBytes);
+  assert.equal(value.book, '8a');
+  assert.equal(value.edition, 'modern-us-neutral');
+  assert.equal(value.figure, id);
+  assert.ok(value.lessons.length > 0);
+  assert.ok(value.lessons.every(item => item.lesson === 'alg8-c2-s1-n7'));
+  const source = `${base}/figures/${id}.png`;
+  const sourceBytes = fs.readFileSync(source);
+  assert.equal(sha(sourceBytes), value.sourceImage.sha256);
+  const original = structuredClone(value);
+  value.sourceImage.path = path.join(root, source);
+  assert.deepEqual({ ...value, sourceImage: original.sourceImage }, original);
+  fs.mkdirSync(own, { recursive: true });
+  const output = `${own}/${id}.context.json`;
+  const bytes = Buffer.from(`${JSON.stringify(value, null, 2)}\n`);
+  fs.writeFileSync(output, bytes, { flag: 'wx' });
+  entries.push({
+    id, originalContext: { path: path.join(root, file), sha256: sha(originalBytes) },
+    currentContext: { path: path.join(root, output), sha256: sha(bytes) },
+    source: { path: path.join(root, source), sha256: sha(sourceBytes) },
+    changedFields: ['sourceImage.path'],
+    sourcePixelsUnchanged: true, contextualTextUnchanged: true,
+  });
+}
+const record = {
+  status: 'EXISTING_CONTEXT_PATH_BINDING_ONLY',
+  root, book: '8a', lesson: 'alg8-c2-s1-n7', entries,
+  sourceReviews: 0, imageViews: 0, buildContextReplays: 0, renders: 0,
+  oldFailuresPreserved: ['fig-14-first-visual-FAIL', 'fig-15-cap1-HOLD'],
+  contextAndSourceBindingDoesNotApproveFigureOrLesson: true,
+  unknownHistoricalBytesRecovered: false, DBWrites: 0, finish: 'review',
+  hostTokens: 'unknown', totalCost: 'unknown',
+};
+const bytes = Buffer.from(`${JSON.stringify(record, null, 2)}\n`);
+fs.writeFileSync(`${own}/binding.record`, bytes, { flag: 'wx' });
+console.log(JSON.stringify({ path: path.join(root, own, 'binding.record'),
+  sha256: sha(bytes), entries }));

@@ -1,0 +1,41 @@
+## cap4 — 现代主题 edition
+
+```bash
+p2c.py adapt-prepare --book 5m --edition modern-us-neutral \
+  --lesson math5-c1-s2-n12 --lesson math5-c1-s2-n13
+# 编辑 .tmp/ld-s10y-lesson/adapt/5m/modern-us-neutral/lessons/<id>/*.template.json，
+# 验收后分别提升为持久目录中的 lesson.json、exercises.json、figures.json，
+# 并用 ld-s10y-image 生成图像产物和 *.spec.json
+p2c.py adapt-finalize --book 5m --edition modern-us-neutral \
+  --lesson math5-c1-s2-n12 --lesson math5-c1-s2-n13
+```
+
+这一层是忠实抽取与产品内容之间的唯一转换层：
+
+1. `adapt-prepare` 把原始 lesson/exercises 完整快照和 SHA 写入 `.tmp/` 模板，原始文件
+   不动。编辑模板后，只有通过内容验收的结果才分别以 `lesson.json`、`exercises.json`
+   和 `figures.json` 写入 `artifacts/<book>/editions/<edition>/lessons/<id>/`；模板本身
+   不得进入持久目录。
+2. 只改文化语境，不改知识点、题号、分组、未登记公式、图引用和题量；非公式数字确需更新时，
+   必须逐项写入 `numeric_changes`，并在 `changes` 中包含 `context-number`。`adapt-prepare`
+   会把来源页 `errata` 自动带进 lesson 模板；作者只填写 `corrected` 并把目标块的 `changes`
+   标为 `math-correction`。`adapt-finalize` 会核对来源页、页 JSON 哈希、块引用、原式和修正式，
+   并在 prepare、finalize 和发布前重验时从权威页流核验所有非空引用；旧 lesson 缺
+   `source_refs` 时重建。未登记改写、错误绑定、无法恢复的缺失绑定、原式漂移、或把已知
+   错误原样带入现代版都会失败。完整字段见
+   [edition text contract](references/edition-text-contract.md)
+3. 发布文本不得含未声明的 profile 禁词或西里尔字母；小问标号改用拉丁字母。
+   虚构场景中的俄文或苏联人物姓名必须替换为常见的现代英文姓名，并在题面、图像上下文
+   和答案中保持同一映射；不得只替换文化场景却保留阿廖沙、别佳、谢尔盖、瓦西亚等姓名。
+   原书用于科学史教学的真实人物、地点、国家和机构应保留身份，并在对应正文或题目的
+   `historical_entities` 中逐项声明 `term` 和来源绑定的 `reason`；声明项必须同时出现在
+   原文快照与现代文本中，不能作为整本书的文化检查开关。
+4. 原始层继续按印刷视觉行忠实保存；现代版正文按完整语句和单独引出的公式分行，并把
+   连续 2–3 个语句组成短段落，发布时每个短段落成为独立正文块。若一道题含完整的数字、
+   拉丁字母或西里尔字母小问序列，必须按自然顺序排列，
+   **题干前缀和每个小问各自独占一行**，并移除原书多栏对齐所用的全角空格。
+   两栏公式列表必须先按连续各行的明确全角对齐分隔符还原列归属，再分小问；
+   只有首行标号、后续行续列时不得把右栏首题之后的全部公式串进同一小问。
+   没有连续对齐证据的普通公式序列不猜列，保持原顺序并对照源页确认。
+   `adapt-finalize` 会确定性执行这些排版规范并重写已有 edition，禁止手改原始
+   `pages/` 或原始 lesson JSON。

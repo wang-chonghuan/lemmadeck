@@ -1,0 +1,134 @@
+8-merge. Acceptance verification also uses this file, so stale commands block delivery.
+9-
+10-> Consolidated on 2026-09-12 from the former local runbook, QA, and deployment dimensions. Existing
+11:> commands, evidence rules, and operational boundaries were preserved. Hosting instructions were
+12-> replaced on 2026-09-23 with explicit human approval for the Render migration and Azure cleanup.
+13-
+14-## Contract
+15-
+16-**Runtime**
+17-
+18-One long-running service: the TanStack Start web app in `app/`, SSR. It serves both pages and server
+19-functions; there is no separate API process. "Start the product" means the Vite dev server on the
+20-fixed main port recorded in `.intentfold/project.json`.
+21-
+22-The database is remote: the shared Supabase project, schema `lemmadeck-schema`, reached through
+23:`LEMMADECK_DATABASE_URL`. There is no local database. Content generation (`ld-s10y-lesson`,
+24:`ld-s10y-image`, `ld-s10y-answer`, `sr-story`, `sr-voa1500`, `ld-galaxy`) runs as one-off scripts,
+25-not as a service. Their committed resource inputs and outputs live under `ssot-resources/`;
+26-rebuildable working files live under `.tmp/` and may be removed after the run.
+27-
+28-**Environments**
+29-
+30-One environment: **production**, hosted on Render. There is no staging or preview environment.
+31-Render builds the root `Dockerfile` with the repo root as context, installing the standalone
+32-project in `app/` and shipping only `app/.output`. Production remains a single always-on instance.
+33-
+--
+41-**Evidence**
+42-
+43-Acceptance verification is acceptance-criteria only. A ticket proves its own criteria against an
+44:authoritative surface and stops; no regression pass is added to the flow.
+45-
+46-Evidence must be reproducible and capable of failing. Use the smallest observation that settles the
+47:criterion: a command, query, or browser interaction. Code inspection alone is not evidence that
+48-behavior works.
+49-
+50-A ticket-scoped browser check is a command-line script under
+51-`.intentfold/tickets/<ticket-id>/tmp/`, uncommitted. One script covering all criteria is the normal
+52-case, with a screenshot per visual criterion. `app/tests/` remains the project's long-lived
+53-Playwright suite and is not where ticket-scoped checks live.
+54-
+55:`playwright-cli open <url>` is useful for debugging but is never acceptance evidence. A criterion
+56-check asserts the reachable page or flow, required controls and regions, accepted action, correctly
+57-placed result, resolved loading state, absence of an error-only state, and the expected value shape.
+58-
+59-A chore's proof is whatever settles its criterion. When the criterion is visible only in the running
+60-product, verify it there even when a query proves the underlying row exists.
+61-
+62-## Tools
+63-
+64-**Production**
+--
+85-
+86-```bash
+87-npm --prefix .agents/skills install
+88:npm --prefix .claude/skills/ld-s10y-lesson install
+89-```
+90-
+91:`ld-s10y-lesson` also owns a Python virtual environment; its `SKILL.md` contains the exact `uv`
+92-bootstrap command and required packages.
+93-
+94-**Run locally**
+95-
+96-The fixed main port is recorded in `.intentfold/project.json` and set in `app/vite.config.ts`. Do not
+97-pass `--port` in the main checkout:
+98-
+99-```bash
+100-cd app && npm run dev
+--
+172-```
+173-
+174-- Content scripts read the repo-root `.env`. Skills under `.agents/skills/` resolve shared Node
+175:  dependencies there; `ld-s10y-lesson` uses its own Node package and Python virtual environment;
+176:  `ld-s10y-answer` publishers resolve `postgres` from `app/`.
+177-- Render securely stores the existing `LEMMADECK_DATABASE_URL` and a random production
+178-  `SESSION_SECRET`. The container does not load the repo `.env`. Use `ips-render-ops` capability 6
+179-  for approved runtime changes, never bake secrets into the image. Do not copy generation
+180-  credentials to the website. Session-secret rotation invalidates existing login cookies and
+181-  requires explicit approval.
+182-
+183-Read the live content schema:
+184-
+185-```bash
+--
+187-```
+188-
+189-There is no local database: this command reaches the same shared Supabase project used by production.
+190:Legacy database variables are not supported; no alternate database is acceptance evidence for
+191-data the product reads.
+192-
+193-**Deploy**
+194-
+195-The only routine release path is `ips-render-ops` capability 3, targeting an approved merged
+196-revision. Load the current skill and use its secret-safe authentication setup. Replace the skill
+197-path and commit placeholders below with the loaded skill directory and approved main commit:
+198-
+199-```bash
+--
+239-**Environment troubleshooting.** A missing `app/.env` symlink appears as the app starting while every
+240-DB-backed page fails. Recreate the symlink rather than copying `.env`.
+241-
+242:**Choose authoritative evidence.** A database query proves a row exists but not that the UI shows
+243-it. A browser proves rendered behavior but may not prove a background write completed. Use both only
+244-when the criterion spans both surfaces.
+245-
+246-**Use headed browser verification for formal UI acceptance.** Fall back to headless only when no GUI
+247-is available and record that limitation.
+248-
+249-**Drive a real browser from a script.** An embedded preview pane can produce false negatives for
+250-lazy-loading and viewport logic. It may demonstrate a page to the human, but it is not acceptance
+251:evidence.
+252-
+253-**Use stable locators.** Prefer role, label, placeholder, visible text, or a stable `data-testid`.
+254-Locate the stable container first, then assert its contents. Do not locate by CSS class chains or DOM
+255-structure invisible to the user.
+256-
+257-**Treat generated content as dynamic.** Assert completion, placement, non-empty output, and shape
+258-rather than exact generated wording. Wait for a completion signal or stable text, and ensure stale
+259-content cannot satisfy a new action's assertion.
+260-
+--
+271-**Authentication failures stop operations.** A cloud command failing authentication is a stop for
+272-human re-authentication, not a reason to retry with a different account, workspace, or subscription.
+273-
+274:## Redlines
+275-
+276-1. **Recording a criterion as passed when its check did not run** — forbidden outright. An
+277-   environment or external limit that stopped the run is recorded exactly as it happened.
+278-2. **Writing to the real learner's data from a test** — forbidden outright. Tests use
+279-   `sr_users.id = 2`, never `sr_users.id = 1`.
+280-3. **Driving `https://lemmadeck.com` during acceptance** — forbidden outright. Signing in, clicking,
+281-   submitting, or any other write-capable interaction is prohibited; acceptance runs against
+282-   localhost. A read-only GET required by the post-deploy check is allowed.
+283-4. **Writing a real password, session secret, or DB connection string into a check script, ticket
