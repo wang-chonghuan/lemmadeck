@@ -1,0 +1,103 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 301,
+  "printed_page": 292,
+  "notes": [
+    "AUTHOR only. The first line continues p0300#7 after 加, completing 加速不大，或完全没有被加速。",
+    "The printed 例题 is a worked-example column heading, not evidence of a new numbered source unit. No h1/h2/h3 or next numbered unit heading has been observed; source122 remains open.",
+    "Worked examples 1 and 2 and their printed 解 paragraphs are faithfully retained from this source page itself. No separate answer resources were read.",
+    "Figure275 is referenced by example1. Figure276 is printed alongside it; preserve its presence without inventing a textual reference or relabelling obscured apparatus glyphs.",
+    "The figure captions occupy one shared printed row. The printed second example number and 解 lead-ins are bold.",
+    "The final paragraph continues beyond the page after 则. No next-page source pixels were read.",
+    "The real footer is • 292 •."
+  ],
+  "errata": [],
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 301
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "de0e343cc2489e409529f72d1477ccc23c7dfe665fcbd5ce1a3b0150ed36d459"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "printed_lines": 18,
+  "figures": [
+    {
+      "id": "fig-275",
+      "label": "图 275",
+      "box": [
+        194,
+        636,
+        558,
+        397
+      ]
+    },
+    {
+      "id": "fig-276",
+      "label": "图 276",
+      "box": [
+        888,
+        565,
+        436,
+        467
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p cont -->
+速不大，或完全没有被加速。
+
+<!-- exhead -->
+例　题
+
+<!-- ex 1 -->
+1. 在马蹄形磁铁的两极上面放置一根通电的直导体（图
+275）。导体可以向任何方向自由地移动。这个导体将怎样运
+动？
+
+<!-- fig 图 275 box 194,636,558,397 -->
+![图 275](figures/fig-275.png)
+
+<!-- fig 图 276 box 888,565,436,467 -->
+![图 276](figures/fig-276.png)
+
+<!-- cap 图 275 -->
+图 275
+
+<!-- cap 图 276 samerow -->
+图 276
+
+<!-- p -->
+**解** 先求出导体上不同点处磁感应强度矢量的方向，然
+后利用左手定则，可以判断导体将在水平面内转动，并且将被
+吸到磁铁两个磁极之间。
+
+<!-- ex 2 -->
+**2.** 图 252 所示的通电线圈，其尺寸为 $d=3$ 厘米，$l=5$
+厘米，线圈中的电流强度 $I=10$ 安培，磁场的磁感应强度 $B=$
+$0.1$ 特斯拉。试求磁场对线圈的作用力矩。
+
+<!-- p open -->
+**解** 根据安培定律，磁场对线圈的每一个竖直边的作用
+力等于 $F=IBl$，方向垂直于线圈平面。每个力的力臂等于
+$d/2$。对线圈的上边和下边没有作用力，合力矩为
+$M=2F\cdot\frac{d}{2}=IBld=IBS$，
+式中 $S=ld$——线圈的面积。把各量的数值代到上式中，则
+
+<!-- foot -->
+• 292 •

@@ -1,0 +1,95 @@
+---
+{
+  "schema": "ld-s10y-lesson/page@3",
+  "book": "9p",
+  "page": 297,
+  "printed_page": 288,
+  "source": {
+    "pdf": "9p 苏联中学课本 物理 九年级.pdf",
+    "pdf_sha256": "df0ea9c3417b7ba0166872b33a8ec81ef20cfb9e15b512a44993174fe92162c0",
+    "pdf_page": 297
+  },
+  "render": {
+    "dpi": 300,
+    "w": 1504,
+    "h": 2289,
+    "sha256": "3cd76f1eae2a9b09ea9eacba61b580fbe133e10f8c8bc870ec77b7fb8e196414"
+  },
+  "profile": {
+    "id": "soviet-cn",
+    "sha256": "c364d68442cfccc9920d3e23932d418c3d7b123cf4a47408e6535dcb19f7104a"
+  },
+  "notes": [
+    "AUTHOR only. No h1, h2, h3 or exercise heading is visible on this page.",
+    "Figure268 and its caption interrupt the first paragraph. The caption shares the printed row with 可以把磁场的矢量B认.",
+    "The first paragraph is new, not a sentence continuation from page296. open/cont across the local figure preserves its printed order.",
+    "The final three printed lines are bold. The last visible characters 则跟 remain open to an unseen next page.",
+    "The source's magnetic force subscript 磁 is retained as a LaTeX text subscript. Formula (11-4) uses absolute values around I and q; scalar v is not a vector there.",
+    "The printed page number is flanked by two visible round bullet marks."
+  ],
+  "errata": [],
+  "printed_lines": 24,
+  "figures": [
+    {
+      "id": "fig-268",
+      "label": "图 268",
+      "box": [
+        647,
+        260,
+        606,
+        335
+      ]
+    }
+  ],
+  "provenance": {
+    "cap": "1",
+    "normalized": true
+  }
+}
+---
+
+<!-- p open -->
+现在我们求 $\vec{F}_{\text{磁}}$。为
+此，讨论一段通电的细
+长导体（图 268）。设这
+段导体的长度和横截面
+积 $S$ 都是很小的，从而，
+在这一段导体范围内，
+可以把磁场的矢量 $\vec{B}$ 认
+
+<!-- fig 图 268 box 647,260,606,335 -->
+![图 268](figures/fig-268.png)
+
+<!-- cap 图 268 samerow -->
+图 268
+
+<!-- p cont -->
+为是不变的。导体中的电流 $I$ 与粒子的电量 $q$、带电粒子的
+密度（单位体积内的电荷数）$n$ 和带电粒子有秩序运动的速度
+$v$ 有关，其关系式（§ 86）为
+$|I|=|q|nvS$。（11-4）
+
+<!-- p -->
+磁场对所取电流元的作用力等于
+$F=|I|\Delta lB\sin\alpha$。
+
+<!-- p -->
+把电流的关系式（11-4）代到上式中，则得
+$F=|q|nvS\Delta lB\sin\alpha=v|q|NB\sin\alpha$，
+
+<!-- p -->
+式中 $N=nS\Delta l$ ——所研究的体积中的带电粒子数。因此，磁
+场对每个运动电荷的作用力为
+$F_{\text{磁}}=\frac{F}{N}=|q|vB\sin\alpha$。
+
+<!-- p -->
+这个力的方向垂直于矢量 $\vec{B}$ 和 $\vec{v}$，它的方向也是用左手
+定则确定。
+
+<!-- p open -->
+**如果左手这样放置，使得磁感应强度 $\vec{B}$ 在垂直于电荷速**
+**度方向的分量穿过掌心（或者换句话说，磁力线穿过掌心），四**
+**个手指指向正电荷运动的方向（负电荷运动的反方向），则跟**
+
+<!-- foot -->
+• 288 •
