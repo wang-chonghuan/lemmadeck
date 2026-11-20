@@ -1,0 +1,14 @@
+{
+  "name": "d299-six-current-template-idempotency",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck",
+  "command": [
+    ".claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-c",
+    "import sys,json,copy; from pathlib import Path; sys.path.insert(0,\".claude/skills/ld-s10y-lesson/tools\"); from edition import normalize_lesson_layout,prose_flow_contract,validate_lesson_identity; current=json.loads(Path(\".intentfold/tickets/STEMROBIN-181/tmp/d1816-d299-current-figure-text/result.json\").read_text()); results=[]; [(normalize_lesson_layout(new),results.append({\"path\":row[\"template\"][\"path\"],\"equal\":new==old,\"flowErrors\":prose_flow_contract(new[\"prose\"],new[\"section_breaks\"])[1],\"identityErrors\":validate_lesson_identity(old[\"source\"][\"data\"],new)})) for row in current[\"templates\"] for old in [json.loads(Path(row[\"template\"][\"path\"]).read_text())] for new in [copy.deepcopy(old)]]; print(json.dumps(results)); assert all(row[\"equal\"] and not row[\"flowErrors\"] and not row[\"identityErrors\"] for row in results)"
+  ],
+  "startedAt": "2026-11-20T20:34:45.750Z",
+  "finishedAt": "2026-11-20T20:34:46.069Z",
+  "elapsedMs": 319,
+  "exitCode": 0,
+  "error": null
+}

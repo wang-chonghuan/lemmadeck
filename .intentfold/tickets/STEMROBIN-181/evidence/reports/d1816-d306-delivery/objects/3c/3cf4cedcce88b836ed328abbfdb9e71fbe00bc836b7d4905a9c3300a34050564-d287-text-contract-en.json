@@ -1,0 +1,151 @@
+{
+  "name": "d287-text-contract-en",
+  "startedAt": "2026-11-20T20:15:02.016Z",
+  "finishedAt": "2026-11-20T20:15:02.111Z",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck",
+  "executable": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+  "args": [
+    "-c",
+    "\nimport sys\nsys.dont_write_bytecode = True\nsys.path.insert(0, sys.argv[1])\nimport json\nfrom pathlib import Path\nimport edition as E\nbook, folder, profile_path = map(Path, sys.argv[2:5])\nlesson = E.load(folder / \"lesson.template.json\")\nexercises = E.load(folder / \"exercises.template.json\")\nraw_lesson_path = book / \"lessons\" / lesson[\"id\"] / \"lesson.json\"\nraw_exercises_path = book / \"lessons\" / lesson[\"id\"] / \"exercises.json\"\nraw_lesson = E.load(raw_lesson_path)\nraw_exercises = E.load(raw_exercises_path)\nprofile = E.load(profile_path)\nerrors = []\nerrors += E.validate_source(book, lesson.get(\"source\"), raw_lesson_path, \"lesson\")\nerrors += E.validate_source(book, exercises.get(\"source\"), raw_exercises_path, \"exercises\")\nerrors += E.validate_lesson_identity(raw_lesson, lesson)\nif lesson.get(\"schema\") != E.LESSON_SCHEMA or exercises.get(\"schema\") != E.EXERCISES_SCHEMA:\n    errors.append(\"native template schema changed\")\nif lesson.get(\"edition\") != folder.parents[1].name or exercises.get(\"edition\") != folder.parents[1].name:\n    errors.append(\"edition identity mismatch\")\ncorrections, errata_errors = E.validate_errata(book, raw_lesson, raw_exercises, lesson, exercises)\nerrors += errata_errors\ntry:\n    authoritative_targets = E._authoritative_source_targets(book, raw_lesson, raw_exercises)\n    if E._refs_by_target(authoritative_targets) != E._refs_by_target(E._source_target_map(raw_lesson, raw_exercises)):\n        errors.append(\"canonical source_refs differ from authoritative page binding\")\nexcept SystemExit as error:\n    authoritative_targets = {}\n    errors.append(str(error))\nnative_flow, flow_errors = E.prose_flow_contract(lesson[\"prose\"], lesson[\"section_breaks\"])\nerrors += flow_errors\nfor index, (source, modern) in enumerate(zip(raw_lesson[\"prose\"], lesson[\"prose\"])):\n    label = f\"lesson.prose[{index}]\"\n    for field in (\"kind\", \"id\", \"label\", \"printed_page\", \"source_refs\"):\n        if source.get(field) != modern.get(field):\n            errors.append(f\"{label}.{field} changed\")\n    if modern[\"source_text\"] != source[\"text\"]:\n        errors.append(f\"{label}.source_text changed\")\n    if modern.get(\"numeric_changes\") != []:\n        errors.append(f\"{label} declares numeric changes\")\n    if \"notation\" not in modern[\"changes\"] and index in (2, 3):\n        errors.append(f\"{label} missing notation declaration\")\n    if lesson.get(\"locale\") == \"en\" and modern.get(\"kind\") == \"p\" and E.normalize_prose_layout(modern[\"text\"]) != modern[\"text\"]:\n        errors.append(f\"{label} is not native-normalized\")\n    errors += E.validate_text(source[\"text\"], modern[\"text\"], modern[\"changes\"],\n        modern[\"numeric_changes\"], label,\n        profile.get(\"forbidden_terms\", []) + profile.get(\"forbidden_person_names\", []),\n        modern.get(\"historical_entities\"), corrections.get(label), modern.get(\"notation_changes\"))\nif len(raw_lesson[\"prose\"]) != len(lesson[\"prose\"]):\n    errors.append(\"source prose block count changed\")\nif exercises[\"count\"] != 0 or exercises[\"exercises\"] != [] or raw_exercises[\"count\"] != 0:\n    errors.append(\"zero exercise count changed\")\nif lesson[\"errata\"] != []:\n    errors.append(\"unexpected errata\")\nprint(json.dumps({\n    \"status\": \"pass\" if not errors else \"fail\", \"errors\": errors,\n    \"scope\": \"Native text/source/identity/math/digits/errata/prose-flow functions only; no figure validation, finalization, scientific approval or writes.\",\n    \"proseFlow\": native_flow, \"sourceProseBlocks\": len(raw_lesson[\"prose\"]),\n    \"authoritativeSourceTargets\": authoritative_targets,\n    \"normalization\": \"English native-normalized; Chinese deliberately unchanged to preserve retained flow, known normalizer drift retained separately.\",\n    \"mathAtoms\": sum(len(E.math_signature(block[\"text\"])) for block in lesson[\"prose\"]),\n    \"sourceTasks\": raw_exercises[\"count\"], \"candidateTasks\": exercises[\"count\"],\n}, ensure_ascii=False, indent=2))\nraise SystemExit(0 if not errors else 2)\n",
+    "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools",
+    "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.tmp/STEMROBIN-181/d1816-d287/source-root/10p",
+    "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.tmp/STEMROBIN-181/d1816-d287/work/adapt/10p/modern-us-neutral-en/lessons/phy10-c1-s3-n19",
+    "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json"
+  ],
+  "exitCode": 0,
+  "signal": null,
+  "stdout": "{\n  \"status\": \"pass\",\n  \"errors\": [],\n  \"scope\": \"Native text/source/identity/math/digits/errata/prose-flow functions only; no figure validation, finalization, scientific approval or writes.\",\n  \"proseFlow\": {\n    \"paragraphs\": [\n      {\n        \"index\": 0,\n        \"blockIndex\": 0,\n        \"paragraphInBlock\": 0,\n        \"text\": \"Electrical oscillations in an oscillating circuit are similar to the free oscillations of a spring oscillator, an object attached to a spring.\\nDifferent physical quantities change periodically, which means their changes repeat: in mechanical oscillations, the changing quantities are the object's position coordinate $x$ and its velocity component $v_x$, which gives its speed and direction along the chosen axis;\"\n      },\n      {\n        \"index\": 1,\n        \"blockIndex\": 0,\n        \"paragraphInBlock\": 1,\n        \"text\": \"in electrical oscillations, they are the charge $q$ stored in the capacitor and the current $i$ flowing in the circuit.\\nThese quantities have different physical meanings, but the ways they change periodically over time are similar.\"\n      },\n      {\n        \"index\": 2,\n        \"blockIndex\": 0,\n        \"paragraphInBlock\": 2,\n        \"text\": \"This is because the conditions that produce the two kinds of oscillation are similar.\\nThe elastic force $F_x$, exerted by the spring, brings the spring oscillator back toward its equilibrium position, where the spring exerts no net restoring force.\"\n      },\n      {\n        \"index\": 3,\n        \"blockIndex\": 0,\n        \"paragraphInBlock\": 3,\n        \"text\": \"The farther the oscillator moves from equilibrium, the greater the elastic force: the force's magnitude is proportional to the size of the displacement, with spring stiffness $k$ as the constant of proportionality.\\nThe voltage $U$ between the capacitor's plates causes the capacitor to discharge, so current begins to flow.\"\n      },\n      {\n        \"index\": 4,\n        \"blockIndex\": 0,\n        \"paragraphInBlock\": 4,\n        \"text\": \"This voltage is proportional to the charge $q$, because $U=\\\\frac{1}{C}q$.\\nHere the constant of proportionality is the reciprocal of the capacitance, $\\\\frac{1}{C}$: the capacitance tells us how much charge the capacitor stores for a given voltage.\"\n      },\n      {\n        \"index\": 5,\n        \"blockIndex\": 1,\n        \"paragraphInBlock\": 0,\n        \"text\": \"Because of inertia, the object's tendency to keep its motion, a force can increase the oscillator's speed only gradually;\\nwhen the force stops acting, the velocity does not immediately become zero.\"\n      },\n      {\n        \"index\": 6,\n        \"blockIndex\": 1,\n        \"paragraphInBlock\": 1,\n        \"text\": \"Similarly, because of self-induction, in which a changing current produces an effect that opposes that change, the current in a coil increases gradually under an applied voltage;\\nwhen the voltage becomes zero, the current does not immediately disappear.\"\n      },\n      {\n        \"index\": 7,\n        \"blockIndex\": 1,\n        \"paragraphInBlock\": 2,\n        \"text\": \"The circuit's inductance $L$, which describes the coil's opposition to changes in current, corresponds to the oscillator's mass $m$.\\nComparing the oscillator's kinetic energy $\\\\frac{mv_x^2}{2}$ with the energy of the current's magnetic field, $\\\\frac{Li^2}{2}$, shows how these quantities correspond in the energy formulas.\"\n      },\n      {\n        \"index\": 8,\n        \"blockIndex\": 2,\n        \"paragraphInBlock\": 0,\n        \"text\": \"Charging the capacitor corresponds to moving the oscillator away from equilibrium by hand.\\nIts initial displacement is $x_{\\\\mathrm{m}}$, so the spring oscillator has potential energy $\\\\frac{kx_{\\\\mathrm{m}}^2}{2}$, energy stored by stretching or compressing the spring (Figure $28$b).\"\n      },\n      {\n        \"index\": 9,\n        \"blockIndex\": 2,\n        \"paragraphInBlock\": 1,\n        \"text\": \"Comparing this expression with the capacitor's energy $\\\\frac{q_{\\\\mathrm{m}}^2}{2C}$ shows that spring stiffness $k$ corresponds to the reciprocal of capacitance, $\\\\frac{1}{C}$.\\nThe oscillator's initial coordinate $x_{\\\\mathrm{m}}$ corresponds to the capacitor's initial charge $q_{\\\\mathrm{m}}$.\"\n      },\n      {\n        \"index\": 10,\n        \"blockIndex\": 3,\n        \"paragraphInBlock\": 0,\n        \"text\": \"The current caused by a potential difference, or voltage, corresponds to the velocity $v_x$ that the oscillator gains under the spring's elastic force (Figure $29$b).\\nAt a particular instant, an alternating current can be expressed as the time derivative of transferred charge: the rate at which charge passes, found by considering shorter and shorter time intervals, with transferred charge counted positively in the chosen positive current direction.\\n$i=\\\\lim_{\\\\Delta t \\\\to 0}\\\\frac{\\\\Delta q}{\\\\Delta t}=q'$.\"\n      },\n      {\n        \"index\": 11,\n        \"blockIndex\": 4,\n        \"paragraphInBlock\": 0,\n        \"text\": \"The table below summarizes the corresponding quantities in mechanical and electrical oscillations.\"\n      }\n    ],\n    \"resolvedBreaks\": [\n      5,\n      8,\n      11\n    ],\n    \"boundaries\": [\n      {\n        \"index\": 5,\n        \"before\": \"This voltage is proportional to the charge $q$, because $U=\\\\frac{1}{C}q$.\\nHere the constant of proportionality is the reciprocal of the capacitance, $\\\\frac{1}{C}$: the capacitance tells us how much charge the capacitor stores for a given voltage.\",\n        \"after\": \"Because of inertia, the object's tendency to keep its motion, a force can increase the oscillator's speed only gradually;\\nwhen the force stops acting, the velocity does not immediately become zero.\"\n      },\n      {\n        \"index\": 8,\n        \"before\": \"The circuit's inductance $L$, which describes the coil's opposition to changes in current, corresponds to the oscillator's mass $m$.\\nComparing the oscillator's kinetic energy $\\\\frac{mv_x^2}{2}$ with the energy of the current's magnetic field, $\\\\frac{Li^2}{2}$, shows how these quantities correspond in the energy formulas.\",\n        \"after\": \"Charging the capacitor corresponds to moving the oscillator away from equilibrium by hand.\\nIts initial displacement is $x_{\\\\mathrm{m}}$, so the spring oscillator has potential energy $\\\\frac{kx_{\\\\mathrm{m}}^2}{2}$, energy stored by stretching or compressing the spring (Figure $28$b).\"\n      },\n      {\n        \"index\": 11,\n        \"before\": \"The current caused by a potential difference, or voltage, corresponds to the velocity $v_x$ that the oscillator gains under the spring's elastic force (Figure $29$b).\\nAt a particular instant, an alternating current can be expressed as the time derivative of transferred charge: the rate at which charge passes, found by considering shorter and shorter time intervals, with transferred charge counted positively in the chosen positive current direction.\\n$i=\\\\lim_{\\\\Delta t \\\\to 0}\\\\frac{\\\\Delta q}{\\\\Delta t}=q'$.\",\n        \"after\": \"The table below summarizes the corresponding quantities in mechanical and electrical oscillations.\"\n      }\n    ]\n  },\n  \"sourceProseBlocks\": 6,\n  \"authoritativeSourceTargets\": {\n    \"p0052#6\": {\n      \"lesson.prose[0]\": \"回路里的电振荡与自由机械振动，例如，与弹簧振子的振动相似。这个类似之点不是指周期性变化的物理量的本质，因为在机械振动中作周期性变化的是物体的坐标 $x$ 和它的速度投影 $v_x$；而在电振荡中，作周期性变化的是电容器的电量 $q$和电路中的电流强度 $i$。相似的是这些量的周期性变化过程。这些量的变化（机械的和电的）性质相同的原因是产生机械振动和电振荡的条件有类似性。使弹簧振子恢复到平衡位置的是弹性力 $F_x$。这个力与振子离开平衡位置的位移成正比，比例系数是弹簧的刚度 $k$。电容器的放电（即电流的出现）是由电容器极板间的电压 $U$ 决定的，这个电压与电量 $q$ 成正比，因为 $U=\\\\frac{1}{C}q$。比例系数是电容的倒数 $\\\\frac{1}{C}$。\"\n    },\n    \"p0053#1\": {\n      \"lesson.prose[0]\": \"回路里的电振荡与自由机械振动，例如，与弹簧振子的振动相似。这个类似之点不是指周期性变化的物理量的本质，因为在机械振动中作周期性变化的是物体的坐标 $x$ 和它的速度投影 $v_x$；而在电振荡中，作周期性变化的是电容器的电量 $q$和电路中的电流强度 $i$。相似的是这些量的周期性变化过程。这些量的变化（机械的和电的）性质相同的原因是产生机械振动和电振荡的条件有类似性。使弹簧振子恢复到平衡位置的是弹性力 $F_x$。这个力与振子离开平衡位置的位移成正比，比例系数是弹簧的刚度 $k$。电容器的放电（即电流的出现）是由电容器极板间的电压 $U$ 决定的，这个电压与电量 $q$ 成正比，因为 $U=\\\\frac{1}{C}q$。比例系数是电容的倒数 $\\\\frac{1}{C}$。\"\n    },\n    \"p0053#2\": {\n      \"lesson.prose[1]\": \"振子由于有惯性，在力的作用下增大速度只能是逐渐的，并且速度在力的作用停止以后不能立即变为零。与此相似，由于有自感现象，线圈里的电流在电压的作用下也是逐渐地增大，并且当电压等于零时不能立即消失。回路里的电感系数 $L$ 起的作用与力学中振子的质量 $m$ 的作用一样。把振子的动能 $\\\\frac{mv_x^2}{2}$ 与电流的能量 $\\\\frac{Li^2}{2}$ 对比时，这一点是显而易见的。\"\n    },\n    \"p0053#3\": {\n      \"lesson.prose[2]\": \"用电池组给电容器充电相当于使振子离开平衡位置（例如，用手推）$x_{\\\\mathrm{м}}$，从而使弹簧振子具有势能 $\\\\frac{kx_{\\\\mathrm{м}}^2}{2}$（图 $28$б）。把这个表示式与电容器的能量 $\\\\frac{q_{\\\\mathrm{м}}^2}{2C}$ 比较，我们发现系数 $k$ 类似于 $\\\\frac{1}{C}$，而初始坐标 $x_{\\\\mathrm{м}}$ 类似于电量 $q_{\\\\mathrm{м}}$。\"\n    },\n    \"p0053#4\": {\n      \"lesson.prose[3]\": \"由电势差引起的电流与在弹簧弹力作用下得到的速度 $v_x$ 相当（图$29$б），并且交变电流在某一时刻的电流强度可由通过的电量对时间的导数来确定，$i=\\\\lim_{\\\\Delta t \\\\to 0}\\\\frac{\\\\Delta q}{\\\\Delta t}=q'$。\"\n    },\n    \"p0053#5\": {\n      \"lesson.prose[4]\": \"用下面的表可以总括上述全部内容：\"\n    },\n    \"p0053#6\": {\n      \"lesson.prose[5]\": \"\"\n    }\n  },\n  \"normalization\": \"English native-normalized; Chinese deliberately unchanged to preserve retained flow, known normalizer drift retained separately.\",\n  \"mathAtoms\": 25,\n  \"sourceTasks\": 0,\n  \"candidateTasks\": 0\n}\n",
+  "stderr": "",
+  "error": null,
+  "result": {
+    "status": "pass",
+    "errors": [],
+    "scope": "Native text/source/identity/math/digits/errata/prose-flow functions only; no figure validation, finalization, scientific approval or writes.",
+    "proseFlow": {
+      "paragraphs": [
+        {
+          "index": 0,
+          "blockIndex": 0,
+          "paragraphInBlock": 0,
+          "text": "Electrical oscillations in an oscillating circuit are similar to the free oscillations of a spring oscillator, an object attached to a spring.\nDifferent physical quantities change periodically, which means their changes repeat: in mechanical oscillations, the changing quantities are the object's position coordinate $x$ and its velocity component $v_x$, which gives its speed and direction along the chosen axis;"
+        },
+        {
+          "index": 1,
+          "blockIndex": 0,
+          "paragraphInBlock": 1,
+          "text": "in electrical oscillations, they are the charge $q$ stored in the capacitor and the current $i$ flowing in the circuit.\nThese quantities have different physical meanings, but the ways they change periodically over time are similar."
+        },
+        {
+          "index": 2,
+          "blockIndex": 0,
+          "paragraphInBlock": 2,
+          "text": "This is because the conditions that produce the two kinds of oscillation are similar.\nThe elastic force $F_x$, exerted by the spring, brings the spring oscillator back toward its equilibrium position, where the spring exerts no net restoring force."
+        },
+        {
+          "index": 3,
+          "blockIndex": 0,
+          "paragraphInBlock": 3,
+          "text": "The farther the oscillator moves from equilibrium, the greater the elastic force: the force's magnitude is proportional to the size of the displacement, with spring stiffness $k$ as the constant of proportionality.\nThe voltage $U$ between the capacitor's plates causes the capacitor to discharge, so current begins to flow."
+        },
+        {
+          "index": 4,
+          "blockIndex": 0,
+          "paragraphInBlock": 4,
+          "text": "This voltage is proportional to the charge $q$, because $U=\\frac{1}{C}q$.\nHere the constant of proportionality is the reciprocal of the capacitance, $\\frac{1}{C}$: the capacitance tells us how much charge the capacitor stores for a given voltage."
+        },
+        {
+          "index": 5,
+          "blockIndex": 1,
+          "paragraphInBlock": 0,
+          "text": "Because of inertia, the object's tendency to keep its motion, a force can increase the oscillator's speed only gradually;\nwhen the force stops acting, the velocity does not immediately become zero."
+        },
+        {
+          "index": 6,
+          "blockIndex": 1,
+          "paragraphInBlock": 1,
+          "text": "Similarly, because of self-induction, in which a changing current produces an effect that opposes that change, the current in a coil increases gradually under an applied voltage;\nwhen the voltage becomes zero, the current does not immediately disappear."
+        },
+        {
+          "index": 7,
+          "blockIndex": 1,
+          "paragraphInBlock": 2,
+          "text": "The circuit's inductance $L$, which describes the coil's opposition to changes in current, corresponds to the oscillator's mass $m$.\nComparing the oscillator's kinetic energy $\\frac{mv_x^2}{2}$ with the energy of the current's magnetic field, $\\frac{Li^2}{2}$, shows how these quantities correspond in the energy formulas."
+        },
+        {
+          "index": 8,
+          "blockIndex": 2,
+          "paragraphInBlock": 0,
+          "text": "Charging the capacitor corresponds to moving the oscillator away from equilibrium by hand.\nIts initial displacement is $x_{\\mathrm{m}}$, so the spring oscillator has potential energy $\\frac{kx_{\\mathrm{m}}^2}{2}$, energy stored by stretching or compressing the spring (Figure $28$b)."
+        },
+        {
+          "index": 9,
+          "blockIndex": 2,
+          "paragraphInBlock": 1,
+          "text": "Comparing this expression with the capacitor's energy $\\frac{q_{\\mathrm{m}}^2}{2C}$ shows that spring stiffness $k$ corresponds to the reciprocal of capacitance, $\\frac{1}{C}$.\nThe oscillator's initial coordinate $x_{\\mathrm{m}}$ corresponds to the capacitor's initial charge $q_{\\mathrm{m}}$."
+        },
+        {
+          "index": 10,
+          "blockIndex": 3,
+          "paragraphInBlock": 0,
+          "text": "The current caused by a potential difference, or voltage, corresponds to the velocity $v_x$ that the oscillator gains under the spring's elastic force (Figure $29$b).\nAt a particular instant, an alternating current can be expressed as the time derivative of transferred charge: the rate at which charge passes, found by considering shorter and shorter time intervals, with transferred charge counted positively in the chosen positive current direction.\n$i=\\lim_{\\Delta t \\to 0}\\frac{\\Delta q}{\\Delta t}=q'$."
+        },
+        {
+          "index": 11,
+          "blockIndex": 4,
+          "paragraphInBlock": 0,
+          "text": "The table below summarizes the corresponding quantities in mechanical and electrical oscillations."
+        }
+      ],
+      "resolvedBreaks": [
+        5,
+        8,
+        11
+      ],
+      "boundaries": [
+        {
+          "index": 5,
+          "before": "This voltage is proportional to the charge $q$, because $U=\\frac{1}{C}q$.\nHere the constant of proportionality is the reciprocal of the capacitance, $\\frac{1}{C}$: the capacitance tells us how much charge the capacitor stores for a given voltage.",
+          "after": "Because of inertia, the object's tendency to keep its motion, a force can increase the oscillator's speed only gradually;\nwhen the force stops acting, the velocity does not immediately become zero."
+        },
+        {
+          "index": 8,
+          "before": "The circuit's inductance $L$, which describes the coil's opposition to changes in current, corresponds to the oscillator's mass $m$.\nComparing the oscillator's kinetic energy $\\frac{mv_x^2}{2}$ with the energy of the current's magnetic field, $\\frac{Li^2}{2}$, shows how these quantities correspond in the energy formulas.",
+          "after": "Charging the capacitor corresponds to moving the oscillator away from equilibrium by hand.\nIts initial displacement is $x_{\\mathrm{m}}$, so the spring oscillator has potential energy $\\frac{kx_{\\mathrm{m}}^2}{2}$, energy stored by stretching or compressing the spring (Figure $28$b)."
+        },
+        {
+          "index": 11,
+          "before": "The current caused by a potential difference, or voltage, corresponds to the velocity $v_x$ that the oscillator gains under the spring's elastic force (Figure $29$b).\nAt a particular instant, an alternating current can be expressed as the time derivative of transferred charge: the rate at which charge passes, found by considering shorter and shorter time intervals, with transferred charge counted positively in the chosen positive current direction.\n$i=\\lim_{\\Delta t \\to 0}\\frac{\\Delta q}{\\Delta t}=q'$.",
+          "after": "The table below summarizes the corresponding quantities in mechanical and electrical oscillations."
+        }
+      ]
+    },
+    "sourceProseBlocks": 6,
+    "authoritativeSourceTargets": {
+      "p0052#6": {
+        "lesson.prose[0]": "回路里的电振荡与自由机械振动，例如，与弹簧振子的振动相似。这个类似之点不是指周期性变化的物理量的本质，因为在机械振动中作周期性变化的是物体的坐标 $x$ 和它的速度投影 $v_x$；而在电振荡中，作周期性变化的是电容器的电量 $q$和电路中的电流强度 $i$。相似的是这些量的周期性变化过程。这些量的变化（机械的和电的）性质相同的原因是产生机械振动和电振荡的条件有类似性。使弹簧振子恢复到平衡位置的是弹性力 $F_x$。这个力与振子离开平衡位置的位移成正比，比例系数是弹簧的刚度 $k$。电容器的放电（即电流的出现）是由电容器极板间的电压 $U$ 决定的，这个电压与电量 $q$ 成正比，因为 $U=\\frac{1}{C}q$。比例系数是电容的倒数 $\\frac{1}{C}$。"
+      },
+      "p0053#1": {
+        "lesson.prose[0]": "回路里的电振荡与自由机械振动，例如，与弹簧振子的振动相似。这个类似之点不是指周期性变化的物理量的本质，因为在机械振动中作周期性变化的是物体的坐标 $x$ 和它的速度投影 $v_x$；而在电振荡中，作周期性变化的是电容器的电量 $q$和电路中的电流强度 $i$。相似的是这些量的周期性变化过程。这些量的变化（机械的和电的）性质相同的原因是产生机械振动和电振荡的条件有类似性。使弹簧振子恢复到平衡位置的是弹性力 $F_x$。这个力与振子离开平衡位置的位移成正比，比例系数是弹簧的刚度 $k$。电容器的放电（即电流的出现）是由电容器极板间的电压 $U$ 决定的，这个电压与电量 $q$ 成正比，因为 $U=\\frac{1}{C}q$。比例系数是电容的倒数 $\\frac{1}{C}$。"
+      },
+      "p0053#2": {
+        "lesson.prose[1]": "振子由于有惯性，在力的作用下增大速度只能是逐渐的，并且速度在力的作用停止以后不能立即变为零。与此相似，由于有自感现象，线圈里的电流在电压的作用下也是逐渐地增大，并且当电压等于零时不能立即消失。回路里的电感系数 $L$ 起的作用与力学中振子的质量 $m$ 的作用一样。把振子的动能 $\\frac{mv_x^2}{2}$ 与电流的能量 $\\frac{Li^2}{2}$ 对比时，这一点是显而易见的。"
+      },
+      "p0053#3": {
+        "lesson.prose[2]": "用电池组给电容器充电相当于使振子离开平衡位置（例如，用手推）$x_{\\mathrm{м}}$，从而使弹簧振子具有势能 $\\frac{kx_{\\mathrm{м}}^2}{2}$（图 $28$б）。把这个表示式与电容器的能量 $\\frac{q_{\\mathrm{м}}^2}{2C}$ 比较，我们发现系数 $k$ 类似于 $\\frac{1}{C}$，而初始坐标 $x_{\\mathrm{м}}$ 类似于电量 $q_{\\mathrm{м}}$。"
+      },
+      "p0053#4": {
+        "lesson.prose[3]": "由电势差引起的电流与在弹簧弹力作用下得到的速度 $v_x$ 相当（图$29$б），并且交变电流在某一时刻的电流强度可由通过的电量对时间的导数来确定，$i=\\lim_{\\Delta t \\to 0}\\frac{\\Delta q}{\\Delta t}=q'$。"
+      },
+      "p0053#5": {
+        "lesson.prose[4]": "用下面的表可以总括上述全部内容："
+      },
+      "p0053#6": {
+        "lesson.prose[5]": ""
+      }
+    },
+    "normalization": "English native-normalized; Chinese deliberately unchanged to preserve retained flow, known normalizer drift retained separately.",
+    "mathAtoms": 25,
+    "sourceTasks": 0,
+    "candidateTasks": 0
+  }
+}

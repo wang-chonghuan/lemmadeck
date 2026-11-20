@@ -1,0 +1,617 @@
+---
+name: ld-s10y-image
+description: Load when creating, repairing, reviewing, or migrating figures for Soviet 10 Years modern-edition lessons, especially geometry, number lines, charts, measured diagrams, semantic illustrations, or hybrid figures that combine GPT Image artwork with exact mathematical overlays.
+---
+
+# ld-s10y-image
+
+Create modern textbook figures without asking an image model to preserve exact
+mathematics.
+
+For batch continuation and execution faults, follow the lesson pipeline's
+[technical recovery contract](../../../.claude/skills/ld-s10y-lesson/references/production-resume.md).
+A tool retry does not reset paid/image usage or approve a failed figure.
+
+## Ownership
+
+This skill owns the complete modern-edition figure workflow:
+
+- authoritative edition-text context
+- renderer selection
+- `ld-s10y-image/figure-spec@2`
+- deterministic geometry and labels
+- GPT Image artwork through `n-azure`
+- layered hybrid composition
+- hash-bound mathematical, visual, and cultural review
+
+`ld-s10y-lesson` owns extraction, lesson assembly, edition text, and publishing.
+It must delegate modern figure work here.
+
+## Image batches
+
+These rules cover source pages, figures, crops and verification screenshots:
+
+- Read at most 8 images per batch. Count every image loaded into the current
+  context, including reopens and crops; never let that total exceed 24.
+- For multiple batches, when delegation is available and authorized, use a fresh
+  subagent per batch with only the needed text and image paths, not image-bearing
+  history. Finish that batch and return only textual observations and existing
+  evidence paths/hashes before starting the next. The parent must not reopen the
+  whole batch or receive its image payloads; inspect specific findings only.
+- Without bounded delegation, return a textual checkpoint and load the next batch
+  only after compaction has removed the old image history or in a fresh context.
+  Waiting, smaller tool calls,
+  smaller images and returning text do not clear image history. Do not rely on
+  token-triggered automatic compaction to stay below the image limit.
+
+## Capabilities
+
+### cap1 — Plan one figure
+
+Build context, inspect the edition text and original PNG, select a rendering
+mode, and write a draft FigureSpec. Read
+[routing.md](references/routing.md) and
+[figure-spec.md](references/figure-spec.md).
+
+Before drawing or reusing any existing modern figure, reopen the original PNG
+named by `source.image` and record `source.inventory` from those pixels:
+independently describe every source subfigure, point, relationship, label,
+row/column and given value, then map those requirements to object and
+assertion IDs. Treat a reused FigureSpec as an unverified draft until this
+comparison is complete. Use stable IDs derived from the source inventory.
+Record justified modern additions separately from source facts; do not relabel
+axes, ticks, regularization, or other additions as source content. A
+byte-identical regenerated output proves renderer determinism only. It does
+not prove source fidelity, and `objectCount` cannot replace grid-dimension or
+point-relationship assertions. Mark applicable inventory groups with
+`requires: ["gridDimensions"]` or `requires: ["pointRelationships"]` so the
+validator enforces that distinction. A point-relationship group must map every
+source point to at least one mapped relationship assertion wholly inside that
+group; a relation among other points, or one that escapes to an unmapped point,
+does not cover the missing source point.
+
+Classify `display.purpose` independently of rendering mode. Use
+`instructional` for anything whose detail, geometry, relationship, apparatus,
+table, or data the learner must inspect. Instructional figures normally use
+the product's standard width, but may declare an inline `display.maxWidthPx`
+from 240 through 960 when their composition is legible at a smaller natural
+size; all declared test widths must fit that maximum. Use `decorative` only
+for portraits, avatars, and comparable non-instructional images; these must
+use inline layout and a validated `display.maxWidthPx` from 128 through 240
+(normally 160 for a portrait). Read the full contract in
+[figure-spec.md](references/figure-spec.md).
+
+Measure the media width in the headed product, not only the containing column.
+For inline figures include the actual mobile media width in `display.widths`.
+For scroll figures include the fixed media width: the current product renders
+scroll media at 640 px even when the source canvas is wider. A canvas-width-only
+check can incorrectly pass text that the product shrinks below 16 px.
+
+For new choice diagrams derived from written mathematics rather than an
+original image, use the deterministic `source.authoredBasis` path in the
+FigureSpec contract. Do not fabricate an original; the pixel-inventory rule
+above applies to source-image figures, while authored diagrams map their stated
+geometry and deliberate alternatives to the same executable assertions.
+
+Update the lesson edition figure entry to exactly one final-output contract:
+
+- `deterministic`: `svg` + `render` + `review` + `spec`
+- `hybrid`: `artwork` + overlay `svg` + `render` + `review` + `spec`
+- `generated`: `png` + `generation` + `review` + `spec`
+
+Remove fields from the other modes. A hybrid figure never publishes a
+flattened PNG. Its artwork-generation metadata is referenced by
+`spec.assets[].metadata`, not duplicated in the lesson manifest.
+
+```bash
+python .agents/skills/ld-s10y-image/scripts/build_context.py \
+  --book 5m --edition modern-us-neutral --figure fig-29 \
+  --output .tmp/s10y-image/fig-29/context.json
+```
+
+The host agent performs semantic interpretation. Deterministic scripts never
+guess what the source diagram means.
+
+### cap2 — Render deterministic or hybrid geometry
+
+Validate the spec, then render it with JSXGraph:
+
+```bash
+python .agents/skills/ld-s10y-image/scripts/validate_spec.py \
+  .tmp/s10y-image/fig-29/spec.json --stage draft
+
+node .agents/skills/ld-s10y-image/scripts/render_spec.mjs \
+  --spec .tmp/s10y-image/fig-29/spec.json \
+  --svg .tmp/s10y-image/fig-29/fig-29.svg \
+  --report .tmp/s10y-image/fig-29/fig-29.render.json
+```
+
+The validator also rejects finite geometry outside the canvas; label checks
+alone miss clipped table borders and blank answer cells. The renderer fails
+when labels overlap, leave the canvas, or render below `display.minTextPx` at
+any declared product width. For hybrid mode, also pass `--artwork` for the
+transparent artwork layer; `--svg` remains the independent mathematical
+overlay. Repair the spec once; do not hand-edit generated SVG paths.
+
+### cap3 — Generate semantic artwork
+
+Read [generation.md](references/generation.md). Use `n-azure` cap4 with the
+original PNG and complete edition text. For hybrid figures, generate only the
+natural objects or scene; omit grids, measurements, coordinates, labels, and
+answer-bearing annotations. Request a transparent background when practical.
+
+### cap4 — Review and promote
+
+Read [quality-gate.md](references/quality-gate.md). A figure is promotable only
+when:
+
+1. FigureSpec validation passes.
+2. Render report status is `pass` for deterministic or hybrid output.
+3. Mathematical and cultural visual review passes.
+4. A separate `ld-s10y-image/review@1` file records `status: pass` and hashes
+   the current source, spec, evidence, and durable outputs.
+5. The lesson edition validator and offline lesson render pass.
+
+Record the review after inspecting the figure:
+
+```bash
+python .agents/skills/ld-s10y-image/scripts/record_review.py \
+  --spec .tmp/s10y-image/fig-29/spec.json \
+  --render .tmp/s10y-image/fig-29/fig-29.render.json \
+  --output .tmp/s10y-image/fig-29/fig-29.review.json \
+  --status pass \
+  --notes "Compared with the source image and current edition text."
+```
+
+Use `--generation` instead of `--render` for `generated` mode. Preview under
+`.tmp/`. Do not overwrite edition assets or write the database before
+approval. Promoted metadata may depend only on durable edition files.
+
+For a corpus migration or audit, derive the target set from lesson prose,
+exercise display objects, and `figure_refs`:
+
+```bash
+python .agents/skills/ld-s10y-image/scripts/audit_corpus.py \
+  --edition modern-us-neutral --require-current \
+  --output .tmp/s10y-image/corpus-audit.json
+```
+
+Do not substitute a glob of FigureSpec files for this audit. A referenced
+figure can be absent from its lesson manifest, and an unreferenced file does
+not prove that the product uses it.
+
+## Non-negotiable rules
+
+- Edition text is authoritative; the original PNG supplies visual structure.
+- Never use an answer key to construct a question figure.
+- Use deterministic geometry for points, lines, grids, axes, ticks, dimensions,
+  coordinates, transformations, and mathematical labels.
+- Declare every intended product display width and keep all final text at least
+  16 px there. Do not judge readability from the source canvas alone.
+- Do not infer display size from rendering mode or filename. Every newly
+  authored or repaired FigureSpec states `display.purpose`; decorative figures
+  use the compact width contract. Instructional figures retain normal readable
+  sizing unless their spec explicitly declares a validated inline
+  `display.maxWidthPx`.
+- Validate against the usable figure width measured in the headed product, not
+  only the nominal viewport or column. Prose and exercise containers can have
+  different widths, and scroll media keeps its own fixed width.
+- Hybrid artwork must preserve its intrinsic aspect ratio. FigureSpec `size`
+  is a centered contain box, never permission to stretch an image.
+- A central-symmetry or half-turn claim requires a `centralSymmetry` assertion
+  covering every defining opposite point pair. Never represent the claimed
+  symmetric object as an unchecked free-form `svgPath`.
+- Use `inside` assertions (`point` + `container`) for items that must stay
+  inside a set, panel, frame, or region. A set-relation figure with
+  `connects` assertions must cover every visible member point and every
+  `*-label`; the validator also requires clearance for the rendered point or
+  text footprint, not merely an anchor barely inside the border. Give set
+  polygons stable `*-set` ids and their members matching `*-<index>` plus
+  `*-<index>-label`, so completeness is derived rather than optional. Use
+  `connects` assertions for every arrow or edge whose endpoints carry meaning.
+- Use GPT Image only for semantic artwork. In hybrid output, artwork is below
+  the deterministic overlay.
+- Visible labels are English; mathematical symbols and numbers are allowed.
+- Vector colors use only semantic roles: `ink`, `muted`, `accent`,
+  `accentSoft`, `grid`, and `paper`. The SVG emits CSS variables so the app,
+  alternate themes, and print can recolor it. Do not encode a product theme
+  such as teal or green into the FigureSpec.
+- Do not copy Cyrillic, Chinese, decorative Soviet symbols, flags, uniforms,
+  handwriting, old-book texture, or fictional cultural wording from source
+  pixels. Preserve source-bound historical identities declared by the edition;
+  generated portraits must read as contemporary textbook illustrations, never
+  as archival photographs.
+- No silent fallback. A failed assertion, collision, or visual gate blocks
+  promotion.
+- Source coordinates and half-unit grid steps are facts, not approximate
+  decoration. Chords must include every labelled intersection, with
+  `pointOnCircle` and collinearity assertions where applicable. A directed
+  self-loop needs an arrowhead, not only a circle.
+- A source grid, ruled plane, table lattice, or city-block array is
+  instructional structure, not a decorative background. Inventory its exact
+  rows, columns, offsets, and gaps; never replace it with a blank panel.
+- For read-from-graph exercises, record the source curve's queried coordinates
+  and extrema before interpolation. A similar-looking curve is not equivalent;
+  do not change its values or extend it past the source endpoints.
+- Preserve source solid/dashed curve distinctions. `svgPath.dash` uses the same
+  dash styles as JSXGraph lines; review the rendered SVG, not only the spec.
+  Position axis values explicitly when automatic label placement would shift
+  them away from their ticks.
+# Rendering mode routing
+
+Choose the least generative mode that can express the figure.
+
+| Mode | Use when | Final construction |
+|---|---|---|
+| `deterministic` | Geometry, sets, number lines, coordinates, tables, charts, transformations, measured diagrams | JSXGraph-generated SVG; optional PNG snapshot |
+| `hybrid` | Natural objects must sit at mathematically exact positions | GPT Image artwork below a JSXGraph overlay |
+| `generated` | Object identity, count, or scene matters, but exact coordinates do not | GPT Image 2 PNG |
+
+## Hard routing rules
+
+- Rendering mode and display purpose are independent decisions. A generated
+  portrait can be decorative; a generated classification scene is
+  instructional. Record the choice in `display.purpose`.
+- Any exact point, tick, number, distance, angle, grid intersection, alignment,
+  parallelism, perpendicularity, symmetry, or transformation makes the
+  mathematical layer deterministic.
+- A decorative illustration does not justify making the mathematical layer
+  generative.
+- Do not ask GPT Image to draw readable scales, coordinate axes, tables, or
+  multi-label geometry.
+- Do not use a generated PNG as the sole output when the exercise depends on
+  measuring or counting equal intervals.
+
+## Examples
+
+- Animal/plant classification collection: `generated`.
+- Squirrels at measured heights on a tree: `hybrid`; tree and squirrels are
+  artwork, height guides and labels are deterministic.
+- Birds on a rope at signed offsets: `hybrid`; birds and rope may be artwork,
+  knot, grid, scale, and placements are deterministic.
+- Half-turn around point O: `deterministic`; optional child artwork may be
+  transformed as a paired image asset, but the transform is computed.
+- Venn diagrams, polygons, angle diagrams, number lines: `deterministic`.
+# FigureSpec contract
+
+The canonical schema is
+`assets/figure-spec.schema.json`; the semantic validator is
+`scripts/validate_spec.py`.
+
+## Required top-level fields
+
+- `schema`: `ld-s10y-image/figure-spec@2`
+- `id`: original figure id
+- `mode`: `deterministic`, `hybrid`, or `generated`
+- `description`: instructional purpose, not merely appearance
+- `source.image`: original PNG path and SHA-256
+- `source.authoritativeText`: complete relevant edition text
+- `source.inventory`: source-based groups with `description`, `objects`, and
+  `assertions`. Use `requires: ["gridDimensions"]` for source grid counts and
+  `requires: ["pointRelationships"]` for source-bound relations among multiple
+  points. Record source requirements first, give them stable IDs, then map
+  them to the object and assertion IDs that realize each requirement.
+  Missing, invisible, or unresolved IDs fail validation. Reused specs are not
+  evidence: rebuild or recheck this inventory against the original PNG, not
+  the prior SVG or object list. State modern regularization or additions as
+  additions rather than source-image facts.
+- For a **new deterministic choice diagram**, use `source.authoredBasis`
+  instead of `source.image`. State the independently derived geometry and any
+  deliberate false alternatives. `authoritativeText` still holds the written
+  task; `inventory` maps these authored requirements to objects and assertions,
+  not invented source pixels. This path cannot recover or replace a missing
+  original, requires a new `fig-choice-` identifier, and cannot use
+  hybrid/generated mode. Reference-only images do not
+  become `source.image`. All geometry, label and independent-review checks remain.
+- `canvas`: pixel size and mathematical bounding box
+- `display`: product `layout`, semantic `purpose`, minimum final text size,
+  every width that must be checked, and an optional validated product maximum
+  width
+- `objects`: ordered render objects
+- `assertions`: ID-addressable machine-checkable mathematical facts
+
+Coordinates use JSXGraph user space. `canvas.boundingBox` is
+`[xMin, yMax, xMax, yMin]`.
+
+Review is not embedded in the spec. Record it separately as
+`ld-s10y-image/review@1` after rendering or generation so any spec or output
+change invalidates the review evidence.
+
+## Supported objects
+
+- `point`: `at`, optional `label`, `visible`, style
+- `segment`, `line`, `arrow`: `from`, `to`
+- `circle`: `center`, `radius`
+- `polygon`: `points`
+- `arc`: `center`, `start`, `end`. Coordinate literals create hidden construction
+  points; only explicitly declared point objects may display endpoint markers.
+- `grid`: `xStep`, `yStep`; optional finite
+  `[xMin, yMax, xMax, yMin]` `bounds`; optional absolute coordinate phases
+  `xOffset` and `yOffset`. Grid lines occur at `offset + n * step`, so a
+  cropped or locally positioned source grid does not have to align with the
+  canvas origin.
+- `axis`: `from`, `to`, optional ticks
+- `measure`: `from`, `to`, `label`
+- `text`: `at`, `text`
+- `image`: `asset`, `at`, `size`; hybrid artwork only. `size` is a fit box:
+  the renderer always preserves the source artwork's intrinsic aspect ratio
+  with centered `contain` behavior and must never stretch it to fill the box.
+  Put image objects before geometry objects so the exact overlay is always on
+  top. Set `avoidLabels: true` only when its tight image rectangle must exclude
+  labels; otherwise use `layout.avoidRegions` for occupied artwork areas.
+  Optional `rotation` contains `angleDegrees` and `center`; the renderer
+  applies an exact JSXGraph rotation around that user-coordinate center.
+- `svgPath`: deterministic fallback for a curve or filled region JSXGraph
+  cannot express directly. It uses source-screen path coordinates and must not
+  contain labels, ticks, points, or measurements. Like other objects,
+  `strokeWidth` is in output pixels, independent of unequal axis scales.
+
+Point references may be object ids. Coordinate literals are `[x, y]`.
+
+## Labels
+
+Labels are an overlay owned by the renderer, not freehand SVG text. Default
+placement tests eight candidates around the anchor and scores collisions
+against earlier labels, visible points, declared image regions, and
+`layout.avoidRegions`.
+
+Use `labelPlacement` only when the semantic layout requires a fixed side:
+
+```json
+{
+  "position": "NE",
+  "offset": [8, -8]
+}
+```
+
+Never compensate for a wrong coordinate by moving a label.
+Supported positions are `CENTER`, `NE`, `NW`, `SE`, `SW`, `E`, `W`, `N`, and `S`.
+`C` is not an alias. Unknown positions must fail validation rather than silently
+falling back to a different side. Axis tick labels follow the same contract.
+
+## Display and color
+
+Classify the figure by what the learner must do with it, independently of its
+rendering mode:
+
+- `display.purpose: "instructional"` is the default for diagrams, apparatus,
+  tables, graphs, measured figures, and any image whose details the learner
+  must inspect. It keeps the product's normal figure sizing unless the
+  composition has a smaller natural display size. In that case use inline
+  layout and set `display.maxWidthPx` from 240 through 960; include every
+  resulting desktop and mobile width in `display.widths`, with no width above
+  the maximum. Measure the media width in each headed product surface rather
+  than assuming it from the viewport or the prose column.
+- `display.purpose: "decorative"` is for portraits, avatars, and similar
+  identification or atmosphere images that carry no measured, relational, or
+  answer-bearing detail. Decorative figures must use `layout: "inline"`, set
+  `display.maxWidthPx` from 128 through 240, and declare only
+  `display.widths` at or below that maximum. Use 160 px for an ordinary
+  textbook portrait.
+
+Every newly authored or repaired FigureSpec must state `display.purpose`.
+Specs that predate this field are treated as instructional for compatibility.
+Never classify an image as decorative merely because it was generated or
+contains natural objects.
+
+`display.widths` contains the actual CSS widths at which the product may show
+the figure. The renderer measures labels at each width and rejects any text
+smaller than `display.minTextPx`, which must be at least 16. Use
+`display.layout: "scroll"` when keeping labels readable requires a figure
+wider than its viewport. Scroll media currently renders at 640 px regardless
+of a wider source canvas, so include that actual width rather than only the
+canvas width. Any figure with `display.maxWidthPx` must use inline layout and
+include its actual mobile media width. A prose-column measurement does not
+cover a narrower exercise container.
+
+Use semantic color roles rather than literal product-theme colors:
+
+- `ink`
+- `muted`
+- `accent`
+- `accentSoft`
+- `grid`
+- `paper`
+
+The renderer converts these roles to `--ld-figure-*` CSS variables. This keeps
+the same SVG usable in neutral, accent, and print themes.
+
+## Assertions
+
+Use assertions for every relationship required by the exercise:
+
+- `distance`
+- `equalDistance`
+- `collinear`
+- `parallel`
+- `perpendicular`
+- `pointOnLine`
+- `pointOnCircle`: `point`, `center`, `radius`, optional tolerance
+- `centralSymmetry`: `center` plus every defining opposite point pair in
+  `pairs`; each pair's midpoint must equal the declared center
+- `inside`: `point` plus the containing polygon `container`; use for points,
+  labels, or other anchored items that must remain inside a set, panel, or
+  frame. In a set-relation figure, every visible member point and every
+  `*-label` requires its own `inside` assertion. The anchor and the rendered
+  footprint must both have clear boundary space. Name a set polygon
+  `<group>-set`, its points `<group>-<index>`, and labels
+  `<group>-<index>-label`; the validator derives mandatory coverage from those
+  ids instead of trusting a hand-written assertion list.
+- `connects`: `arrow`, `from`, and `to`; use for arrows or edges whose
+  endpoints are part of the source meaning
+- `gridDimensions`: `grid`, `columns`, and `rows`; the finite grid bounds must
+  align with its offsets and steps, and the asserted cell count must match
+- `displacement`: `from`, `to`, `dx`, and `dy`; use for source-bound horizontal
+  and vertical point relationships on a grid
+- `objectCount`
+
+Assertions validate source-space mathematics before rendering. The render
+report separately validates label overlap and clipping. When a source-inventory
+group declares `gridDimensions`, every mapped grid must have that assertion;
+when it declares `pointRelationships`, every mapped point must appear in at
+least one mapped multi-point assertion whose point references are wholly
+inside that inventory group. A relationship among other points or to an
+unmapped point does not cover the missing source point. `objectCount` is never
+a substitute for either check.
+
+When the description or authoritative text says a figure is centrally
+symmetric or invariant under a half-turn, `centralSymmetry` is mandatory.
+Do not use an opaque `svgPath` for the claimed symmetric object: construct its
+defining vertices deterministically and include all opposite pairs.
+# Figure quality gate
+
+Start with purpose: can a student use this figure with the edition question and
+still be misled about the mathematical relationship?
+
+## Deterministic checks
+
+- source PNG hash is current
+- For deterministic `source.authoredBasis` diagrams, compare the actual image
+  with the written task and declared derived geometry instead of a source PNG.
+  The spec hash binds this provenance; intentional alternative geometry is not
+  a claim of original-source fidelity. All other applicable checks still run.
+- all object ids and references resolve
+- the independent source inventory resolves to visible objects; for new and
+  reused figures alike, compare its completeness against the original source
+  pixels, never against the already-generated object list or SVG
+- every source inventory assertion ID resolves
+- every finite source grid has a `gridDimensions` assertion, and every
+  source-bound point relation has an executable relationship assertion such as
+  `displacement`; every mapped point is covered by a mapped relation wholly
+  inside its source-inventory group, so another point's or an outside point's
+  relation cannot substitute; `objectCount` cannot satisfy either requirement
+- every required mathematical relationship has an assertion
+- every centrally symmetric object has complete opposite-point pairs whose
+  midpoint is the declared center
+- every set-relation member point and member label has an `inside` assertion;
+  omission is a validation failure, and the rendered footprint has clear
+  space from the set boundary
+- every semantic arrow or edge has a `connects` assertion
+- preserve shared frames: source elements that use one axis, grid, number line,
+  or coordinate system remain in one deterministic frame even when they are
+  labelled as separate subparts
+- preserve every instructional grid row, column, offset, and road/cell gap;
+  a blank frame is not a valid substitute for a source lattice
+- assertions pass within declared tolerance
+- visible labels use English
+- output hash matches render metadata
+- byte-identical regeneration is determinism evidence only, never source-fidelity evidence
+- render metadata names only the durable final output, never a preview or ticket-temp path
+- every hybrid image reports centered contain fitting with preserved aspect ratio
+- no label collision, clipping, missing point, or missing object
+- text is at least 16 px at every declared product width and on the final
+  offline/product surface after applying the SVG screen transform
+- every scroll-layout figure can reach its horizontal scroll end
+- SVG colors are semantic CSS variables and remain legible in neutral, accent,
+  and print themes
+- finite geometry fits the canvas, including empty table cells and border lines;
+  a label-only pass is insufficient
+
+## Visual checks
+
+- compare the full edition text, original PNG, and rendered output together
+- verify counts, signs, units, relative positions, equal intervals, and labels
+- verify half-unit scales, every subfigure, every chord endpoint, every table
+  column and every directed self-loop. When repairing given data, also repair
+  dependent answer keys through `ld-s10y-answer`.
+- verify no answer is revealed
+- verify no cultural text or symbols leaked from the source
+- inspect at full resolution and at normal app width
+- reject black or visually broken raster rendering
+- for hybrid output, inspect the artwork and SVG overlay as separate layers as
+  well as together; reject alignment that only works in a flattened preview
+
+## Review evidence
+
+The review lives in a separate `ld-s10y-image/review@1` file. It must record
+`status: pass` and hashes for the source image, current FigureSpec, render or
+generation evidence, and every durable output. A spec, render, generation, or
+output change invalidates the review.
+
+## Repair loop
+
+Allow one targeted repair:
+
+- wrong mathematics: repair FigureSpec coordinates or assertions
+- overlap: repair label constraints or canvas composition
+- wrong artwork: regenerate only the artwork
+
+If the second result still defeats the instructional purpose, mark
+the review evidence as `fail` and stop. Never hand-edit renderer output.
+# Small-batch production and recovery
+
+Use the active ticket's authorization, not the skill's usual publish default.
+An offline repair or a paused production assignment does not authorize DB writes,
+deployment or starting other workers.
+
+## Continue from facts
+
+- Before continuing, read the latest direct human instruction and the existing
+  checkpoint. A direct pause stays effective until a later direct human resume
+  for that scope; old resume messages, heartbeats and completion of a repair do
+  not lift it.
+- Collect already completed child results before dispatching replacements.
+  Bind the returned paths to the actual files and reuse passed stages. A
+  checkpoint, batch report or context compression is not a completion condition.
+  When batch delivery and further production are authorized, commit/push the
+  completed small batch (normally about four lessons), then continue within that
+  scope. An offline four-lesson experiment does not authorize a fifth lesson.
+- Distinguish tool execution failure, content review failure, missing/ambiguous
+  source, and human approval. A bad cwd, missing output directory, read-only
+  working file or output-parser error is not a scientific verdict or a permanent
+  prohibition on that content.
+- Preserve the failed call and any valid output. Correct the identified technical
+  cause and continue only the failed stage; do not redo passed authors/reviews or
+  count recovery as approval. Content changes still need affected-only review.
+  Real content-revision, image and paid-call usage is never reset.
+- Read a checkpoint's HOLD reason to identify the held phase. A technical repair
+  corrects its execution diagnosis, not a separate content or approval HOLD.
+- Stop dependent stages at their first failure. Independent completed work remains
+  usable; a local gap does not block unrelated authorized lessons.
+
+## Existing tool contracts
+
+Commands run from the exact active checkout root. Book identity is explicit;
+neither the environment nor another book supplies a default.
+
+```bash
+P=.claude/skills/ld-s10y-lesson/.venv/bin/python
+$P .claude/skills/ld-s10y-lesson/tools/production.py prepare-range \
+  --repo . --book <book> --first <physical-page> --last <physical-page> \
+  --work .tmp/ld-s10y-lesson
+$P .claude/skills/ld-s10y-lesson/tools/production.py read-json \
+  --input <saved-stdout>
+$P .claude/skills/ld-s10y-lesson/tools/retain_choices.py \
+  --repo . --book <book> --lesson <card-id> --source <approved-choice-directory>
+```
+
+Range preparation reuses complete prepared pages and stops before the next page
+when a command fails. It is preparation only, never source/content approval.
+Use the returned machine result for control; human logs are not one JSON document.
+For historical mixed stdout, read all complete top-level documents without
+rerunning the successful producer. Do not turn candidate presence into approval.
+
+Choice retention verifies the existing choice checker against the current lesson,
+its projection and assets. It refuses a wrong owner or a different existing
+target; exact outputs can be reused. The seed's original index trace stays
+historical: adding unrelated lessons to the book index does not invalidate
+unchanged reviewed question content. Changed lesson files or assets still fail.
+
+Immutable evidence and editable outputs are different files. Keep the original
+approved snapshots read-only; make a writable working copy. Modern finalization
+replaces its output files, not the evidence snapshot or its permissions.
+
+When importing already approved raw lessons into a repair checkout, `p2c.py
+reindex --book <book> --toc <toc.json>` derives the index from retained lesson
+files without rewriting them. It is not a substitute for assembling or reviewing
+new/incomplete source.
+
+## Evidence without duplicate packages
+
+Reference the existing source/PDF/runtime path, Git revision and file hash.
+Keep the first failure receipt and changed candidate snapshot once. Do not copy
+Node, Python, whole PDFs or a whole earlier evidence package into each new batch.
+Only a genuinely required changed input or output needs new bytes.
+Follow the image skill's bounded contexts; return text and evidence paths/hashes,
+not image-bearing history. Verify a completed batch once, then only affected
+changes after a real defect.

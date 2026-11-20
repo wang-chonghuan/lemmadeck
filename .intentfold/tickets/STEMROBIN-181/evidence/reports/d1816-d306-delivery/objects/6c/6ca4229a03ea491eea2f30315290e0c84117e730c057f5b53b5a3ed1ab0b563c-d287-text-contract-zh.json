@@ -1,0 +1,139 @@
+{
+  "name": "d287-text-contract-zh",
+  "startedAt": "2026-11-20T20:15:01.942Z",
+  "finishedAt": "2026-11-20T20:15:02.090Z",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck",
+  "executable": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/.venv/bin/python",
+  "args": [
+    "-c",
+    "\nimport sys\nsys.dont_write_bytecode = True\nsys.path.insert(0, sys.argv[1])\nimport json\nfrom pathlib import Path\nimport edition as E\nbook, folder, profile_path = map(Path, sys.argv[2:5])\nlesson = E.load(folder / \"lesson.template.json\")\nexercises = E.load(folder / \"exercises.template.json\")\nraw_lesson_path = book / \"lessons\" / lesson[\"id\"] / \"lesson.json\"\nraw_exercises_path = book / \"lessons\" / lesson[\"id\"] / \"exercises.json\"\nraw_lesson = E.load(raw_lesson_path)\nraw_exercises = E.load(raw_exercises_path)\nprofile = E.load(profile_path)\nerrors = []\nerrors += E.validate_source(book, lesson.get(\"source\"), raw_lesson_path, \"lesson\")\nerrors += E.validate_source(book, exercises.get(\"source\"), raw_exercises_path, \"exercises\")\nerrors += E.validate_lesson_identity(raw_lesson, lesson)\nif lesson.get(\"schema\") != E.LESSON_SCHEMA or exercises.get(\"schema\") != E.EXERCISES_SCHEMA:\n    errors.append(\"native template schema changed\")\nif lesson.get(\"edition\") != folder.parents[1].name or exercises.get(\"edition\") != folder.parents[1].name:\n    errors.append(\"edition identity mismatch\")\ncorrections, errata_errors = E.validate_errata(book, raw_lesson, raw_exercises, lesson, exercises)\nerrors += errata_errors\ntry:\n    authoritative_targets = E._authoritative_source_targets(book, raw_lesson, raw_exercises)\n    if E._refs_by_target(authoritative_targets) != E._refs_by_target(E._source_target_map(raw_lesson, raw_exercises)):\n        errors.append(\"canonical source_refs differ from authoritative page binding\")\nexcept SystemExit as error:\n    authoritative_targets = {}\n    errors.append(str(error))\nnative_flow, flow_errors = E.prose_flow_contract(lesson[\"prose\"], lesson[\"section_breaks\"])\nerrors += flow_errors\nfor index, (source, modern) in enumerate(zip(raw_lesson[\"prose\"], lesson[\"prose\"])):\n    label = f\"lesson.prose[{index}]\"\n    for field in (\"kind\", \"id\", \"label\", \"printed_page\", \"source_refs\"):\n        if source.get(field) != modern.get(field):\n            errors.append(f\"{label}.{field} changed\")\n    if modern[\"source_text\"] != source[\"text\"]:\n        errors.append(f\"{label}.source_text changed\")\n    if modern.get(\"numeric_changes\") != []:\n        errors.append(f\"{label} declares numeric changes\")\n    if \"notation\" not in modern[\"changes\"] and index in (2, 3):\n        errors.append(f\"{label} missing notation declaration\")\n    if lesson.get(\"locale\") == \"en\" and modern.get(\"kind\") == \"p\" and E.normalize_prose_layout(modern[\"text\"]) != modern[\"text\"]:\n        errors.append(f\"{label} is not native-normalized\")\n    errors += E.validate_text(source[\"text\"], modern[\"text\"], modern[\"changes\"],\n        modern[\"numeric_changes\"], label,\n        profile.get(\"forbidden_terms\", []) + profile.get(\"forbidden_person_names\", []),\n        modern.get(\"historical_entities\"), corrections.get(label), modern.get(\"notation_changes\"))\nif len(raw_lesson[\"prose\"]) != len(lesson[\"prose\"]):\n    errors.append(\"source prose block count changed\")\nif exercises[\"count\"] != 0 or exercises[\"exercises\"] != [] or raw_exercises[\"count\"] != 0:\n    errors.append(\"zero exercise count changed\")\nif lesson[\"errata\"] != []:\n    errors.append(\"unexpected errata\")\nprint(json.dumps({\n    \"status\": \"pass\" if not errors else \"fail\", \"errors\": errors,\n    \"scope\": \"Native text/source/identity/math/digits/errata/prose-flow functions only; no figure validation, finalization, scientific approval or writes.\",\n    \"proseFlow\": native_flow, \"sourceProseBlocks\": len(raw_lesson[\"prose\"]),\n    \"authoritativeSourceTargets\": authoritative_targets,\n    \"normalization\": \"English native-normalized; Chinese deliberately unchanged to preserve retained flow, known normalizer drift retained separately.\",\n    \"mathAtoms\": sum(len(E.math_signature(block[\"text\"])) for block in lesson[\"prose\"]),\n    \"sourceTasks\": raw_exercises[\"count\"], \"candidateTasks\": exercises[\"count\"],\n}, ensure_ascii=False, indent=2))\nraise SystemExit(0 if not errors else 2)\n",
+    "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/tools",
+    "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.tmp/STEMROBIN-181/d1816-d287/source-root/10p",
+    "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.tmp/STEMROBIN-181/d1816-d287/work/adapt/10p/modern-us-neutral/lessons/phy10-c1-s3-n19",
+    "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.claude/skills/ld-s10y-lesson/profiles/modern-us-neutral.json"
+  ],
+  "exitCode": 0,
+  "signal": null,
+  "stdout": "{\n  \"status\": \"pass\",\n  \"errors\": [],\n  \"scope\": \"Native text/source/identity/math/digits/errata/prose-flow functions only; no figure validation, finalization, scientific approval or writes.\",\n  \"proseFlow\": {\n    \"paragraphs\": [\n      {\n        \"index\": 0,\n        \"blockIndex\": 0,\n        \"paragraphInBlock\": 0,\n        \"text\": \"振荡回路中的电振荡与弹簧振子的自由振动相似。\\n两者发生周期性变化的物理量不同：机械振动中变化的是物体的坐标 $x$ 和速度投影 $v_x$；\\n电振荡中变化的是电容器的电量 $q$ 和电路中的电流强度 $i$。\"\n      },\n      {\n        \"index\": 1,\n        \"blockIndex\": 0,\n        \"paragraphInBlock\": 1,\n        \"text\": \"这些量的物理意义不同，但它们随时间发生周期性变化的过程相似。\\n这是因为两种振动的产生条件有相似之处。\\n使弹簧振子回到平衡位置的是弹性力 $F_x$。\"\n      },\n      {\n        \"index\": 2,\n        \"blockIndex\": 0,\n        \"paragraphInBlock\": 2,\n        \"text\": \"弹性力的大小与振子偏离平衡位置的位移大小成正比，比例系数是弹簧的刚度 $k$。\\n电容器极板间的电压 $U$ 决定了电容器的放电，也就是电流的出现。\\n这个电压与电量 $q$ 成正比，因为 $U=\\\\frac{1}{C}q$。\"\n      },\n      {\n        \"index\": 3,\n        \"blockIndex\": 0,\n        \"paragraphInBlock\": 3,\n        \"text\": \"这里的比例系数是电容的倒数 $\\\\frac{1}{C}$。\"\n      },\n      {\n        \"index\": 4,\n        \"blockIndex\": 1,\n        \"paragraphInBlock\": 0,\n        \"text\": \"由于惯性，振子的速度在力的作用下只能逐渐增大；\\n作用力消失时，速度也不会立即变为零。\\n与此相似，由于自感，线圈中的电流在电压的作用下逐渐增大；\"\n      },\n      {\n        \"index\": 5,\n        \"blockIndex\": 1,\n        \"paragraphInBlock\": 1,\n        \"text\": \"电压变为零时，电流也不会立即消失。\\n回路的电感系数 $L$ 对应振子的质量 $m$。\\n比较振子的动能 $\\\\frac{mv_x^2}{2}$ 和电流的能量 $\\\\frac{Li^2}{2}$，就能看出这两个量在能量表达式中的对应关系。\"\n      },\n      {\n        \"index\": 6,\n        \"blockIndex\": 2,\n        \"paragraphInBlock\": 0,\n        \"text\": \"给电容器充电，相当于用手使振子偏离平衡位置。\\n振子的初始位移为 $x_{\\\\mathrm{m}}$，弹簧振子因此具有势能 $\\\\frac{kx_{\\\\mathrm{m}}^2}{2}$（图 $28$b）。\\n把这个表达式与电容器的能量 $\\\\frac{q_{\\\\mathrm{m}}^2}{2C}$ 比较，可以看出弹簧刚度 $k$ 对应电容的倒数 $\\\\frac{1}{C}$。\"\n      },\n      {\n        \"index\": 7,\n        \"blockIndex\": 2,\n        \"paragraphInBlock\": 1,\n        \"text\": \"振子的初始坐标 $x_{\\\\mathrm{m}}$ 对应电容器的初始电量 $q_{\\\\mathrm{m}}$。\"\n      },\n      {\n        \"index\": 8,\n        \"blockIndex\": 3,\n        \"paragraphInBlock\": 0,\n        \"text\": \"由电势差引起的电流，对应振子在弹性力作用下获得的速度 $v_x$（图 $29$b）。\\n交变电流在某一时刻的电流强度，可以用通过电量对时间的导数表示：\\n$i=\\\\lim_{\\\\Delta t \\\\to 0}\\\\frac{\\\\Delta q}{\\\\Delta t}=q'$。\"\n      },\n      {\n        \"index\": 9,\n        \"blockIndex\": 4,\n        \"paragraphInBlock\": 0,\n        \"text\": \"下表汇总了机械振动与电振荡中的对应关系。\"\n      }\n    ],\n    \"resolvedBreaks\": [\n      4,\n      6,\n      9\n    ],\n    \"boundaries\": [\n      {\n        \"index\": 4,\n        \"before\": \"这里的比例系数是电容的倒数 $\\\\frac{1}{C}$。\",\n        \"after\": \"由于惯性，振子的速度在力的作用下只能逐渐增大；\\n作用力消失时，速度也不会立即变为零。\\n与此相似，由于自感，线圈中的电流在电压的作用下逐渐增大；\"\n      },\n      {\n        \"index\": 6,\n        \"before\": \"电压变为零时，电流也不会立即消失。\\n回路的电感系数 $L$ 对应振子的质量 $m$。\\n比较振子的动能 $\\\\frac{mv_x^2}{2}$ 和电流的能量 $\\\\frac{Li^2}{2}$，就能看出这两个量在能量表达式中的对应关系。\",\n        \"after\": \"给电容器充电，相当于用手使振子偏离平衡位置。\\n振子的初始位移为 $x_{\\\\mathrm{m}}$，弹簧振子因此具有势能 $\\\\frac{kx_{\\\\mathrm{m}}^2}{2}$（图 $28$b）。\\n把这个表达式与电容器的能量 $\\\\frac{q_{\\\\mathrm{m}}^2}{2C}$ 比较，可以看出弹簧刚度 $k$ 对应电容的倒数 $\\\\frac{1}{C}$。\"\n      },\n      {\n        \"index\": 9,\n        \"before\": \"由电势差引起的电流，对应振子在弹性力作用下获得的速度 $v_x$（图 $29$b）。\\n交变电流在某一时刻的电流强度，可以用通过电量对时间的导数表示：\\n$i=\\\\lim_{\\\\Delta t \\\\to 0}\\\\frac{\\\\Delta q}{\\\\Delta t}=q'$。\",\n        \"after\": \"下表汇总了机械振动与电振荡中的对应关系。\"\n      }\n    ]\n  },\n  \"sourceProseBlocks\": 6,\n  \"authoritativeSourceTargets\": {\n    \"p0052#6\": {\n      \"lesson.prose[0]\": \"回路里的电振荡与自由机械振动，例如，与弹簧振子的振动相似。这个类似之点不是指周期性变化的物理量的本质，因为在机械振动中作周期性变化的是物体的坐标 $x$ 和它的速度投影 $v_x$；而在电振荡中，作周期性变化的是电容器的电量 $q$和电路中的电流强度 $i$。相似的是这些量的周期性变化过程。这些量的变化（机械的和电的）性质相同的原因是产生机械振动和电振荡的条件有类似性。使弹簧振子恢复到平衡位置的是弹性力 $F_x$。这个力与振子离开平衡位置的位移成正比，比例系数是弹簧的刚度 $k$。电容器的放电（即电流的出现）是由电容器极板间的电压 $U$ 决定的，这个电压与电量 $q$ 成正比，因为 $U=\\\\frac{1}{C}q$。比例系数是电容的倒数 $\\\\frac{1}{C}$。\"\n    },\n    \"p0053#1\": {\n      \"lesson.prose[0]\": \"回路里的电振荡与自由机械振动，例如，与弹簧振子的振动相似。这个类似之点不是指周期性变化的物理量的本质，因为在机械振动中作周期性变化的是物体的坐标 $x$ 和它的速度投影 $v_x$；而在电振荡中，作周期性变化的是电容器的电量 $q$和电路中的电流强度 $i$。相似的是这些量的周期性变化过程。这些量的变化（机械的和电的）性质相同的原因是产生机械振动和电振荡的条件有类似性。使弹簧振子恢复到平衡位置的是弹性力 $F_x$。这个力与振子离开平衡位置的位移成正比，比例系数是弹簧的刚度 $k$。电容器的放电（即电流的出现）是由电容器极板间的电压 $U$ 决定的，这个电压与电量 $q$ 成正比，因为 $U=\\\\frac{1}{C}q$。比例系数是电容的倒数 $\\\\frac{1}{C}$。\"\n    },\n    \"p0053#2\": {\n      \"lesson.prose[1]\": \"振子由于有惯性，在力的作用下增大速度只能是逐渐的，并且速度在力的作用停止以后不能立即变为零。与此相似，由于有自感现象，线圈里的电流在电压的作用下也是逐渐地增大，并且当电压等于零时不能立即消失。回路里的电感系数 $L$ 起的作用与力学中振子的质量 $m$ 的作用一样。把振子的动能 $\\\\frac{mv_x^2}{2}$ 与电流的能量 $\\\\frac{Li^2}{2}$ 对比时，这一点是显而易见的。\"\n    },\n    \"p0053#3\": {\n      \"lesson.prose[2]\": \"用电池组给电容器充电相当于使振子离开平衡位置（例如，用手推）$x_{\\\\mathrm{м}}$，从而使弹簧振子具有势能 $\\\\frac{kx_{\\\\mathrm{м}}^2}{2}$（图 $28$б）。把这个表示式与电容器的能量 $\\\\frac{q_{\\\\mathrm{м}}^2}{2C}$ 比较，我们发现系数 $k$ 类似于 $\\\\frac{1}{C}$，而初始坐标 $x_{\\\\mathrm{м}}$ 类似于电量 $q_{\\\\mathrm{м}}$。\"\n    },\n    \"p0053#4\": {\n      \"lesson.prose[3]\": \"由电势差引起的电流与在弹簧弹力作用下得到的速度 $v_x$ 相当（图$29$б），并且交变电流在某一时刻的电流强度可由通过的电量对时间的导数来确定，$i=\\\\lim_{\\\\Delta t \\\\to 0}\\\\frac{\\\\Delta q}{\\\\Delta t}=q'$。\"\n    },\n    \"p0053#5\": {\n      \"lesson.prose[4]\": \"用下面的表可以总括上述全部内容：\"\n    },\n    \"p0053#6\": {\n      \"lesson.prose[5]\": \"\"\n    }\n  },\n  \"normalization\": \"English native-normalized; Chinese deliberately unchanged to preserve retained flow, known normalizer drift retained separately.\",\n  \"mathAtoms\": 25,\n  \"sourceTasks\": 0,\n  \"candidateTasks\": 0\n}\n",
+  "stderr": "",
+  "error": null,
+  "result": {
+    "status": "pass",
+    "errors": [],
+    "scope": "Native text/source/identity/math/digits/errata/prose-flow functions only; no figure validation, finalization, scientific approval or writes.",
+    "proseFlow": {
+      "paragraphs": [
+        {
+          "index": 0,
+          "blockIndex": 0,
+          "paragraphInBlock": 0,
+          "text": "振荡回路中的电振荡与弹簧振子的自由振动相似。\n两者发生周期性变化的物理量不同：机械振动中变化的是物体的坐标 $x$ 和速度投影 $v_x$；\n电振荡中变化的是电容器的电量 $q$ 和电路中的电流强度 $i$。"
+        },
+        {
+          "index": 1,
+          "blockIndex": 0,
+          "paragraphInBlock": 1,
+          "text": "这些量的物理意义不同，但它们随时间发生周期性变化的过程相似。\n这是因为两种振动的产生条件有相似之处。\n使弹簧振子回到平衡位置的是弹性力 $F_x$。"
+        },
+        {
+          "index": 2,
+          "blockIndex": 0,
+          "paragraphInBlock": 2,
+          "text": "弹性力的大小与振子偏离平衡位置的位移大小成正比，比例系数是弹簧的刚度 $k$。\n电容器极板间的电压 $U$ 决定了电容器的放电，也就是电流的出现。\n这个电压与电量 $q$ 成正比，因为 $U=\\frac{1}{C}q$。"
+        },
+        {
+          "index": 3,
+          "blockIndex": 0,
+          "paragraphInBlock": 3,
+          "text": "这里的比例系数是电容的倒数 $\\frac{1}{C}$。"
+        },
+        {
+          "index": 4,
+          "blockIndex": 1,
+          "paragraphInBlock": 0,
+          "text": "由于惯性，振子的速度在力的作用下只能逐渐增大；\n作用力消失时，速度也不会立即变为零。\n与此相似，由于自感，线圈中的电流在电压的作用下逐渐增大；"
+        },
+        {
+          "index": 5,
+          "blockIndex": 1,
+          "paragraphInBlock": 1,
+          "text": "电压变为零时，电流也不会立即消失。\n回路的电感系数 $L$ 对应振子的质量 $m$。\n比较振子的动能 $\\frac{mv_x^2}{2}$ 和电流的能量 $\\frac{Li^2}{2}$，就能看出这两个量在能量表达式中的对应关系。"
+        },
+        {
+          "index": 6,
+          "blockIndex": 2,
+          "paragraphInBlock": 0,
+          "text": "给电容器充电，相当于用手使振子偏离平衡位置。\n振子的初始位移为 $x_{\\mathrm{m}}$，弹簧振子因此具有势能 $\\frac{kx_{\\mathrm{m}}^2}{2}$（图 $28$b）。\n把这个表达式与电容器的能量 $\\frac{q_{\\mathrm{m}}^2}{2C}$ 比较，可以看出弹簧刚度 $k$ 对应电容的倒数 $\\frac{1}{C}$。"
+        },
+        {
+          "index": 7,
+          "blockIndex": 2,
+          "paragraphInBlock": 1,
+          "text": "振子的初始坐标 $x_{\\mathrm{m}}$ 对应电容器的初始电量 $q_{\\mathrm{m}}$。"
+        },
+        {
+          "index": 8,
+          "blockIndex": 3,
+          "paragraphInBlock": 0,
+          "text": "由电势差引起的电流，对应振子在弹性力作用下获得的速度 $v_x$（图 $29$b）。\n交变电流在某一时刻的电流强度，可以用通过电量对时间的导数表示：\n$i=\\lim_{\\Delta t \\to 0}\\frac{\\Delta q}{\\Delta t}=q'$。"
+        },
+        {
+          "index": 9,
+          "blockIndex": 4,
+          "paragraphInBlock": 0,
+          "text": "下表汇总了机械振动与电振荡中的对应关系。"
+        }
+      ],
+      "resolvedBreaks": [
+        4,
+        6,
+        9
+      ],
+      "boundaries": [
+        {
+          "index": 4,
+          "before": "这里的比例系数是电容的倒数 $\\frac{1}{C}$。",
+          "after": "由于惯性，振子的速度在力的作用下只能逐渐增大；\n作用力消失时，速度也不会立即变为零。\n与此相似，由于自感，线圈中的电流在电压的作用下逐渐增大；"
+        },
+        {
+          "index": 6,
+          "before": "电压变为零时，电流也不会立即消失。\n回路的电感系数 $L$ 对应振子的质量 $m$。\n比较振子的动能 $\\frac{mv_x^2}{2}$ 和电流的能量 $\\frac{Li^2}{2}$，就能看出这两个量在能量表达式中的对应关系。",
+          "after": "给电容器充电，相当于用手使振子偏离平衡位置。\n振子的初始位移为 $x_{\\mathrm{m}}$，弹簧振子因此具有势能 $\\frac{kx_{\\mathrm{m}}^2}{2}$（图 $28$b）。\n把这个表达式与电容器的能量 $\\frac{q_{\\mathrm{m}}^2}{2C}$ 比较，可以看出弹簧刚度 $k$ 对应电容的倒数 $\\frac{1}{C}$。"
+        },
+        {
+          "index": 9,
+          "before": "由电势差引起的电流，对应振子在弹性力作用下获得的速度 $v_x$（图 $29$b）。\n交变电流在某一时刻的电流强度，可以用通过电量对时间的导数表示：\n$i=\\lim_{\\Delta t \\to 0}\\frac{\\Delta q}{\\Delta t}=q'$。",
+          "after": "下表汇总了机械振动与电振荡中的对应关系。"
+        }
+      ]
+    },
+    "sourceProseBlocks": 6,
+    "authoritativeSourceTargets": {
+      "p0052#6": {
+        "lesson.prose[0]": "回路里的电振荡与自由机械振动，例如，与弹簧振子的振动相似。这个类似之点不是指周期性变化的物理量的本质，因为在机械振动中作周期性变化的是物体的坐标 $x$ 和它的速度投影 $v_x$；而在电振荡中，作周期性变化的是电容器的电量 $q$和电路中的电流强度 $i$。相似的是这些量的周期性变化过程。这些量的变化（机械的和电的）性质相同的原因是产生机械振动和电振荡的条件有类似性。使弹簧振子恢复到平衡位置的是弹性力 $F_x$。这个力与振子离开平衡位置的位移成正比，比例系数是弹簧的刚度 $k$。电容器的放电（即电流的出现）是由电容器极板间的电压 $U$ 决定的，这个电压与电量 $q$ 成正比，因为 $U=\\frac{1}{C}q$。比例系数是电容的倒数 $\\frac{1}{C}$。"
+      },
+      "p0053#1": {
+        "lesson.prose[0]": "回路里的电振荡与自由机械振动，例如，与弹簧振子的振动相似。这个类似之点不是指周期性变化的物理量的本质，因为在机械振动中作周期性变化的是物体的坐标 $x$ 和它的速度投影 $v_x$；而在电振荡中，作周期性变化的是电容器的电量 $q$和电路中的电流强度 $i$。相似的是这些量的周期性变化过程。这些量的变化（机械的和电的）性质相同的原因是产生机械振动和电振荡的条件有类似性。使弹簧振子恢复到平衡位置的是弹性力 $F_x$。这个力与振子离开平衡位置的位移成正比，比例系数是弹簧的刚度 $k$。电容器的放电（即电流的出现）是由电容器极板间的电压 $U$ 决定的，这个电压与电量 $q$ 成正比，因为 $U=\\frac{1}{C}q$。比例系数是电容的倒数 $\\frac{1}{C}$。"
+      },
+      "p0053#2": {
+        "lesson.prose[1]": "振子由于有惯性，在力的作用下增大速度只能是逐渐的，并且速度在力的作用停止以后不能立即变为零。与此相似，由于有自感现象，线圈里的电流在电压的作用下也是逐渐地增大，并且当电压等于零时不能立即消失。回路里的电感系数 $L$ 起的作用与力学中振子的质量 $m$ 的作用一样。把振子的动能 $\\frac{mv_x^2}{2}$ 与电流的能量 $\\frac{Li^2}{2}$ 对比时，这一点是显而易见的。"
+      },
+      "p0053#3": {
+        "lesson.prose[2]": "用电池组给电容器充电相当于使振子离开平衡位置（例如，用手推）$x_{\\mathrm{м}}$，从而使弹簧振子具有势能 $\\frac{kx_{\\mathrm{м}}^2}{2}$（图 $28$б）。把这个表示式与电容器的能量 $\\frac{q_{\\mathrm{м}}^2}{2C}$ 比较，我们发现系数 $k$ 类似于 $\\frac{1}{C}$，而初始坐标 $x_{\\mathrm{м}}$ 类似于电量 $q_{\\mathrm{м}}$。"
+      },
+      "p0053#4": {
+        "lesson.prose[3]": "由电势差引起的电流与在弹簧弹力作用下得到的速度 $v_x$ 相当（图$29$б），并且交变电流在某一时刻的电流强度可由通过的电量对时间的导数来确定，$i=\\lim_{\\Delta t \\to 0}\\frac{\\Delta q}{\\Delta t}=q'$。"
+      },
+      "p0053#5": {
+        "lesson.prose[4]": "用下面的表可以总括上述全部内容："
+      },
+      "p0053#6": {
+        "lesson.prose[5]": ""
+      }
+    },
+    "normalization": "English native-normalized; Chinese deliberately unchanged to preserve retained flow, known normalizer drift retained separately.",
+    "mathAtoms": 25,
+    "sourceTasks": 0,
+    "candidateTasks": 0
+  }
+}

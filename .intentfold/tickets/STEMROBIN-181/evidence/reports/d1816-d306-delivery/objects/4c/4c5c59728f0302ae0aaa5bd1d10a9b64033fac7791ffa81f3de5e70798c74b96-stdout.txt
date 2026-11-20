@@ -1,0 +1,201 @@
+                        v = 0.02;
+                    } else if (type === 4 || type === 5 || type === 6) {
+                        v = 3.33;
+                    } else if (type === 7) {
+                        v = 10.0;
+                    } else {
+                        v = 0.05;
+                    }
+                }
+            }
+            if (type === 7) {
+                node2.setAttributeNS(null, 'fill', 'none');
+                node2.setAttributeNS(null, 'stroke-width', 1); // this is the stroke-width of the arrow head.
+            }
+            node2.setAttributeNS(null, "refY", h);
+            node2.setAttributeNS(null, "refX", v);
+            // this.setPropertyPrim(node2, 'class', el.evalVisProp('cssclass'));
+
+            node2.appendChild(node3);
+
+            // Set color and opacity
+            this._setArrowColor(node2, el.evalVisProp('strokecolor'), el.evalVisProp('strokeopacity'), el, type);
+
+            return node2;
+        },
+
+        /**
+         * Updates color of an arrow DOM node.
+         * @param {Node} node The arrow node.
+         * @param {String} color Color value in a HTML compatible format, e.g. <tt>#00ff00</tt> or <tt>green</tt> for green.
+         * @param {Number} opacity
+         * @param {JXG.GeometryElement} el The element the arrows are to be attached to
+         */
+        _setArrowColor: function (node, color, opacity, el, type) {
+            if (node) {
+                if (Type.isString(color)) {
+                    if (type !== 7) {
+                        this._setAttribute(function () {
+                            node.setAttributeNS(null, 'fill-opacity', opacity);
+                            if (JXG.isWebkitApple()) {
+                                // 2025: Safari does not support 'context-stroke'
+                                node.setAttributeNS(null, 'fill', color);
+                            } else {
+                                node.setAttributeNS(null, 'fill', 'context-stroke');
+                            }
+                        }, el.visPropOld.fillcolor);
+                    } else {
+                        this._setAttribute(function () {
+                            node.setAttributeNS(null, 'fill', 'none');
+                            node.setAttributeNS(null, 'stroke-opacity', opacity);
+                            if (JXG.isWebkitApple()) {
+                                node.setAttributeNS(null, 'stroke', color);
+                            } else {
+                                node.setAttributeNS(null, 'stroke', 'context-stroke');
+                            }
+                        }, el.visPropOld.fillcolor);
+                    }
+                }
+
+                // if (this.isIE) {
+                    // Necessary, since Safari is the new IE (11.2024)
+                    el.rendNode.parentNode.insertBefore(el.rendNode, el.rendNode);
+                // }
+            }
+        },
+
+        // Already documented in JXG.AbstractRenderer
+        _setArrowWidth: function (node, width, parentNode, size) {
+            var s, d;
+
+            if (node) {
+                // if (width === 0) {
+                //     // display:none does not work well in webkit
+                //     node.setAttributeNS(null, 'display', 'none');
+                // } else {
+                s = width;
+                d = s * size;
+                node.setAttributeNS(null, "viewBox", 0 + " " + 0 + " " + s * 10 + " " + s * 10);
+                node.setAttributeNS(null, "markerHeight", d);
+                node.setAttributeNS(null, "markerWidth", d);
+                node.setAttributeNS(null, "display", 'inherit');
+                // }
+
+                // if (this.isIE) {
+                    // Necessary, since Safari is the new IE (11.2024)
+                    parentNode.parentNode.insertBefore(parentNode, parentNode);
+                // }
+            }
+        },
+
+        /* ********* Line related stuff *********** */
+
+        // documented in AbstractRenderer
+        updateTicks: function (ticks) {
+            var i,
+                j,
+                c,
+                node,
+                x,
+                y,
+                tickStr = "",
+                len = ticks.ticks.length,
+                len2,
+                str,
+                isReal = true;
+
+            for (i = 0; i < len; i++) {
+                c = ticks.ticks[i];
+                x = c[0];
+                y = c[1];
+
+                len2 = x.length;
+                str = " M " + x[0] + " " + y[0];
+                if (!Type.isNumber(x[0])) {
+                    isReal = false;
+                }
+                for (j = 1; isReal && j < len2; ++j) {
+                    if (Type.isNumber(x[j])) {
+                        str += " L " + x[j] + " " + y[j];
+                    } else {
+                        isReal = false;
+                    }
+                }
+                if (isReal) {
+                    tickStr += str;
+                }
+            }
+
+            node = ticks.rendNode;
+
+            if (!Type.exists(node)) {
+                node = this.createPrim("path", ticks.id);
+                this.appendChildPrim(node, ticks.evalVisProp('layer'));
+                ticks.rendNode = node;
+            }
+
+            node.setAttributeNS(null, "stroke", ticks.evalVisProp('strokecolor'));
+            node.setAttributeNS(null, "fill", 'none');
+            // node.setAttributeNS(null, 'fill', ticks.evalVisProp('fillcolor'));
+            // node.setAttributeNS(null, 'fill-opacity', ticks.evalVisProp('fillopacity'));
+            node.setAttributeNS(null, 'stroke-opacity', ticks.evalVisProp('strokeopacity'));
+            node.setAttributeNS(null, "stroke-width", ticks.evalVisProp('strokewidth'));
+
+            this.setClipPath(ticks, ticks.evalVisProp('clip'));
+            this.updatePathPrim(node, tickStr, ticks.board);
+        },
+
+        /* ********* Text related stuff *********** */
+
+        // Already documented in JXG.AbstractRenderer
+        displayCopyright: function (str, fontsize) {
+            var node, t,
+                x = 4 + 1.8 * fontsize,
+                y = 6 + fontsize,
+                alpha = 0.2;
+
+            node = this.createPrim("text", 'licenseText');
+            node.setAttributeNS(null, 'x', x + 'px');
+            node.setAttributeNS(null, 'y', y + 'px');
+            node.setAttributeNS(null, 'style', 'font-family:Arial,Helvetica,sans-serif; font-size:' +
+                fontsize + 'px; opacity:' + alpha + ';');
+                // fill:#356AA0;
+            node.setAttributeNS(null, 'aria-hidden', 'true');
+
+            t = this.container.ownerDocument.createTextNode(str);
+            node.appendChild(t);
+            this.appendChildPrim(node, 0);
+        },
+
+        // Already documented in JXG.AbstractRenderer
+        displayLogo: function (str, fontsize) {
+            var node,
+                s = 1.5 * fontsize,
+                alpha = 0.2;
+
+            node = this.createPrim("image", 'licenseLogo');
+
+            node.setAttributeNS(null, 'x', '5px');
+            node.setAttributeNS(null, 'y', '5px');
+            node.setAttributeNS(null, 'width', s + 'px');
+            node.setAttributeNS(null, 'height', s + 'px');
+            node.setAttributeNS(null, "preserveAspectRatio", 'none');
+            node.setAttributeNS(null, 'style', 'opacity:' + alpha + ';');
+            node.setAttributeNS(null, 'aria-hidden', 'true');
+
+            node.setAttributeNS(this.xlinkNamespace, 'xlink:href', str); // Deprecated
+            node.setAttributeNS(null, 'href', str);
+
+            this.appendChildPrim(node, 0);
+        },
+
+        // Already documented in JXG.AbstractRenderer
+        drawInternalText: function (el) {
+            var node = this.createPrim("text", el.id);
+
+            //node.setAttributeNS(null, "style", "alignment-baseline:middle"); // Not yet supported by Firefox
+            // Preserve spaces
+            //node.setAttributeNS("http://www.w3.org/XML/1998/namespace", "space", 'preserve');
+            node.style.whiteSpace = 'nowrap';
+
+            el.rendNodeText = this.container.ownerDocument.createTextNode("");

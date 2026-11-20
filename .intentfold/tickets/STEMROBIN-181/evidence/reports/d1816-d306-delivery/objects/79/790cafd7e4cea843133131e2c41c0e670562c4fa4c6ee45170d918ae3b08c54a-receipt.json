@@ -1,0 +1,14 @@
+{
+  "name": "d280-inspect-text-drift",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck",
+  "command": [
+    "node",
+    "-e",
+    "const fs=require(\"fs\"),o=\".intentfold/tickets/STEMROBIN-181/tmp/d1816-d280-fig2425-author\",f=JSON.parse(fs.readFileSync(o+\"/input-freeze.json\")); const rows=f.drafts.map(d=>{const j=JSON.parse(fs.readFileSync(d.path)),blocks=j.prose.map((b,index)=>({...b,index})).filter(b=>b.kind!==\"fig\");const text=[j.chapter,j.printed_title,...blocks.map(b=>b.text)].join(\"\\n\\n\");const old=f.authoritativeText.find(x=>x.lesson.includes(d.edition+\":\"));return {path:d.path,edition:d.edition,currentStatus:j.status,authoritativeTextUnchanged:text===old.text,changedBlocks:blocks.filter(b=>b.text!==d.nonfigBlocks.find(x=>x.index===b.index)?.text).map(b=>({index:b.index,old:d.nonfigBlocks.find(x=>x.index===b.index)?.text,current:b.text})),chapter:j.chapter,printed_title:j.printed_title};});console.log(JSON.stringify(rows,null,2));"
+  ],
+  "startedAt": "2026-11-20T20:15:04.369Z",
+  "finishedAt": "2026-11-20T20:15:04.406Z",
+  "elapsedMs": 37,
+  "exitCode": 0,
+  "error": null
+}

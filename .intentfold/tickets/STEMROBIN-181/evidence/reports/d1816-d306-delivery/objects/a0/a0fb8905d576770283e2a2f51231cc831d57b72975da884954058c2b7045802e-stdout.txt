@@ -1,0 +1,420 @@
+
+FILE: .intentfold/project.json
+{
+  "project": "lemmadeck",
+  "main_branch": "main",
+  "deploy": {
+    "where": "Render web service lemmadeck (srv-dapsio9srm7s73an5p60), Frankfurt, one 0.5c-512mb instance; live at https://lemmadeck.com",
+    "how": "See charter/operations.md for the sole Render release, verification and rollback flow. infra/README.md tracks the remaining guarded Azure retirement."
+  },
+  "tickets": {
+    "system": "plane",
+    "project_url": "https://app.plane.so/intentmill/projects/556c9df8-f5ac-435a-8abd-53bc522dd8a7/issues/",
+    "project": "lemmadeck"
+  },
+  "ports": {
+    "web": {
+      "main": 3200,
+      "ticket_prefix": 52
+    }
+  }
+}
+
+
+FILE: .intentfold/charter/product.md
+# Product
+
+Human-authored. The machine reads this as binding intent and never edits it.
+Section shape is fixed by `.intentfold/readme.md`.
+
+> Migrated 2026-08-05 from `.prodfarm/charter/goal.md`. The source carried a
+> `DRAFT — AWAITING HUMAN CONFIRMATION` banner while its body marked two pillars as human-confirmed
+> (2026-07-14, 2026-07-20). The confirmed parts are stated below as fact; the parts the source left
+> open are marked `TODO(human)` rather than invented.
+>
+> Revised 2026-09-12 by explicit human direction: English learning is no longer part of this
+> application.
+
+## Contract
+
+**What this product is**
+
+一个面向**一名 8 岁、理解力强的孩子**的初中数学/物理自学课程产品(web 应用)。
+
+内容按初中标准(2022 版义务教育课标),解释按儿童认知,训练按严肃教材
+——不阉割概念,只重排入口与坡度。三层材料:教师版知识骨架、学生版讲义(课文页)、练习题系统
+(识别/表示/基础操作/反向推理/易错辨析五类题)。
+
+课文页采用**卡片式精读**:课文不变、按语义打散成带编号的卡片,一次读一张,读完当场以轻量"读没读"题
+(read-check)卡关,防止跳读/假读;走完全部卡片才算读完课文,之后进入练习题系统。
+
+**多语言**(人确认 2026-07-14):产品面向多语言学习者,目标 7–8 种语言,首个为英文。数学内容以中文为
+源语言,学习者可切换界面与数学内容语言;数学公式统一用标准数学记法、跨语言共享。多语言是数学/
+物理课程的呈现能力,不是英语学习课程。
+
+**Who it is for**
+
+主用户是一名 8 岁、理解力强的自学者。他要做的事是**独立走完一课**:读懂课文、通过 read-check、
+做完练习并知道自己错在哪,不需要成人在旁翻译概念。
+
+**What good looks like**
+
+TODO(human) — 源文件写的是 `达成度判定标准: (awaiting human)`,并给了一个示例:
+"数学 stage-N 全部课文与练习可用且孩子可独立完成一课"。这一条决定每个工单最终被什么标准评判,
+需要定下来。
+
+**What this product is not**
+
+- 不提供英语学习课程、英语课文、英语背诵或英语词汇训练。历史英语数据与生成工具可以保留,
+  但不是产品界面或学习路径的一部分。
+- TODO(human) — 是否做多用户/班级、是否做家长端、是否做游戏化激励、是否做初中以外的学段。
+
+## Tools
+
+## Guidance
+
+## Redlines
+
+1. **Editing this file** — forbidden outright. Product intent is the human's exclusively.
+
+
+FILE: .intentfold/charter/ui.md
+# UI Requirements
+
+Binding on every UI change. **UI work follows this file strictly** — the agent does not invent
+alternatives to what is written here. Section shape is fixed by `.intentfold/readme.md`.
+
+Anything this file does not cover is still a design decision: it is settled at the **grill**, by the
+human, before implementation. Never invented while coding.
+
+> `.prodfarm/charter/` had no UI file — the design system lives in
+> `ssot-resources/reference/DESIGN.md`
+> and has since before this harness. This file **points at it** rather than restating it, per
+> `.intentfold/readme.md` ("a restated value is a stale value waiting to happen"). Filled in
+> 2026-08-05; the
+> parts marked *observed* describe how the repo is today, not a decision the human has recorded.
+
+## Contract
+
+**Styling stack — Tailwind**
+
+This project runs **Tailwind CSS 4** (+ tw-animate-css) with shadcn components. The intentfold
+default (Astryx + StyleX) does **not** apply here: the two stacks are exclusive, and this project
+chose Tailwind. Astryx and StyleX are not used at all.
+
+**Design source of truth**
+
+`ssot-resources/reference/DESIGN.md` is the design system of record — palette, radii, layout metrics,
+typography, per-component specs, and lesson-section labelling. **Read
+`ssot-resources/reference/DESIGN.guide.md` first**; `DESIGN.md` itself says so, and it explains how the
+document is meant to be read and written.
+
+Where a value in `DESIGN.md` and the code disagree, **`app/src/styles/app.css` is the source of truth
+for the value** — that is where the tokens actually live — and the disagreement is drift to report.
+
+**Tokens**
+
+Every style value is a token. The registries, by path:
+
+- `app/src/styles/app.css` — the `--sr-*` CSS variables. The implementation SSOT.
+- `ssot-resources/reference/DESIGN.md` — the documented vocabulary the variables realize.
+
+The palette is closed: **exactly three colors carry the identity — teal-blue, green, and pure
+white — over a neutral ink scale. No additional hues.** The full list of names and values is in
+`DESIGN.md`; do not copy it here and do not approximate a colour that is not in it. `--sr-font` is
+the single global font token (Inter, system sans fallback); display, body and numeric roles reference
+it rather than defining their own family. The shadcn `--primary` token is mapped to the teal-blue so
+default `Button` components match.
+
+**Layout and responsive**
+
+App-shell layout, fixed 236px catalog, 860px mobile breakpoint, 100dvh shell, compact spacing scale —
+all specified in `DESIGN.md`. Every UI change is checked at both viewports named in `operations.md`.
+
+**Component structure** — *observed*: components are flat under `app/src/components/` (e.g.
+`catalog.tsx`, `card-reader.tsx`, `quiz-drawer.tsx`), with shadcn primitives alongside. The
+intentfold template's atoms/molecules/organisms layout is **not** in use.
+TODO(human) — decide whether to keep the flat layout or move to atomic design. Until then, a new
+component goes next to its peers in `app/src/components/` and this file is not evidence for a
+restructure.
+
+## Tools
+
+There is no UI-specific static check today. The mechanical defence is the project-wide one in
+`engineering.md`.
+
+TODO(human) — a check that fails on a raw hex colour or an off-palette hue in `app/src/` would be
+worth more than any of the prose above. Until it exists, the palette rule is Guidance enforced by the
+author.
+
+Design reference: `ssot-resources/reference/DESIGN.guide.md`, then
+`ssot-resources/reference/DESIGN.md`.
+shadcn/ui docs: https://ui.shadcn.com
+
+## Guidance
+
+Binding. Followed while writing, judged by the author — nothing reviews a diff against this section.
+
+**Choosing components.** Reach for a custom component only when shadcn genuinely has nothing that
+fits — not because the official one needs configuring, and not because writing one looks faster.
+"There is no equivalent" is a claim to check against the docs, not to assume.
+
+**Choosing a token.** Use the `--sr-*` variable, never a raw hex value and never a Tailwind palette
+colour that happens to look close. A missing token is a **stop**, not a reason to compose one out of
+primitives.
+
+**The look this product is going for.** Compact, clean, school-serious: a pure white workspace, dense
+practical hierarchy, quiet focus. No mascots, no marketing layout, no decorative gradients beyond the
+single brand mark, no hero sections, no nested cards. Density over whitespace — but prose stays
+readable (line-height ~1.5–1.6). `DESIGN.md` has the specifics.
+
+**Interaction states.** Loading, empty, error, disabled and focus are part of the change, not a
+follow-up. `DESIGN.md` specifies the empty state (centred icon tile, short display heading, one dim
+sentence).
+
+**Content and tone.** The reader is an 8-year-old working alone. Labels are plain and short; the four
+lesson-section labels are fixed per subject in `DESIGN.md` and are not reworded.
+
+## Redlines
+
+1. **Changing a governed token registry** — adding, renaming, removing or retuning a value — not
+   without the human's explicit approval. The registries, by path, so this can be matched against a
+   diff without judgement: `app/src/styles/app.css`, `ssot-resources/reference/DESIGN.md`.
+2. **Introducing a colour outside the three-colour palette plus the ink scale** — forbidden outright.
+   Detectable as a raw hex or an `rgb(`/`hsl(` literal added under `app/src/` outside those two files.
+3. **Recreating the brand mark** — forbidden outright. It is
+   `ssot-resources/public/logo-mark.png` (derived from
+   `ssot-resources/brand/lemmadeck-logo.png`); never substitute a Lucide glyph or a CSS shape, and
+   never restretch or re-crop it.
+4. **Introducing a second styling mechanism** — StyleX, Astryx, CSS-in-JS, or a new global stylesheet —
+   forbidden outright. Tailwind plus `app/src/styles/app.css` is the whole of it.
+
+
+FILE: ssot-resources/reference/DESIGN.md
+Read `ssot-resources/reference/DESIGN.guide.md` before reading, writing, or using this `ssot-resources/reference/DESIGN.md`.
+
+# LemmaDeck Design System
+
+LemmaDeck is a learning app that delivers middle-school-standard math and physics to a young, high-comprehension learner, one small concept at a time. The UI should feel **compact, clean, and school-serious**: a pure white workspace, dense practical hierarchy, and quiet focus rather than playful edutainment. No mascots, no marketing layout, no decorative gradients beyond the single brand mark.
+
+## Palette
+
+Exactly three colors carry the identity — **teal-blue, green, and pure white** — over a neutral ink scale for text. Do not introduce additional hues.
+
+```yaml
+color:
+  white: "#FFFFFF"        # the only page/background surface (pure white)
+  panel: "#F5F9F9"        # faint cool wash — sidebar, headers, hover fills
+  card: "#FFFFFF"
+  blue: "#0E7C9B"         # primary — teal-blue (actions, selection, links)
+  blue_deep: "#0A5E76"    # primary hover / active
+  blue_tint: "#E1F1F5"    # selected row, info chip background
+  green: "#15A06A"        # accent — mastery, correct, success
+  green_deep: "#0F7D52"
+  green_tint: "#E4F6EE"
+  ink: "#15201F"          # primary text
+  ink_soft: "#4C5A58"     # secondary text
+  ink_dim: "#8A9795"      # metadata, captions
+  line: "#E3EAE9"         # borders
+  line_soft: "#EEF3F2"
+radius:
+  card: "10px"
+  control: "8px"
+  pill: "999px"
+layout:
+  catalog: "236px"
+  mobile_breakpoint: "860px"
+  app_shell_height: "100dvh"
+```
+
+Tokens are implemented as `--sr-*` CSS variables in `app/src/styles/app.css` — that file is the source of truth when values conflict. The shadcn `--primary` token is also mapped to the teal-blue so default `Button` components match.
+
+## Typography
+
+- All UI typography uses `Inter`, with system sans as the fallback.
+- `--sr-font` is the single global font token. Display, body, and numeric semantic tokens must reference it rather than define separate font families.
+- Operational labels (eyebrows, group headings, counts) stay small and dense. Do not scale type with viewport width.
+
+## Layout
+
+- The app shell fills the viewport like a web app (`100dvh`); never center it in a canvas or leave wide-screen gutters.
+- Two-pane workspace: a fixed **236px catalog** on the left and a flexible detail pane. There is no right assistant pane.
+- The catalog is the subject/stage navigator. It hides below the 860px breakpoint (mobile shows the detail pane full-width); a drawer can be added later.
+- Detail pane = a slim top bar (icon + view title) over a scrolling content area with **20px padding**.
+- Spacing is deliberately compact: 15px card padding, 12px grid gaps, 14px section gaps. Prefer density over whitespace, but keep lines readable (line-height ~1.5–1.6 for prose).
+- Do not add hero sections, nested cards, or decorative section cards. Cards hold one concrete content module each.
+
+## Components
+
+- **Catalog item**: a flat compact button row — 17px lucide stroke icon, 8px radius, `ink_soft` text. Hover fills `card`; selected uses `blue_tint` background with `blue_deep` text. A trailing pill `--sr-count` shows lesson counts in `line_soft`/`ink_dim`.
+- **Brand mark**: use the geometric teal LemmaDeck mark derived from `ssot-resources/brand/lemmadeck-logo.png`. Its transparent app asset is `ssot-resources/public/logo-mark.png`; never recreate it with a Lucide glyph or CSS shape. Keep the established square crop (about 92% content height and 66% content width) instead of stretching or independently recropping it. In the wordmark, `Deck` / `阶梯` uses the primary teal token `--sr-blue`, not green.
+- **Card**: `card` background, `line` border, 10px radius, 15px padding. Title in display type; body in `ink_soft`.
+- **Chips**: info/blue chips use `blue_tint`/`blue_deep`; mastery/green chips use `green_tint`/`green_deep`. Small outline `--sr-tag` for status labels like 草稿.
+- **Buttons**: primary is solid `blue`, hover `blue_deep`; ghost is transparent with a `line` border and `panel` hover. Compact height (~9px vertical padding).
+- **Eyebrow**: uppercase, letter-spaced, `ink_dim` label above titles; `.accent` variant in `blue_deep`.
+- **Empty state**: centered icon tile (`blue_tint`), short display heading, one dim sentence. Used when a subject has no lessons yet.
+- **Lesson PDF**: use the compact download icon in the lesson header to open the browser print/save flow. The print document contains the current lesson title, full prose, then all exercises; it omits the app shell, tabs, navigation, answer controls, and learner state. Fit figures and tables to an A4 page without replacing the on-screen lesson renderer.
+- **Textbook tabs**: order is 课文, 选择题, 书写题. 选择题 contains the parallel single-choice set, all on one page with click-to-submit feedback. 书写题 contains full textbook problems and figures for paper work, without input, plotting or submission controls. Omit 选择题 when no parallel set exists.
+
+## Lesson Rendering
+
+A lesson is four sections plus a typed exercise set (see `app/src/lib/lessons.ts`). Label the four sections by subject:
+
+- Math: 今天学什么 · 讲清楚 · 做几个 · 自己试
+- Physics: 看到什么 · 怎么测 · 讲清楚 · 自己试
+
+Exercise types map to quiet category tags, not colorful badges: 辨认 / 表示 / 操作 / 反推 / 解释 / 辨错. Mastery checks and the closing "最容易错在哪里" question are rendered as a compact list, not a celebratory callout.
+
+Within textbook prose, short paragraphs are flush-left with no first-line indent and use whitespace
+only. Arabic numerals and Latin mathematical glyphs use KaTeX Main at `1.10em` so their visual height
+balances the surrounding Chinese text; this applies equally to plain values and inline formulas. A real
+concept transition may add one full-width `line` rule before the next paragraph; do not draw a rule
+between every paragraph.
+
+Figures carry a semantic display purpose from their FigureSpec. Instructional diagrams, apparatus,
+tables, graphs, and detail-bearing images keep the normal readable figure width unless their figure
+spec declares a smaller validated natural width. Any figure with an explicit maximum width may share
+a row with adjacent compact figures, and its caption stays attached on screen and in print.
+Decorative portraits, avatars, and comparable non-instructional images always use their validated
+compact width.
+
+## Icons
+
+- Use the LemmaDeck mark in every brand surface: browser/app icon, landing and login brand areas, catalog header, and app title bars.
+- Use `lucide-react` stroke icons only for navigation and functional actions, matching the app's thin-stroke style.
+
+## Interaction States
+
+- Selection updates the detail view, the view title, and the selected-row state.
+- Focus states use a 2px teal-blue (`blue`) outline with a 1px offset.
+- Respect reduced motion by disabling transitions and animation inside the app.
+
+## Content Tone
+
+- Copy is direct, concrete, and serious — the tone of a good teacher, not a cartoon. Chinese UI copy.
+- Do not write encouragement filler or science-story fluff (mirrors `ssot-resources/content/course/course-gen-guide-common.md` 禁止事项).
+- Always land on formal terms; intuitive phrasing is an entry ramp, never a replacement for the definition.
+
+
+FILE: .intentfold/tickets/STEMROBIN-181/tmp/d1816-d271-raw-source49-review/report.json
+{
+  "schema": "d271-bounded-first-raw-review@1",
+  "batch": "D271",
+  "ticket": "STEMROBIN-181",
+  "physicalPage": 49,
+  "printedPage": 39,
+  "status": "pass-with-notes",
+  "verdictMeaning": "Bounded RAW source-figure fidelity only. The one-pixel fig25 PNG caption remnant is nonblocking for instructional content; this is not a zero-contamination claim.",
+  "sourceFirst": {
+    "sourceOnlyReadFirst": true,
+    "originalOpenedAlone": true,
+    "inventorySavedBeforeAfterInventoryOrCandidates": true,
+    "inventoryPath": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d271-raw-source49-review/source-inventory.json",
+    "inventorySha256": "7cd0458972e75f1c8469fc8129573fd8991025e75adb8283c71885e700a5e461",
+    "inventoryUnchangedAfterCandidateInspection": true,
+    "sourceOnlyJsonUnchanged": true,
+    "sourceOnlySha256": "aaacaba7c467e3eada2eda3e76bef79653807d4dde32ed03896baac352ad13ae",
+    "inputFreezeSha256": "bd8fe0d0b02bf17454e93258af27f0a3937d7a6068672d2306ce522d74116cb9",
+    "afterInventorySha256": "bda8e5d1acd3fe9327f917376d6259df457c3b121fb7a7c19b7633c426a68589",
+    "originalSha256": "5d6cf8a65656ebc07d266b165c66c9e353787ee0099fdab9319d56e024adc2ac"
+  },
+  "figures": [
+    {
+      "id": "fig-24",
+      "pngVerdict": "pass",
+      "svgVerdict": "pass",
+      "checks": {
+        "apparatus": "Not applicable: source has no apparatus.",
+        "grid": "Source has no grid; none added.",
+        "curve": "All three rising runs, two full downward resets, three baseline crossings and the last partial run survive in both formats. No invented continuation.",
+        "axes": "Both source axes, extensions below/left of origin and up/right arrowheads preserved.",
+        "labels": "All three source glyph appearances and positions preserved, including the small subscript. No claim about Latin/Cyrillic encoding.",
+        "arrows": "Two axis arrowheads; no added curve arrows.",
+        "crop": "Recorded figure box [248,977,503,272], effective padding 12. PNG 527x296 is exactly the original crop [236,965,763,1261] in RGBA pixels. Both previews have complete arrows and low vertices; captions and neighboring apparatus are outside.",
+        "stroke": "PNG retains original scanned strokes and specks. SVG smooths/join-rounds pixel stair steps without changing visible topology, arrow direction or labels."
+      },
+      "findings": [],
+      "hashes": {
+        "png": "34e9cd577c710a4c6975c19d711cb9dffdf905e11ad596c9bf525db7eb9be09e",
+        "svg": "09c18f02ac41d5628cca0b99a1ab35701ac384e0bbc0885f4fc853fc42656020",
+        "svgPreview": "45f683f0b1edf951beb3347cc4ea0890b215e2db2c2069cb0a52bb13b82fe656",
+        "previewReceipt": "48835c2db6d951abaccf88f9b435be6d12613cff36ecb785c89e0a0406fd15a0"
+      }
+    },
+    {
+      "id": "fig-25",
+      "pngVerdict": "pass-with-note",
+      "svgVerdict": "pass",
+      "checks": {
+        "apparatus": "Both formats retain the whole black housing/lower band, circular double rim, light mount and all four fasteners. Original connected housing ink bounds are inclusive [864,800,1296,1288]; all fit the candidate.",
+        "grid": "Visible 19 vertical and 17 horizontal line tracks, approximately 17..19 px source spacing, scan offsets, short edge tracks and curved boundary fragments retained. Rim bands excluded from track counts. No invented rectangular cell total.",
+        "curve": "Left low trace, largest crest/trough and progressively smaller right-hand oscillations retained. No constant-amplitude substitution, dashed restyling, omitted end oscillation or extension.",
+        "axes": "No separately drawn/labeled axes in source or candidates; central graticule lines are not mislabeled as axes.",
+        "labels": "No internal units, letters or numeric values invented. Instrument-name and figure-number captions are separately retained as cap blocks, not readable candidate content.",
+        "arrows": "No source or candidate arrowheads.",
+        "crop": "Padding 0: figure box [864,798,433,491], exclusive crop [864,798,1297,1289]. PNG 433x491 is pixel-identical to this original crop. Last housing pixels at y=1288 are retained. Caption separation is spatially narrow, not a full blank horizontal row.",
+        "stroke": "PNG is exact source raster. SVG rounds/smooths lattice intersections and scan noise but keeps distinguishable grid, rim, fasteners and oscillatory trace; the isolated caption-tip pixel is omitted."
+      },
+      "findings": [
+        {
+          "severity": "note",
+          "appliesTo": "PNG",
+          "category": "crop-contamination",
+          "detail": "One black pixel at original (1033,1288), local (169,490), belongs to the leading caption glyph component with inclusive bounds [1022,1288,1050,1319]. It falls on the PNG's last row. All other pixels of that component are outside the crop; no readable caption fragment is included. At the same location the existing SVG preview is opaque white.",
+          "blocking": false,
+          "disposition": "Reported only; no crop repair or rerender authorized. Retaining the full housing also requires its last row y=1288, so a whole-row trim would remove apparatus ink.",
+          "inventoryRefinement": "The independent inventory's caption Y range was approximate. Original-pixel connectivity after candidate inspection establishes this one-pixel tip at y=1288; the saved inventory was not edited."
+        }
+      ],
+      "hashes": {
+        "png": "be747d5fe06993fd66547479ddef9c80a855ecf142f39b8bc9e0b40900932dd4",
+        "svg": "489686427346717fbd8304f7307d08890a267946e8d02f8c70210ef03d6a3b90",
+        "svgPreview": "a36a1d87e55791d1b8dea30d0ce66f441dd924e1b0dbd49115992aafc984369b",
+        "previewReceipt": "501b1db62561619b18ecbd76f393fb1d9208453704be95efd33a84fb35263277"
+      }
+    }
+  ],
+  "hashVerification": {
+    "allMatched": true,
+    "candidateFilesVerifiedOnce": 6,
+    "frozenInputFilesVerifiedOnce": 15,
+    "method": "SHA-256 over existing bytes; candidate/receipt/page/audit/native references also checked for declared byte lengths. Source-only, input-freeze and original checked before candidates. No rehash loops.",
+    "additionalFrozenHashes": {
+      "page": "445a502e6bc4c7e2e23c232c1ad985524eb2d96ae8ae0f258951bc2fe06ea8de",
+      "audit": "8821c504cd5125a8a700f8b6452f62a7680ae444ce0d0b490aaa2b143f65d446",
+      "priorNativeResult": "ea83ee92f1578dde555c2155bd7dc980592edae33a730a7448092564a021b68f"
+    },
+    "previewBinding": "Hash-checked existing receipts name the respective SVG and PNG preview paths and report exitCode 0. No native stage was executed; existing preview bytes, not a new render, were inspected."
+  },
+  "scope": {
+    "wholeSourceTextReview": "D269, excluded. Only local caption blocks were read to confirm separate retention.",
+    "nativeStages": "Already passed per authorized input; not replayed or newly certified.",
+    "rawFigureReviewOnly": true,
+    "sourceApproval": false,
+    "courseApproval": false,
+    "modernFigureApproval": false,
+    "publishApproval": false,
+    "formalHandoff": false,
+    "exactGlyphEncodingInferred": false,
+    "freshness": "Already satisfied per user; no skillhost/IntentFold/backend refresh.",
+    "paidCalls": 0,
+    "nativeCalls": 0,
+    "databaseCalls": 0,
+    "gitCalls": 0,
+    "otherAgentsOrChats": 0,
+    "repairs": 0,
+    "rerenders": 0,
+    "existingFilesModified": 0,
+    "createdFiles": ["source-inventory.json", "physical49-fig25-source-crop.png", "report.json"]
+  },
+  "imageLedger": [
+    {"open": 1, "role": "original-physical49-alone", "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.tmp/STEMROBIN-181/d1816-d270/source-work/10p/pages/0049/page.png"},
+    {"open": 2, "role": "source-only-fig25-crop", "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.intentfold/tickets/STEMROBIN-181/tmp/d1816-d271-raw-source49-review/physical49-fig25-source-crop.png", "boxXYXY": [860,790,1310,1390], "size": [450,600], "sha256": "60dde9eb4aa54c3edc7b94aa005841a26ed9a554275906316d8c8aa77c3ed1e9"},
+    {"open": 3, "role": "fig-24-raw-png", "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.tmp/STEMROBIN-181/d1816-d270/source-work/10p/pages/0049/figures/fig-24.png"},
+    {"open": 4, "role": "fig-24-existing-svg-preview", "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.tmp/STEMROBIN-181/d1816-d270/raw-svg-previews/fig-24.svg-preview.png"},
+    {"open": 5, "role": "fig-25-raw-png", "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.tmp/STEMROBIN-181/d1816-d270/source-work/10p/pages/0049/figures/fig-25.png"},
+    {"open": 6, "role": "fig-25-existing-svg-preview", "path": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck/.tmp/STEMROBIN-181/d1816-d270/raw-svg-previews/fig-25.svg-preview.png"}
+  ],
+  "imageCounts": {"batch": 6, "context": 6, "batchLimit": 8, "contextLimit": 24, "reopens": 0}
+}
+

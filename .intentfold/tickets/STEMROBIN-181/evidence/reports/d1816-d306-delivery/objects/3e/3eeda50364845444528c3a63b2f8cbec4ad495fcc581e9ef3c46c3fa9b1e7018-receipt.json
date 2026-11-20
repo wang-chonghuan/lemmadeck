@@ -1,0 +1,15 @@
+{
+  "name": "d280-source-pixel-tracks",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck",
+  "command": [
+    ".claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-B",
+    "-c",
+    "from PIL import Image\nimport itertools,json\nfor f in [24,25]:\n im=Image.open(f\".tmp/STEMROBIN-181/d1816-d276/root/10p/figures/fig-{f}.png\").convert(\"L\")\n print(\"FIG\",f,\"size\",im.size)\n if f==25:\n  for kind,k in [(\"row\",80),(\"row\",110),(\"row\",300),(\"row\",340),(\"col\",180),(\"col\",200),(\"col\",218),(\"col\",250),(\"col\",300)]:\n   n=im.width if kind==\"row\" else im.height\n   pts=[i for i in range(n) if im.getpixel((i,k) if kind==\"row\" else (k,i))<128]\n   runs=[[g[0][1],g[-1][1]] for _,it in itertools.groupby(enumerate(pts),lambda z:z[1]-z[0]) if (g:=list(it))]\n   print(kind,k,json.dumps(runs))"
+  ],
+  "startedAt": "2026-11-20T20:04:24.559Z",
+  "finishedAt": "2026-11-20T20:04:24.616Z",
+  "elapsedMs": 57,
+  "exitCode": 0,
+  "error": null
+}

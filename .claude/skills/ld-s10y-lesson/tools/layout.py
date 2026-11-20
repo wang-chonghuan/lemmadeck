@@ -323,6 +323,39 @@ def _small_prose_continuation(
     )
 
 
+def _separate_caption_rows(
+    ink: np.ndarray, top: int, top_bottom: int, bottom_top: int, bottom: int,
+    glyph_h: float,
+) -> bool:
+    """Keep adjacent caption rows, including joined bold caption glyphs."""
+    if (
+        bottom_top - top_bottom <= 0.2 * glyph_h
+        or not all(
+            0.5 * glyph_h <= b - a + 1 <= 1.4 * glyph_h
+            for a, b in ((top, top_bottom), (bottom_top, bottom))
+        )
+    ):
+        return False
+    labels, _ = ndimage.label(ink)
+    bounds_list = [bounds for bounds in ndimage.find_objects(labels) if bounds is not None]
+    row_glyphs = []
+    for a, b in ((top, top_bottom), (bottom_top, bottom)):
+        glyphs = [
+            (r, c)
+            for r, c in bounds_list
+            if a <= (r.start + r.stop - 1) / 2 <= b
+            and 0.5 * glyph_h <= r.stop - r.start <= 1.4 * glyph_h
+            and 0.2 * glyph_h <= c.stop - c.start <= 4 * glyph_h
+        ]
+        if len(glyphs) < 2:
+            return False
+        row_glyphs.append(glyphs)
+    return not any(
+        _fraction_denominator(ink, r, c, bounds_list, glyph_h)
+        for r, c in row_glyphs[1]
+    )
+
+
 def _fraction_denominator(ink, rows, columns, bounds_list, glyph_h: float) -> bool:
     """Require a covering fraction rule and its numerator before hiding a glyph."""
     margin = 0.15 * glyph_h
@@ -573,6 +606,9 @@ def line_bands(
             if (
                 a - prev_b <= merge_gap and not separate_tall_rows
                 and not _small_prose_continuation(
+                    ink, prev_a, prev_b, a, b, glyph_h
+                )
+                and not _separate_caption_rows(
                     ink, prev_a, prev_b, a, b, glyph_h
                 )
             ):

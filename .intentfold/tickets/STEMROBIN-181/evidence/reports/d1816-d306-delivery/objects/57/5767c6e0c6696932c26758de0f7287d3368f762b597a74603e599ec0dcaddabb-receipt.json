@@ -1,0 +1,14 @@
+{
+  "name": "d295-six-current-template-normalization-equality",
+  "cwd": "/Users/yong/.codex/worktrees/stemrobin-181-six/lemmadeck",
+  "command": [
+    ".claude/skills/ld-s10y-lesson/.venv/bin/python",
+    "-c",
+    "import sys,json,copy; from pathlib import Path; sys.path.insert(0,\".claude/skills/ld-s10y-lesson/tools\"); from edition import normalize_lesson_layout; roots=[(\".tmp/STEMROBIN-181/d1816-d276/source-work\",[\"phy10-c1-s3-n17\",\"phy10-c1-s3-n18\"]),(\".tmp/STEMROBIN-181/d1816-d287/work\",[\"phy10-c1-s3-n19\"])]; records=[]; [(records.append((str(p),json.loads(p.read_text())))) for root,ids in roots for edition in [\"modern-us-neutral\",\"modern-us-neutral-en\"] for lesson in ids for p in [Path(root)/\"adapt\"/\"10p\"/edition/\"lessons\"/lesson/\"lesson.template.json\"]]; results=[]; [(normalize_lesson_layout(new),results.append({\"path\":p,\"equal\":new==old,\"changedBlocks\":[i for i,(a,b) in enumerate(zip(old[\"prose\"],new[\"prose\"])) if a!=b]})) for p,old in records for new in [copy.deepcopy(old)]]; print(json.dumps(results)); assert all(x[\"equal\"] for x in results),\"Reviewed template normalization changed\""
+  ],
+  "startedAt": "2026-11-20T20:21:28.431Z",
+  "finishedAt": "2026-11-20T20:21:28.498Z",
+  "elapsedMs": 67,
+  "exitCode": 1,
+  "error": null
+}

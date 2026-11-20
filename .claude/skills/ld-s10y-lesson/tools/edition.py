@@ -508,6 +508,10 @@ def normalize_prose_layout(text: str) -> str:
     if not text:
         return text
 
+    explicit_paragraphs = re.split(r"\n\s*\n", text)
+    if len(explicit_paragraphs) > 1:
+        return "\n\n".join(normalize_prose_layout(part) for part in explicit_paragraphs)
+
     masked = masked_math(text)
     depths = nesting_depths(masked)
     boundaries = set()
@@ -558,7 +562,7 @@ def normalize_prose_layout(text: str) -> str:
 
     joined_lines = []
     for line in lines:
-        closing = re.match(r"^([”’」』]+)\s*(.*)$", line)
+        closing = re.match(r"^((?:[”’」』]|\*\*)+)\s*(.*)$", line)
         if closing and joined_lines:
             joined_lines[-1] += closing.group(1)
             line = closing.group(2)
@@ -781,6 +785,8 @@ def same_figure_label(source: object, modern: object, locale: object) -> bool:
         return True
     if locale != "en" or not isinstance(source, str):
         return False
+    if source == "表":
+        return modern == "Table"
     number = re.fullmatch(r"图\s+(\d+)", source)
     return bool(number and modern == f"Figure {number.group(1)}")
 
